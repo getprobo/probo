@@ -85,7 +85,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if len(input) == 1 {
-				return fmt.Errorf("at least one of --url or --event must be specified")
+				return fmt.Errorf("at least one field must be specified for update")
 			}
 
 			cfg, err := f.Config()

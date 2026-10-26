@@ -72,7 +72,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
   prb datum create
 
   # Create a datum non-interactively
-  prb datum create --name "Customer PII" --data-classification CONFIDENTIAL`,
+  prb datum create --name "Customer PII" --data-classification CONFIDENTIAL --owner <profile-id>`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
 			if err != nil {
@@ -92,12 +92,9 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
-			if flagOrg == "" {
-				flagOrg = hc.Organization
-			}
-
-			if flagOrg == "" {
-				return fmt.Errorf("organization is required; pass --org or set a default with 'prb auth login'")
+			flagOrg, err = cmdutil.ResolveOrganization(flagOrg, hc.Organization)
+			if err != nil {
+				return err
 			}
 
 			if f.IOStreams.IsInteractive() {
@@ -136,14 +133,15 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("data classification is required; pass --data-classification or run interactively")
 			}
 
+			if flagOwner == "" {
+				return fmt.Errorf("owner is required; pass --owner or run interactively")
+			}
+
 			input := map[string]any{
 				"organizationId":     flagOrg,
 				"name":               flagName,
 				"dataClassification": flagClassification,
-			}
-
-			if flagOwner != "" {
-				input["ownerId"] = flagOwner
+				"ownerId":            flagOwner,
 			}
 
 			if len(flagThirdPartyIDs) > 0 {
@@ -178,8 +176,10 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
 	cmd.Flags().StringVar(&flagName, "name", "", "Datum name (required)")
 	cmd.Flags().StringVar(&flagClassification, "data-classification", "", "Data classification: PUBLIC, INTERNAL, CONFIDENTIAL, SECRET (required)")
-	cmd.Flags().StringVar(&flagOwner, "owner", "", "Owner profile ID")
-	cmd.Flags().StringSliceVar(&flagThirdPartyIDs, "thirdParty-ids", nil, "ThirdParty IDs (comma-separated)")
+	cmd.Flags().StringVar(&flagOwner, "owner", "", "Owner profile ID (required)")
+	cmd.Flags().StringSliceVar(&flagThirdPartyIDs, "third-party-ids", nil, "Third party IDs (comma-separated)")
+	cmd.Flags().StringSliceVar(&flagThirdPartyIDs, "thirdParty-ids", nil, "Third party IDs (comma-separated)")
+	_ = cmd.Flags().MarkHidden("thirdParty-ids")
 
 	return cmd
 }

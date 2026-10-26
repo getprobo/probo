@@ -68,7 +68,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create",
 		Short: "Create a webhook subscription",
-		Example: `  # Create a webhook for thirdParty events
+		Example: `  # Create a webhook for third-party events
   prb webhook create --url https://example.com/webhook --event THIRD_PARTY_CREATED --event THIRD_PARTY_UPDATED
 
   # Create a webhook for all supported events
@@ -100,12 +100,9 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
-			if flagOrg == "" {
-				flagOrg = hc.Organization
-			}
-
-			if flagOrg == "" {
-				return fmt.Errorf("organization is required; pass --org or set a default with 'prb auth login'")
+			flagOrg, err = cmdutil.ResolveOrganization(flagOrg, hc.Organization)
+			if err != nil {
+				return err
 			}
 
 			input := map[string]any{

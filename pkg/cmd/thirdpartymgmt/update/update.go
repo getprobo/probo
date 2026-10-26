@@ -64,7 +64,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "update <id>",
-		Short: "Update a thirdParty",
+		Short: "Update a third party",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
@@ -144,7 +144,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 			v := resp.UpdateThirdParty.ThirdParty
 			_, _ = fmt.Fprintf(
 				f.IOStreams.Out,
-				"Updated thirdParty %s (%s)\n",
+				"Updated third party %s (%s)\n",
 				v.ID,
 				v.Name,
 			)
@@ -153,9 +153,9 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&flagName, "name", "", "ThirdParty name")
-	cmd.Flags().StringVar(&flagDescription, "description", "", "ThirdParty description")
-	cmd.Flags().StringVar(&flagCategory, "category", "", "ThirdParty category")
+	cmd.Flags().StringVar(&flagName, "name", "", "Third party name")
+	cmd.Flags().StringVar(&flagDescription, "description", "", "Third party description")
+	cmd.Flags().StringVar(&flagCategory, "category", "", "Third party category")
 	cmd.Flags().StringVar(&flagLegalName, "legal-name", "", "Legal name")
 	cmd.Flags().StringVar(&flagAddress, "address", "", "Headquarter address")
 	cmd.Flags().StringVar(&flagWebsite, "website", "", "Website URL")

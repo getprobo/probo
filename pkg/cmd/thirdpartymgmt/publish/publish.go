@@ -82,12 +82,12 @@ func NewCmdPublish(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "publish",
-		Short: "Publish the thirdParty register as a document version",
-		Example: `  # Publish the third_party register
-  prb third_party publish --org ORG_ID
+		Short: "Publish the third party register as a document version",
+		Example: `  # Publish the third party register
+  prb third-party publish --org ORG_ID
 
   # Publish with approvers
-  prb third_party publish --org ORG_ID --approver PROFILE_ID1 --approver PROFILE_ID2`,
+  prb third-party publish --org ORG_ID --approver PROFILE_ID1 --approver PROFILE_ID2`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
 			if err != nil {
@@ -99,12 +99,9 @@ func NewCmdPublish(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			if flagOrg == "" {
-				flagOrg = hc.Organization
-			}
-
-			if flagOrg == "" {
-				return fmt.Errorf("organization is required: pass --org or run `prb auth login`")
+			flagOrg, err = cmdutil.ResolveOrganization(flagOrg, hc.Organization)
+			if err != nil {
+				return err
 			}
 
 			client := api.NewClient(
@@ -140,7 +137,7 @@ func NewCmdPublish(f *cmdutil.Factory) *cobra.Command {
 			v := resp.PublishThirdPartyList.DocumentVersionEdge.Node
 			_, _ = fmt.Fprintf(
 				f.IOStreams.Out,
-				"Published thirdParty register %s (v%d.%d)\n",
+				"Published third party register %s (v%d.%d)\n",
 				v.Title,
 				v.Major,
 				v.Minor,

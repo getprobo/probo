@@ -92,12 +92,9 @@ func NewCmdUpload(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("cannot load default host: %w", err)
 			}
 
-			if flagOrg == "" {
-				flagOrg = hc.Organization
-			}
-
-			if flagOrg == "" {
-				return fmt.Errorf("organization is required; pass --org or set a default with 'prb auth login'")
+			flagOrg, err = cmdutil.ResolveOrganization(flagOrg, hc.Organization)
+			if err != nil {
+				return err
 			}
 
 			client := api.NewClient(

@@ -30,9 +30,10 @@ import (
 )
 
 const listQuery = `
-query($first: Int, $after: CursorKey, $orderBy: WebhookSubscriptionOrder) {
-  viewer {
-    organization {
+query($id: ID!, $first: Int, $after: CursorKey, $orderBy: WebhookSubscriptionOrder) {
+  node(id: $id) {
+    __typename
+    ... on Organization {
       webhookSubscriptions(first: $first, after: $after, orderBy: $orderBy) {
         totalCount
         edges {
@@ -62,6 +63,7 @@ type webhookSubscription struct {
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	var (
+		flagOrg      string
 		flagLimit    int
 		flagOrderBy  string
 		flagOrderDir string
@@ -96,7 +98,14 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
-			variables := map[string]any{}
+			flagOrg, err = cmdutil.ResolveOrganization(flagOrg, hc.Organization)
+			if err != nil {
+				return err
+			}
+
+			variables := map[string]any{
+				"id": flagOrg,
+			}
 
 			if flagOrderBy != "" {
 				if err := cmdutil.ValidateEnum("order-by", flagOrderBy, []string{"CREATED_AT"}); err != nil {
@@ -116,17 +125,24 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				flagLimit,
 				func(data json.RawMessage) (*api.Connection[webhookSubscription], error) {
 					var resp struct {
-						Viewer struct {
-							Organization struct {
-								WebhookSubscriptions api.Connection[webhookSubscription] `json:"webhookSubscriptions"`
-							} `json:"organization"`
-						} `json:"viewer"`
+						Node *struct {
+							Typename             string                              `json:"__typename"`
+							WebhookSubscriptions api.Connection[webhookSubscription] `json:"webhookSubscriptions"`
+						} `json:"node"`
 					}
 					if err := json.Unmarshal(data, &resp); err != nil {
 						return nil, err
 					}
 
-					return &resp.Viewer.Organization.WebhookSubscriptions, nil
+					if resp.Node == nil {
+						return nil, fmt.Errorf("organization %s not found", flagOrg)
+					}
+
+					if resp.Node.Typename != "Organization" {
+						return nil, fmt.Errorf("expected Organization node, got %s", resp.Node.Typename)
+					}
+
+					return &resp.Node.WebhookSubscriptions, nil
 				},
 			)
 			if err != nil {
@@ -173,6 +189,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
+	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of webhook subscriptions to list")
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")

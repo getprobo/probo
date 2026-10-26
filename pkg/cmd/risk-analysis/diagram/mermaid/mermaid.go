@@ -52,6 +52,8 @@ type mermaidResponse struct {
 }
 
 func NewCmdMermaid(f *cmdutil.Factory) *cobra.Command {
+	var flagOutput *string
+
 	cmd := &cobra.Command{
 		Use:   "mermaid <id>",
 		Short: "Get the Mermaid chart for a risk analysis diagram",
@@ -62,6 +64,10 @@ func NewCmdMermaid(f *cmdutil.Factory) *cobra.Command {
   prb risk-analysis diagram mermaid <id> --json`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
+				return err
+			}
+
 			cfg, err := f.Config()
 			if err != nil {
 				return err
@@ -101,11 +107,17 @@ func NewCmdMermaid(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("expected RiskAnalysisDiagram node, got %s", resp.Node.Typename)
 			}
 
+			if *flagOutput == cmdutil.OutputJSON {
+				return cmdutil.PrintJSON(f.IOStreams.Out, resp.Node)
+			}
+
 			_, _ = fmt.Fprintln(f.IOStreams.Out, resp.Node.MermaidChart)
 
 			return nil
 		},
 	}
+
+	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd
 }

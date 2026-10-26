@@ -65,6 +65,10 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		flagPurpose              string
 		flagRole                 string
 		flagLawfulBasis          string
+		flagSpecialOrCriminal    string
+		flagInternational        bool
+		flagDPIA                 string
+		flagTIA                  string
 		flagDataSubjectCategory  string
 		flagPersonalDataCategory string
 	)
@@ -76,7 +80,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
   prb processing-activity create
 
   # Create a processing activity non-interactively
-  prb pa create --name "Customer onboarding" --role CONTROLLER --lawful-basis CONSENT`,
+  prb pa create --name "Customer onboarding" --role CONTROLLER --lawful-basis CONSENT --special-or-criminal-data NO --data-protection-impact-assessment NOT_NEEDED --transfer-impact-assessment NOT_NEEDED`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
 			if err != nil {
@@ -96,12 +100,9 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
-			if flagOrg == "" {
-				flagOrg = hc.Organization
-			}
-
-			if flagOrg == "" {
-				return fmt.Errorf("organization is required; pass --org or set a default with 'prb auth login'")
+			flagOrg, err = cmdutil.ResolveOrganization(flagOrg, hc.Organization)
+			if err != nil {
+				return err
 			}
 
 			if f.IOStreams.IsInteractive() {
@@ -146,27 +147,131 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 						return err
 					}
 				}
+
+				if flagSpecialOrCriminal == "" {
+					err := huh.NewSelect[string]().
+						Title("Special or criminal data").
+						Options(
+							huh.NewOption("No", "NO"),
+							huh.NewOption("Yes", "YES"),
+							huh.NewOption("Possible", "POSSIBLE"),
+						).
+						Value(&flagSpecialOrCriminal).
+						Run()
+					if err != nil {
+						return err
+					}
+				}
+
+				if flagDPIA == "" {
+					err := huh.NewSelect[string]().
+						Title("Data protection impact assessment").
+						Options(
+							huh.NewOption("Not needed", "NOT_NEEDED"),
+							huh.NewOption("Needed", "NEEDED"),
+						).
+						Value(&flagDPIA).
+						Run()
+					if err != nil {
+						return err
+					}
+				}
+
+				if flagTIA == "" {
+					err := huh.NewSelect[string]().
+						Title("Transfer impact assessment").
+						Options(
+							huh.NewOption("Not needed", "NOT_NEEDED"),
+							huh.NewOption("Needed", "NEEDED"),
+						).
+						Value(&flagTIA).
+						Run()
+					if err != nil {
+						return err
+					}
+				}
 			}
 
 			if flagName == "" {
 				return fmt.Errorf("name is required; pass --name or run interactively")
 			}
 
+			if flagRole == "" {
+				return fmt.Errorf("role is required; pass --role or run interactively")
+			}
+
+			if err := cmdutil.ValidateEnum("role", flagRole, []string{"CONTROLLER", "PROCESSOR"}); err != nil {
+				return err
+			}
+
+			if flagLawfulBasis == "" {
+				return fmt.Errorf("lawful basis is required; pass --lawful-basis or run interactively")
+			}
+
+			if err := cmdutil.ValidateEnum(
+				"lawful-basis",
+				flagLawfulBasis,
+				[]string{
+					"LEGITIMATE_INTEREST",
+					"CONSENT",
+					"CONTRACTUAL_NECESSITY",
+					"LEGAL_OBLIGATION",
+					"VITAL_INTERESTS",
+					"PUBLIC_TASK",
+				},
+			); err != nil {
+				return err
+			}
+
+			if flagSpecialOrCriminal == "" {
+				return fmt.Errorf("special or criminal data is required; pass --special-or-criminal-data or run interactively")
+			}
+
+			if err := cmdutil.ValidateEnum(
+				"special-or-criminal-data",
+				flagSpecialOrCriminal,
+				[]string{"YES", "NO", "POSSIBLE"},
+			); err != nil {
+				return err
+			}
+
+			if flagDPIA == "" {
+				return fmt.Errorf("data protection impact assessment is required; pass --data-protection-impact-assessment or run interactively")
+			}
+
+			if err := cmdutil.ValidateEnum(
+				"data-protection-impact-assessment",
+				flagDPIA,
+				[]string{"NEEDED", "NOT_NEEDED"},
+			); err != nil {
+				return err
+			}
+
+			if flagTIA == "" {
+				return fmt.Errorf("transfer impact assessment is required; pass --transfer-impact-assessment or run interactively")
+			}
+
+			if err := cmdutil.ValidateEnum(
+				"transfer-impact-assessment",
+				flagTIA,
+				[]string{"NEEDED", "NOT_NEEDED"},
+			); err != nil {
+				return err
+			}
+
 			input := map[string]any{
-				"organizationId": flagOrg,
-				"name":           flagName,
+				"organizationId":                       flagOrg,
+				"name":                                 flagName,
+				"role":                                 flagRole,
+				"lawfulBasis":                          flagLawfulBasis,
+				"specialOrCriminalData":                flagSpecialOrCriminal,
+				"internationalTransfers":               flagInternational,
+				"dataProtectionImpactAssessmentNeeded": flagDPIA,
+				"transferImpactAssessmentNeeded":       flagTIA,
 			}
 
 			if flagPurpose != "" {
 				input["purpose"] = flagPurpose
-			}
-
-			if flagRole != "" {
-				input["role"] = flagRole
-			}
-
-			if flagLawfulBasis != "" {
-				input["lawfulBasis"] = flagLawfulBasis
 			}
 
 			if flagDataSubjectCategory != "" {
@@ -205,8 +310,12 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
 	cmd.Flags().StringVar(&flagName, "name", "", "Processing activity name (required)")
 	cmd.Flags().StringVar(&flagPurpose, "purpose", "", "Purpose of processing")
-	cmd.Flags().StringVar(&flagRole, "role", "", "Role: CONTROLLER, PROCESSOR")
-	cmd.Flags().StringVar(&flagLawfulBasis, "lawful-basis", "", "Lawful basis: LEGITIMATE_INTEREST, CONSENT, CONTRACTUAL_NECESSITY, LEGAL_OBLIGATION, VITAL_INTERESTS, PUBLIC_TASK")
+	cmd.Flags().StringVar(&flagRole, "role", "", "Role: CONTROLLER, PROCESSOR (required)")
+	cmd.Flags().StringVar(&flagLawfulBasis, "lawful-basis", "", "Lawful basis: LEGITIMATE_INTEREST, CONSENT, CONTRACTUAL_NECESSITY, LEGAL_OBLIGATION, VITAL_INTERESTS, PUBLIC_TASK (required)")
+	cmd.Flags().StringVar(&flagSpecialOrCriminal, "special-or-criminal-data", "", "Special or criminal data: YES, NO, POSSIBLE (required)")
+	cmd.Flags().BoolVar(&flagInternational, "international-transfers", false, "Processing involves international transfers")
+	cmd.Flags().StringVar(&flagDPIA, "data-protection-impact-assessment", "", "Data protection impact assessment: NEEDED, NOT_NEEDED (required)")
+	cmd.Flags().StringVar(&flagTIA, "transfer-impact-assessment", "", "Transfer impact assessment: NEEDED, NOT_NEEDED (required)")
 	cmd.Flags().StringVar(&flagDataSubjectCategory, "data-subject-category", "", "Data subject category")
 	cmd.Flags().StringVar(&flagPersonalDataCategory, "personal-data-category", "", "Personal data category")
 

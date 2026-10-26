@@ -39,16 +39,10 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: DocumentOrder, $filter
         edges {
           node {
             id
+            title
             status
-            versions(first: 1) {
-              edges {
-                node {
-                  title
-                  documentType
-                  classification
-                }
-              }
-            }
+            documentType
+            classification
           }
         }
         pageInfo {
@@ -62,17 +56,11 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: DocumentOrder, $filter
 `
 
 type document struct {
-	ID       string `json:"id"`
-	Status   string `json:"status"`
-	Versions struct {
-		Edges []struct {
-			Node struct {
-				Title          string `json:"title"`
-				DocumentType   string `json:"documentType"`
-				Classification string `json:"classification"`
-			} `json:"node"`
-		} `json:"edges"`
-	} `json:"versions"`
+	ID             string `json:"id"`
+	Title          string `json:"title"`
+	Status         string `json:"status"`
+	DocumentType   string `json:"documentType"`
+	Classification string `json:"classification"`
 }
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
@@ -117,12 +105,9 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				cfg.HTTPTimeoutDuration(),
 			)
 
-			if flagOrg == "" {
-				flagOrg = hc.Organization
-			}
-
-			if flagOrg == "" {
-				return fmt.Errorf("organization is required; pass --org or set a default with 'prb auth login'")
+			flagOrg, err = cmdutil.ResolveOrganization(flagOrg, hc.Organization)
+			if err != nil {
+				return err
 			}
 
 			variables := map[string]any{
@@ -255,22 +240,11 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 			rows := make([][]string, 0, len(documents))
 			for _, doc := range documents {
-				title := ""
-				docType := ""
-				classification := ""
-
-				if len(doc.Versions.Edges) > 0 {
-					v := doc.Versions.Edges[0].Node
-					title = v.Title
-					docType = v.DocumentType
-					classification = v.Classification
-				}
-
 				rows = append(rows, []string{
 					doc.ID,
-					title,
-					docType,
-					classification,
+					doc.Title,
+					doc.DocumentType,
+					doc.Classification,
 					doc.Status,
 				})
 			}

@@ -120,12 +120,9 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
-			if flagOrg == "" {
-				flagOrg = hc.Organization
-			}
-
-			if flagOrg == "" {
-				return fmt.Errorf("organization is required; pass --org or set a default with 'prb auth login'")
+			flagOrg, err = cmdutil.ResolveOrganization(flagOrg, hc.Organization)
+			if err != nil {
+				return err
 			}
 
 			if f.IOStreams.IsInteractive() {
@@ -160,9 +157,22 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("name is required; pass --name or run interactively")
 			}
 
+			if flagPriority == "" {
+				return fmt.Errorf("priority is required; pass --priority or run interactively")
+			}
+
+			if err := cmdutil.ValidateEnum(
+				"priority",
+				flagPriority,
+				[]string{"URGENT", "HIGH", "MEDIUM", "LOW"},
+			); err != nil {
+				return err
+			}
+
 			input := map[string]any{
 				"organizationId": flagOrg,
 				"name":           flagName,
+				"priority":       flagPriority,
 			}
 
 			if flagContent != "" {
@@ -180,10 +190,6 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				}
 
 				input["state"] = flagState
-			}
-
-			if flagPriority != "" {
-				input["priority"] = flagPriority
 			}
 
 			if len(flagInternalControls) > 0 {
@@ -274,7 +280,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagName, "name", "", "Task name (required)")
 	cmd.Flags().StringVar(&flagContent, "content", "", "Task content as markdown or ProseMirror JSON. Images and links to /api/files/v1/{id} are kept")
 	cmd.Flags().StringVar(&flagState, "state", "", cmdutil.TaskStateFlagUsage())
-	cmd.Flags().StringVar(&flagPriority, "priority", "", "Task priority: URGENT, HIGH, MEDIUM, LOW")
+	cmd.Flags().StringVar(&flagPriority, "priority", "", "Task priority: URGENT, HIGH, MEDIUM, LOW (required)")
 	cmd.Flags().StringArrayVar(&flagInternalControls, "internal-control", nil, "Internal control ID (repeatable)")
 	cmd.Flags().StringVar(&flagTimeEstimate, "time-estimate", "", "Time estimate")
 	cmd.Flags().StringVar(&flagAssignedTo, "assigned-to", "", "Assigned profile ID")

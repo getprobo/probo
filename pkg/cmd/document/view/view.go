@@ -36,7 +36,10 @@ query($id: ID!) {
     __typename
     ... on Document {
       id
+      title
       status
+      documentType
+      classification
       currentPublishedMajor
       currentPublishedMinor
       versions(first: 1) {
@@ -62,7 +65,10 @@ type viewResponse struct {
 	Node *struct {
 		Typename              string `json:"__typename"`
 		ID                    string `json:"id"`
+		Title                 string `json:"title"`
 		Status                string `json:"status"`
+		DocumentType          string `json:"documentType"`
+		Classification        string `json:"classification"`
 		CurrentPublishedMajor *int   `json:"currentPublishedMajor"`
 		CurrentPublishedMinor *int   `json:"currentPublishedMinor"`
 		Versions              struct {
@@ -142,20 +148,15 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			bold := lipgloss.NewStyle().Bold(true)
 			label := lipgloss.NewStyle().Foreground(lipgloss.Color("242")).Width(22)
 
-			title := doc.ID
-			if len(doc.Versions.Edges) > 0 {
-				title = doc.Versions.Edges[0].Node.Title
-			}
-
-			_, _ = fmt.Fprintf(out, "%s\n\n", bold.Render(title))
+			_, _ = fmt.Fprintf(out, "%s\n\n", bold.Render(doc.Title))
 
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("ID:"), doc.ID)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Status:"), doc.Status)
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Type:"), doc.DocumentType)
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Classification:"), doc.Classification)
 
 			if len(doc.Versions.Edges) > 0 {
 				v := doc.Versions.Edges[0].Node
-				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Type:"), v.DocumentType)
-				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Classification:"), v.Classification)
 				_, _ = fmt.Fprintf(out, "%s%d.%d (%s)\n", label.Render("Latest Version:"), v.Major, v.Minor, v.Status)
 			}
 

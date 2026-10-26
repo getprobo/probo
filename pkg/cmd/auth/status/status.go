@@ -22,9 +22,11 @@ package status
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
+	"go.probo.inc/probo/pkg/cli/config"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 )
 
@@ -40,16 +42,33 @@ func NewCmdStatus(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			if len(cfg.Hosts) == 0 {
+			displayed := make(map[string]*config.HostConfig, len(cfg.Hosts)+1)
+			for host, hc := range cfg.Hosts {
+				copied := *hc
+				displayed[host] = &copied
+			}
+
+			active := cfg.ActiveHost
+			if os.Getenv("PROBO_HOST") != "" || os.Getenv("PROBO_TOKEN") != "" {
+				effective, hc, err := cfg.DefaultHost()
+				if err != nil {
+					return err
+				}
+
+				active = effective
+				displayed[effective] = hc
+			}
+
+			if len(displayed) == 0 {
 				_, _ = fmt.Fprintln(f.IOStreams.Out, "You are not logged in to any Probo hosts.")
 				return nil
 			}
 
 			bold := lipgloss.NewStyle().Bold(true)
 
-			for host, hc := range cfg.Hosts {
+			for host, hc := range displayed {
 				label := host
-				if host == cfg.ActiveHost {
+				if host == active {
 					label += " (active)"
 				}
 

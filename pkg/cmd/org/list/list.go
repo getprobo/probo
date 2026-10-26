@@ -117,7 +117,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 			variables := map[string]any{
 				"filter": map[string]any{
-					"state": "ACTIVE",
+					"states": []string{"ACTIVE"},
 				},
 			}
 
