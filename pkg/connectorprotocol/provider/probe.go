@@ -1334,3 +1334,68 @@ func buildRetoolProbeURL(conn *coredata.Connector, ep Endpoints) (string, error)
 
 	return endpoint + "?" + url.Values{"limit": {"1"}}.Encode(), nil
 }
+
+// buildOnePasswordProbeURL asks for one user wherever the connector reads its
+// roster: the Users API of its region for client credentials, the customer's
+// own SCIM bridge for an API key.
+func buildOnePasswordProbeURL(conn *coredata.Connector) (string, error) {
+	if isOnePasswordUsersAPI(conn) {
+		s, err := coredata.ConnectorSettings[coredata.OnePasswordUsersAPISettings](conn)
+		if err != nil {
+			return "", fmt.Errorf("cannot read 1password users api settings: %w", err)
+		}
+
+		endpoint, err := drivers.OnePasswordUsersURL(drivers.OnePasswordUsersAPIBaseURL(s.Region), s.AccountID)
+		if err != nil {
+			return "", fmt.Errorf("cannot build 1password probe URL: %w", err)
+		}
+
+		endpoint.RawQuery = url.Values{"max_page_size": {"1"}}.Encode()
+
+		return endpoint.String(), nil
+	}
+
+	s, err := coredata.ConnectorSettings[coredata.OnePasswordConnectorSettings](conn)
+	if err != nil {
+		return "", fmt.Errorf("cannot read 1password connector settings: %w", err)
+	}
+
+	if s.SCIMBridgeURL == "" {
+		return "", fmt.Errorf("missing 1password scim bridge url")
+	}
+
+	endpoint, err := url.Parse(s.SCIMBridgeURL)
+	if err != nil {
+		return "", fmt.Errorf("cannot parse 1password scim bridge url: %w", err)
+	}
+
+	endpoint = endpoint.JoinPath("scim", "v2", "Users")
+	endpoint.RawQuery = url.Values{"count": {"1"}}.Encode()
+
+	return endpoint.String(), nil
+}
+
+// probeOnePassword sends the probe with the media type the driver asks for, so
+// a SCIM bridge that refuses plain JSON answers 406 to both or to neither.
+func probeOnePassword(
+	ctx context.Context,
+	httpClient *http.Client,
+	conn *coredata.Connector,
+	_ Endpoints,
+) error {
+	probeURL, err := buildOnePasswordProbeURL(conn)
+	if err != nil {
+		return fmt.Errorf("cannot build probe URL: %w", err)
+	}
+
+	req, err := newProbeGET(ctx, probeURL)
+	if err != nil {
+		return err
+	}
+
+	if !isOnePasswordUsersAPI(conn) {
+		req.Header.Set("Accept", "application/scim+json")
+	}
+
+	return doProbeRequest(httpClient, req)
+}
