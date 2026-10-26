@@ -186,9 +186,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
-	cmd.Flags().StringVar(&flagOrg, "organization", "", "Organization ID")
-	_ = cmd.Flags().MarkHidden("organization")
+	cmdutil.AddOrganizationFlag(cmd, &flagOrg, "Organization ID")
 	cmd.Flags().StringVar(&flagKind, "kind", "", "Finding kind: MINOR_NONCONFORMITY, MAJOR_NONCONFORMITY, OBSERVATION, EXCEPTION (required)")
 	cmd.Flags().StringVar(&flagDescription, "description", "", "Finding description")
 	cmd.Flags().StringVar(&flagSource, "source", "", "Finding source")

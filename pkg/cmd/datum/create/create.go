@@ -173,13 +173,11 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
+	cmdutil.AddOrganizationFlag(cmd, &flagOrg, "Organization ID")
 	cmd.Flags().StringVar(&flagName, "name", "", "Datum name (required)")
 	cmd.Flags().StringVar(&flagClassification, "data-classification", "", "Data classification: PUBLIC, INTERNAL, CONFIDENTIAL, SECRET (required)")
 	cmd.Flags().StringVar(&flagOwner, "owner", "", "Owner profile ID (required)")
 	cmd.Flags().StringSliceVar(&flagThirdPartyIDs, "third-party-ids", nil, "Third party IDs (comma-separated)")
-	cmd.Flags().StringSliceVar(&flagThirdPartyIDs, "thirdParty-ids", nil, "Third party IDs (comma-separated)")
-	_ = cmd.Flags().MarkHidden("thirdParty-ids")
 
 	return cmd
 }

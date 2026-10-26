@@ -352,7 +352,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
+	cmdutil.AddOrganizationFlag(cmd, &flagOrg, "Organization ID")
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of devices to list")
 	cmd.Flags().StringVar(&flagQuery, "query", "", "Search devices by owner name")
 	cmd.Flags().StringSliceVar(&flagState, "state", nil, "Filter by state; repeat or comma-separate for multiple (PENDING, ACTIVE, REVOKED)")

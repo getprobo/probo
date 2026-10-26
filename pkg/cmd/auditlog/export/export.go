@@ -115,7 +115,7 @@ func NewCmdExport(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
+	cmdutil.AddOrganizationFlag(cmd, &flagOrg, "Organization ID")
 	cmd.Flags().StringVar(&flagFrom, "from", "", "Start time in RFC3339 format (e.g. 2026-01-01T00:00:00Z)")
 	cmd.Flags().StringVar(&flagTo, "to", "", "End time in RFC3339 format (e.g. 2026-02-01T00:00:00Z)")
 

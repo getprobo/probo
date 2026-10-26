@@ -30,7 +30,8 @@ Settle the host and the organization before any other `prb` command. Read
 2. Use the organization the user named, or the only organization in the list.
 3. When several organizations match, print the id and name of each and ask
    which one to use.
-4. Pass that id as `--org` on later commands, or pass it once to
-   `prb auth login --org` so it becomes the saved default.
+4. Pass that id as `--org` on later commands. `--organization` is the same
+   flag. Pass it once to `prb auth login --org` so it becomes the saved
+   default.
 5. A missing organization fails with `organization is required; pass --org or
-   set a default with 'prb auth login'`.
+   --organization, or set a default with 'prb auth login'`.

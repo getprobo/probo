@@ -24,7 +24,7 @@ import "errors"
 
 // OrganizationRequiredMessage is returned when a command needs an organization
 // and neither --org nor the default saved by `prb auth login` is set.
-const OrganizationRequiredMessage = "organization is required; pass --org or set a default with 'prb auth login'"
+const OrganizationRequiredMessage = "organization is required; pass --org or --organization, or set a default with 'prb auth login'"
 
 // ResolveOrganization returns the organization a command should use. An
 // explicit flag wins; otherwise the host's saved default is used.

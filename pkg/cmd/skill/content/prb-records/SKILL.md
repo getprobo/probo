@@ -21,8 +21,9 @@ Flag help wins when it disagrees with the reference. Copy enum values from
 
 ## Sequence
 
-1. Resolve the organization (`prb-auth`). Controls are the exception: pass
-   `--framework` and omit `--org`.
+1. Resolve the organization (`prb-auth`). Pass it as `--org` or
+   `--organization`. Controls are the exception: pass `--framework` and omit
+   both.
 2. Create with every required flag. The new id is on stdout.
 3. `prb <command> view <id> --json` and confirm the field you wrote.
 4. Update with `prb <command> update <id>` plus at least one changed flag.

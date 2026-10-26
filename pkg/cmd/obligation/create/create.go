@@ -231,7 +231,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
+	cmdutil.AddOrganizationFlag(cmd, &flagOrg, "Organization ID")
 	cmd.Flags().StringVar(&flagArea, "area", "", "Obligation area (required)")
 	cmd.Flags().StringVar(&flagSource, "source", "", "Obligation source (required)")
 	cmd.Flags().StringVar(&flagStatus, "status", "", "Obligation status: NON_COMPLIANT, PARTIALLY_COMPLIANT, COMPLIANT (required)")

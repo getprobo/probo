@@ -26,6 +26,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -91,6 +92,23 @@ func AddOutputFlag(cmd *cobra.Command) *string {
 	}
 
 	return &output
+}
+
+// AddOrganizationFlag registers --org. --organization is the same flag.
+// Do not call this on a command that already uses --organization for a
+// different meaning, such as connector connect.
+func AddOrganizationFlag(cmd *cobra.Command, dest *string, usage string) {
+	cmd.Flags().StringVar(dest, "org", "", usage)
+	cmd.Flags().SetNormalizeFunc(normalizeOrganizationFlag)
+}
+
+func normalizeOrganizationFlag(_ *pflag.FlagSet, name string) pflag.NormalizedName {
+	name = strings.ReplaceAll(name, "_", "-")
+	if name == "organization" {
+		return "org"
+	}
+
+	return pflag.NormalizedName(name)
 }
 
 // ValidateOutputFlag checks that value is a supported output format. An empty

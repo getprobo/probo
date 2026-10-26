@@ -84,13 +84,9 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			orgID := flagOrg
-			if orgID == "" {
-				orgID = hc.Organization
-			}
-
-			if orgID == "" {
-				return fmt.Errorf("organization ID is required: pass --org or run `prb auth login`")
+			orgID, err := cmdutil.ResolveOrganization(flagOrg, hc.Organization)
+			if err != nil {
+				return err
 			}
 
 			input := map[string]any{
@@ -152,7 +148,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
+	cmdutil.AddOrganizationFlag(cmd, &flagOrg, "Organization ID")
 	cmd.Flags().StringVar(&flagProduct, "product", "", "Product description (markdown)")
 	cmd.Flags().StringVar(&flagArchitecture, "architecture", "", "Architecture description (markdown)")
 	cmd.Flags().StringVar(&flagTeam, "team", "", "Team description (markdown)")

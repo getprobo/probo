@@ -203,7 +203,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
+	cmdutil.AddOrganizationFlag(cmd, &flagOrg, "Organization ID")
 	cmd.Flags().StringVar(&flagDataSubject, "data-subject", "", "Data subject name (required)")
 	cmd.Flags().StringVar(&flagType, "type", "", "Request type: ACCESS, DELETION, PORTABILITY (required)")
 	cmd.Flags().StringVar(&flagState, "state", "", "Request state: TODO, IN_PROGRESS, DONE (required)")

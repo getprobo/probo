@@ -104,6 +104,32 @@ func TestAddOutputFlag(t *testing.T) {
 	}
 }
 
+func TestAddOrganizationFlag(t *testing.T) {
+	t.Parallel()
+
+	var org string
+
+	cmd := &cobra.Command{
+		Use: "list",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return nil
+		},
+	}
+	cmdutil.AddOrganizationFlag(cmd, &org, "Organization ID")
+	cmd.SetArgs([]string{"--organization", "org_alias"})
+	cmd.SetOut(io.Discard)
+	cmd.SetErr(io.Discard)
+	cmd.SilenceUsage = true
+	cmd.SilenceErrors = true
+
+	require.NoError(t, cmd.Execute())
+	assert.Equal(t, "org_alias", org)
+
+	cmd.SetArgs([]string{"--org", "org_short"})
+	require.NoError(t, cmd.Execute())
+	assert.Equal(t, "org_short", org)
+}
+
 func TestResolveOrganization(t *testing.T) {
 	t.Parallel()
 
