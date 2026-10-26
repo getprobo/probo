@@ -116,12 +116,14 @@ func TestBlockSDKPost_AllowsConfigAndConsentRead(t *testing.T) {
 	t.Parallel()
 
 	banner := "01ARZ3NDEKTSV4RRFFQ69G5FAV"
-	assert.True(t, blockSDKPost("POST", "https://api.example.com/v1/"+banner+"/report", banner))
-	assert.True(t, blockSDKPost("POST", "https://api.example.com/v1/"+banner+"/detected-cookies", banner))
-	assert.True(t, blockSDKPost("POST", "https://api.example.com/v1/"+banner+"/consents", banner))
-	assert.False(t, blockSDKPost("GET", "https://api.example.com/v1/"+banner+"/config", banner))
-	assert.False(t, blockSDKPost("GET", "https://api.example.com/v1/"+banner+"/consents/abc", banner))
-	assert.False(t, blockSDKPost("POST", "https://api.example.com/v1/other/report", banner))
+	api := "https://api.example.com/v1"
+	assert.True(t, blockSDKPost("POST", api+"/"+banner+"/report", banner, api))
+	assert.True(t, blockSDKPost("POST", api+"/"+banner+"/detected-cookies", banner, api))
+	assert.True(t, blockSDKPost("POST", api+"/"+banner+"/consents", banner, api))
+	assert.False(t, blockSDKPost("GET", api+"/"+banner+"/config", banner, api))
+	assert.False(t, blockSDKPost("GET", api+"/"+banner+"/consents/abc", banner, api))
+	assert.False(t, blockSDKPost("POST", api+"/other/report", banner, api))
+	assert.False(t, blockSDKPost("POST", "https://shop.example.com/"+banner+"/report", banner, api))
 }
 
 func TestRecorder_DeduplicatesAndDropsAPIOrigin(t *testing.T) {

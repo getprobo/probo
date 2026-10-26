@@ -156,7 +156,7 @@ func Run(ctx context.Context, allocCtx context.Context, in Input) (*Result, erro
 	rec := newRecorder(in.APIBaseURL, in.BannerID, in.Limits.MaxObservations)
 
 	if err := chromedp.Do(tabCtx, chromedp.Func(func(actionCtx context.Context, target *chromedp.Target) error {
-		listen(tabCtx, target, rec, in.BannerID, in.allow)
+		listen(tabCtx, target, rec, in.BannerID, in.APIBaseURL, in.allow)
 
 		return prepareBrowser(actionCtx, target, in, root)
 	})); err != nil {
@@ -411,7 +411,7 @@ func prepareBrowser(ctx context.Context, target *chromedp.Target, in Input, root
 	return nil
 }
 
-func listen(ctx context.Context, target *chromedp.Target, rec *recorder, bannerID string, allow func(string) bool) {
+func listen(ctx context.Context, target *chromedp.Target, rec *recorder, bannerID, apiBase string, allow func(string) bool) {
 	rangeAppend(cdp.Events(ctx, target, network.RequestWillBeSent), rec)
 	rangeAppend(cdp.Events(ctx, target, network.LoadingFinished), rec)
 	rangeAppend(cdp.Events(ctx, target, network.LoadingFailed), rec)
@@ -426,7 +426,7 @@ func listen(ctx context.Context, target *chromedp.Target, rec *recorder, bannerI
 				return
 			}
 
-			go answerFetch(ctx, target, ev, bannerID, allow)
+			go answerFetch(ctx, target, ev, bannerID, apiBase, allow)
 		}
 	}()
 }
@@ -507,8 +507,8 @@ func visitorID() string {
 	return hex.EncodeToString(buf)
 }
 
-func answerFetch(ctx context.Context, target *chromedp.Target, ev fetch.EventRequestPaused, bannerID string, allow func(string) bool) {
-	if ev.Request != nil && (blockedRequest(ev.Request.URL, allow) || blockSDKPost(ev.Request.Method, ev.Request.URL, bannerID)) {
+func answerFetch(ctx context.Context, target *chromedp.Target, ev fetch.EventRequestPaused, bannerID, apiBase string, allow func(string) bool) {
+	if ev.Request != nil && (blockedRequest(ev.Request.URL, allow) || blockSDKPost(ev.Request.Method, ev.Request.URL, bannerID, apiBase)) {
 		_, _ = cdp.Call(ctx, target, fetch.FailRequest, fetch.FailRequestParams{
 			RequestID:   ev.RequestID,
 			ErrorReason: network.ErrorReasonBlockedByClient,
