@@ -41,4 +41,8 @@ process_file() {
   printf '\ntype Mutation {\n'
   cat "$mutation_fields"
   printf '}\n'
+  # Relay validates queries against this merged file. @defer is a spec
+  # directive the server prelude already accepts; without it here the
+  # compiler rejects deferred fragment spreads.
+  printf '\ndirective @defer(if: Boolean, label: String) on FRAGMENT_SPREAD | INLINE_FRAGMENT\n'
 } >"$output"

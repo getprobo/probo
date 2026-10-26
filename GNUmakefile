@@ -547,13 +547,13 @@ CONNECT_GQL = $(wildcard pkg/server/api/connect/v1/graphql/*.graphql)
 CONSOLE_GQL = $(wildcard pkg/server/api/console/v1/graphql/*.graphql)
 COMPLIANCEPORTAL_GQL = $(wildcard pkg/server/api/complianceportal/v1/graphql/*.graphql)
 
-pkg/server/api/connect/v1/schema.graphql: pkg/server/api/connect/v1/graphql $(CONNECT_GQL)
+pkg/server/api/connect/v1/schema.graphql: pkg/server/api/connect/v1/graphql $(CONNECT_GQL) $(MERGE_GRAPHQL)
 	$(MERGE_GRAPHQL) $@ pkg/server/api/connect/v1/graphql
 
-pkg/server/api/console/v1/schema.graphql: pkg/server/api/console/v1/graphql $(CONSOLE_GQL)
+pkg/server/api/console/v1/schema.graphql: pkg/server/api/console/v1/graphql $(CONSOLE_GQL) $(MERGE_GRAPHQL)
 	$(MERGE_GRAPHQL) $@ pkg/server/api/console/v1/graphql
 
-pkg/server/api/complianceportal/v1/schema.graphql: pkg/server/api/complianceportal/v1/graphql $(COMPLIANCEPORTAL_GQL)
+pkg/server/api/complianceportal/v1/schema.graphql: pkg/server/api/complianceportal/v1/graphql $(COMPLIANCEPORTAL_GQL) $(MERGE_GRAPHQL)
 	$(MERGE_GRAPHQL) $@ pkg/server/api/complianceportal/v1/graphql
 
 .PHONY: @probo/console
