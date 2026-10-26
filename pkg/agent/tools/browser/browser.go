@@ -31,7 +31,7 @@ import (
 	"github.com/chromedp/chromedp"
 	"github.com/chromedp/chromedp/remote"
 	"go.probo.inc/probo/pkg/agent"
-	"go.probo.inc/probo/pkg/agent/tools/internal/netcheck"
+	"go.probo.inc/probo/pkg/netcheck"
 )
 
 const (
