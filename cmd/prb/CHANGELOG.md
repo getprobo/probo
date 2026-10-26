@@ -4,6 +4,36 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+### Added
+
+- `--json` is shorthand for `--output json` on commands that print a
+  result. Combining it with a different `--output` value is an error
+- `risk-analysis diagram mermaid --json` prints the diagram node
+
+### Changed
+
+- `third-party` is the command name. `thirdParty`, `third_party`, and
+  `tp` stay as aliases
+- `--org` is the organization flag. `finding` still accepts the hidden
+  `--organization` alias
+- `--third-party-ids` replaces `--thirdParty-ids`. The old flag remains
+  as a hidden alias
+- `auth status` shows the host selected by `PROBO_HOST` and whether
+  `PROBO_TOKEN` is set
+- `webhook list` lists one organization's subscriptions and takes `--org`
+- A missing organization is reported the same way on every command
+
+### Fixed
+
+- `org list` filters active profiles with `states`
+- `asset list` no longer queries an `AssetFilter` the API does not define
+- `document list` and `document view` show the document title, type, and
+  classification
+- Non-interactive creates now require the fields the API requires: task
+  priority, asset amount, owner, and data types, datum and obligation
+  owner, processing-activity role and assessments, and control
+  description
+
 ## [0.259.0] - 2026-10-27
 
 ### Added

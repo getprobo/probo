@@ -67,13 +67,13 @@ type finding struct {
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagOrganization string
-		flagLimit        int
-		flagOrderBy      string
-		flagOrderDir     string
-		flagKind         string
-		flagAudit        string
-		flagOutput       *string
+		flagOrg      string
+		flagLimit    int
+		flagOrderBy  string
+		flagOrderDir string
+		flagKind     string
+		flagAudit    string
+		flagOutput   *string
 	)
 
 	cmd := &cobra.Command{
@@ -81,13 +81,13 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		Short:   "List findings in an organization",
 		Aliases: []string{"ls"},
 		Example: `  # List findings in an organization
-  prb finding list --organization <organization-id>
+  prb finding list --org <organization-id>
 
   # Filter by kind and output as JSON
-  prb finding ls --organization <organization-id> --kind MINOR_NONCONFORMITY --json
+  prb finding ls --org <organization-id> --kind MINOR_NONCONFORMITY --json
 
   # List findings linked to an audit
-  prb finding ls --organization <organization-id> --audit <audit-id>`,
+  prb finding ls --org <organization-id> --audit <audit-id>`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
@@ -112,8 +112,13 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
+			flagOrg, err = cmdutil.ResolveOrganization(flagOrg, hc.Organization)
+			if err != nil {
+				return err
+			}
+
 			variables := map[string]any{
-				"id": flagOrganization,
+				"id": flagOrg,
 			}
 
 			if flagOrderBy != "" {
@@ -162,7 +167,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					}
 
 					if resp.Node == nil {
-						return nil, fmt.Errorf("organization %s not found", flagOrganization)
+						return nil, fmt.Errorf("organization %s not found", flagOrg)
 					}
 
 					if resp.Node.Typename != "Organization" {
@@ -219,15 +224,15 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&flagOrganization, "organization", "", "Organization ID (required)")
+	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
+	cmd.Flags().StringVar(&flagOrg, "organization", "", "Organization ID")
+	_ = cmd.Flags().MarkHidden("organization")
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of findings to list")
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT, REFERENCE_ID, IDENTIFIED_ON, DUE_DATE, STATUS, PRIORITY, KIND)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
 	cmd.Flags().StringVar(&flagKind, "kind", "", "Filter by kind (MINOR_NONCONFORMITY, MAJOR_NONCONFORMITY, OBSERVATION, EXCEPTION)")
 	cmd.Flags().StringVar(&flagAudit, "audit", "", "Filter by audit ID")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
-
-	_ = cmd.MarkFlagRequired("organization")
 
 	return cmd
 }

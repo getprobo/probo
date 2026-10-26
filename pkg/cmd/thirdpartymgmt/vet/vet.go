@@ -57,17 +57,17 @@ func NewCmdVet(f *cmdutil.Factory) *cobra.Command {
 	)
 
 	cmd := &cobra.Command{
-		Use:   "vet <thirdParty-id> --url <website-url>",
+		Use:   "vet <id>",
 		Short: "Start AI vetting of a third party from its website",
 		Long:  "Queue a vetting job that crawls a third party's website using AI agents to extract security, compliance, and business information.",
 		Example: `  # Vet a third party by website URL
-  prb third-party vet VND_123 --url https://example.com
+  prb third-party vet <id> --url https://example.com
 
   # Vet with a custom procedure file
-  prb third-party vet VND_123 --url https://example.com --procedure-file ./my-procedure.txt
+  prb third-party vet <id> --url https://example.com --procedure-file ./my-procedure.txt
 
   # Output as JSON
-  prb third-party vet VND_123 --url https://example.com -o json`,
+  prb third-party vet <id> --url https://example.com -o json`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {

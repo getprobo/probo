@@ -102,12 +102,9 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
-			if flagOrg == "" {
-				flagOrg = hc.Organization
-			}
-
-			if flagOrg == "" {
-				return fmt.Errorf("organization is required; pass --org or set a default with 'prb auth login'")
+			flagOrg, err = cmdutil.ResolveOrganization(flagOrg, hc.Organization)
+			if err != nil {
+				return err
 			}
 
 			if f.IOStreams.IsInteractive() {
@@ -177,12 +174,17 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("type is required; pass --type or run interactively")
 			}
 
+			if flagOwner == "" {
+				return fmt.Errorf("owner is required; pass --owner or run interactively")
+			}
+
 			input := map[string]any{
 				"organizationId": flagOrg,
 				"area":           flagArea,
 				"source":         flagSource,
 				"status":         flagStatus,
 				"type":           flagType,
+				"ownerId":        flagOwner,
 			}
 
 			if flagRequirement != "" {
@@ -195,10 +197,6 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 
 			if flagRegulator != "" {
 				input["regulator"] = flagRegulator
-			}
-
-			if flagOwner != "" {
-				input["ownerId"] = flagOwner
 			}
 
 			if flagLastReviewDate != "" {
@@ -241,7 +239,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagRequirement, "requirement", "", "Obligation requirement")
 	cmd.Flags().StringVar(&flagActionsToBeImplemented, "actions-to-be-implemented", "", "Actions to be implemented")
 	cmd.Flags().StringVar(&flagRegulator, "regulator", "", "Regulator")
-	cmd.Flags().StringVar(&flagOwner, "owner", "", "Owner profile ID")
+	cmd.Flags().StringVar(&flagOwner, "owner", "", "Owner profile ID (required)")
 	cmd.Flags().StringVar(&flagLastReviewDate, "last-review-date", "", "Last review date (ISO 8601)")
 	cmd.Flags().StringVar(&flagDueDate, "due-date", "", "Due date (ISO 8601)")
 

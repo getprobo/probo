@@ -49,11 +49,16 @@ func TaskStateFlagUsage() string {
 	return "Task state: " + strings.Join(TaskStates(), ", ")
 }
 
-// AddOutputFlag registers --output / -o on cmd and returns a pointer to the
-// value. The default is "table". Callers should call ValidateOutputFlag early
-// in RunE, then branch on *p.
+// AddOutputFlag registers --output / -o and --json on cmd and returns a
+// pointer to the value. The default is "table". --json is shorthand for
+// --output json. Callers should call ValidateOutputFlag early in RunE, then
+// branch on *p.
 func AddOutputFlag(cmd *cobra.Command) *string {
-	var output string
+	var (
+		output string
+		asJSON bool
+	)
+
 	cmd.Flags().StringVarP(
 		&output,
 		"output",
@@ -61,6 +66,29 @@ func AddOutputFlag(cmd *cobra.Command) *string {
 		"",
 		"Output format: json, table (default)",
 	)
+	cmd.Flags().BoolVar(
+		&asJSON,
+		"json",
+		false,
+		"Output JSON (same as --output json)",
+	)
+
+	previous := cmd.PreRunE
+	cmd.PreRunE = func(cmd *cobra.Command, args []string) error {
+		if asJSON {
+			if cmd.Flags().Changed("output") && output != "" && output != OutputJSON {
+				return fmt.Errorf("--json cannot be combined with --output %s", output)
+			}
+
+			output = OutputJSON
+		}
+
+		if previous != nil {
+			return previous(cmd, args)
+		}
+
+		return nil
+	}
 
 	return &output
 }

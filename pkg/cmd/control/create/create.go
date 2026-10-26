@@ -87,7 +87,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		Use:   "create",
 		Short: "Create a new control",
 		Example: `  # Create a control
-  prb control create --framework FW_ID --section-title "A.5" --name "Information security policies" --maturity-level INITIAL`,
+  prb control create --framework FW_ID --section-title "A.5" --name "Information security policies" --description "Policies are defined and reviewed" --maturity-level INITIAL`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
@@ -112,16 +112,17 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
+			if flagDescription == "" {
+				return fmt.Errorf("description is required; pass --description")
+			}
+
 			input := map[string]any{
 				"frameworkId":   flagFramework,
 				"sectionTitle":  flagSectionTitle,
 				"name":          flagName,
+				"description":   flagDescription,
 				"bestPractice":  flagBestPractice,
 				"maturityLevel": flagMaturityLevel,
-			}
-
-			if flagDescription != "" {
-				input["description"] = flagDescription
 			}
 
 			if flagMaturityLevel == "NONE" && flagNotImplementedJustification != "" {
@@ -156,7 +157,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagFramework, "framework", "", "Framework ID (required)")
 	cmd.Flags().StringVar(&flagSectionTitle, "section-title", "", "Section title (required)")
 	cmd.Flags().StringVar(&flagName, "name", "", "Control name (required)")
-	cmd.Flags().StringVar(&flagDescription, "description", "", "Control description")
+	cmd.Flags().StringVar(&flagDescription, "description", "", "Control description (required)")
 	cmd.Flags().BoolVar(&flagBestPractice, "best-practice", false, "Mark as best practice")
 	cmd.Flags().StringVar(&flagMaturityLevel, "maturity-level", "INITIAL", "CMMI maturity level (NONE, INITIAL, MANAGED, DEFINED, QUANTITATIVELY_MANAGED, OPTIMIZING)")
 	cmd.Flags().StringVar(&flagNotImplementedJustification, "not-implemented-justification", "", "Justification when maturity level is NONE")
@@ -164,6 +165,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	_ = cmd.MarkFlagRequired("framework")
 	_ = cmd.MarkFlagRequired("section-title")
 	_ = cmd.MarkFlagRequired("name")
+	_ = cmd.MarkFlagRequired("description")
 
 	return cmd
 }

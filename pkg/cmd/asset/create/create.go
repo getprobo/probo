@@ -76,7 +76,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
   prb asset create
 
   # Create an asset non-interactively
-  prb asset create --name "Production Database" --asset-type VIRTUAL --amount 50000`,
+  prb asset create --name "Production Database" --asset-type VIRTUAL --amount 1 --owner <profile-id> --data-types-stored "Customer records"`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
 			if err != nil {
@@ -96,12 +96,9 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
-			if flagOrg == "" {
-				flagOrg = hc.Organization
-			}
-
-			if flagOrg == "" {
-				return fmt.Errorf("organization is required; pass --org or set a default with 'prb auth login'")
+			flagOrg, err = cmdutil.ResolveOrganization(flagOrg, hc.Organization)
+			if err != nil {
+				return err
 			}
 
 			if f.IOStreams.IsInteractive() {
@@ -138,22 +135,25 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("asset type is required; pass --asset-type or run interactively")
 			}
 
+			if flagAmount < 1 {
+				return fmt.Errorf("amount is required; pass --amount")
+			}
+
+			if flagOwner == "" {
+				return fmt.Errorf("owner is required; pass --owner or run interactively")
+			}
+
+			if flagDataTypesStored == "" {
+				return fmt.Errorf("data types stored is required; pass --data-types-stored or run interactively")
+			}
+
 			input := map[string]any{
-				"organizationId": flagOrg,
-				"name":           flagName,
-				"assetType":      flagAssetType,
-			}
-
-			if cmd.Flags().Changed("amount") {
-				input["amount"] = flagAmount
-			}
-
-			if flagOwner != "" {
-				input["ownerId"] = flagOwner
-			}
-
-			if flagDataTypesStored != "" {
-				input["dataTypesStored"] = flagDataTypesStored
+				"organizationId":  flagOrg,
+				"name":            flagName,
+				"assetType":       flagAssetType,
+				"amount":          flagAmount,
+				"ownerId":         flagOwner,
+				"dataTypesStored": flagDataTypesStored,
 			}
 
 			if len(flagThirdPartyIDs) > 0 {
@@ -188,10 +188,12 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
 	cmd.Flags().StringVar(&flagName, "name", "", "Asset name (required)")
 	cmd.Flags().StringVar(&flagAssetType, "asset-type", "", "Asset type: PHYSICAL, VIRTUAL (required)")
-	cmd.Flags().IntVar(&flagAmount, "amount", 0, "Asset amount")
-	cmd.Flags().StringVar(&flagOwner, "owner", "", "Owner profile ID")
-	cmd.Flags().StringVar(&flagDataTypesStored, "data-types-stored", "", "Data types stored")
-	cmd.Flags().StringSliceVar(&flagThirdPartyIDs, "thirdParty-ids", nil, "ThirdParty IDs (comma-separated)")
+	cmd.Flags().IntVar(&flagAmount, "amount", 0, "Asset amount (required, at least 1)")
+	cmd.Flags().StringVar(&flagOwner, "owner", "", "Owner profile ID (required)")
+	cmd.Flags().StringVar(&flagDataTypesStored, "data-types-stored", "", "Data types stored (required)")
+	cmd.Flags().StringSliceVar(&flagThirdPartyIDs, "third-party-ids", nil, "Third party IDs (comma-separated)")
+	cmd.Flags().StringSliceVar(&flagThirdPartyIDs, "thirdParty-ids", nil, "Third party IDs (comma-separated)")
+	_ = cmd.Flags().MarkHidden("thirdParty-ids")
 
 	return cmd
 }

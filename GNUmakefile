@@ -347,13 +347,14 @@ test-bench: TEST_FLAGS+=-bench=.
 test-bench: test ## Run benchmark tests
 
 .PHONY: test-e2e
-test-e2e: $(PROBOD_BIN) ## Run console e2e tests
+test-e2e: $(PROBOD_BIN) bin/prb ## Run console e2e tests
 	$(MAKE) test-e2e-run E2E_BINARY=$(E2E_BINARY)
 
 .PHONY: test-e2e-run
 test-e2e-run: CGO_ENABLED=1
 test-e2e-run:
 	PROBO_E2E_BINARY=$(or $(E2E_BINARY),$(CURDIR)/$(PROBOD_BIN)) \
+	PROBO_E2E_PRB=$(CURDIR)/$(PRB_BIN) \
 	PROBO_E2E_CONFIG=$(E2E_CONFIG) \
 	GOTESTSUM_FORMAT=testname $(GO_BASE) tool gotestsum -- $(E2E_TEST_FLAGS) -count=1 ./e2e/internal/... ./e2e/console/...
 
@@ -371,6 +372,7 @@ test-e2e-coverage-run: CGO_ENABLED=1
 test-e2e-coverage-run:
 	@$(RM) -rf $(E2E_COVER_DIR) && $(MKDIR) -p $(E2E_COVER_DIR)
 	PROBO_E2E_BINARY=$(or $(E2E_BINARY),$(E2E_COVERAGE_BINARY)) \
+	PROBO_E2E_PRB=$(CURDIR)/$(PRB_BIN) \
 	PROBO_E2E_COVERDIR=$(E2E_COVER_DIR) \
 	PROBO_E2E_CONFIG=$(E2E_CONFIG) \
 	GOTESTSUM_FORMAT=testname $(GO_BASE) tool gotestsum -- $(E2E_TEST_FLAGS) -p=1 -count=1 ./e2e/internal/... ./e2e/console/... ./e2e/mcp/...

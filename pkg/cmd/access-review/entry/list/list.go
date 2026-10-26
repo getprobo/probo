@@ -173,9 +173,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	)
 
 	cmd := &cobra.Command{
-		Use:   "list [<campaign-id>]",
-		Short: "List access entries for a campaign or campaign source",
-		Args:  cobra.MaximumNArgs(1),
+		Use:     "list [<campaign-id>]",
+		Short:   "List access entries for a campaign or campaign source",
+		Aliases: []string{"ls"},
+		Args:    cobra.MaximumNArgs(1),
 		Example: `  # List all entries for a campaign
   prb access-review entry list <campaign-id>
 

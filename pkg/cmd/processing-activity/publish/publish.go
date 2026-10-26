@@ -99,12 +99,9 @@ func NewCmdPublish(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			if flagOrg == "" {
-				flagOrg = hc.Organization
-			}
-
-			if flagOrg == "" {
-				return fmt.Errorf("organization is required: pass --org or run `prb auth login`")
+			flagOrg, err = cmdutil.ResolveOrganization(flagOrg, hc.Organization)
+			if err != nil {
+				return err
 			}
 
 			client := api.NewClient(

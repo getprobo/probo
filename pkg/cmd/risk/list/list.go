@@ -149,7 +149,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 			query := listByOrgQuery
 			parentID := flagOrg
 			expectedType := "Organization"
-			missingParent := "organization is required; pass --org or set a default with 'prb auth login'"
+			missingParent := cmdutil.OrganizationRequiredMessage
 
 			if flagRiskAnalysis != "" {
 				query = listByAnalysisQuery

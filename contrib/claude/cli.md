@@ -90,7 +90,8 @@ resources, totalCount, err := api.Paginate(
 
 ## Output formatting
 
-**JSON output:**
+**JSON output:** `--json` is shorthand for `--output json` / `-o json`. Do not combine `--json` with a different `--output` value.
+
 ```go
 if *flagOutput == cmdutil.OutputJSON {
 	return cmdutil.PrintJSON(f.IOStreams.Out, resources)
@@ -200,18 +201,16 @@ if !flagYes {
 ## Organization resolution
 
 ```go
-if flagOrg == "" {
-	flagOrg = hc.Organization
-}
-if flagOrg == "" {
-	return fmt.Errorf("organization is required; pass --org or set a default with 'prb auth login'")
+flagOrg, err = cmdutil.ResolveOrganization(flagOrg, hc.Organization)
+if err != nil {
+	return err
 }
 ```
 
 ## Flag conventions
 
-- Use kebab-case: `--order-by`, `--inherent-likelihood`
-- Short flags for common options: `-L` (limit), `-o` (output), `-q` (query), `-y` (yes)
+- Use kebab-case for command names and flags: `third-party`, `--order-by`, `--inherent-likelihood`. The organization flag is `--org` on every command.
+- Short flags for common options: `-L` (limit), `-o` (output), `--json` (JSON output), `-q` (query), `-y` (yes)
 - `StringVar`/`IntVar`/`BoolVar` for flags, positional args only for IDs in view/update/delete
 - Use `cmd.MarkFlagRequired()` for mandatory flags
 
