@@ -524,6 +524,8 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	// Agents — providers
 	env["PROBOD_OPENAI_API_KEY"] = "sk-test-key"
 	env["PROBOD_ANTHROPIC_API_KEY"] = "sk-ant-test-key"
+	env["PROBOD_OPENAI_BASE_URL"] = "https://example.openai.azure.com/openai/v1/"
+	env["PROBOD_ANTHROPIC_BASE_URL"] = "https://llm-gateway.example.com/anthropic"
 	// Agents — default
 	env["PROBOD_AGENT_DEFAULT_PROVIDER"] = "openai"
 	env["PROBOD_AGENT_DEFAULT_MODEL_NAME"] = "gpt-4-turbo"
@@ -679,6 +681,8 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.Equal(t, "sk-test-key", cfg.Probod.Agents.Providers["openai"].APIKey)
 	assert.Equal(t, "anthropic", cfg.Probod.Agents.Providers["anthropic"].Type)
 	assert.Equal(t, "sk-ant-test-key", cfg.Probod.Agents.Providers["anthropic"].APIKey)
+	assert.Equal(t, "https://example.openai.azure.com/openai/v1/", cfg.Probod.Agents.Providers["openai"].BaseURL)
+	assert.Equal(t, "https://llm-gateway.example.com/anthropic", cfg.Probod.Agents.Providers["anthropic"].BaseURL)
 	// Agents — default
 	assert.Equal(t, "openai", cfg.Probod.Agents.Default.Provider)
 	assert.Equal(t, "gpt-4-turbo", cfg.Probod.Agents.Default.ModelName)

@@ -207,6 +207,8 @@ set both keys; an empty pair is rejected when `s3.endpoint` is set.
 | `s3.region`            | AWS region                      | `us-east-1` |
 | `s3.endpoint`          | S3 endpoint (for S3-compatible) | `""` |
 | `s3.usePathStyle`      | Use path-style URLs for selected S3-compatible backends | `false` |
+| `probo.openai.baseUrl` | OpenAI compatible endpoint (e.g. Azure OpenAI) | `""` (api.openai.com) |
+| `probo.anthropic.baseUrl` | Anthropic compatible endpoint | `""` (api.anthropic.com) |
 | `chrome.enabled`       | Deploy Chrome                   | `true` |
 | `chrome.external.addr` | External Chrome (if disabled)   | `""` |
 | `ingress.enabled`      | Enable ingress                  | `false` |

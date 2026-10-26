@@ -337,6 +337,10 @@ spec:
               value: {{ .Values.probo.openai.modelName | quote }}
             - name: PROBOD_OPENAI_MAX_TOKENS
               value: {{ .Values.probo.openai.maxTokens | quote }}
+            {{- if .Values.probo.openai.baseUrl }}
+            - name: PROBOD_OPENAI_BASE_URL
+              value: {{ .Values.probo.openai.baseUrl | quote }}
+            {{- end }}
             {{- end }}
             {{- if .Values.probo.anthropic.apiKey }}
             - name: PROBOD_ANTHROPIC_API_KEY
@@ -344,6 +348,10 @@ spec:
                 secretKeyRef:
                   name: {{ include "probo.fullname" . }}
                   key: anthropic-api-key
+            {{- if .Values.probo.anthropic.baseUrl }}
+            - name: PROBOD_ANTHROPIC_BASE_URL
+              value: {{ .Values.probo.anthropic.baseUrl | quote }}
+            {{- end }}
             {{- end }}
             # Agent Tools
             {{- if .Values.probo.agentTools.firecrawlApiKey }}

@@ -999,15 +999,17 @@ func (b *Builder) buildLLMProviders() map[string]probodconfig.LLMProviderConfig 
 
 	if apiKey := b.resolver.getEnv("PROBOD_OPENAI_API_KEY"); apiKey != "" {
 		providers["openai"] = probodconfig.LLMProviderConfig{
-			Type:   "openai",
-			APIKey: apiKey,
+			Type:    "openai",
+			APIKey:  apiKey,
+			BaseURL: b.resolver.getEnv("PROBOD_OPENAI_BASE_URL"),
 		}
 	}
 
 	if apiKey := b.resolver.getEnv("PROBOD_ANTHROPIC_API_KEY"); apiKey != "" {
 		providers["anthropic"] = probodconfig.LLMProviderConfig{
-			Type:   "anthropic",
-			APIKey: apiKey,
+			Type:    "anthropic",
+			APIKey:  apiKey,
+			BaseURL: b.resolver.getEnv("PROBOD_ANTHROPIC_BASE_URL"),
 		}
 	}
 

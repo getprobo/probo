@@ -231,6 +231,8 @@ probo:
   # OpenAI integration for AI features (optional)
   openai:
     apiKey: "CHANGE_ME_OPENAI_API_KEY"
+    # OpenAI compatible endpoint, e.g. Azure OpenAI. Empty uses api.openai.com.
+    # baseUrl: "https://<resource>.openai.azure.com/openai/v1/"
     temperature: 0.1
     modelName: "gpt-4o"
     maxTokens: 4096
@@ -238,6 +240,8 @@ probo:
   # Anthropic integration (required when slackbot.provider is anthropic)
   # anthropic:
   #   apiKey: "CHANGE_ME_ANTHROPIC_API_KEY"
+  #   # Anthropic compatible endpoint. Empty uses api.anthropic.com.
+  #   baseUrl: ""
 
   # Agent tools (optional, shared across agents)
   # agentTools:

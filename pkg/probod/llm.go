@@ -33,29 +33,40 @@ import (
 )
 
 // buildLLMClient creates an LLM client for the given provider config.
+// httpOpts let tests trust an httptest server certificate.
 func (impl *Implm) buildLLMClient(
 	cfg LLMProviderConfig,
 	l *log.Logger,
 	tp trace.TracerProvider,
 	r prometheus.Registerer,
+	httpOpts ...httpclient.Option,
 ) (*llm.Client, error) {
 	providerType := cfg.Type
 	if providerType == "" {
 		providerType = "openai"
 	}
 
-	httpClient := httpclient.DefaultPooledClient(
+	if err := cfg.Validate(); err != nil {
+		return nil, err
+	}
+
+	clientOpts := []httpclient.Option{
 		httpclient.WithLogger(l),
 		httpclient.WithTracerProvider(tp),
 		httpclient.WithRegisterer(r),
-	)
+	}
+	clientOpts = append(clientOpts, httpOpts...)
+
+	httpClient := httpclient.DefaultPooledClient(clientOpts...)
 
 	switch providerType {
 	case "openai":
-		p := llmopenai.NewProvider(
-			cfg.APIKey,
-			llmopenai.WithHTTPClient(httpClient),
-		)
+		opts := []llmopenai.Option{llmopenai.WithHTTPClient(httpClient)}
+		if cfg.BaseURL != "" {
+			opts = append(opts, llmopenai.WithBaseURL(cfg.BaseURL))
+		}
+
+		p := llmopenai.NewProvider(cfg.APIKey, opts...)
 
 		return llm.NewClient(
 			p,
@@ -64,10 +75,12 @@ func (impl *Implm) buildLLMClient(
 			llm.WithTracerProvider(tp),
 		), nil
 	case "anthropic":
-		p := llmanthropic.NewProvider(
-			cfg.APIKey,
-			llmanthropic.WithHTTPClient(httpClient),
-		)
+		opts := []llmanthropic.Option{llmanthropic.WithHTTPClient(httpClient)}
+		if cfg.BaseURL != "" {
+			opts = append(opts, llmanthropic.WithBaseURL(cfg.BaseURL))
+		}
+
+		p := llmanthropic.NewProvider(cfg.APIKey, opts...)
 
 		return llm.NewClient(
 			p,

@@ -20,12 +20,18 @@
 
 package probodconfig
 
+import (
+	"fmt"
+	"net/url"
+)
+
 type (
 	// LLMProviderConfig holds authentication and connection settings for an
 	// LLM provider (e.g. OpenAI, Anthropic).
 	LLMProviderConfig struct {
-		Type   string `json:"type"`              // "openai", "anthropic", "bedrock"
-		APIKey string `json:"api-key,omitempty"` // for OpenAI and Anthropic
+		Type    string `json:"type"`               // "openai", "anthropic", "bedrock"
+		APIKey  string `json:"api-key,omitempty"`  // for OpenAI and Anthropic
+		BaseURL string `json:"base-url,omitempty"` // https OpenAI or Anthropic compatible endpoint; empty uses the provider default
 	}
 
 	// LLMAgentConfig holds model parameters for a single agent. Provider
@@ -116,6 +122,26 @@ type (
 		Tools                      AgentToolsConfig             `json:"tools,omitzero"`
 	}
 )
+
+// Validate reports a BaseURL that is not an absolute https URL, so a
+// typo fails at startup instead of on every LLM call. An empty
+// BaseURL is valid and selects the provider default.
+func (c LLMProviderConfig) Validate() error {
+	if c.BaseURL == "" {
+		return nil
+	}
+
+	u, err := url.Parse(c.BaseURL)
+	if err != nil {
+		return fmt.Errorf("cannot parse %s base URL: %w", c.Type, err)
+	}
+
+	if u.Scheme != "https" || u.Host == "" {
+		return fmt.Errorf("%s base URL must be an absolute https URL, got %q", c.Type, c.BaseURL)
+	}
+
+	return nil
+}
 
 func (c LLMProviderConfig) IsZero() bool {
 	return c.APIKey == ""
