@@ -117,15 +117,26 @@ func TestClientCredentialsConnectorSettings_OnePassword(t *testing.T) {
 	assert.Equal(t, accountID, settings.AccountID)
 	assert.Equal(t, region, settings.Region)
 
-	ent := "ent"
+	ent, pasted := "ent", " wx52yxl2mvepbk43p3r4xmwkxi "
 	raw, err = clientCredentialsConnectorSettings(types.CreateClientCredentialsConnectorInput{
 		Provider:             coredata.ConnectorProviderOnePassword,
-		OnePasswordAccountID: &accountID,
+		OnePasswordAccountID: &pasted,
 		OnePasswordRegion:    &ent,
 	})
 	require.NoError(t, err)
 	require.NoError(t, json.Unmarshal(raw, &settings))
+	assert.Equal(t, "WX52YXL2MVEPBK43P3R4XMWKXI", settings.AccountID)
 	assert.Equal(t, "ENT", settings.Region)
+
+	// The account name or sign-in address is the likely mistake: the Users API
+	// would answer 400 on every sync.
+	name := "acme"
+	_, err = clientCredentialsConnectorSettings(types.CreateClientCredentialsConnectorInput{
+		Provider:             coredata.ConnectorProviderOnePassword,
+		OnePasswordAccountID: &name,
+		OnePasswordRegion:    &region,
+	})
+	require.Error(t, err)
 
 	_, err = clientCredentialsConnectorSettings(types.CreateClientCredentialsConnectorInput{
 		Provider:             coredata.ConnectorProviderOnePassword,
