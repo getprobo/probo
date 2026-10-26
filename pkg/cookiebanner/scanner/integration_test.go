@@ -46,10 +46,12 @@ func TestRun_RecordsTrackersAndSkipsOtherOrigins(t *testing.T) {
 	defer cancel()
 
 	var posts atomic.Int32
+
 	api := serve(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
 			posts.Add(1)
 		}
+
 		w.WriteHeader(http.StatusNoContent)
 	}))
 
@@ -59,6 +61,7 @@ func TestRun_RecordsTrackersAndSkipsOtherOrigins(t *testing.T) {
 	}))
 
 	var site *httptest.Server
+
 	site = serve(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/track.js":
@@ -98,6 +101,7 @@ fetch("` + chromeURL(t, api) + `/banner/config");
 	assert.LessOrEqual(t, result.PagesScanned, 2)
 
 	var httpOnly, scripted, thirdParty bool
+
 	for _, cookie := range result.Cookies {
 		switch cookie.Name {
 		case "sid":
@@ -110,17 +114,21 @@ fetch("` + chromeURL(t, api) + `/banner/config");
 			thirdParty = true
 		}
 	}
+
 	assert.True(t, httpOnly, "httpOnly cookie")
 	assert.True(t, scripted, "script cookie with initiator")
 	assert.True(t, thirdParty, "third-party cookie")
 
 	var sawIframe bool
+
 	for _, resource := range result.Resources {
 		if resource.Type == coredata.TrackerResourceTypeIframe {
 			sawIframe = true
 		}
+
 		assert.NotContains(t, resource.Origin, "example.com")
 	}
+
 	assert.True(t, sawIframe)
 	assert.Equal(t, int32(0), posts.Load())
 }
@@ -173,6 +181,7 @@ func chromeURL(t *testing.T, server *httptest.Server) string {
 
 	parsed, err := url.Parse(server.URL)
 	require.NoError(t, err)
+
 	parsed.Host = net.JoinHostPort(host, parsed.Port())
 
 	return parsed.String()

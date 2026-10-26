@@ -21,6 +21,8 @@
 package scanner
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
 	"io"
 	"net/http"
@@ -51,6 +53,7 @@ func newFrontier(start Checkpoint) frontier {
 	for _, key := range start.VisitedTemplates {
 		f.visited[key] = struct{}{}
 	}
+
 	for _, item := range start.Queue {
 		f.add(item)
 	}
@@ -63,9 +66,11 @@ func (f *frontier) add(item QueueItem) bool {
 	if !ok {
 		return false
 	}
+
 	if _, seen := f.visited[key]; seen {
 		return false
 	}
+
 	if _, waiting := f.queued[key]; waiting {
 		return false
 	}
@@ -93,6 +98,7 @@ func (f *frontier) pop() (QueueItem, bool) {
 			item, f.later = f.later[0], f.later[1:]
 			ok = true
 		}
+
 		if !ok {
 			return QueueItem{}, false
 		}
@@ -101,7 +107,9 @@ func (f *frontier) pop() (QueueItem, bool) {
 		if !valid {
 			continue
 		}
+
 		delete(f.queued, key)
+
 		if _, seen := f.visited[key]; seen {
 			continue
 		}
@@ -125,6 +133,7 @@ func (f *frontier) checkpoint(pages int, elapsed time.Duration, truncated bool) 
 	for key := range f.visited {
 		visited = append(visited, key)
 	}
+
 	sort.Strings(visited)
 
 	queue := make([]QueueItem, 0, len(f.next)+len(f.later))
@@ -161,19 +170,26 @@ func (in Input) seedSitemaps(ctx context.Context, origin string, f *frontier) {
 	seeds = append(seeds, robotsSitemaps(ctx, in.client(), origin)...)
 
 	seen := map[string]struct{}{}
-	var urls []string
+
+	var (
+		urls    []string
+		fetches int
+	)
+
 	for _, seed := range seeds {
 		if _, ok := seen[seed]; ok {
 			continue
 		}
+
 		seen[seed] = struct{}{}
-		in.readSitemap(ctx, seed, 1, seen, &urls)
+		in.readSitemap(ctx, seed, 1, seen, &urls, &fetches)
 	}
 
 	for _, raw := range urls {
 		if !sameOrigin(origin, raw) || !in.allow(raw) {
 			continue
 		}
+
 		f.add(QueueItem{URL: raw, FromSitemap: true})
 	}
 }
@@ -185,11 +201,13 @@ func robotsSitemaps(ctx context.Context, client *http.Client, origin string) []s
 	}
 
 	var urls []string
-	for _, line := range strings.Split(body, "\n") {
+
+	for line := range strings.SplitSeq(body, "\n") {
 		field, value, found := strings.Cut(line, ":")
 		if !found || !strings.EqualFold(strings.TrimSpace(field), "sitemap") {
 			continue
 		}
+
 		if loc := strings.TrimSpace(value); loc != "" {
 			urls = append(urls, loc)
 		}
@@ -198,13 +216,16 @@ func robotsSitemaps(ctx context.Context, client *http.Client, origin string) []s
 	return urls
 }
 
-func (in Input) readSitemap(ctx context.Context, loc string, depth int, seen map[string]struct{}, urls *[]string) {
-	if ctx.Err() != nil || len(*urls) >= in.Limits.MaxSitemapURLs || depth > in.Limits.MaxSitemapIndexes {
+func (in Input) readSitemap(ctx context.Context, loc string, depth int, seen map[string]struct{}, urls *[]string, fetches *int) {
+	if ctx.Err() != nil || len(*urls) >= in.Limits.MaxSitemapURLs || *fetches >= in.Limits.MaxSitemapURLs || depth > in.Limits.MaxSitemapIndexes {
 		return
 	}
+
 	if !in.allow(loc) {
 		return
 	}
+
+	*fetches++
 
 	body, ok := getText(ctx, in.client(), loc, int64(in.Limits.MaxSitemapBytes))
 	if !ok {
@@ -212,14 +233,20 @@ func (in Input) readSitemap(ctx context.Context, loc string, depth int, seen map
 	}
 
 	locs := sitemapLocations(body)
-	index := strings.Contains(strings.ToLower(body), "<sitemapindex")
-	if index && depth < in.Limits.MaxSitemapIndexes {
-		for _, child := range locs {
-			if _, ok := seen[child]; ok {
-				continue
+	if strings.Contains(strings.ToLower(body), "<sitemapindex") {
+		if depth < in.Limits.MaxSitemapIndexes {
+			for _, child := range locs {
+				if *fetches >= in.Limits.MaxSitemapURLs {
+					return
+				}
+
+				if _, ok := seen[child]; ok {
+					continue
+				}
+
+				seen[child] = struct{}{}
+				in.readSitemap(ctx, child, depth+1, seen, urls, fetches)
 			}
-			seen[child] = struct{}{}
-			in.readSitemap(ctx, child, depth+1, seen, urls)
 		}
 
 		return
@@ -229,15 +256,18 @@ func (in Input) readSitemap(ctx context.Context, loc string, depth int, seen map
 		if len(*urls) >= in.Limits.MaxSitemapURLs {
 			return
 		}
+
 		*urls = append(*urls, raw)
 	}
 }
 
 func sitemapLocations(body string) []string {
 	matches := sitemapLoc.FindAllStringSubmatch(body, -1)
+
 	locs := make([]string, 0, len(matches))
 	for _, match := range matches {
 		loc := strings.TrimSpace(match[1])
+
 		loc = strings.ReplaceAll(loc, "&amp;", "&")
 		if loc != "" {
 			locs = append(locs, loc)
@@ -260,6 +290,7 @@ func getText(ctx context.Context, client *http.Client, raw string, limit int64) 
 	if err != nil {
 		return "", false
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
@@ -271,7 +302,36 @@ func getText(ctx context.Context, client *http.Client, raw string, limit int64) 
 		return "", false
 	}
 
+	if gzipBody(body) {
+		decoded, ok := gunzipLimited(body, limit)
+		if !ok {
+			return "", false
+		}
+
+		body = decoded
+	}
+
 	return string(body), true
+}
+
+func gzipBody(body []byte) bool {
+	return len(body) >= 2 && body[0] == 0x1f && body[1] == 0x8b
+}
+
+func gunzipLimited(body []byte, limit int64) ([]byte, bool) {
+	reader, err := gzip.NewReader(bytes.NewReader(body))
+	if err != nil {
+		return nil, false
+	}
+
+	defer func() { _ = reader.Close() }()
+
+	decoded, err := io.ReadAll(io.LimitReader(reader, limit+1))
+	if err != nil || int64(len(decoded)) > limit {
+		return nil, false
+	}
+
+	return decoded, true
 }
 
 func normalizeLink(pageURL, href string) (string, bool) {
@@ -284,6 +344,7 @@ func normalizeLink(pageURL, href string) (string, bool) {
 	if err != nil {
 		return "", false
 	}
+
 	if ref.Scheme != "http" && ref.Scheme != "https" {
 		return "", false
 	}

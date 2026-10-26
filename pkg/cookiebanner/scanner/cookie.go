@@ -46,13 +46,13 @@ func mapSetCookie(line string, setByURL string) (Cookie, bool) {
 	if setByURL != "" {
 		cookie.SetByURL = new(setByURL)
 	}
+
 	if parsed.MaxAge > 0 {
 		cookie.MaxAgeSeconds = new(parsed.MaxAge)
+	} else if parsed.MaxAge < 0 {
+		cookie.MaxAgeSeconds = new(0)
 	} else if !parsed.Expires.IsZero() {
-		seconds := int(time.Until(parsed.Expires).Seconds())
-		if seconds < 0 {
-			seconds = 0
-		}
+		seconds := max(int(time.Until(parsed.Expires).Seconds()), 0)
 		cookie.MaxAgeSeconds = new(seconds)
 	}
 

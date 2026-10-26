@@ -22,6 +22,7 @@ package scanner
 
 import (
 	"encoding/json"
+	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -42,16 +43,17 @@ type (
 	recorder struct {
 		mu         sync.Mutex
 		apiOrigin  string
+		apiHost    string
 		bannerID   string
 		maxObs     int
 		events     []any
 		requests   map[network.RequestID]requestMeta
+		inflight   map[network.RequestID]struct{}
 		seenCookie map[string]struct{}
 		seenRes    map[string]struct{}
 		seenStore  map[string]struct{}
 		total      int
 		truncated  bool
-		inflight   int
 		quietSince time.Time
 		mainFrame  string
 	}
@@ -65,11 +67,18 @@ type (
 func newRecorder(apiBase, bannerID string, maxObs int) *recorder {
 	origin, _ := requestOrigin(apiBase)
 
+	host := ""
+	if parsed, err := url.Parse(origin); err == nil {
+		host = parsed.Hostname()
+	}
+
 	return &recorder{
 		apiOrigin:  origin,
+		apiHost:    host,
 		bannerID:   bannerID,
 		maxObs:     maxObs,
 		requests:   map[network.RequestID]requestMeta{},
+		inflight:   map[network.RequestID]struct{}{},
 		seenCookie: map[string]struct{}{},
 		seenRes:    map[string]struct{}{},
 		seenStore:  map[string]struct{}{},
@@ -81,27 +90,38 @@ func (r *recorder) append(ev any) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	switch ev.(type) {
+	switch ev := ev.(type) {
 	case *network.EventRequestWillBeSent:
-		r.inflight++
-		r.quietSince = time.Time{}
-	case *network.EventLoadingFinished, *network.EventLoadingFailed, *network.EventRequestServedFromCache:
-		if r.inflight > 0 {
-			r.inflight--
+		if _, ok := r.inflight[ev.RequestID]; !ok {
+			r.inflight[ev.RequestID] = struct{}{}
+			r.quietSince = time.Time{}
 		}
-		if r.inflight == 0 {
-			r.quietSince = time.Now()
-		}
+	case *network.EventLoadingFinished:
+		r.finishRequest(ev.RequestID)
+	case *network.EventLoadingFailed:
+		r.finishRequest(ev.RequestID)
 	}
 
 	r.events = append(r.events, ev)
+}
+
+func (r *recorder) finishRequest(id network.RequestID) {
+	if _, ok := r.inflight[id]; !ok {
+		return
+	}
+
+	delete(r.inflight, id)
+
+	if len(r.inflight) == 0 {
+		r.quietSince = time.Now()
+	}
 }
 
 func (r *recorder) mark() int {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	r.inflight = 0
+	r.inflight = map[network.RequestID]struct{}{}
 	r.quietSince = time.Time{}
 
 	return len(r.events)
@@ -111,7 +131,7 @@ func (r *recorder) quietFor(window time.Duration) bool {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	return r.inflight == 0 && !r.quietSince.IsZero() && time.Since(r.quietSince) >= window
+	return len(r.inflight) == 0 && !r.quietSince.IsZero() && time.Since(r.quietSince) >= window
 }
 
 func (r *recorder) truncatedObservations() bool {
@@ -126,7 +146,9 @@ func (r *recorder) collect(from int, jar []*network.Cookie, storage []StorageIte
 	defer r.mu.Unlock()
 
 	events := append([]any(nil), r.events[from:]...)
+
 	var page Page
+
 	for _, ev := range events {
 		switch e := ev.(type) {
 		case *network.EventRequestWillBeSent:
@@ -139,9 +161,18 @@ func (r *recorder) collect(from int, jar []*network.Cookie, storage []StorageIte
 	}
 
 	r.noteJar(jar, &page)
+
 	for _, item := range storage {
 		r.noteStorage(item, &page)
 	}
+
+	for id := range r.requests {
+		if _, ok := r.inflight[id]; !ok {
+			delete(r.requests, id)
+		}
+	}
+
+	r.events = nil
 
 	return page
 }
@@ -159,11 +190,13 @@ func (r *recorder) noteRequest(ev *network.EventRequestWillBeSent, page *Page) {
 	if ev.Initiator != nil {
 		meta.initiator = ev.Initiator.URL
 	}
+
 	r.requests[ev.RequestID] = meta
 
 	if r.mainFrame == "" && ev.Type == network.ResourceTypeDocument && meta.frameID != "" {
 		r.mainFrame = meta.frameID
 	}
+
 	if r.isAPI(meta.url) {
 		return
 	}
@@ -177,6 +210,7 @@ func (r *recorder) noteRequest(ev *network.EventRequestWillBeSent, page *Page) {
 	if !ok {
 		return
 	}
+
 	r.addResource(resource, page)
 }
 
@@ -189,10 +223,12 @@ func (r *recorder) noteSetCookies(ev *network.EventResponseReceivedExtraInfo, pa
 	for _, line := range headerLines(ev.Headers, "set-cookie") {
 		r.addHTTPCookie(line, meta.url, page)
 	}
+
 	for _, blocked := range ev.BlockedCookies {
 		if blocked == nil {
 			continue
 		}
+
 		r.addHTTPCookie(blocked.CookieLine, meta.url, page)
 	}
 }
@@ -206,7 +242,8 @@ func (r *recorder) noteBinding(ev *runtime.EventBindingCalled, page *Page) {
 	if err := json.Unmarshal([]byte(ev.Payload), &payload); err != nil {
 		return
 	}
-	if payload.Name == "" || strings.EqualFold(payload.Name, consentCookieName) || r.knownName(payload.Name) {
+
+	if payload.Name == "" || strings.EqualFold(payload.Name, consentCookieName) {
 		return
 	}
 
@@ -216,15 +253,21 @@ func (r *recorder) noteBinding(ev *runtime.EventBindingCalled, page *Page) {
 	}
 	if payload.Initiator != "" {
 		cookie.InitiatorURL = new(payload.Initiator)
+		if parsed, err := url.Parse(payload.Initiator); err == nil && parsed.Hostname() != "" {
+			host := parsed.Hostname()
+			cookie.Domain = new(host)
+		}
 	}
+
 	r.addCookie(cookie, page)
 }
 
 func (r *recorder) noteJar(jar []*network.Cookie, page *Page) {
 	for _, item := range jar {
-		if item == nil || item.Name == "" || strings.EqualFold(item.Name, consentCookieName) {
+		if item == nil || item.Name == "" || strings.EqualFold(item.Name, consentCookieName) || r.apiCookie(item.Domain) {
 			continue
 		}
+
 		if r.knownCookie(item.Name, item.Domain) {
 			continue
 		}
@@ -233,7 +276,9 @@ func (r *recorder) noteJar(jar []*network.Cookie, page *Page) {
 		if item.HTTPOnly {
 			source = coredata.CookieSourceHTTP
 		}
+
 		domain := strings.TrimPrefix(item.Domain, ".")
+
 		cookie := Cookie{
 			Name:      item.Name,
 			Source:    source,
@@ -244,9 +289,11 @@ func (r *recorder) noteJar(jar []*network.Cookie, page *Page) {
 		if domain != "" {
 			cookie.Domain = new(domain)
 		}
+
 		if item.PartitionKey != nil {
 			cookie.Partitioned = new(true)
 		}
+
 		switch item.SameSite {
 		case network.CookieSameSiteStrict:
 			cookie.SameSite = new(coredata.CookieSameSiteStrict)
@@ -255,6 +302,7 @@ func (r *recorder) noteJar(jar []*network.Cookie, page *Page) {
 		case network.CookieSameSiteNone:
 			cookie.SameSite = new(coredata.CookieSameSiteNone)
 		}
+
 		r.addCookie(cookie, page)
 	}
 }
@@ -268,12 +316,14 @@ func (r *recorder) noteStorage(item StorageItem, page *Page) {
 	if _, ok := r.seenStore[key]; ok {
 		return
 	}
+
 	if !r.room() {
 		return
 	}
 
 	r.seenStore[key] = struct{}{}
 	r.total++
+
 	page.Storage = append(page.Storage, item)
 }
 
@@ -291,12 +341,14 @@ func (r *recorder) addCookie(cookie Cookie, page *Page) {
 	if _, ok := r.seenCookie[key]; ok {
 		return
 	}
+
 	if !r.room() {
 		return
 	}
 
 	r.seenCookie[key] = struct{}{}
 	r.total++
+
 	page.Cookies = append(page.Cookies, cookie)
 }
 
@@ -309,36 +361,30 @@ func (r *recorder) addResource(resource Resource, page *Page) {
 	if _, ok := r.seenRes[key]; ok {
 		return
 	}
+
 	if !r.room() {
 		return
 	}
 
 	r.seenRes[key] = struct{}{}
 	r.total++
+
 	page.Resources = append(page.Resources, resource)
 }
 
 func (r *recorder) knownCookie(name, domain string) bool {
-	name = strings.ToLower(name)
-	if _, ok := r.seenCookie[name+"\x00"]; ok {
-		return true
-	}
-
 	domain = strings.ToLower(strings.TrimPrefix(domain, "."))
-	_, ok := r.seenCookie[name+"\x00"+domain]
+	_, ok := r.seenCookie[strings.ToLower(name)+"\x00"+domain]
 
 	return ok
 }
 
-func (r *recorder) knownName(name string) bool {
-	prefix := strings.ToLower(name) + "\x00"
-	for key := range r.seenCookie {
-		if strings.HasPrefix(key, prefix) {
-			return true
-		}
+func (r *recorder) apiCookie(domain string) bool {
+	if r.apiHost == "" {
+		return false
 	}
 
-	return false
+	return strings.EqualFold(strings.TrimPrefix(domain, "."), r.apiHost)
 }
 
 func (r *recorder) room() bool {
@@ -384,6 +430,7 @@ func headerLines(headers network.Headers, name string) []string {
 			return splitHeader(v)
 		case []any:
 			var lines []string
+
 			for _, item := range v {
 				if s, ok := item.(string); ok {
 					lines = append(lines, splitHeader(s)...)
@@ -399,6 +446,7 @@ func headerLines(headers network.Headers, name string) []string {
 
 func splitHeader(value string) []string {
 	parts := strings.Split(value, "\n")
+
 	lines := make([]string, 0, len(parts))
 	for _, part := range parts {
 		if part = strings.TrimSpace(part); part != "" {

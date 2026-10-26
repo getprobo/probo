@@ -21,6 +21,9 @@
 package scanner
 
 import (
+	"context"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/chromedp/cdproto/network"
@@ -51,6 +54,19 @@ func TestTemplateKey_CollapsesVariableSegments(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, "https://example.com/pricing", static)
 	assert.NotEqual(t, first, static)
+
+	slug, ok := templateKey("https://example.com/privacy-policy-overview")
+	require.True(t, ok)
+	assert.Equal(t, "https://example.com/privacy-policy-overview", slug)
+
+	encoded, ok := templateKey("https://example.com/a%2Fb")
+	require.True(t, ok)
+	plain, ok := templateKey("https://example.com/a/b")
+	require.True(t, ok)
+	assert.NotEqual(t, encoded, plain)
+
+	assert.True(t, sameOrigin("https://example.com/app", "https://example.com:443/pricing"))
+	assert.False(t, sameOrigin("https://example.com/app", "https://example.com:8443/pricing"))
 }
 
 func TestMapSetCookie_ReadsScannerAttributes(t *testing.T) {
@@ -89,6 +105,11 @@ func TestMapSetCookie_ReadsScannerAttributes(t *testing.T) {
 
 	_, ok = mapSetCookie("probo_consent=1; Path=/", "https://example.com/")
 	assert.False(t, ok)
+
+	deleted, ok := mapSetCookie("gone=1; Max-Age=0; Expires=Wed, 21 Oct 2030 07:28:00 GMT", "https://example.com/")
+	require.True(t, ok)
+	require.NotNil(t, deleted.MaxAgeSeconds)
+	assert.Equal(t, 0, *deleted.MaxAgeSeconds)
 }
 
 func TestBlockSDKPost_AllowsConfigAndConsentRead(t *testing.T) {
@@ -133,7 +154,7 @@ func TestRecorder_DeduplicatesAndDropsAPIOrigin(t *testing.T) {
 
 	rec.append(&runtime.EventBindingCalled{
 		Name:    cookieBinding,
-		Payload: `{"name":"sid","initiator":"https://cdn.example.com/gtm.js"}`,
+		Payload: `{"name":"sid","initiator":"https://example.com/gtm.js"}`,
 	})
 	rec.append(&runtime.EventBindingCalled{
 		Name:    cookieBinding,
@@ -148,6 +169,10 @@ func TestRecorder_DeduplicatesAndDropsAPIOrigin(t *testing.T) {
 		Name:   "extra",
 		Value:  "1",
 		Domain: "other.example",
+	}, {
+		Name:   "api_sid",
+		Value:  "1",
+		Domain: "api.example.com",
 	}}, nil)
 
 	require.Len(t, page.Resources, 1)
@@ -162,7 +187,50 @@ func TestRecorder_DeduplicatesAndDropsAPIOrigin(t *testing.T) {
 	assert.Equal(t, coredata.CookieSourceScript, page.Cookies[1].Source)
 	assert.Equal(t, "extra", page.Cookies[2].Name)
 
+	for _, cookie := range page.Cookies {
+		assert.NotEqual(t, "api_sid", cookie.Name)
+	}
+
 	again := rec.collect(len(rec.events), nil, nil)
 	assert.Empty(t, again.Resources)
 	assert.Empty(t, again.Cookies)
+}
+
+func TestRecorder_RedirectDoesNotDoubleCountInflight(t *testing.T) {
+	t.Parallel()
+
+	rec := newRecorder("", "banner", 10)
+	rec.append(&network.EventRequestWillBeSent{RequestID: "1", Request: &network.Request{URL: "https://example.com/a"}})
+	rec.append(&network.EventRequestWillBeSent{RequestID: "1", Request: &network.Request{URL: "https://example.com/b"}})
+	rec.append(&network.EventRequestServedFromCache{RequestID: "1"})
+	assert.False(t, rec.quietFor(0))
+
+	rec.append(&network.EventLoadingFinished{RequestID: "1"})
+	assert.True(t, rec.quietFor(0))
+}
+
+func TestReadSitemap_DoesNotEnqueueIndexAtDepthLimit(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`<sitemapindex><sitemap><loc>https://example.com/nested.xml</loc></sitemap></sitemapindex>`))
+	}))
+	t.Cleanup(server.Close)
+
+	in := Input{
+		Limits: Limits{
+			MaxSitemapIndexes: 1,
+			MaxSitemapURLs:    10,
+			MaxSitemapBytes:   1 << 20,
+		},
+		skipPublicURLCheck: true,
+		httpClient:         server.Client(),
+	}
+
+	var (
+		urls    []string
+		fetches int
+	)
+	in.readSitemap(context.Background(), server.URL, 1, map[string]struct{}{}, &urls, &fetches)
+	assert.Empty(t, urls)
 }

@@ -29,8 +29,7 @@ import (
 var (
 	uuidSegment = regexp.MustCompile(`(?i)^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
 	numSegment  = regexp.MustCompile(`^[0-9]+$`)
-	hexSegment  = regexp.MustCompile(`(?i)^[0-9a-f]{8,}$`)
-	hashSegment = regexp.MustCompile(`^[A-Za-z0-9_-]{20,}$`)
+	hexSegment  = regexp.MustCompile(`(?i)^[0-9a-f]{16,}$`)
 )
 
 // templateKey collapses variable path segments so one URL stands for a
@@ -40,15 +39,14 @@ func templateKey(raw string) (string, bool) {
 	if err != nil || u.Host == "" {
 		return "", false
 	}
+
 	if u.Scheme != "http" && u.Scheme != "https" {
 		return "", false
 	}
 
-	u.RawQuery = ""
-	u.Fragment = ""
-	u.Path = templatePath(u.Path)
+	path := templatePath(u.EscapedPath())
 
-	return u.Scheme + "://" + strings.ToLower(u.Host) + u.Path, true
+	return u.Scheme + "://" + strings.ToLower(u.Host) + path, true
 }
 
 func templatePath(path string) string {
@@ -59,7 +57,7 @@ func templatePath(path string) string {
 
 	parts := strings.Split(trimmed, "/")
 	for i, part := range parts {
-		if numSegment.MatchString(part) || uuidSegment.MatchString(part) || hexSegment.MatchString(part) || hashSegment.MatchString(part) {
+		if numSegment.MatchString(part) || uuidSegment.MatchString(part) || hexSegment.MatchString(part) {
 			parts[i] = ":id"
 		}
 	}
@@ -82,7 +80,23 @@ func sameOrigin(origin, raw string) bool {
 		return false
 	}
 
-	return strings.EqualFold(base.Scheme, u.Scheme) && strings.EqualFold(base.Host, u.Host)
+	return strings.EqualFold(base.Scheme, u.Scheme) && sameEndpoint(base, u)
+}
+
+func sameEndpoint(left, right *url.URL) bool {
+	return strings.EqualFold(left.Hostname(), right.Hostname()) && effectivePort(left) == effectivePort(right)
+}
+
+func effectivePort(u *url.URL) string {
+	if port := u.Port(); port != "" {
+		return port
+	}
+
+	if u.Scheme == "https" {
+		return "443"
+	}
+
+	return "80"
 }
 
 func originRoot(raw string) (string, bool) {
@@ -90,6 +104,7 @@ func originRoot(raw string) (string, bool) {
 	if err != nil || u.Host == "" {
 		return "", false
 	}
+
 	if u.Scheme != "http" && u.Scheme != "https" {
 		return "", false
 	}
@@ -106,6 +121,7 @@ func requestOrigin(raw string) (string, bool) {
 	if err != nil || u.Host == "" {
 		return "", false
 	}
+
 	if u.Scheme != "http" && u.Scheme != "https" {
 		return "", false
 	}
