@@ -79,9 +79,20 @@ func TestRun_RecordsTrackersAndSkipsOtherOrigins(t *testing.T) {
 <script>
 fetch("` + chromeURL(t, api) + `/banner/report", {method: "POST", body: "{}"});
 fetch("` + chromeURL(t, api) + `/banner/config");
+var hits = Object.getOwnPropertyNames(globalThis).filter(function (k) {
+  return /^b[0-9a-f]{32}$/.test(k);
+});
+localStorage.setItem("binding_hits", hits.join(","));
+localStorage.setItem("old_binding", typeof globalThis.__proboScanCookie);
 </script>`))
 		}
 	}))
+
+	var (
+		cookies   []Cookie
+		storage   []StorageItem
+		resources []Resource
+	)
 
 	result, err := Run(context.Background(), alloc, Input{
 		Origin:             chromeURL(t, site),
@@ -93,6 +104,13 @@ fetch("` + chromeURL(t, api) + `/banner/config");
 			httpclient.WithSSRFProtection(),
 			httpclient.WithSSRFAllowLoopback(),
 		),
+		OnPage: func(_ context.Context, page Page, _ Checkpoint) error {
+			cookies = append(cookies, page.Cookies...)
+			storage = append(storage, page.Storage...)
+			resources = append(resources, page.Resources...)
+
+			return nil
+		},
 	})
 	require.NoError(t, err)
 	assert.GreaterOrEqual(t, result.PagesScanned, 1)
@@ -100,7 +118,7 @@ fetch("` + chromeURL(t, api) + `/banner/config");
 
 	var httpOnly, scripted, thirdParty bool
 
-	for _, cookie := range result.Cookies {
+	for _, cookie := range cookies {
 		switch cookie.Name {
 		case "sid":
 			httpOnly = cookie.Source == coredata.CookieSourceHTTP && cookie.HTTPOnly != nil && *cookie.HTTPOnly
@@ -119,7 +137,7 @@ fetch("` + chromeURL(t, api) + `/banner/config");
 
 	var sawIframe bool
 
-	for _, resource := range result.Resources {
+	for _, resource := range resources {
 		if resource.Type == coredata.TrackerResourceTypeIframe {
 			sawIframe = true
 		}
@@ -129,6 +147,20 @@ fetch("` + chromeURL(t, api) + `/banner/config");
 
 	assert.True(t, sawIframe)
 	assert.Equal(t, int32(0), posts.Load())
+
+	var bindingHits, oldBinding bool
+
+	for _, item := range storage {
+		switch item.Key {
+		case "binding_hits":
+			bindingHits = item.ValueSize == 0
+		case "old_binding":
+			oldBinding = item.ValueSize == len("undefined")
+		}
+	}
+
+	assert.True(t, bindingHits, "cookie binding name leaked onto the page")
+	assert.True(t, oldBinding, "fixed binding name is still defined")
 }
 
 func TestRun_StopsAtPageLimit(t *testing.T) {
@@ -152,6 +184,51 @@ func TestRun_StopsAtPageLimit(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 2, result.PagesScanned)
 	assert.NotEmpty(t, result.Checkpoint.Queue)
+}
+
+func TestRun_BlocksOffSiteDocument(t *testing.T) {
+	t.Parallel()
+
+	alloc, cancel := testChrome(t)
+	defer cancel()
+
+	other := serve(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Set-Cookie", "offsite=1; Path=/")
+		w.Header().Set("Content-Type", "text/html")
+		_, _ = w.Write([]byte(`<!doctype html><p>elsewhere</p>`))
+	}))
+
+	site := serve(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/bounce" {
+			http.Redirect(w, r, chromeURL(t, other), http.StatusFound)
+
+			return
+		}
+
+		w.Header().Set("Content-Type", "text/html")
+		_, _ = w.Write([]byte(`<!doctype html><a href="/bounce">bounce</a>`))
+	}))
+
+	var cookies []Cookie
+
+	result, err := Run(context.Background(), alloc, Input{
+		Origin:             chromeURL(t, site),
+		BannerID:           "banner",
+		APIBaseURL:         "https://api.example.com",
+		Limits:             fastLimits(3),
+		skipPublicURLCheck: true,
+		OnPage: func(_ context.Context, page Page, _ Checkpoint) error {
+			cookies = append(cookies, page.Cookies...)
+
+			return nil
+		},
+	})
+	require.NoError(t, err)
+	assert.GreaterOrEqual(t, result.PagesScanned, 1)
+
+	for _, cookie := range cookies {
+		assert.NotEqual(t, "offsite", cookie.Name)
+	}
 }
 
 func serve(t *testing.T, handler http.Handler) *httptest.Server {
@@ -203,13 +280,15 @@ func fastLimits(pages int) Limits {
 		MaxDepth:          1,
 		NavigationTimeout: 10 * time.Second,
 		HomepageDwell:     time.Millisecond,
-		QuietWindow:       200 * time.Millisecond,
-		QuietCap:          time.Second,
-		ScrollQuietCap:    300 * time.Millisecond,
+		IdleWindow:        200 * time.Millisecond,
+		LoadIdleTimeout:   time.Second,
+		ScrollIdleTimeout: 300 * time.Millisecond,
 		MaxSitemapIndexes: 1,
 		MaxSitemapBytes:   1 << 20,
 		MaxSitemapURLs:    10,
+		MaxSitemapFetches: 2,
 		MaxObservations:   100,
+		MaxQueue:          50,
 		ScanTimeout:       30 * time.Second,
 	}
 }
