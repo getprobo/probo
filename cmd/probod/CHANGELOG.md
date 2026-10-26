@@ -4,6 +4,29 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.327.0] - 2026-10-26
+
+### Changed
+
+- The compliance portal Requests item is now Privacy Requests in the
+  portal nav, page, and console settings. The dialog says the visitor
+  submits a request to access or delete personal data
+
+### Fixed
+
+- The document editor shows image and file blocks again. They
+  disappeared when documents moved to the collaborative editor
+- MCP webhook list, get, create, and update accept document events
+  such as `document:archived`. A subscription that included one no
+  longer fails output validation and hides its ID
+- Closing the document collaboration socket without a status code is
+  a clean disconnect
+
+### Removed
+
+- Personal API keys. OAuth2 access tokens authenticate API, MCP, file,
+  and n8n requests
+
 ## [0.326.0] - 2026-10-23
 
 ### Added
