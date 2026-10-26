@@ -174,9 +174,13 @@ func TestTrackerResource_Upsert_StampsScanOnlyWhenSet(t *testing.T) {
 
 	sdkReport := newResource(nil)
 	require.True(t, upsert(sdkReport))
+	sdkUpdatedAt := sdkReport.UpdatedAt
 
 	assert.False(t, upsert(newResource(nil)), "a repeated SDK report must stay a no-op")
-	assert.False(t, upsert(newResource(&scan.ID)), "a scanner report of an existing resource is not an insert")
+
+	scannerReport := newResource(&scan.ID)
+	scannerReport.UpdatedAt = sdkUpdatedAt.Add(time.Second)
+	assert.False(t, upsert(scannerReport), "a scanner report of an existing resource is not an insert")
 
 	var reloaded coredata.TrackerResource
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
@@ -184,4 +188,5 @@ func TestTrackerResource_Upsert_StampsScanOnlyWhenSet(t *testing.T) {
 	}))
 	require.NotNil(t, reloaded.CookieBannerScanID)
 	assert.Equal(t, scan.ID, *reloaded.CookieBannerScanID)
+	assert.True(t, reloaded.UpdatedAt.After(sdkUpdatedAt), "stamping the scan must refresh updated_at")
 }

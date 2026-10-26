@@ -75,10 +75,14 @@ func TestCookieBannerScan_Insert_OneActivePerBanner(t *testing.T) {
 	assert.ErrorIs(t, err, coredata.ErrResourceAlreadyExists, "a second scan must be rejected while one is pending")
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		if err := first.MarkRunning(ctx, tx, fx.scope, time.Now()); err != nil {
-			return err
-		}
+		return first.MarkRunning(ctx, tx, fx.scope, time.Now())
+	}))
 
+	whileRunning := newPendingCookieBannerScan(fx)
+	err = insertCookieBannerScan(t, ctx, client, fx, whileRunning)
+	assert.ErrorIs(t, err, coredata.ErrResourceAlreadyExists, "a second scan must be rejected while one is running")
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		first.PagesScanned = 3
 		first.CookiesFound = 7
 

@@ -336,7 +336,9 @@ INSERT INTO tracker_resources (
 	@updated_at
 )
 ON CONFLICT (cookie_banner_id, resource_type, origin, path) DO UPDATE
-	SET cookie_banner_scan_id = EXCLUDED.cookie_banner_scan_id
+	SET
+		cookie_banner_scan_id = EXCLUDED.cookie_banner_scan_id,
+		updated_at = EXCLUDED.updated_at
 	WHERE EXCLUDED.cookie_banner_scan_id IS NOT NULL
 RETURNING
 	id,
