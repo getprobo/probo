@@ -22,6 +22,7 @@ package coredata_test
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -171,4 +172,114 @@ func TestFailStaleCookieBannerScans_KeepsRecentRunningScan(t *testing.T) {
 	}))
 	assert.Equal(t, coredata.CookieBannerScanStateRunning, reloaded.State)
 	assert.Nil(t, reloaded.FailureReason)
+}
+
+func TestCookieBannerScan_Pause_BlocksAnotherScanAndKeepsStartedAt(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedTrackerPatternFixture(t, ctx, client)
+
+	scan := newPendingCookieBannerScan(fx)
+	require.NoError(t, insertCookieBannerScan(t, ctx, client, fx, scan))
+
+	startedAt := time.Now().Add(-time.Minute).UTC().Truncate(time.Microsecond)
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return scan.MarkRunning(ctx, tx, fx.scope, startedAt)
+	}))
+
+	checkpoint := json.RawMessage(`{"visited_templates":["/"],"queue":[],"pages_scanned":1,"elapsed_ms":1000,"truncated":false}`)
+	scan.Checkpoint = &checkpoint
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return scan.MarkPaused(ctx, tx, fx.scope, time.Now())
+	}))
+
+	second := newPendingCookieBannerScan(fx)
+	err := insertCookieBannerScan(t, ctx, client, fx, second)
+	assert.ErrorIs(t, err, coredata.ErrResourceAlreadyExists, "a second scan must be rejected while one is paused")
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return scan.MarkRunning(ctx, tx, fx.scope, time.Now())
+	}))
+
+	var resumed coredata.CookieBannerScan
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return resumed.LoadByID(ctx, conn, fx.scope, scan.ID)
+	}))
+	assert.Equal(t, coredata.CookieBannerScanStateRunning, resumed.State)
+	require.NotNil(t, resumed.StartedAt)
+	assert.True(t, resumed.StartedAt.Equal(startedAt), "resuming must keep the original start")
+	require.NotNil(t, resumed.Checkpoint)
+	assert.JSONEq(t, string(checkpoint), string(*resumed.Checkpoint))
+}
+
+func TestFailStaleCookieBannerScans_PausesCheckpointedRun(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedTrackerPatternFixture(t, ctx, client)
+
+	scan := newPendingCookieBannerScan(fx)
+	require.NoError(t, insertCookieBannerScan(t, ctx, client, fx, scan))
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		if err := scan.MarkRunning(ctx, tx, fx.scope, time.Now()); err != nil {
+			return err
+		}
+
+		checkpoint := json.RawMessage(`{"visited_templates":["/pricing"],"queue":[{"url":"https://example.com/about","depth":1}],"pages_scanned":1,"elapsed_ms":5000,"truncated":false}`)
+		scan.Checkpoint = &checkpoint
+
+		return scan.SaveCheckpoint(ctx, tx, fx.scope, time.Now().Add(-time.Hour))
+	}))
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return coredata.FailStaleCookieBannerScans(ctx, conn, 20*time.Minute)
+	}))
+
+	var reloaded coredata.CookieBannerScan
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return reloaded.LoadByID(ctx, conn, fx.scope, scan.ID)
+	}))
+	assert.Equal(t, coredata.CookieBannerScanStatePaused, reloaded.State)
+	assert.Nil(t, reloaded.FailureReason)
+	assert.Nil(t, reloaded.CompletedAt)
+	require.NotNil(t, reloaded.Checkpoint)
+	assert.JSONEq(t, string(*scan.Checkpoint), string(*reloaded.Checkpoint))
+}
+
+func TestFailStaleCookieBannerScans_KeepsPausedScan(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedTrackerPatternFixture(t, ctx, client)
+
+	scan := newPendingCookieBannerScan(fx)
+	require.NoError(t, insertCookieBannerScan(t, ctx, client, fx, scan))
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		if err := scan.MarkRunning(ctx, tx, fx.scope, time.Now()); err != nil {
+			return err
+		}
+
+		checkpoint := json.RawMessage(`{"visited_templates":["/"],"queue":[],"pages_scanned":1,"elapsed_ms":1000,"truncated":false}`)
+		scan.Checkpoint = &checkpoint
+
+		return scan.MarkPaused(ctx, tx, fx.scope, time.Now().Add(-time.Hour))
+	}))
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return coredata.FailStaleCookieBannerScans(ctx, conn, 20*time.Minute)
+	}))
+
+	var reloaded coredata.CookieBannerScan
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return reloaded.LoadByID(ctx, conn, fx.scope, scan.ID)
+	}))
+	assert.Equal(t, coredata.CookieBannerScanStatePaused, reloaded.State)
+	assert.Nil(t, reloaded.FailureReason)
+	assert.Nil(t, reloaded.CompletedAt)
 }

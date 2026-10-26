@@ -22,6 +22,7 @@ package coredata
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"maps"
@@ -43,6 +44,7 @@ type (
 		State          CookieBannerScanState          `db:"state"`
 		FailureReason  *CookieBannerScanFailureReason `db:"failure_reason"`
 		Truncated      bool                           `db:"truncated"`
+		Checkpoint     *json.RawMessage               `db:"checkpoint"`
 		PagesScanned   int                            `db:"pages_scanned"`
 		CookiesFound   int                            `db:"cookies_found"`
 		StorageFound   int                            `db:"storage_found"`
@@ -118,6 +120,7 @@ SELECT
 	state,
 	failure_reason,
 	truncated,
+	checkpoint,
 	pages_scanned,
 	cookies_found,
 	storage_found,
@@ -171,6 +174,7 @@ SELECT
 	state,
 	failure_reason,
 	truncated,
+	checkpoint,
 	pages_scanned,
 	cookies_found,
 	storage_found,
@@ -226,6 +230,7 @@ SELECT
 	state,
 	failure_reason,
 	truncated,
+	checkpoint,
 	pages_scanned,
 	cookies_found,
 	storage_found,
@@ -292,7 +297,7 @@ WHERE
 }
 
 // Insert returns ErrResourceAlreadyExists when the banner already has a
-// PENDING or RUNNING scan.
+// PENDING, RUNNING, or PAUSED scan.
 func (s *CookieBannerScan) Insert(
 	ctx context.Context,
 	tx pg.Tx,
@@ -307,6 +312,7 @@ INSERT INTO cookie_banner_scans (
 	state,
 	failure_reason,
 	truncated,
+	checkpoint,
 	pages_scanned,
 	cookies_found,
 	storage_found,
@@ -323,6 +329,7 @@ INSERT INTO cookie_banner_scans (
 	@state,
 	@failure_reason,
 	@truncated,
+	@checkpoint::jsonb,
 	@pages_scanned,
 	@cookies_found,
 	@storage_found,
@@ -342,6 +349,7 @@ INSERT INTO cookie_banner_scans (
 		"state":            s.State,
 		"failure_reason":   s.FailureReason,
 		"truncated":        s.Truncated,
+		"checkpoint":       checkpointArg(s.Checkpoint),
 		"pages_scanned":    s.PagesScanned,
 		"cookies_found":    s.CookiesFound,
 		"storage_found":    s.StorageFound,
@@ -365,7 +373,7 @@ INSERT INTO cookie_banner_scans (
 	return nil
 }
 
-func (s *CookieBannerScan) LoadNextPendingForUpdateSkipLocked(
+func (s *CookieBannerScan) LoadNextClaimableForUpdateSkipLocked(
 	ctx context.Context,
 	tx pg.Tx,
 ) error {
@@ -377,6 +385,7 @@ SELECT
 	state,
 	failure_reason,
 	truncated,
+	checkpoint,
 	pages_scanned,
 	cookies_found,
 	storage_found,
@@ -386,17 +395,23 @@ SELECT
 	created_at,
 	updated_at
 FROM cookie_banner_scans
-WHERE state = @pending_state
-ORDER BY created_at ASC, id ASC
+WHERE state IN (@paused_state, @pending_state)
+ORDER BY
+	CASE WHEN state = @paused_state THEN 0 ELSE 1 END,
+	created_at ASC,
+	id ASC
 LIMIT 1
 FOR UPDATE SKIP LOCKED;
 `
 
-	args := pgx.StrictNamedArgs{"pending_state": CookieBannerScanStatePending}
+	args := pgx.StrictNamedArgs{
+		"paused_state":  CookieBannerScanStatePaused,
+		"pending_state": CookieBannerScanStatePending,
+	}
 
 	rows, err := tx.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query next pending cookie banner scan: %w", err)
+		return fmt.Errorf("cannot query next claimable cookie banner scan: %w", err)
 	}
 
 	scan, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CookieBannerScan])
@@ -405,7 +420,7 @@ FOR UPDATE SKIP LOCKED;
 			return ErrResourceNotFound
 		}
 
-		return fmt.Errorf("cannot collect next pending cookie banner scan: %w", err)
+		return fmt.Errorf("cannot collect next claimable cookie banner scan: %w", err)
 	}
 
 	*s = scan
@@ -413,8 +428,9 @@ FOR UPDATE SKIP LOCKED;
 	return nil
 }
 
-// MarkRunning moves a PENDING scan to RUNNING. It returns
-// ErrResourceNotFound when the scan is no longer PENDING.
+// MarkRunning moves a PENDING or PAUSED scan to RUNNING. started_at is
+// kept when the scan is resumed. It returns ErrResourceNotFound when the
+// scan is in neither state.
 func (s *CookieBannerScan) MarkRunning(
 	ctx context.Context,
 	conn pg.Querier,
@@ -425,12 +441,12 @@ func (s *CookieBannerScan) MarkRunning(
 UPDATE cookie_banner_scans
 SET
 	state = @running_state,
-	started_at = @now,
+	started_at = COALESCE(started_at, @now),
 	updated_at = @now
 WHERE
 	%s
 	AND id = @id
-	AND state = @pending_state
+	AND state IN (@pending_state, @paused_state)
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -439,6 +455,7 @@ WHERE
 		"id":            s.ID,
 		"running_state": CookieBannerScanStateRunning,
 		"pending_state": CookieBannerScanStatePending,
+		"paused_state":  CookieBannerScanStatePaused,
 		"now":           now,
 	}
 	maps.Copy(args, scope.SQLArguments())
@@ -453,7 +470,99 @@ WHERE
 	}
 
 	s.State = CookieBannerScanStateRunning
-	s.StartedAt = &now
+	if s.StartedAt == nil {
+		s.StartedAt = &now
+	}
+	s.UpdatedAt = now
+
+	return nil
+}
+
+// SaveCheckpoint writes the crawl frontier of a RUNNING scan and refreshes
+// updated_at. A non-null checkpoint is what lets stale recovery pause the
+// scan instead of failing it.
+func (s *CookieBannerScan) SaveCheckpoint(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	now time.Time,
+) error {
+	q := `
+UPDATE cookie_banner_scans
+SET
+	checkpoint = @checkpoint::jsonb,
+	updated_at = @now
+WHERE
+	%s
+	AND id = @id
+	AND state = @running_state
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"id":            s.ID,
+		"checkpoint":    checkpointArg(s.Checkpoint),
+		"running_state": CookieBannerScanStateRunning,
+		"now":           now,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot save cookie banner scan checkpoint: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
+	}
+
+	s.UpdatedAt = now
+
+	return nil
+}
+
+// MarkPaused moves a RUNNING scan to PAUSED and stores the checkpoint.
+// It does not set completed_at or a failure reason.
+func (s *CookieBannerScan) MarkPaused(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	now time.Time,
+) error {
+	q := `
+UPDATE cookie_banner_scans
+SET
+	state = @paused_state,
+	checkpoint = @checkpoint::jsonb,
+	updated_at = @now
+WHERE
+	%s
+	AND id = @id
+	AND state = @running_state
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"id":            s.ID,
+		"paused_state":  CookieBannerScanStatePaused,
+		"checkpoint":    checkpointArg(s.Checkpoint),
+		"running_state": CookieBannerScanStateRunning,
+		"now":           now,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot mark cookie banner scan paused: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
+	}
+
+	s.State = CookieBannerScanStatePaused
 	s.UpdatedAt = now
 
 	return nil
@@ -568,16 +677,41 @@ WHERE
 	return nil
 }
 
-// FailStaleCookieBannerScans fails RUNNING scans started before
-// staleAfter, so a crashed worker does not block the banner's next scan.
+// FailStaleCookieBannerScans recovers RUNNING scans whose updated_at is
+// older than staleAfter. A scan that has a checkpoint is paused so the
+// next process can resume it. A scan with no checkpoint is failed as
+// INTERRUPTED. PAUSED scans are left alone.
 func FailStaleCookieBannerScans(
 	ctx context.Context,
 	conn pg.Querier,
 	staleAfter time.Duration,
 ) error {
 	now := time.Now()
+	staleBefore := now.Add(-staleAfter)
 
-	q := `
+	pause := `
+UPDATE cookie_banner_scans
+SET
+	state = @paused_state,
+	updated_at = @now
+WHERE
+	state = @running_state
+	AND checkpoint IS NOT NULL
+	AND updated_at < @stale_threshold
+`
+
+	pauseArgs := pgx.StrictNamedArgs{
+		"paused_state":    CookieBannerScanStatePaused,
+		"running_state":   CookieBannerScanStateRunning,
+		"now":             now,
+		"stale_threshold": staleBefore,
+	}
+
+	if _, err := conn.Exec(ctx, pause, pauseArgs); err != nil {
+		return fmt.Errorf("cannot pause stale cookie banner scans: %w", err)
+	}
+
+	fail := `
 UPDATE cookie_banner_scans
 SET
 	state = @failed_state,
@@ -586,20 +720,29 @@ SET
 	updated_at = @now
 WHERE
 	state = @running_state
-	AND started_at < @stale_threshold
+	AND checkpoint IS NULL
+	AND updated_at < @stale_threshold
 `
 
-	args := pgx.StrictNamedArgs{
+	failArgs := pgx.StrictNamedArgs{
 		"failed_state":    CookieBannerScanStateFailed,
 		"running_state":   CookieBannerScanStateRunning,
 		"failure_reason":  CookieBannerScanFailureReasonInterrupted,
 		"now":             now,
-		"stale_threshold": now.Add(-staleAfter),
+		"stale_threshold": staleBefore,
 	}
 
-	if _, err := conn.Exec(ctx, q, args); err != nil {
+	if _, err := conn.Exec(ctx, fail, failArgs); err != nil {
 		return fmt.Errorf("cannot fail stale cookie banner scans: %w", err)
 	}
 
 	return nil
+}
+
+func checkpointArg(raw *json.RawMessage) any {
+	if raw == nil {
+		return nil
+	}
+
+	return *raw
 }

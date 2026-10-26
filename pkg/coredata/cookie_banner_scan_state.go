@@ -30,6 +30,7 @@ type CookieBannerScanState string
 const (
 	CookieBannerScanStatePending   CookieBannerScanState = "PENDING"
 	CookieBannerScanStateRunning   CookieBannerScanState = "RUNNING"
+	CookieBannerScanStatePaused    CookieBannerScanState = "PAUSED"
 	CookieBannerScanStateCompleted CookieBannerScanState = "COMPLETED"
 	CookieBannerScanStateFailed    CookieBannerScanState = "FAILED"
 )
@@ -44,6 +45,7 @@ func CookieBannerScanStates() []CookieBannerScanState {
 	return []CookieBannerScanState{
 		CookieBannerScanStatePending,
 		CookieBannerScanStateRunning,
+		CookieBannerScanStatePaused,
 		CookieBannerScanStateCompleted,
 		CookieBannerScanStateFailed,
 	}
@@ -54,6 +56,7 @@ func (v CookieBannerScanState) IsValid() bool {
 	case
 		CookieBannerScanStatePending,
 		CookieBannerScanStateRunning,
+		CookieBannerScanStatePaused,
 		CookieBannerScanStateCompleted,
 		CookieBannerScanStateFailed:
 		return true
