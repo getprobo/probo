@@ -26,6 +26,7 @@ import (
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.gearno.de/kit/log"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -103,23 +104,37 @@ func (t TracingExtension) InterceptOperation(ctx context.Context, next graphql.O
 
 	handler := next(spanCtx)
 
+	operationType := string(requestContext.Operation.Operation)
+	operationName := requestContext.OperationName
+	if operationName == "" {
+		operationName = "unnamed"
+	}
+
+	var (
+		errs     gqlerror.List
+		finished bool
+	)
+
+	finish := func() {
+		if finished {
+			return
+		}
+
+		finished = true
+		if operationSpan != nil {
+			operationSpan.End()
+		}
+	}
+
 	return func(ctx context.Context) *graphql.Response {
 		// gqlgen invokes the response handler with a different ctx than the one
 		// passed to next(...). Re-attach the span so the logger can extract trace_id.
 		if operationSpan != nil {
 			ctx = trace.ContextWithSpan(ctx, operationSpan)
-			defer operationSpan.End()
 		}
 
 		resp := handler(ctx)
 		duration := time.Since(startTime)
-
-		operationType := string(requestContext.Operation.Operation)
-
-		operationName := requestContext.OperationName
-		if operationName == "" {
-			operationName = "unnamed"
-		}
 
 		// A nil response also ends a stream, so only a context error is a cancel.
 		if resp == nil {
@@ -134,17 +149,26 @@ func (t TracingExtension) InterceptOperation(ctx context.Context, next graphql.O
 				)
 			}
 
+			finish()
 			return nil
 		}
 
-		if resp.Errors != nil {
+		errs = append(errs, resp.Errors...)
+
+		// With @defer the operation yields one response per payload; only the
+		// last one, without hasNext, marks the end of the operation.
+		if finished || (resp.HasNext != nil && *resp.HasNext) {
+			return resp
+		}
+
+		if len(errs) > 0 {
 			t.logger.ErrorCtx(
 				ctx,
 				fmt.Sprintf("%s %s failed %s", operationType, operationName, duration.String()),
 				log.String("graphql_operation_name", operationName),
 				log.String("graphql_operation_type", operationType),
 				log.Duration("graphql_operation_duration", duration),
-				log.Any("graphql_operation_errors", resp.Errors),
+				log.Any("graphql_operation_errors", errs),
 			)
 		} else {
 			t.logger.InfoCtx(
@@ -156,6 +180,7 @@ func (t TracingExtension) InterceptOperation(ctx context.Context, next graphql.O
 			)
 		}
 
+		finish()
 		return resp
 	}
 }

@@ -103,6 +103,55 @@ func TestInterceptOperation(t *testing.T) {
 			assert.Equal(t, want, handler(ctx))
 		},
 	)
+
+	t.Run(
+		"deferred stream logs once at the final payload",
+		func(t *testing.T) {
+			t.Parallel()
+
+			ctx := operationContext()
+
+			var logs bytes.Buffer
+
+			extension := gqlx.NewTracingExtension(log.NewLogger(log.WithOutput(&logs)))
+
+			hasNext, last := true, false
+			responses := []*graphql.Response{
+				{HasNext: &hasNext},
+				{HasNext: &hasNext, Errors: gqlerror.List{gqlerror.Errorf("probe failed")}},
+				{HasNext: &last},
+				nil,
+			}
+
+			handler := extension.InterceptOperation(
+				ctx,
+				func(context.Context) graphql.ResponseHandler {
+					return func(context.Context) *graphql.Response {
+						resp := responses[0]
+						responses = responses[1:]
+
+						return resp
+					}
+				},
+			)
+
+			require.NotNil(t, handler(ctx))
+			require.NotNil(t, handler(ctx))
+			assert.Empty(t, logs.String())
+
+			require.NotNil(t, handler(ctx))
+			assert.Nil(t, handler(ctx))
+
+			lines := strings.Split(strings.TrimSpace(logs.String()), "\n")
+			require.Len(t, lines, 1)
+
+			var entry map[string]any
+			require.NoError(t, json.Unmarshal([]byte(lines[0]), &entry))
+			assert.Equal(t, "ERROR", entry["level"])
+			assert.Contains(t, entry["msg"], "query Viewer failed")
+			assert.Contains(t, lines[0], "probe failed")
+		},
+	)
 }
 
 func canceledLogEntry(t *testing.T, logs string) map[string]any {
