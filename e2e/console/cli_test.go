@@ -388,7 +388,7 @@ func (s *prbSession) mustID(args ...string) string {
 	s.t.Helper()
 
 	stdout := s.must(args...)
-	for _, field := range strings.Fields(stdout) {
+	for field := range strings.FieldsSeq(stdout) {
 		field = strings.Trim(field, "()")
 		if _, err := gid.ParseGID(field); err == nil {
 			return field
@@ -459,7 +459,7 @@ func cliTokenScopes() []string {
 		Register(task.OAuth2ScopeMappings)
 
 	var scopes []string
-	for _, scope := range strings.Fields(config.CLIClientScopes) {
+	for scope := range strings.FieldsSeq(config.CLIClientScopes) {
 		if !strings.HasPrefix(scope, "v1:") {
 			continue
 		}
