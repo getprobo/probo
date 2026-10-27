@@ -55,7 +55,6 @@ type (
 
 		AccessControlRequestMethod  string
 		AccessControlRequestHeaders string
-		ClientIP                    string
 	}
 
 	cookieBannerHTTPResult struct {
@@ -125,10 +124,6 @@ func doCookieBannerHTTP(t *testing.T, c *testutil.Client, opts cookieBannerHTTPO
 
 	if opts.UserAgent != "" {
 		req.Header.Set("User-Agent", opts.UserAgent)
-	}
-
-	if opts.ClientIP != "" {
-		req.Header.Set("X-Forwarded-For", opts.ClientIP)
 	}
 
 	if opts.AccessControlRequestMethod != "" {
@@ -278,21 +273,6 @@ func postCookieConsent(
 ) postConsentResponseBody {
 	t.Helper()
 
-	return postCookieConsentFrom(t, c, fixture, visitorID, action, consentData, "", tc...)
-}
-
-func postCookieConsentFrom(
-	t *testing.T,
-	c *testutil.Client,
-	fixture publishedCookieBannerFixture,
-	visitorID string,
-	action string,
-	consentData json.RawMessage,
-	clientIP string,
-	tc ...string,
-) postConsentResponseBody {
-	t.Helper()
-
 	req := postConsentRequest{
 		VisitorID:   visitorID,
 		Version:     fixture.Version,
@@ -318,7 +298,6 @@ func postCookieConsentFrom(
 			Origin:     fixture.Origin,
 			SDKVersion: cookieBannerE2ESDKVersion,
 			UserAgent:  ua,
-			ClientIP:   clientIP,
 			Body:       body,
 		},
 	)

@@ -650,7 +650,6 @@ func TestCookieConsent_ForceOptIn(t *testing.T) {
 
 	tests := []struct {
 		name         string
-		ip           string
 		country      string
 		subdivision  *string
 		regulation   string
@@ -659,7 +658,6 @@ func TestCookieConsent_ForceOptIn(t *testing.T) {
 	}{
 		{
 			name:         "Japan stays APPI under opt-in",
-			ip:           "203.0.113.10",
 			country:      "JP",
 			regulation:   "APPI",
 			settingsLink: "default",
@@ -667,7 +665,6 @@ func TestCookieConsent_ForceOptIn(t *testing.T) {
 		},
 		{
 			name:         "Mexico stays LFPDPPP under opt-in",
-			ip:           "203.0.113.20",
 			country:      "MX",
 			regulation:   "LFPDPPP",
 			settingsLink: "default",
@@ -675,7 +672,6 @@ func TestCookieConsent_ForceOptIn(t *testing.T) {
 		},
 		{
 			name:         "California keeps the privacy choices link",
-			ip:           "203.0.113.30",
 			country:      "US",
 			subdivision:  new("US-CA"),
 			regulation:   "CCPA",
@@ -686,9 +682,8 @@ func TestCookieConsent_ForceOptIn(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			seedIPLocationBlock(t, tt.ip, tt.country, tt.subdivision)
+			// Sequential: every case maps the same loopback addresses.
+			seedLoopbackLocation(t, tt.country, tt.subdivision)
 
 			configResp := doCookieBannerHTTP(
 				t,
@@ -699,7 +694,6 @@ func TestCookieConsent_ForceOptIn(t *testing.T) {
 					Path:       []string{"config"},
 					Origin:     fixture.Origin,
 					SDKVersion: cookieBannerE2ESDKVersion,
-					ClientIP:   tt.ip,
 				},
 			)
 			require.Equal(t, http.StatusOK, configResp.StatusCode, "config body: %s", string(configResp.Body))
@@ -720,14 +714,13 @@ func TestCookieConsent_ForceOptIn(t *testing.T) {
 			assert.Equal(t, tt.settingsLink, config.Layout.SettingsLink)
 			assert.Equal(t, tt.reopenState, config.Layout.ReopenState)
 
-			created := postCookieConsentFrom(
+			created := postCookieConsent(
 				t,
 				fixture.Owner,
 				fixture,
 				uniqueCookieBannerVisitorID(),
 				"ACCEPT_ALL",
 				json.RawMessage(`{"necessary":true,"analytics":true}`),
-				tt.ip,
 			)
 
 			ctx := context.Background()
@@ -740,6 +733,7 @@ func TestCookieConsent_ForceOptIn(t *testing.T) {
 				regulation       string
 				regulationSource string
 			)
+
 			err := conn.QueryRow(
 				ctx,
 				`SELECT consent_mode, regulation, regulation_source FROM cookie_consent_records WHERE id = $1`,
@@ -753,31 +747,49 @@ func TestCookieConsent_ForceOptIn(t *testing.T) {
 	}
 }
 
-func seedIPLocationBlock(t *testing.T, ip, country string, subdivision *string) {
+// seedLoopbackLocation maps the addresses the e2e client actually connects
+// from. Forwarded headers are dropped unless the peer is a trusted proxy, and
+// this suite dials probod directly.
+func seedLoopbackLocation(t *testing.T, country string, subdivision *string) {
 	t.Helper()
+
+	blocks := []struct {
+		family int
+		ip     string
+	}{
+		{4, "127.0.0.1"},
+		{6, "::1"},
+		{6, "::ffff:127.0.0.1"},
+	}
 
 	ctx := context.Background()
 	conn := dialTestPg(t, ctx)
 	t.Cleanup(func() {
-		_, err := conn.Exec(
-			ctx,
-			`DELETE FROM common_ip_location_blocks WHERE address_family = 4 AND ip_start = $1::inet AND ip_end = $1::inet`,
-			ip,
-		)
-		assert.NoError(t, err)
+		for _, block := range blocks {
+			_, err := conn.Exec(
+				ctx,
+				`DELETE FROM common_ip_location_blocks WHERE address_family = $1 AND ip_start = $2::inet AND ip_end = $2::inet`,
+				block.family,
+				block.ip,
+			)
+			assert.NoError(t, err)
+		}
+
 		_ = conn.Close(ctx)
 	})
 
-	_, err := conn.Exec(
-		ctx,
-		`DELETE FROM common_ip_location_blocks WHERE address_family = 4 AND ip_start = $1::inet AND ip_end = $1::inet`,
-		ip,
-	)
-	require.NoError(t, err)
+	for _, block := range blocks {
+		_, err := conn.Exec(
+			ctx,
+			`DELETE FROM common_ip_location_blocks WHERE address_family = $1 AND ip_start = $2::inet AND ip_end = $2::inet`,
+			block.family,
+			block.ip,
+		)
+		require.NoError(t, err)
 
-	_, err = conn.Exec(
-		ctx,
-		`
+		_, err = conn.Exec(
+			ctx,
+			`
 INSERT INTO common_ip_location_blocks (
 	address_family,
 	ip_start,
@@ -785,16 +797,18 @@ INSERT INTO common_ip_location_blocks (
 	country_code,
 	subdivision_code
 ) VALUES (
-	4,
-	$1::inet,
-	$1::inet,
-	$2,
-	$3
+	$1,
+	$2::inet,
+	$2::inet,
+	$3,
+	$4
 )
 `,
-		ip,
-		country,
-		subdivision,
-	)
-	require.NoError(t, err)
+			block.family,
+			block.ip,
+			country,
+			subdivision,
+		)
+		require.NoError(t, err)
+	}
 }
