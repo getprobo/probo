@@ -100,9 +100,13 @@ func newRepoTestServerWithConfig(
 			return
 		}
 
-		connection, err := websocket.Accept(w, r, &websocket.AcceptOptions{
-			InsecureSkipVerify: true,
-		})
+		connection, err := websocket.Accept(
+			w,
+			r,
+			&websocket.AcceptOptions{
+				InsecureSkipVerify: true,
+			},
+		)
 		if err != nil {
 			return
 		}
