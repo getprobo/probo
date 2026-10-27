@@ -400,8 +400,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			return types.NewProcessingActivity(processingActivity), nil
 		}
 	case coredata.DataProtectionImpactAssessmentEntityType:
-		// TODO: add action
-		// action = probo.ActionDataProtectionImpactAssessmentGet
+		action = probo.ActionDataProtectionImpactAssessmentGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
 			dpia, err := r.probo.DataProtectionImpactAssessments.Get(ctx, scope, id)
 			if err != nil {
@@ -411,8 +410,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			return types.NewDataProtectionImpactAssessment(dpia), nil
 		}
 	case coredata.TransferImpactAssessmentEntityType:
-		// TODO: add action
-		//action = probo.ActionTransferImpactAssessmentGet
+		action = probo.ActionTransferImpactAssessmentGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
 			tia, err := r.probo.TransferImpactAssessments.Get(ctx, scope, id)
 			if err != nil {
@@ -680,6 +678,20 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			}
 
 			return types.NewTrackerPatternNode(pattern), nil
+		}
+	case coredata.TrackerResourceEntityType:
+		action = probo.ActionTrackerResourceGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			resource, err := r.cookieBanner.GetTrackerResource(ctx, scope, id)
+			if err != nil {
+				if errors.Is(err, cookiebanner.ErrTrackerResourceNotFound) {
+					return nil, coredata.ErrResourceNotFound
+				}
+
+				return nil, err
+			}
+
+			return types.NewTrackerResourceNode(resource), nil
 		}
 	case coredata.CookieBannerVersionEntityType:
 		action = probo.ActionCookieBannerVersionGet
