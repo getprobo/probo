@@ -4,11 +4,18 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.260.0] - 2026-10-27
+
 ### Added
 
 - `--json` is shorthand for `--output json` on commands that print a
   result. Combining it with a different `--output` value is an error
 - `risk-analysis diagram mermaid --json` prints the diagram node
+- List commands take `--after`. The next cursor is printed on stderr.
+  Repeat the same command and filters with that cursor. Stdout stays
+  the table or the JSON array
+- `processing-activity create` asks whether processing involves
+  international transfers. `--international-transfers` sets the field
 
 ### Changed
 
@@ -36,6 +43,11 @@ All notable changes to the `prb` CLI will be documented in this file.
 - `asset list` no longer queries an `AssetFilter` the API does not define
 - `document list` and `document view` show the document title, type, and
   classification
+- A non-positive `--limit` is an error, and a bad `--order-direction`
+  is rejected before the command calls the API
+- `dpia create` and `tia create` match the API payload. `dpia view`,
+  `tia view`, `cookie-category view`, and `tracker-pattern view` accept
+  null text and boolean fields
 
 ## [0.259.0] - 2026-10-27
 
