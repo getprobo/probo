@@ -40,6 +40,15 @@ Both documents declare
 `https://agent-plugins.org/schemas/1.0.0/{plugin,mcp}.schema.json`, and the
 spec requires the two versions to match.
 
+`using-prb`, `prb-auth`, and `prb-records` are skills in that same `skills/`
+directory. They describe the `prb` CLI and do not use the MCP servers. Install
+one from the repository and pin the tag to the installed CLI:
+
+```bash
+gh skill install getprobo/probo using-prb
+npx skills add getprobo/probo --skill using-prb
+```
+
 Commands, marketplace catalogs, and the client manifests are outside the v1
 format — Agent Plugins v1 standardizes only skills and MCP servers. Clients
 ignore the extra files.

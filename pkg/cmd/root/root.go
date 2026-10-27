@@ -59,7 +59,6 @@ import (
 	"go.probo.inc/probo/pkg/cmd/risk"
 	riskanalysis "go.probo.inc/probo/pkg/cmd/risk-analysis"
 	"go.probo.inc/probo/pkg/cmd/scim"
-	"go.probo.inc/probo/pkg/cmd/skill"
 	"go.probo.inc/probo/pkg/cmd/soa"
 	"go.probo.inc/probo/pkg/cmd/task"
 	"go.probo.inc/probo/pkg/cmd/thirdpartymgmt"
@@ -74,10 +73,9 @@ import (
 
 func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "prb <command> [flags]",
-		Short: "Probo CLI",
-		Long: "prb is a command-line tool for interacting with the Probo platform. " +
-			"Built-in agent skills describe how to call it; run \"prb skills\" to list them.",
+		Use:           "prb <command> [flags]",
+		Short:         "Probo CLI",
+		Long:          "prb is a command-line tool for interacting with the Probo platform.",
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
@@ -142,7 +140,6 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(riskanalysis.NewCmdRiskAnalysis(f))
 	cmd.AddCommand(resourcealias.NewCmdResourceAlias(f))
 	cmd.AddCommand(scim.NewCmdScim(f))
-	cmd.AddCommand(skill.NewCmdSkills(f))
 	cmd.AddCommand(soa.NewCmdSoa(f))
 	cmd.AddCommand(task.NewCmdTask(f))
 	cmd.AddCommand(treatmentplan.NewCmdTreatmentPlan(f))

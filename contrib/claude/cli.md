@@ -23,7 +23,14 @@ Register group commands in `pkg/cmd/root/root.go` with `cmd.AddCommand()`.
 
 ## Agent skills
 
-`prb skills` ships Agent Skills inside the binary (`pkg/cmd/skill/content`). `list` and `show` read them with no network call. `install` copies each `<skill>/SKILL.md` tree into `--dir`, or into the user skill directories for Cursor, Claude, Codex, and OpenCode (`--target`). `--force` replaces a file whose bytes differ from the copy in the binary. Identical files are left in place. These skills describe how to call `prb`. The MCP workflows in `@probo/skills` stay in that package.
+How to call `prb` lives in `@probo/skills`, under `packages/skills/skills/`: `using-prb`, `prb-auth`, and `prb-records`. Install one skill from the repository so it stays pinned to a tag:
+
+```bash
+gh skill install getprobo/probo using-prb
+npx skills add getprobo/probo --skill using-prb
+```
+
+The MCP workflows in the same package are separate skills. `prb` does not embed a copy.
 
 ## Leaf command pattern
 

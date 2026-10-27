@@ -38,4 +38,3 @@ only.
 | `compliance-portal` | Compliance portal |
 | `employee-portal` | Employee portal |
 | `access-review` | Access reviews |
-| `skills` | These agent skills |

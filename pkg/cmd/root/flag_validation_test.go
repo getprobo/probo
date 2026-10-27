@@ -35,6 +35,18 @@ import (
 	"go.probo.inc/probo/pkg/cmd/root"
 )
 
+func TestSkillsAreNotACommand(t *testing.T) {
+	t.Parallel()
+
+	rootCmd := newRoot(t)
+	rootCmd.SetOut(io.Discard)
+	rootCmd.SetErr(io.Discard)
+	rootCmd.SetArgs([]string{"skills", "--help"})
+
+	err := rootCmd.Execute()
+	require.ErrorContains(t, err, `unknown command "skills"`)
+}
+
 func TestListFlagsRejectBadValues(t *testing.T) {
 	t.Parallel()
 

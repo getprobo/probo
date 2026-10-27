@@ -1,7 +1,9 @@
 # Agent skills (`packages/skills`)
 
 npm package [`@probo/skills`](../../packages/skills) ships multi-agent
-compliance skills and agent plugin wiring powered by the Probo MCP API. It is an
+skills and agent plugin wiring. Compliance workflows use the Probo MCP API.
+`using-prb`, `prb-auth`, and `prb-records` tell an agent how to call the `prb`
+CLI and do not use MCP. It is an
 [Agent Plugins 1.0.0](https://agent-plugins.org/) package, and also carries
 client-specific manifests for **Claude Code**, **Codex**, **OpenCode**, and
 **Cursor**. See [`COMPATIBILITY.md`](../../packages/skills/COMPATIBILITY.md).
@@ -20,12 +22,22 @@ A **skills package** bundling:
 | `agents/` | Optional specialized subagents |
 | `hooks/` | Optional event automation |
 
-Individual capabilities are namespaced under `probo`:
+Individual MCP capabilities are namespaced under `probo`:
 
 - Skills: `/probo:<skill-name>` (e.g. `/probo:open-source-compliance`,
   `/probo:missing-signatures`, `/probo:access-review`)
 - Commands: `/probo:<command-name>` (e.g. `/probo:access-review`,
   `/probo:missing-signatures`)
+
+CLI skills live in the same `skills/` directory. Install one from the
+repository and pin the tag to the installed `prb`:
+
+```bash
+gh skill install getprobo/probo using-prb
+npx skills add getprobo/probo --skill using-prb
+```
+
+`prb` does not embed a copy. Each skill's frontmatter says when it applies.
 
 Published to npm as `@probo/skills`. Agent-specific manifests (`.claude-plugin/`,
 `.codex-plugin/`) ship inside the same package.
@@ -113,9 +125,17 @@ Claude Code from starting the OAuth flow.
 
 ## Adding a skill
 
+CLI skills and MCP workflows share `skills/`. A skill that drives `prb` must
+not require MCP, and a skill that drives MCP must not assume `prb` is
+installed. Frontmatter `description` is what tells an agent which one applies.
+Skills must be self-contained — npm installs do not include `contrib/claude/`
+from the monorepo.
+
 1. Create `skills/<name>/SKILL.md` with YAML frontmatter (`name` matching the
    directory, `description` under 1024 chars).
-2. Add `references/` for detailed workflow docs loaded on demand.
+2. Add `references/` for detailed workflow docs loaded on demand. Paths inside
+   a skill are relative to that skill, which is how `gh skill` and
+   `npx skills` install them.
 3. Validate and test:
 
 ```bash
@@ -125,9 +145,6 @@ claude --plugin-dir ./packages/skills
 ```
 
 4. Update `packages/skills/CHANGELOG.md` under `## Unreleased`.
-
-Skills must be self-contained — npm installs do not include `contrib/claude/`
-from the monorepo.
 
 ## Adding a command
 

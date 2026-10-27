@@ -18,9 +18,7 @@ prb <command> <verb> --help
 ```
 
 Pass only flags that appear there. Copy enum values from the help text.
-
-When this skill is not installed on disk, read a bundled reference with
-`prb skills show using-prb references/commands.md`.
+Read `references/commands.md` in this skill for the command groups.
 
 ## Call shape
 

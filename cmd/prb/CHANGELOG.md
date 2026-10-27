@@ -9,11 +9,13 @@ All notable changes to the `prb` CLI will be documented in this file.
 - `--json` is shorthand for `--output json` on commands that print a
   result. Combining it with a different `--output` value is an error
 - `risk-analysis diagram mermaid --json` prints the diagram node
-- `prb skills` lists, prints, and installs the agent skills shipped in
-  the binary so a model can call prb without inventing flags
 
 ### Changed
 
+- Agent skills for calling `prb` are published in `@probo/skills`
+  (`using-prb`, `prb-auth`, `prb-records`). Install them from the
+  repository with `gh skill` or `npx skills`. The binary does not embed
+  a copy
 - `third-party` is the command name. `tp` is the short alias
 - `--org` and `--organization` are the same organization flag.
   `connector connect --organization` stays the boolean that connects a

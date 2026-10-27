@@ -90,26 +90,9 @@ func TestCLI_AuthAndOutput(t *testing.T) {
 	require.Error(t, err)
 	assert.Contains(t, stderr, "--json cannot be combined with --output table")
 
-	assert.Contains(t, help, "skills")
-
-	listed := session.must("skills", "list", "--json")
-	assert.Contains(t, listed, "using-prb")
-	assert.Contains(t, listed, "prb-auth")
-	assert.Contains(t, listed, "prb-records")
-
-	shown := session.must("skills", "show", "using-prb")
-	assert.Contains(t, shown, "name: using-prb")
-
-	reference := session.must("skills", "show", "prb-records", "references/create.md")
-	assert.Contains(t, reference, "--amount")
-
-	_, stderr, err = session.run("skills", "show", "using-prb", "../prb-auth/SKILL.md")
+	_, stderr, err = session.run("skills", "--help")
 	require.Error(t, err)
-	assert.Contains(t, stderr, "invalid skill path")
-
-	dir := t.TempDir()
-	installed := session.must("skills", "install", "--dir", dir)
-	assert.Contains(t, installed, filepath.Join(dir, "using-prb", "SKILL.md"))
+	assert.Contains(t, stderr, "unknown command")
 }
 
 func TestCLI_ResourceLifecycles(t *testing.T) {
