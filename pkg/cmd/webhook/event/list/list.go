@@ -69,6 +69,7 @@ type webhookEvent struct {
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagLimit    int
+		flagAfter    string
 		flagOrderBy  string
 		flagOrderDir string
 		flagStatus   string
@@ -119,11 +120,12 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				}
 			}
 
-			events, totalCount, err := api.Paginate(
+			events, totalCount, nextCursor, err := api.Paginate(
 				client,
 				eventsListQuery(*flagOutput == cmdutil.OutputJSON),
 				variables,
 				flagLimit,
+				flagAfter,
 				api.NodeConnection[webhookEvent]("events", "WebhookSubscription", fmt.Sprintf("webhook subscription %s not found", args[0])),
 			)
 			if err != nil {
@@ -136,9 +138,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				events,
 				totalCount,
 				cmdutil.ListView[webhookEvent]{
-					Empty:   "No webhook events found.",
-					Noun:    "events",
-					Headers: []string{"ID", "STATUS", "CREATED"},
+					Empty:      "No webhook events found.",
+					Noun:       "events",
+					NextCursor: nextCursor,
+					Headers:    []string{"ID", "STATUS", "CREATED"},
 					Row: func(e webhookEvent) ([]string, error) {
 						return []string{
 							e.ID,
@@ -152,6 +155,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of events to list")
+	cmdutil.AddAfterFlag(cmd, &flagAfter)
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
 	cmd.Flags().StringVar(&flagStatus, "status", "", "Filter by status (PENDING, SUCCEEDED, FAILED)")

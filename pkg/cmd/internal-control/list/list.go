@@ -68,6 +68,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagOrg      string
 		flagLimit    int
+		flagAfter    string
 		flagOrderBy  string
 		flagOrderDir string
 		flagFilter   string
@@ -123,11 +124,12 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				}
 			}
 
-			internalControls, totalCount, err := api.Paginate(
+			internalControls, totalCount, nextCursor, err := api.Paginate(
 				client,
 				listQuery,
 				variables,
 				flagLimit,
+				flagAfter,
 				api.NodeConnection[internalControl]("internalControls", "Organization", fmt.Sprintf("organization %s not found", flagOrg)),
 			)
 			if err != nil {
@@ -140,9 +142,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				internalControls,
 				totalCount,
 				cmdutil.ListView[internalControl]{
-					Empty:   "No internal controls found.",
-					Noun:    "internal controls",
-					Headers: []string{"ID", "CODE", "NAME", "CATEGORY", "STATUS", "STATE"},
+					Empty:      "No internal controls found.",
+					Noun:       "internal controls",
+					NextCursor: nextCursor,
+					Headers:    []string{"ID", "CODE", "NAME", "CATEGORY", "STATUS", "STATE"},
 					Row: func(m internalControl) ([]string, error) {
 						code := ""
 						if m.Code != nil {
@@ -165,6 +168,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 	cmdutil.AddOrganizationFlag(cmd, &flagOrg, "Organization ID")
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of internal controls to list")
+	cmdutil.AddAfterFlag(cmd, &flagAfter)
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT, NAME)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
 	cmd.Flags().StringVarP(&flagFilter, "filter", "q", "", "Filter internal controls by search query")

@@ -72,6 +72,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagOrg      string
 		flagLimit    int
+		flagAfter    string
 		flagOrderBy  string
 		flagOrderDir string
 		flagOutput   *string
@@ -112,11 +113,12 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				}
 			}
 
-			tias, totalCount, err := api.Paginate(
+			tias, totalCount, nextCursor, err := api.Paginate(
 				client,
 				listQuery,
 				variables,
 				flagLimit,
+				flagAfter,
 				api.NodeConnection[transferImpactAssessment]("transferImpactAssessments", "Organization", fmt.Sprintf("organization %s not found", flagOrg)),
 			)
 			if err != nil {
@@ -129,9 +131,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				tias,
 				totalCount,
 				cmdutil.ListView[transferImpactAssessment]{
-					Empty:   "No transfer impact assessments found.",
-					Noun:    "transfer impact assessments",
-					Headers: []string{"ID", "DATA SUBJECTS", "LEGAL MECHANISM", "CREATED AT"},
+					Empty:      "No transfer impact assessments found.",
+					Noun:       "transfer impact assessments",
+					NextCursor: nextCursor,
+					Headers:    []string{"ID", "DATA SUBJECTS", "LEGAL MECHANISM", "CREATED AT"},
 					Row: func(t transferImpactAssessment) ([]string, error) {
 						return []string{
 							t.ID,
@@ -147,6 +150,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 	cmdutil.AddOrganizationFlag(cmd, &flagOrg, "Organization ID")
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of transfer impact assessments to list")
+	cmdutil.AddAfterFlag(cmd, &flagAfter)
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
 	flagOutput = cmdutil.AddOutputFlag(cmd)

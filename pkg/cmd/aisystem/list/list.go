@@ -68,6 +68,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagOrg                string
 		flagLimit              int
+		flagAfter              string
 		flagOrderBy            string
 		flagOrderDir           string
 		flagStatus             string
@@ -161,11 +162,12 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				variables["filter"] = filter
 			}
 
-			systems, totalCount, err := api.Paginate(
+			systems, totalCount, nextCursor, err := api.Paginate(
 				client,
 				listQuery,
 				variables,
 				flagLimit,
+				flagAfter,
 				api.NodeConnection[aiSystem]("aiSystems", "Organization", fmt.Sprintf("organization %s not found", flagOrg)),
 			)
 			if err != nil {
@@ -178,8 +180,9 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				systems,
 				totalCount,
 				cmdutil.ListView[aiSystem]{
-					Empty: "No AI systems found.",
-					Noun:  "AI systems",
+					Empty:      "No AI systems found.",
+					Noun:       "AI systems",
+					NextCursor: nextCursor,
 					Headers: []string{
 						"ID",
 						"NAME",
@@ -215,6 +218,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 	cmdutil.AddOrganizationFlag(cmd, &flagOrg, "Organization ID")
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of AI systems to list")
+	cmdutil.AddAfterFlag(cmd, &flagAfter)
 	cmd.Flags().StringVar(
 		&flagOrderBy,
 		"order-by",

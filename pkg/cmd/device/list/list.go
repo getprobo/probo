@@ -131,6 +131,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagOrg             string
 		flagLimit           int
+		flagAfter           string
 		flagOrderBy         string
 		flagOrderDir        string
 		flagQuery           string
@@ -261,11 +262,12 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				query = listWithPosturesQuery
 			}
 
-			devices, totalCount, err := api.Paginate(
+			devices, totalCount, nextCursor, err := api.Paginate(
 				client,
 				query,
 				variables,
 				flagLimit,
+				flagAfter,
 				api.NodeConnection[device]("devices", "Organization", fmt.Sprintf("organization %s not found", flagOrg)),
 			)
 			if err != nil {
@@ -283,9 +285,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				devices,
 				totalCount,
 				cmdutil.ListView[device]{
-					Empty:   "No devices found.",
-					Noun:    "devices",
-					Headers: headers,
+					Empty:      "No devices found.",
+					Noun:       "devices",
+					NextCursor: nextCursor,
+					Headers:    headers,
 					Row: func(d device) ([]string, error) {
 						row := []string{
 							d.ID,
@@ -306,6 +309,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 	cmdutil.AddOrganizationFlag(cmd, &flagOrg, "Organization ID")
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of devices to list")
+	cmdutil.AddAfterFlag(cmd, &flagAfter)
 	cmd.Flags().StringVar(&flagQuery, "query", "", "Search devices by owner name")
 	cmd.Flags().StringSliceVar(&flagState, "state", nil, "Filter by state; repeat or comma-separate for multiple (PENDING, ACTIVE, REVOKED)")
 	cmd.Flags().StringSliceVar(&flagPlatform, "platform", nil, "Filter by platform; repeat or comma-separate for multiple (DARWIN, LINUX, FREEBSD, WINDOWS)")

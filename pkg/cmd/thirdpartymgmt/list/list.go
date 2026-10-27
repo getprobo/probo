@@ -62,6 +62,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagOrg      string
 		flagLimit    int
+		flagAfter    string
 		flagOrderBy  string
 		flagOrderDir string
 		flagLevel    int
@@ -118,11 +119,12 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				}
 			}
 
-			thirdParties, totalCount, err := api.Paginate(
+			thirdParties, totalCount, nextCursor, err := api.Paginate(
 				client,
 				listQuery,
 				variables,
 				flagLimit,
+				flagAfter,
 				api.NodeConnection[thirdParty]("thirdParties", "Organization", fmt.Sprintf("organization %s not found", flagOrg)),
 			)
 			if err != nil {
@@ -135,9 +137,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				thirdParties,
 				totalCount,
 				cmdutil.ListView[thirdParty]{
-					Empty:   "No third parties found.",
-					Noun:    "third parties",
-					Headers: []string{"ID", "NAME", "CATEGORY"},
+					Empty:      "No third parties found.",
+					Noun:       "third parties",
+					NextCursor: nextCursor,
+					Headers:    []string{"ID", "NAME", "CATEGORY"},
 					Row: func(v thirdParty) ([]string, error) {
 						return []string{
 							v.ID,
@@ -152,6 +155,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 	cmdutil.AddOrganizationFlag(cmd, &flagOrg, "Organization ID")
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of third parties to list")
+	cmdutil.AddAfterFlag(cmd, &flagAfter)
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (NAME, CREATED_AT, UPDATED_AT)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
 	cmd.Flags().IntVar(&flagLevel, "level", 0, "Filter by third party level (1 = direct, 2+ = indirect)")

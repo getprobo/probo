@@ -66,6 +66,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagOrg            string
 		flagLimit          int
+		flagAfter          string
 		flagOrderBy        string
 		flagOrderDir       string
 		flagQuery          string
@@ -185,11 +186,12 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				variables["filter"] = filter
 			}
 
-			documents, totalCount, err := api.Paginate(
+			documents, totalCount, nextCursor, err := api.Paginate(
 				client,
 				listQuery,
 				variables,
 				flagLimit,
+				flagAfter,
 				api.NodeConnection[document]("documents", "Organization", fmt.Sprintf("organization %s not found", flagOrg)),
 			)
 			if err != nil {
@@ -202,9 +204,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				documents,
 				totalCount,
 				cmdutil.ListView[document]{
-					Empty:   "No documents found.",
-					Noun:    "documents",
-					Headers: []string{"ID", "TITLE", "TYPE", "CLASSIFICATION", "STATUS"},
+					Empty:      "No documents found.",
+					Noun:       "documents",
+					NextCursor: nextCursor,
+					Headers:    []string{"ID", "TITLE", "TYPE", "CLASSIFICATION", "STATUS"},
 					Row: func(doc document) ([]string, error) {
 						return []string{
 							doc.ID,
@@ -221,6 +224,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 	cmdutil.AddOrganizationFlag(cmd, &flagOrg, "Organization ID")
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of documents to list")
+	cmdutil.AddAfterFlag(cmd, &flagAfter)
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (TITLE, CREATED_AT, UPDATED_AT, DOCUMENT_TYPE)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
 	cmd.Flags().StringVarP(&flagQuery, "query", "q", "", "Search query")

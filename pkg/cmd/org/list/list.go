@@ -76,6 +76,7 @@ type (
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagLimit  int
+		flagAfter  string
 		flagOutput *string
 	)
 
@@ -105,11 +106,12 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				},
 			}
 
-			profiles, totalCount, err := api.Paginate(
+			profiles, totalCount, nextCursor, err := api.Paginate(
 				client,
 				listQuery,
 				variables,
 				flagLimit,
+				flagAfter,
 				api.ViewerConnection[profile]("profiles"),
 			)
 			if err != nil {
@@ -122,9 +124,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				profiles,
 				totalCount,
 				cmdutil.ListView[profile]{
-					Empty:   "No organizations found.",
-					Noun:    "organizations",
-					Headers: []string{"ID", "NAME", "LEGAL NAME", "ROLE"},
+					Empty:      "No organizations found.",
+					Noun:       "organizations",
+					NextCursor: nextCursor,
+					Headers:    []string{"ID", "NAME", "LEGAL NAME", "ROLE"},
 					Row: func(p profile) ([]string, error) {
 						orgID := ""
 						orgName := ""
@@ -157,6 +160,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of organizations to list")
+	cmdutil.AddAfterFlag(cmd, &flagAfter)
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd

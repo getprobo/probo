@@ -62,6 +62,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagOrg      string
 		flagLimit    int
+		flagAfter    string
 		flagOrderBy  string
 		flagOrderDir string
 		flagOutput   *string
@@ -102,11 +103,12 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				}
 			}
 
-			frameworks, totalCount, err := api.Paginate(
+			frameworks, totalCount, nextCursor, err := api.Paginate(
 				client,
 				listQuery,
 				variables,
 				flagLimit,
+				flagAfter,
 				api.NodeConnection[framework]("frameworks", "Organization", fmt.Sprintf("organization %s not found", flagOrg)),
 			)
 			if err != nil {
@@ -119,9 +121,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				frameworks,
 				totalCount,
 				cmdutil.ListView[framework]{
-					Empty:   "No frameworks found.",
-					Noun:    "frameworks",
-					Headers: []string{"ID", "NAME", "DESCRIPTION"},
+					Empty:      "No frameworks found.",
+					Noun:       "frameworks",
+					NextCursor: nextCursor,
+					Headers:    []string{"ID", "NAME", "DESCRIPTION"},
 					Row: func(fw framework) ([]string, error) {
 						desc := ""
 						if fw.Description != nil {
@@ -141,6 +144,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 	cmdutil.AddOrganizationFlag(cmd, &flagOrg, "Organization ID")
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of frameworks to list")
+	cmdutil.AddAfterFlag(cmd, &flagAfter)
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
 	flagOutput = cmdutil.AddOutputFlag(cmd)

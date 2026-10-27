@@ -62,6 +62,7 @@ func NewCmdListLinearIssues(f *cmdutil.Factory) *cobra.Command {
 		flagTeamID string
 		flagQuery  string
 		flagLimit  int
+		flagAfter  string
 	)
 
 	cmd := &cobra.Command{
@@ -86,11 +87,12 @@ func NewCmdListLinearIssues(f *cmdutil.Factory) *cobra.Command {
 				variables["query"] = flagQuery
 			}
 
-			issues, _, err := api.Paginate(
+			issues, totalCount, nextCursor, err := api.Paginate(
 				client,
 				listQuery,
 				variables,
 				flagLimit,
+				flagAfter,
 				api.NodeConnection[linearIssue](
 					"linearIssues",
 					"Organization",
@@ -104,12 +106,16 @@ func NewCmdListLinearIssues(f *cmdutil.Factory) *cobra.Command {
 			if len(issues) == 0 {
 				_, _ = fmt.Fprintln(f.IOStreams.Out, "No Linear issues found.")
 
+				cmdutil.WritePageFooter(f.IOStreams, 0, totalCount, "issues", nextCursor)
+
 				return nil
 			}
 
 			for _, issue := range issues {
 				_, _ = fmt.Fprintf(f.IOStreams.Out, "%s\t%s\t%s\n", issue.ID, issue.Identifier, issue.Title)
 			}
+
+			cmdutil.WritePageFooter(f.IOStreams, len(issues), totalCount, "issues", nextCursor)
 
 			return nil
 		},
@@ -118,6 +124,7 @@ func NewCmdListLinearIssues(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagTeamID, "team-id", "", "Linear team ID")
 	cmd.Flags().StringVar(&flagQuery, "query", "", "Search issues in the team")
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of issues to list")
+	cmdutil.AddAfterFlag(cmd, &flagAfter)
 	_ = cmd.MarkFlagRequired("team-id")
 
 	return cmd

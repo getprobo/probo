@@ -118,11 +118,12 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			var viewed *connectorView
 
 			// Walk every page. Paginate stops at this limit, which is not a page size.
-			accounts, totalCount, err := api.Paginate(
+			accounts, totalCount, _, err := api.Paginate(
 				client,
 				viewQuery,
 				map[string]any{"id": args[0]},
 				math.MaxInt32,
+				"",
 				func(data json.RawMessage) (*api.Connection[account], error) {
 					var resp struct {
 						Node *struct {

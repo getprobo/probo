@@ -39,9 +39,10 @@ When this skill is not installed on disk, read a bundled reference with
    Pass the fields that change.
 8. Delete in non-interactive mode requires `--yes`. Without it, prb exits
    non-zero and deletes nothing.
-9. `--limit` / `-L` caps a list. A line on stderr of the form
-   `Showing N of M` means the list was truncated. Raise `--limit` or page
-   before concluding the set is complete.
+9. `--limit` / `-L` is how many rows to return. stderr prints
+   `Showing N of M` when more rows exist, and `Next cursor: <cursor>` when
+   another page exists. Repeat the same command and filters with
+   `--after <cursor>`. Do not treat one page as the full set.
 
 ## Organization
 

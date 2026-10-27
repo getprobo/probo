@@ -275,11 +275,12 @@ type frameworkOption struct {
 }
 
 func promptFrameworkIDs(client *api.Client, organizationID string) ([]string, error) {
-	frameworks, _, err := api.Paginate(
+	frameworks, _, _, err := api.Paginate(
 		client,
 		frameworksQuery,
 		map[string]any{"id": organizationID},
 		math.MaxInt32,
+		"",
 		func(data json.RawMessage) (*api.Connection[frameworkOption], error) {
 			var resp struct {
 				Node *struct {

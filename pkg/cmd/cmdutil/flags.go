@@ -117,6 +117,17 @@ func AddOrganizationFlag(cmd *cobra.Command, dest *string, usage string) {
 	cmd.Flags().SetNormalizeFunc(normalizeOrganizationFlag)
 }
 
+// AddAfterFlag registers --after. The value is the cursor printed as
+// "Next cursor" by the previous page of the same list.
+func AddAfterFlag(cmd *cobra.Command, dest *string) {
+	cmd.Flags().StringVar(
+		dest,
+		"after",
+		"",
+		"Cursor from the previous page (the Next cursor line)",
+	)
+}
+
 func normalizeOrganizationFlag(_ *pflag.FlagSet, name string) pflag.NormalizedName {
 	name = strings.ReplaceAll(name, "_", "-")
 	if name == "organization" {

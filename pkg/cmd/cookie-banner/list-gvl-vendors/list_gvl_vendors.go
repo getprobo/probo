@@ -63,6 +63,7 @@ type vendor struct {
 func NewCmdListGVLVendors(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagLimit  int
+		flagAfter  string
 		flagOutput *string
 	)
 
@@ -86,11 +87,12 @@ func NewCmdListGVLVendors(f *cmdutil.Factory) *cobra.Command {
 
 			variables := map[string]any{"id": args[0]}
 
-			vendors, totalCount, err := api.Paginate(
+			vendors, totalCount, nextCursor, err := api.Paginate(
 				client,
 				listQuery,
 				variables,
 				flagLimit,
+				flagAfter,
 				api.NodeConnection[vendor]("gvlVendors", "CookieBanner", fmt.Sprintf("cookie banner %s not found", args[0])),
 			)
 			if err != nil {
@@ -103,9 +105,10 @@ func NewCmdListGVLVendors(f *cmdutil.Factory) *cobra.Command {
 				vendors,
 				totalCount,
 				cmdutil.ListView[vendor]{
-					Empty:   "No GVL vendors selected on this cookie banner.",
-					Noun:    "GVL vendors",
-					Headers: []string{"IAB ID", "NAME", "POLICY URL"},
+					Empty:      "No GVL vendors selected on this cookie banner.",
+					Noun:       "GVL vendors",
+					NextCursor: nextCursor,
+					Headers:    []string{"IAB ID", "NAME", "POLICY URL"},
 					Row: func(v vendor) ([]string, error) {
 						policy := ""
 						if v.PolicyURL != nil {
@@ -120,6 +123,7 @@ func NewCmdListGVLVendors(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().IntVar(&flagLimit, "limit", 50, "Maximum number of vendors to return")
+	cmdutil.AddAfterFlag(cmd, &flagAfter)
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd

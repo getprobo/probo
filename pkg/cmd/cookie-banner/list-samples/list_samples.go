@@ -61,6 +61,7 @@ type sample struct {
 func NewCmdListSamples(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagLimit  int
+		flagAfter  string
 		flagOutput *string
 	)
 
@@ -81,11 +82,12 @@ func NewCmdListSamples(f *cmdutil.Factory) *cobra.Command {
 
 			variables := map[string]any{"id": args[0]}
 
-			samples, totalCount, err := api.Paginate(
+			samples, totalCount, nextCursor, err := api.Paginate(
 				client,
 				listSamplesQuery,
 				variables,
 				flagLimit,
+				flagAfter,
 				api.NodeConnectionOrMissing[sample]("samples", "CookieBanner", fmt.Sprintf("cookie banner %s not found", args[0])),
 			)
 			if err != nil {
@@ -98,9 +100,10 @@ func NewCmdListSamples(f *cmdutil.Factory) *cobra.Command {
 				samples,
 				totalCount,
 				cmdutil.ListView[sample]{
-					Empty:   "No cookie banner samples found.",
-					Noun:    "samples",
-					Headers: []string{"ID", "CREATED", "FROZEN"},
+					Empty:      "No cookie banner samples found.",
+					Noun:       "samples",
+					NextCursor: nextCursor,
+					Headers:    []string{"ID", "CREATED", "FROZEN"},
 					Row: func(s sample) ([]string, error) {
 						frozen := "open"
 						if s.FrozenAt != nil {
@@ -115,6 +118,7 @@ func NewCmdListSamples(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of items")
+	cmdutil.AddAfterFlag(cmd, &flagAfter)
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd

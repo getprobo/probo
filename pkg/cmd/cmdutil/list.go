@@ -29,16 +29,19 @@ import (
 // ListView describes how a list command prints one record type.
 // Empty is the full sentence written when the list is empty.
 // Noun is the plural name used in the truncation line.
+// NextCursor is printed when another page exists. An empty cursor is omitted.
 type ListView[T any] struct {
-	Empty   string
-	Noun    string
-	Headers []string
-	Row     func(T) ([]string, error)
+	Empty      string
+	Noun       string
+	Headers    []string
+	Row        func(T) ([]string, error)
+	NextCursor string
 }
 
 // PrintList writes items as JSON or as a table.
-// JSON null slices are printed as []. A total larger than len(items) writes
-// "Showing n of m <noun>" to stderr for both JSON and table output.
+// JSON null slices are printed as []. When the server total is larger than
+// the page, or a next cursor is set, stderr names the window and the cursor.
+// Stdout stays the JSON array or the table.
 func PrintList[T any](ios *iostreams.IOStreams, format string, items []T, total int, view ListView[T]) error {
 	if format == OutputJSON {
 		if items == nil {
@@ -49,13 +52,15 @@ func PrintList[T any](ios *iostreams.IOStreams, format string, items []T, total 
 			return err
 		}
 
-		writeListTruncation(ios, len(items), total, view.Noun)
+		WritePageFooter(ios, len(items), total, view.Noun, view.NextCursor)
 
 		return nil
 	}
 
 	if len(items) == 0 {
 		_, _ = fmt.Fprintln(ios.Out, view.Empty)
+
+		WritePageFooter(ios, 0, total, view.Noun, view.NextCursor)
 
 		return nil
 	}
@@ -73,13 +78,26 @@ func PrintList[T any](ios *iostreams.IOStreams, format string, items []T, total 
 
 	_, _ = fmt.Fprintln(ios.Out, NewTable(view.Headers...).Rows(rows...))
 
-	writeListTruncation(ios, len(items), total, view.Noun)
+	WritePageFooter(ios, len(items), total, view.Noun, view.NextCursor)
 
 	return nil
 }
 
-func writeListTruncation(ios *iostreams.IOStreams, shown, total int, noun string) {
+// WritePageFooter writes the truncation and next-cursor lines to stderr.
+// A leading blank line separates them from the list. Nothing is written
+// when the page is complete and nextCursor is empty.
+func WritePageFooter(ios *iostreams.IOStreams, shown, total int, noun, nextCursor string) {
+	if total <= shown && nextCursor == "" {
+		return
+	}
+
+	_, _ = fmt.Fprintln(ios.ErrOut)
+
 	if total > shown {
-		_, _ = fmt.Fprintf(ios.ErrOut, "\nShowing %d of %d %s\n", shown, total, noun)
+		_, _ = fmt.Fprintf(ios.ErrOut, "Showing %d of %d %s\n", shown, total, noun)
+	}
+
+	if nextCursor != "" {
+		_, _ = fmt.Fprintf(ios.ErrOut, "Next cursor: %s\n", nextCursor)
 	}
 }

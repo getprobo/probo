@@ -68,6 +68,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagOrg      string
 		flagLimit    int
+		flagAfter    string
 		flagOrderBy  string
 		flagOrderDir string
 		flagOutput   *string
@@ -113,11 +114,12 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				}
 			}
 
-			groups, totalCount, err := api.Paginate(
+			groups, totalCount, nextCursor, err := api.Paginate(
 				client,
 				listQuery,
 				variables,
 				flagLimit,
+				flagAfter,
 				api.NodeNestedConnection[commitmentGroup](
 					"trustCenter",
 					"commitmentGroups",
@@ -136,9 +138,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				groups,
 				totalCount,
 				cmdutil.ListView[commitmentGroup]{
-					Empty:   "No commitment groups found.",
-					Noun:    "commitment groups",
-					Headers: []string{"ID", "TITLE", "RANK"},
+					Empty:      "No commitment groups found.",
+					Noun:       "commitment groups",
+					NextCursor: nextCursor,
+					Headers:    []string{"ID", "TITLE", "RANK"},
 					Row: func(g commitmentGroup) ([]string, error) {
 						return []string{
 							g.ID,
@@ -153,6 +156,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 	cmdutil.AddOrganizationFlag(cmd, &flagOrg, "Organization ID")
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of commitment groups to list")
+	cmdutil.AddAfterFlag(cmd, &flagAfter)
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (RANK, CREATED_AT, UPDATED_AT)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
 	flagOutput = cmdutil.AddOutputFlag(cmd)

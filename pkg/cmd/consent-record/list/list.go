@@ -79,6 +79,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		flagVisitorID string
 		flagVersion   int
 		flagLimit     int
+		flagAfter     string
 		flagOutput    *string
 	)
 
@@ -116,11 +117,12 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				variables["filter"] = filter
 			}
 
-			records, totalCount, err := api.Paginate(
+			records, totalCount, nextCursor, err := api.Paginate(
 				client,
 				listQuery,
 				variables,
 				flagLimit,
+				flagAfter,
 				api.NodeConnection[consentRecord]("consentRecords", "CookieBanner", fmt.Sprintf("cookie banner %s not found", flagBannerID)),
 			)
 			if err != nil {
@@ -133,9 +135,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				records,
 				totalCount,
 				cmdutil.ListView[consentRecord]{
-					Empty:   "No consent records found.",
-					Noun:    "consent records",
-					Headers: []string{"ID", "VISITOR ID", "ACTION", "SDK VERSION", "REGULATION", "SOURCE", "COUNTRY", "SUBDIVISION", "ORIGIN", "CREATED AT"},
+					Empty:      "No consent records found.",
+					Noun:       "consent records",
+					NextCursor: nextCursor,
+					Headers:    []string{"ID", "VISITOR ID", "ACTION", "SDK VERSION", "REGULATION", "SOURCE", "COUNTRY", "SUBDIVISION", "ORIGIN", "CREATED AT"},
 					Row: func(r consentRecord) ([]string, error) {
 						regulation := "-"
 						if r.Regulation != nil {
@@ -175,6 +178,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagVisitorID, "visitor-id", "", "Filter by visitor ID")
 	cmd.Flags().IntVar(&flagVersion, "version", 0, "Filter by version")
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of items")
+	cmdutil.AddAfterFlag(cmd, &flagAfter)
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd

@@ -40,6 +40,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagOrg    string
 		flagLimit  int
+		flagAfter  string
 		flagOutput *string
 	)
 
@@ -59,6 +60,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 	cmdutil.AddOrganizationFlag(cmd, &flagOrg, "Organization ID")
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of items")
+	cmdutil.AddAfterFlag(cmd, &flagAfter)
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd
@@ -75,11 +77,12 @@ if err != nil {
 	return err
 }
 
-resources, totalCount, err := api.Paginate(
+resources, totalCount, nextCursor, err := api.Paginate(
 	client,
 	listQuery,
 	variables,
 	flagLimit,
+	flagAfter,
 	api.NodeConnection[resource](
 		"resources",
 		"Organization",
@@ -87,6 +90,8 @@ resources, totalCount, err := api.Paginate(
 	),
 )
 ```
+
+`flagAfter` is `--after`. An empty value starts at the first page. `api.Paginate` walks server pages until `flagLimit` items are collected or the connection ends, then returns the cursor for the following window. Pass that cursor back as `--after` with the same filters. The cursor is empty at the end of the connection. A server that returns more edges than `first` does not yield a cursor, because `endCursor` would skip the edges that were left off the page.
 
 `api.NodeConnection` reads `data.node.<field>`. A null node returns the not-found string. A different `__typename` returns `expected <type> node, got <actual>`. `api.Paginate` wraps that error as `cannot parse response`.
 
@@ -104,7 +109,7 @@ Use the variant that matches the response:
 
 **JSON output:** `--json` is shorthand for `--output json` / `-o json`. Do not combine `--json` with a different `--output` value.
 
-**List output:** `PrintList` writes JSON (a null slice becomes `[]`), the empty sentence, the table, and `Showing n of m <noun>` on stderr when the server total is larger than the page. The truncation line is written for both JSON and table output so agents still see a truncated page. `Empty` and `Noun` can differ (`No access review campaigns found.` vs `campaigns`).
+**List output:** `PrintList` writes JSON (a null slice becomes `[]`), the empty sentence, or the table. Stdout stays that payload. When the server total is larger than the page, stderr adds `Showing n of m <noun>`. When `NextCursor` is set, stderr adds `Next cursor: <cursor>`. Both lines are written for JSON and table output, including an empty page, so an agent can continue with `--after`. `Empty` and `Noun` can differ (`No access review campaigns found.` vs `campaigns`). Lists that print their own rows, such as the Linear TSV commands, call `WritePageFooter` with the same noun.
 
 ```go
 return cmdutil.PrintList(
@@ -113,9 +118,10 @@ return cmdutil.PrintList(
 	resources,
 	totalCount,
 	cmdutil.ListView[resource]{
-		Empty:   "No resources found.",
-		Noun:    "resources",
-		Headers: []string{"ID", "NAME"},
+		Empty:      "No resources found.",
+		Noun:       "resources",
+		NextCursor: nextCursor,
+		Headers:    []string{"ID", "NAME"},
 		Row: func(r resource) ([]string, error) {
 			return []string{r.ID, r.Name}, nil
 		},

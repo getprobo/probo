@@ -159,6 +159,7 @@ type entryNode struct {
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagLimit            int
+		flagAfter            string
 		flagOrderBy          string
 		flagOrderDir         string
 		flagCampaignSourceID string
@@ -303,11 +304,12 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				notFoundLabel = "campaign source"
 			}
 
-			entries, totalCount, err := api.Paginate(
+			entries, totalCount, nextCursor, err := api.Paginate(
 				client,
 				query,
 				variables,
 				flagLimit,
+				flagAfter,
 				api.NodeConnection[entryNode](
 					"entries",
 					expectedTypename,
@@ -324,9 +326,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				entries,
 				totalCount,
 				cmdutil.ListView[entryNode]{
-					Empty:   "No access entries found.",
-					Noun:    "entries",
-					Headers: []string{"ID", "EMAIL", "NAME", "SOURCE", "DECISION", "FLAGS", "ADMIN", "ACTIVE"},
+					Empty:      "No access entries found.",
+					Noun:       "entries",
+					NextCursor: nextCursor,
+					Headers:    []string{"ID", "EMAIL", "NAME", "SOURCE", "DECISION", "FLAGS", "ADMIN", "ACTIVE"},
 					Row: func(e entryNode) ([]string, error) {
 						admin := "unknown"
 
@@ -365,6 +368,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of entries to list")
+	cmdutil.AddAfterFlag(cmd, &flagAfter)
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
 	cmd.Flags().StringVar(&flagCampaignSourceID, "source-id", "", "Campaign source ID to list entries for")
