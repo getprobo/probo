@@ -128,6 +128,31 @@ func AddAfterFlag(cmd *cobra.Command, dest *string) {
 	)
 }
 
+// AddOrderDirectionFlag registers --order-direction. value is the default,
+// ASC or DESC. The flag is checked before RunE, including when --order-by
+// is omitted, so a bad direction is not silently dropped.
+func AddOrderDirectionFlag(cmd *cobra.Command, dest *string, value string) {
+	cmd.Flags().StringVar(
+		dest,
+		"order-direction",
+		value,
+		"Sort direction (ASC, DESC)",
+	)
+
+	previous := cmd.PreRunE
+	cmd.PreRunE = func(cmd *cobra.Command, args []string) error {
+		if err := ValidateOrderDirection(*dest); err != nil {
+			return err
+		}
+
+		if previous != nil {
+			return previous(cmd, args)
+		}
+
+		return nil
+	}
+}
+
 func normalizeOrganizationFlag(_ *pflag.FlagSet, name string) pflag.NormalizedName {
 	name = strings.ReplaceAll(name, "_", "-")
 	if name == "organization" {
@@ -152,6 +177,11 @@ func ValidateOutputFlag(value *string) error {
 			*value,
 		)
 	}
+}
+
+// ValidateOrderDirection checks that value is ASC or DESC.
+func ValidateOrderDirection(value string) error {
+	return ValidateEnum("order-direction", value, []string{"ASC", "DESC"})
 }
 
 // ValidateEnum checks that value is one of the allowed values. It returns a
