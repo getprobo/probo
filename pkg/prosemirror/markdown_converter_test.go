@@ -461,6 +461,21 @@ func TestParseMarkdown_OrderedList(t *testing.T) {
 	require.Len(t, list.Content, 3)
 }
 
+func TestParseMarkdown_OrderedListStartingAtZero(t *testing.T) {
+	t.Parallel()
+
+	doc, err := ParseMarkdown("0. first\n1. second\n")
+	require.NoError(t, err)
+	require.Len(t, doc.Content, 1)
+
+	list := doc.Content[0]
+	assert.Equal(t, NodeOrderedList, list.Type)
+
+	attrs, err := list.OrderedListAttrs()
+	require.NoError(t, err)
+	assert.Equal(t, 0, attrs.Start)
+}
+
 func TestParseMarkdown_NestedList(t *testing.T) {
 	t.Parallel()
 
@@ -714,4 +729,117 @@ A paragraph with **bold**, *italic*, and ` + "`code`" + `.
 	require.NoError(t, err)
 	assert.Equal(t, NodeDoc, parsed.Type)
 	assert.True(t, len(parsed.Content) > 0)
+}
+
+func TestParseMarkdown_TaskList(t *testing.T) {
+	t.Parallel()
+
+	doc, err := ParseMarkdown("- [ ] open\n- [x] done\n- [X] also\n")
+	require.NoError(t, err)
+	require.NoError(t, validateDocument(doc))
+	require.Len(t, doc.Content, 1)
+
+	list := doc.Content[0]
+	assert.Equal(t, NodeTaskList, list.Type)
+	require.Len(t, list.Content, 3)
+
+	for i, want := range []bool{false, true, true} {
+		item := list.Content[i]
+		assert.Equal(t, NodeTaskItem, item.Type)
+
+		attrs, err := item.TaskItemAttrs()
+		require.NoError(t, err)
+		assert.Equal(t, want, attrs.Checked)
+		require.Len(t, item.Content, 1)
+		assert.Equal(t, NodeParagraph, item.Content[0].Type)
+	}
+
+	rendered, err := RenderMarkdown(doc)
+	require.NoError(t, err)
+	assert.Equal(t, "- [ ] open\n- [x] done\n- [x] also\n", rendered)
+}
+
+func TestParseMarkdown_TaskListWithMark(t *testing.T) {
+	t.Parallel()
+
+	doc, err := ParseMarkdown("- [ ] **bold** item")
+	require.NoError(t, err)
+	require.NoError(t, validateDocument(doc))
+	require.Len(t, doc.Content, 1)
+	require.Len(t, doc.Content[0].Content, 1)
+
+	paragraph := doc.Content[0].Content[0].Content[0]
+	require.GreaterOrEqual(t, len(paragraph.Content), 1)
+	assert.Equal(t, "bold", *paragraph.Content[0].Text)
+	require.Len(t, paragraph.Content[0].Marks, 1)
+	assert.Equal(t, MarkStrong, paragraph.Content[0].Marks[0].Type)
+}
+
+func TestParseMarkdown_NestedTaskList(t *testing.T) {
+	t.Parallel()
+
+	doc, err := ParseMarkdown("- [ ] parent\n  - [x] child\n")
+	require.NoError(t, err)
+	require.NoError(t, validateDocument(doc))
+	require.Len(t, doc.Content, 1)
+
+	parent := doc.Content[0].Content[0]
+	assert.Equal(t, NodeTaskItem, parent.Type)
+	require.Len(t, parent.Content, 2)
+	assert.Equal(t, NodeTaskList, parent.Content[1].Type)
+
+	child := parent.Content[1].Content[0]
+	attrs, err := child.TaskItemAttrs()
+	require.NoError(t, err)
+	assert.True(t, attrs.Checked)
+}
+
+func TestParseMarkdown_MixedTaskList(t *testing.T) {
+	t.Parallel()
+
+	doc, err := ParseMarkdown("- plain\n- [ ] task\n- after\n")
+	require.NoError(t, err)
+	require.NoError(t, validateDocument(doc))
+	require.Len(t, doc.Content, 3)
+	assert.Equal(t, NodeBulletList, doc.Content[0].Type)
+	assert.Equal(t, NodeTaskList, doc.Content[1].Type)
+	assert.Equal(t, NodeBulletList, doc.Content[2].Type)
+
+	rendered, err := RenderMarkdown(doc)
+	require.NoError(t, err)
+	assert.Equal(t, "- plain\n\n- [ ] task\n\n- after\n", rendered)
+}
+
+func TestParseMarkdown_OrderedTaskList(t *testing.T) {
+	t.Parallel()
+
+	doc, err := ParseMarkdown("1. [ ] first\n2. [x] second\n")
+	require.NoError(t, err)
+	require.NoError(t, validateDocument(doc))
+	require.Len(t, doc.Content, 1)
+	assert.Equal(t, NodeTaskList, doc.Content[0].Type)
+	require.Len(t, doc.Content[0].Content, 2)
+}
+
+func TestParseMarkdown_TaskListHTML(t *testing.T) {
+	t.Parallel()
+
+	doc, err := ParseMarkdown("<ul><li><input type=\"checkbox\"> open</li><li><input checked type=\"checkbox\"> done</li></ul>\n")
+	require.NoError(t, err)
+	require.NoError(t, validateDocument(doc))
+	require.Len(t, doc.Content, 1)
+	assert.Equal(t, NodeTaskList, doc.Content[0].Type)
+	require.Len(t, doc.Content[0].Content, 2)
+
+	open, err := doc.Content[0].Content[0].TaskItemAttrs()
+	require.NoError(t, err)
+	assert.False(t, open.Checked)
+
+	done, err := doc.Content[0].Content[1].TaskItemAttrs()
+	require.NoError(t, err)
+	assert.True(t, done.Checked)
+	require.NotNil(t, doc.Content[0].Content[0].Content[0].Content[0].Text)
+	assert.Equal(t, "open", *doc.Content[0].Content[0].Content[0].Content[0].Text)
+	require.NotNil(t, doc.Content[0].Content[1].Content[0].Content[0].Text)
+	assert.Equal(t, "done", *doc.Content[0].Content[1].Content[0].Content[0].Text)
 }

@@ -152,6 +152,117 @@ func TestParseMarkdown_BlockHTMLListAndBlockquote(t *testing.T) {
 	assert.Equal(t, NodeBlockquote, doc.Content[1].Type)
 }
 
+func TestParseMarkdown_BlockHTMLCheckboxTypeMustMatchExactly(t *testing.T) {
+	t.Parallel()
+
+	doc, err := ParseMarkdown(`<ul><li><input type="checkbox-custom"> not a task</li></ul>` + "\n")
+	require.NoError(t, err)
+	require.NoError(t, validateDocument(doc))
+	require.Len(t, doc.Content, 1)
+	require.Equal(t, NodeBulletList, doc.Content[0].Type)
+	require.Len(t, doc.Content[0].Content, 1)
+
+	item := doc.Content[0].Content[0]
+	assert.Equal(t, NodeListItem, item.Type)
+	require.Len(t, item.Content, 1)
+	require.Len(t, item.Content[0].Content, 1)
+	assert.Equal(t, " not a task", *item.Content[0].Content[0].Text)
+}
+
+func TestParseMarkdown_BlockHTMLCheckboxOnlyTaskItem(t *testing.T) {
+	t.Parallel()
+
+	doc, err := ParseMarkdown(`<ul><li><input type="checkbox" checked></li></ul>` + "\n")
+	require.NoError(t, err)
+	require.NoError(t, validateDocument(doc))
+	require.Len(t, doc.Content, 1)
+	require.Equal(t, NodeTaskList, doc.Content[0].Type)
+	require.Len(t, doc.Content[0].Content, 1)
+
+	item := doc.Content[0].Content[0]
+	assert.Equal(t, NodeTaskItem, item.Type)
+	attrs, err := item.TaskItemAttrs()
+	require.NoError(t, err)
+	assert.True(t, attrs.Checked)
+	require.Len(t, item.Content, 1)
+	assert.Equal(t, NodeParagraph, item.Content[0].Type)
+	assert.Empty(t, item.Content[0].Content)
+}
+
+func TestParseMarkdown_BlockHTMLOutOfOrderListWithEmptyItem(t *testing.T) {
+	t.Parallel()
+
+	doc, err := ParseMarkdown(`<ol><li><input type="checkbox"> task</li><li></li><li>plain</li></ol>` + "\n")
+	require.NoError(t, err)
+	require.NoError(t, validateDocument(doc))
+	require.Len(t, doc.Content, 2)
+	assert.Equal(t, NodeTaskList, doc.Content[0].Type)
+
+	list := doc.Content[1]
+	assert.Equal(t, NodeOrderedList, list.Type)
+	require.Len(t, list.Content, 1)
+
+	attrs, err := list.OrderedListAttrs()
+	require.NoError(t, err)
+	assert.Equal(t, 3, attrs.Start)
+}
+
+func TestParseMarkdown_BlockHTMLOrderedListKeepsExplicitStart(t *testing.T) {
+	t.Parallel()
+
+	doc, err := ParseMarkdown(`<ol start="5"><li>five</li></ol>` + "\n")
+	require.NoError(t, err)
+	require.NoError(t, validateDocument(doc))
+	require.Len(t, doc.Content, 1)
+	assert.Equal(t, NodeOrderedList, doc.Content[0].Type)
+
+	attrs, err := doc.Content[0].OrderedListAttrs()
+	require.NoError(t, err)
+	assert.Equal(t, 5, attrs.Start)
+}
+
+func TestParseMarkdown_BlockHTMLOrderedListStartingAtZero(t *testing.T) {
+	t.Parallel()
+
+	doc, err := ParseMarkdown(`<ol start="0"><li>zero</li><li><input type="checkbox"> task</li><li>two</li></ol>` + "\n")
+	require.NoError(t, err)
+	require.NoError(t, validateDocument(doc))
+	require.Len(t, doc.Content, 3)
+
+	first := doc.Content[0]
+	assert.Equal(t, NodeOrderedList, first.Type)
+	firstAttrs, err := first.OrderedListAttrs()
+	require.NoError(t, err)
+	assert.Equal(t, 0, firstAttrs.Start)
+
+	assert.Equal(t, NodeTaskList, doc.Content[1].Type)
+
+	third := doc.Content[2]
+	assert.Equal(t, NodeOrderedList, third.Type)
+	thirdAttrs, err := third.OrderedListAttrs()
+	require.NoError(t, err)
+	assert.Equal(t, 2, thirdAttrs.Start)
+}
+
+func TestParseMarkdown_BlockHTMLOutOfOrderListSplitsPlainNumberingGap(t *testing.T) {
+	t.Parallel()
+
+	doc, err := ParseMarkdown("<ol><li>one</li><li></li><li>three</li></ol>\n")
+	require.NoError(t, err)
+	require.NoError(t, validateDocument(doc))
+	require.Len(t, doc.Content, 2)
+
+	for i, want := range []int{1, 3} {
+		list := doc.Content[i]
+		assert.Equal(t, NodeOrderedList, list.Type)
+		require.Len(t, list.Content, 1)
+
+		attrs, attrErr := list.OrderedListAttrs()
+		require.NoError(t, attrErr)
+		assert.Equal(t, want, attrs.Start)
+	}
+}
+
 func TestParseMarkdown_BlockHTMLImagesInQuoteAndCell(t *testing.T) {
 	t.Parallel()
 

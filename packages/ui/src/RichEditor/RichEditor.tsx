@@ -27,7 +27,7 @@ import { HardBreak } from "@tiptap/extension-hard-break";
 import { Heading } from "@tiptap/extension-heading";
 import { HorizontalRule } from "@tiptap/extension-horizontal-rule";
 import { Italic } from "@tiptap/extension-italic";
-import { BulletList, ListItem, ListKeymap, OrderedList } from "@tiptap/extension-list";
+import { BulletList, ListItem, ListKeymap, OrderedList, TaskItem, TaskList } from "@tiptap/extension-list";
 import { Paragraph } from "@tiptap/extension-paragraph";
 import { Strike } from "@tiptap/extension-strike";
 import { TableKit } from "@tiptap/extension-table";
@@ -65,6 +65,7 @@ import { TableCellMenu } from "./TableCellMenu/TableCellMenu";
 import { TableColumnMenu } from "./TableColumnMenu/TableColumnMenu";
 import { TableRowMenu } from "./TableRowMenu/TableRowMenu";
 import { TableSelectionOverlay } from "./TableSelectionOverlay";
+import { TaskItemFocusExtension } from "./TaskItemFocusExtension";
 import {
   type AttachmentUploadError,
   type UploadAttachment,
@@ -93,6 +94,9 @@ const coreExtensions = [
   BulletList,
   OrderedList,
   ListItem,
+  TaskList,
+  TaskItem.configure({ nested: true }),
+  TaskItemFocusExtension,
   ListKeymap,
   HorizontalRule,
   HardBreak,
@@ -168,6 +172,7 @@ function withoutContentUploads(node: JSONContent): JSONContent {
   const needsBlock = node.type === "doc"
     || node.type === "blockquote"
     || node.type === "listItem"
+    || node.type === "taskItem"
     || node.type === "tableCell"
     || node.type === "tableHeader";
 

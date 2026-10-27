@@ -96,6 +96,21 @@ func TestValidateDocumentContentJSON_Schema(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name:    "valid task list",
+			in:      `{"type":"doc","content":[{"type":"taskList","content":[{"type":"taskItem","attrs":{"checked":false},"content":[{"type":"paragraph","content":[{"type":"text","text":"open"}]}]},{"type":"taskItem","attrs":{"checked":true},"content":[{"type":"paragraph","content":[{"type":"text","text":"done"}]}]}]}]}`,
+			wantErr: false,
+		},
+		{
+			name:    "task item in bullet list",
+			in:      `{"type":"doc","content":[{"type":"bulletList","content":[{"type":"taskItem","attrs":{"checked":false},"content":[{"type":"paragraph"}]}]}]}`,
+			wantErr: true,
+		},
+		{
+			name:    "task item checked is not a bool",
+			in:      `{"type":"doc","content":[{"type":"taskList","content":[{"type":"taskItem","attrs":{"checked":"yes"},"content":[{"type":"paragraph"}]}]}]}`,
+			wantErr: true,
+		},
+		{
 			name:    "valid table",
 			in:      `{"type":"doc","content":[{"type":"table","content":[{"type":"tableRow","content":[{"type":"tableCell","content":[{"type":"paragraph"}]}]}]}]}`,
 			wantErr: false,

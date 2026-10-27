@@ -753,6 +753,89 @@ describe("RichEditor collaboration", () => {
     expect(laterRemote.child(3).textContent).toBe("Later");
   });
 
+  it("synchronizes text typed into a newly inserted task item", () => {
+    let document = createRichEditorAutomergeDocument(
+      JSON.stringify({
+        type: "doc",
+        content: [
+          {
+            type: "paragraph",
+            content: [{ type: "text", text: "Before" }],
+          },
+        ],
+      }),
+    );
+    const targetSchema = getSchema(richEditorCollaborationExtensions);
+    const adapter = createSchemaAdapter(
+      richEditorCollaborationExtensions,
+      targetSchema,
+    );
+    const handle: DocHandle<RichEditorAutomergeDocument> = {
+      doc: () => document,
+      change: (change) => {
+        document = Automerge.change(document, change);
+      },
+      on: () => {},
+      off: () => {},
+    };
+    const initialAdapter = createSchemaAdapter(
+      richEditorCollaborationExtensions,
+    );
+    const pmDocument = targetSchema.nodeFromJSON(
+      pmDocFromSpans(
+        initialAdapter,
+        Automerge.spans(document, ["body"]),
+      ).toJSON(),
+    );
+    let state = EditorState.create({
+      schema: targetSchema,
+      doc: pmDocument,
+      plugins: [
+        explicitBlockIdentityPlugin(),
+        createAutomergeSyncPlugin(adapter, handle, ["body"]),
+      ],
+    });
+    const taskItem = targetSchema.nodes.taskItem.create(
+      { checked: false },
+      targetSchema.nodes.paragraph.create(),
+    );
+    const taskList = targetSchema.nodes.taskList.create(null, taskItem);
+    state = state.applyTransaction(
+      state.tr.insert(state.doc.content.size, taskList),
+    ).state;
+    expect(state.doc.lastChild?.firstChild?.attrs.isAmgBlock).toBe(true);
+
+    let taskItemPosition = -1;
+    state.doc.descendants((node, position) => {
+      if (node.type.name === "taskItem") taskItemPosition = position;
+      return taskItemPosition === -1;
+    });
+    expect(taskItemPosition).toBeGreaterThanOrEqual(0);
+
+    let insertionError: unknown;
+    try {
+      state.applyTransaction(
+        state.tr.insertText("Buy milk", taskItemPosition + 2),
+      );
+    } catch (error) {
+      insertionError = error;
+    }
+    expect(insertionError).toBeUndefined();
+
+    const spans = Automerge.spans(document, ["body"]);
+    expect(
+      spans
+        .filter(span => span.type === "block")
+        .map(span => automergeString(span.value.type)),
+    ).toEqual(["paragraph", "task-list-item"]);
+    expect(
+      spans
+        .filter(span => span.type === "text")
+        .map(span => span.value)
+        .join(""),
+    ).toBe("BeforeBuy milk");
+  });
+
   it("reconciles remote text between empty structural blocks", () => {
     const adapter = createSchemaAdapter(richEditorCollaborationExtensions);
     let document = createRichEditorAutomergeDocument(
@@ -857,6 +940,73 @@ describe("RichEditor collaboration", () => {
       type: "codeBlock",
       attrs: { language: "mermaid" },
     });
+  });
+
+  it("preserves task list checked state", () => {
+    const content = JSON.stringify({
+      type: "doc",
+      content: [{
+        type: "taskList",
+        content: [
+          {
+            type: "taskItem",
+            attrs: { checked: false },
+            content: [{
+              type: "paragraph",
+              content: [{ type: "text", text: "open" }],
+            }],
+          },
+          {
+            type: "taskItem",
+            attrs: { checked: true },
+            content: [{
+              type: "paragraph",
+              content: [{ type: "text", text: "done" }],
+            }],
+          },
+        ],
+      }],
+    });
+
+    expect(supportsRichEditorCollaboration(content)).toBe(true);
+
+    const document = createRichEditorAutomergeDocument(content);
+    const blocks = Automerge.spans(document, ["body"])
+      .filter(span => span.type === "block");
+
+    expect(blocks.map(span => automergeString(span.value.type))).toEqual([
+      "task-list-item",
+      "task-list-item",
+    ]);
+    expect(blocks.map(span => span.value.attrs)).toEqual([
+      { checked: false },
+      { checked: true },
+    ]);
+
+    const handle: DocHandle<RichEditorAutomergeDocument> = {
+      doc: () => document,
+      change: () => {},
+      on: () => {},
+      off: () => {},
+    };
+    const roundTrip = richEditorAutomergeContent(
+      handle,
+      richEditorCollaborationExtensions,
+    ) as {
+      content: Array<{
+        type: string;
+        content: Array<{
+          type: string;
+          attrs: { checked: boolean };
+        }>;
+      }>;
+    };
+
+    expect(roundTrip.content[0]?.type).toBe("taskList");
+    expect(roundTrip.content[0]?.content.map(item => item.attrs.checked)).toEqual([
+      false,
+      true,
+    ]);
   });
 });
 

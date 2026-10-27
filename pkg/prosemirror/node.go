@@ -64,6 +64,11 @@ type (
 		Type  *string `json:"type"`
 	}
 
+	// TaskItemAttrs contains attributes for task item nodes.
+	TaskItemAttrs struct {
+		Checked bool `json:"checked"`
+	}
+
 	// ImageAttrs contains attributes for image nodes.
 	// FileID is set for an uploaded image. Src is set for a remote image.
 	// Width is the display width as a percentage of the column.
@@ -124,6 +129,8 @@ const (
 	NodeBulletList     NodeType = "bulletList"
 	NodeOrderedList    NodeType = "orderedList"
 	NodeListItem       NodeType = "listItem"
+	NodeTaskList       NodeType = "taskList"
+	NodeTaskItem       NodeType = "taskItem"
 	NodeTable          NodeType = "table"
 	NodeTableRow       NodeType = "tableRow"
 	NodeTableCell      NodeType = "tableCell"
@@ -174,6 +181,21 @@ func (n Node) CodeBlockAttrs() (CodeBlockAttrs, error) {
 	var a CodeBlockAttrs
 	if err := json.Unmarshal(n.Attrs, &a); err != nil {
 		return a, fmt.Errorf("cannot parse code block attrs: %w", err)
+	}
+
+	return a, nil
+}
+
+// TaskItemAttrs parses and returns the task item attributes.
+// A missing checked attribute means the item is unchecked.
+func (n Node) TaskItemAttrs() (TaskItemAttrs, error) {
+	var a TaskItemAttrs
+	if len(n.Attrs) == 0 {
+		return a, nil
+	}
+
+	if err := json.Unmarshal(n.Attrs, &a); err != nil {
+		return a, fmt.Errorf("cannot parse task item attrs: %w", err)
 	}
 
 	return a, nil

@@ -48,6 +48,7 @@ var (
 		{Automerge: blockTypeBlockquote, ProseMirror: "blockquote"},
 		{Automerge: blockTypeOrderedListItem, ProseMirror: "listItem"},
 		{Automerge: blockTypeUnorderedListItem, ProseMirror: "listItem"},
+		{Automerge: blockTypeTaskListItem, ProseMirror: "taskItem"},
 		{Automerge: blockTypeHorizontalRule, ProseMirror: "horizontalRule"},
 		{Automerge: blockTypeImage, ProseMirror: "image"},
 		{Automerge: blockTypeFile, ProseMirror: "file"},
@@ -119,6 +120,7 @@ const (
 	blockTypeTableCell         = "table-cell"
 	blockTypeTableHeader       = "table-header"
 	blockTypeTableRow          = "table-row"
+	blockTypeTaskListItem      = "task-list-item"
 	blockTypeUnorderedListItem = "unordered-list-item"
 )
 
@@ -470,6 +472,16 @@ func renderBlock(source block, children []node) ([]node, string) {
 			Type:    blockNodeNames[blockTypeUnorderedListItem],
 			Content: append([]node{paragraph}, children...),
 		}}, "bulletList"
+	case blockTypeTaskListItem:
+		paragraph := node{Type: blockNodeNames[blockTypeParagraph], Content: source.Content}
+
+		return []node{{
+			Type: blockNodeNames[blockTypeTaskListItem],
+			Attrs: map[string]any{
+				"checked": boolAttribute(source.Attrs, "checked"),
+			},
+			Content: append([]node{paragraph}, children...),
+		}}, "taskList"
 	case blockTypeTable:
 		rows, spills := partitionNodes(children, blockNodeNames[blockTypeTableRow])
 		rendered := make([]node, 0, 2+len(spills))
@@ -632,6 +644,15 @@ func tolerantStringSlice(value any) []string {
 	}
 
 	return result
+}
+
+func boolAttribute(attrs map[string]any, name string) bool {
+	value, ok := attrs[name].(bool)
+	if !ok {
+		return false
+	}
+
+	return value
 }
 
 func intAttribute(attrs map[string]any, name string, fallback int) int {

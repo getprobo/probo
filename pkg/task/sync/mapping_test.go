@@ -318,6 +318,51 @@ func imageFileID(t *testing.T, content string) string {
 	return *attrs.FileID
 }
 
+func TestMarkdownToContent_KeepsTaskLists(t *testing.T) {
+	t.Parallel()
+
+	markdown := "- [ ] open\n- [x] done\n"
+	content, err := MarkdownToContent(markdown)
+	require.NoError(t, err)
+
+	doc, err := prosemirror.Parse(content)
+	require.NoError(t, err)
+	require.Len(t, doc.Content, 1)
+	assert.Equal(t, prosemirror.NodeTaskList, doc.Content[0].Type)
+	require.Len(t, doc.Content[0].Content, 2)
+
+	open, err := doc.Content[0].Content[0].TaskItemAttrs()
+	require.NoError(t, err)
+	assert.False(t, open.Checked)
+
+	done, err := doc.Content[0].Content[1].TaskItemAttrs()
+	require.NoError(t, err)
+	assert.True(t, done.Checked)
+
+	rendered, err := ContentToMarkdown(content)
+	require.NoError(t, err)
+	assert.Equal(t, markdown, rendered)
+
+	nested, err := MarkdownToContent("- [ ] parent\n  - [x] child\n")
+	require.NoError(t, err)
+
+	nestedDoc, err := prosemirror.Parse(nested)
+	require.NoError(t, err)
+	require.Len(t, nestedDoc.Content, 1)
+	parent := nestedDoc.Content[0].Content[0]
+	assert.Equal(t, prosemirror.NodeTaskItem, parent.Type)
+	require.Len(t, parent.Content, 2)
+	assert.Equal(t, prosemirror.NodeTaskList, parent.Content[1].Type)
+
+	parentAttrs, err := parent.TaskItemAttrs()
+	require.NoError(t, err)
+	assert.False(t, parentAttrs.Checked)
+
+	child, err := parent.Content[1].Content[0].TaskItemAttrs()
+	require.NoError(t, err)
+	assert.True(t, child.Checked)
+}
+
 func TestMarkdownRoundTrip(t *testing.T) {
 	t.Parallel()
 

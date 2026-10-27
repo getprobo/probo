@@ -107,18 +107,25 @@ func init() {
 
 func emitBlock(spans []automerge.SpanInput, n pmNode, parents []string) []automerge.SpanInput {
 	switch n.Type {
-	case "bulletList", "orderedList":
+	case "bulletList", "orderedList", "taskList":
 		itemType := blockTypeUnorderedListItem
+		itemName := "listItem"
+
 		if n.Type == "orderedList" {
 			itemType = blockTypeOrderedListItem
 		}
 
+		if n.Type == "taskList" {
+			itemType = blockTypeTaskListItem
+			itemName = "taskItem"
+		}
+
 		for _, item := range n.Content {
-			if item.Type != "listItem" {
+			if item.Type != itemName {
 				continue
 			}
 
-			spans = append(spans, blockSpan(itemType, parents, nil))
+			spans = append(spans, blockSpan(itemType, parents, blockAttributes(itemType, item.Attrs)))
 			// A list item always renders exactly one leading paragraph from its
 			// own content, so its first paragraph is always folded in.
 			spans = emitContainerChildren(spans, item.Content, childPath(parents, itemType), true)
@@ -306,6 +313,8 @@ func blockAttributes(blockType string, attrs map[string]any) map[string]any {
 		return attachmentAttributes(attrs, "fileId", "src", "alt", "title", "width")
 	case blockTypeFile:
 		return attachmentAttributes(attrs, "fileId", "fileName", "mimeType", "size")
+	case blockTypeTaskListItem:
+		return map[string]any{"checked": boolAttribute(attrs, "checked")}
 	case blockTypeTableCell, blockTypeTableHeader:
 		cellAttrs := map[string]any{
 			"colspan": intAttribute(attrs, "colspan", 1),

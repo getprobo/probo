@@ -42,6 +42,7 @@ func ParseMarkdown(markdown string) (Node, error) {
 		goldmark.WithExtensions(
 			goldmarkext.Strikethrough,
 			goldmarkext.Table,
+			goldmarkext.TaskList,
 		),
 		goldmark.WithParserOptions(parser.WithAutoHeadingID()),
 	)
@@ -214,6 +215,8 @@ func (c *converter) convertNode(n ast.Node) ([]Node, error) {
 			return c.convertTableDataRow(n)
 		case goldmarkast.KindTableCell:
 			return nil, fmt.Errorf("cannot convert table cell outside of a table row")
+		case goldmarkast.KindTaskCheckBox:
+			return nil, nil
 		}
 
 		return nil, fmt.Errorf("cannot convert markdown node of kind %s", n.Kind())
@@ -323,40 +326,126 @@ func (c *converter) convertCodeBlock(n *ast.CodeBlock) ([]Node, error) {
 }
 
 func (c *converter) convertList(n *ast.List) ([]Node, error) {
-	children, err := c.convertChildren(n)
+	items, err := c.markdownListItems(n)
 	if err != nil {
 		return nil, err
 	}
 
+	groups := consecutiveGroups(items, func(item Node) bool {
+		return item.Type == NodeTaskItem
+	})
+	if len(groups) == 0 {
+		return wrapPlainList(n, nil, 0)
+	}
+
+	return markdownListsForGroups(n, groups)
+}
+
+func (c *converter) markdownListItems(n *ast.List) ([]Node, error) {
+	var items []Node
+
+	for child := n.FirstChild(); child != nil; child = child.NextSibling() {
+		if child.Kind() != ast.KindListItem {
+			continue
+		}
+
+		converted, err := c.convertListItem(child)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, converted...)
+	}
+
+	return items, nil
+}
+
+func markdownListsForGroups(n *ast.List, groups [][]Node) ([]Node, error) {
+	var nodes []Node
+
+	consumed := 0
+
+	for _, group := range groups {
+		if group[0].Type == NodeTaskItem {
+			nodes = append(nodes, Node{Type: NodeTaskList, Content: group})
+
+			consumed += len(group)
+
+			continue
+		}
+
+		plain, err := wrapPlainList(n, group, consumed)
+		if err != nil {
+			return nil, err
+		}
+
+		nodes = append(nodes, plain...)
+		consumed += len(group)
+	}
+
+	return nodes, nil
+}
+
+func wrapPlainList(n *ast.List, items []Node, consumed int) ([]Node, error) {
 	if n.IsOrdered() {
-		attrs, err := json.Marshal(OrderedListAttrs{Start: n.Start})
+		attrs, err := json.Marshal(OrderedListAttrs{Start: n.Start + consumed})
 		if err != nil {
 			return nil, fmt.Errorf("cannot marshal ordered list attrs: %w", err)
 		}
 
 		return []Node{{
 			Type:    NodeOrderedList,
-			Content: children,
+			Content: items,
 			Attrs:   attrs,
 		}}, nil
 	}
 
 	return []Node{{
 		Type:    NodeBulletList,
-		Content: children,
+		Content: items,
 	}}, nil
 }
 
+func listItemTask(item ast.Node) (bool, bool) {
+	first := item.FirstChild()
+	if first == nil {
+		return false, false
+	}
+
+	box, ok := first.FirstChild().(*goldmarkast.TaskCheckBox)
+	if !ok || box == nil {
+		return false, false
+	}
+
+	return box.IsChecked, true
+}
+
 func (c *converter) convertListItem(n ast.Node) ([]Node, error) {
+	checked, task := listItemTask(n)
+
 	children, err := c.convertChildren(n)
 	if err != nil {
 		return nil, err
 	}
 
-	return []Node{{
+	item := Node{
 		Type:    NodeListItem,
 		Content: ensureLeadingParagraph(children),
-	}}, nil
+	}
+
+	if !task {
+		return []Node{item}, nil
+	}
+
+	attrs, err := json.Marshal(TaskItemAttrs{Checked: checked})
+	if err != nil {
+		return nil, fmt.Errorf("cannot marshal task item attrs: %w", err)
+	}
+
+	item.Type = NodeTaskItem
+	item.Attrs = attrs
+
+	return []Node{item}, nil
 }
 
 func (c *converter) convertImage(n *ast.Image) ([]Node, error) {

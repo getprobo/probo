@@ -444,11 +444,13 @@ func linearChildAllowed(parent prosemirror.NodeType, child prosemirror.Node, ind
 		return linearInline(child.Type)
 	case prosemirror.NodeBulletList, prosemirror.NodeOrderedList:
 		return child.Type == prosemirror.NodeListItem
+	case prosemirror.NodeTaskList:
+		return child.Type == prosemirror.NodeTaskItem
 	case prosemirror.NodeTable:
 		return child.Type == prosemirror.NodeTableRow
 	case prosemirror.NodeTableRow:
 		return child.Type == prosemirror.NodeTableCell || child.Type == prosemirror.NodeTableHeader
-	case prosemirror.NodeListItem:
+	case prosemirror.NodeListItem, prosemirror.NodeTaskItem:
 		if index == 0 {
 			return child.Type == prosemirror.NodeParagraph
 		}
@@ -464,9 +466,10 @@ func linearChildAllowed(parent prosemirror.NodeType, child prosemirror.Node, ind
 func linearNodeKept(n prosemirror.Node) bool {
 	switch n.Type {
 	case prosemirror.NodeDoc, prosemirror.NodeBlockquote, prosemirror.NodeBulletList, prosemirror.NodeOrderedList,
+		prosemirror.NodeTaskList,
 		prosemirror.NodeTable, prosemirror.NodeTableRow, prosemirror.NodeTableCell, prosemirror.NodeTableHeader:
 		return len(n.Content) > 0
-	case prosemirror.NodeListItem:
+	case prosemirror.NodeListItem, prosemirror.NodeTaskItem:
 		return len(n.Content) > 0 && n.Content[0].Type == prosemirror.NodeParagraph
 	case prosemirror.NodeParagraph, prosemirror.NodeHeading, prosemirror.NodeCodeBlock,
 		prosemirror.NodeHorizontalRule, prosemirror.NodeImage, prosemirror.NodeFile,
@@ -481,6 +484,7 @@ func linearBlock(t prosemirror.NodeType) bool {
 	switch t {
 	case prosemirror.NodeParagraph, prosemirror.NodeHeading, prosemirror.NodeBlockquote, prosemirror.NodeCodeBlock,
 		prosemirror.NodeHorizontalRule, prosemirror.NodeBulletList, prosemirror.NodeOrderedList,
+		prosemirror.NodeTaskList,
 		prosemirror.NodeTable, prosemirror.NodeImage, prosemirror.NodeFile:
 		return true
 	default:

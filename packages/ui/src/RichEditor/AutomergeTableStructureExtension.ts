@@ -33,6 +33,7 @@ export const AutomergeTableStructureExtension = Extension.create({
           "heading",
           "listItem",
           "paragraph",
+          "taskItem",
         ],
         attributes: {
           isAmgBlock: {

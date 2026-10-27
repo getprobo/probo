@@ -48,6 +48,7 @@ function computeDecorations(
     const parentName = $pos.node($pos.depth - 1).type.name;
     if (
       parentName === "listItem"
+      || parentName === "taskItem"
       || parentName === "tableCell"
       || parentName === "tableHeader"
     ) {

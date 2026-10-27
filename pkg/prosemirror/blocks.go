@@ -123,6 +123,26 @@ func ensureLeadingParagraph(nodes []Node) []Node {
 	return append([]Node{{Type: NodeParagraph}}, nodes...)
 }
 
+// consecutiveGroups splits items into runs whose key stays the same.
+// A list can mix plain items and checkboxes, and one ProseMirror list
+// can hold only one of those item types.
+func consecutiveGroups[T any, K comparable](items []T, key func(T) K) [][]T {
+	var groups [][]T
+
+	for _, item := range items {
+		if len(groups) == 0 || key(groups[len(groups)-1][0]) != key(item) {
+			groups = append(groups, []T{item})
+
+			continue
+		}
+
+		last := len(groups) - 1
+		groups[last] = append(groups[last], item)
+	}
+
+	return groups
+}
+
 // whitespaceOnlyInlines reports a run of unmarked spaces. A space between two
 // images would otherwise flush as its own paragraph.
 func whitespaceOnlyInlines(nodes []Node) bool {

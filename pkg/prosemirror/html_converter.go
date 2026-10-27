@@ -23,6 +23,7 @@ package prosemirror
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -35,6 +36,13 @@ import (
 var htmlBlockSanitizePolicy = func() *bluemonday.Policy {
 	policy := bluemonday.UGCPolicy()
 	policy.AllowAttrs("width").OnElements("img")
+	// Checkbox inputs are the HTML form of a task list. Only these attributes
+	// are kept, and the converter stores them as a checked flag rather than HTML.
+	policy.AllowAttrs("type", "checked", "disabled").OnElements("input")
+	policy.AllowAttrs("data-type", "data-checked").OnElements("ul", "ol", "li")
+	// An ordered list may start at zero. Keep that index so a later plain
+	// group in a mixed task list keeps the source numbering.
+	policy.AllowAttrs("start").Matching(bluemonday.Integer).OnElements("ol")
 
 	return policy
 }()
@@ -120,9 +128,47 @@ func paragraphWithPlainText(s string) Node {
 	}
 }
 
+// The HTML fragment parser panics on input elements when the fragment has no
+// context node. Checkbox inputs are rewritten to spans before parsing.
+var checkboxInputTag = regexp.MustCompile(`(?i)<input\b[^>]*>`)
+
+func rewriteCheckboxInputs(s string) string {
+	return checkboxInputTag.ReplaceAllStringFunc(s, func(tag string) string {
+		attrs := parseTagAttrs(tag)
+		if !strings.EqualFold(attrs["type"], "checkbox") {
+			return ""
+		}
+
+		if _, checked := attrs["checked"]; checked {
+			return `<span data-task-checkbox="true"></span>`
+		}
+
+		return `<span data-task-checkbox="false"></span>`
+	})
+}
+
+// parseTagAttrs reads the attributes of a single start tag, such as
+// "<input type=\"checkbox\" checked>". It returns nil if tag is not a
+// well-formed start tag.
+func parseTagAttrs(tag string) map[string]string {
+	tokenizer := html.NewTokenizer(strings.NewReader(tag))
+	if tokenizer.Next() != html.StartTagToken {
+		return nil
+	}
+
+	token := tokenizer.Token()
+
+	attrs := make(map[string]string, len(token.Attr))
+	for _, attr := range token.Attr {
+		attrs[strings.ToLower(attr.Key)] = attr.Val
+	}
+
+	return attrs
+}
+
 func parseHTMLFragmentRoots(htmlStr string) ([]*html.Node, error) {
 	return html.ParseFragmentWithOptions(
-		strings.NewReader(htmlStr),
+		strings.NewReader(rewriteCheckboxInputs(htmlStr)),
 		nil,
 		html.ParseOptionEnableScripting(false),
 	)
@@ -387,48 +433,316 @@ func codeLanguageFromClass(class string) *string {
 }
 
 func (c *htmlBlockConverter) convertList(n *html.Node, ordered bool) ([]Node, error) {
-	var items []Node
+	items, err := c.htmlListItems(n)
+	if err != nil {
+		return nil, err
+	}
+
+	groups := htmlListGroups(items, ordered)
+	if len(groups) == 0 {
+		return nil, nil
+	}
+
+	return htmlListsForGroups(n, ordered, groups)
+}
+
+type htmlListItem struct {
+	node    Node
+	ordinal int
+}
+
+func (c *htmlBlockConverter) htmlListItems(n *html.Node) ([]htmlListItem, error) {
+	var items []htmlListItem
+
+	ordinal := 0
 
 	for li := n.FirstChild; li != nil; li = li.NextSibling {
 		if li.Type != html.ElementNode || li.Data != "li" {
 			continue
 		}
 
-		body, err := c.convertListItem(li)
+		item, ok, err := c.htmlListItem(li)
 		if err != nil {
 			return nil, err
 		}
 
-		if len(body) == 0 {
+		if !ok {
+			ordinal++
+
 			continue
 		}
 
-		items = append(items, Node{Type: NodeListItem, Content: body})
+		items = append(items, htmlListItem{node: item, ordinal: ordinal})
+		ordinal++
 	}
 
-	if len(items) == 0 {
-		return nil, nil
-	}
+	return items, nil
+}
 
-	if ordered {
-		start := parseOlStart(n)
+func htmlListGroups(items []htmlListItem, ordered bool) [][]htmlListItem {
+	var groups [][]htmlListItem
 
-		attrs, err := json.Marshal(OrderedListAttrs{Start: start})
-		if err != nil {
-			return nil, fmt.Errorf("cannot marshal ordered list attrs: %w", err)
+	for _, item := range items {
+		if len(groups) == 0 || startsHTMLListGroup(groups[len(groups)-1], item, ordered) {
+			groups = append(groups, []htmlListItem{item})
+
+			continue
 		}
 
-		return []Node{{
-			Type:    NodeOrderedList,
-			Attrs:   attrs,
-			Content: items,
-		}}, nil
+		last := len(groups) - 1
+		groups[last] = append(groups[last], item)
 	}
 
-	return []Node{{
-		Type:    NodeBulletList,
-		Content: items,
-	}}, nil
+	return groups
+}
+
+func startsHTMLListGroup(group []htmlListItem, item htmlListItem, ordered bool) bool {
+	last := group[len(group)-1]
+	if last.node.Type != item.node.Type {
+		return true
+	}
+
+	// An empty plain <li> is dropped. When it created a numbering gap in an
+	// ordered list, start another plain run so its start attribute preserves
+	// the source's later ordinal.
+	return ordered && item.node.Type == NodeListItem && item.ordinal != last.ordinal+1
+}
+
+func (c *htmlBlockConverter) htmlListItem(li *html.Node) (Node, bool, error) {
+	checked, task := taskItemState(li)
+	stripLeadingCheckbox(li)
+
+	body, err := c.convertListItem(li)
+	if err != nil {
+		return Node{}, false, err
+	}
+
+	if len(body) == 0 {
+		// A task item that only held its checkbox has no body left
+		// once stripLeadingCheckbox removes it, but its checked state
+		// still needs a home: keep it as an empty paragraph instead of
+		// dropping the item like a genuinely empty, checkbox-less <li>.
+		if !task {
+			return Node{}, false, nil
+		}
+
+		body = []Node{{Type: NodeParagraph}}
+	}
+
+	if task {
+		trimLeadingTaskSpace(body)
+	}
+
+	item := Node{Type: NodeListItem, Content: body}
+	if !task {
+		return item, true, nil
+	}
+
+	attrs, err := json.Marshal(TaskItemAttrs{Checked: checked})
+	if err != nil {
+		return Node{}, false, fmt.Errorf("cannot marshal task item attrs: %w", err)
+	}
+
+	item.Type = NodeTaskItem
+	item.Attrs = attrs
+
+	return item, true, nil
+}
+
+func htmlListsForGroups(n *html.Node, ordered bool, groups [][]htmlListItem) ([]Node, error) {
+	var nodes []Node
+
+	start := 1
+
+	if ordered {
+		start = parseOlStart(n)
+	}
+
+	for _, group := range groups {
+		items := make([]Node, 0, len(group))
+		for _, item := range group {
+			items = append(items, item.node)
+		}
+
+		if group[0].node.Type == NodeTaskItem {
+			nodes = append(nodes, Node{Type: NodeTaskList, Content: items})
+
+			continue
+		}
+
+		if ordered {
+			attrs, err := json.Marshal(OrderedListAttrs{Start: start + group[0].ordinal})
+			if err != nil {
+				return nil, fmt.Errorf("cannot marshal ordered list attrs: %w", err)
+			}
+
+			nodes = append(nodes, Node{
+				Type:    NodeOrderedList,
+				Attrs:   attrs,
+				Content: items,
+			})
+		} else {
+			nodes = append(nodes, Node{Type: NodeBulletList, Content: items})
+		}
+	}
+
+	return nodes, nil
+}
+
+func trimLeadingTaskSpace(nodes []Node) {
+	if len(nodes) == 0 || nodes[0].Type != NodeParagraph || len(nodes[0].Content) == 0 {
+		return
+	}
+
+	first := &nodes[0].Content[0]
+	if first.Type != NodeText || first.Text == nil {
+		return
+	}
+
+	trimmed := strings.TrimPrefix(*first.Text, " ")
+	if trimmed == "" {
+		nodes[0].Content = nodes[0].Content[1:]
+		return
+	}
+
+	first.Text = &trimmed
+}
+
+func taskItemState(li *html.Node) (bool, bool) {
+	task := attrVal(li, "data-type") == "taskItem"
+	checked := attrVal(li, "data-checked") == "true"
+
+	if input := leadingCheckbox(li); input != nil {
+		task = true
+
+		if taskCheckboxChecked(input) {
+			checked = true
+		}
+	}
+
+	return checked, task
+}
+
+func stripLeadingCheckbox(li *html.Node) {
+	taskItem := attrVal(li, "data-type") == "taskItem"
+
+	for ch := li.FirstChild; ch != nil; ch = ch.NextSibling {
+		if ch.Type == html.TextNode && strings.TrimSpace(ch.Data) == "" {
+			continue
+		}
+
+		if isTaskCheckbox(ch) {
+			li.RemoveChild(ch)
+			return
+		}
+
+		if ch.Type == html.ElementNode && ch.Data == "label" && findCheckbox(ch) != nil {
+			if taskItem || strings.TrimSpace(htmlText(ch)) == "" {
+				li.RemoveChild(ch)
+				return
+			}
+
+			removeCheckboxInputs(ch)
+
+			return
+		}
+
+		return
+	}
+}
+
+func leadingCheckbox(li *html.Node) *html.Node {
+	for ch := li.FirstChild; ch != nil; ch = ch.NextSibling {
+		if ch.Type == html.TextNode && strings.TrimSpace(ch.Data) == "" {
+			continue
+		}
+
+		if isTaskCheckbox(ch) {
+			return ch
+		}
+
+		if ch.Type == html.ElementNode && ch.Data == "label" {
+			if input := findCheckbox(ch); input != nil {
+				return input
+			}
+		}
+
+		return nil
+	}
+
+	return nil
+}
+
+func findCheckbox(n *html.Node) *html.Node {
+	if isTaskCheckbox(n) {
+		return n
+	}
+
+	for ch := n.FirstChild; ch != nil; ch = ch.NextSibling {
+		if input := findCheckbox(ch); input != nil {
+			return input
+		}
+	}
+
+	return nil
+}
+
+func removeCheckboxInputs(n *html.Node) {
+	for ch := n.FirstChild; ch != nil; {
+		next := ch.NextSibling
+		if isTaskCheckbox(ch) {
+			n.RemoveChild(ch)
+		} else {
+			removeCheckboxInputs(ch)
+		}
+
+		ch = next
+	}
+}
+
+func isTaskCheckbox(n *html.Node) bool {
+	if n == nil || n.Type != html.ElementNode {
+		return false
+	}
+
+	if n.Data == "span" && attrVal(n, "data-task-checkbox") != "" {
+		return true
+	}
+
+	return n.Data == "input" && strings.EqualFold(attrVal(n, "type"), "checkbox")
+}
+
+func taskCheckboxChecked(n *html.Node) bool {
+	if n.Data == "span" {
+		return attrVal(n, "data-task-checkbox") == "true"
+	}
+
+	return hasAttr(n, "checked")
+}
+
+func hasAttr(n *html.Node, key string) bool {
+	for _, a := range n.Attr {
+		if a.Key == key {
+			return true
+		}
+	}
+
+	return false
+}
+
+func htmlText(n *html.Node) string {
+	var buf strings.Builder
+
+	for ch := n.FirstChild; ch != nil; ch = ch.NextSibling {
+		if ch.Type == html.TextNode {
+			buf.WriteString(ch.Data)
+			continue
+		}
+
+		buf.WriteString(htmlText(ch))
+	}
+
+	return buf.String()
 }
 
 func parseOlStart(n *html.Node) int {
@@ -438,7 +752,9 @@ func parseOlStart(n *html.Node) int {
 	}
 
 	v, err := strconv.Atoi(strings.TrimSpace(s))
-	if err != nil || v < 1 {
+	// HTML numbers a list from zero when start="0". A missing, non-numeric,
+	// or negative value keeps the default of 1.
+	if err != nil || v < 0 {
 		return 1
 	}
 

@@ -58,6 +58,8 @@ const supportedNodeNames = new Set([
   "bulletList",
   "orderedList",
   "listItem",
+  "taskList",
+  "taskItem",
   "table",
   "tableRow",
   "tableCell",
@@ -199,7 +201,9 @@ export function explicitBlockIdentityPlugin(): Plugin {
           || node.type.name === "blockquote"
           || node.type.name === "codeBlock"
         );
-        if (!isTopLevelTextBlock && node.type.name !== "listItem") {
+        const isListItem = node.type.name === "listItem"
+          || node.type.name === "taskItem";
+        if (!isTopLevelTextBlock && !isListItem) {
           return true;
         }
 
@@ -246,6 +250,11 @@ export function createSchemaAdapter(
   });
 
   const adapter = new SchemaAdapter({ nodes, marks } satisfies MappedSchemaSpec);
+  for (const mapping of adapter.nodeMappings) {
+    if (mapping.blockName === "task-list-item") {
+      mapping.outer = adapter.schema.nodes.taskList ?? null;
+    }
+  }
   if (!targetSchema) return adapter;
 
   adapter.schema = targetSchema;
@@ -320,6 +329,18 @@ function automergeNodeMapping(name: string): MappedNodeSpec["automerge"] {
             orderedList: "ordered-list-item",
             bulletList: "unordered-list-item",
           },
+        },
+      };
+    case "taskItem":
+      return {
+        block: "task-list-item",
+        attrParsers: {
+          fromAutomerge: block => ({
+            checked: readBooleanAttribute(block.attrs, "checked"),
+          }),
+          fromProsemirror: node => ({
+            checked: readBooleanAttribute(node.attrs, "checked"),
+          }),
         },
       };
     case "table":
@@ -452,6 +473,12 @@ function presentStrings(
   }
 
   return attrs;
+}
+
+function readBooleanAttribute(attributes: unknown, name: string): boolean {
+  if (!isJSONObject(attributes)) return false;
+
+  return attributes[name] === true;
 }
 
 function readNumberAttribute(

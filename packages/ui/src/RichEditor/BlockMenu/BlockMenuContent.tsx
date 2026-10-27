@@ -11,6 +11,7 @@ import {
 } from "@floating-ui/react";
 import type { Icon } from "@phosphor-icons/react";
 import {
+  CheckSquareIcon,
   CodeBlockIcon,
   GridFourIcon,
   ImageIcon,
@@ -61,6 +62,7 @@ const BLOCK_ITEMS: BlockItem[] = [
   { label: "Heading 4", icon: TextHFourIcon, action: chain => chain.toggleHeading({ level: 4 }) },
   { label: "Bullet List", icon: ListBulletsIcon, action: chain => chain.toggleBulletList() },
   { label: "Ordered List", icon: ListNumbersIcon, action: chain => chain.toggleOrderedList() },
+  { label: "Task List", icon: CheckSquareIcon, action: chain => chain.toggleTaskList() },
   { label: "Code Block", icon: CodeBlockIcon, action: chain => chain.toggleCodeBlock() },
   { label: "Blockquote", icon: QuotesIcon, action: chain => chain.toggleBlockquote() },
   { label: "Mermaid Diagram", icon: TreeStructureIcon, action: chain => chain.setCodeBlock({ language: "mermaid" }) },

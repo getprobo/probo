@@ -68,7 +68,9 @@ function isEmptyBlock(node: JSONContent): boolean {
     case "blockquote":
     case "bulletList":
     case "orderedList":
+    case "taskList":
     case "listItem":
+    case "taskItem":
     case "table":
     case "tableRow":
     case "tableHeader":

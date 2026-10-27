@@ -7,6 +7,7 @@
     { "automerge": "blockquote", "prosemirror": "blockquote", "isEmbed": false },
     { "automerge": "ordered-list-item", "prosemirror": "listItem", "outer": "orderedList", "isEmbed": false },
     { "automerge": "unordered-list-item", "prosemirror": "listItem", "outer": "bulletList", "isEmbed": false },
+    { "automerge": "task-list-item", "prosemirror": "taskItem", "outer": "taskList", "isEmbed": false },
     { "automerge": "horizontal-rule", "prosemirror": "horizontalRule", "isEmbed": false },
     { "automerge": "image", "prosemirror": "image", "isEmbed": false },
     { "automerge": "file", "prosemirror": "file", "isEmbed": false },
