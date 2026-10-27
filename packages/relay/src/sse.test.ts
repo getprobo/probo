@@ -79,6 +79,9 @@ describe("pushSSE", () => {
       `event: next\ndata: {"data":{"s":1},"label":"${label}","path":["node"],"hasNext":true}\n\n`,
     );
 
-    expect(push.payloads[0]?.extensions).toBeUndefined();
+    expect(push.payloads).toEqual([
+      { data: { s: 1 }, label, path: ["node"], hasNext: true },
+    ]);
+    expect(push.payloads[0]).not.toHaveProperty("extensions");
   });
 });

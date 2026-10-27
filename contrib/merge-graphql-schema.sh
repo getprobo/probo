@@ -44,5 +44,5 @@ process_file() {
   # Relay validates queries against this merged file. @defer is a spec
   # directive the server prelude already accepts; without it here the
   # compiler rejects deferred fragment spreads.
-  printf '\ndirective @defer(if: Boolean, label: String) on FRAGMENT_SPREAD | INLINE_FRAGMENT\n'
+  printf '\ndirective @defer(if: Boolean = true, label: String) on FRAGMENT_SPREAD | INLINE_FRAGMENT\n'
 } >"$output"
