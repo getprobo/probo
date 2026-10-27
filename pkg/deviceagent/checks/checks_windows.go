@@ -84,7 +84,7 @@ func windowsDiskEncryption(ctx context.Context) Result {
 }
 
 // windowsScreenLockMachineScript reads every machine-wide lock source in one
-// invocation. Three separate calls would cost up to 30s against a 25s
+// invocation. Three separate calls would cost up to 3m against a 150s
 // per-check budget. Each source applies to all users and needs no loaded user
 // hive.
 const windowsScreenLockMachineScript = `` +

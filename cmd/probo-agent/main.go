@@ -57,7 +57,7 @@ const restartExitCode = 75
 // collectTimeout bounds the whole check set for a one-shot `collect`. Every
 // check can spend the agent's per-check budget, so this has to clear the full
 // set rather than a single probe.
-const collectTimeout = 5 * time.Minute
+const collectTimeout = 30 * time.Minute
 
 // Cobra prints a "this is a command line tool" splash and exits 1 when the
 // parent process is explorer.exe. The shell is what launches the probo://

@@ -34,7 +34,7 @@ import (
 	"time"
 )
 
-const defaultCommandTimeout = 10 * time.Second
+const defaultCommandTimeout = 60 * time.Second
 
 var commandExistsCache sync.Map
 

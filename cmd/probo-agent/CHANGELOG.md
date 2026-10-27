@@ -5,6 +5,11 @@ documented in this file.
 
 ## Unreleased
 
+### Changed
+
+- Each posture command may run for 60 seconds, and each check for 150
+  seconds. `probo-agent collect` waits 30 minutes for the full set
+
 ## [0.7.3-rc.1] - 2026-10-19
 
 ### Fixed
