@@ -47,8 +47,8 @@ func NewInternalControlFilter(
 	}
 }
 
-func (f *InternalControlFilter) SQLArguments() pgx.NamedArgs {
-	return pgx.NamedArgs{
+func (f *InternalControlFilter) SQLArguments() pgx.StrictNamedArgs {
+	return pgx.StrictNamedArgs{
 		"query":                 f.query,
 		"state":                 f.state,
 		"implementation_status": f.implementationStatus,
