@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "probo",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "Open-source compliance workflows for the Probo MCP API, plus the using-prb CLI skill",
   "author": {
     "name": "Probo Inc",

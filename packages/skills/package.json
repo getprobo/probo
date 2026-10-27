@@ -1,6 +1,6 @@
 {
   "name": "@probo/skills",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "Multi-agent skills for open-source GRC and the prb CLI (Claude Code, Codex, OpenCode, Cursor)",
   "private": false,
   "scripts": {

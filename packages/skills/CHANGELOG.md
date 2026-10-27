@@ -5,6 +5,8 @@ this file.
 
 ## Unreleased
 
+## [0.5.0] - 2026-10-27
+
 ### Added
 
 - `using-prb` tells an agent how to call the `prb` CLI, including sign-in,

@@ -1,6 +1,6 @@
 {
   "name": "probo",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "Open-source compliance workflows and the using-prb CLI skill (Claude Code, Codex, OpenCode)",
   "author": {
     "name": "Probo Inc",
