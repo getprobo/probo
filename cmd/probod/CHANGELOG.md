@@ -4,6 +4,19 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.328.0] - 2026-10-27
+
+### Added
+
+- Mention organization members in task descriptions and comments.
+  Newly mentioned members get an in-app notification; the author and
+  members already mentioned are skipped
+
+### Fixed
+
+- The compliance portal PDF viewer loads documents again when another
+  dependency installs a different `pdfjs-dist` version
+
 ## [0.327.0] - 2026-10-26
 
 ### Changed
