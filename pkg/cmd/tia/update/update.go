@@ -44,9 +44,9 @@ mutation($input: UpdateTransferImpactAssessmentInput!) {
 type updateResponse struct {
 	UpdateTransferImpactAssessment struct {
 		TransferImpactAssessment struct {
-			ID             string `json:"id"`
-			DataSubjects   string `json:"dataSubjects"`
-			LegalMechanism string `json:"legalMechanism"`
+			ID             string  `json:"id"`
+			DataSubjects   *string `json:"dataSubjects"`
+			LegalMechanism *string `json:"legalMechanism"`
 		} `json:"transferImpactAssessment"`
 	} `json:"updateTransferImpactAssessment"`
 }
