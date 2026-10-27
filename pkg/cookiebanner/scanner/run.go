@@ -46,25 +46,26 @@ const (
 )
 
 type scan struct {
-	mu          sync.Mutex
-	in          Input
-	site        origin
-	startURL    string
-	policy      *requestPolicy
-	rec         *recorder
-	front       frontier
-	http        *http.Client
-	parent      context.Context
-	scanCtx     context.Context
-	tabCtx      context.Context
-	cancelTab   context.CancelFunc
-	target      *chromedp.Target
-	binding     string
-	started     time.Time
-	elapsedBase time.Duration
-	pages       int
-	firstErr    error
-	fatal       error
+	mu             sync.Mutex
+	in             Input
+	site           origin
+	startURL       string
+	policy         *requestPolicy
+	rec            *recorder
+	front          frontier
+	http           *http.Client
+	parent         context.Context
+	scanCtx        context.Context
+	tabCtx         context.Context
+	cancelTab      context.CancelFunc
+	target         *chromedp.Target
+	binding        string
+	browserContext string
+	started        time.Time
+	elapsedBase    time.Duration
+	pages          int
+	firstErr       error
+	fatal          error
 }
 
 // Run crawls in.Origin in an isolated browser context of allocCtx. A

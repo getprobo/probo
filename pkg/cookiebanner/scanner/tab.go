@@ -155,6 +155,10 @@ func (s *scan) prepareTab(ctx context.Context, tab *chromedp.Target) error {
 		}
 	}
 
+	if err := s.watchChildren(ctx); err != nil {
+		return err
+	}
+
 	return nil
 }
 

@@ -56,8 +56,15 @@ func TestRun_RecordsTrackersAndSkipsOtherOrigins(t *testing.T) {
 	}))
 
 	third := serve(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/pixel.js" {
+			w.Header().Set("Content-Type", "text/javascript")
+			_, _ = w.Write([]byte(`document.cookie = "tp=1; path=/";`))
+
+			return
+		}
+
 		w.Header().Set("Content-Type", "text/html")
-		_, _ = w.Write([]byte(`<!doctype html><script>document.cookie = "tp=1; path=/";</script>`))
+		_, _ = w.Write([]byte(`<!doctype html><script src="/pixel.js"></script>`))
 	}))
 
 	var site = serve(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -98,6 +105,7 @@ localStorage.setItem("old_binding", typeof globalThis.__proboScanCookie);
 		Origin:             chromeURL(t, site),
 		BannerID:           "banner",
 		APIBaseURL:         chromeURL(t, api),
+		BrowserURL:         os.Getenv("CHROME_WS_URL"),
 		Limits:             fastLimits(5),
 		skipPublicURLCheck: true,
 		httpClient: httpclient.DefaultClient(
@@ -127,7 +135,7 @@ localStorage.setItem("old_binding", typeof globalThis.__proboScanCookie);
 				scripted = true
 			}
 		case "tp":
-			thirdParty = true
+			thirdParty = cookie.InitiatorURL != nil && strings.Contains(*cookie.InitiatorURL, "/pixel.js")
 		}
 	}
 
@@ -135,17 +143,22 @@ localStorage.setItem("old_binding", typeof globalThis.__proboScanCookie);
 	assert.True(t, scripted, "script cookie with initiator")
 	assert.True(t, thirdParty, "third-party cookie")
 
-	var sawIframe bool
+	var sawIframe, sawPixel bool
 
 	for _, resource := range resources {
 		if resource.Type == coredata.TrackerResourceTypeIframe {
 			sawIframe = true
 		}
 
+		if resource.Path == "/pixel.js" {
+			sawPixel = true
+		}
+
 		assert.NotContains(t, resource.Origin, "example.com")
 	}
 
 	assert.True(t, sawIframe)
+	assert.True(t, sawPixel, "script loaded inside the cross-site frame")
 	assert.Equal(t, int32(0), posts.Load())
 
 	var bindingHits, oldBinding bool

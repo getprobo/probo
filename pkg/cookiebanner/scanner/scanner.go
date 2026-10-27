@@ -161,6 +161,9 @@ type (
 		Checkpoint *Checkpoint
 		OnPage     OnPage
 		Logger     *log.Logger
+		// BrowserURL is the DevTools websocket of the Chrome instance.
+		// Empty skips instrumentation of cross-site iframes and workers.
+		BrowserURL string
 
 		httpClient         *http.Client
 		skipPublicURLCheck bool

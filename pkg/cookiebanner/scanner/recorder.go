@@ -59,10 +59,11 @@ type (
 		bannerID    string
 		binding     string
 		maxObs      int
-		requests    map[network.RequestID]requestMeta
-		inflight    map[network.RequestID]struct{}
-		earlyFinish map[network.RequestID]struct{}
-		earlyExtra  map[network.RequestID]network.EventResponseReceivedExtraInfo
+		session     string
+		requests    map[string]requestMeta
+		inflight    map[string]struct{}
+		earlyFinish map[string]struct{}
+		earlyExtra  map[string]network.EventResponseReceivedExtraInfo
 		hints       map[string]cookieHint
 		seenCookie  map[string]struct{}
 		seenRes     map[string]struct{}
@@ -90,10 +91,10 @@ func newRecorder(site, api origin, bannerID, binding string, maxObs int) *record
 		bannerID:    bannerID,
 		binding:     binding,
 		maxObs:      maxObs,
-		requests:    map[network.RequestID]requestMeta{},
-		inflight:    map[network.RequestID]struct{}{},
-		earlyFinish: map[network.RequestID]struct{}{},
-		earlyExtra:  map[network.RequestID]network.EventResponseReceivedExtraInfo{},
+		requests:    map[string]requestMeta{},
+		inflight:    map[string]struct{}{},
+		earlyFinish: map[string]struct{}{},
+		earlyExtra:  map[string]network.EventResponseReceivedExtraInfo{},
 		hints:       map[string]cookieHint{},
 		seenCookie:  map[string]struct{}{},
 		seenRes:     map[string]struct{}{},
@@ -109,20 +110,38 @@ func (r *recorder) setMainFrame(id string) {
 }
 
 func (r *recorder) handleEvent(ev any) {
+	r.handleSession("", ev)
+}
+
+func (r *recorder) handleSession(session string, ev any) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
+	r.session = session
+
 	switch ev := ev.(type) {
+	case *network.EventRequestWillBeSent:
+		r.recordRequest(ev)
 	case network.EventRequestWillBeSent:
 		r.recordRequest(&ev)
+	case *network.EventLoadingFinished:
+		r.trackFinish(r.reqKey(ev.RequestID))
 	case network.EventLoadingFinished:
-		r.trackFinish(ev.RequestID)
+		r.trackFinish(r.reqKey(ev.RequestID))
+	case *network.EventLoadingFailed:
+		r.trackFinish(r.reqKey(ev.RequestID))
 	case network.EventLoadingFailed:
-		r.trackFinish(ev.RequestID)
+		r.trackFinish(r.reqKey(ev.RequestID))
+	case *network.EventResponseReceived:
+		r.recordStatus(ev)
 	case network.EventResponseReceived:
 		r.recordStatus(&ev)
+	case *network.EventResponseReceivedExtraInfo:
+		r.recordExtra(ev)
 	case network.EventResponseReceivedExtraInfo:
 		r.recordExtra(&ev)
+	case *runtime.EventBindingCalled:
+		r.recordBinding(ev)
 	case runtime.EventBindingCalled:
 		r.recordBinding(&ev)
 	}
@@ -132,10 +151,10 @@ func (r *recorder) beginPage() {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	r.requests = map[network.RequestID]requestMeta{}
-	r.inflight = map[network.RequestID]struct{}{}
-	r.earlyFinish = map[network.RequestID]struct{}{}
-	r.earlyExtra = map[network.RequestID]network.EventResponseReceivedExtraInfo{}
+	r.requests = map[string]requestMeta{}
+	r.inflight = map[string]struct{}{}
+	r.earlyFinish = map[string]struct{}{}
+	r.earlyExtra = map[string]network.EventResponseReceivedExtraInfo{}
 	r.hints = map[string]cookieHint{}
 	r.page = Page{}
 	r.docStatus = 0
@@ -183,9 +202,9 @@ func (r *recorder) endPage(jar []*network.Cookie, storage []StorageItem) Page {
 
 	page := r.page
 	r.page = Page{}
-	r.requests = map[network.RequestID]requestMeta{}
-	r.earlyExtra = map[network.RequestID]network.EventResponseReceivedExtraInfo{}
-	r.earlyFinish = map[network.RequestID]struct{}{}
+	r.requests = map[string]requestMeta{}
+	r.earlyExtra = map[string]network.EventResponseReceivedExtraInfo{}
+	r.earlyFinish = map[string]struct{}{}
 
 	return page
 }
@@ -195,7 +214,7 @@ func (r *recorder) recordRequest(ev *network.EventRequestWillBeSent) {
 		return
 	}
 
-	r.trackStart(ev.RequestID)
+	r.trackStart(r.reqKey(ev.RequestID))
 
 	meta := requestMeta{
 		url:     ev.Request.URL,
@@ -206,15 +225,16 @@ func (r *recorder) recordRequest(ev *network.EventRequestWillBeSent) {
 		meta.initiator = initiator
 	}
 
-	r.requests[ev.RequestID] = meta
+	key := r.reqKey(ev.RequestID)
+	r.requests[key] = meta
 
 	if r.mainFrame == "" && ev.Type == network.ResourceTypeDocument && meta.frameID != "" {
 		r.mainFrame = meta.frameID
 	}
 
-	if extra, ok := r.earlyExtra[ev.RequestID]; ok {
+	if extra, ok := r.earlyExtra[key]; ok {
 		r.applyExtra(meta, &extra)
-		delete(r.earlyExtra, ev.RequestID)
+		delete(r.earlyExtra, key)
 	}
 
 	if r.api.contains(meta.url) || r.site.contains(meta.url) {
@@ -243,10 +263,12 @@ func (r *recorder) recordStatus(ev *network.EventResponseReceived) {
 }
 
 func (r *recorder) recordExtra(ev *network.EventResponseReceivedExtraInfo) {
-	meta, ok := r.requests[ev.RequestID]
+	key := r.reqKey(ev.RequestID)
+
+	meta, ok := r.requests[key]
 	if !ok {
 		if len(r.earlyExtra) < r.maxObs {
-			r.earlyExtra[ev.RequestID] = *ev
+			r.earlyExtra[key] = *ev
 		}
 
 		return
@@ -515,7 +537,49 @@ func (r *recorder) emitResource(resource Resource) {
 	r.page.Resources = append(r.page.Resources, resource)
 }
 
-func (r *recorder) trackStart(id network.RequestID) {
+func (r *recorder) reqKey(id network.RequestID) string {
+	return r.session + "\x00" + string(id)
+}
+
+func (r *recorder) dropSession(session string) {
+	if session == "" {
+		return
+	}
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	prefix := session + "\x00"
+	for key := range r.inflight {
+		if strings.HasPrefix(key, prefix) {
+			delete(r.inflight, key)
+		}
+	}
+
+	for key := range r.requests {
+		if strings.HasPrefix(key, prefix) {
+			delete(r.requests, key)
+		}
+	}
+
+	for key := range r.earlyFinish {
+		if strings.HasPrefix(key, prefix) {
+			delete(r.earlyFinish, key)
+		}
+	}
+
+	for key := range r.earlyExtra {
+		if strings.HasPrefix(key, prefix) {
+			delete(r.earlyExtra, key)
+		}
+	}
+
+	if len(r.inflight) == 0 {
+		r.idleSince = time.Now()
+	}
+}
+
+func (r *recorder) trackStart(id string) {
 	if _, early := r.earlyFinish[id]; early {
 		delete(r.earlyFinish, id)
 
@@ -534,7 +598,7 @@ func (r *recorder) trackStart(id network.RequestID) {
 	r.idleSince = time.Time{}
 }
 
-func (r *recorder) trackFinish(id network.RequestID) {
+func (r *recorder) trackFinish(id string) {
 	if _, ok := r.inflight[id]; ok {
 		delete(r.inflight, id)
 
