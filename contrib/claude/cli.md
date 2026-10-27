@@ -50,7 +50,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		Aliases: []string{"ls"},
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// 1. Validate output flag
+			// 1. Validate output, --limit, and --order-direction
 			// 2. f.GraphQLClient (config, host, token, refresh)
 			// 3. Resolve --org (flag or config default)
 			// 4. Call API
@@ -92,6 +92,8 @@ resources, totalCount, nextCursor, err := api.Paginate(
 ```
 
 `flagAfter` is `--after`. An empty value starts at the first page. `api.Paginate` walks server pages until `flagLimit` items are collected or the connection ends, then returns the cursor for the following window. Pass that cursor back as `--after` with the same filters. The cursor is empty at the end of the connection. A server that returns more edges than `first` does not yield a cursor, because `endCursor` would skip the edges that were left off the page.
+
+Call `cmdutil.ValidateLimit` and, when the command has `--order-direction`, `cmdutil.ValidateEnum` before creating the client. A non-positive `--limit` is an error. `--order-direction` accepts `ASC` and `DESC` even when `--order-by` is omitted, so a bad direction is not silently dropped.
 
 `api.NodeConnection` reads `data.node.<field>`. A null node returns the not-found string. A different `__typename` returns `expected <type> node, got <actual>`. `api.Paginate` wraps that error as `cannot parse response`.
 

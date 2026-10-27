@@ -87,6 +87,14 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
+			if err := cmdutil.ValidateLimit(flagLimit); err != nil {
+				return err
+			}
+
+			if err := cmdutil.ValidateEnum("order-direction", flagOrderDir, []string{"ASC", "DESC"}); err != nil {
+				return err
+			}
+
 			if flagPortal == "" {
 				return fmt.Errorf("compliance portal is required; pass --portal")
 			}

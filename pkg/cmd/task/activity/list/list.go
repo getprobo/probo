@@ -93,16 +93,16 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			if flagTask == "" {
-				return fmt.Errorf("task is required; pass --task")
+			if err := cmdutil.ValidateLimit(flagLimit); err != nil {
+				return err
 			}
 
 			if err := cmdutil.ValidateEnum("order-direction", flagOrderDir, []string{"ASC", "DESC"}); err != nil {
 				return err
 			}
 
-			if err := cmdutil.ValidateLimit(flagLimit); err != nil {
-				return err
+			if flagTask == "" {
+				return fmt.Errorf("task is required; pass --task")
 			}
 
 			client, _, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
