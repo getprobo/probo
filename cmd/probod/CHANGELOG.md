@@ -4,6 +4,13 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.330.2] - 2026-10-27
+
+### Fixed
+
+- The Users destination in the console spotlight opens the users
+  settings page instead of an error page
+
 ## [0.330.1] - 2026-10-27
 
 ### Fixed
