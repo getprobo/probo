@@ -26,38 +26,42 @@ import (
 
 type (
 	NotificationFilter struct {
-		types  []string
-		unread *bool
+		types    []string
+		statuses []string
 	}
 )
 
-func NewNotificationFilter(types []NotificationType, unread *bool) *NotificationFilter {
-	filter := &NotificationFilter{unread: unread}
-	if types == nil {
-		return filter
+func NewNotificationFilter(
+	types []NotificationType,
+	statuses []NotificationStatus,
+) *NotificationFilter {
+	filter := &NotificationFilter{}
+	if types != nil {
+		values := make([]string, len(types))
+		for i, notificationType := range types {
+			values[i] = notificationType.String()
+		}
+
+		filter.types = values
 	}
 
-	values := make([]string, len(types))
-	for i, notificationType := range types {
-		values[i] = notificationType.String()
-	}
+	if statuses != nil {
+		values := make([]string, len(statuses))
+		for i, status := range statuses {
+			values[i] = status.String()
+		}
 
-	filter.types = values
+		filter.statuses = values
+	}
 
 	return filter
 }
 
 func (f *NotificationFilter) SQLArguments() pgx.StrictNamedArgs {
-	args := pgx.StrictNamedArgs{
-		"filter_types":  f.types,
-		"filter_unread": nil,
+	return pgx.StrictNamedArgs{
+		"filter_types":    f.types,
+		"filter_statuses": f.statuses,
 	}
-
-	if f.unread != nil {
-		args["filter_unread"] = *f.unread
-	}
-
-	return args
 }
 
 func (f *NotificationFilter) SQLFragment() string {
@@ -69,9 +73,9 @@ func (f *NotificationFilter) SQLFragment() string {
 		ELSE TRUE
 	END
 	AND CASE
-		WHEN @filter_unread::boolean IS NULL THEN TRUE
-		WHEN @filter_unread::boolean THEN read_at IS NULL
-		ELSE read_at IS NOT NULL
+		WHEN @filter_statuses::text[] IS NOT NULL THEN
+			status::text = ANY(@filter_statuses::text[])
+		ELSE TRUE
 	END
 )`
 }

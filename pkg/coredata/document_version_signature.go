@@ -303,8 +303,7 @@ INSERT INTO document_version_signatures (
 	requested_at,
 	electronic_signature_id,
 	created_at,
-	updated_at,
-	notification_count
+	updated_at
 ) VALUES (
  	@id,
 	@tenant_id,
@@ -316,8 +315,7 @@ INSERT INTO document_version_signatures (
 	@requested_at,
 	@electronic_signature_id,
 	@created_at,
-	@updated_at,
-	@notification_count
+	@updated_at
 )
 `
 
@@ -333,7 +331,6 @@ INSERT INTO document_version_signatures (
 		"electronic_signature_id": pvs.ElectronicSignatureID,
 		"created_at":              pvs.CreatedAt,
 		"updated_at":              pvs.UpdatedAt,
-		"notification_count":      0,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -406,278 +403,6 @@ WHERE
 	*pvss = documentVersionSignatures
 
 	return nil
-}
-
-// documentNotificationMaxCount caps how many emails a signature/approval
-// request gets: the first notice plus three reminders. A request is due for its
-// next email once it is past its scheduled offset — the first email after the
-// debounce delay, then reminders at 1x, 2x and 3x the reminder interval after
-// the previous email — and stops once it reaches this cap. Reminder sends that
-// fall on Saturday or Sunday are deferred to Monday at the same clock time;
-// the first debounced notice is unchanged.
-const documentNotificationMaxCount = 4
-
-func remainingNotificationIDs(all []gid.GID, claimed []gid.GID) []gid.GID {
-	claimedSet := make(map[gid.GID]struct{}, len(claimed))
-	for _, id := range claimed {
-		claimedSet[id] = struct{}{}
-	}
-
-	rest := make([]gid.GID, 0, len(all))
-	for _, id := range all {
-		if _, ok := claimedSet[id]; ok {
-			continue
-		}
-
-		rest = append(rest, id)
-	}
-
-	return rest
-}
-
-// LoadNextDueGroupForNotification loads every still-REQUESTED signature for the
-// next (organization, signatory) group that has at least one request due for a
-// notification, so the whole group can be emailed together. A request is due
-// once it is past its scheduled offset (see documentNotificationMaxCount) and
-// has not reached the cap. The receiver is left empty when no group is due.
-func (pvss *DocumentVersionSignatures) LoadNextDueGroupForNotification(
-	ctx context.Context,
-	conn pg.Querier,
-	now time.Time,
-	debounceBefore time.Time,
-	reminderInterval time.Duration,
-) error {
-	// Reminders skip Sat/Sun; a weekend due time waits until Monday same UTC hour.
-	q := `
-WITH next_group AS (
-	SELECT
-		organization_id,
-		signed_by_profile_id
-	FROM
-		document_version_signatures
-	WHERE
-		state = @state
-		AND notification_count < @max_notifications
-		AND (
-			(notification_count = 0 AND requested_at < @debounce_before)
-			OR (
-				notification_count > 0
-				AND EXTRACT(ISODOW FROM (@now::timestamptz AT TIME ZONE 'UTC')) BETWEEN 1 AND 5
-				AND @now::timestamptz > (
-					SELECT
-						(due_at_utc + CASE EXTRACT(ISODOW FROM due_at_utc)
-							WHEN 6 THEN interval '2 days'
-							WHEN 7 THEN interval '1 day'
-							ELSE interval '0'
-						END) AT TIME ZONE 'UTC'
-					FROM (
-						SELECT
-							(
-								last_notified_at
-									+ make_interval(secs => @reminder_interval_seconds * notification_count)
-							) AT TIME ZONE 'UTC' AS due_at_utc
-					) AS reminder
-				)
-			)
-		)
-		AND EXISTS (
-			SELECT 1
-			FROM document_versions dv
-			JOIN documents doc ON doc.id = dv.document_id
-			WHERE dv.id = document_version_signatures.document_version_id
-				AND doc.deleted_at IS NULL
-				AND doc.archived_at IS NULL
-		)
-		AND EXISTS (
-			SELECT 1
-			FROM iam_membership_profiles p
-			WHERE p.id = document_version_signatures.signed_by_profile_id
-				AND p.state = @recipient_state::membership_state
-				AND (p.contract_end_date IS NULL OR p.contract_end_date >= @now::date)
-		)
-	GROUP BY
-		organization_id,
-		signed_by_profile_id
-	ORDER BY
-		organization_id,
-		signed_by_profile_id
-	LIMIT 1
-)
-SELECT
-	s.id,
-	s.organization_id,
-	s.document_version_id,
-	s.state,
-	s.signed_by_profile_id,
-	s.signed_at,
-	s.requested_at,
-	s.electronic_signature_id,
-	s.created_at,
-	s.updated_at
-FROM
-	document_version_signatures s
-INNER JOIN next_group g
-	ON g.organization_id = s.organization_id
-	AND g.signed_by_profile_id = s.signed_by_profile_id
-WHERE
-	s.state = @state
-	AND s.notification_count < @max_notifications
-	AND EXISTS (
-		SELECT 1
-		FROM document_versions dv
-		JOIN documents doc ON doc.id = dv.document_id
-		WHERE dv.id = s.document_version_id
-			AND doc.deleted_at IS NULL
-			AND doc.archived_at IS NULL
-	)
-ORDER BY
-	s.document_version_id
-`
-
-	args := pgx.StrictNamedArgs{
-		"state":                     DocumentVersionSignatureStateRequested,
-		"recipient_state":           ProfileStateActive,
-		"max_notifications":         documentNotificationMaxCount,
-		"now":                       now,
-		"debounce_before":           debounceBefore,
-		"reminder_interval_seconds": reminderInterval.Seconds(),
-	}
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query due signatures for notification: %w", err)
-	}
-
-	signatures, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[DocumentVersionSignature])
-	if err != nil {
-		return fmt.Errorf("cannot collect due signatures for notification: %w", err)
-	}
-
-	*pvss = signatures
-
-	return nil
-}
-
-// ClaimForNotification claims the receiver's signatures that are individually
-// due for a notification and returns their ids. The conditional update doubles
-// as the claim, so concurrent workers never email the same group twice. Callers
-// advance the rest of the group with BumpRemainingForNotification in the same
-// transaction.
-func (pvss DocumentVersionSignatures) ClaimForNotification(
-	ctx context.Context,
-	conn pg.Tx,
-	now time.Time,
-	debounceBefore time.Time,
-	reminderInterval time.Duration,
-) ([]gid.GID, error) {
-	ids := make([]gid.GID, len(pvss))
-	for i, signature := range pvss {
-		ids[i] = signature.ID
-	}
-
-	// Reminders skip Sat/Sun; a weekend due time waits until Monday same UTC hour.
-	q := `
-UPDATE document_version_signatures
-SET
-	notification_count = notification_count + 1,
-	last_notified_at = @now
-WHERE
-	id = ANY(@ids::text[])
-	AND state = @state
-	AND notification_count < @max_notifications
-	AND (
-		(notification_count = 0 AND requested_at < @debounce_before)
-		OR (
-			notification_count > 0
-			AND EXTRACT(ISODOW FROM (@now::timestamptz AT TIME ZONE 'UTC')) BETWEEN 1 AND 5
-			AND @now::timestamptz > (
-				SELECT
-					(due_at_utc + CASE EXTRACT(ISODOW FROM due_at_utc)
-						WHEN 6 THEN interval '2 days'
-						WHEN 7 THEN interval '1 day'
-						ELSE interval '0'
-					END) AT TIME ZONE 'UTC'
-				FROM (
-					SELECT
-						(
-							last_notified_at
-								+ make_interval(secs => @reminder_interval_seconds * notification_count)
-						) AT TIME ZONE 'UTC' AS due_at_utc
-				) AS reminder
-			)
-		)
-	)
-RETURNING id
-`
-
-	rows, err := conn.Query(ctx, q, pgx.StrictNamedArgs{
-		"ids":                       ids,
-		"state":                     DocumentVersionSignatureStateRequested,
-		"max_notifications":         documentNotificationMaxCount,
-		"now":                       now,
-		"debounce_before":           debounceBefore,
-		"reminder_interval_seconds": reminderInterval.Seconds(),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("cannot claim due signatures for notification: %w", err)
-	}
-
-	claimed, err := pgx.CollectRows(rows, pgx.RowTo[gid.GID])
-	if err != nil {
-		return nil, fmt.Errorf("cannot collect claimed signatures for notification: %w", err)
-	}
-
-	return claimed, nil
-}
-
-// BumpRemainingForNotification advances the notification schedule for the
-// still-pending signatures in the group that were not individually claimed, so
-// the whole emailed list moves forward together. It must run in the same
-// transaction as ClaimForNotification.
-func (pvss DocumentVersionSignatures) BumpRemainingForNotification(
-	ctx context.Context,
-	conn pg.Tx,
-	claimed []gid.GID,
-	now time.Time,
-) ([]gid.GID, error) {
-	ids := make([]gid.GID, len(pvss))
-	for i, signature := range pvss {
-		ids[i] = signature.ID
-	}
-
-	rest := remainingNotificationIDs(ids, claimed)
-	if len(rest) == 0 {
-		return nil, nil
-	}
-
-	q := `
-UPDATE document_version_signatures
-SET
-	notification_count = notification_count + 1,
-	last_notified_at = @now
-WHERE
-	id = ANY(@ids::text[])
-	AND state = @state
-	AND notification_count < @max_notifications
-RETURNING id
-`
-
-	rows, err := conn.Query(ctx, q, pgx.StrictNamedArgs{
-		"ids":               rest,
-		"state":             DocumentVersionSignatureStateRequested,
-		"max_notifications": documentNotificationMaxCount,
-		"now":               now,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("cannot bump remaining signatures for notification: %w", err)
-	}
-
-	bumped, err := pgx.CollectRows(rows, pgx.RowTo[gid.GID])
-	if err != nil {
-		return nil, fmt.Errorf("cannot collect bumped signatures for notification: %w", err)
-	}
-
-	return bumped, nil
 }
 
 func (pvs *DocumentVersionSignature) Update(
@@ -1141,6 +866,64 @@ WHERE
 	if err != nil {
 		return fmt.Errorf("cannot delete document version signatures: %w", err)
 	}
+
+	return nil
+}
+
+func (pvss *DocumentVersionSignatures) LoadByStateAndSignatory(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	signatoryID gid.GID,
+	states []DocumentVersionSignatureState,
+	cursor *page.Cursor[DocumentVersionSignatureOrderField],
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	document_version_id,
+	state,
+	signed_by_profile_id,
+	signed_at,
+	requested_at,
+	electronic_signature_id,
+	created_at,
+	updated_at
+FROM
+	document_version_signatures
+WHERE
+	%s
+	AND signed_by_profile_id = @signatory_id
+	AND state::text = ANY(@states::text[])
+	AND %s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+
+	stateValues := make([]string, len(states))
+	for i, state := range states {
+		stateValues[i] = state.String()
+	}
+
+	args := pgx.StrictNamedArgs{
+		"signatory_id": signatoryID,
+		"states":       stateValues,
+	}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query document version signatures by state and signatory: %w", err)
+	}
+
+	signatures, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[DocumentVersionSignature])
+	if err != nil {
+		return fmt.Errorf("cannot collect document version signatures by state and signatory: %w", err)
+	}
+
+	*pvss = signatures
 
 	return nil
 }

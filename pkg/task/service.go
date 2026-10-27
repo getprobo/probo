@@ -304,15 +304,21 @@ func (s *Service) Create(
 }
 
 func (s *Service) Get(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context,
+	scope coredata.Scoper,
 	taskID gid.GID,
+	identityID gid.GID,
 ) (*coredata.Task, error) {
 	task := &coredata.Task{}
 
-	err := s.pg.WithConn(
+	err := s.pg.WithTx(
 		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			return task.LoadByID(ctx, conn, scope, taskID)
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := task.LoadByID(ctx, tx, scope, taskID); err != nil {
+				return err
+			}
+
+			return resolveViewerTaskNotifications(ctx, tx, scope, task, identityID)
 		},
 	)
 	if err != nil {
@@ -912,6 +918,48 @@ func syncedTaskFieldsChanged(
 	}
 
 	return !oldDeadline.Equal(*task.Deadline)
+}
+
+func resolveViewerTaskNotifications(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	task *coredata.Task,
+	identityID gid.GID,
+) error {
+	profile := &coredata.MembershipProfile{}
+	err := profile.LoadByIdentityIDAndOrganizationID(
+		ctx,
+		tx,
+		scope,
+		identityID,
+		task.OrganizationID,
+	)
+	if errors.Is(err, coredata.ErrResourceNotFound) {
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("cannot load notification recipient: %w", err)
+	}
+
+	for _, notificationType := range []coredata.NotificationType{
+		coredata.NotificationTypeTaskAssigned,
+		coredata.NotificationTypeTaskMentioned,
+	} {
+		if err := notification.Resolve(
+			ctx,
+			tx,
+			scope,
+			task.OrganizationID,
+			profile.ID,
+			notificationType,
+			task.ID,
+		); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func notifyTaskAssignment(

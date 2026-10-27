@@ -102,7 +102,8 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	case coredata.TaskEntityType:
 		action = task.ActionTaskGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
-			task, err := r.task.Get(ctx, scope, id)
+			identity := authn.IdentityFromContext(ctx)
+			task, err := r.task.Get(ctx, scope, id, identity.ID)
 			if err != nil {
 				return nil, err
 			}

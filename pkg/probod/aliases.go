@@ -67,6 +67,7 @@ type (
 	WebhookConfig       = probodconfig.WebhookConfig
 
 	DocumentNotificationConfig = probodconfig.DocumentNotificationConfig
+	WeeklyNotificationConfig   = probodconfig.WeeklyNotificationConfig
 	TaskRecurrenceConfig       = probodconfig.TaskRecurrenceConfig
 	OIDCProviderConfig         = probodconfig.OIDCProviderConfig
 	PgConfig                   = probodconfig.PgConfig

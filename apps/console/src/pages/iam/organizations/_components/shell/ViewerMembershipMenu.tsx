@@ -21,6 +21,7 @@
 import {
   CaretRightIcon,
   FileTextIcon,
+  GearIcon,
   KeyIcon,
   SignOutIcon,
 } from "@phosphor-icons/react";
@@ -182,6 +183,14 @@ export function ViewerMembershipMenu({ organizationKey }: ViewerMembershipMenuPr
             </div>
           </DropdownGroup>
           <DropdownSeparator />
+          {employeePortalId != null && (
+            <DropdownItem
+              iconStart={<GearIcon />}
+              render={<a href={employeePortalHref(employeePortalId, "notification-settings")} />}
+            >
+              {t("viewerMembershipDropdown.actions.notifications")}
+            </DropdownItem>
+          )}
           {canListOAuth2AccessTokens && (
             <DropdownItem iconStart={<KeyIcon />} render={<Link to="/me/oauth-tokens" />}>
               {t("viewerMembershipDropdown.actions.oauthTokens")}

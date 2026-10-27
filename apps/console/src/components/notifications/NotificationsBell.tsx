@@ -18,27 +18,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { BellIcon, BellSlashIcon, CaretRightIcon } from "@phosphor-icons/react";
+import { BellIcon, BellSlashIcon, CaretRightIcon, ChecksIcon, GearIcon } from "@phosphor-icons/react";
 import { catchResultValue, formatError, type GraphQLError } from "@probo/helpers";
 import { Popover } from "@probo/ui/src/v2/Popover/Popover";
 import { PopoverPopup } from "@probo/ui/src/v2/Popover/PopoverPopup";
 import { PopoverTrigger } from "@probo/ui/src/v2/Popover/PopoverTrigger";
 import useToast from "@probo/ui/src/v2/Toaster/useToast";
+import { Tooltip } from "@probo/ui/src/v2/Tooltip/Tooltip";
+import { TooltipPopup } from "@probo/ui/src/v2/Tooltip/TooltipPopup";
+import { TooltipTrigger } from "@probo/ui/src/v2/Tooltip/TooltipTrigger";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { type MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { fetchQuery, graphql, useLazyLoadQuery, usePaginationFragment, useRelayEnvironment } from "react-relay";
-import { Link, useNavigate } from "react-router";
+import { Link } from "react-router";
 
 import type { NotificationsBell_viewer$data, NotificationsBell_viewer$key } from "#/__generated__/core/NotificationsBell_viewer.graphql";
-import type { NotificationsBellMarkReadMutation } from "#/__generated__/core/NotificationsBellMarkReadMutation.graphql";
+import type { NotificationsBellMarkAllReadMutation } from "#/__generated__/core/NotificationsBellMarkAllReadMutation.graphql";
 import type { NotificationsBellPaginationQuery } from "#/__generated__/core/NotificationsBellPaginationQuery.graphql";
 import type { NotificationsBellQuery } from "#/__generated__/core/NotificationsBellQuery.graphql";
 import { employeePortalHref } from "#/lib/employeePortalHref";
 import { useMutation } from "#/lib/relay/useMutation";
 import { navRail } from "#/pages/iam/organizations/_components/shell/variants";
 
+import { notificationsRefreshEvent } from "./requestNotificationRefresh";
 import { notificationsPanel } from "./variants";
 
 // Lives outside pages/iam: that tree compiles against the connect schema, and
@@ -105,6 +109,7 @@ const notificationsFragment = graphql`
           type
           subjectId
           title
+          status
           readAt
           createdAt
         }
@@ -112,7 +117,7 @@ const notificationsFragment = graphql`
     }
     unreadNotifications: notifications(
       organizationId: $organizationId
-      filter: { types: $types, unread: true }
+      filter: { types: $types, statuses: [PENDING] }
       first: 1
     ) {
       totalCount
@@ -120,13 +125,10 @@ const notificationsFragment = graphql`
   }
 `;
 
-const markReadMutation = graphql`
-  mutation NotificationsBellMarkReadMutation($input: MarkNotificationsReadInput!) {
-    markNotificationsRead(input: $input) {
-      notifications {
-        id
-        readAt
-      }
+const markAllReadMutation = graphql`
+  mutation NotificationsBellMarkAllReadMutation($input: MarkAllNotificationsReadInput!) {
+    markAllNotificationsRead(input: $input) {
+      organizationId
     }
   }
 `;
@@ -163,11 +165,14 @@ export function NotificationsBell({ organizationId }: NotificationsBellProps) {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const [readIds, setReadIds] = useState<ReadonlySet<string>>(new Set());
-  const pendingRead = useRef(new Map<string, Promise<void>>());
-  const navigate = useNavigate();
+  const [clearedThrough, setClearedThrough] = useState<{
+    organizationId: string;
+    count: number;
+  } | null>(null);
+  const markingAll = useRef(false);
   const { t, i18n } = useTranslation();
   const toast = useToast();
-  const [markRead] = useMutation<NotificationsBellMarkReadMutation>(markReadMutation);
+  const [markAllRead] = useMutation<NotificationsBellMarkAllReadMutation>(markAllReadMutation);
   const rail = navRail();
   const panel = notificationsPanel();
 
@@ -180,20 +185,25 @@ export function NotificationsBell({ organizationId }: NotificationsBellProps) {
     }
 
     window.addEventListener("focus", refresh);
+    window.addEventListener(notificationsRefreshEvent, refresh);
     return () => {
       window.removeEventListener("focus", refresh);
+      window.removeEventListener(notificationsRefreshEvent, refresh);
       subscription?.unsubscribe();
     };
   }, [environment, variables]);
 
   const label = t("notifications.label");
-  const clearedOnScreen = edges.filter(
-    ({ node }) => node.readAt == null && readIds.has(node.id),
-  ).length;
-  const unreadCount = Math.max(0, pagination.data.unreadNotifications.totalCount - clearedOnScreen);
+  const serverUnread = pagination.data.unreadNotifications.totalCount;
+  const markedAll = clearedThrough != null
+    && clearedThrough.organizationId === organizationId
+    && clearedThrough.count === serverUnread;
+  const unreadCount = markedAll ? 0 : serverUnread;
 
   function isUnread(notification: NotificationNode) {
-    return notification.readAt == null && !readIds.has(notification.id);
+    return !markedAll
+      && notification.status === "PENDING"
+      && !readIds.has(notification.id);
   }
 
   function rememberRead(ids: string[]) {
@@ -270,37 +280,29 @@ export function NotificationsBell({ organizationId }: NotificationsBellProps) {
     fetchQuery(environment, notificationsQuery, variables).subscribe({});
   }
 
-  // Closing the panel acknowledges every notification that was on screen.
-  function markVisibleRead(): Promise<void> {
+  function markEveryRead() {
+    if (markingAll.current || unreadCount === 0) {
+      return;
+    }
+
     const ids = edges
-      .filter(({ node }) => node.readAt == null && !pendingRead.current.has(node.id))
+      .filter(({ node }) => isUnread(node))
       .map(({ node }) => node.id);
-    if (ids.length > 0) {
-      rememberRead(ids);
-      const pending = markRead({
-        variables: {
-          input: { organizationId, notificationIds: ids },
-        },
-      }, { errorToast: false }).then(() => undefined).catch((error: GraphQLError) => {
-        forgetRead(ids);
-        reportError(error);
-      }).finally(() => {
-        for (const id of ids) {
-          pendingRead.current.delete(id);
-        }
-      });
-
-      for (const id of ids) {
-        pendingRead.current.set(id, pending);
-      }
-    }
-
-    if (pendingRead.current.size === 0) {
-      return Promise.resolve();
-    }
-
-    return Promise.all([...pendingRead.current.values()]).then(() => {
+    markingAll.current = true;
+    setClearedThrough({ organizationId, count: serverUnread });
+    rememberRead(ids);
+    void markAllRead({
+      variables: {
+        input: { organizationId, types: [...notificationTypes] },
+      },
+    }, { errorToast: false }).then(() => {
       refreshList();
+    }).catch((error: GraphQLError) => {
+      setClearedThrough(null);
+      forgetRead(ids);
+      reportError(error);
+    }).finally(() => {
+      markingAll.current = false;
     });
   }
 
@@ -308,40 +310,7 @@ export function NotificationsBell({ organizationId }: NotificationsBellProps) {
     setOpen(next);
     if (next) {
       refreshList();
-      return;
     }
-    void markVisibleRead();
-  }
-
-  function handleOpen(event: MouseEvent<HTMLAnchorElement>, notification: NotificationNode) {
-    const href = notificationHref(organizationId, employeePortalId, notification);
-    const openInPlace = event.button === 0
-      && !event.metaKey
-      && !event.ctrlKey
-      && !event.shiftKey
-      && !event.altKey;
-    if (openInPlace) {
-      event.preventDefault();
-    }
-
-    const pending = markVisibleRead();
-    setOpen(false);
-    if (openInPlace) {
-      void pending.finally(() => {
-        followNotification(href);
-      });
-    }
-  }
-
-  function followNotification(
-    href: { external: true; href: string } | { external: false; to: string },
-  ) {
-    if (href.external) {
-      window.location.assign(href.href);
-      return;
-    }
-
-    void navigate(href.to);
   }
 
   return (
@@ -376,6 +345,43 @@ export function NotificationsBell({ organizationId }: NotificationsBellProps) {
           <Text size={2} weight="medium">
             {label}
           </Text>
+          <div className={panel.actions()}>
+            <Tooltip>
+              <TooltipTrigger
+                render={(
+                  <button
+                    type="button"
+                    aria-label={t("notifications.markAllRead")}
+                    className={panel.action()}
+                    onClick={markEveryRead}
+                  >
+                    <ChecksIcon size={16} aria-hidden />
+                  </button>
+                )}
+              />
+              <TooltipPopup side="bottom">
+                {t("notifications.markAllRead")}
+              </TooltipPopup>
+            </Tooltip>
+            {employeePortalId != null && (
+              <Tooltip>
+                <TooltipTrigger
+                  render={(
+                    <a
+                      href={employeePortalHref(employeePortalId, "notification-settings")}
+                      aria-label={t("notifications.settings")}
+                      className={panel.action()}
+                    >
+                      <GearIcon size={16} />
+                    </a>
+                  )}
+                />
+                <TooltipPopup side="bottom">
+                  {t("notifications.settings")}
+                </TooltipPopup>
+              </Tooltip>
+            )}
+          </div>
         </div>
         {edges.length === 0
           ? (
@@ -413,12 +419,12 @@ export function NotificationsBell({ organizationId }: NotificationsBellProps) {
                     <li key={node.id}>
                       {href.external
                         ? (
-                            <a href={href.href} className={panel.item()} onClick={event => handleOpen(event, node)}>
+                            <a href={href.href} className={panel.item()} onClick={() => setOpen(false)}>
                               {body}
                             </a>
                           )
                         : (
-                            <Link to={href.to} className={panel.item()} onClick={event => handleOpen(event, node)}>
+                            <Link to={href.to} className={panel.item()} onClick={() => setOpen(false)}>
                               {body}
                             </Link>
                           )}
@@ -472,6 +478,13 @@ function notificationHref(
   notification: NotificationNode,
 ): { external: true; href: string } | { external: false; to: string } {
   if (notification.type === "TASK_ASSIGNED" || notification.type === "TASK_MENTIONED") {
+    if (employeePortalId != null) {
+      return {
+        external: true,
+        href: employeePortalHref(employeePortalId, "tasks", notification.subjectId),
+      };
+    }
+
     return {
       external: false,
       to: `/organizations/${organizationId}/governance/tasks/${notification.subjectId}`,

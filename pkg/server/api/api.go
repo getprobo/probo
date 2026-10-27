@@ -393,6 +393,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.Cookie,
 			cfg.File,
 			cfg.EmployeePortal,
+			cfg.Notification,
 			cfg.BaseURL,
 			saferedirect.Any(
 				saferedirect.StaticHosts(cfg.BaseURL.Host()),

@@ -53,6 +53,7 @@ func NewNotification(
 		Type:      notification.Type,
 		SubjectID: notification.SubjectID,
 		Title:     title,
+		Status:    notification.Status,
 		ReadAt:    notification.ReadAt,
 		CreatedAt: notification.CreatedAt,
 	}, nil

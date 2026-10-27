@@ -2186,7 +2186,8 @@ func (r *Resolver) GetTaskTool(ctx context.Context, req *mcp.CallToolRequest, in
 		return nil, types.GetTaskOutput{}, err
 	}
 
-	task, err := r.task.Get(ctx, scope, input.ID)
+	identity := authn.IdentityFromContext(ctx)
+	task, err := r.task.Get(ctx, scope, input.ID, identity.ID)
 	if err != nil {
 		return nil, types.GetTaskOutput{}, fmt.Errorf("failed to get task: %w", err)
 	}
@@ -10675,7 +10676,8 @@ func (r *Resolver) PublishTaskToLinearTool(ctx context.Context, req *mcp.CallToo
 		return nil, types.PublishTaskToLinearOutput{}, linearPublishToolError(r, ctx, err)
 	}
 
-	task, err := r.task.Get(ctx, scope, link.TaskID)
+	identity := authn.IdentityFromContext(ctx)
+	task, err := r.task.Get(ctx, scope, link.TaskID, identity.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load published task", log.Error(err))
 		return nil, types.PublishTaskToLinearOutput{}, fmt.Errorf("internal error")
@@ -10708,7 +10710,8 @@ func (r *Resolver) UnlinkTaskExternalTool(ctx context.Context, req *mcp.CallTool
 		}
 	}
 
-	task, err := r.task.Get(ctx, scope, input.TaskID)
+	identity := authn.IdentityFromContext(ctx)
+	task, err := r.task.Get(ctx, scope, input.TaskID, identity.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load unlinked task", log.Error(err))
 		return nil, types.UnlinkTaskExternalOutput{}, fmt.Errorf("internal error")
@@ -10905,7 +10908,7 @@ func (r *Resolver) LinkTaskToLinearTool(ctx context.Context, req *mcp.CallToolRe
 		}
 	}
 
-	linkedTask, err := r.task.Get(ctx, scope, link.TaskID)
+	linkedTask, err := r.task.Get(ctx, scope, link.TaskID, identity.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load linked task", log.Error(err))
 		return nil, types.LinkTaskToLinearOutput{}, fmt.Errorf("internal error")

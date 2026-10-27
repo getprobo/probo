@@ -947,6 +947,18 @@ func (s *DocumentService) SignDocumentVersionByIdentity(
 				return fmt.Errorf("cannot update document version signature: %w", err)
 			}
 
+			if err := notification.Resolve(
+				ctx,
+				tx,
+				scope,
+				document.OrganizationID,
+				documentVersionSignature.SignedBy,
+				coredata.NotificationTypeDocumentSignatureRequested,
+				document.ID,
+			); err != nil {
+				return fmt.Errorf("cannot resolve signature notification: %w", err)
+			}
+
 			if err := s.emitDocumentEvent(
 				ctx,
 				scope,

@@ -1,0 +1,44 @@
+{
+  "title": "Ajustes de notificaciones",
+  "breadcrumb": "Ajustes de notificaciones",
+  "email": {
+    "heading": "Correo",
+    "description": "Elija cuándo le envía correos esta organización."
+  },
+  "types": {
+    "DOCUMENT_SIGNATURE_REQUESTED": {
+      "label": "Solicitudes de firma de documentos",
+      "description": "Cuando un documento necesita su firma."
+    },
+    "DOCUMENT_APPROVAL_REQUESTED": {
+      "label": "Solicitudes de aprobación de documentos",
+      "description": "Cuando un documento necesita su aprobación."
+    },
+    "TASK_ASSIGNED": {
+      "label": "Asignaciones de tareas",
+      "description": "Cuando se le asigna una tarea."
+    },
+    "TASK_MENTIONED": {
+      "label": "Menciones en una tarea",
+      "description": "Cuando se le menciona en una tarea."
+    }
+  },
+  "emailOptions": {
+    "NONE": {
+      "label": "Ninguno",
+      "description": "Ningún correo."
+    },
+    "EACH": {
+      "label": "Cada uno",
+      "description": "Un correo por cada elemento nuevo."
+    },
+    "REMINDERS": {
+      "label": "Recordatorios",
+      "description": "Hasta cuatro correos de seguimiento hasta que lo gestione."
+    },
+    "WEEKLY": {
+      "label": "Semanal",
+      "description": "Un correo el lunes para los elementos que siguen en espera."
+    }
+  }
+}

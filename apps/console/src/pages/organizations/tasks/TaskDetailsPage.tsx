@@ -23,7 +23,7 @@ import { usePageTitle } from "@probo/hooks";
 import { TaskDetails } from "@probo/tasks";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Link } from "@probo/ui/src/v2/Link/Link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   graphql,
@@ -35,6 +35,7 @@ import { useLocation, useNavigate } from "react-router";
 
 import type { TaskDetailsPage_task$key } from "#/__generated__/core/TaskDetailsPage_task.graphql";
 import type { TaskDetailsPageQuery } from "#/__generated__/core/TaskDetailsPageQuery.graphql";
+import { requestNotificationRefresh } from "#/components/notifications/requestNotificationRefresh";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { NotFoundError } from "#/lib/relay/errors";
 
@@ -95,6 +96,13 @@ export function TaskDetailsPage({ queryRef }: TaskDetailsPageProps) {
     taskKey,
   );
   usePageTitle(task?.name ?? "");
+
+  useEffect(() => {
+    if (task == null) {
+      return;
+    }
+    requestNotificationRefresh();
+  }, [task?.id]);
 
   if (!task || task.organization.id !== organizationId) {
     throw new NotFoundError(t("detailsPage.notFound"));

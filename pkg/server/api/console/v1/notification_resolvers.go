@@ -18,23 +18,21 @@ import (
 	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
-// MarkNotificationsRead is the resolver for the markNotificationsRead field.
-func (r *mutationResolver) MarkNotificationsRead(ctx context.Context, input types.MarkNotificationsReadInput) (*types.MarkNotificationsReadPayload, error) {
+// MarkAllNotificationsRead is the resolver for the markAllNotificationsRead field.
+func (r *mutationResolver) MarkAllNotificationsRead(ctx context.Context, input types.MarkAllNotificationsReadInput) (*types.MarkAllNotificationsReadPayload, error) {
 	scope, err := r.authorize(ctx, input.OrganizationID, notification.ActionNotificationUpdate)
 	if err != nil {
 		return nil, err
 	}
 
 	identity := authn.IdentityFromContext(ctx)
-
-	notifications, err := r.notification.MarkNotificationsRead(
+	if err := r.notification.MarkAllNotificationsRead(
 		ctx,
 		scope,
 		input.OrganizationID,
 		identity.ID,
-		input.NotificationIds,
-	)
-	if err != nil {
+		input.Types,
+	); err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlx.NotFound(ctx, err)
 		}
@@ -44,21 +42,8 @@ func (r *mutationResolver) MarkNotificationsRead(ctx context.Context, input type
 		return nil, gqlx.Internal(ctx)
 	}
 
-	nodes := make([]*types.Notification, 0, len(notifications))
-
-	for _, item := range notifications {
-		node, err := types.NewNotification(item)
-		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot mark notifications read", log.Error(err))
-
-			return nil, gqlx.Internal(ctx)
-		}
-
-		nodes = append(nodes, node)
-	}
-
-	return &types.MarkNotificationsReadPayload{
-		Notifications: nodes,
+	return &types.MarkAllNotificationsReadPayload{
+		OrganizationID: input.OrganizationID,
 	}, nil
 }
 

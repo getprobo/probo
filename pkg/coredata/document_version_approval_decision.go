@@ -304,8 +304,7 @@ INSERT INTO document_version_approval_decisions (
 	electronic_signature_id,
 	decided_at,
 	created_at,
-	updated_at,
-	notification_count
+	updated_at
 ) VALUES (
 	@id,
 	@tenant_id,
@@ -317,8 +316,7 @@ INSERT INTO document_version_approval_decisions (
 	@electronic_signature_id,
 	@decided_at,
 	@created_at,
-	@updated_at,
-	@notification_count
+	@updated_at
 )
 `
 
@@ -334,7 +332,6 @@ INSERT INTO document_version_approval_decisions (
 		"decided_at":              d.DecidedAt,
 		"created_at":              d.CreatedAt,
 		"updated_at":              d.UpdatedAt,
-		"notification_count":      0,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -376,7 +373,6 @@ func (ds DocumentVersionApprovalDecisions) BulkInsert(
 				d.DecidedAt,
 				d.CreatedAt,
 				d.UpdatedAt,
-				0,
 			},
 		)
 	}
@@ -396,263 +392,11 @@ func (ds DocumentVersionApprovalDecisions) BulkInsert(
 			"decided_at",
 			"created_at",
 			"updated_at",
-			"notification_count",
 		},
 		pgx.CopyFromRows(rows),
 	)
 
 	return err
-}
-
-// LoadNextDueGroupForNotification loads every still-PENDING approval decision
-// for the next (organization, approver) group that has at least one decision due
-// for a notification, so the whole group can be emailed together. A decision is
-// due once it is past its scheduled offset (see documentNotificationMaxCount)
-// and has not reached the cap. The receiver is left empty when no group is due.
-//
-// A decision is only ever PENDING while its quorum is pending — resolving a
-// quorum either approves all decisions or voids the remaining ones — so there is
-// no need to join the quorum table here.
-func (d *DocumentVersionApprovalDecisions) LoadNextDueGroupForNotification(
-	ctx context.Context,
-	conn pg.Querier,
-	now time.Time,
-	debounceBefore time.Time,
-	reminderInterval time.Duration,
-) error {
-	// Reminders skip Sat/Sun; a weekend due time waits until Monday same UTC hour.
-	q := `
-WITH next_group AS (
-	SELECT
-		organization_id,
-		approver_id
-	FROM
-		document_version_approval_decisions
-	WHERE
-		state = @state
-		AND notification_count < @max_notifications
-		AND (
-			(notification_count = 0 AND created_at < @debounce_before)
-			OR (
-				notification_count > 0
-				AND EXTRACT(ISODOW FROM (@now::timestamptz AT TIME ZONE 'UTC')) BETWEEN 1 AND 5
-				AND @now::timestamptz > (
-					SELECT
-						(due_at_utc + CASE EXTRACT(ISODOW FROM due_at_utc)
-							WHEN 6 THEN interval '2 days'
-							WHEN 7 THEN interval '1 day'
-							ELSE interval '0'
-						END) AT TIME ZONE 'UTC'
-					FROM (
-						SELECT
-							(
-								last_notified_at
-									+ make_interval(secs => @reminder_interval_seconds * notification_count)
-							) AT TIME ZONE 'UTC' AS due_at_utc
-					) AS reminder
-				)
-			)
-		)
-		AND EXISTS (
-			SELECT 1
-			FROM document_version_approval_quorums q
-			JOIN document_versions dv ON dv.id = q.version_id
-			JOIN documents doc ON doc.id = dv.document_id
-			WHERE q.id = document_version_approval_decisions.quorum_id
-				AND doc.deleted_at IS NULL
-				AND doc.archived_at IS NULL
-		)
-		AND EXISTS (
-			SELECT 1
-			FROM iam_membership_profiles p
-			WHERE p.id = document_version_approval_decisions.approver_id
-				AND p.state = @recipient_state::membership_state
-				AND (p.contract_end_date IS NULL OR p.contract_end_date >= @now::date)
-		)
-	GROUP BY
-		organization_id,
-		approver_id
-	ORDER BY
-		organization_id,
-		approver_id
-	LIMIT 1
-)
-SELECT
-	d.id,
-	d.organization_id,
-	d.quorum_id,
-	d.approver_id,
-	d.state,
-	d.comment,
-	d.electronic_signature_id,
-	d.decided_at,
-	d.created_at,
-	d.updated_at
-FROM
-	document_version_approval_decisions d
-INNER JOIN next_group g
-	ON g.organization_id = d.organization_id
-	AND g.approver_id = d.approver_id
-WHERE
-	d.state = @state
-	AND d.notification_count < @max_notifications
-	AND EXISTS (
-		SELECT 1
-		FROM document_version_approval_quorums q
-		JOIN document_versions dv ON dv.id = q.version_id
-		JOIN documents doc ON doc.id = dv.document_id
-		WHERE q.id = d.quorum_id
-			AND doc.deleted_at IS NULL
-			AND doc.archived_at IS NULL
-	)
-ORDER BY
-	d.quorum_id
-`
-
-	args := pgx.StrictNamedArgs{
-		"state":                     DocumentVersionApprovalDecisionStatePending,
-		"recipient_state":           ProfileStateActive,
-		"max_notifications":         documentNotificationMaxCount,
-		"now":                       now,
-		"debounce_before":           debounceBefore,
-		"reminder_interval_seconds": reminderInterval.Seconds(),
-	}
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query due approval decisions for notification: %w", err)
-	}
-
-	decisions, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[DocumentVersionApprovalDecision])
-	if err != nil {
-		return fmt.Errorf("cannot collect due approval decisions for notification: %w", err)
-	}
-
-	*d = decisions
-
-	return nil
-}
-
-// ClaimForNotification claims the receiver's decisions that are individually
-// due for a notification and returns their ids. The conditional update doubles
-// as the claim, so concurrent workers never email the same group twice. Callers
-// advance the rest of the group with BumpRemainingForNotification in the same
-// transaction.
-func (d DocumentVersionApprovalDecisions) ClaimForNotification(
-	ctx context.Context,
-	conn pg.Tx,
-	now time.Time,
-	debounceBefore time.Time,
-	reminderInterval time.Duration,
-) ([]gid.GID, error) {
-	ids := make([]gid.GID, len(d))
-	for i, decision := range d {
-		ids[i] = decision.ID
-	}
-
-	// Reminders skip Sat/Sun; a weekend due time waits until Monday same UTC hour.
-	q := `
-UPDATE document_version_approval_decisions
-SET
-	notification_count = notification_count + 1,
-	last_notified_at = @now
-WHERE
-	id = ANY(@ids::text[])
-	AND state = @state
-	AND notification_count < @max_notifications
-	AND (
-		(notification_count = 0 AND created_at < @debounce_before)
-		OR (
-			notification_count > 0
-			AND EXTRACT(ISODOW FROM (@now::timestamptz AT TIME ZONE 'UTC')) BETWEEN 1 AND 5
-			AND @now::timestamptz > (
-				SELECT
-					(due_at_utc + CASE EXTRACT(ISODOW FROM due_at_utc)
-						WHEN 6 THEN interval '2 days'
-						WHEN 7 THEN interval '1 day'
-						ELSE interval '0'
-					END) AT TIME ZONE 'UTC'
-				FROM (
-					SELECT
-						(
-							last_notified_at
-								+ make_interval(secs => @reminder_interval_seconds * notification_count)
-						) AT TIME ZONE 'UTC' AS due_at_utc
-				) AS reminder
-			)
-		)
-	)
-RETURNING id
-`
-
-	rows, err := conn.Query(ctx, q, pgx.StrictNamedArgs{
-		"ids":                       ids,
-		"state":                     DocumentVersionApprovalDecisionStatePending,
-		"max_notifications":         documentNotificationMaxCount,
-		"now":                       now,
-		"debounce_before":           debounceBefore,
-		"reminder_interval_seconds": reminderInterval.Seconds(),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("cannot claim due approval decisions for notification: %w", err)
-	}
-
-	claimed, err := pgx.CollectRows(rows, pgx.RowTo[gid.GID])
-	if err != nil {
-		return nil, fmt.Errorf("cannot collect claimed approval decisions for notification: %w", err)
-	}
-
-	return claimed, nil
-}
-
-// BumpRemainingForNotification advances the notification schedule for the
-// still-pending decisions in the group that were not individually claimed, so
-// the whole emailed list moves forward together. It must run in the same
-// transaction as ClaimForNotification.
-func (d DocumentVersionApprovalDecisions) BumpRemainingForNotification(
-	ctx context.Context,
-	conn pg.Tx,
-	claimed []gid.GID,
-	now time.Time,
-) ([]gid.GID, error) {
-	ids := make([]gid.GID, len(d))
-	for i, decision := range d {
-		ids[i] = decision.ID
-	}
-
-	rest := remainingNotificationIDs(ids, claimed)
-	if len(rest) == 0 {
-		return nil, nil
-	}
-
-	q := `
-UPDATE document_version_approval_decisions
-SET
-	notification_count = notification_count + 1,
-	last_notified_at = @now
-WHERE
-	id = ANY(@ids::text[])
-	AND state = @state
-	AND notification_count < @max_notifications
-RETURNING id
-`
-
-	rows, err := conn.Query(ctx, q, pgx.StrictNamedArgs{
-		"ids":               rest,
-		"state":             DocumentVersionApprovalDecisionStatePending,
-		"max_notifications": documentNotificationMaxCount,
-		"now":               now,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("cannot bump remaining approval decisions for notification: %w", err)
-	}
-
-	bumped, err := pgx.CollectRows(rows, pgx.RowTo[gid.GID])
-	if err != nil {
-		return nil, fmt.Errorf("cannot collect bumped approval decisions for notification: %w", err)
-	}
-
-	return bumped, nil
 }
 
 func (d *DocumentVersionApprovalDecision) Update(
@@ -809,6 +553,64 @@ WHERE
 	if err != nil {
 		return fmt.Errorf("cannot delete document version approval decisions: %w", err)
 	}
+
+	return nil
+}
+
+func (ds *DocumentVersionApprovalDecisions) LoadByStateAndApprover(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	approverID gid.GID,
+	states []DocumentVersionApprovalDecisionState,
+	cursor *page.Cursor[DocumentVersionApprovalDecisionOrderField],
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	quorum_id,
+	approver_id,
+	state,
+	comment,
+	electronic_signature_id,
+	decided_at,
+	created_at,
+	updated_at
+FROM
+	document_version_approval_decisions
+WHERE
+	%s
+	AND approver_id = @approver_id
+	AND state::text = ANY(@states::text[])
+	AND %s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+
+	stateValues := make([]string, len(states))
+	for i, state := range states {
+		stateValues[i] = state.String()
+	}
+
+	args := pgx.StrictNamedArgs{
+		"approver_id": approverID,
+		"states":      stateValues,
+	}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query approval decisions by state and approver: %w", err)
+	}
+
+	decisions, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[DocumentVersionApprovalDecision])
+	if err != nil {
+		return fmt.Errorf("cannot collect approval decisions by state and approver: %w", err)
+	}
+
+	*ds = decisions
 
 	return nil
 }

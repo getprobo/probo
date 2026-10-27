@@ -44,6 +44,7 @@ import { useLocation } from "react-router";
 
 import type { TaskDetailsPage_task$data, TaskDetailsPage_task$key } from "#/__generated__/core/TaskDetailsPage_task.graphql";
 import type { TaskDetailsPageQuery } from "#/__generated__/core/TaskDetailsPageQuery.graphql";
+import { requestNotificationRefresh } from "#/components/notifications/requestNotificationRefresh";
 import { NotFoundError } from "#/lib/relay/errors";
 import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
@@ -123,6 +124,10 @@ function TaskDetailsBody({ task }: { task: TaskDetailsPage_task$data }) {
   const { stateOption } = taskListItem({ field: true });
   const assignedTo = task.assignedTo;
   const showEngagement = task.canListActivities || task.canCreateComment;
+
+  useEffect(() => {
+    requestNotificationRefresh();
+  }, [task.id]);
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col px-8 pt-8 pb-32">

@@ -118,7 +118,7 @@ func (s *DocumentApprovalService) RequestApproval(
 	}
 
 	// Approval notifications are sent asynchronously and debounced by the
-	// document notification worker, which batches all pending approvals per
+	// notification email worker, which batches all pending approvals per
 	// recipient into a single email.
 
 	return quorum, nil
@@ -383,6 +383,18 @@ func (s *DocumentApprovalService) Approve(
 
 			if err := decision.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update approval decision: %w", err)
+			}
+
+			if err := notification.Resolve(
+				ctx,
+				tx,
+				scope,
+				document.OrganizationID,
+				decision.ApproverID,
+				coredata.NotificationTypeDocumentApprovalRequested,
+				document.ID,
+			); err != nil {
+				return fmt.Errorf("cannot resolve approval notification: %w", err)
 			}
 
 			if err := s.maybeApproveQuorum(ctx, scope, tx, quorum.ID); err != nil {

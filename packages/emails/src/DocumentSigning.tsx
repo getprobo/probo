@@ -21,6 +21,7 @@
 import { Button, Section, Text } from 'react-email';
 import * as React from 'react';
 import EmailLayout, { bodyText, button, buttonContainer, footerText } from './components/EmailLayout';
+import { NotificationSettingsLink } from './components/NotificationSettingsLink';
 
 const documentList = {
   ...bodyText,
@@ -54,6 +55,7 @@ export const DocumentSigning = () => {
         This process is managed securely by Probo, acting as the compliance partner on behalf of <strong>{'{{.OrganizationName}}'}</strong>.
         Thank you for your prompt attention to this matter.
       </Text>
+      <NotificationSettingsLink />
       <Text style={footerText}>
         Best regards,
       </Text>

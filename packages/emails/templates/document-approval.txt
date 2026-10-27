@@ -16,6 +16,8 @@ This process is managed securely by Probo, acting as the compliance partner on b
 
 Thank you for your prompt attention to this matter.
 
+Notification settings: {{.NotificationSettingsUrl}}
+
 Best regards,
 
 {{.SenderCompanyHeadquarterAddress}}

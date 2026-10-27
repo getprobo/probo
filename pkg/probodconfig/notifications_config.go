@@ -25,6 +25,7 @@ type NotificationsConfig struct {
 	Slack    SlackConfig                `json:"slack"`
 	Webhook  WebhookConfig              `json:"webhook"`
 	Document DocumentNotificationConfig `json:"document"`
+	Weekly   WeeklyNotificationConfig   `json:"weekly"`
 }
 
 type WebhookConfig struct {
@@ -50,4 +51,12 @@ type DocumentNotificationConfig struct {
 	// Reminder sends that fall on Saturday or Sunday are deferred to Monday at
 	// the same clock time; the first (debounced) notice is unchanged.
 	ReminderInterval int `json:"reminder-interval"`
+}
+
+// WeeklyNotificationConfig chooses when the Monday-style digest is sent.
+// Weekday uses time.Weekday: 0 is Sunday and 1 is Monday. Hour is UTC, 0–23.
+// The digest becomes due at that hour and can be sent through the rest of the day.
+type WeeklyNotificationConfig struct {
+	Weekday int `json:"weekday"`
+	Hour    int `json:"hour"`
 }

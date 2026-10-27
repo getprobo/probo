@@ -1,0 +1,44 @@
+{
+  "title": "Meldingsinstellingen",
+  "breadcrumb": "Meldingsinstellingen",
+  "email": {
+    "heading": "E-mail",
+    "description": "Kies wanneer deze organisatie u e-mails stuurt."
+  },
+  "types": {
+    "DOCUMENT_SIGNATURE_REQUESTED": {
+      "label": "Verzoeken om documentondertekening",
+      "description": "Wanneer een document uw handtekening nodig heeft."
+    },
+    "DOCUMENT_APPROVAL_REQUESTED": {
+      "label": "Verzoeken om documentgoedkeuring",
+      "description": "Wanneer een document uw goedkeuring nodig heeft."
+    },
+    "TASK_ASSIGNED": {
+      "label": "Taaktoewijzingen",
+      "description": "Wanneer een taak aan u wordt toegewezen."
+    },
+    "TASK_MENTIONED": {
+      "label": "Vermeldingen in een taak",
+      "description": "Wanneer u in een taak wordt vermeld."
+    }
+  },
+  "emailOptions": {
+    "NONE": {
+      "label": "Geen",
+      "description": "Geen e-mail."
+    },
+    "EACH": {
+      "label": "Elk",
+      "description": "Eén e-mail voor elk nieuw item."
+    },
+    "REMINDERS": {
+      "label": "Herinneringen",
+      "description": "Tot vier vervolgmails totdat u het afhandelt."
+    },
+    "WEEKLY": {
+      "label": "Wekelijks",
+      "description": "Eén e-mail op maandag voor items die nog wachten."
+    }
+  }
+}

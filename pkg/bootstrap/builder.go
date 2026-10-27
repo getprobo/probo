@@ -273,6 +273,10 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 					DebounceDelay:    b.resolver.getEnvIntOrDefault("PROBOD_DOCUMENT_NOTIFICATION_DEBOUNCE_DELAY", 900),
 					ReminderInterval: b.resolver.getEnvIntOrDefault("PROBOD_DOCUMENT_NOTIFICATION_REMINDER_INTERVAL", 86400),
 				},
+				Weekly: probodconfig.WeeklyNotificationConfig{
+					Weekday: b.resolver.getEnvIntOrDefault("PROBOD_NOTIFICATION_WEEKLY_WEEKDAY", 1),
+					Hour:    b.resolver.getEnvIntOrDefault("PROBOD_NOTIFICATION_WEEKLY_HOUR", 16),
+				},
 			},
 			TaskRecurrence: probodconfig.TaskRecurrenceConfig{
 				Interval: b.resolver.getEnvIntOrDefault("PROBOD_TASK_RECURRENCE_INTERVAL", 300),

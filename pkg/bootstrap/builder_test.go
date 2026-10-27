@@ -366,6 +366,8 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Equal(t, 300, cfg.Probod.Notifications.Document.Interval)
 	assert.Equal(t, 900, cfg.Probod.Notifications.Document.DebounceDelay)
 	assert.Equal(t, 86400, cfg.Probod.Notifications.Document.ReminderInterval)
+	assert.Equal(t, 1, cfg.Probod.Notifications.Weekly.Weekday)
+	assert.Equal(t, 16, cfg.Probod.Notifications.Weekly.Hour)
 	assert.Equal(t, 300, cfg.Probod.TaskRecurrence.Interval)
 
 	// Agents tools — Firecrawl empty by default
@@ -519,6 +521,8 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["PROBOD_TASK_RECURRENCE_INTERVAL"] = "600"
 	env["PROBOD_DOCUMENT_NOTIFICATION_DEBOUNCE_DELAY"] = "60"
 	env["PROBOD_DOCUMENT_NOTIFICATION_REMINDER_INTERVAL"] = "43200"
+	env["PROBOD_NOTIFICATION_WEEKLY_WEEKDAY"] = "3"
+	env["PROBOD_NOTIFICATION_WEEKLY_HOUR"] = "9"
 	// Firecrawl
 	env["PROBOD_FIRECRAWL_API_KEY"] = "fc-test-key"
 	// Agents — providers
@@ -674,6 +678,8 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.Equal(t, 600, cfg.Probod.TaskRecurrence.Interval)
 	assert.Equal(t, 60, cfg.Probod.Notifications.Document.DebounceDelay)
 	assert.Equal(t, 43200, cfg.Probod.Notifications.Document.ReminderInterval)
+	assert.Equal(t, 3, cfg.Probod.Notifications.Weekly.Weekday)
+	assert.Equal(t, 9, cfg.Probod.Notifications.Weekly.Hour)
 	// Agents tools — Firecrawl
 	assert.Equal(t, "fc-test-key", cfg.Probod.Agents.Tools.FirecrawlAPIKey)
 	// Agents — providers

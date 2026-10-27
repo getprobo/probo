@@ -29,6 +29,9 @@ import ConfirmEmail from "../src/ConfirmEmail";
 import DocumentExport from "../src/DocumentExport";
 import DocumentApproval from "../src/DocumentApproval";
 import DocumentSigning from "../src/DocumentSigning";
+import TaskAssigned from "../src/TaskAssigned";
+import TaskMentioned from "../src/TaskMentioned";
+import NotificationDigest from "../src/NotificationDigest";
 import FrameworkExport from "../src/FrameworkExport";
 import Invitation from "../src/Invitation";
 import PasswordReset from "../src/PasswordReset";
@@ -68,6 +71,18 @@ const templates: TemplateConfig[] = [
   {
     name: "document-signing",
     render: () => DocumentSigning(),
+  },
+  {
+    name: "task-assigned",
+    render: () => TaskAssigned(),
+  },
+  {
+    name: "task-mentioned",
+    render: () => TaskMentioned(),
+  },
+  {
+    name: "notification-digest",
+    render: () => NotificationDigest(),
   },
   {
     name: "document-export",

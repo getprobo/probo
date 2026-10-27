@@ -38,18 +38,31 @@ enum NotificationType
         )
 }
 
+enum NotificationStatus
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.NotificationStatus") {
+    PENDING
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.NotificationStatusPending"
+        )
+    RESOLVED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.NotificationStatusResolved"
+        )
+}
+
 type Notification implements Node {
     id: ID!
     type: NotificationType!
     subjectId: ID!
     title: String!
+    status: NotificationStatus!
     readAt: Datetime
     createdAt: Datetime!
 }
 
 input NotificationFilter {
     types: [NotificationType!]
-    unread: Boolean
+    statuses: [NotificationStatus!]
 }
 
 type NotificationConnection
@@ -67,16 +80,16 @@ type NotificationEdge {
 }
 
 extend type Mutation {
-    markNotificationsRead(
-        input: MarkNotificationsReadInput!
-    ): MarkNotificationsReadPayload!
+    markAllNotificationsRead(
+        input: MarkAllNotificationsReadInput!
+    ): MarkAllNotificationsReadPayload!
 }
 
-input MarkNotificationsReadInput {
+input MarkAllNotificationsReadInput {
     organizationId: ID!
-    notificationIds: [ID!]!
+    types: [NotificationType!]
 }
 
-type MarkNotificationsReadPayload {
-    notifications: [Notification!]!
+type MarkAllNotificationsReadPayload {
+    organizationId: ID!
 }

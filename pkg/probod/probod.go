@@ -211,6 +211,10 @@ func New() *Implm {
 					DebounceDelay:    900,   // 15 minutes
 					ReminderInterval: 86400, // 1 day base cadence (1x, 2x, 3x; weekend reminders → Monday)
 				},
+				Weekly: WeeklyNotificationConfig{
+					Weekday: int(time.Monday),
+					Hour:    16, // 16:00 UTC: late afternoon in Paris, morning in San Francisco
+				},
 			},
 			TaskRecurrence: TaskRecurrenceConfig{
 				Interval: 300, // 5 minutes
@@ -902,6 +906,15 @@ func (impl *Implm) Run(
 
 	notificationService := notification.NewService(pgClient)
 
+	notificationMailer, err := notification.NewMailer(
+		baseURL.String(),
+		impl.cfg.Auth.Cookie.Secret,
+		time.Duration(impl.cfg.Auth.InvitationConfirmationTokenValidity)*time.Second,
+	)
+	if err != nil {
+		return fmt.Errorf("cannot create notification mailer: %w", err)
+	}
+
 	taskService := task.NewService(
 		pgClient,
 		encryptionKey,
@@ -912,7 +925,6 @@ func (impl *Implm) Run(
 		fileManagerService,
 		impl.cfg.AWS.Bucket,
 	)
-
 	itamService := itam.NewService(
 		pgClient,
 		iamService,
@@ -1498,36 +1510,49 @@ func (impl *Implm) Run(
 		},
 	)
 
-	documentNotificationInterval := time.Duration(impl.cfg.Notifications.Document.Interval) * time.Second
-	if documentNotificationInterval <= 0 {
-		documentNotificationInterval = 5 * time.Minute
+	notificationEmailInterval := time.Duration(impl.cfg.Notifications.Document.Interval) * time.Second
+	if notificationEmailInterval <= 0 {
+		notificationEmailInterval = 5 * time.Minute
 	}
 
-	documentNotificationDebounce := time.Duration(impl.cfg.Notifications.Document.DebounceDelay) * time.Second
-	if documentNotificationDebounce <= 0 {
-		documentNotificationDebounce = 15 * time.Minute
+	notificationEmailDebounce := time.Duration(impl.cfg.Notifications.Document.DebounceDelay) * time.Second
+	if notificationEmailDebounce <= 0 {
+		notificationEmailDebounce = 15 * time.Minute
 	}
 
-	documentNotificationReminder := time.Duration(impl.cfg.Notifications.Document.ReminderInterval) * time.Second
-	if documentNotificationReminder <= 0 {
-		documentNotificationReminder = 24 * time.Hour
+	notificationEmailReminder := time.Duration(impl.cfg.Notifications.Document.ReminderInterval) * time.Second
+	if notificationEmailReminder <= 0 {
+		notificationEmailReminder = 24 * time.Hour
 	}
 
-	documentNotificationWorker := probo.NewDocumentNotificationWorker(
+	weeklyWeekday := time.Weekday(impl.cfg.Notifications.Weekly.Weekday)
+	if weeklyWeekday < time.Sunday || weeklyWeekday > time.Saturday {
+		weeklyWeekday = time.Monday
+	}
+
+	weeklyHour := impl.cfg.Notifications.Weekly.Hour
+	if weeklyHour < 0 || weeklyHour > 23 {
+		weeklyHour = 16
+	}
+
+	notificationEmailWorker := probo.NewNotificationEmailWorker(
 		proboService,
-		l.Named("document-notification-worker"),
-		probo.DocumentNotificationWorkerConfig{
-			DebounceDelay:    documentNotificationDebounce,
-			ReminderInterval: documentNotificationReminder,
+		notificationMailer,
+		l.Named("notification-email-worker"),
+		probo.NotificationEmailWorkerConfig{
+			DebounceDelay:    notificationEmailDebounce,
+			ReminderInterval: notificationEmailReminder,
+			WeeklyWeekday:    weeklyWeekday,
+			WeeklyHour:       weeklyHour,
 		},
-		worker.WithInterval(documentNotificationInterval),
+		worker.WithInterval(notificationEmailInterval),
 	)
-	documentNotificationCtx, stopDocumentNotification := context.WithCancel(context.Background())
+	notificationEmailWorkerCtx, stopNotificationEmailWorker := context.WithCancel(context.Background())
 
 	wg.Go(
 		func() {
-			if err := documentNotificationWorker.Run(documentNotificationCtx); err != nil {
-				cancel(fmt.Errorf("document notification worker crashed: %w", err))
+			if err := notificationEmailWorker.Run(notificationEmailWorkerCtx); err != nil {
+				cancel(fmt.Errorf("notification email worker crashed: %w", err))
 			}
 		},
 	)
@@ -1809,7 +1834,7 @@ func (impl *Implm) Run(
 	stopLinearWebhookRetentionWorker()
 	stopDocumentPDFWorker()
 	stopDocumentApprovalQuorumPDFWorker()
-	stopDocumentNotification()
+	stopNotificationEmailWorker()
 	stopExportJobExporter()
 	stopAccessReviewWorker()
 	stopConnectorsService()

@@ -1,0 +1,44 @@
+{
+  "title": "Notification settings",
+  "breadcrumb": "Notification settings",
+  "email": {
+    "heading": "Email",
+    "description": "Choose when this organization emails you."
+  },
+  "types": {
+    "DOCUMENT_SIGNATURE_REQUESTED": {
+      "label": "Document signature requests",
+      "description": "When a document needs your signature."
+    },
+    "DOCUMENT_APPROVAL_REQUESTED": {
+      "label": "Document approval requests",
+      "description": "When a document needs your approval."
+    },
+    "TASK_ASSIGNED": {
+      "label": "Task assignments",
+      "description": "When a task is assigned to you."
+    },
+    "TASK_MENTIONED": {
+      "label": "Task mentions",
+      "description": "When you are mentioned in a task."
+    }
+  },
+  "emailOptions": {
+    "NONE": {
+      "label": "None",
+      "description": "No email."
+    },
+    "EACH": {
+      "label": "Each",
+      "description": "One email for each new item."
+    },
+    "REMINDERS": {
+      "label": "Reminders",
+      "description": "Up to four follow-up emails until you handle it."
+    },
+    "WEEKLY": {
+      "label": "Weekly",
+      "description": "One Monday email for items still waiting."
+    }
+  }
+}

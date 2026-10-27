@@ -70,6 +70,7 @@ func Insert(
 		Type:               req.Type,
 		SubjectID:          req.SubjectID,
 		Attributes:         attributes,
+		Status:             coredata.NotificationStatusPending,
 		CreatedAt:          now,
 		UpdatedAt:          now,
 	}

@@ -324,7 +324,7 @@ func (r *viewerResolver) Notifications(ctx context.Context, obj *types.Viewer, o
 
 	notificationFilter := coredata.NewNotificationFilter(nil, nil)
 	if filter != nil {
-		notificationFilter = coredata.NewNotificationFilter(filter.Types, filter.Unread)
+		notificationFilter = coredata.NewNotificationFilter(filter.Types, filter.Statuses)
 	}
 
 	notifications, err := r.notification.ListNotifications(

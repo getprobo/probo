@@ -158,16 +158,14 @@ func (s *Service) GetNotification(
 	return notification, nil
 }
 
-func (s *Service) MarkNotificationsRead(
+func (s *Service) MarkAllNotificationsRead(
 	ctx context.Context,
 	scope coredata.Scoper,
 	organizationID gid.GID,
 	identityID gid.GID,
-	notificationIDs []gid.GID,
-) ([]*coredata.Notification, error) {
-	var notifications []*coredata.Notification
-
-	err := s.pg.WithTx(
+	types []coredata.NotificationType,
+) error {
+	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			profile, err := loadRecipient(ctx, tx, scope, organizationID, identityID)
@@ -175,29 +173,21 @@ func (s *Service) MarkNotificationsRead(
 				return fmt.Errorf("cannot load notification recipient: %w", err)
 			}
 
-			marked, err := (&coredata.Notifications{}).MarkReadByIDs(
+			if err := (&coredata.Notifications{}).MarkAllRead(
 				ctx,
 				tx,
 				scope,
 				organizationID,
 				profile.ID,
-				notificationIDs,
+				types,
 				time.Now(),
-			)
-			if err != nil {
+			); err != nil {
 				return err
 			}
-
-			notifications = marked
 
 			return nil
 		},
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	return notifications, nil
 }
 
 func loadRecipient(
@@ -219,4 +209,104 @@ func loadRecipient(
 	}
 
 	return profile, nil
+}
+
+type EmailPreference struct {
+	Type  coredata.NotificationType
+	Email coredata.NotificationEmailDelivery
+}
+
+func (s *Service) ListPreferences(
+	ctx context.Context,
+	organizationID gid.GID,
+	identityID gid.GID,
+) ([]EmailPreference, error) {
+	var stored coredata.NotificationPreferences
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			scope := coredata.NewScopeFromObjectID(organizationID)
+			profile, err := loadRecipient(ctx, conn, scope, organizationID, identityID)
+			if err != nil {
+				return err
+			}
+
+			if err := stored.LoadByProfileID(ctx, conn, profile.ID); err != nil {
+				return fmt.Errorf("cannot load notification preferences: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	byType := make(map[coredata.NotificationType]coredata.NotificationEmailDelivery, len(stored))
+	for _, preference := range stored {
+		byType[preference.Type] = preference.EmailDelivery
+	}
+
+	preferences := make([]EmailPreference, 0, len(coredata.NotificationTypes()))
+	for _, notificationType := range coredata.NotificationTypes() {
+		email, ok := byType[notificationType]
+		if !ok {
+			email = coredata.DefaultNotificationEmailDelivery(notificationType)
+		}
+
+		preferences = append(preferences, EmailPreference{
+			Type:  notificationType,
+			Email: email,
+		})
+	}
+
+	return preferences, nil
+}
+
+func (s *Service) UpdatePreference(
+	ctx context.Context,
+	organizationID gid.GID,
+	identityID gid.GID,
+	notificationType coredata.NotificationType,
+	email coredata.NotificationEmailDelivery,
+) (EmailPreference, error) {
+	if !notificationType.IsValid() || !email.IsValid() {
+		return EmailPreference{}, fmt.Errorf("cannot update notification preference: invalid value")
+	}
+
+	now := time.Now()
+	preference := &coredata.NotificationPreference{
+		OrganizationID: organizationID,
+		Type:           notificationType,
+		EmailDelivery:  email,
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
+
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			scope := coredata.NewScopeFromObjectID(organizationID)
+			profile, err := loadRecipient(ctx, tx, scope, organizationID, identityID)
+			if err != nil {
+				return err
+			}
+
+			preference.RecipientProfileID = profile.ID
+			if err := preference.Upsert(ctx, tx); err != nil {
+				return fmt.Errorf("cannot update notification preference: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return EmailPreference{}, err
+	}
+
+	return EmailPreference{
+		Type:  preference.Type,
+		Email: preference.EmailDelivery,
+	}, nil
 }

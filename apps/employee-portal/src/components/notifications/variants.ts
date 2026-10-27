@@ -27,7 +27,9 @@ import { tv } from "tailwind-variants/lite";
 export const notificationsPanel = tv({
   slots: {
     popup: "flex w-80 max-h-(--available-height) flex-col overflow-hidden p-0",
-    header: "px-3 pt-3 pb-2",
+    header: "flex items-center justify-between gap-2 px-3 pt-3 pb-2",
+    actions: "flex items-center gap-2",
+    action: "cursor-pointer text-sand-11 hover:text-sand-12",
     empty: "flex flex-col items-center gap-2 px-3 pt-2 pb-4 text-center",
     emptyIcon: "text-sand-11",
     list: "flex max-h-[min(24rem,calc(var(--available-height)-3.5rem))] min-h-0 flex-col overflow-y-auto overscroll-y-contain px-1 pb-1",

@@ -198,7 +198,8 @@ func (r *mutationResolver) PublishTaskToLinear(ctx context.Context, input types.
 		return nil, r.linearPublishError(ctx, err)
 	}
 
-	task, err := r.task.Get(ctx, scope, link.TaskID)
+	identity := authn.IdentityFromContext(ctx)
+	task, err := r.task.Get(ctx, scope, link.TaskID, identity.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load published task", log.Error(err))
 		return nil, gqlx.Internal(ctx)
@@ -249,7 +250,7 @@ func (r *mutationResolver) LinkTaskToLinear(ctx context.Context, input types.Lin
 		}
 	}
 
-	task, err := r.task.Get(ctx, scope, link.TaskID)
+	task, err := r.task.Get(ctx, scope, link.TaskID, identity.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load linked task", log.Error(err))
 		return nil, gqlx.Internal(ctx)
@@ -279,7 +280,8 @@ func (r *mutationResolver) UnlinkTaskExternal(ctx context.Context, input types.U
 		}
 	}
 
-	task, err := r.task.Get(ctx, scope, input.TaskID)
+	identity := authn.IdentityFromContext(ctx)
+	task, err := r.task.Get(ctx, scope, input.TaskID, identity.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load unlinked task", log.Error(err))
 		return nil, gqlx.Internal(ctx)

@@ -1,0 +1,44 @@
+{
+  "title": "Paramètres de notification",
+  "breadcrumb": "Paramètres de notification",
+  "email": {
+    "heading": "E-mail",
+    "description": "Choisissez quand cette organisation vous envoie des e-mails."
+  },
+  "types": {
+    "DOCUMENT_SIGNATURE_REQUESTED": {
+      "label": "Demandes de signature de document",
+      "description": "Lorsqu’un document nécessite votre signature."
+    },
+    "DOCUMENT_APPROVAL_REQUESTED": {
+      "label": "Demandes d’approbation de document",
+      "description": "Lorsqu’un document nécessite votre approbation."
+    },
+    "TASK_ASSIGNED": {
+      "label": "Attributions de tâches",
+      "description": "Lorsqu’une tâche vous est attribuée."
+    },
+    "TASK_MENTIONED": {
+      "label": "Mentions dans une tâche",
+      "description": "Lorsque vous êtes mentionné dans une tâche."
+    }
+  },
+  "emailOptions": {
+    "NONE": {
+      "label": "Aucun",
+      "description": "Aucun e-mail."
+    },
+    "EACH": {
+      "label": "Chaque",
+      "description": "Un e-mail pour chaque nouvel élément."
+    },
+    "REMINDERS": {
+      "label": "Relances",
+      "description": "Jusqu’à quatre e-mails de relance jusqu’à ce que vous le traitiez."
+    },
+    "WEEKLY": {
+      "label": "Hebdomadaire",
+      "description": "Un e-mail le lundi pour les éléments encore en attente."
+    }
+  }
+}

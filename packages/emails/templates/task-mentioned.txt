@@ -1,0 +1,18 @@
+Probo
+
+Hi {{.RecipientFullName}},
+
+You're receiving this message because {{.OrganizationName}} mentioned you in these tasks:
+
+{{range .Tasks}}- {{.Title}}: {{.URL}}
+{{end}}
+Open your tasks to review them:
+
+{{.TasksUrl}}
+
+Notification settings: {{.NotificationSettingsUrl}}
+
+Best regards,
+
+{{.SenderCompanyHeadquarterAddress}}
+Powered By Probo

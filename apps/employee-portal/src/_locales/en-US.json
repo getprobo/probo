@@ -6,7 +6,9 @@
     "documentSignatureRequested": "{{title}} is ready for your signature",
     "documentApprovalRequested": "{{title}} is waiting for your approval",
     "taskAssigned": "You were assigned {{title}}",
-    "taskMentioned": "You were mentioned in {{title}}"
+    "taskMentioned": "You were mentioned in {{title}}",
+    "settings": "Notification settings",
+    "markAllRead": "Mark all as read"
   },
   "ui": {
     "richEditor": {
@@ -19,6 +21,7 @@
     "tagline": "Employee Portal"
   },
   "userMenu": {
+    "notifications": "Notifications",
     "oauthTokens": "OAuth tokens",
     "switchToDarkMode": "Switch to dark mode",
     "switchToLightMode": "Switch to light mode",

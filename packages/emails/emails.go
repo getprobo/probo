@@ -71,6 +71,18 @@ type (
 		Type  string
 		URL   string
 	}
+
+	TaskSummary struct {
+		Title string
+		URL   string
+	}
+
+	NotificationDigestOrganization struct {
+		Name       string
+		Signatures []DocumentSummary
+		Approvals  []DocumentSummary
+		Tasks      []TaskSummary
+	}
 )
 
 func DefaultPresenterConfig(baseURL string) PresenterConfig {
@@ -105,6 +117,9 @@ const (
 	subjectInvitation                             = "Invitation to join %s on Probo"
 	subjectDocumentApproval                       = "Action Required – Please review and approve %s compliance documents"
 	subjectDocumentSigning                        = "Action Required – Please review and sign %s compliance documents"
+	subjectTaskAssigned                           = "Action Required – Tasks assigned to you at %s"
+	subjectTaskMentioned                          = "You were mentioned in tasks at %s"
+	subjectNotificationDigest                     = "Your weekly Probo notifications at %s"
 	subjectDocumentExport                         = "Your document export is ready"
 	subjectFrameworkExport                        = "Your framework export is ready"
 	subjectCompliancePortalAccess                 = "Compliance Portal Access Invitation - %s"
@@ -148,6 +163,12 @@ var (
 	mailingListUpdatesTextTemplate                     = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/mailing-list-updates.txt.tmpl"))
 	logExportHTMLTemplate                              = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/log-export.html.tmpl"))
 	logExportTextTemplate                              = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/log-export.txt.tmpl"))
+	taskAssignedHTMLTemplate                           = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/task-assigned.html.tmpl"))
+	taskAssignedTextTemplate                           = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/task-assigned.txt.tmpl"))
+	taskMentionedHTMLTemplate                          = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/task-mentioned.html.tmpl"))
+	taskMentionedTextTemplate                          = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/task-mentioned.txt.tmpl"))
+	notificationDigestHTMLTemplate                     = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/notification-digest.html.tmpl"))
+	notificationDigestTextTemplate                     = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/notification-digest.txt.tmpl"))
 )
 
 func (p *Presenter) getCommonVariables() (*CommonVariables, error) {
@@ -249,6 +270,7 @@ func (p *Presenter) RenderDocumentApproval(
 	approvalURL string,
 	organizationName string,
 	documents []DocumentSummary,
+	notificationSettingsURL string,
 ) (subject string, textBody string, htmlBody *string, err error) {
 	vars, err := p.getCommonVariables()
 	if err != nil {
@@ -257,14 +279,16 @@ func (p *Presenter) RenderDocumentApproval(
 
 	data := struct {
 		*CommonVariables
-		ApprovalUrl      string
-		OrganizationName string
-		Documents        []DocumentSummary
+		ApprovalUrl             string
+		OrganizationName        string
+		Documents               []DocumentSummary
+		NotificationSettingsUrl string
 	}{
-		CommonVariables:  vars,
-		ApprovalUrl:      approvalURL,
-		OrganizationName: organizationName,
-		Documents:        documents,
+		CommonVariables:         vars,
+		ApprovalUrl:             approvalURL,
+		OrganizationName:        organizationName,
+		Documents:               documents,
+		NotificationSettingsUrl: notificationSettingsURL,
 	}
 
 	textBody, htmlBody, err = renderEmail(documentApprovalTextTemplate, documentApprovalHTMLTemplate, data)
@@ -277,6 +301,7 @@ func (p *Presenter) RenderDocumentSigning(
 	signingURL string,
 	organizationName string,
 	documents []DocumentSummary,
+	notificationSettingsURL string,
 ) (subject string, textBody string, htmlBody *string, err error) {
 	vars, err := p.getCommonVariables()
 	if err != nil {
@@ -285,19 +310,114 @@ func (p *Presenter) RenderDocumentSigning(
 
 	data := struct {
 		*CommonVariables
-		SigningUrl       string
-		OrganizationName string
-		Documents        []DocumentSummary
+		SigningUrl              string
+		OrganizationName        string
+		Documents               []DocumentSummary
+		NotificationSettingsUrl string
 	}{
-		CommonVariables:  vars,
-		SigningUrl:       signingURL,
-		OrganizationName: organizationName,
-		Documents:        documents,
+		CommonVariables:         vars,
+		SigningUrl:              signingURL,
+		OrganizationName:        organizationName,
+		Documents:               documents,
+		NotificationSettingsUrl: notificationSettingsURL,
 	}
 
 	textBody, htmlBody, err = renderEmail(documentSigningTextTemplate, documentSigningHTMLTemplate, data)
 
 	return fmt.Sprintf(subjectDocumentSigning, organizationName), textBody, htmlBody, err
+}
+
+func (p *Presenter) RenderTaskAssigned(
+	ctx context.Context,
+	tasksURL string,
+	organizationName string,
+	tasks []TaskSummary,
+	notificationSettingsURL string,
+) (subject string, textBody string, htmlBody *string, err error) {
+	vars, err := p.getCommonVariables()
+	if err != nil {
+		return "", "", nil, fmt.Errorf("cannot get common variables: %w", err)
+	}
+
+	data := struct {
+		*CommonVariables
+		TasksUrl                string
+		OrganizationName        string
+		Tasks                   []TaskSummary
+		NotificationSettingsUrl string
+	}{
+		CommonVariables:         vars,
+		TasksUrl:                tasksURL,
+		OrganizationName:        organizationName,
+		Tasks:                   tasks,
+		NotificationSettingsUrl: notificationSettingsURL,
+	}
+
+	textBody, htmlBody, err = renderEmail(taskAssignedTextTemplate, taskAssignedHTMLTemplate, data)
+
+	return fmt.Sprintf(subjectTaskAssigned, organizationName), textBody, htmlBody, err
+}
+
+func (p *Presenter) RenderTaskMentioned(
+	ctx context.Context,
+	tasksURL string,
+	organizationName string,
+	tasks []TaskSummary,
+	notificationSettingsURL string,
+) (subject string, textBody string, htmlBody *string, err error) {
+	vars, err := p.getCommonVariables()
+	if err != nil {
+		return "", "", nil, fmt.Errorf("cannot get common variables: %w", err)
+	}
+
+	data := struct {
+		*CommonVariables
+		TasksUrl                string
+		OrganizationName        string
+		Tasks                   []TaskSummary
+		NotificationSettingsUrl string
+	}{
+		CommonVariables:         vars,
+		TasksUrl:                tasksURL,
+		OrganizationName:        organizationName,
+		Tasks:                   tasks,
+		NotificationSettingsUrl: notificationSettingsURL,
+	}
+
+	textBody, htmlBody, err = renderEmail(taskMentionedTextTemplate, taskMentionedHTMLTemplate, data)
+
+	return fmt.Sprintf(subjectTaskMentioned, organizationName), textBody, htmlBody, err
+}
+
+func (p *Presenter) RenderNotificationDigest(
+	ctx context.Context,
+	organizations []NotificationDigestOrganization,
+	notificationSettingsURL string,
+) (subject string, textBody string, htmlBody *string, err error) {
+	if len(organizations) == 0 {
+		return "", "", nil, fmt.Errorf("cannot render notification digest: no organization")
+	}
+
+	vars, err := p.getCommonVariables()
+	if err != nil {
+		return "", "", nil, fmt.Errorf("cannot get common variables: %w", err)
+	}
+
+	data := struct {
+		*CommonVariables
+		OrganizationName        string
+		Organizations           []NotificationDigestOrganization
+		NotificationSettingsUrl string
+	}{
+		CommonVariables:         vars,
+		OrganizationName:        organizations[0].Name,
+		Organizations:           organizations,
+		NotificationSettingsUrl: notificationSettingsURL,
+	}
+
+	textBody, htmlBody, err = renderEmail(notificationDigestTextTemplate, notificationDigestHTMLTemplate, data)
+
+	return fmt.Sprintf(subjectNotificationDigest, organizations[0].Name), textBody, htmlBody, err
 }
 
 func (p *Presenter) RenderDocumentExport(ctx context.Context, downloadUrl string) (subject string, textBody string, htmlBody *string, err error) {

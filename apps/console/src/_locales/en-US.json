@@ -6,7 +6,9 @@
     "documentSignatureRequested": "{{title}} is ready for your signature",
     "documentApprovalRequested": "{{title}} is waiting for your approval",
     "taskAssigned": "You were assigned {{title}}",
-    "taskMentioned": "You were mentioned in {{title}}"
+    "taskMentioned": "You were mentioned in {{title}}",
+    "settings": "Notification settings",
+    "markAllRead": "Mark all as read"
   },
   "size": {
     "B": "B",
@@ -1370,7 +1372,7 @@
   },
   "viewerDropdown": {
     "errors": { "requestFailed": "Request failed", "cannotSignOut": "Cannot sign out" },
-    "actions": { "oauthTokens": "OAuth tokens", "help": "Help", "logout": "Logout" }
+    "actions": { "notifications": "Notifications", "oauthTokens": "OAuth tokens", "help": "Help", "logout": "Logout" }
   },
   "editAvatar": {
     "title": "Profile photo",
@@ -1547,7 +1549,7 @@
   },
   "viewerMembershipDropdown": {
     "errors": { "requestFailed": "Request failed", "cannotSignOut": "Cannot sign out" },
-    "actions": { "oauthTokens": "OAuth tokens", "employeePortal": "Employee Portal", "switchToDarkMode": "Switch to dark mode", "switchToLightMode": "Switch to light mode", "help": "Help", "logout": "Logout" }
+    "actions": { "notifications": "Notifications", "oauthTokens": "OAuth tokens", "employeePortal": "Employee Portal", "switchToDarkMode": "Switch to dark mode", "switchToLightMode": "Switch to light mode", "help": "Help", "logout": "Logout" }
   },
   "usersPage": {
     "empty": "No users",
