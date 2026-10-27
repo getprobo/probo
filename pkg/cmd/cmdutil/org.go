@@ -26,15 +26,32 @@ import "errors"
 // and neither --org nor the default saved by `prb auth login` is set.
 const OrganizationRequiredMessage = "organization is required; pass --org or --organization, or set a default with 'prb auth login'"
 
+// OrganizationRequiredMessageOrgOnly is OrganizationRequiredMessage without
+// the --organization hint, for commands where --organization already means
+// something else, such as connector connect's boolean that connects a cloud
+// organization instead of supplying an org ID.
+const OrganizationRequiredMessageOrgOnly = "organization is required; pass --org, or set a default with 'prb auth login'"
+
 // ResolveOrganization returns the organization a command should use. An
 // explicit flag wins; otherwise the host's saved default is used.
 func ResolveOrganization(flag, configured string) (string, error) {
+	return resolveOrganization(flag, configured, OrganizationRequiredMessage)
+}
+
+// ResolveOrganizationOrgOnly is ResolveOrganization, except the error omits
+// the --organization hint. Use it on commands where --organization does not
+// supply an org ID, such as connector connect.
+func ResolveOrganizationOrgOnly(flag, configured string) (string, error) {
+	return resolveOrganization(flag, configured, OrganizationRequiredMessageOrgOnly)
+}
+
+func resolveOrganization(flag, configured, missing string) (string, error) {
 	if flag == "" {
 		flag = configured
 	}
 
 	if flag == "" {
-		return "", errors.New(OrganizationRequiredMessage)
+		return "", errors.New(missing)
 	}
 
 	return flag, nil

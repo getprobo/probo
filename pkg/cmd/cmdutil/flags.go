@@ -69,6 +69,13 @@ func TaskPriorityFlagUsage() string {
 // pointer to the value. The default is "table". --json is shorthand for
 // --output json. Callers should call ValidateOutputFlag early in RunE, then
 // branch on *p.
+//
+// This chains onto any cmd.PreRun or cmd.PreRunE already set (see
+// chainPreRunE) to resolve --json before RunE runs. Call this, and the
+// other cmdutil Add*Flag helpers that document the same behavior, before
+// setting a PreRun or PreRunE of your own directly on cmd (for example
+// cmd.PreRunE = func(...) {...} or via the cobra.Command struct literal) so
+// that a later direct assignment wraps this chain instead of replacing it.
 func AddOutputFlag(cmd *cobra.Command) *string {
 	var (
 		output string
@@ -89,8 +96,7 @@ func AddOutputFlag(cmd *cobra.Command) *string {
 		"Output JSON (same as --output json)",
 	)
 
-	previous := cmd.PreRunE
-	cmd.PreRunE = func(cmd *cobra.Command, args []string) error {
+	chainPreRunE(cmd, func(cmd *cobra.Command, args []string) error {
 		if asJSON {
 			if cmd.Flags().Changed("output") && output != "" && output != OutputJSON {
 				return fmt.Errorf("--json cannot be combined with --output %s", output)
@@ -99,14 +105,35 @@ func AddOutputFlag(cmd *cobra.Command) *string {
 			output = OutputJSON
 		}
 
+		return nil
+	})
+
+	return &output
+}
+
+// chainPreRunE installs fn as cmd.PreRunE, running it before whatever
+// PreRunE (or, lacking that, PreRun) was already set on cmd. Cobra runs
+// PreRun only when PreRunE is nil, so replacing PreRunE outright would
+// silently drop a caller's PreRun; this chains both.
+func chainPreRunE(cmd *cobra.Command, fn func(cmd *cobra.Command, args []string) error) {
+	previousE := cmd.PreRunE
+	previous := cmd.PreRun
+	cmd.PreRun = nil
+	cmd.PreRunE = func(cmd *cobra.Command, args []string) error {
+		if err := fn(cmd, args); err != nil {
+			return err
+		}
+
+		if previousE != nil {
+			return previousE(cmd, args)
+		}
+
 		if previous != nil {
-			return previous(cmd, args)
+			previous(cmd, args)
 		}
 
 		return nil
 	}
-
-	return &output
 }
 
 // AddOrganizationFlag registers --org. --organization is the same flag.
@@ -130,7 +157,8 @@ func AddAfterFlag(cmd *cobra.Command, dest *string) {
 
 // AddOrderDirectionFlag registers --order-direction. value is the default,
 // ASC or DESC. The flag is checked before RunE, including when --order-by
-// is omitted, so a bad direction is not silently dropped.
+// is omitted, so a bad direction is not silently dropped. See AddOutputFlag
+// for the PreRun/PreRunE chaining contract this relies on.
 func AddOrderDirectionFlag(cmd *cobra.Command, dest *string, value string) {
 	cmd.Flags().StringVar(
 		dest,
@@ -139,18 +167,9 @@ func AddOrderDirectionFlag(cmd *cobra.Command, dest *string, value string) {
 		"Sort direction (ASC, DESC)",
 	)
 
-	previous := cmd.PreRunE
-	cmd.PreRunE = func(cmd *cobra.Command, args []string) error {
-		if err := ValidateOrderDirection(*dest); err != nil {
-			return err
-		}
-
-		if previous != nil {
-			return previous(cmd, args)
-		}
-
-		return nil
-	}
+	chainPreRunE(cmd, func(cmd *cobra.Command, args []string) error {
+		return ValidateOrderDirection(*dest)
+	})
 }
 
 func normalizeOrganizationFlag(_ *pflag.FlagSet, name string) pflag.NormalizedName {

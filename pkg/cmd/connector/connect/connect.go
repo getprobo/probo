@@ -159,7 +159,7 @@ func NewCmdConnect(f *cmdutil.Factory) *cobra.Command {
 				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
-			flagOrg, err = cmdutil.ResolveOrganization(flagOrg, hc.Organization)
+			flagOrg, err = cmdutil.ResolveOrganizationOrgOnly(flagOrg, hc.Organization)
 			if err != nil {
 				return err
 			}
