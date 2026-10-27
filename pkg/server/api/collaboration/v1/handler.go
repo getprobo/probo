@@ -325,6 +325,7 @@ func (h *Handler) closeOpenError(
 		log.Error(err),
 		log.String("document_id", documentID),
 	)
+
 	_ = connection.Close(websocket.StatusInternalError, "collaboration failed")
 }
 

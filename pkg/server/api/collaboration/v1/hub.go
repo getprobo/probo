@@ -221,7 +221,9 @@ func (h *Hub) Acquire(
 
 		openCtx, openCancel := context.WithTimeout(ctx, RoomOpenTimeout)
 		opened, err := h.documents.Open(openCtx, scope, documentID)
+
 		openCancel()
+
 		if err != nil {
 			h.finishOpening(documentID, room)
 
