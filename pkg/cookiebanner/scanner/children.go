@@ -50,7 +50,7 @@ type devtools struct {
 	conn *remote.Conn
 
 	mu    sync.Mutex
-	next  int64
+	next  atomic.Int64
 	wait  map[int64]chan *cdproto.Message
 	armed map[target.ID]struct{}
 }
@@ -288,7 +288,7 @@ func (d *devtools) mark(id target.ID) bool {
 }
 
 func (d *devtools) call(ctx context.Context, session target.SessionID, method string, params any) error {
-	id := atomic.AddInt64(&d.next, 1)
+	id := d.next.Add(1)
 
 	var raw jsonv2.Value
 
