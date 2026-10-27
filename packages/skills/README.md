@@ -73,12 +73,13 @@ claude --plugin-dir ./packages/skills
 ### prb CLI
 
 `using-prb` lives in `skills/` next to the MCP workflows. It covers sign-in,
-organization choice, and record changes. Install it from the repository and
-pin a tag that matches the installed `prb`. The binary does not embed a copy.
+organization choice, and record changes. Install it from the repository
+pinned to the `@probo/skills` tag that matches the installed `prb` (see
+`CHANGELOG.md` for the version). The binary does not embed a copy.
 
 ```bash
-gh skill install getprobo/probo using-prb
-npx skills add getprobo/probo --skill using-prb
+gh skill install getprobo/probo using-prb --pin @probo/skills/vX.Y.Z
+npx skills add "getprobo/probo#@probo/skills/vX.Y.Z" --skill using-prb
 ```
 
 ## What's included

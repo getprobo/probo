@@ -29,11 +29,12 @@ Individual MCP capabilities are namespaced under `probo`:
   `/probo:missing-signatures`)
 
 The CLI skill `using-prb` lives in the same `skills/` directory. Install it
-from the repository and pin the tag to the installed `prb`:
+from the repository pinned to the `@probo/skills` tag matching the installed
+`prb` (see `packages/skills/CHANGELOG.md` for the version):
 
 ```bash
-gh skill install getprobo/probo using-prb
-npx skills add getprobo/probo --skill using-prb
+gh skill install getprobo/probo using-prb --pin @probo/skills/vX.Y.Z
+npx skills add "getprobo/probo#@probo/skills/vX.Y.Z" --skill using-prb
 ```
 
 `prb` does not embed a copy. Frontmatter `description` says when `using-prb`

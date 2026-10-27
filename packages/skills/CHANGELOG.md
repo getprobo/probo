@@ -9,11 +9,11 @@ this file.
 
 - `using-prb` tells an agent how to call the `prb` CLI, including sign-in,
   organization choice, and record changes. Install it from the repository
-  and pin the tag to the installed CLI:
+  pinned to the `@probo/skills` tag that matches the installed CLI:
 
   ```bash
-  gh skill install getprobo/probo using-prb
-  npx skills add getprobo/probo --skill using-prb
+  gh skill install getprobo/probo using-prb --pin @probo/skills/vX.Y.Z
+  npx skills add "getprobo/probo#@probo/skills/vX.Y.Z" --skill using-prb
   ```
 
   The `prb` binary does not embed a second copy. This skill sits next to
