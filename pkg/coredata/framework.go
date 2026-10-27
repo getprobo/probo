@@ -169,6 +169,7 @@ WHERE
 
 	args := pgx.NamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
