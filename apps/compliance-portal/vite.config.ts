@@ -20,7 +20,9 @@
 
 import { randomBytes } from "node:crypto";
 import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { isIP } from "node:net";
+import { dirname } from "node:path";
 import { fileURLToPath, URL } from "node:url";
 
 import babel from "@rolldown/plugin-babel";
@@ -35,6 +37,14 @@ const cspTemplatePath = fileURLToPath(
 // Process-lifetime nonce for Vite serve: pairs with html.cspNonce so the
 // React Fast Refresh inline preamble is allowed without unsafe-inline.
 const viteDevCspNonce = randomBytes(16).toString("base64");
+
+// The pdf.js worker must come from the exact pdfjs-dist react-pdf loads, or
+// Document fails with "API version does not match the Worker version". Other
+// workspace deps can hoist a different pdfjs-dist to the root node_modules.
+const reactPdfRequire = createRequire(
+  createRequire(import.meta.url).resolve("react-pdf/package.json"),
+);
+const pdfjsDistDir = dirname(reactPdfRequire.resolve("pdfjs-dist/package.json"));
 
 // Same policy as production (apps/compliance-portal/csp.go), with a script
 // nonce for Fast Refresh and ws:/wss: on connect-src for Vite HMR.
@@ -304,6 +314,7 @@ export default defineConfig(({ mode, command }) => {
     resolve: {
       alias: {
         "#": fileURLToPath(new URL("./src", import.meta.url)),
+        "pdfjs-dist": pdfjsDistDir,
       },
     },
   };
