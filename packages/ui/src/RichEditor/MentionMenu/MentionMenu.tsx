@@ -29,11 +29,11 @@ import { type Editor } from "@tiptap/react";
 import { useCallback, useLayoutEffect, useState, useSyncExternalStore } from "react";
 import { useTranslation } from "react-i18next";
 
-import { Avatar } from "../../v2/Avatar/Avatar";
 import { Text } from "../../v2/typography/Text";
 import { EditorFloatingPortal } from "../_lib/EditorFloatingPortal";
 import { getMentionStorage, type MentionItem, type MentionSuggestionState } from "../MentionExtension";
 
+import { MentionPerson } from "./MentionPerson";
 import { mentionMenu } from "./variants";
 
 function mentionOptionId(index: number): string {
@@ -100,7 +100,7 @@ export function MentionMenu({ editor }: MentionMenuProps) {
   const items = useStableMentionItems(state);
   const [nav, setNav] = useState({ index: 0, items });
   const activeIndex = nav.items === items ? nav.index : 0;
-  const { popup, option, body, label, description, empty } = mentionMenu();
+  const { popup, option, empty } = mentionMenu();
 
   const { refs, floatingStyles } = useFloating({
     strategy: "fixed",
@@ -206,34 +206,7 @@ export function MentionMenu({ editor }: MentionMenuProps) {
                     state.select?.(item);
                   }}
                 >
-                  <Avatar
-                    size={1}
-                    radius="full"
-                    name={item.label}
-                    email={item.description ?? undefined}
-                    src={item.avatarUrl}
-                    alt=""
-                  />
-                  <span className={body()}>
-                    <Text
-                      size={2}
-                      weight="medium"
-                      highContrast={!highlighted}
-                      color={highlighted ? "current" : "neutral"}
-                      className={label()}
-                    >
-                      {item.label}
-                    </Text>
-                    {item.description && (
-                      <Text
-                        size={1}
-                        color={highlighted ? "current" : "neutral"}
-                        className={description()}
-                      >
-                        {item.description}
-                      </Text>
-                    )}
-                  </span>
+                  <MentionPerson item={item} highlighted={highlighted} />
                 </button>
               );
             })

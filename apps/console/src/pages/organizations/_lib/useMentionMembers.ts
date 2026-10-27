@@ -19,13 +19,22 @@
 // SOFTWARE.
 
 import type { MentionItem, MentionSource } from "@probo/ui";
-import { useCallback } from "react";
+import { useMemo } from "react";
 import { fetchQuery, graphql, useRelayEnvironment } from "react-relay";
+import type { IEnvironment } from "relay-runtime";
 
+import type { useMentionMembersProfileQuery } from "#/__generated__/core/useMentionMembersProfileQuery.graphql";
 import type { useMentionMembersQuery } from "#/__generated__/core/useMentionMembersQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 const mentionMembersPageSize = 8;
+
+const mentionedMembers = new Map<string, MentionItem>();
+const mentionedMemberLoads = new Map<string, Promise<MentionItem | null>>();
+
+function mentionCacheKey(organizationId: string, id: string): string {
+  return `${organizationId}:${id}`;
+}
 
 const mentionMembersQuery = graphql`
   query useMentionMembersQuery($organizationId: ID!, $first: Int!, $filter: ProfileFilter) {
@@ -52,12 +61,100 @@ const mentionMembersQuery = graphql`
   }
 `;
 
+const mentionMemberQuery = graphql`
+  query useMentionMembersProfileQuery($id: ID!) {
+    node(id: $id) {
+      __typename
+      ... on Profile {
+        id
+        fullName
+        emailAddress
+        avatar {
+          downloadUrl
+        }
+      }
+    }
+  }
+`;
+
+function mentionItemFromProfile(node: {
+  id: string;
+  fullName: string;
+  emailAddress: string;
+  avatar?: { downloadUrl?: string | null } | null;
+}): MentionItem {
+  return {
+    id: node.id,
+    label: node.fullName,
+    description: node.emailAddress,
+    avatarUrl: node.avatar?.downloadUrl,
+  };
+}
+
+function rememberMentionedMembers(organizationId: string, items: MentionItem[]) {
+  for (const item of items) {
+    mentionedMembers.set(mentionCacheKey(organizationId, item.id), item);
+  }
+}
+
+function mentionItemFromNode(
+  node: useMentionMembersProfileQuery["response"]["node"],
+): MentionItem | null {
+  if (node == null || node.__typename !== "Profile") {
+    return null;
+  }
+
+  return mentionItemFromProfile(node);
+}
+
+function loadMentionedMember(environment: IEnvironment, organizationId: string, id: string) {
+  const cacheKey = mentionCacheKey(organizationId, id);
+  const cached = mentionedMembers.get(cacheKey);
+  if (cached) {
+    return Promise.resolve(cached);
+  }
+
+  const pending = mentionedMemberLoads.get(cacheKey);
+  if (pending) {
+    return pending;
+  }
+
+  const load = new Promise<MentionItem | null>((resolve) => {
+    fetchQuery<useMentionMembersProfileQuery>(
+      environment,
+      mentionMemberQuery,
+      { id },
+      // Always re-authorize against the current organization/session rather
+      // than reusing a Relay store entry a different context may have
+      // populated for this same profile id.
+      { fetchPolicy: "network-only" },
+    ).subscribe({
+      next: (data) => {
+        const item = mentionItemFromNode(data.node);
+        if (item) {
+          mentionedMembers.set(cacheKey, item);
+        }
+        resolve(item);
+      },
+      error: (error: unknown) => {
+        console.error("Cannot load mentioned member", error);
+        resolve(null);
+      },
+    });
+  }).finally(() => {
+    mentionedMemberLoads.delete(cacheKey);
+  });
+
+  mentionedMemberLoads.set(cacheKey, load);
+  return load;
+}
+
 export function useMentionMembers(): MentionSource {
   const environment = useRelayEnvironment();
   const organizationId = useOrganizationId();
 
-  return useCallback(
-    (query: string, signal: AbortSignal) =>
+  return useMemo(() => ({
+    search: (query, signal) =>
       new Promise<MentionItem[]>((resolve, reject) => {
         const subscription = fetchQuery<useMentionMembersQuery>(
           environment,
@@ -75,14 +172,9 @@ export function useMentionMembers(): MentionSource {
         ).subscribe({
           next: (data) => {
             const edges = data.organization.profiles?.edges ?? [];
-            resolve(
-              edges.map(({ node }) => ({
-                id: node.id,
-                label: node.fullName,
-                description: node.emailAddress,
-                avatarUrl: node.avatar?.downloadUrl,
-              })),
-            );
+            const items = edges.map(({ node }) => mentionItemFromProfile(node));
+            rememberMentionedMembers(organizationId, items);
+            resolve(items);
           },
           error: reject,
         });
@@ -92,6 +184,12 @@ export function useMentionMembers(): MentionSource {
           resolve([]);
         });
       }),
-    [environment, organizationId],
-  );
+    resolve: (id, signal) => {
+      if (signal.aborted) {
+        return Promise.resolve(mentionedMembers.get(mentionCacheKey(organizationId, id)) ?? null);
+      }
+
+      return loadMentionedMember(environment, organizationId, id);
+    },
+  }), [environment, organizationId]);
 }

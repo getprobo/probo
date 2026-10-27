@@ -50,6 +50,28 @@
   padding: 0.125rem 0.375rem;
 }
 
+.tiptap .node-mention,
+.tiptap .node-mention [data-node-view-wrapper] {
+  display: inline;
+  white-space: nowrap;
+  vertical-align: baseline;
+}
+
+.tiptap .mention {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  border-radius: var(--radius-1);
+  background-color: var(--color-indigo-3);
+  padding: 0.125rem 0.375rem;
+  font-size: var(--text-1);
+  line-height: var(--text-1--line-height);
+  letter-spacing: var(--text-1--letter-spacing);
+  font-weight: 500;
+  white-space: nowrap;
+  color: var(--color-indigo-11);
+}
+
 [data-rich-editor-floating]:not(button) {
   border: 1px solid var(--color-sand-6);
   border-radius: var(--radius-3);

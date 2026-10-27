@@ -116,6 +116,11 @@
         @apply text-txt-tertiary;
     }
 
+    .node-mention,
+    .node-mention [data-node-view-wrapper] {
+        @apply inline whitespace-nowrap align-baseline;
+    }
+
     .mention {
         @apply inline-flex items-center rounded-1 bg-indigo-3 px-1.5 py-0.5 align-middle text-1 font-medium whitespace-nowrap text-indigo-11;
     }

@@ -31,6 +31,10 @@ export const mentionMenu = tv({
       "text-left outline-none select-none",
       "data-highlighted:bg-gold-9 data-highlighted:text-white",
     ],
+    row: [
+      "flex w-full items-center gap-2 rounded-2 px-2 py-1",
+      "text-left select-none",
+    ],
     body: "flex min-w-0 flex-1 flex-col",
     label: "block w-full truncate",
     description: "block w-full truncate",

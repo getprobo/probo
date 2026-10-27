@@ -20,8 +20,10 @@
 
 import { Mention, type MentionNodeAttrs, type MentionOptions } from "@tiptap/extension-mention";
 import { PluginKey } from "@tiptap/pm/state";
-import type { Editor } from "@tiptap/react";
+import { type Editor, ReactNodeViewRenderer } from "@tiptap/react";
 import type { SuggestionProps } from "@tiptap/suggestion";
+
+import { MentionNodeView } from "./MentionNodeView";
 
 export type MentionItem = {
   id: string;
@@ -30,7 +32,10 @@ export type MentionItem = {
   avatarUrl?: string | null;
 };
 
-export type MentionSource = (query: string, signal: AbortSignal) => Promise<MentionItem[]>;
+export type MentionSource = {
+  search: (query: string, signal: AbortSignal) => Promise<MentionItem[]>;
+  resolve: (id: string, signal: AbortSignal) => Promise<MentionItem | null>;
+};
 
 export type MentionSuggestionState = {
   active: boolean;
@@ -102,6 +107,9 @@ export const MentionExtension = Mention.extend<
       keyDown: null,
     };
   },
+  addNodeView() {
+    return ReactNodeViewRenderer(MentionNodeView);
+  },
 }).configure({
   HTMLAttributes: {
     class: "mention",
@@ -136,7 +144,7 @@ export const MentionExtension = Mention.extend<
       }
 
       try {
-        return await source(query, signal);
+        return await source.search(query, signal);
       } catch (error) {
         if (signal.aborted) {
           return [];
