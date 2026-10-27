@@ -8,6 +8,13 @@
     "taskAssigned": "{{title}} is aan u toegewezen",
     "taskMentioned": "U bent vermeld in {{title}}"
   },
+  "ui": {
+    "richEditor": {
+      "mentionMembers": "Een lid vermelden",
+      "mentionLoading": "Zoeken…",
+      "mentionNoResults": "Geen leden gevonden"
+    }
+  },
   "topBar": {
     "tagline": "Medewerkersportaal"
   },

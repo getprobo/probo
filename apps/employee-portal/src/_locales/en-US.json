@@ -8,6 +8,13 @@
     "taskAssigned": "You were assigned {{title}}",
     "taskMentioned": "You were mentioned in {{title}}"
   },
+  "ui": {
+    "richEditor": {
+      "mentionMembers": "Mention a member",
+      "mentionLoading": "Searching…",
+      "mentionNoResults": "No members found"
+    }
+  },
   "topBar": {
     "tagline": "Employee Portal"
   },

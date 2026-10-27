@@ -48,6 +48,7 @@ import { NotFoundError } from "#/lib/relay/errors";
 import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import { TaskDetailsActivity, TaskDetailsCommentForm } from "./_components/TaskDetailsEngagement";
+import { useMentionMembers } from "./_lib/useMentionMembers";
 import { useUpdateTask } from "./_lib/useUpdateTask";
 
 export const taskDetailsPageFragment = graphql`
@@ -216,6 +217,7 @@ function TaskDetailsDescription({
   onSave: (content: string | null) => Promise<unknown>;
 }) {
   const { t } = useTranslation("tasks");
+  const mentionSource = useMentionMembers();
   const [base, setBase] = useState(content);
   const [draft, setDraft] = useState(content);
   const [editorKey, setEditorKey] = useState(content);
@@ -257,6 +259,7 @@ function TaskDetailsDescription({
       disabled={!canAssign}
       placeholder={t("details.descriptionPlaceholder")}
       aria-label={t("details.description")}
+      mentionSource={mentionSource}
       onChangeContent={canAssign ? setDraft : undefined}
     />
   );

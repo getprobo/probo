@@ -68,6 +68,7 @@ import { useMutation } from "#/lib/relay/useMutation";
 
 import { taskCommentMaxLength } from "../_lib/richText";
 import { taskActivitiesConnectionId } from "../_lib/taskPath";
+import { useMentionMembers } from "../_lib/useMentionMembers";
 
 const taskDetailsActivityListQuery = graphql`
   query TaskDetailsEngagementQuery($taskId: ID!) {
@@ -339,6 +340,7 @@ function CommentStep({
   const [draft, setDraft] = useState(comment.content);
   const [error, setError] = useState<string>();
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const mentionSource = useMentionMembers();
   const [updateComment, isSaving] = useMutation<TaskDetailsEngagementUpdateCommentMutation>(
     updateCommentMutation,
     {
@@ -447,6 +449,7 @@ function CommentStep({
                 controls={false}
                 disabled={!editing}
                 aria-label={t("details.commentPlaceholder")}
+                mentionSource={mentionSource}
                 onChangeContent={editing
                   ? (next) => {
                       setDraft(next);
@@ -499,6 +502,7 @@ export function TaskDetailsCommentForm({ taskId }: { taskId: string }) {
       errorToast: t("details.commentCreateError"),
     },
   );
+  const mentionSource = useMentionMembers();
   const [content, setContent] = useState("");
   const [editorKey, setEditorKey] = useState(0);
   const [error, setError] = useState<string>();
@@ -543,6 +547,7 @@ export function TaskDetailsCommentForm({ taskId }: { taskId: string }) {
             disabled={isCreating}
             placeholder={t("details.commentPlaceholder")}
             aria-label={t("details.commentPlaceholder")}
+            mentionSource={mentionSource}
             onChangeContent={(next) => {
               setContent(next);
               setError(undefined);

@@ -9,6 +9,13 @@
     "taskAssigned": "Vous avez été assigné(e) à {{title}}",
     "taskMentioned": "Vous avez été mentionné(e) dans {{title}}"
   },
+  "ui": {
+    "richEditor": {
+      "mentionMembers": "Mentionner un membre",
+      "mentionLoading": "Recherche…",
+      "mentionNoResults": "Aucun membre trouvé"
+    }
+  },
   "topBar": {
     "tagline": "Portail employé"
   },

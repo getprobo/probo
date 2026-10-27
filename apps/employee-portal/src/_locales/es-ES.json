@@ -8,6 +8,13 @@
     "taskAssigned": "Se le asignó {{title}}",
     "taskMentioned": "Se le ha mencionado en {{title}}"
   },
+  "ui": {
+    "richEditor": {
+      "mentionMembers": "Mencionar a un miembro",
+      "mentionLoading": "Buscando…",
+      "mentionNoResults": "No se encontraron miembros"
+    }
+  },
   "topBar": {
     "tagline": "Portal del empleado"
   },

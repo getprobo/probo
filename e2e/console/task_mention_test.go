@@ -113,6 +113,29 @@ func TestTaskMention_Comment(t *testing.T) {
 	})
 }
 
+func TestTaskMention_EmployeeComment(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	employee := testutil.NewClientInOrg(t, testutil.RoleEmployee, owner)
+	colleague := testutil.NewClientInOrg(t, testutil.RoleEmployee, owner)
+	taskID := factory.NewTaskWithoutInternalControl(owner).WithName("Employee mention task").Create()
+	assignTask(t, owner, taskID, employee.GetProfileID().String())
+
+	ids := mentionableProfileIDs(t, employee, employee.GetOrganizationID().String(), "Test User")
+	assert.Contains(t, ids, colleague.GetProfileID().String())
+
+	createTaskCommentWithContent(
+		t,
+		employee,
+		taskID,
+		mentionContent(t, colleague.GetProfileID().String(), "Colleague"),
+	)
+
+	assert.Equal(t, 1, taskMentionNotificationCount(t, colleague, taskID))
+	assert.Equal(t, 0, taskMentionNotificationCount(t, employee, taskID))
+}
+
 func TestTaskMention_Description(t *testing.T) {
 	t.Parallel()
 
@@ -125,6 +148,64 @@ func TestTaskMention_Description(t *testing.T) {
 	updateTaskDescription(t, owner, taskID, content)
 
 	assert.Equal(t, 1, taskMentionNotificationCount(t, member, taskID))
+}
+
+func mentionableProfileIDs(t *testing.T, client *testutil.Client, organizationID string, query string) []string {
+	t.Helper()
+
+	const gql = `
+		query($organizationId: ID!, $first: Int!, $filter: ProfileFilter) {
+			organization: node(id: $organizationId) {
+				... on Organization {
+					profiles(
+						first: $first
+						orderBy: { direction: ASC, field: FULL_NAME }
+						filter: $filter
+					) {
+						edges {
+							node {
+								id
+							}
+						}
+					}
+				}
+			}
+		}
+	`
+
+	var result struct {
+		Organization struct {
+			Profiles struct {
+				Edges []struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"profiles"`
+		} `json:"organization"`
+	}
+
+	err := client.Execute(
+		gql,
+		map[string]any{
+			"organizationId": organizationID,
+			"first":          8,
+			"filter": map[string]any{
+				"states":        []string{"ACTIVE", "PENDING"},
+				"contractEnded": false,
+				"query":         query,
+			},
+		},
+		&result,
+	)
+	require.NoError(t, err)
+
+	ids := make([]string, 0, len(result.Organization.Profiles.Edges))
+	for _, edge := range result.Organization.Profiles.Edges {
+		ids = append(ids, edge.Node.ID)
+	}
+
+	return ids
 }
 
 func mentionContent(t *testing.T, profileID string, label string) string {
