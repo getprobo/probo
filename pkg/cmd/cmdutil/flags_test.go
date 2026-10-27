@@ -41,6 +41,7 @@ func TestAddOutputFlag(t *testing.T) {
 	}{
 		{
 			name: "defaults to table",
+			args: []string{},
 			want: cmdutil.OutputTable,
 		},
 		{
@@ -145,7 +146,7 @@ func TestAddOrderDirectionFlag(t *testing.T) {
 			},
 		}
 		cmdutil.AddOrderDirectionFlag(cmd, &direction, "ASC")
-		cmd.SetArgs(nil)
+		cmd.SetArgs([]string{})
 		cmd.SetOut(io.Discard)
 		cmd.SetErr(io.Discard)
 		cmd.SilenceUsage = true
@@ -230,5 +231,34 @@ func TestResolveOrganization(t *testing.T) {
 		_, err := cmdutil.ResolveOrganization("", "")
 		require.Error(t, err)
 		assert.EqualError(t, err, cmdutil.OrganizationRequiredMessage)
+	})
+}
+
+func TestResolveOrganizationOrgOnly(t *testing.T) {
+	t.Parallel()
+
+	t.Run("flag wins", func(t *testing.T) {
+		t.Parallel()
+
+		got, err := cmdutil.ResolveOrganizationOrgOnly("org_flag", "org_saved")
+		require.NoError(t, err)
+		assert.Equal(t, "org_flag", got)
+	})
+
+	t.Run("falls back to the saved organization", func(t *testing.T) {
+		t.Parallel()
+
+		got, err := cmdutil.ResolveOrganizationOrgOnly("", "org_saved")
+		require.NoError(t, err)
+		assert.Equal(t, "org_saved", got)
+	})
+
+	t.Run("requires an organization without mentioning --organization", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := cmdutil.ResolveOrganizationOrgOnly("", "")
+		require.Error(t, err)
+		assert.EqualError(t, err, cmdutil.OrganizationRequiredMessageOrgOnly)
+		assert.NotContains(t, err.Error(), "--organization")
 	})
 }
