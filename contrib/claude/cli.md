@@ -23,11 +23,11 @@ Register group commands in `pkg/cmd/root/root.go` with `cmd.AddCommand()`.
 
 ## Agent skills
 
-How to call `prb` lives in `@probo/skills`, under `packages/skills/skills/using-prb`. That one skill covers sign-in, organization choice, and record changes. Install it from the repository so it stays pinned to a tag:
+How to call `prb` lives in `@probo/skills`, under `packages/skills/skills/using-prb`. That one skill covers sign-in, organization choice, and record changes. Install it from the repository pinned to the `@probo/skills` tag matching the installed `prb` (see `packages/skills/CHANGELOG.md` for the version):
 
 ```bash
-gh skill install getprobo/probo using-prb
-npx skills add getprobo/probo --skill using-prb
+gh skill install getprobo/probo using-prb --pin @probo/skills/vX.Y.Z
+npx skills add "getprobo/probo#@probo/skills/vX.Y.Z" --skill using-prb
 ```
 
 The MCP workflows in the same package are separate skills. `prb` does not embed a copy.

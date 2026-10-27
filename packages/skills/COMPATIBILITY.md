@@ -42,11 +42,12 @@ spec requires the two versions to match.
 
 `using-prb` is a skill in that same `skills/` directory. It describes the
 `prb` CLI and does not use the MCP servers. Install it from the repository
-and pin the tag to the installed CLI:
+pinned to the `@probo/skills` tag matching the installed CLI (see
+`CHANGELOG.md` for the version):
 
 ```bash
-gh skill install getprobo/probo using-prb
-npx skills add getprobo/probo --skill using-prb
+gh skill install getprobo/probo using-prb --pin @probo/skills/vX.Y.Z
+npx skills add "getprobo/probo#@probo/skills/vX.Y.Z" --skill using-prb
 ```
 
 Commands, marketplace catalogs, and the client manifests are outside the v1
