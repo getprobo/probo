@@ -4,6 +4,13 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.262.0] - 2026-10-27
+
+### Added
+
+- Cookie Banner Update accepts a Force Opt-In field, and Get and Get
+  Many return `forceOptIn`
+
 ## [0.261.0] - 2026-10-26
 
 ### Changed
