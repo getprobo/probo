@@ -70,6 +70,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagOrg          string
 		flagLimit        int
+		flagAfter        string
 		flagOrderBy      string
 		flagOrderDir     string
 		flagAction       string
@@ -138,11 +139,12 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				variables["filter"] = filter
 			}
 
-			entries, totalCount, err := api.Paginate(
+			entries, totalCount, nextCursor, err := api.Paginate(
 				client,
 				listQuery,
 				variables,
 				flagLimit,
+				flagAfter,
 				api.NodeConnection[auditLogEntry]("auditLogEntries", "Organization", fmt.Sprintf("organization %s not found", flagOrg)),
 			)
 			if err != nil {
@@ -155,9 +157,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				entries,
 				totalCount,
 				cmdutil.ListView[auditLogEntry]{
-					Empty:   "No audit log entries found.",
-					Noun:    "audit log entries",
-					Headers: []string{"ID", "ACTOR TYPE", "ACTOR", "ACTION", "RESOURCE TYPE", "RESOURCE", "CREATED"},
+					Empty:      "No audit log entries found.",
+					Noun:       "audit log entries",
+					NextCursor: nextCursor,
+					Headers:    []string{"ID", "ACTOR TYPE", "ACTOR", "ACTION", "RESOURCE TYPE", "RESOURCE", "CREATED"},
 					Row: func(e auditLogEntry) ([]string, error) {
 						return []string{
 							e.ID,
@@ -176,6 +179,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 	cmdutil.AddOrganizationFlag(cmd, &flagOrg, "Organization ID")
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of entries to list")
+	cmdutil.AddAfterFlag(cmd, &flagAfter)
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
 	cmd.Flags().StringVar(&flagAction, "action", "", "Filter by action (e.g. core:thirdParty:create)")

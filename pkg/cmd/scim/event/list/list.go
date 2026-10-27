@@ -70,6 +70,7 @@ type scimEvent struct {
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagLimit    int
+		flagAfter    string
 		flagOrderDir string
 		flagOutput   *string
 	)
@@ -102,11 +103,12 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				},
 			}
 
-			events, totalCount, err := api.Paginate(
+			events, totalCount, nextCursor, err := api.Paginate(
 				client,
 				listQuery,
 				variables,
 				flagLimit,
+				flagAfter,
 				api.NodeConnection[scimEvent]("events", "SCIMConfiguration", fmt.Sprintf("SCIM configuration %s not found", args[0])),
 			)
 			if err != nil {
@@ -119,9 +121,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				events,
 				totalCount,
 				cmdutil.ListView[scimEvent]{
-					Empty:   "No SCIM events found.",
-					Noun:    "events",
-					Headers: []string{"ID", "METHOD", "PATH", "STATUS", "USER", "CREATED"},
+					Empty:      "No SCIM events found.",
+					Noun:       "events",
+					NextCursor: nextCursor,
+					Headers:    []string{"ID", "METHOD", "PATH", "STATUS", "USER", "CREATED"},
 					Row: func(e scimEvent) ([]string, error) {
 						return []string{
 							e.ID,
@@ -138,6 +141,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of events to list")
+	cmdutil.AddAfterFlag(cmd, &flagAfter)
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 

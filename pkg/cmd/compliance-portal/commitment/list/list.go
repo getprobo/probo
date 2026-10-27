@@ -70,6 +70,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagGroup    string
 		flagLimit    int
+		flagAfter    string
 		flagOrderBy  string
 		flagOrderDir string
 		flagOutput   *string
@@ -114,11 +115,12 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				}
 			}
 
-			commitments, totalCount, err := api.Paginate(
+			commitments, totalCount, nextCursor, err := api.Paginate(
 				client,
 				listQuery,
 				variables,
 				flagLimit,
+				flagAfter,
 				api.NodeConnection[commitment]("commitments", "CompliancePortalCommitmentGroup", fmt.Sprintf("commitment group %s not found", flagGroup)),
 			)
 			if err != nil {
@@ -131,9 +133,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				commitments,
 				totalCount,
 				cmdutil.ListView[commitment]{
-					Empty:   "No commitments found.",
-					Noun:    "commitments",
-					Headers: []string{"ID", "ICON", "EYEBROW", "TITLE", "RANK"},
+					Empty:      "No commitments found.",
+					Noun:       "commitments",
+					NextCursor: nextCursor,
+					Headers:    []string{"ID", "ICON", "EYEBROW", "TITLE", "RANK"},
 					Row: func(c commitment) ([]string, error) {
 						return []string{
 							c.ID,
@@ -150,6 +153,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.Flags().StringVar(&flagGroup, "group", "", "Commitment group ID (required)")
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of commitments to list")
+	cmdutil.AddAfterFlag(cmd, &flagAfter)
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (RANK, CREATED_AT, UPDATED_AT)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
 	flagOutput = cmdutil.AddOutputFlag(cmd)

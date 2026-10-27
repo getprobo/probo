@@ -68,6 +68,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagPortal   string
 		flagLimit    int
+		flagAfter    string
 		flagOrderBy  string
 		flagOrderDir string
 		flagOutput   *string
@@ -108,11 +109,12 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				}
 			}
 
-			refs, totalCount, err := api.Paginate(
+			refs, totalCount, nextCursor, err := api.Paginate(
 				client,
 				listQuery,
 				variables,
 				flagLimit,
+				flagAfter,
 				api.NodeConnection[compliancePortalReference]("references", "CompliancePortal", fmt.Sprintf("compliance portal %s not found", flagPortal)),
 			)
 			if err != nil {
@@ -125,9 +127,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				refs,
 				totalCount,
 				cmdutil.ListView[compliancePortalReference]{
-					Empty:   "No references found.",
-					Noun:    "references",
-					Headers: []string{"ID", "NAME", "WEBSITE", "RANK"},
+					Empty:      "No references found.",
+					Noun:       "references",
+					NextCursor: nextCursor,
+					Headers:    []string{"ID", "NAME", "WEBSITE", "RANK"},
 					Row: func(r compliancePortalReference) ([]string, error) {
 						website := ""
 						if r.WebsiteUrl != nil {
@@ -149,6 +152,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagPortal, "portal", "", "Compliance portal ID")
 	_ = cmd.MarkFlagRequired("portal")
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of references to list")
+	cmdutil.AddAfterFlag(cmd, &flagAfter)
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (RANK, NAME, CREATED_AT, UPDATED_AT)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
 	flagOutput = cmdutil.AddOutputFlag(cmd)

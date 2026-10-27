@@ -100,6 +100,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		flagOrg          string
 		flagRiskAnalysis string
 		flagLimit        int
+		flagAfter        string
 		flagOrderBy      string
 		flagOrderDir     string
 		flagFilter       string
@@ -176,11 +177,12 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				field = "scenarioRisks"
 			}
 
-			risks, totalCount, err := api.Paginate(
+			risks, totalCount, nextCursor, err := api.Paginate(
 				client,
 				query,
 				variables,
 				flagLimit,
+				flagAfter,
 				api.NodeConnectionOrMissing[risk](
 					field,
 					expectedType,
@@ -197,9 +199,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				risks,
 				totalCount,
 				cmdutil.ListView[risk]{
-					Empty:   "No risks found.",
-					Noun:    "risks",
-					Headers: []string{"ID", "REFERENCE", "NAME", "CATEGORY", "TREATMENT", "INHERENT", "RESIDUAL"},
+					Empty:      "No risks found.",
+					Noun:       "risks",
+					NextCursor: nextCursor,
+					Headers:    []string{"ID", "REFERENCE", "NAME", "CATEGORY", "TREATMENT", "INHERENT", "RESIDUAL"},
 					Row: func(r risk) ([]string, error) {
 						return []string{
 							r.ID,
@@ -219,6 +222,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmdutil.AddOrganizationFlag(cmd, &flagOrg, "Organization ID")
 	cmd.Flags().StringVar(&flagRiskAnalysis, "risk-analysis", "", "List unplanned scenario-linked risks on a risk analysis")
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of risks to list")
+	cmdutil.AddAfterFlag(cmd, &flagAfter)
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT, REFERENCE_ID, NAME, CATEGORY, TREATMENT, INHERENT_RISK_SCORE, RESIDUAL_RISK_SCORE)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
 	cmd.Flags().StringVarP(&flagFilter, "filter", "q", "", "Filter risks by search query")

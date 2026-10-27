@@ -71,6 +71,7 @@ type applicabilityStatement struct {
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagLimit    int
+		flagAfter    string
 		flagOrderBy  string
 		flagOrderDir string
 		flagOutput   *string
@@ -106,11 +107,12 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				}
 			}
 
-			statements, totalCount, err := api.Paginate(
+			statements, totalCount, nextCursor, err := api.Paginate(
 				client,
 				listQuery,
 				variables,
 				flagLimit,
+				flagAfter,
 				api.NodeConnection[applicabilityStatement]("applicabilityStatements", "StatementOfApplicability", fmt.Sprintf("statement of applicability %s not found", args[0])),
 			)
 			if err != nil {
@@ -123,9 +125,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				statements,
 				totalCount,
 				cmdutil.ListView[applicabilityStatement]{
-					Empty:   "No applicability statements found.",
-					Noun:    "statements",
-					Headers: []string{"ID", "SECTION", "CONTROL", "APPLICABLE", "JUSTIFICATION"},
+					Empty:      "No applicability statements found.",
+					Noun:       "statements",
+					NextCursor: nextCursor,
+					Headers:    []string{"ID", "SECTION", "CONTROL", "APPLICABLE", "JUSTIFICATION"},
 					Row: func(s applicabilityStatement) ([]string, error) {
 						applicable := "No"
 						if s.Applicability {
@@ -146,6 +149,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of statements to list")
+	cmdutil.AddAfterFlag(cmd, &flagAfter)
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT, CONTROL_SECTION_TITLE)")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")

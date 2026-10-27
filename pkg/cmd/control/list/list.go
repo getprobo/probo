@@ -70,6 +70,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagFramework string
 		flagLimit     int
+		flagAfter     string
 		flagOrderBy   string
 		flagOrderDir  string
 		flagFilter    string
@@ -117,11 +118,12 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				}
 			}
 
-			controls, totalCount, err := api.Paginate(
+			controls, totalCount, nextCursor, err := api.Paginate(
 				client,
 				listQuery,
 				variables,
 				flagLimit,
+				flagAfter,
 				api.NodeConnection[control]("controls", "Framework", fmt.Sprintf("framework %s not found", flagFramework)),
 			)
 			if err != nil {
@@ -134,9 +136,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				controls,
 				totalCount,
 				cmdutil.ListView[control]{
-					Empty:   "No controls found.",
-					Noun:    "controls",
-					Headers: []string{"ID", "SECTION", "NAME", "BEST PRACTICE", "MATURITY"},
+					Empty:      "No controls found.",
+					Noun:       "controls",
+					NextCursor: nextCursor,
+					Headers:    []string{"ID", "SECTION", "NAME", "BEST PRACTICE", "MATURITY"},
 					Row: func(c control) ([]string, error) {
 						bp := "No"
 						if c.BestPractice {
@@ -158,6 +161,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.Flags().StringVar(&flagFramework, "framework", "", "Framework ID (required)")
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of controls to list")
+	cmdutil.AddAfterFlag(cmd, &flagAfter)
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT, SECTION_TITLE)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
 	cmd.Flags().StringVarP(&flagFilter, "filter", "q", "", "Filter controls by search query")

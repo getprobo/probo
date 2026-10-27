@@ -68,6 +68,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagDiagram  string
 		flagLimit    int
+		flagAfter    string
 		flagOrderBy  string
 		flagOrderDir string
 		flagOutput   *string
@@ -112,11 +113,12 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				}
 			}
 
-			nodes, totalCount, err := api.Paginate(
+			nodes, totalCount, nextCursor, err := api.Paginate(
 				client,
 				listQuery,
 				variables,
 				flagLimit,
+				flagAfter,
 				api.NodeConnection[riskAnalysisNode]("nodes", "RiskAnalysisDiagram", fmt.Sprintf("diagram %s not found", flagDiagram)),
 			)
 			if err != nil {
@@ -129,9 +131,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				nodes,
 				totalCount,
 				cmdutil.ListView[riskAnalysisNode]{
-					Empty:   "No nodes found.",
-					Noun:    "nodes",
-					Headers: []string{"ID", "NAME", "TYPE", "CREATED AT"},
+					Empty:      "No nodes found.",
+					Noun:       "nodes",
+					NextCursor: nextCursor,
+					Headers:    []string{"ID", "NAME", "TYPE", "CREATED AT"},
 					Row: func(n riskAnalysisNode) ([]string, error) {
 						return []string{
 							n.ID,
@@ -147,6 +150,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.Flags().StringVar(&flagDiagram, "diagram", "", "Risk analysis diagram ID (required)")
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of nodes to list")
+	cmdutil.AddAfterFlag(cmd, &flagAfter)
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT, NAME)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
 	flagOutput = cmdutil.AddOutputFlag(cmd)

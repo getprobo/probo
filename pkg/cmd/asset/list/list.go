@@ -64,6 +64,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagOrg      string
 		flagLimit    int
+		flagAfter    string
 		flagOrderBy  string
 		flagOrderDir string
 		flagOutput   *string
@@ -109,11 +110,12 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				}
 			}
 
-			assets, totalCount, err := api.Paginate(
+			assets, totalCount, nextCursor, err := api.Paginate(
 				client,
 				listQuery,
 				variables,
 				flagLimit,
+				flagAfter,
 				api.NodeConnection[asset]("assets", "Organization", fmt.Sprintf("organization %s not found", flagOrg)),
 			)
 			if err != nil {
@@ -126,9 +128,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				assets,
 				totalCount,
 				cmdutil.ListView[asset]{
-					Empty:   "No assets found.",
-					Noun:    "assets",
-					Headers: []string{"ID", "NAME", "TYPE", "AMOUNT"},
+					Empty:      "No assets found.",
+					Noun:       "assets",
+					NextCursor: nextCursor,
+					Headers:    []string{"ID", "NAME", "TYPE", "AMOUNT"},
 					Row: func(a asset) ([]string, error) {
 						return []string{
 							a.ID,
@@ -144,6 +147,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 	cmdutil.AddOrganizationFlag(cmd, &flagOrg, "Organization ID")
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of assets to list")
+	cmdutil.AddAfterFlag(cmd, &flagAfter)
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT, AMOUNT)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
 	flagOutput = cmdutil.AddOutputFlag(cmd)

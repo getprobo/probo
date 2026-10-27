@@ -68,6 +68,7 @@ type revision struct {
 func NewCmdListHistory(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagLimit    int
+		flagAfter    string
 		flagOrderBy  string
 		flagOrderDir string
 		flagOutput   *string
@@ -120,11 +121,12 @@ func NewCmdListHistory(f *cmdutil.Factory) *cobra.Command {
 				}
 			}
 
-			sessions, totalCount, err := api.Paginate(
+			sessions, totalCount, nextCursor, err := api.Paginate(
 				client,
 				listQuery,
 				variables,
 				flagLimit,
+				flagAfter,
 				api.NodeConnection[revision]("history", "Document", fmt.Sprintf("document %s not found", args[0])),
 			)
 			if err != nil {
@@ -137,9 +139,10 @@ func NewCmdListHistory(f *cmdutil.Factory) *cobra.Command {
 				sessions,
 				totalCount,
 				cmdutil.ListView[revision]{
-					Empty:   "No revisions found.",
-					Noun:    "sessions",
-					Headers: []string{"ID", "AUTHOR", "STARTED", "ENDED", "CHANGES", "HEADS"},
+					Empty:      "No revisions found.",
+					Noun:       "sessions",
+					NextCursor: nextCursor,
+					Headers:    []string{"ID", "AUTHOR", "STARTED", "ENDED", "CHANGES", "HEADS"},
 					Row: func(session revision) ([]string, error) {
 						author := ""
 						if session.AuthorName != nil {
@@ -161,6 +164,7 @@ func NewCmdListHistory(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of sessions to list")
+	cmdutil.AddAfterFlag(cmd, &flagAfter)
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (ENDED_AT)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
 	flagOutput = cmdutil.AddOutputFlag(cmd)

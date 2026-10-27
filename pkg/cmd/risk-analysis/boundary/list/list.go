@@ -68,6 +68,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagDiagram  string
 		flagLimit    int
+		flagAfter    string
 		flagOrderBy  string
 		flagOrderDir string
 		flagOutput   *string
@@ -116,11 +117,12 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				}
 			}
 
-			boundaries, totalCount, err := api.Paginate(
+			boundaries, totalCount, nextCursor, err := api.Paginate(
 				client,
 				listQuery,
 				variables,
 				flagLimit,
+				flagAfter,
 				api.NodeConnection[riskAnalysisBoundary]("boundaries", "RiskAnalysisDiagram", fmt.Sprintf("diagram %s not found", flagDiagram)),
 			)
 			if err != nil {
@@ -133,9 +135,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				boundaries,
 				totalCount,
 				cmdutil.ListView[riskAnalysisBoundary]{
-					Empty:   "No boundaries found.",
-					Noun:    "boundaries",
-					Headers: []string{"ID", "NAME", "PARENT", "CREATED AT"},
+					Empty:      "No boundaries found.",
+					Noun:       "boundaries",
+					NextCursor: nextCursor,
+					Headers:    []string{"ID", "NAME", "PARENT", "CREATED AT"},
 					Row: func(b riskAnalysisBoundary) ([]string, error) {
 						parent := ""
 						if b.ParentBoundaryId != nil {
@@ -156,6 +159,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.Flags().StringVar(&flagDiagram, "diagram", "", "Risk analysis diagram ID (required)")
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of boundaries to list")
+	cmdutil.AddAfterFlag(cmd, &flagAfter)
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT, NAME)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
 	flagOutput = cmdutil.AddOutputFlag(cmd)

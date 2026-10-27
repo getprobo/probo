@@ -88,6 +88,36 @@ func TestPrintList(t *testing.T) {
 		assert.Equal(t, "\nShowing 1 of 4 frameworks\n", errOut.String())
 	})
 
+	t.Run("next cursor", func(t *testing.T) {
+		t.Parallel()
+
+		withCursor := view
+		withCursor.NextCursor = "cur_2"
+
+		var out, errOut bytes.Buffer
+
+		err := cmdutil.PrintList(streams(&out, &errOut), cmdutil.OutputJSON, []string{"fw_1"}, 4, withCursor)
+		require.NoError(t, err)
+		assert.JSONEq(t, `["fw_1"]`, out.String())
+		assert.Equal(t, "\nShowing 1 of 4 frameworks\nNext cursor: cur_2\n", errOut.String())
+
+		out.Reset()
+		errOut.Reset()
+
+		err = cmdutil.PrintList(streams(&out, &errOut), cmdutil.OutputTable, []string{"fw_1"}, 1, withCursor)
+		require.NoError(t, err)
+		assert.Contains(t, out.String(), "fw_1")
+		assert.Equal(t, "\nNext cursor: cur_2\n", errOut.String())
+
+		out.Reset()
+		errOut.Reset()
+
+		err = cmdutil.PrintList(streams(&out, &errOut), cmdutil.OutputTable, []string{}, 4, withCursor)
+		require.NoError(t, err)
+		assert.Equal(t, "No frameworks found.\n", out.String())
+		assert.Equal(t, "\nShowing 0 of 4 frameworks\nNext cursor: cur_2\n", errOut.String())
+	})
+
 	t.Run("row error prints nothing", func(t *testing.T) {
 		t.Parallel()
 

@@ -64,6 +64,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagOrg    string
 		flagLimit  int
+		flagAfter  string
 		flagOutput *string
 	)
 
@@ -89,11 +90,12 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 			variables := map[string]any{"id": flagOrg}
 
-			banners, totalCount, err := api.Paginate(
+			banners, totalCount, nextCursor, err := api.Paginate(
 				client,
 				listQuery,
 				variables,
 				flagLimit,
+				flagAfter,
 				api.NodeConnection[banner]("cookieBanners", "Organization", fmt.Sprintf("organization %s not found", flagOrg)),
 			)
 			if err != nil {
@@ -106,9 +108,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				banners,
 				totalCount,
 				cmdutil.ListView[banner]{
-					Empty:   "No cookie banners found.",
-					Noun:    "cookie banners",
-					Headers: []string{"ID", "NAME", "ORIGIN", "STATE"},
+					Empty:      "No cookie banners found.",
+					Noun:       "cookie banners",
+					NextCursor: nextCursor,
+					Headers:    []string{"ID", "NAME", "ORIGIN", "STATE"},
 					Row: func(b banner) ([]string, error) {
 						return []string{b.ID, b.Name, b.Origin, b.State}, nil
 					},
@@ -119,6 +122,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 	cmdutil.AddOrganizationFlag(cmd, &flagOrg, "Organization ID")
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of items")
+	cmdutil.AddAfterFlag(cmd, &flagAfter)
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd

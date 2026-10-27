@@ -73,6 +73,7 @@ type documentVersion struct {
 func NewCmdListVersions(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagLimit    int
+		flagAfter    string
 		flagOrderBy  string
 		flagOrderDir string
 		flagStatus   string
@@ -139,11 +140,12 @@ func NewCmdListVersions(f *cmdutil.Factory) *cobra.Command {
 				}
 			}
 
-			versions, totalCount, err := api.Paginate(
+			versions, totalCount, nextCursor, err := api.Paginate(
 				client,
 				listQuery,
 				variables,
 				flagLimit,
+				flagAfter,
 				api.NodeConnection[documentVersion]("versions", "Document", fmt.Sprintf("document %s not found", args[0])),
 			)
 			if err != nil {
@@ -156,9 +158,10 @@ func NewCmdListVersions(f *cmdutil.Factory) *cobra.Command {
 				versions,
 				totalCount,
 				cmdutil.ListView[documentVersion]{
-					Empty:   "No versions found.",
-					Noun:    "versions",
-					Headers: []string{"ID", "TITLE", "VERSION", "STATUS", "TYPE", "CLASSIFICATION"},
+					Empty:      "No versions found.",
+					Noun:       "versions",
+					NextCursor: nextCursor,
+					Headers:    []string{"ID", "TITLE", "VERSION", "STATUS", "TYPE", "CLASSIFICATION"},
 					Row: func(v documentVersion) ([]string, error) {
 						return []string{
 							v.ID,
@@ -175,6 +178,7 @@ func NewCmdListVersions(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of versions to list")
+	cmdutil.AddAfterFlag(cmd, &flagAfter)
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
 	cmd.Flags().StringVar(&flagStatus, "status", "", "Filter by status (PENDING_APPROVAL, PUBLISHED, REJECTED, VOIDED)")

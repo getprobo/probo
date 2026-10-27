@@ -61,6 +61,7 @@ func NewCmdListGVLCatalog(f *cmdutil.Factory) *cobra.Command {
 		flagCookieBannerID string
 		flagMembership     string
 		flagLimit          int
+		flagAfter          string
 		flagOutput         *string
 	)
 
@@ -105,11 +106,12 @@ func NewCmdListGVLCatalog(f *cmdutil.Factory) *cobra.Command {
 				variables["filter"] = filter
 			}
 
-			vendors, totalCount, err := api.Paginate(
+			vendors, totalCount, nextCursor, err := api.Paginate(
 				client,
 				listQuery,
 				variables,
 				flagLimit,
+				flagAfter,
 				api.RootConnection[vendor]("commonGVLVendors"),
 			)
 			if err != nil {
@@ -122,9 +124,10 @@ func NewCmdListGVLCatalog(f *cmdutil.Factory) *cobra.Command {
 				vendors,
 				totalCount,
 				cmdutil.ListView[vendor]{
-					Empty:   "No GVL vendors found. Run gvl-import to populate the catalog.",
-					Noun:    "GVL vendors",
-					Headers: []string{"IAB ID", "NAME", "POLICY URL"},
+					Empty:      "No GVL vendors found. Run gvl-import to populate the catalog.",
+					Noun:       "GVL vendors",
+					NextCursor: nextCursor,
+					Headers:    []string{"IAB ID", "NAME", "POLICY URL"},
 					Row: func(v vendor) ([]string, error) {
 						policy := ""
 						if v.PolicyURL != nil {
@@ -142,6 +145,7 @@ func NewCmdListGVLCatalog(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagCookieBannerID, "cookie-banner-id", "", "Cookie banner ID (required with --membership)")
 	cmd.Flags().StringVar(&flagMembership, "membership", "", "Filter by banner membership: ON_BANNER or NOT_ON_BANNER")
 	cmd.Flags().IntVar(&flagLimit, "limit", 50, "Maximum number of vendors to return")
+	cmdutil.AddAfterFlag(cmd, &flagAfter)
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd

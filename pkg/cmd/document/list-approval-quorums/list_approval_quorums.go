@@ -61,6 +61,7 @@ type approvalQuorum struct {
 func NewCmdListApprovalQuorums(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagLimit    int
+		flagAfter    string
 		flagOrderBy  string
 		flagOrderDir string
 		flagOutput   *string
@@ -109,11 +110,12 @@ func NewCmdListApprovalQuorums(f *cmdutil.Factory) *cobra.Command {
 				}
 			}
 
-			quorums, totalCount, err := api.Paginate(
+			quorums, totalCount, nextCursor, err := api.Paginate(
 				client,
 				listQuery,
 				variables,
 				flagLimit,
+				flagAfter,
 				api.NodeConnection[approvalQuorum]("approvalQuorums", "DocumentVersion", fmt.Sprintf("document version %s not found", args[0])),
 			)
 			if err != nil {
@@ -126,9 +128,10 @@ func NewCmdListApprovalQuorums(f *cmdutil.Factory) *cobra.Command {
 				quorums,
 				totalCount,
 				cmdutil.ListView[approvalQuorum]{
-					Empty:   "No approval quorums found.",
-					Noun:    "approval quorums",
-					Headers: []string{"ID", "STATUS", "CREATED AT"},
+					Empty:      "No approval quorums found.",
+					Noun:       "approval quorums",
+					NextCursor: nextCursor,
+					Headers:    []string{"ID", "STATUS", "CREATED AT"},
 					Row: func(q approvalQuorum) ([]string, error) {
 						return []string{
 							q.ID,
@@ -142,6 +145,7 @@ func NewCmdListApprovalQuorums(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of approval quorums to list")
+	cmdutil.AddAfterFlag(cmd, &flagAfter)
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
 	flagOutput = cmdutil.AddOutputFlag(cmd)

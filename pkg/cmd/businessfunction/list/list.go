@@ -70,6 +70,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagOrg            string
 		flagLimit          int
+		flagAfter          string
 		flagOrderBy        string
 		flagOrderDir       string
 		flagClassification string
@@ -150,11 +151,12 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				variables["filter"] = filter
 			}
 
-			businessFunctions, totalCount, err := api.Paginate(
+			businessFunctions, totalCount, nextCursor, err := api.Paginate(
 				client,
 				listQuery,
 				variables,
 				flagLimit,
+				flagAfter,
 				api.NodeConnection[businessFunction]("businessFunctions", "Organization", fmt.Sprintf("organization %s not found", flagOrg)),
 			)
 			if err != nil {
@@ -167,8 +169,9 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				businessFunctions,
 				totalCount,
 				cmdutil.ListView[businessFunction]{
-					Empty: "No business functions found.",
-					Noun:  "business functions",
+					Empty:      "No business functions found.",
+					Noun:       "business functions",
+					NextCursor: nextCursor,
 					Headers: []string{
 						"ID",
 						"REFERENCE ID",
@@ -196,6 +199,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 	cmdutil.AddOrganizationFlag(cmd, &flagOrg, "Organization ID")
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of business functions to list")
+	cmdutil.AddAfterFlag(cmd, &flagAfter)
 	cmd.Flags().StringVar(
 		&flagOrderBy,
 		"order-by",

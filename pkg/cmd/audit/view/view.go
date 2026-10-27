@@ -132,11 +132,12 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 
 			var viewed *auditNode
 
-			frameworks, _, err := api.Paginate(
+			frameworks, _, _, err := api.Paginate(
 				client,
 				viewQuery,
 				map[string]any{"id": args[0]},
 				math.MaxInt32,
+				"",
 				func(data json.RawMessage) (*api.Connection[frameworkNode], error) {
 					var resp struct {
 						Node *struct {

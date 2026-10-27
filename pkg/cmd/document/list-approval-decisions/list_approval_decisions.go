@@ -69,6 +69,7 @@ type approvalDecision struct {
 func NewCmdListApprovalDecisions(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagLimit    int
+		flagAfter    string
 		flagOrderBy  string
 		flagOrderDir string
 		flagOutput   *string
@@ -117,11 +118,12 @@ func NewCmdListApprovalDecisions(f *cmdutil.Factory) *cobra.Command {
 				}
 			}
 
-			decisions, totalCount, err := api.Paginate(
+			decisions, totalCount, nextCursor, err := api.Paginate(
 				client,
 				listQuery,
 				variables,
 				flagLimit,
+				flagAfter,
 				api.NodeConnection[approvalDecision]("decisions", "DocumentVersionApprovalQuorum", fmt.Sprintf("approval quorum %s not found", args[0])),
 			)
 			if err != nil {
@@ -134,9 +136,10 @@ func NewCmdListApprovalDecisions(f *cmdutil.Factory) *cobra.Command {
 				decisions,
 				totalCount,
 				cmdutil.ListView[approvalDecision]{
-					Empty:   "No approval decisions found.",
-					Noun:    "approval decisions",
-					Headers: []string{"ID", "APPROVER", "STATE", "COMMENT", "DECIDED AT"},
+					Empty:      "No approval decisions found.",
+					Noun:       "approval decisions",
+					NextCursor: nextCursor,
+					Headers:    []string{"ID", "APPROVER", "STATE", "COMMENT", "DECIDED AT"},
 					Row: func(d approvalDecision) ([]string, error) {
 						comment := ""
 						if d.Comment != nil {
@@ -162,6 +165,7 @@ func NewCmdListApprovalDecisions(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of approval decisions to list")
+	cmdutil.AddAfterFlag(cmd, &flagAfter)
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
 	flagOutput = cmdutil.AddOutputFlag(cmd)

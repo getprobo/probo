@@ -72,6 +72,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagCategoryID string
 		flagLimit      int
+		flagAfter      string
 		flagOutput     *string
 	)
 
@@ -92,11 +93,12 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 			variables := map[string]any{"id": flagCategoryID}
 
-			patterns, totalCount, err := api.Paginate(
+			patterns, totalCount, nextCursor, err := api.Paginate(
 				client,
 				listQuery,
 				variables,
 				flagLimit,
+				flagAfter,
 				api.NodeConnection[trackerPattern]("trackerPatterns", "CookieCategory", fmt.Sprintf("cookie category %s not found", flagCategoryID)),
 			)
 			if err != nil {
@@ -109,9 +111,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				patterns,
 				totalCount,
 				cmdutil.ListView[trackerPattern]{
-					Empty:   "No tracker patterns found.",
-					Noun:    "tracker patterns",
-					Headers: []string{"ID", "PATTERN", "MATCH TYPE", "TRACKER TYPE", "SOURCE", "EXCLUDED", "COMMON PATTERN ID", "ATTRIBUTION"},
+					Empty:      "No tracker patterns found.",
+					Noun:       "tracker patterns",
+					NextCursor: nextCursor,
+					Headers:    []string{"ID", "PATTERN", "MATCH TYPE", "TRACKER TYPE", "SOURCE", "EXCLUDED", "COMMON PATTERN ID", "ATTRIBUTION"},
 					Row: func(p trackerPattern) ([]string, error) {
 						excluded := ""
 						if p.Excluded {
@@ -143,6 +146,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagCategoryID, "category-id", "", "Cookie category ID (required)")
 	_ = cmd.MarkFlagRequired("category-id")
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of items")
+	cmdutil.AddAfterFlag(cmd, &flagAfter)
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd
