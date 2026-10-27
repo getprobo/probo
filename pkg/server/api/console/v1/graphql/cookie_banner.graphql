@@ -237,6 +237,7 @@ type CookieBanner implements Node {
     cookiePolicyUrl: String!
     consentExpiryDays: Int!
     showBranding: Boolean!
+    forceOptIn: Boolean!
     capabilities: CookieBannerCapabilities!
     defaultLanguage: String!
     publisherCountryCode: String!
@@ -856,6 +857,7 @@ input UpdateCookieBannerInput {
     defaultLanguage: String
     publisherCountryCode: String
     capabilities: CookieBannerCapabilitiesInput
+    forceOptIn: Boolean
 }
 
 input StartCookieBannerSampleInput {

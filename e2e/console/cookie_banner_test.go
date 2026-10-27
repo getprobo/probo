@@ -349,6 +349,61 @@ func TestCookieBanner_Update(t *testing.T) {
 		assert.Equal(t, "FR", result.UpdateCookieBanner.CookieBanner.PublisherCountryCode)
 	})
 
+	t.Run("update force opt in", func(t *testing.T) {
+		t.Parallel()
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+
+		bannerID := factory.CreateCookieBanner(owner)
+
+		const query = `
+			query($id: ID!) {
+				node(id: $id) {
+					... on CookieBanner {
+						forceOptIn
+					}
+				}
+			}
+		`
+
+		var read struct {
+			Node struct {
+				ForceOptIn bool `json:"forceOptIn"`
+			} `json:"node"`
+		}
+
+		require.NoError(t, owner.Execute(query, map[string]any{"id": bannerID}, &read))
+		assert.False(t, read.Node.ForceOptIn)
+
+		const update = `
+			mutation UpdateCookieBanner($input: UpdateCookieBannerInput!) {
+				updateCookieBanner(input: $input) {
+					cookieBanner {
+						forceOptIn
+					}
+				}
+			}
+		`
+
+		var updated struct {
+			UpdateCookieBanner struct {
+				CookieBanner struct {
+					ForceOptIn bool `json:"forceOptIn"`
+				} `json:"cookieBanner"`
+			} `json:"updateCookieBanner"`
+		}
+
+		require.NoError(t, owner.Execute(update, map[string]any{
+			"input": map[string]any{
+				"cookieBannerId": bannerID,
+				"forceOptIn":     true,
+			},
+		}, &updated))
+		assert.True(t, updated.UpdateCookieBanner.CookieBanner.ForceOptIn)
+
+		require.NoError(t, owner.Execute(query, map[string]any{"id": bannerID}, &read))
+		assert.True(t, read.Node.ForceOptIn)
+	})
+
 	t.Run("disable resource reporting", func(t *testing.T) {
 		t.Parallel()
 		owner := testutil.NewClient(t, testutil.RoleOwner)

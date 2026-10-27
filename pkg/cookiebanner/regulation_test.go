@@ -21,6 +21,7 @@
 package cookiebanner
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -232,6 +233,100 @@ func TestLayoutForRegulation(t *testing.T) {
 		require.False(t, layout.Buttons.Save)
 		require.Equal(t, SettingsLinkDefault, layout.SettingsLink)
 	})
+}
+
+func TestLayoutForBanner(t *testing.T) {
+	t.Parallel()
+
+	t.Run("forced opt-in replaces an opt-out regulation", func(t *testing.T) {
+		t.Parallel()
+
+		layout := LayoutForBanner(RegulationTDPSA, true)
+		require.Equal(t, PresentationOptIn, layout.Presentation)
+		require.Equal(t, StateBanner, layout.InitialState)
+		require.Equal(t, StatePanel, layout.ReopenState)
+		require.False(t, layout.DefaultNonNecessaryGranted)
+		require.True(t, layout.Buttons.AcceptAll)
+		require.True(t, layout.Buttons.RejectAll)
+		require.True(t, layout.Buttons.Customize)
+		require.True(t, layout.Buttons.Save)
+		require.Equal(t, SettingsLinkDefault, layout.SettingsLink)
+	})
+
+	t.Run("forced opt-in replaces a notice regulation", func(t *testing.T) {
+		t.Parallel()
+
+		layout := LayoutForBanner(RegulationLFPDPPP, true)
+		require.Equal(t, PresentationOptIn, layout.Presentation)
+		require.Equal(t, StateBanner, layout.InitialState)
+		require.Equal(t, StatePanel, layout.ReopenState)
+		require.False(t, layout.DefaultNonNecessaryGranted)
+		require.Equal(t, SettingsLinkDefault, layout.SettingsLink)
+	})
+
+	t.Run("forced opt-in replaces no cookie-consent law", func(t *testing.T) {
+		t.Parallel()
+
+		layout := LayoutForBanner(RegulationNone, true)
+		require.Equal(t, PresentationOptIn, layout.Presentation)
+		require.Equal(t, StateBanner, layout.InitialState)
+		require.Equal(t, StatePanel, layout.ReopenState)
+		require.False(t, layout.DefaultNonNecessaryGranted)
+	})
+
+	t.Run("forced opt-in keeps an opt-in regulation", func(t *testing.T) {
+		t.Parallel()
+
+		layout := LayoutForBanner(RegulationGDPR, true)
+		require.Equal(t, LayoutForRegulation(RegulationGDPR), layout)
+	})
+
+	t.Run("forced opt-in keeps the California settings link", func(t *testing.T) {
+		t.Parallel()
+
+		layout := LayoutForBanner(RegulationCCPA, true)
+		require.Equal(t, PresentationOptIn, layout.Presentation)
+		require.Equal(t, StateBanner, layout.InitialState)
+		require.Equal(t, StatePrivacyChoices, layout.ReopenState)
+		require.False(t, layout.DefaultNonNecessaryGranted)
+		require.True(t, layout.Buttons.Customize)
+		require.Equal(t, SettingsLinkCCPAPrivacyChoices, layout.SettingsLink)
+	})
+
+	t.Run("without the flag it matches the regulation layout", func(t *testing.T) {
+		t.Parallel()
+
+		require.Equal(t, LayoutForRegulation(RegulationTDPSA), LayoutForBanner(RegulationTDPSA, false))
+	})
+}
+
+func TestConsentModeForBanner(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		regulation Regulation
+		forceOptIn bool
+		want       string
+	}{
+		{RegulationGDPR, false, ConsentModeOptIn},
+		{RegulationGDPR, true, ConsentModeOptIn},
+		{RegulationTDPSA, false, ConsentModeOptOut},
+		{RegulationTDPSA, true, ConsentModeOptIn},
+		{RegulationCCPA, false, ConsentModeOptOut},
+		{RegulationCCPA, true, ConsentModeOptIn},
+		{RegulationLFPDPPP, false, ConsentModeOptOut},
+		{RegulationLFPDPPP, true, ConsentModeOptIn},
+		{RegulationNone, false, ConsentModeOptOut},
+		{RegulationNone, true, ConsentModeOptIn},
+	}
+
+	for _, tt := range tests {
+		t.Run(fmt.Sprintf("%s force=%t", tt.regulation, tt.forceOptIn), func(t *testing.T) {
+			t.Parallel()
+
+			require.Equal(t, tt.want, ConsentModeForBanner(tt.regulation, tt.forceOptIn))
+		})
+	}
 }
 
 // TestLayoutOpensOnlyWhereRequired pins the compliance invariant the mapping

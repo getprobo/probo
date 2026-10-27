@@ -45,6 +45,7 @@ func NewCookieBanner(b *coredata.CookieBanner, tcfCmpID int) *CookieBanner {
 		CookiePolicyURL:      b.CookiePolicyURL,
 		ConsentExpiryDays:    b.ConsentExpiryDays,
 		ShowBranding:         b.ShowBranding,
+		ForceOptIn:           b.ForceOptIn,
 		Capabilities:         NewCookieBannerCapabilities(b.Capabilities),
 		DefaultLanguage:      b.DefaultLanguage,
 		PublisherCountryCode: b.PublisherCountryCode,

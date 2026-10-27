@@ -64,6 +64,7 @@ const bannerSettingsFormFragment = graphql`
     consentExpiryDays
     defaultLanguage
     publisherCountryCode
+    forceOptIn
     capabilities {
       resourceReporting
       corsless
@@ -84,6 +85,7 @@ const updateBannerMutation = graphql`
         consentExpiryDays
         defaultLanguage
         publisherCountryCode
+        forceOptIn
         capabilities {
           resourceReporting
         }
@@ -119,6 +121,7 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
   const [resourceReportingEnabled, setResourceReportingEnabled] = useState(
     banner.capabilities.resourceReporting,
   );
+  const [forceOptIn, setForceOptIn] = useState(banner.forceOptIn);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [updateBanner, isUpdating] = useMutation<BannerSettingsFormMutation>(
     updateBannerMutation,
@@ -149,6 +152,7 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
             ? (publisherCountryCode.trim().toUpperCase() || "AA")
             : undefined,
           capabilities: { resourceReporting: resourceReportingEnabled },
+          forceOptIn,
         },
       },
       onCompleted(response, payloadErrors) {
@@ -312,6 +316,24 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
                   </Text>
                 </div>
               )}
+            </div>
+            <div className={toggle()}>
+              <Switch
+                checked={forceOptIn}
+                disabled={isUpdating}
+                aria-label={t("bannerSettingsForm.fields.forceOptIn")}
+                onCheckedChange={(checked) => {
+                  setForceOptIn(checked);
+                }}
+              />
+              <div className={toggleCopy()}>
+                <Text size={2} weight="medium" highContrast>
+                  {t("bannerSettingsForm.fields.forceOptIn")}
+                </Text>
+                <Text size={1} color="faint">
+                  {t("bannerSettingsForm.fields.forceOptInHelp")}
+                </Text>
+              </div>
             </div>
             <div className={toggle()}>
               <Switch

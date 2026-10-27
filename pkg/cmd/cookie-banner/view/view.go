@@ -43,6 +43,7 @@ query($id: ID!) {
       privacyPolicyUrl
       consentExpiryDays
       showBranding
+      forceOptIn
       capabilities {
         resourceReporting
         tcf
@@ -78,6 +79,7 @@ type viewResponse struct {
 		PrivacyPolicyUrl  *string `json:"privacyPolicyUrl"`
 		ConsentExpiryDays int     `json:"consentExpiryDays"`
 		ShowBranding      bool    `json:"showBranding"`
+		ForceOptIn        bool    `json:"forceOptIn"`
 		Capabilities      struct {
 			ResourceReporting bool `json:"resourceReporting"`
 			TCF               bool `json:"tcf"`
@@ -166,6 +168,7 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 				_, _ = fmt.Fprintf(out, "%s%d\n", label.Render("TCF CMP ID:"), v.TcfCmpId)
 			}
 
+			_, _ = fmt.Fprintf(out, "%s%t\n", label.Render("Force Opt-In:"), v.ForceOptIn)
 			_, _ = fmt.Fprintf(out, "%s%t\n", label.Render("Resource Reporting:"), v.Capabilities.ResourceReporting)
 			_, _ = fmt.Fprintf(out, "%s%t\n", label.Render("CORSless:"), v.Capabilities.Corsless)
 

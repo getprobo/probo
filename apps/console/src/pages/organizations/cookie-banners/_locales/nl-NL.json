@@ -146,6 +146,8 @@
       "defaultLanguage": "Standaardtaal",
       "publisherCountryCode": "Uitgeversland",
       "publisherCountryCodeHelp": "IAB TCF-vestigingsland (ISO 3166-1 alpha-2). Gebruik AA als het onbekend is.",
+      "forceOptIn": "Opt-in afdwingen",
+      "forceOptInHelp": "Toon de opt-inbanner aan elke bezoeker, ook in opt-out- en kennisgevingsjurisdicties.",
       "resourceReportingEnabled": "Resource-rapportage",
       "resourceReportingEnabledHelp": "Indien ingeschakeld detecteert en rapporteert de banner-SDK scripts van derden, iframes en andere resources."
     },

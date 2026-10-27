@@ -47,6 +47,7 @@ type (
 		ConsentExpiryDays           int                      `db:"consent_expiry_days"`
 		ShowBranding                bool                     `db:"show_branding"`
 		Capabilities                CookieBannerCapabilities `db:"capabilities"`
+		ForceOptIn                  bool                     `db:"force_opt_in"`
 		DefaultLanguage             string                   `db:"default_language"`
 		PublisherCountryCode        string                   `db:"publisher_country_code"`
 		PatternAnalysisRequestedAt  *time.Time               `db:"pattern_analysis_requested_at"`
@@ -125,6 +126,7 @@ SELECT
 	consent_expiry_days,
 	show_branding,
 	capabilities,
+	force_opt_in,
 	default_language,
 	publisher_country_code,
 	pattern_analysis_requested_at,
@@ -181,6 +183,7 @@ SELECT
 	consent_expiry_days,
 	show_branding,
 	capabilities,
+	force_opt_in,
 	default_language,
 	publisher_country_code,
 	pattern_analysis_requested_at,
@@ -238,6 +241,7 @@ SELECT
 	consent_expiry_days,
 	show_branding,
 	capabilities,
+	force_opt_in,
 	default_language,
 	publisher_country_code,
 	pattern_analysis_requested_at,
@@ -299,6 +303,7 @@ SELECT
 	consent_expiry_days,
 	show_branding,
 	capabilities,
+	force_opt_in,
 	default_language,
 	publisher_country_code,
 	pattern_analysis_requested_at,
@@ -357,6 +362,7 @@ SELECT
 	consent_expiry_days,
 	show_branding,
 	capabilities,
+	force_opt_in,
 	default_language,
 	publisher_country_code,
 	pattern_analysis_requested_at,
@@ -447,6 +453,7 @@ INSERT INTO cookie_banners (
 	consent_expiry_days,
 	show_branding,
 	capabilities,
+	force_opt_in,
 	default_language,
 	publisher_country_code,
 	pattern_analysis_requested_at,
@@ -466,6 +473,7 @@ INSERT INTO cookie_banners (
 	@consent_expiry_days,
 	@show_branding,
 	@capabilities,
+	@force_opt_in,
 	@default_language,
 	@publisher_country_code,
 	@pattern_analysis_requested_at,
@@ -488,6 +496,7 @@ INSERT INTO cookie_banners (
 		"consent_expiry_days":            b.ConsentExpiryDays,
 		"show_branding":                  b.ShowBranding,
 		"capabilities":                   b.Capabilities,
+		"force_opt_in":                   b.ForceOptIn,
 		"default_language":               b.DefaultLanguage,
 		"publisher_country_code":         b.PublisherCountryCode,
 		"pattern_analysis_requested_at":  b.PatternAnalysisRequestedAt,
@@ -526,6 +535,7 @@ SET
 	consent_expiry_days = @consent_expiry_days,
 	show_branding = @show_branding,
 	capabilities = @capabilities,
+	force_opt_in = @force_opt_in,
 	default_language = @default_language,
 	publisher_country_code = @publisher_country_code,
 	policy_document_id = @policy_document_id,
@@ -546,6 +556,7 @@ WHERE
 		"consent_expiry_days":    b.ConsentExpiryDays,
 		"show_branding":          b.ShowBranding,
 		"capabilities":           b.Capabilities,
+		"force_opt_in":           b.ForceOptIn,
 		"default_language":       b.DefaultLanguage,
 		"publisher_country_code": b.PublisherCountryCode,
 		"policy_document_id":     b.PolicyDocumentID,
@@ -651,6 +662,7 @@ SELECT
 	consent_expiry_days,
 	show_branding,
 	capabilities,
+	force_opt_in,
 	default_language,
 	publisher_country_code,
 	pattern_analysis_requested_at,
@@ -746,6 +758,7 @@ SELECT
 	consent_expiry_days,
 	show_branding,
 	capabilities,
+	force_opt_in,
 	default_language,
 	publisher_country_code,
 	pattern_analysis_requested_at,

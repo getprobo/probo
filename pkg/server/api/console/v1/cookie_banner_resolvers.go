@@ -879,6 +879,7 @@ func (r *mutationResolver) UpdateCookieBanner(ctx context.Context, input types.U
 			DefaultLanguage:      input.DefaultLanguage,
 			PublisherCountryCode: input.PublisherCountryCode,
 			Capabilities:         capabilities,
+			ForceOptIn:           input.ForceOptIn,
 		},
 	)
 	if err != nil {

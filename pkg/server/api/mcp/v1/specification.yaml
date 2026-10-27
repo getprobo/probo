@@ -14065,6 +14065,7 @@ components:
         - cookie_policy_url
         - consent_expiry_days
         - show_branding
+        - force_opt_in
         - capabilities
         - default_language
         - publisher_country_code
@@ -14102,6 +14103,9 @@ components:
         show_branding:
           type: boolean
           description: Whether to show Probo branding
+        force_opt_in:
+          type: boolean
+          description: Whether every visitor sees the opt-in banner regardless of regulation
         capabilities:
           $ref: "#/components/schemas/CookieBannerCapabilities"
           description: Capabilities enabled on the cookie banner
@@ -14908,6 +14912,12 @@ components:
             - $ref: "#/components/schemas/CookieBannerCapabilitiesInput"
             - type: "null"
           description: Capabilities to change on the cookie banner
+          go.probo.inc/mcpgen/omittable: true
+        force_opt_in:
+          type:
+            - boolean
+            - "null"
+          description: Whether every visitor sees the opt-in banner regardless of regulation
           go.probo.inc/mcpgen/omittable: true
 
     UpdateCookieBannerOutput:

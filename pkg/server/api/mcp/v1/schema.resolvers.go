@@ -6168,6 +6168,10 @@ func (r *Resolver) UpdateCookieBannerTool(ctx context.Context, req *mcp.CallTool
 		}
 	}
 
+	if v := UnwrapOmittable(input.ForceOptIn); v != nil && *v != nil {
+		updateReq.ForceOptIn = *v
+	}
+
 	banner, err := r.cookieBanner.UpdateCookieBanner(ctx, scope, updateReq)
 	if err != nil {
 		return nil, types.UpdateCookieBannerOutput{}, fmt.Errorf("cannot update cookie banner: %w", err)

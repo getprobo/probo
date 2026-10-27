@@ -204,8 +204,6 @@ func (h *Handler) handlePostConsent(w http.ResponseWriter, r *http.Request) {
 	location := h.resolveLocation(r)
 	regulation, regulationSource := cookiebanner.ResolveRegulation(location)
 
-	cm := coredata.CookieConsentMode(cookiebanner.ConsentModeForRegulation(regulation))
-
 	req := cookiebanner.RecordConsentRequest{
 		Version:          body.Version,
 		VisitorID:        body.VisitorID,
@@ -216,7 +214,6 @@ func (h *Handler) handlePostConsent(w http.ResponseWriter, r *http.Request) {
 		SdkVersion:       sdkVersion,
 		Regulation:       &regulation,
 		RegulationSource: regulationSource,
-		ConsentMode:      &cm,
 		TC:               body.TC,
 		Origin:           r.Header.Get("Origin"),
 	}

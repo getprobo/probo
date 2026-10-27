@@ -129,6 +129,14 @@ export const description: INodeProperties[] = [
 				description:
 					'Whether the SDK reports detected resources. Only add this field when you intend to change the value; omit it to keep the banner\'s current setting.',
 			},
+			{
+				displayName: 'Force Opt-In',
+				name: 'forceOptIn',
+				type: 'boolean',
+				default: false,
+				description:
+					'Whether every visitor sees the opt-in banner regardless of regulation. Only add this field when you intend to change the value; omit it to keep the banner\'s current setting.',
+			},
 		],
 	},
 ];
@@ -146,6 +154,7 @@ export async function execute(
 	const additionalFields = this.getNodeParameter('additionalFields', itemIndex, {}) as {
 		privacyPolicyUrl?: string;
 		resourceReportingEnabled?: boolean;
+		forceOptIn?: boolean;
 	};
 
 	const query = `
@@ -160,6 +169,7 @@ export async function execute(
 					cookiePolicyUrl
 					consentExpiryDays
 					showBranding
+					forceOptIn
 					capabilities { resourceReporting corsless }
 					defaultLanguage
 					publisherCountryCode
@@ -182,6 +192,9 @@ export async function execute(
 	}
 	if (additionalFields.resourceReportingEnabled !== undefined) {
 		input.capabilities = { resourceReporting: additionalFields.resourceReportingEnabled };
+	}
+	if (additionalFields.forceOptIn !== undefined) {
+		input.forceOptIn = additionalFields.forceOptIn;
 	}
 
 	const responseData = await proboApiRequest.call(this, query, { input });

@@ -21,6 +21,7 @@
 package console_test
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/url"
@@ -616,4 +617,82 @@ func TestCookieConsent_PublicValidationAndSecurity(t *testing.T) {
 			assert.Contains(t, resp.Header.Get("Access-Control-Allow-Headers"), "X-SDK-Version")
 		},
 	)
+}
+
+func TestCookieConsent_ForceOptIn(t *testing.T) {
+	t.Parallel()
+
+	fixture := setupPublishedCookieBanner(t)
+
+	const update = `
+		mutation UpdateCookieBanner($input: UpdateCookieBannerInput!) {
+			updateCookieBanner(input: $input) {
+				cookieBanner { forceOptIn }
+			}
+		}
+	`
+
+	var updated struct {
+		UpdateCookieBanner struct {
+			CookieBanner struct {
+				ForceOptIn bool `json:"forceOptIn"`
+			} `json:"cookieBanner"`
+		} `json:"updateCookieBanner"`
+	}
+
+	require.NoError(t, fixture.Owner.Execute(update, map[string]any{
+		"input": map[string]any{
+			"cookieBannerId": fixture.BannerID,
+			"forceOptIn":     true,
+		},
+	}, &updated))
+	assert.True(t, updated.UpdateCookieBanner.CookieBanner.ForceOptIn)
+
+	configResp := doCookieBannerHTTP(
+		t,
+		fixture.Owner,
+		cookieBannerHTTPOptions{
+			Method:     http.MethodGet,
+			BannerID:   fixture.BannerID,
+			Path:       []string{"config"},
+			Origin:     fixture.Origin,
+			SDKVersion: cookieBannerE2ESDKVersion,
+		},
+	)
+	require.Equal(t, http.StatusOK, configResp.StatusCode, "config body: %s", string(configResp.Body))
+
+	var config struct {
+		ConsentMode string `json:"consent_mode"`
+		Regulation  string `json:"regulation"`
+		Layout      struct {
+			Presentation string `json:"presentation"`
+		} `json:"layout"`
+	}
+	require.NoError(t, json.Unmarshal(configResp.Body, &config))
+	assert.NotEmpty(t, config.Regulation)
+	assert.Equal(t, "OPT_IN", config.ConsentMode)
+	assert.Equal(t, "OPT_IN", config.Layout.Presentation)
+
+	created := postCookieConsent(
+		t,
+		fixture.Owner,
+		fixture,
+		uniqueCookieBannerVisitorID(),
+		"ACCEPT_ALL",
+		json.RawMessage(`{"necessary":true,"analytics":true}`),
+	)
+
+	ctx := context.Background()
+	conn := dialTestPg(t, ctx)
+
+	defer func() { _ = conn.Close(ctx) }()
+
+	var consentMode string
+	err := conn.QueryRow(
+		ctx,
+		`SELECT consent_mode FROM cookie_consent_records WHERE id = $1`,
+		created.ID,
+	).Scan(&consentMode)
+	require.NoError(t, err)
+	assert.Equal(t, "OPT_IN", consentMode)
 }

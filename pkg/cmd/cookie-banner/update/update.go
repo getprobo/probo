@@ -58,6 +58,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 		flagDefaultLanguage          string
 		flagPublisherCountryCode     string
 		flagResourceReportingEnabled bool
+		flagForceOptIn               bool
 	)
 
 	cmd := &cobra.Command{
@@ -115,6 +116,10 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				}
 			}
 
+			if cmd.Flags().Changed("force-opt-in") {
+				input["forceOptIn"] = flagForceOptIn
+			}
+
 			if len(input) == 1 {
 				return fmt.Errorf("at least one field must be specified for update")
 			}
@@ -143,6 +148,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagDefaultLanguage, "default-language", "", "Default language code")
 	cmd.Flags().StringVar(&flagPublisherCountryCode, "publisher-country-code", "", "IAB TCF publisher country (ISO 3166-1 alpha-2, or AA)")
 	cmd.Flags().BoolVar(&flagResourceReportingEnabled, "resource-reporting-enabled", true, "Whether the SDK reports detected resources")
+	cmd.Flags().BoolVar(&flagForceOptIn, "force-opt-in", false, "Show the opt-in banner to every visitor regardless of regulation")
 
 	return cmd
 }

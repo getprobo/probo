@@ -325,6 +325,20 @@ func RegulationForCountry(cc coredata.CountryCode) Regulation {
 // When the regulation is unknown or RegulationNone, it defaults to
 // OPT_OUT (cookies may fire immediately, visitor can opt out).
 func ConsentModeForRegulation(r Regulation) string {
+	return ConsentModeForBanner(r, false)
+}
+
+// ConsentModeForBanner returns the consent model for a visitor. When
+// forceOptIn is set, every regulation records OPT_IN.
+func ConsentModeForBanner(r Regulation, forceOptIn bool) string {
+	if forceOptIn {
+		return ConsentModeOptIn
+	}
+
+	return consentModeForRegulation(r)
+}
+
+func consentModeForRegulation(r Regulation) string {
 	switch r {
 	case RegulationGDPR,
 		RegulationUKGDPR,

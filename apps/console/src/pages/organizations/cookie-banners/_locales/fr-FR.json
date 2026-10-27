@@ -146,6 +146,8 @@
       "defaultLanguage": "Langue par défaut",
       "publisherCountryCode": "Pays de l’éditeur",
       "publisherCountryCodeHelp": "Pays d’établissement IAB TCF (ISO 3166-1 alpha-2). Utilisez AA s’il n’est pas précisé.",
+      "forceOptIn": "Forcer l'opt-in",
+      "forceOptInHelp": "Affiche la bannière d'opt-in à chaque visiteur, y compris dans les juridictions en opt-out ou en simple information.",
       "resourceReportingEnabled": "Rapport de ressources",
       "resourceReportingEnabledHelp": "Lorsqu’il est activé, le SDK de la bannière détecte et signale les scripts tiers, iframes et autres ressources."
     },

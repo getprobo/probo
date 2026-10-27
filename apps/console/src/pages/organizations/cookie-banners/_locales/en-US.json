@@ -146,6 +146,8 @@
       "defaultLanguage": "Default language",
       "publisherCountryCode": "Publisher country",
       "publisherCountryCodeHelp": "IAB TCF country of establishment (ISO 3166-1 alpha-2). Use AA if unspecified.",
+      "forceOptIn": "Force opt-in",
+      "forceOptInHelp": "Show the opt-in banner to every visitor, including in opt-out and notice jurisdictions.",
       "resourceReportingEnabled": "Resource reporting",
       "resourceReportingEnabledHelp": "When enabled, the banner SDK detects and reports third-party scripts, iframes, and other resources."
     },

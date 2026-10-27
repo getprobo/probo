@@ -155,7 +155,19 @@ func SettingsLinkForRegulation(r Regulation) SettingsLinkStyle {
 
 // LayoutForRegulation resolves the full rendering policy for a regulation.
 func LayoutForRegulation(r Regulation) Layout {
-	layout := layoutForPresentation(PresentationForRegulation(r))
+	return LayoutForBanner(r, false)
+}
+
+// LayoutForBanner resolves the rendering policy for a visitor. When forceOptIn
+// is set, every regulation uses the opt-in presentation. California still gets
+// the statutory settings link and privacy-choices reopen surface.
+func LayoutForBanner(r Regulation, forceOptIn bool) Layout {
+	presentation := PresentationForRegulation(r)
+	if forceOptIn {
+		presentation = PresentationOptIn
+	}
+
+	layout := layoutForPresentation(presentation)
 	layout.SettingsLink = SettingsLinkForRegulation(r)
 
 	// California's Alternative Opt-out Link (11 CCR § 7015) must open a surface

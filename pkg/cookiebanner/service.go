@@ -106,6 +106,7 @@ type (
 		DefaultLanguage      *string
 		PublisherCountryCode *string
 		Capabilities         *coredata.CookieBannerCapabilitiesPatch
+		ForceOptIn           *bool
 	}
 
 	UpdateCookieCategoryRequest struct {
@@ -146,7 +147,6 @@ type (
 		RegulationSource coredata.RegulationSource
 		CountryCode      *coredata.CountryCode
 		SubdivisionCode  *coredata.SubdivisionCode
-		ConsentMode      *coredata.CookieConsentMode
 		TC               *string
 		Origin           string
 	}
@@ -1797,10 +1797,11 @@ func (s *Service) UpdateCookieBanner(
 			publisherCCChanged := req.PublisherCountryCode != nil && *req.PublisherCountryCode != banner.PublisherCountryCode
 			capabilitiesChanged := req.Capabilities != nil &&
 				req.Capabilities.Apply(banner.Capabilities) != banner.Capabilities
+			forceOptInChanged := req.ForceOptIn != nil && *req.ForceOptIn != banner.ForceOptIn
 
 			snapshotChanged := privacyChanged || cookiePolicyChanged || expiryChanged || defaultLangChanged
 
-			if !nameChanged && !snapshotChanged && !capabilitiesChanged && !publisherCCChanged {
+			if !nameChanged && !snapshotChanged && !capabilitiesChanged && !publisherCCChanged && !forceOptInChanged {
 				return nil
 			}
 
@@ -1830,6 +1831,10 @@ func (s *Service) UpdateCookieBanner(
 
 			if req.Capabilities != nil {
 				banner.Capabilities = req.Capabilities.Apply(banner.Capabilities)
+			}
+
+			if req.ForceOptIn != nil {
+				banner.ForceOptIn = *req.ForceOptIn
 			}
 
 			banner.UpdatedAt = time.Now()
@@ -2671,7 +2676,10 @@ func (s *Service) GetActiveBannerConfig(
 	regulation Regulation,
 	sdkVersion string,
 ) (*BannerConfig, error) {
-	var config *BannerConfig
+	var (
+		config     *BannerConfig
+		forceOptIn bool
+	)
 
 	err := s.pg.WithConn(
 		ctx,
@@ -2742,6 +2750,7 @@ func (s *Service) GetActiveBannerConfig(
 			}
 
 			resolved := resolveTranslations(translations, categories)
+			forceOptIn = banner.ForceOptIn
 			config = buildBannerConfig(&banner, &version, &snapshot, resolved, lang)
 
 			var open coredata.CookieBannerSample
@@ -2767,8 +2776,8 @@ func (s *Service) GetActiveBannerConfig(
 	}
 
 	config.Regulation = regulation
-	config.ConsentMode = ConsentModeForRegulation(regulation)
-	config.Layout = LayoutForRegulation(regulation)
+	config.ConsentMode = ConsentModeForBanner(regulation, forceOptIn)
+	config.Layout = LayoutForBanner(regulation, forceOptIn)
 
 	if IsUSStatePrivacyRegulation(regulation) && !IsCaliforniaPrivacyRegulation(regulation) {
 		applyUSStatePrivacyBannerTexts(config)
@@ -3162,6 +3171,12 @@ func (s *Service) RecordConsent(
 				return fmt.Errorf("invalid request: %w", err)
 			}
 
+			var consentMode *coredata.CookieConsentMode
+			if req.Regulation != nil {
+				mode := coredata.CookieConsentMode(ConsentModeForBanner(*req.Regulation, banner.ForceOptIn))
+				consentMode = &mode
+			}
+
 			record = &coredata.CookieConsentRecord{
 				ID:                    gid.New(scope.GetTenantID(), coredata.CookieConsentRecordEntityType),
 				OrganizationID:        banner.OrganizationID,
@@ -3177,7 +3192,7 @@ func (s *Service) RecordConsent(
 				RegulationSource:      &req.RegulationSource,
 				CountryCode:           req.CountryCode,
 				SubdivisionCode:       req.SubdivisionCode,
-				ConsentMode:           req.ConsentMode,
+				ConsentMode:           consentMode,
 				TC:                    optionalNonEmptyString(req.TC),
 				Origin:                storedConsentOrigin(req.Origin),
 				CreatedAt:             time.Now(),
