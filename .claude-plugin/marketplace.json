@@ -8,7 +8,7 @@
   "plugins": [
     {
       "name": "probo",
-      "description": "Open-source compliance workflows powered by Probo MCP",
+      "description": "Open-source compliance workflows for the Probo MCP API, plus the using-prb CLI skill",
       "source": "./packages/skills",
       "homepage": "https://github.com/getprobo/probo/tree/main/packages/skills",
       "repository": "https://github.com/getprobo/probo",
