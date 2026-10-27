@@ -65,7 +65,7 @@ type viewResponse struct {
 		TrackerType            string  `json:"trackerType"`
 		MaxAgeSeconds          *int    `json:"maxAgeSeconds"`
 		Description            *string `json:"description"`
-		Source                 string  `json:"source"`
+		Source                 *string `json:"source"`
 		Excluded               bool    `json:"excluded"`
 		CommonTrackerPatternID *string `json:"commonTrackerPatternId"`
 		Attribution            *string `json:"attribution"`
@@ -137,7 +137,10 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Pattern:"), v.Pattern)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Match Type:"), v.MatchType)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Tracker Type:"), v.TrackerType)
-			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Source:"), v.Source)
+
+			if v.Source != nil && *v.Source != "" {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Source:"), *v.Source)
+			}
 
 			_, _ = fmt.Fprintf(out, "%s%v\n", label.Render("Excluded:"), v.Excluded)
 			if v.MaxAgeSeconds != nil {

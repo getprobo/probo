@@ -50,15 +50,15 @@ query($id: ID!) {
 
 type viewResponse struct {
 	Node *struct {
-		Typename              string `json:"__typename"`
-		ID                    string `json:"id"`
-		DataSubjects          string `json:"dataSubjects"`
-		LegalMechanism        string `json:"legalMechanism"`
-		Transfer              string `json:"transfer"`
-		LocalLawRisk          string `json:"localLawRisk"`
-		SupplementaryMeasures string `json:"supplementaryMeasures"`
-		CreatedAt             string `json:"createdAt"`
-		UpdatedAt             string `json:"updatedAt"`
+		Typename              string  `json:"__typename"`
+		ID                    string  `json:"id"`
+		DataSubjects          *string `json:"dataSubjects"`
+		LegalMechanism        *string `json:"legalMechanism"`
+		Transfer              *string `json:"transfer"`
+		LocalLawRisk          *string `json:"localLawRisk"`
+		SupplementaryMeasures *string `json:"supplementaryMeasures"`
+		CreatedAt             string  `json:"createdAt"`
+		UpdatedAt             string  `json:"updatedAt"`
 	} `json:"node"`
 }
 
@@ -127,24 +127,24 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("ID:"), r.ID)
 
-			if r.DataSubjects != "" {
-				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Data Subjects:"), r.DataSubjects)
+			if r.DataSubjects != nil && *r.DataSubjects != "" {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Data Subjects:"), *r.DataSubjects)
 			}
 
-			if r.LegalMechanism != "" {
-				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Legal Mechanism:"), r.LegalMechanism)
+			if r.LegalMechanism != nil && *r.LegalMechanism != "" {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Legal Mechanism:"), *r.LegalMechanism)
 			}
 
-			if r.Transfer != "" {
-				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Transfer:"), r.Transfer)
+			if r.Transfer != nil && *r.Transfer != "" {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Transfer:"), *r.Transfer)
 			}
 
-			if r.LocalLawRisk != "" {
-				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Local Law Risk:"), r.LocalLawRisk)
+			if r.LocalLawRisk != nil && *r.LocalLawRisk != "" {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Local Law Risk:"), *r.LocalLawRisk)
 			}
 
-			if r.SupplementaryMeasures != "" {
-				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Supplementary Measures:"), r.SupplementaryMeasures)
+			if r.SupplementaryMeasures != nil && *r.SupplementaryMeasures != "" {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Supplementary Measures:"), *r.SupplementaryMeasures)
 			}
 
 			_, _ = fmt.Fprintln(out)

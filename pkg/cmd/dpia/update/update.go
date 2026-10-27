@@ -44,9 +44,9 @@ mutation($input: UpdateDataProtectionImpactAssessmentInput!) {
 type updateResponse struct {
 	UpdateDataProtectionImpactAssessment struct {
 		DataProtectionImpactAssessment struct {
-			ID           string `json:"id"`
-			Description  string `json:"description"`
-			ResidualRisk string `json:"residualRisk"`
+			ID           string  `json:"id"`
+			Description  *string `json:"description"`
+			ResidualRisk *string `json:"residualRisk"`
 		} `json:"dataProtectionImpactAssessment"`
 	} `json:"updateDataProtectionImpactAssessment"`
 }

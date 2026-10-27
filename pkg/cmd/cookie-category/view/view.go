@@ -62,7 +62,7 @@ type viewResponse struct {
 		Rank            int      `json:"rank"`
 		GcmConsentTypes []string `json:"gcmConsentTypes"`
 		TcfPurposeIds   []int    `json:"tcfPurposeIds"`
-		PosthogConsent  string   `json:"posthogConsent"`
+		PosthogConsent  bool     `json:"posthogConsent"`
 		CreatedAt       string   `json:"createdAt"`
 		UpdatedAt       string   `json:"updatedAt"`
 	} `json:"node"`
@@ -137,9 +137,7 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 				_, _ = fmt.Fprintf(out, "%s%v\n", label.Render("TCF Purpose IDs:"), v.TcfPurposeIds)
 			}
 
-			if v.PosthogConsent != "" {
-				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("PostHog Consent:"), v.PosthogConsent)
-			}
+			_, _ = fmt.Fprintf(out, "%s%t\n", label.Render("PostHog Consent:"), v.PosthogConsent)
 
 			_, _ = fmt.Fprintln(out)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Created:"), cmdutil.FormatTime(v.CreatedAt))

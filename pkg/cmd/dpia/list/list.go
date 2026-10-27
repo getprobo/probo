@@ -54,10 +54,10 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: DataProtectionImpactAs
 `
 
 type dataProtectionImpactAssessment struct {
-	ID           string `json:"id"`
-	Description  string `json:"description"`
-	ResidualRisk string `json:"residualRisk"`
-	CreatedAt    string `json:"createdAt"`
+	ID           string  `json:"id"`
+	Description  *string `json:"description"`
+	ResidualRisk *string `json:"residualRisk"`
+	CreatedAt    string  `json:"createdAt"`
 }
 
 func truncate(s string, max int) string {
@@ -140,10 +140,20 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					NextCursor: nextCursor,
 					Headers:    []string{"ID", "DESCRIPTION", "RESIDUAL RISK", "CREATED AT"},
 					Row: func(d dataProtectionImpactAssessment) ([]string, error) {
+						description := ""
+						if d.Description != nil {
+							description = *d.Description
+						}
+
+						residualRisk := ""
+						if d.ResidualRisk != nil {
+							residualRisk = *d.ResidualRisk
+						}
+
 						return []string{
 							d.ID,
-							truncate(d.Description, 50),
-							d.ResidualRisk,
+							truncate(description, 50),
+							residualRisk,
 							cmdutil.FormatTime(d.CreatedAt),
 						}, nil
 					},

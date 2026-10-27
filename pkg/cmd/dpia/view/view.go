@@ -50,15 +50,15 @@ query($id: ID!) {
 
 type viewResponse struct {
 	Node *struct {
-		Typename                    string `json:"__typename"`
-		ID                          string `json:"id"`
-		Description                 string `json:"description"`
-		NecessityAndProportionality string `json:"necessityAndProportionality"`
-		PotentialRisk               string `json:"potentialRisk"`
-		Mitigations                 string `json:"mitigations"`
-		ResidualRisk                string `json:"residualRisk"`
-		CreatedAt                   string `json:"createdAt"`
-		UpdatedAt                   string `json:"updatedAt"`
+		Typename                    string  `json:"__typename"`
+		ID                          string  `json:"id"`
+		Description                 *string `json:"description"`
+		NecessityAndProportionality *string `json:"necessityAndProportionality"`
+		PotentialRisk               *string `json:"potentialRisk"`
+		Mitigations                 *string `json:"mitigations"`
+		ResidualRisk                *string `json:"residualRisk"`
+		CreatedAt                   string  `json:"createdAt"`
+		UpdatedAt                   string  `json:"updatedAt"`
 	} `json:"node"`
 }
 
@@ -127,24 +127,24 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("ID:"), r.ID)
 
-			if r.Description != "" {
-				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Description:"), r.Description)
+			if r.Description != nil && *r.Description != "" {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Description:"), *r.Description)
 			}
 
-			if r.NecessityAndProportionality != "" {
-				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Necessity & Proportionality:"), r.NecessityAndProportionality)
+			if r.NecessityAndProportionality != nil && *r.NecessityAndProportionality != "" {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Necessity & Proportionality:"), *r.NecessityAndProportionality)
 			}
 
-			if r.PotentialRisk != "" {
-				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Potential Risk:"), r.PotentialRisk)
+			if r.PotentialRisk != nil && *r.PotentialRisk != "" {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Potential Risk:"), *r.PotentialRisk)
 			}
 
-			if r.Mitigations != "" {
-				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Mitigations:"), r.Mitigations)
+			if r.Mitigations != nil && *r.Mitigations != "" {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Mitigations:"), *r.Mitigations)
 			}
 
-			if r.ResidualRisk != "" {
-				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Residual Risk:"), r.ResidualRisk)
+			if r.ResidualRisk != nil && *r.ResidualRisk != "" {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Residual Risk:"), *r.ResidualRisk)
 			}
 
 			_, _ = fmt.Fprintln(out)

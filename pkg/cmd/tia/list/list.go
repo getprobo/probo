@@ -54,10 +54,10 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: TransferImpactAssessme
 `
 
 type transferImpactAssessment struct {
-	ID             string `json:"id"`
-	DataSubjects   string `json:"dataSubjects"`
-	LegalMechanism string `json:"legalMechanism"`
-	CreatedAt      string `json:"createdAt"`
+	ID             string  `json:"id"`
+	DataSubjects   *string `json:"dataSubjects"`
+	LegalMechanism *string `json:"legalMechanism"`
+	CreatedAt      string  `json:"createdAt"`
 }
 
 func truncate(s string, max int) string {
@@ -139,12 +139,22 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					Noun:       "transfer impact assessments",
 					NextCursor: nextCursor,
 					Headers:    []string{"ID", "DATA SUBJECTS", "LEGAL MECHANISM", "CREATED AT"},
-					Row: func(t transferImpactAssessment) ([]string, error) {
+					Row: func(assessment transferImpactAssessment) ([]string, error) {
+						dataSubjects := ""
+						if assessment.DataSubjects != nil {
+							dataSubjects = *assessment.DataSubjects
+						}
+
+						legalMechanism := ""
+						if assessment.LegalMechanism != nil {
+							legalMechanism = *assessment.LegalMechanism
+						}
+
 						return []string{
-							t.ID,
-							truncate(t.DataSubjects, 50),
-							truncate(t.LegalMechanism, 50),
-							cmdutil.FormatTime(t.CreatedAt),
+							assessment.ID,
+							truncate(dataSubjects, 50),
+							truncate(legalMechanism, 50),
+							cmdutil.FormatTime(assessment.CreatedAt),
 						}, nil
 					},
 				},
