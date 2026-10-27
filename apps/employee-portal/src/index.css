@@ -26,8 +26,8 @@
 @source "../../../packages/tasks/src";
 
 /* The rich editor's chrome is styled for the console kit. The portal only
- * loads the v2 theme, so the placeholder, slash menu, and focus ring have to
- * be painted with v2 tokens here. */
+ * loads the v2 theme, so the placeholder, slash menu, focus ring, mentions,
+ * and task lists have to be painted with v2 tokens here. */
 .ProseMirror-focused {
   outline: none !important;
 }
@@ -66,6 +66,69 @@
 [data-rich-editor-floating] button:hover,
 [data-rich-editor-floating] button.bg-active {
   background-color: var(--color-sand-3);
+}
+
+.tiptap ul[data-type="taskList"] {
+  margin-block: 0.5rem;
+  list-style: none;
+  padding-left: 0;
+}
+
+.tiptap ul[data-type="taskList"] > li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.tiptap ul[data-type="taskList"] > li > label {
+  margin-top: 0.125rem;
+  display: flex;
+  flex-shrink: 0;
+}
+
+.tiptap ul[data-type="taskList"] > li > label input {
+  height: 1rem;
+  width: 1rem;
+  cursor: pointer;
+}
+
+.tiptap ul[data-type="taskList"] > li > div {
+  min-width: 0;
+  flex: 1;
+}
+
+.tiptap ul[data-type="taskList"] > li > div > p {
+  margin-block: 0;
+}
+
+.tiptap ul[data-type="taskList"] > li[data-checked="true"] > div > p {
+  color: var(--color-sand-11);
+  text-decoration: line-through;
+}
+
+.tiptap[contenteditable="false"] ul[data-type="taskList"] > li > label input {
+  pointer-events: none;
+}
+
+.tiptap .mention {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--radius-1);
+  background-color: var(--color-indigo-3);
+  padding: 0.125rem 0.375rem;
+  vertical-align: middle;
+  font-size: var(--text-1);
+  line-height: var(--text-1--line-height);
+  letter-spacing: var(--text-1--letter-spacing);
+  font-weight: 500;
+  white-space: nowrap;
+  color: var(--color-indigo-11);
+}
+
+.tiptap .mention-suggestion {
+  border-radius: var(--radius-1);
+  background-color: var(--color-sand-3);
+  padding-inline: 0.125rem;
 }
 
 .status-pip-ring {
