@@ -1,7 +1,7 @@
 {
   "name": "@probo/skills",
   "version": "0.4.1",
-  "description": "Multi-agent compliance skills for open-source GRC (Claude Code, Codex, OpenCode) powered by Probo MCP",
+  "description": "Multi-agent skills for open-source GRC and the prb CLI (Claude Code, Codex, OpenCode, Cursor)",
   "private": false,
   "scripts": {
     "validate": "node scripts/validate.mjs",

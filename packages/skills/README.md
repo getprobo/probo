@@ -1,10 +1,11 @@
 # @probo/skills
 
-Multi-agent compliance skills for open-source GRC workflows. Ships an
+Multi-agent skills for open-source GRC workflows and the `prb` CLI. Ships an
 [Agent Plugins 1.0.0](https://agent-plugins.org/) package: Agent
 Skills–compatible instructions plus portable MCP wiring to the [Probo MCP
 API](https://github.com/getprobo/probo/tree/main/pkg/server/api/mcp/v1) over
-OAuth 2.0.
+OAuth 2.0. The `using-prb`, `prb-auth`, and `prb-records` skills are CLI
+instructions and do not use MCP.
 
 **Supported agents:** any Agent Plugins client, plus Claude Code, Codex,
 OpenCode, and Cursor through their own plugin or MCP configuration.
@@ -70,16 +71,29 @@ claude plugin install probo@probo
 claude --plugin-dir ./packages/skills
 ```
 
+### prb CLI skills
+
+`using-prb`, `prb-auth`, and `prb-records` live in `skills/` next to the MCP
+workflows. Install one from the repository and pin a tag that matches the
+installed `prb`. The binary does not embed a copy.
+
+```bash
+gh skill install getprobo/probo using-prb
+npx skills add getprobo/probo --skill using-prb
+```
+
+Use the same commands with `prb-auth` or `prb-records`.
+
 ## What's included
 
 | Component | Location | Purpose |
 | --- | --- | --- |
 | Manifest | `plugin.json` | Agent Plugins 1.0.0 plugin identity |
 | MCP | `mcp.json` | Portable hosted Probo servers |
-| Skills | `skills/` | Compliance workflows |
+| Skills | `skills/` | MCP compliance workflows, plus `using-prb`, `prb-auth`, and `prb-records` |
 | Commands | `commands/` | `access-review`, `missing-signatures` — semi-auto workflows (Claude Code) |
 
-Skills: `/probo:<skill-name>` (e.g. `/probo:open-source-compliance`, `/probo:missing-signatures`).
+MCP skills: `/probo:<skill-name>` (e.g. `/probo:open-source-compliance`, `/probo:missing-signatures`).
 
 Commands: `/probo:<command-name>` (e.g. `/probo:access-review`, `/probo:missing-signatures`).
 

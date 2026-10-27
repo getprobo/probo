@@ -1,7 +1,7 @@
 {
   "name": "probo",
   "version": "0.4.1",
-  "description": "Open-source compliance workflows powered by Probo MCP (Codex, OpenCode, Claude Code)",
+  "description": "Open-source compliance workflows and prb CLI skills (Codex, OpenCode, Claude Code)",
   "author": {
     "name": "Probo Inc",
     "email": "hello@probo.com"

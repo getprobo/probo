@@ -9,13 +9,7 @@ compatibility: Requires the prb binary, a signed-in host, and an organization id
 Read `using-prb` before calling prb. Read `prb-auth` when no organization is
 selected.
 
-Required create flags are listed in `references/create.md`. When this skill is
-not installed on disk, print that file with:
-
-```sh
-prb skills show prb-records references/create.md
-```
-
+Required create flags are listed in `references/create.md` next to this skill.
 Flag help wins when it disagrees with the reference. Copy enum values from
 `prb <command> create --help`. Do not invent a value that is not listed there.
 
