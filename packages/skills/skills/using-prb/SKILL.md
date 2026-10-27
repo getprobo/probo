@@ -1,7 +1,7 @@
 ---
 name: using-prb
 description: Call the prb CLI without inventing flags. Use when an agent runs prb, signs in, chooses an organization, or creates, lists, views, updates, or deletes Probo records such as frameworks, controls, risks, documents, tasks, assets, data, vendors, audits, findings, obligations, processing activities, rights requests, business functions, AI systems, or webhooks.
-compatibility: Requires the prb binary on PATH. Login opens a browser unless PROBO_HOST and PROBO_TOKEN are already set.
+compatibility: Requires the prb binary on PATH. Setting PROBO_HOST and PROBO_TOKEN lets every command skip login entirely. Otherwise `prb auth login` runs the device flow; it opens a browser when the session is interactive, and prints a URL and code to approve manually when it is not.
 ---
 
 # Use prb
@@ -30,6 +30,9 @@ disagrees with a reference.
    Do not treat stderr warnings as failure when the exit code is 0.
 3. Request JSON with `--json`. `--output json` and `-o json` are the same
    choice. Combining `--json` with any other `--output` value fails.
+   `--json` is registered on list and view commands; a few create and
+   update commands have it too. Check `--help` to confirm it exists before
+   relying on it elsewhere.
 4. `list` is also `ls`.
 5. Command and flag names are kebab-case. The vendor command is
    `prb third-party`. `tp` is its short alias.
@@ -39,7 +42,8 @@ disagrees with a reference.
    Pass the fields that change.
 8. Delete in non-interactive mode requires `--yes`. Without it, prb exits
    non-zero and deletes nothing.
-9. `--limit` / `-L` is how many rows to return. It must be greater than 0.
+9. `--limit` / `-L` is the maximum number of rows to return; a list with
+   fewer matches returns fewer rows. It must be greater than 0.
    stderr prints `Showing N of M` when more rows exist, and
    `Next cursor: <cursor>` when another page exists. Repeat the same
    command and filters with `--after <cursor>`. Do not treat one page as
@@ -57,10 +61,11 @@ Settle the host and the organization before any other `prb` command.
    bearer token. A token without a host is an error.
 4. Hosts without a scheme are HTTPS. A local server needs an explicit
    `http://` URL, for example `http://localhost:8080`.
-5. When status shows no active host, run `prb auth login`. Pass `--hostname`
-   when the user names a region or a self-hosted instance (`eu.probo.com`,
-   `us.probo.com`, or the instance host). Pass `--org` when the user already
-   knows the default organization id.
+5. When status shows no active host, or an active host with `Token: not
+   set`, run `prb auth login`. Pass `--hostname` when the user names a
+   region or a self-hosted instance (`eu.probo.com`, `us.probo.com`, or the
+   instance host). Pass `--org` when the user already knows the default
+   organization id.
 
 Then choose the organization:
 
@@ -108,9 +113,13 @@ Document title, type, and classification are fields of the document.
 `prb document view <id> --json` includes `title`.
 
 `prb webhook list` requires `--org`. Create takes `--url` and one or more
-`--event` flags. Event names come from `prb webhook create --help`.
+`--event` flags. `--help` only shows example event names, not the full set.
+An invalid `--event` value returns an error listing every valid name; use
+that to confirm a name before retrying.
 
 ## After writing
 
 Confirm the change with `prb <command> view <id> --json` or
 `prb <command> list --org <id> --json`. A deleted id is absent from the list.
+Controls are the exception from "Change a record": verify with
+`prb control list --framework <framework-id> --json`, not `--org`.
