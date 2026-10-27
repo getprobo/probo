@@ -21,7 +21,10 @@
 package gqlx
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 	"time"
 
@@ -31,6 +34,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/lru"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/vektah/gqlparser/v2/ast"
+	"github.com/vektah/gqlparser/v2/parser"
 	"go.gearno.de/kit/log"
 )
 
@@ -57,21 +61,60 @@ const sseKeepAlivePingInterval = 15 * time.Second
 // stays on the single-response POST transport.
 type eventStreamTransport struct {
 	transport.SSE
+
+	parserTokenLimit int
 }
 
 func (t eventStreamTransport) Do(w http.ResponseWriter, r *http.Request, exec graphql.GraphExecutor) {
+	// SSE flushes headers before resolvers run, so a Set-Cookie written by a
+	// mutation such as signIn would never reach the client.
+	if t.isMutation(r) {
+		postTransport.Do(w, r, exec)
+		return
+	}
+
 	// Reverse proxies buffer the body until the handler returns unless told
 	// otherwise, which would hold the first payload until the last probe.
 	w.Header().Set("X-Accel-Buffering", "no")
 	t.SSE.Do(w, r, exec)
 }
 
+// isMutation peeks at the body and restores it, so whichever transport runs
+// next reads it in full. Anything it cannot parse goes to SSE, which reports
+// the error itself.
+func (t eventStreamTransport) isMutation(r *http.Request) bool {
+	body, err := io.ReadAll(r.Body)
+	r.Body = io.NopCloser(bytes.NewReader(body))
+
+	if err != nil {
+		return false
+	}
+
+	var params struct {
+		Query         string `json:"query"`
+		OperationName string `json:"operationName"`
+	}
+
+	if err := json.Unmarshal(body, &params); err != nil {
+		return false
+	}
+
+	document, err := parser.ParseQueryWithTokenLimit(
+		&ast.Source{Input: params.Query},
+		t.parserTokenLimit,
+	)
+	if err != nil {
+		return false
+	}
+
+	operation := document.Operations.ForName(params.OperationName)
+
+	return operation != nil && operation.Operation == ast.Mutation
+}
+
 var (
 	mb int64 = 1024 * 1024
 
-	sseTransport = eventStreamTransport{
-		KeepAlivePingInterval: sseKeepAlivePingInterval,
-	}
 	postTransport      = transport.POST{}
 	optionsTransport   = transport.Options{}
 	multipartTransport = transport.MultipartForm{
@@ -87,7 +130,12 @@ func NewHandler[S graphql.ExecutableSchema](executableSchema S, logger *log.Logg
 
 	// The first transport whose Supports matches wins, and SSE and POST both
 	// accept application/json bodies, so SSE must be registered first.
-	handler.AddTransport(sseTransport)
+	handler.AddTransport(
+		eventStreamTransport{
+			KeepAlivePingInterval: sseKeepAlivePingInterval,
+			parserTokenLimit:      limits.ParserTokenLimit,
+		},
+	)
 	handler.AddTransport(postTransport)
 	handler.AddTransport(optionsTransport)
 	handler.AddTransport(multipartTransport)
@@ -116,6 +164,9 @@ func NewHandler[S graphql.ExecutableSchema](executableSchema S, logger *log.Logg
 
 func (gqlh *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := WithHTTPContext(r.Context(), w, r)
+
+	ctx, operations := withOpenOperations(ctx)
+	defer operations.close()
 
 	gqlh.gqlhandler.ServeHTTP(w, r.WithContext(ctx))
 }

@@ -23,6 +23,7 @@ package gqlx
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -116,6 +117,17 @@ func (t TracingExtension) InterceptOperation(ctx context.Context, next graphql.O
 		finished bool
 	)
 
+	withSpan := func(ctx context.Context) context.Context {
+		// gqlgen invokes the response handler with a different ctx than the
+		// one passed to next(...). Re-attach the span so the logger can
+		// extract trace_id.
+		if operationSpan != nil {
+			return trace.ContextWithSpan(ctx, operationSpan)
+		}
+
+		return ctx
+	}
+
 	finish := func() {
 		if finished {
 			return
@@ -128,41 +140,12 @@ func (t TracingExtension) InterceptOperation(ctx context.Context, next graphql.O
 		}
 	}
 
-	return func(ctx context.Context) *graphql.Response {
-		// gqlgen invokes the response handler with a different ctx than the one
-		// passed to next(...). Re-attach the span so the logger can extract trace_id.
-		if operationSpan != nil {
-			ctx = trace.ContextWithSpan(ctx, operationSpan)
+	report := func(ctx context.Context) {
+		if finished {
+			return
 		}
 
-		resp := handler(ctx)
 		duration := time.Since(startTime)
-
-		// A nil response also ends a stream, so only a context error is a cancel.
-		if resp == nil {
-			if err := ctx.Err(); err != nil {
-				t.logger.InfoCtx(
-					ctx,
-					fmt.Sprintf("%s %s canceled %s", operationType, operationName, duration.String()),
-					log.String("graphql_operation_name", operationName),
-					log.String("graphql_operation_type", operationType),
-					log.Duration("graphql_operation_duration", duration),
-					log.Error(err),
-				)
-			}
-
-			finish()
-
-			return nil
-		}
-
-		errs = append(errs, resp.Errors...)
-
-		// With @defer the operation yields one response per payload; only the
-		// last one, without hasNext, marks the end of the operation.
-		if finished || (resp.HasNext != nil && *resp.HasNext) {
-			return resp
-		}
 
 		if len(errs) > 0 {
 			t.logger.ErrorCtx(
@@ -184,7 +167,87 @@ func (t TracingExtension) InterceptOperation(ctx context.Context, next graphql.O
 		}
 
 		finish()
+	}
+
+	// A single-response transport such as POST stops after the first
+	// payload even when it says hasNext, so the request closes whatever the
+	// stream did not.
+	if operations := openOperationsFromContext(ctx); operations != nil {
+		operations.add(func() { report(withSpan(spanCtx)) })
+	}
+
+	return func(ctx context.Context) *graphql.Response {
+		ctx = withSpan(ctx)
+
+		resp := handler(ctx)
+
+		// A nil response also ends a stream, so only a context error is a cancel.
+		if resp == nil {
+			if err := ctx.Err(); err != nil {
+				duration := time.Since(startTime)
+
+				t.logger.InfoCtx(
+					ctx,
+					fmt.Sprintf("%s %s canceled %s", operationType, operationName, duration.String()),
+					log.String("graphql_operation_name", operationName),
+					log.String("graphql_operation_type", operationType),
+					log.Duration("graphql_operation_duration", duration),
+					log.Error(err),
+				)
+			}
+
+			finish()
+
+			return nil
+		}
+
+		errs = append(errs, resp.Errors...)
+
+		// With @defer the operation yields one response per payload; only the
+		// last one, without hasNext, marks the end of the operation.
+		if resp.HasNext == nil || !*resp.HasNext {
+			report(ctx)
+		}
 
 		return resp
+	}
+}
+
+type openOperations struct {
+	mu      sync.Mutex
+	closers []func()
+}
+
+var openOperationsKey = &ctxKey{name: "open_operations"}
+
+func withOpenOperations(ctx context.Context) (context.Context, *openOperations) {
+	operations := &openOperations{}
+
+	return context.WithValue(ctx, openOperationsKey, operations), operations
+}
+
+func openOperationsFromContext(ctx context.Context) *openOperations {
+	operations, _ := ctx.Value(openOperationsKey).(*openOperations)
+
+	return operations
+}
+
+func (o *openOperations) add(closer func()) {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+
+	o.closers = append(o.closers, closer)
+}
+
+// close runs after the transport has returned, so no response handler is
+// still running for these operations.
+func (o *openOperations) close() {
+	o.mu.Lock()
+	closers := o.closers
+	o.closers = nil
+	o.mu.Unlock()
+
+	for _, closer := range closers {
+		closer()
 	}
 }

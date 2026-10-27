@@ -22,6 +22,7 @@ package gqlx_test
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"io"
@@ -44,7 +45,7 @@ func TestHandler_SSEStreamsDeferredPayloads(t *testing.T) {
 	t.Parallel()
 
 	gate := make(chan struct{})
-	server := httptest.NewServer(newStreamingHandler(gate))
+	server := httptest.NewServer(newStreamingHandler(gate, io.Discard))
 	t.Cleanup(server.Close)
 
 	req, err := http.NewRequestWithContext(
@@ -82,7 +83,7 @@ func TestHandler_JSONPostStaysASingleResponse(t *testing.T) {
 	gate := make(chan struct{})
 	close(gate)
 
-	server := httptest.NewServer(newStreamingHandler(gate))
+	server := httptest.NewServer(newStreamingHandler(gate, io.Discard))
 	t.Cleanup(server.Close)
 
 	req, err := http.NewRequestWithContext(
@@ -104,6 +105,69 @@ func TestHandler_JSONPostStaysASingleResponse(t *testing.T) {
 
 	assert.NotContains(t, string(body), "event:")
 	assert.JSONEq(t, `{"data":{"name":"ready"},"hasNext":true}`, string(body))
+}
+
+func TestHandler_MutationNeverStreams(t *testing.T) {
+	t.Parallel()
+
+	gate := make(chan struct{})
+	close(gate)
+
+	server := httptest.NewServer(newStreamingHandler(gate, io.Discard))
+	t.Cleanup(server.Close)
+
+	req, err := http.NewRequestWithContext(
+		t.Context(),
+		http.MethodPost,
+		server.URL,
+		strings.NewReader(`{"query":"mutation SignIn { name }","operationName":"SignIn"}`),
+	)
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "text/event-stream, application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = resp.Body.Close() })
+
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	assert.NotEqual(t, "text/event-stream", resp.Header.Get("Content-Type"))
+	assert.NotContains(t, string(body), "event:")
+	assert.JSONEq(t, `{"data":{"name":"ready"},"hasNext":true}`, string(body))
+}
+
+func TestHandler_SingleResponseTransportStillLogsOperation(t *testing.T) {
+	t.Parallel()
+
+	gate := make(chan struct{})
+
+	var logs bytes.Buffer
+
+	server := httptest.NewServer(newStreamingHandler(gate, &logs))
+	t.Cleanup(server.Close)
+
+	req, err := http.NewRequestWithContext(
+		t.Context(),
+		http.MethodPost,
+		server.URL,
+		strings.NewReader(`{"query":"query Viewer { name }","operationName":"Viewer"}`),
+	)
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+
+	_, err = io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	require.NoError(t, resp.Body.Close())
+
+	server.Close()
+
+	assert.Equal(t, 1, strings.Count(logs.String(), "query Viewer succeed"))
 }
 
 func readUntil(t *testing.T, reader *bufio.Reader, marker string) string {
@@ -140,9 +204,9 @@ func readUntil(t *testing.T, reader *bufio.Reader, marker string) string {
 	}
 }
 
-func newStreamingHandler(gate <-chan struct{}) http.Handler {
+func newStreamingHandler(gate <-chan struct{}, logs io.Writer) http.Handler {
 	schema := gqlparser.MustLoadSchema(
-		&ast.Source{Input: "type Query { name: String! }"},
+		&ast.Source{Input: "type Query { name: String! }\ntype Mutation { name: String! }"},
 	)
 
 	executable := &graphql.ExecutableSchemaMock{
@@ -184,5 +248,5 @@ func newStreamingHandler(gate <-chan struct{}) http.Handler {
 		},
 	}
 
-	return gqlx.NewHandler(executable, log.NewLogger(log.WithOutput(io.Discard)), gqlx.Limits{})
+	return gqlx.NewHandler(executable, log.NewLogger(log.WithOutput(logs)), gqlx.Limits{})
 }
