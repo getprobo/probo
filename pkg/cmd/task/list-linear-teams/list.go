@@ -85,7 +85,10 @@ func NewCmdListLinearTeams(f *cmdutil.Factory) *cobra.Command {
 				variables["query"] = flagQuery
 			}
 
-			teams, totalCount, nextCursor, err := api.Paginate(
+			// LinearTeamConnection has no totalCount; Linear's team search
+			// does not report one. Pass len(teams) as the total so the
+			// "Showing N of M" line never prints and only Next cursor does.
+			teams, _, nextCursor, err := api.Paginate(
 				client,
 				listQuery,
 				variables,
@@ -104,7 +107,7 @@ func NewCmdListLinearTeams(f *cmdutil.Factory) *cobra.Command {
 			if len(teams) == 0 {
 				_, _ = fmt.Fprintln(f.IOStreams.Out, "No Linear teams found.")
 
-				cmdutil.WritePageFooter(f.IOStreams, 0, totalCount, "teams", nextCursor)
+				cmdutil.WritePageFooter(f.IOStreams, 0, 0, "teams", nextCursor)
 
 				return nil
 			}
@@ -113,7 +116,7 @@ func NewCmdListLinearTeams(f *cmdutil.Factory) *cobra.Command {
 				_, _ = fmt.Fprintf(f.IOStreams.Out, "%s\t%s\t%s\n", team.ID, team.Key, team.Name)
 			}
 
-			cmdutil.WritePageFooter(f.IOStreams, len(teams), totalCount, "teams", nextCursor)
+			cmdutil.WritePageFooter(f.IOStreams, len(teams), len(teams), "teams", nextCursor)
 
 			return nil
 		},

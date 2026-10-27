@@ -87,7 +87,10 @@ func NewCmdListLinearIssues(f *cmdutil.Factory) *cobra.Command {
 				variables["query"] = flagQuery
 			}
 
-			issues, totalCount, nextCursor, err := api.Paginate(
+			// LinearIssueConnection has no totalCount; Linear's issue search
+			// does not report one. Pass len(issues) as the total so the
+			// "Showing N of M" line never prints and only Next cursor does.
+			issues, _, nextCursor, err := api.Paginate(
 				client,
 				listQuery,
 				variables,
@@ -106,7 +109,7 @@ func NewCmdListLinearIssues(f *cmdutil.Factory) *cobra.Command {
 			if len(issues) == 0 {
 				_, _ = fmt.Fprintln(f.IOStreams.Out, "No Linear issues found.")
 
-				cmdutil.WritePageFooter(f.IOStreams, 0, totalCount, "issues", nextCursor)
+				cmdutil.WritePageFooter(f.IOStreams, 0, 0, "issues", nextCursor)
 
 				return nil
 			}
@@ -115,7 +118,7 @@ func NewCmdListLinearIssues(f *cmdutil.Factory) *cobra.Command {
 				_, _ = fmt.Fprintf(f.IOStreams.Out, "%s\t%s\t%s\n", issue.ID, issue.Identifier, issue.Title)
 			}
 
-			cmdutil.WritePageFooter(f.IOStreams, len(issues), totalCount, "issues", nextCursor)
+			cmdutil.WritePageFooter(f.IOStreams, len(issues), len(issues), "issues", nextCursor)
 
 			return nil
 		},
