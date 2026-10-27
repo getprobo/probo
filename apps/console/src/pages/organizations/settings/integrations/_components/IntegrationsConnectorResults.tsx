@@ -26,8 +26,10 @@ import { useTranslation } from "react-i18next";
 import type { IntegrationsConnectors_organization$data } from "#/__generated__/core/IntegrationsConnectors_organization.graphql";
 import type { IntegrationsConnectors_query$data } from "#/__generated__/core/IntegrationsConnectors_query.graphql";
 import {
+  connectionSignalFrom,
   type ConnectorConnectionStatus,
   groupByProvider,
+  presentConnection,
 } from "#/pages/organizations/_lib/connectorStatus";
 
 import { useConnectorStatuses } from "../_lib/useConnectorStatuses";
@@ -56,9 +58,17 @@ export function IntegrationsConnectorResults({
   const statuses = useConnectorStatuses(status == null ? null : organization.connectors);
   const connectors = statuses == null
     ? organization.connectors
-    : organization.connectors.filter(
-        (_, index) => statuses[index]?.connectionStatus === status,
-      );
+    : organization.connectors.filter((connector, index) => {
+        // Match what the card shows: a connected probe with an unreadable
+        // organization list is presented as needing attention.
+        const signal = connectionSignalFrom({
+          connectionStatus: statuses[index]?.connectionStatus,
+          canReconnect: connector.canReconnect,
+          providerOrganizations: statuses[index]?.providerOrganizations,
+        });
+
+        return signal != null && presentConnection(signal).status === status;
+      });
   const { section, sectionTitle, grid, empty } = integrationsList();
 
   return (

@@ -67,6 +67,7 @@ const integrationsConnectorsOrganizationFragment = graphql`
     connectors(filter: $filter) {
       id
       provider
+      canReconnect
       ...ConnectorGroupListItem_connector
       # The server streams this in a later payload, so the list renders
       # before the vendor probes finish.
