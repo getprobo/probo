@@ -1,12 +1,11 @@
 # Agent skills (`packages/skills`)
 
-npm package [`@probo/skills`](../../packages/skills) ships multi-agent
-skills and agent plugin wiring. Compliance workflows use the Probo MCP API.
-`using-prb`, `prb-auth`, and `prb-records` tell an agent how to call the `prb`
-CLI and do not use MCP. It is an
-[Agent Plugins 1.0.0](https://agent-plugins.org/) package, and also carries
-client-specific manifests for **Claude Code**, **Codex**, **OpenCode**, and
-**Cursor**. See [`COMPATIBILITY.md`](../../packages/skills/COMPATIBILITY.md).
+npm package [`@probo/skills`](../../packages/skills) is an
+[Agent Plugins 1.0.0](https://agent-plugins.org/) package. Compliance
+workflows use the Probo MCP API. `using-prb` tells an agent how to call the
+`prb` CLI and does not use MCP. The package also carries client-specific
+manifests for **Claude Code**, **Codex**, **OpenCode**, and **Cursor**. See
+[`COMPATIBILITY.md`](../../packages/skills/COMPATIBILITY.md).
 
 ## What this package ships
 
@@ -29,15 +28,16 @@ Individual MCP capabilities are namespaced under `probo`:
 - Commands: `/probo:<command-name>` (e.g. `/probo:access-review`,
   `/probo:missing-signatures`)
 
-CLI skills live in the same `skills/` directory. Install one from the
-repository and pin the tag to the installed `prb`:
+The CLI skill `using-prb` lives in the same `skills/` directory. Install it
+from the repository and pin the tag to the installed `prb`:
 
 ```bash
 gh skill install getprobo/probo using-prb
 npx skills add getprobo/probo --skill using-prb
 ```
 
-`prb` does not embed a copy. Each skill's frontmatter says when it applies.
+`prb` does not embed a copy. Frontmatter `description` says when `using-prb`
+applies and when an MCP workflow applies.
 
 Published to npm as `@probo/skills`. Agent-specific manifests (`.claude-plugin/`,
 `.codex-plugin/`) ship inside the same package.
@@ -125,9 +125,9 @@ Claude Code from starting the OAuth flow.
 
 ## Adding a skill
 
-CLI skills and MCP workflows share `skills/`. A skill that drives `prb` must
-not require MCP, and a skill that drives MCP must not assume `prb` is
-installed. Frontmatter `description` is what tells an agent which one applies.
+`using-prb` and the MCP workflows share `skills/`. `using-prb` must not
+require MCP, and an MCP workflow must not assume `prb` is installed.
+Frontmatter `description` is what tells an agent which one applies.
 Skills must be self-contained — npm installs do not include `contrib/claude/`
 from the monorepo.
 

@@ -7,18 +7,17 @@ this file.
 
 ### Added
 
-- `using-prb`, `prb-auth`, and `prb-records` tell an agent how to call the
-  `prb` CLI. Install one from the repository and pin the tag to the
-  installed CLI:
+- `using-prb` tells an agent how to call the `prb` CLI, including sign-in,
+  organization choice, and record changes. Install it from the repository
+  and pin the tag to the installed CLI:
 
   ```bash
   gh skill install getprobo/probo using-prb
   npx skills add getprobo/probo --skill using-prb
   ```
 
-  The same commands install `prb-auth` and `prb-records`. The `prb` binary
-  does not embed a second copy. These skills sit next to the MCP workflows
-  and do not call MCP.
+  The `prb` binary does not embed a second copy. This skill sits next to
+  the MCP workflows and does not call MCP.
 
 ## [0.4.1] - 2026-10-09
 
