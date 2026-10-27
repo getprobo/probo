@@ -20,12 +20,9 @@
 
 import { internalControlStates } from "@probo/helpers";
 import { clsx } from "clsx";
-import type { ComponentProps } from "react";
 import { useTranslation } from "react-i18next";
 
-import type { InternalControlBadge } from "../Badge/InternalControlBadge";
-
-type InternalControlState = ComponentProps<typeof InternalControlBadge>["state"];
+type InternalControlState = (typeof internalControlStates)[number];
 
 type Props = {
   internalControls: { state: InternalControlState }[];

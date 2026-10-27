@@ -4,6 +4,11 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Changed
+
+- Internal controls show one status. The list, the form, and linked
+  controls use implementation status, and the list can filter on it
+
 ## [0.331.0] - 2026-10-28
 
 ### Changed

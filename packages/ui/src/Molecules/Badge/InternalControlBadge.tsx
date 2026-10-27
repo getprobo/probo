@@ -24,15 +24,20 @@ import { useTranslation } from "react-i18next";
 
 import { Badge } from "../../Atoms/Badge/Badge";
 
+type InternalControlStatus =
+  | (typeof internalControlStates)[number]
+  | "OPERATING";
+
 type Props = {
-  state: (typeof internalControlStates)[number];
+  state: InternalControlStatus;
 };
 
 const stateToVariant: Record<
-  Props["state"],
+  InternalControlStatus,
   ComponentProps<typeof Badge>["variant"]
 > = {
   IMPLEMENTED: "success",
+  OPERATING: "success",
   IN_PROGRESS: "info",
   NOT_APPLICABLE: "neutral",
   NOT_STARTED: "neutral",

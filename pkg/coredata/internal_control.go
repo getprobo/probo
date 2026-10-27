@@ -586,7 +586,8 @@ WITH latest AS (
 		event_type,
 		name,
 		category,
-		state
+		state,
+		implementation_status
 	FROM
 		internal_control_events
 	WHERE
@@ -603,7 +604,8 @@ msrs AS (
 		latest.tenant_id,
 		latest.name,
 		latest.category,
-		latest.state
+		latest.state,
+		latest.implementation_status
 	FROM
 		latest
 	WHERE

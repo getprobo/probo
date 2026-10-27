@@ -20,6 +20,7 @@
 
 import {
   formatError,
+  internalControlImplementationStatuses,
 } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import {
@@ -63,16 +64,15 @@ import type { InternalControlsPageDeleteMutation } from "#/__generated__/core/In
 import type { InternalControlsPageFragment$key } from "#/__generated__/core/InternalControlsPageFragment.graphql";
 import type { InternalControlsPageImportMutation } from "#/__generated__/core/InternalControlsPageImportMutation.graphql";
 import type { InternalControlsPageListQuery } from "#/__generated__/core/InternalControlsPageListQuery.graphql";
-import type {
-  InternalControlsPageRefetchQuery,
-  InternalControlState,
-} from "#/__generated__/core/InternalControlsPageRefetchQuery.graphql";
+import type { InternalControlsPageRefetchQuery } from "#/__generated__/core/InternalControlsPageRefetchQuery.graphql";
 import type { InternalControlsPageRowFragment$key } from "#/__generated__/core/InternalControlsPageRowFragment.graphql";
 import { SearchField } from "#/components/SearchField/SearchField";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import InternalControlFormDialog from "./dialog/InternalControlFormDialog";
+
+type InternalControlImplementationStatus = (typeof internalControlImplementationStatuses)[number];
 
 export const InternalControlsConnectionKey = "InternalControlsPage_internalControls";
 
@@ -95,7 +95,6 @@ const internalControlRowFragment = graphql`
     name
     code
     category
-    state
     implementationStatus
     canUpdate: permission(action: "core:internal-control:update")
     canDelete: permission(action: "core:internal-control:delete")
@@ -121,14 +120,14 @@ const internalControlsPageFragment = graphql`
     first: { type: "Int", defaultValue: 500 }
     after: { type: "CursorKey" }
     query: { type: "String", defaultValue: null }
-    state: { type: "InternalControlState", defaultValue: null }
+    implementationStatus: { type: "InternalControlImplementationStatus", defaultValue: null }
     category: { type: "String", defaultValue: null }
   ) {
     id
     internalControls(
       first: $first
       after: $after
-      filter: { query: $query, state: $state, category: $category }
+      filter: { query: $query, implementationStatus: $implementationStatus, category: $category }
     )
       @connection(
         key: "InternalControlsPage_internalControls"
@@ -185,7 +184,7 @@ export default function InternalControlsPage({ queryRef }: InternalControlsPageP
 
   const [isPending, startTransition] = useTransition();
   const [queryFilter, setQueryFilter] = useState<string | null>(null);
-  const [stateFilter, setStateFilter] = useState<InternalControlState | null>(null);
+  const [statusFilter, setStatusFilter] = useState<InternalControlImplementationStatus | null>(null);
   const { data, loadNext, hasNext, isLoadingNext, refetch }
     = usePaginationFragment<InternalControlsPageRefetchQuery, InternalControlsPageFragment$key>(
       internalControlsPageFragment,
@@ -197,7 +196,7 @@ export default function InternalControlsPage({ queryRef }: InternalControlsPageP
       refetch(
         {
           query: queryFilter,
-          state: stateFilter,
+          implementationStatus: statusFilter,
           category: urlCategory,
           ...overrides,
         },
@@ -214,7 +213,7 @@ export default function InternalControlsPage({ queryRef }: InternalControlsPageP
         refetch(
           {
             query: null,
-            state: null,
+            implementationStatus: null,
             category: initialUrlCategory.current,
           },
           { fetchPolicy: "network-only" },
@@ -236,10 +235,12 @@ export default function InternalControlsPage({ queryRef }: InternalControlsPageP
     refetchFilters({ query: newQuery });
   };
 
-  const handleStateFilterChange = (value: string) => {
-    const newState = value === "ALL" ? null : (value as InternalControlState);
-    setStateFilter(newState);
-    refetchFilters({ state: newState });
+  const handleStatusFilterChange = (value: string) => {
+    const newStatus = value === "ALL"
+      ? null
+      : value as InternalControlImplementationStatus;
+    setStatusFilter(newStatus);
+    refetchFilters({ implementationStatus: newStatus });
   };
 
   const handleCategoryFilterChange = (value: string) => {
@@ -257,7 +258,7 @@ export default function InternalControlsPage({ queryRef }: InternalControlsPageP
 
   const currentFilter = {
     query: queryFilter,
-    state: stateFilter,
+    implementationStatus: statusFilter,
     category: urlCategory,
   };
 
@@ -269,9 +270,9 @@ export default function InternalControlsPage({ queryRef }: InternalControlsPageP
   const allFiltersNullConnectionId = ConnectionHandler.getConnectionID(
     organizationId,
     InternalControlsConnectionKey,
-    { filter: { query: null, state: null, category: null } },
+    { filter: { query: null, implementationStatus: null, category: null } },
   );
-  const hasActiveFilter = queryFilter || stateFilter || urlCategory;
+  const hasActiveFilter = queryFilter || statusFilter || urlCategory;
   const createConnectionIds = hasActiveFilter
     ? [allFiltersNullConnectionId, connectionId]
     : [connectionId];
@@ -347,14 +348,15 @@ export default function InternalControlsPage({ queryRef }: InternalControlsPageP
           onValueChange={handleQueryFilterChange}
         />
         <Select
-          value={stateFilter ?? "ALL"}
-          onValueChange={handleStateFilterChange}
+          value={statusFilter ?? "ALL"}
+          onValueChange={handleStatusFilterChange}
         >
-          <Option value="ALL">{t("internalControlsPage.filters.allStates")}</Option>
-          <Option value="NOT_STARTED">{t("internalControlsPage.states.not_started")}</Option>
-          <Option value="IN_PROGRESS">{t("internalControlsPage.states.in_progress")}</Option>
-          <Option value="IMPLEMENTED">{t("internalControlsPage.states.implemented")}</Option>
-          <Option value="NOT_APPLICABLE">{t("internalControlsPage.states.not_applicable")}</Option>
+          <Option value="ALL">{t("internalControlsPage.filters.allStatuses")}</Option>
+          {internalControlImplementationStatuses.map(status => (
+            <Option key={status} value={status}>
+              {t(`internalControlsPage.statuses.${status.toLowerCase()}`)}
+            </Option>
+          ))}
         </Select>
         <Select
           value={urlCategory ?? "ALL"}
@@ -380,7 +382,6 @@ export default function InternalControlsPage({ queryRef }: InternalControlsPageP
                       <Th>{t("internalControlsPage.columns.internalControl")}</Th>
                       <Th>{t("internalControlsPage.columns.category")}</Th>
                       <Th>{t("internalControlsPage.columns.status")}</Th>
-                      <Th>{t("internalControlsPage.columns.state")}</Th>
                       {hasAnyAction && <Th />}
                     </Tr>
                   </Thead>
@@ -496,12 +497,7 @@ function InternalControlRow(props: InternalControlRowProps) {
         <Td>{internalControl.name}</Td>
         <Td>{internalControl.category}</Td>
         <Td>
-          {internalControl.implementationStatus
-            ? t(`internalControlDetailPage.implementationStatuses.${internalControl.implementationStatus.toLowerCase()}`)
-            : null}
-        </Td>
-        <Td width={120}>
-          <InternalControlBadge state={internalControl.state} />
+          <InternalControlBadge state={internalControl.implementationStatus} />
         </Td>
         {props.hasAnyAction && (
           <Td noLink width={50} className="text-end">

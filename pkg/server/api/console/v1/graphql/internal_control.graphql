@@ -124,6 +124,7 @@ input InternalControlOrder
 input InternalControlFilter {
     query: String
     state: InternalControlState
+    implementationStatus: InternalControlImplementationStatus
     category: String
 }
 

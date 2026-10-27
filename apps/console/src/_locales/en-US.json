@@ -674,7 +674,7 @@
   },
   "linkedInternalControlsCard": {
     "title": "Internal controls",
-    "columns": { "name": "Name", "state": "State" },
+    "columns": { "name": "Name", "state": "Status" },
     "empty": "No internal controls linked",
     "actions": {
       "link": "Link internal control",
@@ -1104,7 +1104,8 @@
       "not_applicable": "Not Applicable",
       "not_started": "Not Started",
       "unknown": "Unknown",
-      "not_implemented": "Not Implemented"
+      "not_implemented": "Not Implemented",
+      "operating": "Operating"
     },
     "confirmDialog": { "defaultTitle": "Are you sure?" },
     "durationPicker": {
@@ -2291,9 +2292,9 @@
     "errors": { "import": "Failed to import internal controls", "delete": "Failed to delete internal control" },
     "deleteConfirmation": "This will permanently delete the internal control \"{{name}}\". This action cannot be undone.",
     "actions": { "import": "Import", "newInternalControl": "New internal control", "loading": "Loading...", "loadMore": "Load more", "edit": "Edit", "delete": "Delete" },
-    "filters": { "searchPlaceholder": "Search internal controls...", "allStates": "All states", "allCategories": "All categories" },
-    "states": { "implemented": "Implemented", "in_progress": "In Progress", "not_applicable": "Not Applicable", "not_started": "Not Started" },
-    "columns": { "internalControl": "Internal control", "code": "Code", "category": "Category", "state": "State", "status": "Status" },
+    "filters": { "searchPlaceholder": "Search internal controls...", "allStatuses": "All statuses", "allCategories": "All categories" },
+    "statuses": { "not_implemented": "Not implemented", "in_progress": "In progress", "implemented": "Implemented", "operating": "Operating" },
+    "columns": { "internalControl": "Internal control", "code": "Code", "category": "Category", "status": "Status" },
     "empty": { "title": "No internal controls yet", "description": "Create your first internal control to get started." }
   },
   "linkedThirdPartiesCard": {
@@ -2344,7 +2345,7 @@
     "messages": { "created": "Internal control created successfully." },
     "errors": { "create": "Failed to create internal control" },
     "validation": { "nameRequired": "Name is required", "categoryRequired": "Category is required", "reviewerDistinct": "Reviewer must be a different person from the owner", "operatingIntervalRequired": "Enter how often the control runs" },
-    "fields": { "name": "Name", "namePlaceholder": "Control title", "description": "Description", "descriptionPlaceholder": "Add description", "category": "Category", "categoryPlaceholder": "Select category", "state": "State", "statePlaceholder": "Select state", "code": "Code", "codePlaceholder": "IC-ACCESS-01", "notSet": "Not set", "controlType": "Type", "nature": "Nature", "operatingFrequency": "Operating frequency", "operatingEvent": "Event", "operatingEventPlaceholder": "when someone leaves", "evidenceCadence": "Evidence cadence", "testingCadence": "Testing cadence", "implementationStatus": "Implementation status", "owner": "Owner", "reviewer": "Reviewer" },
+    "fields": { "name": "Name", "namePlaceholder": "Control title", "description": "Description", "descriptionPlaceholder": "Add description", "category": "Category", "categoryPlaceholder": "Select category", "state": "State", "statePlaceholder": "Select state", "code": "Code", "codePlaceholder": "IC-ACCESS-01", "notSet": "Not set", "controlType": "Type", "nature": "Nature", "operatingFrequency": "Operating frequency", "operatingEvent": "Event", "operatingEventPlaceholder": "when someone leaves", "evidenceCadence": "Evidence cadence", "testingCadence": "Testing cadence", "implementationStatus": "Status", "owner": "Owner", "reviewer": "Reviewer" },
     "properties": "Properties",
     "states": { "implemented": "Implemented", "in_progress": "In Progress", "not_applicable": "Not Applicable", "not_started": "Not Started", "unknown": "Unknown", "not_implemented": "Not Implemented" },
     "controlTypes": { "preventive": "Preventive", "detective": "Detective", "corrective": "Corrective" },

@@ -22,7 +22,6 @@ import {
   internalControlImplementationStatuses,
   internalControlNatures,
   internalControlOperatingModes,
-  internalControlStates,
   internalControlTypes,
 } from "@probo/helpers";
 import { TaskDurationField } from "@probo/tasks";
@@ -68,7 +67,6 @@ const internalControlFragment = graphql`
     description
     name
     category
-    state
     code
     controlType
     nature
@@ -132,7 +130,6 @@ export default function InternalControlFormDialog(props: Props) {
     name: z.string().min(1, t("internalControlFormDialog.validation.nameRequired")),
     description: z.string().optional().nullable(),
     category: z.string().min(1, t("internalControlFormDialog.validation.categoryRequired")),
-    state: z.enum(internalControlStates),
     code: z.string().optional().nullable(),
     controlType: blankableEnum(internalControlTypes),
     nature: blankableEnum(internalControlNatures),
@@ -167,7 +164,6 @@ export default function InternalControlFormDialog(props: Props) {
         name: internalControl?.name ?? "",
         description: internalControl?.description ?? "",
         category: internalControl?.category ?? "",
-        state: internalControl?.state ?? "NOT_STARTED",
         code: internalControl?.code ?? "",
         controlType: internalControl?.controlType ?? "",
         nature: internalControl?.nature ?? "",
@@ -203,13 +199,8 @@ export default function InternalControlFormDialog(props: Props) {
         category: data.category,
         ...fields,
       };
-      // Send only the status that changed. Repeating both would collapse an
-      // operating control back to implemented, or a not-started control into
-      // not implemented.
       if (data.implementationStatus !== internalControl.implementationStatus) {
         input.implementationStatus = data.implementationStatus;
-      } else if (data.state !== internalControl.state) {
-        input.state = data.state;
       }
       await updateInternalControl({
         variables: {
@@ -450,24 +441,6 @@ export default function InternalControlFormDialog(props: Props) {
                 optional
               />
             </PropertyRow>
-            {internalControl && (
-              <PropertyRow
-                label={t("internalControlFormDialog.fields.state")}
-                error={formState.errors.state?.message}
-              >
-                <ControlledSelect
-                  control={control}
-                  name="state"
-                  placeholder={t("internalControlFormDialog.fields.statePlaceholder")}
-                >
-                  {internalControlStates.map(state => (
-                    <Option key={state} value={state}>
-                      {t(`internalControlFormDialog.states.${state.toLowerCase()}`)}
-                    </Option>
-                  ))}
-                </ControlledSelect>
-              </PropertyRow>
-            )}
           </div>
         </DialogContent>
         <DialogFooter>

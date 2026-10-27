@@ -226,7 +226,7 @@ func (s FrameworkService) Export(
 							Direction: page.OrderDirectionAsc,
 						},
 					),
-					coredata.NewInternalControlFilter(nil, nil, nil),
+					coredata.NewInternalControlFilter(nil, nil, nil, nil),
 				)
 				if err != nil {
 					return fmt.Errorf("cannot load internalControls: %w", err)
