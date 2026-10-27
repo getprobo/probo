@@ -620,8 +620,8 @@ func TestCookieConsent_PublicValidationAndSecurity(t *testing.T) {
 }
 
 func TestCookieConsent_ForceOptIn(t *testing.T) {
-	t.Parallel()
-
+	// Loopback geolocation is shared by every dial in this process, so this
+	// test stays sequential with the other cookie-banner tests.
 	fixture := setupPublishedCookieBanner(t)
 
 	const update = `
