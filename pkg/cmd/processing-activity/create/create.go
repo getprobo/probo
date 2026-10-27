@@ -243,6 +243,16 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 						return err
 					}
 				}
+
+				if !cmd.Flags().Changed("international-transfers") {
+					err := huh.NewConfirm().
+						Title("International transfers").
+						Value(&flagInternational).
+						Run()
+					if err != nil {
+						return err
+					}
+				}
 			}
 
 			if flagName == "" {
