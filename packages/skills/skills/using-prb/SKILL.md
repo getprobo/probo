@@ -47,7 +47,8 @@ disagrees with a reference.
    stderr prints `Showing N of M` when more rows exist, and
    `Next cursor: <cursor>` when another page exists. Repeat the same
    command and filters with `--after <cursor>`. Do not treat one page as
-   the full set. `--order-direction` is `ASC` or `DESC`.
+   the full set. On commands that expose it, `--order-direction` accepts
+   `ASC` or `DESC`.
 
 ## Sign in
 
