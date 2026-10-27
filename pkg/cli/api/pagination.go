@@ -65,6 +65,8 @@ func Paginate[T any](
 	vars := maps.Clone(variables)
 	if after != "" {
 		vars["after"] = after
+	} else {
+		delete(vars, "after")
 	}
 
 	var (
