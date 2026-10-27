@@ -92,10 +92,6 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			if err := cmdutil.ValidateEnum("order-direction", flagOrderDir, []string{"ASC", "DESC"}); err != nil {
-				return err
-			}
-
 			client, hc, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
@@ -160,7 +156,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of transfer impact assessments to list")
 	cmdutil.AddAfterFlag(cmd, &flagAfter)
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT)")
-	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
+	cmdutil.AddOrderDirectionFlag(cmd, &flagOrderDir, "DESC")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd

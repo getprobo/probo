@@ -174,10 +174,6 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			if err := cmdutil.ValidateEnum("order-direction", flagOrderDir, []string{"ASC", "DESC"}); err != nil {
-				return err
-			}
-
 			if flagRisk != "" && flagRiskAnalysis != "" {
 				return fmt.Errorf("pass only one of --risk and --risk-analysis")
 			}
@@ -308,7 +304,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of treatment plans to list")
 	cmdutil.AddAfterFlag(cmd, &flagAfter)
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT, TREATMENT, CATEGORY, INHERENT_RISK_SCORE, RESIDUAL_RISK_SCORE)")
-	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
+	cmdutil.AddOrderDirectionFlag(cmd, &flagOrderDir, "DESC")
 	cmd.Flags().StringVar(&flagScoreType, "score-type", "", "Filter by matrix score type (INHERENT, NET, RESIDUAL)")
 	cmd.Flags().IntVar(&flagLikelihood, "likelihood", 0, "Filter by likelihood (with --score-type and --impact)")
 	cmd.Flags().IntVar(&flagImpact, "impact", 0, "Filter by impact (with --score-type and --likelihood)")

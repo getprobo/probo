@@ -104,6 +104,81 @@ func TestAddOutputFlag(t *testing.T) {
 	}
 }
 
+func TestAddOrderDirectionFlag(t *testing.T) {
+	t.Parallel()
+
+	t.Run("rejects an unknown direction before RunE", func(t *testing.T) {
+		t.Parallel()
+
+		var direction string
+
+		ran := false
+		cmd := &cobra.Command{
+			Use: "list",
+			RunE: func(cmd *cobra.Command, args []string) error {
+				ran = true
+
+				return nil
+			},
+		}
+		cmdutil.AddOrderDirectionFlag(cmd, &direction, "DESC")
+		cmd.SetArgs([]string{"--order-direction", "SIDEWAYS"})
+		cmd.SetOut(io.Discard)
+		cmd.SetErr(io.Discard)
+		cmd.SilenceUsage = true
+		cmd.SilenceErrors = true
+
+		err := cmd.Execute()
+		require.ErrorContains(t, err, `invalid --order-direction value "SIDEWAYS"`)
+		assert.False(t, ran)
+	})
+
+	t.Run("accepts the default", func(t *testing.T) {
+		t.Parallel()
+
+		var direction string
+
+		cmd := &cobra.Command{
+			Use: "list",
+			RunE: func(cmd *cobra.Command, args []string) error {
+				return nil
+			},
+		}
+		cmdutil.AddOrderDirectionFlag(cmd, &direction, "ASC")
+		cmd.SetArgs(nil)
+		cmd.SetOut(io.Discard)
+		cmd.SetErr(io.Discard)
+		cmd.SilenceUsage = true
+		cmd.SilenceErrors = true
+
+		require.NoError(t, cmd.Execute())
+		assert.Equal(t, "ASC", direction)
+	})
+
+	t.Run("keeps the output flag check", func(t *testing.T) {
+		t.Parallel()
+
+		var direction string
+
+		cmd := &cobra.Command{
+			Use: "list",
+			RunE: func(cmd *cobra.Command, args []string) error {
+				return nil
+			},
+		}
+		cmdutil.AddOrderDirectionFlag(cmd, &direction, "DESC")
+		cmdutil.AddOutputFlag(cmd)
+		cmd.SetArgs([]string{"--json", "--output", "table"})
+		cmd.SetOut(io.Discard)
+		cmd.SetErr(io.Discard)
+		cmd.SilenceUsage = true
+		cmd.SilenceErrors = true
+
+		err := cmd.Execute()
+		require.ErrorContains(t, err, "--json cannot be combined with --output table")
+	})
+}
+
 func TestAddOrganizationFlag(t *testing.T) {
 	t.Parallel()
 

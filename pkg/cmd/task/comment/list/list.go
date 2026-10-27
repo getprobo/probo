@@ -89,10 +89,6 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			if err := cmdutil.ValidateEnum("order-direction", flagOrderDir, []string{"ASC", "DESC"}); err != nil {
-				return err
-			}
-
 			if flagTask == "" {
 				return fmt.Errorf("task is required; pass --task")
 			}
@@ -153,7 +149,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagTask, "task", "", "Task ID (required)")
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of comments to list")
 	cmdutil.AddAfterFlag(cmd, &flagAfter)
-	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "ASC", "Sort direction (ASC, DESC)")
+	cmdutil.AddOrderDirectionFlag(cmd, &flagOrderDir, "ASC")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd

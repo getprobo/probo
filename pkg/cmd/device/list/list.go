@@ -174,10 +174,6 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			if err := cmdutil.ValidateEnum("order-direction", flagOrderDir, []string{"ASC", "DESC"}); err != nil {
-				return err
-			}
-
 			client, hc, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
@@ -317,7 +313,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		"Only devices whose latest posture for some check is FAIL or UNKNOWN",
 	)
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT, UPDATED_AT, HOSTNAME, LAST_SEEN_AT)")
-	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
+	cmdutil.AddOrderDirectionFlag(cmd, &flagOrderDir, "DESC")
 	cmd.Flags().BoolVar(&flagPostures, "postures", false, "Include latest posture check results")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
