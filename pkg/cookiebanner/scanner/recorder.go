@@ -321,15 +321,19 @@ func (r *recorder) recordBinding(ev *runtime.EventBindingCalled) {
 		return
 	}
 
-	scope := strings.TrimPrefix(payload.Host, ".")
+	host := strings.TrimSpace(payload.Host)
+	scope := strings.TrimPrefix(host, ".")
 	hostOnly := true
 
-	if payload.Domain != "" {
-		scope = strings.TrimPrefix(payload.Domain, ".")
+	if domain, ok := acceptedDomain(host, payload.Domain); ok {
+		scope = domain
 		hostOnly = false
 	}
 
-	scope = strings.ToLower(scope)
+	scope = strings.ToLower(strings.TrimRight(strings.TrimPrefix(scope, "."), "."))
+	if r.apiCookie(scope) {
+		return
+	}
 
 	cookie := Cookie{
 		Name:     payload.Name,
@@ -755,12 +759,11 @@ func parseSetCookie(line string, setByURL string) (Cookie, bool) {
 		cookie.MaxAgeSeconds = new(seconds)
 	}
 
-	if parsed.Domain == "" {
-		cookie.HostOnly = new(true)
-	} else {
-		domain := strings.TrimPrefix(parsed.Domain, ".")
+	if domain, ok := acceptedDomain(requestHost(setByURL), parsed.Domain); ok {
 		cookie.Domain = new(domain)
 		cookie.HostOnly = new(false)
+	} else {
+		cookie.HostOnly = new(true)
 	}
 
 	switch parsed.SameSite {
@@ -876,6 +879,26 @@ func limitBytes(s string, n int) string {
 	}
 
 	return s[:n]
+}
+
+// acceptedDomain keeps a Domain attribute only when it is a dotted
+// suffix of the host that set it. Anything else, including an IP host,
+// stays host-only.
+func acceptedDomain(host, domain string) (string, bool) {
+	domain = strings.TrimPrefix(strings.TrimSpace(domain), ".")
+	domain = strings.TrimRight(domain, ".")
+	host = strings.TrimRight(strings.ToLower(strings.TrimSpace(host)), ".")
+
+	folded := strings.ToLower(domain)
+	if host == "" || folded == "" || !strings.Contains(folded, ".") || net.ParseIP(host) != nil {
+		return "", false
+	}
+
+	if host != folded && !strings.HasSuffix(host, "."+folded) {
+		return "", false
+	}
+
+	return domain, true
 }
 
 func requestHost(raw string) string {

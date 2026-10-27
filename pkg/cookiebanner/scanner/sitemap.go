@@ -24,16 +24,14 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"encoding/xml"
 	"io"
 	"net/http"
-	"regexp"
 	"strings"
 	"time"
 
 	"github.com/chromedp/cdproto/network"
 )
-
-var sitemapLoc = regexp.MustCompile(`(?i)<loc>\s*([^<]+)\s*</loc>`)
 
 func (s *scan) enqueueSitemapURLs(ctx context.Context) {
 	seeds := []string{s.site.pathURL("/sitemap.xml")}
@@ -110,8 +108,8 @@ func (s *scan) collectSitemapURLs(
 		return
 	}
 
-	locs := sitemapLocations(body)
-	if strings.Contains(strings.ToLower(body), "<sitemapindex") {
+	locs, index := sitemapLocations(body)
+	if index {
 		if depth < limits.MaxSitemapIndexes {
 			for _, child := range locs {
 				if *fetches >= limits.MaxSitemapFetches {
@@ -139,20 +137,39 @@ func (s *scan) collectSitemapURLs(
 	}
 }
 
-func sitemapLocations(body string) []string {
-	matches := sitemapLoc.FindAllStringSubmatch(body, -1)
+func sitemapLocations(body string) ([]string, bool) {
+	decoder := xml.NewDecoder(strings.NewReader(body))
 
-	locs := make([]string, 0, len(matches))
-	for _, match := range matches {
-		loc := strings.TrimSpace(match[1])
+	var (
+		locs  []string
+		index bool
+	)
 
-		loc = strings.ReplaceAll(loc, "&amp;", "&")
-		if loc != "" {
-			locs = append(locs, loc)
+	for {
+		token, err := decoder.Token()
+		if err != nil {
+			return locs, index
+		}
+
+		start, ok := token.(xml.StartElement)
+		if !ok {
+			continue
+		}
+
+		switch strings.ToLower(start.Name.Local) {
+		case "sitemapindex":
+			index = true
+		case "loc":
+			var loc string
+			if err := decoder.DecodeElement(&loc, &start); err != nil {
+				continue
+			}
+
+			if loc = strings.TrimSpace(loc); loc != "" {
+				locs = append(locs, loc)
+			}
 		}
 	}
-
-	return locs
 }
 
 func (s *scan) fetchText(ctx context.Context, raw string, limit int64) (string, bool) {
@@ -161,14 +178,14 @@ func (s *scan) fetchText(ctx context.Context, raw string, limit int64) (string, 
 
 	req, err := http.NewRequestWithContext(reqCtx, http.MethodGet, raw, nil)
 	if err != nil {
-		s.warn(ctx, "cannot fetch text", raw, err)
+		s.warn(ctx, "cannot fetch text", err)
 
 		return "", false
 	}
 
 	resp, err := s.http.Do(req)
 	if err != nil {
-		s.warn(ctx, "cannot fetch text", raw, err)
+		s.warn(ctx, "cannot fetch text", err)
 
 		return "", false
 	}
@@ -182,7 +199,7 @@ func (s *scan) fetchText(ctx context.Context, raw string, limit int64) (string, 
 	body, err := io.ReadAll(io.LimitReader(resp.Body, limit+1))
 	if err != nil || int64(len(body)) > limit {
 		if err != nil {
-			s.warn(ctx, "cannot read text", raw, err)
+			s.warn(ctx, "cannot read text", err)
 		}
 
 		return "", false

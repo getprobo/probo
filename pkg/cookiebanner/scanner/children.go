@@ -182,26 +182,26 @@ func (s *scan) onAttached(d *devtools, ev *target.EventAttachedToTarget) {
 	defer cancel()
 
 	if err := d.call(ctx, ev.SessionID, network.Enable.Method, network.EnableParams{}); err != nil {
-		s.warn(ctx, "cannot enable child network events", info.URL, err)
+		s.warn(ctx, "cannot enable child network events", err)
 	}
 
 	if err := d.call(ctx, ev.SessionID, network.SetBypassServiceWorker.Method, network.SetBypassServiceWorkerParams{Bypass: true}); err != nil {
-		s.warn(ctx, "cannot bypass child service workers", info.URL, err)
+		s.warn(ctx, "cannot bypass child service workers", err)
 	}
 
 	if err := d.call(ctx, ev.SessionID, fetch.Enable.Method, fetch.EnableParams{}); err != nil {
-		s.warn(ctx, "cannot intercept child requests", info.URL, err)
+		s.warn(ctx, "cannot intercept child requests", err)
 	}
 
 	if info.Type == "iframe" {
 		if err := d.call(ctx, ev.SessionID, runtime.AddBinding.Method, runtime.AddBindingParams{Name: s.binding}); err != nil {
-			s.warn(ctx, "cannot add child cookie binding", info.URL, err)
+			s.warn(ctx, "cannot add child cookie binding", err)
 		}
 
 		if err := d.call(ctx, ev.SessionID, page.AddScriptToEvaluateOnNewDocument.Method, page.AddScriptToEvaluateOnNewDocumentParams{
 			Source: cookieHookSource(s.binding),
 		}); err != nil {
-			s.warn(ctx, "cannot install child cookie hook", info.URL, err)
+			s.warn(ctx, "cannot install child cookie hook", err)
 		}
 	}
 
@@ -210,7 +210,7 @@ func (s *scan) onAttached(d *devtools, ev *target.EventAttachedToTarget) {
 		WaitForDebuggerOnStart: true,
 		Filter:                 childTargetFilter(),
 	}); err != nil {
-		s.warn(ctx, "cannot watch nested targets", info.URL, err)
+		s.warn(ctx, "cannot watch nested targets", err)
 	}
 
 	s.releaseChild(d, ev.SessionID)
