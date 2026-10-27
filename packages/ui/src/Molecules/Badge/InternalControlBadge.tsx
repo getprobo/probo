@@ -24,9 +24,9 @@ import { useTranslation } from "react-i18next";
 
 import { Badge } from "../../Atoms/Badge/Badge";
 
-type InternalControlStatus =
-  | (typeof internalControlStates)[number]
-  | "OPERATING";
+type InternalControlStatus
+  = (typeof internalControlStates)[number]
+    | "OPERATING";
 
 type Props = {
   state: InternalControlStatus;

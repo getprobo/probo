@@ -166,6 +166,7 @@ WITH msrs AS (
 		m.tenant_id,
 		m.search_vector,
 		m.state,
+		m.implementation_status,
 		m.category
 	FROM
 		internal_controls m
@@ -183,7 +184,7 @@ WHERE %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
 
-	args := pgx.NamedArgs{"risk_id": riskID}
+	args := pgx.StrictNamedArgs{"risk_id": riskID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 
@@ -270,7 +271,7 @@ WHERE %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
-	args := pgx.NamedArgs{"risk_id": riskID}
+	args := pgx.StrictNamedArgs{"risk_id": riskID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
@@ -304,6 +305,7 @@ WITH msrs AS (
 		m.tenant_id,
 		m.search_vector,
 		m.state,
+		m.implementation_status,
 		m.category
 	FROM
 		internal_controls m
@@ -653,6 +655,7 @@ WITH mtgtns AS (
 			m.tenant_id,
 			m.search_vector,
 			m.state,
+			m.implementation_status,
 			m.category
 		FROM
 			internal_controls m
@@ -670,7 +673,7 @@ WITH mtgtns AS (
 	`
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
 
-	args := pgx.NamedArgs{"control_id": controlID}
+	args := pgx.StrictNamedArgs{"control_id": controlID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 
@@ -757,7 +760,7 @@ WHERE %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
-	args := pgx.NamedArgs{"control_id": controlID}
+	args := pgx.StrictNamedArgs{"control_id": controlID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
@@ -796,7 +799,7 @@ WHERE
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
 
-	args := pgx.NamedArgs{"organization_id": organizationID}
+	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 
@@ -887,7 +890,7 @@ WHERE
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
-	args := pgx.NamedArgs{"organization_id": organizationID}
+	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
@@ -1375,6 +1378,7 @@ WITH mtgtns AS (
 			m.tenant_id,
 			m.search_vector,
 			m.state,
+			m.implementation_status,
 			m.category
 		FROM
 			internal_controls m
@@ -1392,7 +1396,7 @@ WITH mtgtns AS (
 	`
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
 
-	args := pgx.NamedArgs{"third_party_id": thirdPartyID}
+	args := pgx.StrictNamedArgs{"third_party_id": thirdPartyID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 
@@ -1479,7 +1483,7 @@ WHERE %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
-	args := pgx.NamedArgs{"third_party_id": thirdPartyID}
+	args := pgx.StrictNamedArgs{"third_party_id": thirdPartyID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
@@ -1513,6 +1517,7 @@ WITH linked AS (
 			m.tenant_id,
 			m.search_vector,
 			m.state,
+			m.implementation_status,
 			m.category
 		FROM
 			internal_controls m
@@ -1530,7 +1535,7 @@ WITH linked AS (
 	`
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
 
-	args := pgx.NamedArgs{"task_id": taskID}
+	args := pgx.StrictNamedArgs{"task_id": taskID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 
@@ -1617,7 +1622,7 @@ WHERE %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
-	args := pgx.NamedArgs{"task_id": taskID}
+	args := pgx.StrictNamedArgs{"task_id": taskID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
