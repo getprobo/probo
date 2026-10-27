@@ -446,9 +446,14 @@ func (r *Resolver) ListInternalControlsTool(ctx context.Context, req *mcp.CallTo
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	var internalControlFilter = coredata.NewInternalControlFilter(nil, nil, nil)
+	var internalControlFilter = coredata.NewInternalControlFilter(nil, nil, nil, nil)
 	if input.Filter != nil {
-		internalControlFilter = coredata.NewInternalControlFilter(input.Filter.Query, input.Filter.State, input.Filter.Category)
+		internalControlFilter = coredata.NewInternalControlFilter(
+			input.Filter.Query,
+			input.Filter.State,
+			input.Filter.ImplementationStatus,
+			input.Filter.Category,
+		)
 	}
 
 	page, err := prb.InternalControls.ListForOrganizationID(ctx, scope, input.OrganizationID, cursor, internalControlFilter)
@@ -1903,7 +1908,7 @@ func (r *Resolver) ListControlInternalControlsTool(ctx context.Context, req *mcp
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	internalControlPage, err := prb.InternalControls.ListForControlID(ctx, scope, input.ControlID, cursor, coredata.NewInternalControlFilter(nil, nil, nil))
+	internalControlPage, err := prb.InternalControls.ListForControlID(ctx, scope, input.ControlID, cursor, coredata.NewInternalControlFilter(nil, nil, nil, nil))
 	if err != nil {
 		return nil, types.ListControlInternalControlsOutput{}, fmt.Errorf("failed to list control internal_controls: %w", err)
 	}
@@ -2028,7 +2033,7 @@ func (r *Resolver) ListRiskInternalControlsTool(ctx context.Context, req *mcp.Ca
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	internalControlPage, err := prb.InternalControls.ListForRiskID(ctx, scope, input.RiskID, cursor, coredata.NewInternalControlFilter(nil, nil, nil))
+	internalControlPage, err := prb.InternalControls.ListForRiskID(ctx, scope, input.RiskID, cursor, coredata.NewInternalControlFilter(nil, nil, nil, nil))
 	if err != nil {
 		return nil, types.ListRiskInternalControlsOutput{}, fmt.Errorf("failed to list risk internal_controls: %w", err)
 	}

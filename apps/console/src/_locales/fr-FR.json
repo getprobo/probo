@@ -1065,7 +1065,7 @@
     "title": "Contrôles internes",
     "columns": {
       "name": "Nom",
-      "state": "État"
+      "state": "Statut"
     },
     "empty": "Aucun contrôle interne associé",
     "actions": {
@@ -1616,7 +1616,8 @@
       "not_applicable": "Non applicable",
       "not_started": "Non commencée",
       "unknown": "Inconnu",
-      "not_implemented": "Non mise en œuvre"
+      "not_implemented": "Non mise en œuvre",
+      "operating": "En exploitation"
     },
     "confirmDialog": {
       "defaultTitle": "Êtes-vous sûr ?"
@@ -3775,20 +3776,19 @@
     },
     "filters": {
       "searchPlaceholder": "Rechercher des contrôles internes...",
-      "allStates": "Tous les états",
+      "allStatuses": "Tous les statuts",
       "allCategories": "Toutes les catégories"
     },
-    "states": {
-      "implemented": "Mis en œuvre",
+    "statuses": {
+      "not_implemented": "Non mis en œuvre",
       "in_progress": "En cours",
-      "not_applicable": "Non applicable",
-      "not_started": "Non commencé"
+      "implemented": "Mis en œuvre",
+      "operating": "En exploitation"
     },
     "columns": {
       "internalControl": "Contrôle interne",
       "code": "Code",
       "category": "Catégorie",
-      "state": "État",
       "status": "Statut"
     },
     "empty": {
@@ -3915,7 +3915,7 @@
       "operatingEventPlaceholder": "lorsqu’une personne part",
       "evidenceCadence": "Cadence des preuves",
       "testingCadence": "Cadence des tests",
-      "implementationStatus": "Statut de mise en œuvre",
+      "implementationStatus": "Statut",
       "owner": "Responsable",
       "reviewer": "Relecteur"
     },

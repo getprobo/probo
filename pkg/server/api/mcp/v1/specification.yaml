@@ -2674,6 +2674,9 @@ components:
             state:
               $ref: "#/components/schemas/InternalControlState"
               description: Internal control state filter
+            implementation_status:
+              $ref: "#/components/schemas/InternalControlImplementationStatus"
+              description: Whether the control is not implemented, in progress, implemented, or operating
             category:
               type: string
               description: Filter by internal control category
