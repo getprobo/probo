@@ -4,6 +4,16 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.330.1] - 2026-10-27
+
+### Fixed
+
+- Employee portal PDF previews load again. The worker was a newer
+  pdfjs-dist than react-pdf uses, so previews failed with an unknown
+  worker action
+- Task-list checkboxes no longer freeze the page. Updating focus was
+  rewriting the checkbox on every editor change, which looped
+
 ## [0.330.0] - 2026-10-27
 
 ### Added
