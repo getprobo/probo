@@ -691,7 +691,12 @@ func (d *cancelProbeDocuments) Open(
 ) (*collaboration.DocumentCollaboration, error) {
 	d.openCtx = ctx
 	close(d.started)
-	<-d.release
+
+	select {
+	case <-d.release:
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
 
 	if err := ctx.Err(); err != nil {
 		return nil, err

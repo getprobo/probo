@@ -96,6 +96,7 @@ type (
 		IdentityID       string
 		AvatarURL        string
 		RecordActors     func(ctx context.Context, actors [][]byte) error
+		Incoming         <-chan Incoming
 	}
 )
 
@@ -153,18 +154,28 @@ func (h *Handler) HandleRepo(w http.ResponseWriter, r *http.Request) {
 
 	connection.SetReadLimit(MessageMaxBytes)
 
-	lease, err := h.Hub.Acquire(r.Context(), scope, documentID, connectionID)
+	collaborationCtx, cancelCollaboration := context.WithCancel(r.Context())
+	defer cancelCollaboration()
+
+	incoming := make(chan Incoming, 1)
+	go func() {
+		_ = ReadMessages(collaborationCtx, connection, incoming)
+
+		cancelCollaboration()
+	}()
+
+	lease, err := h.Hub.Acquire(collaborationCtx, scope, documentID, connectionID)
 	if err != nil {
-		h.closeOpenError(r.Context(), connection, documentIDString, err)
+		h.closeOpenError(collaborationCtx, connection, documentIDString, err)
 		return
 	}
 
 	defer lease.Close()
 
 	if lease.SeedOwner() {
-		if err := SeedRepoCollaboration(r.Context(), lease); err != nil {
-			h.releaseSeedClaim(r.Context(), scope, documentID, lease)
-			h.closeOpenError(r.Context(), connection, documentIDString, err)
+		if err := SeedRepoCollaboration(collaborationCtx, lease); err != nil {
+			h.releaseSeedClaim(collaborationCtx, scope, documentID, lease)
+			h.closeOpenError(collaborationCtx, connection, documentIDString, err)
 
 			return
 		}
@@ -188,6 +199,7 @@ func (h *Handler) HandleRepo(w http.ResponseWriter, r *http.Request) {
 		DisplayName:  displayName,
 		IdentityID:   identityID,
 		AvatarURL:    avatarURL,
+		Incoming:     incoming,
 		PublishEphemeral: func(ctx context.Context, frame []byte) error {
 			return h.Probo.Collaboration.NotifyEphemeral(
 				ctx,
@@ -216,8 +228,8 @@ func (h *Handler) HandleRepo(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if err := ServeRepoCollaboration(r.Context(), connection, lease, syncState, config); err != nil {
-		h.closeWithError(r.Context(), connection, documentIDString, err)
+	if err := ServeRepoCollaboration(collaborationCtx, connection, lease, syncState, config); err != nil {
+		h.closeWithError(collaborationCtx, connection, documentIDString, err)
 	}
 }
 
@@ -540,8 +552,16 @@ func ServeRepoCollaboration(
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	incoming := make(chan Incoming, 1)
-	go ReadMessages(ctx, connection, incoming)
+	incoming := config.Incoming
+	if incoming == nil {
+		messages := make(chan Incoming, 1)
+
+		incoming = messages
+
+		go func() {
+			_ = ReadMessages(ctx, connection, messages)
+		}()
+	}
 
 	var join Incoming
 	select {

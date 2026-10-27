@@ -44,7 +44,8 @@ func TestReadMessages_CanceledContext(t *testing.T) {
 	done := make(chan struct{})
 
 	go func() {
-		ReadMessages(ctx, serverConn, incoming)
+		_ = ReadMessages(ctx, serverConn, incoming)
+
 		close(done)
 	}()
 
@@ -72,7 +73,13 @@ func TestReadMessages_ClosedConnection(t *testing.T) {
 	defer cancel()
 
 	incoming := make(chan Incoming, 1)
-	go ReadMessages(ctx, serverConn, incoming)
+	done := make(chan struct{})
+
+	go func() {
+		_ = ReadMessages(ctx, serverConn, incoming)
+
+		close(done)
+	}()
 
 	require.NoError(t, client.Close(websocket.StatusNormalClosure, ""))
 
@@ -82,6 +89,12 @@ func TestReadMessages_ClosedConnection(t *testing.T) {
 		assert.NoError(t, ctx.Err())
 	case <-ctx.Done():
 		require.Fail(t, "timed out waiting for the close error")
+	}
+
+	select {
+	case <-done:
+	case <-ctx.Done():
+		require.Fail(t, "ReadMessages did not return after close")
 	}
 }
 

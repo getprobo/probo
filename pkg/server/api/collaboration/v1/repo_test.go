@@ -111,7 +111,17 @@ func newRepoTestServerWithConfig(
 
 		connection.SetReadLimit(1 << 20)
 
-		lease, err := hub.Acquire(r.Context(), scope, documentID, connectionID)
+		collaborationCtx, cancelCollaboration := context.WithCancel(r.Context())
+		defer cancelCollaboration()
+
+		incoming := make(chan Incoming, 1)
+		go func() {
+			_ = ReadMessages(collaborationCtx, connection, incoming)
+
+			cancelCollaboration()
+		}()
+
+		lease, err := hub.Acquire(collaborationCtx, scope, documentID, connectionID)
 		if err != nil {
 			_ = connection.Close(websocket.StatusInternalError, "collaboration failed")
 			return
@@ -120,7 +130,7 @@ func newRepoTestServerWithConfig(
 		defer lease.Close()
 
 		if lease.SeedOwner() {
-			if err := SeedRepoCollaboration(r.Context(), lease); err != nil {
+			if err := SeedRepoCollaboration(collaborationCtx, lease); err != nil {
 				_ = connection.Close(websocket.StatusInternalError, "collaboration failed")
 				return
 			}
@@ -137,16 +147,61 @@ func newRepoTestServerWithConfig(
 		loopConfig.ServerPeerID = "probo-gateway-" + connectionID
 
 		loopConfig.DocumentID = documentID
+
+		loopConfig.Incoming = incoming
+
 		if loopConfig.Shutdown == nil {
 			loopConfig.Shutdown = context.Background()
 		}
 
-		_ = ServeRepoCollaboration(r.Context(), connection, lease, syncState, loopConfig)
+		_ = ServeRepoCollaboration(collaborationCtx, connection, lease, syncState, loopConfig)
 	}))
 
 	t.Cleanup(server.Close)
 
 	return server
+}
+
+func TestRepoServer_CanceledWhenClientDisconnectsDuringOpen(t *testing.T) {
+	t.Parallel()
+
+	tenantID := gid.NewTenantID()
+	documentID := gid.New(tenantID, coredata.DocumentEntityType)
+	documents := &cancelProbeDocuments{
+		started: make(chan struct{}),
+		release: make(chan struct{}),
+	}
+	hub := NewHub(documents, nil)
+	server := newRepoTestServer(
+		t,
+		hub,
+		coredata.NewScope(tenantID, gid.Nil),
+		documentID,
+		nil,
+	)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	wsURL := "ws" + strings.TrimPrefix(server.URL, "http")
+	connection, _, err := websocket.Dial(ctx, wsURL, nil)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = connection.CloseNow() })
+
+	select {
+	case <-documents.started:
+	case <-ctx.Done():
+		require.Fail(t, "collaboration open did not start")
+	}
+
+	require.NoError(t, connection.CloseNow())
+
+	select {
+	case <-documents.openCtx.Done():
+		assert.ErrorIs(t, documents.openCtx.Err(), context.Canceled)
+	case <-ctx.Done():
+		require.Fail(t, "client disconnect did not cancel collaboration open")
+	}
 }
 
 type repoTestClient struct {

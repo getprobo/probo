@@ -31,12 +31,12 @@ func ReadMessages(
 	ctx context.Context,
 	connection *websocket.Conn,
 	incoming chan<- Incoming,
-) {
+) error {
 	for {
 		messageType, data, err := connection.Read(ctx)
 		// Cancellation unblocks Read with ctx.Err(). That is not a connection failure.
 		if err != nil && ctx.Err() != nil {
-			return
+			return nil
 		}
 
 		message := Incoming{
@@ -47,11 +47,11 @@ func ReadMessages(
 		select {
 		case incoming <- message:
 		case <-ctx.Done():
-			return
+			return nil
 		}
 
 		if err != nil {
-			return
+			return err
 		}
 	}
 }
