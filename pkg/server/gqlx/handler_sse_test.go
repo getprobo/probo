@@ -138,6 +138,35 @@ func TestHandler_MutationNeverStreams(t *testing.T) {
 	assert.JSONEq(t, `{"data":{"name":"ready"},"hasNext":true}`, string(body))
 }
 
+func TestHandler_SSERequestBodyIsBounded(t *testing.T) {
+	t.Parallel()
+
+	gate := make(chan struct{})
+
+	server := httptest.NewServer(newStreamingHandler(gate, io.Discard))
+	t.Cleanup(server.Close)
+
+	body := `{"query":"query Viewer { name }","variables":{"input":"`
+	body += strings.Repeat("a", 1024*1024)
+	body += `"}}`
+
+	req, err := http.NewRequestWithContext(
+		t.Context(),
+		http.MethodPost,
+		server.URL,
+		strings.NewReader(body),
+	)
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "text/event-stream, application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = resp.Body.Close() })
+
+	assert.Equal(t, http.StatusRequestEntityTooLarge, resp.StatusCode)
+}
+
 func TestHandler_SingleResponseTransportStillLogsOperation(t *testing.T) {
 	t.Parallel()
 

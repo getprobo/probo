@@ -118,7 +118,15 @@ func TestInterceptOperation(t *testing.T) {
 			hasNext, last := true, false
 			responses := []*graphql.Response{
 				{HasNext: &hasNext},
-				{HasNext: &hasNext, Errors: gqlerror.List{gqlerror.Errorf("probe failed")}},
+				{HasNext: &hasNext, Errors: gqlerror.List{
+					&gqlerror.Error{
+						Message: "submitted value: api-key-secret",
+						Extensions: map[string]any{
+							"code":  "INVALID",
+							"value": "api-key-secret",
+						},
+					},
+				}},
 				{HasNext: &last},
 				nil,
 			}
@@ -149,7 +157,9 @@ func TestInterceptOperation(t *testing.T) {
 			require.NoError(t, json.Unmarshal([]byte(lines[0]), &entry))
 			assert.Equal(t, "ERROR", entry["level"])
 			assert.Contains(t, entry["msg"], "query Viewer failed")
-			assert.Contains(t, lines[0], "probe failed")
+			assert.Equal(t, float64(1), entry["graphql_operation_error_count"])
+			assert.Equal(t, "INVALID", entry["graphql_operation_error_codes"])
+			assert.NotContains(t, lines[0], "api-key-secret")
 		},
 	)
 }

@@ -24,6 +24,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"time"
@@ -54,7 +55,10 @@ type (
 	}
 )
 
-const sseKeepAlivePingInterval = 15 * time.Second
+const (
+	sseKeepAlivePingInterval = 15 * time.Second
+	maxSSERequestBytes       = 1 * 1024 * 1024
+)
 
 // eventStreamTransport delivers @defer payloads one SSE event at a time.
 // It only answers requests that accept text/event-stream; everyone else
@@ -68,7 +72,14 @@ type eventStreamTransport struct {
 func (t eventStreamTransport) Do(w http.ResponseWriter, r *http.Request, exec graphql.GraphExecutor) {
 	// SSE flushes headers before resolvers run, so a Set-Cookie written by a
 	// mutation such as signIn would never reach the client.
-	if t.isMutation(r) {
+	isMutation, err := t.isMutation(w, r)
+	if err != nil {
+		http.Error(w, "request body too large", http.StatusRequestEntityTooLarge)
+
+		return
+	}
+
+	if isMutation {
 		postTransport.Do(w, r, exec)
 		return
 	}
@@ -82,12 +93,16 @@ func (t eventStreamTransport) Do(w http.ResponseWriter, r *http.Request, exec gr
 // isMutation peeks at the body and restores it, so whichever transport runs
 // next reads it in full. Anything it cannot parse goes to SSE, which reports
 // the error itself.
-func (t eventStreamTransport) isMutation(r *http.Request) bool {
-	body, err := io.ReadAll(r.Body)
+func (t eventStreamTransport) isMutation(w http.ResponseWriter, r *http.Request) (bool, error) {
+	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, maxSSERequestBytes))
 	r.Body = io.NopCloser(bytes.NewReader(body))
 
 	if err != nil {
-		return false
+		if _, ok := errors.AsType[*http.MaxBytesError](err); ok {
+			return false, err
+		}
+
+		return false, nil
 	}
 
 	var params struct {
@@ -96,7 +111,7 @@ func (t eventStreamTransport) isMutation(r *http.Request) bool {
 	}
 
 	if err := json.Unmarshal(body, &params); err != nil {
-		return false
+		return false, nil
 	}
 
 	document, err := parser.ParseQueryWithTokenLimit(
@@ -104,12 +119,12 @@ func (t eventStreamTransport) isMutation(r *http.Request) bool {
 		t.parserTokenLimit,
 	)
 	if err != nil {
-		return false
+		return false, nil
 	}
 
 	operation := document.Operations.ForName(params.OperationName)
 
-	return operation != nil && operation.Operation == ast.Mutation
+	return operation != nil && operation.Operation == ast.Mutation, nil
 }
 
 var (

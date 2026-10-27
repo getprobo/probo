@@ -23,6 +23,8 @@ package gqlx
 import (
 	"context"
 	"fmt"
+	"slices"
+	"strings"
 	"sync"
 	"time"
 
@@ -154,7 +156,8 @@ func (t TracingExtension) InterceptOperation(ctx context.Context, next graphql.O
 				log.String("graphql_operation_name", operationName),
 				log.String("graphql_operation_type", operationType),
 				log.Duration("graphql_operation_duration", duration),
-				log.Any("graphql_operation_errors", errs),
+				log.Int("graphql_operation_error_count", len(errs)),
+				log.String("graphql_operation_error_codes", graphqlErrorCodes(errs)),
 			)
 		} else {
 			t.logger.InfoCtx(
@@ -211,6 +214,44 @@ func (t TracingExtension) InterceptOperation(ctx context.Context, next graphql.O
 
 		return resp
 	}
+}
+
+var safeGraphQLErrorCodes = map[string]struct{}{
+	"ACCOUNT_ALREADY_ACTIVATED": {},
+	"ACTIVATION_NOT_REQUIRED":   {},
+	"ALREADY_AUTHENTICATED":     {},
+	"ASSUMPTION_REQUIRED":       {},
+	"CONFLICT":                  {},
+	"FORBIDDEN":                 {},
+	"FULL_NAME_REQUIRED":        {},
+	"INTERNAL":                  {},
+	"INVALID":                   {},
+	"MEMBERSHIP_REQUIRED":       {},
+	"NDA_SIGNATURE_REQUIRED":    {},
+	"NOT_FOUND":                 {},
+	"TOKEN_ALREADY_USED":        {},
+	"TOKEN_EXPIRED":             {},
+	"UNAUTHENTICATED":           {},
+	"UNAVAILABLE":               {},
+}
+
+// graphqlErrorCodes retains only server-owned, stable codes. gqlerror
+// extensions can otherwise contain submitted validation values.
+func graphqlErrorCodes(errs gqlerror.List) string {
+	codes := make([]string, 0, len(errs))
+
+	for _, err := range errs {
+		code, _ := err.Extensions["code"].(string)
+		if _, ok := safeGraphQLErrorCodes[code]; !ok {
+			code = "UNKNOWN"
+		}
+
+		codes = append(codes, code)
+	}
+
+	slices.Sort(codes)
+
+	return strings.Join(slices.Compact(codes), ",")
 }
 
 type openOperations struct {
