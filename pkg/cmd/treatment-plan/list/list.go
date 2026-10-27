@@ -174,6 +174,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
+			if err := cmdutil.ValidateEnum("order-direction", flagOrderDir, []string{"ASC", "DESC"}); err != nil {
+				return err
+			}
+
 			if flagRisk != "" && flagRiskAnalysis != "" {
 				return fmt.Errorf("pass only one of --risk and --risk-analysis")
 			}
@@ -230,14 +234,6 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					"order-by",
 					flagOrderBy,
 					[]string{"CREATED_AT", "TREATMENT", "CATEGORY", "INHERENT_RISK_SCORE", "RESIDUAL_RISK_SCORE"},
-				); err != nil {
-					return err
-				}
-
-				if err := cmdutil.ValidateEnum(
-					"order-direction",
-					flagOrderDir,
-					[]string{"ASC", "DESC"},
 				); err != nil {
 					return err
 				}

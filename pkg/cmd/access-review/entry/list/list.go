@@ -193,6 +193,14 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
+			if err := cmdutil.ValidateLimit(flagLimit); err != nil {
+				return err
+			}
+
+			if err := cmdutil.ValidateEnum("order-direction", flagOrderDir, []string{"ASC", "DESC"}); err != nil {
+				return err
+			}
+
 			if flagCampaignSourceID == "" && len(args) == 0 {
 				return fmt.Errorf("campaign ID is required when --source-id is not set")
 			}
@@ -210,10 +218,6 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 			if flagCampaignSourceID != "" {
 				variables["id"] = flagCampaignSourceID
-			}
-
-			if err := cmdutil.ValidateEnum("order-direction", flagOrderDir, []string{"ASC", "DESC"}); err != nil {
-				return err
 			}
 
 			if flagOrderBy != "" {

@@ -39,10 +39,11 @@ When this skill is not installed on disk, read a bundled reference with
    Pass the fields that change.
 8. Delete in non-interactive mode requires `--yes`. Without it, prb exits
    non-zero and deletes nothing.
-9. `--limit` / `-L` is how many rows to return. stderr prints
-   `Showing N of M` when more rows exist, and `Next cursor: <cursor>` when
-   another page exists. Repeat the same command and filters with
-   `--after <cursor>`. Do not treat one page as the full set.
+9. `--limit` / `-L` is how many rows to return. It must be greater than 0.
+   stderr prints `Showing N of M` when more rows exist, and
+   `Next cursor: <cursor>` when another page exists. Repeat the same
+   command and filters with `--after <cursor>`. Do not treat one page as
+   the full set. `--order-direction` is `ASC` or `DESC`.
 
 ## Organization
 

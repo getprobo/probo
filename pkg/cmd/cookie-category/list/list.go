@@ -80,6 +80,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
+			if err := cmdutil.ValidateLimit(flagLimit); err != nil {
+				return err
+			}
+
 			if flagBannerID == "" {
 				return fmt.Errorf("banner-id is required; pass --banner-id")
 			}
