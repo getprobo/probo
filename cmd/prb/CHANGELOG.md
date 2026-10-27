@@ -12,10 +12,9 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ### Changed
 
-- Agent skills for calling `prb` are published in `@probo/skills`
-  (`using-prb`, `prb-auth`, `prb-records`). Install them from the
-  repository with `gh skill` or `npx skills`. The binary does not embed
-  a copy
+- How to call `prb` is published as the `using-prb` skill in
+  `@probo/skills`. Install it from the repository with `gh skill` or
+  `npx skills`. The binary does not embed a copy
 - `third-party` is the command name. `tp` is the short alias
 - `--org` and `--organization` are the same organization flag.
   `connector connect --organization` stays the boolean that connects a

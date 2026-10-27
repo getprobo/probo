@@ -85,9 +85,7 @@ const requiredPaths = [
   "skills/compliance-portal-commitments/references/portal-mechanics.md",
   "skills/using-prb/SKILL.md",
   "skills/using-prb/references/commands.md",
-  "skills/prb-auth/SKILL.md",
-  "skills/prb-records/SKILL.md",
-  "skills/prb-records/references/create.md",
+  "skills/using-prb/references/create.md",
   "COMPATIBILITY.md",
 ];
 

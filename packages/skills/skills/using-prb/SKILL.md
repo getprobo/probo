@@ -1,7 +1,7 @@
 ---
 name: using-prb
-description: Call the prb CLI without inventing flags. Use when an agent runs prb, changes a Probo organization from the terminal, or needs JSON output, confirmation, or command discovery.
-compatibility: Requires the prb binary on PATH and either an existing login or PROBO_HOST plus PROBO_TOKEN.
+description: Call the prb CLI without inventing flags. Use when an agent runs prb, signs in, chooses an organization, or creates, lists, views, updates, or deletes Probo records such as frameworks, controls, risks, documents, tasks, assets, data, vendors, audits, findings, obligations, processing activities, rights requests, business functions, AI systems, or webhooks.
+compatibility: Requires the prb binary on PATH. Login opens a browser unless PROBO_HOST and PROBO_TOKEN are already set.
 ---
 
 # Use prb
@@ -18,7 +18,9 @@ prb <command> <verb> --help
 ```
 
 Pass only flags that appear there. Copy enum values from the help text.
-Read `references/commands.md` in this skill for the command groups.
+Read `references/commands.md` in this skill for the command groups. Required
+create flags are listed in `references/create.md`. Flag help wins when it
+disagrees with a reference.
 
 ## Call shape
 
@@ -43,17 +45,70 @@ Read `references/commands.md` in this skill for the command groups.
    command and filters with `--after <cursor>`. Do not treat one page as
    the full set. `--order-direction` is `ASC` or `DESC`.
 
+## Sign in
+
+Settle the host and the organization before any other `prb` command.
+
+1. Run `prb auth status`.
+2. An active host prints `(active)` and `Token: set` or `Token: not set`.
+   The command never prints the token. Do not ask the user to paste a token
+   into the chat when status already says `Token: set`.
+3. `PROBO_HOST` selects the host for this process. `PROBO_TOKEN` supplies the
+   bearer token. A token without a host is an error.
+4. Hosts without a scheme are HTTPS. A local server needs an explicit
+   `http://` URL, for example `http://localhost:8080`.
+5. When status shows no active host, run `prb auth login`. Pass `--hostname`
+   when the user names a region or a self-hosted instance (`eu.probo.com`,
+   `us.probo.com`, or the instance host). Pass `--org` when the user already
+   knows the default organization id.
+
+Then choose the organization:
+
+1. Run `prb org list --json`.
+2. Use the organization the user named, or the only organization in the list.
+3. When several organizations match, print the id and name of each and ask
+   which one to use.
+4. Pass that id as `--org` on later commands. `--organization` is the same
+   flag. Pass it once to `prb auth login --org` so it becomes the saved
+   default.
+5. A missing organization fails with `organization is required; pass --org or
+   --organization, or set a default with 'prb auth login'`.
+
 ## Organization
 
 Commands that select an organization take `--org`. `--organization` sets the
-same value. `prb-auth` covers login and how to choose the organization.
-Lists of a child record take the parent id instead: `control` takes
-`--framework`, `evidence` takes `--internal-control`, consent records and
-cookie categories take the banner, and access-review entries take the
+same value. Lists of a child record take the parent id instead: `control`
+takes `--framework`, `evidence` takes `--internal-control`, consent records
+and cookie categories take the banner, and access-review entries take the
 campaign.
 
 `connector connect --organization` is a boolean. The Probo organization id
 on that command is `--org`.
+
+## Change a record
+
+1. Pass the organization as `--org` or `--organization`. Controls are the
+   exception: pass `--framework` and omit both.
+2. Create with every required flag from `references/create.md`. The new id
+   is on stdout.
+3. `prb <command> view <id> --json` and confirm the field you wrote.
+4. Update with `prb <command> update <id>` plus at least one changed flag.
+5. Delete with `prb <command> delete <id> --yes` only after the user asked to
+   delete that record.
+
+Ids used as inputs:
+
+- `--owner` is a profile id from `prb user list --org <org> --json`.
+- `--framework` on audits and controls is a framework id from
+  `prb framework create` or `prb framework list --json`.
+- `--third-party-ids` takes vendor ids. The kebab-case flag is the one to
+  pass.
+
+Document title, type, and classification are fields of the document.
+`prb document view <id> --json` includes `title`.
+
+`prb webhook list` requires `--org`. Create takes `--url` and one or more
+`--event` flags. Event names come from `prb webhook create --help`.
 
 ## After writing
 

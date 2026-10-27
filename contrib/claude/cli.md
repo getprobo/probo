@@ -23,7 +23,7 @@ Register group commands in `pkg/cmd/root/root.go` with `cmd.AddCommand()`.
 
 ## Agent skills
 
-How to call `prb` lives in `@probo/skills`, under `packages/skills/skills/`: `using-prb`, `prb-auth`, and `prb-records`. Install one skill from the repository so it stays pinned to a tag:
+How to call `prb` lives in `@probo/skills`, under `packages/skills/skills/using-prb`. That one skill covers sign-in, organization choice, and record changes. Install it from the repository so it stays pinned to a tag:
 
 ```bash
 gh skill install getprobo/probo using-prb

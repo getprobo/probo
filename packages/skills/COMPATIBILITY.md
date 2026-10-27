@@ -40,9 +40,9 @@ Both documents declare
 `https://agent-plugins.org/schemas/1.0.0/{plugin,mcp}.schema.json`, and the
 spec requires the two versions to match.
 
-`using-prb`, `prb-auth`, and `prb-records` are skills in that same `skills/`
-directory. They describe the `prb` CLI and do not use the MCP servers. Install
-one from the repository and pin the tag to the installed CLI:
+`using-prb` is a skill in that same `skills/` directory. It describes the
+`prb` CLI and does not use the MCP servers. Install it from the repository
+and pin the tag to the installed CLI:
 
 ```bash
 gh skill install getprobo/probo using-prb
