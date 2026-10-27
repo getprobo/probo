@@ -105,10 +105,6 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			if flagLimit < 1 {
-				return fmt.Errorf("--limit must be greater than 0")
-			}
-
 			variables := map[string]any{
 				"id": flagOrg,
 				"orderBy": map[string]any{
