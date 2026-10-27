@@ -15,11 +15,13 @@ All notable changes to the `prb` CLI will be documented in this file.
 - How to call `prb` is published as the `using-prb` skill in
   `@probo/skills`. Install it from the repository with `gh skill` or
   `npx skills`. The binary does not embed a copy
-- `third-party` is the command name. `tp` is the short alias
+- **Breaking**: `third-party` is the command name; the `thirdParty` and
+  `third_party` command aliases are removed. `tp` is the short alias
 - `--org` and `--organization` are the same organization flag.
   `connector connect --organization` stays the boolean that connects a
   cloud organization
-- `--third-party-ids` is the vendor-id flag
+- **Breaking**: `--third-party-ids` is the vendor-id flag; the hidden
+  `--thirdParty-ids` flag alias is removed
 - `auth status` shows the host selected by `PROBO_HOST` and whether
   `PROBO_TOKEN` is set
 - `webhook list` lists one organization's subscriptions and takes `--org`
