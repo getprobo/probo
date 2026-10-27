@@ -104,13 +104,7 @@ func acceptWebSocket(t *testing.T) (*websocket.Conn, *websocket.Conn) {
 	accepted := make(chan *websocket.Conn, 1)
 	release := make(chan struct{})
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		connection, err := websocket.Accept(
-			w,
-			r,
-			&websocket.AcceptOptions{
-				InsecureSkipVerify: true,
-			},
-		)
+		connection, err := websocket.Accept(w, r, nil)
 		if err != nil {
 			return
 		}
