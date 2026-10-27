@@ -4,6 +4,14 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.259.0] - 2026-10-27
+
+### Added
+
+- `cookie-banner update --force-opt-in` shows the opt-in banner to
+  every visitor regardless of regulation; `cookie-banner view` shows
+  the setting
+
 ## [0.258.0] - 2026-10-22
 
 ### Added
