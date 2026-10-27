@@ -61,11 +61,9 @@ const DocumentSignatureConsentText = "By clicking \"Review and sign\", I consent
 
 type (
 	DocumentService struct {
-		svc                     *Service
-		collaboration           *collaboration.Service
-		html2pdfConverter       *html2pdf.Converter
-		invitationTokenValidity time.Duration
-		tokenSecret             string
+		svc               *Service
+		collaboration     *collaboration.Service
+		html2pdfConverter *html2pdf.Converter
 	}
 
 	ErrSignatureNotCancellable struct {
@@ -945,6 +943,18 @@ func (s *DocumentService) SignDocumentVersionByIdentity(
 
 			if err := documentVersionSignature.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update document version signature: %w", err)
+			}
+
+			if err := notification.Resolve(
+				ctx,
+				tx,
+				scope,
+				document.OrganizationID,
+				documentVersionSignature.SignedBy,
+				coredata.NotificationTypeDocumentSignatureRequested,
+				document.ID,
+			); err != nil {
+				return fmt.Errorf("cannot resolve signature notification: %w", err)
 			}
 
 			if err := s.emitDocumentEvent(
@@ -3532,6 +3542,26 @@ func (s *DocumentService) cancelRequestedSignaturesForDocumentInTx(
 		}
 	}
 
+	seen := make(map[gid.GID]struct{}, len(*signatures))
+	for _, signature := range *signatures {
+		if _, ok := seen[signature.SignedBy]; ok {
+			continue
+		}
+
+		seen[signature.SignedBy] = struct{}{}
+		if err := notification.Resolve(
+			ctx,
+			tx,
+			scope,
+			signature.OrganizationID,
+			signature.SignedBy,
+			coredata.NotificationTypeDocumentSignatureRequested,
+			documentID,
+		); err != nil {
+			return fmt.Errorf("cannot resolve signature notification: %w", err)
+		}
+	}
+
 	return nil
 }
 
@@ -3542,8 +3572,32 @@ func (s *DocumentService) cancelPreviousMajorSignatureRequestsInTx(
 	major int,
 ) error {
 	signatures := &coredata.DocumentVersionSignatures{}
-	if err := signatures.DeleteRequestedByDocumentIDBelowMajor(ctx, tx, scope, documentID, major); err != nil {
+
+	deleted, err := signatures.DeleteRequestedByDocumentIDBelowMajor(ctx, tx, scope, documentID, major)
+	if err != nil {
 		return fmt.Errorf("cannot cancel signature requests from previous major versions: %w", err)
+	}
+
+	// The inbox row is per document. A removed request stops reminders
+	// unless this recipient still has another open request.
+	seen := make(map[gid.GID]struct{}, len(deleted))
+	for _, signature := range deleted {
+		if _, ok := seen[signature.SignedBy]; ok {
+			continue
+		}
+
+		seen[signature.SignedBy] = struct{}{}
+		if err := notification.Resolve(
+			ctx,
+			tx,
+			scope,
+			signature.OrganizationID,
+			signature.SignedBy,
+			coredata.NotificationTypeDocumentSignatureRequested,
+			documentID,
+		); err != nil {
+			return fmt.Errorf("cannot resolve signature notification: %w", err)
+		}
 	}
 
 	return nil

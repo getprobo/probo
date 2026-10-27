@@ -21,10 +21,11 @@
 package probodconfig
 
 type NotificationsConfig struct {
-	Mailer   MailerConfig               `json:"mailer"`
-	Slack    SlackConfig                `json:"slack"`
-	Webhook  WebhookConfig              `json:"webhook"`
-	Document DocumentNotificationConfig `json:"document"`
+	Mailer  MailerConfig             `json:"mailer"`
+	Slack   SlackConfig              `json:"slack"`
+	Webhook WebhookConfig            `json:"webhook"`
+	Email   EmailNotificationConfig  `json:"email"`
+	Weekly  WeeklyNotificationConfig `json:"weekly"`
 }
 
 type WebhookConfig struct {
@@ -37,17 +38,25 @@ type WebhookConfig struct {
 	MaxConcurrency int `json:"max-concurrency"`
 }
 
-// DocumentNotificationConfig configures the debounced worker that batches
-// signature and approval request notifications. All durations are in seconds.
-type DocumentNotificationConfig struct {
+// EmailNotificationConfig configures the worker that sends notification
+// email. All durations are in seconds.
+type EmailNotificationConfig struct {
 	// Interval is how often the worker scans for pending requests.
 	Interval int `json:"interval"`
-	// DebounceDelay is how long a request must have been pending before its
-	// first notification is sent.
+	// DebounceDelay is how long a Reminders row must stay pending before its
+	// first email. Each sends on the next scan and has no wait.
 	DebounceDelay int `json:"debounce-delay"`
 	// ReminderInterval is the base reminder cadence in seconds. Reminders are
 	// sent at 1x, 2x and 3x this interval after the previous email, then stop.
 	// Reminder sends that fall on Saturday or Sunday are deferred to Monday at
 	// the same clock time; the first (debounced) notice is unchanged.
 	ReminderInterval int `json:"reminder-interval"`
+}
+
+// WeeklyNotificationConfig chooses when the Monday-style digest is sent.
+// Weekday uses time.Weekday: 0 is Sunday and 1 is Monday. Hour is UTC, 0–23.
+// The digest becomes due at that hour and can be sent through the rest of the day.
+type WeeklyNotificationConfig struct {
+	Weekday int `json:"weekday"`
+	Hour    int `json:"hour"`
 }

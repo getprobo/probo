@@ -37,15 +37,18 @@ import (
 
 type (
 	Notification struct {
-		ID                 gid.GID          `db:"id"`
-		OrganizationID     gid.GID          `db:"organization_id"`
-		RecipientProfileID gid.GID          `db:"recipient_profile_id"`
-		Type               NotificationType `db:"type"`
-		SubjectID          gid.GID          `db:"subject_id"`
-		Attributes         json.RawMessage  `db:"attributes"`
-		ReadAt             *time.Time       `db:"read_at"`
-		CreatedAt          time.Time        `db:"created_at"`
-		UpdatedAt          time.Time        `db:"updated_at"`
+		ID                 gid.GID            `db:"id"`
+		OrganizationID     gid.GID            `db:"organization_id"`
+		RecipientProfileID gid.GID            `db:"recipient_profile_id"`
+		Type               NotificationType   `db:"type"`
+		SubjectID          gid.GID            `db:"subject_id"`
+		Attributes         json.RawMessage    `db:"attributes"`
+		Status             NotificationStatus `db:"status"`
+		ReadAt             *time.Time         `db:"read_at"`
+		EmailCount         int                `db:"email_count"`
+		LastEmailedAt      *time.Time         `db:"last_emailed_at"`
+		CreatedAt          time.Time          `db:"created_at"`
+		UpdatedAt          time.Time          `db:"updated_at"`
 	}
 
 	Notifications []*Notification
@@ -134,7 +137,10 @@ SELECT
     type,
     subject_id,
     attributes,
+    status,
     read_at,
+    email_count,
+    last_emailed_at,
     created_at,
     updated_at
 FROM
@@ -188,7 +194,10 @@ INSERT INTO
         type,
         subject_id,
         attributes,
+        status,
         read_at,
+        email_count,
+        last_emailed_at,
         created_at,
         updated_at
     )
@@ -200,7 +209,10 @@ VALUES (
     @type,
     @subject_id,
     @attributes,
+    @status,
     @read_at,
+    @email_count,
+    @last_emailed_at,
     @created_at,
     @updated_at
 )
@@ -214,7 +226,10 @@ VALUES (
 		"type":                 n.Type,
 		"subject_id":           n.SubjectID,
 		"attributes":           n.Attributes,
+		"status":               n.Status,
 		"read_at":              n.ReadAt,
+		"email_count":          n.EmailCount,
+		"last_emailed_at":      n.LastEmailedAt,
 		"created_at":           n.CreatedAt,
 		"updated_at":           n.UpdatedAt,
 	}
@@ -226,41 +241,42 @@ VALUES (
 	return nil
 }
 
-func (n *Notifications) MarkReadByIDs(
+func (n *Notifications) MarkAllRead(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
 	recipientProfileID gid.GID,
-	notificationIDs []gid.GID,
+	types []NotificationType,
 	readAt time.Time,
-) ([]*Notification, error) {
-	if len(notificationIDs) == 0 {
-		return []*Notification{}, nil
+) error {
+	// A nil list marks every type. An empty list marks none, matching
+	// NewNotificationFilter. pgx sends a nil slice as NULL.
+	var typeFilter []string
+
+	if types != nil {
+		typeFilter = make([]string, len(types))
+		for i, notificationType := range types {
+			typeFilter[i] = notificationType.String()
+		}
 	}
 
 	q := `
 UPDATE
     notifications
 SET
-    read_at = @read_at,
+    read_at = COALESCE(read_at, @read_at),
+    status = @resolved,
     updated_at = @updated_at
 WHERE
     %s
     AND organization_id = @organization_id
     AND recipient_profile_id = @recipient_profile_id
-    AND id = ANY(@notification_ids)
-    AND read_at IS NULL
-RETURNING
-    id,
-    organization_id,
-    recipient_profile_id,
-    type,
-    subject_id,
-    attributes,
-    read_at,
-    created_at,
-    updated_at
+    AND status = @pending
+    AND (
+        @types::text[] IS NULL
+        OR type::text = ANY(@types::text[])
+    )
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -268,23 +284,19 @@ RETURNING
 	args := pgx.StrictNamedArgs{
 		"organization_id":      organizationID,
 		"recipient_profile_id": recipientProfileID,
-		"notification_ids":     notificationIDs,
+		"types":                typeFilter,
 		"read_at":              readAt,
+		"resolved":             NotificationStatusResolved,
+		"pending":              NotificationStatusPending,
 		"updated_at":           readAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return nil, fmt.Errorf("cannot mark notifications read: %w", err)
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot mark notifications read: %w", err)
 	}
 
-	notifications, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Notification])
-	if err != nil {
-		return nil, fmt.Errorf("cannot collect read notifications: %w", err)
-	}
-
-	return notifications, nil
+	return nil
 }
 
 func (n *Notifications) LoadByRecipientProfileID(
@@ -304,7 +316,10 @@ SELECT
     type,
     subject_id,
     attributes,
+    status,
     read_at,
+    email_count,
+    last_emailed_at,
     created_at,
     updated_at
 FROM
@@ -377,4 +392,80 @@ WHERE
 	}
 
 	return count, nil
+}
+
+func (n *Notifications) ResolvePendingBySubject(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	organizationID gid.GID,
+	recipientProfileID gid.GID,
+	notificationType NotificationType,
+	subjectID gid.GID,
+	now time.Time,
+) error {
+	q := `
+UPDATE
+    notifications
+SET
+    status = @status,
+    updated_at = @updated_at
+WHERE
+    %s
+    AND organization_id = @organization_id
+    AND recipient_profile_id = @recipient_profile_id
+    AND type = @notification_type
+    AND subject_id = @subject_id
+    AND status = @pending
+    AND CASE
+        WHEN type = @signature_requested::notification_type THEN
+            NOT EXISTS (
+                SELECT 1
+                FROM document_version_signatures
+                JOIN document_versions
+                    ON document_versions.id = document_version_signatures.document_version_id
+                WHERE document_versions.document_id = notifications.subject_id
+                    AND document_versions.organization_id = notifications.organization_id
+                    AND document_version_signatures.signed_by_profile_id = notifications.recipient_profile_id
+                    AND document_version_signatures.state = @signature_open
+            )
+        WHEN type = @approval_requested::notification_type THEN
+            NOT EXISTS (
+                SELECT 1
+                FROM document_version_approval_decisions
+                JOIN document_version_approval_quorums
+                    ON document_version_approval_quorums.id = document_version_approval_decisions.quorum_id
+                JOIN document_versions
+                    ON document_versions.id = document_version_approval_quorums.version_id
+                WHERE document_versions.document_id = notifications.subject_id
+                    AND document_versions.organization_id = notifications.organization_id
+                    AND document_version_approval_decisions.approver_id = notifications.recipient_profile_id
+                    AND document_version_approval_decisions.state = @approval_open
+            )
+        ELSE TRUE
+    END
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"organization_id":      organizationID,
+		"recipient_profile_id": recipientProfileID,
+		"notification_type":    notificationType,
+		"subject_id":           subjectID,
+		"status":               NotificationStatusResolved,
+		"pending":              NotificationStatusPending,
+		"updated_at":           now,
+		"signature_requested":  NotificationTypeDocumentSignatureRequested,
+		"approval_requested":   NotificationTypeDocumentApprovalRequested,
+		"signature_open":       DocumentVersionSignatureStateRequested,
+		"approval_open":        DocumentVersionApprovalDecisionStatePending,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot resolve notifications: %w", err)
+	}
+
+	return nil
 }

@@ -7,7 +7,9 @@
     "documentSignatureRequested": "{{title}} est prêt pour votre signature",
     "documentApprovalRequested": "{{title}} attend votre approbation",
     "taskAssigned": "Vous avez été assigné(e) à {{title}}",
-    "taskMentioned": "Vous avez été mentionné(e) dans {{title}}"
+    "taskMentioned": "Vous avez été mentionné(e) dans {{title}}",
+    "settings": "Paramètres de notification",
+    "markAllRead": "Tout marquer comme lu"
   },
   "size": {
     "B": "o",

@@ -66,17 +66,18 @@ type (
 	NotificationsConfig = probodconfig.NotificationsConfig
 	WebhookConfig       = probodconfig.WebhookConfig
 
-	DocumentNotificationConfig = probodconfig.DocumentNotificationConfig
-	TaskRecurrenceConfig       = probodconfig.TaskRecurrenceConfig
-	OIDCProviderConfig         = probodconfig.OIDCProviderConfig
-	PgConfig                   = probodconfig.PgConfig
-	SAMLConfig                 = probodconfig.SAMLConfig
-	SCIMBridgeConfig           = probodconfig.SCIMBridgeConfig
-	ITAMConfig                 = probodconfig.ITAMConfig
-	SlackConfig                = probodconfig.SlackConfig
-	SlackbotConfig             = probodconfig.SlackbotConfig
-	FaroConfig                 = probodconfig.FaroConfig
-	CookieBannerConfig         = probodconfig.CookieBannerConfig
+	EmailNotificationConfig  = probodconfig.EmailNotificationConfig
+	WeeklyNotificationConfig = probodconfig.WeeklyNotificationConfig
+	TaskRecurrenceConfig     = probodconfig.TaskRecurrenceConfig
+	OIDCProviderConfig       = probodconfig.OIDCProviderConfig
+	PgConfig                 = probodconfig.PgConfig
+	SAMLConfig               = probodconfig.SAMLConfig
+	SCIMBridgeConfig         = probodconfig.SCIMBridgeConfig
+	ITAMConfig               = probodconfig.ITAMConfig
+	SlackConfig              = probodconfig.SlackConfig
+	SlackbotConfig           = probodconfig.SlackbotConfig
+	FaroConfig               = probodconfig.FaroConfig
+	CookieBannerConfig       = probodconfig.CookieBannerConfig
 )
 
 const (

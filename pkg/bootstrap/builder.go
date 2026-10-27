@@ -268,10 +268,14 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 					RetryMax:       b.resolver.getEnvIntOrDefault("PROBOD_WEBHOOK_RETRY_MAX", 14400),
 					MaxConcurrency: b.resolver.getEnvIntOrDefault("PROBOD_WEBHOOK_MAX_CONCURRENCY", 5),
 				},
-				Document: probodconfig.DocumentNotificationConfig{
-					Interval:         b.resolver.getEnvIntOrDefault("PROBOD_DOCUMENT_NOTIFICATION_INTERVAL", 300),
-					DebounceDelay:    b.resolver.getEnvIntOrDefault("PROBOD_DOCUMENT_NOTIFICATION_DEBOUNCE_DELAY", 900),
-					ReminderInterval: b.resolver.getEnvIntOrDefault("PROBOD_DOCUMENT_NOTIFICATION_REMINDER_INTERVAL", 86400),
+				Email: probodconfig.EmailNotificationConfig{
+					Interval:         b.resolver.getEnvIntOrDefault("PROBOD_NOTIFICATION_EMAIL_INTERVAL", 300),
+					DebounceDelay:    b.resolver.getEnvIntOrDefault("PROBOD_NOTIFICATION_EMAIL_DEBOUNCE_DELAY", 900),
+					ReminderInterval: b.resolver.getEnvIntOrDefault("PROBOD_NOTIFICATION_EMAIL_REMINDER_INTERVAL", 86400),
+				},
+				Weekly: probodconfig.WeeklyNotificationConfig{
+					Weekday: b.resolver.getEnvIntOrDefault("PROBOD_NOTIFICATION_WEEKLY_WEEKDAY", 1),
+					Hour:    b.resolver.getEnvIntOrDefault("PROBOD_NOTIFICATION_WEEKLY_HOUR", 16),
 				},
 			},
 			TaskRecurrence: probodconfig.TaskRecurrenceConfig{
@@ -418,6 +422,13 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 	}
 
 	if err := validateCookieBannerTCFCmpID(cfg.Probod.CookieBanner.TCFCMPID); err != nil {
+		return nil, err
+	}
+
+	if err := validateWeeklyNotificationSchedule(
+		cfg.Probod.Notifications.Weekly.Weekday,
+		cfg.Probod.Notifications.Weekly.Hour,
+	); err != nil {
 		return nil, err
 	}
 
@@ -873,6 +884,18 @@ func (b *Builder) validateRequired() error {
 func validateCookieBannerTCFCmpID(id int) error {
 	if id < 2 || id > 4095 {
 		return fmt.Errorf("PROBOD_COOKIE_BANNER_TCF_CMP_ID must be between 2 and 4095")
+	}
+
+	return nil
+}
+
+func validateWeeklyNotificationSchedule(weekday int, hour int) error {
+	if weekday < 0 || weekday > 6 {
+		return fmt.Errorf("PROBOD_NOTIFICATION_WEEKLY_WEEKDAY must be between 0 and 6")
+	}
+
+	if hour < 0 || hour > 23 {
+		return fmt.Errorf("PROBOD_NOTIFICATION_WEEKLY_HOUR must be between 0 and 23")
 	}
 
 	return nil

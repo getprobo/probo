@@ -11,6 +11,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/99designs/gqlgen/graphql"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/agentexecution"
@@ -105,6 +106,23 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			task, err := r.task.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
+			}
+
+			// Only a browser session opening the task page resolves the
+			// viewer's rows. An API token read, and any other task query,
+			// leaves them pending.
+			if authn.SessionFromContext(ctx) != nil &&
+				graphql.HasOperationContext(ctx) &&
+				graphql.GetOperationContext(ctx).OperationName == "TaskDetailsPageQuery" {
+				identity := authn.IdentityFromContext(ctx)
+				if err := r.task.ResolveViewerNotifications(ctx, scope, task.ID, identity.ID); err != nil {
+					r.logger.ErrorCtx(
+						ctx,
+						"cannot resolve viewer task notifications",
+						log.Error(err),
+						log.String("task_id", task.ID.String()),
+					)
+				}
 			}
 
 			return types.NewTask(task), nil

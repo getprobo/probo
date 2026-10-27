@@ -378,6 +378,12 @@ probo:
   taskRecurrence:
     interval: 300
 
+  # Weekly notification digest. Weekday uses Go's time.Weekday: 0 is Sunday, 1 is Monday.
+  # Hour is UTC. The digest becomes due at that hour and can be sent through the rest of the day.
+  notificationWeekly:
+    weekday: 1
+    hour: 16
+
   # Outbound webhook delivery
   webhook:
     senderInterval: 5

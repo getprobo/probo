@@ -1015,3 +1015,66 @@ WHERE %s
 
 	return nil
 }
+
+func (t *Tasks) LoadByStateAndAssignee(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	assigneeID gid.GID,
+	states []TaskState,
+	cursor *page.Cursor[TaskOrderField],
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    name,
+    content,
+    state,
+    priority,
+    reference_id,
+    time_estimate,
+    assigned_to_profile_id,
+    deadline,
+    recurrence,
+    rank,
+    priority_rank,
+    created_at,
+    updated_at
+FROM
+    tasks
+WHERE
+    %s
+    AND assigned_to_profile_id = @assignee_id
+    AND state::text = ANY(@states::text[])
+    AND %s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+
+	stateValues := make([]string, len(states))
+	for i, state := range states {
+		stateValues[i] = state.String()
+	}
+
+	args := pgx.StrictNamedArgs{
+		"assignee_id": assigneeID,
+		"states":      stateValues,
+	}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query tasks by state and assignee: %w", err)
+	}
+
+	tasks, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Task])
+	if err != nil {
+		return fmt.Errorf("cannot collect tasks by state and assignee: %w", err)
+	}
+
+	*t = tasks
+
+	return nil
+}

@@ -70,12 +70,13 @@ func Insert(
 		Type:               req.Type,
 		SubjectID:          req.SubjectID,
 		Attributes:         attributes,
+		Status:             coredata.NotificationStatusPending,
 		CreatedAt:          now,
 		UpdatedAt:          now,
 	}
 
 	if err := notification.Insert(ctx, tx, scope); err != nil {
-		return err
+		return fmt.Errorf("cannot insert notification: %w", err)
 	}
 
 	return nil

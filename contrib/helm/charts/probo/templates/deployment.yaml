@@ -309,6 +309,11 @@ spec:
             # Recurring tasks
             - name: PROBOD_TASK_RECURRENCE_INTERVAL
               value: {{ .Values.probo.taskRecurrence.interval | quote }}
+            # Weekly notification digest
+            - name: PROBOD_NOTIFICATION_WEEKLY_WEEKDAY
+              value: {{ .Values.probo.notificationWeekly.weekday | quote }}
+            - name: PROBOD_NOTIFICATION_WEEKLY_HOUR
+              value: {{ .Values.probo.notificationWeekly.hour | quote }}
             # Outbound Webhooks
             - name: PROBOD_WEBHOOK_SENDER_INTERVAL
               value: {{ .Values.probo.webhook.senderInterval | quote }}

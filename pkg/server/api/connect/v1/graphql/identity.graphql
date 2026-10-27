@@ -47,6 +47,11 @@ type Identity implements Node {
   permission(action: String!): Boolean!
     @goField(forceResolver: true)
     @authentication(required: PRESENT)
+
+  notificationPreferences(organizationId: ID!): [NotificationPreference!]!
+    @goField(forceResolver: true)
+    @authentication(required: PRESENT)
+    @sessionOnly
 }
 
 extend type Mutation {

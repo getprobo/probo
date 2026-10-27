@@ -6,7 +6,9 @@
     "documentSignatureRequested": "{{title}} está listo para su firma",
     "documentApprovalRequested": "{{title}} espera su aprobación",
     "taskAssigned": "Se le asignó {{title}}",
-    "taskMentioned": "Se le ha mencionado en {{title}}"
+    "taskMentioned": "Se le ha mencionado en {{title}}",
+    "settings": "Ajustes de notificaciones",
+    "markAllRead": "Marcar todo como leído"
   },
   "ui": {
     "richEditor": {
@@ -22,6 +24,7 @@
     "tagline": "Portal del empleado"
   },
   "userMenu": {
+    "notifications": "Notificaciones",
     "oauthTokens": "Tokens de OAuth",
     "switchToDarkMode": "Cambiar al modo oscuro",
     "switchToLightMode": "Cambiar al modo claro",

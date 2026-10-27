@@ -13,6 +13,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/server/api/authn"
@@ -234,6 +235,35 @@ func (r *identityResolver) SsoLoginURL(ctx context.Context, obj *types.Identity)
 // Permission is the resolver for the permission field.
 func (r *identityResolver) Permission(ctx context.Context, obj *types.Identity, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
+}
+
+// NotificationPreferences is the resolver for the notificationPreferences field.
+func (r *identityResolver) NotificationPreferences(ctx context.Context, obj *types.Identity, organizationID gid.GID) ([]*types.NotificationPreference, error) {
+	identity := authn.IdentityFromContext(ctx)
+	if identity == nil || identity.ID != obj.ID {
+		return nil, gqlx.Forbiddenf(ctx, "cannot read notification preferences")
+	}
+
+	preferences, err := r.notification.ListPreferences(ctx, organizationID, identity.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlx.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot list notification preferences", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	nodes := make([]*types.NotificationPreference, 0, len(preferences))
+	for _, preference := range preferences {
+		nodes = append(nodes, &types.NotificationPreference{
+			Type:  preference.Type,
+			Email: preference.Email,
+		})
+	}
+
+	return nodes, nil
 }
 
 // UpdateAvatar is the resolver for the updateAvatar field.

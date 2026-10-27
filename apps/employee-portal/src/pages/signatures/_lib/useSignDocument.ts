@@ -21,6 +21,7 @@
 import { graphql } from "react-relay";
 
 import type { useSignDocumentMutation } from "#/__generated__/core/useSignDocumentMutation.graphql";
+import { requestNotificationRefresh } from "#/components/notifications/requestNotificationRefresh";
 import { useMutation } from "#/lib/relay/useMutation";
 
 const signDocumentMutation = graphql`
@@ -48,6 +49,8 @@ export function useSignDocument(documentId: string) {
         store.get(documentId)?.setValue(true, "signed");
         store.get(documentVersionId)?.setValue(true, "signed");
       },
+    }).then(() => {
+      requestNotificationRefresh();
     }),
     isSigning,
   ] as const;

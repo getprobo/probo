@@ -31,6 +31,7 @@ import { documentsRoutes } from "#/pages/documents/routes";
 import { enrollRoutes } from "#/pages/enroll/routes";
 import { HomePageSkeleton } from "#/pages/HomePageSkeleton";
 import { MainLayoutSkeleton } from "#/pages/iam/MainLayoutSkeleton";
+import { notificationSettingsRoutes } from "#/pages/iam/notificationSettings/routes";
 import { OrganizationsPageSkeleton } from "#/pages/iam/OrganizationsPageSkeleton";
 import { signaturesRoutes } from "#/pages/signatures/routes";
 import { tasksRoutes } from "#/pages/tasks/routes";
@@ -57,6 +58,7 @@ const routes = [
             Fallback: HomePageSkeleton,
             Component: lazy(() => import("#/pages/HomePageLoader")),
           },
+          ...notificationSettingsRoutes,
           ...documentsRoutes,
           ...tasksRoutes,
           ...signaturesRoutes,

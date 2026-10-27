@@ -44,10 +44,8 @@ const DocumentApprovalConsentText = "By clicking \"Approve\", I consent to appro
 
 type (
 	DocumentApprovalService struct {
-		svc                     *Service
-		html2pdfConverter       *html2pdf.Converter
-		invitationTokenValidity time.Duration
-		tokenSecret             string
+		svc               *Service
+		html2pdfConverter *html2pdf.Converter
 	}
 
 	ErrDocumentVersionNotPendingApproval struct{}
@@ -117,9 +115,7 @@ func (s *DocumentApprovalService) RequestApproval(
 		return nil, fmt.Errorf("cannot create approval decisions: %w", err)
 	}
 
-	// Approval notifications are sent asynchronously and debounced by the
-	// document notification worker, which batches all pending approvals per
-	// recipient into a single email.
+	// The notification email worker sends these from the inbox rows.
 
 	return quorum, nil
 }
@@ -385,6 +381,18 @@ func (s *DocumentApprovalService) Approve(
 				return fmt.Errorf("cannot update approval decision: %w", err)
 			}
 
+			if err := notification.Resolve(
+				ctx,
+				tx,
+				scope,
+				document.OrganizationID,
+				decision.ApproverID,
+				coredata.NotificationTypeDocumentApprovalRequested,
+				document.ID,
+			); err != nil {
+				return fmt.Errorf("cannot resolve approval notification: %w", err)
+			}
+
 			if err := s.maybeApproveQuorum(ctx, scope, tx, quorum.ID); err != nil {
 				return fmt.Errorf("cannot check quorum approval: %w", err)
 			}
@@ -473,6 +481,13 @@ func (s *DocumentApprovalService) Reject(
 				return fmt.Errorf("cannot update approval decision: %w", err)
 			}
 
+			approverIDs, err := pendingApprovalRecipientIDs(ctx, tx, scope, quorum.ID)
+			if err != nil {
+				return fmt.Errorf("cannot load pending approvers: %w", err)
+			}
+
+			approverIDs = append(approverIDs, decision.ApproverID)
+
 			quorum.Status = coredata.DocumentVersionApprovalQuorumStatusRejected
 			quorum.UpdatedAt = now
 
@@ -518,6 +533,17 @@ func (s *DocumentApprovalService) Reject(
 				nil,
 			); err != nil {
 				return fmt.Errorf("cannot emit document version rejected webhook: %w", err)
+			}
+
+			if err := resolveApprovalNotifications(
+				ctx,
+				tx,
+				scope,
+				document.OrganizationID,
+				document.ID,
+				approverIDs,
+			); err != nil {
+				return fmt.Errorf("cannot resolve approval notifications: %w", err)
 			}
 
 			return nil
@@ -586,6 +612,11 @@ func (s *DocumentApprovalService) voidApprovalInTx(
 	documentVersion *coredata.DocumentVersion,
 	quorum *coredata.DocumentVersionApprovalQuorum,
 ) error {
+	approverIDs, err := pendingApprovalRecipientIDs(ctx, tx, scope, quorum.ID)
+	if err != nil {
+		return fmt.Errorf("cannot load pending approvers: %w", err)
+	}
+
 	now := time.Now()
 
 	quorum.Status = coredata.DocumentVersionApprovalQuorumStatusVoided
@@ -619,6 +650,88 @@ func (s *DocumentApprovalService) voidApprovalInTx(
 		nil,
 	); err != nil {
 		return fmt.Errorf("cannot emit approval quorum voided webhook: %w", err)
+	}
+
+	if err := resolveApprovalNotifications(
+		ctx,
+		tx,
+		scope,
+		document.OrganizationID,
+		document.ID,
+		approverIDs,
+	); err != nil {
+		return fmt.Errorf("cannot resolve approval notifications: %w", err)
+	}
+
+	return nil
+}
+
+func pendingApprovalRecipientIDs(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	quorumID gid.GID,
+) ([]gid.GID, error) {
+	var decisions coredata.DocumentVersionApprovalDecisions
+
+	err := decisions.LoadByQuorumID(
+		ctx,
+		tx,
+		scope,
+		quorumID,
+		page.NewCursor(
+			100,
+			nil,
+			page.Head,
+			page.OrderBy[coredata.DocumentVersionApprovalDecisionOrderField]{
+				Field:     coredata.DocumentVersionApprovalDecisionOrderFieldCreatedAt,
+				Direction: page.OrderDirectionAsc,
+			},
+		),
+		coredata.NewDocumentVersionApprovalDecisionFilter(
+			[]coredata.DocumentVersionApprovalDecisionState{
+				coredata.DocumentVersionApprovalDecisionStatePending,
+			},
+		),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load pending approval decisions: %w", err)
+	}
+
+	ids := make([]gid.GID, 0, len(decisions))
+	for _, decision := range decisions {
+		ids = append(ids, decision.ApproverID)
+	}
+
+	return ids, nil
+}
+
+func resolveApprovalNotifications(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+	documentID gid.GID,
+	approverIDs []gid.GID,
+) error {
+	seen := make(map[gid.GID]struct{}, len(approverIDs))
+	for _, approverID := range approverIDs {
+		if _, ok := seen[approverID]; ok {
+			continue
+		}
+
+		seen[approverID] = struct{}{}
+		if err := notification.Resolve(
+			ctx,
+			tx,
+			scope,
+			organizationID,
+			approverID,
+			coredata.NotificationTypeDocumentApprovalRequested,
+			documentID,
+		); err != nil {
+			return fmt.Errorf("cannot resolve approval notification: %w", err)
+		}
 	}
 
 	return nil

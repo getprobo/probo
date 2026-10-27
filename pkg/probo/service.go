@@ -79,7 +79,6 @@ type (
 		bucket                                string
 		encryptionKey                         cipher.EncryptionKey
 		baseURL                               string
-		tokenSecret                           string
 		llmClient                             *llm.Client
 		llmConfig                             LLMConfig
 		html2pdfConverter                     *html2pdf.Converter
@@ -87,7 +86,6 @@ type (
 		logger                                *log.Logger
 		esign                                 *esign.Service
 		connectorRegistry                     *connectorprotocol.Registry
-		invitationTokenValidity               time.Duration
 		Collaboration                         *collaboration.Service
 		Frameworks                            *FrameworkService
 		InternalControls                      *InternalControlService
@@ -130,7 +128,6 @@ func NewService(
 	s3Client *s3.Client,
 	bucket string,
 	baseURL string,
-	tokenSecret string,
 	llmClient *llm.Client,
 	llmConfig LLMConfig,
 	html2pdfConverter *html2pdf.Converter,
@@ -141,7 +138,6 @@ func NewService(
 	collaborationService *collaboration.Service,
 	connectorsService *connector.Service,
 	connectorRegistry *connectorprotocol.Registry,
-	invitationTokenValidity time.Duration,
 ) (*Service, error) {
 	if bucket == "" {
 		return nil, fmt.Errorf("bucket is required")
@@ -150,21 +146,19 @@ func NewService(
 	iamService.Authorizer.RegisterPolicySet(ProboPolicySet())
 
 	svc := &Service{
-		pg:                      pgClient,
-		s3:                      s3Client,
-		bucket:                  bucket,
-		encryptionKey:           encryptionKey,
-		baseURL:                 baseURL,
-		tokenSecret:             tokenSecret,
-		llmClient:               llmClient,
-		llmConfig:               llmConfig,
-		html2pdfConverter:       html2pdfConverter,
-		fileManager:             fileManagerService,
-		logger:                  logger,
-		esign:                   esignService,
-		connectorRegistry:       connectorRegistry,
-		invitationTokenValidity: invitationTokenValidity,
-		Collaboration:           collaborationService,
+		pg:                pgClient,
+		s3:                s3Client,
+		bucket:            bucket,
+		encryptionKey:     encryptionKey,
+		baseURL:           baseURL,
+		llmClient:         llmClient,
+		llmConfig:         llmConfig,
+		html2pdfConverter: html2pdfConverter,
+		fileManager:       fileManagerService,
+		logger:            logger,
+		esign:             esignService,
+		connectorRegistry: connectorRegistry,
+		Collaboration:     collaborationService,
 	}
 
 	svc.Frameworks = &FrameworkService{
@@ -188,17 +182,13 @@ func NewService(
 	}
 	svc.ThirdParties = &ThirdPartyService{svc: svc}
 	svc.Documents = &DocumentService{
-		svc:                     svc,
-		collaboration:           collaborationService,
-		html2pdfConverter:       html2pdfConverter,
-		invitationTokenValidity: invitationTokenValidity,
-		tokenSecret:             tokenSecret,
+		svc:               svc,
+		collaboration:     collaborationService,
+		html2pdfConverter: html2pdfConverter,
 	}
 	svc.DocumentApprovals = &DocumentApprovalService{
-		svc:                     svc,
-		html2pdfConverter:       html2pdfConverter,
-		invitationTokenValidity: invitationTokenValidity,
-		tokenSecret:             tokenSecret,
+		svc:               svc,
+		html2pdfConverter: html2pdfConverter,
 	}
 	svc.Organizations = &OrganizationService{
 		svc: svc,

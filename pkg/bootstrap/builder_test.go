@@ -21,6 +21,7 @@
 package bootstrap
 
 import (
+	"maps"
 	"os"
 	"path/filepath"
 	"strings"
@@ -237,6 +238,42 @@ func TestBuilder_Build_MissingRequiredEnvVars(t *testing.T) {
 	}
 }
 
+func TestBuilder_Build_InvalidWeeklyNotificationSchedule(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		env  map[string]string
+		want string
+	}{
+		{
+			name: "weekday",
+			env:  map[string]string{"PROBOD_NOTIFICATION_WEEKLY_WEEKDAY": "8"},
+			want: "PROBOD_NOTIFICATION_WEEKLY_WEEKDAY must be between 0 and 6",
+		},
+		{
+			name: "hour",
+			env:  map[string]string{"PROBOD_NOTIFICATION_WEEKLY_HOUR": "25"},
+			want: "PROBOD_NOTIFICATION_WEEKLY_HOUR must be between 0 and 23",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			env := requiredEnv()
+			maps.Copy(env, tt.env)
+
+			b := NewBuilder(NewResolver(mockEnv(env)))
+			_, err := b.Build()
+
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), tt.want)
+		})
+	}
+}
+
 func TestBuilder_Build_InvalidCookieBannerTCFCmpID(t *testing.T) {
 	t.Parallel()
 
@@ -363,9 +400,11 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Equal(t, 30, cfg.Probod.Notifications.Webhook.RetryBase)
 	assert.Equal(t, 14400, cfg.Probod.Notifications.Webhook.RetryMax)
 	assert.Equal(t, 5, cfg.Probod.Notifications.Webhook.MaxConcurrency)
-	assert.Equal(t, 300, cfg.Probod.Notifications.Document.Interval)
-	assert.Equal(t, 900, cfg.Probod.Notifications.Document.DebounceDelay)
-	assert.Equal(t, 86400, cfg.Probod.Notifications.Document.ReminderInterval)
+	assert.Equal(t, 300, cfg.Probod.Notifications.Email.Interval)
+	assert.Equal(t, 900, cfg.Probod.Notifications.Email.DebounceDelay)
+	assert.Equal(t, 86400, cfg.Probod.Notifications.Email.ReminderInterval)
+	assert.Equal(t, 1, cfg.Probod.Notifications.Weekly.Weekday)
+	assert.Equal(t, 16, cfg.Probod.Notifications.Weekly.Hour)
 	assert.Equal(t, 300, cfg.Probod.TaskRecurrence.Interval)
 
 	// Agents tools — Firecrawl empty by default
@@ -515,10 +554,12 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["PROBOD_WEBHOOK_RETRY_MAX"] = "7200"
 	env["PROBOD_WEBHOOK_MAX_CONCURRENCY"] = "8"
 	env["PROBOD_CONNECTOR_SLACK_SIGNING_SECRET"] = "slack-signing-secret"
-	env["PROBOD_DOCUMENT_NOTIFICATION_INTERVAL"] = "120"
+	env["PROBOD_NOTIFICATION_EMAIL_INTERVAL"] = "120"
 	env["PROBOD_TASK_RECURRENCE_INTERVAL"] = "600"
-	env["PROBOD_DOCUMENT_NOTIFICATION_DEBOUNCE_DELAY"] = "60"
-	env["PROBOD_DOCUMENT_NOTIFICATION_REMINDER_INTERVAL"] = "43200"
+	env["PROBOD_NOTIFICATION_EMAIL_DEBOUNCE_DELAY"] = "60"
+	env["PROBOD_NOTIFICATION_EMAIL_REMINDER_INTERVAL"] = "43200"
+	env["PROBOD_NOTIFICATION_WEEKLY_WEEKDAY"] = "3"
+	env["PROBOD_NOTIFICATION_WEEKLY_HOUR"] = "9"
 	// Firecrawl
 	env["PROBOD_FIRECRAWL_API_KEY"] = "fc-test-key"
 	// Agents — providers
@@ -670,10 +711,12 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.Equal(t, 60, cfg.Probod.Notifications.Webhook.RetryBase)
 	assert.Equal(t, 7200, cfg.Probod.Notifications.Webhook.RetryMax)
 	assert.Equal(t, 8, cfg.Probod.Notifications.Webhook.MaxConcurrency)
-	assert.Equal(t, 120, cfg.Probod.Notifications.Document.Interval)
+	assert.Equal(t, 120, cfg.Probod.Notifications.Email.Interval)
 	assert.Equal(t, 600, cfg.Probod.TaskRecurrence.Interval)
-	assert.Equal(t, 60, cfg.Probod.Notifications.Document.DebounceDelay)
-	assert.Equal(t, 43200, cfg.Probod.Notifications.Document.ReminderInterval)
+	assert.Equal(t, 60, cfg.Probod.Notifications.Email.DebounceDelay)
+	assert.Equal(t, 43200, cfg.Probod.Notifications.Email.ReminderInterval)
+	assert.Equal(t, 3, cfg.Probod.Notifications.Weekly.Weekday)
+	assert.Equal(t, 9, cfg.Probod.Notifications.Weekly.Hour)
 	// Agents tools — Firecrawl
 	assert.Equal(t, "fc-test-key", cfg.Probod.Agents.Tools.FirecrawlAPIKey)
 	// Agents — providers

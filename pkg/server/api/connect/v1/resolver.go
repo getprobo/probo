@@ -55,6 +55,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/iam/oauth2scope"
+	"go.probo.inc/probo/pkg/notification"
 	"go.probo.inc/probo/pkg/saferedirect"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/authn"
@@ -73,6 +74,7 @@ type (
 		scopeRegistry     *oauth2scope.Registry
 		fileManager       *filemanager.Service
 		employeePortal    *employeeportalmgmt.Service
+		notification      *notification.Service
 		baseURL           *baseurl.BaseURL
 		sessionCookie     *authn.Cookie
 		slackbotAvailable bool
@@ -86,6 +88,7 @@ func NewMux(
 	cookieConfig securecookie.Config,
 	fileManagerSvc *filemanager.Service,
 	employeePortalSvc *employeeportalmgmt.Service,
+	notificationSvc *notification.Service,
 	baseURL *baseurl.BaseURL,
 	allowedRedirectHost saferedirect.AllowedHostFunc,
 	graphqlLimits gqlx.Limits,
@@ -101,6 +104,7 @@ func NewMux(
 		logger,
 		fileManagerSvc,
 		employeePortalSvc,
+		notificationSvc,
 		baseURL,
 		cookieConfig,
 		graphqlLimits,

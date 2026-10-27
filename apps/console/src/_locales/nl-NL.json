@@ -6,7 +6,9 @@
     "documentSignatureRequested": "{{title}} is klaar voor uw handtekening",
     "documentApprovalRequested": "{{title}} wacht op uw goedkeuring",
     "taskAssigned": "{{title}} is aan u toegewezen",
-    "taskMentioned": "U bent vermeld in {{title}}"
+    "taskMentioned": "U bent vermeld in {{title}}",
+    "settings": "Meldingsinstellingen",
+    "markAllRead": "Alles als gelezen markeren"
   },
   "size": {
     "B": "B",

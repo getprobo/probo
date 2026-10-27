@@ -282,11 +282,11 @@ func (s *Service) Create(
 			}
 
 			if err := notifyTaskAssignment(ctx, conn, scope, task, actorID); err != nil {
-				return err
+				return fmt.Errorf("cannot notify task assignment: %w", err)
 			}
 
 			if err := notifyNewMentions(ctx, conn, scope, task, "", task.Content, actorID); err != nil {
-				return err
+				return fmt.Errorf("cannot notify new mentions: %w", err)
 			}
 
 			if err := emitTaskCreated(ctx, conn, scope, task); err != nil {
@@ -304,7 +304,8 @@ func (s *Service) Create(
 }
 
 func (s *Service) Get(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context,
+	scope coredata.Scoper,
 	taskID gid.GID,
 ) (*coredata.Task, error) {
 	task := &coredata.Task{}
@@ -320,6 +321,34 @@ func (s *Service) Get(
 	}
 
 	return task, nil
+}
+
+// ResolveViewerNotifications marks the viewer's pending assignment and mention
+// rows for this task resolved. Task pages call it when the task is opened.
+// Other reads leave the rows pending so a follow-up email is not stopped early.
+func (s *Service) ResolveViewerNotifications(
+	ctx context.Context,
+	scope coredata.Scoper,
+	taskID gid.GID,
+	identityID gid.GID,
+) error {
+	task := &coredata.Task{}
+
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := task.LoadByID(ctx, tx, scope, taskID); err != nil {
+				return fmt.Errorf("cannot load task: %w", err)
+			}
+
+			return resolveViewerTaskNotifications(ctx, tx, scope, task, identityID)
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot resolve task notifications: %w", err)
+	}
+
+	return nil
 }
 
 func (s *Service) GetByIDs(
@@ -416,7 +445,7 @@ func (s *Service) Assign(
 			}
 
 			if err := notifyTaskAssignment(ctx, conn, scope, task, actorID); err != nil {
-				return err
+				return fmt.Errorf("cannot notify task assignment: %w", err)
 			}
 
 			if err := emitTaskUpdated(ctx, conn, scope, &oldTask, task, nil); err != nil {
@@ -679,13 +708,13 @@ func (s *Service) Update(
 
 			if !gidPtrEqual(oldTask.AssignedToID, task.AssignedToID) {
 				if err := notifyTaskAssignment(ctx, conn, scope, task, actorID); err != nil {
-					return err
+					return fmt.Errorf("cannot notify task assignment: %w", err)
 				}
 			}
 
 			if req.Content != nil {
 				if err := notifyNewMentions(ctx, conn, scope, task, oldTask.Content, task.Content, actorID); err != nil {
-					return err
+					return fmt.Errorf("cannot notify new mentions: %w", err)
 				}
 			}
 
@@ -912,6 +941,50 @@ func syncedTaskFieldsChanged(
 	}
 
 	return !oldDeadline.Equal(*task.Deadline)
+}
+
+func resolveViewerTaskNotifications(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	task *coredata.Task,
+	identityID gid.GID,
+) error {
+	profile := &coredata.MembershipProfile{}
+
+	err := profile.LoadByIdentityIDAndOrganizationID(
+		ctx,
+		tx,
+		scope,
+		identityID,
+		task.OrganizationID,
+	)
+	if errors.Is(err, coredata.ErrResourceNotFound) {
+		return nil
+	}
+
+	if err != nil {
+		return fmt.Errorf("cannot load notification recipient: %w", err)
+	}
+
+	for _, notificationType := range []coredata.NotificationType{
+		coredata.NotificationTypeTaskAssigned,
+		coredata.NotificationTypeTaskMentioned,
+	} {
+		if err := notification.Resolve(
+			ctx,
+			tx,
+			scope,
+			task.OrganizationID,
+			profile.ID,
+			notificationType,
+			task.ID,
+		); err != nil {
+			return fmt.Errorf("cannot resolve %s notification: %w", notificationType, err)
+		}
+	}
+
+	return nil
 }
 
 func notifyTaskAssignment(

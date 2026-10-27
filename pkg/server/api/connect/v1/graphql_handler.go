@@ -28,6 +28,7 @@ import (
 	employeeportalmgmt "go.probo.inc/probo/pkg/employeeportal/management"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/notification"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/authz"
@@ -42,6 +43,7 @@ func NewGraphQLHandler(
 	logger *log.Logger,
 	fileManagerSvc *filemanager.Service,
 	employeePortalSvc *employeeportalmgmt.Service,
+	notificationSvc *notification.Service,
 	baseURL *baseurl.BaseURL,
 	cookieConfig securecookie.Config,
 	limits gqlx.Limits,
@@ -56,6 +58,7 @@ func NewGraphQLHandler(
 			scopeRegistry:     svc.OAuth2ScopeRegistry,
 			fileManager:       fileManagerSvc,
 			employeePortal:    employeePortalSvc,
+			notification:      notificationSvc,
 			baseURL:           baseURL,
 			sessionCookie:     authn.NewCookie(&cookieConfig),
 			slackbotAvailable: slackbotAvailable,

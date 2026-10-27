@@ -1,0 +1,20 @@
+Probo
+
+Hi {{.RecipientFullName}},
+
+Here is what is still waiting on you this week at {{.OrganizationName}}:
+
+{{range .Organizations}}{{with .Signatures}}Signatures
+{{range .}}- {{.Title}} ({{.Type}}): {{.URL}}
+{{end}}{{end}}{{with .Approvals}}Approvals
+{{range .}}- {{.Title}} ({{.Type}}): {{.URL}}
+{{end}}{{end}}{{with .Tasks}}Tasks
+{{range .}}- {{.Title}}: {{.URL}}
+{{end}}{{end}}
+{{end}}
+Notification settings: {{.NotificationSettingsUrl}}
+
+Best regards,
+
+{{.SenderCompanyHeadquarterAddress}}
+Powered By Probo

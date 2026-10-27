@@ -21,6 +21,7 @@
 import { graphql } from "react-relay";
 
 import type { useApproveDocumentVersionMutation } from "#/__generated__/core/useApproveDocumentVersionMutation.graphql";
+import { requestNotificationRefresh } from "#/components/notifications/requestNotificationRefresh";
 import { useMutation } from "#/lib/relay/useMutation";
 
 const approveDocumentVersionMutation = graphql`
@@ -46,6 +47,8 @@ export function useApproveDocumentVersion(documentId: string) {
       updater: (store) => {
         store.get(documentId)?.setValue("APPROVED", "approvalState");
       },
+    }).then(() => {
+      requestNotificationRefresh();
     }),
     isApproving,
   ] as const;
