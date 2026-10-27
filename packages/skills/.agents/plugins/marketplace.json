@@ -6,7 +6,7 @@
   "plugins": [
     {
       "name": "probo",
-      "description": "Open-source compliance workflows powered by Probo MCP",
+      "description": "Open-source compliance workflows for the Probo MCP API, plus the using-prb CLI skill",
       "source": {
         "source": "local",
         "path": "./"
