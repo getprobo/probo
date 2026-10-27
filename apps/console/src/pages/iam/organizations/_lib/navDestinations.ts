@@ -233,7 +233,7 @@ const NAV_DESTINATIONS = [
     id: "users",
     group: "settings",
     labelKey: "nav.users",
-    path: "people",
+    path: "users",
     isVisible: permissions => permissions.canListMembers,
   },
   {
