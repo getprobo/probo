@@ -4,6 +4,23 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.330.0] - 2026-10-27
+
+### Added
+
+- Rich text can include a task list of checkboxes, from the block
+  menu or by pasting markdown checkbox syntax. A description synced
+  with Linear keeps those checkboxes when the issue comes back
+- Employees can mention members in a task description or comment on
+  the employee portal, with the same picker as the console
+
+### Fixed
+
+- Framework lists return a single page. The page-size arguments were
+  dropped, so every framework came back
+- Viewing a DPIA, a TIA, or a tracker resource by id checks the
+  matching permission and loads the record
+
 ## [0.329.0] - 2026-10-27
 
 ### Added
