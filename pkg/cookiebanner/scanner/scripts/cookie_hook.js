@@ -25,11 +25,28 @@
   var desc = Object.getOwnPropertyDescriptor(proto, "cookie");
   if (!desc || typeof desc.set !== "function") return;
   var nativeSet = desc.set;
+  function hostIsIP(host) {
+    if (host.indexOf(":") !== -1) return true;
+    var parts = host.split(".");
+    if (parts.length !== 4) return false;
+    for (var i = 0; i < parts.length; i++) {
+      if (!/^\d{1,3}$/.test(parts[i]) || Number(parts[i]) > 255) return false;
+    }
+    return true;
+  }
+  function cookieDomain(host, domain) {
+    host = String(host || "").replace(/\.$/, "").toLowerCase();
+    domain = String(domain || "").replace(/^\./, "").replace(/\.+$/, "").toLowerCase();
+    if (!host || !domain || domain.indexOf(".") === -1 || hostIsIP(host)) return "";
+    if (host !== domain && host.slice(-(domain.length + 1)) !== "." + domain) return "";
+    return domain;
+  }
   Object.defineProperty(proto, "cookie", {
     configurable: true,
     enumerable: desc.enumerable,
     get: desc.get,
     set: function (value) {
+      var accepted = nativeSet.call(this, value);
       try {
         var raw = String(value);
         var name = raw.split("=")[0].trim();
@@ -54,10 +71,15 @@
         var host = "";
         try { host = location.hostname || ""; } catch (e) { }
         if (typeof report === "function") {
-          report(JSON.stringify({ name: name, initiator: initiator, host: host, domain: domain }));
+          report(JSON.stringify({
+            name: name,
+            initiator: initiator,
+            host: host,
+            domain: cookieDomain(host, domain)
+          }));
         }
       } catch (e) { }
-      return nativeSet.call(this, value);
+      return accepted;
     }
   });
 })(__PROBO_BINDING__);

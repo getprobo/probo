@@ -25,7 +25,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -90,11 +89,6 @@ func Run(ctx context.Context, allocCtx context.Context, in Input) (*Result, erro
 
 	policy := newRequestPolicy(site, api, in.skipPublicURLCheck)
 
-	startURL, err := policy.resolveStart(ctx, site)
-	if err != nil {
-		return nil, err
-	}
-
 	start := startingCheckpoint(in.Checkpoint)
 	elapsed := time.Duration(start.ElapsedMS) * time.Millisecond
 	remaining := in.Limits.ScanTimeout - elapsed
@@ -123,6 +117,11 @@ func Run(ctx context.Context, allocCtx context.Context, in Input) (*Result, erro
 		}
 
 		return result, nil
+	}
+
+	startURL, err := policy.resolveStart(ctx, site)
+	if err != nil {
+		return nil, err
 	}
 
 	scanCtx, cancelScan := context.WithTimeout(ctx, remaining)
@@ -226,7 +225,7 @@ func (s *scan) loop() (stopCause, error) {
 				s.firstErr = err
 			}
 
-			s.warn(s.scanCtx, "cannot scan page", item.URL, err)
+			s.warn(s.scanCtx, "cannot scan page", err)
 
 			continue
 		}
@@ -295,7 +294,7 @@ func (s *scan) visit(item QueueItem) (Page, []string, error) {
 
 	links, err := chromedp.Run(readCtx, chromedp.Evaluate[[]string](linkJS))
 	if err != nil {
-		s.warn(s.scanCtx, "cannot read links", item.URL, err)
+		s.warn(s.scanCtx, "cannot read links", err)
 
 		links = nil
 	}
@@ -305,14 +304,14 @@ func (s *scan) visit(item QueueItem) (Page, []string, error) {
 	cancelRead()
 
 	if err != nil {
-		s.warn(s.scanCtx, "cannot read storage", item.URL, err)
+		s.warn(s.scanCtx, "cannot read storage", err)
 
 		stored = storageRead{}
 	}
 
 	jar, err := s.readCookieJar()
 	if err != nil {
-		s.warn(s.scanCtx, "cannot read cookie jar", item.URL, err)
+		s.warn(s.scanCtx, "cannot read cookie jar", err)
 
 		jar = nil
 	}
@@ -454,22 +453,12 @@ func (s *scan) finish(cause stopCause) (*Result, error) {
 	return result, nil
 }
 
-func (s *scan) warn(ctx context.Context, msg, rawURL string, err error) {
+func (s *scan) warn(ctx context.Context, msg string, err error) {
 	if s.in.Logger == nil || err == nil {
 		return
 	}
 
-	path := rawURL
-	if parsed, parseErr := url.Parse(rawURL); parseErr == nil {
-		path = parsed.Path
-	}
-
-	s.in.Logger.WarnCtx(
-		ctx,
-		msg,
-		log.String("path", path),
-		log.Error(err),
-	)
+	s.in.Logger.WarnCtx(ctx, msg, log.Error(err))
 }
 
 func startingCheckpoint(checkpoint *Checkpoint) Checkpoint {

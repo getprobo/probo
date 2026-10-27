@@ -21,7 +21,7 @@
 (function () {
   try {
     var origin = location.origin;
-    if (origin !== __PROBO_APEX__ && origin !== __PROBO_WWW__) return;
+    if (origin !== new URL(__PROBO_APEX__).origin && origin !== new URL(__PROBO_WWW__).origin) return;
     localStorage.setItem(__PROBO_KEY__, __PROBO_VALUE__);
   } catch (e) {}
 })();

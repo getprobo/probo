@@ -183,6 +183,38 @@ func TestParseSetCookie_ReadsScannerAttributes(t *testing.T) {
 	assert.False(t, ok)
 }
 
+func TestParseSetCookie_RejectsForeignDomain(t *testing.T) {
+	t.Parallel()
+
+	foreign, ok := parseSetCookie("id=1; Domain=evil.com", "https://example.com/")
+	require.True(t, ok)
+	assert.Nil(t, foreign.Domain)
+	require.NotNil(t, foreign.HostOnly)
+	assert.True(t, *foreign.HostOnly)
+
+	label, ok := parseSetCookie("id=1; Domain=com", "https://example.com/")
+	require.True(t, ok)
+	assert.Nil(t, label.Domain)
+	assert.True(t, *label.HostOnly)
+
+	overlap, ok := parseSetCookie("id=1; Domain=example.com", "https://notexample.com/")
+	require.True(t, ok)
+	assert.Nil(t, overlap.Domain)
+	assert.True(t, *overlap.HostOnly)
+
+	ip, ok := parseSetCookie("id=1; Domain=127.0.0.1", "https://127.0.0.1/")
+	require.True(t, ok)
+	assert.Nil(t, ip.Domain)
+	assert.True(t, *ip.HostOnly)
+
+	parent, ok := parseSetCookie("id=1; Domain=.example.com.", "https://www.example.com/path")
+	require.True(t, ok)
+	require.NotNil(t, parent.Domain)
+	assert.Equal(t, "example.com", *parent.Domain)
+	require.NotNil(t, parent.HostOnly)
+	assert.False(t, *parent.HostOnly)
+}
+
 func TestRequestPolicy_Block(t *testing.T) {
 	t.Parallel()
 
@@ -271,6 +303,24 @@ func TestRun_RejectsPrivateOrigin(t *testing.T) {
 		APIBaseURL: "https://api.example.com",
 	})
 	require.ErrorIs(t, err, netcheck.ErrBlockedAddress)
+}
+
+func TestRun_CanceledBeforeStartPauses(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	result, err := Run(ctx, nil, Input{
+		Origin:     "https://example.com",
+		BannerID:   "banner",
+		APIBaseURL: "https://api.example.com",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.True(t, result.Paused)
+	assert.False(t, result.Truncated)
+	assert.Equal(t, 0, result.PagesScanned)
 }
 
 func TestRun_TimeBudgetWithNoPages(t *testing.T) {
@@ -412,6 +462,29 @@ func TestRecorder_DeduplicatesAndDropsAPIOrigin(t *testing.T) {
 	again := rec.endPage(nil, nil)
 	assert.Empty(t, again.Resources)
 	assert.Empty(t, again.Cookies)
+}
+
+func TestRecorder_DropsAPIHostScriptCookie(t *testing.T) {
+	t.Parallel()
+
+	rec := testRecorder(t)
+	rec.beginPage()
+	rec.handleEvent(runtime.EventBindingCalled{
+		Name:    "binding",
+		Payload: `{"name":"sid","host":"api.example.com","domain":"api.example.com","initiator":"https://api.example.com/app.js"}`,
+	})
+	rec.handleEvent(runtime.EventBindingCalled{
+		Name:    "binding",
+		Payload: `{"name":"_ga","host":"www.example.com","domain":".evil.com","initiator":"https://cdn.example.com/a.js"}`,
+	})
+
+	page := rec.endPage(nil, nil)
+	require.Len(t, page.Cookies, 1)
+	assert.Equal(t, "_ga", page.Cookies[0].Name)
+	require.NotNil(t, page.Cookies[0].HostOnly)
+	assert.True(t, *page.Cookies[0].HostOnly)
+	require.NotNil(t, page.Cookies[0].Domain)
+	assert.Equal(t, "www.example.com", *page.Cookies[0].Domain)
 }
 
 func TestRecorder_HostOnlyHeaderAndJarAreOneCookie(t *testing.T) {
@@ -638,6 +711,18 @@ func TestFrontier_CapsQueue(t *testing.T) {
 	front.push(QueueItem{URL: "https://example.com/c"})
 
 	assert.Len(t, front.checkpoint(0, 0, false).Queue, 2)
+}
+
+func TestSitemapLocations_ReadsNamespacedIndex(t *testing.T) {
+	t.Parallel()
+
+	body := `<sm:sitemapindex xmlns:sm="http://www.sitemaps.org/schemas/sitemap/0.9">` +
+		`<sm:sitemap><sm:loc>https://example.com/a?x=1&amp;y=2</sm:loc></sm:sitemap>` +
+		`</sm:sitemapindex>`
+
+	locs, index := sitemapLocations(body)
+	assert.True(t, index)
+	assert.Equal(t, []string{"https://example.com/a?x=1&y=2"}, locs)
 }
 
 func TestCollectSitemapURLs_DoesNotEnqueueIndexAtDepthLimit(t *testing.T) {

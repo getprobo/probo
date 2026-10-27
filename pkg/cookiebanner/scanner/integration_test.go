@@ -211,8 +211,11 @@ func TestRun_BlocksOffSiteDocument(t *testing.T) {
 		_, _ = w.Write([]byte(`<!doctype html><p>elsewhere</p>`))
 	}))
 
+	var hits atomic.Int32
+
 	site := serve(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/bounce" {
+			hits.Add(1)
 			http.Redirect(w, r, chromeURL(t, other), http.StatusFound)
 
 			return
@@ -237,6 +240,7 @@ func TestRun_BlocksOffSiteDocument(t *testing.T) {
 		},
 	})
 	require.NoError(t, err)
+	require.Greater(t, hits.Load(), int32(0))
 	assert.GreaterOrEqual(t, result.PagesScanned, 1)
 
 	for _, cookie := range cookies {

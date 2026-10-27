@@ -26,9 +26,9 @@
   );
   var y = window.scrollY || 0;
   if (y + height >= max - 2) {
-    window.scrollTo(0, max);
+    window.scrollTo({ left: 0, top: max, behavior: "instant" });
     return true;
   }
-  window.scrollTo(0, y + height);
+  window.scrollTo({ left: 0, top: y + height, behavior: "instant" });
   return false;
 })()
