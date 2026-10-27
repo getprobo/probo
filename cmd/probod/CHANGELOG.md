@@ -4,6 +4,21 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.329.0] - 2026-10-27
+
+### Added
+
+- Cookie banners can force the opt-in banner for every visitor,
+  including in opt-out and notice jurisdictions. Tracker hits are
+  scored as opt-in, the detected regulation stays on the consent
+  record, and California keeps its privacy-choices link
+
+### Fixed
+
+- Opening a collaborative document no longer fails when a client
+  drops during the handshake, and a disconnected client stops
+  waiting for the document to open
+
 ## [0.328.0] - 2026-10-27
 
 ### Added
