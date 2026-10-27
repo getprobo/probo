@@ -43,8 +43,9 @@ func NodeConnectionOrMissing[T any](field, expectedType, notFound string) func(j
 	}
 }
 
-// NodeConnectionRequired is NodeConnection, except a null or absent
-// connection field returns missing instead of an empty connection.
+// NodeConnectionRequired is NodeConnection, except a null connection field
+// returns missing instead of an empty connection. An absent field already
+// returns an error in NodeConnection; this gives it the missing message too.
 func NodeConnectionRequired[T any](field, expectedType, notFound, missing string) func(json.RawMessage) (*Connection[T], error) {
 	return func(data json.RawMessage) (*Connection[T], error) {
 		return nodeConnection[T](data, field, expectedType, notFound, false, missing)
