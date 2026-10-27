@@ -648,51 +648,153 @@ func TestCookieConsent_ForceOptIn(t *testing.T) {
 	}, &updated))
 	assert.True(t, updated.UpdateCookieBanner.CookieBanner.ForceOptIn)
 
-	configResp := doCookieBannerHTTP(
-		t,
-		fixture.Owner,
-		cookieBannerHTTPOptions{
-			Method:     http.MethodGet,
-			BannerID:   fixture.BannerID,
-			Path:       []string{"config"},
-			Origin:     fixture.Origin,
-			SDKVersion: cookieBannerE2ESDKVersion,
+	tests := []struct {
+		name         string
+		ip           string
+		country      string
+		subdivision  *string
+		regulation   string
+		settingsLink string
+		reopenState  string
+	}{
+		{
+			name:         "Japan stays APPI under opt-in",
+			ip:           "203.0.113.10",
+			country:      "JP",
+			regulation:   "APPI",
+			settingsLink: "default",
+			reopenState:  "panel",
 		},
-	)
-	require.Equal(t, http.StatusOK, configResp.StatusCode, "config body: %s", string(configResp.Body))
-
-	var config struct {
-		ConsentMode string `json:"consent_mode"`
-		Regulation  string `json:"regulation"`
-		Layout      struct {
-			Presentation string `json:"presentation"`
-		} `json:"layout"`
+		{
+			name:         "Mexico stays LFPDPPP under opt-in",
+			ip:           "203.0.113.20",
+			country:      "MX",
+			regulation:   "LFPDPPP",
+			settingsLink: "default",
+			reopenState:  "panel",
+		},
+		{
+			name:         "California keeps the privacy choices link",
+			ip:           "203.0.113.30",
+			country:      "US",
+			subdivision:  new("US-CA"),
+			regulation:   "CCPA",
+			settingsLink: "ccpa_privacy_choices",
+			reopenState:  "privacy_choices",
+		},
 	}
-	require.NoError(t, json.Unmarshal(configResp.Body, &config))
-	assert.NotEmpty(t, config.Regulation)
-	assert.Equal(t, "OPT_IN", config.ConsentMode)
-	assert.Equal(t, "OPT_IN", config.Layout.Presentation)
 
-	created := postCookieConsent(
-		t,
-		fixture.Owner,
-		fixture,
-		uniqueCookieBannerVisitorID(),
-		"ACCEPT_ALL",
-		json.RawMessage(`{"necessary":true,"analytics":true}`),
-	)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			seedIPLocationBlock(t, tt.ip, tt.country, tt.subdivision)
+
+			configResp := doCookieBannerHTTP(
+				t,
+				fixture.Owner,
+				cookieBannerHTTPOptions{
+					Method:     http.MethodGet,
+					BannerID:   fixture.BannerID,
+					Path:       []string{"config"},
+					Origin:     fixture.Origin,
+					SDKVersion: cookieBannerE2ESDKVersion,
+					ClientIP:   tt.ip,
+				},
+			)
+			require.Equal(t, http.StatusOK, configResp.StatusCode, "config body: %s", string(configResp.Body))
+
+			var config struct {
+				ConsentMode string `json:"consent_mode"`
+				Regulation  string `json:"regulation"`
+				Layout      struct {
+					Presentation string `json:"presentation"`
+					ReopenState  string `json:"reopen_state"`
+					SettingsLink string `json:"settings_link"`
+				} `json:"layout"`
+			}
+			require.NoError(t, json.Unmarshal(configResp.Body, &config))
+			assert.Equal(t, tt.regulation, config.Regulation)
+			assert.Equal(t, "OPT_IN", config.ConsentMode)
+			assert.Equal(t, "OPT_IN", config.Layout.Presentation)
+			assert.Equal(t, tt.settingsLink, config.Layout.SettingsLink)
+			assert.Equal(t, tt.reopenState, config.Layout.ReopenState)
+
+			created := postCookieConsentFrom(
+				t,
+				fixture.Owner,
+				fixture,
+				uniqueCookieBannerVisitorID(),
+				"ACCEPT_ALL",
+				json.RawMessage(`{"necessary":true,"analytics":true}`),
+				tt.ip,
+			)
+
+			ctx := context.Background()
+			conn := dialTestPg(t, ctx)
+
+			defer func() { _ = conn.Close(ctx) }()
+
+			var (
+				consentMode      string
+				regulation       string
+				regulationSource string
+			)
+			err := conn.QueryRow(
+				ctx,
+				`SELECT consent_mode, regulation, regulation_source FROM cookie_consent_records WHERE id = $1`,
+				created.ID,
+			).Scan(&consentMode, &regulation, &regulationSource)
+			require.NoError(t, err)
+			assert.Equal(t, "OPT_IN", consentMode)
+			assert.Equal(t, tt.regulation, regulation)
+			assert.Equal(t, "DETECTED", regulationSource)
+		})
+	}
+}
+
+func seedIPLocationBlock(t *testing.T, ip, country string, subdivision *string) {
+	t.Helper()
 
 	ctx := context.Background()
 	conn := dialTestPg(t, ctx)
+	t.Cleanup(func() {
+		_, err := conn.Exec(
+			ctx,
+			`DELETE FROM common_ip_location_blocks WHERE address_family = 4 AND ip_start = $1::inet AND ip_end = $1::inet`,
+			ip,
+		)
+		assert.NoError(t, err)
+		_ = conn.Close(ctx)
+	})
 
-	defer func() { _ = conn.Close(ctx) }()
-
-	var consentMode string
-	err := conn.QueryRow(
+	_, err := conn.Exec(
 		ctx,
-		`SELECT consent_mode FROM cookie_consent_records WHERE id = $1`,
-		created.ID,
-	).Scan(&consentMode)
+		`DELETE FROM common_ip_location_blocks WHERE address_family = 4 AND ip_start = $1::inet AND ip_end = $1::inet`,
+		ip,
+	)
 	require.NoError(t, err)
-	assert.Equal(t, "OPT_IN", consentMode)
+
+	_, err = conn.Exec(
+		ctx,
+		`
+INSERT INTO common_ip_location_blocks (
+	address_family,
+	ip_start,
+	ip_end,
+	country_code,
+	subdivision_code
+) VALUES (
+	4,
+	$1::inet,
+	$1::inet,
+	$2,
+	$3
+)
+`,
+		ip,
+		country,
+		subdivision,
+	)
+	require.NoError(t, err)
 }

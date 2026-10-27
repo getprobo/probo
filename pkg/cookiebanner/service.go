@@ -3172,6 +3172,7 @@ func (s *Service) RecordConsent(
 			}
 
 			var consentMode *coredata.CookieConsentMode
+
 			if req.Regulation != nil {
 				mode := coredata.CookieConsentMode(ConsentModeForBanner(*req.Regulation, banner.ForceOptIn))
 				consentMode = &mode
@@ -3252,6 +3253,10 @@ func (s *Service) ReportDetectedTrackers(
 
 			if !banner.Capabilities.ResourceReporting {
 				req.Resources = nil
+			}
+
+			if banner.ForceOptIn {
+				req.Presentation = PresentationOptIn
 			}
 
 			var uncategorised coredata.CookieCategory

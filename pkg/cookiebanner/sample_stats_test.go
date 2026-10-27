@@ -646,6 +646,31 @@ func TestReportDetectedTrackers_PageLoadGrant(t *testing.T) {
 		assert.Equal(t, 1, loadsOf(t, ctx, client, fx, sample.ID).FirefoxGrantedPageLoads)
 		assert.Equal(t, 0, loadsOf(t, ctx, client, fx, sample.ID).SafariGrantedPageLoads)
 	})
+
+	t.Run("force opt-in denies an unconsented opt-out report", func(t *testing.T) {
+		t.Parallel()
+
+		client := test.PGClient(t)
+		ctx := context.Background()
+		fx := seedWorkerFixture(t, ctx, client)
+		fx.banner.ForceOptIn = true
+
+		require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+			return fx.banner.Update(ctx, tx, fx.scope)
+		}))
+
+		svc := NewService(client, false, 0)
+		require.NoError(t, svc.ReportDetectedTrackers(ctx, fx.banner.ID, ReportDetectedTrackersRequest{
+			PageView:     true,
+			Family:       coredata.BrowserFamilyChrome,
+			Presentation: PresentationOptOut,
+		}))
+		requireFlushSampleCounts(t, ctx, svc)
+
+		sample := loadLatestSample(t, ctx, client, fx)
+		assert.Equal(t, 1, loadsOf(t, ctx, client, fx, sample.ID).ChromePageLoads)
+		assert.Equal(t, 0, loadsOf(t, ctx, client, fx, sample.ID).ChromeGrantedPageLoads)
+	})
 }
 
 func insertDraftVersion(
