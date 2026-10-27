@@ -37,8 +37,13 @@ export function syncTaskCheckboxFocusability(
   const checkboxes = root.querySelectorAll<HTMLInputElement>(
     taskCheckboxSelector,
   );
+  const tabIndex = editable ? 0 : -1;
   checkboxes.forEach((checkbox) => {
-    checkbox.tabIndex = editable ? 0 : -1;
+    // Assigning tabIndex marks the checkbox DOM dirty. ProseMirror treats that
+    // as a new document change and calls this again, so only write a new value.
+    if (checkbox.tabIndex !== tabIndex) {
+      checkbox.tabIndex = tabIndex;
+    }
   });
 }
 
