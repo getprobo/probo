@@ -125,6 +125,26 @@ autoscaling:
   targetCPUUtilizationPercentage: 80
   # targetMemoryUtilizationPercentage: 80
 
+# Additional environment variables for the probod container, appended after
+# the variables the chart renders itself (a later entry with the same name wins).
+# Use this for any PROBOD_* setting the chart has no dedicated value for, for
+# example connectors for providers the chart does not template yet:
+# https://www.probo.com/docs/deployment/configuration/environment-reference
+extraEnv: []
+# - name: PROBOD_CONNECTOR_VERCEL_CLIENT_ID
+#   valueFrom:
+#     secretKeyRef:
+#       name: probo-connectors
+#       key: vercel-client-id
+# - name: PROBOD_CONNECTOR_VERCEL_INTEGRATION_SLUG
+#   value: my-integration
+
+# Additional sources of environment variables for the probod container
+# (envFrom). Variables set by the chart or by extraEnv take precedence.
+extraEnvFrom: []
+# - secretRef:
+#     name: probo-extra-secrets
+
 # Additional volumes on the output Deployment definition.
 volumes: []
 # - name: foo
