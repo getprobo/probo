@@ -48,7 +48,7 @@ const linkedInternalControlFragment = graphql`
   fragment LinkedInternalControlsCardFragment on InternalControl {
     id
     name
-    state
+    implementationStatus
   }
 `;
 
@@ -211,7 +211,7 @@ function InternalControlRow(props: {
     <Tr to={`/organizations/${organizationId}/governance/internal-controls/${internalControl.id}`}>
       <Td>{internalControl.name}</Td>
       <Td>
-        <InternalControlBadge state={internalControl.state} />
+        <InternalControlBadge state={internalControl.implementationStatus} />
       </Td>
       {!props.readOnly && (
         <Td noLink width={50} className="text-end">

@@ -25,7 +25,6 @@ import { usePageTitle } from "@probo/hooks";
 import { dateFormat, formatDuration } from "@probo/i18n";
 import {
   ActionDropdown,
-  Badge,
   Button,
   DropdownItem,
   IconCheckmark1,
@@ -85,7 +84,6 @@ export const internalControlNodeQuery = graphql`
       ... on InternalControl {
         name
         description
-        state
         code
         implementationStatus
         operatingFrequency {
@@ -154,30 +152,15 @@ function TasksCountBadge({ internalControlId }: { internalControlId: string }) {
 }
 
 function ReadOnlyImplementationStatus({
-  state,
   implementationStatus,
 }: {
-  state?: string | null;
   implementationStatus?: string | null;
 }) {
-  const { t } = useTranslation();
-
-  if (state === "NOT_STARTED" || state === "NOT_APPLICABLE" || state === "UNKNOWN") {
-    return <InternalControlBadge state={state} />;
-  }
-
-  if (implementationStatus === "OPERATING") {
-    return (
-      <Badge variant="success">
-        {t("internalControlDetailPage.implementationStatuses.operating")}
-      </Badge>
-    );
-  }
-
   if (
     implementationStatus === "NOT_IMPLEMENTED"
     || implementationStatus === "IN_PROGRESS"
     || implementationStatus === "IMPLEMENTED"
+    || implementationStatus === "OPERATING"
   ) {
     return <InternalControlBadge state={implementationStatus} />;
   }
@@ -263,7 +246,6 @@ export default function InternalControlDetailPage(props: Props) {
       <PageHeader title={internalControl.name} description={internalControl.description}>
         {!internalControl.canUpdate && (
           <ReadOnlyImplementationStatus
-            state={internalControl.state}
             implementationStatus={internalControl.implementationStatus}
           />
         )}

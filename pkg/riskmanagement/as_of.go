@@ -169,7 +169,7 @@ func loadInternalControlEventsAsOf(
 		scope,
 		internalControlIDs,
 		asOf,
-		coredata.NewInternalControlFilter(nil, nil, nil),
+		coredata.NewInternalControlFilter(nil, nil, nil, nil),
 	); err != nil {
 		return nil, fmt.Errorf("cannot load internal control events: %w", err)
 	}
@@ -553,7 +553,7 @@ func (s *Service) ListInternalControlsAsOf(
 	filter *coredata.InternalControlFilter,
 ) (*page.Page[*coredata.InternalControl, coredata.InternalControlOrderField], int, error) {
 	if filter == nil {
-		filter = coredata.NewInternalControlFilter(nil, nil, nil)
+		filter = coredata.NewInternalControlFilter(nil, nil, nil, nil)
 	}
 
 	var (

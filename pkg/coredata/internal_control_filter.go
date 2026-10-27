@@ -26,25 +26,33 @@ import (
 
 type (
 	InternalControlFilter struct {
-		query    *string
-		state    *InternalControlState
-		category *string
+		query                *string
+		state                *InternalControlState
+		implementationStatus *InternalControlImplementationStatus
+		category             *string
 	}
 )
 
-func NewInternalControlFilter(query *string, state *InternalControlState, category *string) *InternalControlFilter {
+func NewInternalControlFilter(
+	query *string,
+	state *InternalControlState,
+	implementationStatus *InternalControlImplementationStatus,
+	category *string,
+) *InternalControlFilter {
 	return &InternalControlFilter{
-		query:    query,
-		state:    state,
-		category: category,
+		query:                query,
+		state:                state,
+		implementationStatus: implementationStatus,
+		category:             category,
 	}
 }
 
 func (f *InternalControlFilter) SQLArguments() pgx.NamedArgs {
 	return pgx.NamedArgs{
-		"query":    f.query,
-		"state":    f.state,
-		"category": f.category,
+		"query":                 f.query,
+		"state":                 f.state,
+		"implementation_status": f.implementationStatus,
+		"category":              f.category,
 	}
 }
 
@@ -68,6 +76,15 @@ AND
 			TRUE
 		ELSE
 			state = @state::mitigation_state
+	END
+)
+AND
+(
+	CASE
+		WHEN @implementation_status::internal_control_implementation_status IS NULL THEN
+			TRUE
+		ELSE
+			implementation_status = @implementation_status::internal_control_implementation_status
 	END
 )
 AND
@@ -102,6 +119,24 @@ AND
 			TRUE
 		ELSE
 			state = @state::mitigation_state::text
+		END
+)
+AND
+(
+	CASE
+		WHEN @implementation_status::internal_control_implementation_status IS NULL THEN
+			TRUE
+		ELSE
+			COALESCE(
+				implementation_status,
+				(
+					CASE state
+						WHEN 'IN_PROGRESS' THEN 'IN_PROGRESS'
+						WHEN 'IMPLEMENTED' THEN 'IMPLEMENTED'
+						ELSE 'NOT_IMPLEMENTED'
+					END
+				)::internal_control_implementation_status
+			) = @implementation_status::internal_control_implementation_status
 		END
 )
 AND

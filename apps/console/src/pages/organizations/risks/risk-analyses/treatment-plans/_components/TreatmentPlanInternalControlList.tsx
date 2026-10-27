@@ -75,7 +75,7 @@ const internalControlFragment = graphql`
   fragment TreatmentPlanInternalControlList_internalControl on InternalControl {
     id
     name
-    state
+    implementationStatus
   }
 `;
 
@@ -365,7 +365,7 @@ function InternalControlRow({
                 {internalControl.name}
               </Link>
             )}
-      <InternalControlBadge state={internalControl.state} />
+      <InternalControlBadge state={internalControl.implementationStatus} />
       {!readOnly && (
         <button
           type="button"
