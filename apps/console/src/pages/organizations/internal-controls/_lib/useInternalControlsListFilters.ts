@@ -94,11 +94,12 @@ export function internalControlsListVariables(input: {
   before: string | null;
 }): InternalControlsListVariables {
   const trimmed = input.query.trim();
-  const before = input.after ? null : input.before;
+  const after = input.after || null;
+  const before = after ? null : input.before || null;
 
   return {
     first: before ? null : internalControlsPageSize,
-    after: before ? null : input.after,
+    after: before ? null : after,
     last: before ? internalControlsPageSize : null,
     before,
     order: {
@@ -125,8 +126,8 @@ export function useInternalControlsListFilters() {
   const category = categoryValue === "" ? null : categoryValue;
   const ownerValue = searchParams.get("owner");
   const ownerId = ownerValue === "" ? null : ownerValue;
-  const after = searchParams.get("after");
-  const before = after ? null : searchParams.get("before");
+  const after = searchParams.get("after") || null;
+  const before = after ? null : searchParams.get("before") || null;
   // A page index without a cursor cannot be loaded, so it reads as page 1.
   const page = after == null && before == null
     ? 1
