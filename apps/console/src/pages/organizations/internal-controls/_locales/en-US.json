@@ -41,7 +41,8 @@
     },
     "values": {
       "unassigned": "Unassigned",
-      "none": "None"
+      "none": "None",
+      "noCode": "None"
     },
     "due": {
       "evidence": "Evidence · {{date}}",

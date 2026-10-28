@@ -34,14 +34,15 @@
       "nextDue": "Prochaine échéance"
     },
     "statuses": {
-      "not_implemented": "Non implémenté",
+      "not_implemented": "Non mis en œuvre",
       "in_progress": "En cours",
-      "implemented": "Implémenté",
-      "operating": "En fonctionnement"
+      "implemented": "Mis en œuvre",
+      "operating": "En exploitation"
     },
     "values": {
       "unassigned": "Non assigné",
-      "none": "Aucune"
+      "none": "Aucune",
+      "noCode": "Aucun"
     },
     "due": {
       "evidence": "Preuve · {{date}}",
