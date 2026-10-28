@@ -4,7 +4,7 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*", "$TURBO_ROOT$/apps/vite/**"],
       "outputs": ["dist/**"]
     },
     "lint": {
@@ -12,7 +12,7 @@
     },
     "check": {
       "dependsOn": ["^check"],
-      "inputs": ["$TURBO_DEFAULT$", "../vite/**"]
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/apps/vite/**"]
     },
     "test": {},
     "dev": {
