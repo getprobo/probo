@@ -216,7 +216,13 @@ export default function InternalControlDetailPage(props: Props) {
               connections: [connectionId],
             },
             onSuccess() {
-              void navigate(listTo);
+              // The cursor may point at the deleted row or leave an empty
+              // page, so return to the first page with the same filters.
+              const search = new URLSearchParams(location.search);
+              search.delete("after");
+              search.delete("before");
+              search.delete("page");
+              void navigate({ pathname: listTo.pathname, search: search.toString() });
               resolve();
             },
           });
