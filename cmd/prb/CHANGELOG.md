@@ -4,6 +4,14 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.261.0] - 2026-10-28
+
+### Added
+
+- `internal-control list` filters with `--implementation-status`
+  (repeatable), `--owner`, and `--needs-attention`, and sorts with
+  `--order-by NEXT_DUE`. `--filter` matches the name or the code
+
 ## [0.260.0] - 2026-10-27
 
 ### Added
