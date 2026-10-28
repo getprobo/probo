@@ -19,6 +19,9 @@
 // SOFTWARE.
 
 import { ButtonSkeleton } from "@probo/ui/src/v2/Button/ButtonSkeleton";
+import { TextFieldSkeleton } from "@probo/ui/src/v2/form/TextFieldSkeleton";
+import { PaginationSkeleton } from "@probo/ui/src/v2/Pagination/PaginationSkeleton";
+import { SelectSkeleton } from "@probo/ui/src/v2/Select/SelectSkeleton";
 import { TableSkeleton } from "@probo/ui/src/v2/Table/TableSkeleton";
 import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
 import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
@@ -26,7 +29,21 @@ import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 import { internalControlsPage } from "./_components/variants";
 
 export function InternalControlsPageSkeleton() {
-  const { root, header, intro, title, actions } = internalControlsPage();
+  const {
+    root,
+    header,
+    intro,
+    title,
+    actions,
+    results,
+    views,
+    tools,
+    tableFilters,
+    filter,
+    search,
+    list,
+    pager,
+  } = internalControlsPage();
 
   return (
     <div className={root()}>
@@ -43,7 +60,25 @@ export function InternalControlsPageSkeleton() {
           <ButtonSkeleton size={2} className="w-8" />
         </div>
       </div>
-      <TableSkeleton size={2} variant="surface" layout="fixed" columns={6} count={6} />
+      <div className={results()}>
+        <div className={views()}>
+          <ButtonSkeleton size={1} className="w-56" />
+        </div>
+        <div className={tools()}>
+          <TextFieldSkeleton size={2} className={search()} />
+          <div className={tableFilters()}>
+            <SelectSkeleton size={2} className={filter()} />
+            <SelectSkeleton size={2} className={filter()} />
+            <SelectSkeleton size={2} className={filter()} />
+          </div>
+        </div>
+        <div className={list()}>
+          <TableSkeleton size={2} variant="surface" layout="fixed" columns={6} count={6} />
+          <div className={pager()}>
+            <PaginationSkeleton />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
