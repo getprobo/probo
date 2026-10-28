@@ -661,6 +661,13 @@ spec:
             {{- end }}
             {{- end }}
             {{- with .Values.extraEnv }}
+            {{- $seen := dict }}
+            {{- range . }}
+            {{- if hasKey $seen .name }}
+            {{- fail (printf "extraEnv: environment variable %q is listed more than once" .name) }}
+            {{- end }}
+            {{- $_ := set $seen .name true }}
+            {{- end }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
           {{- with .Values.extraEnvFrom }}

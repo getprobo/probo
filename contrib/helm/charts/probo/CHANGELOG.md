@@ -6,11 +6,14 @@ All notable changes to the Probo Helm chart will be documented in this file.
 
 ### Added
 
-- `extraEnv` and `extraEnvFrom` values append environment variables (including
+- `extraEnv` and `extraEnvFrom` values add environment variables (including
   `valueFrom` references to Secrets) to the `probod` container. This allows
   configuring any `PROBOD_*` setting the chart has no dedicated value for, such
   as the Google Workspace, Vercel, and Sentry connectors, without forking the
-  chart.
+  chart. `extraEnv` entries must not repeat a variable the chart already sets
+  (Kubernetes rejects duplicate names under server-side apply), and rendering
+  fails if `extraEnv` lists the same name twice. `extraEnvFrom` has the lowest
+  precedence.
 
 ## [0.29.0] - 2026-10-28
 

@@ -213,6 +213,43 @@ set both keys; an empty pair is rejected when `s3.endpoint` is set.
 
 See [values.yaml](values.yaml) for all available options.
 
+### Additional Environment Variables
+
+`probod` is configured through `PROBOD_*` environment variables, and the chart
+only has dedicated values for some of them. For anything else, such as
+connectors for providers that have no `probo.connectors` template yet (Google
+Workspace, Vercel, Sentry, ...), use `extraEnv` and `extraEnvFrom`. See the
+[environment variable reference](https://www.probo.com/docs/deployment/configuration/environment-reference)
+for the names.
+
+```yaml
+extraEnv:
+  - name: PROBOD_CONNECTOR_GOOGLE_WORKSPACE_CLIENT_ID
+    valueFrom:
+      secretKeyRef:
+        name: probo-connectors
+        key: google-workspace-client-id
+  - name: PROBOD_CONNECTOR_GOOGLE_WORKSPACE_CLIENT_SECRET
+    valueFrom:
+      secretKeyRef:
+        name: probo-connectors
+        key: google-workspace-client-secret
+
+# Or load the keys of a Secret as environment variables (only keys that are
+# valid environment variable names are loaded):
+extraEnvFrom:
+  - secretRef:
+      name: probo-extra-secrets
+```
+
+`extraEnv` entries are appended after the variables the chart renders. Do not
+repeat a variable the chart already sets, or list the same name twice:
+Kubernetes rejects duplicate environment variable names under server-side
+apply (the Helm 4 default), and the chart fails to render if `extraEnv` itself
+contains a duplicate. Variables from `extraEnvFrom` have the lowest precedence,
+so an entry in `env` always wins over the same name from `envFrom`. Create the
+referenced Secrets yourself; the chart does not manage them.
+
 ## Components
 
 The chart deploys the following:
@@ -280,39 +317,6 @@ two ways:
 
 **Note:** Using `caBundlePath` is recommended for large CA bundles (for
 example system CA bundles) as it avoids environment variable size limitations.
-
-### Additional environment variables
-
-`probod` is configured through `PROBOD_*` environment variables, and the chart
-only has dedicated values for some of them. For anything else, such as
-connectors for providers that have no `probo.connectors` template yet (Google
-Workspace, Vercel, Sentry, ...), use `extraEnv` and `extraEnvFrom`. See the
-[environment variable reference](https://www.probo.com/docs/deployment/configuration/environment-reference)
-for the names.
-
-```yaml
-extraEnv:
-  - name: PROBOD_CONNECTOR_GOOGLE_WORKSPACE_CLIENT_ID
-    valueFrom:
-      secretKeyRef:
-        name: probo-connectors
-        key: google-workspace-client-id
-  - name: PROBOD_CONNECTOR_GOOGLE_WORKSPACE_CLIENT_SECRET
-    valueFrom:
-      secretKeyRef:
-        name: probo-connectors
-        key: google-workspace-client-secret
-
-# Or load every key of a Secret as an environment variable:
-extraEnvFrom:
-  - secretRef:
-      name: probo-extra-secrets
-```
-
-`extraEnv` entries are appended after the variables the chart renders, so an
-entry with the same name overrides the chart's value. Variables from
-`extraEnvFrom` have the lowest precedence. Create the referenced Secrets
-yourself; the chart does not manage them.
 
 ### Backup
 
