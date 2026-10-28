@@ -1,0 +1,98 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.elastic-cloud.com
+        headers:
+            Accept:
+                - application/json
+        url: https://api.elastic-cloud.com/api/v1/organizations
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: 261
+        body: '{"next_page":"example-organizations-cursor","organizations":[{"billing_contacts":[],"custom_bundles_allowed":true,"custom_plugins_allowed":false,"force_mfa":false,"id":"00000000000000000000000000000001","name":"Example Organization","operational_contacts":[]}]}'
+        headers:
+            Cache-Control:
+                - max-age=0, no-cache, no-store, must-revalidate
+            Content-Length:
+                - "261"
+            Content-Type:
+                - application/json
+            Date:
+                - Wed, 28 Oct 2026 11:23:47 GMT
+            Server:
+                - elastic-iam-service/77e1226
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+            X-Content-Type-Options:
+                - nosniff
+            X-Download-Options:
+                - noopen
+            X-Elastic-Api-Key-Expiration:
+                - "2026-11-28T10:58:05.236Z"
+            X-Frame-Options:
+                - SAMEORIGIN
+            X-Request-Id:
+                - 3debb383f47e70e424bf24bdfd399bc4
+            X-Xss-Protection:
+                - 1;mode=block
+        status: 200 OK
+        code: 200
+        duration: 546.824292ms
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.elastic-cloud.com
+        form:
+            next_page:
+                - example-organizations-cursor
+        headers:
+            Accept:
+                - application/json
+        url: https://api.elastic-cloud.com/api/v1/organizations?next_page=example-organizations-cursor
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: 20
+        body: '{"organizations":[]}'
+        headers:
+            Cache-Control:
+                - max-age=0, no-cache, no-store, must-revalidate
+            Content-Length:
+                - "20"
+            Content-Type:
+                - application/json
+            Date:
+                - Wed, 28 Oct 2026 11:23:47 GMT
+            Server:
+                - elastic-iam-service/77e1226
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+            X-Content-Type-Options:
+                - nosniff
+            X-Download-Options:
+                - noopen
+            X-Elastic-Api-Key-Expiration:
+                - "2026-11-28T10:58:05.236Z"
+            X-Frame-Options:
+                - SAMEORIGIN
+            X-Request-Id:
+                - c53a3a424b3105687a93ba17880216e3
+            X-Xss-Protection:
+                - 1;mode=block
+        status: 200 OK
+        code: 200
+        duration: 122.551083ms

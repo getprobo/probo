@@ -86,6 +86,7 @@ func NewBuiltinRegistryWith(opts ...Option) (*Registry, error) {
 		deepgramRegistration(),
 		docusignRegistration(),
 		dotfileRegistration(),
+		elasticCloudRegistration(),
 		elevenLabsRegistration(),
 		frontRegistration(),
 		grafanaRegistration(),

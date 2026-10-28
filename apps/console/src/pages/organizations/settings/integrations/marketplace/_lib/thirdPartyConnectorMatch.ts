@@ -31,6 +31,7 @@ const connectorProviderAliases: Record<string, readonly string[]> = {
   CAL_COM: ["Cal.com", "Calcom"],
   BETTER_STACK: ["Better Stack", "BetterStack"],
   MONGODB_ATLAS: ["MongoDB Atlas", "MongoDB"],
+  ELASTIC_CLOUD: ["Elastic Cloud", "Elastic", "Elasticsearch"],
   OVHCLOUD: ["OVHcloud", "OVH"],
   MICROSOFT_365: ["Microsoft 365", "Office 365"],
   GOOGLE_WORKSPACE: ["Google Workspace"],

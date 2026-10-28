@@ -63,3 +63,9 @@ export const Front: Story = {
     thirdParty: "FRONT",
   },
 };
+
+export const ElasticCloud: Story = {
+  args: {
+    thirdParty: "ELASTIC_CLOUD",
+  },
+};

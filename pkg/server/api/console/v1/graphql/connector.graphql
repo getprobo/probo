@@ -142,6 +142,10 @@ enum ConnectorProvider
         )
     PLANETSCALE
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderPlanetScale")
+    ELASTIC_CLOUD
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderElasticCloud"
+        )
 }
 
 enum AzureEnvironment

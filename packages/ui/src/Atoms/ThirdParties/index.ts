@@ -21,6 +21,7 @@ export { Datadog } from "./Datadog";
 export { Deepgram } from "./Deepgram";
 export { DocuSign } from "./DocuSign";
 export { Dotfile } from "./Dotfile";
+export { ElasticCloud } from "./ElasticCloud";
 export { ElevenLabs } from "./ElevenLabs";
 export { Figma } from "./Figma";
 export { Front } from "./Front";
