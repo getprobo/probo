@@ -526,6 +526,40 @@ WHERE
 	return nil
 }
 
+// CountByCookieBannerScanID counts resources the scan stamped, skipping
+// excluded rows so a hidden resource does not inflate the scan total.
+func (trs *TrackerResources) CountByCookieBannerScanID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	scanID gid.GID,
+) (int, error) {
+	q := `
+SELECT
+	COUNT(id)
+FROM
+	tracker_resources
+WHERE
+	%s
+	AND cookie_banner_scan_id = @cookie_banner_scan_id
+	AND excluded = FALSE
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"cookie_banner_scan_id": scanID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	var count int
+	if err := conn.QueryRow(ctx, q, args).Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot count tracker resources by scan: %w", err)
+	}
+
+	return count, nil
+}
+
 func (trs *TrackerResources) CountUncategorisedByCookieBannerID(
 	ctx context.Context,
 	conn pg.Querier,

@@ -3373,6 +3373,12 @@ type detectedTrackerInfo struct {
 	InitiatorURL  *string
 	CookieDomain  *string
 	HostOnly      *bool
+	HTTPOnly      *bool
+	Secure        *bool
+	SameSite      *coredata.CookieSameSite
+	Partitioned   *bool
+	SetByURL      *string
+	ScanID        *gid.GID
 	SampleHit     bool
 	Granted       bool
 }
@@ -3388,8 +3394,44 @@ func (s *Service) reportDetectedTracker(
 	inserted *int,
 	countedHits map[gid.GID]bool,
 ) error {
+	patternID, err := s.persistDetectedTracker(
+		ctx,
+		tx,
+		scope,
+		banner,
+		uncategorisedID,
+		now,
+		info,
+		inserted,
+	)
+	if err != nil {
+		return err
+	}
+
+	if info.SampleHit && patternID != nil {
+		if _, seen := countedHits[*patternID]; !seen {
+			countedHits[*patternID] = info.Granted
+		}
+	}
+
+	return nil
+}
+
+// persistDetectedTracker writes the pattern and the detected row on tx.
+// The pattern id is nil when the identifier is skipped. Sample hits are
+// recorded by the caller, after this returns.
+func (s *Service) persistDetectedTracker(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	banner *coredata.CookieBanner,
+	uncategorisedID gid.GID,
+	now time.Time,
+	info detectedTrackerInfo,
+	inserted *int,
+) (*gid.GID, error) {
 	if len(info.Identifier) > MaxTrackerIdentifierLength {
-		return nil
+		return nil, nil
 	}
 
 	// PostgreSQL INTEGER (int4) is the column type. A cookie Max-Age
@@ -3402,7 +3444,7 @@ func (s *Service) reportDetectedTracker(
 
 	err := matchedPattern.FindMatchingPattern(ctx, tx, scope, banner.ID, info.TrackerType, info.Identifier)
 	if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
-		return fmt.Errorf("cannot find matching tracker pattern: %w", err)
+		return nil, fmt.Errorf("cannot find matching tracker pattern: %w", err)
 	}
 
 	if s.afterPatternLookup != nil {
@@ -3410,7 +3452,7 @@ func (s *Service) reportDetectedTracker(
 	}
 
 	if err == nil && matchedPattern.Excluded {
-		return nil
+		return nil, nil
 	}
 
 	var (
@@ -3436,7 +3478,7 @@ func (s *Service) reportDetectedTracker(
 		// nothing.
 		needsMetadata, err = applyIncomingPatternMetadata(ctx, tx, scope, &matchedPattern, info, now)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	} else {
 		var mappingRequestedAt *time.Time
@@ -3462,7 +3504,7 @@ func (s *Service) reportDetectedTracker(
 
 		wasInserted, err := newPattern.InsertIfNotExists(ctx, tx, scope)
 		if err != nil {
-			return fmt.Errorf("cannot insert tracker pattern: %w", err)
+			return nil, fmt.Errorf("cannot insert tracker pattern: %w", err)
 		}
 
 		if wasInserted {
@@ -3471,18 +3513,18 @@ func (s *Service) reportDetectedTracker(
 		} else {
 			var existingPattern coredata.TrackerPattern
 			if err := existingPattern.FindMatchingPattern(ctx, tx, scope, banner.ID, info.TrackerType, info.Identifier); err != nil {
-				return fmt.Errorf("cannot load existing tracker pattern: %w", err)
+				return nil, fmt.Errorf("cannot load existing tracker pattern: %w", err)
 			}
 
 			if existingPattern.Excluded {
-				return nil
+				return nil, nil
 			}
 
 			patternID = &existingPattern.ID
 
 			needsMetadata, err = applyIncomingPatternMetadata(ctx, tx, scope, &existingPattern, info, now)
 			if err != nil {
-				return err
+				return nil, err
 			}
 		}
 	}
@@ -3496,38 +3538,40 @@ func (s *Service) reportDetectedTracker(
 	}
 
 	tracker := &coredata.DetectedTracker{
-		ID:               gid.New(scope.GetTenantID(), coredata.DetectedTrackerEntityType),
-		CookieBannerID:   banner.ID,
-		TrackerPatternID: patternID,
-		TrackerType:      info.TrackerType,
-		Identifier:       info.Identifier,
-		MaxAgeSeconds:    info.MaxAgeSeconds,
-		Source:           info.Source,
-		ObservedBy:       info.ObservedBy,
-		ValueSize:        info.ValueSize,
-		InitiatorURL:     info.InitiatorURL,
-		InitiatorDomain:  initiatorDomain,
-		CookieDomain:     info.CookieDomain,
-		HostOnly:         info.HostOnly,
-		CreatedAt:        now,
-		UpdatedAt:        now,
+		ID:                 gid.New(scope.GetTenantID(), coredata.DetectedTrackerEntityType),
+		CookieBannerID:     banner.ID,
+		TrackerPatternID:   patternID,
+		TrackerType:        info.TrackerType,
+		Identifier:         info.Identifier,
+		MaxAgeSeconds:      info.MaxAgeSeconds,
+		Source:             info.Source,
+		ObservedBy:         info.ObservedBy,
+		ValueSize:          info.ValueSize,
+		InitiatorURL:       info.InitiatorURL,
+		InitiatorDomain:    initiatorDomain,
+		CookieDomain:       info.CookieDomain,
+		HostOnly:           info.HostOnly,
+		HTTPOnly:           info.HTTPOnly,
+		Secure:             info.Secure,
+		SameSite:           info.SameSite,
+		Partitioned:        info.Partitioned,
+		SetByURL:           info.SetByURL,
+		CookieBannerScanID: info.ScanID,
+		CreatedAt:          now,
+		UpdatedAt:          now,
 	}
 
-	if needsMetadata {
+	// Scanner rows are upserted even when the pattern did not change, so
+	// cookie_banner_scan_id and the cookie attributes refresh on the next scan.
+	if needsMetadata || info.ObservedBy == coredata.DetectedTrackerObserverScanner {
 		if _, err := tracker.Upsert(ctx, tx, scope); err != nil {
-			return fmt.Errorf("cannot upsert detected tracker: %w", err)
+			return nil, fmt.Errorf("cannot upsert detected tracker: %w", err)
 		}
 	} else if _, err := tracker.InsertIfNotExists(ctx, tx, scope); err != nil {
-		return fmt.Errorf("cannot insert detected tracker: %w", err)
+		return nil, fmt.Errorf("cannot insert detected tracker: %w", err)
 	}
 
-	if info.SampleHit && patternID != nil {
-		if _, seen := countedHits[*patternID]; !seen {
-			countedHits[*patternID] = info.Granted
-		}
-	}
-
-	return nil
+	return patternID, nil
 }
 
 // applyIncomingPatternMetadata promotes source and fills max-age on
@@ -3601,23 +3645,56 @@ func (s *Service) reportDetectedResource(
 
 	origin := u.Scheme + "://" + u.Host
 
-	path := u.Path
+	return s.upsertTrackerResource(
+		ctx,
+		tx,
+		scope,
+		banner,
+		uncategorisedID,
+		now,
+		item.ResourceType,
+		origin,
+		u.Path,
+		nil,
+	)
+}
+
+// upsertTrackerResource writes one tracker resource. A nil scanID leaves an
+// existing row's scan stamp untouched, which is what SDK reports need.
+func (s *Service) upsertTrackerResource(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	banner *coredata.CookieBanner,
+	uncategorisedID gid.GID,
+	now time.Time,
+	resourceType coredata.TrackerResourceType,
+	origin string,
+	path string,
+	scanID *gid.GID,
+) (bool, error) {
 	if path == "" {
 		path = "/"
 	}
 
+	host := origin
+	if parsed, err := url.Parse(origin); err == nil && parsed.Host != "" {
+		host = parsed.Host
+	}
+
 	resource := &coredata.TrackerResource{
-		ID:               gid.New(scope.GetTenantID(), coredata.TrackerResourceEntityType),
-		OrganizationID:   banner.OrganizationID,
-		CookieBannerID:   banner.ID,
-		CookieCategoryID: uncategorisedID,
-		ResourceType:     item.ResourceType,
-		Origin:           origin,
-		Path:             path,
-		DisplayName:      u.Host + path,
-		Description:      "",
-		CreatedAt:        now,
-		UpdatedAt:        now,
+		ID:                 gid.New(scope.GetTenantID(), coredata.TrackerResourceEntityType),
+		OrganizationID:     banner.OrganizationID,
+		CookieBannerID:     banner.ID,
+		CookieCategoryID:   uncategorisedID,
+		ResourceType:       resourceType,
+		Origin:             origin,
+		Path:               path,
+		DisplayName:        host + path,
+		Description:        "",
+		CookieBannerScanID: scanID,
+		CreatedAt:          now,
+		UpdatedAt:          now,
 	}
 
 	inserted, err := resource.Upsert(ctx, tx, scope)

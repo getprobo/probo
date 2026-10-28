@@ -200,3 +200,113 @@ func TestTrackerResource_Upsert_StampsScanOnlyWhenSet(t *testing.T) {
 	assert.Equal(t, scan.ID, *reloaded.CookieBannerScanID)
 	assert.True(t, reloaded.UpdatedAt.After(sdkUpdatedAt), "stamping the scan must refresh updated_at")
 }
+
+func TestDetectedTracker_CountByCookieBannerScanID_SplitsCookiesAndStorage(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedTrackerPatternFixture(t, ctx, client)
+	tp := seedTrackerPattern(t, ctx, client, fx, "_ga", coredata.TrackerPatternMatchTypeExact, coredata.CookieSourceHTTP)
+
+	scan := newPendingCookieBannerScan(fx)
+	require.NoError(t, insertCookieBannerScan(t, ctx, client, fx, scan))
+
+	other := newPendingCookieBannerScan(fx)
+	other.State = coredata.CookieBannerScanStateCompleted
+	require.NoError(t, insertCookieBannerScan(t, ctx, client, fx, other))
+
+	cookie := newDetectedTracker(fx, tp.ID, "_ga", coredata.DetectedTrackerObserverScanner)
+	cookie.CookieBannerScanID = &scan.ID
+
+	storage := newDetectedTracker(fx, tp.ID, "theme", coredata.DetectedTrackerObserverScanner)
+	storage.TrackerType = coredata.TrackerTypeLocalStorage
+	storage.CookieBannerScanID = &scan.ID
+
+	session := newDetectedTracker(fx, tp.ID, "tab", coredata.DetectedTrackerObserverScanner)
+	session.TrackerType = coredata.TrackerTypeSessionStorage
+	session.CookieBannerScanID = &scan.ID
+
+	sdk := newDetectedTracker(fx, tp.ID, "sdk_only", coredata.DetectedTrackerObserverSDK)
+	sdk.CookieBannerScanID = &scan.ID
+
+	elsewhere := newDetectedTracker(fx, tp.ID, "other_scan", coredata.DetectedTrackerObserverScanner)
+	elsewhere.CookieBannerScanID = &other.ID
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		for _, dt := range []*coredata.DetectedTracker{cookie, storage, session, sdk, elsewhere} {
+			if _, err := dt.Upsert(ctx, tx, fx.scope); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}))
+
+	var cookies, storageCount int
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		var err error
+
+		cookies, storageCount, err = new(coredata.DetectedTrackers).CountByCookieBannerScanID(ctx, conn, fx.scope, scan.ID)
+
+		return err
+	}))
+	assert.Equal(t, 1, cookies)
+	assert.Equal(t, 2, storageCount)
+}
+
+func TestTrackerResource_CountByCookieBannerScanID_SkipsExcluded(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedTrackerPatternFixture(t, ctx, client)
+
+	scan := newPendingCookieBannerScan(fx)
+	require.NoError(t, insertCookieBannerScan(t, ctx, client, fx, scan))
+
+	newResource := func(path string, scanID *gid.GID, excluded bool) *coredata.TrackerResource {
+		now := time.Now().UTC().Truncate(time.Microsecond)
+
+		return &coredata.TrackerResource{
+			ID:                 gid.New(fx.scope.GetTenantID(), coredata.TrackerResourceEntityType),
+			OrganizationID:     fx.organizationID,
+			CookieBannerID:     fx.cookieBannerID,
+			CookieCategoryID:   fx.cookieCategoryID,
+			ResourceType:       coredata.TrackerResourceTypeScript,
+			Origin:             "https://www.googletagmanager.com",
+			Path:               path,
+			DisplayName:        "www.googletagmanager.com" + path,
+			Excluded:           excluded,
+			CookieBannerScanID: scanID,
+			CreatedAt:          now,
+			UpdatedAt:          now,
+		}
+	}
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		for _, tr := range []*coredata.TrackerResource{
+			newResource("/gtm.js", &scan.ID, false),
+			newResource("/hidden.js", &scan.ID, true),
+			newResource("/sdk.js", nil, false),
+		} {
+			if err := tr.Insert(ctx, tx, fx.scope); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}))
+
+	var count int
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		var err error
+
+		count, err = new(coredata.TrackerResources).CountByCookieBannerScanID(ctx, conn, fx.scope, scan.ID)
+
+		return err
+	}))
+	assert.Equal(t, 1, count)
+}

@@ -137,6 +137,7 @@ func TestChooseStart_UsesWWWWhenApexDoesNotResolve(t *testing.T) {
 	require.ErrorIs(t, err, netcheck.ErrBlockedAddress)
 
 	_, err = chooseStart(site, hostUnknown, hostUnknown)
+	require.ErrorIs(t, err, ErrUnreachable)
 	require.ErrorContains(t, err, "cannot resolve")
 }
 
