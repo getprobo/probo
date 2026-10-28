@@ -2117,3 +2117,165 @@ func TestMeasure_ThirdPartyMapping(t *testing.T) {
 		require.Error(t, err, "should not link a third party from another tenant")
 	})
 }
+
+func TestInternalControl_ListFilters(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+
+	const createQuery = `
+		mutation($input: CreateInternalControlInput!) {
+			createInternalControl(input: $input) {
+				internalControlEdge { node { id } }
+			}
+		}
+	`
+
+	create := func(t *testing.T, input map[string]any) string {
+		t.Helper()
+
+		input["organizationId"] = owner.GetOrganizationID().String()
+
+		var result struct {
+			CreateInternalControl struct {
+				InternalControlEdge struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"internalControlEdge"`
+			} `json:"createInternalControl"`
+		}
+
+		err := owner.Execute(createQuery, map[string]any{"input": input}, &result)
+		require.NoError(t, err)
+
+		return result.CreateInternalControl.InternalControlEdge.Node.ID
+	}
+
+	notImplementedID := create(t, map[string]any{
+		"name":                 "Attention Not Implemented",
+		"category":             "POLICY",
+		"implementationStatus": "NOT_IMPLEMENTED",
+		"ownerId":              owner.GetProfileID().String(),
+	})
+	operatingID := create(t, map[string]any{
+		"name":                 "Attention Operating",
+		"category":             "POLICY",
+		"implementationStatus": "OPERATING",
+		"evidenceCadence":      "P30D",
+		"ownerId":              viewer.GetProfileID().String(),
+	})
+	soonID := create(t, map[string]any{
+		"name":                 "Soon Due",
+		"category":             "TECHNICAL",
+		"implementationStatus": "IMPLEMENTED",
+		"evidenceCadence":      "P1D",
+	})
+	laterID := create(t, map[string]any{
+		"name":                 "Later Due",
+		"category":             "TECHNICAL",
+		"implementationStatus": "IMPLEMENTED",
+		"evidenceCadence":      "P365D",
+	})
+
+	const listQuery = `
+		query($id: ID!, $filter: InternalControlFilter, $orderBy: InternalControlOrder) {
+			node(id: $id) {
+				... on Organization {
+					internalControls(first: 100, filter: $filter, orderBy: $orderBy) {
+						edges { node { id name } }
+					}
+				}
+			}
+		}
+	`
+
+	type listed struct {
+		Node struct {
+			InternalControls struct {
+				Edges []struct {
+					Node struct {
+						ID   string `json:"id"`
+						Name string `json:"name"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"internalControls"`
+		} `json:"node"`
+	}
+
+	ids := func(t *testing.T, filter map[string]any, orderBy map[string]any) []string {
+		t.Helper()
+
+		var result listed
+		err := owner.Execute(listQuery, map[string]any{
+			"id":      owner.GetOrganizationID().String(),
+			"filter":  filter,
+			"orderBy": orderBy,
+		}, &result)
+		require.NoError(t, err)
+
+		found := make([]string, len(result.Node.InternalControls.Edges))
+		for i, edge := range result.Node.InternalControls.Edges {
+			found[i] = edge.Node.ID
+		}
+
+		return found
+	}
+
+	t.Run("filter by several statuses", func(t *testing.T) {
+		t.Parallel()
+
+		found := ids(t, map[string]any{
+			"implementationStatuses": []string{"NOT_IMPLEMENTED", "OPERATING"},
+			"query":                  "Attention",
+		}, nil)
+		assert.ElementsMatch(t, []string{notImplementedID, operatingID}, found)
+	})
+
+	t.Run("filter by owner", func(t *testing.T) {
+		t.Parallel()
+
+		found := ids(t, map[string]any{
+			"ownerId": owner.GetProfileID().String(),
+			"query":   "Attention",
+		}, nil)
+		assert.Equal(t, []string{notImplementedID}, found)
+	})
+
+	t.Run("needs attention keeps not implemented controls", func(t *testing.T) {
+		t.Parallel()
+
+		found := ids(t, map[string]any{
+			"needsAttention": true,
+			"query":          "Attention",
+		}, nil)
+		assert.Contains(t, found, notImplementedID)
+		assert.NotContains(t, found, operatingID)
+	})
+
+	t.Run("order by next due ascending", func(t *testing.T) {
+		t.Parallel()
+
+		found := ids(t, map[string]any{
+			"query": "Due",
+		}, map[string]any{
+			"field":     "NEXT_DUE",
+			"direction": "ASC",
+		})
+
+		soonAt := -1
+		laterAt := -1
+		for i, id := range found {
+			if id == soonID {
+				soonAt = i
+			}
+			if id == laterID {
+				laterAt = i
+			}
+		}
+
+		require.NotEqual(t, -1, soonAt)
+		require.NotEqual(t, -1, laterAt)
+		assert.Less(t, soonAt, laterAt)
+	})
+}

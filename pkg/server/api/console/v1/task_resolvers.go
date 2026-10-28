@@ -414,13 +414,16 @@ func (r *taskResolver) InternalControls(ctx context.Context, obj *types.Task, fi
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	internalControlFilter := coredata.NewInternalControlFilter(nil, nil, nil, nil)
+	internalControlFilter := coredata.NewInternalControlFilter(nil, nil, nil, nil, nil, nil, nil)
 	if filter != nil {
 		internalControlFilter = coredata.NewInternalControlFilter(
 			filter.Query,
 			filter.State,
 			filter.ImplementationStatus,
 			filter.Category,
+			filter.ImplementationStatuses,
+			filter.OwnerID,
+			filter.NeedsAttention,
 		)
 	}
 

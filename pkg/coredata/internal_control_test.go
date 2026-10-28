@@ -197,3 +197,19 @@ func TestImplementationStatusMapping(t *testing.T) {
 		)
 	})
 }
+
+func TestInternalControlNextDueValue(t *testing.T) {
+	t.Parallel()
+
+	sooner := time.Date(2026, 3, 1, 0, 0, 0, 0, time.UTC)
+	later := time.Date(2026, 6, 1, 0, 0, 0, 0, time.UTC)
+	empty := time.Date(9999, 12, 31, 23, 59, 59, 0, time.UTC)
+
+	assert.True(t, internalControlNextDueValue(&sooner, &later).Equal(sooner))
+	assert.True(t, internalControlNextDueValue(&later, &sooner).Equal(sooner))
+	assert.True(t, internalControlNextDueValue(&sooner, nil).Equal(sooner))
+	assert.True(t, internalControlNextDueValue(nil, &later).Equal(later))
+	assert.True(t, internalControlNextDueValue(nil, nil).Equal(empty))
+	assert.Equal(t, internalControlNextDueExpr, InternalControlOrderFieldNextDue.Column())
+	assert.Equal(t, "NAME", InternalControlOrderFieldName.Column())
+}

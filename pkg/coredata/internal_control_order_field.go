@@ -34,6 +34,12 @@ type (
 const (
 	InternalControlOrderFieldCreatedAt InternalControlOrderField = "CREATED_AT"
 	InternalControlOrderFieldName      InternalControlOrderField = "NAME"
+	InternalControlOrderFieldNextDue   InternalControlOrderField = "NEXT_DUE"
+
+	// Empty due dates sort after every real date. The cursor stores the same
+	// instant, so paging stays aligned with the SQL expression.
+	internalControlNextDueEmpty = "9999-12-31 23:59:59+00"
+	internalControlNextDueExpr  = "COALESCE(LEAST(next_evidence_due, next_test_due), '" + internalControlNextDueEmpty + "'::timestamptz)"
 )
 
 var (
@@ -47,6 +53,7 @@ func InternalControlOrderFields() []InternalControlOrderField {
 	return []InternalControlOrderField{
 		InternalControlOrderFieldCreatedAt,
 		InternalControlOrderFieldName,
+		InternalControlOrderFieldNextDue,
 	}
 }
 
@@ -67,5 +74,9 @@ func (v *InternalControlOrderField) UnmarshalText(text []byte) error {
 }
 
 func (p InternalControlOrderField) Column() string {
+	if p == InternalControlOrderFieldNextDue {
+		return internalControlNextDueExpr
+	}
+
 	return string(p)
 }

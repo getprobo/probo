@@ -71,9 +71,33 @@ func (m InternalControl) CursorKey(orderBy InternalControlOrderField) page.Curso
 		return page.NewCursorKey(m.ID, m.CreatedAt)
 	case InternalControlOrderFieldName:
 		return page.NewCursorKey(m.ID, m.Name)
+	case InternalControlOrderFieldNextDue:
+		return page.NewCursorKey(m.ID, internalControlNextDueValue(m.NextEvidenceDue, m.NextTestDue))
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
+}
+
+func internalControlNextDueValue(evidenceDue *time.Time, testDue *time.Time) time.Time {
+	switch {
+	case evidenceDue != nil && testDue != nil:
+		if evidenceDue.Before(*testDue) {
+			return *evidenceDue
+		}
+
+		return *testDue
+	case evidenceDue != nil:
+		return *evidenceDue
+	case testDue != nil:
+		return *testDue
+	default:
+		empty, err := time.Parse(time.RFC3339, "9999-12-31T23:59:59Z")
+		if err != nil {
+			panic(err)
+		}
+
+		return empty
+	}
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
@@ -167,7 +191,10 @@ WITH msrs AS (
 		m.search_vector,
 		m.state,
 		m.implementation_status,
-		m.category
+		m.category,
+		m.owner_profile_id,
+		m.next_evidence_due,
+		m.next_test_due
 	FROM
 		internal_controls m
 	INNER JOIN
@@ -306,7 +333,10 @@ WITH msrs AS (
 		m.search_vector,
 		m.state,
 		m.implementation_status,
-		m.category
+		m.category,
+		m.owner_profile_id,
+		m.next_evidence_due,
+		m.next_test_due
 	FROM
 		internal_controls m
 	INNER JOIN
@@ -607,7 +637,10 @@ msrs AS (
 		latest.name,
 		latest.category,
 		latest.state,
-		latest.implementation_status
+		latest.implementation_status,
+		CAST(NULL AS text) AS owner_profile_id,
+		CAST(NULL AS timestamptz) AS next_evidence_due,
+		CAST(NULL AS timestamptz) AS next_test_due
 	FROM
 		latest
 	WHERE
@@ -656,7 +689,10 @@ WITH mtgtns AS (
 			m.search_vector,
 			m.state,
 			m.implementation_status,
-			m.category
+			m.category,
+			m.owner_profile_id,
+			m.next_evidence_due,
+			m.next_test_due
 		FROM
 			internal_controls m
 		INNER JOIN
@@ -1379,7 +1415,10 @@ WITH mtgtns AS (
 			m.search_vector,
 			m.state,
 			m.implementation_status,
-			m.category
+			m.category,
+			m.owner_profile_id,
+			m.next_evidence_due,
+			m.next_test_due
 		FROM
 			internal_controls m
 		INNER JOIN
@@ -1518,7 +1557,10 @@ WITH linked AS (
 			m.search_vector,
 			m.state,
 			m.implementation_status,
-			m.category
+			m.category,
+			m.owner_profile_id,
+			m.next_evidence_due,
+			m.next_test_due
 		FROM
 			internal_controls m
 		INNER JOIN
