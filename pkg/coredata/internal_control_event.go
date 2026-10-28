@@ -166,7 +166,10 @@ WITH latest AS (
         state,
         implementation_status,
         internal_control_created_at,
-        created_at
+        created_at,
+        CAST(NULL AS text) AS owner_profile_id,
+        CAST(NULL AS timestamptz) AS next_evidence_due,
+        CAST(NULL AS timestamptz) AS next_test_due
     FROM
         internal_control_events
     WHERE
@@ -187,10 +190,7 @@ filtered AS (
         state,
         implementation_status,
         internal_control_created_at,
-        created_at,
-        CAST(NULL AS text) AS owner_profile_id,
-        CAST(NULL AS timestamptz) AS next_evidence_due,
-        CAST(NULL AS timestamptz) AS next_test_due
+        created_at
     FROM
         latest
     WHERE
