@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 (() => {
-  var read = function (store) {
+  var read = (store) => {
     var out = [];
     try {
       for (var i = 0; i < store.length; i++) {
@@ -31,4 +31,4 @@
     return out;
   };
   return { local: read(localStorage), session: read(sessionStorage) };
-})()
+})();

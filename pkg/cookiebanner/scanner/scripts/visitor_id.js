@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-(function () {
+(() => {
   try {
     var origin = location.origin;
     if (origin !== new URL(__PROBO_APEX__).origin && origin !== new URL(__PROBO_WWW__).origin) return;

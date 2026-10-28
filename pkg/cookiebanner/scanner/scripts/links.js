@@ -18,4 +18,4 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-Array.from(document.querySelectorAll("a[href]")).map(function (a) { return a.href; })
+Array.from(document.querySelectorAll("a[href]")).map((a) => a.href);
