@@ -20,6 +20,8 @@
 
 import { Field } from "@probo/ui/src/v2/form/Field";
 import { TextField } from "@probo/ui/src/v2/form/TextField";
+import { Text } from "@probo/ui/src/v2/typography/Text";
+import { useId } from "react";
 import { graphql, useFragment } from "react-relay";
 
 import type { ExtraSettingField_setting$key } from "#/__generated__/core/ExtraSettingField_setting.graphql";
@@ -32,6 +34,7 @@ const extraSettingFieldFragment = graphql`
     label
     required
     control
+    description
   }
 `;
 
@@ -47,6 +50,7 @@ export function ExtraSettingField({
   onValueChange,
 }: ExtraSettingFieldProps) {
   const setting = useFragment(extraSettingFieldFragment, settingKey);
+  const descriptionId = useId();
 
   if (setting.control === "REGION") {
     return (
@@ -59,13 +63,21 @@ export function ExtraSettingField({
   }
 
   return (
-    <Field required={setting.required} label={setting.label}>
-      <TextField
-        name={setting.key}
-        required={setting.required}
-        value={value}
-        onValueChange={onValueChange}
-      />
-    </Field>
+    <>
+      <Field required={setting.required} label={setting.label}>
+        <TextField
+          name={setting.key}
+          required={setting.required}
+          value={value}
+          aria-describedby={setting.description ? descriptionId : undefined}
+          onValueChange={onValueChange}
+        />
+      </Field>
+      {setting.description && (
+        <Text id={descriptionId} size={1} color="faint">
+          {setting.description}
+        </Text>
+      )}
+    </>
   );
 }

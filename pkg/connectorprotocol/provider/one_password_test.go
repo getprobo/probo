@@ -60,6 +60,7 @@ func TestOnePasswordRegistrationMetadata(t *testing.T) {
 	assert.Equal(t, "accountId", reg.ClientCredentialsExtraSettings()[0].Key)
 	assert.Equal(t, "Account ID", reg.ClientCredentialsExtraSettings()[0].Label)
 	assert.True(t, reg.ClientCredentialsExtraSettings()[0].Required)
+	assert.Contains(t, reg.ClientCredentialsExtraSettings()[0].Description, "/app#/")
 	assert.Equal(t, "region", reg.ClientCredentialsExtraSettings()[1].Key)
 	assert.Equal(t, "Region", reg.ClientCredentialsExtraSettings()[1].Label)
 	assert.True(t, reg.ClientCredentialsExtraSettings()[1].Required)

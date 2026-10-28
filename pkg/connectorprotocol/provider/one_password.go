@@ -51,7 +51,12 @@ func onePasswordRegistration() *Registration {
 		},
 		ClientCredentials: &ClientCredentialsConfig{
 			ExtraSettings: []ExtraSetting{
-				{Key: "accountId", Label: "Account ID", Required: true},
+				{
+					Key:         "accountId",
+					Label:       "Account ID",
+					Required:    true,
+					Description: "In the 1Password web app, open View vault items and copy the 26 characters after /app#/ in the address bar. This is not the client ID.",
+				},
 				{Key: "region", Label: "Region", Required: true, Control: ExtraSettingControlRegion},
 			},
 			CredentialPage: &CredentialPage{URL: "https://start.1password.com/integrations/directory"},
