@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-(function (bindingName) {
+((bindingName) => {
   var report = globalThis[bindingName];
   try { delete globalThis[bindingName]; } catch (e) { }
   var proto = Document.prototype;
