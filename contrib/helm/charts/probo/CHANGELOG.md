@@ -4,6 +4,18 @@ All notable changes to the Probo Helm chart will be documented in this file.
 
 ## Unreleased
 
+## [0.29.0] - 2026-10-28
+
+### Added
+
+- `probo.faro.enabled`, `probo.faro.collectorUrl`, and
+  `probo.faro.apiKey` turn on Grafana Faro browser telemetry. The API
+  key is stored in the chart secret
+
+### Changed
+
+- Default `appVersion` is now `0.332.0`
+
 ## [0.28.0] - 2026-10-23
 
 ### Changed
