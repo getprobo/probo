@@ -52,6 +52,7 @@ export const internalControlsPage = tv({
     nameCell: "min-w-0 max-w-0 whitespace-normal [overflow-wrap:anywhere]",
     identity: "flex w-full min-w-0 flex-col items-stretch gap-1",
     name: "w-full min-w-0 whitespace-normal [overflow-wrap:anywhere] line-clamp-2",
+    code: "inline-block max-w-full truncate whitespace-nowrap align-top",
     owner: "inline-flex min-w-0 max-w-full items-center gap-2",
     ownerName: "min-w-0 truncate",
     due: "flex min-w-0 flex-wrap items-center gap-1",

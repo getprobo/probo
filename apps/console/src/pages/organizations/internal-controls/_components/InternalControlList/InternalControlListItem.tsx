@@ -20,7 +20,6 @@
 
 import { DotsThreeIcon, PencilIcon, TrashIcon, WarningIcon } from "@phosphor-icons/react";
 import { dateFormat } from "@probo/i18n";
-import { useDialogRef } from "@probo/ui";
 import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
@@ -42,7 +41,6 @@ import { graphql } from "relay-runtime";
 
 import type { InternalControlListItem_internalControl$key } from "#/__generated__/core/InternalControlListItem_internalControl.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
-import InternalControlFormDialog from "#/pages/organizations/internal-controls/dialog/InternalControlFormDialog";
 
 import {
   implementationStatusColor,
@@ -65,47 +63,41 @@ const internalControlListItemFragment = graphql`
     owner {
       fullName
     }
-    ...InternalControlFormDialogInternalControlFragment
   }
 `;
 
 interface InternalControlListItemProps {
   internalControlKey: InternalControlListItem_internalControl$key;
-  onChanged: () => void;
+  onEdit: (id: string) => void;
+  onDeleted: () => void;
 }
 
 export function InternalControlListItem(props: InternalControlListItemProps) {
-  const { internalControlKey, onChanged } = props;
+  const { internalControlKey, onEdit, onDeleted } = props;
   const { i18n, t } = useTranslation("organizations/internal-controls");
   const organizationId = useOrganizationId();
   const location = useLocation();
-  const dialogRef = useDialogRef();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const internalControl = useFragment(internalControlListItemFragment, internalControlKey);
   const due = nextDue(internalControl.nextEvidenceDue, internalControl.nextTestDue);
   const ownerLabel = internalControl.owner?.fullName;
-  const { identity, name, nameCell, owner, ownerName, due: dueSlot } = internalControlsPage();
+  const { code, identity, name, nameCell, owner, ownerName, due: dueSlot } = internalControlsPage();
   const statusKey = internalControl.implementationStatus.toLowerCase();
 
   return (
     <>
-      <InternalControlFormDialog
-        internalControl={internalControl}
-        ref={dialogRef}
-        onSaved={onChanged}
-      />
       <InternalControlDeleteDialog
         open={deleteOpen}
         internalControlId={internalControl.id}
         name={internalControl.name}
         onOpenChange={setDeleteOpen}
-        onDeleted={onChanged}
+        onDeleted={onDeleted}
       />
       <TableRow align="start" interactive>
         <TableCell width={internalControlColumnWidth.code}>
           {internalControl.code
-            ? <Code>{internalControl.code}</Code>
-            : <Text size={2} color="faint">{t("list.values.none")}</Text>}
+            ? <Code className={code()}>{internalControl.code}</Code>
+            : <Text size={2} color="faint">{t("list.values.noCode")}</Text>}
         </TableCell>
         <TableRowHeaderCell className={nameCell()}>
           <div className={identity()}>
@@ -160,7 +152,7 @@ export function InternalControlListItem(props: InternalControlListItemProps) {
               />
               <DropdownPopup>
                 {internalControl.canUpdate && (
-                  <DropdownItem iconStart={<PencilIcon />} onClick={() => dialogRef.current?.open()}>
+                  <DropdownItem iconStart={<PencilIcon />} onClick={() => onEdit(internalControl.id)}>
                     {t("list.actions.edit")}
                   </DropdownItem>
                 )}
