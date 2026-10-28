@@ -29,4 +29,15 @@ type (
 		Column() string
 		fmt.Stringer
 	}
+
+	// DirectionalOrderField sorts by an expression that depends on the
+	// requested direction, e.g. to keep empty values last both ways.
+	// Cursor keys are computed without knowing the direction, so
+	// DirectionalCursorValue must map the bound cursor value into the
+	// same space as DirectionalColumn.
+	DirectionalOrderField interface {
+		OrderField
+		DirectionalColumn(direction OrderDirection) string
+		DirectionalCursorValue(direction OrderDirection, placeholder string) string
+	}
 )

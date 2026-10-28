@@ -65,6 +65,11 @@ func NewCursor[T OrderField](size int, from *CursorKey, pos Position, orderBy Or
 
 func (c *Cursor[T]) SQLFragment() string {
 	fieldName := c.OrderBy.Field.Column()
+	cursorValue := "@cursor_field_value"
+	if f, ok := any(c.OrderBy.Field).(DirectionalOrderField); ok {
+		fieldName = f.DirectionalColumn(c.OrderBy.Direction)
+		cursorValue = f.DirectionalCursorValue(c.OrderBy.Direction, cursorValue)
+	}
 
 	var orderDirection string
 
@@ -81,9 +86,9 @@ func (c *Cursor[T]) SQLFragment() string {
 
 	whereClause := "TRUE"
 	if c.Key != nil && orderDirection == "DESC" {
-		whereClause = "(" + fieldName + " <= @cursor_field_value) AND NOT (" + fieldName + " = @cursor_field_value AND id > @cursor_id)"
+		whereClause = "(" + fieldName + " <= " + cursorValue + ") AND NOT (" + fieldName + " = " + cursorValue + " AND id > @cursor_id)"
 	} else if c.Key != nil && orderDirection == "ASC" {
-		whereClause = "(" + fieldName + " >= @cursor_field_value) AND NOT (" + fieldName + " = @cursor_field_value AND id < @cursor_id)"
+		whereClause = "(" + fieldName + " >= " + cursorValue + ") AND NOT (" + fieldName + " = " + cursorValue + " AND id < @cursor_id)"
 	}
 
 	orderByClause := fieldName + " " + orderDirection + ", id " + orderDirection

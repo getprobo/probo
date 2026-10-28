@@ -2177,6 +2177,11 @@ func TestInternalControl_ListFilters(t *testing.T) {
 		"implementationStatus": "IMPLEMENTED",
 		"evidenceCadence":      "P365D",
 	})
+	undatedID := create(t, map[string]any{
+		"name":                 "Undated Due",
+		"category":             "TECHNICAL",
+		"implementationStatus": "IMPLEMENTED",
+	})
 	codedID := create(t, map[string]any{
 		"name":                 "Access Review Procedure",
 		"code":                 "IC-LIST-77",
@@ -2292,5 +2297,85 @@ func TestInternalControl_ListFilters(t *testing.T) {
 		require.NotEqual(t, -1, soonAt)
 		require.NotEqual(t, -1, laterAt)
 		assert.Less(t, soonAt, laterAt)
+	})
+
+	t.Run("order by next due keeps empty due dates last both ways", func(t *testing.T) {
+		t.Parallel()
+
+		for _, direction := range []string{"ASC", "DESC"} {
+			found := ids(t, map[string]any{
+				"query": "Due",
+			}, map[string]any{
+				"field":     "NEXT_DUE",
+				"direction": direction,
+			})
+
+			want := []string{soonID, laterID, undatedID}
+			if direction == "DESC" {
+				want = []string{laterID, soonID, undatedID}
+			}
+			assert.Equal(t, want, found, direction)
+		}
+	})
+
+	t.Run("next due descending pages across empty due dates", func(t *testing.T) {
+		t.Parallel()
+
+		const pageQuery = `
+			query($id: ID!, $after: CursorKey) {
+				node(id: $id) {
+					... on Organization {
+						internalControls(
+							first: 1
+							after: $after
+							filter: { query: "Due" }
+							orderBy: { field: NEXT_DUE, direction: DESC }
+						) {
+							edges { node { id } }
+							pageInfo { hasNextPage endCursor }
+						}
+					}
+				}
+			}
+		`
+
+		var (
+			walked []string
+			after  *string
+		)
+		for range 5 {
+			var result struct {
+				Node struct {
+					InternalControls struct {
+						Edges []struct {
+							Node struct {
+								ID string `json:"id"`
+							} `json:"node"`
+						} `json:"edges"`
+						PageInfo struct {
+							HasNextPage bool    `json:"hasNextPage"`
+							EndCursor   *string `json:"endCursor"`
+						} `json:"pageInfo"`
+					} `json:"internalControls"`
+				} `json:"node"`
+			}
+
+			err := owner.Execute(pageQuery, map[string]any{
+				"id":    owner.GetOrganizationID().String(),
+				"after": after,
+			}, &result)
+			require.NoError(t, err)
+
+			for _, edge := range result.Node.InternalControls.Edges {
+				walked = append(walked, edge.Node.ID)
+			}
+
+			if !result.Node.InternalControls.PageInfo.HasNextPage {
+				break
+			}
+			after = result.Node.InternalControls.PageInfo.EndCursor
+		}
+
+		assert.Equal(t, []string{laterID, soonID, undatedID}, walked)
 	})
 }
