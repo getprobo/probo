@@ -4,6 +4,27 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.331.0] - 2026-10-28
+
+### Changed
+
+- Creating a task opens a full page instead of a dialog, with every
+  field the task page offers. The task is saved once it has a name
+- The integrations list and the access review source pages render
+  right away, and each connector card fills in its connection status
+  as the vendor responds. Filtering by status waits for the statuses
+  while search and filters stay usable
+
+### Fixed
+
+- Integrations lists no longer time out for organizations with many
+  connectors
+- Filtering integrations by status matches the status each card
+  shows. A connector that needs a reconnect is no longer listed under
+  Connected
+- GraphQL operation logs record only error counts and codes instead of
+  full error objects, which could include submitted values
+
 ## [0.330.3] - 2026-10-28
 
 ### Fixed
