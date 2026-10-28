@@ -49,9 +49,9 @@ const (
 var (
 	_ page.OrderField            = InternalControlOrderField("")
 	_ page.DirectionalOrderField = InternalControlOrderField("")
-	_ fmt.Stringer             = InternalControlOrderField("")
-	_ encoding.TextMarshaler   = InternalControlOrderField("")
-	_ encoding.TextUnmarshaler = (*InternalControlOrderField)(nil)
+	_ fmt.Stringer               = InternalControlOrderField("")
+	_ encoding.TextMarshaler     = InternalControlOrderField("")
+	_ encoding.TextUnmarshaler   = (*InternalControlOrderField)(nil)
 )
 
 func InternalControlOrderFields() []InternalControlOrderField {
