@@ -146,6 +146,8 @@ enum ConnectorProvider
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderElasticCloud"
         )
+    DAYTONA
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderDaytona")
 }
 
 enum AzureEnvironment

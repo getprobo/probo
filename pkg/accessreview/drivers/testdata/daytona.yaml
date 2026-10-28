@@ -1,0 +1,119 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: app.daytona.io
+        headers:
+            Accept:
+                - application/json
+        url: https://app.daytona.io/api/api-keys/current
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: 279
+        body: '{"createdAt":"2026-10-28T12:54:22.648Z","expiresAt":null,"lastUsedAt":"2026-10-28T13:05:00.754Z","name":"probo-access-review","organizationId":"00000000-0000-4000-8000-000000000001","permissions":[],"userId":"user_00000000000000000000000001","value":"dtn********************000"}'
+        headers:
+            Content-Length:
+                - "279"
+            Content-Security-Policy:
+                - frame-ancestors 'none'
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Wed, 28 Oct 2026 13:11:21 GMT
+            Referrer-Policy:
+                - strict-origin-when-cross-origin
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains; preload
+            Vary:
+                - Origin
+            Via:
+                - 1.1 7df620b6f451b0302028f760f929cf50.cloudfront.net (CloudFront)
+            X-Amz-Cf-Id:
+                - 4kF7NIdATZW21zoHXQOdnD97Rw3VuZYG1XVRnjdR-KaCbfDNf3gzRQ==
+            X-Amz-Cf-Pop:
+                - CDG52-P7
+            X-Cache:
+                - Miss from cloudfront
+            X-Content-Type-Options:
+                - nosniff
+            X-Daytona-Api-Version:
+                - v0.226.1
+            X-Frame-Options:
+                - DENY
+            X-Powered-By:
+                - Express
+            X-Ratelimit-Limit-Authenticated:
+                - "50000"
+            X-Ratelimit-Remaining-Authenticated:
+                - "49999"
+            X-Ratelimit-Reset-Authenticated:
+                - "60"
+        status: 200 OK
+        code: 200
+        duration: 183.353375ms
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: app.daytona.io
+        headers:
+            Accept:
+                - application/json
+        url: https://app.daytona.io/api/organizations/00000000-0000-4000-8000-000000000001/users
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: 262
+        body: '[{"assignedRoles":[],"createdAt":"2026-10-28T12:51:59.357Z","email":"member1@example.com","name":"Member 1","organizationId":"00000000-0000-4000-8000-000000000001","role":"owner","updatedAt":"2026-10-28T12:51:59.357Z","userId":"user_00000000000000000000000001"}]'
+        headers:
+            Content-Length:
+                - "262"
+            Content-Security-Policy:
+                - frame-ancestors 'none'
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Wed, 28 Oct 2026 13:11:22 GMT
+            Referrer-Policy:
+                - strict-origin-when-cross-origin
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains; preload
+            Vary:
+                - Origin
+            Via:
+                - 1.1 7df620b6f451b0302028f760f929cf50.cloudfront.net (CloudFront)
+            X-Amz-Cf-Id:
+                - pE051jzuuDhDzZMGX5vL2fjyge0CB06JDkklSAAAxg7L17MlziR_Yg==
+            X-Amz-Cf-Pop:
+                - CDG52-P7
+            X-Cache:
+                - Miss from cloudfront
+            X-Content-Type-Options:
+                - nosniff
+            X-Daytona-Api-Version:
+                - v0.226.1
+            X-Frame-Options:
+                - DENY
+            X-Powered-By:
+                - Express
+            X-Ratelimit-Limit-Authenticated:
+                - "50000"
+            X-Ratelimit-Remaining-Authenticated:
+                - "49998"
+            X-Ratelimit-Reset-Authenticated:
+                - "60"
+        status: 200 OK
+        code: 200
+        duration: 99.276375ms

@@ -69,3 +69,9 @@ export const ElasticCloud: Story = {
     thirdParty: "ELASTIC_CLOUD",
   },
 };
+
+export const Daytona: Story = {
+  args: {
+    thirdParty: "DAYTONA",
+  },
+};

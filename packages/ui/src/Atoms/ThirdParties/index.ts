@@ -18,6 +18,7 @@ export { Cloudflare } from "./Cloudflare";
 export { Crisp } from "./Crisp";
 export { Cursor } from "./Cursor";
 export { Datadog } from "./Datadog";
+export { Daytona } from "./Daytona";
 export { Deepgram } from "./Deepgram";
 export { DocuSign } from "./DocuSign";
 export { Dotfile } from "./Dotfile";
