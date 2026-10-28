@@ -4,8 +4,13 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.263.0] - 2026-10-28
+
 ### Added
 
+- Internal Control `Get Many` filters by category, implementation
+  statuses, owner, and needs attention, and sorts by created at, name,
+  or next due date. Query matches the name or the code
 - Audit Log `Get Many` filters by action, actor, resource type, and
   resource ID
 
