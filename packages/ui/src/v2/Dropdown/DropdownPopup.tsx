@@ -19,7 +19,9 @@
 // SOFTWARE.
 
 import { Menu } from "@base-ui/react/menu";
-import type { ComponentProps } from "react";
+import { type ComponentProps, useContext } from "react";
+
+import { overlayPortalContainer, OverlayPortalRootContext } from "../../lib/overlayPortalRoot";
 
 import { DropdownProvider } from "./context";
 import { dropdownPopup } from "./variants";
@@ -32,6 +34,9 @@ export type DropdownPopupProps
       size?: 1 | 2;
       variant?: "solid" | "soft";
       highContrast?: boolean;
+      // Mount inside a modal stacking context (a body portal uses z-3, below
+      // dialogs and drawers at z-5).
+      container?: ComponentProps<typeof Menu.Portal>["container"];
       // Positioner placement passthrough.
       side?: ComponentProps<typeof Menu.Positioner>["side"];
       align?: ComponentProps<typeof Menu.Positioner>["align"];
@@ -41,14 +46,15 @@ export type DropdownPopupProps
 // Portal + positioner + styled popup. Provides the menu-level look to its items.
 export function DropdownPopup(props: DropdownPopupProps) {
   const {
-    className, children,
+    className, children, container,
     size = 2, variant = "solid", highContrast = false,
     side = "bottom", align = "start", sideOffset = 4,
     ...popupProps
   } = props;
+  const overlayRoot = useContext(OverlayPortalRootContext);
 
   return (
-    <Menu.Portal>
+    <Menu.Portal container={overlayPortalContainer(container, overlayRoot)}>
       {/* z-3 on the Positioner so the portaled root wins over in-page z-1. */}
       <Menu.Positioner className="z-3" side={side} align={align} sideOffset={sideOffset}>
         <Menu.Popup className={dropdownPopup({ className })} {...popupProps}>
