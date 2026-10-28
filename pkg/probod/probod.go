@@ -101,6 +101,8 @@ import (
 	"go.probo.inc/probo/pkg/slack"
 	"go.probo.inc/probo/pkg/task"
 	tasksync "go.probo.inc/probo/pkg/task/sync"
+	asanasvc "go.probo.inc/probo/pkg/task/sync/asana"
+	linearsvc "go.probo.inc/probo/pkg/task/sync/linear"
 	"go.probo.inc/probo/pkg/thirdparty"
 	"go.probo.inc/probo/pkg/webhook"
 	"golang.org/x/sync/errgroup"
@@ -447,6 +449,13 @@ func (impl *Implm) Run(
 	}
 
 	linearAPIBaseURL := linearRegistration.Endpoints.APIBase
+
+	asanaRegistration, ok := providerRegistry.Get(coredata.ConnectorProviderAsana)
+	if !ok {
+		return fmt.Errorf("cannot configure asana task sync: no asana connector provider registered")
+	}
+
+	asanaAPIBaseURL := asanaRegistration.Endpoints.APIBase
 
 	defaultConnectorRegistry := connectorprotocol.NewConnectorRegistry()
 
@@ -919,6 +928,7 @@ func (impl *Implm) Run(
 		defaultConnectorRegistry,
 		baseURL.String(),
 		linearAPIBaseURL,
+		asanaAPIBaseURL,
 		l.Named("task"),
 		fileManagerService,
 		impl.cfg.AWS.Bucket,
@@ -1443,8 +1453,19 @@ func (impl *Implm) Run(
 		},
 	)
 
-	linearWebhookWorker := tasksync.NewWebhookWorker(
-		taskService.Sync,
+	asanaWebhookWorker := asanasvc.NewAsanaWebhookWorker(
+		taskService.Sync.Asana,
+		l.Named("asana-webhook"),
+		worker.WithInterval(time.Second),
+		worker.WithRegisterer(r),
+		worker.WithTracerProvider(tp),
+	)
+	asanaWebhookWorkerCtx, stopAsanaWebhookWorker := context.WithCancel(
+		context.WithoutCancel(ctx),
+	)
+
+	linearWebhookWorker := linearsvc.NewWebhookWorker(
+		taskService.Sync.Linear,
 		l.Named("linear-webhook"),
 		worker.WithInterval(time.Second),
 		worker.WithRegisterer(r),
@@ -1468,6 +1489,14 @@ func (impl *Implm) Run(
 		func() {
 			if err := linearWebhookWorker.Run(linearWebhookWorkerCtx); err != nil {
 				cancel(fmt.Errorf("linear webhook worker crashed: %w", err))
+			}
+		},
+	)
+
+	wg.Go(
+		func() {
+			if err := asanaWebhookWorker.Run(asanaWebhookWorkerCtx); err != nil {
+				cancel(fmt.Errorf("asana webhook worker crashed: %w", err))
 			}
 		},
 	)
@@ -1854,6 +1883,7 @@ func (impl *Implm) Run(
 	stopTaskRecurrenceWorker()
 	stopTaskSyncOutboundWorker()
 	stopLinearWebhookWorker()
+	stopAsanaWebhookWorker()
 	stopLinearWebhookRetentionWorker()
 	stopDocumentPDFWorker()
 	stopDocumentApprovalQuorumPDFWorker()

@@ -33,6 +33,8 @@ import type { NavPanelBodyProps } from "./navPanels";
 const settingsNavPanelQuery = graphql`
   query SettingsNavPanelQuery($organizationId: ID!) {
     slackbotAvailable
+    linearSynchronizationAvailable
+    asanaSynchronizationAvailable
     organization: node(id: $organizationId) @required(action: THROW) {
       __typename
       ... on Organization {
@@ -42,6 +44,7 @@ const settingsNavPanelQuery = graphql`
         canConnectSlack: permission(action: "core:connector:initiate")
         canUninstallSlack: permission(action: "core:connector:delete")
         canListConnectors: permission(action: "core:connector:list")
+        canListTasks: permission(action: "core:task:list")
         canListMembers: permission(action: "iam:membership:list")
         canListAuditLogEntries: permission(action: "iam:audit-log-entry:list")
       }
@@ -65,7 +68,7 @@ function SettingsNavPanelInner({ queryRef, group }: SettingsNavPanelInnerProps) 
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const data = usePreloadedQuery<SettingsNavPanelQuery>(settingsNavPanelQuery, queryRef);
-  const { organization, slackbotAvailable } = data;
+  const { organization, slackbotAvailable, linearSynchronizationAvailable, asanaSynchronizationAvailable } = data;
   if (organization.__typename !== "Organization") {
     throw new Error("invalid type for organization node");
   }
@@ -74,6 +77,11 @@ function SettingsNavPanelInner({ queryRef, group }: SettingsNavPanelInnerProps) 
     || organization.canListAuditLogEntries;
   const showSlackBot = slackbotAvailable
     && (organization.canConnectSlack || organization.canUninstallSlack);
+  const showTaskSynchronization = (linearSynchronizationAvailable || asanaSynchronizationAvailable)
+    && organization.canListTasks;
+  const showIntegrations = organization.canListConnectors
+    || showSlackBot
+    || showTaskSynchronization;
 
   return (
     <>
@@ -93,12 +101,6 @@ function SettingsNavPanelInner({ queryRef, group }: SettingsNavPanelInnerProps) 
         <NavPanelItem
           label={t("nav.webhooks")}
           to={navHref(organizationId, group, "webhooks")}
-        />
-      )}
-      {showSlackBot && (
-        <NavPanelItem
-          label={t("nav.slackBot")}
-          to={navHref(organizationId, group, "slackbot")}
         />
       )}
       {showIam && (
@@ -129,12 +131,26 @@ function SettingsNavPanelInner({ queryRef, group }: SettingsNavPanelInnerProps) 
           )}
         </NavPanelGroup>
       )}
-      {organization.canListConnectors && (
+      {showIntegrations && (
         <NavPanelGroup label={t("nav.integrations")}>
-          <NavPanelItem
-            label={t("nav.connections")}
-            to={navHref(organizationId, group, "integrations")}
-          />
+          {organization.canListConnectors && (
+            <NavPanelItem
+              label={t("nav.connections")}
+              to={navHref(organizationId, group, "integrations")}
+            />
+          )}
+          {showSlackBot && (
+            <NavPanelItem
+              label={t("nav.slackBot")}
+              to={navHref(organizationId, group, "slackbot")}
+            />
+          )}
+          {showTaskSynchronization && (
+            <NavPanelItem
+              label={t("nav.taskSynchronization")}
+              to={navHref(organizationId, group, "task-synchronization")}
+            />
+          )}
         </NavPanelGroup>
       )}
     </>

@@ -41,9 +41,16 @@ const navPanelFragment = graphql`
 export interface NavPanelProps {
   organizationKey: NavPanel_organization$key;
   slackbotAvailable: boolean;
+  linearSynchronizationAvailable: boolean;
+  asanaSynchronizationAvailable: boolean;
 }
 
-export function NavPanel({ organizationKey, slackbotAvailable }: NavPanelProps) {
+export function NavPanel({
+  organizationKey,
+  slackbotAvailable,
+  linearSynchronizationAvailable,
+  asanaSynchronizationAvailable,
+}: NavPanelProps) {
   const { t } = useTranslation();
   const organization = useFragment<NavPanel_organization$key>(
     navPanelFragment,
@@ -54,8 +61,13 @@ export function NavPanel({ organizationKey, slackbotAvailable }: NavPanelProps) 
     organization,
   );
   const groups = useMemo(
-    () => visibleNavGroups(permissions, slackbotAvailable),
-    [permissions, slackbotAvailable],
+    () => visibleNavGroups(
+      permissions,
+      slackbotAvailable,
+      linearSynchronizationAvailable,
+      asanaSynchronizationAvailable,
+    ),
+    [permissions, slackbotAvailable, linearSynchronizationAvailable, asanaSynchronizationAvailable],
   );
   const activeGroup = useActiveNavGroup(groups);
   const slots = navPanel();

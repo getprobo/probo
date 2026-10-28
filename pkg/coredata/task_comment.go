@@ -67,16 +67,27 @@ SELECT
     tc.id,
     tc.organization_id,
     tc.task_id,
-    p.identity_id
+    p.identity_id,
+    l.task_comment_id
 FROM
     task_comments tc
 LEFT JOIN
     iam_membership_profiles p ON p.id = tc.owner_profile_id
+LEFT JOIN
+    task_comment_external_links l ON l.task_comment_id = tc.id
+    AND l.provider = @asana_provider
 WHERE
     tc.id = ANY(@resource_ids)
 `
 
-	rows, err := conn.Query(ctx, q, pgx.StrictNamedArgs{"resource_ids": resourceIDs})
+	rows, err := conn.Query(
+		ctx,
+		q,
+		pgx.StrictNamedArgs{
+			"resource_ids":   resourceIDs,
+			"asana_provider": ConnectorProviderAsana,
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot query authorization attributes: %w", err)
 	}
@@ -92,7 +103,9 @@ WHERE
 
 		var ownerIdentityID *gid.GID
 
-		if err := rows.Scan(&id, &organizationID, &taskID, &ownerIdentityID); err != nil {
+		var asanaLinkID *gid.GID
+
+		if err := rows.Scan(&id, &organizationID, &taskID, &ownerIdentityID, &asanaLinkID); err != nil {
 			return nil, fmt.Errorf("cannot scan authorization attributes: %w", err)
 		}
 
@@ -101,6 +114,10 @@ WHERE
 		}
 		if ownerIdentityID != nil {
 			attrs["owner_id"] = ownerIdentityID.String()
+		}
+
+		if asanaLinkID != nil {
+			attrs["asana_linked"] = "true"
 		}
 
 		attrsByID[id] = attrs

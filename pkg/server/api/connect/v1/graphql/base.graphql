@@ -48,6 +48,12 @@ type Query {
   slackbotAvailable: Boolean!
     @goField(forceResolver: true)
     @authentication(required: PRESENT)
+  linearSynchronizationAvailable: Boolean!
+    @goField(forceResolver: true)
+    @authentication(required: PRESENT)
+  asanaSynchronizationAvailable: Boolean!
+    @goField(forceResolver: true)
+    @authentication(required: PRESENT)
   oauth2ScopesSupported: [OAuth2Scope!]!
     @goField(forceResolver: true)
     @authentication(required: OPTIONAL)

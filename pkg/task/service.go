@@ -38,6 +38,7 @@ import (
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/prosemirror"
 	tasksync "go.probo.inc/probo/pkg/task/sync"
+	"go.probo.inc/probo/pkg/task/sync/shared"
 	"go.probo.inc/probo/pkg/timespan"
 	"go.probo.inc/probo/pkg/validator"
 )
@@ -62,6 +63,7 @@ func NewService(
 	connectorRegistry *connectorprotocol.Registry,
 	baseURL string,
 	linearAPIBaseURL string,
+	asanaAPIBaseURL string,
 	logger *log.Logger,
 	files *filemanager.Service,
 	bucket string,
@@ -75,6 +77,7 @@ func NewService(
 			connectorRegistry,
 			baseURL,
 			linearAPIBaseURL,
+			asanaAPIBaseURL,
 			logger,
 			InsertUpdateActivities,
 			recordImportedTask,
@@ -458,7 +461,7 @@ func (s *Service) Assign(
 					conn,
 					scope,
 					task.ID,
-					tasksync.SyncActionUpdate,
+					shared.SyncActionUpdate,
 				); err != nil {
 					return fmt.Errorf("cannot enqueue task sync: %w", err)
 				}
@@ -756,7 +759,7 @@ func (s *Service) Update(
 					conn,
 					scope,
 					task.ID,
-					tasksync.SyncActionUpdate,
+					shared.SyncActionUpdate,
 				); err != nil {
 					return fmt.Errorf("cannot enqueue task sync: %w", err)
 				}
@@ -792,7 +795,7 @@ func (s *Service) Delete(
 					conn,
 					scope,
 					taskID,
-					tasksync.SyncActionCancel,
+					shared.SyncActionCancel,
 				); err != nil {
 					return fmt.Errorf("cannot enqueue task sync: %w", err)
 				}

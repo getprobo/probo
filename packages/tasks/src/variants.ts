@@ -71,6 +71,7 @@ export const taskListItem = tv({
     titleLink: "hover:underline after:absolute after:inset-0 after:content-['']",
     metaGroup: "relative z-1 ml-auto flex h-6 shrink-0 items-center gap-3",
     meta: "flex h-6 shrink-0 items-center gap-1 text-sand-11 [&_svg]:size-3.5",
+    metaLabel: "block max-w-40 truncate",
     metaIcon: "text-indigo-11",
     deadline: "flex h-6 shrink-0 items-center gap-1 text-sand-12 [&_svg]:size-3.5",
     deadlineIcon: "text-red-11",

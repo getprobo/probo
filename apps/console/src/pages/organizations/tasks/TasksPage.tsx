@@ -18,23 +18,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { PlusIcon } from "@phosphor-icons/react";
+import { GearSixIcon, PlusIcon } from "@phosphor-icons/react";
 import { usePageTitle } from "@probo/hooks";
 import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
+import { iconButton } from "@probo/ui/src/v2/IconButton/variants";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
-import { useLocation } from "react-router";
+import { Link, useLocation } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { TasksPageQuery } from "#/__generated__/core/TasksPageQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { TasksPageList } from "./_components/TasksPageList/TasksPageList";
-import { TasksSettingsDialog } from "./_components/TasksSettingsDialog/TasksSettingsDialog";
-import { taskNewPath } from "./_lib/taskPath";
+import { taskNewPath, taskSynchronizationPath } from "./_lib/taskPath";
 import { tasksPage } from "./variants";
 
 export const tasksPageQuery = graphql`
@@ -74,7 +74,6 @@ export const tasksPageQuery = graphql`
             includeCanceled: $includeCanceled
             includeDuplicate: $includeDuplicate
           )
-        ...TasksSettingsDialog_organization
       }
     }
   }
@@ -87,6 +86,7 @@ interface TasksPageProps {
 
 export function TasksPage({ queryRef, onReady }: TasksPageProps) {
   const { t } = useTranslation();
+  const { t: tTasks } = useTranslation("organizations/tasks");
   const organizationId = useOrganizationId();
   const location = useLocation();
   const query = usePreloadedQuery<TasksPageQuery>(tasksPageQuery, queryRef);
@@ -123,7 +123,13 @@ export function TasksPage({ queryRef, onReady }: TasksPageProps) {
               {t("tasks.actions.create")}
             </ButtonLink>
           )}
-          <TasksSettingsDialog organizationKey={organization} />
+          <Link
+            to={taskSynchronizationPath(organizationId)}
+            aria-label={tTasks("settingsDialog.trigger")}
+            className={iconButton({ variant: "soft", color: "neutral" })}
+          >
+            <GearSixIcon />
+          </Link>
         </div>
       </div>
       <TasksPageList organizationKey={organization} />

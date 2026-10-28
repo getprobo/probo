@@ -20,6 +20,7 @@
 
 import { ArrowsClockwiseIcon } from "@phosphor-icons/react";
 import { compactDateFormat, formatDuration } from "@probo/i18n";
+import { Asana } from "@probo/ui/src/Atoms/ThirdParties/Asana";
 import { Linear } from "@probo/ui/src/Atoms/ThirdParties/Linear";
 import { Tooltip } from "@probo/ui/src/v2/Tooltip/Tooltip";
 import { TooltipPopup } from "@probo/ui/src/v2/Tooltip/TooltipPopup";
@@ -58,6 +59,7 @@ export interface TaskListItemTask {
   deadline?: string | null;
   recurrenceInterval?: string | null;
   externalLink?: {
+    provider?: string;
     identifier: string;
     url: string;
   } | null;
@@ -226,9 +228,13 @@ export function TaskListItem(props: TaskListItemProps) {
                 draggable={false}
                 onMouseDown={event => event.stopPropagation()}
               >
-                <Linear aria-hidden />
-                <Text size={1} color="current">
-                  {props.task.externalLink.identifier}
+                {props.task.externalLink.provider === "ASANA"
+                  ? <Asana aria-hidden />
+                  : <Linear aria-hidden />}
+                <Text size={1} color="current" className={slots.metaLabel()}>
+                  {props.task.externalLink.provider === "ASANA"
+                    ? props.task.name
+                    : props.task.externalLink.identifier}
                 </Text>
               </a>
             )}

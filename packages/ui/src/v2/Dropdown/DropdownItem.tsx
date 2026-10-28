@@ -28,7 +28,7 @@ export type DropdownItemProps
   = & Omit<ComponentProps<typeof Menu.Item>, "color" | "className">
     & {
       className?: string;
-      color?: "accent" | "error" | "success" | "linear";
+      color?: "accent" | "neutral" | "error" | "success" | "linear";
       iconStart?: ReactNode;
       // Trailing keyboard shortcut hint (e.g. "⌘ E").
       shortcut?: ReactNode;
@@ -36,7 +36,8 @@ export type DropdownItemProps
 
 // A single actionable menu item. Inherits size/variant/highContrast from the
 // popup; set `color="error"` for destructive actions, `color="success"` for
-// affirmative status rows (e.g. subscribed), and `color="linear"` for Linear.
+// affirmative status rows (e.g. subscribed), `color="neutral"` for a sand
+// highlight, and `color="linear"` for Linear.
 export function DropdownItem(props: DropdownItemProps) {
   const { className, color = "accent", iconStart, shortcut, children, ...rest } = props;
   const { size, variant, highContrast } = useDropdownContext();

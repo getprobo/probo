@@ -37,6 +37,8 @@ import { OrganizationLayoutSkeleton } from "./OrganizationLayoutSkeleton";
 export const organizationLayoutQuery = graphql`
   query OrganizationLayoutQuery($organizationId: ID!) {
     slackbotAvailable
+    linearSynchronizationAvailable
+    asanaSynchronizationAvailable
     organization: node(id: $organizationId) @required(action: THROW) {
       __typename
       ... on Organization {
@@ -68,7 +70,13 @@ export interface OrganizationLayoutProps {
 
 export function OrganizationLayout({ queryRef }: OrganizationLayoutProps) {
   const routeOrganizationId = useOrganizationId();
-  const { organization, viewer, slackbotAvailable } = usePreloadedQuery<OrganizationLayoutQuery>(
+  const {
+    organization,
+    viewer,
+    slackbotAvailable,
+    linearSynchronizationAvailable,
+    asanaSynchronizationAvailable,
+  } = usePreloadedQuery<OrganizationLayoutQuery>(
     organizationLayoutQuery,
     queryRef,
   );
@@ -93,17 +101,23 @@ export function OrganizationLayout({ queryRef }: OrganizationLayoutProps) {
           <NavSpotlight
             organizationKey={organization}
             slackbotAvailable={slackbotAvailable}
+            linearSynchronizationAvailable={linearSynchronizationAvailable}
+            asanaSynchronizationAvailable={asanaSynchronizationAvailable}
             open={spotlightOpen}
             onOpenChange={setSpotlightOpen}
           />
           <NavRail
             organizationKey={organization}
             slackbotAvailable={slackbotAvailable}
+            linearSynchronizationAvailable={linearSynchronizationAvailable}
+            asanaSynchronizationAvailable={asanaSynchronizationAvailable}
             onOpenSpotlight={() => setSpotlightOpen(true)}
           />
           <NavPanel
             organizationKey={organization}
             slackbotAvailable={slackbotAvailable}
+            linearSynchronizationAvailable={linearSynchronizationAvailable}
+            asanaSynchronizationAvailable={asanaSynchronizationAvailable}
           />
           <main className={slots.content()}>
             <div className={slots.contentInner()}>

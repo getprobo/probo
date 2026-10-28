@@ -24,16 +24,24 @@ import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 	"go.probo.inc/probo/pkg/cmd/task/activity"
+	asanaprojectsetup "go.probo.inc/probo/pkg/cmd/task/asana-project-setup"
 	"go.probo.inc/probo/pkg/cmd/task/comment"
 	"go.probo.inc/probo/pkg/cmd/task/create"
 	"go.probo.inc/probo/pkg/cmd/task/delete"
+	linkasana "go.probo.inc/probo/pkg/cmd/task/link-asana"
 	linklinear "go.probo.inc/probo/pkg/cmd/task/link-linear"
 	"go.probo.inc/probo/pkg/cmd/task/list"
+	listasanaprojects "go.probo.inc/probo/pkg/cmd/task/list-asana-projects"
+	listasanatasks "go.probo.inc/probo/pkg/cmd/task/list-asana-tasks"
+	listasanateams "go.probo.inc/probo/pkg/cmd/task/list-asana-teams"
 	listlinearissues "go.probo.inc/probo/pkg/cmd/task/list-linear-issues"
 	listlinearteams "go.probo.inc/probo/pkg/cmd/task/list-linear-teams"
+	publishasana "go.probo.inc/probo/pkg/cmd/task/publish-asana"
 	publishlinear "go.probo.inc/probo/pkg/cmd/task/publish-linear"
 	unlinkexternal "go.probo.inc/probo/pkg/cmd/task/unlink-external"
 	"go.probo.inc/probo/pkg/cmd/task/update"
+	updateasanaprojectmapping "go.probo.inc/probo/pkg/cmd/task/update-asana-project-mapping"
+	updateasanasettings "go.probo.inc/probo/pkg/cmd/task/update-asana-settings"
 	updatelinearsettings "go.probo.inc/probo/pkg/cmd/task/update-linear-settings"
 	"go.probo.inc/probo/pkg/cmd/task/view"
 )
@@ -56,6 +64,14 @@ func NewCmdTask(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(listlinearissues.NewCmdListLinearIssues(f))
 	cmd.AddCommand(publishlinear.NewCmdPublishLinear(f))
 	cmd.AddCommand(linklinear.NewCmdLinkLinear(f))
+	cmd.AddCommand(publishasana.NewCmdPublishAsana(f))
+	cmd.AddCommand(linkasana.NewCmdLinkAsana(f))
+	cmd.AddCommand(listasanateams.NewCmdListAsanaTeams(f))
+	cmd.AddCommand(listasanaprojects.NewCmdListAsanaProjects(f))
+	cmd.AddCommand(listasanatasks.NewCmdListAsanaTasks(f))
+	cmd.AddCommand(updateasanasettings.NewCmdUpdateAsanaSettings(f))
+	cmd.AddCommand(asanaprojectsetup.NewCmdAsanaProjectSetup(f))
+	cmd.AddCommand(updateasanaprojectmapping.NewCmdUpdateAsanaProjectMapping(f))
 	cmd.AddCommand(unlinkexternal.NewCmdUnlinkExternal(f))
 
 	return cmd
