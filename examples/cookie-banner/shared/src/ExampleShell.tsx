@@ -67,6 +67,30 @@ export function ExampleShell({ title, description, children }: ExampleShellProps
         </probo-settings-link>
       </header>
 
+      <div
+        style={{
+          position: "relative",
+          marginBottom: 24,
+          paddingBottom: "56.25%",
+          height: 0,
+        }}
+      >
+        <iframe
+          src="https://www.youtube.com/embed/4kHl4FoK1Ys"
+          title="Modern Talking - You're My Heart, You're My Soul"
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            border: 0,
+          }}
+          allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        />
+      </div>
+
       {children}
     </div>
   );
