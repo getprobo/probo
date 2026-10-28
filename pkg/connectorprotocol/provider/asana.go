@@ -82,7 +82,14 @@ func asanaRegistration() *Registration {
 			return drivers.NewAsanaNameResolver(c, s.WorkspaceGID, ep.APIBase)
 		},
 		SetOrganizationSettings: func(c *coredata.Connector, workspaceGID string) error {
-			return c.SetSettings(&coredata.AsanaConnectorSettings{WorkspaceGID: workspaceGID})
+			existing, err := coredata.ConnectorSettings[coredata.AsanaConnectorSettings](c)
+			if err != nil || existing.WorkspaceGID != workspaceGID {
+				return c.SetSettings(&coredata.AsanaConnectorSettings{WorkspaceGID: workspaceGID})
+			}
+
+			existing.WorkspaceGID = workspaceGID
+
+			return c.SetSettings(&existing)
 		},
 	}
 }

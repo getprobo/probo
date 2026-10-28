@@ -29,7 +29,8 @@
       "recurrence": "Répétition",
       "recurrenceUnit": "Unité de répétition",
       "createdAt": "Créé le",
-      "updatedAt": "Mis à jour le"
+      "updatedAt": "Mis à jour le",
+      "asana": "Asana"
     },
     "duration": {
       "S": "Secondes",
@@ -159,6 +160,33 @@
       "actions": {
         "showMore": "Afficher plus"
       }
+    },
+    "asana": {
+      "noResults": "Aucun résultat",
+      "loadMore": "Charger plus",
+      "errors": {
+        "load": "Impossible d'afficher Asana",
+        "publish": "Échec de la création de la tâche dans Asana",
+        "link": "Échec de la liaison de la tâche à Asana",
+        "unlink": "Échec de la dissociation de la tâche Asana"
+      },
+      "publish": "Créer",
+      "link": "Lier",
+      "linkTo": "Lier à",
+      "unlink": "Délier",
+      "project": "Projet Asana",
+      "task": "Tâche Asana",
+      "chooseProject": "Choisir un projet",
+      "noProject": "Aucun projet",
+      "chooseTask": "Choisir une tâche",
+      "newTask": "Nouvelle tâche",
+      "searchProject": "Rechercher par nom",
+      "searchTask": "Rechercher par nom",
+      "linkHint": "Lier à Asana",
+      "linkedTask": "Liée à <task>Asana</task>",
+      "published": "Tâche créée dans Asana.",
+      "linked": "Tâche liée à Asana.",
+      "unlinked": "Tâche Asana déliée."
     }
   },
   "settingsDialog": {
@@ -208,6 +236,49 @@
       "connect": "Connecter",
       "disconnect": "Déconnecter",
       "close": "Fermer"
+    },
+    "asana": {
+      "name": "Asana",
+      "description": "Publiez une tâche dans un projet Asana et synchronisez le nom, la description, l'échéance, l'assignation, les commentaires et les fichiers lorsque les e-mails correspondent.",
+      "defaultProject": "Projet par défaut",
+      "defaultProjectDescription": "Les nouvelles tâches sont publiées dans ce projet, sauf si un autre projet est choisi. Laissez-le vide pour garder les nouvelles tâches dans Probo.",
+      "noDefaultProject": "Aucun projet par défaut",
+      "searchProject": "Rechercher des projets",
+      "chooseProject": "Choisir un projet",
+      "taskImport": "Importer les nouvelles tâches",
+      "taskImportDescription": "Actif crée une tâche Probo pour chaque nouvelle tâche du projet par défaut.",
+      "taskImportStatus": {
+        "active": "Actif",
+        "inactive": "Inactif"
+      },
+      "mapping": "Correspondance des états et des priorités",
+      "mappingHint": "Choisissez un projet pour associer ses sections et son champ de priorité. Tant qu'aucune correspondance n'est enregistrée, l'état suit le statut terminé d'Asana.",
+      "mappingDescription": "Chaque état Probo peut déplacer la tâche vers une section. Quand deux états partagent une section, indiquez l'état que les tâches entrantes doivent prendre.",
+      "loadingMapping": "Chargement du projet…",
+      "noSection": "Ne pas déplacer la section",
+      "incoming": "Entrant",
+      "priorityField": "Champ de priorité",
+      "noPriority": "Ne pas synchroniser la priorité",
+      "noOption": "Ignorer",
+      "saveMapping": "Enregistrer la correspondance",
+      "disconnect": {
+        "title": "Déconnecter Asana ?",
+        "description": "Les tâches ne seront plus synchronisées avec Asana. Vous pourrez reconnecter plus tard.",
+        "confirm": "Déconnecter"
+      },
+      "messages": {
+        "disconnected": "Asana déconnecté.",
+        "defaultProjectSaved": "Projet par défaut enregistré.",
+        "taskImportSaved": "Import des tâches enregistré.",
+        "mappingSaved": "Correspondance enregistrée."
+      },
+      "errors": {
+        "disconnect": "Échec de la déconnexion d'Asana",
+        "defaultProject": "Échec de l'enregistrement du projet par défaut",
+        "taskImport": "Échec de l'enregistrement de l'import",
+        "mapping": "Échec de l'enregistrement de la correspondance",
+        "shared": "Quand plusieurs états partagent une section, marquez-en exactement un comme entrant. La même règle s'applique aux options de priorité."
+      }
     }
   },
   "newPage": {

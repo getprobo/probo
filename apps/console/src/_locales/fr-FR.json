@@ -2245,6 +2245,7 @@
     "context": "Contexte",
     "webhooks": "Webhooks",
     "slackBot": "SlackBot",
+    "taskSynchronization": "Synchronisation des tâches",
     "integrations": "INTÉGRATIONS",
     "tasks": "Tâches",
     "internalControls": "Contrôles internes",

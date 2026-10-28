@@ -7365,6 +7365,7 @@ components:
       enum:
         - PROBO
         - LINEAR
+        - ASANA
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.TaskExternalLinkOrigin
 
     TaskExternalLink:
@@ -7596,6 +7597,430 @@ components:
       properties:
         task:
           $ref: "#/components/schemas/Task"
+
+    AsanaNamed:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          description: Asana GID
+        name:
+          type: string
+          description: Asana name
+
+    AsanaTaskSummary:
+      type: object
+      required:
+        - id
+        - name
+        - completed
+      properties:
+        id:
+          type: string
+          description: Asana task GID
+        name:
+          type: string
+          description: Asana task name
+        completed:
+          type: boolean
+          description: Whether the Asana task is completed
+
+    ListAsanaTeamsInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        size:
+          type: integer
+          description: Page size. Defaults to 20.
+        cursor:
+          type: string
+          description: Page cursor
+        query:
+          type: string
+          description: Search teams by name
+
+    ListAsanaTeamsOutput:
+      type: object
+      required:
+        - teams
+      properties:
+        teams:
+          type: array
+          items:
+            $ref: "#/components/schemas/AsanaNamed"
+          description: Asana teams
+        next_cursor:
+          anyOf:
+            - type: string
+            - type: "null"
+          description: Next page cursor. Null when this is the last page.
+
+    ListAsanaProjectsInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        team_id:
+          type: string
+          description: Asana team GID. Omit it to list workspace projects.
+        size:
+          type: integer
+          description: Page size. Defaults to 20.
+        cursor:
+          type: string
+          description: Page cursor
+        query:
+          type: string
+          description: Search projects by name
+
+    ListAsanaProjectsOutput:
+      type: object
+      required:
+        - projects
+      properties:
+        projects:
+          type: array
+          items:
+            $ref: "#/components/schemas/AsanaNamed"
+          description: Asana projects
+        next_cursor:
+          anyOf:
+            - type: string
+            - type: "null"
+          description: Next page cursor. Null when this is the last page.
+
+    ListAsanaTasksInput:
+      type: object
+      required:
+        - organization_id
+        - project_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        project_id:
+          type: string
+          description: Asana project GID
+        size:
+          type: integer
+          description: Page size. Defaults to 20.
+        cursor:
+          type: string
+          description: Page cursor
+        query:
+          type: string
+          description: Search tasks by name
+
+    ListAsanaTasksOutput:
+      type: object
+      required:
+        - tasks
+      properties:
+        tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/AsanaTaskSummary"
+          description: Asana tasks
+        next_cursor:
+          anyOf:
+            - type: string
+            - type: "null"
+          description: Next page cursor. Null when this is the last page.
+
+    PublishTaskToAsanaInput:
+      type: object
+      required:
+        - task_id
+        - project_id
+      properties:
+        task_id:
+          $ref: "#/components/schemas/GID"
+          description: Task ID
+        project_id:
+          type: string
+          description: Asana project GID
+
+    PublishTaskToAsanaOutput:
+      type: object
+      required:
+        - task
+      properties:
+        task:
+          $ref: "#/components/schemas/Task"
+
+    LinkTaskToAsanaInput:
+      type: object
+      required:
+        - task_id
+        - project_id
+        - task_gid
+      properties:
+        task_id:
+          $ref: "#/components/schemas/GID"
+          description: Task ID
+        project_id:
+          type: string
+          description: Asana project GID
+        task_gid:
+          type: string
+          description: Asana task GID
+
+    LinkTaskToAsanaOutput:
+      type: object
+      required:
+        - task
+      properties:
+        task:
+          $ref: "#/components/schemas/Task"
+
+    AsanaTaskImport:
+      type: string
+      enum:
+        - ACTIVE
+        - INACTIVE
+
+    AsanaSettings:
+      type: object
+      required:
+        - task_import
+      properties:
+        default_project:
+          anyOf:
+            - $ref: "#/components/schemas/AsanaNamed"
+            - type: "null"
+          description: Default Asana project. Null when no default project is set.
+        task_import:
+          $ref: "#/components/schemas/AsanaTaskImport"
+          description: Whether new tasks in the default Asana project are imported.
+
+    UpdateAsanaSettingsInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        default_project_id:
+          anyOf:
+            - type: string
+              description: Asana project GID
+            - type: "null"
+              description: Clear the default Asana project
+          description: Asana project GID. Omit it to keep the current project. Null clears the project and turns task import off.
+        task_import:
+          $ref: "#/components/schemas/AsanaTaskImport"
+          description: Task import status. Omit it to keep the current status. Active requires a default project.
+
+    UpdateAsanaSettingsOutput:
+      type: object
+      required:
+        - settings
+      properties:
+        settings:
+          $ref: "#/components/schemas/AsanaSettings"
+          description: Asana settings after the update.
+
+    AsanaSection:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          description: Asana section GID
+        name:
+          type: string
+          description: Asana section name
+
+    AsanaEnumOption:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          description: Asana enum option GID
+        name:
+          type: string
+          description: Asana enum option name
+
+    AsanaEnumField:
+      type: object
+      required:
+        - id
+        - name
+        - options
+      properties:
+        id:
+          type: string
+          description: Asana custom field GID
+        name:
+          type: string
+          description: Asana custom field name
+        options:
+          type: array
+          items:
+            $ref: "#/components/schemas/AsanaEnumOption"
+          description: Enum options
+
+    AsanaStateMapping:
+      type: object
+      required:
+        - state
+        - section_id
+        - inbound
+      properties:
+        state:
+          $ref: "#/components/schemas/TaskState"
+          description: Probo task state
+        section_id:
+          type: string
+          description: Asana section GID. Empty when the state does not move the task.
+        inbound:
+          type: boolean
+          description: Whether tasks arriving in this section take this state. Required when several states share a section.
+
+    AsanaPriorityMapping:
+      type: object
+      required:
+        - priority
+        - option_id
+        - inbound
+      properties:
+        priority:
+          $ref: "#/components/schemas/TaskPriority"
+          description: Probo task priority
+        option_id:
+          type: string
+          description: Asana enum option GID. Empty when the priority is ignored.
+        inbound:
+          type: boolean
+          description: Whether tasks arriving with this option take this priority. Required when several priorities share an option.
+
+    AsanaProjectMapping:
+      type: object
+      required:
+        - states
+        - priorities
+      properties:
+        states:
+          type: array
+          items:
+            $ref: "#/components/schemas/AsanaStateMapping"
+          description: State to section mapping
+        priority_field_id:
+          anyOf:
+            - type: string
+            - type: "null"
+          description: Enum custom field used as priority. Null when priority is not synced.
+        priorities:
+          type: array
+          items:
+            $ref: "#/components/schemas/AsanaPriorityMapping"
+          description: Priority to enum option mapping
+
+    AsanaProjectSetup:
+      type: object
+      required:
+        - project
+        - sections
+        - enum_fields
+      properties:
+        project:
+          $ref: "#/components/schemas/AsanaNamed"
+          description: Asana project
+        sections:
+          type: array
+          items:
+            $ref: "#/components/schemas/AsanaSection"
+          description: Project sections
+        enum_fields:
+          type: array
+          items:
+            $ref: "#/components/schemas/AsanaEnumField"
+          description: Enum custom fields that can be used as priority
+        mapping:
+          anyOf:
+            - $ref: "#/components/schemas/AsanaProjectMapping"
+            - type: "null"
+          description: Saved mapping. Null until one is saved.
+
+    GetAsanaProjectSetupInput:
+      type: object
+      required:
+        - organization_id
+        - project_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        project_id:
+          type: string
+          description: Asana project GID
+
+    GetAsanaProjectSetupOutput:
+      type: object
+      required:
+        - setup
+      properties:
+        setup:
+          $ref: "#/components/schemas/AsanaProjectSetup"
+          description: Sections, enum fields, and the saved mapping for the project.
+
+    UpdateAsanaProjectMappingInput:
+      type: object
+      required:
+        - organization_id
+        - project_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        project_id:
+          type: string
+          description: Asana project GID
+        clear:
+          type: boolean
+          description: Remove the saved mapping for the project.
+        states:
+          type: array
+          items:
+            $ref: "#/components/schemas/AsanaStateMapping"
+          description: State mapping. Omit it to keep the current states.
+        priority_field_id:
+          anyOf:
+            - type: string
+              description: Asana enum custom field GID
+            - type: "null"
+              description: Stop syncing priority
+          description: Priority field. Omit it to keep the current field. Null stops syncing priority.
+        priorities:
+          type: array
+          items:
+            $ref: "#/components/schemas/AsanaPriorityMapping"
+          description: Priority mapping. Omit it to keep the current priorities.
+
+    UpdateAsanaProjectMappingOutput:
+      type: object
+      required:
+        - setup
+      properties:
+        setup:
+          $ref: "#/components/schemas/AsanaProjectSetup"
+          description: Project setup after the mapping is saved.
 
     UnlinkTaskExternalInput:
       type: object
@@ -19382,6 +19807,102 @@ tools:
       $ref: "#/components/schemas/LinkTaskToLinearInput"
     outputSchema:
       $ref: "#/components/schemas/LinkTaskToLinearOutput"
+  - name: listAsanaTeams
+    title: List Asana Teams
+    description: Search Asana teams in the connected workspace. Personal workspaces have no teams.
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: true
+    inputSchema:
+      $ref: "#/components/schemas/ListAsanaTeamsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListAsanaTeamsOutput"
+  - name: listAsanaProjects
+    title: List Asana Projects
+    description: List Asana projects. Pass a team GID to filter, or omit it for the whole workspace.
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: true
+    inputSchema:
+      $ref: "#/components/schemas/ListAsanaProjectsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListAsanaProjectsOutput"
+  - name: listAsanaTasks
+    title: List Asana Tasks
+    description: Search tasks in an Asana project
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: true
+    inputSchema:
+      $ref: "#/components/schemas/ListAsanaTasksInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListAsanaTasksOutput"
+  - name: publishTaskToAsana
+    title: Publish Task To Asana
+    description: Publish a Probo task as a new Asana task in a project
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: true
+    inputSchema:
+      $ref: "#/components/schemas/PublishTaskToAsanaInput"
+    outputSchema:
+      $ref: "#/components/schemas/PublishTaskToAsanaOutput"
+  - name: linkTaskToAsana
+    title: Link Task To Asana
+    description: Link a Probo task to an existing Asana task. This updates the Probo task with the Asana task.
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: false
+      openWorld: true
+    inputSchema:
+      $ref: "#/components/schemas/LinkTaskToAsanaInput"
+    outputSchema:
+      $ref: "#/components/schemas/LinkTaskToAsanaOutput"
+  - name: updateAsanaSettings
+    title: Update Asana Settings
+    description: Update the organization's Asana settings. Omit a field to leave it unchanged. Null default_project_id clears the default project and turns task import off.
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: true
+    inputSchema:
+      $ref: "#/components/schemas/UpdateAsanaSettingsInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateAsanaSettingsOutput"
+  - name: getAsanaProjectSetup
+    title: Get Asana Project Setup
+    description: Read an Asana project's sections, enum custom fields, and saved state and priority mapping.
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: true
+    inputSchema:
+      $ref: "#/components/schemas/GetAsanaProjectSetupInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetAsanaProjectSetupOutput"
+  - name: updateAsanaProjectMapping
+    title: Update Asana Project Mapping
+    description: Save how an Asana project's sections and priority field map onto Probo states and priorities. When several states share a section, exactly one must be incoming.
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: true
+    inputSchema:
+      $ref: "#/components/schemas/UpdateAsanaProjectMappingInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateAsanaProjectMappingOutput"
   - name: unlinkTaskExternal
     title: Unlink Task External
     description: Unlink a task from its external issue

@@ -48,6 +48,7 @@ export const dropdownItem = tv({
     },
     color: {
       accent: "text-sand-12",
+      neutral: "text-sand-12",
       error: "text-red-11",
       success: "text-green-11",
       linear: "text-linear",
@@ -62,6 +63,9 @@ export const dropdownItem = tv({
     { variant: "solid", color: "accent", class: "data-highlighted:bg-gold-9 data-highlighted:text-white" },
     { variant: "soft", color: "accent", class: "data-highlighted:bg-gold-4 data-highlighted:text-gold-12" },
     { color: "accent", highContrast: true, class: "text-sand-12" },
+    // neutral
+    { variant: "solid", color: "neutral", class: "data-highlighted:bg-sand-4 data-highlighted:text-sand-12" },
+    { variant: "soft", color: "neutral", class: "data-highlighted:bg-sand-4 data-highlighted:text-sand-12" },
     // error
     { variant: "solid", color: "error", class: "data-highlighted:bg-red-9 data-highlighted:text-white" },
     { variant: "soft", color: "error", class: "data-highlighted:bg-red-4 data-highlighted:text-red-12" },

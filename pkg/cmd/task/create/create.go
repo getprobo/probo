@@ -91,6 +91,8 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		flagRecurrenceInterval string
 		flagLinearTeam         string
 		flagNoLinearTeam       bool
+		flagAsanaProject       string
+		flagNoAsanaProject     bool
 	)
 
 	cmd := &cobra.Command{
@@ -231,6 +233,16 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				input["linearTeamId"] = flagLinearTeam
 			}
 
+			if flagNoAsanaProject && flagAsanaProject != "" {
+				return fmt.Errorf("--no-asana-project and --asana-project cannot be used together")
+			}
+
+			if flagNoAsanaProject {
+				input["asanaProjectId"] = nil
+			} else if flagAsanaProject != "" {
+				input["asanaProjectId"] = flagAsanaProject
+			}
+
 			raw, err := client.DoRaw(
 				createMutation,
 				map[string]any{"input": input},
@@ -263,7 +275,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			if len(resp.Errors) > 0 {
 				_, _ = fmt.Fprintf(
 					f.IOStreams.ErrOut,
-					"Linear publish failed: %s\n",
+					"External publish failed: %s\n",
 					graphQLErrorMessage(resp.Errors),
 				)
 			}
@@ -284,6 +296,8 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagRecurrenceInterval, "recurrence-interval", "", "Recurrence interval as an ISO-8601 duration, e.g. P7D, P1M or P1Y (requires --deadline). The next task is created when the deadline passes")
 	cmd.Flags().StringVar(&flagLinearTeam, "linear-team", "", "Linear team ID. Omit to use the organization's default Linear team. If the Linear publish attempt fails after the task is created, the task still exists")
 	cmd.Flags().BoolVar(&flagNoLinearTeam, "no-linear-team", false, "Create the task with no Linear team")
+	cmd.Flags().StringVar(&flagAsanaProject, "asana-project", "", "Asana project GID. Omit to use the organization's default Asana project. A Linear publish takes precedence when both would publish")
+	cmd.Flags().BoolVar(&flagNoAsanaProject, "no-asana-project", false, "Create the task with no Asana project")
 
 	return cmd
 }

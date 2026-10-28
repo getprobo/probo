@@ -324,6 +324,14 @@ const routes = [
                     import("./pages/organizations/settings/SlackBotSettingsPageLoader"),
                 ),
               },
+              {
+                path: "task-synchronization",
+                Fallback: PageSkeleton,
+                Component: lazy(
+                  () =>
+                    import("./pages/organizations/settings/TaskSynchronizationPageLoader"),
+                ),
+              },
               ...integrationRoutes,
               ...usersRoutes,
               ...authRoutes,

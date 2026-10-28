@@ -34,6 +34,7 @@ import {
   TASKS_NAMESPACE,
   type TaskState,
 } from "@probo/tasks";
+import { Asana } from "@probo/ui/src/Atoms/ThirdParties/Asana";
 import { Linear } from "@probo/ui/src/Atoms/ThirdParties/Linear";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Card } from "@probo/ui/src/v2/Card/Card";
@@ -51,9 +52,12 @@ import {
 } from "react-relay";
 import { Navigate, useLocation, useNavigate } from "react-router";
 
+import type { NewTaskPageAsanaLinkMutation } from "#/__generated__/core/NewTaskPageAsanaLinkMutation.graphql";
+import type { NewTaskPageAsanaPublishMutation } from "#/__generated__/core/NewTaskPageAsanaPublishMutation.graphql";
 import type { NewTaskPageLinkMutation } from "#/__generated__/core/NewTaskPageLinkMutation.graphql";
 import type { NewTaskPagePublishMutation } from "#/__generated__/core/NewTaskPagePublishMutation.graphql";
 import type { NewTaskPageQuery } from "#/__generated__/core/NewTaskPageQuery.graphql";
+import type { TaskAsanaDraftField_organization$key } from "#/__generated__/core/TaskAsanaDraftField_organization.graphql";
 import type { TaskLinearDraftField_organization$key } from "#/__generated__/core/TaskLinearDraftField_organization.graphql";
 import {
   TaskAssigneeMenu,
@@ -67,6 +71,10 @@ import { useMentionMembers } from "#/pages/organizations/_lib/useMentionMembers"
 
 import { InternalControlCombobox, type InternalControlOption } from "./_components/InternalControlCombobox";
 import {
+  type AsanaDraft,
+  TaskAsanaDraftField,
+} from "./_components/TaskAsanaDraftField";
+import {
   type LinearDraft,
   type LinearIssueDraft,
   TaskLinearDraftField,
@@ -78,7 +86,7 @@ import {
   taskListSearch,
 } from "./_lib/taskPath";
 import { useCreateTask } from "./_lib/useCreateTask";
-import { taskInternalControls, taskLinearField } from "./variants";
+import { taskAsanaField, taskInternalControls, taskLinearField } from "./variants";
 
 const descriptionEditorClassName = "min-h-40 bg-transparent! py-0! pr-0! shadow-none!";
 const unassignedValue = "__NONE__";
@@ -105,6 +113,28 @@ const linkMutation = graphql`
   }
 `;
 
+const asanaPublishMutation = graphql`
+  mutation NewTaskPageAsanaPublishMutation($input: PublishTaskToAsanaInput!) {
+    publishTaskToAsana(input: $input) {
+      task {
+        id
+        ...TaskListItem_task
+      }
+    }
+  }
+`;
+
+const asanaLinkMutation = graphql`
+  mutation NewTaskPageAsanaLinkMutation($input: LinkTaskToAsanaInput!) {
+    linkTaskToAsana(input: $input) {
+      task {
+        ...TaskDetailsPage_task
+        ...TaskListItem_task
+      }
+    }
+  }
+`;
+
 export const newTaskPageQuery = graphql`
   query NewTaskPageQuery(
     $organizationId: ID!
@@ -119,12 +149,21 @@ export const newTaskPageQuery = graphql`
         connectors(filter: { providers: [LINEAR_SYNC] }) {
           __typename
         }
+        asanaConnectors: connectors(filter: { providers: [ASANA] }) {
+          __typename
+        }
         linearSettings {
           defaultTeam {
             id
           }
         }
+        asanaSettings {
+          defaultProject {
+            id
+          }
+        }
         ...TaskLinearDraftField_organization
+        ...TaskAsanaDraftField_organization
       }
     }
     internalControl: node(id: $internalControlId) @include(if: $includeInternalControl) {
@@ -167,6 +206,7 @@ export function NewTaskPage({ queryRef }: NewTaskPageProps) {
     preselected == null ? [] : [preselected],
   );
   const [linear, setLinear] = useState<LinearDraft | null>(null);
+  const [asana, setAsana] = useState<AsanaDraft | null>(null);
   const [uploading, setUploading] = useState(false);
   const submitLock = useRef(false);
   const [createTask, isCreating] = useCreateTask();
@@ -184,7 +224,21 @@ export function NewTaskPage({ queryRef }: NewTaskPageProps) {
       errorToast: t("detailsPage.linear.errors.link"),
     },
   );
-  const isSaving = isCreating || isPublishing || isLinking;
+  const [publishAsana, isPublishingAsana] = useMutation<NewTaskPageAsanaPublishMutation>(
+    asanaPublishMutation,
+    {
+      successMessage: t("detailsPage.asana.published"),
+      errorToast: t("detailsPage.asana.errors.publish"),
+    },
+  );
+  const [linkAsana, isLinkingAsana] = useMutation<NewTaskPageAsanaLinkMutation>(
+    asanaLinkMutation,
+    {
+      successMessage: t("detailsPage.asana.linked"),
+      errorToast: t("detailsPage.asana.errors.link"),
+    },
+  );
+  const isSaving = isCreating || isPublishing || isLinking || isPublishingAsana || isLinkingAsana;
   const { root: nameRoot, input: nameInput } = taskNameField();
   const { stateOption } = taskListItem();
   usePageTitle(name.trim() || t("newPage.title"));
@@ -206,8 +260,12 @@ export function NewTaskPage({ queryRef }: NewTaskPageProps) {
   }
 
   const linearConnected = organization.connectors.length > 0;
+  const asanaConnected = organization.asanaConnectors.length > 0;
   const defaultTeamId = linearConnected
     ? (organization.linearSettings.defaultTeam?.id ?? null)
+    : null;
+  const defaultProjectId = asanaConnected
+    ? (organization.asanaSettings.defaultProject?.id ?? null)
     : null;
   const showInternalControls = organization.canListInternalControls
     || internalControls.length > 0;
@@ -275,6 +333,10 @@ export function NewTaskPage({ queryRef }: NewTaskPageProps) {
       teamId: defaultTeamId,
       issueId: null,
     };
+    const asanaSelection = asana ?? {
+      projectId: defaultProjectId,
+      taskGid: null,
+    };
 
     void createTask({
       name: nextName,
@@ -282,8 +344,9 @@ export function NewTaskPage({ queryRef }: NewTaskPageProps) {
       state,
       priority,
       internalControlIds: internalControls.map(control => control.id),
-      // Explicit null skips the server's default-team publish.
+      // Explicit null skips the server's default-team and default-project publish.
       linearTeamId: null,
+      asanaProjectId: null,
       assignedToId: assignee?.id,
       timeEstimate,
       deadline,
@@ -312,9 +375,30 @@ export function NewTaskPage({ queryRef }: NewTaskPageProps) {
                 },
               });
             }
+          } else if (asanaSelection.projectId != null) {
+            if (asanaSelection.taskGid != null) {
+              await linkAsana({
+                variables: {
+                  input: {
+                    taskId,
+                    projectId: asanaSelection.projectId,
+                    taskGid: asanaSelection.taskGid,
+                  },
+                },
+              });
+            } else {
+              await publishAsana({
+                variables: {
+                  input: {
+                    taskId,
+                    projectId: asanaSelection.projectId,
+                  },
+                },
+              });
+            }
           }
         } catch {
-          // The task exists; the Linear toast already explains the failure.
+          // The task exists; the sync toast already explains the failure.
         }
         void navigate({
           pathname: taskDetailsPath(organizationId, taskId),
@@ -436,6 +520,13 @@ export function NewTaskPage({ queryRef }: NewTaskPageProps) {
                 onIssue={applyLinearIssue}
               />
             )}
+            {asanaConnected && (
+              <NewTaskAsanaCard
+                organizationKey={organization}
+                disabled={isSaving}
+                onChange={setAsana}
+              />
+            )}
             {showInternalControls && (
               <NewTaskInternalControls
                 controls={internalControls}
@@ -488,6 +579,37 @@ function NewTaskLinearCard({
           disabled={disabled}
           onChange={onChange}
           onIssue={onIssue}
+        />
+      </div>
+    </Card>
+  );
+}
+
+function NewTaskAsanaCard({
+  organizationKey,
+  disabled,
+  onChange,
+}: {
+  organizationKey: TaskAsanaDraftField_organization$key;
+  disabled: boolean;
+  onChange: (selection: AsanaDraft) => void;
+}) {
+  const { t } = useTranslation("organizations/tasks");
+  const { root, title, titleIcon } = taskAsanaField();
+
+  return (
+    <Card variant="soft" size={2}>
+      <div className={root()}>
+        <div className={title()}>
+          <Asana className={titleIcon()} aria-hidden />
+          <Heading level={2} size={2} weight="medium">
+            {t("detailsPage.asana.linkHint")}
+          </Heading>
+        </div>
+        <TaskAsanaDraftField
+          organizationKey={organizationKey}
+          disabled={disabled}
+          onChange={onChange}
         />
       </div>
     </Card>

@@ -124,6 +124,7 @@ function isSettingsVisible(
     || permissions.canListWebhookSubscriptions
     || (slackbotAvailable && (permissions.canConnectSlack || permissions.canUninstallSlack))
     || permissions.canListConnectors
+    || permissions.canListTasks
     || permissions.canListMembers
     || permissions.canListAuditLogEntries;
 }
@@ -266,6 +267,9 @@ function settingsHref(
   }
   if (permissions.canListConnectors) {
     return groupHref(organizationId, "settings", "integrations");
+  }
+  if (permissions.canListTasks) {
+    return groupHref(organizationId, "settings", "task-synchronization");
   }
   return groupHref(organizationId, "settings", "audit-log");
 }

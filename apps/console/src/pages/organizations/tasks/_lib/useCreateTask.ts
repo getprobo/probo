@@ -76,6 +76,7 @@ export function useCreateTask() {
       timeEstimate?: string | null;
       deadline?: string | null;
       recurrenceInterval?: string | null;
+      asanaProjectId?: string | null;
     },
     connectionId?: string,
   ) {
@@ -129,6 +130,9 @@ export function useCreateTask() {
           ...(input.deadline != null ? { deadline: input.deadline } : {}),
           ...(input.recurrenceInterval != null
             ? { recurrenceInterval: input.recurrenceInterval }
+            : {}),
+          ...(input.asanaProjectId !== undefined
+            ? { asanaProjectId: input.asanaProjectId }
             : {}),
         },
       },

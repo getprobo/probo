@@ -140,6 +140,10 @@ func (h *outboundHandler) handle(ctx context.Context, item *coredata.TaskSyncJob
 		return fmt.Errorf("cannot unmarshal task sync payload: %w", err)
 	}
 
+	if payload.Provider == coredata.ConnectorProviderAsana {
+		return h.handleAsana(ctx, item, payload)
+	}
+
 	scope := coredata.NewScopeFromObjectID(item.ID)
 
 	client, err := h.linearClient(ctx, scope, payload.ConnectorID)

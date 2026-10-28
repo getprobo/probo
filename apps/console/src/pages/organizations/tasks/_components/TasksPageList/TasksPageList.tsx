@@ -84,7 +84,10 @@ const tasksPageListFragment = graphql`
     includeDuplicate: { type: "Boolean!" }
   ) {
     canUpdateTask: permission(action: "core:task:update")
-    connectors(filter: { providers: [LINEAR_SYNC] }) {
+    linearConnectors: connectors(filter: { providers: [LINEAR_SYNC] }) {
+      id
+    }
+    asanaConnectors: connectors(filter: { providers: [ASANA] }) {
       id
     }
     ...useOrganizationTaskListGroups_inProgress
@@ -540,7 +543,8 @@ export function TasksPageList({ organizationKey }: TasksPageListProps) {
             isDragging={draggedId === item.id}
             isGhost={preview != null && draggedId === item.id}
             ignoreClick={ignoreClick}
-            linearConnected={organization.connectors.length > 0}
+            linearConnected={organization.linearConnectors.length > 0}
+            asanaConnected={organization.asanaConnectors.length > 0}
             onDragStart={() => {
               setIgnoreClick(true);
               draggedIdRef.current = item.id;

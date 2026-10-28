@@ -210,6 +210,23 @@ type Organization implements Node {
         after: String
         query: String
     ): LinearIssueConnection! @goField(forceResolver: true)
+    asanaTeams(first: Int, after: String, query: String): AsanaTeamConnection!
+        @goField(forceResolver: true)
+    asanaProjects(
+        teamId: String
+        first: Int
+        after: String
+        query: String
+    ): AsanaProjectConnection! @goField(forceResolver: true)
+    asanaTasks(
+        projectId: String!
+        first: Int
+        after: String
+        query: String
+    ): AsanaTaskConnection! @goField(forceResolver: true)
+    asanaProjectSetup(projectId: String!): AsanaProjectSetup!
+        @goField(forceResolver: true)
+    asanaSettings: AsanaSettings! @goField(forceResolver: true)
     slackbotAvailable: Boolean! @goField(forceResolver: true)
     slackbotInstallation: SlackbotInstallation @goField(forceResolver: true)
     slackbotChannels(cursor: String): SlackbotChannelPage!

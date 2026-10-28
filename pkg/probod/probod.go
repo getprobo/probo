@@ -444,6 +444,13 @@ func (impl *Implm) Run(
 
 	linearAPIBaseURL := linearRegistration.Endpoints.APIBase
 
+	asanaRegistration, ok := providerRegistry.Get(coredata.ConnectorProviderAsana)
+	if !ok {
+		return fmt.Errorf("cannot configure asana task sync: no asana connector provider registered")
+	}
+
+	asanaAPIBaseURL := asanaRegistration.Endpoints.APIBase
+
 	defaultConnectorRegistry := connectorprotocol.NewConnectorRegistry()
 
 	for _, connectorCfg := range impl.cfg.Connectors {
@@ -908,6 +915,7 @@ func (impl *Implm) Run(
 		defaultConnectorRegistry,
 		baseURL.String(),
 		linearAPIBaseURL,
+		asanaAPIBaseURL,
 		l.Named("task"),
 		fileManagerService,
 		impl.cfg.AWS.Bucket,
@@ -1423,6 +1431,17 @@ func (impl *Implm) Run(
 		},
 	)
 
+	asanaWebhookWorker := tasksync.NewAsanaWebhookWorker(
+		taskService.Sync,
+		l.Named("asana-webhook"),
+		worker.WithInterval(time.Second),
+		worker.WithRegisterer(r),
+		worker.WithTracerProvider(tp),
+	)
+	asanaWebhookWorkerCtx, stopAsanaWebhookWorker := context.WithCancel(
+		context.WithoutCancel(ctx),
+	)
+
 	linearWebhookWorker := tasksync.NewWebhookWorker(
 		taskService.Sync,
 		l.Named("linear-webhook"),
@@ -1448,6 +1467,14 @@ func (impl *Implm) Run(
 		func() {
 			if err := linearWebhookWorker.Run(linearWebhookWorkerCtx); err != nil {
 				cancel(fmt.Errorf("linear webhook worker crashed: %w", err))
+			}
+		},
+	)
+
+	wg.Go(
+		func() {
+			if err := asanaWebhookWorker.Run(asanaWebhookWorkerCtx); err != nil {
+				cancel(fmt.Errorf("asana webhook worker crashed: %w", err))
 			}
 		},
 	)
@@ -1806,6 +1833,7 @@ func (impl *Implm) Run(
 	stopTaskRecurrenceWorker()
 	stopTaskSyncOutboundWorker()
 	stopLinearWebhookWorker()
+	stopAsanaWebhookWorker()
 	stopLinearWebhookRetentionWorker()
 	stopDocumentPDFWorker()
 	stopDocumentApprovalQuorumPDFWorker()

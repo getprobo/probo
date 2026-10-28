@@ -30,6 +30,7 @@ type TaskExternalLinkOrigin string
 const (
 	TaskExternalLinkOriginProbo  TaskExternalLinkOrigin = "PROBO"
 	TaskExternalLinkOriginLinear TaskExternalLinkOrigin = "LINEAR"
+	TaskExternalLinkOriginAsana  TaskExternalLinkOrigin = "ASANA"
 )
 
 var (
@@ -42,6 +43,7 @@ func TaskExternalLinkOrigins() []TaskExternalLinkOrigin {
 	return []TaskExternalLinkOrigin{
 		TaskExternalLinkOriginProbo,
 		TaskExternalLinkOriginLinear,
+		TaskExternalLinkOriginAsana,
 	}
 }
 
@@ -49,7 +51,8 @@ func (v TaskExternalLinkOrigin) IsValid() bool {
 	switch v {
 	case
 		TaskExternalLinkOriginProbo,
-		TaskExternalLinkOriginLinear:
+		TaskExternalLinkOriginLinear,
+		TaskExternalLinkOriginAsana:
 		return true
 	}
 

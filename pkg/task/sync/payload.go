@@ -20,7 +20,10 @@
 
 package tasksync
 
-import "go.probo.inc/probo/pkg/gid"
+import (
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
+)
 
 type SyncAction string
 
@@ -32,14 +35,15 @@ const (
 )
 
 type JobPayload struct {
-	Action             SyncAction `json:"action"`
-	TaskID             gid.GID    `json:"task_id"`
-	ExternalID         string     `json:"external_id"`
-	ExternalIdentifier string     `json:"external_identifier"`
-	TeamID             string     `json:"team_id"`
-	ConnectorID        gid.GID    `json:"connector_id"`
-	CommentID          gid.GID    `json:"comment_id,omitempty"`
-	ExternalCommentID  string     `json:"external_comment_id,omitempty"`
+	Action             SyncAction                 `json:"action"`
+	Provider           coredata.ConnectorProvider `json:"provider,omitempty"`
+	TaskID             gid.GID                    `json:"task_id"`
+	ExternalID         string                     `json:"external_id"`
+	ExternalIdentifier string                     `json:"external_identifier"`
+	TeamID             string                     `json:"team_id"`
+	ConnectorID        gid.GID                    `json:"connector_id"`
+	CommentID          gid.GID                    `json:"comment_id,omitempty"`
+	ExternalCommentID  string                     `json:"external_comment_id,omitempty"`
 }
 
 func commentSyncActions() []string {
