@@ -11286,6 +11286,9 @@ components:
         required:
           type: boolean
           description: Whether the connect form requires this setting
+        description:
+          type: string
+          description: Where the customer finds the value. Omitted when the label says enough
 
     ConnectorProviderCatalogEntry:
       type: object

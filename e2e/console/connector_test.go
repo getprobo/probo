@@ -63,6 +63,7 @@ func TestConnectorProviders(t *testing.T) {
 					key
 					label
 					required
+					description
 				}
 				clientCredentialsPage {
 					url
@@ -79,9 +80,10 @@ func TestConnectorProviders(t *testing.T) {
 	`
 
 	type settingInfo struct {
-		Key      string `json:"key"`
-		Label    string `json:"label"`
-		Required bool   `json:"required"`
+		Key         string  `json:"key"`
+		Label       string  `json:"label"`
+		Required    bool    `json:"required"`
+		Description *string `json:"description"`
 	}
 
 	type keyFormat struct {
@@ -125,6 +127,7 @@ func TestConnectorProviders(t *testing.T) {
 	protocolsByProvider := make(map[string][]string)
 	apiKeySettingKeys := make(map[string][]string)
 	clientCredentialsSettingKeys := make(map[string][]string)
+	clientCredentialsSettings := make(map[string][]settingInfo)
 	workloadIdentitySettingKeys := make(map[string][]string)
 	workloadIdentitySupported := make(map[string]bool)
 
@@ -150,6 +153,8 @@ func TestConnectorProviders(t *testing.T) {
 		for _, s := range info.ClientCredentialsExtraSettings {
 			clientCredentialsSettingKeys[info.Provider] = append(clientCredentialsSettingKeys[info.Provider], s.Key)
 		}
+
+		clientCredentialsSettings[info.Provider] = info.ClientCredentialsExtraSettings
 
 		for _, s := range info.WorkloadIdentityExtraSettings {
 			workloadIdentitySettingKeys[info.Provider] = append(workloadIdentitySettingKeys[info.Provider], s.Key)
@@ -185,6 +190,14 @@ func TestConnectorProviders(t *testing.T) {
 	// settings on the other would collect fields the create resolver rejects.
 	assert.Equal(t, []string{"scimBridgeUrl"}, apiKeySettingKeys["ONE_PASSWORD"])
 	assert.Equal(t, []string{"accountId", "region"}, clientCredentialsSettingKeys["ONE_PASSWORD"])
+
+	if onePasswordSettings := clientCredentialsSettings["ONE_PASSWORD"]; assert.Len(t, onePasswordSettings, 2) {
+		if assert.NotNil(t, onePasswordSettings[0].Description) {
+			assert.Contains(t, *onePasswordSettings[0].Description, "/app#/")
+		}
+
+		assert.Nil(t, onePasswordSettings[1].Description)
+	}
 
 	// A single-path provider declares its settings on that path only.
 	assert.Equal(t, []string{"baseUrl"}, apiKeySettingKeys["LANGFUSE"])

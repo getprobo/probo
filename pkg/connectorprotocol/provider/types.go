@@ -762,4 +762,8 @@ type ExtraSetting struct {
 	Label    string
 	Required bool
 	Control  ExtraSettingControl
+
+	// Description tells the customer where to find the value. Empty when the
+	// label says enough.
+	Description string
 }

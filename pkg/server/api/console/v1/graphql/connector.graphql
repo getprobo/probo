@@ -346,6 +346,11 @@ type ConnectorProviderSettingInfo {
     control is how the connect form renders this setting. TEXT is the default.
     """
     control: ConnectorProviderSettingControl!
+    """
+    description tells the customer where to find the value. Null when the label
+    says enough.
+    """
+    description: String
 }
 
 """
