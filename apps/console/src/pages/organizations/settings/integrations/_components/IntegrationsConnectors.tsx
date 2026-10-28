@@ -44,14 +44,11 @@ import {
 import { useIntegrationsListSearch } from "../_lib/useIntegrationsListSearch";
 import { integrationsList, integrationsPage } from "../variants";
 
-import { IntegrationsConnectorResults } from "./IntegrationsConnectorResults";
+import { ConnectorGroupList } from "./ConnectorGroupList";
 
 const integrationsConnectorsFragment = graphql`
   fragment IntegrationsConnectors_query on Query {
-    connectorProviders {
-      provider
-      ...ConnectorGroupListItem_provider
-    }
+    ...ConnectorGroupList_query
   }
 `;
 
@@ -61,18 +58,7 @@ const integrationsConnectorsOrganizationFragment = graphql`
   @argumentDefinitions(
     filter: { type: "ConnectorFilter", defaultValue: null }
   ) {
-    canCreateConnector: permission(action: "core:connector:create")
-    ...ConnectorGroupListItem_organization
-    ...MarketplaceEntryCard_organization
-    connectors(filter: $filter) {
-      id
-      provider
-      canReconnect
-      ...ConnectorGroupListItem_connector
-      # The server streams this in a later payload, so the list renders
-      # before the vendor probes finish.
-      ...useConnectorStatuses_connector @defer
-    }
+    ...ConnectorGroupList_organization @arguments(filter: $filter)
   }
 `;
 
@@ -86,7 +72,7 @@ export function IntegrationsConnectors({
   organizationKey,
 }: IntegrationsConnectorsProps) {
   const { t } = useTranslation("organizations/settings/integrations");
-  const { connectorProviders } = useFragment(integrationsConnectorsFragment, queryKey);
+  const integrationsQuery = useFragment(integrationsConnectorsFragment, queryKey);
   const { query, status, setStatus } = useIntegrationsListFilters();
   const [searchInput, setSearchInput] = useIntegrationsListSearch();
   const [organization, refetch] = useRefetchableFragment<
@@ -191,9 +177,9 @@ export function IntegrationsConnectors({
               </div>
             )}
           >
-            <IntegrationsConnectorResults
-              organization={organization}
-              connectorProviders={connectorProviders}
+            <ConnectorGroupList
+              queryKey={integrationsQuery}
+              organizationKey={organization}
               status={status}
               isFiltering={isFiltering}
             />

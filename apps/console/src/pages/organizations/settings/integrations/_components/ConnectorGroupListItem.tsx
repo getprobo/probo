@@ -45,11 +45,11 @@ import {
   connectionTone,
   presentConnection,
 } from "#/pages/organizations/_lib/connectorStatus";
+import { useConnectorStatuses } from "#/pages/organizations/_lib/useConnectorStatuses";
 
 import { buildConnectorInitiateURL } from "../_lib/connectorInitiate";
 import { connectorProviderAccessibleName, connectorProviderVisibleName } from "../_lib/connectorProviderLabel";
 import { connectorDetailsPath } from "../_lib/integrationPath";
-import { useConnectorStatuses } from "../_lib/useConnectorStatuses";
 import { connectorCard } from "../variants";
 
 import { ConnectionIssueMark } from "./ConnectionIssueMark";

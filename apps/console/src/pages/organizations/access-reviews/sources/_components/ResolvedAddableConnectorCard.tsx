@@ -55,10 +55,10 @@ import {
   type ConnectorConnectionStatus,
   presentConnection,
 } from "#/pages/organizations/_lib/connectorStatus";
+import { useConnectorStatuses } from "#/pages/organizations/_lib/useConnectorStatuses";
 import { ConnectorProviderName } from "#/pages/organizations/settings/integrations/_components/ConnectorProviderName";
 import { connectorProviderAccessibleName } from "#/pages/organizations/settings/integrations/_lib/connectorProviderLabel";
 import { connectorDetailsPath } from "#/pages/organizations/settings/integrations/_lib/integrationPath";
-import { useConnectorStatuses } from "#/pages/organizations/settings/integrations/_lib/useConnectorStatuses";
 
 import { listedConnectorAccounts } from "../_lib/listedConnectorAccounts";
 

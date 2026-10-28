@@ -24,7 +24,7 @@ import { graphql, useFragment } from "react-relay";
 import type { AddableConnectorListItem_connector$key } from "#/__generated__/core/AddableConnectorListItem_connector.graphql";
 // The card reads this fragment. The import keeps the deferred spread
 // colocated with that module for the Relay lint rule.
-import "#/pages/organizations/settings/integrations/_lib/useConnectorStatuses";
+import "#/pages/organizations/_lib/useConnectorStatuses";
 
 import { ConnectorAccountPages } from "./AddableConnectorAccounts";
 import {

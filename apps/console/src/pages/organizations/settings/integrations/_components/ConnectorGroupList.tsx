@@ -22,25 +22,54 @@ import { Card } from "@probo/ui/src/v2/Card/Card";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
+import { graphql, useFragment } from "react-relay";
 
-import type { IntegrationsConnectors_organization$data } from "#/__generated__/core/IntegrationsConnectors_organization.graphql";
-import type { IntegrationsConnectors_query$data } from "#/__generated__/core/IntegrationsConnectors_query.graphql";
+import type { ConnectorGroupList_organization$key } from "#/__generated__/core/ConnectorGroupList_organization.graphql";
+import type { ConnectorGroupList_query$key } from "#/__generated__/core/ConnectorGroupList_query.graphql";
 import {
   connectionSignalFrom,
   type ConnectorConnectionStatus,
   groupByProvider,
   presentConnection,
 } from "#/pages/organizations/_lib/connectorStatus";
+import { useConnectorStatuses } from "#/pages/organizations/_lib/useConnectorStatuses";
 
-import { useConnectorStatuses } from "../_lib/useConnectorStatuses";
 import { integrationsList } from "../variants";
 
 import { ConnectorGroupListItem } from "./ConnectorGroupListItem";
 import { MarketplaceEntryCard } from "./MarketplaceEntryCard";
 
-interface IntegrationsConnectorResultsProps {
-  organization: IntegrationsConnectors_organization$data;
-  connectorProviders: IntegrationsConnectors_query$data["connectorProviders"];
+const connectorGroupListQueryFragment = graphql`
+  fragment ConnectorGroupList_query on Query {
+    connectorProviders {
+      provider
+      ...ConnectorGroupListItem_provider
+    }
+  }
+`;
+
+const connectorGroupListOrganizationFragment = graphql`
+  fragment ConnectorGroupList_organization on Organization
+  @argumentDefinitions(
+    filter: { type: "ConnectorFilter", defaultValue: null }
+  ) {
+    canCreateConnector: permission(action: "core:connector:create")
+    ...ConnectorGroupListItem_organization
+    ...MarketplaceEntryCard_organization
+    connectors(filter: $filter) {
+      id
+      provider
+      canReconnect
+      ...ConnectorGroupListItem_connector
+      # Streamed after the list, so the page renders before the probes finish.
+      ...useConnectorStatuses_connector @defer
+    }
+  }
+`;
+
+interface ConnectorGroupListProps {
+  queryKey: ConnectorGroupList_query$key;
+  organizationKey: ConnectorGroupList_organization$key;
   status: ConnectorConnectionStatus | null;
   isFiltering: boolean;
 }
@@ -48,13 +77,15 @@ interface IntegrationsConnectorResultsProps {
 // Without a status filter the cards render at once and each card waits for
 // its own deferred status. With one, the list itself needs every status, so
 // it suspends until the probes finish.
-export function IntegrationsConnectorResults({
-  organization,
-  connectorProviders,
+export function ConnectorGroupList({
+  queryKey,
+  organizationKey,
   status,
   isFiltering,
-}: IntegrationsConnectorResultsProps) {
+}: ConnectorGroupListProps) {
   const { t } = useTranslation("organizations/settings/integrations");
+  const { connectorProviders } = useFragment(connectorGroupListQueryFragment, queryKey);
+  const organization = useFragment(connectorGroupListOrganizationFragment, organizationKey);
   const statuses = useConnectorStatuses(status == null ? null : organization.connectors);
   const connectors = statuses == null
     ? organization.connectors
