@@ -63,7 +63,7 @@ require (
 	github.com/vikstrous/dataloadgen v0.0.10
 	github.com/yuin/goldmark v1.8.6
 	go.gearno.de/crypto/uuid v0.1.1-0.20251208105319-3f587312a712
-	go.gearno.de/kit v0.14.0
+	go.gearno.de/kit v0.15.0
 	go.gearno.de/x/ref v0.0.0-20260216110753-a700c951377c
 	go.opentelemetry.io/otel v1.47.0
 	go.opentelemetry.io/otel/sdk v1.47.0
