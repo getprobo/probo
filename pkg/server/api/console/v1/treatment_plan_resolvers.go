@@ -386,6 +386,10 @@ func (r *treatmentPlanResolver) InternalControls(ctx context.Context, obj *types
 	}
 
 	if asOf != nil {
+		if filter != nil && (filter.OwnerID != nil || (filter.NeedsAttention != nil && *filter.NeedsAttention)) {
+			return nil, gqlx.Invalidf(ctx, "ownerId and needsAttention filters are not supported with asOf: internal control history does not record owners or due dates")
+		}
+
 		page, total, err := r.riskManagement.ListInternalControlsAsOf(
 			ctx,
 			scope,

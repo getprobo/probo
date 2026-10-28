@@ -1256,6 +1256,19 @@ func TestRiskAnalysis_ListInternalControlsAsOfViaNode(t *testing.T) {
 	require.Len(t, filteredByState.Edges, 1)
 	assert.Equal(t, olderInternalControlID, filteredByState.Edges[0].Node.ID)
 
+	for name, filter := range map[string]map[string]any{
+		"owner":           {"ownerId": owner.GetProfileID().String()},
+		"needs attention": {"needsAttention": true},
+	} {
+		_, err := owner.Do(treatmentPlanInternalControlsAsOfQuery, map[string]any{
+			"id":     planID,
+			"asOf":   asOf,
+			"first":  10,
+			"filter": filter,
+		})
+		testutil.RequireErrorCode(t, err, "INVALID", name)
+	}
+
 	live := queryInternalControls(nil, 10, nil, nil)
 	require.Len(t, live.Edges, 2)
 	states := map[string]string{
