@@ -84,7 +84,7 @@ export function InternalControlListItem(props: InternalControlListItemProps) {
   const internalControl = useFragment(internalControlListItemFragment, internalControlKey);
   const due = nextDue(internalControl.nextEvidenceDue, internalControl.nextTestDue);
   const ownerLabel = internalControl.owner?.fullName;
-  const { identity, nameCell, owner, ownerName, due: dueSlot } = internalControlsPage();
+  const { identity, name, nameCell, owner, ownerName, due: dueSlot } = internalControlsPage();
   const statusKey = internalControl.implementationStatus.toLowerCase();
 
   return (
@@ -114,8 +114,11 @@ export function InternalControlListItem(props: InternalControlListItemProps) {
                 pathname: `/organizations/${organizationId}/governance/internal-controls/${internalControl.id}`,
                 search: location.search,
               }}
+              title={internalControl.name}
             >
-              {internalControl.name}
+              <Text size={2} highContrast className={name()}>
+                {internalControl.name}
+              </Text>
             </TableLink>
           </div>
         </TableRowHeaderCell>

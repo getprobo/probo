@@ -46,10 +46,12 @@ export const internalControlsPage = tv({
     pager: "flex justify-end",
     empty: "flex flex-col items-center gap-3 px-6 py-12 text-center",
     emptyActions: "flex flex-wrap items-center justify-center gap-2",
-    // Fluid column under layout="fixed". max-w-0 lets a sentence wrap
-    // inside the leftover width instead of stretching the table.
-    nameCell: "min-w-0 max-w-0 whitespace-normal break-words",
-    identity: "flex w-full min-w-0 flex-col items-stretch gap-1 whitespace-normal break-words",
+    // Fluid column under layout="fixed". max-w-0 keeps the column inside
+    // the leftover width. anywhere breaks a single long token; words
+    // still wrap on spaces, and the full name stays visible.
+    nameCell: "min-w-0 max-w-0 whitespace-normal [overflow-wrap:anywhere]",
+    identity: "flex w-full min-w-0 flex-col items-stretch gap-1",
+    name: "block w-full min-w-0 whitespace-normal [overflow-wrap:anywhere]",
     owner: "inline-flex min-w-0 max-w-full items-center gap-2",
     ownerName: "min-w-0 truncate",
     due: "flex min-w-0 flex-wrap items-center gap-1",
