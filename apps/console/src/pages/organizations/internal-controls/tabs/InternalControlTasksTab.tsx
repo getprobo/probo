@@ -31,7 +31,7 @@ import {
   Thead,
   Tr,
 } from "@probo/ui";
-import { Link } from "@probo/ui/src/v2/Link/Link";
+import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLazyLoadQuery, useRefetchableFragment } from "react-relay";
@@ -167,17 +167,25 @@ function InternalControlTasksPanel({
                 <div className={actions()}>
                   {internalControl.canCreateTask && (
                     <div className={actionCell()}>
-                      <Link
+                      <ButtonLink
                         to={{
                           pathname: taskNewPath(organizationId),
                           search: newTaskInternalControlSearch(internalControlId),
                         }}
-                        underline={false}
+                        variant="ghost"
+                        color="neutral"
                         className={action()}
+                        aria-disabled={isUpdating || undefined}
+                        tabIndex={isUpdating ? -1 : undefined}
+                        onClick={(event) => {
+                          if (isUpdating) {
+                            event.preventDefault();
+                          }
+                        }}
                       >
                         <IconPlusLarge size={16} />
                         {t("internalControlTasksTab.actions.newTask")}
-                      </Link>
+                      </ButtonLink>
                     </div>
                   )}
                   {internalControl.canUpdateTask && (

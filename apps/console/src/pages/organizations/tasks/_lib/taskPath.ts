@@ -161,6 +161,24 @@ export function newTaskInternalControlSearch(internalControlId: string) {
   return `?${params.toString()}`;
 }
 
+export function internalControlTasksPath(organizationId: string, internalControlId: string) {
+  return `/organizations/${organizationId}/governance/internal-controls/${internalControlId}/tasks`;
+}
+
+export function taskBackTarget(organizationId: string, search: string) {
+  const internalControlId = newTaskInternalControlId(search);
+  if (internalControlId != null) {
+    return {
+      pathname: internalControlTasksPath(organizationId, internalControlId),
+    };
+  }
+
+  return {
+    pathname: taskListPath(organizationId),
+    search: taskListSearch(search),
+  };
+}
+
 export function taskConnectionId(parentId: string, connectionKey: string) {
   return ConnectionHandler.getConnectionID(
     parentId,

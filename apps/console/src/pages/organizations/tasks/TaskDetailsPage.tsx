@@ -45,7 +45,7 @@ import { TaskInternalControlsSection } from "./_components/TaskInternalControlsS
 import { TaskLinearField } from "./_components/TaskLinearField";
 import { TaskNameField } from "./_components/TaskNameField";
 import { TaskPropertiesSection } from "./_components/TaskPropertiesSection";
-import { taskListPath } from "./_lib/taskPath";
+import { taskBackTarget } from "./_lib/taskPath";
 
 export const taskDetailsPageFragment = graphql`
   fragment TaskDetailsPage_task on Task {
@@ -100,12 +100,14 @@ export function TaskDetailsPage({ queryRef }: TaskDetailsPageProps) {
     throw new NotFoundError(t("detailsPage.notFound"));
   }
 
+  const backTarget = taskBackTarget(organizationId, location.search);
+
   return (
     <>
       <TaskDetails
         back={(
           <Link
-            to={{ pathname: taskListPath(organizationId), search: location.search }}
+            to={backTarget}
             size={2}
             color="neutral"
             underline={false}
@@ -143,10 +145,7 @@ export function TaskDetailsPage({ queryRef }: TaskDetailsPageProps) {
           open={deleteOpen}
           onOpenChange={setDeleteOpen}
           onDeleted={() => {
-            void navigate({
-              pathname: taskListPath(organizationId),
-              search: location.search,
-            });
+            void navigate(backTarget);
           }}
         />
       )}

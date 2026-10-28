@@ -72,7 +72,7 @@ import {
   TaskLinearDraftField,
 } from "./_components/TaskLinearDraftField";
 import {
-  newTaskInternalControlId,
+  taskBackTarget,
   taskDetailsPath,
   taskListPath,
   taskListSearch,
@@ -211,8 +211,7 @@ export function NewTaskPage({ queryRef }: NewTaskPageProps) {
     : null;
   const showInternalControls = organization.canListInternalControls
     || internalControls.length > 0;
-  const backSearch = taskListSearch(location.search);
-  const linkedInternalControlId = newTaskInternalControlId(location.search);
+  const backTarget = taskBackTarget(organizationId, location.search);
 
   function clearNameError(next: string) {
     if (!next.trim()) {
@@ -319,7 +318,7 @@ export function NewTaskPage({ queryRef }: NewTaskPageProps) {
         }
         void navigate({
           pathname: taskDetailsPath(organizationId, taskId),
-          search: backSearch,
+          search: location.search,
         });
       },
       () => {
@@ -333,11 +332,7 @@ export function NewTaskPage({ queryRef }: NewTaskPageProps) {
       <TaskDetails
         back={(
           <Link
-            to={linkedInternalControlId == null
-              ? { pathname: taskListPath(organizationId), search: backSearch }
-              : {
-                  pathname: `/organizations/${organizationId}/governance/internal-controls/${linkedInternalControlId}/tasks`,
-                }}
+            to={backTarget}
             size={2}
             color="neutral"
             underline={false}
@@ -360,7 +355,7 @@ export function NewTaskPage({ queryRef }: NewTaskPageProps) {
                 placeholder={t("newPage.fields.namePlaceholder")}
                 aria-label={t("detailsPage.fields.name")}
                 onChange={(event) => {
-                  const next = event.currentTarget.value;
+                  const next = clampUtf8(event.currentTarget.value, taskNameMaxLength);
                   setName(next);
                   clearNameError(next);
                 }}

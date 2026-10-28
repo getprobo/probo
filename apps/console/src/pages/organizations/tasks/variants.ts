@@ -39,7 +39,6 @@ export const taskDetailsPageSkeleton = tv({
     title: "flex min-w-0 items-center gap-2",
     body: "grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_280px]",
     main: "flex min-w-0 flex-col gap-6",
-    editor: "h-44",
     engagement: "flex flex-col gap-4",
   },
 });

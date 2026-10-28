@@ -213,7 +213,7 @@ function TaskAssigneeMenuLoaded({
     if (onSelect == null) {
       return;
     }
-    if (resolved == null) {
+    if (resolved == null || (unassigned != null && resolved === unassigned.value)) {
       onSelect(null);
       return;
     }

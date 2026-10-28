@@ -40,7 +40,6 @@ export function TaskDetailsPageSkeleton({
     title,
     body,
     main,
-    editor,
     engagement,
   } = taskDetailsPageSkeleton();
 
@@ -56,7 +55,7 @@ export function TaskDetailsPageSkeleton({
       </div>
       <div className={body()}>
         <div className={main()}>
-          <CardSkeleton size={5} className={editor()} />
+          <CardSkeleton size={5} />
           {showEngagement && (
             <div className={engagement()}>
               <TabsSkeleton count={2} />

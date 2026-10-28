@@ -30,9 +30,11 @@ export const internalControlTasksTab = tv({
       "[&>*]:flex [&>*]:min-w-0 [&>*]:w-full [&>*]:flex-1",
     ],
     action: [
-      "flex w-full cursor-pointer items-center justify-center gap-2 py-2",
-      "bg-highlight hover:bg-highlight-hover active:bg-highlight-pressed",
+      "flex h-auto w-full cursor-pointer items-center justify-center gap-2 rounded-none border-0 px-0 py-2",
+      "bg-highlight font-normal text-inherit shadow-none",
+      "hover:bg-highlight-hover active:bg-highlight-pressed",
       "disabled:cursor-default disabled:opacity-50",
+      "aria-disabled:pointer-events-none aria-disabled:opacity-50",
     ],
   },
 });
