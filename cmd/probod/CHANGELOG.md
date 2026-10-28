@@ -4,6 +4,16 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.330.3] - 2026-10-28
+
+### Fixed
+
+- Compliance portal document previews load again. The PDF worker came
+  from a different pdfjs-dist than react-pdf uses, so previews failed
+  with an API and worker version mismatch
+- Employee portal task editor shows mentions and task checkboxes
+  styled like the console instead of plain text and stacked checkboxes
+
 ## [0.330.2] - 2026-10-27
 
 ### Fixed
