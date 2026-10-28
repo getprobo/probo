@@ -95,6 +95,8 @@ const sourcesFragment = graphql`
             name
           }
           ...AccessReviewSourceListItem_source
+          # Streamed after the row, so the list renders before the vendor probe.
+          ...AccessReviewSourceListItem_status @defer
         }
       }
     }
@@ -271,6 +273,7 @@ export function AccessReviewSourcesPage({ queryRef }: AccessReviewSourcesPagePro
                     <AccessReviewSourceListItem
                       key={node.id}
                       sourceKey={node}
+                      statusKey={node}
                       connectionId={accessReviewSources.__id}
                     />
                   ))}

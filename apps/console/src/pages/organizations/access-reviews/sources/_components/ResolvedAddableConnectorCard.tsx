@@ -30,26 +30,34 @@ import { DropdownTrigger } from "@probo/ui/src/v2/Dropdown/DropdownTrigger";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { type ReactNode } from "react";
+import { type ReactNode, Suspense, useCallback, useLayoutEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 import { Link } from "react-router";
 
 import type { ResolvedAddableConnectorCard_account$key } from "#/__generated__/core/ResolvedAddableConnectorCard_account.graphql";
 import type {
-  ProviderOrganizationsStatus,
+  ResolvedAddableConnectorCard_connector$data,
   ResolvedAddableConnectorCard_connector$key,
 } from "#/__generated__/core/ResolvedAddableConnectorCard_connector.graphql";
+import type {
+  useConnectorStatuses_connector$data,
+  useConnectorStatuses_connector$key,
+} from "#/__generated__/core/useConnectorStatuses_connector.graphql";
 import { TonedCard } from "#/components/TonedCard/TonedCard";
+import type { TonedCardTone } from "#/components/TonedCard/variants";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import {
   aggregateConnectionTone,
   connectionSignalFrom,
+  type ConnectionTone,
+  type ConnectorConnectionStatus,
   presentConnection,
 } from "#/pages/organizations/_lib/connectorStatus";
 import { ConnectorProviderName } from "#/pages/organizations/settings/integrations/_components/ConnectorProviderName";
 import { connectorProviderAccessibleName } from "#/pages/organizations/settings/integrations/_lib/connectorProviderLabel";
 import { connectorDetailsPath } from "#/pages/organizations/settings/integrations/_lib/integrationPath";
+import { useConnectorStatuses } from "#/pages/organizations/settings/integrations/_lib/useConnectorStatuses";
 
 import { listedConnectorAccounts } from "../_lib/listedConnectorAccounts";
 
@@ -61,11 +69,7 @@ const connectorFragment = graphql`
     id
     displayName
     provider
-    connectionStatus
     canReconnect
-    providerOrganizations {
-      status
-    }
     distinctAccountCount
   }
 `;
@@ -93,37 +97,311 @@ export interface AddableConnectorCard {
 interface ResolvedAddableConnectorCardProps {
   pages: readonly LoadedConnectorAccounts[];
   connectorKeys: ResolvedAddableConnectorCard_connector$key;
+  // The same connectors, read through the fragment the list spreads with @defer.
+  statusKeys: useConnectorStatuses_connector$key;
   normalizedSearch: string;
   selectedProviders: ReadonlySet<string>;
   onSelectedChange: (provider: string, selected: boolean) => void;
   children: (card: AddableConnectorCard | null) => ReactNode;
 }
 
+interface LoadedAccount {
+  id: string;
+  name: string;
+  externalAccountId: string;
+  connectorId: string;
+}
+
+interface LoadedAddableConnector {
+  connector: ResolvedAddableConnectorCard_connector$data[number];
+  accounts: readonly LoadedAccount[];
+}
+
+interface AddableSelection {
+  accounts: readonly AddableConnectorAccount[];
+  selectable: boolean;
+}
+
+interface AddableConnectorStatusView extends AddableSelection {
+  tone: TonedCardTone;
+  showNeedsOrganization: boolean;
+  statusTone: ConnectionTone | null;
+  sharedStatus: ConnectorConnectionStatus | null;
+  connectedCount: number;
+  presentedCount: number;
+}
+
+// The initial account is the connector itself. Until the probe says the
+// provider has no organization picker, that account cannot be added.
 function accountNeedsOrganization(
   externalAccountId: string,
   connectorId: string,
-  organizationsStatus: ProviderOrganizationsStatus,
+  statuses: useConnectorStatuses_connector$data | null,
+  connectors: readonly { id: string }[],
 ) {
-  return organizationsStatus !== "NOT_APPLICABLE"
-    && externalAccountId === connectorId;
+  if (externalAccountId !== connectorId) {
+    return false;
+  }
+
+  const index = connectors.findIndex(connector => connector.id === connectorId);
+  const organizationsStatus = statuses?.[index]?.providerOrganizations.status;
+  if (organizationsStatus == null) {
+    return true;
+  }
+
+  return organizationsStatus !== "NOT_APPLICABLE";
+}
+
+function addableConnectorStatusView(
+  connectors: readonly { id: string; canReconnect: boolean }[],
+  loaded: readonly LoadedAddableConnector[],
+  listed: readonly LoadedAccount[],
+  statuses: useConnectorStatuses_connector$data | null,
+  hasNext: boolean,
+): AddableConnectorStatusView {
+  const needsOrganization = (account: LoadedAccount) => accountNeedsOrganization(
+    account.externalAccountId,
+    account.connectorId,
+    statuses,
+    connectors,
+  );
+  const presented = statuses == null
+    ? []
+    : connectors.flatMap((connector, index) => {
+        const status = statuses[index];
+        const signal = connectionSignalFrom({
+          connectionStatus: status?.connectionStatus,
+          canReconnect: connector.canReconnect,
+          providerOrganizations: status?.providerOrganizations,
+        });
+        return signal == null ? [] : [presentConnection(signal)];
+      });
+  const [firstPresented] = presented;
+  const sharedStatus = firstPresented != null
+    && presented.every(item => item.status === firstPresented.status)
+    ? firstPresented.status
+    : null;
+  const addable = loaded
+    .flatMap(({ accounts }) => accounts)
+    .filter(account => !needsOrganization(account));
+  const visibleAddable = listed.filter(account => !needsOrganization(account));
+  const statusTone = presented.length === 0 ? null : aggregateConnectionTone(presented);
+
+  return {
+    tone: statusTone ?? "sand",
+    selectable: visibleAddable.length > 0 && !hasNext,
+    accounts: addable.map(account => ({ id: account.id, name: account.name })),
+    showNeedsOrganization: statuses != null
+      && listed.length > 0
+      && visibleAddable.length === 0,
+    statusTone,
+    sharedStatus,
+    connectedCount: presented.filter(item => item.status === "CONNECTED").length,
+    presentedCount: presented.length,
+  };
+}
+
+function selectionsEqual(current: AddableSelection | null, next: AddableSelection) {
+  if (current == null || current.selectable !== next.selectable) {
+    return false;
+  }
+  if (current.accounts.length !== next.accounts.length) {
+    return false;
+  }
+
+  return current.accounts.every((account, index) => {
+    const other = next.accounts[index];
+    return other != null && account.id === other.id && account.name === other.name;
+  });
+}
+
+interface AddableConnectorCardFrameProps {
+  face: ResolvedAddableConnectorCard_connector$data[number];
+  view: AddableConnectorStatusView;
+  providerSelected: boolean;
+  onSelectedChange: (provider: string, selected: boolean) => void;
+}
+
+function AddableConnectorCardFrame({
+  face,
+  view,
+  providerSelected,
+  onSelectedChange,
+}: AddableConnectorCardFrameProps) {
+  const { t } = useTranslation();
+  const organizationId = useOrganizationId();
+  const { t: tConnector } = useTranslation("organizations/settings/integrations");
+  const selected = view.selectable && providerSelected;
+  const { controls, checkbox, menu, badges, frame } = addableConnectorCard({
+    selectable: view.selectable,
+  });
+  const selectLabel = t("newAccessReviewSourcePage.actions.select", {
+    name: connectorProviderAccessibleName(face.provider, face.displayName),
+  });
+
+  return (
+    <TonedCard
+      tone={view.tone}
+      size={2}
+      className={frame()}
+      stretch={view.selectable
+        ? (
+            <CardButton
+              type="button"
+              aria-label={selectLabel}
+              aria-pressed={selected}
+              onClick={() => {
+                onSelectedChange(face.provider, !selected);
+              }}
+            />
+          )
+        : undefined}
+      icon={(
+        <ThirdPartyLogo thirdParty={face.provider} />
+      )}
+      lead={(
+        <Heading level={3} size={3} weight="medium" highContrast className="flex min-w-0">
+          <ConnectorProviderName provider={face.provider} name={face.displayName} />
+        </Heading>
+      )}
+      control={(
+        <div className={controls()}>
+          <Checkbox
+            className={checkbox()}
+            checked={selected}
+            disabled={!view.selectable}
+            tabIndex={view.selectable ? -1 : undefined}
+            aria-hidden={view.selectable || undefined}
+            aria-label={selectLabel}
+            onCheckedChange={(checked) => {
+              onSelectedChange(face.provider, checked);
+            }}
+          />
+          <div className={menu()}>
+            <Dropdown>
+              <DropdownTrigger
+                render={(
+                  <IconButton
+                    variant="ghost"
+                    color="neutral"
+                    size={1}
+                    aria-label={t("accessReviewSourcesPage.actions.more")}
+                  >
+                    <DotsThreeVerticalIcon />
+                  </IconButton>
+                )}
+              />
+              <DropdownPopup align="end">
+                <DropdownItem
+                  iconStart={<PencilSimpleIcon />}
+                  render={(
+                    <Link to={connectorDetailsPath(organizationId, face.provider)} />
+                  )}
+                >
+                  {t("accessReviewSourcesPage.actions.edit")}
+                </DropdownItem>
+              </DropdownPopup>
+            </Dropdown>
+          </div>
+        </div>
+      )}
+    >
+      {view.showNeedsOrganization && (
+        <Text size={2} color="faint">
+          {t("accessReviewSourcesPage.needsOrganization")}
+        </Text>
+      )}
+      <div className={badges()}>
+        {view.statusTone != null && (
+          <Badge variant="soft" color={view.statusTone} size={1}>
+            {view.sharedStatus != null
+              ? tConnector(`detailsPage.status.${view.sharedStatus}`)
+              : tConnector("listPage.connectedCount", {
+                  connected: view.connectedCount,
+                  total: view.presentedCount,
+                })}
+          </Badge>
+        )}
+        <Badge variant="soft" color="neutral" size={1}>
+          {t("accessReviewSourcesPage.accountCount", {
+            count: face.distinctAccountCount,
+          })}
+        </Badge>
+      </div>
+    </TonedCard>
+  );
+}
+
+interface AddableConnectorCardStatusesProps {
+  face: ResolvedAddableConnectorCard_connector$data[number];
+  statusKeys: useConnectorStatuses_connector$key;
+  connectors: readonly { id: string; canReconnect: boolean }[];
+  loaded: readonly LoadedAddableConnector[];
+  listed: readonly LoadedAccount[];
+  hasNext: boolean;
+  providerSelected: boolean;
+  onSelectedChange: (provider: string, selected: boolean) => void;
+  onSelection: (selection: AddableSelection) => void;
+}
+
+// Reads the deferred probe. Suspends until it arrives, so it has to render
+// under the card's own Suspense boundary: the page collects every card
+// before painting, and a suspend here would hold that collection.
+function AddableConnectorCardStatuses({
+  face,
+  statusKeys,
+  connectors,
+  loaded,
+  listed,
+  hasNext,
+  providerSelected,
+  onSelectedChange,
+  onSelection,
+}: AddableConnectorCardStatusesProps) {
+  const statuses = useConnectorStatuses(statusKeys);
+  const view = addableConnectorStatusView(
+    connectors,
+    loaded,
+    listed,
+    statuses ?? null,
+    hasNext,
+  );
+
+  useLayoutEffect(() => {
+    onSelection({
+      accounts: view.accounts,
+      selectable: view.selectable,
+    });
+  }, [onSelection, view.accounts, view.selectable]);
+
+  return (
+    <AddableConnectorCardFrame
+      face={face}
+      view={view}
+      providerSelected={providerSelected}
+      onSelectedChange={onSelectedChange}
+    />
+  );
 }
 
 export function ResolvedAddableConnectorCard({
   pages,
   connectorKeys,
+  statusKeys,
   normalizedSearch,
   selectedProviders,
   onSelectedChange,
   children,
 }: ResolvedAddableConnectorCardProps) {
-  const { t } = useTranslation();
-  const organizationId = useOrganizationId();
-  const { t: tConnector } = useTranslation("organizations/settings/integrations");
   const connectors = useFragment(connectorFragment, connectorKeys);
   const accountKeys: ResolvedAddableConnectorCard_account$key = pages.flatMap(
     page => page.accounts,
   );
   const accounts = useFragment(accountFragment, accountKeys);
+  const [selection, setSelection] = useState<AddableSelection | null>(null);
+  const reportSelection = useCallback((next: AddableSelection) => {
+    setSelection(current => selectionsEqual(current, next) ? current : next);
+  }, []);
   const [face] = connectors;
   const loaded = pages.flatMap((page, index) => {
     const connector = connectors[index];
@@ -139,144 +417,56 @@ export function ResolvedAddableConnectorCard({
       accounts: pageAccounts.map(account => ({
         id: account.id,
         name: account.name,
-        needsOrganization: accountNeedsOrganization(
-          account.externalAccountId,
-          connector.id,
-          connector.providerOrganizations.status,
-        ),
+        externalAccountId: account.externalAccountId,
+        connectorId: connector.id,
       })),
     }];
   });
   const listed = loaded.flatMap(({ connector, accounts: pageAccounts }) =>
     listedConnectorAccounts(pageAccounts, connector, normalizedSearch) ?? [],
   );
-  const presented = connectors.flatMap((connector) => {
-    const signal = connectionSignalFrom({
-      connectionStatus: connector.connectionStatus,
-      canReconnect: connector.canReconnect,
-      providerOrganizations: {
-        status: connector.providerOrganizations.status,
-      },
-    });
-    return signal == null ? [] : [presentConnection(signal)];
-  });
-  const [firstPresented] = presented;
-  const sharedStatus = firstPresented != null
-    && presented.every(item => item.status === firstPresented.status)
-    ? firstPresented.status
-    : null;
-  const tone = presented.length === 0 ? "green" : aggregateConnectionTone(presented);
-  const accountCount = face?.distinctAccountCount ?? 0;
-  const addable = loaded
-    .flatMap(({ accounts: pageAccounts }) => pageAccounts)
-    .filter(account => !account.needsOrganization);
-  const visibleAddable = listed.filter(account => !account.needsOrganization);
   const hasNext = pages.some(page => page.hasNext);
-  const selectable = visibleAddable.length > 0 && !hasNext;
-  const selected = selectable && face != null && selectedProviders.has(face.provider);
-  const { controls, checkbox, menu, badges, frame } = addableConnectorCard({
-    selectable,
-  });
   if (face == null || (listed.length === 0 && !hasNext)) {
     return children(null);
   }
 
-  const selectLabel = t("newAccessReviewSourcePage.actions.select", {
-    name: connectorProviderAccessibleName(face.provider, face.displayName),
-  });
+  const pending = addableConnectorStatusView(
+    connectors,
+    loaded,
+    listed,
+    null,
+    hasNext,
+  );
+  const applied = selection ?? pending;
+  const providerSelected = selectedProviders.has(face.provider);
 
   return children({
     provider: face.provider,
-    accounts: addable.map(account => ({ id: account.id, name: account.name })),
-    selectable,
+    accounts: applied.accounts,
+    selectable: applied.selectable,
     card: (
-      <TonedCard
-        tone={tone}
-        size={2}
-        className={frame()}
-        stretch={selectable
-          ? (
-              <CardButton
-                type="button"
-                aria-label={selectLabel}
-                aria-pressed={selected}
-                onClick={() => {
-                  onSelectedChange(face.provider, !selected);
-                }}
-              />
-            )
-          : undefined}
-        icon={(
-          <ThirdPartyLogo thirdParty={face.provider} />
-        )}
-        lead={(
-          <Heading level={3} size={3} weight="medium" highContrast className="flex min-w-0">
-            <ConnectorProviderName provider={face.provider} name={face.displayName} />
-          </Heading>
-        )}
-        control={(
-          <div className={controls()}>
-            <Checkbox
-              className={checkbox()}
-              checked={selected}
-              disabled={!selectable}
-              tabIndex={selectable ? -1 : undefined}
-              aria-hidden={selectable || undefined}
-              aria-label={selectLabel}
-              onCheckedChange={(checked) => {
-                onSelectedChange(face.provider, checked);
-              }}
-            />
-            <div className={menu()}>
-              <Dropdown>
-                <DropdownTrigger
-                  render={(
-                    <IconButton
-                      variant="ghost"
-                      color="neutral"
-                      size={1}
-                      aria-label={t("accessReviewSourcesPage.actions.more")}
-                    >
-                      <DotsThreeVerticalIcon />
-                    </IconButton>
-                  )}
-                />
-                <DropdownPopup align="end">
-                  <DropdownItem
-                    iconStart={<PencilSimpleIcon />}
-                    render={(
-                      <Link to={connectorDetailsPath(organizationId, face.provider)} />
-                    )}
-                  >
-                    {t("accessReviewSourcesPage.actions.edit")}
-                  </DropdownItem>
-                </DropdownPopup>
-              </Dropdown>
-            </div>
-          </div>
+      <Suspense
+        fallback={(
+          <AddableConnectorCardFrame
+            face={face}
+            view={pending}
+            providerSelected={providerSelected}
+            onSelectedChange={onSelectedChange}
+          />
         )}
       >
-        {listed.length > 0 && visibleAddable.length === 0 && (
-          <Text size={2} color="faint">
-            {t("accessReviewSourcesPage.needsOrganization")}
-          </Text>
-        )}
-        <div className={badges()}>
-          <Badge variant="soft" color={tone} size={1}>
-            {sharedStatus != null
-              ? tConnector(`detailsPage.status.${sharedStatus}`)
-              : tConnector("listPage.connectedCount", {
-                  connected: presented.filter(item => item.status === "CONNECTED").length,
-                  total: presented.length,
-                })}
-          </Badge>
-          <Badge variant="soft" color="neutral" size={1}>
-            {t("accessReviewSourcesPage.accountCount", {
-              count: accountCount,
-            })}
-          </Badge>
-        </div>
-      </TonedCard>
+        <AddableConnectorCardStatuses
+          face={face}
+          statusKeys={statusKeys}
+          connectors={connectors}
+          loaded={loaded}
+          listed={listed}
+          hasNext={hasNext}
+          providerSelected={providerSelected}
+          onSelectedChange={onSelectedChange}
+          onSelection={reportSelection}
+        />
+      </Suspense>
     ),
   });
 }

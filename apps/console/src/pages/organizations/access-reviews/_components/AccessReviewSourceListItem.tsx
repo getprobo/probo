@@ -36,7 +36,14 @@ import { useTranslation } from "react-i18next";
 import { useFragment, useQueryLoader } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { AccessReviewSourceListItem_source$key } from "#/__generated__/core/AccessReviewSourceListItem_source.graphql";
+import type {
+  AccessReviewSourceListItem_source$data,
+  AccessReviewSourceListItem_source$key,
+} from "#/__generated__/core/AccessReviewSourceListItem_source.graphql";
+import type {
+  AccessReviewSourceConnectionStatus,
+  AccessReviewSourceListItem_status$key,
+} from "#/__generated__/core/AccessReviewSourceListItem_status.graphql";
 import type { AccessReviewSourceListItemConfigureMutation } from "#/__generated__/core/AccessReviewSourceListItemConfigureMutation.graphql";
 import type { InlineOrgSelectQuery } from "#/__generated__/core/InlineOrgSelectQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
@@ -67,12 +74,17 @@ const fragment = graphql`
       oauth2Scopes
       ...SourceConnectionIssue_connector
     }
-    connectionStatus
     selectedOrganization
     needsConfiguration
     createdAt
     canDelete: permission(action: "access-review:source:delete")
     ...AccessReviewSourceDeleteDialog_source
+  }
+`;
+
+const statusFragment = graphql`
+  fragment AccessReviewSourceListItem_status on AccessReviewSource {
+    connectionStatus
   }
 `;
 
@@ -92,18 +104,86 @@ const configureMutation = graphql`
 
 interface AccessReviewSourceListItemProps {
   sourceKey: AccessReviewSourceListItem_source$key;
+  statusKey: AccessReviewSourceListItem_status$key;
   connectionId: string;
 }
 
 export function AccessReviewSourceListItem({
   sourceKey,
+  statusKey,
   connectionId,
 }: AccessReviewSourceListItemProps) {
+  const accessSource = useFragment(fragment, sourceKey);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const row = {
+    accessSource,
+    connectionId,
+    deleteOpen,
+    onDeleteOpenChange: setDeleteOpen,
+  };
+
+  // A CSV source has no connector, so its status is known without a probe.
+  // A vendor row waits: treating a missing status as NOT_APPLICABLE would
+  // flash the plain card before the probe says otherwise.
+  if (accessSource.connector == null) {
+    return (
+      <AccessReviewSourceRow
+        {...row}
+        connectionStatus="NOT_APPLICABLE"
+      />
+    );
+  }
+
+  return (
+    <Suspense
+      fallback={(
+        <AccessReviewSourceRow
+          {...row}
+          connectionStatus={null}
+        />
+      )}
+    >
+      <DeferredAccessReviewSourceRow
+        {...row}
+        statusKey={statusKey}
+      />
+    </Suspense>
+  );
+}
+
+interface AccessReviewSourceRowProps {
+  accessSource: AccessReviewSourceListItem_source$data;
+  connectionId: string;
+  deleteOpen: boolean;
+  onDeleteOpenChange: (open: boolean) => void;
+  connectionStatus: AccessReviewSourceConnectionStatus | null;
+}
+
+function DeferredAccessReviewSourceRow({
+  statusKey,
+  ...row
+}: Omit<AccessReviewSourceRowProps, "connectionStatus"> & {
+  statusKey: AccessReviewSourceListItem_status$key;
+}) {
+  const status = useFragment(statusFragment, statusKey);
+
+  return (
+    <AccessReviewSourceRow
+      {...row}
+      connectionStatus={status.connectionStatus}
+    />
+  );
+}
+
+function AccessReviewSourceRow({
+  accessSource,
+  connectionId,
+  deleteOpen,
+  onDeleteOpenChange,
+  connectionStatus,
+}: AccessReviewSourceRowProps) {
   const { i18n, t } = useTranslation();
   const organizationId = useOrganizationId();
-  const [deleteOpen, setDeleteOpen] = useState(false);
-
-  const accessSource = useFragment(fragment, sourceKey);
 
   const [configure]
     = useMutation<AccessReviewSourceListItemConfigureMutation>(configureMutation, {
@@ -115,7 +195,8 @@ export function AccessReviewSourceListItem({
 
   const connector = accessSource.connector;
   const showOrgSelector = connector != null
-    && accessSource.connectionStatus !== "NOT_APPLICABLE"
+    && connectionStatus != null
+    && connectionStatus !== "NOT_APPLICABLE"
     && Boolean(accessSource.needsConfiguration || accessSource.selectedOrganization);
 
   useEffect(() => {
@@ -174,7 +255,7 @@ export function AccessReviewSourceListItem({
               <DropdownItem
                 color="error"
                 iconStart={<TrashIcon />}
-                onClick={() => setDeleteOpen(true)}
+                onClick={() => onDeleteOpenChange(true)}
               >
                 {t("accessReviewSourceRow.actions.delete")}
               </DropdownItem>
@@ -184,13 +265,13 @@ export function AccessReviewSourceListItem({
             sourceKey={accessSource}
             connectionId={connectionId}
             open={deleteOpen}
-            onOpenChange={setDeleteOpen}
+            onOpenChange={onDeleteOpenChange}
           />
         </>
       )
     : null;
 
-  if (connector == null || accessSource.connectionStatus === "NOT_APPLICABLE") {
+  if (connector == null || connectionStatus === "NOT_APPLICABLE") {
     return (
       <Card variant="soft" size={2} className={card()}>
         <div className={header()}>
@@ -217,7 +298,37 @@ export function AccessReviewSourceListItem({
     );
   }
 
-  const connectionStatus = accessSource.connectionStatus;
+  if (connectionStatus == null) {
+    return (
+      <Card variant="soft" size={2} className={card()}>
+        <div className={header()}>
+          <ThirdPartyLogo
+            thirdParty={connector.provider}
+            className={logo()}
+          />
+          <div className={identity()}>
+            <Heading level={3} size={3} weight="medium" highContrast className={title()}>
+              {accessReviewSourceLabel({
+                name: accessSource.name,
+                accountName: accessSource.connectorAccount?.name,
+              })}
+            </Heading>
+            <Text size={1} color="faint">
+              <time dateTime={accessSource.createdAt}>
+                {dateTimeFormat(i18n.language, accessSource.createdAt)}
+              </time>
+            </Text>
+          </div>
+        </div>
+        {deleteControl != null && (
+          <div className={actions()}>
+            {deleteControl}
+          </div>
+        )}
+      </Card>
+    );
+  }
+
   const canReconnect = connector.canReconnect;
   const reconnectUrl = accessSource.connectorId == null
     ? null

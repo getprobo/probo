@@ -22,6 +22,9 @@ import { type ReactNode } from "react";
 import { graphql, useFragment } from "react-relay";
 
 import type { AddableConnectorListItem_connector$key } from "#/__generated__/core/AddableConnectorListItem_connector.graphql";
+// The card reads this fragment. The import keeps the deferred spread
+// colocated with that module for the Relay lint rule.
+import "#/pages/organizations/settings/integrations/_lib/useConnectorStatuses";
 
 import { ConnectorAccountPages } from "./AddableConnectorAccounts";
 import {
@@ -33,6 +36,8 @@ const fragment = graphql`
   fragment AddableConnectorListItem_connector on Connector @relay(plural: true) {
     ...ResolvedAddableConnectorCard_connector
     ...AddableConnectorAccounts_connector
+    # Streamed after the card, so the page renders before the vendor probes.
+    ...useConnectorStatuses_connector @defer
   }
 `;
 
@@ -59,6 +64,7 @@ export function AddableConnectorListItem({
         <ResolvedAddableConnectorCard
           pages={pages}
           connectorKeys={connectors}
+          statusKeys={connectors}
           normalizedSearch={normalizedSearch}
           selectedProviders={selectedProviders}
           onSelectedChange={onSelectedChange}
