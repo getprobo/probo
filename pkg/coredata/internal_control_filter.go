@@ -73,6 +73,7 @@ func (f *InternalControlFilter) SQLArguments() pgx.StrictNamedArgs {
 		"implementation_statuses": filterStrings(f.implementationStatuses),
 		"owner_profile_id":        ownerID,
 		"needs_attention":         f.needsAttention,
+		"not_implemented":         InternalControlImplementationStatusNotImplemented,
 	}
 }
 
@@ -140,7 +141,7 @@ AND
 		WHEN @needs_attention::boolean IS NOT TRUE THEN
 			TRUE
 		ELSE
-			implementation_status = 'NOT_IMPLEMENTED'
+			implementation_status = @not_implemented::internal_control_implementation_status
 			OR (next_evidence_due IS NOT NULL AND next_evidence_due < NOW())
 			OR (next_test_due IS NOT NULL AND next_test_due < NOW())
 	END
@@ -239,7 +240,7 @@ AND
 						ELSE 'NOT_IMPLEMENTED'
 					END
 				)::internal_control_implementation_status
-			) = 'NOT_IMPLEMENTED'
+			) = @not_implemented::internal_control_implementation_status
 			OR (next_evidence_due IS NOT NULL AND next_evidence_due < NOW())
 			OR (next_test_due IS NOT NULL AND next_test_due < NOW())
 	END
