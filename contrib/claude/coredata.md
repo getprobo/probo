@@ -389,6 +389,37 @@ func (f *CookieBannerFilter) SQLArguments() pgx.StrictNamedArgs {
 
 For complex multi-field filters, use `CASE WHEN` in SQL and always declare all argument keys in every code path (use `nil` for inactive ones).
 
+### List text search
+
+Text search on a filterable list uses a stored `search_vector`. A typed word is a prefix of a stored word, every word is required, and punctuation is ignored. A query that keeps no words matches every row. Words may sit in different columns because those columns are concatenated into one vector.
+
+```sql
+search_vector tsvector
+GENERATED ALWAYS AS (
+    to_tsvector(
+        'simple',
+        COALESCE(name, '') || ' ' || COALESCE(description, '')
+    )
+) STORED
+```
+
+Index it with GIN. Copy this predicate into `SQLFragment` and write the real column name in place. Do not build it from a Go constant or a function that interpolates the column name. Bind `@query` on every path, including when it is unset.
+
+```sql
+CASE
+    WHEN to_tsvector('simple', COALESCE(@query::text, '')) <> ''::tsvector THEN
+        search_vector @@ (
+            SELECT to_tsquery('simple', string_agg(quote_literal(lexeme) || ':*', ' & '))
+            FROM unnest(to_tsvector('simple', @query::text)) AS lex(lexeme, positions)
+        )
+    ELSE TRUE
+END
+```
+
+Columns that store codes such as `POL-004`, `AC-2`, or `RSK-001` pass the text through `translate(text, '-+', '  ')` before `to_tsvector`. Do the same to `@query` in that list's `SQLFragment`. Documents, controls, and risks do this. Leave the query unchanged on a list whose stored vector has not been rebuilt the same way. A hyphen before digits is otherwise stored as a signed number, so a search for the digits misses.
+
+On a new module, one escaped `ILIKE '%…%' ESCAPE '\'` on a single column is acceptable for the first implementation. Replace it with a `search_vector` once the list searches more than one column, needs word prefixes, or the table is large enough that a scan matters. Do not mix `ILIKE` and `search_vector` in the same text search.
+
 ## Enums
 
 Coredata enums are always `type X string` with a single validation source of truth (`IsValid`) and text marshalling support for pgx/JSON wiring.

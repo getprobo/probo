@@ -79,20 +79,14 @@ func (f *DeviceFilter) SQLFragment() string {
 	return `
 (
 	CASE
-		WHEN @query::text IS NOT NULL AND @query::text != '' THEN
+		WHEN to_tsvector('simple', COALESCE(@query::text, '')) <> ''::tsvector THEN
 			EXISTS (
 				SELECT 1
 				FROM iam_membership_profiles p
 				WHERE p.id = devices.owner_profile_id
-					AND to_tsvector('simple', p.full_name) @@ (
-						SELECT to_tsquery('simple', string_agg(lexeme || ':*', ' & '))
-						FROM unnest(
-							regexp_split_to_array(
-								trim(regexp_replace(@query, '-', ' ', 'g')),
-								'\s+'
-							)
-						) AS lexeme
-						WHERE lexeme <> ''
+					AND p.search_vector @@ (
+						SELECT to_tsquery('simple', string_agg(quote_literal(lexeme) || ':*', ' & '))
+						FROM unnest(to_tsvector('simple', @query::text)) AS lex(lexeme, positions)
 					)
 			)
 		ELSE TRUE

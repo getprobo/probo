@@ -81,13 +81,12 @@ func (f *InternalControlFilter) SQLFragment() string {
 	return `
 (
 	CASE
-		WHEN @query::text IS NULL OR @query::text = '' THEN
-			TRUE
-		ELSE
+		WHEN to_tsvector('simple', COALESCE(@query::text, '')) <> ''::tsvector THEN
 			search_vector @@ (
-				SELECT to_tsquery('simple', string_agg(lexeme || ':*', ' & '))
-				FROM unnest(regexp_split_to_array(trim(@query), '\s+')) AS lexeme
+				SELECT to_tsquery('simple', string_agg(quote_literal(lexeme) || ':*', ' & '))
+				FROM unnest(to_tsvector('simple', @query::text)) AS lex(lexeme, positions)
 			)
+		ELSE TRUE
 	END
 )
 AND
@@ -97,7 +96,7 @@ AND
 			TRUE
 		ELSE
 			state = @state::mitigation_state
-	END
+		END
 )
 AND
 (
@@ -153,13 +152,12 @@ func (f *InternalControlFilter) EventSQLFragment() string {
 	return `
 (
 	CASE
-		WHEN @query::text IS NULL OR @query::text = '' THEN
-			TRUE
-		ELSE
-			to_tsvector('simple', name) @@ (
-				SELECT to_tsquery('simple', string_agg(lexeme || ':*', ' & '))
-				FROM unnest(regexp_split_to_array(trim(@query), '\s+')) AS lexeme
+		WHEN to_tsvector('simple', COALESCE(@query::text, '')) <> ''::tsvector THEN
+			search_vector @@ (
+				SELECT to_tsquery('simple', string_agg(quote_literal(lexeme) || ':*', ' & '))
+				FROM unnest(to_tsvector('simple', @query::text)) AS lex(lexeme, positions)
 			)
+		ELSE TRUE
 	END
 )
 AND

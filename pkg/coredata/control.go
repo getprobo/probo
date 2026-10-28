@@ -115,7 +115,8 @@ func (c *Controls) CountByDocumentID(
 WITH ctrl AS (
 	SELECT
 		c.id,
-		c.tenant_id
+		c.tenant_id,
+		c.search_vector
 	FROM
 		controls c
 	INNER JOIN
@@ -228,7 +229,8 @@ func (c *Controls) CountByInternalControlID(
 WITH ctrl AS (
 	SELECT
 		c.id,
-		c.tenant_id
+		c.tenant_id,
+		c.search_vector
 	FROM
 		controls c
 	INNER JOIN
@@ -341,7 +343,8 @@ func (c *Controls) CountByRiskID(
 WITH ctrl AS (
 	SELECT DISTINCT
 		c.id,
-		c.tenant_id
+		c.tenant_id,
+		c.search_vector
 	FROM
 		controls c
 	LEFT JOIN
@@ -549,7 +552,8 @@ func (c *Controls) CountByOrganizationID(
 WITH ctrl AS (
 	SELECT
 		c.id,
-		c.tenant_id
+		c.tenant_id,
+		c.search_vector
 	FROM
 		controls c
 	INNER JOIN

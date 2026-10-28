@@ -162,6 +162,7 @@ WITH latest AS (
         internal_control_id,
         event_type,
         name,
+        search_vector,
         category,
         state,
         implementation_status,

@@ -37,24 +37,20 @@ func NewControlFilter(query *string) *ControlFilter {
 }
 
 func (f *ControlFilter) SQLArguments() pgx.NamedArgs {
-	args := pgx.NamedArgs{}
-
-	if f.query != nil {
-		args["query"] = *f.query
+	return pgx.NamedArgs{
+		"query": f.query,
 	}
-
-	return args
 }
 
 func (f *ControlFilter) SQLFragment() string {
-	if f.query == nil || *f.query == "" {
-		return "TRUE"
-	}
-
 	return `
-		search_vector @@ (
-			SELECT to_tsquery('simple', string_agg(lexeme || ':*', ' & '))
-			FROM unnest(regexp_split_to_array(trim(@query), '\s+')) AS lexeme
-		)
+		CASE
+			WHEN to_tsvector('simple', translate(COALESCE(@query::text, ''), '-+', '  ')) <> ''::tsvector THEN
+				search_vector @@ (
+					SELECT to_tsquery('simple', string_agg(quote_literal(lexeme) || ':*', ' & '))
+					FROM unnest(to_tsvector('simple', translate(COALESCE(@query::text, ''), '-+', '  '))) AS lex(lexeme, positions)
+				)
+			ELSE TRUE
+		END
 	`
 }

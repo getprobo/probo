@@ -44,20 +44,13 @@ func (f *RiskFilter) SQLArguments() pgx.StrictNamedArgs {
 
 func (f *RiskFilter) SQLFragment() string {
 	return `
-(
-	CASE
-		WHEN @query::text IS NOT NULL AND @query::text != '' THEN
-			search_vector @@ (
-				SELECT to_tsquery('simple', string_agg(lexeme || ':*', ' & '))
-				FROM unnest(
-					regexp_split_to_array(
-						trim(regexp_replace(@query, '-', ' ', 'g')),
-						'\s+'
-					)
-				) AS lexeme
-				WHERE lexeme <> ''
-			)
-		ELSE TRUE
-	END
-)`
+		CASE
+			WHEN to_tsvector('simple', translate(COALESCE(@query::text, ''), '-+', '  ')) <> ''::tsvector THEN
+				search_vector @@ (
+					SELECT to_tsquery('simple', string_agg(quote_literal(lexeme) || ':*', ' & '))
+					FROM unnest(to_tsvector('simple', translate(COALESCE(@query::text, ''), '-+', '  '))) AS lex(lexeme, positions)
+				)
+			ELSE TRUE
+		END
+	`
 }
