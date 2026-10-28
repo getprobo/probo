@@ -4,6 +4,16 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.332.0] - 2026-10-28
+
+### Added
+
+- The console, employee portal, and compliance portal can report
+  browser telemetry to a Grafana Faro collector. It is off unless
+  `faro.enabled` is set, with `faro.collector-url` and `faro.api-key`
+- Hovering a mention shows the member's avatar, name, and email, in
+  the console and the employee portal
+
 ### Changed
 
 - Internal controls show one status. The list, the form, and linked
@@ -13,7 +23,13 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
   the name or the code. Filters, sort, the page, and a Needs attention
   view stay in the URL. The list can filter on several statuses, an
   owner, and controls that need attention, and it can sort by the next
-  due date.
+  due date. Owner and Needs attention filters are rejected on as-of
+  snapshots, which do not record owners or due dates
+
+### Fixed
+
+- Date pickers, dropdowns, and popovers opened from a dialog or drawer
+  show above it instead of behind it
 
 ## [0.331.0] - 2026-10-28
 
