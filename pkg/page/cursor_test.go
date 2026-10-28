@@ -24,6 +24,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"go.probo.inc/probo/pkg/gid"
 )
 
 type testOrderField string
@@ -74,4 +76,68 @@ func TestNewCursor(t *testing.T) {
 			assert.Equal(t, tt.expectedSize, cursor.Size)
 		})
 	}
+}
+
+type testDirectionalOrderField string
+
+func (f testDirectionalOrderField) Column() string { return string(f) }
+func (f testDirectionalOrderField) String() string { return string(f) }
+
+func (f testDirectionalOrderField) DirectionalColumn(direction OrderDirection) string {
+	return string(f) + "_" + string(direction)
+}
+
+func (f testDirectionalOrderField) DirectionalCursorValue(direction OrderDirection, placeholder string) string {
+	return "map_" + string(direction) + "(" + placeholder + ")"
+}
+
+func TestCursor_SQLFragment_DirectionalOrderField(t *testing.T) {
+	t.Parallel()
+
+	key := NewCursorKey(gid.New(gid.NewTenantID(), 1), "v")
+
+	t.Run("descending head uses the descending expression", func(t *testing.T) {
+		t.Parallel()
+
+		cursor := NewCursor(10, &key, Head, OrderBy[testDirectionalOrderField]{
+			Field:     "due",
+			Direction: OrderDirectionDesc,
+		})
+
+		assert.Equal(
+			t,
+			"(due_DESC <= map_DESC(@cursor_field_value)) AND NOT (due_DESC = map_DESC(@cursor_field_value) AND id > @cursor_id) ORDER BY due_DESC DESC, id DESC LIMIT @cursor_limit",
+			cursor.SQLFragment(),
+		)
+	})
+
+	t.Run("descending tail keeps the descending expression", func(t *testing.T) {
+		t.Parallel()
+
+		cursor := NewCursor(10, &key, Tail, OrderBy[testDirectionalOrderField]{
+			Field:     "due",
+			Direction: OrderDirectionDesc,
+		})
+
+		assert.Equal(
+			t,
+			"(due_DESC >= map_DESC(@cursor_field_value)) AND NOT (due_DESC = map_DESC(@cursor_field_value) AND id < @cursor_id) ORDER BY due_DESC ASC, id ASC LIMIT @cursor_limit",
+			cursor.SQLFragment(),
+		)
+	})
+
+	t.Run("plain fields are unchanged", func(t *testing.T) {
+		t.Parallel()
+
+		cursor := NewCursor(10, &key, Head, OrderBy[testOrderField]{
+			Field:     "name",
+			Direction: OrderDirectionDesc,
+		})
+
+		assert.Equal(
+			t,
+			"(name <= @cursor_field_value) AND NOT (name = @cursor_field_value AND id > @cursor_id) ORDER BY name DESC, id DESC LIMIT @cursor_limit",
+			cursor.SQLFragment(),
+		)
+	})
 }
