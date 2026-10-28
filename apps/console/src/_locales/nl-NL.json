@@ -3727,6 +3727,7 @@
       "operating": "Operationeel"
     },
     "actions": {
+      "back": "Interne controles",
       "edit": "Bewerken",
       "delete": "Verwijderen"
     },

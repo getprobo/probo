@@ -43,6 +43,7 @@ import { compliancePortalRoutes } from "./pages/organizations/compliance-portals
 import { cookieBannerRoutes } from "./pages/organizations/cookie-banners/routes";
 import { deviceRoutes } from "./pages/organizations/devices/routes";
 import { employeePortalRoutes } from "./pages/organizations/employee-portal/routes";
+import { internalControlRoutes } from "./pages/organizations/internal-controls/routes";
 import { riskRoutes } from "./pages/organizations/risks/routes";
 import { integrationRoutes } from "./pages/organizations/settings/integrations/routes";
 import { taskRoutes } from "./pages/organizations/tasks/routes";
@@ -55,7 +56,6 @@ import { dataRoutes } from "./routes/dataRoutes";
 import { documentsRoutes } from "./routes/documentsRoutes";
 import { findingRoutes } from "./routes/findingRoutes";
 import { frameworkRoutes } from "./routes/frameworkRoutes";
-import { internalControlRoutes } from "./routes/internalControlRoutes";
 import { obligationRoutes } from "./routes/obligationRoutes";
 import { processingActivityRoutes } from "./routes/processingActivityRoutes";
 import { rightsRequestRoutes } from "./routes/rightsRequestRoutes";

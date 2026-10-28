@@ -18,30 +18,41 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { useQueryLoader } from "react-relay";
 
-import type { InternalControlsPageListQuery } from "#/__generated__/core/InternalControlsPageListQuery.graphql";
-import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
+import type { InternalControlsPageQuery } from "#/__generated__/core/InternalControlsPageQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import InternalControlsPage, { internalControlsPageQuery } from "./InternalControlsPage";
+import { useInternalControlsListFilters } from "./_lib/useInternalControlsListFilters";
+import { InternalControlsPage, internalControlsPageQuery } from "./InternalControlsPage";
+import { InternalControlsPageSkeleton } from "./InternalControlsPageSkeleton";
 
 export default function InternalControlsPageLoader() {
   const organizationId = useOrganizationId();
+  const filters = useInternalControlsListFilters();
+  const filtersRef = useRef(filters);
   const [queryRef, loadQuery]
-    = useQueryLoader<InternalControlsPageListQuery>(internalControlsPageQuery);
+    = useQueryLoader<InternalControlsPageQuery>(internalControlsPageQuery);
 
   useEffect(() => {
-    loadQuery({ organizationId });
+    filtersRef.current = filters;
+  }, [filters]);
+
+  useEffect(() => {
+    const current = filtersRef.current;
+    loadQuery({
+      organizationId,
+      ...current.variables,
+    }, { fetchPolicy: "store-and-network" });
   }, [loadQuery, organizationId]);
 
   if (!queryRef) {
-    return <PageSkeleton />;
+    return <InternalControlsPageSkeleton />;
   }
 
   return (
-    <Suspense fallback={<PageSkeleton />}>
+    <Suspense fallback={<InternalControlsPageSkeleton />}>
       <InternalControlsPage queryRef={queryRef} />
     </Suspense>
   );

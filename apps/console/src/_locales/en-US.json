@@ -2280,7 +2280,7 @@
     "deleteConfirmation": "This will permanently delete the internal control \"{{name}}\". This action cannot be undone.",
     "fields": { "selectState": "Select status", "code": "Code", "owner": "Owner", "reviewer": "Reviewer", "operatingFrequency": "Operating frequency", "evidenceCadence": "Evidence cadence", "testingCadence": "Testing cadence", "nextEvidenceDue": "Evidence due", "nextTestDue": "Test due" },
     "operatingModes": { "continuous": "Continuous", "event": "On event" },
-    "actions": { "edit": "Edit", "delete": "Delete" },
+    "actions": { "back": "Internal controls", "edit": "Edit", "delete": "Delete" },
     "states": { "implemented": "Implemented", "in_progress": "In Progress", "not_applicable": "Not Applicable", "not_started": "Not Started", "unknown": "Unknown", "not_implemented": "Not Implemented" },
     "implementationStatuses": { "not_implemented": "Not implemented", "in_progress": "In progress", "implemented": "Implemented", "operating": "Operating" },
     "tabs": { "evidences": "Evidences", "tasks": "Tasks", "controls": "Controls", "risks": "Risks", "documents": "Documents", "thirdParties": "Third parties" }

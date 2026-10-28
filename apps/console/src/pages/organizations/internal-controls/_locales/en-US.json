@@ -1,0 +1,67 @@
+{
+  "list": {
+    "title": "Internal controls",
+    "description": "Internal controls are owned safeguards that run on a cadence, produce evidence, and cover many framework requirements at once.",
+    "page": "Page {{page}}",
+    "actions": {
+      "new": "New internal control",
+      "import": "Import",
+      "menu": "Internal control actions",
+      "edit": "Edit",
+      "delete": "Delete",
+      "cancel": "Cancel",
+      "clearFilters": "Clear filters",
+      "previous": "Previous",
+      "next": "Next"
+    },
+    "views": {
+      "label": "Internal control views",
+      "all": "All",
+      "attention": "Needs attention"
+    },
+    "filters": {
+      "search": "Search internal controls",
+      "allStatuses": "All statuses",
+      "allCategories": "All categories",
+      "allOwners": "All owners",
+      "selectedCount": "{{count}} selected"
+    },
+    "columns": {
+      "control": "Control",
+      "status": "Status",
+      "owner": "Owner",
+      "nextDue": "Next due"
+    },
+    "statuses": {
+      "not_implemented": "Not implemented",
+      "in_progress": "In progress",
+      "implemented": "Implemented",
+      "operating": "Operating"
+    },
+    "values": {
+      "unassigned": "Unassigned",
+      "none": "None"
+    },
+    "due": {
+      "evidence": "Evidence · {{date}}",
+      "test": "Test · {{date}}",
+      "evidenceOverdue": "Evidence · {{date}} · Overdue",
+      "testOverdue": "Test · {{date}} · Overdue"
+    },
+    "empty": {
+      "title": "No internal controls yet",
+      "description": "Create your first internal control to get started.",
+      "filteredTitle": "No matching controls",
+      "filteredDescription": "Try a different search or clear the filters."
+    },
+    "messages": {
+      "deleted": "Internal control deleted",
+      "imported": "Internal controls imported"
+    },
+    "errors": {
+      "delete": "Failed to delete internal control",
+      "import": "Failed to import internal controls"
+    },
+    "deleteConfirmation": "This will permanently delete the internal control \"{{name}}\". This action cannot be undone."
+  }
+}

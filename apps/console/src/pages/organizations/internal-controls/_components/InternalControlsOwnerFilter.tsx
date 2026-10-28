@@ -1,0 +1,87 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+import { Select } from "@probo/ui/src/v2/Select/Select";
+import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
+import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
+import { SelectTrigger } from "@probo/ui/src/v2/Select/SelectTrigger";
+import { Suspense } from "react";
+import { useTranslation } from "react-i18next";
+
+import { usePeople } from "#/hooks/graph/PeopleGraph";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
+
+import { useInternalControlsListFilters } from "../_lib/useInternalControlsListFilters";
+
+const allOwners = "ALL";
+
+export function InternalControlsOwnerFilter() {
+  const { t } = useTranslation("organizations/internal-controls");
+
+  return (
+    <Suspense
+      fallback={(
+        <Select value={allOwners} disabled>
+          <SelectTrigger
+            size={2}
+            placeholder={t("list.filters.allOwners")}
+            aria-label={t("list.columns.owner")}
+          />
+        </Select>
+      )}
+    >
+      <InternalControlsOwnerFilterOptions />
+    </Suspense>
+  );
+}
+
+function InternalControlsOwnerFilterOptions() {
+  const { t } = useTranslation("organizations/internal-controls");
+  const organizationId = useOrganizationId();
+  const people = usePeople(organizationId, { contractEnded: false });
+  const { ownerId, setOwnerId } = useInternalControlsListFilters();
+  const known = people.some(person => person.id === ownerId);
+  const options = known || ownerId == null
+    ? people
+    : [...people, { id: ownerId, fullName: ownerId }];
+
+  return (
+    <Select
+      value={ownerId ?? allOwners}
+      onValueChange={(value) => {
+        setOwnerId(value === allOwners || value == null ? null : value);
+      }}
+    >
+      <SelectTrigger
+        size={2}
+        placeholder={t("list.filters.allOwners")}
+        aria-label={t("list.columns.owner")}
+      />
+      <SelectPopup align="end">
+        <SelectItem value={allOwners}>{t("list.filters.allOwners")}</SelectItem>
+        {options.map(person => (
+          <SelectItem key={person.id} value={person.id}>
+            {person.fullName ?? person.id}
+          </SelectItem>
+        ))}
+      </SelectPopup>
+    </Select>
+  );
+}

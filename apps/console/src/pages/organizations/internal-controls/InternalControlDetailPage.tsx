@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { CaretLeftIcon } from "@phosphor-icons/react";
 import {
   internalControlImplementationStatuses,
 } from "@probo/helpers";
@@ -44,6 +45,7 @@ import {
   useConfirm,
 } from "@probo/ui";
 import { InternalControlBadge } from "@probo/ui/src/Molecules/Badge/InternalControlBadge";
+import { Link } from "@probo/ui/src/v2/Link/Link";
 import { Suspense } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -53,7 +55,7 @@ import {
   useLazyLoadQuery,
   usePreloadedQuery,
 } from "react-relay";
-import { Outlet, useNavigate, useParams } from "react-router";
+import { Outlet, useLocation, useNavigate, useParams } from "react-router";
 
 import type { InternalControlDetailPageNodeQuery } from "#/__generated__/core/InternalControlDetailPageNodeQuery.graphql";
 import type { InternalControlDetailPageTasksCountQuery } from "#/__generated__/core/InternalControlDetailPageTasksCountQuery.graphql";
@@ -181,6 +183,11 @@ export default function InternalControlDetailPage(props: Props) {
   usePageTitle(internalControl.name ?? "");
   const [deleteInternalControl] = useDeleteInternalControlMutation();
   const navigate = useNavigate();
+  const location = useLocation();
+  const listTo = {
+    pathname: `/organizations/${organizationId}/governance/internal-controls`,
+    search: location.search,
+  };
   const confirm = useConfirm();
   const [updateInternalControl, isUpdating] = useUpdateInternalControl();
   if (!internalControlId) {
@@ -209,7 +216,7 @@ export default function InternalControlDetailPage(props: Props) {
               connections: [connectionId],
             },
             onSuccess() {
-              void navigate(`/organizations/${organizationId}/governance/internal-controls`);
+              void navigate(listTo);
               resolve();
             },
           });
@@ -243,6 +250,15 @@ export default function InternalControlDetailPage(props: Props) {
 
   return (
     <div className="space-y-6">
+      <Link
+        to={listTo}
+        size={2}
+        color="neutral"
+        underline={false}
+        iconStart={<CaretLeftIcon />}
+      >
+        {t("internalControlDetailPage.actions.back")}
+      </Link>
       <PageHeader title={internalControl.name} description={internalControl.description}>
         {!internalControl.canUpdate && (
           <ReadOnlyImplementationStatus

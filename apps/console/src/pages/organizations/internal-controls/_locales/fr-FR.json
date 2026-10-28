@@ -1,0 +1,67 @@
+{
+  "list": {
+    "title": "Contrôles internes",
+    "description": "Les contrôles internes sont des dispositifs nommés, avec un responsable, qui tournent selon une cadence, produisent des preuves et couvrent plusieurs exigences de référentiel.",
+    "page": "Page {{page}}",
+    "actions": {
+      "new": "Nouveau contrôle interne",
+      "import": "Importer",
+      "menu": "Actions des contrôles internes",
+      "edit": "Modifier",
+      "delete": "Supprimer",
+      "cancel": "Annuler",
+      "clearFilters": "Effacer les filtres",
+      "previous": "Précédent",
+      "next": "Suivant"
+    },
+    "views": {
+      "label": "Vues des contrôles internes",
+      "all": "Tous",
+      "attention": "À traiter"
+    },
+    "filters": {
+      "search": "Rechercher des contrôles internes",
+      "allStatuses": "Tous les statuts",
+      "allCategories": "Toutes les catégories",
+      "allOwners": "Tous les responsables",
+      "selectedCount": "{{count}} sélectionnés"
+    },
+    "columns": {
+      "control": "Contrôle",
+      "status": "Statut",
+      "owner": "Responsable",
+      "nextDue": "Prochaine échéance"
+    },
+    "statuses": {
+      "not_implemented": "Non implémenté",
+      "in_progress": "En cours",
+      "implemented": "Implémenté",
+      "operating": "En fonctionnement"
+    },
+    "values": {
+      "unassigned": "Non assigné",
+      "none": "Aucune"
+    },
+    "due": {
+      "evidence": "Preuve · {{date}}",
+      "test": "Test · {{date}}",
+      "evidenceOverdue": "Preuve · {{date}} · En retard",
+      "testOverdue": "Test · {{date}} · En retard"
+    },
+    "empty": {
+      "title": "Aucun contrôle interne",
+      "description": "Créez votre premier contrôle interne pour commencer.",
+      "filteredTitle": "Aucun contrôle correspondant",
+      "filteredDescription": "Essayez une autre recherche ou effacez les filtres."
+    },
+    "messages": {
+      "deleted": "Contrôle interne supprimé",
+      "imported": "Contrôles internes importés"
+    },
+    "errors": {
+      "delete": "Échec de la suppression du contrôle interne",
+      "import": "Échec de l’importation des contrôles internes"
+    },
+    "deleteConfirmation": "Cette action supprimera définitivement le contrôle interne « {{name}} ». Cette action est irréversible."
+  }
+}

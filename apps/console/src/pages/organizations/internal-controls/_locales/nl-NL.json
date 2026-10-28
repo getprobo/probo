@@ -1,0 +1,67 @@
+{
+  "list": {
+    "title": "Interne controles",
+    "description": "Interne controles zijn benoemde, toegewezen waarborgen die op een cadans draaien, bewijs opleveren en meerdere raamwerkeisen tegelijk dekken.",
+    "page": "Pagina {{page}}",
+    "actions": {
+      "new": "Nieuwe interne controle",
+      "import": "Importeren",
+      "menu": "Acties voor interne controles",
+      "edit": "Bewerken",
+      "delete": "Verwijderen",
+      "cancel": "Annuleren",
+      "clearFilters": "Filters wissen",
+      "previous": "Vorige",
+      "next": "Volgende"
+    },
+    "views": {
+      "label": "Weergaven van interne controles",
+      "all": "Alle",
+      "attention": "Aandacht nodig"
+    },
+    "filters": {
+      "search": "Interne controles zoeken",
+      "allStatuses": "Alle statussen",
+      "allCategories": "Alle categorieën",
+      "allOwners": "Alle eigenaren",
+      "selectedCount": "{{count}} geselecteerd"
+    },
+    "columns": {
+      "control": "Controle",
+      "status": "Status",
+      "owner": "Eigenaar",
+      "nextDue": "Volgende termijn"
+    },
+    "statuses": {
+      "not_implemented": "Niet geïmplementeerd",
+      "in_progress": "In uitvoering",
+      "implemented": "Geïmplementeerd",
+      "operating": "Operationeel"
+    },
+    "values": {
+      "unassigned": "Niet toegewezen",
+      "none": "Geen"
+    },
+    "due": {
+      "evidence": "Bewijs · {{date}}",
+      "test": "Test · {{date}}",
+      "evidenceOverdue": "Bewijs · {{date}} · Te laat",
+      "testOverdue": "Test · {{date}} · Te laat"
+    },
+    "empty": {
+      "title": "Nog geen interne controles",
+      "description": "Maak uw eerste interne controle om te beginnen.",
+      "filteredTitle": "Geen overeenkomende controles",
+      "filteredDescription": "Probeer een andere zoekopdracht of wis de filters."
+    },
+    "messages": {
+      "deleted": "Interne controle verwijderd",
+      "imported": "Interne controles geïmporteerd"
+    },
+    "errors": {
+      "delete": "Verwijderen van interne controle mislukt",
+      "import": "Importeren van interne controles mislukt"
+    },
+    "deleteConfirmation": "Hiermee wordt de interne controle \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt."
+  }
+}
