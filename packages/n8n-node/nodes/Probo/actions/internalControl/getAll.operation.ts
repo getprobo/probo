@@ -80,11 +80,11 @@ export const description: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Query',
-				name: 'query',
+				displayName: 'Category',
+				name: 'category',
 				type: 'string',
 				default: '',
-				description: 'Search internal controls by name or code',
+				description: 'Only controls in this category',
 			},
 			{
 				displayName: 'Implementation Statuses',
@@ -98,20 +98,6 @@ export const description: INodeProperties[] = [
 				],
 				default: [],
 				description: 'Only controls in one of these statuses',
-			},
-			{
-				displayName: 'Category',
-				name: 'category',
-				type: 'string',
-				default: '',
-				description: 'Only controls in this category',
-			},
-			{
-				displayName: 'Owner ID',
-				name: 'ownerId',
-				type: 'string',
-				default: '',
-				description: 'Only controls owned by this profile',
 			},
 			{
 				displayName: 'Needs Attention',
@@ -131,6 +117,20 @@ export const description: INodeProperties[] = [
 				],
 				default: 'CREATED_AT',
 				description: 'Field used to order the list',
+			},
+			{
+				displayName: 'Owner ID',
+				name: 'ownerId',
+				type: 'string',
+				default: '',
+				description: 'Only controls owned by this profile',
+			},
+			{
+				displayName: 'Query',
+				name: 'query',
+				type: 'string',
+				default: '',
+				description: 'Search internal controls by name or code',
 			},
 		],
 	},
