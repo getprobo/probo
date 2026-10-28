@@ -31,7 +31,7 @@
       "control": "Controle",
       "status": "Status",
       "owner": "Eigenaar",
-      "nextDue": "Volgende termijn"
+      "nextDue": "Volgende deadline"
     },
     "statuses": {
       "not_implemented": "Niet geïmplementeerd",
@@ -41,7 +41,8 @@
     },
     "values": {
       "unassigned": "Niet toegewezen",
-      "none": "Geen"
+      "none": "Geen",
+      "noCode": "Geen"
     },
     "due": {
       "evidence": "Bewijs · {{date}}",
