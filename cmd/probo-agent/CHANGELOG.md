@@ -5,10 +5,20 @@ documented in this file.
 
 ## Unreleased
 
+## [0.7.3] - 2026-10-28
+
 ### Changed
 
 - Each posture command may run for 60 seconds, and each check for 150
   seconds. `probo-agent collect` waits 30 minutes for the full set
+
+### Fixed
+
+- Posture checks now report the same verdicts as the console. A macOS
+  screen lock with a delay, and a Linux or Windows password policy with
+  a recorded minimum length, are passes instead of failures. A Linux
+  remote login service that is still starting or stopping is judged by
+  its direction, and an unrecognized state is reported as unknown.
 
 ## [0.7.3-rc.1] - 2026-10-19
 
