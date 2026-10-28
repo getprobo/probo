@@ -47,11 +47,11 @@ export const internalControlsPage = tv({
     empty: "flex flex-col items-center gap-3 px-6 py-12 text-center",
     emptyActions: "flex flex-wrap items-center justify-center gap-2",
     // Fluid column under layout="fixed". max-w-0 keeps the column inside
-    // the leftover width. anywhere breaks a single long token; words
-    // still wrap on spaces, and the full name stays visible.
+    // the leftover width. Two lines, then an ellipsis. anywhere breaks
+    // a token that would otherwise run into the next column.
     nameCell: "min-w-0 max-w-0 whitespace-normal [overflow-wrap:anywhere]",
     identity: "flex w-full min-w-0 flex-col items-stretch gap-1",
-    name: "block w-full min-w-0 whitespace-normal [overflow-wrap:anywhere]",
+    name: "w-full min-w-0 whitespace-normal [overflow-wrap:anywhere] line-clamp-2",
     owner: "inline-flex min-w-0 max-w-full items-center gap-2",
     ownerName: "min-w-0 truncate",
     due: "flex min-w-0 flex-wrap items-center gap-1",
