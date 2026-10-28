@@ -97,7 +97,12 @@ export function NavSpotlight({
         };
       },
     );
-  }, [organizationId, permissions, slackbotAvailable, t]);
+  }, [
+    organizationId,
+    permissions,
+    slackbotAvailable,
+    t,
+  ]);
 
   useHotkeys("mod+k", () => {
     onOpenChange(!open);

@@ -23,6 +23,7 @@
       "priority": "Priority",
       "assignedTo": "Assigned to",
       "linear": "Linear",
+      "asana": "Asana",
       "internalControls": "Internal controls",
       "timeEstimate": "Time estimate",
       "timeEstimateUnit": "Time estimate unit",
@@ -112,6 +113,33 @@
         "load": "Could not display Linear"
       }
     },
+    "asana": {
+      "noResults": "No results",
+      "loadMore": "Load more",
+      "errors": {
+        "load": "Could not display Asana",
+        "publish": "Failed to create task in Asana",
+        "link": "Failed to link task to Asana",
+        "unlink": "Failed to unlink Asana task"
+      },
+      "publish": "Create",
+      "link": "Link",
+      "linkTo": "Link to",
+      "unlink": "Unlink",
+      "project": "Asana project",
+      "task": "Asana task",
+      "chooseProject": "Select project",
+      "noProject": "No project",
+      "chooseTask": "Select task",
+      "newTask": "New task",
+      "searchProject": "Search by name",
+      "searchTask": "Search by name",
+      "linkHint": "Link to Asana",
+      "linkedTask": "Linked to task <task>{{task}}</task>",
+      "published": "Task created in Asana.",
+      "linked": "Task linked to Asana.",
+      "unlinked": "Asana task unlinked."
+    },
     "errors": {
       "delete": "Failed to delete task",
       "update": "Failed to update task",
@@ -171,11 +199,11 @@
     "title": "Settings",
     "integrations": {
       "title": "Task integrations",
-      "description": "Connect tools to publish tasks and keep them in sync."
+      "description": "Connect Linear or Asana to publish tasks and keep the name, description, deadline, assignee, comments, files, and mentions in sync in both directions. People match by email."
     },
     "linear": {
       "name": "Linear",
-      "description": "Publish a task to Linear and sync name, content, state, priority, deadline, assignee, and comments when emails match.",
+      "description": "Also syncs state and priority.",
       "defaultTeam": "Default team",
       "defaultTeamDescription": "New tasks use this Linear team unless another team is chosen.",
       "defaultTeamReadOnly": "You don't have permission to change the default team.",
@@ -203,6 +231,55 @@
         "disconnect": "Failed to disconnect Linear",
         "defaultTeam": "Failed to save the default team",
         "issueImport": "Failed to save issue import"
+      }
+    },
+    "asana": {
+      "name": "Asana",
+      "description": "Uses a project mapping for state and priority.",
+      "defaultProject": "Default project",
+      "defaultProjectDescription": "New tasks are published to this project unless another project is chosen. Leave it empty to keep new tasks in Probo.",
+      "noDefaultProject": "No default project",
+      "searchProject": "Search projects",
+      "chooseProject": "Choose a project",
+      "taskImport": "Import new tasks",
+      "taskImportDescription": "Active creates a Probo task for each new task in the default project.",
+      "taskImportReadOnly": "You don't have permission to change task import.",
+      "taskImportNeedsProject": "Choose a default project before activating task import.",
+      "taskImportStatus": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "mapping": "State and priority mapping",
+      "customFieldsUnavailable": "Priority cannot be mapped because this Asana workspace does not include custom fields. State can still follow sections. The connected Asana workspace needs a paid plan to map priority.",
+      "mappingHint": "Choose a project to map its sections and priority field. Until you save a mapping, state follows whether the Asana task is completed.",
+      "loadingMapping": "Loading project…",
+      "noSection": "Don't move section",
+      "priorityField": "Priority field",
+      "noPriority": "Don't sync priority",
+      "noOption": "Ignore",
+      "saveMapping": "Save mapping",
+      "deleteMapping": "Delete mapping",
+      "deleteMappingTitle": "Delete mapping?",
+      "deleteMappingDescription": "State will follow whether the Asana task is completed until you save a new mapping.",
+      "disconnect": {
+        "title": "Disconnect Asana?",
+        "description": "Tasks will no longer sync with Asana. You can connect again later.",
+        "confirm": "Disconnect"
+      },
+      "messages": {
+        "disconnected": "Asana disconnected.",
+        "defaultProjectSaved": "Default project saved.",
+        "taskImportSaved": "Task import saved.",
+        "mappingSaved": "Mapping saved.",
+        "mappingDeleted": "Mapping deleted."
+      },
+      "errors": {
+        "connect": "Failed to connect Asana",
+        "disconnect": "Failed to disconnect Asana",
+        "defaultProject": "Failed to save the default project",
+        "taskImport": "Failed to save task import",
+        "mapping": "Failed to save the mapping",
+        "deleteMapping": "Failed to delete the mapping"
       }
     },
     "status": {

@@ -78,10 +78,14 @@ var ReadAccessPolicy = policy.NewPolicy(
 // TaskCommentOwnershipPolicy is attached to owner, admin, and viewer so
 // permission(action:) on a comment matches mutation authorization: only the
 // author can update; the author can delete; owner/admin still delete any
-// comment through core:* on their role policy.
+// comment through core:* on their role policy. A comment linked to Asana
+// cannot be updated.
 var TaskCommentOwnershipPolicy = policy.NewPolicy(
 	"probo:task-comment-ownership",
 	"Task Comment Ownership",
+	policy.Deny(ActionTaskCommentUpdate).
+		WithSID("deny-update-asana-comments").
+		When(policy.Equals("resource.asana_linked", "true")),
 	policy.Deny(ActionTaskCommentUpdate).
 		WithSID("deny-update-others-task-comments").
 		When(policy.NotEquals("principal.id", "resource.owner_id")),

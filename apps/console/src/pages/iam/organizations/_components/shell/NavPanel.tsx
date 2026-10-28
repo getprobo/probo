@@ -43,7 +43,10 @@ export interface NavPanelProps {
   slackbotAvailable: boolean;
 }
 
-export function NavPanel({ organizationKey, slackbotAvailable }: NavPanelProps) {
+export function NavPanel({
+  organizationKey,
+  slackbotAvailable,
+}: NavPanelProps) {
   const { t } = useTranslation();
   const organization = useFragment<NavPanel_organization$key>(
     navPanelFragment,

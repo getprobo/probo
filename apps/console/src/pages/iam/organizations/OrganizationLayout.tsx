@@ -68,7 +68,11 @@ export interface OrganizationLayoutProps {
 
 export function OrganizationLayout({ queryRef }: OrganizationLayoutProps) {
   const routeOrganizationId = useOrganizationId();
-  const { organization, viewer, slackbotAvailable } = usePreloadedQuery<OrganizationLayoutQuery>(
+  const {
+    organization,
+    viewer,
+    slackbotAvailable,
+  } = usePreloadedQuery<OrganizationLayoutQuery>(
     organizationLayoutQuery,
     queryRef,
   );
