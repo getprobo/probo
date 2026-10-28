@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import { PlusIcon } from "@phosphor-icons/react";
+import { useDialogRef } from "@probo/ui";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Pagination } from "@probo/ui/src/v2/Pagination/Pagination";
 import { Table } from "@probo/ui/src/v2/Table/Table";
@@ -26,7 +27,7 @@ import { TableBody } from "@probo/ui/src/v2/Table/TableBody";
 import { TableColumnHeaderCell } from "@probo/ui/src/v2/Table/TableColumnHeaderCell";
 import { TableHeader } from "@probo/ui/src/v2/Table/TableHeader";
 import { TableRow } from "@probo/ui/src/v2/Table/TableRow";
-import { type ReactNode, useCallback, useEffect, useRef, useTransition } from "react";
+import { type ReactNode, useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { useRefetchableFragment } from "react-relay";
 import { graphql } from "relay-runtime";
@@ -82,6 +83,7 @@ export const internalControlListFragment = graphql`
         node {
           id
           ...InternalControlListItem_internalControl
+          ...InternalControlFormDialogInternalControlFragment
         }
       }
     }
@@ -103,6 +105,16 @@ export function InternalControlList(props: InternalControlListProps) {
   const skipFirstRefetch = useRef(true);
   const variablesRef = useRef(filters.variables);
   const variablesKey = JSON.stringify(filters.variables);
+  const listFiltersKey = JSON.stringify({
+    ...filters.variables,
+    first: null,
+    after: null,
+    last: null,
+    before: null,
+  });
+  const listFiltersKeyRef = useRef(listFiltersKey);
+  const editDialogRef = useDialogRef();
+  const [editRequest, setEditRequest] = useState<{ id: string; count: number } | null>(null);
   const [organization, refetch] = useRefetchableFragment<
     InternalControlListRefetchQuery,
     InternalControlList_organization$key
@@ -114,7 +126,7 @@ export function InternalControlList(props: InternalControlListProps) {
 
   const refetchCurrent = useCallback(() => {
     startRefetchTransition(() => {
-      refetch(variablesRef.current, { fetchPolicy: "store-and-network" });
+      refetch(variablesRef.current, { fetchPolicy: "network-only" });
     });
   }, [refetch]);
 
@@ -126,16 +138,30 @@ export function InternalControlList(props: InternalControlListProps) {
     onTotalCount(organization.internalControls.totalCount);
   }, [onTotalCount, organization.internalControls.totalCount]);
 
+  // Opening from an effect lets the dialog mount (or remount for another
+  // control) before it opens, and keeps it closed when its row comes back
+  // into view after paging.
   useEffect(() => {
+    if (editRequest) {
+      editDialogRef.current?.open();
+    }
+  }, [editRequest, editDialogRef]);
+
+  useEffect(() => {
+    const filtersChanged = listFiltersKeyRef.current !== listFiltersKey;
+    listFiltersKeyRef.current = listFiltersKey;
+
     if (skipFirstRefetch.current) {
       skipFirstRefetch.current = false;
       return;
     }
 
     startRefetchTransition(() => {
-      refetch(variablesRef.current, { fetchPolicy: "store-and-network" });
+      refetch(variablesRef.current, {
+        fetchPolicy: filtersChanged ? "network-only" : "store-or-network",
+      });
     });
-  }, [variablesKey, refetch]);
+  }, [variablesKey, listFiltersKey, refetch]);
 
   const edges = organization.internalControls.edges;
   const pageInfo = organization.internalControls.pageInfo;
@@ -160,7 +186,13 @@ export function InternalControlList(props: InternalControlListProps) {
     });
   }
 
-  function handleChanged() {
+  const editing = edges.find(({ node }) => node.id === editRequest?.id)?.node;
+
+  function handleEdit(id: string) {
+    setEditRequest(previous => ({ id, count: (previous?.count ?? 0) + 1 }));
+  }
+
+  function handleDeleted() {
     if (edges.length === 1 && pageInfo.hasPreviousPage && pageInfo.startCursor != null) {
       filters.setPageCursor({
         before: pageInfo.startCursor,
@@ -238,11 +270,20 @@ export function InternalControlList(props: InternalControlListProps) {
                 <InternalControlListItem
                   key={node.id}
                   internalControlKey={node}
-                  onChanged={handleChanged}
+                  onEdit={handleEdit}
+                  onDeleted={handleDeleted}
                 />
               ))}
         </TableBody>
       </Table>
+      {editing && (
+        <InternalControlFormDialog
+          key={editing.id}
+          ref={editDialogRef}
+          internalControl={editing}
+          onSaved={refetchCurrent}
+        />
+      )}
       <div className={pager()}>
         <Pagination
           hasPrevious={pageInfo.hasPreviousPage}
