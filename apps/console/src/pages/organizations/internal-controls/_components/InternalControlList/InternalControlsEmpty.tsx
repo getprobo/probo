@@ -43,7 +43,7 @@ export function InternalControlsEmpty(props: InternalControlsEmptyProps) {
 
   return (
     <TableRow>
-      <TableCell colSpan={5}>
+      <TableCell colSpan={6}>
         <div className={empty()}>
           <ShieldCheckIcon size={32} weight="duotone" aria-hidden />
           <Heading level={2} size={4} weight="medium">

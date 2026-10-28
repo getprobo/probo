@@ -20,13 +20,14 @@
       "attention": "Aandacht nodig"
     },
     "filters": {
-      "search": "Interne controles zoeken",
+      "search": "Zoeken op naam of code",
       "allStatuses": "Alle statussen",
       "allCategories": "Alle categorieën",
       "allOwners": "Alle eigenaren",
       "selectedCount": "{{count}} geselecteerd"
     },
     "columns": {
+      "code": "Code",
       "control": "Controle",
       "status": "Status",
       "owner": "Eigenaar",

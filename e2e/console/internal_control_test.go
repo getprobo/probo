@@ -2177,6 +2177,12 @@ func TestInternalControl_ListFilters(t *testing.T) {
 		"implementationStatus": "IMPLEMENTED",
 		"evidenceCadence":      "P365D",
 	})
+	codedID := create(t, map[string]any{
+		"name":                 "Access Review Procedure",
+		"code":                 "IC-LIST-77",
+		"category":             "POLICY",
+		"implementationStatus": "IMPLEMENTED",
+	})
 
 	const listQuery = `
 		query($id: ID!, $filter: InternalControlFilter, $orderBy: InternalControlOrder) {
@@ -2251,6 +2257,15 @@ func TestInternalControl_ListFilters(t *testing.T) {
 		}, nil)
 		assert.Contains(t, found, notImplementedID)
 		assert.NotContains(t, found, operatingID)
+	})
+
+	t.Run("search matches the control code", func(t *testing.T) {
+		t.Parallel()
+
+		found := ids(t, map[string]any{
+			"query": "IC-LIST-77",
+		}, nil)
+		assert.Equal(t, []string{codedID}, found)
 	})
 
 	t.Run("order by next due ascending", func(t *testing.T) {

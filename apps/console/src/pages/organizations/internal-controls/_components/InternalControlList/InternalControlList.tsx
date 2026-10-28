@@ -193,6 +193,7 @@ export function InternalControlList(props: InternalControlListProps) {
       <Table size={2} variant="surface">
         <TableHeader>
           <TableRow align="center">
+            <TableColumnHeaderCell>{t("list.columns.code")}</TableColumnHeaderCell>
             <TableColumnHeaderCell
               sort={sortState("name")}
               onSort={() => filters.setSort("name")}
