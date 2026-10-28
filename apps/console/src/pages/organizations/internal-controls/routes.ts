@@ -34,10 +34,12 @@ import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 import { coreEnvironment } from "#/environments";
 import { internalControlNodeQuery } from "#/pages/organizations/internal-controls/InternalControlDetailPage";
 
+import { InternalControlsPageSkeleton } from "./InternalControlsPageSkeleton";
+
 export const internalControlRoutes = [
   {
     path: "internal-controls",
-    Fallback: PageSkeleton,
+    Fallback: InternalControlsPageSkeleton,
     Component: lazy(
       () =>
         import("#/pages/organizations/internal-controls/InternalControlsPageLoader"),

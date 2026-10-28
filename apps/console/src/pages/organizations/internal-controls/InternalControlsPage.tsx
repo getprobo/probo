@@ -19,145 +19,111 @@
 // SOFTWARE.
 
 import {
-  formatError,
-  internalControlImplementationStatuses,
-} from "@probo/helpers";
+  DotsThreeVerticalIcon,
+  ListIcon,
+  PlusIcon,
+  UploadSimpleIcon,
+  WarningIcon,
+} from "@phosphor-icons/react";
+import { internalControlImplementationStatuses } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import {
-  ActionDropdown,
-  Button,
-  Card,
-  DropdownItem,
-  FileButton,
-  IconFolderUpload,
-  IconPencil,
-  IconPlusLarge,
-  IconTrashCan,
-  Option,
-  PageHeader,
-  Select,
-  Table,
-  Tbody,
-  Td,
-  Th,
-  Thead,
-  Tr,
-  useConfirm,
-  useDialogRef,
-} from "@probo/ui";
-import { InternalControlBadge } from "@probo/ui/src/Molecules/Badge/InternalControlBadge";
-import useToast from "@probo/ui/src/v2/Toaster/useToast";
-import { type ChangeEventHandler, useEffect, useRef, useState, useTransition } from "react";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
+import { DropdownItem } from "@probo/ui/src/v2/Dropdown/DropdownItem";
+import { DropdownPopup } from "@probo/ui/src/v2/Dropdown/DropdownPopup";
+import { DropdownTrigger } from "@probo/ui/src/v2/Dropdown/DropdownTrigger";
+import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
+import { SegmentedControl } from "@probo/ui/src/v2/SegmentedControl/SegmentedControl";
+import { SegmentedControlItem } from "@probo/ui/src/v2/SegmentedControl/SegmentedControlItem";
+import { Select } from "@probo/ui/src/v2/Select/Select";
+import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
+import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
+import { SelectTrigger } from "@probo/ui/src/v2/Select/SelectTrigger";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { Text } from "@probo/ui/src/v2/typography/Text";
+import { type ChangeEventHandler, useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  ConnectionHandler,
-  graphql,
-  type PreloadedQuery,
-  useFragment,
-  useMutation,
-  usePaginationFragment,
-  usePreloadedQuery,
-} from "react-relay";
-import { useSearchParams } from "react-router";
+import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
+import { graphql } from "relay-runtime";
 
-import type { InternalControlsPageDeleteMutation } from "#/__generated__/core/InternalControlsPageDeleteMutation.graphql";
-import type { InternalControlsPageFragment$key } from "#/__generated__/core/InternalControlsPageFragment.graphql";
 import type { InternalControlsPageImportMutation } from "#/__generated__/core/InternalControlsPageImportMutation.graphql";
-import type { InternalControlsPageListQuery } from "#/__generated__/core/InternalControlsPageListQuery.graphql";
-import type { InternalControlsPageRefetchQuery } from "#/__generated__/core/InternalControlsPageRefetchQuery.graphql";
-import type { InternalControlsPageRowFragment$key } from "#/__generated__/core/InternalControlsPageRowFragment.graphql";
-import { SearchField } from "#/components/SearchField/SearchField";
+import type { InternalControlsPageQuery } from "#/__generated__/core/InternalControlsPageQuery.graphql";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { NotFoundError } from "#/lib/relay/errors";
 
+import { InternalControlList } from "./_components/InternalControlList/InternalControlList";
+import { InternalControlsListSearch } from "./_components/InternalControlsListSearch";
+import { InternalControlsOwnerFilter } from "./_components/InternalControlsOwnerFilter";
+import { internalControlsPage } from "./_components/variants";
+import {
+  type InternalControlImplementationStatus,
+  type InternalControlsListView,
+  useInternalControlsListFilters,
+} from "./_lib/useInternalControlsListFilters";
 import InternalControlFormDialog from "./dialog/InternalControlFormDialog";
 
-type InternalControlImplementationStatus = (typeof internalControlImplementationStatuses)[number];
-
-export const InternalControlsConnectionKey = "InternalControlsPage_internalControls";
+const allCategories = "ALL";
 
 export const internalControlsPageQuery = graphql`
-  query InternalControlsPageListQuery($organizationId: ID!) {
+  query InternalControlsPageQuery(
+    $organizationId: ID!
+    $first: Int
+    $after: CursorKey
+    $last: Int
+    $before: CursorKey
+    $order: InternalControlOrder
+    $query: String
+    $implementationStatuses: [InternalControlImplementationStatus!]
+    $category: String
+    $ownerId: ID
+    $needsAttention: Boolean
+  ) {
     organization: node(id: $organizationId) @required(action: THROW) {
       __typename
       ... on Organization {
         canCreateInternalControl: permission(action: "core:internal-control:create")
         internalControlCategories
-        ...InternalControlsPageFragment
-      }
-    }
-  }
-`;
-
-const internalControlRowFragment = graphql`
-  fragment InternalControlsPageRowFragment on InternalControl {
-    id
-    name
-    code
-    category
-    implementationStatus
-    canUpdate: permission(action: "core:internal-control:update")
-    canDelete: permission(action: "core:internal-control:delete")
-    ...InternalControlFormDialogInternalControlFragment
-  }
-`;
-
-const deleteInternalControlMutation = graphql`
-  mutation InternalControlsPageDeleteMutation(
-    $input: DeleteInternalControlInput!
-    $connections: [ID!]!
-  ) {
-    deleteInternalControl(input: $input) {
-      deletedInternalControlId @deleteEdge(connections: $connections)
-    }
-  }
-`;
-
-const internalControlsPageFragment = graphql`
-  fragment InternalControlsPageFragment on Organization
-  @refetchable(queryName: "InternalControlsPageRefetchQuery")
-  @argumentDefinitions(
-    first: { type: "Int", defaultValue: 500 }
-    after: { type: "CursorKey" }
-    query: { type: "String", defaultValue: null }
-    implementationStatus: { type: "InternalControlImplementationStatus", defaultValue: null }
-    category: { type: "String", defaultValue: null }
-  ) {
-    id
-    internalControls(
-      first: $first
-      after: $after
-      filter: { query: $query, implementationStatus: $implementationStatus, category: $category }
-    )
-      @connection(
-        key: "InternalControlsPage_internalControls"
-        filters: ["filter"]
-      ) {
-      edges {
-        node {
-          id
-          canUpdate: permission(action: "core:internal-control:update")
-          canDelete: permission(action: "core:internal-control:delete")
-          ...InternalControlsPageRowFragment
+        internalControls(
+          first: $first
+          after: $after
+          last: $last
+          before: $before
+          orderBy: $order
+          filter: {
+            query: $query
+            implementationStatuses: $implementationStatuses
+            category: $category
+            ownerId: $ownerId
+            needsAttention: $needsAttention
+          }
+        ) {
+          totalCount
         }
-      }
-      pageInfo {
-        hasNextPage
-        endCursor
+        ...InternalControlList_organization
+          @arguments(
+            first: $first
+            after: $after
+            last: $last
+            before: $before
+            order: $order
+            query: $query
+            implementationStatuses: $implementationStatuses
+            category: $category
+            ownerId: $ownerId
+            needsAttention: $needsAttention
+          )
       }
     }
   }
 `;
 
 const importInternalControlsMutation = graphql`
-  mutation InternalControlsPageImportMutation(
-    $input: ImportInternalControlInput!
-    $connections: [ID!]!
-  ) {
+  mutation InternalControlsPageImportMutation($input: ImportInternalControlInput!) {
     importInternalControl(input: $input) {
-      internalControlEdges @appendEdge(connections: $connections) {
+      internalControlEdges {
         node {
-          ...InternalControlsPageRowFragment
+          id
         }
       }
     }
@@ -165,366 +131,285 @@ const importInternalControlsMutation = graphql`
 `;
 
 interface InternalControlsPageProps {
-  queryRef: PreloadedQuery<InternalControlsPageListQuery>;
+  queryRef: PreloadedQuery<InternalControlsPageQuery>;
 }
 
-export default function InternalControlsPage({ queryRef }: InternalControlsPageProps) {
-  const { t } = useTranslation();
+export function InternalControlsPage({ queryRef }: InternalControlsPageProps) {
+  const { t } = useTranslation("organizations/internal-controls");
   const organizationId = useOrganizationId();
-
-  usePageTitle(t("internalControlsPage.title"));
-
-  const { organization } = usePreloadedQuery<InternalControlsPageListQuery>(internalControlsPageQuery, queryRef);
-  if (organization.__typename !== "Organization") {
-    throw new Error("invalid node type");
+  const filters = useInternalControlsListFilters();
+  const importFileRef = useRef<HTMLInputElement>(null);
+  const refetchRef = useRef<() => void>(() => {});
+  const { organization } = usePreloadedQuery<InternalControlsPageQuery>(
+    internalControlsPageQuery,
+    queryRef,
+  );
+  const queriedCount = organization.__typename === "Organization"
+    ? organization.internalControls?.totalCount ?? 0
+    : 0;
+  const [totalCount, setTotalCount] = useState(queriedCount);
+  const [seenQueryCount, setSeenQueryCount] = useState(queriedCount);
+  if (queriedCount !== seenQueryCount) {
+    setSeenQueryCount(queriedCount);
+    setTotalCount(queriedCount);
   }
 
-  const [searchParams, setSearchParams] = useSearchParams();
-  const urlCategory = searchParams.get("category") ?? null;
+  usePageTitle(t("list.title"));
 
-  const [isPending, startTransition] = useTransition();
-  const [queryFilter, setQueryFilter] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<InternalControlImplementationStatus | null>(null);
-  const { data, loadNext, hasNext, isLoadingNext, refetch }
-    = usePaginationFragment<InternalControlsPageRefetchQuery, InternalControlsPageFragment$key>(
-      internalControlsPageFragment,
-      organization,
+  const [importInternalControls, isImporting]
+    = useMutationWithToasts<InternalControlsPageImportMutation>(
+      importInternalControlsMutation,
+      {
+        successMessage: t("list.messages.imported"),
+        errorMessage: t("list.errors.import"),
+      },
     );
 
-  const refetchFilters = (overrides: Record<string, unknown> = {}) => {
-    startTransition(() => {
-      refetch(
-        {
-          query: queryFilter,
-          implementationStatus: statusFilter,
-          category: urlCategory,
-          ...overrides,
-        },
-        { fetchPolicy: "network-only" },
-      );
-    });
-  };
+  const handleRefetch = useCallback((refetch: () => void) => {
+    refetchRef.current = refetch;
+  }, []);
 
-  const initialUrlCategory = useRef(urlCategory);
-  const prevUrlCategory = useRef(urlCategory);
-  useEffect(() => {
-    if (initialUrlCategory.current) {
-      startTransition(() => {
-        refetch(
-          {
-            query: null,
-            implementationStatus: null,
-            category: initialUrlCategory.current,
-          },
-          { fetchPolicy: "network-only" },
-        );
-      });
-    }
-  }, [refetch, startTransition]);
+  const handleTotalCount = useCallback((count: number) => {
+    setTotalCount(count);
+  }, []);
 
-  useEffect(() => {
-    if (urlCategory !== prevUrlCategory.current) {
-      prevUrlCategory.current = urlCategory;
-      refetchFilters({ category: urlCategory });
-    }
-  });
+  if (organization.__typename !== "Organization") {
+    throw new NotFoundError("invalid type for organization node");
+  }
 
-  const handleQueryFilterChange = (value: string) => {
-    const newQuery = value === "" ? null : value;
-    setQueryFilter(newQuery);
-    refetchFilters({ query: newQuery });
-  };
-
-  const handleStatusFilterChange = (value: string) => {
-    const newStatus = value === "ALL"
-      ? null
-      : value as InternalControlImplementationStatus;
-    setStatusFilter(newStatus);
-    refetchFilters({ implementationStatus: newStatus });
-  };
-
-  const handleCategoryFilterChange = (value: string) => {
-    const newCategory = value === "ALL" ? null : value;
-    setSearchParams((prev) => {
-      const next = new URLSearchParams(prev);
-      if (newCategory) {
-        next.set("category", newCategory);
-      } else {
-        next.delete("category");
-      }
-      return next;
-    }, { replace: true });
-  };
-
-  const currentFilter = {
-    query: queryFilter,
-    implementationStatus: statusFilter,
-    category: urlCategory,
-  };
-
-  const connectionId = ConnectionHandler.getConnectionID(
-    organizationId,
-    InternalControlsConnectionKey,
-    { filter: currentFilter },
+  const canCreate = organization.canCreateInternalControl ?? false;
+  const categories = categoryOptions(
+    organization.internalControlCategories,
+    filters.category,
   );
-  const allFiltersNullConnectionId = ConnectionHandler.getConnectionID(
-    organizationId,
-    InternalControlsConnectionKey,
-    { filter: { query: null, implementationStatus: null, category: null } },
-  );
-  const hasActiveFilter = queryFilter || statusFilter || urlCategory;
-  const createConnectionIds = hasActiveFilter
-    ? [allFiltersNullConnectionId, connectionId]
-    : [connectionId];
-
-  const internalControls = data?.internalControls?.edges?.map(edge => edge.node) ?? [];
-  const categories = organization.internalControlCategories ?? [];
-
-  const [importInternalControls] = useMutationWithToasts<InternalControlsPageImportMutation>(
-    importInternalControlsMutation,
-    {
-      successMessage: t("internalControlsPage.messages.imported"),
-      errorMessage: t("internalControlsPage.errors.import"),
-    },
-  );
-  const importFileRef = useRef<HTMLInputElement>(null);
+  const {
+    root,
+    header,
+    intro,
+    title,
+    actions,
+    results,
+    views,
+    tools,
+    tableFilters,
+    filter,
+  } = internalControlsPage();
 
   const handleImport: ChangeEventHandler<HTMLInputElement> = (event) => {
     const file = event.target.files?.[0];
+    event.target.value = "";
     if (!file) {
       return;
     }
+
     void importInternalControls({
       variables: {
         input: {
           organizationId,
           file: null,
         },
-        connections: createConnectionIds,
       },
       uploadables: {
         "input.file": file,
       },
-      onCompleted() {
-        importFileRef.current!.value = "";
+      onSuccess() {
+        refetchRef.current();
       },
     });
   };
 
-  const hasAnyAction = internalControls.some(
-    ({ canUpdate, canDelete }) => canUpdate || canDelete,
-  );
+  function openImport() {
+    importFileRef.current?.click();
+  }
+
+  const importAction = canCreate
+    ? (
+        <Button
+          variant="soft"
+          color="neutral"
+          iconStart={<UploadSimpleIcon />}
+          disabled={isImporting}
+          onClick={openImport}
+        >
+          {t("list.actions.import")}
+        </Button>
+      )
+    : null;
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title={t("internalControlsPage.title")}
-        description={t("internalControlsPage.description")}
-      >
-        {organization.canCreateInternalControl && (
-          <>
-            <FileButton
-              ref={importFileRef}
-              variant="secondary"
-              icon={IconFolderUpload}
-              onChange={handleImport}
-            >
-              {t("internalControlsPage.actions.import")}
-            </FileButton>
-            <InternalControlFormDialog connection={connectionId}>
-              <Button variant="primary" icon={IconPlusLarge}>
-                {t("internalControlsPage.actions.newInternalControl")}
+    <div className={root()}>
+      <div className={header()}>
+        <div className={intro()}>
+          <div className={title()}>
+            <Heading level={1} size={6} weight="medium" highContrast>
+              {t("list.title")}
+            </Heading>
+            <Text size={2} color="faint">{totalCount}</Text>
+          </div>
+          <Text size={2} color="faint">{t("list.description")}</Text>
+        </div>
+        {canCreate && (
+          <div className={actions()}>
+            <InternalControlFormDialog onSaved={() => refetchRef.current()}>
+              <Button variant="solid" iconStart={<PlusIcon />}>
+                {t("list.actions.new")}
               </Button>
             </InternalControlFormDialog>
-          </>
+            <Dropdown>
+              <DropdownTrigger
+                render={(
+                  <IconButton
+                    variant="soft"
+                    color="neutral"
+                    aria-label={t("list.actions.menu")}
+                  >
+                    <DotsThreeVerticalIcon />
+                  </IconButton>
+                )}
+              />
+              <DropdownPopup align="end">
+                <DropdownItem
+                  iconStart={<UploadSimpleIcon />}
+                  disabled={isImporting}
+                  onClick={openImport}
+                >
+                  {t("list.actions.import")}
+                </DropdownItem>
+              </DropdownPopup>
+            </Dropdown>
+          </div>
         )}
-      </PageHeader>
-
-      <div className="flex items-center gap-4">
-        <SearchField
-          className="w-full"
-          placeholder={t("internalControlsPage.filters.searchPlaceholder")}
-          value={queryFilter ?? ""}
-          onValueChange={handleQueryFilterChange}
-        />
-        <Select
-          value={statusFilter ?? "ALL"}
-          onValueChange={handleStatusFilterChange}
-        >
-          <Option value="ALL">{t("internalControlsPage.filters.allStatuses")}</Option>
-          {internalControlImplementationStatuses.map(status => (
-            <Option key={status} value={status}>
-              {t(`internalControlsPage.statuses.${status.toLowerCase()}`)}
-            </Option>
-          ))}
-        </Select>
-        <Select
-          value={urlCategory ?? "ALL"}
-          onValueChange={handleCategoryFilterChange}
-        >
-          <Option value="ALL">{t("internalControlsPage.filters.allCategories")}</Option>
-          {categories.map(category => (
-            <Option key={category} value={category}>
-              {category}
-            </Option>
-          ))}
-        </Select>
       </div>
 
-      <div className={isPending ? "opacity-50 pointer-events-none transition-opacity" : ""}>
-        {internalControls.length > 0
-          ? (
-              <Card>
-                <Table>
-                  <Thead>
-                    <Tr>
-                      <Th>{t("internalControlsPage.columns.code")}</Th>
-                      <Th>{t("internalControlsPage.columns.internalControl")}</Th>
-                      <Th>{t("internalControlsPage.columns.category")}</Th>
-                      <Th>{t("internalControlsPage.columns.status")}</Th>
-                      {hasAnyAction && <Th />}
-                    </Tr>
-                  </Thead>
-                  <Tbody>
-                    {internalControls.map(internalControl => (
-                      <InternalControlRow
-                        key={internalControl.id}
-                        internalControlKey={internalControl}
-                        connectionId={connectionId}
-                        hasAnyAction={hasAnyAction}
-                      />
-                    ))}
-                  </Tbody>
-                </Table>
+      <input
+        ref={importFileRef}
+        type="file"
+        accept="application/json,.json"
+        className="sr-only"
+        tabIndex={-1}
+        onChange={handleImport}
+      />
 
-                {hasNext && (
-                  <div className="p-4 border-t">
-                    <Button
-                      variant="secondary"
-                      onClick={() => loadNext(20)}
-                      disabled={isLoadingNext}
-                    >
-                      {isLoadingNext ? t("internalControlsPage.actions.loading") : t("internalControlsPage.actions.loadMore")}
-                    </Button>
-                  </div>
-                )}
-              </Card>
-            )
-          : (
-              <Card padded>
-                <div className="text-center py-12">
-                  <h3 className="text-lg font-semibold mb-2">
-                    {t("internalControlsPage.empty.title")}
-                  </h3>
-                  <p className="text-txt-tertiary mb-4">
-                    {t("internalControlsPage.empty.description")}
-                  </p>
-                </div>
-              </Card>
-            )}
+      <div className={results()}>
+        <div className={views()}>
+          <SegmentedControl
+            size={1}
+            value={filters.view}
+            aria-label={t("list.views.label")}
+            onValueChange={(value) => {
+              if (isListView(value)) {
+                filters.setView(value);
+              }
+            }}
+          >
+            <SegmentedControlItem value="all">
+              <ListIcon />
+              {t("list.views.all")}
+            </SegmentedControlItem>
+            <SegmentedControlItem value="attention">
+              <WarningIcon />
+              {t("list.views.attention")}
+            </SegmentedControlItem>
+          </SegmentedControl>
+        </div>
+        <div className={tools()}>
+          <InternalControlsListSearch />
+          <div className={tableFilters()}>
+            <div className={filter()}>
+              <Select
+                multiple
+                value={filters.statuses}
+                onValueChange={(value) => {
+                  filters.setStatuses(value.filter(isImplementationStatus));
+                }}
+              >
+                <SelectTrigger
+                  size={2}
+                  placeholder={t("list.filters.allStatuses")}
+                  aria-label={t("list.columns.status")}
+                >
+                  {(value: readonly string[]) => selectedFilterLabel(
+                    value,
+                    t("list.filters.allStatuses"),
+                    status => t(`list.statuses.${status.toLowerCase()}`),
+                    t("list.filters.selectedCount", { count: value.length }),
+                  )}
+                </SelectTrigger>
+                <SelectPopup align="end">
+                  {internalControlImplementationStatuses.map(status => (
+                    <SelectItem key={status} value={status}>
+                      {t(`list.statuses.${status.toLowerCase()}`)}
+                    </SelectItem>
+                  ))}
+                </SelectPopup>
+              </Select>
+            </div>
+            <div className={filter()}>
+              <Select
+                value={filters.category ?? allCategories}
+                onValueChange={(value) => {
+                  filters.setCategory(value === allCategories || value == null ? null : value);
+                }}
+              >
+                <SelectTrigger
+                  size={2}
+                  placeholder={t("list.filters.allCategories")}
+                  aria-label={t("list.filters.allCategories")}
+                />
+                <SelectPopup align="end">
+                  <SelectItem value={allCategories}>
+                    {t("list.filters.allCategories")}
+                  </SelectItem>
+                  {categories.map(category => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
+                </SelectPopup>
+              </Select>
+            </div>
+            <div className={filter()}>
+              <InternalControlsOwnerFilter />
+            </div>
+          </div>
+        </div>
+        <InternalControlList
+          organizationKey={organization}
+          importAction={importAction}
+          onRefetch={handleRefetch}
+          onTotalCount={handleTotalCount}
+        />
       </div>
     </div>
   );
 }
 
-type InternalControlRowProps = {
-  internalControlKey: InternalControlsPageRowFragment$key;
-  connectionId: string;
-  hasAnyAction: boolean;
-};
+function isListView(value: string): value is InternalControlsListView {
+  return value === "all" || value === "attention";
+}
 
-function InternalControlRow(props: InternalControlRowProps) {
-  const internalControl = useFragment(internalControlRowFragment, props.internalControlKey);
-  const organizationId = useOrganizationId();
-  const { t } = useTranslation();
-  const [deleteInternalControl] = useMutation<InternalControlsPageDeleteMutation>(deleteInternalControlMutation);
-  const toast = useToast();
-  const confirm = useConfirm();
-  const dialogRef = useDialogRef();
+function isImplementationStatus(value: string): value is InternalControlImplementationStatus {
+  return (internalControlImplementationStatuses as readonly string[]).includes(value);
+}
 
-  const handleDelete = () => {
-    confirm(
-      () =>
-        new Promise<void>((resolve) => {
-          deleteInternalControl({
-            variables: {
-              input: { internalControlId: internalControl.id },
-              connections: [props.connectionId],
-            },
-            onCompleted(_, error) {
-              if (error) {
-                toast.add({
-                  title: t("internalControlsPage.messages.error"),
-                  description: formatError(
-                    t("internalControlsPage.errors.delete"),
-                    error,
-                  ),
-                  type: "error",
-                });
-              } else {
-                toast.add({
-                  title: t("internalControlsPage.messages.success"),
-                  description: t("internalControlsPage.messages.deleted"),
-                  type: "success",
-                });
-              }
-              resolve();
-            },
-            onError(error) {
-              toast.add({
-                title: t("internalControlsPage.messages.error"),
-                description: formatError(
-                  t("internalControlsPage.errors.delete"),
-                  error,
-                ),
-                type: "error",
-              });
-              resolve();
-            },
-          });
-        }),
-      {
-        message: t("internalControlsPage.deleteConfirmation", { name: internalControl.name }),
-      },
-    );
-  };
+function categoryOptions(categories: readonly string[], selected: string | null): string[] {
+  if (selected == null || categories.includes(selected)) {
+    return [...categories];
+  }
+  return [selected, ...categories];
+}
 
-  return (
-    <>
-      <InternalControlFormDialog internalControl={internalControl} ref={dialogRef} />
-      <Tr to={`/organizations/${organizationId}/governance/internal-controls/${internalControl.id}`}>
-        <Td>{internalControl.code}</Td>
-        <Td>{internalControl.name}</Td>
-        <Td>{internalControl.category}</Td>
-        <Td>
-          <InternalControlBadge state={internalControl.implementationStatus} />
-        </Td>
-        {props.hasAnyAction && (
-          <Td noLink width={50} className="text-end">
-            {(internalControl.canUpdate || internalControl.canDelete) && (
-              <ActionDropdown>
-                {internalControl.canUpdate && (
-                  <DropdownItem
-                    icon={IconPencil}
-                    onClick={() => dialogRef.current?.open()}
-                  >
-                    {t("internalControlsPage.actions.edit")}
-                  </DropdownItem>
-                )}
-                {internalControl.canDelete && (
-                  <DropdownItem
-                    onClick={handleDelete}
-                    variant="danger"
-                    icon={IconTrashCan}
-                  >
-                    {t("internalControlsPage.actions.delete")}
-                  </DropdownItem>
-                )}
-              </ActionDropdown>
-            )}
-          </Td>
-        )}
-      </Tr>
-    </>
-  );
+function selectedFilterLabel(
+  values: readonly string[],
+  emptyLabel: string,
+  label: (value: string) => string,
+  countLabel: string,
+): string {
+  if (values.length === 0) {
+    return emptyLabel;
+  }
+  if (values.length === 1) {
+    return label(values[0] ?? "");
+  }
+  return countLabel;
 }

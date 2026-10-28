@@ -109,10 +109,11 @@ type Props = {
   connection?: string;
   ref?: DialogRef;
   onCreated?: (internalControlId: string) => void | Promise<void>;
+  onSaved?: () => void;
 };
 
 export default function InternalControlFormDialog(props: Props) {
-  const { children, internalControl: internalControlKey, connection, onCreated, ...rest } = props;
+  const { children, internalControl: internalControlKey, connection, onCreated, onSaved, ...rest } = props;
   const { t } = useTranslation();
   const ref = useDialogRef();
   const dialogRef = rest.ref ?? ref;
@@ -236,6 +237,7 @@ export default function InternalControlFormDialog(props: Props) {
       }
       reset();
     }
+    onSaved?.();
     dialogRef.current?.close();
   };
 

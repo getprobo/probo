@@ -3732,6 +3732,7 @@
       "operating": "En exploitation"
     },
     "actions": {
+      "back": "Contrôles internes",
       "edit": "Modifier",
       "delete": "Supprimer"
     },
