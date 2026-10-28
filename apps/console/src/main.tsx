@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { startFaro } from "@probo/faro";
 import { initDisplayMode } from "@probo/ui/src/v2/displayMode/displayMode";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createRoot } from "react-dom/client";
@@ -27,8 +28,6 @@ import "./index.css";
 import { App } from "./App";
 import "./lib/i18n/i18n";
 
-initDisplayMode();
-
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -36,6 +35,13 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+void startFaro({
+  appName: "console",
+  apiURL: import.meta.env.VITE_API_URL,
+});
+
+initDisplayMode();
 
 createRoot(document.getElementById("root")!).render(
   <QueryClientProvider client={queryClient}>

@@ -35,6 +35,8 @@ func TestContentSecurityPolicy_SubstitutesOrigins(t *testing.T) {
 	policy, err := console.ContentSecurityPolicy(
 		"https://app.example.com",
 		"https://probod.s3.eu-west-1.amazonaws.com",
+		false,
+		"",
 	)
 	require.NoError(t, err)
 	require.NotEmpty(t, policy)
@@ -75,6 +77,8 @@ func TestContentSecurityPolicy_RejectsAppOriginInjection(t *testing.T) {
 	_, err := console.ContentSecurityPolicy(
 		"https://evil.com;frame-ancestors",
 		"https://probod.s3.eu-west-1.amazonaws.com",
+		false,
+		"",
 	)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "invalid CSP app origin")
@@ -86,7 +90,53 @@ func TestContentSecurityPolicy_RejectsFileStorageOriginInjection(t *testing.T) {
 	_, err := console.ContentSecurityPolicy(
 		"https://app.example.com",
 		"https://evil.com;frame-ancestors",
+		false,
+		"",
 	)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "invalid CSP file storage origin")
+}
+
+func TestContentSecurityPolicy_IncludesFaroCollectorOrigin(t *testing.T) {
+	t.Parallel()
+
+	policy, err := console.ContentSecurityPolicy(
+		"https://app.example.com",
+		"https://probod.s3.eu-west-1.amazonaws.com",
+		true,
+		"https://collector.example.com/collect",
+	)
+	require.NoError(t, err)
+	assert.Contains(
+		t,
+		policy,
+		"connect-src 'self' https://app.example.com https://probod.s3.eu-west-1.amazonaws.com https://collector.example.com;",
+	)
+	assert.NotContains(t, policy, "https://collector.example.com/collect")
+}
+
+func TestContentSecurityPolicy_OmitsFaroCollectorOriginWhenDisabled(t *testing.T) {
+	t.Parallel()
+
+	policy, err := console.ContentSecurityPolicy(
+		"https://app.example.com",
+		"https://probod.s3.eu-west-1.amazonaws.com",
+		false,
+		"https://collector.example.com/collect",
+	)
+	require.NoError(t, err)
+	assert.NotContains(t, policy, "collector.example.com")
+}
+
+func TestContentSecurityPolicy_RejectsFaroCollectorOriginInjection(t *testing.T) {
+	t.Parallel()
+
+	_, err := console.ContentSecurityPolicy(
+		"https://app.example.com",
+		"https://probod.s3.eu-west-1.amazonaws.com",
+		true,
+		"https://evil.com;frame-ancestors",
+	)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid CSP faro collector origin")
 }

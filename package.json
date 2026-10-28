@@ -14,7 +14,7 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
-    "lint": "for dir in apps/console apps/compliance-portal apps/employee-portal packages/ui packages/hotkeys packages/relay packages/routes packages/tasks packages/collaboration packages/eslint-config; do eslint --concurrency off \"$dir\" || exit; done; eslint --concurrency off eslint.config.mjs packages/automerge-conformance contrib/benchmarks .github/actions && npm -w @probo/n8n-nodes-probo run lint",
+    "lint": "for dir in apps/console apps/compliance-portal apps/employee-portal packages/ui packages/hotkeys packages/relay packages/routes packages/tasks packages/collaboration packages/eslint-config packages/faro; do eslint --concurrency off \"$dir\" || exit; done; eslint --concurrency off eslint.config.mjs packages/automerge-conformance contrib/benchmarks .github/actions && npm -w @probo/n8n-nodes-probo run lint",
   "check": "turbo run check",
   "test": "turbo run test",
   "relay": "relay-compiler"

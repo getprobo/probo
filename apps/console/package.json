@@ -17,6 +17,7 @@
     "@phosphor-icons/react": "^2.1.10",
     "@probo/collaboration": "1.0.0",
     "@probo/coredata": "^1.0.0",
+    "@probo/faro": "1.0.0",
     "@probo/helpers": "^1.0.0",
     "@probo/hooks": "1.0.0",
     "@probo/hotkeys": "1.0.0",

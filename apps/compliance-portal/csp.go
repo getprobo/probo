@@ -38,14 +38,23 @@ var contentSecurityPolicyTmpl = template.Must(
 )
 
 type contentSecurityPolicyData struct {
-	AppOrigin         string
-	FileStorageOrigin string
+	AppOrigin           string
+	FileStorageOrigin   string
+	FaroEnabled         bool
+	FaroCollectorOrigin string
 }
 
 // ContentSecurityPolicy returns the compliance-portal CSP with AppOrigin and
 // FileStorageOrigin substituted (PROBOD_BASE_URL origin and the object-storage
-// origin used after file download redirects).
-func ContentSecurityPolicy(appOrigin string, fileStorageOrigin string) (string, error) {
+// origin used after file download redirects). faroEnabled gates the collector
+// origin in connect-src. faroCollectorURL is the collect endpoint; a path on
+// the URL is discarded.
+func ContentSecurityPolicy(
+	appOrigin string,
+	fileStorageOrigin string,
+	faroEnabled bool,
+	faroCollectorURL string,
+) (string, error) {
 	origin, err := baseurl.CSPOrigin(appOrigin)
 	if err != nil {
 		return "", fmt.Errorf("invalid CSP app origin: %w", err)
@@ -56,13 +65,23 @@ func ContentSecurityPolicy(appOrigin string, fileStorageOrigin string) (string, 
 		return "", fmt.Errorf("invalid CSP file storage origin: %w", err)
 	}
 
+	collectorOrigin := ""
+	if faroEnabled {
+		collectorOrigin, err = baseurl.CSPOrigin(faroCollectorURL)
+		if err != nil {
+			return "", fmt.Errorf("invalid CSP faro collector origin: %w", err)
+		}
+	}
+
 	var buf bytes.Buffer
 
 	err = contentSecurityPolicyTmpl.Execute(
 		&buf,
 		contentSecurityPolicyData{
-			AppOrigin:         origin,
-			FileStorageOrigin: storageOrigin,
+			AppOrigin:           origin,
+			FileStorageOrigin:   storageOrigin,
+			FaroEnabled:         faroEnabled,
+			FaroCollectorOrigin: collectorOrigin,
 		},
 	)
 	if err != nil {

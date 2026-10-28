@@ -28,6 +28,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"html/template"
 	"io"
 	"io/fs"
 	"net/http"
@@ -41,6 +42,14 @@ type (
 	FileRenderer func(w io.Writer, r *http.Request) error
 
 	Option func(*Server)
+
+	// IndexData is the template data for the Faro collector meta tags in a
+	// portal index.html.
+	IndexData struct {
+		FaroEnabled      bool
+		FaroCollectorURL string
+		FaroAPIKey       string
+	}
 
 	GzipOptions struct {
 		EnableFileTypeCheck bool
@@ -64,6 +73,56 @@ func WithFileRenderer(path string, renderer FileRenderer) Option {
 	return func(s *Server) {
 		s.fileRenderers[path] = renderer
 	}
+}
+
+// NewIndexRenderer parses index.html under distPath as an html/template and
+// returns a renderer that executes it with data.
+func NewIndexRenderer(staticFiles fs.FS, distPath string, data any) (FileRenderer, error) {
+	tmpl, err := parseIndexTemplate(staticFiles, distPath)
+	if err != nil {
+		return nil, err
+	}
+
+	return func(w io.Writer, _ *http.Request) error {
+		return tmpl.Execute(w, data)
+	}, nil
+}
+
+// NewRequestIndexRenderer parses index.html under distPath as an html/template
+// and returns a renderer that executes it with the value from data for each
+// request.
+func NewRequestIndexRenderer(
+	staticFiles fs.FS,
+	distPath string,
+	data func(*http.Request) any,
+) (FileRenderer, error) {
+	tmpl, err := parseIndexTemplate(staticFiles, distPath)
+	if err != nil {
+		return nil, err
+	}
+
+	return func(w io.Writer, r *http.Request) error {
+		return tmpl.Execute(w, data(r))
+	}, nil
+}
+
+func parseIndexTemplate(staticFiles fs.FS, distPath string) (*template.Template, error) {
+	subFS, err := fs.Sub(staticFiles, distPath)
+	if err != nil {
+		return nil, fmt.Errorf("cannot open %s: %w", distPath, err)
+	}
+
+	indexBytes, err := fs.ReadFile(subFS, "index.html")
+	if err != nil {
+		return nil, fmt.Errorf("cannot read index.html: %w", err)
+	}
+
+	tmpl, err := template.New("index").Parse(string(indexBytes))
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse index.html template: %w", err)
+	}
+
+	return tmpl, nil
 }
 
 func NewServer(staticFiles fs.FS, distPath string, gzipOptions GzipOptions, opts ...Option) (*Server, error) {

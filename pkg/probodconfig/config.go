@@ -86,6 +86,7 @@ type (
 		Branding      bool                `json:"branding"`
 		CookieBanner  CookieBannerConfig  `json:"cookie-banner"`
 		Slackbot      SlackbotConfig      `json:"slackbot,omitzero"`
+		Faro          FaroConfig          `json:"faro,omitzero"`
 	}
 
 	// CompliancePortalConfig contains compliance portal server configuration.

@@ -23,6 +23,7 @@ import { readFileSync } from "node:fs";
 import { isIP } from "node:net";
 import { fileURLToPath, URL } from "node:url";
 
+import { omitFaroCollectorOrigin, omitFaroDevPlaceholders } from "@probo/faro/vite";
 import babel from "@rolldown/plugin-babel";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
@@ -38,8 +39,9 @@ const cspTemplatePath = fileURLToPath(
 // React Fast Refresh inline preamble is allowed without unsafe-inline.
 const viteDevCspNonce = randomBytes(16).toString("base64");
 
-// Same policy as production (apps/employee-portal/csp.go), with a script
-// nonce for Fast Refresh and ws:/wss: on connect-src for Vite HMR.
+// Production policy (apps/employee-portal/csp.go), plus a script nonce for
+// Fast Refresh and ws:/wss: for Vite HMR. Omits the Faro collector origin: the
+// dev index.html never renders the Faro meta tags.
 function employeePortalContentSecurityPolicy(
   appOrigin: string,
   fileStorageOrigin: string,
@@ -47,7 +49,7 @@ function employeePortalContentSecurityPolicy(
 ): string {
   const template = readFileSync(cspTemplatePath, "utf8");
   // Collapse newlines: Node rejects CR/LF in header values (Vite setHeader).
-  return template
+  return omitFaroCollectorOrigin(template)
     .replaceAll("{{.AppOrigin}}", appOrigin)
     .replaceAll("{{.FileStorageOrigin}}", fileStorageOrigin)
     .trim()
@@ -227,6 +229,7 @@ export default defineConfig(({ mode, command }) => {
     // iam pages and the rest of the app compile against separate schemas
     // (connect vs console) and artifact directories.
     plugins: [
+      omitFaroDevPlaceholders(),
       react(),
       babel({
         exclude: [/[/\\]node_modules[/\\]/, /\0rolldown[/\\]runtime\.js/, iamFiles],
@@ -315,11 +318,11 @@ export default defineConfig(({ mode, command }) => {
     // Prebundle the PDF viewer so first open of a document page does not
     // re-optimize deps and load a second copy of React.
     optimizeDeps: {
+      exclude: ["@probo/faro", pdfjsWorkerUrlId],
       include: [
         "react-pdf",
         "pdfjs-dist",
       ],
-      exclude: [pdfjsWorkerUrlId],
     },
     resolve: {
       alias: {

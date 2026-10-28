@@ -409,6 +409,11 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 				ClientSecret:  b.resolver.getEnv("PROBOD_SLACKBOT_CLIENT_SECRET"),
 				RedirectURI:   b.resolver.getEnv("PROBOD_SLACKBOT_REDIRECT_URI"),
 			},
+			Faro: probodconfig.FaroConfig{
+				Enabled:      b.resolver.getEnvBoolOrDefault("PROBOD_FARO_ENABLED", false),
+				APIKey:       b.resolver.getEnv("PROBOD_FARO_API_KEY"),
+				CollectorURL: b.resolver.getEnv("PROBOD_FARO_COLLECTOR_URL"),
+			},
 		},
 	}
 
@@ -732,6 +737,18 @@ func (b *Builder) validateRequired() error {
 		for _, key := range slackRequired {
 			if b.resolver.getEnv(key) == "" {
 				missing = append(missing, key+" (required when PROBOD_CONNECTOR_SLACK_CLIENT_ID is set)")
+			}
+		}
+	}
+
+	if b.resolver.getEnvBoolOrDefault("PROBOD_FARO_ENABLED", false) {
+		faroRequired := []string{
+			"PROBOD_FARO_COLLECTOR_URL",
+			"PROBOD_FARO_API_KEY",
+		}
+		for _, key := range faroRequired {
+			if b.resolver.getEnv(key) == "" {
+				missing = append(missing, key+" (required when PROBOD_FARO_ENABLED is true)")
 			}
 		}
 	}

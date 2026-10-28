@@ -21,10 +21,6 @@
 package complianceportal_v1
 
 import (
-	"fmt"
-	"html/template"
-	"io"
-	"io/fs"
 	"net/http"
 
 	complianceportalstatics "go.probo.inc/probo/apps/compliance-portal"
@@ -47,6 +43,11 @@ type (
 		Href string
 	}
 
+	indexPageData struct {
+		HeadData
+		statichandler.IndexData
+	}
+
 	HeadDataFunc func(r *http.Request) HeadData
 
 	Server struct {
@@ -54,8 +55,24 @@ type (
 	}
 )
 
-func NewServer(headDataFunc HeadDataFunc) (*Server, error) {
-	renderer, err := buildIndexRenderer(headDataFunc)
+func NewServer(
+	headDataFunc HeadDataFunc,
+	faroEnabled bool,
+	faroCollectorURL string,
+	faroAPIKey string,
+) (*Server, error) {
+	renderer, err := statichandler.NewRequestIndexRenderer(
+		complianceportalstatics.StaticFiles,
+		"dist",
+		func(r *http.Request) any {
+			return indexPageData{
+				HeadData:         headDataFunc(r),
+				FaroEnabled:      faroEnabled,
+				FaroCollectorURL: faroCollectorURL,
+				FaroAPIKey:       faroAPIKey,
+			}
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -76,27 +93,6 @@ func NewServer(headDataFunc HeadDataFunc) (*Server, error) {
 	}
 
 	return &Server{Server: spaServer}, nil
-}
-
-func buildIndexRenderer(headDataFunc HeadDataFunc) (statichandler.FileRenderer, error) {
-	subFS, err := fs.Sub(complianceportalstatics.StaticFiles, "dist")
-	if err != nil {
-		return nil, fmt.Errorf("cannot open dist: %w", err)
-	}
-
-	indexBytes, err := fs.ReadFile(subFS, "index.html")
-	if err != nil {
-		return nil, fmt.Errorf("cannot read index.html: %w", err)
-	}
-
-	tmpl, err := template.New("index").Parse(string(indexBytes))
-	if err != nil {
-		return nil, fmt.Errorf("cannot parse index.html template: %w", err)
-	}
-
-	return func(w io.Writer, r *http.Request) error {
-		return tmpl.Execute(w, headDataFunc(r))
-	}, nil
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {

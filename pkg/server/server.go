@@ -73,8 +73,12 @@ import (
 )
 
 type Config struct {
-	BaseURL                 *baseurl.BaseURL
-	FileStorageOrigin       string
+	BaseURL           *baseurl.BaseURL
+	FileStorageOrigin string
+	// FaroEnabled gates the collector meta tags and the connect-src origin.
+	FaroEnabled             bool
+	FaroCollectorURL        string
+	FaroAPIKey              string
 	AllowedOrigins          []string
 	ExtraHeaderFields       map[string]string
 	Probo                   *probo.Service
@@ -197,12 +201,20 @@ func NewServer(cfg Config) (*Server, error) {
 		return nil, err
 	}
 
-	consoleWebServer, err := console_web.NewServer()
+	consoleWebServer, err := console_web.NewServer(
+		cfg.FaroEnabled,
+		cfg.FaroCollectorURL,
+		cfg.FaroAPIKey,
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	employeePortalWebServer, err := employeeportal_web.NewServer()
+	employeePortalWebServer, err := employeeportal_web.NewServer(
+		cfg.FaroEnabled,
+		cfg.FaroCollectorURL,
+		cfg.FaroAPIKey,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -218,12 +230,22 @@ func NewServer(cfg Config) (*Server, error) {
 		}
 	}
 
-	consoleCSP, err := console.ContentSecurityPolicy(appOrigin, cfg.FileStorageOrigin)
+	consoleCSP, err := console.ContentSecurityPolicy(
+		appOrigin,
+		cfg.FileStorageOrigin,
+		cfg.FaroEnabled,
+		cfg.FaroCollectorURL,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot build console content security policy: %w", err)
 	}
 
-	employeePortalCSP, err := employeeportalstatics.ContentSecurityPolicy(appOrigin, cfg.FileStorageOrigin)
+	employeePortalCSP, err := employeeportalstatics.ContentSecurityPolicy(
+		appOrigin,
+		cfg.FileStorageOrigin,
+		cfg.FaroEnabled,
+		cfg.FaroCollectorURL,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot build employee portal content security policy: %w", err)
 	}

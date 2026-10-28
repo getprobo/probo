@@ -39,6 +39,9 @@ import (
 type MuxConfig struct {
 	BaseURL                 *baseurl.BaseURL
 	FileStorageOrigin       string
+	FaroEnabled             bool
+	FaroCollectorURL        string
+	FaroAPIKey              string
 	ExtraHeaderFields       map[string]string
 	AllowedOrigins          []string
 	Logger                  *log.Logger
@@ -55,7 +58,12 @@ type MuxConfig struct {
 }
 
 func NewMux(cfg MuxConfig) (http.Handler, error) {
-	webServer, err := NewServer(compliancePageHeadData())
+	webServer, err := NewServer(
+		compliancePageHeadData(),
+		cfg.FaroEnabled,
+		cfg.FaroCollectorURL,
+		cfg.FaroAPIKey,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -76,6 +84,8 @@ func NewMux(cfg MuxConfig) (http.Handler, error) {
 	csp, err := complianceportalstatics.ContentSecurityPolicy(
 		appOrigin,
 		cfg.FileStorageOrigin,
+		cfg.FaroEnabled,
+		cfg.FaroCollectorURL,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot build content security policy: %w", err)

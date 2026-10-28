@@ -18,6 +18,7 @@
   <meta name="msapplication-square310x310logo" content="/favicons/mstile-310x310.png" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  {{if .FaroEnabled}}<meta name="faro-collector-url" content="{{.FaroCollectorURL}}"><meta name="faro-api-key" content="{{.FaroAPIKey}}">{{end}}
   <title>Probo Employee Portal</title>
 </head>
 

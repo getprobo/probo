@@ -16,6 +16,7 @@ const reactDirs = [
 const browserDirs = [
   ...reactDirs,
   "packages/collaboration/**",
+  "packages/faro/**",
 ];
 const lintedDirs = [...browserDirs, "packages/eslint-config/**"];
 

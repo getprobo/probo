@@ -196,6 +196,14 @@ probo:
     exportTimeout: 30
     maxQueueSize: 2048
 
+  # Browser telemetry for the console, employee portal, and compliance portal.
+  # The API key is visible to the page; it only authenticates the browser to
+  # the collector. Point collectorUrl at a Faro receiver you already run.
+  faro:
+    enabled: false
+    collectorUrl: ""
+    apiKey: ""
+
   # OAuth2 signing key used by bootstrap to sign auth tokens
   # REQUIRED: PEM-encoded private key (RSA is recommended)
   # Generate with: openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048

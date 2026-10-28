@@ -233,6 +233,7 @@ func New() *Implm {
 				TSAURL: "http://timestamp.digicert.com",
 			},
 			Branding: true,
+			Faro:     FaroConfig{Enabled: false},
 			CookieBanner: CookieBannerConfig{
 				TCFCMPID: cookiebanner.DefaultTCFCmpID,
 			},
@@ -1057,6 +1058,9 @@ func (impl *Implm) Run(
 			ProviderRegistry:        providerRegistry,
 			BaseURL:                 baseURL,
 			FileStorageOrigin:       fileStorageOrigin,
+			FaroEnabled:             impl.cfg.Faro.Enabled,
+			FaroCollectorURL:        impl.cfg.Faro.CollectorURL,
+			FaroAPIKey:              impl.cfg.Faro.APIKey,
 			GraphQLLimits: gqlx.Limits{
 				ParserTokenLimit:  impl.cfg.Api.GraphQL.ParserTokenLimit,
 				ComplexityLimit:   impl.cfg.Api.GraphQL.ComplexityLimit,
@@ -1090,6 +1094,9 @@ func (impl *Implm) Run(
 		complianceportal_v1.MuxConfig{
 			BaseURL:                 baseURL,
 			FileStorageOrigin:       fileStorageOrigin,
+			FaroEnabled:             impl.cfg.Faro.Enabled,
+			FaroCollectorURL:        impl.cfg.Faro.CollectorURL,
+			FaroAPIKey:              impl.cfg.Faro.APIKey,
 			ExtraHeaderFields:       impl.cfg.Api.ExtraHeaderFields,
 			AllowedOrigins:          impl.cfg.Api.Cors.AllowedOrigins,
 			Logger:                  l.Named("compliance-portal"),

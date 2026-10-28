@@ -23,6 +23,7 @@ import { readFileSync } from "node:fs";
 import { isIP } from "node:net";
 import { fileURLToPath, URL } from "node:url";
 
+import { omitFaroCollectorOrigin, omitFaroMeta } from "@probo/faro/vite";
 import babel from "@rolldown/plugin-babel";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
@@ -38,8 +39,9 @@ const cspTemplatePath = fileURLToPath(
 // React Fast Refresh inline preamble is allowed without unsafe-inline.
 const viteDevCspNonce = randomBytes(16).toString("base64");
 
-// Same policy as production (apps/compliance-portal/csp.go), with a script
-// nonce for Fast Refresh and ws:/wss: on connect-src for Vite HMR.
+// Production policy (apps/compliance-portal/csp.go), plus a script nonce for
+// Fast Refresh and ws:/wss: for Vite HMR. Omits the Faro collector origin: the
+// dev index.html never renders the Faro meta tags.
 function compliancePortalContentSecurityPolicy(
   appOrigin: string,
   fileStorageOrigin: string,
@@ -47,7 +49,7 @@ function compliancePortalContentSecurityPolicy(
 ): string {
   const template = readFileSync(cspTemplatePath, "utf8");
   // Collapse newlines: Node rejects CR/LF in header values (Vite setHeader).
-  return template
+  return omitFaroCollectorOrigin(template)
     .replaceAll("{{.AppOrigin}}", appOrigin)
     .replaceAll("{{.FileStorageOrigin}}", fileStorageOrigin)
     .trim()
@@ -196,27 +198,29 @@ function goHtmlTemplateDevDefaults(): Plugin {
     transformIndexHtml: {
       order: "pre",
       handler(html) {
-        return html
-          .replace(
-            /\{\{if \.HTMLLang\}\}\{\{\.HTMLLang\}\}\{\{else\}\}en\{\{end\}\}/g,
-            "en",
-          )
-          .replace(
-            /\{\{if \.FaviconURL\}\}\{\{\.FaviconURL\}\}\{\{else\}\}(\/favicons\/favicon\.ico)\{\{end\}\}/g,
-            "$1",
-          )
-          .replace(
-            /\{\{if \.CanonicalURL\}\}<link rel="canonical" href="\{\{\.CanonicalURL\}\}">\{\{end\}\}\s*/g,
-            "",
-          )
-          .replace(
-            // eslint-disable-next-line @stylistic/max-len
-            /\{\{range \.Hreflang\}\}<link rel="alternate" hreflang="\{\{\.Lang\}\}" href="\{\{\.Href\}\}">\s*\{\{end\}\}\s*/g,
-            "",
-          )
-          .replace(/\{\{\.Title\}\}/g, "Compliance")
-          .replace(/\{\{\.Description\}\}/g, "")
-          .replace(/\{\{\.OGURL\}\}/g, "");
+        return omitFaroMeta(
+          html
+            .replace(
+              /\{\{if \.HTMLLang\}\}\{\{\.HTMLLang\}\}\{\{else\}\}en\{\{end\}\}/g,
+              "en",
+            )
+            .replace(
+              /\{\{if \.FaviconURL\}\}\{\{\.FaviconURL\}\}\{\{else\}\}(\/favicons\/favicon\.ico)\{\{end\}\}/g,
+              "$1",
+            )
+            .replace(
+              /\{\{if \.CanonicalURL\}\}<link rel="canonical" href="\{\{\.CanonicalURL\}\}">\{\{end\}\}\s*/g,
+              "",
+            )
+            .replace(
+              // eslint-disable-next-line @stylistic/max-len
+              /\{\{range \.Hreflang\}\}<link rel="alternate" hreflang="\{\{\.Lang\}\}" href="\{\{\.Href\}\}">\s*\{\{end\}\}\s*/g,
+              "",
+            )
+            .replace(/\{\{\.Title\}\}/g, "Compliance")
+            .replace(/\{\{\.Description\}\}/g, "")
+            .replace(/\{\{\.OGURL\}\}/g, ""),
+        );
       },
     },
   };
@@ -304,7 +308,7 @@ export default defineConfig(({ mode, command }) => {
         : undefined,
     },
     optimizeDeps: {
-      exclude: [pdfjsWorkerUrlId],
+      exclude: ["@probo/faro", pdfjsWorkerUrlId],
     },
     resolve: {
       alias: {

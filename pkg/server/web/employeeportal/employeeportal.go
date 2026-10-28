@@ -33,12 +33,30 @@ type Server struct {
 	*statichandler.Server
 }
 
-func NewServer() (*Server, error) {
+func NewServer(faroEnabled bool, faroCollectorURL string, faroAPIKey string) (*Server, error) {
+	renderer, err := statichandler.NewIndexRenderer(
+		employeeportalstatics.StaticFiles,
+		"dist",
+		statichandler.IndexData{
+			FaroEnabled:      faroEnabled,
+			FaroCollectorURL: faroCollectorURL,
+			FaroAPIKey:       faroAPIKey,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	gzipOptions := statichandler.GzipOptions{
 		EnableFileTypeCheck: false,
 	}
 
-	spaServer, err := statichandler.NewServer(employeeportalstatics.StaticFiles, "dist", gzipOptions)
+	spaServer, err := statichandler.NewServer(
+		employeeportalstatics.StaticFiles,
+		"dist",
+		gzipOptions,
+		statichandler.WithFileRenderer("/index.html", renderer),
+	)
 	if err != nil {
 		return nil, err
 	}

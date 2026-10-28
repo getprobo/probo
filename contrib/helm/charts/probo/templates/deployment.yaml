@@ -59,6 +59,17 @@ spec:
             - name: PROBOD_TRACING_MAX_QUEUE_SIZE
               value: {{ .Values.probo.tracing.maxQueueSize | quote }}
             {{- end }}
+            {{- if .Values.probo.faro.enabled }}
+            - name: PROBOD_FARO_ENABLED
+              value: "true"
+            - name: PROBOD_FARO_COLLECTOR_URL
+              value: {{ required "probo.faro.collectorUrl is required when Faro is enabled" .Values.probo.faro.collectorUrl | quote }}
+            - name: PROBOD_FARO_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" . }}
+                  key: faro-api-key
+            {{- end }}
             # Application Configuration
             - name: PROBOD_BASE_URL
               value: {{ printf "https://%s" .Values.probo.baseUrl | quote }}

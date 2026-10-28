@@ -3,7 +3,7 @@ script-src 'self';
 style-src 'self' 'unsafe-inline';
 img-src 'self' data: {{.AppOrigin}} {{.FileStorageOrigin}} https://www.google.com https://*.gstatic.com;
 font-src 'self';
-connect-src 'self' {{.AppOrigin}} {{.FileStorageOrigin}};
+connect-src 'self' {{.AppOrigin}} {{.FileStorageOrigin}}{{if .FaroEnabled}} {{.FaroCollectorOrigin}}{{end}};
 worker-src 'self' blob:;
 object-src 'none';
 base-uri 'self';

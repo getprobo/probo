@@ -35,6 +35,8 @@ func TestContentSecurityPolicy_SubstitutesOrigins(t *testing.T) {
 	policy, err := employeeportalstatics.ContentSecurityPolicy(
 		"https://app.example.com",
 		"https://probod.s3.eu-west-1.amazonaws.com",
+		false,
+		"",
 	)
 	require.NoError(t, err)
 	require.NotEmpty(t, policy)
@@ -73,6 +75,8 @@ func TestContentSecurityPolicy_RejectsAppOriginInjection(t *testing.T) {
 	_, err := employeeportalstatics.ContentSecurityPolicy(
 		"https://evil.com;frame-ancestors",
 		"https://probod.s3.eu-west-1.amazonaws.com",
+		false,
+		"",
 	)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "invalid CSP app origin")
@@ -84,6 +88,8 @@ func TestContentSecurityPolicy_RejectsFileStorageOriginInjection(t *testing.T) {
 	_, err := employeeportalstatics.ContentSecurityPolicy(
 		"https://app.example.com",
 		"https://evil.com;frame-ancestors",
+		false,
+		"",
 	)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "invalid CSP file storage origin")

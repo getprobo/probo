@@ -24,6 +24,7 @@ import { createRequire } from "node:module";
 import { isIP } from "node:net";
 import { fileURLToPath, URL } from "node:url";
 
+import { omitFaroCollectorOrigin, omitFaroDevPlaceholders } from "@probo/faro/vite";
 import babel from "@rolldown/plugin-babel";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
@@ -41,8 +42,9 @@ const cspTemplatePath = fileURLToPath(
 // React Fast Refresh inline preamble is allowed without unsafe-inline.
 const viteDevCspNonce = randomBytes(16).toString("base64");
 
-// Same policy as production (apps/console/csp.go), with a script nonce for
-// Fast Refresh and ws:/wss: on connect-src for Vite HMR.
+// Production policy (apps/console/csp.go), plus a script nonce for Fast
+// Refresh and ws:/wss: for Vite HMR. Omits the Faro collector origin: the
+// dev index.html never renders the Faro meta tags.
 function consoleContentSecurityPolicy(
   appOrigin: string,
   fileStorageOrigin: string,
@@ -50,7 +52,7 @@ function consoleContentSecurityPolicy(
 ): string {
   const template = readFileSync(cspTemplatePath, "utf8");
   // Collapse newlines: Node rejects CR/LF in header values (Vite setHeader).
-  return template
+  return omitFaroCollectorOrigin(template)
     .replaceAll("{{.AppOrigin}}", appOrigin)
     .replaceAll("{{.FileStorageOrigin}}", fileStorageOrigin)
     .trim()
@@ -291,6 +293,7 @@ export default defineConfig(({ mode, command }) => {
       ),
     },
     plugins: [
+      omitFaroDevPlaceholders(),
       react(),
       babel({
         exclude: [/[/\\]node_modules[/\\]/, /\0rolldown[/\\]runtime\.js/, iamFiles],
@@ -354,7 +357,7 @@ export default defineConfig(({ mode, command }) => {
     ...(command === "serve"
       ? {
           optimizeDeps: {
-            exclude: ["@automerge/automerge", pdfjsWorkerUrlId],
+            exclude: ["@automerge/automerge", pdfjsWorkerUrlId, "@probo/faro"],
           },
         }
       : {}),

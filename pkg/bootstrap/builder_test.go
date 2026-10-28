@@ -151,6 +151,20 @@ func TestBuilder_Build_MissingRequiredEnvVars(t *testing.T) {
 			wantMissing: []string{"PROBOD_CONNECTOR_SLACK_CLIENT_SECRET", "PROBOD_CONNECTOR_SLACK_SIGNING_SECRET"},
 		},
 		{
+			name: "enabled faro missing required fields",
+			env: map[string]string{
+				"PROBOD_ENCRYPTION_KEY":            "key",
+				"PROBOD_AUTH_COOKIE_SECRET":        "secret",
+				"PROBOD_AUTH_PASSWORD_PEPPER":      "pepper",
+				"PROBOD_FARO_ENABLED":              "true",
+				"PROBOD_OAUTH2_SERVER_SIGNING_KEY": "signing-key",
+			},
+			wantMissing: []string{
+				"PROBOD_FARO_COLLECTOR_URL",
+				"PROBOD_FARO_API_KEY",
+			},
+		},
+		{
 			name: "enabled slackbot missing required fields",
 			env: map[string]string{
 				"PROBOD_ENCRYPTION_KEY":            "key",
@@ -429,6 +443,11 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	// Cookie banner
 	assert.Equal(t, 4095, cfg.Probod.CookieBanner.TCFCMPID)
 
+	// Faro stays off unless the operator turns it on.
+	assert.False(t, cfg.Probod.Faro.Enabled)
+	assert.Empty(t, cfg.Probod.Faro.CollectorURL)
+	assert.Empty(t, cfg.Probod.Faro.APIKey)
+
 	// No connectors by default
 	assert.Empty(t, cfg.Probod.Connectors)
 }
@@ -567,6 +586,10 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["PROBOD_BRANDING"] = "false"
 	// Cookie banner
 	env["PROBOD_COOKIE_BANNER_TCF_CMP_ID"] = "123"
+	// Faro
+	env["PROBOD_FARO_ENABLED"] = "true"
+	env["PROBOD_FARO_COLLECTOR_URL"] = "https://collector.example.com/collect"
+	env["PROBOD_FARO_API_KEY"] = "faro-api-key"
 	// Slackbot
 	env["PROBOD_SLACKBOT_ENABLED"] = "true"
 	env["PROBOD_SLACKBOT_SIGNING_SECRET"] = "slackbot-signing-secret"
@@ -722,6 +745,9 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	// Cookie banner
 	assert.Equal(t, 123, cfg.Probod.CookieBanner.TCFCMPID)
 	// Slackbot
+	assert.True(t, cfg.Probod.Faro.Enabled)
+	assert.Equal(t, "https://collector.example.com/collect", cfg.Probod.Faro.CollectorURL)
+	assert.Equal(t, "faro-api-key", cfg.Probod.Faro.APIKey)
 	assert.True(t, cfg.Probod.Slackbot.Enabled)
 	assert.Equal(t, "slackbot-signing-secret", cfg.Probod.Slackbot.SigningSecret)
 	assert.Equal(t, "slackbot-client-id", cfg.Probod.Slackbot.ClientID)

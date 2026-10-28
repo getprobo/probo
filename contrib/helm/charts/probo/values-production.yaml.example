@@ -339,6 +339,13 @@ probo:
     exportTimeout: 30
     maxQueueSize: 10000
 
+  # Browser telemetry. The API key is sent by the browser. Set enabled to
+  # false to deploy without Faro.
+  faro:
+    enabled: true
+    collectorUrl: "https://collector.example/collect"
+    apiKey: ""
+
   # Custom domains with Let's Encrypt (optional, direct TLS mode only)
   customDomains:
     enabled: true
