@@ -11,7 +11,8 @@
       "dependsOn": ["^lint"]
     },
     "check": {
-      "dependsOn": ["^check"]
+      "dependsOn": ["^check"],
+      "inputs": ["$TURBO_DEFAULT$", "../vite/**"]
     },
     "test": {},
     "dev": {

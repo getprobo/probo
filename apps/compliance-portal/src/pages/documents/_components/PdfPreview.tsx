@@ -35,7 +35,7 @@ import { pdfPreview } from "./variants";
 
 // Bundle the pdf.js worker with the app (via Vite's `?url`) instead of loading
 // it from a CDN, so the viewer works under a strict trust-center CSP.
-// vite.config.ts aliases `pdfjs-dist` to react-pdf's own copy so versions match.
+// apps/vite/pdfjsDistDir.ts aliases `pdfjs-dist` to react-pdf's own copy.
 pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
 
 // Fit-to-width at 100% zoom: mobile keeps a tight phone gutter; desktop pages

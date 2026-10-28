@@ -39,6 +39,7 @@ import "react-pdf/dist/Page/AnnotationLayer.css";
 
 // Bundle the pdf.js worker with the app (via Vite's `?url`) instead of loading
 // it from a CDN, so the viewer works under a strict console CSP.
+// apps/vite/pdfjsDistDir.ts aliases `pdfjs-dist` to react-pdf's own copy.
 pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
 
 const btnClass

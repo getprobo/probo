@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite --port 5175",
     "build": "tsc -b && vite build",
-    "check": "tsc --noEmit -p tsconfig.app.json",
+    "check": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p ../vite/tsconfig.json",
     "preview": "vite preview"
   },
   "dependencies": {

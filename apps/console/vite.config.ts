@@ -29,6 +29,8 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig, loadEnv, type ProxyOptions } from "vite";
 
+import { pdfjsDistDir, pdfjsWorkerUrlId } from "../vite/pdfjsDistDir";
+
 const require = createRequire(import.meta.url);
 
 const cspTemplatePath = fileURLToPath(
@@ -352,7 +354,7 @@ export default defineConfig(({ mode, command }) => {
     ...(command === "serve"
       ? {
           optimizeDeps: {
-            exclude: ["@automerge/automerge"],
+            exclude: ["@automerge/automerge", pdfjsWorkerUrlId],
           },
         }
       : {}),
@@ -376,6 +378,10 @@ export default defineConfig(({ mode, command }) => {
         {
           find: "mermaid",
           replacement: require.resolve("mermaid/dist/mermaid.esm.min.mjs"),
+        },
+        {
+          find: "pdfjs-dist",
+          replacement: pdfjsDistDir(import.meta.url),
         },
       ],
     },

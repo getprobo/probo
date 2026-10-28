@@ -35,7 +35,7 @@ import { pdfPreview } from "./variants";
 
 // Bundle the pdf.js worker with the app (via Vite's `?url`) instead of loading
 // it from a CDN, so the viewer works under a strict employee-portal CSP.
-// vite.config.ts aliases `pdfjs-dist` to react-pdf's main-thread copy.
+// apps/vite/pdfjsDistDir.ts aliases `pdfjs-dist` to react-pdf's own copy.
 pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
 
 // Figma document page at 100% (2093:1856) is 672px in the 928px stage.
