@@ -102,9 +102,13 @@ export function InternalControlListItem(props: InternalControlListItemProps) {
         onDeleted={onChanged}
       />
       <TableRow align="center" interactive>
+        <TableCell>
+          {internalControl.code
+            ? <Code className="whitespace-nowrap">{internalControl.code}</Code>
+            : <Text size={2} color="faint">{t("list.values.none")}</Text>}
+        </TableCell>
         <TableRowHeaderCell>
           <div className={identity()}>
-            {internalControl.code && <Code>{internalControl.code}</Code>}
             <TableLink
               to={{
                 pathname: `/organizations/${organizationId}/governance/internal-controls/${internalControl.id}`,

@@ -84,7 +84,7 @@ export const description: INodeProperties[] = [
 				name: 'query',
 				type: 'string',
 				default: '',
-				description: 'Search internal controls by name or description',
+				description: 'Search internal controls by name or code',
 			},
 			{
 				displayName: 'Implementation Statuses',

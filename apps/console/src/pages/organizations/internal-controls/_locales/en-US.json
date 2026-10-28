@@ -20,13 +20,14 @@
       "attention": "Needs attention"
     },
     "filters": {
-      "search": "Search internal controls",
+      "search": "Search by name or code",
       "allStatuses": "All statuses",
       "allCategories": "All categories",
       "allOwners": "All owners",
       "selectedCount": "{{count}} selected"
     },
     "columns": {
+      "code": "Code",
       "control": "Control",
       "status": "Status",
       "owner": "Owner",

@@ -2671,7 +2671,7 @@ components:
           properties:
             query:
               type: string
-              description: Search query
+              description: Search by name or code
             state:
               $ref: "#/components/schemas/InternalControlState"
               description: Internal control state filter

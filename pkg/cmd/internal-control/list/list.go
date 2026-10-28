@@ -208,7 +208,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmdutil.AddAfterFlag(cmd, &flagAfter)
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT, NAME, NEXT_DUE)")
 	cmdutil.AddOrderDirectionFlag(cmd, &flagOrderDir, "DESC")
-	cmd.Flags().StringVarP(&flagFilter, "filter", "q", "", "Filter internal controls by search query")
+	cmd.Flags().StringVarP(&flagFilter, "filter", "q", "", "Filter internal controls by name or code")
 	cmd.Flags().StringArrayVar(&flagImplementationStatuses, "implementation-status", nil, "Filter by implementation status (repeatable)")
 	cmd.Flags().StringVar(&flagOwner, "owner", "", "Filter by owner profile ID")
 	cmd.Flags().BoolVar(&flagNeedsAttention, "needs-attention", false, "Only controls that are not implemented or overdue")

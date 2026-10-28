@@ -8,11 +8,12 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 - Internal controls show one status. The list, the form, and linked
   controls use implementation status, and the list can filter on it
-- The internal controls list shows who owns each control, its status,
-  and the next evidence or test that is due. Filters, sort, the page,
-  and a Needs attention view stay in the URL. The list can filter on
-  several statuses, an owner, and controls that need attention, and it
-  can sort by the next due date.
+- The internal controls list shows each control's code, who owns it,
+  its status, and the next evidence or test that is due. Search matches
+  the name or the code. Filters, sort, the page, and a Needs attention
+  view stay in the URL. The list can filter on several statuses, an
+  owner, and controls that need attention, and it can sort by the next
+  due date.
 
 ## [0.331.0] - 2026-10-28
 

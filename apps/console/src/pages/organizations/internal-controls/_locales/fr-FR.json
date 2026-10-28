@@ -20,13 +20,14 @@
       "attention": "À traiter"
     },
     "filters": {
-      "search": "Rechercher des contrôles internes",
+      "search": "Rechercher par nom ou code",
       "allStatuses": "Tous les statuts",
       "allCategories": "Toutes les catégories",
       "allOwners": "Tous les responsables",
       "selectedCount": "{{count}} sélectionnés"
     },
     "columns": {
+      "code": "Code",
       "control": "Contrôle",
       "status": "Statut",
       "owner": "Responsable",
