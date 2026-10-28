@@ -22,14 +22,19 @@ package coredata
 
 import (
 	"github.com/jackc/pgx/v5"
+
+	"go.probo.inc/probo/pkg/gid"
 )
 
 type (
 	InternalControlFilter struct {
-		query                *string
-		state                *InternalControlState
-		implementationStatus *InternalControlImplementationStatus
-		category             *string
+		query                  *string
+		state                  *InternalControlState
+		implementationStatus   *InternalControlImplementationStatus
+		category               *string
+		implementationStatuses []InternalControlImplementationStatus
+		ownerID                *gid.GID
+		needsAttention         *bool
 	}
 )
 
@@ -38,21 +43,36 @@ func NewInternalControlFilter(
 	state *InternalControlState,
 	implementationStatus *InternalControlImplementationStatus,
 	category *string,
+	implementationStatuses []InternalControlImplementationStatus,
+	ownerID *gid.GID,
+	needsAttention *bool,
 ) *InternalControlFilter {
 	return &InternalControlFilter{
-		query:                query,
-		state:                state,
-		implementationStatus: implementationStatus,
-		category:             category,
+		query:                  query,
+		state:                  state,
+		implementationStatus:   implementationStatus,
+		category:               category,
+		implementationStatuses: implementationStatuses,
+		ownerID:                ownerID,
+		needsAttention:         needsAttention,
 	}
 }
 
 func (f *InternalControlFilter) SQLArguments() pgx.StrictNamedArgs {
+	var ownerID *string
+	if f.ownerID != nil {
+		value := f.ownerID.String()
+		ownerID = &value
+	}
+
 	return pgx.StrictNamedArgs{
-		"query":                 f.query,
-		"state":                 f.state,
-		"implementation_status": f.implementationStatus,
-		"category":              f.category,
+		"query":                   f.query,
+		"state":                   f.state,
+		"implementation_status":   f.implementationStatus,
+		"category":                f.category,
+		"implementation_statuses": filterStrings(f.implementationStatuses),
+		"owner_profile_id":        ownerID,
+		"needs_attention":         f.needsAttention,
 	}
 }
 
@@ -94,6 +114,35 @@ AND
 			TRUE
 		ELSE
 			category = @category::text
+	END
+)
+AND
+(
+	CASE
+		WHEN @implementation_statuses::internal_control_implementation_status[] IS NULL THEN
+			TRUE
+		ELSE
+			implementation_status = ANY(@implementation_statuses::internal_control_implementation_status[])
+	END
+)
+AND
+(
+	CASE
+		WHEN @owner_profile_id::text IS NULL OR @owner_profile_id::text = '' THEN
+			TRUE
+		ELSE
+			owner_profile_id = @owner_profile_id::text
+	END
+)
+AND
+(
+	CASE
+		WHEN @needs_attention::boolean IS NOT TRUE THEN
+			TRUE
+		ELSE
+			implementation_status = 'NOT_IMPLEMENTED'
+			OR (next_evidence_due IS NOT NULL AND next_evidence_due < NOW())
+			OR (next_test_due IS NOT NULL AND next_test_due < NOW())
 	END
 )
 	`
@@ -146,6 +195,53 @@ AND
 			TRUE
 		ELSE
 			category = @category::text
+	END
+)
+AND
+(
+	CASE
+		WHEN @implementation_statuses::internal_control_implementation_status[] IS NULL THEN
+			TRUE
+		ELSE
+			COALESCE(
+				implementation_status,
+				(
+					CASE state
+						WHEN 'IN_PROGRESS' THEN 'IN_PROGRESS'
+						WHEN 'IMPLEMENTED' THEN 'IMPLEMENTED'
+						ELSE 'NOT_IMPLEMENTED'
+					END
+				)::internal_control_implementation_status
+			) = ANY(@implementation_statuses::internal_control_implementation_status[])
+	END
+)
+AND
+(
+	CASE
+		WHEN @owner_profile_id::text IS NULL OR @owner_profile_id::text = '' THEN
+			TRUE
+		ELSE
+			owner_profile_id = @owner_profile_id::text
+	END
+)
+AND
+(
+	CASE
+		WHEN @needs_attention::boolean IS NOT TRUE THEN
+			TRUE
+		ELSE
+			COALESCE(
+				implementation_status,
+				(
+					CASE state
+						WHEN 'IN_PROGRESS' THEN 'IN_PROGRESS'
+						WHEN 'IMPLEMENTED' THEN 'IMPLEMENTED'
+						ELSE 'NOT_IMPLEMENTED'
+					END
+				)::internal_control_implementation_status
+			) = 'NOT_IMPLEMENTED'
+			OR (next_evidence_due IS NOT NULL AND next_evidence_due < NOW())
+			OR (next_test_due IS NOT NULL AND next_test_due < NOW())
 	END
 )
 	`

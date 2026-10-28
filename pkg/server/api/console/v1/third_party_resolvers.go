@@ -887,13 +887,16 @@ func (r *thirdPartyResolver) InternalControls(ctx context.Context, obj *types.Th
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	var internalControlFilter = coredata.NewInternalControlFilter(nil, nil, nil, nil)
+	var internalControlFilter = coredata.NewInternalControlFilter(nil, nil, nil, nil, nil, nil, nil)
 	if filter != nil {
 		internalControlFilter = coredata.NewInternalControlFilter(
 			filter.Query,
 			filter.State,
 			filter.ImplementationStatus,
 			filter.Category,
+			filter.ImplementationStatuses,
+			filter.OwnerID,
+			filter.NeedsAttention,
 		)
 	}
 

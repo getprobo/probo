@@ -2539,6 +2539,7 @@ components:
       enum:
         - CREATED_AT
         - NAME
+        - NEXT_DUE
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.InternalControlOrderField
 
     InternalControlOrderBy:
@@ -2677,9 +2678,22 @@ components:
             implementation_status:
               $ref: "#/components/schemas/InternalControlImplementationStatus"
               description: Whether the control is not implemented, in progress, implemented, or operating
+            implementation_statuses:
+              type: array
+              description: Match any of these implementation statuses
+              items:
+                $ref: "#/components/schemas/InternalControlImplementationStatus"
             category:
               type: string
               description: Filter by internal control category
+            owner_id:
+              anyOf:
+                - $ref: "#/components/schemas/GID"
+                - type: "null"
+              description: Owner profile ID
+            needs_attention:
+              type: boolean
+              description: Only controls that are not implemented or have an overdue evidence or test date
 
     ListInternalControlsOutput:
       type: object

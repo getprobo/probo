@@ -66,13 +66,16 @@ type internalControl struct {
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagOrg      string
-		flagLimit    int
-		flagAfter    string
-		flagOrderBy  string
-		flagOrderDir string
-		flagFilter   string
-		flagOutput   *string
+		flagOrg                    string
+		flagLimit                  int
+		flagAfter                  string
+		flagOrderBy                string
+		flagOrderDir               string
+		flagFilter                 string
+		flagImplementationStatuses []string
+		flagOwner                  string
+		flagNeedsAttention         bool
+		flagOutput                 *string
 	)
 
 	cmd := &cobra.Command{
@@ -86,7 +89,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
   prb internal-control list --filter "encryption"
 
   # List internal controls sorted by name
-  prb internal-control ls --order-by NAME --json`,
+  prb internal-control ls --order-by NAME --json
+
+  # List controls that need attention, owned by one profile
+  prb internal-control list --needs-attention --owner <profile-id>`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
@@ -112,7 +118,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if flagOrderBy != "" {
-				if err := cmdutil.ValidateEnum("order-by", flagOrderBy, []string{"CREATED_AT", "NAME"}); err != nil {
+				if err := cmdutil.ValidateEnum("order-by", flagOrderBy, []string{"CREATED_AT", "NAME", "NEXT_DUE"}); err != nil {
 					return err
 				}
 
@@ -122,10 +128,37 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				}
 			}
 
+			filter := map[string]any{}
 			if flagFilter != "" {
-				variables["filter"] = map[string]any{
-					"query": flagFilter,
+				filter["query"] = flagFilter
+			}
+			if len(flagImplementationStatuses) > 0 {
+				if err := cmdutil.ValidateEnum(
+					"implementation-status",
+					flagImplementationStatuses[0],
+					[]string{"NOT_IMPLEMENTED", "IN_PROGRESS", "IMPLEMENTED", "OPERATING"},
+				); err != nil {
+					return err
 				}
+				for _, status := range flagImplementationStatuses[1:] {
+					if err := cmdutil.ValidateEnum(
+						"implementation-status",
+						status,
+						[]string{"NOT_IMPLEMENTED", "IN_PROGRESS", "IMPLEMENTED", "OPERATING"},
+					); err != nil {
+						return err
+					}
+				}
+				filter["implementationStatuses"] = flagImplementationStatuses
+			}
+			if flagOwner != "" {
+				filter["ownerId"] = flagOwner
+			}
+			if flagNeedsAttention {
+				filter["needsAttention"] = true
+			}
+			if len(filter) > 0 {
+				variables["filter"] = filter
 			}
 
 			internalControls, totalCount, nextCursor, err := api.Paginate(
@@ -173,9 +206,12 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmdutil.AddOrganizationFlag(cmd, &flagOrg, "Organization ID")
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of internal controls to list")
 	cmdutil.AddAfterFlag(cmd, &flagAfter)
-	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT, NAME)")
+	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT, NAME, NEXT_DUE)")
 	cmdutil.AddOrderDirectionFlag(cmd, &flagOrderDir, "DESC")
 	cmd.Flags().StringVarP(&flagFilter, "filter", "q", "", "Filter internal controls by search query")
+	cmd.Flags().StringArrayVar(&flagImplementationStatuses, "implementation-status", nil, "Filter by implementation status (repeatable)")
+	cmd.Flags().StringVar(&flagOwner, "owner", "", "Filter by owner profile ID")
+	cmd.Flags().BoolVar(&flagNeedsAttention, "needs-attention", false, "Only controls that are not implemented or overdue")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd

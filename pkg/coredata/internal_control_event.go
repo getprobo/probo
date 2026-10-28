@@ -156,17 +156,7 @@ func (es *InternalControlEvents) LoadLatestByInternalControlIDsAsOf(
 	}
 
 	q := `
-SELECT
-    organization_id,
-    internal_control_id,
-    event_type,
-    name,
-    category,
-    state,
-    implementation_status,
-    internal_control_created_at,
-    created_at
-FROM (
+WITH latest AS (
     SELECT DISTINCT ON (internal_control_id)
         organization_id,
         internal_control_id,
@@ -186,10 +176,39 @@ FROM (
     ORDER BY
         internal_control_id,
         created_at DESC
-) latest
-WHERE
-    event_type <> @deleted
-    AND %s
+),
+filtered AS (
+    SELECT
+        organization_id,
+        internal_control_id,
+        event_type,
+        name,
+        category,
+        state,
+        implementation_status,
+        internal_control_created_at,
+        created_at,
+        CAST(NULL AS text) AS owner_profile_id,
+        CAST(NULL AS timestamptz) AS next_evidence_due,
+        CAST(NULL AS timestamptz) AS next_test_due
+    FROM
+        latest
+    WHERE
+        event_type <> @deleted
+        AND %s
+)
+SELECT
+    organization_id,
+    internal_control_id,
+    event_type,
+    name,
+    category,
+    state,
+    implementation_status,
+    internal_control_created_at,
+    created_at
+FROM
+    filtered
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.EventSQLFragment())

@@ -111,6 +111,10 @@ enum InternalControlOrderField
             value: "go.probo.inc/probo/pkg/coredata.InternalControlOrderFieldCreatedAt"
         )
     NAME @goEnum(value: "go.probo.inc/probo/pkg/coredata.InternalControlOrderFieldName")
+    NEXT_DUE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlOrderFieldNextDue"
+        )
 }
 
 input InternalControlOrder
@@ -125,7 +129,10 @@ input InternalControlFilter {
     query: String
     state: InternalControlState
     implementationStatus: InternalControlImplementationStatus
+    implementationStatuses: [InternalControlImplementationStatus!]
     category: String
+    ownerId: ID
+    needsAttention: Boolean
 }
 
 type InternalControl implements Node {

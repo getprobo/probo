@@ -66,6 +66,74 @@ export const description: INodeProperties[] = [
 		default: 50,
 		description: 'Max number of results to return',
 	},
+	{
+		displayName: 'Options',
+		name: 'options',
+		type: 'collection',
+		placeholder: 'Add Option',
+		default: {},
+		displayOptions: {
+			show: {
+				resource: ['internalControl'],
+				operation: ['getAll'],
+			},
+		},
+		options: [
+			{
+				displayName: 'Query',
+				name: 'query',
+				type: 'string',
+				default: '',
+				description: 'Search internal controls by name or description',
+			},
+			{
+				displayName: 'Implementation Statuses',
+				name: 'implementationStatuses',
+				type: 'multiOptions',
+				options: [
+					{ name: 'Not Implemented', value: 'NOT_IMPLEMENTED' },
+					{ name: 'In Progress', value: 'IN_PROGRESS' },
+					{ name: 'Implemented', value: 'IMPLEMENTED' },
+					{ name: 'Operating', value: 'OPERATING' },
+				],
+				default: [],
+				description: 'Only controls in one of these statuses',
+			},
+			{
+				displayName: 'Category',
+				name: 'category',
+				type: 'string',
+				default: '',
+				description: 'Only controls in this category',
+			},
+			{
+				displayName: 'Owner ID',
+				name: 'ownerId',
+				type: 'string',
+				default: '',
+				description: 'Only controls owned by this profile',
+			},
+			{
+				displayName: 'Needs Attention',
+				name: 'needsAttention',
+				type: 'boolean',
+				default: false,
+				description: 'Whether to keep only controls that are not implemented or have an overdue evidence or test date',
+			},
+			{
+				displayName: 'Order By',
+				name: 'orderBy',
+				type: 'options',
+				options: [
+					{ name: 'Created At', value: 'CREATED_AT' },
+					{ name: 'Name', value: 'NAME' },
+					{ name: 'Next Due', value: 'NEXT_DUE' },
+				],
+				default: 'CREATED_AT',
+				description: 'Field used to order the list',
+			},
+		],
+	},
 ];
 
 export async function execute(
@@ -75,12 +143,50 @@ export async function execute(
 	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
+	const options = this.getNodeParameter('options', itemIndex, {}) as {
+		query?: string;
+		implementationStatuses?: string[];
+		category?: string;
+		ownerId?: string;
+		needsAttention?: boolean;
+		orderBy?: string;
+	};
+
+	const variables: IDataObject = { organizationId };
+	const filter: IDataObject = {};
+	if (options.query) {
+		filter.query = options.query;
+	}
+	if (options.implementationStatuses?.length) {
+		filter.implementationStatuses = options.implementationStatuses;
+	}
+	if (options.category) {
+		filter.category = options.category;
+	}
+	if (options.ownerId) {
+		filter.ownerId = options.ownerId;
+	}
+	if (options.needsAttention) {
+		filter.needsAttention = true;
+	}
+	if (Object.keys(filter).length > 0) {
+		variables.filter = filter;
+	}
+	if (options.orderBy) {
+		variables.orderBy = { field: options.orderBy, direction: 'ASC' };
+	}
 
 	const query = `
-		query GetInternalControls($organizationId: ID!, $first: Int, $after: CursorKey) {
+		query GetInternalControls(
+			$organizationId: ID!
+			$first: Int
+			$after: CursorKey
+			$filter: InternalControlFilter
+			$orderBy: InternalControlOrder
+		) {
 			node(id: $organizationId) {
 				... on Organization {
-					internalControls(first: $first, after: $after) {
+					internalControls(first: $first, after: $after, filter: $filter, orderBy: $orderBy) {
 						edges {
 							node {
 								id
@@ -126,7 +232,7 @@ export async function execute(
 	const internalControls = await proboApiRequestAllItems.call(
 		this,
 		query,
-		{ organizationId },
+		variables,
 		(response) => {
 			const data = response?.data as IDataObject | undefined;
 			const node = data?.node as IDataObject | undefined;
