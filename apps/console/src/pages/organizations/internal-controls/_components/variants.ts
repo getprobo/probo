@@ -20,6 +20,14 @@
 
 import { tv } from "tailwind-variants/lite";
 
+export const internalControlColumnWidth = {
+  code: "8.5rem",
+  status: "11rem",
+  owner: "11rem",
+  nextDue: "14rem",
+  actions: "3rem",
+} as const;
+
 export const internalControlsPage = tv({
   slots: {
     root: "flex flex-col gap-6",
@@ -38,9 +46,13 @@ export const internalControlsPage = tv({
     pager: "flex justify-end",
     empty: "flex flex-col items-center gap-3 px-6 py-12 text-center",
     emptyActions: "flex flex-wrap items-center justify-center gap-2",
-    identity: "flex min-w-0 flex-col items-start gap-1",
-    owner: "inline-flex min-w-0 items-center gap-2",
-    due: "inline-flex items-center gap-1",
+    // Fluid column under layout="fixed". max-w-0 lets a sentence wrap
+    // inside the leftover width instead of stretching the table.
+    nameCell: "min-w-0 max-w-0 whitespace-normal break-words",
+    identity: "flex w-full min-w-0 flex-col items-stretch gap-1 whitespace-normal break-words",
+    owner: "inline-flex min-w-0 max-w-full items-center gap-2",
+    ownerName: "min-w-0 truncate",
+    due: "flex min-w-0 flex-wrap items-center gap-1",
   },
   variants: {
     pending: {

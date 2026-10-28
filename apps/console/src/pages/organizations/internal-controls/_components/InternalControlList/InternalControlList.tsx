@@ -36,7 +36,7 @@ import type { InternalControlListRefetchQuery } from "#/__generated__/core/Inter
 import InternalControlFormDialog from "#/pages/organizations/internal-controls/dialog/InternalControlFormDialog";
 
 import { useInternalControlsListFilters } from "../../_lib/useInternalControlsListFilters";
-import { internalControlsPage } from "../variants";
+import { internalControlColumnWidth, internalControlsPage } from "../variants";
 
 import { InternalControlListItem } from "./InternalControlListItem";
 import { InternalControlsEmpty } from "./InternalControlsEmpty";
@@ -140,7 +140,7 @@ export function InternalControlList(props: InternalControlListProps) {
   const edges = organization.internalControls.edges;
   const pageInfo = organization.internalControls.pageInfo;
   const isPending = isRefetchPending;
-  const { list, pager } = internalControlsPage({ pending: isPending });
+  const { list, pager, nameCell } = internalControlsPage({ pending: isPending });
   const canCreate = organization.canCreateInternalControl ?? false;
 
   function goNext() {
@@ -190,25 +190,33 @@ export function InternalControlList(props: InternalControlListProps) {
 
   return (
     <div aria-busy={isPending} className={list()}>
-      <Table size={2} variant="surface">
+      <Table size={2} variant="surface" layout="fixed">
         <TableHeader>
           <TableRow align="center">
-            <TableColumnHeaderCell>{t("list.columns.code")}</TableColumnHeaderCell>
+            <TableColumnHeaderCell width={internalControlColumnWidth.code}>
+              {t("list.columns.code")}
+            </TableColumnHeaderCell>
             <TableColumnHeaderCell
+              className={nameCell()}
               sort={sortState("name")}
               onSort={() => filters.setSort("name")}
             >
               {t("list.columns.control")}
             </TableColumnHeaderCell>
-            <TableColumnHeaderCell>{t("list.columns.status")}</TableColumnHeaderCell>
-            <TableColumnHeaderCell>{t("list.columns.owner")}</TableColumnHeaderCell>
+            <TableColumnHeaderCell width={internalControlColumnWidth.status}>
+              {t("list.columns.status")}
+            </TableColumnHeaderCell>
+            <TableColumnHeaderCell width={internalControlColumnWidth.owner}>
+              {t("list.columns.owner")}
+            </TableColumnHeaderCell>
             <TableColumnHeaderCell
+              width={internalControlColumnWidth.nextDue}
               sort={sortState("nextDue")}
               onSort={() => filters.setSort("nextDue")}
             >
               {t("list.columns.nextDue")}
             </TableColumnHeaderCell>
-            <TableColumnHeaderCell width="3rem" />
+            <TableColumnHeaderCell width={internalControlColumnWidth.actions} />
           </TableRow>
         </TableHeader>
         <TableBody>

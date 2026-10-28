@@ -48,7 +48,7 @@ import {
   implementationStatusColor,
   nextDue,
 } from "../../_lib/internalControlDisplay";
-import { internalControlsPage } from "../variants";
+import { internalControlColumnWidth, internalControlsPage } from "../variants";
 
 import { InternalControlDeleteDialog } from "./InternalControlDeleteDialog";
 
@@ -83,8 +83,8 @@ export function InternalControlListItem(props: InternalControlListItemProps) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const internalControl = useFragment(internalControlListItemFragment, internalControlKey);
   const due = nextDue(internalControl.nextEvidenceDue, internalControl.nextTestDue);
-  const ownerName = internalControl.owner?.fullName;
-  const { identity, owner, due: dueSlot } = internalControlsPage();
+  const ownerLabel = internalControl.owner?.fullName;
+  const { identity, nameCell, owner, ownerName, due: dueSlot } = internalControlsPage();
   const statusKey = internalControl.implementationStatus.toLowerCase();
 
   return (
@@ -101,13 +101,13 @@ export function InternalControlListItem(props: InternalControlListItemProps) {
         onOpenChange={setDeleteOpen}
         onDeleted={onChanged}
       />
-      <TableRow align="center" interactive>
-        <TableCell>
+      <TableRow align="start" interactive>
+        <TableCell width={internalControlColumnWidth.code}>
           {internalControl.code
-            ? <Code className="whitespace-nowrap">{internalControl.code}</Code>
+            ? <Code>{internalControl.code}</Code>
             : <Text size={2} color="faint">{t("list.values.none")}</Text>}
         </TableCell>
-        <TableRowHeaderCell>
+        <TableRowHeaderCell className={nameCell()}>
           <div className={identity()}>
             <TableLink
               to={{
@@ -119,22 +119,22 @@ export function InternalControlListItem(props: InternalControlListItemProps) {
             </TableLink>
           </div>
         </TableRowHeaderCell>
-        <TableCell>
+        <TableCell width={internalControlColumnWidth.status}>
           <Badge variant="soft" color={implementationStatusColor(internalControl.implementationStatus)}>
             {t(`list.statuses.${statusKey}`)}
           </Badge>
         </TableCell>
-        <TableCell>
-          {ownerName
+        <TableCell width={internalControlColumnWidth.owner}>
+          {ownerLabel
             ? (
                 <span className={owner()}>
-                  <Avatar size={1} name={ownerName} />
-                  <Text size={2}>{ownerName}</Text>
+                  <Avatar size={1} name={ownerLabel} />
+                  <Text size={2} className={ownerName()}>{ownerLabel}</Text>
                 </span>
               )
             : <Text size={2} color="faint">{t("list.values.unassigned")}</Text>}
         </TableCell>
-        <TableCell>
+        <TableCell width={internalControlColumnWidth.nextDue}>
           {due
             ? (
                 <Text size={2} color={due.overdue ? "red" : "neutral"} className={dueSlot()}>
@@ -146,7 +146,7 @@ export function InternalControlListItem(props: InternalControlListItemProps) {
               )
             : <Text size={2} color="faint">{t("list.values.none")}</Text>}
         </TableCell>
-        <TableCell interactive justify="end" width="3rem">
+        <TableCell interactive justify="end" width={internalControlColumnWidth.actions}>
           {(internalControl.canUpdate || internalControl.canDelete) && (
             <Dropdown>
               <DropdownTrigger

@@ -43,7 +43,7 @@ export function InternalControlsPageSkeleton() {
           <ButtonSkeleton size={2} className="w-8" />
         </div>
       </div>
-      <TableSkeleton size={2} variant="surface" columns={6} count={6} />
+      <TableSkeleton size={2} variant="surface" layout="fixed" columns={6} count={6} />
     </div>
   );
 }
