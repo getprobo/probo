@@ -66,6 +66,49 @@ export const description: INodeProperties[] = [
 		default: 50,
 		description: 'Max number of results to return',
 	},
+	{
+		displayName: 'Filters',
+		name: 'filters',
+		type: 'collection',
+		placeholder: 'Add Filter',
+		default: {},
+		displayOptions: {
+			show: {
+				resource: ['auditLog'],
+				operation: ['getAll'],
+			},
+		},
+		options: [
+			{
+				displayName: 'Action',
+				name: 'action',
+				type: 'string',
+				default: '',
+				description: 'Filter by action, for example iam:invitation:create',
+			},
+			{
+				displayName: 'Actor ID',
+				name: 'actorId',
+				type: 'string',
+				default: '',
+				description: 'Filter by the identity or API key that performed the action',
+			},
+			{
+				displayName: 'Resource ID',
+				name: 'resourceId',
+				type: 'string',
+				default: '',
+				description: 'Filter by the ID of the affected resource',
+			},
+			{
+				displayName: 'Resource Type',
+				name: 'resourceType',
+				type: 'string',
+				default: '',
+				description: 'Filter by resource type, for example Invitation',
+			},
+		],
+	},
 ];
 
 export async function execute(
@@ -75,12 +118,18 @@ export async function execute(
 	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
+	const filters = this.getNodeParameter('filters', itemIndex, {}) as {
+		action?: string;
+		actorId?: string;
+		resourceType?: string;
+		resourceId?: string;
+	};
 
 	const query = `
-		query GetAuditLogEntries($organizationId: ID!, $first: Int, $after: CursorKey) {
+		query GetAuditLogEntries($organizationId: ID!, $first: Int, $after: CursorKey, $filter: AuditLogEntryFilter) {
 			node(id: $organizationId) {
 				... on Organization {
-					auditLogEntries(first: $first, after: $after) {
+					auditLogEntries(first: $first, after: $after, filter: $filter) {
 						edges {
 							node {
 								id
@@ -103,10 +152,33 @@ export async function execute(
 		}
 	`;
 
+	const variables: IDataObject = { organizationId };
+	const filter: IDataObject = {};
+
+	if (filters.action) {
+		filter.action = filters.action;
+	}
+
+	if (filters.actorId) {
+		filter.actorId = filters.actorId;
+	}
+
+	if (filters.resourceType) {
+		filter.resourceType = filters.resourceType;
+	}
+
+	if (filters.resourceId) {
+		filter.resourceId = filters.resourceId;
+	}
+
+	if (Object.keys(filter).length > 0) {
+		variables.filter = filter;
+	}
+
 	const auditLogEntries = await proboApiRequestAllItems.call(
 		this,
 		query,
-		{ organizationId },
+		variables,
 		(response) => {
 			const data = response?.data as IDataObject | undefined;
 			const node = data?.node as IDataObject | undefined;

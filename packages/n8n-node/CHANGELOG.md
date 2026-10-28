@@ -4,6 +4,11 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+### Added
+
+- Audit Log `Get Many` filters by action, actor, resource type, and
+  resource ID
+
 ## [0.262.0] - 2026-10-27
 
 ### Added
