@@ -120,7 +120,7 @@ func chooseStart(site origin, apex, www hostVerdict) (string, error) {
 			return site.wwwRoot(), nil
 		}
 
-		return "", fmt.Errorf("cannot start scan: cannot resolve host %q", site.host)
+		return "", fmt.Errorf("cannot start scan: %w: cannot resolve host %q", ErrUnreachable, site.host)
 	default:
 		return "", fmt.Errorf("cannot start scan: %w: host %q", netcheck.ErrBlockedAddress, site.host)
 	}

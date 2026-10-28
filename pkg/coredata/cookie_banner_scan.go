@@ -678,6 +678,86 @@ WHERE
 	return nil
 }
 
+// Touch refreshes updated_at on a RUNNING scan. The scan worker calls it
+// while a page is still loading, so stale recovery does not pause a scan
+// that has not finished a page within StaleRunningAfter. It returns
+// ErrResourceNotFound when the scan is no longer RUNNING.
+func (s *CookieBannerScan) Touch(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	now time.Time,
+) error {
+	q := `
+UPDATE cookie_banner_scans
+SET
+	updated_at = @now
+WHERE
+	%s
+	AND id = @id
+	AND state = @running_state
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"id":            s.ID,
+		"running_state": CookieBannerScanStateRunning,
+		"now":           now,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot touch cookie banner scan: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
+	}
+
+	s.UpdatedAt = now
+
+	return nil
+}
+
+// LockCookieBannerScanClaims serializes scan claims on this database.
+// Every probod shares one Chrome, so the running-scan cap is cluster-wide
+// and the count must not race another claim.
+func LockCookieBannerScanClaims(ctx context.Context, tx pg.Tx) error {
+	q := `SELECT pg_advisory_xact_lock(hashtext('cookie_banner_scans_claim'))`
+
+	if _, err := tx.Exec(ctx, q); err != nil {
+		return fmt.Errorf("cannot lock cookie banner scan claims: %w", err)
+	}
+
+	return nil
+}
+
+// CountRunningCookieBannerScans counts RUNNING scans across every banner
+// and tenant. Call it while holding LockCookieBannerScanClaims.
+func CountRunningCookieBannerScans(ctx context.Context, conn pg.Querier) (int, error) {
+	q := `
+SELECT
+	COUNT(id)
+FROM
+	cookie_banner_scans
+WHERE
+	state = @running_state
+`
+
+	args := pgx.StrictNamedArgs{
+		"running_state": CookieBannerScanStateRunning,
+	}
+
+	var count int
+	if err := conn.QueryRow(ctx, q, args).Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot count running cookie banner scans: %w", err)
+	}
+
+	return count, nil
+}
+
 // FailStaleCookieBannerScans recovers RUNNING scans whose updated_at is
 // older than staleAfter. A scan that has a checkpoint is paused so the
 // next process can resume it. A scan with no checkpoint is failed as
