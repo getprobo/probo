@@ -220,20 +220,42 @@ function selectionsEqual(current: AddableSelection | null, next: AddableSelectio
 
 interface AddableConnectorCardFrameProps {
   face: ResolvedAddableConnectorCard_connector$data[number];
-  view: AddableConnectorStatusView;
+  // Null while the deferred statuses are pending; also used as the
+  // Suspense fallback, since a null key never suspends.
+  statusKeys: useConnectorStatuses_connector$key | null;
+  connectors: readonly { id: string; canReconnect: boolean }[];
+  loaded: readonly LoadedAddableConnector[];
+  listed: readonly LoadedAccount[];
+  hasNext: boolean;
   providerSelected: boolean;
   onSelectedChange: (provider: string, selected: boolean) => void;
+  onSelection: (selection: AddableSelection) => void;
 }
 
 function AddableConnectorCardFrame({
   face,
-  view,
+  statusKeys,
+  connectors,
+  loaded,
+  listed,
+  hasNext,
   providerSelected,
   onSelectedChange,
+  onSelection,
 }: AddableConnectorCardFrameProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const { t: tConnector } = useTranslation("organizations/settings/integrations");
+  const statuses = useConnectorStatuses(statusKeys);
+  const view = addableConnectorStatusView(connectors, loaded, listed, statuses ?? null, hasNext);
+
+  useLayoutEffect(() => {
+    if (statusKeys == null) {
+      return;
+    }
+    onSelection({ accounts: view.accounts, selectable: view.selectable });
+  }, [statusKeys, onSelection, view.accounts, view.selectable]);
+
   const selected = view.selectable && providerSelected;
   const { controls, checkbox, menu, badges, frame } = addableConnectorCard({
     selectable: view.selectable,
@@ -338,58 +360,6 @@ function AddableConnectorCardFrame({
   );
 }
 
-interface AddableConnectorCardStatusesProps {
-  face: ResolvedAddableConnectorCard_connector$data[number];
-  statusKeys: useConnectorStatuses_connector$key;
-  connectors: readonly { id: string; canReconnect: boolean }[];
-  loaded: readonly LoadedAddableConnector[];
-  listed: readonly LoadedAccount[];
-  hasNext: boolean;
-  providerSelected: boolean;
-  onSelectedChange: (provider: string, selected: boolean) => void;
-  onSelection: (selection: AddableSelection) => void;
-}
-
-// Reads the deferred probe. Suspends until it arrives, so it has to render
-// under the card's own Suspense boundary: the page collects every card
-// before painting, and a suspend here would hold that collection.
-function AddableConnectorCardStatuses({
-  face,
-  statusKeys,
-  connectors,
-  loaded,
-  listed,
-  hasNext,
-  providerSelected,
-  onSelectedChange,
-  onSelection,
-}: AddableConnectorCardStatusesProps) {
-  const statuses = useConnectorStatuses(statusKeys);
-  const view = addableConnectorStatusView(
-    connectors,
-    loaded,
-    listed,
-    statuses ?? null,
-    hasNext,
-  );
-
-  useLayoutEffect(() => {
-    onSelection({
-      accounts: view.accounts,
-      selectable: view.selectable,
-    });
-  }, [onSelection, view.accounts, view.selectable]);
-
-  return (
-    <AddableConnectorCardFrame
-      face={face}
-      view={view}
-      providerSelected={providerSelected}
-      onSelectedChange={onSelectedChange}
-    />
-  );
-}
-
 export function ResolvedAddableConnectorCard({
   pages,
   connectorKeys,
@@ -455,13 +425,18 @@ export function ResolvedAddableConnectorCard({
         fallback={(
           <AddableConnectorCardFrame
             face={face}
-            view={pending}
+            statusKeys={null}
+            connectors={connectors}
+            loaded={loaded}
+            listed={listed}
+            hasNext={hasNext}
             providerSelected={providerSelected}
             onSelectedChange={onSelectedChange}
+            onSelection={reportSelection}
           />
         )}
       >
-        <AddableConnectorCardStatuses
+        <AddableConnectorCardFrame
           face={face}
           statusKeys={statusKeys}
           connectors={connectors}
