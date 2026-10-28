@@ -365,7 +365,10 @@ export default function InternalControlDetailPage(props: Props) {
 
       <Tabs>
         <TabLink
-          to={`/organizations/${organizationId}/governance/internal-controls/${internalControlId}/evidences`}
+          to={{
+            pathname: `/organizations/${organizationId}/governance/internal-controls/${internalControlId}/evidences`,
+            search: location.search,
+          }}
         >
           <IconPageCheck size={20} />
           {t("internalControlDetailPage.tabs.evidences")}
@@ -373,7 +376,10 @@ export default function InternalControlDetailPage(props: Props) {
         </TabLink>
         {internalControl.canListTasks && (
           <TabLink
-            to={`/organizations/${organizationId}/governance/internal-controls/${internalControlId}/tasks`}
+            to={{
+              pathname: `/organizations/${organizationId}/governance/internal-controls/${internalControlId}/tasks`,
+              search: location.search,
+            }}
           >
             <IconCheckmark1 size={20} />
             {t("internalControlDetailPage.tabs.tasks")}
@@ -383,28 +389,40 @@ export default function InternalControlDetailPage(props: Props) {
           </TabLink>
         )}
         <TabLink
-          to={`/organizations/${organizationId}/governance/internal-controls/${internalControlId}/controls`}
+          to={{
+            pathname: `/organizations/${organizationId}/governance/internal-controls/${internalControlId}/controls`,
+            search: location.search,
+          }}
         >
           <IconFrame2 size={20} />
           {t("internalControlDetailPage.tabs.controls")}
           <TabBadge>{controlsCount}</TabBadge>
         </TabLink>
         <TabLink
-          to={`/organizations/${organizationId}/governance/internal-controls/${internalControlId}/risks`}
+          to={{
+            pathname: `/organizations/${organizationId}/governance/internal-controls/${internalControlId}/risks`,
+            search: location.search,
+          }}
         >
           <IconWarning size={20} />
           {t("internalControlDetailPage.tabs.risks")}
           <TabBadge>{risksCount}</TabBadge>
         </TabLink>
         <TabLink
-          to={`/organizations/${organizationId}/governance/internal-controls/${internalControlId}/documents`}
+          to={{
+            pathname: `/organizations/${organizationId}/governance/internal-controls/${internalControlId}/documents`,
+            search: location.search,
+          }}
         >
           <IconPageTextLine size={20} />
           {t("internalControlDetailPage.tabs.documents")}
           <TabBadge>{documentsCount}</TabBadge>
         </TabLink>
         <TabLink
-          to={`/organizations/${organizationId}/governance/internal-controls/${internalControlId}/third-parties`}
+          to={{
+            pathname: `/organizations/${organizationId}/governance/internal-controls/${internalControlId}/third-parties`,
+            search: location.search,
+          }}
         >
           <IconStore size={20} />
           {t("internalControlDetailPage.tabs.thirdParties")}

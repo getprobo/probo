@@ -59,9 +59,11 @@ export const internalControlRoutes = [
     children: [
       {
         path: "",
-        loader: () => {
+        loader: ({ request }) => {
+          const url = new URL(request.url);
+          // Keep the list's search so Back returns to the same page.
           // eslint-disable-next-line
-          throw redirect("evidences");
+          throw redirect(`evidences${url.search}`);
         },
         Component: Fragment,
       },
