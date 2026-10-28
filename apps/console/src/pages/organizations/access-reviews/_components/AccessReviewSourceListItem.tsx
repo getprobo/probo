@@ -48,6 +48,7 @@ import type { AccessReviewSourceListItemConfigureMutation } from "#/__generated_
 import type { InlineOrgSelectQuery } from "#/__generated__/core/InlineOrgSelectQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
+import { ConnectionStatusPending } from "#/pages/organizations/_components/ConnectionStatusPending";
 import { buildConnectorInitiateURL } from "#/pages/organizations/settings/integrations/_lib/connectorInitiate";
 
 import { connectionIssue } from "../_lib/connectionIssue";
@@ -300,7 +301,7 @@ function AccessReviewSourceRow({
 
   if (connectionStatus == null) {
     return (
-      <Card variant="soft" size={2} className={card()}>
+      <Card aria-busy variant="soft" size={2} className={card()}>
         <div className={header()}>
           <ThirdPartyLogo
             thirdParty={connector.provider}
@@ -320,11 +321,10 @@ function AccessReviewSourceRow({
             </Text>
           </div>
         </div>
-        {deleteControl != null && (
-          <div className={actions()}>
-            {deleteControl}
-          </div>
-        )}
+        <div className={actions()}>
+          <ConnectionStatusPending />
+          {deleteControl}
+        </div>
       </Card>
     );
   }

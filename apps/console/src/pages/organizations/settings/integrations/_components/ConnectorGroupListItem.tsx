@@ -37,6 +37,7 @@ import type { ConnectorGroupListItem_provider$key } from "#/__generated__/core/C
 import type { useConnectorStatuses_connector$key } from "#/__generated__/core/useConnectorStatuses_connector.graphql";
 import { TonedCard } from "#/components/TonedCard/TonedCard";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { ConnectionStatusPending } from "#/pages/organizations/_components/ConnectionStatusPending";
 import {
   aggregateConnectionTone,
   connectionIssueKeys,
@@ -204,6 +205,7 @@ function ConnectorGroupListItemCard({
   return (
     <div className={card()}>
       <TonedCard
+        aria-busy={statuses == null || undefined}
         tone={tone}
         size={2}
         className={face.canGet ? "pointer-events-none h-full" : "h-full"}
@@ -240,13 +242,17 @@ function ConnectorGroupListItemCard({
         control={menu}
       >
         <div className={tags()}>
-          <ConnectorConnectionBadge
-            aggregated={single == null}
-            aggregatedTotal={single == null && statuses != null ? connectors.length : null}
-            connectedCount={connectedCount}
-            tone={tone}
-            solo={solo}
-          />
+          {statuses == null
+            ? <ConnectionStatusPending />
+            : (
+                <ConnectorConnectionBadge
+                  aggregated={single == null}
+                  aggregatedTotal={connectors.length}
+                  connectedCount={connectedCount}
+                  tone={tone}
+                  solo={solo}
+                />
+              )}
           <Badge variant="soft" color="neutral" size={1}>
             {t("listPage.accountCount", { count: accountTotal })}
           </Badge>

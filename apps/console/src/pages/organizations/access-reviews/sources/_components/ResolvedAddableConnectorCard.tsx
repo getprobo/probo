@@ -47,6 +47,7 @@ import type {
 import { TonedCard } from "#/components/TonedCard/TonedCard";
 import type { TonedCardTone } from "#/components/TonedCard/variants";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { ConnectionStatusPending } from "#/pages/organizations/_components/ConnectionStatusPending";
 import {
   aggregateConnectionTone,
   connectionSignalFrom,
@@ -124,6 +125,7 @@ interface AddableSelection {
 
 interface AddableConnectorStatusView extends AddableSelection {
   tone: TonedCardTone;
+  pending: boolean;
   showNeedsOrganization: boolean;
   statusTone: ConnectionTone | null;
   sharedStatus: ConnectorConnectionStatus | null;
@@ -189,6 +191,7 @@ function addableConnectorStatusView(
 
   return {
     tone: statusTone ?? "sand",
+    pending: statuses == null,
     selectable: visibleAddable.length > 0 && !hasNext,
     accounts: addable.map(account => ({ id: account.id, name: account.name })),
     showNeedsOrganization: statuses != null
@@ -241,6 +244,7 @@ function AddableConnectorCardFrame({
 
   return (
     <TonedCard
+      aria-busy={view.pending || undefined}
       tone={view.tone}
       size={2}
       className={frame()}
@@ -312,16 +316,18 @@ function AddableConnectorCardFrame({
         </Text>
       )}
       <div className={badges()}>
-        {view.statusTone != null && (
-          <Badge variant="soft" color={view.statusTone} size={1}>
-            {view.sharedStatus != null
-              ? tConnector(`detailsPage.status.${view.sharedStatus}`)
-              : tConnector("listPage.connectedCount", {
-                  connected: view.connectedCount,
-                  total: view.presentedCount,
-                })}
-          </Badge>
-        )}
+        {view.pending
+          ? <ConnectionStatusPending />
+          : view.statusTone != null && (
+            <Badge variant="soft" color={view.statusTone} size={1}>
+              {view.sharedStatus != null
+                ? tConnector(`detailsPage.status.${view.sharedStatus}`)
+                : tConnector("listPage.connectedCount", {
+                    connected: view.connectedCount,
+                    total: view.presentedCount,
+                  })}
+            </Badge>
+          )}
         <Badge variant="soft" color="neutral" size={1}>
           {t("accessReviewSourcesPage.accountCount", {
             count: face.distinctAccountCount,
