@@ -132,6 +132,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 			if flagFilter != "" {
 				filter["query"] = flagFilter
 			}
+
 			if len(flagImplementationStatuses) > 0 {
 				if err := cmdutil.ValidateEnum(
 					"implementation-status",
@@ -140,6 +141,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				); err != nil {
 					return err
 				}
+
 				for _, status := range flagImplementationStatuses[1:] {
 					if err := cmdutil.ValidateEnum(
 						"implementation-status",
@@ -149,14 +151,18 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 						return err
 					}
 				}
+
 				filter["implementationStatuses"] = flagImplementationStatuses
 			}
+
 			if flagOwner != "" {
 				filter["ownerId"] = flagOwner
 			}
+
 			if flagNeedsAttention {
 				filter["needsAttention"] = true
 			}
+
 			if len(filter) > 0 {
 				variables["filter"] = filter
 			}

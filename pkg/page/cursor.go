@@ -66,6 +66,7 @@ func NewCursor[T OrderField](size int, from *CursorKey, pos Position, orderBy Or
 func (c *Cursor[T]) SQLFragment() string {
 	fieldName := c.OrderBy.Field.Column()
 	cursorValue := "@cursor_field_value"
+
 	if f, ok := any(c.OrderBy.Field).(DirectionalOrderField); ok {
 		fieldName = f.DirectionalColumn(c.OrderBy.Direction)
 		cursorValue = f.DirectionalCursorValue(c.OrderBy.Direction, cursorValue)

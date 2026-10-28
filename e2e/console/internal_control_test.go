@@ -2218,6 +2218,7 @@ func TestInternalControl_ListFilters(t *testing.T) {
 		t.Helper()
 
 		var result listed
+
 		err := owner.Execute(listQuery, map[string]any{
 			"id":      owner.GetOrganizationID().String(),
 			"filter":  filter,
@@ -2285,10 +2286,12 @@ func TestInternalControl_ListFilters(t *testing.T) {
 
 		soonAt := -1
 		laterAt := -1
+
 		for i, id := range found {
 			if id == soonID {
 				soonAt = i
 			}
+
 			if id == laterID {
 				laterAt = i
 			}
@@ -2314,6 +2317,7 @@ func TestInternalControl_ListFilters(t *testing.T) {
 			if direction == "DESC" {
 				want = []string{laterID, soonID, undatedID}
 			}
+
 			assert.Equal(t, want, found, direction)
 		}
 	})
@@ -2343,6 +2347,7 @@ func TestInternalControl_ListFilters(t *testing.T) {
 			walked []string
 			after  *string
 		)
+
 		for range 5 {
 			var result struct {
 				Node struct {
@@ -2373,6 +2378,7 @@ func TestInternalControl_ListFilters(t *testing.T) {
 			if !result.Node.InternalControls.PageInfo.HasNextPage {
 				break
 			}
+
 			after = result.Node.InternalControls.PageInfo.EndCursor
 		}
 
