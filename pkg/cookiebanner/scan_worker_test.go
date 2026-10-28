@@ -338,6 +338,34 @@ func TestCookieBannerScanHandler_Process_MapsFailureReasons(t *testing.T) {
 	}
 }
 
+func TestCookieBannerScanHandler_Process_KeepsPagesWhenALaterPageFails(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedWorkerFixture(t, ctx, client)
+	scan := insertRunningScan(t, ctx, client, fx)
+	w := newScanWorker(t, client)
+
+	w.handler.run = func(ctx context.Context, in scanner.Input) (*scanner.Result, error) {
+		require.NoError(t, in.OnPage(
+			ctx,
+			scanner.Page{
+				Cookies: []scanner.Cookie{{Name: "_ga", Source: coredata.CookieSourceHTTP}},
+			},
+			scanner.Checkpoint{PagesScanned: 2},
+		))
+
+		return nil, errors.New("cannot accept scanned page")
+	}
+
+	require.NoError(t, w.handler.Process(ctx, *scan))
+
+	got := reloadScan(t, ctx, client, fx, scan.ID)
+	assert.Equal(t, coredata.CookieBannerScanStateFailed, got.State)
+	assert.Equal(t, 2, got.PagesScanned)
+}
+
 func TestCookieBannerScanHandler_Process_DropsWorkWhenOwnershipIsLost(t *testing.T) {
 	t.Parallel()
 

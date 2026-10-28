@@ -399,6 +399,10 @@ func (h *cookieBannerScanHandler) acceptPage(
 		return err
 	}
 
+	// The scanner returns no result when a later page fails to ingest, so
+	// MarkFailed can only keep the progress recorded on the scan itself.
+	scan.PagesScanned = checkpoint.PagesScanned
+
 	return nil
 }
 
