@@ -259,7 +259,19 @@ func (h *outboundHandler) processUpdate(
 			return h.succeed(ctx, item)
 		}
 
-		markdown, sentHash, err := outboundTaskHash(task)
+		_, sentHash, err := outboundTaskHash(task)
+		if err != nil {
+			return err
+		}
+
+		markdown, err := h.svc.linearIssueDescriptionMarkdown(
+			ctx,
+			scope,
+			client,
+			task.OrganizationID,
+			task.Content,
+			payload.ExternalID,
+		)
 		if err != nil {
 			return err
 		}

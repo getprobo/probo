@@ -258,9 +258,21 @@ func (s *Service) PublishToLinear(
 		return nil, fmt.Errorf("cannot pick Linear workflow state: %w", err)
 	}
 
-	markdown, err := ContentToMarkdown(task.Content)
+	canonical, err := ContentToMarkdown(task.Content)
 	if err != nil {
 		return nil, fmt.Errorf("cannot convert task content to markdown: %w", err)
+	}
+
+	markdown, err := s.linearIssueDescriptionMarkdown(
+		ctx,
+		scope,
+		client,
+		task.OrganizationID,
+		task.Content,
+		"",
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot convert task mentions: %w", err)
 	}
 
 	viewerID, err := client.ViewerID(ctx)
@@ -353,7 +365,7 @@ func (s *Service) PublishToLinear(
 		destination,
 		viewerID,
 		issue,
-		markdown,
+		canonical,
 		files,
 	)
 	if err != nil {
@@ -771,12 +783,14 @@ func (s *Service) linearIssueContent(
 		return "", "", nil, fmt.Errorf("cannot import Linear description files: %w", err)
 	}
 
-	content, err := MarkdownToContent(markdown)
-	if err != nil {
-		return "", "", nil, err
-	}
-
-	content, canonical, err := applyImportedFiles(content, metas)
+	content, canonical, err := s.contentFromLinearMarkdown(
+		ctx,
+		client,
+		scope,
+		organizationID,
+		markdown,
+		metas,
+	)
 	if err != nil {
 		return "", "", nil, err
 	}
@@ -877,6 +891,20 @@ func (s *Service) finishLinearLink(
 				); err != nil {
 					return fmt.Errorf("cannot record task update events: %w", err)
 				}
+			}
+
+			if err := s.notifySyncedMentions(
+				ctx,
+				tx,
+				scope,
+				current.OrganizationID,
+				current.ID,
+				current.Name,
+				oldTask.Content,
+				current.Content,
+				actorID,
+			); err != nil {
+				return err
 			}
 
 			internalControlIDs, err := (coredata.InternalControlTask{}).LoadInternalControlIDsByTaskID(ctx, tx, scope, current.ID)

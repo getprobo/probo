@@ -48,12 +48,15 @@ type importedFileMeta struct {
 
 // linearImport is markdown with Linear uploads already copied into Probo.
 type linearImport struct {
-	connectorID    gid.GID
-	organizationID gid.GID
-	markdown       string
-	files          map[string]string
-	metas          map[string]importedFileMeta
-	created        []createdInboundFile
+	connectorID      gid.GID
+	organizationID   gid.GID
+	markdown         string
+	files            map[string]string
+	metas            map[string]importedFileMeta
+	created          []createdInboundFile
+	mentionsApplied  bool
+	mentionContent   string
+	mentionCanonical string
 }
 
 // createdInboundFile is a private file stored by this import. A discarded
@@ -282,14 +285,19 @@ func (s *Service) prepareLinearImport(
 		return nil, err
 	}
 
-	return &linearImport{
+	imported := &linearImport{
 		connectorID:    connectorID,
 		organizationID: organizationID,
 		markdown:       rewritten,
 		files:          files,
 		metas:          metas,
 		created:        created,
-	}, nil
+	}
+	if err := s.attachLinearMentions(ctx, client, scope, organizationID, imported); err != nil {
+		return nil, err
+	}
+
+	return imported, nil
 }
 
 func (s *Service) resolveInboundFile(

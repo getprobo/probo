@@ -171,6 +171,11 @@ func (s *Service) ApplyInboundIssue(
 				mapped.Markdown = markdown
 			}
 
+			if update != nil && update.mentionsApplied {
+				mapped.Content = update.mentionContent
+				mapped.Markdown = update.mentionCanonical
+			}
+
 			oldTask := *task
 
 			if _, err := applyInboundAssignee(
@@ -230,6 +235,20 @@ func (s *Service) ApplyInboundIssue(
 				task,
 				actorID,
 				now,
+			); err != nil {
+				return err
+			}
+
+			if err := s.notifySyncedMentions(
+				ctx,
+				tx,
+				scope,
+				task.OrganizationID,
+				task.ID,
+				task.Name,
+				oldTask.Content,
+				task.Content,
+				actorID,
 			); err != nil {
 				return err
 			}
