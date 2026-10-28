@@ -76,7 +76,8 @@ export function ExampleShell({ title, description, children }: ExampleShellProps
         }}
       >
         <iframe
-          src="https://www.youtube.com/embed/4kHl4FoK1Ys"
+          data-cookie-consent="advertising"
+          data-src="https://www.youtube.com/embed/4kHl4FoK1Ys"
           title="Modern Talking - You're My Heart, You're My Soul"
           style={{
             position: "absolute",
