@@ -30,15 +30,13 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { useInternalControlsListFilters } from "../_lib/useInternalControlsListFilters";
 
-const allOwners = "ALL";
-
 export function InternalControlsOwnerFilter() {
   const { t } = useTranslation("organizations/internal-controls");
 
   return (
     <Suspense
       fallback={(
-        <Select value={allOwners} disabled>
+        <Select value={null} disabled>
           <SelectTrigger
             size={2}
             placeholder={t("list.filters.allOwners")}
@@ -63,19 +61,23 @@ function InternalControlsOwnerFilterOptions() {
     : [...people, { id: ownerId, fullName: ownerId }];
 
   return (
-    <Select
-      value={ownerId ?? allOwners}
-      onValueChange={(value) => {
-        setOwnerId(value === allOwners || value == null ? null : value);
-      }}
+    <Select<string | null>
+      value={ownerId}
+      onValueChange={setOwnerId}
     >
       <SelectTrigger
         size={2}
         placeholder={t("list.filters.allOwners")}
         aria-label={t("list.columns.owner")}
-      />
+      >
+        {(value: string | null) => (
+          value == null
+            ? t("list.filters.allOwners")
+            : options.find(person => person.id === value)?.fullName ?? value
+        )}
+      </SelectTrigger>
       <SelectPopup align="end">
-        <SelectItem value={allOwners}>{t("list.filters.allOwners")}</SelectItem>
+        <SelectItem value={null}>{t("list.filters.allOwners")}</SelectItem>
         {options.map(person => (
           <SelectItem key={person.id} value={person.id}>
             {person.fullName ?? person.id}

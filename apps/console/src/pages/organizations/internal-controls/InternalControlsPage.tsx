@@ -63,8 +63,6 @@ import {
 } from "./_lib/useInternalControlsListFilters";
 import InternalControlFormDialog from "./dialog/InternalControlFormDialog";
 
-const allCategories = "ALL";
-
 export const internalControlsPageQuery = graphql`
   query InternalControlsPageQuery(
     $organizationId: ID!
@@ -345,19 +343,19 @@ export function InternalControlsPage({ queryRef }: InternalControlsPageProps) {
               </Select>
             </div>
             <div className={filter()}>
-              <Select
-                value={filters.category ?? allCategories}
-                onValueChange={(value) => {
-                  filters.setCategory(value === allCategories || value == null ? null : value);
-                }}
+              <Select<string | null>
+                value={filters.category}
+                onValueChange={filters.setCategory}
               >
                 <SelectTrigger
                   size={2}
                   placeholder={t("list.filters.allCategories")}
                   aria-label={t("list.filters.allCategories")}
-                />
+                >
+                  {(value: string | null) => value ?? t("list.filters.allCategories")}
+                </SelectTrigger>
                 <SelectPopup align="end">
-                  <SelectItem value={allCategories}>
+                  <SelectItem value={null}>
                     {t("list.filters.allCategories")}
                   </SelectItem>
                   {categories.map(category => (
