@@ -114,7 +114,6 @@ export function InternalControlListItem(props: InternalControlListItemProps) {
                 pathname: `/organizations/${organizationId}/governance/internal-controls/${internalControl.id}`,
                 search: location.search,
               }}
-              title={internalControl.name}
             >
               <Text size={2} highContrast className={name()}>
                 {internalControl.name}
