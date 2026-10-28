@@ -20,19 +20,21 @@
 
 import { PlusIcon } from "@phosphor-icons/react";
 import { usePageTitle } from "@probo/hooks";
-import { Button } from "@probo/ui/src/v2/Button/Button";
+import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
+import { useLocation } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { TasksPageQuery } from "#/__generated__/core/TasksPageQuery.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import { CreateTaskDialog } from "./_components/CreateTaskDialog/CreateTaskDialog";
 import { TasksPageList } from "./_components/TasksPageList/TasksPageList";
 import { TasksSettingsDialog } from "./_components/TasksSettingsDialog/TasksSettingsDialog";
+import { taskNewPath } from "./_lib/taskPath";
 import { tasksPage } from "./variants";
 
 export const tasksPageQuery = graphql`
@@ -85,6 +87,8 @@ interface TasksPageProps {
 
 export function TasksPage({ queryRef, onReady }: TasksPageProps) {
   const { t } = useTranslation();
+  const organizationId = useOrganizationId();
+  const location = useLocation();
   const query = usePreloadedQuery<TasksPageQuery>(tasksPageQuery, queryRef);
   usePageTitle(t("tasks.title"));
   useEffect(() => {
@@ -111,11 +115,13 @@ export function TasksPage({ queryRef, onReady }: TasksPageProps) {
         </div>
         <div className={actions()}>
           {organization.canCreateTask && (
-            <CreateTaskDialog>
-              <Button variant="solid" iconStart={<PlusIcon />}>
-                {t("tasks.actions.create")}
-              </Button>
-            </CreateTaskDialog>
+            <ButtonLink
+              to={{ pathname: taskNewPath(organizationId), search: location.search }}
+              variant="solid"
+              iconStart={<PlusIcon />}
+            >
+              {t("tasks.actions.create")}
+            </ButtonLink>
           )}
           <TasksSettingsDialog organizationKey={organization} />
         </div>

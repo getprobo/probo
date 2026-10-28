@@ -210,7 +210,7 @@
       "close": "Sluiten"
     }
   },
-  "createDialog": {
+  "newPage": {
     "title": "Taak toevoegen",
     "fields": {
       "namePlaceholder": "Taaknaam"

@@ -59,8 +59,8 @@ export function useCreateTask() {
   const [commit, isCreating] = useMutation<useCreateTaskMutation>(
     createTaskMutation,
     {
-      successMessage: t("createDialog.messages.created"),
-      errorToast: t("createDialog.errors.create"),
+      successMessage: t("newPage.messages.created"),
+      errorToast: t("newPage.errors.create"),
     },
   );
 
@@ -72,6 +72,10 @@ export function useCreateTask() {
       priority: TaskPriority;
       internalControlIds?: readonly string[] | null;
       linearTeamId?: string | null;
+      assignedToId?: string | null;
+      timeEstimate?: string | null;
+      deadline?: string | null;
+      recurrenceInterval?: string | null;
     },
     connectionId?: string,
   ) {
@@ -89,7 +93,13 @@ export function useCreateTask() {
     const connections = new Set<string>();
     for (const variant of organizationTaskListFilterVariants(listFilter)) {
       if (taskMatchesFilter(
-        { name: input.name, state, internalControlIds },
+        {
+          name: input.name,
+          state,
+          internalControlIds,
+          assignedToId: input.assignedToId ?? null,
+          deadline: input.deadline ?? null,
+        },
         { ...variant, state },
       )) {
         connections.add(organizationTaskListConnectionId(organizationId, variant, state));
@@ -113,6 +123,12 @@ export function useCreateTask() {
           internalControlIds: internalControlIds.length > 0 ? [...internalControlIds] : undefined,
           ...(input.linearTeamId !== undefined
             ? { linearTeamId: input.linearTeamId }
+            : {}),
+          ...(input.assignedToId != null ? { assignedToId: input.assignedToId } : {}),
+          ...(input.timeEstimate != null ? { timeEstimate: input.timeEstimate } : {}),
+          ...(input.deadline != null ? { deadline: input.deadline } : {}),
+          ...(input.recurrenceInterval != null
+            ? { recurrenceInterval: input.recurrenceInterval }
             : {}),
         },
       },

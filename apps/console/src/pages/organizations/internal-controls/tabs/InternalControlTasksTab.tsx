@@ -31,6 +31,7 @@ import {
   Thead,
   Tr,
 } from "@probo/ui";
+import { Link } from "@probo/ui/src/v2/Link/Link";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLazyLoadQuery, useRefetchableFragment } from "react-relay";
@@ -41,8 +42,12 @@ import type { InternalControlTasksTab_internalControl$key } from "#/__generated_
 import type { InternalControlTasksTabQuery } from "#/__generated__/core/InternalControlTasksTabQuery.graphql";
 import type { InternalControlTasksTabRefetchQuery } from "#/__generated__/core/InternalControlTasksTabRefetchQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
-import { CreateTaskDialog } from "#/pages/organizations/tasks/_components/CreateTaskDialog/CreateTaskDialog";
-import { emptyTaskListFilter, taskDetailsPath } from "#/pages/organizations/tasks/_lib/taskPath";
+import {
+  emptyTaskListFilter,
+  newTaskInternalControlSearch,
+  taskDetailsPath,
+  taskNewPath,
+} from "#/pages/organizations/tasks/_lib/taskPath";
 import { useTaskInternalControlIds } from "#/pages/organizations/tasks/_lib/useTaskInternalControlIds";
 import { useUpdateTask } from "#/pages/organizations/tasks/_lib/useUpdateTask";
 
@@ -67,7 +72,6 @@ const internalControlTasksTabFragment = graphql`
       orderBy: { field: PRIORITY_RANK, direction: ASC }
       filter: $filter
     ) @connection(key: "InternalControl__tasks") @required(action: THROW) {
-      __id
       edges @required(action: THROW) {
         node {
           id
@@ -163,15 +167,17 @@ function InternalControlTasksPanel({
                 <div className={actions()}>
                   {internalControl.canCreateTask && (
                     <div className={actionCell()}>
-                      <CreateTaskDialog
-                        connectionId={internalControl.tasks.__id}
-                        internalControlId={internalControlId}
+                      <Link
+                        to={{
+                          pathname: taskNewPath(organizationId),
+                          search: newTaskInternalControlSearch(internalControlId),
+                        }}
+                        underline={false}
+                        className={action()}
                       >
-                        <button type="button" className={action()} disabled={isUpdating}>
-                          <IconPlusLarge size={16} />
-                          {t("internalControlTasksTab.actions.newTask")}
-                        </button>
-                      </CreateTaskDialog>
+                        <IconPlusLarge size={16} />
+                        {t("internalControlTasksTab.actions.newTask")}
+                      </Link>
                     </div>
                   )}
                   {internalControl.canUpdateTask && (

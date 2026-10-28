@@ -23,6 +23,7 @@ import type { AppRoute } from "@probo/routes";
 
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 
+import { NewTaskPageSkeleton } from "./NewTaskPageSkeleton";
 import { TaskDetailsPageSkeleton } from "./TaskDetailsPageSkeleton";
 
 export const taskRoutes = [
@@ -30,6 +31,11 @@ export const taskRoutes = [
     path: "tasks",
     Fallback: PageSkeleton,
     Component: lazy(() => import("./TasksPageLoader")),
+  },
+  {
+    path: "tasks/new",
+    Fallback: NewTaskPageSkeleton,
+    Component: lazy(() => import("./NewTaskPageLoader")),
   },
   {
     path: "tasks/:taskId",

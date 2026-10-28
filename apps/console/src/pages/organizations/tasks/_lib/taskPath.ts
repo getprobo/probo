@@ -126,12 +126,39 @@ const taskListConnectionFilters = {
   filter: emptyTaskListFilter,
 };
 
+const newTaskInternalControlParam = "internalControlId";
+
 export function taskListPath(organizationId: string) {
   return `/organizations/${organizationId}/governance/tasks`;
 }
 
+export function taskNewPath(organizationId: string) {
+  return `${taskListPath(organizationId)}/new`;
+}
+
 export function taskDetailsPath(organizationId: string, taskId: string) {
   return `${taskListPath(organizationId)}/${taskId}`;
+}
+
+export function newTaskInternalControlId(search: string) {
+  const value = new URLSearchParams(search).get(newTaskInternalControlParam);
+  if (value == null || value === "") {
+    return null;
+  }
+  return value;
+}
+
+export function taskListSearch(search: string) {
+  const params = new URLSearchParams(search);
+  params.delete(newTaskInternalControlParam);
+  const next = params.toString();
+  return next === "" ? "" : `?${next}`;
+}
+
+export function newTaskInternalControlSearch(internalControlId: string) {
+  const params = new URLSearchParams();
+  params.set(newTaskInternalControlParam, internalControlId);
+  return `?${params.toString()}`;
 }
 
 export function taskConnectionId(parentId: string, connectionKey: string) {

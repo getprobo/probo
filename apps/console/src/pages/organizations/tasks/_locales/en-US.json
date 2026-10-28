@@ -210,7 +210,7 @@
       "close": "Close"
     }
   },
-  "createDialog": {
+  "newPage": {
     "title": "Add Task",
     "fields": {
       "namePlaceholder": "Task name"

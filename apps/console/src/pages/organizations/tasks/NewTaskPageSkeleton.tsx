@@ -18,27 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { DialogProps } from "@probo/ui/src/v2/Dialog/Dialog";
+import { TaskDetailsPageSkeleton } from "./TaskDetailsPageSkeleton";
 
-export type DialogOpenChangeDetails = Parameters<
-  NonNullable<DialogProps["onOpenChange"]>
->[1];
-
-export function isFloatingDismiss(details: DialogOpenChangeDetails) {
-  if (details.reason !== "outside-press" && details.reason !== "focus-out") {
-    return false;
-  }
-
-  const nodes: Array<EventTarget | null> = [details.event.target];
-  if ("relatedTarget" in details.event) {
-    nodes.push(details.event.relatedTarget);
-  }
-
-  return nodes.some(node =>
-    node instanceof Element
-    && (
-      node.closest("[data-rich-editor-floating]") != null
-      || node.closest("[data-dialog-overlay-root]") != null
-    ),
-  );
+export function NewTaskPageSkeleton() {
+  return <TaskDetailsPageSkeleton showEngagement={false} />;
 }

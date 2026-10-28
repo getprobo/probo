@@ -210,7 +210,7 @@
       "close": "Fermer"
     }
   },
-  "createDialog": {
+  "newPage": {
     "title": "Ajouter une tâche",
     "fields": {
       "namePlaceholder": "Nom de la tâche"

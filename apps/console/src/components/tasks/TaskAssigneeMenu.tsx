@@ -91,7 +91,7 @@ const taskAssigneeMenuFragment = graphql`
   }
 `;
 
-interface AssigneeOption {
+export interface TaskAssigneeOption {
   id: string;
   fullName: string;
   emailAddress: string;
@@ -114,6 +114,7 @@ export interface TaskAssigneeMenuProps {
   disabled?: boolean;
   hideEndedContracts?: boolean;
   onValueChange: (value: string | null) => void;
+  onSelect?: (assignee: TaskAssigneeOption | null) => void;
 }
 
 export function TaskAssigneeMenu(props: TaskAssigneeMenuProps) {
@@ -133,6 +134,7 @@ function TaskAssigneeMenuLoaded({
   disabled,
   hideEndedContracts = true,
   onValueChange,
+  onSelect,
 }: TaskAssigneeMenuProps) {
   const { t } = useTranslation("organizations/tasks");
   const { t: tCommon } = useTranslation();
@@ -208,6 +210,17 @@ function TaskAssigneeMenuLoaded({
       return;
     }
     onValueChange(resolved);
+    if (onSelect == null) {
+      return;
+    }
+    if (resolved == null) {
+      onSelect(null);
+      return;
+    }
+    const selected = users.find(user => user.id === resolved);
+    if (selected != null) {
+      onSelect(selected);
+    }
   }
 
   return (
@@ -350,9 +363,9 @@ function AssigneeMenuSearch({
 }
 
 function pinViewer(
-  users: readonly AssigneeOption[],
+  users: readonly TaskAssigneeOption[],
   profile: CurrentUserProfile | null,
-): AssigneeOption[] {
+): TaskAssigneeOption[] {
   if (profile == null || profile.id === "") {
     return [...users];
   }

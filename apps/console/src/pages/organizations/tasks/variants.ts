@@ -39,8 +39,7 @@ export const taskDetailsPageSkeleton = tv({
     title: "flex min-w-0 items-center gap-2",
     body: "grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_280px]",
     main: "flex min-w-0 flex-col gap-6",
-    descriptionCard: "border-0 bg-sand-1 !py-2 shadow-3",
-    description: "flex flex-col gap-2",
+    editor: "h-44",
     engagement: "flex flex-col gap-4",
   },
 });
@@ -49,22 +48,6 @@ export const taskCommentsEmpty = tv({
   slots: {
     root: "flex items-center gap-2 py-2",
     icon: "text-sand-a8 [&_svg]:size-4",
-  },
-});
-
-export const createTaskDialog = tv({
-  slots: {
-    form: "flex h-full min-h-0 flex-1 flex-col gap-4",
-    fields: "flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto",
-    descriptionField: "flex flex-col",
-    editor: [
-      "h-64 flex-none! overflow-auto rounded-2 border border-sand-a5",
-      "py-0! [&_.tiptap]:min-h-full [&_.tiptap]:py-3",
-      "[&_.tiptap>p:first-child]:mt-0 [&_.tiptap>p:last-child]:mb-0",
-    ],
-    value: "flex items-center gap-2",
-    linearFallback: "flex flex-col items-start gap-2",
-    linearFallbackChoice: "flex items-center gap-2",
   },
 });
 

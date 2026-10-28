@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Card } from "@probo/ui/src/v2/Card/Card";
 import { CardSkeleton } from "@probo/ui/src/v2/Card/CardSkeleton";
 import { ListSkeleton } from "@probo/ui/src/v2/List/ListSkeleton";
 import { TabsSkeleton } from "@probo/ui/src/v2/Tabs/TabsSkeleton";
@@ -27,7 +26,13 @@ import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
 import { taskDetailsPageSkeleton } from "./variants";
 
-export function TaskDetailsPageSkeleton() {
+interface TaskDetailsPageSkeletonProps {
+  showEngagement?: boolean;
+}
+
+export function TaskDetailsPageSkeleton({
+  showEngagement = true,
+}: TaskDetailsPageSkeletonProps) {
   const {
     root,
     header,
@@ -35,8 +40,7 @@ export function TaskDetailsPageSkeleton() {
     title,
     body,
     main,
-    descriptionCard,
-    description,
+    editor,
     engagement,
   } = taskDetailsPageSkeleton();
 
@@ -52,17 +56,13 @@ export function TaskDetailsPageSkeleton() {
       </div>
       <div className={body()}>
         <div className={main()}>
-          <Card variant="ghost" size={2} className={descriptionCard()}>
-            <div className={description()}>
-              <TextSkeleton size={2} className="w-full" />
-              <TextSkeleton size={2} className="w-5/6" />
-              <TextSkeleton size={2} className="w-2/3" />
+          <CardSkeleton size={5} className={editor()} />
+          {showEngagement && (
+            <div className={engagement()}>
+              <TabsSkeleton count={2} />
+              <ListSkeleton count={2} />
             </div>
-          </Card>
-          <div className={engagement()}>
-            <TabsSkeleton count={2} />
-            <ListSkeleton count={2} />
-          </div>
+          )}
         </div>
         <CardSkeleton size={2} />
       </div>
