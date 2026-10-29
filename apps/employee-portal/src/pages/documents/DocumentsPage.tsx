@@ -26,8 +26,14 @@ import { ApprovalDashboardCard } from "#/pages/_components/ApprovalDashboardCard
 import { PageHeader } from "#/pages/_components/PageHeader";
 import { SignatureDashboardCard } from "#/pages/_components/SignatureDashboardCard";
 
+import { SharedDocumentList } from "./_components/SharedDocumentList";
+
 export const documentsPageQuery = graphql`
-  query DocumentsPageQuery($organizationId: ID!) @throwOnFieldError {
+  query DocumentsPageQuery(
+    $organizationId: ID!
+    $employeePortalId: ID!
+    $first: Int
+  ) @throwOnFieldError {
     viewer @required(action: THROW) {
       pendingSignatures: signableDocuments(
         organizationId: $organizationId
@@ -44,6 +50,12 @@ export const documentsPageQuery = graphql`
       ...SignatureDashboardCard_viewer @arguments(organizationId: $organizationId)
       ...ApprovalDashboardCard_viewer @arguments(organizationId: $organizationId)
     }
+    employeePortal: node(id: $employeePortalId) @required(action: THROW) {
+      __typename
+      ... on EmployeePortal {
+        ...SharedDocumentList_employeePortal @arguments(first: $first)
+      }
+    }
   }
 `;
 
@@ -54,10 +66,13 @@ interface DocumentsPageProps {
 export function DocumentsPage({ queryRef }: DocumentsPageProps) {
   const { t } = useTranslation("documents");
   const { t: tApp } = useTranslation();
-  const { viewer } = usePreloadedQuery<DocumentsPageQuery>(
+  const { viewer, employeePortal } = usePreloadedQuery<DocumentsPageQuery>(
     documentsPageQuery,
     queryRef,
   );
+  if (employeePortal.__typename !== "EmployeePortal") {
+    throw new Error("invalid type for employee portal node");
+  }
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-8 pt-8 pb-32">
@@ -76,6 +91,7 @@ export function DocumentsPage({ queryRef }: DocumentsPageProps) {
           wash={viewer.pendingApprovals.totalCount > 0}
         />
       </div>
+      <SharedDocumentList employeePortalKey={employeePortal} />
     </main>
   );
 }

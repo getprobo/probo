@@ -1,4 +1,9 @@
 {
   "title": "Documenten",
-  "breadcrumb": "Documenten"
+  "breadcrumb": "Documenten",
+  "shared": {
+    "heading": "Met je gedeeld",
+    "empty": "Er zijn nog geen documenten gedeeld.",
+    "view": "{{title}} bekijken"
+  }
 }

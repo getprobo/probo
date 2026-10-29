@@ -1,4 +1,9 @@
 {
   "title": "Documentos",
-  "breadcrumb": "Documentos"
+  "breadcrumb": "Documentos",
+  "shared": {
+    "heading": "Compartidos contigo",
+    "empty": "Todavía no se ha compartido ningún documento.",
+    "view": "Ver {{title}}"
+  }
 }

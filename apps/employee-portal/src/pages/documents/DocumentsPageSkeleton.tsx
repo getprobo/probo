@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import { CardSkeleton } from "@probo/ui/src/v2/Card/CardSkeleton";
+import { ListSkeleton } from "@probo/ui/src/v2/List/ListSkeleton";
 import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
 import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
@@ -32,6 +33,10 @@ export function DocumentsPageSkeleton() {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <CardSkeleton size={5} className="h-75" />
         <CardSkeleton size={5} className="h-75" />
+      </div>
+      <div className="flex flex-col gap-4">
+        <HeadingSkeleton size={2} className="w-40" />
+        <ListSkeleton count={4} />
       </div>
     </main>
   );

@@ -22,23 +22,28 @@ import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
 
 import type { DocumentsPageQuery } from "#/__generated__/core/DocumentsPageQuery.graphql";
+import { DOCUMENT_LIST_PAGE_SIZE } from "#/pages/_lib/documentList";
 import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import { DocumentsPage, documentsPageQuery } from "./DocumentsPage";
 import { DocumentsPageSkeleton } from "./DocumentsPageSkeleton";
 
 export default function DocumentsPageLoader() {
-  const { organizationId } = useEmployeePortalRoute();
+  const { organizationId, employeePortalId } = useEmployeePortalRoute();
   const [queryRef, loadQuery] = useQueryLoader<DocumentsPageQuery>(
     documentsPageQuery,
   );
 
   useEffect(() => {
-    loadQuery({ organizationId }, { fetchPolicy: "network-only" });
-  }, [organizationId, loadQuery]);
+    loadQuery(
+      { organizationId, employeePortalId, first: DOCUMENT_LIST_PAGE_SIZE },
+      { fetchPolicy: "network-only" },
+    );
+  }, [employeePortalId, organizationId, loadQuery]);
 
   const currentQueryRef = queryRef != null
     && queryRef.variables.organizationId === organizationId
+    && queryRef.variables.employeePortalId === employeePortalId
     ? queryRef
     : null;
 
@@ -47,7 +52,7 @@ export default function DocumentsPageLoader() {
   }
 
   return (
-    <Suspense key={organizationId} fallback={<DocumentsPageSkeleton />}>
+    <Suspense key={`${organizationId}:${employeePortalId}`} fallback={<DocumentsPageSkeleton />}>
       <DocumentsPage queryRef={currentQueryRef} />
     </Suspense>
   );
