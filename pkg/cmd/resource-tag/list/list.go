@@ -88,6 +88,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
+			if err := cmdutil.ValidateLimit(flagLimit); err != nil {
+				return err
+			}
+
 			cfg, err := f.Config()
 			if err != nil {
 				return err
@@ -190,7 +194,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of resource tags to list")
 	cmd.Flags().StringVar(&flagAfter, "after", "", "Cursor to continue listing from")
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT, KEY)")
-	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
+	cmdutil.AddOrderDirectionFlag(cmd, &flagOrderDir, "DESC")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd
