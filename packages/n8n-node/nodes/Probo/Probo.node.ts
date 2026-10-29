@@ -37,7 +37,23 @@ import {
 	getAPIKeyConnectorProviders,
 	getClientCredentialsConnectorProviders,
 } from './actions/connector/loadConnectorProviderOptions';
-import { searchDocuments, searchOrganizations } from './locators';
+import {
+	searchAccessReviewCampaigns,
+	searchAssets,
+	searchAudits,
+	searchCompliancePortals,
+	searchControls,
+	searchCookieBanners,
+	searchDocumentVersions,
+	searchDocuments,
+	searchFrameworks,
+	searchInternalControls,
+	searchOrganizations,
+	searchPeople,
+	searchRisks,
+	searchTasks,
+	searchThirdParties,
+} from './locators';
 
 function nodeErrorForItem(
 	this: IExecuteFunctions,
@@ -359,8 +375,21 @@ export class Probo implements INodeType {
 			getClientCredentialsConnectorProviders,
 		},
 		listSearch: {
-			searchOrganizations,
+			searchAccessReviewCampaigns,
+			searchAssets,
+			searchAudits,
+			searchCompliancePortals,
+			searchControls,
+			searchCookieBanners,
+			searchDocumentVersions,
 			searchDocuments,
+			searchFrameworks,
+			searchInternalControls,
+			searchOrganizations,
+			searchPeople,
+			searchRisks,
+			searchTasks,
+			searchThirdParties,
 		},
 	};
 }

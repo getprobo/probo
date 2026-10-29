@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { organizationLocator } from '../../locators';
+import { organizationLocator, personLocator } from '../../locators';
 import { proboApiRequest, readResourceId } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
@@ -73,20 +73,11 @@ export const description: INodeProperties[] = [
 		description: 'The classification of the data',
 		required: true,
 	},
-	{
-		displayName: 'Owner ID',
-		name: 'ownerId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['datum'],
-				operation: ['create'],
-			},
-		},
-		default: '',
-		description: 'The ID of the owner (People)',
-		required: true,
-	},
+	personLocator({
+		displayName: 'Owner',
+		resource: ['datum'],
+		operation: ['create'],
+	}),
 	{
 		displayName: 'ThirdParty IDs',
 		name: 'thirdPartyIds',
@@ -138,7 +129,7 @@ export async function execute(
 	const organizationId = readResourceId(this.getNodeParameter('organizationId', itemIndex));
 	const name = this.getNodeParameter('name', itemIndex) as string;
 	const dataClassification = this.getNodeParameter('dataClassification', itemIndex) as string;
-	const ownerId = this.getNodeParameter('ownerId', itemIndex) as string;
+	const ownerId = readResourceId(this.getNodeParameter('ownerId', itemIndex));
 	const thirdPartyIdsStr = this.getNodeParameter('thirdPartyIds', itemIndex, '') as string;
 	const options = this.getNodeParameter('options', itemIndex, {}) as {
 		includeOwner?: boolean;

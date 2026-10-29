@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { organizationLocator } from '../../locators';
+import { organizationLocator, personLocator } from '../../locators';
 import { proboConnectApiRequest, readResourceId } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
@@ -27,20 +27,12 @@ export const description: INodeProperties[] = [
 		resource: ['user'],
 		operation: ['removeUser'],
 	}),
-	{
-		displayName: 'User ID',
+	personLocator({
 		name: 'userId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['user'],
-				operation: ['removeUser'],
-			},
-		},
-		default: '',
-		description: 'The ID of the user (profile) to remove from the organization',
-		required: true,
-	},
+		displayName: 'User',
+		resource: ['user'],
+		operation: ['removeUser'],
+	}),
 ];
 
 export async function execute(
@@ -48,7 +40,7 @@ export async function execute(
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
 	const organizationId = readResourceId(this.getNodeParameter('organizationId', itemIndex));
-	const userId = this.getNodeParameter('userId', itemIndex) as string;
+	const userId = readResourceId(this.getNodeParameter('userId', itemIndex));
 
 	const query = `
 		mutation RemoveUser($input: RemoveUserInput!) {

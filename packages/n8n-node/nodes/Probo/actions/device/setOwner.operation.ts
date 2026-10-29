@@ -19,10 +19,17 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+import { proboApiRequest, readResourceId } from '../../GenericFunctions';
+import { personLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
+	organizationLocator({
+		resource: ['device'],
+		operation: ['setOwner'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+		{
 		displayName: 'Device ID',
 		name: 'deviceId',
 		type: 'string',
@@ -49,21 +56,11 @@ export const description: INodeProperties[] = [
 		default: false,
 		description: 'Whether to clear the device owner instead of assigning one',
 	},
-	{
-		displayName: 'Owner ID',
-		name: 'ownerId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['device'],
-				operation: ['setOwner'],
-				clearOwner: [false],
-			},
-		},
-		default: '',
-		description: 'The profile ID of the owner',
-		required: true,
-	},
+	personLocator({
+		displayName: 'Owner',
+		resource: ['device'],
+		operation: ['setOwner'],
+	}),
 ];
 
 export async function execute(
@@ -79,7 +76,7 @@ export async function execute(
 	};
 
 	if (!clearOwner) {
-		input.ownerId = this.getNodeParameter('ownerId', itemIndex) as string;
+		input.ownerId = readResourceId(this.getNodeParameter('ownerId', itemIndex));
 	}
 
 	const query = `

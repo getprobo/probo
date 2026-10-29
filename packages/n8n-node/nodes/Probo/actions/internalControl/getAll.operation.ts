@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { organizationLocator } from '../../locators';
+import { organizationLocator, personLocator } from '../../locators';
 import { proboApiRequestAllItems, readResourceId, executionItems } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
@@ -109,13 +109,11 @@ export const description: INodeProperties[] = [
 				default: 'CREATED_AT',
 				description: 'Field used to order the list',
 			},
-			{
-				displayName: 'Owner ID',
-				name: 'ownerId',
-				type: 'string',
-				default: '',
+			personLocator({
+				displayName: 'Owner',
+				required: false,
 				description: 'Only controls owned by this profile',
-			},
+			}),
 			{
 				displayName: 'Query',
 				name: 'query',
@@ -154,8 +152,8 @@ export async function execute(
 	if (options.category) {
 		filter.category = options.category;
 	}
-	if (options.ownerId) {
-		filter.ownerId = options.ownerId;
+	if (readResourceId(options.ownerId)) {
+		filter.ownerId = readResourceId(options.ownerId);
 	}
 	if (options.needsAttention) {
 		filter.needsAttention = true;

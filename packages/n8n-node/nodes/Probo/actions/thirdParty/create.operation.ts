@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { organizationLocator } from '../../locators';
+import { organizationLocator, thirdPartyLocator } from '../../locators';
 import { proboApiRequest, readResourceId } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
@@ -161,13 +161,11 @@ export const description: INodeProperties[] = [
 				type: 'string',
 				default: '',
 			},
-			{
-				displayName: 'Parent Third Party ID',
+			thirdPartyLocator({
 				name: 'parentThirdPartyId',
-				type: 'string',
-				default: '',
-				description: 'The ID of the parent third party (creates a child relationship; level is derived from the parent)',
-			},
+				displayName: 'Parent Third Party',
+				required: false,
+			}),
 			{
 				displayName: 'Privacy Policy URL',
 				name: 'privacyPolicyUrl',
@@ -293,9 +291,9 @@ export async function execute(
 	if (additionalFields.subprocessorsListUrl) input.subprocessorsListUrl = additionalFields.subprocessorsListUrl;
 	if (additionalFields.securityPageUrl) input.securityPageUrl = additionalFields.securityPageUrl;
 	if (additionalFields.trustPageUrl) input.trustPageUrl = additionalFields.trustPageUrl;
-	if (additionalFields.parentThirdPartyId) {
+	if (readResourceId(additionalFields.parentThirdPartyId)) {
 		// The server derives the level from the parent (parent.level + 1).
-		input.parentThirdPartyId = additionalFields.parentThirdPartyId;
+		input.parentThirdPartyId = readResourceId(additionalFields.parentThirdPartyId);
 	}
 	if (additionalFields.certifications) {
 		input.certifications = additionalFields.certifications.split(',').map((c) => c.trim()).filter(Boolean);

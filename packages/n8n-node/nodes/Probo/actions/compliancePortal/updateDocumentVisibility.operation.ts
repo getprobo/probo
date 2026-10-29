@@ -19,24 +19,14 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { organizationLocator, documentLocator } from '../../locators';
+import { organizationLocator, documentLocator, compliancePortalLocator } from '../../locators';
 import { proboApiRequest, readResourceId } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Compliance Portal ID',
-		name: 'compliancePortalId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['compliancePortal'],
-				operation: ['updateDocumentVisibility'],
-			},
-		},
-		default: '',
-		description: 'The ID of the compliance portal',
-		required: true,
-	},
+	compliancePortalLocator({
+		resource: ['compliancePortal'],
+		operation: ['updateDocumentVisibility'],
+	}),
 	organizationLocator({
 		resource: ['compliancePortal'],
 		operation: ['updateDocumentVisibility'],
@@ -72,7 +62,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const compliancePortalId = this.getNodeParameter('compliancePortalId', itemIndex) as string;
+	const compliancePortalId = readResourceId(this.getNodeParameter('compliancePortalId', itemIndex));
 	const documentId = readResourceId(this.getNodeParameter('documentId', itemIndex));
 	const compliancePortalVisibility = this.getNodeParameter('compliancePortalVisibility', itemIndex) as string;
 

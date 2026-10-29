@@ -19,31 +19,34 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+import { proboApiRequest, readResourceId } from '../../GenericFunctions';
 import { stampGraphqlNode, withParentReference } from '../../output';
+import { documentVersionLocator, organizationLocator, documentLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Document Version ID',
-		name: 'documentVersionId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['document'],
-				operation: ['getVersion'],
-			},
-		},
-		default: '',
-		description: 'The ID of the document version',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['document'],
+		operation: ['getVersion'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+	documentLocator({
+		resource: ['document'],
+		operation: ['getVersion'],
+		required: false,
+		description: 'Document to search versions in. Leave this empty when entering a version ID.',
+	}),
+		documentVersionLocator({
+		resource: ['document'],
+		operation: ['getVersion'],
+	}),
 ];
 
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const documentVersionId = this.getNodeParameter('documentVersionId', itemIndex) as string;
+	const documentVersionId = readResourceId(this.getNodeParameter('documentVersionId', itemIndex));
 
 	const query = `
 		query GetDocumentVersion($documentVersionId: ID!) {

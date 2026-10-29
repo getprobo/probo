@@ -19,23 +19,20 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { proboApiRequestAllItems, executionItems } from '../../GenericFunctions';
+import { proboApiRequestAllItems, executionItems, readResourceId } from '../../GenericFunctions';
+import { compliancePortalLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Compliance Portal ID',
-		name: 'compliancePortalId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['compliancePortal'],
-				operation: ['getAllFiles'],
-			},
-		},
-		default: '',
-		description: 'The ID of the compliance portal',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['compliancePortal'],
+		operation: ['getAllFiles'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+		compliancePortalLocator({
+		resource: ['compliancePortal'],
+		operation: ['getAllFiles'],
+	}),
 	{
 		displayName: 'Return All',
 		name: 'returnAll',
@@ -72,7 +69,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData[]> {
-	const compliancePortalId = this.getNodeParameter('compliancePortalId', itemIndex) as string;
+	const compliancePortalId = readResourceId(this.getNodeParameter('compliancePortalId', itemIndex));
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
 

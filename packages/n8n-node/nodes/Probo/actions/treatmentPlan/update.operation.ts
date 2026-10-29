@@ -19,7 +19,8 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+import { proboApiRequest, readResourceId } from '../../GenericFunctions';
+import { personLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
 	{
@@ -103,13 +104,10 @@ export const description: INodeProperties[] = [
 				default: 1,
 				description: 'The inherent likelihood (1-5)',
 			},
-			{
-				displayName: 'Owner ID',
-				name: 'ownerId',
-				type: 'string',
-				default: '',
-				description: 'The ID of the person who owns this treatment plan',
-			},
+			personLocator({
+				displayName: 'Owner',
+				required: false,
+			}),
 			{
 				displayName: 'Residual Impact',
 				name: 'residualImpact',
@@ -174,7 +172,7 @@ export async function execute(
 
 	const input: Record<string, unknown> = { id: treatmentPlanId };
 	if (treatment) input.treatment = treatment;
-	if (additionalFields.ownerId) input.ownerId = additionalFields.ownerId;
+	if (readResourceId(additionalFields.ownerId)) input.ownerId = readResourceId(additionalFields.ownerId);
 	if (additionalFields.inherentLikelihood !== undefined) input.inherentLikelihood = additionalFields.inherentLikelihood;
 	if (additionalFields.inherentImpact !== undefined) input.inherentImpact = additionalFields.inherentImpact;
 	if (additionalFields.residualLikelihood !== undefined) input.residualLikelihood = additionalFields.residualLikelihood;

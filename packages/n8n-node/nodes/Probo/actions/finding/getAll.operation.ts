@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { organizationLocator } from '../../locators';
+import { organizationLocator, auditLocator } from '../../locators';
 import { proboApiRequestAllItems, readResourceId, executionItems } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
@@ -70,13 +70,10 @@ export const description: INodeProperties[] = [
 			},
 		},
 		options: [
-			{
-				displayName: 'Audit ID',
-				name: 'auditId',
-				type: 'string',
-				default: '',
+			auditLocator({
+				required: false,
 				description: 'Only return findings linked to this audit',
-			},
+			}),
 		],
 	},
 ];
@@ -127,8 +124,8 @@ export async function execute(
 	const variables: IDataObject = { organizationId };
 	const filter: IDataObject = {};
 
-	if (filters.auditId) {
-		filter.auditId = filters.auditId;
+	if (readResourceId(filters.auditId)) {
+		filter.auditId = readResourceId(filters.auditId);
 	}
 
 	if (Object.keys(filter).length > 0) {

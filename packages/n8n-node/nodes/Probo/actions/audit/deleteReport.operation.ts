@@ -19,30 +19,27 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+import { proboApiRequest, readResourceId } from '../../GenericFunctions';
+import { auditLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Audit ID',
-		name: 'auditId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['audit'],
-				operation: ['deleteReport'],
-			},
-		},
-		default: '',
-		description: 'The ID of the audit whose report to delete',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['audit'],
+		operation: ['deleteReport'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+		auditLocator({
+		resource: ['audit'],
+		operation: ['deleteReport'],
+	}),
 ];
 
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const auditId = this.getNodeParameter('auditId', itemIndex) as string;
+	const auditId = readResourceId(this.getNodeParameter('auditId', itemIndex));
 
 	const query = `
 		mutation DeleteAuditReport($input: DeleteAuditReportInput!) {

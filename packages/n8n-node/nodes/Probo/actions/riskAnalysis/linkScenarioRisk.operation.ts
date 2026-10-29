@@ -19,10 +19,17 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+import { proboApiRequest, readResourceId } from '../../GenericFunctions';
+import { riskLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
+	organizationLocator({
+		resource: ['riskAnalysis'],
+		operation: ['linkScenarioRisk'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+		{
 		displayName: 'Scenario ID',
 		name: 'riskAnalysisScenarioId',
 		type: 'string',
@@ -36,20 +43,10 @@ export const description: INodeProperties[] = [
 		description: 'The ID of the scenario',
 		required: true,
 	},
-	{
-		displayName: 'Risk ID',
-		name: 'riskId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['riskAnalysis'],
-				operation: ['linkScenarioRisk'],
-			},
-		},
-		default: '',
-		description: 'The ID of the risk to link',
-		required: true,
-	},
+	riskLocator({
+		resource: ['riskAnalysis'],
+		operation: ['linkScenarioRisk'],
+	}),
 ];
 
 export async function execute(
@@ -57,7 +54,7 @@ export async function execute(
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
 	const riskAnalysisScenarioId = this.getNodeParameter('riskAnalysisScenarioId', itemIndex) as string;
-	const riskId = this.getNodeParameter('riskId', itemIndex) as string;
+	const riskId = readResourceId(this.getNodeParameter('riskId', itemIndex));
 
 	const query = `
 		mutation LinkRiskAnalysisScenarioRisk($input: LinkRiskAnalysisScenarioRiskInput!) {

@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { organizationLocator } from '../../locators';
+import { organizationLocator, personLocator } from '../../locators';
 import { proboConnectApiRequest, readResourceId } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
@@ -27,20 +27,12 @@ export const description: INodeProperties[] = [
 		resource: ['user'],
 		operation: ['inviteUser'],
 	}),
-	{
-		displayName: 'Profile ID',
+	personLocator({
 		name: 'profileId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['user'],
-				operation: ['inviteUser'],
-			},
-		},
-		default: '',
-		description: 'The ID of the user (profile) to invite to the organization',
-		required: true,
-	},
+		displayName: 'Profile',
+		resource: ['user'],
+		operation: ['inviteUser'],
+	}),
 ];
 
 export async function execute(
@@ -48,7 +40,7 @@ export async function execute(
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
 	const organizationId = readResourceId(this.getNodeParameter('organizationId', itemIndex));
-	const profileId = this.getNodeParameter('profileId', itemIndex) as string;
+	const profileId = readResourceId(this.getNodeParameter('profileId', itemIndex));
 
 	const query = `
 		mutation InviteUser($input: InviteUserInput!) {

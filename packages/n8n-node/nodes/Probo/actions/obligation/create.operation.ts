@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { organizationLocator } from '../../locators';
+import { organizationLocator, personLocator } from '../../locators';
 import { proboApiRequest, readResourceId } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
@@ -95,19 +95,12 @@ export const description: INodeProperties[] = [
 		default: '',
 		description: 'The regulator of the obligation',
 	},
-	{
-		displayName: 'Owner ID',
-		name: 'ownerId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['obligation'],
-				operation: ['create'],
-			},
-		},
-		default: '',
-		description: 'The ID of the owner',
-	},
+	personLocator({
+		displayName: 'Owner',
+		resource: ['obligation'],
+		operation: ['create'],
+		required: false,
+	}),
 	{
 		displayName: 'Last Review Date',
 		name: 'lastReviewDate',
@@ -196,7 +189,7 @@ export async function execute(
 	const requirement = this.getNodeParameter('requirement', itemIndex) as string;
 	const actionsToBeImplemented = this.getNodeParameter('actionsToBeImplemented', itemIndex, '') as string;
 	const regulator = this.getNodeParameter('regulator', itemIndex, '') as string;
-	const ownerId = this.getNodeParameter('ownerId', itemIndex, '') as string;
+	const ownerId = readResourceId(this.getNodeParameter('ownerId', itemIndex, ''));
 	const lastReviewDate = this.getNodeParameter('lastReviewDate', itemIndex, '') as string;
 	const dueDate = this.getNodeParameter('dueDate', itemIndex, '') as string;
 	const status = this.getNodeParameter('status', itemIndex, '') as string;

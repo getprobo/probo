@@ -19,30 +19,27 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+import { proboApiRequest, readResourceId } from '../../GenericFunctions';
+import { frameworkLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Framework ID',
-		name: 'frameworkId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['framework'],
-				operation: ['get'],
-			},
-		},
-		default: '',
-		description: 'The ID of the framework',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['framework'],
+		operation: ['get'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+		frameworkLocator({
+		resource: ['framework'],
+		operation: ['get'],
+	}),
 ];
 
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const frameworkId = this.getNodeParameter('frameworkId', itemIndex) as string;
+	const frameworkId = readResourceId(this.getNodeParameter('frameworkId', itemIndex));
 
 	const query = `
 		query GetFramework($frameworkId: ID!) {

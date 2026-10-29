@@ -19,45 +19,32 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+import { proboApiRequest, readResourceId } from '../../GenericFunctions';
+import { controlLocator, internalControlLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Control ID',
-		name: 'controlId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['control'],
-				operation: ['linkInternalControl'],
-			},
-		},
-		default: '',
-		description: 'The ID of the control',
-		required: true,
-	},
-	{
-		displayName: 'Internal Control ID',
-		name: 'internalControlId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['control'],
-				operation: ['linkInternalControl'],
-			},
-		},
-		default: '',
-		description: 'The ID of the internal control to link',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['control'],
+		operation: ['linkInternalControl'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+		controlLocator({
+		resource: ['control'],
+		operation: ['linkInternalControl'],
+	}),
+	internalControlLocator({
+		resource: ['control'],
+		operation: ['linkInternalControl'],
+	}),
 ];
 
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const controlId = this.getNodeParameter('controlId', itemIndex) as string;
-	const internalControlId = this.getNodeParameter('internalControlId', itemIndex) as string;
+	const controlId = readResourceId(this.getNodeParameter('controlId', itemIndex));
+	const internalControlId = readResourceId(this.getNodeParameter('internalControlId', itemIndex));
 
 	const query = `
 		mutation CreateControlInternalControlMapping($input: CreateControlInternalControlMappingInput!) {

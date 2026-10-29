@@ -19,23 +19,22 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+import { proboApiRequest, readResourceId } from '../../GenericFunctions';
+import { assetLocator, organizationLocator, personLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Asset ID',
+	organizationLocator({
+		resource: ['asset'],
+		operation: ['update'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+	assetLocator({
 		name: 'id',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['asset'],
-				operation: ['update'],
-			},
-		},
-		default: '',
-		description: 'The ID of the asset to update',
-		required: true,
-	},
+		resource: ['asset'],
+		operation: ['update'],
+		description: 'The asset to update. Search the list, or enter an ID.',
+	}),
 	{
 		displayName: 'Name',
 		name: 'name',
@@ -62,19 +61,12 @@ export const description: INodeProperties[] = [
 		default: 0,
 		description: 'The amount of the asset',
 	},
-	{
-		displayName: 'Owner ID',
-		name: 'ownerId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['asset'],
-				operation: ['update'],
-			},
-		},
-		default: '',
-		description: 'The ID of the owner (People)',
-	},
+	personLocator({
+		displayName: 'Owner',
+		resource: ['asset'],
+		operation: ['update'],
+		required: false,
+	}),
 	{
 		displayName: 'Asset Type',
 		name: 'assetType',
@@ -159,10 +151,10 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const id = this.getNodeParameter('id', itemIndex) as string;
+	const id = readResourceId(this.getNodeParameter('id', itemIndex));
 	const name = this.getNodeParameter('name', itemIndex, '') as string;
 	const amount = this.getNodeParameter('amount', itemIndex, 0) as number;
-	const ownerId = this.getNodeParameter('ownerId', itemIndex, '') as string;
+	const ownerId = readResourceId(this.getNodeParameter('ownerId', itemIndex, ''));
 	const assetType = this.getNodeParameter('assetType', itemIndex, '') as string;
 	const dataTypesStored = this.getNodeParameter('dataTypesStored', itemIndex, '') as string;
 	const thirdPartyIdsStr = this.getNodeParameter('thirdPartyIds', itemIndex, '') as string;

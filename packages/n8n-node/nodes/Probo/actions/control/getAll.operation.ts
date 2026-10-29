@@ -19,23 +19,20 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { proboApiRequestAllItems, executionItems } from '../../GenericFunctions';
+import { proboApiRequestAllItems, executionItems, readResourceId } from '../../GenericFunctions';
+import { frameworkLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Framework ID',
-		name: 'frameworkId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['control'],
-				operation: ['getAll'],
-			},
-		},
-		default: '',
-		description: 'The ID of the framework',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['control'],
+		operation: ['getAll'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+		frameworkLocator({
+		resource: ['control'],
+		operation: ['getAll'],
+	}),
 	{
 		displayName: 'Return All',
 		name: 'returnAll',
@@ -72,7 +69,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData[]> {
-	const frameworkId = this.getNodeParameter('frameworkId', itemIndex) as string;
+	const frameworkId = readResourceId(this.getNodeParameter('frameworkId', itemIndex));
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
 

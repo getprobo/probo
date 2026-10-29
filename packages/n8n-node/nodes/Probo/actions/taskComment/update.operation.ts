@@ -19,7 +19,8 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+import { proboApiRequest, readResourceId } from '../../GenericFunctions';
+import { personLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
 	{
@@ -59,13 +60,10 @@ export const description: INodeProperties[] = [
 				default: '',
 				description: 'The comment content as a ProseMirror document JSON string. An image node sets fileId from an attachment upload. A file node sets fileId, fileName, mimeType, and size',
 			},
-			{
-				displayName: 'Owner ID',
-				name: 'ownerId',
-				type: 'string',
-				default: '',
-				description: 'The owner membership profile ID',
-			},
+			personLocator({
+				displayName: 'Owner',
+				required: false,
+			}),
 		],
 	},
 ];
@@ -104,8 +102,8 @@ export async function execute(
 			? null
 			: additionalFields.content;
 	}
-	if (additionalFields.ownerId) {
-		input.ownerId = additionalFields.ownerId;
+	if (readResourceId(additionalFields.ownerId)) {
+		input.ownerId = readResourceId(additionalFields.ownerId);
 	}
 
 	const responseData = await proboApiRequest.call(this, query, { input });

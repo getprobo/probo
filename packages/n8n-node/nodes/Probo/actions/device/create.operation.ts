@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { organizationLocator } from '../../locators';
+import { organizationLocator, personLocator } from '../../locators';
 import { proboApiRequest, readResourceId } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
@@ -27,19 +27,12 @@ export const description: INodeProperties[] = [
 		resource: ['device'],
 		operation: ['create'],
 	}),
-	{
-		displayName: 'Owner ID',
-		name: 'ownerId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['device'],
-				operation: ['create'],
-			},
-		},
-		default: '',
-		description: 'Optional profile ID of the owner',
-	},
+	personLocator({
+		displayName: 'Owner',
+		resource: ['device'],
+		operation: ['create'],
+		required: false,
+	}),
 ];
 
 export async function execute(
@@ -47,7 +40,7 @@ export async function execute(
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
 	const organizationId = readResourceId(this.getNodeParameter('organizationId', itemIndex));
-	const ownerId = this.getNodeParameter('ownerId', itemIndex) as string;
+	const ownerId = readResourceId(this.getNodeParameter('ownerId', itemIndex));
 
 	const input: { organizationId: string; ownerId?: string } = {
 		organizationId,

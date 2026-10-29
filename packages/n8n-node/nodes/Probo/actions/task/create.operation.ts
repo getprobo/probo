@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { organizationLocator } from '../../locators';
+import { organizationLocator, internalControlLocator, personLocator } from '../../locators';
 import { proboApiRequest, readResourceId } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
@@ -27,19 +27,12 @@ export const description: INodeProperties[] = [
 		resource: ['task'],
 		operation: ['create'],
 	}),
-	{
-		displayName: 'Internal Control ID',
-		name: 'internalControlId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['task'],
-				operation: ['create'],
-			},
-		},
-		default: '',
+	internalControlLocator({
+		resource: ['task'],
+		operation: ['create'],
+		required: false,
 		description: 'The ID of the internal control this task belongs to',
-	},
+	}),
 	{
 		displayName: 'Name',
 		name: 'name',
@@ -153,19 +146,13 @@ export const description: INodeProperties[] = [
 		default: '',
 		description: 'The time estimate for the task',
 	},
-	{
-		displayName: 'Assigned To ID',
+	personLocator({
 		name: 'assignedToId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['task'],
-				operation: ['create'],
-			},
-		},
-		default: '',
-		description: 'The ID of the user assigned to this task',
-	},
+		displayName: 'Assignee',
+		resource: ['task'],
+		operation: ['create'],
+		required: false,
+	}),
 	{
 		displayName: 'Deadline',
 		name: 'deadline',
@@ -212,13 +199,13 @@ export async function execute(
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
 	const organizationId = readResourceId(this.getNodeParameter('organizationId', itemIndex));
-	const internalControlId = this.getNodeParameter('internalControlId', itemIndex, '') as string;
+	const internalControlId = readResourceId(this.getNodeParameter('internalControlId', itemIndex, ''));
 	const name = this.getNodeParameter('name', itemIndex) as string;
 	const content = this.getNodeParameter('content', itemIndex, '') as string;
 	const state = this.getNodeParameter('state', itemIndex, '') as string;
 	const priority = this.getNodeParameter('priority', itemIndex, '') as string;
 	const timeEstimate = this.getNodeParameter('timeEstimate', itemIndex, '') as string;
-	const assignedToId = this.getNodeParameter('assignedToId', itemIndex, '') as string;
+	const assignedToId = readResourceId(this.getNodeParameter('assignedToId', itemIndex, ''));
 	const deadline = this.getNodeParameter('deadline', itemIndex, '') as string;
 	const recurrenceInterval = this.getNodeParameter('recurrenceInterval', itemIndex, '') as string;
 	const linearTeamId = this.getNodeParameter('linearTeamId', itemIndex, '') as string;

@@ -19,23 +19,20 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+import { proboApiRequest, readResourceId } from '../../GenericFunctions';
+import { controlLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Control ID',
-		name: 'controlId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['control'],
-				operation: ['unlinkObligation'],
-			},
-		},
-		default: '',
-		description: 'The ID of the control',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['control'],
+		operation: ['unlinkObligation'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+		controlLocator({
+		resource: ['control'],
+		operation: ['unlinkObligation'],
+	}),
 	{
 		displayName: 'Obligation ID',
 		name: 'obligationId',
@@ -56,7 +53,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const controlId = this.getNodeParameter('controlId', itemIndex) as string;
+	const controlId = readResourceId(this.getNodeParameter('controlId', itemIndex));
 	const obligationId = this.getNodeParameter('obligationId', itemIndex) as string;
 
 	const query = `
