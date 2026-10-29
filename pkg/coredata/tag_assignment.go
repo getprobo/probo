@@ -107,6 +107,28 @@ LIMIT 1;
 	return nil
 }
 
+// LockTagAssignmentKey serializes assignment changes for one key of a
+// resource until the transaction ends.
+func LockTagAssignmentKey(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceID gid.GID,
+	key string,
+) error {
+	q := `SELECT pg_advisory_xact_lock(hashtext(@resource_id::text || ':' || @key::text))`
+
+	args := pgx.StrictNamedArgs{
+		"resource_id": resourceID,
+		"key":         key,
+	}
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot acquire tag assignment lock: %w", err)
+	}
+
+	return nil
+}
+
 func (a *TagAssignment) Insert(
 	ctx context.Context,
 	conn pg.Querier,
