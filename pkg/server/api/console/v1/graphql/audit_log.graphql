@@ -34,11 +34,31 @@ input AuditLogEntryOrder
     direction: OrderDirection!
 }
 
+enum AuditLogOutcome
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.AuditLogOutcome"
+    ) {
+    ALLOWED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AuditLogOutcomeAllowed"
+        )
+    DENIED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AuditLogOutcomeDenied"
+        )
+}
+
 input AuditLogEntryFilter {
     action: String
+    actionPrefix: String
     actorId: ID
+    actorType: AuditLogActorType
     resourceType: String
     resourceId: ID
+    outcome: AuditLogOutcome
+    requestId: String
+    createdFrom: Datetime
+    createdTo: Datetime
 }
 
 type AuditLogEntry implements Node {
@@ -46,11 +66,19 @@ type AuditLogEntry implements Node {
     organization: Organization @goField(forceResolver: true)
     actorId: ID!
     actorType: AuditLogActorType!
+    actorEmail: String
+    actorName: String
     action: String!
     resourceType: String!
     resourceId: ID!
+    outcome: AuditLogOutcome!
+    denialReason: String
     metadata: String
+    originIp: String
+    userAgent: String
+    requestId: String
     createdAt: Datetime!
+    recordedAt: Datetime!
 
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }

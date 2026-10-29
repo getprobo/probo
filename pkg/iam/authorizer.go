@@ -189,12 +189,15 @@ func (a *Authorizer) AuthorizeBatch(ctx context.Context, params AuthorizeBatchPa
 		)
 	}
 
-	var scope *coredata.Scope
+	var (
+		scope  *coredata.Scope
+		denial error
+	)
 
 	if err := a.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			authorizedScope, err := a.authorizeMulti(
+			authorizedScope, decision, err := a.authorizeMulti(
 				ctx,
 				tx,
 				AuthorizeMultiParams{
@@ -209,11 +212,16 @@ func (a *Authorizer) AuthorizeBatch(ctx context.Context, params AuthorizeBatchPa
 			}
 
 			scope = authorizedScope
+			denial = decision
 
 			return nil
 		},
 	); err != nil {
 		return nil, err
+	}
+
+	if denial != nil {
+		return nil, denial
 	}
 
 	return scope, nil
@@ -251,39 +259,8 @@ func (a *Authorizer) AuthorizeMulti(
 				return err
 			}
 
-			entries := make(coredata.AuditLogEntries, 0, len(params.Items))
-			for i, item := range params.Items {
-				if d[i] != nil {
-					continue
-				}
-
-				entry := a.buildAuditLogEntry(
-					ctx,
-					AuthorizeParams{
-						Principal: params.Principal,
-						Resource:  item.Resource,
-						Session:   params.Session,
-						Action:    item.Action,
-						DryRun:    item.DryRun,
-					},
-					itemAttrs[i],
-				)
-				if entry == nil {
-					continue
-				}
-
-				entries = append(entries, entry)
-			}
-
-			if len(entries) > 0 {
-				if err := entries.BulkInsert(ctx, tx, s); err != nil {
-					a.logger.ErrorCtx(
-						ctx,
-						"cannot bulk insert audit log entries",
-						log.Error(err),
-						log.String("action", params.Items[0].Action),
-					)
-				}
+			if err := a.insertAuditEntries(ctx, tx, s, params, itemAttrs, d, false); err != nil {
+				return err
 			}
 
 			scope = s
@@ -303,7 +280,7 @@ func (a *Authorizer) authorizeMulti(
 	tx pg.Tx,
 	params AuthorizeMultiParams,
 	extraResourceAttributes policy.Attributes,
-) (*coredata.Scope, error) {
+) (*coredata.Scope, error, error) {
 	scope, itemAttrs, decisions, err := a.evaluateMultiInTx(
 		ctx,
 		tx,
@@ -311,47 +288,26 @@ func (a *Authorizer) authorizeMulti(
 		extraResourceAttributes,
 	)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
+	var denial error
 	for _, decision := range decisions {
 		if decision != nil {
-			return nil, decision
+			denial = decision
+			break
 		}
 	}
 
-	entries := make(coredata.AuditLogEntries, 0, len(params.Items))
-	for i, item := range params.Items {
-		entry := a.buildAuditLogEntry(
-			ctx,
-			AuthorizeParams{
-				Principal: params.Principal,
-				Resource:  item.Resource,
-				Session:   params.Session,
-				Action:    item.Action,
-				DryRun:    item.DryRun,
-			},
-			itemAttrs[i],
-		)
-		if entry == nil {
-			continue
-		}
-
-		entries = append(entries, entry)
+	if err := a.insertAuditEntries(ctx, tx, scope, params, itemAttrs, decisions, denial != nil); err != nil {
+		return nil, nil, err
 	}
 
-	if len(entries) > 0 {
-		if err := entries.BulkInsert(ctx, tx, scope); err != nil {
-			a.logger.ErrorCtx(
-				ctx,
-				"cannot bulk insert audit log entries",
-				log.Error(err),
-				log.String("action", params.Items[0].Action),
-			)
-		}
+	if denial != nil {
+		return nil, denial, nil
 	}
 
-	return scope, nil
+	return scope, nil, nil
 }
 
 // evaluateMultiInTx evaluates every item in params against the loaded
@@ -864,12 +820,99 @@ func resourceTypeFromAction(action string) string {
 	return strings.Join(segments, "")
 }
 
+type actorSnapshot struct {
+	email *string
+	name  *string
+}
+
+func (a *Authorizer) insertAuditEntries(
+	ctx context.Context,
+	tx pg.Tx,
+	scope *coredata.Scope,
+	params AuthorizeMultiParams,
+	itemAttrs []policy.Attributes,
+	decisions []error,
+	denialsOnly bool,
+) error {
+	snapshot := a.loadActorSnapshot(ctx, tx, params.Principal)
+	now := time.Now()
+	request, _ := AuditRequestFromContext(ctx)
+	entries := make(coredata.AuditLogEntries, 0, len(params.Items))
+
+	for i, item := range params.Items {
+		if denialsOnly && decisions[i] == nil {
+			continue
+		}
+
+		entry := a.buildAuditLogEntry(
+			ctx,
+			AuthorizeParams{
+				Principal: params.Principal,
+				Resource:  item.Resource,
+				Session:   params.Session,
+				Action:    item.Action,
+				DryRun:    item.DryRun,
+			},
+			itemAttrs[i],
+			decisions[i],
+			snapshot,
+			request,
+			now,
+		)
+		if entry == nil {
+			continue
+		}
+
+		entries = append(entries, entry)
+	}
+
+	if len(entries) == 0 {
+		return nil
+	}
+
+	if err := entries.BulkInsert(ctx, tx, scope); err != nil {
+		return fmt.Errorf("cannot bulk insert audit log entries: %w", err)
+	}
+
+	return nil
+}
+
+func (a *Authorizer) loadActorSnapshot(
+	ctx context.Context,
+	conn pg.Querier,
+	principalID gid.GID,
+) actorSnapshot {
+	identity := &coredata.Identity{}
+	if err := identity.LoadByID(ctx, conn, principalID); err != nil {
+		a.logger.ErrorCtx(
+			ctx,
+			"cannot load audit log actor",
+			log.Error(err),
+			log.String("principal_id", principalID.String()),
+		)
+
+		return actorSnapshot{}
+	}
+
+	email := identity.EmailAddress.String()
+	name := identity.FullName
+
+	return actorSnapshot{
+		email: &email,
+		name:  &name,
+	}
+}
+
 // buildAuditLogEntry returns nil when no entry should be recorded
 // (dry run or missing/invalid organization id).
 func (a *Authorizer) buildAuditLogEntry(
 	ctx context.Context,
 	params AuthorizeParams,
 	resourceAttrs policy.Attributes,
+	decision error,
+	snapshot actorSnapshot,
+	request AuditRequest,
+	now time.Time,
 ) *coredata.AuditLogEntry {
 	if params.DryRun {
 		return nil
@@ -898,19 +941,50 @@ func (a *Authorizer) buildAuditLogEntry(
 		actorType = coredata.AuditLogActorTypeAPIKey
 	}
 
-	resourceType := resourceTypeFromAction(params.Action)
-
-	metadata := []byte("{}")
+	outcome := coredata.AuditLogOutcomeAllowed
+	var denialReason *string
+	if decision != nil {
+		outcome = coredata.AuditLogOutcomeDenied
+		reason := decision.Error()
+		if len(reason) > 1024 {
+			reason = reason[:1024]
+		}
+		denialReason = &reason
+	}
 
 	return &coredata.AuditLogEntry{
 		ID:             gid.New(orgID.TenantID(), coredata.AuditLogEntryEntityType),
 		OrganizationID: orgID,
 		ActorID:        params.Principal,
 		ActorType:      actorType,
+		ActorEmail:     snapshot.email,
+		ActorName:      snapshot.name,
 		Action:         params.Action,
-		ResourceType:   resourceType,
+		ResourceType:   resourceTypeFromAction(params.Action),
 		ResourceID:     params.Resource,
-		Metadata:       metadata,
-		CreatedAt:      time.Now(),
+		Outcome:        outcome,
+		DenialReason:   denialReason,
+		Metadata:       redactAuditMetadata([]byte("{}")),
+		OriginIP:       optionalAuditString(request.IP),
+		UserAgent:      optionalAuditString(truncateAuditString(request.UserAgent, 512)),
+		RequestID:      optionalAuditString(truncateAuditString(request.RequestID, 128)),
+		CreatedAt:      now,
+		RecordedAt:     now,
 	}
+}
+
+func optionalAuditString(value string) *string {
+	if value == "" {
+		return nil
+	}
+
+	return &value
+}
+
+func truncateAuditString(value string, limit int) string {
+	if len(value) <= limit {
+		return value
+	}
+
+	return value[:limit]
 }

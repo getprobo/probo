@@ -4532,8 +4532,16 @@ func (r *Resolver) ListAuditLogEntriesTool(ctx context.Context, req *mcp.CallToo
 			filter.WithAction(*input.Filter.Action)
 		}
 
+		if input.Filter.ActionPrefix != nil {
+			filter.WithActionPrefix(*input.Filter.ActionPrefix)
+		}
+
 		if input.Filter.ActorID != nil {
 			filter.WithActorID(*input.Filter.ActorID)
+		}
+
+		if input.Filter.ActorType != nil {
+			filter.WithActorType(coredata.AuditLogActorType(*input.Filter.ActorType))
 		}
 
 		if input.Filter.ResourceType != nil {
@@ -4542,6 +4550,22 @@ func (r *Resolver) ListAuditLogEntriesTool(ctx context.Context, req *mcp.CallToo
 
 		if input.Filter.ResourceID != nil {
 			filter.WithResourceID(*input.Filter.ResourceID)
+		}
+
+		if input.Filter.Outcome != nil {
+			filter.WithOutcome(coredata.AuditLogOutcome(*input.Filter.Outcome))
+		}
+
+		if input.Filter.RequestID != nil {
+			filter.WithRequestID(*input.Filter.RequestID)
+		}
+
+		if input.Filter.CreatedFrom != nil {
+			filter.WithCreatedAtGte(*input.Filter.CreatedFrom)
+		}
+
+		if input.Filter.CreatedTo != nil {
+			filter.WithCreatedAtLt(*input.Filter.CreatedTo)
 		}
 	}
 
