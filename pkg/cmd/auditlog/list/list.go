@@ -136,6 +136,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			filter := map[string]any{}
+
 			if flagAction != "" {
 				if prefix, ok := strings.CutSuffix(flagAction, "*"); ok {
 					if prefix != "" {
