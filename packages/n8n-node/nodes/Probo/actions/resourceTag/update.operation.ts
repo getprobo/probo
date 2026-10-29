@@ -65,7 +65,7 @@ export const description: INodeProperties[] = [
 	{
 		displayName: 'Color',
 		name: 'color',
-		type: 'string',
+		type: 'color',
 		displayOptions: {
 			show: {
 				resource: ['resourceTag'],
