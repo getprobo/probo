@@ -171,6 +171,13 @@ func (s *Service) ApplyInboundIssue(
 				mapped.Markdown = markdown
 			}
 
+			mentionsStructureChanged := update != nil && update.mentionsApplied && task.Content != update.mentionContent
+
+			if update != nil && update.mentionsApplied {
+				mapped.Content = update.mentionContent
+				mapped.Markdown = update.mentionCanonical
+			}
+
 			oldTask := *task
 
 			if _, err := applyInboundAssignee(
@@ -192,7 +199,7 @@ func (s *Service) ApplyInboundIssue(
 				mapped.Deadline,
 				task.AssignedToID,
 			)
-			if link.ContentHash != nil && *link.ContentHash == hash {
+			if inboundContentUnchanged(hash, link.ContentHash, mentionsStructureChanged) {
 				return touchInboundLink(ctx, tx, scope, link, data, remoteUpdatedAt, hash, mapped.Priority)
 			}
 
@@ -232,6 +239,20 @@ func (s *Service) ApplyInboundIssue(
 				now,
 			); err != nil {
 				return err
+			}
+
+			if err := s.notifySyncedMentions(
+				ctx,
+				tx,
+				scope,
+				task.OrganizationID,
+				task.ID,
+				task.Name,
+				oldTask.Content,
+				task.Content,
+				actorID,
+			); err != nil {
+				return fmt.Errorf("cannot notify synced mentions: %w", err)
 			}
 
 			assigneeChanged := task.AssignedToID != nil &&
@@ -578,6 +599,15 @@ func touchInboundLink(
 	}
 
 	return nil
+}
+
+// inboundContentUnchanged reports whether an inbound issue update is a
+// no-op: the canonical markdown hash matches the one already stored. A
+// plain @Name that this update just resolved to a real mention chip
+// renders the same markdown as before, so mentionsStructureChanged must
+// be set to tell that structural change apart from a true no-op.
+func inboundContentUnchanged(hash string, storedHash *string, mentionsStructureChanged bool) bool {
+	return !mentionsStructureChanged && storedHash != nil && *storedHash == hash
 }
 
 func isAppActor(metadata json.RawMessage, actorID string) bool {

@@ -48,12 +48,15 @@ type importedFileMeta struct {
 
 // linearImport is markdown with Linear uploads already copied into Probo.
 type linearImport struct {
-	connectorID    gid.GID
-	organizationID gid.GID
-	markdown       string
-	files          map[string]string
-	metas          map[string]importedFileMeta
-	created        []createdInboundFile
+	connectorID      gid.GID
+	organizationID   gid.GID
+	markdown         string
+	files            map[string]string
+	metas            map[string]importedFileMeta
+	created          []createdInboundFile
+	mentionsApplied  bool
+	mentionContent   string
+	mentionCanonical string
 }
 
 // createdInboundFile is a private file stored by this import. A discarded
@@ -206,7 +209,7 @@ func (s *Service) importLinearFiles(
 				continue
 			}
 
-			return "", nil, nil, nil, err
+			return "", nil, nil, created, err
 		}
 
 		if fileID == "" {
@@ -239,7 +242,7 @@ func (s *Service) importLinearFiles(
 		referencedAttachments(markdown, files),
 		metas,
 	); err != nil {
-		return "", nil, nil, nil, err
+		return "", nil, nil, created, err
 	}
 
 	markdown = replaceLinearAssets(markdown, files)
@@ -279,17 +282,31 @@ func (s *Service) prepareLinearImport(
 		continueOnFailure,
 	)
 	if err != nil {
-		return nil, err
+		discardScope := coredata.NewScope(organizationID.TenantID(), gid.Nil)
+		if discardErr := s.discardCreatedFiles(ctx, discardScope, created); discardErr != nil {
+			return nil, fmt.Errorf("cannot discard Linear files: %w", errors.Join(err, discardErr))
+		}
+
+		return nil, fmt.Errorf("cannot import Linear files: %w", err)
 	}
 
-	return &linearImport{
+	imported := &linearImport{
 		connectorID:    connectorID,
 		organizationID: organizationID,
 		markdown:       rewritten,
 		files:          files,
 		metas:          metas,
 		created:        created,
-	}, nil
+	}
+	if err := s.attachLinearMentions(ctx, client, scope, organizationID, imported); err != nil {
+		if discardErr := s.discardInboundImport(ctx, imported); discardErr != nil {
+			return nil, fmt.Errorf("cannot discard Linear files: %w", errors.Join(err, discardErr))
+		}
+
+		return nil, fmt.Errorf("cannot attach Linear mentions: %w", err)
+	}
+
+	return imported, nil
 }
 
 func (s *Service) resolveInboundFile(

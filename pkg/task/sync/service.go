@@ -258,7 +258,7 @@ func (s *Service) PublishToLinear(
 		return nil, fmt.Errorf("cannot pick Linear workflow state: %w", err)
 	}
 
-	markdown, err := ContentToMarkdown(task.Content)
+	canonical, err := ContentToMarkdown(task.Content)
 	if err != nil {
 		return nil, fmt.Errorf("cannot convert task content to markdown: %w", err)
 	}
@@ -307,6 +307,19 @@ func (s *Service) PublishToLinear(
 		issue = issueFromExternalLink(reused)
 		files = attachmentsFromMetadata(reused.Metadata)
 	} else {
+		markdown, err := s.linearIssueDescriptionMarkdown(
+			ctx,
+			scope,
+			client,
+			task.OrganizationID,
+			task.Content,
+		)
+		if err != nil {
+			s.compensateFailedPublish(ctx, client, scope, taskID, "")
+
+			return nil, fmt.Errorf("cannot convert task mentions: %w", err)
+		}
+
 		description, uploaded, _, err := s.embedLinearDescription(
 			ctx,
 			client,
@@ -353,7 +366,7 @@ func (s *Service) PublishToLinear(
 		destination,
 		viewerID,
 		issue,
-		markdown,
+		canonical,
 		files,
 	)
 	if err != nil {
@@ -541,6 +554,15 @@ func (s *Service) LinkToLinear(
 		}
 
 		return nil, fmt.Errorf("cannot sync Linear comments: %w", err)
+	}
+
+	if err := s.notifyLinkedMentions(ctx, scope, previous, linked, identityID); err != nil && s.logger != nil {
+		s.logger.WarnCtx(
+			ctx,
+			"cannot notify newly linked Linear mentions",
+			log.String("task_id", taskID.String()),
+			log.Error(err),
+		)
 	}
 
 	return link, nil
@@ -771,14 +793,16 @@ func (s *Service) linearIssueContent(
 		return "", "", nil, fmt.Errorf("cannot import Linear description files: %w", err)
 	}
 
-	content, err := MarkdownToContent(markdown)
+	content, canonical, err := s.contentFromLinearMarkdown(
+		ctx,
+		client,
+		scope,
+		organizationID,
+		markdown,
+		metas,
+	)
 	if err != nil {
-		return "", "", nil, err
-	}
-
-	content, canonical, err := applyImportedFiles(content, metas)
-	if err != nil {
-		return "", "", nil, err
+		return "", "", nil, fmt.Errorf("cannot convert Linear description: %w", err)
 	}
 
 	return content, canonical, files, nil

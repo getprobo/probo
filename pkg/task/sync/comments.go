@@ -72,13 +72,24 @@ func (s *Service) copyTaskCommentsToLinear(
 			continue
 		}
 
-		markdown, err := ContentToMarkdown(comment.Content)
+		canonical, err := ContentToMarkdown(comment.Content)
 		if err != nil {
 			return createdIDs, fmt.Errorf("cannot convert task comment %q: %w", comment.ID, err)
 		}
 
-		if strings.TrimSpace(markdown) == "" {
+		if strings.TrimSpace(canonical) == "" {
 			continue
+		}
+
+		markdown, err := s.linearCommentMarkdown(
+			ctx,
+			scope,
+			client,
+			comment.OrganizationID,
+			comment.Content,
+		)
+		if err != nil {
+			return createdIDs, fmt.Errorf("cannot convert task comment %q mentions: %w", comment.ID, err)
 		}
 
 		description, files, changed, err := s.embedLinearDescription(
@@ -115,7 +126,7 @@ func (s *Service) copyTaskCommentsToLinear(
 
 		createdIDs = append(createdIDs, created.ID)
 
-		if err := s.saveCommentLink(ctx, scope, link, comment.ID, created, CommentContentHash(markdown)); err != nil {
+		if err := s.saveCommentLink(ctx, scope, link, comment.ID, created, CommentContentHash(canonical)); err != nil {
 			return createdIDs, err
 		}
 	}
@@ -209,14 +220,16 @@ func (s *Service) importLinearComment(
 		link.Metadata = next
 	}
 
-	content, err := MarkdownToContent(markdown)
+	content, canonical, err := s.contentFromLinearMarkdown(
+		ctx,
+		client,
+		scope,
+		link.OrganizationID,
+		markdown,
+		metas,
+	)
 	if err != nil {
 		return gid.Nil, fmt.Errorf("cannot convert Linear comment %q: %w", remote.ID, err)
-	}
-
-	content, canonical, err := applyImportedFiles(content, metas)
-	if err != nil {
-		return gid.Nil, fmt.Errorf("cannot render Linear comment %q: %w", remote.ID, err)
 	}
 
 	if strings.TrimSpace(canonical) == "" {
@@ -565,10 +578,29 @@ func (s *Service) applyInboundCommentTx(
 		err   error
 	)
 
-	if prepared != nil {
+	var (
+		content   string
+		canonical string
+	)
+
+	if prepared != nil && prepared.mentionsApplied {
+		content = prepared.mentionContent
+		canonical = prepared.mentionCanonical
+		files = mergeAttachmentMaps(files, prepared.files)
+	} else if prepared != nil {
 		body = prepared.markdown
 		files = mergeAttachmentMaps(files, prepared.files)
 		metas = prepared.metas
+
+		content, err = MarkdownToContent(body)
+		if err != nil {
+			return fmt.Errorf("cannot parse Linear comment: %w", err)
+		}
+
+		content, canonical, err = applyImportedFiles(content, metas)
+		if err != nil {
+			return fmt.Errorf("cannot apply imported Linear comment files: %w", err)
+		}
 	} else {
 		body, files, metas, err = s.importLinearMarkdown(
 			ctx,
@@ -582,16 +614,27 @@ func (s *Service) applyInboundCommentTx(
 		if err != nil {
 			return fmt.Errorf("cannot import Linear comment files: %w", err)
 		}
-	}
 
-	content, err := MarkdownToContent(body)
-	if err != nil {
-		return fmt.Errorf("cannot read Linear comment: %w", err)
-	}
+		var client *linear.Client
 
-	content, canonical, err := applyImportedFiles(content, metas)
-	if err != nil {
-		return fmt.Errorf("cannot read Linear comment: %w", err)
+		if textMayContainLinearProfile(body) {
+			client, err = s.linearClientForConnectorID(ctx, scope, link.ConnectorID)
+			if err != nil {
+				return fmt.Errorf("cannot resolve Linear mentions: %w", err)
+			}
+		}
+
+		content, canonical, err = s.contentFromLinearMarkdown(
+			ctx,
+			client,
+			scope,
+			link.OrganizationID,
+			body,
+			metas,
+		)
+		if err != nil {
+			return fmt.Errorf("cannot convert Linear comment: %w", err)
+		}
 	}
 
 	if strings.TrimSpace(canonical) == "" {
@@ -644,7 +687,24 @@ func (s *Service) applyInboundCommentTx(
 			return nil
 		}
 
-		return s.updateImportedComment(ctx, tx, actorScope, existing, content, hash, remoteUpdatedAt)
+		mentionActor := envelope.Actor
+		mentionActor.Email = authorEmail
+
+		actorProfileID, err := inboundActivityActorID(ctx, tx, scope, link.OrganizationID, mentionActor)
+		if err != nil {
+			return fmt.Errorf("cannot resolve Linear mention actor: %w", err)
+		}
+
+		return s.updateImportedComment(
+			ctx,
+			tx,
+			actorScope,
+			existing,
+			content,
+			hash,
+			remoteUpdatedAt,
+			actorProfileID,
+		)
 	}
 
 	ownerID, err := resolveCommentOwnerTx(ctx, tx, scope, link, authorEmail)
@@ -699,6 +759,26 @@ func (s *Service) applyInboundCommentTx(
 		return fmt.Errorf("cannot emit task comment created webhook: %w", err)
 	}
 
+	mentionActor := envelope.Actor
+	mentionActor.Email = authorEmail
+
+	actorProfileID, err := inboundActivityActorID(ctx, tx, scope, link.OrganizationID, mentionActor)
+	if err != nil {
+		return fmt.Errorf("cannot resolve Linear mention actor: %w", err)
+	}
+
+	if err := s.notifySyncedCommentMentions(
+		ctx,
+		tx,
+		scope,
+		taskComment.TaskID,
+		"",
+		taskComment.Content,
+		actorProfileID,
+	); err != nil {
+		return fmt.Errorf("cannot notify synced comment mentions: %w", err)
+	}
+
 	return nil
 }
 
@@ -734,6 +814,7 @@ func (s *Service) updateImportedComment(
 	content string,
 	hash string,
 	remoteUpdatedAt *time.Time,
+	actorProfileID *gid.GID,
 ) error {
 	taskComment := &coredata.TaskComment{}
 	if err := taskComment.LoadByID(ctx, tx, scope, mapping.TaskCommentID); err != nil {
@@ -771,6 +852,18 @@ func (s *Service) updateImportedComment(
 		webhooktypes.NewTaskComment(&previous),
 	); err != nil {
 		return fmt.Errorf("cannot emit task comment updated webhook: %w", err)
+	}
+
+	if err := s.notifySyncedCommentMentions(
+		ctx,
+		tx,
+		scope,
+		taskComment.TaskID,
+		previous.Content,
+		taskComment.Content,
+		actorProfileID,
+	); err != nil {
+		return fmt.Errorf("cannot notify synced comment mentions: %w", err)
 	}
 
 	return nil
@@ -968,16 +1061,16 @@ func (h *outboundHandler) processCommentUpsert(
 			return h.succeed(ctx, item)
 		}
 
-		markdown, err := ContentToMarkdown(comment.Content)
+		canonical, err := ContentToMarkdown(comment.Content)
 		if err != nil {
 			return fmt.Errorf("cannot convert task comment: %w", err)
 		}
 
-		if strings.TrimSpace(markdown) == "" {
+		if strings.TrimSpace(canonical) == "" {
 			return h.succeed(ctx, item)
 		}
 
-		hash := CommentContentHash(markdown)
+		hash := CommentContentHash(canonical)
 		loaded := false
 
 		var known map[string]string
@@ -1007,6 +1100,17 @@ func (h *outboundHandler) processCommentUpsert(
 			if !missing {
 				return h.succeed(ctx, item)
 			}
+		}
+
+		markdown, err := h.svc.linearCommentMarkdown(
+			ctx,
+			scope,
+			client,
+			comment.OrganizationID,
+			comment.Content,
+		)
+		if err != nil {
+			return fmt.Errorf("cannot convert task comment mentions: %w", err)
 		}
 
 		var description string
@@ -1314,23 +1418,9 @@ func (s *Service) listTaskComments(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			loaded, err := page.LoadAll(
-				ctx,
-				page.OrderBy[coredata.TaskCommentOrderField]{
-					Field:     coredata.TaskCommentOrderFieldCreatedAt,
-					Direction: page.OrderDirectionAsc,
-				},
-				func(ctx context.Context, cursor *page.Cursor[coredata.TaskCommentOrderField]) ([]*coredata.TaskComment, error) {
-					var batch coredata.TaskComments
-					if err := batch.LoadByTaskID(ctx, conn, scope, taskID, cursor); err != nil {
-						return nil, err
-					}
-
-					return batch, nil
-				},
-			)
+			loaded, err := loadTaskComments(ctx, conn, scope, taskID)
 			if err != nil {
-				return fmt.Errorf("cannot list task comments: %w", err)
+				return err
 			}
 
 			comments = loaded

@@ -247,13 +247,27 @@ func (s *Service) importLinearIssueForConnector(
 		return fmt.Errorf("cannot insert imported task link: %w", err)
 	}
 
-	if s.recordImportedTask == nil {
-		return nil
-	}
-
 	actorID, err := inboundActivityActorID(ctx, tx, scope, connector.OrganizationID, envelope.Actor)
 	if err != nil {
 		return fmt.Errorf("cannot resolve Linear activity actor: %w", err)
+	}
+
+	if err := s.notifySyncedMentions(
+		ctx,
+		tx,
+		scope,
+		task.OrganizationID,
+		task.ID,
+		task.Name,
+		"",
+		task.Content,
+		actorID,
+	); err != nil {
+		return fmt.Errorf("cannot notify synced mentions: %w", err)
+	}
+
+	if s.recordImportedTask == nil {
+		return nil
 	}
 
 	actorIdentityID, err := linearActorIdentityID(ctx, tx, scope, connector.OrganizationID, envelope.Actor.Email)
@@ -385,14 +399,27 @@ func (s *Service) importedTaskContent(
 		created = storedFiles
 	}
 
-	content, err := MarkdownToContent(description)
-	if err != nil {
-		return "", "", nil, nil, err
+	var client *linear.Client
+
+	if textMayContainLinearProfile(description) {
+		loaded, _, clientErr := s.linearClientForConnector(ctx, scope, connector)
+		if clientErr != nil {
+			return "", "", nil, nil, fmt.Errorf("cannot resolve Linear mentions: %w", clientErr)
+		}
+
+		client = loaded
 	}
 
-	content, markdown, err := applyImportedFiles(content, metas)
+	content, markdown, err := s.contentFromLinearMarkdown(
+		ctx,
+		client,
+		scope,
+		connector.OrganizationID,
+		description,
+		metas,
+	)
 	if err != nil {
-		return "", "", nil, nil, err
+		return "", "", nil, nil, fmt.Errorf("cannot convert imported Linear description: %w", err)
 	}
 
 	return content, markdown, files, created, nil

@@ -388,6 +388,72 @@ func TestImportLinearMarkdown_BestEffortKeepsTaskText(t *testing.T) {
 	assert.Contains(t, rewritten, assetURL)
 }
 
+func TestImportLinearFiles_ReturnsCreatedFilesOnFailure(t *testing.T) {
+	t.Parallel()
+
+	const (
+		imageURL = "https://uploads.linear.app/org/file/diagram.png"
+		failURL  = "https://uploads.linear.app/org/file/broken.pdf"
+	)
+
+	store := &memoryAttachmentStore{}
+	client := linear.NewClient(&http.Client{
+		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			switch req.URL.Path {
+			case "/org/file/diagram.png":
+				header := make(http.Header)
+				header.Set("Content-Type", "image/png")
+
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Header:     header,
+					Body:       io.NopCloser(strings.NewReader("png-bytes")),
+					Request:    req,
+				}, nil
+			case "/org/file/broken.pdf":
+				return &http.Response{
+					StatusCode: http.StatusInternalServerError,
+					Body:       io.NopCloser(strings.NewReader("")),
+					Header:     make(http.Header),
+					Request:    req,
+				}, nil
+			default:
+				t.Errorf("unexpected Linear asset request %s", req.URL.Path)
+
+				return &http.Response{
+					StatusCode: http.StatusInternalServerError,
+					Body:       io.NopCloser(strings.NewReader("")),
+					Header:     make(http.Header),
+					Request:    req,
+				}, nil
+			}
+		}),
+	}, "https://api.linear.app")
+
+	markdown := "![diagram](" + imageURL + ")\n\n[broken.pdf](" + failURL + ")"
+
+	svc := &Service{stores: store}
+	_, files, metas, created, err := svc.importLinearFiles(
+		t.Context(),
+		client,
+		nil,
+		gid.Nil,
+		gid.Nil,
+		markdown,
+		nil,
+		false,
+	)
+
+	require.Error(t, err)
+	assert.Nil(t, files)
+	assert.Nil(t, metas)
+	require.Len(t, store.files, 1, "the image must have been stored before the failure")
+	require.Len(t, created, 1, "the already-stored file must be reported so the caller can discard it")
+	assert.Equal(t, imageURL, created[0].assetURL)
+	assert.Equal(t, gid.Nil, created[0].connectorID)
+	assert.NotEqual(t, "", created[0].id.String())
+}
+
 func TestImportLinearMarkdown_SkipsMissingAsset(t *testing.T) {
 	t.Parallel()
 

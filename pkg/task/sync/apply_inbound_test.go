@@ -272,6 +272,38 @@ func TestPickLinkForLinearOrganization(t *testing.T) {
 	assert.Nil(t, got)
 }
 
+func TestInboundContentUnchanged(t *testing.T) {
+	t.Parallel()
+
+	hash := "hash-a"
+	stored := "hash-a"
+	other := "hash-b"
+
+	t.Run("no stored hash is a change", func(t *testing.T) {
+		t.Parallel()
+
+		assert.False(t, inboundContentUnchanged(hash, nil, false))
+	})
+
+	t.Run("different hash is a change", func(t *testing.T) {
+		t.Parallel()
+
+		assert.False(t, inboundContentUnchanged(hash, &other, false))
+	})
+
+	t.Run("same hash without a mention structure change is a no-op", func(t *testing.T) {
+		t.Parallel()
+
+		assert.True(t, inboundContentUnchanged(hash, &stored, false))
+	})
+
+	t.Run("same hash with a mention structure change is still a change", func(t *testing.T) {
+		t.Parallel()
+
+		assert.False(t, inboundContentUnchanged(hash, &stored, true))
+	})
+}
+
 func TestMapInboundIssue_PartialPayloadKeepsOmittedFields(t *testing.T) {
 	t.Parallel()
 

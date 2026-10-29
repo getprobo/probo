@@ -259,9 +259,20 @@ func (h *outboundHandler) processUpdate(
 			return h.succeed(ctx, item)
 		}
 
-		markdown, sentHash, err := outboundTaskHash(task)
+		_, sentHash, err := outboundTaskHash(task)
 		if err != nil {
-			return err
+			return fmt.Errorf("cannot hash outbound task: %w", err)
+		}
+
+		markdown, err := h.svc.linearIssueDescriptionMarkdown(
+			ctx,
+			scope,
+			client,
+			task.OrganizationID,
+			task.Content,
+		)
+		if err != nil {
+			return fmt.Errorf("cannot convert task mentions: %w", err)
 		}
 
 		stateID, err := PickWorkflowStateID(states, task.State)
