@@ -20,7 +20,7 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { organizationLocator, documentLocator, compliancePortalLocator } from '../../locators';
-import { proboApiRequest, readResourceId } from '../../GenericFunctions';
+import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	compliancePortalLocator({
@@ -62,8 +62,8 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const compliancePortalId = readResourceId(this.getNodeParameter('compliancePortalId', itemIndex));
-	const documentId = readResourceId(this.getNodeParameter('documentId', itemIndex));
+	const compliancePortalId = this.getNodeParameter('compliancePortalId', itemIndex, '', { extractValue: true }) as string;
+	const documentId = this.getNodeParameter('documentId', itemIndex, '', { extractValue: true }) as string;
 	const compliancePortalVisibility = this.getNodeParameter('compliancePortalVisibility', itemIndex) as string;
 
 	const query = `

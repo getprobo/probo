@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest, readResourceId } from '../../GenericFunctions';
+import { proboApiRequest } from '../../GenericFunctions';
 import { personLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
@@ -76,7 +76,7 @@ export async function execute(
 	};
 
 	if (!clearOwner) {
-		input.ownerId = readResourceId(this.getNodeParameter('ownerId', itemIndex));
+		input.ownerId = this.getNodeParameter('ownerId', itemIndex, '', { extractValue: true }) as string;
 	}
 
 	const query = `

@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest, readResourceId } from '../../GenericFunctions';
+import { proboApiRequest } from '../../GenericFunctions';
 import { internalControlLocator, personLocator, taskLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
@@ -224,7 +224,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const taskId = readResourceId(this.getNodeParameter('taskId', itemIndex));
+	const taskId = this.getNodeParameter('taskId', itemIndex, '', { extractValue: true }) as string;
 	const name = this.getNodeParameter('name', itemIndex, '') as string;
 	const content = this.getNodeParameter('content', itemIndex, '') as string;
 	const state = this.getNodeParameter('state', itemIndex, '') as string;
@@ -232,8 +232,8 @@ export async function execute(
 	const rank = this.getNodeParameter('rank', itemIndex, '') as string;
 	const timeEstimate = this.getNodeParameter('timeEstimate', itemIndex, '') as string;
 	const deadline = this.getNodeParameter('deadline', itemIndex, '') as string;
-	const assignedToId = readResourceId(this.getNodeParameter('assignedToId', itemIndex, ''));
-	const internalControlId = readResourceId(this.getNodeParameter('internalControlId', itemIndex, ''));
+	const assignedToId = this.getNodeParameter('assignedToId', itemIndex, '', { extractValue: true }) as string;
+	const internalControlId = this.getNodeParameter('internalControlId', itemIndex, '', { extractValue: true }) as string;
 	const recurrenceInterval = this.getNodeParameter('recurrenceInterval', itemIndex, '') as string;
 	const clearRecurrenceInterval = this.getNodeParameter('clearRecurrenceInterval', itemIndex, false) as boolean;
 

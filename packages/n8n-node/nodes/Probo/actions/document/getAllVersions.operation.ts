@@ -20,7 +20,7 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
 import { organizationLocator, documentLocator } from '../../locators';
-import { proboApiRequestAllItems, readResourceId, executionItems } from '../../GenericFunctions';
+import { proboApiRequestAllItems, executionItems } from '../../GenericFunctions';
 import { documentVersionSelection, withParentReference } from '../../output';
 
 export const description: INodeProperties[] = [
@@ -112,7 +112,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData[]> {
-	const documentId = readResourceId(this.getNodeParameter('documentId', itemIndex));
+	const documentId = this.getNodeParameter('documentId', itemIndex, '', { extractValue: true }) as string;
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
 	const simplify = this.getNodeParameter('simple', itemIndex, true) as boolean;

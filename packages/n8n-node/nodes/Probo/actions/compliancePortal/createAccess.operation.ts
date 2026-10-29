@@ -20,7 +20,7 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
-import { proboApiRequest, readResourceId } from '../../GenericFunctions';
+import { proboApiRequest } from '../../GenericFunctions';
 import { compliancePortalLocator, personLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
@@ -117,8 +117,8 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const compliancePortalId = readResourceId(this.getNodeParameter('compliancePortalId', itemIndex));
-	const profileId = readResourceId(this.getNodeParameter('profileId', itemIndex, ''));
+	const compliancePortalId = this.getNodeParameter('compliancePortalId', itemIndex, '', { extractValue: true }) as string;
+	const profileId = this.getNodeParameter('profileId', itemIndex, '', { extractValue: true }) as string;
 	const email = this.getNodeParameter('email', itemIndex, '') as string;
 	const documentIds = stringList(this.getNodeParameter('documentIds', itemIndex, []));
 	const reportIds = stringList(this.getNodeParameter('reportIds', itemIndex, []));

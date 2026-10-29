@@ -20,7 +20,7 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { organizationLocator } from '../../locators';
-import { proboApiRequest, readResourceId } from '../../GenericFunctions';
+import { proboApiRequest } from '../../GenericFunctions';
 import { internalControlFields, readInternalControlFields } from './internalControlFields';
 
 export const description: INodeProperties[] = [
@@ -76,7 +76,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const organizationId = readResourceId(this.getNodeParameter('organizationId', itemIndex));
+	const organizationId = this.getNodeParameter('organizationId', itemIndex, '', { extractValue: true }) as string;
 	const name = this.getNodeParameter('name', itemIndex) as string;
 	const description = this.getNodeParameter('description', itemIndex, '') as string;
 	const category = this.getNodeParameter('category', itemIndex) as string;
@@ -129,7 +129,7 @@ export async function execute(
 			...(description && { description }),
 			category,
 			...readInternalControlFields(
-				(field) => readResourceId(this.getNodeParameter(field, itemIndex, '')),
+				(field) => this.getNodeParameter(field, itemIndex, '', { extractValue: true }) as string,
 			),
 		},
 	};

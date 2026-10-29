@@ -24,24 +24,6 @@ export const profileSelection = `id
 fullName
 emailAddress`;
 
-export function readResourceId(value: unknown): string {
-	if (typeof value === 'string') {
-		return value;
-	}
-
-	if (value && typeof value === 'object' && 'value' in value) {
-		const inner = (value as { value?: unknown }).value;
-		if (typeof inner === 'string') {
-			return inner;
-		}
-		if (typeof inner === 'number') {
-			return String(inner);
-		}
-	}
-
-	return '';
-}
-
 export function executionItems(records: IDataObject[], itemIndex: number): INodeExecutionData[] {
 	return records.map((json) => ({
 		json,

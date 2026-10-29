@@ -31,7 +31,7 @@ import { NodeApiError, NodeOperationError } from 'n8n-workflow';
 import { version } from '../../package.json';
 import { readGraphQLBody } from './graphqlResponse';
 
-export { executionItems, readResourceId } from './output';
+export { executionItems } from './output';
 
 type ApiRequestFn = (
 	this: IExecuteFunctions | IHookFunctions,

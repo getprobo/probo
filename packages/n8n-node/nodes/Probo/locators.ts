@@ -27,7 +27,7 @@ import {
 	type INodeProperties,
 } from 'n8n-workflow';
 import { proboApiRequest, proboConnectApiRequest } from './GenericFunctions';
-import { readResourceId } from './output';
+
 
 interface LocatorOptions {
 	name?: string;
@@ -528,7 +528,7 @@ export async function searchDocuments(
 	filter?: string,
 	paginationToken?: string,
 ): Promise<INodeListSearchResult> {
-	const organizationId = readResourceId(this.getCurrentNodeParameter('organizationId'));
+	const organizationId = (this.getCurrentNodeParameter('organizationId', { extractValue: true }) as string) ?? '';
 	if (!organizationId) {
 		throw new NodeOperationError(this.getNode(), 'Select an organization before searching documents');
 	}
@@ -618,7 +618,7 @@ async function searchInOrganization(
 	filter?: string,
 	paginationToken?: string,
 ): Promise<INodeListSearchResult> {
-	const organizationId = readResourceId(this.getCurrentNodeParameter('organizationId'));
+	const organizationId = (this.getCurrentNodeParameter('organizationId', { extractValue: true }) as string) ?? '';
 	if (!organizationId) {
 		throw new NodeOperationError(this.getNode(), 'Select an organization before searching');
 	}
@@ -710,7 +710,7 @@ export async function searchDocumentVersions(
 	filter?: string,
 	paginationToken?: string,
 ): Promise<INodeListSearchResult> {
-	const documentId = readResourceId(this.getCurrentNodeParameter('documentId'));
+	const documentId = (this.getCurrentNodeParameter('documentId', { extractValue: true }) as string) ?? '';
 	if (!documentId) {
 		throw new NodeOperationError(this.getNode(), 'Select a document before searching versions');
 	}

@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest, readResourceId } from '../../GenericFunctions';
+import { proboApiRequest } from '../../GenericFunctions';
 import { personLocator, riskLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
@@ -163,12 +163,12 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const riskId = readResourceId(this.getNodeParameter('riskId', itemIndex));
+	const riskId = this.getNodeParameter('riskId', itemIndex, '', { extractValue: true }) as string;
 	const riskAnalysisId = this.getNodeParameter('riskAnalysisId', itemIndex) as string;
 	const treatment = this.getNodeParameter('treatment', itemIndex) as string;
 	const inherentLikelihood = this.getNodeParameter('inherentLikelihood', itemIndex) as number;
 	const inherentImpact = this.getNodeParameter('inherentImpact', itemIndex) as number;
-	const ownerId = readResourceId(this.getNodeParameter('ownerId', itemIndex));
+	const ownerId = this.getNodeParameter('ownerId', itemIndex, '', { extractValue: true }) as string;
 	const additionalFields = this.getNodeParameter('additionalFields', itemIndex, {}) as {
 		residualLikelihood?: number;
 		residualImpact?: number;

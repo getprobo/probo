@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiMultipartRequest, readResourceId } from '../../GenericFunctions';
+import { proboApiMultipartRequest } from '../../GenericFunctions';
 import { auditLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
@@ -53,7 +53,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const auditId = readResourceId(this.getNodeParameter('auditId', itemIndex));
+	const auditId = this.getNodeParameter('auditId', itemIndex, '', { extractValue: true }) as string;
 	const binaryPropertyName = this.getNodeParameter('binaryPropertyName', itemIndex) as string;
 
 	const binaryData = this.helpers.assertBinaryData(itemIndex, binaryPropertyName);

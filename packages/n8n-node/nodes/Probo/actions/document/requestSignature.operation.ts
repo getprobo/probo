@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest, readResourceId } from '../../GenericFunctions';
+import { proboApiRequest } from '../../GenericFunctions';
 import { stampGraphqlNode, withParentReference } from '../../output';
 import { documentVersionLocator, personLocator, organizationLocator, documentLocator } from '../../locators';
 
@@ -52,8 +52,8 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const documentVersionId = readResourceId(this.getNodeParameter('documentVersionId', itemIndex));
-	const signatoryId = readResourceId(this.getNodeParameter('signatoryId', itemIndex));
+	const documentVersionId = this.getNodeParameter('documentVersionId', itemIndex, '', { extractValue: true }) as string;
+	const signatoryId = this.getNodeParameter('signatoryId', itemIndex, '', { extractValue: true }) as string;
 
 	const query = `
 		mutation RequestSignature($input: RequestSignatureInput!) {

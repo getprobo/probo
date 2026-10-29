@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest, readResourceId } from '../../GenericFunctions';
+import { proboApiRequest } from '../../GenericFunctions';
 import { accessReviewSourceIdsUpdateField } from './sources.fields';
 import { accessReviewCampaignLocator, organizationLocator } from '../../locators';
 
@@ -80,7 +80,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const accessReviewCampaignId = readResourceId(this.getNodeParameter('accessReviewCampaignId', itemIndex));
+	const accessReviewCampaignId = this.getNodeParameter('accessReviewCampaignId', itemIndex, '', { extractValue: true }) as string;
 	const name = this.getNodeParameter('name', itemIndex, '') as string;
 	const description = this.getNodeParameter('description', itemIndex, '') as string;
 	const additionalFields = this.getNodeParameter('additionalFields', itemIndex, {}) as {

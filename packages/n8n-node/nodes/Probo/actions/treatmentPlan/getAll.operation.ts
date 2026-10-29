@@ -20,7 +20,7 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
 import { organizationLocator, riskLocator } from '../../locators';
-import { proboApiRequestAllItems, readResourceId, executionItems } from '../../GenericFunctions';
+import { proboApiRequestAllItems, executionItems } from '../../GenericFunctions';
 
 const treatmentPlanNodeFields = `
 	id
@@ -236,8 +236,8 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData[]> {
-	const organizationId = readResourceId(this.getNodeParameter('organizationId', itemIndex));
-	const riskId = readResourceId(this.getNodeParameter('riskId', itemIndex, ''));
+	const organizationId = this.getNodeParameter('organizationId', itemIndex, '', { extractValue: true }) as string;
+	const riskId = this.getNodeParameter('riskId', itemIndex, '', { extractValue: true }) as string;
 	const riskAnalysisId = this.getNodeParameter('riskAnalysisId', itemIndex, '') as string;
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;

@@ -20,7 +20,7 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { organizationLocator, personLocator, riskLocator } from '../../locators';
-import { proboApiRequest, readResourceId } from '../../GenericFunctions';
+import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	organizationLocator({
@@ -197,7 +197,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const organizationId = readResourceId(this.getNodeParameter('organizationId', itemIndex));
+	const organizationId = this.getNodeParameter('organizationId', itemIndex, '', { extractValue: true }) as string;
 	const kind = this.getNodeParameter('kind', itemIndex) as string;
 	const description = this.getNodeParameter('description', itemIndex) as string;
 	const additionalFields = this.getNodeParameter('additionalFields', itemIndex, {}) as {
@@ -246,11 +246,11 @@ export async function execute(
 	if (additionalFields.identifiedOn) input.identifiedOn = additionalFields.identifiedOn;
 	if (additionalFields.rootCause) input.rootCause = additionalFields.rootCause;
 	if (additionalFields.correctiveAction) input.correctiveAction = additionalFields.correctiveAction;
-	if (readResourceId(additionalFields.ownerId)) input.ownerId = readResourceId(additionalFields.ownerId);
+	if (this.getNodeParameter('additionalFields.ownerId', itemIndex, '', { extractValue: true }) as string) input.ownerId = this.getNodeParameter('additionalFields.ownerId', itemIndex, '', { extractValue: true }) as string;
 	if (additionalFields.dueDate) input.dueDate = additionalFields.dueDate;
 	if (additionalFields.status) input.status = additionalFields.status;
 	if (additionalFields.priority) input.priority = additionalFields.priority;
-	if (readResourceId(additionalFields.riskId)) input.riskId = readResourceId(additionalFields.riskId);
+	if (this.getNodeParameter('additionalFields.riskId', itemIndex, '', { extractValue: true }) as string) input.riskId = this.getNodeParameter('additionalFields.riskId', itemIndex, '', { extractValue: true }) as string;
 	if (additionalFields.effectivenessCheck) input.effectivenessCheck = additionalFields.effectivenessCheck;
 
 	const responseData = await proboApiRequest.call(this, query, { input });

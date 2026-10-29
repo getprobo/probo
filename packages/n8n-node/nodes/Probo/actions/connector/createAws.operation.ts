@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import type { IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
-import { proboApiRequest, readResourceId } from '../../GenericFunctions';
+import { proboApiRequest } from '../../GenericFunctions';
 import { connectorNameField, connectorResultFields, organizationIdField } from './fields';
 
 const operation = 'createAwsWorkloadIdentity';
@@ -47,7 +47,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const organizationId = readResourceId(this.getNodeParameter('organizationId', itemIndex));
+	const organizationId = this.getNodeParameter('organizationId', itemIndex, '', { extractValue: true }) as string;
 	const name = this.getNodeParameter('name', itemIndex) as string;
 	const awsRoleArn = this.getNodeParameter('awsRoleArn', itemIndex) as string;
 

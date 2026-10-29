@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest, readResourceId } from '../../GenericFunctions';
+import { proboApiRequest } from '../../GenericFunctions';
 import { controlLocator, internalControlLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
@@ -43,8 +43,8 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const controlId = readResourceId(this.getNodeParameter('controlId', itemIndex));
-	const internalControlId = readResourceId(this.getNodeParameter('internalControlId', itemIndex));
+	const controlId = this.getNodeParameter('controlId', itemIndex, '', { extractValue: true }) as string;
+	const internalControlId = this.getNodeParameter('internalControlId', itemIndex, '', { extractValue: true }) as string;
 
 	const query = `
 		mutation CreateControlInternalControlMapping($input: CreateControlInternalControlMappingInput!) {

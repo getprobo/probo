@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest, readResourceId } from '../../GenericFunctions';
+import { proboApiRequest } from '../../GenericFunctions';
 import { assetLocator, organizationLocator, personLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
@@ -151,10 +151,10 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const id = readResourceId(this.getNodeParameter('id', itemIndex));
+	const id = this.getNodeParameter('id', itemIndex, '', { extractValue: true }) as string;
 	const name = this.getNodeParameter('name', itemIndex, '') as string;
 	const amount = this.getNodeParameter('amount', itemIndex, 0) as number;
-	const ownerId = readResourceId(this.getNodeParameter('ownerId', itemIndex, ''));
+	const ownerId = this.getNodeParameter('ownerId', itemIndex, '', { extractValue: true }) as string;
 	const assetType = this.getNodeParameter('assetType', itemIndex, '') as string;
 	const dataTypesStored = this.getNodeParameter('dataTypesStored', itemIndex, '') as string;
 	const thirdPartyIdsStr = this.getNodeParameter('thirdPartyIds', itemIndex, '') as string;

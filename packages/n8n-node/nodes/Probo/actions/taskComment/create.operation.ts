@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest, readResourceId } from '../../GenericFunctions';
+import { proboApiRequest } from '../../GenericFunctions';
 import { personLocator, taskLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
@@ -62,9 +62,9 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const taskId = readResourceId(this.getNodeParameter('taskId', itemIndex));
+	const taskId = this.getNodeParameter('taskId', itemIndex, '', { extractValue: true }) as string;
 	const content = this.getNodeParameter('content', itemIndex) as string;
-	const ownerId = readResourceId(this.getNodeParameter('ownerId', itemIndex, ''));
+	const ownerId = this.getNodeParameter('ownerId', itemIndex, '', { extractValue: true }) as string;
 
 	const query = `
 		mutation CreateTaskComment($input: CreateTaskCommentInput!) {

@@ -20,7 +20,7 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
 import { organizationLocator, auditLocator } from '../../locators';
-import { proboApiRequestAllItems, readResourceId, executionItems } from '../../GenericFunctions';
+import { proboApiRequestAllItems, executionItems } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	organizationLocator({
@@ -82,12 +82,9 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData[]> {
-	const organizationId = readResourceId(this.getNodeParameter('organizationId', itemIndex));
+	const organizationId = this.getNodeParameter('organizationId', itemIndex, '', { extractValue: true }) as string;
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
-	const filters = this.getNodeParameter('filters', itemIndex, {}) as {
-		auditId?: string;
-	};
 
 	const query = `
 		query GetFindings($organizationId: ID!, $first: Int, $after: CursorKey, $filter: FindingFilter) {
@@ -124,8 +121,8 @@ export async function execute(
 	const variables: IDataObject = { organizationId };
 	const filter: IDataObject = {};
 
-	if (readResourceId(filters.auditId)) {
-		filter.auditId = readResourceId(filters.auditId);
+	if (this.getNodeParameter('filters.auditId', itemIndex, '', { extractValue: true }) as string) {
+		filter.auditId = this.getNodeParameter('filters.auditId', itemIndex, '', { extractValue: true }) as string;
 	}
 
 	if (Object.keys(filter).length > 0) {

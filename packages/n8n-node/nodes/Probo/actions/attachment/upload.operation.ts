@@ -21,7 +21,7 @@
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { organizationLocator } from '../../locators';
 import { NodeOperationError } from 'n8n-workflow';
-import { proboApiMultipartRequest, readResourceId } from '../../GenericFunctions';
+import { proboApiMultipartRequest } from '../../GenericFunctions';
 import { resolveAttachmentFile } from './attachmentFile';
 
 export const description: INodeProperties[] = [
@@ -51,7 +51,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const organizationId = readResourceId(this.getNodeParameter('organizationId', itemIndex));
+	const organizationId = this.getNodeParameter('organizationId', itemIndex, '', { extractValue: true }) as string;
 	const binaryPropertyName = this.getNodeParameter('binaryPropertyName', itemIndex) as string;
 
 	const binaryData = this.helpers.assertBinaryData(itemIndex, binaryPropertyName);

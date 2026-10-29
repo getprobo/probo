@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest, readResourceId } from '../../GenericFunctions';
+import { proboApiRequest } from '../../GenericFunctions';
 import { personLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
@@ -210,7 +210,7 @@ export async function execute(
 	const requirement = this.getNodeParameter('requirement', itemIndex, '') as string;
 	const actionsToBeImplemented = this.getNodeParameter('actionsToBeImplemented', itemIndex, '') as string;
 	const regulator = this.getNodeParameter('regulator', itemIndex, '') as string;
-	const ownerId = readResourceId(this.getNodeParameter('ownerId', itemIndex, ''));
+	const ownerId = this.getNodeParameter('ownerId', itemIndex, '', { extractValue: true }) as string;
 	const lastReviewDate = this.getNodeParameter('lastReviewDate', itemIndex, '') as string;
 	const dueDate = this.getNodeParameter('dueDate', itemIndex, '') as string;
 	const status = this.getNodeParameter('status', itemIndex, '') as string;

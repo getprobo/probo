@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest, readResourceId } from '../../GenericFunctions';
+import { proboApiRequest } from '../../GenericFunctions';
 import { auditLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
@@ -54,7 +54,7 @@ export async function execute(
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
 	const findingId = this.getNodeParameter('findingId', itemIndex) as string;
-	const auditId = readResourceId(this.getNodeParameter('auditId', itemIndex));
+	const auditId = this.getNodeParameter('auditId', itemIndex, '', { extractValue: true }) as string;
 
 	const query = `
 		mutation DeleteFindingAuditMapping($input: DeleteFindingAuditMappingInput!) {
