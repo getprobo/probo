@@ -33,16 +33,34 @@ import (
 const attachMutation = `
 mutation($input: AttachTagInput!) {
   attachTag(input: $input) {
-    resourceId
-    tagId
+    tag {
+      id
+      key
+      value
+    }
+    tagAssignmentEdge {
+      node {
+        id
+      }
+    }
+    replacedTagAssignmentId
   }
 }
 `
 
 type attachResponse struct {
 	AttachTag struct {
-		ResourceID string `json:"resourceId"`
-		TagID      string `json:"tagId"`
+		Tag struct {
+			ID    string `json:"id"`
+			Key   string `json:"key"`
+			Value string `json:"value"`
+		} `json:"tag"`
+		TagAssignmentEdge struct {
+			Node struct {
+				ID string `json:"id"`
+			} `json:"node"`
+		} `json:"tagAssignmentEdge"`
+		ReplacedTagAssignmentID *string `json:"replacedTagAssignmentId"`
 	} `json:"attachTag"`
 }
 
@@ -55,6 +73,8 @@ func NewCmdAttach(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "attach",
 		Short: "Attach a tag to a resource",
+		Long: "Attach a tag to a resource. A resource holds one value per key, so " +
+			"attaching env=staging replaces env=prod on that resource.",
 		Example: `  # Attach a tag interactively
   prb tag attach --resource-id prbdoc_...
 
@@ -130,10 +150,19 @@ func NewCmdAttach(f *cmdutil.Factory) *cobra.Command {
 			a := resp.AttachTag
 			_, _ = fmt.Fprintf(
 				f.IOStreams.Out,
-				"Attached tag %s to resource %s\n",
-				a.TagID,
-				a.ResourceID,
+				"Attached tag %s=%s to resource %s\n",
+				a.Tag.Key,
+				a.Tag.Value,
+				flagResourceID,
 			)
+
+			if a.ReplacedTagAssignmentID != nil {
+				_, _ = fmt.Fprintf(
+					f.IOStreams.Out,
+					"Replaced the previous %s value on that resource\n",
+					a.Tag.Key,
+				)
+			}
 
 			return nil
 		},

@@ -188,7 +188,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&flagOrg, "organization-id", "", "Organization ID")
-	cmd.Flags().StringVar(&flagKey, "key", "", "Unique slug key for the tag")
+	cmd.Flags().StringVar(&flagKey, "key", "", "Slug key for the tag; each key and value pair is unique in the organization")
 	cmd.Flags().StringVar(&flagValue, "value", "", "Display value for the tag")
 	cmd.Flags().StringVar(&flagColor, "color", "", "Optional hex color (#RGB or #RRGGBB)")
 

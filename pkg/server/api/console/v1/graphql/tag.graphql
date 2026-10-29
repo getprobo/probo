@@ -81,7 +81,7 @@ type TagAssignment
         model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TagAssignment"
     ) {
     id: ID!
-    resource: Node! @goField(forceResolver: true)
+    resource: Node @goField(forceResolver: true)
     createdAt: Datetime!
 }
 
@@ -156,7 +156,7 @@ input UpdateTagInput {
     id: ID!
     key: String
     value: String
-    color: String
+    color: String @goField(omittable: true)
 }
 
 input DeleteTagInput {
@@ -186,11 +186,12 @@ type DeleteTagPayload {
 }
 
 type AttachTagPayload {
-    resourceId: ID!
-    tagId: ID!
+    tag: Tag!
+    tagAssignmentEdge: TagAssignmentEdge!
+    replacedTagAssignmentId: ID
 }
 
 type DetachTagPayload {
-    resourceId: ID!
-    tagId: ID!
+    tag: Tag!
+    deletedTagAssignmentId: ID
 }

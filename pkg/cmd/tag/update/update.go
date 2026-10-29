@@ -69,7 +69,10 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
   prb tag update --id prbrtg_...
 
   # Update key and value
-  prb tag update --id prbrtg_... --key environment --value staging`,
+  prb tag update --id prbrtg_... --key environment --value staging
+
+  # Remove the color
+  prb tag update --id prbrtg_... --color ""`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
 			if err != nil {
@@ -152,9 +155,9 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&flagID, "id", "", "Tag ID")
-	cmd.Flags().StringVar(&flagKey, "key", "", "Unique slug key for the tag")
+	cmd.Flags().StringVar(&flagKey, "key", "", "Slug key for the tag")
 	cmd.Flags().StringVar(&flagValue, "value", "", "Display value for the tag")
-	cmd.Flags().StringVar(&flagColor, "color", "", "Optional hex color (#RGB or #RRGGBB)")
+	cmd.Flags().StringVar(&flagColor, "color", "", "Hex color (#RGB or #RRGGBB); pass an empty value to clear it")
 
 	return cmd
 }

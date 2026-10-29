@@ -47,7 +47,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'Unique slug key for the tag within the organization',
+		description: 'Slug key for the tag; each key and value pair is unique within the organization',
 	},
 	{
 		displayName: 'Value',
@@ -75,6 +75,19 @@ export const description: INodeProperties[] = [
 		default: '',
 		description: 'Optional hex color (#RGB or #RRGGBB)',
 	},
+	{
+		displayName: 'Clear Color',
+		name: 'clearColor',
+		type: 'boolean',
+		displayOptions: {
+			show: {
+				resource: ['tag'],
+				operation: ['update'],
+			},
+		},
+		default: false,
+		description: 'Whether to remove the color from the tag',
+	},
 ];
 
 export async function execute(
@@ -85,6 +98,7 @@ export async function execute(
 	const key = this.getNodeParameter('key', itemIndex, '') as string;
 	const value = this.getNodeParameter('value', itemIndex, '') as string;
 	const color = this.getNodeParameter('color', itemIndex, '') as string;
+	const clearColor = this.getNodeParameter('clearColor', itemIndex, false) as boolean;
 
 	const query = `
 		mutation UpdateTag($input: UpdateTagInput!) {
@@ -104,7 +118,8 @@ export async function execute(
 	const input: Record<string, unknown> = { id };
 	if (key) input.key = key;
 	if (value) input.value = value;
-	if (color) input.color = color;
+	if (clearColor) input.color = null;
+	else if (color) input.color = color;
 
 	const responseData = await proboApiRequest.call(this, query, { input });
 

@@ -29,12 +29,8 @@ import (
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
-func TestTag_CatalogCRUD(t *testing.T) {
-	t.Parallel()
-
-	owner := testutil.NewClient(t, testutil.RoleOwner)
-
-	const createMutation = `
+const (
+	createTagMutation = `
 		mutation($input: CreateTagInput!) {
 			createTag(input: $input) {
 				tagEdge {
@@ -49,7 +45,46 @@ func TestTag_CatalogCRUD(t *testing.T) {
 		}
 	`
 
-	var createResult struct {
+	attachTagMutation = `
+		mutation($input: AttachTagInput!) {
+			attachTag(input: $input) {
+				tag {
+					id
+				}
+				tagAssignmentEdge {
+					node {
+						id
+					}
+				}
+				replacedTagAssignmentId
+			}
+		}
+	`
+
+	detachTagMutation = `
+		mutation($input: DetachTagInput!) {
+			detachTag(input: $input) {
+				tag {
+					id
+				}
+				deletedTagAssignmentId
+			}
+		}
+	`
+
+	tagsForResourceQuery = `
+		query($resourceId: ID!) {
+			tagsForResource(resourceId: $resourceId) {
+				id
+				key
+				value
+			}
+		}
+	`
+)
+
+type (
+	createTagResult struct {
 		CreateTag struct {
 			TagEdge struct {
 				Node struct {
@@ -62,7 +97,108 @@ func TestTag_CatalogCRUD(t *testing.T) {
 		} `json:"createTag"`
 	}
 
-	err := owner.Execute(createMutation, map[string]any{
+	attachTagResult struct {
+		AttachTag struct {
+			Tag struct {
+				ID string `json:"id"`
+			} `json:"tag"`
+			TagAssignmentEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"tagAssignmentEdge"`
+			ReplacedTagAssignmentID *string `json:"replacedTagAssignmentId"`
+		} `json:"attachTag"`
+	}
+
+	detachTagResult struct {
+		DetachTag struct {
+			Tag struct {
+				ID string `json:"id"`
+			} `json:"tag"`
+			DeletedTagAssignmentID *string `json:"deletedTagAssignmentId"`
+		} `json:"detachTag"`
+	}
+
+	tagsForResourceResult struct {
+		TagsForResource []struct {
+			ID    string `json:"id"`
+			Key   string `json:"key"`
+			Value string `json:"value"`
+		} `json:"tagsForResource"`
+	}
+)
+
+func createTag(t *testing.T, c *testutil.Client, key string, value string) string {
+	t.Helper()
+
+	var result createTagResult
+
+	err := c.Execute(createTagMutation, map[string]any{
+		"input": map[string]any{
+			"organizationId": c.GetOrganizationID().String(),
+			"key":            key,
+			"value":          value,
+		},
+	}, &result)
+	require.NoError(t, err)
+
+	return result.CreateTag.TagEdge.Node.ID
+}
+
+func attachTag(t *testing.T, c *testutil.Client, resourceID string, tagID string) attachTagResult {
+	t.Helper()
+
+	var result attachTagResult
+
+	err := c.Execute(attachTagMutation, map[string]any{
+		"input": map[string]any{
+			"resourceId": resourceID,
+			"tagId":      tagID,
+		},
+	}, &result)
+	require.NoError(t, err)
+
+	return result
+}
+
+func detachTag(t *testing.T, c *testutil.Client, resourceID string, tagID string) detachTagResult {
+	t.Helper()
+
+	var result detachTagResult
+
+	err := c.Execute(detachTagMutation, map[string]any{
+		"input": map[string]any{
+			"resourceId": resourceID,
+			"tagId":      tagID,
+		},
+	}, &result)
+	require.NoError(t, err)
+
+	return result
+}
+
+func tagsForResource(t *testing.T, c *testutil.Client, resourceID string) tagsForResourceResult {
+	t.Helper()
+
+	var result tagsForResourceResult
+
+	err := c.Execute(tagsForResourceQuery, map[string]any{
+		"resourceId": resourceID,
+	}, &result)
+	require.NoError(t, err)
+
+	return result
+}
+
+func TestTag_CatalogCRUD(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	var createResult createTagResult
+
+	err := owner.Execute(createTagMutation, map[string]any{
 		"input": map[string]any{
 			"organizationId": owner.GetOrganizationID().String(),
 			"key":            "environment",
@@ -111,6 +247,25 @@ func TestTag_CatalogCRUD(t *testing.T) {
 	assert.Equal(t, "Staging", updateResult.UpdateTag.Tag.Value)
 	require.NotNil(t, updateResult.UpdateTag.Tag.Color)
 	assert.Equal(t, "#00ff00", *updateResult.UpdateTag.Tag.Color)
+
+	err = owner.Execute(updateMutation, map[string]any{
+		"input": map[string]any{
+			"id":    tagID,
+			"value": "Staging",
+		},
+	}, &updateResult)
+	require.NoError(t, err)
+	require.NotNil(t, updateResult.UpdateTag.Tag.Color, "omitting color keeps it")
+	assert.Equal(t, "#00ff00", *updateResult.UpdateTag.Tag.Color)
+
+	err = owner.Execute(updateMutation, map[string]any{
+		"input": map[string]any{
+			"id":    tagID,
+			"color": nil,
+		},
+	}, &updateResult)
+	require.NoError(t, err)
+	assert.Nil(t, updateResult.UpdateTag.Tag.Color, "null color clears it")
 
 	const listQuery = `
 		query($id: ID!) {
@@ -185,91 +340,49 @@ func TestTag_CatalogCRUD(t *testing.T) {
 	assert.Equal(t, tagID, deleteResult.DeleteTag.DeletedTagID)
 }
 
-func TestTag_AttachDetachAndConflict(t *testing.T) {
+func TestTag_KeyHoldsSeveralValues(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	documentID := factory.NewDocument(owner).WithTitle("Tagged Document").Create()
 
-	const createMutation = `
-		mutation($input: CreateTagInput!) {
-			createTag(input: $input) {
-				tagEdge { node { id } }
-			}
-		}
-	`
+	securityID := createTag(t, owner, "department", "Security")
+	engineeringID := createTag(t, owner, "department", "Engineering")
+	assert.NotEqual(t, securityID, engineeringID)
 
-	var createResult struct {
-		CreateTag struct {
-			TagEdge struct {
-				Node struct {
-					ID string `json:"id"`
-				} `json:"node"`
-			} `json:"tagEdge"`
-		} `json:"createTag"`
-	}
-
-	err := owner.Execute(createMutation, map[string]any{
+	_, err := owner.Do(createTagMutation, map[string]any{
 		"input": map[string]any{
 			"organizationId": owner.GetOrganizationID().String(),
 			"key":            "department",
 			"value":          "Security",
 		},
-	}, &createResult)
-	require.NoError(t, err)
-
-	tagID := createResult.CreateTag.TagEdge.Node.ID
-
-	const attachMutation = `
-		mutation($input: AttachTagInput!) {
-			attachTag(input: $input) {
-				resourceId
-				tagId
-			}
-		}
-	`
-
-	err = owner.Execute(attachMutation, map[string]any{
-		"input": map[string]any{
-			"resourceId": documentID,
-			"tagId":      tagID,
-		},
-	}, nil)
-	require.NoError(t, err)
-
-	_, err = owner.Do(attachMutation, map[string]any{
-		"input": map[string]any{
-			"resourceId": documentID,
-			"tagId":      tagID,
-		},
 	})
-	require.Error(t, err)
+	testutil.RequireErrorCode(t, err, "CONFLICT")
+}
 
-	const forResourceQuery = `
-		query($resourceId: ID!) {
-			tagsForResource(resourceId: $resourceId) {
-				id
-				key
-				value
-			}
-		}
-	`
+func TestTag_AttachAndDetach(t *testing.T) {
+	t.Parallel()
 
-	var forResourceResult struct {
-		TagsForResource []struct {
-			ID    string `json:"id"`
-			Key   string `json:"key"`
-			Value string `json:"value"`
-		} `json:"tagsForResource"`
-	}
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	documentID := factory.NewDocument(owner).WithTitle("Tagged Document").Create()
+	tagID := createTag(t, owner, "classification", "Internal")
 
-	err = owner.Execute(forResourceQuery, map[string]any{
-		"resourceId": documentID,
-	}, &forResourceResult)
-	require.NoError(t, err)
-	require.Len(t, forResourceResult.TagsForResource, 1)
-	assert.Equal(t, tagID, forResourceResult.TagsForResource[0].ID)
-	assert.Equal(t, "department", forResourceResult.TagsForResource[0].Key)
+	first := attachTag(t, owner, documentID, tagID)
+	assert.Equal(t, tagID, first.AttachTag.Tag.ID)
+	assert.NotEmpty(t, first.AttachTag.TagAssignmentEdge.Node.ID)
+	assert.Nil(t, first.AttachTag.ReplacedTagAssignmentID)
+
+	second := attachTag(t, owner, documentID, tagID)
+	assert.Equal(
+		t,
+		first.AttachTag.TagAssignmentEdge.Node.ID,
+		second.AttachTag.TagAssignmentEdge.Node.ID,
+		"attaching the same tag again returns the existing assignment",
+	)
+	assert.Nil(t, second.AttachTag.ReplacedTagAssignmentID)
+
+	forResource := tagsForResource(t, owner, documentID)
+	require.Len(t, forResource.TagsForResource, 1)
+	assert.Equal(t, tagID, forResource.TagsForResource[0].ID)
 
 	const nodeQuery = `
 		query($id: ID!) {
@@ -279,6 +392,7 @@ func TestTag_AttachDetachAndConflict(t *testing.T) {
 					assignments(first: 50) {
 						edges {
 							node {
+								id
 								resource {
 									id
 									__typename
@@ -298,7 +412,8 @@ func TestTag_AttachDetachAndConflict(t *testing.T) {
 			Assignments struct {
 				Edges []struct {
 					Node struct {
-						Resource struct {
+						ID       string `json:"id"`
+						Resource *struct {
 							ID       string `json:"id"`
 							Typename string `json:"__typename"`
 						} `json:"resource"`
@@ -309,65 +424,64 @@ func TestTag_AttachDetachAndConflict(t *testing.T) {
 		} `json:"node"`
 	}
 
-	err = owner.Execute(nodeQuery, map[string]any{"id": tagID}, &nodeResult)
+	err := owner.Execute(nodeQuery, map[string]any{"id": tagID}, &nodeResult)
 	require.NoError(t, err)
 	assert.Equal(t, 1, nodeResult.Node.Assignments.TotalCount)
 	require.Len(t, nodeResult.Node.Assignments.Edges, 1)
+	require.NotNil(t, nodeResult.Node.Assignments.Edges[0].Node.Resource)
 	assert.Equal(t, documentID, nodeResult.Node.Assignments.Edges[0].Node.Resource.ID)
 	assert.Equal(t, "Document", nodeResult.Node.Assignments.Edges[0].Node.Resource.Typename)
 
-	const detachMutation = `
-		mutation($input: DetachTagInput!) {
-			detachTag(input: $input) {
-				resourceId
-				tagId
-			}
-		}
-	`
+	detached := detachTag(t, owner, documentID, tagID)
+	require.NotNil(t, detached.DetachTag.DeletedTagAssignmentID)
+	assert.Equal(t, first.AttachTag.TagAssignmentEdge.Node.ID, *detached.DetachTag.DeletedTagAssignmentID)
 
-	err = owner.Execute(detachMutation, map[string]any{
-		"input": map[string]any{
-			"resourceId": documentID,
-			"tagId":      tagID,
-		},
-	}, nil)
-	require.NoError(t, err)
+	again := detachTag(t, owner, documentID, tagID)
+	assert.Nil(t, again.DetachTag.DeletedTagAssignmentID, "detaching a tag that is not attached is a no-op")
 
-	err = owner.Execute(forResourceQuery, map[string]any{
-		"resourceId": documentID,
-	}, &forResourceResult)
-	require.NoError(t, err)
-	assert.Empty(t, forResourceResult.TagsForResource)
+	assert.Empty(t, tagsForResource(t, owner, documentID).TagsForResource)
 }
 
-func TestTag_DuplicateKeyConflict(t *testing.T) {
+func TestTag_AttachReplacesValueOfSameKey(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
+	documentID := factory.NewDocument(owner).WithTitle("Environment Document").Create()
+	productionID := createTag(t, owner, "env", "Production")
+	stagingID := createTag(t, owner, "env", "Staging")
+	ownerTagID := createTag(t, owner, "owner", "Platform")
 
-	const createMutation = `
-		mutation($input: CreateTagInput!) {
-			createTag(input: $input) {
-				tagEdge { node { id } }
-			}
-		}
-	`
+	production := attachTag(t, owner, documentID, productionID)
+	attachTag(t, owner, documentID, ownerTagID)
 
-	err := owner.Execute(createMutation, map[string]any{
+	staging := attachTag(t, owner, documentID, stagingID)
+	require.NotNil(t, staging.AttachTag.ReplacedTagAssignmentID)
+	assert.Equal(t, production.AttachTag.TagAssignmentEdge.Node.ID, *staging.AttachTag.ReplacedTagAssignmentID)
+
+	tags := tagsForResource(t, owner, documentID).TagsForResource
+	require.Len(t, tags, 2, "another key on the same resource is kept")
+
+	values := map[string]string{}
+	for _, tag := range tags {
+		values[tag.Key] = tag.Value
+	}
+
+	assert.Equal(t, "Staging", values["env"])
+	assert.Equal(t, "Platform", values["owner"])
+}
+
+func TestTag_AttachRejectsUntaggableResource(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	tagID := createTag(t, owner, "scope", "Global")
+	otherTagID := createTag(t, owner, "scope", "Local")
+
+	_, err := owner.Do(attachTagMutation, map[string]any{
 		"input": map[string]any{
-			"organizationId": owner.GetOrganizationID().String(),
-			"key":            "duplicate-key",
-			"value":          "One",
-		},
-	}, nil)
-	require.NoError(t, err)
-
-	_, err = owner.Do(createMutation, map[string]any{
-		"input": map[string]any{
-			"organizationId": owner.GetOrganizationID().String(),
-			"key":            "duplicate-key",
-			"value":          "Two",
+			"resourceId": otherTagID,
+			"tagId":      tagID,
 		},
 	})
-	require.Error(t, err)
+	testutil.RequireErrorCode(t, err, "INVALID")
 }

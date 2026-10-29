@@ -62,8 +62,12 @@ export async function execute(
 	const query = `
 		mutation DetachTag($input: DetachTagInput!) {
 			detachTag(input: $input) {
-				resourceId
-				tagId
+				tag {
+					id
+					key
+					value
+				}
+				deletedTagAssignmentId
 			}
 		}
 	`;

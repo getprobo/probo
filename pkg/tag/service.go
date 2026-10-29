@@ -22,6 +22,7 @@ package tag
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -53,7 +54,9 @@ type (
 		ID    gid.GID
 		Key   *string
 		Value *string
-		Color *string
+		// Color is left unchanged when nil and cleared when it points to nil
+		// or to an empty string.
+		Color **string
 	}
 
 	AttachRequest struct {
@@ -64,6 +67,20 @@ type (
 	DetachRequest struct {
 		ResourceID gid.GID
 		TagID      gid.GID
+	}
+
+	AttachResult struct {
+		Tag        *coredata.Tag
+		Assignment *coredata.TagAssignment
+		// ReplacedAssignmentID is set when the resource already carried another
+		// value of the same key, which this attach removed.
+		ReplacedAssignmentID *gid.GID
+	}
+
+	DetachResult struct {
+		Tag *coredata.Tag
+		// DeletedAssignmentID is nil when the tag was not attached.
+		DeletedAssignmentID *gid.GID
 	}
 )
 
@@ -98,7 +115,7 @@ func (req *UpdateTagRequest) Validate() error {
 func (req *AttachRequest) Validate() error {
 	v := validator.New()
 
-	v.Check(req.ResourceID, "resource_id", validator.Required(), validator.GID())
+	v.Check(req.ResourceID, "resource_id", validator.Required(), validator.GID(TaggableEntityTypes...))
 	v.Check(req.TagID, "tag_id", validator.Required(), validator.GID(coredata.TagEntityType))
 
 	return v.Error()
@@ -107,7 +124,7 @@ func (req *AttachRequest) Validate() error {
 func (req *DetachRequest) Validate() error {
 	v := validator.New()
 
-	v.Check(req.ResourceID, "resource_id", validator.Required(), validator.GID())
+	v.Check(req.ResourceID, "resource_id", validator.Required(), validator.GID(TaggableEntityTypes...))
 	v.Check(req.TagID, "tag_id", validator.Required(), validator.GID(coredata.TagEntityType))
 
 	return v.Error()
@@ -271,11 +288,12 @@ func (s *Service) Update(
 			}
 
 			if req.Color != nil {
-				if *req.Color == "" {
-					tag.Color = nil
-				} else {
-					tag.Color = req.Color
+				color := *req.Color
+				if color != nil && *color == "" {
+					color = nil
 				}
+
+				tag.Color = color
 			}
 
 			tag.UpdatedAt = time.Now()
@@ -316,63 +334,114 @@ func (s *Service) Delete(
 	)
 }
 
+// Attach puts the tag on the resource. A resource holds one value per key, so
+// attaching env=staging replaces env=prod. Attaching a tag that is already
+// present returns the existing assignment.
 func (s *Service) Attach(
 	ctx context.Context,
 	scope coredata.Scoper,
 	req AttachRequest,
-) error {
+) (*AttachResult, error) {
 	if err := req.Validate(); err != nil {
-		return err
+		return nil, err
 	}
 
-	return s.pg.WithConn(
+	result := &AttachResult{}
+
+	err := s.pg.WithTx(
 		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			tag := &coredata.Tag{}
-			if err := tag.LoadByID(ctx, conn, scope, req.TagID); err != nil {
+			if err := tag.LoadByID(ctx, tx, scope, req.TagID); err != nil {
 				return fmt.Errorf("cannot load tag: %w", err)
 			}
 
-			assignment := &coredata.TagAssignment{
-				ID:         gid.New(scope.GetTenantID(), coredata.TagAssignmentEntityType),
-				ResourceID: req.ResourceID,
-				TagID:      req.TagID,
-				CreatedAt:  time.Now(),
+			result.Tag = tag
+
+			existing := &coredata.TagAssignment{}
+
+			err := existing.LoadByResourceIDAndKey(ctx, tx, scope, req.ResourceID, tag.Key)
+			switch {
+			case err == nil && existing.TagID == tag.ID:
+				result.Assignment = existing
+
+				return nil
+			case err == nil:
+				if err := existing.Delete(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot remove previous tag value: %w", err)
+				}
+
+				result.ReplacedAssignmentID = &existing.ID
+			case !errors.Is(err, coredata.ErrResourceNotFound):
+				return fmt.Errorf("cannot load tag assignment: %w", err)
 			}
 
-			if err := assignment.Insert(ctx, conn, scope); err != nil {
+			assignment := &coredata.TagAssignment{
+				ID:             gid.New(scope.GetTenantID(), coredata.TagAssignmentEntityType),
+				OrganizationID: tag.OrganizationID,
+				ResourceID:     req.ResourceID,
+				TagID:          tag.ID,
+				Key:            tag.Key,
+				CreatedAt:      time.Now(),
+			}
+
+			if err := assignment.Insert(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot attach tag: %w", err)
 			}
+
+			result.Assignment = assignment
 
 			return nil
 		},
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
+// Detach removes the tag from the resource. Detaching a tag that is not
+// attached succeeds and reports no deleted assignment.
 func (s *Service) Detach(
 	ctx context.Context,
 	scope coredata.Scoper,
 	req DetachRequest,
-) error {
+) (*DetachResult, error) {
 	if err := req.Validate(); err != nil {
-		return err
+		return nil, err
 	}
 
-	return s.pg.WithConn(
+	result := &DetachResult{}
+
+	err := s.pg.WithTx(
 		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			assignment := &coredata.TagAssignment{
-				ResourceID: req.ResourceID,
-				TagID:      req.TagID,
+		func(ctx context.Context, tx pg.Tx) error {
+			tag := &coredata.Tag{}
+			if err := tag.LoadByID(ctx, tx, scope, req.TagID); err != nil {
+				return fmt.Errorf("cannot load tag: %w", err)
 			}
 
-			if err := assignment.Delete(ctx, conn, scope); err != nil {
+			result.Tag = tag
+
+			assignment := &coredata.TagAssignment{}
+
+			err := assignment.DeleteByResourceIDAndTagID(ctx, tx, scope, req.ResourceID, req.TagID)
+			switch {
+			case err == nil:
+				result.DeletedAssignmentID = &assignment.ID
+			case !errors.Is(err, coredata.ErrResourceNotFound):
 				return fmt.Errorf("cannot detach tag: %w", err)
 			}
 
 			return nil
 		},
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func (s *Service) ListForResourceID(

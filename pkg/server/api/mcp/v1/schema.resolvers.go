@@ -11682,7 +11682,7 @@ func (r *Resolver) CreateTagTool(ctx context.Context, req *mcp.CallToolRequest, 
 		return nil, types.CreateTagOutput{}, err
 	}
 
-	tag, err := r.tag.Create(
+	created, err := r.tag.Create(
 		ctx,
 		scope,
 		tag.CreateTagRequest{
@@ -11697,7 +11697,7 @@ func (r *Resolver) CreateTagTool(ctx context.Context, req *mcp.CallToolRequest, 
 	}
 
 	return nil, types.CreateTagOutput{
-		Tag: types.NewTag(tag),
+		Tag: types.NewTag(created),
 	}, nil
 }
 
@@ -11707,14 +11707,14 @@ func (r *Resolver) UpdateTagTool(ctx context.Context, req *mcp.CallToolRequest, 
 		return nil, types.UpdateTagOutput{}, err
 	}
 
-	tag, err := r.tag.Update(
+	updated, err := r.tag.Update(
 		ctx,
 		scope,
 		tag.UpdateTagRequest{
 			ID:    input.ID,
 			Key:   input.Key,
 			Value: input.Value,
-			Color: input.Color,
+			Color: UnwrapOmittable(input.Color),
 		},
 	)
 	if err != nil {
@@ -11722,7 +11722,7 @@ func (r *Resolver) UpdateTagTool(ctx context.Context, req *mcp.CallToolRequest, 
 	}
 
 	return nil, types.UpdateTagOutput{
-		Tag: types.NewTag(tag),
+		Tag: types.NewTag(updated),
 	}, nil
 }
 
@@ -11747,7 +11747,7 @@ func (r *Resolver) AttachTagTool(ctx context.Context, req *mcp.CallToolRequest, 
 		return nil, types.AttachTagOutput{}, err
 	}
 
-	err = r.tag.Attach(
+	result, err := r.tag.Attach(
 		ctx,
 		scope,
 		tag.AttachRequest{
@@ -11760,8 +11760,9 @@ func (r *Resolver) AttachTagTool(ctx context.Context, req *mcp.CallToolRequest, 
 	}
 
 	return nil, types.AttachTagOutput{
-		ResourceID: input.ResourceID,
-		TagID:      input.TagID,
+		Tag:                     types.NewTag(result.Tag),
+		TagAssignmentID:         result.Assignment.ID,
+		ReplacedTagAssignmentID: result.ReplacedAssignmentID,
 	}, nil
 }
 
@@ -11771,7 +11772,7 @@ func (r *Resolver) DetachTagTool(ctx context.Context, req *mcp.CallToolRequest, 
 		return nil, types.DetachTagOutput{}, err
 	}
 
-	err = r.tag.Detach(
+	result, err := r.tag.Detach(
 		ctx,
 		scope,
 		tag.DetachRequest{
@@ -11784,8 +11785,8 @@ func (r *Resolver) DetachTagTool(ctx context.Context, req *mcp.CallToolRequest, 
 	}
 
 	return nil, types.DetachTagOutput{
-		ResourceID: input.ResourceID,
-		TagID:      input.TagID,
+		Tag:                    types.NewTag(result.Tag),
+		DeletedTagAssignmentID: result.DeletedAssignmentID,
 	}, nil
 }
 
