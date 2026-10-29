@@ -63,9 +63,14 @@ var (
 
 type (
 	// Limits bounds one scan. Zero values are replaced by DefaultLimits.
+	// MaxPages and ScanTimeout cover every run of a scan. PagesPerRun and
+	// RunTimeout bound one call to Run, which then pauses so the browser
+	// can serve other scans.
 	Limits struct {
 		MaxPages          int
 		MaxDepth          int
+		PagesPerRun       int
+		RunTimeout        time.Duration
 		NavigationTimeout time.Duration
 		HomepageDwell     time.Duration
 		IdleWindow        time.Duration
@@ -75,6 +80,11 @@ type (
 		MaxSitemapBytes   int
 		MaxSitemapURLs    int
 		MaxSitemapFetches int
+		MaxProbes         int
+		ProbeConcurrency  int
+		ProbeTimeout      time.Duration
+		ProbeBudget       time.Duration
+		MaxProbeBytes     int
 		MaxObservations   int
 		MaxQueue          int
 		ScanTimeout       time.Duration
@@ -89,17 +99,21 @@ type (
 	}
 
 	// QueueItem is one not-yet-visited URL in the crawl frontier.
+	// EmbedHosts are the third-party hosts its static HTML embeds.
 	QueueItem struct {
-		URL         string `json:"url"`
-		Depth       int    `json:"depth"`
-		FromSitemap bool   `json:"from_sitemap,omitempty"`
+		URL         string   `json:"url"`
+		Depth       int      `json:"depth"`
+		FromSitemap bool     `json:"from_sitemap,omitempty"`
+		EmbedHosts  []string `json:"embed_hosts,omitempty"`
 	}
 
 	// Checkpoint is the crawl frontier persisted between pages. It holds
-	// no cookie values.
+	// no cookie values. CoveredHosts are the third-party hosts visited
+	// pages embedded or requested.
 	Checkpoint struct {
 		VisitedTemplates []string    `json:"visited_templates"`
 		Queue            []QueueItem `json:"queue"`
+		CoveredHosts     []string    `json:"covered_hosts,omitempty"`
 		PagesScanned     int         `json:"pages_scanned"`
 		ElapsedMS        int64       `json:"elapsed_ms"`
 		Truncated        bool        `json:"truncated"`
@@ -171,8 +185,9 @@ type (
 
 	// Result is the frontier to resume and how far this invocation got.
 	// Observations are delivered only through OnPage. Paused is set when
-	// the caller's context is cancelled. Truncated is set when the time
-	// budget or the observation cap is hit. A paused result is not also
+	// the caller's context is cancelled or the run's page or time budget is
+	// spent with pages left. Truncated is set when the scan's time budget,
+	// page cap, or observation cap is hit. A paused result is not also
 	// truncated. The checkpoint still records the cap, so a resume stops.
 	Result struct {
 		PagesScanned int
@@ -185,8 +200,10 @@ type (
 // DefaultLimits returns the production scan bounds.
 func DefaultLimits() Limits {
 	return Limits{
-		MaxPages:          25,
+		MaxPages:          100,
 		MaxDepth:          2,
+		PagesPerRun:       10,
+		RunTimeout:        2 * time.Minute,
 		NavigationTimeout: 30 * time.Second,
 		HomepageDwell:     10 * time.Second,
 		IdleWindow:        2 * time.Second,
@@ -196,9 +213,14 @@ func DefaultLimits() Limits {
 		MaxSitemapBytes:   5 << 20,
 		MaxSitemapURLs:    500,
 		MaxSitemapFetches: 10,
+		MaxProbes:         150,
+		ProbeConcurrency:  4,
+		ProbeTimeout:      10 * time.Second,
+		ProbeBudget:       time.Minute,
+		MaxProbeBytes:     2 << 20,
 		MaxObservations:   5000,
 		MaxQueue:          500,
-		ScanTimeout:       15 * time.Minute,
+		ScanTimeout:       30 * time.Minute,
 	}
 }
 
@@ -210,6 +232,14 @@ func (l Limits) withDefaults() Limits {
 
 	if l.MaxDepth <= 0 {
 		l.MaxDepth = d.MaxDepth
+	}
+
+	if l.PagesPerRun <= 0 {
+		l.PagesPerRun = d.PagesPerRun
+	}
+
+	if l.RunTimeout <= 0 {
+		l.RunTimeout = d.RunTimeout
 	}
 
 	if l.NavigationTimeout <= 0 {
@@ -246,6 +276,26 @@ func (l Limits) withDefaults() Limits {
 
 	if l.MaxSitemapFetches <= 0 {
 		l.MaxSitemapFetches = d.MaxSitemapFetches
+	}
+
+	if l.MaxProbes <= 0 {
+		l.MaxProbes = d.MaxProbes
+	}
+
+	if l.ProbeConcurrency <= 0 {
+		l.ProbeConcurrency = d.ProbeConcurrency
+	}
+
+	if l.ProbeTimeout <= 0 {
+		l.ProbeTimeout = d.ProbeTimeout
+	}
+
+	if l.ProbeBudget <= 0 {
+		l.ProbeBudget = d.ProbeBudget
+	}
+
+	if l.MaxProbeBytes <= 0 {
+		l.MaxProbeBytes = d.MaxProbeBytes
 	}
 
 	if l.MaxObservations <= 0 {
