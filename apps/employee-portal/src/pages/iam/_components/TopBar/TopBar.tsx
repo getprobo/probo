@@ -43,6 +43,7 @@ const topBarFragment = graphql`
     }
     canListNotifications: permission(action: "core:notification:list")
     viewer @required(action: THROW) {
+      ...TopBarUserMenu_profile
       identity @required(action: THROW) {
         ...TopBarUserMenu_identity
       }
@@ -104,7 +105,10 @@ export function TopBar({ organizationKey }: TopBarProps) {
               </ErrorBoundary>
             </RelayProvider>
           )}
-          <TopBarUserMenu identityKey={organization.viewer.identity} />
+          <TopBarUserMenu
+            identityKey={organization.viewer.identity}
+            profileKey={organization.viewer}
+          />
         </div>
       </div>
     </header>

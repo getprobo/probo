@@ -40,18 +40,25 @@ import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { TopBarUserMenu_identity$key } from "#/__generated__/iam/TopBarUserMenu_identity.graphql";
+import type { TopBarUserMenu_profile$key } from "#/__generated__/iam/TopBarUserMenu_profile.graphql";
 import type { TopBarUserMenuSignOutMutation } from "#/__generated__/iam/TopBarUserMenuSignOutMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
 
 import { topBarUserMenuTrigger } from "./variants";
 
-const topBarUserMenuFragment = graphql`
+const topBarUserMenuIdentityFragment = graphql`
   fragment TopBarUserMenu_identity on Identity {
     email
     fullName
     canListOAuth2AccessTokens: permission(
       action: "iam:oauth2-access-token:list"
     )
+  }
+`;
+
+const topBarUserMenuProfileFragment = graphql`
+  fragment TopBarUserMenu_profile on Profile {
+    fullName
   }
 `;
 
@@ -65,20 +72,25 @@ const signOutMutation = graphql`
 
 interface TopBarUserMenuProps {
   identityKey: TopBarUserMenu_identity$key;
+  profileKey?: TopBarUserMenu_profile$key | null;
 }
 
-export function TopBarUserMenu({ identityKey }: TopBarUserMenuProps) {
+export function TopBarUserMenu({
+  identityKey,
+  profileKey = null,
+}: TopBarUserMenuProps) {
   const { t } = useTranslation();
   const { displayMode, toggleDisplayMode } = useDisplayMode();
 
   const { canListOAuth2AccessTokens, email, fullName }
-    = useFragment(topBarUserMenuFragment, identityKey);
+    = useFragment(topBarUserMenuIdentityFragment, identityKey);
+  const profile = useFragment(topBarUserMenuProfileFragment, profileKey);
   const [signOut, isSigningOut] = useMutation<TopBarUserMenuSignOutMutation>(
     signOutMutation,
     { errorToast: t("userMenu.signOutFailed") },
   );
 
-  const displayName = fullName.trim() || email;
+  const displayName = (profile?.fullName ?? fullName).trim() || email;
 
   function handleSignOut() {
     void signOut({ variables: {} }).then(() => {

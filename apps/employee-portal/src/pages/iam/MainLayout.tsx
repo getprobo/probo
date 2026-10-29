@@ -55,9 +55,7 @@ export const mainLayoutQuery = graphql`
 const mainLayoutFragment = graphql`
   fragment MainLayout_organization on Organization {
     viewer @required(action: THROW) {
-      identity @required(action: THROW) {
-        fullName
-      }
+      fullName
     }
   }
 `;
@@ -84,7 +82,7 @@ export function MainLayout({ queryRef }: MainLayoutProps) {
       organizationId={data.employeePortal.organization.id}
       deviceAgent={data.employeePortal.capabilities.deviceAgent}
     >
-      <ViewerIdentityProvider fullName={organization.viewer.identity.fullName}>
+      <ViewerIdentityProvider fullName={organization.viewer.fullName}>
         <DocumentQueueProvider>
           <MainLayoutChrome organizationKey={data.employeePortal.organization} />
         </DocumentQueueProvider>
