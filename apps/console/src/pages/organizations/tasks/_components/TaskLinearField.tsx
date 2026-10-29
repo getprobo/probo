@@ -44,6 +44,7 @@ const taskLinearFieldFragment = graphql`
     id
     canUpdate: permission(action: "core:task:update")
     externalLink {
+      provider
       identifier
       url
     }
@@ -101,7 +102,7 @@ function TaskLinearFieldContent({ taskKey }: { taskKey: TaskLinearField_task$key
   const connected = (organization?.connectors.length ?? 0) > 0;
   const { root, title, titleIcon, link, issue } = taskLinearField();
 
-  if (!connected) {
+  if (!connected || task.externalLink?.provider === "ASANA") {
     return null;
   }
 

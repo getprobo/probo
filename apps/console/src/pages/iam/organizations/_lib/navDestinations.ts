@@ -222,14 +222,6 @@ const NAV_DESTINATIONS = [
     isVisible: permissions => permissions.canListWebhookSubscriptions,
   },
   {
-    id: "slackbot",
-    group: "settings",
-    labelKey: "nav.slackBot",
-    path: "slackbot",
-    isVisible: (permissions, slackbotAvailable) =>
-      slackbotAvailable && (permissions.canConnectSlack || permissions.canUninstallSlack),
-  },
-  {
     id: "users",
     group: "settings",
     labelKey: "nav.users",
@@ -263,6 +255,21 @@ const NAV_DESTINATIONS = [
     labelKey: "nav.connections",
     path: "integrations",
     isVisible: permissions => permissions.canListConnectors,
+  },
+  {
+    id: "slackbot",
+    group: "settings",
+    labelKey: "nav.slackBot",
+    path: "slackbot",
+    isVisible: (permissions, slackbotAvailable) =>
+      slackbotAvailable && (permissions.canConnectSlack || permissions.canUninstallSlack),
+  },
+  {
+    id: "task-synchronization",
+    group: "settings",
+    labelKey: "nav.taskSynchronization",
+    path: "task-synchronization",
+    isVisible: permissions => permissions.canListTasks,
   },
 ] as const satisfies readonly NavDestination[];
 

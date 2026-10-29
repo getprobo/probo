@@ -98,7 +98,30 @@ type (
 	}
 
 	AsanaConnectorSettings struct {
-		WorkspaceGID string `json:"workspace_gid"`
+		WorkspaceGID       string                                 `json:"workspace_gid"`
+		DefaultProjectGID  string                                 `json:"default_project_gid,omitempty"`
+		DefaultProjectName string                                 `json:"default_project_name,omitempty"`
+		ImportNewTasks     bool                                   `json:"import_new_tasks,omitempty"`
+		Webhooks           map[string]AsanaWebhookRegistration    `json:"webhooks,omitempty"`
+		Mappings           map[string]AsanaProjectMappingSettings `json:"mappings,omitempty"`
+	}
+
+	// AsanaWebhookRegistration is the project webhook Asana calls back.
+	// Secret is ciphertext, base64-encoded, not the hook secret itself.
+	AsanaWebhookRegistration struct {
+		GID    string `json:"gid"`
+		Nonce  string `json:"nonce"`
+		Secret string `json:"secret"`
+	}
+
+	// AsanaProjectMappingSettings maps one Asana project onto Probo states
+	// and an optional enum custom field used as priority.
+	AsanaProjectMappingSettings struct {
+		States           map[string]string `json:"states,omitempty"`
+		SectionInbound   map[string]string `json:"section_inbound,omitempty"`
+		PriorityFieldGID string            `json:"priority_field_gid,omitempty"`
+		Priorities       map[string]string `json:"priorities,omitempty"`
+		OptionInbound    map[string]string `json:"option_inbound,omitempty"`
 	}
 
 	NetlifyConnectorSettings struct {

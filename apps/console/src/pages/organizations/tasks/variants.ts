@@ -59,6 +59,43 @@ export const taskInternalControls = tv({
   },
 });
 
+export const taskAsanaField = tv({
+  slots: {
+    root: "flex w-full flex-col items-stretch gap-3",
+    title: "flex items-center gap-2",
+    titleIcon: "size-4 shrink-0",
+    link: "flex w-full flex-col items-stretch gap-2",
+    issue: "hover:underline",
+    action: "w-full",
+    skeleton: "w-full",
+  },
+});
+
+export const taskAsanaPublishField = tv({
+  slots: {
+    root: "flex flex-col",
+    action: "w-full",
+  },
+  variants: {
+    spacing: {
+      compact: { root: "gap-2" },
+      relaxed: { root: "gap-4" },
+    },
+  },
+  defaultVariants: {
+    spacing: "compact",
+  },
+});
+
+export const asanaMappingEditor = tv({
+  slots: {
+    root: "flex flex-col gap-3",
+    row: "flex flex-wrap items-end gap-3",
+    control: "min-w-48 flex-1",
+    incoming: "flex items-center gap-2 pb-2",
+  },
+});
+
 export const taskLinearField = tv({
   slots: {
     root: "flex w-full flex-col items-stretch gap-3",

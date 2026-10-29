@@ -22,6 +22,7 @@
       "priority": "Priority",
       "assignedTo": "Assigned to",
       "linear": "Linear",
+      "asana": "Asana",
       "internalControls": "Internal controls",
       "timeEstimate": "Time estimate",
       "timeEstimateUnit": "Time estimate unit",
@@ -108,6 +109,33 @@
         "unlink": "Failed to unlink Linear issue",
         "load": "Could not display Linear"
       }
+    },
+    "asana": {
+      "noResults": "No results",
+      "loadMore": "Load more",
+      "errors": {
+        "load": "Could not display Asana",
+        "publish": "Failed to create task in Asana",
+        "link": "Failed to link task to Asana",
+        "unlink": "Failed to unlink Asana task"
+      },
+      "publish": "Create",
+      "link": "Link",
+      "linkTo": "Link to",
+      "unlink": "Unlink",
+      "project": "Asana project",
+      "task": "Asana task",
+      "chooseProject": "Select project",
+      "noProject": "No project",
+      "chooseTask": "Select task",
+      "newTask": "New task",
+      "searchProject": "Search by name",
+      "searchTask": "Search by name",
+      "linkHint": "Link to Asana",
+      "linkedTask": "Linked to <task>Asana</task>",
+      "published": "Task created in Asana.",
+      "linked": "Task linked to Asana.",
+      "unlinked": "Asana task unlinked."
     },
     "errors": {
       "delete": "Failed to delete task",
@@ -198,6 +226,49 @@
         "disconnect": "Failed to disconnect Linear",
         "defaultTeam": "Failed to save the default team",
         "issueImport": "Failed to save issue import"
+      }
+    },
+    "asana": {
+      "name": "Asana",
+      "description": "Publish a task to an Asana project and sync name, description, deadline, assignee, comments, and files when emails match.",
+      "defaultProject": "Default project",
+      "defaultProjectDescription": "New tasks are published to this project unless another project is chosen. Leave it empty to keep new tasks in Probo.",
+      "noDefaultProject": "No default project",
+      "searchProject": "Search projects",
+      "chooseProject": "Choose a project",
+      "taskImport": "Import new tasks",
+      "taskImportDescription": "Active creates a Probo task for each new task in the default project.",
+      "taskImportStatus": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "mapping": "State and priority mapping",
+      "mappingHint": "Choose a project to map its sections and priority field. Until you save a mapping, state follows whether the Asana task is completed.",
+      "mappingDescription": "Each Probo state can move the task to a section. When two states share a section, mark which state incoming tasks should use.",
+      "loadingMapping": "Loading project…",
+      "noSection": "Don't move section",
+      "incoming": "Incoming",
+      "priorityField": "Priority field",
+      "noPriority": "Don't sync priority",
+      "noOption": "Ignore",
+      "saveMapping": "Save mapping",
+      "disconnect": {
+        "title": "Disconnect Asana?",
+        "description": "Tasks will no longer sync with Asana. You can connect again later.",
+        "confirm": "Disconnect"
+      },
+      "messages": {
+        "disconnected": "Asana disconnected.",
+        "defaultProjectSaved": "Default project saved.",
+        "taskImportSaved": "Task import saved.",
+        "mappingSaved": "Mapping saved."
+      },
+      "errors": {
+        "disconnect": "Failed to disconnect Asana",
+        "defaultProject": "Failed to save the default project",
+        "taskImport": "Failed to save task import",
+        "mapping": "Failed to save the mapping",
+        "shared": "When several states share a section, mark exactly one as incoming. The same rule applies to priority options."
       }
     },
     "status": {

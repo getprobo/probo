@@ -132,6 +132,10 @@ export function taskListPath(organizationId: string) {
   return `/organizations/${organizationId}/governance/tasks`;
 }
 
+export function taskSynchronizationPath(organizationId: string) {
+  return `/organizations/${organizationId}/settings/task-synchronization`;
+}
+
 export function taskNewPath(organizationId: string) {
   return `${taskListPath(organizationId)}/new`;
 }

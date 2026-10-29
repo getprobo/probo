@@ -32,6 +32,8 @@ import { TaskAssigneeMenu } from "#/components/tasks/TaskAssigneeMenu";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 import { TaskDeleteDialog } from "#/pages/organizations/tasks/_components/TaskDeleteDialog";
+import { TaskListAsanaDialog } from "#/pages/organizations/tasks/_components/TaskListAsanaDialog";
+import { TaskListAsanaMenu } from "#/pages/organizations/tasks/_components/TaskListAsanaMenu";
 import { TaskListLinearDialog } from "#/pages/organizations/tasks/_components/TaskListLinearDialog";
 import { TaskListLinearMenu } from "#/pages/organizations/tasks/_components/TaskListLinearMenu";
 import {
@@ -60,6 +62,7 @@ const taskListItemFragment = graphql`
     canUpdate: permission(action: "core:task:update")
     canDelete: permission(action: "core:task:delete")
     externalLink {
+      provider
       identifier
       url
     }
@@ -73,6 +76,8 @@ const taskListItemFragment = graphql`
     }
     ...TaskListLinearDialog_task
     ...TaskListLinearMenu_task
+    ...TaskListAsanaDialog_task
+    ...TaskListAsanaMenu_task
   }
 `;
 
@@ -96,6 +101,7 @@ interface TaskListItemProps {
   isGhost?: boolean;
   ignoreClick: boolean;
   linearConnected?: boolean;
+  asanaConnected?: boolean;
   onDragStart?: () => void;
   onDragOver?: (event: React.DragEvent) => void;
   onDrop?: () => void;
@@ -113,7 +119,8 @@ function taskListItemPropsAreEqual(
     && previous.isDragging === next.isDragging
     && previous.isGhost === next.isGhost
     && previous.ignoreClick === next.ignoreClick
-    && previous.linearConnected === next.linearConnected;
+    && previous.linearConnected === next.linearConnected
+    && previous.asanaConnected === next.asanaConnected;
 }
 
 export const TaskListItem = memo(function TaskListItem(props: TaskListItemProps) {
@@ -124,6 +131,7 @@ export const TaskListItem = memo(function TaskListItem(props: TaskListItemProps)
   const { graphqlFilter } = useTasksCardFilters();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [linearOpen, setLinearOpen] = useState(false);
+  const [asanaOpen, setAsanaOpen] = useState(false);
   const task = useFragment(taskListItemFragment, props.taskKey);
   const { canUpdate, canDelete } = task;
   const [updateState, isUpdating] = useMutation<TaskListItemUpdateStateMutation>(
@@ -319,15 +327,32 @@ export const TaskListItem = memo(function TaskListItem(props: TaskListItemProps)
               setDeleteOpen(true);
             }
           : undefined}
-        extraMenu={props.linearConnected && canUpdate
+        extraMenu={(props.linearConnected || props.asanaConnected) && canUpdate
           ? (
-              <TaskListLinearMenu
-                taskKey={task}
-                linked={task.externalLink != null}
-                onLink={() => {
-                  setLinearOpen(true);
-                }}
-              />
+              <>
+                {props.linearConnected && task.externalLink?.provider !== "ASANA"
+                  ? (
+                      <TaskListLinearMenu
+                        taskKey={task}
+                        linked={task.externalLink != null}
+                        onLink={() => {
+                          setLinearOpen(true);
+                        }}
+                      />
+                    )
+                  : null}
+                {props.asanaConnected && task.externalLink?.provider !== "LINEAR_SYNC"
+                  ? (
+                      <TaskListAsanaMenu
+                        taskKey={task}
+                        linked={task.externalLink?.provider === "ASANA"}
+                        onLink={() => {
+                          setAsanaOpen(true);
+                        }}
+                      />
+                    )
+                  : null}
+              </>
             )
           : undefined}
         sectionState={props.sectionState}
@@ -362,6 +387,13 @@ export const TaskListItem = memo(function TaskListItem(props: TaskListItemProps)
           taskKey={task}
           open={linearOpen}
           onOpenChange={setLinearOpen}
+        />
+      )}
+      {props.asanaConnected && canUpdate && task.externalLink == null && (
+        <TaskListAsanaDialog
+          taskKey={task}
+          open={asanaOpen}
+          onOpenChange={setAsanaOpen}
         />
       )}
       {canDelete && (

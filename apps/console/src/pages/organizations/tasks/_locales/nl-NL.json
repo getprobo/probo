@@ -29,7 +29,8 @@
       "recurrence": "Herhaling",
       "recurrenceUnit": "Herhalingseenheid",
       "createdAt": "Aangemaakt",
-      "updatedAt": "Bijgewerkt"
+      "updatedAt": "Bijgewerkt",
+      "asana": "Asana"
     },
     "duration": {
       "S": "Seconden",
@@ -159,6 +160,33 @@
       "actions": {
         "showMore": "Meer tonen"
       }
+    },
+    "asana": {
+      "noResults": "Geen resultaten",
+      "loadMore": "Meer laden",
+      "errors": {
+        "load": "Asana kan niet worden getoond",
+        "publish": "Taak aanmaken in Asana mislukt",
+        "link": "Taak koppelen aan Asana mislukt",
+        "unlink": "Asana-taak ontkoppelen mislukt"
+      },
+      "publish": "Aanmaken",
+      "link": "Koppelen",
+      "linkTo": "Koppelen aan",
+      "unlink": "Ontkoppelen",
+      "project": "Asana-project",
+      "task": "Asana-taak",
+      "chooseProject": "Project kiezen",
+      "noProject": "Geen project",
+      "chooseTask": "Taak kiezen",
+      "newTask": "Nieuwe taak",
+      "searchProject": "Zoeken op naam",
+      "searchTask": "Zoeken op naam",
+      "linkHint": "Koppelen aan Asana",
+      "linkedTask": "Gekoppeld aan <task>Asana</task>",
+      "published": "Taak aangemaakt in Asana.",
+      "linked": "Taak gekoppeld aan Asana.",
+      "unlinked": "Asana-taak ontkoppeld."
     }
   },
   "settingsDialog": {
@@ -208,6 +236,49 @@
       "connect": "Verbinden",
       "disconnect": "Ontkoppelen",
       "close": "Sluiten"
+    },
+    "asana": {
+      "name": "Asana",
+      "description": "Publiceer een taak naar een Asana-project en synchroniseer naam, beschrijving, deadline, toegewezen persoon, opmerkingen en bestanden wanneer e-mailadressen overeenkomen.",
+      "defaultProject": "Standaardproject",
+      "defaultProjectDescription": "Nieuwe taken worden in dit project gepubliceerd, tenzij een ander project wordt gekozen. Laat het leeg om nieuwe taken in Probo te houden.",
+      "noDefaultProject": "Geen standaardproject",
+      "searchProject": "Projecten zoeken",
+      "chooseProject": "Kies een project",
+      "taskImport": "Nieuwe taken importeren",
+      "taskImportDescription": "Actief maakt een Probo-taak voor elke nieuwe taak in het standaardproject.",
+      "taskImportStatus": {
+        "active": "Actief",
+        "inactive": "Inactief"
+      },
+      "mapping": "Status- en prioriteitskoppeling",
+      "mappingHint": "Kies een project om de secties en het prioriteitsveld te koppelen. Tot je een koppeling opslaat, volgt de status of de Asana-taak voltooid is.",
+      "mappingDescription": "Elke Probo-status kan de taak naar een sectie verplaatsen. Als twee statussen een sectie delen, markeer je welke status binnenkomende taken moeten krijgen.",
+      "loadingMapping": "Project laden…",
+      "noSection": "Sectie niet verplaatsen",
+      "incoming": "Inkomend",
+      "priorityField": "Prioriteitsveld",
+      "noPriority": "Prioriteit niet synchroniseren",
+      "noOption": "Negeren",
+      "saveMapping": "Koppeling opslaan",
+      "disconnect": {
+        "title": "Asana loskoppelen?",
+        "description": "Taken worden niet meer met Asana gesynchroniseerd. Je kunt later opnieuw verbinden.",
+        "confirm": "Loskoppelen"
+      },
+      "messages": {
+        "disconnected": "Asana losgekoppeld.",
+        "defaultProjectSaved": "Standaardproject opgeslagen.",
+        "taskImportSaved": "Taakimport opgeslagen.",
+        "mappingSaved": "Koppeling opgeslagen."
+      },
+      "errors": {
+        "disconnect": "Asana loskoppelen mislukt",
+        "defaultProject": "Standaardproject opslaan mislukt",
+        "taskImport": "Taakimport opslaan mislukt",
+        "mapping": "Koppeling opslaan mislukt",
+        "shared": "Als meerdere statussen een sectie delen, markeer er precies één als inkomend. Dezelfde regel geldt voor prioriteitsopties."
+      }
     }
   },
   "newPage": {

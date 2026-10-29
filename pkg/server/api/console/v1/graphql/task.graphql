@@ -124,6 +124,10 @@ enum TaskExternalLinkOrigin
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.TaskExternalLinkOriginLinear"
         )
+    ASANA
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TaskExternalLinkOriginAsana"
+        )
 }
 
 type TaskExternalLink {
@@ -199,6 +203,12 @@ extend type Mutation {
     updateLinearSettings(
         input: UpdateLinearSettingsInput!
     ): UpdateLinearSettingsPayload!
+    publishTaskToAsana(input: PublishTaskToAsanaInput!): PublishTaskToAsanaPayload!
+    linkTaskToAsana(input: LinkTaskToAsanaInput!): LinkTaskToAsanaPayload!
+    updateAsanaSettings(input: UpdateAsanaSettingsInput!): UpdateAsanaSettingsPayload!
+    updateAsanaProjectMapping(
+        input: UpdateAsanaProjectMappingInput!
+    ): UpdateAsanaProjectMappingPayload!
 }
 
 input CreateTaskInput {
@@ -213,6 +223,7 @@ input CreateTaskInput {
     deadline: Datetime
     recurrenceInterval: TimeSpan
     linearTeamId: String @goField(omittable: true)
+    asanaProjectId: String @goField(omittable: true)
 }
 
 input UpdateLinearSettingsInput {
@@ -280,4 +291,162 @@ input UnlinkTaskExternalInput {
 
 type UnlinkTaskExternalPayload {
     task: Task!
+}
+
+enum AsanaTaskImport {
+    ACTIVE
+    INACTIVE
+}
+
+type AsanaProject {
+    id: String!
+    name: String!
+}
+
+type AsanaSettings {
+    defaultProject: AsanaProject
+    taskImport: AsanaTaskImport!
+}
+
+type AsanaPageInfo {
+    hasNextPage: Boolean!
+    hasPreviousPage: Boolean!
+    startCursor: String
+    endCursor: String
+}
+
+type AsanaTeam {
+    id: String!
+    name: String!
+}
+
+type AsanaTeamEdge {
+    cursor: String!
+    node: AsanaTeam!
+}
+
+type AsanaTeamConnection {
+    edges: [AsanaTeamEdge!]!
+    pageInfo: AsanaPageInfo!
+}
+
+type AsanaProjectEdge {
+    cursor: String!
+    node: AsanaProject!
+}
+
+type AsanaProjectConnection {
+    edges: [AsanaProjectEdge!]!
+    pageInfo: AsanaPageInfo!
+}
+
+type AsanaTask {
+    id: String!
+    name: String!
+    completed: Boolean!
+}
+
+type AsanaTaskEdge {
+    cursor: String!
+    node: AsanaTask!
+}
+
+type AsanaTaskConnection {
+    edges: [AsanaTaskEdge!]!
+    pageInfo: AsanaPageInfo!
+}
+
+type AsanaSection {
+    id: String!
+    name: String!
+}
+
+type AsanaEnumOption {
+    id: String!
+    name: String!
+}
+
+type AsanaEnumField {
+    id: String!
+    name: String!
+    options: [AsanaEnumOption!]!
+}
+
+type AsanaStateMapping {
+    state: TaskState!
+    sectionId: String!
+    inbound: Boolean!
+}
+
+type AsanaPriorityMapping {
+    priority: TaskPriority!
+    optionId: String!
+    inbound: Boolean!
+}
+
+type AsanaProjectMapping {
+    states: [AsanaStateMapping!]!
+    priorityFieldId: String
+    priorities: [AsanaPriorityMapping!]!
+}
+
+type AsanaProjectSetup {
+    project: AsanaProject!
+    sections: [AsanaSection!]!
+    enumFields: [AsanaEnumField!]!
+    mapping: AsanaProjectMapping
+}
+
+input PublishTaskToAsanaInput {
+    taskId: ID!
+    projectId: String!
+}
+
+type PublishTaskToAsanaPayload {
+    task: Task!
+}
+
+input LinkTaskToAsanaInput {
+    taskId: ID!
+    projectId: String!
+    taskGid: String!
+}
+
+type LinkTaskToAsanaPayload {
+    task: Task!
+}
+
+input UpdateAsanaSettingsInput {
+    organizationId: ID!
+    defaultProjectId: String @goField(omittable: true)
+    taskImport: AsanaTaskImport @goField(omittable: true)
+}
+
+type UpdateAsanaSettingsPayload {
+    organization: Organization!
+}
+
+input AsanaStateMappingInput {
+    state: TaskState!
+    sectionId: String!
+    inbound: Boolean!
+}
+
+input AsanaPriorityMappingInput {
+    priority: TaskPriority!
+    optionId: String!
+    inbound: Boolean!
+}
+
+input UpdateAsanaProjectMappingInput {
+    organizationId: ID!
+    projectId: String!
+    clear: Boolean
+    states: [AsanaStateMappingInput!] @goField(omittable: true)
+    priorityFieldId: String @goField(omittable: true)
+    priorities: [AsanaPriorityMappingInput!] @goField(omittable: true)
+}
+
+type UpdateAsanaProjectMappingPayload {
+    setup: AsanaProjectSetup!
 }

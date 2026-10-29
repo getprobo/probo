@@ -11394,3 +11394,258 @@ func (r *Resolver) RestoreDocumentHistoryTool(ctx context.Context, req *mcp.Call
 		Document: withHeads,
 	}, nil
 }
+
+func (r *Resolver) ListAsanaTeamsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListAsanaTeamsInput) (*mcp.CallToolResult, types.ListAsanaTeamsOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, task.ActionTaskUpdate)
+	if err != nil {
+		return nil, types.ListAsanaTeamsOutput{}, err
+	}
+
+	page, err := r.task.Sync.ListAsanaTeams(
+		ctx,
+		scope,
+		input.OrganizationID,
+		optionalString(input.Query),
+		optionalInt(input.Size),
+		optionalString(input.Cursor),
+	)
+	if err != nil {
+		if errors.Is(err, tasksync.ErrAsanaNotConnected) {
+			return nil, types.ListAsanaTeamsOutput{Teams: []*types.AsanaNamed{}}, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot list Asana teams", log.Error(err))
+
+		return nil, types.ListAsanaTeamsOutput{}, fmt.Errorf("internal error")
+	}
+
+	teams := make([]*types.AsanaNamed, 0, len(page.Items))
+	for _, team := range page.Items {
+		teams = append(teams, &types.AsanaNamed{ID: team.GID, Name: team.Name})
+	}
+
+	return nil, types.ListAsanaTeamsOutput{
+		Teams:      teams,
+		NextCursor: linearNextCursor(page.EndCursor, page.HasNextPage),
+	}, nil
+}
+
+func (r *Resolver) ListAsanaProjectsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListAsanaProjectsInput) (*mcp.CallToolResult, types.ListAsanaProjectsOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, task.ActionTaskUpdate)
+	if err != nil {
+		return nil, types.ListAsanaProjectsOutput{}, err
+	}
+
+	page, err := r.task.Sync.ListAsanaProjects(
+		ctx,
+		scope,
+		input.OrganizationID,
+		optionalString(input.TeamID),
+		optionalString(input.Query),
+		optionalInt(input.Size),
+		optionalString(input.Cursor),
+	)
+	if err != nil {
+		if errors.Is(err, tasksync.ErrAsanaNotConnected) {
+			return nil, types.ListAsanaProjectsOutput{Projects: []*types.AsanaNamed{}}, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot list Asana projects", log.Error(err))
+
+		return nil, types.ListAsanaProjectsOutput{}, fmt.Errorf("internal error")
+	}
+
+	projects := make([]*types.AsanaNamed, 0, len(page.Items))
+	for _, project := range page.Items {
+		projects = append(projects, &types.AsanaNamed{ID: project.GID, Name: project.Name})
+	}
+
+	return nil, types.ListAsanaProjectsOutput{
+		Projects:   projects,
+		NextCursor: linearNextCursor(page.EndCursor, page.HasNextPage),
+	}, nil
+}
+
+func (r *Resolver) ListAsanaTasksTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListAsanaTasksInput) (*mcp.CallToolResult, types.ListAsanaTasksOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, task.ActionTaskUpdate)
+	if err != nil {
+		return nil, types.ListAsanaTasksOutput{}, err
+	}
+
+	page, err := r.task.Sync.ListAsanaTasks(
+		ctx,
+		scope,
+		input.OrganizationID,
+		input.ProjectID,
+		optionalString(input.Query),
+		optionalInt(input.Size),
+		optionalString(input.Cursor),
+	)
+	if err != nil {
+		if errors.Is(err, tasksync.ErrAsanaNotConnected) || errors.Is(err, tasksync.ErrAsanaProjectNotFound) {
+			return nil, types.ListAsanaTasksOutput{Tasks: []*types.AsanaTaskSummary{}}, nil
+		}
+
+		if errors.Is(err, tasksync.ErrAsanaProjectIDRequired) {
+			return nil, types.ListAsanaTasksOutput{}, fmt.Errorf("asana project id is required")
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot list Asana tasks", log.Error(err))
+
+		return nil, types.ListAsanaTasksOutput{}, fmt.Errorf("internal error")
+	}
+
+	tasks := make([]*types.AsanaTaskSummary, 0, len(page.Tasks))
+	for _, item := range page.Tasks {
+		tasks = append(tasks, &types.AsanaTaskSummary{
+			ID:        item.GID,
+			Name:      item.Name,
+			Completed: item.Completed,
+		})
+	}
+
+	return nil, types.ListAsanaTasksOutput{
+		Tasks:      tasks,
+		NextCursor: linearNextCursor(page.EndCursor, page.HasNextPage),
+	}, nil
+}
+
+func (r *Resolver) PublishTaskToAsanaTool(ctx context.Context, req *mcp.CallToolRequest, input *types.PublishTaskToAsanaInput) (*mcp.CallToolResult, types.PublishTaskToAsanaOutput, error) {
+	scope, err := r.Authorize(ctx, input.TaskID, task.ActionTaskUpdate)
+	if err != nil {
+		return nil, types.PublishTaskToAsanaOutput{}, err
+	}
+
+	if input.ProjectID == "" {
+		return nil, types.PublishTaskToAsanaOutput{}, tasksync.ErrAsanaProjectIDRequired
+	}
+
+	link, err := r.task.Sync.PublishToAsana(ctx, scope, input.TaskID, input.ProjectID)
+	if err != nil {
+		return nil, types.PublishTaskToAsanaOutput{}, asanaPublishToolError(r, ctx, err)
+	}
+
+	loaded, err := r.task.Get(ctx, scope, link.TaskID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load published task", log.Error(err))
+
+		return nil, types.PublishTaskToAsanaOutput{}, fmt.Errorf("internal error")
+	}
+
+	taskWithLink, err := r.taskWithExternalLink(ctx, scope, loaded)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load published task external link", log.Error(err))
+
+		return nil, types.PublishTaskToAsanaOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, types.PublishTaskToAsanaOutput{Task: taskWithLink}, nil
+}
+
+func (r *Resolver) LinkTaskToAsanaTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkTaskToAsanaInput) (*mcp.CallToolResult, types.LinkTaskToAsanaOutput, error) {
+	scope, err := r.Authorize(ctx, input.TaskID, task.ActionTaskUpdate)
+	if err != nil {
+		return nil, types.LinkTaskToAsanaOutput{}, err
+	}
+
+	if input.ProjectID == "" {
+		return nil, types.LinkTaskToAsanaOutput{}, tasksync.ErrAsanaProjectIDRequired
+	}
+
+	if input.TaskGid == "" {
+		return nil, types.LinkTaskToAsanaOutput{}, tasksync.ErrAsanaTaskIDRequired
+	}
+
+	link, err := r.task.Sync.LinkToAsana(ctx, scope, input.TaskID, input.ProjectID, input.TaskGid)
+	if err != nil {
+		return nil, types.LinkTaskToAsanaOutput{}, asanaPublishToolError(r, ctx, err)
+	}
+
+	loaded, err := r.task.Get(ctx, scope, link.TaskID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load linked task", log.Error(err))
+
+		return nil, types.LinkTaskToAsanaOutput{}, fmt.Errorf("internal error")
+	}
+
+	taskWithLink, err := r.taskWithExternalLink(ctx, scope, loaded)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load linked task external link", log.Error(err))
+
+		return nil, types.LinkTaskToAsanaOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, types.LinkTaskToAsanaOutput{Task: taskWithLink}, nil
+}
+
+func (r *Resolver) UpdateAsanaSettingsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateAsanaSettingsInput) (*mcp.CallToolResult, types.UpdateAsanaSettingsOutput, error) {
+	var raw json.RawMessage
+	if req != nil && req.Params != nil {
+		raw = req.Params.Arguments
+	}
+
+	update, err := asanaSettingsUpdate(raw, input.TaskImport)
+	if err != nil {
+		return nil, types.UpdateAsanaSettingsOutput{}, err
+	}
+
+	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionConnectorInitiate)
+	if err != nil {
+		return nil, types.UpdateAsanaSettingsOutput{}, err
+	}
+
+	if err := r.task.Sync.UpdateAsanaSettings(ctx, scope, input.OrganizationID, update); err != nil {
+		return nil, types.UpdateAsanaSettingsOutput{}, asanaSettingsToolError(r, ctx, err)
+	}
+
+	settings, err := r.task.Sync.AsanaSettings(ctx, scope, input.OrganizationID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load Asana settings", log.Error(err))
+
+		return nil, types.UpdateAsanaSettingsOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, types.UpdateAsanaSettingsOutput{Settings: mcpAsanaSettings(settings)}, nil
+}
+
+func (r *Resolver) GetAsanaProjectSetupTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetAsanaProjectSetupInput) (*mcp.CallToolResult, types.GetAsanaProjectSetupOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionConnectorList)
+	if err != nil {
+		return nil, types.GetAsanaProjectSetupOutput{}, err
+	}
+
+	setup, mapping, err := r.task.Sync.AsanaProjectSetup(ctx, scope, input.OrganizationID, input.ProjectID)
+	if err != nil {
+		return nil, types.GetAsanaProjectSetupOutput{}, asanaSettingsToolError(r, ctx, err)
+	}
+
+	return nil, types.GetAsanaProjectSetupOutput{Setup: mcpAsanaSetup(setup, mapping)}, nil
+}
+
+func (r *Resolver) UpdateAsanaProjectMappingTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateAsanaProjectMappingInput) (*mcp.CallToolResult, types.UpdateAsanaProjectMappingOutput, error) {
+	var raw json.RawMessage
+	if req != nil && req.Params != nil {
+		raw = req.Params.Arguments
+	}
+
+	update, err := asanaMappingUpdate(raw, input)
+	if err != nil {
+		return nil, types.UpdateAsanaProjectMappingOutput{}, err
+	}
+
+	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionConnectorInitiate)
+	if err != nil {
+		return nil, types.UpdateAsanaProjectMappingOutput{}, err
+	}
+
+	if err := r.task.Sync.UpdateAsanaProjectMapping(ctx, scope, input.OrganizationID, update); err != nil {
+		return nil, types.UpdateAsanaProjectMappingOutput{}, asanaSettingsToolError(r, ctx, err)
+	}
+
+	setup, mapping, err := r.task.Sync.AsanaProjectSetup(ctx, scope, input.OrganizationID, input.ProjectID)
+	if err != nil {
+		return nil, types.UpdateAsanaProjectMappingOutput{}, asanaSettingsToolError(r, ctx, err)
+	}
+
+	return nil, types.UpdateAsanaProjectMappingOutput{Setup: mcpAsanaSetup(setup, mapping)}, nil
+}

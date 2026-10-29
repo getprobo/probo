@@ -885,7 +885,7 @@ func (s *Service) EnqueueCommentOutbound(
 		return fmt.Errorf("cannot load task external link: %w", err)
 	}
 
-	if !isLinearPublishComplete(link) {
+	if !isPublishComplete(link) {
 		return nil
 	}
 
@@ -897,6 +897,7 @@ func (s *Service) EnqueueCommentOutbound(
 	payload, err := json.Marshal(
 		JobPayload{
 			Action:             SyncActionCommentUpsert,
+			Provider:           link.Provider,
 			TaskID:             link.TaskID,
 			ExternalID:         link.ExternalID,
 			ExternalIdentifier: link.ExternalIdentifier,
@@ -965,7 +966,7 @@ func (s *Service) EnqueueCommentDelete(
 		return fmt.Errorf("cannot load task external link: %w", err)
 	}
 
-	if !isLinearPublishComplete(link) {
+	if !isPublishComplete(link) {
 		return nil
 	}
 
@@ -977,6 +978,7 @@ func (s *Service) EnqueueCommentDelete(
 	payload, err := json.Marshal(
 		JobPayload{
 			Action:             SyncActionCommentDelete,
+			Provider:           link.Provider,
 			TaskID:             link.TaskID,
 			ExternalID:         link.ExternalID,
 			ExternalIdentifier: link.ExternalIdentifier,
