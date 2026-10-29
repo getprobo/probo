@@ -119,7 +119,6 @@ func (f *frontier) evictForLink(item QueueItem) bool {
 	}
 
 	for i, entry := range slices.Backward(f.entries) {
-
 		if entry.item.FromSitemap && len(entry.item.EmbedHosts) == 0 {
 			f.removeAt(i)
 
