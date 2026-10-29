@@ -25,6 +25,7 @@ import (
 	"errors"
 	"io"
 	"testing"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -107,7 +108,7 @@ func TestAuthorizer_InternalErrorPaths(t *testing.T) {
 	t.Run("authorize batch returns wrapped resource attributes batch error", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := a.authorizeMulti(
+		_, _, err := a.authorizeMulti(
 			ctx,
 			nil,
 			AuthorizeMultiParams{
@@ -366,7 +367,15 @@ func TestAuthorizer_BuildAuditLogEntry(t *testing.T) {
 				logger: log.NewLogger(log.WithOutput(io.Discard)),
 			}
 
-			entry := a.buildAuditLogEntry(context.Background(), tt.params, tt.resourceAttrs)
+			entry := a.buildAuditLogEntry(
+				context.Background(),
+				tt.params,
+				tt.resourceAttrs,
+				nil,
+				actorSnapshot{},
+				AuditRequest{},
+				time.Now(),
+			)
 			if tt.wantNil {
 				assert.Nil(t, entry)
 
@@ -378,6 +387,8 @@ func TestAuthorizer_BuildAuditLogEntry(t *testing.T) {
 			assert.Equal(t, tt.params.Principal, entry.ActorID)
 			assert.Equal(t, tt.params.Resource, entry.ResourceID)
 			assert.Equal(t, tt.params.Action, entry.Action)
+			assert.Equal(t, coredata.AuditLogOutcomeAllowed, entry.Outcome)
+			assert.Nil(t, entry.DenialReason)
 		})
 	}
 }

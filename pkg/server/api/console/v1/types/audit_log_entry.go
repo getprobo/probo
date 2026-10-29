@@ -82,10 +82,18 @@ func NewAuditLogEntry(e *coredata.AuditLogEntry) *AuditLogEntry {
 		},
 		ActorID:      e.ActorID,
 		ActorType:    e.ActorType,
+		ActorEmail:   e.ActorEmail,
+		ActorName:    e.ActorName,
 		Action:       e.Action,
 		ResourceType: e.ResourceType,
 		ResourceID:   e.ResourceID,
+		Outcome:      e.Outcome,
+		DenialReason: e.DenialReason,
 		Metadata:     metadata,
+		OriginIP:     e.OriginIP,
+		UserAgent:    e.UserAgent,
+		RequestID:    e.RequestID,
 		CreatedAt:    e.CreatedAt,
+		RecordedAt:   e.RecordedAt,
 	}
 }

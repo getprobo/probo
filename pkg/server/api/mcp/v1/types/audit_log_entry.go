@@ -33,10 +33,18 @@ func NewAuditLogEntry(e *coredata.AuditLogEntry) *AuditLogEntry {
 		OrganizationID: e.OrganizationID,
 		ActorID:        e.ActorID,
 		ActorType:      AuditLogEntryActorType(e.ActorType),
+		ActorEmail:     e.ActorEmail,
+		ActorName:      e.ActorName,
 		Action:         e.Action,
 		ResourceType:   e.ResourceType,
 		ResourceID:     e.ResourceID,
+		Outcome:        AuditLogEntryOutcome(e.Outcome),
+		DenialReason:   e.DenialReason,
+		OriginIP:       e.OriginIP,
+		UserAgent:      e.UserAgent,
+		RequestID:      e.RequestID,
 		CreatedAt:      e.CreatedAt,
+		RecordedAt:     e.RecordedAt,
 	}
 
 	if len(e.Metadata) > 0 {

@@ -41,11 +41,19 @@ type (
 		OrganizationID gid.GID           `db:"organization_id"`
 		ActorID        gid.GID           `db:"actor_id"`
 		ActorType      AuditLogActorType `db:"actor_type"`
+		ActorEmail     *string           `db:"actor_email"`
+		ActorName      *string           `db:"actor_name"`
 		Action         string            `db:"action"`
 		ResourceType   string            `db:"resource_type"`
 		ResourceID     gid.GID           `db:"resource_id"`
+		Outcome        AuditLogOutcome   `db:"outcome"`
+		DenialReason   *string           `db:"denial_reason"`
 		Metadata       json.RawMessage   `db:"metadata"`
+		OriginIP       *string           `db:"origin_ip"`
+		UserAgent      *string           `db:"user_agent"`
+		RequestID      *string           `db:"request_id"`
 		CreatedAt      time.Time         `db:"created_at"`
+		RecordedAt     time.Time         `db:"recorded_at"`
 	}
 
 	AuditLogEntries []*AuditLogEntry
@@ -111,11 +119,19 @@ INSERT INTO audit_log_entries (
     organization_id,
     actor_id,
     actor_type,
+    actor_email,
+    actor_name,
     action,
     resource_type,
     resource_id,
+    outcome,
+    denial_reason,
     metadata,
-    created_at
+    origin_ip,
+    user_agent,
+    request_id,
+    created_at,
+    recorded_at
 )
 VALUES (
     @id,
@@ -123,11 +139,19 @@ VALUES (
     @organization_id,
     @actor_id,
     @actor_type,
+    @actor_email,
+    @actor_name,
     @action,
     @resource_type,
     @resource_id,
+    @outcome,
+    @denial_reason,
     @metadata,
-    @created_at
+    @origin_ip,
+    @user_agent,
+    @request_id,
+    @created_at,
+    @recorded_at
 )
 `
 
@@ -137,11 +161,19 @@ VALUES (
 		"organization_id": e.OrganizationID,
 		"actor_id":        e.ActorID,
 		"actor_type":      e.ActorType,
+		"actor_email":     e.ActorEmail,
+		"actor_name":      e.ActorName,
 		"action":          e.Action,
 		"resource_type":   e.ResourceType,
 		"resource_id":     e.ResourceID,
+		"outcome":         e.Outcome,
+		"denial_reason":   e.DenialReason,
 		"metadata":        e.Metadata,
+		"origin_ip":       e.OriginIP,
+		"user_agent":      e.UserAgent,
+		"request_id":      e.RequestID,
 		"created_at":      e.CreatedAt,
+		"recorded_at":     e.RecordedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -174,11 +206,19 @@ func (es AuditLogEntries) BulkInsert(
 				e.OrganizationID,
 				e.ActorID,
 				e.ActorType,
+				e.ActorEmail,
+				e.ActorName,
 				e.Action,
 				e.ResourceType,
 				e.ResourceID,
+				e.Outcome,
+				e.DenialReason,
 				e.Metadata,
+				e.OriginIP,
+				e.UserAgent,
+				e.RequestID,
 				e.CreatedAt,
+				e.RecordedAt,
 			},
 		)
 	}
@@ -192,11 +232,19 @@ func (es AuditLogEntries) BulkInsert(
 			"organization_id",
 			"actor_id",
 			"actor_type",
+			"actor_email",
+			"actor_name",
 			"action",
 			"resource_type",
 			"resource_id",
+			"outcome",
+			"denial_reason",
 			"metadata",
+			"origin_ip",
+			"user_agent",
+			"request_id",
 			"created_at",
+			"recorded_at",
 		},
 		pgx.CopyFromRows(rows),
 	)
@@ -219,11 +267,19 @@ SELECT
     organization_id,
     actor_id,
     actor_type,
+    actor_email,
+    actor_name,
     action,
     resource_type,
     resource_id,
+    outcome,
+    denial_reason,
     metadata,
-    created_at
+    origin_ip,
+    user_agent,
+    request_id,
+    created_at,
+    recorded_at
 FROM
     audit_log_entries
 WHERE
@@ -269,11 +325,19 @@ SELECT
     organization_id,
     actor_id,
     actor_type,
+    actor_email,
+    actor_name,
     action,
     resource_type,
     resource_id,
+    outcome,
+    denial_reason,
     metadata,
-    created_at
+    origin_ip,
+    user_agent,
+    request_id,
+    created_at,
+    recorded_at
 FROM
     audit_log_entries
 WHERE
