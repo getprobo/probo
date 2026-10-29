@@ -39,7 +39,7 @@ export default function DocumentsPageLoader() {
       { organizationId, employeePortalId, first: DOCUMENT_LIST_PAGE_SIZE },
       { fetchPolicy: "network-only" },
     );
-  }, [employeePortalId, organizationId, loadQuery]);
+  }, [employeePortalId, loadQuery, organizationId]);
 
   const currentQueryRef = queryRef != null
     && queryRef.variables.organizationId === organizationId
@@ -52,7 +52,10 @@ export default function DocumentsPageLoader() {
   }
 
   return (
-    <Suspense key={`${organizationId}:${employeePortalId}`} fallback={<DocumentsPageSkeleton />}>
+    <Suspense
+      key={`${organizationId}:${employeePortalId}`}
+      fallback={<DocumentsPageSkeleton />}
+    >
       <DocumentsPage queryRef={currentQueryRef} />
     </Suspense>
   );

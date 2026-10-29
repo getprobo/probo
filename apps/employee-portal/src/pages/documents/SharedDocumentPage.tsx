@@ -18,15 +18,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { UnAuthenticatedError } from "@probo/relay";
 import { Text } from "@probo/ui/src/v2/typography/Text";
+import { type ReactNode, use } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
+import { graphql, type PreloadedQuery, usePreloadedQuery, useRelayEnvironment } from "react-relay";
+import { commitMutation, type Environment } from "relay-runtime";
 
 import type { SharedDocumentPageQuery } from "#/__generated__/core/SharedDocumentPageQuery.graphql";
+import type { useExportEmployeeDocumentPdfMutation } from "#/__generated__/core/useExportEmployeeDocumentPdfMutation.graphql";
+import { redirectToLogin } from "#/lib/auth/redirectToLogin";
 import { NotFoundError } from "#/lib/relay/errors";
 import { DocumentRequestPanel } from "#/pages/_components/DocumentRequestPanel";
 import { DocumentWorkspace } from "#/pages/_components/DocumentWorkspace";
-import { useExportEmployeeDocumentPdf } from "#/pages/_lib/useExportEmployeeDocumentPdf";
+import { exportEmployeeDocumentPdfMutation } from "#/pages/_lib/useExportEmployeeDocumentPdf";
 import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 const NS = "documents";
@@ -48,6 +53,77 @@ interface SharedDocumentPageProps {
   queryRef: PreloadedQuery<SharedDocumentPageQuery>;
 }
 
+interface SharedDocumentWorkspaceProps {
+  versionId: string;
+  title: string;
+  request: ReactNode;
+}
+
+// One export per version. commitMutation does not update component state, so
+// the suspended page can start it before mounting. The useMutation hook cannot:
+// its in-flight update runs before this component mounts.
+const pdfPromises = new Map<string, Promise<string>>();
+
+function loadSharedDocumentPdf(
+  environment: Environment,
+  documentVersionId: string,
+  organizationId: string,
+): Promise<string> {
+  const existing = pdfPromises.get(documentVersionId);
+  if (existing != null) {
+    return existing;
+  }
+
+  const promise = new Promise<string>((resolve, reject) => {
+    commitMutation<useExportEmployeeDocumentPdfMutation>(environment, {
+      mutation: exportEmployeeDocumentPdfMutation,
+      variables: { input: { documentVersionId } },
+      onCompleted: (response, errors) => {
+        const [payloadError] = errors ?? [];
+        if (payloadError != null) {
+          reject(new Error(payloadError.message));
+          return;
+        }
+        resolve(response.exportEmployeeDocumentVersionPDF.data);
+      },
+      onError: (error) => {
+        if (error instanceof UnAuthenticatedError) {
+          redirectToLogin({ organizationId });
+        }
+        reject(error);
+      },
+    });
+  });
+  void promise.catch(() => {
+    if (pdfPromises.get(documentVersionId) === promise) {
+      pdfPromises.delete(documentVersionId);
+    }
+  });
+  pdfPromises.set(documentVersionId, promise);
+  return promise;
+}
+
+// Suspends on the export, then mounts the PDF in that same render. An effect
+// would let the workspace commit first, and react-pdf would suspend the
+// loader skeleton again.
+function SharedDocumentWorkspace({
+  versionId,
+  title,
+  request,
+}: SharedDocumentWorkspaceProps) {
+  const environment = useRelayEnvironment();
+  const { organizationId } = useEmployeePortalRoute();
+  const dataUri = use(loadSharedDocumentPdf(environment, versionId, organizationId));
+
+  return (
+    <DocumentWorkspace
+      title={title}
+      dataUri={dataUri}
+      request={request}
+    />
+  );
+}
+
 export function SharedDocumentPage({ queryRef }: SharedDocumentPageProps) {
   const { t } = useTranslation(NS);
   const { t: tApp } = useTranslation();
@@ -60,12 +136,10 @@ export function SharedDocumentPage({ queryRef }: SharedDocumentPageProps) {
     throw new NotFoundError("shared document not found");
   }
 
-  const dataUri = useExportEmployeeDocumentPdf(document.publishedVersionId);
-
   return (
-    <DocumentWorkspace
+    <SharedDocumentWorkspace
+      versionId={document.publishedVersionId}
       title={document.title}
-      dataUri={dataUri}
       request={(
         <DocumentRequestPanel
           backLabel={t("title")}

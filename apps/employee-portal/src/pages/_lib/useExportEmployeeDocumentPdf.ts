@@ -24,7 +24,7 @@ import { graphql } from "react-relay";
 import type { useExportEmployeeDocumentPdfMutation } from "#/__generated__/core/useExportEmployeeDocumentPdfMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
 
-const exportEmployeeDocumentPdfMutation = graphql`
+export const exportEmployeeDocumentPdfMutation = graphql`
   mutation useExportEmployeeDocumentPdfMutation(
     $input: ExportEmployeeDocumentVersionPDFInput!
   ) {
