@@ -73,6 +73,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 
   # Remove the color
   prb tag update --id prbrtg_... --color ""`,
+		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
 			if err != nil {
@@ -92,6 +93,10 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
+			setKey := cmd.Flags().Changed("key")
+			setValue := cmd.Flags().Changed("value")
+			setColor := cmd.Flags().Changed("color")
+
 			if f.IOStreams.IsInteractive() {
 				if flagID == "" {
 					err := huh.NewInput().
@@ -101,6 +106,29 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 					if err != nil {
 						return err
 					}
+				}
+
+				if !setKey && !setValue && !setColor {
+					err := huh.NewForm(
+						huh.NewGroup(
+							huh.NewInput().
+								Title("Key (leave empty to keep)").
+								Value(&flagKey),
+							huh.NewInput().
+								Title("Value (leave empty to keep)").
+								Value(&flagValue),
+							huh.NewInput().
+								Title("Color (leave empty to keep)").
+								Value(&flagColor),
+						),
+					).Run()
+					if err != nil {
+						return err
+					}
+
+					setKey = flagKey != ""
+					setValue = flagValue != ""
+					setColor = flagColor != ""
 				}
 			}
 
@@ -112,16 +140,20 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				"id": flagID,
 			}
 
-			if cmd.Flags().Changed("key") {
+			if setKey {
 				input["key"] = flagKey
 			}
 
-			if cmd.Flags().Changed("value") {
+			if setValue {
 				input["value"] = flagValue
 			}
 
-			if cmd.Flags().Changed("color") {
-				input["color"] = flagColor
+			if setColor {
+				if flagColor == "" {
+					input["color"] = nil
+				} else {
+					input["color"] = flagColor
+				}
 			}
 
 			if len(input) == 1 {

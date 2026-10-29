@@ -68,6 +68,7 @@ func NewCmdDetach(f *cmdutil.Factory) *cobra.Command {
 
   # Detach a tag non-interactively
   prb tag detach --resource-id prbdoc_... --tag-id prbrtg_...`,
+		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
 			if err != nil {

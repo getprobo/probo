@@ -52,6 +52,7 @@ func NewCmdDelete(f *cmdutil.Factory) *cobra.Command {
 
   # Delete without confirmation
   prb tag delete --tag-id prbrtg_... --yes`,
+		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			id := flagID
 			if id == "" {
@@ -137,6 +138,7 @@ func NewCmdDelete(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagID, "id", "", "Tag ID")
 	cmd.Flags().StringVar(&flagTagID, "tag-id", "", "Tag ID")
 	cmd.Flags().BoolVarP(&flagYes, "yes", "y", false, "Skip confirmation prompt")
+	cmd.MarkFlagsMutuallyExclusive("id", "tag-id")
 
 	return cmd
 }
