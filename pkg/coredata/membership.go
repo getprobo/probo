@@ -110,6 +110,49 @@ WHERE
 	return nil
 }
 
+func (m *Memberships) LoadByOrganizationID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	organizationID gid.GID,
+	cursor *page.Cursor[MembershipOrderField],
+) error {
+	q := `
+SELECT
+    id,
+    identity_id,
+    organization_id,
+    role,
+    created_at,
+    updated_at
+FROM
+    iam_memberships
+WHERE
+    %s
+    AND organization_id = @organization_id
+    AND %s
+`
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"organization_id": organizationID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query memberships: %w", err)
+	}
+
+	memberships, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Membership])
+	if err != nil {
+		return fmt.Errorf("cannot collect memberships: %w", err)
+	}
+
+	*m = memberships
+
+	return nil
+}
+
 func (m *Membership) Insert(ctx context.Context, conn pg.Tx, scope Scoper) error {
 	query := `
 INSERT INTO

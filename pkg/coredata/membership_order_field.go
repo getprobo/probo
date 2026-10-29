@@ -32,11 +32,8 @@ type (
 )
 
 const (
-	MembershipOrderFieldOrganizationName MembershipOrderField = "ORGANIZATION_NAME"
-	MembershipOrderFieldFullName         MembershipOrderField = "FULL_NAME"
-	MembershipOrderFieldEmailAddress     MembershipOrderField = "EMAIL_ADDRESS"
-	MembershipOrderFieldRole             MembershipOrderField = "ROLE"
-	MembershipOrderFieldCreatedAt        MembershipOrderField = "CREATED_AT"
+	MembershipOrderFieldRole      MembershipOrderField = "ROLE"
+	MembershipOrderFieldCreatedAt MembershipOrderField = "CREATED_AT"
 )
 
 var (
@@ -48,9 +45,6 @@ var (
 
 func MembershipOrderFields() []MembershipOrderField {
 	return []MembershipOrderField{
-		MembershipOrderFieldOrganizationName,
-		MembershipOrderFieldFullName,
-		MembershipOrderFieldEmailAddress,
 		MembershipOrderFieldRole,
 		MembershipOrderFieldCreatedAt,
 	}
@@ -74,12 +68,6 @@ func (v *MembershipOrderField) UnmarshalText(text []byte) error {
 
 func (p MembershipOrderField) Column() string {
 	switch p {
-	case MembershipOrderFieldOrganizationName:
-		return "organization_name"
-	case MembershipOrderFieldFullName:
-		return "full_name"
-	case MembershipOrderFieldEmailAddress:
-		return "email_address"
 	case MembershipOrderFieldRole:
 		return "role"
 	case MembershipOrderFieldCreatedAt:

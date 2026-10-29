@@ -23,15 +23,15 @@ package drivers
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 // ProboMembershipsDriver is a built-in identity source that queries
-// iam_memberships + identities for the organization. No external
+// the organization's memberships and their profiles. No external
 // connector is needed.
 type ProboMembershipsDriver struct {
 	pg             *pg.Client
@@ -52,47 +52,75 @@ func NewProboMembershipsDriver(
 }
 
 func (d *ProboMembershipsDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
-	var records []AccountRecord
+	var (
+		memberships           []*coredata.Membership
+		membershipsByIdentity = map[gid.GID]*coredata.Membership{}
+		records               []AccountRecord
+	)
 
 	err := d.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			accounts, err := coredata.LoadMembershipAccountsByOrganizationID(
+			err := page.WalkAll(
 				ctx,
-				conn,
-				d.scope,
-				d.organizationID,
+				page.OrderBy[coredata.MembershipOrderField]{
+					Field:     coredata.MembershipOrderFieldCreatedAt,
+					Direction: page.OrderDirectionAsc,
+				},
+				func(ctx context.Context, cursor *page.Cursor[coredata.MembershipOrderField]) (coredata.Memberships, error) {
+					var batch coredata.Memberships
+					if err := batch.LoadByOrganizationID(ctx, conn, d.scope, d.organizationID, cursor); err != nil {
+						return nil, fmt.Errorf("cannot load memberships: %w", err)
+					}
+
+					return batch, nil
+				},
+				func(batch coredata.Memberships) error {
+					memberships = append(memberships, batch...)
+					for _, membership := range batch {
+						membershipsByIdentity[membership.IdentityID] = membership
+					}
+
+					return nil
+				},
 			)
 			if err != nil {
-				return fmt.Errorf("cannot load membership accounts: %w", err)
+				return fmt.Errorf("cannot walk memberships: %w", err)
 			}
 
-			for _, account := range accounts {
-				role := strings.TrimSpace(account.Role)
+			filter := coredata.NewMembershipProfileFilter(nil).WithMembership()
 
-				roles := []string{}
-				if role != "" {
-					roles = []string{role}
-				}
+			err = page.WalkAll(
+				ctx,
+				page.OrderBy[coredata.MembershipProfileOrderField]{
+					Field:     coredata.MembershipProfileOrderFieldEmailAddress,
+					Direction: page.OrderDirectionAsc,
+				},
+				func(ctx context.Context, cursor *page.Cursor[coredata.MembershipProfileOrderField]) (coredata.MembershipProfiles, error) {
+					var batch coredata.MembershipProfiles
+					if err := batch.LoadByOrganizationID(ctx, conn, d.scope, d.organizationID, cursor, filter); err != nil {
+						return nil, fmt.Errorf("cannot load membership profiles: %w", err)
+					}
 
-				isAdmin := role == string(coredata.MembershipRoleOwner) || role == string(coredata.MembershipRoleAdmin)
-				createdAt := account.CreatedAt
+					return batch, nil
+				},
+				func(profiles coredata.MembershipProfiles) error {
+					for _, profile := range profiles {
+						membership, ok := membershipsByIdentity[profile.IdentityID]
+						if !ok {
+							continue
+						}
 
-				records = append(
-					records,
-					AccountRecord{
-						Email:       account.Email,
-						FullName:    account.FullName,
-						Roles:       roles,
-						Active:      new(account.State == string(coredata.ProfileStateActive)),
-						IsAdmin:     new(isAdmin),
-						ExternalID:  account.ID.String(),
-						CreatedAt:   &createdAt,
-						MFAStatus:   coredata.MFAStatusUnknown,
-						AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
-						AccountType: coredata.AccessReviewEntryAccountTypeUser,
-					},
-				)
+						delete(membershipsByIdentity, profile.IdentityID)
+
+						records = append(records, proboMembershipRecord(membership, profile))
+					}
+
+					return nil
+				},
+			)
+			if err != nil {
+				return fmt.Errorf("cannot walk membership profiles: %w", err)
 			}
 
 			return nil
@@ -102,5 +130,37 @@ func (d *ProboMembershipsDriver) ListAccounts(ctx context.Context) ([]AccountRec
 		return nil, fmt.Errorf("cannot list probo membership accounts: %w", err)
 	}
 
+	// A membership without a profile is still a grant on record, so it
+	// is reviewed as inactive (the authorizer denies it) rather than hidden.
+	for _, membership := range memberships {
+		if _, ok := membershipsByIdentity[membership.IdentityID]; ok {
+			records = append(records, proboMembershipRecord(membership, nil))
+		}
+	}
+
 	return records, nil
+}
+
+func proboMembershipRecord(membership *coredata.Membership, profile *coredata.MembershipProfile) AccountRecord {
+	isAdmin := membership.Role == coredata.MembershipRoleOwner || membership.Role == coredata.MembershipRoleAdmin
+	createdAt := membership.CreatedAt
+
+	record := AccountRecord{
+		Roles:       []string{string(membership.Role)},
+		IsAdmin:     new(isAdmin),
+		ExternalID:  membership.ID.String(),
+		CreatedAt:   &createdAt,
+		MFAStatus:   coredata.MFAStatusUnknown,
+		AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+		AccountType: coredata.AccessReviewEntryAccountTypeUser,
+		Active:      new(false),
+	}
+
+	if profile != nil {
+		record.Email = profile.EmailAddress.String()
+		record.FullName = profile.FullName
+		record.Active = new(profile.State == coredata.ProfileStateActive)
+	}
+
+	return record
 }
