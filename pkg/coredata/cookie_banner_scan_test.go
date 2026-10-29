@@ -193,6 +193,7 @@ func TestCookieBannerScan_Pause_BlocksAnotherScanAndKeepsStartedAt(t *testing.T)
 
 	checkpoint := json.RawMessage(`{"visited_templates":["/"],"queue":[],"pages_scanned":1,"elapsed_ms":1000,"truncated":false}`)
 	scan.Checkpoint = &checkpoint
+	scan.PagesScanned = 1
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		return scan.MarkPaused(ctx, tx, fx.scope, time.Now())
@@ -214,6 +215,7 @@ func TestCookieBannerScan_Pause_BlocksAnotherScanAndKeepsStartedAt(t *testing.T)
 	assert.Equal(t, coredata.CookieBannerScanStateRunning, resumed.State)
 	require.NotNil(t, resumed.StartedAt)
 	assert.True(t, resumed.StartedAt.Equal(startedAt), "resuming must keep the original start")
+	assert.Equal(t, 1, resumed.PagesScanned)
 	require.NotNil(t, resumed.Checkpoint)
 	assert.JSONEq(t, string(checkpoint), string(*resumed.Checkpoint))
 }

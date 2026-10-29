@@ -112,7 +112,7 @@ func TestCookieBannerScanHandler_Claim_StopsAtRunningLimit(t *testing.T) {
 	assert.ErrorIs(t, err, worker.ErrNoTask)
 }
 
-func TestCookieBannerScanHandler_Claim_PrefersPaused(t *testing.T) {
+func TestCookieBannerScanHandler_Claim_TakesTheLeastRecentlyRunScan(t *testing.T) {
 	t.Parallel()
 
 	client := test.PGClient(t)
@@ -120,23 +120,29 @@ func TestCookieBannerScanHandler_Claim_PrefersPaused(t *testing.T) {
 	pausedBanner := seedWorkerFixture(t, ctx, client)
 	pendingBanner := seedWorkerFixture(t, ctx, client)
 
-	// Year 2000 sorts ahead of any paused scan another test creates with
-	// the current time, so this claim takes our row and not theirs.
+	// Year 2000 sorts ahead of any scan another test creates with the
+	// current time, so these claims take our rows and not theirs. The
+	// paused scan was requested first but ran after the pending one was
+	// requested, so it waits its turn.
+	requested := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
+	waiting := requested.Add(time.Hour)
+	ran := requested.Add(2 * time.Hour)
+
 	paused := &coredata.CookieBannerScan{
 		ID:             gid.New(pausedBanner.scope.GetTenantID(), coredata.CookieBannerScanEntityType),
 		OrganizationID: pausedBanner.organizationID,
 		CookieBannerID: pausedBanner.banner.ID,
 		State:          coredata.CookieBannerScanStatePending,
-		CreatedAt:      time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
-		UpdatedAt:      time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
+		CreatedAt:      requested,
+		UpdatedAt:      requested,
 	}
 	pending := &coredata.CookieBannerScan{
 		ID:             gid.New(pendingBanner.scope.GetTenantID(), coredata.CookieBannerScanEntityType),
 		OrganizationID: pendingBanner.organizationID,
 		CookieBannerID: pendingBanner.banner.ID,
 		State:          coredata.CookieBannerScanStatePending,
-		CreatedAt:      time.Now().UTC(),
-		UpdatedAt:      time.Now().UTC(),
+		CreatedAt:      waiting,
+		UpdatedAt:      waiting,
 	}
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
@@ -144,14 +150,14 @@ func TestCookieBannerScanHandler_Claim_PrefersPaused(t *testing.T) {
 			return err
 		}
 
-		if err := paused.MarkRunning(ctx, tx, pausedBanner.scope, paused.CreatedAt); err != nil {
+		if err := paused.MarkRunning(ctx, tx, pausedBanner.scope, requested); err != nil {
 			return err
 		}
 
 		checkpoint := json.RawMessage(`{"visited_templates":["/"],"queue":[],"pages_scanned":1,"elapsed_ms":1}`)
 		paused.Checkpoint = &checkpoint
 
-		if err := paused.MarkPaused(ctx, tx, pausedBanner.scope, paused.CreatedAt); err != nil {
+		if err := paused.MarkPaused(ctx, tx, pausedBanner.scope, ran); err != nil {
 			return err
 		}
 
@@ -160,14 +166,17 @@ func TestCookieBannerScanHandler_Claim_PrefersPaused(t *testing.T) {
 
 	worker := newScanWorker(t, client)
 	// Other tests may already hold a running scan. Raising the cap keeps
-	// this claim on the ordering rule instead of the cluster limit.
+	// these claims on the ordering rule instead of the cluster limit.
 	worker.handler.maxRunning = 1000
 
-	claimed, err := worker.handler.Claim(ctx)
+	first, err := worker.handler.Claim(ctx)
 	require.NoError(t, err)
-	assert.Equal(t, paused.ID, claimed.ID)
-	assert.Equal(t, coredata.CookieBannerScanStateRunning, claimed.State)
-	assert.NotEqual(t, pending.ID, claimed.ID)
+	assert.Equal(t, pending.ID, first.ID)
+	assert.Equal(t, coredata.CookieBannerScanStateRunning, first.State)
+
+	second, err := worker.handler.Claim(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, paused.ID, second.ID)
 }
 
 func TestCookieBannerScanHandler_Process_CompletesWithDerivedCounts(t *testing.T) {
@@ -251,6 +260,45 @@ func TestCookieBannerScanHandler_Process_PausesOnShutdown(t *testing.T) {
 	assert.Nil(t, got.CompletedAt)
 	require.NotNil(t, got.Checkpoint)
 	assert.Contains(t, string(*got.Checkpoint), "https://example.com/pricing")
+}
+
+func TestCookieBannerScanHandler_Process_PausesWhenARunEnds(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedWorkerFixture(t, ctx, client)
+	scan := insertRunningScan(t, ctx, client, fx)
+	w := newScanWorker(t, client)
+
+	w.handler.run = func(context.Context, scanner.Input) (*scanner.Result, error) {
+		return &scanner.Result{
+			Paused:       true,
+			PagesScanned: 10,
+			Checkpoint: scanner.Checkpoint{
+				PagesScanned: 10,
+				Queue: []scanner.QueueItem{
+					{URL: "https://example.com/stories/a", Depth: 1, EmbedHosts: []string{"www.youtube.com"}},
+				},
+				CoveredHosts: []string{"tally.so"},
+			},
+		}, nil
+	}
+
+	require.NoError(t, w.handler.Process(ctx, *scan))
+
+	got := reloadScan(t, ctx, client, fx, scan.ID)
+	assert.Equal(t, coredata.CookieBannerScanStatePaused, got.State)
+	assert.Nil(t, got.FailureReason)
+	assert.Nil(t, got.CompletedAt)
+	assert.Equal(t, 10, got.PagesScanned)
+
+	checkpoint, err := unmarshalCheckpoint(got.Checkpoint)
+	require.NoError(t, err)
+	require.NotNil(t, checkpoint)
+	require.Len(t, checkpoint.Queue, 1)
+	assert.Equal(t, []string{"www.youtube.com"}, checkpoint.Queue[0].EmbedHosts)
+	assert.Equal(t, []string{"tally.so"}, checkpoint.CoveredHosts)
 }
 
 func TestCookieBannerScanHandler_Process_PausesWhenShutdownInterruptsAnError(t *testing.T) {
@@ -418,6 +466,7 @@ func TestCookieBannerScanHandler_Process_DiscardsOutcomeWhenHeartbeatLosesTheSca
 	t.Parallel()
 
 	client := test.PGClient(t)
+
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
