@@ -18,7 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { type ComponentProps, useCallback, useMemo } from "react";
+import { type Editor } from "@tiptap/core";
+import { type ComponentProps, type MutableRefObject, useCallback, useEffect, useMemo, useRef } from "react";
 
 import {
   createRichEditorAutomergeDocument as createAutomergeDocument,
@@ -26,12 +27,22 @@ import {
   richEditorAutomergeContent,
   supportsRichEditorCollaboration,
 } from "./collaboration";
+import {
+  type CommentAnchor,
+  createCommentAnchorExtension,
+  refreshCommentAnchors,
+  type CommentAnchorController,
+} from "./commentAnchors";
 import { createRichEditorHistoryExtension } from "./historyDecorations";
 import {
   createRichEditorPresenceExtension,
   type RichEditorCollaborationHandle,
 } from "./presence";
 import { RichEditor, richEditorCollaborationExtensions } from "./RichEditor";
+import {
+  createSuggestingExtension,
+  type SuggestingController,
+} from "./SuggestionExtension";
 
 export { supportsRichEditorCollaboration };
 
@@ -44,13 +55,21 @@ type CollaborativeRichEditorProps = Omit<
   "editorExtensions" | "initialContent" | "onPresence" | "suspendContentChanges"
 > & {
   collaborationHandle: RichEditorCollaborationHandle;
+  suggesting?: MutableRefObject<SuggestingController>;
+  commentAnchors?: CommentAnchor[];
+  commentAnchorController?: CommentAnchorController;
 };
 
 export function CollaborativeRichEditor({
   collaborationHandle,
   historyHighlights,
+  suggesting,
+  commentAnchors,
+  commentAnchorController,
+  onEditor,
   ...props
 }: CollaborativeRichEditorProps) {
+  const editorRef = useRef<Editor | null>(null);
   const editorExtensions = useMemo(() => {
     const base = [
       ...richEditorCollaborationExtensions,
@@ -61,12 +80,23 @@ export function CollaborativeRichEditor({
       createRichEditorPresenceExtension(collaborationHandle),
     ];
 
+    if (suggesting) {
+      base.push(createSuggestingExtension(suggesting));
+    }
+    if (commentAnchorController) {
+      base.push(createCommentAnchorExtension(collaborationHandle, commentAnchorController));
+    }
     if (!historyHighlights?.length) {
       return base;
     }
 
     return [...base, createRichEditorHistoryExtension(historyHighlights)];
-  }, [collaborationHandle, historyHighlights]);
+  }, [collaborationHandle, commentAnchorController, historyHighlights, suggesting]);
+
+  useEffect(() => {
+    if (!editorRef.current || !commentAnchors) return;
+    refreshCommentAnchors(editorRef.current, commentAnchors);
+  }, [commentAnchors]);
 
   const initialContent = useMemo(
     () => richEditorAutomergeContent(
@@ -80,12 +110,21 @@ export function CollaborativeRichEditor({
     collaborationHandle.updatePresence?.(anchor, head);
   }, [collaborationHandle]);
 
+  const handleEditor = useCallback((editor: Editor | null) => {
+    editorRef.current = editor;
+    if (editor && commentAnchors) {
+      refreshCommentAnchors(editor, commentAnchors);
+    }
+    onEditor?.(editor);
+  }, [commentAnchors, onEditor]);
+
   return (
     <RichEditor
       {...props}
       editorExtensions={editorExtensions}
       historyHighlights={undefined}
       initialContent={initialContent}
+      onEditor={handleEditor}
       onPresence={onPresence}
       suspendContentChanges
     />

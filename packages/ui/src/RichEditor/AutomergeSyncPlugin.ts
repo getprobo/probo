@@ -29,7 +29,6 @@ import type {
   SchemaAdapter,
 } from "@automerge/prosemirror";
 import { patchesToTr } from "@automerge/prosemirror/dist/patchesToTr.js";
-import pmToAm from "@automerge/prosemirror/dist/pmToAm.js";
 import {
   pmDocFromSpans,
   pmNodeToSpans,
@@ -43,6 +42,13 @@ import {
 } from "@tiptap/pm/state";
 
 import type { RichEditorAutomergeDocument } from "./collaboration";
+import { applyDocumentSteps, reassignSuggestionBlocks } from "./documentSteps";
+import {
+  suggestionReassignmentFrom,
+  suggestionSplitFrom,
+} from "./suggestionSplit";
+
+export const automergeRemoteTransaction = "automerge-remote";
 import {
   collaborationDebug,
   summarizeAutomergeSpans,
@@ -96,6 +102,7 @@ export function createAutomergeSyncPlugin(
               state: view.state,
             });
         restoreContentUploads(view.state.doc, transaction);
+        transaction.setMeta(automergeRemoteTransaction, true);
         ignoreTransaction = true;
         try {
           view.dispatch(transaction);
@@ -122,7 +129,25 @@ export function createAutomergeSyncPlugin(
       const changedTransactions = transactions.filter(
         transaction => transaction.docChanged,
       );
-      if (changedTransactions.length === 0) return undefined;
+      const reassignment = suggestionReassignmentFrom(transactions);
+      if (changedTransactions.length === 0) {
+        if (reassignment) {
+          ignoreTransaction = true;
+          try {
+            handle.change((document) => {
+              reassignSuggestionBlocks(
+                document,
+                path,
+                reassignment.from,
+                reassignment.to,
+              );
+            });
+          } finally {
+            ignoreTransaction = false;
+          }
+        }
+        return undefined;
+      }
 
       collaborationDebug("local-before", () => ({
         transactionCount: changedTransactions.length,
@@ -148,18 +173,34 @@ export function createAutomergeSyncPlugin(
               pmNodeToSpans(adapter, state.doc),
               adapter.updateSpansConfig(),
             );
-          } else {
-            for (const transaction of changedTransactions) {
-              const spans = Automerge.spans(document, path);
-              pmToAm(
-                adapter,
-                spans,
-                transaction.steps,
+            return;
+          }
+          for (const transaction of changedTransactions) {
+            const applied = applyDocumentSteps(
+              adapter,
+              document,
+              path,
+              transaction.docs[0],
+              transaction.steps,
+              suggestionSplitFrom(transaction),
+            );
+            if (!applied) {
+              Automerge.updateSpans(
                 document,
-                transaction.docs[0],
                 path,
+                pmNodeToSpans(adapter, state.doc),
+                adapter.updateSpansConfig(),
               );
+              return;
             }
+          }
+          if (reassignment) {
+            reassignSuggestionBlocks(
+              document,
+              path,
+              reassignment.from,
+              reassignment.to,
+            );
           }
         });
       } finally {
