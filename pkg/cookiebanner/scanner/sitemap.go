@@ -25,39 +25,49 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/xml"
+	"errors"
+	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
 	"github.com/chromedp/cdproto/network"
+	"go.gearno.de/kit/httpclient"
 )
 
 func (s *scan) enqueueSitemapURLs(ctx context.Context) {
 	seeds := []string{s.site.pathURL("/sitemap.xml")}
 	seeds = append(seeds, s.sitemapsFromRobots(ctx)...)
 
-	seen := map[string]struct{}{}
+	groups := s.sitemapGroups(ctx, seeds)
+	kept := make([][]string, 0, len(groups))
 
-	var (
-		urls    []string
-		fetches int
-	)
+	for _, group := range groups {
+		var accepted []string
 
-	for _, seed := range seeds {
-		if _, ok := seen[seed]; ok {
-			continue
+		for _, raw := range group {
+			if s.site.contains(raw) && !s.policy.block(ctx, http.MethodGet, raw, "", "") {
+				accepted = append(accepted, raw)
+			}
 		}
 
-		seen[seed] = struct{}{}
-		s.collectSitemapURLs(ctx, seed, 1, seen, &urls, &fetches)
+		if len(accepted) > 0 {
+			kept = append(kept, accepted)
+		}
 	}
 
-	for _, raw := range urls {
-		if !s.site.contains(raw) || s.policy.block(ctx, http.MethodGet, raw, "", "") {
-			continue
-		}
+	representatives, rest := arrangeSitemapURLs(kept, s.in.Limits.MaxSitemapURLs)
 
+	// Representatives sit behind the homepage and ahead of links found
+	// there, so a section the homepage never reaches is still visited
+	// inside the page budget. The rest wait until those links are done.
+	for _, raw := range representatives {
+		s.front.push(QueueItem{URL: raw, Depth: 1})
+	}
+
+	for _, raw := range rest {
 		s.front.push(QueueItem{URL: raw, FromSitemap: true})
 	}
 }
@@ -84,16 +94,36 @@ func (s *scan) sitemapsFromRobots(ctx context.Context) []string {
 	return urls
 }
 
-func (s *scan) collectSitemapURLs(
+func (s *scan) sitemapGroups(ctx context.Context, seeds []string) [][]string {
+	seen := map[string]struct{}{}
+
+	var (
+		groups  [][]string
+		fetches int
+	)
+
+	for _, seed := range seeds {
+		if _, ok := seen[seed]; ok {
+			continue
+		}
+
+		seen[seed] = struct{}{}
+		s.collectSitemapGroups(ctx, seed, 1, seen, &groups, &fetches)
+	}
+
+	return groups
+}
+
+func (s *scan) collectSitemapGroups(
 	ctx context.Context,
 	loc string,
 	depth int,
 	seen map[string]struct{},
-	urls *[]string,
+	groups *[][]string,
 	fetches *int,
 ) {
 	limits := s.in.Limits
-	if ctx.Err() != nil || len(*urls) >= limits.MaxSitemapURLs || *fetches >= limits.MaxSitemapFetches || depth > limits.MaxSitemapIndexes {
+	if ctx.Err() != nil || *fetches >= limits.MaxSitemapFetches || depth > limits.MaxSitemapIndexes {
 		return
 	}
 
@@ -121,20 +151,89 @@ func (s *scan) collectSitemapURLs(
 				}
 
 				seen[child] = struct{}{}
-				s.collectSitemapURLs(ctx, child, depth+1, seen, urls, fetches)
+				s.collectSitemapGroups(ctx, child, depth+1, seen, groups, fetches)
 			}
 		}
 
 		return
 	}
 
-	for _, raw := range locs {
-		if len(*urls) >= limits.MaxSitemapURLs {
-			return
+	if limits.MaxSitemapURLs > 0 && len(locs) > limits.MaxSitemapURLs {
+		locs = locs[:limits.MaxSitemapURLs]
+	}
+
+	if len(locs) > 0 {
+		*groups = append(*groups, locs)
+	}
+}
+
+// arrangeSitemapURLs round-robins child sitemaps into cap so the first
+// file cannot fill it. representatives is one content URL per child,
+// chosen before the cap is applied.
+func arrangeSitemapURLs(groups [][]string, cap int) (representatives, rest []string) {
+	for _, group := range groups {
+		if loc := contentURL(group); loc != "" {
+			representatives = append(representatives, loc)
+		}
+	}
+
+	indexes := make([]int, len(groups))
+
+	for {
+		if cap > 0 && len(rest) >= cap {
+			return representatives, rest
 		}
 
-		*urls = append(*urls, raw)
+		added := false
+
+		for i, group := range groups {
+			if indexes[i] >= len(group) {
+				continue
+			}
+
+			if cap > 0 && len(rest) >= cap {
+				return representatives, rest
+			}
+
+			rest = append(rest, group[indexes[i]])
+			indexes[i]++
+			added = true
+		}
+
+		if !added {
+			return representatives, rest
+		}
 	}
+}
+
+func contentURL(locs []string) string {
+	var fallback string
+
+	for _, loc := range locs {
+		if fallback == "" {
+			fallback = loc
+		}
+
+		if pathSegments(loc) >= 2 {
+			return loc
+		}
+	}
+
+	return fallback
+}
+
+func pathSegments(raw string) int {
+	parsed, err := url.Parse(raw)
+	if err != nil {
+		return 0
+	}
+
+	trimmed := strings.Trim(parsed.EscapedPath(), "/")
+	if trimmed == "" {
+		return 0
+	}
+
+	return len(strings.Split(trimmed, "/"))
 }
 
 func sitemapLocations(body string) ([]string, bool) {
@@ -170,6 +269,46 @@ func sitemapLocations(body string) ([]string, bool) {
 			}
 		}
 	}
+}
+
+// sameSiteClient follows a redirect only when the target is the same
+// site as the request. The crawl already treats www and the apex as
+// one origin, but the SSRF client refuses any host change, including
+// that one. The dial check still rejects a redirect to a private address.
+func sameSiteClient(base *http.Client) *http.Client {
+	return &http.Client{
+		Transport:     base.Transport,
+		Jar:           base.Jar,
+		Timeout:       base.Timeout,
+		CheckRedirect: sameSiteRedirect,
+	}
+}
+
+func sameSiteRedirect(req *http.Request, via []*http.Request) error {
+	if len(via) >= 10 {
+		return errors.New("stopped after 10 redirects")
+	}
+
+	if len(via) == 0 {
+		return nil
+	}
+
+	if sameSiteURL(via[0].URL, req.URL) {
+		return nil
+	}
+
+	return fmt.Errorf("%w: %s -> %s", httpclient.ErrCrossOriginRedirect, via[0].URL.Scheme+"://"+via[0].URL.Host, req.URL.Scheme+"://"+req.URL.Host)
+}
+
+func sameSiteURL(original, target *url.URL) bool {
+	left, ok := parseOrigin(original.String())
+	if !ok {
+		return false
+	}
+
+	right, ok := parseOrigin(target.String())
+
+	return ok && left == right
 }
 
 func (s *scan) fetchText(ctx context.Context, raw string, limit int64) (string, bool) {
