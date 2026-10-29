@@ -30,7 +30,7 @@ import {
 	type IWebhookResponseData,
 	type JsonObject,
 } from 'n8n-workflow';
-import { proboApiRequest, readResourceId } from '../Probo/GenericFunctions';
+import { proboApiRequest } from '../Probo/GenericFunctions';
 import { organizationLocator, searchOrganizations } from '../Probo/locators';
 import { WEBHOOK_EVENT_OPTIONS } from '../Probo/actions/webhook/events';
 
@@ -175,7 +175,7 @@ export class ProboTrigger implements INodeType {
 				}
 
 				const webhookUrl = this.getNodeWebhookUrl('default');
-				const organizationId = readResourceId(this.getNodeParameter('organizationId'));
+				const organizationId = this.getNodeParameter('organizationId', '', { extractValue: true }) as string;
 				const events = this.getNodeParameter('events') as string[];
 				const organization = node.organization as IDataObject | undefined;
 				const remoteEvents = (node.selectedEvents as string[] | undefined) ?? [];
@@ -207,7 +207,7 @@ export class ProboTrigger implements INodeType {
 
 			async create(this: IHookFunctions): Promise<boolean> {
 				const webhookUrl = this.getNodeWebhookUrl('default');
-				const organizationId = readResourceId(this.getNodeParameter('organizationId'));
+				const organizationId = this.getNodeParameter('organizationId', '', { extractValue: true }) as string;
 				const events = this.getNodeParameter('events') as string[];
 
 				if (webhookUrl === undefined) {

@@ -20,7 +20,7 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
 import { organizationLocator, personLocator } from '../../locators';
-import { proboApiRequestAllItems, readResourceId, executionItems } from '../../GenericFunctions';
+import { proboApiRequestAllItems, executionItems } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	organizationLocator({
@@ -106,7 +106,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData[]> {
-	const organizationId = readResourceId(this.getNodeParameter('organizationId', itemIndex));
+	const organizationId = this.getNodeParameter('organizationId', itemIndex, '', { extractValue: true }) as string;
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
 	const filters = this.getNodeParameter('filters', itemIndex, {}) as {
@@ -154,8 +154,8 @@ export async function execute(
 		filter.state = filters.state;
 	}
 
-	if (readResourceId(filters.assignedToId)) {
-		filter.assignedToId = readResourceId(filters.assignedToId);
+	if (this.getNodeParameter('filters.assignedToId', itemIndex, '', { extractValue: true }) as string) {
+		filter.assignedToId = this.getNodeParameter('filters.assignedToId', itemIndex, '', { extractValue: true }) as string;
 	}
 
 	if (Object.keys(filter).length > 0) {

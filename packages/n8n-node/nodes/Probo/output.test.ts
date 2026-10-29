@@ -29,22 +29,11 @@ import {
 	executionItems,
 	formatIsoDuration,
 	publishedFilterValue,
-	readResourceId,
 	signatureListFilter,
 	stampGraphqlNode,
 	waitingFields,
 	withParentReference,
 } from './output';
-
-describe('readResourceId', () => {
-	it('reads a legacy string id and a resource locator value', () => {
-		expect(readResourceId('org-1')).toBe('org-1');
-		expect(readResourceId({ __rl: true, mode: 'list', value: 'org-2' })).toBe('org-2');
-		expect(readResourceId({ mode: 'id', value: 12 })).toBe('12');
-		expect(readResourceId(undefined)).toBe('');
-		expect(readResourceId({ mode: 'list', value: '' })).toBe('');
-	});
-});
 
 describe('executionItems', () => {
 	it('returns one paired item per record', () => {

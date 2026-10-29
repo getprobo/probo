@@ -20,7 +20,7 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { organizationLocator, personLocator } from '../../locators';
-import { proboApiRequest, readResourceId } from '../../GenericFunctions';
+import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	organizationLocator({
@@ -183,13 +183,13 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const organizationId = readResourceId(this.getNodeParameter('organizationId', itemIndex));
+	const organizationId = this.getNodeParameter('organizationId', itemIndex, '', { extractValue: true }) as string;
 	const area = this.getNodeParameter('area', itemIndex) as string;
 	const source = this.getNodeParameter('source', itemIndex) as string;
 	const requirement = this.getNodeParameter('requirement', itemIndex) as string;
 	const actionsToBeImplemented = this.getNodeParameter('actionsToBeImplemented', itemIndex, '') as string;
 	const regulator = this.getNodeParameter('regulator', itemIndex, '') as string;
-	const ownerId = readResourceId(this.getNodeParameter('ownerId', itemIndex, ''));
+	const ownerId = this.getNodeParameter('ownerId', itemIndex, '', { extractValue: true }) as string;
 	const lastReviewDate = this.getNodeParameter('lastReviewDate', itemIndex, '') as string;
 	const dueDate = this.getNodeParameter('dueDate', itemIndex, '') as string;
 	const status = this.getNodeParameter('status', itemIndex, '') as string;

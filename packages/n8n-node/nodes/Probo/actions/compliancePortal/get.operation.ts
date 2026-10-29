@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest, readResourceId } from '../../GenericFunctions';
+import { proboApiRequest } from '../../GenericFunctions';
 import { compliancePortalLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
@@ -39,7 +39,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const compliancePortalId = readResourceId(this.getNodeParameter('compliancePortalId', itemIndex));
+	const compliancePortalId = this.getNodeParameter('compliancePortalId', itemIndex, '', { extractValue: true }) as string;
 
 	const query = `
 		query GetCompliancePortal($compliancePortalId: ID!) {

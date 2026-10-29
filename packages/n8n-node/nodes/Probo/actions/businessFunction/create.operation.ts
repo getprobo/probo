@@ -20,7 +20,7 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { organizationLocator, personLocator } from '../../locators';
-import { proboApiRequest, readResourceId } from '../../GenericFunctions';
+import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	organizationLocator({
@@ -159,7 +159,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const organizationId = readResourceId(this.getNodeParameter('organizationId', itemIndex));
+	const organizationId = this.getNodeParameter('organizationId', itemIndex, '', { extractValue: true }) as string;
 	const name = this.getNodeParameter('name', itemIndex) as string;
 	const classification = this.getNodeParameter('classification', itemIndex) as string;
 	const mtdMinutes = this.getNodeParameter('mtdMinutes', itemIndex) as number;
@@ -212,8 +212,8 @@ export async function execute(
 		input.notes = additionalFields.notes;
 	}
 
-	if (readResourceId(additionalFields.ownerId)) {
-		input.ownerId = readResourceId(additionalFields.ownerId);
+	if (this.getNodeParameter('additionalFields.ownerId', itemIndex, '', { extractValue: true }) as string) {
+		input.ownerId = this.getNodeParameter('additionalFields.ownerId', itemIndex, '', { extractValue: true }) as string;
 	}
 
 	if (additionalFields.assetIds) {

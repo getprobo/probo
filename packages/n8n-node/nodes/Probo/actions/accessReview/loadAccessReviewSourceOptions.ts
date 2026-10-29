@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import type { IDataObject, ILoadOptionsFunctions, INodePropertyOptions } from 'n8n-workflow';
-import { proboApiRequest, readResourceId } from '../../GenericFunctions';
+import { proboApiRequest } from '../../GenericFunctions';
 
 const organizationSourcesQuery = `
 	query AccessReviewSources($organizationId: ID!, $after: CursorKey) {
@@ -107,12 +107,14 @@ function getPageInfo(responseData: IDataObject): { hasNextPage: boolean; endCurs
 async function resolveOrganizationId(
 	this: ILoadOptionsFunctions,
 ): Promise<string | undefined> {
-	const organizationId = readResourceId(this.getCurrentNodeParameter('organizationId'));
+	const organizationId = (this.getCurrentNodeParameter('organizationId', { extractValue: true }) as string) ?? '';
 	if (organizationId) {
 		return organizationId;
 	}
 
-	const accessReviewCampaignId = this.getCurrentNodeParameter('accessReviewCampaignId') as string | undefined;
+	const accessReviewCampaignId = this.getCurrentNodeParameter('accessReviewCampaignId', {
+		extractValue: true,
+	}) as string | undefined;
 	if (!accessReviewCampaignId) {
 		return undefined;
 	}

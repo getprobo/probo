@@ -20,7 +20,7 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { organizationLocator } from '../../locators';
-import { proboApiRequest, readResourceId } from '../../GenericFunctions';
+import { proboApiRequest } from '../../GenericFunctions';
 import { WEBHOOK_EVENT_OPTIONS } from './events';
 
 export const description: INodeProperties[] = [
@@ -63,7 +63,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const organizationId = readResourceId(this.getNodeParameter('organizationId', itemIndex));
+	const organizationId = this.getNodeParameter('organizationId', itemIndex, '', { extractValue: true }) as string;
 	const endpointUrl = this.getNodeParameter('endpointUrl', itemIndex) as string;
 	const selectedEvents = this.getNodeParameter('selectedEvents', itemIndex) as string[];
 

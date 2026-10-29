@@ -20,7 +20,7 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { organizationLocator, documentLocator, riskLocator } from '../../locators';
-import { proboApiRequest, readResourceId } from '../../GenericFunctions';
+import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	riskLocator({
@@ -44,8 +44,8 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const riskId = readResourceId(this.getNodeParameter('riskId', itemIndex));
-	const documentId = readResourceId(this.getNodeParameter('documentId', itemIndex));
+	const riskId = this.getNodeParameter('riskId', itemIndex, '', { extractValue: true }) as string;
+	const documentId = this.getNodeParameter('documentId', itemIndex, '', { extractValue: true }) as string;
 
 	const query = `
 		mutation DeleteRiskDocumentMapping($input: DeleteRiskDocumentMappingInput!) {

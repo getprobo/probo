@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest, readResourceId } from '../../GenericFunctions';
+import { proboApiRequest } from '../../GenericFunctions';
 import { cookieBannerLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
@@ -142,7 +142,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const cookieBannerId = readResourceId(this.getNodeParameter('cookieBannerId', itemIndex));
+	const cookieBannerId = this.getNodeParameter('cookieBannerId', itemIndex, '', { extractValue: true }) as string;
 	const name = this.getNodeParameter('name', itemIndex, '') as string;
 	const cookiePolicyUrl = this.getNodeParameter('cookiePolicyUrl', itemIndex, '') as string;
 	const consentExpiryDays = this.getNodeParameter('consentExpiryDays', itemIndex, 0) as number;

@@ -24,7 +24,7 @@ import type {
 	INodeExecutionData,
 	IDataObject,
 } from 'n8n-workflow';
-import { proboConnectApiRequest, toPeriod, readResourceId } from '../../GenericFunctions';
+import { proboConnectApiRequest, toPeriod } from '../../GenericFunctions';
 import { organizationLocator, personLocator } from '../../locators';
 
 const kindOptions = [
@@ -124,7 +124,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const userId = readResourceId(this.getNodeParameter('userId', itemIndex));
+	const userId = this.getNodeParameter('userId', itemIndex, '', { extractValue: true }) as string;
 	const fullName = this.getNodeParameter('fullName', itemIndex) as string;
 	const kind = this.getNodeParameter('kind', itemIndex) as string;
 	const additionalFields = this.getNodeParameter('additionalFields', itemIndex, {}) as {

@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest, readResourceId } from '../../GenericFunctions';
+import { proboApiRequest } from '../../GenericFunctions';
 import { personLocator, riskLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
@@ -220,14 +220,14 @@ export async function execute(
 	if (additionalFields.rootCause !== undefined) input.rootCause = additionalFields.rootCause === '' ? null : additionalFields.rootCause;
 	if (additionalFields.correctiveAction !== undefined) input.correctiveAction = additionalFields.correctiveAction === '' ? null : additionalFields.correctiveAction;
 	if (additionalFields.ownerId !== undefined) {
-		const ownerId = readResourceId(additionalFields.ownerId);
+		const ownerId = this.getNodeParameter('additionalFields.ownerId', itemIndex, '', { extractValue: true }) as string;
 		input.ownerId = ownerId === '' ? null : ownerId;
 	}
 	if (additionalFields.dueDate !== undefined) input.dueDate = additionalFields.dueDate === '' ? null : additionalFields.dueDate;
 	if (additionalFields.status !== undefined) input.status = additionalFields.status;
 	if (additionalFields.priority !== undefined) input.priority = additionalFields.priority;
 	if (additionalFields.riskId !== undefined) {
-		const riskId = readResourceId(additionalFields.riskId);
+		const riskId = this.getNodeParameter('additionalFields.riskId', itemIndex, '', { extractValue: true }) as string;
 		input.riskId = riskId === '' ? null : riskId;
 	}
 	if (additionalFields.effectivenessCheck !== undefined) input.effectivenessCheck = additionalFields.effectivenessCheck === '' ? null : additionalFields.effectivenessCheck;

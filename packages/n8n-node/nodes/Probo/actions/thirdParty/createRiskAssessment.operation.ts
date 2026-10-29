@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest, readResourceId } from '../../GenericFunctions';
+import { proboApiRequest } from '../../GenericFunctions';
 import { thirdPartyLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
@@ -110,7 +110,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const thirdPartyId = readResourceId(this.getNodeParameter('thirdPartyId', itemIndex));
+	const thirdPartyId = this.getNodeParameter('thirdPartyId', itemIndex, '', { extractValue: true }) as string;
 	const expiresAtRaw = this.getNodeParameter('expiresAt', itemIndex) as string;
 	const dataSensitivity = this.getNodeParameter('dataSensitivity', itemIndex) as string;
 	const businessImpact = this.getNodeParameter('businessImpact', itemIndex) as string;
