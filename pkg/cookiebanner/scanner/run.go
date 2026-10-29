@@ -146,7 +146,7 @@ func Run(ctx context.Context, allocCtx context.Context, in Input) (*Result, erro
 		policy:      policy,
 		rec:         newRecorder(site, api, in.BannerID, binding, in.Limits.MaxObservations),
 		front:       newFrontier(start, in.Limits.MaxQueue),
-		http:        in.client(),
+		http:        sameSiteClient(in.client()),
 		parent:      ctx,
 		scanCtx:     scanCtx,
 		tabCtx:      tabCtx,

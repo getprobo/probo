@@ -24,6 +24,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -32,6 +33,7 @@ import (
 	"github.com/chromedp/cdproto/runtime"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.gearno.de/kit/httpclient"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/netcheck"
 )
@@ -713,6 +715,28 @@ func TestFrontier_CapsQueue(t *testing.T) {
 	assert.Len(t, front.checkpoint(0, 0, false).Queue, 2)
 }
 
+func TestSameSiteRedirect_FollowsWWWAndBlocksOtherHosts(t *testing.T) {
+	t.Parallel()
+
+	apex, err := url.Parse("https://probo.com/robots.txt")
+	require.NoError(t, err)
+	www, err := url.Parse("https://www.probo.com/robots.txt")
+	require.NoError(t, err)
+
+	err = sameSiteRedirect(&http.Request{URL: www}, []*http.Request{{URL: apex}})
+	require.NoError(t, err)
+
+	insecure, err := url.Parse("http://probo.com/robots.txt")
+	require.NoError(t, err)
+	err = sameSiteRedirect(&http.Request{URL: insecure}, []*http.Request{{URL: apex}})
+	require.ErrorIs(t, err, httpclient.ErrCrossOriginRedirect)
+
+	other, err := url.Parse("https://evil.com/robots.txt")
+	require.NoError(t, err)
+	err = sameSiteRedirect(&http.Request{URL: other}, []*http.Request{{URL: apex}})
+	require.ErrorIs(t, err, httpclient.ErrCrossOriginRedirect)
+}
+
 func TestSitemapLocations_ReadsNamespacedIndex(t *testing.T) {
 	t.Parallel()
 
@@ -749,12 +773,50 @@ func TestCollectSitemapURLs_DoesNotEnqueueIndexAtDepthLimit(t *testing.T) {
 	}
 
 	var (
-		urls    []string
+		groups  [][]string
 		fetches int
 	)
-	s.collectSitemapURLs(context.Background(), server.URL, 1, map[string]struct{}{}, &urls, &fetches)
-	assert.Empty(t, urls)
+	s.collectSitemapGroups(context.Background(), server.URL, 1, map[string]struct{}{}, &groups, &fetches)
+	assert.Empty(t, groups)
 	assert.Equal(t, 1, fetches)
+}
+
+func TestArrangeSitemapURLs_RoundRobinKeepsTheLastChild(t *testing.T) {
+	t.Parallel()
+
+	representatives, rest := arrangeSitemapURLs(
+		[][]string{
+			{"https://example.com/docs/a", "https://example.com/docs/b", "https://example.com/docs/c"},
+			{"https://example.com/blog/post"},
+		},
+		3,
+	)
+
+	assert.Equal(t, []string{"https://example.com/docs/a", "https://example.com/blog/post"}, representatives)
+	assert.Equal(
+		t,
+		[]string{"https://example.com/docs/a", "https://example.com/blog/post", "https://example.com/docs/b"},
+		rest,
+	)
+}
+
+func TestFrontier_RepresentativePrecedesDiscoveredLink(t *testing.T) {
+	t.Parallel()
+
+	front := newFrontier(Checkpoint{}, 10)
+	front.push(QueueItem{URL: "https://example.com/", Depth: 0})
+	front.push(QueueItem{URL: "https://example.com/blog/post", Depth: 1})
+	front.markVisited("https://example.com/")
+	front.push(QueueItem{URL: "https://example.com/pricing", Depth: 1})
+	front.push(QueueItem{URL: "https://example.com/docs/a", FromSitemap: true})
+
+	first, ok := front.pop()
+	require.True(t, ok)
+	assert.Equal(t, "https://example.com/blog/post", first.URL)
+
+	second, ok := front.pop()
+	require.True(t, ok)
+	assert.Equal(t, "https://example.com/pricing", second.URL)
 }
 
 func testRecorder(t *testing.T) *recorder {
