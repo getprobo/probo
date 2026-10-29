@@ -1,0 +1,104 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+package remove
+
+import (
+	"encoding/json"
+	"fmt"
+
+	"github.com/spf13/cobra"
+	"go.probo.inc/probo/pkg/cli/api"
+	"go.probo.inc/probo/pkg/cmd/cmdutil"
+)
+
+const removeMutation = `
+mutation($input: DeleteEmployeePortalDocumentInput!) {
+  deleteEmployeePortalDocument(input: $input) {
+    deletedEmployeePortalDocumentId
+  }
+}
+`
+
+type removeResponse struct {
+	DeleteEmployeePortalDocument struct {
+		DeletedEmployeePortalDocumentID string `json:"deletedEmployeePortalDocumentId"`
+	} `json:"deleteEmployeePortalDocument"`
+}
+
+func NewCmdRemove(f *cmdutil.Factory) *cobra.Command {
+	var flagID string
+
+	cmd := &cobra.Command{
+		Use:     "remove",
+		Short:   "Stop sharing a document with an employee portal",
+		Example: `  prb employee-portal document remove --id <employee-portal-document-id>`,
+		Args:    cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cfg, err := f.Config()
+			if err != nil {
+				return err
+			}
+
+			host, hc, err := cfg.DefaultHost()
+			if err != nil {
+				return err
+			}
+
+			client := api.NewClient(
+				host,
+				hc.Token,
+				"/api/console/v1/graphql",
+				cfg.HTTPTimeoutDuration(),
+				cmdutil.TokenRefreshOption(cfg, host, hc),
+			)
+
+			data, err := client.Do(
+				removeMutation,
+				map[string]any{
+					"input": map[string]any{
+						"id": flagID,
+					},
+				},
+			)
+			if err != nil {
+				return err
+			}
+
+			var resp removeResponse
+			if err := json.Unmarshal(data, &resp); err != nil {
+				return fmt.Errorf("cannot parse response: %w", err)
+			}
+
+			_, _ = fmt.Fprintf(
+				f.IOStreams.Out,
+				"Removed employee portal document %s\n",
+				resp.DeleteEmployeePortalDocument.DeletedEmployeePortalDocumentID,
+			)
+
+			return nil
+		},
+	}
+
+	cmd.Flags().StringVar(&flagID, "id", "", "Employee portal document ID")
+	_ = cmd.MarkFlagRequired("id")
+
+	return cmd
+}

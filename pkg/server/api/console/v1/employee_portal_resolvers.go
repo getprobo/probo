@@ -12,6 +12,8 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	employeeportalmgmt "go.probo.inc/probo/pkg/employeeportal/management"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
@@ -76,6 +78,44 @@ func (r *employeePortalResolver) Permission(ctx context.Context, obj *types.Empl
 	return r.Resolver.Permission(ctx, obj, action)
 }
 
+// Documents is the resolver for the documents field.
+func (r *employeePortalResolver) Documents(ctx context.Context, obj *types.EmployeePortal, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.EmployeePortalDocumentOrderBy) (*types.EmployeePortalDocumentConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, employeeportalmgmt.ActionEmployeePortalGet)
+	if err != nil {
+		return nil, err
+	}
+
+	if gqlx.OnlyTotalCountSelected(ctx) {
+		return &types.EmployeePortalDocumentConnection{ParentID: obj.ID}, nil
+	}
+
+	pageOrderBy := page.OrderBy[coredata.EmployeePortalDocumentOrderField]{
+		Field:     coredata.EmployeePortalDocumentOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.EmployeePortalDocumentOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	documentPage, err := r.employeePortal.ListDocuments(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlx.NotFoundf(ctx, "employee portal %q not found", obj.ID)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot list employee portal documents", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return types.NewEmployeePortalDocumentConnection(documentPage, obj.ID), nil
+}
+
 // TotalCount is the resolver for the totalCount field.
 func (r *employeePortalConnectionResolver) TotalCount(ctx context.Context, obj *types.EmployeePortalConnection) (int, error) {
 	scope, err := r.authorize(ctx, obj.ParentID, employeeportalmgmt.ActionEmployeePortalList)
@@ -86,6 +126,69 @@ func (r *employeePortalConnectionResolver) TotalCount(ctx context.Context, obj *
 	count, err := r.employeePortal.CountForOrganizationID(ctx, scope, obj.ParentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count employee portals", log.Error(err))
+
+		return 0, gqlx.Internal(ctx)
+	}
+
+	return count, nil
+}
+
+// Title is the resolver for the title field.
+func (r *employeePortalDocumentResolver) Title(ctx context.Context, obj *types.EmployeePortalDocument) (string, error) {
+	if _, err := r.authorize(ctx, obj.ID, employeeportalmgmt.ActionEmployeePortalGet); err != nil {
+		return "", err
+	}
+
+	version, err := r.publishedVersion(ctx, obj.DocumentID)
+	if err != nil {
+		return "", err
+	}
+
+	return version.Title, nil
+}
+
+// DocumentType is the resolver for the documentType field.
+func (r *employeePortalDocumentResolver) DocumentType(ctx context.Context, obj *types.EmployeePortalDocument) (coredata.DocumentType, error) {
+	if _, err := r.authorize(ctx, obj.ID, employeeportalmgmt.ActionEmployeePortalGet); err != nil {
+		return "", err
+	}
+
+	version, err := r.publishedVersion(ctx, obj.DocumentID)
+	if err != nil {
+		return "", err
+	}
+
+	return version.DocumentType, nil
+}
+
+// PublishedVersionID is the resolver for the publishedVersionId field.
+func (r *employeePortalDocumentResolver) PublishedVersionID(ctx context.Context, obj *types.EmployeePortalDocument) (gid.GID, error) {
+	if _, err := r.authorize(ctx, obj.ID, employeeportalmgmt.ActionEmployeePortalGet); err != nil {
+		return gid.Nil, err
+	}
+
+	version, err := r.publishedVersion(ctx, obj.DocumentID)
+	if err != nil {
+		return gid.Nil, err
+	}
+
+	return version.ID, nil
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *employeePortalDocumentConnectionResolver) TotalCount(ctx context.Context, obj *types.EmployeePortalDocumentConnection) (int, error) {
+	scope, err := r.authorize(ctx, obj.ParentID, employeeportalmgmt.ActionEmployeePortalGet)
+	if err != nil {
+		return 0, err
+	}
+
+	count, err := r.employeePortal.CountDocuments(ctx, scope, obj.ParentID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return 0, gqlx.NotFoundf(ctx, "employee portal %q not found", obj.ParentID)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot count employee portal documents", log.Error(err))
 
 		return 0, gqlx.Internal(ctx)
 	}
@@ -193,6 +296,102 @@ func (r *mutationResolver) UpdateEmployeePortalBrand(ctx context.Context, input 
 	}, nil
 }
 
+// AddEmployeePortalDocument is the resolver for the addEmployeePortalDocument field.
+func (r *mutationResolver) AddEmployeePortalDocument(ctx context.Context, input types.AddEmployeePortalDocumentInput) (*types.AddEmployeePortalDocumentPayload, error) {
+	scope, err := r.authorize(ctx, input.EmployeePortalID, employeeportalmgmt.ActionEmployeePortalUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := r.authorize(ctx, input.DocumentID, probo.ActionDocumentGet); err != nil {
+		return nil, err
+	}
+
+	link, err := r.employeePortal.AddDocument(
+		ctx,
+		scope,
+		&employeeportalmgmt.AddEmployeePortalDocumentRequest{
+			EmployeePortalID: input.EmployeePortalID,
+			DocumentID:       input.DocumentID,
+		},
+	)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlx.NotFoundf(ctx, "document %q not found", input.DocumentID)
+		}
+
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot add employee portal document", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return &types.AddEmployeePortalDocumentPayload{
+		EmployeePortalDocument: types.NewEmployeePortalDocument(link),
+		Document:               &types.Document{ID: link.DocumentID},
+	}, nil
+}
+
+// DeleteEmployeePortalDocument is the resolver for the deleteEmployeePortalDocument field.
+func (r *mutationResolver) DeleteEmployeePortalDocument(ctx context.Context, input types.DeleteEmployeePortalDocumentInput) (*types.DeleteEmployeePortalDocumentPayload, error) {
+	scope, err := r.authorize(ctx, input.ID, employeeportalmgmt.ActionEmployeePortalUpdate)
+	if err != nil {
+		if gqlx.IsNotFound(err) {
+			return &types.DeleteEmployeePortalDocumentPayload{
+				DeletedEmployeePortalDocumentID: input.ID,
+			}, nil
+		}
+
+		return nil, err
+	}
+
+	if err := (&employeeportalmgmt.DeleteEmployeePortalDocumentRequest{ID: input.ID}).Validate(); err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot validate employee portal document delete", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	link, err := r.employeePortal.GetDocument(ctx, scope, input.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return &types.DeleteEmployeePortalDocumentPayload{
+				DeletedEmployeePortalDocumentID: input.ID,
+			}, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load employee portal document", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	err = r.employeePortal.DeleteDocument(
+		ctx,
+		scope,
+		&employeeportalmgmt.DeleteEmployeePortalDocumentRequest{ID: input.ID},
+	)
+	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot delete employee portal document", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return &types.DeleteEmployeePortalDocumentPayload{
+		DeletedEmployeePortalDocumentID: link.ID,
+		Document:                        &types.Document{ID: link.DocumentID},
+	}, nil
+}
+
 // EmployeePortal returns schema.EmployeePortalResolver implementation.
 func (r *Resolver) EmployeePortal() schema.EmployeePortalResolver { return &employeePortalResolver{r} }
 
@@ -201,7 +400,19 @@ func (r *Resolver) EmployeePortalConnection() schema.EmployeePortalConnectionRes
 	return &employeePortalConnectionResolver{r}
 }
 
+// EmployeePortalDocument returns schema.EmployeePortalDocumentResolver implementation.
+func (r *Resolver) EmployeePortalDocument() schema.EmployeePortalDocumentResolver {
+	return &employeePortalDocumentResolver{r}
+}
+
+// EmployeePortalDocumentConnection returns schema.EmployeePortalDocumentConnectionResolver implementation.
+func (r *Resolver) EmployeePortalDocumentConnection() schema.EmployeePortalDocumentConnectionResolver {
+	return &employeePortalDocumentConnectionResolver{r}
+}
+
 type (
-	employeePortalResolver           struct{ *Resolver }
-	employeePortalConnectionResolver struct{ *Resolver }
+	employeePortalResolver                   struct{ *Resolver }
+	employeePortalConnectionResolver         struct{ *Resolver }
+	employeePortalDocumentResolver           struct{ *Resolver }
+	employeePortalDocumentConnectionResolver struct{ *Resolver }
 )

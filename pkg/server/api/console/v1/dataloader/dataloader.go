@@ -31,6 +31,7 @@ import (
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
+	employeeportalmgmt "go.probo.inc/probo/pkg/employeeportal/management"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/iam/policy"
@@ -66,6 +67,12 @@ type (
 		TenantID           gid.TenantID
 		CompliancePortalID gid.GID
 		DocumentID         gid.GID
+	}
+
+	EmployeePortalDocumentKey struct {
+		TenantID         gid.TenantID
+		EmployeePortalID gid.GID
+		DocumentID       gid.GID
 	}
 
 	CompliancePortalAuditKey struct {
@@ -128,6 +135,8 @@ type (
 		CommonThirdParty                           *dataloadgen.Loader[gid.GID, *coredata.CommonThirdParty]
 		ThirdPartyAdministratorIDs                 *dataloadgen.Loader[gid.GID, []gid.GID]
 		CompliancePortalDocument                   *dataloadgen.Loader[CompliancePortalDocumentKey, *coredata.CompliancePortalDocument]
+		EmployeePortalDocument                     *dataloadgen.Loader[EmployeePortalDocumentKey, *coredata.EmployeePortalDocument]
+		CurrentPublishedDocumentVersion            *dataloadgen.Loader[gid.GID, *coredata.DocumentVersion]
 		CompliancePortalAudit                      *dataloadgen.Loader[CompliancePortalAuditKey, *coredata.CompliancePortalAudit]
 		CompliancePortalDocumentByID               *dataloadgen.Loader[gid.GID, *coredata.CompliancePortalDocument]
 		CompliancePortalAuditByID                  *dataloadgen.Loader[gid.GID, *coredata.CompliancePortalAudit]
@@ -146,6 +155,7 @@ type (
 		cookieBanner     *cookiebanner.Service
 		thirdParty       *thirdparty.Service
 		compliancePortal *management.Service
+		employeePortal   *employeeportalmgmt.Service
 		riskManagement   *riskmanagement.Service
 		task             *task.Service
 	}
@@ -165,6 +175,7 @@ func NewMiddleware(
 	compliancePortalSvc *management.Service,
 	riskManagementSvc *riskmanagement.Service,
 	taskSvc *task.Service,
+	employeePortalSvc *employeeportalmgmt.Service,
 ) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(
@@ -175,6 +186,7 @@ func NewMiddleware(
 					cookieBanner:     cookieBannerSvc,
 					thirdParty:       thirdPartySvc,
 					compliancePortal: compliancePortalSvc,
+					employeePortal:   employeePortalSvc,
 					riskManagement:   riskManagementSvc,
 					task:             taskSvc,
 				}
@@ -211,6 +223,8 @@ func (f *batchFetcher) newLoaders() *Loaders {
 		CommonThirdParty:                         dataloadgen.NewMappedLoader(f.fetchCommonThirdParties),
 		ThirdPartyAdministratorIDs:               dataloadgen.NewMappedLoader(f.fetchThirdPartyAdministratorIDs),
 		CompliancePortalDocument:                 dataloadgen.NewMappedLoader(f.fetchCompliancePortalDocuments),
+		EmployeePortalDocument:                   dataloadgen.NewMappedLoader(f.fetchEmployeePortalDocuments),
+		CurrentPublishedDocumentVersion:          dataloadgen.NewMappedLoader(f.fetchCurrentPublishedDocumentVersions),
 		CompliancePortalAudit:                    dataloadgen.NewMappedLoader(f.fetchCompliancePortalAudits),
 		CompliancePortalDocumentByID:             dataloadgen.NewMappedLoader(f.fetchCompliancePortalDocumentsByID),
 		CompliancePortalAuditByID:                dataloadgen.NewMappedLoader(f.fetchCompliancePortalAuditsByID),
@@ -225,6 +239,74 @@ func (f *batchFetcher) newLoaders() *Loaders {
 			dataloadgen.WithoutCache(),
 		),
 	}
+}
+
+func (f *batchFetcher) fetchEmployeePortalDocuments(
+	ctx context.Context,
+	keys []EmployeePortalDocumentKey,
+) (map[EmployeePortalDocumentKey]*coredata.EmployeePortalDocument, error) {
+	type groupKey struct {
+		tenantID         gid.TenantID
+		employeePortalID gid.GID
+	}
+
+	documentIDsByGroup := make(map[groupKey][]gid.GID)
+
+	for _, key := range keys {
+		group := groupKey{
+			tenantID:         key.TenantID,
+			employeePortalID: key.EmployeePortalID,
+		}
+		documentIDsByGroup[group] = append(documentIDsByGroup[group], key.DocumentID)
+	}
+
+	result := make(map[EmployeePortalDocumentKey]*coredata.EmployeePortalDocument, len(keys))
+
+	for group, documentIDs := range documentIDsByGroup {
+		links, err := f.employeePortal.GetDocumentLinks(
+			ctx,
+			scopeFromContext(ctx, group.tenantID),
+			group.employeePortalID,
+			documentIDs,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("cannot batch load employee portal documents: %w", err)
+		}
+
+		for _, link := range links {
+			result[EmployeePortalDocumentKey{
+				TenantID:         group.tenantID,
+				EmployeePortalID: group.employeePortalID,
+				DocumentID:       link.DocumentID,
+			}] = link
+		}
+	}
+
+	return result, nil
+}
+
+func (f *batchFetcher) fetchCurrentPublishedDocumentVersions(
+	ctx context.Context,
+	documentIDs []gid.GID,
+) (map[gid.GID]*coredata.DocumentVersion, error) {
+	result := make(map[gid.GID]*coredata.DocumentVersion, len(documentIDs))
+
+	for tenantID, ids := range gidKeysByTenant(documentIDs) {
+		versions, err := f.employeePortal.CurrentPublishedVersions(
+			ctx,
+			scopeFromContext(ctx, tenantID),
+			ids,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("cannot batch load published document versions: %w", err)
+		}
+
+		for _, version := range versions {
+			result[version.DocumentID] = version
+		}
+	}
+
+	return result, nil
 }
 
 func (f *batchFetcher) fetchCompliancePortalDocuments(

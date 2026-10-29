@@ -19,8 +19,11 @@
 // SOFTWARE.
 
 import type { INodeProperties } from 'n8n-workflow';
+import * as addDocumentOp from './addDocument.operation';
+import * as deleteDocumentOp from './deleteDocument.operation';
 import * as getOp from './get.operation';
 import * as getAllOp from './getAll.operation';
+import * as listDocumentsOp from './listDocuments.operation';
 import * as updateOp from './update.operation';
 
 export const description: INodeProperties[] = [
@@ -36,16 +39,35 @@ export const description: INodeProperties[] = [
 		},
 		options: [
 			{
+				name: 'Add Document',
+				value: 'addDocument',
+				description: 'Share a published document with an employee portal',
+				action: 'Share a published document with an employee portal',
+			},
+			{
+				name: 'Delete Document',
+				value: 'deleteDocument',
+				description: 'Stop sharing a document with an employee portal',
+				action: 'Stop sharing a document with an employee portal',
+			},
+			{
 				name: 'Get',
 				value: 'get',
 				description: 'Get employee portal settings',
 				action: 'Get employee portal settings',
 			},
+
 			{
 				name: 'Get Many',
 				value: 'getAll',
 				description: 'Get many employee portals',
 				action: 'Get many employee portals',
+			},
+			{
+				name: 'List Documents',
+				value: 'listDocuments',
+				description: 'List documents shared with an employee portal',
+				action: 'List documents shared with an employee portal',
 			},
 			{
 				name: 'Update',
@@ -59,10 +81,16 @@ export const description: INodeProperties[] = [
 	...getOp.description,
 	...getAllOp.description,
 	...updateOp.description,
+	...listDocumentsOp.description,
+	...addDocumentOp.description,
+	...deleteDocumentOp.description,
 ];
 
 export {
 	getOp as get,
 	getAllOp as getAll,
 	updateOp as update,
+	listDocumentsOp as listDocuments,
+	addDocumentOp as addDocument,
+	deleteDocumentOp as deleteDocument,
 };

@@ -13094,6 +13094,127 @@ components:
         employee_portal:
           $ref: "#/components/schemas/EmployeePortal"
 
+    EmployeePortalDocument:
+      type: object
+      required:
+        - id
+        - document_id
+        - title
+        - document_type
+        - published_version_id
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Employee portal document ID
+        document_id:
+          $ref: "#/components/schemas/GID"
+          description: Document ID
+        title:
+          type: string
+          description: Title of the published document
+        document_type:
+          $ref: "#/components/schemas/DocumentType"
+          description: Type of the published document
+        published_version_id:
+          $ref: "#/components/schemas/GID"
+          description: Current published document version ID
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ListEmployeePortalDocumentsInput:
+      type: object
+      required:
+        - employee_portal_id
+      properties:
+        employee_portal_id:
+          $ref: "#/components/schemas/GID"
+          description: Employee portal ID
+        order_by:
+          $ref: "#/components/schemas/EmployeePortalDocumentOrderBy"
+          description: Employee portal document order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListEmployeePortalDocumentsOutput:
+      type: object
+      required:
+        - employee_portal_documents
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        employee_portal_documents:
+          type: array
+          items:
+            $ref: "#/components/schemas/EmployeePortalDocument"
+
+    EmployeePortalDocumentOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.EmployeePortalDocumentOrderField
+
+    EmployeePortalDocumentOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/EmployeePortalDocumentOrderField"
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+
+    AddEmployeePortalDocumentInput:
+      type: object
+      required:
+        - employee_portal_id
+        - document_id
+      properties:
+        employee_portal_id:
+          $ref: "#/components/schemas/GID"
+          description: Employee portal ID
+        document_id:
+          $ref: "#/components/schemas/GID"
+          description: Document ID
+
+    AddEmployeePortalDocumentOutput:
+      type: object
+      required:
+        - employee_portal_document
+      properties:
+        employee_portal_document:
+          $ref: "#/components/schemas/EmployeePortalDocument"
+          description: Linked employee portal document
+
+    DeleteEmployeePortalDocumentInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Employee portal document ID
+
+    DeleteEmployeePortalDocumentOutput:
+      type: object
+      required:
+        - deleted_employee_portal_document_id
+      properties:
+        deleted_employee_portal_document_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted employee portal document ID
+
     UpdateCompliancePortalDocumentVisibilityInput:
       type: object
       required:
@@ -20733,6 +20854,42 @@ tools:
       $ref: "#/components/schemas/UpdateEmployeePortalInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateEmployeePortalOutput"
+  - name: listEmployeePortalDocuments
+    title: List Employee Portal Documents
+    description: List published documents shared with an employee portal
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListEmployeePortalDocumentsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListEmployeePortalDocumentsOutput"
+  - name: addEmployeePortalDocument
+    title: Add Employee Portal Document
+    description: Share a published document with an employee portal
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/AddEmployeePortalDocumentInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddEmployeePortalDocumentOutput"
+  - name: deleteEmployeePortalDocument
+    title: Delete Employee Portal Document
+    description: Stop sharing a document with an employee portal
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/DeleteEmployeePortalDocumentInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteEmployeePortalDocumentOutput"
   - name: updateCompliancePortalDocumentVisibility
     title: Update Compliance Portal Document Visibility
     description: Update a document's visibility on a compliance portal

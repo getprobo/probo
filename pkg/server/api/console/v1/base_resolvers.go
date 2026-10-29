@@ -439,6 +439,16 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 			return types.NewEmployeePortal(employeePortal), nil
 		}
+	case coredata.EmployeePortalDocumentEntityType:
+		action = employeeportalmgmt.ActionEmployeePortalGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			link, err := r.employeePortal.GetDocument(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewEmployeePortalDocument(link), nil
+		}
 	case coredata.CompliancePortalAccessEntityType:
 		action = management.ActionCompliancePortalAccessGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {

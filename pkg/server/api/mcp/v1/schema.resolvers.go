@@ -11394,3 +11394,125 @@ func (r *Resolver) RestoreDocumentHistoryTool(ctx context.Context, req *mcp.Call
 		Document: withHeads,
 	}, nil
 }
+
+func (r *Resolver) ListEmployeePortalDocumentsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListEmployeePortalDocumentsInput) (*mcp.CallToolResult, types.ListEmployeePortalDocumentsOutput, error) {
+	scope, err := r.Authorize(ctx, input.EmployeePortalID, employeeportalmgmt.ActionEmployeePortalGet)
+	if err != nil {
+		return nil, types.ListEmployeePortalDocumentsOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.EmployeePortalDocumentOrderField]{
+		Field:     coredata.EmployeePortalDocumentOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.EmployeePortalDocumentOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	documentPage, err := r.employeePortal.ListDocuments(ctx, scope, input.EmployeePortalID, cursor)
+	if err != nil {
+		return nil, types.ListEmployeePortalDocumentsOutput{}, fmt.Errorf("cannot list employee portal documents: %w", err)
+	}
+
+	documentIDs := make([]gid.GID, len(documentPage.Data))
+	for i, link := range documentPage.Data {
+		documentIDs[i] = link.DocumentID
+	}
+
+	versions, err := r.employeePortal.CurrentPublishedVersions(ctx, scope, documentIDs)
+	if err != nil {
+		return nil, types.ListEmployeePortalDocumentsOutput{}, fmt.Errorf("cannot load published document versions: %w", err)
+	}
+
+	versionByDocumentID := make(map[gid.GID]*coredata.DocumentVersion, len(versions))
+	for _, version := range versions {
+		versionByDocumentID[version.DocumentID] = version
+	}
+
+	documents := make([]*types.EmployeePortalDocument, 0, len(documentPage.Data))
+	for _, link := range documentPage.Data {
+		version, ok := versionByDocumentID[link.DocumentID]
+		if !ok {
+			return nil, types.ListEmployeePortalDocumentsOutput{}, fmt.Errorf("published version missing for document %s", link.DocumentID)
+		}
+
+		documents = append(documents, types.NewEmployeePortalDocument(link, version))
+	}
+
+	return nil, types.NewListEmployeePortalDocumentsOutput(documents, documentPage), nil
+}
+
+func (r *Resolver) AddEmployeePortalDocumentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddEmployeePortalDocumentInput) (*mcp.CallToolResult, types.AddEmployeePortalDocumentOutput, error) {
+	scope, err := r.Authorize(ctx, input.EmployeePortalID, employeeportalmgmt.ActionEmployeePortalUpdate)
+	if err != nil {
+		return nil, types.AddEmployeePortalDocumentOutput{}, err
+	}
+
+	if _, err := r.Authorize(ctx, input.DocumentID, probo.ActionDocumentGet); err != nil {
+		return nil, types.AddEmployeePortalDocumentOutput{}, err
+	}
+
+	link, err := r.employeePortal.AddDocument(
+		ctx,
+		scope,
+		&employeeportalmgmt.AddEmployeePortalDocumentRequest{
+			EmployeePortalID: input.EmployeePortalID,
+			DocumentID:       input.DocumentID,
+		},
+	)
+	if err != nil {
+		return nil, types.AddEmployeePortalDocumentOutput{}, fmt.Errorf("cannot add employee portal document: %w", err)
+	}
+
+	versions, err := r.employeePortal.CurrentPublishedVersions(ctx, scope, []gid.GID{link.DocumentID})
+	if err != nil {
+		return nil, types.AddEmployeePortalDocumentOutput{}, fmt.Errorf("cannot load published document version: %w", err)
+	}
+
+	if len(versions) == 0 {
+		return nil, types.AddEmployeePortalDocumentOutput{}, fmt.Errorf("published version missing for document %s", link.DocumentID)
+	}
+
+	return nil, types.AddEmployeePortalDocumentOutput{
+		EmployeePortalDocument: types.NewEmployeePortalDocument(link, versions[0]),
+	}, nil
+}
+
+func (r *Resolver) DeleteEmployeePortalDocumentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteEmployeePortalDocumentInput) (*mcp.CallToolResult, types.DeleteEmployeePortalDocumentOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, employeeportalmgmt.ActionEmployeePortalUpdate)
+	if err != nil {
+		// Authorize turns a missing row into this string and drops the sentinel.
+		if err.Error() == "resource not found" {
+			return nil, types.DeleteEmployeePortalDocumentOutput{
+				DeletedEmployeePortalDocumentID: input.ID,
+			}, nil
+		}
+
+		return nil, types.DeleteEmployeePortalDocumentOutput{}, err
+	}
+
+	if err := (&employeeportalmgmt.DeleteEmployeePortalDocumentRequest{ID: input.ID}).Validate(); err != nil {
+		return nil, types.DeleteEmployeePortalDocumentOutput{}, err
+	}
+
+	if _, err := r.employeePortal.GetDocument(ctx, scope, input.ID); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
+		return nil, types.DeleteEmployeePortalDocumentOutput{}, fmt.Errorf("cannot load employee portal document: %w", err)
+	}
+
+	if err := r.employeePortal.DeleteDocument(
+		ctx,
+		scope,
+		&employeeportalmgmt.DeleteEmployeePortalDocumentRequest{ID: input.ID},
+	); err != nil {
+		return nil, types.DeleteEmployeePortalDocumentOutput{}, fmt.Errorf("cannot delete employee portal document: %w", err)
+	}
+
+	return nil, types.DeleteEmployeePortalDocumentOutput{
+		DeletedEmployeePortalDocumentID: input.ID,
+	}, nil
+}

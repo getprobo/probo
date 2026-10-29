@@ -23,6 +23,7 @@ package employeeportal
 import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
+	"go.probo.inc/probo/pkg/cmd/employee-portal/document"
 	"go.probo.inc/probo/pkg/cmd/employee-portal/list"
 	"go.probo.inc/probo/pkg/cmd/employee-portal/update"
 	"go.probo.inc/probo/pkg/cmd/employee-portal/view"
@@ -37,6 +38,7 @@ func NewCmdEmployeePortal(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(list.NewCmdList(f))
 	cmd.AddCommand(view.NewCmdView(f))
 	cmd.AddCommand(update.NewCmdUpdate(f))
+	cmd.AddCommand(document.NewCmdDocument(f))
 
 	return cmd
 }

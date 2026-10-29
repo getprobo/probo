@@ -17,6 +17,7 @@ import (
 	"go.probo.inc/probo/pkg/collaboration"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/coredata"
+	employeeportalmgmt "go.probo.inc/probo/pkg/employeeportal/management"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/page"
@@ -112,6 +113,34 @@ func (r *documentResolver) CompliancePortalDocument(ctx context.Context, obj *ty
 	}
 
 	return types.NewCompliancePortalDocument(link), nil
+}
+
+// EmployeePortalDocument is the resolver for the employeePortalDocument field.
+func (r *documentResolver) EmployeePortalDocument(ctx context.Context, obj *types.Document, employeePortalID gid.GID) (*types.EmployeePortalDocument, error) {
+	scope, err := r.authorize(ctx, employeePortalID, employeeportalmgmt.ActionEmployeePortalGet)
+	if err != nil {
+		return nil, err
+	}
+
+	link, err := dataloader.FromContext(ctx).EmployeePortalDocument.Load(
+		ctx,
+		dataloader.EmployeePortalDocumentKey{
+			TenantID:         scope.GetTenantID(),
+			EmployeePortalID: employeePortalID,
+			DocumentID:       obj.ID,
+		},
+	)
+	if err != nil {
+		if errors.Is(err, dataloadgen.ErrNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load employee portal document", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return types.NewEmployeePortalDocument(link), nil
 }
 
 // CompliancePortalDocumentAccess is the resolver for the compliancePortalDocumentAccess field.
@@ -1917,13 +1946,28 @@ func (r *mutationResolver) ExportEmployeeDocumentVersionPDF(ctx context.Context,
 
 	_, err = r.probo.Documents.GetWithFilter(ctx, scope, documentVersion.DocumentID, documentFilter)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlx.NotFound(ctx, err)
+		if !errors.Is(err, coredata.ErrResourceNotFound) {
+			r.logger.ErrorCtx(ctx, "cannot get employee document", log.Error(err))
+
+			return nil, gqlx.Internal(ctx)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get employee document", log.Error(err))
+		shared, shareErr := r.employeePortal.IsSharedPublishedVersion(
+			ctx,
+			scope,
+			documentVersion.DocumentID,
+			documentVersion.Major,
+			documentVersion.Minor,
+		)
+		if shareErr != nil {
+			r.logger.ErrorCtx(ctx, "cannot check shared employee portal document", log.Error(shareErr))
 
-		return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Internal(ctx)
+		}
+
+		if !shared {
+			return nil, gqlx.NotFound(ctx, err)
+		}
 	}
 
 	options := probo.ExportPDFOptions{

@@ -54,6 +54,13 @@ type EmployeePortal implements Node {
     updatedAt: Datetime!
     organization: Organization! @goField(forceResolver: true)
     permission(action: String!): Boolean! @goField(forceResolver: true)
+    documents(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: EmployeePortalDocumentOrder
+    ): EmployeePortalDocumentConnection! @goField(forceResolver: true)
 }
 
 type EmployeePortalConnection
@@ -77,6 +84,12 @@ extend type Mutation {
     updateEmployeePortalBrand(
         input: UpdateEmployeePortalBrandInput!
     ): UpdateEmployeePortalBrandPayload!
+    addEmployeePortalDocument(
+        input: AddEmployeePortalDocumentInput!
+    ): AddEmployeePortalDocumentPayload!
+    deleteEmployeePortalDocument(
+        input: DeleteEmployeePortalDocumentInput!
+    ): DeleteEmployeePortalDocumentPayload!
 }
 
 input EmployeePortalCapabilitiesInput {
@@ -102,4 +115,65 @@ type UpdateEmployeePortalPayload {
 
 type UpdateEmployeePortalBrandPayload {
     employeePortal: EmployeePortal!
+}
+
+enum EmployeePortalDocumentOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.EmployeePortalDocumentOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.EmployeePortalDocumentOrderFieldCreatedAt"
+        )
+}
+
+input EmployeePortalDocumentOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.EmployeePortalDocumentOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: EmployeePortalDocumentOrderField!
+}
+
+type EmployeePortalDocument implements Node {
+    id: ID!
+    documentId: ID!
+    title: String! @goField(forceResolver: true)
+    documentType: DocumentType! @goField(forceResolver: true)
+    publishedVersionId: ID! @goField(forceResolver: true)
+    createdAt: Datetime!
+    updatedAt: Datetime!
+}
+
+type EmployeePortalDocumentConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.EmployeePortalDocumentConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [EmployeePortalDocumentEdge!]!
+    pageInfo: PageInfo!
+}
+
+type EmployeePortalDocumentEdge {
+    cursor: CursorKey!
+    node: EmployeePortalDocument!
+}
+
+input AddEmployeePortalDocumentInput {
+    employeePortalId: ID!
+    documentId: ID!
+}
+
+type AddEmployeePortalDocumentPayload {
+    employeePortalDocument: EmployeePortalDocument!
+    document: Document!
+}
+
+input DeleteEmployeePortalDocumentInput {
+    id: ID!
+}
+
+type DeleteEmployeePortalDocumentPayload {
+    deletedEmployeePortalDocumentId: ID!
+    document: Document
 }

@@ -202,6 +202,7 @@ func NewMux(
 			managementSvc,
 			riskManagementSvc,
 			taskSvc,
+			employeePortalSvc,
 		))
 
 		r.Handle("/graphql", graphqlHandler)
