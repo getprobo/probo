@@ -119,6 +119,36 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 			return types.NewTaskComment(taskComment), nil
 		}
+	case coredata.DocumentCommentThreadEntityType:
+		action = probo.ActionDocumentGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			thread, err := r.probo.Documents.GetCommentThread(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewDocumentCommentThread(thread), nil
+		}
+	case coredata.DocumentCommentEntityType:
+		action = probo.ActionDocumentGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			comment, err := r.probo.Documents.GetComment(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewDocumentComment(comment), nil
+		}
+	case coredata.DocumentSuggestionEntityType:
+		action = probo.ActionDocumentGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			suggestion, err := r.probo.Documents.GetSuggestion(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewDocumentSuggestion(suggestion), nil
+		}
 	case coredata.TaskActivityEntityType:
 		action = task.ActionTaskActivityGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {

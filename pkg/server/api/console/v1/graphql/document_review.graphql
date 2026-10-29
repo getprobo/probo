@@ -1,0 +1,292 @@
+# Copyright (c) 2026 Probo Inc <hello@probo.com>.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+enum DocumentCommentThreadOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.DocumentCommentThreadOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentCommentThreadOrderFieldCreatedAt"
+        )
+}
+
+input DocumentCommentThreadOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DocumentCommentThreadOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: DocumentCommentThreadOrderField!
+}
+
+input DocumentCommentThreadFilter {
+    resolved: Boolean
+}
+
+enum DocumentCommentOrderField
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.DocumentCommentOrderField") {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentCommentOrderFieldCreatedAt"
+        )
+}
+
+input DocumentCommentOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DocumentCommentOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: DocumentCommentOrderField!
+}
+
+enum DocumentSuggestionStatus
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.DocumentSuggestionStatus") {
+    OPEN
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentSuggestionStatusOpen"
+        )
+    ACCEPTED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentSuggestionStatusAccepted"
+        )
+    REJECTED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentSuggestionStatusRejected"
+        )
+}
+
+enum DocumentSuggestionOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.DocumentSuggestionOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentSuggestionOrderFieldCreatedAt"
+        )
+}
+
+input DocumentSuggestionOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DocumentSuggestionOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: DocumentSuggestionOrderField!
+}
+
+input DocumentSuggestionFilter {
+    status: DocumentSuggestionStatus
+}
+
+type DocumentCommentThread implements Node {
+    id: ID!
+    document: Document! @goField(forceResolver: true)
+    suggestion: DocumentSuggestion @goField(forceResolver: true)
+    suggestionId: ID
+    anchorStart: String!
+    anchorEnd: String!
+    anchorQuote: String!
+    resolvedAt: Datetime
+    resolvedBy: Profile @goField(forceResolver: true)
+    comments(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: DocumentCommentOrder
+    ): DocumentCommentConnection! @goField(forceResolver: true)
+    createdAt: Datetime!
+    updatedAt: Datetime!
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type DocumentCommentThreadConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DocumentCommentThreadConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [DocumentCommentThreadEdge!]!
+    pageInfo: PageInfo!
+}
+
+type DocumentCommentThreadEdge {
+    cursor: CursorKey!
+    node: DocumentCommentThread!
+}
+
+type DocumentComment implements Node {
+    id: ID!
+    thread: DocumentCommentThread! @goField(forceResolver: true)
+    author: Profile! @goField(forceResolver: true)
+    content: String!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type DocumentCommentConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DocumentCommentConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [DocumentCommentEdge!]!
+    pageInfo: PageInfo!
+}
+
+type DocumentCommentEdge {
+    cursor: CursorKey!
+    node: DocumentComment!
+}
+
+type DocumentSuggestion implements Node {
+    id: ID!
+    document: Document! @goField(forceResolver: true)
+    author: Profile! @goField(forceResolver: true)
+    status: DocumentSuggestionStatus!
+    resolvedAt: Datetime
+    resolvedBy: Profile @goField(forceResolver: true)
+    createdAt: Datetime!
+    updatedAt: Datetime!
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type DocumentSuggestionConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DocumentSuggestionConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [DocumentSuggestionEdge!]!
+    pageInfo: PageInfo!
+}
+
+type DocumentSuggestionEdge {
+    cursor: CursorKey!
+    node: DocumentSuggestion!
+}
+
+extend type Mutation {
+    createDocumentCommentThread(
+        input: CreateDocumentCommentThreadInput!
+    ): CreateDocumentCommentThreadPayload!
+    createDocumentComment(
+        input: CreateDocumentCommentInput!
+    ): CreateDocumentCommentPayload!
+    updateDocumentComment(
+        input: UpdateDocumentCommentInput!
+    ): UpdateDocumentCommentPayload!
+    deleteDocumentComment(
+        input: DeleteDocumentCommentInput!
+    ): DeleteDocumentCommentPayload!
+    resolveDocumentCommentThread(
+        input: ResolveDocumentCommentThreadInput!
+    ): ResolveDocumentCommentThreadPayload!
+    reopenDocumentCommentThread(
+        input: ReopenDocumentCommentThreadInput!
+    ): ReopenDocumentCommentThreadPayload!
+    startDocumentSuggestion(
+        input: StartDocumentSuggestionInput!
+    ): StartDocumentSuggestionPayload!
+    acceptDocumentSuggestion(
+        input: AcceptDocumentSuggestionInput!
+    ): AcceptDocumentSuggestionPayload!
+    rejectDocumentSuggestion(
+        input: RejectDocumentSuggestionInput!
+    ): RejectDocumentSuggestionPayload!
+}
+
+input CreateDocumentCommentThreadInput {
+    documentId: ID!
+    content: String!
+    quote: String
+    anchorStart: String
+    anchorEnd: String
+    suggestionId: ID
+    quoteOccurrence: Int
+}
+
+input CreateDocumentCommentInput {
+    threadId: ID!
+    content: String!
+}
+
+input UpdateDocumentCommentInput {
+    commentId: ID!
+    content: String!
+}
+
+input DeleteDocumentCommentInput {
+    commentId: ID!
+}
+
+input ResolveDocumentCommentThreadInput {
+    threadId: ID!
+}
+
+input ReopenDocumentCommentThreadInput {
+    threadId: ID!
+}
+
+input StartDocumentSuggestionInput {
+    documentId: ID!
+}
+
+input AcceptDocumentSuggestionInput {
+    suggestionId: ID!
+}
+
+input RejectDocumentSuggestionInput {
+    suggestionId: ID!
+}
+
+type CreateDocumentCommentThreadPayload {
+    documentCommentThreadEdge: DocumentCommentThreadEdge!
+}
+
+type CreateDocumentCommentPayload {
+    documentCommentEdge: DocumentCommentEdge!
+}
+
+type UpdateDocumentCommentPayload {
+    documentComment: DocumentComment!
+}
+
+type DeleteDocumentCommentPayload {
+    deletedDocumentCommentId: ID!
+    deletedDocumentCommentThreadId: ID
+}
+
+type ResolveDocumentCommentThreadPayload {
+    documentCommentThread: DocumentCommentThread!
+}
+
+type ReopenDocumentCommentThreadPayload {
+    documentCommentThread: DocumentCommentThread!
+}
+
+type StartDocumentSuggestionPayload {
+    documentSuggestionEdge: DocumentSuggestionEdge!
+}
+
+type AcceptDocumentSuggestionPayload {
+    documentSuggestion: DocumentSuggestion!
+}
+
+type RejectDocumentSuggestionPayload {
+    documentSuggestion: DocumentSuggestion!
+}
