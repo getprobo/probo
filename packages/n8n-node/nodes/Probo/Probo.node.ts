@@ -186,6 +186,16 @@ export class Probo implements INodeType {
 						description: 'Manage documents, versions, and signatures',
 					},
 					{
+						name: 'Document Comment',
+						value: 'documentComment',
+						description: 'Comment on a live document',
+					},
+					{
+						name: 'Document Suggestion',
+						value: 'documentSuggestion',
+						description: 'Suggest and review document redlines',
+					},
+					{
 						name: 'DPIA',
 						value: 'dpia',
 						description: 'Manage data protection impact assessments',

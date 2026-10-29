@@ -34,6 +34,8 @@ import * as trackerPattern from './trackerPattern';
 import * as datum from './datum';
 import * as device from './device';
 import * as document from './document';
+import * as documentComment from './documentComment';
+import * as documentSuggestion from './documentSuggestion';
 import * as dpia from './dpia';
 import * as employeePortal from './employeePortal';
 import * as evidence from './evidence';
@@ -90,6 +92,8 @@ export const resources: Record<string, ResourceModule> = {
 	datum: datum as ResourceModule,
 	device: device as ResourceModule,
 	document: document as ResourceModule,
+	documentComment: documentComment as ResourceModule,
+	documentSuggestion: documentSuggestion as ResourceModule,
 	dpia: dpia as ResourceModule,
 	employeePortal: employeePortal as ResourceModule,
 	evidence: evidence as ResourceModule,
