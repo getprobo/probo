@@ -88,9 +88,9 @@ func (s *Service) ApplyInboundIssue(
 
 			link, ok := PickLinkForLinearOrganization(links, envelope.OrganizationID)
 			if !ok {
-				if envelope.Action != "create" {
-					unusedUpdate = update
+				unusedUpdate = update
 
+				if envelope.Action != "create" {
 					return nil
 				}
 
@@ -298,11 +298,24 @@ func (s *Service) ApplyInboundIssue(
 		},
 	)
 	if err != nil {
-		return err
+		txErr := err
+
+		cleanupUpdateErr := s.discardInboundImport(ctx, update)
+		cleanupCreatesErr := s.discardPreparedIssues(ctx, creates)
+
+		return errors.Join(txErr, cleanupUpdateErr, cleanupCreatesErr)
+	}
+
+	if unusedUpdate == nil {
+		s.retainInboundImport(update)
 	}
 
 	if err := s.discardInboundImport(ctx, unusedUpdate); err != nil {
 		return err
+	}
+
+	if unusedCreates == nil {
+		s.retainPreparedIssues(creates)
 	}
 
 	return s.discardPreparedIssues(ctx, unusedCreates)

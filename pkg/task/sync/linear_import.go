@@ -31,6 +31,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
@@ -57,10 +58,12 @@ type linearImport struct {
 	mentionsApplied  bool
 	mentionContent   string
 	mentionCanonical string
+	released         bool
 }
 
-// createdInboundFile is a private file stored by this import. A discarded
-// event deletes it, because nothing else references the row yet.
+// createdInboundFile is a file this import holds. Concurrent imports of the
+// same Linear asset share the row. It is deleted only after every holder
+// releases it and none of them kept it.
 type createdInboundFile struct {
 	id          gid.GID
 	connectorID gid.GID
@@ -71,22 +74,37 @@ type createdInboundFile struct {
 // The file row commits on its own connection, so a rolled-back task import
 // would otherwise download and store the same upload again. One in-flight
 // import per connector and URL keeps concurrent webhooks from storing it twice.
+// Each import holds a reference. The row is deleted only when the last holder
+// releases it without keeping the file.
 type inboundFileCache struct {
 	mu       sync.Mutex
 	files    map[string]cachedInboundFile
 	inflight map[string]*inboundFlight
+	// pending is keyed by file id. A failed delete must not be dropped when a
+	// newer import already owns the connector and asset URL.
+	pending map[gid.GID]pendingInboundDelete
+}
+
+type pendingInboundDelete struct {
+	file     createdInboundFile
+	tenantID gid.TenantID
 }
 
 type inboundFlight struct {
-	done chan struct{}
-	file cachedInboundFile
-	err  error
+	done    chan struct{}
+	file    cachedInboundFile
+	err     error
+	waiters int
 }
 
 type cachedInboundFile struct {
-	fileID string
-	meta   importedFileMeta
+	fileID   string
+	meta     importedFileMeta
+	refs     int
+	retained bool
 }
+
+const inboundFileCleanupTimeout = 15 * time.Second
 
 // importLinearMarkdown downloads Linear uploads referenced by markdown and
 // rewrites them to stored file paths. known maps a file id to an asset URL
@@ -101,7 +119,7 @@ func (s *Service) importLinearMarkdown(
 	markdown string,
 	known map[string]string,
 ) (string, map[string]string, map[string]importedFileMeta, error) {
-	markdown, files, metas, _, err := s.importLinearFiles(
+	markdown, files, metas, created, err := s.importLinearFiles(
 		ctx,
 		client,
 		scope,
@@ -111,8 +129,13 @@ func (s *Service) importLinearMarkdown(
 		known,
 		false,
 	)
+	if err != nil {
+		return "", nil, nil, err
+	}
 
-	return markdown, files, metas, err
+	s.retainCreatedFiles(created)
+
+	return markdown, files, metas, nil
 }
 
 // importLinearMarkdownBestEffort keeps going when one upload cannot be
@@ -127,7 +150,7 @@ func (s *Service) importLinearMarkdownBestEffort(
 	markdown string,
 	known map[string]string,
 ) (string, map[string]string, map[string]importedFileMeta, error) {
-	markdown, files, metas, _, err := s.importLinearFiles(
+	markdown, files, metas, created, err := s.importLinearFiles(
 		ctx,
 		client,
 		scope,
@@ -137,8 +160,13 @@ func (s *Service) importLinearMarkdownBestEffort(
 		known,
 		true,
 	)
+	if err != nil {
+		return "", nil, nil, err
+	}
 
-	return markdown, files, metas, err
+	s.retainCreatedFiles(created)
+
+	return markdown, files, metas, nil
 }
 
 func (s *Service) importLinearFiles(
@@ -322,11 +350,13 @@ func (s *Service) resolveInboundFile(
 	if !leader && flight == nil {
 		live, ok, liveErr := s.liveInboundFile(ctx, scope, organizationID, cached)
 		if liveErr != nil {
+			s.abandonInboundHold(connectorID, assetURL)
+
 			return "", importedFileMeta{}, false, liveErr
 		}
 
 		if ok {
-			return cached.fileID, live, false, nil
+			return cached.fileID, live, true, nil
 		}
 
 		s.forgetInboundFile(connectorID, assetURL)
@@ -335,11 +365,13 @@ func (s *Service) resolveInboundFile(
 
 	if !leader {
 		if flight == nil {
-			return cached.fileID, cached.meta, false, nil
+			return cached.fileID, cached.meta, true, nil
 		}
 
 		select {
 		case <-ctx.Done():
+			s.cancelInboundWait(connectorID, assetURL, flight)
+
 			return "", importedFileMeta{}, false, ctx.Err()
 		case <-flight.done:
 		}
@@ -348,7 +380,7 @@ func (s *Service) resolveInboundFile(
 			return "", importedFileMeta{}, false, flight.err
 		}
 
-		return flight.file.fileID, flight.file.meta, false, nil
+		return flight.file.fileID, flight.file.meta, true, nil
 	}
 
 	defer func() {
@@ -398,10 +430,15 @@ func (s *Service) startInboundFlight(
 	defer s.inboundFiles.mu.Unlock()
 
 	if cached, ok := s.inboundFiles.files[key]; ok && cached.fileID != "" {
+		cached.refs++
+		s.inboundFiles.files[key] = cached
+
 		return cached, nil, false
 	}
 
 	if flight, ok := s.inboundFiles.inflight[key]; ok {
+		flight.waiters++
+
 		return cachedInboundFile{}, flight, false
 	}
 
@@ -434,6 +471,7 @@ func (s *Service) finishInboundFlight(
 			s.inboundFiles.files = map[string]cachedInboundFile{}
 		}
 
+		file.refs = 1 + flight.waiters
 		s.inboundFiles.files[key] = file
 		flight.file = file
 	}
@@ -490,6 +528,152 @@ func (s *Service) liveInboundFile(
 	}, true, nil
 }
 
+func (s *Service) cancelInboundWait(connectorID gid.GID, assetURL string, flight *inboundFlight) {
+	if s == nil || flight == nil || assetURL == "" {
+		return
+	}
+
+	key := inboundFileKey(connectorID, assetURL)
+
+	s.inboundFiles.mu.Lock()
+
+	current, inflight := s.inboundFiles.inflight[key]
+	if inflight && current == flight {
+		if flight.waiters > 0 {
+			flight.waiters--
+		}
+
+		s.inboundFiles.mu.Unlock()
+
+		return
+	}
+
+	s.inboundFiles.mu.Unlock()
+	s.releaseInboundFile(connectorID, assetURL, false)
+}
+
+func (s *Service) releaseInboundFile(connectorID gid.GID, assetURL string, retain bool) bool {
+	if s == nil || assetURL == "" {
+		return false
+	}
+
+	key := inboundFileKey(connectorID, assetURL)
+
+	s.inboundFiles.mu.Lock()
+	defer s.inboundFiles.mu.Unlock()
+
+	file, ok := s.inboundFiles.files[key]
+	if !ok {
+		return false
+	}
+
+	if retain {
+		file.retained = true
+	}
+
+	if file.refs > 0 {
+		file.refs--
+	}
+
+	if file.refs > 0 || file.retained {
+		s.inboundFiles.files[key] = file
+
+		return false
+	}
+
+	delete(s.inboundFiles.files, key)
+
+	return true
+}
+
+func (s *Service) abandonInboundHold(connectorID gid.GID, assetURL string) {
+	if s == nil || assetURL == "" {
+		return
+	}
+
+	key := inboundFileKey(connectorID, assetURL)
+
+	s.inboundFiles.mu.Lock()
+	defer s.inboundFiles.mu.Unlock()
+
+	file, ok := s.inboundFiles.files[key]
+	if !ok {
+		return
+	}
+
+	if file.refs > 0 {
+		file.refs--
+	}
+
+	s.inboundFiles.files[key] = file
+}
+
+// rememberInboundFile puts file back under its connector and asset URL.
+// It reports false when a different row already owns that key. The caller
+// still has to delete file.
+func (s *Service) rememberInboundFile(file createdInboundFile) bool {
+	if s == nil || file.assetURL == "" || file.id == gid.Nil {
+		return false
+	}
+
+	key := inboundFileKey(file.connectorID, file.assetURL)
+	fileID := file.id.String()
+
+	s.inboundFiles.mu.Lock()
+	defer s.inboundFiles.mu.Unlock()
+
+	if existing, ok := s.inboundFiles.files[key]; ok {
+		return existing.fileID == fileID
+	}
+
+	if s.inboundFiles.files == nil {
+		s.inboundFiles.files = map[string]cachedInboundFile{}
+	}
+
+	s.inboundFiles.files[key] = cachedInboundFile{fileID: fileID}
+
+	return true
+}
+
+func (s *Service) queueInboundDelete(file createdInboundFile, scope coredata.Scoper) {
+	if s == nil || scope == nil || file.id == gid.Nil {
+		return
+	}
+
+	s.inboundFiles.mu.Lock()
+	defer s.inboundFiles.mu.Unlock()
+
+	if s.inboundFiles.pending == nil {
+		s.inboundFiles.pending = map[gid.GID]pendingInboundDelete{}
+	}
+
+	s.inboundFiles.pending[file.id] = pendingInboundDelete{
+		file:     file,
+		tenantID: scope.GetTenantID(),
+	}
+}
+
+func (s *Service) takePendingInboundDeletes() []pendingInboundDelete {
+	if s == nil {
+		return nil
+	}
+
+	s.inboundFiles.mu.Lock()
+	defer s.inboundFiles.mu.Unlock()
+
+	if len(s.inboundFiles.pending) == 0 {
+		return nil
+	}
+
+	pending := make([]pendingInboundDelete, 0, len(s.inboundFiles.pending))
+	for id, item := range s.inboundFiles.pending {
+		pending = append(pending, item)
+		delete(s.inboundFiles.pending, id)
+	}
+
+	return pending
+}
+
 func (s *Service) forgetInboundFile(connectorID gid.GID, assetURL string) {
 	if s == nil || assetURL == "" {
 		return
@@ -512,14 +696,112 @@ func (s *Service) discardCreatedFiles(
 	scope coredata.Scoper,
 	created []createdInboundFile,
 ) error {
-	if s == nil || s.pg == nil || scope == nil || len(created) == 0 {
+	if s == nil {
 		return nil
 	}
 
-	err := s.pg.WithTx(
-		ctx,
+	flushErr := s.flushPendingInboundDeletes(ctx)
+	if len(created) == 0 {
+		return flushErr
+	}
+
+	doomed := make([]createdInboundFile, 0, len(created))
+	for _, file := range created {
+		if s.releaseInboundFile(file.connectorID, file.assetURL, false) {
+			doomed = append(doomed, file)
+		}
+	}
+
+	if s.pg == nil || scope == nil || len(doomed) == 0 {
+		return flushErr
+	}
+
+	err := s.deleteInboundFiles(ctx, scope, doomed)
+	if err != nil {
+		err = errors.Join(err, s.retryStrandedInboundDeletes(ctx, scope, doomed))
+	}
+
+	return errors.Join(flushErr, err)
+}
+
+func (s *Service) retryStrandedInboundDeletes(
+	ctx context.Context,
+	scope coredata.Scoper,
+	doomed []createdInboundFile,
+) error {
+	stranded := make([]createdInboundFile, 0, len(doomed))
+	for _, file := range doomed {
+		if s.rememberInboundFile(file) {
+			continue
+		}
+
+		stranded = append(stranded, file)
+	}
+
+	if len(stranded) == 0 {
+		return nil
+	}
+
+	err := s.deleteInboundFiles(ctx, scope, stranded)
+	if err != nil {
+		for _, file := range stranded {
+			s.queueInboundDelete(file, scope)
+		}
+	}
+
+	return err
+}
+
+func (s *Service) flushPendingInboundDeletes(ctx context.Context) error {
+	if s == nil || s.pg == nil {
+		return nil
+	}
+
+	pending := s.takePendingInboundDeletes()
+	if len(pending) == 0 {
+		return nil
+	}
+
+	byTenant := map[gid.TenantID][]createdInboundFile{}
+	for _, item := range pending {
+		byTenant[item.tenantID] = append(byTenant[item.tenantID], item.file)
+	}
+
+	var flushErr error
+
+	for tenantID, files := range byTenant {
+		err := s.deleteInboundFiles(ctx, coredata.NewScope(tenantID, gid.Nil), files)
+		if err != nil {
+			scope := coredata.NewScope(tenantID, gid.Nil)
+			for _, file := range files {
+				s.queueInboundDelete(file, scope)
+			}
+
+			flushErr = errors.Join(flushErr, err)
+		}
+	}
+
+	return flushErr
+}
+
+func (s *Service) deleteInboundFiles(
+	ctx context.Context,
+	scope coredata.Scoper,
+	files []createdInboundFile,
+) error {
+	if s == nil || s.pg == nil || scope == nil || len(files) == 0 {
+		return nil
+	}
+
+	// The webhook worker cancels ctx when the processing lease is lost.
+	// Cleanup still has to finish, or that ack leaves the files behind.
+	cleanupCtx, cancel := inboundFileCleanupContext(ctx)
+	defer cancel()
+
+	return s.pg.WithTx(
+		cleanupCtx,
 		func(ctx context.Context, tx pg.Tx) error {
-			for _, file := range created {
+			for _, file := range files {
 				record := coredata.File{ID: file.id}
 				if err := record.SoftDelete(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot delete unused Linear attachment: %w", err)
@@ -529,21 +811,52 @@ func (s *Service) discardCreatedFiles(
 			return nil
 		},
 	)
-	if err != nil {
-		return err
+}
+
+func inboundFileCleanupContext(ctx context.Context) (context.Context, context.CancelFunc) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	return context.WithTimeout(context.WithoutCancel(ctx), inboundFileCleanupTimeout)
+}
+
+func (s *Service) retainCreatedFiles(created []createdInboundFile) {
+	if s == nil {
+		return
 	}
 
 	for _, file := range created {
-		s.forgetInboundFile(file.connectorID, file.assetURL)
+		s.releaseInboundFile(file.connectorID, file.assetURL, true)
+	}
+}
+
+func (s *Service) retainInboundImport(imported *linearImport) {
+	if imported == nil || imported.released {
+		return
 	}
 
-	return nil
+	imported.released = true
+	s.retainCreatedFiles(imported.created)
+}
+
+func (s *Service) retainPreparedIssues(issues []preparedImportedIssue) {
+	for i := range issues {
+		if issues[i].released {
+			continue
+		}
+
+		issues[i].released = true
+		s.retainCreatedFiles(issues[i].created)
+	}
 }
 
 func (s *Service) discardInboundImport(ctx context.Context, imported *linearImport) error {
-	if imported == nil {
+	if imported == nil || imported.released {
 		return nil
 	}
+
+	imported.released = true
 
 	return s.discardCreatedFiles(
 		ctx,
@@ -553,8 +866,10 @@ func (s *Service) discardInboundImport(ctx context.Context, imported *linearImpo
 }
 
 func (s *Service) discardPreparedIssues(ctx context.Context, issues []preparedImportedIssue) error {
+	var cleanupErr error
+
 	for i := range issues {
-		if issues[i].connector == nil {
+		if issues[i].released || issues[i].connector == nil {
 			continue
 		}
 
@@ -563,12 +878,11 @@ func (s *Service) discardPreparedIssues(ctx context.Context, issues []preparedIm
 			coredata.NewScope(issues[i].connector.OrganizationID.TenantID(), gid.Nil),
 			issues[i].created,
 		)
-		if err != nil {
-			return err
-		}
+		issues[i].released = true
+		cleanupErr = errors.Join(cleanupErr, err)
 	}
 
-	return nil
+	return cleanupErr
 }
 
 func mergeAttachmentMaps(base, extra map[string]string) map[string]string {

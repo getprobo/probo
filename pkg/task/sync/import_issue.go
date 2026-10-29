@@ -47,6 +47,7 @@ type preparedImportedIssue struct {
 	markdown  string
 	files     map[string]string
 	created   []createdInboundFile
+	released  bool
 }
 
 func (s *Service) importCreatedLinearIssue(

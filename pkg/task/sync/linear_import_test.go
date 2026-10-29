@@ -28,6 +28,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -454,6 +455,135 @@ func TestImportLinearFiles_ReturnsCreatedFilesOnFailure(t *testing.T) {
 	assert.NotEqual(t, "", created[0].id.String())
 }
 
+func TestImportLinearFiles_SharedHoldSurvivesOneRelease(t *testing.T) {
+	t.Parallel()
+
+	assetURL := "https://uploads.linear.app/org/file/diagram.png"
+	svc := &Service{stores: &memoryAttachmentStore{}}
+	client := pngLinearClient(t)
+
+	importFile := func() []createdInboundFile {
+		t.Helper()
+
+		_, _, _, created, err := svc.importLinearFiles(
+			t.Context(),
+			client,
+			nil,
+			gid.Nil,
+			gid.Nil,
+			"![diagram]("+assetURL+")",
+			nil,
+			false,
+		)
+		require.NoError(t, err)
+
+		return created
+	}
+
+	first := importFile()
+	second := importFile()
+
+	require.Len(t, first, 1)
+	require.Len(t, second, 1)
+	assert.Equal(t, first[0].id, second[0].id)
+	assert.Len(t, svc.stores.(*memoryAttachmentStore).files, 1)
+
+	assert.False(t, svc.releaseInboundFile(gid.Nil, assetURL, false))
+	_, held := svc.inboundFiles.files[inboundFileKey(gid.Nil, assetURL)]
+	assert.True(t, held)
+
+	assert.True(t, svc.releaseInboundFile(gid.Nil, assetURL, false))
+	_, held = svc.inboundFiles.files[inboundFileKey(gid.Nil, assetURL)]
+	assert.False(t, held)
+}
+
+func TestImportLinearFiles_RetainedFileIsNotDropped(t *testing.T) {
+	t.Parallel()
+
+	assetURL := "https://uploads.linear.app/org/file/diagram.png"
+	svc := &Service{stores: &memoryAttachmentStore{}}
+	client := pngLinearClient(t)
+
+	_, _, _, created, err := svc.importLinearFiles(
+		t.Context(),
+		client,
+		nil,
+		gid.Nil,
+		gid.Nil,
+		"![diagram]("+assetURL+")",
+		nil,
+		false,
+	)
+	require.NoError(t, err)
+	require.Len(t, created, 1)
+
+	svc.retainCreatedFiles(created)
+
+	_, _, _, shared, err := svc.importLinearFiles(
+		t.Context(),
+		client,
+		nil,
+		gid.Nil,
+		gid.Nil,
+		"![diagram]("+assetURL+")",
+		nil,
+		false,
+	)
+	require.NoError(t, err)
+	require.Len(t, shared, 1)
+
+	assert.False(t, svc.releaseInboundFile(gid.Nil, assetURL, false))
+	_, held := svc.inboundFiles.files[inboundFileKey(gid.Nil, assetURL)]
+	assert.True(t, held)
+	assert.Len(t, svc.stores.(*memoryAttachmentStore).files, 1)
+}
+
+func TestRememberInboundFile_QueuesDifferentRowForDelete(t *testing.T) {
+	t.Parallel()
+
+	assetURL := "https://uploads.linear.app/org/file/diagram.png"
+	connectorID := gid.Nil
+	key := inboundFileKey(connectorID, assetURL)
+	newer := gid.New(gid.NewTenantID(), coredata.FileEntityType)
+	older := gid.New(newer.TenantID(), coredata.FileEntityType)
+	svc := &Service{}
+	svc.inboundFiles.files = map[string]cachedInboundFile{
+		key: {fileID: newer.String(), refs: 1},
+	}
+
+	olderFile := createdInboundFile{
+		id:          older,
+		connectorID: connectorID,
+		assetURL:    assetURL,
+	}
+	assert.False(t, svc.rememberInboundFile(olderFile))
+	assert.Equal(t, newer.String(), svc.inboundFiles.files[key].fileID)
+
+	scope := coredata.NewScope(older.TenantID(), gid.Nil)
+	svc.queueInboundDelete(olderFile, scope)
+
+	pending := svc.takePendingInboundDeletes()
+	require.Len(t, pending, 1)
+	assert.Equal(t, older, pending[0].file.id)
+	assert.Equal(t, older.TenantID(), pending[0].tenantID)
+	assert.Empty(t, svc.inboundFiles.pending)
+}
+
+func TestInboundFileCleanupContext_OutlivesParentCancel(t *testing.T) {
+	t.Parallel()
+
+	parent, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	ctx, stop := inboundFileCleanupContext(parent)
+	defer stop()
+
+	assert.NoError(t, ctx.Err())
+	deadline, ok := ctx.Deadline()
+	assert.True(t, ok)
+	assert.WithinDuration(t, time.Now().Add(inboundFileCleanupTimeout), deadline, time.Second)
+}
+
 func TestImportLinearMarkdown_SkipsMissingAsset(t *testing.T) {
 	t.Parallel()
 
@@ -481,6 +611,24 @@ func TestImportLinearMarkdown_SkipsMissingAsset(t *testing.T) {
 	)
 	require.NoError(t, err)
 	assert.Contains(t, rewritten, assetURL)
+}
+
+func pngLinearClient(t *testing.T) *linear.Client {
+	t.Helper()
+
+	return linear.NewClient(&http.Client{
+		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			header := make(http.Header)
+			header.Set("Content-Type", "image/png")
+
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Header:     header,
+				Body:       io.NopCloser(strings.NewReader("png-bytes")),
+				Request:    req,
+			}, nil
+		}),
+	}, "https://api.linear.app")
 }
 
 type roundTripFunc func(*http.Request) (*http.Response, error)

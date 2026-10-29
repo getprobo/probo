@@ -398,12 +398,20 @@ func (s *Service) ApplyInboundComment(
 			return s.applyInboundCommentTx(ctx, tx, scope, link, envelope, data, prepared)
 		},
 	)
-	if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-		return nil
+	if err != nil {
+		if cleanupErr := s.discardInboundImport(ctx, prepared); cleanupErr != nil {
+			return fmt.Errorf("cannot discard Linear comment files: %w", errors.Join(err, cleanupErr))
+		}
+
+		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+			return nil
+		}
+
+		return err
 	}
 
-	if err != nil {
-		return err
+	if unused == nil {
+		s.retainInboundImport(prepared)
 	}
 
 	return s.discardInboundImport(ctx, unused)
@@ -638,6 +646,10 @@ func (s *Service) applyInboundCommentTx(
 	}
 
 	if strings.TrimSpace(canonical) == "" {
+		if err := s.discardInboundImport(ctx, prepared); err != nil {
+			return err
+		}
+
 		return nil
 	}
 
