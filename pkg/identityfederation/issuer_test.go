@@ -280,9 +280,7 @@ func TestIssuer_Token_Claims(t *testing.T) {
 
 	assert.GreaterOrEqual(t, issuedAt, before)
 	assert.LessOrEqual(t, issuedAt, after)
-	// nbf is one minute behind iat so a slow verifier clock still accepts
-	// a just-minted token.
-	assert.Equal(t, issuedAt-60, notBefore)
+	assert.Equal(t, issuedAt, notBefore)
 	assert.Equal(t, int64(300), expiresAt-issuedAt)
 
 	assert.Equal(t, "RS256", decodeTokenHeader(t, token).Algorithm)

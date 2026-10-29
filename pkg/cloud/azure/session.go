@@ -22,13 +22,14 @@
 // by presenting a Probo-minted OIDC token as an Entra client assertion.
 //
 // Probo holds no Azure credential for any customer. It mints a short-lived
-// assertion (pkg/identityfederation), presents it through pkg/azidentityx, and
-// caches the resulting access tokens per scope. The customer revokes by
-// deleting the federated identity credential.
+// assertion (pkg/identityfederation), presents it at the environment's
+// authority, and azidentity caches the resulting tokens per scope. The
+// customer revokes by deleting the federated identity credential.
 package azure
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -38,8 +39,9 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"go.gearno.de/kit/httpclient"
-	"go.probo.inc/probo/pkg/azidentityx"
 	"go.probo.inc/probo/pkg/cloud"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/identityfederation"
@@ -95,8 +97,8 @@ var (
 // user input: it selects whose cloud accounts the resulting credentials reach.
 //
 // No credential is fetched here, which is why there is no context to pass. The
-// exchange runs on the first API call and the session caches the access token
-// per scope from then on, so a session is cheap to build and no token is ever
+// SDK performs the exchange lazily on the first API call and owns caching and
+// refresh from then on, so a session is cheap to build and no token is ever
 // written to disk.
 func NewSession(
 	issuer *identityfederation.Issuer,
@@ -145,12 +147,11 @@ func NewSession(
 		return token, nil
 	}
 
-	cred, err := azidentityx.NewClientAssertionCredential(
-		httpClient,
-		ep.configuration.ActiveDirectoryAuthorityHost,
+	cred, err := azidentity.NewClientAssertionCredential(
 		tenantID,
 		clientID,
 		getAssertion,
+		&azidentity.ClientAssertionCredentialOptions{ClientOptions: opts},
 	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot open azure session: %w", err)
@@ -172,9 +173,9 @@ func NewSession(
 	return session, nil
 }
 
-// WithHTTPClient sets the transport the Graph client wraps and the token
-// exchange uses. Tests pass a VCR client. Omit it to use the default
-// SSRF-protected pool.
+// WithHTTPClient sets the transport the Graph client wraps and azidentity
+// uses for the token exchange. Tests pass a VCR client. Omit it to use the
+// default SSRF-protected pool.
 func WithHTTPClient(httpClient *http.Client) SessionOption {
 	return func(s *Session) {
 		s.httpClient = httpClient
@@ -340,12 +341,24 @@ func (s *Session) wait(ctx context.Context, d time.Duration) error {
 }
 
 func isFederatedCredentialNotFound(err error) bool {
-	tokenErr, ok := errors.AsType[*azidentityx.TokenEndpointError](err)
-	if !ok {
+	authErr, ok := errors.AsType[*azidentity.AuthenticationFailedError](err)
+	if !ok || authErr.RawResponse == nil {
 		return false
 	}
 
-	return slices.Contains(tokenErr.ErrorCodes(), entraFederatedCredentialNotFound)
+	body, readErr := runtime.Payload(authErr.RawResponse)
+	if readErr != nil {
+		return false
+	}
+
+	var payload struct {
+		ErrorCodes []int `json:"error_codes"`
+	}
+	if json.Unmarshal(body, &payload) != nil {
+		return false
+	}
+
+	return slices.Contains(payload.ErrorCodes, entraFederatedCredentialNotFound)
 }
 
 func authorizeGraph(base *http.Client, session *Session) *GraphClient {

@@ -4,6 +4,12 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Changed
+
+- Federation tokens set `nbf` equal to `iat` again
+- The Azure token exchange uses azidentity again. The request includes
+  the scopes that library adds
+
 ## [0.333.0] - 2026-10-29
 
 ### Added

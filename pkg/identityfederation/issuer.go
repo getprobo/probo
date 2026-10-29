@@ -214,13 +214,11 @@ func (i *Issuer) Token(
 	now := time.Now()
 
 	claims := Claims{
-		Issuer:   issuerURL,
-		Subject:  organizationID.String(),
-		Audience: audience,
-		IssuedAt: now.Unix(),
-		// nbf is one minute behind iat so a verifier whose clock is behind
-		// the issuer does not reject a just-minted token.
-		NotBefore: now.Add(-time.Minute).Unix(),
+		Issuer:    issuerURL,
+		Subject:   organizationID.String(),
+		Audience:  audience,
+		IssuedAt:  now.Unix(),
+		NotBefore: now.Unix(),
 		ExpiresAt: now.Add(i.tokenTTL).Unix(),
 		JTI:       jti.String(),
 	}
