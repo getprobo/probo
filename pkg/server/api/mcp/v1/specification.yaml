@@ -8680,6 +8680,532 @@ components:
         document:
           $ref: "#/components/schemas/Document"
 
+    DocumentCommentThreadOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DocumentCommentThreadOrderField
+
+    DocumentCommentThreadOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/DocumentCommentThreadOrderField"
+          description: Comment thread order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Comment thread order direction
+
+    DocumentCommentOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DocumentCommentOrderField
+
+    DocumentCommentOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/DocumentCommentOrderField"
+          description: Comment order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Comment order direction
+
+    DocumentSuggestionStatus:
+      type: string
+      enum:
+        - OPEN
+        - ACCEPTED
+        - REJECTED
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DocumentSuggestionStatus
+
+    DocumentSuggestionOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DocumentSuggestionOrderField
+
+    DocumentSuggestionOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/DocumentSuggestionOrderField"
+          description: Suggestion order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Suggestion order direction
+
+    DocumentCommentThread:
+      type: object
+      required:
+        - id
+        - document_id
+        - anchor_start
+        - anchor_end
+        - anchor_quote
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Comment thread ID
+        document_id:
+          $ref: "#/components/schemas/GID"
+          description: Document ID
+        suggestion_id:
+          type:
+            - string
+            - "null"
+          go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/gid.GID
+          description: Suggestion this thread comments on, when the thread is a redline discussion
+        anchor_start:
+          type: string
+          description: Base64 Automerge cursor for the start of the anchored range
+        anchor_end:
+          type: string
+          description: Base64 Automerge cursor for the end of the anchored range
+        anchor_quote:
+          type: string
+          description: Text quote captured when the thread was created
+        resolved_at:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Resolution timestamp
+        resolved_by_profile_id:
+          type:
+            - string
+            - "null"
+          go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/gid.GID
+          description: Profile that resolved the thread
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    DocumentComment:
+      type: object
+      required:
+        - id
+        - thread_id
+        - author_profile_id
+        - content
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Comment ID
+        thread_id:
+          $ref: "#/components/schemas/GID"
+          description: Comment thread ID
+        author_profile_id:
+          $ref: "#/components/schemas/GID"
+          description: Author profile ID
+        content:
+          type: string
+          description: Comment text
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    DocumentSuggestion:
+      type: object
+      required:
+        - id
+        - document_id
+        - author_profile_id
+        - status
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Suggestion ID
+        document_id:
+          $ref: "#/components/schemas/GID"
+          description: Document ID
+        author_profile_id:
+          $ref: "#/components/schemas/GID"
+          description: Author profile ID
+        status:
+          $ref: "#/components/schemas/DocumentSuggestionStatus"
+          description: Suggestion status
+        resolved_at:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Resolution timestamp
+        resolved_by_profile_id:
+          type:
+            - string
+            - "null"
+          go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/gid.GID
+          description: Profile that accepted or rejected the suggestion
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    ListDocumentCommentThreadsInput:
+      type: object
+      required:
+        - document_id
+      properties:
+        document_id:
+          $ref: "#/components/schemas/GID"
+          description: Document ID
+        resolved:
+          type: boolean
+          description: When set, return only resolved or only open threads
+        order_by:
+          $ref: "#/components/schemas/DocumentCommentThreadOrderBy"
+          description: Comment thread order
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListDocumentCommentThreadsOutput:
+      type: object
+      required:
+        - threads
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        threads:
+          type: array
+          items:
+            $ref: "#/components/schemas/DocumentCommentThread"
+
+    GetDocumentCommentThreadInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Comment thread ID
+
+    GetDocumentCommentThreadOutput:
+      type: object
+      required:
+        - thread
+      properties:
+        thread:
+          $ref: "#/components/schemas/DocumentCommentThread"
+
+    ListDocumentCommentsInput:
+      type: object
+      required:
+        - thread_id
+      properties:
+        thread_id:
+          $ref: "#/components/schemas/GID"
+          description: Comment thread ID
+        order_by:
+          $ref: "#/components/schemas/DocumentCommentOrderBy"
+          description: Comment order
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListDocumentCommentsOutput:
+      type: object
+      required:
+        - comments
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        comments:
+          type: array
+          items:
+            $ref: "#/components/schemas/DocumentComment"
+
+    GetDocumentCommentInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Comment ID
+
+    GetDocumentCommentOutput:
+      type: object
+      required:
+        - comment
+      properties:
+        comment:
+          $ref: "#/components/schemas/DocumentComment"
+
+    CreateDocumentCommentThreadInput:
+      type: object
+      required:
+        - document_id
+        - content
+      properties:
+        document_id:
+          $ref: "#/components/schemas/GID"
+          description: Document ID
+        content:
+          type: string
+          description: First comment text
+        quote:
+          type: string
+          description: Text to anchor when cursors are not supplied
+        quote_occurrence:
+          type: integer
+          description: Zero-based occurrence of the quote to anchor
+        suggestion_id:
+          $ref: "#/components/schemas/GID"
+          description: Open suggestion to comment on. The server anchors the thread to that redline.
+
+    CreateDocumentCommentThreadOutput:
+      type: object
+      required:
+        - thread
+        - comment
+      properties:
+        thread:
+          $ref: "#/components/schemas/DocumentCommentThread"
+        comment:
+          $ref: "#/components/schemas/DocumentComment"
+
+    CreateDocumentCommentInput:
+      type: object
+      required:
+        - thread_id
+        - content
+      properties:
+        thread_id:
+          $ref: "#/components/schemas/GID"
+          description: Comment thread ID
+        content:
+          type: string
+          description: Reply text
+
+    CreateDocumentCommentOutput:
+      type: object
+      required:
+        - comment
+      properties:
+        comment:
+          $ref: "#/components/schemas/DocumentComment"
+
+    UpdateDocumentCommentInput:
+      type: object
+      required:
+        - id
+        - content
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Comment ID
+        content:
+          type: string
+          description: Replacement comment text
+
+    UpdateDocumentCommentOutput:
+      type: object
+      required:
+        - comment
+      properties:
+        comment:
+          $ref: "#/components/schemas/DocumentComment"
+
+    DeleteDocumentCommentInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Comment ID
+
+    DeleteDocumentCommentOutput:
+      type: object
+      required:
+        - deleted_comment_id
+      properties:
+        deleted_comment_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted comment ID
+        deleted_thread_id:
+          type:
+            - string
+            - "null"
+          go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/gid.GID
+          description: Deleted thread ID when the comment was the last one in the thread
+
+    ResolveDocumentCommentThreadInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Comment thread ID
+
+    ResolveDocumentCommentThreadOutput:
+      type: object
+      required:
+        - thread
+      properties:
+        thread:
+          $ref: "#/components/schemas/DocumentCommentThread"
+
+    ReopenDocumentCommentThreadInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Comment thread ID
+
+    ReopenDocumentCommentThreadOutput:
+      type: object
+      required:
+        - thread
+      properties:
+        thread:
+          $ref: "#/components/schemas/DocumentCommentThread"
+
+    ListDocumentSuggestionsInput:
+      type: object
+      required:
+        - document_id
+      properties:
+        document_id:
+          $ref: "#/components/schemas/GID"
+          description: Document ID
+        status:
+          $ref: "#/components/schemas/DocumentSuggestionStatus"
+          description: When set, return only suggestions with this status
+        order_by:
+          $ref: "#/components/schemas/DocumentSuggestionOrderBy"
+          description: Suggestion order
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListDocumentSuggestionsOutput:
+      type: object
+      required:
+        - suggestions
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        suggestions:
+          type: array
+          items:
+            $ref: "#/components/schemas/DocumentSuggestion"
+
+    GetDocumentSuggestionInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Suggestion ID
+
+    GetDocumentSuggestionOutput:
+      type: object
+      required:
+        - suggestion
+      properties:
+        suggestion:
+          $ref: "#/components/schemas/DocumentSuggestion"
+
+    StartDocumentSuggestionInput:
+      type: object
+      required:
+        - document_id
+      properties:
+        document_id:
+          $ref: "#/components/schemas/GID"
+          description: Document ID
+
+    StartDocumentSuggestionOutput:
+      type: object
+      required:
+        - suggestion
+      properties:
+        suggestion:
+          $ref: "#/components/schemas/DocumentSuggestion"
+
+    AcceptDocumentSuggestionInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Suggestion ID
+
+    AcceptDocumentSuggestionOutput:
+      type: object
+      required:
+        - suggestion
+      properties:
+        suggestion:
+          $ref: "#/components/schemas/DocumentSuggestion"
+
+    RejectDocumentSuggestionInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Suggestion ID
+
+    RejectDocumentSuggestionOutput:
+      type: object
+      required:
+        - suggestion
+      properties:
+        suggestion:
+          $ref: "#/components/schemas/DocumentSuggestion"
+
     AddDocumentInput:
       type: object
       required:
@@ -19475,6 +20001,186 @@ tools:
       $ref: "#/components/schemas/GetDocumentInput"
     outputSchema:
       $ref: "#/components/schemas/GetDocumentOutput"
+  - name: listDocumentCommentThreads
+    title: List Document Comment Threads
+    description: List comment threads on a live document. Pass resolved to show only open or only resolved threads.
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListDocumentCommentThreadsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListDocumentCommentThreadsOutput"
+  - name: getDocumentCommentThread
+    title: Get Document Comment Thread
+    description: Get a document comment thread by ID
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/GetDocumentCommentThreadInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetDocumentCommentThreadOutput"
+  - name: listDocumentComments
+    title: List Document Comments
+    description: List comments in a document comment thread
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListDocumentCommentsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListDocumentCommentsOutput"
+  - name: getDocumentComment
+    title: Get Document Comment
+    description: Get a document comment by ID
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/GetDocumentCommentInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetDocumentCommentOutput"
+  - name: createDocumentCommentThread
+    title: Create Document Comment Thread
+    description: Start a comment thread from a quote, or reply on an open suggestion by passing suggestion_id.
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/CreateDocumentCommentThreadInput"
+    outputSchema:
+      $ref: "#/components/schemas/CreateDocumentCommentThreadOutput"
+  - name: createDocumentComment
+    title: Create Document Comment
+    description: Reply on a document comment thread
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/CreateDocumentCommentInput"
+    outputSchema:
+      $ref: "#/components/schemas/CreateDocumentCommentOutput"
+  - name: updateDocumentComment
+    title: Update Document Comment
+    description: Edit your own document comment
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateDocumentCommentInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateDocumentCommentOutput"
+  - name: deleteDocumentComment
+    title: Delete Document Comment
+    description: Delete your own document comment. The thread is deleted when it has no comments left.
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/DeleteDocumentCommentInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteDocumentCommentOutput"
+  - name: resolveDocumentCommentThread
+    title: Resolve Document Comment Thread
+    description: Resolve a document comment thread
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ResolveDocumentCommentThreadInput"
+    outputSchema:
+      $ref: "#/components/schemas/ResolveDocumentCommentThreadOutput"
+  - name: reopenDocumentCommentThread
+    title: Reopen Document Comment Thread
+    description: Reopen a resolved document comment thread
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ReopenDocumentCommentThreadInput"
+    outputSchema:
+      $ref: "#/components/schemas/ReopenDocumentCommentThreadOutput"
+  - name: listDocumentSuggestions
+    title: List Document Suggestions
+    description: List redline suggestions on a live document. Pass status OPEN to list suggestions that still need a decision.
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListDocumentSuggestionsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListDocumentSuggestionsOutput"
+  - name: getDocumentSuggestion
+    title: Get Document Suggestion
+    description: Get a document suggestion by ID
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/GetDocumentSuggestionInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetDocumentSuggestionOutput"
+  - name: startDocumentSuggestion
+    title: Start Document Suggestion
+    description: Allocate an ID for a new redline. Paint that ID on suggestion marks in the collaborative document.
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/StartDocumentSuggestionInput"
+    outputSchema:
+      $ref: "#/components/schemas/StartDocumentSuggestionOutput"
+  - name: acceptDocumentSuggestion
+    title: Accept Document Suggestion
+    description: Keep suggested insertions, drop suggested deletions, and resolve the suggestion thread
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/AcceptDocumentSuggestionInput"
+    outputSchema:
+      $ref: "#/components/schemas/AcceptDocumentSuggestionOutput"
+  - name: rejectDocumentSuggestion
+    title: Reject Document Suggestion
+    description: Drop suggested insertions, keep the original text, and resolve the suggestion thread
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/RejectDocumentSuggestionInput"
+    outputSchema:
+      $ref: "#/components/schemas/RejectDocumentSuggestionOutput"
   - name: addDocument
     title: Add Document
     description: Add a new document to the organization

@@ -97,6 +97,7 @@ type (
 		IdentityID       string
 		AvatarURL        string
 		RecordActors     func(ctx context.Context, actors [][]byte) error
+		CanUpdate        bool
 	}
 )
 
@@ -109,7 +110,7 @@ func (h *Handler) HandleRepo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	scope, document, err := h.authorize(r.Context(), documentID)
+	scope, document, canUpdate, err := h.authorize(r.Context(), documentID)
 	if err != nil {
 		h.renderAuthorizationError(w, err)
 		return
@@ -187,6 +188,7 @@ func (h *Handler) HandleRepo(w http.ResponseWriter, r *http.Request) {
 		DisplayName:  displayName,
 		IdentityID:   identityID,
 		AvatarURL:    avatarURL,
+		CanUpdate:    canUpdate,
 		PublishEphemeral: func(ctx context.Context, frame []byte) error {
 			return h.Probo.Collaboration.NotifyEphemeral(
 				ctx,
@@ -223,7 +225,7 @@ func (h *Handler) HandleRepo(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) authorize(
 	ctx context.Context,
 	documentID gid.GID,
-) (*coredata.Scope, *coredata.Document, error) {
+) (*coredata.Scope, *coredata.Document, bool, error) {
 	identity := authn.IdentityFromContext(ctx)
 	session := authn.SessionFromContext(ctx)
 
@@ -231,7 +233,7 @@ func (h *Handler) authorize(
 
 	document, err := h.Probo.Documents.LoadDocument(ctx, scope, documentID)
 	if err != nil {
-		return nil, nil, fmt.Errorf("cannot load document: %w", err)
+		return nil, nil, false, fmt.Errorf("cannot load document: %w", err)
 	}
 
 	params := iam.AuthorizeParams{
@@ -245,11 +247,17 @@ func (h *Handler) authorize(
 	}
 
 	authScope, err := h.IAM.Authorizer.Authorize(ctx, params)
-	if err != nil {
-		return nil, nil, fmt.Errorf("cannot authorize document update: %w", err)
+	if err == nil {
+		return authScope, document, true, nil
 	}
 
-	return authScope, document, nil
+	params.Action = probo.ActionDocumentComment
+	authScope, err = h.IAM.Authorizer.Authorize(ctx, params)
+	if err != nil {
+		return nil, nil, false, fmt.Errorf("cannot authorize document collaboration: %w", err)
+	}
+
+	return authScope, document, false, nil
 }
 
 func (h *Handler) releaseSeedClaim(
@@ -602,9 +610,49 @@ func ServeRepoCollaboration(
 				continue
 			}
 
+			var beforeSpans []automerge.Span
+			if !config.CanUpdate && lease.Collaboration() != nil && lease.Collaboration().Document != nil {
+				beforeSpans, err = collaboration.BodySpans(lease.Collaboration().Document)
+				if err != nil {
+					return fmt.Errorf("cannot read collaboration spans: %w", err)
+				}
+			}
+
 			reply, fanout, err := conn.Receive(message.Data)
 			if err != nil {
 				return fmt.Errorf("cannot process repo frame: %w", err)
+			}
+
+			if !config.CanUpdate && fanout == nil && lease.Collaboration() != nil && lease.Collaboration().Document != nil {
+				kind, kindErr := collabpkg.FrameKind(message.Data)
+				if kindErr != nil {
+					return fmt.Errorf("cannot read repo frame type: %w", kindErr)
+				}
+
+				frameType := collabpkg.MessageType(kind)
+				if frameType == collabpkg.MessageSync || frameType == collabpkg.MessageRequest {
+					afterSpans, spanErr := collaboration.BodySpans(lease.Collaboration().Document)
+					if spanErr != nil {
+						return fmt.Errorf("cannot read collaboration spans: %w", spanErr)
+					}
+
+					if !collaboration.CommentChangeAllowed(beforeSpans, afterSpans) {
+						if err := collaboration.WriteBodySpans(lease.Collaboration().Document, beforeSpans); err != nil {
+							return fmt.Errorf("cannot restore collaboration spans: %w", err)
+						}
+
+						if _, err := lease.Collaboration().Document.Commit("Reject direct edit", time.Now()); err != nil && !errors.Is(err, automerge.ErrNoOperations) {
+							return fmt.Errorf("cannot commit restored collaboration spans: %w", err)
+						}
+
+						restored, syncErr := conn.SyncChanged()
+						if syncErr != nil {
+							return fmt.Errorf("cannot sync restored collaboration spans: %w", syncErr)
+						}
+
+						reply = append(reply, restored...)
+					}
+				}
 			}
 
 			if err := writeRepoFrames(ctx, connection, reply); err != nil {

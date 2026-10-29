@@ -2580,6 +2580,7 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 				errors.Is(err, collaboration.ErrDocumentCollaborationStale),
 				errors.Is(err, collaboration.ErrDocumentCollaborationEditsNotSeeded),
 				errors.Is(err, collaboration.ErrSeedInProgress),
+				errors.Is(err, collaboration.ErrOpenSuggestions),
 				errors.Is(err, prosemirror.ErrFragmentEditAmbiguous):
 				return nil, types.UpdateDocumentOutput{}, fmt.Errorf("cannot update document: %w", err)
 			}
@@ -6890,6 +6891,10 @@ func (r *Resolver) PublishDocumentTool(ctx context.Context, req *mcp.CallToolReq
 		},
 	)
 	if err != nil {
+		if errors.Is(err, collaboration.ErrOpenSuggestions) {
+			return nil, types.PublishDocumentOutput{}, err
+		}
+
 		panic(fmt.Errorf("cannot publish document: %w", err))
 	}
 
@@ -11353,7 +11358,8 @@ func (r *Resolver) RestoreDocumentHistoryTool(ctx context.Context, req *mcp.Call
 		case errors.Is(err, coredata.ErrResourceNotFound):
 			return nil, types.RestoreDocumentHistoryOutput{}, fmt.Errorf("cannot restore history: %w", err)
 		case errors.Is(err, collaboration.ErrDocumentCollaborationNotSeeded),
-			errors.Is(err, collaboration.ErrSeedInProgress):
+			errors.Is(err, collaboration.ErrSeedInProgress),
+			errors.Is(err, collaboration.ErrOpenSuggestions):
 			return nil, types.RestoreDocumentHistoryOutput{}, fmt.Errorf("cannot restore history: %w", err)
 		}
 
@@ -11381,4 +11387,297 @@ func (r *Resolver) RestoreDocumentHistoryTool(ctx context.Context, req *mcp.Call
 	return nil, types.RestoreDocumentHistoryOutput{
 		Document: withHeads,
 	}, nil
+}
+
+func (r *Resolver) ListDocumentCommentThreadsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListDocumentCommentThreadsInput) (*mcp.CallToolResult, types.ListDocumentCommentThreadsOutput, error) {
+	scope, err := r.Authorize(ctx, input.DocumentID, probo.ActionDocumentGet)
+	if err != nil {
+		return nil, types.ListDocumentCommentThreadsOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.DocumentCommentThreadOrderField]{
+		Field:     coredata.DocumentCommentThreadOrderFieldCreatedAt,
+		Direction: page.OrderDirectionAsc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy.Field = input.OrderBy.Field
+		pageOrderBy.Direction = input.OrderBy.Direction
+	}
+
+	var filter *coredata.DocumentCommentThreadFilter
+	if input.Resolved != nil {
+		filter = coredata.NewDocumentCommentThreadFilter(input.Resolved)
+	}
+
+	threads, err := r.proboSvc.Documents.ListCommentThreads(
+		ctx,
+		scope,
+		input.DocumentID,
+		types.NewCursor(input.Size, input.Cursor, pageOrderBy),
+		filter,
+	)
+	if err != nil {
+		return nil, types.ListDocumentCommentThreadsOutput{}, r.documentReviewError(ctx, "cannot list document comment threads", err)
+	}
+
+	return nil, types.NewListDocumentCommentThreadsOutput(threads), nil
+}
+
+func (r *Resolver) GetDocumentCommentThreadTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetDocumentCommentThreadInput) (*mcp.CallToolResult, types.GetDocumentCommentThreadOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionDocumentGet)
+	if err != nil {
+		return nil, types.GetDocumentCommentThreadOutput{}, err
+	}
+
+	thread, err := r.proboSvc.Documents.GetCommentThread(ctx, scope, input.ID)
+	if err != nil {
+		return nil, types.GetDocumentCommentThreadOutput{}, r.documentReviewError(ctx, "cannot get document comment thread", err)
+	}
+
+	return nil, types.GetDocumentCommentThreadOutput{Thread: types.NewDocumentCommentThread(thread)}, nil
+}
+
+func (r *Resolver) ListDocumentCommentsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListDocumentCommentsInput) (*mcp.CallToolResult, types.ListDocumentCommentsOutput, error) {
+	scope, err := r.Authorize(ctx, input.ThreadID, probo.ActionDocumentGet)
+	if err != nil {
+		return nil, types.ListDocumentCommentsOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.DocumentCommentOrderField]{
+		Field:     coredata.DocumentCommentOrderFieldCreatedAt,
+		Direction: page.OrderDirectionAsc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy.Field = input.OrderBy.Field
+		pageOrderBy.Direction = input.OrderBy.Direction
+	}
+
+	comments, err := r.proboSvc.Documents.ListComments(
+		ctx,
+		scope,
+		input.ThreadID,
+		types.NewCursor(input.Size, input.Cursor, pageOrderBy),
+	)
+	if err != nil {
+		return nil, types.ListDocumentCommentsOutput{}, r.documentReviewError(ctx, "cannot list document comments", err)
+	}
+
+	return nil, types.NewListDocumentCommentsOutput(comments), nil
+}
+
+func (r *Resolver) GetDocumentCommentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetDocumentCommentInput) (*mcp.CallToolResult, types.GetDocumentCommentOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionDocumentGet)
+	if err != nil {
+		return nil, types.GetDocumentCommentOutput{}, err
+	}
+
+	comment, err := r.proboSvc.Documents.GetComment(ctx, scope, input.ID)
+	if err != nil {
+		return nil, types.GetDocumentCommentOutput{}, r.documentReviewError(ctx, "cannot get document comment", err)
+	}
+
+	return nil, types.GetDocumentCommentOutput{Comment: types.NewDocumentComment(comment)}, nil
+}
+
+func (r *Resolver) CreateDocumentCommentThreadTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateDocumentCommentThreadInput) (*mcp.CallToolResult, types.CreateDocumentCommentThreadOutput, error) {
+	scope, err := r.Authorize(ctx, input.DocumentID, probo.ActionDocumentComment)
+	if err != nil {
+		return nil, types.CreateDocumentCommentThreadOutput{}, err
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+
+	thread, comment, err := r.proboSvc.Documents.CreateCommentThread(
+		ctx,
+		scope,
+		probo.CreateDocumentCommentThreadRequest{
+			DocumentID:      input.DocumentID,
+			IdentityID:      identity.ID,
+			Content:         input.Content,
+			Quote:           optionalString(input.Quote),
+			SuggestionID:    input.SuggestionID,
+			QuoteOccurrence: optionalInt(input.QuoteOccurrence),
+		},
+	)
+	if err != nil {
+		return nil, types.CreateDocumentCommentThreadOutput{}, r.documentReviewError(ctx, "cannot create document comment thread", err)
+	}
+
+	return nil, types.CreateDocumentCommentThreadOutput{
+		Thread:  types.NewDocumentCommentThread(thread),
+		Comment: types.NewDocumentComment(comment),
+	}, nil
+}
+
+func (r *Resolver) CreateDocumentCommentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateDocumentCommentInput) (*mcp.CallToolResult, types.CreateDocumentCommentOutput, error) {
+	scope, err := r.Authorize(ctx, input.ThreadID, probo.ActionDocumentComment)
+	if err != nil {
+		return nil, types.CreateDocumentCommentOutput{}, err
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+
+	comment, err := r.proboSvc.Documents.CreateComment(
+		ctx,
+		scope,
+		probo.CreateDocumentCommentRequest{
+			ThreadID:   input.ThreadID,
+			IdentityID: identity.ID,
+			Content:    input.Content,
+		},
+	)
+	if err != nil {
+		return nil, types.CreateDocumentCommentOutput{}, r.documentReviewError(ctx, "cannot create document comment", err)
+	}
+
+	return nil, types.CreateDocumentCommentOutput{Comment: types.NewDocumentComment(comment)}, nil
+}
+
+func (r *Resolver) UpdateDocumentCommentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateDocumentCommentInput) (*mcp.CallToolResult, types.UpdateDocumentCommentOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionDocumentComment)
+	if err != nil {
+		return nil, types.UpdateDocumentCommentOutput{}, err
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+
+	comment, err := r.proboSvc.Documents.UpdateComment(
+		ctx,
+		scope,
+		probo.UpdateDocumentCommentRequest{
+			CommentID:  input.ID,
+			IdentityID: identity.ID,
+			Content:    input.Content,
+		},
+	)
+	if err != nil {
+		return nil, types.UpdateDocumentCommentOutput{}, r.documentReviewError(ctx, "cannot update document comment", err)
+	}
+
+	return nil, types.UpdateDocumentCommentOutput{Comment: types.NewDocumentComment(comment)}, nil
+}
+
+func (r *Resolver) DeleteDocumentCommentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteDocumentCommentInput) (*mcp.CallToolResult, types.DeleteDocumentCommentOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionDocumentComment)
+	if err != nil {
+		return nil, types.DeleteDocumentCommentOutput{}, err
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+
+	deletedThreadID, err := r.proboSvc.Documents.DeleteComment(ctx, scope, input.ID, identity.ID)
+	if err != nil {
+		return nil, types.DeleteDocumentCommentOutput{}, r.documentReviewError(ctx, "cannot delete document comment", err)
+	}
+
+	var deletedThread *string
+	if deletedThreadID != nil {
+		value := deletedThreadID.String()
+		deletedThread = &value
+	}
+
+	return nil, types.DeleteDocumentCommentOutput{
+		DeletedCommentID: input.ID,
+		DeletedThreadID:  deletedThread,
+	}, nil
+}
+
+func (r *Resolver) ResolveDocumentCommentThreadTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ResolveDocumentCommentThreadInput) (*mcp.CallToolResult, types.ResolveDocumentCommentThreadOutput, error) {
+	thread, err := r.setDocumentCommentThreadResolved(ctx, input.ID, true)
+	if err != nil {
+		return nil, types.ResolveDocumentCommentThreadOutput{}, err
+	}
+
+	return nil, types.ResolveDocumentCommentThreadOutput{Thread: thread}, nil
+}
+
+func (r *Resolver) ReopenDocumentCommentThreadTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ReopenDocumentCommentThreadInput) (*mcp.CallToolResult, types.ReopenDocumentCommentThreadOutput, error) {
+	thread, err := r.setDocumentCommentThreadResolved(ctx, input.ID, false)
+	if err != nil {
+		return nil, types.ReopenDocumentCommentThreadOutput{}, err
+	}
+
+	return nil, types.ReopenDocumentCommentThreadOutput{Thread: thread}, nil
+}
+
+func (r *Resolver) ListDocumentSuggestionsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListDocumentSuggestionsInput) (*mcp.CallToolResult, types.ListDocumentSuggestionsOutput, error) {
+	scope, err := r.Authorize(ctx, input.DocumentID, probo.ActionDocumentGet)
+	if err != nil {
+		return nil, types.ListDocumentSuggestionsOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.DocumentSuggestionOrderField]{
+		Field:     coredata.DocumentSuggestionOrderFieldCreatedAt,
+		Direction: page.OrderDirectionAsc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy.Field = input.OrderBy.Field
+		pageOrderBy.Direction = input.OrderBy.Direction
+	}
+
+	var filter *coredata.DocumentSuggestionFilter
+	if input.Status != nil {
+		filter = coredata.NewDocumentSuggestionFilter(input.Status)
+	}
+
+	suggestions, err := r.proboSvc.Documents.ListSuggestions(
+		ctx,
+		scope,
+		input.DocumentID,
+		types.NewCursor(input.Size, input.Cursor, pageOrderBy),
+		filter,
+	)
+	if err != nil {
+		return nil, types.ListDocumentSuggestionsOutput{}, r.documentReviewError(ctx, "cannot list document suggestions", err)
+	}
+
+	return nil, types.NewListDocumentSuggestionsOutput(suggestions), nil
+}
+
+func (r *Resolver) GetDocumentSuggestionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetDocumentSuggestionInput) (*mcp.CallToolResult, types.GetDocumentSuggestionOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionDocumentGet)
+	if err != nil {
+		return nil, types.GetDocumentSuggestionOutput{}, err
+	}
+
+	suggestion, err := r.proboSvc.Documents.GetSuggestion(ctx, scope, input.ID)
+	if err != nil {
+		return nil, types.GetDocumentSuggestionOutput{}, r.documentReviewError(ctx, "cannot get document suggestion", err)
+	}
+
+	return nil, types.GetDocumentSuggestionOutput{Suggestion: types.NewDocumentSuggestion(suggestion)}, nil
+}
+
+func (r *Resolver) StartDocumentSuggestionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.StartDocumentSuggestionInput) (*mcp.CallToolResult, types.StartDocumentSuggestionOutput, error) {
+	scope, err := r.Authorize(ctx, input.DocumentID, probo.ActionDocumentComment)
+	if err != nil {
+		return nil, types.StartDocumentSuggestionOutput{}, err
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+
+	suggestion, err := r.proboSvc.Documents.StartSuggestion(ctx, scope, input.DocumentID, identity.ID)
+	if err != nil {
+		return nil, types.StartDocumentSuggestionOutput{}, r.documentReviewError(ctx, "cannot start document suggestion", err)
+	}
+
+	return nil, types.StartDocumentSuggestionOutput{Suggestion: types.NewDocumentSuggestion(suggestion)}, nil
+}
+
+func (r *Resolver) AcceptDocumentSuggestionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AcceptDocumentSuggestionInput) (*mcp.CallToolResult, types.AcceptDocumentSuggestionOutput, error) {
+	suggestion, err := r.decideDocumentSuggestion(ctx, input.ID, true)
+	if err != nil {
+		return nil, types.AcceptDocumentSuggestionOutput{}, err
+	}
+
+	return nil, types.AcceptDocumentSuggestionOutput{Suggestion: suggestion}, nil
+}
+
+func (r *Resolver) RejectDocumentSuggestionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RejectDocumentSuggestionInput) (*mcp.CallToolResult, types.RejectDocumentSuggestionOutput, error) {
+	suggestion, err := r.decideDocumentSuggestion(ctx, input.ID, false)
+	if err != nil {
+		return nil, types.RejectDocumentSuggestionOutput{}, err
+	}
+
+	return nil, types.RejectDocumentSuggestionOutput{Suggestion: suggestion}, nil
 }

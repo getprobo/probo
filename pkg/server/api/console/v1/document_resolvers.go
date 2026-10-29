@@ -177,6 +177,68 @@ func (r *documentResolver) Versions(ctx context.Context, obj *types.Document, fi
 	return types.NewDocumentVersionConnection(page, r, obj.ID), nil
 }
 
+// CommentThreads is the resolver for the commentThreads field.
+func (r *documentResolver) CommentThreads(ctx context.Context, obj *types.Document, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentCommentThreadOrderBy, filter *types.DocumentCommentThreadFilter) (*types.DocumentCommentThreadConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet)
+	if err != nil {
+		return nil, err
+	}
+
+	dataloader.FromContext(ctx).DocumentReads.Remember(obj.ID)
+
+	pageOrderBy := page.OrderBy[coredata.DocumentCommentThreadOrderField]{
+		Field:     coredata.DocumentCommentThreadOrderFieldCreatedAt,
+		Direction: page.OrderDirectionAsc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.DocumentCommentThreadOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	threadFilter := documentCommentThreadFilter(filter)
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	threads, err := r.probo.Documents.ListCommentThreads(ctx, scope, obj.ID, cursor, threadFilter)
+	if err != nil {
+		return nil, r.documentReviewError(ctx, "cannot list document comment threads", err)
+	}
+
+	return types.NewDocumentCommentThreadConnection(threads, r, obj.ID, threadFilter), nil
+}
+
+// Suggestions is the resolver for the suggestions field.
+func (r *documentResolver) Suggestions(ctx context.Context, obj *types.Document, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentSuggestionOrderBy, filter *types.DocumentSuggestionFilter) (*types.DocumentSuggestionConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet)
+	if err != nil {
+		return nil, err
+	}
+
+	dataloader.FromContext(ctx).DocumentReads.Remember(obj.ID)
+
+	pageOrderBy := page.OrderBy[coredata.DocumentSuggestionOrderField]{
+		Field:     coredata.DocumentSuggestionOrderFieldCreatedAt,
+		Direction: page.OrderDirectionAsc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.DocumentSuggestionOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	suggestionFilter := documentSuggestionFilter(filter)
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	suggestions, err := r.probo.Documents.ListSuggestions(ctx, scope, obj.ID, cursor, suggestionFilter)
+	if err != nil {
+		return nil, r.documentReviewError(ctx, "cannot list document suggestions", err)
+	}
+
+	return types.NewDocumentSuggestionConnection(suggestions, r, obj.ID, suggestionFilter), nil
+}
+
 // Controls is the resolver for the controls field.
 func (r *documentResolver) Controls(ctx context.Context, obj *types.Document, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionControlList)
@@ -1328,6 +1390,10 @@ func (r *mutationResolver) PublishDocument(ctx context.Context, input types.Publ
 			return nil, gqlx.Conflict(ctx, errArchived)
 		}
 
+		if errors.Is(err, collaboration.ErrOpenSuggestions) {
+			return nil, gqlx.Conflictf(ctx, "resolve open suggestions before publishing")
+		}
+
 		if errPending, ok := errors.AsType[*probo.ErrDocumentVersionPendingApproval](err); ok {
 			return nil, gqlx.Conflict(ctx, errPending)
 		}
@@ -1967,6 +2033,8 @@ func (r *mutationResolver) RestoreDocumentHistory(ctx context.Context, input typ
 		case errors.Is(err, collaboration.ErrDocumentCollaborationNotSeeded),
 			errors.Is(err, collaboration.ErrSeedInProgress):
 			return nil, gqlx.Conflict(ctx, err)
+		case errors.Is(err, collaboration.ErrOpenSuggestions):
+			return nil, gqlx.Conflictf(ctx, "resolve open suggestions before restoring")
 		}
 
 		if errArchived, ok := errors.AsType[*collaboration.ErrDocumentArchived](err); ok {

@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"maps"
 	"net/http"
+	"sync"
 
 	"github.com/vikstrous/dataloadgen"
 	"go.probo.inc/probo/pkg/complianceportal/management"
@@ -138,6 +139,17 @@ type (
 		CompliancePortalDocumentAccessByFile       *dataloadgen.Loader[CompliancePortalDocumentAccessByFileKey, *coredata.CompliancePortalDocumentAccess]
 		Audit                                      *dataloadgen.Loader[gid.GID, *coredata.Audit]
 		Authorize                                  *dataloadgen.Loader[AuthorizeKey, AuthorizeResult]
+		DocumentCommentsByThread                   *dataloadgen.Loader[gid.GID, []*coredata.DocumentComment]
+		// DocumentReads and ProfileReads collapse repeated authorization of the
+		// same document or author inside one request. The shared Authorize
+		// loader is uncached so each call stays an audit decision.
+		DocumentReads onceIDs
+		ProfileReads  onceIDs
+	}
+
+	onceIDs struct {
+		mu  sync.Mutex
+		ids map[gid.GID]struct{}
 	}
 
 	batchFetcher struct {
@@ -224,7 +236,67 @@ func (f *batchFetcher) newLoaders() *Loaders {
 			f.fetchAuthorizes,
 			dataloadgen.WithoutCache(),
 		),
+		DocumentCommentsByThread: dataloadgen.NewMappedLoader(f.fetchDocumentCommentsByThread),
 	}
+}
+
+func (ids *onceIDs) Remember(id gid.GID) {
+	ids.mu.Lock()
+	defer ids.mu.Unlock()
+
+	if ids.ids == nil {
+		ids.ids = map[gid.GID]struct{}{}
+	}
+
+	ids.ids[id] = struct{}{}
+}
+
+func (ids *onceIDs) Do(id gid.GID, authorize func() error) error {
+	ids.mu.Lock()
+	defer ids.mu.Unlock()
+
+	if ids.ids == nil {
+		ids.ids = map[gid.GID]struct{}{}
+	}
+
+	if _, ok := ids.ids[id]; ok {
+		return nil
+	}
+
+	if err := authorize(); err != nil {
+		return err
+	}
+
+	ids.ids[id] = struct{}{}
+
+	return nil
+}
+
+func (f *batchFetcher) fetchDocumentCommentsByThread(
+	ctx context.Context,
+	keys []gid.GID,
+) (map[gid.GID][]*coredata.DocumentComment, error) {
+	result := make(map[gid.GID][]*coredata.DocumentComment, len(keys))
+	for _, key := range keys {
+		result[key] = []*coredata.DocumentComment{}
+	}
+
+	for tenantID, threadIDs := range gidKeysByTenant(keys) {
+		comments, err := f.probo.Documents.LoadCommentsByThreadIDs(
+			ctx,
+			scopeFromContext(ctx, tenantID),
+			threadIDs,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("cannot batch load document comments: %w", err)
+		}
+
+		for _, comment := range comments {
+			result[comment.ThreadID] = append(result[comment.ThreadID], comment)
+		}
+	}
+
+	return result, nil
 }
 
 func (f *batchFetcher) fetchCompliancePortalDocuments(

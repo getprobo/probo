@@ -304,6 +304,24 @@ type Document implements Node {
         filter: DocumentVersionFilter
     ): DocumentVersionConnection! @goField(forceResolver: true)
 
+    commentThreads(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: DocumentCommentThreadOrder
+        filter: DocumentCommentThreadFilter
+    ): DocumentCommentThreadConnection! @goField(forceResolver: true)
+
+    suggestions(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: DocumentSuggestionOrder
+        filter: DocumentSuggestionFilter
+    ): DocumentSuggestionConnection! @goField(forceResolver: true)
+
     controls(
         first: Int
         after: CursorKey

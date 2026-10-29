@@ -586,6 +586,10 @@ func (s *DocumentService) publish(
 		return nil, err
 	}
 
+	if err := s.collaboration.EnsureNoOpenSuggestions(ctx, tx, scope, req.DocumentID); err != nil {
+		return nil, err
+	}
+
 	if req.Minor {
 		document, version, err := s.publishMinor(ctx, scope, tx, req.DocumentID, &req.Changelog, req.IgnoreUnchanged)
 		if err != nil {
