@@ -13871,7 +13871,9 @@ components:
           type: string
           description: Display value for the tag
         color:
-          type: string
+          type:
+            - string
+            - "null"
           description: Optional hex color (#RGB or #RRGGBB)
         created_at:
           type: string
