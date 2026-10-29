@@ -1,0 +1,85 @@
+name: "Trivy image scan"
+description: "Install a checksum-pinned Trivy binary and scan a container image. The job must already have run runs-on/action."
+inputs:
+  image-ref:
+    description: "Image name to scan. A local Docker tag or a registry reference."
+    required: true
+  format:
+    description: "Trivy report format."
+    required: false
+    default: "table"
+  output:
+    description: "Write the report to this path. Empty writes to the step log."
+    required: false
+    default: ""
+  username:
+    description: "Registry username. Leave empty to pull without credentials."
+    required: false
+    default: ""
+  password:
+    description: "Registry password."
+    required: false
+    default: ""
+runs:
+  using: "composite"
+  steps:
+    - name: "Cache Trivy database"
+      uses: "runs-on/cache@v5.0.7"
+      with:
+        path: ~/.cache/trivy
+        key: "trivy-db-${{ runner.arch }}-${{ github.run_id }}"
+        restore-keys: "trivy-db-"
+    - name: "Install Trivy"
+      # aquasecurity's IP allow list hides trivy-action from actions-lock, and
+      # the commit that ships Trivy 0.76.1 has no release tag. The release
+      # tarball is served from the GitHub CDN, which that allow list does not cover.
+      shell: "bash"
+      env:
+        TRIVY_VERSION: "0.76.1"
+        TRIVY_SHA256: "c7cbe3137fb8a48a17574bede3dd6beb16742d1e9772929940fc90082c39d9c0"
+      run: |
+        set -euo pipefail
+        case "$(uname -m)" in
+          x86_64) ;;
+          *)
+            echo "Trivy ${TRIVY_VERSION} is pinned for x86_64 only (runner is $(uname -m))." >&2
+            exit 1
+            ;;
+        esac
+        curl -sL "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz" -o /tmp/trivy.tar.gz
+        echo "${TRIVY_SHA256}  /tmp/trivy.tar.gz" | sha256sum -c -
+        tar -xzf /tmp/trivy.tar.gz -C /tmp trivy
+        sudo install -m 755 /tmp/trivy /usr/local/bin/trivy
+        trivy --version
+    - name: "Scan image"
+      shell: "bash"
+      env:
+        IMAGE_REF: ${{ inputs.image-ref }}
+        SCAN_FORMAT: ${{ inputs.format }}
+        SCAN_OUTPUT: ${{ inputs.output }}
+        REGISTRY_USERNAME: ${{ inputs.username }}
+        REGISTRY_PASSWORD: ${{ inputs.password }}
+      run: |
+        set -euo pipefail
+        if [ -z "${IMAGE_REF}" ]; then
+          echo "image-ref is required." >&2
+          exit 1
+        fi
+        if [ -n "${REGISTRY_USERNAME}" ]; then
+          export TRIVY_USERNAME="${REGISTRY_USERNAME}"
+          export TRIVY_PASSWORD="${REGISTRY_PASSWORD}"
+        fi
+        args=(
+          image
+          --exit-code 1
+          --ignore-unfixed
+          --pkg-types os,library
+          --severity CRITICAL,HIGH
+          --format "${SCAN_FORMAT}"
+          --cache-dir "${HOME}/.cache/trivy"
+        )
+        if [ -n "${SCAN_OUTPUT}" ]; then
+          args+=(--output "${SCAN_OUTPUT}")
+        fi
+        args+=("${IMAGE_REF}")
+        trivy "${args[@]}"

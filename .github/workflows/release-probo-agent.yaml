@@ -23,11 +23,11 @@ jobs:
           - { goos: freebsd, goarch: amd64 }
           - { goos: freebsd, goarch: arm64 }
     steps:
-      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
+      - uses: "actions/checkout@v7.0.1"
         with:
           submodules: recursive
-      - uses: "runs-on/action@17b59092eb37ebfdbb034460892887c09100eaa3" # v2
-      - uses: "./.github/actions/setup"
+      - uses: "runs-on/action@v2.6.0"
+      - uses: "$/.github/actions/setup"
         with:
           node: "false"
           go-cache-key-prefix: "${{ github.workflow }}-${{ github.job }}-${{ matrix.goos }}-${{ matrix.goarch }}"
@@ -63,7 +63,7 @@ jobs:
             cp cmd/probo-agent/CHANGELOG.md "staging/${AGENT_DIR}/"
           fi
           tar -czf "archives/${AGENT_DIR}.tar.gz" -C staging "${AGENT_DIR}"
-      - uses: "actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9" # v7
+      - uses: "actions/upload-artifact@v7.0.2"
         with:
           name: "archive-${{ matrix.goos }}-${{ matrix.goarch }}"
           path: "archives/"
@@ -83,10 +83,10 @@ jobs:
           - { goarch: amd64, arch_label: x86_64, wix_arch: amd64 }
           - { goarch: arm64, arch_label: arm64, wix_arch: arm64 }
     steps:
-      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
+      - uses: "actions/checkout@v7.0.1"
         with:
           submodules: recursive
-      - uses: "./.github/actions/setup"
+      - uses: "$/.github/actions/setup"
         with:
           node: "false"
           go-cache-key-prefix: "${{ github.workflow }}-${{ github.job }}-${{ matrix.goarch }}"
@@ -119,13 +119,13 @@ jobs:
           go build -ldflags $guiLdflags -gcflags="-e" -o dist/probo-agentw.exe ./cmd/probo-agent
           if ($LASTEXITCODE -ne 0) { throw "GUI go build failed" }
       - name: "Azure login"
-        uses: "azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906" # v3.1.0
+        uses: "azure/login@v3.1.0"
         with:
           client-id: "${{ secrets.AZURE_CLIENT_ID }}"
           tenant-id: "${{ secrets.AZURE_TENANT_ID }}"
           subscription-id: "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
       - name: "Sign Windows executables"
-        uses: "azure/artifact-signing-action@c7ab2a863ab5f9a846ddb8265964877ef296ee82" # v2.0.0
+        uses: "azure/artifact-signing-action@v2.0.0"
         with:
           endpoint: "${{ vars.AZURE_TRUSTED_SIGNING_ENDPOINT }}"
           signing-account-name: "${{ vars.AZURE_TRUSTED_SIGNING_ACCOUNT }}"
@@ -155,7 +155,7 @@ jobs:
             -Output $Msi
           "msi_path=$Msi" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
       - name: "Sign MSI"
-        uses: "azure/artifact-signing-action@c7ab2a863ab5f9a846ddb8265964877ef296ee82" # v2.0.0
+        uses: "azure/artifact-signing-action@v2.0.0"
         with:
           endpoint: "${{ vars.AZURE_TRUSTED_SIGNING_ENDPOINT }}"
           signing-account-name: "${{ vars.AZURE_TRUSTED_SIGNING_ACCOUNT }}"
@@ -186,7 +186,7 @@ jobs:
           # matches with path.Clean, not filepath).
           & tar.exe -a -c -f $Zip -C $StagingRoot $AgentDir
           if ($LASTEXITCODE -ne 0) { throw "tar zip failed" }
-      - uses: "actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9" # v7
+      - uses: "actions/upload-artifact@v7.0.2"
         with:
           name: "archive-windows-${{ matrix.goarch }}"
           path: "archives/"
@@ -198,10 +198,10 @@ jobs:
     permissions:
       contents: "read"
     steps:
-      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
+      - uses: "actions/checkout@v7.0.1"
         with:
           submodules: recursive
-      - uses: "./.github/actions/setup"
+      - uses: "$/.github/actions/setup"
         with:
           node: "false"
       - name: "Select Xcode version"
@@ -279,7 +279,7 @@ jobs:
             --binary dist/probo-agent_universal \
             --version "${VERSION}" \
             --output "archives/probo-agent_${VERSION}_darwin.pkg"
-      - uses: "actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9" # v7
+      - uses: "actions/upload-artifact@v7.0.2"
         with:
           name: "archive-darwin"
           path: "archives/"
@@ -294,12 +294,12 @@ jobs:
       id-token: "write"
       attestations: "write"
     steps:
-      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
+      - uses: "actions/checkout@v7.0.1"
         with:
           fetch-depth: 0
-      - uses: "runs-on/action@17b59092eb37ebfdbb034460892887c09100eaa3" # v2
-      - uses: "sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6" # v4.1.2
-      - uses: "actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333" # v8
+      - uses: "runs-on/action@v2.6.0"
+      - uses: "sigstore/cosign-installer@v4.1.2"
+      - uses: "actions/download-artifact@v8.0.2"
         with:
           pattern: "archive-*"
           path: "archives"
@@ -337,24 +337,24 @@ jobs:
           ' archives/install.sh > archives/install.sh.tmp
           mv archives/install.sh.tmp archives/install.sh
       - name: "Generate SBOM"
-        uses: "anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c" # v0.24.3
+        uses: "anchore/sbom-action@v0.24.3"
         with:
           path: ./cmd/probo-agent
           format: cyclonedx-json
           output-file: sbom.json
       - name: "Run vulnerability scan"
-        uses: "anchore/scan-action@27805bf3b4e84b4a5c980df22ed233c00390a439" # v7.4.2
+        uses: "anchore/scan-action@v7.4.2"
         with:
           sbom: "sbom.json"
           fail-build: true
           severity-cutoff: critical
       - name: "Attest SBOM for archives"
-        uses: "actions/attest-sbom@c604332985a26aa8cf1bdc465b92731239ec6b9e" # v4
+        uses: "actions/attest-sbom@v4.1.0"
         with:
           subject-path: "archives/*.tar.gz, archives/*.zip, archives/*.pkg, archives/*.msi"
           sbom-path: "sbom.json"
       - name: "Attest build provenance for archives"
-        uses: "actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8" # v4
+        uses: "actions/attest-build-provenance@v4.2.2"
         with:
           subject-path: "archives/*.tar.gz, archives/*.zip, archives/*.pkg, archives/*.msi"
       - name: "Extract release notes"
@@ -384,7 +384,7 @@ jobs:
             --notes-file release-notes.md \
             $PRERELEASE_FLAG \
             archives/* sbom.json
-      - uses: "actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9" # v7
+      - uses: "actions/upload-artifact@v7.0.2"
         with:
           name: "sbom"
           path: "sbom.json"

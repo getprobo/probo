@@ -29,11 +29,11 @@ jobs:
       snapshot: "${{ steps.classify.outputs.snapshot }}"
       swift: "${{ steps.classify.outputs.swift }}"
     steps:
-      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
+      - uses: "actions/checkout@v7.0.1"
         with:
           fetch-depth: 2
-      - uses: "runs-on/action@17b59092eb37ebfdbb034460892887c09100eaa3" # v2
-      - uses: "./.github/actions/setup"
+      - uses: "runs-on/action@v2.6.0"
+      - uses: "$/.github/actions/setup"
         with:
           node: "false"
       - name: "Create placeholder dist files"
@@ -59,11 +59,11 @@ jobs:
     permissions:
       contents: "read"
     steps:
-      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
+      - uses: "actions/checkout@v7.0.1"
         with:
           submodules: recursive
-      - uses: "runs-on/action@17b59092eb37ebfdbb034460892887c09100eaa3" # v2
-      - uses: "./.github/actions/setup"
+      - uses: "runs-on/action@v2.6.0"
+      - uses: "$/.github/actions/setup"
         with:
           go: "false"
       - run: "npm --workspace @probo/emails run build"
@@ -80,7 +80,7 @@ jobs:
         run: |
           npm --workspace @probo/employee-portal run check
           NODE_ENV=production npm --workspace @probo/employee-portal run build
-      - uses: "actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9" # v7
+      - uses: "actions/upload-artifact@v7.0.2"
         with:
           name: "frontend-apps"
           path: |
@@ -105,15 +105,15 @@ jobs:
           - { goos: linux, goarch: amd64 }
           - { goos: freebsd, goarch: arm64 }
     steps:
-      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
+      - uses: "actions/checkout@v7.0.1"
         with:
           submodules: recursive
-      - uses: "runs-on/action@17b59092eb37ebfdbb034460892887c09100eaa3" # v2
-      - uses: "./.github/actions/setup"
+      - uses: "runs-on/action@v2.6.0"
+      - uses: "$/.github/actions/setup"
         with:
           node: "false"
           go-cache-key-prefix: "${{ github.workflow }}-${{ github.job }}-${{ matrix.goos }}-${{ matrix.goarch }}"
-      - uses: "actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333" # v8
+      - uses: "actions/download-artifact@v8.0.2"
         with:
           name: "frontend-apps"
       - name: "Generate Go code"
@@ -139,7 +139,7 @@ jobs:
 
           go build -ldflags "-s -w -X 'main.version=snapshot'" \
             -gcflags="-e" -o "dist/prb${EXT}" ./cmd/prb/main.go
-      - uses: "actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9" # v7
+      - uses: "actions/upload-artifact@v7.0.2"
         with:
           name: "binary-${{ matrix.goos }}-${{ matrix.goarch }}"
           path: "dist/"
@@ -162,15 +162,15 @@ jobs:
             platform: "linux/amd64"
             runner: "4cpu-linux-x64"
     steps:
-      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
-      - uses: "runs-on/action@17b59092eb37ebfdbb034460892887c09100eaa3" # v2
-      - uses: "docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069" # v4.4.1
-      - uses: "docker/login-action@dbcb813823bdd20940b903addbd779551569679f" # v4.6.0
+      - uses: "actions/checkout@v7.0.1"
+      - uses: "runs-on/action@v2.6.0"
+      - uses: "docker/setup-buildx-action@v4.4.1"
+      - uses: "docker/login-action@v4.7.0"
         with:
           registry: artifact.probo.inc
           username: ${{ secrets.HARBOR_USERNAME }}
           password: ${{ secrets.HARBOR_PASSWORD }}
-      - uses: "actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333" # v8
+      - uses: "actions/download-artifact@v8.0.2"
         with:
           name: "binary-linux-${{ matrix.arch }}"
           path: "linux/${{ matrix.arch }}"
@@ -184,22 +184,10 @@ jobs:
             --tag "artifact.probo.inc/probo/probo:snapshot-${{ matrix.arch }}" \
             --load \
             .
-      - name: "Cache Trivy database"
-        uses: "runs-on/cache@a5f51d6f3fece787d03b7b4e981c82538a0654ed" # v4
-        with:
-          path: ~/.cache/trivy
-          key: "trivy-db-${{ matrix.arch }}-${{ github.run_id }}"
-          restore-keys: "trivy-db-${{ matrix.arch }}-"
       - name: "Scan Docker image with Trivy"
-        uses: "aquasecurity/trivy-action@8f28faec26515256b6d22074d1d2a8986f4cbd87" # trivy v0.75.0
+        uses: "$/.github/actions/trivy"
         with:
           image-ref: "artifact.probo.inc/probo/probo:snapshot-${{ matrix.arch }}"
-          format: "table"
-          exit-code: 1
-          ignore-unfixed: true
-          vuln-type: "os,library"
-          severity: "CRITICAL,HIGH"
-          cache-dir: ~/.cache/trivy
 
   # ── Snapshot: SBOM & vulnerability scan ────────────────────────────
   snapshot-scan:
@@ -210,16 +198,16 @@ jobs:
     permissions:
       contents: "read"
     steps:
-      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
+      - uses: "actions/checkout@v7.0.1"
         with:
           submodules: recursive
-      - uses: "runs-on/action@17b59092eb37ebfdbb034460892887c09100eaa3" # v2
-      - uses: "anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c" # v0.24.3
+      - uses: "runs-on/action@v2.6.0"
+      - uses: "anchore/sbom-action@v0.24.3"
         with:
           path: ./
           format: cyclonedx-json
           output-file: sbom.json
-      - uses: "anchore/scan-action@27805bf3b4e84b4a5c980df22ed233c00390a439" # v7.4.2
+      - uses: "anchore/scan-action@v7.4.2"
         with:
           sbom: "sbom.json"
           fail-build: true
@@ -235,11 +223,11 @@ jobs:
     permissions:
       contents: "read"
     steps:
-      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
+      - uses: "actions/checkout@v7.0.1"
         with:
           submodules: recursive
-      - uses: "runs-on/action@17b59092eb37ebfdbb034460892887c09100eaa3" # v2
-      - uses: "./.github/actions/setup"
+      - uses: "runs-on/action@v2.6.0"
+      - uses: "$/.github/actions/setup"
       - name: "Create placeholder dist files"
         run: |
           mkdir -p apps/console/dist apps/compliance-portal/dist apps/employee-portal/dist
@@ -265,12 +253,12 @@ jobs:
           go build -ldflags "-s -w -X 'main.version=snapshot'" \
             -gcflags="-e" -o bin/prb ./cmd/prb/main.go & pids+=($!)
           for pid in "${pids[@]}"; do wait "$pid"; done
-      - uses: "actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9" # v7
+      - uses: "actions/upload-artifact@v7.0.2"
         with:
           name: "probod-ci"
           path: "bin/probod"
           retention-days: 1
-      - uses: "actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9" # v7
+      - uses: "actions/upload-artifact@v7.0.2"
         with:
           name: "emails-dist"
           path: "packages/emails/dist/"
@@ -285,11 +273,11 @@ jobs:
     permissions:
       contents: "read"
     steps:
-      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
+      - uses: "actions/checkout@v7.0.1"
         with:
           submodules: recursive
-      - uses: "runs-on/action@17b59092eb37ebfdbb034460892887c09100eaa3" # v2
-      - uses: "./.github/actions/setup"
+      - uses: "runs-on/action@v2.6.0"
+      - uses: "$/.github/actions/setup"
         with:
           node: "false"
       - name: "Build probo-agent"
@@ -308,18 +296,18 @@ jobs:
       contents: "read"
       pull-requests: "write"
     steps:
-      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
+      - uses: "actions/checkout@v7.0.1"
         with:
           submodules: recursive
-      - uses: "runs-on/action@17b59092eb37ebfdbb034460892887c09100eaa3" # v2
-      - uses: "./.github/actions/setup"
+      - uses: "runs-on/action@v2.6.0"
+      - uses: "$/.github/actions/setup"
         with:
           node: "false"
-      - uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
+      - uses: golangci/golangci-lint-action@v9.3.0
         with:
           version: v2.14.0
           install-only: true
-      - uses: reviewdog/action-setup@d8a7baabd7f3e8544ee4dbde3ee41d0011c3a93f # v1.5.0
+      - uses: reviewdog/action-setup@v1.5.0
       - name: "Create placeholder dist files"
         run: |
           mkdir -p apps/console/dist apps/compliance-portal/dist apps/employee-portal/dist packages/emails/dist
@@ -368,14 +356,14 @@ jobs:
       contents: "read"
       pull-requests: "write"
     steps:
-      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
+      - uses: "actions/checkout@v7.0.1"
         with:
           submodules: recursive
-      - uses: "runs-on/action@17b59092eb37ebfdbb034460892887c09100eaa3" # v2
-      - uses: "./.github/actions/setup"
+      - uses: "runs-on/action@v2.6.0"
+      - uses: "$/.github/actions/setup"
         with:
           go: "false"
-      - uses: reviewdog/action-setup@d8a7baabd7f3e8544ee4dbde3ee41d0011c3a93f # v1.5.0
+      - uses: reviewdog/action-setup@v1.5.0
       - name: "Validate @probo/skills"
         run: npm --workspace @probo/skills run validate
       - name: "Generate Relay artifacts"
@@ -400,11 +388,11 @@ jobs:
     permissions:
       contents: "read"
     steps:
-      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
+      - uses: "actions/checkout@v7.0.1"
         with:
           submodules: recursive
-      - uses: "runs-on/action@17b59092eb37ebfdbb034460892887c09100eaa3" # v2
-      - uses: "./.github/actions/setup"
+      - uses: "runs-on/action@v2.6.0"
+      - uses: "$/.github/actions/setup"
         with:
           go: "false"
       - name: "Generate Relay artifacts"
@@ -421,14 +409,14 @@ jobs:
       contents: "read"
       pull-requests: "write"
     steps:
-      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
+      - uses: "actions/checkout@v7.0.1"
         with:
           submodules: recursive
-      - uses: "runs-on/action@17b59092eb37ebfdbb034460892887c09100eaa3" # v2
-      - uses: "swift-actions/setup-swift@7ca6abe6b3b0e8b5421b88be48feee39cbf52c6a" # v2.4.0
+      - uses: "runs-on/action@v2.6.0"
+      - uses: "swift-actions/setup-swift@v2.4.0"
         with:
           swift-version: "6.0"
-      - uses: reviewdog/action-setup@d8a7baabd7f3e8544ee4dbde3ee41d0011c3a93f # v1.5.0
+      - uses: reviewdog/action-setup@v1.5.0
       - name: "Install SwiftLint"
         env:
           SWIFTLINT_VERSION: "0.65.0"
@@ -461,10 +449,10 @@ jobs:
     permissions:
       contents: "read"
     steps:
-      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
+      - uses: "actions/checkout@v7.0.1"
         with:
           submodules: recursive
-      - uses: "runs-on/action@17b59092eb37ebfdbb034460892887c09100eaa3" # v2
+      - uses: "runs-on/action@v2.6.0"
       - name: "Install shellcheck and shfmt"
         env:
           SHELLCHECK_VERSION: "v0.11.0"
@@ -492,11 +480,11 @@ jobs:
     permissions:
       contents: "read"
     steps:
-      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
+      - uses: "actions/checkout@v7.0.1"
         with:
           submodules: recursive
-      - uses: "runs-on/action@17b59092eb37ebfdbb034460892887c09100eaa3" # v2
-      - uses: "./.github/actions/setup"
+      - uses: "runs-on/action@v2.6.0"
+      - uses: "$/.github/actions/setup"
       - name: "Configure Docker image source"
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]; then
@@ -505,8 +493,8 @@ jobs:
           else
             echo "COMPOSE_FILE=compose.yaml:compose.github-action.yaml" >> "$GITHUB_ENV"
           fi
-      - uses: "docker/setup-compose-action@54042514f505b273907334ae2b9cdbb9a0213c1a" # v2.4.0
-      - uses: "docker/login-action@dbcb813823bdd20940b903addbd779551569679f" # v4.6.0
+      - uses: "docker/setup-compose-action@v2.4.0"
+      - uses: "docker/login-action@v4.7.0"
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         with:
           registry: artifact.probo.inc
@@ -531,7 +519,7 @@ jobs:
       - name: "Race-test e2e harness packages"
         run: "CGO_ENABLED=1 go test -race -count=1 ./e2e/internal/..."
       - name: "Upload test results"
-        uses: "actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9" # v7
+        uses: "actions/upload-artifact@v7.0.2"
         if: "always()"
         continue-on-error: true
         with:
@@ -539,7 +527,7 @@ jobs:
           path: "junit.xml"
           retention-days: 30
       - run: "go tool cover -html=coverage.out -o coverage.html"
-      - uses: "actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9" # v7
+      - uses: "actions/upload-artifact@v7.0.2"
         continue-on-error: true
         with:
           name: "coverage-reports"
@@ -556,20 +544,20 @@ jobs:
     permissions:
       contents: "read"
     steps:
-      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
+      - uses: "actions/checkout@v7.0.1"
         with:
           submodules: recursive
-      - uses: "runs-on/action@17b59092eb37ebfdbb034460892887c09100eaa3" # v2
-      - uses: "./.github/actions/setup"
+      - uses: "runs-on/action@v2.6.0"
+      - uses: "$/.github/actions/setup"
         with:
           node: "false"
-      - uses: "actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333" # v8
+      - uses: "actions/download-artifact@v8.0.2"
         with:
           name: "probod-ci"
           path: "bin"
       # emails parses every template in dist at init. build-probod already
       # produced that output; a placeholder file panics the test binary.
-      - uses: "actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333" # v8
+      - uses: "actions/download-artifact@v8.0.2"
         with:
           name: "emails-dist"
           path: "packages/emails/dist"
@@ -591,8 +579,8 @@ jobs:
             echo "COMPOSE_FILE=compose.yaml:compose.github-action.yaml" >> "$GITHUB_ENV"
             echo "DOCKER_COMPOSE_FLAGS=-f compose.github-action.yaml" >> "$GITHUB_ENV"
           fi
-      - uses: "docker/setup-compose-action@54042514f505b273907334ae2b9cdbb9a0213c1a" # v2.4.0
-      - uses: "docker/login-action@dbcb813823bdd20940b903addbd779551569679f" # v4.6.0
+      - uses: "docker/setup-compose-action@v2.4.0"
+      - uses: "docker/login-action@v4.7.0"
         if: "env.USE_HARBOR_MIRROR == 'true'"
         with:
           registry: artifact.probo.inc
@@ -604,7 +592,7 @@ jobs:
           sudo mkcert -install 2>&1 | grep -v 'no Firefox and/or Chrome/Chromium security databases found' || true
       - name: "Cache Docker images"
         id: docker-cache
-        uses: "runs-on/cache@a5f51d6f3fece787d03b7b4e981c82538a0654ed" # v4
+        uses: "runs-on/cache@v5.0.7"
         with:
           path: /tmp/docker-images
           key: "docker-images-${{ env.USE_HARBOR_MIRROR }}-${{ hashFiles('compose.yaml', 'compose.github-action.yaml') }}"
@@ -637,7 +625,7 @@ jobs:
               E2E_BINARY="${{ github.workspace }}/bin/probod" \
               E2E_TEST_FLAGS="-parallel=8"
       - name: "Upload test results"
-        uses: "actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9" # v7
+        uses: "actions/upload-artifact@v7.0.2"
         if: "always()"
         continue-on-error: true
         with:

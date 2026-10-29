@@ -14,9 +14,9 @@ jobs:
     runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
     timeout-minutes: 30
     steps:
-      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
-      - uses: "runs-on/action@17b59092eb37ebfdbb034460892887c09100eaa3" # v2
-      - uses: "./.github/actions/setup"
+      - uses: "actions/checkout@v7.0.1"
+      - uses: "runs-on/action@v2.6.0"
+      - uses: "$/.github/actions/setup"
         with:
           node: "false"
       - name: "Run pinned upstream battery"
@@ -27,7 +27,7 @@ jobs:
         run: |
           make test-automerge-official-fixtures \
             AUTOMERGE_BATTERY_FIXTURES="${RUNNER_TEMP}/automerge-battery-fixtures"
-      - uses: "actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9" # v7
+      - uses: "actions/upload-artifact@v7.0.2"
         with:
           name: "automerge-battery-${{ github.sha }}"
           path: "${{ runner.temp }}/automerge-battery.json"

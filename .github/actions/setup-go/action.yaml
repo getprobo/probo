@@ -24,7 +24,7 @@ runs:
   steps:
     - name: "Install Go"
       id: "install-go"
-      uses: "actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16" # v6
+      uses: "actions/setup-go@v7.0.0"
       with:
         go-version: "${{ inputs.go-version }}"
         cache: false
@@ -36,7 +36,7 @@ runs:
         echo "gomodcache=$(go env GOMODCACHE)" >> "$GITHUB_OUTPUT"
     - name: "Cache"
       id: "cache"
-      uses: "actions/cache@caa296126883cff596d87d8935842f9db880ef25" # v5
+      uses: "actions/cache@v6.1.0"
       with:
         path: |
           ${{ steps.get-cache-paths.outputs.gocache }}
@@ -55,7 +55,7 @@ runs:
     # anything in CI that compiles daily). Go touches mtimes on cache use, so
     # entries untouched since job start went unused this run and are dropped.
     - name: "Trim GOCACHE"
-      uses: "./.github/actions/trim-gocache"
+      uses: "$/.github/actions/trim-gocache"
       with:
         gocache: "${{ steps.get-cache-paths.outputs.gocache }}"
         max-staleness-hours: "${{ inputs.max-staleness-hours }}"

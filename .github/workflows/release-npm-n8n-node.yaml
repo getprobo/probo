@@ -17,11 +17,11 @@ jobs:
       id-token: write
       attestations: write
     steps:
-      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
+      - uses: "actions/checkout@v7.0.1"
         with:
           fetch-depth: 0
           submodules: recursive
-      - uses: "actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1" # v6
+      - uses: "actions/setup-node@v7.1.0"
         with:
           node-version-file: ".nvmrc"
           cache: "npm"
@@ -38,12 +38,12 @@ jobs:
             exit 1
           fi
       - run: "npm --workspace @probo/n8n-nodes-probo run build"
-      - uses: "anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c" # v0.24.3
+      - uses: "anchore/sbom-action@v0.24.3"
         with:
           path: ./packages/n8n-node
           format: cyclonedx-json
           output-file: packages/n8n-node/sbom.json
-      - uses: "anchore/scan-action@27805bf3b4e84b4a5c980df22ed233c00390a439" # v7.4.2
+      - uses: "anchore/scan-action@v7.4.2"
         with:
           path: ./packages/n8n-node
           fail-build: true
@@ -65,11 +65,11 @@ jobs:
           test -s checksums.txt
           test -f "$PACKFILE"
       - run: 'npm publish "packages/n8n-node/${PACKFILE}" --access public --dry-run'
-      - uses: "actions/attest-sbom@c604332985a26aa8cf1bdc465b92731239ec6b9e" # v4
+      - uses: "actions/attest-sbom@v4.1.0"
         with:
           subject-path: "packages/n8n-node/${{ env.PACKFILE }}"
           sbom-path: "packages/n8n-node/sbom.json"
-      - uses: "actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8" # v4
+      - uses: "actions/attest-build-provenance@v4.2.2"
         with:
           subject-path: "packages/n8n-node/${{ env.PACKFILE }}"
       - name: "Publish to npm"
@@ -105,7 +105,7 @@ jobs:
             "packages/n8n-node/${PACKFILE}" \
             packages/n8n-node/sbom.json \
             packages/n8n-node/checksums.txt
-      - uses: "actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9" # v7
+      - uses: "actions/upload-artifact@v7.0.2"
         with:
           name: "npm-sbom"
           path: |
