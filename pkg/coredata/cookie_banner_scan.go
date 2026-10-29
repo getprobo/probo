@@ -373,6 +373,10 @@ INSERT INTO cookie_banner_scans (
 	return nil
 }
 
+// LoadNextClaimableForUpdateSkipLocked locks the PENDING or PAUSED scan
+// that has waited longest since it was requested or last paused. A scan
+// paused after a run goes behind every scan already waiting, so scans of
+// different banners take turns on the browser.
 func (s *CookieBannerScan) LoadNextClaimableForUpdateSkipLocked(
 	ctx context.Context,
 	tx pg.Tx,
@@ -397,8 +401,7 @@ SELECT
 FROM cookie_banner_scans
 WHERE state IN (@paused_state, @pending_state)
 ORDER BY
-	CASE WHEN state = @paused_state THEN 0 ELSE 1 END,
-	created_at ASC,
+	updated_at ASC,
 	id ASC
 LIMIT 1
 FOR UPDATE SKIP LOCKED;
@@ -523,8 +526,9 @@ WHERE
 	return nil
 }
 
-// MarkPaused moves a RUNNING scan to PAUSED and stores the checkpoint.
-// It does not set completed_at or a failure reason.
+// MarkPaused moves a RUNNING scan to PAUSED and stores the checkpoint and
+// the pages scanned so far. It does not set completed_at or a failure
+// reason.
 func (s *CookieBannerScan) MarkPaused(
 	ctx context.Context,
 	conn pg.Querier,
@@ -536,6 +540,7 @@ UPDATE cookie_banner_scans
 SET
 	state = @paused_state,
 	checkpoint = @checkpoint::jsonb,
+	pages_scanned = @pages_scanned,
 	updated_at = @now
 WHERE
 	%s
@@ -549,6 +554,7 @@ WHERE
 		"id":            s.ID,
 		"paused_state":  CookieBannerScanStatePaused,
 		"checkpoint":    checkpointArg(s.Checkpoint),
+		"pages_scanned": s.PagesScanned,
 		"running_state": CookieBannerScanStateRunning,
 		"now":           now,
 	}

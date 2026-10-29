@@ -282,6 +282,8 @@ func (h *cookieBannerScanHandler) Process(ctx context.Context, scan coredata.Coo
 
 	switch {
 	case result != nil && result.Paused:
+		scan.PagesScanned = result.PagesScanned
+
 		return h.markPaused(ctx, scope, &scan, &result.Checkpoint)
 	case runErr != nil && h.shutdownSignalled():
 		return h.markPaused(ctx, scope, &scan, nil)
