@@ -41,6 +41,7 @@ export type RichEditorPresence = {
 export type RichEditorCollaborationHandle = DocHandle<RichEditorAutomergeDocument> & {
   updatePresence?: (anchorPosition: number, headPosition: number) => void;
   onPresence?: (listener: (presences: RichEditorPresence[]) => void) => () => void;
+  onReview?: (listener: () => void) => () => void;
 };
 
 const presencePluginKey = new PluginKey<DecorationSet>("automerge-presence");

@@ -56,6 +56,7 @@ import {
 } from "./historyDecorations";
 import { ImageExtension } from "./ImageExtension";
 import { LinkExtension } from "./LinkExtension";
+import { SuggestionDelete, SuggestionInsert } from "./SuggestionExtension";
 import { MarkdownPasteExtension } from "./MarkdownPasteExtension";
 import { getMentionStorage, MentionExtension, type MentionSource } from "./MentionExtension";
 import { MentionMenu } from "./MentionMenu/MentionMenu";
@@ -90,6 +91,8 @@ const coreExtensions = [
   Code,
   CodeBlockExtension,
   LinkExtension,
+  SuggestionInsert,
+  SuggestionDelete,
   SlashCommandExtension,
   MentionExtension,
   Blockquote,
@@ -219,8 +222,12 @@ type RichEditorProps = ComponentProps<"div"> & {
   editorExtensions?: Extensions;
   initialContent?: Content;
   onPresence?: (anchor: number, head: number) => void;
+  onEditor?: (editor: Editor | null) => void;
+  formatting?: boolean;
   suspendContentChanges?: boolean;
   mentionSource?: MentionSource;
+  // Review cards rendered inside the scrollport so they move with the page.
+  margin?: ReactNode;
 };
 
 function parseContent(content: string): Content {
@@ -253,8 +260,11 @@ export function RichEditor(props: RichEditorProps) {
     editorExtensions: editorExtensionOverride,
     initialContent: initialContentOverride,
     onPresence,
+    onEditor,
+    formatting = true,
     suspendContentChanges = false,
     mentionSource,
+    margin,
     ...divProps
   } = props;
   const { t } = useTranslation();
@@ -413,10 +423,14 @@ export function RichEditor(props: RichEditorProps) {
       const json = withoutContentUploads(created.getJSON());
       stripNonTextMarks(json);
       emittedRef.current = JSON.stringify(json);
+      onEditor?.(created);
       onPresence?.(
         created.state.selection.anchor,
         created.state.selection.head,
       );
+    },
+    onDestroy: () => {
+      onEditor?.(null);
     },
     onUpdate: handleUpdate,
     onSelectionUpdate: ({ editor }) => {
@@ -477,8 +491,12 @@ export function RichEditor(props: RichEditorProps) {
   const { bar, attach } = attachmentToolbar();
 
   return (
-    <div className={richEditorVariants({ className, disabled, compact, controls })} {...divProps}>
-      {!disabled
+    <div
+      className={richEditorVariants({ className, disabled, compact, controls })}
+      {...divProps}
+      data-review-scroll={margin ? "" : undefined}
+    >
+      {!disabled && formatting
         && (
           <>
             <BubbleMenu editor={editor} />
@@ -498,6 +516,7 @@ export function RichEditor(props: RichEditorProps) {
         )}
 
       <EditorContent className="flex min-h-0 flex-1 flex-col" editor={editor} />
+      {margin}
       {showToolbar && (
         <div className={bar()}>
           {showAttachment && (
