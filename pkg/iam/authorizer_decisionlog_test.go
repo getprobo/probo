@@ -73,7 +73,7 @@ func TestAuthorizer_DecisionLogging(t *testing.T) {
 		assert.Equal(t, 1, countAuditLogsForAction(t, context.Background(), client, action))
 	})
 
-	t.Run("deny writes decision log without audit row", func(t *testing.T) {
+	t.Run("deny writes decision log and denial audit row", func(t *testing.T) {
 		t.Parallel()
 
 		client := test.PGClient(t)
@@ -105,7 +105,20 @@ func TestAuthorizer_DecisionLogging(t *testing.T) {
 		assert.Contains(t, output, "deny")
 		assert.Contains(t, output, "deny-test-action")
 		assert.Contains(t, output, "explicit deny by statement deny-test-action")
-		assert.Equal(t, 0, countAuditLogsForAction(t, context.Background(), client, action))
+		assert.Equal(t, 1, countAuditLogsForActionAndOutcome(
+			t,
+			context.Background(),
+			client,
+			action,
+			coredata.AuditLogOutcomeDenied,
+		))
+		assert.Equal(t, 0, countAuditLogsForActionAndOutcome(
+			t,
+			context.Background(),
+			client,
+			action,
+			coredata.AuditLogOutcomeAllowed,
+		))
 	})
 
 	t.Run("implicit deny logs no_match without policy id", func(t *testing.T) {
@@ -139,6 +152,13 @@ func TestAuthorizer_DecisionLogging(t *testing.T) {
 		assert.Contains(t, output, "no_match")
 		assert.NotContains(t, output, "policy_id")
 		assert.True(t, strings.Contains(output, "implicit deny"))
+		assert.Equal(t, 1, countAuditLogsForActionAndOutcome(
+			t,
+			context.Background(),
+			client,
+			action,
+			coredata.AuditLogOutcomeDenied,
+		))
 	})
 }
 
