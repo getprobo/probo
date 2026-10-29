@@ -444,20 +444,6 @@ func pkceChallenge(verifier string) string {
 	return base64.RawURLEncoding.EncodeToString(sum[:])
 }
 
-func (c *OAuth2Connector) Complete(ctx context.Context, r *http.Request) (Connection, *gid.GID, string, error) {
-	conn, state, err := c.CompleteWithState(ctx, r)
-	if err != nil {
-		return nil, nil, "", err
-	}
-
-	organizationID, err := gid.ParseGID(state.OrganizationID)
-	if err != nil {
-		return nil, nil, "", fmt.Errorf("cannot parse organization ID: %w", err)
-	}
-
-	return conn, &organizationID, state.ContinueURL, nil
-}
-
 // CompleteWithState completes the OAuth2 flow and returns the full state.
 // This allows callers to access additional context (like SCIMBridgeID) from the state.
 func (c *OAuth2Connector) CompleteWithState(ctx context.Context, r *http.Request) (Connection, *OAuth2State, error) {

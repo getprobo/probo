@@ -21,6 +21,7 @@
 package drivers
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -89,7 +90,7 @@ func (d *MercuryDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 
 			records = append(records, AccountRecord{
 				Email:       email,
-				FullName:    mercuryFullName(u, email),
+				FullName:    cmp.Or(joinName(u.FirstName, u.LastName), email),
 				Roles:       mercuryRoles(u.OrganizationRole),
 				IsAdmin:     new(u.OrganizationRole == "administrator"),
 				MFAStatus:   coredata.MFAStatusUnknown,
@@ -150,15 +151,6 @@ func (d *MercuryDriver) fetchUsersPage(ctx context.Context, startAfter string) (
 	}
 
 	return &resp, nil
-}
-
-func mercuryFullName(u mercuryUser, fallback string) string {
-	fullName := strings.TrimSpace(strings.TrimSpace(u.FirstName) + " " + strings.TrimSpace(u.LastName))
-	if fullName != "" {
-		return fullName
-	}
-
-	return fallback
 }
 
 // mercuryRoles maps Mercury's organizationRole enum

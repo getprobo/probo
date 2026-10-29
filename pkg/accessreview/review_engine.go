@@ -194,7 +194,7 @@ func (s *Service) resolveDriver(
 	// lands in the default arm and fails loudly rather than fetching nothing.
 	switch conn := dbConnector.Connection.(type) {
 	case *connectorprotocol.WorkloadIdentityConnection:
-		return s.newCloudDriver(ctx, tx, scope, reg, dbConnector, source)
+		return s.newCloudDriver(ctx, reg, dbConnector, account.ExternalAccountID)
 
 	case connectorprotocol.HTTPConnection:
 		return s.newHTTPDriver(ctx, tx, scope, reg, dbConnector, conn)
@@ -211,22 +211,11 @@ func (s *Service) resolveDriver(
 // cloud session rather than an HTTP client.
 func (s *Service) newCloudDriver(
 	ctx context.Context,
-	tx pg.Tx,
-	scope coredata.Scoper,
 	reg *provider.Registration,
 	dbConnector *coredata.Connector,
-	source *coredata.AccessReviewSource,
+	externalAccountID string,
 ) (drivers.Driver, error) {
-	if source.ConnectorAccountID == nil {
-		return nil, fmt.Errorf("cannot resolve driver: source %s has no connector account", source.ID)
-	}
-
-	account := &coredata.ConnectorAccount{}
-	if err := account.LoadByID(ctx, tx, scope, *source.ConnectorAccountID); err != nil {
-		return nil, fmt.Errorf("cannot load connector account %s: %w", *source.ConnectorAccountID, err)
-	}
-
-	session, err := s.OpenSession(ctx, dbConnector, account.ExternalAccountID)
+	session, err := s.OpenSession(ctx, dbConnector, externalAccountID)
 	if err != nil {
 		return nil, err
 	}

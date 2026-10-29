@@ -205,6 +205,11 @@ func parseRFC3339Ptr(s string) *time.Time {
 	return &t
 }
 
+// joinName joins trimmed first and last names with one space.
+func joinName(first, last string) string {
+	return strings.TrimSpace(strings.TrimSpace(first) + " " + strings.TrimSpace(last))
+}
+
 // activeFromStatus maps a provider status string to the three-valued Active
 // signal for providers whose only "live" state is the literal "active" and
 // whose remaining status enum is not otherwise enumerated: "active" → active,

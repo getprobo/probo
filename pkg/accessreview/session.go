@@ -43,24 +43,6 @@ func (s *Service) OpenSession(
 	return provider.OpenSession(ctx, s.federation, s.providerRegistry, dbConnector, accountID)
 }
 
-func (s *Service) initialAccount(c *coredata.Connector) (string, string, error) {
-	if s.providerRegistry == nil || c == nil {
-		return "", "", nil
-	}
-
-	reg, ok := s.providerRegistry.Get(c.Provider)
-	if !ok {
-		return "", "", nil
-	}
-
-	externalID, name, err := reg.ResolveInitialAccount(c)
-	if err != nil {
-		return "", "", fmt.Errorf("cannot resolve initial account: %w", err)
-	}
-
-	return externalID, name, nil
-}
-
 func (s *Service) DiscoverAccounts(
 	ctx context.Context,
 	scope coredata.Scoper,

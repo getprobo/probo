@@ -47,24 +47,6 @@ const (
 	TitleMaxLength = 1000
 )
 
-func (s *Service) initialAccount(c *coredata.Connector) (string, string, error) {
-	if s.providerRegistry == nil || c == nil {
-		return "", "", nil
-	}
-
-	reg, ok := s.providerRegistry.Get(c.Provider)
-	if !ok {
-		return "", "", nil
-	}
-
-	externalID, name, err := reg.ResolveInitialAccount(c)
-	if err != nil {
-		return "", "", fmt.Errorf("cannot resolve initial account: %w", err)
-	}
-
-	return externalID, name, nil
-}
-
 // resolveStoredInitialAccount is the account this credential is. A connector
 // with no tenant in settings is still that one account, keyed by the connector
 // id. Organization installs with nothing resolved yet have no such account.
@@ -73,7 +55,7 @@ func (s *Service) resolveStoredInitialAccount(c *coredata.Connector) (string, st
 		return "", "", nil
 	}
 
-	externalID, name, err := s.initialAccount(c)
+	externalID, name, err := s.providerRegistry.ResolveInitialAccount(c)
 	if err != nil {
 		return "", "", err
 	}

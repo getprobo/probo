@@ -61,17 +61,6 @@ func mintGitHubAppStateToken(t *testing.T) string {
 	return state
 }
 
-func TestCompleteOAuth2FromRequest_RejectsMissingState(t *testing.T) {
-	t.Parallel()
-
-	registry := connectorprotocol.NewConnectorRegistry()
-	req := httptest.NewRequest("GET", "/?code=abc", nil)
-
-	_, err := registry.CompleteOAuth2FromRequest(context.Background(), req)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "missing state parameter")
-}
-
 func TestCompleteGitHubAppFromRequest_RejectsMissingState(t *testing.T) {
 	t.Parallel()
 

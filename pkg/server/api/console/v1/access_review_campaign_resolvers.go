@@ -601,7 +601,7 @@ func (r *accessReviewSourceResolver) ProviderOrganizations(ctx context.Context, 
 
 // NeedsConfiguration is the resolver for the needsConfiguration field.
 //
-// True when the provider has a picker UI (NeedsPicker) AND the user has
+// True when the provider has a picker UI AND the user has
 // not yet picked an org. 2-auto providers (PagerDuty, Vercel) always
 // return false: the identifier is captured during the OAuth callback,
 // not via a follow-up configure mutation.

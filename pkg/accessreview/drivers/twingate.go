@@ -22,6 +22,7 @@ package drivers
 
 import (
 	"bytes"
+	"cmp"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -218,7 +219,7 @@ func (d *TwingateDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 
 			records = append(records, AccountRecord{
 				Email:       email,
-				FullName:    twingateFullName(u, email),
+				FullName:    cmp.Or(joinName(u.FirstName, u.LastName), email),
 				Roles:       twingateRoles(u),
 				IsAdmin:     new(u.IsAdmin),
 				Active:      twingateActive(u),
@@ -294,15 +295,6 @@ func (d *TwingateDriver) queryUsers(ctx context.Context, after string) (*twingat
 	}
 
 	return &resp, nil
-}
-
-func twingateFullName(u twingateUser, fallback string) string {
-	name := strings.TrimSpace(strings.TrimSpace(u.FirstName) + " " + strings.TrimSpace(u.LastName))
-	if name != "" {
-		return name
-	}
-
-	return fallback
 }
 
 // twingateActive reads Twingate's own lifecycle state. PENDING is an invited

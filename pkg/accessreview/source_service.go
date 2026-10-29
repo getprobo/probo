@@ -323,7 +323,7 @@ func resolveSourceAccount(
 	scope coredata.Scoper,
 	cnnctr *coredata.Connector,
 ) (*coredata.ConnectorAccount, error) {
-	externalID, _, err := s.initialAccount(cnnctr)
+	externalID, _, err := s.providerRegistry.ResolveInitialAccount(cnnctr)
 	if err != nil {
 		return nil, err
 	}
@@ -701,7 +701,7 @@ func (s *Service) ConfigureAccessReviewSource(
 				return fmt.Errorf("cannot update connector: %w", err)
 			}
 
-			externalID, name, err := s.initialAccount(dbConnector)
+			externalID, name, err := s.providerRegistry.ResolveInitialAccount(dbConnector)
 			if err != nil {
 				return err
 			}
@@ -1337,7 +1337,7 @@ func (s *Service) applyOrganizationSlug(
 				return fmt.Errorf("cannot update connector: %w", err)
 			}
 
-			externalID, name, err := s.initialAccount(dbConnector)
+			externalID, name, err := s.providerRegistry.ResolveInitialAccount(dbConnector)
 			if err != nil {
 				return err
 			}

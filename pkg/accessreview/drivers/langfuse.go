@@ -21,6 +21,7 @@
 package drivers
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -105,7 +106,7 @@ func (d *LangfuseDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 
 		records = append(records, AccountRecord{
 			Email:       email,
-			FullName:    langfuseFullName(m, email),
+			FullName:    cmp.Or(strings.TrimSpace(m.Name), email),
 			Roles:       langfuseRoles(m.Role),
 			IsAdmin:     new(langfuseIsAdmin(m.Role)),
 			MFAStatus:   coredata.MFAStatusUnknown,
@@ -116,14 +117,6 @@ func (d *LangfuseDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 	}
 
 	return records, nil
-}
-
-func langfuseFullName(m langfuseMembership, fallback string) string {
-	if name := strings.TrimSpace(m.Name); name != "" {
-		return name
-	}
-
-	return fallback
 }
 
 // langfuseRoles maps the Langfuse organization MembershipRole

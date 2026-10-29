@@ -21,6 +21,7 @@
 package drivers
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -96,7 +97,7 @@ func (d *IncidentIODriver) ListAccounts(ctx context.Context) ([]AccountRecord, e
 
 			records = append(records, AccountRecord{
 				Email:       email,
-				FullName:    incidentIOFullName(u, email),
+				FullName:    cmp.Or(strings.TrimSpace(u.Name), email),
 				Roles:       incidentIORoles(u),
 				IsAdmin:     new(incidentIOIsAdmin(u)),
 				MFAStatus:   coredata.MFAStatusUnknown,
@@ -162,14 +163,6 @@ func (d *IncidentIODriver) fetchUsersPage(ctx context.Context, after string) (*i
 	}
 
 	return &resp, nil
-}
-
-func incidentIOFullName(u incidentIOUser, fallback string) string {
-	if name := strings.TrimSpace(u.Name); name != "" {
-		return name
-	}
-
-	return fallback
 }
 
 // incidentIORoles returns the user's roles, preferring the live RBAC roles

@@ -22,6 +22,7 @@ package drivers
 
 import (
 	"bytes"
+	"cmp"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -134,7 +135,7 @@ func railwayRecords(me *railwayMe) []AccountRecord {
 				agg = &railwayAggregate{
 					record: AccountRecord{
 						Email:       email,
-						FullName:    railwayFullName(m, email),
+						FullName:    cmp.Or(strings.TrimSpace(m.Name), email),
 						AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 						AccountType: coredata.AccessReviewEntryAccountTypeUser,
 						ExternalID:  id,
@@ -257,14 +258,6 @@ func railwayPost(ctx context.Context, httpClient *http.Client, endpoint, label, 
 	}
 
 	return httpResp, nil
-}
-
-func railwayFullName(m railwayMember, fallback string) string {
-	if name := strings.TrimSpace(m.Name); name != "" {
-		return name
-	}
-
-	return fallback
 }
 
 // railwayRoles maps Railway's TeamRole enum to a display label. The enum is

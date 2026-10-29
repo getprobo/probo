@@ -42,81 +42,7 @@ func (s *AccessReviewStatistics) LoadByCampaignID(
 	scope Scoper,
 	campaignID gid.GID,
 ) error {
-	args := pgx.StrictNamedArgs{"campaign_id": campaignID}
-	maps.Copy(args, scope.SQLArguments())
-
-	s.DecisionCounts = make(map[AccessReviewEntryDecision]int)
-	s.FlagCounts = make(map[AccessReviewEntryFlag]int)
-	s.TotalCount = 0
-
-	q := `
-SELECT decision, COUNT(*) as count
-FROM access_review_entries
-WHERE
-    %s
-    AND access_review_campaign_id = @campaign_id
-GROUP BY decision;
-`
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query access entry decision counts: %w", err)
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var (
-			decision AccessReviewEntryDecision
-			count    int
-		)
-
-		if err := rows.Scan(&decision, &count); err != nil {
-			return fmt.Errorf("cannot scan decision count: %w", err)
-		}
-
-		s.DecisionCounts[decision] = count
-		s.TotalCount += count
-	}
-
-	if err := rows.Err(); err != nil {
-		return fmt.Errorf("cannot iterate decision counts: %w", err)
-	}
-
-	q = `
-SELECT f, COUNT(*) as count
-FROM access_review_entries, unnest(flags) AS f
-WHERE
-    %s
-    AND access_review_campaign_id = @campaign_id
-GROUP BY f;
-`
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	rows, err = conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query access entry flag counts: %w", err)
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var (
-			flag  AccessReviewEntryFlag
-			count int
-		)
-
-		if err := rows.Scan(&flag, &count); err != nil {
-			return fmt.Errorf("cannot scan flag count: %w", err)
-		}
-
-		s.FlagCounts[flag] = count
-	}
-
-	if err := rows.Err(); err != nil {
-		return fmt.Errorf("cannot iterate flag counts: %w", err)
-	}
-
-	return nil
+	return s.load(ctx, conn, scope, campaignID, nil)
 }
 
 func (s *AccessReviewStatistics) LoadByCampaignIDAndSourceID(
@@ -125,6 +51,16 @@ func (s *AccessReviewStatistics) LoadByCampaignIDAndSourceID(
 	scope Scoper,
 	campaignID gid.GID,
 	sourceID gid.GID,
+) error {
+	return s.load(ctx, conn, scope, campaignID, &sourceID)
+}
+
+func (s *AccessReviewStatistics) load(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	campaignID gid.GID,
+	sourceID *gid.GID,
 ) error {
 	args := pgx.StrictNamedArgs{
 		"campaign_id": campaignID,
@@ -142,7 +78,10 @@ FROM access_review_entries
 WHERE
     %s
     AND access_review_campaign_id = @campaign_id
-    AND access_review_campaign_source_id = @source_id
+    AND CASE
+        WHEN @source_id::text IS NULL THEN TRUE
+        ELSE access_review_campaign_source_id = @source_id::text
+    END
 GROUP BY decision;
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -177,7 +116,10 @@ FROM access_review_entries, unnest(flags) AS f
 WHERE
     %s
     AND access_review_campaign_id = @campaign_id
-    AND access_review_campaign_source_id = @source_id
+    AND CASE
+        WHEN @source_id::text IS NULL THEN TRUE
+        ELSE access_review_campaign_source_id = @source_id::text
+    END
 GROUP BY f;
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())

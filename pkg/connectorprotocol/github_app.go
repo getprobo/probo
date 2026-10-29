@@ -183,8 +183,8 @@ func (c *GitHubAppConnector) Initiate(
 	// redirects to the setup URL after a new install; if the app is already
 	// installed it sends the user to the configure page and never comes
 	// back, so we never create a connector. The OAuth authorize URL always
-	// returns with a code. Complete then binds an existing org installation
-	// or sends the user to InstallationURL when none exists.
+	// returns with a code. CompleteWithState then binds an existing org
+	// installation or sends the user to InstallationURL when none exists.
 	return c.authorizeURL(state)
 }
 
@@ -231,23 +231,6 @@ func (c *GitHubAppConnector) InstallationURL(state string) (string, error) {
 	u.RawQuery = q.Encode()
 
 	return u.String(), nil
-}
-
-func (c *GitHubAppConnector) Complete(
-	ctx context.Context,
-	r *http.Request,
-) (Connection, *gid.GID, string, error) {
-	connection, state, err := c.CompleteWithState(ctx, r)
-	if err != nil {
-		return nil, nil, "", err
-	}
-
-	organizationID, err := gid.ParseGID(state.OrganizationID)
-	if err != nil {
-		return nil, nil, "", fmt.Errorf("cannot parse organization ID: %w", err)
-	}
-
-	return connection, &organizationID, state.ContinueURL, nil
 }
 
 func (c *GitHubAppConnector) CompleteWithState(

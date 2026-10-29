@@ -40,7 +40,6 @@ type (
 		OrganizationID               gid.GID                      `db:"organization_id"`
 		AccessReviewCampaignID       gid.GID                      `db:"access_review_campaign_id"`
 		AccessReviewCampaignSourceID gid.GID                      `db:"access_review_campaign_source_id"`
-		IdentityID                   *gid.GID                     `db:"identity_id"`
 		Email                        string                       `db:"email"`
 		FullName                     string                       `db:"full_name"`
 		Roles                        []string                     `db:"roles"`
@@ -127,7 +126,6 @@ SELECT
     organization_id,
     access_review_campaign_id,
     access_review_campaign_source_id,
-    identity_id,
     email,
     full_name,
     roles,
@@ -176,111 +174,6 @@ LIMIT 1;
 	}
 
 	*e = entry
-
-	return nil
-}
-
-func (e *AccessReviewEntry) Insert(
-	ctx context.Context,
-	conn pg.Tx,
-	scope Scoper,
-) error {
-	q := `
-INSERT INTO
-    access_review_entries (
-        id,
-        tenant_id,
-        organization_id,
-        access_review_campaign_id,
-        access_review_campaign_source_id,
-        identity_id,
-        email,
-        full_name,
-        roles,
-        job_title,
-        is_admin,
-        mfa_status,
-        auth_method,
-        account_type,
-        active,
-        last_login,
-        account_created_at,
-        external_id,
-        account_key,
-        flags,
-        flag_reasons,
-        decision,
-        decision_note,
-        decided_by,
-        decided_at,
-        created_at,
-        updated_at
-    )
-VALUES (
-    @id,
-    @tenant_id,
-    @organization_id,
-    @access_review_campaign_id,
-    @access_review_campaign_source_id,
-    @identity_id,
-    @email,
-    @full_name,
-    COALESCE(@roles, '{}'::TEXT[]),
-    @job_title,
-    @is_admin,
-    @mfa_status,
-    @auth_method,
-    @account_type,
-    COALESCE(@active, TRUE),
-    @last_login,
-    @account_created_at,
-    @external_id,
-    @account_key,
-    @flags,
-    @flag_reasons,
-    @decision,
-    @decision_note,
-    @decided_by,
-    @decided_at,
-    @created_at,
-    @updated_at
-);
-`
-
-	args := pgx.StrictNamedArgs{
-		"id":                               e.ID,
-		"tenant_id":                        scope.GetTenantID(),
-		"organization_id":                  e.OrganizationID,
-		"access_review_campaign_id":        e.AccessReviewCampaignID,
-		"access_review_campaign_source_id": e.AccessReviewCampaignSourceID,
-		"identity_id":                      e.IdentityID,
-		"email":                            e.Email,
-		"full_name":                        e.FullName,
-		"roles":                            e.Roles,
-		"job_title":                        e.JobTitle,
-		"is_admin":                         e.IsAdmin,
-		"mfa_status":                       e.MFAStatus,
-		"auth_method":                      e.AuthMethod,
-		"account_type":                     e.AccountType,
-		"active":                           e.Active,
-		"last_login":                       e.LastLogin,
-		"account_created_at":               e.AccountCreatedAt,
-		"external_id":                      e.ExternalID,
-		"account_key":                      e.AccountKey,
-		"flags":                            e.Flags,
-		"flag_reasons":                     e.FlagReasons,
-		"decision":                         e.Decision,
-		"decision_note":                    e.DecisionNote,
-		"decided_by":                       e.DecidedBy,
-		"decided_at":                       e.DecidedAt,
-		"created_at":                       e.CreatedAt,
-		"updated_at":                       e.UpdatedAt,
-	}
-
-	_, err := conn.Exec(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot insert access_entry: %w", err)
-	}
 
 	return nil
 }
@@ -344,7 +237,6 @@ SELECT
     organization_id,
     access_review_campaign_id,
     access_review_campaign_source_id,
-    identity_id,
     email,
     full_name,
     roles,
@@ -411,7 +303,6 @@ SELECT
     organization_id,
     access_review_campaign_id,
     access_review_campaign_source_id,
-    identity_id,
     email,
     full_name,
     roles,
@@ -524,25 +415,6 @@ WHERE
 	return count, nil
 }
 
-func (e *AccessReviewEntry) LoadOrganizationID(
-	ctx context.Context,
-	conn pg.Querier,
-	entryID gid.GID,
-) (gid.GID, error) {
-	q := `SELECT organization_id FROM access_review_entries WHERE id = $1 LIMIT 1;`
-
-	var organizationID gid.GID
-	if err := conn.QueryRow(ctx, q, entryID).Scan(&organizationID); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return gid.GID{}, ErrResourceNotFound
-		}
-
-		return gid.GID{}, fmt.Errorf("cannot load organization id for access entry: %w", err)
-	}
-
-	return organizationID, nil
-}
-
 func (e *AccessReviewEntry) UpdateFlags(
 	ctx context.Context,
 	conn pg.Tx,
@@ -599,7 +471,6 @@ INSERT INTO access_review_entries (
     organization_id,
     access_review_campaign_id,
     access_review_campaign_source_id,
-    identity_id,
     email,
     full_name,
     roles,
@@ -627,7 +498,6 @@ INSERT INTO access_review_entries (
     @organization_id,
     @access_review_campaign_id,
     @access_review_campaign_source_id,
-    @identity_id,
     @email,
     @full_name,
     COALESCE(@roles, '{}'::TEXT[]),
@@ -672,7 +542,6 @@ ON CONFLICT (access_review_campaign_source_id, account_key) DO UPDATE SET
 		"organization_id":                  e.OrganizationID,
 		"access_review_campaign_id":        e.AccessReviewCampaignID,
 		"access_review_campaign_source_id": e.AccessReviewCampaignSourceID,
-		"identity_id":                      e.IdentityID,
 		"email":                            e.Email,
 		"full_name":                        e.FullName,
 		"roles":                            e.Roles,

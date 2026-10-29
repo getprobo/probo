@@ -21,6 +21,7 @@
 package drivers
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -103,7 +104,7 @@ func (d *DotfileDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 
 			records = append(records, AccountRecord{
 				Email:       email,
-				FullName:    dotfileFullName(u, email),
+				FullName:    cmp.Or(joinName(u.FirstName, u.LastName), email),
 				Roles:       dotfileRoles(u.Role),
 				Active:      &active,
 				IsAdmin:     new(dotfileIsAdmin(u.Role)),
@@ -162,17 +163,6 @@ func (d *DotfileDriver) fetchPage(ctx context.Context, page int) (*dotfileUsersR
 	}
 
 	return &resp, nil
-}
-
-// dotfileFullName joins the user's first and last names, falling back to the
-// email when Dotfile exposes neither.
-func dotfileFullName(u dotfileUser, email string) string {
-	name := strings.TrimSpace(strings.TrimSpace(u.FirstName) + " " + strings.TrimSpace(u.LastName))
-	if name == "" {
-		return email
-	}
-
-	return name
 }
 
 // dotfileRoles returns the user's single Dotfile role as a one-element slice

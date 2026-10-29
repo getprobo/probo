@@ -233,16 +233,6 @@ func TestTwingateActive(t *testing.T) {
 	assert.Nil(t, twingateActive(twingateUser{}))
 }
 
-func TestTwingateFullName(t *testing.T) {
-	t.Parallel()
-
-	assert.Equal(t, "Ada Lovelace", twingateFullName(twingateUser{FirstName: "Ada", LastName: "Lovelace"}, "x@example.com"))
-	assert.Equal(t, "Ada", twingateFullName(twingateUser{FirstName: " Ada "}, "x@example.com"))
-	assert.Equal(t, "Lovelace", twingateFullName(twingateUser{LastName: "Lovelace"}, "x@example.com"))
-	// A nameless record falls back to the email rather than reviewing blank.
-	assert.Equal(t, "x@example.com", twingateFullName(twingateUser{}, "x@example.com"))
-}
-
 // twingateStub serves the given response bodies in order, recording the
 // decoded `after` variable of each request.
 func twingateStub(t *testing.T, bodies ...string) (*httptest.Server, *[]any) {
@@ -314,6 +304,26 @@ func TestTwingateDriverPaginates(t *testing.T) {
 	require.Len(t, *cursors, 2)
 	assert.Nil(t, (*cursors)[0])
 	assert.Equal(t, "cursor-1", (*cursors)[1])
+}
+
+func TestTwingateDriverFallsBackToEmailForName(t *testing.T) {
+	t.Parallel()
+
+	server, _ := twingateStub(
+		t,
+		`{"data":{"users":{
+      "pageInfo":{"hasNextPage":false,"endCursor":""},
+      "edges":[{"node":{"id":"u1","email":"nameless@example.com","firstName":" ","lastName":"",
+        "role":"MEMBER","isAdmin":false,"state":"ACTIVE","type":"MANUAL",
+        "createdAt":"2026-01-01T00:00:00Z"}}]}}}`,
+	)
+
+	driver := NewTwingateDriver(server.Client(), server.URL)
+	records, err := driver.ListAccounts(context.Background())
+	require.NoError(t, err)
+	require.Len(t, records, 1)
+
+	assert.Equal(t, "nameless@example.com", records[0].FullName)
 }
 
 func TestTwingateDriverRefusesNextPageWithoutCursor(t *testing.T) {

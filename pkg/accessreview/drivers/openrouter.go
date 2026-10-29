@@ -21,6 +21,7 @@
 package drivers
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -29,6 +30,7 @@ import (
 	"strconv"
 	"strings"
 
+	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -93,7 +95,7 @@ func (d *OpenRouterDriver) ListAccounts(ctx context.Context) ([]AccountRecord, e
 
 			records = append(records, AccountRecord{
 				Email:       email,
-				FullName:    openRouterFullName(m, email),
+				FullName:    cmp.Or(joinName(ref.UnrefOrZero(m.FirstName), ref.UnrefOrZero(m.LastName)), email),
 				Roles:       openRouterRoles(role),
 				IsAdmin:     openRouterIsAdmin(role),
 				MFAStatus:   coredata.MFAStatusUnknown,
@@ -149,25 +151,6 @@ func (d *OpenRouterDriver) fetchMembersPage(ctx context.Context, offset int) (*o
 	}
 
 	return &resp, nil
-}
-
-func openRouterFullName(m openRouterMember, fallback string) string {
-	first := ""
-	if m.FirstName != nil {
-		first = strings.TrimSpace(*m.FirstName)
-	}
-
-	last := ""
-	if m.LastName != nil {
-		last = strings.TrimSpace(*m.LastName)
-	}
-
-	full := strings.TrimSpace(first + " " + last)
-	if full != "" {
-		return full
-	}
-
-	return fallback
 }
 
 // openRouterRoles maps OpenRouter's organization role enum

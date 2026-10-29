@@ -344,16 +344,6 @@ func TestLangfuseListAccountsMapping(t *testing.T) {
 	assert.Equal(t, new(false), records[2].IsAdmin)
 }
 
-func TestLangfuseFullName(t *testing.T) {
-	t.Parallel()
-
-	assert.Equal(t, "Ada Admin", langfuseFullName(langfuseMembership{Name: "Ada Admin"}, "ada@example.com"))
-	// Langfuse leaves name empty for a member who never set one, and the
-	// review table needs something to show, so the email stands in.
-	assert.Equal(t, "ada@example.com", langfuseFullName(langfuseMembership{Name: ""}, "ada@example.com"))
-	assert.Equal(t, "ada@example.com", langfuseFullName(langfuseMembership{Name: "   "}, "ada@example.com"))
-}
-
 func TestLangfuseRoles(t *testing.T) {
 	t.Parallel()
 

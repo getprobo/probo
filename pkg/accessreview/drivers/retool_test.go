@@ -147,21 +147,6 @@ func TestRetoolMFAStatus(t *testing.T) {
 	assert.Equal(t, coredata.MFAStatusDisabled, retoolMFAStatus(retoolUser{}))
 }
 
-func TestRetoolFullName(t *testing.T) {
-	t.Parallel()
-
-	first := "Ada"
-	last := "Lovelace"
-	blank := "   "
-
-	assert.Equal(t, "Ada Lovelace", retoolFullName(retoolUser{FirstName: &first, LastName: &last}, "x@example.com"))
-	assert.Equal(t, "Ada", retoolFullName(retoolUser{FirstName: &first}, "x@example.com"))
-	assert.Equal(t, "Lovelace", retoolFullName(retoolUser{LastName: &last}, "x@example.com"))
-	// Both nullable, which the schema allows: fall back to the email.
-	assert.Equal(t, "x@example.com", retoolFullName(retoolUser{}, "x@example.com"))
-	assert.Equal(t, "x@example.com", retoolFullName(retoolUser{FirstName: &blank, LastName: &blank}, "x@example.com"))
-}
-
 // TestRetoolDriverRefusesNextPageWithoutToken covers a page that advertises
 // more users without saying where to resume. Returning what we have would be a
 // short roster with no error, and a member missing from a campaign is reviewed

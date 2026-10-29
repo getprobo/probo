@@ -43,13 +43,9 @@ import (
 //
 // SelectedSlug returns the currently-configured org identifier for the
 // connector (empty string if none).
-//
-// NeedsPicker reports whether the picker mutation should surface in the
-// UI; false for 2-auto providers (identifier captured at OAuth/install).
 type providerOrgConfig struct {
 	ListOrgs     func(ctx context.Context, httpClient *http.Client, baseURL string) ([]drivers.Organization, error)
 	SelectedSlug func(c *coredata.Connector) string
-	NeedsPicker  bool
 }
 
 // providerOrgConfigs is the single source of truth that the access-source
@@ -64,7 +60,6 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 			s, _ := coredata.ConnectorSettings[coredata.GitHubConnectorSettings](c)
 			return s.Organization
 		},
-		NeedsPicker: true,
 	},
 	coredata.ConnectorProviderSentry: {
 		ListOrgs: drivers.ListSentryOrganizations,
@@ -72,7 +67,6 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 			s, _ := coredata.ConnectorSettings[coredata.SentryConnectorSettings](c)
 			return s.OrganizationSlug
 		},
-		NeedsPicker: true,
 	},
 	coredata.ConnectorProviderGoogleAnalytics: {
 		ListOrgs: drivers.ListGoogleAnalyticsOrganizations,
@@ -80,7 +74,6 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 			s, _ := coredata.ConnectorSettings[coredata.GoogleAnalyticsConnectorSettings](c)
 			return s.AccountID
 		},
-		NeedsPicker: true,
 	},
 	coredata.ConnectorProviderGitLab: {
 		ListOrgs: drivers.ListGitLabOrganizations,
@@ -88,7 +81,6 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 			s, _ := coredata.ConnectorSettings[coredata.GitLabConnectorSettings](c)
 			return s.GroupID
 		},
-		NeedsPicker: true,
 	},
 	coredata.ConnectorProviderBitbucket: {
 		ListOrgs: drivers.ListBitbucketOrganizations,
@@ -96,7 +88,6 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 			s, _ := coredata.ConnectorSettings[coredata.BitbucketConnectorSettings](c)
 			return s.Workspace
 		},
-		NeedsPicker: true,
 	},
 	coredata.ConnectorProviderHeroku: {
 		ListOrgs: drivers.ListHerokuOrganizations,
@@ -104,7 +95,6 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 			s, _ := coredata.ConnectorSettings[coredata.HerokuConnectorSettings](c)
 			return s.TeamID
 		},
-		NeedsPicker: true,
 	},
 	coredata.ConnectorProviderAsana: {
 		ListOrgs: drivers.ListAsanaOrganizations,
@@ -112,7 +102,6 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 			s, _ := coredata.ConnectorSettings[coredata.AsanaConnectorSettings](c)
 			return s.WorkspaceGID
 		},
-		NeedsPicker: true,
 	},
 	coredata.ConnectorProviderNetlify: {
 		ListOrgs: drivers.ListNetlifyOrganizations,
@@ -120,7 +109,6 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 			s, _ := coredata.ConnectorSettings[coredata.NetlifyConnectorSettings](c)
 			return s.AccountSlug
 		},
-		NeedsPicker: true,
 	},
 	coredata.ConnectorProviderClickUp: {
 		ListOrgs: drivers.ListClickUpOrganizations,
@@ -128,7 +116,6 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 			s, _ := coredata.ConnectorSettings[coredata.ClickUpConnectorSettings](c)
 			return s.TeamID
 		},
-		NeedsPicker: true,
 	},
 	coredata.ConnectorProviderCloudflare: {
 		ListOrgs: drivers.ListCloudflareOrganizations,
@@ -136,7 +123,6 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 			s, _ := coredata.ConnectorSettings[coredata.CloudflareConnectorSettings](c)
 			return s.AccountID
 		},
-		NeedsPicker: true,
 	},
 	coredata.ConnectorProviderPlanetScale: {
 		ListOrgs: drivers.ListPlanetScaleOrganizations,
@@ -144,7 +130,6 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 			s, _ := coredata.ConnectorSettings[coredata.PlanetScaleConnectorSettings](c)
 			return s.Organization
 		},
-		NeedsPicker: true,
 	},
 	// DocuSign declares no APIBase, but its Identity host is exactly what
 	// ListDocuSignOrganizations calls, so ListOrgs takes the baseURL
@@ -156,12 +141,11 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 			s, _ := coredata.ConnectorSettings[coredata.DocuSignConnectorSettings](c)
 			return s.AccountID
 		},
-		NeedsPicker: true,
 	},
 	// Pattern 2-auto: identifier is captured during the OAuth callback
 	// (subdomain for PagerDuty, teamId or fallback /v2/user.id for
-	// Vercel). No picker UI; NeedsPicker = false. Install-scoped connections
-	// (GitHub App) share a provider entry that has ListOrgs for OAuth; the
+	// Vercel). No picker UI. Install-scoped connections (GitHub App)
+	// share a provider entry that has ListOrgs for OAuth; the
 	// connection's OrganizationSelector capability gates the picker.
 	coredata.ConnectorProviderPagerDuty: {
 		SelectedSlug: func(c *coredata.Connector) string {

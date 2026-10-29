@@ -33,6 +33,26 @@ func (r *Registration) ResolveInitialAccount(c *coredata.Connector) (externalID 
 	return r.InitialAccountFunc(c)
 }
 
+// ResolveInitialAccount resolves the initial account through the connector's
+// registration. An unknown provider returns empty strings.
+func (r *Registry) ResolveInitialAccount(c *coredata.Connector) (string, string, error) {
+	if r == nil || c == nil {
+		return "", "", nil
+	}
+
+	reg, ok := r.Get(c.Provider)
+	if !ok {
+		return "", "", nil
+	}
+
+	externalID, name, err := reg.ResolveInitialAccount(c)
+	if err != nil {
+		return "", "", fmt.Errorf("cannot resolve initial account: %w", err)
+	}
+
+	return externalID, name, nil
+}
+
 func emptyInitialAccount(*coredata.Connector) (string, string, error) {
 	return "", "", nil
 }

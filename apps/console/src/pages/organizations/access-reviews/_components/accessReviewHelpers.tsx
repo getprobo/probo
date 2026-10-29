@@ -82,26 +82,6 @@ export function isCampaignDeletableStatus(status: string): boolean {
   return status !== "IN_PROGRESS";
 }
 
-export function statusLabel(
-  t: (key: string) => string,
-  status: string,
-): string {
-  switch (status) {
-    case "DRAFT":
-      return t("accessReviewCampaignsPage.status.draft");
-    case "IN_PROGRESS":
-      return t("accessReviewCampaignsPage.status.in_progress");
-    case "PENDING_ACTIONS":
-      return t("accessReviewCampaignsPage.status.pending_actions");
-    case "COMPLETED":
-      return t("accessReviewCampaignsPage.status.completed");
-    case "CANCELLED":
-      return t("accessReviewCampaignsPage.status.cancelled");
-    default:
-      return status;
-  }
-}
-
 export function decisionBadgeVariant(decision: string): BadgeVariant {
   switch (decision) {
     case "APPROVED":
@@ -169,12 +149,6 @@ export const flagGroups = [
     ],
   },
 ];
-
-export function NotAvailable() {
-  return (
-    <span className="text-xs text-txt-tertiary">N/A</span>
-  );
-}
 
 export function MfaStatusIcon({
   status,

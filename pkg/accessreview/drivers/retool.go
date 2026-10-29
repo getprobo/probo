@@ -21,6 +21,7 @@
 package drivers
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -29,6 +30,7 @@ import (
 	"strconv"
 	"strings"
 
+	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -115,7 +117,7 @@ func (d *RetoolDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 
 			record := AccountRecord{
 				Email:       email,
-				FullName:    retoolFullName(u, email),
+				FullName:    cmp.Or(joinName(ref.UnrefOrZero(u.FirstName), ref.UnrefOrZero(u.LastName)), email),
 				Roles:       retoolRoles(u),
 				IsAdmin:     new(u.IsAdmin),
 				Active:      new(u.Active),
@@ -192,28 +194,6 @@ func (d *RetoolDriver) fetchUsersPage(ctx context.Context, nextToken string) (*r
 	}
 
 	return &body, nil
-}
-
-func retoolFullName(u retoolUser, fallback string) string {
-	var parts []string
-
-	if u.FirstName != nil {
-		if first := strings.TrimSpace(*u.FirstName); first != "" {
-			parts = append(parts, first)
-		}
-	}
-
-	if u.LastName != nil {
-		if last := strings.TrimSpace(*u.LastName); last != "" {
-			parts = append(parts, last)
-		}
-	}
-
-	if len(parts) > 0 {
-		return strings.Join(parts, " ")
-	}
-
-	return fallback
 }
 
 // retoolMFAStatus reads Retool's own per-user two-factor flag. Retool reports

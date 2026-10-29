@@ -21,6 +21,7 @@
 package drivers
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -148,7 +149,7 @@ func (d *SegmentDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 		// AccountRecord contract.
 		records = append(records, AccountRecord{
 			Email:       email,
-			FullName:    segmentFullName(u.Name, email),
+			FullName:    cmp.Or(strings.TrimSpace(u.Name), email),
 			Roles:       roles,
 			Active:      nil,
 			IsAdmin:     new(isAdmin),
@@ -306,16 +307,6 @@ func (d *SegmentDriver) getJSON(ctx context.Context, endpoint string, out any) e
 	}
 
 	return nil
-}
-
-// segmentFullName returns the member's name, falling back to the email when
-// Segment stores an empty name.
-func segmentFullName(name, email string) string {
-	if n := strings.TrimSpace(name); n != "" {
-		return n
-	}
-
-	return email
 }
 
 // segmentRolesAndAdmin collapses a member's permission entries into a

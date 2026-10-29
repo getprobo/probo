@@ -38,7 +38,7 @@ interface CapturedOrganizationProps {
 // subdomain). It is not user-editable: the value came from the handshake, and
 // the only way to change it is to reconnect against a different one.
 //
-// No empty state: these providers have NeedsPicker false, so an unset
+// No empty state: these providers register no organization lister, so an unset
 // organization leaves needsConfiguration false and the parent renders no
 // selector at all.
 export function CapturedOrganization({ sourceKey }: CapturedOrganizationProps) {

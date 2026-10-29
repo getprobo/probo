@@ -426,7 +426,7 @@ func mongoDBAtlasUserRecord(u mongoDBAtlasUser) AccountRecord {
 		// Atlas has no separate email field on this version: username is the
 		// email, typed as format "email" in the schema.
 		Email:       u.Username,
-		FullName:    mongoDBAtlasFullName(u.FirstName, u.LastName),
+		FullName:    joinName(u.FirstName, u.LastName),
 		Roles:       mongoDBAtlasUserRoles(u),
 		Active:      &active,
 		IsAdmin:     &isAdmin,
@@ -607,10 +607,6 @@ func mongoDBAtlasHasOrgOwner(roles []string) bool {
 	}
 
 	return false
-}
-
-func mongoDBAtlasFullName(firstName, lastName string) string {
-	return strings.TrimSpace(strings.TrimSpace(firstName) + " " + strings.TrimSpace(lastName))
 }
 
 // mongoDBAtlasNameResolver titles the source with the organization the

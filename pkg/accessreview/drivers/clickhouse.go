@@ -21,6 +21,7 @@
 package drivers
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -98,7 +99,7 @@ func (d *ClickHouseDriver) ListAccounts(ctx context.Context) ([]AccountRecord, e
 
 		record := AccountRecord{
 			Email:       email,
-			FullName:    clickhouseFullName(m, email),
+			FullName:    cmp.Or(strings.TrimSpace(m.Name), email),
 			Roles:       clickhouseRoles(m),
 			IsAdmin:     new(clickhouseIsAdmin(m)),
 			MFAStatus:   coredata.MFAStatusUnknown,
@@ -177,14 +178,6 @@ func (d *ClickHouseDriver) getJSON(ctx context.Context, endpoint, what string, o
 	}
 
 	return nil
-}
-
-func clickhouseFullName(m clickhouseMember, fallback string) string {
-	if name := strings.TrimSpace(m.Name); name != "" {
-		return name
-	}
-
-	return fallback
 }
 
 // clickhouseRoles prefers the custom/system roles in assignedRoles (the live

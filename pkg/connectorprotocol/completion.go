@@ -63,18 +63,6 @@ func (r *Registry) CompleteFromState(
 	return r.completeOAuth2FromState(ctx, req, stateToken)
 }
 
-func (r *Registry) CompleteOAuth2FromRequest(
-	ctx context.Context,
-	req *http.Request,
-) (*CompletionState, error) {
-	stateToken := req.URL.Query().Get("state")
-	if stateToken == "" {
-		return nil, fmt.Errorf("missing state parameter")
-	}
-
-	return r.completeOAuth2FromState(ctx, req, stateToken)
-}
-
 func (r *Registry) CompleteGitHubAppFromRequest(
 	ctx context.Context,
 	req *http.Request,

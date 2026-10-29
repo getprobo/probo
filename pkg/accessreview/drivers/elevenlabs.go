@@ -21,6 +21,7 @@
 package drivers
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -148,7 +149,7 @@ func elevenLabsRecord(m elevenLabsMember, email string) AccountRecord {
 
 	return AccountRecord{
 		Email:       email,
-		FullName:    elevenLabsFullName(m, email),
+		FullName:    cmp.Or(strings.TrimSpace(m.FirstName), email),
 		Roles:       elevenLabsRoles(m),
 		IsAdmin:     new(elevenLabsIsAdmin(m)),
 		Active:      &active,
@@ -157,16 +158,6 @@ func elevenLabsRecord(m elevenLabsMember, email string) AccountRecord {
 		AccountType: coredata.AccessReviewEntryAccountTypeUser,
 		ExternalID:  strings.TrimSpace(m.UserID),
 	}
-}
-
-func elevenLabsFullName(m elevenLabsMember, fallback string) string {
-	// ElevenLabs stores only a first name, so FullName is that name when the
-	// member has set one and the email otherwise.
-	if name := strings.TrimSpace(m.FirstName); name != "" {
-		return name
-	}
-
-	return fallback
 }
 
 // elevenLabsIsAdmin reports the two ways a member administers the workspace:

@@ -168,16 +168,6 @@ func TestElevenLabsIsAdmin(t *testing.T) {
 	assert.False(t, elevenLabsIsAdmin(elevenLabsMember{SeatType: "workspace_admin_readonly"}))
 }
 
-func TestElevenLabsFullName(t *testing.T) {
-	t.Parallel()
-
-	assert.Equal(t, "Ada", elevenLabsFullName(elevenLabsMember{FirstName: " Ada "}, "ada@example.com"))
-	// ElevenLabs stores no last name, and a blank first name falls back to
-	// the email so a record is never nameless.
-	assert.Equal(t, "ada@example.com", elevenLabsFullName(elevenLabsMember{FirstName: "  "}, "ada@example.com"))
-	assert.Equal(t, "ada@example.com", elevenLabsFullName(elevenLabsMember{}, "ada@example.com"))
-}
-
 func TestElevenLabsRecord(t *testing.T) {
 	t.Parallel()
 
@@ -203,4 +193,10 @@ func TestElevenLabsRecord(t *testing.T) {
 	require.NotNil(t, live.Active)
 	assert.True(t, *live.Active)
 	assert.Equal(t, new(true), live.IsAdmin)
+
+	named := elevenLabsRecord(elevenLabsMember{FirstName: " Ada "}, "ada@example.com")
+	assert.Equal(t, "Ada", named.FullName)
+
+	nameless := elevenLabsRecord(elevenLabsMember{FirstName: " "}, "nameless@example.com")
+	assert.Equal(t, "nameless@example.com", nameless.FullName)
 }

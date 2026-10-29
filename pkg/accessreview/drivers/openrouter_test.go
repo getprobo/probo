@@ -91,18 +91,3 @@ func TestOpenRouterIsAdmin(t *testing.T) {
 		)
 	}
 }
-
-func TestOpenRouterFullName(t *testing.T) {
-	t.Parallel()
-
-	first, last := "Bob", "Member"
-
-	// first + last.
-	assert.Equal(t, "Bob Member", openRouterFullName(openRouterMember{FirstName: &first, LastName: &last}, "bob@example.com"))
-	// last_name null → first name alone.
-	assert.Equal(t, "Bob", openRouterFullName(openRouterMember{FirstName: &first}, "bob@example.com"))
-	// first_name null → last name alone.
-	assert.Equal(t, "Member", openRouterFullName(openRouterMember{LastName: &last}, "bob@example.com"))
-	// both null → email fallback.
-	assert.Equal(t, "carol@example.com", openRouterFullName(openRouterMember{}, "carol@example.com"))
-}

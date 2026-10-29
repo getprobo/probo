@@ -21,6 +21,7 @@
 package drivers
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -116,7 +117,7 @@ func (d *DeepgramDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 
 		records = append(records, AccountRecord{
 			Email:       email,
-			FullName:    deepgramFullName(*m, email),
+			FullName:    cmp.Or(joinName(m.FirstName, m.LastName), email),
 			Roles:       deepgramRoles(m.Scopes),
 			IsAdmin:     new(deepgramIsAdmin(m.Scopes)),
 			MFAStatus:   coredata.MFAStatusUnknown,
@@ -195,15 +196,6 @@ func (d *DeepgramDriver) fetchProjectMembers(ctx context.Context, projectID stri
 	}
 
 	return resp.Members, nil
-}
-
-func deepgramFullName(m deepgramMember, fallback string) string {
-	fullName := strings.TrimSpace(strings.TrimSpace(m.FirstName) + " " + strings.TrimSpace(m.LastName))
-	if fullName != "" {
-		return fullName
-	}
-
-	return fallback
 }
 
 func deepgramUnionScopes(a, b []string) []string {

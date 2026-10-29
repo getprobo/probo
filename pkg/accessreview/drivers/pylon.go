@@ -21,6 +21,7 @@
 package drivers
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -113,7 +114,7 @@ func (d *PylonDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error)
 
 			records = append(records, AccountRecord{
 				Email:       email,
-				FullName:    pylonFullName(u, email),
+				FullName:    cmp.Or(strings.TrimSpace(u.Name), email),
 				Roles:       pylonRoles(role),
 				Active:      activeFromStatus(u.Status),
 				IsAdmin:     new(pylonIsAdmin(role)),
@@ -234,14 +235,6 @@ func (d *PylonDriver) fetchPage(ctx context.Context, path, cursor string) (*http
 	}
 
 	return httpResp, nil
-}
-
-func pylonFullName(u pylonUser, fallback string) string {
-	if name := strings.TrimSpace(u.Name); name != "" {
-		return name
-	}
-
-	return fallback
 }
 
 // pylonRoles returns the user's role as a single-element slice using the

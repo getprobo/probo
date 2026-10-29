@@ -54,6 +54,18 @@ func TestActiveFromStatus(t *testing.T) {
 	}
 }
 
+func TestJoinName(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, "Ada Lovelace", joinName("Ada", "Lovelace"))
+	assert.Equal(t, "Ada", joinName("Ada", ""))
+	assert.Equal(t, "Lovelace", joinName("", "Lovelace"))
+	assert.Equal(t, "Ada", joinName(" Ada ", ""))
+	assert.Equal(t, "Ada Lovelace", joinName(" Ada ", " Lovelace "))
+	assert.Equal(t, "", joinName("", ""))
+	assert.Equal(t, "", joinName("   ", "   "))
+}
+
 // TestRetryRoundTripperRewindsBody covers the retry of a POST. The first
 // attempt reads the body to the end, so an unrewound retry sends an empty one
 // and the provider answers 400 — turning a recoverable 5xx into a failed sync.

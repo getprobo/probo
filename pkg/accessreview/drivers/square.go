@@ -22,6 +22,7 @@ package drivers
 
 import (
 	"bytes"
+	"cmp"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -107,7 +108,7 @@ func (d *SquareDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 
 			records = append(records, AccountRecord{
 				Email:       email,
-				FullName:    squareFullName(m, email),
+				FullName:    cmp.Or(joinName(m.GivenName, m.FamilyName), email),
 				Roles:       ownerMemberRoles(role),
 				Active:      activeFromStatus(m.Status),
 				IsAdmin:     new(m.IsOwner),
@@ -178,17 +179,6 @@ func (d *SquareDriver) searchTeamMembers(ctx context.Context, cursor string) (*s
 	}
 
 	return &resp, nil
-}
-
-// squareFullName joins the team member's given and family names, falling back
-// to the email when Square exposes neither.
-func squareFullName(m squareTeamMember, email string) string {
-	name := strings.TrimSpace(strings.TrimSpace(m.GivenName) + " " + strings.TrimSpace(m.FamilyName))
-	if name == "" {
-		return email
-	}
-
-	return name
 }
 
 // squareNameResolver resolves the Square merchant's business name via

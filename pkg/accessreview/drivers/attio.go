@@ -119,7 +119,7 @@ func (d *AttioDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error)
 
 		record := AccountRecord{
 			Email:       m.EmailAddress,
-			FullName:    attioFullName(m.FirstName, m.LastName),
+			FullName:    joinName(m.FirstName, m.LastName),
 			Roles:       attioRoles(m.AccessLevel),
 			Active:      active,
 			IsAdmin:     isAdmin,
@@ -169,10 +169,6 @@ func attioAccountStatus(accessLevel string) (active *bool, isAdmin *bool) {
 	default:
 		return nil, nil
 	}
-}
-
-func attioFullName(firstName, lastName string) string {
-	return strings.TrimSpace(strings.TrimSpace(firstName) + " " + strings.TrimSpace(lastName))
 }
 
 // attioNameResolver resolves the Attio workspace name via /v2/self.

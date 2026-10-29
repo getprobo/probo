@@ -30,7 +30,6 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-	"time"
 
 	"go.probo.inc/probo/pkg/coredata"
 )
@@ -318,18 +317,12 @@ func posthogAccountRecord(member posthogMember) AccountRecord {
 		MFAStatus:   posthogMFAStatus(member.Is2FAEnabled),
 		AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 		AccountType: coredata.AccessReviewEntryAccountTypeUser,
+		CreatedAt:   parseRFC3339Ptr(member.JoinedAt),
+		LastLogin:   parseRFC3339Ptr(member.LastLogin),
 	}
 
 	if record.ExternalID == "" {
 		record.ExternalID = member.ID
-	}
-
-	if t, ok := parseRFC3339(member.JoinedAt); ok {
-		record.CreatedAt = &t
-	}
-
-	if t, ok := parseRFC3339(member.LastLogin); ok {
-		record.LastLogin = &t
 	}
 
 	return record
@@ -439,17 +432,4 @@ func (r *posthogNameResolver) ResolveInstanceName(ctx context.Context) (string, 
 	}
 
 	return resp.Name, nil
-}
-
-func parseRFC3339(value string) (time.Time, bool) {
-	if value == "" {
-		return time.Time{}, false
-	}
-
-	t, err := time.Parse(time.RFC3339, value)
-	if err != nil {
-		return time.Time{}, false
-	}
-
-	return t, true
 }

@@ -22,6 +22,7 @@ package drivers
 
 import (
 	"bytes"
+	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
@@ -402,7 +403,7 @@ func newRelicRecords(users []newRelicUser, groupsByUser map[string][]string) []A
 
 		record := AccountRecord{
 			Email:       email,
-			FullName:    newRelicFullName(u, email),
+			FullName:    cmp.Or(strings.TrimSpace(u.Name), email),
 			Roles:       newRelicRoles(groups),
 			IsAdmin:     new(slices.ContainsFunc(groups, newRelicIsAdminGroup)),
 			MFAStatus:   coredata.MFAStatusUnknown,
@@ -426,14 +427,6 @@ func newRelicRecords(users []newRelicUser, groupsByUser map[string][]string) []A
 // nothing, so case is a real distinction here rather than noise.
 func newRelicIsAdminGroup(group string) bool {
 	return group == newRelicAdminGroup
-}
-
-func newRelicFullName(u newRelicUser, fallback string) string {
-	if name := strings.TrimSpace(u.Name); name != "" {
-		return name
-	}
-
-	return fallback
 }
 
 // newRelicRoles reports the groups a user belongs to, which is where New Relic

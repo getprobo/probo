@@ -21,6 +21,7 @@
 package drivers
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -94,7 +95,7 @@ func (d *ApolloDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 
 			records = append(records, AccountRecord{
 				Email:       email,
-				FullName:    apolloFullName(u, email),
+				FullName:    cmp.Or(strings.TrimSpace(u.Name), joinName(u.FirstName, u.LastName), email),
 				Roles:       apolloRoles(role),
 				IsAdmin:     apolloIsAdmin(role),
 				MFAStatus:   coredata.MFAStatusUnknown,
@@ -149,19 +150,6 @@ func (d *ApolloDriver) fetchUsersPage(ctx context.Context, page int) (*apolloUse
 	}
 
 	return &resp, nil
-}
-
-func apolloFullName(u apolloUser, fallback string) string {
-	if name := strings.TrimSpace(u.Name); name != "" {
-		return name
-	}
-
-	combined := strings.TrimSpace(strings.TrimSpace(u.FirstName) + " " + strings.TrimSpace(u.LastName))
-	if combined != "" {
-		return combined
-	}
-
-	return fallback
 }
 
 // apolloRole extracts a role label from Apollo's `role` field, which is

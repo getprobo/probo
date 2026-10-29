@@ -189,36 +189,12 @@ func (r *Registry) Initiate(
 	opts InitiateOptions,
 	req *http.Request,
 ) (string, error) {
-	return r.InitiateForProtocol(ctx, provider, ProtocolOAuth2, organizationID, opts, req)
-}
-
-// InitiateForProtocol starts the install/auth flow for the connector registered
-// under provider and protocol.
-func (r *Registry) InitiateForProtocol(
-	ctx context.Context,
-	provider string,
-	protocol ProtocolType,
-	organizationID gid.GID,
-	opts InitiateOptions,
-	req *http.Request,
-) (string, error) {
-	c, err := r.Lookup(provider, protocol)
+	c, err := r.Lookup(provider, ProtocolOAuth2)
 	if err != nil {
 		return "", fmt.Errorf("cannot initiate connector: %w", err)
 	}
 
 	return c.Initiate(ctx, provider, organizationID, opts, req)
-}
-
-func (r *Registry) InitiateProtocol(
-	ctx context.Context,
-	provider string,
-	protocol ProtocolType,
-	organizationID gid.GID,
-	opts InitiateOptions,
-	req *http.Request,
-) (string, error) {
-	return r.InitiateForProtocol(ctx, provider, protocol, organizationID, opts, req)
 }
 
 // ExtractProviderFromState decodes the OAuth2 state token without
@@ -241,15 +217,6 @@ func ExtractProviderFromState(stateToken string) (string, error) {
 	}
 
 	return payload.Data.Provider, nil
-}
-
-func (r *Registry) Complete(ctx context.Context, provider string, req *http.Request) (Connection, *gid.GID, string, error) {
-	c, err := r.Get(provider)
-	if err != nil {
-		return nil, nil, "", fmt.Errorf("cannot complete connector: %w", err)
-	}
-
-	return c.Complete(ctx, req)
 }
 
 // CompleteWithState completes the OAuth2 flow and returns the full state
