@@ -363,6 +363,27 @@ func TestRun_TimeBudgetWithNoPages(t *testing.T) {
 	})
 }
 
+func TestRun_PageCapWithQueueLeftIsTruncated(t *testing.T) {
+	t.Parallel()
+
+	result, err := Run(context.Background(), nil, Input{
+		Origin:             "https://example.com",
+		BannerID:           "banner",
+		APIBaseURL:         "https://api.example.com",
+		skipPublicURLCheck: true,
+		Limits:             Limits{MaxPages: 3},
+		Checkpoint: &Checkpoint{
+			PagesScanned: 3,
+			Queue:        []QueueItem{{URL: "https://example.com/a", Depth: 1}},
+		},
+	})
+	require.NoError(t, err)
+	assert.True(t, result.Truncated)
+	assert.False(t, result.Paused)
+	assert.True(t, result.Checkpoint.Truncated)
+	assert.Equal(t, 3, result.PagesScanned)
+}
+
 func TestRecorder_DeduplicatesAndDropsAPIOrigin(t *testing.T) {
 	t.Parallel()
 
@@ -784,7 +805,7 @@ func TestCollectSitemapURLs_DoesNotEnqueueIndexAtDepthLimit(t *testing.T) {
 func TestArrangeSitemapURLs_RoundRobinKeepsTheLastChild(t *testing.T) {
 	t.Parallel()
 
-	representatives, rest := arrangeSitemapURLs(
+	urls := arrangeSitemapURLs(
 		[][]string{
 			{"https://example.com/docs/a", "https://example.com/docs/b", "https://example.com/docs/c"},
 			{"https://example.com/blog/post"},
@@ -792,31 +813,153 @@ func TestArrangeSitemapURLs_RoundRobinKeepsTheLastChild(t *testing.T) {
 		3,
 	)
 
-	assert.Equal(t, []string{"https://example.com/docs/a", "https://example.com/blog/post"}, representatives)
 	assert.Equal(
 		t,
 		[]string{"https://example.com/docs/a", "https://example.com/blog/post", "https://example.com/docs/b"},
-		rest,
+		urls,
 	)
 }
 
-func TestFrontier_RepresentativePrecedesDiscoveredLink(t *testing.T) {
+func TestFrontier_LinkUpgradesSitemapEntry(t *testing.T) {
 	t.Parallel()
 
 	front := newFrontier(Checkpoint{}, 10)
 	front.push(QueueItem{URL: "https://example.com/", Depth: 0})
-	front.push(QueueItem{URL: "https://example.com/blog/post", Depth: 1})
-	front.markVisited("https://example.com/")
-	front.push(QueueItem{URL: "https://example.com/pricing", Depth: 1})
-	front.push(QueueItem{URL: "https://example.com/docs/a", FromSitemap: true})
+	front.push(QueueItem{URL: "https://www.example.com/docs/a", FromSitemap: true})
+	front.push(QueueItem{URL: "https://www.example.com/stories/a", FromSitemap: true})
+
+	home, ok := front.pop()
+	require.True(t, ok)
+	front.markVisited(home.URL)
+
+	front.push(QueueItem{URL: "https://example.com/stories/a", Depth: 1})
 
 	first, ok := front.pop()
 	require.True(t, ok)
-	assert.Equal(t, "https://example.com/blog/post", first.URL)
+	assert.Equal(t, "https://www.example.com/stories/a", first.URL)
+	assert.False(t, first.FromSitemap)
+	assert.Equal(t, 1, first.Depth)
 
-	second, ok := front.pop()
+	assert.Len(t, front.checkpoint(0, 0, false).Queue, 1)
+}
+
+func TestFrontier_LinkDisplacesSitemapEntryAtCap(t *testing.T) {
+	t.Parallel()
+
+	front := newFrontier(Checkpoint{}, 2)
+	front.push(QueueItem{URL: "https://example.com/docs/a", FromSitemap: true})
+	front.push(QueueItem{URL: "https://example.com/docs/b", FromSitemap: true})
+	front.push(QueueItem{URL: "https://example.com/pricing", Depth: 1})
+	front.push(QueueItem{URL: "https://example.com/docs/c", FromSitemap: true})
+
+	var urls []string
+	for _, item := range front.checkpoint(0, 0, false).Queue {
+		urls = append(urls, item.URL)
+	}
+
+	assert.Equal(t, []string{"https://example.com/docs/a", "https://example.com/pricing"}, urls)
+}
+
+func TestFrontier_PopsUncoveredEmbedHostFirst(t *testing.T) {
+	t.Parallel()
+
+	front := newFrontier(Checkpoint{}, 10)
+	front.push(QueueItem{URL: "https://example.com/pricing", Depth: 1})
+	front.push(QueueItem{URL: "https://example.com/blog/a", FromSitemap: true, EmbedHosts: []string{"cdn.example.net"}})
+	front.push(QueueItem{URL: "https://example.com/stories/a", FromSitemap: true, EmbedHosts: []string{"www.youtube.com"}})
+	front.push(QueueItem{URL: "https://example.com/stories/b", FromSitemap: true, EmbedHosts: []string{"www.youtube.com"}})
+	front.push(QueueItem{URL: "https://example.com/", Depth: 0, EmbedHosts: []string{"cdn.example.net"}})
+
+	var order []string
+
+	for {
+		item, ok := front.pop()
+		if !ok {
+			break
+		}
+
+		order = append(order, item.URL)
+		front.markVisited(item.URL)
+		front.cover(item.EmbedHosts)
+	}
+
+	assert.Equal(
+		t,
+		[]string{
+			"https://example.com/",
+			"https://example.com/stories/a",
+			"https://example.com/pricing",
+			"https://example.com/blog/a",
+			"https://example.com/stories/b",
+		},
+		order,
+	)
+}
+
+func TestFrontier_RoundRobinsSections(t *testing.T) {
+	t.Parallel()
+
+	front := newFrontier(Checkpoint{}, 10)
+	front.push(QueueItem{URL: "https://example.com/stories/a", Depth: 1})
+	front.push(QueueItem{URL: "https://example.com/stories/b", Depth: 1})
+	front.push(QueueItem{URL: "https://example.com/stories/c", Depth: 1})
+	front.push(QueueItem{URL: "https://example.com/changelog/x", Depth: 2})
+
+	var order []string
+
+	for {
+		item, ok := front.pop()
+		if !ok {
+			break
+		}
+
+		order = append(order, item.URL)
+		front.markVisited(item.URL)
+	}
+
+	assert.Equal(
+		t,
+		[]string{
+			"https://example.com/stories/a",
+			"https://example.com/changelog/x",
+			"https://example.com/stories/b",
+			"https://example.com/stories/c",
+		},
+		order,
+	)
+}
+
+func TestFrontier_ResumeKeepsCoveredHostsAndSections(t *testing.T) {
+	t.Parallel()
+
+	front := newFrontier(Checkpoint{}, 10)
+	front.push(QueueItem{URL: "https://example.com/stories/a", Depth: 1, EmbedHosts: []string{"www.youtube.com"}})
+	front.push(QueueItem{URL: "https://example.com/stories/b", Depth: 1, EmbedHosts: []string{"www.youtube.com"}})
+	front.push(QueueItem{URL: "https://example.com/blog/a", FromSitemap: true})
+
+	first, ok := front.pop()
 	require.True(t, ok)
-	assert.Equal(t, "https://example.com/pricing", second.URL)
+	front.markVisited(first.URL)
+	front.cover(first.EmbedHosts)
+
+	checkpoint := front.checkpoint(1, 0, false)
+	assert.Equal(t, []string{"www.youtube.com"}, checkpoint.CoveredHosts)
+
+	resumed := newFrontier(checkpoint, 10)
+	next, ok := resumed.pop()
+	require.True(t, ok)
+	assert.Equal(t, "https://example.com/blog/a", next.URL)
+}
+
+func TestSectionOf_SkipsLocale(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, "", sectionOf("https://example.com/"))
+	assert.Equal(t, "about", sectionOf("https://example.com/about"))
+	assert.Equal(t, "posts", sectionOf("https://example.com/posts/:id"))
+	assert.Equal(t, "en/blog", sectionOf("https://example.com/en/blog/post"))
+	assert.Equal(t, "fr-fr/pricing", sectionOf("https://example.com/fr-fr/pricing"))
+	assert.Equal(t, "en", sectionOf("https://example.com/en"))
 }
 
 func testRecorder(t *testing.T) *recorder {

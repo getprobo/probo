@@ -196,7 +196,47 @@ func TestRun_StopsAtPageLimit(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Equal(t, 2, result.PagesScanned)
+	assert.True(t, result.Truncated)
 	assert.NotEmpty(t, result.Checkpoint.Queue)
+}
+
+func TestRun_PausesAfterPagesPerRun(t *testing.T) {
+	t.Parallel()
+
+	alloc, cancel := testChrome(t)
+	defer cancel()
+
+	site := serve(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		_, _ = w.Write([]byte(`<!doctype html><a href="/a">a</a><a href="/b">b</a><a href="/c">c</a>`))
+	}))
+
+	limits := fastLimits(5)
+	limits.PagesPerRun = 2
+
+	in := Input{
+		Origin:             chromeURL(t, site),
+		BannerID:           "banner",
+		APIBaseURL:         "https://api.example.com",
+		Limits:             limits,
+		skipPublicURLCheck: true,
+	}
+
+	first, err := Run(context.Background(), alloc, in)
+	require.NoError(t, err)
+	assert.True(t, first.Paused)
+	assert.False(t, first.Truncated)
+	assert.Equal(t, 2, first.PagesScanned)
+	assert.NotEmpty(t, first.Checkpoint.Queue)
+
+	in.Checkpoint = &first.Checkpoint
+
+	second, err := Run(context.Background(), alloc, in)
+	require.NoError(t, err)
+	assert.False(t, second.Paused)
+	assert.False(t, second.Truncated)
+	assert.Equal(t, 4, second.PagesScanned)
+	assert.Empty(t, second.Checkpoint.Queue)
 }
 
 func TestRun_BlocksOffSiteDocument(t *testing.T) {
@@ -304,6 +344,9 @@ func fastLimits(pages int) Limits {
 		MaxSitemapBytes:   1 << 20,
 		MaxSitemapURLs:    10,
 		MaxSitemapFetches: 2,
+		MaxProbes:         10,
+		ProbeTimeout:      2 * time.Second,
+		ProbeBudget:       5 * time.Second,
 		MaxObservations:   100,
 		MaxQueue:          50,
 		ScanTimeout:       30 * time.Second,

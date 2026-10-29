@@ -39,6 +39,7 @@ type stopCause int
 const (
 	causeFinished stopCause = iota
 	causePaused
+	causeYield
 	causeTruncated
 	causeBrowser
 	causeEvents
@@ -68,8 +69,9 @@ type scan struct {
 }
 
 // Run crawls in.Origin in an isolated browser context of allocCtx. A
-// cancelled ctx pauses the scan after the last page that finished. The
-// scan budget is Limits.ScanTimeout minus checkpoint elapsed time.
+// cancelled ctx pauses the scan after the last page that finished, and so
+// does a spent PagesPerRun or RunTimeout. The scan budget is
+// Limits.ScanTimeout minus checkpoint elapsed time.
 func Run(ctx context.Context, allocCtx context.Context, in Input) (*Result, error) {
 	in.Limits = in.Limits.withDefaults()
 
@@ -92,8 +94,10 @@ func Run(ctx context.Context, allocCtx context.Context, in Input) (*Result, erro
 	start := startingCheckpoint(in.Checkpoint)
 	elapsed := time.Duration(start.ElapsedMS) * time.Millisecond
 	remaining := in.Limits.ScanTimeout - elapsed
+	pageCapped := start.PagesScanned >= in.Limits.MaxPages && len(start.Queue) > 0
+	exhausted := remaining <= 0 || start.Truncated || pageCapped
 
-	if ctx.Err() != nil && remaining > 0 && !start.Truncated {
+	if ctx.Err() != nil && !exhausted {
 		start.ElapsedMS = elapsed.Milliseconds()
 
 		return &Result{
@@ -103,7 +107,7 @@ func Run(ctx context.Context, allocCtx context.Context, in Input) (*Result, erro
 		}, nil
 	}
 
-	if remaining <= 0 || start.Truncated {
+	if exhausted {
 		start.Truncated = true
 		start.ElapsedMS = elapsed.Milliseconds()
 
@@ -173,7 +177,13 @@ func Run(ctx context.Context, allocCtx context.Context, in Input) (*Result, erro
 
 	if len(start.VisitedTemplates) == 0 && len(start.Queue) == 0 {
 		s.front.push(QueueItem{URL: startURL, Depth: 0})
-		s.enqueueSitemapURLs(scanCtx)
+
+		sitemapURLs := s.sitemapURLs(scanCtx)
+		for _, raw := range sitemapURLs {
+			s.front.push(QueueItem{URL: raw, FromSitemap: true})
+		}
+
+		s.probeEmbeds(scanCtx, sitemapURLs)
 	}
 
 	cause, err := s.loop()
@@ -193,15 +203,32 @@ func (in Input) client() *http.Client {
 }
 
 func (s *scan) loop() (stopCause, error) {
-	for s.pages < s.in.Limits.MaxPages {
+	var (
+		limits     = s.in.Limits
+		runStarted = time.Now()
+		visits     int
+	)
+
+	for {
 		if cause, stop := s.stopping(); stop {
 			return cause, nil
 		}
 
-		item, found := s.front.pop()
-		if !found {
+		if s.front.len() == 0 {
 			return causeFinished, nil
 		}
+
+		if s.pages >= limits.MaxPages {
+			return causeTruncated, nil
+		}
+
+		// A scan that has not loaded a page keeps the browser, so a site
+		// that never loads fails in one run instead of pausing forever.
+		if s.pages > 0 && (visits >= limits.PagesPerRun || time.Since(runStarted) >= limits.RunTimeout) {
+			return causeYield, nil
+		}
+
+		item, _ := s.front.pop()
 
 		if !s.site.contains(item.URL) || s.policy.block(s.scanCtx, http.MethodGet, item.URL, "", "") {
 			s.front.markVisited(item.URL)
@@ -210,6 +237,8 @@ func (s *scan) loop() (stopCause, error) {
 		}
 
 		page, links, err := s.visit(item)
+		visits++
+
 		if err != nil {
 			if cause, stop := s.stopping(); stop {
 				if cause == causePaused || cause == causeTruncated {
@@ -231,8 +260,10 @@ func (s *scan) loop() (stopCause, error) {
 		}
 
 		s.front.markVisited(item.URL)
+		s.front.cover(item.EmbedHosts)
+		s.front.cover(resourceHosts(page.Resources))
 
-		if !item.FromSitemap && item.Depth < s.in.Limits.MaxDepth {
+		if !item.FromSitemap && item.Depth < limits.MaxDepth {
 			for _, href := range links {
 				link, linkOK := resolveLink(item.URL, href)
 				if !linkOK || !s.site.contains(link) || s.policy.block(s.scanCtx, http.MethodGet, link, "", "") {
@@ -253,8 +284,6 @@ func (s *scan) loop() (stopCause, error) {
 			}
 		}
 	}
-
-	return causeFinished, nil
 }
 
 func (s *scan) visit(item QueueItem) (Page, []string, error) {
@@ -275,7 +304,7 @@ func (s *scan) visit(item QueueItem) (Page, []string, error) {
 
 	s.waitNetworkIdle(s.in.Limits.IdleWindow, s.in.Limits.LoadIdleTimeout)
 
-	if item.Depth == 0 && !item.FromSitemap {
+	if item.isStart() {
 		s.sleep(s.in.Limits.HomepageDwell)
 	}
 
@@ -433,7 +462,7 @@ func (s *scan) finish(cause stopCause) (*Result, error) {
 		return nil, fmt.Errorf("cannot read browser events: %w", s.fatalErr())
 	}
 
-	paused := cause == causePaused
+	paused := cause == causePaused || cause == causeYield
 	capped := cause == causeTruncated || s.rec.capped()
 
 	result := &Result{

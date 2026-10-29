@@ -37,7 +37,7 @@ import (
 	"go.gearno.de/kit/httpclient"
 )
 
-func (s *scan) enqueueSitemapURLs(ctx context.Context) {
+func (s *scan) sitemapURLs(ctx context.Context) []string {
 	seeds := []string{s.site.pathURL("/sitemap.xml")}
 	seeds = append(seeds, s.sitemapsFromRobots(ctx)...)
 
@@ -58,18 +58,7 @@ func (s *scan) enqueueSitemapURLs(ctx context.Context) {
 		}
 	}
 
-	representatives, rest := arrangeSitemapURLs(kept, s.in.Limits.MaxSitemapURLs)
-
-	// Representatives sit behind the homepage and ahead of links found
-	// there, so a section the homepage never reaches is still visited
-	// inside the page budget. The rest wait until those links are done.
-	for _, raw := range representatives {
-		s.front.push(QueueItem{URL: raw, Depth: 1})
-	}
-
-	for _, raw := range rest {
-		s.front.push(QueueItem{URL: raw, FromSitemap: true})
-	}
+	return arrangeSitemapURLs(kept, s.in.Limits.MaxSitemapURLs)
 }
 
 func (s *scan) sitemapsFromRobots(ctx context.Context) []string {
@@ -168,72 +157,34 @@ func (s *scan) collectSitemapGroups(
 }
 
 // arrangeSitemapURLs round-robins child sitemaps into cap so the first
-// file cannot fill it. representatives is one content URL per child,
-// chosen before the cap is applied.
-func arrangeSitemapURLs(groups [][]string, cap int) (representatives, rest []string) {
-	for _, group := range groups {
-		if loc := contentURL(group); loc != "" {
-			representatives = append(representatives, loc)
-		}
-	}
-
-	indexes := make([]int, len(groups))
+// file cannot fill it.
+func arrangeSitemapURLs(groups [][]string, cap int) []string {
+	var (
+		out     []string
+		indexes = make([]int, len(groups))
+	)
 
 	for {
-		if cap > 0 && len(rest) >= cap {
-			return representatives, rest
-		}
-
 		added := false
 
 		for i, group := range groups {
+			if cap > 0 && len(out) >= cap {
+				return out
+			}
+
 			if indexes[i] >= len(group) {
 				continue
 			}
 
-			if cap > 0 && len(rest) >= cap {
-				return representatives, rest
-			}
-
-			rest = append(rest, group[indexes[i]])
+			out = append(out, group[indexes[i]])
 			indexes[i]++
 			added = true
 		}
 
 		if !added {
-			return representatives, rest
+			return out
 		}
 	}
-}
-
-func contentURL(locs []string) string {
-	var fallback string
-
-	for _, loc := range locs {
-		if fallback == "" {
-			fallback = loc
-		}
-
-		if pathSegments(loc) >= 2 {
-			return loc
-		}
-	}
-
-	return fallback
-}
-
-func pathSegments(raw string) int {
-	parsed, err := url.Parse(raw)
-	if err != nil {
-		return 0
-	}
-
-	trimmed := strings.Trim(parsed.EscapedPath(), "/")
-	if trimmed == "" {
-		return 0
-	}
-
-	return len(strings.Split(trimmed, "/"))
 }
 
 func sitemapLocations(body string) ([]string, bool) {
