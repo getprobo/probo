@@ -340,6 +340,16 @@ func (r *mutationResolver) AddEmployeePortalDocument(ctx context.Context, input 
 
 // DeleteEmployeePortalDocument is the resolver for the deleteEmployeePortalDocument field.
 func (r *mutationResolver) DeleteEmployeePortalDocument(ctx context.Context, input types.DeleteEmployeePortalDocumentInput) (*types.DeleteEmployeePortalDocumentPayload, error) {
+	if err := (&employeeportalmgmt.DeleteEmployeePortalDocumentRequest{ID: input.ID}).Validate(); err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot validate employee portal document delete", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
 	scope, err := r.authorize(ctx, input.ID, employeeportalmgmt.ActionEmployeePortalUpdate)
 	if err != nil {
 		if gqlx.IsNotFound(err) {
@@ -349,16 +359,6 @@ func (r *mutationResolver) DeleteEmployeePortalDocument(ctx context.Context, inp
 		}
 
 		return nil, err
-	}
-
-	if err := (&employeeportalmgmt.DeleteEmployeePortalDocumentRequest{ID: input.ID}).Validate(); err != nil {
-		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot validate employee portal document delete", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
 	}
 
 	link, err := r.employeePortal.GetDocument(ctx, scope, input.ID)

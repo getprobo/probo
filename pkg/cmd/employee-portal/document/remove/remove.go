@@ -24,6 +24,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
@@ -44,7 +45,10 @@ type removeResponse struct {
 }
 
 func NewCmdRemove(f *cmdutil.Factory) *cobra.Command {
-	var flagID string
+	var (
+		flagID  string
+		flagYes bool
+	)
 
 	cmd := &cobra.Command{
 		Use:     "remove",
@@ -52,6 +56,26 @@ func NewCmdRemove(f *cmdutil.Factory) *cobra.Command {
 		Example: `  prb employee-portal document remove --id <employee-portal-document-id>`,
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if !flagYes {
+				if !f.IOStreams.IsInteractive() {
+					return fmt.Errorf("cannot stop sharing document: confirmation required, use --yes to confirm")
+				}
+
+				var confirmed bool
+
+				err := huh.NewConfirm().
+					Title(fmt.Sprintf("Stop sharing employee portal document %s?", flagID)).
+					Value(&confirmed).
+					Run()
+				if err != nil {
+					return err
+				}
+
+				if !confirmed {
+					return nil
+				}
+			}
+
 			cfg, err := f.Config()
 			if err != nil {
 				return err
@@ -99,6 +123,7 @@ func NewCmdRemove(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.Flags().StringVar(&flagID, "id", "", "Employee portal document ID")
 	_ = cmd.MarkFlagRequired("id")
+	cmd.Flags().BoolVarP(&flagYes, "yes", "y", false, "Skip confirmation prompt")
 
 	return cmd
 }

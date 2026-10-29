@@ -11484,6 +11484,10 @@ func (r *Resolver) AddEmployeePortalDocumentTool(ctx context.Context, req *mcp.C
 }
 
 func (r *Resolver) DeleteEmployeePortalDocumentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteEmployeePortalDocumentInput) (*mcp.CallToolResult, types.DeleteEmployeePortalDocumentOutput, error) {
+	if err := (&employeeportalmgmt.DeleteEmployeePortalDocumentRequest{ID: input.ID}).Validate(); err != nil {
+		return nil, types.DeleteEmployeePortalDocumentOutput{}, err
+	}
+
 	scope, err := r.Authorize(ctx, input.ID, employeeportalmgmt.ActionEmployeePortalUpdate)
 	if err != nil {
 		// Authorize turns a missing row into this string and drops the sentinel.
@@ -11493,10 +11497,6 @@ func (r *Resolver) DeleteEmployeePortalDocumentTool(ctx context.Context, req *mc
 			}, nil
 		}
 
-		return nil, types.DeleteEmployeePortalDocumentOutput{}, err
-	}
-
-	if err := (&employeeportalmgmt.DeleteEmployeePortalDocumentRequest{ID: input.ID}).Validate(); err != nil {
 		return nil, types.DeleteEmployeePortalDocumentOutput{}, err
 	}
 

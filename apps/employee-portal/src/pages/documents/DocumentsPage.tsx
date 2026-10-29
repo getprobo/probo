@@ -22,6 +22,7 @@ import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { DocumentsPageQuery } from "#/__generated__/core/DocumentsPageQuery.graphql";
+import { NotFoundError } from "#/lib/relay/errors";
 import { ApprovalDashboardCard } from "#/pages/_components/ApprovalDashboardCard";
 import { PageHeader } from "#/pages/_components/PageHeader";
 import { SignatureDashboardCard } from "#/pages/_components/SignatureDashboardCard";
@@ -71,7 +72,7 @@ export function DocumentsPage({ queryRef }: DocumentsPageProps) {
     queryRef,
   );
   if (employeePortal.__typename !== "EmployeePortal") {
-    throw new Error("invalid type for employee portal node");
+    throw new NotFoundError("invalid type for employee portal node");
   }
 
   return (

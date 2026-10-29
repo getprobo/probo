@@ -325,7 +325,7 @@ func publishedLinkedDocumentIDs(
 	}
 
 	var documents coredata.Documents
-	if err := documents.LoadByIDs(ctx, conn, scope, documentIDs); err != nil {
+	if err := documents.LoadExistingByIDs(ctx, conn, scope, documentIDs); err != nil {
 		return nil, fmt.Errorf("cannot load documents: %w", err)
 	}
 

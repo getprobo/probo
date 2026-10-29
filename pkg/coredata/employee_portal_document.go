@@ -328,7 +328,7 @@ WHERE
 	AND employee_portal_id = @employee_portal_id
 	AND (
 		NOT @has_document_ids
-		OR document_id = ANY(@document_ids)
+		OR document_id = ANY(@document_ids::text[])
 	)
 	AND %s
 `
@@ -418,6 +418,31 @@ RETURNING
 	}
 
 	*d = row
+
+	return nil
+}
+
+func (EmployeePortalDocument) DeleteByDocumentIDs(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	documentIDs []gid.GID,
+) error {
+	q := `
+DELETE FROM employee_portal_documents
+WHERE
+	%s
+	AND document_id = ANY(@document_ids::text[])
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"document_ids": documentIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot delete employee portal documents by document ids: %w", err)
+	}
 
 	return nil
 }

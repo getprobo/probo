@@ -173,6 +173,30 @@ func (s *Service) ListForOrganizationID(
 	return page.NewPage(portals, cursor), nil
 }
 
+func (s *Service) OldestByOrganizationIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	organizationIDs []gid.GID,
+) ([]*coredata.EmployeePortal, error) {
+	var portals coredata.EmployeePortals
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := portals.LoadOldestByOrganizationIDs(ctx, conn, scope, organizationIDs); err != nil {
+				return fmt.Errorf("cannot load employee portals: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return portals, nil
+}
+
 func (s *Service) CountForOrganizationID(
 	ctx context.Context,
 	scope coredata.Scoper,

@@ -78,6 +78,14 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		Aliases: []string{"ls"},
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
+				return err
+			}
+
+			if err := cmdutil.ValidateLimit(flagLimit); err != nil {
+				return err
+			}
+
 			cfg, err := f.Config()
 			if err != nil {
 				return err

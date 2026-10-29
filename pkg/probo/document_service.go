@@ -1577,6 +1577,11 @@ func (s *DocumentService) deleteDocumentEntityMappings(
 		return fmt.Errorf("cannot delete internal control mappings: %w", err)
 	}
 
+	employeePortalDocument := coredata.EmployeePortalDocument{}
+	if err := employeePortalDocument.DeleteByDocumentIDs(ctx, tx, scope, documentIDs); err != nil {
+		return fmt.Errorf("cannot delete employee portal document mappings: %w", err)
+	}
+
 	return nil
 }
 

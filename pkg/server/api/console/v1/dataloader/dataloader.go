@@ -35,7 +35,6 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/iam/policy"
-	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/authn"
@@ -250,29 +249,19 @@ func (f *batchFetcher) fetchEmployeePortalsByOrganization(
 ) (map[gid.GID]*coredata.EmployeePortal, error) {
 	result := make(map[gid.GID]*coredata.EmployeePortal, len(organizationIDs))
 
-	for _, organizationID := range organizationIDs {
-		portals, err := f.employeePortal.ListForOrganizationID(
+	for tenantID, ids := range gidKeysByTenant(organizationIDs) {
+		portals, err := f.employeePortal.OldestByOrganizationIDs(
 			ctx,
-			scopeFromContext(ctx, organizationID.TenantID()),
-			organizationID,
-			page.NewCursor(
-				1,
-				nil,
-				page.Head,
-				page.OrderBy[coredata.EmployeePortalOrderField]{
-					Field:     coredata.EmployeePortalOrderFieldCreatedAt,
-					Direction: page.OrderDirectionAsc,
-				},
-			),
+			scopeFromContext(ctx, tenantID),
+			ids,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("cannot batch load employee portals: %w", err)
 		}
-		if len(portals.Data) == 0 {
-			continue
-		}
 
-		result[organizationID] = portals.Data[0]
+		for _, portal := range portals {
+			result[portal.OrganizationID] = portal
+		}
 	}
 
 	return result, nil

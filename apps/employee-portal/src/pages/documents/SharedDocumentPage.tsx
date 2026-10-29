@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { type ReactNode, use } from "react";
+import { type ReactNode, use, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery, useRelayEnvironment } from "react-relay";
 import { commitMutation, type Environment } from "relay-runtime";
@@ -36,6 +36,9 @@ const NS = "documents";
 
 export const sharedDocumentPageQuery = graphql`
   query SharedDocumentPageQuery($documentId: ID!) @throwOnFieldError {
+    viewer @required(action: THROW) {
+      id
+    }
     document: node(id: $documentId) @required(action: THROW) {
       __typename
       ... on EmployeePortalDocument {
@@ -52,21 +55,30 @@ interface SharedDocumentPageProps {
 }
 
 interface SharedDocumentWorkspaceProps {
+  viewerId: string;
   versionId: string;
   title: string;
   request: ReactNode;
 }
 
-// One export per version. commitMutation does not update component state, so
-// the suspended page can start it before mounting. The useMutation hook cannot:
-// its in-flight update runs before this component mounts.
+// In-flight exports only. commitMutation does not update component state, so
+// the suspended page can start one before mounting. The useMutation hook
+// cannot: its in-flight update runs before this component mounts. The map
+// drops the promise when it settles so a resolved data URI is not retained,
+// and the key includes the viewer because the watermark embeds their email.
 const pdfPromises = new Map<string, Promise<string>>();
+
+function sharedDocumentPdfKey(viewerId: string, documentVersionId: string): string {
+  return `${viewerId}:${documentVersionId}`;
+}
 
 function loadSharedDocumentPdf(
   environment: Environment,
+  viewerId: string,
   documentVersionId: string,
 ): Promise<string> {
-  const existing = pdfPromises.get(documentVersionId);
+  const key = sharedDocumentPdfKey(viewerId, documentVersionId);
+  const existing = pdfPromises.get(key);
   if (existing != null) {
     return existing;
   }
@@ -86,25 +98,30 @@ function loadSharedDocumentPdf(
       onError: reject,
     });
   });
-  void promise.catch(() => {
-    if (pdfPromises.get(documentVersionId) === promise) {
-      pdfPromises.delete(documentVersionId);
+  void promise.finally(() => {
+    if (pdfPromises.get(key) === promise) {
+      pdfPromises.delete(key);
     }
   });
-  pdfPromises.set(documentVersionId, promise);
+  pdfPromises.set(key, promise);
   return promise;
 }
 
 // Suspends on the export, then mounts the PDF in that same render. An effect
 // would let the workspace commit first, and react-pdf would suspend the
-// loader skeleton again.
+// loader skeleton again. The promise stays on this component so a suspense
+// retry does not start another export.
 function SharedDocumentWorkspace({
+  viewerId,
   versionId,
   title,
   request,
 }: SharedDocumentWorkspaceProps) {
   const environment = useRelayEnvironment();
-  const dataUri = use(loadSharedDocumentPdf(environment, versionId));
+  const [promise] = useState(() =>
+    loadSharedDocumentPdf(environment, viewerId, versionId),
+  );
+  const dataUri = use(promise);
 
   return (
     <DocumentWorkspace
@@ -119,7 +136,7 @@ export function SharedDocumentPage({ queryRef }: SharedDocumentPageProps) {
   const { t } = useTranslation(NS);
   const { t: tApp } = useTranslation();
   const { employeePortalId } = useEmployeePortalRoute();
-  const { document } = usePreloadedQuery<SharedDocumentPageQuery>(
+  const { viewer, document } = usePreloadedQuery<SharedDocumentPageQuery>(
     sharedDocumentPageQuery,
     queryRef,
   );
@@ -129,6 +146,8 @@ export function SharedDocumentPage({ queryRef }: SharedDocumentPageProps) {
 
   return (
     <SharedDocumentWorkspace
+      key={`${viewer.id}:${document.publishedVersionId}`}
+      viewerId={viewer.id}
       versionId={document.publishedVersionId}
       title={document.title}
       request={(

@@ -248,6 +248,59 @@ WHERE
 	return nil
 }
 
+func (ps *EmployeePortals) LoadOldestByOrganizationIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	organizationIDs []gid.GID,
+) error {
+	if len(organizationIDs) == 0 {
+		*ps = EmployeePortals{}
+		return nil
+	}
+
+	q := `
+SELECT DISTINCT ON (organization_id)
+	id,
+	organization_id,
+	name,
+	active,
+	capabilities,
+	logo_file_id,
+	dark_logo_file_id,
+	created_at,
+	updated_at
+FROM
+	employee_portals
+WHERE
+	%s
+	AND organization_id = ANY(@organization_ids::text[])
+ORDER BY
+	organization_id,
+	created_at ASC,
+	id ASC
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"organization_ids": organizationIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query employee portals: %w", err)
+	}
+
+	portals, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[EmployeePortal])
+	if err != nil {
+		return fmt.Errorf("cannot collect employee portals: %w", err)
+	}
+
+	*ps = portals
+
+	return nil
+}
+
 func (ps *EmployeePortals) CountByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
