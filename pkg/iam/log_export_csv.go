@@ -211,9 +211,11 @@ func writeAuditLogEntryCSVRow(
 ) error {
 	email := actor.email
 	name := actor.name
+
 	if entry.ActorEmail != nil {
 		email = *entry.ActorEmail
 	}
+
 	if entry.ActorName != nil {
 		name = *entry.ActorName
 	}
