@@ -101,7 +101,7 @@ func materialize(ctx context.Context, document *automerge.Document) (string, err
 		return "", fmt.Errorf("cannot get collaboration spans: %w", err)
 	}
 
-	content, err := automergeprosemirror.Render(spans)
+	content, err := automergeprosemirror.Render(ProjectAcceptedSpans(spans))
 	if err != nil {
 		return "", fmt.Errorf("cannot render collaboration spans: %w", err)
 	}

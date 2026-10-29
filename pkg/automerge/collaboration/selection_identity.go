@@ -32,6 +32,7 @@ import (
 const (
 	selectionPresenceKind     = "selection"
 	departurePresenceKind     = "departure"
+	reviewPresenceKind        = "document-review"
 	maxSelectionDisplayRunes  = 128
 	maxSelectionAvatarRunes   = 2048
 	selectionDisplayNameField = "displayName"
@@ -69,6 +70,40 @@ func EncodeDepartureEphemeral(
 	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot encode departure frame: %w", err)
+	}
+
+	return frame, nil
+}
+
+// EncodeReviewEphemeral builds an ephemeral frame that tells open editors to
+// refetch comment threads and suggestions. A fresh sessionID keeps each
+// notice from being dropped as a duplicate.
+func EncodeReviewEphemeral(
+	senderID string,
+	targetID string,
+	documentID string,
+	sessionID string,
+) ([]byte, error) {
+	payload, err := marshal(map[string]string{
+		selectionKindField: reviewPresenceKind,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot encode review ephemeral: %w", err)
+	}
+
+	frame, err := EncodeMessage(
+		Message{
+			Type:       MessageEphemeral,
+			SenderID:   senderID,
+			TargetID:   targetID,
+			DocumentID: documentID,
+			SessionID:  sessionID,
+			Count:      1,
+			Data:       payload,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot encode review frame: %w", err)
 	}
 
 	return frame, nil

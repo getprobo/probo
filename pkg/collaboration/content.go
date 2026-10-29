@@ -183,6 +183,17 @@ func (s *Service) PutContent(
 		return err
 	}
 
+	if doc.Seeded {
+		spans, err := BodySpans(automergeDocument)
+		if err != nil {
+			return err
+		}
+
+		if HasOpenSuggestions(spans) {
+			return ErrOpenSuggestions
+		}
+	}
+
 	if err := writeSpans(automergeDocument, content, !doc.Seeded); err != nil {
 		return err
 	}
