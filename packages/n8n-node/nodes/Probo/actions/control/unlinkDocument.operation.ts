@@ -19,7 +19,8 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+import { organizationLocator, documentLocator } from '../../locators';
+import { proboApiRequest, readResourceId } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
@@ -36,20 +37,17 @@ export const description: INodeProperties[] = [
 		description: 'The ID of the control',
 		required: true,
 	},
-	{
-		displayName: 'Document ID',
-		name: 'documentId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['control'],
-				operation: ['unlinkDocument'],
-			},
-		},
-		default: '',
+	organizationLocator({
+		resource: ['control'],
+		operation: ['unlinkDocument'],
+		required: false,
+		description: 'Organization to search documents in. Leave this empty when entering a document ID.',
+	}),
+	documentLocator({
+		resource: ['control'],
+		operation: ['unlinkDocument'],
 		description: 'The ID of the document to unlink',
-		required: true,
-	},
+	}),
 ];
 
 export async function execute(
@@ -57,7 +55,7 @@ export async function execute(
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
 	const controlId = this.getNodeParameter('controlId', itemIndex) as string;
-	const documentId = this.getNodeParameter('documentId', itemIndex) as string;
+	const documentId = readResourceId(this.getNodeParameter('documentId', itemIndex));
 
 	const query = `
 		mutation DeleteControlDocumentMapping($input: DeleteControlDocumentMappingInput!) {

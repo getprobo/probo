@@ -168,6 +168,10 @@ export async function execute(
 }
 ```
 
+List operations return one n8n item per record. Build that array with `executionItems(records, itemIndex)` from `GenericFunctions.ts`, and type `execute` as `Promise<INodeExecutionData[]>`. `Probo.node.ts` flattens the array into the node's output. An empty list produces no items.
+
+`organizationId` and `documentId` inputs are resource locators (`organizationLocator` / `documentLocator` in `locators.ts`). Read them with `readResourceId`, which accepts both the locator object and a legacy string id. Register `searchOrganizations` and `searchDocuments` on the node `listSearch` methods when a node shows those fields.
+
 ## GraphQL helpers
 
 All helpers live in `GenericFunctions.ts`.

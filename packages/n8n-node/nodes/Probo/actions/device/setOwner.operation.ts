@@ -90,6 +90,7 @@ export async function execute(
 					owner {
 						id
 						fullName
+						emailAddress
 					}
 				}
 			}

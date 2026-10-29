@@ -20,6 +20,7 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
+import { stampGraphqlNode, withParentReference } from '../../output';
 
 export const description: INodeProperties[] = [
 	{
@@ -70,6 +71,12 @@ export async function execute(
 						requestedAt
 						createdAt
 						updatedAt
+						documentVersion {
+							id
+							document {
+								id
+							}
+						}
 						signedBy {
 							id
 							fullName
@@ -86,7 +93,11 @@ export async function execute(
 	});
 
 	return {
-		json: responseData,
+		json: stampGraphqlNode(
+			responseData,
+			['data', 'requestSignature', 'documentVersionSignatureEdge', 'node'],
+			(node) => withParentReference(node, { versionId: documentVersionId }),
+		),
 		pairedItem: { item: itemIndex },
 	};
 }

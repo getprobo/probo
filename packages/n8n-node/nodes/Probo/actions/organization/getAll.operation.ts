@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { proboConnectApiRequestAllItems } from '../../GenericFunctions';
+import { proboConnectApiRequestAllItems, executionItems } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
@@ -57,7 +57,7 @@ export const description: INodeProperties[] = [
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
-): Promise<INodeExecutionData> {
+): Promise<INodeExecutionData[]> {
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
 
@@ -117,8 +117,5 @@ export async function execute(
 	}
 	const organizations = Array.from(organizationMap.values());
 
-	return {
-		json: { organizations },
-		pairedItem: { item: itemIndex },
-	};
+	return executionItems(organizations, itemIndex);
 }

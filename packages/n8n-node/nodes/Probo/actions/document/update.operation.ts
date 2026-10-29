@@ -19,23 +19,21 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+import { organizationLocator, documentLocator } from '../../locators';
+import { proboApiRequest, readResourceId } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Document ID',
-		name: 'documentId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['document'],
-				operation: ['update'],
-			},
-		},
-		default: '',
+	organizationLocator({
+		resource: ['document'],
+		operation: ['update'],
+		required: false,
+		description: 'Organization to search documents in. Leave this empty when entering a document ID.',
+	}),
+	documentLocator({
+		resource: ['document'],
+		operation: ['update'],
 		description: 'The ID of the document to update',
-		required: true,
-	},
+	}),
 	{
 		displayName: 'Update Fields',
 		name: 'updateFields',
@@ -112,7 +110,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const documentId = this.getNodeParameter('documentId', itemIndex) as string;
+	const documentId = readResourceId(this.getNodeParameter('documentId', itemIndex));
 	const updateFields = this.getNodeParameter('updateFields', itemIndex, {}) as {
 		title?: string;
 		content?: string;

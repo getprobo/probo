@@ -19,30 +19,28 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+import { organizationLocator, documentLocator } from '../../locators';
+import { proboApiRequest, readResourceId } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Document ID',
-		name: 'documentId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['document'],
-				operation: ['getLatestPublishedVersionId'],
-			},
-		},
-		default: '',
+	organizationLocator({
+		resource: ['document'],
+		operation: ['getLatestPublishedVersionId'],
+		required: false,
+		description: 'Organization to search documents in. Leave this empty when entering a document ID.',
+	}),
+	documentLocator({
+		resource: ['document'],
+		operation: ['getLatestPublishedVersionId'],
 		description: 'The ID of the document whose latest published version ID should be returned',
-		required: true,
-	},
+	}),
 ];
 
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const documentId = this.getNodeParameter('documentId', itemIndex) as string;
+	const documentId = readResourceId(this.getNodeParameter('documentId', itemIndex));
 
 	const query = `
 		query GetLatestPublishedDocumentVersionId($documentId: ID!) {

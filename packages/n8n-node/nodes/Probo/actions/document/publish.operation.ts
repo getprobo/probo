@@ -19,23 +19,20 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+import { organizationLocator, documentLocator } from '../../locators';
+import { proboApiRequest, readResourceId } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Document ID',
-		name: 'documentId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['document'],
-				operation: ['publish'],
-			},
-		},
-		default: '',
-		description: 'The ID of the document',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['document'],
+		operation: ['publish'],
+		required: false,
+		description: 'Organization to search documents in. Leave this empty when entering a document ID.',
+	}),
+	documentLocator({
+		resource: ['document'],
+		operation: ['publish'],
+	}),
 	{
 		displayName: 'Minor',
 		name: 'minor',
@@ -86,7 +83,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const documentId = this.getNodeParameter('documentId', itemIndex) as string;
+	const documentId = readResourceId(this.getNodeParameter('documentId', itemIndex));
 	const minor = this.getNodeParameter('minor', itemIndex, false) as boolean;
 	const approverIdsRaw = this.getNodeParameter('approverIds', itemIndex, '') as string;
 	const changelog = this.getNodeParameter('changelog', itemIndex) as string;

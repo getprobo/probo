@@ -41,6 +41,8 @@ import * as getApprovalQuorumOp from './getApprovalQuorum.operation';
 import * as getAllApprovalQuorumsOp from './getAllApprovalQuorums.operation';
 import * as getApprovalDecisionOp from './getApprovalDecision.operation';
 import * as getAllApprovalDecisionsOp from './getAllApprovalDecisions.operation';
+import * as getPendingApprovalsOp from './getPendingApprovals.operation';
+import * as getPendingSignaturesOp from './getPendingSignatures.operation';
 
 export const description: INodeProperties[] = [
 	{
@@ -139,6 +141,18 @@ export const description: INodeProperties[] = [
 				action: 'Get many document versions',
 			},
 			{
+				name: 'Get Pending Approvals',
+				value: 'getPendingApprovals',
+				description: 'Get approval decisions that are still waiting',
+				action: 'Get pending document approvals',
+			},
+			{
+				name: 'Get Pending Signatures',
+				value: 'getPendingSignatures',
+				description: 'Get signature requests that are still waiting',
+				action: 'Get pending document signatures',
+			},
+			{
 				name: 'Get Signature',
 				value: 'getSignature',
 				description: 'Get a document version signature',
@@ -211,6 +225,8 @@ export const description: INodeProperties[] = [
 	...getAllApprovalQuorumsOp.description,
 	...getApprovalDecisionOp.description,
 	...getAllApprovalDecisionsOp.description,
+	...getPendingApprovalsOp.description,
+	...getPendingSignaturesOp.description,
 ];
 
 export {
@@ -236,4 +252,6 @@ export {
 	getAllApprovalQuorumsOp as getAllApprovalQuorums,
 	getApprovalDecisionOp as getApprovalDecision,
 	getAllApprovalDecisionsOp as getAllApprovalDecisions,
+	getPendingApprovalsOp as getPendingApprovals,
+	getPendingSignaturesOp as getPendingSignatures,
 };

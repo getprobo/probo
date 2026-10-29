@@ -71,6 +71,7 @@ export async function execute(
 					owner {
 						id
 						fullName
+						emailAddress
 					}
 					internalControls(first: 0) {
 						totalCount
