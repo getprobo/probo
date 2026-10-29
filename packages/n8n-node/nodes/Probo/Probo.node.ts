@@ -246,11 +246,6 @@ export class Probo implements INodeType {
 						description: 'Manage resource aliases',
 					},
 					{
-						name: 'Tag',
-						value: 'tag',
-						description: 'Manage tags',
-					},
-					{
 						name: 'Rights Request',
 						value: 'rightsRequest',
 						description: 'Manage rights requests',
@@ -269,6 +264,11 @@ export class Probo implements INodeType {
 						name: 'Statement of Applicability',
 						value: 'statementOfApplicability',
 						description: 'Manage statements of applicability',
+					},
+					{
+						name: 'Tag',
+						value: 'tag',
+						description: 'Manage tags',
 					},
 					{
 						name: 'Task',
