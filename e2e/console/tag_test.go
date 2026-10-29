@@ -72,6 +72,36 @@ const (
 		}
 	`
 
+	updateTagMutation = `
+		mutation($input: UpdateTagInput!) {
+			updateTag(input: $input) {
+				tag {
+					id
+					value
+					color
+				}
+			}
+		}
+	`
+
+	deleteTagMutation = `
+		mutation($input: DeleteTagInput!) {
+			deleteTag(input: $input) {
+				deletedTagId
+			}
+		}
+	`
+
+	tagNodeQuery = `
+		query($id: ID!) {
+			node(id: $id) {
+				... on Tag {
+					id
+				}
+			}
+		}
+	`
+
 	tagsForResourceQuery = `
 		query($resourceId: ID!) {
 			tagsForResource(resourceId: $resourceId) {
@@ -214,18 +244,6 @@ func TestTag_CatalogCRUD(t *testing.T) {
 
 	tagID := createResult.CreateTag.TagEdge.Node.ID
 
-	const updateMutation = `
-		mutation($input: UpdateTagInput!) {
-			updateTag(input: $input) {
-				tag {
-					id
-					value
-					color
-				}
-			}
-		}
-	`
-
 	var updateResult struct {
 		UpdateTag struct {
 			Tag struct {
@@ -236,7 +254,7 @@ func TestTag_CatalogCRUD(t *testing.T) {
 		} `json:"updateTag"`
 	}
 
-	err = owner.Execute(updateMutation, map[string]any{
+	err = owner.Execute(updateTagMutation, map[string]any{
 		"input": map[string]any{
 			"id":    tagID,
 			"value": "Staging",
@@ -248,7 +266,7 @@ func TestTag_CatalogCRUD(t *testing.T) {
 	require.NotNil(t, updateResult.UpdateTag.Tag.Color)
 	assert.Equal(t, "#00ff00", *updateResult.UpdateTag.Tag.Color)
 
-	err = owner.Execute(updateMutation, map[string]any{
+	err = owner.Execute(updateTagMutation, map[string]any{
 		"input": map[string]any{
 			"id":    tagID,
 			"value": "Staging",
@@ -258,7 +276,7 @@ func TestTag_CatalogCRUD(t *testing.T) {
 	require.NotNil(t, updateResult.UpdateTag.Tag.Color, "omitting color keeps it")
 	assert.Equal(t, "#00ff00", *updateResult.UpdateTag.Tag.Color)
 
-	err = owner.Execute(updateMutation, map[string]any{
+	err = owner.Execute(updateTagMutation, map[string]any{
 		"input": map[string]any{
 			"id":    tagID,
 			"color": nil,
@@ -317,21 +335,13 @@ func TestTag_CatalogCRUD(t *testing.T) {
 
 	assert.True(t, found)
 
-	const deleteMutation = `
-		mutation($input: DeleteTagInput!) {
-			deleteTag(input: $input) {
-				deletedTagId
-			}
-		}
-	`
-
 	var deleteResult struct {
 		DeleteTag struct {
 			DeletedTagID string `json:"deletedTagId"`
 		} `json:"deleteTag"`
 	}
 
-	err = owner.Execute(deleteMutation, map[string]any{
+	err = owner.Execute(deleteTagMutation, map[string]any{
 		"input": map[string]any{
 			"tagId": tagID,
 		},
@@ -484,4 +494,186 @@ func TestTag_AttachRejectsUntaggableResource(t *testing.T) {
 		},
 	})
 	testutil.RequireErrorCode(t, err, "INVALID")
+}
+
+func TestTag_DeleteRemovesAssignments(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	documentID := factory.NewDocument(owner).WithTitle("Cascade Document").Create()
+	tagID := createTag(t, owner, "lifecycle", "Deprecated")
+
+	attachTag(t, owner, documentID, tagID)
+	require.Len(t, tagsForResource(t, owner, documentID).TagsForResource, 1)
+
+	_, err := owner.Do(deleteTagMutation, map[string]any{
+		"input": map[string]any{"tagId": tagID},
+	})
+	require.NoError(t, err)
+
+	assert.Empty(t, tagsForResource(t, owner, documentID).TagsForResource)
+
+	var nodeResult struct {
+		Node *struct {
+			ID string `json:"id"`
+		} `json:"node"`
+	}
+
+	err = owner.Execute(tagNodeQuery, map[string]any{"id": tagID}, &nodeResult)
+	testutil.AssertNodeNotAccessible(t, err, nodeResult.Node == nil, "Tag")
+}
+
+func TestTag_RBAC(t *testing.T) {
+	t.Parallel()
+
+	t.Run("viewer can read tags", func(t *testing.T) {
+		t.Parallel()
+
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+		viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+		documentID := factory.NewDocument(owner).WithTitle("Viewer Document").Create()
+		tagID := createTag(t, owner, "team", "Security")
+		attachTag(t, owner, documentID, tagID)
+
+		var nodeResult struct {
+			Node *struct {
+				ID string `json:"id"`
+			} `json:"node"`
+		}
+
+		err := viewer.Execute(tagNodeQuery, map[string]any{"id": tagID}, &nodeResult)
+		require.NoError(t, err)
+		require.NotNil(t, nodeResult.Node)
+		assert.Equal(t, tagID, nodeResult.Node.ID)
+
+		tags := tagsForResource(t, viewer, documentID).TagsForResource
+		require.Len(t, tags, 1)
+		assert.Equal(t, tagID, tags[0].ID)
+	})
+
+	t.Run("viewer cannot change tags", func(t *testing.T) {
+		t.Parallel()
+
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+		viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+		documentID := factory.NewDocument(owner).WithTitle("Viewer Document").Create()
+		tagID := createTag(t, owner, "team", "Platform")
+		attachedTagID := createTag(t, owner, "region", "EU")
+		attachTag(t, owner, documentID, attachedTagID)
+
+		_, err := viewer.Do(createTagMutation, map[string]any{
+			"input": map[string]any{
+				"organizationId": viewer.GetOrganizationID().String(),
+				"key":            "team",
+				"value":          "Viewer",
+			},
+		})
+		testutil.RequireForbiddenError(t, err, "viewer cannot create")
+
+		_, err = viewer.Do(updateTagMutation, map[string]any{
+			"input": map[string]any{"id": tagID, "value": "Changed"},
+		})
+		testutil.RequireForbiddenError(t, err, "viewer cannot update")
+
+		_, err = viewer.Do(deleteTagMutation, map[string]any{
+			"input": map[string]any{"tagId": tagID},
+		})
+		testutil.RequireForbiddenError(t, err, "viewer cannot delete")
+
+		_, err = viewer.Do(attachTagMutation, map[string]any{
+			"input": map[string]any{"resourceId": documentID, "tagId": tagID},
+		})
+		testutil.RequireForbiddenError(t, err, "viewer cannot attach")
+
+		_, err = viewer.Do(detachTagMutation, map[string]any{
+			"input": map[string]any{"resourceId": documentID, "tagId": attachedTagID},
+		})
+		testutil.RequireForbiddenError(t, err, "viewer cannot detach")
+	})
+
+	t.Run("admin can manage tags", func(t *testing.T) {
+		t.Parallel()
+
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+		admin := testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
+		documentID := factory.NewDocument(owner).WithTitle("Admin Document").Create()
+
+		tagID := createTag(t, admin, "team", "Compliance")
+		attached := attachTag(t, admin, documentID, tagID)
+		assert.Equal(t, tagID, attached.AttachTag.Tag.ID)
+
+		detached := detachTag(t, admin, documentID, tagID)
+		require.NotNil(t, detached.DetachTag.DeletedTagAssignmentID)
+
+		_, err := admin.Do(deleteTagMutation, map[string]any{
+			"input": map[string]any{"tagId": tagID},
+		})
+		require.NoError(t, err)
+	})
+}
+
+func TestTag_TenantIsolation(t *testing.T) {
+	t.Parallel()
+
+	owner1 := testutil.NewClient(t, testutil.RoleOwner)
+	owner2 := testutil.NewClient(t, testutil.RoleOwner)
+
+	document1ID := factory.NewDocument(owner1).WithTitle("Org 1 Document").Create()
+	document2ID := factory.NewDocument(owner2).WithTitle("Org 2 Document").Create()
+	tag1ID := createTag(t, owner1, "env", "Production")
+	tag2ID := createTag(t, owner2, "env", "Production")
+	attachTag(t, owner1, document1ID, tag1ID)
+
+	t.Run("other org cannot read the tag", func(t *testing.T) {
+		var nodeResult struct {
+			Node *struct {
+				ID string `json:"id"`
+			} `json:"node"`
+		}
+
+		err := owner2.Execute(tagNodeQuery, map[string]any{"id": tag1ID}, &nodeResult)
+		testutil.AssertNodeNotAccessible(t, err, nodeResult.Node == nil, "Tag")
+	})
+
+	t.Run("other org cannot list tags of a resource", func(t *testing.T) {
+		_, err := owner2.Do(tagsForResourceQuery, map[string]any{"resourceId": document1ID})
+		require.Error(t, err)
+	})
+
+	t.Run("other org cannot change the tag", func(t *testing.T) {
+		_, err := owner2.Do(updateTagMutation, map[string]any{
+			"input": map[string]any{"id": tag1ID, "value": "Hijacked"},
+		})
+		require.Error(t, err)
+
+		_, err = owner2.Do(deleteTagMutation, map[string]any{
+			"input": map[string]any{"tagId": tag1ID},
+		})
+		require.Error(t, err)
+	})
+
+	t.Run("cannot attach a tag from another org", func(t *testing.T) {
+		_, err := owner2.Do(attachTagMutation, map[string]any{
+			"input": map[string]any{"resourceId": document2ID, "tagId": tag1ID},
+		})
+		require.Error(t, err)
+
+		assert.Empty(t, tagsForResource(t, owner2, document2ID).TagsForResource)
+	})
+
+	t.Run("cannot tag a resource of another org", func(t *testing.T) {
+		_, err := owner2.Do(attachTagMutation, map[string]any{
+			"input": map[string]any{"resourceId": document1ID, "tagId": tag2ID},
+		})
+		require.Error(t, err)
+
+		_, err = owner2.Do(detachTagMutation, map[string]any{
+			"input": map[string]any{"resourceId": document1ID, "tagId": tag1ID},
+		})
+		require.Error(t, err)
+	})
+
+	tags := tagsForResource(t, owner1, document1ID).TagsForResource
+	require.Len(t, tags, 1)
+	assert.Equal(t, tag1ID, tags[0].ID)
 }
