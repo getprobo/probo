@@ -536,6 +536,30 @@
       "anonymous": "Medewerker",
       "inactive": "{{name}} (inactief)",
       "overflow": "{{count}} mensen meer"
+    },
+    "review": {
+      "viewing": "Lezen",
+      "editing": "Bewerken",
+      "suggesting": "Voorstellen",
+      "comment": "Opmerking",
+      "reply": "Antwoorden",
+      "resolve": "Oplossen",
+      "reopen": "Heropenen",
+      "accept": "Accepteren",
+      "reject": "Afwijzen",
+      "edit": "Bewerken",
+      "delete": "Verwijderen",
+      "save": "Opslaan",
+      "showResolved": "Opgeloste gesprekken tonen",
+      "cancel": "Annuleren",
+      "history": "Opmerkingen",
+      "resolvedEmpty": "Geen opgeloste opmerkingen",
+      "detached": "Los van de tekst",
+      "commentPlaceholder": "Opmerking toevoegen",
+      "replyPlaceholder": "Antwoorden",
+      "suggestionBy": "Voorstel van {{name}}",
+      "commentFailed": "De opmerking kon niet worden toegevoegd",
+      "suggestionFailed": "Het voorstel kon niet worden gestart"
     }
   },
   "documentSignaturesPage": {

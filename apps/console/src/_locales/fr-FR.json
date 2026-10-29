@@ -537,6 +537,30 @@
       "anonymous": "Collaborateur",
       "inactive": "{{name}} (inactif)",
       "overflow": "{{count}} personnes de plus"
+    },
+    "review": {
+      "viewing": "Lecture",
+      "editing": "Modification",
+      "suggesting": "Suggestion",
+      "comment": "Commenter",
+      "reply": "Répondre",
+      "resolve": "Résoudre",
+      "reopen": "Rouvrir",
+      "accept": "Accepter",
+      "reject": "Refuser",
+      "edit": "Modifier",
+      "delete": "Supprimer",
+      "save": "Enregistrer",
+      "showResolved": "Afficher les fils résolus",
+      "cancel": "Annuler",
+      "history": "Commentaires",
+      "resolvedEmpty": "Aucun commentaire résolu",
+      "detached": "Détaché du texte",
+      "commentPlaceholder": "Ajouter un commentaire",
+      "replyPlaceholder": "Répondre",
+      "suggestionBy": "Suggestion de {{name}}",
+      "commentFailed": "Impossible d'ajouter le commentaire",
+      "suggestionFailed": "Impossible de démarrer la suggestion"
     }
   },
   "documentSignaturesPage": {

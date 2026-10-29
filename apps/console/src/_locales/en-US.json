@@ -322,6 +322,30 @@
       "anonymous": "Collaborator",
       "inactive": "{{name}} (inactive)",
       "overflow": "{{count}} more people"
+    },
+    "review": {
+      "viewing": "Viewing",
+      "editing": "Editing",
+      "suggesting": "Suggesting",
+      "comment": "Comment",
+      "reply": "Reply",
+      "resolve": "Resolve",
+      "reopen": "Reopen",
+      "accept": "Accept",
+      "reject": "Reject",
+      "edit": "Edit",
+      "delete": "Delete",
+      "save": "Save",
+      "showResolved": "Show resolved",
+      "cancel": "Cancel",
+      "history": "Comments",
+      "resolvedEmpty": "No resolved comments",
+      "detached": "Detached from the text",
+      "commentPlaceholder": "Add a comment",
+      "replyPlaceholder": "Reply",
+      "suggestionBy": "Suggestion by {{name}}",
+      "commentFailed": "Could not add the comment",
+      "suggestionFailed": "Could not start the suggestion"
     }
   },
   "documentSignaturesPage": {
