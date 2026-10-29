@@ -21,12 +21,12 @@
 import { lazy } from "@probo/react-lazy";
 import type { AppRoute } from "@probo/routes";
 
-import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
+import { AuditLogPageSkeleton } from "./AuditLogPageSkeleton";
 
 export const auditLogRoutes = [
   {
     path: "audit-log",
-    Fallback: PageSkeleton,
+    Fallback: AuditLogPageSkeleton,
     Component: lazy(() => import("./AuditLogPageLoader")),
   },
 ] satisfies AppRoute[];
