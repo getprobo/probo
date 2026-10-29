@@ -299,6 +299,15 @@ func (s *Service) RestoreHistory(
 
 	defer func() { _ = opened.Document.Close() }()
 
+	spans, err := BodySpans(opened.Document)
+	if err != nil {
+		return 0, err
+	}
+
+	if HasOpenSuggestions(spans) {
+		return 0, ErrOpenSuggestions
+	}
+
 	hasHeads, err := opened.Document.HasHeads(heads)
 	if err != nil {
 		return 0, fmt.Errorf("cannot verify collaboration history restore heads: %w", err)
@@ -313,7 +322,7 @@ func (s *Service) RestoreHistory(
 		return 0, err
 	}
 
-	spans, err := automergeprosemirror.ToSpans(content)
+	restored, err := automergeprosemirror.ToSpans(content)
 	if err != nil {
 		return 0, fmt.Errorf("cannot convert restored content to spans: %w", err)
 	}
@@ -323,7 +332,7 @@ func (s *Service) RestoreHistory(
 		return 0, fmt.Errorf("cannot get collaboration body for restore: %w", err)
 	}
 
-	if err := text.UpdateSpans(spans, automergeprosemirror.UpdateSpansConfig()); err != nil {
+	if err := text.UpdateSpans(restored, automergeprosemirror.UpdateSpansConfig()); err != nil {
 		return 0, fmt.Errorf("cannot write restored collaboration spans: %w", err)
 	}
 
