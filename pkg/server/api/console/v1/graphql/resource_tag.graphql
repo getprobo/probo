@@ -76,9 +76,12 @@ input ResourceTagAssignmentOrder
     field: ResourceTagAssignmentOrderField!
 }
 
-type ResourceTagAssignment {
+type ResourceTagAssignment
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ResourceTagAssignment"
+    ) {
     id: ID!
-    resourceId: ID!
+    resource: Node! @goField(forceResolver: true)
     createdAt: Datetime!
 }
 

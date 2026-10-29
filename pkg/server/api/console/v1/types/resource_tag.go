@@ -21,6 +21,8 @@
 package types
 
 import (
+	"time"
+
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
@@ -47,6 +49,14 @@ type (
 
 		Resolver any
 		ParentID gid.GID
+	}
+
+	// ResourceID is the tagged resource. GraphQL exposes it as resource, which
+	// resolves that GID through Query.node.
+	ResourceTagAssignment struct {
+		ID         gid.GID
+		ResourceID gid.GID
+		CreatedAt  time.Time
 	}
 )
 

@@ -302,6 +302,11 @@ func (r *resourceTagResolver) Permission(ctx context.Context, obj *types.Resourc
 	return r.Resolver.Permission(ctx, obj, action)
 }
 
+// Resource is the resolver for the resource field.
+func (r *resourceTagAssignmentResolver) Resource(ctx context.Context, obj *types.ResourceTagAssignment) (types.Node, error) {
+	return (&queryResolver{r.Resolver}).Node(ctx, obj.ResourceID)
+}
+
 // TotalCount is the resolver for the totalCount field.
 func (r *resourceTagAssignmentConnectionResolver) TotalCount(ctx context.Context, obj *types.ResourceTagAssignmentConnection) (int, error) {
 	scope, err := r.authorize(ctx, obj.ParentID, resourcetag.ActionAssignmentGet)
@@ -351,6 +356,11 @@ func (r *resourceTagConnectionResolver) TotalCount(ctx context.Context, obj *typ
 // ResourceTag returns schema.ResourceTagResolver implementation.
 func (r *Resolver) ResourceTag() schema.ResourceTagResolver { return &resourceTagResolver{r} }
 
+// ResourceTagAssignment returns schema.ResourceTagAssignmentResolver implementation.
+func (r *Resolver) ResourceTagAssignment() schema.ResourceTagAssignmentResolver {
+	return &resourceTagAssignmentResolver{r}
+}
+
 // ResourceTagAssignmentConnection returns schema.ResourceTagAssignmentConnectionResolver implementation.
 func (r *Resolver) ResourceTagAssignmentConnection() schema.ResourceTagAssignmentConnectionResolver {
 	return &resourceTagAssignmentConnectionResolver{r}
@@ -363,6 +373,7 @@ func (r *Resolver) ResourceTagConnection() schema.ResourceTagConnectionResolver 
 
 type (
 	resourceTagResolver                     struct{ *Resolver }
+	resourceTagAssignmentResolver           struct{ *Resolver }
 	resourceTagAssignmentConnectionResolver struct{ *Resolver }
 	resourceTagConnectionResolver           struct{ *Resolver }
 )

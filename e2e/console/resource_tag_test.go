@@ -276,7 +276,10 @@ func TestResourceTag_AttachDetachAndConflict(t *testing.T) {
 					assignments(first: 50) {
 						edges {
 							node {
-								resourceId
+								resource {
+									id
+									__typename
+								}
 							}
 						}
 						totalCount
@@ -292,7 +295,10 @@ func TestResourceTag_AttachDetachAndConflict(t *testing.T) {
 			Assignments struct {
 				Edges []struct {
 					Node struct {
-						ResourceID string `json:"resourceId"`
+						Resource struct {
+							ID       string `json:"id"`
+							Typename string `json:"__typename"`
+						} `json:"resource"`
 					} `json:"node"`
 				} `json:"edges"`
 				TotalCount int `json:"totalCount"`
@@ -304,7 +310,8 @@ func TestResourceTag_AttachDetachAndConflict(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 1, nodeResult.Node.Assignments.TotalCount)
 	require.Len(t, nodeResult.Node.Assignments.Edges, 1)
-	assert.Equal(t, documentID, nodeResult.Node.Assignments.Edges[0].Node.ResourceID)
+	assert.Equal(t, documentID, nodeResult.Node.Assignments.Edges[0].Node.Resource.ID)
+	assert.Equal(t, "Document", nodeResult.Node.Assignments.Edges[0].Node.Resource.Typename)
 
 	const detachMutation = `
 		mutation($input: DetachResourceTagInput!) {
