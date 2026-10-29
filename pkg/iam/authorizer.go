@@ -292,6 +292,7 @@ func (a *Authorizer) authorizeMulti(
 	}
 
 	var denial error
+
 	for _, decision := range decisions {
 		if decision != nil {
 			denial = decision
@@ -942,13 +943,17 @@ func (a *Authorizer) buildAuditLogEntry(
 	}
 
 	outcome := coredata.AuditLogOutcomeAllowed
+
 	var denialReason *string
+
 	if decision != nil {
 		outcome = coredata.AuditLogOutcomeDenied
 		reason := decision.Error()
+
 		if len(reason) > 1024 {
 			reason = reason[:1024]
 		}
+
 		denialReason = &reason
 	}
 

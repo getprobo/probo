@@ -151,12 +151,15 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Actor ID:"), e.ActorID)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Resource Type:"), e.ResourceType)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Resource ID:"), e.ResourceID)
+
 			if e.DenialReason != nil {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Denial reason:"), *e.DenialReason)
 			}
+
 			if e.RequestID != nil {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Request ID:"), *e.RequestID)
 			}
+
 			if e.OriginIP != nil {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Origin IP:"), *e.OriginIP)
 			}
