@@ -74,7 +74,7 @@ func (r *mutationResolver) UpdateTag(ctx context.Context, input types.UpdateTagI
 			ID:    input.ID,
 			Key:   input.Key,
 			Value: input.Value,
-			Color: input.Color,
+			Color: gqlx.UnwrapOmittable(input.Color),
 		},
 	)
 	if err != nil {
@@ -129,7 +129,7 @@ func (r *mutationResolver) AttachTag(ctx context.Context, input types.AttachTagI
 		return nil, err
 	}
 
-	err = r.tag.Attach(
+	result, err := r.tag.Attach(
 		ctx,
 		scope,
 		tag.AttachRequest{
@@ -156,8 +156,9 @@ func (r *mutationResolver) AttachTag(ctx context.Context, input types.AttachTagI
 	}
 
 	return &types.AttachTagPayload{
-		ResourceID: input.ResourceID,
-		TagID:      input.TagID,
+		Tag:                     types.NewTag(result.Tag),
+		TagAssignmentEdge:       types.NewTagAssignmentEdge(result.Assignment, coredata.TagAssignmentOrderFieldCreatedAt),
+		ReplacedTagAssignmentID: result.ReplacedAssignmentID,
 	}, nil
 }
 
@@ -168,7 +169,7 @@ func (r *mutationResolver) DetachTag(ctx context.Context, input types.DetachTagI
 		return nil, err
 	}
 
-	err = r.tag.Detach(
+	result, err := r.tag.Detach(
 		ctx,
 		scope,
 		tag.DetachRequest{
@@ -177,6 +178,10 @@ func (r *mutationResolver) DetachTag(ctx context.Context, input types.DetachTagI
 		},
 	)
 	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlx.NotFound(ctx, err)
+		}
+
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
@@ -187,8 +192,8 @@ func (r *mutationResolver) DetachTag(ctx context.Context, input types.DetachTagI
 	}
 
 	return &types.DetachTagPayload{
-		ResourceID: input.ResourceID,
-		TagID:      input.TagID,
+		Tag:                    types.NewTag(result.Tag),
+		DeletedTagAssignmentID: result.DeletedAssignmentID,
 	}, nil
 }
 
@@ -304,7 +309,18 @@ func (r *tagResolver) Permission(ctx context.Context, obj *types.Tag, action str
 
 // Resource is the resolver for the resource field.
 func (r *tagAssignmentResolver) Resource(ctx context.Context, obj *types.TagAssignment) (types.Node, error) {
-	return (&queryResolver{r.Resolver}).Node(ctx, obj.ResourceID)
+	node, err := (&queryResolver{r.Resolver}).Node(ctx, obj.ResourceID)
+	if err != nil {
+		// Assignments outlive deleted resources until those deletions clean
+		// them up, so a missing resource is expected rather than an error.
+		if gqlx.IsNotFound(err) {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
+	return node, nil
 }
 
 // TotalCount is the resolver for the totalCount field.

@@ -13866,7 +13866,7 @@ components:
           description: Organization ID
         key:
           type: string
-          description: Unique slug key for the tag within the organization
+          description: Slug key for the tag; each key and value pair is unique within the organization
         value:
           type: string
           description: Display value for the tag
@@ -13892,7 +13892,7 @@ components:
           description: Organization ID
         key:
           type: string
-          description: Unique slug key for the tag within the organization
+          description: Slug key for the tag; each key and value pair is unique within the organization
         value:
           type: string
           description: Display value for the tag
@@ -13918,13 +13918,14 @@ components:
           description: Tag ID
         key:
           type: string
-          description: Unique slug key for the tag within the organization
+          description: Slug key for the tag; each key and value pair is unique within the organization
         value:
           type: string
           description: Display value for the tag
         color:
-          type: string
-          description: Optional hex color (#RGB or #RRGGBB); empty string clears
+          type: ["string", "null"]
+          description: Hex color (#RGB or #RRGGBB); null clears it
+          go.probo.inc/mcpgen/omittable: true
 
     UpdateTagOutput:
       type: object
@@ -13968,13 +13969,19 @@ components:
     AttachTagOutput:
       type: object
       required:
-        - resource_id
-        - tag_id
+        - tag
+        - tag_assignment_id
       properties:
-        resource_id:
+        tag:
+          $ref: "#/components/schemas/Tag"
+        tag_assignment_id:
           $ref: "#/components/schemas/GID"
-        tag_id:
-          $ref: "#/components/schemas/GID"
+          description: Assignment of the tag to the resource
+        replaced_tag_assignment_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Assignment of another value of the same key that this attach removed
 
     DetachTagInput:
       type: object
@@ -13992,13 +13999,15 @@ components:
     DetachTagOutput:
       type: object
       required:
-        - resource_id
-        - tag_id
+        - tag
       properties:
-        resource_id:
-          $ref: "#/components/schemas/GID"
-        tag_id:
-          $ref: "#/components/schemas/GID"
+        tag:
+          $ref: "#/components/schemas/Tag"
+        deleted_tag_assignment_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Removed assignment, or null when the tag was not attached
 
     ListTagsInput:
       type: object
@@ -21248,10 +21257,10 @@ tools:
       $ref: "#/components/schemas/DeleteTagOutput"
   - name: attachTag
     title: Attach Tag
-    description: Attach a tag to a resource
+    description: Attach a tag to a resource, replacing any other value of the same key on that resource
     hints:
       readonly: false
-      destructive: false
+      destructive: true
       idempotent: true
       openWorld: false
     inputSchema:

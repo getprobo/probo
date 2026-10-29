@@ -33,16 +33,24 @@ import (
 const detachMutation = `
 mutation($input: DetachTagInput!) {
   detachTag(input: $input) {
-    resourceId
-    tagId
+    tag {
+      id
+      key
+      value
+    }
+    deletedTagAssignmentId
   }
 }
 `
 
 type detachResponse struct {
 	DetachTag struct {
-		ResourceID string `json:"resourceId"`
-		TagID      string `json:"tagId"`
+		Tag struct {
+			ID    string `json:"id"`
+			Key   string `json:"key"`
+			Value string `json:"value"`
+		} `json:"tag"`
+		DeletedTagAssignmentID *string `json:"deletedTagAssignmentId"`
 	} `json:"detachTag"`
 }
 
@@ -128,11 +136,24 @@ func NewCmdDetach(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			d := resp.DetachTag
+			if d.DeletedTagAssignmentID == nil {
+				_, _ = fmt.Fprintf(
+					f.IOStreams.Out,
+					"Tag %s=%s was not attached to resource %s\n",
+					d.Tag.Key,
+					d.Tag.Value,
+					flagResourceID,
+				)
+
+				return nil
+			}
+
 			_, _ = fmt.Fprintf(
 				f.IOStreams.Out,
-				"Detached tag %s from resource %s\n",
-				d.TagID,
-				d.ResourceID,
+				"Detached tag %s=%s from resource %s\n",
+				d.Tag.Key,
+				d.Tag.Value,
+				flagResourceID,
 			)
 
 			return nil

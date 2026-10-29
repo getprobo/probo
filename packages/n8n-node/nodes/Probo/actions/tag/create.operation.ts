@@ -47,7 +47,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'Unique slug key for the tag within the organization',
+		description: 'Slug key for the tag; each key and value pair is unique within the organization',
 		required: true,
 	},
 	{

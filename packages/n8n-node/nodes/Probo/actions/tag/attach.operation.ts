@@ -47,7 +47,8 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'ID of the tag to attach',
+		description:
+			'ID of the tag to attach. A resource holds one value per key, so this replaces any other value of the same key.',
 		required: true,
 	},
 ];
@@ -62,8 +63,19 @@ export async function execute(
 	const query = `
 		mutation AttachTag($input: AttachTagInput!) {
 			attachTag(input: $input) {
-				resourceId
-				tagId
+				tag {
+					id
+					key
+					value
+					color
+				}
+				tagAssignmentEdge {
+					node {
+						id
+						createdAt
+					}
+				}
+				replacedTagAssignmentId
 			}
 		}
 	`;

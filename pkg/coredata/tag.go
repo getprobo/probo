@@ -363,7 +363,7 @@ VALUES (
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
-			if pgErr.Code == "23505" && pgErr.ConstraintName == "tags_organization_id_key_key" {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "tags_organization_id_key_value_key" {
 				return ErrResourceAlreadyExists
 			}
 		}
@@ -405,7 +405,11 @@ WHERE
 	result, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
-			if pgErr.Code == "23505" && pgErr.ConstraintName == "tags_organization_id_key_key" {
+			// Renaming the key cascades to assignments, so it can also collide
+			// with another value of the new key on the same resource.
+			if pgErr.Code == "23505" &&
+				(pgErr.ConstraintName == "tags_organization_id_key_value_key" ||
+					pgErr.ConstraintName == "tag_assignments_resource_id_key_key") {
 				return ErrResourceAlreadyExists
 			}
 		}
