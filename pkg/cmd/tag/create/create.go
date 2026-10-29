@@ -73,7 +73,8 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
   prb tag create
 
   # Create a tag non-interactively
-  prb tag create --organization-id prborg_... --key environment --value production --color "#FF0000"`,
+  prb tag create --org prborg_... --key environment --value production --color "#FF0000"`,
+		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
 			if err != nil {
@@ -140,7 +141,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if flagOrg == "" {
-				return fmt.Errorf("organization ID is required; pass --organization-id or set a default with 'prb auth login'")
+				return fmt.Errorf("organization ID is required; pass --org or set a default with 'prb auth login'")
 			}
 
 			if flagKey == "" {
@@ -187,7 +188,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&flagOrg, "organization-id", "", "Organization ID")
+	cmdutil.AddOrganizationFlag(cmd, &flagOrg, "Organization ID")
 	cmd.Flags().StringVar(&flagKey, "key", "", "Slug key for the tag; each key and value pair is unique in the organization")
 	cmd.Flags().StringVar(&flagValue, "value", "", "Display value for the tag")
 	cmd.Flags().StringVar(&flagColor, "color", "", "Optional hex color (#RGB or #RRGGBB)")

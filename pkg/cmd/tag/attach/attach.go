@@ -80,6 +80,7 @@ func NewCmdAttach(f *cmdutil.Factory) *cobra.Command {
 
   # Attach a tag non-interactively
   prb tag attach --resource-id prbdoc_... --tag-id prbrtg_...`,
+		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
 			if err != nil {

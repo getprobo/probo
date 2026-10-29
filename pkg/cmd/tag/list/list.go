@@ -81,7 +81,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
   prb tag list
 
   # List tags for a specific organization
-  prb tag list --organization-id prborg_... --json`,
+  prb tag list --org prborg_... --json`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
@@ -127,7 +127,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if flagOrg == "" {
-				return fmt.Errorf("organization ID is required; pass --organization-id or set a default with 'prb auth login'")
+				return fmt.Errorf("organization ID is required; pass --org or set a default with 'prb auth login'")
 			}
 
 			variables := map[string]any{
@@ -190,7 +190,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&flagOrg, "organization-id", "", "Organization ID")
+	cmdutil.AddOrganizationFlag(cmd, &flagOrg, "Organization ID")
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of tags to list")
 	cmd.Flags().StringVar(&flagAfter, "after", "", "Cursor to continue listing from")
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT, KEY)")
