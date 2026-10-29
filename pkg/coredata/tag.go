@@ -172,7 +172,7 @@ WHERE
 
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
-	args := pgx.NamedArgs{"organization_id": organizationID}
+	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
@@ -247,7 +247,6 @@ WHERE
 		SELECT tag_id
 		FROM tag_assignments
 		WHERE resource_id = @resource_id
-			AND tenant_id = @tenant_id
 	)
 ORDER BY
 	key ASC
@@ -298,7 +297,7 @@ FROM
 	tags
 WHERE
 	%s
-	AND id = ANY(@tag_ids)
+	AND id = ANY(@tag_ids::text[])
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())

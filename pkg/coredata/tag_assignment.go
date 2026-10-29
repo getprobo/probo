@@ -280,7 +280,7 @@ WHERE
 
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
-	args := pgx.NamedArgs{"tag_id": tagID}
+	args := pgx.StrictNamedArgs{"tag_id": tagID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
@@ -354,7 +354,7 @@ FROM
 	tag_assignments
 WHERE
 	%s
-	AND resource_id = ANY(@resource_ids)
+	AND resource_id = ANY(@resource_ids::text[])
 ORDER BY
 	key ASC
 `
@@ -396,6 +396,18 @@ func (as *TagAssignments) FilterResourceIDs(
 		return candidateIDs, nil
 	}
 
+	uniqueTagIDs := make([]gid.GID, 0, len(tagIDs))
+	seen := make(map[gid.GID]struct{}, len(tagIDs))
+
+	for _, tagID := range tagIDs {
+		if _, ok := seen[tagID]; ok {
+			continue
+		}
+
+		seen[tagID] = struct{}{}
+		uniqueTagIDs = append(uniqueTagIDs, tagID)
+	}
+
 	q := `
 SELECT
 	resource_id
@@ -403,8 +415,8 @@ FROM
 	tag_assignments
 WHERE
 	%s
-	AND resource_id = ANY(@resource_ids)
-	AND tag_id = ANY(@tag_ids)
+	AND resource_id = ANY(@resource_ids::text[])
+	AND tag_id = ANY(@tag_ids::text[])
 GROUP BY
 	resource_id
 HAVING
@@ -415,8 +427,8 @@ HAVING
 
 	args := pgx.StrictNamedArgs{
 		"resource_ids": candidateIDs,
-		"tag_ids":      tagIDs,
-		"tag_count":    len(tagIDs),
+		"tag_ids":      uniqueTagIDs,
+		"tag_count":    len(uniqueTagIDs),
 	}
 	maps.Copy(args, scope.SQLArguments())
 
