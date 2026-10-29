@@ -31,7 +31,7 @@ import { DialogBody } from "@probo/ui/src/v2/Dialog/DialogBody";
 import { DialogPopup } from "@probo/ui/src/v2/Dialog/DialogPopup";
 import { DialogTitle } from "@probo/ui/src/v2/Dialog/DialogTitle";
 import { shortcutAria } from "@probo/ui/src/v2/shortcutAria";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 import { useNavigate } from "react-router";
@@ -83,7 +83,6 @@ export function NavSpotlight({
     navPermissionsFragment,
     organization,
   );
-  const [queryEmpty, setQueryEmpty] = useState(true);
   const slots = navSpotlight();
 
   const destinations = useMemo(() => {
@@ -101,27 +100,19 @@ export function NavSpotlight({
   }, [organizationId, permissions, slackbotAvailable, t]);
 
   useHotkeys("mod+k", () => {
-    setQueryEmpty(true);
     onOpenChange(!open);
   }, { preventDefault: true });
-
-  function handleOpenChange(next: boolean) {
-    onOpenChange(next);
-    if (!next) {
-      setQueryEmpty(true);
-    }
-  }
 
   function onValueChange(destination: SpotlightDestination | null) {
     if (destination == null) {
       return;
     }
     void navigate(destination.to);
-    handleOpenChange(false);
+    onOpenChange(false);
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogPopup placement="top" lockScroll>
         <DialogTitle className={slots.title()}>{t("nav.spotlight.title")}</DialogTitle>
         <DialogBody>
@@ -132,21 +123,20 @@ export function NavSpotlight({
             itemToStringLabel={destination => `${destination.label} ${destination.groupLabel}`}
             inline
             open={open}
-            onOpenChange={handleOpenChange}
+            onOpenChange={onOpenChange}
             autoHighlight
           >
-            <ComboboxInputGroup>
+            <ComboboxInputGroup className={slots.field()}>
               <span className={slots.icon()}>
                 <CompassIcon />
               </span>
               <ComboboxInput
                 placeholder={t("nav.spotlight.placeholder")}
                 aria-keyshortcuts={shortcutAria("K")}
-                onInput={(event) => {
-                  setQueryEmpty(event.currentTarget.value.length === 0);
-                }}
               />
-              {queryEmpty && <SearchShortcutHint shortcut="K" />}
+              <span className={slots.hint()}>
+                <SearchShortcutHint shortcut="K" />
+              </span>
             </ComboboxInputGroup>
             <ComboboxEmpty>{t("nav.spotlight.empty")}</ComboboxEmpty>
             <ComboboxList<SpotlightDestination> className={slots.list()}>

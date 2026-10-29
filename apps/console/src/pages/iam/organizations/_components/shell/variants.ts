@@ -143,6 +143,10 @@ export const navPanel = tv({
 export const navSpotlight = tv({
   slots: {
     title: "sr-only",
+    field: "group",
+    // The hint stays mounted. Unmounting it on the first keystroke re-renders
+    // the inline combobox and Base UI clears the query.
+    hint: "hidden shrink-0 group-has-[input:placeholder-shown]:inline-flex",
     icon: "flex size-4 shrink-0 items-center justify-center text-sand-a9 [&_svg]:size-4",
     list: "mt-3 flex max-h-80 flex-col gap-0.5 overflow-y-auto",
     row: "flex w-full items-center justify-between gap-3",
