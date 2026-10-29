@@ -4,6 +4,8 @@ All notable changes to the Probo Helm chart will be documented in this file.
 
 ## Unreleased
 
+## [0.30.0] - 2026-10-29
+
 ### Added
 
 - `extraEnv` and `extraEnvFrom` values add environment variables (including
@@ -14,6 +16,10 @@ All notable changes to the Probo Helm chart will be documented in this file.
   (Kubernetes rejects duplicate names under server-side apply), and rendering
   fails if `extraEnv` lists the same name twice. `extraEnvFrom` has the lowest
   precedence.
+
+### Changed
+
+- Default `appVersion` is now `0.333.0`
 
 ## [0.29.0] - 2026-10-28
 
