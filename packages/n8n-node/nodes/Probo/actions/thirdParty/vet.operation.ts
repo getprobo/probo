@@ -19,23 +19,20 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+import { proboApiRequest, readResourceId } from '../../GenericFunctions';
+import { thirdPartyLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'ThirdParty ID',
-		name: 'thirdPartyId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['thirdParty'],
-				operation: ['vet'],
-			},
-		},
-		default: '',
-		description: 'The ID of the third party to vet',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['thirdParty'],
+		operation: ['vet'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+		thirdPartyLocator({
+		resource: ['thirdParty'],
+		operation: ['vet'],
+	}),
 	{
 		displayName: 'Website URL',
 		name: 'websiteUrl',
@@ -72,7 +69,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const thirdPartyId = this.getNodeParameter('thirdPartyId', itemIndex) as string;
+	const thirdPartyId = readResourceId(this.getNodeParameter('thirdPartyId', itemIndex));
 	const websiteUrl = this.getNodeParameter('websiteUrl', itemIndex) as string;
 	const procedure = this.getNodeParameter('procedure', itemIndex, '') as string;
 

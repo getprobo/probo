@@ -19,45 +19,32 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+import { proboApiRequest, readResourceId } from '../../GenericFunctions';
+import { auditLocator, frameworkLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Audit ID',
-		name: 'auditId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['audit'],
-				operation: ['linkFramework'],
-			},
-		},
-		default: '',
-		description: 'The ID of the audit',
-		required: true,
-	},
-	{
-		displayName: 'Framework ID',
-		name: 'frameworkId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['audit'],
-				operation: ['linkFramework'],
-			},
-		},
-		default: '',
-		description: 'The ID of the framework to link',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['audit'],
+		operation: ['linkFramework'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+		auditLocator({
+		resource: ['audit'],
+		operation: ['linkFramework'],
+	}),
+	frameworkLocator({
+		resource: ['audit'],
+		operation: ['linkFramework'],
+	}),
 ];
 
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const auditId = this.getNodeParameter('auditId', itemIndex) as string;
-	const frameworkId = this.getNodeParameter('frameworkId', itemIndex) as string;
+	const auditId = readResourceId(this.getNodeParameter('auditId', itemIndex));
+	const frameworkId = readResourceId(this.getNodeParameter('frameworkId', itemIndex));
 
 	const query = `
 		mutation CreateAuditFrameworkMapping($input: CreateAuditFrameworkMappingInput!) {

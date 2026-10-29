@@ -19,24 +19,27 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { proboApiRequestAllItems, executionItems } from '../../GenericFunctions';
+import { proboApiRequestAllItems, executionItems, readResourceId } from '../../GenericFunctions';
 import { signatureListFilter, withParentReference } from '../../output';
+import { documentVersionLocator, organizationLocator, documentLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Document Version ID',
-		name: 'documentVersionId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['document'],
-				operation: ['getAllSignatures'],
-			},
-		},
-		default: '',
-		description: 'The ID of the document version',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['document'],
+		operation: ['getAllSignatures'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+	documentLocator({
+		resource: ['document'],
+		operation: ['getAllSignatures'],
+		required: false,
+		description: 'Document to search versions in. Leave this empty when entering a version ID.',
+	}),
+		documentVersionLocator({
+		resource: ['document'],
+		operation: ['getAllSignatures'],
+	}),
 	{
 		displayName: 'Return All',
 		name: 'returnAll',
@@ -118,7 +121,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData[]> {
-	const documentVersionId = this.getNodeParameter('documentVersionId', itemIndex) as string;
+	const documentVersionId = readResourceId(this.getNodeParameter('documentVersionId', itemIndex));
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
 	const filters = this.getNodeParameter('filters', itemIndex, {}) as IDataObject;

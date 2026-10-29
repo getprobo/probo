@@ -19,30 +19,27 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+import { proboApiRequest, readResourceId } from '../../GenericFunctions';
+import { accessReviewCampaignLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Access Review Campaign ID',
-		name: 'accessReviewCampaignId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['accessReview'],
-				operation: ['get'],
-			},
-		},
-		default: '',
-		description: 'The ID of the access review campaign',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['accessReview'],
+		operation: ['get'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+		accessReviewCampaignLocator({
+		resource: ['accessReview'],
+		operation: ['get'],
+	}),
 ];
 
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const accessReviewCampaignId = this.getNodeParameter('accessReviewCampaignId', itemIndex) as string;
+	const accessReviewCampaignId = readResourceId(this.getNodeParameter('accessReviewCampaignId', itemIndex));
 
 	const query = `
 		query GetAccessReviewCampaign($accessReviewCampaignId: ID!) {

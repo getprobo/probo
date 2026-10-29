@@ -19,10 +19,17 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+import { proboApiRequest, readResourceId } from '../../GenericFunctions';
+import { auditLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
+	organizationLocator({
+		resource: ['finding'],
+		operation: ['unlinkAudit'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+		{
 		displayName: 'Finding ID',
 		name: 'findingId',
 		type: 'string',
@@ -36,20 +43,10 @@ export const description: INodeProperties[] = [
 		description: 'The ID of the finding',
 		required: true,
 	},
-	{
-		displayName: 'Audit ID',
-		name: 'auditId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['finding'],
-				operation: ['unlinkAudit'],
-			},
-		},
-		default: '',
-		description: 'The ID of the audit to unlink',
-		required: true,
-	},
+	auditLocator({
+		resource: ['finding'],
+		operation: ['unlinkAudit'],
+	}),
 ];
 
 export async function execute(
@@ -57,7 +54,7 @@ export async function execute(
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
 	const findingId = this.getNodeParameter('findingId', itemIndex) as string;
-	const auditId = this.getNodeParameter('auditId', itemIndex) as string;
+	const auditId = readResourceId(this.getNodeParameter('auditId', itemIndex));
 
 	const query = `
 		mutation DeleteFindingAuditMapping($input: DeleteFindingAuditMappingInput!) {

@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { organizationLocator } from '../../locators';
+import { organizationLocator, riskLocator } from '../../locators';
 import { proboApiRequestAllItems, readResourceId, executionItems } from '../../GenericFunctions';
 
 const treatmentPlanNodeFields = `
@@ -84,19 +84,12 @@ export const description: INodeProperties[] = [
 		operation: ['getAll'],
 		description: 'The ID of the organization. Ignored when Risk ID or Risk Analysis ID is set.',
 	}),
-	{
-		displayName: 'Risk ID',
-		name: 'riskId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['treatmentPlan'],
-				operation: ['getAll'],
-			},
-		},
-		default: '',
+	riskLocator({
+		resource: ['treatmentPlan'],
+		operation: ['getAll'],
+		required: false,
 		description: 'List treatment plans for this risk. Cannot be set together with Risk Analysis ID.',
-	},
+	}),
 	{
 		displayName: 'Risk Analysis ID',
 		name: 'riskAnalysisId',
@@ -244,7 +237,7 @@ export async function execute(
 	itemIndex: number,
 ): Promise<INodeExecutionData[]> {
 	const organizationId = readResourceId(this.getNodeParameter('organizationId', itemIndex));
-	const riskId = this.getNodeParameter('riskId', itemIndex, '') as string;
+	const riskId = readResourceId(this.getNodeParameter('riskId', itemIndex, ''));
 	const riskAnalysisId = this.getNodeParameter('riskAnalysisId', itemIndex, '') as string;
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;

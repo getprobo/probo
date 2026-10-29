@@ -19,24 +19,14 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { organizationLocator, documentLocator } from '../../locators';
+import { organizationLocator, documentLocator, internalControlLocator } from '../../locators';
 import { proboApiRequest, readResourceId } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Internal Control ID',
-		name: 'internalControlId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['internalControl'],
-				operation: ['linkDocument'],
-			},
-		},
-		default: '',
-		description: 'The ID of the internal control',
-		required: true,
-	},
+	internalControlLocator({
+		resource: ['internalControl'],
+		operation: ['linkDocument'],
+	}),
 	organizationLocator({
 		resource: ['internalControl'],
 		operation: ['linkDocument'],
@@ -53,7 +43,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const internalControlId = this.getNodeParameter('internalControlId', itemIndex) as string;
+	const internalControlId = readResourceId(this.getNodeParameter('internalControlId', itemIndex));
 	const documentId = readResourceId(this.getNodeParameter('documentId', itemIndex));
 
 	const query = `

@@ -19,23 +19,20 @@
 // SOFTWARE.
 
 import type { IDataObject, IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
-import { proboApiRequestAllItems, executionItems } from '../../GenericFunctions';
+import { proboApiRequestAllItems, executionItems, readResourceId } from '../../GenericFunctions';
+import { accessReviewCampaignLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Access Review Campaign ID',
-		name: 'accessReviewCampaignId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['accessReview'],
-				operation: ['readEntries'],
-			},
-		},
-		default: '',
-		description: 'The ID of the access review campaign',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['accessReview'],
+		operation: ['readEntries'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+		accessReviewCampaignLocator({
+		resource: ['accessReview'],
+		operation: ['readEntries'],
+	}),
 	{
 		displayName: 'Return All',
 		name: 'returnAll',
@@ -72,7 +69,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData[]> {
-	const accessReviewCampaignId = this.getNodeParameter('accessReviewCampaignId', itemIndex) as string;
+	const accessReviewCampaignId = readResourceId(this.getNodeParameter('accessReviewCampaignId', itemIndex));
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
 

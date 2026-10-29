@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import type { INodeProperties } from 'n8n-workflow';
+import { personLocator } from '../../locators';
 
 export function internalControlFields(operation: string): INodeProperties[] {
 	const displayOptions = {
@@ -137,22 +138,18 @@ export function internalControlFields(operation: string): INodeProperties[] {
 			default: '',
 			description: 'Whether the control is in place and running',
 		},
-		{
-			displayName: 'Owner ID',
-			name: 'ownerId',
-			type: 'string',
+		personLocator({
+			displayName: 'Owner',
 			displayOptions,
-			default: '',
-			description: 'Membership profile ID of the owner',
-		},
-		{
-			displayName: 'Reviewer ID',
+			required: false,
+		}),
+		personLocator({
 			name: 'reviewerId',
-			type: 'string',
+			displayName: 'Reviewer',
 			displayOptions,
-			default: '',
+			required: false,
 			description: 'Membership profile ID of the reviewer. Must differ from the owner.',
-		},
+		}),
 	];
 }
 

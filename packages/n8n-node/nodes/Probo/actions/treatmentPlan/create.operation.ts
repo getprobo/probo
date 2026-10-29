@@ -19,23 +19,20 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+import { proboApiRequest, readResourceId } from '../../GenericFunctions';
+import { personLocator, riskLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Risk ID',
-		name: 'riskId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['treatmentPlan'],
-				operation: ['create'],
-			},
-		},
-		default: '',
-		description: 'The ID of the risk',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['treatmentPlan'],
+		operation: ['create'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+		riskLocator({
+		resource: ['treatmentPlan'],
+		operation: ['create'],
+	}),
 	{
 		displayName: 'Risk Analysis ID',
 		name: 'riskAnalysisId',
@@ -118,20 +115,11 @@ export const description: INodeProperties[] = [
 		description: 'The inherent impact (1-5)',
 		required: true,
 	},
-	{
-		displayName: 'Owner ID',
-		name: 'ownerId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['treatmentPlan'],
-				operation: ['create'],
-			},
-		},
-		default: '',
-		description: 'The ID of the person who owns this treatment plan',
-		required: true,
-	},
+	personLocator({
+		displayName: 'Owner',
+		resource: ['treatmentPlan'],
+		operation: ['create'],
+	}),
 	{
 		displayName: 'Additional Fields',
 		name: 'additionalFields',
@@ -175,12 +163,12 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const riskId = this.getNodeParameter('riskId', itemIndex) as string;
+	const riskId = readResourceId(this.getNodeParameter('riskId', itemIndex));
 	const riskAnalysisId = this.getNodeParameter('riskAnalysisId', itemIndex) as string;
 	const treatment = this.getNodeParameter('treatment', itemIndex) as string;
 	const inherentLikelihood = this.getNodeParameter('inherentLikelihood', itemIndex) as number;
 	const inherentImpact = this.getNodeParameter('inherentImpact', itemIndex) as number;
-	const ownerId = this.getNodeParameter('ownerId', itemIndex) as string;
+	const ownerId = readResourceId(this.getNodeParameter('ownerId', itemIndex));
 	const additionalFields = this.getNodeParameter('additionalFields', itemIndex, {}) as {
 		residualLikelihood?: number;
 		residualImpact?: number;

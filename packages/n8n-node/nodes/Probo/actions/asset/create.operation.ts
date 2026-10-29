@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { organizationLocator } from '../../locators';
+import { organizationLocator, personLocator } from '../../locators';
 import { proboApiRequest, readResourceId } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
@@ -55,20 +55,11 @@ export const description: INodeProperties[] = [
 		description: 'The amount of the asset',
 		required: true,
 	},
-	{
-		displayName: 'Owner ID',
-		name: 'ownerId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['asset'],
-				operation: ['create'],
-			},
-		},
-		default: '',
-		description: 'The ID of the owner (People)',
-		required: true,
-	},
+	personLocator({
+		displayName: 'Owner',
+		resource: ['asset'],
+		operation: ['create'],
+	}),
 	{
 		displayName: 'Asset Type',
 		name: 'assetType',
@@ -158,7 +149,7 @@ export async function execute(
 	const organizationId = readResourceId(this.getNodeParameter('organizationId', itemIndex));
 	const name = this.getNodeParameter('name', itemIndex) as string;
 	const amount = this.getNodeParameter('amount', itemIndex) as number;
-	const ownerId = this.getNodeParameter('ownerId', itemIndex) as string;
+	const ownerId = readResourceId(this.getNodeParameter('ownerId', itemIndex));
 	const assetType = this.getNodeParameter('assetType', itemIndex) as string;
 	const dataTypesStored = this.getNodeParameter('dataTypesStored', itemIndex) as string;
 	const thirdPartyIdsStr = this.getNodeParameter('thirdPartyIds', itemIndex, '') as string;

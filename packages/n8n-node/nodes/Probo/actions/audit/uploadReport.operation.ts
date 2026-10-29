@@ -19,23 +19,20 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiMultipartRequest } from '../../GenericFunctions';
+import { proboApiMultipartRequest, readResourceId } from '../../GenericFunctions';
+import { auditLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Audit ID',
-		name: 'auditId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['audit'],
-				operation: ['uploadReport'],
-			},
-		},
-		default: '',
-		description: 'The ID of the audit to upload the report for',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['audit'],
+		operation: ['uploadReport'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+		auditLocator({
+		resource: ['audit'],
+		operation: ['uploadReport'],
+	}),
 	{
 		displayName: 'Input Data Field Name',
 		name: 'binaryPropertyName',
@@ -56,7 +53,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const auditId = this.getNodeParameter('auditId', itemIndex) as string;
+	const auditId = readResourceId(this.getNodeParameter('auditId', itemIndex));
 	const binaryPropertyName = this.getNodeParameter('binaryPropertyName', itemIndex) as string;
 
 	const binaryData = this.helpers.assertBinaryData(itemIndex, binaryPropertyName);

@@ -19,23 +19,20 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest, toPeriod } from '../../GenericFunctions';
+import { proboApiRequest, toPeriod, readResourceId } from '../../GenericFunctions';
+import { thirdPartyLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'ThirdParty ID',
-		name: 'thirdPartyId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['thirdParty'],
-				operation: ['updateBusinessAssociateAgreement'],
-			},
-		},
-		default: '',
-		description: 'The ID of the thirdParty',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['thirdParty'],
+		operation: ['updateBusinessAssociateAgreement'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+		thirdPartyLocator({
+		resource: ['thirdParty'],
+		operation: ['updateBusinessAssociateAgreement'],
+	}),
 	{
 		displayName: 'Valid From',
 		name: 'validFrom',
@@ -68,7 +65,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const thirdPartyId = this.getNodeParameter('thirdPartyId', itemIndex) as string;
+	const thirdPartyId = readResourceId(this.getNodeParameter('thirdPartyId', itemIndex));
 	const validFrom = this.getNodeParameter('validFrom', itemIndex, '') as string;
 	const validUntil = this.getNodeParameter('validUntil', itemIndex, '') as string;
 

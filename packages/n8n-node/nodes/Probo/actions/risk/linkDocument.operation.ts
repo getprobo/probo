@@ -19,24 +19,14 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { organizationLocator, documentLocator } from '../../locators';
+import { organizationLocator, documentLocator, riskLocator } from '../../locators';
 import { proboApiRequest, readResourceId } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Risk ID',
-		name: 'riskId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['risk'],
-				operation: ['linkDocument'],
-			},
-		},
-		default: '',
-		description: 'The ID of the risk',
-		required: true,
-	},
+	riskLocator({
+		resource: ['risk'],
+		operation: ['linkDocument'],
+	}),
 	organizationLocator({
 		resource: ['risk'],
 		operation: ['linkDocument'],
@@ -53,7 +43,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const riskId = this.getNodeParameter('riskId', itemIndex) as string;
+	const riskId = readResourceId(this.getNodeParameter('riskId', itemIndex));
 	const documentId = readResourceId(this.getNodeParameter('documentId', itemIndex));
 
 	const query = `

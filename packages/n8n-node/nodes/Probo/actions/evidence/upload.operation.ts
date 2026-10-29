@@ -19,23 +19,20 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiMultipartRequest } from '../../GenericFunctions';
+import { proboApiMultipartRequest, readResourceId } from '../../GenericFunctions';
+import { internalControlLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Internal Control ID',
-		name: 'internalControlId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['evidence'],
-				operation: ['upload'],
-			},
-		},
-		default: '',
-		description: 'The ID of the internal control to upload evidence for',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['evidence'],
+		operation: ['upload'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+		internalControlLocator({
+		resource: ['evidence'],
+		operation: ['upload'],
+	}),
 	{
 		displayName: 'Input Data Field Name',
 		name: 'binaryPropertyName',
@@ -56,7 +53,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const internalControlId = this.getNodeParameter('internalControlId', itemIndex) as string;
+	const internalControlId = readResourceId(this.getNodeParameter('internalControlId', itemIndex));
 	const binaryPropertyName = this.getNodeParameter('binaryPropertyName', itemIndex) as string;
 
 	const binaryData = this.helpers.assertBinaryData(itemIndex, binaryPropertyName);

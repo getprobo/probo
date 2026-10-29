@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { organizationLocator } from '../../locators';
+import { organizationLocator, personLocator, riskLocator } from '../../locators';
 import { proboApiRequest, readResourceId } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
@@ -114,13 +114,10 @@ export const description: INodeProperties[] = [
 				default: '',
 				description: 'The date the finding was identified (ISO 8601 format)',
 			},
-			{
-				displayName: 'Owner ID',
-				name: 'ownerId',
-				type: 'string',
-				default: '',
-				description: 'The ID of the person who owns this finding',
-			},
+			personLocator({
+				displayName: 'Owner',
+				required: false,
+			}),
 			{
 				displayName: 'Priority',
 				name: 'priority',
@@ -142,13 +139,9 @@ export const description: INodeProperties[] = [
 				default: 'MEDIUM',
 				description: 'The priority of the finding',
 			},
-			{
-				displayName: 'Risk ID',
-				name: 'riskId',
-				type: 'string',
-				default: '',
-				description: 'The ID of the associated risk',
-			},
+			riskLocator({
+				required: false,
+			}),
 			{
 				displayName: 'Root Cause',
 				name: 'rootCause',
@@ -253,11 +246,11 @@ export async function execute(
 	if (additionalFields.identifiedOn) input.identifiedOn = additionalFields.identifiedOn;
 	if (additionalFields.rootCause) input.rootCause = additionalFields.rootCause;
 	if (additionalFields.correctiveAction) input.correctiveAction = additionalFields.correctiveAction;
-	if (additionalFields.ownerId) input.ownerId = additionalFields.ownerId;
+	if (readResourceId(additionalFields.ownerId)) input.ownerId = readResourceId(additionalFields.ownerId);
 	if (additionalFields.dueDate) input.dueDate = additionalFields.dueDate;
 	if (additionalFields.status) input.status = additionalFields.status;
 	if (additionalFields.priority) input.priority = additionalFields.priority;
-	if (additionalFields.riskId) input.riskId = additionalFields.riskId;
+	if (readResourceId(additionalFields.riskId)) input.riskId = readResourceId(additionalFields.riskId);
 	if (additionalFields.effectivenessCheck) input.effectivenessCheck = additionalFields.effectivenessCheck;
 
 	const responseData = await proboApiRequest.call(this, query, { input });

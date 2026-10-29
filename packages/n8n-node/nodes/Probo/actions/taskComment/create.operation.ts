@@ -19,23 +19,20 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+import { proboApiRequest, readResourceId } from '../../GenericFunctions';
+import { personLocator, taskLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Task ID',
-		name: 'taskId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['taskComment'],
-				operation: ['create'],
-			},
-		},
-		default: '',
-		description: 'The ID of the task',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['taskComment'],
+		operation: ['create'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+		taskLocator({
+		resource: ['taskComment'],
+		operation: ['create'],
+	}),
 	{
 		displayName: 'Content',
 		name: 'content',
@@ -53,28 +50,21 @@ export const description: INodeProperties[] = [
 		description: 'The comment content as a ProseMirror document JSON string. An image node sets fileId from an attachment upload. A file node sets fileId, fileName, mimeType, and size',
 		required: true,
 	},
-	{
-		displayName: 'Owner ID',
-		name: 'ownerId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['taskComment'],
-				operation: ['create'],
-			},
-		},
-		default: '',
-		description: 'The owner membership profile ID. Defaults to the authenticated user when omitted.',
-	},
+	personLocator({
+		displayName: 'Owner',
+		resource: ['taskComment'],
+		operation: ['create'],
+		required: false,
+	}),
 ];
 
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const taskId = this.getNodeParameter('taskId', itemIndex) as string;
+	const taskId = readResourceId(this.getNodeParameter('taskId', itemIndex));
 	const content = this.getNodeParameter('content', itemIndex) as string;
-	const ownerId = this.getNodeParameter('ownerId', itemIndex, '') as string;
+	const ownerId = readResourceId(this.getNodeParameter('ownerId', itemIndex, ''));
 
 	const query = `
 		mutation CreateTaskComment($input: CreateTaskCommentInput!) {

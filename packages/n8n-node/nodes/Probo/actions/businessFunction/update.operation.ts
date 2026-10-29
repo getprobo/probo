@@ -19,7 +19,8 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+import { proboApiRequest, readResourceId } from '../../GenericFunctions';
+import { personLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
 	{
@@ -111,13 +112,10 @@ export const description: INodeProperties[] = [
 				default: '',
 				description: 'Additional notes. Empty string clears the value.',
 			},
-			{
-				displayName: 'Owner ID',
-				name: 'ownerId',
-				type: 'string',
-				default: '',
-				description: 'Owner profile ID. Empty string clears the value.',
-			},
+			personLocator({
+				displayName: 'Owner',
+				required: false,
+			}),
 			{
 				displayName: 'RPO Minutes',
 				name: 'rpoMinutes',
@@ -214,7 +212,8 @@ export async function execute(
 	}
 
 	if (additionalFields.ownerId !== undefined) {
-		input.ownerId = additionalFields.ownerId === '' ? null : additionalFields.ownerId;
+		const ownerId = readResourceId(additionalFields.ownerId);
+		input.ownerId = ownerId === '' ? null : ownerId;
 	}
 
 	if (additionalFields.assetIds) {

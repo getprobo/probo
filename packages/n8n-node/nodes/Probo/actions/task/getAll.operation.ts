@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { organizationLocator } from '../../locators';
+import { organizationLocator, personLocator } from '../../locators';
 import { proboApiRequestAllItems, readResourceId, executionItems } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
@@ -70,13 +70,11 @@ export const description: INodeProperties[] = [
 			},
 		},
 		options: [
-			{
-				displayName: 'Assigned To ID',
+			personLocator({
 				name: 'assignedToId',
-				type: 'string',
-				default: '',
-				description: 'Filter by the profile ID the task is assigned to',
-			},
+				displayName: 'Assignee',
+				required: false,
+			}),
 			{
 				displayName: 'Query',
 				name: 'query',
@@ -156,8 +154,8 @@ export async function execute(
 		filter.state = filters.state;
 	}
 
-	if (filters.assignedToId) {
-		filter.assignedToId = filters.assignedToId;
+	if (readResourceId(filters.assignedToId)) {
+		filter.assignedToId = readResourceId(filters.assignedToId);
 	}
 
 	if (Object.keys(filter).length > 0) {

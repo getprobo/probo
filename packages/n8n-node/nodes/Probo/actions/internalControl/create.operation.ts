@@ -129,7 +129,7 @@ export async function execute(
 			...(description && { description }),
 			category,
 			...readInternalControlFields(
-				(field) => this.getNodeParameter(field, itemIndex, '') as string,
+				(field) => readResourceId(this.getNodeParameter(field, itemIndex, '')),
 			),
 		},
 	};
