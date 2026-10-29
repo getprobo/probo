@@ -30,7 +30,8 @@ import {
 	type IWebhookResponseData,
 	type JsonObject,
 } from 'n8n-workflow';
-import { proboApiRequest } from '../Probo/GenericFunctions';
+import { proboApiRequest, readResourceId } from '../Probo/GenericFunctions';
+import { organizationLocator, searchOrganizations } from '../Probo/locators';
 import { WEBHOOK_EVENT_OPTIONS } from '../Probo/actions/webhook/events';
 
 function extractNode(response: IDataObject): IDataObject | undefined {
@@ -100,14 +101,9 @@ export class ProboTrigger implements INodeType {
 			},
 		],
 		properties: [
-			{
-				displayName: 'Organization ID',
-				name: 'organizationId',
-				type: 'string',
-				default: '',
-				required: true,
-				description: 'The ID of the organization to receive events from',
-			},
+			organizationLocator({
+				description: 'The organization to receive events from. Search the list, or enter an ID.',
+			}),
 			{
 				displayName: 'Events',
 				name: 'events',
@@ -179,7 +175,7 @@ export class ProboTrigger implements INodeType {
 				}
 
 				const webhookUrl = this.getNodeWebhookUrl('default');
-				const organizationId = this.getNodeParameter('organizationId') as string;
+				const organizationId = readResourceId(this.getNodeParameter('organizationId'));
 				const events = this.getNodeParameter('events') as string[];
 				const organization = node.organization as IDataObject | undefined;
 				const remoteEvents = (node.selectedEvents as string[] | undefined) ?? [];
@@ -211,7 +207,7 @@ export class ProboTrigger implements INodeType {
 
 			async create(this: IHookFunctions): Promise<boolean> {
 				const webhookUrl = this.getNodeWebhookUrl('default');
-				const organizationId = this.getNodeParameter('organizationId') as string;
+				const organizationId = readResourceId(this.getNodeParameter('organizationId'));
 				const events = this.getNodeParameter('events') as string[];
 
 				if (webhookUrl === undefined) {
@@ -350,4 +346,10 @@ export class ProboTrigger implements INodeType {
 			workflowData: [this.helpers.returnJsonArray(body as IDataObject)],
 		};
 	}
+
+	methods = {
+		listSearch: {
+			searchOrganizations,
+		},
+	};
 }

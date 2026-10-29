@@ -37,6 +37,7 @@ import {
 	getAPIKeyConnectorProviders,
 	getClientCredentialsConnectorProviders,
 } from './actions/connector/loadConnectorProviderOptions';
+import { searchDocuments, searchOrganizations } from './locators';
 
 function nodeErrorForItem(
 	this: IExecuteFunctions,
@@ -329,7 +330,11 @@ export class Probo implements INodeType {
 
 				const executeFunction = getExecuteFunction(resource, operation);
 				const result = await executeFunction.call(this, i);
-				returnData.push(result);
+				if (Array.isArray(result)) {
+					returnData.push(...result);
+				} else {
+					returnData.push(result);
+				}
 			} catch (error) {
 				const nodeError = nodeErrorForItem.call(this, error, i);
 				if (this.continueOnFail()) {
@@ -353,6 +358,9 @@ export class Probo implements INodeType {
 			getAPIKeyConnectorProviders,
 			getClientCredentialsConnectorProviders,
 		},
-		listSearch: {},
+		listSearch: {
+			searchOrganizations,
+			searchDocuments,
+		},
 	};
 }

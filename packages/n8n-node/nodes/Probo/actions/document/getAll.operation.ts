@@ -19,23 +19,15 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { proboApiRequestAllItems } from '../../GenericFunctions';
+import { organizationLocator } from '../../locators';
+import { proboApiRequestAllItems, readResourceId, executionItems } from '../../GenericFunctions';
+import { documentListFilter } from '../../output';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Organization ID',
-		name: 'organizationId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['document'],
-				operation: ['getAll'],
-			},
-		},
-		default: '',
-		description: 'The ID of the organization',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['document'],
+		operation: ['getAll'],
+	}),
 	{
 		displayName: 'Return All',
 		name: 'returnAll',
@@ -65,6 +57,23 @@ export const description: INodeProperties[] = [
 		},
 		default: 50,
 		description: 'Max number of results to return',
+	},
+	{
+		displayName: 'Status',
+		name: 'status',
+		type: 'multiOptions',
+		displayOptions: {
+			show: {
+				resource: ['document'],
+				operation: ['getAll'],
+			},
+		},
+		options: [
+			{ name: 'Active', value: 'ACTIVE' },
+			{ name: 'Archived', value: 'ARCHIVED' },
+		],
+		default: ['ACTIVE'],
+		description: 'Statuses to include. Active is used when nothing is selected.',
 	},
 	{
 		displayName: 'Filters',
@@ -114,9 +123,14 @@ export const description: INodeProperties[] = [
 			{
 				displayName: 'Published',
 				name: 'published',
-				type: 'boolean',
-				default: true,
-				description: 'Whether to return documents with a published version',
+				type: 'options',
+				default: 'any',
+				description: 'Limit to documents that have or have not been published. Any does not filter.',
+				options: [
+					{ name: 'Any', value: 'any' },
+					{ name: 'Not Published', value: 'false' },
+					{ name: 'Published', value: 'true' },
+				],
 			},
 			{
 				displayName: 'Query',
@@ -124,17 +138,6 @@ export const description: INodeProperties[] = [
 				type: 'string',
 				default: '',
 				description: 'Search query to filter documents',
-			},
-			{
-				displayName: 'Status',
-				name: 'status',
-				type: 'multiOptions',
-				default: [],
-				description: 'Filter by document status',
-				options: [
-					{ name: 'Active', value: 'ACTIVE' },
-					{ name: 'Archived', value: 'ARCHIVED' },
-				],
 			},
 			{
 				displayName: 'Write Modes',
@@ -154,19 +157,13 @@ export const description: INodeProperties[] = [
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
-): Promise<INodeExecutionData> {
-	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
+): Promise<INodeExecutionData[]> {
+	const organizationId = readResourceId(this.getNodeParameter('organizationId', itemIndex));
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
+	const status = this.getNodeParameter('status', itemIndex, ['ACTIVE']) as string[];
 	const filters = this.getNodeParameter('filters', itemIndex, {}) as IDataObject;
-
-	const filter: IDataObject = {};
-	if (filters.query) filter.query = filters.query;
-	if ((filters.writeModes as string[])?.length) filter.writeModes = filters.writeModes;
-	if ((filters.documentTypes as string[])?.length) filter.documentTypes = filters.documentTypes;
-	if ((filters.classifications as string[])?.length) filter.classifications = filters.classifications;
-	if (filters.published !== undefined) filter.published = filters.published;
-	filter.status = (filters.status as string[])?.length ? filters.status : ['ACTIVE'];
+	const filter = documentListFilter(status, filters);
 
 	const query = `
 		query GetDocuments($organizationId: ID!, $first: Int, $after: CursorKey, $filter: DocumentFilter) {
@@ -209,8 +206,5 @@ export async function execute(
 		limit,
 	);
 
-	return {
-		json: { documents },
-		pairedItem: { item: itemIndex },
-	};
+	return executionItems(documents, itemIndex);
 }

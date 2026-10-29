@@ -69,10 +69,12 @@ export async function execute(
 					owner {
 						id
 						fullName
+						emailAddress
 					}
 					reviewer {
 						id
 						fullName
+						emailAddress
 					}
 					createdAt
 					updatedAt

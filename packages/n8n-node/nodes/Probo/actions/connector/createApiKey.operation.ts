@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import type { IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+import { proboApiRequest, readResourceId } from '../../GenericFunctions';
 import { connectorNameField, connectorResultFields, organizationIdField } from './fields';
 
 const operation = 'createApiKey';
@@ -68,7 +68,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
+	const organizationId = readResourceId(this.getNodeParameter('organizationId', itemIndex));
 	const name = this.getNodeParameter('name', itemIndex) as string;
 	const provider = this.getNodeParameter('provider', itemIndex) as string;
 	const apiKey = this.getNodeParameter('apiKey', itemIndex) as string;

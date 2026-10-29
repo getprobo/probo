@@ -19,23 +19,14 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+import { organizationLocator } from '../../locators';
+import { proboApiRequest, readResourceId } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Organization ID',
-		name: 'organizationId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['rightsRequest'],
-				operation: ['create'],
-			},
-		},
-		default: '',
-		description: 'The ID of the organization',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['rightsRequest'],
+		operation: ['create'],
+	}),
 	{
 		displayName: 'Request Type',
 		name: 'requestType',
@@ -164,7 +155,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
+	const organizationId = readResourceId(this.getNodeParameter('organizationId', itemIndex));
 	const requestType = this.getNodeParameter('requestType', itemIndex) as string;
 	const requestState = this.getNodeParameter('requestState', itemIndex) as string;
 	const dataSubject = this.getNodeParameter('dataSubject', itemIndex) as string;

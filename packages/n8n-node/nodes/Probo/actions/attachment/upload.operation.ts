@@ -19,25 +19,17 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { organizationLocator } from '../../locators';
 import { NodeOperationError } from 'n8n-workflow';
-import { proboApiMultipartRequest } from '../../GenericFunctions';
+import { proboApiMultipartRequest, readResourceId } from '../../GenericFunctions';
 import { resolveAttachmentFile } from './attachmentFile';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Organization ID',
-		name: 'organizationId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['attachment'],
-				operation: ['upload'],
-			},
-		},
-		default: '',
+	organizationLocator({
+		resource: ['attachment'],
+		operation: ['upload'],
 		description: 'The ID of the organization that will own the file',
-		required: true,
-	},
+	}),
 	{
 		displayName: 'Input Data Field Name',
 		name: 'binaryPropertyName',
@@ -59,7 +51,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
+	const organizationId = readResourceId(this.getNodeParameter('organizationId', itemIndex));
 	const binaryPropertyName = this.getNodeParameter('binaryPropertyName', itemIndex) as string;
 
 	const binaryData = this.helpers.assertBinaryData(itemIndex, binaryPropertyName);

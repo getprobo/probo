@@ -19,24 +19,15 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+import { organizationLocator } from '../../locators';
+import { proboApiRequest, readResourceId } from '../../GenericFunctions';
 import { parseRiskAnalysisMatrixSize, riskAnalysisMatrixSizeOptions } from './matrixSize';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Organization ID',
-		name: 'organizationId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['riskAnalysis'],
-				operation: ['create'],
-			},
-		},
-		default: '',
-		description: 'The ID of the organization',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['riskAnalysis'],
+		operation: ['create'],
+	}),
 	{
 		displayName: 'Name',
 		name: 'name',
@@ -112,7 +103,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
+	const organizationId = readResourceId(this.getNodeParameter('organizationId', itemIndex));
 	const name = this.getNodeParameter('name', itemIndex) as string;
 	const matrixSize = this.getNodeParameter('matrixSize', itemIndex) as string;
 	const additionalFields = this.getNodeParameter('additionalFields', itemIndex, {}) as {

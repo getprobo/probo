@@ -59,6 +59,7 @@ export async function execute(
 					actor {
 						id
 						fullName
+						emailAddress
 					}
 				}
 			}

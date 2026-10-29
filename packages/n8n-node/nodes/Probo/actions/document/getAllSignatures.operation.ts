@@ -19,7 +19,8 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { proboApiRequestAllItems } from '../../GenericFunctions';
+import { proboApiRequestAllItems, executionItems } from '../../GenericFunctions';
+import { signatureListFilter, withParentReference } from '../../output';
 
 export const description: INodeProperties[] = [
 	{
@@ -80,17 +81,6 @@ export const description: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'States',
-				name: 'states',
-				type: 'multiOptions',
-				default: [],
-				description: 'Filter by signature state',
-				options: [
-					{ name: 'Requested', value: 'REQUESTED' },
-					{ name: 'Signed', value: 'SIGNED' },
-				],
-			},
-			{
 				displayName: 'Active Contract',
 				name: 'activeContract',
 				type: 'boolean',
@@ -98,15 +88,26 @@ export const description: INodeProperties[] = [
 				description: 'Whether to filter by active contract status',
 			},
 			{
-				displayName: 'Profile States',
-				name: 'state',
+				displayName: 'Signatory Status',
+				name: 'profileStates',
 				type: 'multiOptions',
 				default: [],
-				description: 'Filter by signatory profile states',
+				description: 'Filter by the signatory account status',
 				options: [
-					{ name: 'Pending', value: 'PENDING' },
 					{ name: 'Active', value: 'ACTIVE' },
 					{ name: 'Deactivated', value: 'DEACTIVATED' },
+					{ name: 'Pending', value: 'PENDING' },
+				],
+			},
+			{
+				displayName: 'Signature Status',
+				name: 'states',
+				type: 'multiOptions',
+				default: [],
+				description: 'Filter by signature status',
+				options: [
+					{ name: 'Requested', value: 'REQUESTED' },
+					{ name: 'Signed', value: 'SIGNED' },
 				],
 			},
 		],
@@ -116,17 +117,12 @@ export const description: INodeProperties[] = [
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
-): Promise<INodeExecutionData> {
+): Promise<INodeExecutionData[]> {
 	const documentVersionId = this.getNodeParameter('documentVersionId', itemIndex) as string;
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
 	const filters = this.getNodeParameter('filters', itemIndex, {}) as IDataObject;
-
-	const filter: IDataObject = {};
-	if ((filters.states as string[])?.length) filter.states = filters.states;
-	if (filters.activeContract !== undefined) filter.activeContract = filters.activeContract;
-	if ((filters.state as string[])?.length) filter.profileStates = filters.state;
-
+	const filter = signatureListFilter(filters);
 	const hasFilter = Object.keys(filter).length > 0;
 
 	const query = `
@@ -142,6 +138,12 @@ export async function execute(
 								requestedAt
 								createdAt
 								updatedAt
+								documentVersion {
+									id
+									document {
+										id
+									}
+								}
 								signedBy {
 									id
 									fullName
@@ -175,8 +177,8 @@ export async function execute(
 		limit,
 	);
 
-	return {
-		json: { signatures },
-		pairedItem: { item: itemIndex },
-	};
+	return executionItems(
+		signatures.map((signature) => withParentReference(signature, { versionId: documentVersionId })),
+		itemIndex,
+	);
 }

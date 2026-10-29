@@ -24,23 +24,14 @@ import type {
 	INodeExecutionData,
 	IDataObject,
 } from 'n8n-workflow';
-import { proboConnectApiRequestAllItems } from '../../GenericFunctions';
+import { proboConnectApiRequestAllItems, readResourceId, executionItems } from '../../GenericFunctions';
+import { organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Organization ID',
-		name: 'organizationId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['user'],
-				operation: ['listUsers'],
-			},
-		},
-		default: '',
-		description: 'The ID of the organization',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['user'],
+		operation: ['listUsers'],
+	}),
 	{
 		displayName: 'Return All',
 		name: 'returnAll',
@@ -149,8 +140,8 @@ export const description: INodeProperties[] = [
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
-): Promise<INodeExecutionData> {
-	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
+): Promise<INodeExecutionData[]> {
+	const organizationId = readResourceId(this.getNodeParameter('organizationId', itemIndex));
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
 	const query = this.getNodeParameter('query', itemIndex, '') as string;
@@ -224,8 +215,5 @@ export async function execute(
 		limit,
 	);
 
-	return {
-		json: { users },
-		pairedItem: { item: itemIndex },
-	};
+	return executionItems(users, itemIndex);
 }

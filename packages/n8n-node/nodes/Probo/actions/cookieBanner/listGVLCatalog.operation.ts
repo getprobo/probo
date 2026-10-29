@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import type { IDataObject, IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
-import { proboApiRequestAllItems } from '../../GenericFunctions';
+import { proboApiRequestAllItems, executionItems } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
@@ -101,7 +101,7 @@ export const description: INodeProperties[] = [
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
-): Promise<INodeExecutionData> {
+): Promise<INodeExecutionData[]> {
 	const query = this.getNodeParameter('query', itemIndex, '') as string;
 	const cookieBannerId = this.getNodeParameter('cookieBannerId', itemIndex, '') as string;
 	const membership = this.getNodeParameter('membership', itemIndex, '') as string;
@@ -155,8 +155,5 @@ export async function execute(
 		limit,
 	);
 
-	return {
-		json: { commonGVLVendors },
-		pairedItem: { item: itemIndex },
-	};
+	return executionItems(commonGVLVendors, itemIndex);
 }

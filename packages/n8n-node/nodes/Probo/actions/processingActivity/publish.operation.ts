@@ -19,23 +19,15 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+import { organizationLocator } from '../../locators';
+import { proboApiRequest, readResourceId } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Organization ID',
-		name: 'organizationId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['processingActivity'],
-				operation: ['publish'],
-			},
-		},
-		default: '',
+	organizationLocator({
+		resource: ['processingActivity'],
+		operation: ['publish'],
 		description: 'The ID of the organization whose processing activity list to publish',
-		required: true,
-	},
+	}),
 	{
 		displayName: 'Approver IDs',
 		name: 'approverIds',
@@ -68,7 +60,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
+	const organizationId = readResourceId(this.getNodeParameter('organizationId', itemIndex));
 	const approverIds = this.getNodeParameter('approverIds', itemIndex, '') as string;
 	const minor = this.getNodeParameter('minor', itemIndex, false) as boolean;
 
