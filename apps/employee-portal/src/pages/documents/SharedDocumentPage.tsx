@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { UnAuthenticatedError } from "@probo/relay";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { type ReactNode, use } from "react";
 import { useTranslation } from "react-i18next";
@@ -27,7 +26,6 @@ import { commitMutation, type Environment } from "relay-runtime";
 
 import type { SharedDocumentPageQuery } from "#/__generated__/core/SharedDocumentPageQuery.graphql";
 import type { useExportEmployeeDocumentPdfMutation } from "#/__generated__/core/useExportEmployeeDocumentPdfMutation.graphql";
-import { redirectToLogin } from "#/lib/auth/redirectToLogin";
 import { NotFoundError } from "#/lib/relay/errors";
 import { DocumentRequestPanel } from "#/pages/_components/DocumentRequestPanel";
 import { DocumentWorkspace } from "#/pages/_components/DocumentWorkspace";
@@ -67,7 +65,6 @@ const pdfPromises = new Map<string, Promise<string>>();
 function loadSharedDocumentPdf(
   environment: Environment,
   documentVersionId: string,
-  organizationId: string,
 ): Promise<string> {
   const existing = pdfPromises.get(documentVersionId);
   if (existing != null) {
@@ -86,12 +83,7 @@ function loadSharedDocumentPdf(
         }
         resolve(response.exportEmployeeDocumentVersionPDF.data);
       },
-      onError: (error) => {
-        if (error instanceof UnAuthenticatedError) {
-          redirectToLogin({ organizationId });
-        }
-        reject(error);
-      },
+      onError: reject,
     });
   });
   void promise.catch(() => {
@@ -112,8 +104,7 @@ function SharedDocumentWorkspace({
   request,
 }: SharedDocumentWorkspaceProps) {
   const environment = useRelayEnvironment();
-  const { organizationId } = useEmployeePortalRoute();
-  const dataUri = use(loadSharedDocumentPdf(environment, versionId, organizationId));
+  const dataUri = use(loadSharedDocumentPdf(environment, versionId));
 
   return (
     <DocumentWorkspace
