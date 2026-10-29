@@ -51,5 +51,28 @@
     "errors": {
       "update": "Instellingen bijwerken mislukt"
     }
+  },
+  "documentsPage": {
+    "title": "Documenten",
+    "description": "Kies welke gepubliceerde documenten medewerkers kunnen lezen.",
+    "empty": "Nog geen gepubliceerde documenten.",
+    "actions": {
+      "previous": "Vorige",
+      "next": "Volgende",
+      "share": "{{title}} delen"
+    },
+    "confirm": {
+      "title": "Dit document niet meer delen?",
+      "description": "Medewerkers zien het dan niet meer in het medewerkersportaal.",
+      "confirm": "Niet meer delen"
+    },
+    "messages": {
+      "shared": "Document gedeeld",
+      "removed": "Document verwijderd"
+    },
+    "errors": {
+      "share": "Document delen mislukt",
+      "remove": "Document verwijderen mislukt"
+    }
   }
 }

@@ -51,5 +51,28 @@
     "errors": {
       "update": "Failed to update settings"
     }
+  },
+  "documentsPage": {
+    "title": "Documents",
+    "description": "Choose which published documents employees can read.",
+    "empty": "No published documents yet.",
+    "actions": {
+      "previous": "Prev",
+      "next": "Next",
+      "share": "Share {{title}}"
+    },
+    "confirm": {
+      "title": "Stop sharing this document?",
+      "description": "Employees will no longer see it in the employee portal.",
+      "confirm": "Stop sharing"
+    },
+    "messages": {
+      "shared": "Document shared",
+      "removed": "Document removed"
+    },
+    "errors": {
+      "share": "Failed to share document",
+      "remove": "Failed to remove document"
+    }
   }
 }

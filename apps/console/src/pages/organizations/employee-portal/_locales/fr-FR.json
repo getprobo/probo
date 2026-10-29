@@ -51,5 +51,28 @@
     "errors": {
       "update": "Échec de la mise à jour des paramètres"
     }
+  },
+  "documentsPage": {
+    "title": "Documents",
+    "description": "Choisissez les documents publiés que les employés peuvent lire.",
+    "empty": "Aucun document publié pour le moment.",
+    "actions": {
+      "previous": "Préc.",
+      "next": "Suiv.",
+      "share": "Partager {{title}}"
+    },
+    "confirm": {
+      "title": "Arrêter le partage de ce document ?",
+      "description": "Les employés ne le verront plus dans le portail employé.",
+      "confirm": "Arrêter le partage"
+    },
+    "messages": {
+      "shared": "Document partagé",
+      "removed": "Document retiré"
+    },
+    "errors": {
+      "share": "Échec du partage du document",
+      "remove": "Échec du retrait du document"
+    }
   }
 }

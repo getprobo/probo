@@ -331,7 +331,10 @@ func (r *mutationResolver) AddEmployeePortalDocument(ctx context.Context, input 
 
 	return &types.AddEmployeePortalDocumentPayload{
 		EmployeePortalDocument: types.NewEmployeePortalDocument(link),
-		Document:               &types.Document{ID: link.DocumentID},
+		Document: &types.Document{
+			ID:           link.DocumentID,
+			Organization: &types.Organization{ID: link.OrganizationID},
+		},
 	}, nil
 }
 
@@ -388,7 +391,10 @@ func (r *mutationResolver) DeleteEmployeePortalDocument(ctx context.Context, inp
 
 	return &types.DeleteEmployeePortalDocumentPayload{
 		DeletedEmployeePortalDocumentID: link.ID,
-		Document:                        &types.Document{ID: link.DocumentID},
+		Document: &types.Document{
+			ID:           link.DocumentID,
+			Organization: &types.Organization{ID: link.OrganizationID},
+		},
 	}, nil
 }
 

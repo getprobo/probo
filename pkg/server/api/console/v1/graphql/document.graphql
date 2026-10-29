@@ -291,9 +291,7 @@ type Document implements Node {
     compliancePortalDocument(
         compliancePortalId: ID!
     ): CompliancePortalDocument @goField(forceResolver: true)
-    employeePortalDocument(
-        employeePortalId: ID!
-    ): EmployeePortalDocument @goField(forceResolver: true)
+    employeePortalDocument: EmployeePortalDocument @goField(forceResolver: true)
     compliancePortalDocumentAccess(
         compliancePortalAccessId: ID!
     ): CompliancePortalDocumentAccess @goField(forceResolver: true)

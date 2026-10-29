@@ -116,8 +116,24 @@ func (r *documentResolver) CompliancePortalDocument(ctx context.Context, obj *ty
 }
 
 // EmployeePortalDocument is the resolver for the employeePortalDocument field.
-func (r *documentResolver) EmployeePortalDocument(ctx context.Context, obj *types.Document, employeePortalID gid.GID) (*types.EmployeePortalDocument, error) {
-	scope, err := r.authorize(ctx, employeePortalID, employeeportalmgmt.ActionEmployeePortalGet)
+func (r *documentResolver) EmployeePortalDocument(ctx context.Context, obj *types.Document) (*types.EmployeePortalDocument, error) {
+	scope, err := r.authorize(ctx, obj.Organization.ID, employeeportalmgmt.ActionEmployeePortalList)
+	if err != nil {
+		return nil, err
+	}
+
+	portal, err := dataloader.FromContext(ctx).EmployeePortalByOrganization.Load(ctx, obj.Organization.ID)
+	if err != nil {
+		if errors.Is(err, dataloadgen.ErrNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load employee portal", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	scope, err = r.authorize(ctx, portal.ID, employeeportalmgmt.ActionEmployeePortalGet)
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +142,7 @@ func (r *documentResolver) EmployeePortalDocument(ctx context.Context, obj *type
 		ctx,
 		dataloader.EmployeePortalDocumentKey{
 			TenantID:         scope.GetTenantID(),
-			EmployeePortalID: employeePortalID,
+			EmployeePortalID: portal.ID,
 			DocumentID:       obj.ID,
 		},
 	)

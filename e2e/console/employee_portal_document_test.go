@@ -77,7 +77,7 @@ func TestEmployeePortalDocument_SharePublishedDocument(t *testing.T) {
 	}
 
 	err = owner.Execute(`
-		mutation($input: AddEmployeePortalDocumentInput!, $portalId: ID!) {
+		mutation($input: AddEmployeePortalDocumentInput!) {
 			addEmployeePortalDocument(input: $input) {
 				employeePortalDocument {
 					id
@@ -88,12 +88,11 @@ func TestEmployeePortalDocument_SharePublishedDocument(t *testing.T) {
 				}
 				document {
 					id
-					employeePortalDocument(employeePortalId: $portalId) { id }
+					employeePortalDocument { id }
 				}
 			}
 		}
 	`, map[string]any{
-		"portalId": portalID,
 		"input": map[string]any{
 			"employeePortalId": portalID,
 			"documentId":       publishedID,

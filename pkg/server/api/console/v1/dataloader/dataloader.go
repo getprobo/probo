@@ -35,6 +35,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/iam/policy"
+	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/authn"
@@ -135,6 +136,7 @@ type (
 		CommonThirdParty                           *dataloadgen.Loader[gid.GID, *coredata.CommonThirdParty]
 		ThirdPartyAdministratorIDs                 *dataloadgen.Loader[gid.GID, []gid.GID]
 		CompliancePortalDocument                   *dataloadgen.Loader[CompliancePortalDocumentKey, *coredata.CompliancePortalDocument]
+		EmployeePortalByOrganization               *dataloadgen.Loader[gid.GID, *coredata.EmployeePortal]
 		EmployeePortalDocument                     *dataloadgen.Loader[EmployeePortalDocumentKey, *coredata.EmployeePortalDocument]
 		CurrentPublishedDocumentVersion            *dataloadgen.Loader[gid.GID, *coredata.DocumentVersion]
 		CompliancePortalAudit                      *dataloadgen.Loader[CompliancePortalAuditKey, *coredata.CompliancePortalAudit]
@@ -223,6 +225,7 @@ func (f *batchFetcher) newLoaders() *Loaders {
 		CommonThirdParty:                         dataloadgen.NewMappedLoader(f.fetchCommonThirdParties),
 		ThirdPartyAdministratorIDs:               dataloadgen.NewMappedLoader(f.fetchThirdPartyAdministratorIDs),
 		CompliancePortalDocument:                 dataloadgen.NewMappedLoader(f.fetchCompliancePortalDocuments),
+		EmployeePortalByOrganization:             dataloadgen.NewMappedLoader(f.fetchEmployeePortalsByOrganization),
 		EmployeePortalDocument:                   dataloadgen.NewMappedLoader(f.fetchEmployeePortalDocuments),
 		CurrentPublishedDocumentVersion:          dataloadgen.NewMappedLoader(f.fetchCurrentPublishedDocumentVersions),
 		CompliancePortalAudit:                    dataloadgen.NewMappedLoader(f.fetchCompliancePortalAudits),
@@ -239,6 +242,40 @@ func (f *batchFetcher) newLoaders() *Loaders {
 			dataloadgen.WithoutCache(),
 		),
 	}
+}
+
+func (f *batchFetcher) fetchEmployeePortalsByOrganization(
+	ctx context.Context,
+	organizationIDs []gid.GID,
+) (map[gid.GID]*coredata.EmployeePortal, error) {
+	result := make(map[gid.GID]*coredata.EmployeePortal, len(organizationIDs))
+
+	for _, organizationID := range organizationIDs {
+		portals, err := f.employeePortal.ListForOrganizationID(
+			ctx,
+			scopeFromContext(ctx, organizationID.TenantID()),
+			organizationID,
+			page.NewCursor(
+				1,
+				nil,
+				page.Head,
+				page.OrderBy[coredata.EmployeePortalOrderField]{
+					Field:     coredata.EmployeePortalOrderFieldCreatedAt,
+					Direction: page.OrderDirectionAsc,
+				},
+			),
+		)
+		if err != nil {
+			return nil, fmt.Errorf("cannot batch load employee portals: %w", err)
+		}
+		if len(portals.Data) == 0 {
+			continue
+		}
+
+		result[organizationID] = portals.Data[0]
+	}
+
+	return result, nil
 }
 
 func (f *batchFetcher) fetchEmployeePortalDocuments(

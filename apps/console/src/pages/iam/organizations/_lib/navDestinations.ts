@@ -187,6 +187,13 @@ const NAV_DESTINATIONS = [
     isVisible: permissions => permissions.canGetEmployeePortal,
   },
   {
+    id: "employee-portal-documents",
+    group: "employeePortal",
+    labelKey: "nav.employeePortalDocuments",
+    path: "documents",
+    isVisible: permissions => permissions.canGetEmployeePortal && permissions.canListDocuments,
+  },
+  {
     id: "campaigns",
     group: "accessReview",
     labelKey: "nav.campaigns",

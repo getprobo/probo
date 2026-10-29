@@ -21,9 +21,17 @@
 import { lazy } from "@probo/react-lazy";
 import type { AppRoute } from "@probo/routes";
 
+import { EmployeePortalDocumentsPageSkeleton } from "./documents/EmployeePortalDocumentsPageSkeleton";
 import { EmployeePortalPageSkeleton } from "./EmployeePortalPageSkeleton";
 
 export const employeePortalRoutes = [
+  {
+    path: "employee-portal/documents",
+    Fallback: EmployeePortalDocumentsPageSkeleton,
+    Component: lazy(
+      () => import("#/pages/organizations/employee-portal/documents/EmployeePortalDocumentsPageLoader"),
+    ),
+  },
   {
     path: "employee-portal",
     Fallback: EmployeePortalPageSkeleton,

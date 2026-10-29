@@ -35,6 +35,7 @@ const employeePortalNavPanelQuery = graphql`
       __typename
       ... on Organization {
         canGetEmployeePortal: permission(action: "employee-portal:portal:get")
+        canListDocuments: permission(action: "core:document:list")
       }
     }
   }
@@ -69,9 +70,18 @@ function EmployeePortalNavPanelInner({ queryRef, group }: EmployeePortalNavPanel
   }
 
   return (
-    <NavPanelItem
-      label={t("nav.employeePortalSettings")}
-      to={navHref(organizationId, group, "")}
-    />
+    <>
+      <NavPanelItem
+        label={t("nav.employeePortalSettings")}
+        to={navHref(organizationId, group, "")}
+        exact
+      />
+      {organization.canListDocuments && (
+        <NavPanelItem
+          label={t("nav.employeePortalDocuments")}
+          to={navHref(organizationId, group, "documents")}
+        />
+      )}
+    </>
   );
 }
