@@ -28,20 +28,32 @@ runs:
       with:
         go-version: "${{ inputs.go-version }}"
         cache: false
-    - name: "Get cache paths"
-      id: "get-cache-paths"
+    # actions/cache re-reads path in its post step. A composite step output
+    # is empty there; runner.temp is still set.
+    - name: "Select cache directories"
       shell: "bash"
+      env:
+        GO_BUILD_CACHE: "${{ runner.temp }}/go-build"
+        GO_MOD_CACHE: "${{ runner.temp }}/go-mod"
       run: |
-        echo "gocache=$(go env GOCACHE)" >> "$GITHUB_OUTPUT"
-        echo "gomodcache=$(go env GOMODCACHE)" >> "$GITHUB_OUTPUT"
+        mkdir -p "$GO_BUILD_CACHE" "$GO_MOD_CACHE"
+        echo "GOCACHE=$GO_BUILD_CACHE" >> "$GITHUB_ENV"
+        echo "GOMODCACHE=$GO_MOD_CACHE" >> "$GITHUB_ENV"
     - name: "Cache"
       id: "cache"
       uses: "actions/cache@v6.1.0"
       with:
         path: |
-          ${{ steps.get-cache-paths.outputs.gocache }}
-          ${{ steps.get-cache-paths.outputs.gomodcache }}
-        key: "go-cache-${{ runner.os }}-${{ runner.arch }}-${{ inputs.cache-key-prefix }}-${{ inputs.go-version }}-${{ github.head_ref || github.ref_name }}-${{ hashFiles(inputs.cache-dependency-path) }}-${{ github.run_id }}"
+          ${{ runner.temp }}/go-build
+          ${{ runner.temp }}/go-mod
+        # End with a hash of the files that change compiled objects, not
+        # the run id. A run id made every success a new key, so the post
+        # step uploaded the cache again. An exact hit skips that upload,
+        # which is what a rerun of the same sources should do. A source
+        # change misses, restores the newest prefix match, and saves the
+        # new objects. The prefixed restore keys still match an older
+        # run-id entry and any save from the same branch or main.
+        key: "go-cache-${{ runner.os }}-${{ runner.arch }}-${{ inputs.cache-key-prefix }}-${{ inputs.go-version }}-${{ github.head_ref || github.ref_name }}-${{ hashFiles(inputs.cache-dependency-path) }}-${{ hashFiles('**/*.go', '**/go.mod', '**/*.sql', '**/*.graphql', '**/gqlgen.yaml', '**/mcpgen.yaml', 'pkg/server/api/mcp/v1/specification.yaml', 'pkg/**/*.tmpl', 'apps/**/*.tmpl', 'pkg/**/*.html', 'pkg/**/*.txt', 'pkg/**/*.png', 'pkg/**/*.js', 'pkg/**/*.wasm', 'pkg/**/*.sha256', 'pkg/proboctl/seed/common-third-parties/data/data.json') }}"
         restore-keys: |
           go-cache-${{ runner.os }}-${{ runner.arch }}-${{ inputs.cache-key-prefix }}-${{ inputs.go-version }}-${{ github.head_ref || github.ref_name }}-${{ hashFiles(inputs.cache-dependency-path) }}-
           go-cache-${{ runner.os }}-${{ runner.arch }}-${{ inputs.cache-key-prefix }}-${{ inputs.go-version }}-${{ github.head_ref || github.ref_name }}-
@@ -57,5 +69,5 @@ runs:
     - name: "Trim GOCACHE"
       uses: "$/.github/actions/trim-gocache"
       with:
-        gocache: "${{ steps.get-cache-paths.outputs.gocache }}"
+        gocache: "${{ runner.temp }}/go-build"
         max-staleness-hours: "${{ inputs.max-staleness-hours }}"
