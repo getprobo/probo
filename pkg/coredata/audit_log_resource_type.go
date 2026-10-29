@@ -121,6 +121,12 @@ func ResourceTypeName(entityType uint16) string {
 		return "AiSystem"
 	case TaskCommentEntityType:
 		return "TaskComment"
+	case DocumentSuggestionEntityType:
+		return "DocumentSuggestion"
+	case DocumentCommentThreadEntityType:
+		return "DocumentCommentThread"
+	case DocumentCommentEntityType:
+		return "DocumentComment"
 	case TaskActivityEntityType:
 		return "TaskActivity"
 	case TaskSyncJobEntityType:
