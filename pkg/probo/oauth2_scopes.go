@@ -250,6 +250,7 @@ var OAuth2ScopeMappings = map[coredata.OAuth2Scope][]string{
 	ScopeV1DocumentRead: {
 		ActionDocumentGet,
 		ActionDocumentList,
+		ActionDocumentComment,
 		ActionDocumentVersionGet,
 		ActionDocumentVersionList,
 		ActionDocumentRevisionGet,
@@ -268,6 +269,7 @@ var OAuth2ScopeMappings = map[coredata.OAuth2Scope][]string{
 	ScopeV1Document: {
 		ActionDocumentGet,
 		ActionDocumentList,
+		ActionDocumentComment,
 		ActionDocumentVersionGet,
 		ActionDocumentVersionList,
 		ActionDocumentRevisionGet,

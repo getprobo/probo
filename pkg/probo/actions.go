@@ -132,6 +132,7 @@ const (
 	ActionDocumentArchive     = "core:document:archive"
 	ActionDocumentUnarchive   = "core:document:unarchive"
 	ActionDocumentDeleteDraft = "core:document:delete-draft"
+	ActionDocumentComment     = "core:document:comment"
 
 	// DocumentVersion actions
 	ActionDocumentVersionGet             = "core:document-version:get"
