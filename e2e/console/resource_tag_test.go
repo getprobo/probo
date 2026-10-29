@@ -151,12 +151,15 @@ func TestResourceTag_CatalogCRUD(t *testing.T) {
 	require.GreaterOrEqual(t, listResult.Node.ResourceTags.TotalCount, 1)
 
 	found := false
+
 	for _, edge := range listResult.Node.ResourceTags.Edges {
 		if edge.Node.ID == tagID {
 			found = true
+
 			assert.Equal(t, "environment", edge.Node.Key)
 		}
 	}
+
 	assert.True(t, found)
 
 	const deleteMutation = `

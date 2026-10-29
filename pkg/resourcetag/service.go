@@ -180,6 +180,7 @@ func (s *Service) CountForOrganizationID(
 			tags := &coredata.ResourceTags{}
 
 			var err error
+
 			count, err = tags.CountByOrganizationID(ctx, conn, scope, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot count resource tags: %w", err)
@@ -419,6 +420,7 @@ func (s *Service) LoadByResourceIDs(
 			}
 
 			tagIDs := make([]gid.GID, 0, len(assignments))
+
 			seen := make(map[gid.GID]struct{}, len(assignments))
 			for _, assignment := range assignments {
 				if _, ok := seen[assignment.TagID]; ok {
@@ -473,6 +475,7 @@ func (s *Service) FilterResourceIDs(
 			assignments := &coredata.ResourceTagAssignments{}
 
 			var err error
+
 			filtered, err = assignments.FilterResourceIDs(ctx, conn, scope, candidateIDs, tagIDs)
 			if err != nil {
 				return fmt.Errorf("cannot filter resource ids by tags: %w", err)
@@ -533,6 +536,7 @@ func (s *Service) CountAssignmentsForTagID(
 			assignments := &coredata.ResourceTagAssignments{}
 
 			var err error
+
 			count, err = assignments.CountByTagID(ctx, conn, scope, tagID)
 			if err != nil {
 				return fmt.Errorf("cannot count resource tag assignments: %w", err)
