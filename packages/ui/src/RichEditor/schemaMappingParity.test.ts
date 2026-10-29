@@ -84,6 +84,7 @@ describe("ProseMirror schema mapping parity", () => {
     const adapter = createSchemaAdapter(richEditorCollaborationExtensions);
 
     const adapterMarks = adapter.markMappings
+      .filter(mapping => !mapping.prosemirrorMark.name.startsWith("suggestion"))
       .map(mapping => ({
         automerge: mapping.automergeMarkName,
         prosemirror: mapping.prosemirrorMark.name,

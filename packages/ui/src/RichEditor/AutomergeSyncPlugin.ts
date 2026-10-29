@@ -27,7 +27,6 @@ import type {
   SchemaAdapter,
 } from "@automerge/prosemirror";
 import { patchesToTr } from "@automerge/prosemirror/dist/patchesToTr.js";
-import pmToAm from "@automerge/prosemirror/dist/pmToAm.js";
 import {
   pmDocFromSpans,
   pmNodeToSpans,
@@ -41,6 +40,13 @@ import {
 } from "@tiptap/pm/state";
 
 import type { RichEditorAutomergeDocument } from "./collaboration";
+import { applyDocumentSteps, reassignSuggestionBlocks } from "./documentSteps";
+import {
+  suggestionReassignmentFrom,
+  suggestionSplitFrom,
+} from "./suggestionSplit";
+
+export const automergeRemoteTransaction = "automerge-remote";
 import {
   collaborationDebug,
   summarizeAutomergeSpans,
@@ -81,9 +87,11 @@ export function createAutomergeSyncPlugin(
           prosemirror: summarizeProseMirrorDocument(view.state.doc),
         }));
 
-        const structuralLeaf = hasHorizontalRule(view.state.doc)
-          || spansHaveHorizontalRule(doc, path);
-        const transaction = structuralLeaf
+        // Full reconcile only when a horizontal rule appears or disappears.
+        // Presence of an HR elsewhere must not force a rewrite on every patch.
+        const beforeHadRule = spansHaveHorizontalRule(patchInfo.before, path);
+        const afterHasRule = spansHaveHorizontalRule(doc, path);
+        const transaction = beforeHadRule !== afterHasRule
           ? reconcileAutomergeDocument(adapter, path, doc, view.state)
           : patchesToTr({
               adapter,
@@ -93,6 +101,7 @@ export function createAutomergeSyncPlugin(
               patches,
               state: view.state,
             });
+        transaction.setMeta(automergeRemoteTransaction, true);
         ignoreTransaction = true;
         try {
           view.dispatch(transaction);
@@ -119,7 +128,27 @@ export function createAutomergeSyncPlugin(
       const changedTransactions = transactions.filter(
         transaction => transaction.docChanged,
       );
-      if (changedTransactions.length === 0) return undefined;
+      const reassignment = suggestionReassignmentFrom(transactions);
+      if (changedTransactions.length === 0) {
+        if (reassignment) {
+          ignoreTransaction = true;
+          try {
+            handle.change((document) => {
+              reassignSuggestionBlocks(
+                document,
+                path,
+                reassignment.from,
+                reassignment.to,
+              );
+            });
+          } finally {
+            ignoreTransaction = false;
+          }
+        }
+        return undefined;
+      }
+
+      const touchesRule = changedTransactions.some(transactionTouchesHorizontalRule);
 
       collaborationDebug("local-before", () => ({
         transactionCount: changedTransactions.length,
@@ -129,34 +158,49 @@ export function createAutomergeSyncPlugin(
         heads: Automerge.getHeads(handle.doc()),
         spans: summarizeAutomergeSpans(handle.doc()),
         prosemirror: summarizeProseMirrorDocument(state.doc),
-        structuralLeaf: hasHorizontalRule(state.doc),
+        structuralLeaf: touchesRule,
       }));
 
       ignoreTransaction = true;
       try {
         handle.change((document) => {
-          if (
-            hasHorizontalRule(state.doc)
-            || hasMarkStep(changedTransactions)
-          ) {
+          // Only HR insert/delete/move needs a full span rewrite. Typing next
+          // to an existing rule stays on the incremental path.
+          if (touchesRule) {
             Automerge.updateSpans(
               document,
               path,
               pmNodeToSpans(adapter, state.doc),
               adapter.updateSpansConfig(),
             );
-          } else {
-            for (const transaction of changedTransactions) {
-              const spans = Automerge.spans(document, path);
-              pmToAm(
-                adapter,
-                spans,
-                transaction.steps,
+            return;
+          }
+          for (const transaction of changedTransactions) {
+            const applied = applyDocumentSteps(
+              adapter,
+              document,
+              path,
+              transaction.docs[0],
+              transaction.steps,
+              suggestionSplitFrom(transaction),
+            );
+            if (!applied) {
+              Automerge.updateSpans(
                 document,
-                transaction.docs[0],
                 path,
+                pmNodeToSpans(adapter, state.doc),
+                adapter.updateSpansConfig(),
               );
+              return;
             }
+          }
+          if (reassignment) {
+            reassignSuggestionBlocks(
+              document,
+              path,
+              reassignment.from,
+              reassignment.to,
+            );
           }
         });
       } finally {
@@ -210,30 +254,51 @@ function spansHaveHorizontalRule(
   });
 }
 
-function hasHorizontalRule(document: {
-  descendants: (
-    callback: (node: { type: { name: string } }) => boolean,
-  ) => void;
+function transactionTouchesHorizontalRule(transaction: {
+  docs: Array<{
+    content: { size: number };
+    nodesBetween: (
+      from: number,
+      to: number,
+      callback: (node: { type: { name: string } }) => void | boolean,
+    ) => void;
+  }>;
+  steps: ReadonlyArray<{
+    from?: number;
+    to?: number;
+    slice?: {
+      content: {
+        descendants: (
+          callback: (node: { type: { name: string } }) => void | boolean,
+        ) => void;
+      };
+    };
+  }>;
 }): boolean {
-  let found = false;
-  document.descendants((node) => {
-    if (node.type.name === "horizontalRule") {
-      found = true;
-      return false;
+  const before = transaction.docs[0];
+  if (!before) return false;
+
+  for (const step of transaction.steps) {
+    if (typeof step.from === "number" && typeof step.to === "number") {
+      let found = false;
+      const from = Math.max(0, Math.min(step.from, before.content.size));
+      const to = Math.max(from, Math.min(step.to, before.content.size));
+      before.nodesBetween(from, to, (node) => {
+        if (node.type.name === "horizontalRule") found = true;
+        return !found;
+      });
+      if (found) return true;
     }
 
-    return true;
-  });
-  return found;
-}
+    let inserted = false;
+    step.slice?.content.descendants((node) => {
+      if (node.type.name === "horizontalRule") inserted = true;
+      return !inserted;
+    });
+    if (inserted) return true;
+  }
 
-function hasMarkStep(transactions: Transaction[]): boolean {
-  return transactions.some(transaction =>
-    transaction.steps.some((step) => {
-      const stepType = step.constructor.name;
-      return stepType === "AddMarkStep" || stepType === "RemoveMarkStep";
-    }),
-  );
+  return false;
 }
 
 function findDocumentDiff(

@@ -105,6 +105,33 @@ describe("RichEditor collaboration", () => {
     expect(document.body).toContain("Hello world");
   });
 
+  it("reads legacy camel-case suggestion marks", () => {
+    const document = createRichEditorAutomergeDocument(
+      JSON.stringify({
+        type: "doc",
+        content: [{
+          type: "paragraph",
+          content: [{
+            type: "text",
+            text: "Suggested",
+            marks: [{ type: "suggestionInsert", attrs: { id: "suggestion-1" } }],
+          }],
+        }],
+      }),
+    );
+    const spans = Automerge.spans(document, ["body"]).map((span) => {
+      if (span.type !== "text" || !span.marks?.["suggestion-insert"]) return span;
+      const { ["suggestion-insert"]: mark, ...marks } = span.marks;
+      return { ...span, marks: { ...marks, suggestionInsert: mark } };
+    });
+    const adapter = createSchemaAdapter(richEditorCollaborationExtensions);
+    const restored = pmDocFromSpans(adapter, spans).toJSON();
+
+    expect(restored.content[0].content[0].marks).toEqual([
+      { type: "suggestionInsert", attrs: { id: "suggestion-1" } },
+    ]);
+  });
+
   it("preserves table and row boundaries", () => {
     const content = tableDocumentJSON();
 

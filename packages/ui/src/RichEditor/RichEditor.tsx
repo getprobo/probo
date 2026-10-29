@@ -35,7 +35,7 @@ import { Text } from "@tiptap/extension-text";
 import { Underline } from "@tiptap/extension-underline";
 import { Dropcursor, UndoRedo } from "@tiptap/extensions";
 import { type Content, Editor, EditorContent, type JSONContent, useEditor } from "@tiptap/react";
-import { type ComponentProps, useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { type ComponentProps, type ReactNode, useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { tv } from "tailwind-variants";
 
@@ -55,6 +55,7 @@ import {
 } from "./historyDecorations";
 import { ImageExtension } from "./ImageExtension";
 import { LinkExtension } from "./LinkExtension";
+import { SuggestionDelete, SuggestionInsert } from "./SuggestionExtension";
 import { MarkdownPasteExtension } from "./MarkdownPasteExtension";
 import { OptionsMenu } from "./OptionsMenu/OptionsMenu";
 import { PlaceholderExtension, setPlaceholder } from "./PlaceholderExtension";
@@ -85,6 +86,8 @@ const coreExtensions = [
   Code,
   CodeBlockExtension,
   LinkExtension,
+  SuggestionInsert,
+  SuggestionDelete,
   SlashCommandExtension,
   Blockquote,
   BulletList,
@@ -186,7 +189,11 @@ type RichEditorProps = ComponentProps<"div"> & {
   editorExtensions?: Extensions;
   initialContent?: Content;
   onPresence?: (anchor: number, head: number) => void;
+  onEditor?: (editor: Editor | null) => void;
+  formatting?: boolean;
   suspendContentChanges?: boolean;
+  // Review cards rendered inside the scrollport so they move with the page.
+  margin?: ReactNode;
 };
 
 function parseContent(content: string): Content {
@@ -216,7 +223,10 @@ export function RichEditor(props: RichEditorProps) {
     editorExtensions: editorExtensionOverride,
     initialContent: initialContentOverride,
     onPresence,
+    onEditor,
+    formatting = true,
     suspendContentChanges = false,
+    margin,
     ...divProps
   } = props;
   const { t } = useTranslation();
@@ -370,10 +380,14 @@ export function RichEditor(props: RichEditorProps) {
       const json = withoutContentUploads(created.getJSON());
       stripNonTextMarks(json);
       emittedRef.current = JSON.stringify(json);
+      onEditor?.(created);
       onPresence?.(
         created.state.selection.anchor,
         created.state.selection.head,
       );
+    },
+    onDestroy: () => {
+      onEditor?.(null);
     },
     onUpdate: handleUpdate,
     onSelectionUpdate: ({ editor }) => {
@@ -415,8 +429,12 @@ export function RichEditor(props: RichEditorProps) {
   if (!editor) return null;
 
   return (
-    <div className={richEditorVariants({ className, disabled, compact, controls })} {...divProps}>
-      {!disabled
+    <div
+      className={richEditorVariants({ className, disabled, compact, controls })}
+      {...divProps}
+      data-review-scroll={margin ? "" : undefined}
+    >
+      {!disabled && formatting
         && (
           <>
             <BubbleMenu editor={editor} />
@@ -435,6 +453,7 @@ export function RichEditor(props: RichEditorProps) {
         )}
 
       <EditorContent className="flex min-h-0 flex-1 flex-col" editor={editor} />
+      {margin}
       <input
         ref={fileInputRef}
         type="file"

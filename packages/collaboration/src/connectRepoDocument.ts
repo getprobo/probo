@@ -97,6 +97,11 @@ function isSelectionPresence(value: unknown): value is SelectionPresence {
     && isTextSelection(message.selection);
 }
 
+function isReviewPresence(value: unknown): boolean {
+  if (!value || typeof value !== "object") return false;
+  return (value as { kind?: unknown }).kind === "document-review";
+}
+
 function isDeparturePresence(value: unknown): boolean {
   if (!value || typeof value !== "object") return false;
   return (value as { kind?: unknown }).kind === "departure";
@@ -153,6 +158,7 @@ export async function connectRepoDocument(
   >[] = [];
   const latest = new Map<string, PresenceEntry>();
   const listeners = new Set<(presences: RichEditorPresence[]) => void>();
+  const reviewListeners = new Set<() => void>();
   let closed = false;
 
   const localActive = (): boolean => {
@@ -175,6 +181,13 @@ export async function connectRepoDocument(
     if (!lastSelection) return;
     const active = localActive();
     broadcastSelection(lastSelection, active);
+  };
+
+  collaboration.onReview = (listener) => {
+    reviewListeners.add(listener);
+    return () => {
+      reviewListeners.delete(listener);
+    };
   };
 
   collaboration.updatePresence = (anchorPosition, headPosition) => {
@@ -218,6 +231,11 @@ export async function connectRepoDocument(
     if (isDeparturePresence(payload.message)) {
       if (!latest.delete(sender)) return;
       emitPresences();
+      return;
+    }
+
+    if (isReviewPresence(payload.message)) {
+      for (const listener of reviewListeners) listener();
       return;
     }
 
@@ -296,6 +314,13 @@ export async function connectRepoDocument(
   const handleEphemeral = (
     payload: DocHandleEphemeralMessagePayload<RichEditorAutomergeDocument>,
   ) => {
+    // A review notice only asks the sidebar to refetch. It does not depend on
+    // the document being ready, and it must not be dropped with unknown frames.
+    if (isReviewPresence(payload.message)) {
+      applyEphemeral(payload);
+      return;
+    }
+
     if (!isSelectionPresence(payload.message) && !isDeparturePresence(payload.message)) {
       return;
     }

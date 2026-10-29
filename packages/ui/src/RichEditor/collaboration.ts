@@ -240,6 +240,18 @@ export function createSchemaAdapter(
   });
 
   const adapter = new SchemaAdapter({ nodes, marks } satisfies MappedSchemaSpec);
+  // Read-only aliases for documents that still carry camelCase Automerge mark
+  // names from an earlier sync path. New writes always use kebab-case via
+  // automergeMarkMapping; do not add further write aliases here.
+  const legacySuggestionMarks: Record<string, string> = {
+    "suggestion-insert": "suggestionInsert",
+    "suggestion-delete": "suggestionDelete",
+  };
+  for (const mapping of [...adapter.markMappings]) {
+    const legacy = legacySuggestionMarks[mapping.automergeMarkName];
+    if (!legacy) continue;
+    adapter.markMappings.push({ ...mapping, automergeMarkName: legacy });
+  }
   if (!targetSchema) return adapter;
 
   adapter.schema = targetSchema;
@@ -338,6 +350,10 @@ function automergeMarkMapping(name: string): MappedMarkSpec["automerge"] {
     case "underline":
     case "code":
       return { markName: name };
+    case "suggestionInsert":
+      return suggestionMarkMapping("suggestion-insert");
+    case "suggestionDelete":
+      return suggestionMarkMapping("suggestion-delete");
     case "link":
       return {
         markName: "link",
@@ -359,6 +375,22 @@ function automergeMarkMapping(name: string): MappedMarkSpec["automerge"] {
     default:
       return undefined;
   }
+}
+
+function suggestionMarkMapping(markName: string): MappedMarkSpec["automerge"] {
+  return {
+    markName,
+    parsers: {
+      fromAutomerge: (value) => {
+        if (typeof value !== "string") return { id: "" };
+        const parsed = parseJSONObject(value);
+        return { id: readStringAttribute(parsed, "id", "") };
+      },
+      fromProsemirror: (mark: Mark) => JSON.stringify({
+        id: readStringAttribute(mark.attrs, "id", ""),
+      }),
+    },
+  };
 }
 
 function parseJSONObject(value: string): Record<string, unknown> {
