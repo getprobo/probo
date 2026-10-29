@@ -18,8 +18,8 @@
 -- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 -- SOFTWARE.
 
--- Later scope rewrites of the prb CLI client landed after the resource-tag
--- tables, so re-apply v1:resource-tag on the current scope set.
+-- Later scope rewrites of the prb CLI client landed after the tag
+-- tables, so re-apply v1:tag on the current scope set.
 UPDATE iam_oauth2_clients
 SET scopes = '{
     openid,
@@ -42,7 +42,7 @@ SET scopes = '{
     v1:itam,
     v1:org,
     v1:privacy,
-    v1:resource-tag,
+    v1:tag,
     v1:risk,
     v1:slack-connection,
     v1:task,

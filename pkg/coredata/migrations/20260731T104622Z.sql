@@ -18,7 +18,7 @@
 -- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 -- SOFTWARE.
 
-CREATE TABLE resource_tags (
+CREATE TABLE tags (
     id TEXT PRIMARY KEY,
     tenant_id TEXT NOT NULL,
     organization_id TEXT NOT NULL REFERENCES organizations (id) ON UPDATE CASCADE ON DELETE CASCADE,
@@ -27,21 +27,21 @@ CREATE TABLE resource_tags (
     color TEXT,
     created_at TIMESTAMPTZ NOT NULL,
     updated_at TIMESTAMPTZ NOT NULL,
-    CONSTRAINT resource_tags_organization_id_key_key UNIQUE (organization_id, key),
-    CONSTRAINT resource_tags_key_slug_check CHECK (key ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),
-    CONSTRAINT resource_tags_color_hex_check CHECK (
+    CONSTRAINT tags_organization_id_key_key UNIQUE (organization_id, key),
+    CONSTRAINT tags_key_slug_check CHECK (key ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),
+    CONSTRAINT tags_color_hex_check CHECK (
         color IS NULL
         OR color ~ '^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$'
     )
 );
 
-CREATE TABLE resource_tag_assignments (
+CREATE TABLE tag_assignments (
     id TEXT PRIMARY KEY,
     tenant_id TEXT NOT NULL,
     resource_id TEXT NOT NULL,
-    tag_id TEXT NOT NULL REFERENCES resource_tags (id) ON UPDATE CASCADE ON DELETE CASCADE,
+    tag_id TEXT NOT NULL REFERENCES tags (id) ON UPDATE CASCADE ON DELETE CASCADE,
     created_at TIMESTAMPTZ NOT NULL,
-    CONSTRAINT resource_tag_assignments_resource_id_tag_id_key UNIQUE (resource_id, tag_id)
+    CONSTRAINT tag_assignments_resource_id_tag_id_key UNIQUE (resource_id, tag_id)
 );
 
 UPDATE iam_oauth2_clients
@@ -64,7 +64,7 @@ SET scopes = '{
     v1:itam,
     v1:org,
     v1:privacy,
-    v1:resource-tag,
+    v1:tag,
     v1:risk,
     v1:slack-connection,
     v1:task,

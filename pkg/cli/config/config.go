@@ -59,7 +59,7 @@ const (
 		"v1:itam " +
 		"v1:org " +
 		"v1:privacy " +
-		"v1:resource-tag " +
+		"v1:tag " +
 		"v1:risk " +
 		"v1:slack-connection " +
 		"v1:task " +

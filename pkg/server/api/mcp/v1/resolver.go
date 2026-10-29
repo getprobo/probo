@@ -52,11 +52,11 @@ import (
 	slackchannel "go.probo.inc/probo/pkg/probot/channel/slack"
 	"go.probo.inc/probo/pkg/prosemirror"
 	"go.probo.inc/probo/pkg/resourcealias"
-	"go.probo.inc/probo/pkg/resourcetag"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/mcp/v1/types"
+	"go.probo.inc/probo/pkg/tag"
 	"go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/thirdparty"
 )
@@ -80,7 +80,7 @@ type Resolver struct {
 	management            *management.Service
 	certManager           *certmanager.Service
 	resourceAlias         *resourcealias.Service
-	resourceTag           *resourcetag.Service
+	tag                   *tag.Service
 	thirdPartySvc         *thirdparty.Service
 	iamSvc                *iam.Service
 	accessReview          *accessreview.Service

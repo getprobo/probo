@@ -29,12 +29,12 @@ import (
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/probot/identitybinding"
-	"go.probo.inc/probo/pkg/resourcetag"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlx"
+	"go.probo.inc/probo/pkg/tag"
 	"go.probo.inc/probo/pkg/task"
 )
 
@@ -740,15 +740,15 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 			return types.NewCookieBannerSample(sample), nil
 		}
-	case coredata.ResourceTagEntityType:
-		action = resourcetag.ActionTagGet
+	case coredata.TagEntityType:
+		action = tag.ActionGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
-			tag, err := r.resourceTag.Get(ctx, scope, id)
+			tag, err := r.tag.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
 
-			return types.NewResourceTag(tag), nil
+			return types.NewTag(tag), nil
 		}
 	default:
 	}

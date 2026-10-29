@@ -53,7 +53,6 @@ import (
 	slackchannel "go.probo.inc/probo/pkg/probot/channel/slack"
 	"go.probo.inc/probo/pkg/probot/identitybinding"
 	"go.probo.inc/probo/pkg/resourcealias"
-	"go.probo.inc/probo/pkg/resourcetag"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/saferedirect"
 	"go.probo.inc/probo/pkg/securecookie"
@@ -63,6 +62,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlx"
+	"go.probo.inc/probo/pkg/tag"
 	"go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/thirdparty"
 )
@@ -84,7 +84,7 @@ type (
 		batchAuthorize          authz.BatchAuthorizeFunc
 		probo                   *probo.Service
 		resourceAlias           *resourcealias.Service
-		resourceTag             *resourcetag.Service
+		tag                     *tag.Service
 		iam                     *iam.Service
 		esign                   *esign.Service
 		management              *management.Service
@@ -121,7 +121,7 @@ func NewMux(
 	proboSvc *probo.Service,
 	collaborationHandler *collaboration_v1.Handler,
 	resourceAliasSvc *resourcealias.Service,
-	resourceTagSvc *resourcetag.Service,
+	tagSvc *tag.Service,
 	iamSvc *iam.Service,
 	esignSvc *esign.Service,
 	managementSvc *management.Service,
@@ -162,7 +162,7 @@ func NewMux(
 		iamSvc,
 		proboSvc,
 		resourceAliasSvc,
-		resourceTagSvc,
+		tagSvc,
 		esignSvc,
 		managementSvc,
 		certManagerSvc,
