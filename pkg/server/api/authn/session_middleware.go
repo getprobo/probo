@@ -21,11 +21,13 @@
 package authn
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net"
 	"net/http"
 
+	"github.com/jackc/puddle/v2"
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/gid"
@@ -33,6 +35,18 @@ import (
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/clientip"
 )
+
+// ignoreSessionDataUpdateError reports errors that happen because the
+// request is already over. The database client does not wrap the request
+// context error, and shutdown closes the pool while a hijacked socket is
+// still leaving the handler.
+func ignoreSessionDataUpdateError(ctx context.Context, err error) bool {
+	if ctx.Err() != nil {
+		return true
+	}
+
+	return errors.Is(err, puddle.ErrClosedPool)
+}
 
 func NewSessionMiddleware(svc *iam.Service, cookieConfig securecookie.Config) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
@@ -105,9 +119,11 @@ func NewSessionMiddleware(svc *iam.Service, cookieConfig securecookie.Config) fu
 
 				next.ServeHTTP(w, r.WithContext(ctx))
 
+				// A collaboration socket is hijacked, so a panic here is written
+				// onto a connection that can no longer carry an HTTP response.
+				// Shutdown closes that socket and then the database pool.
 				err = svc.SessionService.UpdateSessionData(ctx, session.ID, session.Data)
-				// Ignore only the failure caused by the request context ending.
-				if err != nil && !errors.Is(err, ctx.Err()) {
+				if err != nil && !ignoreSessionDataUpdateError(ctx, err) {
 					panic(fmt.Errorf("cannot update session data: %w", err))
 				}
 			},
