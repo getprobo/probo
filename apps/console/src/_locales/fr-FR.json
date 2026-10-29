@@ -2464,25 +2464,7 @@
       "removeEmail": "Supprimer l’e-mail"
     }
   },
-  "auditLogPage": {
-    "title": "Journal d’audit",
-    "description": "Un enregistrement de toutes les actions effectuées au sein de votre organisation. Les entrées sont immuables et ne peuvent pas être modifiées ou supprimées.",
-    "empty": "Aucune entrée dans le journal d’audit pour le moment.",
-    "showing": "Affichage de {{shown}} sur {{total}} entrées",
-    "columns": { "date": "Date", "actor": "Acteur", "action": "Action", "resource": "Ressource" },
-    "actions": { "showMore": "Afficher plus" },
-    "export": {
-      "title": "Exporter le journal d'audit",
-      "description": "Sélectionnez une plage de dates pour exporter les entrées du journal d'audit au format CSV. Vous recevrez un e-mail avec un lien de téléchargement.",
-      "fields": { "from": "Du", "to": "Au" },
-      "actions": { "export": "Exporter", "exporting": "Exportation..." },
-      "messages": {
-        "successTitle": "Succès",
-        "success": "L'export a démarré. Vous recevrez un e-mail avec un lien de téléchargement lorsqu'il sera prêt."
-      },
-      "errors": { "title": "Erreur", "request": "Échec de la demande d'export du journal d'audit" }
-    }
-  },
+
   "samlSsoPage": {
     "title": "Authentification unique SAML",
     "description": "Configurez l’authentification unique SAML 2.0 pour chaque domaine de messagerie.",

@@ -1,0 +1,77 @@
+{
+  "auditLogPage": {
+    "title": "Auditlogboek",
+    "description": "Elke autorisatiecontrole die voor deze werkruimte is vastgelegd, inclusief leesacties.",
+    "empty": "Nog geen auditlogitems.",
+    "emptyFiltered": "Geen auditlogitems komen overeen met deze filters.",
+    "columns": {
+      "when": "Wanneer",
+      "actor": "Actor",
+      "action": "Actie",
+      "target": "Doel",
+      "outcome": "Uitkomst"
+    },
+    "actions": {
+      "previous": "Vorige",
+      "next": "Volgende",
+      "openEntry": "Auditlogitem bekijken"
+    },
+    "actorTypes": {
+      "USER": "Gebruiker",
+      "API_KEY": "API-sleutel",
+      "SYSTEM": "Systeem"
+    },
+    "outcomes": {
+      "ALLOWED": "Toegestaan",
+      "DENIED": "Geweigerd"
+    },
+    "filters": {
+      "actorType": "Actortype",
+      "allActorTypes": "Alle actortypen",
+      "action": "Actie",
+      "actionPlaceholder": "iam:organization:get of iam:*",
+      "outcome": "Uitkomst",
+      "allOutcomes": "Alle uitkomsten",
+      "actorId": "Actor-ID",
+      "resourceType": "Resourcetype",
+      "resourceId": "Resource-ID",
+      "from": "Van",
+      "to": "Tot",
+      "requestId": "Verzoek-ID",
+      "range": "De startdatum ligt na de einddatum."
+    },
+    "entry": {
+      "title": "Auditlogitem",
+      "actor": "Actor",
+      "actorId": "Actor-ID",
+      "action": "Actie",
+      "target": "Doel",
+      "outcome": "Uitkomst",
+      "when": "Wanneer",
+      "recordedAt": "Vastgelegd",
+      "originIp": "Herkomst-IP",
+      "userAgent": "User-agent",
+      "requestId": "Verzoek-ID",
+      "denialReason": "Reden van weigering",
+      "close": "Sluiten"
+    },
+    "export": {
+      "title": "Auditlogboek exporteren",
+      "description": "Selecteer een datumbereik om auditlogboekvermeldingen te exporteren als CSV. U ontvangt een e-mail met een downloadlink.",
+      "fields": {
+        "from": "Van",
+        "to": "Tot"
+      },
+      "actions": {
+        "export": "Exporteren",
+        "cancel": "Annuleren"
+      },
+      "messages": {
+        "success": "Export gestart. U ontvangt een e-mail met een downloadlink zodra deze gereed is."
+      },
+      "errors": {
+        "request": "Aanvragen van auditlogboekexport mislukt"
+      }
+    }
+  }
+}
