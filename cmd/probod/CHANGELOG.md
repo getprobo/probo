@@ -4,6 +4,28 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.333.0] - 2026-10-29
+
+### Added
+
+- Task mentions sync with Linear. A new mention in a task
+  description or comment is sent as a profile URL, and a profile
+  URL coming back from Linear becomes a mention chip. Re-syncing
+  the same document does not notify a profile it already contains.
+  A mention that cannot be resolved stays plain text
+
+### Changed
+
+- Listing, counting, and exporting audit logs uses an index on
+  organization, tenant, and time, so a page no longer walks every
+  tenant
+
+### Fixed
+
+- The employee portal greeting and account menu show the membership
+  profile name, the same name the console shows. The organization
+  picker and device enrollment still use the identity name
+
 ## [0.332.0] - 2026-10-28
 
 ### Added
