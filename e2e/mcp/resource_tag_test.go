@@ -85,11 +85,13 @@ func TestMCP_ResourceTag(t *testing.T) {
 	}, &listOut)
 
 	found := false
+
 	for _, tag := range listOut.ResourceTags {
 		if tag.ID == tagID {
 			found = true
 		}
 	}
+
 	assert.True(t, found)
 
 	mc.CallToolInto("detachResourceTag", map[string]any{
