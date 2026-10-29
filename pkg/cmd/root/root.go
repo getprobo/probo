@@ -55,7 +55,7 @@ import (
 	"go.probo.inc/probo/pkg/cmd/org"
 	processingactivity "go.probo.inc/probo/pkg/cmd/processing-activity"
 	resourcealias "go.probo.inc/probo/pkg/cmd/resource-alias"
-	resourcetag "go.probo.inc/probo/pkg/cmd/resource-tag"
+	tag "go.probo.inc/probo/pkg/cmd/tag"
 	rightsrequest "go.probo.inc/probo/pkg/cmd/rights-request"
 	"go.probo.inc/probo/pkg/cmd/risk"
 	riskanalysis "go.probo.inc/probo/pkg/cmd/risk-analysis"
@@ -140,7 +140,7 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(risk.NewCmdRisk(f))
 	cmd.AddCommand(riskanalysis.NewCmdRiskAnalysis(f))
 	cmd.AddCommand(resourcealias.NewCmdResourceAlias(f))
-	cmd.AddCommand(resourcetag.NewCmdResourceTag(f))
+	cmd.AddCommand(tag.NewCmdTag(f))
 	cmd.AddCommand(scim.NewCmdScim(f))
 	cmd.AddCommand(soa.NewCmdSoa(f))
 	cmd.AddCommand(task.NewCmdTask(f))

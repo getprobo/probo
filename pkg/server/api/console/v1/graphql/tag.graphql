@@ -1,0 +1,196 @@
+# Copyright (c) 2026 Probo Inc <hello@probo.com>.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+enum TagOrderField
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.TagOrderField") {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TagOrderFieldCreatedAt"
+        )
+    KEY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TagOrderFieldKey"
+        )
+}
+
+input TagOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TagOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: TagOrderField!
+}
+
+type Tag implements Node {
+    id: ID!
+    organization: Organization! @goField(forceResolver: true)
+    key: String!
+    value: String!
+    color: String
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    assignments(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TagAssignmentOrder
+    ): TagAssignmentConnection! @goField(forceResolver: true)
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+enum TagAssignmentOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.TagAssignmentOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TagAssignmentOrderFieldCreatedAt"
+        )
+}
+
+input TagAssignmentOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TagAssignmentOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: TagAssignmentOrderField!
+}
+
+type TagAssignment
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TagAssignment"
+    ) {
+    id: ID!
+    resource: Node! @goField(forceResolver: true)
+    createdAt: Datetime!
+}
+
+type TagAssignmentConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TagAssignmentConnection"
+    ) {
+    edges: [TagAssignmentEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int! @goField(forceResolver: true)
+}
+
+type TagAssignmentEdge {
+    cursor: CursorKey!
+    node: TagAssignment!
+}
+
+type TagConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TagConnection"
+    ) {
+    edges: [TagEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int! @goField(forceResolver: true)
+}
+
+type TagEdge {
+    cursor: CursorKey!
+    node: Tag!
+}
+
+extend type Organization {
+    tags(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TagOrder
+    ): TagConnection! @goField(forceResolver: true)
+}
+
+extend type Query {
+    tagsForResource(resourceId: ID!): [Tag!]!
+}
+
+extend type Mutation {
+    createTag(
+        input: CreateTagInput!
+    ): CreateTagPayload!
+    updateTag(
+        input: UpdateTagInput!
+    ): UpdateTagPayload!
+    deleteTag(
+        input: DeleteTagInput!
+    ): DeleteTagPayload!
+    attachTag(
+        input: AttachTagInput!
+    ): AttachTagPayload!
+    detachTag(
+        input: DetachTagInput!
+    ): DetachTagPayload!
+}
+
+input CreateTagInput {
+    organizationId: ID!
+    key: String!
+    value: String!
+    color: String
+}
+
+input UpdateTagInput {
+    id: ID!
+    key: String
+    value: String
+    color: String
+}
+
+input DeleteTagInput {
+    tagId: ID!
+}
+
+input AttachTagInput {
+    resourceId: ID!
+    tagId: ID!
+}
+
+input DetachTagInput {
+    resourceId: ID!
+    tagId: ID!
+}
+
+type CreateTagPayload {
+    tagEdge: TagEdge!
+}
+
+type UpdateTagPayload {
+    tag: Tag!
+}
+
+type DeleteTagPayload {
+    deletedTagId: ID!
+}
+
+type AttachTagPayload {
+    resourceId: ID!
+    tagId: ID!
+}
+
+type DetachTagPayload {
+    resourceId: ID!
+    tagId: ID!
+}
