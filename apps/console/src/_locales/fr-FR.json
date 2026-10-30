@@ -560,7 +560,8 @@
       "replyPlaceholder": "Répondre",
       "suggestionBy": "Suggestion de {{name}}",
       "commentFailed": "Impossible d'ajouter le commentaire",
-      "suggestionFailed": "Impossible de démarrer la suggestion"
+      "suggestionFailed": "Impossible de démarrer la suggestion",
+      "selectCard": "Sélectionner l'élément de révision"
     }
   },
   "documentSignaturesPage": {

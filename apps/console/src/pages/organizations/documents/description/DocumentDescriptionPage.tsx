@@ -193,6 +193,7 @@ export function DocumentDescriptionPage(props: {
   const [mode, setMode] = useState<"viewing" | "editing" | "suggesting">("viewing");
   const [editor, setEditor] = useState<Editor | null>(null);
   const reviewToolbarRef = useRef<HTMLDivElement>(null);
+  const reviewLayoutRef = useRef<HTMLDivElement>(null);
   const [reviewMarginHost, setReviewMarginHost] = useState<HTMLElement | null>(null);
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
   const [activeSuggestionId, setActiveSuggestionId] = useState<string | null>(null);
@@ -283,6 +284,25 @@ export function DocumentDescriptionPage(props: {
       setActiveThreadId(id);
       setActiveSuggestionId(null);
     };
+  }, [mode]);
+
+  // Suggesting tracks text through the suggestion transaction (typing/paste),
+  // but a drop would reach ProseMirror directly and insert untracked content.
+  // File drops still upload; block plain-content drops while Suggesting.
+  useEffect(() => {
+    if (mode !== "suggesting") return;
+    const node = reviewLayoutRef.current;
+    if (!node) return;
+    const blockTextDrop = (event: DragEvent) => {
+      if (Array.from(event.dataTransfer?.types ?? []).includes("Files")) return;
+      const target = event.target;
+      const element = target instanceof Element ? target : (target as Node | null)?.parentElement;
+      if (!element?.closest("[data-review-scroll]")) return;
+      event.preventDefault();
+      event.stopPropagation();
+    };
+    node.addEventListener("drop", blockTextDrop, true);
+    return () => node.removeEventListener("drop", blockTextDrop, true);
   }, [mode]);
 
   useEffect(() => {
@@ -385,7 +405,7 @@ export function DocumentDescriptionPage(props: {
     <div className="flex flex-1 min-h-0 flex-col">
       {(historyAvailable || collaborationHandle) && (
         <div className="flex items-center justify-end gap-3 px-4 pb-2">
-          {collaborationHandle && document.canComment && (
+          {collaborationHandle && (canEdit || document.canComment) && (
             <Dropdown>
               <DropdownTrigger
                 render={(
@@ -419,9 +439,11 @@ export function DocumentDescriptionPage(props: {
                       {t("documentDescriptionPage.review.editing")}
                     </DropdownRadioItem>
                   )}
-                  <DropdownRadioItem value="suggesting">
-                    {t("documentDescriptionPage.review.suggesting")}
-                  </DropdownRadioItem>
+                  {document.canComment && (
+                    <DropdownRadioItem value="suggesting">
+                      {t("documentDescriptionPage.review.suggesting")}
+                    </DropdownRadioItem>
+                  )}
                 </DropdownRadioGroup>
               </DropdownPopup>
             </Dropdown>
@@ -444,7 +466,7 @@ export function DocumentDescriptionPage(props: {
           )}
         </div>
       )}
-      <div className="flex min-h-0 flex-1" data-review-layout="">
+      <div ref={reviewLayoutRef} className="flex min-h-0 flex-1" data-review-layout="">
         {collaborationHandle
           ? (
               <>

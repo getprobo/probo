@@ -444,7 +444,12 @@ export function DocumentReviewMargin(props: DocumentReviewMarginProps) {
     scheduleCards();
     const scroll = editor.view.dom.closest("[data-review-scroll]");
     const observer = new ResizeObserver(scheduleCards);
-    if (scroll) observer.observe(scroll);
+    if (scroll) {
+      observer.observe(scroll);
+      // Cards are portaled into a non-scrolling sibling <aside>; the editor
+      // root scrolls on its own, so reposition them on every scroll frame.
+      scroll.addEventListener("scroll", scheduleCards, { passive: true });
+    }
     const media = window.matchMedia("(max-width: 1023px)");
     const onMedia = () => {
       setNarrow(media.matches);
@@ -455,6 +460,7 @@ export function DocumentReviewMargin(props: DocumentReviewMarginProps) {
       if (cardFrame !== 0) window.cancelAnimationFrame(cardFrame);
       if (selectionFrame !== 0) window.cancelAnimationFrame(selectionFrame);
       editor.off("transaction", onTransaction);
+      scroll?.removeEventListener("scroll", scheduleCards);
       observer.disconnect();
       media.removeEventListener("change", onMedia);
     };
@@ -1240,7 +1246,7 @@ function placeCardTops(
 const reviewDocumentFragment = graphql`
   fragment DocumentReviewMargin_document on Document {
     id
-    commentThreads(first: 50, filter: { resolved: false })
+    commentThreads(first: 200, filter: { resolved: false })
       @connection(key: "DocumentReviewMargin_commentThreads", filters: ["filter"]) {
       edges {
         node {
@@ -1250,7 +1256,7 @@ const reviewDocumentFragment = graphql`
           anchorEnd
           resolvedAt
           suggestionId
-          comments(first: 30) @connection(key: "DocumentReviewMargin_comments") {
+          comments(first: 100) @connection(key: "DocumentReviewMargin_comments") {
             edges {
               node {
                 id
@@ -1266,7 +1272,7 @@ const reviewDocumentFragment = graphql`
       pageInfo { hasNextPage endCursor }
     }
     suggestions(
-      first: 100
+      first: 200
       filter: { status: OPEN }
       orderBy: { field: CREATED_AT, direction: DESC }
     )
@@ -1292,7 +1298,7 @@ export const reviewThreadFragment = graphql`
     anchorEnd
     resolvedAt
     suggestionId
-    comments(first: 30) @connection(key: "DocumentReviewMargin_comments") {
+    comments(first: 100) @connection(key: "DocumentReviewMargin_comments") {
       edges {
         node {
           id

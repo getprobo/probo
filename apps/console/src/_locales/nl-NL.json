@@ -559,7 +559,8 @@
       "replyPlaceholder": "Antwoorden",
       "suggestionBy": "Voorstel van {{name}}",
       "commentFailed": "De opmerking kon niet worden toegevoegd",
-      "suggestionFailed": "Het voorstel kon niet worden gestart"
+      "suggestionFailed": "Het voorstel kon niet worden gestart",
+      "selectCard": "Revisie-item selecteren"
     }
   },
   "documentSignaturesPage": {

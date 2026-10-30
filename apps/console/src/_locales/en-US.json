@@ -345,7 +345,8 @@
       "replyPlaceholder": "Reply",
       "suggestionBy": "Suggestion by {{name}}",
       "commentFailed": "Could not add the comment",
-      "suggestionFailed": "Could not start the suggestion"
+      "suggestionFailed": "Could not start the suggestion",
+      "selectCard": "Select review item"
     }
   },
   "documentSignaturesPage": {
