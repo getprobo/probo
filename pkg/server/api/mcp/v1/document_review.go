@@ -23,16 +23,13 @@ package mcp_v1
 import (
 	"context"
 	"errors"
-	"fmt"
 
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/collaboration"
-	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/authn"
+	"go.probo.inc/probo/pkg/server/api/mcp/mcpx"
 	"go.probo.inc/probo/pkg/server/api/mcp/v1/types"
-	"go.probo.inc/probo/pkg/validator"
 )
 
 func (r *Resolver) setDocumentCommentThreadResolved(
@@ -92,15 +89,23 @@ func (r *Resolver) decideDocumentSuggestion(
 }
 
 func (r *Resolver) documentReviewError(ctx context.Context, message string, err error) error {
-	if errors.Is(err, coredata.ErrResourceNotFound) ||
-		errors.Is(err, coredata.ErrResourceAlreadyExists) ||
-		errors.Is(err, probo.ErrNotDocumentCommentAuthor) ||
-		errors.Is(err, probo.ErrDocumentCommentThreadResolved) ||
-		errors.Is(err, probo.ErrInvalidDocumentAnchor) ||
-		errors.Is(err, collaboration.ErrQuoteNotFound) ||
-		errors.Is(err, collaboration.ErrSuggestionNotInDocument) ||
-		errors.Is(err, collaboration.ErrOpenSuggestions) {
-		return err
+	switch {
+	case errors.Is(err, probo.ErrNotDocumentCommentAuthor):
+		return probo.ErrNotDocumentCommentAuthor
+	case errors.Is(err, probo.ErrDocumentCommentThreadResolved):
+		return probo.ErrDocumentCommentThreadResolved
+	case errors.Is(err, probo.ErrInvalidDocumentAnchor):
+		return probo.ErrInvalidDocumentAnchor
+	case errors.Is(err, collaboration.ErrQuoteNotFound):
+		return collaboration.ErrQuoteNotFound
+	case errors.Is(err, collaboration.ErrSuggestionNotInDocument):
+		return collaboration.ErrSuggestionNotInDocument
+	case errors.Is(err, collaboration.ErrOpenSuggestions):
+		return collaboration.ErrOpenSuggestions
+	case errors.Is(err, collaboration.ErrDocumentCollaborationNotSeeded):
+		return collaboration.ErrDocumentCollaborationNotSeeded
+	case errors.Is(err, collaboration.ErrSeedInProgress):
+		return collaboration.ErrSeedInProgress
 	}
 
 	if errArchived, ok := errors.AsType[*collaboration.ErrDocumentArchived](err); ok {
@@ -111,11 +116,5 @@ func (r *Resolver) documentReviewError(ctx context.Context, message string, err 
 		return errGenerated
 	}
 
-	if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-		return validationErrors
-	}
-
-	r.logger.ErrorCtx(ctx, message, log.Error(err))
-
-	return fmt.Errorf("internal error")
+	return mcpx.MapError(ctx, r.logger, message, err)
 }
