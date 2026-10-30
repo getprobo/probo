@@ -356,6 +356,16 @@ func TestCookieBannerScanHandler_Process_MapsFailureReasons(t *testing.T) {
 			err:    errors.New("boom"),
 			reason: coredata.CookieBannerScanFailureReasonInternal,
 		},
+		{
+			name:   "banner not installed",
+			err:    scanner.ErrBannerNotInstalled,
+			reason: coredata.CookieBannerScanFailureReasonBannerNotInstalled,
+		},
+		{
+			name:   "different banner",
+			err:    scanner.ErrDifferentBanner,
+			reason: coredata.CookieBannerScanFailureReasonDifferentBanner,
+		},
 	}
 
 	for _, tc := range cases {

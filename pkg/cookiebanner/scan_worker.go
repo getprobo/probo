@@ -563,6 +563,10 @@ func scanFailureReason(err error) coredata.CookieBannerScanFailureReason {
 		return coredata.CookieBannerScanFailureReasonBlocked
 	case errors.Is(err, scanner.ErrUnreachable):
 		return coredata.CookieBannerScanFailureReasonUnreachable
+	case errors.Is(err, scanner.ErrBannerNotInstalled):
+		return coredata.CookieBannerScanFailureReasonBannerNotInstalled
+	case errors.Is(err, scanner.ErrDifferentBanner):
+		return coredata.CookieBannerScanFailureReasonDifferentBanner
 	default:
 		return coredata.CookieBannerScanFailureReasonInternal
 	}
