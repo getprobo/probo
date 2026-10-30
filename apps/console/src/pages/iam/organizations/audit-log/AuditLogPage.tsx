@@ -25,8 +25,8 @@ import { graphql } from "relay-runtime";
 
 import type { AuditLogPageQuery } from "#/__generated__/iam/AuditLogPageQuery.graphql";
 
-import { AuditLogList } from "./_components/AuditLogList";
-import { auditLogPage } from "./variants";
+import { AuditLogList } from "./_components/AuditLogList/AuditLogList";
+import { auditLogPage } from "./_components/variants";
 
 const AUDIT_LOG_NS = "iam/organizations/audit-log";
 

@@ -36,7 +36,7 @@ import {
   auditLogActorColor,
   auditLogActorLabel,
   auditLogOutcomeColor,
-} from "../_lib/auditLogEntry";
+} from "../../_lib/auditLogEntry";
 import { auditLogListItem } from "../variants";
 
 const AUDIT_LOG_NS = "iam/organizations/audit-log";

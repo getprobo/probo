@@ -2,8 +2,13 @@
   "auditLogPage": {
     "title": "Auditlogboek",
     "description": "Elke autorisatiecontrole die voor deze werkruimte is vastgelegd, inclusief leesacties.",
-    "empty": "Nog geen auditlogitems.",
-    "emptyFiltered": "Geen auditlogitems komen overeen met deze filters.",
+    "empty": {
+      "title": "Nog geen auditlogitems",
+      "description": "Autorisatiecontroles verschijnen hier zodra ze zijn vastgelegd.",
+      "filteredTitle": "Geen overeenkomende items",
+      "filteredDescription": "Probeer een andere actie, uitkomst of datumbereik.",
+      "clear": "Filters wissen"
+    },
     "columns": {
       "when": "Wanneer",
       "actor": "Actor",
@@ -40,8 +45,10 @@
       "dates": "Datumbereik",
       "datesPlaceholder": "Alle datums",
       "datesHint": "Kies een startdatum en daarna een einddatum.",
+      "clearDates": "Datums wissen",
       "more": "Filters",
-      "moreCount": "Filters ({{count}})",
+      "moreCount_one": "Filters ({{count}})",
+      "moreCount_other": "Filters ({{count}})",
       "requestId": "Verzoek-ID",
       "range": "De startdatum ligt na de einddatum."
     },

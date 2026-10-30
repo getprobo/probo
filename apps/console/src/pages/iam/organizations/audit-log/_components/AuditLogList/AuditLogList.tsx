@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Card } from "@probo/ui/src/v2/Card/Card";
 import { Pagination } from "@probo/ui/src/v2/Pagination/Pagination";
 import { Table } from "@probo/ui/src/v2/Table/Table";
 import { TableBody } from "@probo/ui/src/v2/Table/TableBody";
@@ -38,10 +37,11 @@ import type { AuditLogListRefetchQuery } from "#/__generated__/iam/AuditLogListR
 import type { CursorPaginationVariables } from "#/lib/relay/useCursorPagination";
 import { useCursorPagination } from "#/lib/relay/useCursorPagination";
 
-import { useAuditLogListFilters } from "../_lib/useAuditLogListFilters";
+import { useAuditLogListFilters } from "../../_lib/useAuditLogListFilters";
 import { auditLogList, auditLogPage } from "../variants";
 
 import { AuditLogEntryDialog } from "./AuditLogEntryDialog";
+import { AuditLogListEmpty } from "./AuditLogListEmpty";
 import { AuditLogListFilters } from "./AuditLogListFilters";
 import { AuditLogListItem } from "./AuditLogListItem";
 import { ExportAuditLogDialog } from "./ExportAuditLogDialog";
@@ -60,7 +60,6 @@ export const auditLogListFragment = graphql`
     before: { type: "CursorKey", defaultValue: null }
     filter: { type: "AuditLogEntryFilter", defaultValue: null }
   ) {
-    id
     canExportAuditLog: permission(action: "iam:audit-log:export")
     auditLogEntries(
       first: $first
@@ -148,7 +147,7 @@ export function AuditLogList({ organizationKey }: AuditLogListProps) {
   const pageInfo = organization.auditLogEntries.pageInfo;
   const isPending = isRefetchPending || isPagePending;
   const { header, intro } = auditLogPage();
-  const { root, results, empty, pager } = auditLogList({ pending: isPending });
+  const { root, results, pager } = auditLogList({ pending: isPending });
 
   return (
     <>
@@ -162,20 +161,14 @@ export function AuditLogList({ organizationKey }: AuditLogListProps) {
           </Text>
         </div>
         {organization.canExportAuditLog && (
-          <ExportAuditLogDialog organizationId={organization.id} />
+          <ExportAuditLogDialog />
         )}
       </div>
       <div className={root()}>
         <AuditLogListFilters />
         {edges.length === 0
           ? (
-              <Card variant="soft" size={2}>
-                <div className={empty()}>
-                  <Text size={2} color="faint">
-                    {t(hasActiveFilters ? "auditLogPage.emptyFiltered" : "auditLogPage.empty")}
-                  </Text>
-                </div>
-              </Card>
+              <AuditLogListEmpty filtered={hasActiveFilters} />
             )
           : (
               <>

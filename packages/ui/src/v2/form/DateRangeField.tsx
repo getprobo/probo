@@ -46,6 +46,8 @@ export interface DateRangeFieldProps {
   "placeholder"?: string;
   // Shown under the calendar. Explains the two-click selection.
   "hint"?: string;
+  // Accessible name for the clear control. Callers pass a translated string.
+  "clearLabel"?: string;
   "size"?: 1 | 2;
   "variant"?: "classic" | "surface";
   "disabled"?: boolean;
@@ -70,6 +72,7 @@ export function DateRangeField(props: DateRangeFieldProps) {
     locale,
     placeholder,
     hint,
+    clearLabel = "Clear dates",
     size,
     variant,
     disabled = false,
@@ -208,7 +211,7 @@ export function DateRangeField(props: DateRangeFieldProps) {
           <button
             type="button"
             className={clear()}
-            aria-label="Clear dates"
+            aria-label={clearLabel}
             onMouseDown={clearRange}
           >
             <XIcon />

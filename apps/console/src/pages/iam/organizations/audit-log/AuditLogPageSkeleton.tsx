@@ -19,31 +19,35 @@
 // SOFTWARE.
 
 import { ButtonSkeleton } from "@probo/ui/src/v2/Button/ButtonSkeleton";
+import { DateRangeFieldSkeleton } from "@probo/ui/src/v2/form/DateRangeFieldSkeleton";
 import { TextFieldSkeleton } from "@probo/ui/src/v2/form/TextFieldSkeleton";
+import { SelectSkeleton } from "@probo/ui/src/v2/Select/SelectSkeleton";
 import { TableSkeleton } from "@probo/ui/src/v2/Table/TableSkeleton";
 import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
 import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
-import { auditLogPageSkeleton } from "./variants";
+import { auditLogPageSkeleton } from "./_components/variants";
 
 export function AuditLogPageSkeleton() {
-  const { root, header, intro, toolbar, action, filter, range } = auditLogPageSkeleton();
+  const {
+    root, header, intro, toolbar, action, filter, range, title, description, exportAction, more,
+  } = auditLogPageSkeleton();
 
   return (
     <div className={root()}>
       <div className={header()}>
         <div className={intro()}>
-          <HeadingSkeleton size={6} className="w-32" />
-          <TextSkeleton size={2} className="w-96 max-w-full" />
+          <HeadingSkeleton size={6} className={title()} />
+          <TextSkeleton size={2} className={description()} />
         </div>
-        <ButtonSkeleton size={2} className="w-28" />
+        <ButtonSkeleton size={2} className={exportAction()} />
       </div>
       <div className={toolbar()}>
         <TextFieldSkeleton className={action()} />
-        <TextFieldSkeleton className={filter()} />
-        <TextFieldSkeleton className={filter()} />
-        <TextFieldSkeleton className={range()} />
-        <ButtonSkeleton size={2} className="w-24" />
+        <SelectSkeleton className={filter()} />
+        <SelectSkeleton className={filter()} />
+        <DateRangeFieldSkeleton className={range()} />
+        <ButtonSkeleton size={2} className={more()} />
       </div>
       <TableSkeleton variant="surface" layout="fixed" columns={5} count={8} />
     </div>

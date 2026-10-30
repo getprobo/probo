@@ -21,6 +21,7 @@
 import { useState } from "react";
 
 import { type DateRange, DateRangeField } from "./DateRangeField";
+import { DateRangeFieldSkeleton } from "./DateRangeFieldSkeleton";
 
 export default {
   title: "v2/form/DateRangeField",
@@ -58,6 +59,14 @@ export function Controlled() {
         {" – "}
         {value.to || "(empty)"}
       </span>
+    </div>
+  );
+}
+
+export function Skeleton() {
+  return (
+    <div className="w-64">
+      <DateRangeFieldSkeleton />
     </div>
   );
 }

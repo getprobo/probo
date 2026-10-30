@@ -26,7 +26,7 @@ import { PopoverPopup } from "@probo/ui/src/v2/Popover/PopoverPopup";
 import { PopoverTrigger } from "@probo/ui/src/v2/Popover/PopoverTrigger";
 import { useTranslation } from "react-i18next";
 
-import { useAuditLogListFilters } from "../_lib/useAuditLogListFilters";
+import { useAuditLogListFilters } from "../../_lib/useAuditLogListFilters";
 import { auditLogList } from "../variants";
 
 import { AuditLogFilterField } from "./AuditLogFilterField";
@@ -45,7 +45,7 @@ export function AuditLogMoreFilters() {
     setResourceId,
     setRequestId,
   } = useAuditLogListFilters();
-  const { panel } = auditLogList();
+  const { popup, panel, field } = auditLogList();
   const count = [actorId, resourceType, resourceId, requestId]
     .filter(value => value !== "")
     .length;
@@ -65,12 +65,12 @@ export function AuditLogMoreFilters() {
           </Button>
         )}
       />
-      <PopoverPopup align="end" className="w-72">
+      <PopoverPopup align="end" className={popup()}>
         <div className={panel()}>
           <Field label={t("auditLogPage.filters.actorId")}>
             <AuditLogFilterField
               key={`actor:${actorId}`}
-              className="w-full"
+              className={field()}
               label={t("auditLogPage.filters.actorId")}
               value={actorId}
               onCommit={setActorId}
@@ -79,7 +79,7 @@ export function AuditLogMoreFilters() {
           <Field label={t("auditLogPage.filters.resourceType")}>
             <AuditLogFilterField
               key={`resource-type:${resourceType}`}
-              className="w-full"
+              className={field()}
               label={t("auditLogPage.filters.resourceType")}
               value={resourceType}
               onCommit={setResourceType}
@@ -88,7 +88,7 @@ export function AuditLogMoreFilters() {
           <Field label={t("auditLogPage.filters.resourceId")}>
             <AuditLogFilterField
               key={`resource:${resourceId}`}
-              className="w-full"
+              className={field()}
               label={t("auditLogPage.filters.resourceId")}
               value={resourceId}
               onCommit={setResourceId}
@@ -97,7 +97,7 @@ export function AuditLogMoreFilters() {
           <Field label={t("auditLogPage.filters.requestId")}>
             <AuditLogFilterField
               key={`request:${requestId}`}
-              className="w-full"
+              className={field()}
               label={t("auditLogPage.filters.requestId")}
               value={requestId}
               onCommit={setRequestId}

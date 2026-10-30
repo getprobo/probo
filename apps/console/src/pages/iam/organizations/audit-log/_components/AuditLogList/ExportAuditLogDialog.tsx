@@ -36,6 +36,7 @@ import { useTranslation } from "react-i18next";
 import { graphql } from "relay-runtime";
 
 import type { ExportAuditLogDialog_exportMutation } from "#/__generated__/iam/ExportAuditLogDialog_exportMutation.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 
 import { exportAuditLogDialog } from "../variants";
@@ -53,11 +54,8 @@ const exportMutation = graphql`
   }
 `;
 
-interface ExportAuditLogDialogProps {
-  organizationId: string;
-}
-
-export function ExportAuditLogDialog({ organizationId }: ExportAuditLogDialogProps) {
+export function ExportAuditLogDialog() {
+  const organizationId = useOrganizationId();
   const { t, i18n } = useTranslation(AUDIT_LOG_NS);
   const [open, setOpen] = useState(false);
   const [fromDate, setFromDate] = useState("");
@@ -123,6 +121,7 @@ export function ExportAuditLogDialog({ organizationId }: ExportAuditLogDialogPro
                 locale={i18n.language}
                 placeholder={t("auditLogPage.filters.datesPlaceholder")}
                 hint={t("auditLogPage.filters.datesHint")}
+                clearLabel={t("auditLogPage.filters.clearDates")}
                 aria-label={t("auditLogPage.export.fields.range")}
                 onValueChange={(next) => {
                   setFromDate(next.from);
