@@ -575,6 +575,152 @@ func TestCLI_ListWindow(t *testing.T) {
 	assert.NotContains(t, session.must("connector", "list", "--help"), "--after")
 }
 
+func TestCLI_EmployeePortalDocuments(t *testing.T) {
+	t.Parallel()
+
+	session := newPRBSession(t)
+	name := factory.SafeName("cli-portal")
+	title := name + "-shared"
+
+	documentID := session.mustID(
+		"document", "create",
+		"--org", session.orgID,
+		"--title", title,
+		"--document-type", "POLICY",
+		"--classification", "INTERNAL",
+	)
+	draftID := session.mustID(
+		"document", "create",
+		"--org", session.orgID,
+		"--title", name+"-draft",
+		"--document-type", "POLICY",
+		"--classification", "INTERNAL",
+	)
+	session.must(
+		"document", "publish", documentID,
+		"--minor",
+		"--changelog", "Share with employees",
+	)
+
+	portals := decodeListIDs(t, session.must(
+		"employee-portal", "list",
+		"--org", session.orgID,
+		"--json",
+	))
+	require.NotEmpty(t, portals)
+	portalID := portals[0]
+
+	_, stderr, err := session.run(
+		"employee-portal", "document", "add",
+		"--portal", portalID,
+		"--document", draftID,
+	)
+	require.Error(t, err)
+	assert.Contains(t, stderr, "document must be published")
+
+	added := session.must(
+		"employee-portal", "document", "add",
+		"--portal", portalID,
+		"--document", documentID,
+	)
+	linkID := employeePortalDocumentLinkID(t, added)
+	assert.Contains(t, added, title)
+	assert.Contains(t, added, documentID)
+
+	addedAgain := session.must(
+		"employee-portal", "document", "add",
+		"--portal", portalID,
+		"--document", documentID,
+	)
+	assert.Equal(t, linkID, employeePortalDocumentLinkID(t, addedAgain))
+
+	var listed []struct {
+		ID           string `json:"id"`
+		DocumentID   string `json:"documentId"`
+		Title        string `json:"title"`
+		DocumentType string `json:"documentType"`
+	}
+	require.NoError(t, json.Unmarshal(
+		[]byte(session.must(
+			"employee-portal", "document", "list",
+			"--portal", portalID,
+			"--json",
+		)),
+		&listed,
+	))
+	require.Len(t, listed, 1)
+	assert.Equal(t, linkID, listed[0].ID)
+	assert.Equal(t, documentID, listed[0].DocumentID)
+	assert.Equal(t, title, listed[0].Title)
+	assert.Equal(t, "POLICY", listed[0].DocumentType)
+
+	alias := decodeListIDs(t, session.must(
+		"employee-portal", "document", "ls",
+		"--portal", portalID,
+		"--json",
+	))
+	assert.Equal(t, []string{linkID}, alias)
+
+	_, stderr, err = session.run(
+		"employee-portal", "document", "remove",
+		"--id", linkID,
+	)
+	require.Error(t, err)
+	assert.Contains(t, stderr, "confirmation required, use --yes to confirm")
+
+	_, stderr, err = session.run(
+		"employee-portal", "document", "list",
+		"--portal", portalID,
+		"--limit", "0",
+	)
+	require.Error(t, err)
+	assert.Contains(t, stderr, "invalid --limit value 0")
+
+	_, stderr, err = session.run(
+		"employee-portal", "document", "list",
+		"--portal", portalID,
+		"--output", "xml",
+	)
+	require.Error(t, err)
+	assert.Contains(t, stderr, `invalid --output value "xml"`)
+
+	removed := session.must(
+		"employee-portal", "document", "remove",
+		"--id", linkID,
+		"--yes",
+	)
+	assert.Contains(t, removed, linkID)
+
+	var empty []struct {
+		ID string `json:"id"`
+	}
+	require.NoError(t, json.Unmarshal(
+		[]byte(session.must(
+			"employee-portal", "document", "list",
+			"--portal", portalID,
+			"--json",
+		)),
+		&empty,
+	))
+	assert.Empty(t, empty)
+
+	removedAgain := session.must(
+		"employee-portal", "document", "remove",
+		"--id", linkID,
+		"--yes",
+	)
+	assert.Contains(t, removedAgain, linkID)
+}
+
+func employeePortalDocumentLinkID(t *testing.T, stdout string) string {
+	t.Helper()
+
+	_, id, ok := strings.Cut(stdout, " as ")
+	require.True(t, ok, "add output %q", stdout)
+
+	return strings.TrimSpace(id)
+}
+
 type prbSession struct {
 	t         *testing.T
 	bin       string
