@@ -104,14 +104,28 @@ func HasOpenSuggestions(spans []automerge.Span) bool {
 }
 
 // CommentChangeAllowed reports whether a comment-only peer's sync is a
-// suggestion. The accepted document must stay the same, and existing
-// redlines may grow but must not shrink.
-func CommentChangeAllowed(before []automerge.Span, after []automerge.Span) bool {
+// suggestion. The accepted document must stay the same, existing redlines may
+// grow but must not shrink, existing split markers must survive, and every
+// newly introduced suggestion id must match an open suggestion row so a
+// comment-only peer cannot manufacture an untracked redline.
+func CommentChangeAllowed(
+	before []automerge.Span,
+	after []automerge.Span,
+	openSuggestionIDs map[string]bool,
+) bool {
 	if !spansEqual(normalizeSuggestionSpans(before), normalizeSuggestionSpans(after)) {
 		return false
 	}
 
-	return coveragePreserved(suggestionCoverageByID(before), suggestionCoverageByID(after))
+	if !coveragePreserved(suggestionCoverageByID(before), suggestionCoverageByID(after)) {
+		return false
+	}
+
+	if !splitMarkersPreserved(before, after) {
+		return false
+	}
+
+	return newSuggestionsTracked(before, after, openSuggestionIDs)
 }
 
 // ApplySuggestionDecision rewrites body spans for an accept or reject.
@@ -346,6 +360,24 @@ func (s *Service) EnsureNoOpenSuggestions(
 	scope coredata.Scoper,
 	documentID gid.GID,
 ) error {
+	openStatus := coredata.DocumentSuggestionStatusOpen
+
+	var suggestions coredata.DocumentSuggestions
+	openCount, err := suggestions.CountByDocumentID(
+		ctx,
+		tx,
+		scope,
+		documentID,
+		coredata.NewDocumentSuggestionFilter(&openStatus),
+	)
+	if err != nil {
+		return fmt.Errorf("cannot count open document suggestions: %w", err)
+	}
+
+	if openCount > 0 {
+		return ErrOpenSuggestions
+	}
+
 	doc := &coredata.CollaborationDocument{}
 	if err := doc.LoadByDocumentID(ctx, tx, scope, documentID); err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
@@ -579,10 +611,18 @@ func copyMap(value map[string]any) map[string]any {
 	return next
 }
 
+// normalizeSuggestionSpans reduces spans to the document readers see with every
+// open suggestion rolled back: suggested insertions vanish, suggestion marks
+// drop, and suggestion split markers collapse so adding a split (an Enter in a
+// suggestion) is treated as metadata rather than a structural edit.
 func normalizeSuggestionSpans(spans []automerge.Span) []automerge.Span {
 	normalized := make([]automerge.Span, 0, len(spans))
 
 	for _, span := range spans {
+		if id, _ := suggestionSplit(span); id != "" {
+			continue
+		}
+
 		if span.Type == automerge.SpanTypeText && markID(span.Marks, SuggestionInsertMark) != "" {
 			continue
 		}
@@ -591,10 +631,98 @@ func normalizeSuggestionSpans(spans []automerge.Span) []automerge.Span {
 			span.Marks = withoutMark(span.Marks, SuggestionDeleteMark)
 		}
 
-		normalized = append(normalized, span)
+		normalized = appendMergingText(normalized, span)
 	}
 
 	return normalized
+}
+
+// appendMergingText coalesces adjacent text runs that share marks. Dropping a
+// split marker leaves the surrounding text runs adjacent, so merging keeps the
+// normalized form equal to the un-split baseline.
+func appendMergingText(spans []automerge.Span, span automerge.Span) []automerge.Span {
+	if span.Type == automerge.SpanTypeText && len(spans) > 0 {
+		last := &spans[len(spans)-1]
+		if last.Type == automerge.SpanTypeText && jsonEqual(last.Marks, span.Marks) {
+			last.Text += span.Text
+			return spans
+		}
+	}
+
+	return append(spans, span)
+}
+
+func suggestionSpanIDs(spans []automerge.Span) map[string]bool {
+	ids := map[string]bool{}
+
+	for _, span := range spans {
+		if id, _ := suggestionSplit(span); id != "" {
+			ids[id] = true
+		}
+
+		if span.Type != automerge.SpanTypeText {
+			continue
+		}
+
+		if id := markID(span.Marks, SuggestionInsertMark); id != "" {
+			ids[id] = true
+		}
+
+		if id := markID(span.Marks, SuggestionDeleteMark); id != "" {
+			ids[id] = true
+		}
+	}
+
+	return ids
+}
+
+func splitMarkerIDs(spans []automerge.Span) map[string]bool {
+	ids := map[string]bool{}
+
+	for _, span := range spans {
+		if id, _ := suggestionSplit(span); id != "" {
+			ids[id] = true
+		}
+	}
+
+	return ids
+}
+
+// splitMarkersPreserved rejects a sync that removes a split marker a prior
+// suggestion created; a comment-only peer may add splits but not merge away an
+// existing one.
+func splitMarkersPreserved(before []automerge.Span, after []automerge.Span) bool {
+	afterSplits := splitMarkerIDs(after)
+
+	for id := range splitMarkerIDs(before) {
+		if !afterSplits[id] {
+			return false
+		}
+	}
+
+	return true
+}
+
+// newSuggestionsTracked rejects suggestion ids that appear in the sync but were
+// not already in the document and do not match an open suggestion row.
+func newSuggestionsTracked(
+	before []automerge.Span,
+	after []automerge.Span,
+	openSuggestionIDs map[string]bool,
+) bool {
+	beforeIDs := suggestionSpanIDs(before)
+
+	for id := range suggestionSpanIDs(after) {
+		if beforeIDs[id] {
+			continue
+		}
+
+		if !openSuggestionIDs[id] {
+			return false
+		}
+	}
+
+	return true
 }
 
 func suggestionCoverageByID(spans []automerge.Span) map[string]suggestionCoverage {
@@ -760,22 +888,46 @@ type visibleOffset struct {
 	absolute uint32
 }
 
+// visibleText joins block text with a newline so a quote spanning paragraphs
+// resolves. The separator is visible-only; it maps to the block boundary's
+// absolute position, which absoluteUTF16 clamps to.
 func visibleText(spans []automerge.Span) (string, []visibleOffset) {
 	var visible strings.Builder
 
 	offsets := make([]visibleOffset, 0, len(spans)+1)
 	var visibleUTF16 uint32
 	var absolute uint32
+	wrote := false
+	pendingBreak := false
 
 	offsets = append(offsets, visibleOffset{visible: 0, absolute: 0})
 
 	for _, span := range spans {
 		width := spanUTF16Width(span)
+		if span.Type == automerge.SpanTypeBlock {
+			if wrote {
+				pendingBreak = true
+			}
+
+			absolute += width
+
+			continue
+		}
+
 		if span.Type == automerge.SpanTypeText && span.Text != "" {
+			if pendingBreak {
+				visible.WriteByte('\n')
+				visibleUTF16++
+				offsets = append(offsets, visibleOffset{visible: visibleUTF16, absolute: absolute})
+				pendingBreak = false
+			}
+
 			visible.WriteString(span.Text)
 			visibleUTF16 += width
 			absolute += width
 			offsets = append(offsets, visibleOffset{visible: visibleUTF16, absolute: absolute})
+			wrote = true
+
 			continue
 		}
 
@@ -797,7 +949,12 @@ func absoluteUTF16(offsets []visibleOffset, visible uint32) (uint32, bool) {
 			continue
 		}
 
-		return previous.absolute + (visible - previous.visible), true
+		absolute := previous.absolute + (visible - previous.visible)
+		if absolute > current.absolute {
+			absolute = current.absolute
+		}
+
+		return absolute, true
 	}
 
 	last := offsets[len(offsets)-1]
