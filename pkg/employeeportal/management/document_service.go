@@ -226,18 +226,15 @@ func (s *Service) ListDocuments(
 				return fmt.Errorf("cannot load employee portal: %w", err)
 			}
 
-			publishedIDs, err := publishedLinkedDocumentIDs(ctx, conn, scope, employeePortalID)
-			if err != nil {
-				return err
-			}
+			filter := coredata.NewEmployeePortalDocumentFilter(new(true))
 
 			if err := links.LoadByEmployeePortalID(
 				ctx,
 				conn,
 				scope,
 				employeePortalID,
-				publishedIDs,
 				cursor,
+				filter,
 			); err != nil {
 				return fmt.Errorf("cannot list employee portal documents: %w", err)
 			}
@@ -266,12 +263,20 @@ func (s *Service) CountDocuments(
 				return fmt.Errorf("cannot load employee portal: %w", err)
 			}
 
-			publishedIDs, err := publishedLinkedDocumentIDs(ctx, conn, scope, employeePortalID)
-			if err != nil {
-				return err
-			}
+			var err error
 
-			count = len(publishedIDs)
+			filter := coredata.NewEmployeePortalDocumentFilter(new(true))
+
+			count, err = (&coredata.EmployeePortalDocuments{}).CountByEmployeePortalID(
+				ctx,
+				conn,
+				scope,
+				employeePortalID,
+				filter,
+			)
+			if err != nil {
+				return fmt.Errorf("cannot count employee portal documents: %w", err)
+			}
 
 			return nil
 		},
@@ -281,62 +286,6 @@ func (s *Service) CountDocuments(
 	}
 
 	return count, nil
-}
-
-func publishedLinkedDocumentIDs(
-	ctx context.Context,
-	conn pg.Querier,
-	scope coredata.Scoper,
-	employeePortalID gid.GID,
-) ([]gid.GID, error) {
-	links, err := page.LoadAll(
-		ctx,
-		page.OrderBy[coredata.EmployeePortalDocumentOrderField]{
-			Field:     coredata.EmployeePortalDocumentOrderFieldCreatedAt,
-			Direction: page.OrderDirectionAsc,
-		},
-		func(ctx context.Context, cursor *page.Cursor[coredata.EmployeePortalDocumentOrderField]) ([]*coredata.EmployeePortalDocument, error) {
-			var batch coredata.EmployeePortalDocuments
-			if err := batch.LoadByEmployeePortalID(
-				ctx,
-				conn,
-				scope,
-				employeePortalID,
-				nil,
-				cursor,
-			); err != nil {
-				return nil, fmt.Errorf("cannot list employee portal documents: %w", err)
-			}
-
-			return batch, nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(links) == 0 {
-		return nil, nil
-	}
-
-	documentIDs := make([]gid.GID, len(links))
-	for i, link := range links {
-		documentIDs[i] = link.DocumentID
-	}
-
-	var documents coredata.Documents
-	if err := documents.LoadExistingByIDs(ctx, conn, scope, documentIDs); err != nil {
-		return nil, fmt.Errorf("cannot load documents: %w", err)
-	}
-
-	publishedIDs := make([]gid.GID, 0, len(documents))
-	for _, document := range documents {
-		if documentPublished(document) {
-			publishedIDs = append(publishedIDs, document.ID)
-		}
-	}
-
-	return publishedIDs, nil
 }
 
 func (s *Service) CurrentPublishedVersions(

@@ -305,14 +305,9 @@ func (ds *EmployeePortalDocuments) LoadByEmployeePortalID(
 	conn pg.Querier,
 	scope Scoper,
 	employeePortalID gid.GID,
-	documentIDs []gid.GID,
 	cursor *page.Cursor[EmployeePortalDocumentOrderField],
+	filter *EmployeePortalDocumentFilter,
 ) error {
-	if documentIDs != nil && len(documentIDs) == 0 {
-		*ds = EmployeePortalDocuments{}
-		return nil
-	}
-
 	q := `
 SELECT
 	id,
@@ -326,25 +321,20 @@ FROM
 WHERE
 	%s
 	AND employee_portal_id = @employee_portal_id
-	AND (
-		NOT @has_document_ids
-		OR document_id = ANY(@document_ids::text[])
-	)
+	AND %s
 	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(
+		q,
+		scope.SQLFragment(),
+		filter.SQLFragment(),
+		cursor.SQLFragment(),
+	)
 
-	if documentIDs == nil {
-		documentIDs = []gid.GID{}
-	}
-
-	args := pgx.StrictNamedArgs{
-		"employee_portal_id": employeePortalID,
-		"has_document_ids":   len(documentIDs) > 0,
-		"document_ids":       documentIDs,
-	}
+	args := pgx.StrictNamedArgs{"employee_portal_id": employeePortalID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -360,6 +350,40 @@ WHERE
 	*ds = links
 
 	return nil
+}
+
+func (ds *EmployeePortalDocuments) CountByEmployeePortalID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	employeePortalID gid.GID,
+	filter *EmployeePortalDocumentFilter,
+) (int, error) {
+	q := `
+SELECT
+	COUNT(id)
+FROM
+	employee_portal_documents
+WHERE
+	%s
+	AND employee_portal_id = @employee_portal_id
+	AND %s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"employee_portal_id": employeePortalID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+
+	var count int
+
+	err := conn.QueryRow(ctx, q, args).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("cannot count employee portal documents: %w", err)
+	}
+
+	return count, nil
 }
 
 func (d *EmployeePortalDocument) Upsert(

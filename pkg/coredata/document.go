@@ -286,27 +286,6 @@ func (p *Documents) LoadByIDs(
 	scope Scoper,
 	documentIDs []gid.GID,
 ) error {
-	return p.loadByIDs(ctx, conn, scope, documentIDs, true)
-}
-
-// LoadExistingByIDs loads the documents that are still present. Missing and
-// soft-deleted ids are omitted instead of failing the batch.
-func (p *Documents) LoadExistingByIDs(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	documentIDs []gid.GID,
-) error {
-	return p.loadByIDs(ctx, conn, scope, documentIDs, false)
-}
-
-func (p *Documents) loadByIDs(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	documentIDs []gid.GID,
-	requireAll bool,
-) error {
 	q := `
 SELECT
     documents.id,
@@ -348,7 +327,7 @@ WHERE
 
 	*p = documents
 
-	if requireAll && len(documents) != len(gid.NewSet(documentIDs...)) {
+	if len(documents) != len(gid.NewSet(documentIDs...)) {
 		return ErrResourceNotFound
 	}
 
