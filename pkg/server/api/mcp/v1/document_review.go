@@ -37,7 +37,7 @@ func (r *Resolver) setDocumentCommentThreadResolved(
 	threadID gid.GID,
 	resolved bool,
 ) (*types.DocumentCommentThread, error) {
-	scope, err := r.Authorize(ctx, threadID, probo.ActionDocumentComment)
+	scope, err := r.Authorize(ctx, threadID, probo.ActionDocumentCommentResolve)
 	if err != nil {
 		return nil, err
 	}
@@ -58,34 +58,6 @@ func (r *Resolver) setDocumentCommentThreadResolved(
 	}
 
 	return types.NewDocumentCommentThread(thread), nil
-}
-
-func (r *Resolver) decideDocumentSuggestion(
-	ctx context.Context,
-	suggestionID gid.GID,
-	accept bool,
-) (*types.DocumentSuggestion, error) {
-	scope, err := r.Authorize(ctx, suggestionID, probo.ActionDocumentUpdate)
-	if err != nil {
-		return nil, err
-	}
-
-	identity := authn.IdentityFromContext(ctx)
-
-	suggestion, err := r.proboSvc.Documents.DecideSuggestion(
-		ctx,
-		scope,
-		probo.DecideDocumentSuggestionRequest{
-			SuggestionID: suggestionID,
-			IdentityID:   identity.ID,
-			Accept:       accept,
-		},
-	)
-	if err != nil {
-		return nil, r.documentReviewError(ctx, "cannot decide document suggestion", err)
-	}
-
-	return types.NewDocumentSuggestion(suggestion), nil
 }
 
 func (r *Resolver) documentReviewError(ctx context.Context, message string, err error) error {
