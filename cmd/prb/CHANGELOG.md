@@ -4,6 +4,16 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.262.0] - 2026-10-30
+
+### Added
+
+- `employee-portal document add` shares a published document with
+  an employee portal. `employee-portal document list` (`ls`) lists
+  those documents. `employee-portal document remove` stops sharing
+  one and asks for confirmation unless `--yes` is set. Login now
+  requests the `v1:employee-portal` scope
+
 ### Fixed
 
 - A resource id that starts with `-` is accepted as a positional
