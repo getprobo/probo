@@ -19,22 +19,13 @@
 // SOFTWARE.
 
 import type { INodeProperties } from 'n8n-workflow';
+import { organizationLocator } from '../../locators';
 
 export function organizationIdField(operation: string): INodeProperties {
-	return {
-		displayName: 'Organization ID',
-		name: 'organizationId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['connector'],
-				operation: [operation],
-			},
-		},
-		default: '',
-		description: 'The ID of the organization',
-		required: true,
-	};
+	return organizationLocator({
+		resource: ['connector'],
+		operation: [operation],
+	});
 }
 
 export function connectorNameField(operation: string): INodeProperties {

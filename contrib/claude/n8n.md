@@ -105,19 +105,10 @@ Each file exports `description` (field definitions) and `execute` (the handler):
 
 ```typescript
 export const description: INodeProperties[] = [
-    {
-        displayName: 'Organization ID',
-        name: 'organizationId',
-        type: 'string',
-        displayOptions: {
-            show: {
-                resource: ['myresource'],
-                operation: ['create'],
-            },
-        },
-        default: '',
-        required: true,
-    },
+    organizationLocator({
+        resource: ['myresource'],
+        operation: ['create'],
+    }),
     // ... more fields ...
     {
         displayName: 'Additional Fields',
@@ -141,7 +132,9 @@ export async function execute(
     this: IExecuteFunctions,
     itemIndex: number,
 ): Promise<INodeExecutionData> {
-    const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
+    const organizationId = this.getNodeParameter('organizationId', itemIndex, '', {
+        extractValue: true,
+    }) as string;
     const name = this.getNodeParameter('name', itemIndex) as string;
 
     const query = `
@@ -167,6 +160,10 @@ export async function execute(
     };
 }
 ```
+
+List operations return one n8n item per record. Build that array with `executionItems(records, itemIndex)` from `GenericFunctions.ts`, and type `execute` as `Promise<INodeExecutionData[]>`. `Probo.node.ts` flattens the array into the node's output. An empty list produces no items.
+
+Organization, document, person, document version, and the other named records (framework, control, risk, internal control, asset, audit, task, third party, compliance portal, cookie banner, access review campaign) are resource locators in `locators.ts`. Read the ID with `getNodeParameter(name, itemIndex, '', { extractValue: true })`. Register the matching `search*` method on the node `listSearch` methods when a node shows that field. People and most records search inside the selected organization. Document versions search inside the selected document.
 
 ## GraphQL helpers
 

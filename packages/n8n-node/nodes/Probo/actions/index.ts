@@ -69,7 +69,10 @@ export interface ResourceModule {
 
 export interface OperationModule {
 	description: INodeProperties[];
-	execute: (this: IExecuteFunctions, itemIndex: number) => Promise<INodeExecutionData>;
+	execute: (
+		this: IExecuteFunctions,
+		itemIndex: number,
+	) => Promise<INodeExecutionData | INodeExecutionData[]>;
 }
 
 export const resources: Record<string, ResourceModule> = {

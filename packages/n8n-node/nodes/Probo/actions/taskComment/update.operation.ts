@@ -20,8 +20,15 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
+import { organizationLocator, personLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
+	organizationLocator({
+		resource: ['taskComment'],
+		operation: ['update'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
 	{
 		displayName: 'Comment ID',
 		name: 'commentId',
@@ -59,13 +66,10 @@ export const description: INodeProperties[] = [
 				default: '',
 				description: 'The comment content as a ProseMirror document JSON string. An image node sets fileId from an attachment upload. A file node sets fileId, fileName, mimeType, and size',
 			},
-			{
-				displayName: 'Owner ID',
-				name: 'ownerId',
-				type: 'string',
-				default: '',
-				description: 'The owner membership profile ID',
-			},
+			personLocator({
+				displayName: 'Owner',
+				required: false,
+			}),
 		],
 	},
 ];
@@ -91,6 +95,7 @@ export async function execute(
 					owner {
 						id
 						fullName
+						emailAddress
 					}
 				}
 			}
@@ -103,8 +108,8 @@ export async function execute(
 			? null
 			: additionalFields.content;
 	}
-	if (additionalFields.ownerId) {
-		input.ownerId = additionalFields.ownerId;
+	if (this.getNodeParameter('additionalFields.ownerId', itemIndex, '', { extractValue: true }) as string) {
+		input.ownerId = this.getNodeParameter('additionalFields.ownerId', itemIndex, '', { extractValue: true }) as string;
 	}
 
 	const responseData = await proboApiRequest.call(this, query, { input });

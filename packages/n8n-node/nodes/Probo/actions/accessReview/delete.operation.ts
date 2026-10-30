@@ -20,29 +20,26 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
+import { accessReviewCampaignLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Access Review Campaign ID',
-		name: 'accessReviewCampaignId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['accessReview'],
-				operation: ['delete'],
-			},
-		},
-		default: '',
-		description: 'The ID of the access review campaign to delete',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['accessReview'],
+		operation: ['delete'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+	accessReviewCampaignLocator({
+		resource: ['accessReview'],
+		operation: ['delete'],
+	}),
 ];
 
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const accessReviewCampaignId = this.getNodeParameter('accessReviewCampaignId', itemIndex) as string;
+	const accessReviewCampaignId = this.getNodeParameter('accessReviewCampaignId', itemIndex, '', { extractValue: true }) as string;
 
 	const query = `
 		mutation DeleteAccessReviewCampaign($input: DeleteAccessReviewCampaignInput!) {

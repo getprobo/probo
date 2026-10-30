@@ -20,8 +20,15 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
+import { organizationLocator, personLocator, riskLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
+	organizationLocator({
+		resource: ['finding'],
+		operation: ['update'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
 	{
 		displayName: 'Finding ID',
 		name: 'findingId',
@@ -84,13 +91,10 @@ export const description: INodeProperties[] = [
 				default: '',
 				description: 'The date the finding was identified (ISO 8601 format)',
 			},
-			{
-				displayName: 'Owner ID',
-				name: 'ownerId',
-				type: 'string',
-				default: '',
-				description: 'The ID of the person who owns this finding',
-			},
+			personLocator({
+				displayName: 'Owner',
+				required: false,
+			}),
 			{
 				displayName: 'Priority',
 				name: 'priority',
@@ -116,13 +120,9 @@ export const description: INodeProperties[] = [
 				default: '',
 				description: 'The priority of the finding',
 			},
-			{
-				displayName: 'Risk ID',
-				name: 'riskId',
-				type: 'string',
-				default: '',
-				description: 'The ID of the associated risk',
-			},
+			riskLocator({
+				required: false,
+			}),
 			{
 				displayName: 'Root Cause',
 				name: 'rootCause',
@@ -225,11 +225,17 @@ export async function execute(
 	if (additionalFields.identifiedOn !== undefined) input.identifiedOn = additionalFields.identifiedOn === '' ? null : additionalFields.identifiedOn;
 	if (additionalFields.rootCause !== undefined) input.rootCause = additionalFields.rootCause === '' ? null : additionalFields.rootCause;
 	if (additionalFields.correctiveAction !== undefined) input.correctiveAction = additionalFields.correctiveAction === '' ? null : additionalFields.correctiveAction;
-	if (additionalFields.ownerId !== undefined) input.ownerId = additionalFields.ownerId === '' ? null : additionalFields.ownerId;
+	if (additionalFields.ownerId !== undefined) {
+		const ownerId = this.getNodeParameter('additionalFields.ownerId', itemIndex, '', { extractValue: true }) as string;
+		input.ownerId = ownerId === '' ? null : ownerId;
+	}
 	if (additionalFields.dueDate !== undefined) input.dueDate = additionalFields.dueDate === '' ? null : additionalFields.dueDate;
 	if (additionalFields.status !== undefined) input.status = additionalFields.status;
 	if (additionalFields.priority !== undefined) input.priority = additionalFields.priority;
-	if (additionalFields.riskId !== undefined) input.riskId = additionalFields.riskId === '' ? null : additionalFields.riskId;
+	if (additionalFields.riskId !== undefined) {
+		const riskId = this.getNodeParameter('additionalFields.riskId', itemIndex, '', { extractValue: true }) as string;
+		input.riskId = riskId === '' ? null : riskId;
+	}
 	if (additionalFields.effectivenessCheck !== undefined) input.effectivenessCheck = additionalFields.effectivenessCheck === '' ? null : additionalFields.effectivenessCheck;
 
 	const responseData = await proboApiRequest.call(this, query, { input });

@@ -19,23 +19,14 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { organizationLocator, personLocator } from '../../locators';
 import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Organization ID',
-		name: 'organizationId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['datum'],
-				operation: ['create'],
-			},
-		},
-		default: '',
-		description: 'The ID of the organization',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['datum'],
+		operation: ['create'],
+	}),
 	{
 		displayName: 'Name',
 		name: 'name',
@@ -82,20 +73,11 @@ export const description: INodeProperties[] = [
 		description: 'The classification of the data',
 		required: true,
 	},
-	{
-		displayName: 'Owner ID',
-		name: 'ownerId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['datum'],
-				operation: ['create'],
-			},
-		},
-		default: '',
-		description: 'The ID of the owner (People)',
-		required: true,
-	},
+	personLocator({
+		displayName: 'Owner',
+		resource: ['datum'],
+		operation: ['create'],
+	}),
 	{
 		displayName: 'ThirdParty IDs',
 		name: 'thirdPartyIds',
@@ -144,10 +126,10 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
+	const organizationId = this.getNodeParameter('organizationId', itemIndex, '', { extractValue: true }) as string;
 	const name = this.getNodeParameter('name', itemIndex) as string;
 	const dataClassification = this.getNodeParameter('dataClassification', itemIndex) as string;
-	const ownerId = this.getNodeParameter('ownerId', itemIndex) as string;
+	const ownerId = this.getNodeParameter('ownerId', itemIndex, '', { extractValue: true }) as string;
 	const thirdPartyIdsStr = this.getNodeParameter('thirdPartyIds', itemIndex, '') as string;
 	const options = this.getNodeParameter('options', itemIndex, {}) as {
 		includeOwner?: boolean;

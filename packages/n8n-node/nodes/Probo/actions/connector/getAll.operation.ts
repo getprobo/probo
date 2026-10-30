@@ -18,31 +18,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+import type { IDataObject, INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { organizationLocator } from '../../locators';
+import { proboApiRequest, executionItems } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Organization ID',
-		name: 'organizationId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['connector'],
-				operation: ['getAll'],
-			},
-		},
-		default: '',
-		description: 'The ID of the organization',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['connector'],
+		operation: ['getAll'],
+	}),
 ];
 
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
-): Promise<INodeExecutionData> {
-	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
+): Promise<INodeExecutionData[]> {
+	const organizationId = this.getNodeParameter('organizationId', itemIndex, '', { extractValue: true }) as string;
 
 	const query = `
 		query GetConnectors($organizationId: ID!) {
@@ -61,9 +52,9 @@ export async function execute(
 	`;
 
 	const responseData = await proboApiRequest.call(this, query, { organizationId });
+	const data = responseData.data as IDataObject | undefined;
+	const node = data?.node as IDataObject | undefined;
+	const connectors = Array.isArray(node?.connectors) ? (node.connectors as IDataObject[]) : [];
 
-	return {
-		json: responseData,
-		pairedItem: { item: itemIndex },
-	};
+	return executionItems(connectors, itemIndex);
 }

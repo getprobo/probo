@@ -25,6 +25,7 @@ import type {
 	IDataObject,
 } from 'n8n-workflow';
 import { proboConnectApiRequest, toPeriod } from '../../GenericFunctions';
+import { organizationLocator, personLocator } from '../../locators';
 
 const kindOptions = [
 	{ name: 'Employee', value: 'EMPLOYEE' },
@@ -33,20 +34,18 @@ const kindOptions = [
 ];
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'User ID',
+	organizationLocator({
+		resource: ['user'],
+		operation: ['updateUser'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+	personLocator({
 		name: 'userId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['user'],
-				operation: ['updateUser'],
-			},
-		},
-		default: '',
-		description: 'The ID of the user (profile) to update',
-		required: true,
-	},
+		displayName: 'User',
+		resource: ['user'],
+		operation: ['updateUser'],
+	}),
 	{
 		displayName: 'Full Name',
 		name: 'fullName',
@@ -125,7 +124,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const userId = this.getNodeParameter('userId', itemIndex) as string;
+	const userId = this.getNodeParameter('userId', itemIndex, '', { extractValue: true }) as string;
 	const fullName = this.getNodeParameter('fullName', itemIndex) as string;
 	const kind = this.getNodeParameter('kind', itemIndex) as string;
 	const additionalFields = this.getNodeParameter('additionalFields', itemIndex, {}) as {

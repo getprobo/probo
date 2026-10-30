@@ -20,22 +20,19 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
+import { thirdPartyLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'ThirdParty ID',
-		name: 'thirdPartyId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['thirdParty'],
-				operation: ['createRiskAssessment'],
-			},
-		},
-		default: '',
-		description: 'The ID of the thirdParty',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['thirdParty'],
+		operation: ['createRiskAssessment'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+	thirdPartyLocator({
+		resource: ['thirdParty'],
+		operation: ['createRiskAssessment'],
+	}),
 	{
 		displayName: 'Expires At',
 		name: 'expiresAt',
@@ -113,7 +110,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const thirdPartyId = this.getNodeParameter('thirdPartyId', itemIndex) as string;
+	const thirdPartyId = this.getNodeParameter('thirdPartyId', itemIndex, '', { extractValue: true }) as string;
 	const expiresAtRaw = this.getNodeParameter('expiresAt', itemIndex) as string;
 	const dataSensitivity = this.getNodeParameter('dataSensitivity', itemIndex) as string;
 	const businessImpact = this.getNodeParameter('businessImpact', itemIndex) as string;

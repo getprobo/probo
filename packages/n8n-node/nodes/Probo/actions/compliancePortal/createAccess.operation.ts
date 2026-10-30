@@ -21,35 +21,26 @@
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
+import { compliancePortalLocator, personLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Compliance Portal ID',
-		name: 'compliancePortalId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['compliancePortal'],
-				operation: ['createAccess'],
-			},
-		},
-		default: '',
-		description: 'The ID of the compliance portal',
-		required: true,
-	},
-	{
-		displayName: 'Profile ID',
+	organizationLocator({
+		resource: ['compliancePortal'],
+		operation: ['createAccess'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+	compliancePortalLocator({
+		resource: ['compliancePortal'],
+		operation: ['createAccess'],
+	}),
+	personLocator({
 		name: 'profileId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['compliancePortal'],
-				operation: ['createAccess'],
-			},
-		},
-		default: '',
-		description: 'Existing organization profile ID. Provide exactly one of Profile ID or Email.',
-	},
+		displayName: 'Profile',
+		resource: ['compliancePortal'],
+		operation: ['createAccess'],
+		required: false,
+	}),
 	{
 		displayName: 'Email',
 		name: 'email',
@@ -62,7 +53,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'Visitor email address. Provide exactly one of Profile ID or Email.',
+		description: 'Visitor email address. Provide exactly one of Profile or Email.',
 	},
 	{
 		displayName: 'Document IDs',
@@ -126,8 +117,8 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const compliancePortalId = this.getNodeParameter('compliancePortalId', itemIndex) as string;
-	const profileId = this.getNodeParameter('profileId', itemIndex, '') as string;
+	const compliancePortalId = this.getNodeParameter('compliancePortalId', itemIndex, '', { extractValue: true }) as string;
+	const profileId = this.getNodeParameter('profileId', itemIndex, '', { extractValue: true }) as string;
 	const email = this.getNodeParameter('email', itemIndex, '') as string;
 	const documentIds = stringList(this.getNodeParameter('documentIds', itemIndex, []));
 	const reportIds = stringList(this.getNodeParameter('reportIds', itemIndex, []));
@@ -140,7 +131,7 @@ export async function execute(
 	if (hasProfileId === hasEmail) {
 		throw new NodeOperationError(
 			this.getNode(),
-			'Provide exactly one of Profile ID or Email',
+			'Provide exactly one of Profile or Email',
 			{ itemIndex },
 		);
 	}

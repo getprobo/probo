@@ -19,36 +19,20 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { organizationLocator, internalControlLocator, personLocator } from '../../locators';
 import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Organization ID',
-		name: 'organizationId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['task'],
-				operation: ['create'],
-			},
-		},
-		default: '',
-		description: 'The ID of the organization',
-		required: true,
-	},
-	{
-		displayName: 'Internal Control ID',
-		name: 'internalControlId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['task'],
-				operation: ['create'],
-			},
-		},
-		default: '',
+	organizationLocator({
+		resource: ['task'],
+		operation: ['create'],
+	}),
+	internalControlLocator({
+		resource: ['task'],
+		operation: ['create'],
+		required: false,
 		description: 'The ID of the internal control this task belongs to',
-	},
+	}),
 	{
 		displayName: 'Name',
 		name: 'name',
@@ -162,19 +146,13 @@ export const description: INodeProperties[] = [
 		default: '',
 		description: 'The time estimate for the task',
 	},
-	{
-		displayName: 'Assigned To ID',
+	personLocator({
 		name: 'assignedToId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['task'],
-				operation: ['create'],
-			},
-		},
-		default: '',
-		description: 'The ID of the user assigned to this task',
-	},
+		displayName: 'Assignee',
+		resource: ['task'],
+		operation: ['create'],
+		required: false,
+	}),
 	{
 		displayName: 'Deadline',
 		name: 'deadline',
@@ -220,14 +198,14 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
-	const internalControlId = this.getNodeParameter('internalControlId', itemIndex, '') as string;
+	const organizationId = this.getNodeParameter('organizationId', itemIndex, '', { extractValue: true }) as string;
+	const internalControlId = this.getNodeParameter('internalControlId', itemIndex, '', { extractValue: true }) as string;
 	const name = this.getNodeParameter('name', itemIndex) as string;
 	const content = this.getNodeParameter('content', itemIndex, '') as string;
 	const state = this.getNodeParameter('state', itemIndex, '') as string;
 	const priority = this.getNodeParameter('priority', itemIndex, '') as string;
 	const timeEstimate = this.getNodeParameter('timeEstimate', itemIndex, '') as string;
-	const assignedToId = this.getNodeParameter('assignedToId', itemIndex, '') as string;
+	const assignedToId = this.getNodeParameter('assignedToId', itemIndex, '', { extractValue: true }) as string;
 	const deadline = this.getNodeParameter('deadline', itemIndex, '') as string;
 	const recurrenceInterval = this.getNodeParameter('recurrenceInterval', itemIndex, '') as string;
 	const linearTeamId = this.getNodeParameter('linearTeamId', itemIndex, '') as string;

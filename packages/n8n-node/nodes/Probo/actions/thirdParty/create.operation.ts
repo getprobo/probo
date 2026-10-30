@@ -19,23 +19,14 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { organizationLocator, thirdPartyLocator } from '../../locators';
 import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Organization ID',
-		name: 'organizationId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['thirdParty'],
-				operation: ['create'],
-			},
-		},
-		default: '',
-		description: 'The ID of the organization',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['thirdParty'],
+		operation: ['create'],
+	}),
 	{
 		displayName: 'Name',
 		name: 'name',
@@ -170,13 +161,13 @@ export const description: INodeProperties[] = [
 				type: 'string',
 				default: '',
 			},
-			{
-				displayName: 'Parent Third Party ID',
+			thirdPartyLocator({
 				name: 'parentThirdPartyId',
-				type: 'string',
-				default: '',
-				description: 'The ID of the parent third party (creates a child relationship; level is derived from the parent)',
-			},
+				displayName: 'Parent Third Party',
+				required: false,
+				description:
+					'The ID of the parent third party (creates a child relationship; level is derived from the parent)',
+			}),
 			{
 				displayName: 'Privacy Policy URL',
 				name: 'privacyPolicyUrl',
@@ -228,7 +219,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
+	const organizationId = this.getNodeParameter('organizationId', itemIndex, '', { extractValue: true }) as string;
 	const name = this.getNodeParameter('name', itemIndex) as string;
 	const description = this.getNodeParameter('description', itemIndex, '') as string;
 	const category = this.getNodeParameter('category', itemIndex, '') as string;
@@ -302,9 +293,9 @@ export async function execute(
 	if (additionalFields.subprocessorsListUrl) input.subprocessorsListUrl = additionalFields.subprocessorsListUrl;
 	if (additionalFields.securityPageUrl) input.securityPageUrl = additionalFields.securityPageUrl;
 	if (additionalFields.trustPageUrl) input.trustPageUrl = additionalFields.trustPageUrl;
-	if (additionalFields.parentThirdPartyId) {
+	if (this.getNodeParameter('additionalFields.parentThirdPartyId', itemIndex, '', { extractValue: true }) as string) {
 		// The server derives the level from the parent (parent.level + 1).
-		input.parentThirdPartyId = additionalFields.parentThirdPartyId;
+		input.parentThirdPartyId = this.getNodeParameter('additionalFields.parentThirdPartyId', itemIndex, '', { extractValue: true }) as string;
 	}
 	if (additionalFields.certifications) {
 		input.certifications = additionalFields.certifications.split(',').map((c) => c.trim()).filter(Boolean);

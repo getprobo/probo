@@ -19,23 +19,14 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { proboApiRequestAllItems } from '../../GenericFunctions';
+import { organizationLocator, personLocator } from '../../locators';
+import { proboApiRequestAllItems, executionItems } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Organization ID',
-		name: 'organizationId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['task'],
-				operation: ['getAll'],
-			},
-		},
-		default: '',
-		description: 'The ID of the organization',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['task'],
+		operation: ['getAll'],
+	}),
 	{
 		displayName: 'Return All',
 		name: 'returnAll',
@@ -79,13 +70,11 @@ export const description: INodeProperties[] = [
 			},
 		},
 		options: [
-			{
-				displayName: 'Assigned To ID',
+			personLocator({
 				name: 'assignedToId',
-				type: 'string',
-				default: '',
-				description: 'Filter by the profile ID the task is assigned to',
-			},
+				displayName: 'Assignee',
+				required: false,
+			}),
 			{
 				displayName: 'Query',
 				name: 'query',
@@ -116,8 +105,8 @@ export const description: INodeProperties[] = [
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
-): Promise<INodeExecutionData> {
-	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
+): Promise<INodeExecutionData[]> {
+	const organizationId = this.getNodeParameter('organizationId', itemIndex, '', { extractValue: true }) as string;
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
 	const filters = this.getNodeParameter('filters', itemIndex, {}) as {
@@ -165,8 +154,8 @@ export async function execute(
 		filter.state = filters.state;
 	}
 
-	if (filters.assignedToId) {
-		filter.assignedToId = filters.assignedToId;
+	if (this.getNodeParameter('filters.assignedToId', itemIndex, '', { extractValue: true }) as string) {
+		filter.assignedToId = this.getNodeParameter('filters.assignedToId', itemIndex, '', { extractValue: true }) as string;
 	}
 
 	if (Object.keys(filter).length > 0) {
@@ -186,8 +175,5 @@ export async function execute(
 		limit,
 	);
 
-	return {
-		json: { tasks },
-		pairedItem: { item: itemIndex },
-	};
+	return executionItems(tasks, itemIndex);
 }

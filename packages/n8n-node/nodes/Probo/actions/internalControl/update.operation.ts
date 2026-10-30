@@ -20,23 +20,22 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
+import { internalControlLocator, organizationLocator } from '../../locators';
 import { internalControlFields, readInternalControlFields } from './internalControlFields';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Internal Control ID',
+	organizationLocator({
+		resource: ['internalControl'],
+		operation: ['update'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+	internalControlLocator({
 		name: 'id',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['internalControl'],
-				operation: ['update'],
-			},
-		},
-		default: '',
-		description: 'The ID of the internal control to update',
-		required: true,
-	},
+		resource: ['internalControl'],
+		operation: ['update'],
+		description: 'The internal control to update. Search the list, or enter an ID.',
+	}),
 	{
 		displayName: 'Name',
 		name: 'name',
@@ -114,7 +113,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const id = this.getNodeParameter('id', itemIndex) as string;
+	const id = this.getNodeParameter('id', itemIndex, '', { extractValue: true }) as string;
 	const name = this.getNodeParameter('name', itemIndex, '') as string;
 	const description = this.getNodeParameter('description', itemIndex, '') as string;
 	const category = this.getNodeParameter('category', itemIndex, '') as string;
@@ -145,10 +144,12 @@ export async function execute(
 					owner {
 						id
 						fullName
+						emailAddress
 					}
 					reviewer {
 						id
 						fullName
+						emailAddress
 					}
 					createdAt
 					updatedAt
@@ -160,7 +161,7 @@ export async function execute(
 	const input: Record<string, unknown> = {
 		id,
 		...readInternalControlFields(
-			(field) => this.getNodeParameter(field, itemIndex, '') as string,
+			(field) => this.getNodeParameter(field, itemIndex, '', { extractValue: true }) as string,
 		),
 	};
 	if (name) input.name = name;

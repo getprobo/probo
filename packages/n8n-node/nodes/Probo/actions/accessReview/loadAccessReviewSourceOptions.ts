@@ -107,12 +107,14 @@ function getPageInfo(responseData: IDataObject): { hasNextPage: boolean; endCurs
 async function resolveOrganizationId(
 	this: ILoadOptionsFunctions,
 ): Promise<string | undefined> {
-	const organizationId = this.getCurrentNodeParameter('organizationId') as string | undefined;
+	const organizationId = (this.getCurrentNodeParameter('organizationId', { extractValue: true }) as string) ?? '';
 	if (organizationId) {
 		return organizationId;
 	}
 
-	const accessReviewCampaignId = this.getCurrentNodeParameter('accessReviewCampaignId') as string | undefined;
+	const accessReviewCampaignId = this.getCurrentNodeParameter('accessReviewCampaignId', {
+		extractValue: true,
+	}) as string | undefined;
 	if (!accessReviewCampaignId) {
 		return undefined;
 	}

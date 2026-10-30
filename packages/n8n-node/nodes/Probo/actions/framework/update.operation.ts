@@ -20,22 +20,21 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
+import { frameworkLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Framework ID',
+	organizationLocator({
+		resource: ['framework'],
+		operation: ['update'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+	frameworkLocator({
 		name: 'id',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['framework'],
-				operation: ['update'],
-			},
-		},
-		default: '',
-		description: 'The ID of the framework to update',
-		required: true,
-	},
+		resource: ['framework'],
+		operation: ['update'],
+		description: 'The framework to update. Search the list, or enter an ID.',
+	}),
 	{
 		displayName: 'Name',
 		name: 'name',
@@ -68,7 +67,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const id = this.getNodeParameter('id', itemIndex) as string;
+	const id = this.getNodeParameter('id', itemIndex, '', { extractValue: true }) as string;
 	const name = this.getNodeParameter('name', itemIndex, '') as string;
 	const description = this.getNodeParameter('description', itemIndex, '') as string;
 

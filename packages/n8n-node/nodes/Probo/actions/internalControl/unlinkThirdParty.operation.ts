@@ -20,44 +20,31 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
+import { internalControlLocator, thirdPartyLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Internal Control ID',
-		name: 'internalControlId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['internalControl'],
-				operation: ['unlinkThirdParty'],
-			},
-		},
-		default: '',
-		description: 'The ID of the internal control',
-		required: true,
-	},
-	{
-		displayName: 'Third Party ID',
-		name: 'thirdPartyId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['internalControl'],
-				operation: ['unlinkThirdParty'],
-			},
-		},
-		default: '',
-		description: 'The ID of the third party to unlink',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['internalControl'],
+		operation: ['unlinkThirdParty'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+	internalControlLocator({
+		resource: ['internalControl'],
+		operation: ['unlinkThirdParty'],
+	}),
+	thirdPartyLocator({
+		resource: ['internalControl'],
+		operation: ['unlinkThirdParty'],
+	}),
 ];
 
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const internalControlId = this.getNodeParameter('internalControlId', itemIndex) as string;
-	const thirdPartyId = this.getNodeParameter('thirdPartyId', itemIndex) as string;
+	const internalControlId = this.getNodeParameter('internalControlId', itemIndex, '', { extractValue: true }) as string;
+	const thirdPartyId = this.getNodeParameter('thirdPartyId', itemIndex, '', { extractValue: true }) as string;
 
 	const query = `
 		mutation DeleteInternalControlThirdPartyMapping($input: DeleteInternalControlThirdPartyMappingInput!) {

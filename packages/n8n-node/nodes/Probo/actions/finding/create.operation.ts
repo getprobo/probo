@@ -19,23 +19,14 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { organizationLocator, personLocator, riskLocator } from '../../locators';
 import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Organization ID',
-		name: 'organizationId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['finding'],
-				operation: ['create'],
-			},
-		},
-		default: '',
-		description: 'The ID of the organization',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['finding'],
+		operation: ['create'],
+	}),
 	{
 		displayName: 'Kind',
 		name: 'kind',
@@ -123,13 +114,10 @@ export const description: INodeProperties[] = [
 				default: '',
 				description: 'The date the finding was identified (ISO 8601 format)',
 			},
-			{
-				displayName: 'Owner ID',
-				name: 'ownerId',
-				type: 'string',
-				default: '',
-				description: 'The ID of the person who owns this finding',
-			},
+			personLocator({
+				displayName: 'Owner',
+				required: false,
+			}),
 			{
 				displayName: 'Priority',
 				name: 'priority',
@@ -151,13 +139,9 @@ export const description: INodeProperties[] = [
 				default: 'MEDIUM',
 				description: 'The priority of the finding',
 			},
-			{
-				displayName: 'Risk ID',
-				name: 'riskId',
-				type: 'string',
-				default: '',
-				description: 'The ID of the associated risk',
-			},
+			riskLocator({
+				required: false,
+			}),
 			{
 				displayName: 'Root Cause',
 				name: 'rootCause',
@@ -213,7 +197,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
+	const organizationId = this.getNodeParameter('organizationId', itemIndex, '', { extractValue: true }) as string;
 	const kind = this.getNodeParameter('kind', itemIndex) as string;
 	const description = this.getNodeParameter('description', itemIndex) as string;
 	const additionalFields = this.getNodeParameter('additionalFields', itemIndex, {}) as {
@@ -262,11 +246,11 @@ export async function execute(
 	if (additionalFields.identifiedOn) input.identifiedOn = additionalFields.identifiedOn;
 	if (additionalFields.rootCause) input.rootCause = additionalFields.rootCause;
 	if (additionalFields.correctiveAction) input.correctiveAction = additionalFields.correctiveAction;
-	if (additionalFields.ownerId) input.ownerId = additionalFields.ownerId;
+	if (this.getNodeParameter('additionalFields.ownerId', itemIndex, '', { extractValue: true }) as string) input.ownerId = this.getNodeParameter('additionalFields.ownerId', itemIndex, '', { extractValue: true }) as string;
 	if (additionalFields.dueDate) input.dueDate = additionalFields.dueDate;
 	if (additionalFields.status) input.status = additionalFields.status;
 	if (additionalFields.priority) input.priority = additionalFields.priority;
-	if (additionalFields.riskId) input.riskId = additionalFields.riskId;
+	if (this.getNodeParameter('additionalFields.riskId', itemIndex, '', { extractValue: true }) as string) input.riskId = this.getNodeParameter('additionalFields.riskId', itemIndex, '', { extractValue: true }) as string;
 	if (additionalFields.effectivenessCheck) input.effectivenessCheck = additionalFields.effectivenessCheck;
 
 	const responseData = await proboApiRequest.call(this, query, { input });

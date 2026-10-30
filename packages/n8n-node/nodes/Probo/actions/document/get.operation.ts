@@ -19,30 +19,27 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { organizationLocator, documentLocator } from '../../locators';
 import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Document ID',
-		name: 'documentId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['document'],
-				operation: ['get'],
-			},
-		},
-		default: '',
-		description: 'The ID of the document',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['document'],
+		operation: ['get'],
+		required: false,
+		description: 'Organization to search documents in. Leave this empty when entering a document ID.',
+	}),
+	documentLocator({
+		resource: ['document'],
+		operation: ['get'],
+	}),
 ];
 
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const documentId = this.getNodeParameter('documentId', itemIndex) as string;
+	const documentId = this.getNodeParameter('documentId', itemIndex, '', { extractValue: true }) as string;
 
 	const query = `
 		query GetDocument($documentId: ID!) {

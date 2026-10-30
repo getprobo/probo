@@ -20,44 +20,40 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
+import { stampGraphqlNode, withParentReference } from '../../output';
+import { documentVersionLocator, personLocator, organizationLocator, documentLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Document Version ID',
-		name: 'documentVersionId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['document'],
-				operation: ['requestSignature'],
-			},
-		},
-		default: '',
-		description: 'The ID of the document version',
-		required: true,
-	},
-	{
-		displayName: 'Signatory ID',
+	organizationLocator({
+		resource: ['document'],
+		operation: ['requestSignature'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+	documentLocator({
+		resource: ['document'],
+		operation: ['requestSignature'],
+		required: false,
+		description: 'Document to search versions in. Leave this empty when entering a version ID.',
+	}),
+	documentVersionLocator({
+		resource: ['document'],
+		operation: ['requestSignature'],
+	}),
+	personLocator({
 		name: 'signatoryId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['document'],
-				operation: ['requestSignature'],
-			},
-		},
-		default: '',
-		description: 'The profile ID of the signatory',
-		required: true,
-	},
+		displayName: 'Signatory',
+		resource: ['document'],
+		operation: ['requestSignature'],
+	}),
 ];
 
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const documentVersionId = this.getNodeParameter('documentVersionId', itemIndex) as string;
-	const signatoryId = this.getNodeParameter('signatoryId', itemIndex) as string;
+	const documentVersionId = this.getNodeParameter('documentVersionId', itemIndex, '', { extractValue: true }) as string;
+	const signatoryId = this.getNodeParameter('signatoryId', itemIndex, '', { extractValue: true }) as string;
 
 	const query = `
 		mutation RequestSignature($input: RequestSignatureInput!) {
@@ -70,6 +66,12 @@ export async function execute(
 						requestedAt
 						createdAt
 						updatedAt
+						documentVersion {
+							id
+							document {
+								id
+							}
+						}
 						signedBy {
 							id
 							fullName
@@ -86,7 +88,11 @@ export async function execute(
 	});
 
 	return {
-		json: responseData,
+		json: stampGraphqlNode(
+			responseData,
+			['data', 'requestSignature', 'documentVersionSignatureEdge', 'node'],
+			(node) => withParentReference(node, { versionId: documentVersionId }),
+		),
 		pairedItem: { item: itemIndex },
 	};
 }

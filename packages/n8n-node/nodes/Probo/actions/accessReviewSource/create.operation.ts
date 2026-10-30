@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import type { IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
+import { organizationLocator } from '../../locators';
 import { NodeOperationError } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
 
@@ -26,20 +27,10 @@ const sourceDescription =
 	'Connect the provider first. Create the connector with Create API Key, Create Client Credentials, or Create AWS, GCP, or Azure Workload Identity Federation, then pass that connector id here. This operation does not collect credentials. A CSV source is the path with no provider.';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Organization ID',
-		name: 'organizationId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['accessReviewSource'],
-				operation: ['create'],
-			},
-		},
-		default: '',
-		description: 'The ID of the organization',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['accessReviewSource'],
+		operation: ['create'],
+	}),
 	{
 		displayName: 'Name',
 		name: 'name',
@@ -133,7 +124,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
+	const organizationId = this.getNodeParameter('organizationId', itemIndex, '', { extractValue: true }) as string;
 	const name = this.getNodeParameter('name', itemIndex) as string;
 	const sourceType = this.getNodeParameter('sourceType', itemIndex) as string;
 

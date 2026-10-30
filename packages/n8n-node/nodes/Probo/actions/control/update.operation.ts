@@ -20,22 +20,21 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
+import { controlLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Control ID',
+	organizationLocator({
+		resource: ['control'],
+		operation: ['update'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+	controlLocator({
 		name: 'id',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['control'],
-				operation: ['update'],
-			},
-		},
-		default: '',
-		description: 'The ID of the control to update',
-		required: true,
-	},
+		resource: ['control'],
+		operation: ['update'],
+		description: 'The control to update. Search the list, or enter an ID.',
+	}),
 	{
 		displayName: 'Section Title',
 		name: 'sectionTitle',
@@ -104,7 +103,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const id = this.getNodeParameter('id', itemIndex) as string;
+	const id = this.getNodeParameter('id', itemIndex, '', { extractValue: true }) as string;
 	const sectionTitle = this.getNodeParameter('sectionTitle', itemIndex, '') as string;
 	const name = this.getNodeParameter('name', itemIndex, '') as string;
 	const description = this.getNodeParameter('description', itemIndex, '') as string;

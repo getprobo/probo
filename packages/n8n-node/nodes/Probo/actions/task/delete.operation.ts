@@ -20,29 +20,26 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
+import { taskLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Task ID',
-		name: 'taskId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['task'],
-				operation: ['delete'],
-			},
-		},
-		default: '',
-		description: 'The ID of the task to delete',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['task'],
+		operation: ['delete'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+	taskLocator({
+		resource: ['task'],
+		operation: ['delete'],
+	}),
 ];
 
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const taskId = this.getNodeParameter('taskId', itemIndex) as string;
+	const taskId = this.getNodeParameter('taskId', itemIndex, '', { extractValue: true }) as string;
 
 	const query = `
 		mutation DeleteTask($input: DeleteTaskInput!) {

@@ -20,23 +20,20 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
-import { proboApiRequestAllItems } from '../../GenericFunctions';
+import { proboApiRequestAllItems, executionItems } from '../../GenericFunctions';
+import { taskLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Task ID',
-		name: 'taskId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['taskComment'],
-				operation: ['getAll'],
-			},
-		},
-		default: '',
-		description: 'The ID of the task',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['taskComment'],
+		operation: ['getAll'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+	taskLocator({
+		resource: ['taskComment'],
+		operation: ['getAll'],
+	}),
 	{
 		displayName: 'Return All',
 		name: 'returnAll',
@@ -72,8 +69,8 @@ export const description: INodeProperties[] = [
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
-): Promise<INodeExecutionData> {
-	const taskId = this.getNodeParameter('taskId', itemIndex) as string;
+): Promise<INodeExecutionData[]> {
+	const taskId = this.getNodeParameter('taskId', itemIndex, '', { extractValue: true }) as string;
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
 
@@ -92,6 +89,7 @@ export async function execute(
 								owner {
 									id
 									fullName
+									emailAddress
 								}
 							}
 						}
@@ -130,8 +128,5 @@ export async function execute(
 		limit,
 	);
 
-	return {
-		json: { comments },
-		pairedItem: { item: itemIndex },
-	};
+	return executionItems(comments, itemIndex);
 }

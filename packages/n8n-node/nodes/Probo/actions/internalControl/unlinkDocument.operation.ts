@@ -19,45 +19,33 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { organizationLocator, documentLocator, internalControlLocator } from '../../locators';
 import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Internal Control ID',
-		name: 'internalControlId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['internalControl'],
-				operation: ['unlinkDocument'],
-			},
-		},
-		default: '',
-		description: 'The ID of the internal control',
-		required: true,
-	},
-	{
-		displayName: 'Document ID',
-		name: 'documentId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['internalControl'],
-				operation: ['unlinkDocument'],
-			},
-		},
-		default: '',
+	organizationLocator({
+		resource: ['internalControl'],
+		operation: ['unlinkDocument'],
+		required: false,
+		description: 'Organization to search internal controls and documents in. Leave this empty when entering an ID.',
+	}),
+	internalControlLocator({
+		resource: ['internalControl'],
+		operation: ['unlinkDocument'],
+	}),
+	documentLocator({
+		resource: ['internalControl'],
+		operation: ['unlinkDocument'],
 		description: 'The ID of the document to unlink',
-		required: true,
-	},
+	}),
 ];
 
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const internalControlId = this.getNodeParameter('internalControlId', itemIndex) as string;
-	const documentId = this.getNodeParameter('documentId', itemIndex) as string;
+	const internalControlId = this.getNodeParameter('internalControlId', itemIndex, '', { extractValue: true }) as string;
+	const documentId = this.getNodeParameter('documentId', itemIndex, '', { extractValue: true }) as string;
 
 	const query = `
 		mutation DeleteInternalControlDocumentMapping($input: DeleteInternalControlDocumentMappingInput!) {

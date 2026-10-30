@@ -20,8 +20,15 @@
 
 import type { IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
+import { taskLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
+	organizationLocator({
+		resource: ['task'],
+		operation: ['linkToLinear'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
 	{
 		displayName: 'Linking updates the Probo task with the Linear issue',
 		name: 'linkWarning',
@@ -34,20 +41,10 @@ export const description: INodeProperties[] = [
 		},
 		default: '',
 	},
-	{
-		displayName: 'Task ID',
-		name: 'taskId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['task'],
-				operation: ['linkToLinear'],
-			},
-		},
-		default: '',
-		description: 'The ID of the task to link',
-		required: true,
-	},
+	taskLocator({
+		resource: ['task'],
+		operation: ['linkToLinear'],
+	}),
 	{
 		displayName: 'Team ID',
 		name: 'teamId',
@@ -82,7 +79,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const taskId = this.getNodeParameter('taskId', itemIndex) as string;
+	const taskId = this.getNodeParameter('taskId', itemIndex, '', { extractValue: true }) as string;
 	const teamId = this.getNodeParameter('teamId', itemIndex) as string;
 	const issueId = this.getNodeParameter('issueId', itemIndex) as string;
 

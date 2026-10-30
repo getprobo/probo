@@ -19,23 +19,14 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { proboApiRequestAllItems } from '../../GenericFunctions';
+import { organizationLocator, personLocator } from '../../locators';
+import { proboApiRequestAllItems, executionItems } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Organization ID',
-		name: 'organizationId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['internalControl'],
-				operation: ['getAll'],
-			},
-		},
-		default: '',
-		description: 'The ID of the organization',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['internalControl'],
+		operation: ['getAll'],
+	}),
 	{
 		displayName: 'Return All',
 		name: 'returnAll',
@@ -118,13 +109,11 @@ export const description: INodeProperties[] = [
 				default: 'CREATED_AT',
 				description: 'Field used to order the list',
 			},
-			{
-				displayName: 'Owner ID',
-				name: 'ownerId',
-				type: 'string',
-				default: '',
+			personLocator({
+				displayName: 'Owner',
+				required: false,
 				description: 'Only controls owned by this profile',
-			},
+			}),
 			{
 				displayName: 'Query',
 				name: 'query',
@@ -139,8 +128,8 @@ export const description: INodeProperties[] = [
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
-): Promise<INodeExecutionData> {
-	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
+): Promise<INodeExecutionData[]> {
+	const organizationId = this.getNodeParameter('organizationId', itemIndex, '', { extractValue: true }) as string;
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
 	const options = this.getNodeParameter('options', itemIndex, {}) as {
@@ -163,8 +152,8 @@ export async function execute(
 	if (options.category) {
 		filter.category = options.category;
 	}
-	if (options.ownerId) {
-		filter.ownerId = options.ownerId;
+	if (this.getNodeParameter('options.ownerId', itemIndex, '', { extractValue: true }) as string) {
+		filter.ownerId = this.getNodeParameter('options.ownerId', itemIndex, '', { extractValue: true }) as string;
 	}
 	if (options.needsAttention) {
 		filter.needsAttention = true;
@@ -210,10 +199,12 @@ export async function execute(
 								owner {
 									id
 									fullName
+									emailAddress
 								}
 								reviewer {
 									id
 									fullName
+									emailAddress
 								}
 								createdAt
 								updatedAt
@@ -242,8 +233,5 @@ export async function execute(
 		limit,
 	);
 
-	return {
-		json: { internalControls },
-		pairedItem: { item: itemIndex },
-	};
+	return executionItems(internalControls, itemIndex);
 }

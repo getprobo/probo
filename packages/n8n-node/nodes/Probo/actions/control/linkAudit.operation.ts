@@ -20,44 +20,31 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
+import { auditLocator, controlLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Control ID',
-		name: 'controlId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['control'],
-				operation: ['linkAudit'],
-			},
-		},
-		default: '',
-		description: 'The ID of the control',
-		required: true,
-	},
-	{
-		displayName: 'Audit ID',
-		name: 'auditId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['control'],
-				operation: ['linkAudit'],
-			},
-		},
-		default: '',
-		description: 'The ID of the audit to link',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['control'],
+		operation: ['linkAudit'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+	controlLocator({
+		resource: ['control'],
+		operation: ['linkAudit'],
+	}),
+	auditLocator({
+		resource: ['control'],
+		operation: ['linkAudit'],
+	}),
 ];
 
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const controlId = this.getNodeParameter('controlId', itemIndex) as string;
-	const auditId = this.getNodeParameter('auditId', itemIndex) as string;
+	const controlId = this.getNodeParameter('controlId', itemIndex, '', { extractValue: true }) as string;
+	const auditId = this.getNodeParameter('auditId', itemIndex, '', { extractValue: true }) as string;
 
 	const query = `
 		mutation CreateControlAuditMapping($input: CreateControlAuditMappingInput!) {

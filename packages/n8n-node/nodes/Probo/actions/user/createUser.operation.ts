@@ -25,6 +25,7 @@ import type {
 	IDataObject,
 } from 'n8n-workflow';
 import { proboConnectApiRequest, toPeriod } from '../../GenericFunctions';
+import { organizationLocator } from '../../locators';
 
 const roleOptions = [
 	{ name: 'Owner', value: 'OWNER' },
@@ -43,20 +44,10 @@ const kindOptions = [
 ];
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Organization ID',
-		name: 'organizationId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['user'],
-				operation: ['createUser'],
-			},
-		},
-		default: '',
-		description: 'The ID of the organization',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['user'],
+		operation: ['createUser'],
+	}),
 	{
 		displayName: 'Full Name',
 		name: 'fullName',
@@ -165,7 +156,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
+	const organizationId = this.getNodeParameter('organizationId', itemIndex, '', { extractValue: true }) as string;
 	const fullName = this.getNodeParameter('fullName', itemIndex) as string;
 	const emailAddress = this.getNodeParameter('emailAddress', itemIndex) as string;
 	const role = this.getNodeParameter('role', itemIndex) as string;

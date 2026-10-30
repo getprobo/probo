@@ -19,23 +19,20 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { proboApiRequestAllItems } from '../../GenericFunctions';
+import { proboApiRequestAllItems, executionItems } from '../../GenericFunctions';
+import { cookieBannerLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Cookie Banner ID',
-		name: 'cookieBannerId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['cookieConsentRecord'],
-				operation: ['getAll'],
-			},
-		},
-		default: '',
-		description: 'The ID of the cookie banner',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['cookieConsentRecord'],
+		operation: ['getAll'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+	cookieBannerLocator({
+		resource: ['cookieConsentRecord'],
+		operation: ['getAll'],
+	}),
 	{
 		displayName: 'Return All',
 		name: 'returnAll',
@@ -136,8 +133,8 @@ export const description: INodeProperties[] = [
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
-): Promise<INodeExecutionData> {
-	const cookieBannerId = this.getNodeParameter('cookieBannerId', itemIndex) as string;
+): Promise<INodeExecutionData[]> {
+	const cookieBannerId = this.getNodeParameter('cookieBannerId', itemIndex, '', { extractValue: true }) as string;
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
 	const filterAction = this.getNodeParameter('filterAction', itemIndex, '') as string;
@@ -203,8 +200,5 @@ export async function execute(
 		limit,
 	);
 
-	return {
-		json: { cookieConsentRecords },
-		pairedItem: { item: itemIndex },
-	};
+	return executionItems(cookieConsentRecords, itemIndex);
 }

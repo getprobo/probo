@@ -20,22 +20,19 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
+import { cookieBannerLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Cookie Banner ID',
-		name: 'cookieBannerId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['cookieBanner'],
-				operation: ['addGVLVendor'],
-			},
-		},
-		default: '',
-		description: 'The ID of the cookie banner',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['cookieBanner'],
+		operation: ['addGVLVendor'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+	cookieBannerLocator({
+		resource: ['cookieBanner'],
+		operation: ['addGVLVendor'],
+	}),
 	{
 		displayName: 'IAB Vendor ID',
 		name: 'iabVendorId',
@@ -59,7 +56,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const cookieBannerId = this.getNodeParameter('cookieBannerId', itemIndex) as string;
+	const cookieBannerId = this.getNodeParameter('cookieBannerId', itemIndex, '', { extractValue: true }) as string;
 	const iabVendorId = this.getNodeParameter('iabVendorId', itemIndex) as number;
 
 	const query = `

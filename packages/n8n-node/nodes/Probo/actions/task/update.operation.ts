@@ -20,22 +20,19 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
+import { internalControlLocator, personLocator, taskLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Task ID',
-		name: 'taskId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['task'],
-				operation: ['update'],
-			},
-		},
-		default: '',
-		description: 'The ID of the task to update',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['task'],
+		operation: ['update'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+	taskLocator({
+		resource: ['task'],
+		operation: ['update'],
+	}),
 	{
 		displayName: 'Name',
 		name: 'name',
@@ -182,32 +179,19 @@ export const description: INodeProperties[] = [
 		default: '',
 		description: 'The deadline for the task',
 	},
-	{
-		displayName: 'Assigned To ID',
+	personLocator({
 		name: 'assignedToId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['task'],
-				operation: ['update'],
-			},
-		},
-		default: '',
-		description: 'The ID of the user assigned to this task',
-	},
-	{
-		displayName: 'Internal Control ID',
-		name: 'internalControlId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['task'],
-				operation: ['update'],
-			},
-		},
-		default: '',
+		displayName: 'Assignee',
+		resource: ['task'],
+		operation: ['update'],
+		required: false,
+	}),
+	internalControlLocator({
+		resource: ['task'],
+		operation: ['update'],
+		required: false,
 		description: 'The ID of the internal control this task belongs to',
-	},
+	}),
 	{
 		displayName: 'Recurrence Interval',
 		name: 'recurrenceInterval',
@@ -240,7 +224,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const taskId = this.getNodeParameter('taskId', itemIndex) as string;
+	const taskId = this.getNodeParameter('taskId', itemIndex, '', { extractValue: true }) as string;
 	const name = this.getNodeParameter('name', itemIndex, '') as string;
 	const content = this.getNodeParameter('content', itemIndex, '') as string;
 	const state = this.getNodeParameter('state', itemIndex, '') as string;
@@ -248,8 +232,8 @@ export async function execute(
 	const rank = this.getNodeParameter('rank', itemIndex, '') as string;
 	const timeEstimate = this.getNodeParameter('timeEstimate', itemIndex, '') as string;
 	const deadline = this.getNodeParameter('deadline', itemIndex, '') as string;
-	const assignedToId = this.getNodeParameter('assignedToId', itemIndex, '') as string;
-	const internalControlId = this.getNodeParameter('internalControlId', itemIndex, '') as string;
+	const assignedToId = this.getNodeParameter('assignedToId', itemIndex, '', { extractValue: true }) as string;
+	const internalControlId = this.getNodeParameter('internalControlId', itemIndex, '', { extractValue: true }) as string;
 	const recurrenceInterval = this.getNodeParameter('recurrenceInterval', itemIndex, '') as string;
 	const clearRecurrenceInterval = this.getNodeParameter('clearRecurrenceInterval', itemIndex, false) as boolean;
 

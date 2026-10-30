@@ -19,23 +19,21 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { proboApiRequestAllItems } from '../../GenericFunctions';
+import { organizationLocator, documentLocator } from '../../locators';
+import { proboApiRequestAllItems, executionItems } from '../../GenericFunctions';
+import { documentVersionSelection, withParentReference } from '../../output';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Document ID',
-		name: 'documentId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['document'],
-				operation: ['getAllVersions'],
-			},
-		},
-		default: '',
-		description: 'The ID of the document',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['document'],
+		operation: ['getAllVersions'],
+		required: false,
+		description: 'Organization to search documents in. Leave this empty when entering a document ID.',
+	}),
+	documentLocator({
+		resource: ['document'],
+		operation: ['getAllVersions'],
+	}),
 	{
 		displayName: 'Return All',
 		name: 'returnAll',
@@ -65,6 +63,20 @@ export const description: INodeProperties[] = [
 		},
 		default: 50,
 		description: 'Max number of results to return',
+	},
+	{
+		displayName: 'Simplify',
+		name: 'simple',
+		type: 'boolean',
+		displayOptions: {
+			show: {
+				resource: ['document'],
+				operation: ['getAllVersions'],
+			},
+		},
+		default: true,
+		description: 'Whether to return a simplified version of the response instead of the raw data',
+		hint: 'Omits the version body and keeps titles, statuses, and identifiers',
 	},
 	{
 		displayName: 'Filters',
@@ -99,10 +111,11 @@ export const description: INodeProperties[] = [
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
-): Promise<INodeExecutionData> {
-	const documentId = this.getNodeParameter('documentId', itemIndex) as string;
+): Promise<INodeExecutionData[]> {
+	const documentId = this.getNodeParameter('documentId', itemIndex, '', { extractValue: true }) as string;
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
+	const simplify = this.getNodeParameter('simple', itemIndex, true) as boolean;
 	const filters = this.getNodeParameter('filters', itemIndex, {}) as IDataObject;
 
 	const filter: IDataObject = {};
@@ -117,20 +130,7 @@ export async function execute(
 					versions(first: $first, after: $after${hasFilter ? ', filter: $filter' : ''}) {
 						edges {
 							node {
-								id
-								title
-								major
-								minor
-								status
-								content {
-									prosemirror
-								}
-								changelog
-								classification
-								documentType
-								publishedAt
-								createdAt
-								updatedAt
+								${documentVersionSelection(simplify)}
 							}
 						}
 						pageInfo {
@@ -159,8 +159,8 @@ export async function execute(
 		limit,
 	);
 
-	return {
-		json: { versions },
-		pairedItem: { item: itemIndex },
-	};
+	return executionItems(
+		versions.map((version) => withParentReference(version, { documentId })),
+		itemIndex,
+	);
 }

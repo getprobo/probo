@@ -19,45 +19,32 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { organizationLocator, documentLocator, riskLocator } from '../../locators';
 import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Risk ID',
-		name: 'riskId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['risk'],
-				operation: ['linkDocument'],
-			},
-		},
-		default: '',
-		description: 'The ID of the risk',
-		required: true,
-	},
-	{
-		displayName: 'Document ID',
-		name: 'documentId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['risk'],
-				operation: ['linkDocument'],
-			},
-		},
-		default: '',
-		description: 'The ID of the document to link',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['risk'],
+		operation: ['linkDocument'],
+		required: false,
+		description: 'Organization to search risks and documents in. Leave this empty when entering an ID.',
+	}),
+	riskLocator({
+		resource: ['risk'],
+		operation: ['linkDocument'],
+	}),
+	documentLocator({
+		resource: ['risk'],
+		operation: ['linkDocument'],
+	}),
 ];
 
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const riskId = this.getNodeParameter('riskId', itemIndex) as string;
-	const documentId = this.getNodeParameter('documentId', itemIndex) as string;
+	const riskId = this.getNodeParameter('riskId', itemIndex, '', { extractValue: true }) as string;
+	const documentId = this.getNodeParameter('documentId', itemIndex, '', { extractValue: true }) as string;
 
 	const query = `
 		mutation CreateRiskDocumentMapping($input: CreateRiskDocumentMappingInput!) {
