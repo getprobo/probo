@@ -4,6 +4,12 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+### Changed
+
+- **Breaking**: non-interactive `prb auth login` requires `--hostname`
+  and no longer uses `eu.probo.com` when the flag is omitted. In a
+  terminal, the prompt lists US, then EU, then a custom host
+
 ## [0.262.0] - 2026-10-30
 
 ### Added
