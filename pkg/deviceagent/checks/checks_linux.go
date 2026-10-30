@@ -21,7 +21,9 @@
 package checks
 
 import (
+	"bytes"
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -845,6 +847,22 @@ func linuxOSVersion(ctx context.Context) Result {
 		"pretty_name": kvLookup(body, "PRETTY_NAME"),
 		"version_id":  kvLookup(body, "VERSION_ID"),
 		"id":          kvLookup(body, "ID"),
+	}
+
+	kernel, kernelErr := os.ReadFile("/proc/sys/kernel/osrelease")
+	switch kernelErr {
+	case nil:
+		ev["kernel_version"] = string(bytes.TrimSpace(kernel))
+
+	default:
+		res := RunCommand(ctx, "uname", "-r")
+
+		switch res.Err {
+		case nil:
+			ev["kernel_version"] = strings.TrimSpace(res.Stdout)
+		default:
+			ev["kernel_version_error"] = fmt.Errorf("%w; %w", kernelErr, res.Err).Error()
+		}
 	}
 
 	return pass(ev)

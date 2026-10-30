@@ -21,6 +21,7 @@
 package coredata
 
 import (
+	"fmt"
 	"strings"
 )
 
@@ -29,16 +30,53 @@ import (
 // these branches, since they define what each backend's output means.
 
 func parseOSVersionValue(ev map[string]any) DevicePostureValue {
-	return textValue(
-		firstNonEmptyString(
-			stringEvidence(ev, "product_version"),
-			stringEvidence(ev, "pretty_name"),
-			stringEvidence(ev, "version_id"),
-			stringEvidence(ev, "version"),
-			stringEvidence(ev, "caption"),
-			stringEvidence(ev, "release"),
-		),
+	distroVersion := firstNonEmptyString(
+		stringEvidence(ev, "product_version"),
+		stringEvidence(ev, "pretty_name"),
+		stringEvidence(ev, "version_id"),
+		stringEvidence(ev, "version"),
+		stringEvidence(ev, "caption"),
+		stringEvidence(ev, "release"),
 	)
+
+	kernelVersion := parseLinuxKernelVersion(stringEvidence(ev, "kernel_version"))
+
+	// Only the Linux agent reports kernel_version, so only append it when it is
+	// non-empty.
+	switch {
+	case distroVersion != "" && kernelVersion != "":
+		return textValue(fmt.Sprintf("%s (%s)", distroVersion, kernelVersion))
+	case kernelVersion != "":
+		return textValue(kernelVersion)
+	default:
+		return textValue(distroVersion)
+	}
+}
+
+// parseLinuxKernelVersion keeps major.minor.patch, dropping distro suffixes such as
+// "-45-generic" or "-200.fc44.x86_64". Unparseable input is returned as-is.
+func parseLinuxKernelVersion(release string) string {
+	version := release
+
+	idx := strings.IndexFunc(version, func(r rune) bool {
+		return r != '.' && (r < '0' || r > '9')
+	})
+
+	if idx > -1 {
+		version = version[:idx]
+	}
+
+	parts := strings.Split(strings.TrimRight(version, "."), ".")
+
+	if parts[0] == "" {
+		return release
+	}
+
+	if len(parts) > 3 {
+		parts = parts[:3]
+	}
+
+	return strings.Join(parts, ".")
 }
 
 func parseDiskEncryptionValue(ev map[string]any) DevicePostureValue {

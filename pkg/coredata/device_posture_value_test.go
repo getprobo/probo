@@ -80,6 +80,128 @@ func TestParseDevicePostureValue_OSVersion(t *testing.T) {
 	)
 }
 
+func TestParseDevicePostureValue_LinuxKernelVersion(t *testing.T) {
+	t.Parallel()
+
+	runDevicePostureValueCases(
+		t,
+		[]devicePostureValueCase{
+			{
+				name:     "appended to os-release pretty name",
+				checkKey: "OS_VERSION",
+				evidence: map[string]any{
+					"pretty_name":    "Ubuntu 24.04.2 LTS",
+					"version_id":     "24.04",
+					"kernel_version": "6.8.0-45-generic",
+				},
+				wantKind: coredata.DevicePostureValueKindText,
+				wantText: "Ubuntu 24.04.2 LTS (6.8.0)",
+			},
+			{
+				name:     "empty kernel version keeps os version alone",
+				checkKey: "OS_VERSION",
+				evidence: map[string]any{
+					"pretty_name":    "Ubuntu 24.04.2 LTS",
+					"kernel_version": "",
+				},
+				wantKind: coredata.DevicePostureValueKindText,
+				wantText: "Ubuntu 24.04.2 LTS",
+			},
+			{
+				name:     "fedora",
+				checkKey: "OS_VERSION",
+				evidence: map[string]any{"kernel_version": "7.2.13-200.fc44.x86_64"},
+				wantKind: coredata.DevicePostureValueKindText,
+				wantText: "7.2.13",
+			},
+			{
+				name:     "debian",
+				checkKey: "OS_VERSION",
+				evidence: map[string]any{"kernel_version": "6.1.0-26-amd64"},
+				wantKind: coredata.DevicePostureValueKindText,
+				wantText: "6.1.0",
+			},
+			{
+				name:     "arch",
+				checkKey: "OS_VERSION",
+				evidence: map[string]any{"kernel_version": "6.11.5-arch1-1"},
+				wantKind: coredata.DevicePostureValueKindText,
+				wantText: "6.11.5",
+			},
+			{
+				name:     "rhel with dotted suffix",
+				checkKey: "OS_VERSION",
+				evidence: map[string]any{"kernel_version": "5.14.0-427.13.1.el9_4.x86_64"},
+				wantKind: coredata.DevicePostureValueKindText,
+				wantText: "5.14.0",
+			},
+			{
+				name:     "wsl2 with four parts",
+				checkKey: "OS_VERSION",
+				evidence: map[string]any{"kernel_version": "5.15.167.4-microsoft-standard-WSL2"},
+				wantKind: coredata.DevicePostureValueKindText,
+				wantText: "5.15.167",
+			},
+			{
+				name:     "release candidate",
+				checkKey: "OS_VERSION",
+				evidence: map[string]any{"kernel_version": "6.12.0-rc4"},
+				wantKind: coredata.DevicePostureValueKindText,
+				wantText: "6.12.0",
+			},
+			{
+				name:     "custom build",
+				checkKey: "OS_VERSION",
+				evidence: map[string]any{"kernel_version": "6.8.0+"},
+				wantKind: coredata.DevicePostureValueKindText,
+				wantText: "6.8.0",
+			},
+			{
+				name:     "without suffix",
+				checkKey: "OS_VERSION",
+				evidence: map[string]any{"kernel_version": "6.12.1"},
+				wantKind: coredata.DevicePostureValueKindText,
+				wantText: "6.12.1",
+			},
+			{
+				name:     "two parts",
+				checkKey: "OS_VERSION",
+				evidence: map[string]any{"kernel_version": "6.8"},
+				wantKind: coredata.DevicePostureValueKindText,
+				wantText: "6.8",
+			},
+			{
+				name:     "trailing dot before suffix",
+				checkKey: "OS_VERSION",
+				evidence: map[string]any{"kernel_version": "6.8.-rc1"},
+				wantKind: coredata.DevicePostureValueKindText,
+				wantText: "6.8",
+			},
+			{
+				name:     "trailing newline",
+				checkKey: "OS_VERSION",
+				evidence: map[string]any{"kernel_version": "6.8.0-45-generic\n"},
+				wantKind: coredata.DevicePostureValueKindText,
+				wantText: "6.8.0",
+			},
+			{
+				name:     "unparseable kept as-is",
+				checkKey: "OS_VERSION",
+				evidence: map[string]any{"kernel_version": "custom-kernel"},
+				wantKind: coredata.DevicePostureValueKindText,
+				wantText: "custom-kernel",
+			},
+			{
+				name:     "prefixed kept as-is",
+				checkKey: "OS_VERSION",
+				evidence: map[string]any{"kernel_version": "v6.8.0"},
+				wantKind: coredata.DevicePostureValueKindText,
+				wantText: "v6.8.0",
+			},
+		},
+	)
+}
+
 func TestParseDevicePostureValue_DiskEncryption(t *testing.T) {
 	t.Parallel()
 

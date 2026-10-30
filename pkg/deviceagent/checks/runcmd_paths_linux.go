@@ -29,6 +29,7 @@ var linuxCommandPaths = map[string][]string{
 	"systemctl":    {"/usr/bin/systemctl", "/bin/systemctl"},
 	"timedatectl":  {"/usr/bin/timedatectl", "/bin/timedatectl"},
 	"ufw":          {"/usr/sbin/ufw", "/sbin/ufw"},
+	"uname":        {"/usr/bin/uname", "/bin/uname"},
 }
 
 func commandCandidates(cmd string) []string {
