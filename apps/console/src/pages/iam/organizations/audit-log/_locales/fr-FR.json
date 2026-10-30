@@ -2,8 +2,13 @@
   "auditLogPage": {
     "title": "Journal d’audit",
     "description": "Chaque contrôle d’autorisation enregistré pour cet espace, y compris les lectures.",
-    "empty": "Aucune entrée dans le journal d’audit pour le moment.",
-    "emptyFiltered": "Aucune entrée ne correspond à ces filtres.",
+    "empty": {
+      "title": "Aucune entrée dans le journal d’audit pour le moment",
+      "description": "Les contrôles d’autorisation apparaissent ici au fur et à mesure.",
+      "filteredTitle": "Aucune entrée correspondante",
+      "filteredDescription": "Essayez une autre action, un autre résultat ou une autre période.",
+      "clear": "Effacer les filtres"
+    },
     "columns": {
       "when": "Quand",
       "actor": "Acteur",
@@ -40,8 +45,10 @@
       "dates": "Période",
       "datesPlaceholder": "Toutes les dates",
       "datesHint": "Choisissez une date de début, puis une date de fin.",
+      "clearDates": "Effacer les dates",
       "more": "Filtres",
-      "moreCount": "Filtres ({{count}})",
+      "moreCount_one": "Filtres ({{count}})",
+      "moreCount_other": "Filtres ({{count}})",
       "requestId": "ID de requête",
       "range": "La date de début est postérieure à la date de fin."
     },

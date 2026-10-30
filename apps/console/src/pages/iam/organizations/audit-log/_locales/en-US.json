@@ -2,8 +2,13 @@
   "auditLogPage": {
     "title": "Audit log",
     "description": "Every authorization check recorded for this workspace, including reads.",
-    "empty": "No audit log entries yet.",
-    "emptyFiltered": "No audit log entries match these filters.",
+    "empty": {
+      "title": "No audit log entries yet",
+      "description": "Authorization checks show up here as they are recorded.",
+      "filteredTitle": "No matching entries",
+      "filteredDescription": "Try a different action, outcome, or date range.",
+      "clear": "Clear filters"
+    },
     "columns": {
       "when": "When",
       "actor": "Actor",
@@ -40,8 +45,10 @@
       "dates": "Date range",
       "datesPlaceholder": "Any date",
       "datesHint": "Select a start date, then an end date.",
+      "clearDates": "Clear dates",
       "more": "Filters",
-      "moreCount": "Filters ({{count}})",
+      "moreCount_one": "Filters ({{count}})",
+      "moreCount_other": "Filters ({{count}})",
       "requestId": "Request ID",
       "range": "The start date is after the end date."
     },

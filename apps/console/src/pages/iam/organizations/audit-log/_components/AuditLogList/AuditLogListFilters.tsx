@@ -32,7 +32,7 @@ import {
   type AuditLogOutcome,
   auditLogOutcomes,
   useAuditLogListFilters,
-} from "../_lib/useAuditLogListFilters";
+} from "../../_lib/useAuditLogListFilters";
 import { auditLogList } from "../variants";
 
 import { AuditLogFilterField } from "./AuditLogFilterField";
@@ -144,6 +144,7 @@ export function AuditLogListFilters() {
           locale={i18n.language}
           placeholder={t("auditLogPage.filters.datesPlaceholder")}
           hint={t("auditLogPage.filters.datesHint")}
+          clearLabel={t("auditLogPage.filters.clearDates")}
           aria-label={datesLabel}
           onValueChange={next => setDates(next.from, next.to)}
         />

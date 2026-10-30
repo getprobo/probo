@@ -173,6 +173,7 @@ export interface AuditLogListFilters {
   setTo: (value: string) => void;
   setDates: (from: string, to: string) => void;
   setRequestId: (value: string) => void;
+  clear: () => void;
 }
 
 export function useAuditLogListFilters(): AuditLogListFilters {
@@ -247,6 +248,10 @@ export function useAuditLogListFilters(): AuditLogListFilters {
     }, { replace: true });
   }, [setSearchParams]);
 
+  const clear = useCallback(() => {
+    setSearchParams({}, { replace: true });
+  }, [setSearchParams]);
+
   const setRequestId = useCallback((value: string) => {
     setParam("request", value);
   }, [setParam]);
@@ -273,5 +278,6 @@ export function useAuditLogListFilters(): AuditLogListFilters {
     setTo,
     setDates,
     setRequestId,
+    clear,
   };
 }

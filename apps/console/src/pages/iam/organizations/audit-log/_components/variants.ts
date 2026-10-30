@@ -37,7 +37,13 @@ export const auditLogPageSkeleton = tv({
     action: "min-w-48 flex-1 basis-56 max-w-md max-sm:w-full max-sm:flex-none",
     filter: "w-40 shrink-0 max-sm:w-full",
     range: "w-60 shrink-0 max-sm:w-full",
+    popup: "w-72",
     panel: "flex flex-col gap-3",
+    field: "w-full",
+    title: "w-32",
+    description: "w-96 max-w-full",
+    exportAction: "w-28",
+    more: "w-24",
   },
 });
 
@@ -48,9 +54,12 @@ export const auditLogList = tv({
     action: "min-w-48 flex-1 basis-56 max-w-md max-sm:w-full max-sm:flex-none",
     filter: "w-40 shrink-0 max-sm:w-full",
     range: "w-60 shrink-0 max-sm:w-full",
+    popup: "w-72",
     panel: "flex flex-col gap-3",
+    field: "w-full",
     results: "transition-opacity",
-    empty: "flex flex-col items-center py-8 text-center",
+    empty: "flex flex-col items-center gap-3 px-6 py-12 text-center",
+    emptyIcon: "text-sand-a9 [&_svg]:size-8",
     pager: "flex justify-center",
   },
   variants: {

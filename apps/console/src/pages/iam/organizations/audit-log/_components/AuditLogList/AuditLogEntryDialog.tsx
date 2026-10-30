@@ -41,7 +41,7 @@ import {
   auditLogActorColor,
   auditLogActorLabel,
   auditLogOutcomeColor,
-} from "../_lib/auditLogEntry";
+} from "../../_lib/auditLogEntry";
 import { auditLogEntryDialog } from "../variants";
 
 const auditLogEntryDialogFragment = graphql`

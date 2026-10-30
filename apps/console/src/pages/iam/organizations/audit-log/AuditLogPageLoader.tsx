@@ -25,7 +25,7 @@ import type { AuditLogPageQuery } from "#/__generated__/iam/AuditLogPageQuery.gr
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { IAMRelayProvider } from "#/providers/IAMRelayProvider";
 
-import { AUDIT_LOG_PAGE_SIZE } from "./_components/AuditLogList";
+import { AUDIT_LOG_PAGE_SIZE } from "./_components/AuditLogList/AuditLogList";
 import { useAuditLogListFilters } from "./_lib/useAuditLogListFilters";
 import { AuditLogPage, auditLogPageQuery } from "./AuditLogPage";
 import { AuditLogPageSkeleton } from "./AuditLogPageSkeleton";
