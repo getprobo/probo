@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { CalendarBlankIcon, XIcon } from "@phosphor-icons/react";
-import { type MouseEvent, useRef, useState } from "react";
+import { type FocusEvent, type FormEvent, type MouseEvent, useRef, useState } from "react";
 
 import { Popover, type PopoverProps } from "../Popover/Popover";
 import { PopoverPopup } from "../Popover/PopoverPopup";
@@ -88,7 +88,13 @@ export function DateRangeField(props: DateRangeFieldProps) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<DateRange | null>(null);
   const [preview, setPreview] = useState("");
+  const [nativeInvalid, setNativeInvalid] = useState(false);
   const skipCloseCommit = useRef(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  if (nativeInvalid && value.from !== "" && value.to !== "") {
+    setNativeInvalid(false);
+  }
+
   const committed = orderedDateRange(value.from, value.to);
   const current = draft ?? committed;
   const label = formatDateRange(current.from, current.to, locale);
@@ -160,45 +166,59 @@ export function DateRangeField(props: DateRangeFieldProps) {
     setDraft(null);
     setPreview("");
     publish({ from: "", to: "" });
+    // Keyboard activation reports detail 0. The clear button unmounts with
+    // the value, so move focus to the trigger after that commit.
+    if (event.type === "click" && event.detail === 0) {
+      const trigger = triggerRef.current;
+      queueMicrotask(() => {
+        trigger?.focus();
+      });
+    }
+  }
+
+  function rejectHiddenInvalid(event: FormEvent<HTMLInputElement>) {
+    event.preventDefault();
+    setNativeInvalid(true);
+    triggerRef.current?.focus();
+  }
+
+  function redirectHiddenFocus(event: FocusEvent<HTMLInputElement>) {
+    event.currentTarget.blur();
+    triggerRef.current?.focus();
   }
 
   const hasValue = value.from !== "" || value.to !== "" || draft != null;
 
   return (
     <div className={root({ className })}>
-      {(name != null || required) && (
+      {name != null && (
         <>
-          <input
-            type="text"
-            className={nativeValue()}
-            tabIndex={-1}
-            aria-hidden
-            name={name == null ? undefined : `${name}From`}
-            value={value.from}
-            required={required}
-            disabled={disabled}
-            onChange={() => undefined}
-          />
-          <input
-            type="text"
-            className={nativeValue()}
-            tabIndex={-1}
-            aria-hidden
-            name={name == null ? undefined : `${name}To`}
-            value={value.to}
-            required={required}
-            disabled={disabled}
-            onChange={() => undefined}
-          />
+          <input type="hidden" name={`${name}From`} value={value.from} />
+          <input type="hidden" name={`${name}To`} value={value.to} />
         </>
+      )}
+      {required && (
+        <input
+          type="text"
+          className={nativeValue()}
+          tabIndex={-1}
+          aria-label={ariaLabel}
+          value={value.from !== "" && value.to !== "" ? `${value.from}/${value.to}` : ""}
+          required
+          disabled={disabled}
+          onChange={() => undefined}
+          onInvalid={rejectHiddenInvalid}
+          onFocus={redirectHiddenFocus}
+        />
       )}
       <div className={surface()}>
         <Popover open={open} onOpenChange={handleOpenChange}>
           <PopoverTrigger
+            ref={triggerRef}
             id={id}
             disabled={disabled}
             className={rangeButton()}
-            aria-invalid={ariaInvalid}
+            aria-invalid={ariaInvalid || nativeInvalid || undefined}
             aria-describedby={ariaDescribedBy}
             aria-required={ariaRequired || required || undefined}
             aria-label={ariaLabel}
