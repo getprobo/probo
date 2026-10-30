@@ -66,6 +66,7 @@ interface AccessEntryListItemProps {
     entryId: string,
     event: { shiftKey: boolean },
   ) => void;
+  onDecided: () => void;
 }
 
 export function AccessEntryListItem({
@@ -73,6 +74,7 @@ export function AccessEntryListItem({
   isPendingActions,
   selected,
   onSelectedChange,
+  onDecided,
 }: AccessEntryListItemProps) {
   const { i18n, t } = useTranslation();
   const entry = useFragment(accessEntryListItemFragment, entryKey);
@@ -212,6 +214,7 @@ export function AccessEntryListItem({
             ? (
                 <EntryDecisionActions
                   entryKey={entry}
+                  onDecided={onDecided}
                 />
               )
             : entry.decision !== "PENDING"

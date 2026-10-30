@@ -149,6 +149,7 @@ interface AccessEntrySourceSectionProps {
   isPendingActions: boolean;
   selectedIds: ReadonlySet<string>;
   onSelectedChange: (entryId: string, event: { shiftKey: boolean }) => void;
+  onDecided: () => void;
   onMatchesChange: (sourceId: string, matches: SourceMatches) => void;
 }
 
@@ -161,6 +162,7 @@ export function AccessEntrySourceSection({
   isPendingActions,
   selectedIds,
   onSelectedChange,
+  onDecided,
   onMatchesChange,
 }: AccessEntrySourceSectionProps) {
   const {
@@ -279,6 +281,7 @@ export function AccessEntrySourceSection({
         isPendingActions={isPendingActions}
         selectedIds={selectedIds}
         onSelectedChange={onSelectedChange}
+        onDecided={onDecided}
       />
     </AccessEntrySection>
   );

@@ -2936,7 +2936,8 @@
       "recordDecisions_one": "Échec de l’enregistrement des décisions pour {{count}} entrée.",
       "recordDecisions_other": "Échec de l’enregistrement des décisions pour {{count}} entrées.",
       "updateFlags_one": "Échec de la mise à jour des indicateurs pour {{count}} entrée.",
-      "updateFlags_other": "Échec de la mise à jour des indicateurs pour {{count}} entrées."
+      "updateFlags_other": "Échec de la mise à jour des indicateurs pour {{count}} entrées.",
+      "pendingCountRefresh": "Impossible d’actualiser le nombre d’entrées en attente. Rechargez la page."
     },
     "messages": {
       "error": "Erreur",

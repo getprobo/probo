@@ -61,9 +61,10 @@ const mutation = graphql`
 
 type Props = {
   entryKey: EntryDecisionActions_entry$key;
+  onDecided: () => void;
 };
 
-export function EntryDecisionActions({ entryKey }: Props) {
+export function EntryDecisionActions({ entryKey, onDecided }: Props) {
   const { t } = useTranslation();
   const toast = useToast();
   const ref = useDialogRef();
@@ -94,6 +95,7 @@ export function EntryDecisionActions({ entryKey }: Props) {
           });
           return;
         }
+        onDecided();
         setPendingDecision(null);
         setNote("");
         ref.current?.close();

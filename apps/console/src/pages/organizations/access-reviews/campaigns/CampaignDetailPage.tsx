@@ -67,6 +67,7 @@ import { AccessEntriesToolbar } from "./_components/AccessEntriesToolbar";
 import type { EntryFilters, SourceMatches } from "./_components/AccessEntrySourceSection";
 import { AccessEntrySourceSection } from "./_components/AccessEntrySourceSection";
 import { accessEntriesLayout } from "./_components/variants";
+import { usePendingCountRefresh } from "./_lib/usePendingCountRefresh";
 
 const SEARCH_DEBOUNCE_MS = 300;
 
@@ -215,6 +216,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
     = campaign.canDelete && isCampaignDeletableStatus(campaign.status);
 
   const campaignIdRef = useRef(campaign.id);
+  const refreshPendingCount = usePendingCountRefresh(campaign.id, isPendingActions);
   // Bumped on every campaign navigation so returning to a prior campaign cannot
   // revive in-flight bulk callbacks from an earlier visit.
   const bulkGenerationRef = useRef(0);
@@ -654,6 +656,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
     const isStale = () => bulkGenerationRef.current !== generationAtStart;
 
     const finish = () => {
+      refreshPendingCount();
       if (failedIds.length === decisions.length) {
         toast.add({
           title: t("campaignDetailPage.messages.error"),
@@ -694,6 +697,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
         },
         onCompleted(_, errors) {
           if (isStale()) {
+            refreshPendingCount();
             return;
           }
           const batchIds = batch.map(d => d.accessReviewEntryId);
@@ -709,6 +713,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
         },
         onError() {
           if (isStale()) {
+            refreshPendingCount();
             return;
           }
           failedIds.push(...batch.map(d => d.accessReviewEntryId));
@@ -816,7 +821,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
         </h1>
         <div className="ml-auto flex items-center gap-2">
           {isPendingActions && (
-            <Button onClick={handleComplete} disabled={!canComplete || isClosing}>
+            <Button onClick={handleComplete} disabled={!canComplete || isClosing || isBulkSubmitting}>
               {isClosing
                 ? t("campaignDetailPage.actions.completing")
                 : t("campaignDetailPage.actions.completeCampaign")}
@@ -885,6 +890,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
             isPendingActions={isPendingActions}
             selectedIds={selectedIdSet}
             onSelectedChange={handleSelectedChange}
+            onDecided={refreshPendingCount}
             onMatchesChange={handleMatchesChange}
           />
         ))}

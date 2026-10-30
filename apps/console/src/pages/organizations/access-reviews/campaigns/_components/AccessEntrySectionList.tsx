@@ -41,6 +41,7 @@ interface AccessEntrySectionListProps {
     entryId: string,
     event: { shiftKey: boolean },
   ) => void;
+  onDecided: () => void;
 }
 
 function AccessEntrySectionListComponent({
@@ -48,6 +49,7 @@ function AccessEntrySectionListComponent({
   isPendingActions,
   selectedIds,
   onSelectedChange,
+  onDecided,
 }: AccessEntrySectionListProps) {
   const { root } = accessEntryList();
 
@@ -66,6 +68,7 @@ function AccessEntrySectionListComponent({
             isPendingActions={isPendingActions}
             selected={selectedIds.has(entry.id)}
             onSelectedChange={onSelectedChange}
+            onDecided={onDecided}
           />
         );
       })}
