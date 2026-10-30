@@ -100,6 +100,14 @@ export function PdfPreview({ file, scale, ref, onNumPages, onVisiblePageChange }
   const [numPages, setNumPages] = useState(0);
   const [loadError, setLoadError] = useState(false);
   const [pageWidth, setPageWidth] = useState<number | null>(null);
+  // Clear the previous document's error and pages when the file changes.
+  // Adjusting state during render avoids an effect and the extra commit.
+  const [prevFile, setPrevFile] = useState(file);
+  if (file !== prevFile) {
+    setPrevFile(file);
+    setLoadError(false);
+    setNumPages(0);
+  }
   const wrapperRef = useRef<HTMLDivElement>(null);
   const documentRef = useRef<ComponentRef<typeof Document>>(null);
 
@@ -174,12 +182,6 @@ export function PdfPreview({ file, scale, ref, onNumPages, onVisiblePageChange }
 
   const slots = pdfPreview();
 
-  useEffect(() => {
-    setLoadError(false);
-    setNumPages(0);
-    onNumPages(0);
-  }, [file, onNumPages]);
-
   if (loadError) {
     return (
       <div className={slots.viewport()}>
@@ -209,6 +211,9 @@ export function PdfPreview({ file, scale, ref, onNumPages, onVisiblePageChange }
         }}
         onLoadError={() => {
           setLoadError(true);
+          setNumPages(0);
+          onNumPages(0);
+          onVisiblePageChange(1);
         }}
       >
         {pageWidth != null
