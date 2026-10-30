@@ -123,7 +123,7 @@ export function EmployeePortalDocumentList(props: {
         last: null,
         before: null,
         query: queryFilter,
-      }, { fetchPolicy: "store-or-network" });
+      }, { fetchPolicy: "network-only" });
     });
   }, [queryFilter, refetch]);
 

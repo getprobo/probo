@@ -18,39 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useEffect, useRef, useState } from "react";
+import { useDebouncedSearch } from "#/lib/useDebouncedSearch";
 
 import { useIntegrationsListFilters } from "./useIntegrationsListFilters";
-
-const SEARCH_DEBOUNCE_MS = 300;
 
 // Owns the debounced search input. Mount this in exactly one component (the
 // search field) — it is the single writer of the `q` URL param.
 export function useIntegrationsListSearch(): [string, (value: string) => void] {
   const { query, setQuery } = useIntegrationsListFilters();
-  const [input, setInput] = useState(query);
-  const lastCommittedRef = useRef(query);
-
-  useEffect(() => {
-    if (input === query) {
-      return;
-    }
-
-    const handle = setTimeout(() => {
-      const value = input.trim() === "" ? "" : input;
-      lastCommittedRef.current = value;
-      setQuery(value);
-    }, SEARCH_DEBOUNCE_MS);
-
-    return () => clearTimeout(handle);
-  }, [input, query, setQuery]);
-
-  useEffect(() => {
-    if (query !== lastCommittedRef.current) {
-      lastCommittedRef.current = query;
-      setInput(query);
-    }
-  }, [query]);
-
-  return [input, setInput];
+  return useDebouncedSearch({ query, setQuery, blankIfWhitespace: true });
 }

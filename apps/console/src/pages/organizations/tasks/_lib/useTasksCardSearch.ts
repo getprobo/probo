@@ -18,36 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useEffect, useRef, useState } from "react";
+import { useDebouncedSearch } from "#/lib/useDebouncedSearch";
 
 import { useTasksCardFilters } from "./useTasksCardFilters";
 
-const searchDebounceMs = 300;
-
 export function useTasksCardSearch(): [string, (value: string) => void] {
   const { query, setQuery } = useTasksCardFilters();
-  const [input, setInput] = useState(query);
-  const lastCommittedRef = useRef(query);
-
-  useEffect(() => {
-    if (input === query) {
-      return;
-    }
-
-    const handle = setTimeout(() => {
-      lastCommittedRef.current = input;
-      setQuery(input);
-    }, searchDebounceMs);
-
-    return () => clearTimeout(handle);
-  }, [input, query, setQuery]);
-
-  useEffect(() => {
-    if (query !== lastCommittedRef.current) {
-      lastCommittedRef.current = query;
-      setInput(query);
-    }
-  }, [query]);
-
-  return [input, setInput];
+  return useDebouncedSearch({ query, setQuery });
 }

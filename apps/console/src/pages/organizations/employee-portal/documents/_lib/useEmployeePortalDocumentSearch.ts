@@ -18,38 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useEffect, useRef, useState } from "react";
+import { useDebouncedSearch } from "#/lib/useDebouncedSearch";
 
 import { useEmployeePortalDocumentFilters } from "./useEmployeePortalDocumentFilters";
-
-const SEARCH_DEBOUNCE_MS = 300;
 
 // Owns the debounced search input. Mount this in exactly one component (the
 // search field) — it is the single writer of the `q` URL param.
 export function useEmployeePortalDocumentSearch(): [string, (value: string) => void] {
   const { query, setQuery } = useEmployeePortalDocumentFilters();
-  const [input, setInput] = useState(query);
-  const lastCommittedRef = useRef(query);
-
-  useEffect(() => {
-    if (input === query) {
-      return;
-    }
-
-    const handle = setTimeout(() => {
-      lastCommittedRef.current = input;
-      setQuery(input);
-    }, SEARCH_DEBOUNCE_MS);
-
-    return () => clearTimeout(handle);
-  }, [input, query, setQuery]);
-
-  useEffect(() => {
-    if (query !== lastCommittedRef.current) {
-      lastCommittedRef.current = query;
-      setInput(query);
-    }
-  }, [query]);
-
-  return [input, setInput];
+  return useDebouncedSearch({ query, setQuery });
 }
