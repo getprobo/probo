@@ -100,6 +100,14 @@ export function PdfPreview({ file, scale, ref, onNumPages, onVisiblePageChange }
   const [numPages, setNumPages] = useState(0);
   const [loadError, setLoadError] = useState(false);
   const [pageWidth, setPageWidth] = useState<number | null>(null);
+  // Clear the previous document's error and pages when the file changes.
+  // Adjusting state during render avoids an effect and the extra commit.
+  const [prevFile, setPrevFile] = useState(file);
+  if (file !== prevFile) {
+    setPrevFile(file);
+    setLoadError(false);
+    setNumPages(0);
+  }
   const wrapperRef = useRef<HTMLDivElement>(null);
   const documentRef = useRef<ComponentRef<typeof Document>>(null);
 
@@ -174,55 +182,52 @@ export function PdfPreview({ file, scale, ref, onNumPages, onVisiblePageChange }
 
   const slots = pdfPreview();
 
-  useEffect(() => {
-    setLoadError(false);
-    setNumPages(0);
-    onNumPages(0);
-  }, [file, onNumPages]);
-
-  if (loadError) {
-    return (
-      <div className={slots.viewport()}>
-        <div className={slots.loading()}>
-          <InlineErrorCard onRetry={() => window.location.reload()} />
-        </div>
-      </div>
-    );
-  }
-
+  // Stay mounted on error so the width observer is not left on a detached node.
   return (
     <div ref={wrapperRef} onScrollEnd={resolveVisiblePage} className={slots.viewport()}>
-      <Document
-        ref={documentRef}
-        file={file}
-        className={slots.list()}
-        loading={(
-          <div className={slots.loading()}>
-            <SpinnerGapIcon className={slots.spinner()} />
-          </div>
-        )}
-        onLoadSuccess={(document) => {
-          setLoadError(false);
-          setNumPages(document.numPages);
-          onNumPages(document.numPages);
-          onVisiblePageChange(1);
-        }}
-        onLoadError={() => {
-          setLoadError(true);
-        }}
-      >
-        {pageWidth != null
-          ? times(numPages, index => (
-              <Page
-                key={index}
-                pageNumber={index + 1}
-                width={pageWidth}
-                scale={scale}
-                className={slots.page()}
-              />
-            ))
-          : null}
-      </Document>
+      {loadError
+        ? (
+            <div className={slots.loading()}>
+              <InlineErrorCard onRetry={() => window.location.reload()} />
+            </div>
+          )
+        : (
+            <Document
+              ref={documentRef}
+              file={file}
+              className={slots.list()}
+              loading={(
+                <div className={slots.loading()}>
+                  <SpinnerGapIcon className={slots.spinner()} />
+                </div>
+              )}
+              onLoadSuccess={(document) => {
+                setLoadError(false);
+                setNumPages(document.numPages);
+                onNumPages(document.numPages);
+                onVisiblePageChange(1);
+              }}
+              onLoadError={(error) => {
+                console.error("Failed to load PDF document", error);
+                setLoadError(true);
+                setNumPages(0);
+                onNumPages(0);
+                onVisiblePageChange(1);
+              }}
+            >
+              {pageWidth != null
+                ? times(numPages, index => (
+                    <Page
+                      key={index}
+                      pageNumber={index + 1}
+                      width={pageWidth}
+                      scale={scale}
+                      className={slots.page()}
+                    />
+                  ))
+                : null}
+            </Document>
+          )}
     </div>
   );
 }

@@ -80,6 +80,15 @@ export function DocumentViewer({ title, dataUri = null, downloadName = title, lo
   const [numPages, setNumPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [scale, setScale] = useState(1);
+  // The toolbar's page lives here. Drop it with the count when the file
+  // changes, so a replaced or failed PDF cannot show a stale page over
+  // zero pages (for example "4 / 0").
+  const [prevDataUri, setPrevDataUri] = useState(dataUri);
+  if (dataUri !== prevDataUri) {
+    setPrevDataUri(dataUri);
+    setNumPages(0);
+    setCurrentPage(1);
+  }
 
   const isLocked = locked != null;
   const mimeType = !isLocked && dataUri ? dataUriMimeType(dataUri) : null;

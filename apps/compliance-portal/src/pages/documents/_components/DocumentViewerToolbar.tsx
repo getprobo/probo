@@ -94,30 +94,34 @@ export function DocumentViewerToolbar({
       <div className={slots.start()}>
         {isPdf && (
           <>
-            <div className={slots.controls()}>
-              <IconButton
-                variant="ghost"
-                color="neutral"
-                aria-label={t("common.previousPage")}
-                disabled={currentPage <= 1}
-                onClick={() => onMovePage(-1)}
-              >
-                <CaretLeftIcon />
-              </IconButton>
-              <Text size={2} color="neutral">
-                {t("common.pageOf", { current: currentPage, total: numPages })}
-              </Text>
-              <IconButton
-                variant="ghost"
-                color="neutral"
-                aria-label={t("common.nextPage")}
-                disabled={currentPage >= numPages}
-                onClick={() => onMovePage(1)}
-              >
-                <CaretRightIcon />
-              </IconButton>
-            </div>
-            <Separator orientation="vertical" className={slots.separator()} />
+            {numPages > 0 && (
+              <>
+                <div className={slots.controls()}>
+                  <IconButton
+                    variant="ghost"
+                    color="neutral"
+                    aria-label={t("common.previousPage")}
+                    disabled={currentPage <= 1}
+                    onClick={() => onMovePage(-1)}
+                  >
+                    <CaretLeftIcon />
+                  </IconButton>
+                  <Text size={2} color="neutral">
+                    {t("common.pageOf", { current: currentPage, total: numPages })}
+                  </Text>
+                  <IconButton
+                    variant="ghost"
+                    color="neutral"
+                    aria-label={t("common.nextPage")}
+                    disabled={currentPage >= numPages}
+                    onClick={() => onMovePage(1)}
+                  >
+                    <CaretRightIcon />
+                  </IconButton>
+                </div>
+                <Separator orientation="vertical" className={slots.separator()} />
+              </>
+            )}
             <div className={slots.controls()}>
               <IconButton
                 variant="ghost"
