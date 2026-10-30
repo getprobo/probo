@@ -189,3 +189,120 @@ func TestMicrosoft365Driver_MFAFetchCanceledPropagates(t *testing.T) {
 	_, err := driver.ListAccounts(context.Background())
 	require.ErrorIs(t, err, context.Canceled)
 }
+
+func TestMicrosoft365Driver_GroupRoleMembersAndUnlistedRoles(t *testing.T) {
+	t.Parallel()
+
+	bodies := map[string]string{
+		"/v1.0/directoryRoles": `{"value":[
+			{"id":"role-ga","displayName":"Global Administrator"},
+			{"id":"role-pra","displayName":"Privileged Role Administrator"},
+			{"id":"role-exo","displayName":"Exchange Administrator"}
+		]}`,
+		"/v1.0/directoryRoles/role-ga/members": `{"value":[
+			{"id":"user-alice","@odata.type":"#microsoft.graph.user"},
+			{"id":"group-admins","@odata.type":"#microsoft.graph.group"}
+		]}`,
+		"/v1.0/directoryRoles/role-pra/members": `{"value":[
+			{"id":"group-admins","@odata.type":"#microsoft.graph.group"}
+		]}`,
+		"/v1.0/directoryRoles/role-exo/members": `{"value":[
+			{"id":"user-erin","@odata.type":"#microsoft.graph.user"}
+		]}`,
+		"/v1.0/groups/group-admins/transitiveMembers": `{
+			"value":[{"id":"sp-automation","@odata.type":"#microsoft.graph.servicePrincipal"}],
+			"@odata.nextLink":"https://graph.microsoft.com/v1.0/groups/group-admins/transitiveMembers?$skiptoken=page2"
+		}`,
+		"/v1.0/users": `{"value":[
+			{"id":"user-alice","mail":"alice@example.com","accountEnabled":true},
+			{"id":"user-erin","mail":"erin@example.com","accountEnabled":true},
+			{"id":"user-frank","mail":"frank@example.com","accountEnabled":true}
+		]}`,
+		"/v1.0/reports/authenticationMethods/userRegistrationDetails": `{"value":[]}`,
+	}
+
+	groupFetches := 0
+
+	client := &http.Client{
+		Transport: roundTripperFunc(
+			func(r *http.Request) (*http.Response, error) {
+				body, ok := bodies[r.URL.Path]
+				if r.URL.Query().Get("$skiptoken") == "page2" {
+					body = `{"value":[{"id":"user-alice","@odata.type":"#microsoft.graph.user"}]}`
+				} else if r.URL.Path == "/v1.0/groups/group-admins/transitiveMembers" {
+					groupFetches++
+				}
+
+				status := http.StatusOK
+				if !ok {
+					status = http.StatusNotFound
+				}
+
+				return &http.Response{
+					StatusCode: status,
+					Header:     http.Header{"Content-Type": []string{"application/json"}},
+					Body:       io.NopCloser(strings.NewReader(body)),
+				}, nil
+			},
+		),
+	}
+
+	driver := NewMicrosoft365Driver(client, log.NewLogger(log.WithName("test")), "https://graph.microsoft.com/v1.0")
+	records, err := driver.ListAccounts(context.Background())
+	require.NoError(t, err)
+	require.Len(t, records, 3)
+
+	recordsByEmail := make(map[string]AccountRecord, len(records))
+	for _, record := range records {
+		recordsByEmail[record.Email] = record
+	}
+
+	alice := recordsByEmail["alice@example.com"]
+	assert.Equal(t, []string{"Global Administrator", "Privileged Role Administrator"}, alice.Roles)
+	assert.Equal(t, new(true), alice.IsAdmin)
+	assert.Equal(t, 1, groupFetches)
+
+	erin := recordsByEmail["erin@example.com"]
+	assert.Equal(t, []string{"Exchange Administrator"}, erin.Roles)
+	assert.Nil(t, erin.IsAdmin)
+
+	frank := recordsByEmail["frank@example.com"]
+	assert.Equal(t, []string{"User"}, frank.Roles)
+	assert.Equal(t, new(false), frank.IsAdmin)
+}
+
+func TestMicrosoft365Driver_GroupMembersRefuseCrossHostPagination(t *testing.T) {
+	t.Parallel()
+
+	bodies := map[string]string{
+		"/v1.0/directoryRoles":                 `{"value":[{"id":"role-ga","displayName":"Global Administrator"}]}`,
+		"/v1.0/directoryRoles/role-ga/members": `{"value":[{"id":"group-admins","@odata.type":"#microsoft.graph.group"}]}`,
+		"/v1.0/groups/group-admins/transitiveMembers": `{
+			"value":[],
+			"@odata.nextLink":"https://evil.example.com/v1.0/groups/group-admins/transitiveMembers?$skiptoken=page2"
+		}`,
+	}
+
+	crossHostRequests := 0
+
+	client := &http.Client{
+		Transport: roundTripperFunc(
+			func(r *http.Request) (*http.Response, error) {
+				if r.URL.Hostname() == "evil.example.com" {
+					crossHostRequests++
+				}
+
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Header:     http.Header{"Content-Type": []string{"application/json"}},
+					Body:       io.NopCloser(strings.NewReader(bodies[r.URL.Path])),
+				}, nil
+			},
+		),
+	}
+
+	driver := NewMicrosoft365Driver(client, log.NewLogger(log.WithName("test")), "https://graph.microsoft.com/v1.0")
+	_, err := driver.ListAccounts(context.Background())
+	require.ErrorContains(t, err, "cross-host pagination is not allowed")
+	assert.Zero(t, crossHostRequests)
+}

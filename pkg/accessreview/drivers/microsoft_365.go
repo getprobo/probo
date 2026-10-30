@@ -28,6 +28,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -52,6 +53,8 @@ const (
 	microsoft365UsersPath                   = "users"
 	microsoft365DirectoryRolesPath          = "directoryRoles"
 	microsoft365RoleMembersPath             = "members"
+	microsoft365GroupsPath                  = "groups"
+	microsoft365TransitiveMembersPath       = "transitiveMembers"
 	microsoft365ReportsPath                 = "reports"
 	microsoft365AuthenticationMethodsPath   = "authenticationMethods"
 	microsoft365UserRegistrationDetailsPath = "userRegistrationDetails"
@@ -60,6 +63,8 @@ const (
 	microsoft365UsersSelect          = "id,userPrincipalName,mail,displayName,givenName,surname,accountEnabled,jobTitle,department,createdDateTime"
 	microsoft365UserTypeMemberFilter = "userType eq 'Member'"
 	microsoft365UsersPageSize        = 999
+	microsoft365UserODataType        = "#microsoft.graph.user"
+	microsoft365GroupODataType       = "#microsoft.graph.group"
 	microsoft365MaxPaginationOK      = maxPaginationPages
 )
 
@@ -123,15 +128,14 @@ type microsoft365RolesPage struct {
 	NextLink string                      `json:"@odata.nextLink"`
 }
 
-type microsoft365RoleMember struct {
-	ID          string `json:"id"`
-	ODataType   string `json:"@odata.type"`
-	DisplayName string `json:"displayName"`
+type microsoft365DirectoryObject struct {
+	ID        string `json:"id"`
+	ODataType string `json:"@odata.type"`
 }
 
 type microsoft365MembersPage struct {
-	Value    []microsoft365RoleMember `json:"value"`
-	NextLink string                   `json:"@odata.nextLink"`
+	Value    []microsoft365DirectoryObject `json:"value"`
+	NextLink string                        `json:"@odata.nextLink"`
 }
 
 type microsoft365UserRegistrationDetails struct {
@@ -152,6 +156,7 @@ func (d *Microsoft365Driver) ListAccounts(ctx context.Context) ([]AccountRecord,
 	}
 
 	rolesByUser := make(map[string][]string)
+	usersByGroup := make(map[string][]string)
 
 	for _, role := range roles {
 		members, err := d.listRoleMembers(ctx, role.ID)
@@ -160,11 +165,31 @@ func (d *Microsoft365Driver) ListAccounts(ctx context.Context) ([]AccountRecord,
 		}
 
 		for _, m := range members {
-			if m.ODataType != "" && m.ODataType != "#microsoft.graph.user" {
+			userIDs := []string{m.ID}
+
+			switch m.ODataType {
+			case "", microsoft365UserODataType:
+			case microsoft365GroupODataType:
+				groupUserIDs, ok := usersByGroup[m.ID]
+				if !ok {
+					groupUserIDs, err = d.listGroupUserIDs(ctx, m.ID)
+					if err != nil {
+						return nil, fmt.Errorf("cannot list members of group %q in role %q: %w", m.ID, role.DisplayName, err)
+					}
+
+					usersByGroup[m.ID] = groupUserIDs
+				}
+
+				userIDs = groupUserIDs
+			default:
 				continue
 			}
 
-			rolesByUser[m.ID] = append(rolesByUser[m.ID], role.DisplayName)
+			for _, id := range userIDs {
+				if !slices.Contains(rolesByUser[id], role.DisplayName) {
+					rolesByUser[id] = append(rolesByUser[id], role.DisplayName)
+				}
+			}
 		}
 	}
 
@@ -202,14 +227,6 @@ func (d *Microsoft365Driver) ListAccounts(ctx context.Context) ([]AccountRecord,
 		}
 
 		userRoles := rolesByUser[u.ID]
-		isAdmin := false
-
-		for _, r := range userRoles {
-			if adminRoleDisplayNames[r] {
-				isAdmin = true
-				break
-			}
-		}
 
 		roles := userRoles
 		if len(roles) == 0 {
@@ -223,7 +240,7 @@ func (d *Microsoft365Driver) ListAccounts(ctx context.Context) ([]AccountRecord,
 			Roles:       roles,
 			JobTitle:    u.JobTitle,
 			Active:      &active,
-			IsAdmin:     new(isAdmin),
+			IsAdmin:     microsoft365IsAdmin(userRoles),
 			MFAStatus:   microsoft365MFAStatus(u, mfaStatuses),
 			AuthMethod:  coredata.AccessReviewEntryAuthMethodSSO,
 			AccountType: coredata.AccessReviewEntryAccountTypeUser,
@@ -240,6 +257,22 @@ func (d *Microsoft365Driver) ListAccounts(ctx context.Context) ([]AccountRecord,
 	}
 
 	return records, nil
+}
+
+// microsoft365IsAdmin leaves roles outside adminRoleDisplayNames unknown:
+// the allowlist is not an exhaustive map of privileged roles.
+func microsoft365IsAdmin(roles []string) *bool {
+	if len(roles) == 0 {
+		return new(false)
+	}
+
+	for _, r := range roles {
+		if adminRoleDisplayNames[r] {
+			return new(true)
+		}
+	}
+
+	return nil
 }
 
 func microsoft365MFAStatus(u microsoft365User, statuses map[string]coredata.MFAStatus) coredata.MFAStatus {
@@ -408,13 +441,46 @@ func (d *Microsoft365Driver) listDirectoryRoles(ctx context.Context) ([]microsof
 	return nil, fmt.Errorf("cannot list all microsoft 365 directory roles: %w", ErrPaginationLimitReached)
 }
 
-func (d *Microsoft365Driver) listRoleMembers(ctx context.Context, roleID string) ([]microsoft365RoleMember, error) {
+func (d *Microsoft365Driver) listRoleMembers(ctx context.Context, roleID string) ([]microsoft365DirectoryObject, error) {
 	endpoint, err := url.JoinPath(d.baseURL, microsoft365DirectoryRolesPath, url.PathEscape(roleID), microsoft365RoleMembersPath)
 	if err != nil {
 		return nil, fmt.Errorf("cannot build graph role members URL: %w", err)
 	}
 
-	var all []microsoft365RoleMember
+	members, err := d.listMembers(ctx, endpoint)
+	if err != nil {
+		return nil, fmt.Errorf("cannot list role members: %w", err)
+	}
+
+	return members, nil
+}
+
+// listGroupUserIDs returns the users of a role-assignable group so they
+// inherit the group's role.
+func (d *Microsoft365Driver) listGroupUserIDs(ctx context.Context, groupID string) ([]string, error) {
+	endpoint, err := url.JoinPath(d.baseURL, microsoft365GroupsPath, url.PathEscape(groupID), microsoft365TransitiveMembersPath)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build graph group transitive members URL: %w", err)
+	}
+
+	members, err := d.listMembers(ctx, endpoint)
+	if err != nil {
+		return nil, fmt.Errorf("cannot list group transitive members: %w", err)
+	}
+
+	var userIDs []string
+
+	for _, m := range members {
+		if m.ODataType == microsoft365UserODataType {
+			userIDs = append(userIDs, m.ID)
+		}
+	}
+
+	return userIDs, nil
+}
+
+func (d *Microsoft365Driver) listMembers(ctx context.Context, endpoint string) ([]microsoft365DirectoryObject, error) {
+	var all []microsoft365DirectoryObject
 
 	for range microsoft365MaxPaginationOK {
 		var page microsoft365MembersPage
@@ -427,13 +493,15 @@ func (d *Microsoft365Driver) listRoleMembers(ctx context.Context, roleID string)
 			return all, nil
 		}
 
-		endpoint, err = d.nextPageURL(page.NextLink)
+		next, err := d.nextPageURL(page.NextLink)
 		if err != nil {
 			return nil, err
 		}
+
+		endpoint = next
 	}
 
-	return nil, fmt.Errorf("cannot list all members of role %q: %w", roleID, ErrPaginationLimitReached)
+	return nil, fmt.Errorf("cannot list all members: %w", ErrPaginationLimitReached)
 }
 
 func (d *Microsoft365Driver) fetchJSON(ctx context.Context, url string, dst any) error {
