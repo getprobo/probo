@@ -64,6 +64,17 @@ const presenceIdleMs = 60_000;
 
 const initializationTimeoutMs = 35_000;
 
+// The gateway stamps review notices with this peer id (see NotifyReview in
+// pkg/collaboration). A client could also pick it as its join peer id, so this
+// is a best-effort origin filter rather than proof of server authorship: the
+// protocol has no authenticated sender marker. The rate limit below is the real
+// safeguard against a peer amplifying refetches across every open tab.
+const reviewSenderId = "probo-gateway";
+
+// Coalesce bursts of review notices so a flood cannot turn into one refetch per
+// notice in every open tab.
+const reviewInvalidationIntervalMs = 1_000;
+
 // The presence payload broadcast over repo ephemeral messages: a caret or
 // selection expressed as stable Automerge cursors. displayName, identityID, and
 // avatarURL are stamped by the gateway from the authenticated connection.
@@ -160,6 +171,9 @@ export async function connectRepoDocument(
   const listeners = new Set<(presences: RichEditorPresence[]) => void>();
   const reviewListeners = new Set<() => void>();
   let closed = false;
+  let pendingReview = false;
+  let lastReviewAt = 0;
+  let reviewFlushTimer: number | undefined;
 
   const localActive = (): boolean => {
     if (typeof document !== "undefined" && document.visibilityState === "hidden") {
@@ -185,9 +199,40 @@ export async function connectRepoDocument(
 
   collaboration.onReview = (listener) => {
     reviewListeners.add(listener);
+    // A notice can land before the page subscribes (onReview is wired before
+    // whenReady, but the page subscribes only after connectRepoDocument
+    // resolves). Replay the buffered invalidation so the margin is not stale.
+    if (pendingReview) {
+      pendingReview = false;
+      listener();
+    }
     return () => {
       reviewListeners.delete(listener);
     };
+  };
+
+  const dispatchReview = () => {
+    if (reviewListeners.size === 0) {
+      pendingReview = true;
+      return;
+    }
+    for (const listener of reviewListeners) listener();
+  };
+
+  const invalidateReview = () => {
+    const now = Date.now();
+    const elapsed = now - lastReviewAt;
+    if (elapsed >= reviewInvalidationIntervalMs) {
+      lastReviewAt = now;
+      dispatchReview();
+      return;
+    }
+    if (reviewFlushTimer !== undefined) return;
+    reviewFlushTimer = window.setTimeout(() => {
+      reviewFlushTimer = undefined;
+      lastReviewAt = Date.now();
+      dispatchReview();
+    }, reviewInvalidationIntervalMs - elapsed);
   };
 
   collaboration.updatePresence = (anchorPosition, headPosition) => {
@@ -235,7 +280,8 @@ export async function connectRepoDocument(
     }
 
     if (isReviewPresence(payload.message)) {
-      for (const listener of reviewListeners) listener();
+      if (sender !== reviewSenderId) return;
+      invalidateReview();
       return;
     }
 
@@ -413,6 +459,10 @@ export async function connectRepoDocument(
     closed = true;
     window.clearInterval(heartbeat);
     window.clearInterval(prune);
+    if (reviewFlushTimer !== undefined) {
+      window.clearTimeout(reviewFlushTimer);
+      reviewFlushTimer = undefined;
+    }
     document.removeEventListener("visibilitychange", onVisibilityChange);
     handle.off("change", onDocumentChange);
     handle.off("ephemeral-message", handleEphemeral);
