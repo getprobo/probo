@@ -124,6 +124,7 @@ export function RichDescriptionEditor({
               key={editorGeneration}
               className={editor()}
               controls={false}
+              attachments
               content={draft}
               placeholder={placeholder}
               aria-label={ariaLabel}

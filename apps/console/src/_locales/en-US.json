@@ -1061,6 +1061,7 @@
       "couldNotUpload": "Could not upload {{fileName}}",
       "tooLarge": "{{fileName}} is too large",
       "unsupported": "{{fileName}} is not a supported file",
+      "attachFiles": "Attach files",
       "mentionMembers": "Mention a member",
       "mentionLoading": "Searching…",
       "mentionNoResults": "No members found"

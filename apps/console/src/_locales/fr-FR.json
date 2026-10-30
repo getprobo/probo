@@ -1573,6 +1573,7 @@
       "couldNotUpload": "Impossible d’envoyer {{fileName}}",
       "tooLarge": "{{fileName}} est trop volumineux",
       "unsupported": "{{fileName}} n’est pas un fichier pris en charge",
+      "attachFiles": "Joindre des fichiers",
       "mentionMembers": "Mentionner un membre",
       "mentionLoading": "Recherche…",
       "mentionNoResults": "Aucun membre trouvé"

@@ -43,6 +43,8 @@ const imageExtensions = extensionsOf(acceptImage);
 
 export const imageAccept = acceptAttribute(acceptImage);
 
+export const anyAttachmentAccept = acceptAttribute(attachmentAccept);
+
 const fileAcceptMap = Object.fromEntries(
   Object.entries(attachmentAccept).filter(
     ([mimeType]) => !(mimeType in acceptImage),

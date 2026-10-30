@@ -380,6 +380,7 @@ export function NewTaskPage({ queryRef }: NewTaskPageProps) {
             key={editorKey}
             className={descriptionEditorClassName}
             controls={false}
+            attachments
             content={content}
             disabled={isSaving}
             placeholder={t("detailsPage.fields.descriptionPlaceholder")}

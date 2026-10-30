@@ -1572,6 +1572,7 @@
       "couldNotUpload": "Kan {{fileName}} niet uploaden",
       "tooLarge": "{{fileName}} is te groot",
       "unsupported": "{{fileName}} is geen ondersteund bestand",
+      "attachFiles": "Bestanden bijvoegen",
       "mentionMembers": "Een lid vermelden",
       "mentionLoading": "Zoeken…",
       "mentionNoResults": "Geen leden gevonden"

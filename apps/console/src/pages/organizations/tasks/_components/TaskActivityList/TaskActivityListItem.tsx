@@ -322,6 +322,7 @@ function CommentStep({
                 className={taskCommentEditor({ editing })}
                 content={editing ? draft : comment.content}
                 controls={false}
+                attachments={editing}
                 disabled={!editing}
                 aria-label={t("detailsPage.comments.fields.comment")}
                 mentionSource={mentionSource}

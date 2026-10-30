@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { PaperclipIcon } from "@phosphor-icons/react";
 import { type Extensions } from "@tiptap/core";
 import { Blockquote } from "@tiptap/extension-blockquote";
 import { Bold } from "@tiptap/extension-bold";
@@ -35,13 +36,13 @@ import { Text } from "@tiptap/extension-text";
 import { Underline } from "@tiptap/extension-underline";
 import { Dropcursor, UndoRedo } from "@tiptap/extensions";
 import { type Content, Editor, EditorContent, type JSONContent, useEditor } from "@tiptap/react";
-import { type ComponentProps, useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { type ComponentProps, type ReactNode, useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { tv } from "tailwind-variants";
 
 import useToast from "../v2/Toaster/useToast";
 
-import { fileAccept, imageAccept } from "./attachments";
+import { anyAttachmentAccept, fileAccept, imageAccept } from "./attachments";
 import { AutomergeTableStructureExtension } from "./AutomergeTableStructureExtension";
 import { AutomergeUnknownBlockExtension } from "./AutomergeUnknownBlockExtension";
 import { BlockMenu } from "./BlockMenu/BlockMenu";
@@ -148,6 +149,20 @@ const richEditorVariants = tv({
   ],
 });
 
+const attachmentToolbar = tv({
+  slots: {
+    bar: "mt-2 flex shrink-0 items-center justify-between gap-2",
+    attach: [
+      "inline-flex size-5 shrink-0 items-center justify-center rounded-full",
+      "bg-sand-3 text-sand-11 hover:bg-sand-4",
+      "cursor-pointer outline-none transition-colors",
+      "focus-visible:ring-2 focus-visible:ring-sand-8 focus-visible:ring-offset-1 focus-visible:ring-offset-sand-1",
+      "disabled:pointer-events-none disabled:opacity-50",
+      "[&_svg]:size-3",
+    ],
+  },
+});
+
 function stripNonTextMarks(node: JSONContent) {
   if (node.type !== "text") delete node.marks;
   node.content?.forEach(stripNonTextMarks);
@@ -189,6 +204,10 @@ type RichEditorProps = ComponentProps<"div"> & {
   compact?: boolean;
   // When false, the plus and drag handles are not mounted. Slash and selection menus stay.
   controls?: boolean;
+  // Paperclip for images and files. Task composers hide the block handles.
+  attachments?: boolean;
+  // Right side of the attachment row, such as a comment send button.
+  toolbar?: ReactNode;
   placeholder?: string;
   onChangeContent?: (content: string) => void;
   onUploadingChange?: (uploading: boolean) => void;
@@ -220,6 +239,8 @@ export function RichEditor(props: RichEditorProps) {
     disabled = false,
     compact = false,
     controls = true,
+    attachments = false,
+    toolbar,
     placeholder,
     onChangeContent,
     onUploadingChange,
@@ -397,14 +418,18 @@ export function RichEditor(props: RichEditorProps) {
     },
   }, [editorExtensions]);
 
-  const openFilePicker = useCallback((kind: "image" | "file") => {
+  const openFilePicker = useCallback((kind: "image" | "file" | "any") => {
     const input = fileInputRef.current;
     const upload = uploadRef.current;
     if (!input || !upload || !editor) {
       return;
     }
 
-    input.accept = kind === "image" ? imageAccept : fileAccept;
+    input.accept = kind === "image"
+      ? imageAccept
+      : kind === "file"
+        ? fileAccept
+        : anyAttachmentAccept;
     input.value = "";
     input.click();
   }, [editor]);
@@ -438,6 +463,10 @@ export function RichEditor(props: RichEditorProps) {
 
   if (!editor) return null;
 
+  const showAttachment = attachments && onUploadFile != null;
+  const showToolbar = showAttachment || toolbar != null;
+  const { bar, attach } = attachmentToolbar();
+
   return (
     <div className={richEditorVariants({ className, disabled, compact, controls })} {...divProps}>
       {!disabled
@@ -460,6 +489,27 @@ export function RichEditor(props: RichEditorProps) {
         )}
 
       <EditorContent className="flex min-h-0 flex-1 flex-col" editor={editor} />
+      {showToolbar && (
+        <div className={bar()}>
+          {showAttachment && (
+            <button
+              type="button"
+              className={attach()}
+              aria-label={t("ui.richEditor.attachFiles")}
+              disabled={!canUpload}
+              onMouseDown={(event) => {
+                event.preventDefault();
+              }}
+              onClick={() => {
+                openFilePicker("any");
+              }}
+            >
+              <PaperclipIcon />
+            </button>
+          )}
+          {toolbar}
+        </div>
+      )}
       <input
         ref={fileInputRef}
         type="file"

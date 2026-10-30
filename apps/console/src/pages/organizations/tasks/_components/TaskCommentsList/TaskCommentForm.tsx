@@ -44,7 +44,7 @@ export function TaskCommentForm() {
   const [uploading, setUploading] = useState(false);
   const [editorKey, setEditorKey] = useState(0);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const { root, actions, editor } = taskCommentForm();
+  const { root, editor } = taskCommentForm();
 
   function handleSubmit() {
     if (uploading) {
@@ -84,12 +84,26 @@ export function TaskCommentForm() {
           <RichEditor
             key={editorKey}
             controls={false}
+            attachments
             className={editor()}
             content={content}
             disabled={isCreating}
             placeholder={t("detailsPage.comments.fields.leaveAComment")}
             aria-label={t("detailsPage.comments.fields.leaveAComment")}
             mentionSource={mentionSource}
+            toolbar={(
+              <Button
+                type="submit"
+                size={1}
+                variant="solid"
+                color="neutral"
+                highContrast
+                disabled={uploading}
+                loading={isCreating}
+              >
+                {t("detailsPage.comments.actions.send")}
+              </Button>
+            )}
             onChangeContent={(next) => {
               setContent(next);
               if (richEditorContentTextLength(next) > taskCommentMaxLength) {
@@ -106,19 +120,6 @@ export function TaskCommentForm() {
             onUploadingChange={setUploading}
           />
         </Field>
-        <div className={actions()}>
-          <Button
-            type="submit"
-            size={1}
-            variant="solid"
-            color="neutral"
-            highContrast
-            disabled={uploading}
-            loading={isCreating}
-          >
-            {t("detailsPage.comments.actions.send")}
-          </Button>
-        </div>
       </Form>
     </Card>
   );

@@ -24,11 +24,29 @@ import type { EditorView } from "@tiptap/pm/view";
 import { describe, expect, it } from "vitest";
 
 import {
+  anyAttachmentAccept,
   attachmentKind,
+  fileAccept,
+  imageAccept,
   maxAttachmentSize,
   prepareAttachment,
 } from "./attachments";
 import { uploadAttachments } from "./uploadAttachments";
+
+describe("anyAttachmentAccept", () => {
+  it("offers images and other files from one picker", () => {
+    const accepted = anyAttachmentAccept.split(",");
+
+    expect(accepted).toEqual(expect.arrayContaining([
+      ".png",
+      ".pdf",
+      "image/png",
+      "application/pdf",
+    ]));
+    expect(fileAccept.split(",")).not.toContain("image/png");
+    expect(imageAccept.split(",")).not.toContain("application/pdf");
+  });
+});
 
 describe("attachmentKind", () => {
   it("accepts a csv file reported as excel", () => {
