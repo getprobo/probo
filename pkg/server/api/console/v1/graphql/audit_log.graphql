@@ -57,7 +57,9 @@ input AuditLogEntryFilter {
     resourceId: ID
     outcome: AuditLogOutcome
     requestId: String
+    "Inclusive lower bound on createdAt."
     createdFrom: Datetime
+    "Exclusive upper bound on createdAt. An entry at this instant is excluded."
     createdTo: Datetime
 }
 
