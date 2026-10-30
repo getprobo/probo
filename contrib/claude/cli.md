@@ -251,6 +251,8 @@ Environment variables: `PROBO_NO_INTERACTIVE=1`, `CI=true`, `TERM=dumb` (non-int
 
 ## OAuth device login (`prb auth login`)
 
+Interactive login lists US (`us.probo.com`), then EU (`eu.probo.com`), then a custom host. Non-interactive login requires `--hostname` and does not use `eu.probo.com`.
+
 The well-known CLI OAuth client (`config.CLIClientID`) requests `config.CLIClientScopes` at device authorization. Keep three places in sync when adding `v1:*` scopes:
 
 1. Scope constants and `OAuth2ScopeSet()` registration in the owning package

@@ -10,6 +10,9 @@ this file.
 - `access-review` reference describes `retryAccessReviewCampaignSourceFetch`
   as a recovery step for a failed source fetch, called only when the user
   asks
+- `using-prb` tells agents to ask for a US, EU, or custom host before
+  `prb auth login --hostname`. Omitting `--hostname` fails because prompts
+  are disabled
 
 ## [0.5.0] - 2026-10-27
 

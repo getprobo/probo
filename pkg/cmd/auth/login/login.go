@@ -86,58 +86,28 @@ func NewCmdLogin(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "login",
 		Short: "Authenticate with a Probo host",
-		Example: `  # Interactive login (select region, opens browser for device authorization)
+		Example: `  # Choose US, EU, or a custom host, then authorize in the browser
   prb auth login
-
-  # Login to Probo EU
-  prb auth login --hostname eu.probo.com
 
   # Login to Probo US
   prb auth login --hostname us.probo.com
 
+  # Login to Probo EU
+  prb auth login --hostname eu.probo.com
+
   # Login to a self-hosted instance
   prb auth login --hostname probo.example.com`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if f.IOStreams.IsInteractive() && flagHost == "" {
-				var region string
-
-				err := huh.NewSelect[string]().
-					Title("Where is your Probo account hosted?").
-					Options(
-						huh.NewOption("Probo EU (eu.probo.com)", regionEU),
-						huh.NewOption("Probo US (us.probo.com)", regionUS),
-						huh.NewOption("Other (custom domain)", regionCustom),
-					).
-					Value(&region).
-					Run()
-				if err != nil {
-					return err
-				}
-
-				switch region {
-				case regionEU:
-					flagHost = hostEU
-				case regionUS:
-					flagHost = hostUS
-				case regionCustom:
-					err := huh.NewInput().
-						Title("Probo hostname").
-						Placeholder("probo.example.com").
-						Value(&flagHost).
-						Run()
-					if err != nil {
-						return err
-					}
-
-					if flagHost == "" {
-						return fmt.Errorf("hostname is required")
-					}
-				}
+			host, err := loginHost(
+				flagHost,
+				f.IOStreams.IsInteractive(),
+				promptHost,
+			)
+			if err != nil {
+				return err
 			}
 
-			if flagHost == "" {
-				flagHost = hostEU
-			}
+			flagHost = host
 
 			baseURL := normalizeHostToURL(flagHost)
 			httpClient := &http.Client{Timeout: 30 * time.Second}
@@ -256,6 +226,83 @@ func NewCmdLogin(f *cmdutil.Factory) *cobra.Command {
 	cmdutil.AddOrganizationFlag(cmd, &flagOrganization, "Default organization ID")
 
 	return cmd
+}
+
+func hostOptions() []huh.Option[string] {
+	return []huh.Option[string]{
+		huh.NewOption("Probo US (us.probo.com)", regionUS),
+		huh.NewOption("Probo EU (eu.probo.com)", regionEU),
+		huh.NewOption("Custom", regionCustom),
+	}
+}
+
+func loginHost(
+	hostname string,
+	interactive bool,
+	prompt func() (string, error),
+) (string, error) {
+	hostname = strings.TrimSpace(hostname)
+	if hostname != "" {
+		return hostname, nil
+	}
+
+	if !interactive {
+		return "", fmt.Errorf(
+			"hostname is required; pass --hostname with us.probo.com, eu.probo.com, or a custom host",
+		)
+	}
+
+	host, err := prompt()
+	if err != nil {
+		return "", err
+	}
+
+	host = strings.TrimSpace(host)
+	if host == "" {
+		return "", fmt.Errorf("hostname is required")
+	}
+
+	return host, nil
+}
+
+func promptHost() (string, error) {
+	var region string
+
+	err := huh.NewSelect[string]().
+		Title("Where is your Probo account hosted?").
+		Options(hostOptions()...).
+		Value(&region).
+		Run()
+	if err != nil {
+		return "", err
+	}
+
+	switch region {
+	case regionUS:
+		return hostUS, nil
+	case regionEU:
+		return hostEU, nil
+	case regionCustom:
+		var host string
+
+		err := huh.NewInput().
+			Title("Probo hostname").
+			Placeholder("probo.example.com").
+			Value(&host).
+			Run()
+		if err != nil {
+			return "", err
+		}
+
+		host = strings.TrimSpace(host)
+		if host == "" {
+			return "", fmt.Errorf("hostname is required")
+		}
+
+		return host, nil
+	default:
+		return "", fmt.Errorf("hostname is required")
+	}
 }
 
 func normalizeHostToURL(host string) string {

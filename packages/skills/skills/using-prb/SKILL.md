@@ -62,11 +62,12 @@ Settle the host and the organization before any other `prb` command.
    bearer token. A token without a host is an error.
 4. Hosts without a scheme are HTTPS. A local server needs an explicit
    `http://` URL, for example `http://localhost:8080`.
-5. When status shows no active host, or an active host with `Token: not
-   set`, run `prb auth login`. Pass `--hostname` when the user names a
-   region or a self-hosted instance (`eu.probo.com`, `us.probo.com`, or the
-   instance host). Pass `--org` when the user already knows the default
-   organization id.
+5. When status shows no active host, or the active host has `Token: not set`,
+   ask for the host before login. If the user has not named one, ask them to
+   pick US (`us.probo.com`), EU (`eu.probo.com`), or a custom host. Then run
+   `prb auth login --hostname <host>`. Omitting `--hostname` fails because
+   prompts are disabled.
+   Pass `--org` when the user already knows the default organization id.
 
 Then choose the organization:
 
