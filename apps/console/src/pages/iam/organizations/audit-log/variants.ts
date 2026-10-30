@@ -33,15 +33,24 @@ export const auditLogPageSkeleton = tv({
     root: "flex flex-col gap-6",
     header: "flex items-start justify-between gap-4",
     intro: "flex min-w-0 flex-col gap-2",
-    filters: "grid grid-cols-4 gap-3 max-lg:grid-cols-2 max-sm:grid-cols-1",
+    toolbar: "flex flex-wrap items-center justify-between gap-2",
+    tools: "flex flex-wrap items-center gap-2",
+    action: "w-80 max-sm:w-full",
+    filters: "flex flex-wrap items-center justify-end gap-2",
+    filter: "w-40 shrink-0 max-sm:w-full",
+    field: "w-44 shrink-0 max-sm:w-full",
   },
 });
 
 export const auditLogList = tv({
   slots: {
     root: "flex flex-col gap-4",
-    filters: "grid grid-cols-4 gap-3 max-lg:grid-cols-2 max-sm:grid-cols-1",
-    filter: "min-w-0",
+    toolbar: "flex flex-wrap items-center justify-between gap-2",
+    tools: "flex flex-wrap items-center gap-2",
+    action: "w-80 max-sm:w-full",
+    filters: "flex flex-wrap items-center justify-end gap-2",
+    filter: "w-40 shrink-0 max-sm:w-full",
+    field: "w-44 shrink-0 max-sm:w-full",
     results: "transition-opacity",
     empty: "flex flex-col items-center py-8 text-center",
     pager: "flex justify-center",
@@ -57,15 +66,9 @@ export const auditLogList = tv({
 
 export const auditLogListItem = tv({
   slots: {
-    open: [
-      "min-w-0 appearance-none border-0 bg-transparent p-0 text-left font-inherit text-sand-12 pointer-events-auto cursor-pointer",
-      "after:absolute after:inset-0 after:content-['']",
-      "outline-none focus-visible:ring-2 focus-visible:ring-sand-8 focus-visible:ring-offset-1 focus-visible:ring-offset-sand-1",
-    ],
-    actor: "flex min-w-0 flex-col items-start gap-1",
-    target: "flex min-w-0 flex-col items-start gap-0.5",
-    truncate: "min-w-0 max-w-full truncate",
-    mono: "min-w-0 max-w-full truncate font-mono",
+    actor: "flex min-w-0 items-center gap-2",
+    truncate: "min-w-0 truncate",
+    action: "block max-w-full truncate",
   },
 });
 
@@ -75,6 +78,7 @@ export const auditLogEntryDialog = tv({
     row: "flex flex-col gap-0.5",
     value: "min-w-0 break-all",
     actor: "flex min-w-0 flex-wrap items-center gap-2",
+    target: "flex min-w-0 flex-col items-start gap-0.5",
   },
 });
 

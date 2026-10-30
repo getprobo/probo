@@ -20,9 +20,11 @@
 
 import { dateTimeFormat } from "@probo/i18n";
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
+import { TableButton } from "@probo/ui/src/v2/Table/TableButton";
 import { TableCell } from "@probo/ui/src/v2/Table/TableCell";
 import { TableRow } from "@probo/ui/src/v2/Table/TableRow";
 import { TableRowHeaderCell } from "@probo/ui/src/v2/Table/TableRowHeaderCell";
+import { Code } from "@probo/ui/src/v2/typography/Code";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
@@ -47,7 +49,6 @@ export const auditLogListItemFragment = graphql`
     actorName
     action
     resourceType
-    resourceId
     outcome
     createdAt
   }
@@ -68,28 +69,25 @@ export function AuditLogListItem({ entryKey, onOpen }: AuditLogListItemProps) {
     actorName,
     action,
     resourceType,
-    resourceId,
     outcome,
     createdAt,
   } = entry;
-  const { open, actor, target, truncate, mono } = auditLogListItem();
+  const { actor, truncate, action: actionSlot } = auditLogListItem();
   const label = auditLogActorLabel({ actorEmail, actorName, actorId });
 
   return (
     <TableRow align="center" interactive>
       <TableRowHeaderCell>
-        <button
-          type="button"
-          className={open()}
+        <TableButton
           aria-label={t("auditLogPage.actions.openEntry")}
           onClick={onOpen}
         >
           <Text size={2}>
             {dateTimeFormat(i18n.language, createdAt)}
           </Text>
-        </button>
+        </TableButton>
       </TableRowHeaderCell>
-      <TableCell>
+      <TableCell overflow="truncate">
         <div className={actor()}>
           <Badge variant="soft" size={1} color={auditLogActorColor(actorType)}>
             {t(`auditLogPage.actorTypes.${actorType}`)}
@@ -99,20 +97,15 @@ export function AuditLogListItem({ entryKey, onOpen }: AuditLogListItemProps) {
           </Text>
         </div>
       </TableCell>
-      <TableCell>
-        <Text size={2} className={mono()}>
+      <TableCell overflow="truncate">
+        <Code size={2} variant="ghost" className={actionSlot()}>
           {action}
-        </Text>
+        </Code>
       </TableCell>
-      <TableCell>
-        <div className={target()}>
-          <Text size={2} highContrast className={truncate()}>
-            {resourceType}
-          </Text>
-          <Text size={1} color="faint" className={mono()}>
-            {resourceId}
-          </Text>
-        </div>
+      <TableCell overflow="truncate">
+        <Text size={2} highContrast className={truncate()}>
+          {resourceType}
+        </Text>
       </TableCell>
       <TableCell>
         <Badge variant="soft" size={1} color={auditLogOutcomeColor(outcome)}>

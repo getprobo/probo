@@ -28,6 +28,7 @@ import { DialogFooter } from "@probo/ui/src/v2/Dialog/DialogFooter";
 import { DialogHeader } from "@probo/ui/src/v2/Dialog/DialogHeader";
 import { DialogPopup } from "@probo/ui/src/v2/Dialog/DialogPopup";
 import { DialogTitle } from "@probo/ui/src/v2/Dialog/DialogTitle";
+import { Code } from "@probo/ui/src/v2/typography/Code";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
@@ -93,7 +94,7 @@ export function AuditLogEntryDialog({
     createdAt,
     recordedAt,
   } = entry;
-  const { details, actor } = auditLogEntryDialog();
+  const { details, actor, target } = auditLogEntryDialog();
   const label = auditLogActorLabel({ actorEmail, actorName, actorId });
 
   return (
@@ -105,27 +106,34 @@ export function AuditLogEntryDialog({
         <DialogBody>
           <dl className={details()}>
             <Detail label={t("auditLogPage.entry.when")}>
-              {dateTimeFormat(i18n.language, createdAt)}
+              <Text size={2} highContrast>
+                {dateTimeFormat(i18n.language, createdAt)}
+              </Text>
             </Detail>
             <Detail label={t("auditLogPage.entry.recordedAt")}>
-              {dateTimeFormat(i18n.language, recordedAt)}
+              <Text size={2} highContrast>
+                {dateTimeFormat(i18n.language, recordedAt)}
+              </Text>
             </Detail>
             <Detail label={t("auditLogPage.entry.actor")}>
               <span className={actor()}>
                 <Badge variant="soft" size={1} color={auditLogActorColor(actorType)}>
                   {t(`auditLogPage.actorTypes.${actorType}`)}
                 </Badge>
-                <span>{label}</span>
+                <Text size={2} highContrast>{label}</Text>
               </span>
             </Detail>
             <Detail label={t("auditLogPage.entry.actorId")}>
-              {actorId}
+              <Code size={2} variant="ghost">{actorId}</Code>
             </Detail>
             <Detail label={t("auditLogPage.entry.action")}>
-              {action}
+              <Code size={2} variant="ghost">{action}</Code>
             </Detail>
             <Detail label={t("auditLogPage.entry.target")}>
-              {`${resourceType} ${resourceId}`}
+              <span className={target()}>
+                <Text size={2} highContrast>{resourceType}</Text>
+                <Code size={1} variant="ghost">{resourceId}</Code>
+              </span>
             </Detail>
             <Detail label={t("auditLogPage.entry.outcome")}>
               <Badge variant="soft" size={1} color={auditLogOutcomeColor(outcome)}>
@@ -134,17 +142,19 @@ export function AuditLogEntryDialog({
             </Detail>
             {denialReason != null && denialReason !== "" && (
               <Detail label={t("auditLogPage.entry.denialReason")}>
-                {denialReason}
+                {textValue(denialReason)}
               </Detail>
             )}
             <Detail label={t("auditLogPage.entry.originIp")}>
-              {originIp ?? ""}
+              {textValue(originIp)}
             </Detail>
             <Detail label={t("auditLogPage.entry.userAgent")}>
-              {userAgent ?? ""}
+              {textValue(userAgent)}
             </Detail>
             <Detail label={t("auditLogPage.entry.requestId")}>
-              {requestId ?? ""}
+              {requestId == null || requestId === ""
+                ? <Text size={2} color="faint">—</Text>
+                : <Code size={2} variant="ghost">{requestId}</Code>}
             </Detail>
           </dl>
         </DialogBody>
@@ -164,20 +174,21 @@ export function AuditLogEntryDialog({
 
 function Detail({ label, children }: { label: string; children: ReactNode }) {
   const { row, value } = auditLogEntryDialog();
-  const text = typeof children === "string" ? children : null;
 
   return (
     <div className={row()}>
       <dt>
         <Text size={1} color="faint">{label}</Text>
       </dt>
-      <dd className={value()}>
-        {text == null
-          ? children
-          : text === ""
-            ? <Text size={2} color="faint">—</Text>
-            : <Text size={2} highContrast>{text}</Text>}
-      </dd>
+      <dd className={value()}>{children}</dd>
     </div>
   );
+}
+
+function textValue(value: string | null | undefined) {
+  if (value == null || value === "") {
+    return <Text size={2} color="faint">—</Text>;
+  }
+
+  return <Text size={2} highContrast>{value}</Text>;
 }

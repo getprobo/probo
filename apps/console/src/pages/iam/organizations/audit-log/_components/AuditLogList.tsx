@@ -180,22 +180,22 @@ export function AuditLogList({ organizationKey }: AuditLogListProps) {
           : (
               <>
                 <div aria-busy={isPending} className={results()}>
-                  <Table>
+                  <Table variant="surface" layout="fixed">
                     <TableHeader>
                       <TableRow>
-                        <TableColumnHeaderCell>
+                        <TableColumnHeaderCell width="12rem">
                           {t("auditLogPage.columns.when")}
                         </TableColumnHeaderCell>
-                        <TableColumnHeaderCell>
+                        <TableColumnHeaderCell overflow="truncate">
                           {t("auditLogPage.columns.actor")}
                         </TableColumnHeaderCell>
-                        <TableColumnHeaderCell>
+                        <TableColumnHeaderCell overflow="truncate">
                           {t("auditLogPage.columns.action")}
                         </TableColumnHeaderCell>
-                        <TableColumnHeaderCell>
+                        <TableColumnHeaderCell width="10rem">
                           {t("auditLogPage.columns.target")}
                         </TableColumnHeaderCell>
-                        <TableColumnHeaderCell>
+                        <TableColumnHeaderCell width="7rem">
                           {t("auditLogPage.columns.outcome")}
                         </TableColumnHeaderCell>
                       </TableRow>

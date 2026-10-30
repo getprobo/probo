@@ -18,16 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Field } from "@probo/ui/src/v2/form/Field";
 import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { useState } from "react";
-
-import { auditLogList } from "../variants";
 
 interface AuditLogFilterFieldProps {
   label: string;
   value: string;
   placeholder?: string;
+  className?: string;
   onCommit: (value: string) => void;
 }
 
@@ -35,10 +33,10 @@ export function AuditLogFilterField({
   label,
   value,
   placeholder,
+  className,
   onCommit,
 }: AuditLogFilterFieldProps) {
   const [draft, setDraft] = useState(value);
-  const { filter } = auditLogList();
 
   function commit() {
     const next = draft.trim();
@@ -51,23 +49,20 @@ export function AuditLogFilterField({
   }
 
   return (
-    <div className={filter()}>
-      <Field label={label}>
-        <TextField
-          size={2}
-          value={draft}
-          placeholder={placeholder}
-          aria-label={label}
-          onValueChange={setDraft}
-          onBlur={commit}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              event.preventDefault();
-              commit();
-            }
-          }}
-        />
-      </Field>
-    </div>
+    <TextField
+      size={2}
+      className={className}
+      value={draft}
+      placeholder={placeholder ?? label}
+      aria-label={label}
+      onValueChange={setDraft}
+      onBlur={commit}
+      onKeyDown={(event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          commit();
+        }
+      }}
+    />
   );
 }
