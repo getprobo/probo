@@ -155,6 +155,11 @@ func IsForbidden(err error) bool {
 	return hasCode(err, "FORBIDDEN")
 }
 
+// IsNotFound reports whether err is a GraphQL error with code NOT_FOUND.
+func IsNotFound(err error) bool {
+	return hasCode(err, "NOT_FOUND")
+}
+
 func hasCode(err error, code string) bool {
 	gqlErr, ok := errors.AsType[*gqlerror.Error](err)
 	if !ok {

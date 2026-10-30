@@ -266,6 +266,11 @@ export class Probo implements INodeType {
 						description: 'Manage statements of applicability',
 					},
 					{
+						name: 'Tag',
+						value: 'tag',
+						description: 'Manage tags',
+					},
+					{
 						name: 'Task',
 						value: 'task',
 						description: 'Manage tasks',

@@ -62,6 +62,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlx"
+	"go.probo.inc/probo/pkg/tag"
 	"go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/thirdparty"
 )
@@ -83,6 +84,7 @@ type (
 		batchAuthorize          authz.BatchAuthorizeFunc
 		probo                   *probo.Service
 		resourceAlias           *resourcealias.Service
+		tag                     *tag.Service
 		iam                     *iam.Service
 		esign                   *esign.Service
 		management              *management.Service
@@ -119,6 +121,7 @@ func NewMux(
 	proboSvc *probo.Service,
 	collaborationHandler *collaboration_v1.Handler,
 	resourceAliasSvc *resourcealias.Service,
+	tagSvc *tag.Service,
 	iamSvc *iam.Service,
 	esignSvc *esign.Service,
 	managementSvc *management.Service,
@@ -159,6 +162,7 @@ func NewMux(
 		iamSvc,
 		proboSvc,
 		resourceAliasSvc,
+		tagSvc,
 		esignSvc,
 		managementSvc,
 		certManagerSvc,

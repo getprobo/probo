@@ -52,6 +52,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/mcp/mcpx"
 	"go.probo.inc/probo/pkg/server/api/mcp/v1/server"
+	"go.probo.inc/probo/pkg/tag"
 	"go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/thirdparty"
 )
@@ -62,6 +63,7 @@ func NewMux(
 	managementSvc *management.Service,
 	certManagerSvc *certmanager.Service,
 	resourceAliasSvc *resourcealias.Service,
+	tagSvc *tag.Service,
 	thirdPartySvc *thirdparty.Service,
 	iamSvc *iam.Service,
 	accessReviewSvc *accessreview.Service,
@@ -90,6 +92,7 @@ func NewMux(
 		management:            managementSvc,
 		certManager:           certManagerSvc,
 		resourceAlias:         resourceAliasSvc,
+		tag:                   tagSvc,
 		thirdPartySvc:         thirdPartySvc,
 		iamSvc:                iamSvc,
 		accessReview:          accessReviewSvc,

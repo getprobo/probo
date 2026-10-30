@@ -61,6 +61,7 @@ const (
 		"v1:privacy " +
 		"v1:risk " +
 		"v1:slack-connection " +
+		"v1:tag " +
 		"v1:task " +
 		"v1:third-party " +
 		"v1:webhook"

@@ -72,6 +72,7 @@ import (
 	slack_v1 "go.probo.inc/probo/pkg/server/api/slack/v1"
 	"go.probo.inc/probo/pkg/server/gqlx"
 	"go.probo.inc/probo/pkg/slack"
+	"go.probo.inc/probo/pkg/tag"
 	"go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/thirdparty"
 )
@@ -87,6 +88,7 @@ type (
 		CollaborationEvents     *realtime.Events
 		ShutdownContext         context.Context
 		ResourceAlias           *resourcealias.Service
+		Tag                     *tag.Service
 		File                    *filemanager.Service
 		IAM                     *iam.Service
 		Visitor                 *visitor.Service
@@ -304,6 +306,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.Probo,
 			collabHandler,
 			cfg.ResourceAlias,
+			cfg.Tag,
 			cfg.IAM,
 			cfg.ESign,
 			cfg.Management,
@@ -355,6 +358,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.Management,
 			cfg.CertManager,
 			cfg.ResourceAlias,
+			cfg.Tag,
 			cfg.ThirdParty,
 			cfg.IAM,
 			cfg.AccessReview,
