@@ -5,6 +5,15 @@ documented in this file.
 
 ## Unreleased
 
+## [0.7.4] - 2026-10-30
+
+### Fixed
+
+- The Linux firewall check continues past an installed frontend that
+  is not active. A Fedora machine with `firewalld` installed but
+  stopped, and `nftables` managing the firewall, was reported as
+  failing.
+
 ## [0.7.3] - 2026-10-28
 
 ### Changed
