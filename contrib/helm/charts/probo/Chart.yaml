@@ -2,8 +2,8 @@ apiVersion: v2
 name: probo
 description: A Helm chart for deploying Probo - Open Source Compliance Platform
 type: application
-version: 0.30.0
-appVersion: "0.333.0"
+version: 0.31.0
+appVersion: "0.334.0"
 keywords:
   - compliance
   - soc2

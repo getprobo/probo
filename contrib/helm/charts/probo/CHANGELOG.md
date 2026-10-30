@@ -4,6 +4,19 @@ All notable changes to the Probo Helm chart will be documented in this file.
 
 ## Unreleased
 
+## [0.31.0] - 2026-10-30
+
+### Added
+
+- `probo.openai.baseUrl` and `probo.anthropic.baseUrl` set
+  `PROBOD_OPENAI_BASE_URL` and `PROBOD_ANTHROPIC_BASE_URL`. Empty
+  keeps api.openai.com and api.anthropic.com. Use them for Azure
+  OpenAI or another compatible gateway.
+
+### Changed
+
+- Default `appVersion` is now `0.334.0`
+
 ## [0.30.0] - 2026-10-29
 
 ### Added
