@@ -276,18 +276,6 @@ func (s *Service) RestoreHistory(
 		return 0, fmt.Errorf("cannot create collaboration restore actor: %w", err)
 	}
 
-	if err := s.RecordActors(
-		ctx,
-		scope,
-		documentID,
-		organizationID,
-		identityID,
-		profileID,
-		[][]byte{actorID[:]},
-	); err != nil {
-		return 0, fmt.Errorf("cannot record collaboration restore actor: %w", err)
-	}
-
 	opened, err := s.openWithActor(ctx, scope, documentID, actorID)
 	if err != nil {
 		if errors.Is(err, ErrDocumentCollaborationNotSeeded) || errors.Is(err, ErrSeedInProgress) {
@@ -315,6 +303,20 @@ func (s *Service) RestoreHistory(
 
 	if !hasHeads {
 		return 0, fmt.Errorf("collaboration history restore heads are unknown")
+	}
+
+	// Record the restore actor only after validation so a rejected restore
+	// leaves no actor attribution behind.
+	if err := s.RecordActors(
+		ctx,
+		scope,
+		documentID,
+		organizationID,
+		identityID,
+		profileID,
+		[][]byte{actorID[:]},
+	); err != nil {
+		return 0, fmt.Errorf("cannot record collaboration restore actor: %w", err)
 	}
 
 	content, err := materializeAtHeads(opened.Document, heads)

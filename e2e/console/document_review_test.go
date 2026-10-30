@@ -43,6 +43,8 @@ func TestDocumentReview_PublishBlockedByOpenSuggestion(t *testing.T) {
 	updateDocumentContent(t, owner, documentID, "Keep this sentence.")
 
 	t.Run("open comment does not block publish", func(t *testing.T) {
+		t.Parallel()
+
 		commentDocumentID := factory.NewDocument(owner).
 			WithTitle(factory.SafeName("Review comment publish")).
 			Create()
@@ -78,6 +80,8 @@ func TestDocumentReview_PublishBlockedByOpenSuggestion(t *testing.T) {
 	})
 
 	t.Run("open suggestion mark blocks publish", func(t *testing.T) {
+		t.Parallel()
+
 		paintSuggestionInsert(t, documentID, "suggestion-open", "inserted")
 
 		_, err := owner.Do(`
