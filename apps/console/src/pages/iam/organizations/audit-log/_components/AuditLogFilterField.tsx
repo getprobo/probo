@@ -19,21 +19,33 @@
 // SOFTWARE.
 
 import { TextField } from "@probo/ui/src/v2/form/TextField";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 
 interface AuditLogFilterFieldProps {
-  label: string;
-  value: string;
-  placeholder?: string;
-  className?: string;
-  onCommit: (value: string) => void;
+  "id"?: string;
+  "label": string;
+  "value": string;
+  "placeholder"?: string;
+  "className"?: string;
+  "icon"?: ReactNode;
+  "required"?: boolean;
+  "aria-invalid"?: boolean;
+  "aria-describedby"?: string;
+  "aria-required"?: boolean;
+  "onCommit": (value: string) => void;
 }
 
 export function AuditLogFilterField({
+  id,
   label,
   value,
   placeholder,
   className,
+  icon,
+  required,
+  "aria-invalid": ariaInvalid,
+  "aria-describedby": ariaDescribedBy,
+  "aria-required": ariaRequired,
   onCommit,
 }: AuditLogFilterFieldProps) {
   const [draft, setDraft] = useState(value);
@@ -50,11 +62,17 @@ export function AuditLogFilterField({
 
   return (
     <TextField
+      id={id}
       size={2}
       className={className}
+      icon={icon}
       value={draft}
       placeholder={placeholder ?? label}
-      aria-label={label}
+      required={required}
+      aria-invalid={ariaInvalid}
+      aria-describedby={ariaDescribedBy}
+      aria-required={ariaRequired}
+      aria-label={id == null ? label : undefined}
       onValueChange={setDraft}
       onBlur={commit}
       onKeyDown={(event) => {

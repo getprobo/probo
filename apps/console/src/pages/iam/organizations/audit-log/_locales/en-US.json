@@ -37,6 +37,11 @@
       "resourceId": "Resource ID",
       "from": "From",
       "to": "To",
+      "dates": "Date range",
+      "datesPlaceholder": "Any date",
+      "datesHint": "Select a start date, then an end date.",
+      "more": "Filters",
+      "moreCount": "Filters ({{count}})",
       "requestId": "Request ID",
       "range": "The start date is after the end date."
     },
@@ -60,7 +65,8 @@
       "description": "Select a date range to export audit log entries as CSV. You will receive an email with a download link.",
       "fields": {
         "from": "From",
-        "to": "To"
+        "to": "To",
+        "range": "Date range"
       },
       "actions": {
         "export": "Export",

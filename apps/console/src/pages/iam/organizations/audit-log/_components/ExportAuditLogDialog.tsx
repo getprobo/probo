@@ -29,7 +29,7 @@ import { DialogHeader } from "@probo/ui/src/v2/Dialog/DialogHeader";
 import { DialogPopup } from "@probo/ui/src/v2/Dialog/DialogPopup";
 import { DialogTitle } from "@probo/ui/src/v2/Dialog/DialogTitle";
 import { DialogTrigger } from "@probo/ui/src/v2/Dialog/DialogTrigger";
-import { DateField } from "@probo/ui/src/v2/form/DateField";
+import { DateRangeField } from "@probo/ui/src/v2/form/DateRangeField";
 import { Field } from "@probo/ui/src/v2/form/Field";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -71,10 +71,8 @@ export function ExportAuditLogDialog({ organizationId }: ExportAuditLogDialogPro
         errorToast: t("auditLogPage.export.errors.request"),
       },
     );
-  const rangeInverted = fromDate !== "" && toDate !== "" && fromDate > toDate;
-
   function handleExport() {
-    if (fromDate === "" || toDate === "" || rangeInverted) {
+    if (fromDate === "" || toDate === "") {
       return;
     }
 
@@ -117,30 +115,19 @@ export function ExportAuditLogDialog({ organizationId }: ExportAuditLogDialogPro
         </DialogHeader>
         <DialogBody>
           <div className={fields()}>
-            <Field label={t("auditLogPage.export.fields.from")} required>
-              <DateField
-                size={2}
+            <Field label={t("auditLogPage.export.fields.range")} required>
+              <DateRangeField
                 required
-                value={fromDate}
+                nullable
+                value={{ from: fromDate, to: toDate }}
                 locale={i18n.language}
-                max={toDate === "" ? undefined : toDate}
-                onValueChange={setFromDate}
-              />
-            </Field>
-            <Field
-              label={t("auditLogPage.export.fields.to")}
-              required
-              error={rangeInverted
-                ? t("auditLogPage.filters.range")
-                : undefined}
-            >
-              <DateField
-                size={2}
-                required
-                value={toDate}
-                locale={i18n.language}
-                min={fromDate === "" ? undefined : fromDate}
-                onValueChange={setToDate}
+                placeholder={t("auditLogPage.filters.datesPlaceholder")}
+                hint={t("auditLogPage.filters.datesHint")}
+                aria-label={t("auditLogPage.export.fields.range")}
+                onValueChange={(next) => {
+                  setFromDate(next.from);
+                  setToDate(next.to);
+                }}
               />
             </Field>
           </div>
@@ -158,7 +145,7 @@ export function ExportAuditLogDialog({ organizationId }: ExportAuditLogDialogPro
             color="neutral"
             highContrast
             loading={isExporting}
-            disabled={fromDate === "" || toDate === "" || rangeInverted}
+            disabled={fromDate === "" || toDate === ""}
             iconStart={<FileCsvIcon />}
             onClick={handleExport}
           >
