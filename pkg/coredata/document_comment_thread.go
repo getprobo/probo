@@ -111,6 +111,27 @@ func (t *DocumentCommentThread) LoadByID(
 	scope Scoper,
 	threadID gid.GID,
 ) error {
+	return t.loadByID(ctx, conn, scope, threadID, false)
+}
+
+// LoadByIDForUpdate is LoadByID under FOR UPDATE so a reply insert and a
+// concurrent resolve serialize on the same thread row.
+func (t *DocumentCommentThread) LoadByIDForUpdate(
+	ctx context.Context,
+	tx pg.Tx,
+	scope Scoper,
+	threadID gid.GID,
+) error {
+	return t.loadByID(ctx, tx, scope, threadID, true)
+}
+
+func (t *DocumentCommentThread) loadByID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	threadID gid.GID,
+	forUpdate bool,
+) error {
 	q := `
 SELECT
     id,
@@ -131,6 +152,10 @@ WHERE
     AND id = @thread_id
 LIMIT 1
 `
+
+	if forUpdate {
+		q += "\nFOR UPDATE"
+	}
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 

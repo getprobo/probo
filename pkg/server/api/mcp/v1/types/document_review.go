@@ -76,7 +76,7 @@ func NewListDocumentCommentThreadsOutput(
 	}
 
 	return ListDocumentCommentThreadsOutput{
-		NextCursor: nextCursor(threadPage.Data, func(thread *coredata.DocumentCommentThread) page.CursorKey {
+		NextCursor: nextCursor(threadPage.Info.HasNext, threadPage.Data, func(thread *coredata.DocumentCommentThread) page.CursorKey {
 			return thread.CursorKey(threadPage.Cursor.OrderBy.Field)
 		}),
 		Threads: threads,
@@ -92,7 +92,7 @@ func NewListDocumentCommentsOutput(
 	}
 
 	return ListDocumentCommentsOutput{
-		NextCursor: nextCursor(commentPage.Data, func(comment *coredata.DocumentComment) page.CursorKey {
+		NextCursor: nextCursor(commentPage.Info.HasNext, commentPage.Data, func(comment *coredata.DocumentComment) page.CursorKey {
 			return comment.CursorKey(commentPage.Cursor.OrderBy.Field)
 		}),
 		Comments: comments,
@@ -108,7 +108,7 @@ func NewListDocumentSuggestionsOutput(
 	}
 
 	return ListDocumentSuggestionsOutput{
-		NextCursor: nextCursor(suggestionPage.Data, func(suggestion *coredata.DocumentSuggestion) page.CursorKey {
+		NextCursor: nextCursor(suggestionPage.Info.HasNext, suggestionPage.Data, func(suggestion *coredata.DocumentSuggestion) page.CursorKey {
 			return suggestion.CursorKey(suggestionPage.Cursor.OrderBy.Field)
 		}),
 		Suggestions: suggestions,
@@ -125,8 +125,8 @@ func gidString(id *gid.GID) *string {
 	return &value
 }
 
-func nextCursor[T any](items []*T, key func(*T) page.CursorKey) *page.CursorKey {
-	if len(items) == 0 {
+func nextCursor[T any](hasNext bool, items []*T, key func(*T) page.CursorKey) *page.CursorKey {
+	if !hasNext || len(items) == 0 {
 		return nil
 	}
 

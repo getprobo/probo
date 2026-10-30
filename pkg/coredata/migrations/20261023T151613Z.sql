@@ -35,6 +35,9 @@ CREATE TABLE document_suggestions (
         ON UPDATE CASCADE ON DELETE SET NULL
 );
 
+CREATE INDEX document_suggestions_document_id_created_at_id_idx
+    ON document_suggestions (document_id, created_at, id);
+
 CREATE TABLE document_comment_threads (
     id TEXT PRIMARY KEY,
     tenant_id TEXT NOT NULL,
@@ -58,6 +61,9 @@ CREATE UNIQUE INDEX document_comment_threads_open_suggestion_key
     ON document_comment_threads (suggestion_id)
     WHERE resolved_at IS NULL AND suggestion_id IS NOT NULL;
 
+CREATE INDEX document_comment_threads_document_id_created_at_id_idx
+    ON document_comment_threads (document_id, created_at, id);
+
 CREATE TABLE document_comments (
     id TEXT PRIMARY KEY,
     tenant_id TEXT NOT NULL,
@@ -71,3 +77,6 @@ CREATE TABLE document_comments (
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL
 );
+
+CREATE INDEX document_comments_thread_id_created_at_id_idx
+    ON document_comments (thread_id, created_at, id);
