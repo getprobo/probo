@@ -632,8 +632,7 @@ func buildGrafanaProbeURL(conn *coredata.Connector, _ Endpoints) (string, error)
 
 	u = u.JoinPath("api", "org", "users")
 	q := u.Query()
-	q.Set("perpage", "1")
-	q.Set("page", "1")
+	q.Set("limit", "1")
 	u.RawQuery = q.Encode()
 
 	return u.String(), nil

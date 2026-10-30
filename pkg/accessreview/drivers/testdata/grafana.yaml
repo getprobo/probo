@@ -8,29 +8,35 @@ interactions:
         proto_minor: 1
         content_length: 0
         host: grafana.example.com
-        form:
-            page:
-                - "1"
-            perpage:
-                - "100"
         headers:
             Accept:
                 - application/json
-        url: https://grafana.example.com/api/org/users?page=1&perpage=100
+        url: https://grafana.example.com/api/org/users
         method: GET
       response:
-        proto: HTTP/2.0
-        proto_major: 2
-        proto_minor: 0
-        content_length: -1
-        uncompressed: true
-        body: '[{"userId":1,"email":"admin@example.com","login":"admin@example.com","name":"Admin User","role":"Admin","lastSeenAt":"2026-05-20T10:00:00Z","isDisabled":false},{"userId":2,"email":"","login":"viewer@example.com","name":"Viewer User","role":"Viewer","lastSeenAt":"","isDisabled":true}]'
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 685
+        body: '[{"orgId":1,"userId":1,"uid":"fg2s7f61rxji8f","email":"admin@example.com","name":"Admin User","avatarUrl":"/avatar/e64c7d89f26bd1972efa854d13d7dd61","login":"admin","role":"Admin","lastSeenAt":"2026-10-30T12:04:58+01:00","lastSeenAtAge":"3 minutes","isDisabled":false,"authLabels":null,"isExternallySynced":false,"isProvisioned":false},{"orgId":1,"userId":2,"uid":"eg2s7hm90cyyod","email":"viewer@example.com","name":"Viewer User","avatarUrl":"/avatar/426caa1f3e35c0b18f73110d2b2c6f74","login":"viewer@example.com","role":"Viewer","lastSeenAt":"2016-10-30T12:05:43+01:00","lastSeenAtAge":"10 years","isDisabled":true,"authLabels":null,"isExternallySynced":false,"isProvisioned":false}]'
         headers:
+            Cache-Control:
+                - no-store
+            Content-Length:
+                - "685"
             Content-Type:
                 - application/json
+            Date:
+                - Fri, 30 Oct 2026 11:08:10 GMT
+            X-Content-Type-Options:
+                - nosniff
+            X-Frame-Options:
+                - deny
+            X-Xss-Protection:
+                - 1; mode=block
         status: 200 OK
         code: 200
-        duration: 100ms
+        duration: 27.676042ms
     - id: 1
       request:
         proto: HTTP/1.1
@@ -44,15 +50,26 @@ interactions:
         url: https://grafana.example.com/api/org
         method: GET
       response:
-        proto: HTTP/2.0
-        proto_major: 2
-        proto_minor: 0
-        content_length: -1
-        uncompressed: true
-        body: '{"id":1,"name":"Acme Grafana"}'
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 117
+        body: '{"id":1,"name":"Acme Grafana","address":{"address1":"","address2":"","city":"","zipCode":"","state":"","country":""}}'
         headers:
+            Cache-Control:
+                - no-store
+            Content-Length:
+                - "117"
             Content-Type:
                 - application/json
+            Date:
+                - Fri, 30 Oct 2026 11:08:10 GMT
+            X-Content-Type-Options:
+                - nosniff
+            X-Frame-Options:
+                - deny
+            X-Xss-Protection:
+                - 1; mode=block
         status: 200 OK
         code: 200
-        duration: 100ms
+        duration: 6.735917ms

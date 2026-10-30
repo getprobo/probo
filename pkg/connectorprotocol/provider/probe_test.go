@@ -95,6 +95,24 @@ func TestBuildSigNozProbeURL(t *testing.T) {
 	assert.Equal(t, "https://acme.us.signoz.cloud/api/v2/users", probeURL)
 }
 
+func TestBuildGrafanaProbeURL(t *testing.T) {
+	t.Parallel()
+
+	conn := &coredata.Connector{Provider: coredata.ConnectorProviderGrafana}
+	require.NoError(
+		t,
+		conn.SetSettings(
+			&coredata.GrafanaConnectorSettings{
+				BaseURL: "https://grafana.example.com/",
+			},
+		),
+	)
+
+	probeURL, err := buildGrafanaProbeURL(conn, Endpoints{})
+	require.NoError(t, err)
+	assert.Equal(t, "https://grafana.example.com/api/org/users?limit=1", probeURL)
+}
+
 func TestBuildZendeskProbeURL(t *testing.T) {
 	t.Parallel()
 
