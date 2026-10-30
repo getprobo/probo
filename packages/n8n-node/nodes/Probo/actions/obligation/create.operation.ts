@@ -99,7 +99,6 @@ export const description: INodeProperties[] = [
 		displayName: 'Owner',
 		resource: ['obligation'],
 		operation: ['create'],
-		required: false,
 	}),
 	{
 		displayName: 'Last Review Date',
@@ -226,7 +225,7 @@ export async function execute(
 			requirement,
 			...(actionsToBeImplemented && { actionsToBeImplemented }),
 			...(regulator && { regulator }),
-			...(ownerId && { ownerId }),
+			ownerId,
 			...(lastReviewDate && { lastReviewDate }),
 			...(dueDate && { dueDate }),
 			...(status && { status }),

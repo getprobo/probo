@@ -23,15 +23,15 @@ import { organizationLocator, documentLocator, compliancePortalLocator } from '.
 import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
-	compliancePortalLocator({
-		resource: ['compliancePortal'],
-		operation: ['updateDocumentVisibility'],
-	}),
 	organizationLocator({
 		resource: ['compliancePortal'],
 		operation: ['updateDocumentVisibility'],
 		required: false,
-		description: 'Organization to search documents in. Leave this empty when entering a document ID.',
+		description: 'Organization to search portals and documents in. Leave this empty when entering an ID.',
+	}),
+	compliancePortalLocator({
+		resource: ['compliancePortal'],
+		operation: ['updateDocumentVisibility'],
 	}),
 	documentLocator({
 		resource: ['compliancePortal'],

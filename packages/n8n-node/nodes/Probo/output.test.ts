@@ -18,8 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-// The n8n package cannot depend on vitest. This file is excluded from the build.
-// eslint-disable-next-line @n8n/community-nodes/no-restricted-imports
 import { describe, expect, it } from 'vitest';
 import type { IDataObject } from 'n8n-workflow';
 

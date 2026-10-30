@@ -23,15 +23,15 @@ import { organizationLocator, documentLocator, internalControlLocator } from '..
 import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
-	internalControlLocator({
-		resource: ['internalControl'],
-		operation: ['unlinkDocument'],
-	}),
 	organizationLocator({
 		resource: ['internalControl'],
 		operation: ['unlinkDocument'],
 		required: false,
-		description: 'Organization to search documents in. Leave this empty when entering a document ID.',
+		description: 'Organization to search internal controls and documents in. Leave this empty when entering an ID.',
+	}),
+	internalControlLocator({
+		resource: ['internalControl'],
+		operation: ['unlinkDocument'],
 	}),
 	documentLocator({
 		resource: ['internalControl'],

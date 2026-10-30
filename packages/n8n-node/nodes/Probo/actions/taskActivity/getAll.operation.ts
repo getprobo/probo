@@ -30,7 +30,7 @@ export const description: INodeProperties[] = [
 		required: false,
 		description: 'Organization to search in. Leave this empty when entering an ID.',
 	}),
-		taskLocator({
+	taskLocator({
 		resource: ['taskActivity'],
 		operation: ['getAll'],
 	}),

@@ -18,20 +18,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { NodeOperationError, type INodeProperties, type IExecuteFunctions, type INodeExecutionData } from 'n8n-workflow';
 import { organizationLocator, documentLocator, controlLocator } from '../../locators';
 import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
-	controlLocator({
-		resource: ['control'],
-		operation: ['linkDocument'],
-	}),
 	organizationLocator({
 		resource: ['control'],
 		operation: ['linkDocument'],
 		required: false,
-		description: 'Organization to search documents in. Leave this empty when entering a document ID.',
+		description: 'Organization to search controls and documents in. Leave this empty when entering an ID.',
+	}),
+	controlLocator({
+		resource: ['control'],
+		operation: ['linkDocument'],
 	}),
 	documentLocator({
 		resource: ['control'],
@@ -45,6 +45,9 @@ export async function execute(
 ): Promise<INodeExecutionData> {
 	const controlId = this.getNodeParameter('controlId', itemIndex, '', { extractValue: true }) as string;
 	const documentId = this.getNodeParameter('documentId', itemIndex, '', { extractValue: true }) as string;
+	if (!documentId) {
+		throw new NodeOperationError(this.getNode(), 'Select a document', { itemIndex });
+	}
 
 	const query = `
 		mutation CreateControlDocumentMapping($input: CreateControlDocumentMappingInput!) {

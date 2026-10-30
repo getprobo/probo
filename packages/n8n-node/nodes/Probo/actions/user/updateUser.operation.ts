@@ -40,7 +40,7 @@ export const description: INodeProperties[] = [
 		required: false,
 		description: 'Organization to search in. Leave this empty when entering an ID.',
 	}),
-		personLocator({
+	personLocator({
 		name: 'userId',
 		displayName: 'User',
 		resource: ['user'],

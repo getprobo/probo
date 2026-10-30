@@ -165,6 +165,8 @@ export const description: INodeProperties[] = [
 				name: 'parentThirdPartyId',
 				displayName: 'Parent Third Party',
 				required: false,
+				description:
+					'The ID of the parent third party (creates a child relationship; level is derived from the parent)',
 			}),
 			{
 				displayName: 'Privacy Policy URL',

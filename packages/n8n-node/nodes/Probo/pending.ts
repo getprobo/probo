@@ -19,7 +19,32 @@
 // SOFTWARE.
 
 import type { IDataObject } from 'n8n-workflow';
-import { personFields, waitingFields } from './output';
+import { personFields, profileSelection, waitingFields } from './output';
+
+export const PENDING_PAGE_SIZE = 20;
+
+const signatureFieldsFragment = `
+fragment SignatureFields on DocumentVersionSignature {
+	id
+	state
+	requestedAt
+	signedBy {
+		${profileSelection}
+	}
+}
+`;
+
+const decisionFieldsFragment = `
+fragment DecisionFields on DocumentVersionApprovalDecision {
+	id
+	state
+	comment
+	createdAt
+	approver {
+		${profileSelection}
+	}
+}
+`;
 
 export type GraphQLRequest = (query: string, variables: IDataObject) => Promise<IDataObject>;
 
@@ -39,7 +64,7 @@ interface Connection<T> {
 }
 
 const pendingSignatureDocumentsQuery = `
-	query PendingSignatureDocuments($organizationId: ID!, $first: Int, $after: CursorKey) {
+	query PendingSignatureDocuments($organizationId: ID!, $first: Int, $after: CursorKey, $nestedFirst: Int!) {
 		node(id: $organizationId) {
 			... on Organization {
 				documents(first: $first, after: $after, filter: { status: [ACTIVE] }) {
@@ -47,7 +72,7 @@ const pendingSignatureDocumentsQuery = `
 						node {
 							id
 							title
-							versions(first: 100, filter: { statuses: [PUBLISHED] }) {
+							versions(first: $nestedFirst, filter: { statuses: [PUBLISHED] }) {
 								edges {
 									node {
 										id
@@ -55,17 +80,10 @@ const pendingSignatureDocumentsQuery = `
 										major
 										minor
 										status
-										signatures(first: 100, filter: { states: [REQUESTED] }) {
+										signatures(first: $nestedFirst, filter: { states: [REQUESTED] }) {
 											edges {
 												node {
-													id
-													state
-													requestedAt
-													signedBy {
-														id
-														fullName
-														emailAddress
-													}
+													...SignatureFields
 												}
 											}
 											pageInfo {
@@ -90,10 +108,11 @@ const pendingSignatureDocumentsQuery = `
 			}
 		}
 	}
+	${signatureFieldsFragment}
 `;
 
 const pendingSignatureVersionsQuery = `
-	query PendingSignatureVersions($documentId: ID!, $first: Int, $after: CursorKey) {
+	query PendingSignatureVersions($documentId: ID!, $first: Int, $after: CursorKey, $nestedFirst: Int!) {
 		node(id: $documentId) {
 			... on Document {
 				versions(first: $first, after: $after, filter: { statuses: [PUBLISHED] }) {
@@ -104,17 +123,10 @@ const pendingSignatureVersionsQuery = `
 							major
 							minor
 							status
-							signatures(first: 100, filter: { states: [REQUESTED] }) {
+							signatures(first: $nestedFirst, filter: { states: [REQUESTED] }) {
 								edges {
 									node {
-										id
-										state
-										requestedAt
-										signedBy {
-											id
-											fullName
-											emailAddress
-										}
+										...SignatureFields
 									}
 								}
 								pageInfo {
@@ -132,6 +144,7 @@ const pendingSignatureVersionsQuery = `
 			}
 		}
 	}
+	${signatureFieldsFragment}
 `;
 
 const pendingSignaturesQuery = `
@@ -141,14 +154,7 @@ const pendingSignaturesQuery = `
 				signatures(first: $first, after: $after, filter: { states: [REQUESTED] }) {
 					edges {
 						node {
-							id
-							state
-							requestedAt
-							signedBy {
-								id
-								fullName
-								emailAddress
-							}
+							...SignatureFields
 						}
 					}
 					pageInfo {
@@ -159,10 +165,11 @@ const pendingSignaturesQuery = `
 			}
 		}
 	}
+	${signatureFieldsFragment}
 `;
 
 const pendingApprovalDocumentsQuery = `
-	query PendingApprovalDocuments($organizationId: ID!, $first: Int, $after: CursorKey) {
+	query PendingApprovalDocuments($organizationId: ID!, $first: Int, $after: CursorKey, $nestedFirst: Int!) {
 		node(id: $organizationId) {
 			... on Organization {
 				documents(first: $first, after: $after, filter: { status: [ACTIVE] }) {
@@ -170,7 +177,7 @@ const pendingApprovalDocumentsQuery = `
 						node {
 							id
 							title
-							versions(first: 100, filter: { statuses: [PENDING_APPROVAL] }) {
+							versions(first: $nestedFirst, filter: { statuses: [PENDING_APPROVAL] }) {
 								edges {
 									node {
 										id
@@ -178,23 +185,15 @@ const pendingApprovalDocumentsQuery = `
 										major
 										minor
 										status
-										approvalQuorums(first: 100) {
+										approvalQuorums(first: $nestedFirst) {
 											edges {
 												node {
 													id
 													status
-													decisions(first: 100, filter: { states: [PENDING] }) {
+													decisions(first: $nestedFirst, filter: { states: [PENDING] }) {
 														edges {
 															node {
-																id
-																state
-																comment
-																createdAt
-																approver {
-																	id
-																	fullName
-																	emailAddress
-																}
+																...DecisionFields
 															}
 														}
 														pageInfo {
@@ -226,10 +225,11 @@ const pendingApprovalDocumentsQuery = `
 			}
 		}
 	}
+	${decisionFieldsFragment}
 `;
 
 const pendingApprovalVersionsQuery = `
-	query PendingApprovalVersions($documentId: ID!, $first: Int, $after: CursorKey) {
+	query PendingApprovalVersions($documentId: ID!, $first: Int, $after: CursorKey, $nestedFirst: Int!) {
 		node(id: $documentId) {
 			... on Document {
 				versions(first: $first, after: $after, filter: { statuses: [PENDING_APPROVAL] }) {
@@ -240,23 +240,15 @@ const pendingApprovalVersionsQuery = `
 							major
 							minor
 							status
-							approvalQuorums(first: 100) {
+							approvalQuorums(first: $nestedFirst) {
 								edges {
 									node {
 										id
 										status
-										decisions(first: 100, filter: { states: [PENDING] }) {
+										decisions(first: $nestedFirst, filter: { states: [PENDING] }) {
 											edges {
 												node {
-													id
-													state
-													comment
-													createdAt
-													approver {
-														id
-														fullName
-														emailAddress
-													}
+													...DecisionFields
 												}
 											}
 											pageInfo {
@@ -281,10 +273,11 @@ const pendingApprovalVersionsQuery = `
 			}
 		}
 	}
+	${decisionFieldsFragment}
 `;
 
 const pendingApprovalQuorumsQuery = `
-	query PendingApprovalQuorums($documentVersionId: ID!, $first: Int, $after: CursorKey) {
+	query PendingApprovalQuorums($documentVersionId: ID!, $first: Int, $after: CursorKey, $nestedFirst: Int!) {
 		node(id: $documentVersionId) {
 			... on DocumentVersion {
 				approvalQuorums(first: $first, after: $after) {
@@ -292,18 +285,10 @@ const pendingApprovalQuorumsQuery = `
 						node {
 							id
 							status
-							decisions(first: 100, filter: { states: [PENDING] }) {
+							decisions(first: $nestedFirst, filter: { states: [PENDING] }) {
 								edges {
 									node {
-										id
-										state
-										comment
-										createdAt
-										approver {
-											id
-											fullName
-											emailAddress
-										}
+										...DecisionFields
 									}
 								}
 								pageInfo {
@@ -321,6 +306,7 @@ const pendingApprovalQuorumsQuery = `
 			}
 		}
 	}
+	${decisionFieldsFragment}
 `;
 
 const pendingApprovalDecisionsQuery = `
@@ -330,15 +316,7 @@ const pendingApprovalDecisionsQuery = `
 				decisions(first: $first, after: $after, filter: { states: [PENDING] }) {
 					edges {
 						node {
-							id
-							state
-							comment
-							createdAt
-							approver {
-								id
-								fullName
-								emailAddress
-							}
+							...DecisionFields
 						}
 					}
 					pageInfo {
@@ -349,6 +327,7 @@ const pendingApprovalDecisionsQuery = `
 			}
 		}
 	}
+	${decisionFieldsFragment}
 `;
 
 function nodesOf<T>(connection: Connection<T> | undefined): T[] {
@@ -376,6 +355,13 @@ function asConnection(value: unknown): Connection<IDataObject> | undefined {
 	return value as Connection<IDataObject>;
 }
 
+function pageSize(options: PendingOptions, collected: number): number {
+	if (options.returnAll) {
+		return PENDING_PAGE_SIZE;
+	}
+	return Math.max(1, Math.min(PENDING_PAGE_SIZE, options.limit - collected));
+}
+
 async function walkConnection(
 	initial: Connection<IDataObject> | undefined,
 	more: (after: string) => Promise<Connection<IDataObject> | undefined>,
@@ -384,7 +370,7 @@ async function walkConnection(
 	let connection = initial;
 	const seen = new Set<string>();
 
-	for (let page = 0; page < 100 && connection; page++) {
+	while (connection) {
 		for (const node of nodesOf(connection)) {
 			if (await visit(node)) {
 				return true;
@@ -406,14 +392,20 @@ async function walkConnection(
 async function eachDocumentPage(
 	request: GraphQLRequest,
 	query: string,
-	organizationId: string,
+	options: PendingOptions,
+	collected: () => number,
 	visit: (document: IDataObject) => Promise<boolean>,
 ): Promise<void> {
 	let after: string | undefined;
 	const seen = new Set<string>();
 
-	for (let page = 0; page < 100; page++) {
-		const response = await request(query, { organizationId, first: 100, after });
+	while (true) {
+		const response = await request(query, {
+			organizationId: options.organizationId,
+			first: PENDING_PAGE_SIZE,
+			nestedFirst: pageSize(options, collected()),
+			after,
+		});
 		const documents = asConnection(graphqlNode(response)?.documents);
 		for (const document of nodesOf(documents)) {
 			if (await visit(document)) {
@@ -514,14 +506,17 @@ export async function collectPendingSignatures(
 	await eachDocumentPage(
 		request,
 		pendingSignatureDocumentsQuery,
-		options.organizationId,
+		options,
+		() => items.length,
 		async (document) => {
 			return walkConnection(
 				asConnection(document.versions),
 				async (after) => {
+					const size = pageSize(options, items.length);
 					const response = await request(pendingSignatureVersionsQuery, {
 						documentId: document.id,
-						first: 100,
+						first: size,
+						nestedFirst: size,
 						after,
 					});
 					return asConnection(graphqlNode(response)?.versions);
@@ -532,7 +527,7 @@ export async function collectPendingSignatures(
 						async (after) => {
 							const response = await request(pendingSignaturesQuery, {
 								documentVersionId: version.id,
-								first: 100,
+								first: pageSize(options, items.length),
 								after,
 							});
 							return asConnection(graphqlNode(response)?.signatures);
@@ -562,14 +557,17 @@ export async function collectPendingApprovals(
 	await eachDocumentPage(
 		request,
 		pendingApprovalDocumentsQuery,
-		options.organizationId,
+		options,
+		() => items.length,
 		async (document) => {
 			return walkConnection(
 				asConnection(document.versions),
 				async (after) => {
+					const size = pageSize(options, items.length);
 					const response = await request(pendingApprovalVersionsQuery, {
 						documentId: document.id,
-						first: 100,
+						first: size,
+						nestedFirst: size,
 						after,
 					});
 					return asConnection(graphqlNode(response)?.versions);
@@ -578,9 +576,11 @@ export async function collectPendingApprovals(
 					return walkConnection(
 						asConnection(version.approvalQuorums),
 						async (after) => {
+							const size = pageSize(options, items.length);
 							const response = await request(pendingApprovalQuorumsQuery, {
 								documentVersionId: version.id,
-								first: 100,
+								first: size,
+								nestedFirst: size,
 								after,
 							});
 							return asConnection(graphqlNode(response)?.approvalQuorums);
@@ -591,7 +591,7 @@ export async function collectPendingApprovals(
 								async (after) => {
 									const response = await request(pendingApprovalDecisionsQuery, {
 										approvalQuorumId: quorum.id,
-										first: 100,
+										first: pageSize(options, items.length),
 										after,
 									});
 									return asConnection(graphqlNode(response)?.decisions);

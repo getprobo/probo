@@ -32,6 +32,8 @@ export const description: INodeProperties[] = [
 		displayName: 'Profile',
 		resource: ['user'],
 		operation: ['inviteUser'],
+		description:
+			'Profile to invite. The list includes pending and deactivated profiles. Enter an ID for an active member.',
 	}),
 ];
 
