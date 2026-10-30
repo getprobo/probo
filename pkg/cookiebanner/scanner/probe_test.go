@@ -22,12 +22,15 @@ package scanner
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -59,7 +62,8 @@ func TestReadStaticPage_CollectsEmbedHostsAndLinks(t *testing.T) {
 <a href="https://www.example.com/www">www</a>
 <a href="mailto:hello@example.com">mail</a>`
 
-	page := readStaticPage(base, strings.NewReader(body), site, api)
+	page, err := readStaticPage(base, strings.NewReader(body), site, api)
+	require.NoError(t, err)
 
 	assert.Equal(
 		t,
@@ -89,7 +93,8 @@ func TestReadStaticPage_ResolvesAgainstBaseHref(t *testing.T) {
 <base href="https://ignored.example/late/">
 <a href="after">after</a>`
 
-	page := readStaticPage(base, strings.NewReader(body), site, api)
+	page, err := readStaticPage(base, strings.NewReader(body), site, api)
+	require.NoError(t, err)
 
 	assert.Equal(t, []string{"cdn.example.net"}, page.hosts)
 	assert.Equal(
@@ -195,7 +200,7 @@ func TestProbeEmbeds_StopsWhenTheSiteRefuses(t *testing.T) {
 	s.front.push(QueueItem{URL: server.URL + "/docs/x", FromSitemap: true})
 
 	_, err := s.probeEmbeds(context.Background(), []string{server.URL + "/docs/x"})
-	require.ErrorIs(t, err, ErrBannerNotInstalled)
+	require.ErrorIs(t, err, ErrBlocked)
 
 	assert.Equal(t, int32(0), others.Load())
 
@@ -252,6 +257,78 @@ func TestProbeEmbeds_RequiresThisBanner(t *testing.T) {
 			assert.Equal(t, int32(0), others.Load())
 		})
 	}
+}
+
+func TestProbeEmbeds_TimeoutIsNotAMissingBanner(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		<-r.Context().Done()
+	}))
+	t.Cleanup(server.Close)
+
+	s := probeScan(t, server)
+	s.in.Limits.ProbeTimeout = 20 * time.Millisecond
+
+	confirmed, err := s.probeEmbeds(context.Background(), nil)
+	require.NoError(t, err)
+	assert.False(t, confirmed)
+}
+
+func TestProbeEmbeds_ShortReadIsNotAMissingBanner(t *testing.T) {
+	t.Parallel()
+
+	banner := `<probo-cookie-banner banner-id="banner"></probo-cookie-banner>`
+	body := strings.Repeat("<p>pad</p>", 40) + banner
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		_, _ = w.Write([]byte(body))
+	}))
+	t.Cleanup(server.Close)
+
+	s := probeScan(t, server)
+	s.in.Limits.MaxProbeBytes = 32
+
+	confirmed, err := s.probeEmbeds(context.Background(), nil)
+	require.NoError(t, err)
+	assert.False(t, confirmed)
+}
+
+func TestProbeEmbeds_BannerBeforeTheCapStillCounts(t *testing.T) {
+	t.Parallel()
+
+	banner := `<probo-cookie-banner banner-id="banner"></probo-cookie-banner>`
+	body := banner + strings.Repeat("<p>pad</p>", 40)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		_, _ = w.Write([]byte(body))
+	}))
+	t.Cleanup(server.Close)
+
+	s := probeScan(t, server)
+	s.in.Limits.MaxProbeBytes = len(banner)
+
+	confirmed, err := s.probeEmbeds(context.Background(), nil)
+	require.NoError(t, err)
+	assert.True(t, confirmed)
+}
+
+func TestWithoutRequestURL_DropsTheFailingURL(t *testing.T) {
+	t.Parallel()
+
+	cause := errors.New("connection refused")
+	wrapped := fmt.Errorf(
+		"cannot fetch page: %w",
+		&url.Error{Op: "Get", URL: "https://example.com/cb?token=secret", Err: cause},
+	)
+
+	got := withoutRequestURL(wrapped)
+
+	assert.ErrorIs(t, got, cause)
+	assert.NotContains(t, got.Error(), "token")
+	assert.NotContains(t, got.Error(), "example.com")
 }
 
 func probeScan(t *testing.T, server *httptest.Server) *scan {

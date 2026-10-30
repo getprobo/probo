@@ -21,9 +21,12 @@
 package scanner
 
 import (
+	"fmt"
 	"net"
 	"net/url"
 	"strings"
+
+	"go.probo.inc/probo/pkg/netcheck"
 )
 
 // origin is a scheme, host and port. The host has no leading "www." and
@@ -117,8 +120,8 @@ func chooseStart(site origin, apex, www hostVerdict) (string, error) {
 			return site.wwwRoot(), nil
 		}
 
-		return "", errResolve(site.host)
+		return "", fmt.Errorf("cannot start scan: cannot resolve host %q", site.host)
 	default:
-		return "", errPrivate(site.host)
+		return "", fmt.Errorf("cannot start scan: %w: host %q", netcheck.ErrBlockedAddress, site.host)
 	}
 }

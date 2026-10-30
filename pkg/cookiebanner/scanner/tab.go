@@ -135,7 +135,7 @@ func (s *scan) prepareTab(ctx context.Context, tab *chromedp.Target) error {
 		return err
 	}
 
-	vid := newVisitorID()
+	vid := randomHex(16)
 	if script, ok := visitorIDScript(s.in, s.site, vid); ok {
 		if _, err := cdp.Call(ctx, tab, page.AddScriptToEvaluateOnNewDocument, page.AddScriptToEvaluateOnNewDocumentParams{
 			Source: script,
@@ -433,14 +433,6 @@ func jsString(s string) string {
 	}
 
 	return string(encoded)
-}
-
-func newVisitorID() string {
-	return randomHex(16)
-}
-
-func newBindingName() string {
-	return "b" + randomHex(16)
 }
 
 func randomHex(n int) string {

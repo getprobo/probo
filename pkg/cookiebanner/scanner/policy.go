@@ -22,7 +22,6 @@ package scanner
 
 import (
 	"context"
-	"fmt"
 	"net"
 	"net/http"
 	"net/url"
@@ -183,12 +182,4 @@ func lookupHost(ctx context.Context, host string) hostVerdict {
 	}
 
 	return hostPublic
-}
-
-func errPrivate(host string) error {
-	return fmt.Errorf("cannot start scan: %w: host %q", netcheck.ErrBlockedAddress, host)
-}
-
-func errResolve(host string) error {
-	return fmt.Errorf("cannot start scan: cannot resolve host %q", host)
 }
