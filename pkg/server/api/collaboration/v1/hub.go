@@ -83,6 +83,7 @@ type (
 
 	Room struct {
 		mu            sync.Mutex
+		docMu         sync.Mutex
 		collaboration *collaboration.DocumentCollaboration
 		documents     Documents
 		scope         coredata.Scoper
@@ -294,6 +295,18 @@ func (h *Hub) addPeerLocked(
 
 func (l *RoomLease) Collaboration() *collaboration.DocumentCollaboration {
 	return l.room.collaboration
+}
+
+// LockDocument serializes mutations of the shared room document across every
+// connection in the room. It must wrap any read-modify-write on the document
+// (such as the comment-only snapshot/validate/restore) so a concurrent editor's
+// change on another socket cannot interleave and be rolled back.
+func (l *RoomLease) LockDocument() {
+	l.room.docMu.Lock()
+}
+
+func (l *RoomLease) UnlockDocument() {
+	l.room.docMu.Unlock()
 }
 
 func (l *RoomLease) Revision() int64 {
