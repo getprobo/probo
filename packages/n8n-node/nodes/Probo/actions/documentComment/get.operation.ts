@@ -18,8 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+import type { IDataObject, IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
+import { NodeOperationError } from 'n8n-workflow';
+import { proboApiRequestAllItems } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
@@ -35,20 +36,42 @@ export const description: INodeProperties[] = [
 export async function execute(this: IExecuteFunctions, itemIndex: number): Promise<INodeExecutionData> {
 	const threadId = this.getNodeParameter('threadId', itemIndex) as string;
 	const query = `
-		query GetDocumentCommentThread($threadId: ID!) {
+		query GetDocumentCommentThread($threadId: ID!, $first: Int, $after: CursorKey) {
 			node(id: $threadId) {
+				__typename
 				... on DocumentCommentThread {
 					id
 					anchorQuote
 					resolvedAt
 					suggestion { id status }
-					comments(first: 50) {
+					comments(first: $first, after: $after, orderBy: { field: CREATED_AT, direction: ASC }) {
 						edges { node { id content createdAt author { id fullName } } }
+						pageInfo { hasNextPage endCursor }
 					}
 				}
 			}
 		}
 	`;
-	const responseData = await proboApiRequest.call(this, query, { threadId });
-	return { json: responseData, pairedItem: { item: itemIndex } };
+
+	let thread: IDataObject | undefined;
+	const comments = await proboApiRequestAllItems.call(
+		this,
+		query,
+		{ threadId },
+		(response) => {
+			const data = response?.data as IDataObject | undefined;
+			const node = data?.node as IDataObject | undefined;
+			if (!node || node.__typename !== 'DocumentCommentThread') {
+				throw new NodeOperationError(this.getNode(), `Document comment thread ${threadId} not found`);
+			}
+			if (thread === undefined) {
+				thread = { ...node };
+				delete thread.comments;
+				delete thread.__typename;
+			}
+			return node.comments as IDataObject | undefined;
+		},
+	);
+
+	return { json: { ...thread, comments }, pairedItem: { item: itemIndex } };
 }

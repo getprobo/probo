@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import type { IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
+import { NodeOperationError } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
@@ -51,6 +52,7 @@ export const description: INodeProperties[] = [
 		displayName: 'Quote Occurrence',
 		name: 'quoteOccurrence',
 		type: 'number',
+		typeOptions: { minValue: 0 },
 		default: 0,
 		displayOptions: { show: { resource: ['documentComment'], operation: ['create'] } },
 	},
@@ -70,6 +72,13 @@ export async function execute(this: IExecuteFunctions, itemIndex: number): Promi
 	const quote = this.getNodeParameter('quote', itemIndex, '') as string;
 	const quoteOccurrence = this.getNodeParameter('quoteOccurrence', itemIndex, 0) as number;
 	const suggestionId = this.getNodeParameter('suggestionId', itemIndex, '') as string;
+	if (!quote && !suggestionId) {
+		throw new NodeOperationError(
+			this.getNode(),
+			'Provide a Quote or a Suggestion ID to anchor the comment',
+			{ itemIndex },
+		);
+	}
 	const input: Record<string, string | number> = { documentId, content };
 	if (quote) {
 		input.quote = quote;
