@@ -91,7 +91,7 @@ export function DateRangeField(props: DateRangeFieldProps) {
   const [nativeInvalid, setNativeInvalid] = useState(false);
   const skipCloseCommit = useRef(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
-  if (nativeInvalid && value.from !== "" && value.to !== "") {
+  if (nativeInvalid && (!required || (value.from !== "" && value.to !== ""))) {
     setNativeInvalid(false);
   }
 
@@ -193,8 +193,8 @@ export function DateRangeField(props: DateRangeFieldProps) {
     <div className={root({ className })}>
       {name != null && (
         <>
-          <input type="hidden" name={`${name}From`} value={value.from} />
-          <input type="hidden" name={`${name}To`} value={value.to} />
+          <input type="hidden" name={`${name}From`} value={value.from} disabled={disabled} />
+          <input type="hidden" name={`${name}To`} value={value.to} disabled={disabled} />
         </>
       )}
       {required && (
