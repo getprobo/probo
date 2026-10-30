@@ -29,7 +29,6 @@ export const auditLogOutcomes = ["ALLOWED", "DENIED"] as const;
 export type AuditLogOutcome = (typeof auditLogOutcomes)[number];
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 export interface AuditLogListFilter {
   action?: string | null;
@@ -83,19 +82,33 @@ export function auditLogFilterKey(filter: object | null | undefined): string {
   );
 }
 
-function utcStart(date: string): string | null {
+function localDayParts(date: string): { year: number; month: number; day: number } | null {
   if (!isIsoDate(date)) {
     return null;
   }
-  return new Date(`${date}T00:00:00Z`).toISOString();
-}
-
-function utcEndExclusive(date: string): string | null {
-  const start = utcStart(date);
-  if (start == null) {
+  const [year, month, day] = date.split("-").map(Number);
+  if (year == null || month == null || day == null) {
     return null;
   }
-  return new Date(Date.parse(start) + DAY_MS).toISOString();
+  return { year, month, day };
+}
+
+// The picker stores a local calendar day. Bounds are that day's local
+// midnight, converted to UTC, so the query matches the day the user chose.
+export function auditLogLocalDayStart(date: string): string | null {
+  const parts = localDayParts(date);
+  if (parts == null) {
+    return null;
+  }
+  return new Date(parts.year, parts.month - 1, parts.day).toISOString();
+}
+
+export function auditLogLocalDayEndExclusive(date: string): string | null {
+  const parts = localDayParts(date);
+  if (parts == null) {
+    return null;
+  }
+  return new Date(parts.year, parts.month - 1, parts.day + 1).toISOString();
 }
 
 function auditLogGraphqlFilter(filters: {
@@ -140,8 +153,8 @@ function auditLogGraphqlFilter(filters: {
   }
 
   const span = orderedDateRange(filters.from, filters.to);
-  const createdFrom = utcStart(span.from);
-  const createdTo = utcEndExclusive(span.to);
+  const createdFrom = auditLogLocalDayStart(span.from);
+  const createdTo = auditLogLocalDayEndExclusive(span.to);
   if (createdFrom != null) {
     filter.createdFrom = createdFrom;
   }
