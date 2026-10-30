@@ -39,11 +39,13 @@ import type { ExportAuditLogDialog_exportMutation } from "#/__generated__/iam/Ex
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 
+import {
+  auditLogLocalDayEndExclusive,
+  auditLogLocalDayStart,
+} from "../../_lib/useAuditLogListFilters";
 import { exportAuditLogDialog } from "../variants";
 
 const AUDIT_LOG_NS = "iam/organizations/audit-log";
-const DAY_MS = 24 * 60 * 60 * 1000;
-
 const exportMutation = graphql`
   mutation ExportAuditLogDialog_exportMutation(
     $input: RequestAuditLogExportInput!
@@ -70,7 +72,9 @@ export function ExportAuditLogDialog() {
       },
     );
   function handleExport() {
-    if (fromDate === "" || toDate === "") {
+    const fromTime = auditLogLocalDayStart(fromDate);
+    const toTime = auditLogLocalDayEndExclusive(toDate);
+    if (fromTime == null || toTime == null) {
       return;
     }
 
@@ -78,8 +82,8 @@ export function ExportAuditLogDialog() {
       variables: {
         input: {
           organizationId,
-          fromTime: new Date(`${fromDate}T00:00:00Z`).toISOString(),
-          toTime: new Date(Date.parse(`${toDate}T00:00:00Z`) + DAY_MS).toISOString(),
+          fromTime,
+          toTime,
         },
       },
     }).then(() => {
