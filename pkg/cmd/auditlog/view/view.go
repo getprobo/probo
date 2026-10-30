@@ -141,6 +141,8 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			actor := e.ActorID
 			if e.ActorEmail != nil && *e.ActorEmail != "" {
 				actor = *e.ActorEmail
+			} else if e.ActorName != nil && *e.ActorName != "" {
+				actor = *e.ActorName
 			}
 
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("ID:"), e.ID)
