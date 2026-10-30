@@ -29,6 +29,16 @@ import (
 	"time"
 )
 
+const (
+	// maxEmbedHostsPerItem bounds the static hosts kept for one queued
+	// page. The list only decides visit order.
+	maxEmbedHostsPerItem = 32
+
+	// maxEmbedHostsPerScan bounds those hosts across the queue, so a
+	// large page cannot inflate the checkpoint.
+	maxEmbedHostsPerScan = 2048
+)
+
 var localeSegment = regexp.MustCompile(`(?i)^[a-z]{2}([-_][a-z]{2,4})?$`)
 
 type (
@@ -37,12 +47,13 @@ type (
 	// least visited section, then links before sitemap entries, then
 	// shallower pages, then insertion order.
 	frontier struct {
-		visited  map[string]struct{}
-		queued   map[string]*frontierEntry
-		entries  []*frontierEntry
-		sections map[string]int
-		covered  map[string]struct{}
-		maxQueue int
+		visited    map[string]struct{}
+		queued     map[string]*frontierEntry
+		entries    []*frontierEntry
+		sections   map[string]int
+		covered    map[string]struct{}
+		maxQueue   int
+		embedHosts int
 	}
 
 	frontierEntry struct {
@@ -98,7 +109,9 @@ func (f *frontier) insert(item QueueItem, capped bool) {
 	}
 
 	if entry, waiting := f.queued[key]; waiting {
+		prev := slices.Clone(entry.item.EmbedHosts)
 		entry.merge(item)
+		entry.item.EmbedHosts = f.retainHosts(prev, entry.item.EmbedHosts)
 
 		return
 	}
@@ -107,7 +120,7 @@ func (f *frontier) insert(item QueueItem, capped bool) {
 		return
 	}
 
-	item.EmbedHosts = unionHosts(nil, item.EmbedHosts)
+	item.EmbedHosts = f.retainHosts(nil, unionHosts(nil, limitHosts(item.EmbedHosts, maxEmbedHostsPerItem)))
 	entry := &frontierEntry{item: item, key: key, section: sectionOf(key)}
 	f.entries = append(f.entries, entry)
 	f.queued[key] = entry
@@ -206,8 +219,53 @@ func (f *frontier) len() int {
 }
 
 func (f *frontier) removeAt(i int) {
+	f.releaseHosts(len(f.entries[i].item.EmbedHosts))
 	delete(f.queued, f.entries[i].key)
 	f.entries = slices.Delete(f.entries, i, i+1)
+}
+
+// retainHosts keeps the leading hosts that still fit on the item and in
+// the queue. prev is the item's current list and is already counted.
+func (f *frontier) retainHosts(prev, next []string) []string {
+	f.releaseHosts(len(prev))
+
+	next = limitHosts(next, maxEmbedHostsPerItem)
+
+	room := maxEmbedHostsPerScan - f.embedHosts
+	if room <= 0 || len(next) == 0 {
+		return nil
+	}
+
+	if len(next) > room {
+		next = append([]string(nil), next[:room]...)
+	}
+
+	f.embedHosts += len(next)
+
+	return next
+}
+
+func (f *frontier) releaseHosts(n int) {
+	f.embedHosts -= n
+	if f.embedHosts < 0 {
+		f.embedHosts = 0
+	}
+}
+
+func limitHosts(hosts []string, max int) []string {
+	if len(hosts) <= max {
+		return hosts
+	}
+
+	return append([]string(nil), hosts[:max]...)
+}
+
+func addEmbedHost(hosts []string, host string) []string {
+	if len(hosts) >= maxEmbedHostsPerItem || slices.Contains(hosts, host) {
+		return hosts
+	}
+
+	return append(hosts, host)
 }
 
 func (f *frontier) checkpoint(pages int, elapsed time.Duration, truncated bool) Checkpoint {

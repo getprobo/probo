@@ -25,6 +25,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -250,6 +251,27 @@ func TestRequestPolicy_Block(t *testing.T) {
 	assert.True(t, open.block(ctx, http.MethodGet, "http://127.0.0.1/admin", "", ""))
 	assert.True(t, open.block(ctx, http.MethodGet, "http://169.254.169.254/latest", "", ""))
 	assert.False(t, open.block(ctx, http.MethodGet, "http://8.8.8.8/", "", ""))
+}
+
+func TestConsentCookieURLs_CoversApexAndWWW(t *testing.T) {
+	t.Parallel()
+
+	site, ok := parseOrigin("https://www.probo.com/stories/blaxel-soc2")
+	require.True(t, ok)
+
+	urls := consentCookieURLs(site)
+	assert.Equal(t, []string{"https://probo.com/", "https://www.probo.com/"}, urls)
+
+	for _, rawURL := range urls {
+		params, cookieOK, err := consentCookie(Input{
+			BannerID: "banner",
+			Consent:  &Consent{Version: 1, CategorySlugs: []string{"functional"}},
+		}, rawURL, "abc")
+		require.NoError(t, err)
+		require.True(t, cookieOK)
+		assert.Equal(t, rawURL, params.URL)
+		assert.Empty(t, params.Domain)
+	}
 }
 
 func TestConsentCookie_IsURLEncoded(t *testing.T) {
@@ -858,6 +880,80 @@ func TestFrontier_LinkDisplacesSitemapEntryAtCap(t *testing.T) {
 	}
 
 	assert.Equal(t, []string{"https://example.com/docs/a", "https://example.com/pricing"}, urls)
+}
+
+func TestFrontier_CapsEmbedHosts(t *testing.T) {
+	t.Parallel()
+
+	hosts := make([]string, maxEmbedHostsPerItem+8)
+	for i := range hosts {
+		hosts[i] = "h" + strconv.Itoa(i) + ".example.net"
+	}
+
+	front := newFrontier(Checkpoint{}, 10)
+	front.push(QueueItem{URL: "https://example.com/a", Depth: 1, EmbedHosts: hosts})
+
+	queued := front.checkpoint(0, 0, false).Queue
+	require.Len(t, queued, 1)
+	assert.Len(t, queued[0].EmbedHosts, maxEmbedHostsPerItem)
+
+	front = newFrontier(Checkpoint{}, 80)
+
+	for i := range 70 {
+		pageHosts := make([]string, maxEmbedHostsPerItem)
+		for h := range pageHosts {
+			pageHosts[h] = "p" + strconv.Itoa(i) + "-" + strconv.Itoa(h) + ".example.net"
+		}
+
+		front.push(QueueItem{
+			URL:        "https://example.com/page-" + strconv.Itoa(i),
+			Depth:      1,
+			EmbedHosts: pageHosts,
+		})
+	}
+
+	var total int
+	for _, item := range front.checkpoint(0, 0, false).Queue {
+		total += len(item.EmbedHosts)
+	}
+
+	assert.Equal(t, maxEmbedHostsPerScan, total)
+	assert.Equal(t, maxEmbedHostsPerScan, front.embedHosts)
+
+	_, ok := front.pop()
+	require.True(t, ok)
+	assert.Less(t, front.embedHosts, maxEmbedHostsPerScan)
+}
+
+func TestNavigationBudget_StopsAtTheRunDeadline(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	s := &scan{
+		in:     Input{Limits: Limits{NavigationTimeout: 30 * time.Second}.withDefaults()},
+		runCtx: ctx,
+		pages:  1,
+	}
+
+	assert.Less(t, s.navigationBudget(false), 6*time.Second)
+	assert.Equal(t, 30*time.Second, s.navigationBudget(true))
+}
+
+func TestNavigationBudget_GraceVisitUsesTheFullTimeout(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	s := &scan{
+		in:     Input{Limits: Limits{NavigationTimeout: 30 * time.Second}.withDefaults()},
+		runCtx: ctx,
+	}
+
+	assert.Equal(t, time.Duration(0), s.navigationBudget(false))
+	assert.Equal(t, 30*time.Second, s.navigationBudget(true))
 }
 
 func TestFrontier_PopsUncoveredEmbedHostFirst(t *testing.T) {

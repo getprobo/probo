@@ -59,6 +59,14 @@ var (
 	// ErrBlocked means the site refused the scan, or the scanner refused
 	// the navigation, for example with HTTP 401, 403, 429 or 503.
 	ErrBlocked = errors.New("scanner: page blocked")
+
+	// ErrBannerNotInstalled means the homepage HTML has no probo banner.
+	// The scan stops before any page is opened.
+	ErrBannerNotInstalled = errors.New("scanner: banner is not installed")
+
+	// ErrDifferentBanner means the homepage embeds a probo banner, but not
+	// the one this scan is for. The scan stops before any page is opened.
+	ErrDifferentBanner = errors.New("scanner: a different banner is installed")
 )
 
 type (
@@ -100,6 +108,7 @@ type (
 
 	// QueueItem is one not-yet-visited URL in the crawl frontier.
 	// EmbedHosts are the third-party hosts its static HTML embeds.
+	// The frontier caps how many are kept per page and across the queue.
 	QueueItem struct {
 		URL         string   `json:"url"`
 		Depth       int      `json:"depth"`

@@ -56,6 +56,7 @@ type scan struct {
 	http           *http.Client
 	parent         context.Context
 	scanCtx        context.Context
+	runCtx         context.Context
 	tabCtx         context.Context
 	cancelTab      context.CancelFunc
 	target         *chromedp.Target
@@ -70,7 +71,8 @@ type scan struct {
 
 // Run crawls in.Origin in an isolated browser context of allocCtx. A
 // cancelled ctx pauses the scan after the last page that finished, and so
-// does a spent PagesPerRun or RunTimeout. The scan budget is
+// does a spent PagesPerRun or RunTimeout. RunTimeout covers sitemap and
+// probe discovery as well as page visits. The scan budget is
 // Limits.ScanTimeout minus checkpoint elapsed time.
 func Run(ctx context.Context, allocCtx context.Context, in Input) (*Result, error) {
 	in.Limits = in.Limits.withDefaults()
@@ -175,15 +177,32 @@ func Run(ctx context.Context, allocCtx context.Context, in Input) (*Result, erro
 		return nil, fmt.Errorf("cannot prepare browser: %w", err)
 	}
 
+	runCtx, cancelRun := context.WithTimeout(scanCtx, in.Limits.RunTimeout)
+	defer cancelRun()
+
+	s.runCtx = runCtx
+
 	if len(start.VisitedTemplates) == 0 && len(start.Queue) == 0 {
 		s.front.push(QueueItem{URL: startURL, Depth: 0})
 
-		sitemapURLs := s.sitemapURLs(scanCtx)
+		sitemapURLs := s.sitemapURLs(runCtx)
 		for _, raw := range sitemapURLs {
 			s.front.push(QueueItem{URL: raw, FromSitemap: true})
 		}
 
-		s.probeEmbeds(scanCtx, sitemapURLs)
+		confirmed, err := s.probeEmbeds(runCtx, sitemapURLs)
+		if err != nil {
+			return nil, err
+		}
+
+		if !confirmed {
+			s.front = newFrontier(Checkpoint{}, in.Limits.MaxQueue)
+			if cause, stop := s.stopping(); stop {
+				return s.finish(cause)
+			}
+
+			return s.finish(causeYield)
+		}
 	}
 
 	cause, err := s.loop()
@@ -204,9 +223,10 @@ func (in Input) client() *http.Client {
 
 func (s *scan) loop() (stopCause, error) {
 	var (
-		limits     = s.in.Limits
-		runStarted = time.Now()
-		visits     int
+		limits = s.in.Limits
+		visits int
+		grace  bool
+		used   bool
 	)
 
 	for {
@@ -222,10 +242,19 @@ func (s *scan) loop() (stopCause, error) {
 			return causeTruncated, nil
 		}
 
-		// A scan that has not loaded a page keeps the browser, so a site
-		// that never loads fails in one run instead of pausing forever.
-		if s.pages > 0 && (visits >= limits.PagesPerRun || time.Since(runStarted) >= limits.RunTimeout) {
+		// A scan that has not loaded a page keeps going, so a site that
+		// never loads fails in one run instead of pausing forever. After
+		// the run budget, that is a single full navigation.
+		if s.pages > 0 && (visits >= limits.PagesPerRun || s.runExpired()) {
 			return causeYield, nil
+		}
+
+		if s.runExpired() && !grace {
+			if used {
+				return causeFinished, nil
+			}
+
+			grace = true
 		}
 
 		item, _ := s.front.pop()
@@ -236,7 +265,12 @@ func (s *scan) loop() (stopCause, error) {
 			continue
 		}
 
-		page, links, err := s.visit(item)
+		page, links, err := s.visit(item, grace)
+		if grace {
+			grace = false
+			used = true
+		}
+
 		visits++
 
 		if err != nil {
@@ -246,6 +280,22 @@ func (s *scan) loop() (stopCause, error) {
 				}
 
 				return cause, nil
+			}
+
+			if s.runExpired() {
+				s.front.requeue(item)
+
+				if s.pages > 0 {
+					return causeYield, nil
+				}
+
+				if used {
+					return causeFinished, nil
+				}
+
+				grace = true
+
+				continue
 			}
 
 			s.front.markVisited(item.URL)
@@ -286,10 +336,10 @@ func (s *scan) loop() (stopCause, error) {
 	}
 }
 
-func (s *scan) visit(item QueueItem) (Page, []string, error) {
+func (s *scan) visit(item QueueItem, grace bool) (Page, []string, error) {
 	s.rec.beginPage()
 
-	navCtx, cancel := context.WithTimeout(s.tabCtx, s.in.Limits.NavigationTimeout)
+	navCtx, cancel := context.WithTimeout(s.tabCtx, s.navigationBudget(grace))
 	err := chromedp.Do(navCtx, chromedp.Navigate(item.URL))
 
 	cancel()
@@ -359,12 +409,14 @@ func (s *scan) waitNetworkIdle(window, cap time.Duration) {
 	defer ticker.Stop()
 
 	for {
-		if s.rec.idleFor(window) || time.Now().After(deadline) || s.cancelled() != nil {
+		if s.rec.idleFor(window) || time.Now().After(deadline) || s.cancelled() != nil || s.runExpired() {
 			return
 		}
 
 		select {
 		case <-s.scanCtx.Done():
+			return
+		case <-s.runDone():
 			return
 		case <-ticker.C:
 		}
@@ -377,13 +429,14 @@ func (s *scan) sleep(minimum time.Duration) {
 
 	select {
 	case <-s.scanCtx.Done():
+	case <-s.runDone():
 	case <-timer.C:
 	}
 }
 
 func (s *scan) scrollToBottom() {
 	for range 12 {
-		if s.cancelled() != nil {
+		if s.cancelled() != nil || s.runExpired() {
 			return
 		}
 
@@ -396,6 +449,45 @@ func (s *scan) scrollToBottom() {
 			return
 		}
 	}
+}
+
+func (s *scan) navigationBudget(grace bool) time.Duration {
+	limit := s.in.Limits.NavigationTimeout
+	if grace || s.runCtx == nil {
+		return limit
+	}
+
+	if s.runCtx.Err() != nil {
+		return 0
+	}
+
+	deadline, ok := s.runCtx.Deadline()
+	if !ok {
+		return limit
+	}
+
+	remain := time.Until(deadline)
+	if remain >= limit {
+		return limit
+	}
+
+	if remain <= 0 {
+		return 0
+	}
+
+	return remain
+}
+
+func (s *scan) runExpired() bool {
+	return s.runCtx != nil && s.runCtx.Err() != nil
+}
+
+func (s *scan) runDone() <-chan struct{} {
+	if s.runCtx == nil {
+		return nil
+	}
+
+	return s.runCtx.Done()
 }
 
 func (s *scan) elapsed() time.Duration {

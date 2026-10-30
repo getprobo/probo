@@ -144,12 +144,18 @@ func (s *scan) prepareTab(ctx context.Context, tab *chromedp.Target) error {
 		}
 	}
 
-	params, ok, err := consentCookie(s.in, s.startURL, vid)
-	if err != nil {
-		return err
-	}
+	// The banner writes a host-only cookie, so one set on the apex is not
+	// sent to www. Both hosts are crawled as one site.
+	for _, rawURL := range consentCookieURLs(s.site) {
+		params, ok, err := consentCookie(s.in, rawURL, vid)
+		if err != nil {
+			return err
+		}
 
-	if ok {
+		if !ok {
+			break
+		}
+
 		if _, err := cdp.Call(ctx, tab, network.SetCookie, params); err != nil {
 			return fmt.Errorf("cannot seed consent cookie: %w", err)
 		}
@@ -350,6 +356,10 @@ func visitorIDScript(in Input, site origin, vid string) (string, bool) {
 	script = strings.ReplaceAll(script, "__PROBO_VALUE__", jsString(vid))
 
 	return script, true
+}
+
+func consentCookieURLs(site origin) []string {
+	return []string{site.root(), site.wwwRoot()}
 }
 
 func consentCookie(in Input, rawURL, vid string) (network.SetCookieParams, bool, error) {
