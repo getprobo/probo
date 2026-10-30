@@ -211,7 +211,8 @@ export function PdfPreview({ file, scale, ref, onNumPages, onVisiblePageChange }
           onNumPages(document.numPages);
           onVisiblePageChange(1);
         }}
-        onLoadError={() => {
+        onLoadError={(error) => {
+          console.error("Failed to load PDF document", error);
           setLoadError(true);
           setNumPages(0);
           onNumPages(0);
