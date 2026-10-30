@@ -66,6 +66,7 @@ var (
 		"outcome",
 		"denial_reason",
 		"origin_ip",
+		"user_agent",
 		"request_id",
 		"recorded_at",
 	}
@@ -234,6 +235,7 @@ func writeAuditLogEntryCSVRow(
 		string(entry.Outcome),
 		stringPtrValue(entry.DenialReason),
 		stringPtrValue(entry.OriginIP),
+		stringPtrValue(entry.UserAgent),
 		stringPtrValue(entry.RequestID),
 		entry.RecordedAt.Format(time.RFC3339),
 	})
