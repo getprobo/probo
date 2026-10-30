@@ -120,10 +120,7 @@ func (r *documentCommentThreadResolver) Comments(ctx context.Context, obj *types
 	}
 
 	if obj.Document != nil {
-		if err := dataloader.FromContext(ctx).DocumentReads.Do(obj.Document.ID, func() error {
-			_, err := r.authorize(ctx, obj.Document.ID, probo.ActionDocumentGet)
-			return err
-		}); err != nil {
+		if _, err := r.authorize(ctx, obj.Document.ID, probo.ActionDocumentGet); err != nil {
 			return nil, err
 		}
 	}
@@ -140,8 +137,8 @@ func (r *documentCommentThreadResolver) Comments(ctx context.Context, obj *types
 	if limit > page.MaxCursorSize {
 		limit = page.MaxCursorSize
 	}
-	if limit < len(loaded) {
-		loaded = loaded[:limit]
+	if len(loaded) > limit+1 {
+		loaded = loaded[:limit+1]
 	}
 
 	cursor := types.NewCursor(&limit, nil, nil, nil, pageOrderBy)
