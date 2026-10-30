@@ -34,10 +34,22 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
-// sourceFetchFailureMessage is the generic, user-facing message persisted on a
-// failed fetch attempt. The raw error is only ever written to the logs so that
-// internal connector details are never surfaced through the API or UI.
-const sourceFetchFailureMessage = "We couldn't fetch accounts from this source. Verify the source configuration and try again."
+const (
+	// sourceFetchFailureMessage is the generic, user-facing message persisted on a
+	// failed fetch attempt. The raw error is only ever written to the logs so that
+	// internal connector details are never surfaced through the API or UI.
+	sourceFetchFailureMessage = "We couldn't fetch accounts from this source. Verify the source configuration and try again."
+
+	campaignNotInProgressFetchMessage = "The campaign is no longer in progress, so this source was not fetched."
+
+	// maxSourceFetchAttempts bounds the total attempts of a source; past it, a
+	// stale attempt is failed instead of re-queued.
+	maxSourceFetchAttempts = 3
+
+	// staleFetchRecoveryBatchSize caps the campaigns one stale sweep locks; the
+	// rest wait for the next sweep.
+	staleFetchRecoveryBatchSize = 100
+)
 
 // fetchFailureMessage is the user-facing message for a failed fetch: a refused
 // setting's own explanation, which is Probo's fixed text, or the generic one.
@@ -123,24 +135,107 @@ func (h *sourceFetchHandler) RecoverStale(ctx context.Context) error {
 	return h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			var attempts coredata.AccessReviewCampaignSourceFetchAttempts
-
-			count, err := attempts.RecoverStale(ctx, tx, staleThreshold, now)
-			if err != nil {
-				return fmt.Errorf("cannot recover stale fetch attempts: %w", err)
+			// Campaigns are locked before their attempts, the order
+			// DeleteCampaign takes them in.
+			var campaigns coredata.AccessReviewCampaigns
+			if err := campaigns.LoadWithStaleFetchAttemptsForUpdateSkipLocked(ctx, tx, staleThreshold, staleFetchRecoveryBatchSize); err != nil {
+				return fmt.Errorf("cannot lock campaigns with stale fetch attempts: %w", err)
 			}
 
-			if count > 0 {
+			swept := 0
+
+			for _, campaign := range campaigns {
+				count, err := h.recoverStaleCampaignFetches(ctx, tx, campaign, staleThreshold, now)
+				if err != nil {
+					return fmt.Errorf("cannot recover stale fetches of campaign %s: %w", campaign.ID, err)
+				}
+
+				swept += count
+			}
+
+			if swept > 0 {
 				h.logger.InfoCtx(
 					ctx,
-					"recovered stale fetch attempts",
-					log.Int("count", count),
+					"swept stale fetch attempts",
+					log.Int("count", swept),
 				)
 			}
 
 			return nil
 		},
 	)
+}
+
+// recoverStaleCampaignFetches fails the campaign's stale attempts and queues a
+// retry for each one below maxSourceFetchAttempts while the campaign is in
+// progress. Once a source exhausts its attempts the campaign is finalized.
+func (h *sourceFetchHandler) recoverStaleCampaignFetches(
+	ctx context.Context,
+	tx pg.Tx,
+	campaign *coredata.AccessReviewCampaign,
+	staleThreshold time.Time,
+	now time.Time,
+) (int, error) {
+	scope := coredata.NewScopeFromObjectID(campaign.ID)
+
+	var stale coredata.AccessReviewCampaignSourceFetchAttempts
+	if err := stale.LoadStaleByCampaignIDForUpdateSkipLocked(ctx, tx, scope, campaign.ID, staleThreshold); err != nil {
+		return 0, fmt.Errorf("cannot load stale fetch attempts: %w", err)
+	}
+
+	var (
+		staleMessage = "fetch timed out"
+		exhausted    = false
+	)
+
+	for _, attempt := range stale {
+		attempt.Status = coredata.AccessReviewCampaignSourceFetchStatusFailed
+		attempt.Error = &staleMessage
+		attempt.CompletedAt = &now
+		attempt.UpdatedAt = now
+
+		if err := attempt.Update(ctx, tx, scope); err != nil {
+			return 0, fmt.Errorf("cannot fail stale fetch attempt: %w", err)
+		}
+
+		if attempt.AttemptNumber >= maxSourceFetchAttempts {
+			h.logger.WarnCtx(
+				ctx,
+				"fetch attempt exhausted its retries",
+				log.String("access_review_campaign_source_id", attempt.AccessReviewCampaignSourceID.String()),
+				log.String("fetch_attempt_id", attempt.ID.String()),
+			)
+
+			exhausted = true
+
+			continue
+		}
+
+		if campaign.Status != coredata.AccessReviewCampaignStatusInProgress {
+			continue
+		}
+
+		retry := &coredata.AccessReviewCampaignSourceFetchAttempt{
+			ID:                           gid.New(scope.GetTenantID(), coredata.AccessReviewCampaignSourceFetchAttemptEntityType),
+			OrganizationID:               attempt.OrganizationID,
+			AccessReviewCampaignSourceID: attempt.AccessReviewCampaignSourceID,
+			Status:                       coredata.AccessReviewCampaignSourceFetchStatusQueued,
+			CreatedAt:                    now,
+			UpdatedAt:                    now,
+		}
+
+		if err := retry.Insert(ctx, tx, scope); err != nil {
+			return 0, fmt.Errorf("cannot queue retry fetch attempt: %w", err)
+		}
+	}
+
+	if exhausted {
+		if err := finalizeCampaign(ctx, tx, scope, campaign.ID); err != nil {
+			return 0, fmt.Errorf("cannot finalize campaign fetch lifecycle: %w", err)
+		}
+	}
+
+	return len(stale), nil
 }
 
 func (h *sourceFetchHandler) handle(
@@ -170,6 +265,14 @@ func (h *sourceFetchHandler) handle(
 	}
 
 	count, err := h.svc.FetchSource(ctx, scope, campaign, campaignSource)
+	if errors.Is(err, errCampaignNotInProgress) {
+		if err := h.failSourceFetch(ctx, attempt, campaignNotInProgressFetchMessage); err != nil {
+			return fmt.Errorf("cannot commit skipped fetch attempt: %w", err)
+		}
+
+		return nil
+	}
+
 	if err != nil {
 		if commitErr := h.commitFailedSourceFetch(ctx, attempt, campaignSource, err); commitErr != nil {
 			return fmt.Errorf("cannot fetch source: %w, and cannot commit failed fetch attempt: %w", err, commitErr)
@@ -232,14 +335,21 @@ func (h *sourceFetchHandler) commitFailedSourceFetch(
 		fields...,
 	)
 
+	return h.failSourceFetch(ctx, attempt, fetchFailureMessage(failureErr))
+}
+
+func (h *sourceFetchHandler) failSourceFetch(
+	ctx context.Context,
+	attempt *coredata.AccessReviewCampaignSourceFetchAttempt,
+	message string,
+) error {
 	var (
-		now    = time.Now()
-		errMsg = fetchFailureMessage(failureErr)
-		scope  = coredata.NewScope(attempt.TenantID, gid.Nil)
+		now   = time.Now()
+		scope = coredata.NewScope(attempt.TenantID, gid.Nil)
 	)
 
 	attempt.Status = coredata.AccessReviewCampaignSourceFetchStatusFailed
-	attempt.Error = &errMsg
+	attempt.Error = &message
 	attempt.CompletedAt = &now
 	attempt.UpdatedAt = now
 
@@ -285,38 +395,44 @@ func (h *sourceFetchHandler) finalizeCampaignFetchLifecycle(
 	return h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := lockCampaignForUpdate(ctx, tx, scope, campaignID); err != nil {
-				return fmt.Errorf("cannot lock campaign: %w", err)
-			}
-
-			campaign := &coredata.AccessReviewCampaign{}
-			if err := campaign.LoadByID(ctx, tx, scope, campaignID); err != nil {
-				return fmt.Errorf("cannot load campaign: %w", err)
-			}
-
-			if campaign.Status != coredata.AccessReviewCampaignStatusInProgress {
-				return nil
-			}
-
-			latest := coredata.AccessReviewCampaignSourceFetchAttempts{}
-			if err := latest.LoadLatestByCampaignID(ctx, tx, scope, campaignID); err != nil {
-				return fmt.Errorf("cannot load latest fetch attempts: %w", err)
-			}
-
-			if len(latest) == 0 {
-				return nil
-			}
-
-			for _, attempt := range latest {
-				if !attempt.Status.IsTerminal() {
-					return nil
-				}
-			}
-
-			campaign.Status = coredata.AccessReviewCampaignStatusPendingActions
-			campaign.UpdatedAt = time.Now()
-
-			return campaign.Update(ctx, tx, scope)
+			return finalizeCampaign(ctx, tx, scope, campaignID)
 		},
 	)
+}
+
+// finalizeCampaign moves an in-progress campaign to PENDING_ACTIONS once the
+// latest attempt of every source is terminal.
+func finalizeCampaign(ctx context.Context, tx pg.Tx, scope coredata.Scoper, campaignID gid.GID) error {
+	if err := lockCampaignForUpdate(ctx, tx, scope, campaignID); err != nil {
+		return fmt.Errorf("cannot lock campaign: %w", err)
+	}
+
+	campaign := &coredata.AccessReviewCampaign{}
+	if err := campaign.LoadByID(ctx, tx, scope, campaignID); err != nil {
+		return fmt.Errorf("cannot load campaign: %w", err)
+	}
+
+	if campaign.Status != coredata.AccessReviewCampaignStatusInProgress {
+		return nil
+	}
+
+	latest := coredata.AccessReviewCampaignSourceFetchAttempts{}
+	if err := latest.LoadLatestByCampaignID(ctx, tx, scope, campaignID); err != nil {
+		return fmt.Errorf("cannot load latest fetch attempts: %w", err)
+	}
+
+	if len(latest) == 0 {
+		return nil
+	}
+
+	for _, attempt := range latest {
+		if !attempt.Status.IsTerminal() {
+			return nil
+		}
+	}
+
+	campaign.Status = coredata.AccessReviewCampaignStatusPendingActions
+	campaign.UpdatedAt = time.Now()
+
+	return campaign.Update(ctx, tx, scope)
 }

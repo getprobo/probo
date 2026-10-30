@@ -714,6 +714,11 @@ func (s *Service) CancelCampaign(
 				return fmt.Errorf("cannot update campaign: %w", err)
 			}
 
+			var attempts coredata.AccessReviewCampaignSourceFetchAttempts
+			if err := attempts.FailQueuedByCampaignID(ctx, conn, scope, campaign.ID, campaignNotInProgressFetchMessage, now); err != nil {
+				return fmt.Errorf("cannot cancel queued fetch attempts: %w", err)
+			}
+
 			return nil
 		},
 	)

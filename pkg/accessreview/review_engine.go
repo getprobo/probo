@@ -22,6 +22,7 @@ package accessreview
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -40,6 +41,10 @@ import (
 // also walk a long audit log.
 const sourceFetchTimeout = 2 * time.Minute
 
+var (
+	errCampaignNotInProgress = errors.New("campaign is not in progress")
+)
+
 // FetchSource pulls accounts from a single campaign source snapshot and upserts
 // access entries against that snapshot.
 func (s *Service) FetchSource(
@@ -49,6 +54,12 @@ func (s *Service) FetchSource(
 	campaignSource *coredata.AccessReviewCampaignSource,
 ) (int, error) {
 	fetchedCount := 0
+
+	// Best effort: a cancel committing after this check is caught by the
+	// share-locked status check before the entries are written.
+	if campaign.Status != coredata.AccessReviewCampaignStatusInProgress {
+		return 0, errCampaignNotInProgress
+	}
 
 	if campaignSource.AccessReviewSourceID == nil {
 		return 0, fmt.Errorf("cannot fetch source %s: the access source no longer exists", campaignSource.ID)
@@ -100,6 +111,21 @@ func (s *Service) FetchSource(
 	err = s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
+			// A share lock orders this write against CancelCampaign without
+			// serializing the other sources' writes.
+			current := &coredata.AccessReviewCampaign{ID: campaign.ID}
+			if err := current.LockForShare(ctx, conn, scope); err != nil {
+				return fmt.Errorf("cannot lock campaign for share: %w", err)
+			}
+
+			if err := current.LoadByID(ctx, conn, scope, campaign.ID); err != nil {
+				return fmt.Errorf("cannot load campaign: %w", err)
+			}
+
+			if current.Status != coredata.AccessReviewCampaignStatusInProgress {
+				return errCampaignNotInProgress
+			}
+
 			now := time.Now()
 
 			for _, account := range accounts {

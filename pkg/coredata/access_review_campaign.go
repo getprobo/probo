@@ -87,6 +87,92 @@ FOR UPDATE
 	return nil
 }
 
+func (c *AccessReviewCampaign) LockForShare(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+) error {
+	q := `
+SELECT id
+FROM access_review_campaigns
+WHERE %s
+  AND id = @id
+FOR SHARE
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+	args := pgx.StrictNamedArgs{"id": c.ID}
+	maps.Copy(args, scope.SQLArguments())
+
+	var id gid.GID
+	if err := conn.QueryRow(ctx, q, args).Scan(&id); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot lock campaign: %w", err)
+	}
+
+	return nil
+}
+
+// LoadWithStaleFetchAttemptsForUpdateSkipLocked locks up to limit campaigns
+// with an attempt stuck in FETCHING since before staleThreshold, skipping
+// campaigns locked elsewhere. It is intentionally cross-tenant.
+func (campaigns *AccessReviewCampaigns) LoadWithStaleFetchAttemptsForUpdateSkipLocked(
+	ctx context.Context,
+	conn pg.Tx,
+	staleThreshold time.Time,
+	limit int,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    name,
+    description,
+    status,
+    started_at,
+    completed_at,
+    created_at,
+    updated_at
+FROM
+    access_review_campaigns
+WHERE
+    id IN (
+        SELECT access_review_campaign_id
+        FROM access_review_campaign_sources
+        WHERE id IN (
+            SELECT access_review_campaign_source_id
+            FROM access_review_campaign_source_fetch_attempts
+            WHERE status = @fetching_status
+                AND updated_at < @stale_threshold
+        )
+    )
+LIMIT @limit
+FOR UPDATE SKIP LOCKED
+`
+
+	args := pgx.StrictNamedArgs{
+		"fetching_status": AccessReviewCampaignSourceFetchStatusFetching,
+		"stale_threshold": staleThreshold,
+		"limit":           limit,
+	}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query access_review_campaigns: %w", err)
+	}
+
+	result, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[AccessReviewCampaign])
+	if err != nil {
+		return fmt.Errorf("cannot collect access review campaigns: %w", err)
+	}
+
+	*campaigns = result
+
+	return nil
+}
+
 func (c *AccessReviewCampaign) AuthorizationAttributes(
 	ctx context.Context,
 	conn pg.Querier,
