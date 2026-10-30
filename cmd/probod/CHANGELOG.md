@@ -4,11 +4,57 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.334.0] - 2026-10-30
+
+### Added
+
+- Published documents can be shared with the employee portal.
+  The console catalog is paged and searchable. Employees who
+  can open the portal see those documents and can export the
+  current published PDF. The built-in prb client gains the
+  employee portal scope
+- Elastic Cloud access reviews connect with an organization
+  API key. The roster is members and API keys, with each role
+  and whether it administers the organization. A key that
+  cannot read that roster is refused, and the error names the
+  Organization owner role it needs
+- Front access reviews list a company's teammates through an
+  OAuth app or a company API token
+- Daytona access reviews list an organization's members with
+  an API key. Owners are admins. Pending invitations are not
+  listed, and there is no member status, MFA, or last login
+- Task comments send with Command-Enter on macOS and
+  Control-Enter elsewhere. The composer shows a paperclip
+  that opens a picker for images and files
+- OpenAI and Anthropic can use a custom base URL
+  (`PROBOD_OPENAI_BASE_URL` and `PROBOD_ANTHROPIC_BASE_URL`),
+  for Azure OpenAI or a gateway. Unset keeps the default
+  endpoints
+
 ### Changed
 
 - Federation tokens set `nbf` equal to `iat` again
 - The Azure token exchange uses azidentity again. The request includes
   the scopes that library adds
+
+### Fixed
+
+- Microsoft 365 access reviews assign a directory role to the
+  users of a group that holds it. Those users were reported
+  as non-admins, including Global Administrator. A user whose
+  only roles sit outside the admin list is unknown rather
+  than a non-admin. A user with no role is still not an admin
+- Brex access reviews read `user_role`. `ACCOUNT_ADMIN` is an
+  admin, `EMPLOYEE` and `BOOKKEEPER` are not, and any other
+  role stays unclassified instead of looking like it has no
+  role
+- Probo member access reviews read state from the membership
+  profile. Campaign fetches of this source failed after that
+  column moved off the membership. Deactivated members,
+  pending invitees, and memberships without a profile are
+  inactive
+- A failed Linear sync deletes the files it stored. A failed
+  apply or a lost webhook lease left those files in storage
 
 ## [0.333.0] - 2026-10-29
 
