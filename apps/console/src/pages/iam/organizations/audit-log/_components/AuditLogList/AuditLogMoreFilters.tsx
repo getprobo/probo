@@ -69,7 +69,6 @@ export function AuditLogMoreFilters() {
         <div className={panel()}>
           <Field label={t("auditLogPage.filters.actorId")}>
             <AuditLogFilterField
-              key={`actor:${actorId}`}
               className={field()}
               label={t("auditLogPage.filters.actorId")}
               value={actorId}
@@ -78,7 +77,6 @@ export function AuditLogMoreFilters() {
           </Field>
           <Field label={t("auditLogPage.filters.resourceType")}>
             <AuditLogFilterField
-              key={`resource-type:${resourceType}`}
               className={field()}
               label={t("auditLogPage.filters.resourceType")}
               value={resourceType}
@@ -87,7 +85,6 @@ export function AuditLogMoreFilters() {
           </Field>
           <Field label={t("auditLogPage.filters.resourceId")}>
             <AuditLogFilterField
-              key={`resource:${resourceId}`}
               className={field()}
               label={t("auditLogPage.filters.resourceId")}
               value={resourceId}
@@ -96,7 +93,6 @@ export function AuditLogMoreFilters() {
           </Field>
           <Field label={t("auditLogPage.filters.requestId")}>
             <AuditLogFilterField
-              key={`request:${requestId}`}
               className={field()}
               label={t("auditLogPage.filters.requestId")}
               value={requestId}

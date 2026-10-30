@@ -94,7 +94,7 @@ export function DateRangeField(props: DateRangeFieldProps) {
   const label = formatDateRange(current.from, current.to, locale);
   const filled = label !== "";
   const {
-    root, surface, glyph, rangeButton, caption, clear, popup,
+    root, surface, glyph, rangeButton, caption, clear, popup, nativeValue,
   } = dateField({ size, variant, filled });
 
   function publish(next: DateRange) {
@@ -111,6 +111,9 @@ export function DateRangeField(props: DateRangeFieldProps) {
   ) {
     if (!nextOpen && isNestedSelectDismiss(eventDetails)) {
       return;
+    }
+    if (nextOpen) {
+      skipCloseCommit.current = false;
     }
     if (!nextOpen) {
       if (skipCloseCommit.current) {
@@ -163,11 +166,31 @@ export function DateRangeField(props: DateRangeFieldProps) {
 
   return (
     <div className={root({ className })}>
-      {name != null && (
-        <input type="hidden" name={`${name}From`} value={value.from} disabled={disabled} />
-      )}
-      {name != null && (
-        <input type="hidden" name={`${name}To`} value={value.to} disabled={disabled} />
+      {(name != null || required) && (
+        <>
+          <input
+            type="text"
+            className={nativeValue()}
+            tabIndex={-1}
+            aria-hidden
+            name={name == null ? undefined : `${name}From`}
+            value={value.from}
+            required={required}
+            disabled={disabled}
+            onChange={() => undefined}
+          />
+          <input
+            type="text"
+            className={nativeValue()}
+            tabIndex={-1}
+            aria-hidden
+            name={name == null ? undefined : `${name}To`}
+            value={value.to}
+            required={required}
+            disabled={disabled}
+            onChange={() => undefined}
+          />
+        </>
       )}
       <div className={surface()}>
         <Popover open={open} onOpenChange={handleOpenChange}>
@@ -212,7 +235,11 @@ export function DateRangeField(props: DateRangeFieldProps) {
             type="button"
             className={clear()}
             aria-label={clearLabel}
-            onMouseDown={clearRange}
+            onMouseDown={(event) => {
+              event.preventDefault();
+              clearRange(event);
+            }}
+            onClick={clearRange}
           >
             <XIcon />
           </button>

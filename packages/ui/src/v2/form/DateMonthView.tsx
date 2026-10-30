@@ -209,7 +209,7 @@ export function DateMonthView(props: DateMonthViewProps) {
                 range.end !== "" ? range.end : (range.preview ?? ""),
               );
           const isDisabled = disabled || isOutOfRange(iso, minDate, maxDate);
-          const pressed = tone === "selected" || tone === "start" || tone === "end" || tone === "single";
+          const pressed = tone === "selected" || tone === "within" || tone === "start" || tone === "end" || tone === "single";
 
           return (
             <button

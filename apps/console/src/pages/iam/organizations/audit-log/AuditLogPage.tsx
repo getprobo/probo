@@ -27,6 +27,7 @@ import type { AuditLogPageQuery } from "#/__generated__/iam/AuditLogPageQuery.gr
 
 import { AuditLogList } from "./_components/AuditLogList/AuditLogList";
 import { auditLogPage } from "./_components/variants";
+import { auditLogFilterKey } from "./_lib/useAuditLogListFilters";
 
 const AUDIT_LOG_NS = "iam/organizations/audit-log";
 
@@ -74,7 +75,10 @@ export function AuditLogPage({ queryRef }: AuditLogPageProps) {
 
   return (
     <div className={root()}>
-      <AuditLogList organizationKey={organization} />
+      <AuditLogList
+        organizationKey={organization}
+        loadedFilterKey={auditLogFilterKey(queryRef.variables.filter)}
+      />
     </div>
   );
 }

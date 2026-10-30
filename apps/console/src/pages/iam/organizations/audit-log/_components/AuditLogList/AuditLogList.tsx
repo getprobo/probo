@@ -37,7 +37,7 @@ import type { AuditLogListRefetchQuery } from "#/__generated__/iam/AuditLogListR
 import type { CursorPaginationVariables } from "#/lib/relay/useCursorPagination";
 import { useCursorPagination } from "#/lib/relay/useCursorPagination";
 
-import { useAuditLogListFilters } from "../../_lib/useAuditLogListFilters";
+import { auditLogFilterKey, useAuditLogListFilters } from "../../_lib/useAuditLogListFilters";
 import { auditLogList, auditLogPage } from "../variants";
 
 import { AuditLogEntryDialog } from "./AuditLogEntryDialog";
@@ -88,9 +88,10 @@ export const auditLogListFragment = graphql`
 
 interface AuditLogListProps {
   organizationKey: AuditLogList_organization$key;
+  loadedFilterKey: string;
 }
 
-export function AuditLogList({ organizationKey }: AuditLogListProps) {
+export function AuditLogList({ organizationKey, loadedFilterKey }: AuditLogListProps) {
   const { t } = useTranslation(AUDIT_LOG_NS);
   const { graphqlFilter, hasActiveFilters } = useAuditLogListFilters();
   const [isRefetchPending, startRefetchTransition] = useTransition();
@@ -124,9 +125,12 @@ export function AuditLogList({ organizationKey }: AuditLogListProps) {
   );
 
   useEffect(() => {
+    const matchesLoaded = auditLogFilterKey(graphqlFilter) === loadedFilterKey;
     if (skipFirstRefetch.current) {
       skipFirstRefetch.current = false;
-      return;
+      if (matchesLoaded) {
+        return;
+      }
     }
 
     pageVariablesRef.current = {
@@ -138,10 +142,10 @@ export function AuditLogList({ organizationKey }: AuditLogListProps) {
     startRefetchTransition(() => {
       refetch(
         { ...pageVariablesRef.current, filter: graphqlFilter },
-        { fetchPolicy: "store-or-network" },
+        { fetchPolicy: "network-only" },
       );
     });
-  }, [graphqlFilter, refetch]);
+  }, [graphqlFilter, loadedFilterKey, refetch]);
 
   const edges = organization.auditLogEntries.edges;
   const pageInfo = organization.auditLogEntries.pageInfo;

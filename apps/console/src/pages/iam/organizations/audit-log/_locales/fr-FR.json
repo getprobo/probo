@@ -1,7 +1,7 @@
 {
   "auditLogPage": {
     "title": "Journal d’audit",
-    "description": "Chaque contrôle d’autorisation enregistré pour cet espace, y compris les lectures.",
+    "description": "Décisions d’autorisation enregistrées pour cet espace, y compris les lectures.",
     "empty": {
       "title": "Aucune entrée dans le journal d’audit pour le moment",
       "description": "Les contrôles d’autorisation apparaissent ici au fur et à mesure.",
@@ -19,7 +19,7 @@
     "actions": {
       "previous": "Précédent",
       "next": "Suivant",
-      "openEntry": "Voir l’entrée du journal d’audit"
+      "openEntry": "Voir l’entrée du journal d’audit du {{when}}"
     },
     "actorTypes": {
       "USER": "Utilisateur",

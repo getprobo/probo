@@ -1,7 +1,7 @@
 {
   "auditLogPage": {
     "title": "Audit log",
-    "description": "Every authorization check recorded for this workspace, including reads.",
+    "description": "Recorded authorization decisions for this workspace, including reads.",
     "empty": {
       "title": "No audit log entries yet",
       "description": "Authorization checks show up here as they are recorded.",
@@ -19,7 +19,7 @@
     "actions": {
       "previous": "Previous",
       "next": "Next",
-      "openEntry": "View audit log entry"
+      "openEntry": "View audit log entry from {{when}}"
     },
     "actorTypes": {
       "USER": "User",

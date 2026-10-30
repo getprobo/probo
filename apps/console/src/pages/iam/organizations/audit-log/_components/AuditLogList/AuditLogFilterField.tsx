@@ -49,6 +49,11 @@ export function AuditLogFilterField({
   onCommit,
 }: AuditLogFilterFieldProps) {
   const [draft, setDraft] = useState(value);
+  const [committed, setCommitted] = useState(value);
+  if (value !== committed) {
+    setCommitted(value);
+    setDraft(value);
+  }
 
   function commit() {
     const next = draft.trim();

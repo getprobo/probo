@@ -61,7 +61,6 @@ export function AuditLogListFilters() {
   return (
     <div className={toolbar()}>
       <AuditLogFilterField
-        key={`action:${action}`}
         className={actionSlot()}
         icon={<MagnifyingGlassIcon />}
         label={t("auditLogPage.filters.action")}
