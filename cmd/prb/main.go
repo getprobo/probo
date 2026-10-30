@@ -55,6 +55,7 @@ func main() {
 	}
 
 	cmd := root.NewCmdRoot(f)
+	cmd.SetArgs(root.AcceptDashPrefixedIDs(cmd, os.Args[1:]))
 
 	if err := cmd.Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %s\n", err)

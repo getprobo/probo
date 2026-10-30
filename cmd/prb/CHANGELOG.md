@@ -4,6 +4,12 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+### Fixed
+
+- A resource id that starts with `-` is accepted as a positional
+  argument. Base64url ids use `-` in the alphabet, and the flag
+  parser was rejecting them as unknown flags
+
 ## [0.261.0] - 2026-10-28
 
 ### Added
