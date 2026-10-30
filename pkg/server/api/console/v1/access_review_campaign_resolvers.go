@@ -1054,7 +1054,7 @@ func (r *mutationResolver) CloseAccessReviewCampaign(ctx context.Context, input 
 
 	campaign, err := r.accessReview.CloseCampaign(ctx, scope, input.AccessReviewCampaignID)
 	if err != nil {
-		if errors.Is(err, accessreview.ErrCampaignNotPendingActions) {
+		if errorx.AnyOf(err, accessreview.ErrCampaignNotPendingActions, accessreview.ErrCampaignSourceNotFetched) {
 			return nil, gqlx.Invalid(ctx, err)
 		}
 
@@ -1155,6 +1155,45 @@ func (r *mutationResolver) RemoveAccessReviewCampaignSource(ctx context.Context,
 	}, nil
 }
 
+// RetryAccessReviewCampaignSourceFetch is the resolver for the retryAccessReviewCampaignSourceFetch field.
+func (r *mutationResolver) RetryAccessReviewCampaignSourceFetch(ctx context.Context, input types.RetryAccessReviewCampaignSourceFetchInput) (*types.RetryAccessReviewCampaignSourceFetchPayload, error) {
+	scope, err := r.authorize(ctx, input.AccessReviewCampaignID, accessreview.ActionCampaignRetrySourceFetch)
+	if err != nil {
+		return nil, err
+	}
+
+	campaign, err := r.accessReview.RetryCampaignSourceFetch(
+		ctx,
+		scope,
+		accessreview.RetryCampaignSourceFetchRequest{
+			CampaignID:           input.AccessReviewCampaignID,
+			AccessReviewSourceID: input.AccessReviewSourceID,
+		},
+	)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlx.NotFound(ctx, err)
+		}
+
+		if errorx.AnyOf(
+			err,
+			accessreview.ErrCampaignCompleted,
+			accessreview.ErrCampaignCancelled,
+			accessreview.ErrCampaignSourceFetchNotFailed,
+		) {
+			return nil, gqlx.Invalid(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot retry access review campaign source fetch", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return &types.RetryAccessReviewCampaignSourceFetchPayload{
+		AccessReviewCampaign: types.NewAccessReviewCampaign(campaign),
+	}, nil
+}
+
 // RecordAccessReviewEntryDecision is the resolver for the recordAccessReviewEntryDecision field.
 func (r *mutationResolver) RecordAccessReviewEntryDecision(ctx context.Context, input types.RecordAccessReviewEntryDecisionInput) (*types.RecordAccessReviewEntryDecisionPayload, error) {
 	scope, err := r.authorize(ctx, input.AccessReviewEntryID, accessreview.ActionEntryDecide)
@@ -1175,6 +1214,10 @@ func (r *mutationResolver) RecordAccessReviewEntryDecision(ctx context.Context, 
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlx.NotFound(ctx, err)
+		}
+
+		if errors.Is(err, accessreview.ErrCampaignNotPendingActions) {
+			return nil, gqlx.Invalid(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot record access entry decision", log.Error(err))
@@ -1233,6 +1276,10 @@ func (r *mutationResolver) RecordAccessReviewEntryDecisions(ctx context.Context,
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
+		if errors.Is(err, accessreview.ErrCampaignNotPendingActions) {
+			return nil, gqlx.Invalid(ctx, err)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot record access entry decisions", log.Error(err))
 
 		return nil, gqlx.Internal(ctx)
@@ -1263,6 +1310,10 @@ func (r *mutationResolver) FlagAccessReviewEntry(ctx context.Context, input type
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlx.NotFound(ctx, err)
+		}
+
+		if errors.Is(err, accessreview.ErrCampaignNotPendingActions) {
+			return nil, gqlx.Invalid(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot flag access entry", log.Error(err))

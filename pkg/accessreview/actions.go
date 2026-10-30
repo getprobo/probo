@@ -24,16 +24,17 @@ package accessreview
 // Format: access-review:<entity>:<action>
 const (
 	// Campaign actions
-	ActionCampaignGet          = "access-review:campaign:get"
-	ActionCampaignList         = "access-review:campaign:list"
-	ActionCampaignCreate       = "access-review:campaign:create"
-	ActionCampaignUpdate       = "access-review:campaign:update"
-	ActionCampaignDelete       = "access-review:campaign:delete"
-	ActionCampaignStart        = "access-review:campaign:start"
-	ActionCampaignClose        = "access-review:campaign:close"
-	ActionCampaignCancel       = "access-review:campaign:cancel"
-	ActionCampaignAddSource    = "access-review:campaign:add-source"
-	ActionCampaignRemoveSource = "access-review:campaign:remove-source"
+	ActionCampaignGet              = "access-review:campaign:get"
+	ActionCampaignList             = "access-review:campaign:list"
+	ActionCampaignCreate           = "access-review:campaign:create"
+	ActionCampaignUpdate           = "access-review:campaign:update"
+	ActionCampaignDelete           = "access-review:campaign:delete"
+	ActionCampaignStart            = "access-review:campaign:start"
+	ActionCampaignClose            = "access-review:campaign:close"
+	ActionCampaignCancel           = "access-review:campaign:cancel"
+	ActionCampaignAddSource        = "access-review:campaign:add-source"
+	ActionCampaignRemoveSource     = "access-review:campaign:remove-source"
+	ActionCampaignRetrySourceFetch = "access-review:campaign:retry-source-fetch"
 
 	// Entry actions
 	ActionEntryGet    = "access-review:entry:get"

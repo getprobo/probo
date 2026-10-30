@@ -22,6 +22,7 @@ package accessreview_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -239,4 +240,491 @@ func loadCampaignSourceByLiveSource(
 	t.Fatalf("campaign source for %s not found", sourceID)
 
 	return nil
+}
+
+func TestCloseCampaign_RefusesFailedSourceFetch(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	tenantID := gid.NewTenantID()
+	scope := coredata.NewScope(tenantID, gid.Nil)
+	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
+	now := time.Now().UTC()
+
+	require.NoError(t, client.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			org := &coredata.Organization{
+				ID:        organizationID,
+				TenantID:  tenantID,
+				Name:      "Failed fetch",
+				CreatedAt: now,
+				UpdatedAt: now,
+			}
+
+			return org.Insert(ctx, tx)
+		},
+	))
+
+	source := insertAccessSource(t, ctx, client, scope, &coredata.AccessReviewSource{
+		ID:             gid.New(tenantID, coredata.AccessReviewSourceEntityType),
+		OrganizationID: organizationID,
+		Name:           "Uploaded CSV",
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	})
+
+	svc := accessreview.NewService(
+		client,
+		cipher.EncryptionKey{},
+		nil,
+		provider.NewBuiltinRegistry(),
+		log.NewLogger(log.WithName("test")),
+	)
+
+	campaign, err := svc.CreateCampaign(
+		ctx,
+		scope,
+		accessreview.CreateAccessReviewCampaignRequest{
+			OrganizationID:        organizationID,
+			Name:                  "Q4 review",
+			AccessReviewSourceIDs: []gid.GID{source.ID},
+		},
+	)
+	require.NoError(t, err)
+
+	_, err = svc.StartCampaign(ctx, scope, campaign.ID)
+	require.NoError(t, err)
+
+	// Settle the latest attempt the way the fetch worker does.
+	settle := func(campaignID gid.GID, status coredata.AccessReviewCampaignSourceFetchStatus) {
+		t.Helper()
+
+		require.NoError(t, client.WithTx(
+			ctx,
+			func(ctx context.Context, tx pg.Tx) error {
+				var latest coredata.AccessReviewCampaignSourceFetchAttempts
+				if err := latest.LoadLatestByCampaignID(ctx, tx, scope, campaignID); err != nil {
+					return err
+				}
+
+				latest[0].Status = status
+				if err := latest[0].Update(ctx, tx, scope); err != nil {
+					return err
+				}
+
+				loaded := &coredata.AccessReviewCampaign{}
+				if err := loaded.LoadByID(ctx, tx, scope, campaignID); err != nil {
+					return err
+				}
+
+				loaded.Status = coredata.AccessReviewCampaignStatusPendingActions
+
+				return loaded.Update(ctx, tx, scope)
+			},
+		))
+	}
+
+	settle(campaign.ID, coredata.AccessReviewCampaignSourceFetchStatusFailed)
+
+	_, err = svc.CloseCampaign(ctx, scope, campaign.ID)
+	require.ErrorIs(t, err, accessreview.ErrCampaignSourceNotFetched)
+	assert.ErrorContains(t, err, source.ID.String())
+
+	retryReq := accessreview.RetryCampaignSourceFetchRequest{
+		CampaignID:           campaign.ID,
+		AccessReviewSourceID: source.ID,
+	}
+
+	retried, err := svc.RetryCampaignSourceFetch(ctx, scope, retryReq)
+	require.NoError(t, err)
+	assert.Equal(t, coredata.AccessReviewCampaignStatusInProgress, retried.Status)
+
+	var latest coredata.AccessReviewCampaignSourceFetchAttempts
+
+	require.NoError(t, client.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return latest.LoadLatestByCampaignID(ctx, conn, scope, campaign.ID)
+		},
+	))
+	require.Len(t, latest, 1)
+	assert.Equal(t, coredata.AccessReviewCampaignSourceFetchStatusQueued, latest[0].Status)
+	assert.Equal(t, 2, latest[0].AttemptNumber)
+
+	_, err = svc.RetryCampaignSourceFetch(ctx, scope, retryReq)
+	require.ErrorIs(t, err, accessreview.ErrCampaignSourceFetchNotFailed)
+
+	_, err = svc.RetryCampaignSourceFetch(
+		ctx,
+		scope,
+		accessreview.RetryCampaignSourceFetchRequest{
+			CampaignID:           campaign.ID,
+			AccessReviewSourceID: gid.New(tenantID, coredata.AccessReviewSourceEntityType),
+		},
+	)
+	require.ErrorIs(t, err, coredata.ErrResourceNotFound)
+
+	settle(campaign.ID, coredata.AccessReviewCampaignSourceFetchStatusSuccess)
+
+	closed, err := svc.CloseCampaign(ctx, scope, campaign.ID)
+	require.NoError(t, err)
+	assert.Equal(t, coredata.AccessReviewCampaignStatusCompleted, closed.Status)
+
+	_, err = svc.RetryCampaignSourceFetch(ctx, scope, retryReq)
+	require.ErrorIs(t, err, accessreview.ErrCampaignCompleted)
+
+	deletedSource := insertAccessSource(t, ctx, client, scope, &coredata.AccessReviewSource{
+		ID:             gid.New(tenantID, coredata.AccessReviewSourceEntityType),
+		OrganizationID: organizationID,
+		Name:           "Deleted CSV",
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	})
+
+	orphaned, err := svc.CreateCampaign(
+		ctx,
+		scope,
+		accessreview.CreateAccessReviewCampaignRequest{
+			OrganizationID:        organizationID,
+			Name:                  "Orphaned review",
+			AccessReviewSourceIDs: []gid.GID{deletedSource.ID},
+		},
+	)
+	require.NoError(t, err)
+
+	_, err = svc.StartCampaign(ctx, scope, orphaned.ID)
+	require.NoError(t, err)
+	require.NoError(t, svc.DeleteSource(ctx, scope, deletedSource.ID))
+	settle(orphaned.ID, coredata.AccessReviewCampaignSourceFetchStatusFailed)
+
+	_, err = svc.CloseCampaign(ctx, scope, orphaned.ID)
+	require.ErrorIs(t, err, accessreview.ErrCampaignSourceNotFetched)
+	assert.ErrorContains(t, err, `"Deleted CSV" (source deleted)`)
+
+	orphanedReq := accessreview.RetryCampaignSourceFetchRequest{
+		CampaignID:           orphaned.ID,
+		AccessReviewSourceID: deletedSource.ID,
+	}
+
+	_, err = svc.RetryCampaignSourceFetch(ctx, scope, orphanedReq)
+	require.ErrorIs(t, err, coredata.ErrResourceNotFound)
+
+	cancelled, err := svc.CancelCampaign(ctx, scope, orphaned.ID)
+	require.NoError(t, err)
+	assert.Equal(t, coredata.AccessReviewCampaignStatusCancelled, cancelled.Status)
+
+	_, err = svc.RetryCampaignSourceFetch(ctx, scope, orphanedReq)
+	require.ErrorIs(t, err, accessreview.ErrCampaignCancelled)
+
+	draft, err := svc.CreateCampaign(
+		ctx,
+		scope,
+		accessreview.CreateAccessReviewCampaignRequest{
+			OrganizationID:        organizationID,
+			Name:                  "Draft review",
+			AccessReviewSourceIDs: []gid.GID{source.ID},
+		},
+	)
+	require.NoError(t, err)
+
+	_, err = svc.RetryCampaignSourceFetch(
+		ctx,
+		scope,
+		accessreview.RetryCampaignSourceFetchRequest{
+			CampaignID:           draft.ID,
+			AccessReviewSourceID: source.ID,
+		},
+	)
+	require.ErrorIs(t, err, accessreview.ErrCampaignSourceFetchNotFailed)
+}
+
+func TestEntryWrites_WaitForCampaignRetry(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	svc, scope, organizationID, sourceID := newEntryWritesFixture(t, ctx, client)
+	campaignID, entryIDs := insertPendingActionsCampaign(t, ctx, client, svc, scope, organizationID, sourceID, 1)
+
+	results := make(chan error, 2)
+
+	// Hold the campaign row as RetryCampaignSourceFetch does while it moves
+	// the campaign back to IN_PROGRESS.
+	require.NoError(t, client.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			holderPID := backendPID(t, ctx, tx)
+
+			loaded := &coredata.AccessReviewCampaign{ID: campaignID}
+			if err := loaded.LockForUpdate(ctx, tx, scope); err != nil {
+				return err
+			}
+
+			if err := loaded.LoadByID(ctx, tx, scope, campaignID); err != nil {
+				return err
+			}
+
+			loaded.Status = coredata.AccessReviewCampaignStatusInProgress
+			if err := loaded.Update(ctx, tx, scope); err != nil {
+				return err
+			}
+
+			go func() {
+				_, err := svc.RecordDecisions(
+					ctx,
+					scope,
+					[]accessreview.RecordAccessReviewEntryDecisionRequest{
+						{EntryID: entryIDs[0], Decision: coredata.AccessReviewEntryDecisionApproved},
+					},
+				)
+				results <- err
+			}()
+
+			go func() {
+				_, err := svc.FlagEntry(
+					ctx,
+					scope,
+					accessreview.FlagAccessReviewEntryRequest{
+						EntryID: entryIDs[0],
+						Flags:   []coredata.AccessReviewEntryFlag{coredata.AccessReviewEntryFlagExcessive},
+					},
+				)
+				results <- err
+			}()
+
+			requireBlockedBehind(t, ctx, client, []int32{holderPID}, 2)
+			assert.Empty(t, results, "entry writes must wait while the retry holds the campaign")
+
+			return nil
+		},
+	))
+
+	for range 2 {
+		assert.ErrorIs(t, <-results, accessreview.ErrCampaignNotPendingActions)
+	}
+}
+
+func TestRecordDecisions_CrossCampaignBatchesDoNotDeadlock(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	svc, scope, organizationID, sourceID := newEntryWritesFixture(t, ctx, client)
+	campaignA, entriesA := insertPendingActionsCampaign(t, ctx, client, svc, scope, organizationID, sourceID, 2)
+	campaignB, entriesB := insertPendingActionsCampaign(t, ctx, client, svc, scope, organizationID, sourceID, 2)
+
+	approve := func(entryIDs ...gid.GID) []accessreview.RecordAccessReviewEntryDecisionRequest {
+		decisions := make([]accessreview.RecordAccessReviewEntryDecisionRequest, len(entryIDs))
+		for i, id := range entryIDs {
+			decisions[i] = accessreview.RecordAccessReviewEntryDecisionRequest{
+				EntryID:  id,
+				Decision: coredata.AccessReviewEntryDecisionApproved,
+			}
+		}
+
+		return decisions
+	}
+
+	results := make(chan error, 2)
+
+	// Queue each batch on its first campaign lock, then release A before B:
+	// locking in caller order makes the two batches deadlock.
+	require.NoError(t, client.WithTx(
+		ctx,
+		func(ctx context.Context, txB pg.Tx) error {
+			holderB := backendPID(t, ctx, txB)
+			if err := (&coredata.AccessReviewCampaign{ID: campaignB}).LockForUpdate(ctx, txB, scope); err != nil {
+				return err
+			}
+
+			return client.WithTx(
+				ctx,
+				func(ctx context.Context, txA pg.Tx) error {
+					holderA := backendPID(t, ctx, txA)
+					if err := (&coredata.AccessReviewCampaign{ID: campaignA}).LockForUpdate(ctx, txA, scope); err != nil {
+						return err
+					}
+
+					go func() {
+						_, err := svc.RecordDecisions(ctx, scope, approve(entriesA[0], entriesB[0]))
+						results <- err
+					}()
+
+					go func() {
+						_, err := svc.RecordDecisions(ctx, scope, approve(entriesB[1], entriesA[1]))
+						results <- err
+					}()
+
+					requireBlockedBehind(t, ctx, client, []int32{holderA, holderB}, 2)
+
+					return nil
+				},
+			)
+		},
+	))
+
+	for range 2 {
+		require.NoError(t, <-results)
+	}
+}
+
+func newEntryWritesFixture(
+	t *testing.T,
+	ctx context.Context,
+	client *pg.Client,
+) (*accessreview.Service, *coredata.Scope, gid.GID, gid.GID) {
+	t.Helper()
+
+	tenantID := gid.NewTenantID()
+	scope := coredata.NewScope(tenantID, gid.Nil)
+	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
+	now := time.Now().UTC()
+
+	require.NoError(t, client.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			org := &coredata.Organization{
+				ID:        organizationID,
+				TenantID:  tenantID,
+				Name:      "Retry race",
+				CreatedAt: now,
+				UpdatedAt: now,
+			}
+
+			return org.Insert(ctx, tx)
+		},
+	))
+
+	source := insertAccessSource(t, ctx, client, scope, &coredata.AccessReviewSource{
+		ID:             gid.New(tenantID, coredata.AccessReviewSourceEntityType),
+		OrganizationID: organizationID,
+		Name:           "Uploaded CSV",
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	})
+
+	svc := accessreview.NewService(
+		client,
+		cipher.EncryptionKey{},
+		nil,
+		provider.NewBuiltinRegistry(),
+		log.NewLogger(log.WithName("test")),
+	)
+
+	return svc, scope, organizationID, source.ID
+}
+
+func insertPendingActionsCampaign(
+	t *testing.T,
+	ctx context.Context,
+	client *pg.Client,
+	svc *accessreview.Service,
+	scope *coredata.Scope,
+	organizationID gid.GID,
+	sourceID gid.GID,
+	entryCount int,
+) (gid.GID, []gid.GID) {
+	t.Helper()
+
+	campaign, err := svc.CreateCampaign(
+		ctx,
+		scope,
+		accessreview.CreateAccessReviewCampaignRequest{
+			OrganizationID:        organizationID,
+			Name:                  "Q4 review",
+			AccessReviewSourceIDs: []gid.GID{sourceID},
+		},
+	)
+	require.NoError(t, err)
+
+	campaignSource := loadCampaignSourceByLiveSource(t, ctx, client, scope, campaign.ID, sourceID)
+	now := time.Now().UTC()
+	entryIDs := make([]gid.GID, entryCount)
+
+	require.NoError(t, client.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			for i := range entryIDs {
+				entryIDs[i] = gid.New(scope.GetTenantID(), coredata.AccessReviewEntryEntityType)
+				email := fmt.Sprintf("user%d@example.com", i)
+
+				entry := &coredata.AccessReviewEntry{
+					ID:                           entryIDs[i],
+					OrganizationID:               organizationID,
+					AccessReviewCampaignID:       campaign.ID,
+					AccessReviewCampaignSourceID: campaignSource.ID,
+					Email:                        email,
+					FullName:                     "User",
+					Roles:                        []string{"member"},
+					MFAStatus:                    coredata.MFAStatusUnknown,
+					AuthMethod:                   coredata.AccessReviewEntryAuthMethodUnknown,
+					AccountType:                  coredata.AccessReviewEntryAccountTypeUser,
+					ExternalID:                   email,
+					AccountKey:                   email,
+					Flags:                        []coredata.AccessReviewEntryFlag{},
+					FlagReasons:                  []string{},
+					Decision:                     coredata.AccessReviewEntryDecisionPending,
+					CreatedAt:                    now,
+					UpdatedAt:                    now,
+				}
+				if err := entry.Upsert(ctx, tx, scope); err != nil {
+					return err
+				}
+			}
+
+			loaded := &coredata.AccessReviewCampaign{}
+			if err := loaded.LoadByID(ctx, tx, scope, campaign.ID); err != nil {
+				return err
+			}
+
+			loaded.Status = coredata.AccessReviewCampaignStatusPendingActions
+
+			return loaded.Update(ctx, tx, scope)
+		},
+	))
+
+	return campaign.ID, entryIDs
+}
+
+func backendPID(t *testing.T, ctx context.Context, tx pg.Tx) int32 {
+	t.Helper()
+
+	var pid int32
+	require.NoError(t, tx.QueryRow(ctx, "SELECT pg_backend_pid()").Scan(&pid))
+
+	return pid
+}
+
+// requireBlockedBehind waits until want backends wait, directly or behind
+// another waiter, on a lock one of the holders keeps.
+func requireBlockedBehind(t *testing.T, ctx context.Context, client *pg.Client, holders []int32, want int64) {
+	t.Helper()
+
+	const q = `
+WITH RECURSIVE blocked(pid) AS (
+	SELECT pid FROM pg_stat_activity WHERE pg_blocking_pids(pid) && $1::int4[]
+	UNION
+	SELECT a.pid FROM pg_stat_activity a JOIN blocked b ON b.pid = ANY(pg_blocking_pids(a.pid))
+)
+SELECT count(*) FROM blocked`
+
+	require.Eventually(
+		t,
+		func() bool {
+			var count int64
+
+			err := client.WithConn(
+				ctx,
+				func(ctx context.Context, conn pg.Querier) error {
+					return conn.QueryRow(ctx, q, holders).Scan(&count)
+				},
+			)
+
+			return err == nil && count == want
+		},
+		10*time.Second,
+		20*time.Millisecond,
+	)
 }

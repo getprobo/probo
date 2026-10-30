@@ -4,6 +4,11 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+### Added
+
+- `access-review campaign retry-fetch <campaign-id> --source-id <source-id>`
+  queues a new fetch for a campaign source whose fetch failed
+
 ## [0.262.0] - 2026-10-30
 
 ### Added

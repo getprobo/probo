@@ -11779,6 +11779,27 @@ components:
         campaign:
           $ref: "#/components/schemas/AccessReviewCampaign"
 
+    RetryAccessReviewCampaignSourceFetchMCPInput:
+      type: object
+      required:
+        - campaign_id
+        - access_review_source_id
+      properties:
+        campaign_id:
+          $ref: "#/components/schemas/GID"
+          description: Campaign ID
+        access_review_source_id:
+          $ref: "#/components/schemas/GID"
+          description: Access source ID whose last fetch failed
+
+    RetryAccessReviewCampaignSourceFetchMCPOutput:
+      type: object
+      required:
+        - campaign
+      properties:
+        campaign:
+          $ref: "#/components/schemas/AccessReviewCampaign"
+
     OrganizationContext:
       type: object
       required:
@@ -20213,7 +20234,7 @@ tools:
       $ref: "#/components/schemas/FlagAccessReviewEntryMCPOutput"
   - name: closeAccessReviewCampaign
     title: Close Access Review Campaign
-    description: Close an access review campaign. All entries must have been decided (no PENDING entries).
+    description: Close an access review campaign. All entries must have been decided (no PENDING entries) and every source fetched; retry a failed source fetch or cancel the campaign.
     hints:
       readonly: false
       destructive: false
@@ -20470,6 +20491,18 @@ tools:
       $ref: "#/components/schemas/RemoveAccessReviewCampaignSourceMCPInput"
     outputSchema:
       $ref: "#/components/schemas/RemoveAccessReviewCampaignSourceMCPOutput"
+  - name: retryAccessReviewCampaignSourceFetch
+    title: Retry Access Review Campaign Source Fetch
+    description: Queue a new fetch for a campaign source whose last fetch failed. The campaign returns to IN_PROGRESS until the fetch settles, and decisions cannot be recorded while the retry runs. A campaign cannot be closed while a source fetch has failed.
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/RetryAccessReviewCampaignSourceFetchMCPInput"
+    outputSchema:
+      $ref: "#/components/schemas/RetryAccessReviewCampaignSourceFetchMCPOutput"
   - name: getOrganizationContext
     title: Get Organization Context
     description: Get the organization context containing structured sections about the company

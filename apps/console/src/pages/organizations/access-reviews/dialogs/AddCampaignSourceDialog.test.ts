@@ -58,6 +58,7 @@ describe("AddCampaignSourceDialogMutation", () => {
         status: "DRAFT",
         pendingEntries: { totalCount: 0 },
         canDelete: true,
+        canRetrySourceFetch: true,
         sources: [],
       },
     });

@@ -36,7 +36,7 @@ var FullAccessPolicy = policy.NewPolicy(
 		ActionCampaignGet, ActionCampaignList, ActionCampaignCreate,
 		ActionCampaignUpdate, ActionCampaignDelete, ActionCampaignStart,
 		ActionCampaignClose, ActionCampaignCancel, ActionCampaignAddSource,
-		ActionCampaignRemoveSource,
+		ActionCampaignRemoveSource, ActionCampaignRetrySourceFetch,
 		ActionEntryGet, ActionEntryList, ActionEntryDecide, ActionEntryFlag,
 		ActionSourceGet, ActionSourceList, ActionSourceCreate,
 		ActionSourceUpdate, ActionSourceDelete, ActionSourceSync,

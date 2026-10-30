@@ -21,8 +21,10 @@
 package accessreview
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -112,6 +114,20 @@ func (s *Service) RecordDecisions(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
+			campaignIDs, err := coredata.AccessReviewCampaignIDsByEntryIDs(ctx, conn, scope, entryIDs)
+			if err != nil {
+				return fmt.Errorf("cannot load access entry campaigns: %w", err)
+			}
+
+			// Lock in a fixed order so batches spanning the same campaigns cannot deadlock.
+			slices.SortFunc(campaignIDs, func(a, b gid.GID) int { return bytes.Compare(a[:], b[:]) })
+
+			for _, campaignID := range campaignIDs {
+				if err := lockCampaignForUpdate(ctx, conn, scope, campaignID); err != nil {
+					return fmt.Errorf("cannot lock campaign: %w", err)
+				}
+			}
+
 			// Track verified campaigns to avoid repeated loads within the
 			// same transaction.
 			verifiedCampaigns := make(map[gid.GID]bool)
@@ -130,7 +146,7 @@ func (s *Service) RecordDecisions(
 					}
 
 					if campaign.Status != coredata.AccessReviewCampaignStatusPendingActions {
-						return fmt.Errorf("cannot decide access entry: campaign status is %s, expected PENDING_ACTIONS", campaign.Status)
+						return fmt.Errorf("cannot decide access entry: %w", NewCampaignNotPendingActionsError(campaign.ID))
 					}
 
 					verifiedCampaigns[entry.AccessReviewCampaignID] = true
@@ -224,13 +240,17 @@ func (s *Service) FlagEntry(
 				return fmt.Errorf("cannot load access entry: %w", err)
 			}
 
+			if err := lockCampaignForUpdate(ctx, conn, scope, entry.AccessReviewCampaignID); err != nil {
+				return fmt.Errorf("cannot lock campaign: %w", err)
+			}
+
 			campaign := &coredata.AccessReviewCampaign{}
 			if err := campaign.LoadByID(ctx, conn, scope, entry.AccessReviewCampaignID); err != nil {
 				return fmt.Errorf("cannot load campaign: %w", err)
 			}
 
 			if campaign.Status != coredata.AccessReviewCampaignStatusPendingActions {
-				return fmt.Errorf("cannot flag access entry: campaign status is %q, expected PENDING_ACTIONS", campaign.Status)
+				return fmt.Errorf("cannot flag access entry: %w", NewCampaignNotPendingActionsError(campaign.ID))
 			}
 
 			entry.Flags = req.Flags

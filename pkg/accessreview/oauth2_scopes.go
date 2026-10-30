@@ -54,6 +54,7 @@ var OAuth2ScopeMappings = map[coredata.OAuth2Scope][]string{
 		ActionCampaignCancel,
 		ActionCampaignAddSource,
 		ActionCampaignRemoveSource,
+		ActionCampaignRetrySourceFetch,
 		ActionEntryDecide,
 		ActionEntryFlag,
 		ActionSourceCreate,

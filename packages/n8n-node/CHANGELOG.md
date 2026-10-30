@@ -4,6 +4,11 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+### Added
+
+- Access Review `Retry Source Fetch` queues a new fetch for a
+  campaign source whose fetch failed
+
 ## [0.264.0] - 2026-10-30
 
 ### Added

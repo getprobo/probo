@@ -568,6 +568,9 @@ extend type Mutation {
     removeAccessReviewCampaignSource(
         input: RemoveAccessReviewCampaignSourceInput!
     ): RemoveAccessReviewCampaignSourcePayload!
+    retryAccessReviewCampaignSourceFetch(
+        input: RetryAccessReviewCampaignSourceFetchInput!
+    ): RetryAccessReviewCampaignSourceFetchPayload!
     recordAccessReviewEntryDecision(
         input: RecordAccessReviewEntryDecisionInput!
     ): RecordAccessReviewEntryDecisionPayload!
@@ -702,6 +705,15 @@ input RemoveAccessReviewCampaignSourceInput {
 }
 
 type RemoveAccessReviewCampaignSourcePayload {
+    accessReviewCampaign: AccessReviewCampaign!
+}
+
+input RetryAccessReviewCampaignSourceFetchInput {
+    accessReviewCampaignId: ID!
+    accessReviewSourceId: ID!
+}
+
+type RetryAccessReviewCampaignSourceFetchPayload {
     accessReviewCampaign: AccessReviewCampaign!
 }
 

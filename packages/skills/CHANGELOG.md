@@ -5,6 +5,12 @@ this file.
 
 ## Unreleased
 
+### Changed
+
+- `access-review` reference describes `retryAccessReviewCampaignSourceFetch`
+  as a recovery step for a failed source fetch, called only when the user
+  asks
+
 ## [0.5.0] - 2026-10-27
 
 ### Added

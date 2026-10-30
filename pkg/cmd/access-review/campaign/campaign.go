@@ -29,6 +29,7 @@ import (
 	"go.probo.inc/probo/pkg/cmd/access-review/campaign/delete"
 	"go.probo.inc/probo/pkg/cmd/access-review/campaign/list"
 	"go.probo.inc/probo/pkg/cmd/access-review/campaign/removesource"
+	"go.probo.inc/probo/pkg/cmd/access-review/campaign/retryfetch"
 	"go.probo.inc/probo/pkg/cmd/access-review/campaign/start"
 	"go.probo.inc/probo/pkg/cmd/access-review/campaign/update"
 	"go.probo.inc/probo/pkg/cmd/access-review/campaign/view"
@@ -51,6 +52,7 @@ func NewCmdCampaign(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(cancel.NewCmdCancel(f))
 	cmd.AddCommand(addsource.NewCmdAddSource(f))
 	cmd.AddCommand(removesource.NewCmdRemoveSource(f))
+	cmd.AddCommand(retryfetch.NewCmdRetryFetch(f))
 
 	return cmd
 }

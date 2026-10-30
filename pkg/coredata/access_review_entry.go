@@ -178,6 +178,39 @@ LIMIT 1;
 	return nil
 }
 
+func AccessReviewCampaignIDsByEntryIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	entryIDs []gid.GID,
+) ([]gid.GID, error) {
+	q := `
+SELECT DISTINCT
+    access_review_campaign_id
+FROM
+    access_review_entries
+WHERE
+    %s
+    AND id = ANY(@ids::text[])
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"ids": entryIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query access_review_entries: %w", err)
+	}
+
+	campaignIDs, err := pgx.CollectRows(rows, pgx.RowTo[gid.GID])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect campaign ids: %w", err)
+	}
+
+	return campaignIDs, nil
+}
+
 func (e *AccessReviewEntry) Update(
 	ctx context.Context,
 	conn pg.Tx,

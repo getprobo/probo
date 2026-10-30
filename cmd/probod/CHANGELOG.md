@@ -4,6 +4,18 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Added
+
+- A campaign source whose fetch failed can be retried from the
+  campaign page, the API, and MCP. The campaign goes back to in
+  progress until the new fetch settles, and decisions cannot be
+  recorded while the retry runs
+
+### Fixed
+
+- An access review campaign cannot be completed while a source fetch
+  has failed. Retry the fetch, or cancel the campaign
+
 ## [0.334.0] - 2026-10-30
 
 ### Added

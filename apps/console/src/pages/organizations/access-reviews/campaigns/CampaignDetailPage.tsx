@@ -150,6 +150,7 @@ export const campaignDetailPageQuery = graphql`
           totalCount
         }
         canDelete: permission(action: "access-review:campaign:delete")
+        canRetrySourceFetch: permission(action: "access-review:campaign:retry-source-fetch")
         sources {
           id
           name
@@ -158,6 +159,13 @@ export const campaignDetailPageQuery = graphql`
             name
             connectorAccount {
               name
+            }
+          }
+          fetchAttempts(first: 1) {
+            edges {
+              node {
+                status
+              }
             }
           }
           ...AccessEntrySourceSection_source
@@ -409,7 +417,12 @@ export default function CampaignDetailPage({ queryRef }: Props) {
     [campaign.sources],
   );
 
-  const canComplete = campaign.pendingEntries.totalCount === 0;
+  // Mirrors CloseCampaign: every source's latest fetch must have succeeded.
+  const canComplete = campaign.pendingEntries.totalCount === 0
+    && campaign.sources.every((source) => {
+      const status = source.fetchAttempts.edges[0]?.node.status;
+      return status == null || status === "SUCCESS";
+    });
 
   const handleStart = () => {
     startCampaign({
@@ -886,6 +899,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
           <AccessEntrySourceSection
             key={source.id}
             sourceKey={source}
+            canRetryFetch={campaign.canRetrySourceFetch && isPendingActions}
             filters={deferredFilters}
             isPendingActions={isPendingActions}
             selectedIds={selectedIdSet}

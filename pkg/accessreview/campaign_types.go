@@ -52,6 +52,11 @@ type (
 		CampaignID           gid.GID
 		AccessReviewSourceID gid.GID
 	}
+
+	RetryCampaignSourceFetchRequest struct {
+		CampaignID           gid.GID
+		AccessReviewSourceID gid.GID
+	}
 )
 
 func (r *CreateAccessReviewCampaignRequest) Validate() error {

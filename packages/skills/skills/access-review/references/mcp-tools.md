@@ -92,6 +92,18 @@ Do not call unless the user explicitly asks for campaign setup:
 - `createAccessReviewCampaign`
 - `createAccessReviewSource` / source mutations
 
+### Recovery: `retryAccessReviewCampaignSourceFetch`
+
+Call only when the user asks. If a source's latest fetch attempt failed, the
+campaign cannot be closed. This tool queues a new fetch for that source. Input:
+
+- `campaign_id`
+- `access_review_source_id`
+
+The fetch runs in the background: wait for the campaign to return to
+`PENDING_ACTIONS` before resuming the review. A source deleted after the
+campaign started cannot be retried (not found); cancel the campaign instead.
+
 ## Entry fields (review signals)
 
 | Field | Review use |

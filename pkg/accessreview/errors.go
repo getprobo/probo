@@ -47,6 +47,8 @@ var (
 	ErrCampaignNotPendingActions     = errors.New("access review campaign not pending actions")
 	ErrCampaignCompleted             = errors.New("access review campaign completed")
 	ErrCampaignCancelled             = errors.New("access review campaign cancelled")
+	ErrCampaignSourceNotFetched      = errors.New("access review campaign source not fetched")
+	ErrCampaignSourceFetchNotFailed  = errors.New("access review campaign source fetch not failed")
 	ErrMissingOAuthScopes            = errors.New("missing required OAuth scopes")
 )
 
@@ -73,6 +75,15 @@ type (
 
 	CampaignCancelledError struct {
 		CampaignID gid.GID
+	}
+
+	CampaignSourceNotFetchedError struct {
+		CampaignID gid.GID
+		Sources    coredata.AccessReviewCampaignSources
+	}
+
+	CampaignSourceFetchNotFailedError struct {
+		AccessReviewSourceID gid.GID
 	}
 
 	MissingOAuthScopesError struct {
@@ -135,7 +146,7 @@ func NewCampaignNotPendingActionsError(campaignID gid.GID) error {
 
 func (e *CampaignNotPendingActionsError) Error() string {
 	return fmt.Sprintf(
-		"access review campaign %q cannot be closed unless it is pending actions",
+		"access review campaign %q is not pending actions",
 		e.CampaignID,
 	)
 }
@@ -166,6 +177,46 @@ func (e *CampaignCancelledError) Error() string {
 
 func (e *CampaignCancelledError) Is(target error) bool {
 	return target == ErrCampaignCancelled
+}
+
+func NewCampaignSourceNotFetchedError(campaignID gid.GID, sources coredata.AccessReviewCampaignSources) error {
+	return &CampaignSourceNotFetchedError{CampaignID: campaignID, Sources: sources}
+}
+
+func (e *CampaignSourceNotFetchedError) Error() string {
+	names := make([]string, 0, len(e.Sources))
+	for _, s := range e.Sources {
+		if s.AccessReviewSourceID == nil {
+			names = append(names, fmt.Sprintf("%q (source deleted)", s.Name))
+		} else {
+			names = append(names, fmt.Sprintf("%q (%s)", s.Name, *s.AccessReviewSourceID))
+		}
+	}
+
+	return fmt.Sprintf(
+		"access review campaign %q cannot be closed while these sources have not been fetched: %s: retry the fetch or cancel the campaign",
+		e.CampaignID,
+		strings.Join(names, ", "),
+	)
+}
+
+func (e *CampaignSourceNotFetchedError) Is(target error) bool {
+	return target == ErrCampaignSourceNotFetched
+}
+
+func NewCampaignSourceFetchNotFailedError(accessReviewSourceID gid.GID) error {
+	return &CampaignSourceFetchNotFailedError{AccessReviewSourceID: accessReviewSourceID}
+}
+
+func (e *CampaignSourceFetchNotFailedError) Error() string {
+	return fmt.Sprintf(
+		"access source %q cannot be retried in this campaign: its last fetch did not fail",
+		e.AccessReviewSourceID,
+	)
+}
+
+func (e *CampaignSourceFetchNotFailedError) Is(target error) bool {
+	return target == ErrCampaignSourceFetchNotFailed
 }
 
 func NewMissingOAuthScopesError(scopes []string) error {

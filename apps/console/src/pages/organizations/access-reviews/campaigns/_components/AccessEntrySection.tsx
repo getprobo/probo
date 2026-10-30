@@ -18,12 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { IconWarning, Spinner, ThirdPartyLogo } from "@probo/ui";
+import { Button, IconWarning, Spinner, ThirdPartyLogo } from "@probo/ui";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
+import { useParams } from "react-router";
 
 import type { AccessEntrySection_source$key } from "#/__generated__/core/AccessEntrySection_source.graphql";
+import type { AccessEntrySectionRetryFetchMutation } from "#/__generated__/core/AccessEntrySectionRetryFetchMutation.graphql";
+import { useMutation } from "#/lib/relay/useMutation";
 
 import { campaignSourceLabel } from "../../_lib/sourceLabel";
 
@@ -33,6 +36,7 @@ const accessEntrySectionFragment = graphql`
   fragment AccessEntrySection_source on AccessReviewCampaignSource {
     name
     source {
+      id
       name
       connector {
         provider
@@ -52,8 +56,26 @@ const accessEntrySectionFragment = graphql`
   }
 `;
 
+const retryFetchMutation = graphql`
+  mutation AccessEntrySectionRetryFetchMutation(
+    $input: RetryAccessReviewCampaignSourceFetchInput!
+  ) {
+    retryAccessReviewCampaignSourceFetch(input: $input) {
+      accessReviewCampaign {
+        id
+        status
+        sources {
+          id
+          ...AccessEntrySection_source
+        }
+      }
+    }
+  }
+`;
+
 interface AccessEntrySectionProps {
   sourceKey: AccessEntrySection_source$key;
+  canRetryFetch: boolean;
   count: number;
   children: ReactNode;
   footer?: ReactNode;
@@ -62,6 +84,7 @@ interface AccessEntrySectionProps {
 // One connector group: header (logo + name + count) above a bordered list of entries.
 export function AccessEntrySection({
   sourceKey,
+  canRetryFetch,
   count,
   children,
   footer,
@@ -77,6 +100,12 @@ export function AccessEntrySection({
       ? t(`campaignDetailPage.fetchStatus.${fetchStatus.toLowerCase()}`)
       : null;
   const provider = source.source?.connector?.provider;
+  const sourceId = source.source?.id;
+  const { campaignId } = useParams<{ campaignId: string }>();
+  const [retryFetch, isRetrying] = useMutation<AccessEntrySectionRetryFetchMutation>(
+    retryFetchMutation,
+    { errorToast: t("campaignDetailPage.errors.retryFetch") },
+  );
 
   return (
     <section className={root()}>
@@ -101,10 +130,30 @@ export function AccessEntrySection({
         ? (
             <div className="flex items-start gap-2 rounded-[10px] border border-border-danger bg-danger px-4 py-3 text-sm text-txt-danger">
               <IconWarning className="mt-0.5 size-4 shrink-0" />
-              <div>
+              <div className="flex-1">
                 <p className="font-medium">{t("campaignDetailPage.fetchFailed")}</p>
                 <p>{error}</p>
               </div>
+              {canRetryFetch && sourceId && campaignId
+                ? (
+                    <Button
+                      variant="secondary"
+                      disabled={isRetrying}
+                      onClick={() => {
+                        void retryFetch({
+                          variables: {
+                            input: {
+                              accessReviewCampaignId: campaignId,
+                              accessReviewSourceId: sourceId,
+                            },
+                          },
+                        }).catch(() => {});
+                      }}
+                    >
+                      {t("campaignDetailPage.actions.retryFetch")}
+                    </Button>
+                  )
+                : null}
             </div>
           )
         : null}

@@ -24,6 +24,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"go.gearno.de/kit/pg"
@@ -449,6 +450,33 @@ func (s *Service) CloseCampaign(
 				return NewCampaignNotPendingActionsError(campaign.ID)
 			}
 
+			var latest coredata.AccessReviewCampaignSourceFetchAttempts
+			if err := latest.LoadLatestByCampaignID(ctx, conn, scope, campaignID); err != nil {
+				return fmt.Errorf("cannot load latest fetch attempts: %w", err)
+			}
+
+			notFetchedIDs := map[gid.GID]bool{}
+
+			for _, attempt := range latest {
+				if attempt.Status != coredata.AccessReviewCampaignSourceFetchStatusSuccess {
+					notFetchedIDs[attempt.AccessReviewCampaignSourceID] = true
+				}
+			}
+
+			if len(notFetchedIDs) > 0 {
+				var campaignSources coredata.AccessReviewCampaignSources
+				if err := campaignSources.LoadByCampaignID(ctx, conn, scope, campaignID); err != nil {
+					return fmt.Errorf("cannot load campaign sources: %w", err)
+				}
+
+				notFetched := slices.DeleteFunc(
+					campaignSources,
+					func(cs *coredata.AccessReviewCampaignSource) bool { return !notFetchedIDs[cs.ID] },
+				)
+
+				return NewCampaignSourceNotFetchedError(campaign.ID, notFetched)
+			}
+
 			entries := coredata.AccessReviewEntries{}
 			filter := &coredata.AccessReviewEntryFilter{
 				Decision: new(coredata.AccessReviewEntryDecisionPending),
@@ -476,6 +504,90 @@ func (s *Service) CloseCampaign(
 
 			if err := campaign.Update(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot update campaign: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return campaign, nil
+}
+
+// RetryCampaignSourceFetch queues a new fetch attempt for a campaign source
+// whose latest attempt failed. The campaign goes back to IN_PROGRESS until the
+// fetch worker settles every source again.
+func (s *Service) RetryCampaignSourceFetch(
+	ctx context.Context,
+	scope coredata.Scoper,
+	req RetryCampaignSourceFetchRequest,
+) (*coredata.AccessReviewCampaign, error) {
+	campaign := &coredata.AccessReviewCampaign{}
+
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, conn pg.Tx) error {
+			if err := lockCampaignForUpdate(ctx, conn, scope, req.CampaignID); err != nil {
+				return fmt.Errorf("cannot lock campaign: %w", err)
+			}
+
+			if err := campaign.LoadByID(ctx, conn, scope, req.CampaignID); err != nil {
+				return fmt.Errorf("cannot load campaign: %w", err)
+			}
+
+			switch campaign.Status {
+			case coredata.AccessReviewCampaignStatusCompleted:
+				return NewCampaignCompletedError(campaign.ID)
+			case coredata.AccessReviewCampaignStatusCancelled:
+				return NewCampaignCancelledError(campaign.ID)
+			}
+
+			var campaignSources coredata.AccessReviewCampaignSources
+			if err := campaignSources.LoadByCampaignID(ctx, conn, scope, campaign.ID); err != nil {
+				return fmt.Errorf("cannot load campaign sources: %w", err)
+			}
+
+			i := slices.IndexFunc(
+				campaignSources,
+				func(cs *coredata.AccessReviewCampaignSource) bool {
+					return cs.AccessReviewSourceID != nil && *cs.AccessReviewSourceID == req.AccessReviewSourceID
+				},
+			)
+			if i < 0 {
+				return coredata.ErrResourceNotFound
+			}
+
+			campaignSource := campaignSources[i]
+
+			var latest coredata.AccessReviewCampaignSourceFetchAttempts
+			if err := latest.LoadLatestByCampaignID(ctx, conn, scope, campaign.ID); err != nil {
+				return fmt.Errorf("cannot load latest fetch attempts: %w", err)
+			}
+
+			failed := slices.ContainsFunc(
+				latest,
+				func(a *coredata.AccessReviewCampaignSourceFetchAttempt) bool {
+					return a.AccessReviewCampaignSourceID == campaignSource.ID &&
+						a.Status == coredata.AccessReviewCampaignSourceFetchStatusFailed
+				},
+			)
+			if !failed {
+				return NewCampaignSourceFetchNotFailedError(req.AccessReviewSourceID)
+			}
+
+			if campaign.Status != coredata.AccessReviewCampaignStatusInProgress {
+				campaign.Status = coredata.AccessReviewCampaignStatusInProgress
+				campaign.UpdatedAt = time.Now()
+
+				if err := campaign.Update(ctx, conn, scope); err != nil {
+					return fmt.Errorf("cannot update campaign: %w", err)
+				}
+			}
+
+			if err := s.enqueueSourceFetches(ctx, conn, scope, coredata.AccessReviewCampaignSources{campaignSource}); err != nil {
+				return fmt.Errorf("cannot queue source fetch: %w", err)
 			}
 
 			return nil

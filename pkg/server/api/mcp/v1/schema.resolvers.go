@@ -4371,6 +4371,42 @@ func (r *Resolver) RemoveAccessReviewCampaignSourceTool(ctx context.Context, req
 	}, nil
 }
 
+// RetryAccessReviewCampaignSourceFetchTool handles the retryAccessReviewCampaignSourceFetch tool
+// Queue a new fetch for a campaign source whose last fetch failed
+func (r *Resolver) RetryAccessReviewCampaignSourceFetchTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RetryAccessReviewCampaignSourceFetchInput) (*mcp.CallToolResult, types.RetryAccessReviewCampaignSourceFetchOutput, error) {
+	scope, err := r.Authorize(ctx, input.CampaignID, accessreview.ActionCampaignRetrySourceFetch)
+	if err != nil {
+		return nil, types.RetryAccessReviewCampaignSourceFetchOutput{}, err
+	}
+
+	campaign, err := r.accessReview.RetryCampaignSourceFetch(
+		ctx,
+		scope,
+		accessreview.RetryCampaignSourceFetchRequest{
+			CampaignID:           input.CampaignID,
+			AccessReviewSourceID: input.AccessReviewSourceID,
+		},
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, coredata.ErrResourceNotFound):
+			return nil, types.RetryAccessReviewCampaignSourceFetchOutput{}, fmt.Errorf("resource not found")
+		case errors.Is(err, accessreview.ErrCampaignCompleted),
+			errors.Is(err, accessreview.ErrCampaignCancelled),
+			errors.Is(err, accessreview.ErrCampaignSourceFetchNotFailed):
+			return nil, types.RetryAccessReviewCampaignSourceFetchOutput{}, err
+		default:
+			r.logger.ErrorCtx(ctx, "cannot retry access review campaign source fetch", log.Error(err))
+
+			return nil, types.RetryAccessReviewCampaignSourceFetchOutput{}, fmt.Errorf("internal server error")
+		}
+	}
+
+	return nil, types.RetryAccessReviewCampaignSourceFetchOutput{
+		Campaign: types.NewAccessReviewCampaign(campaign),
+	}, nil
+}
+
 // FlagAccessReviewEntryTool handles the flagAccessEntry tool
 // Flag an access entry during review
 func (r *Resolver) FlagAccessReviewEntryTool(ctx context.Context, req *mcp.CallToolRequest, input *types.FlagAccessReviewEntryInput) (*mcp.CallToolResult, types.FlagAccessReviewEntryOutput, error) {

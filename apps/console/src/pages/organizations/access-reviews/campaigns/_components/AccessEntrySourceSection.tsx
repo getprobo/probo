@@ -145,6 +145,7 @@ function entryMatchesFilters(
 
 interface AccessEntrySourceSectionProps {
   sourceKey: AccessEntrySourceSection_source$key;
+  canRetryFetch: boolean;
   filters: EntryFilters;
   isPendingActions: boolean;
   selectedIds: ReadonlySet<string>;
@@ -158,6 +159,7 @@ interface AccessEntrySourceSectionProps {
 // the page can drive select-all and range selection across every connector.
 export function AccessEntrySourceSection({
   sourceKey,
+  canRetryFetch,
   filters,
   isPendingActions,
   selectedIds,
@@ -271,6 +273,7 @@ export function AccessEntrySourceSection({
   return (
     <AccessEntrySection
       sourceKey={source}
+      canRetryFetch={canRetryFetch}
       count={hasEntryFilters ? matchedEntries.length : source.entries.totalCount}
       footer={hasNext
         ? <InfiniteScrollTrigger onView={handleView} loading={isLoadingNext} />

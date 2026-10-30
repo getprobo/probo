@@ -28,6 +28,7 @@ import * as startOp from './start.operation';
 import * as closeOp from './close.operation';
 import * as cancelOp from './cancel.operation';
 import * as readEntriesOp from './readEntries.operation';
+import * as retryFetchOp from './retryFetch.operation';
 
 export const description: INodeProperties[] = [
 	{
@@ -84,6 +85,12 @@ export const description: INodeProperties[] = [
 				action: 'Read campaign access entries',
 			},
 			{
+				name: 'Retry Source Fetch',
+				value: 'retryFetch',
+				description: 'Retry the failed fetch of a source in an access review campaign',
+				action: 'Retry a failed access review source fetch',
+			},
+			{
 				name: 'Start',
 				value: 'start',
 				description: 'Start an access review campaign',
@@ -107,6 +114,7 @@ export const description: INodeProperties[] = [
 	...closeOp.description,
 	...cancelOp.description,
 	...readEntriesOp.description,
+	...retryFetchOp.description,
 ];
 
 export {
@@ -119,4 +127,5 @@ export {
 	closeOp as close,
 	cancelOp as cancel,
 	readEntriesOp as readEntries,
+	retryFetchOp as retryFetch,
 };

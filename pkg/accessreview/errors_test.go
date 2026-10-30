@@ -37,6 +37,7 @@ func TestCampaignClientErrors(t *testing.T) {
 
 	tenantID := gid.NewTenantID()
 	campaignID := gid.New(tenantID, coredata.AccessReviewCampaignEntityType)
+	sourceID := gid.New(tenantID, coredata.AccessReviewSourceEntityType)
 
 	tests := []struct {
 		name     string
@@ -72,7 +73,7 @@ func TestCampaignClientErrors(t *testing.T) {
 			name: "not pending actions",
 			err:  accessreview.NewCampaignNotPendingActionsError(campaignID),
 			wantText: fmt.Sprintf(
-				"access review campaign %q cannot be closed unless it is pending actions",
+				"access review campaign %q is not pending actions",
 				campaignID,
 			),
 			sentinel: accessreview.ErrCampaignNotPendingActions,
@@ -88,6 +89,31 @@ func TestCampaignClientErrors(t *testing.T) {
 			err:      accessreview.NewCampaignCancelledError(campaignID),
 			wantText: fmt.Sprintf("access review campaign %q is already cancelled", campaignID),
 			sentinel: accessreview.ErrCampaignCancelled,
+		},
+		{
+			name: "source not fetched",
+			err: accessreview.NewCampaignSourceNotFetchedError(
+				campaignID,
+				coredata.AccessReviewCampaignSources{
+					{Name: "GitHub", AccessReviewSourceID: &sourceID},
+					{Name: "Old CSV"},
+				},
+			),
+			wantText: fmt.Sprintf(
+				"access review campaign %q cannot be closed while these sources have not been fetched: \"GitHub\" (%s), \"Old CSV\" (source deleted): retry the fetch or cancel the campaign",
+				campaignID,
+				sourceID,
+			),
+			sentinel: accessreview.ErrCampaignSourceNotFetched,
+		},
+		{
+			name: "source fetch not failed",
+			err:  accessreview.NewCampaignSourceFetchNotFailedError(sourceID),
+			wantText: fmt.Sprintf(
+				"access source %q cannot be retried in this campaign: its last fetch did not fail",
+				sourceID,
+			),
+			sentinel: accessreview.ErrCampaignSourceFetchNotFailed,
 		},
 	}
 
