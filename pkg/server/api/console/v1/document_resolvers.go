@@ -184,8 +184,6 @@ func (r *documentResolver) CommentThreads(ctx context.Context, obj *types.Docume
 		return nil, err
 	}
 
-	dataloader.FromContext(ctx).DocumentReads.Remember(obj.ID)
-
 	pageOrderBy := page.OrderBy[coredata.DocumentCommentThreadOrderField]{
 		Field:     coredata.DocumentCommentThreadOrderFieldCreatedAt,
 		Direction: page.OrderDirectionAsc,
@@ -214,8 +212,6 @@ func (r *documentResolver) Suggestions(ctx context.Context, obj *types.Document,
 	if err != nil {
 		return nil, err
 	}
-
-	dataloader.FromContext(ctx).DocumentReads.Remember(obj.ID)
 
 	pageOrderBy := page.OrderBy[coredata.DocumentSuggestionOrderField]{
 		Field:     coredata.DocumentSuggestionOrderFieldCreatedAt,

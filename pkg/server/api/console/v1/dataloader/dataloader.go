@@ -26,7 +26,6 @@ import (
 	"fmt"
 	"maps"
 	"net/http"
-	"sync"
 
 	"github.com/vikstrous/dataloadgen"
 	"go.probo.inc/probo/pkg/complianceportal/management"
@@ -35,6 +34,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/iam/policy"
+	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/authn"
@@ -140,16 +140,6 @@ type (
 		Audit                                      *dataloadgen.Loader[gid.GID, *coredata.Audit]
 		Authorize                                  *dataloadgen.Loader[AuthorizeKey, AuthorizeResult]
 		DocumentCommentsByThread                   *dataloadgen.Loader[gid.GID, []*coredata.DocumentComment]
-		// DocumentReads and ProfileReads collapse repeated authorization of the
-		// same document or author inside one request. The shared Authorize
-		// loader is uncached so each call stays an audit decision.
-		DocumentReads onceIDs
-		ProfileReads  onceIDs
-	}
-
-	onceIDs struct {
-		mu  sync.Mutex
-		ids map[gid.GID]struct{}
 	}
 
 	batchFetcher struct {
@@ -240,38 +230,6 @@ func (f *batchFetcher) newLoaders() *Loaders {
 	}
 }
 
-func (ids *onceIDs) Remember(id gid.GID) {
-	ids.mu.Lock()
-	defer ids.mu.Unlock()
-
-	if ids.ids == nil {
-		ids.ids = map[gid.GID]struct{}{}
-	}
-
-	ids.ids[id] = struct{}{}
-}
-
-func (ids *onceIDs) Do(id gid.GID, authorize func() error) error {
-	ids.mu.Lock()
-	defer ids.mu.Unlock()
-
-	if ids.ids == nil {
-		ids.ids = map[gid.GID]struct{}{}
-	}
-
-	if _, ok := ids.ids[id]; ok {
-		return nil
-	}
-
-	if err := authorize(); err != nil {
-		return err
-	}
-
-	ids.ids[id] = struct{}{}
-
-	return nil
-}
-
 func (f *batchFetcher) fetchDocumentCommentsByThread(
 	ctx context.Context,
 	keys []gid.GID,
@@ -291,7 +249,15 @@ func (f *batchFetcher) fetchDocumentCommentsByThread(
 			return nil, fmt.Errorf("cannot batch load document comments: %w", err)
 		}
 
+		// The default Comments resolver serves at most one unpaginated page
+		// (MaxCursorSize) plus a look-ahead row from this batch, so cap each
+		// thread to that bound and drop the rest to avoid materializing an
+		// unbounded per-thread slice for large documents.
 		for _, comment := range comments {
+			if len(result[comment.ThreadID]) >= page.MaxCursorSize+1 {
+				continue
+			}
+
 			result[comment.ThreadID] = append(result[comment.ThreadID], comment)
 		}
 	}

@@ -59,15 +59,11 @@ func documentSuggestionFilter(
 }
 
 func (r *Resolver) loadReviewProfile(ctx context.Context, profileID gid.GID) (*types.Profile, error) {
-	loaders := dataloader.FromContext(ctx)
-	if err := loaders.ProfileReads.Do(profileID, func() error {
-		_, err := r.authorize(ctx, profileID, iam.ActionMembershipProfileGet)
-		return err
-	}); err != nil {
+	if _, err := r.authorize(ctx, profileID, iam.ActionMembershipProfileGet); err != nil {
 		return nil, err
 	}
 
-	profile, err := loaders.Profile.Load(ctx, profileID)
+	profile, err := dataloader.FromContext(ctx).Profile.Load(ctx, profileID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, gqlx.NotFound(ctx, err)
@@ -82,14 +78,19 @@ func (r *Resolver) loadReviewProfile(ctx context.Context, profileID gid.GID) (*t
 }
 
 func (r *Resolver) loadReviewDocument(ctx context.Context, documentID gid.GID) (*types.Document, error) {
-	scope, err := r.authorize(ctx, documentID, probo.ActionDocumentGet)
-	if err != nil {
+	if _, err := r.authorize(ctx, documentID, probo.ActionDocumentGet); err != nil {
 		return nil, err
 	}
 
-	document, err := r.probo.Documents.Get(ctx, scope, documentID)
+	document, err := dataloader.FromContext(ctx).Document.Load(ctx, documentID)
 	if err != nil {
-		return nil, r.documentReviewError(ctx, "cannot load document review document", err)
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
+			return nil, gqlx.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load document review document", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewDocument(document), nil
@@ -170,7 +171,9 @@ func (r *Resolver) documentReviewError(ctx context.Context, message string, err 
 		return gqlx.NotFound(ctx, err)
 	case errors.Is(err, coredata.ErrResourceAlreadyExists),
 		errors.Is(err, probo.ErrDocumentCommentThreadResolved),
-		errors.Is(err, collaboration.ErrOpenSuggestions):
+		errors.Is(err, collaboration.ErrOpenSuggestions),
+		errors.Is(err, collaboration.ErrDocumentCollaborationNotSeeded),
+		errors.Is(err, collaboration.ErrSeedInProgress):
 		return gqlx.Conflict(ctx, err)
 	case errors.Is(err, probo.ErrNotDocumentCommentAuthor),
 		errors.Is(err, probo.ErrInvalidDocumentAnchor),
