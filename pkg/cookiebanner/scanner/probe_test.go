@@ -45,6 +45,7 @@ func TestReadStaticPage_CollectsEmbedHostsAndLinks(t *testing.T) {
 	require.NoError(t, err)
 
 	body := `<!doctype html>
+<probo-cookie-banner banner-id="banner"></probo-cookie-banner>
 <script src="//cdn.example.net/a.js"></script>
 <script src="/local.js"></script>
 <script src="https://www.example.com/www.js"></script>
@@ -66,6 +67,55 @@ func TestReadStaticPage_CollectsEmbedHostsAndLinks(t *testing.T) {
 		page.hosts,
 	)
 	assert.Equal(t, []string{"https://example.com/next", "https://www.example.com/www"}, page.links)
+	assert.Equal(t, "banner", page.bannerID)
+}
+
+func TestReadStaticPage_ResolvesAgainstBaseHref(t *testing.T) {
+	t.Parallel()
+
+	site, ok := parseOrigin("https://example.com")
+	require.True(t, ok)
+	api, ok := parseOrigin("https://api.example.com/v1")
+	require.True(t, ok)
+
+	base, err := url.Parse("https://example.com/stories/a")
+	require.NoError(t, err)
+
+	body := `<!doctype html>
+<a href="/early">early</a>
+<base href="https://cdn.example.net/app/">
+<a href="next">next</a>
+<iframe src="player"></iframe>
+<base href="https://ignored.example/late/">
+<a href="after">after</a>`
+
+	page := readStaticPage(base, strings.NewReader(body), site, api)
+
+	assert.Equal(t, []string{"cdn.example.net"}, page.hosts)
+	assert.Equal(
+		t,
+		[]string{
+			"https://example.com/early",
+			"https://cdn.example.net/app/next",
+			"https://cdn.example.net/app/after",
+		},
+		page.links,
+	)
+}
+
+func TestProbeEmbeds_CancelIsNotAMissingBanner(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}))
+	t.Cleanup(server.Close)
+
+	s := probeScan(t, server)
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	confirmed, err := s.probeEmbeds(ctx, nil)
+	require.NoError(t, err)
+	assert.False(t, confirmed)
 }
 
 func TestProbeEmbeds_TagsQueuedPages(t *testing.T) {
@@ -74,9 +124,11 @@ func TestProbeEmbeds_TagsQueuedPages(t *testing.T) {
 	server := httptest.NewServer(
 		http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "text/html")
+
 				switch r.URL.Path {
 				case "/":
-					_, _ = w.Write([]byte(`<a href="/stories/a">a</a><a href="/pricing">p</a><script src="https://cdn.example.net/app.js"></script>`))
+					_, _ = w.Write([]byte(`<probo-cookie-banner banner-id="banner"></probo-cookie-banner><a href="/stories/a">a</a><a href="/pricing">p</a><script src="https://cdn.example.net/app.js"></script>`))
 				case "/stories/a":
 					_, _ = w.Write([]byte(`<iframe data-src="https://www.youtube.com/embed/x"></iframe>`))
 				case "/docs/x":
@@ -99,7 +151,8 @@ func TestProbeEmbeds_TagsQueuedPages(t *testing.T) {
 		s.front.push(QueueItem{URL: raw, FromSitemap: true})
 	}
 
-	s.probeEmbeds(context.Background(), sitemapURLs)
+	_, err := s.probeEmbeds(context.Background(), sitemapURLs)
+	require.NoError(t, err)
 
 	queue := map[string]QueueItem{}
 	for _, item := range s.front.checkpoint(0, 0, false).Queue {
@@ -141,12 +194,63 @@ func TestProbeEmbeds_StopsWhenTheSiteRefuses(t *testing.T) {
 	s := probeScan(t, server)
 	s.front.push(QueueItem{URL: server.URL + "/docs/x", FromSitemap: true})
 
-	s.probeEmbeds(context.Background(), []string{server.URL + "/docs/x"})
+	_, err := s.probeEmbeds(context.Background(), []string{server.URL + "/docs/x"})
+	require.ErrorIs(t, err, ErrBannerNotInstalled)
 
 	assert.Equal(t, int32(0), others.Load())
 
 	for _, item := range s.front.checkpoint(0, 0, false).Queue {
 		assert.Empty(t, item.EmbedHosts)
+	}
+}
+
+func TestProbeEmbeds_RequiresThisBanner(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name string
+		html string
+		err  error
+	}{
+		{name: "matching id", html: `<probo-cookie-banner banner-id="banner"></probo-cookie-banner>`},
+		{name: "different id", html: `<probo-cookie-banner banner-id="other"></probo-cookie-banner>`, err: ErrDifferentBanner},
+		{name: "no element", html: `<p>home</p>`, err: ErrBannerNotInstalled},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			var others atomic.Int32
+
+			server := httptest.NewServer(
+				http.HandlerFunc(
+					func(w http.ResponseWriter, r *http.Request) {
+						w.Header().Set("Content-Type", "text/html")
+
+						if r.URL.Path != "/" {
+							others.Add(1)
+						}
+
+						_, _ = w.Write([]byte(tc.html))
+					},
+				),
+			)
+			t.Cleanup(server.Close)
+
+			s := probeScan(t, server)
+			s.front.push(QueueItem{URL: server.URL + "/docs", FromSitemap: true})
+
+			_, err := s.probeEmbeds(context.Background(), []string{server.URL + "/docs"})
+			if tc.err == nil {
+				require.NoError(t, err)
+
+				return
+			}
+
+			require.ErrorIs(t, err, tc.err)
+			assert.Equal(t, int32(0), others.Load())
+		})
 	}
 }
 
@@ -157,7 +261,7 @@ func probeScan(t *testing.T, server *httptest.Server) *scan {
 	require.True(t, ok)
 
 	s := &scan{
-		in:       Input{Limits: Limits{}.withDefaults()},
+		in:       Input{BannerID: "banner", Limits: Limits{}.withDefaults()},
 		site:     site,
 		startURL: site.root(),
 		policy:   newRequestPolicy(site, origin{}, true),

@@ -45,23 +45,34 @@ var embedTags = map[string]struct{}{
 }
 
 type staticPage struct {
-	hosts []string
-	links []string
+	hosts    []string
+	links    []string
+	bannerID string
 }
 
 // probeEmbeds reads the static HTML of the start page, the pages it links
 // to, and the sitemap URLs, and tags their queue entries with the
 // third-party hosts they embed. It only orders the queue: the browser
 // still records every tracker. Embeds added by JavaScript are not seen.
-func (s *scan) probeEmbeds(ctx context.Context, sitemapURLs []string) {
+// It returns ErrBannerNotInstalled when the homepage has no probo
+// banner, and ErrDifferentBanner when it embeds another one, before
+// any other page is fetched. confirmed is false when the context ends
+// before that homepage can be read; the caller retries next run.
+func (s *scan) probeEmbeds(ctx context.Context, sitemapURLs []string) (bool, error) {
 	ctx, cancel := context.WithTimeout(ctx, s.in.Limits.ProbeBudget)
 	defer cancel()
 
 	home, err := s.probePage(ctx, s.startURL)
-	if errors.Is(err, ErrBlocked) {
-		s.warn(ctx, "cannot probe pages", err)
+	if home.bannerID != s.in.BannerID {
+		if ctx.Err() != nil || (s.parent != nil && s.parent.Err() != nil) || (s.scanCtx != nil && s.scanCtx.Err() != nil) {
+			return false, nil
+		}
 
-		return
+		if err != nil {
+			s.warn(ctx, "cannot probe pages", err)
+		}
+
+		return false, bannerInstallError(home.bannerID)
 	}
 
 	if len(home.hosts) > 0 {
@@ -77,6 +88,16 @@ func (s *scan) probeEmbeds(ctx context.Context, sitemapURLs []string) {
 			s.front.push(item)
 		}
 	}
+
+	return true, nil
+}
+
+func bannerInstallError(found string) error {
+	if found == "" {
+		return fmt.Errorf("%w: homepage has no probo-cookie-banner", ErrBannerNotInstalled)
+	}
+
+	return ErrDifferentBanner
 }
 
 func (s *scan) probeCandidates(ctx context.Context, links, sitemapURLs []string) []QueueItem {
@@ -204,12 +225,16 @@ func htmlContent(header string) bool {
 }
 
 // readStaticPage collects the hosts of embedded frames, scripts and media,
-// including lazy attributes such as data-src, and the page's links. A body
-// cut short by the size cap or a timeout yields what was read.
+// including lazy attributes such as data-src, and the page's links. The
+// first base href becomes the base for later relative URLs, matching the
+// document base URL the browser uses. A body cut short by the size cap or
+// a timeout yields what was read.
 func readStaticPage(base *url.URL, body io.Reader, site, api origin) staticPage {
 	var (
-		page  staticPage
-		hosts []string
+		page    staticPage
+		hosts   []string
+		doc     = base
+		sawBase bool
 	)
 
 	tokens := html.NewTokenizer(body)
@@ -231,13 +256,22 @@ func readStaticPage(base *url.URL, body io.Reader, site, api origin) staticPage 
 				attr := string(key)
 
 				switch {
+				case tag == "probo-cookie-banner" && attr == "banner-id" && page.bannerID == "":
+					page.bannerID = strings.TrimSpace(string(value))
+				case tag == "base" && attr == "href" && !sawBase:
+					sawBase = true
+
+					ref, err := base.Parse(strings.TrimSpace(string(value)))
+					if err == nil && (ref.Scheme == "http" || ref.Scheme == "https") && ref.Host != "" {
+						doc = ref
+					}
 				case tag == "a" && attr == "href":
-					if link, ok := resolveLink(base.String(), string(value)); ok {
+					if link, ok := resolveLink(doc.String(), string(value)); ok {
 						page.links = append(page.links, link)
 					}
 				case embedAttr(tag, attr):
-					if host, ok := embedHost(base, string(value), site, api); ok {
-						hosts = append(hosts, host)
+					if host, ok := embedHost(doc, string(value), site, api); ok {
+						hosts = addEmbedHost(hosts, host)
 					}
 				}
 			}

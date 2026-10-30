@@ -40,14 +40,22 @@ import (
 // the stale threshold, typically because the worker crashed.
 //
 // CookieBannerScanFailureReasonInternal: any other error on our side.
+//
+// CookieBannerScanFailureReasonBannerNotInstalled: the homepage HTML has
+// no probo banner, so no page was opened.
+//
+// CookieBannerScanFailureReasonDifferentBanner: the homepage embeds a
+// probo banner, but not this one, so no page was opened.
 type CookieBannerScanFailureReason string
 
 const (
-	CookieBannerScanFailureReasonUnreachable   CookieBannerScanFailureReason = "UNREACHABLE"
-	CookieBannerScanFailureReasonBlocked       CookieBannerScanFailureReason = "BLOCKED"
-	CookieBannerScanFailureReasonNoPagesLoaded CookieBannerScanFailureReason = "NO_PAGES_LOADED"
-	CookieBannerScanFailureReasonInterrupted   CookieBannerScanFailureReason = "INTERRUPTED"
-	CookieBannerScanFailureReasonInternal      CookieBannerScanFailureReason = "INTERNAL"
+	CookieBannerScanFailureReasonUnreachable        CookieBannerScanFailureReason = "UNREACHABLE"
+	CookieBannerScanFailureReasonBlocked            CookieBannerScanFailureReason = "BLOCKED"
+	CookieBannerScanFailureReasonNoPagesLoaded      CookieBannerScanFailureReason = "NO_PAGES_LOADED"
+	CookieBannerScanFailureReasonInterrupted        CookieBannerScanFailureReason = "INTERRUPTED"
+	CookieBannerScanFailureReasonInternal           CookieBannerScanFailureReason = "INTERNAL"
+	CookieBannerScanFailureReasonBannerNotInstalled CookieBannerScanFailureReason = "BANNER_NOT_INSTALLED"
+	CookieBannerScanFailureReasonDifferentBanner    CookieBannerScanFailureReason = "DIFFERENT_BANNER"
 )
 
 var (
@@ -63,6 +71,8 @@ func CookieBannerScanFailureReasons() []CookieBannerScanFailureReason {
 		CookieBannerScanFailureReasonNoPagesLoaded,
 		CookieBannerScanFailureReasonInterrupted,
 		CookieBannerScanFailureReasonInternal,
+		CookieBannerScanFailureReasonBannerNotInstalled,
+		CookieBannerScanFailureReasonDifferentBanner,
 	}
 }
 
@@ -73,7 +83,9 @@ func (v CookieBannerScanFailureReason) IsValid() bool {
 		CookieBannerScanFailureReasonBlocked,
 		CookieBannerScanFailureReasonNoPagesLoaded,
 		CookieBannerScanFailureReasonInterrupted,
-		CookieBannerScanFailureReasonInternal:
+		CookieBannerScanFailureReasonInternal,
+		CookieBannerScanFailureReasonBannerNotInstalled,
+		CookieBannerScanFailureReasonDifferentBanner:
 		return true
 	}
 

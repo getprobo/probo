@@ -79,6 +79,7 @@ func TestRun_RecordsTrackersAndSkipsOtherOrigins(t *testing.T) {
 			w.Header().Set("Set-Cookie", "sid=secret; HttpOnly; Path=/")
 			w.Header().Set("Content-Type", "text/html")
 			_, _ = w.Write([]byte(`<!doctype html>
+<probo-cookie-banner banner-id="banner"></probo-cookie-banner>
 <script src="/track.js"></script>
 <iframe src="` + chromeURL(t, third) + `"></iframe>
 <a href="/next">next</a>
@@ -108,10 +109,7 @@ localStorage.setItem("old_binding", typeof globalThis.__proboScanCookie);
 		BrowserURL:         os.Getenv("CHROME_WS_URL"),
 		Limits:             fastLimits(5),
 		skipPublicURLCheck: true,
-		httpClient: httpclient.DefaultClient(
-			httpclient.WithSSRFProtection(),
-			httpclient.WithSSRFAllowLoopback(),
-		),
+		httpClient:         testHTTPClient(),
 		OnPage: func(_ context.Context, page Page, _ Checkpoint) error {
 			cookies = append(cookies, page.Cookies...)
 			storage = append(storage, page.Storage...)
@@ -184,7 +182,7 @@ func TestRun_StopsAtPageLimit(t *testing.T) {
 
 	site := serve(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
-		_, _ = w.Write([]byte(`<!doctype html><a href="/a">a</a><a href="/b">b</a><a href="/c">c</a>`))
+		_, _ = w.Write([]byte(`<!doctype html><probo-cookie-banner banner-id="banner"></probo-cookie-banner><a href="/a">a</a><a href="/b">b</a><a href="/c">c</a>`))
 	}))
 
 	result, err := Run(context.Background(), alloc, Input{
@@ -193,11 +191,42 @@ func TestRun_StopsAtPageLimit(t *testing.T) {
 		APIBaseURL:         "https://api.example.com",
 		Limits:             fastLimits(2),
 		skipPublicURLCheck: true,
+		httpClient:         testHTTPClient(),
 	})
 	require.NoError(t, err)
 	assert.Equal(t, 2, result.PagesScanned)
 	assert.True(t, result.Truncated)
 	assert.NotEmpty(t, result.Checkpoint.Queue)
+}
+
+func TestRun_PausesWhenTheRunBudgetEnds(t *testing.T) {
+	t.Parallel()
+
+	alloc, cancel := testChrome(t)
+	defer cancel()
+
+	site := serve(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		_, _ = w.Write([]byte(`<!doctype html><probo-cookie-banner banner-id="banner"></probo-cookie-banner><a href="/a">a</a><a href="/b">b</a><a href="/c">c</a><a href="/d">d</a><a href="/e">e</a>`))
+	}))
+
+	limits := fastLimits(20)
+	limits.PagesPerRun = 20
+	limits.RunTimeout = time.Second
+
+	result, err := Run(context.Background(), alloc, Input{
+		Origin:             chromeURL(t, site),
+		BannerID:           "banner",
+		APIBaseURL:         "https://api.example.com",
+		Limits:             limits,
+		skipPublicURLCheck: true,
+		httpClient:         testHTTPClient(),
+	})
+	require.NoError(t, err)
+	assert.True(t, result.Paused)
+	assert.False(t, result.Truncated)
+	assert.GreaterOrEqual(t, result.PagesScanned, 1)
+	assert.Less(t, result.PagesScanned, 20)
 }
 
 func TestRun_PausesAfterPagesPerRun(t *testing.T) {
@@ -208,7 +237,7 @@ func TestRun_PausesAfterPagesPerRun(t *testing.T) {
 
 	site := serve(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
-		_, _ = w.Write([]byte(`<!doctype html><a href="/a">a</a><a href="/b">b</a><a href="/c">c</a>`))
+		_, _ = w.Write([]byte(`<!doctype html><probo-cookie-banner banner-id="banner"></probo-cookie-banner><a href="/a">a</a><a href="/b">b</a><a href="/c">c</a>`))
 	}))
 
 	limits := fastLimits(5)
@@ -220,6 +249,7 @@ func TestRun_PausesAfterPagesPerRun(t *testing.T) {
 		APIBaseURL:         "https://api.example.com",
 		Limits:             limits,
 		skipPublicURLCheck: true,
+		httpClient:         testHTTPClient(),
 	}
 
 	first, err := Run(context.Background(), alloc, in)
@@ -262,7 +292,7 @@ func TestRun_BlocksOffSiteDocument(t *testing.T) {
 		}
 
 		w.Header().Set("Content-Type", "text/html")
-		_, _ = w.Write([]byte(`<!doctype html><a href="/bounce">bounce</a>`))
+		_, _ = w.Write([]byte(`<!doctype html><probo-cookie-banner banner-id="banner"></probo-cookie-banner><a href="/bounce">bounce</a>`))
 	}))
 
 	var cookies []Cookie
@@ -273,6 +303,7 @@ func TestRun_BlocksOffSiteDocument(t *testing.T) {
 		APIBaseURL:         "https://api.example.com",
 		Limits:             fastLimits(3),
 		skipPublicURLCheck: true,
+		httpClient:         testHTTPClient(),
 		OnPage: func(_ context.Context, page Page, _ Checkpoint) error {
 			cookies = append(cookies, page.Cookies...)
 
@@ -300,6 +331,35 @@ func serve(t *testing.T, handler http.Handler) *httptest.Server {
 	t.Cleanup(server.Close)
 
 	return server
+}
+
+// testHTTPClient fetches the page the browser will open. The SSRF
+// client allows the loopback server. When Chrome runs in a container,
+// CHROME_TEST_HOST is a name this process cannot resolve, so that name
+// is dialed as loopback, where the test server listens.
+func testHTTPClient() *http.Client {
+	host := os.Getenv("CHROME_TEST_HOST")
+	client := httpclient.DefaultClient(
+		httpclient.WithSSRFProtection(),
+		httpclient.WithSSRFAllowLoopback(),
+	)
+
+	if host == "" {
+		return client
+	}
+
+	dialer := &net.Dialer{Timeout: 5 * time.Second}
+	client.Transport = &http.Transport{
+		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+			if name, port, err := net.SplitHostPort(addr); err == nil && name == host {
+				addr = net.JoinHostPort("127.0.0.1", port)
+			}
+
+			return dialer.DialContext(ctx, network, addr)
+		},
+	}
+
+	return client
 }
 
 // chromeURL rewrites a test server URL when Chrome runs in a container.
