@@ -109,26 +109,48 @@ describe("RichEditor collaboration", () => {
     const document = createRichEditorAutomergeDocument(
       JSON.stringify({
         type: "doc",
-        content: [{
-          type: "paragraph",
-          content: [{
-            type: "text",
-            text: "Suggested",
-            marks: [{ type: "suggestionInsert", attrs: { id: "suggestion-1" } }],
-          }],
-        }],
+        content: [
+          {
+            type: "paragraph",
+            content: [{
+              type: "text",
+              text: "Suggested",
+              marks: [{ type: "suggestionInsert", attrs: { id: "suggestion-1" } }],
+            }],
+          },
+          {
+            type: "paragraph",
+            content: [{
+              type: "text",
+              text: "Removed",
+              marks: [{ type: "suggestionDelete", attrs: { id: "suggestion-2" } }],
+            }],
+          },
+        ],
       }),
     );
+    const legacyMarkNames: Record<string, string> = {
+      "suggestion-insert": "suggestionInsert",
+      "suggestion-delete": "suggestionDelete",
+    };
     const spans = Automerge.spans(document, ["body"]).map((span) => {
-      if (span.type !== "text" || !span.marks?.["suggestion-insert"]) return span;
-      const { ["suggestion-insert"]: mark, ...marks } = span.marks;
-      return { ...span, marks: { ...marks, suggestionInsert: mark } };
+      if (span.type !== "text" || !span.marks) return span;
+      const marks = { ...span.marks };
+      for (const [modern, legacy] of Object.entries(legacyMarkNames)) {
+        if (!(modern in marks)) continue;
+        marks[legacy] = marks[modern];
+        delete marks[modern];
+      }
+      return { ...span, marks };
     });
     const adapter = createSchemaAdapter(richEditorCollaborationExtensions);
     const restored = pmDocFromSpans(adapter, spans).toJSON();
 
     expect(restored.content[0].content[0].marks).toEqual([
       { type: "suggestionInsert", attrs: { id: "suggestion-1" } },
+    ]);
+    expect(restored.content[1].content[0].marks).toEqual([
+      { type: "suggestionDelete", attrs: { id: "suggestion-2" } },
     ]);
   });
 

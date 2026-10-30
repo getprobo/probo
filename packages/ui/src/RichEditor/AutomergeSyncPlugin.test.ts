@@ -249,7 +249,9 @@ describe("Automerge sync plugin", () => {
     const position = textPosition(state, "Hello");
     const mark = state.schema.marks.bold?.create();
     if (!mark) throw new Error("expected a bold mark");
-    state = state.apply(state.tr.addMark(position, position + 2, mark));
+    expectNoSpanRewrite(() => {
+      state = state.apply(state.tr.addMark(position, position + 2, mark));
+    });
     expect(document.body).toContain("Hello");
     const spans = Automerge.spans(document, ["body"]);
     const text = spans
@@ -260,7 +262,9 @@ describe("Automerge sync plugin", () => {
     const bold = spans.find(span => span.type === "text" && span.value === "He");
     expect(bold && "marks" in bold ? bold.marks : undefined).toMatchObject({ strong: true });
 
-    state.apply(state.tr.removeMark(position, position + 2, mark));
+    expectNoSpanRewrite(() => {
+      state.apply(state.tr.removeMark(position, position + 2, mark));
+    });
     const cleared = Automerge.spans(document, ["body"])
       .filter(span => span.type === "text")
       .map(span => String(span.value))

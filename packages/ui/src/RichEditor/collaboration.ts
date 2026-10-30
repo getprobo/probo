@@ -69,6 +69,8 @@ const supportedMarkNames = new Set([
   "underline",
   "code",
   "link",
+  "suggestionInsert",
+  "suggestionDelete",
 ]);
 
 export function supportsRichEditorCollaboration(content: string): boolean {
