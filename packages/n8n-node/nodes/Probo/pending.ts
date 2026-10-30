@@ -21,7 +21,7 @@
 import type { IDataObject } from 'n8n-workflow';
 import { personFields, profileSelection, waitingFields } from './output';
 
-export const PENDING_PAGE_SIZE = 20;
+const PENDING_PAGE_SIZE = 20;
 
 const signatureFieldsFragment = `
 fragment SignatureFields on DocumentVersionSignature {
