@@ -255,7 +255,7 @@ test-automerge: ## Run the full Automerge suite, including the JS oracle and off
 		$(GO_TEST) ./pkg/automerge/...
 
 .PHONY: test-js
-test-js: ## Run frontend unit tests (vitest) across workspaces
+test-js: relay ## Run frontend unit tests (vitest) across workspaces
 	$(NPM) run test
 
 .PHONY: test-automerge-conformance

@@ -395,8 +395,6 @@ jobs:
       - uses: "$/.github/actions/setup"
         with:
           go: "false"
-      - name: "Generate Relay artifacts"
-        run: make relay
       - name: "Run vitest"
         run: make test-js
 

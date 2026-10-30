@@ -14,7 +14,9 @@
       "dependsOn": ["^check"],
       "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/apps/vite/**"]
     },
-    "test": {},
+    "test": {
+      "inputs": ["$TURBO_DEFAULT$", "src/__generated__/**"]
+    },
     "dev": {
       "cache": false,
       "persistent": true

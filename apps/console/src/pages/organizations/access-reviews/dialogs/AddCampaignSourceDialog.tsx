@@ -38,7 +38,7 @@ import type { AddCampaignSourceDialogMutation } from "#/__generated__/core/AddCa
 import type { AddCampaignSourceDialogSourcesQuery } from "#/__generated__/core/AddCampaignSourceDialogSourcesQuery.graphql";
 import { AccessReviewSourceOptionLabel } from "#/pages/organizations/access-reviews/_components/AccessReviewSourceOptionLabel";
 
-const addScopeMutation = graphql`
+const addCampaignSourceMutation = graphql`
   mutation AddCampaignSourceDialogMutation(
     $input: AddAccessReviewCampaignSourceInput!
   ) {
@@ -48,33 +48,15 @@ const addScopeMutation = graphql`
         sources {
           id
           name
-          fetchAttempts(first: 1) {
-            edges {
-              node {
-                status
-                fetchedAccountsCount
-                error
-              }
+          source {
+            id
+            name
+            connectorAccount {
+              name
             }
           }
-          entries(first: 50) {
-            edges {
-              node {
-                id
-                email
-                fullName
-                roles
-                isAdmin
-                mfaStatus
-                lastLogin
-                decision
-                flags
-              }
-            }
-            pageInfo {
-              hasNextPage
-            }
-          }
+          # eslint-disable-next-line relay/must-colocate-fragment-spreads
+          ...AccessEntrySourceSection_source
         }
       }
     }
@@ -124,7 +106,7 @@ export function AddCampaignSourceDialog({
   const [selectedSourceId, setSelectedSourceId] = useState<string>("");
 
   const [addCampaignSource, isAdding]
-    = useMutation<AddCampaignSourceDialogMutation>(addScopeMutation);
+    = useMutation<AddCampaignSourceDialogMutation>(addCampaignSourceMutation);
 
   const onSubmit = () => {
     if (!selectedSourceId) return;
