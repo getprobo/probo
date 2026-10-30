@@ -523,14 +523,14 @@ export async function searchOrganizations(
 	};
 }
 
-export function documentSearchStatuses(operation: unknown): string[] {
+function documentSearchStatuses(operation: unknown): string[] {
 	if (operation === 'unarchive') {
 		return ['ARCHIVED'];
 	}
 	return ['ACTIVE'];
 }
 
-export function peopleSearchStates(operation: unknown): string[] {
+function peopleSearchStates(operation: unknown): string[] {
 	switch (operation) {
 		case 'inviteUser':
 			return ['PENDING', 'DEACTIVATED'];
@@ -543,7 +543,7 @@ export function peopleSearchStates(operation: unknown): string[] {
 	}
 }
 
-export function versionSearchStatuses(operation: unknown): string[] | undefined {
+function versionSearchStatuses(operation: unknown): string[] | undefined {
 	if (operation === 'voidApproval') {
 		return ['PENDING_APPROVAL'];
 	}
@@ -590,7 +590,7 @@ export async function searchDocuments(
 	};
 }
 
-export function personResultName(node: IDataObject): string {
+function personResultName(node: IDataObject): string {
 	const fullName = typeof node.fullName === 'string' ? node.fullName : '';
 	const email = typeof node.emailAddress === 'string' ? node.emailAddress : '';
 	if (fullName && email) {
@@ -599,7 +599,7 @@ export function personResultName(node: IDataObject): string {
 	return fullName || email || String(node.id ?? '');
 }
 
-export function versionResultName(node: IDataObject): string {
+function versionResultName(node: IDataObject): string {
 	const title = typeof node.title === 'string' && node.title ? node.title : 'Version';
 	const major = node.major ?? '';
 	const minor = node.minor ?? '';
