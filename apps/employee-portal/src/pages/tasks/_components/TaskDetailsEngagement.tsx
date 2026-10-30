@@ -45,6 +45,7 @@ import { DialogTitle } from "@probo/ui/src/v2/Dialog/DialogTitle";
 import { ErrorBoundary } from "@probo/ui/src/v2/ErrorBoundary/ErrorBoundary";
 import { Field } from "@probo/ui/src/v2/form/Field";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
+import { shortcutAria } from "@probo/ui/src/v2/shortcutAria";
 import { Timeline } from "@probo/ui/src/v2/Timeline/Timeline";
 import { TimelineContent } from "@probo/ui/src/v2/Timeline/TimelineContent";
 import { TimelineItem } from "@probo/ui/src/v2/Timeline/TimelineItem";
@@ -509,6 +510,9 @@ export function TaskDetailsCommentForm({ taskId }: { taskId: string }) {
   const { root, actions, editor } = taskCommentForm();
 
   function handleSubmit() {
+    if (isCreating) {
+      return;
+    }
     if (isRichEditorContentEmpty(content)) {
       setError(t("details.commentRequired"));
       return;
@@ -548,6 +552,7 @@ export function TaskDetailsCommentForm({ taskId }: { taskId: string }) {
             placeholder={t("details.commentPlaceholder")}
             aria-label={t("details.commentPlaceholder")}
             mentionSource={mentionSource}
+            onModEnter={handleSubmit}
             onChangeContent={(next) => {
               setContent(next);
               setError(undefined);
@@ -562,6 +567,7 @@ export function TaskDetailsCommentForm({ taskId }: { taskId: string }) {
             color="neutral"
             highContrast
             loading={isCreating}
+            aria-keyshortcuts={isCreating ? undefined : shortcutAria("Enter")}
           >
             {t("details.send")}
           </Button>

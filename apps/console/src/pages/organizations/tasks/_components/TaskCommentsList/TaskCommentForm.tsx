@@ -23,6 +23,7 @@ import { taskCommentForm } from "@probo/tasks";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { Field } from "@probo/ui/src/v2/form/Field";
+import { shortcutAria } from "@probo/ui/src/v2/shortcutAria";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -47,7 +48,7 @@ export function TaskCommentForm() {
   const { root, editor } = taskCommentForm();
 
   function handleSubmit() {
-    if (uploading) {
+    if (uploading || isCreating) {
       return;
     }
 
@@ -91,6 +92,7 @@ export function TaskCommentForm() {
             placeholder={t("detailsPage.comments.fields.leaveAComment")}
             aria-label={t("detailsPage.comments.fields.leaveAComment")}
             mentionSource={mentionSource}
+            onModEnter={handleSubmit}
             toolbar={(
               <Button
                 type="submit"
@@ -100,6 +102,9 @@ export function TaskCommentForm() {
                 highContrast
                 disabled={uploading}
                 loading={isCreating}
+                aria-keyshortcuts={
+                  uploading || isCreating ? undefined : shortcutAria("Enter")
+                }
               >
                 {t("detailsPage.comments.actions.send")}
               </Button>

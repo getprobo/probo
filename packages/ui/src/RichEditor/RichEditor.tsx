@@ -62,6 +62,7 @@ import { MentionMenu } from "./MentionMenu/MentionMenu";
 import { OptionsMenu } from "./OptionsMenu/OptionsMenu";
 import { PlaceholderExtension, setPlaceholder } from "./PlaceholderExtension";
 import { SlashCommandExtension } from "./SlashCommandExtension";
+import { submitOnModEnter } from "./submitOnModEnter";
 import { TableCellMenu } from "./TableCellMenu/TableCellMenu";
 import { TableColumnMenu } from "./TableColumnMenu/TableColumnMenu";
 import { TableRowMenu } from "./TableRowMenu/TableRowMenu";
@@ -208,6 +209,8 @@ type RichEditorProps = ComponentProps<"div"> & {
   attachments?: boolean;
   // Right side of the attachment row, such as a comment send button.
   toolbar?: ReactNode;
+  // TipTap binds Mod-Enter to a hard break. Composers override it to submit.
+  onModEnter?: () => void;
   placeholder?: string;
   onChangeContent?: (content: string) => void;
   onUploadingChange?: (uploading: boolean) => void;
@@ -241,6 +244,7 @@ export function RichEditor(props: RichEditorProps) {
     controls = true,
     attachments = false,
     toolbar,
+    onModEnter,
     placeholder,
     onChangeContent,
     onUploadingChange,
@@ -256,6 +260,7 @@ export function RichEditor(props: RichEditorProps) {
   const { t } = useTranslation();
   const uploadRef = useRef<UploadAttachment | null>(null);
   const onChangeContentRef = useRef(onChangeContent);
+  const onModEnterRef = useRef(onModEnter);
   const onUploadingChangeRef = useRef(onUploadingChange);
   const uploadingRef = useRef(false);
   const emittedRef = useRef<string | null>(null);
@@ -266,8 +271,9 @@ export function RichEditor(props: RichEditorProps) {
 
   useLayoutEffect(() => {
     onChangeContentRef.current = onChangeContent;
+    onModEnterRef.current = onModEnter;
     onUploadingChangeRef.current = onUploadingChange;
-  }, [onChangeContent, onUploadingChange]);
+  }, [onChangeContent, onModEnter, onUploadingChange]);
 
   useEffect(() => {
     return () => {
@@ -352,6 +358,9 @@ export function RichEditor(props: RichEditorProps) {
     editorProps: {
       attributes: {
         class: "min-h-full flex-1",
+      },
+      handleKeyDown(_view, event) {
+        return submitOnModEnter(event, onModEnterRef.current);
       },
       handlePaste(view, event) {
         const upload = uploadRef.current;
