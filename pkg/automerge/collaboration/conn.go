@@ -198,6 +198,10 @@ func (c *ServerConn) adoptDocumentID(id string) error {
 	}
 
 	canonicalID := strings.TrimPrefix(id, AutomergeURLPrefix)
+	if canonicalID == "" || strings.HasPrefix(canonicalID, AutomergeURLPrefix) {
+		return fmt.Errorf("received a frame with a malformed document id %q", id)
+	}
+
 	if c.documentID == "" {
 		c.documentID = canonicalID
 
