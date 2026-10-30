@@ -28,6 +28,7 @@ import (
 	"slices"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
@@ -231,9 +232,9 @@ func (a *Authorizer) AuthorizeBatch(ctx context.Context, params AuthorizeBatchPa
 // per item: a nil entry means allowed, a non-nil entry carries the iam
 // error explaining the denial (typically *ErrInsufficientPermissions).
 //
-// Audit log entries for allowed, non-dry-run items are written in a single
-// bulk insert. Use AuthorizeBatch instead when callers want all-or-nothing
-// semantics for a homogeneous batch.
+// Audit log entries for non-dry-run items are written in a single bulk
+// insert, including denials. Use AuthorizeBatch instead when callers want
+// all-or-nothing semantics for a homogeneous batch.
 func (a *Authorizer) AuthorizeMulti(
 	ctx context.Context,
 	params AuthorizeMultiParams,
@@ -835,15 +836,31 @@ func (a *Authorizer) insertAuditEntries(
 	decisions []error,
 	denialsOnly bool,
 ) error {
-	snapshot := a.loadActorSnapshot(ctx, tx, params.Principal)
-	now := time.Now()
-	request, _ := AuditRequestFromContext(ctx)
-	entries := make(coredata.AuditLogEntries, 0, len(params.Items))
+	indexes := make([]int, 0, len(params.Items))
 
 	for i, item := range params.Items {
 		if denialsOnly && decisions[i] == nil {
 			continue
 		}
+
+		if item.DryRun {
+			continue
+		}
+
+		indexes = append(indexes, i)
+	}
+
+	if len(indexes) == 0 {
+		return nil
+	}
+
+	snapshot := a.loadActorSnapshot(ctx, tx, params.Principal)
+	now := time.Now()
+	request, _ := AuditRequestFromContext(ctx)
+	entries := make(coredata.AuditLogEntries, 0, len(indexes))
+
+	for _, i := range indexes {
+		item := params.Items[i]
 
 		entry := a.buildAuditLogEntry(
 			ctx,
@@ -948,12 +965,7 @@ func (a *Authorizer) buildAuditLogEntry(
 
 	if decision != nil {
 		outcome = coredata.AuditLogOutcomeDenied
-		reason := decision.Error()
-
-		if len(reason) > 1024 {
-			reason = reason[:1024]
-		}
-
+		reason := truncateAuditString(decision.Error(), 1024)
 		denialReason = &reason
 	}
 
@@ -969,7 +981,7 @@ func (a *Authorizer) buildAuditLogEntry(
 		ResourceID:     params.Resource,
 		Outcome:        outcome,
 		DenialReason:   denialReason,
-		Metadata:       redactAuditMetadata([]byte("{}")),
+		Metadata:       []byte("{}"),
 		OriginIP:       optionalAuditString(request.IP),
 		UserAgent:      optionalAuditString(truncateAuditString(request.UserAgent, 512)),
 		RequestID:      optionalAuditString(truncateAuditString(request.RequestID, 128)),
@@ -991,5 +1003,10 @@ func truncateAuditString(value string, limit int) string {
 		return value
 	}
 
-	return value[:limit]
+	cut := value[:limit]
+	for len(cut) > 0 && !utf8.ValidString(cut) {
+		cut = cut[:len(cut)-1]
+	}
+
+	return cut
 }

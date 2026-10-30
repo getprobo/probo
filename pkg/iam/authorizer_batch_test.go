@@ -199,6 +199,13 @@ func TestAuthorizer_AuthorizeBatch(t *testing.T) {
 			action,
 			coredata.AuditLogOutcomeDenied,
 		))
+		assert.Equal(t, 0, countAuditLogsForActionAndOutcome(
+			t,
+			context.Background(),
+			client,
+			action,
+			coredata.AuditLogOutcomeAllowed,
+		))
 	})
 
 	t.Run("duplicate resources in batch", func(t *testing.T) {
