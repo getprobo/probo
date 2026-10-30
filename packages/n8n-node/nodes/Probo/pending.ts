@@ -359,7 +359,8 @@ function pageSize(options: PendingOptions, collected: number): number {
 	if (options.returnAll) {
 		return PENDING_PAGE_SIZE;
 	}
-	return Math.max(1, Math.min(PENDING_PAGE_SIZE, options.limit - collected));
+	const remaining = Math.floor(options.limit - collected);
+	return Math.max(1, Math.min(PENDING_PAGE_SIZE, remaining));
 }
 
 async function walkConnection(
