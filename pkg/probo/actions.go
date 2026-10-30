@@ -132,7 +132,17 @@ const (
 	ActionDocumentArchive     = "core:document:archive"
 	ActionDocumentUnarchive   = "core:document:unarchive"
 	ActionDocumentDeleteDraft = "core:document:delete-draft"
-	ActionDocumentComment     = "core:document:comment"
+
+	// Document comment actions
+	ActionDocumentComment        = "core:document:comment"
+	ActionDocumentCommentUpdate  = "core:document:comment-update"
+	ActionDocumentCommentDelete  = "core:document:comment-delete"
+	ActionDocumentCommentResolve = "core:document:comment-resolve"
+
+	// Document suggestion actions
+	ActionDocumentSuggest       = "core:document:suggest"
+	ActionDocumentSuggestAccept = "core:document:suggest-accept"
+	ActionDocumentSuggestReject = "core:document:suggest-reject"
 
 	// DocumentVersion actions
 	ActionDocumentVersionGet             = "core:document-version:get"
