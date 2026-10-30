@@ -582,6 +582,15 @@ func (s *DocumentService) publish(
 
 	result := &PublishDocumentResult{}
 
+	// Lock the collaboration document for the whole publish so the
+	// no-open-suggestions check and the snapshot materialization see one
+	// revision; a concurrent suggestion persist blocks on the same row.
+	collabDocument := &coredata.CollaborationDocument{}
+	if err := collabDocument.LoadByDocumentIDForUpdate(ctx, tx, scope, req.DocumentID); err != nil &&
+		!errors.Is(err, coredata.ErrResourceNotFound) {
+		return nil, fmt.Errorf("cannot lock collaboration document: %w", err)
+	}
+
 	if err := s.ensureNoPendingApproval(ctx, scope, tx, req.DocumentID); err != nil {
 		return nil, err
 	}
@@ -2268,6 +2277,7 @@ func (s *DocumentService) DeleteDraft(
 				scope,
 				document.ID,
 				published.Content,
+				collaboration.WithDiscardOpenSuggestions(),
 			); err != nil {
 				return fmt.Errorf("cannot restore published content: %w", err)
 			}

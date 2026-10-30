@@ -37,6 +37,24 @@ import (
 // content seeds from, matching the frontend's default empty editor.
 const EmptyProseMirrorDocument = `{"type":"doc","content":[{"type":"paragraph"}]}`
 
+type (
+	putContentConfig struct {
+		discardOpenSuggestions bool
+	}
+
+	// PutContentOption configures a PutContent call.
+	PutContentOption func(*putContentConfig)
+)
+
+// WithDiscardOpenSuggestions lets PutContent overwrite a document that still has
+// open suggestions. The draft-delete restore discards the draft, so its open
+// suggestions go with it rather than blocking the restore.
+func WithDiscardOpenSuggestions() PutContentOption {
+	return func(c *putContentConfig) {
+		c.discardOpenSuggestions = true
+	}
+}
+
 func collaborationProfile(
 	ctx context.Context,
 	conn pg.Querier,
@@ -142,7 +160,13 @@ func (s *Service) PutContent(
 	scope coredata.Scoper,
 	documentID gid.GID,
 	content string,
+	opts ...PutContentOption,
 ) error {
+	cfg := putContentConfig{}
+	for _, opt := range opts {
+		opt(&cfg)
+	}
+
 	if strings.TrimSpace(content) == "" {
 		content = EmptyProseMirrorDocument
 	}
@@ -183,7 +207,7 @@ func (s *Service) PutContent(
 		return err
 	}
 
-	if doc.Seeded {
+	if doc.Seeded && !cfg.discardOpenSuggestions {
 		spans, err := BodySpans(automergeDocument)
 		if err != nil {
 			return err

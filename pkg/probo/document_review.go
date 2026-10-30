@@ -357,6 +357,19 @@ func (s *DocumentService) CreateCommentThread(
 			return err
 		}
 
+		if req.SuggestionID != nil {
+			// Re-check the suggestion under FOR UPDATE so a concurrent decision
+			// cannot attach this thread to an already resolved suggestion.
+			suggestion := &coredata.DocumentSuggestion{}
+			if err := suggestion.LoadByIDForUpdate(ctx, tx, scope, *req.SuggestionID); err != nil {
+				return fmt.Errorf("cannot load document suggestion: %w", err)
+			}
+
+			if suggestion.DocumentID != document.ID || suggestion.Status != coredata.DocumentSuggestionStatusOpen {
+				return fmt.Errorf("cannot load document suggestion: %w", coredata.ErrResourceNotFound)
+			}
+		}
+
 		thread.OrganizationID = document.OrganizationID
 		thread.DocumentID = document.ID
 		comment.OrganizationID = document.OrganizationID
@@ -403,7 +416,7 @@ func (s *DocumentService) CreateComment(
 
 	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		thread := &coredata.DocumentCommentThread{}
-		if err := thread.LoadByID(ctx, tx, scope, req.ThreadID); err != nil {
+		if err := thread.LoadByIDForUpdate(ctx, tx, scope, req.ThreadID); err != nil {
 			return fmt.Errorf("cannot load document comment thread: %w", err)
 		}
 
@@ -751,23 +764,19 @@ func (s *DocumentService) DecideSuggestion(
 			return fmt.Errorf("cannot load document suggestion: %w", err)
 		}
 
+		profile, err := s.reviewProfile(ctx, tx, scope, suggestion.OrganizationID, req.IdentityID)
+		if err != nil {
+			return err
+		}
+
 		if suggestion.Status != coredata.DocumentSuggestionStatusOpen {
-			// Already decided: clear any leftover marks from an earlier
-			// split-brain persist, then return the stored row.
+			// Already decided: reconcile the body with the stored decision in
+			// case an earlier attempt committed metadata but not the body.
 			if err := s.applySuggestionDecision(ctx, scope, suggestion, suggestion.Status == coredata.DocumentSuggestionStatusAccepted); err != nil &&
 				!errors.Is(err, collaboration.ErrSuggestionNotInDocument) {
 				return err
 			}
 			return nil
-		}
-
-		if err := s.applySuggestionDecision(ctx, scope, suggestion, req.Accept); err != nil {
-			return err
-		}
-
-		profile, err := s.reviewProfile(ctx, tx, scope, suggestion.OrganizationID, req.IdentityID)
-		if err != nil {
-			return err
 		}
 
 		now := time.Now()
@@ -803,6 +812,14 @@ func (s *DocumentService) DecideSuggestion(
 			if err := thread.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot resolve suggestion comment thread: %w", err)
 			}
+		}
+
+		// Mutate the collaborative body last: authorization and metadata
+		// failures roll back the transaction before the body is touched. A
+		// body already matching the decision is tolerated for recovery.
+		if err := s.applySuggestionDecision(ctx, scope, suggestion, req.Accept); err != nil &&
+			!errors.Is(err, collaboration.ErrSuggestionNotInDocument) {
+			return err
 		}
 
 		return nil
