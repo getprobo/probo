@@ -4,6 +4,14 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.264.0] - 2026-10-30
+
+### Added
+
+- Employee Portal `Add Document` shares a published document with
+  an employee portal. `List Documents` lists those documents.
+  `Delete Document` stops sharing one
+
 ## [0.263.0] - 2026-10-28
 
 ### Added
