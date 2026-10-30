@@ -195,9 +195,7 @@ export function textblockJoin(
   const $from = doc.resolve(replace.from);
   const $to = doc.resolve(replace.to);
   if ($from.sameParent($to)) return null;
-  if ($from.parent.type.name !== "paragraph" || $to.parent.type.name !== "paragraph") {
-    return null;
-  }
+  if (!$from.parent.isTextblock || !$to.parent.isTextblock) return null;
   if ($from.parentOffset !== $from.parent.content.size) return null;
   if ($to.parentOffset !== 0) return null;
   return { from: replace.from, to: replace.to };
@@ -216,10 +214,8 @@ export function textblockRemoval(
     slice: { content: { size: number } };
   };
   if (replace.slice.content.size !== 0 || replace.to - replace.from !== 2) return null;
-  const $from = doc.resolve(replace.from);
-  if ($from.parent.type.name !== "doc") return null;
   const node = doc.nodeAt(replace.from);
-  if (!node?.isTextblock || node.type.name !== "paragraph") return null;
+  if (!node?.isTextblock) return null;
   if (node.content.size !== 0 || node.nodeSize !== 2) return null;
   return { at: replace.from };
 }

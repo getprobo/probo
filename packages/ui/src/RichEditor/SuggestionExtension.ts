@@ -112,6 +112,9 @@ export function createSuggestingExtension(
 ) {
   return Mark.create({
     name: "documentSuggesting",
+    // Paste/key handlers must run before MarkdownPaste (and the base keymap),
+    // otherwise those extensions edit the document untracked while suggesting.
+    priority: 1_000,
     addProseMirrorPlugins() {
       return [
         new Plugin({
@@ -244,6 +247,9 @@ function applySuggestingKey(
   if (event.key === "Enter" && !event.shiftKey) {
     return applySuggestingEnter(view, controller);
   }
+  // A hard break cannot be tracked as a suggestion, so reject it rather than
+  // let the default handler insert one untracked.
+  if (event.key === "Enter" && event.shiftKey) return true;
   if (event.key !== "Backspace" && event.key !== "Delete") return false;
   if (isTextblockBoundary(view.state, event.key)) return false;
 
@@ -261,8 +267,11 @@ function applySuggestingKey(
   }
 
   const deleteForward = event.key === "Delete";
-  const start = deleteForward ? from : from - 1;
-  const end = deleteForward ? from + 1 : from;
+  const span = deleteForward
+    ? (nextCodePoint(state.doc, from)?.text.length ?? 1)
+    : (prevCodePoint(state.doc, from)?.length ?? 1);
+  const start = deleteForward ? from : from - span;
+  const end = deleteForward ? from + span : from;
   if (start < 0 || end > state.doc.content.size) return true;
 
   const tr = state.tr;
@@ -615,7 +624,9 @@ export function discardSuggestionId(
   if (!editorViewReady(editor)) return;
   const rewrites: Array<{ from: number; to: number; marks: readonly ProseMirrorMark[] }> = [];
   const removals: Array<{ from: number; to: number }> = [];
+  const blocks: number[] = [];
   editor.state.doc.descendants((node, pos) => {
+    if (node.isTextblock && suggestionSplitId(node) === id) blocks.push(pos);
     if (!node.isText) return;
     const inserted = node.marks.some(mark =>
       mark.type.name === suggestionInsertName && mark.attrs.id === id,
@@ -638,13 +649,28 @@ export function discardSuggestionId(
       ),
     });
   });
-  if (rewrites.length === 0 && removals.length === 0) return;
+  if (rewrites.length === 0 && removals.length === 0 && blocks.length === 0) return;
   const tr = editor.state.tr;
   for (const range of rewrites.reverse()) {
     rewriteText(tr, range.from, range.to, range.marks);
   }
   for (const range of removals.reverse()) {
     tr.delete(range.from, range.to);
+  }
+  for (const pos of blocks.reverse()) {
+    const mapped = tr.mapping.map(pos);
+    const block = tr.doc.nodeAt(mapped);
+    if (!block?.type.spec.attrs?.unknownAttrs) continue;
+    const unknown = block.attrs.unknownAttrs;
+    const current = unknown && typeof unknown === "object"
+      ? { ...(unknown as Record<string, unknown>) }
+      : {};
+    delete current[suggestionSplitAttr];
+    delete current[suggestionSplitKindAttr];
+    tr.setNodeMarkup(mapped, undefined, {
+      ...block.attrs,
+      unknownAttrs: current,
+    });
   }
   tr.setMeta(suggestingPluginKey, { input: true });
   tr.setMeta("addToHistory", false);
@@ -689,6 +715,17 @@ function nextCodePoint(
   const text = Array.from(child.text.slice($pos.textOffset))[0];
   if (!text) return null;
   return { text, marks: child.marks };
+}
+
+function prevCodePoint(doc: ProseMirrorNode, pos: number): string | null {
+  if (pos <= 0 || pos > doc.content.size) return null;
+  const $pos = doc.resolve(pos);
+  const offset = $pos.parentOffset;
+  if (offset <= 0) return null;
+  const before = $pos.parent.textBetween(Math.max(0, offset - 2), offset);
+  if (before === "") return null;
+  const chars = Array.from(before);
+  return chars[chars.length - 1] ?? null;
 }
 
 function markCovers(marks: readonly ProseMirrorMark[], name: string, id: string): boolean {
