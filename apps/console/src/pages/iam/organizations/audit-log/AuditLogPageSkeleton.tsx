@@ -27,7 +27,7 @@ import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 import { auditLogPageSkeleton } from "./variants";
 
 export function AuditLogPageSkeleton() {
-  const { root, header, intro, filters } = auditLogPageSkeleton();
+  const { root, header, intro, toolbar, tools, action, filters, filter, field } = auditLogPageSkeleton();
 
   return (
     <div className={root()}>
@@ -38,18 +38,22 @@ export function AuditLogPageSkeleton() {
         </div>
         <ButtonSkeleton size={2} className="w-28" />
       </div>
-      <div className={filters()}>
-        <TextFieldSkeleton />
-        <TextFieldSkeleton />
-        <TextFieldSkeleton />
-        <TextFieldSkeleton />
-        <TextFieldSkeleton />
-        <TextFieldSkeleton />
-        <TextFieldSkeleton />
-        <TextFieldSkeleton />
-        <TextFieldSkeleton />
+      <div className={toolbar()}>
+        <TextFieldSkeleton className={action()} />
+        <div className={filters()}>
+          <TextFieldSkeleton className={filter()} />
+          <TextFieldSkeleton className={filter()} />
+        </div>
       </div>
-      <TableSkeleton columns={5} count={8} />
+      <div className={tools()}>
+        <TextFieldSkeleton className={field()} />
+        <TextFieldSkeleton className={field()} />
+        <TextFieldSkeleton className={field()} />
+        <TextFieldSkeleton className={field()} />
+        <TextFieldSkeleton className={filter()} />
+        <TextFieldSkeleton className={filter()} />
+      </div>
+      <TableSkeleton variant="surface" layout="fixed" columns={5} count={8} />
     </div>
   );
 }

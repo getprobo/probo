@@ -56,6 +56,7 @@ export interface DateFieldProps {
   "aria-invalid"?: boolean;
   "aria-describedby"?: string;
   "aria-required"?: boolean;
+  "aria-label"?: string;
   "onValueChange"?: (value: string) => void;
 }
 
@@ -79,6 +80,7 @@ export function DateField(props: DateFieldProps) {
     "aria-invalid": ariaInvalid,
     "aria-describedby": ariaDescribedBy,
     "aria-required": ariaRequired,
+    "aria-label": ariaLabel,
     onValueChange,
   } = props;
 
@@ -147,6 +149,7 @@ export function DateField(props: DateFieldProps) {
           aria-invalid={ariaInvalid}
           aria-describedby={ariaDescribedBy}
           aria-required={ariaRequired}
+          aria-label={ariaLabel}
           className={input()}
           onChange={dateInput.onChange}
           onBlur={dateInput.onBlur}
