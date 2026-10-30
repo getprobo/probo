@@ -56,6 +56,11 @@
     "title": "Documenten",
     "description": "Kies welke gepubliceerde documenten medewerkers kunnen lezen.",
     "empty": "Nog geen gepubliceerde documenten.",
+    "search": {
+      "placeholder": "Zoeken op titel",
+      "label": "Documenten zoeken",
+      "empty": "Geen documenten gevonden."
+    },
     "actions": {
       "previous": "Vorige",
       "next": "Volgende",

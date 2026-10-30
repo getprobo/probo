@@ -21,7 +21,7 @@
 import { List } from "@probo/ui/src/v2/List/List";
 import { Pagination } from "@probo/ui/src/v2/Pagination/Pagination";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment, useRefetchableFragment } from "react-relay";
 import { graphql } from "relay-runtime";
@@ -29,11 +29,14 @@ import { graphql } from "relay-runtime";
 import type { EmployeePortalDocumentList_employeePortal$key } from "#/__generated__/core/EmployeePortalDocumentList_employeePortal.graphql";
 import type { EmployeePortalDocumentList_organization$key } from "#/__generated__/core/EmployeePortalDocumentList_organization.graphql";
 import type { EmployeePortalDocumentListPaginationQuery } from "#/__generated__/core/EmployeePortalDocumentListPaginationQuery.graphql";
+import { SearchField } from "#/components/SearchField/SearchField";
 import {
   type CursorPaginationVariables,
   useCursorPagination,
 } from "#/lib/relay/useCursorPagination";
 
+import { useEmployeePortalDocumentFilters } from "../_lib/useEmployeePortalDocumentFilters";
+import { useEmployeePortalDocumentSearch } from "../_lib/useEmployeePortalDocumentSearch";
 import { employeePortalDocumentsPage } from "../variants";
 
 import { EmployeePortalDocumentListItem } from "./EmployeePortalDocumentListItem";
@@ -56,6 +59,7 @@ const organizationFragment = graphql`
     after: { type: "CursorKey", defaultValue: null }
     last: { type: "Int", defaultValue: null }
     before: { type: "CursorKey", defaultValue: null }
+    query: { type: "String", defaultValue: null }
   ) {
     documents(
       first: $first
@@ -63,7 +67,7 @@ const organizationFragment = graphql`
       last: $last
       before: $before
       orderBy: { field: TITLE, direction: ASC }
-      filter: { status: [ACTIVE], published: true }
+      filter: { status: [ACTIVE], published: true, query: $query }
     ) {
       pageInfo {
         hasNextPage
@@ -86,29 +90,57 @@ export function EmployeePortalDocumentList(props: {
   employeePortalKey: EmployeePortalDocumentList_employeePortal$key;
 }) {
   const { t } = useTranslation(NS);
+  const { query } = useEmployeePortalDocumentFilters();
+  const [queryInput, setQueryInput] = useEmployeePortalDocumentSearch();
+  const queryFilter = query || null;
   const employeePortal = useFragment(employeePortalFragment, props.employeePortalKey);
   const [data, refetch] = useRefetchableFragment<
     EmployeePortalDocumentListPaginationQuery,
     EmployeePortalDocumentList_organization$key
   >(organizationFragment, props.organizationKey);
+  const [isSearching, startSearchTransition] = useTransition();
+  const previousQuery = useRef<string | null | undefined>(undefined);
 
   const refetchPage = useCallback((variables: CursorPaginationVariables) => {
-    refetch(variables, { fetchPolicy: "store-or-network" });
-  }, [refetch]);
+    refetch({ ...variables, query: queryFilter }, { fetchPolicy: "store-or-network" });
+  }, [refetch, queryFilter]);
+
+  useEffect(() => {
+    if (previousQuery.current === queryFilter) {
+      return;
+    }
+
+    const isInitial = previousQuery.current === undefined;
+    previousQuery.current = queryFilter;
+    if (isInitial && queryFilter == null) {
+      return;
+    }
+
+    startSearchTransition(() => {
+      refetch({
+        first: PAGE_SIZE,
+        after: null,
+        last: null,
+        before: null,
+        query: queryFilter,
+      }, { fetchPolicy: "store-or-network" });
+    });
+  }, [queryFilter, refetch]);
 
   const pageInfo = data.documents.pageInfo;
-  const { isPending, goPrevious, goNext } = useCursorPagination(
+  const { isPending: isPaging, goPrevious, goNext } = useCursorPagination(
     refetchPage,
     pageInfo,
     PAGE_SIZE,
   );
-  const { list, results, pager } = employeePortalDocumentsPage({ pending: isPending });
+  const isPending = isPaging || isSearching;
+  const { list, search, results, pager } = employeePortalDocumentsPage({ pending: isPending });
   const documents = data.documents.edges.map(({ node }) => node);
   const isEmpty = documents.length === 0
     && !pageInfo.hasPreviousPage
     && !pageInfo.hasNextPage;
 
-  if (isEmpty) {
+  if (isEmpty && queryFilter == null) {
     return (
       <Text size={2} color="faint">
         {t("documentsPage.empty")}
@@ -118,29 +150,48 @@ export function EmployeePortalDocumentList(props: {
 
   return (
     <div className={list()}>
-      <div aria-busy={isPending || undefined} className={results()}>
-        <List>
-          {documents.map(document => (
-            <EmployeePortalDocumentListItem
-              key={document.id}
-              documentKey={document}
-              employeePortalKey={employeePortal}
-            />
-          ))}
-        </List>
-      </div>
-      <div className={pager()}>
-        <Pagination
-          hasPrevious={pageInfo.hasPreviousPage}
-          hasNext={pageInfo.hasNextPage}
-          previousLabel={t("documentsPage.actions.previous")}
-          nextLabel={t("documentsPage.actions.next")}
-          showLabels
-          disabled={isPending}
-          onPrevious={goPrevious}
-          onNext={goNext}
+      <div className={search()}>
+        <SearchField
+          size={2}
+          value={queryInput}
+          onValueChange={setQueryInput}
+          placeholder={t("documentsPage.search.placeholder")}
+          aria-label={t("documentsPage.search.label")}
         />
       </div>
+      <div aria-busy={isPending || undefined} className={results()}>
+        {isEmpty
+          ? (
+              <Text size={2} color="faint">
+                {t("documentsPage.search.empty")}
+              </Text>
+            )
+          : (
+              <List>
+                {documents.map(document => (
+                  <EmployeePortalDocumentListItem
+                    key={document.id}
+                    documentKey={document}
+                    employeePortalKey={employeePortal}
+                  />
+                ))}
+              </List>
+            )}
+      </div>
+      {!isEmpty && (
+        <div className={pager()}>
+          <Pagination
+            hasPrevious={pageInfo.hasPreviousPage}
+            hasNext={pageInfo.hasNextPage}
+            previousLabel={t("documentsPage.actions.previous")}
+            nextLabel={t("documentsPage.actions.next")}
+            showLabels
+            disabled={isPending}
+            onPrevious={goPrevious}
+            onNext={goNext}
+          />
+        </div>
+      )}
     </div>
   );
 }

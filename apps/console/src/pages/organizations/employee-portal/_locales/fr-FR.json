@@ -56,6 +56,11 @@
     "title": "Documents",
     "description": "Choisissez les documents publiés que les employés peuvent lire.",
     "empty": "Aucun document publié pour le moment.",
+    "search": {
+      "placeholder": "Rechercher par titre",
+      "label": "Rechercher des documents",
+      "empty": "Aucun document ne correspond à votre recherche."
+    },
     "actions": {
       "previous": "Préc.",
       "next": "Suiv.",

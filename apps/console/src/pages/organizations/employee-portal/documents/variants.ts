@@ -24,6 +24,7 @@ export const employeePortalDocumentsPage = tv({
   slots: {
     root: "flex flex-col gap-6",
     header: "flex flex-col gap-2",
+    search: "w-80 max-sm:min-w-0 max-sm:w-full",
     list: "flex flex-col gap-4",
     results: "transition-opacity",
     pager: "flex justify-center",

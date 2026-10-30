@@ -56,6 +56,11 @@
     "title": "Documents",
     "description": "Choose which published documents employees can read.",
     "empty": "No published documents yet.",
+    "search": {
+      "placeholder": "Search by title",
+      "label": "Search documents",
+      "empty": "No documents match your search."
+    },
     "actions": {
       "previous": "Prev",
       "next": "Next",
