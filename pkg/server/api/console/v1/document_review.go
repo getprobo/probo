@@ -116,7 +116,7 @@ func (r *mutationResolver) setDocumentCommentThread(
 	threadID gid.GID,
 	resolved bool,
 ) (*types.DocumentCommentThread, error) {
-	scope, err := r.authorize(ctx, threadID, probo.ActionDocumentComment)
+	scope, err := r.authorize(ctx, threadID, probo.ActionDocumentCommentResolve)
 	if err != nil {
 		return nil, err
 	}
@@ -136,33 +136,6 @@ func (r *mutationResolver) setDocumentCommentThread(
 	}
 
 	return types.NewDocumentCommentThread(thread), nil
-}
-
-func (r *mutationResolver) decideDocumentSuggestion(
-	ctx context.Context,
-	suggestionID gid.GID,
-	accept bool,
-) (*types.DocumentSuggestion, error) {
-	scope, err := r.authorize(ctx, suggestionID, probo.ActionDocumentUpdate)
-	if err != nil {
-		return nil, err
-	}
-
-	identity := authn.IdentityFromContext(ctx)
-	suggestion, err := r.probo.Documents.DecideSuggestion(
-		ctx,
-		scope,
-		probo.DecideDocumentSuggestionRequest{
-			SuggestionID: suggestionID,
-			IdentityID:   identity.ID,
-			Accept:       accept,
-		},
-	)
-	if err != nil {
-		return nil, r.documentReviewError(ctx, "cannot decide document suggestion", err)
-	}
-
-	return types.NewDocumentSuggestion(suggestion), nil
 }
 
 func (r *Resolver) documentReviewError(ctx context.Context, message string, err error) error {

@@ -11534,7 +11534,7 @@ func (r *Resolver) CreateDocumentCommentTool(ctx context.Context, req *mcp.CallT
 }
 
 func (r *Resolver) UpdateDocumentCommentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateDocumentCommentInput) (*mcp.CallToolResult, types.UpdateDocumentCommentOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionDocumentComment)
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionDocumentCommentUpdate)
 	if err != nil {
 		return nil, types.UpdateDocumentCommentOutput{}, err
 	}
@@ -11558,7 +11558,7 @@ func (r *Resolver) UpdateDocumentCommentTool(ctx context.Context, req *mcp.CallT
 }
 
 func (r *Resolver) DeleteDocumentCommentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteDocumentCommentInput) (*mcp.CallToolResult, types.DeleteDocumentCommentOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionDocumentComment)
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionDocumentCommentDelete)
 	if err != nil {
 		return nil, types.DeleteDocumentCommentOutput{}, err
 	}
@@ -11649,7 +11649,7 @@ func (r *Resolver) GetDocumentSuggestionTool(ctx context.Context, req *mcp.CallT
 }
 
 func (r *Resolver) StartDocumentSuggestionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.StartDocumentSuggestionInput) (*mcp.CallToolResult, types.StartDocumentSuggestionOutput, error) {
-	scope, err := r.Authorize(ctx, input.DocumentID, probo.ActionDocumentComment)
+	scope, err := r.Authorize(ctx, input.DocumentID, probo.ActionDocumentSuggest)
 	if err != nil {
 		return nil, types.StartDocumentSuggestionOutput{}, err
 	}
@@ -11665,19 +11665,49 @@ func (r *Resolver) StartDocumentSuggestionTool(ctx context.Context, req *mcp.Cal
 }
 
 func (r *Resolver) AcceptDocumentSuggestionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AcceptDocumentSuggestionInput) (*mcp.CallToolResult, types.AcceptDocumentSuggestionOutput, error) {
-	suggestion, err := r.decideDocumentSuggestion(ctx, input.ID, true)
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionDocumentSuggestAccept)
 	if err != nil {
 		return nil, types.AcceptDocumentSuggestionOutput{}, err
 	}
 
-	return nil, types.AcceptDocumentSuggestionOutput{Suggestion: suggestion}, nil
+	identity := authn.IdentityFromContext(ctx)
+
+	suggestion, err := r.proboSvc.Documents.DecideSuggestion(
+		ctx,
+		scope,
+		probo.DecideDocumentSuggestionRequest{
+			SuggestionID: input.ID,
+			IdentityID:   identity.ID,
+			Accept:       true,
+		},
+	)
+	if err != nil {
+		return nil, types.AcceptDocumentSuggestionOutput{}, r.documentReviewError(ctx, "cannot accept document suggestion", err)
+	}
+
+	return nil, types.AcceptDocumentSuggestionOutput{Suggestion: types.NewDocumentSuggestion(suggestion)}, nil
 }
 
 func (r *Resolver) RejectDocumentSuggestionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RejectDocumentSuggestionInput) (*mcp.CallToolResult, types.RejectDocumentSuggestionOutput, error) {
-	suggestion, err := r.decideDocumentSuggestion(ctx, input.ID, false)
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionDocumentSuggestReject)
 	if err != nil {
 		return nil, types.RejectDocumentSuggestionOutput{}, err
 	}
 
-	return nil, types.RejectDocumentSuggestionOutput{Suggestion: suggestion}, nil
+	identity := authn.IdentityFromContext(ctx)
+
+	suggestion, err := r.proboSvc.Documents.DecideSuggestion(
+		ctx,
+		scope,
+		probo.DecideDocumentSuggestionRequest{
+			SuggestionID: input.ID,
+			IdentityID:   identity.ID,
+			Accept:       false,
+		},
+	)
+	if err != nil {
+		return nil, types.RejectDocumentSuggestionOutput{}, r.documentReviewError(ctx, "cannot reject document suggestion", err)
+	}
+
+	return nil, types.RejectDocumentSuggestionOutput{Suggestion: types.NewDocumentSuggestion(suggestion)}, nil
 }

@@ -270,7 +270,7 @@ func (r *mutationResolver) CreateDocumentComment(ctx context.Context, input type
 
 // UpdateDocumentComment is the resolver for the updateDocumentComment field.
 func (r *mutationResolver) UpdateDocumentComment(ctx context.Context, input types.UpdateDocumentCommentInput) (*types.UpdateDocumentCommentPayload, error) {
-	scope, err := r.authorize(ctx, input.CommentID, probo.ActionDocumentComment)
+	scope, err := r.authorize(ctx, input.CommentID, probo.ActionDocumentCommentUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -297,7 +297,7 @@ func (r *mutationResolver) UpdateDocumentComment(ctx context.Context, input type
 
 // DeleteDocumentComment is the resolver for the deleteDocumentComment field.
 func (r *mutationResolver) DeleteDocumentComment(ctx context.Context, input types.DeleteDocumentCommentInput) (*types.DeleteDocumentCommentPayload, error) {
-	scope, err := r.authorize(ctx, input.CommentID, probo.ActionDocumentComment)
+	scope, err := r.authorize(ctx, input.CommentID, probo.ActionDocumentCommentDelete)
 	if err != nil {
 		return nil, err
 	}
@@ -334,7 +334,7 @@ func (r *mutationResolver) ReopenDocumentCommentThread(ctx context.Context, inpu
 
 // StartDocumentSuggestion is the resolver for the startDocumentSuggestion field.
 func (r *mutationResolver) StartDocumentSuggestion(ctx context.Context, input types.StartDocumentSuggestionInput) (*types.StartDocumentSuggestionPayload, error) {
-	scope, err := r.authorize(ctx, input.DocumentID, probo.ActionDocumentComment)
+	scope, err := r.authorize(ctx, input.DocumentID, probo.ActionDocumentSuggest)
 	if err != nil {
 		return nil, err
 	}
@@ -353,25 +353,55 @@ func (r *mutationResolver) StartDocumentSuggestion(ctx context.Context, input ty
 
 // AcceptDocumentSuggestion is the resolver for the acceptDocumentSuggestion field.
 func (r *mutationResolver) AcceptDocumentSuggestion(ctx context.Context, input types.AcceptDocumentSuggestionInput) (*types.AcceptDocumentSuggestionPayload, error) {
-	suggestion, err := r.decideDocumentSuggestion(ctx, input.SuggestionID, true)
+	scope, err := r.authorize(ctx, input.SuggestionID, probo.ActionDocumentSuggestAccept)
 	if err != nil {
 		return nil, err
 	}
 
+	identity := authn.IdentityFromContext(ctx)
+
+	suggestion, err := r.probo.Documents.DecideSuggestion(
+		ctx,
+		scope,
+		probo.DecideDocumentSuggestionRequest{
+			SuggestionID: input.SuggestionID,
+			IdentityID:   identity.ID,
+			Accept:       true,
+		},
+	)
+	if err != nil {
+		return nil, r.documentReviewError(ctx, "cannot accept document suggestion", err)
+	}
+
 	return &types.AcceptDocumentSuggestionPayload{
-		DocumentSuggestion: suggestion,
+		DocumentSuggestion: types.NewDocumentSuggestion(suggestion),
 	}, nil
 }
 
 // RejectDocumentSuggestion is the resolver for the rejectDocumentSuggestion field.
 func (r *mutationResolver) RejectDocumentSuggestion(ctx context.Context, input types.RejectDocumentSuggestionInput) (*types.RejectDocumentSuggestionPayload, error) {
-	suggestion, err := r.decideDocumentSuggestion(ctx, input.SuggestionID, false)
+	scope, err := r.authorize(ctx, input.SuggestionID, probo.ActionDocumentSuggestReject)
 	if err != nil {
 		return nil, err
 	}
 
+	identity := authn.IdentityFromContext(ctx)
+
+	suggestion, err := r.probo.Documents.DecideSuggestion(
+		ctx,
+		scope,
+		probo.DecideDocumentSuggestionRequest{
+			SuggestionID: input.SuggestionID,
+			IdentityID:   identity.ID,
+			Accept:       false,
+		},
+	)
+	if err != nil {
+		return nil, r.documentReviewError(ctx, "cannot reject document suggestion", err)
+	}
+
 	return &types.RejectDocumentSuggestionPayload{
-		DocumentSuggestion: suggestion,
+		DocumentSuggestion: types.NewDocumentSuggestion(suggestion),
 	}, nil
 }
 
