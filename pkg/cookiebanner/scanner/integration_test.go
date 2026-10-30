@@ -336,9 +336,13 @@ func serve(t *testing.T, handler http.Handler) *httptest.Server {
 // testHTTPClient fetches the page the browser will open. The SSRF
 // client allows the loopback server. When Chrome runs in a container,
 // CHROME_TEST_HOST is a name this process cannot resolve, so that name
-// is dialed as loopback, where the test server listens.
+// is dialed as loopback, where the test server listens. The protected
+// transport stays in place for every other address.
 func testHTTPClient() *http.Client {
-	host := os.Getenv("CHROME_TEST_HOST")
+	return httpClientForHost(os.Getenv("CHROME_TEST_HOST"))
+}
+
+func httpClientForHost(host string) *http.Client {
 	client := httpclient.DefaultClient(
 		httpclient.WithSSRFProtection(),
 		httpclient.WithSSRFAllowLoopback(),
@@ -348,18 +352,41 @@ func testHTTPClient() *http.Client {
 		return client
 	}
 
-	dialer := &net.Dialer{Timeout: 5 * time.Second}
-	client.Transport = &http.Transport{
-		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-			if name, port, err := net.SplitHostPort(addr); err == nil && name == host {
-				addr = net.JoinHostPort("127.0.0.1", port)
-			}
-
-			return dialer.DialContext(ctx, network, addr)
-		},
-	}
+	client.Transport = rewriteTestHost{host: host, next: client.Transport}
 
 	return client
+}
+
+// rewriteTestHost sends the container-visible test hostname to loopback.
+// Other hosts keep the SSRF dial check on the wrapped transport.
+type rewriteTestHost struct {
+	host string
+	next http.RoundTripper
+}
+
+func (r rewriteTestHost) RoundTrip(req *http.Request) (*http.Response, error) {
+	port := ""
+	if req.URL != nil {
+		port = req.URL.Port()
+	}
+
+	if req.URL == nil || req.URL.Hostname() != r.host || port == "" {
+		return r.next.RoundTrip(req)
+	}
+
+	clone := req.Clone(req.Context())
+	clone.URL.Host = net.JoinHostPort("127.0.0.1", port)
+
+	if clone.Host == "" {
+		clone.Host = req.URL.Host
+	}
+
+	resp, err := r.next.RoundTrip(clone)
+	if resp != nil {
+		resp.Request = req
+	}
+
+	return resp, err
 }
 
 // chromeURL rewrites a test server URL when Chrome runs in a container.
@@ -389,6 +416,32 @@ func testChrome(t *testing.T) (context.Context, context.CancelFunc) {
 	}
 
 	return remote.NewAllocator(context.Background(), addr)
+}
+
+func TestHTTPClientForHost_KeepsSSRFProtection(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	t.Cleanup(server.Close)
+
+	client := httpClientForHost("chrome.test")
+	client.Timeout = 2 * time.Second
+
+	parsed, err := url.Parse(server.URL)
+	require.NoError(t, err)
+
+	parsed.Host = net.JoinHostPort("chrome.test", parsed.Port())
+
+	resp, err := client.Get(parsed.String())
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = resp.Body.Close() })
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	assert.Equal(t, "chrome.test", resp.Request.URL.Hostname())
+
+	_, err = client.Get("http://10.1.2.3/latest")
+	require.ErrorIs(t, err, httpclient.ErrBlockedAddress)
 }
 
 func fastLimits(pages int) Limits {

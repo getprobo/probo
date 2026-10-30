@@ -22,6 +22,7 @@ package scanner
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -1070,7 +1071,7 @@ func testRecorder(t *testing.T) *recorder {
 func mustOrigin(raw string) (origin, error) {
 	parsed, ok := parseOrigin(raw)
 	if !ok {
-		return origin{}, errResolve(raw)
+		return origin{}, fmt.Errorf("cannot parse origin %q", raw)
 	}
 
 	return parsed, nil

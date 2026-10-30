@@ -25,6 +25,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -144,7 +145,7 @@ func Run(ctx context.Context, allocCtx context.Context, in Input) (*Result, erro
 		}
 	}()
 
-	binding := newBindingName()
+	binding := "b" + randomHex(16)
 	s := &scan{
 		in:          in,
 		site:        site,
@@ -579,7 +580,21 @@ func (s *scan) warn(ctx context.Context, msg string, err error) {
 		return
 	}
 
-	s.in.Logger.WarnCtx(ctx, msg, log.Error(err))
+	s.in.Logger.WarnCtx(ctx, msg, log.Error(withoutRequestURL(err)))
+}
+
+// withoutRequestURL drops the URL a *url.Error prints. That URL is the
+// request that failed, including a redirect target, and its query can
+// carry a token.
+func withoutRequestURL(err error) error {
+	for {
+		urlErr, ok := errors.AsType[*url.Error](err)
+		if !ok || urlErr == nil || urlErr.Err == nil {
+			return err
+		}
+
+		err = urlErr.Err
+	}
 }
 
 func startingCheckpoint(checkpoint *Checkpoint) Checkpoint {

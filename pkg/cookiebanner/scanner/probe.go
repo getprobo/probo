@@ -48,31 +48,50 @@ type staticPage struct {
 	hosts    []string
 	links    []string
 	bannerID string
+	// complete is true when the HTML was parsed through to the end.
+	// A short read leaves it false, so an empty banner id is not
+	// proof that the banner is absent.
+	complete bool
 }
 
 // probeEmbeds reads the static HTML of the start page, the pages it links
 // to, and the sitemap URLs, and tags their queue entries with the
 // third-party hosts they embed. It only orders the queue: the browser
 // still records every tracker. Embeds added by JavaScript are not seen.
-// It returns ErrBannerNotInstalled when the homepage has no probo
-// banner, and ErrDifferentBanner when it embeds another one, before
-// any other page is fetched. confirmed is false when the context ends
-// before that homepage can be read; the caller retries next run.
+// It returns ErrBannerNotInstalled when the homepage HTML was read
+// through to the end and has no probo banner, and ErrDifferentBanner
+// when it embeds another one, before any other page is fetched.
+// confirmed is false when that HTML could not be read through to the
+// end; the caller retries next run. A refusal from the site is
+// ErrBlocked.
 func (s *scan) probeEmbeds(ctx context.Context, sitemapURLs []string) (bool, error) {
 	ctx, cancel := context.WithTimeout(ctx, s.in.Limits.ProbeBudget)
 	defer cancel()
 
 	home, err := s.probePage(ctx, s.startURL)
 	if home.bannerID != s.in.BannerID {
-		if ctx.Err() != nil || (s.parent != nil && s.parent.Err() != nil) || (s.scanCtx != nil && s.scanCtx.Err() != nil) {
+		gaveUp := ctx.Err() != nil ||
+			(s.parent != nil && s.parent.Err() != nil) ||
+			(s.scanCtx != nil && s.scanCtx.Err() != nil)
+
+		switch {
+		case home.bannerID != "":
+			return false, ErrDifferentBanner
+		case gaveUp:
 			return false, nil
-		}
+		case errors.Is(err, ErrBlocked):
+			return false, err
+		case err != nil || !home.complete:
+			if err != nil {
+				s.warn(ctx, "cannot probe pages", err)
+			} else {
+				s.warn(ctx, "cannot probe pages", errors.New("homepage HTML was cut short"))
+			}
 
-		if err != nil {
-			s.warn(ctx, "cannot probe pages", err)
+			return false, nil
+		default:
+			return false, fmt.Errorf("%w: homepage has no probo-cookie-banner", ErrBannerNotInstalled)
 		}
-
-		return false, bannerInstallError(home.bannerID)
 	}
 
 	if len(home.hosts) > 0 {
@@ -90,14 +109,6 @@ func (s *scan) probeEmbeds(ctx context.Context, sitemapURLs []string) (bool, err
 	}
 
 	return true, nil
-}
-
-func bannerInstallError(found string) error {
-	if found == "" {
-		return fmt.Errorf("%w: homepage has no probo-cookie-banner", ErrBannerNotInstalled)
-	}
-
-	return ErrDifferentBanner
 }
 
 func (s *scan) probeCandidates(ctx context.Context, links, sitemapURLs []string) []QueueItem {
@@ -206,12 +217,35 @@ func (s *scan) probePage(ctx context.Context, raw string) (staticPage, error) {
 	}
 
 	if resp.StatusCode != http.StatusOK || !htmlContent(resp.Header.Get("Content-Type")) {
-		return staticPage{}, nil
+		// The response finished, and it is not an HTML document, so
+		// there is no banner element left to find.
+		return staticPage{complete: true}, nil
 	}
 
-	body := io.LimitReader(resp.Body, int64(s.in.Limits.MaxProbeBytes))
+	page, err := readStaticPage(
+		resp.Request.URL,
+		io.LimitReader(resp.Body, int64(s.in.Limits.MaxProbeBytes)),
+		s.site,
+		s.policy.api,
+	)
+	if err != nil {
+		return page, fmt.Errorf("cannot read page: %w", err)
+	}
 
-	return readStaticPage(resp.Request.URL, body, s.site, s.policy.api), nil
+	var extra [1]byte
+
+	n, readErr := resp.Body.Read(extra[:])
+	if n > 0 {
+		return page, nil
+	}
+
+	if readErr != nil && !errors.Is(readErr, io.EOF) {
+		return page, fmt.Errorf("cannot read page: %w", readErr)
+	}
+
+	page.complete = true
+
+	return page, nil
 }
 
 func htmlContent(header string) bool {
@@ -227,9 +261,10 @@ func htmlContent(header string) bool {
 // readStaticPage collects the hosts of embedded frames, scripts and media,
 // including lazy attributes such as data-src, and the page's links. The
 // first base href becomes the base for later relative URLs, matching the
-// document base URL the browser uses. A body cut short by the size cap or
-// a timeout yields what was read.
-func readStaticPage(base *url.URL, body io.Reader, site, api origin) staticPage {
+// document base URL the browser uses. A read that fails before the end
+// returns that error; the caller decides whether the bytes were the
+// whole document.
+func readStaticPage(base *url.URL, body io.Reader, site, api origin) (staticPage, error) {
 	var (
 		page    staticPage
 		hosts   []string
@@ -244,7 +279,11 @@ func readStaticPage(base *url.URL, body io.Reader, site, api origin) staticPage 
 		case html.ErrorToken:
 			page.hosts = unionHosts(nil, hosts)
 
-			return page
+			if err := tokens.Err(); err != nil && !errors.Is(err, io.EOF) {
+				return page, err
+			}
+
+			return page, nil
 		case html.StartTagToken, html.SelfClosingTagToken:
 			name, more := tokens.TagName()
 			tag := string(name)
