@@ -171,6 +171,33 @@ describe('collectPendingSignatures', () => {
 		expect(calls).toBe(1);
 		expect(items.map((item) => item.id)).toEqual(['sig-1']);
 	});
+
+	it('sends an integer page size when the limit is fractional', async () => {
+		const request: GraphQLRequest = async (_query, variables) => {
+			expect(variables.nestedFirst).toBe(1);
+			expect(Number.isInteger(variables.nestedFirst)).toBe(true);
+			expect(Number.isInteger(variables.first)).toBe(true);
+			return {
+				data: {
+					node: {
+						documents: {
+							edges: [],
+							pageInfo: { hasNextPage: false },
+						},
+					},
+				},
+			};
+		};
+
+		const items = await collectPendingSignatures(request, {
+			organizationId: 'org-1',
+			returnAll: false,
+			limit: 1.5,
+			now,
+		});
+
+		expect(items).toEqual([]);
+	});
 });
 
 describe('collectPendingApprovals', () => {
