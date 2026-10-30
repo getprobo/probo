@@ -114,8 +114,17 @@ export const dateField = tv({
     surface: [
       "flex min-w-0 w-full items-center gap-2 rounded-2 text-2 text-sand-12 transition-colors",
       "focus-within:ring-2 focus-within:ring-sand-8 focus-within:ring-offset-1 focus-within:ring-offset-sand-1",
+      "has-data-popup-open:ring-2 has-data-popup-open:ring-sand-8 has-data-popup-open:ring-offset-1 has-data-popup-open:ring-offset-sand-1",
       "has-[input:disabled]:pointer-events-none has-[input:disabled]:opacity-50",
     ],
+    glyph: "flex size-4 shrink-0 items-center justify-center text-sand-a9 [&_svg]:size-4",
+    rangeButton: [
+      "flex h-full min-w-0 flex-1 cursor-pointer items-center gap-2 border-0 bg-transparent p-0",
+      "text-start outline-none",
+      "disabled:pointer-events-none",
+    ],
+    caption: "min-w-0 flex-1 truncate text-start",
+    popup: "flex flex-col gap-2",
     iconTrigger: [
       "flex size-4 shrink-0 items-center justify-center border-0 bg-transparent p-0",
       "cursor-pointer text-sand-a9 outline-none [&_svg]:size-4 hover:text-sand-12",
@@ -158,17 +167,22 @@ export const dateField = tv({
       classic: { surface: "border border-sand-a5 bg-sand-1 inset-shadow-2" },
       surface: { surface: "border border-sand-a5 bg-sand-1" },
     },
+    filled: {
+      true: { caption: "text-sand-12" },
+      false: { caption: "text-sand-a9" },
+    },
   },
   defaultVariants: {
     size: 2,
     variant: "surface",
+    filled: true,
   },
 });
 
 export const dateFieldDay = tv({
   base: [
-    "flex items-center justify-center rounded-2 text-sand-12",
-    "cursor-pointer outline-none hover:bg-sand-4",
+    "flex items-center justify-center text-sand-12",
+    "cursor-pointer outline-none",
     "focus-visible:ring-2 focus-visible:ring-sand-8",
     "disabled:pointer-events-none disabled:opacity-50",
   ],
@@ -177,9 +191,15 @@ export const dateFieldDay = tv({
       1: "size-6 text-1",
       2: "size-8 text-2",
     },
-    selected: {
-      true: "bg-sand-5 hover:bg-sand-5",
-      false: "",
+    // One background and one radius per tone. lite has no class merge, so a
+    // day must not emit both hover:bg-sand-4 and a selected background.
+    tone: {
+      day: "rounded-2 hover:bg-sand-4",
+      selected: "rounded-2 bg-sand-5 hover:bg-sand-5",
+      within: "rounded-none bg-sand-3 hover:bg-sand-4",
+      start: "rounded-s-2 bg-sand-12 text-sand-1 hover:bg-sand-12",
+      end: "rounded-e-2 bg-sand-12 text-sand-1 hover:bg-sand-12",
+      single: "rounded-2 bg-sand-12 text-sand-1 hover:bg-sand-12",
     },
     today: {
       true: "font-medium",
@@ -192,7 +212,7 @@ export const dateFieldDay = tv({
   },
   defaultVariants: {
     size: 2,
-    selected: false,
+    tone: "day",
     today: false,
     outside: false,
   },

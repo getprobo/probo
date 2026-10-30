@@ -37,6 +37,11 @@
       "resourceId": "Resource-ID",
       "from": "Van",
       "to": "Tot",
+      "dates": "Datumbereik",
+      "datesPlaceholder": "Alle datums",
+      "datesHint": "Kies een startdatum en daarna een einddatum.",
+      "more": "Filters",
+      "moreCount": "Filters ({{count}})",
       "requestId": "Verzoek-ID",
       "range": "De startdatum ligt na de einddatum."
     },
@@ -60,7 +65,8 @@
       "description": "Selecteer een datumbereik om auditlogboekvermeldingen te exporteren als CSV. U ontvangt een e-mail met een downloadlink.",
       "fields": {
         "from": "Van",
-        "to": "Tot"
+        "to": "Tot",
+        "range": "Datumbereik"
       },
       "actions": {
         "export": "Exporteren",

@@ -37,6 +37,11 @@
       "resourceId": "ID de la ressource",
       "from": "Du",
       "to": "Au",
+      "dates": "Période",
+      "datesPlaceholder": "Toutes les dates",
+      "datesHint": "Choisissez une date de début, puis une date de fin.",
+      "more": "Filtres",
+      "moreCount": "Filtres ({{count}})",
       "requestId": "ID de requête",
       "range": "La date de début est postérieure à la date de fin."
     },
@@ -60,7 +65,8 @@
       "description": "Sélectionnez une plage de dates pour exporter les entrées du journal d’audit au format CSV. Vous recevrez un e-mail avec un lien de téléchargement.",
       "fields": {
         "from": "Du",
-        "to": "Au"
+        "to": "Au",
+        "range": "Période"
       },
       "actions": {
         "export": "Exporter",

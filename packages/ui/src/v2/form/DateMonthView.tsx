@@ -28,6 +28,7 @@ import { SelectPopup } from "../Select/SelectPopup";
 import { SelectTrigger } from "../Select/SelectTrigger";
 
 import {
+  dateRangeTone,
   isOutOfRange,
   monthAfterMax,
   monthBeforeMin,
@@ -43,8 +44,16 @@ import {
 } from "./dateModel";
 import { dateField, dateFieldDay } from "./variants";
 
+export interface DateMonthRange {
+  start: string;
+  end: string;
+  // Hovered ISO day while the end is still open. Ignored once `end` is set.
+  preview?: string;
+}
+
 export interface DateMonthViewProps {
-  // Selected ISO `YYYY-MM-DD`, or `""` when empty.
+  // Selected ISO `YYYY-MM-DD`, or `""` when empty. Ignored for highlighting
+  // when `range` is set; still chooses the month the grid opens on.
   value: string;
   locale?: string;
   min?: string;
@@ -53,10 +62,13 @@ export interface DateMonthViewProps {
   size?: 1 | 2;
   // When this changes, snap the visible month back to `value` (or today).
   resetKey?: string | number | boolean;
+  // Start/end highlighting. Omit for a single-day picker.
+  range?: DateMonthRange;
   onDaySelect?: (iso: string) => void;
+  onDayHover?: (iso: string) => void;
 }
 
-// Month/year header and day grid shared by DateField and DateCalendar.
+// Month/year header and day grid shared by DateField, DateCalendar, and DateRangeField.
 export function DateMonthView(props: DateMonthViewProps) {
   const {
     value,
@@ -66,7 +78,9 @@ export function DateMonthView(props: DateMonthViewProps) {
     disabled = false,
     size = 2,
     resetKey,
+    range,
     onDaySelect,
+    onDayHover,
   } = props;
 
   const [visible, setVisible] = useState(() => visibleFrom(value));
@@ -183,12 +197,19 @@ export function DateMonthView(props: DateMonthViewProps) {
           </span>
         ))}
       </div>
-      <div className={grid()}>
+      <div className={grid()} onMouseLeave={() => onDayHover?.("")}>
         {days.map((day) => {
           const iso = toIsoDate(day);
           const isOutside = day.getMonth() !== visible.month;
-          const isSelected = iso === value;
+          const tone = range == null
+            ? (iso === value ? "selected" : "day")
+            : dateRangeTone(
+                iso,
+                range.start,
+                range.end !== "" ? range.end : (range.preview ?? ""),
+              );
           const isDisabled = disabled || isOutOfRange(iso, minDate, maxDate);
+          const pressed = tone === "selected" || tone === "start" || tone === "end" || tone === "single";
 
           return (
             <button
@@ -196,14 +217,15 @@ export function DateMonthView(props: DateMonthViewProps) {
               type="button"
               disabled={isDisabled}
               aria-label={day.toLocaleDateString(locale, { dateStyle: "full" })}
-              aria-pressed={isSelected}
+              aria-pressed={pressed}
               aria-current={iso === todayIso ? "date" : undefined}
               className={dateFieldDay({
                 size,
-                selected: isSelected,
+                tone,
                 today: iso === todayIso,
-                outside: isOutside,
+                outside: isOutside && !pressed,
               })}
+              onMouseEnter={() => onDayHover?.(iso)}
               onClick={() => onDaySelect?.(iso)}
             >
               {day.getDate()}

@@ -122,8 +122,11 @@ function auditLogGraphqlFilter(filters: {
     filter.requestId = filters.requestId;
   }
 
-  const createdFrom = utcStart(filters.from);
-  const createdTo = utcEndExclusive(filters.to);
+  const span = filters.from !== "" && filters.to !== "" && filters.from > filters.to
+    ? { from: filters.to, to: filters.from }
+    : { from: filters.from, to: filters.to };
+  const createdFrom = utcStart(span.from);
+  const createdTo = utcEndExclusive(span.to);
   if (createdFrom != null) {
     filter.createdFrom = createdFrom;
   }
@@ -168,6 +171,7 @@ export interface AuditLogListFilters {
   setResourceId: (value: string) => void;
   setFrom: (value: string) => void;
   setTo: (value: string) => void;
+  setDates: (from: string, to: string) => void;
   setRequestId: (value: string) => void;
 }
 
@@ -236,6 +240,13 @@ export function useAuditLogListFilters(): AuditLogListFilters {
     setParam("to", value);
   }, [setParam]);
 
+  const setDates = useCallback((from: string, to: string) => {
+    setSearchParams((previous) => {
+      const withFrom = assignParam(previous, "from", from);
+      return assignParam(withFrom, "to", to);
+    }, { replace: true });
+  }, [setSearchParams]);
+
   const setRequestId = useCallback((value: string) => {
     setParam("request", value);
   }, [setParam]);
@@ -260,6 +271,7 @@ export function useAuditLogListFilters(): AuditLogListFilters {
     setResourceId,
     setFrom,
     setTo,
+    setDates,
     setRequestId,
   };
 }
