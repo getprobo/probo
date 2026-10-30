@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import {
   auditLogLocalDayEndExclusive,
@@ -26,28 +26,35 @@ import {
 } from "./useAuditLogListFilters";
 
 describe("audit log local day bounds", () => {
+  // UTC midnight and local midnight are the same instant when the
+  // process zone is UTC, which is how CI runs. Pin a non-UTC zone so a
+  // revert to `T00:00:00Z` fails here.
+  const previousTz = process.env.TZ;
+
+  beforeAll(() => {
+    process.env.TZ = "Europe/Paris";
+  });
+
+  afterAll(() => {
+    if (previousTz === undefined) {
+      delete process.env.TZ;
+    } else {
+      process.env.TZ = previousTz;
+    }
+  });
+
   it("starts at local midnight of the chosen day", () => {
     const start = auditLogLocalDayStart("2026-03-10");
 
-    expect(start).not.toBeNull();
-    const date = new Date(start ?? "");
-    expect(date.getFullYear()).toBe(2026);
-    expect(date.getMonth()).toBe(2);
-    expect(date.getDate()).toBe(10);
-    expect(date.getHours()).toBe(0);
-    expect(date.getMinutes()).toBe(0);
+    expect(start).toBe(new Date(2026, 2, 10).toISOString());
+    expect(start).not.toBe("2026-03-10T00:00:00.000Z");
   });
 
   it("ends at the next local midnight", () => {
     const end = auditLogLocalDayEndExclusive("2026-03-10");
 
-    expect(end).not.toBeNull();
-    const date = new Date(end ?? "");
-    expect(date.getFullYear()).toBe(2026);
-    expect(date.getMonth()).toBe(2);
-    expect(date.getDate()).toBe(11);
-    expect(date.getHours()).toBe(0);
-    expect(date.getMinutes()).toBe(0);
+    expect(end).toBe(new Date(2026, 2, 11).toISOString());
+    expect(end).not.toBe("2026-03-11T00:00:00.000Z");
   });
 
   it("rejects a calendar-invalid day", () => {
