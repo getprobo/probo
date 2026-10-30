@@ -38,8 +38,8 @@ export type SuggestionPreview = {
 
 type Piece = {
   text: string;
-  insertId: string | null;
-  deleteId: string | null;
+  insertIds: string[];
+  deleteIds: string[];
 };
 
 type BlockChunk = {
@@ -69,8 +69,8 @@ export function collectSuggestionAnchors(doc: ProseMirrorNode) {
     if (!chunk || !node.isText || !node.text) return;
     chunk.pieces.push({
       text: node.text,
-      insertId: markId(node, suggestionInsertName),
-      deleteId: markId(node, suggestionDeleteName),
+      insertIds: markIds(node, suggestionInsertName),
+      deleteIds: markIds(node, suggestionDeleteName),
     });
   });
 
@@ -79,8 +79,8 @@ export function collectSuggestionAnchors(doc: ProseMirrorNode) {
   for (const block of chunks) {
     if (block.splitId && block.splitKind === "insertion") ids.add(block.splitId);
     for (const piece of block.pieces) {
-      if (piece.insertId) ids.add(piece.insertId);
-      if (piece.deleteId) ids.add(piece.deleteId);
+      for (const id of piece.insertIds) ids.add(id);
+      for (const id of piece.deleteIds) ids.add(id);
     }
   }
 
@@ -115,7 +115,7 @@ function previewParts(blocks: BlockChunk[], id: string): SuggestionPreviewPart[]
     first === last
     && only.splitId === id
     && only.splitKind === "insertion"
-    && only.pieces.every(piece => piece.insertId !== id && piece.deleteId !== id)
+    && only.pieces.every(piece => !piece.insertIds.includes(id) && !piece.deleteIds.includes(id))
   ) {
     return [{ kind: "inserted", text: "\n" }];
   }
@@ -128,8 +128,8 @@ function previewParts(blocks: BlockChunk[], id: string): SuggestionPreviewPart[]
       pushPart(parts, ownsLine ? "inserted" : "kept", "\n");
     }
     for (const piece of block.pieces) {
-      if (piece.insertId === id) pushPart(parts, "inserted", piece.text);
-      else if (piece.deleteId === id) pushPart(parts, "deleted", piece.text);
+      if (piece.insertIds.includes(id)) pushPart(parts, "inserted", piece.text);
+      else if (piece.deleteIds.includes(id)) pushPart(parts, "deleted", piece.text);
       else pushPart(parts, "kept", piece.text);
     }
   }
@@ -141,7 +141,7 @@ function previewParts(blocks: BlockChunk[], id: string): SuggestionPreviewPart[]
 
 function blockInvolves(block: BlockChunk, id: string): boolean {
   if (block.splitId === id && block.splitKind === "insertion") return true;
-  return block.pieces.some(piece => piece.insertId === id || piece.deleteId === id);
+  return block.pieces.some(piece => piece.insertIds.includes(id) || piece.deleteIds.includes(id));
 }
 
 function pushPart(
@@ -158,12 +158,13 @@ function pushPart(
   parts.push({ kind, text });
 }
 
-function markId(node: ProseMirrorNode, name: string): string | null {
+function markIds(node: ProseMirrorNode, name: string): string[] {
+  const ids: string[] = [];
   for (const mark of node.marks) {
     if (mark.type.name !== name) continue;
-    if (typeof mark.attrs.id === "string" && mark.attrs.id !== "") return mark.attrs.id;
+    if (typeof mark.attrs.id === "string" && mark.attrs.id !== "") ids.push(mark.attrs.id);
   }
-  return null;
+  return ids;
 }
 
 function suggestionSplitId(node: ProseMirrorNode): string | null {
