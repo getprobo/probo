@@ -38,10 +38,44 @@ func TestBrexDriver(t *testing.T) {
 	driver := NewBrexDriver(client, "https://platform.brexapis.com")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
-	require.NotEmpty(t, records)
+	require.Len(t, records, 6)
 
 	r := records[0]
 	assert.NotEmpty(t, r.Email)
 	assert.NotEmpty(t, r.FullName)
 	assert.NotEmpty(t, r.ExternalID)
+	assert.Equal(t, []string{"EMPLOYEE"}, r.Roles)
+	assert.Equal(t, new(false), r.IsAdmin)
+
+	admin := records[4]
+	assert.Equal(t, "john@example.com", admin.Email)
+	assert.Equal(t, []string{"ACCOUNT_ADMIN"}, admin.Roles)
+	assert.Equal(t, new(true), admin.IsAdmin)
+}
+
+func TestBrexIsAdmin(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		role     string
+		expected *bool
+	}{
+		{name: "account admin", role: "ACCOUNT_ADMIN", expected: new(true)},
+		{name: "employee", role: "EMPLOYEE", expected: new(false)},
+		{name: "bookkeeper", role: "BOOKKEEPER", expected: new(false)},
+		{name: "unobserved role", role: "CARD_ADMIN", expected: nil},
+		{name: "empty role", role: "", expected: nil},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				assert.Equal(t, tt.expected, brexIsAdmin(tt.role))
+			},
+		)
+	}
 }

@@ -47,7 +47,7 @@ type brexUsersResponse struct {
 		LastName  string `json:"last_name"`
 		Email     string `json:"email"`
 		Status    string `json:"status"`
-		Role      string `json:"role"`
+		UserRole  string `json:"user_role"`
 	} `json:"items"`
 	NextCursor string `json:"next_cursor"`
 }
@@ -74,7 +74,7 @@ func (d *BrexDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) 
 		}
 
 		for _, u := range resp.Items {
-			role := strings.TrimSpace(u.Role)
+			role := strings.TrimSpace(u.UserRole)
 
 			roles := []string{}
 			if role != "" {
@@ -86,6 +86,7 @@ func (d *BrexDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) 
 				FullName:    u.FirstName + " " + u.LastName,
 				Roles:       roles,
 				Active:      new(u.Status == "ACTIVE"),
+				IsAdmin:     brexIsAdmin(role),
 				ExternalID:  u.ID,
 				MFAStatus:   coredata.MFAStatusUnknown,
 				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
@@ -106,6 +107,19 @@ func (d *BrexDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) 
 	}
 
 	return nil, fmt.Errorf("cannot list all brex accounts: %w", ErrPaginationLimitReached)
+}
+
+// brexIsAdmin classifies only the user_role values observed on the wire: the
+// Team API spec does not document the field, so other roles stay unknown.
+func brexIsAdmin(role string) *bool {
+	switch role {
+	case "ACCOUNT_ADMIN":
+		return new(true)
+	case "EMPLOYEE", "BOOKKEEPER":
+		return new(false)
+	default:
+		return nil
+	}
 }
 
 func (d *BrexDriver) queryUsers(ctx context.Context, cursor *string) (*brexUsersResponse, error) {
