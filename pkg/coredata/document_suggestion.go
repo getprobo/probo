@@ -22,6 +22,7 @@ package coredata
 
 import (
 	"context"
+	"encoding"
 	"errors"
 	"fmt"
 	"maps"
@@ -57,6 +58,51 @@ const (
 	DocumentSuggestionStatusAccepted DocumentSuggestionStatus = "ACCEPTED"
 	DocumentSuggestionStatusRejected DocumentSuggestionStatus = "REJECTED"
 )
+
+var (
+	_ fmt.Stringer             = DocumentSuggestionStatus("")
+	_ encoding.TextMarshaler   = DocumentSuggestionStatus("")
+	_ encoding.TextUnmarshaler = (*DocumentSuggestionStatus)(nil)
+)
+
+func DocumentSuggestionStatuses() []DocumentSuggestionStatus {
+	return []DocumentSuggestionStatus{
+		DocumentSuggestionStatusOpen,
+		DocumentSuggestionStatusAccepted,
+		DocumentSuggestionStatusRejected,
+	}
+}
+
+func (v DocumentSuggestionStatus) IsValid() bool {
+	switch v {
+	case
+		DocumentSuggestionStatusOpen,
+		DocumentSuggestionStatusAccepted,
+		DocumentSuggestionStatusRejected:
+		return true
+	}
+
+	return false
+}
+
+func (v DocumentSuggestionStatus) String() string {
+	return string(v)
+}
+
+func (v DocumentSuggestionStatus) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *DocumentSuggestionStatus) UnmarshalText(text []byte) error {
+	val := DocumentSuggestionStatus(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid DocumentSuggestionStatus value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
 
 func (s DocumentSuggestion) CursorKey(orderBy DocumentSuggestionOrderField) page.CursorKey {
 	switch orderBy {
@@ -363,11 +409,8 @@ SET
 WHERE
     %s
     AND id = @suggestion_id
+    AND (@only_open::boolean = FALSE OR status = @open_status)
 `
-
-	if onlyOpen {
-		q += "\n    AND status = @open_status"
-	}
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
@@ -377,9 +420,8 @@ WHERE
 		"updated_at":             s.UpdatedAt,
 		"resolved_at":            s.ResolvedAt,
 		"resolved_by_profile_id": s.ResolvedByProfileID,
-	}
-	if onlyOpen {
-		args["open_status"] = DocumentSuggestionStatusOpen
+		"only_open":              onlyOpen,
+		"open_status":            DocumentSuggestionStatusOpen,
 	}
 	maps.Copy(args, scope.SQLArguments())
 

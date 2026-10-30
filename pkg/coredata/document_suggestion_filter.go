@@ -38,7 +38,7 @@ CASE
 END`
 }
 
-func (f *DocumentSuggestionFilter) SQLArguments() pgx.NamedArgs {
+func (f *DocumentSuggestionFilter) SQLArguments() pgx.StrictNamedArgs {
 	status := DocumentSuggestionStatusOpen
 	hasStatus := false
 
@@ -47,7 +47,7 @@ func (f *DocumentSuggestionFilter) SQLArguments() pgx.NamedArgs {
 		hasStatus = true
 	}
 
-	return pgx.NamedArgs{
+	return pgx.StrictNamedArgs{
 		"has_suggestion_status": hasStatus,
 		"suggestion_status":     status,
 	}
