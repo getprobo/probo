@@ -39,7 +39,7 @@ CASE
 END`
 }
 
-func (f *DocumentCommentThreadFilter) SQLArguments() pgx.NamedArgs {
+func (f *DocumentCommentThreadFilter) SQLArguments() pgx.StrictNamedArgs {
 	resolved := false
 	hasResolved := false
 
@@ -48,7 +48,7 @@ func (f *DocumentCommentThreadFilter) SQLArguments() pgx.NamedArgs {
 		hasResolved = true
 	}
 
-	return pgx.NamedArgs{
+	return pgx.StrictNamedArgs{
 		"has_thread_resolved": hasResolved,
 		"thread_resolved":     resolved,
 	}
