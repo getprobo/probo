@@ -1602,6 +1602,30 @@ func (impl *Implm) Run(
 		},
 	)
 
+	stopCookieBannerScanWorker := func() {}
+
+	if impl.cfg.ChromeDPAddr != "" {
+		cookieBannerScanWorker := cookiebanner.NewCookieBannerScanWorker(
+			cookieBannerService,
+			pgClient,
+			impl.cfg.ChromeDPAddr,
+			baseURL.WithPath("/api/cookie-banner/v1").MustString(),
+			l,
+		)
+
+		var cookieBannerScanWorkerCtx context.Context
+
+		cookieBannerScanWorkerCtx, stopCookieBannerScanWorker = context.WithCancel(context.Background())
+
+		wg.Go(
+			func() {
+				if err := cookieBannerScanWorker.Run(cookieBannerScanWorkerCtx); err != nil {
+					cancel(fmt.Errorf("cookie banner scan worker crashed: %w", err))
+				}
+			},
+		)
+	}
+
 	sampleCountFlusherCtx, stopSampleCountFlusher := context.WithCancel(context.Background())
 	sampleCountFlusherDone := make(chan struct{})
 
@@ -1789,6 +1813,7 @@ func (impl *Implm) Run(
 	stopESignService()
 	stopCertManagerService()
 	stopTrackerPatternAnalysisWorker()
+	stopCookieBannerScanWorker()
 	stopTrackerPolicyWorker()
 	stopTrackerMappingWorker()
 	stopCommonPatternEnrichmentWorker()

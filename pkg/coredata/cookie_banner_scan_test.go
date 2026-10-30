@@ -23,6 +23,7 @@ package coredata_test
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
@@ -192,6 +193,7 @@ func TestCookieBannerScan_Pause_BlocksAnotherScanAndKeepsStartedAt(t *testing.T)
 
 	checkpoint := json.RawMessage(`{"visited_templates":["/"],"queue":[],"pages_scanned":1,"elapsed_ms":1000,"truncated":false}`)
 	scan.Checkpoint = &checkpoint
+	scan.PagesScanned = 1
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		return scan.MarkPaused(ctx, tx, fx.scope, time.Now())
@@ -213,6 +215,7 @@ func TestCookieBannerScan_Pause_BlocksAnotherScanAndKeepsStartedAt(t *testing.T)
 	assert.Equal(t, coredata.CookieBannerScanStateRunning, resumed.State)
 	require.NotNil(t, resumed.StartedAt)
 	assert.True(t, resumed.StartedAt.Equal(startedAt), "resuming must keep the original start")
+	assert.Equal(t, 1, resumed.PagesScanned)
 	require.NotNil(t, resumed.Checkpoint)
 	assert.JSONEq(t, string(checkpoint), string(*resumed.Checkpoint))
 }
@@ -287,4 +290,142 @@ func TestFailStaleCookieBannerScans_KeepsPausedScan(t *testing.T) {
 	assert.Equal(t, coredata.CookieBannerScanStatePaused, reloaded.State)
 	assert.Nil(t, reloaded.FailureReason)
 	assert.Nil(t, reloaded.CompletedAt)
+}
+
+func TestCookieBannerScan_Touch_RefreshesOnlyRunning(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedTrackerPatternFixture(t, ctx, client)
+
+	scan := newPendingCookieBannerScan(fx)
+	require.NoError(t, insertCookieBannerScan(t, ctx, client, fx, scan))
+
+	err := client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return scan.Touch(ctx, conn, fx.scope, time.Now())
+	})
+	assert.ErrorIs(t, err, coredata.ErrResourceNotFound, "a pending scan has no heartbeat")
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return scan.MarkRunning(ctx, tx, fx.scope, time.Now())
+	}))
+
+	touchedAt := time.Now().Add(time.Minute).UTC().Truncate(time.Microsecond)
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return scan.Touch(ctx, conn, fx.scope, touchedAt)
+	}))
+
+	var reloaded coredata.CookieBannerScan
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return reloaded.LoadByID(ctx, conn, fx.scope, scan.ID)
+	}))
+	assert.True(t, reloaded.UpdatedAt.Equal(touchedAt))
+	assert.Equal(t, coredata.CookieBannerScanStateRunning, reloaded.State)
+
+	checkpoint := json.RawMessage(`{"visited_templates":["/"],"queue":[],"pages_scanned":1,"elapsed_ms":1000,"truncated":false}`)
+	scan.Checkpoint = &checkpoint
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return scan.MarkPaused(ctx, tx, fx.scope, time.Now())
+	}))
+
+	err = client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return scan.Touch(ctx, conn, fx.scope, time.Now())
+	})
+	assert.ErrorIs(t, err, coredata.ErrResourceNotFound, "a paused scan must not take a heartbeat")
+}
+
+func TestCountRunningCookieBannerScans_CountsOnlyRunningAcrossTenants(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	first := seedTrackerPatternFixture(t, ctx, client)
+	second := seedTrackerPatternFixture(t, ctx, client)
+
+	firstScan := newPendingCookieBannerScan(first)
+	secondScan := newPendingCookieBannerScan(second)
+
+	// Repeatable read freezes the baseline, so a scan another test
+	// commits while this one runs cannot change the deltas.
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		if _, err := tx.Exec(ctx, `SET TRANSACTION ISOLATION LEVEL REPEATABLE READ`); err != nil {
+			return err
+		}
+
+		before, err := coredata.CountRunningCookieBannerScans(ctx, tx)
+		if err != nil {
+			return err
+		}
+
+		if err := firstScan.Insert(ctx, tx, first.scope); err != nil {
+			return err
+		}
+
+		if err := secondScan.Insert(ctx, tx, second.scope); err != nil {
+			return err
+		}
+
+		pending, err := coredata.CountRunningCookieBannerScans(ctx, tx)
+		if err != nil {
+			return err
+		}
+
+		if pending != before {
+			return fmt.Errorf("pending scans counted: before %d, after %d", before, pending)
+		}
+
+		if err := firstScan.MarkRunning(ctx, tx, first.scope, time.Now()); err != nil {
+			return err
+		}
+
+		oneRunning, err := coredata.CountRunningCookieBannerScans(ctx, tx)
+		if err != nil {
+			return err
+		}
+
+		if oneRunning != before+1 {
+			return fmt.Errorf("one running scan counted as %d, baseline %d", oneRunning, before)
+		}
+
+		if err := secondScan.MarkRunning(ctx, tx, second.scope, time.Now()); err != nil {
+			return err
+		}
+
+		twoRunning, err := coredata.CountRunningCookieBannerScans(ctx, tx)
+		if err != nil {
+			return err
+		}
+
+		if twoRunning != before+2 {
+			return fmt.Errorf("running scans on two tenants counted as %d, baseline %d", twoRunning, before)
+		}
+
+		secondScan.PagesScanned = 1
+
+		if err := secondScan.MarkCompleted(ctx, tx, second.scope, time.Now()); err != nil {
+			return err
+		}
+
+		checkpoint := json.RawMessage(`{"visited_templates":["/"],"queue":[],"pages_scanned":1,"elapsed_ms":1,"truncated":false}`)
+		firstScan.Checkpoint = &checkpoint
+
+		if err := firstScan.MarkPaused(ctx, tx, first.scope, time.Now()); err != nil {
+			return err
+		}
+
+		settled, err := coredata.CountRunningCookieBannerScans(ctx, tx)
+		if err != nil {
+			return err
+		}
+
+		if settled != before {
+			return fmt.Errorf("paused and completed scans still counted: before %d, after %d", before, settled)
+		}
+
+		return nil
+	}))
 }

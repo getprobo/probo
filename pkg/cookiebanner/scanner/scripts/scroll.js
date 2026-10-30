@@ -31,4 +31,4 @@
   }
   window.scrollTo({ left: 0, top: y + height, behavior: "instant" });
   return false;
-})()
+})();

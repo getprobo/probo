@@ -284,6 +284,45 @@ ON CONFLICT (cookie_banner_id, tracker_type, identifier, COALESCE(cookie_domain,
 	return result.RowsAffected() > 0, nil
 }
 
+// CountByCookieBannerScanID counts scanner observations stamped with
+// scanID. Storage is localStorage and sessionStorage together. SDK rows
+// are excluded, even when they share the scan id.
+func (dts *DetectedTrackers) CountByCookieBannerScanID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	scanID gid.GID,
+) (cookies int, storage int, err error) {
+	q := `
+SELECT
+	COUNT(id) FILTER (WHERE tracker_type = @cookie_type),
+	COUNT(id) FILTER (WHERE tracker_type IN (@local_storage_type, @session_storage_type))
+FROM
+	detected_trackers
+WHERE
+	%s
+	AND cookie_banner_scan_id = @cookie_banner_scan_id
+	AND observed_by = @observed_by
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"cookie_banner_scan_id": scanID,
+		"observed_by":           DetectedTrackerObserverScanner,
+		"cookie_type":           TrackerTypeCookie,
+		"local_storage_type":    TrackerTypeLocalStorage,
+		"session_storage_type":  TrackerTypeSessionStorage,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	if err := conn.QueryRow(ctx, q, args).Scan(&cookies, &storage); err != nil {
+		return 0, 0, fmt.Errorf("cannot count detected trackers by scan: %w", err)
+	}
+
+	return cookies, storage, nil
+}
+
 func (dts *DetectedTrackers) CountByTrackerPatternID(
 	ctx context.Context,
 	conn pg.Querier,

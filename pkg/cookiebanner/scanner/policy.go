@@ -190,5 +190,5 @@ func errPrivate(host string) error {
 }
 
 func errResolve(host string) error {
-	return fmt.Errorf("cannot start scan: cannot resolve host %q", host)
+	return fmt.Errorf("cannot start scan: %w: cannot resolve host %q", ErrUnreachable, host)
 }
