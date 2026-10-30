@@ -117,7 +117,7 @@ func (r *documentResolver) CompliancePortalDocument(ctx context.Context, obj *ty
 
 // EmployeePortalDocument is the resolver for the employeePortalDocument field.
 func (r *documentResolver) EmployeePortalDocument(ctx context.Context, obj *types.Document) (*types.EmployeePortalDocument, error) {
-	scope, err := r.authorize(ctx, obj.Organization.ID, employeeportalmgmt.ActionEmployeePortalList)
+	_, err := r.authorize(ctx, obj.Organization.ID, employeeportalmgmt.ActionEmployeePortalList)
 	if err != nil {
 		return nil, err
 	}
@@ -133,7 +133,7 @@ func (r *documentResolver) EmployeePortalDocument(ctx context.Context, obj *type
 		return nil, gqlx.Internal(ctx)
 	}
 
-	scope, err = r.authorize(ctx, portal.ID, employeeportalmgmt.ActionEmployeePortalGet)
+	scope, err := r.authorize(ctx, portal.ID, employeeportalmgmt.ActionEmployeePortalGet)
 	if err != nil {
 		return nil, err
 	}

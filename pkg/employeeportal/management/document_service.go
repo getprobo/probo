@@ -422,6 +422,7 @@ func (s *Service) IsSharedPublishedVersion(
 			}
 
 			link := &coredata.EmployeePortalDocument{}
+
 			err := link.LoadByOrganizationIDAndDocumentID(
 				ctx,
 				conn,
