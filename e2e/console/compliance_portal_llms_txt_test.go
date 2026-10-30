@@ -120,8 +120,8 @@ func TestCompliancePortal_LLMsTxt(t *testing.T) {
 	require.NoError(t, err)
 
 	trustHost := llmsTxtTrustHost(t, owner, portalID)
-	// Poll lease is 2 minutes, so the certificate is not ready within 30s.
-	testutil.WaitForCompliancePortalHTTPSWithin(t, trustHost, 3*time.Minute)
+	// The certificate is not ready within the 30s default.
+	testutil.WaitForCompliancePortalHTTPSWithin(t, trustHost, time.Minute)
 
 	client := testutil.TrustHTTPClient(trustHost)
 	resp, err := client.Get("https://" + trustHost + "/llms.txt")

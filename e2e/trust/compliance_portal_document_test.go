@@ -57,8 +57,8 @@ func TestCompliancePortal_DocumentPageLoadsPublishedSnapshot(t *testing.T) {
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	compliancePortalID := lookupCompliancePortalID(t, owner)
 	trustHost := lookupTrustHost(t, owner, compliancePortalID)
-	// Poll lease is 2 minutes, so the certificate is not ready within 30s.
-	testutil.WaitForCompliancePortalHTTPSWithin(t, trustHost, 3*time.Minute)
+	// The certificate is not ready within the 30s default.
+	testutil.WaitForCompliancePortalHTTPSWithin(t, trustHost, time.Minute)
 
 	publishedTitle := factory.SafeName("Published policy")
 	draftTitle := factory.SafeName("Working draft")
