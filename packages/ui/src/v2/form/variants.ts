@@ -110,7 +110,7 @@ export const textFieldSkeleton = tv({
 // Date picker trigger (TextField-like surface + typed input) plus the calendar popup chrome.
 export const dateField = tv({
   slots: {
-    root: "w-full",
+    root: "relative w-full",
     surface: [
       "flex min-w-0 w-full items-center gap-2 rounded-2 text-2 text-sand-12 transition-colors",
       "focus-within:ring-2 focus-within:ring-sand-8 focus-within:ring-offset-1 focus-within:ring-offset-sand-1",
@@ -121,9 +121,10 @@ export const dateField = tv({
     rangeButton: [
       "flex h-full min-w-0 flex-1 cursor-pointer items-center gap-2 border-0 bg-transparent p-0",
       "text-start outline-none",
-      "disabled:pointer-events-none",
+      "disabled:pointer-events-none disabled:opacity-50",
     ],
     caption: "min-w-0 flex-1 truncate text-start",
+    nativeValue: "pointer-events-none absolute inset-x-0 top-0 h-px overflow-hidden opacity-0",
     popup: "flex flex-col gap-2",
     iconTrigger: [
       "flex size-4 shrink-0 items-center justify-center border-0 bg-transparent p-0",

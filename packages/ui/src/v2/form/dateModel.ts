@@ -207,14 +207,19 @@ export function formatDateRange(from: string, to: string, locale: string | undef
   if (from !== "" && to !== "") {
     const start = parseIsoDate(from);
     const end = parseIsoDate(to);
-    const sameYear = start != null && end != null && start.getFullYear() === end.getFullYear();
+    if (start == null || end == null) {
+      return "";
+    }
+    const sameYear = start.getFullYear() === end.getFullYear();
     return `${formatIsoDay(from, locale, !sameYear)} ${RANGE_DASH} ${formatIsoDay(to, locale, true)}`;
   }
   if (from !== "") {
-    return `${formatIsoDay(from, locale, true)} ${RANGE_DASH}`;
+    const start = formatIsoDay(from, locale, true);
+    return start === "" ? "" : `${start} ${RANGE_DASH}`;
   }
   if (to !== "") {
-    return `${RANGE_DASH} ${formatIsoDay(to, locale, true)}`;
+    const end = formatIsoDay(to, locale, true);
+    return end === "" ? "" : `${RANGE_DASH} ${end}`;
   }
   return "";
 }

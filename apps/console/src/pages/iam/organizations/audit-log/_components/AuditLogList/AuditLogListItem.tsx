@@ -79,7 +79,9 @@ export function AuditLogListItem({ entryKey, onOpen }: AuditLogListItemProps) {
     <TableRow align="center" interactive>
       <TableRowHeaderCell>
         <TableButton
-          aria-label={t("auditLogPage.actions.openEntry")}
+          aria-label={t("auditLogPage.actions.openEntry", {
+            when: dateTimeFormat(i18n.language, createdAt),
+          })}
           onClick={onOpen}
         >
           <Text size={2}>

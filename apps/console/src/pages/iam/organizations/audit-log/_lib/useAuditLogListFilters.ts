@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { orderedDateRange } from "@probo/ui/src/v2/form/dateModel";
 import { useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router";
 
@@ -63,7 +64,23 @@ export function isIsoDate(value: string): boolean {
   if (!ISO_DATE.test(value)) {
     return false;
   }
-  return !Number.isNaN(Date.parse(`${value}T00:00:00Z`));
+  const [year, month, day] = value.split("-").map(Number);
+  if (year == null || month == null || day == null) {
+    return false;
+  }
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year
+    && date.getUTCMonth() === month - 1
+    && date.getUTCDate() === day;
+}
+
+export function auditLogFilterKey(filter: object | null | undefined): string {
+  if (filter == null) {
+    return "";
+  }
+  return JSON.stringify(
+    Object.entries(filter).sort(([left], [right]) => left.localeCompare(right)),
+  );
 }
 
 function utcStart(date: string): string | null {
@@ -122,9 +139,7 @@ function auditLogGraphqlFilter(filters: {
     filter.requestId = filters.requestId;
   }
 
-  const span = filters.from !== "" && filters.to !== "" && filters.from > filters.to
-    ? { from: filters.to, to: filters.from }
-    : { from: filters.from, to: filters.to };
+  const span = orderedDateRange(filters.from, filters.to);
   const createdFrom = utcStart(span.from);
   const createdTo = utcEndExclusive(span.to);
   if (createdFrom != null) {

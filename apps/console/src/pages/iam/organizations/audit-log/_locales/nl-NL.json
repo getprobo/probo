@@ -1,7 +1,7 @@
 {
   "auditLogPage": {
     "title": "Auditlogboek",
-    "description": "Elke autorisatiecontrole die voor deze werkruimte is vastgelegd, inclusief leesacties.",
+    "description": "Vastgelegde autorisatiebeslissingen voor deze werkruimte, inclusief leesacties.",
     "empty": {
       "title": "Nog geen auditlogitems",
       "description": "Autorisatiecontroles verschijnen hier zodra ze zijn vastgelegd.",
@@ -19,7 +19,7 @@
     "actions": {
       "previous": "Vorige",
       "next": "Volgende",
-      "openEntry": "Auditlogitem bekijken"
+      "openEntry": "Auditlogitem van {{when}} bekijken"
     },
     "actorTypes": {
       "USER": "Gebruiker",
