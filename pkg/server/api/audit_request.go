@@ -22,7 +22,6 @@ package api
 
 import (
 	"net/http"
-	"unicode"
 
 	"go.gearno.de/crypto/uuid"
 	"go.probo.inc/probo/pkg/iam"
@@ -31,10 +30,7 @@ import (
 
 func auditRequestMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		requestID := r.Header.Get("X-Request-Id")
-		if !validAuditRequestID(requestID) {
-			requestID = uuid.MustNewV7().String()
-		}
+		requestID := uuid.MustNewV7().String()
 
 		w.Header().Set("X-Request-Id", requestID)
 
@@ -49,18 +45,4 @@ func auditRequestMiddleware(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
-}
-
-func validAuditRequestID(value string) bool {
-	if value == "" || len(value) > 128 {
-		return false
-	}
-
-	for _, r := range value {
-		if r > unicode.MaxASCII || !unicode.IsPrint(r) || unicode.IsSpace(r) {
-			return false
-		}
-	}
-
-	return true
 }
