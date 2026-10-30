@@ -24,6 +24,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
@@ -47,6 +48,16 @@ func NewCmdComment(f *cmdutil.Factory) *cobra.Command {
 	return cmd
 }
 
+type commentThread struct {
+	ID          string `json:"id"`
+	AnchorQuote string `json:"anchorQuote"`
+	ResolvedAt  string `json:"resolvedAt"`
+	Suggestion  *struct {
+		ID string `json:"id"`
+	} `json:"suggestion"`
+	CreatedAt string `json:"createdAt"`
+}
+
 func newListCmd(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagResolved string
@@ -63,10 +74,11 @@ func newListCmd(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			variables := map[string]any{
-				"id":    args[0],
-				"first": flagLimit,
+			if err := cmdutil.ValidateLimit(flagLimit); err != nil {
+				return err
 			}
+
+			variables := map[string]any{"id": args[0]}
 			if flagResolved != "" {
 				if err := cmdutil.ValidateEnum("resolved", flagResolved, []string{"true", "false"}); err != nil {
 					return err
@@ -74,16 +86,84 @@ func newListCmd(f *cmdutil.Factory) *cobra.Command {
 				variables["filter"] = map[string]any{"resolved": flagResolved == "true"}
 			}
 
-			data, err := do(f, listQuery, variables)
+			client, err := newClient(f)
+			if err != nil {
+				return err
+			}
+
+			threads, totalCount, err := api.Paginate(
+				client,
+				listQuery,
+				variables,
+				flagLimit,
+				func(data json.RawMessage) (*api.Connection[commentThread], error) {
+					var resp struct {
+						Node *struct {
+							Typename       string                        `json:"__typename"`
+							CommentThreads api.Connection[commentThread] `json:"commentThreads"`
+						} `json:"node"`
+					}
+					if err := json.Unmarshal(data, &resp); err != nil {
+						return nil, err
+					}
+
+					if resp.Node == nil {
+						return nil, fmt.Errorf("document %s not found", args[0])
+					}
+
+					if resp.Node.Typename != "Document" {
+						return nil, fmt.Errorf("expected Document node, got %s", resp.Node.Typename)
+					}
+
+					return &resp.Node.CommentThreads, nil
+				},
+			)
 			if err != nil {
 				return err
 			}
 
 			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, json.RawMessage(data))
+				return cmdutil.PrintJSON(f.IOStreams.Out, threads)
 			}
 
-			_, _ = fmt.Fprintln(f.IOStreams.Out, string(data))
+			if len(threads) == 0 {
+				_, _ = fmt.Fprintln(f.IOStreams.Out, "No comment threads found.")
+				return nil
+			}
+
+			rows := make([][]string, 0, len(threads))
+			for _, t := range threads {
+				resolved := "no"
+				if t.ResolvedAt != "" {
+					resolved = "yes"
+				}
+
+				suggestion := ""
+				if t.Suggestion != nil {
+					suggestion = t.Suggestion.ID
+				}
+
+				rows = append(rows, []string{
+					t.ID,
+					t.AnchorQuote,
+					resolved,
+					suggestion,
+					cmdutil.FormatTime(t.CreatedAt),
+				})
+			}
+
+			tbl := cmdutil.NewTable("ID", "QUOTE", "RESOLVED", "SUGGESTION", "CREATED").Rows(rows...)
+
+			_, _ = fmt.Fprintln(f.IOStreams.Out, tbl)
+
+			if totalCount > len(threads) {
+				_, _ = fmt.Fprintf(
+					f.IOStreams.ErrOut,
+					"\nShowing %d of %d comment threads\n",
+					len(threads),
+					totalCount,
+				)
+			}
 
 			return nil
 		},
@@ -96,6 +176,32 @@ func newListCmd(f *cmdutil.Factory) *cobra.Command {
 	return cmd
 }
 
+type viewResponse struct {
+	Node *struct {
+		Typename    string `json:"__typename"`
+		ID          string `json:"id"`
+		AnchorQuote string `json:"anchorQuote"`
+		ResolvedAt  string `json:"resolvedAt"`
+		Suggestion  *struct {
+			ID     string `json:"id"`
+			Status string `json:"status"`
+		} `json:"suggestion"`
+		Comments struct {
+			Edges []struct {
+				Node struct {
+					ID        string `json:"id"`
+					Content   string `json:"content"`
+					CreatedAt string `json:"createdAt"`
+					Author    *struct {
+						ID       string `json:"id"`
+						FullName string `json:"fullName"`
+					} `json:"author"`
+				} `json:"node"`
+			} `json:"edges"`
+		} `json:"comments"`
+	} `json:"node"`
+}
+
 func newViewCmd(f *cmdutil.Factory) *cobra.Command {
 	var flagOutput *string
 
@@ -104,7 +210,76 @@ func newViewCmd(f *cmdutil.Factory) *cobra.Command {
 		Short: "View a comment thread",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return printQuery(f, flagOutput, viewQuery, map[string]any{"id": args[0]})
+			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
+				return err
+			}
+
+			client, err := newClient(f)
+			if err != nil {
+				return err
+			}
+
+			data, err := client.Do(viewQuery, map[string]any{"id": args[0]})
+			if err != nil {
+				return err
+			}
+
+			var resp viewResponse
+			if err := json.Unmarshal(data, &resp); err != nil {
+				return fmt.Errorf("cannot parse response: %w", err)
+			}
+
+			if resp.Node == nil {
+				return fmt.Errorf("comment thread %s not found", args[0])
+			}
+
+			if resp.Node.Typename != "DocumentCommentThread" {
+				return fmt.Errorf("expected DocumentCommentThread node, got %s", resp.Node.Typename)
+			}
+
+			if *flagOutput == cmdutil.OutputJSON {
+				return cmdutil.PrintJSON(f.IOStreams.Out, resp.Node)
+			}
+
+			n := resp.Node
+			out := f.IOStreams.Out
+
+			label := lipgloss.NewStyle().Foreground(lipgloss.Color("242")).Width(22)
+
+			status := "Open"
+			if n.ResolvedAt != "" {
+				status = "Resolved " + cmdutil.FormatTime(n.ResolvedAt)
+			}
+
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("ID:"), n.ID)
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Status:"), status)
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Quote:"), n.AnchorQuote)
+
+			if n.Suggestion != nil {
+				_, _ = fmt.Fprintf(out, "%s%s (%s)\n", label.Render("Suggestion:"), n.Suggestion.ID, n.Suggestion.Status)
+			}
+
+			for _, edge := range n.Comments.Edges {
+				c := edge.Node
+
+				author := ""
+				if c.Author != nil {
+					author = c.Author.FullName
+				}
+
+				content, err := cmdutil.FormatRichText(c.Content)
+				if err != nil {
+					return fmt.Errorf("cannot format comment content: %w", err)
+				}
+
+				_, _ = fmt.Fprintln(out)
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Comment:"), c.ID)
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Author:"), author)
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Created:"), cmdutil.FormatTime(c.CreatedAt))
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Content:"), content)
+			}
+
+			return nil
 		},
 	}
 
@@ -146,7 +321,31 @@ func newCreateCmd(f *cmdutil.Factory) *cobra.Command {
 				input["suggestionId"] = flagSuggestion
 			}
 
-			return printQuery(f, flagOutput, createMutation, map[string]any{"input": input})
+			return runMutation(
+				f,
+				flagOutput,
+				createMutation,
+				map[string]any{"input": input},
+				func(data json.RawMessage) (string, error) {
+					var resp struct {
+						CreateDocumentCommentThread struct {
+							DocumentCommentThreadEdge struct {
+								Node struct {
+									ID string `json:"id"`
+								} `json:"node"`
+							} `json:"documentCommentThreadEdge"`
+						} `json:"createDocumentCommentThread"`
+					}
+					if err := json.Unmarshal(data, &resp); err != nil {
+						return "", fmt.Errorf("cannot parse response: %w", err)
+					}
+
+					return fmt.Sprintf(
+						"Created comment thread %s",
+						resp.CreateDocumentCommentThread.DocumentCommentThreadEdge.Node.ID,
+					), nil
+				},
+			)
 		},
 	}
 
@@ -174,12 +373,36 @@ func newReplyCmd(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("content is required")
 			}
 
-			return printQuery(f, flagOutput, replyMutation, map[string]any{
-				"input": map[string]any{
-					"threadId": args[0],
-					"content":  flagContent,
+			return runMutation(
+				f,
+				flagOutput,
+				replyMutation,
+				map[string]any{
+					"input": map[string]any{
+						"threadId": args[0],
+						"content":  flagContent,
+					},
 				},
-			})
+				func(data json.RawMessage) (string, error) {
+					var resp struct {
+						CreateDocumentComment struct {
+							DocumentCommentEdge struct {
+								Node struct {
+									ID string `json:"id"`
+								} `json:"node"`
+							} `json:"documentCommentEdge"`
+						} `json:"createDocumentComment"`
+					}
+					if err := json.Unmarshal(data, &resp); err != nil {
+						return "", fmt.Errorf("cannot parse response: %w", err)
+					}
+
+					return fmt.Sprintf(
+						"Created comment %s",
+						resp.CreateDocumentComment.DocumentCommentEdge.Node.ID,
+					), nil
+				},
+			)
 		},
 	}
 
@@ -204,12 +427,34 @@ func newUpdateCmd(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("content is required")
 			}
 
-			return printQuery(f, flagOutput, updateMutation, map[string]any{
-				"input": map[string]any{
-					"commentId": args[0],
-					"content":   flagContent,
+			return runMutation(
+				f,
+				flagOutput,
+				updateMutation,
+				map[string]any{
+					"input": map[string]any{
+						"commentId": args[0],
+						"content":   flagContent,
+					},
 				},
-			})
+				func(data json.RawMessage) (string, error) {
+					var resp struct {
+						UpdateDocumentComment struct {
+							DocumentComment struct {
+								ID string `json:"id"`
+							} `json:"documentComment"`
+						} `json:"updateDocumentComment"`
+					}
+					if err := json.Unmarshal(data, &resp); err != nil {
+						return "", fmt.Errorf("cannot parse response: %w", err)
+					}
+
+					return fmt.Sprintf(
+						"Updated comment %s",
+						resp.UpdateDocumentComment.DocumentComment.ID,
+					), nil
+				},
+			)
 		},
 	}
 
@@ -227,9 +472,29 @@ func newDeleteCmd(f *cmdutil.Factory) *cobra.Command {
 		Short: "Delete your own comment",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return printQuery(f, flagOutput, deleteMutation, map[string]any{
-				"input": map[string]any{"commentId": args[0]},
-			})
+			return runMutation(
+				f,
+				flagOutput,
+				deleteMutation,
+				map[string]any{
+					"input": map[string]any{"commentId": args[0]},
+				},
+				func(data json.RawMessage) (string, error) {
+					var resp struct {
+						DeleteDocumentComment struct {
+							DeletedDocumentCommentID string `json:"deletedDocumentCommentId"`
+						} `json:"deleteDocumentComment"`
+					}
+					if err := json.Unmarshal(data, &resp); err != nil {
+						return "", fmt.Errorf("cannot parse response: %w", err)
+					}
+
+					return fmt.Sprintf(
+						"Deleted comment %s",
+						resp.DeleteDocumentComment.DeletedDocumentCommentID,
+					), nil
+				},
+			)
 		},
 	}
 
@@ -246,9 +511,7 @@ func newResolveCmd(f *cmdutil.Factory) *cobra.Command {
 		Short: "Resolve a comment thread",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return printQuery(f, flagOutput, resolveMutation, map[string]any{
-				"input": map[string]any{"threadId": args[0]},
-			})
+			return runThreadStateMutation(f, flagOutput, resolveMutation, args[0], "resolveDocumentCommentThread", "Resolved")
 		},
 	}
 
@@ -265,9 +528,7 @@ func newReopenCmd(f *cmdutil.Factory) *cobra.Command {
 		Short: "Reopen a comment thread",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return printQuery(f, flagOutput, reopenMutation, map[string]any{
-				"input": map[string]any{"threadId": args[0]},
-			})
+			return runThreadStateMutation(f, flagOutput, reopenMutation, args[0], "reopenDocumentCommentThread", "Reopened")
 		},
 	}
 
@@ -276,12 +537,53 @@ func newReopenCmd(f *cmdutil.Factory) *cobra.Command {
 	return cmd
 }
 
-func printQuery(f *cmdutil.Factory, flagOutput *string, query string, variables map[string]any) error {
+func runThreadStateMutation(
+	f *cmdutil.Factory,
+	flagOutput *string,
+	query string,
+	threadID string,
+	field string,
+	past string,
+) error {
+	return runMutation(
+		f,
+		flagOutput,
+		query,
+		map[string]any{
+			"input": map[string]any{"threadId": threadID},
+		},
+		func(data json.RawMessage) (string, error) {
+			var resp map[string]struct {
+				DocumentCommentThread struct {
+					ID string `json:"id"`
+				} `json:"documentCommentThread"`
+			}
+			if err := json.Unmarshal(data, &resp); err != nil {
+				return "", fmt.Errorf("cannot parse response: %w", err)
+			}
+
+			return fmt.Sprintf("%s comment thread %s", past, resp[field].DocumentCommentThread.ID), nil
+		},
+	)
+}
+
+func runMutation(
+	f *cmdutil.Factory,
+	flagOutput *string,
+	query string,
+	variables map[string]any,
+	confirm func(json.RawMessage) (string, error),
+) error {
 	if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
 		return err
 	}
 
-	data, err := do(f, query, variables)
+	client, err := newClient(f)
+	if err != nil {
+		return err
+	}
+
+	data, err := client.Do(query, variables)
 	if err != nil {
 		return err
 	}
@@ -290,12 +592,17 @@ func printQuery(f *cmdutil.Factory, flagOutput *string, query string, variables 
 		return cmdutil.PrintJSON(f.IOStreams.Out, json.RawMessage(data))
 	}
 
-	_, _ = fmt.Fprintln(f.IOStreams.Out, string(data))
+	msg, err := confirm(data)
+	if err != nil {
+		return err
+	}
+
+	_, _ = fmt.Fprintln(f.IOStreams.Out, msg)
 
 	return nil
 }
 
-func do(f *cmdutil.Factory, query string, variables map[string]any) (json.RawMessage, error) {
+func newClient(f *cmdutil.Factory) (*api.Client, error) {
 	cfg, err := f.Config()
 	if err != nil {
 		return nil, err
@@ -306,17 +613,22 @@ func do(f *cmdutil.Factory, query string, variables map[string]any) (json.RawMes
 		return nil, err
 	}
 
-	client := api.NewClient(host, hc.Token, "/api/console/v1/graphql", cfg.HTTPTimeoutDuration())
-
-	return client.Do(query, variables)
+	return api.NewClient(
+		host,
+		hc.Token,
+		"/api/console/v1/graphql",
+		cfg.HTTPTimeoutDuration(),
+		cmdutil.TokenRefreshOption(cfg, host, hc),
+	), nil
 }
 
 const listQuery = `
-query($id: ID!, $first: Int, $filter: DocumentCommentThreadFilter) {
+query($id: ID!, $first: Int, $after: CursorKey, $filter: DocumentCommentThreadFilter) {
   node(id: $id) {
     __typename
     ... on Document {
-      commentThreads(first: $first, filter: $filter) {
+      commentThreads(first: $first, after: $after, filter: $filter) {
+        totalCount
         edges {
           node {
             id
@@ -325,6 +637,10 @@ query($id: ID!, $first: Int, $filter: DocumentCommentThreadFilter) {
             suggestion { id }
             createdAt
           }
+        }
+        pageInfo {
+          hasNextPage
+          endCursor
         }
       }
     }
