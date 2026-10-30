@@ -39,12 +39,18 @@ import (
 	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
-// ignoreSessionDataUpdateError reports errors that happen because the
-// request is already over. The database client does not wrap the request
-// context error, and shutdown closes the pool while a hijacked socket is
-// still leaving the handler.
-func ignoreSessionDataUpdateError(ctx context.Context, err error) bool {
-	if ctx.Err() != nil {
+// ignoreSessionDataUpdateError reports errors that happen because the request is
+// already over. The database client does not wrap the request context error, so
+// a failed write can only be attributed to cancellation when the context was
+// already canceled before the write started; otherwise a real session-not-found
+// or write error must surface. Shutdown closes the pool while a hijacked socket
+// is still leaving the handler, so a closed pool is always ignored.
+func ignoreSessionDataUpdateError(canceledBeforeWrite bool, err error) bool {
+	if canceledBeforeWrite {
+		return true
+	}
+
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 		return true
 	}
 
@@ -140,8 +146,10 @@ func NewSessionMiddleware(svc *iam.Service, cookieConfig securecookie.Config) fu
 				// A collaboration socket is hijacked, so a panic here is written
 				// onto a connection that can no longer carry an HTTP response.
 				// Shutdown closes that socket and then the database pool.
+				canceledBeforeWrite := ctx.Err() != nil
+
 				err = svc.SessionService.UpdateSessionData(ctx, session.ID, session.Data)
-				if err != nil && !ignoreSessionDataUpdateError(ctx, err) {
+				if err != nil && !ignoreSessionDataUpdateError(canceledBeforeWrite, err) {
 					panic(fmt.Errorf("cannot update session data: %w", err))
 				}
 			},

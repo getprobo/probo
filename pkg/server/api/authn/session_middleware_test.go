@@ -39,21 +39,26 @@ func TestIgnoreSessionDataUpdateError(t *testing.T) {
 	t.Run("closed pool during shutdown", func(t *testing.T) {
 		t.Parallel()
 
-		assert.True(t, ignoreSessionDataUpdateError(context.Background(), closedPool))
+		assert.True(t, ignoreSessionDataUpdateError(false, closedPool))
 	})
 
-	t.Run("request context already ended", func(t *testing.T) {
+	t.Run("context canceled before the write", func(t *testing.T) {
 		t.Parallel()
 
-		ctx, cancel := context.WithCancel(context.Background())
-		cancel()
+		assert.True(t, ignoreSessionDataUpdateError(true, database))
+	})
 
-		assert.True(t, ignoreSessionDataUpdateError(ctx, database))
+	t.Run("context-caused write error", func(t *testing.T) {
+		t.Parallel()
+
+		wrapped := fmt.Errorf("cannot update session: %w", context.Canceled)
+
+		assert.True(t, ignoreSessionDataUpdateError(false, wrapped))
 	})
 
 	t.Run("database error on a live request", func(t *testing.T) {
 		t.Parallel()
 
-		assert.False(t, ignoreSessionDataUpdateError(context.Background(), database))
+		assert.False(t, ignoreSessionDataUpdateError(false, database))
 	})
 }
