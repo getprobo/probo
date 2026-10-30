@@ -89,6 +89,7 @@ export const documentDescriptionPageQuery = graphql`
         }
         canUpdate: permission(action: "core:document:update")
         canComment: permission(action: "core:document:comment")
+        canSuggest: permission(action: "core:document:suggest")
         canViewHistory: permission(action: "core:document-revision:list")
       }
     }
@@ -405,7 +406,7 @@ export function DocumentDescriptionPage(props: {
     <div className="flex flex-1 min-h-0 flex-col">
       {(historyAvailable || collaborationHandle) && (
         <div className="flex items-center justify-end gap-3 px-4 pb-2">
-          {collaborationHandle && (canEdit || document.canComment) && (
+          {collaborationHandle && (canEdit || document.canComment || document.canSuggest) && (
             <Dropdown>
               <DropdownTrigger
                 render={(
@@ -439,7 +440,7 @@ export function DocumentDescriptionPage(props: {
                       {t("documentDescriptionPage.review.editing")}
                     </DropdownRadioItem>
                   )}
-                  {document.canComment && (
+                  {document.canSuggest && (
                     <DropdownRadioItem value="suggesting">
                       {t("documentDescriptionPage.review.suggesting")}
                     </DropdownRadioItem>
