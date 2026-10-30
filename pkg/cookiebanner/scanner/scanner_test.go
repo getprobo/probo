@@ -1,0 +1,1078 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+package scanner
+
+import (
+	"context"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
+	"strconv"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/chromedp/cdproto/network"
+	"github.com/chromedp/cdproto/runtime"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.gearno.de/kit/httpclient"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/netcheck"
+)
+
+func TestTemplateKey_CollapsesVariableSegments(t *testing.T) {
+	t.Parallel()
+
+	t.Run("numeric segments", func(t *testing.T) {
+		t.Parallel()
+
+		first, ok := templateKey("https://Example.com/posts/123?utm=1#top")
+		require.True(t, ok)
+		second, ok := templateKey("https://example.com/posts/456")
+		require.True(t, ok)
+		assert.Equal(t, first, second)
+	})
+
+	t.Run("uuid and hex segments", func(t *testing.T) {
+		t.Parallel()
+
+		uuid, ok := templateKey("https://example.com/orders/550e8400-e29b-41d4-a716-446655440000")
+		require.True(t, ok)
+		assert.Equal(t, "https://example.com/orders/:id", uuid)
+
+		hash, ok := templateKey("https://example.com/r/abcdef0123456789")
+		require.True(t, ok)
+		assert.Equal(t, "https://example.com/r/:id", hash)
+	})
+
+	t.Run("static paths stay distinct", func(t *testing.T) {
+		t.Parallel()
+
+		static, ok := templateKey("https://example.com/pricing")
+		require.True(t, ok)
+		assert.Equal(t, "https://example.com/pricing", static)
+
+		slug, ok := templateKey("https://example.com/privacy-policy-overview")
+		require.True(t, ok)
+		assert.Equal(t, "https://example.com/privacy-policy-overview", slug)
+		assert.NotEqual(t, static, slug)
+	})
+
+	t.Run("encoded slash is a different path", func(t *testing.T) {
+		t.Parallel()
+
+		encoded, ok := templateKey("https://example.com/a%2Fb")
+		require.True(t, ok)
+		plain, ok := templateKey("https://example.com/a/b")
+		require.True(t, ok)
+		assert.NotEqual(t, encoded, plain)
+	})
+
+	t.Run("www and default port fold", func(t *testing.T) {
+		t.Parallel()
+
+		apex, ok := templateKey("https://example.com/pricing")
+		require.True(t, ok)
+		www, ok := templateKey("https://www.example.com/pricing")
+		require.True(t, ok)
+		port, ok := templateKey("https://example.com:443/pricing")
+		require.True(t, ok)
+		assert.Equal(t, apex, www)
+		assert.Equal(t, apex, port)
+	})
+}
+
+func TestOrigin_FoldsWWWAndPorts(t *testing.T) {
+	t.Parallel()
+
+	site, ok := parseOrigin("https://example.com/app")
+	require.True(t, ok)
+	assert.True(t, site.contains("https://www.Example.com:443/pricing"))
+	assert.False(t, site.contains("https://example.com:8443/pricing"))
+	assert.False(t, site.contains("https://other.example.com/pricing"))
+	assert.Equal(t, "https://example.com/", site.root())
+	assert.Equal(t, "https://www.example.com/", site.wwwRoot())
+
+	_, ok = parseOrigin("https://user:pass@example.com")
+	assert.False(t, ok)
+
+	_, ok = parseOrigin("javascript:alert(1)")
+	assert.False(t, ok)
+}
+
+func TestChooseStart_UsesWWWWhenApexDoesNotResolve(t *testing.T) {
+	t.Parallel()
+
+	site, ok := parseOrigin("https://example.com")
+	require.True(t, ok)
+
+	got, err := chooseStart(site, hostPublic, hostUnknown)
+	require.NoError(t, err)
+	assert.Equal(t, "https://example.com/", got)
+
+	got, err = chooseStart(site, hostUnknown, hostPublic)
+	require.NoError(t, err)
+	assert.Equal(t, "https://www.example.com/", got)
+
+	_, err = chooseStart(site, hostPrivate, hostPublic)
+	require.ErrorIs(t, err, netcheck.ErrBlockedAddress)
+
+	_, err = chooseStart(site, hostUnknown, hostUnknown)
+	require.ErrorContains(t, err, "cannot resolve")
+}
+
+func TestParseSetCookie_ReadsScannerAttributes(t *testing.T) {
+	t.Parallel()
+
+	cookie, ok := parseSetCookie(
+		"sid=abc; HttpOnly; Secure; SameSite=Lax; Max-Age=3600; Domain=.Example.com; Partitioned",
+		"https://example.com/login?token=secret#frag",
+	)
+	require.True(t, ok)
+	assert.Equal(t, "sid", cookie.Name)
+	assert.Equal(t, coredata.CookieSourceHTTP, cookie.Source)
+	assert.Equal(t, 3, cookie.ValueSize)
+	require.NotNil(t, cookie.HTTPOnly)
+	assert.True(t, *cookie.HTTPOnly)
+	require.NotNil(t, cookie.Secure)
+	assert.True(t, *cookie.Secure)
+	require.NotNil(t, cookie.SameSite)
+	assert.Equal(t, coredata.CookieSameSiteLax, *cookie.SameSite)
+	require.NotNil(t, cookie.MaxAgeSeconds)
+	assert.Equal(t, 3600, *cookie.MaxAgeSeconds)
+	require.NotNil(t, cookie.Domain)
+	assert.Equal(t, "Example.com", *cookie.Domain)
+	require.NotNil(t, cookie.HostOnly)
+	assert.False(t, *cookie.HostOnly)
+	require.NotNil(t, cookie.Partitioned)
+	assert.True(t, *cookie.Partitioned)
+	require.NotNil(t, cookie.SetByURL)
+	assert.Equal(t, "https://example.com/login", *cookie.SetByURL)
+
+	hostOnly, ok := parseSetCookie("id=1; Path=/", "https://example.com/")
+	require.True(t, ok)
+	assert.Nil(t, hostOnly.Domain)
+	require.NotNil(t, hostOnly.HostOnly)
+	assert.True(t, *hostOnly.HostOnly)
+
+	_, ok = parseSetCookie("probo_consent=1; Path=/", "https://example.com/")
+	assert.False(t, ok)
+
+	deleted, ok := parseSetCookie("gone=1; Max-Age=0; Expires=Wed, 21 Oct 2030 07:28:00 GMT", "https://example.com/")
+	require.True(t, ok)
+	require.NotNil(t, deleted.MaxAgeSeconds)
+	assert.Equal(t, 0, *deleted.MaxAgeSeconds)
+
+	_, ok = parseSetCookie(strings.Repeat("n", maxNameBytes+1)+"=1", "https://example.com/")
+	assert.False(t, ok)
+}
+
+func TestParseSetCookie_RejectsForeignDomain(t *testing.T) {
+	t.Parallel()
+
+	foreign, ok := parseSetCookie("id=1; Domain=evil.com", "https://example.com/")
+	require.True(t, ok)
+	assert.Nil(t, foreign.Domain)
+	require.NotNil(t, foreign.HostOnly)
+	assert.True(t, *foreign.HostOnly)
+
+	label, ok := parseSetCookie("id=1; Domain=com", "https://example.com/")
+	require.True(t, ok)
+	assert.Nil(t, label.Domain)
+	assert.True(t, *label.HostOnly)
+
+	overlap, ok := parseSetCookie("id=1; Domain=example.com", "https://notexample.com/")
+	require.True(t, ok)
+	assert.Nil(t, overlap.Domain)
+	assert.True(t, *overlap.HostOnly)
+
+	ip, ok := parseSetCookie("id=1; Domain=127.0.0.1", "https://127.0.0.1/")
+	require.True(t, ok)
+	assert.Nil(t, ip.Domain)
+	assert.True(t, *ip.HostOnly)
+
+	parent, ok := parseSetCookie("id=1; Domain=.example.com.", "https://www.example.com/path")
+	require.True(t, ok)
+	require.NotNil(t, parent.Domain)
+	assert.Equal(t, "example.com", *parent.Domain)
+	require.NotNil(t, parent.HostOnly)
+	assert.False(t, *parent.HostOnly)
+}
+
+func TestRequestPolicy_Block(t *testing.T) {
+	t.Parallel()
+
+	site, ok := parseOrigin("https://shop.example.com")
+	require.True(t, ok)
+	api, ok := parseOrigin("https://api.example.com:443/v1")
+	require.True(t, ok)
+
+	policy := newRequestPolicy(site, api, true)
+	policy.setMainFrame("main")
+
+	ctx := context.Background()
+	banner := "01ARZ3NDEKTSV4RRFFQ69G5FAV"
+	apiURL := "https://api.example.com/v1/" + banner
+
+	assert.True(t, policy.block(ctx, http.MethodPost, apiURL+"/report", "", ""))
+	assert.True(t, policy.block(ctx, http.MethodPut, apiURL+"/consents", "", ""))
+	assert.True(t, policy.block(ctx, http.MethodDelete, "https://api.example.com/anything", "", ""))
+	assert.False(t, policy.block(ctx, http.MethodGet, apiURL+"/config", "", ""))
+	assert.False(t, policy.block(ctx, http.MethodHead, apiURL+"/consents/abc", "", ""))
+	assert.False(t, policy.block(ctx, http.MethodOptions, apiURL+"/report", "", ""))
+	assert.False(t, policy.block(ctx, http.MethodPost, "https://shop.example.com/"+banner+"/report", "", ""))
+
+	assert.True(t, policy.block(ctx, http.MethodGet, "https://calendly.com/demo", string(network.ResourceTypeDocument), "main"))
+	assert.False(t, policy.block(ctx, http.MethodGet, "https://calendly.com/embed", string(network.ResourceTypeDocument), "child"))
+	assert.False(t, policy.block(ctx, http.MethodGet, "https://cdn.example.com/gtm.js", string(network.ResourceTypeScript), "main"))
+	assert.True(t, policy.block(ctx, http.MethodGet, "http://[not a url", "", ""))
+	assert.False(t, policy.block(ctx, http.MethodGet, "data:text/plain,hi", "", ""))
+
+	open := newRequestPolicy(site, api, false)
+	assert.True(t, open.block(ctx, http.MethodGet, "http://127.0.0.1/admin", "", ""))
+	assert.True(t, open.block(ctx, http.MethodGet, "http://169.254.169.254/latest", "", ""))
+	assert.False(t, open.block(ctx, http.MethodGet, "http://8.8.8.8/", "", ""))
+}
+
+func TestConsentCookieURLs_CoversApexAndWWW(t *testing.T) {
+	t.Parallel()
+
+	site, ok := parseOrigin("https://www.probo.com/stories/blaxel-soc2")
+	require.True(t, ok)
+
+	urls := consentCookieURLs(site)
+	assert.Equal(t, []string{"https://probo.com/", "https://www.probo.com/"}, urls)
+
+	for _, rawURL := range urls {
+		params, cookieOK, err := consentCookie(Input{
+			BannerID: "banner",
+			Consent:  &Consent{Version: 1, CategorySlugs: []string{"functional"}},
+		}, rawURL, "abc")
+		require.NoError(t, err)
+		require.True(t, cookieOK)
+		assert.Equal(t, rawURL, params.URL)
+		assert.Empty(t, params.Domain)
+	}
+}
+
+func TestConsentCookie_IsURLEncoded(t *testing.T) {
+	t.Parallel()
+
+	params, ok, err := consentCookie(Input{
+		BannerID: "banner",
+		Consent:  &Consent{Version: 3, CategorySlugs: []string{"analytics"}},
+	}, "https://example.com/", "abc")
+	require.NoError(t, err)
+	require.True(t, ok)
+	assert.True(t, strings.HasPrefix(params.Value, "%7B"))
+	assert.NotContains(t, params.Value, "{")
+	assert.Contains(t, params.Value, "ACCEPT_ALL")
+}
+
+func TestCookieHook_HidesBinding(t *testing.T) {
+	t.Parallel()
+
+	source := cookieHookSource("b0123456789abcdef0123456789abcdef")
+	assert.Contains(t, source, `delete globalThis`)
+	assert.Contains(t, source, `"b0123456789abcdef0123456789abcdef"`)
+	assert.NotContains(t, source, "__proboScanCookie")
+}
+
+func TestRun_RequiresAPIBaseURL(t *testing.T) {
+	t.Parallel()
+
+	_, err := Run(context.Background(), nil, Input{
+		Origin:             "https://example.com",
+		BannerID:           "banner",
+		skipPublicURLCheck: true,
+	})
+	require.ErrorContains(t, err, "API base URL is required")
+}
+
+func TestRun_RejectsCredentialsInOrigin(t *testing.T) {
+	t.Parallel()
+
+	_, err := Run(context.Background(), nil, Input{
+		Origin:   "https://user:pass@example.com",
+		BannerID: "banner",
+	})
+	require.ErrorContains(t, err, "origin is invalid")
+}
+
+func TestRun_RejectsPrivateOrigin(t *testing.T) {
+	t.Parallel()
+
+	_, err := Run(context.Background(), nil, Input{
+		Origin:     "http://127.0.0.1",
+		BannerID:   "banner",
+		APIBaseURL: "https://api.example.com",
+	})
+	require.ErrorIs(t, err, netcheck.ErrBlockedAddress)
+}
+
+func TestRun_CanceledBeforeStartPauses(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	result, err := Run(ctx, nil, Input{
+		Origin:     "https://example.com",
+		BannerID:   "banner",
+		APIBaseURL: "https://api.example.com",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.True(t, result.Paused)
+	assert.False(t, result.Truncated)
+	assert.Equal(t, 0, result.PagesScanned)
+}
+
+func TestRun_TimeBudgetWithNoPages(t *testing.T) {
+	t.Parallel()
+
+	t.Run("no pages is an error", func(t *testing.T) {
+		t.Parallel()
+
+		result, err := Run(context.Background(), nil, Input{
+			Origin:             "https://example.com",
+			BannerID:           "banner",
+			APIBaseURL:         "https://api.example.com",
+			skipPublicURLCheck: true,
+			Limits:             Limits{ScanTimeout: time.Second},
+			Checkpoint:         &Checkpoint{ElapsedMS: 2000},
+		})
+		require.ErrorIs(t, err, ErrNoPageLoaded)
+		require.NotNil(t, result)
+		assert.True(t, result.Truncated)
+		assert.False(t, result.Paused)
+		assert.Equal(t, 0, result.PagesScanned)
+	})
+
+	t.Run("pages already scanned stay completed", func(t *testing.T) {
+		t.Parallel()
+
+		result, err := Run(context.Background(), nil, Input{
+			Origin:             "https://example.com",
+			BannerID:           "banner",
+			APIBaseURL:         "https://api.example.com",
+			skipPublicURLCheck: true,
+			Limits:             Limits{ScanTimeout: time.Second},
+			Checkpoint:         &Checkpoint{ElapsedMS: 2000, PagesScanned: 3},
+		})
+		require.NoError(t, err)
+		assert.True(t, result.Truncated)
+		assert.Equal(t, 3, result.PagesScanned)
+	})
+}
+
+func TestRun_PageCapWithQueueLeftIsTruncated(t *testing.T) {
+	t.Parallel()
+
+	result, err := Run(context.Background(), nil, Input{
+		Origin:             "https://example.com",
+		BannerID:           "banner",
+		APIBaseURL:         "https://api.example.com",
+		skipPublicURLCheck: true,
+		Limits:             Limits{MaxPages: 3},
+		Checkpoint: &Checkpoint{
+			PagesScanned: 3,
+			Queue:        []QueueItem{{URL: "https://example.com/a", Depth: 1}},
+		},
+	})
+	require.NoError(t, err)
+	assert.True(t, result.Truncated)
+	assert.False(t, result.Paused)
+	assert.True(t, result.Checkpoint.Truncated)
+	assert.Equal(t, 3, result.PagesScanned)
+}
+
+func TestRecorder_DeduplicatesAndDropsAPIOrigin(t *testing.T) {
+	t.Parallel()
+
+	site, err := mustOrigin("https://example.com")
+	require.NoError(t, err)
+	api, err := mustOrigin("https://api.example.com/v1")
+	require.NoError(t, err)
+
+	rec := newRecorder(site, api, "banner", "binding", 10)
+	rec.beginPage()
+	rec.handleEvent(network.EventRequestWillBeSent{
+		RequestID: "1",
+		Request:   &network.Request{URL: "https://cdn.example.com/gtm.js"},
+		Type:      network.ResourceTypeScript,
+		FrameID:   "main",
+		Initiator: &network.Initiator{URL: "https://example.com/page?x=1"},
+	})
+	rec.handleEvent(network.EventRequestWillBeSent{
+		RequestID: "1",
+		Request:   &network.Request{URL: "https://cdn.example.com/gtm.js"},
+		Type:      network.ResourceTypeScript,
+		FrameID:   "main",
+	})
+	rec.handleEvent(network.EventRequestWillBeSent{
+		RequestID: "2",
+		Request:   &network.Request{URL: "https://api.example.com/v1/banner/config"},
+		Type:      network.ResourceTypeFetch,
+		FrameID:   "main",
+	})
+	rec.handleEvent(network.EventRequestWillBeSent{
+		RequestID: "3",
+		Request:   &network.Request{URL: "https://www.example.com/app.js"},
+		Type:      network.ResourceTypeScript,
+		FrameID:   "main",
+	})
+	rec.handleEvent(network.EventResponseReceivedExtraInfo{
+		RequestID: "1",
+		Headers:   network.Headers{"set-cookie": "sid=abc; HttpOnly; Secure; Domain=example.com"},
+	})
+	rec.handleEvent(runtime.EventBindingCalled{
+		Name:    "binding",
+		Payload: `{"name":"sid","host":"example.com","domain":"example.com","initiator":"https://cdn.example.com/gtm.js?x=1"}`,
+	})
+	rec.handleEvent(runtime.EventBindingCalled{
+		Name:    "binding",
+		Payload: `{"name":"_ga","host":"example.com","initiator":"https://cdn.example.com/gtm.js"}`,
+	})
+
+	page := rec.endPage([]*network.Cookie{{
+		Name:     "sid",
+		Value:    "abc",
+		Domain:   ".example.com",
+		HTTPOnly: true,
+		Secure:   true,
+	}, {
+		Name:   "extra",
+		Value:  "1",
+		Domain: "other.example",
+	}, {
+		Name:   "api_sid",
+		Value:  "1",
+		Domain: "api.example.com",
+	}}, nil)
+
+	require.Len(t, page.Resources, 1)
+	assert.Equal(t, coredata.TrackerResourceTypeScript, page.Resources[0].Type)
+	assert.Equal(t, "https://cdn.example.com", page.Resources[0].Origin)
+	assert.Equal(t, "/gtm.js", page.Resources[0].Path)
+	require.NotNil(t, page.Resources[0].InitiatorURL)
+	assert.Equal(t, "https://example.com/page", *page.Resources[0].InitiatorURL)
+
+	require.Len(t, page.Cookies, 3)
+
+	byName := map[string]Cookie{}
+	for _, cookie := range page.Cookies {
+		byName[cookie.Name] = cookie
+	}
+
+	sid := byName["sid"]
+	assert.Equal(t, coredata.CookieSourceHTTP, sid.Source)
+	require.NotNil(t, sid.SetByURL)
+	assert.Equal(t, "https://cdn.example.com/gtm.js", *sid.SetByURL)
+	require.NotNil(t, sid.HTTPOnly)
+	assert.True(t, *sid.HTTPOnly)
+	require.NotNil(t, sid.InitiatorURL)
+	assert.Equal(t, "https://cdn.example.com/gtm.js", *sid.InitiatorURL)
+
+	ga := byName["_ga"]
+	assert.Equal(t, coredata.CookieSourceScript, ga.Source)
+	require.NotNil(t, ga.Domain)
+	assert.Equal(t, "example.com", *ga.Domain)
+	require.NotNil(t, ga.HostOnly)
+	assert.True(t, *ga.HostOnly)
+
+	_, apiCookie := byName["api_sid"]
+	assert.False(t, apiCookie)
+	assert.Contains(t, byName, "extra")
+
+	again := rec.endPage(nil, nil)
+	assert.Empty(t, again.Resources)
+	assert.Empty(t, again.Cookies)
+}
+
+func TestRecorder_DropsAPIHostScriptCookie(t *testing.T) {
+	t.Parallel()
+
+	rec := testRecorder(t)
+	rec.beginPage()
+	rec.handleEvent(runtime.EventBindingCalled{
+		Name:    "binding",
+		Payload: `{"name":"sid","host":"api.example.com","domain":"api.example.com","initiator":"https://api.example.com/app.js"}`,
+	})
+	rec.handleEvent(runtime.EventBindingCalled{
+		Name:    "binding",
+		Payload: `{"name":"_ga","host":"www.example.com","domain":".evil.com","initiator":"https://cdn.example.com/a.js"}`,
+	})
+
+	page := rec.endPage(nil, nil)
+	require.Len(t, page.Cookies, 1)
+	assert.Equal(t, "_ga", page.Cookies[0].Name)
+	require.NotNil(t, page.Cookies[0].HostOnly)
+	assert.True(t, *page.Cookies[0].HostOnly)
+	require.NotNil(t, page.Cookies[0].Domain)
+	assert.Equal(t, "www.example.com", *page.Cookies[0].Domain)
+}
+
+func TestRecorder_HostOnlyHeaderAndJarAreOneCookie(t *testing.T) {
+	t.Parallel()
+
+	rec := testRecorder(t)
+	rec.beginPage()
+	rec.handleEvent(network.EventRequestWillBeSent{
+		RequestID: "1",
+		Request:   &network.Request{URL: "https://shop.example.com/login"},
+	})
+	rec.handleEvent(network.EventResponseReceivedExtraInfo{
+		RequestID: "1",
+		Headers:   network.Headers{"set-cookie": "id=1; HttpOnly"},
+	})
+
+	page := rec.endPage([]*network.Cookie{{
+		Name:     "id",
+		Value:    "1",
+		Domain:   "shop.example.com",
+		HTTPOnly: true,
+	}}, nil)
+
+	require.Len(t, page.Cookies, 1)
+	assert.Equal(t, coredata.CookieSourceHTTP, page.Cookies[0].Source)
+	require.NotNil(t, page.Cookies[0].HostOnly)
+	assert.True(t, *page.Cookies[0].HostOnly)
+	require.NotNil(t, page.Cookies[0].Domain)
+	assert.Equal(t, "shop.example.com", *page.Cookies[0].Domain)
+	require.NotNil(t, page.Cookies[0].SetByURL)
+	assert.Equal(t, "https://shop.example.com/login", *page.Cookies[0].SetByURL)
+}
+
+func TestScan_PauseKeepsTheObservationCap(t *testing.T) {
+	t.Parallel()
+
+	rec := testRecorder(t)
+	rec.truncated = true
+	s := &scan{
+		rec:     rec,
+		front:   newFrontier(Checkpoint{}, 10),
+		pages:   2,
+		started: time.Now(),
+	}
+
+	result, err := s.finish(causePaused)
+	require.NoError(t, err)
+	assert.True(t, result.Paused)
+	assert.False(t, result.Truncated)
+	assert.True(t, result.Checkpoint.Truncated)
+	assert.Equal(t, 2, result.PagesScanned)
+}
+
+func TestRun_TruncatedCheckpointStops(t *testing.T) {
+	t.Parallel()
+
+	result, err := Run(context.Background(), nil, Input{
+		Origin:             "https://example.com",
+		BannerID:           "banner",
+		APIBaseURL:         "https://api.example.com",
+		skipPublicURLCheck: true,
+		Checkpoint:         &Checkpoint{Truncated: true, PagesScanned: 2},
+	})
+	require.NoError(t, err)
+	assert.True(t, result.Truncated)
+	assert.False(t, result.Paused)
+	assert.Equal(t, 2, result.PagesScanned)
+}
+
+func TestRecorder_RedirectDoesNotDoubleCountInflight(t *testing.T) {
+	t.Parallel()
+
+	rec := testRecorder(t)
+	rec.beginPage()
+	rec.handleEvent(network.EventRequestWillBeSent{RequestID: "1", Request: &network.Request{URL: "https://cdn.example.com/a"}})
+	rec.handleEvent(network.EventRequestWillBeSent{RequestID: "1", Request: &network.Request{URL: "https://cdn.example.com/b"}})
+	rec.handleEvent(network.EventRequestServedFromCache{RequestID: "1"})
+	assert.False(t, rec.idleFor(0))
+
+	rec.handleEvent(network.EventLoadingFinished{RequestID: "1"})
+	assert.True(t, rec.idleFor(0))
+}
+
+func TestRecorder_FinishBeforeStartStillGoesIdle(t *testing.T) {
+	t.Parallel()
+
+	rec := testRecorder(t)
+	rec.beginPage()
+	rec.handleEvent(network.EventLoadingFinished{RequestID: "1"})
+	assert.False(t, rec.idleFor(0))
+
+	rec.handleEvent(network.EventRequestWillBeSent{
+		RequestID: "1",
+		Request:   &network.Request{URL: "https://cdn.example.com/a"},
+	})
+	assert.True(t, rec.idleFor(0))
+}
+
+func TestRecorder_SetCookieBeforeRequestKeepsSetter(t *testing.T) {
+	t.Parallel()
+
+	rec := testRecorder(t)
+	rec.beginPage()
+	rec.handleEvent(network.EventResponseReceivedExtraInfo{
+		RequestID: "9",
+		Headers:   network.Headers{"set-cookie": "sid=abc; Domain=example.com"},
+	})
+	rec.handleEvent(network.EventRequestWillBeSent{
+		RequestID: "9",
+		Request:   &network.Request{URL: "https://cdn.example.com/set?token=1"},
+	})
+
+	page := rec.endPage([]*network.Cookie{{
+		Name:   "sid",
+		Value:  "abc",
+		Domain: ".example.com",
+	}}, nil)
+
+	require.Len(t, page.Cookies, 1)
+	assert.Equal(t, coredata.CookieSourceHTTP, page.Cookies[0].Source)
+	require.NotNil(t, page.Cookies[0].SetByURL)
+	assert.Equal(t, "https://cdn.example.com/set", *page.Cookies[0].SetByURL)
+}
+
+func TestRecorder_DropsInvalidBlockedCookies(t *testing.T) {
+	t.Parallel()
+
+	rec := testRecorder(t)
+	rec.beginPage()
+	rec.handleEvent(network.EventRequestWillBeSent{
+		RequestID: "1",
+		Request:   &network.Request{URL: "https://cdn.example.com/a"},
+	})
+	rec.handleEvent(network.EventResponseReceivedExtraInfo{
+		RequestID: "1",
+		Headers:   network.Headers{"set-cookie": "bad=1\ngood=1"},
+		BlockedCookies: []*network.BlockedSetCookieWithReason{{
+			CookieLine:     "bad=1",
+			BlockedReasons: []network.SetCookieBlockedReason{network.SetCookieBlockedReasonSyntaxError},
+		}, {
+			CookieLine:     "pref=1; Domain=cdn.example.com",
+			BlockedReasons: []network.SetCookieBlockedReason{network.SetCookieBlockedReasonUserPreferences},
+		}},
+	})
+
+	page := rec.endPage(nil, nil)
+
+	names := map[string]bool{}
+	for _, cookie := range page.Cookies {
+		names[cookie.Name] = true
+	}
+
+	assert.False(t, names["bad"])
+	assert.True(t, names["good"])
+	assert.True(t, names["pref"])
+}
+
+func TestRecorder_UsesStackFrameWhenInitiatorURLIsEmpty(t *testing.T) {
+	t.Parallel()
+
+	rec := testRecorder(t)
+	rec.beginPage()
+	rec.handleEvent(network.EventRequestWillBeSent{
+		RequestID: "1",
+		Request:   &network.Request{URL: "https://cdn.example.com/gtm.js"},
+		Type:      network.ResourceTypeScript,
+		FrameID:   "main",
+		Initiator: &network.Initiator{
+			Type: network.InitiatorTypeScript,
+			Stack: &runtime.StackTrace{CallFrames: []*runtime.CallFrame{
+				{URL: ""},
+				{URL: "https://tags.example.com/loader.js?x=1"},
+			}},
+		},
+	})
+
+	page := rec.endPage(nil, nil)
+	require.Len(t, page.Resources, 1)
+	require.NotNil(t, page.Resources[0].InitiatorURL)
+	assert.Equal(t, "https://tags.example.com/loader.js", *page.Resources[0].InitiatorURL)
+}
+
+func TestRecorder_DropsConsentStoragePrefix(t *testing.T) {
+	t.Parallel()
+
+	rec := testRecorder(t)
+	rec.beginPage()
+	page := rec.endPage(nil, []StorageItem{
+		{Type: coredata.TrackerTypeLocalStorage, Key: "probo_consent:banner:vid", ValueSize: 32},
+		{Type: coredata.TrackerTypeLocalStorage, Key: "probo_consent:banner:other", ValueSize: 2},
+		{Type: coredata.TrackerTypeLocalStorage, Key: "theme", ValueSize: 4},
+	})
+
+	require.Len(t, page.Storage, 1)
+	assert.Equal(t, "theme", page.Storage[0].Key)
+}
+
+func TestFrontier_FailedTemplateIsNotRequeued(t *testing.T) {
+	t.Parallel()
+
+	front := newFrontier(Checkpoint{}, 10)
+	front.markVisited("https://example.com/missing")
+	front.push(QueueItem{URL: "https://www.example.com/missing"})
+
+	assert.Empty(t, front.checkpoint(0, 0, false).Queue)
+}
+
+func TestFrontier_RequeueIgnoresCap(t *testing.T) {
+	t.Parallel()
+
+	front := newFrontier(Checkpoint{}, 1)
+	front.push(QueueItem{URL: "https://example.com/a"})
+	front.requeue(QueueItem{URL: "https://example.com/b"})
+
+	assert.Len(t, front.checkpoint(0, 0, false).Queue, 2)
+}
+
+func TestFrontier_CapsQueue(t *testing.T) {
+	t.Parallel()
+
+	front := newFrontier(Checkpoint{}, 2)
+	front.push(QueueItem{URL: "https://example.com/a"})
+	front.push(QueueItem{URL: "https://example.com/b"})
+	front.push(QueueItem{URL: "https://example.com/c"})
+
+	assert.Len(t, front.checkpoint(0, 0, false).Queue, 2)
+}
+
+func TestSameSiteRedirect_FollowsWWWAndBlocksOtherHosts(t *testing.T) {
+	t.Parallel()
+
+	apex, err := url.Parse("https://probo.com/robots.txt")
+	require.NoError(t, err)
+	www, err := url.Parse("https://www.probo.com/robots.txt")
+	require.NoError(t, err)
+
+	err = sameSiteRedirect(&http.Request{URL: www}, []*http.Request{{URL: apex}})
+	require.NoError(t, err)
+
+	insecure, err := url.Parse("http://probo.com/robots.txt")
+	require.NoError(t, err)
+	err = sameSiteRedirect(&http.Request{URL: insecure}, []*http.Request{{URL: apex}})
+	require.ErrorIs(t, err, httpclient.ErrCrossOriginRedirect)
+
+	other, err := url.Parse("https://evil.com/robots.txt")
+	require.NoError(t, err)
+	err = sameSiteRedirect(&http.Request{URL: other}, []*http.Request{{URL: apex}})
+	require.ErrorIs(t, err, httpclient.ErrCrossOriginRedirect)
+}
+
+func TestSitemapLocations_ReadsNamespacedIndex(t *testing.T) {
+	t.Parallel()
+
+	body := `<sm:sitemapindex xmlns:sm="http://www.sitemaps.org/schemas/sitemap/0.9">` +
+		`<sm:sitemap><sm:loc>https://example.com/a?x=1&amp;y=2</sm:loc></sm:sitemap>` +
+		`</sm:sitemapindex>`
+
+	locs, index := sitemapLocations(body)
+	assert.True(t, index)
+	assert.Equal(t, []string{"https://example.com/a?x=1&y=2"}, locs)
+}
+
+func TestCollectSitemapURLs_DoesNotEnqueueIndexAtDepthLimit(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`<sitemapindex><sitemap><loc>https://example.com/nested.xml</loc></sitemap></sitemapindex>`))
+	}))
+	t.Cleanup(server.Close)
+
+	site, ok := parseOrigin(server.URL)
+	require.True(t, ok)
+
+	s := &scan{
+		in: Input{Limits: Limits{
+			MaxSitemapIndexes: 1,
+			MaxSitemapURLs:    10,
+			MaxSitemapBytes:   1 << 20,
+			MaxSitemapFetches: 5,
+		}},
+		site:   site,
+		policy: newRequestPolicy(site, origin{}, true),
+		http:   server.Client(),
+	}
+
+	var (
+		groups  [][]string
+		fetches int
+	)
+	s.collectSitemapGroups(context.Background(), server.URL, 1, map[string]struct{}{}, &groups, &fetches)
+	assert.Empty(t, groups)
+	assert.Equal(t, 1, fetches)
+}
+
+func TestArrangeSitemapURLs_RoundRobinKeepsTheLastChild(t *testing.T) {
+	t.Parallel()
+
+	urls := arrangeSitemapURLs(
+		[][]string{
+			{"https://example.com/docs/a", "https://example.com/docs/b", "https://example.com/docs/c"},
+			{"https://example.com/blog/post"},
+		},
+		3,
+	)
+
+	assert.Equal(
+		t,
+		[]string{"https://example.com/docs/a", "https://example.com/blog/post", "https://example.com/docs/b"},
+		urls,
+	)
+}
+
+func TestFrontier_LinkUpgradesSitemapEntry(t *testing.T) {
+	t.Parallel()
+
+	front := newFrontier(Checkpoint{}, 10)
+	front.push(QueueItem{URL: "https://example.com/", Depth: 0})
+	front.push(QueueItem{URL: "https://www.example.com/docs/a", FromSitemap: true})
+	front.push(QueueItem{URL: "https://www.example.com/stories/a", FromSitemap: true})
+
+	home, ok := front.pop()
+	require.True(t, ok)
+	front.markVisited(home.URL)
+
+	front.push(QueueItem{URL: "https://example.com/stories/a", Depth: 1})
+
+	first, ok := front.pop()
+	require.True(t, ok)
+	assert.Equal(t, "https://www.example.com/stories/a", first.URL)
+	assert.False(t, first.FromSitemap)
+	assert.Equal(t, 1, first.Depth)
+
+	assert.Len(t, front.checkpoint(0, 0, false).Queue, 1)
+}
+
+func TestFrontier_LinkDisplacesSitemapEntryAtCap(t *testing.T) {
+	t.Parallel()
+
+	front := newFrontier(Checkpoint{}, 2)
+	front.push(QueueItem{URL: "https://example.com/docs/a", FromSitemap: true})
+	front.push(QueueItem{URL: "https://example.com/docs/b", FromSitemap: true})
+	front.push(QueueItem{URL: "https://example.com/pricing", Depth: 1})
+	front.push(QueueItem{URL: "https://example.com/docs/c", FromSitemap: true})
+
+	var urls []string
+	for _, item := range front.checkpoint(0, 0, false).Queue {
+		urls = append(urls, item.URL)
+	}
+
+	assert.Equal(t, []string{"https://example.com/docs/a", "https://example.com/pricing"}, urls)
+}
+
+func TestFrontier_CapsEmbedHosts(t *testing.T) {
+	t.Parallel()
+
+	hosts := make([]string, maxEmbedHostsPerItem+8)
+	for i := range hosts {
+		hosts[i] = "h" + strconv.Itoa(i) + ".example.net"
+	}
+
+	front := newFrontier(Checkpoint{}, 10)
+	front.push(QueueItem{URL: "https://example.com/a", Depth: 1, EmbedHosts: hosts})
+
+	queued := front.checkpoint(0, 0, false).Queue
+	require.Len(t, queued, 1)
+	assert.Len(t, queued[0].EmbedHosts, maxEmbedHostsPerItem)
+
+	front = newFrontier(Checkpoint{}, 80)
+
+	for i := range 70 {
+		pageHosts := make([]string, maxEmbedHostsPerItem)
+		for h := range pageHosts {
+			pageHosts[h] = "p" + strconv.Itoa(i) + "-" + strconv.Itoa(h) + ".example.net"
+		}
+
+		front.push(QueueItem{
+			URL:        "https://example.com/page-" + strconv.Itoa(i),
+			Depth:      1,
+			EmbedHosts: pageHosts,
+		})
+	}
+
+	var total int
+	for _, item := range front.checkpoint(0, 0, false).Queue {
+		total += len(item.EmbedHosts)
+	}
+
+	assert.Equal(t, maxEmbedHostsPerScan, total)
+	assert.Equal(t, maxEmbedHostsPerScan, front.embedHosts)
+
+	_, ok := front.pop()
+	require.True(t, ok)
+	assert.Less(t, front.embedHosts, maxEmbedHostsPerScan)
+}
+
+func TestNavigationBudget_StopsAtTheRunDeadline(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	s := &scan{
+		in:     Input{Limits: Limits{NavigationTimeout: 30 * time.Second}.withDefaults()},
+		runCtx: ctx,
+		pages:  1,
+	}
+
+	assert.Less(t, s.navigationBudget(false), 6*time.Second)
+	assert.Equal(t, 30*time.Second, s.navigationBudget(true))
+}
+
+func TestNavigationBudget_GraceVisitUsesTheFullTimeout(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	s := &scan{
+		in:     Input{Limits: Limits{NavigationTimeout: 30 * time.Second}.withDefaults()},
+		runCtx: ctx,
+	}
+
+	assert.Equal(t, time.Duration(0), s.navigationBudget(false))
+	assert.Equal(t, 30*time.Second, s.navigationBudget(true))
+}
+
+func TestFrontier_PopsUncoveredEmbedHostFirst(t *testing.T) {
+	t.Parallel()
+
+	front := newFrontier(Checkpoint{}, 10)
+	front.push(QueueItem{URL: "https://example.com/pricing", Depth: 1})
+	front.push(QueueItem{URL: "https://example.com/blog/a", FromSitemap: true, EmbedHosts: []string{"cdn.example.net"}})
+	front.push(QueueItem{URL: "https://example.com/stories/a", FromSitemap: true, EmbedHosts: []string{"www.youtube.com"}})
+	front.push(QueueItem{URL: "https://example.com/stories/b", FromSitemap: true, EmbedHosts: []string{"www.youtube.com"}})
+	front.push(QueueItem{URL: "https://example.com/", Depth: 0, EmbedHosts: []string{"cdn.example.net"}})
+
+	var order []string
+
+	for {
+		item, ok := front.pop()
+		if !ok {
+			break
+		}
+
+		order = append(order, item.URL)
+		front.markVisited(item.URL)
+		front.cover(item.EmbedHosts)
+	}
+
+	assert.Equal(
+		t,
+		[]string{
+			"https://example.com/",
+			"https://example.com/stories/a",
+			"https://example.com/pricing",
+			"https://example.com/blog/a",
+			"https://example.com/stories/b",
+		},
+		order,
+	)
+}
+
+func TestFrontier_RoundRobinsSections(t *testing.T) {
+	t.Parallel()
+
+	front := newFrontier(Checkpoint{}, 10)
+	front.push(QueueItem{URL: "https://example.com/stories/a", Depth: 1})
+	front.push(QueueItem{URL: "https://example.com/stories/b", Depth: 1})
+	front.push(QueueItem{URL: "https://example.com/stories/c", Depth: 1})
+	front.push(QueueItem{URL: "https://example.com/changelog/x", Depth: 2})
+
+	var order []string
+
+	for {
+		item, ok := front.pop()
+		if !ok {
+			break
+		}
+
+		order = append(order, item.URL)
+		front.markVisited(item.URL)
+	}
+
+	assert.Equal(
+		t,
+		[]string{
+			"https://example.com/stories/a",
+			"https://example.com/changelog/x",
+			"https://example.com/stories/b",
+			"https://example.com/stories/c",
+		},
+		order,
+	)
+}
+
+func TestFrontier_ResumeKeepsCoveredHostsAndSections(t *testing.T) {
+	t.Parallel()
+
+	front := newFrontier(Checkpoint{}, 10)
+	front.push(QueueItem{URL: "https://example.com/stories/a", Depth: 1, EmbedHosts: []string{"www.youtube.com"}})
+	front.push(QueueItem{URL: "https://example.com/stories/b", Depth: 1, EmbedHosts: []string{"www.youtube.com"}})
+	front.push(QueueItem{URL: "https://example.com/blog/a", FromSitemap: true})
+
+	first, ok := front.pop()
+	require.True(t, ok)
+	front.markVisited(first.URL)
+	front.cover(first.EmbedHosts)
+
+	checkpoint := front.checkpoint(1, 0, false)
+	assert.Equal(t, []string{"www.youtube.com"}, checkpoint.CoveredHosts)
+
+	resumed := newFrontier(checkpoint, 10)
+	next, ok := resumed.pop()
+	require.True(t, ok)
+	assert.Equal(t, "https://example.com/blog/a", next.URL)
+}
+
+func TestSectionOf_SkipsLocale(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, "", sectionOf("https://example.com/"))
+	assert.Equal(t, "about", sectionOf("https://example.com/about"))
+	assert.Equal(t, "posts", sectionOf("https://example.com/posts/:id"))
+	assert.Equal(t, "en/blog", sectionOf("https://example.com/en/blog/post"))
+	assert.Equal(t, "fr-fr/pricing", sectionOf("https://example.com/fr-fr/pricing"))
+	assert.Equal(t, "en", sectionOf("https://example.com/en"))
+}
+
+func testRecorder(t *testing.T) *recorder {
+	t.Helper()
+
+	site, err := mustOrigin("https://example.com")
+	require.NoError(t, err)
+
+	return newRecorder(site, origin{scheme: "https", host: "api.example.com"}, "banner", "binding", 10)
+}
+
+func mustOrigin(raw string) (origin, error) {
+	parsed, ok := parseOrigin(raw)
+	if !ok {
+		return origin{}, fmt.Errorf("cannot parse origin %q", raw)
+	}
+
+	return parsed, nil
+}
