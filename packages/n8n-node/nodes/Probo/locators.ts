@@ -523,6 +523,36 @@ export async function searchOrganizations(
 	};
 }
 
+export function documentSearchStatuses(operation: unknown): string[] {
+	if (operation === 'unarchive') {
+		return ['ARCHIVED'];
+	}
+	return ['ACTIVE'];
+}
+
+export function peopleSearchStates(operation: unknown): string[] {
+	switch (operation) {
+		case 'inviteUser':
+			return ['PENDING', 'DEACTIVATED'];
+		case 'deactivateUser':
+			return ['ACTIVE', 'PENDING'];
+		case 'removeUser':
+			return ['ACTIVE', 'PENDING', 'DEACTIVATED'];
+		default:
+			return ['ACTIVE'];
+	}
+}
+
+export function versionSearchStatuses(operation: unknown): string[] | undefined {
+	if (operation === 'voidApproval') {
+		return ['PENDING_APPROVAL'];
+	}
+	if (operation === 'requestSignature') {
+		return ['PUBLISHED'];
+	}
+	return undefined;
+}
+
 export async function searchDocuments(
 	this: ILoadOptionsFunctions,
 	filter?: string,
@@ -539,7 +569,7 @@ export async function searchDocuments(
 		after: paginationToken,
 		filter: {
 			...(filter?.trim() ? { query: filter.trim() } : {}),
-			status: ['ACTIVE'],
+			status: documentSearchStatuses(this.getNode().parameters.operation),
 		},
 	});
 	const data = response.data as IDataObject | undefined;
@@ -694,7 +724,7 @@ export async function searchPeople(
 		connection: 'profiles',
 		fields: 'fullName emailAddress',
 		filterType: 'ProfileFilter',
-		baseFilter: { states: ['ACTIVE'] },
+		baseFilter: { states: peopleSearchStates(this.getNode().parameters.operation) },
 		filterFor: (text) => ({ query: text }),
 		label: (node) => {
 			if (typeof node.id !== 'string' || !node.id) {
@@ -715,11 +745,12 @@ export async function searchDocumentVersions(
 		throw new NodeOperationError(this.getNode(), 'Select a document before searching versions');
 	}
 
+	const statuses = versionSearchStatuses(this.getNode().parameters.operation);
 	const query = `
-		query SearchDocumentVersions($documentId: ID!, $first: Int, $after: CursorKey) {
+		query SearchDocumentVersions($documentId: ID!, $first: Int, $after: CursorKey, $filter: DocumentVersionFilter) {
 			node(id: $documentId) {
 				... on Document {
-					versions(first: $first, after: $after) {
+					versions(first: $first, after: $after, filter: $filter) {
 						edges {
 							node {
 								id
@@ -743,6 +774,7 @@ export async function searchDocumentVersions(
 		documentId,
 		first: 50,
 		after: paginationToken,
+		filter: statuses ? { statuses } : {},
 	});
 	const data = response.data as IDataObject | undefined;
 	const node = data?.node as IDataObject | undefined;

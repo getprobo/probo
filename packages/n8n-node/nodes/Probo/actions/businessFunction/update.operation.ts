@@ -20,9 +20,15 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
-import { personLocator } from '../../locators';
+import { organizationLocator, personLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
+	organizationLocator({
+		resource: ['businessFunction'],
+		operation: ['update'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
 	{
 		displayName: 'Business Function ID',
 		name: 'id',
@@ -115,6 +121,7 @@ export const description: INodeProperties[] = [
 			personLocator({
 				displayName: 'Owner',
 				required: false,
+				description: 'Owner profile ID. Empty string clears the value.',
 			}),
 			{
 				displayName: 'RPO Minutes',

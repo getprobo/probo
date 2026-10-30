@@ -29,7 +29,7 @@ export const description: INodeProperties[] = [
 		required: false,
 		description: 'Organization to search in. Leave this empty when entering an ID.',
 	}),
-		taskLocator({
+	taskLocator({
 		resource: ['taskComment'],
 		operation: ['create'],
 	}),
@@ -55,6 +55,7 @@ export const description: INodeProperties[] = [
 		resource: ['taskComment'],
 		operation: ['create'],
 		required: false,
+		description: 'The owner membership profile ID. Defaults to the authenticated user when omitted.',
 	}),
 ];
 

@@ -18,11 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-// The n8n package cannot depend on vitest. This file is excluded from the build.
-// eslint-disable-next-line @n8n/community-nodes/no-restricted-imports
 import { describe, expect, it } from 'vitest';
 
-import { personLocator, personResultName, versionResultName } from './locators';
+import {
+	documentSearchStatuses,
+	peopleSearchStates,
+	personLocator,
+	personResultName,
+	versionResultName,
+	versionSearchStatuses,
+} from './locators';
 
 describe('locator labels', () => {
 	it('shows a person by name and email', () => {
@@ -55,5 +60,25 @@ describe('personLocator', () => {
 		expect(signatory.name).toBe('signatoryId');
 		expect(signatory.displayName).toBe('Signatory');
 		expect(signatory.type).toBe('resourceLocator');
+	});
+});
+
+describe('search filters', () => {
+	it('lists archived documents only when unarchiving', () => {
+		expect(documentSearchStatuses('unarchive')).toEqual(['ARCHIVED']);
+		expect(documentSearchStatuses('get')).toEqual(['ACTIVE']);
+	});
+
+	it('lists the profile states each user operation can act on', () => {
+		expect(peopleSearchStates('inviteUser')).toEqual(['PENDING', 'DEACTIVATED']);
+		expect(peopleSearchStates('deactivateUser')).toEqual(['ACTIVE', 'PENDING']);
+		expect(peopleSearchStates('removeUser')).toEqual(['ACTIVE', 'PENDING', 'DEACTIVATED']);
+		expect(peopleSearchStates('create')).toEqual(['ACTIVE']);
+	});
+
+	it('limits version search to the statuses an operation accepts', () => {
+		expect(versionSearchStatuses('voidApproval')).toEqual(['PENDING_APPROVAL']);
+		expect(versionSearchStatuses('requestSignature')).toEqual(['PUBLISHED']);
+		expect(versionSearchStatuses('getVersion')).toBeUndefined();
 	});
 });

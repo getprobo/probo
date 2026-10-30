@@ -29,7 +29,7 @@ export const description: INodeProperties[] = [
 		required: false,
 		description: 'Organization to search in. Leave this empty when entering an ID.',
 	}),
-		cookieBannerLocator({
+	cookieBannerLocator({
 		resource: ['cookieBanner'],
 		operation: ['regeneratePolicy'],
 	}),

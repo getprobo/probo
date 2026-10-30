@@ -32,6 +32,7 @@ export const description: INodeProperties[] = [
 		displayName: 'User',
 		resource: ['user'],
 		operation: ['removeUser'],
+		description: 'User to remove. The list includes active, pending, and deactivated profiles.',
 	}),
 ];
 

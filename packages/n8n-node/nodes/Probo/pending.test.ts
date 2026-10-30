@@ -18,12 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-// The n8n package cannot depend on vitest. This file is excluded from the build.
-// eslint-disable-next-line @n8n/community-nodes/no-restricted-imports
 import { describe, expect, it } from 'vitest';
 import type { IDataObject } from 'n8n-workflow';
 
-import { collectPendingApprovals, collectPendingSignatures, type GraphQLRequest } from './pending';
+import {
+	PENDING_PAGE_SIZE,
+	collectPendingApprovals,
+	collectPendingSignatures,
+	type GraphQLRequest,
+} from './pending';
 
 const now = new Date('2026-10-29T15:38:00.000Z');
 
@@ -43,6 +46,9 @@ describe('collectPendingSignatures', () => {
 			calls.push(query);
 			if (query.includes('query PendingSignatureDocuments')) {
 				expect(variables.organizationId).toBe('org-1');
+				expect(variables.first).toBe(PENDING_PAGE_SIZE);
+				expect(variables.nestedFirst).toBe(PENDING_PAGE_SIZE);
+				expect(query).toContain('fragment SignatureFields');
 				return {
 					data: {
 						node: {
@@ -112,7 +118,12 @@ describe('collectPendingSignatures', () => {
 	});
 
 	it('stops once the requested limit is reached', async () => {
-		const request: GraphQLRequest = async () => ({
+		let calls = 0;
+		const request: GraphQLRequest = async (_query, variables) => {
+			calls += 1;
+			expect(variables.first).toBe(PENDING_PAGE_SIZE);
+			expect(variables.nestedFirst).toBe(1);
+			return {
 			data: {
 				node: {
 					documents: {
@@ -147,7 +158,8 @@ describe('collectPendingSignatures', () => {
 					},
 				},
 			},
-		});
+			};
+		};
 
 		const items = await collectPendingSignatures(request, {
 			organizationId: 'org-1',
@@ -156,6 +168,7 @@ describe('collectPendingSignatures', () => {
 			now,
 		});
 
+		expect(calls).toBe(1);
 		expect(items.map((item) => item.id)).toEqual(['sig-1']);
 	});
 });

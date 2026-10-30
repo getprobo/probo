@@ -29,7 +29,7 @@ export const description: INodeProperties[] = [
 		required: false,
 		description: 'Organization to search in. Leave this empty when entering an ID.',
 	}),
-		{
+	{
 		displayName: 'Device ID',
 		name: 'deviceId',
 		type: 'string',
@@ -58,8 +58,13 @@ export const description: INodeProperties[] = [
 	},
 	personLocator({
 		displayName: 'Owner',
-		resource: ['device'],
-		operation: ['setOwner'],
+		displayOptions: {
+			show: {
+				resource: ['device'],
+				operation: ['setOwner'],
+				clearOwner: [false],
+			},
+		},
 	}),
 ];
 

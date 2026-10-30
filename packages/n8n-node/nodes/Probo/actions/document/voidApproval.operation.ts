@@ -35,7 +35,7 @@ export const description: INodeProperties[] = [
 		required: false,
 		description: 'Document to search versions in. Leave this empty when entering a version ID.',
 	}),
-		documentVersionLocator({
+	documentVersionLocator({
 		resource: ['document'],
 		operation: ['voidApproval'],
 	}),

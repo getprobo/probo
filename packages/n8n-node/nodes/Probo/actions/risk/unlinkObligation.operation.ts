@@ -29,7 +29,7 @@ export const description: INodeProperties[] = [
 		required: false,
 		description: 'Organization to search in. Leave this empty when entering an ID.',
 	}),
-		riskLocator({
+	riskLocator({
 		resource: ['risk'],
 		operation: ['unlinkObligation'],
 	}),

@@ -29,7 +29,7 @@ export const description: INodeProperties[] = [
 		required: false,
 		description: 'Organization to search in. Leave this empty when entering an ID.',
 	}),
-		{
+	{
 		displayName: 'Query',
 		name: 'query',
 		type: 'string',
@@ -46,6 +46,7 @@ export const description: INodeProperties[] = [
 		resource: ['cookieBanner'],
 		operation: ['listGVLCatalog'],
 		required: false,
+		description: 'Cookie banner ID (required when Membership is set)',
 	}),
 	{
 		displayName: 'Membership',

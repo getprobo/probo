@@ -105,19 +105,10 @@ Each file exports `description` (field definitions) and `execute` (the handler):
 
 ```typescript
 export const description: INodeProperties[] = [
-    {
-        displayName: 'Organization ID',
-        name: 'organizationId',
-        type: 'string',
-        displayOptions: {
-            show: {
-                resource: ['myresource'],
-                operation: ['create'],
-            },
-        },
-        default: '',
-        required: true,
-    },
+    organizationLocator({
+        resource: ['myresource'],
+        operation: ['create'],
+    }),
     // ... more fields ...
     {
         displayName: 'Additional Fields',
@@ -141,7 +132,9 @@ export async function execute(
     this: IExecuteFunctions,
     itemIndex: number,
 ): Promise<INodeExecutionData> {
-    const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
+    const organizationId = this.getNodeParameter('organizationId', itemIndex, '', {
+        extractValue: true,
+    }) as string;
     const name = this.getNodeParameter('name', itemIndex) as string;
 
     const query = `

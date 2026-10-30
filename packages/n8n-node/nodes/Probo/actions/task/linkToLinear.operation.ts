@@ -29,7 +29,7 @@ export const description: INodeProperties[] = [
 		required: false,
 		description: 'Organization to search in. Leave this empty when entering an ID.',
 	}),
-		{
+	{
 		displayName: 'Linking updates the Probo task with the Linear issue',
 		name: 'linkWarning',
 		type: 'notice',

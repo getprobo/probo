@@ -30,7 +30,7 @@ export const description: INodeProperties[] = [
 		required: false,
 		description: 'Organization to search in. Leave this empty when entering an ID.',
 	}),
-		compliancePortalLocator({
+	compliancePortalLocator({
 		resource: ['compliancePortal'],
 		operation: ['createAccess'],
 	}),
@@ -53,7 +53,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'Visitor email address. Provide exactly one of Profile ID or Email.',
+		description: 'Visitor email address. Provide exactly one of Profile or Email.',
 	},
 	{
 		displayName: 'Document IDs',
@@ -131,7 +131,7 @@ export async function execute(
 	if (hasProfileId === hasEmail) {
 		throw new NodeOperationError(
 			this.getNode(),
-			'Provide exactly one of Profile ID or Email',
+			'Provide exactly one of Profile or Email',
 			{ itemIndex },
 		);
 	}

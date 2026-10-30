@@ -23,15 +23,15 @@ import { organizationLocator, documentLocator, riskLocator } from '../../locator
 import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
-	riskLocator({
-		resource: ['risk'],
-		operation: ['linkDocument'],
-	}),
 	organizationLocator({
 		resource: ['risk'],
 		operation: ['linkDocument'],
 		required: false,
-		description: 'Organization to search documents in. Leave this empty when entering a document ID.',
+		description: 'Organization to search risks and documents in. Leave this empty when entering an ID.',
+	}),
+	riskLocator({
+		resource: ['risk'],
+		operation: ['linkDocument'],
 	}),
 	documentLocator({
 		resource: ['risk'],
