@@ -65,10 +65,7 @@ type apolloUser struct {
 type apolloUsersResponse struct {
 	Users      []apolloUser `json:"users"`
 	Pagination struct {
-		Page         int `json:"page"`
-		PerPage      int `json:"per_page"`
-		TotalPages   int `json:"total_pages"`
-		TotalEntries int `json:"total_entries"`
+		TotalPages int `json:"total_pages"`
 	} `json:"pagination"`
 }
 

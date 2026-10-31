@@ -23,6 +23,8 @@ package drivers
 import (
 	"context"
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"testing"
 
@@ -99,4 +101,32 @@ func TestApolloIsAdmin_UnreadableRoleIsUnknown(t *testing.T) {
 			},
 		)
 	}
+}
+
+func TestApolloDriver_StringPaginationFields(t *testing.T) {
+	t.Parallel()
+
+	srv := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "/users/search", r.URL.Path)
+
+			w.Header().Set("Content-Type", "application/json")
+
+			if r.URL.Query().Get("page") == "2" {
+				_, _ = w.Write([]byte(`{"users":[{"id":"u2","name":"Bob Rep","email":"bob@example.com","role":"Sales Rep"}],"pagination":{"page":"2","per_page":"100","total_entries":2,"total_pages":2}}`))
+
+				return
+			}
+
+			_, _ = w.Write([]byte(`{"users":[{"id":"u1","name":"Alice Admin","email":"alice@example.com","role":"Admin"}],"pagination":{"page":"1","per_page":"100","total_entries":2,"total_pages":2}}`))
+		}),
+	)
+	defer srv.Close()
+
+	records, err := NewApolloDriver(srv.Client(), srv.URL).ListAccounts(context.Background())
+	require.NoError(t, err)
+	require.Len(t, records, 2)
+
+	assert.Equal(t, "alice@example.com", records[0].Email)
+	assert.Equal(t, "bob@example.com", records[1].Email)
 }
