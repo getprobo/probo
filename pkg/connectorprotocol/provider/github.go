@@ -67,7 +67,11 @@ func githubRegistration() *Registration {
 			}
 
 			if s.Organization == "" {
-				return nil, fmt.Errorf("cannot create github driver: organization is required")
+				return nil, &drivers.SettingRejectedError{
+					Code:    drivers.GitHubOrganizationNotSelected,
+					Setting: "organization",
+					Message: "No GitHub organization is selected for this connector. Select the organization on the access source. If none is listed, a GitHub organization owner must approve the Probo app for the organization, then reconnect the connector.",
+				}
 			}
 
 			return drivers.NewGitHubDriver(c, s.Organization, logger.Named("github"), ep.APIBase), nil

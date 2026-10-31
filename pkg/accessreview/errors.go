@@ -49,6 +49,7 @@ var (
 	ErrCampaignCancelled             = errors.New("access review campaign cancelled")
 	ErrCampaignSourceNotFetched      = errors.New("access review campaign source not fetched")
 	ErrCampaignSourceFetchNotFailed  = errors.New("access review campaign source fetch not failed")
+	ErrCampaignSourceNotConfigured   = errors.New("access review campaign source not configured")
 	ErrMissingOAuthScopes            = errors.New("missing required OAuth scopes")
 )
 
@@ -78,6 +79,11 @@ type (
 	}
 
 	CampaignSourceNotFetchedError struct {
+		CampaignID gid.GID
+		Sources    coredata.AccessReviewCampaignSources
+	}
+
+	CampaignSourceNotConfiguredError struct {
 		CampaignID gid.GID
 		Sources    coredata.AccessReviewCampaignSources
 	}
@@ -184,8 +190,36 @@ func NewCampaignSourceNotFetchedError(campaignID gid.GID, sources coredata.Acces
 }
 
 func (e *CampaignSourceNotFetchedError) Error() string {
-	names := make([]string, 0, len(e.Sources))
-	for _, s := range e.Sources {
+	return fmt.Sprintf(
+		"access review campaign %q cannot be closed while these sources have not been fetched: %s: retry the fetch or cancel the campaign",
+		e.CampaignID,
+		campaignSourceNames(e.Sources),
+	)
+}
+
+func (e *CampaignSourceNotFetchedError) Is(target error) bool {
+	return target == ErrCampaignSourceNotFetched
+}
+
+func NewCampaignSourceNotConfiguredError(campaignID gid.GID, sources coredata.AccessReviewCampaignSources) error {
+	return &CampaignSourceNotConfiguredError{CampaignID: campaignID, Sources: sources}
+}
+
+func (e *CampaignSourceNotConfiguredError) Error() string {
+	return fmt.Sprintf(
+		"access review campaign %q cannot be started while these sources have no organization selected on their connector: %s: select the organization on each source; if none is listed, have an owner of that organization grant Probo access, then reconnect the connector",
+		e.CampaignID,
+		campaignSourceNames(e.Sources),
+	)
+}
+
+func (e *CampaignSourceNotConfiguredError) Is(target error) bool {
+	return target == ErrCampaignSourceNotConfigured
+}
+
+func campaignSourceNames(sources coredata.AccessReviewCampaignSources) string {
+	names := make([]string, 0, len(sources))
+	for _, s := range sources {
 		if s.AccessReviewSourceID == nil {
 			names = append(names, fmt.Sprintf("%q (source deleted)", s.Name))
 		} else {
@@ -193,15 +227,7 @@ func (e *CampaignSourceNotFetchedError) Error() string {
 		}
 	}
 
-	return fmt.Sprintf(
-		"access review campaign %q cannot be closed while these sources have not been fetched: %s: retry the fetch or cancel the campaign",
-		e.CampaignID,
-		strings.Join(names, ", "),
-	)
-}
-
-func (e *CampaignSourceNotFetchedError) Is(target error) bool {
-	return target == ErrCampaignSourceNotFetched
+	return strings.Join(names, ", ")
 }
 
 func NewCampaignSourceFetchNotFailedError(accessReviewSourceID gid.GID) error {

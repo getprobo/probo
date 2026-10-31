@@ -1031,6 +1031,7 @@ func (r *mutationResolver) StartAccessReviewCampaign(ctx context.Context, input 
 			err,
 			accessreview.ErrCampaignMissingSources,
 			accessreview.ErrCampaignNotDraft,
+			accessreview.ErrCampaignSourceNotConfigured,
 		) {
 			return nil, gqlx.Invalid(ctx, err)
 		}

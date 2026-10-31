@@ -374,6 +374,71 @@ func snapshotSourceNames(
 	return snapshotted, nil
 }
 
+// unconfiguredCampaignSources resolves each connector from the live source,
+// as the fetch does, not from the campaign source snapshot.
+func unconfiguredCampaignSources(
+	ctx context.Context,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	campaignSources coredata.AccessReviewCampaignSources,
+) (coredata.AccessReviewCampaignSources, error) {
+	sourceIDs := make([]gid.GID, 0, len(campaignSources))
+	for _, campaignSource := range campaignSources {
+		if campaignSource.AccessReviewSourceID != nil {
+			sourceIDs = append(sourceIDs, *campaignSource.AccessReviewSourceID)
+		}
+	}
+
+	var sources coredata.AccessReviewSources
+	if err := sources.LoadByIDs(ctx, conn, scope, sourceIDs); err != nil {
+		return nil, fmt.Errorf("cannot load access sources: %w", err)
+	}
+
+	accountIDsBySourceID := make(map[gid.GID]gid.GID, len(sources))
+	accountIDs := make([]gid.GID, 0, len(sources))
+
+	for _, source := range sources {
+		if source.ConnectorAccountID != nil {
+			accountIDsBySourceID[source.ID] = *source.ConnectorAccountID
+			accountIDs = append(accountIDs, *source.ConnectorAccountID)
+		}
+	}
+
+	connectorIDsByAccountID, err := coredata.ConnectorIDsByAccountIDs(ctx, conn, scope, accountIDs)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load connector ids: %w", err)
+	}
+
+	var notConfigured coredata.AccessReviewCampaignSources
+
+	for _, campaignSource := range campaignSources {
+		if campaignSource.AccessReviewSourceID == nil {
+			continue
+		}
+
+		accountID, ok := accountIDsBySourceID[*campaignSource.AccessReviewSourceID]
+		if !ok {
+			continue
+		}
+
+		connectorID, ok := connectorIDsByAccountID[accountID]
+		if !ok {
+			return nil, fmt.Errorf("cannot load connector account %s: %w", accountID, coredata.ErrResourceNotFound)
+		}
+
+		dbConnector := &coredata.Connector{}
+		if err := dbConnector.LoadMetadataByID(ctx, conn, scope, connectorID); err != nil {
+			return nil, fmt.Errorf("cannot load connector %s: %w", connectorID, err)
+		}
+
+		if connectorNeedsConfiguration(dbConnector) && !providerOrgConfigs[dbConnector.Provider].SelectionOptional {
+			notConfigured = append(notConfigured, campaignSource)
+		}
+	}
+
+	return notConfigured, nil
+}
+
 func (s *Service) StartCampaign(
 	ctx context.Context,
 	scope coredata.Scoper,
@@ -403,6 +468,15 @@ func (s *Service) StartCampaign(
 
 			if len(campaignSources) == 0 {
 				return NewCampaignMissingSourcesError(campaign.ID)
+			}
+
+			notConfigured, err := unconfiguredCampaignSources(ctx, conn, scope, campaignSources)
+			if err != nil {
+				return fmt.Errorf("cannot check campaign sources configuration: %w", err)
+			}
+
+			if len(notConfigured) > 0 {
+				return NewCampaignSourceNotConfiguredError(campaign.ID, notConfigured)
 			}
 
 			now := time.Now()

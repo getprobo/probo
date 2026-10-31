@@ -1039,12 +1039,16 @@ func (s *Service) SourceNeedsConfiguration(
 		return false, err
 	}
 
-	cfg, ok := providerOrgConfigs[dbConnector.Provider]
-	if !ok || !ProviderSupportsOrganizationPicker(dbConnector.Provider, dbConnector.Protocol) {
-		return false, nil
+	return connectorNeedsConfiguration(dbConnector), nil
+}
+
+func connectorNeedsConfiguration(c *coredata.Connector) bool {
+	cfg, ok := providerOrgConfigs[c.Provider]
+	if !ok || !ProviderSupportsOrganizationPicker(c.Provider, c.Protocol) {
+		return false
 	}
 
-	return cfg.SelectedSlug(dbConnector) == "", nil
+	return cfg.SelectedSlug(c) == ""
 }
 
 // SourceMissingOAuthScopes returns the OAuth scopes required by the current

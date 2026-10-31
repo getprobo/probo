@@ -58,6 +58,29 @@ func TestFetchFailureMessage(t *testing.T) {
 		assert.Equal(t, rejected.Message, fetchFailureMessage(err))
 	})
 
+	t.Run(
+		"github connector without an organization",
+		func(t *testing.T) {
+			t.Parallel()
+
+			reg, ok := provider.NewBuiltinRegistry().Get(coredata.ConnectorProviderGitHub)
+			require.True(t, ok)
+
+			_, err := reg.NewDriver(
+				context.Background(),
+				http.DefaultClient,
+				&coredata.Connector{Provider: coredata.ConnectorProviderGitHub},
+				log.NewLogger(log.WithName("test")),
+				reg.Endpoints,
+			)
+
+			rejected, ok := errors.AsType[*drivers.SettingRejectedError](err)
+			require.True(t, ok)
+			assert.Equal(t, drivers.GitHubOrganizationNotSelected, rejected.Code)
+			assert.Equal(t, rejected.Message, fetchFailureMessage(fmt.Errorf("cannot resolve driver for source GitHub: %w", err)))
+		},
+	)
+
 	t.Run("anything else stays generic", func(t *testing.T) {
 		t.Parallel()
 

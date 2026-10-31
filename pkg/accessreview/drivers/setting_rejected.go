@@ -27,8 +27,8 @@ import (
 	"strings"
 )
 
-// SettingRejectedError reports that the provider accepted the credential and
-// refused a connector setting. Code and Message are Probo's own text, safe to
+// SettingRejectedError reports a connector setting the provider refused, or one
+// Probo cannot fetch without. Code and Message are Probo's own text, safe to
 // log and to show. Setting is the ExtraSetting key the connection check blames,
 // empty when the credential cannot reach what the setting names.
 type SettingRejectedError struct {
@@ -39,6 +39,10 @@ type SettingRejectedError struct {
 }
 
 func (e *SettingRejectedError) Error() string {
+	if e.StatusCode == 0 {
+		return fmt.Sprintf("setting rejected: %s: %s", e.Code, e.Message)
+	}
+
 	return fmt.Sprintf("setting rejected: %s (status %d): %s", e.Code, e.StatusCode, e.Message)
 }
 

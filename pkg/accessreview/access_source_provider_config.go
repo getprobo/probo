@@ -46,6 +46,8 @@ import (
 type providerOrgConfig struct {
 	ListOrgs     func(ctx context.Context, httpClient *http.Client, baseURL string) ([]drivers.Organization, error)
 	SelectedSlug func(c *coredata.Connector) string
+	// SelectionOptional means the driver still fetches with no selection.
+	SelectionOptional bool
 }
 
 // providerOrgConfigs is the single source of truth that the access-source
@@ -67,6 +69,7 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 			s, _ := coredata.ConnectorSettings[coredata.SentryConnectorSettings](c)
 			return s.OrganizationSlug
 		},
+		SelectionOptional: true,
 	},
 	coredata.ConnectorProviderGoogleAnalytics: {
 		ListOrgs: drivers.ListGoogleAnalyticsOrganizations,
@@ -95,6 +98,7 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 			s, _ := coredata.ConnectorSettings[coredata.HerokuConnectorSettings](c)
 			return s.TeamID
 		},
+		SelectionOptional: true,
 	},
 	coredata.ConnectorProviderAsana: {
 		ListOrgs: drivers.ListAsanaOrganizations,

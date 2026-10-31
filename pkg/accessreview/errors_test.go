@@ -107,6 +107,21 @@ func TestCampaignClientErrors(t *testing.T) {
 			sentinel: accessreview.ErrCampaignSourceNotFetched,
 		},
 		{
+			name: "source not configured",
+			err: accessreview.NewCampaignSourceNotConfiguredError(
+				campaignID,
+				coredata.AccessReviewCampaignSources{
+					{Name: "GitHub", AccessReviewSourceID: &sourceID},
+				},
+			),
+			wantText: fmt.Sprintf(
+				"access review campaign %q cannot be started while these sources have no organization selected on their connector: \"GitHub\" (%s): select the organization on each source; if none is listed, have an owner of that organization grant Probo access, then reconnect the connector",
+				campaignID,
+				sourceID,
+			),
+			sentinel: accessreview.ErrCampaignSourceNotConfigured,
+		},
+		{
 			name: "source fetch not failed",
 			err:  accessreview.NewCampaignSourceFetchNotFailedError(sourceID),
 			wantText: fmt.Sprintf(

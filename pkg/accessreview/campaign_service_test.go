@@ -440,6 +440,147 @@ func TestCloseCampaign_RefusesFailedSourceFetch(t *testing.T) {
 	require.ErrorIs(t, err, accessreview.ErrCampaignSourceFetchNotFailed)
 }
 
+func TestStartCampaign_RefusesSourceWithoutOrganization(t *testing.T) {
+	t.Parallel()
+
+	env := newAccessSourceEnv(t)
+
+	githubConnectorID := env.insertConnector(t, coredata.ConnectorProviderGitHub)
+	githubSource := env.insertLinkedSource(t, env.insertAccount(t, githubConnectorID, "github"), "GitHub")
+
+	sentryConnectorID := env.insertConnector(t, coredata.ConnectorProviderSentry)
+	sentrySource := env.insertLinkedSource(t, env.insertAccount(t, sentryConnectorID, "sentry"), "Sentry")
+
+	herokuConnectorID := env.insertConnector(t, coredata.ConnectorProviderHeroku)
+	herokuSource := env.insertLinkedSource(t, env.insertAccount(t, herokuConnectorID, "heroku"), "Heroku")
+
+	campaign, err := env.svc.CreateCampaign(
+		env.ctx,
+		env.scope,
+		accessreview.CreateAccessReviewCampaignRequest{
+			OrganizationID:        env.organizationID,
+			Name:                  "Q4 review",
+			AccessReviewSourceIDs: []gid.GID{githubSource.ID, sentrySource.ID, herokuSource.ID},
+		},
+	)
+	require.NoError(t, err)
+
+	_, err = env.svc.StartCampaign(env.ctx, env.scope, campaign.ID)
+	require.ErrorIs(t, err, accessreview.ErrCampaignSourceNotConfigured)
+	assert.ErrorContains(t, err, fmt.Sprintf("%q (%s)", "github", githubSource.ID))
+	assert.NotContains(t, err.Error(), sentrySource.ID.String())
+	assert.NotContains(t, err.Error(), herokuSource.ID.String())
+
+	err = env.client.WithTx(
+		env.ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			cnnctr := &coredata.Connector{ID: githubConnectorID, UpdatedAt: time.Now()}
+			if err := cnnctr.SetSettings(&coredata.GitHubConnectorSettings{Organization: "acme"}); err != nil {
+				return err
+			}
+
+			return cnnctr.UpdateSettings(ctx, tx, env.scope)
+		},
+	)
+	require.NoError(t, err)
+
+	started, err := env.svc.StartCampaign(env.ctx, env.scope, campaign.ID)
+	require.NoError(t, err)
+	assert.Equal(t, coredata.AccessReviewCampaignStatusInProgress, started.Status)
+}
+
+func TestStartCampaign_ChecksRelinkedSourceConnector(t *testing.T) {
+	t.Parallel()
+
+	t.Run(
+		"relinked to a configured connector",
+		func(t *testing.T) {
+			t.Parallel()
+
+			env := newAccessSourceEnv(t)
+
+			unsetAccountID := env.insertAccount(t, env.insertConnector(t, coredata.ConnectorProviderGitHub), "unset")
+			setAccountID := env.insertAccount(
+				t,
+				env.insertConnector(t, coredata.ConnectorProviderGitHub, &coredata.GitHubConnectorSettings{Organization: "acme"}),
+				"set",
+			)
+			source := env.insertLinkedSource(t, unsetAccountID, "GitHub")
+
+			campaign, err := env.svc.CreateCampaign(
+				env.ctx,
+				env.scope,
+				accessreview.CreateAccessReviewCampaignRequest{
+					OrganizationID:        env.organizationID,
+					Name:                  "Q4 review",
+					AccessReviewSourceIDs: []gid.GID{source.ID},
+				},
+			)
+			require.NoError(t, err)
+
+			relinkSource(t, env, source, setAccountID)
+
+			started, err := env.svc.StartCampaign(env.ctx, env.scope, campaign.ID)
+			require.NoError(t, err)
+			assert.Equal(t, coredata.AccessReviewCampaignStatusInProgress, started.Status)
+		},
+	)
+
+	t.Run(
+		"relinked to an unconfigured connector",
+		func(t *testing.T) {
+			t.Parallel()
+
+			env := newAccessSourceEnv(t)
+
+			unsetAccountID := env.insertAccount(t, env.insertConnector(t, coredata.ConnectorProviderGitHub), "unset")
+			setAccountID := env.insertAccount(
+				t,
+				env.insertConnector(t, coredata.ConnectorProviderGitHub, &coredata.GitHubConnectorSettings{Organization: "acme"}),
+				"set",
+			)
+			source := env.insertLinkedSource(t, setAccountID, "GitHub")
+
+			campaign, err := env.svc.CreateCampaign(
+				env.ctx,
+				env.scope,
+				accessreview.CreateAccessReviewCampaignRequest{
+					OrganizationID:        env.organizationID,
+					Name:                  "Q4 review",
+					AccessReviewSourceIDs: []gid.GID{source.ID},
+				},
+			)
+			require.NoError(t, err)
+
+			relinkSource(t, env, source, unsetAccountID)
+
+			_, err = env.svc.StartCampaign(env.ctx, env.scope, campaign.ID)
+			require.ErrorIs(t, err, accessreview.ErrCampaignSourceNotConfigured)
+			assert.ErrorContains(t, err, source.ID.String())
+		},
+	)
+}
+
+func relinkSource(
+	t *testing.T,
+	env *accessSourceEnv,
+	source *coredata.AccessReviewSource,
+	accountID gid.GID,
+) {
+	t.Helper()
+
+	source.ConnectorAccountID = &accountID
+	source.UpdatedAt = time.Now()
+
+	err := env.client.WithTx(
+		env.ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			return source.Update(ctx, tx, env.scope)
+		},
+	)
+	require.NoError(t, err)
+}
+
 func TestEntryWrites_WaitForCampaignRetry(t *testing.T) {
 	t.Parallel()
 

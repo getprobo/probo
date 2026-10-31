@@ -37,6 +37,10 @@ import (
 	"go.probo.inc/probo/pkg/rfc5988"
 )
 
+// GitHubOrganizationNotSelected is the code for a connector with no
+// organization selected.
+const GitHubOrganizationNotSelected = "github_organization_not_selected"
+
 // GitHub REST path segments joined onto the driver's base URL. They are
 // single segments rather than whole paths because every GitHub endpoint the
 // driver calls interleaves them with an escaped org or login.
