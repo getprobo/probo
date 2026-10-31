@@ -230,11 +230,12 @@ func TestEndpointOverrideRejected(t *testing.T) {
 			wantErr:   "Google SDK's basePath",
 		},
 		{
-			// 1Password's data host is per-connection (regional Users API or
-			// customer-hosted SCIM bridge); same reasoning as Google Workspace.
-			name:      "probe override rejected for provider with per-connection data host",
-			overrides: provider.EndpointOverrides{coredata.ConnectorProviderOnePassword: {Probe: "https://events.1password.com/api/v1/other"}},
-			wantErr:   "neither api-base nor identity",
+			// Every 1Password host is per-connection (regional Users API or
+			// customer-hosted SCIM bridge), so it compiles no endpoint an
+			// override could move.
+			name:      "probe override rejected for provider with per-connection hosts",
+			overrides: provider.EndpointOverrides{coredata.ConnectorProviderOnePassword: {Probe: "https://api.1password.com/v1/accounts/X/users"}},
+			wantErr:   "the provider has no static value for it",
 		},
 		{
 			// url.JoinPath would propagate this query onto every path GitHub's

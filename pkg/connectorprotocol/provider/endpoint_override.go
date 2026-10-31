@@ -163,9 +163,9 @@ func applyEndpointOverride(p coredata.ConnectorProvider, unsupportedReason strin
 	// host while every data call stayed on the real provider, turning the
 	// connection badge green for an environment the driver never reaches —
 	// the DocuSign bug this guards against. Atomicity above cannot catch this
-	// case by itself when Probe is the provider's only static field (e.g.
-	// 1Password): moving that one field is trivially "every field", yet still
-	// unsafe, because nothing else in Endpoints exists for it to carry.
+	// case by itself when Probe is the provider's only static field: moving
+	// that one field is trivially "every field", yet still unsafe, because
+	// nothing else in Endpoints exists for it to carry.
 	if o.Probe != "" && base.APIBase == "" && base.Identity == "" {
 		return Endpoints{}, fmt.Errorf("cannot override probe endpoint for connector provider %q: the provider has neither api-base nor identity to move with it, so the connection check would move while the driver's data calls stayed on the real provider", p)
 	}

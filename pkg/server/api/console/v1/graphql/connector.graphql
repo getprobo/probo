@@ -248,22 +248,18 @@ type ConnectorProviderInfo {
     """
     clientCredentialsExtraSettings: [ConnectorProviderSettingInfo!]!
     """
-    clientCredentialsTokenUrl is the token endpoint this provider pins, for the
-    connect form to omit the Token URL field entirely. Null when the token host
-    follows a per-connection setting (1Password, whose host follows its region),
-    which is the only case where the customer has a value to supply. When it is
-    set the create mutation uses it and ignores whatever the client sends, so a
-    form that renders the field anyway is asking for something that cannot take
-    effect.
+    clientCredentialsTokenUrl is the token endpoint this provider pins. Null
+    when the token host follows a per-connection setting (1Password, whose host
+    follows its region) and for a provider with no client-credentials path.
+    The customer never supplies it.
     """
     clientCredentialsTokenUrl: String
     """
-    clientCredentialsTokenUrlRequired is true when the client-credentials
-    connect form must ask for the token endpoint. False when the provider pins
-    one (clientCredentialsTokenUrl), and false for a provider with no
-    client-credentials path.
+    clientCredentialsTokenUrlRequired is always false: every client-credentials
+    token endpoint is pinned or derived from the connector's settings.
     """
     clientCredentialsTokenUrlRequired: Boolean!
+        @deprecated(reason: "The token endpoint is never supplied by the customer.")
     """
     clientCredentialsPage is the vendor page where the customer creates the
     client credentials the client-credentials connect form asks for. Null when
@@ -326,7 +322,7 @@ type AzureConnectorSetup {
 
 """
 How the connect form renders one extra setting. TEXT is a single-line input.
-REGION is the flagged EU, US and CA select.
+REGION is the flagged EU, US, CA and ENT select.
 """
 enum ConnectorProviderSettingControl
     @goModel(
@@ -350,6 +346,11 @@ type ConnectorProviderSettingInfo {
     control is how the connect form renders this setting. TEXT is the default.
     """
     control: ConnectorProviderSettingControl!
+    """
+    description tells the customer where to find the value. Null when the label
+    says enough.
+    """
+    description: String
 }
 
 """
@@ -701,14 +702,20 @@ input CreateClientCredentialsConnectorInput {
     clientId: String!
     clientSecret: String!
     """
-    Token endpoint for the client-credentials exchange. Optional: a provider
-    that declares a constant token endpoint sets it server-side and ignores
-    any value sent here. Required only when clientCredentialsTokenUrlRequired
-    is true, and then it must be an absolute https URL.
+    Ignored: the server pins the token endpoint or derives it from the
+    provider's settings.
     """
     tokenUrl: String
+        @deprecated(reason: "The token endpoint is never supplied by the customer.")
     scope: String
+    """
+    The 26-character ID of the 1Password account.
+    """
     onePasswordAccountId: String
+    """
+    The 1Password server the account lives on: US (1password.com), CA
+    (1password.ca), EU (1password.eu) or ENT (ent.1password.com).
+    """
     onePasswordRegion: String
 }
 

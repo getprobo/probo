@@ -49,7 +49,6 @@
       "apiKey": "Clé API",
       "clientId": "Identifiant client",
       "clientSecret": "Secret client",
-      "tokenUrl": "URL du jeton",
       "scope": "Périmètre",
       "datadogSite": "Site Datadog",
       "zendeskSubdomain": "Sous-domaine Zendesk",
@@ -57,7 +56,8 @@
       "regionPlaceholder": "Sélectionner une région",
       "regionUnitedStates": "États-Unis",
       "regionEurope": "Europe",
-      "regionCanada": "Canada"
+      "regionCanada": "Canada",
+      "regionEnterprise": "Entreprise (ent.1password.com)"
     },
     "workloadIdentity": {
       "propagationHint": "La fédération peut prendre quelques minutes. Si le connecteur s’affiche comme déconnecté, attendez puis réessayez.",

@@ -55,9 +55,8 @@ func TestHTTPClient_SlackUserToken(t *testing.T) {
 		_, err := provider.HTTPClient(
 			context.Background(),
 			registry,
-			nil,
-			coredata.ConnectorProviderSlack,
-			conn,
+			provider.NewRegistry(),
+			&coredata.Connector{Provider: coredata.ConnectorProviderSlack, Connection: conn},
 		)
 		require.Error(t, err)
 		assert.ErrorContains(t, err, "cannot refresh token")
@@ -74,11 +73,93 @@ func TestHTTPClient_SlackUserToken(t *testing.T) {
 		client, err := provider.HTTPClient(
 			context.Background(),
 			registry,
-			nil,
-			coredata.ConnectorProviderSlack,
-			conn,
+			provider.NewRegistry(),
+			&coredata.Connector{Provider: coredata.ConnectorProviderSlack, Connection: conn},
 		)
 		require.NoError(t, err)
 		require.NotNil(t, client)
 	})
+}
+
+// HTTPClient applies the token endpoint a registration derives before any
+// exchange, so a row stored with another endpoint never reuses its token.
+func TestHTTPClient_DerivedClientCredentialsTokenURL(t *testing.T) {
+	t.Parallel()
+
+	// Loopback, which the exchange refuses to dial: a failed exchange proves
+	// the client went to the derived endpoint instead of reusing the token.
+	const derived = "https://127.0.0.1:1/v1/oauth/token"
+
+	registry := provider.NewRegistry()
+	require.NoError(
+		t,
+		registry.Register(
+			&provider.Registration{
+				Provider:    coredata.ConnectorProviderOnePassword,
+				DisplayName: "1Password",
+				ClientCredentials: &provider.ClientCredentialsConfig{
+					TokenURL: func(*coredata.Connector) (string, error) {
+						return derived, nil
+					},
+				},
+			},
+		),
+	)
+
+	newConnector := func(conn *connectorprotocol.OAuth2Connection) *coredata.Connector {
+		return &coredata.Connector{Provider: coredata.ConnectorProviderOnePassword, Connection: conn}
+	}
+
+	t.Run(
+		"a stored legacy endpoint is replaced before the exchange",
+		func(t *testing.T) {
+			t.Parallel()
+
+			conn := &connectorprotocol.OAuth2Connection{
+				GrantType:    connectorprotocol.OAuth2GrantTypeClientCredentials,
+				ClientID:     "client",
+				ClientSecret: "secret",
+				TokenURL:     "https://api.1password.com/v1beta1/users/oauth2/token",
+				AccessToken:  "ory_at_legacy",
+				ExpiresAt:    time.Now().Add(time.Hour),
+				Scope:        "openid",
+			}
+
+			_, err := provider.HTTPClient(
+				context.Background(),
+				connectorprotocol.NewConnectorRegistry(),
+				registry,
+				newConnector(conn),
+			)
+			require.Error(t, err)
+			assert.ErrorContains(t, err, "cannot exchange client credentials")
+			assert.Equal(t, derived, conn.TokenURL)
+			assert.Empty(t, conn.AccessToken)
+			assert.Empty(t, conn.Scope)
+		},
+	)
+
+	t.Run(
+		"a token from the derived endpoint is reused",
+		func(t *testing.T) {
+			t.Parallel()
+
+			conn := &connectorprotocol.OAuth2Connection{
+				GrantType:   connectorprotocol.OAuth2GrantTypeClientCredentials,
+				TokenURL:    derived,
+				AccessToken: "op_o_c_current",
+				ExpiresAt:   time.Now().Add(time.Hour),
+			}
+
+			client, err := provider.HTTPClient(
+				context.Background(),
+				connectorprotocol.NewConnectorRegistry(),
+				registry,
+				newConnector(conn),
+			)
+			require.NoError(t, err)
+			require.NotNil(t, client)
+			assert.Equal(t, "op_o_c_current", conn.AccessToken)
+		},
+	)
 }

@@ -87,11 +87,16 @@ func catalogEntries(registry *provider.Registry) []*types.ConnectorProviderCatal
 func settingInfos(settings []provider.ExtraSetting) []*types.ConnectorProviderSetting {
 	infos := make([]*types.ConnectorProviderSetting, 0, len(settings))
 	for _, setting := range settings {
-		infos = append(infos, &types.ConnectorProviderSetting{
+		info := &types.ConnectorProviderSetting{
 			Key:      setting.Key,
 			Label:    setting.Label,
 			Required: setting.Required,
-		})
+		}
+		if setting.Description != "" {
+			info.Description = new(setting.Description)
+		}
+
+		infos = append(infos, info)
 	}
 
 	return infos

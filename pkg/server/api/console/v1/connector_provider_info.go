@@ -41,12 +41,17 @@ func connectorProviderSettingInfos(settings []provider.ExtraSetting) []*types.Co
 			control = provider.ExtraSettingControlText
 		}
 
-		out = append(out, &types.ConnectorProviderSettingInfo{
+		info := &types.ConnectorProviderSettingInfo{
 			Key:      s.Key,
 			Label:    s.Label,
 			Required: s.Required,
 			Control:  control,
-		})
+		}
+		if s.Description != "" {
+			info.Description = new(s.Description)
+		}
+
+		out = append(out, info)
 	}
 
 	return out

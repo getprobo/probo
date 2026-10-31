@@ -218,12 +218,12 @@ func (s *Service) resolveDriver(
 	// The connection decides which credential the driver can be built from, so
 	// it decides which factory runs. A protocol added later without a factory
 	// lands in the default arm and fails loudly rather than fetching nothing.
-	switch conn := dbConnector.Connection.(type) {
+	switch dbConnector.Connection.(type) {
 	case *connectorprotocol.WorkloadIdentityConnection:
 		return s.newCloudDriver(ctx, reg, dbConnector, account.ExternalAccountID)
 
 	case connectorprotocol.HTTPConnection:
-		return s.newHTTPDriver(ctx, tx, scope, reg, dbConnector, conn)
+		return s.newHTTPDriver(ctx, tx, scope, reg, dbConnector)
 
 	default:
 		return nil, fmt.Errorf(
@@ -257,13 +257,12 @@ func (s *Service) newHTTPDriver(
 	scope coredata.Scoper,
 	reg *provider.Registration,
 	dbConnector *coredata.Connector,
-	conn connectorprotocol.HTTPConnection,
 ) (drivers.Driver, error) {
 	if reg.NewDriver == nil {
 		return nil, fmt.Errorf("cannot resolve driver: provider %q registers no driver", dbConnector.Provider)
 	}
 
-	oauth2Conn := connectorprotocol.OAuth2ConnectionOf(conn)
+	oauth2Conn := connectorprotocol.OAuth2ConnectionOf(dbConnector.Connection)
 
 	var tokenBefore string
 	if oauth2Conn != nil {
@@ -274,8 +273,7 @@ func (s *Service) newHTTPDriver(
 		ctx,
 		s.connectorRegistry,
 		s.providerRegistry,
-		reg.Provider,
-		conn,
+		dbConnector,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create HTTP client for %s connector: %w", reg.Provider, err)
