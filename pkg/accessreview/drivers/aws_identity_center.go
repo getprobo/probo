@@ -46,6 +46,10 @@ const (
 	awsSSOAdministratorAccess = "AWSAdministratorAccess"
 
 	identityStoreService = "identitystore"
+
+	// identityCenterProbeTimeout bounds one region's ListInstances so an
+	// unreachable region cannot stall discovery.
+	identityCenterProbeTimeout = 5 * time.Second
 )
 
 type (
@@ -212,7 +216,7 @@ func listIdentityCenterUsersInRegions(
 	logger *log.Logger,
 	regions []string,
 ) ([]identityCenterUser, error) {
-	instance, err := discoverIdentityCenter(ctx, session, logger, regions)
+	instance, err := discoverIdentityCenter(ctx, session, logger, regions, identityCenterProbeTimeout)
 	if err != nil {
 		if ctx.Err() != nil {
 			return nil, err
@@ -329,6 +333,7 @@ func discoverIdentityCenter(
 	session *cloudaws.Session,
 	logger *log.Logger,
 	regions []string,
+	probeTimeout time.Duration,
 ) (identityCenterInstance, error) {
 	sessionRegion := session.Config().Region
 
@@ -337,7 +342,11 @@ func discoverIdentityCenter(
 		cfg.Region = region
 		client := ssoadmin.NewFromConfig(cfg)
 
-		instance, err := listIdentityCenterInstances(ctx, client)
+		probeCtx, cancel := context.WithTimeout(ctx, probeTimeout)
+		instance, err := listIdentityCenterInstances(probeCtx, client)
+
+		cancel()
+
 		if err != nil {
 			if ctx.Err() != nil {
 				return identityCenterInstance{}, err
@@ -345,6 +354,14 @@ func discoverIdentityCenter(
 
 			if identityCenterAccessDenied(err) {
 				return identityCenterInstance{}, err
+			}
+
+			if errors.Is(err, context.DeadlineExceeded) {
+				logger.WarnCtx(
+					ctx,
+					"iam identity center region did not answer, skipping it",
+					log.String("region", region),
+				)
 			}
 
 			continue

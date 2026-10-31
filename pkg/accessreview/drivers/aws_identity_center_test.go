@@ -22,10 +22,16 @@ package drivers
 
 import (
 	"context"
+	"io"
+	"net/http"
 	"slices"
+	"strings"
+	"sync"
 	"testing"
 	"time"
 
+	awssdk "github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/credentials"
 	istypes "github.com/aws/aws-sdk-go-v2/service/identitystore/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -33,6 +39,78 @@ import (
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
 	"go.probo.inc/probo/pkg/coredata"
 )
+
+// newIdentityCenterProbeSession answers ListInstances by region: instanceRegion
+// returns an instance, hangRegion blocks until the request context ends, and
+// every other region returns no instance. The returned func lists called regions.
+func newIdentityCenterProbeSession(
+	t *testing.T,
+	instanceRegion string,
+	hangRegion string,
+	onHang func(),
+) (*cloudaws.Session, func() []string) {
+	t.Helper()
+
+	var (
+		mu    sync.Mutex
+		calls []string
+	)
+
+	transport := roundTripFunc(
+		func(r *http.Request) (*http.Response, error) {
+			region := strings.Split(r.URL.Host, ".")[1]
+
+			mu.Lock()
+
+			calls = append(calls, region)
+			mu.Unlock()
+
+			body := `{"Instances":[]}`
+
+			switch region {
+			case hangRegion:
+				if onHang != nil {
+					onHang()
+				}
+
+				select {
+				case <-r.Context().Done():
+					return nil, r.Context().Err()
+				case <-time.After(5 * time.Second):
+				}
+			case instanceRegion:
+				body = `{"Instances":[{"InstanceArn":"arn:aws:sso:::instance/ssoins-1","IdentityStoreId":"d-1"}]}`
+			}
+
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Header:     http.Header{"Content-Type": []string{"application/x-amz-json-1.1"}},
+				Body:       io.NopCloser(strings.NewReader(body)),
+				Request:    r,
+			}, nil
+		},
+	)
+
+	session := cloudaws.NewSessionFromConfig(
+		vcrAWSAccountID,
+		cloudaws.CommercialPartition,
+		awssdk.Config{
+			Region: cloudaws.DefaultCommercialRegion,
+			Credentials: awssdk.NewCredentialsCache(
+				credentials.NewStaticCredentialsProvider(vcrAWSAccessKey, vcrAWSSecretKey, ""),
+			),
+			HTTPClient:       &http.Client{Transport: transport},
+			RetryMaxAttempts: 1,
+		},
+	)
+
+	return session, func() []string {
+		mu.Lock()
+		defer mu.Unlock()
+
+		return slices.Clone(calls)
+	}
+}
 
 func TestIdentityCenterRegions_PutsPreferredFirst(t *testing.T) {
 	t.Parallel()
@@ -128,6 +206,51 @@ func TestListIdentityCenterUsers_FindsInstanceOutsideSessionRegion(t *testing.T)
 	assert.Empty(t, dave.Roles)
 	assert.Equal(t, coredata.AccessReviewEntryAuthMethodUnknown, dave.AuthMethod)
 	assert.Nil(t, dave.IsAdmin)
+}
+
+func TestDiscoverIdentityCenter_SkipsRegionThatNeverAnswers(t *testing.T) {
+	t.Parallel()
+
+	session, calls := newIdentityCenterProbeSession(t, "eu-west-1", "me-south-1", nil)
+
+	start := time.Now()
+	instance, err := discoverIdentityCenter(
+		context.Background(),
+		session,
+		log.NewLogger(log.WithName("test")),
+		[]string{cloudaws.DefaultCommercialRegion, "me-south-1", "eu-west-1"},
+		100*time.Millisecond,
+	)
+	elapsed := time.Since(start)
+
+	require.NoError(t, err)
+	assert.Equal(t, "arn:aws:sso:::instance/ssoins-1", instance.arn)
+	assert.Equal(t, "d-1", instance.storeID)
+	assert.Equal(t, "eu-west-1", instance.region)
+	assert.Equal(t, []string{cloudaws.DefaultCommercialRegion, "me-south-1", "eu-west-1"}, calls())
+	assert.Less(t, elapsed, 2*time.Second)
+}
+
+func TestDiscoverIdentityCenter_StopsWhenParentContextIsCancelled(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	session, calls := newIdentityCenterProbeSession(t, "eu-west-1", "me-south-1", cancel)
+
+	instance, err := discoverIdentityCenter(
+		ctx,
+		session,
+		log.NewLogger(log.WithName("test")),
+		[]string{cloudaws.DefaultCommercialRegion, "me-south-1", "eu-west-1"},
+		time.Minute,
+	)
+
+	require.Error(t, err)
+	assert.ErrorIs(t, err, context.Canceled)
+	assert.Empty(t, instance.arn)
+	assert.Equal(t, []string{cloudaws.DefaultCommercialRegion, "me-south-1"}, calls())
 }
 
 func TestListIdentityCenterUsers_ListsDirectAndGroupAssignments(t *testing.T) {
