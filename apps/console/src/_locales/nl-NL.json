@@ -3868,6 +3868,12 @@
       "retry": "Opnieuw proberen",
       "truncated": "De eerste 100 gegevensrijen worden weergegeven."
     },
+    "json": {
+      "empty": "Dit JSON-bestand is leeg.",
+      "error": "Het JSON-voorbeeld kan niet worden geladen.",
+      "retry": "Opnieuw proberen",
+      "truncated": "De eerste 512 KB wordt weergegeven."
+    },
     "text": {
       "empty": "Dit tekstbestand is leeg.",
       "error": "Het tekstvoorbeeld kan niet worden geladen.",
