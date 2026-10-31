@@ -1,0 +1,90 @@
+{
+  "auditLogPage": {
+    "title": "Journal d’audit",
+    "description": "Décisions d’autorisation enregistrées pour cet espace, y compris les lectures.",
+    "empty": {
+      "title": "Aucune entrée dans le journal d’audit pour le moment",
+      "description": "Les contrôles d’autorisation apparaissent ici au fur et à mesure.",
+      "filteredTitle": "Aucune entrée correspondante",
+      "filteredDescription": "Essayez une autre action, un autre résultat ou une autre période.",
+      "clear": "Effacer les filtres"
+    },
+    "columns": {
+      "when": "Quand",
+      "actor": "Acteur",
+      "action": "Action",
+      "target": "Cible",
+      "outcome": "Résultat"
+    },
+    "actions": {
+      "previous": "Précédent",
+      "next": "Suivant",
+      "openEntry": "Voir l’entrée du journal d’audit du {{when}}"
+    },
+    "actorTypes": {
+      "USER": "Utilisateur",
+      "API_KEY": "Clé d’API",
+      "SYSTEM": "Système"
+    },
+    "outcomes": {
+      "ALLOWED": "Autorisé",
+      "DENIED": "Refusé"
+    },
+    "filters": {
+      "actorType": "Type d’acteur",
+      "allActorTypes": "Tous les types d’acteurs",
+      "action": "Action",
+      "actionPlaceholder": "iam:organization:get ou iam:*",
+      "outcome": "Résultat",
+      "allOutcomes": "Tous les résultats",
+      "actorId": "ID de l’acteur",
+      "resourceType": "Type de ressource",
+      "resourceId": "ID de la ressource",
+      "from": "Du",
+      "to": "Au",
+      "dates": "Période",
+      "datesPlaceholder": "Toutes les dates",
+      "datesHint": "Choisissez une date de début, puis une date de fin.",
+      "clearDates": "Effacer les dates",
+      "more": "Filtres",
+      "moreCount_one": "Filtres ({{count}})",
+      "moreCount_other": "Filtres ({{count}})",
+      "requestId": "ID de requête",
+      "range": "La date de début est postérieure à la date de fin."
+    },
+    "entry": {
+      "title": "Entrée du journal d’audit",
+      "actor": "Acteur",
+      "actorId": "ID de l’acteur",
+      "action": "Action",
+      "target": "Cible",
+      "outcome": "Résultat",
+      "when": "Quand",
+      "recordedAt": "Enregistré",
+      "originIp": "Adresse IP d’origine",
+      "userAgent": "Agent utilisateur",
+      "requestId": "ID de requête",
+      "denialReason": "Motif du refus",
+      "close": "Fermer"
+    },
+    "export": {
+      "title": "Exporter le journal d’audit",
+      "description": "Sélectionnez une plage de dates pour exporter les entrées du journal d’audit au format CSV. Vous recevrez un e-mail avec un lien de téléchargement.",
+      "fields": {
+        "from": "Du",
+        "to": "Au",
+        "range": "Période"
+      },
+      "actions": {
+        "export": "Exporter",
+        "cancel": "Annuler"
+      },
+      "messages": {
+        "success": "L’export a démarré. Vous recevrez un e-mail avec un lien de téléchargement lorsqu’il sera prêt."
+      },
+      "errors": {
+        "request": "Échec de la demande d’export du journal d’audit"
+      }
+    }
+  }
+}

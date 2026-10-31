@@ -2465,25 +2465,7 @@
       "removeEmail": "E-mail verwijderen"
     }
   },
-  "auditLogPage": {
-    "title": "Auditlogboek",
-    "description": "Een overzicht van alle acties die in uw organisatie zijn uitgevoerd. Items zijn onveranderlijk en kunnen niet worden bewerkt of verwijderd.",
-    "empty": "Nog geen auditlogitems.",
-    "showing": "{{shown}} van {{total}} items weergegeven",
-    "columns": { "date": "Datum", "actor": "Actor", "action": "Actie", "resource": "Resource" },
-    "actions": { "showMore": "Meer tonen" },
-    "export": {
-      "title": "Auditlogboek exporteren",
-      "description": "Selecteer een datumbereik om auditlogboekvermeldingen te exporteren als CSV. U ontvangt een e-mail met een downloadlink.",
-      "fields": { "from": "Van", "to": "Tot" },
-      "actions": { "export": "Exporteren", "exporting": "Bezig met exporteren..." },
-      "messages": {
-        "successTitle": "Succes",
-        "success": "Export gestart. U ontvangt een e-mail met een downloadlink zodra deze gereed is."
-      },
-      "errors": { "title": "Fout", "request": "Aanvragen van auditlogboekexport mislukt" }
-    }
-  },
+
   "samlSsoPage": {
     "title": "SAML Single Sign-On",
     "description": "Stel SAML 2.0 single sign-on in voor elk e-maildomein.",

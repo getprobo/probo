@@ -1,0 +1,90 @@
+{
+  "auditLogPage": {
+    "title": "Audit log",
+    "description": "Recorded authorization decisions for this workspace, including reads.",
+    "empty": {
+      "title": "No audit log entries yet",
+      "description": "Authorization checks show up here as they are recorded.",
+      "filteredTitle": "No matching entries",
+      "filteredDescription": "Try a different action, outcome, or date range.",
+      "clear": "Clear filters"
+    },
+    "columns": {
+      "when": "When",
+      "actor": "Actor",
+      "action": "Action",
+      "target": "Target",
+      "outcome": "Outcome"
+    },
+    "actions": {
+      "previous": "Previous",
+      "next": "Next",
+      "openEntry": "View audit log entry from {{when}}"
+    },
+    "actorTypes": {
+      "USER": "User",
+      "API_KEY": "API key",
+      "SYSTEM": "System"
+    },
+    "outcomes": {
+      "ALLOWED": "Allowed",
+      "DENIED": "Denied"
+    },
+    "filters": {
+      "actorType": "Actor type",
+      "allActorTypes": "All actor types",
+      "action": "Action",
+      "actionPlaceholder": "iam:organization:get or iam:*",
+      "outcome": "Outcome",
+      "allOutcomes": "All outcomes",
+      "actorId": "Actor ID",
+      "resourceType": "Resource type",
+      "resourceId": "Resource ID",
+      "from": "From",
+      "to": "To",
+      "dates": "Date range",
+      "datesPlaceholder": "Any date",
+      "datesHint": "Select a start date, then an end date.",
+      "clearDates": "Clear dates",
+      "more": "Filters",
+      "moreCount_one": "Filters ({{count}})",
+      "moreCount_other": "Filters ({{count}})",
+      "requestId": "Request ID",
+      "range": "The start date is after the end date."
+    },
+    "entry": {
+      "title": "Audit log entry",
+      "actor": "Actor",
+      "actorId": "Actor ID",
+      "action": "Action",
+      "target": "Target",
+      "outcome": "Outcome",
+      "when": "When",
+      "recordedAt": "Recorded",
+      "originIp": "Origin IP",
+      "userAgent": "User agent",
+      "requestId": "Request ID",
+      "denialReason": "Denial reason",
+      "close": "Close"
+    },
+    "export": {
+      "title": "Export audit log",
+      "description": "Select a date range to export audit log entries as CSV. You will receive an email with a download link.",
+      "fields": {
+        "from": "From",
+        "to": "To",
+        "range": "Date range"
+      },
+      "actions": {
+        "export": "Export",
+        "cancel": "Cancel"
+      },
+      "messages": {
+        "success": "Export started. You will receive an email with a download link when it is ready."
+      },
+      "errors": {
+        "request": "Failed to request audit log export"
+      }
+    }
+  }
+}

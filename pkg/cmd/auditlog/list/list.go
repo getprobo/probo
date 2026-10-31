@@ -22,6 +22,8 @@ package list
 
 import (
 	"fmt"
+	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
@@ -40,9 +42,12 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: AuditLogEntryOrder, $f
             id
             actorId
             actorType
+            actorEmail
+            actorName
             action
             resourceType
             resourceId
+            outcome
             createdAt
           }
         }
@@ -57,13 +62,16 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: AuditLogEntryOrder, $f
 `
 
 type auditLogEntry struct {
-	ID           string `json:"id"`
-	ActorID      string `json:"actorId"`
-	ActorType    string `json:"actorType"`
-	Action       string `json:"action"`
-	ResourceType string `json:"resourceType"`
-	ResourceID   string `json:"resourceId"`
-	CreatedAt    string `json:"createdAt"`
+	ID           string  `json:"id"`
+	ActorID      string  `json:"actorId"`
+	ActorType    string  `json:"actorType"`
+	ActorEmail   *string `json:"actorEmail"`
+	ActorName    *string `json:"actorName"`
+	Action       string  `json:"action"`
+	ResourceType string  `json:"resourceType"`
+	ResourceID   string  `json:"resourceId"`
+	Outcome      string  `json:"outcome"`
+	CreatedAt    string  `json:"createdAt"`
 }
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
@@ -75,8 +83,13 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		flagOrderDir     string
 		flagAction       string
 		flagActorID      string
+		flagActorType    string
 		flagResourceType string
 		flagResourceID   string
+		flagOutcome      string
+		flagRequestID    string
+		flagFrom         string
+		flagTo           string
 		flagOutput       *string
 	)
 
@@ -123,8 +136,14 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			filter := map[string]any{}
+
 			if flagAction != "" {
-				filter["action"] = flagAction
+				field, value, err := auditActionFilter(flagAction)
+				if err != nil {
+					return err
+				}
+
+				filter[field] = value
 			}
 
 			if flagActorID != "" {
@@ -137,6 +156,44 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 			if flagResourceID != "" {
 				filter["resourceId"] = flagResourceID
+			}
+
+			if flagActorType != "" {
+				if err := cmdutil.ValidateEnum("actor-type", flagActorType, []string{"USER", "API_KEY", "SYSTEM"}); err != nil {
+					return err
+				}
+
+				filter["actorType"] = flagActorType
+			}
+
+			if flagOutcome != "" {
+				if err := cmdutil.ValidateEnum("outcome", flagOutcome, []string{"ALLOWED", "DENIED"}); err != nil {
+					return err
+				}
+
+				filter["outcome"] = flagOutcome
+			}
+
+			if flagRequestID != "" {
+				filter["requestId"] = flagRequestID
+			}
+
+			if flagFrom != "" {
+				from, err := time.ParseInLocation(time.DateOnly, flagFrom, time.Local)
+				if err != nil {
+					return fmt.Errorf("invalid --from %q: use YYYY-MM-DD", flagFrom)
+				}
+
+				filter["createdFrom"] = from.UTC().Format(time.RFC3339)
+			}
+
+			if flagTo != "" {
+				to, err := time.ParseInLocation(time.DateOnly, flagTo, time.Local)
+				if err != nil {
+					return fmt.Errorf("invalid --to %q: use YYYY-MM-DD", flagTo)
+				}
+
+				filter["createdTo"] = to.AddDate(0, 0, 1).UTC().Format(time.RFC3339)
 			}
 
 			if len(filter) > 0 {
@@ -164,11 +221,20 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					Empty:      "No audit log entries found.",
 					Noun:       "audit log entries",
 					NextCursor: nextCursor,
-					Headers:    []string{"ID", "ACTOR TYPE", "ACTOR", "ACTION", "RESOURCE TYPE", "RESOURCE", "CREATED"},
+					Headers:    []string{"ID", "OUTCOME", "ACTOR TYPE", "ACTOR", "ACTOR ID", "ACTION", "RESOURCE TYPE", "RESOURCE", "CREATED"},
 					Row: func(e auditLogEntry) ([]string, error) {
+						actor := e.ActorID
+						if e.ActorEmail != nil && *e.ActorEmail != "" {
+							actor = *e.ActorEmail
+						} else if e.ActorName != nil && *e.ActorName != "" {
+							actor = *e.ActorName
+						}
+
 						return []string{
 							e.ID,
+							e.Outcome,
 							e.ActorType,
+							actor,
 							e.ActorID,
 							e.Action,
 							e.ResourceType,
@@ -186,11 +252,29 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmdutil.AddAfterFlag(cmd, &flagAfter)
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT)")
 	cmdutil.AddOrderDirectionFlag(cmd, &flagOrderDir, "DESC")
-	cmd.Flags().StringVar(&flagAction, "action", "", "Filter by action (e.g. core:thirdParty:create)")
+	cmd.Flags().StringVar(&flagAction, "action", "", "Filter by action. A trailing * matches the prefix (iam:*)")
 	cmd.Flags().StringVar(&flagActorID, "actor-id", "", "Filter by actor ID")
 	cmd.Flags().StringVar(&flagResourceType, "resource-type", "", "Filter by resource type (e.g. ThirdParty)")
 	cmd.Flags().StringVar(&flagResourceID, "resource-id", "", "Filter by resource ID")
+	cmd.Flags().StringVar(&flagActorType, "actor-type", "", "Filter by actor type (USER, API_KEY, SYSTEM)")
+	cmd.Flags().StringVar(&flagOutcome, "outcome", "", "Filter by outcome (ALLOWED, DENIED)")
+	cmd.Flags().StringVar(&flagRequestID, "request-id", "", "Filter by request ID")
+	cmd.Flags().StringVar(&flagFrom, "from", "", "Include entries on or after this local date (YYYY-MM-DD)")
+	cmd.Flags().StringVar(&flagTo, "to", "", "Include entries on or before this local date (YYYY-MM-DD)")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd
+}
+
+func auditActionFilter(action string) (string, string, error) {
+	if !strings.Contains(action, "*") {
+		return "action", action, nil
+	}
+
+	prefix, ok := strings.CutSuffix(action, "*")
+	if !ok || prefix == "" || strings.Contains(prefix, "*") {
+		return "", "", fmt.Errorf("invalid --action %q: * is only allowed as a trailing prefix", action)
+	}
+
+	return "actionPrefix", prefix, nil
 }

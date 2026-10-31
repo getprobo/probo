@@ -38,10 +38,17 @@ query($id: ID!) {
       id
       actorId
       actorType
+      actorEmail
+      actorName
       action
       resourceType
       resourceId
+      outcome
+      denialReason
+      originIp
+      requestId
       createdAt
+      recordedAt
     }
   }
 }
@@ -49,14 +56,21 @@ query($id: ID!) {
 
 type viewResponse struct {
 	Node *struct {
-		Typename     string `json:"__typename"`
-		ID           string `json:"id"`
-		ActorID      string `json:"actorId"`
-		ActorType    string `json:"actorType"`
-		Action       string `json:"action"`
-		ResourceType string `json:"resourceType"`
-		ResourceID   string `json:"resourceId"`
-		CreatedAt    string `json:"createdAt"`
+		Typename     string  `json:"__typename"`
+		ID           string  `json:"id"`
+		ActorID      string  `json:"actorId"`
+		ActorType    string  `json:"actorType"`
+		ActorEmail   *string `json:"actorEmail"`
+		ActorName    *string `json:"actorName"`
+		Action       string  `json:"action"`
+		ResourceType string  `json:"resourceType"`
+		ResourceID   string  `json:"resourceId"`
+		Outcome      string  `json:"outcome"`
+		DenialReason *string `json:"denialReason"`
+		OriginIP     *string `json:"originIp"`
+		RequestID    *string `json:"requestId"`
+		CreatedAt    string  `json:"createdAt"`
+		RecordedAt   string  `json:"recordedAt"`
 	} `json:"node"`
 }
 
@@ -124,15 +138,37 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 
 			_, _ = fmt.Fprintf(out, "%s\n\n", bold.Render("Audit Log Entry"))
 
+			actor := e.ActorID
+			if e.ActorEmail != nil && *e.ActorEmail != "" {
+				actor = *e.ActorEmail
+			} else if e.ActorName != nil && *e.ActorName != "" {
+				actor = *e.ActorName
+			}
+
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("ID:"), e.ID)
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Outcome:"), e.Outcome)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Action:"), e.Action)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Actor Type:"), e.ActorType)
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Actor:"), actor)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Actor ID:"), e.ActorID)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Resource Type:"), e.ResourceType)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Resource ID:"), e.ResourceID)
 
+			if e.DenialReason != nil {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Denial reason:"), *e.DenialReason)
+			}
+
+			if e.RequestID != nil {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Request ID:"), *e.RequestID)
+			}
+
+			if e.OriginIP != nil {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Origin IP:"), *e.OriginIP)
+			}
+
 			_, _ = fmt.Fprintln(out)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Created:"), cmdutil.FormatTime(e.CreatedAt))
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Recorded:"), cmdutil.FormatTime(e.RecordedAt))
 
 			return nil
 		},

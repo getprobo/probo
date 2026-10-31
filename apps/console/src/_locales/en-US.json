@@ -1602,25 +1602,7 @@
     "kinds": { "EMPLOYEE": "Employee", "CONTRACTOR": "Contractor", "SERVICE_ACCOUNT": "Service account" },
     "actions": { "create": "Create", "addEmail": "Add email", "removeEmail": "Remove email" }
   },
-  "auditLogPage": {
-    "title": "Audit Log",
-    "description": "A record of all actions performed in your organization. Entries are immutable and cannot be modified or deleted.",
-    "empty": "No audit log entries yet.",
-    "showing": "Showing {{shown}} of {{total}} entries",
-    "columns": { "date": "Date", "actor": "Actor", "action": "Action", "resource": "Resource" },
-    "actions": { "showMore": "Show more" },
-    "export": {
-      "title": "Export Audit Log",
-      "description": "Select a date range to export audit log entries as CSV. You will receive an email with a download link.",
-      "fields": { "from": "From", "to": "To" },
-      "actions": { "export": "Export", "exporting": "Exporting..." },
-      "messages": {
-        "successTitle": "Success",
-        "success": "Export started. You will receive an email with a download link when it is ready."
-      },
-      "errors": { "title": "Error", "request": "Failed to request audit log export" }
-    }
-  },
+
   "samlSsoPage": {
     "title": "SAML Single Sign-On",
     "description": "Set up SAML 2.0 single sign-on for each email domain.",

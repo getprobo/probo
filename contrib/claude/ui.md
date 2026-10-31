@@ -222,6 +222,7 @@ Use the look variants and `TableLink`:
 
 - `TableRow interactive` — containing block + cursor; sibling cells are `pointer-events-none` so they do not steal hits from the overlay.
 - `TableLink` inside the title `TableRowHeaderCell` — unstyled react-router link whose `::after` covers the row (padding and meta columns). Cmd/ctrl/middle-click stay native. One tab stop.
+- `TableButton` inside the title `TableRowHeaderCell` — the same stretch on a `<button>`, when the row opens something in place rather than navigating. Do not hand-roll the `::after` overlay.
 - `TableCell interactive` (or `TableRowHeaderCell interactive`) — `relative z-1` and `pointer-events-auto!` so a trailing `Button` / `ButtonLink` sits above the overlay and can hover. The `!` is required: the row’s `[&_td]:pointer-events-none` is a descendant selector and otherwise wins, so the overlay steals `:hover`.
 
 ```tsx
@@ -248,7 +249,7 @@ Use the look variants and `TableLink`:
 <TableRow onClick={() => navigate(to)}>…</TableRow>
 ```
 
-Put `interactive` only on body rows that contain a `TableLink`. Header rows stay inert. Do not set `position: relative` on `TableLink` — the overlay must use the row as its containing block.
+Put `interactive` only on body rows that contain a `TableLink` or `TableButton`. Header rows stay inert. Do not set `position: relative` on `TableLink` or `TableButton` — the overlay must use the row as its containing block.
 
 ## Clickable cards
 

@@ -63,6 +63,12 @@ var (
 		"action",
 		"resource_type",
 		"resource_id",
+		"outcome",
+		"denial_reason",
+		"origin_ip",
+		"user_agent",
+		"request_id",
+		"recorded_at",
 	}
 
 	scimEventExportCSVHeader = []string{
@@ -204,17 +210,34 @@ func writeAuditLogEntryCSVRow(
 	entry *coredata.AuditLogEntry,
 	actor auditLogActorExportInfo,
 ) error {
+	email := actor.email
+	name := actor.name
+
+	if entry.ActorEmail != nil {
+		email = *entry.ActorEmail
+	}
+
+	if entry.ActorName != nil {
+		name = *entry.ActorName
+	}
+
 	return w.Write([]string{
 		organizationName,
 		entry.ID.String(),
 		entry.CreatedAt.Format(time.RFC3339),
 		string(entry.ActorType),
 		entry.ActorID.String(),
-		actor.email,
-		actor.name,
+		email,
+		name,
 		entry.Action,
 		entry.ResourceType,
 		entry.ResourceID.String(),
+		string(entry.Outcome),
+		stringPtrValue(entry.DenialReason),
+		stringPtrValue(entry.OriginIP),
+		stringPtrValue(entry.UserAgent),
+		stringPtrValue(entry.RequestID),
+		entry.RecordedAt.Format(time.RFC3339),
 	})
 }
 

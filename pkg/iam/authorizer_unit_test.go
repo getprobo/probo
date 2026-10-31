@@ -24,7 +24,10 @@ import (
 	"context"
 	"errors"
 	"io"
+	"strings"
 	"testing"
+	"time"
+	"unicode/utf8"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -107,7 +110,7 @@ func TestAuthorizer_InternalErrorPaths(t *testing.T) {
 	t.Run("authorize batch returns wrapped resource attributes batch error", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := a.authorizeMulti(
+		_, _, err := a.authorizeMulti(
 			ctx,
 			nil,
 			AuthorizeMultiParams{
@@ -287,12 +290,16 @@ func TestAuthorizer_BuildAuditLogEntry(t *testing.T) {
 	resourceID := gid.New(tenantID, coredata.FrameworkEntityType)
 	sessionID := gid.New(gid.NilTenant, coredata.SessionEntityType)
 
+	longReason := strings.Repeat("a", 1023) + "ézzz"
+
 	tests := []struct {
 		name          string
 		params        AuthorizeParams
 		resourceAttrs policy.Attributes
+		decision      error
 		wantNil       bool
 		wantActorType coredata.AuditLogActorType
+		wantReason    string
 	}{
 		{
 			name: "dry run returns nil",
@@ -356,6 +363,20 @@ func TestAuthorizer_BuildAuditLogEntry(t *testing.T) {
 			},
 			wantActorType: coredata.AuditLogActorTypeAPIKey,
 		},
+		{
+			name: "denial records the outcome and a rune-safe reason",
+			params: AuthorizeParams{
+				Principal: principalID,
+				Resource:  resourceID,
+				Action:    "core:framework:get",
+			},
+			resourceAttrs: policy.Attributes{
+				"organization_id": orgID.String(),
+			},
+			decision:      errors.New(longReason),
+			wantActorType: coredata.AuditLogActorTypeAPIKey,
+			wantReason:    strings.Repeat("a", 1023),
+		},
 	}
 
 	for _, tt := range tests {
@@ -366,7 +387,15 @@ func TestAuthorizer_BuildAuditLogEntry(t *testing.T) {
 				logger: log.NewLogger(log.WithOutput(io.Discard)),
 			}
 
-			entry := a.buildAuditLogEntry(context.Background(), tt.params, tt.resourceAttrs)
+			entry := a.buildAuditLogEntry(
+				context.Background(),
+				tt.params,
+				tt.resourceAttrs,
+				tt.decision,
+				actorSnapshot{},
+				AuditRequest{},
+				time.Now(),
+			)
 			if tt.wantNil {
 				assert.Nil(t, entry)
 
@@ -378,6 +407,18 @@ func TestAuthorizer_BuildAuditLogEntry(t *testing.T) {
 			assert.Equal(t, tt.params.Principal, entry.ActorID)
 			assert.Equal(t, tt.params.Resource, entry.ResourceID)
 			assert.Equal(t, tt.params.Action, entry.Action)
+
+			if tt.decision == nil {
+				assert.Equal(t, coredata.AuditLogOutcomeAllowed, entry.Outcome)
+				assert.Nil(t, entry.DenialReason)
+
+				return
+			}
+
+			assert.Equal(t, coredata.AuditLogOutcomeDenied, entry.Outcome)
+			require.NotNil(t, entry.DenialReason)
+			assert.Equal(t, tt.wantReason, *entry.DenialReason)
+			assert.True(t, utf8.ValidString(*entry.DenialReason))
 		})
 	}
 }

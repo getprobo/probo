@@ -11930,15 +11930,41 @@ components:
             action:
               type: string
               description: Filter by action (e.g. "core:thirdParty:create")
+            action_prefix:
+              type: string
+              description: Filter by action prefix (e.g. "iam:membership")
             actor_id:
               $ref: "#/components/schemas/GID"
               description: Filter by actor ID
+            actor_type:
+              type: string
+              enum: [USER, API_KEY, SYSTEM]
+              go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AuditLogActorType
+              description: Filter by actor type
             resource_type:
               type: string
               description: Filter by resource type (e.g. "ThirdParty")
             resource_id:
               $ref: "#/components/schemas/GID"
               description: Filter by resource ID
+            outcome:
+              type: string
+              enum: [ALLOWED, DENIED]
+              go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AuditLogOutcome
+              description: Filter by outcome
+            request_id:
+              type: string
+              description: Filter by request ID
+            created_from:
+              type: string
+              format: date-time
+              go.probo.inc/mcpgen/type: time.Time
+              description: Include entries at or after this time
+            created_to:
+              type: string
+              format: date-time
+              go.probo.inc/mcpgen/type: time.Time
+              description: Include entries before this time
 
     ListAuditLogEntriesOutput:
       type: object
@@ -12023,7 +12049,9 @@ components:
         - action
         - resource_type
         - resource_id
+        - outcome
         - created_at
+        - recorded_at
       properties:
         id:
           $ref: "#/components/schemas/GID"
@@ -12039,6 +12067,12 @@ components:
           enum: [USER, API_KEY, SYSTEM]
           go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AuditLogActorType
           description: Type of actor
+        actor_email:
+          type: string
+          description: Email copied onto the row when it was written
+        actor_name:
+          type: string
+          description: Name copied onto the row when it was written
         action:
           type: string
           description: Action performed (e.g. "core:thirdParty:create")
@@ -12048,14 +12082,36 @@ components:
         resource_id:
           $ref: "#/components/schemas/GID"
           description: ID of the affected resource
+        outcome:
+          type: string
+          enum: [ALLOWED, DENIED]
+          go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AuditLogOutcome
+          description: Whether the action was allowed or denied
+        denial_reason:
+          type: string
+          description: Why the action was denied
         metadata:
           type: object
           description: Additional metadata about the action
+        origin_ip:
+          type: string
+          description: Client IP copied when the row was written
+        user_agent:
+          type: string
+          description: User agent copied when the row was written
+        request_id:
+          type: string
+          description: Request that produced the row
         created_at:
           type: string
           format: date-time
           go.probo.inc/mcpgen/type: time.Time
           description: When the action was performed
+        recorded_at:
+          type: string
+          format: date-time
+          go.probo.inc/mcpgen/type: time.Time
+          description: When the row was written
 
     RightsRequestType:
       type: string
