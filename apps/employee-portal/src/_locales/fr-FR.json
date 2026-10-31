@@ -103,8 +103,24 @@
       "devices": {
         "title": "Appareils",
         "description": "Gérez vos appareils professionnels.",
-        "connected": "Appareil connecté",
-        "action": "Inscrire un appareil"
+        "action": "Inscrire un appareil",
+        "emptyPostures": "Aucun contrôle de posture pour le moment",
+        "pendingHostname": "En attente",
+        "checks_one": "{{count}} contrôle",
+        "checks_other": "{{count}} contrôles",
+        "warnings_one": "{{count}} avertissement",
+        "warnings_other": "{{count}} avertissements",
+        "checks": {
+          "diskEncryption": "Chiffrement du disque",
+          "screenLock": "Verrouillage de l’écran",
+          "firewallEnabled": "Pare-feu activé",
+          "timeSync": "Synchronisation de l’heure",
+          "osVersion": "Version du système",
+          "autoUpdate": "Mise à jour automatique",
+          "passwordPolicy": "Politique de mot de passe",
+          "remoteLogin": "Connexion à distance",
+          "malwareProtection": "Protection contre les logiciels malveillants"
+        }
       },
       "slack": {
         "title": "Slack",
