@@ -98,7 +98,6 @@ func TestFinishConnectorCompletion_FailedInstallCheck(t *testing.T) {
 						TokenType:   "user",
 					},
 				},
-				url.Values{},
 				nil,
 			)
 
@@ -202,4 +201,49 @@ func TestOAuthConnectorRawSettings_PagerDutyReconnectMetadata(t *testing.T) {
 	var settings coredata.PagerDutyConnectorSettings
 	require.NoError(t, json.Unmarshal(raw, &settings))
 	assert.Equal(t, "new-account", settings.Subdomain)
+}
+
+func TestOAuthConnectorRawSettings_VercelReconnectTeam(t *testing.T) {
+	t.Parallel()
+
+	recorder := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/?teamId=team_x", nil)
+	completion := &connectorprotocol.CompletionState{
+		Provider:    coredata.ConnectorProviderVercel.String(),
+		ConnectorID: "reconnect-id",
+	}
+
+	raw, ok := oauthConnectorRawSettings(
+		log.NewLogger(log.WithName("test")),
+		recorder,
+		req,
+		completion,
+		req.URL.Query(),
+	)
+	require.True(t, ok)
+
+	var settings coredata.VercelConnectorSettings
+	require.NoError(t, json.Unmarshal(raw, &settings))
+	assert.Equal(t, coredata.VercelConnectorSettings{TeamID: "team_x"}, settings)
+}
+
+func TestOAuthConnectorRawSettings_VercelWithoutTeam(t *testing.T) {
+	t.Parallel()
+
+	recorder := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	completion := &connectorprotocol.CompletionState{
+		Provider:    coredata.ConnectorProviderVercel.String(),
+		ConnectorID: "reconnect-id",
+	}
+
+	_, ok := oauthConnectorRawSettings(
+		log.NewLogger(log.WithName("test")),
+		recorder,
+		req,
+		completion,
+		req.URL.Query(),
+	)
+	require.False(t, ok)
+	assert.Equal(t, http.StatusBadGateway, recorder.Code)
 }

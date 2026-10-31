@@ -99,7 +99,6 @@ func handleConnectorComplete(
 			accessReviewSvc,
 			safeRedirect,
 			completion,
-			query,
 			rawSettings,
 		)
 	}
@@ -155,7 +154,6 @@ func handleConnectorGitHubAppComplete(
 			accessReviewSvc,
 			safeRedirect,
 			completion,
-			r.URL.Query(),
 			rawSettings,
 		)
 	}
@@ -291,6 +289,39 @@ func oauthConnectorRawSettings(
 		}
 	}
 
+	if connectorProvider == coredata.ConnectorProviderVercel {
+		teamID := vercelCallbackTeamID(query)
+		if teamID == "" {
+			if oauth2Conn, ok := completion.Connection.(*connectorprotocol.OAuth2Connection); ok && oauth2Conn.AccessToken != "" {
+				if uid, err := connectorprotocol.FetchVercelUserID(r.Context(), oauth2Conn.AccessToken); err == nil {
+					teamID = uid
+				} else {
+					logger.WarnCtx(r.Context(), "cannot fetch vercel user id for personal-account fallback", log.Error(err))
+				}
+			}
+		}
+
+		if teamID == "" {
+			httpserver.RenderError(w, http.StatusBadGateway, fmt.Errorf("cannot determine the Vercel team, connect Vercel again"))
+
+			return nil, false
+		}
+
+		raw, err := json.Marshal(
+			&coredata.VercelConnectorSettings{
+				TeamID: teamID,
+			},
+		)
+		if err != nil {
+			logger.ErrorCtx(r.Context(), "cannot marshal vercel settings", log.Error(err))
+			httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
+
+			return nil, false
+		}
+
+		rawSettings = raw
+	}
+
 	return rawSettings, true
 }
 
@@ -331,7 +362,6 @@ func finishConnectorCompletion(
 	accessReviewSvc *accessreview.Service,
 	safeRedirect *saferedirect.SafeRedirect,
 	completion *connectorprotocol.CompletionState,
-	query url.Values,
 	rawSettings json.RawMessage,
 ) {
 	var connectorProvider coredata.ConnectorProvider
@@ -402,10 +432,6 @@ func finishConnectorCompletion(
 
 			return
 		}
-
-		if err := proboSvc.Connectors.ResetAccountNameSync(r.Context(), scope, cnnctr.ID); err != nil {
-			logger.WarnCtx(r.Context(), "cannot reset connector account name sync after reconnect", log.Error(err))
-		}
 	} else {
 		createReq := connector.CreateConnectorRequest{
 			OrganizationID: organizationID,
@@ -413,33 +439,6 @@ func finishConnectorCompletion(
 			Provider:       connectorProvider,
 			Protocol:       coredata.ConnectorProtocol(connection.Type()),
 			Connection:     connection,
-		}
-
-		if connectorProvider == coredata.ConnectorProviderVercel {
-			teamID := vercelCallbackTeamID(query)
-			if teamID == "" {
-				if oauth2Conn, ok := connection.(*connectorprotocol.OAuth2Connection); ok && oauth2Conn.AccessToken != "" {
-					if uid, err := connectorprotocol.FetchVercelUserID(r.Context(), oauth2Conn.AccessToken); err == nil {
-						teamID = uid
-					} else {
-						logger.WarnCtx(r.Context(), "cannot fetch vercel user id for personal-account fallback", log.Error(err))
-					}
-				}
-			}
-
-			if teamID != "" {
-				raw, err := json.Marshal(&coredata.VercelConnectorSettings{
-					TeamID: teamID,
-				})
-				if err != nil {
-					logger.ErrorCtx(r.Context(), "cannot marshal vercel settings", log.Error(err))
-					httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
-
-					return
-				}
-
-				createReq.RawSettings = raw
-			}
 		}
 
 		if rawSettings != nil {

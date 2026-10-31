@@ -29,9 +29,7 @@ import (
 	"go.gearno.de/kit/worker"
 	"go.probo.inc/probo/pkg/connectorprotocol"
 	"go.probo.inc/probo/pkg/connectorprotocol/provider"
-	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
-	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/identityfederation"
 )
 
@@ -101,22 +99,4 @@ func NewService(
 
 func (s *Service) Run(ctx context.Context) error {
 	return s.nameWorker.Run(ctx)
-}
-
-// ResetAccountNameSync clears the synced-name flag on every account of
-// connectorID so the name worker re-resolves the display name. A reconnect
-// may scope a different org or workspace.
-func (s *Service) ResetAccountNameSync(
-	ctx context.Context,
-	scope coredata.Scoper,
-	connectorID gid.GID,
-) error {
-	return s.pg.WithTx(
-		ctx,
-		func(ctx context.Context, conn pg.Tx) error {
-			accounts := &coredata.ConnectorAccounts{}
-
-			return accounts.ResetNameSyncByConnectorID(ctx, conn, scope, connectorID)
-		},
-	)
 }

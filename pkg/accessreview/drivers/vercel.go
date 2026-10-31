@@ -33,10 +33,13 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-// Vercel path elements joined onto the driver's base URL. The members
-// prefix/suffix pair is concatenated rather than joined because the team ID
-// between them must reach url.URL.String() unescaped; see queryMembers.
 const (
+	// VercelTeamMissing is the code for a connector saved without a team.
+	VercelTeamMissing = "vercel_team_missing"
+
+	// Vercel path elements joined onto the driver's base URL. The members
+	// prefix/suffix pair is concatenated rather than joined because the team
+	// ID between them must reach url.URL.String() unescaped; see queryMembers.
 	vercelTeamMembersPathPrefix = "/v3/teams/"
 	vercelTeamMembersPathSuffix = "/members"
 

@@ -75,7 +75,10 @@ func vercelRegistration() *Registration {
 			}
 
 			if s.TeamID == "" {
-				return nil, fmt.Errorf("cannot create vercel driver: team_id is required")
+				return nil, &drivers.SettingRejectedError{
+					Code:    drivers.VercelTeamMissing,
+					Message: "This Vercel connection has no team recorded. Reconnect Vercel.",
+				}
 			}
 
 			return drivers.NewVercelDriver(c, s.TeamID, ep.APIBase), nil

@@ -707,7 +707,22 @@ func (s *Service) Reconnect(
 
 			cnnctr.UpdatedAt = time.Now()
 
-			return cnnctr.Update(ctx, conn, scope, s.encryptionKey)
+			if err := cnnctr.Update(ctx, conn, scope, s.encryptionKey); err != nil {
+				return fmt.Errorf("cannot update connector: %w", err)
+			}
+
+			if len(req.RawSettings) > 0 {
+				if err := s.syncReconnectedAccount(ctx, conn, scope, cnnctr); err != nil {
+					return err
+				}
+			}
+
+			accounts := &coredata.ConnectorAccounts{}
+			if err := accounts.ResetNameSyncByConnectorID(ctx, conn, scope, cnnctr.ID); err != nil {
+				return fmt.Errorf("cannot reset connector account name sync: %w", err)
+			}
+
+			return nil
 		},
 	)
 	if err != nil {
@@ -715,6 +730,42 @@ func (s *Service) Reconnect(
 	}
 
 	return cnnctr, nil
+}
+
+// syncReconnectedAccount moves the single account row, or creates it, to the
+// tenant the new settings name. A row already on that tenant keeps its name.
+func (s *Service) syncReconnectedAccount(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	cnnctr *coredata.Connector,
+) error {
+	if s.organizationInstall(cnnctr) {
+		return nil
+	}
+
+	externalID, name, err := s.resolveStoredInitialAccount(cnnctr)
+	if err != nil {
+		return fmt.Errorf("cannot resolve connector account: %w", err)
+	}
+
+	account := &coredata.ConnectorAccount{}
+
+	err = account.LoadStandaloneByConnectorID(ctx, tx, scope, cnnctr.ID)
+	switch {
+	case errors.Is(err, coredata.ErrMultipleConnectorAccounts):
+		return nil
+	case err != nil && !errors.Is(err, coredata.ErrResourceNotFound):
+		return fmt.Errorf("cannot load connector account: %w", err)
+	case err == nil && account.ExternalAccountID == externalID:
+		return nil
+	}
+
+	if _, err := coredata.SyncStandaloneAccount(ctx, tx, scope, cnnctr, externalID, name); err != nil {
+		return fmt.Errorf("cannot sync connector account: %w", err)
+	}
+
+	return nil
 }
 
 // ClaimInstallState takes exclusive ownership of an app-install state for this

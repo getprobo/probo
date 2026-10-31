@@ -223,6 +223,97 @@ func TestDisableAccount_RefusesInitialAccount(t *testing.T) {
 	})
 }
 
+func TestReconnect_SyncsStandaloneAccount(t *testing.T) {
+	t.Parallel()
+
+	reconnectVercel := func(t *testing.T, svc *Service, scope coredata.Scoper, created *coredata.Connector, teamID string) {
+		t.Helper()
+
+		_, err := svc.Reconnect(
+			t.Context(),
+			scope,
+			ReconnectConnectorRequest{
+				ConnectorID:    created.ID,
+				OrganizationID: created.OrganizationID,
+				Provider:       coredata.ConnectorProviderVercel,
+				Connection:     &connectorprotocol.OAuth2Connection{AccessToken: "new-token"},
+				RawSettings:    json.RawMessage(`{"team_id":"` + teamID + `"}`),
+			},
+		)
+		require.NoError(t, err)
+	}
+
+	createVercel := func(t *testing.T) (*Service, coredata.Scoper, *coredata.Connector) {
+		t.Helper()
+
+		svc, scope, organizationID := newConnectorCreateEnv(t)
+		created, err := svc.Create(
+			t.Context(),
+			scope,
+			CreateConnectorRequest{
+				OrganizationID: organizationID,
+				Name:           "Test",
+				Provider:       coredata.ConnectorProviderVercel,
+				Protocol:       coredata.ConnectorProtocolOAuth2,
+				Connection:     &connectorprotocol.OAuth2Connection{AccessToken: "old-token"},
+			},
+		)
+		require.NoError(t, err)
+
+		return svc, scope, created
+	}
+
+	t.Run("new team moves the account row", func(t *testing.T) {
+		t.Parallel()
+
+		svc, scope, created := createVercel(t)
+		original := loadConnectorAccount(t, svc, scope, created.ID, created.ID.String())
+		require.NoError(t, svc.pg.WithTx(t.Context(), func(ctx context.Context, tx pg.Tx) error {
+			_, err := tx.Exec(ctx, `UPDATE connector_accounts SET name_synced_at = now() WHERE id = $1`, original.ID)
+
+			return err
+		}))
+
+		reconnectVercel(t, svc, scope, created, "team_x")
+
+		account := loadConnectorAccount(t, svc, scope, created.ID, "team_x")
+		assert.Equal(t, original.ID, account.ID)
+		assert.Nil(t, account.NameSyncedAt)
+		assert.Equal(t, 1, countConnectorAccounts(t, svc, scope, created.ID))
+	})
+
+	t.Run("missing account row is created", func(t *testing.T) {
+		t.Parallel()
+
+		svc, scope, created := createVercel(t)
+		original := loadConnectorAccount(t, svc, scope, created.ID, created.ID.String())
+		require.NoError(t, svc.pg.WithTx(t.Context(), func(ctx context.Context, tx pg.Tx) error {
+			return original.Delete(ctx, tx, scope)
+		}))
+
+		reconnectVercel(t, svc, scope, created, "team_x")
+
+		loadConnectorAccount(t, svc, scope, created.ID, "team_x")
+		assert.Equal(t, 1, countConnectorAccounts(t, svc, scope, created.ID))
+	})
+
+	t.Run("same team keeps the resolved name", func(t *testing.T) {
+		t.Parallel()
+
+		svc, scope, created := createVercel(t)
+		require.NoError(t, svc.pg.WithTx(t.Context(), func(ctx context.Context, tx pg.Tx) error {
+			_, err := coredata.SyncStandaloneAccount(ctx, tx, scope, created, "team_x", "Acme")
+
+			return err
+		}))
+
+		reconnectVercel(t, svc, scope, created, "team_x")
+
+		account := loadConnectorAccount(t, svc, scope, created.ID, "team_x")
+		assert.Equal(t, "Acme", account.Name)
+	})
+}
+
 func TestCreate_LeavesOrganizationInstallWithoutAccount(t *testing.T) {
 	t.Parallel()
 
