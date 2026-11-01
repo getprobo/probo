@@ -1648,6 +1648,7 @@ func TestSettingChecksBeforeSave(t *testing.T) {
 	for _, prvdr := range []coredata.ConnectorProvider{
 		coredata.ConnectorProviderSupabase,
 		coredata.ConnectorProviderBetterStack,
+		coredata.ConnectorProviderUniFi,
 	} {
 		reg, ok := NewBuiltinRegistry().Get(prvdr)
 		require.True(t, ok)
@@ -1704,4 +1705,92 @@ func TestProbeBetterStack(t *testing.T) {
 		assert.Equal(t, drivers.BetterStackTeamNotFound, rejected.Code)
 		assert.Equal(t, "teamName", rejected.Setting)
 	})
+}
+
+func TestProbeUniFi(t *testing.T) {
+	t.Parallel()
+
+	conn := &coredata.Connector{Provider: coredata.ConnectorProviderUniFi}
+	require.NoError(t, conn.SetSettings(&coredata.UniFiConnectorSettings{ConsoleID: "ABCDEF0123:1234567890"}))
+
+	probe := func(client *http.Client) error {
+		return NewBuiltinRegistry().ProbeConnection(t.Context(), client, conn)
+	}
+
+	t.Run("reads the console's network admins", func(t *testing.T) {
+		t.Parallel()
+
+		var seen []*http.Request
+
+		require.NoError(t, probe(probeStubClient(&seen, http.StatusOK, `{"meta":{"rc":"ok"},"data":[]}`)))
+		require.Len(t, seen, 1)
+		assert.Equal(
+			t,
+			"https://api.ui.com/v1/connector/consoles/ABCDEF0123:1234567890/proxy/network/api/stat/admin",
+			seen[0].URL.String(),
+		)
+	})
+
+	for name, body := range map[string]string{
+		"legacy error flag":  `{"meta":{"rc":"error","msg":"api.err.NoPermission"},"data":[]}`,
+		"missing ok flag":    `{"status":"ok"}`,
+		"missing admin list": `{"meta":{"rc":"ok"}}`,
+	} {
+		t.Run(name+" refuses the operation", func(t *testing.T) {
+			t.Parallel()
+
+			var seen []*http.Request
+
+			err := probe(probeStubClient(&seen, http.StatusOK, body))
+
+			rejected, ok := errors.AsType[*CredentialRejectedError](err)
+			require.Truef(t, ok, "%s should refuse the operation, got %v", name, err)
+			assert.True(t, rejected.OperationRefused)
+		})
+	}
+
+	t.Run("console 400 rejects", func(t *testing.T) {
+		t.Parallel()
+
+		var seen []*http.Request
+
+		err := probe(probeStubClient(&seen, http.StatusBadRequest, `{"meta":{"rc":"error","msg":"api.err.Invalid"},"data":[]}`))
+
+		rejected, ok := errors.AsType[*CredentialRejectedError](err)
+		require.Truef(t, ok, "a console 400 should reject, got %v", err)
+		assert.Equal(t, http.StatusBadRequest, rejected.StatusCode)
+	})
+
+	t.Run("bad key rejects the credential", func(t *testing.T) {
+		t.Parallel()
+
+		var seen []*http.Request
+
+		err := probe(probeStubClient(&seen, http.StatusUnauthorized, `{"code":"unauthorized","httpStatusCode":401}`))
+
+		rejected, ok := errors.AsType[*CredentialRejectedError](err)
+		require.Truef(t, ok, "401 should reject the credential, got %v", err)
+		assert.Equal(t, http.StatusUnauthorized, rejected.StatusCode)
+	})
+
+	for _, tc := range []struct {
+		status int
+		code   string
+	}{
+		{http.StatusForbidden, drivers.UniFiConsoleUnreachable},
+		{http.StatusBadRequest, drivers.UniFiConsoleUnsupported},
+	} {
+		t.Run(http.StatusText(tc.status)+" rejects the console id", func(t *testing.T) {
+			t.Parallel()
+
+			var seen []*http.Request
+
+			err := probe(probeStubClient(&seen, tc.status, fmt.Sprintf(`{"code":"x","httpStatusCode":%d}`, tc.status)))
+
+			rejected, ok := errors.AsType[*drivers.SettingRejectedError](err)
+			require.Truef(t, ok, "%d should reject the console id, got %v", tc.status, err)
+			assert.Equal(t, tc.code, rejected.Code)
+			assert.Equal(t, "consoleId", rejected.Setting)
+		})
+	}
 }
