@@ -148,6 +148,7 @@ enum ConnectorProvider
         )
     DAYTONA
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderDaytona")
+    UNIFI @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderUniFi")
 }
 
 enum AzureEnvironment
@@ -685,6 +686,7 @@ input CreateAPIKeyConnectorInput {
     newRelicRegion: String
     retoolBaseUrl: String
     twingateNetwork: String
+    unifiConsoleId: String
 }
 
 type CreateAPIKeyConnectorPayload {

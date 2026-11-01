@@ -75,3 +75,9 @@ export const Daytona: Story = {
     thirdParty: "DAYTONA",
   },
 };
+
+export const UniFi: Story = {
+  args: {
+    thirdParty: "UNIFI",
+  },
+};

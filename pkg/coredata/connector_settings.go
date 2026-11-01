@@ -271,6 +271,12 @@ type (
 		Network string `json:"network"`
 	}
 
+	// UniFiConnectorSettings holds the UniFi console the source reviews, as Site
+	// Manager identifies it in api.ui.com connector paths.
+	UniFiConnectorSettings struct {
+		ConsoleID string `json:"console_id"`
+	}
+
 	// AWSConnectorSettings names the IAM role Probo assumes. Every field is
 	// public knowledge — the account owns the trust, and the connection
 	// itself holds no credential — so unlike the connection blob these stay
