@@ -20,6 +20,7 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
+import { stampGraphqlNode, withParentReference } from '../../output';
 
 export const description: INodeProperties[] = [
 	{
@@ -52,9 +53,16 @@ export async function execute(
 					state
 					comment
 					decidedAt
+					documentVersion {
+						id
+						document {
+							id
+						}
+					}
 					approver {
 						id
 						fullName
+						emailAddress
 					}
 					createdAt
 					updatedAt
@@ -66,7 +74,7 @@ export async function execute(
 	const responseData = await proboApiRequest.call(this, query, { approvalDecisionId });
 
 	return {
-		json: responseData,
+		json: stampGraphqlNode(responseData, ['data', 'node'], (node) => withParentReference(node)),
 		pairedItem: { item: itemIndex },
 	};
 }

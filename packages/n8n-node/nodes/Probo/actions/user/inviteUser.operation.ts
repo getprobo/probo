@@ -19,45 +19,30 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { organizationLocator, personLocator } from '../../locators';
 import { proboConnectApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Organization ID',
-		name: 'organizationId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['user'],
-				operation: ['inviteUser'],
-			},
-		},
-		default: '',
-		description: 'The ID of the organization',
-		required: true,
-	},
-	{
-		displayName: 'Profile ID',
+	organizationLocator({
+		resource: ['user'],
+		operation: ['inviteUser'],
+	}),
+	personLocator({
 		name: 'profileId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['user'],
-				operation: ['inviteUser'],
-			},
-		},
-		default: '',
-		description: 'The ID of the user (profile) to invite to the organization',
-		required: true,
-	},
+		displayName: 'Profile',
+		resource: ['user'],
+		operation: ['inviteUser'],
+		description:
+			'The profile to use. Search the list, or enter an ID. The list includes pending and deactivated profiles. Enter an ID for an active member.',
+	}),
 ];
 
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
-	const profileId = this.getNodeParameter('profileId', itemIndex) as string;
+	const organizationId = this.getNodeParameter('organizationId', itemIndex, '', { extractValue: true }) as string;
+	const profileId = this.getNodeParameter('profileId', itemIndex, '', { extractValue: true }) as string;
 
 	const query = `
 		mutation InviteUser($input: InviteUserInput!) {

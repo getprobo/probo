@@ -18,46 +18,36 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { NodeOperationError, type INodeProperties, type IExecuteFunctions, type INodeExecutionData } from 'n8n-workflow';
+import { organizationLocator, documentLocator, controlLocator } from '../../locators';
 import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Control ID',
-		name: 'controlId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['control'],
-				operation: ['linkDocument'],
-			},
-		},
-		default: '',
-		description: 'The ID of the control',
-		required: true,
-	},
-	{
-		displayName: 'Document ID',
-		name: 'documentId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['control'],
-				operation: ['linkDocument'],
-			},
-		},
-		default: '',
-		description: 'The ID of the document to link',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['control'],
+		operation: ['linkDocument'],
+		required: false,
+		description: 'Organization to search controls and documents in. Leave this empty when entering an ID.',
+	}),
+	controlLocator({
+		resource: ['control'],
+		operation: ['linkDocument'],
+	}),
+	documentLocator({
+		resource: ['control'],
+		operation: ['linkDocument'],
+	}),
 ];
 
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const controlId = this.getNodeParameter('controlId', itemIndex) as string;
-	const documentId = this.getNodeParameter('documentId', itemIndex) as string;
+	const controlId = this.getNodeParameter('controlId', itemIndex, '', { extractValue: true }) as string;
+	const documentId = this.getNodeParameter('documentId', itemIndex, '', { extractValue: true }) as string;
+	if (!documentId) {
+		throw new NodeOperationError(this.getNode(), 'Select a document', { itemIndex });
+	}
 
 	const query = `
 		mutation CreateControlDocumentMapping($input: CreateControlDocumentMappingInput!) {

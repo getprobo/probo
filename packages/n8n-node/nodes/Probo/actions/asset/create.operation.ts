@@ -19,23 +19,14 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { organizationLocator, personLocator } from '../../locators';
 import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Organization ID',
-		name: 'organizationId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['asset'],
-				operation: ['create'],
-			},
-		},
-		default: '',
-		description: 'The ID of the organization',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['asset'],
+		operation: ['create'],
+	}),
 	{
 		displayName: 'Name',
 		name: 'name',
@@ -64,20 +55,11 @@ export const description: INodeProperties[] = [
 		description: 'The amount of the asset',
 		required: true,
 	},
-	{
-		displayName: 'Owner ID',
-		name: 'ownerId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['asset'],
-				operation: ['create'],
-			},
-		},
-		default: '',
-		description: 'The ID of the owner (People)',
-		required: true,
-	},
+	personLocator({
+		displayName: 'Owner',
+		resource: ['asset'],
+		operation: ['create'],
+	}),
 	{
 		displayName: 'Asset Type',
 		name: 'assetType',
@@ -164,10 +146,10 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
+	const organizationId = this.getNodeParameter('organizationId', itemIndex, '', { extractValue: true }) as string;
 	const name = this.getNodeParameter('name', itemIndex) as string;
 	const amount = this.getNodeParameter('amount', itemIndex) as number;
-	const ownerId = this.getNodeParameter('ownerId', itemIndex) as string;
+	const ownerId = this.getNodeParameter('ownerId', itemIndex, '', { extractValue: true }) as string;
 	const assetType = this.getNodeParameter('assetType', itemIndex) as string;
 	const dataTypesStored = this.getNodeParameter('dataTypesStored', itemIndex) as string;
 	const thirdPartyIdsStr = this.getNodeParameter('thirdPartyIds', itemIndex, '') as string;

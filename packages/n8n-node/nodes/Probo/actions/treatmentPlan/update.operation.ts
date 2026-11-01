@@ -20,8 +20,15 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
+import { organizationLocator, personLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
+	organizationLocator({
+		resource: ['treatmentPlan'],
+		operation: ['update'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
 	{
 		displayName: 'Treatment Plan ID',
 		name: 'treatmentPlanId',
@@ -103,13 +110,10 @@ export const description: INodeProperties[] = [
 				default: 1,
 				description: 'The inherent likelihood (1-5)',
 			},
-			{
-				displayName: 'Owner ID',
-				name: 'ownerId',
-				type: 'string',
-				default: '',
-				description: 'The ID of the person who owns this treatment plan',
-			},
+			personLocator({
+				displayName: 'Owner',
+				required: false,
+			}),
 			{
 				displayName: 'Residual Impact',
 				name: 'residualImpact',
@@ -174,7 +178,7 @@ export async function execute(
 
 	const input: Record<string, unknown> = { id: treatmentPlanId };
 	if (treatment) input.treatment = treatment;
-	if (additionalFields.ownerId) input.ownerId = additionalFields.ownerId;
+	if (this.getNodeParameter('additionalFields.ownerId', itemIndex, '', { extractValue: true }) as string) input.ownerId = this.getNodeParameter('additionalFields.ownerId', itemIndex, '', { extractValue: true }) as string;
 	if (additionalFields.inherentLikelihood !== undefined) input.inherentLikelihood = additionalFields.inherentLikelihood;
 	if (additionalFields.inherentImpact !== undefined) input.inherentImpact = additionalFields.inherentImpact;
 	if (additionalFields.residualLikelihood !== undefined) input.residualLikelihood = additionalFields.residualLikelihood;

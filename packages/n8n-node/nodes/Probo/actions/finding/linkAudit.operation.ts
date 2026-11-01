@@ -20,8 +20,15 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
+import { auditLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
+	organizationLocator({
+		resource: ['finding'],
+		operation: ['linkAudit'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
 	{
 		displayName: 'Finding ID',
 		name: 'findingId',
@@ -36,20 +43,10 @@ export const description: INodeProperties[] = [
 		description: 'The ID of the finding',
 		required: true,
 	},
-	{
-		displayName: 'Audit ID',
-		name: 'auditId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['finding'],
-				operation: ['linkAudit'],
-			},
-		},
-		default: '',
-		description: 'The ID of the audit to link',
-		required: true,
-	},
+	auditLocator({
+		resource: ['finding'],
+		operation: ['linkAudit'],
+	}),
 	{
 		displayName: 'Reference ID',
 		name: 'referenceId',
@@ -71,7 +68,7 @@ export async function execute(
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
 	const findingId = this.getNodeParameter('findingId', itemIndex) as string;
-	const auditId = this.getNodeParameter('auditId', itemIndex) as string;
+	const auditId = this.getNodeParameter('auditId', itemIndex, '', { extractValue: true }) as string;
 	const referenceId = this.getNodeParameter('referenceId', itemIndex) as string;
 
 	const query = `

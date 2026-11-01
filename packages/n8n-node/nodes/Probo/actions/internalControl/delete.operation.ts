@@ -20,29 +20,26 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
+import { internalControlLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Internal Control ID',
-		name: 'internalControlId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['internalControl'],
-				operation: ['delete'],
-			},
-		},
-		default: '',
-		description: 'The ID of the internal control to delete',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['internalControl'],
+		operation: ['delete'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+	internalControlLocator({
+		resource: ['internalControl'],
+		operation: ['delete'],
+	}),
 ];
 
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const internalControlId = this.getNodeParameter('internalControlId', itemIndex) as string;
+	const internalControlId = this.getNodeParameter('internalControlId', itemIndex, '', { extractValue: true }) as string;
 
 	const query = `
 		mutation DeleteInternalControl($input: DeleteInternalControlInput!) {

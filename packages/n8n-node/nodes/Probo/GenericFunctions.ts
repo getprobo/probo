@@ -31,6 +31,8 @@ import { NodeApiError, NodeOperationError } from 'n8n-workflow';
 import { version } from '../../package.json';
 import { readGraphQLBody } from './graphqlResponse';
 
+export { executionItems } from './output';
+
 type ApiRequestFn = (
 	this: IExecuteFunctions | IHookFunctions,
 	query: string,
@@ -115,7 +117,7 @@ export async function proboApiRequest(
 }
 
 export async function proboConnectApiRequest(
-	this: IExecuteFunctions | IHookFunctions,
+	this: ApiRequestContext,
 	query: string,
 	variables: IDataObject = {},
 ): Promise<IDataObject> {

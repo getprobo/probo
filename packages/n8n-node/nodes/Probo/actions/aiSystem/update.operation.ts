@@ -20,8 +20,15 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
+import { organizationLocator, personLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
+	organizationLocator({
+		resource: ['aiSystem'],
+		operation: ['update'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
 	{
 		displayName: 'AI System ID',
 		name: 'id',
@@ -151,13 +158,10 @@ export const description: INodeProperties[] = [
 				default: '',
 				description: 'Additional notes. Empty string clears the value.',
 			},
-			{
-				displayName: 'Owner ID',
-				name: 'ownerId',
-				type: 'string',
-				default: '',
-				description: 'Owner profile ID. Empty string clears the value.',
-			},
+			personLocator({
+				displayName: 'Owner',
+				required: false,
+			}),
 			{
 				displayName: 'Purpose',
 				name: 'purpose',
@@ -272,7 +276,8 @@ export async function execute(
 	}
 
 	if (additionalFields.ownerId !== undefined) {
-		input.ownerId = additionalFields.ownerId === '' ? null : additionalFields.ownerId;
+		const ownerId = this.getNodeParameter('additionalFields.ownerId', itemIndex, '', { extractValue: true }) as string;
+		input.ownerId = ownerId === '' ? null : ownerId;
 	}
 
 	if (additionalFields.source !== undefined) {

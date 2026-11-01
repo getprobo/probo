@@ -19,30 +19,22 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { organizationLocator } from '../../locators';
 import { proboConnectApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Organization ID',
-		name: 'organizationId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['organization'],
-				operation: ['deleteHorizontalLogo'],
-			},
-		},
-		default: '',
+	organizationLocator({
+		resource: ['organization'],
+		operation: ['deleteHorizontalLogo'],
 		description: 'The ID of the organization whose horizontal logo to delete',
-		required: true,
-	},
+	}),
 ];
 
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
+	const organizationId = this.getNodeParameter('organizationId', itemIndex, '', { extractValue: true }) as string;
 
 	const query = `
 		mutation DeleteOrganizationHorizontalLogo($input: DeleteOrganizationHorizontalLogoInput!) {

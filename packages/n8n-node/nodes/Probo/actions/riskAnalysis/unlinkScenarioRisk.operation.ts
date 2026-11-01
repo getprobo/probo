@@ -20,8 +20,15 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
+import { riskLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
+	organizationLocator({
+		resource: ['riskAnalysis'],
+		operation: ['unlinkScenarioRisk'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
 	{
 		displayName: 'Scenario ID',
 		name: 'riskAnalysisScenarioId',
@@ -36,20 +43,10 @@ export const description: INodeProperties[] = [
 		description: 'The ID of the scenario',
 		required: true,
 	},
-	{
-		displayName: 'Risk ID',
-		name: 'riskId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['riskAnalysis'],
-				operation: ['unlinkScenarioRisk'],
-			},
-		},
-		default: '',
-		description: 'The ID of the risk to unlink',
-		required: true,
-	},
+	riskLocator({
+		resource: ['riskAnalysis'],
+		operation: ['unlinkScenarioRisk'],
+	}),
 ];
 
 export async function execute(
@@ -57,7 +54,7 @@ export async function execute(
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
 	const riskAnalysisScenarioId = this.getNodeParameter('riskAnalysisScenarioId', itemIndex) as string;
-	const riskId = this.getNodeParameter('riskId', itemIndex) as string;
+	const riskId = this.getNodeParameter('riskId', itemIndex, '', { extractValue: true }) as string;
 
 	const query = `
 		mutation UnlinkRiskAnalysisScenarioRisk($input: UnlinkRiskAnalysisScenarioRiskInput!) {

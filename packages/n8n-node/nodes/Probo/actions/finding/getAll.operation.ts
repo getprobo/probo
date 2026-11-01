@@ -19,23 +19,14 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { proboApiRequestAllItems } from '../../GenericFunctions';
+import { organizationLocator, auditLocator } from '../../locators';
+import { proboApiRequestAllItems, executionItems } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Organization ID',
-		name: 'organizationId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['finding'],
-				operation: ['getAll'],
-			},
-		},
-		default: '',
-		description: 'The ID of the organization',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['finding'],
+		operation: ['getAll'],
+	}),
 	{
 		displayName: 'Return All',
 		name: 'returnAll',
@@ -79,13 +70,10 @@ export const description: INodeProperties[] = [
 			},
 		},
 		options: [
-			{
-				displayName: 'Audit ID',
-				name: 'auditId',
-				type: 'string',
-				default: '',
+			auditLocator({
+				required: false,
 				description: 'Only return findings linked to this audit',
-			},
+			}),
 		],
 	},
 ];
@@ -93,13 +81,10 @@ export const description: INodeProperties[] = [
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
-): Promise<INodeExecutionData> {
-	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
+): Promise<INodeExecutionData[]> {
+	const organizationId = this.getNodeParameter('organizationId', itemIndex, '', { extractValue: true }) as string;
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
-	const filters = this.getNodeParameter('filters', itemIndex, {}) as {
-		auditId?: string;
-	};
 
 	const query = `
 		query GetFindings($organizationId: ID!, $first: Int, $after: CursorKey, $filter: FindingFilter) {
@@ -136,8 +121,8 @@ export async function execute(
 	const variables: IDataObject = { organizationId };
 	const filter: IDataObject = {};
 
-	if (filters.auditId) {
-		filter.auditId = filters.auditId;
+	if (this.getNodeParameter('filters.auditId', itemIndex, '', { extractValue: true }) as string) {
+		filter.auditId = this.getNodeParameter('filters.auditId', itemIndex, '', { extractValue: true }) as string;
 	}
 
 	if (Object.keys(filter).length > 0) {
@@ -157,8 +142,5 @@ export async function execute(
 		limit,
 	);
 
-	return {
-		json: { findings },
-		pairedItem: { item: itemIndex },
-	};
+	return executionItems(findings, itemIndex);
 }

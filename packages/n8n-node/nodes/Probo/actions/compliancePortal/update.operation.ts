@@ -20,22 +20,19 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
+import { compliancePortalLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Compliance Portal ID',
-		name: 'compliancePortalId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['compliancePortal'],
-				operation: ['update'],
-			},
-		},
-		default: '',
-		description: 'The ID of the compliance portal to update',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['compliancePortal'],
+		operation: ['update'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+	compliancePortalLocator({
+		resource: ['compliancePortal'],
+		operation: ['update'],
+	}),
 	{
 		displayName: 'Active',
 		name: 'active',
@@ -175,7 +172,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const compliancePortalId = this.getNodeParameter('compliancePortalId', itemIndex) as string;
+	const compliancePortalId = this.getNodeParameter('compliancePortalId', itemIndex, '', { extractValue: true }) as string;
 	const active = this.getNodeParameter('active', itemIndex) as boolean | undefined;
 	const searchEngineIndexing = this.getNodeParameter('searchEngineIndexing', itemIndex, '') as string;
 	const rightsRequestsEnabled = this.getNodeParameter('rightsRequestsEnabled', itemIndex, '') as string;

@@ -20,29 +20,32 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
+import { documentVersionLocator, organizationLocator, documentLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Document Version ID',
-		name: 'documentVersionId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['document'],
-				operation: ['voidApproval'],
-			},
-		},
-		default: '',
-		description: 'The ID of the document version',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['document'],
+		operation: ['voidApproval'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+	documentLocator({
+		resource: ['document'],
+		operation: ['voidApproval'],
+		required: false,
+		description: 'Document to search versions in. Leave this empty when entering a version ID.',
+	}),
+	documentVersionLocator({
+		resource: ['document'],
+		operation: ['voidApproval'],
+	}),
 ];
 
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const documentVersionId = this.getNodeParameter('documentVersionId', itemIndex) as string;
+	const documentVersionId = this.getNodeParameter('documentVersionId', itemIndex, '', { extractValue: true }) as string;
 
 	const query = `
 		mutation VoidDocumentVersionApproval($input: VoidDocumentVersionApprovalInput!) {

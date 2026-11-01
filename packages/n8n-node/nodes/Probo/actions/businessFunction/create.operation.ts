@@ -19,23 +19,14 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { organizationLocator, personLocator } from '../../locators';
 import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Organization ID',
-		name: 'organizationId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['businessFunction'],
-				operation: ['create'],
-			},
-		},
-		default: '',
-		description: 'The ID of the organization',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['businessFunction'],
+		operation: ['create'],
+	}),
 	{
 		displayName: 'Name',
 		name: 'name',
@@ -149,13 +140,10 @@ export const description: INodeProperties[] = [
 				default: '',
 				description: 'Additional notes',
 			},
-			{
-				displayName: 'Owner ID',
-				name: 'ownerId',
-				type: 'string',
-				default: '',
-				description: 'Owner profile ID',
-			},
+			personLocator({
+				displayName: 'Owner',
+				required: false,
+			}),
 			{
 				displayName: 'Third Party IDs',
 				name: 'thirdPartyIds',
@@ -171,7 +159,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
+	const organizationId = this.getNodeParameter('organizationId', itemIndex, '', { extractValue: true }) as string;
 	const name = this.getNodeParameter('name', itemIndex) as string;
 	const classification = this.getNodeParameter('classification', itemIndex) as string;
 	const mtdMinutes = this.getNodeParameter('mtdMinutes', itemIndex) as number;
@@ -224,8 +212,8 @@ export async function execute(
 		input.notes = additionalFields.notes;
 	}
 
-	if (additionalFields.ownerId) {
-		input.ownerId = additionalFields.ownerId;
+	if (this.getNodeParameter('additionalFields.ownerId', itemIndex, '', { extractValue: true }) as string) {
+		input.ownerId = this.getNodeParameter('additionalFields.ownerId', itemIndex, '', { extractValue: true }) as string;
 	}
 
 	if (additionalFields.assetIds) {

@@ -19,23 +19,14 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { organizationLocator, personLocator } from '../../locators';
 import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Organization ID',
-		name: 'organizationId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['obligation'],
-				operation: ['create'],
-			},
-		},
-		default: '',
-		description: 'The ID of the organization',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['obligation'],
+		operation: ['create'],
+	}),
 	{
 		displayName: 'Area',
 		name: 'area',
@@ -104,19 +95,11 @@ export const description: INodeProperties[] = [
 		default: '',
 		description: 'The regulator of the obligation',
 	},
-	{
-		displayName: 'Owner ID',
-		name: 'ownerId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['obligation'],
-				operation: ['create'],
-			},
-		},
-		default: '',
-		description: 'The ID of the owner',
-	},
+	personLocator({
+		displayName: 'Owner',
+		resource: ['obligation'],
+		operation: ['create'],
+	}),
 	{
 		displayName: 'Last Review Date',
 		name: 'lastReviewDate',
@@ -199,13 +182,13 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
+	const organizationId = this.getNodeParameter('organizationId', itemIndex, '', { extractValue: true }) as string;
 	const area = this.getNodeParameter('area', itemIndex) as string;
 	const source = this.getNodeParameter('source', itemIndex) as string;
 	const requirement = this.getNodeParameter('requirement', itemIndex) as string;
 	const actionsToBeImplemented = this.getNodeParameter('actionsToBeImplemented', itemIndex, '') as string;
 	const regulator = this.getNodeParameter('regulator', itemIndex, '') as string;
-	const ownerId = this.getNodeParameter('ownerId', itemIndex, '') as string;
+	const ownerId = this.getNodeParameter('ownerId', itemIndex, '', { extractValue: true }) as string;
 	const lastReviewDate = this.getNodeParameter('lastReviewDate', itemIndex, '') as string;
 	const dueDate = this.getNodeParameter('dueDate', itemIndex, '') as string;
 	const status = this.getNodeParameter('status', itemIndex, '') as string;
@@ -242,7 +225,7 @@ export async function execute(
 			requirement,
 			...(actionsToBeImplemented && { actionsToBeImplemented }),
 			...(regulator && { regulator }),
-			...(ownerId && { ownerId }),
+			ownerId,
 			...(lastReviewDate && { lastReviewDate }),
 			...(dueDate && { dueDate }),
 			...(status && { status }),

@@ -21,22 +21,19 @@
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
 import { accessReviewSourceIdsUpdateField } from './sources.fields';
+import { accessReviewCampaignLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Access Review Campaign ID',
-		name: 'accessReviewCampaignId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['accessReview'],
-				operation: ['update'],
-			},
-		},
-		default: '',
-		description: 'The ID of the access review campaign to update',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['accessReview'],
+		operation: ['update'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+	accessReviewCampaignLocator({
+		resource: ['accessReview'],
+		operation: ['update'],
+	}),
 	{
 		displayName: 'Name',
 		name: 'name',
@@ -83,7 +80,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const accessReviewCampaignId = this.getNodeParameter('accessReviewCampaignId', itemIndex) as string;
+	const accessReviewCampaignId = this.getNodeParameter('accessReviewCampaignId', itemIndex, '', { extractValue: true }) as string;
 	const name = this.getNodeParameter('name', itemIndex, '') as string;
 	const description = this.getNodeParameter('description', itemIndex, '') as string;
 	const additionalFields = this.getNodeParameter('additionalFields', itemIndex, {}) as {

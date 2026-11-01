@@ -20,36 +20,23 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
+import { compliancePortalLocator, thirdPartyLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Compliance Portal ID',
-		name: 'compliancePortalId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['compliancePortal'],
-				operation: ['updateThirdPartyPublished'],
-			},
-		},
-		default: '',
-		description: 'The ID of the compliance portal',
-		required: true,
-	},
-	{
-		displayName: 'Third Party ID',
-		name: 'thirdPartyId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['compliancePortal'],
-				operation: ['updateThirdPartyPublished'],
-			},
-		},
-		default: '',
-		description: 'The ID of the third party to publish on the compliance portal',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['compliancePortal'],
+		operation: ['updateThirdPartyPublished'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+	compliancePortalLocator({
+		resource: ['compliancePortal'],
+		operation: ['updateThirdPartyPublished'],
+	}),
+	thirdPartyLocator({
+		resource: ['compliancePortal'],
+		operation: ['updateThirdPartyPublished'],
+	}),
 	{
 		displayName: 'Published',
 		name: 'published',
@@ -69,8 +56,8 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const compliancePortalId = this.getNodeParameter('compliancePortalId', itemIndex) as string;
-	const thirdPartyId = this.getNodeParameter('thirdPartyId', itemIndex) as string;
+	const compliancePortalId = this.getNodeParameter('compliancePortalId', itemIndex, '', { extractValue: true }) as string;
+	const thirdPartyId = this.getNodeParameter('thirdPartyId', itemIndex, '', { extractValue: true }) as string;
 	const published = this.getNodeParameter('published', itemIndex) as boolean;
 
 	const query = `

@@ -20,29 +20,26 @@
 
 import type { IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
+import { taskLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Task ID',
-		name: 'taskId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['task'],
-				operation: ['unlinkExternal'],
-			},
-		},
-		default: '',
-		description: 'The ID of the task to unlink',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['task'],
+		operation: ['unlinkExternal'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+	taskLocator({
+		resource: ['task'],
+		operation: ['unlinkExternal'],
+	}),
 ];
 
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const taskId = this.getNodeParameter('taskId', itemIndex) as string;
+	const taskId = this.getNodeParameter('taskId', itemIndex, '', { extractValue: true }) as string;
 
 	const query = `
 		mutation UnlinkTaskExternal($input: UnlinkTaskExternalInput!) {

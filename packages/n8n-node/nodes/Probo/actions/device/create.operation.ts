@@ -19,44 +19,28 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { organizationLocator, personLocator } from '../../locators';
 import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Organization ID',
-		name: 'organizationId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['device'],
-				operation: ['create'],
-			},
-		},
-		default: '',
-		description: 'The ID of the organization',
-		required: true,
-	},
-	{
-		displayName: 'Owner ID',
-		name: 'ownerId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['device'],
-				operation: ['create'],
-			},
-		},
-		default: '',
-		description: 'Optional profile ID of the owner',
-	},
+	organizationLocator({
+		resource: ['device'],
+		operation: ['create'],
+	}),
+	personLocator({
+		displayName: 'Owner',
+		resource: ['device'],
+		operation: ['create'],
+		required: false,
+	}),
 ];
 
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
-	const ownerId = this.getNodeParameter('ownerId', itemIndex) as string;
+	const organizationId = this.getNodeParameter('organizationId', itemIndex, '', { extractValue: true }) as string;
+	const ownerId = this.getNodeParameter('ownerId', itemIndex, '', { extractValue: true }) as string;
 
 	const input: { organizationId: string; ownerId?: string } = {
 		organizationId,

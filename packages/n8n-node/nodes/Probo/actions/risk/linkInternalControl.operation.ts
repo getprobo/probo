@@ -20,44 +20,31 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
+import { internalControlLocator, riskLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Risk ID',
-		name: 'riskId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['risk'],
-				operation: ['linkInternalControl'],
-			},
-		},
-		default: '',
-		description: 'The ID of the risk',
-		required: true,
-	},
-	{
-		displayName: 'Internal Control ID',
-		name: 'internalControlId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['risk'],
-				operation: ['linkInternalControl'],
-			},
-		},
-		default: '',
-		description: 'The ID of the internal control to link',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['risk'],
+		operation: ['linkInternalControl'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+	riskLocator({
+		resource: ['risk'],
+		operation: ['linkInternalControl'],
+	}),
+	internalControlLocator({
+		resource: ['risk'],
+		operation: ['linkInternalControl'],
+	}),
 ];
 
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const riskId = this.getNodeParameter('riskId', itemIndex) as string;
-	const internalControlId = this.getNodeParameter('internalControlId', itemIndex) as string;
+	const riskId = this.getNodeParameter('riskId', itemIndex, '', { extractValue: true }) as string;
+	const internalControlId = this.getNodeParameter('internalControlId', itemIndex, '', { extractValue: true }) as string;
 
 	const query = `
 		mutation CreateRiskInternalControlMapping($input: CreateRiskInternalControlMappingInput!) {

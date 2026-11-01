@@ -19,23 +19,14 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { proboApiRequestAllItems } from '../../GenericFunctions';
+import { organizationLocator } from '../../locators';
+import { proboApiRequestAllItems, executionItems } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Organization ID',
-		name: 'organizationId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['device'],
-				operation: ['getAll'],
-			},
-		},
-		default: '',
-		description: 'The ID of the organization',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['device'],
+		operation: ['getAll'],
+	}),
 	{
 		displayName: 'Return All',
 		name: 'returnAll',
@@ -146,8 +137,8 @@ export const description: INodeProperties[] = [
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
-): Promise<INodeExecutionData> {
-	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
+): Promise<INodeExecutionData[]> {
+	const organizationId = this.getNodeParameter('organizationId', itemIndex, '', { extractValue: true }) as string;
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
 	const options = this.getNodeParameter('options', itemIndex, {}) as {
@@ -164,6 +155,7 @@ export async function execute(
 		? `owner {
 			id
 			fullName
+			emailAddress
 		}`
 		: '';
 
@@ -259,8 +251,5 @@ export async function execute(
 		limit,
 	);
 
-	return {
-		json: { devices },
-		pairedItem: { item: itemIndex },
-	};
+	return executionItems(devices, itemIndex);
 }

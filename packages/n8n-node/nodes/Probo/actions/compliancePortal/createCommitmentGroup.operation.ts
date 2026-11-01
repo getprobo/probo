@@ -20,22 +20,19 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
+import { compliancePortalLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Compliance Portal ID',
-		name: 'compliancePortalId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['trustCenter'],
-				operation: ['createCommitmentGroup'],
-			},
-		},
-		default: '',
-		description: 'The ID of the compliance portal',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['trustCenter'],
+		operation: ['createCommitmentGroup'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+	compliancePortalLocator({
+		resource: ['trustCenter'],
+		operation: ['createCommitmentGroup'],
+	}),
 	{
 		displayName: 'Title',
 		name: 'title',
@@ -73,7 +70,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const compliancePortalId = this.getNodeParameter('compliancePortalId', itemIndex) as string;
+	const compliancePortalId = this.getNodeParameter('compliancePortalId', itemIndex, '', { extractValue: true }) as string;
 	const title = this.getNodeParameter('title', itemIndex) as string;
 	const description = this.getNodeParameter('description', itemIndex) as string;
 

@@ -19,23 +19,20 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { proboApiRequestAllItems } from '../../GenericFunctions';
+import { proboApiRequestAllItems, executionItems } from '../../GenericFunctions';
+import { thirdPartyLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'ThirdParty ID',
-		name: 'thirdPartyId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['thirdParty'],
-				operation: ['getAllComplianceReports'],
-			},
-		},
-		default: '',
-		description: 'The ID of the thirdParty',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['thirdParty'],
+		operation: ['getAllComplianceReports'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+	thirdPartyLocator({
+		resource: ['thirdParty'],
+		operation: ['getAllComplianceReports'],
+	}),
 	{
 		displayName: 'Return All',
 		name: 'returnAll',
@@ -71,8 +68,8 @@ export const description: INodeProperties[] = [
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
-): Promise<INodeExecutionData> {
-	const thirdPartyId = this.getNodeParameter('thirdPartyId', itemIndex) as string;
+): Promise<INodeExecutionData[]> {
+	const thirdPartyId = this.getNodeParameter('thirdPartyId', itemIndex, '', { extractValue: true }) as string;
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
 
@@ -114,8 +111,5 @@ export async function execute(
 		limit,
 	);
 
-	return {
-		json: { thirdPartyComplianceReports },
-		pairedItem: { item: itemIndex },
-	};
+	return executionItems(thirdPartyComplianceReports, itemIndex);
 }

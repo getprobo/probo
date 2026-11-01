@@ -19,23 +19,14 @@
 // SOFTWARE.
 
 import type { IDataObject, IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
-import { proboApiRequestAllItems } from '../../GenericFunctions';
+import { organizationLocator } from '../../locators';
+import { proboApiRequestAllItems, executionItems } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Organization ID',
-		name: 'organizationId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['task'],
-				operation: ['listLinearIssues'],
-			},
-		},
-		default: '',
-		description: 'The ID of the organization',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['task'],
+		operation: ['listLinearIssues'],
+	}),
 	{
 		displayName: 'Team ID',
 		name: 'teamId',
@@ -98,8 +89,8 @@ export const description: INodeProperties[] = [
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
-): Promise<INodeExecutionData> {
-	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
+): Promise<INodeExecutionData[]> {
+	const organizationId = this.getNodeParameter('organizationId', itemIndex, '', { extractValue: true }) as string;
 	const teamId = this.getNodeParameter('teamId', itemIndex) as string;
 	const search = this.getNodeParameter('query', itemIndex) as string;
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
@@ -140,8 +131,5 @@ export async function execute(
 		limit,
 	);
 
-	return {
-		json: { linearIssues },
-		pairedItem: { item: itemIndex },
-	};
+	return executionItems(linearIssues, itemIndex);
 }

@@ -19,30 +19,28 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { organizationLocator, documentLocator } from '../../locators';
 import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Document ID',
-		name: 'documentId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['document'],
-				operation: ['archive'],
-			},
-		},
-		default: '',
+	organizationLocator({
+		resource: ['document'],
+		operation: ['archive'],
+		required: false,
+		description: 'Organization to search documents in. Leave this empty when entering a document ID.',
+	}),
+	documentLocator({
+		resource: ['document'],
+		operation: ['archive'],
 		description: 'The ID of the document to archive',
-		required: true,
-	},
+	}),
 ];
 
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const documentId = this.getNodeParameter('documentId', itemIndex) as string;
+	const documentId = this.getNodeParameter('documentId', itemIndex, '', { extractValue: true }) as string;
 
 	const query = `
 		mutation ArchiveDocument($input: ArchiveDocumentInput!) {

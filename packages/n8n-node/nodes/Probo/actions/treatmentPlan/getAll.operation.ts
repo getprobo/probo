@@ -19,7 +19,8 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { proboApiRequestAllItems } from '../../GenericFunctions';
+import { organizationLocator, riskLocator } from '../../locators';
+import { proboApiRequestAllItems, executionItems } from '../../GenericFunctions';
 
 const treatmentPlanNodeFields = `
 	id
@@ -46,6 +47,7 @@ const treatmentPlanNodeFields = `
 	owner {
 		id
 		fullName
+		emailAddress
 	}
 	createdAt
 	updatedAt
@@ -77,33 +79,17 @@ function treatmentPlansQuery(parentType: 'Organization' | 'Risk' | 'RiskAnalysis
 }
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Organization ID',
-		name: 'organizationId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['treatmentPlan'],
-				operation: ['getAll'],
-			},
-		},
-		default: '',
+	organizationLocator({
+		resource: ['treatmentPlan'],
+		operation: ['getAll'],
 		description: 'The ID of the organization. Ignored when Risk ID or Risk Analysis ID is set.',
-		required: true,
-	},
-	{
-		displayName: 'Risk ID',
-		name: 'riskId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['treatmentPlan'],
-				operation: ['getAll'],
-			},
-		},
-		default: '',
+	}),
+	riskLocator({
+		resource: ['treatmentPlan'],
+		operation: ['getAll'],
+		required: false,
 		description: 'List treatment plans for this risk. Cannot be set together with Risk Analysis ID.',
-	},
+	}),
 	{
 		displayName: 'Risk Analysis ID',
 		name: 'riskAnalysisId',
@@ -249,9 +235,9 @@ export const description: INodeProperties[] = [
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
-): Promise<INodeExecutionData> {
-	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
-	const riskId = this.getNodeParameter('riskId', itemIndex, '') as string;
+): Promise<INodeExecutionData[]> {
+	const organizationId = this.getNodeParameter('organizationId', itemIndex, '', { extractValue: true }) as string;
+	const riskId = this.getNodeParameter('riskId', itemIndex, '', { extractValue: true }) as string;
 	const riskAnalysisId = this.getNodeParameter('riskAnalysisId', itemIndex, '') as string;
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
@@ -309,8 +295,5 @@ export async function execute(
 		limit,
 	);
 
-	return {
-		json: { treatmentPlans },
-		pairedItem: { item: itemIndex },
-	};
+	return executionItems(treatmentPlans, itemIndex);
 }

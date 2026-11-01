@@ -20,8 +20,15 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
+import { personLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
+	organizationLocator({
+		resource: ['device'],
+		operation: ['setOwner'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
 	{
 		displayName: 'Device ID',
 		name: 'deviceId',
@@ -49,10 +56,8 @@ export const description: INodeProperties[] = [
 		default: false,
 		description: 'Whether to clear the device owner instead of assigning one',
 	},
-	{
-		displayName: 'Owner ID',
-		name: 'ownerId',
-		type: 'string',
+	personLocator({
+		displayName: 'Owner',
 		displayOptions: {
 			show: {
 				resource: ['device'],
@@ -60,10 +65,7 @@ export const description: INodeProperties[] = [
 				clearOwner: [false],
 			},
 		},
-		default: '',
-		description: 'The profile ID of the owner',
-		required: true,
-	},
+	}),
 ];
 
 export async function execute(
@@ -79,7 +81,7 @@ export async function execute(
 	};
 
 	if (!clearOwner) {
-		input.ownerId = this.getNodeParameter('ownerId', itemIndex) as string;
+		input.ownerId = this.getNodeParameter('ownerId', itemIndex, '', { extractValue: true }) as string;
 	}
 
 	const query = `
@@ -90,6 +92,7 @@ export async function execute(
 					owner {
 						id
 						fullName
+						emailAddress
 					}
 				}
 			}

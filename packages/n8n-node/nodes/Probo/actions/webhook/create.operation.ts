@@ -19,24 +19,15 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { organizationLocator } from '../../locators';
 import { proboApiRequest } from '../../GenericFunctions';
 import { WEBHOOK_EVENT_OPTIONS } from './events';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Organization ID',
-		name: 'organizationId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['webhook'],
-				operation: ['create'],
-			},
-		},
-		default: '',
-		description: 'The ID of the organization',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['webhook'],
+		operation: ['create'],
+	}),
 	{
 		displayName: 'Endpoint URL',
 		name: 'endpointUrl',
@@ -72,7 +63,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
+	const organizationId = this.getNodeParameter('organizationId', itemIndex, '', { extractValue: true }) as string;
 	const endpointUrl = this.getNodeParameter('endpointUrl', itemIndex) as string;
 	const selectedEvents = this.getNodeParameter('selectedEvents', itemIndex) as string[];
 

@@ -19,37 +19,25 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { organizationLocator, documentLocator, compliancePortalLocator } from '../../locators';
 import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Compliance Portal ID',
-		name: 'compliancePortalId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['compliancePortal'],
-				operation: ['updateDocumentVisibility'],
-			},
-		},
-		default: '',
-		description: 'The ID of the compliance portal',
-		required: true,
-	},
-	{
-		displayName: 'Document ID',
-		name: 'documentId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['compliancePortal'],
-				operation: ['updateDocumentVisibility'],
-			},
-		},
-		default: '',
+	organizationLocator({
+		resource: ['compliancePortal'],
+		operation: ['updateDocumentVisibility'],
+		required: false,
+		description: 'Organization to search portals and documents in. Leave this empty when entering an ID.',
+	}),
+	compliancePortalLocator({
+		resource: ['compliancePortal'],
+		operation: ['updateDocumentVisibility'],
+	}),
+	documentLocator({
+		resource: ['compliancePortal'],
+		operation: ['updateDocumentVisibility'],
 		description: 'The ID of the document to publish on the compliance portal',
-		required: true,
-	},
+	}),
 	{
 		displayName: 'Compliance Portal Visibility',
 		name: 'compliancePortalVisibility',
@@ -74,8 +62,8 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const compliancePortalId = this.getNodeParameter('compliancePortalId', itemIndex) as string;
-	const documentId = this.getNodeParameter('documentId', itemIndex) as string;
+	const compliancePortalId = this.getNodeParameter('compliancePortalId', itemIndex, '', { extractValue: true }) as string;
+	const documentId = this.getNodeParameter('documentId', itemIndex, '', { extractValue: true }) as string;
 	const compliancePortalVisibility = this.getNodeParameter('compliancePortalVisibility', itemIndex) as string;
 
 	const query = `

@@ -19,9 +19,16 @@
 // SOFTWARE.
 
 import type { IDataObject, IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
-import { proboApiRequestAllItems } from '../../GenericFunctions';
+import { proboApiRequestAllItems, executionItems } from '../../GenericFunctions';
+import { cookieBannerLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
+	organizationLocator({
+		resource: ['cookieBanner'],
+		operation: ['listGVLCatalog'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
 	{
 		displayName: 'Query',
 		name: 'query',
@@ -35,19 +42,12 @@ export const description: INodeProperties[] = [
 		default: '',
 		description: 'Search by vendor name or IAB vendor ID',
 	},
-	{
-		displayName: 'Cookie Banner ID',
-		name: 'cookieBannerId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['cookieBanner'],
-				operation: ['listGVLCatalog'],
-			},
-		},
-		default: '',
+	cookieBannerLocator({
+		resource: ['cookieBanner'],
+		operation: ['listGVLCatalog'],
+		required: false,
 		description: 'Cookie banner ID (required when Membership is set)',
-	},
+	}),
 	{
 		displayName: 'Membership',
 		name: 'membership',
@@ -101,9 +101,9 @@ export const description: INodeProperties[] = [
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
-): Promise<INodeExecutionData> {
+): Promise<INodeExecutionData[]> {
 	const query = this.getNodeParameter('query', itemIndex, '') as string;
-	const cookieBannerId = this.getNodeParameter('cookieBannerId', itemIndex, '') as string;
+	const cookieBannerId = this.getNodeParameter('cookieBannerId', itemIndex, '', { extractValue: true }) as string;
 	const membership = this.getNodeParameter('membership', itemIndex, '') as string;
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
@@ -155,8 +155,5 @@ export async function execute(
 		limit,
 	);
 
-	return {
-		json: { commonGVLVendors },
-		pairedItem: { item: itemIndex },
-	};
+	return executionItems(commonGVLVendors, itemIndex);
 }

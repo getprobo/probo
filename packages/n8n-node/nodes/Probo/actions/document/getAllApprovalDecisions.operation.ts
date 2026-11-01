@@ -19,7 +19,8 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { proboApiRequestAllItems } from '../../GenericFunctions';
+import { proboApiRequestAllItems, executionItems } from '../../GenericFunctions';
+import { withParentReference } from '../../output';
 
 export const description: INodeProperties[] = [
 	{
@@ -71,7 +72,7 @@ export const description: INodeProperties[] = [
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
-): Promise<INodeExecutionData> {
+): Promise<INodeExecutionData[]> {
 	const approvalQuorumId = this.getNodeParameter('approvalQuorumId', itemIndex) as string;
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
@@ -87,9 +88,16 @@ export async function execute(
 								state
 								comment
 								decidedAt
+								documentVersion {
+									id
+									document {
+										id
+									}
+								}
 								approver {
 									id
 									fullName
+									emailAddress
 								}
 								createdAt
 								updatedAt
@@ -118,8 +126,5 @@ export async function execute(
 		limit,
 	);
 
-	return {
-		json: { approvalDecisions },
-		pairedItem: { item: itemIndex },
-	};
+	return executionItems(approvalDecisions.map((decision) => withParentReference(decision)), itemIndex);
 }

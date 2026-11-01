@@ -20,22 +20,19 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
+import { assetLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'Asset ID',
-		name: 'assetId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['asset'],
-				operation: ['get'],
-			},
-		},
-		default: '',
-		description: 'The ID of the asset',
-		required: true,
-	},
+	organizationLocator({
+		resource: ['asset'],
+		operation: ['get'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+	assetLocator({
+		resource: ['asset'],
+		operation: ['get'],
+	}),
 	{
 		displayName: 'Options',
 		name: 'options',
@@ -71,7 +68,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const assetId = this.getNodeParameter('assetId', itemIndex) as string;
+	const assetId = this.getNodeParameter('assetId', itemIndex, '', { extractValue: true }) as string;
 	const options = this.getNodeParameter('options', itemIndex, {}) as {
 		includeOwner?: boolean;
 		includeThirdParties?: boolean;

@@ -37,6 +37,23 @@ import {
 	getAPIKeyConnectorProviders,
 	getClientCredentialsConnectorProviders,
 } from './actions/connector/loadConnectorProviderOptions';
+import {
+	searchAccessReviewCampaigns,
+	searchAssets,
+	searchAudits,
+	searchCompliancePortals,
+	searchControls,
+	searchCookieBanners,
+	searchDocumentVersions,
+	searchDocuments,
+	searchFrameworks,
+	searchInternalControls,
+	searchOrganizations,
+	searchPeople,
+	searchRisks,
+	searchTasks,
+	searchThirdParties,
+} from './locators';
 
 function nodeErrorForItem(
 	this: IExecuteFunctions,
@@ -329,7 +346,11 @@ export class Probo implements INodeType {
 
 				const executeFunction = getExecuteFunction(resource, operation);
 				const result = await executeFunction.call(this, i);
-				returnData.push(result);
+				if (Array.isArray(result)) {
+					returnData.push(...result);
+				} else {
+					returnData.push(result);
+				}
 			} catch (error) {
 				const nodeError = nodeErrorForItem.call(this, error, i);
 				if (this.continueOnFail()) {
@@ -353,6 +374,22 @@ export class Probo implements INodeType {
 			getAPIKeyConnectorProviders,
 			getClientCredentialsConnectorProviders,
 		},
-		listSearch: {},
+		listSearch: {
+			searchAccessReviewCampaigns,
+			searchAssets,
+			searchAudits,
+			searchCompliancePortals,
+			searchControls,
+			searchCookieBanners,
+			searchDocumentVersions,
+			searchDocuments,
+			searchFrameworks,
+			searchInternalControls,
+			searchOrganizations,
+			searchPeople,
+			searchRisks,
+			searchTasks,
+			searchThirdParties,
+		},
 	};
 }

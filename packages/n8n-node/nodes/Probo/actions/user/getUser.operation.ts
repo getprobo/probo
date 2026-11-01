@@ -20,29 +20,28 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { proboConnectApiRequest } from '../../GenericFunctions';
+import { personLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	{
-		displayName: 'User ID',
+	organizationLocator({
+		resource: ['user'],
+		operation: ['getUser'],
+		required: false,
+		description: 'Organization to search in. Leave this empty when entering an ID.',
+	}),
+	personLocator({
 		name: 'userId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['user'],
-				operation: ['getUser'],
-			},
-		},
-		default: '',
-		description: 'The ID of the user (profile)',
-		required: true,
-	},
+		displayName: 'User',
+		resource: ['user'],
+		operation: ['getUser'],
+	}),
 ];
 
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const userId = this.getNodeParameter('userId', itemIndex) as string;
+	const userId = this.getNodeParameter('userId', itemIndex, '', { extractValue: true }) as string;
 
 	const query = `
 		query GetUser($userId: ID!) {
