@@ -139,6 +139,7 @@ func NewBuiltinRegistryWith(opts ...Option) (*Registry, error) {
 		tailscaleRegistration(),
 		tallyRegistration(),
 		twingateRegistration(),
+		unifiRegistration(),
 		upcloudRegistration(),
 		vercelRegistration(),
 		yousignRegistration(),

@@ -269,6 +269,18 @@ func apiKeyConnectorSettings(input types.CreateAPIKeyConnectorInput) (json.RawMe
 		}
 
 		return json.Marshal(&coredata.TwingateConnectorSettings{Network: network})
+	case coredata.ConnectorProviderUniFi:
+		if input.UnifiConsoleID == nil || *input.UnifiConsoleID == "" {
+			return nil, fmt.Errorf("cannot create unifi connector: unifiConsoleId is required")
+		}
+
+		// The console ID becomes a path segment on api.ui.com.
+		consoleID, err := drivers.UniFiConsoleID(*input.UnifiConsoleID)
+		if err != nil {
+			return nil, fmt.Errorf("cannot create unifi connector: unifiConsoleId must be a UniFi console ID")
+		}
+
+		return json.Marshal(&coredata.UniFiConnectorSettings{ConsoleID: consoleID})
 	case coredata.ConnectorProviderRetool:
 		// Optional: Retool Cloud routes every organization through the shared
 		// api.retool.com gateway, so only a self-hosted customer has a URL to
