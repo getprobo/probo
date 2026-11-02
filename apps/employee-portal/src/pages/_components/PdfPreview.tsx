@@ -23,6 +23,7 @@ import "react-pdf/dist/Page/TextLayer.css";
 
 import { SpinnerGapIcon } from "@phosphor-icons/react";
 import { times } from "@probo/helpers";
+import { ErrorBoundary } from "@probo/ui/src/v2/ErrorBoundary/ErrorBoundary";
 // Vite `?url` import resolves to the bundled worker URL (string); the import-x
 // resolver doesn't understand the suffix, and `vite/client` types cover it.
 // eslint-disable-next-line import-x/default
@@ -30,6 +31,8 @@ import workerSrc from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import type { ComponentRef, Ref } from "react";
 import { useEffect, useImperativeHandle, useRef, useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
+
+import { InlineErrorCard } from "#/components/errors/InlineErrorCard";
 
 import { pdfPreview } from "./variants";
 
@@ -85,7 +88,19 @@ interface PdfPreviewProps {
 // multiplies that width. Reports page count and the visible page.
 export function PdfPreview({ file, scale, ref, onNumPages, onVisiblePageChange }: PdfPreviewProps) {
   const [numPages, setNumPages] = useState(0);
+  const [loadError, setLoadError] = useState(false);
   const [pageWidth, setPageWidth] = useState<number | null>(null);
+  const [boundaryKey, setBoundaryKey] = useState(0);
+  // Clear the previous document's error, pages, and caught render error when
+  // the file changes. Adjusting state during render avoids an effect and the
+  // extra commit.
+  const [prevFile, setPrevFile] = useState(file);
+  if (file !== prevFile) {
+    setPrevFile(file);
+    setLoadError(false);
+    setNumPages(0);
+    setBoundaryKey(key => key + 1);
+  }
   const wrapperRef = useRef<HTMLDivElement>(null);
   const documentRef = useRef<ComponentRef<typeof Document>>(null);
 
@@ -153,39 +168,57 @@ export function PdfPreview({ file, scale, ref, onNumPages, onVisiblePageChange }
   }, [pageWidth, scale, numPages, onVisiblePageChange]);
 
   const slots = pdfPreview();
+  const errorFallback = (
+    <div className={slots.loading()}>
+      <InlineErrorCard onRetry={() => window.location.reload()} />
+    </div>
+  );
 
+  // Stay mounted on error so the width observer is not left on a detached node.
   return (
     <div ref={wrapperRef} onScrollEnd={resolveVisiblePage} className={slots.viewport()}>
-      <Document
-        ref={documentRef}
-        file={file}
-        className={slots.list()}
-        loading={(
-          <div className={slots.loading()}>
-            <SpinnerGapIcon className={slots.spinner()} />
-          </div>
-        )}
-        onLoadSuccess={(document) => {
-          setNumPages(document.numPages);
-          onNumPages(document.numPages);
-          onVisiblePageChange(1);
-        }}
-        onLoadError={(error) => {
-          console.error("Failed to load PDF document", error);
-        }}
-      >
-        {pageWidth != null
-          ? times(numPages, index => (
-              <Page
-                key={index}
-                pageNumber={index + 1}
-                width={pageWidth}
-                scale={scale}
-                className={slots.page()}
-              />
-            ))
-          : null}
-      </Document>
+      <ErrorBoundary key={boundaryKey} fallback={errorFallback}>
+        {loadError
+          ? errorFallback
+          : (
+              <Document
+                ref={documentRef}
+                file={file}
+                suspense={false}
+                className={slots.list()}
+                loading={(
+                  <div className={slots.loading()}>
+                    <SpinnerGapIcon className={slots.spinner()} />
+                  </div>
+                )}
+                onLoadSuccess={(document) => {
+                  setLoadError(false);
+                  setNumPages(document.numPages);
+                  onNumPages(document.numPages);
+                  onVisiblePageChange(1);
+                }}
+                onLoadError={(error) => {
+                  console.error("Failed to load PDF document", error);
+                  setLoadError(true);
+                  setNumPages(0);
+                  onNumPages(0);
+                  onVisiblePageChange(1);
+                }}
+              >
+                {pageWidth != null
+                  ? times(numPages, index => (
+                      <Page
+                        key={index}
+                        pageNumber={index + 1}
+                        width={pageWidth}
+                        scale={scale}
+                        className={slots.page()}
+                      />
+                    ))
+                  : null}
+              </Document>
+            )}
+      </ErrorBoundary>
     </div>
   );
 }

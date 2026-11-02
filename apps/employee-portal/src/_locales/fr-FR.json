@@ -201,6 +201,10 @@
       "tryAgain": "Réessayer",
       "backToOrganizations": "Retour aux organisations",
       "contactSupport": "Contacter le support"
+    },
+    "inline": {
+      "message": "Impossible de charger le contenu",
+      "retry": "Réessayer"
     }
   }
 }

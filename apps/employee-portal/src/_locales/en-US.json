@@ -200,6 +200,10 @@
       "tryAgain": "Try again",
       "backToOrganizations": "Back to organizations",
       "contactSupport": "Contact support"
+    },
+    "inline": {
+      "message": "Unable to load content",
+      "retry": "Retry"
     }
   }
 }

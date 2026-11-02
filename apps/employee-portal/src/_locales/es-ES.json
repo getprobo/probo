@@ -200,6 +200,10 @@
       "tryAgain": "Intentar de nuevo",
       "backToOrganizations": "Volver a las organizaciones",
       "contactSupport": "Contactar con soporte"
+    },
+    "inline": {
+      "message": "No se ha podido cargar el contenido",
+      "retry": "Reintentar"
     }
   }
 }
