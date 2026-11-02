@@ -54,17 +54,6 @@ const slackChannelPageQuery = graphql`
   }
 `;
 
-// users.conversations has no name parameter, so a typed query filters the
-// pages already loaded. Show more asks Slack for the next page of 50.
-export function channelMatchesQuery(name: string, query: string): boolean {
-  const needle = query.trim().replace(/^#/, "").toLocaleLowerCase();
-  if (needle === "") {
-    return true;
-  }
-
-  return name.toLocaleLowerCase().includes(needle);
-}
-
 export function useSlackChannelPage(organizationId: string, enabled: boolean) {
   const environment = useRelayEnvironment();
   const scopeKey = `${organizationId}:${String(enabled)}`;

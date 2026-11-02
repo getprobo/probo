@@ -30,7 +30,6 @@ import { Spinner } from "@probo/ui/src/v2/Spinner/Spinner";
 import { Code } from "@probo/ui/src/v2/typography/Code";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
@@ -42,7 +41,7 @@ import { tonedCard } from "#/components/TonedCard/variants";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 
-import { channelMatchesQuery, useSlackChannelPage } from "../_lib/useSlackChannelPage";
+import { useSlackChannelPage } from "../_lib/useSlackChannelPage";
 import { slackSection } from "../variants";
 
 const fragment = graphql`
@@ -134,7 +133,6 @@ export function CompliancePortalSlackSection({
     });
   };
 
-  const [channelQuery, setChannelQuery] = useState("");
   const isInstalled = compliancePortal.organization.slackbotInstallation?.active;
   const configuredChannel = compliancePortal.slackbotNotificationChannel;
   const showInstall = !isInstalled
@@ -142,20 +140,16 @@ export function CompliancePortalSlackSection({
     && compliancePortal.organization.slackbotAvailable;
   const showChannelConfig = isInstalled === true && compliancePortal.canConfigureSlack;
   const channelPage = useSlackChannelPage(organizationId, showChannelConfig);
-  const visibleChannels = channelPage.channels.filter(channel =>
-    channelMatchesQuery(channel.name, channelQuery),
-  );
   const channels = configuredChannel
-    && channelMatchesQuery(configuredChannel.channelName, channelQuery)
-    && !visibleChannels.some(channel => channel.id === configuredChannel.channelId)
+    && !channelPage.channels.some(channel => channel.id === configuredChannel.channelId)
     ? [
         {
           id: configuredChannel.channelId,
           name: configuredChannel.channelName,
         },
-        ...visibleChannels,
+        ...channelPage.channels,
       ]
-    : visibleChannels;
+    : channelPage.channels;
   const slackListEmpty = channelPage.channels.length === 0 && !channelPage.hasNext;
   const showEmptyCallout = showChannelConfig && slackListEmpty && !channelPage.failed;
 
@@ -261,8 +255,7 @@ export function CompliancePortalSlackSection({
                         items={channels}
                         loading={channelPage.loading}
                         failed={channelPage.failed}
-                        query={channelQuery}
-                        onQueryChange={setChannelQuery}
+                        searchable={false}
                         hasNext={channelPage.hasNext}
                         onLoadMore={channelPage.onLoadMore}
                         selectedId={configuredChannel?.channelId ?? null}
@@ -272,8 +265,8 @@ export function CompliancePortalSlackSection({
                             : t("slackSection.channel.placeholder")
                         }
                         ariaLabel={t("slackSection.channel.label")}
-                        placeholder={t("slackSection.channel.searchPlaceholder")}
-                        emptyLabel={t("slackSection.channel.noResults")}
+                        placeholder={t("slackSection.channel.placeholder")}
+                        emptyLabel={t("slackSection.channel.emptyTitle")}
                         errorLabel={t("slackSection.channel.loadError")}
                         loadMoreLabel={t("slackSection.channel.loadMore")}
                         disabled={isSettingChannel || isClearingChannel}

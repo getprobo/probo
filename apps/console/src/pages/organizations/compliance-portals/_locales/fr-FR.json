@@ -540,8 +540,6 @@
       "label": "Canal",
       "placeholder": "Sélectionner un canal",
       "help": "Invitez @Probo dans un canal avant de le sélectionner.",
-      "searchPlaceholder": "Rechercher un canal",
-      "noResults": "Aucun canal correspondant",
       "loadMore": "Afficher plus",
       "loadError": "Impossible de charger les canaux Slack.",
       "emptyTitle": "Recherche des canaux Slack",

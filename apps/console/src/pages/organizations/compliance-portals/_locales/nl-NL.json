@@ -321,8 +321,6 @@
       "label": "Kanaal",
       "placeholder": "Selecteer kanaal",
       "help": "Nodig @Probo uit in een kanaal voordat u het selecteert.",
-      "searchPlaceholder": "Kanalen zoeken",
-      "noResults": "Geen overeenkomend kanaal",
       "loadMore": "Meer weergeven",
       "loadError": "Slack-kanalen laden is mislukt.",
       "emptyTitle": "Slack-kanalen zoeken",

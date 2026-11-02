@@ -47,9 +47,9 @@ const (
 	slackMethodUpdateMessage        = "chat.update"
 	slackMethodUsersConversations   = "users.conversations"
 
-	// users.conversations has no name query. The picker pages 50 channels
-	// and the menu filters loaded names locally. Lookup scans with a
-	// larger page so finding one channel stays a short walk.
+	// users.conversations has no name query. The picker pages 50
+	// channels. Lookup scans with a larger page so finding one
+	// channel stays a short walk.
 	conversationPickerPageSize = 50
 	conversationLookupPageSize = 1000
 	threadRepliesPageSize      = 200

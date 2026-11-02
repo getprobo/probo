@@ -46,8 +46,9 @@ export interface ComboboxPagedProps<TItem> {
   items: readonly TItem[];
   loading: boolean;
   failed: boolean;
-  query: string;
-  onQueryChange: (query: string) => void;
+  searchable?: boolean;
+  query?: string;
+  onQueryChange?: (query: string) => void;
   hasNext: boolean;
   onLoadMore: () => void;
   selectedId: string | null;
@@ -76,7 +77,8 @@ export function ComboboxPaged<TItem>(props: ComboboxPagedProps<TItem>) {
     items,
     loading,
     failed,
-    query,
+    searchable = true,
+    query = "",
     onQueryChange,
     hasNext,
     onLoadMore,
@@ -118,19 +120,23 @@ export function ComboboxPaged<TItem>(props: ComboboxPagedProps<TItem>) {
       open={open}
       onOpenChange={(next) => {
         setOpen(next);
-        if (next) {
-          onQueryChange("");
+        if (next && searchable) {
+          onQueryChange?.("");
         }
       }}
-      inputValue={open ? query : (selectedId == null ? "" : selectedLabel)}
+      inputValue={
+        searchable && open
+          ? query
+          : (selectedId == null ? "" : selectedLabel)
+      }
       onInputValueChange={(value, details) => {
-        if (!open) {
+        if (!searchable || !open) {
           return;
         }
         if (details.reason !== "input-change") {
           return;
         }
-        onQueryChange(value);
+        onQueryChange?.(value);
       }}
       disabled={disabled}
       filter={null}
@@ -141,7 +147,8 @@ export function ComboboxPaged<TItem>(props: ComboboxPagedProps<TItem>) {
           <ComboboxInputGroup>
             <ComboboxInput
               id={id}
-              placeholder={open ? placeholder : selectedLabel}
+              readOnly={!searchable}
+              placeholder={searchable && open ? placeholder : selectedLabel}
               aria-label={ariaLabel}
               disabled={disabled}
             />
