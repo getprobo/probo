@@ -79,7 +79,6 @@ export function useSlackChannelPage(organizationId: string, enabled: boolean) {
   });
   const [settledId, setSettledId] = useState<number | null>(null);
   const [failedId, setFailedId] = useState<number | null>(null);
-  const firstPageIdsRef = useRef(new Set<string>());
   const pagedBeyondFirstRef = useRef(false);
   const nextCursorRef = useRef<string | null>(null);
   const loadingRef = useRef(false);
@@ -111,7 +110,6 @@ export function useSlackChannelPage(organizationId: string, enabled: boolean) {
 
     if (request.reset) {
       pagedBeyondFirstRef.current = false;
-      firstPageIdsRef.current = new Set();
       nextCursorRef.current = null;
     }
 
@@ -128,19 +126,16 @@ export function useSlackChannelPage(organizationId: string, enabled: boolean) {
         }
 
         const page = readPage(data);
-        const previousFirstPage = firstPageIdsRef.current;
         const pagedBeyondFirst = pagedBeyondFirstRef.current;
-        if (request.mode === "replace") {
-          firstPageIdsRef.current = new Set(page.channels.map(channel => channel.id));
-        }
 
         setChannels((current) => {
           if (request.mode === "append") {
             return dedupe([...current, ...page.channels]);
           }
+          // Later pages were loaded from the previous cursor. A channel
+          // that left page 1 is not in this response or in those pages.
           if (pagedBeyondFirst) {
-            const rest = current.filter(channel => !previousFirstPage.has(channel.id));
-            return dedupe([...page.channels, ...rest]);
+            return dedupe([...page.channels, ...current]);
           }
           return page.channels;
         });
