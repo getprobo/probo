@@ -288,17 +288,17 @@ export function CompliancePortalSlackSection({
                                 ))}
                               </SelectList>
                             )}
-                            {channelPage.loading && channels.length === 0 && (
+                            {channelPage.loading && channelPage.channels.length === 0 && (
                               <Text size={2} color="faint" className="px-3 py-2">
                                 {t("slackSection.channel.emptyTitle")}
                               </Text>
                             )}
-                            {channelPage.failed && channels.length === 0 && (
+                            {channelPage.failed && channelPage.channels.length === 0 && (
                               <Text size={2} color="faint" className="px-3 py-2">
                                 {t("slackSection.channel.loadError")}
                               </Text>
                             )}
-                            {!channelPage.loading && !channelPage.failed && channels.length === 0 && (
+                            {!channelPage.loading && !channelPage.failed && channelPage.channels.length === 0 && (
                               <Text size={2} color="faint" className="px-3 py-2">
                                 {t("slackSection.channel.emptyTitle")}
                               </Text>
@@ -315,7 +315,7 @@ export function CompliancePortalSlackSection({
                                 color="neutral"
                                 size={1}
                                 className="w-full justify-center"
-                                loading={channelPage.loading}
+                                loading={channelPage.loadingMore}
                                 onClick={channelPage.onLoadMore}
                               >
                                 {t("slackSection.channel.loadMore")}

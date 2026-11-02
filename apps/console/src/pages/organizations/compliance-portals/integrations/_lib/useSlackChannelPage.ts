@@ -71,7 +71,9 @@ export function useSlackChannelPage(organizationId: string, enabled: boolean) {
   const pagedBeyondFirstRef = useRef(false);
   const nextCursorRef = useRef<string | null>(null);
   const loadingRef = useRef(false);
+  const appendingRef = useRef(false);
   const loading = enabled && settledId !== request.id;
+  const loadingMore = loading && request.mode === "append";
   const failed = failedId === request.id;
 
   if (scope !== scopeKey) {
@@ -95,6 +97,10 @@ export function useSlackChannelPage(organizationId: string, enabled: boolean) {
   useEffect(() => {
     if (!enabled) {
       return;
+    }
+
+    if (request.mode !== "append") {
+      appendingRef.current = false;
     }
 
     if (request.reset) {
@@ -134,12 +140,20 @@ export function useSlackChannelPage(organizationId: string, enabled: boolean) {
           setNextCursor(page.nextCursor);
         }
 
+        if (request.mode === "append") {
+          appendingRef.current = false;
+        }
+
         setFailedId(null);
         setSettledId(request.id);
       },
       error: () => {
         if (!active) {
           return;
+        }
+
+        if (request.mode === "append") {
+          appendingRef.current = false;
         }
 
         setFailedId(request.id);
@@ -181,10 +195,11 @@ export function useSlackChannelPage(organizationId: string, enabled: boolean) {
 
   function onLoadMore() {
     const cursor = nextCursorRef.current;
-    if (cursor == null || loadingRef.current) {
+    if (cursor == null || appendingRef.current) {
       return;
     }
 
+    appendingRef.current = true;
     pagedBeyondFirstRef.current = true;
     setRequest(current => ({
       cursor,
@@ -197,6 +212,7 @@ export function useSlackChannelPage(organizationId: string, enabled: boolean) {
   return {
     channels,
     loading,
+    loadingMore,
     failed,
     hasNext: nextCursor != null,
     onLoadMore,
