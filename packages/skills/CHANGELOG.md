@@ -5,6 +5,8 @@ this file.
 
 ## Unreleased
 
+## [0.6.0] - 2026-11-02
+
 ### Changed
 
 - `access-review` reference describes `retryAccessReviewCampaignSourceFetch`
