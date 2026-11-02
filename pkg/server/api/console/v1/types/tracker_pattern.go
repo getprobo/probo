@@ -79,6 +79,7 @@ type (
 		ThirdPartyID     *gid.GID
 		Excluded         *bool
 		Categorized      *bool
+		ObservedBy       *coredata.DetectedTrackerObserver
 	}
 )
 
@@ -95,7 +96,8 @@ func NewCoredataTrackerPatternFilter(filter *TrackerPatternFilter) *coredata.Tra
 		WithCategorized(filter.Categorized).
 		WithQuery(filter.Query).
 		WithSource(filter.Source).
-		WithTrackerType(filter.TrackerType)
+		WithTrackerType(filter.TrackerType).
+		WithObservedBy(filter.ObservedBy)
 }
 
 func NewTrackerPatternConnection(

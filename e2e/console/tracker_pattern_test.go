@@ -746,6 +746,254 @@ func TestTrackerPattern_SampleHits(t *testing.T) {
 	assert.Empty(t, result.Node.SampleHits)
 }
 
+func TestTrackerPattern_ObservedBy(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	bannerID := factory.CreateCookieBanner(owner)
+	categoryID := factory.CreateCookieCategory(owner, bannerID)
+
+	bothID := factory.CreateTrackerPattern(owner, categoryID, factory.Attrs{"pattern": "both"})
+	scanID := factory.CreateTrackerPattern(owner, categoryID, factory.Attrs{"pattern": "scan"})
+	sdkID := factory.CreateTrackerPattern(owner, categoryID, factory.Attrs{"pattern": "sdk"})
+	factory.CreateTrackerPattern(owner, categoryID, factory.Attrs{"pattern": "unseen"})
+
+	scanCookie := &detectedTrackerCookie{
+		valueSize:   24,
+		httpOnly:    true,
+		secure:      true,
+		sameSite:    "LAX",
+		partitioned: true,
+		setByURL:    "https://tracker.example/set",
+	}
+
+	seedDetectedTracker(t, bannerID, bothID, "both", coredata.DetectedTrackerObserverSDK, nil)
+	seedDetectedTracker(t, bannerID, bothID, "both", coredata.DetectedTrackerObserverScanner, scanCookie)
+	seedDetectedTracker(t, bannerID, scanID, "scan", coredata.DetectedTrackerObserverScanner, scanCookie)
+	seedDetectedTracker(t, bannerID, sdkID, "sdk", coredata.DetectedTrackerObserverSDK, nil)
+
+	const listQuery = `
+		query($id: ID!, $filter: TrackerPatternFilter) {
+			node(id: $id) {
+				... on CookieBanner {
+					trackerPatterns(
+						first: 10
+						filter: $filter
+						orderBy: { field: NAME, direction: ASC }
+					) {
+						edges {
+							node {
+								pattern
+								observedBy
+							}
+						}
+					}
+				}
+			}
+		}
+	`
+
+	type listedPattern struct {
+		Pattern    string   `json:"pattern"`
+		ObservedBy []string `json:"observedBy"`
+	}
+
+	var listed struct {
+		Node struct {
+			TrackerPatterns struct {
+				Edges []struct {
+					Node listedPattern `json:"node"`
+				} `json:"edges"`
+			} `json:"trackerPatterns"`
+		} `json:"node"`
+	}
+
+	load := func(t *testing.T, observedBy string) []listedPattern {
+		t.Helper()
+
+		require.NoError(t, owner.Execute(
+			listQuery,
+			map[string]any{
+				"id": bannerID,
+				"filter": map[string]any{
+					"observedBy": observedBy,
+				},
+			},
+			&listed,
+		))
+
+		patterns := make([]listedPattern, 0, len(listed.Node.TrackerPatterns.Edges))
+		for _, edge := range listed.Node.TrackerPatterns.Edges {
+			patterns = append(patterns, edge.Node)
+		}
+
+		return patterns
+	}
+
+	assert.Equal(t, []listedPattern{
+		{Pattern: "both", ObservedBy: []string{"SCANNER", "SDK"}},
+		{Pattern: "sdk", ObservedBy: []string{"SDK"}},
+	}, load(t, "SDK"))
+	assert.Equal(t, []listedPattern{
+		{Pattern: "both", ObservedBy: []string{"SCANNER", "SDK"}},
+		{Pattern: "scan", ObservedBy: []string{"SCANNER"}},
+	}, load(t, "SCANNER"))
+
+	const detectionQuery = `
+		query($id: ID!) {
+			node(id: $id) {
+				... on TrackerPattern {
+					detectedTrackers(first: 10) {
+						edges {
+							node {
+								identifier
+								observedBy
+								valueSize
+								httpOnly
+								secure
+								sameSite
+								partitioned
+								setByUrl
+							}
+						}
+					}
+				}
+			}
+		}
+	`
+
+	var detection struct {
+		Node struct {
+			DetectedTrackers struct {
+				Edges []struct {
+					Node struct {
+						Identifier  string  `json:"identifier"`
+						ObservedBy  string  `json:"observedBy"`
+						ValueSize   *int    `json:"valueSize"`
+						HTTPOnly    *bool   `json:"httpOnly"`
+						Secure      *bool   `json:"secure"`
+						SameSite    *string `json:"sameSite"`
+						Partitioned *bool   `json:"partitioned"`
+						SetByURL    *string `json:"setByUrl"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"detectedTrackers"`
+		} `json:"node"`
+	}
+
+	require.NoError(t, owner.Execute(detectionQuery, map[string]any{"id": scanID}, &detection))
+	require.Len(t, detection.Node.DetectedTrackers.Edges, 1)
+
+	got := detection.Node.DetectedTrackers.Edges[0].Node
+	assert.Equal(t, "scan", got.Identifier)
+	assert.Equal(t, "SCANNER", got.ObservedBy)
+	require.NotNil(t, got.ValueSize)
+	assert.Equal(t, 24, *got.ValueSize)
+	require.NotNil(t, got.HTTPOnly)
+	assert.True(t, *got.HTTPOnly)
+	require.NotNil(t, got.Secure)
+	assert.True(t, *got.Secure)
+	require.NotNil(t, got.SameSite)
+	assert.Equal(t, "LAX", *got.SameSite)
+	require.NotNil(t, got.Partitioned)
+	assert.True(t, *got.Partitioned)
+	require.NotNil(t, got.SetByURL)
+	assert.Equal(t, "https://tracker.example/set", *got.SetByURL)
+}
+
+type detectedTrackerCookie struct {
+	valueSize   int
+	httpOnly    bool
+	secure      bool
+	sameSite    string
+	partitioned bool
+	setByURL    string
+}
+
+func seedDetectedTracker(
+	t *testing.T,
+	bannerID string,
+	patternID string,
+	identifier string,
+	observedBy coredata.DetectedTrackerObserver,
+	cookie *detectedTrackerCookie,
+) {
+	t.Helper()
+
+	patternGID, err := gid.ParseGID(patternID)
+	require.NoError(t, err)
+
+	ctx := context.Background()
+	conn := dialTestPg(t, ctx)
+	t.Cleanup(func() { _ = conn.Close(ctx) })
+
+	id := gid.New(patternGID.TenantID(), coredata.DetectedTrackerEntityType)
+	now := time.Now().UTC()
+
+	var (
+		valueSize   *int
+		httpOnly    *bool
+		secure      *bool
+		sameSite    *string
+		partitioned *bool
+		setByURL    *string
+		source      = string(coredata.CookieSourceScript)
+	)
+
+	if cookie != nil {
+		source = string(coredata.CookieSourceHTTP)
+		valueSize = &cookie.valueSize
+		httpOnly = &cookie.httpOnly
+		secure = &cookie.secure
+		sameSite = &cookie.sameSite
+		partitioned = &cookie.partitioned
+		setByURL = &cookie.setByURL
+	}
+
+	_, err = conn.Exec(
+		ctx,
+		`
+		INSERT INTO detected_trackers (
+			id, tenant_id, cookie_banner_id, tracker_pattern_id, tracker_type,
+			identifier, source, observed_by, value_size, http_only, secure,
+			same_site, partitioned, set_by_url, created_at, updated_at
+		) VALUES (
+			$1, $2, $3, $4, 'COOKIE',
+			$5, $6, $7, $8, $9, $10,
+			$11, $12, $13, $14, $15
+		)
+	`,
+		id,
+		patternGID.TenantID(),
+		bannerID,
+		patternID,
+		identifier,
+		source,
+		observedBy,
+		valueSize,
+		httpOnly,
+		secure,
+		sameSite,
+		partitioned,
+		setByURL,
+		now,
+		now,
+	)
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		cleanupCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		cleanupConn := dialTestPg(t, cleanupCtx)
+
+		defer func() { _ = cleanupConn.Close(cleanupCtx) }()
+
+		_, err := cleanupConn.Exec(cleanupCtx, `DELETE FROM detected_trackers WHERE id = $1`, id)
+		assert.NoError(t, err, "cleanup: cannot delete seeded detected tracker %s", id)
+	})
+}
+
 func seedCommonTrackerPattern(t *testing.T) gid.GID {
 	t.Helper()
 

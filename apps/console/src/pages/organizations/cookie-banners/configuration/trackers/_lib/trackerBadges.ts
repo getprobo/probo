@@ -32,3 +32,8 @@ export const cookieSourceBadges = {
   HTTP: { color: "neutral" as const, labelKey: "http", variant: "soft" as const },
   EXTENSION: { color: "amber" as const, labelKey: "extension", variant: "soft" as const },
 };
+
+export const trackerObserverBadges = {
+  SDK: { color: "sky" as const, labelKey: "sdk", variant: "soft" as const },
+  SCANNER: { color: "neutral" as const, labelKey: "scanner", variant: "outline" as const },
+};

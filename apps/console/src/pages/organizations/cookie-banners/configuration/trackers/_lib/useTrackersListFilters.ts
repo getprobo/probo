@@ -29,8 +29,18 @@ import { TRACKERS_PAGE_SIZE } from "./pageSize";
 export const cookieSources = ["SCRIPT", "PRE_EXISTING", "HTTP", "EXTENSION"] as const;
 export type CookieSource = (typeof cookieSources)[number];
 
-export const trackersListViews = ["all", "on-banner"] as const;
+export const trackersListViews = ["categorised", "sdk", "scan", "all"] as const;
 export type TrackersListView = (typeof trackersListViews)[number];
+
+export const detectedTrackerObservers = ["SDK", "SCANNER"] as const;
+export type DetectedTrackerObserver = (typeof detectedTrackerObservers)[number];
+
+const observedByForView: Record<TrackersListView, DetectedTrackerObserver | null> = {
+  categorised: null,
+  sdk: "SDK",
+  scan: "SCANNER",
+  all: null,
+};
 
 export const trackerTypes = [
   "COOKIE",
@@ -69,6 +79,7 @@ export type TrackersListGraphqlFilter = {
   thirdPartyId: string | null;
   excluded: boolean | null;
   categorized: boolean | null;
+  observedBy: DetectedTrackerObserver | null;
 };
 
 export function isCookieSource(value: string): value is CookieSource {
@@ -128,10 +139,11 @@ export function trackersListGraphqlFilter(filters: {
   party: string | null;
 }): TrackersListGraphqlFilter | null {
   const query = filters.query.trim() || null;
-  const onBanner = filters.view === "on-banner";
-  const category = onBanner ? null : filters.category;
-  const excluded = onBanner ? false : null;
-  const categorized = onBanner ? true : null;
+  const categorised = filters.view === "categorised";
+  const category = categorised ? null : filters.category;
+  const excluded = categorised ? false : null;
+  const categorized = categorised ? true : null;
+  const observedBy = observedByForView[filters.view];
   if (
     query == null
     && filters.source == null
@@ -140,6 +152,7 @@ export function trackersListGraphqlFilter(filters: {
     && filters.party == null
     && excluded == null
     && categorized == null
+    && observedBy == null
   ) {
     return null;
   }
@@ -152,6 +165,7 @@ export function trackersListGraphqlFilter(filters: {
     thirdPartyId: filters.party,
     excluded,
     categorized,
+    observedBy,
   };
 }
 
@@ -223,10 +237,12 @@ export function useTrackersListFilters(): TrackersListFilters {
   const rawDir = searchParams.get("dir") ?? "";
   const after = emptyToNull(searchParams.get("after"));
   const before = after == null ? emptyToNull(searchParams.get("before")) : null;
-  const view: TrackersListView = rawView === "all" ? "all" : "on-banner";
+  const view: TrackersListView = isTrackersListView(rawView) && rawView !== "categorised"
+    ? rawView
+    : "categorised";
   const source = isCookieSource(rawSource) ? rawSource : null;
   const type = isTrackerType(rawType) ? rawType : null;
-  const category = view === "on-banner" || rawCategory === "" ? null : rawCategory;
+  const category = view === "categorised" || rawCategory === "" ? null : rawCategory;
   const party = rawParty === "" ? null : rawParty;
   const field = isTrackerPatternOrderField(rawSort)
     ? rawSort
@@ -264,11 +280,11 @@ export function useTrackersListFilters(): TrackersListFilters {
   const setView = useCallback((value: TrackersListView) => {
     setSearchParams((previous) => {
       const next = new URLSearchParams(previous);
-      if (value === "all") {
-        next.set("view", "all");
-      } else {
+      if (value === "categorised") {
         next.delete("view");
         next.delete("category");
+      } else {
+        next.set("view", value);
       }
       clearPagination(next);
       return next;

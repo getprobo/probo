@@ -89,7 +89,7 @@
   },
   "detectedTrackersSection": {
     "title": "Detections",
-    "columns": { "identifier": "Identifier", "domain": "Domain", "initiatorUrl": "Initiator URL", "maxAge": "Max age (seconds)", "source": "Source", "firstSeen": "First seen" },
+    "columns": { "identifier": "Identifier", "domain": "Domain", "initiatorUrl": "Initiator URL", "maxAge": "Max age (seconds)", "source": "Source", "seenBy": "Seen by", "firstSeen": "First seen" },
     "empty": "No detections for this tracker yet.",
     "sort": { "initiatorUrl": "Sort by initiator URL", "firstSeen": "Sort by first seen" },
     "actions": { "showMore": "Show more" },
@@ -97,9 +97,26 @@
     "summary_other": "{{count}} detections"
   },
   "moveToCategorySelect": { "empty": "No categories" },
+  "observers": { "sdk": "Visitors", "scanner": "Scan" },
   "detectedTrackerRow": {
     "hostOnly": "Host-only",
-    "duration": { "second_one": "{{count}} second", "second_other": "{{count}} seconds" }
+    "duration": { "second_one": "{{count}} second", "second_other": "{{count}} seconds" },
+    "details": {
+      "label": "Cookie details",
+      "httpOnly": "HttpOnly",
+      "secure": "Secure",
+      "sameSite": "SameSite",
+      "sameSiteStrict": "Strict",
+      "sameSiteLax": "Lax",
+      "sameSiteNone": "None",
+      "partitioned": "Partitioned",
+      "setBy": "Set by",
+      "valueSize": "Value size",
+      "yes": "Yes",
+      "no": "No",
+      "bytes_one": "{{count}} byte",
+      "bytes_other": "{{count}} bytes"
+    }
   },
   "trackersPage": {
     "title": "Trackers",
@@ -107,11 +124,11 @@
     "filters": { "search": "Search by name or description...", "allThirdParties": "All third parties", "allCategories": "All categories", "source": "Source", "type": "Type", "category": "Category", "thirdParty": "Third party" },
     "types": { "all": "All types", "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Cache storage" },
     "sources": { "all": "All sources", "script": "Script", "preExisting": "Pre-existing", "http": "HTTP", "extension": "Extension" },
-    "columns": { "name": "Name", "attribution": "Attribution", "source": "Source", "category": "Category", "maxAge": "Max age" },
+    "columns": { "name": "Name", "attribution": "Attribution", "source": "Source", "seenBy": "Seen by", "category": "Category", "maxAge": "Max age" },
     "sort": { "name": "Sort by name", "source": "Sort by source" },
     "actions": { "previous": "Previous", "next": "Next", "new": "New tracker" },
-    "views": { "onBanner": "On banner", "allDetected": "All detected", "ariaLabel": "Tracker list view" },
-    "empty": { "title": "No trackers", "description": "No trackers have been detected yet. They will appear here when detected.", "onBanner": "No categorized trackers are shown on the banner." },
+    "views": { "categorised": "Categorised", "sdk": "From visitors", "scan": "From scan", "all": "All trackers", "ariaLabel": "Tracker list view" },
+    "empty": { "title": "No trackers", "description": "No trackers have been detected yet. They will appear here when detected.", "categorised": "No categorised trackers are shown on the banner.", "sdk": "No trackers have been reported by visitors yet.", "scan": "No trackers have been found by a scan yet." },
     "emptyFiltered": "No matching trackers"
   },
   "installPage": {

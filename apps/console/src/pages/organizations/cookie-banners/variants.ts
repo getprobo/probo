@@ -112,6 +112,7 @@ export const cookieBannerList = tv({
     results: "transition-opacity",
     pager: "flex justify-center",
     empty: "flex flex-col items-center gap-1 py-8 text-center",
+    seenBy: "flex min-w-0 flex-wrap items-center gap-1",
   },
   variants: {
     pending: {
@@ -252,7 +253,11 @@ export const trackerPatternDetectedTrackersSection = tv({
 
 export const detectedTrackerListItem = tv({
   slots: {
+    heading: "flex min-w-0 items-center gap-2",
     identifier: "min-w-0 truncate font-mono",
+    info: "relative z-1 shrink-0",
+    detail: "flex flex-col gap-2",
+    fact: "flex items-baseline justify-between gap-4",
     url: "min-w-0 truncate font-mono",
     date: "whitespace-nowrap",
   },

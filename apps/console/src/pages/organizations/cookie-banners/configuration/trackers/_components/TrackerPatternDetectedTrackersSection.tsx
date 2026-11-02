@@ -152,6 +152,9 @@ export function TrackerPatternDetectedTrackersSection({
                       <TableColumnHeaderCell width="7rem">
                         {t("detectedTrackersSection.columns.source")}
                       </TableColumnHeaderCell>
+                      <TableColumnHeaderCell width="8rem">
+                        {t("detectedTrackersSection.columns.seenBy")}
+                      </TableColumnHeaderCell>
                       <TableColumnHeaderCell
                         width="10rem"
                         sort={detectedTrackersHeaderSort("CREATED_AT", order)}

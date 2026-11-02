@@ -33,6 +33,13 @@ func NewDetectedTracker(dt *coredata.DetectedTracker) *DetectedTracker {
 		source = &s
 	}
 
+	var sameSite *DetectedTrackerSameSite
+
+	if dt.SameSite != nil {
+		s := DetectedTrackerSameSite(string(*dt.SameSite))
+		sameSite = &s
+	}
+
 	return &DetectedTracker{
 		ID:            dt.ID,
 		Identifier:    dt.Identifier,
@@ -41,6 +48,13 @@ func NewDetectedTracker(dt *coredata.DetectedTracker) *DetectedTracker {
 		HostOnly:      dt.HostOnly,
 		MaxAgeSeconds: dt.MaxAgeSeconds,
 		Source:        source,
+		ObservedBy:    DetectedTrackerObservedBy(dt.ObservedBy),
+		ValueSize:     dt.ValueSize,
+		HTTPOnly:      dt.HTTPOnly,
+		Secure:        dt.Secure,
+		SameSite:      sameSite,
+		Partitioned:   dt.Partitioned,
+		SetByURL:      dt.SetByURL,
 		CreatedAt:     dt.CreatedAt,
 	}
 }

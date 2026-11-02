@@ -4155,6 +4155,38 @@ func (s *Service) LoadDistinctCommonTrackerPatternIDsByCookieBannerID(
 	return ids, nil
 }
 
+func (s *Service) LoadObserversByTrackerPatternIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	trackerPatternIDs []gid.GID,
+) (map[gid.GID][]coredata.DetectedTrackerObserver, error) {
+	var observers map[gid.GID][]coredata.DetectedTrackerObserver
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var err error
+
+			observers, err = new(coredata.DetectedTrackers).LoadObserversByTrackerPatternIDs(
+				ctx,
+				conn,
+				scope,
+				trackerPatternIDs,
+			)
+			if err != nil {
+				return fmt.Errorf("cannot load detected tracker observers: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return observers, nil
+}
+
 func (s *Service) CountDetectedTrackersByPatternID(
 	ctx context.Context,
 	scope coredata.Scoper,

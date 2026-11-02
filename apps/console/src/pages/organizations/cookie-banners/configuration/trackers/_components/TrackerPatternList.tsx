@@ -138,6 +138,35 @@ export function TrackerPatternList({ cookieBannerKey }: TrackerPatternListProps)
     });
   }
 
+  function emptyState() {
+    if (hasActiveFilters) {
+      return (
+        <Text size={2} color="faint">
+          {t("trackersPage.emptyFiltered")}
+        </Text>
+      );
+    }
+
+    if (view === "all") {
+      return (
+        <>
+          <Text size={3} weight="medium" highContrast>
+            {t("trackersPage.empty.title")}
+          </Text>
+          <Text size={2} color="faint">
+            {t("trackersPage.empty.description")}
+          </Text>
+        </>
+      );
+    }
+
+    return (
+      <Text size={2} color="faint">
+        {t(`trackersPage.empty.${view}`)}
+      </Text>
+    );
+  }
+
   function handleRemoved() {
     if (edges.length === 1 && pageInfo.hasPreviousPage && pageInfo.startCursor != null) {
       setBefore(pageInfo.startCursor);
@@ -153,28 +182,7 @@ export function TrackerPatternList({ cookieBannerKey }: TrackerPatternListProps)
         ? (
             <Card variant="soft" size={2}>
               <div className={empty()}>
-                {hasActiveFilters
-                  ? (
-                      <Text size={2} color="faint">
-                        {t("trackersPage.emptyFiltered")}
-                      </Text>
-                    )
-                  : view === "on-banner"
-                    ? (
-                        <Text size={2} color="faint">
-                          {t("trackersPage.empty.onBanner")}
-                        </Text>
-                      )
-                    : (
-                        <>
-                          <Text size={3} weight="medium" highContrast>
-                            {t("trackersPage.empty.title")}
-                          </Text>
-                          <Text size={2} color="faint">
-                            {t("trackersPage.empty.description")}
-                          </Text>
-                        </>
-                      )}
+                {emptyState()}
               </div>
             </Card>
           )
@@ -203,6 +211,9 @@ export function TrackerPatternList({ cookieBannerKey }: TrackerPatternListProps)
                         aria-label={t("trackersPage.sort.source")}
                       >
                         {t("trackersPage.columns.source")}
+                      </TableColumnHeaderCell>
+                      <TableColumnHeaderCell width="10rem" className={optional()}>
+                        {t("trackersPage.columns.seenBy")}
                       </TableColumnHeaderCell>
                       <TableColumnHeaderCell width="10rem">
                         {t("trackersPage.columns.category")}

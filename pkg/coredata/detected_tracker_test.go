@@ -55,6 +55,57 @@ func newDetectedTracker(
 	}
 }
 
+func TestDetectedTrackers_LoadObserversByTrackerPatternIDs(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedTrackerPatternFixture(t, ctx, client)
+
+	both := seedTrackerPattern(t, ctx, client, fx, "both", coredata.TrackerPatternMatchTypeExact, coredata.CookieSourceScript)
+	sdkOnly := seedTrackerPattern(t, ctx, client, fx, "sdk_only", coredata.TrackerPatternMatchTypeExact, coredata.CookieSourceScript)
+	none := seedTrackerPattern(t, ctx, client, fx, "none", coredata.TrackerPatternMatchTypeExact, coredata.CookieSourceScript)
+
+	insert := func(patternID gid.GID, identifier string, observedBy coredata.DetectedTrackerObserver) {
+		t.Helper()
+
+		require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+			_, err := newDetectedTracker(fx, patternID, identifier, observedBy).InsertIfNotExists(ctx, tx, fx.scope)
+
+			return err
+		}))
+	}
+
+	insert(both.ID, "both", coredata.DetectedTrackerObserverScanner)
+	insert(both.ID, "both", coredata.DetectedTrackerObserverSDK)
+	insert(sdkOnly.ID, "sdk_only", coredata.DetectedTrackerObserverSDK)
+
+	var observers map[gid.GID][]coredata.DetectedTrackerObserver
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		var err error
+
+		observers, err = new(coredata.DetectedTrackers).LoadObserversByTrackerPatternIDs(
+			ctx,
+			conn,
+			fx.scope,
+			[]gid.GID{both.ID, sdkOnly.ID, none.ID},
+		)
+
+		return err
+	}))
+
+	assert.Equal(t, []coredata.DetectedTrackerObserver{
+		coredata.DetectedTrackerObserverScanner,
+		coredata.DetectedTrackerObserverSDK,
+	}, observers[both.ID])
+	assert.Equal(t, []coredata.DetectedTrackerObserver{
+		coredata.DetectedTrackerObserverSDK,
+	}, observers[sdkOnly.ID])
+	_, found := observers[none.ID]
+	assert.False(t, found)
+}
+
 func TestDetectedTracker_InsertIfNotExists_SeparatesObservers(t *testing.T) {
 	t.Parallel()
 

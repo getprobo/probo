@@ -89,7 +89,7 @@
   },
   "detectedTrackersSection": {
     "title": "Détections",
-    "columns": { "identifier": "Identifiant", "domain": "Domaine", "initiatorUrl": "URL initiatrice", "maxAge": "Âge maximal (secondes)", "source": "Source", "firstSeen": "Première détection" },
+    "columns": { "identifier": "Identifiant", "domain": "Domaine", "initiatorUrl": "URL initiatrice", "maxAge": "Âge maximal (secondes)", "source": "Source", "seenBy": "Vu par", "firstSeen": "Première détection" },
     "empty": "Aucune détection pour ce traceur pour le moment.",
     "sort": { "initiatorUrl": "Trier par URL initiatrice", "firstSeen": "Trier par première détection" },
     "actions": { "showMore": "Afficher plus" },
@@ -97,9 +97,26 @@
     "summary_other": "{{count}} détections"
   },
   "moveToCategorySelect": { "empty": "Aucune catégorie" },
+  "observers": { "sdk": "Visiteurs", "scanner": "Scan" },
   "detectedTrackerRow": {
     "hostOnly": "Hôte uniquement",
-    "duration": { "second_one": "{{count}} seconde", "second_other": "{{count}} secondes" }
+    "duration": { "second_one": "{{count}} seconde", "second_other": "{{count}} secondes" },
+    "details": {
+      "label": "Détails du cookie",
+      "httpOnly": "HttpOnly",
+      "secure": "Secure",
+      "sameSite": "SameSite",
+      "sameSiteStrict": "Strict",
+      "sameSiteLax": "Lax",
+      "sameSiteNone": "Aucun",
+      "partitioned": "Partitionné",
+      "setBy": "Défini par",
+      "valueSize": "Taille de la valeur",
+      "yes": "Oui",
+      "no": "Non",
+      "bytes_one": "{{count}} octet",
+      "bytes_other": "{{count}} octets"
+    }
   },
   "trackersPage": {
     "title": "Traceurs",
@@ -107,11 +124,11 @@
     "filters": { "search": "Rechercher par nom ou description...", "allThirdParties": "Tous les tiers", "allCategories": "Toutes les catégories", "source": "Source", "type": "Type", "category": "Catégorie", "thirdParty": "Tiers" },
     "types": { "all": "Tous les types", "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Stockage en cache" },
     "sources": { "all": "Toutes les sources", "script": "Script", "preExisting": "Préexistant", "http": "HTTP", "extension": "Extension" },
-    "columns": { "name": "Nom", "attribution": "Attribution", "source": "Source", "category": "Catégorie", "maxAge": "Âge maximal" },
+    "columns": { "name": "Nom", "attribution": "Attribution", "source": "Source", "seenBy": "Vu par", "category": "Catégorie", "maxAge": "Âge maximal" },
     "sort": { "name": "Trier par nom", "source": "Trier par source" },
     "actions": { "previous": "Précédent", "next": "Suivant", "new": "Nouveau traceur" },
-    "views": { "onBanner": "Sur la bannière", "allDetected": "Tous les détectés", "ariaLabel": "Vue de la liste des traceurs" },
-    "empty": { "title": "Aucun traceur", "description": "Aucun traceur n’a encore été détecté. Ils apparaîtront ici lorsqu’ils seront détectés.", "onBanner": "Aucun traceur catégorisé n’est affiché sur la bannière." },
+    "views": { "categorised": "Catégorisés", "sdk": "Des visiteurs", "scan": "Du scan", "all": "Tous les traceurs", "ariaLabel": "Vue de la liste des traceurs" },
+    "empty": { "title": "Aucun traceur", "description": "Aucun traceur n’a encore été détecté. Ils apparaîtront ici lorsqu’ils seront détectés.", "categorised": "Aucun traceur catégorisé n’est affiché sur la bannière.", "sdk": "Aucun traceur n’a encore été signalé par des visiteurs.", "scan": "Aucun traceur n’a encore été trouvé par un scan." },
     "emptyFiltered": "Aucun traceur correspondant"
   },
   "installPage": {

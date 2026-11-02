@@ -35,6 +35,8 @@ export function CookieBannerTrackersPageSkeleton() {
         <div className={views()}>
           <span className={view()} aria-hidden />
           <span className={view()} aria-hidden />
+          <span className={view()} aria-hidden />
+          <span className={view()} aria-hidden />
         </div>
         <div className={tools()}>
           <div className={search()}>
@@ -52,7 +54,7 @@ export function CookieBannerTrackersPageSkeleton() {
             </div>
           </div>
         </div>
-        <TableSkeleton variant="surface" layout="fixed" columns={7} count={8} />
+        <TableSkeleton variant="surface" layout="fixed" columns={8} count={8} />
       </div>
     </div>
   );

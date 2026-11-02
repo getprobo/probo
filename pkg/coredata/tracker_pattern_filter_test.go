@@ -169,3 +169,103 @@ func TestTrackerPatternFilter_CategorizedAndExcluded(t *testing.T) {
 		assert.Equal(t, []string{"uncategorised"}, names)
 	})
 }
+
+func TestTrackerPatternFilter_ObservedBy(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedTrackerPatternFixture(t, ctx, client)
+
+	sdkPattern := seedTrackerPattern(
+		t,
+		ctx,
+		client,
+		fx,
+		"sdk_only",
+		coredata.TrackerPatternMatchTypeExact,
+		coredata.CookieSourceScript,
+	)
+	scanPattern := seedTrackerPattern(
+		t,
+		ctx,
+		client,
+		fx,
+		"scan_only",
+		coredata.TrackerPatternMatchTypeExact,
+		coredata.CookieSourceHTTP,
+	)
+	bothPattern := seedTrackerPattern(
+		t,
+		ctx,
+		client,
+		fx,
+		"both",
+		coredata.TrackerPatternMatchTypeExact,
+		coredata.CookieSourceScript,
+	)
+
+	insert := func(patternID gid.GID, identifier string, observedBy coredata.DetectedTrackerObserver) {
+		t.Helper()
+
+		require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+			_, err := newDetectedTracker(fx, patternID, identifier, observedBy).InsertIfNotExists(ctx, tx, fx.scope)
+
+			return err
+		}))
+	}
+
+	insert(sdkPattern.ID, "sdk_only", coredata.DetectedTrackerObserverSDK)
+	insert(scanPattern.ID, "scan_only", coredata.DetectedTrackerObserverScanner)
+	insert(bothPattern.ID, "both", coredata.DetectedTrackerObserverSDK)
+	insert(bothPattern.ID, "both", coredata.DetectedTrackerObserverScanner)
+
+	cursor := page.NewCursor(
+		10,
+		nil,
+		page.Head,
+		page.OrderBy[coredata.TrackerPatternOrderField]{
+			Field:     coredata.TrackerPatternOrderFieldName,
+			Direction: page.OrderDirectionAsc,
+		},
+	)
+
+	load := func(t *testing.T, observedBy coredata.DetectedTrackerObserver) []string {
+		t.Helper()
+
+		filter := coredata.NewTrackerPatternFilter(nil, nil, nil).
+			WithObservedBy(&observedBy)
+
+		var patterns coredata.TrackerPatterns
+
+		require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+			return patterns.LoadByCookieBannerID(
+				ctx,
+				conn,
+				fx.scope,
+				fx.cookieBannerID,
+				cursor,
+				filter,
+			)
+		}))
+
+		names := make([]string, 0, len(patterns))
+		for _, pattern := range patterns {
+			names = append(names, pattern.Pattern)
+		}
+
+		return names
+	}
+
+	t.Run("sdk detections", func(t *testing.T) {
+		t.Parallel()
+
+		assert.Equal(t, []string{"both", "sdk_only"}, load(t, coredata.DetectedTrackerObserverSDK))
+	})
+
+	t.Run("scanner detections", func(t *testing.T) {
+		t.Parallel()
+
+		assert.Equal(t, []string{"both", "scan_only"}, load(t, coredata.DetectedTrackerObserverScanner))
+	})
+}

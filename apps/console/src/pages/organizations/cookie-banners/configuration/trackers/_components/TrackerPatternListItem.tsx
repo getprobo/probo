@@ -55,6 +55,7 @@ import { cookieSourceBadges, trackerTypeBadges } from "../_lib/trackerBadges";
 
 import { DeleteTrackerPatternDialog } from "./DeleteTrackerPatternDialog";
 import { TrackerAttributionLabel } from "./TrackerAttributionLabel";
+import { TrackerObserverBadges } from "./TrackerObserverBadges";
 import { TrackerTypeBadge } from "./TrackerTypeBadge";
 
 const trackerPatternFragment = graphql`
@@ -75,6 +76,7 @@ const trackerPatternFragment = graphql`
       name
     }
     attribution
+    observedBy
     canUpdate: permission(action: "core:tracker-pattern:update")
     canDelete: permission(action: "core:tracker-pattern:delete")
   }
@@ -292,6 +294,9 @@ export function TrackerPatternListItem({
                   {t(`trackerPatternRow.sources.${sourceBadge.labelKey}`)}
                 </Badge>
               )}
+        </TableCell>
+        <TableCell className={optional()}>
+          <TrackerObserverBadges observers={pattern.observedBy} />
         </TableCell>
         {pattern.canUpdate
           ? (

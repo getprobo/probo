@@ -1948,6 +1948,32 @@ func (r *trackerPatternResolver) Attribution(ctx context.Context, obj *types.Tra
 	return &attribution, nil
 }
 
+// ObservedBy is the resolver for the observedBy field.
+func (r *trackerPatternResolver) ObservedBy(ctx context.Context, obj *types.TrackerPattern) ([]coredata.DetectedTrackerObserver, error) {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionTrackerPatternGet); err != nil {
+		return nil, err
+	}
+
+	loaders := dataloader.FromContext(ctx)
+
+	observers, err := loaders.TrackerPatternObservers.Load(ctx, obj.ID)
+	if err != nil {
+		if errors.Is(err, dataloadgen.ErrNotFound) {
+			return []coredata.DetectedTrackerObserver{}, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load tracker pattern observers", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	if observers == nil {
+		return []coredata.DetectedTrackerObserver{}, nil
+	}
+
+	return observers, nil
+}
+
 // DetectedTrackers is the resolver for the detectedTrackers field.
 func (r *trackerPatternResolver) DetectedTrackers(ctx context.Context, obj *types.TrackerPattern, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DetectedTrackerOrderBy) (*types.DetectedTrackerConnection, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionTrackerPatternGet)

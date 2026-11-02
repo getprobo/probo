@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CookieIcon, MagnifyingGlassIcon } from "@phosphor-icons/react";
+import { CookieIcon, ListBulletsIcon, ScanIcon, UsersIcon } from "@phosphor-icons/react";
 import { SegmentedControl } from "@probo/ui/src/v2/SegmentedControl/SegmentedControl";
 import { SegmentedControlItem } from "@probo/ui/src/v2/SegmentedControl/SegmentedControlItem";
 import { Select } from "@probo/ui/src/v2/Select/Select";
@@ -110,20 +110,28 @@ export function TrackersListFilters({ cookieBannerKey }: TrackersListFiltersProp
             }
           }}
         >
-          <SegmentedControlItem value="on-banner">
+          <SegmentedControlItem value="categorised">
             <CookieIcon />
-            {t("trackersPage.views.onBanner")}
+            {t("trackersPage.views.categorised")}
+          </SegmentedControlItem>
+          <SegmentedControlItem value="sdk">
+            <UsersIcon />
+            {t("trackersPage.views.sdk")}
+          </SegmentedControlItem>
+          <SegmentedControlItem value="scan">
+            <ScanIcon />
+            {t("trackersPage.views.scan")}
           </SegmentedControlItem>
           <SegmentedControlItem value="all">
-            <MagnifyingGlassIcon />
-            {t("trackersPage.views.allDetected")}
+            <ListBulletsIcon />
+            {t("trackersPage.views.all")}
           </SegmentedControlItem>
         </SegmentedControl>
       </div>
       <div className={tools()}>
         <TrackersListSearch />
         <div className={filters()}>
-          {view === "all" && (
+          {view !== "categorised" && (
             <div className={filter()}>
               <Select
                 value={category}

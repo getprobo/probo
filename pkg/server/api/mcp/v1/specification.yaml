@@ -17644,7 +17644,7 @@ components:
 
     DetectedTracker:
       type: object
-      required: [id, identifier, created_at]
+      required: [id, identifier, observed_by, created_at]
       properties:
         id:
           $ref: "#/components/schemas/GID"
@@ -17667,6 +17667,30 @@ components:
           enum: [SCRIPT, PRE_EXISTING, HTTP, EXTENSION]
           nullable: true
           go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.CookieSource
+        observed_by:
+          type: string
+          enum: [SDK, SCANNER]
+          go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DetectedTrackerObserver
+        value_size:
+          type: integer
+          nullable: true
+        http_only:
+          type: boolean
+          nullable: true
+        secure:
+          type: boolean
+          nullable: true
+        same_site:
+          type: string
+          enum: [STRICT, LAX, NONE]
+          nullable: true
+          go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.CookieSameSite
+        partitioned:
+          type: boolean
+          nullable: true
+        set_by_url:
+          type: string
+          nullable: true
         created_at:
           type: string
           format: date-time

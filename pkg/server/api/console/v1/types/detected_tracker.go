@@ -78,6 +78,13 @@ func NewDetectedTrackerNode(dt *coredata.DetectedTracker) *DetectedTracker {
 		HostOnly:      dt.HostOnly,
 		MaxAgeSeconds: dt.MaxAgeSeconds,
 		Source:        dt.Source,
+		ObservedBy:    dt.ObservedBy,
+		ValueSize:     dt.ValueSize,
+		HTTPOnly:      dt.HTTPOnly,
+		Secure:        dt.Secure,
+		SameSite:      dt.SameSite,
+		Partitioned:   dt.Partitioned,
+		SetByURL:      dt.SetByURL,
 		CreatedAt:     dt.CreatedAt,
 	}
 }

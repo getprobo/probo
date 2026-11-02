@@ -131,6 +131,7 @@ type (
 		CookieCategory                             *dataloadgen.Loader[gid.GID, *coredata.CookieCategory]
 		SamplePageLoads                            *dataloadgen.Loader[gid.GID, []cookiebanner.SampleFamilyCount]
 		SampleHitSplits                            *dataloadgen.Loader[SampleHitSplitKey, cookiebanner.SampleHitSplits]
+		TrackerPatternObservers                    *dataloadgen.Loader[gid.GID, []coredata.DetectedTrackerObserver]
 		CommonTrackerPattern                       *dataloadgen.Loader[gid.GID, *coredata.CommonTrackerPattern]
 		CommonThirdParty                           *dataloadgen.Loader[gid.GID, *coredata.CommonThirdParty]
 		ThirdPartyAdministratorIDs                 *dataloadgen.Loader[gid.GID, []gid.GID]
@@ -220,6 +221,7 @@ func (f *batchFetcher) newLoaders() *Loaders {
 		CookieCategory:                           dataloadgen.NewMappedLoader(f.fetchCookieCategories),
 		SamplePageLoads:                          dataloadgen.NewMappedLoader(f.fetchSamplePageLoads),
 		SampleHitSplits:                          dataloadgen.NewMappedLoader(f.fetchSampleHitSplits),
+		TrackerPatternObservers:                  dataloadgen.NewMappedLoader(f.fetchTrackerPatternObservers),
 		CommonTrackerPattern:                     dataloadgen.NewMappedLoader(f.fetchCommonTrackerPatterns),
 		CommonThirdParty:                         dataloadgen.NewMappedLoader(f.fetchCommonThirdParties),
 		ThirdPartyAdministratorIDs:               dataloadgen.NewMappedLoader(f.fetchThirdPartyAdministratorIDs),
@@ -1107,6 +1109,33 @@ func (f *batchFetcher) fetchSampleHitSplits(
 				SampleID:  query.SampleID,
 				Latest:    query.Latest,
 			}] = split
+		}
+	}
+
+	return result, nil
+}
+
+func (f *batchFetcher) fetchTrackerPatternObservers(
+	ctx context.Context,
+	keys []gid.GID,
+) (map[gid.GID][]coredata.DetectedTrackerObserver, error) {
+	result := make(map[gid.GID][]coredata.DetectedTrackerObserver, len(keys))
+	for _, patternID := range keys {
+		result[patternID] = []coredata.DetectedTrackerObserver{}
+	}
+
+	for tenantID, patternIDs := range gidKeysByTenant(keys) {
+		observers, err := f.cookieBanner.LoadObserversByTrackerPatternIDs(
+			ctx,
+			scopeFromContext(ctx, tenantID),
+			patternIDs,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("cannot load tracker pattern observers: %w", err)
+		}
+
+		for patternID, observedBy := range observers {
+			result[patternID] = observedBy
 		}
 	}
 

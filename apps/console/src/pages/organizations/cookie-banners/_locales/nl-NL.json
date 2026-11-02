@@ -89,7 +89,7 @@
   },
   "detectedTrackersSection": {
     "title": "Detecties",
-    "columns": { "identifier": "Identificatie", "domain": "Domein", "initiatorUrl": "Initiator-URL", "maxAge": "Maximale leeftijd (seconden)", "source": "Bron", "firstSeen": "Eerst gezien" },
+    "columns": { "identifier": "Identificatie", "domain": "Domein", "initiatorUrl": "Initiator-URL", "maxAge": "Maximale leeftijd (seconden)", "source": "Bron", "seenBy": "Gezien door", "firstSeen": "Eerst gezien" },
     "empty": "Nog geen detecties voor deze tracker.",
     "sort": { "initiatorUrl": "Sorteren op initiator-URL", "firstSeen": "Sorteren op eerst gezien" },
     "actions": { "showMore": "Meer weergeven" },
@@ -97,9 +97,26 @@
     "summary_other": "{{count}} detecties"
   },
   "moveToCategorySelect": { "empty": "Geen categorieën" },
+  "observers": { "sdk": "Bezoekers", "scanner": "Scan" },
   "detectedTrackerRow": {
     "hostOnly": "Alleen host",
-    "duration": { "second_one": "{{count}} seconde", "second_other": "{{count}} seconden" }
+    "duration": { "second_one": "{{count}} seconde", "second_other": "{{count}} seconden" },
+    "details": {
+      "label": "Cookiedetails",
+      "httpOnly": "HttpOnly",
+      "secure": "Secure",
+      "sameSite": "SameSite",
+      "sameSiteStrict": "Strict",
+      "sameSiteLax": "Lax",
+      "sameSiteNone": "Geen",
+      "partitioned": "Gepartitioneerd",
+      "setBy": "Gezet door",
+      "valueSize": "Waardegrootte",
+      "yes": "Ja",
+      "no": "Nee",
+      "bytes_one": "{{count}} byte",
+      "bytes_other": "{{count}} bytes"
+    }
   },
   "trackersPage": {
     "title": "Trackers",
@@ -107,11 +124,11 @@
     "filters": { "search": "Zoeken op naam of beschrijving...", "allThirdParties": "Alle derde partijen", "allCategories": "Alle categorieën", "source": "Bron", "type": "Type", "category": "Categorie", "thirdParty": "Derde partij" },
     "types": { "all": "Alle typen", "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Cache-opslag" },
     "sources": { "all": "Alle bronnen", "script": "Script", "preExisting": "Vooraf bestaand", "http": "HTTP", "extension": "Extensie" },
-    "columns": { "name": "Naam", "attribution": "Attributie", "source": "Bron", "category": "Categorie", "maxAge": "Maximale leeftijd" },
+    "columns": { "name": "Naam", "attribution": "Attributie", "source": "Bron", "seenBy": "Gezien door", "category": "Categorie", "maxAge": "Maximale leeftijd" },
     "sort": { "name": "Sorteren op naam", "source": "Sorteren op bron" },
     "actions": { "previous": "Vorige", "next": "Volgende", "new": "Nieuwe tracker" },
-    "views": { "onBanner": "Op banner", "allDetected": "Alle gedetecteerde", "ariaLabel": "Trackerlijstweergave" },
-    "empty": { "title": "Geen trackers", "description": "Er zijn nog geen trackers gedetecteerd. Ze verschijnen hier zodra ze worden gedetecteerd.", "onBanner": "Er worden geen gecategoriseerde trackers op de banner getoond." },
+    "views": { "categorised": "Gecategoriseerd", "sdk": "Van bezoekers", "scan": "Van de scan", "all": "Alle trackers", "ariaLabel": "Trackerlijstweergave" },
+    "empty": { "title": "Geen trackers", "description": "Er zijn nog geen trackers gedetecteerd. Ze verschijnen hier zodra ze worden gedetecteerd.", "categorised": "Er worden geen gecategoriseerde trackers op de banner getoond.", "sdk": "Er zijn nog geen trackers door bezoekers gemeld.", "scan": "Er zijn nog geen trackers door een scan gevonden." },
     "emptyFiltered": "Geen overeenkomende trackers"
   },
   "installPage": {

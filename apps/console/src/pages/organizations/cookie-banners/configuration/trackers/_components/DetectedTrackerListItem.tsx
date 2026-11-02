@@ -18,8 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { InfoIcon } from "@phosphor-icons/react";
 import { dateTimeFormat } from "@probo/i18n";
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
+import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
+import { Popover } from "@probo/ui/src/v2/Popover/Popover";
+import { PopoverPopup } from "@probo/ui/src/v2/Popover/PopoverPopup";
+import { PopoverTrigger } from "@probo/ui/src/v2/Popover/PopoverTrigger";
 import { TableCell } from "@probo/ui/src/v2/Table/TableCell";
 import { TableRow } from "@probo/ui/src/v2/Table/TableRow";
 import { TableRowHeaderCell } from "@probo/ui/src/v2/Table/TableRowHeaderCell";
@@ -32,6 +37,22 @@ import type { DetectedTrackerListItem_detectedTracker$key } from "#/__generated_
 import { detectedTrackerListItem } from "../../../variants";
 import { cookieSourceBadges } from "../_lib/trackerBadges";
 
+import { TrackerObserverBadges } from "./TrackerObserverBadges";
+
+const sameSiteKeys = {
+  STRICT: "Strict",
+  LAX: "Lax",
+  NONE: "None",
+} as const;
+
+function detailRow(label: string, value: string | null) {
+  if (value == null) {
+    return null;
+  }
+
+  return { label, value };
+}
+
 const detectedTrackerFragment = graphql`
   fragment DetectedTrackerListItem_detectedTracker on DetectedTracker {
     identifier
@@ -40,6 +61,13 @@ const detectedTrackerFragment = graphql`
     initiatorUrl
     maxAgeSeconds
     source
+    observedBy
+    valueSize
+    httpOnly
+    secure
+    sameSite
+    partitioned
+    setByUrl
     createdAt
   }
 `;
@@ -51,15 +79,69 @@ interface DetectedTrackerListItemProps {
 export function DetectedTrackerListItem({ detectedTrackerKey }: DetectedTrackerListItemProps) {
   const { t, i18n } = useTranslation("organizations/cookie-banners");
   const tracker = useFragment(detectedTrackerFragment, detectedTrackerKey);
-  const { identifier, url, date } = detectedTrackerListItem();
+  const { heading, identifier, info, detail, fact, url, date } = detectedTrackerListItem();
   const sourceBadge = tracker.source == null ? null : cookieSourceBadges[tracker.source];
+  const yesNo = (value: boolean | null | undefined) => (
+    value == null ? null : t(value ? "detectedTrackerRow.details.yes" : "detectedTrackerRow.details.no")
+  );
+  const sameSiteLabel = tracker.sameSite == null
+    ? null
+    : t(`detectedTrackerRow.details.sameSite${sameSiteKeys[tracker.sameSite]}`);
+  const details = [
+    detailRow(t("detectedTrackerRow.details.httpOnly"), yesNo(tracker.httpOnly)),
+    detailRow(t("detectedTrackerRow.details.secure"), yesNo(tracker.secure)),
+    detailRow(t("detectedTrackerRow.details.sameSite"), sameSiteLabel),
+    detailRow(t("detectedTrackerRow.details.partitioned"), yesNo(tracker.partitioned)),
+    detailRow(t("detectedTrackerRow.details.setBy"), tracker.setByUrl ?? null),
+    detailRow(
+      t("detectedTrackerRow.details.valueSize"),
+      tracker.valueSize == null
+        ? null
+        : t("detectedTrackerRow.details.bytes", { count: tracker.valueSize }),
+    ),
+  ].filter(item => item != null);
 
   return (
     <TableRow align="center">
       <TableRowHeaderCell overflow="truncate">
-        <Text size={2} className={identifier()}>
-          {tracker.identifier}
-        </Text>
+        <div className={heading()}>
+          <Text size={2} className={identifier()}>
+            {tracker.identifier}
+          </Text>
+          {details.length > 0
+            ? (
+                <span className={info()}>
+                  <Popover>
+                    <PopoverTrigger
+                      render={(
+                        <IconButton
+                          size={1}
+                          variant="ghost"
+                          color="neutral"
+                          aria-label={t("detectedTrackerRow.details.label")}
+                        />
+                      )}
+                    >
+                      <InfoIcon />
+                    </PopoverTrigger>
+                    <PopoverPopup>
+                      <div className={detail()}>
+                        <Text size={2} weight="medium" highContrast>
+                          {tracker.identifier}
+                        </Text>
+                        {details.map(item => (
+                          <div key={item.label} className={fact()}>
+                            <Text size={2} color="faint">{item.label}</Text>
+                            <Text size={2} className={url()}>{item.value}</Text>
+                          </div>
+                        ))}
+                      </div>
+                    </PopoverPopup>
+                  </Popover>
+                </span>
+              )
+            : null}
+        </div>
       </TableRowHeaderCell>
       <TableCell overflow="truncate">
         {tracker.hostOnly === true
@@ -98,6 +180,9 @@ export function DetectedTrackerListItem({ detectedTrackerKey }: DetectedTrackerL
                 {t(`trackerPatternRow.sources.${sourceBadge.labelKey}`)}
               </Badge>
             )}
+      </TableCell>
+      <TableCell>
+        <TrackerObserverBadges observers={[tracker.observedBy]} />
       </TableCell>
       <TableCell>
         <time dateTime={tracker.createdAt} className={date()}>

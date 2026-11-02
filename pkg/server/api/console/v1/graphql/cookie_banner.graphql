@@ -42,6 +42,36 @@ enum CookieSource
         )
 }
 
+enum DetectedTrackerObserver
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.DetectedTrackerObserver"
+    ) {
+    SDK
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DetectedTrackerObserverSDK"
+        )
+    SCANNER
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DetectedTrackerObserverScanner"
+        )
+}
+
+enum CookieSameSite
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.CookieSameSite") {
+    STRICT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieSameSiteStrict"
+        )
+    LAX
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieSameSiteLax"
+        )
+    NONE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieSameSiteNone"
+        )
+}
+
 enum TrackerType
     @goModel(model: "go.probo.inc/probo/pkg/coredata.TrackerType") {
     COOKIE
@@ -483,6 +513,13 @@ type TrackerPattern implements Node
     attribution: CommonTrackerPatternAttribution
         @goField(forceResolver: true)
 
+    """
+    Distinct observers that reported a detection of this pattern.
+    Empty when the pattern has no detections.
+    """
+    observedBy: [DetectedTrackerObserver!]!
+        @goField(forceResolver: true)
+
     detectedTrackers(
         first: Int
         after: CursorKey
@@ -540,6 +577,10 @@ input TrackerPatternFilter
     When false, only uncategorised patterns.
     """
     categorized: Boolean
+    """
+    Only patterns with at least one detection from this observer.
+    """
+    observedBy: DetectedTrackerObserver
 }
 
 type DetectedTracker implements Node {
@@ -550,6 +591,13 @@ type DetectedTracker implements Node {
     hostOnly: Boolean
     maxAgeSeconds: Int
     source: CookieSource
+    observedBy: DetectedTrackerObserver!
+    valueSize: Int
+    httpOnly: Boolean
+    secure: Boolean
+    sameSite: CookieSameSite
+    partitioned: Boolean
+    setByUrl: String
     createdAt: Datetime!
 }
 

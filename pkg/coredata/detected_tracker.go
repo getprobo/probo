@@ -323,6 +323,72 @@ WHERE
 	return cookies, storage, nil
 }
 
+// LoadObserversByTrackerPatternIDs returns the distinct observers that
+// reported each pattern. Patterns with no detections are absent from
+// the map.
+func (dts *DetectedTrackers) LoadObserversByTrackerPatternIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	trackerPatternIDs []gid.GID,
+) (map[gid.GID][]DetectedTrackerObserver, error) {
+	observers := make(map[gid.GID][]DetectedTrackerObserver, len(trackerPatternIDs))
+	if len(trackerPatternIDs) == 0 {
+		return observers, nil
+	}
+
+	q := `
+SELECT
+	tracker_pattern_id,
+	array_agg(DISTINCT observed_by::text ORDER BY observed_by::text) AS observers
+FROM
+	detected_trackers
+WHERE
+	%s
+	AND tracker_pattern_id = ANY(@tracker_pattern_ids::text[])
+GROUP BY
+	tracker_pattern_id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"tracker_pattern_ids": trackerPatternIDs,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query detected tracker observers: %w", err)
+	}
+
+	type patternObservers struct {
+		TrackerPatternID gid.GID  `db:"tracker_pattern_id"`
+		Observers        []string `db:"observers"`
+	}
+
+	collected, err := pgx.CollectRows(rows, pgx.RowToStructByName[patternObservers])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect detected tracker observers: %w", err)
+	}
+
+	for _, row := range collected {
+		parsed := make([]DetectedTrackerObserver, 0, len(row.Observers))
+		for _, raw := range row.Observers {
+			observer := DetectedTrackerObserver(raw)
+			if !observer.IsValid() {
+				return nil, fmt.Errorf("invalid detected tracker observer %q", raw)
+			}
+
+			parsed = append(parsed, observer)
+		}
+
+		observers[row.TrackerPatternID] = parsed
+	}
+
+	return observers, nil
+}
+
 func (dts *DetectedTrackers) CountByTrackerPatternID(
 	ctx context.Context,
 	conn pg.Querier,
