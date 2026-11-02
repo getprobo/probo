@@ -51,15 +51,12 @@ const (
 	scanHeartbeatInterval = 30 * time.Second
 )
 
-type scanRunner func(ctx context.Context, in scanner.Input) (*scanner.Result, error)
-
 type cookieBannerScanHandler struct {
 	svc               *Service
 	pg                *pg.Client
 	chromeAddr        string
 	apiBaseURL        string
 	logger            *log.Logger
-	run               scanRunner
 	maxRunning        int
 	heartbeatInterval time.Duration
 	shutdownCh        chan struct{}
@@ -94,7 +91,6 @@ func NewCookieBannerScanWorker(
 		shutdownCh:        make(chan struct{}),
 		now:               time.Now,
 	}
-	h.run = h.execute
 
 	// MaxConcurrency stays 1 even when opts try to raise it: one process
 	// must not hold two browser contexts, and the cluster cap is enforced
@@ -187,36 +183,7 @@ func (h *cookieBannerScanHandler) RecoverStale(ctx context.Context) error {
 func (h *cookieBannerScanHandler) Process(ctx context.Context, scan coredata.CookieBannerScan) error {
 	scope := coredata.NewScopeFromObjectID(scan.ID)
 
-	var (
-		banner     coredata.CookieBanner
-		checkpoint *scanner.Checkpoint
-		consent    *scanner.Consent
-	)
-
-	err := h.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			if err := banner.LoadByID(ctx, conn, scope, scan.CookieBannerID); err != nil {
-				return fmt.Errorf("cannot load cookie banner: %w", err)
-			}
-
-			decoded, err := unmarshalCheckpoint(scan.Checkpoint)
-			if err != nil {
-				return err
-			}
-
-			checkpoint = decoded
-
-			loaded, err := h.scanConsent(ctx, conn, scope, &banner)
-			if err != nil {
-				return err
-			}
-
-			consent = loaded
-
-			return nil
-		},
-	)
+	banner, checkpoint, consent, err := h.loadScan(ctx, scope, &scan)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			h.logLost(ctx, scan.ID, "cookie banner scan lost before it started")
@@ -255,7 +222,7 @@ func (h *cookieBannerScanHandler) Process(ctx context.Context, scan coredata.Coo
 		h.beat(ctx, scanCtx, scope, scan.ID, &lost, cancel)
 	}()
 
-	result, runErr := h.run(
+	result, runErr := h.execute(
 		scanCtx,
 		scanner.Input{
 			Origin:     banner.Origin,
@@ -274,7 +241,57 @@ func (h *cookieBannerScanHandler) Process(ctx context.Context, scan coredata.Coo
 	cancel()
 	<-heartbeatDone
 
-	if lost.Load() {
+	return h.record(ctx, scope, &scan, lost.Load(), result, runErr)
+}
+
+func (h *cookieBannerScanHandler) loadScan(
+	ctx context.Context,
+	scope coredata.Scoper,
+	scan *coredata.CookieBannerScan,
+) (coredata.CookieBanner, *scanner.Checkpoint, *scanner.Consent, error) {
+	var (
+		banner     coredata.CookieBanner
+		checkpoint *scanner.Checkpoint
+		consent    *scanner.Consent
+	)
+
+	err := h.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := banner.LoadByID(ctx, conn, scope, scan.CookieBannerID); err != nil {
+				return fmt.Errorf("cannot load cookie banner: %w", err)
+			}
+
+			decoded, err := unmarshalCheckpoint(scan.Checkpoint)
+			if err != nil {
+				return err
+			}
+
+			checkpoint = decoded
+
+			loaded, err := h.scanConsent(ctx, conn, scope, &banner)
+			if err != nil {
+				return err
+			}
+
+			consent = loaded
+
+			return nil
+		},
+	)
+
+	return banner, checkpoint, consent, err
+}
+
+func (h *cookieBannerScanHandler) record(
+	ctx context.Context,
+	scope coredata.Scoper,
+	scan *coredata.CookieBannerScan,
+	lost bool,
+	result *scanner.Result,
+	runErr error,
+) error {
+	if lost {
 		h.logLost(ctx, scan.ID, "cookie banner scan lost while running")
 
 		return nil
@@ -284,9 +301,9 @@ func (h *cookieBannerScanHandler) Process(ctx context.Context, scan coredata.Coo
 	case result != nil && result.Paused:
 		scan.PagesScanned = result.PagesScanned
 
-		return h.markPaused(ctx, scope, &scan, &result.Checkpoint)
+		return h.markPaused(ctx, scope, scan, &result.Checkpoint)
 	case runErr != nil && h.shutdownSignalled():
-		return h.markPaused(ctx, scope, &scan, nil)
+		return h.markPaused(ctx, scope, scan, nil)
 	case runErr != nil:
 		if result != nil {
 			scan.PagesScanned = result.PagesScanned
@@ -299,11 +316,11 @@ func (h *cookieBannerScanHandler) Process(ctx context.Context, scan coredata.Coo
 			log.String("cookie_banner_scan_id", scan.ID.String()),
 		)
 
-		return h.markFailed(ctx, scope, &scan, scanFailureReason(runErr))
+		return h.markFailed(ctx, scope, scan, scanFailureReason(runErr))
 	case result == nil:
-		return h.markFailed(ctx, scope, &scan, coredata.CookieBannerScanFailureReasonInternal)
+		return h.markFailed(ctx, scope, scan, coredata.CookieBannerScanFailureReasonInternal)
 	default:
-		return h.complete(ctx, scope, &scan, result)
+		return h.complete(ctx, scope, scan, result)
 	}
 }
 

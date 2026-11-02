@@ -26,6 +26,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -187,37 +188,43 @@ func TestCookieBannerScanHandler_Process_CompletesWithDerivedCounts(t *testing.T
 	fx := seedWorkerFixture(t, ctx, client)
 	scan := insertRunningScan(t, ctx, client, fx)
 	w := newScanWorker(t, client)
+	banner, _, _, err := w.handler.loadScan(ctx, fx.scope, scan)
+	require.NoError(t, err)
 
-	w.handler.run = func(ctx context.Context, in scanner.Input) (*scanner.Result, error) {
-		require.NoError(t, in.OnPage(
-			ctx,
-			scanner.Page{
-				URL: fx.banner.Origin + "/",
-				Cookies: []scanner.Cookie{
-					{Name: "_ga", Source: coredata.CookieSourceHTTP},
-				},
-				Storage: []scanner.StorageItem{
-					{Type: coredata.TrackerTypeLocalStorage, Key: "theme", ValueSize: 4},
-				},
-				Resources: []scanner.Resource{
-					{
-						Type:   coredata.TrackerResourceTypeScript,
-						Origin: "https://cdn.example.com",
-						Path:   "/a.js",
-					},
+	pageCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	require.NoError(t, w.handler.acceptPage(
+		pageCtx,
+		fx.scope,
+		scan,
+		&banner,
+		scanner.Page{
+			URL: fx.banner.Origin + "/",
+			Cookies: []scanner.Cookie{
+				{Name: "_ga", Source: coredata.CookieSourceHTTP},
+			},
+			Storage: []scanner.StorageItem{
+				{Type: coredata.TrackerTypeLocalStorage, Key: "theme", ValueSize: 4},
+			},
+			Resources: []scanner.Resource{
+				{
+					Type:   coredata.TrackerResourceTypeScript,
+					Origin: "https://cdn.example.com",
+					Path:   "/a.js",
 				},
 			},
-			scanner.Checkpoint{PagesScanned: 1},
-		))
+		},
+		scanner.Checkpoint{PagesScanned: 1},
+		new(atomic.Bool),
+		cancel,
+	))
 
-		return &scanner.Result{
-			PagesScanned: 3,
-			Truncated:    true,
-			Checkpoint:   scanner.Checkpoint{PagesScanned: 3},
-		}, nil
-	}
-
-	require.NoError(t, w.handler.Process(ctx, *scan))
+	require.NoError(t, w.handler.record(ctx, fx.scope, scan, false, &scanner.Result{
+		PagesScanned: 3,
+		Truncated:    true,
+		Checkpoint:   scanner.Checkpoint{PagesScanned: 3},
+	}, nil))
 
 	got := reloadScan(t, ctx, client, fx, scan.ID)
 	assert.Equal(t, coredata.CookieBannerScanStateCompleted, got.State)
@@ -237,22 +244,16 @@ func TestCookieBannerScanHandler_Process_PausesOnShutdown(t *testing.T) {
 	fx := seedWorkerFixture(t, ctx, client)
 	scan := insertRunningScan(t, ctx, client, fx)
 	w := newScanWorker(t, client)
+	w.handler.signalShutdown()
 
-	w.handler.run = func(ctx context.Context, _ scanner.Input) (*scanner.Result, error) {
-		w.handler.signalShutdown()
-		<-ctx.Done()
-
-		return &scanner.Result{
-			Paused:       true,
+	require.NoError(t, w.handler.record(ctx, fx.scope, scan, false, &scanner.Result{
+		Paused:       true,
+		PagesScanned: 2,
+		Checkpoint: scanner.Checkpoint{
 			PagesScanned: 2,
-			Checkpoint: scanner.Checkpoint{
-				PagesScanned: 2,
-				Queue:        []scanner.QueueItem{{URL: "https://example.com/pricing", Depth: 1}},
-			},
-		}, nil
-	}
-
-	require.NoError(t, w.handler.Process(ctx, *scan))
+			Queue:        []scanner.QueueItem{{URL: "https://example.com/pricing", Depth: 1}},
+		},
+	}, nil))
 
 	got := reloadScan(t, ctx, client, fx, scan.ID)
 	assert.Equal(t, coredata.CookieBannerScanStatePaused, got.State)
@@ -271,21 +272,17 @@ func TestCookieBannerScanHandler_Process_PausesWhenARunEnds(t *testing.T) {
 	scan := insertRunningScan(t, ctx, client, fx)
 	w := newScanWorker(t, client)
 
-	w.handler.run = func(context.Context, scanner.Input) (*scanner.Result, error) {
-		return &scanner.Result{
-			Paused:       true,
+	require.NoError(t, w.handler.record(ctx, fx.scope, scan, false, &scanner.Result{
+		Paused:       true,
+		PagesScanned: 10,
+		Checkpoint: scanner.Checkpoint{
 			PagesScanned: 10,
-			Checkpoint: scanner.Checkpoint{
-				PagesScanned: 10,
-				Queue: []scanner.QueueItem{
-					{URL: "https://example.com/stories/a", Depth: 1, EmbedHosts: []string{"www.youtube.com"}},
-				},
-				CoveredHosts: []string{"tally.so"},
+			Queue: []scanner.QueueItem{
+				{URL: "https://example.com/stories/a", Depth: 1, EmbedHosts: []string{"www.youtube.com"}},
 			},
-		}, nil
-	}
-
-	require.NoError(t, w.handler.Process(ctx, *scan))
+			CoveredHosts: []string{"tally.so"},
+		},
+	}, nil))
 
 	got := reloadScan(t, ctx, client, fx, scan.ID)
 	assert.Equal(t, coredata.CookieBannerScanStatePaused, got.State)
@@ -309,14 +306,9 @@ func TestCookieBannerScanHandler_Process_PausesWhenShutdownInterruptsAnError(t *
 	fx := seedWorkerFixture(t, ctx, client)
 	scan := insertRunningScan(t, ctx, client, fx)
 	w := newScanWorker(t, client)
+	w.handler.signalShutdown()
 
-	w.handler.run = func(context.Context, scanner.Input) (*scanner.Result, error) {
-		w.handler.signalShutdown()
-
-		return nil, errors.New("browser closed")
-	}
-
-	require.NoError(t, w.handler.Process(ctx, *scan))
+	require.NoError(t, w.handler.record(ctx, fx.scope, scan, false, nil, errors.New("browser closed")))
 
 	got := reloadScan(t, ctx, client, fx, scan.ID)
 	assert.Equal(t, coredata.CookieBannerScanStatePaused, got.State)
@@ -378,15 +370,12 @@ func TestCookieBannerScanHandler_Process_MapsFailureReasons(t *testing.T) {
 			scan := insertRunningScan(t, ctx, client, fx)
 			w := newScanWorker(t, client)
 
-			w.handler.run = func(context.Context, scanner.Input) (*scanner.Result, error) {
-				if errors.Is(tc.err, scanner.ErrNoPageLoaded) {
-					return &scanner.Result{}, fmt.Errorf("scan: %w", tc.err)
-				}
-
-				return nil, fmt.Errorf("scan: %w", tc.err)
+			var result *scanner.Result
+			if errors.Is(tc.err, scanner.ErrNoPageLoaded) {
+				result = &scanner.Result{}
 			}
 
-			require.NoError(t, w.handler.Process(ctx, *scan))
+			require.NoError(t, w.handler.record(ctx, fx.scope, scan, false, result, fmt.Errorf("scan: %w", tc.err)))
 
 			got := reloadScan(t, ctx, client, fx, scan.ID)
 			assert.Equal(t, coredata.CookieBannerScanStateFailed, got.State)
@@ -404,20 +393,26 @@ func TestCookieBannerScanHandler_Process_KeepsPagesWhenALaterPageFails(t *testin
 	fx := seedWorkerFixture(t, ctx, client)
 	scan := insertRunningScan(t, ctx, client, fx)
 	w := newScanWorker(t, client)
+	banner, _, _, err := w.handler.loadScan(ctx, fx.scope, scan)
+	require.NoError(t, err)
 
-	w.handler.run = func(ctx context.Context, in scanner.Input) (*scanner.Result, error) {
-		require.NoError(t, in.OnPage(
-			ctx,
-			scanner.Page{
-				Cookies: []scanner.Cookie{{Name: "_ga", Source: coredata.CookieSourceHTTP}},
-			},
-			scanner.Checkpoint{PagesScanned: 2},
-		))
+	pageCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
-		return nil, errors.New("cannot accept scanned page")
-	}
+	require.NoError(t, w.handler.acceptPage(
+		pageCtx,
+		fx.scope,
+		scan,
+		&banner,
+		scanner.Page{
+			Cookies: []scanner.Cookie{{Name: "_ga", Source: coredata.CookieSourceHTTP}},
+		},
+		scanner.Checkpoint{PagesScanned: 2},
+		new(atomic.Bool),
+		cancel,
+	))
 
-	require.NoError(t, w.handler.Process(ctx, *scan))
+	require.NoError(t, w.handler.record(ctx, fx.scope, scan, false, nil, errors.New("cannot accept scanned page")))
 
 	got := reloadScan(t, ctx, client, fx, scan.ID)
 	assert.Equal(t, coredata.CookieBannerScanStateFailed, got.State)
@@ -432,24 +427,39 @@ func TestCookieBannerScanHandler_Process_DropsWorkWhenOwnershipIsLost(t *testing
 	fx := seedWorkerFixture(t, ctx, client)
 	scan := insertRunningScan(t, ctx, client, fx)
 	w := newScanWorker(t, client)
+	banner, _, _, err := w.handler.loadScan(ctx, fx.scope, scan)
+	require.NoError(t, err)
 
-	w.handler.run = func(ctx context.Context, in scanner.Input) (*scanner.Result, error) {
-		require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-			return scan.MarkFailed(ctx, tx, fx.scope, coredata.CookieBannerScanFailureReasonInterrupted, time.Now())
-		}))
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return scan.MarkFailed(ctx, tx, fx.scope, coredata.CookieBannerScanFailureReasonInterrupted, time.Now())
+	}))
 
-		require.NoError(t, in.OnPage(
-			ctx,
-			scanner.Page{
-				Cookies: []scanner.Cookie{{Name: "lost", Source: coredata.CookieSourceHTTP}},
-			},
-			scanner.Checkpoint{PagesScanned: 1},
-		))
+	pageCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
-		return &scanner.Result{PagesScanned: 1, Checkpoint: scanner.Checkpoint{PagesScanned: 9}}, nil
-	}
+	lost := new(atomic.Bool)
+	require.NoError(t, w.handler.acceptPage(
+		pageCtx,
+		fx.scope,
+		scan,
+		&banner,
+		scanner.Page{
+			Cookies: []scanner.Cookie{{Name: "lost", Source: coredata.CookieSourceHTTP}},
+		},
+		scanner.Checkpoint{PagesScanned: 1},
+		lost,
+		cancel,
+	))
+	require.True(t, lost.Load())
 
-	require.NoError(t, w.handler.Process(ctx, *scan))
+	require.NoError(t, w.handler.record(
+		ctx,
+		fx.scope,
+		scan,
+		true,
+		&scanner.Result{PagesScanned: 1, Checkpoint: scanner.Checkpoint{PagesScanned: 9}},
+		nil,
+	))
 
 	got := reloadScan(t, ctx, client, fx, scan.ID)
 	assert.Equal(t, coredata.CookieBannerScanStateFailed, got.State)
@@ -459,7 +469,7 @@ func TestCookieBannerScanHandler_Process_DropsWorkWhenOwnershipIsLost(t *testing
 
 	var pattern coredata.TrackerPattern
 
-	err := client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+	err = client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return pattern.FindMatchingPattern(
 			ctx,
 			conn,
@@ -485,20 +495,36 @@ func TestCookieBannerScanHandler_Process_DiscardsOutcomeWhenHeartbeatLosesTheSca
 	w := newScanWorker(t, client)
 	w.handler.heartbeatInterval = 10 * time.Millisecond
 
-	w.handler.run = func(ctx context.Context, _ scanner.Input) (*scanner.Result, error) {
-		require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-			return scan.MarkFailed(ctx, tx, fx.scope, coredata.CookieBannerScanFailureReasonInterrupted, time.Now())
-		}))
+	scanCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
-		<-ctx.Done()
+	var lost atomic.Bool
 
-		return &scanner.Result{
-			Paused:     true,
-			Checkpoint: scanner.Checkpoint{PagesScanned: 9},
-		}, nil
+	beatDone := make(chan struct{})
+	go func() {
+		defer close(beatDone)
+
+		w.handler.beat(ctx, scanCtx, fx.scope, scan.ID, &lost, cancel)
+	}()
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return scan.MarkFailed(ctx, tx, fx.scope, coredata.CookieBannerScanFailureReasonInterrupted, time.Now())
+	}))
+
+	select {
+	case <-scanCtx.Done():
+	case <-ctx.Done():
+		t.Fatal("heartbeat did not notice the lost scan")
 	}
 
-	require.NoError(t, w.handler.Process(ctx, *scan))
+	require.True(t, lost.Load())
+	require.NoError(t, w.handler.record(ctx, fx.scope, scan, lost.Load(), &scanner.Result{
+		Paused:     true,
+		Checkpoint: scanner.Checkpoint{PagesScanned: 9},
+	}, nil))
+
+	cancel()
+	<-beatDone
 
 	got := reloadScan(t, context.Background(), client, fx, scan.ID)
 	assert.Equal(t, coredata.CookieBannerScanStateFailed, got.State)
@@ -521,15 +547,16 @@ func TestCookieBannerScanHandler_Process_ResumesFromCheckpoint(t *testing.T) {
 	}))
 
 	w := newScanWorker(t, client)
-	w.handler.run = func(_ context.Context, in scanner.Input) (*scanner.Result, error) {
-		require.NotNil(t, in.Checkpoint)
-		assert.Equal(t, "https://example.com/pricing", in.Checkpoint.Queue[0].URL)
-		assert.Equal(t, 4, in.Checkpoint.PagesScanned)
+	_, checkpoint, _, err := w.handler.loadScan(ctx, fx.scope, scan)
+	require.NoError(t, err)
+	require.NotNil(t, checkpoint)
+	assert.Equal(t, "https://example.com/pricing", checkpoint.Queue[0].URL)
+	assert.Equal(t, 4, checkpoint.PagesScanned)
 
-		return &scanner.Result{PagesScanned: 4, Checkpoint: *in.Checkpoint}, nil
-	}
-
-	require.NoError(t, w.handler.Process(ctx, *scan))
+	require.NoError(t, w.handler.record(ctx, fx.scope, scan, false, &scanner.Result{
+		PagesScanned: 4,
+		Checkpoint:   *checkpoint,
+	}, nil))
 
 	got := reloadScan(t, ctx, client, fx, scan.ID)
 	assert.Equal(t, coredata.CookieBannerScanStateCompleted, got.State)
@@ -574,16 +601,12 @@ func TestCookieBannerScanHandler_Process_SeedsConsentFromThePublishedVersion(t *
 	}))
 
 	w := newScanWorker(t, client)
-	w.handler.run = func(_ context.Context, in scanner.Input) (*scanner.Result, error) {
-		require.NotNil(t, in.Consent)
-		assert.Equal(t, 3, in.Consent.Version)
-		assert.Equal(t, []string{"analytics", "marketing"}, in.Consent.CategorySlugs)
-		assert.Equal(t, "ws://localhost:9222", in.BrowserURL)
-
-		return &scanner.Result{PagesScanned: 1}, nil
-	}
-
-	require.NoError(t, w.handler.Process(ctx, *scan))
+	_, _, consent, err := w.handler.loadScan(ctx, fx.scope, scan)
+	require.NoError(t, err)
+	require.NotNil(t, consent)
+	assert.Equal(t, 3, consent.Version)
+	assert.Equal(t, []string{"analytics", "marketing"}, consent.CategorySlugs)
+	assert.Equal(t, "ws://localhost:9222", w.handler.chromeAddr)
 }
 
 func TestCookieBannerScanHandler_Process_SkipsConsentWithoutAPublishedVersion(t *testing.T) {
@@ -606,11 +629,7 @@ func TestCookieBannerScanHandler_Process_SkipsConsentWithoutAPublishedVersion(t 
 	}))
 
 	w := newScanWorker(t, client)
-	w.handler.run = func(_ context.Context, in scanner.Input) (*scanner.Result, error) {
-		assert.Nil(t, in.Consent)
-
-		return &scanner.Result{PagesScanned: 1}, nil
-	}
-
-	require.NoError(t, w.handler.Process(ctx, *scan))
+	_, _, consent, err := w.handler.loadScan(ctx, fx.scope, scan)
+	require.NoError(t, err)
+	assert.Nil(t, consent)
 }
