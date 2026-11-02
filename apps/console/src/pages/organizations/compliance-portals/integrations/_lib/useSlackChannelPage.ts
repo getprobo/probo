@@ -1,0 +1,248 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+import { useEffect, useRef, useState } from "react";
+import { fetchQuery, graphql, useRelayEnvironment } from "react-relay";
+
+import type { useSlackChannelPageQuery } from "#/__generated__/core/useSlackChannelPageQuery.graphql";
+
+const slackChannelPollIntervalMs = 5000;
+
+export interface SlackChannel {
+  id: string;
+  name: string;
+}
+
+interface ChannelRequest {
+  cursor: string | null;
+  mode: "replace" | "append";
+  reset: boolean;
+  id: number;
+}
+
+const slackChannelPageQuery = graphql`
+  query useSlackChannelPageQuery($organizationId: ID!, $cursor: String) {
+    node(id: $organizationId) {
+      __typename
+      ... on Organization {
+        slackbotChannels(cursor: $cursor) {
+          channels {
+            id
+            name
+          }
+          nextCursor
+        }
+      }
+    }
+  }
+`;
+
+// users.conversations has no name parameter, so a typed query filters the
+// pages already loaded. Show more asks Slack for the next page of 50.
+export function channelMatchesQuery(name: string, query: string): boolean {
+  const needle = query.trim().replace(/^#/, "").toLocaleLowerCase();
+  if (needle === "") {
+    return true;
+  }
+
+  return name.toLocaleLowerCase().includes(needle);
+}
+
+export function useSlackChannelPage(organizationId: string, enabled: boolean) {
+  const environment = useRelayEnvironment();
+  const scopeKey = `${organizationId}:${String(enabled)}`;
+  const [scope, setScope] = useState(scopeKey);
+  const [channels, setChannels] = useState<SlackChannel[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [request, setRequest] = useState<ChannelRequest>({
+    cursor: null,
+    mode: "replace",
+    reset: true,
+    id: 0,
+  });
+  const [settledId, setSettledId] = useState<number | null>(null);
+  const [failedId, setFailedId] = useState<number | null>(null);
+  const firstPageIdsRef = useRef(new Set<string>());
+  const pagedBeyondFirstRef = useRef(false);
+  const nextCursorRef = useRef<string | null>(null);
+  const loadingRef = useRef(false);
+  const loading = enabled && settledId !== request.id;
+  const failed = failedId === request.id;
+
+  if (scope !== scopeKey) {
+    setScope(scopeKey);
+    setChannels([]);
+    setNextCursor(null);
+    setSettledId(null);
+    setFailedId(null);
+    setRequest(current => ({
+      cursor: null,
+      mode: "replace",
+      reset: true,
+      id: current.id + 1,
+    }));
+  }
+
+  useEffect(() => {
+    loadingRef.current = loading;
+  }, [loading]);
+
+  useEffect(() => {
+    if (!enabled) {
+      return;
+    }
+
+    if (request.reset) {
+      pagedBeyondFirstRef.current = false;
+      firstPageIdsRef.current = new Set();
+      nextCursorRef.current = null;
+    }
+
+    let active = true;
+    const subscription = fetchQuery<useSlackChannelPageQuery>(
+      environment,
+      slackChannelPageQuery,
+      { organizationId, cursor: request.cursor },
+      { fetchPolicy: "network-only" },
+    ).subscribe({
+      next: (data) => {
+        if (!active) {
+          return;
+        }
+
+        const page = readPage(data);
+        const previousFirstPage = firstPageIdsRef.current;
+        const pagedBeyondFirst = pagedBeyondFirstRef.current;
+        if (request.mode === "replace") {
+          firstPageIdsRef.current = new Set(page.channels.map(channel => channel.id));
+        }
+
+        setChannels((current) => {
+          if (request.mode === "append") {
+            return dedupe([...current, ...page.channels]);
+          }
+          if (pagedBeyondFirst) {
+            const rest = current.filter(channel => !previousFirstPage.has(channel.id));
+            return dedupe([...page.channels, ...rest]);
+          }
+          return page.channels;
+        });
+
+        if (request.mode === "append" || !pagedBeyondFirst) {
+          nextCursorRef.current = page.nextCursor;
+          setNextCursor(page.nextCursor);
+        }
+
+        setFailedId(null);
+        setSettledId(request.id);
+      },
+      error: () => {
+        if (!active) {
+          return;
+        }
+
+        setFailedId(request.id);
+        setSettledId(request.id);
+      },
+    });
+
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
+  }, [enabled, environment, organizationId, request]);
+
+  useEffect(() => {
+    if (!enabled) {
+      return;
+    }
+
+    const refresh = () => {
+      if (document.hidden || loadingRef.current) {
+        return;
+      }
+
+      setRequest(current => ({
+        cursor: null,
+        mode: "replace",
+        reset: false,
+        id: current.id + 1,
+      }));
+    };
+    const interval = window.setInterval(refresh, slackChannelPollIntervalMs);
+    document.addEventListener("visibilitychange", refresh);
+
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [enabled]);
+
+  function onLoadMore() {
+    const cursor = nextCursorRef.current;
+    if (cursor == null || loadingRef.current) {
+      return;
+    }
+
+    pagedBeyondFirstRef.current = true;
+    setRequest(current => ({
+      cursor,
+      mode: "append",
+      reset: false,
+      id: current.id + 1,
+    }));
+  }
+
+  return {
+    channels,
+    loading,
+    failed,
+    hasNext: nextCursor != null,
+    onLoadMore,
+  };
+}
+
+function readPage(data: useSlackChannelPageQuery["response"]): {
+  channels: SlackChannel[];
+  nextCursor: string | null;
+} {
+  const organization = data.node?.__typename === "Organization" ? data.node : null;
+  const page = organization?.slackbotChannels;
+  return {
+    channels: page?.channels.map(channel => ({
+      id: channel.id,
+      name: channel.name,
+    })) ?? [],
+    nextCursor: page?.nextCursor ?? null,
+  };
+}
+
+function dedupe(channels: SlackChannel[]): SlackChannel[] {
+  const seen = new Set<string>();
+  const unique: SlackChannel[] = [];
+  for (const channel of channels) {
+    if (seen.has(channel.id)) {
+      continue;
+    }
+    seen.add(channel.id);
+    unique.push(channel);
+  }
+  return unique;
+}

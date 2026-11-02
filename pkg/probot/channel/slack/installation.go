@@ -376,7 +376,7 @@ func (s *InstallationService) ListMemberConversations(
 		return nil, fmt.Errorf("cannot load Slack client: %w", err)
 	}
 
-	page, err := client.ListConversations(ctx, cursor)
+	page, err := client.ListConversations(ctx, cursor, conversationPickerPageSize)
 	if err != nil {
 		return nil, fmt.Errorf("cannot list Slack conversations: %w", err)
 	}
@@ -478,7 +478,7 @@ func findMemberConversation(
 ) (*Conversation, error) {
 	cursor := ""
 	for {
-		page, err := client.ListConversations(ctx, cursor)
+		page, err := client.ListConversations(ctx, cursor, conversationLookupPageSize)
 		if err != nil {
 			return nil, err
 		}

@@ -103,7 +103,11 @@ func (c *Conversation) UnmarshalJSON(data []byte) error {
 
 // ListConversations calls users.conversations. conversations.list pages
 // every public channel, so a joined channel can be missing from page one.
-func (c *Client) ListConversations(ctx context.Context, cursor string) (*ConversationsPage, error) {
+func (c *Client) ListConversations(
+	ctx context.Context,
+	cursor string,
+	limit int,
+) (*ConversationsPage, error) {
 	endpoint, err := c.methodURL(slackMethodUsersConversations)
 	if err != nil {
 		return nil, fmt.Errorf("cannot build list conversations endpoint: %w", err)
@@ -116,7 +120,7 @@ func (c *Client) ListConversations(ctx context.Context, cursor string) (*Convers
 
 	query := u.Query()
 	query.Set("exclude_archived", strconv.FormatBool(true))
-	query.Set("limit", strconv.Itoa(conversationsPageSize))
+	query.Set("limit", strconv.Itoa(limit))
 	query.Set("types", "public_channel,private_channel")
 
 	if cursor != "" {

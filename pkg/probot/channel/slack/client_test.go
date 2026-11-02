@@ -184,7 +184,7 @@ func TestClientListConversations(t *testing.T) {
 							assert.Equal(t, "/api/users.conversations", r.URL.Path)
 							assert.Equal(t, tt.wantCursor, r.URL.Query().Get("cursor"))
 							assert.Equal(t, "true", r.URL.Query().Get("exclude_archived"))
-							assert.Equal(t, "1000", r.URL.Query().Get("limit"))
+							assert.Equal(t, "50", r.URL.Query().Get("limit"))
 							assert.Equal(t, "public_channel,private_channel", r.URL.Query().Get("types"))
 							assert.Equal(t, "Bearer "+testBotToken, r.Header.Get("Authorization"))
 
@@ -199,7 +199,11 @@ func TestClientListConversations(t *testing.T) {
 				)
 				t.Cleanup(server.Close)
 
-				page, err := newTestClient(server.URL+"/api").ListConversations(t.Context(), tt.cursor)
+				page, err := newTestClient(server.URL+"/api").ListConversations(
+					t.Context(),
+					tt.cursor,
+					conversationPickerPageSize,
+				)
 				require.NoError(t, err)
 				assert.Equal(
 					t,
@@ -234,7 +238,11 @@ func TestClientListConversations_OmittedMembership(t *testing.T) {
 	)
 	t.Cleanup(server.Close)
 
-	page, err := newTestClient(server.URL+"/api").ListConversations(t.Context(), "")
+	page, err := newTestClient(server.URL+"/api").ListConversations(
+		t.Context(),
+		"",
+		conversationPickerPageSize,
+	)
 	require.NoError(t, err)
 	assert.Equal(
 		t,
@@ -539,7 +547,7 @@ func TestClientSlackAPIErrors(t *testing.T) {
 		{
 			name: "list conversations",
 			call: func(ctx context.Context, c *Client) error {
-				_, err := c.ListConversations(ctx, "")
+				_, err := c.ListConversations(ctx, "", conversationPickerPageSize)
 				return err
 			},
 		},

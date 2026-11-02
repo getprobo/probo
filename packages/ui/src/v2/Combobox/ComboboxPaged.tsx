@@ -34,6 +34,7 @@ import { ComboboxItem } from "./ComboboxItem";
 import { ComboboxJoined } from "./ComboboxJoined";
 import { ComboboxList } from "./ComboboxList";
 import { ComboboxPopup } from "./ComboboxPopup";
+import { comboboxJoined } from "./variants";
 
 export interface ComboboxPagedOption {
   id: string;
@@ -57,6 +58,7 @@ export interface ComboboxPagedProps<TItem> {
   errorLabel: string;
   loadMoreLabel: string;
   disabled?: boolean;
+  id?: string;
   pinned?: ComboboxPagedOption;
   onPinnedSelect?: () => void;
   onSelect: (item: TItem) => void;
@@ -86,6 +88,7 @@ export function ComboboxPaged<TItem>(props: ComboboxPagedProps<TItem>) {
     errorLabel,
     loadMoreLabel,
     disabled,
+    id,
     pinned,
     onPinnedSelect,
     onSelect,
@@ -137,6 +140,7 @@ export function ComboboxPaged<TItem>(props: ComboboxPagedProps<TItem>) {
         field={(
           <ComboboxInputGroup>
             <ComboboxInput
+              id={id}
               placeholder={open ? placeholder : selectedLabel}
               aria-label={ariaLabel}
               disabled={disabled}
@@ -152,33 +156,35 @@ export function ComboboxPaged<TItem>(props: ComboboxPagedProps<TItem>) {
         )}
       >
         <ComboboxPopup joined>
-          {(pinned != null || items.length > 0) && (
-            <ComboboxList>
-              {pinned != null && (
-                <ComboboxItem
-                  key={pinned.id}
-                  value={pinned.id}
-                >
-                  <OptionLabel icon={pinned.leading} label={pinned.label} />
-                </ComboboxItem>
-              )}
-              {items.map(item => (
-                <ComboboxItem
-                  key={itemId(item)}
-                  value={itemId(item)}
-                >
-                  <OptionLabel icon={itemLeading?.(item)} label={itemLabel(item)} />
-                </ComboboxItem>
-              ))}
-            </ComboboxList>
-          )}
-          {loading && items.length === 0 && <OptionSkeletons />}
-          {failed && (
-            <Text size={2} color="faint" className="px-3 py-2">
-              {errorLabel}
-            </Text>
-          )}
-          {showEmpty && <ComboboxEmpty>{emptyLabel}</ComboboxEmpty>}
+          <div className={comboboxJoined().list()}>
+            {(pinned != null || items.length > 0) && (
+              <ComboboxList>
+                {pinned != null && (
+                  <ComboboxItem
+                    key={pinned.id}
+                    value={pinned.id}
+                  >
+                    <OptionLabel icon={pinned.leading} label={pinned.label} />
+                  </ComboboxItem>
+                )}
+                {items.map(item => (
+                  <ComboboxItem
+                    key={itemId(item)}
+                    value={itemId(item)}
+                  >
+                    <OptionLabel icon={itemLeading?.(item)} label={itemLabel(item)} />
+                  </ComboboxItem>
+                ))}
+              </ComboboxList>
+            )}
+            {loading && items.length === 0 && <OptionSkeletons />}
+            {failed && (
+              <Text size={2} color="faint" className="px-3 py-2">
+                {errorLabel}
+              </Text>
+            )}
+            {showEmpty && <ComboboxEmpty>{emptyLabel}</ComboboxEmpty>}
+          </div>
           {hasNext && (
             <div
               onMouseDown={(event) => {

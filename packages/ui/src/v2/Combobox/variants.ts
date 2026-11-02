@@ -91,8 +91,9 @@ export const comboboxJoined = tv({
     ],
     field: "relative",
     input: "relative z-1",
+    list: "max-h-[min(16rem,var(--available-height))] overflow-y-auto",
     popup: [
-      "max-h-[min(16rem,var(--available-height))] overflow-y-auto rounded-b-3 rounded-t-none border border-t-0 border-sand-6 bg-sand-1 p-1 shadow-3 outline-none",
+      "flex max-h-[min(20rem,var(--available-height))] flex-col overflow-hidden rounded-b-3 rounded-t-none border border-t-0 border-sand-6 bg-sand-1 p-1 shadow-3 outline-none",
       "[clip-path:inset(0_-1.5rem_-1.5rem_-1.5rem)]",
     ],
   },

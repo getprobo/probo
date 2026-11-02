@@ -48,6 +48,5 @@ export const slackSection = tv({
     empty: "flex items-start gap-3",
     emptyCopy: "flex flex-col gap-0.5",
     emptyCallout: "min-w-0 flex-1",
-    popupEmpty: "flex flex-col gap-0.5 px-3 py-2",
   },
 });
