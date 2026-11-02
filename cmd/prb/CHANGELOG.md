@@ -4,6 +4,8 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.263.0] - 2026-11-02
+
 ### Added
 
 - `access-review campaign retry-fetch <campaign-id> --source-id <source-id>`
@@ -14,6 +16,8 @@ All notable changes to the `prb` CLI will be documented in this file.
 - **Breaking**: non-interactive `prb auth login` requires `--hostname`
   and no longer uses `eu.probo.com` when the flag is omitted. In a
   terminal, the prompt lists US, then EU, then a custom host
+- `connector create --token-url` is deprecated and ignored. The
+  server names the token endpoint
 
 ## [0.262.0] - 2026-10-30
 
