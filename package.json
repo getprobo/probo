@@ -31,6 +31,7 @@
     "@langchain/community": "1.1.29",
     "argparse": "2.0.1",
     "deepmerge": "npm:deepmerge-ts@8.0.2",
+    "glob": "14.0.3",
     "handlebars": "4.7.10",
     "html-to-text": "10.0.1",
     "postcss-selector-parser": "^7.1.6",
