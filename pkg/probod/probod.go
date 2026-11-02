@@ -1622,7 +1622,7 @@ func (impl *Implm) Run(
 
 		var cookieBannerScanWorkerCtx context.Context
 
-		cookieBannerScanWorkerCtx, stopCookieBannerScanWorker = context.WithCancel(context.Background())
+		cookieBannerScanWorkerCtx, stopCookieBannerScanWorker = context.WithCancel(context.WithoutCancel(ctx))
 
 		wg.Go(
 			func() {
