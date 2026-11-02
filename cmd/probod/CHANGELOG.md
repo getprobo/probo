@@ -4,6 +4,17 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.335.1] - 2026-11-02
+
+### Fixed
+
+- PDFs no longer raise a Content Security Policy violation in the
+  compliance and employee portals: both now allow WebAssembly
+  compilation for pdf.js
+- A PDF that fails to load in the compliance or employee portal
+  shows an inline error with a reload button in the viewer,
+  instead of replacing the whole page with an error screen
+
 ## [0.335.0] - 2026-11-02
 
 ### Added
