@@ -23,8 +23,12 @@ import { Button } from "@probo/ui/src/v2/Button/Button";
 import { ButtonAnchor } from "@probo/ui/src/v2/Button/ButtonAnchor";
 import { Callout } from "@probo/ui/src/v2/Callout/Callout";
 import { Card } from "@probo/ui/src/v2/Card/Card";
-import { ComboboxPaged } from "@probo/ui/src/v2/Combobox/ComboboxPaged";
 import { Field } from "@probo/ui/src/v2/form/Field";
+import { Select } from "@probo/ui/src/v2/Select/Select";
+import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
+import { SelectList } from "@probo/ui/src/v2/Select/SelectList";
+import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
+import { SelectTrigger } from "@probo/ui/src/v2/Select/SelectTrigger";
 import { SlackLogo } from "@probo/ui/src/v2/SlackLogo/SlackLogo";
 import { Spinner } from "@probo/ui/src/v2/Spinner/Spinner";
 import { Code } from "@probo/ui/src/v2/typography/Code";
@@ -153,9 +157,12 @@ export function CompliancePortalSlackSection({
   const slackListEmpty = channelPage.channels.length === 0 && !channelPage.hasNext;
   const showEmptyCallout = showChannelConfig && slackListEmpty && !channelPage.failed;
 
+  const channelNames = Object.fromEntries(
+    channels.map(listedChannel => [listedChannel.id, `#${listedChannel.name}`]),
+  );
   const {
     root, intro, grid, card, lead, copy, channel, channelRow, channelField,
-    empty, emptyCopy, emptyCallout,
+    empty, emptyCopy, emptyCallout, menuList,
   } = slackSection();
   const { frame, header, wash, fade, icon: iconSlot, control, body } = tonedCard({
     tone: "sand",
@@ -251,29 +258,72 @@ export function CompliancePortalSlackSection({
                       label={t("slackSection.channel.label")}
                       className={channelField()}
                     >
-                      <ComboboxPaged
-                        items={channels}
-                        loading={channelPage.loading}
-                        failed={channelPage.failed}
-                        searchable={false}
-                        hasNext={channelPage.hasNext}
-                        onLoadMore={channelPage.onLoadMore}
-                        selectedId={configuredChannel?.channelId ?? null}
-                        selectedLabel={
-                          configuredChannel
-                            ? `#${configuredChannel.channelName}`
-                            : t("slackSection.channel.placeholder")
-                        }
-                        ariaLabel={t("slackSection.channel.label")}
-                        placeholder={t("slackSection.channel.placeholder")}
-                        emptyLabel={t("slackSection.channel.emptyTitle")}
-                        errorLabel={t("slackSection.channel.loadError")}
-                        loadMoreLabel={t("slackSection.channel.loadMore")}
+                      <Select
+                        value={configuredChannel?.channelId ?? null}
+                        onValueChange={(channelId) => {
+                          if (channelId != null) {
+                            setNotificationChannel(channelId);
+                          }
+                        }}
                         disabled={isSettingChannel || isClearingChannel}
-                        onSelect={listedChannel => setNotificationChannel(listedChannel.id)}
-                        itemId={listedChannel => listedChannel.id}
-                        itemLabel={listedChannel => `#${listedChannel.name}`}
-                      />
+                      >
+                        <SelectTrigger
+                          placeholder={t("slackSection.channel.placeholder")}
+                          aria-label={t("slackSection.channel.label")}
+                        >
+                          {(value: string | null) => (
+                            value
+                              ? (channelNames[value] ?? `#${value}`)
+                              : t("slackSection.channel.placeholder")
+                          )}
+                        </SelectTrigger>
+                        <SelectPopup>
+                          <div className={menuList()}>
+                            {channels.length > 0 && (
+                              <SelectList>
+                                {channels.map(listedChannel => (
+                                  <SelectItem key={listedChannel.id} value={listedChannel.id}>
+                                    {`#${listedChannel.name}`}
+                                  </SelectItem>
+                                ))}
+                              </SelectList>
+                            )}
+                            {channelPage.loading && channels.length === 0 && (
+                              <Text size={2} color="faint" className="px-3 py-2">
+                                {t("slackSection.channel.emptyTitle")}
+                              </Text>
+                            )}
+                            {channelPage.failed && channels.length === 0 && (
+                              <Text size={2} color="faint" className="px-3 py-2">
+                                {t("slackSection.channel.loadError")}
+                              </Text>
+                            )}
+                            {!channelPage.loading && !channelPage.failed && channels.length === 0 && (
+                              <Text size={2} color="faint" className="px-3 py-2">
+                                {t("slackSection.channel.emptyTitle")}
+                              </Text>
+                            )}
+                          </div>
+                          {channelPage.hasNext && (
+                            <div
+                              onMouseDown={(event) => {
+                                event.preventDefault();
+                              }}
+                            >
+                              <Button
+                                variant="ghost"
+                                color="neutral"
+                                size={1}
+                                className="w-full justify-center"
+                                loading={channelPage.loading}
+                                onClick={channelPage.onLoadMore}
+                              >
+                                {t("slackSection.channel.loadMore")}
+                              </Button>
+                            </div>
+                          )}
+                        </SelectPopup>
+                      </Select>
                     </Field>
                     {configuredChannel && (
                       <Button
