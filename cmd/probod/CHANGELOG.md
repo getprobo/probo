@@ -4,6 +4,8 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.335.0] - 2026-11-02
+
 ### Added
 
 - A campaign source whose fetch failed can be retried from the
@@ -11,10 +13,55 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
   progress until the new fetch settles, and decisions cannot be
   recorded while the retry runs
 
+### Changed
+
+- 1Password Users API connectors use the v1 API. The token
+  endpoint comes from the Region setting, and existing
+  connections move to it on their next fetch. The `tokenUrl`
+  input of the client-credentials connector mutation is
+  deprecated and ignored. The Enterprise region is supported
+- The 1Password account ID is checked when a connector is
+  created: it must be 26 letters and digits. The connect form
+  says where to find it, and that it is not the client ID
+- The 1Password connection check lists one user from the Users
+  API or the customer's SCIM bridge, so a token for another
+  account, or without the View users scope, is refused
+- A campaign cannot start while a source uses a connector that
+  needs an organization and has none selected. The error names
+  each source to fix
+- The compliance portal Slack channel picker lists the
+  channels the bot has joined, 50 at a time, with Show more
+  for the next page. It shows an error when the next page fails
+
 ### Fixed
 
 - An access review campaign cannot be completed while a source fetch
   has failed. Retry the fetch, or cancel the campaign
+- 1Password Users API sources list their users. They always
+  reported zero accounts
+- Vercel connectors saved without a team record it when they
+  are reconnected, so their source fetches work again
+- AWS Identity Center discovery skips a region that does not
+  answer within five seconds, so one unreachable region no
+  longer fails the whole fetch
+- Apollo.io source fetches decode the users response again
+- Grafana sources with 100 or more organization users fetch
+  them in one request instead of failing on the page limit
+- Cancelling a campaign stops its queued and running source
+  fetches. A cancelled campaign no longer receives entries
+- The Complete campaign button turns on after the last pending
+  decision, without a reload
+- Adding a source to a draft campaign no longer shows the
+  error screen
+- List searches accept punctuation such as `:` or `(`. A pasted
+  document title no longer fails the documents, controls,
+  risks, internal controls, or devices list
+- The compliance portal PDF viewer shows an error card with a
+  retry when a document fails to load, resets the page when the
+  file changes, and formats the zoom percent for the locale
+- The console Go to dialog keeps the first character typed
+- Employee portal shared documents use the wide top bar, like
+  signature and approval documents
 
 ## [0.334.0] - 2026-10-30
 
