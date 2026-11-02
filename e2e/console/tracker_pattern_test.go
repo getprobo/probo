@@ -808,7 +808,7 @@ func TestTrackerPattern_ObservedBy(t *testing.T) {
 		} `json:"node"`
 	}
 
-	load := func(t *testing.T, observedBy string) []listedPattern {
+	load := func(t *testing.T, observedBy []string) []listedPattern {
 		t.Helper()
 
 		require.NoError(t, owner.Execute(
@@ -833,11 +833,16 @@ func TestTrackerPattern_ObservedBy(t *testing.T) {
 	assert.Equal(t, []listedPattern{
 		{Pattern: "both", ObservedBy: []string{"SCANNER", "SDK"}},
 		{Pattern: "sdk", ObservedBy: []string{"SDK"}},
-	}, load(t, "SDK"))
+	}, load(t, []string{"SDK"}))
 	assert.Equal(t, []listedPattern{
 		{Pattern: "both", ObservedBy: []string{"SCANNER", "SDK"}},
 		{Pattern: "scan", ObservedBy: []string{"SCANNER"}},
-	}, load(t, "SCANNER"))
+	}, load(t, []string{"SCANNER"}))
+	assert.Equal(t, []listedPattern{
+		{Pattern: "both", ObservedBy: []string{"SCANNER", "SDK"}},
+		{Pattern: "scan", ObservedBy: []string{"SCANNER"}},
+		{Pattern: "sdk", ObservedBy: []string{"SDK"}},
+	}, load(t, []string{"SDK", "SCANNER"}))
 
 	const detectionQuery = `
 		query($id: ID!) {

@@ -578,9 +578,10 @@ input TrackerPatternFilter
     """
     categorized: Boolean
     """
-    Only patterns with at least one detection from this observer.
+    Only patterns with at least one detection from any of these
+    observers. Null or empty disables the filter.
     """
-    observedBy: DetectedTrackerObserver
+    observedBy: [DetectedTrackerObserver!]
 }
 
 type DetectedTracker implements Node {

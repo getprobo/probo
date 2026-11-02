@@ -79,7 +79,7 @@ type (
 		ThirdPartyID     *gid.GID
 		Excluded         *bool
 		Categorized      *bool
-		ObservedBy       *coredata.DetectedTrackerObserver
+		ObservedBy       []coredata.DetectedTrackerObserver
 	}
 )
 

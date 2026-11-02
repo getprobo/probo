@@ -35,7 +35,7 @@ type TrackerPatternFilter struct {
 	source             *CookieSource
 	trackerType        *TrackerType
 	commonThirdPartyID *gid.GID
-	observedBy         *DetectedTrackerObserver
+	observedBy         []DetectedTrackerObserver
 }
 
 func NewTrackerPatternFilter(
@@ -94,8 +94,9 @@ func (f *TrackerPatternFilter) WithCommonThirdPartyID(id *gid.GID) *TrackerPatte
 }
 
 // WithObservedBy restricts results to patterns that have at least one
-// detection from the given observer. A nil value disables the filter.
-func (f *TrackerPatternFilter) WithObservedBy(observedBy *DetectedTrackerObserver) *TrackerPatternFilter {
+// detection from any of the given observers. A nil or empty slice
+// disables the filter.
+func (f *TrackerPatternFilter) WithObservedBy(observedBy []DetectedTrackerObserver) *TrackerPatternFilter {
 	f.observedBy = observedBy
 	return f
 }
@@ -180,11 +181,10 @@ func (f *TrackerPatternFilter) SQLFragment() string {
 	END
 	AND
 	CASE
-		WHEN @has_observed_by_filter::boolean = false THEN TRUE
-		WHEN @has_observed_by_filter::boolean = true THEN
+		WHEN @filter_observed_by::detected_tracker_observer[] IS NOT NULL THEN
 			id IN (
 				SELECT tracker_pattern_id FROM detected_trackers
-				WHERE observed_by = @filter_observed_by::detected_tracker_observer
+				WHERE observed_by = ANY(@filter_observed_by::detected_tracker_observer[])
 			)
 		ELSE TRUE
 	END
@@ -214,8 +214,7 @@ func (f *TrackerPatternFilter) SQLArguments() pgx.StrictNamedArgs {
 		"filter_tracker_type":              nil,
 		"has_common_third_party_id_filter": false,
 		"filter_common_third_party_id":     nil,
-		"has_observed_by_filter":           false,
-		"filter_observed_by":               nil,
+		"filter_observed_by":               filterStrings(f.observedBy),
 	}
 
 	if f.matchType != nil {
@@ -259,11 +258,6 @@ func (f *TrackerPatternFilter) SQLArguments() pgx.StrictNamedArgs {
 	if f.commonThirdPartyID != nil {
 		args["has_common_third_party_id_filter"] = true
 		args["filter_common_third_party_id"] = *f.commonThirdPartyID
-	}
-
-	if f.observedBy != nil {
-		args["has_observed_by_filter"] = true
-		args["filter_observed_by"] = string(*f.observedBy)
 	}
 
 	return args

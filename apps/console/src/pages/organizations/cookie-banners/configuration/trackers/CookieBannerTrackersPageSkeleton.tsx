@@ -37,12 +37,16 @@ export function CookieBannerTrackersPageSkeleton() {
           <span className={view()} aria-hidden />
           <span className={view()} aria-hidden />
           <span className={view()} aria-hidden />
+          <span className={view()} aria-hidden />
         </div>
         <div className={tools()}>
           <div className={search()}>
             <TextFieldSkeleton />
           </div>
           <div className={filters()}>
+            <div className={filter()}>
+              <SelectSkeleton />
+            </div>
             <div className={filter()}>
               <SelectSkeleton />
             </div>

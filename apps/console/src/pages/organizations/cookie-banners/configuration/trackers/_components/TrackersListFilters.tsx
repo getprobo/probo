@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CookieIcon, ListBulletsIcon, ScanIcon, UsersIcon } from "@phosphor-icons/react";
+import { CookieIcon, ListBulletsIcon, ScanIcon, TagIcon, UsersIcon } from "@phosphor-icons/react";
 import { SegmentedControl } from "@probo/ui/src/v2/SegmentedControl/SegmentedControl";
 import { SegmentedControlItem } from "@probo/ui/src/v2/SegmentedControl/SegmentedControlItem";
 import { Select } from "@probo/ui/src/v2/Select/Select";
@@ -32,10 +32,14 @@ import { graphql } from "relay-runtime";
 import type { TrackersListFilters_cookieBanner$key } from "#/__generated__/core/TrackersListFilters_cookieBanner.graphql";
 
 import { cookieBannerList } from "../../../variants";
+import { allObserversValue, observedByFromMenu, selectedFilterLabel } from "../_lib/selectedFilterLabel";
+import { trackerObserverBadges } from "../_lib/trackerBadges";
 import {
   type CookieSource,
   cookieSources,
+  detectedTrackerObservers,
   isCookieSource,
+  isDetectedTrackerObserver,
   isTrackersListView,
   isTrackerType,
   type TrackerType,
@@ -84,17 +88,22 @@ export function TrackersListFilters({ cookieBannerKey }: TrackersListFiltersProp
     type,
     category,
     party,
+    observedBy,
     setView,
     setSource,
     setType,
     setCategory,
     setParty,
+    setObservedBy,
   } = useTrackersListFilters();
   const { views, tools, filters, filter, typeFilter } = cookieBannerList();
   const allSourcesLabel = t("trackersPage.sources.all");
   const allTypesLabel = t("trackersPage.types.all");
   const allCategoriesLabel = t("trackersPage.filters.allCategories");
   const allThirdPartiesLabel = t("trackersPage.filters.allThirdParties");
+  const allObserversLabel = t("trackersPage.filters.allObservers");
+  const categoryLocked = view === "categorised" || view === "uncategorised";
+  const observedByLocked = view === "sdk" || view === "scan";
   const categories = cookieBanner.categories.edges.map(edge => edge.node);
 
   return (
@@ -114,6 +123,10 @@ export function TrackersListFilters({ cookieBannerKey }: TrackersListFiltersProp
             <CookieIcon />
             {t("trackersPage.views.categorised")}
           </SegmentedControlItem>
+          <SegmentedControlItem value="uncategorised">
+            <TagIcon />
+            {t("trackersPage.views.uncategorised")}
+          </SegmentedControlItem>
           <SegmentedControlItem value="sdk">
             <UsersIcon />
             {t("trackersPage.views.sdk")}
@@ -131,7 +144,40 @@ export function TrackersListFilters({ cookieBannerKey }: TrackersListFiltersProp
       <div className={tools()}>
         <TrackersListSearch />
         <div className={filters()}>
-          {view !== "categorised" && (
+          {!observedByLocked && (
+            <div className={filter()}>
+              <Select
+                multiple
+                value={observedBy.length === 0 ? [allObserversValue] : observedBy}
+                onValueChange={(value) => {
+                  setObservedBy(observedByFromMenu(observedBy, value));
+                }}
+              >
+                <SelectTrigger
+                  className={observedBy.length === 0 ? "text-sand-a10!" : undefined}
+                  size={2}
+                  placeholder={allObserversLabel}
+                  aria-label={t("trackersPage.filters.observedBy")}
+                >
+                  {(value: readonly string[]) => selectedFilterLabel(
+                    value.filter(isDetectedTrackerObserver),
+                    allObserversLabel,
+                    observer => t(`observers.${trackerObserverBadges[observer].labelKey}`),
+                    t("trackersPage.filters.selectedCount", { count: value.length }),
+                  )}
+                </SelectTrigger>
+                <SelectPopup align="start">
+                  <SelectItem value={allObserversValue}>{allObserversLabel}</SelectItem>
+                  {detectedTrackerObservers.map(observer => (
+                    <SelectItem key={observer} value={observer}>
+                      {t(`observers.${trackerObserverBadges[observer].labelKey}`)}
+                    </SelectItem>
+                  ))}
+                </SelectPopup>
+              </Select>
+            </div>
+          )}
+          {!categoryLocked && (
             <div className={filter()}>
               <Select
                 value={category}

@@ -29,17 +29,15 @@ import { TRACKERS_PAGE_SIZE } from "./pageSize";
 export const cookieSources = ["SCRIPT", "PRE_EXISTING", "HTTP", "EXTENSION"] as const;
 export type CookieSource = (typeof cookieSources)[number];
 
-export const trackersListViews = ["categorised", "sdk", "scan", "all"] as const;
+export const trackersListViews = ["categorised", "uncategorised", "sdk", "scan", "all"] as const;
 export type TrackersListView = (typeof trackersListViews)[number];
 
 export const detectedTrackerObservers = ["SDK", "SCANNER"] as const;
 export type DetectedTrackerObserver = (typeof detectedTrackerObservers)[number];
 
-const observedByForView: Record<TrackersListView, DetectedTrackerObserver | null> = {
-  categorised: null,
+const lockedObservedBy: Partial<Record<TrackersListView, DetectedTrackerObserver>> = {
   sdk: "SDK",
   scan: "SCANNER",
-  all: null,
 };
 
 export const trackerTypes = [
@@ -79,7 +77,7 @@ export type TrackersListGraphqlFilter = {
   thirdPartyId: string | null;
   excluded: boolean | null;
   categorized: boolean | null;
-  observedBy: DetectedTrackerObserver | null;
+  observedBy: DetectedTrackerObserver[] | null;
 };
 
 export function isCookieSource(value: string): value is CookieSource {
@@ -88,6 +86,27 @@ export function isCookieSource(value: string): value is CookieSource {
 
 export function isTrackersListView(value: string): value is TrackersListView {
   return (trackersListViews as readonly string[]).includes(value);
+}
+
+export function isDetectedTrackerObserver(value: string): value is DetectedTrackerObserver {
+  return (detectedTrackerObservers as readonly string[]).includes(value);
+}
+
+function categoryLocked(view: TrackersListView): boolean {
+  return view === "categorised" || view === "uncategorised";
+}
+
+function selectedObservers(values: readonly string[]): DetectedTrackerObserver[] {
+  const seen = new Set<string>();
+  const selected: DetectedTrackerObserver[] = [];
+  for (const value of values) {
+    if (seen.has(value) || !isDetectedTrackerObserver(value)) {
+      continue;
+    }
+    seen.add(value);
+    selected.push(value);
+  }
+  return selected;
 }
 
 export function isTrackerType(value: string): value is TrackerType {
@@ -137,13 +156,25 @@ export function trackersListGraphqlFilter(filters: {
   type: TrackerType | null;
   category: string | null;
   party: string | null;
+  observedBy: readonly DetectedTrackerObserver[];
 }): TrackersListGraphqlFilter | null {
   const query = filters.query.trim() || null;
-  const categorised = filters.view === "categorised";
-  const category = categorised ? null : filters.category;
-  const excluded = categorised ? false : null;
-  const categorized = categorised ? true : null;
-  const observedBy = observedByForView[filters.view];
+  const lockedCategory = categoryLocked(filters.view);
+  const category = lockedCategory ? null : filters.category;
+  const excluded = lockedCategory ? false : null;
+  let categorized: boolean | null = null;
+  if (filters.view === "categorised") {
+    categorized = true;
+  } else if (filters.view === "uncategorised") {
+    categorized = false;
+  }
+  const locked = lockedObservedBy[filters.view];
+  let observedBy: DetectedTrackerObserver[] | null = null;
+  if (locked != null) {
+    observedBy = [locked];
+  } else if (filters.observedBy.length > 0) {
+    observedBy = [...filters.observedBy];
+  }
   if (
     query == null
     && filters.source == null
@@ -209,6 +240,7 @@ export interface TrackersListFilters {
   type: TrackerType | null;
   category: string | null;
   party: string | null;
+  observedBy: DetectedTrackerObserver[];
   graphqlFilter: TrackersListGraphqlFilter | null;
   graphqlOrder: TrackersListOrder;
   graphqlPagination: CursorPaginationVariables;
@@ -219,6 +251,7 @@ export interface TrackersListFilters {
   setType: (value: TrackerType | null) => void;
   setCategory: (value: string | null) => void;
   setParty: (value: string | null) => void;
+  setObservedBy: (values: readonly DetectedTrackerObserver[]) => void;
   setOrder: (field: TrackerPatternOrderField) => void;
   setAfter: (cursor: string) => void;
   setBefore: (cursor: string) => void;
@@ -242,8 +275,16 @@ export function useTrackersListFilters(): TrackersListFilters {
     : "categorised";
   const source = isCookieSource(rawSource) ? rawSource : null;
   const type = isTrackerType(rawType) ? rawType : null;
-  const category = view === "categorised" || rawCategory === "" ? null : rawCategory;
+  const category = categoryLocked(view) || rawCategory === "" ? null : rawCategory;
   const party = rawParty === "" ? null : rawParty;
+  // A string snapshot keeps the observer list stable. Reading getAll()
+  // directly is a new array every render, which the React compiler
+  // will not memoize.
+  const search = searchParams.toString();
+  const observedBy = useMemo(
+    () => selectedObservers(new URLSearchParams(search).getAll("observedBy")),
+    [search],
+  );
   const field = isTrackerPatternOrderField(rawSort)
     ? rawSort
     : defaultTrackersListOrder.field;
@@ -256,8 +297,16 @@ export function useTrackersListFilters(): TrackersListFilters {
   );
 
   const graphqlFilter = useMemo(
-    () => trackersListGraphqlFilter({ view, query, source, type, category, party }),
-    [category, party, query, source, type, view],
+    () => trackersListGraphqlFilter({
+      view,
+      query,
+      source,
+      type,
+      category,
+      party,
+      observedBy,
+    }),
+    [category, observedBy, party, query, source, type, view],
   );
   const graphqlPagination = useMemo(
     () => trackersListGraphqlPagination(after, before),
@@ -285,6 +334,9 @@ export function useTrackersListFilters(): TrackersListFilters {
         next.delete("category");
       } else {
         next.set("view", value);
+        if (value === "uncategorised") {
+          next.delete("category");
+        }
       }
       clearPagination(next);
       return next;
@@ -304,6 +356,17 @@ export function useTrackersListFilters(): TrackersListFilters {
   const setParty = useCallback((value: string | null) => {
     setParam("party", value ?? "");
   }, [setParam]);
+  const setObservedBy = useCallback((values: readonly DetectedTrackerObserver[]) => {
+    setSearchParams((previous) => {
+      const next = new URLSearchParams(previous);
+      next.delete("observedBy");
+      for (const value of values) {
+        next.append("observedBy", value);
+      }
+      clearPagination(next);
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
 
   const setOrder = useCallback((nextField: TrackerPatternOrderField) => {
     setSearchParams((previous) => {
@@ -365,6 +428,7 @@ export function useTrackersListFilters(): TrackersListFilters {
     type,
     category,
     party,
+    observedBy,
     graphqlFilter,
     graphqlOrder,
     graphqlPagination,
@@ -373,13 +437,15 @@ export function useTrackersListFilters(): TrackersListFilters {
       || source != null
       || type != null
       || category != null
-      || party != null,
+      || party != null
+      || (lockedObservedBy[view] == null && observedBy.length > 0),
     setView,
     setQuery,
     setSource,
     setType,
     setCategory,
     setParty,
+    setObservedBy,
     setOrder,
     setAfter,
     setBefore,

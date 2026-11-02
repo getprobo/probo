@@ -121,14 +121,14 @@
   "trackersPage": {
     "title": "Trackers",
     "description": "Trackers detected by this banner and the category each one belongs to.",
-    "filters": { "search": "Search by name or description...", "allThirdParties": "All third parties", "allCategories": "All categories", "source": "Source", "type": "Type", "category": "Category", "thirdParty": "Third party" },
+    "filters": { "search": "Search by name or description...", "allThirdParties": "All third parties", "allCategories": "All categories", "allObservers": "Any observer", "source": "Source", "type": "Type", "category": "Category", "thirdParty": "Third party", "observedBy": "Seen by", "selectedCount": "{{count}} selected" },
     "types": { "all": "All types", "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Cache storage" },
     "sources": { "all": "All sources", "script": "Script", "preExisting": "Pre-existing", "http": "HTTP", "extension": "Extension" },
     "columns": { "name": "Name", "attribution": "Attribution", "source": "Source", "seenBy": "Seen by", "category": "Category", "maxAge": "Max age" },
     "sort": { "name": "Sort by name", "source": "Sort by source" },
     "actions": { "previous": "Previous", "next": "Next", "new": "New tracker" },
-    "views": { "categorised": "Categorised", "sdk": "From visitors", "scan": "From scan", "all": "All trackers", "ariaLabel": "Tracker list view" },
-    "empty": { "title": "No trackers", "description": "No trackers have been detected yet. They will appear here when detected.", "categorised": "No categorised trackers are shown on the banner.", "sdk": "No trackers have been reported by visitors yet.", "scan": "No trackers have been found by a scan yet." },
+    "views": { "categorised": "Categorised", "uncategorised": "Uncategorised", "sdk": "From visitors", "scan": "From scan", "all": "All trackers", "ariaLabel": "Tracker list view" },
+    "empty": { "title": "No trackers", "description": "No trackers have been detected yet. They will appear here when detected.", "categorised": "No categorised trackers are shown on the banner.", "uncategorised": "No uncategorised trackers.", "sdk": "No trackers have been reported by visitors yet.", "scan": "No trackers have been found by a scan yet." },
     "emptyFiltered": "No matching trackers"
   },
   "installPage": {

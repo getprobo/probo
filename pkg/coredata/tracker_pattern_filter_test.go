@@ -215,6 +215,16 @@ func TestTrackerPatternFilter_ObservedBy(t *testing.T) {
 		}))
 	}
 
+	seedTrackerPattern(
+		t,
+		ctx,
+		client,
+		fx,
+		"unseen",
+		coredata.TrackerPatternMatchTypeExact,
+		coredata.CookieSourceScript,
+	)
+
 	insert(sdkPattern.ID, "sdk_only", coredata.DetectedTrackerObserverSDK)
 	insert(scanPattern.ID, "scan_only", coredata.DetectedTrackerObserverScanner)
 	insert(bothPattern.ID, "both", coredata.DetectedTrackerObserverSDK)
@@ -230,11 +240,11 @@ func TestTrackerPatternFilter_ObservedBy(t *testing.T) {
 		},
 	)
 
-	load := func(t *testing.T, observedBy coredata.DetectedTrackerObserver) []string {
+	load := func(t *testing.T, observedBy []coredata.DetectedTrackerObserver) []string {
 		t.Helper()
 
 		filter := coredata.NewTrackerPatternFilter(nil, nil, nil).
-			WithObservedBy(&observedBy)
+			WithObservedBy(observedBy)
 
 		var patterns coredata.TrackerPatterns
 
@@ -260,12 +270,31 @@ func TestTrackerPatternFilter_ObservedBy(t *testing.T) {
 	t.Run("sdk detections", func(t *testing.T) {
 		t.Parallel()
 
-		assert.Equal(t, []string{"both", "sdk_only"}, load(t, coredata.DetectedTrackerObserverSDK))
+		assert.Equal(t, []string{"both", "sdk_only"}, load(t, []coredata.DetectedTrackerObserver{
+			coredata.DetectedTrackerObserverSDK,
+		}))
 	})
 
 	t.Run("scanner detections", func(t *testing.T) {
 		t.Parallel()
 
-		assert.Equal(t, []string{"both", "scan_only"}, load(t, coredata.DetectedTrackerObserverScanner))
+		assert.Equal(t, []string{"both", "scan_only"}, load(t, []coredata.DetectedTrackerObserver{
+			coredata.DetectedTrackerObserverScanner,
+		}))
+	})
+
+	t.Run("either observer", func(t *testing.T) {
+		t.Parallel()
+
+		assert.Equal(t, []string{"both", "scan_only", "sdk_only"}, load(t, []coredata.DetectedTrackerObserver{
+			coredata.DetectedTrackerObserverSDK,
+			coredata.DetectedTrackerObserverScanner,
+		}))
+	})
+
+	t.Run("empty selection", func(t *testing.T) {
+		t.Parallel()
+
+		assert.Equal(t, []string{"both", "scan_only", "sdk_only", "unseen"}, load(t, nil))
 	})
 }

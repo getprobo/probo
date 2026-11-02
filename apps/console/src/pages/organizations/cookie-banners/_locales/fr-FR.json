@@ -121,14 +121,14 @@
   "trackersPage": {
     "title": "Traceurs",
     "description": "Traceurs détectés par cette bannière et la catégorie à laquelle chacun appartient.",
-    "filters": { "search": "Rechercher par nom ou description...", "allThirdParties": "Tous les tiers", "allCategories": "Toutes les catégories", "source": "Source", "type": "Type", "category": "Catégorie", "thirdParty": "Tiers" },
+    "filters": { "search": "Rechercher par nom ou description...", "allThirdParties": "Tous les tiers", "allCategories": "Toutes les catégories", "allObservers": "N’importe quel observateur", "source": "Source", "type": "Type", "category": "Catégorie", "thirdParty": "Tiers", "observedBy": "Vu par", "selectedCount": "{{count}} sélectionnés" },
     "types": { "all": "Tous les types", "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Stockage en cache" },
     "sources": { "all": "Toutes les sources", "script": "Script", "preExisting": "Préexistant", "http": "HTTP", "extension": "Extension" },
     "columns": { "name": "Nom", "attribution": "Attribution", "source": "Source", "seenBy": "Vu par", "category": "Catégorie", "maxAge": "Âge maximal" },
     "sort": { "name": "Trier par nom", "source": "Trier par source" },
     "actions": { "previous": "Précédent", "next": "Suivant", "new": "Nouveau traceur" },
-    "views": { "categorised": "Catégorisés", "sdk": "Des visiteurs", "scan": "Du scan", "all": "Tous les traceurs", "ariaLabel": "Vue de la liste des traceurs" },
-    "empty": { "title": "Aucun traceur", "description": "Aucun traceur n’a encore été détecté. Ils apparaîtront ici lorsqu’ils seront détectés.", "categorised": "Aucun traceur catégorisé n’est affiché sur la bannière.", "sdk": "Aucun traceur n’a encore été signalé par des visiteurs.", "scan": "Aucun traceur n’a encore été trouvé par un scan." },
+    "views": { "categorised": "Catégorisés", "uncategorised": "Non catégorisés", "sdk": "Des visiteurs", "scan": "Du scan", "all": "Tous les traceurs", "ariaLabel": "Vue de la liste des traceurs" },
+    "empty": { "title": "Aucun traceur", "description": "Aucun traceur n’a encore été détecté. Ils apparaîtront ici lorsqu’ils seront détectés.", "categorised": "Aucun traceur catégorisé n’est affiché sur la bannière.", "uncategorised": "Aucun traceur non catégorisé.", "sdk": "Aucun traceur n’a encore été signalé par des visiteurs.", "scan": "Aucun traceur n’a encore été trouvé par un scan." },
     "emptyFiltered": "Aucun traceur correspondant"
   },
   "installPage": {

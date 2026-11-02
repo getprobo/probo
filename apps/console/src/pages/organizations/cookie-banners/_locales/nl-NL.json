@@ -121,14 +121,14 @@
   "trackersPage": {
     "title": "Trackers",
     "description": "Trackers die door deze banner zijn gedetecteerd en de categorie van elke tracker.",
-    "filters": { "search": "Zoeken op naam of beschrijving...", "allThirdParties": "Alle derde partijen", "allCategories": "Alle categorieën", "source": "Bron", "type": "Type", "category": "Categorie", "thirdParty": "Derde partij" },
+    "filters": { "search": "Zoeken op naam of beschrijving...", "allThirdParties": "Alle derde partijen", "allCategories": "Alle categorieën", "allObservers": "Willekeurige waarnemer", "source": "Bron", "type": "Type", "category": "Categorie", "thirdParty": "Derde partij", "observedBy": "Gezien door", "selectedCount": "{{count}} geselecteerd" },
     "types": { "all": "Alle typen", "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Cache-opslag" },
     "sources": { "all": "Alle bronnen", "script": "Script", "preExisting": "Vooraf bestaand", "http": "HTTP", "extension": "Extensie" },
     "columns": { "name": "Naam", "attribution": "Attributie", "source": "Bron", "seenBy": "Gezien door", "category": "Categorie", "maxAge": "Maximale leeftijd" },
     "sort": { "name": "Sorteren op naam", "source": "Sorteren op bron" },
     "actions": { "previous": "Vorige", "next": "Volgende", "new": "Nieuwe tracker" },
-    "views": { "categorised": "Gecategoriseerd", "sdk": "Van bezoekers", "scan": "Van de scan", "all": "Alle trackers", "ariaLabel": "Trackerlijstweergave" },
-    "empty": { "title": "Geen trackers", "description": "Er zijn nog geen trackers gedetecteerd. Ze verschijnen hier zodra ze worden gedetecteerd.", "categorised": "Er worden geen gecategoriseerde trackers op de banner getoond.", "sdk": "Er zijn nog geen trackers door bezoekers gemeld.", "scan": "Er zijn nog geen trackers door een scan gevonden." },
+    "views": { "categorised": "Gecategoriseerd", "uncategorised": "Niet gecategoriseerd", "sdk": "Van bezoekers", "scan": "Van de scan", "all": "Alle trackers", "ariaLabel": "Trackerlijstweergave" },
+    "empty": { "title": "Geen trackers", "description": "Er zijn nog geen trackers gedetecteerd. Ze verschijnen hier zodra ze worden gedetecteerd.", "categorised": "Er worden geen gecategoriseerde trackers op de banner getoond.", "uncategorised": "Geen ongecategoriseerde trackers.", "sdk": "Er zijn nog geen trackers door bezoekers gemeld.", "scan": "Er zijn nog geen trackers door een scan gevonden." },
     "emptyFiltered": "Geen overeenkomende trackers"
   },
   "installPage": {
