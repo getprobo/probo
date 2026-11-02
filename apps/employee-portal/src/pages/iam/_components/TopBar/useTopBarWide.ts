@@ -23,5 +23,6 @@ import { useMatch } from "react-router";
 export function useTopBarWide(): boolean {
   const signatureDocument = useMatch("/:employeePortalId/signatures/:documentId");
   const approvalDocument = useMatch("/:employeePortalId/approvals/:documentId");
-  return signatureDocument != null || approvalDocument != null;
+  const sharedDocument = useMatch("/:employeePortalId/documents/:documentId");
+  return signatureDocument != null || approvalDocument != null || sharedDocument != null;
 }
