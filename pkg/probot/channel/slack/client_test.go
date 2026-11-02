@@ -222,6 +222,7 @@ func TestClientListConversations_OmittedMembership(t *testing.T) {
 		http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
 				assert.Equal(t, "/api/users.conversations", r.URL.Path)
+
 				_, err := w.Write(
 					[]byte(
 						`{"ok":true,"channels":[{"id":"C1","name":"general","is_archived":false}]}`,
