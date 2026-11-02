@@ -321,14 +321,13 @@
       "label": "Kanaal",
       "placeholder": "Selecteer kanaal",
       "help": "Nodig @Probo uit in een kanaal voordat u het selecteert.",
-      "emptyTitle": "Nog geen Slack-kanaal",
-      "emptyDescription": "Nodig @Probo in Slack uit in een kanaal en open daarna deze lijst opnieuw."
+      "emptyTitle": "Slack-kanalen zoeken",
+      "emptyDescription": "Nodig @Probo uit in een kanaal. Deze pagina controleert Slack automatisch."
     },
     "actions": {
       "clear": "Wissen",
       "install": "Installeren",
-      "refresh": "Vernieuwen",
-      "loadingMore": "Laden…"
+      "refresh": "Vernieuwen"
     }
   },
   "externalUrls": {

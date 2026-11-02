@@ -80,8 +80,31 @@ func (c *Client) OpenIM(ctx context.Context, userID string) (string, error) {
 	return result.Channel.ID, nil
 }
 
+// UnmarshalJSON treats a missing is_member as joined. users.conversations
+// omits that field for every conversation the token is a member of.
+func (c *Conversation) UnmarshalJSON(data []byte) error {
+	var raw struct {
+		ID         string `json:"id"`
+		Name       string `json:"name"`
+		IsMember   *bool  `json:"is_member"`
+		IsArchived bool   `json:"is_archived"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return fmt.Errorf("cannot decode Slack conversation: %w", err)
+	}
+
+	c.ID = raw.ID
+	c.Name = raw.Name
+	c.IsArchived = raw.IsArchived
+	c.IsMember = raw.IsMember == nil || *raw.IsMember
+
+	return nil
+}
+
+// ListConversations calls users.conversations. conversations.list pages
+// every public channel, so a joined channel can be missing from page one.
 func (c *Client) ListConversations(ctx context.Context, cursor string) (*ConversationsPage, error) {
-	endpoint, err := c.methodURL(slackMethodConversationsList)
+	endpoint, err := c.methodURL(slackMethodUsersConversations)
 	if err != nil {
 		return nil, fmt.Errorf("cannot build list conversations endpoint: %w", err)
 	}

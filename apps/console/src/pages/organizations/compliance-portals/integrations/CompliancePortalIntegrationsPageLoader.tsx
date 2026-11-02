@@ -38,7 +38,7 @@ export default function CompliancePortalIntegrationsPageLoader() {
 
   useEffect(() => {
     if (compliancePortalId) {
-      loadQuery({ compliancePortalId });
+      loadQuery({ compliancePortalId }, { fetchPolicy: "store-and-network" });
     }
   }, [loadQuery, compliancePortalId]);
 

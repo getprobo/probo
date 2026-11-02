@@ -540,14 +540,13 @@
       "label": "Canal",
       "placeholder": "Sélectionner un canal",
       "help": "Invitez @Probo dans un canal avant de le sélectionner.",
-      "emptyTitle": "Aucun canal Slack pour le moment",
-      "emptyDescription": "Dans Slack, invitez @Probo dans un canal, puis rouvrez cette liste."
+      "emptyTitle": "Recherche des canaux Slack",
+      "emptyDescription": "Invitez @Probo dans un canal. Cette page interroge Slack automatiquement."
     },
     "actions": {
       "clear": "Effacer",
       "install": "Installer",
-      "refresh": "Actualiser",
-      "loadingMore": "Chargement…"
+      "refresh": "Actualiser"
     }
   },
   "externalUrls": {

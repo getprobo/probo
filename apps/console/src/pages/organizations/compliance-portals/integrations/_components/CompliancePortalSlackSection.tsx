@@ -29,10 +29,11 @@ import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
 import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
 import { SelectTrigger } from "@probo/ui/src/v2/Select/SelectTrigger";
 import { SlackLogo } from "@probo/ui/src/v2/SlackLogo/SlackLogo";
+import { Spinner } from "@probo/ui/src/v2/Spinner/Spinner";
 import { Code } from "@probo/ui/src/v2/typography/Code";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useTransition } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { useRefetchableFragment } from "react-relay";
 import { graphql } from "relay-runtime";
@@ -46,6 +47,8 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 
 import { slackSection } from "../variants";
+
+const slackChannelPollIntervalMs = 5000;
 
 const fragment = graphql`
   fragment CompliancePortalSlackSection_compliancePortal on CompliancePortal
@@ -147,7 +150,16 @@ export function CompliancePortalSlackSection({
   };
 
   const [, startTransition] = useTransition();
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const refetchRef = useRef(refetch);
+  useEffect(() => {
+    refetchRef.current = refetch;
+  }, [refetch]);
+
+  const refreshChannels = useCallback(() => {
+    startTransition(() => {
+      refetchRef.current({}, { fetchPolicy: "network-only" });
+    });
+  }, [startTransition]);
 
   const isInstalled = compliancePortal.organization.slackbotInstallation?.active;
   const listedChannels = compliancePortal.organization.slackbotChannels.channels;
@@ -163,7 +175,6 @@ export function CompliancePortalSlackSection({
       ]
     : listedChannels;
   const slackListEmpty = listedChannels.length === 0;
-  const showEmptyCallout = slackListEmpty && !isRefreshing;
   const channelNames = Object.fromEntries(
     channels.map(channel => [channel.id, `#${channel.name}`]),
   );
@@ -172,17 +183,32 @@ export function CompliancePortalSlackSection({
     && compliancePortal.organization.slackbotAvailable;
   const showChannelConfig = isInstalled === true && compliancePortal.canConfigureSlack;
 
-  const refreshChannels = () => {
-    setIsRefreshing(true);
-    startTransition(() => {
-      refetch({}, {
-        fetchPolicy: "network-only",
-        onComplete() {
-          setIsRefreshing(false);
-        },
-      });
-    });
-  };
+  useEffect(() => {
+    if (!showChannelConfig) {
+      return;
+    }
+
+    const refresh = () => {
+      if (document.hidden) {
+        return;
+      }
+      refreshChannels();
+    };
+
+    refresh();
+    const interval = window.setInterval(refresh, slackChannelPollIntervalMs);
+    const onVisibility = () => {
+      if (!document.hidden) {
+        refresh();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [refreshChannels, showChannelConfig]);
 
   const {
     root, intro, grid, card, lead, copy, channel, channelRow, channelField,
@@ -256,9 +282,14 @@ export function CompliancePortalSlackSection({
                   </div>
                 </Callout>
               </div>
-              {showChannelConfig && showEmptyCallout && (
+              {showChannelConfig && slackListEmpty && (
                 <div className={empty()}>
-                  <Callout variant="surface" color="neutral" className={emptyCallout()}>
+                  <Callout
+                    variant="surface"
+                    color="neutral"
+                    className={emptyCallout()}
+                    icon={<Spinner size={3} />}
+                  >
                     <div className={emptyCopy()}>
                       <Text size={2} weight="medium" highContrast>
                         {t("slackSection.channel.emptyTitle")}
@@ -315,28 +346,23 @@ export function CompliancePortalSlackSection({
                     </Text>
                   </div>
                   <SelectPopup>
-                    {isRefreshing && slackListEmpty
+                    {slackListEmpty
                       ? (
-                          <Text size={2} color="faint" className={popupEmpty()}>
-                            {t("slackSection.actions.loadingMore")}
-                          </Text>
+                          <div className={popupEmpty()}>
+                            <Spinner size={2} />
+                            <Text size={2} weight="medium" highContrast>
+                              {t("slackSection.channel.emptyTitle")}
+                            </Text>
+                            <Text size={1} color="faint">
+                              {t("slackSection.channel.emptyDescription")}
+                            </Text>
+                          </div>
                         )
-                      : slackListEmpty
-                        ? (
-                            <div className={popupEmpty()}>
-                              <Text size={2} weight="medium" highContrast>
-                                {t("slackSection.channel.emptyTitle")}
-                              </Text>
-                              <Text size={1} color="faint">
-                                {t("slackSection.channel.emptyDescription")}
-                              </Text>
-                            </div>
-                          )
-                        : channels.map(listedChannel => (
-                            <SelectItem key={listedChannel.id} value={listedChannel.id}>
-                              {`#${listedChannel.name}`}
-                            </SelectItem>
-                          ))}
+                      : channels.map(listedChannel => (
+                          <SelectItem key={listedChannel.id} value={listedChannel.id}>
+                            {`#${listedChannel.name}`}
+                          </SelectItem>
+                        ))}
                   </SelectPopup>
                 </Select>
               )}

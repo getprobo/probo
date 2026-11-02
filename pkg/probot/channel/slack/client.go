@@ -39,16 +39,15 @@ const (
 	slackMethodAssistantSetStatus   = "assistant.threads.setStatus"
 	slackMethodAppsUninstall        = "apps.uninstall"
 	slackMethodAuthTest             = "auth.test"
-	slackMethodConversationsList    = "conversations.list"
 	slackMethodConversationsOpen    = "conversations.open"
 	slackMethodConversationsReplies = "conversations.replies"
 	slackMethodPostEphemeral        = "chat.postEphemeral"
 	slackMethodPostMessage          = "chat.postMessage"
 	slackMethodReactionsAdd         = "reactions.add"
 	slackMethodUpdateMessage        = "chat.update"
+	slackMethodUsersConversations   = "users.conversations"
 
-	// Slack conversations.list max page size. One request is enough for
-	// typical workspaces; the picker does not page further in the UI.
+	// Slack users.conversations max page size. The picker reads one page.
 	conversationsPageSize = 1000
 	threadRepliesPageSize = 200
 	slackHTTPTimeout      = 30 * time.Second

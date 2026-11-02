@@ -181,7 +181,7 @@ func TestClientListConversations(t *testing.T) {
 					http.HandlerFunc(
 						func(w http.ResponseWriter, r *http.Request) {
 							assert.Equal(t, http.MethodGet, r.Method)
-							assert.Equal(t, "/api/conversations.list", r.URL.Path)
+							assert.Equal(t, "/api/users.conversations", r.URL.Path)
 							assert.Equal(t, tt.wantCursor, r.URL.Query().Get("cursor"))
 							assert.Equal(t, "true", r.URL.Query().Get("exclude_archived"))
 							assert.Equal(t, "1000", r.URL.Query().Get("limit"))
@@ -213,6 +213,35 @@ func TestClientListConversations(t *testing.T) {
 			},
 		)
 	}
+}
+
+func TestClientListConversations_OmittedMembership(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(
+		http.HandlerFunc(
+			func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, "/api/users.conversations", r.URL.Path)
+				_, err := w.Write(
+					[]byte(
+						`{"ok":true,"channels":[{"id":"C1","name":"general","is_archived":false}]}`,
+					),
+				)
+				require.NoError(t, err)
+			},
+		),
+	)
+	t.Cleanup(server.Close)
+
+	page, err := newTestClient(server.URL+"/api").ListConversations(t.Context(), "")
+	require.NoError(t, err)
+	assert.Equal(
+		t,
+		[]Conversation{
+			{ID: "C1", Name: "general", IsMember: true, IsArchived: false},
+		},
+		page.Conversations,
+	)
 }
 
 func TestClientInstalledBotID(t *testing.T) {

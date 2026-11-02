@@ -540,14 +540,13 @@
       "label": "Channel",
       "placeholder": "Select channel",
       "help": "Invite @Probo to a channel before selecting it.",
-      "emptyTitle": "No Slack channel yet",
-      "emptyDescription": "In Slack, invite @Probo to a channel, then open this list again."
+      "emptyTitle": "Looking for Slack channels",
+      "emptyDescription": "Invite @Probo to a channel. This page checks Slack automatically."
     },
     "actions": {
       "clear": "Clear",
       "install": "Install",
-      "refresh": "Refresh",
-      "loadingMore": "Loading…"
+      "refresh": "Refresh"
     }
   },
   "externalUrls": {
