@@ -310,6 +310,11 @@ export function CompliancePortalSlackSection({
                                 event.preventDefault();
                               }}
                             >
+                              {channelPage.failedMore && (
+                                <Text size={2} color="faint" className="px-3 py-2">
+                                  {t("slackSection.channel.loadError")}
+                                </Text>
+                              )}
                               <Button
                                 variant="ghost"
                                 color="neutral"

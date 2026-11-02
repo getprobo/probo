@@ -74,7 +74,8 @@ export function useSlackChannelPage(organizationId: string, enabled: boolean) {
   const appendingRef = useRef(false);
   const loading = enabled && settledId !== request.id;
   const loadingMore = loading && request.mode === "append";
-  const failed = failedId === request.id;
+  const failed = failedId === request.id && request.mode !== "append";
+  const failedMore = failedId === request.id && request.mode === "append";
 
   if (scope !== scopeKey) {
     setScope(scopeKey);
@@ -214,6 +215,7 @@ export function useSlackChannelPage(organizationId: string, enabled: boolean) {
     loading,
     loadingMore,
     failed,
+    failedMore,
     hasNext: nextCursor != null,
     onLoadMore,
   };
