@@ -15,17 +15,17 @@
     "@probo/helpers": "1.0.0",
     "@probo/i18n": "1.0.0",
     "@probo/ui": "1.0.0",
-    "@tanstack/react-virtual": "^3.14.21",
+    "@tanstack/react-virtual": "^3.14.22",
     "tailwind-variants": "^3.3.1"
   },
   "peerDependencies": {
-    "i18next": "^26.4.7",
+    "i18next": "^26.5.11",
     "react": "^19.2.7",
-    "react-i18next": "^17.0.19",
-    "react-router": "^8.4.0"
+    "react-i18next": "^17.1.9",
+    "react-router": "^8.5.0"
   },
   "devDependencies": {
     "@types/react": "^19.2.18",
-    "typescript": "6.0.3"
+    "typescript": "7.0.2"
   }
 }
