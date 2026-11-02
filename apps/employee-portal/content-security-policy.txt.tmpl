@@ -1,5 +1,5 @@
 default-src 'self';
-script-src 'self';
+script-src 'self' 'wasm-unsafe-eval';
 style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
 img-src 'self' data: {{.AppOrigin}} {{.FileStorageOrigin}} https://www.google.com https://*.gstatic.com;
 font-src 'self' https://fonts.gstatic.com;
