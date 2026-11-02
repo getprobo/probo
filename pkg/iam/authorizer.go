@@ -190,15 +190,12 @@ func (a *Authorizer) AuthorizeBatch(ctx context.Context, params AuthorizeBatchPa
 		)
 	}
 
-	var (
-		scope  *coredata.Scope
-		denial error
-	)
+	var scope *coredata.Scope
 
 	if err := a.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			authorizedScope, decision, err := a.authorizeMulti(
+			authorizedScope, err := a.authorizeMulti(
 				ctx,
 				tx,
 				AuthorizeMultiParams{
@@ -213,16 +210,11 @@ func (a *Authorizer) AuthorizeBatch(ctx context.Context, params AuthorizeBatchPa
 			}
 
 			scope = authorizedScope
-			denial = decision
 
 			return nil
 		},
 	); err != nil {
 		return nil, err
-	}
-
-	if denial != nil {
-		return nil, denial
 	}
 
 	return scope, nil
@@ -281,7 +273,7 @@ func (a *Authorizer) authorizeMulti(
 	tx pg.Tx,
 	params AuthorizeMultiParams,
 	extraResourceAttributes policy.Attributes,
-) (*coredata.Scope, error, error) {
+) (*coredata.Scope, error) {
 	scope, itemAttrs, decisions, err := a.evaluateMultiInTx(
 		ctx,
 		tx,
@@ -289,7 +281,7 @@ func (a *Authorizer) authorizeMulti(
 		extraResourceAttributes,
 	)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	var denial error
@@ -302,14 +294,15 @@ func (a *Authorizer) authorizeMulti(
 	}
 
 	if err := a.insertAuditEntries(ctx, tx, scope, params, itemAttrs, decisions, denial != nil); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	if denial != nil {
-		return nil, denial, nil
+		// Commit the denial rows and still return the authorization error.
+		return nil, pg.NoRollback(denial)
 	}
 
-	return scope, nil, nil
+	return scope, nil
 }
 
 // evaluateMultiInTx evaluates every item in params against the loaded

@@ -110,7 +110,7 @@ func TestAuthorizer_InternalErrorPaths(t *testing.T) {
 	t.Run("authorize batch returns wrapped resource attributes batch error", func(t *testing.T) {
 		t.Parallel()
 
-		_, _, err := a.authorizeMulti(
+		_, err := a.authorizeMulti(
 			ctx,
 			nil,
 			AuthorizeMultiParams{
