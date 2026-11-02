@@ -4,10 +4,37 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.265.0] - 2026-11-02
+
 ### Added
 
 - Access Review `Retry Source Fetch` queues a new fetch for a
   campaign source whose fetch failed
+- People, organizations, documents, document versions, and other
+  named records can be picked from a searchable list. `By ID`
+  still takes an expression or a value from a previous node
+- Pending signature and approval operations report who is
+  waiting, on which document, and for how long
+
+### Changed
+
+- List operations return one item per record, with parent IDs
+  and the same person fields, including email. Version lists
+  omit the body unless Simplify is turned off
+- Signatory account status is labeled separately from
+  signature status, and document status defaults are shown
+
+### Removed
+
+- Connector `Create (Client Credentials)` no longer has a
+  `Token Endpoint` parameter. The server names the endpoint
+
+### Fixed
+
+- Pending lists with a small limit fetch a bounded page instead
+  of a 100-by-100 tree, and return-all is no longer cut off
+  after 100 pages. A fractional limit is rounded down instead
+  of being rejected
 
 ## [0.264.0] - 2026-10-30
 
