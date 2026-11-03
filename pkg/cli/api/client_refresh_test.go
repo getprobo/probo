@@ -64,8 +64,11 @@ func TestDoRaw_RefreshesExpiredAccessToken(t *testing.T) {
 	}))
 	t.Cleanup(server.Close)
 
-	var gotAccess, gotRefresh string
-	var gotExpiry time.Time
+	var (
+		gotAccess  string
+		gotRefresh string
+		gotExpiry  time.Time
+	)
 
 	client := api.NewClient(
 		server.URL,

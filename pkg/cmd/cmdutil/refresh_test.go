@@ -158,6 +158,7 @@ func TestTokenRefreshOption_OverlappingCommandsRefreshOnce(t *testing.T) {
 
 	fresh, err := config.Load()
 	require.NoError(t, err)
+
 	saved := fresh.Hosts[host]
 	require.NotNil(t, saved)
 	assert.Equal(t, "access-2", saved.Token)

@@ -484,6 +484,7 @@ func (c *Client) tryRefreshToken() error {
 
 	c.token = token.AccessToken
 	r.RefreshToken = refreshToken
+
 	if !expiresAt.IsZero() {
 		r.ExpiresAt = expiresAt
 	}

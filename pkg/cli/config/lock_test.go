@@ -35,6 +35,7 @@ func TestLock_BlocksUntilReleased(t *testing.T) {
 	require.NoError(t, err)
 
 	acquired := make(chan struct{})
+
 	go func() {
 		next, err := config.Lock()
 		if err != nil {
