@@ -29,13 +29,19 @@ import (
 type (
 	DetectedTrackerOrderBy OrderBy[coredata.DetectedTrackerOrderField]
 
+	DetectedTrackerFilter struct {
+		TrackerTypes []coredata.TrackerType
+	}
+
 	DetectedTrackerConnection struct {
 		TotalCount int
 		Edges      []*DetectedTrackerEdge
 		PageInfo   PageInfo
 
-		Resolver any
-		ParentID gid.GID
+		Resolver     any
+		ParentID     gid.GID
+		ForScan      bool
+		TrackerTypes []coredata.TrackerType
 	}
 )
 
@@ -57,6 +63,19 @@ func NewDetectedTrackerConnection(
 		Resolver: parentType,
 		ParentID: parentID,
 	}
+}
+
+func NewDetectedTrackerScanConnection(
+	p *page.Page[*coredata.DetectedTracker, coredata.DetectedTrackerOrderField],
+	parentType any,
+	scanID gid.GID,
+	trackerTypes []coredata.TrackerType,
+) *DetectedTrackerConnection {
+	conn := NewDetectedTrackerConnection(p, parentType, scanID)
+	conn.ForScan = true
+	conn.TrackerTypes = trackerTypes
+
+	return conn
 }
 
 func NewDetectedTrackerEdge(

@@ -39,6 +39,8 @@ import * as stopSampleOp from './stopSample.operation';
 import * as getSamplesOp from './getSamples.operation';
 import * as getScanOp from './getScan.operation';
 import * as getScansOp from './getScans.operation';
+import * as getScanResourcesOp from './getScanResources.operation';
+import * as getScanTrackersOp from './getScanTrackers.operation';
 import * as requestScanOp from './requestScan.operation';
 
 export const description: INodeProperties[] = [
@@ -118,6 +120,18 @@ export const description: INodeProperties[] = [
 				value: 'getScans',
 				description: 'Get scans for a cookie banner',
 				action: 'Get cookie banner scans',
+			},
+			{
+				name: 'Get Scan Resources',
+				value: 'getScanResources',
+				description: 'Get resources stamped on a cookie banner scan',
+				action: 'Get cookie banner scan resources',
+			},
+			{
+				name: 'Get Scan Trackers',
+				value: 'getScanTrackers',
+				description: 'Get detections stamped on a cookie banner scan',
+				action: 'Get cookie banner scan trackers',
 			},
 			{
 				name: 'List GVL Catalog',
@@ -202,6 +216,8 @@ export const description: INodeProperties[] = [
 	...getSamplesOp.description,
 	...getScanOp.description,
 	...getScansOp.description,
+	...getScanResourcesOp.description,
+	...getScanTrackersOp.description,
 	...requestScanOp.description,
 ];
 
@@ -226,5 +242,7 @@ export {
 	getSamplesOp as getSamples,
 	getScanOp as getScan,
 	getScansOp as getScans,
+	getScanResourcesOp as getScanResources,
+	getScanTrackersOp as getScanTrackers,
 	requestScanOp as requestScan,
 };

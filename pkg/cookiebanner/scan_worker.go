@@ -307,6 +307,9 @@ func (h *cookieBannerScanHandler) record(
 	case runErr != nil:
 		if result != nil {
 			scan.PagesScanned = result.PagesScanned
+			if err := assignCheckpoint(scan, &result.Checkpoint); err != nil {
+				return err
+			}
 		}
 
 		h.logger.WarnCtx(
@@ -488,6 +491,9 @@ func (h *cookieBannerScanHandler) complete(
 			scan.CookiesFound = cookies
 			scan.StorageFound = storage
 			scan.ResourcesFound = resources
+			if err := assignCheckpoint(scan, &result.Checkpoint); err != nil {
+				return err
+			}
 
 			return scan.MarkCompleted(ctx, tx, scope, h.now())
 		},
@@ -587,6 +593,21 @@ func scanFailureReason(err error) coredata.CookieBannerScanFailureReason {
 	default:
 		return coredata.CookieBannerScanFailureReasonInternal
 	}
+}
+
+func assignCheckpoint(scan *coredata.CookieBannerScan, checkpoint *scanner.Checkpoint) error {
+	if checkpoint == nil {
+		return nil
+	}
+
+	raw, err := marshalCheckpoint(*checkpoint)
+	if err != nil {
+		return err
+	}
+
+	scan.Checkpoint = raw
+
+	return nil
 }
 
 func marshalCheckpoint(checkpoint scanner.Checkpoint) (*json.RawMessage, error) {

@@ -183,6 +183,8 @@ The query fetches `size + 1` (or `size + 2` with a cursor) rows to detect whethe
 
 For backward pagination (`last` / `before`), SQL sort direction is reversed, then the result slice is reversed back.
 
+`cursor.NewCursor` honors `before` over `first`, and `after` over `last`. Relay keeps a fragment's default `first` when a refetch passes `first: null`, so a Previous click arrives with both `first` and `before` set. Preferring `first` reloads page one. See [`pagination.md`](pagination.md).
+
 Default page size is **25** when neither `first` nor `last` is provided.
 
 ## Adding a new paginated field — checklist

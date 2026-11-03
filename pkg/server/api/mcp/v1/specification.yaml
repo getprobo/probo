@@ -15160,6 +15160,78 @@ components:
         cookie_banner_scan:
           $ref: "#/components/schemas/CookieBannerScan"
 
+    ListScanDetectedTrackersInput:
+      type: object
+      required:
+        - cookie_banner_scan_id
+      properties:
+        cookie_banner_scan_id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie banner scan ID
+        tracker_types:
+          anyOf:
+            - type: array
+              items:
+                $ref: "#/components/schemas/TrackerType"
+            - type: "null"
+          description: Only these tracker types. Null lists every scanner detection on the scan.
+        direction:
+          anyOf:
+            - $ref: "#/components/schemas/OrderDirection"
+            - type: "null"
+          description: Sort by first seen. Null means newest first.
+        size:
+          type: integer
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+
+    ListScanDetectedTrackersOutput:
+      type: object
+      required:
+        - detected_trackers
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+        detected_trackers:
+          type: array
+          items:
+            $ref: "#/components/schemas/DetectedTracker"
+
+    ListScanTrackerResourcesInput:
+      type: object
+      required:
+        - cookie_banner_scan_id
+      properties:
+        cookie_banner_scan_id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie banner scan ID
+        direction:
+          anyOf:
+            - $ref: "#/components/schemas/OrderDirection"
+            - type: "null"
+          description: Sort by created time. Null means newest first.
+        size:
+          type: integer
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+
+    ListScanTrackerResourcesOutput:
+      type: object
+      required:
+        - tracker_resources
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+        tracker_resources:
+          type: array
+          items:
+            $ref: "#/components/schemas/TrackerResource"
+
+    TrackerType:
+      type: string
+      enum: [COOKIE, LOCAL_STORAGE, SESSION_STORAGE, INDEXED_DB, CACHE_STORAGE]
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.TrackerType
+
     RequestCookieBannerScanInput:
       type: object
       required:
@@ -21601,6 +21673,30 @@ tools:
       $ref: "#/components/schemas/GetCookieBannerScanInput"
     outputSchema:
       $ref: "#/components/schemas/GetCookieBannerScanOutput"
+  - name: listScanDetectedTrackers
+    title: List Scan Detected Trackers
+    description: List scanner detections stamped on a cookie banner scan
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListScanDetectedTrackersInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListScanDetectedTrackersOutput"
+  - name: listScanTrackerResources
+    title: List Scan Tracker Resources
+    description: List tracker resources stamped on a cookie banner scan
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListScanTrackerResourcesInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListScanTrackerResourcesOutput"
   - name: requestCookieBannerScan
     title: Request Cookie Banner Scan
     description: Queue a scan for a cookie banner. Fails when one is already pending, running, or paused.

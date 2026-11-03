@@ -91,8 +91,8 @@ function timestampMs(value: string): number | null {
 
 export function scanLifecycleDurations(scan: {
   createdAt: string;
-  startedAt: string | null;
-  completedAt: string | null;
+  startedAt?: string | null;
+  completedAt?: string | null;
 }, now = Date.now()): { totalMs: number; queueMs: number | null; runningMs: number | null } {
   const createdMs = timestampMs(scan.createdAt);
   const startedMs = scan.startedAt == null ? null : timestampMs(scan.startedAt);

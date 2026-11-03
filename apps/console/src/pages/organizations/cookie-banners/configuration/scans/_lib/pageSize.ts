@@ -19,3 +19,4 @@
 // SOFTWARE.
 
 export const SCANS_PAGE_SIZE = 15;
+export const SCAN_FINDINGS_PAGE_SIZE = 15;

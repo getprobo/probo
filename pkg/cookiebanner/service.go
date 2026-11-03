@@ -4217,6 +4217,112 @@ func (s *Service) CountDetectedTrackersByPatternID(
 	return count, nil
 }
 
+func (s *Service) ListDetectedTrackersForScan(
+	ctx context.Context,
+	scope coredata.Scoper,
+	scanID gid.GID,
+	filter *coredata.DetectedTrackerFilter,
+	cursor *page.Cursor[coredata.DetectedTrackerOrderField],
+) (coredata.DetectedTrackers, error) {
+	var trackers coredata.DetectedTrackers
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := trackers.LoadByCookieBannerScanID(ctx, conn, scope, scanID, filter, cursor); err != nil {
+				return fmt.Errorf("cannot list detected trackers for scan: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return trackers, nil
+}
+
+func (s *Service) CountDetectedTrackersForScan(
+	ctx context.Context,
+	scope coredata.Scoper,
+	scanID gid.GID,
+	filter *coredata.DetectedTrackerFilter,
+) (int, error) {
+	var count int
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var err error
+
+			count, err = new(coredata.DetectedTrackers).CountByCookieBannerScan(ctx, conn, scope, scanID, filter)
+			if err != nil {
+				return fmt.Errorf("cannot count detected trackers for scan: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (s *Service) ListTrackerResourcesForScan(
+	ctx context.Context,
+	scope coredata.Scoper,
+	scanID gid.GID,
+	cursor *page.Cursor[coredata.TrackerResourceOrderField],
+) (coredata.TrackerResources, error) {
+	var resources coredata.TrackerResources
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := resources.LoadByCookieBannerScanID(ctx, conn, scope, scanID, cursor); err != nil {
+				return fmt.Errorf("cannot list tracker resources for scan: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return resources, nil
+}
+
+func (s *Service) CountTrackerResourcesForScan(
+	ctx context.Context,
+	scope coredata.Scoper,
+	scanID gid.GID,
+) (int, error) {
+	var count int
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var err error
+
+			count, err = new(coredata.TrackerResources).CountByCookieBannerScanID(ctx, conn, scope, scanID)
+			if err != nil {
+				return fmt.Errorf("cannot count tracker resources for scan: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
 func (s *Service) ListDetectedTrackersForPattern(
 	ctx context.Context,
 	scope coredata.Scoper,

@@ -19,23 +19,46 @@
 // SOFTWARE.
 
 import { BrowserIcon, CodeIcon, CookieIcon, DatabaseIcon } from "@phosphor-icons/react";
+import { SegmentedControl } from "@probo/ui/src/v2/SegmentedControl/SegmentedControl";
+import { SegmentedControlItem } from "@probo/ui/src/v2/SegmentedControl/SegmentedControlItem";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { ScanCounts_scan$key } from "#/__generated__/core/ScanCounts_scan.graphql";
 
-import { scanCounts } from "../../../variants";
-import { StatCard } from "../../_components/StatCard";
+import { cookieBannerList } from "../../../variants";
+import { scanPageRows, scanPageTotals } from "../_lib/scanPages";
+
+import { ScanCookies, ScanStorage } from "./ScanDetectedTrackers";
+import { ScanPages } from "./ScanPages";
+import { ScanResources } from "./ScanResources";
 
 const scanCountsFragment = graphql`
   fragment ScanCounts_scan on CookieBannerScan {
-    pagesScanned
     cookiesFound
+    checkpoint {
+      visitedTemplates
+      queue {
+        url
+      }
+    }
     storageFound
     resourcesFound
+    ...ScanPages_scan
+    ...ScanDetectedTrackers_cookies
+    ...ScanDetectedTrackers_storage
+    ...ScanResources_scan
   }
 `;
+
+const scanTabs = ["pages", "cookies", "storage", "resources"] as const;
+type ScanTab = (typeof scanTabs)[number];
+
+function isScanTab(value: string): value is ScanTab {
+  return (scanTabs as readonly string[]).includes(value);
+}
 
 interface ScanCountsProps {
   scanKey: ScanCounts_scan$key;
@@ -44,43 +67,59 @@ interface ScanCountsProps {
 export function ScanCounts({ scanKey }: ScanCountsProps) {
   const { t, i18n } = useTranslation("organizations/cookie-banners");
   const scan = useFragment(scanCountsFragment, scanKey);
-  const { root, grid } = scanCounts();
+  const [tab, setTab] = useState<ScanTab>("pages");
+  const { views } = cookieBannerList();
   const format = new Intl.NumberFormat(i18n.language);
-  const counts = [
-    {
-      title: t("scanPage.counts.pages"),
-      count: scan.pagesScanned,
-      icon: <BrowserIcon size={24} aria-hidden />,
-    },
-    {
-      title: t("scanPage.counts.cookies"),
-      count: scan.cookiesFound,
-      icon: <CookieIcon size={24} aria-hidden />,
-    },
-    {
-      title: t("scanPage.counts.storage"),
-      count: scan.storageFound,
-      icon: <DatabaseIcon size={24} aria-hidden />,
-    },
-    {
-      title: t("scanPage.counts.resources"),
-      count: scan.resourcesFound,
-      icon: <CodeIcon size={24} aria-hidden />,
-    },
-  ];
+  const countClass = "font-mono tabular-nums";
+  const pageRows = scanPageRows(
+    scan.checkpoint?.visitedTemplates ?? [],
+    (scan.checkpoint?.queue ?? []).map(item => ({ url: item.url })),
+  );
+  const pageTotals = scanPageTotals(pageRows);
 
   return (
-    <div className={root()}>
-      <div className={grid()}>
-        {counts.map(item => (
-          <StatCard
-            key={item.title}
-            icon={item.icon}
-            title={item.title}
-            value={format.format(item.count)}
-          />
-        ))}
+    <div className="flex flex-col gap-4">
+      <div className={views()}>
+        <SegmentedControl
+          size={1}
+          value={tab}
+          aria-label={t("scanPage.counts.ariaLabel")}
+          onValueChange={(value) => {
+            if (isScanTab(value)) {
+              setTab(value);
+            }
+          }}
+        >
+          <SegmentedControlItem value="pages">
+            <BrowserIcon />
+            {t("scanPage.counts.pages")}
+            <span className={countClass}>
+              {format.format(pageTotals.visited)}
+              {" / "}
+              {format.format(pageTotals.total)}
+            </span>
+          </SegmentedControlItem>
+          <SegmentedControlItem value="cookies">
+            <CookieIcon />
+            {t("scanPage.counts.cookies")}
+            <span className={countClass}>{format.format(scan.cookiesFound)}</span>
+          </SegmentedControlItem>
+          <SegmentedControlItem value="storage">
+            <DatabaseIcon />
+            {t("scanPage.counts.storage")}
+            <span className={countClass}>{format.format(scan.storageFound)}</span>
+          </SegmentedControlItem>
+          <SegmentedControlItem value="resources">
+            <CodeIcon />
+            {t("scanPage.counts.resources")}
+            <span className={countClass}>{format.format(scan.resourcesFound)}</span>
+          </SegmentedControlItem>
+        </SegmentedControl>
       </div>
+      {tab === "pages" ? <ScanPages scanKey={scan} /> : null}
+      {tab === "cookies" ? <ScanCookies scanKey={scan} /> : null}
+      {tab === "storage" ? <ScanStorage scanKey={scan} /> : null}
+      {tab === "resources" ? <ScanResources scanKey={scan} /> : null}
     </div>
   );
 }

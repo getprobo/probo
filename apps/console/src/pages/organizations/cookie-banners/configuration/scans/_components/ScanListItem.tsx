@@ -35,13 +35,12 @@ import { cookieBannerScanPath } from "../../../_lib/cookieBannerPaths";
 import { trackerPatternListItem } from "../../../variants";
 import { formatScanTime } from "../_lib/formatScanTime";
 
-import { ScanStateBadge, ScanTruncatedBadge } from "./ScanStateBadge";
+import { ScanStateBadge } from "./ScanStateBadge";
 
 const scanListItemFragment = graphql`
   fragment ScanListItem_scan on CookieBannerScan {
     id
     state
-    truncated
     pagesScanned
     cookiesFound
     storageFound
@@ -85,10 +84,7 @@ export function ScanListItem({ scanKey }: ScanListItemProps) {
         </TableLink>
       </TableRowHeaderCell>
       <TableCell>
-        <div className="flex flex-wrap items-center gap-1">
-          <ScanStateBadge state={scan.state} />
-          {scan.truncated ? <ScanTruncatedBadge /> : null}
-        </div>
+        <ScanStateBadge state={scan.state} />
       </TableCell>
       <TableCell className={optional()}>
         <Text size={2} className={date()}>{formatScanTime(i18n.language, scan.startedAt)}</Text>

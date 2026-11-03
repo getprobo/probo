@@ -37,13 +37,3 @@ export function ScanStateBadge({ state }: ScanStateBadgeProps) {
     </Badge>
   );
 }
-
-export function ScanTruncatedBadge() {
-  const { t } = useTranslation("organizations/cookie-banners");
-
-  return (
-    <Badge variant="outline" color="amber">
-      {t("scansPage.badges.truncated")}
-    </Badge>
-  );
-}

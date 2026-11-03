@@ -323,6 +323,112 @@ WHERE
 	return cookies, storage, nil
 }
 
+// LoadByCookieBannerScanID lists scanner observations stamped with scanID.
+// The filter fragment is applied before the cursor fragment, which ends in
+// ORDER BY and LIMIT.
+func (dts *DetectedTrackers) LoadByCookieBannerScanID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	scanID gid.GID,
+	filter *DetectedTrackerFilter,
+	cursor *page.Cursor[DetectedTrackerOrderField],
+) error {
+	q := `
+SELECT
+	id,
+	cookie_banner_id,
+	tracker_pattern_id,
+	tracker_type,
+	identifier,
+	max_age_seconds,
+	source,
+	observed_by,
+	value_size,
+	initiator_url,
+	initiator_domain,
+	cookie_domain,
+	host_only,
+	http_only,
+	secure,
+	same_site,
+	partitioned,
+	set_by_url,
+	cookie_banner_scan_id,
+	created_at,
+	updated_at
+FROM
+	detected_trackers
+WHERE
+	%s
+	AND cookie_banner_scan_id = @cookie_banner_scan_id
+	AND observed_by = @observed_by
+	AND %s
+	AND %s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"cookie_banner_scan_id": scanID,
+		"observed_by":           DetectedTrackerObserverScanner,
+	}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query detected trackers by scan: %w", err)
+	}
+
+	trackers, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[DetectedTracker])
+	if err != nil {
+		return fmt.Errorf("cannot collect detected trackers by scan: %w", err)
+	}
+
+	*dts = trackers
+
+	return nil
+}
+
+// CountByCookieBannerScan lists scanner observations stamped with scanID.
+func (dts *DetectedTrackers) CountByCookieBannerScan(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	scanID gid.GID,
+	filter *DetectedTrackerFilter,
+) (int, error) {
+	q := `
+SELECT
+	COUNT(id)
+FROM
+	detected_trackers
+WHERE
+	%s
+	AND cookie_banner_scan_id = @cookie_banner_scan_id
+	AND observed_by = @observed_by
+	AND %s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"cookie_banner_scan_id": scanID,
+		"observed_by":           DetectedTrackerObserverScanner,
+	}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+
+	var count int
+	if err := conn.QueryRow(ctx, q, args).Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot count detected trackers by scan: %w", err)
+	}
+
+	return count, nil
+}
+
 // LoadObserversByTrackerPatternIDs returns the distinct observers that
 // reported each pattern. Patterns with no detections are absent from
 // the map.

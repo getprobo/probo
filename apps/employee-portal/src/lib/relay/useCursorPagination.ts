@@ -66,6 +66,8 @@ export function useCursorPagination(
       return;
     }
     startTransition(() => {
+      // first stays null on purpose. Relay still sends the fragment's
+      // default first; the server ignores it when before is set.
       refetch({ first: null, after: null, last: pageSize, before: pageInfo.startCursor });
     });
   }, [isPending, refetch, pageSize, pageInfo.hasPreviousPage, pageInfo.startCursor]);

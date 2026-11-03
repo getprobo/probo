@@ -18,9 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Card } from "@probo/ui/src/v2/Card/Card";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import type { ReactNode } from "react";
 
 import { sampleFamilyCounts } from "../../variants";
 
@@ -39,32 +37,5 @@ export function StatValue({ value, label }: StatValueProps) {
       </Text>
       <Text size={2}>{label}</Text>
     </div>
-  );
-}
-
-interface StatCardProps {
-  icon: ReactNode;
-  title: string;
-  value: string;
-}
-
-export function StatCard({ icon, title, value }: StatCardProps) {
-  const { family, logo, value: valueClass } = sampleFamilyCounts();
-
-  return (
-    <Card
-      variant="soft"
-      size={3}
-      padding={4}
-      className="flex min-w-0 flex-col items-stretch gap-3"
-    >
-      <div className={family()}>
-        <span className={logo()}>{icon}</span>
-        <Text size={4} weight="medium">{title}</Text>
-      </div>
-      <Text size={4} weight="bold" highContrast className={valueClass()}>
-        {value}
-      </Text>
-    </Card>
   );
 }

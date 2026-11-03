@@ -26,7 +26,6 @@ import type { CookieBannerScanPageQuery } from "#/__generated__/core/CookieBanne
 import type { CookieBannerScanPageRefetchQuery } from "#/__generated__/core/CookieBannerScanPageRefetchQuery.graphql";
 import { NotFoundError } from "#/lib/relay/errors";
 
-import { ScanCheckpoint } from "./_components/ScanCheckpoint";
 import { ScanCounts } from "./_components/ScanCounts";
 import { ScanDetailHeader } from "./_components/ScanDetailHeader";
 import { ScanTimeline } from "./_components/ScanTimeline";
@@ -51,7 +50,6 @@ const cookieBannerScanPageFragment = graphql`
     ...ScanDetailHeader_scan
     ...ScanCounts_scan
     ...ScanTimeline_scan
-    ...ScanCheckpoint_scan
   }
 `;
 
@@ -97,7 +95,6 @@ function CookieBannerScanPageContent({ scanKey }: { scanKey: CookieBannerScanPag
       <ScanDetailHeader scanKey={scan} />
       <ScanTimeline scanKey={scan} />
       <ScanCounts scanKey={scan} />
-      <ScanCheckpoint scanKey={scan} />
     </div>
   );
 }

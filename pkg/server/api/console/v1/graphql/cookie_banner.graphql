@@ -372,6 +372,23 @@ type CookieBannerScan implements Node {
     createdAt: Datetime!
     updatedAt: Datetime!
     checkpoint: CookieBannerScanCheckpoint
+
+    detectedTrackers(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: DetectedTrackerOrder
+        filter: DetectedTrackerFilter
+    ): DetectedTrackerConnection! @goField(forceResolver: true)
+
+    trackerResources(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TrackerResourceOrder
+    ): TrackerResourceConnection! @goField(forceResolver: true)
 }
 
 type CookieBannerScanConnection
@@ -758,6 +775,16 @@ enum DetectedTrackerOrderField
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.DetectedTrackerOrderFieldInitiatorURL"
         )
+}
+
+input DetectedTrackerFilter
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DetectedTrackerFilter"
+    ) {
+    """
+    Only detections of these tracker types. Null or empty means any type.
+    """
+    trackerTypes: [TrackerType!]
 }
 
 input DetectedTrackerOrder

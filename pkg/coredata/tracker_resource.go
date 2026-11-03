@@ -560,6 +560,63 @@ WHERE
 	return count, nil
 }
 
+// LoadByCookieBannerScanID lists resources the scan stamped, skipping
+// excluded rows. The cursor fragment ends in ORDER BY and LIMIT, so it
+// stays last.
+func (trs *TrackerResources) LoadByCookieBannerScanID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	scanID gid.GID,
+	cursor *page.Cursor[TrackerResourceOrderField],
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	cookie_banner_id,
+	cookie_category_id,
+	resource_type,
+	origin,
+	path,
+	display_name,
+	description,
+	excluded,
+	cookie_banner_scan_id,
+	created_at,
+	updated_at
+FROM
+	tracker_resources
+WHERE
+	%s
+	AND cookie_banner_scan_id = @cookie_banner_scan_id
+	AND excluded = FALSE
+	AND %s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"cookie_banner_scan_id": scanID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query tracker resources by scan: %w", err)
+	}
+
+	resources, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[TrackerResource])
+	if err != nil {
+		return fmt.Errorf("cannot collect tracker resources by scan: %w", err)
+	}
+
+	*trs = resources
+
+	return nil
+}
+
 func (trs *TrackerResources) CountUncategorisedByCookieBannerID(
 	ctx context.Context,
 	conn pg.Querier,

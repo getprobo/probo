@@ -25,6 +25,7 @@ Detailed guides for specific subsystems live in `contrib/claude/`:
 - [`contrib/claude/probot.md`](contrib/claude/probot.md) — Probot layers, Slack workers, identity binding, replay
 - [`contrib/claude/app-arborescence.md`](contrib/claude/app-arborescence.md) — Frontend app folder layout (pages, routes at resource folders, loaders, skeletons, _components, _lib, _locales)
 - [`contrib/claude/relay.md`](contrib/claude/relay.md) — Frontend Relay client (queries, fragments, mutations, pagination)
+- [`contrib/claude/pagination.md`](contrib/claude/pagination.md) — Cursor previous/next (Relay null defaults, `before` over `first`)
 - [`contrib/claude/hooks.md`](contrib/claude/hooks.md) — Custom hooks (_lib placement, awaitable useMutation primitive, auto error handling)
 - [`contrib/claude/react-components.md`](contrib/claude/react-components.md) — React component shape (file/export, props, configure vs data via hooks, naming/suffix taxonomy, error props)
 - [`contrib/claude/ui.md`](contrib/claude/ui.md) — @probo/ui v2 kit (Base UI headless, Tailwind, tailwind-variants, flat folders, bundle-safe skeletons)

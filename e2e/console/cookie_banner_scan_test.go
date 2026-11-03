@@ -196,6 +196,38 @@ func TestCookieBannerScan_ListAndRequest(t *testing.T) {
 	require.Len(t, filtered.Node.Scans.Edges, 1)
 	assert.Equal(t, completedID, filtered.Node.Scans.Edges[0].Node.ID)
 	assert.Equal(t, "COMPLETED", filtered.Node.Scans.Edges[0].Node.State)
+
+	otherID := seedCompletedScan(t, bannerID, time.Now().Add(-3*time.Hour))
+	seedScanTracker(t, bannerID, completedID, "_ga")
+	seedScanTracker(t, bannerID, otherID, "_fbp")
+
+	const trackersQuery = `
+		query ScanTrackers($id: ID!) {
+			node(id: $id) {
+				... on CookieBannerScan {
+					detectedTrackers(first: 10, filter: { trackerTypes: [COOKIE] }) {
+						edges { node { identifier } }
+					}
+				}
+			}
+		}
+	`
+
+	var trackers struct {
+		Node struct {
+			DetectedTrackers struct {
+				Edges []struct {
+					Node struct {
+						Identifier string `json:"identifier"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"detectedTrackers"`
+		} `json:"node"`
+	}
+
+	require.NoError(t, owner.Execute(trackersQuery, map[string]any{"id": completedID}, &trackers))
+	require.Len(t, trackers.Node.DetectedTrackers.Edges, 1)
+	assert.Equal(t, "_ga", trackers.Node.DetectedTrackers.Edges[0].Node.Identifier)
 }
 
 func seedCompletedScan(t *testing.T, bannerID string, createdAt time.Time) string {
@@ -263,4 +295,49 @@ func seedCompletedScan(t *testing.T, bannerID string, createdAt time.Time) strin
 	})
 
 	return id.String()
+}
+
+func seedScanTracker(t *testing.T, bannerID string, scanID string, identifier string) {
+	t.Helper()
+
+	bannerGID, err := gid.ParseGID(bannerID)
+	require.NoError(t, err)
+
+	ctx := context.Background()
+	conn := dialTestPg(t, ctx)
+	t.Cleanup(func() { _ = conn.Close(ctx) })
+
+	id := gid.New(bannerGID.TenantID(), coredata.DetectedTrackerEntityType)
+	now := time.Now()
+
+	_, err = conn.Exec(
+		ctx,
+		`
+		INSERT INTO detected_trackers (
+			id, tenant_id, cookie_banner_id, tracker_type, identifier,
+			observed_by, cookie_banner_scan_id, created_at, updated_at
+		) VALUES (
+			$1, $2, $3, 'COOKIE', $4,
+			'SCANNER', $5, $6, $6
+		)
+	`,
+		id,
+		bannerGID.TenantID(),
+		bannerID,
+		identifier,
+		scanID,
+		now,
+	)
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		cleanupCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		cleanupConn := dialTestPg(t, cleanupCtx)
+		defer func() { _ = cleanupConn.Close(cleanupCtx) }()
+
+		_, err := cleanupConn.Exec(cleanupCtx, `DELETE FROM detected_trackers WHERE id = $1`, id)
+		assert.NoError(t, err)
+	})
 }

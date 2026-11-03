@@ -38,23 +38,34 @@ func NewCursor[O page.OrderField](
 	before *page.CursorKey,
 	orderBy page.OrderBy[O],
 ) *page.Cursor[O] {
-	var (
-		size      int
-		from      *page.CursorKey
-		direction = page.Head
-	)
+	// Relay's getOperationVariables keeps a fragment default when the
+	// refetch passes null. A Previous click therefore arrives as
+	// first=<default>, after=null, last=<page size>, before=<start cursor>.
+	// before must win over that leaked first, or Previous reloads page one.
+	// after likewise wins over a leaked last.
+	switch {
+	case before != nil:
+		return page.NewCursor(cursorSize(last, first), before, page.Tail, orderBy)
+	case after != nil:
+		return page.NewCursor(cursorSize(first, last), after, page.Head, orderBy)
+	case last != nil:
+		return page.NewCursor(*last, nil, page.Tail, orderBy)
+	case first != nil:
+		return page.NewCursor(*first, nil, page.Head, orderBy)
+	default:
+		return page.NewCursor(0, nil, page.Head, orderBy)
+	}
+}
 
-	if first != nil {
-		size = *first
-		direction = page.Head
-		from = after
-	} else if last != nil {
-		size = *last
-		direction = page.Tail
-		from = before
+func cursorSize(preferred *int, fallback *int) int {
+	if preferred != nil {
+		return *preferred
+	}
+	if fallback != nil {
+		return *fallback
 	}
 
-	return page.NewCursor(size, from, direction, orderBy)
+	return 0
 }
 
 func MarshalCursorKeyScalar(ck page.CursorKey) graphql.Marshaler {

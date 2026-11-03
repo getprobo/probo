@@ -206,8 +206,9 @@
   },
   "scanPage": {
     "actions": { "back": "Scans" },
-    "counts": { "pages": "Pagina's", "cookies": "Cookies", "storage": "Opslag", "resources": "Resources" },
+    "counts": { "ariaLabel": "Scanresultaten", "pages": "Pagina's", "cookies": "Cookies", "storage": "Opslag", "resources": "Resources" },
     "timeline": { "title": "Levenscyclus", "queued": "In wachtrij", "started": "Gestart", "finished": "Afgerond", "totalElapsed": "Totale duur", "queueTime": "Wachttijd", "runningTime": "Looptijd" },
+    "findings": { "truncated": "Een scan bezoekt maximaal {{count}} pagina's. De pagina's worden zorgvuldig gekozen zodat de steekproef de site toch dekt.", "page": "Pagina", "scanned": "Gescand", "showMore": "Meer tonen", "pagesEmpty": "Geen pagina's vastgelegd", "pagesNoCheckpoint": "Nog geen pagina's vastgelegd", "pagesFilteredEmpty": "Geen overeenkomende pagina's", "pagesFilter": { "ariaLabel": "Pagina's", "all": "Alle", "scanned": "Gescand", "notScanned": "Niet gescand" }, "cookiesEmpty": "Geen cookies vastgelegd", "storageEmpty": "Geen opslag vastgelegd", "resourcesEmpty": "Geen resources vastgelegd" },
     "checkpoint": {
       "title": "Laatste controlepunt",
       "elapsed": "Verstreken tijd",

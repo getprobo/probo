@@ -20,10 +20,10 @@
 
 import { Card } from "@probo/ui/src/v2/Card/Card";
 
-import { scanCounts, scanTimeline } from "../../variants";
+import { cookieBannerListSkeleton, scanTimeline } from "../../variants";
 
 export function CookieBannerScanPageSkeleton() {
-  const { root, grid } = scanCounts();
+  const { views, view } = cookieBannerListSkeleton();
   const { frame, columns } = scanTimeline();
 
   return (
@@ -51,13 +51,11 @@ export function CookieBannerScanPageSkeleton() {
           </div>
         </Card>
       </div>
-      <div className={root()}>
-        <div className={grid()}>
-          <div className="h-16 rounded-3 bg-sand-a3" />
-          <div className="h-16 rounded-3 bg-sand-a3" />
-          <div className="h-16 rounded-3 bg-sand-a3" />
-          <div className="h-16 rounded-3 bg-sand-a3" />
-        </div>
+      <div className={views()}>
+        <span className={view()} aria-hidden />
+        <span className={view()} aria-hidden />
+        <span className={view()} aria-hidden />
+        <span className={view()} aria-hidden />
       </div>
     </div>
   );

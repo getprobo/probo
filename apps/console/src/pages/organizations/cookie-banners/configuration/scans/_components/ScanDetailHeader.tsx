@@ -34,12 +34,11 @@ import { cookieBannerScansPath } from "../../../_lib/cookieBannerPaths";
 import { trackerPatternDetailHeader } from "../../../variants";
 import { formatScanTime } from "../_lib/formatScanTime";
 
-import { ScanStateBadge, ScanTruncatedBadge } from "./ScanStateBadge";
+import { ScanStateBadge } from "./ScanStateBadge";
 
 const scanDetailHeaderFragment = graphql`
   fragment ScanDetailHeader_scan on CookieBannerScan {
     state
-    truncated
     createdAt
   }
 `;
@@ -81,7 +80,6 @@ export function ScanDetailHeader({ scanKey }: ScanDetailHeaderProps) {
           </Heading>
           <div className={badges()}>
             <ScanStateBadge state={scan.state} />
-            {scan.truncated ? <ScanTruncatedBadge /> : null}
           </div>
         </div>
       </div>

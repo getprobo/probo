@@ -60,3 +60,14 @@ func NewListTrackerResourcesOutput(pg *page.Page[*coredata.TrackerResource, core
 		TrackerResources: resources,
 	}
 }
+
+func NewListScanTrackerResourcesOutput(
+	p *page.Page[*coredata.TrackerResource, coredata.TrackerResourceOrderField],
+) ListScanTrackerResourcesOutput {
+	listed := NewListTrackerResourcesOutput(p)
+
+	return ListScanTrackerResourcesOutput{
+		NextCursor:       listed.NextCursor,
+		TrackerResources: listed.TrackerResources,
+	}
+}

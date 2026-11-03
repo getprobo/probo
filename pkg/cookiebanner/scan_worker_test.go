@@ -223,7 +223,10 @@ func TestCookieBannerScanHandler_Process_CompletesWithDerivedCounts(t *testing.T
 	require.NoError(t, w.handler.record(ctx, fx.scope, scan, false, &scanner.Result{
 		PagesScanned: 3,
 		Truncated:    true,
-		Checkpoint:   scanner.Checkpoint{PagesScanned: 3},
+		Checkpoint: scanner.Checkpoint{
+			PagesScanned:     3,
+			VisitedTemplates: []string{"https://example.com/pricing"},
+		},
 	}, nil))
 
 	got := reloadScan(t, ctx, client, fx, scan.ID)
@@ -234,6 +237,8 @@ func TestCookieBannerScanHandler_Process_CompletesWithDerivedCounts(t *testing.T
 	assert.Equal(t, 1, got.StorageFound)
 	assert.Equal(t, 1, got.ResourcesFound)
 	assert.NotNil(t, got.CompletedAt)
+	require.NotNil(t, got.Checkpoint)
+	assert.Contains(t, string(*got.Checkpoint), "https://example.com/pricing")
 }
 
 func TestCookieBannerScanHandler_Process_PausesOnShutdown(t *testing.T) {
@@ -372,7 +377,11 @@ func TestCookieBannerScanHandler_Process_MapsFailureReasons(t *testing.T) {
 
 			var result *scanner.Result
 			if errors.Is(tc.err, scanner.ErrNoPageLoaded) {
-				result = &scanner.Result{}
+				result = &scanner.Result{
+					Checkpoint: scanner.Checkpoint{
+						VisitedTemplates: []string{"https://example.com/skipped"},
+					},
+				}
 			}
 
 			require.NoError(t, w.handler.record(ctx, fx.scope, scan, false, result, fmt.Errorf("scan: %w", tc.err)))
@@ -381,6 +390,10 @@ func TestCookieBannerScanHandler_Process_MapsFailureReasons(t *testing.T) {
 			assert.Equal(t, coredata.CookieBannerScanStateFailed, got.State)
 			require.NotNil(t, got.FailureReason)
 			assert.Equal(t, tc.reason, *got.FailureReason)
+			if errors.Is(tc.err, scanner.ErrNoPageLoaded) {
+				require.NotNil(t, got.Checkpoint)
+				assert.Contains(t, string(*got.Checkpoint), "https://example.com/skipped")
+			}
 		})
 	}
 }

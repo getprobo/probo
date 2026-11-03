@@ -206,8 +206,9 @@
   },
   "scanPage": {
     "actions": { "back": "Scans" },
-    "counts": { "pages": "Pages", "cookies": "Cookies", "storage": "Storage", "resources": "Resources" },
+    "counts": { "ariaLabel": "Scan results", "pages": "Pages", "cookies": "Cookies", "storage": "Storage", "resources": "Resources" },
     "timeline": { "title": "Lifecycle", "queued": "Queued", "started": "Started", "finished": "Finished", "totalElapsed": "Total elapsed", "queueTime": "Queue time", "runningTime": "Running time" },
+    "findings": { "truncated": "A scan visits at most {{count}} pages. The pages are chosen carefully so the sample still covers the site.", "page": "Page", "scanned": "Scanned", "showMore": "Show more", "pagesEmpty": "No pages recorded", "pagesNoCheckpoint": "No pages recorded yet", "pagesFilteredEmpty": "No matching pages", "pagesFilter": { "ariaLabel": "Pages", "all": "All", "scanned": "Scanned", "notScanned": "Not scanned" }, "cookiesEmpty": "No cookies recorded", "storageEmpty": "No storage recorded", "resourcesEmpty": "No resources recorded" },
     "checkpoint": {
       "title": "Latest checkpoint",
       "elapsed": "Elapsed",

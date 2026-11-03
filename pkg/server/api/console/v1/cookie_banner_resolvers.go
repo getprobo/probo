@@ -664,6 +664,75 @@ func (r *cookieBannerScanResolver) CookieBanner(ctx context.Context, obj *types.
 	return types.NewCookieBanner(banner), nil
 }
 
+// DetectedTrackers is the resolver for the detectedTrackers field.
+func (r *cookieBannerScanResolver) DetectedTrackers(ctx context.Context, obj *types.CookieBannerScan, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DetectedTrackerOrderBy, filter *types.DetectedTrackerFilter) (*types.DetectedTrackerConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionCookieBannerGet)
+	if err != nil {
+		return nil, err
+	}
+
+	var trackerTypes []coredata.TrackerType
+	if filter != nil {
+		trackerTypes = filter.TrackerTypes
+	}
+
+	pageOrderBy := page.OrderBy[coredata.DetectedTrackerOrderField]{
+		Field:     coredata.DetectedTrackerOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.DetectedTrackerOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	trackers, err := r.cookieBanner.ListDetectedTrackersForScan(
+		ctx,
+		scope,
+		obj.ID,
+		coredata.NewDetectedTrackerFilter(trackerTypes),
+		cursor,
+	)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list detected trackers", log.Error(err))
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return types.NewDetectedTrackerScanConnection(page.NewPage(trackers, cursor), r, obj.ID, trackerTypes), nil
+}
+
+// TrackerResources is the resolver for the trackerResources field.
+func (r *cookieBannerScanResolver) TrackerResources(ctx context.Context, obj *types.CookieBannerScan, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TrackerResourceOrderBy) (*types.TrackerResourceConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionCookieBannerGet)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.TrackerResourceOrderField]{
+		Field:     coredata.TrackerResourceOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.TrackerResourceOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	resources, err := r.cookieBanner.ListTrackerResourcesForScan(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list tracker resources", log.Error(err))
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return types.NewTrackerResourceConnection(page.NewPage(resources, cursor), r, obj.ID), nil
+}
+
 // TotalCount is the resolver for the totalCount field.
 func (r *cookieBannerScanConnectionResolver) TotalCount(ctx context.Context, obj *types.CookieBannerScanConnection) (int, error) {
 	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionCookieBannerGet)
@@ -898,6 +967,26 @@ func (r *cookieCategoryConnectionResolver) TotalCount(ctx context.Context, obj *
 
 // TotalCount is the resolver for the totalCount field.
 func (r *detectedTrackerConnectionResolver) TotalCount(ctx context.Context, obj *types.DetectedTrackerConnection) (int, error) {
+	if obj.ForScan {
+		scope, err := r.authorize(ctx, obj.ParentID, probo.ActionCookieBannerGet)
+		if err != nil {
+			return 0, err
+		}
+
+		count, err := r.cookieBanner.CountDetectedTrackersForScan(
+			ctx,
+			scope,
+			obj.ParentID,
+			coredata.NewDetectedTrackerFilter(obj.TrackerTypes),
+		)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot count detected trackers", log.Error(err))
+			return 0, gqlx.Internal(ctx)
+		}
+
+		return count, nil
+	}
+
 	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionTrackerPatternGet)
 	if err != nil {
 		return 0, err
@@ -2199,6 +2288,21 @@ func (r *trackerResourceResolver) Permission(ctx context.Context, obj *types.Tra
 
 // TotalCount is the resolver for the totalCount field.
 func (r *trackerResourceConnectionResolver) TotalCount(ctx context.Context, obj *types.TrackerResourceConnection) (int, error) {
+	if _, ok := obj.Resolver.(*cookieBannerScanResolver); ok {
+		scope, err := r.authorize(ctx, obj.ParentID, probo.ActionCookieBannerGet)
+		if err != nil {
+			return 0, err
+		}
+
+		count, err := r.cookieBanner.CountTrackerResourcesForScan(ctx, scope, obj.ParentID)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot count tracker resources", log.Error(err))
+			return 0, gqlx.Internal(ctx)
+		}
+
+		return count, nil
+	}
+
 	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionTrackerResourceList)
 	if err != nil {
 		return 0, err

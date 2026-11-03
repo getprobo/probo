@@ -206,8 +206,9 @@
   },
   "scanPage": {
     "actions": { "back": "Analyses" },
-    "counts": { "pages": "Pages", "cookies": "Cookies", "storage": "Stockage", "resources": "Ressources" },
+    "counts": { "ariaLabel": "Résultats de l'analyse", "pages": "Pages", "cookies": "Cookies", "storage": "Stockage", "resources": "Ressources" },
     "timeline": { "title": "Cycle de vie", "queued": "Mise en file", "started": "Démarrée", "finished": "Terminée", "totalElapsed": "Durée totale", "queueTime": "Temps en file", "runningTime": "Temps d'exécution" },
+    "findings": { "truncated": "Une analyse visite au plus {{count}} pages. Elles sont choisies avec soin pour que l’échantillon couvre quand même le site.", "page": "Page", "scanned": "Analysée", "showMore": "Afficher plus", "pagesEmpty": "Aucune page enregistrée", "pagesNoCheckpoint": "Aucune page enregistrée pour l’instant", "pagesFilteredEmpty": "Aucune page correspondante", "pagesFilter": { "ariaLabel": "Pages", "all": "Toutes", "scanned": "Analysées", "notScanned": "Non analysées" }, "cookiesEmpty": "Aucun cookie enregistré", "storageEmpty": "Aucun stockage enregistré", "resourcesEmpty": "Aucune ressource enregistrée" },
     "checkpoint": {
       "title": "Dernier point de contrôle",
       "elapsed": "Durée écoulée",

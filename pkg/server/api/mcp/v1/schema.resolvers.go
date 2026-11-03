@@ -11615,3 +11615,62 @@ func (r *Resolver) RequestCookieBannerScanTool(ctx context.Context, req *mcp.Cal
 
 	return nil, types.RequestCookieBannerScanOutput{CookieBannerScan: types.NewCookieBannerScan(scan)}, nil
 }
+
+func (r *Resolver) ListScanDetectedTrackersTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListScanDetectedTrackersInput) (*mcp.CallToolResult, types.ListScanDetectedTrackersOutput, error) {
+	scope, err := r.Authorize(ctx, input.CookieBannerScanID, probo.ActionCookieBannerGet)
+	if err != nil {
+		return nil, types.ListScanDetectedTrackersOutput{}, err
+	}
+
+	direction := page.OrderDirectionDesc
+	if input.Direction != nil {
+		direction = *input.Direction
+	}
+
+	var trackerTypes []coredata.TrackerType
+	if input.TrackerTypes != nil {
+		trackerTypes = *input.TrackerTypes
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, page.OrderBy[coredata.DetectedTrackerOrderField]{
+		Field:     coredata.DetectedTrackerOrderFieldCreatedAt,
+		Direction: direction,
+	})
+
+	trackers, err := r.cookieBanner.ListDetectedTrackersForScan(
+		ctx,
+		scope,
+		input.CookieBannerScanID,
+		coredata.NewDetectedTrackerFilter(trackerTypes),
+		cursor,
+	)
+	if err != nil {
+		return nil, types.ListScanDetectedTrackersOutput{}, mcpx.MapError(ctx, r.logger, "cannot list scan detected trackers", err)
+	}
+
+	return nil, types.NewListScanDetectedTrackersOutput(page.NewPage(trackers, cursor)), nil
+}
+
+func (r *Resolver) ListScanTrackerResourcesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListScanTrackerResourcesInput) (*mcp.CallToolResult, types.ListScanTrackerResourcesOutput, error) {
+	scope, err := r.Authorize(ctx, input.CookieBannerScanID, probo.ActionCookieBannerGet)
+	if err != nil {
+		return nil, types.ListScanTrackerResourcesOutput{}, err
+	}
+
+	direction := page.OrderDirectionDesc
+	if input.Direction != nil {
+		direction = *input.Direction
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, page.OrderBy[coredata.TrackerResourceOrderField]{
+		Field:     coredata.TrackerResourceOrderFieldCreatedAt,
+		Direction: direction,
+	})
+
+	resources, err := r.cookieBanner.ListTrackerResourcesForScan(ctx, scope, input.CookieBannerScanID, cursor)
+	if err != nil {
+		return nil, types.ListScanTrackerResourcesOutput{}, mcpx.MapError(ctx, r.logger, "cannot list scan tracker resources", err)
+	}
+
+	return nil, types.NewListScanTrackerResourcesOutput(page.NewPage(resources, cursor)), nil
+}

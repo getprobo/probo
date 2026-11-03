@@ -1,0 +1,24 @@
+---
+description: Previous on a cursor page must use before, not a fresh first page
+globs: "**/*.{ts,tsx,go}"
+alwaysApply: false
+---
+
+# Cursor previous / next
+
+Previous loads the page before the current `startCursor`. It does not reload page one.
+
+Relay keeps a fragment's default `first` when a refetch passes `first: null` (`relay-runtime` `getOperationVariables` only overrides a default when the value is non-null). A Previous request therefore arrives as `first: <default>`, `last: <page size>`, `before: <start cursor>`.
+
+`cursor.NewCursor` honors `before` over `first`, and `after` over `last`. Do not add a resolver branch that uses `first` whenever it is set; that drops `before` and returns the first page.
+
+Client previous/next goes through `useCursorPagination`:
+
+- Next: `{ first: pageSize, after: endCursor, last: null, before: null }`
+- Previous: `{ first: null, after: null, last: pageSize, before: startCursor }`
+
+Do not change Previous to `first: pageSize` or omit `before`. Select `pageInfo { hasNextPage hasPreviousPage startCursor endCursor }`. Do not use `@connection` / `loadNext` for a previous/next control.
+
+An in-memory list pages with an index into the array. Previous decrements that index. It does not set the index back to 0.
+
+See [`contrib/claude/pagination.md`](../../contrib/claude/pagination.md).

@@ -654,6 +654,7 @@ UPDATE cookie_banner_scans
 SET
 	state = @completed_state,
 	truncated = @truncated,
+	checkpoint = COALESCE(@checkpoint::jsonb, checkpoint),
 	pages_scanned = @pages_scanned,
 	cookies_found = @cookies_found,
 	storage_found = @storage_found,
@@ -673,6 +674,7 @@ WHERE
 		"completed_state": CookieBannerScanStateCompleted,
 		"running_state":   CookieBannerScanStateRunning,
 		"truncated":       s.Truncated,
+		"checkpoint":      checkpointArg(s.Checkpoint),
 		"pages_scanned":   s.PagesScanned,
 		"cookies_found":   s.CookiesFound,
 		"storage_found":   s.StorageFound,
@@ -711,6 +713,7 @@ UPDATE cookie_banner_scans
 SET
 	state = @failed_state,
 	failure_reason = @failure_reason,
+	checkpoint = COALESCE(@checkpoint::jsonb, checkpoint),
 	pages_scanned = @pages_scanned,
 	completed_at = @now,
 	updated_at = @now
@@ -727,6 +730,7 @@ WHERE
 		"failed_state":   CookieBannerScanStateFailed,
 		"running_state":  CookieBannerScanStateRunning,
 		"failure_reason": reason,
+		"checkpoint":     checkpointArg(s.Checkpoint),
 		"pages_scanned":  s.PagesScanned,
 		"now":            now,
 	}

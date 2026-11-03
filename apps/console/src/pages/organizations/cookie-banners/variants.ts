@@ -312,13 +312,6 @@ export const categoryCreateDialog = tv({
   },
 });
 
-export const scanCounts = tv({
-  slots: {
-    root: "@container",
-    grid: "grid grid-cols-2 gap-3 @min-[48rem]:grid-cols-4",
-  },
-});
-
 export const scanTimeline = tv({
   slots: {
     frame: "@container",

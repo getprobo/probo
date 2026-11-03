@@ -79,3 +79,14 @@ func NewListDetectedTrackersOutput(
 		DetectedTrackers: trackers,
 	}
 }
+
+func NewListScanDetectedTrackersOutput(
+	p *page.Page[*coredata.DetectedTracker, coredata.DetectedTrackerOrderField],
+) ListScanDetectedTrackersOutput {
+	listed := NewListDetectedTrackersOutput(p)
+
+	return ListScanDetectedTrackersOutput{
+		NextCursor:       listed.NextCursor,
+		DetectedTrackers: listed.DetectedTrackers,
+	}
+}
