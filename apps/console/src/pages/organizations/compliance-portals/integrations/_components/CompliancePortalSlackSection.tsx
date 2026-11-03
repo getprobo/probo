@@ -155,6 +155,7 @@ export function CompliancePortalSlackSection({
   const slackListEmpty = channelPage.channels.length === 0 && !channelPage.hasNext;
   const showEmptyCallout = showChannelConfig && slackListEmpty && !channelPage.failed;
   const showChannelSelect = channels.length > 0;
+  const showStandaloneLoadMore = !showChannelSelect && channelPage.hasNext;
 
   const channelNames = Object.fromEntries(
     channels.map(listedChannel => [listedChannel.id, `#${listedChannel.name}`]),
@@ -234,6 +235,24 @@ export function CompliancePortalSlackSection({
                   <Callout color="red" className={emptyCallout()}>
                     {t("slackSection.channel.loadError")}
                   </Callout>
+                </div>
+              )}
+              {showStandaloneLoadMore && (
+                <div>
+                  {channelPage.failedMore && (
+                    <Text size={2} color="faint" className="px-3 py-2">
+                      {t("slackSection.channel.loadError")}
+                    </Text>
+                  )}
+                  <Button
+                    variant="ghost"
+                    color="neutral"
+                    size={1}
+                    loading={channelPage.loadingMore}
+                    onClick={channelPage.onLoadMore}
+                  >
+                    {t("slackSection.channel.loadMore")}
+                  </Button>
                 </div>
               )}
               {showChannelSelect && (

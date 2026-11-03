@@ -537,7 +537,7 @@
       "placeholder": "Select channel",
       "loadMore": "Show more",
       "loadError": "Could not load Slack channels.",
-      "emptyTitle": "Waiting for you to invite @Probo in a channel",
+      "emptyTitle": "Waiting for you to invite @Probo to a channel",
       "emptyDescription": "@Probo hasn't been invited to any channel yet."
     },
     "actions": {

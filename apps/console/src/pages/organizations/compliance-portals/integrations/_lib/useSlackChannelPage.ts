@@ -25,6 +25,11 @@ import type { useSlackChannelPageQuery } from "#/__generated__/core/useSlackChan
 
 const slackChannelPollIntervalMs = 5000;
 
+// A page can list no channels and still carry a cursor: the server drops
+// conversations that are not eligible after Slack pages them. Follow those
+// cursors before treating the list as empty.
+const maxEmptyChannelPages = 5;
+
 export interface SlackChannel {
   id: string;
   name: string;
@@ -110,61 +115,89 @@ export function useSlackChannelPage(organizationId: string, enabled: boolean) {
     }
 
     let active = true;
-    const subscription = fetchQuery<useSlackChannelPageQuery>(
-      environment,
-      slackChannelPageQuery,
-      { organizationId, cursor: request.cursor },
-      { fetchPolicy: "network-only" },
-    ).subscribe({
-      next: (data) => {
-        if (!active) {
-          return;
-        }
+    let subscription: { unsubscribe: () => void } | null = null;
 
-        const page = readPage(data);
-        const pagedBeyondFirst = pagedBeyondFirstRef.current;
+    const settle = (collected: SlackChannel[], nextCursor: string | null) => {
+      const pagedBeyondFirst = pagedBeyondFirstRef.current;
 
-        setChannels((current) => {
-          if (request.mode === "append") {
-            return dedupe([...current, ...page.channels]);
-          }
-          // Later pages were loaded from the previous cursor. A channel
-          // that left page 1 is not in this response or in those pages.
-          if (pagedBeyondFirst) {
-            return dedupe([...page.channels, ...current]);
-          }
-          return page.channels;
-        });
-
-        if (request.mode === "append" || !pagedBeyondFirst) {
-          nextCursorRef.current = page.nextCursor;
-          setNextCursor(page.nextCursor);
-        }
-
+      setChannels((current) => {
         if (request.mode === "append") {
-          appendingRef.current = false;
+          return dedupe([...current, ...collected]);
         }
-
-        setFailedId(null);
-        setSettledId(request.id);
-      },
-      error: () => {
-        if (!active) {
-          return;
+        // Later pages were loaded from the previous cursor. A channel
+        // that left page 1 is not in this response or in those pages.
+        if (pagedBeyondFirst) {
+          return dedupe([...collected, ...current]);
         }
+        return collected;
+      });
 
-        if (request.mode === "append") {
-          appendingRef.current = false;
-        }
+      if (request.mode === "append" || !pagedBeyondFirst) {
+        nextCursorRef.current = nextCursor;
+        setNextCursor(nextCursor);
+      }
 
-        setFailedId(request.id);
-        setSettledId(request.id);
-      },
-    });
+      if (request.mode === "append") {
+        appendingRef.current = false;
+      }
+
+      setFailedId(null);
+      setSettledId(request.id);
+    };
+
+    const fail = () => {
+      if (request.mode === "append") {
+        appendingRef.current = false;
+      }
+
+      setFailedId(request.id);
+      setSettledId(request.id);
+    };
+
+    const load = (cursor: string | null, walked: number, collected: SlackChannel[]) => {
+      const current = fetchQuery<useSlackChannelPageQuery>(
+        environment,
+        slackChannelPageQuery,
+        { organizationId, cursor },
+        { fetchPolicy: "network-only" },
+      ).subscribe({
+        next: (data) => {
+          current.unsubscribe();
+          if (!active) {
+            return;
+          }
+
+          const page = readPage(data);
+          const channels = dedupe([...collected, ...page.channels]);
+          const keepWalking = page.channels.length === 0
+            && page.nextCursor != null
+            && page.nextCursor !== cursor
+            && walked + 1 < maxEmptyChannelPages;
+
+          if (keepWalking) {
+            load(page.nextCursor, walked + 1, channels);
+            return;
+          }
+
+          settle(channels, page.nextCursor);
+        },
+        error: () => {
+          current.unsubscribe();
+          if (!active) {
+            return;
+          }
+
+          fail();
+        },
+      });
+      subscription = current;
+    };
+
+    load(request.cursor, 0, []);
 
     return () => {
       active = false;
-      subscription.unsubscribe();
+      subscription?.unsubscribe();
     };
   }, [enabled, environment, organizationId, request]);
 
