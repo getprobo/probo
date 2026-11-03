@@ -5,6 +5,13 @@ documented in this file.
 
 ## Unreleased
 
+## [0.8.0] - 2026-11-03
+
+### Added
+
+- On Linux, the OS version posture evidence includes the full kernel
+  version in addition to the distribution name and version
+
 ## [0.7.4] - 2026-10-30
 
 ### Fixed
