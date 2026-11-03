@@ -17,13 +17,11 @@
     "lint": "for dir in apps/console apps/compliance-portal apps/employee-portal packages/ui packages/hotkeys packages/relay packages/routes packages/tasks packages/collaboration packages/eslint-config packages/faro; do eslint --concurrency off \"$dir\" || exit; done; eslint --concurrency off eslint.config.mjs packages/automerge-conformance contrib/benchmarks .github/actions && npm -w @probo/n8n-nodes-probo run lint",
   "check": "turbo run check",
     "test": "turbo run test",
-    "relay": "relay-compiler",
-    "postinstall": "patch-package"
+    "relay": "relay-compiler"
   },
   "devDependencies": {
     "@probo/eslint-config": "1.0.0",
     "eslint": "^10.12.0",
-    "patch-package": "8.0.1",
     "relay-compiler": "^21.0.1",
     "turbo": "^2.11.8",
     "typescript": "6.0.3"
