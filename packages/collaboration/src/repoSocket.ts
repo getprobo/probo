@@ -76,8 +76,11 @@ export class RepoWebSocketAdapter extends NetworkAdapter {
 
   remotePeerId?: PeerId;
 
-  constructor(public readonly url: string) {
+  readonly url: string;
+
+  constructor(url: string) {
     super();
+    this.url = url;
   }
 
   isReady() {

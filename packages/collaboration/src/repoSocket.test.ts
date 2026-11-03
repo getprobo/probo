@@ -36,9 +36,11 @@ class FakeWebSocket extends EventTarget {
   readyState = FakeWebSocket.CONNECTING;
   binaryType = "blob";
   sent: ArrayBuffer[] = [];
+  url: string;
 
-  constructor(public url: string) {
+  constructor(url: string) {
     super();
+    this.url = url;
     opened.push(this);
     if (!FakeWebSocket.reachable) return;
 
