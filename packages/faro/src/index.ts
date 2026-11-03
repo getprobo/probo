@@ -18,39 +18,5 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { faroSettings } from "./settings";
-
+export { FaroClient, type FaroClientOptions } from "./client";
 export { faroSettings, type FaroSettings } from "./settings";
-
-export interface StartFaroOptions {
-  appName: string;
-  apiURL?: string;
-}
-
-// Reads the collector meta tags rendered by probod. The SDK module is loaded
-// only when both tags are present. A failed chunk or a thrown init is logged
-// and must not reject: callers start this without awaiting.
-export async function startFaro(options: StartFaroOptions): Promise<void> {
-  try {
-    const collectorURL = document
-      .querySelector("meta[name=\"faro-collector-url\"]")
-      ?.getAttribute("content") ?? "";
-    const apiKey = document
-      .querySelector("meta[name=\"faro-api-key\"]")
-      ?.getAttribute("content") ?? "";
-    const settings = faroSettings(collectorURL, apiKey);
-    if (!settings) {
-      return;
-    }
-
-    const { initFaro } = await import("./sdk");
-    initFaro({
-      appName: options.appName,
-      collectorURL: settings.url,
-      apiKey: settings.apiKey,
-      apiURL: options.apiURL,
-    });
-  } catch (error) {
-    console.error("Cannot start Faro", error);
-  }
-}

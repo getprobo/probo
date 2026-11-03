@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { startFaro } from "@probo/faro";
+import { FaroClient } from "@probo/faro";
 import { initDisplayMode } from "@probo/ui/src/v2/displayMode/displayMode";
 import { createRoot } from "react-dom/client";
 
@@ -26,11 +26,13 @@ import "./index.css";
 import "#/lib/i18n/i18n";
 
 import { App } from "./App";
+import { router } from "./routes";
 
-void startFaro({
+const faro = new FaroClient({
   appName: "compliance-portal",
   apiURL: import.meta.env.VITE_API_URL,
 });
+void faro.start(router);
 
 initDisplayMode();
 

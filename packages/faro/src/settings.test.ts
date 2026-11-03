@@ -60,11 +60,16 @@ describe("Faro app snippets", () => {
 });
 
 describe("Faro public entry", () => {
-  it("does not import the SDK until startFaro loads it", () => {
+  it("does not import the SDK until FaroClient loads it", () => {
     const index = readFileSync(new URL("./index.ts", import.meta.url), "utf8");
+    const client = readFileSync(new URL("./client.ts", import.meta.url), "utf8");
+    const route = readFileSync(new URL("./route.ts", import.meta.url), "utf8");
     const settings = readFileSync(new URL("./settings.ts", import.meta.url), "utf8");
     expect(index).not.toContain("@grafana/faro");
+    expect(client).not.toContain("@grafana/faro");
+    expect(route).not.toContain("@grafana/faro");
     expect(settings).not.toContain("@grafana/faro");
-    expect(index).toContain("import(\"./sdk\")");
+    expect(index).not.toContain("import(\"./sdk\")");
+    expect(client).toContain("import(\"./sdk\")");
   });
 });

@@ -18,22 +18,39 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import {
+  createReactRouterV7DataOptions,
+  ReactIntegration,
+  withFaroRouterInstrumentation,
+} from "@grafana/faro-react";
 import { getWebInstrumentations, initializeFaro } from "@grafana/faro-web-sdk";
 import { TracingInstrumentation } from "@grafana/faro-web-tracing";
+import { type DataRouter, matchRoutes } from "react-router";
+
+import { routePattern } from "./route";
 
 export interface InitFaroOptions {
   appName: string;
   collectorURL: string;
   apiKey: string;
   apiURL?: string;
+  router: DataRouter;
 }
 
 export function initFaro(options: InitFaroOptions): void {
+  const { router } = options;
   initializeFaro({
     url: options.collectorURL,
     apiKey: options.apiKey,
     app: {
       name: options.appName,
+    },
+    pageTracking: {
+      generatePageId: location => routePattern(
+        router.routes,
+        location.pathname,
+        router.basename,
+      ),
     },
     instrumentations: [
       ...getWebInstrumentations({ captureConsole: false }),
@@ -42,8 +59,16 @@ export function initFaro(options: InitFaroOptions): void {
           propagateTraceHeaderCorsUrls: traceHeaderCorsUrls(options.apiURL),
         },
       }),
+      new ReactIntegration({
+        router: createReactRouterV7DataOptions({ matchRoutes }),
+      }),
     ],
   });
+
+  // Faro types the v6 data router; React Router 8 exposes the same surface.
+  withFaroRouterInstrumentation(
+    router as unknown as Parameters<typeof withFaroRouterInstrumentation>[0],
+  );
 }
 
 function traceHeaderCorsUrls(apiURL: string | undefined): RegExp[] {
