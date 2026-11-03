@@ -86,7 +86,7 @@ func TestOAuth2_PrbCLIDeviceFlowWithAPIScopes(t *testing.T) {
 
 	allowedResp, err := testutil.ConsoleGraphQLWithAccessToken(
 		t,
-		tokenResp.AccessToken,
+		refreshed.AccessToken,
 		getOrganizationQuery,
 		map[string]any{
 			"id": owner.GetOrganizationID().String(),
