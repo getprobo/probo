@@ -24,20 +24,22 @@ import { DialogTrigger } from "../Dialog/DialogTrigger";
 import { imagePreview } from "./variants";
 
 // Opens the lightbox. The child is usually the small image. Pass `render` to
-// reuse another control, the same way DialogTrigger does.
+// use an existing control (e.g. a Button) as the trigger, per Base UI's
+// polymorphism — do not clone children by hand.
 export type ImagePreviewTriggerProps = Omit<DialogTriggerProps, "className"> & {
   className?: string;
 };
 
 export function ImagePreviewTrigger(props: ImagePreviewTriggerProps) {
-  const { className, ...rest } = props;
+  const { className, render, ...rest } = props;
   const { trigger } = imagePreview();
 
   return (
     <DialogTrigger
-      {...rest}
-      className={trigger({ className })}
+      className={render == null ? trigger({ className }) : className}
+      render={render}
       data-image-preview-trigger=""
+      {...rest}
     />
   );
 }
