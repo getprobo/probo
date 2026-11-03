@@ -241,6 +241,7 @@ func seedCompletedScan(t *testing.T, bannerID string, createdAt time.Time) strin
 	t.Cleanup(func() { _ = conn.Close(ctx) })
 
 	var organizationID string
+
 	err = conn.QueryRow(ctx, `SELECT organization_id FROM cookie_banners WHERE id = $1`, bannerID).Scan(&organizationID)
 	require.NoError(t, err)
 

@@ -61,6 +61,7 @@ func cursorSize(preferred *int, fallback *int) int {
 	if preferred != nil {
 		return *preferred
 	}
+
 	if fallback != nil {
 		return *fallback
 	}

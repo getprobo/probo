@@ -390,6 +390,7 @@ func TestCookieBannerScanHandler_Process_MapsFailureReasons(t *testing.T) {
 			assert.Equal(t, coredata.CookieBannerScanStateFailed, got.State)
 			require.NotNil(t, got.FailureReason)
 			assert.Equal(t, tc.reason, *got.FailureReason)
+
 			if errors.Is(tc.err, scanner.ErrNoPageLoaded) {
 				require.NotNil(t, got.Checkpoint)
 				assert.Contains(t, string(*got.Checkpoint), "https://example.com/skipped")

@@ -66,8 +66,5 @@ func NewListScanTrackerResourcesOutput(
 ) ListScanTrackerResourcesOutput {
 	listed := NewListTrackerResourcesOutput(p)
 
-	return ListScanTrackerResourcesOutput{
-		NextCursor:       listed.NextCursor,
-		TrackerResources: listed.TrackerResources,
-	}
+	return ListScanTrackerResourcesOutput(listed)
 }

@@ -128,22 +128,27 @@ func NewCmdViewScan(f *cmdutil.Factory) *cobra.Command {
 			label := lipgloss.NewStyle().Foreground(lipgloss.Color("242")).Width(18)
 
 			_, _ = fmt.Fprintf(out, "%s\n\n", bold.Render(scan.ID))
+
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("State:"), scan.State)
 			if scan.FailureReason != nil {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Failure:"), *scan.FailureReason)
 			}
+
 			_, _ = fmt.Fprintf(out, "%s%t\n", label.Render("Truncated:"), scan.Truncated)
 			_, _ = fmt.Fprintf(out, "%s%d\n", label.Render("Pages:"), scan.PagesScanned)
 			_, _ = fmt.Fprintf(out, "%s%d\n", label.Render("Cookies:"), scan.CookiesFound)
 			_, _ = fmt.Fprintf(out, "%s%d\n", label.Render("Storage:"), scan.StorageFound)
 			_, _ = fmt.Fprintf(out, "%s%d\n", label.Render("Resources:"), scan.ResourcesFound)
+
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Requested:"), cmdutil.FormatTime(scan.CreatedAt))
 			if scan.StartedAt != nil {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Started:"), cmdutil.FormatTime(*scan.StartedAt))
 			}
+
 			if scan.CompletedAt != nil {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Finished:"), cmdutil.FormatTime(*scan.CompletedAt))
 			}
+
 			if scan.Checkpoint != nil {
 				_, _ = fmt.Fprintf(out, "%s%d visited, %d queued, %d hosts\n", label.Render("Checkpoint:"), len(scan.Checkpoint.VisitedTemplates), len(scan.Checkpoint.Queue), len(scan.Checkpoint.CoveredHosts))
 			}

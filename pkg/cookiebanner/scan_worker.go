@@ -490,6 +490,7 @@ func (h *cookieBannerScanHandler) complete(
 			scan.PagesScanned = result.PagesScanned
 			scan.CookiesFound = cookies
 			scan.StorageFound = storage
+
 			scan.ResourcesFound = resources
 			if err := assignCheckpoint(scan, &result.Checkpoint); err != nil {
 				return err

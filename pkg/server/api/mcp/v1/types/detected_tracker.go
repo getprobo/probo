@@ -85,8 +85,5 @@ func NewListScanDetectedTrackersOutput(
 ) ListScanDetectedTrackersOutput {
 	listed := NewListDetectedTrackersOutput(p)
 
-	return ListScanDetectedTrackersOutput{
-		NextCursor:       listed.NextCursor,
-		DetectedTrackers: listed.DetectedTrackers,
-	}
+	return ListScanDetectedTrackersOutput(listed)
 }

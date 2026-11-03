@@ -1134,9 +1134,7 @@ func (f *batchFetcher) fetchTrackerPatternObservers(
 			return nil, fmt.Errorf("cannot load tracker pattern observers: %w", err)
 		}
 
-		for patternID, observedBy := range observers {
-			result[patternID] = observedBy
-		}
+		maps.Copy(result, observers)
 	}
 
 	return result, nil

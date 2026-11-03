@@ -116,12 +116,6 @@ export const description: INodeProperties[] = [
 				action: 'Get a cookie banner scan',
 			},
 			{
-				name: 'Get Scans',
-				value: 'getScans',
-				description: 'Get scans for a cookie banner',
-				action: 'Get cookie banner scans',
-			},
-			{
 				name: 'Get Scan Resources',
 				value: 'getScanResources',
 				description: 'Get resources stamped on a cookie banner scan',
@@ -132,6 +126,12 @@ export const description: INodeProperties[] = [
 				value: 'getScanTrackers',
 				description: 'Get detections stamped on a cookie banner scan',
 				action: 'Get cookie banner scan trackers',
+			},
+			{
+				name: 'Get Scans',
+				value: 'getScans',
+				description: 'Get scans for a cookie banner',
+				action: 'Get cookie banner scans',
 			},
 			{
 				name: 'List GVL Catalog',
