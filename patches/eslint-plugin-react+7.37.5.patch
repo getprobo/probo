@@ -1,0 +1,70 @@
+diff --git a/node_modules/eslint-plugin-react/lib/rules/forbid-component-props.js b/node_modules/eslint-plugin-react/lib/rules/forbid-component-props.js
+index 2dd4412..a12e8c7 100644
+--- a/node_modules/eslint-plugin-react/lib/rules/forbid-component-props.js
++++ b/node_modules/eslint-plugin-react/lib/rules/forbid-component-props.js
+@@ -5,7 +5,8 @@
+ 
+ 'use strict';
+ 
+-const minimatch = require('minimatch');
++const minimatchImport = require('minimatch');
++const minimatch = typeof minimatchImport === 'function' ? minimatchImport : minimatchImport.minimatch;
+ const docsUrl = require('../util/docsUrl');
+ const report = require('../util/report');
+ 
+diff --git a/node_modules/eslint-plugin-react/lib/rules/jsx-handler-names.js b/node_modules/eslint-plugin-react/lib/rules/jsx-handler-names.js
+index f89f244..9c14388 100644
+--- a/node_modules/eslint-plugin-react/lib/rules/jsx-handler-names.js
++++ b/node_modules/eslint-plugin-react/lib/rules/jsx-handler-names.js
+@@ -5,7 +5,8 @@
+ 
+ 'use strict';
+ 
+-const minimatch = require('minimatch');
++const minimatchImport = require('minimatch');
++const minimatch = typeof minimatchImport === 'function' ? minimatchImport : minimatchImport.minimatch;
+ const docsUrl = require('../util/docsUrl');
+ const getText = require('../util/eslint').getText;
+ const report = require('../util/report');
+diff --git a/node_modules/eslint-plugin-react/lib/rules/jsx-pascal-case.js b/node_modules/eslint-plugin-react/lib/rules/jsx-pascal-case.js
+index efeef40..9e55a30 100644
+--- a/node_modules/eslint-plugin-react/lib/rules/jsx-pascal-case.js
++++ b/node_modules/eslint-plugin-react/lib/rules/jsx-pascal-case.js
+@@ -6,7 +6,8 @@
+ 'use strict';
+ 
+ const elementType = require('jsx-ast-utils/elementType');
+-const minimatch = require('minimatch');
++const minimatchImport = require('minimatch');
++const minimatch = typeof minimatchImport === 'function' ? minimatchImport : minimatchImport.minimatch;
+ const docsUrl = require('../util/docsUrl');
+ const jsxUtil = require('../util/jsx');
+ const report = require('../util/report');
+diff --git a/node_modules/eslint-plugin-react/lib/rules/no-danger.js b/node_modules/eslint-plugin-react/lib/rules/no-danger.js
+index 54dbed4..b631f9d 100644
+--- a/node_modules/eslint-plugin-react/lib/rules/no-danger.js
++++ b/node_modules/eslint-plugin-react/lib/rules/no-danger.js
+@@ -7,7 +7,8 @@
+ 
+ const has = require('hasown');
+ const fromEntries = require('object.fromentries/polyfill')();
+-const minimatch = require('minimatch');
++const minimatchImport = require('minimatch');
++const minimatch = typeof minimatchImport === 'function' ? minimatchImport : minimatchImport.minimatch;
+ 
+ const docsUrl = require('../util/docsUrl');
+ const jsxUtil = require('../util/jsx');
+diff --git a/node_modules/eslint-plugin-react/lib/rules/no-unstable-nested-components.js b/node_modules/eslint-plugin-react/lib/rules/no-unstable-nested-components.js
+index c330795..d6bdb74 100644
+--- a/node_modules/eslint-plugin-react/lib/rules/no-unstable-nested-components.js
++++ b/node_modules/eslint-plugin-react/lib/rules/no-unstable-nested-components.js
+@@ -5,7 +5,8 @@
+ 
+ 'use strict';
+ 
+-const minimatch = require('minimatch');
++const minimatchImport = require('minimatch');
++const minimatch = typeof minimatchImport === 'function' ? minimatchImport : minimatchImport.minimatch;
+ const Components = require('../util/Components');
+ const docsUrl = require('../util/docsUrl');
+ const astUtil = require('../util/ast');
