@@ -38,6 +38,7 @@ import type { ElectronicSignatureSectionFragment$key } from "#/__generated__/cor
 import { TonedCard } from "#/components/TonedCard/TonedCard";
 
 import { type NdaSignatureStatus, ndaSignatureTone } from "../_lib/ndaSignature";
+import { signatureBundleUrl } from "../_lib/signatureBundleUrl";
 import { electronicSignatureSection } from "../variants";
 
 import { EventTypeIcon } from "./EventTypeIcon";
@@ -55,6 +56,7 @@ const signedAtFormat = {
 
 const fragment = graphql`
   fragment ElectronicSignatureSectionFragment on ElectronicSignature {
+    id
     status
     signedAt
     certificate {
@@ -116,7 +118,12 @@ export function ElectronicSignatureSection({
   const { root, copy, description, trigger, popup, event, timestamp }
     = electronicSignatureSection();
   const tone = ndaSignatureTone(signature.status);
-  const certificateUrl = signature.certificate?.downloadUrl;
+  const bundleUrl = signature.certificate?.downloadUrl != null
+    ? signatureBundleUrl(
+        signature.id,
+        import.meta.env.VITE_API_URL || window.location.origin,
+      )
+    : null;
   const descriptionCopy = signatureDescription(
     signature.status,
     signature.signedAt,
@@ -134,7 +141,7 @@ export function ElectronicSignatureSection({
             {t(signatureLeadKey(signature.status))}
           </Text>
         )}
-        control={certificateUrl != null
+        control={bundleUrl != null
           ? (
               <IconButton
                 size={1}
@@ -142,7 +149,7 @@ export function ElectronicSignatureSection({
                 color="neutral"
                 aria-label={t("electronicSignature.actions.download")}
                 onClick={() => {
-                  safeOpenUrl(certificateUrl);
+                  safeOpenUrl(bundleUrl);
                 }}
               >
                 <DownloadSimpleIcon />

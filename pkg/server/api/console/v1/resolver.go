@@ -258,6 +258,11 @@ func NewMux(
 				slackbotInstallations,
 			),
 		)
+
+		r.Get(
+			"/electronic-signatures/{signatureID}/bundle",
+			handleElectronicSignatureBundle(logger, iamSvc, esignSvc, baseURL),
+		)
 	})
 
 	// Public in the sense that the vendor top-level-redirects the customer's
