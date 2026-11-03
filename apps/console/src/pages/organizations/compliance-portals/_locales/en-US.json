@@ -175,7 +175,7 @@
   },
   "electronicSignature": {
     "title": "NDA",
-    "certificateTitle": "Certificate of completion",
+    "certificateTitle": "Signed file and certificate",
     "status": {
       "signed": "Signed electronically",
       "processing": "Signature in progress",
@@ -190,7 +190,7 @@
       "completed": "This visitor signed electronically."
     },
     "actions": {
-      "download": "Download"
+      "download": "Download signed file and certificate"
     },
     "activity": "Activity"
   },
