@@ -37,6 +37,7 @@ import { ScanResources } from "./ScanResources";
 
 const scanCountsFragment = graphql`
   fragment ScanCounts_scan on CookieBannerScan {
+    pagesScanned
     cookiesFound
     checkpoint {
       visitedTemplates
@@ -75,7 +76,7 @@ export function ScanCounts({ scanKey }: ScanCountsProps) {
     scan.checkpoint?.visitedTemplates ?? [],
     (scan.checkpoint?.queue ?? []).map(item => ({ url: item.url })),
   );
-  const pageTotals = scanPageTotals(pageRows);
+  const pageTotals = scanPageTotals(pageRows, scan.pagesScanned);
 
   return (
     <div className="flex flex-col gap-4">
@@ -94,7 +95,7 @@ export function ScanCounts({ scanKey }: ScanCountsProps) {
             <BrowserIcon />
             {t("scanPage.counts.pages")}
             <span className={countClass}>
-              {format.format(pageTotals.visited)}
+              {format.format(pageTotals.scanned)}
               {" / "}
               {format.format(pageTotals.total)}
             </span>

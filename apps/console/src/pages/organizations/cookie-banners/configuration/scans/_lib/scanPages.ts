@@ -49,13 +49,16 @@ export function scanPageRows(
   return rows;
 }
 
-export function scanPageTotals(rows: readonly ScanPageRow[]): { visited: number; total: number } {
-  let visited = 0;
+export function scanPageTotals(
+  rows: readonly ScanPageRow[],
+  pagesScanned: number,
+): { scanned: number; total: number } {
+  let queued = 0;
   for (const row of rows) {
-    if (row.scanned) {
-      visited += 1;
+    if (!row.scanned) {
+      queued += 1;
     }
   }
 
-  return { visited, total: rows.length };
+  return { scanned: pagesScanned, total: pagesScanned + queued };
 }

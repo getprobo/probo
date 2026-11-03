@@ -25,6 +25,7 @@ import { SelectTrigger } from "@probo/ui/src/v2/Select/SelectTrigger";
 import { useTranslation } from "react-i18next";
 
 import { cookieBannerList } from "../../../variants";
+import { resourceTypeBadges } from "../_lib/resourceBadges";
 import {
   isTrackerResourceType,
   type TrackerResourceType,
@@ -33,18 +34,6 @@ import {
 } from "../_lib/useResourcesListFilters";
 
 import { ResourcesListSearch } from "./ResourcesListSearch";
-
-const typeLabels = {
-  SCRIPT: "script",
-  IFRAME: "iframe",
-  IMAGE: "image",
-  STYLESHEET: "stylesheet",
-  FONT: "font",
-  BEACON: "beacon",
-  FETCH: "fetch",
-  MEDIA: "media",
-  SERVICE_WORKER: "serviceWorker",
-} as const;
 
 export function ResourcesListFilters() {
   const { t } = useTranslation("organizations/cookie-banners");
@@ -75,14 +64,14 @@ export function ResourcesListFilters() {
               aria-label={t("resourcesPage.filters.type")}
             >
               {(value: TrackerResourceType | null) => (
-                value != null ? t(`resourcesPage.types.${typeLabels[value]}`) : allTypesLabel
+                value != null ? t(`resourcesPage.types.${resourceTypeBadges[value].labelKey}`) : allTypesLabel
               )}
             </SelectTrigger>
             <SelectPopup align="start">
               <SelectItem value={null}>{allTypesLabel}</SelectItem>
               {trackerResourceTypes.map(resourceType => (
                 <SelectItem key={resourceType} value={resourceType}>
-                  {t(`resourcesPage.types.${typeLabels[resourceType]}`)}
+                  {t(`resourcesPage.types.${resourceTypeBadges[resourceType].labelKey}`)}
                 </SelectItem>
               ))}
             </SelectPopup>

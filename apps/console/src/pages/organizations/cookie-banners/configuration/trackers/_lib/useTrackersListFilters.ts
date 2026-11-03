@@ -92,8 +92,12 @@ export function isDetectedTrackerObserver(value: string): value is DetectedTrack
   return (detectedTrackerObservers as readonly string[]).includes(value);
 }
 
-function categoryLocked(view: TrackersListView): boolean {
+export function isCategoryLockedView(view: TrackersListView): boolean {
   return view === "categorised" || view === "uncategorised";
+}
+
+export function isObservedByLockedView(view: TrackersListView): boolean {
+  return lockedObservedBy[view] != null;
 }
 
 function selectedObservers(values: readonly string[]): DetectedTrackerObserver[] {
@@ -159,7 +163,7 @@ export function trackersListGraphqlFilter(filters: {
   observedBy: readonly DetectedTrackerObserver[];
 }): TrackersListGraphqlFilter | null {
   const query = filters.query.trim() || null;
-  const lockedCategory = categoryLocked(filters.view);
+  const lockedCategory = isCategoryLockedView(filters.view);
   const category = lockedCategory ? null : filters.category;
   const excluded = lockedCategory ? false : null;
   let categorized: boolean | null = null;
@@ -168,7 +172,9 @@ export function trackersListGraphqlFilter(filters: {
   } else if (filters.view === "uncategorised") {
     categorized = false;
   }
-  const locked = lockedObservedBy[filters.view];
+  const locked = isObservedByLockedView(filters.view)
+    ? lockedObservedBy[filters.view]
+    : undefined;
   let observedBy: DetectedTrackerObserver[] | null = null;
   if (locked != null) {
     observedBy = [locked];
@@ -275,15 +281,15 @@ export function useTrackersListFilters(): TrackersListFilters {
     : "categorised";
   const source = isCookieSource(rawSource) ? rawSource : null;
   const type = isTrackerType(rawType) ? rawType : null;
-  const category = categoryLocked(view) || rawCategory === "" ? null : rawCategory;
+  const category = isCategoryLockedView(view) || rawCategory === "" ? null : rawCategory;
   const party = rawParty === "" ? null : rawParty;
-  // A string snapshot keeps the observer list stable. Reading getAll()
-  // directly is a new array every render, which the React compiler
-  // will not memoize.
-  const search = searchParams.toString();
+  // Key only the observer params. The full search string also changes
+  // when the page cursor changes, and a new observer list would make
+  // pagination look like a filter change.
+  const observedByKey = searchParams.getAll("observedBy").join(",");
   const observedBy = useMemo(
-    () => selectedObservers(new URLSearchParams(search).getAll("observedBy")),
-    [search],
+    () => selectedObservers(observedByKey === "" ? [] : observedByKey.split(",")),
+    [observedByKey],
   );
   const field = isTrackerPatternOrderField(rawSort)
     ? rawSort
@@ -438,7 +444,7 @@ export function useTrackersListFilters(): TrackersListFilters {
       || type != null
       || category != null
       || party != null
-      || (lockedObservedBy[view] == null && observedBy.length > 0),
+      || (!isObservedByLockedView(view) && observedBy.length > 0),
     setView,
     setQuery,
     setSource,

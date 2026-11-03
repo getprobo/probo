@@ -262,7 +262,7 @@ func (h *cookieBannerScanHandler) loadScan(
 				return fmt.Errorf("cannot load cookie banner: %w", err)
 			}
 
-			decoded, err := unmarshalCheckpoint(scan.Checkpoint)
+			decoded, err := UnmarshalScanCheckpoint(scan.Checkpoint)
 			if err != nil {
 				return err
 			}
@@ -394,6 +394,10 @@ func (h *cookieBannerScanHandler) acceptPage(
 		return err
 	}
 
+	// The scanner returns no result when ingestion fails, so MarkFailed
+	// persists whatever frontier is on the scan. Keep the previous one
+	// until this page is stored, or a failed page shows up as visited.
+	previous := scan.Checkpoint
 	scan.Checkpoint = raw
 
 	err = h.pg.WithTx(
@@ -410,6 +414,10 @@ func (h *cookieBannerScanHandler) acceptPage(
 			return nil
 		},
 	)
+	if err != nil {
+		scan.Checkpoint = previous
+	}
+
 	if errors.Is(err, coredata.ErrResourceNotFound) {
 		lost.Store(true)
 		cancel()
@@ -622,7 +630,9 @@ func marshalCheckpoint(checkpoint scanner.Checkpoint) (*json.RawMessage, error) 
 	return &encoded, nil
 }
 
-func unmarshalCheckpoint(raw *json.RawMessage) (*scanner.Checkpoint, error) {
+// UnmarshalScanCheckpoint decodes a stored crawl frontier. A nil or empty
+// value decodes to a nil checkpoint.
+func UnmarshalScanCheckpoint(raw *json.RawMessage) (*scanner.Checkpoint, error) {
 	if raw == nil || len(*raw) == 0 {
 		return nil, nil
 	}

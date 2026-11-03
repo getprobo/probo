@@ -295,7 +295,7 @@ func TestCookieBannerScanHandler_Process_PausesWhenARunEnds(t *testing.T) {
 	assert.Nil(t, got.CompletedAt)
 	assert.Equal(t, 10, got.PagesScanned)
 
-	checkpoint, err := unmarshalCheckpoint(got.Checkpoint)
+	checkpoint, err := UnmarshalScanCheckpoint(got.Checkpoint)
 	require.NoError(t, err)
 	require.NotNil(t, checkpoint)
 	require.Len(t, checkpoint.Queue, 1)
@@ -431,6 +431,68 @@ func TestCookieBannerScanHandler_Process_KeepsPagesWhenALaterPageFails(t *testin
 	got := reloadScan(t, ctx, client, fx, scan.ID)
 	assert.Equal(t, coredata.CookieBannerScanStateFailed, got.State)
 	assert.Equal(t, 2, got.PagesScanned)
+}
+
+func TestCookieBannerScanHandler_Process_KeepsCheckpointWhenIngestFails(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedWorkerFixture(t, ctx, client)
+	scan := insertRunningScan(t, ctx, client, fx)
+	w := newScanWorker(t, client)
+	banner, _, _, err := w.handler.loadScan(ctx, fx.scope, scan)
+	require.NoError(t, err)
+
+	pageCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	require.NoError(t, w.handler.acceptPage(
+		pageCtx,
+		fx.scope,
+		scan,
+		&banner,
+		scanner.Page{
+			Cookies: []scanner.Cookie{{Name: "_ga", Source: coredata.CookieSourceHTTP}},
+		},
+		scanner.Checkpoint{
+			PagesScanned:     1,
+			VisitedTemplates: []string{"https://example.com/kept"},
+		},
+		new(atomic.Bool),
+		cancel,
+	))
+
+	// An unknown tracker type fails the insert after the frontier for
+	// this page was assigned. A missing category would look like a lost
+	// scan, which acceptPage treats as success.
+	require.Error(t, w.handler.acceptPage(
+		pageCtx,
+		fx.scope,
+		scan,
+		&banner,
+		scanner.Page{
+			Storage: []scanner.StorageItem{{
+				Type: coredata.TrackerType("NOPE"),
+				Key:  "theme",
+			}},
+		},
+		scanner.Checkpoint{
+			PagesScanned:     2,
+			VisitedTemplates: []string{"https://example.com/kept", "https://example.com/never-saved"},
+		},
+		new(atomic.Bool),
+		cancel,
+	))
+
+	require.NoError(t, w.handler.record(ctx, fx.scope, scan, false, nil, errors.New("cannot accept scanned page")))
+
+	got := reloadScan(t, ctx, client, fx, scan.ID)
+	assert.Equal(t, coredata.CookieBannerScanStateFailed, got.State)
+	assert.Equal(t, 1, got.PagesScanned)
+	require.NotNil(t, got.Checkpoint)
+	assert.Contains(t, string(*got.Checkpoint), "https://example.com/kept")
+	assert.NotContains(t, string(*got.Checkpoint), "https://example.com/never-saved")
 }
 
 func TestCookieBannerScanHandler_Process_DropsWorkWhenOwnershipIsLost(t *testing.T) {

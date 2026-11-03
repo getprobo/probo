@@ -782,7 +782,7 @@ input DetectedTrackerFilter
         model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DetectedTrackerFilter"
     ) {
     """
-    Only detections of these tracker types. Null or empty means any type.
+    Only detections of these tracker types. Null or an empty list returns every scanner detection.
     """
     trackerTypes: [TrackerType!]
 }

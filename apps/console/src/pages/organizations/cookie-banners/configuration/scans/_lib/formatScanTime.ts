@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { dateTimeFormat } from "@probo/i18n";
+import { dateTimeFormat, formatDuration } from "@probo/i18n";
 
 const scanTimeWithSeconds = {
   hour: "2-digit",
@@ -52,7 +52,13 @@ type DurationFormatCtor = new (
   options?: { style?: "long" | "short" | "narrow" },
 ) => { format: (value: Record<string, number>) => string };
 
-export function formatScanDuration(language: string, milliseconds: number | null): string {
+type DurationTranslator = (key: string, options?: { count?: number }) => string;
+
+export function formatScanDuration(
+  language: string,
+  milliseconds: number | null,
+  t: DurationTranslator,
+): string {
   if (milliseconds == null || !Number.isFinite(milliseconds)) {
     return EMPTY_DURATION;
   }
@@ -62,26 +68,28 @@ export function formatScanDuration(language: string, milliseconds: number | null
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
   const DurationFormat = (Intl as typeof Intl & { DurationFormat?: DurationFormatCtor }).DurationFormat;
-  if (DurationFormat == null) {
-    return `${totalSeconds}s`;
+  if (DurationFormat != null) {
+    const value: Record<string, number> = {};
+    if (hours > 0) {
+      value.hours = hours;
+    }
+    if (minutes > 0) {
+      value.minutes = minutes;
+    }
+    if (seconds > 0 || (hours === 0 && minutes === 0)) {
+      value.seconds = seconds;
+    }
+
+    try {
+      return new DurationFormat(language, { style: "short" }).format(value);
+    } catch {
+      // Older engines reject the options. The translated fallback below
+      // covers them.
+    }
   }
 
-  const value: Record<string, number> = {};
-  if (hours > 0) {
-    value.hours = hours;
-  }
-  if (minutes > 0) {
-    value.minutes = minutes;
-  }
-  if (seconds > 0 || (hours === 0 && minutes === 0)) {
-    value.seconds = seconds;
-  }
-
-  try {
-    return new DurationFormat(language, { style: "short" }).format(value);
-  } catch {
-    return `${totalSeconds}s`;
-  }
+  const formatted = formatDuration(`PT${hours}H${minutes}M${seconds}S`, t);
+  return formatted ?? t("duration.sec", { count: 0 });
 }
 
 function timestampMs(value: string): number | null {

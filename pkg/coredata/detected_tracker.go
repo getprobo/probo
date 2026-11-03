@@ -392,7 +392,7 @@ WHERE
 	return nil
 }
 
-// CountByCookieBannerScan lists scanner observations stamped with scanID.
+// CountByCookieBannerScan counts scanner observations stamped with scanID.
 func (dts *DetectedTrackers) CountByCookieBannerScan(
 	ctx context.Context,
 	conn pg.Querier,

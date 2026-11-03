@@ -15174,7 +15174,7 @@ components:
               items:
                 $ref: "#/components/schemas/TrackerType"
             - type: "null"
-          description: Only these tracker types. Null lists every scanner detection on the scan.
+          description: Only these tracker types. Null or an empty list returns every scanner detection on the scan.
         direction:
           anyOf:
             - $ref: "#/components/schemas/OrderDirection"

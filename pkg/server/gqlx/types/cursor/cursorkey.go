@@ -42,16 +42,17 @@ func NewCursor[O page.OrderField](
 	// refetch passes null. A Previous click therefore arrives as
 	// first=<default>, after=null, last=<page size>, before=<start cursor>.
 	// before must win over that leaked first, or Previous reloads page one.
-	// after likewise wins over a leaked last.
+	// after likewise wins over a leaked last. With no cursor, first wins
+	// over last, which is the precedence this helper had before.
 	switch {
 	case before != nil:
 		return page.NewCursor(cursorSize(last, first), before, page.Tail, orderBy)
 	case after != nil:
 		return page.NewCursor(cursorSize(first, last), after, page.Head, orderBy)
-	case last != nil:
-		return page.NewCursor(*last, nil, page.Tail, orderBy)
 	case first != nil:
 		return page.NewCursor(*first, nil, page.Head, orderBy)
+	case last != nil:
+		return page.NewCursor(*last, nil, page.Tail, orderBy)
 	default:
 		return page.NewCursor(0, nil, page.Head, orderBy)
 	}

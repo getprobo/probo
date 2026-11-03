@@ -54,6 +54,7 @@ interface ScanTimelineProps {
 
 export function ScanTimeline({ scanKey }: ScanTimelineProps) {
   const { t, i18n } = useTranslation("organizations/cookie-banners");
+  const { t: tRoot } = useTranslation();
   const scan = useFragment(scanTimelineFragment, scanKey);
   const { root } = scanSection();
   const { frame, columns, durations, duration, value } = scanTimeline();
@@ -116,7 +117,7 @@ export function ScanTimeline({ scanKey }: ScanTimelineProps) {
               <div key={item.label} className={duration()}>
                 <Text size={1} color="faint">{item.label}</Text>
                 <Text size={2} highContrast className={value()}>
-                  {formatScanDuration(i18n.language, item.milliseconds)}
+                  {formatScanDuration(i18n.language, item.milliseconds, tRoot)}
                 </Text>
               </div>
             ))}

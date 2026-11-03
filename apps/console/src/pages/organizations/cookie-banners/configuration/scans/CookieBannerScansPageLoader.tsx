@@ -38,6 +38,7 @@ export default function CookieBannerScansPageLoader() {
   const filterRef = useRef(graphqlFilter);
   const orderRef = useRef(graphqlOrder);
   const paginationRef = useRef(graphqlPagination);
+  const resetPaginationRef = useRef(resetPagination);
   const prevBannerIdRef = useRef<string | undefined>(undefined);
   const [queryRef, loadQuery] = useQueryLoader<CookieBannerScansPageQuery>(
     cookieBannerScansPageQuery,
@@ -54,6 +55,10 @@ export default function CookieBannerScansPageLoader() {
   useEffect(() => {
     paginationRef.current = graphqlPagination;
   }, [graphqlPagination]);
+
+  useEffect(() => {
+    resetPaginationRef.current = resetPagination;
+  }, [resetPagination]);
 
   useEffect(() => {
     const switched = prevBannerIdRef.current !== undefined
@@ -75,9 +80,9 @@ export default function CookieBannerScansPageLoader() {
     );
 
     if (switched) {
-      resetPagination();
+      resetPaginationRef.current();
     }
-  }, [loadQuery, cookieBannerId, resetPagination]);
+  }, [loadQuery, cookieBannerId]);
 
   const currentQueryRef = queryRef != null
     && queryRef.variables.cookieBannerId === cookieBannerId

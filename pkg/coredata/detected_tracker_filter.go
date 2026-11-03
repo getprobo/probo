@@ -31,10 +31,6 @@ func NewDetectedTrackerFilter(trackerTypes []TrackerType) *DetectedTrackerFilter
 }
 
 func (f *DetectedTrackerFilter) SQLFragment() string {
-	if f == nil {
-		return "TRUE"
-	}
-
 	return `
 (
 	CASE
@@ -46,11 +42,12 @@ func (f *DetectedTrackerFilter) SQLFragment() string {
 }
 
 func (f *DetectedTrackerFilter) SQLArguments() pgx.StrictNamedArgs {
-	if f == nil {
-		return pgx.StrictNamedArgs{}
+	var trackerTypes []TrackerType
+	if f != nil {
+		trackerTypes = f.trackerTypes
 	}
 
 	return pgx.StrictNamedArgs{
-		"filter_tracker_types": filterStrings(f.trackerTypes),
+		"filter_tracker_types": filterStrings(trackerTypes),
 	}
 }

@@ -19,8 +19,12 @@
 // SOFTWARE.
 
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
+import { Tooltip } from "@probo/ui/src/v2/Tooltip/Tooltip";
+import { TooltipPopup } from "@probo/ui/src/v2/Tooltip/TooltipPopup";
+import { TooltipTrigger } from "@probo/ui/src/v2/Tooltip/TooltipTrigger";
 import { useTranslation } from "react-i18next";
 
+import { SCAN_MAX_PAGES } from "../_lib/pageSize";
 import { scanStateBadge } from "../_lib/scanStates";
 
 interface ScanStateBadgeProps {
@@ -35,5 +39,26 @@ export function ScanStateBadge({ state }: ScanStateBadgeProps) {
     <Badge variant={badge.variant} color={badge.color}>
       {t(`scansPage.states.${badge.labelKey}`)}
     </Badge>
+  );
+}
+
+export function ScanTruncatedBadge() {
+  const { t } = useTranslation("organizations/cookie-banners");
+
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={(
+          <span tabIndex={0} className="inline-flex">
+            <Badge variant="outline" color="amber">
+              {t("scansPage.badges.truncated")}
+            </Badge>
+          </span>
+        )}
+      />
+      <TooltipPopup className="max-w-64">
+        {t("scansPage.badges.truncatedHint", { count: SCAN_MAX_PAGES })}
+      </TooltipPopup>
+    </Tooltip>
   );
 }

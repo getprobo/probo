@@ -197,7 +197,7 @@
     "states": { "any": "Any state", "pending": "Queued", "running": "Running", "paused": "Paused", "completed": "Completed", "failed": "Failed" },
     "columns": { "requested": "Requested", "state": "State", "started": "Started", "finished": "Finished", "pages": "Pages", "cookies": "Cookies", "storage": "Storage", "resources": "Resources" },
     "sort": { "requested": "Sort by requested date" },
-    "badges": { "truncated": "Truncated" },
+    "badges": { "truncated": "Truncated", "truncatedHint": "This scan stopped early. A scan visits at most {{count}} pages, and it also stops when time runs out or enough items are recorded. The pages are chosen carefully so the sample still covers the site." },
     "actions": { "scan": "Scan", "previous": "Previous", "next": "Next" },
     "empty": { "title": "No scans", "description": "Start a scan to crawl the site and detect trackers." },
     "emptyFiltered": "No matching scans",
@@ -208,7 +208,7 @@
     "actions": { "back": "Scans" },
     "counts": { "ariaLabel": "Scan results", "pages": "Pages", "cookies": "Cookies", "storage": "Storage", "resources": "Resources" },
     "timeline": { "title": "Lifecycle", "queued": "Queued", "started": "Started", "finished": "Finished", "totalElapsed": "Total elapsed", "queueTime": "Queue time", "runningTime": "Running time" },
-    "findings": { "truncated": "A scan visits at most {{count}} pages. The pages are chosen carefully so the sample still covers the site.", "page": "Page", "scanned": "Scanned", "showMore": "Show more", "pagesEmpty": "No pages recorded", "pagesNoCheckpoint": "No pages recorded yet", "pagesFilteredEmpty": "No matching pages", "pagesFilter": { "ariaLabel": "Pages", "all": "All", "scanned": "Scanned", "notScanned": "Not scanned" }, "cookiesEmpty": "No cookies recorded", "storageEmpty": "No storage recorded", "resourcesEmpty": "No resources recorded" },
+    "findings": { "truncated": "This scan stopped early. A scan visits at most {{count}} pages, and it also stops when time runs out or enough items are recorded. The pages are chosen carefully so the sample still covers the site.", "page": "Page", "scanned": "Scanned", "showMore": "Show more", "pagesEmpty": "No pages recorded", "pagesNoCheckpoint": "No pages recorded yet", "pagesFilteredEmpty": "No matching pages", "pagesFilter": { "ariaLabel": "Pages", "all": "All", "scanned": "Scanned", "notScanned": "Not scanned" }, "cookiesEmpty": "No cookies recorded", "storageEmpty": "No storage recorded", "resourcesEmpty": "No resources recorded" },
     "checkpoint": {
       "title": "Latest checkpoint",
       "elapsed": "Elapsed",

@@ -35,21 +35,10 @@ import type { CursorPaginationVariables } from "#/lib/relay/useCursorPagination"
 import { useCursorPagination } from "#/lib/relay/useCursorPagination";
 
 import { cookieBannerList } from "../../../variants";
+import { resourceTypeBadges } from "../../resources/_lib/resourceBadges";
 import { SCAN_FINDINGS_PAGE_SIZE } from "../_lib/pageSize";
 
 import { FindingsPagination } from "./FindingsPagination";
-
-const typeLabels = {
-  SCRIPT: "script",
-  IFRAME: "iframe",
-  IMAGE: "image",
-  STYLESHEET: "stylesheet",
-  FONT: "font",
-  BEACON: "beacon",
-  FETCH: "fetch",
-  MEDIA: "media",
-  SERVICE_WORKER: "serviceWorker",
-} as const;
 
 const scanResourcesFragment = graphql`
   fragment ScanResources_scan on CookieBannerScan
@@ -127,7 +116,7 @@ export function ScanResources({ scanKey }: { scanKey: ScanResources_scan$key }) 
             {resources.map(resource => (
               <TableRow key={resource.id}>
                 <TableCell>
-                  <Text size={2}>{t(`resourcesPage.types.${typeLabels[resource.type]}`)}</Text>
+                  <Text size={2}>{t(`resourcesPage.types.${resourceTypeBadges[resource.type].labelKey}`)}</Text>
                 </TableCell>
                 <TableCell overflow="truncate">
                   <Text size={2} className="break-all font-mono">{resource.origin}</Text>

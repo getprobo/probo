@@ -39,7 +39,7 @@ import { graphql } from "relay-runtime";
 import type { ScanPages_scan$key } from "#/__generated__/core/ScanPages_scan.graphql";
 
 import { cookieBannerList } from "../../../variants";
-import { SCAN_FINDINGS_PAGE_SIZE } from "../_lib/pageSize";
+import { SCAN_FINDINGS_PAGE_SIZE, SCAN_MAX_PAGES } from "../_lib/pageSize";
 import { type ScanPageRow, scanPageRows } from "../_lib/scanPages";
 
 import { FindingsPagination } from "./FindingsPagination";
@@ -111,7 +111,7 @@ export function ScanPages({ scanKey }: ScanPagesProps) {
       {scan.truncated
         ? (
             <Callout color="neutral">
-              {t("scanPage.findings.truncated", { count: 100 })}
+              {t("scanPage.findings.truncated", { count: SCAN_MAX_PAGES })}
             </Callout>
           )
         : null}

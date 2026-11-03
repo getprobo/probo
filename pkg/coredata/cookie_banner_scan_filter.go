@@ -31,10 +31,6 @@ func NewCookieBannerScanFilter(state *CookieBannerScanState) *CookieBannerScanFi
 }
 
 func (f *CookieBannerScanFilter) SQLFragment() string {
-	if f == nil {
-		return "TRUE"
-	}
-
 	// Cast the parameter once. Postgres rejects the same placeholder cast
 	// to two different types.
 	return `
@@ -48,12 +44,8 @@ func (f *CookieBannerScanFilter) SQLFragment() string {
 }
 
 func (f *CookieBannerScanFilter) SQLArguments() pgx.StrictNamedArgs {
-	if f == nil {
-		return pgx.StrictNamedArgs{}
-	}
-
 	args := pgx.StrictNamedArgs{"filter_state": nil}
-	if f.state != nil {
+	if f != nil && f.state != nil {
 		args["filter_state"] = string(*f.state)
 	}
 

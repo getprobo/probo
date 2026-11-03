@@ -361,3 +361,66 @@ func TestTrackerResource_CountByCookieBannerScanID_SkipsExcluded(t *testing.T) {
 	}))
 	assert.Equal(t, 1, count)
 }
+
+func TestTrackerResource_LoadByCookieBannerScanID_SkipsExcluded(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedTrackerPatternFixture(t, ctx, client)
+
+	scan := newPendingCookieBannerScan(fx)
+	require.NoError(t, insertCookieBannerScan(t, ctx, client, fx, scan))
+
+	newResource := func(path string, excluded bool) *coredata.TrackerResource {
+		now := time.Now().UTC().Truncate(time.Microsecond)
+
+		return &coredata.TrackerResource{
+			ID:                 gid.New(fx.scope.GetTenantID(), coredata.TrackerResourceEntityType),
+			OrganizationID:     fx.organizationID,
+			CookieBannerID:     fx.cookieBannerID,
+			CookieCategoryID:   fx.cookieCategoryID,
+			ResourceType:       coredata.TrackerResourceTypeScript,
+			Origin:             "https://www.googletagmanager.com",
+			Path:               path,
+			DisplayName:        "www.googletagmanager.com" + path,
+			Excluded:           excluded,
+			CookieBannerScanID: &scan.ID,
+			CreatedAt:          now,
+			UpdatedAt:          now,
+		}
+	}
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		for _, tr := range []*coredata.TrackerResource{
+			newResource("/gtm.js", false),
+			newResource("/hidden.js", true),
+		} {
+			if err := tr.Insert(ctx, tx, fx.scope); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}))
+
+	var resources coredata.TrackerResources
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		cursor := page.NewCursor(
+			10,
+			nil,
+			page.Head,
+			page.OrderBy[coredata.TrackerResourceOrderField]{
+				Field:     coredata.TrackerResourceOrderFieldCreatedAt,
+				Direction: page.OrderDirectionAsc,
+			},
+		)
+
+		return resources.LoadByCookieBannerScanID(ctx, conn, fx.scope, scan.ID, cursor)
+	}))
+
+	require.Len(t, resources, 1)
+	assert.Equal(t, "/gtm.js", resources[0].Path)
+	assert.False(t, resources[0].Excluded)
+}

@@ -38,8 +38,10 @@ import {
   type CookieSource,
   cookieSources,
   detectedTrackerObservers,
+  isCategoryLockedView,
   isCookieSource,
   isDetectedTrackerObserver,
+  isObservedByLockedView,
   isTrackersListView,
   isTrackerType,
   type TrackerType,
@@ -102,8 +104,8 @@ export function TrackersListFilters({ cookieBannerKey }: TrackersListFiltersProp
   const allCategoriesLabel = t("trackersPage.filters.allCategories");
   const allThirdPartiesLabel = t("trackersPage.filters.allThirdParties");
   const allObserversLabel = t("trackersPage.filters.allObservers");
-  const categoryLocked = view === "categorised" || view === "uncategorised";
-  const observedByLocked = view === "sdk" || view === "scan";
+  const categoryLocked = isCategoryLockedView(view);
+  const observedByLocked = isObservedByLockedView(view);
   const categories = cookieBanner.categories.edges.map(edge => edge.node);
 
   return (

@@ -147,24 +147,9 @@ func NewListCookieBannerScansOutput(
 	}
 }
 
-type cookieBannerScanCheckpointJSON struct {
-	VisitedTemplates []string `json:"visited_templates"`
-	Queue            []struct {
-		URL string `json:"url"`
-	} `json:"queue"`
-	CoveredHosts []string `json:"covered_hosts"`
-	PagesScanned int      `json:"pages_scanned"`
-	ElapsedMS    int64    `json:"elapsed_ms"`
-	Truncated    bool     `json:"truncated"`
-}
-
 func decodeCookieBannerScanCheckpoint(raw *json.RawMessage) *CookieBannerScanCheckpoint {
-	if raw == nil || len(*raw) == 0 {
-		return nil
-	}
-
-	var decoded cookieBannerScanCheckpointJSON
-	if err := json.Unmarshal(*raw, &decoded); err != nil {
+	decoded, err := cookiebanner.UnmarshalScanCheckpoint(raw)
+	if err != nil || decoded == nil {
 		return nil
 	}
 

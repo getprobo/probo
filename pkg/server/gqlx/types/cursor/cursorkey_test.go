@@ -73,6 +73,23 @@ func TestNewCursor_AfterWinsOverLeakedLast(t *testing.T) {
 	assert.Equal(t, first, cursor.Size)
 }
 
+func TestNewCursor_FirstWinsOverLastWithoutCursor(t *testing.T) {
+	t.Parallel()
+
+	first := 15
+	last := 15
+	orderBy := page.OrderBy[testOrderField]{
+		Field:     "created_at",
+		Direction: page.OrderDirectionDesc,
+	}
+
+	cursor := NewCursor(&first, nil, &last, nil, orderBy)
+
+	assert.Nil(t, cursor.Key)
+	assert.Equal(t, page.Head, cursor.Position)
+	assert.Equal(t, first, cursor.Size)
+}
+
 func TestNewCursor_FirstPageIgnoresEmptyCursors(t *testing.T) {
 	t.Parallel()
 

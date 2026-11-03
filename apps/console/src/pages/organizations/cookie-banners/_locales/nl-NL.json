@@ -121,7 +121,7 @@
   "trackersPage": {
     "title": "Trackers",
     "description": "Trackers die door deze banner zijn gedetecteerd en de categorie van elke tracker.",
-    "filters": { "search": "Zoeken op naam of beschrijving...", "allThirdParties": "Alle derde partijen", "allCategories": "Alle categorieën", "allObservers": "Willekeurige waarnemer", "source": "Bron", "type": "Type", "category": "Categorie", "thirdParty": "Derde partij", "observedBy": "Gezien door", "selectedCount": "{{count}} geselecteerd" },
+    "filters": { "search": "Zoeken op naam of beschrijving...", "allThirdParties": "Alle derde partijen", "allCategories": "Alle categorieën", "allObservers": "Alle waarnemers", "source": "Bron", "type": "Type", "category": "Categorie", "thirdParty": "Derde partij", "observedBy": "Gezien door", "selectedCount": "{{count}} geselecteerd" },
     "types": { "all": "Alle typen", "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Cache-opslag" },
     "sources": { "all": "Alle bronnen", "script": "Script", "preExisting": "Vooraf bestaand", "http": "HTTP", "extension": "Extensie" },
     "columns": { "name": "Naam", "attribution": "Attributie", "source": "Bron", "seenBy": "Gezien door", "category": "Categorie", "maxAge": "Maximale leeftijd" },
@@ -197,7 +197,7 @@
     "states": { "any": "Elke status", "pending": "In wachtrij", "running": "Bezig", "paused": "Gepauzeerd", "completed": "Voltooid", "failed": "Mislukt" },
     "columns": { "requested": "Aangevraagd", "state": "Status", "started": "Gestart", "finished": "Afgerond", "pages": "Pagina's", "cookies": "Cookies", "storage": "Opslag", "resources": "Resources" },
     "sort": { "requested": "Sorteren op aanvraagdatum" },
-    "badges": { "truncated": "Afgekapt" },
+    "badges": { "truncated": "Afgekapt", "truncatedHint": "Deze scan is eerder gestopt. Een scan bezoekt maximaal {{count}} pagina's en stopt ook als de tijd op is of als er genoeg items zijn vastgelegd. De pagina's worden zorgvuldig gekozen zodat de steekproef de site toch dekt." },
     "actions": { "scan": "Scannen", "previous": "Vorige", "next": "Volgende" },
     "empty": { "title": "Geen scans", "description": "Start een scan om de site te doorlopen en trackers te detecteren." },
     "emptyFiltered": "Geen overeenkomende scans",
@@ -208,7 +208,7 @@
     "actions": { "back": "Scans" },
     "counts": { "ariaLabel": "Scanresultaten", "pages": "Pagina's", "cookies": "Cookies", "storage": "Opslag", "resources": "Resources" },
     "timeline": { "title": "Levenscyclus", "queued": "In wachtrij", "started": "Gestart", "finished": "Afgerond", "totalElapsed": "Totale duur", "queueTime": "Wachttijd", "runningTime": "Looptijd" },
-    "findings": { "truncated": "Een scan bezoekt maximaal {{count}} pagina's. De pagina's worden zorgvuldig gekozen zodat de steekproef de site toch dekt.", "page": "Pagina", "scanned": "Gescand", "showMore": "Meer tonen", "pagesEmpty": "Geen pagina's vastgelegd", "pagesNoCheckpoint": "Nog geen pagina's vastgelegd", "pagesFilteredEmpty": "Geen overeenkomende pagina's", "pagesFilter": { "ariaLabel": "Pagina's", "all": "Alle", "scanned": "Gescand", "notScanned": "Niet gescand" }, "cookiesEmpty": "Geen cookies vastgelegd", "storageEmpty": "Geen opslag vastgelegd", "resourcesEmpty": "Geen resources vastgelegd" },
+    "findings": { "truncated": "Deze scan is eerder gestopt. Een scan bezoekt maximaal {{count}} pagina's en stopt ook als de tijd op is of als er genoeg items zijn vastgelegd. De pagina's worden zorgvuldig gekozen zodat de steekproef de site toch dekt.", "page": "Pagina", "scanned": "Gescand", "showMore": "Meer tonen", "pagesEmpty": "Geen pagina's vastgelegd", "pagesNoCheckpoint": "Nog geen pagina's vastgelegd", "pagesFilteredEmpty": "Geen overeenkomende pagina's", "pagesFilter": { "ariaLabel": "Pagina's", "all": "Alle", "scanned": "Gescand", "notScanned": "Niet gescand" }, "cookiesEmpty": "Geen cookies vastgelegd", "storageEmpty": "Geen opslag vastgelegd", "resourcesEmpty": "Geen resources vastgelegd" },
     "checkpoint": {
       "title": "Laatste controlepunt",
       "elapsed": "Verstreken tijd",

@@ -23,7 +23,9 @@ sends `first: 15` on every request, including Previous. The variables that arriv
 
 ## Client
 
-Use [`useCursorPagination`](../../apps/console/src/lib/relay/useCursorPagination.ts) (the employee portal and compliance portal copies match it):
+Use [`useCursorPagination`](../../apps/console/src/lib/relay/useCursorPagination.ts). The compliance portal copy matches it. The employee portal copy also skips `goNext` and `goPrevious` while a refetch is pending.
+
+The calls are:
 
 - Next: `{ first: pageSize, after: endCursor, last: null, before: null }`
 - Previous: `{ first: null, after: null, last: pageSize, before: startCursor }`

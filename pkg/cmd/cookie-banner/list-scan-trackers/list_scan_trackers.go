@@ -100,6 +100,12 @@ func NewCmdListScanTrackers(f *cmdutil.Factory) *cobra.Command {
 				"direction": flagDirection,
 			}
 			if len(flagTypes) > 0 {
+				for _, trackerType := range flagTypes {
+					if err := cmdutil.ValidateEnum("type", trackerType, []string{"COOKIE", "LOCAL_STORAGE", "SESSION_STORAGE", "INDEXED_DB", "CACHE_STORAGE"}); err != nil {
+						return err
+					}
+				}
+
 				variables["trackerTypes"] = flagTypes
 			}
 

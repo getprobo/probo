@@ -58,7 +58,7 @@ export function CookieBannerTrackersPageSkeleton() {
             </div>
           </div>
         </div>
-        <TableSkeleton variant="surface" layout="fixed" columns={8} count={8} />
+        <TableSkeleton variant="surface" layout="fixed" columns={7} count={8} />
       </div>
     </div>
   );

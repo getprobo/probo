@@ -104,6 +104,10 @@ func NewCmdListScans(f *cmdutil.Factory) *cobra.Command {
 				"direction": flagDirection,
 			}
 			if flagState != "" {
+				if err := cmdutil.ValidateEnum("state", flagState, []string{"PENDING", "RUNNING", "PAUSED", "COMPLETED", "FAILED"}); err != nil {
+					return err
+				}
+
 				variables["state"] = flagState
 			}
 
