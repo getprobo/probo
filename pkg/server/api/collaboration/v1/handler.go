@@ -688,6 +688,7 @@ func ServeRepoCollaboration(
 			); err != nil {
 				return err
 			}
+
 			if len(reply) > 0 {
 				initialSyncPending = false
 			}
