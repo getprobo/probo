@@ -201,17 +201,27 @@ func (s *InstallationService) RememberTeamName(
 		return
 	}
 
-	installation.TeamName = &name
 	installation.UpdatedAt = time.Now()
+	installation.TeamName = &name
+
+	var saved bool
 
 	err = s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return installation.UpdateTeamName(ctx, conn, scope)
+			var updateErr error
+
+			saved, updateErr = installation.UpdateTeamName(ctx, conn, scope)
+
+			return updateErr
 		},
 	)
 	if err != nil && s.logger != nil {
 		s.logger.ErrorCtx(ctx, "cannot save Slack workspace name", log.Error(err))
+	}
+
+	if !saved {
+		installation.TeamName = nil
 	}
 }
 

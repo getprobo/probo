@@ -264,7 +264,11 @@ INSERT INTO slackbot_installations (
 )
 ON CONFLICT (organization_id) DO UPDATE SET
 	team_id = EXCLUDED.team_id,
-	team_name = COALESCE(EXCLUDED.team_name, slackbot_installations.team_name),
+	team_name = CASE
+		WHEN EXCLUDED.team_id = slackbot_installations.team_id
+			THEN COALESCE(EXCLUDED.team_name, slackbot_installations.team_name)
+		ELSE EXCLUDED.team_name
+	END,
 	bot_user_id = EXCLUDED.bot_user_id,
 	encrypted_access_token = EXCLUDED.encrypted_access_token,
 	encrypted_refresh_token = EXCLUDED.encrypted_refresh_token,
@@ -336,7 +340,7 @@ func (s *SlackbotInstallation) UpdateTeamName(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-) error {
+) (bool, error) {
 	q := `
 UPDATE slackbot_installations
 SET
@@ -344,11 +348,14 @@ SET
 	updated_at = @updated_at
 WHERE %s
 	AND id = @id
+	AND team_id = @team_id
+	AND team_name IS NULL
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"id":         s.ID,
+		"team_id":    s.TeamID,
 		"team_name":  s.TeamName,
 		"updated_at": s.UpdatedAt,
 	}
@@ -356,14 +363,10 @@ WHERE %s
 
 	result, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot update Slackbot installation team name: %w", err)
+		return false, fmt.Errorf("cannot update Slackbot installation team name: %w", err)
 	}
 
-	if result.RowsAffected() == 0 {
-		return ErrResourceNotFound
-	}
-
-	return nil
+	return result.RowsAffected() > 0, nil
 }
 
 func (s *SlackbotInstallation) UpdateCredentials(

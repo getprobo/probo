@@ -213,7 +213,7 @@ function SlackBotCard({
           <SlackLogo aria-hidden />
         </div>
         <div className={copy()}>
-          <Heading level={2} size={2} weight="medium" highContrast>
+          <Heading level={3} size={2} weight="medium" highContrast>
             {title}
           </Heading>
           <Text size={1} color="current" className={descriptionSlot()}>

@@ -151,10 +151,12 @@ func (s *InstallationService) Complete(
 		scope,
 		payload.Data.OrganizationID,
 	)
+
 	installation.TeamID = oauthResponse.Team.ID
 	if name := strings.TrimSpace(oauthResponse.Team.Name); name != "" {
 		installation.TeamName = &name
 	}
+
 	installation.BotUserID = oauthResponse.BotUserID
 
 	installation.Scopes = splitScopes(oauthResponse.Scope)
