@@ -368,6 +368,7 @@ jobs:
           else
             echo "probo-agent ${VERSION}" > release-notes.md
           fi
+          contrib/ci/release-verify-notes.sh probo-agent_Darwin_arm64.tar.gz >> release-notes.md
       - name: "Create GitHub release"
         env:
           GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"

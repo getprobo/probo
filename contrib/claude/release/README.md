@@ -170,6 +170,16 @@ tags at once (e.g. `--follow-tags`) can silently skip workflow triggers.
 When releasing multiple tracks in one session, push each track's tag
 immediately after creating it, before moving on to the next track.
 
+## Release note verification section
+
+Tracks that publish a cosign-signed `checksums.txt` (probod,
+probod-bootstrap, prb, probo-agent) append a "Verifying this release"
+section to their GitHub release notes with
+`contrib/ci/release-verify-notes.sh <example-archive> [<image:tag>]`.
+The script pins the signing identity to `GITHUB_WORKFLOW_REF`, so it
+must run inside the release workflow. A new track that signs its
+checksums must call it too.
+
 ## Checklist (every track)
 
 1. [ ] Pulled latest `main`

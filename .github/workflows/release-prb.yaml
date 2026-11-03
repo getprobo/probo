@@ -134,6 +134,7 @@ jobs:
             /^## \[/ { if (found) exit; if ($0 ~ "\\[" ver "\\]") found=1 }
             found
           ' cmd/prb/CHANGELOG.md > release-notes.md
+          contrib/ci/release-verify-notes.sh prb_Darwin_arm64.tar.gz >> release-notes.md
       - name: "Create GitHub release"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

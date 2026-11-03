@@ -350,6 +350,9 @@ jobs:
           - \`artifact.probo.inc/probo/probo:${IMAGE_TAG}\` (multi-arch: linux/amd64, linux/arm64)
           - \`artifact.probo.inc/probo/probo:latest\` (multi-arch: linux/amd64, linux/arm64)
           EOF
+          contrib/ci/release-verify-notes.sh \
+            probod_Darwin_arm64.tar.gz \
+            "artifact.probo.inc/probo/probo:${IMAGE_TAG}" >> release-notes.md
       - name: "Create GitHub release"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
