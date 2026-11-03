@@ -53,6 +53,34 @@ func TestWriteTimeoutFor(t *testing.T) {
 	assert.Equal(t, WriteTimeoutFloor, writeTimeoutFor(-1))
 }
 
+func TestRepoReplyContext(t *testing.T) {
+	t.Parallel()
+
+	t.Run("initial reply has a shared deadline", func(t *testing.T) {
+		t.Parallel()
+
+		before := time.Now()
+		ctx, cancel := repoReplyContext(context.Background(), true)
+		t.Cleanup(cancel)
+
+		deadline, ok := ctx.Deadline()
+		require.True(t, ok)
+		assert.WithinDuration(t, before.Add(WriteTimeoutCeiling), deadline, 100*time.Millisecond)
+	})
+
+	t.Run("later replies retain the request context", func(t *testing.T) {
+		t.Parallel()
+
+		parent, cancelParent := context.WithCancel(context.Background())
+		t.Cleanup(cancelParent)
+
+		ctx, cancel := repoReplyContext(parent, false)
+		t.Cleanup(cancel)
+
+		assert.Same(t, parent, ctx)
+	})
+}
+
 func TestReadMessages_CanceledContext(t *testing.T) {
 	t.Parallel()
 

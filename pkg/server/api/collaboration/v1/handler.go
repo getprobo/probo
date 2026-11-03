@@ -51,7 +51,8 @@ const (
 	WriteTimeoutFloor = 10 * time.Second
 	// WriteTimeoutCeiling bounds a stalled peer. It must exceed the floor
 	// plus an 8 MiB snapshot frame at minWriteBytesPerSecond (138s), and
-	// stay under the browser's 180s initialization budget.
+	// stay under the browser's 180s initialization budget. It also bounds
+	// the initial sync response as a whole, not just one of its frames.
 	WriteTimeoutCeiling = 150 * time.Second
 	// minWriteBytesPerSecond budgets a long-haul transfer. Snapshot sync
 	// frames reach 8 MiB, and a short fixed deadline closes the socket
@@ -647,6 +648,7 @@ func ServeRepoCollaboration(
 	defer announceCollaborationDeparture(ctx, conn, lease, config)
 
 	revision := lease.Revision()
+	initialSyncPending := true
 
 	var tick <-chan time.Time
 
@@ -678,8 +680,16 @@ func ServeRepoCollaboration(
 				return fmt.Errorf("cannot process repo frame: %w", err)
 			}
 
-			if err := writeRepoFrames(ctx, connection, reply); err != nil {
+			if err := writeRepoReply(
+				ctx,
+				connection,
+				reply,
+				initialSyncPending,
+			); err != nil {
 				return err
+			}
+			if len(reply) > 0 {
+				initialSyncPending = false
 			}
 
 			if fanout != nil {
@@ -850,6 +860,31 @@ func writeRepoFrames(ctx context.Context, connection *websocket.Conn, frames [][
 	}
 
 	return nil
+}
+
+// writeRepoReply writes a response to an inbound client frame. The first
+// response carries the initial document snapshot, which can span multiple
+// frames; give that sequence one shared deadline so it cannot exceed the
+// browser's 180-second initialization budget by receiving a full allowance per
+// frame.
+func writeRepoReply(
+	ctx context.Context,
+	connection *websocket.Conn,
+	frames [][]byte,
+	initial bool,
+) error {
+	writeCtx, cancel := repoReplyContext(ctx, initial)
+	defer cancel()
+
+	return writeRepoFrames(writeCtx, connection, frames)
+}
+
+func repoReplyContext(ctx context.Context, initial bool) (context.Context, context.CancelFunc) {
+	if !initial {
+		return ctx, func() {}
+	}
+
+	return context.WithTimeout(ctx, WriteTimeoutCeiling)
 }
 
 func recordActorsFromFrame(
