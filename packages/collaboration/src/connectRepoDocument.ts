@@ -62,7 +62,8 @@ const presenceHeartbeatIntervalMs = 10_000;
 // inactive (still connected, no caret).
 const presenceIdleMs = 60_000;
 
-// Covers a 20s document open and a 2 minute snapshot write on a long-haul link.
+// Covers a 20s document open and the server's 150s snapshot write ceiling on a
+// long-haul link.
 const initializationTimeoutMs = 180_000;
 
 // The presence payload broadcast over repo ephemeral messages: a caret or
