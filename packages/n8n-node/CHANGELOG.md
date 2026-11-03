@@ -4,6 +4,15 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.266.0] - 2026-11-03
+
+### Added
+
+- Cookie Banner `Request Scan`, `Get Scan`, and `Get Scans`
+  operations
+- Cookie Banner `Get Scan Resources` and `Get Scan Trackers` list
+  what a scan found
+
 ## [0.265.0] - 2026-11-02
 
 ### Added
