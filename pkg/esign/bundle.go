@@ -22,6 +22,7 @@ package esign
 
 import (
 	"archive/zip"
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -31,9 +32,11 @@ import (
 	"time"
 	"unicode"
 
+	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 )
 
@@ -47,20 +50,15 @@ type bundleFile struct {
 	Body []byte
 }
 
-// WriteBundle writes a zip of the signed file and its certificate of
-// completion. The returned name is the download filename. ErrBundleNotReady
-// means the certificate has not been generated yet.
-func (s *Service) WriteBundle(
+// EnsureBundle returns the zip of the signed file and its certificate.
+// A signature that already has a certificate and no bundle gets one stored
+// on the first call.
+func (s *Service) EnsureBundle(
 	ctx context.Context,
+	scope coredata.Scoper,
 	signatureID gid.GID,
-	w io.Writer,
-) (string, error) {
-	var (
-		scope           = coredata.NewScopeFromObjectID(signatureID)
-		signature       coredata.ElectronicSignature
-		signedFile      coredata.File
-		certificateFile coredata.File
-	)
+) (*coredata.File, error) {
+	var signature coredata.ElectronicSignature
 
 	err := s.pg.WithConn(
 		ctx,
@@ -73,10 +71,29 @@ func (s *Service) WriteBundle(
 				return fmt.Errorf("cannot load electronic signature: %w", err)
 			}
 
-			if signature.CertificateFileID == nil {
-				return ErrBundleNotReady
-			}
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
 
+	if signature.BundleFileID != nil {
+		return loadFile(ctx, s.pg, scope, *signature.BundleFileID)
+	}
+
+	if signature.CertificateFileID == nil {
+		return nil, nil
+	}
+
+	var (
+		signedFile      coredata.File
+		certificateFile coredata.File
+	)
+
+	err = s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
 			if err := signedFile.LoadByID(ctx, conn, scope, signature.FileID); err != nil {
 				return fmt.Errorf("cannot load signed file: %w", err)
 			}
@@ -89,28 +106,150 @@ func (s *Service) WriteBundle(
 		},
 	)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	signedBody, err := s.fileManager.GetFileBytes(ctx, &signedFile)
+	uploaded, err := uploadSignatureBundle(
+		ctx,
+		s.fileManager,
+		s.bucket,
+		&signature,
+		&signedFile,
+		&certificateFile,
+	)
 	if err != nil {
-		return "", fmt.Errorf("cannot read signed file: %w", err)
+		return nil, err
 	}
 
-	certificateBody, err := s.fileManager.GetFileBytes(ctx, &certificateFile)
+	var stored coredata.File
+
+	err = s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			var locked coredata.ElectronicSignature
+
+			if err := locked.LoadByIDForUpdate(ctx, tx, scope, signatureID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrElectronicSignatureNotFound
+				}
+
+				return fmt.Errorf("cannot lock electronic signature: %w", err)
+			}
+
+			if locked.BundleFileID != nil {
+				if err := stored.LoadByID(ctx, tx, scope, *locked.BundleFileID); err != nil {
+					return fmt.Errorf("cannot load signature bundle: %w", err)
+				}
+
+				return nil
+			}
+
+			if err := uploaded.Insert(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot insert signature bundle: %w", err)
+			}
+
+			locked.BundleFileID = &uploaded.ID
+			locked.UpdatedAt = time.Now()
+
+			if err := locked.Update(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot update signature bundle: %w", err)
+			}
+
+			stored = uploaded
+
+			return nil
+		},
+	)
 	if err != nil {
-		return "", fmt.Errorf("cannot read certificate file: %w", err)
+		return nil, err
 	}
+
+	return &stored, nil
+}
+
+func loadFile(
+	ctx context.Context,
+	pgClient *pg.Client,
+	scope coredata.Scoper,
+	fileID gid.GID,
+) (*coredata.File, error) {
+	var file coredata.File
+
+	err := pgClient.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := file.LoadByID(ctx, conn, scope, fileID); err != nil {
+				return fmt.Errorf("cannot load signature bundle: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &file, nil
+}
+
+func uploadSignatureBundle(
+	ctx context.Context,
+	files *filemanager.Service,
+	bucket string,
+	signature *coredata.ElectronicSignature,
+	signedFile *coredata.File,
+	certificateFile *coredata.File,
+) (coredata.File, error) {
+	signedBody, err := files.GetFileBytes(ctx, signedFile)
+	if err != nil {
+		return coredata.File{}, fmt.Errorf("cannot read signed file: %w", err)
+	}
+
+	certificateBody, err := files.GetFileBytes(ctx, certificateFile)
+	if err != nil {
+		return coredata.File{}, fmt.Errorf("cannot read certificate file: %w", err)
+	}
+
+	var body bytes.Buffer
 
 	if err := writeSignatureBundle(
-		w,
+		&body,
 		bundleFile{Name: signedFile.FileName, Body: signedBody},
 		bundleFile{Name: certificateFile.FileName, Body: certificateBody},
 	); err != nil {
-		return "", fmt.Errorf("cannot write signature bundle: %w", err)
+		return coredata.File{}, fmt.Errorf("cannot write signature bundle: %w", err)
 	}
 
-	return bundleArchiveName(signature.DocumentName, signature.DocumentType), nil
+	now := time.Now()
+	bundle := coredata.File{
+		ID:             gid.New(signature.ID.TenantID(), coredata.FileEntityType),
+		OrganizationID: signature.OrganizationID,
+		BucketName:     bucket,
+		MimeType:       "application/zip",
+		FileName:       bundleArchiveName(signature.DocumentName, signature.DocumentType),
+		FileKey:        uuid.MustNewV4().String(),
+		Visibility:     coredata.FileVisibilityPrivate,
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
+
+	size, err := files.PutFile(
+		ctx,
+		&bundle,
+		bytes.NewReader(body.Bytes()),
+		map[string]string{
+			"type":         "electronic-signature-bundle",
+			"signature-id": signature.ID.String(),
+		},
+		filemanager.WithAttachmentContentDisposition(),
+	)
+	if err != nil {
+		return coredata.File{}, fmt.Errorf("cannot upload signature bundle: %w", err)
+	}
+
+	bundle.FileSize = size
+
+	return bundle, nil
 }
 
 func writeSignatureBundle(w io.Writer, signed, certificate bundleFile) (err error) {

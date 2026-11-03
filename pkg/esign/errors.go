@@ -25,5 +25,4 @@ import "errors"
 var (
 	ErrElectronicSignatureNotFound = errors.New("electronic signature not found")
 	ErrSignatureAccessDenied       = errors.New("signature does not belong to the caller")
-	ErrBundleNotReady              = errors.New("electronic signature bundle is not ready")
 )

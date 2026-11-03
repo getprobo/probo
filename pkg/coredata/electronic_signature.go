@@ -55,6 +55,7 @@ type ElectronicSignature struct {
 	TSAToken                       []byte                          `db:"tsa_token"`
 	SignedAt                       *time.Time                      `db:"signed_at"`
 	CertificateFileID              *gid.GID                        `db:"certificate_file_id"`
+	BundleFileID                   *gid.GID                        `db:"bundle_file_id"`
 	CertificateProcessingStartedAt *time.Time                      `db:"certificate_processing_started_at"`
 	AttemptCount                   int                             `db:"attempt_count"`
 	MaxAttempts                    int                             `db:"max_attempts"`
@@ -182,6 +183,7 @@ UPDATE electronic_signatures SET
 	tsa_token = @tsa_token,
 	signed_at = @signed_at,
 	certificate_file_id = @certificate_file_id,
+	bundle_file_id = @bundle_file_id,
 	certificate_processing_started_at = @certificate_processing_started_at,
 	attempt_count = @attempt_count,
 	max_attempts = @max_attempts,
@@ -207,6 +209,7 @@ WHERE
 		"tsa_token":                         es.TSAToken,
 		"signed_at":                         es.SignedAt,
 		"certificate_file_id":               es.CertificateFileID,
+		"bundle_file_id":                    es.BundleFileID,
 		"certificate_processing_started_at": es.CertificateProcessingStartedAt,
 		"attempt_count":                     es.AttemptCount,
 		"max_attempts":                      es.MaxAttempts,
@@ -237,7 +240,7 @@ SELECT
 	signer_email, consent_text, email_subject, signer_full_name,
 	signer_ip_address,
 	signer_user_agent, file_hash, seal, seal_version, tsa_token, signed_at,
-	certificate_file_id, certificate_processing_started_at,
+	certificate_file_id, bundle_file_id, certificate_processing_started_at,
 	attempt_count, max_attempts, last_attempted_at, last_error,
 	processing_started_at, created_at, updated_at
 FROM electronic_signatures
@@ -268,6 +271,51 @@ LIMIT 1
 	return nil
 }
 
+// LoadByIDForUpdate locks the row so the bundle file is stored once.
+func (es *ElectronicSignature) LoadByIDForUpdate(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	id gid.GID,
+) error {
+	q := `
+SELECT
+	id, organization_id, status, document_type, document_name, file_id,
+	signer_email, consent_text, email_subject, signer_full_name,
+	signer_ip_address,
+	signer_user_agent, file_hash, seal, seal_version, tsa_token, signed_at,
+	certificate_file_id, bundle_file_id, certificate_processing_started_at,
+	attempt_count, max_attempts, last_attempted_at, last_error,
+	processing_started_at, created_at, updated_at
+FROM electronic_signatures
+WHERE %s AND id = @id
+LIMIT 1
+FOR UPDATE
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"id": id}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query electronic signature for update: %w", err)
+	}
+
+	sig, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[ElectronicSignature])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect electronic signature for update: %w", err)
+	}
+
+	*es = sig
+
+	return nil
+}
+
 func (es *ElectronicSignature) LoadNextAcceptedForUpdateSkipLocked(
 	ctx context.Context,
 	conn pg.Tx,
@@ -278,7 +326,7 @@ SELECT
 	signer_email, consent_text, email_subject, signer_full_name,
 	signer_ip_address,
 	signer_user_agent, file_hash, seal, seal_version, tsa_token, signed_at,
-	certificate_file_id, certificate_processing_started_at,
+	certificate_file_id, bundle_file_id, certificate_processing_started_at,
 	attempt_count, max_attempts, last_attempted_at, last_error,
 	processing_started_at, created_at, updated_at
 FROM electronic_signatures
@@ -317,7 +365,7 @@ SELECT
 	signer_email, consent_text, email_subject, signer_full_name,
 	signer_ip_address,
 	signer_user_agent, file_hash, seal, seal_version, tsa_token, signed_at,
-	certificate_file_id, certificate_processing_started_at,
+	certificate_file_id, bundle_file_id, certificate_processing_started_at,
 	attempt_count, max_attempts, last_attempted_at, last_error,
 	processing_started_at, created_at, updated_at
 FROM electronic_signatures

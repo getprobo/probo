@@ -40,6 +40,10 @@ func NewElectronicSignature(es *coredata.ElectronicSignature) *ElectronicSignatu
 		signature.Certificate = &File{ID: *es.CertificateFileID}
 	}
 
+	if es.BundleFileID != nil {
+		signature.Bundle = &File{ID: *es.BundleFileID}
+	}
+
 	return signature
 }
 

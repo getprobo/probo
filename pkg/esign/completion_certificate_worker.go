@@ -156,23 +156,27 @@ func (h *completionCertificateHandler) generateAndCommit(
 		organization coredata.Organization
 	)
 
-	if ref.UnrefOrZero(signature.EmailSubject) != "" {
-		if err := h.pg.WithConn(
-			ctx,
-			func(ctx context.Context, conn pg.Querier) error {
-				if err := signedFile.LoadByID(ctx, conn, scope, signature.FileID); err != nil {
-					return fmt.Errorf("cannot load signed file: %w", err)
-				}
+	sendCompletionEmail := ref.UnrefOrZero(signature.EmailSubject) != ""
 
-				if err := organization.LoadByID(ctx, conn, scope, signature.OrganizationID); err != nil {
-					return fmt.Errorf("cannot load organization: %w", err)
-				}
+	if err := h.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := signedFile.LoadByID(ctx, conn, scope, signature.FileID); err != nil {
+				return fmt.Errorf("cannot load signed file: %w", err)
+			}
 
+			if !sendCompletionEmail {
 				return nil
-			},
-		); err != nil {
-			return err
-		}
+			}
+
+			if err := organization.LoadByID(ctx, conn, scope, signature.OrganizationID); err != nil {
+				return fmt.Errorf("cannot load organization: %w", err)
+			}
+
+			return nil
+		},
+	); err != nil {
+		return err
 	}
 
 	certificateFile, err := h.generateCertificate(ctx, signature, scope)
@@ -185,7 +189,7 @@ func (h *completionCertificateHandler) generateAndCommit(
 		attachments coredata.EmailAttachments
 	)
 
-	if ref.UnrefOrZero(signature.EmailSubject) != "" {
+	if sendCompletionEmail {
 		email, attachments, err = h.generateCompletionEmail(
 			ctx,
 			signature,
@@ -198,10 +202,27 @@ func (h *completionCertificateHandler) generateAndCommit(
 		}
 	}
 
+	bundleFile, err := uploadSignatureBundle(
+		ctx,
+		h.fileManager,
+		h.bucket,
+		signature,
+		&signedFile,
+		certificateFile,
+	)
+	if err != nil {
+		return err
+	}
+
 	if err := h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			if err := bundleFile.Insert(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot insert signature bundle: %w", err)
+			}
+
 			signature.CertificateFileID = &certificateFile.ID
+			signature.BundleFileID = &bundleFile.ID
 
 			signature.UpdatedAt = time.Now()
 			if err := signature.Update(ctx, tx, scope); err != nil {
@@ -231,6 +252,9 @@ func (h *completionCertificateHandler) generateAndCommit(
 			return nil
 		},
 	); err != nil {
+		signature.CertificateFileID = nil
+		signature.BundleFileID = nil
+
 		return err
 	}
 
