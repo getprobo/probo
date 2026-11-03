@@ -392,7 +392,7 @@ func TestAuthorizer_BuildAuditLogEntry(t *testing.T) {
 				tt.params,
 				tt.resourceAttrs,
 				tt.decision,
-				actorSnapshot{},
+				auditActor{},
 				AuditRequest{},
 				time.Now(),
 			)
@@ -474,6 +474,15 @@ func TestAuthorizer_WrappedInternalErrors(t *testing.T) {
 
 		_, ok := errors.AsType[*ErrAssumptionRequired](err)
 		assert.False(t, ok)
+	})
+
+	t.Run("load audit actor returns the load error", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := a.loadAuditActor(context.Background(), tx, principalID)
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "cannot load audit log actor")
+		assert.ErrorIs(t, err, queryErr)
 	})
 
 	t.Run("build principal attributes wraps load errors", func(t *testing.T) {

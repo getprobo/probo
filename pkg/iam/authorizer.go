@@ -815,9 +815,9 @@ func resourceTypeFromAction(action string) string {
 	return strings.Join(segments, "")
 }
 
-type actorSnapshot struct {
-	email *string
-	name  *string
+type auditActor struct {
+	email string
+	name  string
 }
 
 func (a *Authorizer) insertAuditEntries(
@@ -847,7 +847,11 @@ func (a *Authorizer) insertAuditEntries(
 		return nil
 	}
 
-	snapshot := a.loadActorSnapshot(ctx, tx, params.Principal)
+	actor, err := a.loadAuditActor(ctx, tx, params.Principal)
+	if err != nil {
+		return err
+	}
+
 	now := time.Now()
 	request, _ := AuditRequestFromContext(ctx)
 	entries := make(coredata.AuditLogEntries, 0, len(indexes))
@@ -866,7 +870,7 @@ func (a *Authorizer) insertAuditEntries(
 			},
 			itemAttrs[i],
 			decisions[i],
-			snapshot,
+			actor,
 			request,
 			now,
 		)
@@ -888,30 +892,20 @@ func (a *Authorizer) insertAuditEntries(
 	return nil
 }
 
-func (a *Authorizer) loadActorSnapshot(
+func (a *Authorizer) loadAuditActor(
 	ctx context.Context,
 	conn pg.Querier,
 	principalID gid.GID,
-) actorSnapshot {
+) (auditActor, error) {
 	identity := &coredata.Identity{}
 	if err := identity.LoadByID(ctx, conn, principalID); err != nil {
-		a.logger.ErrorCtx(
-			ctx,
-			"cannot load audit log actor",
-			log.Error(err),
-			log.String("principal_id", principalID.String()),
-		)
-
-		return actorSnapshot{}
+		return auditActor{}, fmt.Errorf("cannot load audit log actor: %w", err)
 	}
 
-	email := identity.EmailAddress.String()
-	name := identity.FullName
-
-	return actorSnapshot{
-		email: &email,
-		name:  &name,
-	}
+	return auditActor{
+		email: identity.EmailAddress.String(),
+		name:  identity.FullName,
+	}, nil
 }
 
 // buildAuditLogEntry returns nil when no entry should be recorded
@@ -921,7 +915,7 @@ func (a *Authorizer) buildAuditLogEntry(
 	params AuthorizeParams,
 	resourceAttrs policy.Attributes,
 	decision error,
-	snapshot actorSnapshot,
+	actor auditActor,
 	request AuditRequest,
 	now time.Time,
 ) *coredata.AuditLogEntry {
@@ -967,8 +961,8 @@ func (a *Authorizer) buildAuditLogEntry(
 		OrganizationID: orgID,
 		ActorID:        params.Principal,
 		ActorType:      actorType,
-		ActorEmail:     snapshot.email,
-		ActorName:      snapshot.name,
+		ActorEmail:     optionalAuditString(actor.email),
+		ActorName:      optionalAuditString(actor.name),
 		Action:         params.Action,
 		ResourceType:   resourceTypeFromAction(params.Action),
 		ResourceID:     params.Resource,
