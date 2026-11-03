@@ -23,6 +23,7 @@ package collaboration_v1
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/coder/websocket"
 )
@@ -56,13 +57,27 @@ func ReadMessages(
 	}
 }
 
+func writeTimeoutFor(nbytes int) time.Duration {
+	if nbytes < 0 {
+		nbytes = 0
+	}
+
+	transfer := time.Duration(nbytes) * time.Second / minWriteBytesPerSecond
+	timeout := WriteTimeoutFloor + transfer
+	if timeout > WriteTimeoutCeiling {
+		return WriteTimeoutCeiling
+	}
+
+	return timeout
+}
+
 func WriteMessage(
 	ctx context.Context,
 	connection *websocket.Conn,
 	messageType websocket.MessageType,
 	data []byte,
 ) error {
-	writeCtx, cancel := context.WithTimeout(ctx, WriteTimeout)
+	writeCtx, cancel := context.WithTimeout(ctx, writeTimeoutFor(len(data)))
 	defer cancel()
 
 	if err := connection.Write(writeCtx, messageType, data); err != nil {

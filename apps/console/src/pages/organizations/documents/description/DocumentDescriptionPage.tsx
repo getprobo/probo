@@ -177,6 +177,8 @@ export function DocumentDescriptionPage(props: {
     && supportsRichEditorCollaboration(content);
   const [collaboration, setCollaboration] = useState<CollaborationState>();
   const connectionAttempt = useRef(0);
+  // The manager's identity changes when a toast is added.
+  const addToast = toast.add;
 
   useEffect(() => {
     if (!collaborationSupported) return;
@@ -206,7 +208,7 @@ export function DocumentDescriptionPage(props: {
           attempt,
           failed: true,
         });
-        toast.add({
+        addToast({
           title: t("documentDescriptionPage.errors.title"),
           description: error instanceof Error
             ? error.message
@@ -222,7 +224,7 @@ export function DocumentDescriptionPage(props: {
         current?.attempt === attempt ? undefined : current,
       );
     };
-  }, [collaborationSupported, document.id, t, toast]);
+  }, [collaborationSupported, document.id, t, addToast]);
 
   const collaborationConnecting = collaborationSupported
     && (collaboration?.versionID !== document.id

@@ -77,6 +77,31 @@ func NewAdoptingServerConn(config ServerConfig, sync SyncSession) (*ServerConn, 
 	return newServerConn(config, "", true, sync)
 }
 
+// NewHandshakenAdoptingServerConn continues a session whose peer reply was
+// already written. The document id still arrives on the client's first sync
+// or request, so the reply can go out before the document is loaded.
+func NewHandshakenAdoptingServerConn(
+	session *ServerSession,
+	sync SyncSession,
+) (*ServerConn, error) {
+	if session == nil || !session.joined {
+		return nil, fmt.Errorf("server connection requires a completed handshake")
+	}
+
+	if sync == nil {
+		return nil, fmt.Errorf("server connection requires a sync session")
+	}
+
+	return &ServerConn{
+		session:      session,
+		sync:         sync,
+		adoptDocID:   true,
+		serverPeerID: session.config.ServerPeerID,
+		remotePeerID: session.remotePeerID,
+		started:      true,
+	}, nil
+}
+
 func newServerConn(config ServerConfig, documentID string, adopt bool, sync SyncSession) (*ServerConn, error) {
 	session, err := NewServerSession(config)
 	if err != nil {
@@ -249,7 +274,7 @@ func (c *ServerConn) drainSync() ([][]byte, error) {
 	}
 }
 
-// RemotePeerID returns the connected client's peer id after Start.
+// RemotePeerID returns the connected client's peer id after the handshake.
 func (c *ServerConn) RemotePeerID() string {
 	return c.remotePeerID
 }

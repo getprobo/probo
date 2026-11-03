@@ -25,7 +25,6 @@ import {
   type DocumentProgress,
   Repo,
 } from "@automerge/automerge-repo";
-import { WebSocketClientAdapter } from "@automerge/automerge-repo-network-websocket";
 import {
   deriveAutomergeUrl,
   type RichEditorAutomergeDocument,
@@ -44,6 +43,7 @@ import {
   pruneStalePresences,
   syncPresenceSelections,
 } from "./presence";
+import { RepoWebSocketAdapter } from "./repoSocket";
 
 // A collaboration handle for the editor, plus a close() that tears down the repo
 // and its network connection.
@@ -62,7 +62,8 @@ const presenceHeartbeatIntervalMs = 10_000;
 // inactive (still connected, no caret).
 const presenceIdleMs = 60_000;
 
-const initializationTimeoutMs = 35_000;
+// Covers a 20s document open and a 2 minute snapshot write on a long-haul link.
+const initializationTimeoutMs = 180_000;
 
 // The presence payload broadcast over repo ephemeral messages: a caret or
 // selection expressed as stable Automerge cursors. displayName, identityID, and
@@ -127,7 +128,7 @@ export async function connectRepoDocument(
     "collaboration",
   ].join("/");
 
-  const network = new WebSocketClientAdapter(endpoint.toString());
+  const network = new RepoWebSocketAdapter(endpoint.toString());
   const repo = new Repo({ network: [network] });
 
   const documentURL = (await deriveAutomergeUrl(documentId)) as AutomergeUrl;

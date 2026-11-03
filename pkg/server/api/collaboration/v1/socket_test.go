@@ -35,6 +35,19 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestWriteTimeoutFor(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, WriteTimeoutFloor, writeTimeoutFor(0))
+	assert.Equal(
+		t,
+		WriteTimeoutFloor+time.Second,
+		writeTimeoutFor(minWriteBytesPerSecond),
+	)
+	assert.Equal(t, WriteTimeoutCeiling, writeTimeoutFor(8<<20))
+	assert.Equal(t, WriteTimeoutFloor, writeTimeoutFor(-1))
+}
+
 func TestReadMessages_CanceledContext(t *testing.T) {
 	t.Parallel()
 

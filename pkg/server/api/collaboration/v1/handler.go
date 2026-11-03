@@ -47,7 +47,15 @@ import (
 
 const (
 	MessageMaxBytes = 1024 * 1024
-	WriteTimeout    = 10 * time.Second
+	// WriteTimeoutFloor covers a small frame, including a long round trip.
+	WriteTimeoutFloor = 10 * time.Second
+	// WriteTimeoutCeiling bounds a stalled peer. A full snapshot frame is
+	// allowed to finish inside it on a modest long-haul link.
+	WriteTimeoutCeiling = 2 * time.Minute
+	// minWriteBytesPerSecond budgets a long-haul transfer. Snapshot sync
+	// frames reach 8 MiB, and a short fixed deadline closes the socket
+	// before a distant peer can read them.
+	minWriteBytesPerSecond = 64 << 10
 )
 
 const (
@@ -92,11 +100,14 @@ type (
 		Logger           *log.Logger
 		Shutdown         context.Context
 		PublishEphemeral func(ctx context.Context, frame []byte) error
-		DisplayName      string
-		IdentityID       string
-		AvatarURL        string
-		RecordActors     func(ctx context.Context, actors [][]byte) error
-		Incoming         <-chan Incoming
+		// Session is the handshake already completed with this client. The
+		// peer reply has been written; document loading must not delay it.
+		Session      *collabpkg.ServerSession
+		DisplayName  string
+		IdentityID   string
+		AvatarURL    string
+		RecordActors func(ctx context.Context, actors [][]byte) error
+		Incoming     <-chan Incoming
 	}
 )
 
@@ -164,6 +175,23 @@ func (h *Handler) HandleRepo(w http.ResponseWriter, r *http.Request) {
 		cancelCollaboration()
 	}()
 
+	serverPeerID := "probo-gateway-" + connectionID
+
+	session, accepted, err := acceptRepoJoin(
+		collaborationCtx,
+		connection,
+		incoming,
+		serverPeerID,
+	)
+	if err != nil {
+		h.closeWithError(collaborationCtx, connection, documentIDString, err)
+		return
+	}
+
+	if !accepted {
+		return
+	}
+
 	lease, err := h.Hub.Acquire(collaborationCtx, scope, documentID, connectionID)
 	if err != nil {
 		h.closeOpenError(collaborationCtx, connection, documentIDString, err)
@@ -190,7 +218,8 @@ func (h *Handler) HandleRepo(w http.ResponseWriter, r *http.Request) {
 	defer func() { _ = syncState.Close() }()
 
 	config := RepoConfig{
-		ServerPeerID: "probo-gateway-" + connectionID,
+		ServerPeerID: serverPeerID,
+		Session:      session,
 		Refresher:    h.Probo.Collaboration,
 		Scope:        scope,
 		DocumentID:   documentID,
@@ -534,6 +563,59 @@ func announceCollaborationDeparture(
 	}
 }
 
+// acceptRepoJoin writes the peer reply before the document is opened.
+// A far client treats a quiet socket as a missing document, and opening a
+// large snapshot takes longer than that wait.
+func acceptRepoJoin(
+	ctx context.Context,
+	connection *websocket.Conn,
+	incoming <-chan Incoming,
+	serverPeerID string,
+) (*collabpkg.ServerSession, bool, error) {
+	var join Incoming
+
+	select {
+	case join = <-incoming:
+	case <-ctx.Done():
+		return nil, false, nil
+	}
+
+	if join.Err != nil {
+		return nil, false, repoReadResult(join.Err)
+	}
+
+	if join.MessageType != websocket.MessageBinary {
+		_ = connection.Close(websocket.StatusUnsupportedData, "expected a binary join frame")
+
+		return nil, false, nil
+	}
+
+	session, err := collabpkg.NewServerSession(
+		collabpkg.ServerConfig{ServerPeerID: serverPeerID},
+	)
+	if err != nil {
+		return nil, false, err
+	}
+
+	handshake, err := session.Accept(join.Data)
+	if err != nil {
+		return nil, false, fmt.Errorf("cannot accept collaboration join: %w", err)
+	}
+
+	err = WriteMessage(ctx, connection, websocket.MessageBinary, handshake.Reply)
+	if err != nil {
+		return nil, false, err
+	}
+
+	if !handshake.Accepted {
+		_ = connection.Close(websocket.StatusPolicyViolation, "unsupported protocol version")
+
+		return nil, false, nil
+	}
+
+	return session, true, nil
+}
+
 func ServeRepoCollaboration(
 	ctx context.Context,
 	connection *websocket.Conn,
@@ -541,57 +623,18 @@ func ServeRepoCollaboration(
 	syncState *automerge.SyncState,
 	config RepoConfig,
 ) error {
-	conn, err := collabpkg.NewAdoptingServerConn(
-		collabpkg.ServerConfig{ServerPeerID: config.ServerPeerID},
-		syncState,
-	)
+	conn, err := collabpkg.NewHandshakenAdoptingServerConn(config.Session, syncState)
 	if err != nil {
 		return fmt.Errorf("cannot create repo server connection: %w", err)
 	}
 
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
 	incoming := config.Incoming
 	if incoming == nil {
-		messages := make(chan Incoming, 1)
-
-		incoming = messages
-
-		go func() {
-			_ = ReadMessages(ctx, connection, messages)
-		}()
+		return fmt.Errorf("repo collaboration requires an incoming frame source")
 	}
 
-	var join Incoming
-	select {
-	case join = <-incoming:
-	case <-ctx.Done():
-		return nil
-	}
-
-	if join.Err != nil {
-		return repoReadResult(join.Err)
-	}
-
-	if join.MessageType != websocket.MessageBinary {
-		_ = connection.Close(websocket.StatusUnsupportedData, "expected a binary join frame")
-		return nil
-	}
-
-	out, accepted, err := conn.Start(join.Data)
-	if err != nil {
-		return fmt.Errorf("cannot start repo server connection: %w", err)
-	}
-
-	if err := writeRepoFrames(ctx, connection, out); err != nil {
-		return err
-	}
-
-	if !accepted {
-		_ = connection.Close(websocket.StatusPolicyViolation, "unsupported protocol version")
-		return nil
-	}
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
 	lease.SetRemotePeerID(conn.RemotePeerID())
 	lease.ReplayPresence()

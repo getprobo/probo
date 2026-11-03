@@ -119,6 +119,22 @@ func newRepoTestServerWithConfig(
 			cancelCollaboration()
 		}()
 
+		serverPeerID := "probo-gateway-" + connectionID
+
+		session, accepted, joinErr := acceptRepoJoin(
+			collaborationCtx,
+			connection,
+			incoming,
+			serverPeerID,
+		)
+		if joinErr != nil || !accepted {
+			if joinErr != nil {
+				_ = connection.Close(websocket.StatusInternalError, "collaboration failed")
+			}
+
+			return
+		}
+
 		lease, err := hub.Acquire(collaborationCtx, scope, documentID, connectionID)
 		if err != nil {
 			_ = connection.Close(websocket.StatusInternalError, "collaboration failed")
@@ -142,10 +158,9 @@ func newRepoTestServerWithConfig(
 		defer func() { _ = syncState.Close() }()
 
 		loopConfig := config
-		loopConfig.ServerPeerID = "probo-gateway-" + connectionID
-
+		loopConfig.ServerPeerID = serverPeerID
+		loopConfig.Session = session
 		loopConfig.DocumentID = documentID
-
 		loopConfig.Incoming = incoming
 
 		if loopConfig.Shutdown == nil {
@@ -178,13 +193,15 @@ func TestRepoServer_CanceledWhenClientDisconnectsDuringOpen(t *testing.T) {
 		nil,
 	)
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	wsURL := "ws" + strings.TrimPrefix(server.URL, "http")
 	connection, _, err := websocket.Dial(ctx, wsURL, nil)
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = connection.CloseNow() })
+
+	writeRepoJoin(t, ctx, connection, "client-cancel")
 
 	select {
 	case <-documents.started:
@@ -336,6 +353,79 @@ func dialRepoClient(
 	t.Cleanup(func() { _ = conn.Close(websocket.StatusNormalClosure, "") })
 
 	return client
+}
+
+func writeRepoJoin(
+	t *testing.T,
+	ctx context.Context,
+	connection *websocket.Conn,
+	peerID string,
+) {
+	t.Helper()
+
+	frame, err := collabpkg.EncodeJoinFrame(
+		collabpkg.NewJoinFrame(peerID, collabpkg.PeerMetadata{}),
+	)
+	require.NoError(t, err)
+
+	writeCtx, cancel := context.WithTimeout(ctx, time.Second)
+	defer cancel()
+
+	require.NoError(t, connection.Write(writeCtx, websocket.MessageBinary, frame))
+}
+
+func TestRepoServer_RepliesToJoinBeforeDocumentOpen(t *testing.T) {
+	t.Parallel()
+
+	tenantID := gid.NewTenantID()
+	documentID := gid.New(tenantID, coredata.DocumentEntityType)
+	documents := &cancelProbeDocuments{
+		started: make(chan struct{}),
+		release: make(chan struct{}),
+	}
+	t.Cleanup(func() {
+		select {
+		case <-documents.release:
+		default:
+			close(documents.release)
+		}
+	})
+
+	hub := NewHub(documents, nil)
+	server := newRepoTestServer(
+		t,
+		hub,
+		coredata.NewScope(tenantID, gid.Nil),
+		documentID,
+		nil,
+	)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	wsURL := "ws" + strings.TrimPrefix(server.URL, "http")
+	connection, _, err := websocket.Dial(ctx, wsURL, nil)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = connection.CloseNow() })
+
+	writeRepoJoin(t, ctx, connection, "client-far")
+
+	readCtx, readCancel := context.WithTimeout(ctx, 2*time.Second)
+	defer readCancel()
+
+	_, data, err := connection.Read(readCtx)
+	require.NoError(t, err)
+
+	peer, err := collabpkg.DecodePeerFrame(data)
+	require.NoError(t, err)
+	assert.Equal(t, collabpkg.ProtocolV1, peer.SelectedProtocolVersion)
+	assert.Equal(t, "client-far", peer.TargetID)
+
+	select {
+	case <-documents.started:
+	case <-ctx.Done():
+		require.Fail(t, "collaboration open did not start after the peer reply")
+	}
 }
 
 func actorFromByte(value int) automerge.ActorID {
