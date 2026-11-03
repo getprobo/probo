@@ -21,9 +21,10 @@
 import { mergeAttributes, Node } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 
+import { imagePreviewTriggerSelector } from "../v2/ImagePreview/variants";
+
 import { attachmentPath, fileIDFromAttachmentURL } from "./attachments";
 import { ImageNodeView } from "./ImageNodeView";
-import { richImageEnlargeSelector } from "./ImagePreview/ImageEnlargeButton";
 import { imageWidthPercent } from "./imageWidth";
 
 export const ImageExtension = Node.create({
@@ -110,7 +111,7 @@ export const ImageExtension = Node.create({
           return false;
         }
 
-        return target.closest(richImageEnlargeSelector) != null;
+        return target.closest(imagePreviewTriggerSelector) != null;
       },
     });
   },

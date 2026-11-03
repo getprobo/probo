@@ -20,6 +20,9 @@
 
 import { tv } from "tailwind-variants/lite";
 
+// Present on the trigger so a parent editor can ignore clicks meant for the preview.
+export const imagePreviewTriggerSelector = "[data-image-preview-trigger]";
+
 // Auto margins center the popup without a transform, so the close control can
 // stay position:fixed to the viewport and still live inside the focus trap.
 export const imagePreview = tv({
@@ -52,5 +55,6 @@ export const imagePreview = tv({
       "focus-visible:ring-2 focus-visible:ring-sand-8 focus-visible:ring-offset-2",
       "[&_svg]:size-4",
     ],
+    skeleton: "block h-48 w-full animate-pulse rounded-3 bg-sand-3",
   },
 });

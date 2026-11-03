@@ -31,8 +31,11 @@ import {
 } from "react";
 import { useTranslation } from "react-i18next";
 
+import { ImagePreview } from "../v2/ImagePreview/ImagePreview";
+import { ImagePreviewPopup } from "../v2/ImagePreview/ImagePreviewPopup";
+import { ImagePreviewTrigger } from "../v2/ImagePreview/ImagePreviewTrigger";
+
 import { attachmentPath } from "./attachments";
-import { ImageEnlargeButton } from "./ImagePreview/ImageEnlargeButton";
 import { dragImageWidth, keyboardImageWidth, loadedImagePin, snapImageWidth } from "./imageWidth";
 
 type ResizeSide = "left" | "right";
@@ -188,6 +191,9 @@ export function ImageNodeView({ editor, node, getPos, updateAttributes }: ReactN
     }
   };
 
+  const enlargeLabel = alt !== ""
+    ? t("ui.richEditor.enlargeImageNamed", { name: alt })
+    : t("ui.richEditor.enlargeImage");
   const image = (
     <img
       ref={setImageRef}
@@ -212,7 +218,22 @@ export function ImageNodeView({ editor, node, getPos, updateAttributes }: ReactN
         >
           {editor.isEditable
             ? image
-            : <ImageEnlargeButton src={src} alt={alt}>{image}</ImageEnlargeButton>}
+            : (
+                <ImagePreview>
+                  <ImagePreviewTrigger
+                    aria-label={enlargeLabel}
+                    onMouseDown={event => event.stopPropagation()}
+                  >
+                    {image}
+                  </ImagePreviewTrigger>
+                  <ImagePreviewPopup
+                    src={src}
+                    alt={alt}
+                    label={enlargeLabel}
+                    closeLabel={t("ui.richEditor.closeImage")}
+                  />
+                </ImagePreview>
+              )}
           {editor.isEditable && (
             <>
               <button
