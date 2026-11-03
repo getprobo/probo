@@ -86,14 +86,25 @@ func TestWriteSignatureBundle_FlattensPathNames(t *testing.T) {
 func TestBundleArchiveName(t *testing.T) {
 	t.Parallel()
 
-	t.Run("uses the document name without its extension", func(t *testing.T) {
+	t.Run("uses the document title as-is", func(t *testing.T) {
 		t.Parallel()
 
-		name := "Mutual NDA.pdf"
+		name := "Acme Corp. NDA"
 		assert.Equal(
 			t,
-			"Mutual NDA.zip",
+			"Acme Corp. NDA.zip",
 			bundleArchiveName(&name, coredata.ElectronicSignatureDocumentTypeNDA),
+		)
+	})
+
+	t.Run("keeps version dots in the title", func(t *testing.T) {
+		t.Parallel()
+
+		name := "Data Processing Agreement v1.2"
+		assert.Equal(
+			t,
+			"Data Processing Agreement v1.2.zip",
+			bundleArchiveName(&name, coredata.ElectronicSignatureDocumentTypeDPA),
 		)
 	})
 
