@@ -56,6 +56,8 @@ import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { z } from "#/lib/zod";
 
+import { InternalControlCategoryCombobox } from "../_components/InternalControlCategoryCombobox";
+
 const controlDurationUnits = ["D", "W", "MO", "Y"] as const;
 
 const blankableEnum = <T extends readonly [string, ...string[]]>(values: T) =>
@@ -130,7 +132,7 @@ export default function InternalControlFormDialog(props: Props) {
   const internalControlSchema = z.object({
     name: z.string().min(1, t("internalControlFormDialog.validation.nameRequired")),
     description: z.string().optional().nullable(),
-    category: z.string().min(1, t("internalControlFormDialog.validation.categoryRequired")),
+    category: z.string().trim().min(1, t("internalControlFormDialog.validation.categoryRequired")),
     code: z.string().optional().nullable(),
     controlType: blankableEnum(internalControlTypes),
     nature: blankableEnum(internalControlNatures),
@@ -276,14 +278,11 @@ export default function InternalControlFormDialog(props: Props) {
           <div className="py-5 px-6 bg-subtle">
             <Label>{t("internalControlFormDialog.properties")}</Label>
             <PropertyRow
+              id="category"
               label={t("internalControlFormDialog.fields.category")}
               error={formState.errors.category?.message}
             >
-              <Input
-                {...register("category")}
-                required
-                placeholder={t("internalControlFormDialog.fields.categoryPlaceholder")}
-              />
+              <InternalControlCategoryCombobox control={control} name="category" />
             </PropertyRow>
             <PropertyRow
               label={t("internalControlFormDialog.fields.code")}
