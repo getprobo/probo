@@ -192,7 +192,12 @@ func (c *ClientConn) Receive(frame []byte) (ClientInbound, error) {
 }
 
 func (c *ClientConn) validateDocument(message Message) error {
-	if message.DocumentID != c.config.DocumentID {
+	canonicalID, err := CanonicalDocumentID(message.DocumentID)
+	if err != nil {
+		return fmt.Errorf("client received a frame with a %w", err)
+	}
+
+	if canonicalID != c.config.DocumentID {
 		return fmt.Errorf(
 			"client scoped to document %q received a frame for document %q",
 			c.config.DocumentID,

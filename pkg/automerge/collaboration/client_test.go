@@ -59,9 +59,12 @@ func TestNewClientConn_NilSyncPanicsOnUse(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	require.Panics(t, func() {
-		_, _ = conn.Receive(peer)
-	})
+	require.Panics(
+		t,
+		func() {
+			_, _ = conn.Receive(peer)
+		},
+	)
 }
 
 // pump exchanges frames until neither side produces more, starting from the
