@@ -4,6 +4,8 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.263.1] - 2026-11-03
+
 ### Fixed
 
 - `prb` keeps the saved login for the refresh-token lifetime. Every
