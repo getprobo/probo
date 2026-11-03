@@ -64,6 +64,7 @@ func writeTimeoutFor(nbytes int) time.Duration {
 
 	transfer := time.Duration(nbytes) * time.Second / minWriteBytesPerSecond
 	timeout := WriteTimeoutFloor + transfer
+
 	if timeout > WriteTimeoutCeiling {
 		return WriteTimeoutCeiling
 	}

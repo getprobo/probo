@@ -383,6 +383,7 @@ func TestRepoServer_RepliesToJoinBeforeDocumentOpen(t *testing.T) {
 		started: make(chan struct{}),
 		release: make(chan struct{}),
 	}
+
 	t.Cleanup(func() {
 		select {
 		case <-documents.release:
