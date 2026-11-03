@@ -42,13 +42,14 @@ type SyncSession interface {
 // A ServerConn is not safe for concurrent use; the adapter drives it from one
 // connection goroutine.
 type ServerConn struct {
-	session      *ServerSession
-	sync         SyncSession
-	documentID   string
-	adoptDocID   bool
-	serverPeerID string
-	remotePeerID string
-	started      bool
+	session            *ServerSession
+	sync               SyncSession
+	documentID         string
+	expectedDocumentID string
+	adoptDocID         bool
+	serverPeerID       string
+	remotePeerID       string
+	started            bool
 }
 
 // NewServerConn creates a connection driver for a known document. documentID is
@@ -77,15 +78,21 @@ func NewAdoptingServerConn(config ServerConfig, sync SyncSession) (*ServerConn, 
 	return newServerConn(config, "", true, sync)
 }
 
-// NewHandshakenAdoptingServerConn continues a session whose peer reply was
-// already written. The document id still arrives on the client's first sync
-// or request, so the reply can go out before the document is loaded.
-func NewHandshakenAdoptingServerConn(
+// NewHandshakenServerConn continues a session whose peer reply was already
+// written, so the reply can go out before the document is loaded. Like an
+// adopting connection it stays silent until the client's first sync or
+// request, but that frame must name documentID; any other id is rejected.
+func NewHandshakenServerConn(
 	session *ServerSession,
+	documentID string,
 	sync SyncSession,
 ) (*ServerConn, error) {
 	if session == nil || !session.joined {
 		return nil, fmt.Errorf("server connection requires a completed handshake")
+	}
+
+	if documentID == "" {
+		return nil, fmt.Errorf("server connection requires a document id")
 	}
 
 	if sync == nil {
@@ -93,12 +100,13 @@ func NewHandshakenAdoptingServerConn(
 	}
 
 	return &ServerConn{
-		session:      session,
-		sync:         sync,
-		adoptDocID:   true,
-		serverPeerID: session.config.ServerPeerID,
-		remotePeerID: session.remotePeerID,
-		started:      true,
+		session:            session,
+		sync:               sync,
+		expectedDocumentID: documentID,
+		adoptDocID:         true,
+		serverPeerID:       session.config.ServerPeerID,
+		remotePeerID:       session.remotePeerID,
+		started:            true,
 	}, nil
 }
 
@@ -220,6 +228,14 @@ func (c *ServerConn) adoptDocumentID(id string) error {
 	}
 
 	if c.documentID == "" {
+		if c.expectedDocumentID != "" && c.expectedDocumentID != id {
+			return fmt.Errorf(
+				"connection scoped to document %q received a frame for document %q",
+				c.expectedDocumentID,
+				id,
+			)
+		}
+
 		c.documentID = id
 
 		return nil

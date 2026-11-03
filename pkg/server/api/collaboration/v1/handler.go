@@ -49,9 +49,10 @@ const (
 	MessageMaxBytes = 1024 * 1024
 	// WriteTimeoutFloor covers a small frame, including a long round trip.
 	WriteTimeoutFloor = 10 * time.Second
-	// WriteTimeoutCeiling bounds a stalled peer. A full snapshot frame is
-	// allowed to finish inside it on a modest long-haul link.
-	WriteTimeoutCeiling = 2 * time.Minute
+	// WriteTimeoutCeiling bounds a stalled peer. It must exceed the floor
+	// plus an 8 MiB snapshot frame at minWriteBytesPerSecond (138s), and
+	// stay under the browser's 180s initialization budget.
+	WriteTimeoutCeiling = 150 * time.Second
 	// minWriteBytesPerSecond budgets a long-haul transfer. Snapshot sync
 	// frames reach 8 MiB, and a short fixed deadline closes the socket
 	// before a distant peer can read them.
@@ -623,7 +624,11 @@ func ServeRepoCollaboration(
 	syncState *automerge.SyncState,
 	config RepoConfig,
 ) error {
-	conn, err := collabpkg.NewHandshakenAdoptingServerConn(config.Session, syncState)
+	conn, err := collabpkg.NewHandshakenServerConn(
+		config.Session,
+		collabpkg.DeriveDocumentID(config.DocumentID.String()),
+		syncState,
+	)
 	if err != nil {
 		return fmt.Errorf("cannot create repo server connection: %w", err)
 	}

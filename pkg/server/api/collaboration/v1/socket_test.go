@@ -44,7 +44,12 @@ func TestWriteTimeoutFor(t *testing.T) {
 		WriteTimeoutFloor+time.Second,
 		writeTimeoutFor(minWriteBytesPerSecond),
 	)
-	assert.Equal(t, WriteTimeoutCeiling, writeTimeoutFor(8<<20))
+	assert.Equal(
+		t,
+		WriteTimeoutFloor+128*time.Second,
+		writeTimeoutFor(8<<20),
+	)
+	assert.Equal(t, WriteTimeoutCeiling, writeTimeoutFor(64<<20))
 	assert.Equal(t, WriteTimeoutFloor, writeTimeoutFor(-1))
 }
 

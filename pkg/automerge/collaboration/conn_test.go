@@ -311,6 +311,70 @@ func TestAdoptingServerConn_RejectsSecondDocument(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestHandshakenServerConn_BindsExpectedDocument(t *testing.T) {
+	t.Parallel()
+
+	handshakenConn := func(t *testing.T, sync SyncSession) *ServerConn {
+		t.Helper()
+
+		session, err := NewServerSession(ServerConfig{ServerPeerID: "server"})
+		require.NoError(t, err)
+
+		handshake, err := session.Accept(joinFixture(t))
+		require.NoError(t, err)
+		require.True(t, handshake.Accepted)
+
+		conn, err := NewHandshakenServerConn(session, "doc-a", sync)
+		require.NoError(t, err)
+
+		return conn
+	}
+
+	t.Run("answers the expected document", func(t *testing.T) {
+		t.Parallel()
+
+		sync := &scriptedSync{}
+		conn := handshakenConn(t, sync)
+
+		frames, err := conn.SyncChanged()
+		require.NoError(t, err)
+		assert.Empty(t, frames, "nothing is sent before the client asks")
+
+		sync.outbound = [][]byte{{9, 9}}
+
+		request, err := EncodeMessage(
+			Message{
+				Type: MessageRequest, SenderID: "peer-a", TargetID: "server",
+				DocumentID: "doc-a", Data: []byte{7, 7},
+			},
+		)
+		require.NoError(t, err)
+
+		reply, _, err := conn.Receive(request)
+		require.NoError(t, err)
+		require.Len(t, reply, 1)
+		assert.Equal(t, "doc-a", conn.DocumentID())
+	})
+
+	t.Run("rejects another document", func(t *testing.T) {
+		t.Parallel()
+
+		conn := handshakenConn(t, &scriptedSync{})
+
+		foreign, err := EncodeMessage(
+			Message{
+				Type: MessageRequest, SenderID: "peer-a", TargetID: "server",
+				DocumentID: "doc-b", Data: []byte{7, 7},
+			},
+		)
+		require.NoError(t, err)
+
+		_, _, err = conn.Receive(foreign)
+		require.Error(t, err)
+		assert.Empty(t, conn.DocumentID())
+	})
+}
+
 // TestServerConn_RejectsForeignDocument keeps a fixed-id connection from serving
 // a different document than it was constructed for.
 func TestServerConn_RejectsForeignDocument(t *testing.T) {
