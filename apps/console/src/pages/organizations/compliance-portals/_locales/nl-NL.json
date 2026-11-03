@@ -313,18 +313,13 @@
     "notInstalledTitle": "Slack-bot niet geïnstalleerd",
     "description": "Kies waar toegangsverzoeken voor deze compliancepagina naartoe worden gestuurd.",
     "notInstalled": "Installeer de Probo Slack-app via de organisatie-instellingen voordat u een kanaal kiest.",
-    "loginRequired": {
-      "title": "Slack-toegang vereist /probot login",
-      "description": "Elke reviewer moet <cmd>/probot login</cmd> in Slack uitvoeren om het Probo-account te koppelen voordat verzoeken via Slack kunnen worden behandeld."
-    },
     "channel": {
       "label": "Kanaal",
       "placeholder": "Selecteer kanaal",
-      "help": "Nodig @Probo uit in een kanaal voordat u het selecteert.",
       "loadMore": "Meer weergeven",
       "loadError": "Slack-kanalen laden is mislukt.",
-      "emptyTitle": "Slack-kanalen zoeken",
-      "emptyDescription": "Nodig @Probo uit in een kanaal. Deze pagina controleert Slack automatisch."
+      "emptyTitle": "Wachten tot u @Probo in een kanaal uitnodigt",
+      "emptyDescription": "@Probo is nog in geen enkel kanaal uitgenodigd."
     },
     "actions": {
       "clear": "Wissen",

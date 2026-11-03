@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { WarningCircleIcon } from "@phosphor-icons/react";
+import { SpinnerGapIcon } from "@phosphor-icons/react";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { ButtonAnchor } from "@probo/ui/src/v2/Button/ButtonAnchor";
 import { Callout } from "@probo/ui/src/v2/Callout/Callout";
@@ -30,11 +30,9 @@ import { SelectList } from "@probo/ui/src/v2/Select/SelectList";
 import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
 import { SelectTrigger } from "@probo/ui/src/v2/Select/SelectTrigger";
 import { SlackLogo } from "@probo/ui/src/v2/SlackLogo/SlackLogo";
-import { Spinner } from "@probo/ui/src/v2/Spinner/Spinner";
-import { Code } from "@probo/ui/src/v2/typography/Code";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { Trans, useTranslation } from "react-i18next";
+import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -156,6 +154,7 @@ export function CompliancePortalSlackSection({
     : channelPage.channels;
   const slackListEmpty = channelPage.channels.length === 0 && !channelPage.hasNext;
   const showEmptyCallout = showChannelConfig && slackListEmpty && !channelPage.failed;
+  const showChannelSelect = channels.length > 0;
 
   const channelNames = Object.fromEntries(
     channels.map(listedChannel => [listedChannel.id, `#${listedChannel.name}`]),
@@ -210,48 +209,34 @@ export function CompliancePortalSlackSection({
               </div>
             )}
           </div>
-          {isInstalled && (
+          {showChannelConfig && (
             <div className={body()}>
-              <div className={empty()}>
-                <Callout
-                  color="amber"
-                  icon={<WarningCircleIcon weight="fill" />}
-                  className={emptyCallout()}
-                >
-                  <div className={emptyCopy()}>
-                    <Text size={2} weight="medium" color="current" highContrast>
-                      {t("slackSection.loginRequired.title")}
-                    </Text>
-                    <Text size={2} color="current">
-                      <Trans
-                        ns="organizations/compliance-portals"
-                        i18nKey="slackSection.loginRequired.description"
-                        components={{ cmd: <Code size={2} /> }}
-                      />
-                    </Text>
-                  </div>
-                </Callout>
-              </div>
               {showEmptyCallout && (
                 <div className={empty()}>
                   <Callout
-                    variant="surface"
-                    color="neutral"
+                    color="sky"
                     className={emptyCallout()}
-                    icon={<Spinner size={3} />}
+                    icon={<SpinnerGapIcon className="animate-spin" />}
                   >
                     <div className={emptyCopy()}>
-                      <Text size={2} weight="medium" highContrast>
+                      <Text size={2} weight="medium" color="current" highContrast>
                         {t("slackSection.channel.emptyTitle")}
                       </Text>
-                      <Text size={2}>
+                      <Text size={2} color="current">
                         {t("slackSection.channel.emptyDescription")}
                       </Text>
                     </div>
                   </Callout>
                 </div>
               )}
-              {showChannelConfig && (
+              {channelPage.failed && !showChannelSelect && (
+                <div className={empty()}>
+                  <Callout color="red" className={emptyCallout()}>
+                    {t("slackSection.channel.loadError")}
+                  </Callout>
+                </div>
+              )}
+              {showChannelSelect && (
                 <div className={channel()}>
                   <div className={channelRow()}>
                     <Field
@@ -279,30 +264,13 @@ export function CompliancePortalSlackSection({
                         </SelectTrigger>
                         <SelectPopup>
                           <div className={menuList()}>
-                            {channels.length > 0 && (
-                              <SelectList>
-                                {channels.map(listedChannel => (
-                                  <SelectItem key={listedChannel.id} value={listedChannel.id}>
-                                    {`#${listedChannel.name}`}
-                                  </SelectItem>
-                                ))}
-                              </SelectList>
-                            )}
-                            {channelPage.loading && channelPage.channels.length === 0 && (
-                              <Text size={2} color="faint" className="px-3 py-2">
-                                {t("slackSection.channel.emptyTitle")}
-                              </Text>
-                            )}
-                            {channelPage.failed && channelPage.channels.length === 0 && (
-                              <Text size={2} color="faint" className="px-3 py-2">
-                                {t("slackSection.channel.loadError")}
-                              </Text>
-                            )}
-                            {!channelPage.loading && !channelPage.failed && channelPage.channels.length === 0 && (
-                              <Text size={2} color="faint" className="px-3 py-2">
-                                {t("slackSection.channel.emptyTitle")}
-                              </Text>
-                            )}
+                            <SelectList>
+                              {channels.map(listedChannel => (
+                                <SelectItem key={listedChannel.id} value={listedChannel.id}>
+                                  {`#${listedChannel.name}`}
+                                </SelectItem>
+                              ))}
+                            </SelectList>
                           </div>
                           {channelPage.hasNext && (
                             <div
@@ -341,9 +309,6 @@ export function CompliancePortalSlackSection({
                       </Button>
                     )}
                   </div>
-                  <Text size={1} color="faint">
-                    {t("slackSection.channel.help")}
-                  </Text>
                 </div>
               )}
             </div>
