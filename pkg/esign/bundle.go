@@ -22,7 +22,6 @@ package esign
 
 import (
 	"archive/zip"
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -121,7 +120,10 @@ func (s *Service) EnsureBundle(
 		return nil, err
 	}
 
-	var stored coredata.File
+	var (
+		stored       coredata.File
+		keptUploaded bool
+	)
 
 	err = s.pg.WithTx(
 		ctx,
@@ -156,12 +158,19 @@ func (s *Service) EnsureBundle(
 			}
 
 			stored = uploaded
+			keptUploaded = true
 
 			return nil
 		},
 	)
 	if err != nil {
+		_ = s.fileManager.DeleteFile(ctx, &uploaded)
+
 		return nil, err
+	}
+
+	if !keptUploaded {
+		_ = s.fileManager.DeleteFile(ctx, &uploaded)
 	}
 
 	return &stored, nil
@@ -210,16 +219,6 @@ func uploadSignatureBundle(
 		return coredata.File{}, fmt.Errorf("cannot read certificate file: %w", err)
 	}
 
-	var body bytes.Buffer
-
-	if err := writeSignatureBundle(
-		&body,
-		bundleFile{Name: signedFile.FileName, Body: signedBody},
-		bundleFile{Name: certificateFile.FileName, Body: certificateBody},
-	); err != nil {
-		return coredata.File{}, fmt.Errorf("cannot write signature bundle: %w", err)
-	}
-
 	now := time.Now()
 	bundle := coredata.File{
 		ID:             gid.New(signature.ID.TenantID(), coredata.FileEntityType),
@@ -233,10 +232,21 @@ func uploadSignatureBundle(
 		UpdatedAt:      now,
 	}
 
+	reader, writer := io.Pipe()
+
+	go func() {
+		err := writeSignatureBundle(
+			writer,
+			bundleFile{Name: signedFile.FileName, Body: signedBody},
+			bundleFile{Name: certificateFile.FileName, Body: certificateBody},
+		)
+		_ = writer.CloseWithError(err)
+	}()
+
 	size, err := files.PutFile(
 		ctx,
 		&bundle,
-		bytes.NewReader(body.Bytes()),
+		reader,
 		map[string]string{
 			"type":         "electronic-signature-bundle",
 			"signature-id": signature.ID.String(),
@@ -244,6 +254,8 @@ func uploadSignatureBundle(
 		filemanager.WithAttachmentContentDisposition(),
 	)
 	if err != nil {
+		_ = reader.Close()
+
 		return coredata.File{}, fmt.Errorf("cannot upload signature bundle: %w", err)
 	}
 
@@ -316,12 +328,6 @@ func bundleArchiveName(
 	documentType coredata.ElectronicSignatureDocumentType,
 ) string {
 	base := zipEntryName(ref.UnrefOrZero(documentName), documentType.DisplayName())
-	ext := filepath.Ext(base)
-
-	if ext != "" {
-		base = strings.Trim(strings.TrimSuffix(base, ext), " .")
-	}
-
 	if base == "" {
 		base = "signed-document"
 	}

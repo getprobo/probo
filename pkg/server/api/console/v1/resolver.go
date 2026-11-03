@@ -263,7 +263,6 @@ func NewMux(
 				slackbotInstallations,
 			),
 		)
-
 	})
 
 	// Public in the sense that the vendor top-level-redirects the customer's
