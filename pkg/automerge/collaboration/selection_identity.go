@@ -50,9 +50,11 @@ func EncodeDepartureEphemeral(
 	documentID string,
 	sessionID string,
 ) ([]byte, error) {
-	payload, err := marshal(map[string]string{
-		selectionKindField: departurePresenceKind,
-	})
+	payload, err := marshal(
+		map[string]string{
+			selectionKindField: departurePresenceKind,
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot encode departure ephemeral: %w", err)
 	}
@@ -84,9 +86,11 @@ func EncodeReviewEphemeral(
 	documentID string,
 	sessionID string,
 ) ([]byte, error) {
-	payload, err := marshal(map[string]string{
-		selectionKindField: reviewPresenceKind,
-	})
+	payload, err := marshal(
+		map[string]string{
+			selectionKindField: reviewPresenceKind,
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot encode review ephemeral: %w", err)
 	}

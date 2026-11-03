@@ -288,21 +288,25 @@ func TestAdoptingServerConn_AcceptsAutomergeURLAlias(t *testing.T) {
 	_, _, err = conn.Start(joinFixture(t))
 	require.NoError(t, err)
 
-	first, err := EncodeMessage(Message{
-		Type: MessageSync, SenderID: "peer-a", TargetID: "server",
-		DocumentID: "client-chosen-doc", Data: []byte{1},
-	})
+	first, err := EncodeMessage(
+		Message{
+			Type: MessageSync, SenderID: "peer-a", TargetID: "server",
+			DocumentID: "client-chosen-doc", Data: []byte{1},
+		},
+	)
 	require.NoError(t, err)
 	_, _, err = conn.Receive(first)
 	require.NoError(t, err)
 
 	payload, err := EncodePresence(PresenceMessage{Type: PresenceHeartbeat})
 	require.NoError(t, err)
-	second, err := EncodeMessage(Message{
-		Type: MessageEphemeral, SenderID: "peer-a", TargetID: "server",
-		DocumentID: AutomergeURL("client-chosen-doc"), SessionID: "session",
-		Data: payload,
-	})
+	second, err := EncodeMessage(
+		Message{
+			Type: MessageEphemeral, SenderID: "peer-a", TargetID: "server",
+			DocumentID: AutomergeURL("client-chosen-doc"), SessionID: "session",
+			Data: payload,
+		},
+	)
 	require.NoError(t, err)
 	_, _, err = conn.Receive(second)
 	require.NoError(t, err)

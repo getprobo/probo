@@ -20,10 +20,7 @@
 
 package collaboration
 
-import (
-	"fmt"
-	"strings"
-)
+import "fmt"
 
 // SyncSession is the subset of an Automerge sync state the connection driver
 // needs. *automerge.SyncState satisfies it, so the driver never touches the
@@ -230,9 +227,9 @@ func (c *ServerConn) adoptDocumentID(id string) error {
 		return nil
 	}
 
-	canonicalID := strings.TrimPrefix(id, AutomergeURLPrefix)
-	if canonicalID == "" || strings.HasPrefix(canonicalID, AutomergeURLPrefix) {
-		return fmt.Errorf("received a frame with a malformed document id %q", id)
+	canonicalID, err := CanonicalDocumentID(id)
+	if err != nil {
+		return fmt.Errorf("received a frame with a %w", err)
 	}
 
 	if c.documentID == "" {
