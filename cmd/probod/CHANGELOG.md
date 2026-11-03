@@ -4,6 +4,27 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.336.0] - 2026-11-03
+
+### Added
+
+- The measure category field is a combobox that lists existing
+  categories and creates a new one when no match exists. Category
+  matching ignores case and surrounding whitespace
+- The Linux OS version posture check reports the full kernel
+  version next to the distribution name, and the console shows the
+  kernel's major, minor, and patch numbers
+
+### Fixed
+
+- Large collaborative documents open from far-away regions. A
+  client far from the server no longer sees the document reported
+  as unavailable while a large snapshot loads, and the initial
+  sync of an 8 MiB document has enough time to finish on a
+  long-haul link
+- A collaboration connection rejects frames that name a document
+  other than the one its URL authorized
+
 ## [0.335.1] - 2026-11-02
 
 ### Fixed
