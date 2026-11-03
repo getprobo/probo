@@ -736,8 +736,11 @@ func (r *organizationResolver) SlackbotInstallation(ctx context.Context, obj *ty
 		return nil, gqlx.Internal(ctx)
 	}
 
+	r.slackbotInstallations.RememberTeamName(ctx, scope, installation)
+
 	return &types.SlackbotInstallation{
 		TeamID:    installation.TeamID,
+		TeamName:  installation.TeamName,
 		BotUserID: installation.BotUserID,
 		Scopes:    installation.Scopes,
 		Active:    installation.Status == coredata.SlackbotInstallationStatusActive,

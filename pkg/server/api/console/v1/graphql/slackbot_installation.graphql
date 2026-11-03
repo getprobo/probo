@@ -1,5 +1,6 @@
 type SlackbotInstallation {
     teamId: String!
+    teamName: String
     botUserId: String!
     scopes: [String!]!
     active: Boolean!

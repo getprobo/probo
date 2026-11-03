@@ -18,11 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { CardSkeleton } from "@probo/ui/src/v2/Card/CardSkeleton";
+import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
 import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
 
 import type { SlackBotSettingsPageQuery } from "#/__generated__/core/SlackBotSettingsPageQuery.graphql";
-import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { CoreRelayProvider } from "#/providers/CoreRelayProvider";
 
@@ -30,6 +31,20 @@ import {
   SlackBotSettingsPage,
   slackBotSettingsPageQuery,
 } from "./SlackBotSettingsPage";
+import { slackBotSettingsPageSkeleton } from "./variants";
+
+function SlackBotSettingsPageSkeleton() {
+  const { root, grid } = slackBotSettingsPageSkeleton();
+
+  return (
+    <div className={root()}>
+      <HeadingSkeleton size={4} className="w-20" />
+      <div className={grid()}>
+        <CardSkeleton size={5} />
+      </div>
+    </div>
+  );
+}
 
 function SlackBotSettingsPageQueryLoader() {
   const organizationId = useOrganizationId();
@@ -42,11 +57,11 @@ function SlackBotSettingsPageQueryLoader() {
   }, [loadQuery, organizationId]);
 
   if (!queryRef) {
-    return <LinkCardSkeleton />;
+    return <SlackBotSettingsPageSkeleton />;
   }
 
   return (
-    <Suspense fallback={<LinkCardSkeleton />}>
+    <Suspense fallback={<SlackBotSettingsPageSkeleton />}>
       <SlackBotSettingsPage queryRef={queryRef} />
     </Suspense>
   );

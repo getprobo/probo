@@ -1671,6 +1671,7 @@
     "connectionTitle": "Slack",
     "emptyDescription": "Install the Probo Slack app to receive notifications",
     "installed": "The Probo Slack app is installed",
+    "installedIn": "Installed in {{workspace}}",
     "uninstallConfirmation": "Uninstall the Probo Slack app? Probo will stop receiving Slack events and sending notifications to this workspace.",
     "messages": { "uninstalled": "The Probo Slack app was uninstalled" },
     "errors": { "uninstall": "Failed to uninstall the Probo Slack app" },

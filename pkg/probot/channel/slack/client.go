@@ -175,6 +175,7 @@ type (
 	authTestResponse struct {
 		slackResponse
 		BotID string `json:"bot_id,omitempty"`
+		Team  string `json:"team,omitempty"`
 	}
 )
 
@@ -210,21 +211,48 @@ func newAPIClient(botToken string, apiBaseURL string, httpClient *http.Client) *
 // omits user on bot messages in conversations.replies, so thread filtering
 // cannot rely on matching bot_user_id against reply.User alone.
 func (c *Client) InstalledBotID(ctx context.Context) (string, error) {
+	result, err := c.authTest(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	if result.BotID == "" {
+		return "", fmt.Errorf("slack auth.test response has no bot_id")
+	}
+
+	return result.BotID, nil
+}
+
+func (c *Client) WorkspaceName(ctx context.Context) (string, error) {
+	result, err := c.authTest(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	name := strings.TrimSpace(result.Team)
+	if name == "" {
+		return "", fmt.Errorf("slack auth.test response has no team")
+	}
+
+	return name, nil
+}
+
+func (c *Client) authTest(ctx context.Context) (authTestResponse, error) {
 	endpoint, err := c.methodURL(slackMethodAuthTest)
 	if err != nil {
-		return "", fmt.Errorf("cannot build Slack auth.test endpoint: %w", err)
+		return authTestResponse{}, fmt.Errorf("cannot build Slack auth.test endpoint: %w", err)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, nil)
 	if err != nil {
-		return "", fmt.Errorf("cannot create Slack auth.test request: %w", err)
+		return authTestResponse{}, fmt.Errorf("cannot create Slack auth.test request: %w", err)
 	}
 
 	req.Header.Set("Authorization", "Bearer "+c.token)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("cannot call Slack auth.test: %w", err)
+		return authTestResponse{}, fmt.Errorf("cannot call Slack auth.test: %w", err)
 	}
 
 	defer func() {
@@ -234,21 +262,17 @@ func (c *Client) InstalledBotID(ctx context.Context) (string, error) {
 	var result authTestResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-			return "", newAPIError(resp, "")
+			return authTestResponse{}, newAPIError(resp, "")
 		}
 
-		return "", fmt.Errorf("cannot decode Slack auth.test response: %w", err)
+		return authTestResponse{}, fmt.Errorf("cannot decode Slack auth.test response: %w", err)
 	}
 
 	if !result.OK || resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-		return "", newAPIError(resp, result.Error)
+		return authTestResponse{}, newAPIError(resp, result.Error)
 	}
 
-	if result.BotID == "" {
-		return "", fmt.Errorf("slack auth.test response has no bot_id")
-	}
-
-	return result.BotID, nil
+	return result, nil
 }
 
 func (c *Client) UninstallApp(

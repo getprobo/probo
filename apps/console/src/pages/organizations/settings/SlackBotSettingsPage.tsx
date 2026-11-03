@@ -18,7 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Button, Card, Slack, useConfirm } from "@probo/ui";
+import { useConfirm } from "@probo/ui";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { ButtonAnchor } from "@probo/ui/src/v2/Button/ButtonAnchor";
+import { Card } from "@probo/ui/src/v2/Card/Card";
+import { SlackLogo } from "@probo/ui/src/v2/SlackLogo/SlackLogo";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { Text } from "@probo/ui/src/v2/typography/Text";
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import {
   type PreloadedQuery,
@@ -32,6 +39,8 @@ import type { SlackBotSettingsPageQuery } from "#/__generated__/core/SlackBotSet
 import type { SlackBotSettingsPageUninstallMutation } from "#/__generated__/core/SlackBotSettingsPageUninstallMutation.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
+
+import { slackBotSettingsPage } from "./variants";
 
 export const slackBotSettingsPageQuery = graphql`
   query SlackBotSettingsPageQuery($organizationId: ID!) {
@@ -51,6 +60,7 @@ const slackBotSettingsPageFragment = graphql`
     slackbotAvailable
     slackbotInstallation {
       active
+      teamName
     }
   }
 `;
@@ -63,6 +73,7 @@ const uninstallMutation = graphql`
       organization {
         slackbotInstallation {
           active
+          teamName
         }
       }
     }
@@ -122,52 +133,98 @@ function SlackBotSettings({
     );
   };
 
+  const installation = organization.slackbotInstallation;
+  const active = installation?.active === true;
+  const { root, grid, action } = slackBotSettingsPage();
+  const showConnect = organization.canConnectSlack && organization.slackbotAvailable;
+  const showUninstall = installation != null && organization.canUninstallSlack;
+
   return (
-    <div className="space-y-4">
-      <h2 className="text-base font-medium">
+    <section className={root()}>
+      <Heading level={2} size={4} weight="medium" highContrast>
         {t("slackBotSettingsPage.title")}
-      </h2>
-      <Card padded className="space-y-4">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 flex items-center justify-center bg-subtle rounded">
-            <Slack className="h-6 w-6" />
-          </div>
-          <div className="mr-auto">
-            <h3 className="text-base font-semibold">
-              {t("slackBotSettingsPage.connectionTitle")}
-            </h3>
-            <p className="text-sm text-txt-tertiary">
-              {organization.slackbotInstallation?.active
-                ? t("slackBotSettingsPage.installed")
-                : t("slackBotSettingsPage.emptyDescription")}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            {organization.slackbotInstallation
-              && organization.canUninstallSlack && (
-              <Button
-                variant="danger"
-                onClick={uninstall}
-                disabled={isUninstalling}
-              >
-                {isUninstalling
-                  ? t("slackBotSettingsPage.actions.uninstalling")
-                  : t("slackBotSettingsPage.actions.uninstall")}
-              </Button>
-            )}
-            {organization.canConnectSlack && organization.slackbotAvailable && (
-              <Button variant="secondary" asChild>
-                <a href={getSlackInstallUrl(organizationId)}>
-                  {organization.slackbotInstallation
+      </Heading>
+      <div className={grid()}>
+        <SlackBotCard
+          connected={active}
+          title={t("slackBotSettingsPage.connectionTitle")}
+          description={active
+            ? (installation?.teamName
+                ? t("slackBotSettingsPage.installedIn", { workspace: installation.teamName })
+                : t("slackBotSettingsPage.installed"))
+            : t("slackBotSettingsPage.emptyDescription")}
+          actions={(
+            <>
+              {showConnect && (
+                <ButtonAnchor
+                  href={getSlackInstallUrl(organizationId)}
+                  size={2}
+                  variant="solid"
+                  color="neutral"
+                  highContrast
+                  className={action()}
+                >
+                  {installation
                     ? t("slackBotSettingsPage.actions.configure")
                     : t("slackBotSettingsPage.actions.install")}
-                </a>
-              </Button>
-            )}
-          </div>
+                </ButtonAnchor>
+              )}
+              {showUninstall && (
+                <Button
+                  size={2}
+                  variant="solid"
+                  color="red"
+                  className={action()}
+                  loading={isUninstalling}
+                  onClick={uninstall}
+                >
+                  {isUninstalling
+                    ? t("slackBotSettingsPage.actions.uninstalling")
+                    : t("slackBotSettingsPage.actions.uninstall")}
+                </Button>
+              )}
+            </>
+          )}
+        />
+      </div>
+    </section>
+  );
+}
+
+function SlackBotCard({
+  connected,
+  title,
+  description,
+  actions,
+}: {
+  connected: boolean;
+  title: string;
+  description: string;
+  actions: ReactNode;
+}) {
+  const { frame, wash, header, icon, copy, description: descriptionSlot, body }
+    = slackBotSettingsPage({ connected });
+
+  return (
+    <Card variant="soft" padding="none" size={3} className={frame()}>
+      <div className={wash()} />
+      <div className={header()}>
+        <div className={icon()}>
+          <SlackLogo aria-hidden />
         </div>
-      </Card>
-    </div>
+        <div className={copy()}>
+          <Heading level={2} size={2} weight="medium" highContrast>
+            {title}
+          </Heading>
+          <Text size={1} color="current" className={descriptionSlot()}>
+            {description}
+          </Text>
+        </div>
+      </div>
+      <div className={body()}>
+        {actions}
+      </div>
+    </Card>
   );
 }
 

@@ -177,3 +177,41 @@ export const webhookSubscriptionEventList = tv({
     },
   },
 });
+
+export const slackBotSettingsPage = tv({
+  slots: {
+    root: "flex flex-col gap-4",
+    grid: "grid grid-cols-1 gap-3 md:grid-cols-3",
+    frame: "relative flex h-full flex-col gap-6 overflow-hidden px-6 pt-10 pb-6",
+    wash: [
+      "pointer-events-none absolute inset-x-0 top-0 z-0 h-3/5",
+      "mask-[linear-gradient(to_bottom,black_0%,black_40%,transparent_100%)]",
+    ],
+    header: "relative z-1 flex items-start gap-4",
+    icon: "size-8 shrink-0 text-sand-a9 [&_svg]:size-8",
+    copy: "flex min-w-0 flex-1 flex-col justify-center gap-1",
+    description: "text-sand-a9",
+    body: "relative z-1 mt-auto flex flex-col items-stretch gap-2",
+    action: "w-full",
+  },
+  variants: {
+    connected: {
+      true: {
+        wash: "bg-[radial-gradient(ellipse_85%_55%_at_50%_0%,color-mix(in_srgb,var(--color-green-9)_72%,transparent)_0%,color-mix(in_srgb,var(--color-green-9)_28%,transparent)_35%,transparent_62%)]",
+      },
+      false: {
+        wash: "bg-[radial-gradient(ellipse_85%_55%_at_50%_0%,color-mix(in_srgb,var(--color-lime-9)_72%,transparent)_0%,color-mix(in_srgb,var(--color-lime-9)_28%,transparent)_35%,transparent_62%)]",
+      },
+    },
+  },
+  defaultVariants: {
+    connected: false,
+  },
+});
+
+export const slackBotSettingsPageSkeleton = tv({
+  slots: {
+    root: "flex flex-col gap-4",
+    grid: "grid grid-cols-1 gap-3 md:grid-cols-3",
+  },
+});

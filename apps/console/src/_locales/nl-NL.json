@@ -2534,6 +2534,7 @@
     "connectionTitle": "Slack",
     "emptyDescription": "Installeer de Probo Slack-app om meldingen te ontvangen",
     "installed": "De Probo Slack-app is geïnstalleerd",
+    "installedIn": "Geïnstalleerd in {{workspace}}",
     "uninstallConfirmation": "De Probo Slack-app verwijderen? Probo ontvangt dan geen Slack-gebeurtenissen meer en stuurt geen meldingen meer naar deze werkruimte.",
     "messages": {
       "uninstalled": "De Probo Slack-app is verwijderd"

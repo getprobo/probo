@@ -258,7 +258,8 @@ func TestInstallationComplete_PersistsInstallationOnOAuthSuccess(t *testing.T) {
 						"scope":         "chat:write,commands",
 						"bot_user_id":   "U-bot",
 						"team": map[string]any{
-							"id": teamID,
+							"id":   teamID,
+							"name": "Acme",
 						},
 					},
 				),
@@ -311,6 +312,8 @@ func TestInstallationComplete_PersistsInstallationOnOAuthSuccess(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, result.Installation)
 	assert.Equal(t, teamID, result.Installation.TeamID)
+	require.NotNil(t, result.Installation.TeamName)
+	assert.Equal(t, "Acme", *result.Installation.TeamName)
 	assert.Equal(t, "U-bot", result.Installation.BotUserID)
 	assert.Equal(t, coredata.SlackbotInstallationStatusActive, result.Installation.Status)
 	assert.Equal(t, "/organizations/example", result.ContinueURL)

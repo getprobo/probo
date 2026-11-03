@@ -47,6 +47,7 @@ type (
 		ID                    gid.GID                    `db:"id"`
 		OrganizationID        gid.GID                    `db:"organization_id"`
 		TeamID                string                     `db:"team_id"`
+		TeamName              *string                    `db:"team_name"`
 		BotUserID             string                     `db:"bot_user_id"`
 		EncryptedAccessToken  []byte                     `db:"encrypted_access_token"`
 		EncryptedRefreshToken []byte                     `db:"encrypted_refresh_token"`
@@ -127,6 +128,7 @@ SELECT
 	id,
 	organization_id,
 	team_id,
+	team_name,
 	bot_user_id,
 	encrypted_access_token,
 	encrypted_refresh_token,
@@ -159,6 +161,7 @@ SELECT
 	id,
 	organization_id,
 	team_id,
+	team_name,
 	bot_user_id,
 	encrypted_access_token,
 	encrypted_refresh_token,
@@ -192,6 +195,7 @@ SELECT
 	id,
 	organization_id,
 	team_id,
+	team_name,
 	bot_user_id,
 	encrypted_access_token,
 	encrypted_refresh_token,
@@ -234,6 +238,7 @@ INSERT INTO slackbot_installations (
 	tenant_id,
 	organization_id,
 	team_id,
+	team_name,
 	bot_user_id,
 	encrypted_access_token,
 	encrypted_refresh_token,
@@ -247,6 +252,7 @@ INSERT INTO slackbot_installations (
 	@tenant_id,
 	@organization_id,
 	@team_id,
+	@team_name,
 	@bot_user_id,
 	@encrypted_access_token,
 	@encrypted_refresh_token,
@@ -258,6 +264,7 @@ INSERT INTO slackbot_installations (
 )
 ON CONFLICT (organization_id) DO UPDATE SET
 	team_id = EXCLUDED.team_id,
+	team_name = COALESCE(EXCLUDED.team_name, slackbot_installations.team_name),
 	bot_user_id = EXCLUDED.bot_user_id,
 	encrypted_access_token = EXCLUDED.encrypted_access_token,
 	encrypted_refresh_token = EXCLUDED.encrypted_refresh_token,
@@ -269,6 +276,7 @@ RETURNING
 	id,
 	organization_id,
 	team_id,
+	team_name,
 	bot_user_id,
 	encrypted_access_token,
 	encrypted_refresh_token,
@@ -285,6 +293,7 @@ RETURNING
 		"tenant_id":               scope.GetTenantID(),
 		"organization_id":         s.OrganizationID,
 		"team_id":                 s.TeamID,
+		"team_name":               s.TeamName,
 		"bot_user_id":             s.BotUserID,
 		"encrypted_access_token":  encryptedAccessToken,
 		"encrypted_refresh_token": encryptedRefreshToken,
@@ -321,6 +330,40 @@ RETURNING
 	*s = installation
 
 	return originalID == s.ID, nil
+}
+
+func (s *SlackbotInstallation) UpdateTeamName(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+) error {
+	q := `
+UPDATE slackbot_installations
+SET
+	team_name = @team_name,
+	updated_at = @updated_at
+WHERE %s
+	AND id = @id
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"id":         s.ID,
+		"team_name":  s.TeamName,
+		"updated_at": s.UpdatedAt,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot update Slackbot installation team name: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
+	}
+
+	return nil
 }
 
 func (s *SlackbotInstallation) UpdateCredentials(

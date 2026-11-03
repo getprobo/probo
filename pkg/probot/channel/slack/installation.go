@@ -91,7 +91,8 @@ type (
 		Scope        string `json:"scope,omitempty"`
 		BotUserID    string `json:"bot_user_id"`
 		Team         struct {
-			ID string `json:"id"`
+			ID   string `json:"id"`
+			Name string `json:"name"`
 		} `json:"team"`
 	}
 )
@@ -167,6 +168,51 @@ func (s *InstallationService) GetByOrganizationID(
 	}
 
 	return &installation, nil
+}
+
+// RememberTeamName fills a missing workspace name from Slack auth.test and
+// stores it. A Slack failure leaves the installation unchanged.
+func (s *InstallationService) RememberTeamName(
+	ctx context.Context,
+	scope coredata.Scoper,
+	installation *coredata.SlackbotInstallation,
+) {
+	if installation == nil ||
+		installation.Status != coredata.SlackbotInstallationStatusActive ||
+		(installation.TeamName != nil && strings.TrimSpace(*installation.TeamName) != "") {
+		return
+	}
+
+	client, _, err := s.ClientByOrganizationID(ctx, scope, installation.OrganizationID)
+	if err != nil {
+		if s.logger != nil {
+			s.logger.ErrorCtx(ctx, "cannot load Slack client for workspace name", log.Error(err))
+		}
+
+		return
+	}
+
+	name, err := client.WorkspaceName(ctx)
+	if err != nil {
+		if s.logger != nil {
+			s.logger.ErrorCtx(ctx, "cannot load Slack workspace name", log.Error(err))
+		}
+
+		return
+	}
+
+	installation.TeamName = &name
+	installation.UpdatedAt = time.Now()
+
+	err = s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return installation.UpdateTeamName(ctx, conn, scope)
+		},
+	)
+	if err != nil && s.logger != nil {
+		s.logger.ErrorCtx(ctx, "cannot save Slack workspace name", log.Error(err))
+	}
 }
 
 func (s *InstallationService) GetByTeamID(
