@@ -31,6 +31,7 @@ class FakeWebSocket extends EventTarget {
   static readonly OPEN = 1;
   static readonly CLOSING = 2;
   static readonly CLOSED = 3;
+  static reachable = true;
 
   readyState = FakeWebSocket.CONNECTING;
   binaryType = "blob";
@@ -39,6 +40,8 @@ class FakeWebSocket extends EventTarget {
   constructor(public url: string) {
     super();
     opened.push(this);
+    if (!FakeWebSocket.reachable) return;
+
     queueMicrotask(() => {
       this.readyState = FakeWebSocket.OPEN;
       this.dispatchEvent(new Event("open"));
@@ -61,6 +64,7 @@ afterEach(() => {
   globalThis.WebSocket = OriginalWebSocket;
   vi.useRealTimers();
   opened.length = 0;
+  FakeWebSocket.reachable = true;
 });
 
 async function connectAdapter(): Promise<{
@@ -81,6 +85,51 @@ async function connectAdapter(): Promise<{
 }
 
 describe("RepoWebSocketAdapter", () => {
+  it("sends the join frame when the socket opens", async () => {
+    const { adapter, socket } = await connectAdapter();
+
+    expect(socket.sent).toHaveLength(1);
+    const join = cbor.decode<Record<string, unknown>>(
+      new Uint8Array(socket.sent[0]),
+    );
+    expect(join).toMatchObject({
+      type: "join",
+      senderId: "client-far",
+      supportedProtocolVersions: [ProtocolV1],
+    });
+    adapter.disconnect();
+  });
+
+  it("gives up on an unreachable server despite retries", async () => {
+    globalThis.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
+    FakeWebSocket.reachable = false;
+    vi.useFakeTimers();
+    const adapter = new RepoWebSocketAdapter("ws://collaboration.test/doc");
+    adapter.connect("client-far" as PeerId);
+
+    await vi.advanceTimersByTimeAsync(repoHandshakeTimeoutMs - 1);
+    expect(opened.length).toBeGreaterThan(1);
+    expect(adapter.isReady()).toBe(false);
+
+    await vi.advanceTimersByTimeAsync(1);
+    expect(adapter.isReady()).toBe(true);
+    adapter.disconnect();
+  });
+
+  it("closes the socket a retry replaces", async () => {
+    globalThis.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
+    FakeWebSocket.reachable = false;
+    vi.useFakeTimers();
+    const adapter = new RepoWebSocketAdapter("ws://collaboration.test/doc");
+    adapter.connect("client-far" as PeerId);
+
+    await vi.advanceTimersByTimeAsync(5_000);
+
+    expect(opened).toHaveLength(2);
+    expect(opened[0].readyState).toBe(FakeWebSocket.CLOSED);
+    adapter.disconnect();
+  });
+
   it("stays pending through the stock one second silence", async () => {
     const { adapter } = await connectAdapter();
 

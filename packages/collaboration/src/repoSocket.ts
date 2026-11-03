@@ -89,6 +89,8 @@ export class RepoWebSocketAdapter extends NetworkAdapter {
   }
 
   #forceReady() {
+    clearTimeout(this.#handshakeTimeoutId);
+    this.#handshakeTimeoutId = undefined;
     if (this.#ready) return;
 
     this.#ready = true;
@@ -106,6 +108,9 @@ export class RepoWebSocketAdapter extends NetworkAdapter {
       this.socket.removeEventListener("close", this.onClose);
       this.socket.removeEventListener("message", this.onMessage);
       this.socket.removeEventListener("error", this.onError);
+      // A replaced socket that opens later would sit on the server waiting
+      // for a join nobody sends.
+      this.socket.close();
     }
 
     if (!this.#retryIntervalId) {
@@ -121,11 +126,14 @@ export class RepoWebSocketAdapter extends NetworkAdapter {
     this.socket.addEventListener("message", this.onMessage);
     this.socket.addEventListener("error", this.onError);
 
-    clearTimeout(this.#handshakeTimeoutId);
-    this.#handshakeTimeoutId = setTimeout(
-      () => this.#forceReady(),
-      repoHandshakeTimeoutMs,
-    );
+    // Retries run every few seconds; re-arming here would postpone the
+    // deadline forever while the server is unreachable.
+    if (!this.#ready && this.#handshakeTimeoutId === undefined) {
+      this.#handshakeTimeoutId = setTimeout(() => {
+        this.#handshakeTimeoutId = undefined;
+        this.#forceReady();
+      }, repoHandshakeTimeoutMs);
+    }
     this.join();
   }
 
