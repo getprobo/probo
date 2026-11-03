@@ -7,11 +7,15 @@ package console_v1
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 // Certificate is the resolver for the certificate field.
@@ -25,6 +29,39 @@ func (r *electronicSignatureResolver) Certificate(ctx context.Context, obj *type
 	}
 
 	return r.loadFile(ctx, obj.Certificate.ID)
+}
+
+// Bundle is the resolver for the bundle field.
+func (r *electronicSignatureResolver) Bundle(ctx context.Context, obj *types.ElectronicSignature) (*types.File, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionElectronicSignatureGet)
+	if err != nil {
+		return nil, err
+	}
+
+	if obj.Bundle != nil {
+		return r.loadFile(ctx, obj.Bundle.ID)
+	}
+
+	if obj.Certificate == nil {
+		return nil, nil
+	}
+
+	file, err := r.esign.EnsureBundle(ctx, scope, obj.ID)
+	if err != nil {
+		if errors.Is(err, esign.ErrElectronicSignatureNotFound) {
+			return nil, gqlx.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load signature bundle", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	if file == nil {
+		return nil, nil
+	}
+
+	return types.NewFile(file, r.fileManager), nil
 }
 
 // Events is the resolver for the events field.

@@ -130,6 +130,7 @@ type ElectronicSignature implements Node {
     lastError: String
     signedAt: Datetime
     certificate: File @goField(forceResolver: true)
+    bundle: File @goField(forceResolver: true)
     events: [ElectronicSignatureEvent!]! @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
