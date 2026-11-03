@@ -59,7 +59,19 @@ func TestOAuth2_PrbCLIDeviceFlowWithAPIScopes(t *testing.T) {
 	require.Equal(t, 200, pollRaw.StatusCode, "token poll body: %s", string(pollRaw.Body))
 	require.NotNil(t, tokenResp)
 	require.NotEmpty(t, tokenResp.AccessToken)
+	require.NotEmpty(t, tokenResp.RefreshToken)
 	assert.Contains(t, tokenResp.Scope, "v1:org")
+
+	refreshed, refreshRaw, err := testutil.OAuth2TokenWithPublicClientRefresh(
+		owner,
+		config.CLIClientID,
+		tokenResp.RefreshToken,
+	)
+	require.NoError(t, err)
+	require.Equal(t, 200, refreshRaw.StatusCode, "refresh body: %s", string(refreshRaw.Body))
+	require.NotNil(t, refreshed)
+	assert.NotEmpty(t, refreshed.AccessToken)
+	assert.NotEqual(t, tokenResp.RefreshToken, refreshed.RefreshToken)
 
 	const getOrganizationQuery = `
 		query GetOrganization($id: ID!) {

@@ -100,6 +100,7 @@ instead of publishing immediately. Approvers are ignored with --minor.`,
 				hc.Token,
 				"/api/console/v1/graphql",
 				cfg.HTTPTimeoutDuration(),
+				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
 			input := map[string]any{

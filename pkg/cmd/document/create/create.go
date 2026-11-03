@@ -88,6 +88,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				hc.Token,
 				"/api/console/v1/graphql",
 				cfg.HTTPTimeoutDuration(),
+				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
 			flagOrg, err = cmdutil.ResolveOrganization(flagOrg, hc.Organization)

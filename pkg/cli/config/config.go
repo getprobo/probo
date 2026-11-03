@@ -79,10 +79,11 @@ type (
 	}
 
 	HostConfig struct {
-		Token         string `yaml:"token"`
-		RefreshToken  string `yaml:"refresh_token,omitempty"`
-		TokenEndpoint string `yaml:"token_endpoint,omitempty"`
-		Organization  string `yaml:"organization"`
+		Token         string    `yaml:"token"`
+		RefreshToken  string    `yaml:"refresh_token,omitempty"`
+		TokenEndpoint string    `yaml:"token_endpoint,omitempty"`
+		ExpiresAt     time.Time `yaml:"expires_at,omitempty"`
+		Organization  string    `yaml:"organization"`
 	}
 )
 
@@ -207,6 +208,39 @@ func Load() (*Config, error) {
 	}
 
 	return &cfg, nil
+}
+
+// Lock takes an exclusive lock so only one process refreshes the OAuth2
+// tokens in the config file. The caller must call the returned function.
+func Lock() (func(), error) {
+	dir, err := configDir()
+	if err != nil {
+		return nil, err
+	}
+
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		return nil, fmt.Errorf("cannot create config directory: %w", err)
+	}
+
+	file, err := os.OpenFile(
+		filepath.Join(dir, "config.lock"),
+		os.O_RDWR|os.O_CREATE,
+		0o600,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot open credential lock: %w", err)
+	}
+
+	if err := lockFileExclusive(file); err != nil {
+		_ = file.Close()
+
+		return nil, fmt.Errorf("cannot lock credentials: %w", err)
+	}
+
+	return func() {
+		_ = unlockFile(file)
+		_ = file.Close()
+	}, nil
 }
 
 func (c *Config) Save() error {

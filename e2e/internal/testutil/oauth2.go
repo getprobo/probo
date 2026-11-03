@@ -642,6 +642,40 @@ func OAuth2TokenWithRefreshTokenForResources(
 	return &result, raw, nil
 }
 
+// OAuth2TokenWithPublicClientRefresh refreshes tokens the way prb does:
+// client_id in the form body, no client secret.
+func OAuth2TokenWithPublicClientRefresh(
+	c *Client,
+	clientID string,
+	refreshToken string,
+) (*OAuth2TokenResponse, *OAuth2HTTPResponse, error) {
+	values := url.Values{
+		"grant_type":    {"refresh_token"},
+		"client_id":     {clientID},
+		"refresh_token": {refreshToken},
+	}
+
+	raw, err := postForm(
+		c.HTTPClient(),
+		oauth2BaseURL(c)+"/token",
+		values,
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if raw.StatusCode != http.StatusOK {
+		return nil, raw, nil
+	}
+
+	var result OAuth2TokenResponse
+	if err := json.Unmarshal(raw.Body, &result); err != nil {
+		return nil, raw, fmt.Errorf("cannot decode token response: %w", err)
+	}
+
+	return &result, raw, nil
+}
+
 // OAuth2TokenWithDeviceCode polls the token endpoint for device code grant.
 func OAuth2TokenWithDeviceCode(
 	c *Client,

@@ -37,6 +37,12 @@ import (
 	"go.probo.inc/probo/pkg/version"
 )
 
+const (
+	// Refresh slightly early so a command started on the expiry boundary
+	// does not send a token the server is about to reject.
+	accessTokenRefreshSkew = time.Minute
+)
+
 type (
 	Client struct {
 		host       string
@@ -46,15 +52,31 @@ type (
 		refresher  *TokenRefresher
 	}
 
+	// StoredCredentials is the access token, refresh token, and access-token
+	// expiry last written for this host.
+	StoredCredentials struct {
+		AccessToken  string
+		RefreshToken string
+		ExpiresAt    time.Time
+	}
+
 	// TokenRefresher holds the information needed to automatically refresh
 	// an expired access token using the OAuth2 refresh_token grant.
 	TokenRefresher struct {
 		RefreshToken  string
 		TokenEndpoint string
 		ClientID      string
-		// OnRefresh is called after a successful token refresh with the new
-		// access token and refresh token so the caller can persist them.
-		OnRefresh func(accessToken, refreshToken string) error
+		ExpiresAt     time.Time
+		// Lock serializes a refresh across processes. Refresh tokens rotate,
+		// and a second presenter of the spent token is treated as theft.
+		Lock func() (unlock func(), err error)
+		// Current returns the credentials on disk. A newer access token means
+		// another process already refreshed.
+		Current func() (StoredCredentials, error)
+		// OnRefresh is called after a successful token refresh so the caller
+		// can persist the new credentials. expiresAt is zero when the token
+		// response omits expires_in.
+		OnRefresh func(accessToken, refreshToken string, expiresAt time.Time) error
 	}
 
 	Option func(*Client)
@@ -131,6 +153,8 @@ func (c *Client) DoRaw(
 	query string,
 	variables map[string]any,
 ) ([]byte, error) {
+	c.refreshIfDue()
+
 	respBody, statusCode, err := c.doRequest(query, variables)
 	if err != nil {
 		return nil, err
@@ -250,6 +274,8 @@ func (c *Client) doUploadRequest(
 	filename string,
 	file io.Reader,
 ) ([]byte, error) {
+	c.refreshIfDue()
+
 	var buf bytes.Buffer
 
 	writer := multipart.NewWriter(&buf)
@@ -351,8 +377,61 @@ func (c *Client) doUploadRequest(
 	return respBody, nil
 }
 
+func (c *Client) refreshIfDue() {
+	r := c.refresher
+	if r == nil || r.ExpiresAt.IsZero() {
+		return
+	}
+
+	if time.Now().Before(r.ExpiresAt.Add(-accessTokenRefreshSkew)) {
+		return
+	}
+
+	_ = c.tryRefreshToken()
+}
+
 func (c *Client) tryRefreshToken() error {
 	r := c.refresher
+	if r == nil {
+		return fmt.Errorf("cannot refresh token: refresher is not configured")
+	}
+
+	if r.Lock != nil {
+		unlock, err := r.Lock()
+		if err != nil {
+			return fmt.Errorf("cannot lock credentials: %w", err)
+		}
+
+		defer unlock()
+	}
+
+	if r.Current != nil {
+		stored, err := r.Current()
+		if err != nil {
+			return fmt.Errorf("cannot read stored credentials: %w", err)
+		}
+
+		if stored.AccessToken != "" && stored.AccessToken != c.token {
+			c.token = stored.AccessToken
+			if stored.RefreshToken != "" {
+				r.RefreshToken = stored.RefreshToken
+			}
+
+			if !stored.ExpiresAt.IsZero() {
+				r.ExpiresAt = stored.ExpiresAt
+			}
+
+			return nil
+		}
+
+		if stored.RefreshToken != "" {
+			r.RefreshToken = stored.RefreshToken
+		}
+	}
+
+	if r.RefreshToken == "" {
+		return fmt.Errorf("cannot refresh token: refresh token is missing")
+	}
 
 	values := url.Values{
 		"grant_type":    {"refresh_token"},
@@ -393,11 +472,24 @@ func (c *Client) tryRefreshToken() error {
 		return fmt.Errorf("cannot decode refresh response: %w", err)
 	}
 
+	refreshToken := token.RefreshToken
+	if refreshToken == "" {
+		refreshToken = r.RefreshToken
+	}
+
+	var expiresAt time.Time
+	if token.ExpiresIn > 0 {
+		expiresAt = time.Now().Add(time.Duration(token.ExpiresIn) * time.Second)
+	}
+
 	c.token = token.AccessToken
-	r.RefreshToken = token.RefreshToken
+	r.RefreshToken = refreshToken
+	if !expiresAt.IsZero() {
+		r.ExpiresAt = expiresAt
+	}
 
 	if r.OnRefresh != nil {
-		return r.OnRefresh(token.AccessToken, token.RefreshToken)
+		return r.OnRefresh(token.AccessToken, refreshToken, expiresAt)
 	}
 
 	return nil

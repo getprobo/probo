@@ -195,10 +195,16 @@ func NewCmdLogin(f *cmdutil.Factory) *cobra.Command {
 				}
 			}
 
+			var expiresAt time.Time
+			if token.ExpiresIn > 0 {
+				expiresAt = time.Now().Add(time.Duration(token.ExpiresIn) * time.Second)
+			}
+
 			cfg.Hosts[flagHost] = &config.HostConfig{
 				Token:         token.AccessToken,
 				RefreshToken:  token.RefreshToken,
 				TokenEndpoint: discovery.TokenEndpoint,
+				ExpiresAt:     expiresAt,
 				Organization:  flagOrganization,
 			}
 			cfg.ActiveHost = flagHost

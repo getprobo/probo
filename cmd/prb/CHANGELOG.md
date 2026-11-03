@@ -4,6 +4,12 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+### Fixed
+
+- `prb` keeps the saved login for the refresh-token lifetime. Every
+  command refreshes an expired access token, and overlapping commands
+  share that refresh instead of invalidating it
+
 ## [0.263.0] - 2026-11-02
 
 ### Added

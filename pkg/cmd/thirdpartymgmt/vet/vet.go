@@ -106,6 +106,7 @@ func NewCmdVet(f *cmdutil.Factory) *cobra.Command {
 				hc.Token,
 				"/api/console/v1/graphql",
 				30*time.Second,
+				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
 			_, _ = fmt.Fprintf(f.IOStreams.ErrOut, "Starting vetting for %s...\n", flagURL)

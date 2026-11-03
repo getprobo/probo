@@ -21,6 +21,8 @@
 package cmdutil
 
 import (
+	"time"
+
 	"go.probo.inc/probo/pkg/cli/api"
 	"go.probo.inc/probo/pkg/cli/config"
 	"go.probo.inc/probo/pkg/cmd/iostreams"
@@ -80,12 +82,64 @@ func TokenRefreshOption(
 		RefreshToken:  hc.RefreshToken,
 		TokenEndpoint: hc.TokenEndpoint,
 		ClientID:      config.CLIClientID,
-		OnRefresh: func(accessToken, refreshToken string) error {
-			hc.Token = accessToken
-			hc.RefreshToken = refreshToken
+		ExpiresAt:     hc.ExpiresAt,
+		Lock:          config.Lock,
+		Current: func() (api.StoredCredentials, error) {
+			fresh, err := config.Load()
+			if err != nil {
+				return api.StoredCredentials{}, err
+			}
+
+			saved := fresh.Hosts[host]
+			if saved == nil {
+				return api.StoredCredentials{}, nil
+			}
+
+			return api.StoredCredentials{
+				AccessToken:  saved.Token,
+				RefreshToken: saved.RefreshToken,
+				ExpiresAt:    saved.ExpiresAt,
+			}, nil
+		},
+		OnRefresh: func(accessToken, refreshToken string, expiresAt time.Time) error {
+			fresh, err := config.Load()
+			if err != nil {
+				return err
+			}
+
+			saved := fresh.Hosts[host]
+			if saved == nil {
+				saved = &config.HostConfig{
+					TokenEndpoint: hc.TokenEndpoint,
+					Organization:  hc.Organization,
+				}
+			}
+
+			saved.Token = accessToken
+			if refreshToken != "" {
+				saved.RefreshToken = refreshToken
+			}
+
+			if !expiresAt.IsZero() {
+				saved.ExpiresAt = expiresAt
+			}
+
+			if saved.TokenEndpoint == "" {
+				saved.TokenEndpoint = hc.TokenEndpoint
+			}
+
+			fresh.Hosts[host] = saved
+			if err := fresh.Save(); err != nil {
+				return err
+			}
+
+			hc.Token = saved.Token
+			hc.RefreshToken = saved.RefreshToken
+			hc.TokenEndpoint = saved.TokenEndpoint
+			hc.ExpiresAt = saved.ExpiresAt
 			cfg.Hosts[host] = hc
 
-			return cfg.Save()
+			return nil
 		},
 	})
 }
