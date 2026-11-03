@@ -10,6 +10,9 @@
   },
   "ui": {
     "richEditor": {
+      "enlargeImage": "Afbeelding vergroten",
+      "enlargeImageNamed": "{{name}} vergroten",
+      "closeImage": "Afbeelding sluiten",
       "mentionMembers": "Een lid vermelden",
       "mentionLoading": "Zoeken…",
       "mentionNoResults": "Geen leden gevonden"

@@ -11,6 +11,9 @@
   },
   "ui": {
     "richEditor": {
+      "enlargeImage": "Agrandir l'image",
+      "enlargeImageNamed": "Agrandir {{name}}",
+      "closeImage": "Fermer l'image",
       "mentionMembers": "Mentionner un membre",
       "mentionLoading": "Recherche…",
       "mentionNoResults": "Aucun membre trouvé"

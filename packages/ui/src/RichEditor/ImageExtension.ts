@@ -23,6 +23,7 @@ import { ReactNodeViewRenderer } from "@tiptap/react";
 
 import { attachmentPath, fileIDFromAttachmentURL } from "./attachments";
 import { ImageNodeView } from "./ImageNodeView";
+import { richImageEnlargeSelector } from "./ImagePreview/ImageEnlargeButton";
 import { imageWidthPercent } from "./imageWidth";
 
 export const ImageExtension = Node.create({
@@ -102,6 +103,15 @@ export const ImageExtension = Node.create({
     })];
   },
   addNodeView() {
-    return ReactNodeViewRenderer(ImageNodeView);
+    return ReactNodeViewRenderer(ImageNodeView, {
+      stopEvent: ({ event }) => {
+        const target = event.target;
+        if (!(target instanceof Element)) {
+          return false;
+        }
+
+        return target.closest(richImageEnlargeSelector) != null;
+      },
+    });
   },
 });

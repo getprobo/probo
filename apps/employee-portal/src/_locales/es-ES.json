@@ -10,6 +10,9 @@
   },
   "ui": {
     "richEditor": {
+      "enlargeImage": "Ampliar imagen",
+      "enlargeImageNamed": "Ampliar {{name}}",
+      "closeImage": "Cerrar imagen",
       "mentionMembers": "Mencionar a un miembro",
       "mentionLoading": "Buscando…",
       "mentionNoResults": "No se encontraron miembros"

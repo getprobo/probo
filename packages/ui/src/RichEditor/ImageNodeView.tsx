@@ -32,6 +32,7 @@ import {
 import { useTranslation } from "react-i18next";
 
 import { attachmentPath } from "./attachments";
+import { ImageEnlargeButton } from "./ImagePreview/ImageEnlargeButton";
 import { dragImageWidth, keyboardImageWidth, loadedImagePin, snapImageWidth } from "./imageWidth";
 
 type ResizeSide = "left" | "right";
@@ -187,6 +188,20 @@ export function ImageNodeView({ editor, node, getPos, updateAttributes }: ReactN
     }
   };
 
+  const image = (
+    <img
+      ref={setImageRef}
+      className={percent == null ? "rich-image" : "rich-image rich-image-sized"}
+      style={percent == null && intrinsicWidth != null ? { width: intrinsicWidth } : undefined}
+      src={src}
+      alt={alt}
+      title={title}
+      draggable={false}
+      onLoad={event => applyLoadedImage(event.currentTarget)}
+      onError={() => setFailedSrc(src)}
+    />
+  );
+
   return (
     <NodeViewWrapper className="rich-image-slot">
       <div ref={slotRef} className="w-full">
@@ -195,17 +210,9 @@ export function ImageNodeView({ editor, node, getPos, updateAttributes }: ReactN
           style={percent == null ? undefined : { width: `${percent}%` }}
           contentEditable={false}
         >
-          <img
-            ref={setImageRef}
-            className={percent == null ? "rich-image" : "rich-image rich-image-sized"}
-            style={percent == null && intrinsicWidth != null ? { width: intrinsicWidth } : undefined}
-            src={src}
-            alt={alt}
-            title={title}
-            draggable={false}
-            onLoad={event => applyLoadedImage(event.currentTarget)}
-            onError={() => setFailedSrc(src)}
-          />
+          {editor.isEditable
+            ? image
+            : <ImageEnlargeButton src={src} alt={alt}>{image}</ImageEnlargeButton>}
           {editor.isEditable && (
             <>
               <button
