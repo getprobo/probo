@@ -4,6 +4,15 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.264.0] - 2026-11-03
+
+### Added
+
+- `prb cookie-banner request-scan`, `list-scans`, and `view-scan`
+  request and inspect cookie banner scans
+- `prb cookie-banner list-scan-resources` and `list-scan-trackers`
+  list what a scan found
+
 ## [0.263.1] - 2026-11-03
 
 ### Fixed
