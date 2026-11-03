@@ -4,6 +4,28 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.337.0] - 2026-11-03
+
+### Added
+
+- Cookie banner scans. Request a scan of a cookie banner's site, list
+  past scans, and see the resources and trackers each scan found
+- The tracker list has views for categorised, uncategorised, visitor,
+  scan, and all trackers, a Seen by column that filters by any
+  combination of observers, and cookie details on each detection
+- The Slack settings page shows the connected workspace name,
+  including for existing installs
+
+### Changed
+
+- The portal Slack setup page no longer asks reviewers to run
+  `/probot login`. It only asks to invite @Probo into a channel
+
+### Fixed
+
+- The Slack channel picker follows empty pages that still have a
+  cursor, so channels past them load and Show more stays available
+
 ## [0.336.0] - 2026-11-03
 
 ### Added
