@@ -27,6 +27,7 @@ import { CookieBannerConsentRecordsPageSkeleton } from "./configuration/consent-
 import { CookieBannerConfigLayoutSkeleton } from "./configuration/CookieBannerConfigLayoutSkeleton";
 import { CookieBannerInstallPageSkeleton } from "./configuration/install/CookieBannerInstallPageSkeleton";
 import { CookieBannerResourcesPageSkeleton } from "./configuration/resources/CookieBannerResourcesPageSkeleton";
+import { CookieBannerScansPageSkeleton } from "./configuration/scans/CookieBannerScansPageSkeleton";
 import { CookieBannerSettingsPageSkeleton } from "./configuration/settings/CookieBannerSettingsPageSkeleton";
 import { CookieBannerTCFPageSkeleton } from "./configuration/tcf/CookieBannerTCFPageSkeleton";
 import { CookieBannerTrackersPageSkeleton } from "./configuration/trackers/CookieBannerTrackersPageSkeleton";
@@ -85,6 +86,11 @@ export const cookieBannerRoutes = [
         Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/resources/CookieBannerResourcesPageLoader")),
       },
       {
+        path: "scans",
+        Fallback: CookieBannerScansPageSkeleton,
+        Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/scans/CookieBannerScansPageLoader")),
+      },
+      {
         path: "trail",
         Fallback: CookieBannerConsentRecordsPageSkeleton,
         Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/consent-records/CookieBannerConsentRecordsPageLoader")),
@@ -100,6 +106,11 @@ export const cookieBannerRoutes = [
     path: "cookie-banners/:cookieBannerId/consent-records/:consentRecordId",
     Fallback: PageSkeleton,
     Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/consent-records/CookieBannerConsentRecordPageLoader")),
+  },
+  {
+    path: "cookie-banners/:cookieBannerId/scans/:scanId",
+    Fallback: PageSkeleton,
+    Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/scans/CookieBannerScanPageLoader")),
   },
   {
     path: "cookie-banners/:cookieBannerId/trackers/:trackerPatternId",

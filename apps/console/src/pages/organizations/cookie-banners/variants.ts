@@ -312,6 +312,35 @@ export const categoryCreateDialog = tv({
   },
 });
 
+export const scanCounts = tv({
+  slots: {
+    root: "@container",
+    grid: "grid grid-cols-2 gap-3 @min-[48rem]:grid-cols-4",
+  },
+});
+
+export const scanTimeline = tv({
+  slots: {
+    frame: "@container",
+    columns: "grid grid-cols-1 items-start gap-6 @min-[36rem]:grid-cols-2",
+    durations: "flex flex-col gap-3",
+    duration: "flex flex-col gap-0.5",
+    value: "font-mono",
+  },
+});
+
+export const scanSection = tv({
+  slots: {
+    root: "flex flex-col gap-3",
+    intro: "flex flex-col gap-1",
+    rows: "flex flex-col gap-2",
+    row: "flex items-center gap-2.5 rounded-3 border border-sand-6 px-3 py-2.5",
+    rowBody: "flex min-w-0 flex-1 flex-col gap-0.5",
+    list: "flex max-h-64 flex-col gap-2 overflow-auto",
+    item: "break-all font-mono text-2 text-sand-11",
+  },
+});
+
 export const consentRecordPage = tv({
   slots: {
     root: "flex flex-col gap-6",

@@ -258,6 +258,136 @@ type CookieBannerSampleEdge {
     node: CookieBannerSample!
 }
 
+enum CookieBannerScanState
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.CookieBannerScanState") {
+    PENDING
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieBannerScanStatePending"
+        )
+    RUNNING
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieBannerScanStateRunning"
+        )
+    PAUSED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieBannerScanStatePaused"
+        )
+    COMPLETED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieBannerScanStateCompleted"
+        )
+    FAILED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieBannerScanStateFailed"
+        )
+}
+
+enum CookieBannerScanFailureReason
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.CookieBannerScanFailureReason"
+    ) {
+    UNREACHABLE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieBannerScanFailureReasonUnreachable"
+        )
+    BLOCKED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieBannerScanFailureReasonBlocked"
+        )
+    NO_PAGES_LOADED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieBannerScanFailureReasonNoPagesLoaded"
+        )
+    INTERRUPTED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieBannerScanFailureReasonInterrupted"
+        )
+    INTERNAL
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieBannerScanFailureReasonInternal"
+        )
+    BANNER_NOT_INSTALLED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieBannerScanFailureReasonBannerNotInstalled"
+        )
+    DIFFERENT_BANNER
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieBannerScanFailureReasonDifferentBanner"
+        )
+}
+
+enum CookieBannerScanOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.CookieBannerScanOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieBannerScanOrderFieldCreatedAt"
+        )
+}
+
+input CookieBannerScanOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CookieBannerScanOrderBy"
+    ) {
+    field: CookieBannerScanOrderField!
+    direction: OrderDirection!
+}
+
+input CookieBannerScanFilter {
+    """
+    Only scans in this state. Null means every state.
+    """
+    state: CookieBannerScanState
+}
+
+type CookieBannerScanCheckpointQueueItem {
+    url: String!
+}
+
+"""
+The latest crawl frontier. The worker overwrites this; it is not a history.
+"""
+type CookieBannerScanCheckpoint {
+    visitedTemplates: [String!]!
+    queue: [CookieBannerScanCheckpointQueueItem!]!
+    coveredHosts: [String!]!
+    pagesScanned: Int!
+    elapsedMs: Int!
+    truncated: Boolean!
+}
+
+type CookieBannerScan implements Node {
+    id: ID!
+    cookieBanner: CookieBanner! @goField(forceResolver: true)
+    state: CookieBannerScanState!
+    failureReason: CookieBannerScanFailureReason
+    truncated: Boolean!
+    pagesScanned: Int!
+    cookiesFound: Int!
+    storageFound: Int!
+    resourcesFound: Int!
+    startedAt: Datetime
+    completedAt: Datetime
+    createdAt: Datetime!
+    updatedAt: Datetime!
+    checkpoint: CookieBannerScanCheckpoint
+}
+
+type CookieBannerScanConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CookieBannerScanConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [CookieBannerScanEdge!]!
+    pageInfo: PageInfo!
+}
+
+type CookieBannerScanEdge {
+    cursor: CursorKey!
+    node: CookieBannerScan!
+}
+
 type CookieBanner implements Node {
     id: ID!
     name: String!
@@ -357,6 +487,20 @@ type CookieBanner implements Node {
         orderBy: TrackerResourceOrder
         filter: TrackerResourceFilter
     ): TrackerResourceConnection @goField(forceResolver: true)
+
+    """
+    The PENDING, RUNNING, or PAUSED scan for this banner, if one exists.
+    """
+    activeScan: CookieBannerScan @goField(forceResolver: true)
+
+    scans(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: CookieBannerScanOrder
+        filter: CookieBannerScanFilter
+    ): CookieBannerScanConnection! @goField(forceResolver: true)
 
     createdAt: Datetime!
     updatedAt: Datetime!
@@ -882,6 +1026,18 @@ extend type Mutation {
     removeCookieBannerGVLVendor(
         input: RemoveCookieBannerGVLVendorInput!
     ): RemoveCookieBannerGVLVendorPayload!
+    requestCookieBannerScan(
+        input: RequestCookieBannerScanInput!
+    ): RequestCookieBannerScanPayload!
+}
+
+input RequestCookieBannerScanInput {
+    cookieBannerId: ID!
+}
+
+type RequestCookieBannerScanPayload {
+    cookieBannerScan: CookieBannerScan!
+    cookieBanner: CookieBanner!
 }
 
 input CreateCookieBannerInput {

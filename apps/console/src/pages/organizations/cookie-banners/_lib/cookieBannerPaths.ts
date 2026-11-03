@@ -58,6 +58,18 @@ export function cookieBannerResourcesPath(organizationId: string, cookieBannerId
   return `${cookieBannerPath(organizationId, cookieBannerId)}/resources`;
 }
 
+export function cookieBannerScansPath(organizationId: string, cookieBannerId: string): string {
+  return `${cookieBannerPath(organizationId, cookieBannerId)}/scans`;
+}
+
+export function cookieBannerScanPath(
+  organizationId: string,
+  cookieBannerId: string,
+  scanId: string,
+): string {
+  return `${cookieBannerScansPath(organizationId, cookieBannerId)}/${scanId}`;
+}
+
 export function cookieBannerTrailPath(organizationId: string, cookieBannerId: string): string {
   return `${cookieBannerPath(organizationId, cookieBannerId)}/trail`;
 }

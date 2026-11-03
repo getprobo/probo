@@ -515,6 +515,61 @@ func (r *cookieBannerResolver) UncategorisedTrackerResources(ctx context.Context
 	return types.NewTrackerResourceConnectionWithFilter(p, r, obj.ID, filter), nil
 }
 
+// ActiveScan is the resolver for the activeScan field.
+func (r *cookieBannerResolver) ActiveScan(ctx context.Context, obj *types.CookieBanner) (*types.CookieBannerScan, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionCookieBannerGet)
+	if err != nil {
+		return nil, err
+	}
+
+	scan, err := r.cookieBanner.GetActiveScan(ctx, scope, obj.ID)
+	if err != nil {
+		if errors.Is(err, cookiebanner.ErrScanNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get active cookie banner scan", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return types.NewCookieBannerScan(scan), nil
+}
+
+// Scans is the resolver for the scans field.
+func (r *cookieBannerResolver) Scans(ctx context.Context, obj *types.CookieBanner, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.CookieBannerScanOrderBy, filter *types.CookieBannerScanFilter) (*types.CookieBannerScanConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionCookieBannerGet)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.CookieBannerScanOrderField]{
+		Field:     coredata.CookieBannerScanOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.CookieBannerScanOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	var state *coredata.CookieBannerScanState
+	if filter != nil {
+		state = filter.State
+	}
+
+	scans, err := r.cookieBanner.ListScans(ctx, scope, obj.ID, cursor, coredata.NewCookieBannerScanFilter(state))
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list cookie banner scans", log.Error(err))
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return types.NewCookieBannerScanConnection(page.NewPage(scans, cursor), r, obj.ID, state), nil
+}
+
 // Permission is the resolver for the permission field.
 func (r *cookieBannerResolver) Permission(ctx context.Context, obj *types.CookieBanner, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
@@ -577,6 +632,48 @@ func (r *cookieBannerSampleConnectionResolver) TotalCount(ctx context.Context, o
 	count, err := r.cookieBanner.CountCookieBannerSamples(ctx, scope, obj.ParentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count cookie banner samples", log.Error(err))
+		return 0, gqlx.Internal(ctx)
+	}
+
+	return count, nil
+}
+
+// CookieBanner is the resolver for the cookieBanner field.
+func (r *cookieBannerScanResolver) CookieBanner(ctx context.Context, obj *types.CookieBannerScan) (*types.CookieBanner, error) {
+	if obj.CookieBanner == nil {
+		return nil, nil
+	}
+
+	if _, err := r.authorize(ctx, obj.CookieBanner.ID, probo.ActionCookieBannerGet); err != nil {
+		return nil, err
+	}
+
+	loaders := dataloader.FromContext(ctx)
+
+	banner, err := loaders.CookieBanner.Load(ctx, obj.CookieBanner.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
+			return nil, gqlx.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get cookie banner", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return types.NewCookieBanner(banner), nil
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *cookieBannerScanConnectionResolver) TotalCount(ctx context.Context, obj *types.CookieBannerScanConnection) (int, error) {
+	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionCookieBannerGet)
+	if err != nil {
+		return 0, err
+	}
+
+	count, err := r.cookieBanner.CountScans(ctx, scope, obj.ParentID, coredata.NewCookieBannerScanFilter(obj.State))
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot count cookie banner scans", log.Error(err))
 		return 0, gqlx.Internal(ctx)
 	}
 
@@ -1795,6 +1892,40 @@ func (r *mutationResolver) RemoveCookieBannerGVLVendor(ctx context.Context, inpu
 	}, nil
 }
 
+// RequestCookieBannerScan is the resolver for the requestCookieBannerScan field.
+func (r *mutationResolver) RequestCookieBannerScan(ctx context.Context, input types.RequestCookieBannerScanInput) (*types.RequestCookieBannerScanPayload, error) {
+	scope, err := r.authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	scan, err := r.cookieBanner.RequestScan(ctx, scope, input.CookieBannerID)
+	if err != nil {
+		if errors.Is(err, cookiebanner.ErrBannerNotFound) {
+			return nil, gqlx.NotFound(ctx, err)
+		}
+
+		if errors.Is(err, cookiebanner.ErrScanAlreadyInProgress) {
+			return nil, gqlx.Conflict(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot request cookie banner scan", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	banner, err := r.cookieBanner.GetCookieBanner(ctx, scope, input.CookieBannerID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get cookie banner", log.Error(err))
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return &types.RequestCookieBannerScanPayload{
+		CookieBannerScan: types.NewCookieBannerScan(scan),
+		CookieBanner:     types.NewCookieBanner(banner),
+	}, nil
+}
+
 // CookieCategory is the resolver for the cookieCategory field.
 func (r *trackerPatternResolver) CookieCategory(ctx context.Context, obj *types.TrackerPattern) (*types.CookieCategory, error) {
 	if _, err := r.authorize(ctx, obj.CookieCategory.ID, probo.ActionCookieCategoryGet); err != nil {
@@ -2113,6 +2244,16 @@ func (r *Resolver) CookieBannerSampleConnection() schema.CookieBannerSampleConne
 	return &cookieBannerSampleConnectionResolver{r}
 }
 
+// CookieBannerScan returns schema.CookieBannerScanResolver implementation.
+func (r *Resolver) CookieBannerScan() schema.CookieBannerScanResolver {
+	return &cookieBannerScanResolver{r}
+}
+
+// CookieBannerScanConnection returns schema.CookieBannerScanConnectionResolver implementation.
+func (r *Resolver) CookieBannerScanConnection() schema.CookieBannerScanConnectionResolver {
+	return &cookieBannerScanConnectionResolver{r}
+}
+
 // CookieBannerVersion returns schema.CookieBannerVersionResolver implementation.
 func (r *Resolver) CookieBannerVersion() schema.CookieBannerVersionResolver {
 	return &cookieBannerVersionResolver{r}
@@ -2159,6 +2300,8 @@ type (
 	cookieBannerConnectionResolver        struct{ *Resolver }
 	cookieBannerSampleResolver            struct{ *Resolver }
 	cookieBannerSampleConnectionResolver  struct{ *Resolver }
+	cookieBannerScanResolver              struct{ *Resolver }
+	cookieBannerScanConnectionResolver    struct{ *Resolver }
 	cookieBannerVersionResolver           struct{ *Resolver }
 	cookieBannerVersionConnectionResolver struct{ *Resolver }
 	cookieCategoryResolver                struct{ *Resolver }

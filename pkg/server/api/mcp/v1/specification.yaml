@@ -14327,6 +14327,120 @@ components:
           format: date-time
           description: When this sample started
 
+    CookieBannerScanState:
+      type: string
+      enum: [PENDING, RUNNING, PAUSED, COMPLETED, FAILED]
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.CookieBannerScanState
+
+    CookieBannerScanFailureReason:
+      type: string
+      enum: [UNREACHABLE, BLOCKED, NO_PAGES_LOADED, INTERRUPTED, INTERNAL, BANNER_NOT_INSTALLED, DIFFERENT_BANNER]
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.CookieBannerScanFailureReason
+
+    CookieBannerScanCheckpointQueueItem:
+      type: object
+      required: [url]
+      properties:
+        url:
+          type: string
+          description: URL still waiting in the crawl queue
+
+    CookieBannerScanCheckpoint:
+      type: object
+      required: [visited_templates, queue, covered_hosts, pages_scanned, elapsed_ms, truncated]
+      properties:
+        visited_templates:
+          type: array
+          items:
+            type: string
+          description: Page templates already visited
+        queue:
+          type: array
+          items:
+            $ref: "#/components/schemas/CookieBannerScanCheckpointQueueItem"
+          description: URLs still waiting to be scanned
+        covered_hosts:
+          type: array
+          items:
+            type: string
+          description: Third-party hosts already covered
+        pages_scanned:
+          type: integer
+          description: Pages finished when this checkpoint was saved
+        elapsed_ms:
+          type: integer
+          description: Milliseconds elapsed when this checkpoint was saved
+        truncated:
+          type: boolean
+          description: Whether the crawl had already hit its page cap
+
+    CookieBannerScan:
+      type: object
+      required:
+        - id
+        - cookie_banner_id
+        - state
+        - truncated
+        - pages_scanned
+        - cookies_found
+        - storage_found
+        - resources_found
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie banner scan ID
+        cookie_banner_id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie banner ID
+        state:
+          $ref: "#/components/schemas/CookieBannerScanState"
+          description: Current scan state
+        failure_reason:
+          anyOf:
+            - $ref: "#/components/schemas/CookieBannerScanFailureReason"
+            - type: "null"
+          description: Why the scan failed. Null unless the state is FAILED.
+        truncated:
+          type: boolean
+          description: Whether the crawl stopped because it hit its page cap
+        pages_scanned:
+          type: integer
+          description: Pages finished
+        cookies_found:
+          type: integer
+          description: Cookies recorded by this scan
+        storage_found:
+          type: integer
+          description: Storage keys recorded by this scan
+        resources_found:
+          type: integer
+          description: Resources recorded by this scan
+        started_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the worker started the scan
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the scan finished
+        created_at:
+          type: string
+          format: date-time
+          description: When the scan was queued
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+        checkpoint:
+          anyOf:
+            - $ref: "#/components/schemas/CookieBannerScanCheckpoint"
+            - type: "null"
+          description: Latest crawl frontier. Null until the worker saves one.
+
     BrowserFamily:
       type: string
       enum: [CHROME, EDGE, FIREFOX, SAFARI, OTHER]
@@ -14993,6 +15107,75 @@ components:
       properties:
         cookie_banner_sample:
           $ref: "#/components/schemas/CookieBannerSample"
+
+    ListCookieBannerScansInput:
+      type: object
+      required:
+        - cookie_banner_id
+      properties:
+        cookie_banner_id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie banner ID
+        state:
+          anyOf:
+            - $ref: "#/components/schemas/CookieBannerScanState"
+            - type: "null"
+          description: Only scans in this state. Null lists every state.
+        direction:
+          anyOf:
+            - $ref: "#/components/schemas/OrderDirection"
+            - type: "null"
+          description: Sort by requested time. Null means newest first.
+        size:
+          type: integer
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+
+    ListCookieBannerScansOutput:
+      type: object
+      required:
+        - cookie_banner_scans
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+        cookie_banner_scans:
+          type: array
+          items:
+            $ref: "#/components/schemas/CookieBannerScan"
+
+    GetCookieBannerScanInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie banner scan ID
+
+    GetCookieBannerScanOutput:
+      type: object
+      required:
+        - cookie_banner_scan
+      properties:
+        cookie_banner_scan:
+          $ref: "#/components/schemas/CookieBannerScan"
+
+    RequestCookieBannerScanInput:
+      type: object
+      required:
+        - cookie_banner_id
+      properties:
+        cookie_banner_id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie banner ID
+
+    RequestCookieBannerScanOutput:
+      type: object
+      required:
+        - cookie_banner_scan
+      properties:
+        cookie_banner_scan:
+          $ref: "#/components/schemas/CookieBannerScan"
 
     AddCookieBannerInput:
       type: object
@@ -21394,6 +21577,42 @@ tools:
       $ref: "#/components/schemas/StopCookieBannerSampleInput"
     outputSchema:
       $ref: "#/components/schemas/StopCookieBannerSampleOutput"
+  - name: listCookieBannerScans
+    title: List Cookie Banner Scans
+    description: List scans for a cookie banner, newest first unless a direction is given
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListCookieBannerScansInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListCookieBannerScansOutput"
+  - name: getCookieBannerScan
+    title: Get Cookie Banner Scan
+    description: Get a cookie banner scan by ID
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/GetCookieBannerScanInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetCookieBannerScanOutput"
+  - name: requestCookieBannerScan
+    title: Request Cookie Banner Scan
+    description: Queue a scan for a cookie banner. Fails when one is already pending, running, or paused.
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/RequestCookieBannerScanInput"
+    outputSchema:
+      $ref: "#/components/schemas/RequestCookieBannerScanOutput"
   - name: addCookieBanner
     title: Add Cookie Banner
     description: Create a new cookie banner for an organization

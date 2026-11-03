@@ -108,18 +108,47 @@ func (s *Service) GetScan(
 	return &scan, nil
 }
 
+func (s *Service) GetActiveScan(
+	ctx context.Context,
+	scope coredata.Scoper,
+	bannerID gid.GID,
+) (*coredata.CookieBannerScan, error) {
+	var scan coredata.CookieBannerScan
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := scan.LoadActiveByCookieBannerID(ctx, conn, scope, bannerID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrScanNotFound
+				}
+
+				return fmt.Errorf("cannot load active cookie banner scan: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &scan, nil
+}
+
 func (s *Service) ListScans(
 	ctx context.Context,
 	scope coredata.Scoper,
 	bannerID gid.GID,
 	cursor *page.Cursor[coredata.CookieBannerScanOrderField],
+	filter *coredata.CookieBannerScanFilter,
 ) (coredata.CookieBannerScans, error) {
 	var scans coredata.CookieBannerScans
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := scans.LoadByCookieBannerID(ctx, conn, scope, bannerID, cursor); err != nil {
+			if err := scans.LoadByCookieBannerID(ctx, conn, scope, bannerID, cursor, filter); err != nil {
 				return fmt.Errorf("cannot list cookie banner scans: %w", err)
 			}
 
@@ -137,6 +166,7 @@ func (s *Service) CountScans(
 	ctx context.Context,
 	scope coredata.Scoper,
 	bannerID gid.GID,
+	filter *coredata.CookieBannerScanFilter,
 ) (int, error) {
 	var count int
 
@@ -148,7 +178,7 @@ func (s *Service) CountScans(
 				err   error
 			)
 
-			count, err = scans.CountByCookieBannerID(ctx, conn, scope, bannerID)
+			count, err = scans.CountByCookieBannerID(ctx, conn, scope, bannerID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count cookie banner scans: %w", err)
 			}

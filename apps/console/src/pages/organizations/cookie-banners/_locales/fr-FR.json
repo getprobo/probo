@@ -190,6 +190,48 @@
     "empty": { "title": "Aucune ressource non catégorisée", "description": "Toutes les ressources détectées ont été catégorisées. Les nouvelles ressources apparaîtront ici lorsqu’elles seront détectées." },
     "emptyFiltered": "Aucune ressource correspondante"
   },
+  "scansPage": {
+    "title": "Analyses",
+    "description": "Explorations mises en file pour cette bannière. Une seule analyse peut être active à la fois.",
+    "filters": { "state": "État" },
+    "states": { "any": "Tous les états", "pending": "En file", "running": "En cours", "paused": "En pause", "completed": "Terminée", "failed": "Échouée" },
+    "columns": { "requested": "Demandée", "state": "État", "started": "Démarrée", "finished": "Terminée", "pages": "Pages", "cookies": "Cookies", "storage": "Stockage", "resources": "Ressources" },
+    "sort": { "requested": "Trier par date de demande" },
+    "badges": { "truncated": "Tronquée" },
+    "actions": { "scan": "Analyser", "previous": "Précédent", "next": "Suivant" },
+    "empty": { "title": "Aucune analyse", "description": "Lancez une analyse pour parcourir le site et détecter les traceurs." },
+    "emptyFiltered": "Aucune analyse correspondante",
+    "messages": { "requested": "Analyse mise en file" },
+    "errors": { "request": "Impossible de lancer l’analyse" }
+  },
+  "scanPage": {
+    "actions": { "back": "Analyses" },
+    "counts": { "pages": "Pages", "cookies": "Cookies", "storage": "Stockage", "resources": "Ressources" },
+    "timeline": { "title": "Cycle de vie", "queued": "Mise en file", "started": "Démarrée", "finished": "Terminée", "totalElapsed": "Durée totale", "queueTime": "Temps en file", "runningTime": "Temps d'exécution" },
+    "checkpoint": {
+      "title": "Dernier point de contrôle",
+      "elapsed": "Durée écoulée",
+      "elapsedValue": "{{seconds}} s",
+      "pagesScanned": "Pages analysées",
+      "visited": "Pages visitées",
+      "queue": "File restante",
+      "hosts": "Hôtes couverts",
+      "truncated": "Tronquée",
+      "yes": "Oui",
+      "no": "Non",
+      "empty": "Aucun"
+    },
+    "failure": {
+      "unknown": "L’analyse a échoué.",
+      "unreachable": "Le site était injoignable.",
+      "blocked": "Le site a bloqué l’analyse.",
+      "noPagesLoaded": "Aucune page n’a été chargée.",
+      "interrupted": "L’analyse a été interrompue.",
+      "internal": "L’analyse a échoué à cause d’une erreur interne.",
+      "bannerNotInstalled": "La bannière n’est pas installée sur le site.",
+      "differentBanner": "Le site utilise une autre bannière."
+    }
+  },
   "categoryList": {
     "title": "Catégories",
     "description": "Définissez l’ordre d’affichage des catégories sur la bannière. Modifiez une catégorie pour changer son nom, son identifiant et ses correspondances de consentement.",

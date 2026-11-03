@@ -190,6 +190,48 @@
     "empty": { "title": "Geen ongecategoriseerde resources", "description": "Alle gedetecteerde resources zijn gecategoriseerd. Nieuwe resources verschijnen hier zodra ze worden gedetecteerd." },
     "emptyFiltered": "Geen overeenkomende resources"
   },
+  "scansPage": {
+    "title": "Scans",
+    "description": "Crawls die voor deze banner in de wachtrij staan. Er kan één scan tegelijk actief zijn.",
+    "filters": { "state": "Status" },
+    "states": { "any": "Elke status", "pending": "In wachtrij", "running": "Bezig", "paused": "Gepauzeerd", "completed": "Voltooid", "failed": "Mislukt" },
+    "columns": { "requested": "Aangevraagd", "state": "Status", "started": "Gestart", "finished": "Afgerond", "pages": "Pagina's", "cookies": "Cookies", "storage": "Opslag", "resources": "Resources" },
+    "sort": { "requested": "Sorteren op aanvraagdatum" },
+    "badges": { "truncated": "Afgekapt" },
+    "actions": { "scan": "Scannen", "previous": "Vorige", "next": "Volgende" },
+    "empty": { "title": "Geen scans", "description": "Start een scan om de site te doorlopen en trackers te detecteren." },
+    "emptyFiltered": "Geen overeenkomende scans",
+    "messages": { "requested": "Scan in de wachtrij geplaatst" },
+    "errors": { "request": "De scan kon niet worden gestart" }
+  },
+  "scanPage": {
+    "actions": { "back": "Scans" },
+    "counts": { "pages": "Pagina's", "cookies": "Cookies", "storage": "Opslag", "resources": "Resources" },
+    "timeline": { "title": "Levenscyclus", "queued": "In wachtrij", "started": "Gestart", "finished": "Afgerond", "totalElapsed": "Totale duur", "queueTime": "Wachttijd", "runningTime": "Looptijd" },
+    "checkpoint": {
+      "title": "Laatste controlepunt",
+      "elapsed": "Verstreken tijd",
+      "elapsedValue": "{{seconds}} s",
+      "pagesScanned": "Gescande pagina's",
+      "visited": "Bezochte pagina's",
+      "queue": "Resterende wachtrij",
+      "hosts": "Gedekte hosts",
+      "truncated": "Afgekapt",
+      "yes": "Ja",
+      "no": "Nee",
+      "empty": "Geen"
+    },
+    "failure": {
+      "unknown": "De scan is mislukt.",
+      "unreachable": "De site was onbereikbaar.",
+      "blocked": "De site heeft de scan geblokkeerd.",
+      "noPagesLoaded": "Er zijn geen pagina's geladen.",
+      "interrupted": "De scan is onderbroken.",
+      "internal": "De scan is mislukt door een interne fout.",
+      "bannerNotInstalled": "De banner is niet op de site geïnstalleerd.",
+      "differentBanner": "De site gebruikt een andere banner."
+    }
+  },
   "categoryList": {
     "title": "Categorieën",
     "description": "Bepaal de volgorde waarin categorieën op de banner verschijnen. Bewerk een categorie om naam, slug en toestemmingskoppelingen te wijzigen.",

@@ -74,12 +74,13 @@ func TestRequestScan_RejectsASecondActiveScan(t *testing.T) {
 				Direction: page.OrderDirectionDesc,
 			},
 		),
+		nil,
 	)
 	require.NoError(t, err)
 	require.Len(t, scans, 1)
 	assert.Equal(t, scan.ID, scans[0].ID)
 
-	count, err := svc.CountScans(ctx, fx.scope, fx.banner.ID)
+	count, err := svc.CountScans(ctx, fx.scope, fx.banner.ID, nil)
 	require.NoError(t, err)
 	assert.Equal(t, 1, count)
 }

@@ -11552,3 +11552,66 @@ func (r *Resolver) DeleteEmployeePortalDocumentTool(ctx context.Context, req *mc
 		DeletedEmployeePortalDocumentID: input.ID,
 	}, nil
 }
+
+func (r *Resolver) ListCookieBannerScansTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListCookieBannerScansInput) (*mcp.CallToolResult, types.ListCookieBannerScansOutput, error) {
+	scope, err := r.Authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerGet)
+	if err != nil {
+		return nil, types.ListCookieBannerScansOutput{}, err
+	}
+
+	direction := page.OrderDirectionDesc
+	if input.Direction != nil {
+		direction = *input.Direction
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, page.OrderBy[coredata.CookieBannerScanOrderField]{
+		Field:     coredata.CookieBannerScanOrderFieldCreatedAt,
+		Direction: direction,
+	})
+
+	scans, err := r.cookieBanner.ListScans(ctx, scope, input.CookieBannerID, cursor, coredata.NewCookieBannerScanFilter(input.State))
+	if err != nil {
+		return nil, types.ListCookieBannerScansOutput{}, mcpx.MapError(ctx, r.logger, "cannot list cookie banner scans", err)
+	}
+
+	return nil, types.NewListCookieBannerScansOutput(page.NewPage(scans, cursor)), nil
+}
+
+func (r *Resolver) GetCookieBannerScanTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetCookieBannerScanInput) (*mcp.CallToolResult, types.GetCookieBannerScanOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionCookieBannerGet)
+	if err != nil {
+		return nil, types.GetCookieBannerScanOutput{}, err
+	}
+
+	scan, err := r.cookieBanner.GetScan(ctx, scope, input.ID)
+	if err != nil {
+		if errors.Is(err, cookiebanner.ErrScanNotFound) {
+			return nil, types.GetCookieBannerScanOutput{}, mcpx.ErrResourceNotFound
+		}
+
+		return nil, types.GetCookieBannerScanOutput{}, mcpx.MapError(ctx, r.logger, "cannot get cookie banner scan", err)
+	}
+
+	return nil, types.GetCookieBannerScanOutput{CookieBannerScan: types.NewCookieBannerScan(scan)}, nil
+}
+
+func (r *Resolver) RequestCookieBannerScanTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RequestCookieBannerScanInput) (*mcp.CallToolResult, types.RequestCookieBannerScanOutput, error) {
+	scope, err := r.Authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerUpdate)
+	if err != nil {
+		return nil, types.RequestCookieBannerScanOutput{}, err
+	}
+
+	scan, err := r.cookieBanner.RequestScan(ctx, scope, input.CookieBannerID)
+	if err != nil {
+		switch {
+		case errors.Is(err, cookiebanner.ErrBannerNotFound):
+			return nil, types.RequestCookieBannerScanOutput{}, mcpx.ErrResourceNotFound
+		case errors.Is(err, cookiebanner.ErrScanAlreadyInProgress):
+			return nil, types.RequestCookieBannerScanOutput{}, cookiebanner.ErrScanAlreadyInProgress
+		default:
+			return nil, types.RequestCookieBannerScanOutput{}, mcpx.MapError(ctx, r.logger, "cannot request cookie banner scan", err)
+		}
+	}
+
+	return nil, types.RequestCookieBannerScanOutput{CookieBannerScan: types.NewCookieBannerScan(scan)}, nil
+}

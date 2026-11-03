@@ -27,6 +27,7 @@ import {
   cookieBannerInstallPath,
   cookieBannerPath,
   cookieBannerResourcesPath,
+  cookieBannerScansPath,
   cookieBannerSettingsPath,
   cookieBannerTCFPath,
   cookieBannerTrackersPath,
@@ -65,6 +66,10 @@ export function CookieBannerNavItems({ cookieBannerId, tcf }: CookieBannerNavIte
       <NavPanelItem
         label={t("nav.cookieBannersResources")}
         to={cookieBannerResourcesPath(organizationId, cookieBannerId)}
+      />
+      <NavPanelItem
+        label={t("nav.cookieBannersScans")}
+        to={cookieBannerScansPath(organizationId, cookieBannerId)}
       />
       <NavPanelItem
         label={t("nav.cookieBannersTrail")}

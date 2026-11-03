@@ -221,6 +221,7 @@ func (s *CookieBannerScans) LoadByCookieBannerID(
 	scope Scoper,
 	cookieBannerID gid.GID,
 	cursor *page.Cursor[CookieBannerScanOrderField],
+	filter *CookieBannerScanFilter,
 ) error {
 	q := `
 SELECT
@@ -244,12 +245,16 @@ WHERE
 	%s
 	AND cookie_banner_id = @cookie_banner_id
 	AND %s
+	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	// The cursor fragment ends with ORDER BY and LIMIT, so the filter
+	// has to come before it. LIMIT would otherwise swallow the predicate.
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"cookie_banner_id": cookieBannerID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -272,6 +277,7 @@ func (s *CookieBannerScans) CountByCookieBannerID(
 	conn pg.Querier,
 	scope Scoper,
 	cookieBannerID gid.GID,
+	filter *CookieBannerScanFilter,
 ) (int, error) {
 	q := `
 SELECT COUNT(id)
@@ -279,12 +285,14 @@ FROM cookie_banner_scans
 WHERE
 	%s
 	AND cookie_banner_id = @cookie_banner_id
+	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"cookie_banner_id": cookieBannerID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 
@@ -294,6 +302,63 @@ WHERE
 	}
 
 	return count, nil
+}
+
+// LoadActiveByCookieBannerID loads the banner's PENDING, RUNNING, or
+// PAUSED scan. The partial unique index guarantees at most one.
+func (s *CookieBannerScan) LoadActiveByCookieBannerID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	cookieBannerID gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	cookie_banner_id,
+	state,
+	failure_reason,
+	truncated,
+	checkpoint,
+	pages_scanned,
+	cookies_found,
+	storage_found,
+	resources_found,
+	started_at,
+	completed_at,
+	created_at,
+	updated_at
+FROM cookie_banner_scans
+WHERE
+	%s
+	AND cookie_banner_id = @cookie_banner_id
+	AND state IN ('PENDING', 'RUNNING', 'PAUSED')
+LIMIT 1;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"cookie_banner_id": cookieBannerID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query active cookie banner scan: %w", err)
+	}
+
+	scan, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CookieBannerScan])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect active cookie banner scan: %w", err)
+	}
+
+	*s = scan
+
+	return nil
 }
 
 // Insert returns ErrResourceAlreadyExists when the banner already has a

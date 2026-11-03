@@ -31,6 +31,7 @@ import { sampleFamilyCounts } from "../../variants";
 import { familyLabel } from "../_lib/familyLabel";
 
 import { FamilyLogo } from "./FamilyLogo";
+import { StatValue } from "./StatCard";
 
 const cookieBannerFragment = graphql`
   fragment SampleFamilyCounts_cookieBanner on CookieBanner {
@@ -72,7 +73,7 @@ export function SampleFamilyCounts({
   const { t, i18n } = useTranslation("organizations/cookie-banners");
   const banner = useFragment(cookieBannerFragment, cookieBannerKey);
   const pattern = useFragment(trackerPatternFragment, trackerPatternKey);
-  const { root, card, family, logo, rates, rate, rateLead, value, fraction }
+  const { root, card, family, logo, rates, rate, fraction }
     = sampleFamilyCounts();
   const loadsByFamily = new Map(
     (banner.latestSample?.pageLoads ?? []).map(entry => [entry.family, entry.count]),
@@ -122,8 +123,6 @@ export function SampleFamilyCounts({
                 loads={loads}
                 locale={i18n.language}
                 rateClass={rate()}
-                rateLeadClass={rateLead()}
-                valueClass={value()}
                 fractionClass={fraction()}
               />
               <RateRow
@@ -132,8 +131,6 @@ export function SampleFamilyCounts({
                 loads={loads}
                 locale={i18n.language}
                 rateClass={rate()}
-                rateLeadClass={rateLead()}
-                valueClass={value()}
                 fractionClass={fraction()}
               />
               <RateRow
@@ -142,8 +139,6 @@ export function SampleFamilyCounts({
                 loads={loads}
                 locale={i18n.language}
                 rateClass={rate()}
-                rateLeadClass={rateLead()}
-                valueClass={value()}
                 fractionClass={fraction()}
               />
             </div>
@@ -160,8 +155,6 @@ interface RateRowProps {
   loads: number;
   locale: string;
   rateClass: string;
-  rateLeadClass: string;
-  valueClass: string;
   fractionClass: string;
 }
 
@@ -171,20 +164,13 @@ function RateRow({
   loads,
   locale,
   rateClass,
-  rateLeadClass,
-  valueClass,
   fractionClass,
 }: RateRowProps) {
   const rate = loads > 0 ? formatHitRate(hits, loads, locale) : "—";
 
   return (
     <div className={rateClass}>
-      <div className={rateLeadClass}>
-        <Text size={4} weight="bold" highContrast className={valueClass}>
-          {rate}
-        </Text>
-        <Text size={2}>{label}</Text>
-      </div>
+      <StatValue value={rate} label={label} />
       <Text size={2} color="faint" className={fractionClass}>
         {hits}
         {" / "}

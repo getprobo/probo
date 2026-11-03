@@ -21,6 +21,8 @@
 package types
 
 import (
+	"encoding/json"
+
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/page"
@@ -102,6 +104,95 @@ func NewListCookieBannerSamplesOutput(
 	return ListCookieBannerSamplesOutput{
 		NextCursor:          nextCursor,
 		CookieBannerSamples: samples,
+	}
+}
+
+func NewCookieBannerScan(scan *coredata.CookieBannerScan) *CookieBannerScan {
+	return &CookieBannerScan{
+		ID:             scan.ID,
+		CookieBannerID: scan.CookieBannerID,
+		State:          scan.State,
+		FailureReason:  scan.FailureReason,
+		Truncated:      scan.Truncated,
+		PagesScanned:   scan.PagesScanned,
+		CookiesFound:   scan.CookiesFound,
+		StorageFound:   scan.StorageFound,
+		ResourcesFound: scan.ResourcesFound,
+		StartedAt:      scan.StartedAt,
+		CompletedAt:    scan.CompletedAt,
+		CreatedAt:      scan.CreatedAt,
+		UpdatedAt:      scan.UpdatedAt,
+		Checkpoint:     decodeCookieBannerScanCheckpoint(scan.Checkpoint),
+	}
+}
+
+func NewListCookieBannerScansOutput(
+	p *page.Page[*coredata.CookieBannerScan, coredata.CookieBannerScanOrderField],
+) ListCookieBannerScansOutput {
+	scans := make([]*CookieBannerScan, 0, len(p.Data))
+	for _, scan := range p.Data {
+		scans = append(scans, NewCookieBannerScan(scan))
+	}
+
+	var nextCursor *page.CursorKey
+	if len(p.Data) > 0 {
+		cursorKey := p.Data[len(p.Data)-1].CursorKey(p.Cursor.OrderBy.Field)
+		nextCursor = &cursorKey
+	}
+
+	return ListCookieBannerScansOutput{
+		NextCursor:        nextCursor,
+		CookieBannerScans: scans,
+	}
+}
+
+type cookieBannerScanCheckpointJSON struct {
+	VisitedTemplates []string `json:"visited_templates"`
+	Queue            []struct {
+		URL string `json:"url"`
+	} `json:"queue"`
+	CoveredHosts []string `json:"covered_hosts"`
+	PagesScanned int      `json:"pages_scanned"`
+	ElapsedMS    int64    `json:"elapsed_ms"`
+	Truncated    bool     `json:"truncated"`
+}
+
+func decodeCookieBannerScanCheckpoint(raw *json.RawMessage) *CookieBannerScanCheckpoint {
+	if raw == nil || len(*raw) == 0 {
+		return nil
+	}
+
+	var decoded cookieBannerScanCheckpointJSON
+	if err := json.Unmarshal(*raw, &decoded); err != nil {
+		return nil
+	}
+
+	queue := make([]*CookieBannerScanCheckpointQueueItem, 0, len(decoded.Queue))
+	for _, item := range decoded.Queue {
+		if item.URL == "" {
+			continue
+		}
+
+		queue = append(queue, &CookieBannerScanCheckpointQueueItem{URL: item.URL})
+	}
+
+	visited := decoded.VisitedTemplates
+	if visited == nil {
+		visited = []string{}
+	}
+
+	hosts := decoded.CoveredHosts
+	if hosts == nil {
+		hosts = []string{}
+	}
+
+	return &CookieBannerScanCheckpoint{
+		VisitedTemplates: visited,
+		Queue:            queue,
+		CoveredHosts:     hosts,
+		PagesScanned:     decoded.PagesScanned,
+		ElapsedMs:        int(decoded.ElapsedMS),
+		Truncated:        decoded.Truncated,
 	}
 }
 

@@ -37,6 +37,9 @@ import * as removeGVLVendorOp from './removeGVLVendor.operation';
 import * as startSampleOp from './startSample.operation';
 import * as stopSampleOp from './stopSample.operation';
 import * as getSamplesOp from './getSamples.operation';
+import * as getScanOp from './getScan.operation';
+import * as getScansOp from './getScans.operation';
+import * as requestScanOp from './requestScan.operation';
 
 export const description: INodeProperties[] = [
 	{
@@ -105,6 +108,18 @@ export const description: INodeProperties[] = [
 				action: 'Get cookie banner samples',
 			},
 			{
+				name: 'Get Scan',
+				value: 'getScan',
+				description: 'Get a cookie banner scan',
+				action: 'Get a cookie banner scan',
+			},
+			{
+				name: 'Get Scans',
+				value: 'getScans',
+				description: 'Get scans for a cookie banner',
+				action: 'Get cookie banner scans',
+			},
+			{
 				name: 'List GVL Catalog',
 				value: 'listGVLCatalog',
 				description: 'List IAB GVL vendors from the global catalog',
@@ -133,6 +148,12 @@ export const description: INodeProperties[] = [
 				value: 'removeGVLVendor',
 				description: 'Remove an IAB GVL vendor from a cookie banner',
 				action: 'Remove a GVL vendor',
+			},
+			{
+				name: 'Request Scan',
+				value: 'requestScan',
+				description: 'Queue a scan for a cookie banner',
+				action: 'Request a cookie banner scan',
 			},
 			{
 				name: 'Start Sample',
@@ -179,6 +200,9 @@ export const description: INodeProperties[] = [
 	...startSampleOp.description,
 	...stopSampleOp.description,
 	...getSamplesOp.description,
+	...getScanOp.description,
+	...getScansOp.description,
+	...requestScanOp.description,
 ];
 
 export {
@@ -200,4 +224,7 @@ export {
 	startSampleOp as startSample,
 	stopSampleOp as stopSample,
 	getSamplesOp as getSamples,
+	getScanOp as getScan,
+	getScansOp as getScans,
+	requestScanOp as requestScan,
 };
