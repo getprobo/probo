@@ -44,8 +44,8 @@ var (
 )
 
 func DefaultNotificationEmailDelivery(notificationType NotificationType) NotificationEmailDelivery {
-	if notificationType == NotificationTypeTaskAssigned || notificationType == NotificationTypeTaskMentioned {
-		return NotificationEmailDeliveryNone
+	if notificationType == NotificationTypeTaskMentioned {
+		return NotificationEmailDeliveryEach
 	}
 
 	return NotificationEmailDeliveryReminders
