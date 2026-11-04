@@ -95,6 +95,8 @@
     "requested_other": "Bekijk {{count}} aanvragen",
     "nda": {
       "signed": "NDA ondertekend",
+      "recorded": "NDA gearchiveerd",
+      "bypassed": "NDA niet vereist",
       "processing": "NDA in verwerking",
       "pending": "NDA in afwachting",
       "failed": "NDA mislukt"
@@ -543,5 +545,56 @@
   },
   "landingLayout": {
     "tabs": { "branding": "Huisstijl", "content": "Inhoud" }
+  },
+  "visitorNda": {
+    "title": "Geheimhoudingsovereenkomst",
+    "description": "Sla de handtekening op het portaal over voor deze bezoeker, of bewaar een kopie van een NDA die elders al is ondertekend.",
+    "bypassed": "Deze bezoeker kan beveiligde documenten openen zonder de NDA van het portaal te ondertekenen.",
+    "signedAt": "Ondertekend op {{date}}",
+    "empty": "Geen vastgelegde NDA",
+    "emptyDescription": "Upload een pdf van een NDA die buiten Probo is ondertekend. De datum is verplicht.",
+    "fields": {
+      "signedAt": "Ondertekend op"
+    },
+    "actions": {
+      "bypass": "NDA overslaan",
+      "require": "NDA vereisen",
+      "upload": "Ondertekende NDA uploaden",
+      "replace": "Ondertekende NDA vervangen",
+      "delete": "Vastgelegde NDA verwijderen",
+      "download": "Vastgelegde NDA downloaden"
+    },
+    "bypassConfirm": {
+      "title": "NDA overslaan voor deze bezoeker?",
+      "description": "Diegene kan beveiligde documenten openen zonder de NDA van het portaal te ondertekenen. U kunt later opnieuw een handtekening vereisen.",
+      "confirm": "NDA overslaan",
+      "cancel": "Annuleren"
+    },
+    "requireConfirm": {
+      "title": "NDA opnieuw vereisen?",
+      "description": "Deze bezoeker moet de NDA van het portaal ondertekenen voordat beveiligde documenten openen, tenzij een vastgelegde NDA bewaard blijft.",
+      "confirm": "NDA vereisen",
+      "cancel": "Annuleren"
+    },
+    "deleteConfirm": {
+      "title": "Vastgelegde NDA verwijderen?",
+      "description": "Het bestand wordt van deze bezoeker verwijderd. Als de NDA niet is overgeslagen, moet diegene de NDA van het portaal opnieuw ondertekenen.",
+      "confirm": "Verwijderen",
+      "cancel": "Annuleren"
+    },
+    "messages": {
+      "bypassed": "NDA overgeslagen voor deze bezoeker",
+      "required": "NDA opnieuw vereist",
+      "uploaded": "Ondertekende NDA vastgelegd",
+      "deleted": "Vastgelegde NDA verwijderd"
+    },
+    "errors": {
+      "bypass": "Bijwerken van de NDA-vereiste mislukt",
+      "upload": "Vastleggen van de ondertekende NDA mislukt",
+      "delete": "Verwijderen van de vastgelegde NDA mislukt",
+      "signedAt": "Kies de datum waarop de NDA is ondertekend",
+      "invalidFileType": "Upload een pdf",
+      "fileTooLarge": "De pdf mag maximaal 10 MB zijn"
+    }
   }
 }

@@ -43,6 +43,9 @@ type (
 		IdentityID            gid.GID                     `db:"identity_id"`
 		CompliancePortalID    gid.GID                     `db:"compliance_portal_id"`
 		ElectronicSignatureID *gid.GID                    `db:"electronic_signature_id"`
+		NDABypassed           bool                        `db:"nda_bypassed"`
+		RecordedNDAFileID     *gid.GID                    `db:"recorded_nda_file_id"`
+		RecordedNDASignedAt   *time.Time                  `db:"recorded_nda_signed_at"`
 		State                 CompliancePortalAccessState `db:"state"`
 		AuthenticatedAt       *time.Time                  `db:"authenticated_at"`
 		CreatedAt             time.Time                   `db:"created_at"`
@@ -122,6 +125,9 @@ SELECT
 	identity_id,
 	compliance_portal_id,
 	electronic_signature_id,
+	nda_bypassed,
+	recorded_nda_file_id,
+	recorded_nda_signed_at,
 	state,
 	authenticated_at,
 	created_at,
@@ -174,6 +180,9 @@ SELECT
 	identity_id,
 	compliance_portal_id,
 	electronic_signature_id,
+	nda_bypassed,
+	recorded_nda_file_id,
+	recorded_nda_signed_at,
 	state,
 	authenticated_at,
 	created_at,
@@ -226,6 +235,9 @@ SELECT
 	identity_id,
 	compliance_portal_id,
 	electronic_signature_id,
+	nda_bypassed,
+	recorded_nda_file_id,
+	recorded_nda_signed_at,
 	state,
 	authenticated_at,
 	created_at,
@@ -284,6 +296,9 @@ SELECT
 	identity_id,
 	compliance_portal_id,
 	electronic_signature_id,
+	nda_bypassed,
+	recorded_nda_file_id,
+	recorded_nda_signed_at,
 	state,
 	authenticated_at,
 	created_at,
@@ -339,6 +354,9 @@ SELECT
 	identity_id,
 	compliance_portal_id,
 	electronic_signature_id,
+	nda_bypassed,
+	recorded_nda_file_id,
+	recorded_nda_signed_at,
 	state,
 	authenticated_at,
 	created_at,
@@ -388,6 +406,9 @@ INSERT INTO cp_accesses (
 	identity_id,
 	compliance_portal_id,
 	electronic_signature_id,
+	nda_bypassed,
+	recorded_nda_file_id,
+	recorded_nda_signed_at,
 	state,
 	authenticated_at,
 	created_at,
@@ -399,6 +420,9 @@ INSERT INTO cp_accesses (
 	@identity_id,
 	@compliance_portal_id,
 	@electronic_signature_id,
+	@nda_bypassed,
+	@recorded_nda_file_id,
+	@recorded_nda_signed_at,
 	@state,
 	@authenticated_at,
 	@created_at,
@@ -413,6 +437,9 @@ INSERT INTO cp_accesses (
 		"identity_id":             tca.IdentityID,
 		"compliance_portal_id":    tca.CompliancePortalID,
 		"electronic_signature_id": tca.ElectronicSignatureID,
+		"nda_bypassed":            tca.NDABypassed,
+		"recorded_nda_file_id":    tca.RecordedNDAFileID,
+		"recorded_nda_signed_at":  tca.RecordedNDASignedAt,
 		"state":                   tca.State,
 		"authenticated_at":        tca.AuthenticatedAt,
 		"created_at":              tca.CreatedAt,
@@ -442,6 +469,9 @@ func (tca *CompliancePortalAccess) Update(
 UPDATE cp_accesses SET
 	updated_at = @updated_at,
 	electronic_signature_id = @electronic_signature_id,
+	nda_bypassed = @nda_bypassed,
+	recorded_nda_file_id = @recorded_nda_file_id,
+	recorded_nda_signed_at = @recorded_nda_signed_at,
 	state = @state,
 	authenticated_at = @authenticated_at
 WHERE
@@ -455,6 +485,9 @@ WHERE
 		"id":                      tca.ID,
 		"updated_at":              tca.UpdatedAt,
 		"electronic_signature_id": tca.ElectronicSignatureID,
+		"nda_bypassed":            tca.NDABypassed,
+		"recorded_nda_file_id":    tca.RecordedNDAFileID,
+		"recorded_nda_signed_at":  tca.RecordedNDASignedAt,
 		"state":                   tca.State,
 		"authenticated_at":        tca.AuthenticatedAt,
 	}
@@ -515,6 +548,9 @@ SELECT
 	identity_id,
 	compliance_portal_id,
 	electronic_signature_id,
+	nda_bypassed,
+	recorded_nda_file_id,
+	recorded_nda_signed_at,
 	state,
 	authenticated_at,
 	created_at,

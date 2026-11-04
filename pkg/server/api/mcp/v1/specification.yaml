@@ -12848,6 +12848,7 @@ components:
         - state
         - email
         - full_name
+        - nda_bypassed
         - created_at
         - updated_at
       properties:
@@ -12864,12 +12865,97 @@ components:
             - string
             - "null"
           format: date-time
+        nda_bypassed:
+          type: boolean
+          description: Whether this visitor is exempt from signing the portal NDA
+        recorded_nda_signed_at:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: When the externally signed NDA was signed
+        recorded_nda_file_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: File ID of an NDA signed outside Probo
         created_at:
           type: string
           format: date-time
         updated_at:
           type: string
           format: date-time
+
+    SetCompliancePortalAccessNDABypassInput:
+      type: object
+      required:
+        - id
+        - bypassed
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Compliance portal access ID
+        bypassed:
+          type: boolean
+          description: When true, the visitor can open protected documents without signing the portal NDA
+
+    SetCompliancePortalAccessNDABypassOutput:
+      type: object
+      required:
+        - compliance_portal_access
+      properties:
+        compliance_portal_access:
+          $ref: "#/components/schemas/CompliancePortalAccess"
+
+    UploadCompliancePortalAccessRecordedNDAInput:
+      type: object
+      required:
+        - id
+        - file_name
+        - content_base64
+        - signed_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Compliance portal access ID
+        file_name:
+          type: string
+          description: PDF file name
+        mime_type:
+          type: string
+          description: MIME type. Inferred from the file name when omitted
+        content_base64:
+          type: string
+          description: PDF bytes encoded as base64
+        signed_at:
+          type: string
+          format: date-time
+          description: When the NDA was signed in the other system
+
+    UploadCompliancePortalAccessRecordedNDAOutput:
+      type: object
+      required:
+        - compliance_portal_access
+      properties:
+        compliance_portal_access:
+          $ref: "#/components/schemas/CompliancePortalAccess"
+
+    DeleteCompliancePortalAccessRecordedNDAInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Compliance portal access ID
+
+    DeleteCompliancePortalAccessRecordedNDAOutput:
+      type: object
+      required:
+        - compliance_portal_access
+      properties:
+        compliance_portal_access:
+          $ref: "#/components/schemas/CompliancePortalAccess"
 
     GetCompliancePortalInput:
       type: object
@@ -21097,6 +21183,42 @@ tools:
       $ref: "#/components/schemas/ActivateCompliancePortalAccessInput"
     outputSchema:
       $ref: "#/components/schemas/ActivateCompliancePortalAccessOutput"
+  - name: setCompliancePortalAccessNDABypass
+    title: Set Compliance Portal Access NDA Bypass
+    description: Exempt a compliance portal visitor from signing the portal NDA, or require it again
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/SetCompliancePortalAccessNDABypassInput"
+    outputSchema:
+      $ref: "#/components/schemas/SetCompliancePortalAccessNDABypassOutput"
+  - name: uploadCompliancePortalAccessRecordedNDA
+    title: Upload Compliance Portal Access Recorded NDA
+    description: Store a PDF of an NDA the visitor already signed in another system
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/UploadCompliancePortalAccessRecordedNDAInput"
+    outputSchema:
+      $ref: "#/components/schemas/UploadCompliancePortalAccessRecordedNDAOutput"
+  - name: deleteCompliancePortalAccessRecordedNDA
+    title: Delete Compliance Portal Access Recorded NDA
+    description: Remove the externally signed NDA stored for a compliance portal visitor
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/DeleteCompliancePortalAccessRecordedNDAInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteCompliancePortalAccessRecordedNDAOutput"
   - name: getCompliancePortal
     title: Get Compliance Portal
     description: Get a compliance portal by ID, including its public URL, custom domain, and Slack status

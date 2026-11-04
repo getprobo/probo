@@ -116,6 +116,8 @@
     "requested_other": "Examiner {{count}} demandes",
     "nda": {
       "signed": "NDA signé",
+      "recorded": "NDA archivé",
+      "bypassed": "NDA non requis",
       "processing": "NDA en cours",
       "pending": "NDA en attente",
       "failed": "NDA échoué"
@@ -960,6 +962,57 @@
     "tabs": {
       "branding": "Identité",
       "content": "Contenu"
+    }
+  },
+  "visitorNda": {
+    "title": "Accord de confidentialité",
+    "description": "Dispensez ce visiteur de la signature sur le portail, ou conservez une copie d’un NDA déjà signé ailleurs.",
+    "bypassed": "Ce visiteur peut ouvrir les documents protégés sans signer le NDA du portail.",
+    "signedAt": "Signé le {{date}}",
+    "empty": "Aucun NDA enregistré",
+    "emptyDescription": "Importez le PDF d’un NDA signé en dehors de Probo. La date est obligatoire.",
+    "fields": {
+      "signedAt": "Signé le"
+    },
+    "actions": {
+      "bypass": "Dispenser du NDA",
+      "require": "Exiger le NDA",
+      "upload": "Importer le NDA signé",
+      "replace": "Remplacer le NDA signé",
+      "delete": "Supprimer le NDA enregistré",
+      "download": "Télécharger le NDA enregistré"
+    },
+    "bypassConfirm": {
+      "title": "Dispenser ce visiteur du NDA ?",
+      "description": "Il pourra ouvrir les documents protégés sans signer le NDA du portail. Vous pourrez exiger une signature plus tard.",
+      "confirm": "Dispenser du NDA",
+      "cancel": "Annuler"
+    },
+    "requireConfirm": {
+      "title": "Exiger à nouveau le NDA ?",
+      "description": "Ce visiteur devra signer le NDA du portail avant d’ouvrir les documents protégés, sauf si un NDA enregistré reste au dossier.",
+      "confirm": "Exiger le NDA",
+      "cancel": "Annuler"
+    },
+    "deleteConfirm": {
+      "title": "Supprimer le NDA enregistré ?",
+      "description": "Le fichier est retiré de ce visiteur. Si le NDA n’est pas dispensé, il devra signer le NDA du portail.",
+      "confirm": "Supprimer",
+      "cancel": "Annuler"
+    },
+    "messages": {
+      "bypassed": "NDA dispensé pour ce visiteur",
+      "required": "NDA à nouveau exigé",
+      "uploaded": "NDA signé enregistré",
+      "deleted": "NDA enregistré supprimé"
+    },
+    "errors": {
+      "bypass": "Échec de la mise à jour de l’exigence de NDA",
+      "upload": "Échec de l’enregistrement du NDA signé",
+      "delete": "Échec de la suppression du NDA enregistré",
+      "signedAt": "Choisissez la date de signature du NDA",
+      "invalidFileType": "Importez un PDF",
+      "fileTooLarge": "Le PDF doit faire 10 Mo ou moins"
     }
   }
 }

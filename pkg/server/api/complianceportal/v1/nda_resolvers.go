@@ -172,6 +172,32 @@ func (r *nonDisclosureAgreementResolver) ViewerSignature(ctx context.Context, ob
 	return types.NewElectronicSignature(sig), nil
 }
 
+// ViewerDisposition is the resolver for the viewerDisposition field.
+func (r *nonDisclosureAgreementResolver) ViewerDisposition(ctx context.Context, obj *types.NonDisclosureAgreement) (types.ViewerNDADisposition, error) {
+	identity := authn.IdentityFromContext(ctx)
+	if identity == nil {
+		return types.ViewerNDADispositionSign, nil
+	}
+
+	compliancePortal := complianceportal.CompliancePortalFromContext(ctx)
+	scope := coredata.NewScopeFromObjectID(compliancePortal.ID)
+
+	access, err := r.visitor.GetPortalAccess(ctx, scope, compliancePortal.ID, identity.ID)
+	if err != nil {
+		return types.ViewerNDADispositionSign, nil
+	}
+
+	if access.RecordedNDAFileID != nil {
+		return types.ViewerNDADispositionRecorded, nil
+	}
+
+	if access.NDABypassed {
+		return types.ViewerNDADispositionBypassed, nil
+	}
+
+	return types.ViewerNDADispositionSign, nil
+}
+
 // NonDisclosureAgreement returns schema.NonDisclosureAgreementResolver implementation.
 func (r *Resolver) NonDisclosureAgreement() schema.NonDisclosureAgreementResolver {
 	return &nonDisclosureAgreementResolver{r}

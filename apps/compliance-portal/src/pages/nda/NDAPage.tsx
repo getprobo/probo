@@ -39,6 +39,7 @@ import { Navigate, useSearchParams } from "react-router";
 
 import { HeaderBand } from "#/components/HeaderBand/HeaderBand";
 import { getSafeContinueUrl } from "#/lib/auth/continueUrl";
+import { viewerMustSignNda } from "#/lib/nda";
 import { useLocalizedPath } from "#/lib/i18n/useLocale";
 import { useMutation } from "#/lib/relay/useMutation";
 import { PdfPreview, type PdfPreviewHandle } from "#/pages/documents/_components/PdfPreview";
@@ -78,6 +79,7 @@ const ndaPageFragment = graphql`
   fragment NDAPageFragment on CompliancePortal
   @refetchable(queryName: "NDAPageRefetchQuery") {
     nonDisclosureAgreement @required(action: THROW) {
+      viewerDisposition
       viewerSignature {
         id
         status
@@ -137,6 +139,8 @@ export function NDAPage({ queryRef }: NDAPageProps) {
 
   const nda = compliancePortal.nonDisclosureAgreement;
   const signature = fragment.nonDisclosureAgreement.viewerSignature;
+  const excused = !viewerMustSignNda(signature, fragment.nonDisclosureAgreement.viewerDisposition)
+    && fragment.nonDisclosureAgreement.viewerDisposition !== "SIGN";
   const hasFullName = data.viewer != null && data.viewer.fullName !== "";
 
   const safeContinueUrl = getSafeContinueUrl(searchParams.get("continue"));
@@ -156,10 +160,10 @@ export function NDAPage({ queryRef }: NDAPageProps) {
 
   // Once the signature is sealed, leave the gate and resume where the user was.
   useEffect(() => {
-    if (isCompleted) {
+    if (isCompleted || excused) {
       window.location.href = safeContinueUrl;
     }
-  }, [isCompleted, safeContinueUrl]);
+  }, [isCompleted, excused, safeContinueUrl]);
 
   // While the backend seals the signature, poll the fragment for the new status.
   useEffect(() => {
@@ -178,14 +182,14 @@ export function NDAPage({ queryRef }: NDAPageProps) {
   // Skip when the full-name gate will redirect — signing mutations reject empty
   // names, and we must not flash a DOCUMENT_VIEWED error redirect race.
   useEffect(() => {
-    if (!hasFullName || signature?.status !== "PENDING" || documentViewedRef.current) {
+    if (excused || !hasFullName || signature?.status !== "PENDING" || documentViewedRef.current) {
       return;
     }
     documentViewedRef.current = true;
     void recordSigningEvent({
       variables: { input: { signatureId: signature.id, eventType: "DOCUMENT_VIEWED" } },
     }).catch(() => {});
-  }, [hasFullName, signature, recordSigningEvent]);
+  }, [excused, hasFullName, signature, recordSigningEvent]);
 
   const handleAccept = () => {
     if (!signature) {
@@ -226,6 +230,12 @@ export function NDAPage({ queryRef }: NDAPageProps) {
     return <Navigate to={localizedPath("/")} replace />;
   }
 
+  // Bypass and a recorded external NDA already satisfy the gate. A sealed
+  // signature does too. The effect above leaves for the continue URL.
+  if (excused || isCompleted) {
+    return null;
+  }
+
   // Soft entry to /nda (banner / locked CTA) never hits requireCompletedNDA.
   // Send nameless visitors to the full-name gate first; continue returns here.
   if (!hasFullName) {
@@ -239,12 +249,6 @@ export function NDAPage({ queryRef }: NDAPageProps) {
 
   if (!nda || !signature) {
     return <Navigate to={localizedPath("/")} replace />;
-  }
-
-  // Signature already sealed: the effect above redirects to the continue URL;
-  // render nothing meanwhile so we don't flash the sign UI or the home page.
-  if (isCompleted) {
-    return null;
   }
 
   const slots = ndaPage();

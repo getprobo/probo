@@ -72,6 +72,10 @@ func (r *Resolver) requireCompletedNDA(ctx context.Context) error {
 		return gqlx.Internal(ctx)
 	}
 
+	if membership.NDABypassed || membership.RecordedNDAFileID != nil {
+		return nil
+	}
+
 	if membership.ElectronicSignatureID == nil {
 		return nil
 	}

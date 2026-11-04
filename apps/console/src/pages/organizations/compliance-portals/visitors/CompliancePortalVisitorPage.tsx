@@ -37,6 +37,7 @@ import { CompliancePortalDocumentAccessList } from "./_components/CompliancePort
 import { CompliancePortalVisitorProfileCard } from "./_components/CompliancePortalVisitorProfileCard";
 import { DeactivateVisitorDialog } from "./_components/DeactivateVisitorDialog";
 import { ElectronicSignatureSection } from "./_components/ElectronicSignatureSection";
+import { VisitorNDASection } from "./_components/VisitorNDASection";
 import { visitorsListSearch } from "./_lib/useAccessListFilters";
 import { visitorDisplayName } from "./_lib/visitorIdentity";
 import { visitorPage } from "./variants";
@@ -61,6 +62,7 @@ export const compliancePortalVisitorPageQuery = graphql`
           ...ElectronicSignatureSectionFragment
         }
         ...CompliancePortalVisitorProfileCard_access
+        ...VisitorNDASection_access
         ...CompliancePortalDocumentAccessList_access @arguments(filter: $filter)
       }
     }
@@ -161,6 +163,7 @@ export function CompliancePortalVisitorPage({ queryRef }: CompliancePortalVisito
           <ElectronicSignatureSection fragmentRef={access.ndaSignature} />
         )}
       </div>
+      <VisitorNDASection accessKey={access} />
       <CompliancePortalDocumentAccessList
         accessKey={access}
         accessId={access.id}

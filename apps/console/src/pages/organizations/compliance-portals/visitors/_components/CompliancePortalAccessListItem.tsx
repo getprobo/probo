@@ -32,7 +32,7 @@ import { graphql } from "relay-runtime";
 
 import type { CompliancePortalAccessListItemFragment$key } from "#/__generated__/core/CompliancePortalAccessListItemFragment.graphql";
 
-import { ndaSignatureListKey, ndaSignatureTone } from "../_lib/ndaSignature";
+import { accessNdaListKey, accessNdaListTone } from "../_lib/ndaSignature";
 import { visitorDisplayName, visitorVisitStatus, visitorVisitStatusTone } from "../_lib/visitorIdentity";
 import { accessListItem } from "../variants";
 
@@ -46,6 +46,10 @@ const fragment = graphql`
       email
     }
     pendingRequestCount
+    ndaBypassed
+    recordedNda {
+      id
+    }
     ndaSignature {
       status
     }
@@ -77,7 +81,7 @@ export function CompliancePortalAccessListItem({
     nda,
     joined,
   } = accessListItem();
-  const ndaStatus = access.ndaSignature?.status;
+  const ndaKey = accessNdaListKey(access);
   const displayName = visitorDisplayName(
     access.identity.fullName,
     access.identity.email,
@@ -110,10 +114,10 @@ export function CompliancePortalAccessListItem({
               </Text>
             </ListItemContent>
           </div>
-          {ndaStatus != null && (
-            <Text size={2} color={ndaSignatureTone(ndaStatus)} className={nda()}>
+          {ndaKey != null && (
+            <Text size={2} color={accessNdaListTone(access)} className={nda()}>
               <SignatureIcon aria-hidden />
-              {t(ndaSignatureListKey(ndaStatus))}
+              {t(ndaKey)}
             </Text>
           )}
         </div>

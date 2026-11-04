@@ -24,8 +24,11 @@ import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 	"go.probo.inc/probo/pkg/cmd/compliance-portal/access/activate"
+	"go.probo.inc/probo/pkg/cmd/compliance-portal/access/bypass"
 	"go.probo.inc/probo/pkg/cmd/compliance-portal/access/create"
 	"go.probo.inc/probo/pkg/cmd/compliance-portal/access/deactivate"
+	"go.probo.inc/probo/pkg/cmd/compliance-portal/access/deleterecordednda"
+	"go.probo.inc/probo/pkg/cmd/compliance-portal/access/recordnda"
 )
 
 func NewCmdAccess(f *cmdutil.Factory) *cobra.Command {
@@ -38,6 +41,9 @@ func NewCmdAccess(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(create.NewCmdCreate(f))
 	cmd.AddCommand(deactivate.NewCmdDeactivate(f))
 	cmd.AddCommand(activate.NewCmdActivate(f))
+	cmd.AddCommand(bypass.NewCmdBypass(f))
+	cmd.AddCommand(recordnda.NewCmdRecordNDA(f))
+	cmd.AddCommand(deleterecordednda.NewCmdDeleteRecordedNDA(f))
 
 	return cmd
 }

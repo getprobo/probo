@@ -23,6 +23,7 @@ import * as activateAccessOp from './activateAccess.operation';
 import * as createOp from './create.operation';
 import * as createAccessOp from './createAccess.operation';
 import * as deactivateAccessOp from './deactivateAccess.operation';
+import * as deleteRecordedNdaOp from './deleteRecordedNda.operation';
 import * as deleteOp from './delete.operation';
 import * as getOp from './get.operation';
 import * as getAllOp from './getAll.operation';
@@ -48,6 +49,8 @@ import * as updateThirdPartyPublishedOp from './updateThirdPartyPublished.operat
 import * as deleteDocumentOp from './deleteDocument.operation';
 import * as deleteAuditOp from './deleteAudit.operation';
 import * as deleteThirdPartyOp from './deleteThirdParty.operation';
+import * as setAccessNdaBypassOp from './setAccessNdaBypass.operation';
+import * as uploadRecordedNdaOp from './uploadRecordedNda.operation';
 
 export const description: INodeProperties[] = [
 	{
@@ -152,6 +155,12 @@ export const description: INodeProperties[] = [
 				action: 'Delete a compliance portal file',
 			},
 			{
+				name: 'Delete Recorded NDA',
+				value: 'deleteRecordedNda',
+				description: 'Remove an NDA signed outside Probo',
+				action: 'Delete a recorded compliance portal NDA',
+			},
+			{
 				name: 'Delete Reference',
 				value: 'deleteReference',
 				description: 'Delete a compliance portal reference',
@@ -200,6 +209,12 @@ export const description: INodeProperties[] = [
 				action: 'Get many compliance portal references',
 			},
 			{
+				name: 'Set Access NDA Bypass',
+				value: 'setAccessNdaBypass',
+				description: 'Exempt a visitor from the portal NDA, or require it again',
+				action: 'Set a compliance portal access NDA bypass',
+			},
+			{
 				name: 'Update',
 				value: 'update',
 				description: 'Update compliance portal settings',
@@ -228,6 +243,12 @@ export const description: INodeProperties[] = [
 				value: 'updateDocumentVisibility',
 				description: 'Update the visibility of a document on a compliance portal',
 				action: 'Update a document visibility on a compliance portal',
+			},
+			{
+				name: 'Upload Recorded NDA',
+				value: 'uploadRecordedNda',
+				description: 'Store a PDF of an NDA signed outside Probo',
+				action: 'Upload a recorded compliance portal NDA',
 			},
 			{
 				name: 'Update Third Party Published',
@@ -267,6 +288,9 @@ export const description: INodeProperties[] = [
 	...deleteDocumentOp.description,
 	...deleteAuditOp.description,
 	...deleteThirdPartyOp.description,
+	...deleteRecordedNdaOp.description,
+	...setAccessNdaBypassOp.description,
+	...uploadRecordedNdaOp.description,
 ];
 
 export {
@@ -299,4 +323,7 @@ export {
 	deleteDocumentOp as deleteDocument,
 	deleteAuditOp as deleteAudit,
 	deleteThirdPartyOp as deleteThirdParty,
+	deleteRecordedNdaOp as deleteRecordedNda,
+	setAccessNdaBypassOp as setAccessNdaBypass,
+	uploadRecordedNdaOp as uploadRecordedNda,
 };

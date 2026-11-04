@@ -27,6 +27,7 @@ import { graphql, useFragment } from "react-relay";
 
 import { Banner } from "#/components/Banner/Banner";
 import { useLocalizedPath } from "#/lib/i18n/useLocale";
+import { viewerMustSignNda } from "#/lib/nda";
 
 import type { UnsignedNDABanner_compliancePortal$key } from "./__generated__/UnsignedNDABanner_compliancePortal.graphql";
 
@@ -34,6 +35,7 @@ const unsignedNDABannerFragment = graphql`
   fragment UnsignedNDABanner_compliancePortal on CompliancePortal {
     viewerHasRequestedAccess
     nonDisclosureAgreement {
+      viewerDisposition
       viewerSignature {
         status
       }
@@ -52,7 +54,10 @@ export function UnsignedNDABanner({ compliancePortalKey }: UnsignedNDABannerProp
   const [dismissed, setDismissed] = useState(false);
 
   const signature = portal.nonDisclosureAgreement?.viewerSignature;
-  const needsSignature = signature != null && signature.status !== "COMPLETED";
+  const needsSignature = viewerMustSignNda(
+    signature,
+    portal.nonDisclosureAgreement?.viewerDisposition,
+  );
   const visible = !dismissed && portal.viewerHasRequestedAccess && needsSignature;
 
   if (!visible) {

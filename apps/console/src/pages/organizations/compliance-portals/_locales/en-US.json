@@ -116,6 +116,8 @@
     "requested_other": "Review {{count}} requests",
     "nda": {
       "signed": "NDA signed",
+      "recorded": "NDA on file",
+      "bypassed": "NDA not required",
       "processing": "NDA processing",
       "pending": "NDA pending",
       "failed": "NDA failed"
@@ -960,6 +962,57 @@
     "tabs": {
       "branding": "Branding",
       "content": "Content"
+    }
+  },
+  "visitorNda": {
+    "title": "Non-disclosure agreement",
+    "description": "Skip the portal signature for this visitor, or keep a copy of an NDA they already signed elsewhere.",
+    "bypassed": "This visitor can open protected documents without signing the portal NDA.",
+    "signedAt": "Signed on {{date}}",
+    "empty": "No recorded NDA",
+    "emptyDescription": "Upload a PDF of an NDA signed outside Probo. The date is required.",
+    "fields": {
+      "signedAt": "Signed on"
+    },
+    "actions": {
+      "bypass": "Skip NDA",
+      "require": "Require NDA",
+      "upload": "Upload signed NDA",
+      "replace": "Replace signed NDA",
+      "delete": "Delete recorded NDA",
+      "download": "Download recorded NDA"
+    },
+    "bypassConfirm": {
+      "title": "Skip the NDA for this visitor?",
+      "description": "They can open protected documents without signing the portal NDA. You can require a signature again later.",
+      "confirm": "Skip NDA",
+      "cancel": "Cancel"
+    },
+    "requireConfirm": {
+      "title": "Require the NDA again?",
+      "description": "This visitor must sign the portal NDA before opening protected documents, unless a recorded NDA stays on file.",
+      "confirm": "Require NDA",
+      "cancel": "Cancel"
+    },
+    "deleteConfirm": {
+      "title": "Delete the recorded NDA?",
+      "description": "The file is removed from this visitor. If the NDA is not skipped, they must sign the portal NDA again.",
+      "confirm": "Delete",
+      "cancel": "Cancel"
+    },
+    "messages": {
+      "bypassed": "NDA skipped for this visitor",
+      "required": "NDA required again",
+      "uploaded": "Signed NDA recorded",
+      "deleted": "Recorded NDA deleted"
+    },
+    "errors": {
+      "bypass": "Failed to update the NDA requirement",
+      "upload": "Failed to record the signed NDA",
+      "delete": "Failed to delete the recorded NDA",
+      "signedAt": "Choose the date the NDA was signed",
+      "invalidFileType": "Upload a PDF",
+      "fileTooLarge": "The PDF must be 10 MB or smaller"
     }
   }
 }
