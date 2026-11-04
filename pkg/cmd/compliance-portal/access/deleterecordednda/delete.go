@@ -24,6 +24,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
@@ -40,11 +41,33 @@ mutation($input: DeleteCompliancePortalAccessRecordedNDAInput!) {
 `
 
 func NewCmdDeleteRecordedNDA(f *cmdutil.Factory) *cobra.Command {
+	var flagYes bool
+
 	cmd := &cobra.Command{
 		Use:   "delete-recorded-nda <id>",
 		Short: "Remove an externally signed NDA",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if !flagYes {
+				if !f.IOStreams.IsInteractive() {
+					return fmt.Errorf("cannot delete recorded NDA: confirmation required, use --yes to confirm")
+				}
+
+				var confirmed bool
+
+				err := huh.NewConfirm().
+					Title(fmt.Sprintf("Delete recorded NDA for visitor access %s?", args[0])).
+					Value(&confirmed).
+					Run()
+				if err != nil {
+					return err
+				}
+
+				if !confirmed {
+					return nil
+				}
+			}
+
 			cfg, err := f.Config()
 			if err != nil {
 				return err
@@ -87,6 +110,8 @@ func NewCmdDeleteRecordedNDA(f *cmdutil.Factory) *cobra.Command {
 			return nil
 		},
 	}
+
+	cmd.Flags().BoolVarP(&flagYes, "yes", "y", false, "Skip confirmation prompt")
 
 	return cmd
 }

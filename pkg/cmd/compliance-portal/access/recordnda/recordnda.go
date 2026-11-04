@@ -30,6 +30,7 @@ import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
+	"go.probo.inc/probo/pkg/complianceportal/management"
 )
 
 const recordMutation = `
@@ -60,6 +61,15 @@ func NewCmdRecordNDA(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			filePath := args[1]
+
+			info, err := os.Stat(filePath)
+			if err != nil {
+				return fmt.Errorf("cannot open file: %w", err)
+			}
+
+			if info.Size() > management.RecordedNDAMaxBytes {
+				return fmt.Errorf("file exceeds the 10 MB recorded NDA limit")
+			}
 
 			file, err := os.Open(filePath)
 			if err != nil {

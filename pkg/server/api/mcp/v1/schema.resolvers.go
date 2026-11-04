@@ -26,7 +26,6 @@ import (
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
 	employeeportalmgmt "go.probo.inc/probo/pkg/employeeportal/management"
-	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/itam"
@@ -11689,15 +11688,8 @@ func (r *Resolver) SetCompliancePortalAccessNDABypassTool(ctx context.Context, r
 		return nil, types.SetCompliancePortalAccessNDABypassOutput{}, mapRecordedNDAMCPError(ctx, r, "cannot set compliance portal NDA bypass", err)
 	}
 
-	out, err := r.compliancePortalAccessWithIdentity(ctx, access)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load visitor identity", log.Error(err))
-
-		return nil, types.SetCompliancePortalAccessNDABypassOutput{}, fmt.Errorf("internal error")
-	}
-
 	return nil, types.SetCompliancePortalAccessNDABypassOutput{
-		CompliancePortalAccess: out,
+		CompliancePortalAccess: r.compliancePortalAccessAfterNDAMutation(ctx, access),
 	}, nil
 }
 
@@ -11707,7 +11699,7 @@ func (r *Resolver) UploadCompliancePortalAccessRecordedNDATool(ctx context.Conte
 		return nil, types.UploadCompliancePortalAccessRecordedNDAOutput{}, err
 	}
 
-	payload, err := decodeFileContent(input.ContentBase64, 10*1024*1024)
+	payload, err := decodeFileContent(input.ContentBase64, management.RecordedNDAMaxBytes)
 	if err != nil {
 		return nil, types.UploadCompliancePortalAccessRecordedNDAOutput{}, err
 	}
@@ -11733,15 +11725,8 @@ func (r *Resolver) UploadCompliancePortalAccessRecordedNDATool(ctx context.Conte
 		return nil, types.UploadCompliancePortalAccessRecordedNDAOutput{}, mapRecordedNDAMCPError(ctx, r, "cannot upload recorded compliance portal NDA", err)
 	}
 
-	out, err := r.compliancePortalAccessWithIdentity(ctx, access)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load visitor identity", log.Error(err))
-
-		return nil, types.UploadCompliancePortalAccessRecordedNDAOutput{}, fmt.Errorf("internal error")
-	}
-
 	return nil, types.UploadCompliancePortalAccessRecordedNDAOutput{
-		CompliancePortalAccess: out,
+		CompliancePortalAccess: r.compliancePortalAccessAfterNDAMutation(ctx, access),
 	}, nil
 }
 
@@ -11756,32 +11741,7 @@ func (r *Resolver) DeleteCompliancePortalAccessRecordedNDATool(ctx context.Conte
 		return nil, types.DeleteCompliancePortalAccessRecordedNDAOutput{}, mapRecordedNDAMCPError(ctx, r, "cannot delete recorded compliance portal NDA", err)
 	}
 
-	out, err := r.compliancePortalAccessWithIdentity(ctx, access)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load visitor identity", log.Error(err))
-
-		return nil, types.DeleteCompliancePortalAccessRecordedNDAOutput{}, fmt.Errorf("internal error")
-	}
-
 	return nil, types.DeleteCompliancePortalAccessRecordedNDAOutput{
-		CompliancePortalAccess: out,
+		CompliancePortalAccess: r.compliancePortalAccessAfterNDAMutation(ctx, access),
 	}, nil
-}
-
-func mapRecordedNDAMCPError(ctx context.Context, r *Resolver, message string, err error) error {
-	if errors.Is(err, coredata.ErrResourceNotFound) {
-		return fmt.Errorf("resource not found")
-	}
-
-	if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-		return validationErrors
-	}
-
-	if fileErr, ok := errors.AsType[*filevalidation.Error](err); ok {
-		return fmt.Errorf("%s", fileErr.Error())
-	}
-
-	r.logger.ErrorCtx(ctx, message, log.Error(err))
-
-	return fmt.Errorf("internal error")
 }

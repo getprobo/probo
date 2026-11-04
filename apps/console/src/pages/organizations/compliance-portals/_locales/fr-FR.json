@@ -975,7 +975,7 @@
       "signedAt": "Signé le"
     },
     "actions": {
-      "bypass": "Dispenser du NDA",
+      "bypass": "Exempter ce visiteur du NDA",
       "require": "Exiger le NDA",
       "upload": "Importer le NDA signé",
       "replace": "Remplacer le NDA signé",
@@ -983,9 +983,9 @@
       "download": "Télécharger le NDA enregistré"
     },
     "bypassConfirm": {
-      "title": "Dispenser ce visiteur du NDA ?",
+      "title": "Exempter ce visiteur du NDA ?",
       "description": "Il pourra ouvrir les documents protégés sans signer le NDA du portail. Vous pourrez exiger une signature plus tard.",
-      "confirm": "Dispenser du NDA",
+      "confirm": "Exempter ce visiteur du NDA",
       "cancel": "Annuler"
     },
     "requireConfirm": {
@@ -1001,7 +1001,7 @@
       "cancel": "Annuler"
     },
     "messages": {
-      "bypassed": "NDA dispensé pour ce visiteur",
+      "bypassed": "Visiteur exempté du NDA",
       "required": "NDA à nouveau exigé",
       "uploaded": "NDA signé enregistré",
       "deleted": "NDA enregistré supprimé"

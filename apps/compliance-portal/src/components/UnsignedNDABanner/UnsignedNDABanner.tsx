@@ -53,9 +53,9 @@ export function UnsignedNDABanner({ compliancePortalKey }: UnsignedNDABannerProp
   const portal = useFragment(unsignedNDABannerFragment, compliancePortalKey);
   const [dismissed, setDismissed] = useState(false);
 
-  const signature = portal.nonDisclosureAgreement?.viewerSignature;
+  const signatureStatus = portal.nonDisclosureAgreement?.viewerSignature?.status;
   const needsSignature = viewerMustSignNda(
-    signature,
+    signatureStatus != null ? { status: signatureStatus } : null,
     portal.nonDisclosureAgreement?.viewerDisposition,
   );
   const visible = !dismissed && portal.viewerHasRequestedAccess && needsSignature;

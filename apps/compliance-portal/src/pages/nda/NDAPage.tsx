@@ -39,8 +39,8 @@ import { Navigate, useSearchParams } from "react-router";
 
 import { HeaderBand } from "#/components/HeaderBand/HeaderBand";
 import { getSafeContinueUrl } from "#/lib/auth/continueUrl";
-import { viewerMustSignNda } from "#/lib/nda";
 import { useLocalizedPath } from "#/lib/i18n/useLocale";
+import { viewerMustSignNda } from "#/lib/nda";
 import { useMutation } from "#/lib/relay/useMutation";
 import { PdfPreview, type PdfPreviewHandle } from "#/pages/documents/_components/PdfPreview";
 

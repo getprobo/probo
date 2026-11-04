@@ -51,7 +51,8 @@ func mapNDASigningValidationError(ctx context.Context, err error) error {
 }
 
 // requireCompletedNDA enforces portal NDA completion for the signed-in identity.
-// No-ops when there is no viewer or the portal membership has no NDA signature.
+// No-ops when there is no viewer, the portal membership has no NDA signature,
+// the visitor is bypassed, or a recorded external NDA is on file.
 // Call from protected (non-PUBLIC) export resolvers after authentication.
 // Access-request mutations must not call this — requesting is allowed before signing.
 func (r *Resolver) requireCompletedNDA(ctx context.Context) error {

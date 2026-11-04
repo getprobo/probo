@@ -184,7 +184,13 @@ func (r *nonDisclosureAgreementResolver) ViewerDisposition(ctx context.Context, 
 
 	access, err := r.visitor.GetPortalAccess(ctx, scope, compliancePortal.ID, identity.ID)
 	if err != nil {
-		return types.ViewerNDADispositionSign, nil
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return types.ViewerNDADispositionSign, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load portal access for NDA disposition", log.Error(err))
+
+		return types.ViewerNDADispositionSign, gqlx.Internal(ctx)
 	}
 
 	if access.RecordedNDAFileID != nil {

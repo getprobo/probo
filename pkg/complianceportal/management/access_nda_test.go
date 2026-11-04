@@ -21,7 +21,9 @@
 package management
 
 import (
+	"bytes"
 	"errors"
+	"io"
 	"strings"
 	"testing"
 	"time"
@@ -96,5 +98,30 @@ func TestUploadRecordedNDARequest_Validate(t *testing.T) {
 		validationErrors, ok := errors.AsType[validator.ValidationErrors](err)
 		require.True(t, ok)
 		assert.NotEmpty(t, validationErrors.ByField("signed_at"))
+	})
+}
+
+func TestEnsureRecordedNDAPDF(t *testing.T) {
+	t.Parallel()
+
+	t.Run("accepts a pdf header and preserves the body", func(t *testing.T) {
+		t.Parallel()
+
+		body := []byte("%PDF-1.7\nhello")
+		reader, err := ensureRecordedNDAPDF(bytes.NewReader(body))
+		require.NoError(t, err)
+
+		got, err := io.ReadAll(reader)
+		require.NoError(t, err)
+		assert.Equal(t, body, got)
+	})
+
+	t.Run("rejects content without a pdf signature", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := ensureRecordedNDAPDF(bytes.NewReader([]byte("not a pdf")))
+		validationErrors, ok := errors.AsType[validator.ValidationErrors](err)
+		require.True(t, ok)
+		assert.NotEmpty(t, validationErrors.ByField("file"))
 	})
 }

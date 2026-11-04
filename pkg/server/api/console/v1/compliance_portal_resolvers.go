@@ -14,7 +14,6 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
@@ -1798,22 +1797,6 @@ func (r *mutationResolver) DeleteCompliancePortalAccessRecordedNda(ctx context.C
 	return &types.DeleteCompliancePortalAccessRecordedNDAPayload{
 		CompliancePortalAccess: types.NewCompliancePortalAccess(access),
 	}, nil
-}
-
-func mapRecordedNDAError(ctx context.Context, err error) error {
-	if errors.Is(err, coredata.ErrResourceNotFound) {
-		return gqlx.NotFound(ctx, err)
-	}
-
-	if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-		return gqlx.InvalidValidationErrors(ctx, validationErrors)
-	}
-
-	if fileErr, ok := errors.AsType[*filevalidation.Error](err); ok {
-		return gqlx.Invalidf(ctx, "%s", fileErr.Error())
-	}
-
-	return nil
 }
 
 // DeleteCompliancePortalAccess is the resolver for the deleteCompliancePortalAccess field.

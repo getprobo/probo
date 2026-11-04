@@ -996,7 +996,7 @@
     },
     "deleteConfirm": {
       "title": "Delete the recorded NDA?",
-      "description": "The file is removed from this visitor. If the NDA is not skipped, they must sign the portal NDA again.",
+      "description": "The file is removed from this visitor. If the NDA is not skipped, they must sign the portal NDA.",
       "confirm": "Delete",
       "cancel": "Cancel"
     },

@@ -95,7 +95,7 @@
     "requested_other": "Bekijk {{count}} aanvragen",
     "nda": {
       "signed": "NDA ondertekend",
-      "recorded": "NDA gearchiveerd",
+      "recorded": "NDA vastgelegd",
       "bypassed": "NDA niet vereist",
       "processing": "NDA in verwerking",
       "pending": "NDA in afwachting",
@@ -572,13 +572,13 @@
     },
     "requireConfirm": {
       "title": "NDA opnieuw vereisen?",
-      "description": "Deze bezoeker moet de NDA van het portaal ondertekenen voordat beveiligde documenten openen, tenzij een vastgelegde NDA bewaard blijft.",
+      "description": "Deze bezoeker moet de NDA van het portaal ondertekenen voordat diegene beveiligde documenten kan openen, tenzij een vastgelegde NDA bewaard blijft.",
       "confirm": "NDA vereisen",
       "cancel": "Annuleren"
     },
     "deleteConfirm": {
       "title": "Vastgelegde NDA verwijderen?",
-      "description": "Het bestand wordt van deze bezoeker verwijderd. Als de NDA niet is overgeslagen, moet diegene de NDA van het portaal opnieuw ondertekenen.",
+      "description": "Het bestand wordt van deze bezoeker verwijderd. Als de NDA niet is overgeslagen, moet diegene de NDA van het portaal ondertekenen.",
       "confirm": "Verwijderen",
       "cancel": "Annuleren"
     },

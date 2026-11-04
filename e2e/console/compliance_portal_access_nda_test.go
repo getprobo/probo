@@ -175,6 +175,27 @@ func TestCompliancePortalAccess_NDABypassAndRecordedFile(t *testing.T) {
 	pdfContent, err := base64.StdEncoding.DecodeString(recordedNDAPDFBase64)
 	require.NoError(t, err)
 
+	err = viewer.ExecuteWithFile(uploadCompliancePortalAccessRecordedNDAMutation, map[string]any{
+		"input": map[string]any{
+			"compliancePortalAccessId": node.ID,
+			"fileName":                 "viewer-nda.pdf",
+			"file":                     nil,
+			"signedAt":                 signedAt.Format(time.RFC3339),
+		},
+	}, "input.file", testutil.UploadFile{
+		Filename:    "viewer-nda.pdf",
+		ContentType: "application/pdf",
+		Content:     pdfContent,
+	}, nil)
+	require.Error(t, err)
+
+	err = viewer.ExecuteShouldFail(deleteCompliancePortalAccessRecordedNDAMutation, map[string]any{
+		"input": map[string]any{
+			"compliancePortalAccessId": node.ID,
+		},
+	})
+	require.Error(t, err)
+
 	var uploaded struct {
 		UploadCompliancePortalAccessRecordedNDA struct {
 			CompliancePortalAccess compliancePortalAccessNDANode `json:"compliancePortalAccess"`
@@ -194,6 +215,14 @@ func TestCompliancePortalAccess_NDABypassAndRecordedFile(t *testing.T) {
 		Content:     pdfContent,
 	}, &uploaded)
 	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		_ = owner.Execute(deleteCompliancePortalAccessRecordedNDAMutation, map[string]any{
+			"input": map[string]any{
+				"compliancePortalAccessId": node.ID,
+			},
+		}, nil)
+	})
 
 	recorded := uploaded.UploadCompliancePortalAccessRecordedNDA.CompliancePortalAccess
 	assert.False(t, recorded.NDABypassed)

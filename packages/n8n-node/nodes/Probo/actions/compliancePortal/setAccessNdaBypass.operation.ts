@@ -46,7 +46,7 @@ export const description: INodeProperties[] = [
 				operation: ['setAccessNdaBypass'],
 			},
 		},
-		default: true,
+		default: false,
 		description: 'Whether the visitor can open protected documents without signing the portal NDA',
 		required: true,
 	},

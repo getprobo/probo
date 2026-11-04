@@ -21,12 +21,10 @@
 package management
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
-	"mime"
-	"path/filepath"
-	"strings"
 	"time"
 
 	"go.gearno.de/crypto/uuid"
@@ -37,7 +35,10 @@ import (
 	"go.probo.inc/probo/pkg/validator"
 )
 
-const recordedNDAMaxBytes int64 = 10 * 1024 * 1024
+// RecordedNDAMaxBytes is the upload cap for an externally signed portal NDA PDF.
+const RecordedNDAMaxBytes int64 = 10 * 1024 * 1024
+
+var recordedNDAPDFMagic = []byte("%PDF-")
 
 type UploadRecordedNDARequest struct {
 	AccessID    gid.GID
@@ -71,12 +72,12 @@ func (req *UploadRecordedNDARequest) Validate() error {
 		return err
 	}
 
-	contentType := recordedNDAContentType(req.FileName, req.ContentType)
+	contentType := filevalidation.ResolveContentType(req.ContentType, req.FileName)
 	req.ContentType = contentType
 
 	fv := filevalidation.NewValidator(
 		filevalidation.WithMimeTypes("application/pdf"),
-		filevalidation.WithMaxFileSize(recordedNDAMaxBytes),
+		filevalidation.WithMaxFileSize(RecordedNDAMaxBytes),
 	)
 
 	if err := fv.Validate(req.FileName, contentType, req.Size); err != nil {
@@ -127,9 +128,17 @@ func (s *Service) UploadRecordedNDA(
 		return nil, err
 	}
 
-	var access coredata.CompliancePortalAccess
+	fileReader, err := ensureRecordedNDAPDF(req.File)
+	if err != nil {
+		return nil, err
+	}
 
-	err := s.pg.WithTx(
+	var (
+		access coredata.CompliancePortalAccess
+		s3Key  string
+	)
+
+	err = s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			if err := access.LoadByIDForUpdate(ctx, tx, scope, req.AccessID); err != nil {
@@ -159,7 +168,7 @@ func (s *Service) UploadRecordedNDA(
 			fileSize, err := s.fileManager.PutFile(
 				ctx,
 				file,
-				req.File,
+				fileReader,
 				map[string]string{
 					"type":                        "compliance-portal-recorded-nda",
 					"compliance-portal-access-id": access.ID.String(),
@@ -170,6 +179,7 @@ func (s *Service) UploadRecordedNDA(
 				return fmt.Errorf("cannot upload recorded NDA: %w", err)
 			}
 
+			s3Key = objectKey.String()
 			file.FileSize = fileSize
 
 			if err := file.Insert(ctx, tx, scope); err != nil {
@@ -189,6 +199,7 @@ func (s *Service) UploadRecordedNDA(
 		},
 	)
 	if err != nil {
+		s.cleanupFileS3Object(ctx, scope, s3Key)
 		return nil, err
 	}
 
@@ -227,16 +238,22 @@ func (s *Service) DeleteRecordedNDA(
 	return &access, nil
 }
 
-func recordedNDAContentType(fileName, contentType string) string {
-	contentType = strings.TrimSpace(contentType)
-	if contentType != "" && contentType != "application/octet-stream" {
-		return contentType
+func ensureRecordedNDAPDF(file io.Reader) (io.Reader, error) {
+	header := make([]byte, len(recordedNDAPDFMagic))
+	n, err := io.ReadFull(file, header)
+	if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
+		return nil, fmt.Errorf("cannot read recorded NDA: %w", err)
 	}
 
-	inferred := mime.TypeByExtension(filepath.Ext(fileName))
-	if inferred == "" {
-		return contentType
+	if n < len(recordedNDAPDFMagic) || !bytes.Equal(header[:n], recordedNDAPDFMagic) {
+		return nil, validator.ValidationErrors{
+			{
+				Field:   "file",
+				Code:    validator.ErrorCodeInvalidFormat,
+				Message: "must be a PDF",
+			},
+		}
 	}
 
-	return inferred
+	return io.MultiReader(bytes.NewReader(header[:n]), file), nil
 }
