@@ -95,10 +95,7 @@ WHERE
                 notification_preferences.recipient_profile_id = notifications.recipient_profile_id
                 AND notification_preferences.notification_type = notifications.type
         ),
-        CASE notifications.type
-            WHEN @task_mentioned::notification_type THEN @each::notification_email_delivery
-            ELSE @reminders::notification_email_delivery
-        END
+        @reminders::notification_email_delivery
     ) = @each::notification_email_delivery
     AND EXISTS (
         SELECT
@@ -137,7 +134,6 @@ LIMIT 1
 		q,
 		pgx.StrictNamedArgs{
 			"pending":                    NotificationStatusPending,
-			"task_mentioned":             NotificationTypeTaskMentioned,
 			"each":                       NotificationEmailDeliveryEach,
 			"reminders":                  NotificationEmailDeliveryReminders,
 			"recipient_state":            ProfileStateActive,
@@ -214,10 +210,7 @@ WHERE
                 notification_preferences.recipient_profile_id = notifications.recipient_profile_id
                 AND notification_preferences.notification_type = notifications.type
         ),
-        CASE notifications.type
-            WHEN @task_mentioned::notification_type THEN @each::notification_email_delivery
-            ELSE @reminders::notification_email_delivery
-        END
+        @reminders::notification_email_delivery
     ) = @reminders::notification_email_delivery
     AND EXISTS (
         SELECT
@@ -260,8 +253,6 @@ LIMIT 1
 			"debounce_before":            debounceBefore,
 			"now":                        now,
 			"reminder_interval_seconds":  reminderInterval.Seconds(),
-			"task_mentioned":             NotificationTypeTaskMentioned,
-			"each":                       NotificationEmailDeliveryEach,
 			"reminders":                  NotificationEmailDeliveryReminders,
 			"recipient_state":            ProfileStateActive,
 			"skip_organization_ids":      skipOrganizationIDs,
@@ -316,10 +307,7 @@ WHERE
                 notification_preferences.recipient_profile_id = notifications.recipient_profile_id
                 AND notification_preferences.notification_type = notifications.type
         ),
-        CASE notifications.type
-            WHEN @task_mentioned::notification_type THEN @each::notification_email_delivery
-            ELSE @reminders::notification_email_delivery
-        END
+        @reminders::notification_email_delivery
     ) = @each::notification_email_delivery
 RETURNING
     id,
@@ -345,7 +333,6 @@ RETURNING
 			"notification_type":    group.Type,
 			"pending":              NotificationStatusPending,
 			"now":                  now,
-			"task_mentioned":       NotificationTypeTaskMentioned,
 			"each":                 NotificationEmailDeliveryEach,
 			"reminders":            NotificationEmailDeliveryReminders,
 		},
@@ -414,10 +401,7 @@ WHERE
                 notification_preferences.recipient_profile_id = notifications.recipient_profile_id
                 AND notification_preferences.notification_type = notifications.type
         ),
-        CASE notifications.type
-            WHEN @task_mentioned::notification_type THEN @each::notification_email_delivery
-            ELSE @reminders::notification_email_delivery
-        END
+        @reminders::notification_email_delivery
     ) = @reminders::notification_email_delivery
 RETURNING
     id,
@@ -446,8 +430,6 @@ RETURNING
 			"debounce_before":           debounceBefore,
 			"now":                       now,
 			"reminder_interval_seconds": reminderInterval.Seconds(),
-			"task_mentioned":            NotificationTypeTaskMentioned,
-			"each":                      NotificationEmailDeliveryEach,
 			"reminders":                 NotificationEmailDeliveryReminders,
 		},
 	)
@@ -497,10 +479,7 @@ WHERE
                 notification_preferences.recipient_profile_id = notifications.recipient_profile_id
                 AND notification_preferences.notification_type = notifications.type
         ),
-        CASE notifications.type
-            WHEN @task_mentioned::notification_type THEN @each::notification_email_delivery
-            ELSE @reminders::notification_email_delivery
-        END
+        @reminders::notification_email_delivery
     ) = @reminders::notification_email_delivery
 RETURNING
     id,
@@ -527,8 +506,6 @@ RETURNING
 			"pending":              NotificationStatusPending,
 			"max_notifications":    NotificationEmailMaxCount,
 			"now":                  now,
-			"task_mentioned":       NotificationTypeTaskMentioned,
-			"each":                 NotificationEmailDeliveryEach,
 			"reminders":            NotificationEmailDeliveryReminders,
 		},
 	)

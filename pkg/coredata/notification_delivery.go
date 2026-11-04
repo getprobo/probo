@@ -43,11 +43,7 @@ var (
 	_ encoding.TextUnmarshaler = (*NotificationEmailDelivery)(nil)
 )
 
-func DefaultNotificationEmailDelivery(notificationType NotificationType) NotificationEmailDelivery {
-	if notificationType == NotificationTypeTaskMentioned {
-		return NotificationEmailDeliveryEach
-	}
-
+func DefaultNotificationEmailDelivery(_ NotificationType) NotificationEmailDelivery {
 	return NotificationEmailDeliveryReminders
 }
 
