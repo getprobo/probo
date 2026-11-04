@@ -508,8 +508,8 @@ function FindingRow(props: FindingRowProps) {
         <span className="font-mono text-sm">{finding.referenceId}</span>
       </Td>
       <Td>
-        <div className="min-w-0">
-          <p className="whitespace-pre-wrap break-words">
+        <div className="min-w-0 max-w-xs">
+          <p className="whitespace-pre-wrap wrap-anywhere">
             {finding.description || t("findingsPage.noDescription")}
           </p>
         </div>
