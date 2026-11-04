@@ -257,9 +257,8 @@ func trustHTTPClientWithJar(serverName string, jar http.CookieJar) *http.Client 
 
 // WaitForCompliancePortalHTTPS blocks until the dedicated trust-center listener
 // serves the page over TLS, or 30s elapse. Managed domains provision
-// certificates asynchronously after activation. Use
-// WaitForCompliancePortalHTTPSWithin when the wait must outlast the ACME
-// poll lease.
+// certificates asynchronously. Use WaitForCompliancePortalHTTPSWithin when
+// the wait must outlast a busy provisioning queue.
 func WaitForCompliancePortalHTTPS(t testing.TB, host string) {
 	t.Helper()
 

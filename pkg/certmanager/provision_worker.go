@@ -46,11 +46,17 @@ const (
 	persistFailureTimeout  = 15 * time.Second
 
 	// provisioningPollLease is how long a claimed PROVISIONING row with an open
-	// order stays ineligible for re-claim after each attempt. It must exceed
-	// processTickTimeout: the claim's row lock is released before Process runs,
-	// so a lease shorter than the maximum processing window would let another
-	// worker claim and process the same row concurrently.
+	// order stays ineligible for re-claim while Process may still be running.
+	// It must exceed processTickTimeout: the claim's row lock is released
+	// before Process runs, so a lease shorter than the maximum processing
+	// window would let another worker claim and process the same row
+	// concurrently. allowNextPoll releases that hold once the attempt has
+	// finished; the lease is not the delay between polls.
 	provisioningPollLease = processTickTimeout + 30*time.Second
+
+	// pollRetryGap keeps a finished not-ready poll from being reclaimed by the
+	// same worker tick, while still letting the next tick take it.
+	pollRetryGap = time.Second
 
 	tracerName = "go.probo.inc/probo/pkg/certmanager"
 )
@@ -257,6 +263,10 @@ func (h *beginChallengeHandler) Process(ctx context.Context, certificate coredat
 		h.recordSpanError(span, err, errorCode)
 
 		return h.persistFailure(ctx, certificate.ID, err)
+	}
+
+	if err := h.allowNextPoll(ctx, certificate.ID, 0); err != nil {
+		return fmt.Errorf("cannot schedule certificate poll: %w", err)
 	}
 
 	h.logger.InfoCtx(
@@ -493,7 +503,7 @@ func (h *pollOrderHandler) processPollOrder(
 			log.String("order_status", poll.Order.Status),
 		)
 
-		return nil
+		return h.allowNextPoll(ctx, certificate.ID, pollRetryGap)
 	case OrderPollStatusInvalid:
 		err := ErrOrderInvalid
 		errorCode := classifyProvisioningError(err)
@@ -584,7 +594,7 @@ func (h *pollOrderHandler) issueCertificate(
 				log.String("certificate_id", certificate.ID.String()),
 			)
 
-			return nil
+			return h.allowNextPoll(ctx, certificate.ID, pollRetryGap)
 		}
 
 		errorCode := classifyProvisioningError(err)
@@ -654,6 +664,64 @@ func (h *pollOrderHandler) issueCertificate(
 			return nil
 		},
 	)
+}
+
+// allowNextPoll makes a finished PROVISIONING attempt eligible for another
+// poll. A zero delay clears the claim stamp. A positive delay backdates it
+// so the in-flight lease elapses after that delay instead of in full.
+func (h *provisionCore) allowNextPoll(
+	ctx context.Context,
+	certificateID gid.GID,
+	delay time.Duration,
+) error {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), persistFailureTimeout)
+	defer cancel()
+
+	return h.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			row := &coredata.Certificate{}
+			if err := row.LoadByIDForUpdate(ctx, tx, coredata.NewNoScope(), certificateID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return nil
+				}
+
+				return fmt.Errorf("cannot load certificate %q: %w", certificateID, err)
+			}
+
+			if row.Status != coredata.CertificateStatusProvisioning ||
+				row.HTTPOrderURL == nil ||
+				*row.HTTPOrderURL == "" {
+				return nil
+			}
+
+			if delay <= 0 {
+				row.SSLLastAttemptAt = nil
+			} else {
+				row.SSLLastAttemptAt = new(nextPollAttemptAt(time.Now(), delay))
+			}
+
+			if err := row.Update(ctx, tx, coredata.NewNoScope()); err != nil {
+				return fmt.Errorf("cannot schedule certificate poll: %w", err)
+			}
+
+			return nil
+		},
+	)
+}
+
+// nextPollAttemptAt backdates the claim stamp so the poll lease elapses
+// after delay. The same tick's claim loop must not see the row as free.
+func nextPollAttemptAt(now time.Time, delay time.Duration) time.Time {
+	if delay < pollRetryGap {
+		delay = pollRetryGap
+	}
+
+	if delay >= provisioningPollLease {
+		delay = provisioningPollLease - pollRetryGap
+	}
+
+	return now.Add(-provisioningPollLease + delay)
 }
 
 func (h *provisionCore) persistFailure(

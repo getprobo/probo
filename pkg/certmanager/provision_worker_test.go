@@ -24,6 +24,7 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -173,6 +174,43 @@ func TestDecideProvisioningOutcome_DNSIsNonTerminal(t *testing.T) {
 	assert.Equal(t, 0, outcome.retryCount)
 	assert.True(t, outcome.clearACMEState)
 	assert.Equal(t, ProvisioningErrorDNSCNAME, outcome.errorCode)
+}
+
+func TestNextPollAttemptAt_BecomesEligibleAfterDelay(t *testing.T) {
+	t.Parallel()
+
+	now := time.Date(2026, 11, 4, 12, 0, 0, 0, time.UTC)
+	attempt := nextPollAttemptAt(now, pollRetryGap)
+
+	assert.False(t, pollLeaseElapsed(attempt, now))
+	assert.False(t, pollLeaseElapsed(attempt, now.Add(pollRetryGap)))
+	assert.True(t, pollLeaseElapsed(attempt, now.Add(pollRetryGap+time.Millisecond)))
+}
+
+func TestNextPollAttemptAt_ShortDelayStillSkipsThisTick(t *testing.T) {
+	t.Parallel()
+
+	now := time.Date(2026, 11, 4, 12, 0, 0, 0, time.UTC)
+	attempt := nextPollAttemptAt(now, 0)
+
+	assert.False(t, pollLeaseElapsed(attempt, now))
+	assert.Equal(t, nextPollAttemptAt(now, pollRetryGap), attempt)
+}
+
+func TestNextPollAttemptAt_ClampsDelayInsideLease(t *testing.T) {
+	t.Parallel()
+
+	now := time.Date(2026, 11, 4, 12, 0, 0, 0, time.UTC)
+
+	assert.Equal(
+		t,
+		nextPollAttemptAt(now, provisioningPollLease-pollRetryGap),
+		nextPollAttemptAt(now, provisioningPollLease+time.Minute),
+	)
+}
+
+func pollLeaseElapsed(lastAttempt time.Time, now time.Time) bool {
+	return lastAttempt.Before(now.Add(-provisioningPollLease))
 }
 
 func TestDecideProvisioningOutcome_RateLimitWithoutOrderStaysPending(t *testing.T) {
