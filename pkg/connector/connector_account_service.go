@@ -220,6 +220,35 @@ func (s *Service) CountDistinctAccounts(
 	return count, nil
 }
 
+func (s *Service) UsedBySCIMBridge(
+	ctx context.Context,
+	scope coredata.Scoper,
+	connectorID gid.GID,
+) (bool, error) {
+	var count int
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			bridges := &coredata.SCIMBridges{}
+
+			var err error
+
+			count, err = bridges.CountByConnectorID(ctx, conn, scope, connectorID)
+			if err != nil {
+				return fmt.Errorf("cannot count SCIM bridges for connector: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
+}
+
 func (s *Service) EnableAccounts(
 	ctx context.Context,
 	scope coredata.Scoper,
