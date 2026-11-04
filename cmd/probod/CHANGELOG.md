@@ -4,6 +4,39 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.339.0] - 2026-11-04
+
+### Added
+
+- Email notifications. Every notification lands in the in-app inbox,
+  and email is sent from pending inbox items. Each organization and
+  membership profile chooses per notification type: no email, a single
+  email, up to four follow-up reminders until the item is handled, or a
+  weekly digest. Settings live on the employee portal
+- Task assignment and mention emails, linking to the task in the
+  employee portal
+
+### Changed
+
+- Signature and approval requests use the notification email schedule
+  instead of their own reminder schedule.
+  `PROBOD_DOCUMENT_NOTIFICATION_INTERVAL`,
+  `PROBOD_DOCUMENT_NOTIFICATION_DEBOUNCE_DELAY`, and
+  `PROBOD_DOCUMENT_NOTIFICATION_REMINDER_INTERVAL` are renamed to
+  `PROBOD_NOTIFICATION_EMAIL_INTERVAL`,
+  `PROBOD_NOTIFICATION_EMAIL_DEBOUNCE_DELAY`, and
+  `PROBOD_NOTIFICATION_EMAIL_REMINDER_INTERVAL`.
+  `PROBOD_NOTIFICATION_WEEKLY_WEEKDAY` and
+  `PROBOD_NOTIFICATION_WEEKLY_HOUR` set when the weekly digest is sent
+  (default Monday, 16:00 UTC)
+- GraphQL client errors such as `NOT_FOUND` and `INVALID` are logged at
+  info instead of error
+
+### Fixed
+
+- Long finding descriptions no longer push the findings table headers
+  out of place
+
 ## [0.338.0] - 2026-11-04
 
 ### Added
