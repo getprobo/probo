@@ -67,6 +67,17 @@ func TestDoRaw_SendsOperationName(t *testing.T) {
 			name:  "anonymous query",
 			query: "query { ok }",
 		},
+		{
+			name: "several named operations",
+			query: `
+query AssetList { node { id } }
+query AssetView { node { id } }
+`,
+		},
+		{
+			name:  "name only inside a block string",
+			query: "query { field(arg: \"\"\"\nquery FakeName { x }\n\"\"\") { id } }",
+		},
 	}
 
 	for _, tt := range tests {
@@ -103,6 +114,7 @@ func TestDoRaw_SendsOperationName(t *testing.T) {
 
 				operationName, ok := got["operationName"]
 				assert.Equal(t, tt.present, ok)
+
 				if tt.present {
 					assert.Equal(t, tt.want, operationName)
 				}
@@ -149,6 +161,7 @@ func TestDoUpload_SendsOperationName(t *testing.T) {
 					}
 
 					reader := multipart.NewReader(r.Body, params["boundary"])
+
 					part, err := reader.NextPart()
 					if err != nil {
 						http.Error(w, err.Error(), http.StatusBadRequest)
@@ -186,6 +199,7 @@ func TestDoUpload_SendsOperationName(t *testing.T) {
 
 				operationName, ok := got["operationName"]
 				assert.Equal(t, tt.present, ok)
+
 				if tt.present {
 					assert.Equal(t, tt.want, operationName)
 				}

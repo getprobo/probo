@@ -33,7 +33,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var operationLead = regexp.MustCompile(`^(?:query|mutation|subscription)\b`)
+var (
+	operationLead = regexp.MustCompile(`^(?:query|mutation|subscription)\b`)
+	// Source templates may contain %s or ${...} and still need a name in
+	// the document text. Runtime code uses the GraphQL parser instead.
+	namedOperationLead = regexp.MustCompile(
+		`(?m)^[ \t]*(?:query|mutation|subscription)\s+[_A-Za-z][_0-9A-Za-z]*\b`,
+	)
+)
 
 func TestShippedGraphQLOperationsAreNamed(t *testing.T) {
 	t.Parallel()
@@ -81,7 +88,7 @@ func TestShippedGraphQLOperationsAreNamed(t *testing.T) {
 			}
 
 			for _, doc := range graphqlDocuments(string(src), ext != ".go") {
-				if operationNameFromQuery(doc) != "" {
+				if namedOperationLead.MatchString(doc) {
 					continue
 				}
 

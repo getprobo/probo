@@ -30,10 +30,11 @@ import (
 	"net/http"
 	"net/textproto"
 	"net/url"
-	"regexp"
 	"strings"
 	"time"
 
+	"github.com/vektah/gqlparser/v2/ast"
+	"github.com/vektah/gqlparser/v2/parser"
 	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/version"
 )
@@ -189,17 +190,13 @@ func (c *Client) DoRaw(
 	return respBody, nil
 }
 
-var graphqlOperationNamePattern = regexp.MustCompile(
-	`(?m)^[ \t]*(?:query|mutation|subscription)\s+([_A-Za-z][_0-9A-Za-z]*)\b`,
-)
-
 func operationNameFromQuery(query string) string {
-	match := graphqlOperationNamePattern.FindStringSubmatch(query)
-	if match == nil {
+	doc, err := parser.ParseQuery(&ast.Source{Input: query})
+	if err != nil || doc == nil || len(doc.Operations) != 1 {
 		return ""
 	}
 
-	return match[1]
+	return doc.Operations[0].Name
 }
 
 func newGraphQLRequest(query string, variables map[string]any) graphQLRequest {

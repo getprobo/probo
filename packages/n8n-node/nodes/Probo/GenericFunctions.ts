@@ -62,12 +62,19 @@ function graphqlBodyOrThrow(
 }
 
 // Send the operation name so server logs and traces can name the request.
+// Only a single named operation is safe: several names used to be rejected,
+// and picking the first would run that one while the rest stay unused.
 function graphqlOperationName(query: string): string | undefined {
-	const match = query.match(
-		/^[ \t]*(?:query|mutation|subscription)\s+([_A-Za-z][_0-9A-Za-z]*)\b/m,
-	);
+	const operations = [
+		...query.matchAll(
+			/^[ \t]*(?:query|mutation|subscription)(?:\s+([_A-Za-z][_0-9A-Za-z]*))?\b/gm,
+		),
+	];
+	if (operations.length !== 1) {
+		return undefined;
+	}
 
-	return match?.[1];
+	return operations[0][1] || undefined;
 }
 
 function graphqlRequestBody(query: string, variables: IDataObject): IDataObject {
