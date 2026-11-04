@@ -155,11 +155,104 @@ func TestInterceptOperation(t *testing.T) {
 
 			var entry map[string]any
 			require.NoError(t, json.Unmarshal([]byte(lines[0]), &entry))
-			assert.Equal(t, "ERROR", entry["level"])
+			assert.Equal(t, "INFO", entry["level"])
 			assert.Contains(t, entry["msg"], "query Viewer failed")
 			assert.Equal(t, float64(1), entry["graphql_operation_error_count"])
 			assert.Equal(t, "INVALID", entry["graphql_operation_error_codes"])
 			assert.NotContains(t, lines[0], "api-key-secret")
+		},
+	)
+
+	t.Run(
+		"logs client errors at info and internal errors at error",
+		func(t *testing.T) {
+			t.Parallel()
+
+			tests := []struct {
+				name  string
+				errs  gqlerror.List
+				level string
+			}{
+				{
+					name: "not found",
+					errs: gqlerror.List{
+						&gqlerror.Error{Extensions: map[string]any{"code": "NOT_FOUND"}},
+					},
+					level: "INFO",
+				},
+				{
+					name: "forbidden",
+					errs: gqlerror.List{
+						&gqlerror.Error{Extensions: map[string]any{"code": "FORBIDDEN"}},
+					},
+					level: "INFO",
+				},
+				{
+					name: "unauthenticated",
+					errs: gqlerror.List{
+						&gqlerror.Error{Extensions: map[string]any{"code": "UNAUTHENTICATED"}},
+					},
+					level: "INFO",
+				},
+				{
+					name: "invalid",
+					errs: gqlerror.List{
+						&gqlerror.Error{Extensions: map[string]any{"code": "INVALID"}},
+					},
+					level: "INFO",
+				},
+				{
+					name: "internal",
+					errs: gqlerror.List{
+						&gqlerror.Error{Extensions: map[string]any{"code": "INTERNAL"}},
+					},
+					level: "ERROR",
+				},
+				{
+					name:  "no code",
+					errs:  gqlerror.List{gqlerror.Errorf("boom")},
+					level: "ERROR",
+				},
+				{
+					name: "invalid and internal",
+					errs: gqlerror.List{
+						&gqlerror.Error{Extensions: map[string]any{"code": "INVALID"}},
+						&gqlerror.Error{Extensions: map[string]any{"code": "INTERNAL"}},
+					},
+					level: "ERROR",
+				},
+			}
+
+			for _, tt := range tests {
+				t.Run(
+					tt.name,
+					func(t *testing.T) {
+						t.Parallel()
+
+						ctx := operationContext()
+
+						var logs bytes.Buffer
+
+						extension := gqlx.NewTracingExtension(log.NewLogger(log.WithOutput(&logs)))
+
+						handler := extension.InterceptOperation(
+							ctx,
+							func(context.Context) graphql.ResponseHandler {
+								return func(context.Context) *graphql.Response {
+									return &graphql.Response{Errors: tt.errs}
+								}
+							},
+						)
+
+						require.NotNil(t, handler(ctx))
+
+						var entry map[string]any
+						require.NoError(t, json.Unmarshal([]byte(strings.TrimSpace(logs.String())), &entry))
+						assert.Equal(t, tt.level, entry["level"])
+						assert.Contains(t, entry["msg"], "query Viewer failed")
+					},
+				)
+			}
 		},
 	)
 }

@@ -150,7 +150,12 @@ func (t TracingExtension) InterceptOperation(ctx context.Context, next graphql.O
 		duration := time.Since(startTime)
 
 		if len(errs) > 0 {
-			t.logger.ErrorCtx(
+			logCtx := t.logger.InfoCtx
+			if hasInternalError(errs) {
+				logCtx = t.logger.ErrorCtx
+			}
+
+			logCtx(
 				ctx,
 				fmt.Sprintf("%s %s failed %s", operationType, operationName, duration.String()),
 				log.String("graphql_operation_name", operationName),
@@ -214,6 +219,18 @@ func (t TracingExtension) InterceptOperation(ctx context.Context, next graphql.O
 
 		return resp
 	}
+}
+
+// hasInternalError reports whether any error is INTERNAL or has no known code.
+func hasInternalError(errs gqlerror.List) bool {
+	for _, err := range errs {
+		code, _ := err.Extensions["code"].(string)
+		if _, ok := safeGraphQLErrorCodes[code]; !ok || code == "INTERNAL" {
+			return true
+		}
+	}
+
+	return false
 }
 
 var safeGraphQLErrorCodes = map[string]struct{}{
