@@ -4,6 +4,22 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.338.0] - 2026-11-04
+
+### Added
+
+- Clicking an image in a read-only task comment opens it at viewport
+  size. Escape, the close control, or a click on the backdrop dismisses
+  it
+
+### Changed
+
+- The access review campaign page filters sources by provider instead of
+  by connector account. Sources without a connector (CSV imports) are
+  hidden while a provider filter is active
+- MCP clients are no longer told to listen for tool list changes, since
+  the tool list is fixed for the life of the server
+
 ## [0.337.0] - 2026-11-03
 
 ### Added
