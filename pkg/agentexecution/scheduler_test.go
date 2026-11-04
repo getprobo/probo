@@ -480,7 +480,8 @@ func TestScheduler_ConversationalShutdownRestoresCheckpoint(t *testing.T) {
 	close(toolRelease)
 
 	select {
-	case <-firstDone:
+	case err := <-firstDone:
+		require.ErrorIs(t, err, context.Canceled)
 	case <-time.After(5 * time.Second):
 		t.Fatal("first worker did not stop gracefully")
 	}

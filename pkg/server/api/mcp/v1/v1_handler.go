@@ -111,7 +111,19 @@ func NewMux(
 		slackDestinations:     slackDestinations,
 	}
 
-	mcpServer := server.New(resolver, mcpgenmcp.WithRecoverFunc(mcpx.NewRecoverFunc(logger)))
+	// Tools are registered once for this process, so clients should not
+	// listen for list changes. Logging is omitted because it is deprecated,
+	// and a non-nil Capabilities value replaces the SDK default that would
+	// advertise it.
+	mcpServer := server.New(
+		resolver,
+		mcpgenmcp.WithRecoverFunc(mcpx.NewRecoverFunc(logger)),
+		mcpgenmcp.WithServerOptions(&mcp.ServerOptions{
+			Capabilities: &mcp.ServerCapabilities{
+				Tools: &mcp.ToolCapabilities{ListChanged: false},
+			},
+		}),
+	)
 
 	mcpServer.AddReceivingMiddleware(mcpx.LoggingMiddleware(logger))
 	mcpServer.AddReceivingMiddleware(mcpx.ListToolsCacheMiddleware(5 * time.Minute))

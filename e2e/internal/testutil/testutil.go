@@ -254,10 +254,16 @@ func Teardown() {
 		_ = testEnv.cmd.Process.Signal(syscall.SIGTERM)
 
 		select {
-		case <-testEnv.done:
+		case err := <-testEnv.done:
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "e2etest: probod exit: %v\n", err)
+			}
 		case <-time.After(10 * time.Second):
 			_ = testEnv.cmd.Process.Kill()
-			<-testEnv.done
+
+			if err := <-testEnv.done; err != nil {
+				fmt.Fprintf(os.Stderr, "e2etest: probod exit: %v\n", err)
+			}
 		}
 	}
 }

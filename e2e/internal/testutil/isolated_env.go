@@ -181,10 +181,16 @@ func (e *IsolatedEnv) stop() {
 	_ = e.cmd.Process.Signal(syscall.SIGTERM)
 
 	select {
-	case <-e.done:
+	case err := <-e.done:
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "e2etest: isolated probod exit: %v\n", err)
+		}
 	case <-time.After(10 * time.Second):
 		_ = e.cmd.Process.Kill()
-		<-e.done
+
+		if err := <-e.done; err != nil {
+			fmt.Fprintf(os.Stderr, "e2etest: isolated probod exit: %v\n", err)
+		}
 	}
 }
 
