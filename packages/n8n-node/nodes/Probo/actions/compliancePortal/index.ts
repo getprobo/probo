@@ -245,16 +245,16 @@ export const description: INodeProperties[] = [
 				action: 'Update a document visibility on a compliance portal',
 			},
 			{
-				name: 'Upload Recorded NDA',
-				value: 'uploadRecordedNda',
-				description: 'Store a PDF of an NDA signed outside Probo',
-				action: 'Upload a recorded compliance portal NDA',
-			},
-			{
 				name: 'Update Third Party Published',
 				value: 'updateThirdPartyPublished',
 				description: 'Publish or unpublish a third party on a compliance portal',
 				action: 'Update a third party published state on a compliance portal',
+			},
+			{
+				name: 'Upload Recorded NDA',
+				value: 'uploadRecordedNda',
+				description: 'Store a PDF of an NDA signed outside Probo',
+				action: 'Upload a recorded compliance portal NDA',
 			},
 		],
 		default: 'get',
