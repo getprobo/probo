@@ -335,6 +335,99 @@ func TestConnectorService_Delete(t *testing.T) {
 	})
 }
 
+func TestUsedBySCIMBridge_HidesThatConnectorFromDistinctAccountCount(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	scope, organizationID := seedConnectorDeleteOrg(t, client)
+	service := Service{pg: client}
+	held := newGoogleWorkspaceConnector(t, client, scope, organizationID, "Directory")
+	other := newGoogleWorkspaceConnector(t, client, scope, organizationID, "Audit")
+
+	now := time.Now().UTC()
+
+	require.NoError(t, client.WithTx(t.Context(), func(ctx context.Context, tx pg.Tx) error {
+		config := &coredata.SCIMConfiguration{
+			ID:             gid.New(scope.GetTenantID(), coredata.SCIMConfigurationEntityType),
+			OrganizationID: organizationID,
+			HashedToken:    []byte{0x01},
+			CreatedAt:      now,
+			UpdatedAt:      now,
+		}
+
+		if err := config.Insert(ctx, tx, scope); err != nil {
+			return err
+		}
+
+		bridge := &coredata.SCIMBridge{
+			ID:                  gid.New(scope.GetTenantID(), coredata.SCIMBridgeEntityType),
+			OrganizationID:      organizationID,
+			ScimConfigurationID: config.ID,
+			ConnectorID:         &held.ID,
+			Type:                coredata.SCIMBridgeTypeGoogleWorkspace,
+			State:               coredata.SCIMBridgeStateActive,
+			ExcludedUserNames:   []string{},
+			CreatedAt:           now,
+			UpdatedAt:           now,
+		}
+
+		return bridge.Insert(ctx, tx, scope)
+	}))
+
+	heldByBridge, err := service.UsedBySCIMBridge(t.Context(), scope, held.ID)
+	require.NoError(t, err)
+	assert.True(t, heldByBridge)
+
+	otherByBridge, err := service.UsedBySCIMBridge(t.Context(), scope, other.ID)
+	require.NoError(t, err)
+	assert.False(t, otherByBridge)
+
+	heldByIDs, err := service.UsedBySCIMBridgeByConnectorIDs(
+		t.Context(),
+		scope,
+		[]gid.GID{held.ID, other.ID},
+	)
+	require.NoError(t, err)
+	assert.Equal(
+		t,
+		map[gid.GID]bool{
+			held.ID:  true,
+			other.ID: false,
+		},
+		heldByIDs,
+	)
+
+	count, err := service.CountDistinctAccounts(t.Context(), scope, other.ID)
+	require.NoError(t, err)
+	assert.Equal(t, 1, count)
+}
+
+func newGoogleWorkspaceConnector(
+	t *testing.T,
+	client *pg.Client,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+	name string,
+) *coredata.Connector {
+	t.Helper()
+
+	service := Service{pg: client}
+
+	cnnctr, err := service.Create(t.Context(), scope, CreateConnectorRequest{
+		OrganizationID: organizationID,
+		Name:           name,
+		Provider:       coredata.ConnectorProviderGoogleWorkspace,
+		Protocol:       coredata.ConnectorProtocolOAuth2,
+		Connection: &connectorprotocol.OAuth2Connection{
+			AccessToken: "test-token",
+			TokenType:   "Bearer",
+		},
+	})
+	require.NoError(t, err)
+
+	return cnnctr
+}
+
 func TestConnectorName_RejectsEmptyAndUnsafeValues(t *testing.T) {
 	t.Parallel()
 

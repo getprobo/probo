@@ -116,6 +116,7 @@ type (
 		Framework                                  *dataloadgen.Loader[gid.GID, *coredata.Framework]
 		Control                                    *dataloadgen.Loader[gid.GID, *coredata.Control]
 		ConnectorAccount                           *dataloadgen.Loader[gid.GID, *coredata.ConnectorAccount]
+		ConnectorUsedBySCIMBridge                  *dataloadgen.Loader[gid.GID, bool]
 		ThirdParty                                 *dataloadgen.Loader[gid.GID, *coredata.ThirdParty]
 		Document                                   *dataloadgen.Loader[gid.GID, *coredata.Document]
 		Profile                                    *dataloadgen.Loader[gid.GID, *coredata.MembershipProfile]
@@ -206,6 +207,7 @@ func (f *batchFetcher) newLoaders() *Loaders {
 		Framework:                                dataloadgen.NewMappedLoader(f.fetchFrameworks),
 		Control:                                  dataloadgen.NewMappedLoader(f.fetchControls),
 		ConnectorAccount:                         dataloadgen.NewMappedLoader(f.fetchConnectorAccounts),
+		ConnectorUsedBySCIMBridge:                dataloadgen.NewMappedLoader(f.fetchConnectorUsedBySCIMBridge),
 		ThirdParty:                               dataloadgen.NewMappedLoader(f.fetchThirdParties),
 		Document:                                 dataloadgen.NewMappedLoader(f.fetchDocuments),
 		Profile:                                  dataloadgen.NewMappedLoader(f.fetchProfiles),
@@ -763,6 +765,28 @@ func (f *batchFetcher) fetchCompliancePortalDocumentAccessesByFile(
 				CompliancePortalFileID:   *access.CompliancePortalFileID,
 			}] = access
 		}
+	}
+
+	return result, nil
+}
+
+func (f *batchFetcher) fetchConnectorUsedBySCIMBridge(
+	ctx context.Context,
+	keys []gid.GID,
+) (map[gid.GID]bool, error) {
+	result := make(map[gid.GID]bool, len(keys))
+
+	for tenantID, connectorIDs := range gidKeysByTenant(keys) {
+		held, err := f.probo.Connectors.UsedBySCIMBridgeByConnectorIDs(
+			ctx,
+			scopeFromContext(ctx, tenantID),
+			connectorIDs,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("cannot batch load SCIM-held connector ids: %w", err)
+		}
+
+		maps.Copy(result, held)
 	}
 
 	return result, nil

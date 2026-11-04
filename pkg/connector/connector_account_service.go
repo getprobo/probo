@@ -220,6 +220,57 @@ func (s *Service) CountDistinctAccounts(
 	return count, nil
 }
 
+func (s *Service) UsedBySCIMBridge(
+	ctx context.Context,
+	scope coredata.Scoper,
+	connectorID gid.GID,
+) (bool, error) {
+	held, err := s.UsedBySCIMBridgeByConnectorIDs(ctx, scope, []gid.GID{connectorID})
+	if err != nil {
+		return false, err
+	}
+
+	return held[connectorID], nil
+}
+
+func (s *Service) UsedBySCIMBridgeByConnectorIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	connectorIDs []gid.GID,
+) (map[gid.GID]bool, error) {
+	held := make(map[gid.GID]bool, len(connectorIDs))
+	for _, id := range connectorIDs {
+		held[id] = false
+	}
+
+	if len(connectorIDs) == 0 {
+		return held, nil
+	}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			bridges := &coredata.SCIMBridges{}
+
+			ids, err := bridges.LoadConnectorIDsByConnectorIDs(ctx, conn, scope, connectorIDs)
+			if err != nil {
+				return fmt.Errorf("cannot load SCIM bridges for connectors: %w", err)
+			}
+
+			for _, id := range ids {
+				held[id] = true
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return held, nil
+}
+
 func (s *Service) EnableAccounts(
 	ctx context.Context,
 	scope coredata.Scoper,

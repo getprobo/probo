@@ -383,8 +383,8 @@ WHERE
 }
 
 // CountDistinctExternalAccountIDsByOrganizationAndProvider counts external
-// account ids once across every connector of provider in the organization.
-// The same id stored on two credentials counts once.
+// account ids once across connectors of provider that a SCIM bridge does not
+// hold. The same id stored on two credentials counts once.
 func (accounts *ConnectorAccounts) CountDistinctExternalAccountIDsByOrganizationAndProvider(
 	ctx context.Context,
 	conn pg.Querier,
@@ -405,9 +405,16 @@ WHERE
             %s
             AND organization_id = @organization_id
             AND provider = @provider
+            AND NOT EXISTS (
+                SELECT 1
+                FROM iam_scim_bridges
+                WHERE
+                    %s
+                    AND connector_id = connectors.id
+            )
     );
 `
-	q = fmt.Sprintf(q, scope.SQLFragment(), scope.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), scope.SQLFragment(), scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"organization_id": organizationID,

@@ -18,6 +18,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlx"
@@ -195,6 +196,22 @@ func (r *connectorResolver) DistinctAccountCount(ctx context.Context, obj *types
 	}
 
 	return count, nil
+}
+
+// UsedByScimBridge is the resolver for the usedByScimBridge field.
+func (r *connectorResolver) UsedByScimBridge(ctx context.Context, obj *types.Connector) (bool, error) {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionConnectorGet); err != nil {
+		return false, err
+	}
+
+	used, err := dataloader.FromContext(ctx).ConnectorUsedBySCIMBridge.Load(ctx, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot check SCIM bridge for connector", log.Error(err))
+
+		return false, gqlx.Internal(ctx)
+	}
+
+	return used, nil
 }
 
 // DiscoveredAccounts is the resolver for the discoveredAccounts field.

@@ -297,6 +297,41 @@ WHERE
 	return count, nil
 }
 
+func (s *SCIMBridges) LoadConnectorIDsByConnectorIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	connectorIDs []gid.GID,
+) ([]gid.GID, error) {
+	if len(connectorIDs) == 0 {
+		return nil, nil
+	}
+
+	q := `
+SELECT connector_id
+FROM iam_scim_bridges
+WHERE
+    %s
+    AND connector_id = ANY(@connector_ids);
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"connector_ids": connectorIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query iam_scim_bridges by connector IDs: %w", err)
+	}
+
+	ids, err := pgx.CollectRows(rows, pgx.RowTo[gid.GID])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect iam_scim_bridges connector IDs: %w", err)
+	}
+
+	return ids, nil
+}
+
 func (s *SCIMBridge) Insert(
 	ctx context.Context,
 	conn pg.Tx,
