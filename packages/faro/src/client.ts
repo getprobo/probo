@@ -76,6 +76,12 @@ export class FaroClient {
       return this.settings;
     }
 
+    // Callers start Faro without awaiting, including where document is absent.
+    if (typeof document === "undefined") {
+      this.settings = null;
+      return this.settings;
+    }
+
     const collectorURL = document
       .querySelector("meta[name=\"faro-collector-url\"]")
       ?.getAttribute("content") ?? "";
