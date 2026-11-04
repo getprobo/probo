@@ -619,6 +619,72 @@ WHERE
 	return nil
 }
 
+func (dts *DetectedTrackers) LoadByCookieBannerID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	cookieBannerID gid.GID,
+	filter *DetectedTrackerFilter,
+	cursor *page.Cursor[DetectedTrackerOrderField],
+) error {
+	if filter == nil {
+		filter = NewDetectedTrackerFilter(nil)
+	}
+
+	q := `
+SELECT
+	id,
+	cookie_banner_id,
+	tracker_pattern_id,
+	tracker_type,
+	identifier,
+	max_age_seconds,
+	source,
+	observed_by,
+	value_size,
+	initiator_url,
+	initiator_domain,
+	cookie_domain,
+	host_only,
+	http_only,
+	secure,
+	same_site,
+	partitioned,
+	set_by_url,
+	cookie_banner_scan_id,
+	created_at,
+	updated_at
+FROM
+	detected_trackers
+WHERE
+	%s
+	AND cookie_banner_id = @cookie_banner_id
+	AND %s
+	AND %s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"cookie_banner_id": cookieBannerID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query detected trackers by cookie banner: %w", err)
+	}
+
+	trackers, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[DetectedTracker])
+	if err != nil {
+		return fmt.Errorf("cannot collect detected trackers by cookie banner: %w", err)
+	}
+
+	*dts = trackers
+
+	return nil
+}
+
 func (dts *DetectedTrackers) LoadSiblingPatternIDsByInitiatorDomains(
 	ctx context.Context,
 	conn pg.Querier,

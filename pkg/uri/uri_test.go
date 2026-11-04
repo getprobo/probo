@@ -480,3 +480,67 @@ func TestFilterSharedInfrastructureDomains(t *testing.T) {
 		})
 	}
 }
+
+func TestRegistrableDomain(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		host string
+		want string
+	}{
+		{name: "strips a subdomain", host: "www.example.co.uk", want: "example.co.uk"},
+		{name: "keeps a platform customer apart", host: "foo.vercel.app", want: "foo.vercel.app"},
+		{name: "another platform customer", host: "bar.vercel.app", want: "bar.vercel.app"},
+		{name: "localhost has no public suffix", host: "localhost", want: "localhost"},
+		{name: "ipv4", host: "127.0.0.1", want: "127.0.0.1"},
+		{name: "ipv6", host: "::1", want: "::1"},
+		{name: "lowercases and drops a trailing dot", host: "WWW.Example.COM.", want: "example.com"},
+		{name: "empty", host: "  ", want: ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, tt.want, RegistrableDomain(tt.host))
+		})
+	}
+
+	assert.NotEqual(t, RegistrableDomain("foo.vercel.app"), RegistrableDomain("bar.vercel.app"))
+}
+
+func TestICANNRegistrableDomain(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		host string
+		want string
+	}{
+		{name: "strips a subdomain of a multi-label suffix", host: "www.shop.example.co.uk", want: "example.co.uk"},
+		{name: "single-label suffix uses the last two labels", host: "www.example.com", want: "example.com"},
+		{name: "platform suffix is the last two labels", host: "foo.vercel.app", want: "vercel.app"},
+		{name: "another host on the same platform suffix", host: "bar.vercel.app", want: "vercel.app"},
+		{name: "private suffix under an ICANN suffix", host: "foo.dh.bytemark.co.uk", want: "bytemark.co.uk"},
+		{name: "nested private suffix uses the registry label", host: "www.s3.dualstack.us-east-1.amazonaws.com", want: "amazonaws.com"},
+		{name: "wildcard suffix", host: "a.b.test.ck", want: "b.test.ck"},
+		{name: "exception to a wildcard", host: "www.ck", want: "www.ck"},
+		{name: "subdomain of an exception", host: "www.www.ck", want: "www.ck"},
+		{name: "localhost has no public suffix", host: "localhost", want: "localhost"},
+		{name: "ipv4", host: "127.0.0.1", want: "127.0.0.1"},
+		{name: "ipv6", host: "::1", want: "::1"},
+		{name: "lowercases and drops a trailing dot", host: "WWW.Example.COM.", want: "example.com"},
+		{name: "empty", host: "  ", want: ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, tt.want, ICANNRegistrableDomain(tt.host))
+		})
+	}
+
+	assert.Equal(t, ICANNRegistrableDomain("foo.vercel.app"), ICANNRegistrableDomain("bar.vercel.app"))
+}

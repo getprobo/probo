@@ -172,6 +172,8 @@ const (
 	DocumentCollaborationSessionEntityType           uint16 = 140
 	CookieBannerScanEntityType                       uint16 = 141
 	EmployeePortalDocumentEntityType                 uint16 = 142
+	CMPDomainEntityType                              uint16 = 143
+	CMPDomainSurfaceEntityType                       uint16 = 144
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -436,6 +438,10 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &CookieBannerScan{ID: id}, true
 	case EmployeePortalDocumentEntityType:
 		return &EmployeePortalDocument{ID: id}, true
+	case CMPDomainEntityType:
+		return &CMPDomain{ID: id}, true
+	case CMPDomainSurfaceEntityType:
+		return &CMPDomainSurface{ID: id}, true
 	default:
 		return nil, false
 	}

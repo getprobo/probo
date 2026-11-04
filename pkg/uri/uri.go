@@ -23,6 +23,7 @@ package uri
 import (
 	"database/sql/driver"
 	"fmt"
+	"net"
 	"net/url"
 	"strings"
 
@@ -122,6 +123,93 @@ func ExtractDomain(rawURL string) string {
 	}
 
 	return domain
+}
+
+// RegistrableDomain returns the eTLD+1 of host. IP addresses, localhost
+// and any host without a public suffix are returned unchanged, so two
+// hosts share a domain only when the public suffix list says they do:
+// foo.vercel.app and bar.vercel.app do not. The host is lowercased and a
+// trailing dot is removed. An empty host returns an empty string.
+func RegistrableDomain(host string) string {
+	host = strings.ToLower(strings.TrimSpace(host))
+	host = strings.TrimSuffix(host, ".")
+	host = strings.Trim(host, "[]")
+	if host == "" {
+		return ""
+	}
+
+	if net.ParseIP(host) != nil {
+		return host
+	}
+
+	domain, err := publicsuffix.EffectiveTLDPlusOne(host)
+	if err != nil {
+		return host
+	}
+
+	return domain
+}
+
+// ICANNRegistrableDomain returns the eTLD+1 of host using only ICANN
+// suffixes. A private suffix such as vercel.app is ignored, so
+// foo.vercel.app and bar.vercel.app are both vercel.app. A private suffix
+// that sits under an ICANN suffix still yields that ICANN domain:
+// foo.dh.bytemark.co.uk is bytemark.co.uk. IP addresses, localhost, and a
+// host with nothing left of its suffix are returned unchanged. The host is
+// lowercased and a trailing dot is removed. An empty host returns an empty
+// string.
+func ICANNRegistrableDomain(host string) string {
+	host = strings.ToLower(strings.TrimSpace(host))
+	host = strings.TrimSuffix(host, ".")
+	host = strings.Trim(host, "[]")
+	if host == "" {
+		return ""
+	}
+
+	if net.ParseIP(host) != nil {
+		return host
+	}
+
+	if strings.HasPrefix(host, ".") || strings.Contains(host, "..") {
+		return host
+	}
+
+	suffix := icannPublicSuffix(host)
+	if suffix == "" || len(host) <= len(suffix) || !strings.HasSuffix(host, "."+suffix) {
+		return host
+	}
+
+	prefix := host[:len(host)-len(suffix)-1]
+	if i := strings.LastIndexByte(prefix, '.'); i >= 0 {
+		return prefix[i+1:] + "." + suffix
+	}
+
+	return prefix + "." + suffix
+}
+
+// icannPublicSuffix returns the longest ICANN public suffix of host. When
+// the prevailing rule is private, it walks to the next shorter suffix until
+// that suffix itself is an ICANN public suffix. A shorter match is not
+// enough: PublicSuffix can report an ICANN bit for a private rule's parent.
+// The last label is the fallback.
+func icannPublicSuffix(host string) string {
+	suffix, icann := publicsuffix.PublicSuffix(host)
+	if icann {
+		return suffix
+	}
+
+	for {
+		dot := strings.IndexByte(suffix, '.')
+		if dot < 0 {
+			return suffix
+		}
+
+		suffix = suffix[dot+1:]
+		shorter, icannSuffix := publicsuffix.PublicSuffix(suffix)
+		if icannSuffix && shorter == suffix {
+			return suffix
+		}
+	}
 }
 
 // DomainLabel extracts the primary registrable label from a host-like

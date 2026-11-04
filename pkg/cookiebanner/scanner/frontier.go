@@ -47,13 +47,15 @@ type (
 	// least visited section, then links before sitemap entries, then
 	// shallower pages, then insertion order.
 	frontier struct {
-		visited    map[string]struct{}
-		queued     map[string]*frontierEntry
-		entries    []*frontierEntry
-		sections   map[string]int
-		covered    map[string]struct{}
-		maxQueue   int
-		embedHosts int
+		visited      map[string]struct{}
+		queued       map[string]*frontierEntry
+		entries      []*frontierEntry
+		sections     map[string]int
+		covered      map[string]struct{}
+		siblings     map[string]struct{}
+		siblingOrder []string
+		maxQueue     int
+		embedHosts   int
 	}
 
 	frontierEntry struct {
@@ -69,8 +71,22 @@ func newFrontier(start Checkpoint, maxQueue int) frontier {
 		queued:   map[string]*frontierEntry{},
 		sections: map[string]int{},
 		covered:  map[string]struct{}{},
+		siblings: map[string]struct{}{},
 		maxQueue: maxQueue,
 	}
+	for _, origin := range start.SiblingOrigins {
+		if origin == "" {
+			continue
+		}
+
+		if _, seen := f.siblings[origin]; seen || len(f.siblings) >= MaxSiblingOrigins {
+			continue
+		}
+
+		f.siblings[origin] = struct{}{}
+		f.siblingOrder = append(f.siblingOrder, origin)
+	}
+
 	for _, key := range start.VisitedTemplates {
 		f.visited[key] = struct{}{}
 		f.sections[sectionOf(key)]++
@@ -268,6 +284,25 @@ func addEmbedHost(hosts []string, host string) []string {
 	return append(hosts, host)
 }
 
+func (f *frontier) rememberSibling(origin string) bool {
+	if origin == "" {
+		return false
+	}
+
+	if f.siblings == nil {
+		f.siblings = map[string]struct{}{}
+	}
+
+	if _, seen := f.siblings[origin]; seen || len(f.siblings) >= MaxSiblingOrigins {
+		return false
+	}
+
+	f.siblings[origin] = struct{}{}
+	f.siblingOrder = append(f.siblingOrder, origin)
+
+	return true
+}
+
 func (f *frontier) checkpoint(pages int, elapsed time.Duration, truncated bool) Checkpoint {
 	visited := make([]string, 0, len(f.visited))
 	for key := range f.visited {
@@ -288,10 +323,17 @@ func (f *frontier) checkpoint(pages int, elapsed time.Duration, truncated bool) 
 
 	sort.Strings(covered)
 
+	var siblings []string
+	if len(f.siblingOrder) > 0 {
+		siblings = append([]string(nil), f.siblingOrder...)
+		sort.Strings(siblings)
+	}
+
 	return Checkpoint{
 		VisitedTemplates: visited,
 		Queue:            queue,
 		CoveredHosts:     covered,
+		SiblingOrigins:   siblings,
 		PagesScanned:     pages,
 		ElapsedMS:        elapsed.Milliseconds(),
 		Truncated:        truncated,
