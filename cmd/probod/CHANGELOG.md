@@ -4,6 +4,15 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.340.0] - 2026-11-04
+
+### Changed
+
+- People who have not saved a notification preference now get an email
+  for every task mention, and reminder emails when a task is assigned.
+  Other notification types stay on reminders. A saved preference still
+  wins
+
 ## [0.339.0] - 2026-11-04
 
 ### Added
