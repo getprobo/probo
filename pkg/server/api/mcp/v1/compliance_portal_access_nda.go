@@ -28,26 +28,16 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/filevalidation"
+	"go.probo.inc/probo/pkg/server/api/mcp/mcpx"
 	"go.probo.inc/probo/pkg/server/api/mcp/v1/types"
-	"go.probo.inc/probo/pkg/validator"
 )
 
 func mapRecordedNDAMCPError(ctx context.Context, r *Resolver, message string, err error) error {
-	if errors.Is(err, coredata.ErrResourceNotFound) {
-		return fmt.Errorf("resource not found")
-	}
-
-	if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-		return validationErrors
-	}
-
 	if fileErr, ok := errors.AsType[*filevalidation.Error](err); ok {
 		return fmt.Errorf("%s", fileErr.Error())
 	}
 
-	r.logger.ErrorCtx(ctx, message, log.Error(err))
-
-	return fmt.Errorf("internal error")
+	return mcpx.MapError(ctx, r.logger, message, err)
 }
 
 func (r *Resolver) compliancePortalAccessAfterNDAMutation(

@@ -41,8 +41,8 @@ import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { VisitorNDASectionDeleteMutation } from "#/__generated__/core/VisitorNDASectionDeleteMutation.graphql";
 import type { VisitorNDASection_access$key } from "#/__generated__/core/VisitorNDASection_access.graphql";
+import type { VisitorNDASectionDeleteMutation } from "#/__generated__/core/VisitorNDASectionDeleteMutation.graphql";
 import type { VisitorNDASectionSetBypassMutation } from "#/__generated__/core/VisitorNDASectionSetBypassMutation.graphql";
 import type { VisitorNDASectionUploadMutation } from "#/__generated__/core/VisitorNDASectionUploadMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";

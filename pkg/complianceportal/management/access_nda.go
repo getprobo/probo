@@ -241,6 +241,7 @@ func (s *Service) DeleteRecordedNDA(
 func ensureRecordedNDAPDF(file io.Reader) (io.Reader, error) {
 	header := make([]byte, len(recordedNDAPDFMagic))
 	n, err := io.ReadFull(file, header)
+
 	if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
 		return nil, fmt.Errorf("cannot read recorded NDA: %w", err)
 	}
