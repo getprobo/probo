@@ -4,6 +4,20 @@ All notable changes to the Probo Helm chart will be documented in this file.
 
 ## Unreleased
 
+## [0.32.0] - 2026-11-04
+
+### Added
+
+- `probo.notificationWeekly.weekday` and `probo.notificationWeekly.hour`
+  set `PROBOD_NOTIFICATION_WEEKLY_WEEKDAY` and
+  `PROBOD_NOTIFICATION_WEEKLY_HOUR`, which choose when the weekly
+  notification digest is sent. Weekday uses Go's `time.Weekday` (0 is
+  Sunday); hour is UTC. Defaults to Monday, 16:00
+
+### Changed
+
+- Default `appVersion` is now `0.339.0`
+
 ## [0.31.0] - 2026-10-30
 
 ### Added
