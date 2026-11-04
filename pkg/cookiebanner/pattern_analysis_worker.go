@@ -184,22 +184,23 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 					maxAge = &v
 				}
 
-				source := bestSource(group)
+				source, provenance := bestSource(group)
 
 				now := time.Now()
 				globPattern := &coredata.TrackerPattern{
-					ID:                 gid.New(banner.ID.TenantID(), coredata.TrackerPatternEntityType),
-					OrganizationID:     group[0].OrganizationID,
-					CookieBannerID:     banner.ID,
-					CookieCategoryID:   key.categoryID,
-					TrackerType:        key.trackerType,
-					Pattern:            key.template,
-					MatchType:          coredata.TrackerPatternMatchTypeGlob,
-					MaxAgeSeconds:      maxAge,
-					Source:             source,
-					MappingRequestedAt: &now,
-					CreatedAt:          now,
-					UpdatedAt:          now,
+					ID:                   gid.New(banner.ID.TenantID(), coredata.TrackerPatternEntityType),
+					OrganizationID:       group[0].OrganizationID,
+					CookieBannerID:       banner.ID,
+					CookieCategoryID:     key.categoryID,
+					TrackerType:          key.trackerType,
+					Pattern:              key.template,
+					MatchType:            coredata.TrackerPatternMatchTypeGlob,
+					MaxAgeSeconds:        maxAge,
+					Source:               source,
+					SourceCookieBannerID: provenance,
+					MappingRequestedAt:   &now,
+					CreatedAt:            now,
+					UpdatedAt:            now,
 				}
 
 				inserted, err := globPattern.InsertIfNotExists(ctx, tx, scope)
@@ -226,6 +227,7 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 
 					if shouldPromoteSource(globPattern.Source, source) {
 						globPattern.Source = source
+						globPattern.SourceCookieBannerID = provenance
 						globPattern.UpdatedAt = now
 
 						if err := globPattern.Update(ctx, tx, scope); err != nil {
@@ -795,38 +797,26 @@ func shouldPromoteSource(existing, candidate *coredata.CookieSource) bool {
 // page evidence, EXTENSION is a confirmed extension write, HTTP is a
 // Set-Cookie or cookieStore echo (and must not outrank EXTENSION), and
 // PRE_EXISTING is the catch-all. nil collapses into PRE_EXISTING.
-func bestSource(patterns []*coredata.TrackerPattern) *coredata.CookieSource {
-	var (
-		hasHTTP      bool
-		hasExtension bool
-	)
+func bestSource(patterns []*coredata.TrackerPattern) (*coredata.CookieSource, *gid.GID) {
+	var best *coredata.TrackerPattern
 
 	for _, p := range patterns {
 		if p.Source == nil {
 			continue
 		}
 
-		switch *p.Source {
-		case coredata.CookieSourceScript:
-			return p.Source
-		case coredata.CookieSourceExtension:
-			hasExtension = true
-		case coredata.CookieSourceHTTP:
-			hasHTTP = true
+		if best == nil || sourceRank(p.Source) > sourceRank(best.Source) {
+			best = p
 		}
 	}
 
-	switch {
-	case hasExtension:
-		src := coredata.CookieSourceExtension
-		return &src
-	case hasHTTP:
-		src := coredata.CookieSourceHTTP
-		return &src
-	default:
+	if best == nil {
 		src := coredata.CookieSourcePreExisting
-		return &src
+
+		return &src, nil
 	}
+
+	return best.Source, best.SourceCookieBannerID
 }
 
 func (h *patternAnalysisHandler) adoptUncategorisedPatterns(
@@ -931,6 +921,7 @@ func (h *patternAnalysisHandler) adoptUncategorisedPatterns(
 		// EXTENSION → SCRIPT) without redundant writes.
 		if shouldPromoteSource(match.Source, ep.Source) {
 			match.Source = ep.Source
+			match.SourceCookieBannerID = ep.SourceCookieBannerID
 			match.UpdatedAt = time.Now()
 
 			if err := match.Update(ctx, tx, scope); err != nil {

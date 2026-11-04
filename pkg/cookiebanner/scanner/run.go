@@ -50,6 +50,7 @@ type scan struct {
 	mu             sync.Mutex
 	in             Input
 	site           origin
+	api            origin
 	startURL       string
 	policy         *requestPolicy
 	rec            *recorder
@@ -66,6 +67,7 @@ type scan struct {
 	started        time.Time
 	elapsedBase    time.Duration
 	pages          int
+	freshSiblings  []string
 	firstErr       error
 	fatal          error
 }
@@ -149,6 +151,7 @@ func Run(ctx context.Context, allocCtx context.Context, in Input) (*Result, erro
 	s := &scan{
 		in:          in,
 		site:        site,
+		api:         api,
 		startURL:    startURL,
 		policy:      policy,
 		rec:         newRecorder(site, api, in.BannerID, binding, in.Limits.MaxObservations),
@@ -321,7 +324,17 @@ func (s *scan) loop() (stopCause, error) {
 		if !item.FromSitemap && item.Depth < limits.MaxDepth {
 			for _, href := range links {
 				link, linkOK := resolveLink(item.URL, href)
-				if !linkOK || !s.site.contains(link) || s.policy.block(s.scanCtx, http.MethodGet, link, "", "") {
+				if !linkOK {
+					continue
+				}
+
+				if _, sibling := siblingOrigin(s.site, s.api, link); sibling {
+					s.noteSibling(link)
+
+					continue
+				}
+
+				if !s.site.contains(link) || s.policy.block(s.scanCtx, http.MethodGet, link, "", "") {
 					continue
 				}
 
@@ -331,6 +344,7 @@ func (s *scan) loop() (stopCause, error) {
 
 		s.pages++
 		page.URL = item.URL
+		page.SiblingOrigins = s.drainSiblings()
 
 		checkpoint := s.front.checkpoint(s.pages, s.elapsed(), s.rec.capped())
 		if s.in.OnPage != nil {

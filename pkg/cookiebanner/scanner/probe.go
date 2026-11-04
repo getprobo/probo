@@ -137,6 +137,12 @@ func (s *scan) probeCandidates(ctx context.Context, links, sitemapURLs []string)
 	}
 
 	for _, link := range links {
+		if _, sibling := siblingOrigin(s.site, s.api, link); sibling {
+			s.noteSibling(link)
+
+			continue
+		}
+
 		if s.site.contains(link) && !s.policy.block(ctx, http.MethodGet, link, "", "") {
 			add(QueueItem{URL: link, Depth: 1})
 		}
