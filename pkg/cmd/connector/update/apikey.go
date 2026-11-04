@@ -33,7 +33,7 @@ const (
 	envConnectorAPIKey = "PROBO_CONNECTOR_API_KEY"
 
 	updateAPIKeyMutation = `
-mutation($input: UpdateAPIKeyConnectorInput!) {
+mutation ConnectorUpdateAPIKey($input: UpdateAPIKeyConnectorInput!) {
   updateAPIKeyConnector(input: $input) {
     connector {
       id

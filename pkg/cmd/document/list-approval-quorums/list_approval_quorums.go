@@ -29,7 +29,7 @@ import (
 )
 
 const listQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: DocumentVersionApprovalQuorumOrder) {
+query DocumentListApprovalQuorums($id: ID!, $first: Int, $after: CursorKey, $orderBy: DocumentVersionApprovalQuorumOrder) {
   node(id: $id) {
     __typename
     ... on DocumentVersion {

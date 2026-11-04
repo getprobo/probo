@@ -53,7 +53,7 @@ var validIcons = []string{
 }
 
 const updateMutation = `
-mutation($input: UpdateCompliancePortalCommitmentInput!) {
+mutation CompliancePortalCommitmentUpdate($input: UpdateCompliancePortalCommitmentInput!) {
   updateCompliancePortalCommitment(input: $input) {
     compliancePortalCommitment {
       id

@@ -30,7 +30,7 @@ import (
 )
 
 const publishMutation = `
-mutation($input: PublishDocumentInput!) {
+mutation DocumentPublish($input: PublishDocumentInput!) {
   publishDocument(input: $input) {
     documentVersion {
       id

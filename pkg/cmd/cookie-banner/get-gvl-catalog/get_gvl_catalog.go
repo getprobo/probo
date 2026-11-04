@@ -31,7 +31,7 @@ import (
 )
 
 const catalogQuery = `
-query {
+query CookieBannerGetGvlCatalog {
   commonGVLCatalog {
     vendorListVersion
     tcfPolicyVersion

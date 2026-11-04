@@ -30,7 +30,7 @@ import (
 )
 
 const deactivateMutation = `
-mutation($input: DeactivateUserInput!) {
+mutation UserDeactivate($input: DeactivateUserInput!) {
   deactivateUser(input: $input) {
     success
   }

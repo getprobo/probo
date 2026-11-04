@@ -31,7 +31,7 @@ import (
 )
 
 const createMutation = `
-mutation($input: CreateDataProtectionImpactAssessmentInput!) {
+mutation DpiaCreate($input: CreateDataProtectionImpactAssessmentInput!) {
   createDataProtectionImpactAssessment(input: $input) {
     dataProtectionImpactAssessment {
       id

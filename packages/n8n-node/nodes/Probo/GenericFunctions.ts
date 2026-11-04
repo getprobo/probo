@@ -61,6 +61,28 @@ function graphqlBodyOrThrow(
 	return parsed.body as IDataObject;
 }
 
+// Send the operation name so server logs and traces can name the request.
+function graphqlOperationName(query: string): string | undefined {
+	const match = query.match(
+		/^[ \t]*(?:query|mutation|subscription)\s+([_A-Za-z][_0-9A-Za-z]*)\b/m,
+	);
+
+	return match?.[1];
+}
+
+function graphqlRequestBody(query: string, variables: IDataObject): IDataObject {
+	const body: IDataObject = {
+		query,
+		variables,
+	};
+	const operationName = graphqlOperationName(query);
+	if (operationName !== undefined) {
+		body.operationName = operationName;
+	}
+
+	return body;
+}
+
 function rethrowRequestError(this: ApiRequestContext, error: unknown): never {
 	if (error instanceof NodeApiError || error instanceof NodeOperationError) {
 		throw error;
@@ -86,10 +108,7 @@ async function proboGraphQLRequest(
 			'Content-Type': 'application/json',
 			'User-Agent': `probo-n8n-node/${version}`,
 		},
-		body: {
-			query,
-			variables,
-		},
+		body: graphqlRequestBody(query, variables),
 		json: true,
 	};
 
@@ -234,7 +253,7 @@ export async function proboApiMultipartRequest(
 		.replace(/"/g, '\\"');
 	const safeMimeType = mimeType.replace(/[\r\n]/g, '');
 
-	const operations = JSON.stringify({ query, variables });
+	const operations = JSON.stringify(graphqlRequestBody(query, variables));
 	const map = JSON.stringify({ '0': [fileVariablePath] });
 
 	const parts: Buffer[] = [];

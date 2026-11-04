@@ -30,7 +30,7 @@ import (
 )
 
 const unlinkMutation = `
-mutation($input: UnlinkTaskExternalInput!) {
+mutation TaskUnlinkExternal($input: UnlinkTaskExternalInput!) {
   unlinkTaskExternal(input: $input) {
     task {
       id

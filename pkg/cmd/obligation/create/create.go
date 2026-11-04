@@ -31,7 +31,7 @@ import (
 )
 
 const createMutation = `
-mutation($input: CreateObligationInput!) {
+mutation ObligationCreate($input: CreateObligationInput!) {
   createObligation(input: $input) {
     obligationEdge {
       node {

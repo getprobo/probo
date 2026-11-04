@@ -30,7 +30,7 @@ import (
 )
 
 const publishMutation = `
-mutation($input: PublishBusinessFunctionListInput!) {
+mutation BusinessFunctionPublish($input: PublishBusinessFunctionListInput!) {
   publishBusinessFunctionList(input: $input) {
     documentEdge {
       node {

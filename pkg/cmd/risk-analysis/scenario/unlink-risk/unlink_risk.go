@@ -29,7 +29,7 @@ import (
 )
 
 const unlinkRiskMutation = `
-mutation($input: UnlinkRiskAnalysisScenarioRiskInput!) {
+mutation RiskAnalysisScenarioUnlinkRisk($input: UnlinkRiskAnalysisScenarioRiskInput!) {
   unlinkRiskAnalysisScenarioRisk(input: $input) {
     riskAnalysisScenario {
       id

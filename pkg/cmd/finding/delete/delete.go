@@ -30,7 +30,7 @@ import (
 )
 
 const deleteMutation = `
-mutation($input: DeleteFindingInput!) {
+mutation FindingDelete($input: DeleteFindingInput!) {
   deleteFinding(input: $input) {
     deletedFindingId
   }

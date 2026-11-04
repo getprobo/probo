@@ -30,7 +30,7 @@ import (
 )
 
 const unarchiveMutation = `
-mutation($input: UnarchiveDocumentInput!) {
+mutation DocumentUnarchive($input: UnarchiveDocumentInput!) {
   unarchiveDocument(input: $input) {
     document {
       id

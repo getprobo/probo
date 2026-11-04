@@ -30,7 +30,7 @@ import (
 )
 
 const setOwnerMutation = `
-mutation($input: SetDeviceOwnerInput!) {
+mutation DeviceSetOwner($input: SetDeviceOwnerInput!) {
   setDeviceOwner(input: $input) {
     device {
       id

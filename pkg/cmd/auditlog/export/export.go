@@ -30,7 +30,7 @@ import (
 )
 
 const exportMutation = `
-mutation($input: RequestAuditLogExportInput!) {
+mutation AuditlogExport($input: RequestAuditLogExportInput!) {
   requestAuditLogExport(input: $input) {
     exportJobId
   }

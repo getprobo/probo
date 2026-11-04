@@ -30,7 +30,7 @@ import (
 )
 
 const listQuery = `
-query(
+query AccessReviewEntryList(
   $id: ID!,
   $first: Int,
   $after: CursorKey,
@@ -82,7 +82,7 @@ query(
 `
 
 const listBySourceQuery = `
-query(
+query AccessReviewEntryListBySource(
   $id: ID!,
   $first: Int,
   $after: CursorKey,

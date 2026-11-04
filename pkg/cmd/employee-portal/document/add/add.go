@@ -30,7 +30,7 @@ import (
 )
 
 const addMutation = `
-mutation($input: AddEmployeePortalDocumentInput!) {
+mutation EmployeePortalDocumentAdd($input: AddEmployeePortalDocumentInput!) {
   addEmployeePortalDocument(input: $input) {
     employeePortalDocument {
       id

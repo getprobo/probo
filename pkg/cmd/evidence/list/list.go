@@ -29,7 +29,7 @@ import (
 )
 
 const listQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: EvidenceOrder) {
+query EvidenceList($id: ID!, $first: Int, $after: CursorKey, $orderBy: EvidenceOrder) {
   node(id: $id) {
     __typename
     ... on InternalControl {

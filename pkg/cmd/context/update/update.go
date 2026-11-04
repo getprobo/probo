@@ -30,7 +30,7 @@ import (
 )
 
 const updateMutation = `
-mutation($input: UpdateOrganizationContextInput!) {
+mutation ContextUpdate($input: UpdateOrganizationContextInput!) {
   updateOrganizationContext(input: $input) {
     context {
       organizationId

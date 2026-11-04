@@ -30,7 +30,7 @@ import (
 )
 
 const deleteMutation = `
-mutation($input: DeleteThirdPartyInput!) {
+mutation ThirdPartyDelete($input: DeleteThirdPartyInput!) {
   deleteThirdParty(input: $input) {
     deletedThirdPartyId
   }

@@ -32,7 +32,7 @@ import (
 )
 
 const createMutation = `
-mutation($input: CreateTaskInput!) {
+mutation TaskCreate($input: CreateTaskInput!) {
   createTask(input: $input) {
     taskEdge {
       node {

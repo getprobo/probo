@@ -30,7 +30,7 @@ import (
 )
 
 const publishMutation = `
-mutation($input: PublishStatementOfApplicabilityInput!) {
+mutation SoaPublish($input: PublishStatementOfApplicabilityInput!) {
   publishStatementOfApplicability(input: $input) {
     documentEdge {
       node {

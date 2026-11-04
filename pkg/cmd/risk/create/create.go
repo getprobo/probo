@@ -31,7 +31,7 @@ import (
 )
 
 const createMutation = `
-mutation($input: CreateRiskInput!) {
+mutation RiskCreate($input: CreateRiskInput!) {
   createRisk(input: $input) {
     riskEdge {
       node {

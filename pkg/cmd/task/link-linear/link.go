@@ -31,7 +31,7 @@ import (
 )
 
 const linkMutation = `
-mutation($input: LinkTaskToLinearInput!) {
+mutation TaskLinkLinear($input: LinkTaskToLinearInput!) {
   linkTaskToLinear(input: $input) {
     task {
       id

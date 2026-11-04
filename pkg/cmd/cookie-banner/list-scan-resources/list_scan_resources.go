@@ -29,7 +29,7 @@ import (
 )
 
 const listScanResourcesQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $direction: OrderDirection!) {
+query CookieBannerListScanResources($id: ID!, $first: Int, $after: CursorKey, $direction: OrderDirection!) {
   node(id: $id) {
     __typename
     ... on CookieBannerScan {

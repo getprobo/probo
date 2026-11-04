@@ -30,7 +30,7 @@ import (
 )
 
 const updateMutation = `
-mutation($input: UpdateConnectorInput!) {
+mutation ConnectorUpdate($input: UpdateConnectorInput!) {
   updateConnector(input: $input) {
     connector {
       id

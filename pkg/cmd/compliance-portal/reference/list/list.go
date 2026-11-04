@@ -29,7 +29,7 @@ import (
 )
 
 const listQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: CompliancePortalReferenceOrder) {
+query CompliancePortalReferenceList($id: ID!, $first: Int, $after: CursorKey, $orderBy: CompliancePortalReferenceOrder) {
   node(id: $id) {
     __typename
     ... on CompliancePortal {

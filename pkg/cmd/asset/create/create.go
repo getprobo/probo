@@ -32,7 +32,7 @@ import (
 )
 
 const createMutation = `
-mutation($input: CreateAssetInput!) {
+mutation AssetCreate($input: CreateAssetInput!) {
   createAsset(input: $input) {
     assetEdge {
       node {

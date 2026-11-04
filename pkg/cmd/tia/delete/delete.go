@@ -30,7 +30,7 @@ import (
 )
 
 const deleteMutation = `
-mutation($input: DeleteTransferImpactAssessmentInput!) {
+mutation TiaDelete($input: DeleteTransferImpactAssessmentInput!) {
   deleteTransferImpactAssessment(input: $input) {
     deletedTransferImpactAssessmentId
   }

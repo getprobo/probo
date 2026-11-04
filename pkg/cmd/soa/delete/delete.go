@@ -30,7 +30,7 @@ import (
 )
 
 const deleteMutation = `
-mutation($input: DeleteStatementOfApplicabilityInput!) {
+mutation SoaDelete($input: DeleteStatementOfApplicabilityInput!) {
   deleteStatementOfApplicability(input: $input) {
     deletedStatementOfApplicabilityId
   }

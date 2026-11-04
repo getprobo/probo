@@ -29,7 +29,7 @@ import (
 )
 
 const linkThirdPartyMutation = `
-mutation($input: CreateInternalControlThirdPartyMappingInput!) {
+mutation InternalControlLinkThirdParty($input: CreateInternalControlThirdPartyMappingInput!) {
   createInternalControlThirdPartyMapping(input: $input) {
     internalControlEdge {
       node { id }

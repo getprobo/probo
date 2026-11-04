@@ -30,7 +30,7 @@ import (
 )
 
 const deleteMutation = `
-mutation($input: DeleteRightsRequestInput!) {
+mutation RightsRequestDelete($input: DeleteRightsRequestInput!) {
   deleteRightsRequest(input: $input) {
     deletedRightsRequestId
   }

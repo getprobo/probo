@@ -29,7 +29,7 @@ import (
 )
 
 const listQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $filter: CookieConsentRecordFilter) {
+query ConsentRecordList($id: ID!, $first: Int, $after: CursorKey, $filter: CookieConsentRecordFilter) {
   node(id: $id) {
     __typename
     ... on CookieBanner {

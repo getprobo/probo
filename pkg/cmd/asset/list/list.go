@@ -29,7 +29,7 @@ import (
 )
 
 const listQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: AssetOrder) {
+query AssetList($id: ID!, $first: Int, $after: CursorKey, $orderBy: AssetOrder) {
   node(id: $id) {
     __typename
     ... on Organization {

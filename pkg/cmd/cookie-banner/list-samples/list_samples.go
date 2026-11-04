@@ -29,7 +29,7 @@ import (
 )
 
 const listSamplesQuery = `
-query($id: ID!, $first: Int, $after: CursorKey) {
+query CookieBannerListSamples($id: ID!, $first: Int, $after: CursorKey) {
   node(id: $id) {
     __typename
     ... on CookieBanner {

@@ -30,7 +30,7 @@ import (
 )
 
 const publishMutation = `
-mutation($input: PublishProcessingActivityListInput!) {
+mutation ProcessingActivityPublish($input: PublishProcessingActivityListInput!) {
   publishProcessingActivityList(input: $input) {
     documentEdge {
       node {

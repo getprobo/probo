@@ -32,7 +32,7 @@ import (
 )
 
 const forkMutation = `
-mutation($input: ForkRiskAnalysisInput!) {
+mutation RiskAnalysisFork($input: ForkRiskAnalysisInput!) {
   forkRiskAnalysis(input: $input) {
     riskAnalysisEdge {
       node {

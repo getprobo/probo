@@ -29,7 +29,7 @@ import (
 )
 
 const listQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: InternalControlOrder, $filter: InternalControlFilter) {
+query InternalControlList($id: ID!, $first: Int, $after: CursorKey, $orderBy: InternalControlOrder, $filter: InternalControlFilter) {
   node(id: $id) {
     __typename
     ... on Organization {

@@ -32,7 +32,7 @@ import (
 )
 
 const viewQuery = `
-query($id: ID!, $first: Int, $after: CursorKey) {
+query ConnectorView($id: ID!, $first: Int, $after: CursorKey) {
   node(id: $id) {
     __typename
     ... on Connector {

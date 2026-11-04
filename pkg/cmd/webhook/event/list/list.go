@@ -35,7 +35,7 @@ func eventsListQuery(includePayload bool) string {
 	}
 
 	return fmt.Sprintf(`
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: WebhookEventOrder, $filter: WebhookEventFilter) {
+query WebhookEventList($id: ID!, $first: Int, $after: CursorKey, $orderBy: WebhookEventOrder, $filter: WebhookEventFilter) {
   node(id: $id) {
     __typename
     ... on WebhookSubscription {

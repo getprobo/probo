@@ -29,7 +29,7 @@ import (
 )
 
 const listQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: RiskAnalysisProcessOrder) {
+query RiskAnalysisProcessList($id: ID!, $first: Int, $after: CursorKey, $orderBy: RiskAnalysisProcessOrder) {
   node(id: $id) {
     __typename
     ... on RiskAnalysisDiagram {

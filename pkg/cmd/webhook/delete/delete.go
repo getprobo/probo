@@ -30,7 +30,7 @@ import (
 )
 
 const deleteMutation = `
-mutation($input: DeleteWebhookSubscriptionInput!) {
+mutation WebhookDelete($input: DeleteWebhookSubscriptionInput!) {
   deleteWebhookSubscription(input: $input) {
     deletedWebhookSubscriptionId
   }

@@ -30,7 +30,7 @@ import (
 )
 
 const deleteMutation = `
-mutation($input: DeleteDatumInput!) {
+mutation DatumDelete($input: DeleteDatumInput!) {
   deleteDatum(input: $input) {
     deletedDatumId
   }

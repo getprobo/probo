@@ -30,7 +30,7 @@ import (
 )
 
 const addMutation = `
-mutation($input: AddCookieBannerGVLVendorInput!) {
+mutation CookieBannerAddGvlVendor($input: AddCookieBannerGVLVendorInput!) {
   addCookieBannerGVLVendor(input: $input) {
     commonGVLVendor {
       iabVendorId

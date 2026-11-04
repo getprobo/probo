@@ -30,7 +30,7 @@ import (
 )
 
 const updateMutation = `
-mutation($input: UpdateApplicabilityStatementInput!) {
+mutation SoaStatementUpdate($input: UpdateApplicabilityStatementInput!) {
   updateApplicabilityStatement(input: $input) {
     applicabilityStatement {
       id

@@ -30,7 +30,7 @@ import (
 )
 
 const createMutation = `
-mutation($input: CreateControlInput!) {
+mutation ControlCreate($input: CreateControlInput!) {
   createControl(input: $input) {
     controlEdge {
       node {

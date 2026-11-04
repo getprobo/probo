@@ -30,7 +30,7 @@ import (
 )
 
 const mermaidQuery = `
-query($id: ID!) {
+query RiskAnalysisDiagramMermaid($id: ID!) {
   node(id: $id) {
     __typename
     ... on RiskAnalysisDiagram {

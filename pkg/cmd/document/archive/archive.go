@@ -30,7 +30,7 @@ import (
 )
 
 const archiveMutation = `
-mutation($input: ArchiveDocumentInput!) {
+mutation DocumentArchive($input: ArchiveDocumentInput!) {
   archiveDocument(input: $input) {
     document {
       id

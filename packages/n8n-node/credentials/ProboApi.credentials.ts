@@ -70,7 +70,8 @@ export class ProboApi implements ICredentialType {
 				'Content-Type': 'application/json',
 			},
 			body: {
-				query: 'query { viewer { id } }',
+				query: 'query ProboViewer { viewer { id } }',
+				operationName: 'ProboViewer',
 			},
 		},
 	};

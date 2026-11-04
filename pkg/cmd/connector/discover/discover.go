@@ -30,7 +30,7 @@ import (
 )
 
 const discoverQuery = `
-query($id: ID!) {
+query ConnectorDiscover($id: ID!) {
   node(id: $id) {
     __typename
     ... on Connector {

@@ -54,7 +54,7 @@ var validIcons = []string{
 }
 
 const createMutation = `
-mutation($input: CreateCompliancePortalCommitmentInput!) {
+mutation CompliancePortalCommitmentCreate($input: CreateCompliancePortalCommitmentInput!) {
   createCompliancePortalCommitment(input: $input) {
     compliancePortalCommitmentEdge {
       node {

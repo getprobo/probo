@@ -27,7 +27,7 @@ import (
 )
 
 const listQuery = `
-query($first: Int, $after: CursorKey, $orderBy: ProfileOrder, $filter: ProfileFilter) {
+query OrgList($first: Int, $after: CursorKey, $orderBy: ProfileOrder, $filter: ProfileFilter) {
   viewer {
     profiles(first: $first, after: $after, orderBy: $orderBy, filter: $filter) {
       totalCount

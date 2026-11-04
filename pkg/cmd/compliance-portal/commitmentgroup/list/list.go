@@ -29,7 +29,7 @@ import (
 )
 
 const listQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: CompliancePortalCommitmentGroupOrder) {
+query CompliancePortalCommitmentGroupList($id: ID!, $first: Int, $after: CursorKey, $orderBy: CompliancePortalCommitmentGroupOrder) {
   node(id: $id) {
     __typename
     ... on Organization {

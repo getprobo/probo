@@ -30,7 +30,7 @@ import (
 )
 
 const decideAllMutation = `
-mutation($input: RecordAccessReviewEntryDecisionsInput!) {
+mutation AccessReviewEntryDecideAll($input: RecordAccessReviewEntryDecisionsInput!) {
   recordAccessReviewEntryDecisions(input: $input) {
     accessReviewEntries {
       id

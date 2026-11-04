@@ -31,7 +31,7 @@ import (
 )
 
 const createMutation = `
-mutation($input: CreateTrackerPatternInput!) {
+mutation TrackerPatternCreate($input: CreateTrackerPatternInput!) {
   createTrackerPattern(input: $input) {
     trackerPatternEdge {
       node {

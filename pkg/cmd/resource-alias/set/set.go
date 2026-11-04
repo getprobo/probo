@@ -31,7 +31,7 @@ import (
 )
 
 const setMutation = `
-mutation($input: SetResourceAliasInput!) {
+mutation ResourceAliasSet($input: SetResourceAliasInput!) {
     setResourceAlias(input: $input) {
       resourceAlias {
         resourceId

@@ -29,7 +29,7 @@ import (
 )
 
 const reorderMutation = `
-mutation($input: ReorderCookieCategoryInput!) {
+mutation CookieCategoryReorder($input: ReorderCookieCategoryInput!) {
   reorderCookieCategory(input: $input) {
     cookieBanner {
       id

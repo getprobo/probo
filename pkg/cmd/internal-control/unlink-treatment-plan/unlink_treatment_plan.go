@@ -29,7 +29,7 @@ import (
 )
 
 const unlinkTreatmentPlanMutation = `
-mutation($input: DeleteTreatmentPlanInternalControlMappingInput!) {
+mutation InternalControlUnlinkTreatmentPlan($input: DeleteTreatmentPlanInternalControlMappingInput!) {
   deleteTreatmentPlanInternalControlMapping(input: $input) {
     deletedInternalControlId
     deletedTreatmentPlanId

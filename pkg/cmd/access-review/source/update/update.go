@@ -31,7 +31,7 @@ import (
 )
 
 const updateMutation = `
-mutation($input: UpdateAccessReviewSourceInput!) {
+mutation AccessReviewSourceUpdate($input: UpdateAccessReviewSourceInput!) {
   updateAccessReviewSource(input: $input) {
     accessReviewSource {
       id

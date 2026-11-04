@@ -40,7 +40,7 @@ const (
 	envConnectorClientSecret = "PROBO_CONNECTOR_CLIENT_SECRET"
 
 	createAPIKeyMutation = `
-mutation($input: CreateAPIKeyConnectorInput!) {
+mutation ConnectorCreateAPIKey($input: CreateAPIKeyConnectorInput!) {
   createAPIKeyConnector(input: $input) {
     connector {
       id
@@ -54,7 +54,7 @@ mutation($input: CreateAPIKeyConnectorInput!) {
 `
 
 	createClientCredentialsMutation = `
-mutation($input: CreateClientCredentialsConnectorInput!) {
+mutation ConnectorCreateClientCredentials($input: CreateClientCredentialsConnectorInput!) {
   createClientCredentialsConnector(input: $input) {
     connector {
       id

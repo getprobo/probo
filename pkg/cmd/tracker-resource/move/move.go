@@ -30,7 +30,7 @@ import (
 )
 
 const moveMutation = `
-mutation($input: MoveTrackerResourceToCategoryInput!) {
+mutation TrackerResourceMove($input: MoveTrackerResourceToCategoryInput!) {
   moveTrackerResourceToCategory(input: $input) {
     trackerResource {
       id

@@ -31,7 +31,7 @@ import (
 )
 
 const trustCenterQuery = `
-query($id: ID!) {
+query CompliancePortalCommitmentGroupCreateTrustCenter($id: ID!) {
   node(id: $id) {
     __typename
     ... on Organization {
@@ -44,7 +44,7 @@ query($id: ID!) {
 `
 
 const createMutation = `
-mutation($input: CreateCompliancePortalCommitmentGroupInput!) {
+mutation CompliancePortalCommitmentGroupCreate($input: CreateCompliancePortalCommitmentGroupInput!) {
   createCompliancePortalCommitmentGroup(input: $input) {
     compliancePortalCommitmentGroupEdge {
       node {

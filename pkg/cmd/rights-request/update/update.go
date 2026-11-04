@@ -30,7 +30,7 @@ import (
 )
 
 const updateMutation = `
-mutation($input: UpdateRightsRequestInput!) {
+mutation RightsRequestUpdate($input: UpdateRightsRequestInput!) {
   updateRightsRequest(input: $input) {
     rightsRequest {
       id

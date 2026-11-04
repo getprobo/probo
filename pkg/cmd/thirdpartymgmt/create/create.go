@@ -31,7 +31,7 @@ import (
 )
 
 const createMutation = `
-mutation($input: CreateThirdPartyInput!) {
+mutation ThirdPartyCreate($input: CreateThirdPartyInput!) {
   createThirdParty(input: $input) {
     thirdPartyEdge {
       node {

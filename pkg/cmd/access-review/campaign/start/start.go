@@ -31,7 +31,7 @@ import (
 )
 
 const startMutation = `
-mutation($input: StartAccessReviewCampaignInput!) {
+mutation AccessReviewCampaignStart($input: StartAccessReviewCampaignInput!) {
   startAccessReviewCampaign(input: $input) {
     accessReviewCampaign {
       id

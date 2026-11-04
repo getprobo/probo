@@ -32,7 +32,7 @@ import (
 )
 
 const createMutation = `
-mutation($input: CreateInternalControlInput!) {
+mutation InternalControlCreate($input: CreateInternalControlInput!) {
   createInternalControl(input: $input) {
     internalControlEdge {
       node {

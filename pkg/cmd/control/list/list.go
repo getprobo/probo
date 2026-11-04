@@ -31,7 +31,7 @@ import (
 )
 
 const listQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: ControlOrder, $filter: ControlFilter) {
+query ControlList($id: ID!, $first: Int, $after: CursorKey, $orderBy: ControlOrder, $filter: ControlFilter) {
   node(id: $id) {
     __typename
     ... on Framework {

@@ -31,7 +31,7 @@ import (
 )
 
 const createMutation = `
-mutation($input: CreateTrackerResourceInput!) {
+mutation TrackerResourceCreate($input: CreateTrackerResourceInput!) {
   createTrackerResource(input: $input) {
     trackerResourceEdge {
       node {

@@ -29,7 +29,7 @@ import (
 )
 
 const listQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: FindingOrder, $filter: FindingFilter) {
+query FindingList($id: ID!, $first: Int, $after: CursorKey, $orderBy: FindingOrder, $filter: FindingFilter) {
   node(id: $id) {
     __typename
     ... on Organization {

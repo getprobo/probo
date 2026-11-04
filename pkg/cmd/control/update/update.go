@@ -30,7 +30,7 @@ import (
 )
 
 const updateMutation = `
-mutation($input: UpdateControlInput!) {
+mutation ControlUpdate($input: UpdateControlInput!) {
   updateControl(input: $input) {
     control {
       id

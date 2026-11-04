@@ -30,7 +30,7 @@ import (
 )
 
 const publishMutation = `
-mutation($input: PublishTransferImpactAssessmentListInput!) {
+mutation TiaPublish($input: PublishTransferImpactAssessmentListInput!) {
   publishTransferImpactAssessmentList(input: $input) {
     documentEdge {
       node {

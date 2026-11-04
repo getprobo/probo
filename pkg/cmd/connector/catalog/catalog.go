@@ -28,7 +28,7 @@ import (
 )
 
 const providersQuery = `
-query {
+query ConnectorCatalogProviders {
   connectorProviders {
     provider
     displayName

@@ -31,7 +31,7 @@ import (
 )
 
 const removeMutation = `
-mutation($input: DeleteEmployeePortalDocumentInput!) {
+mutation EmployeePortalDocumentRemove($input: DeleteEmployeePortalDocumentInput!) {
   deleteEmployeePortalDocument(input: $input) {
     deletedEmployeePortalDocumentId
   }

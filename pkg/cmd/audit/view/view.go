@@ -33,7 +33,7 @@ import (
 )
 
 const viewQuery = `
-query($id: ID!, $first: Int, $after: CursorKey) {
+query AuditView($id: ID!, $first: Int, $after: CursorKey) {
   node(id: $id) {
     __typename
     ... on Audit {

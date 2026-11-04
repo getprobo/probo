@@ -30,7 +30,7 @@ import (
 )
 
 const createMutation = `
-mutation($input: CreateDeviceInput!) {
+mutation DeviceCreate($input: CreateDeviceInput!) {
   createDevice(input: $input) {
     device {
       id

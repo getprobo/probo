@@ -167,7 +167,7 @@ Organization, document, person, document version, and the other named records (f
 
 ## GraphQL helpers
 
-All helpers live in `GenericFunctions.ts`.
+All helpers live in `GenericFunctions.ts`. Name every operation (`query GetWidgets`, `mutation CreateWidget`). The helper sends that name as `operationName`, which is what server logs record. The credential test request includes `operationName` itself.
 
 | Helper | API endpoint | Use case |
 |--------|-------------|----------|

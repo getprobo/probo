@@ -29,7 +29,7 @@ import (
 )
 
 const listQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: RiskAnalysisBoundaryOrder) {
+query RiskAnalysisBoundaryList($id: ID!, $first: Int, $after: CursorKey, $orderBy: RiskAnalysisBoundaryOrder) {
   node(id: $id) {
     __typename
     ... on RiskAnalysisDiagram {

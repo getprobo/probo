@@ -31,7 +31,7 @@ import (
 )
 
 const updateMutation = `
-mutation($input: UpdateInternalControlInput!) {
+mutation InternalControlUpdate($input: UpdateInternalControlInput!) {
   updateInternalControl(input: $input) {
     internalControl {
       id
@@ -197,7 +197,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 }
 
 const operatingFrequencyQuery = `
-query($id: ID!) {
+query InternalControlUpdateOperatingFrequency($id: ID!) {
   node(id: $id) {
     __typename
     ... on InternalControl {

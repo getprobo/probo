@@ -30,7 +30,7 @@ import (
 )
 
 const publishMutation = `
-mutation($input: PublishDataListInput!) {
+mutation DatumPublish($input: PublishDataListInput!) {
   publishDataList(input: $input) {
     documentEdge {
       node {

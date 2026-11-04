@@ -31,7 +31,7 @@ import (
 )
 
 const getQuery = `
-query($id: ID!) {
+query ContextGet($id: ID!) {
   node(id: $id) {
     ... on Organization {
       id

@@ -32,7 +32,7 @@ import (
 )
 
 const viewQuery = `
-query($id: ID!) {
+query TaskCommentView($id: ID!) {
   node(id: $id) {
     __typename
     ... on TaskComment {

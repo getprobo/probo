@@ -30,7 +30,7 @@ import (
 )
 
 const updateMutation = `
-mutation($input: UpdateAiSystemInput!) {
+mutation AisystemUpdate($input: UpdateAiSystemInput!) {
   updateAiSystem(input: $input) {
     aiSystem {
       id

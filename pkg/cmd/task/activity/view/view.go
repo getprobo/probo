@@ -31,7 +31,7 @@ import (
 )
 
 const viewQuery = `
-query($id: ID!) {
+query TaskActivityView($id: ID!) {
   node(id: $id) {
     __typename
     ... on TaskActivity {

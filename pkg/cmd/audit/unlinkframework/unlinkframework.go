@@ -29,7 +29,7 @@ import (
 )
 
 const unlinkMutation = `
-mutation($input: DeleteAuditFrameworkMappingInput!) {
+mutation AuditUnlinkFramework($input: DeleteAuditFrameworkMappingInput!) {
   deleteAuditFrameworkMapping(input: $input) {
     deletedAuditId
     deletedFrameworkId

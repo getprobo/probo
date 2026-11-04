@@ -32,7 +32,7 @@ import (
 )
 
 const publishedQuery = `
-query($id: ID!) {
+query CookieBannerPublishedVersion($id: ID!) {
   node(id: $id) {
     ... on CookieBanner {
       publishedVersion {

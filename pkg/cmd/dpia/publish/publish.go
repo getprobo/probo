@@ -30,7 +30,7 @@ import (
 )
 
 const publishMutation = `
-mutation($input: PublishDataProtectionImpactAssessmentListInput!) {
+mutation DpiaPublish($input: PublishDataProtectionImpactAssessmentListInput!) {
   publishDataProtectionImpactAssessmentList(input: $input) {
     documentEdge {
       node {

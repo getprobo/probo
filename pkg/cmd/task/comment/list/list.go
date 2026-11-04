@@ -30,7 +30,7 @@ import (
 )
 
 const listQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: TaskCommentOrder) {
+query TaskCommentList($id: ID!, $first: Int, $after: CursorKey, $orderBy: TaskCommentOrder) {
   node(id: $id) {
     __typename
     ... on Task {

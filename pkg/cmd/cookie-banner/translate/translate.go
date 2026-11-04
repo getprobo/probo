@@ -30,7 +30,7 @@ import (
 )
 
 const translateMutation = `
-mutation($input: UpsertCookieBannerTranslationInput!) {
+mutation CookieBannerTranslate($input: UpsertCookieBannerTranslationInput!) {
   upsertCookieBannerTranslation(input: $input) {
     cookieBannerTranslation {
       id

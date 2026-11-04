@@ -30,6 +30,7 @@ import (
 	"net/http"
 	"net/textproto"
 	"net/url"
+	"regexp"
 	"strings"
 	"time"
 
@@ -82,8 +83,9 @@ type (
 	Option func(*Client)
 
 	graphQLRequest struct {
-		Query     string         `json:"query"`
-		Variables map[string]any `json:"variables,omitempty"`
+		Query         string         `json:"query"`
+		OperationName string         `json:"operationName,omitempty"`
+		Variables     map[string]any `json:"variables,omitempty"`
 	}
 
 	graphQLResponse struct {
@@ -187,14 +189,32 @@ func (c *Client) DoRaw(
 	return respBody, nil
 }
 
+var graphqlOperationNamePattern = regexp.MustCompile(
+	`(?m)^[ \t]*(?:query|mutation|subscription)\s+([_A-Za-z][_0-9A-Za-z]*)\b`,
+)
+
+func operationNameFromQuery(query string) string {
+	match := graphqlOperationNamePattern.FindStringSubmatch(query)
+	if match == nil {
+		return ""
+	}
+
+	return match[1]
+}
+
+func newGraphQLRequest(query string, variables map[string]any) graphQLRequest {
+	return graphQLRequest{
+		Query:         query,
+		OperationName: operationNameFromQuery(query),
+		Variables:     variables,
+	}
+}
+
 func (c *Client) doRequest(
 	query string,
 	variables map[string]any,
 ) ([]byte, int, error) {
-	reqBody := graphQLRequest{
-		Query:     query,
-		Variables: variables,
-	}
+	reqBody := newGraphQLRequest(query, variables)
 
 	body, err := json.Marshal(reqBody)
 	if err != nil {
@@ -281,12 +301,7 @@ func (c *Client) doUploadRequest(
 	writer := multipart.NewWriter(&buf)
 
 	// Part 1: operations
-	operationsJSON, err := json.Marshal(
-		graphQLRequest{
-			Query:     query,
-			Variables: variables,
-		},
-	)
+	operationsJSON, err := json.Marshal(newGraphQLRequest(query, variables))
 	if err != nil {
 		return nil, fmt.Errorf("cannot marshal operations: %w", err)
 	}

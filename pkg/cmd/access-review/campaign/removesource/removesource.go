@@ -30,7 +30,7 @@ import (
 )
 
 const removeSourceMutation = `
-mutation($input: RemoveAccessReviewCampaignSourceInput!) {
+mutation AccessReviewCampaignRemoveSource($input: RemoveAccessReviewCampaignSourceInput!) {
   removeAccessReviewCampaignSource(input: $input) {
     accessReviewCampaign {
       id

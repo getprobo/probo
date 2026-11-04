@@ -30,7 +30,7 @@ import (
 )
 
 const publishMutation = `
-mutation($input: PublishThirdPartyListInput!) {
+mutation ThirdPartyPublish($input: PublishThirdPartyListInput!) {
   publishThirdPartyList(input: $input) {
     documentEdge {
       node {

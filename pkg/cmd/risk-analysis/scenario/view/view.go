@@ -31,7 +31,7 @@ import (
 )
 
 const viewQuery = `
-query($id: ID!) {
+query RiskAnalysisScenarioView($id: ID!) {
   node(id: $id) {
     __typename
     ... on RiskAnalysisScenario {

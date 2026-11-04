@@ -31,7 +31,7 @@ import (
 )
 
 const createMutation = `
-mutation($input: CreateTreatmentPlanInput!) {
+mutation TreatmentPlanCreate($input: CreateTreatmentPlanInput!) {
   createTreatmentPlan(input: $input) {
     treatmentPlanEdge {
       node {

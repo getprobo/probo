@@ -32,7 +32,7 @@ import (
 )
 
 const viewQuery = `
-query($id: ID!, $asOf: Datetime) {
+query RiskAnalysisView($id: ID!, $asOf: Datetime) {
   node(id: $id) {
     __typename
     ... on RiskAnalysis {

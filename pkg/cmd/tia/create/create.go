@@ -30,7 +30,7 @@ import (
 )
 
 const createMutation = `
-mutation($input: CreateTransferImpactAssessmentInput!) {
+mutation TiaCreate($input: CreateTransferImpactAssessmentInput!) {
   createTransferImpactAssessment(input: $input) {
     transferImpactAssessment {
       id

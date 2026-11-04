@@ -30,7 +30,7 @@ import (
 )
 
 const deleteMutation = `
-mutation($input: DeleteObligationInput!) {
+mutation ObligationDelete($input: DeleteObligationInput!) {
   deleteObligation(input: $input) {
     deletedObligationId
   }

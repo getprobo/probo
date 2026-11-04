@@ -30,7 +30,7 @@ import (
 )
 
 const updateMutation = `
-mutation($input: UpdateTrackerResourceInput!) {
+mutation TrackerResourceUpdate($input: UpdateTrackerResourceInput!) {
   updateTrackerResource(input: $input) {
     trackerResource {
       id

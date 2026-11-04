@@ -29,7 +29,7 @@ import (
 )
 
 const listQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: DataProtectionImpactAssessmentOrder) {
+query DpiaList($id: ID!, $first: Int, $after: CursorKey, $orderBy: DataProtectionImpactAssessmentOrder) {
   node(id: $id) {
     __typename
     ... on Organization {

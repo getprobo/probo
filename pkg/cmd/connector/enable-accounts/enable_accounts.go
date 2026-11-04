@@ -31,7 +31,7 @@ import (
 )
 
 const enableMutation = `
-mutation($input: EnableConnectorAccountsInput!) {
+mutation ConnectorEnableAccounts($input: EnableConnectorAccountsInput!) {
   enableConnectorAccounts(input: $input) {
     connectorAccounts {
       id

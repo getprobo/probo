@@ -30,7 +30,7 @@ import (
 )
 
 const removeMutation = `
-mutation($input: RemoveUserInput!) {
+mutation UserRemove($input: RemoveUserInput!) {
   removeUser(input: $input) {
     deletedProfileId
   }

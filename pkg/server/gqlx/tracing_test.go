@@ -255,6 +255,72 @@ func TestInterceptOperation(t *testing.T) {
 			}
 		},
 	)
+
+	t.Run(
+		"uses the document name when the request omits it",
+		func(t *testing.T) {
+			t.Parallel()
+
+			ctx := graphql.WithOperationContext(
+				context.Background(),
+				&graphql.OperationContext{
+					Operation: &ast.OperationDefinition{
+						Operation: ast.Query,
+						Name:      "AssetList",
+					},
+				},
+			)
+
+			entry := failedLogEntry(t, ctx)
+			assert.Contains(t, entry["msg"], "query AssetList failed")
+			assert.Equal(t, "AssetList", entry["graphql_operation_name"])
+		},
+	)
+
+	t.Run(
+		"anonymous operation stays unnamed",
+		func(t *testing.T) {
+			t.Parallel()
+
+			ctx := graphql.WithOperationContext(
+				context.Background(),
+				&graphql.OperationContext{
+					Operation: &ast.OperationDefinition{
+						Operation: ast.Query,
+					},
+				},
+			)
+
+			entry := failedLogEntry(t, ctx)
+			assert.Contains(t, entry["msg"], "query unnamed failed")
+			assert.Equal(t, "unnamed", entry["graphql_operation_name"])
+		},
+	)
+}
+
+func failedLogEntry(t *testing.T, ctx context.Context) map[string]any {
+	t.Helper()
+
+	var logs bytes.Buffer
+
+	extension := gqlx.NewTracingExtension(log.NewLogger(log.WithOutput(&logs)))
+	handler := extension.InterceptOperation(
+		ctx,
+		func(context.Context) graphql.ResponseHandler {
+			return func(context.Context) *graphql.Response {
+				return &graphql.Response{
+					Errors: gqlerror.List{gqlerror.Errorf("boom")},
+				}
+			}
+		},
+	)
+
+	require.NotNil(t, handler(ctx))
+
+	var entry map[string]any
+	require.NoError(t, json.Unmarshal([]byte(strings.TrimSpace(logs.String())), &entry))
+
+	return entry
 }
 
 func canceledLogEntry(t *testing.T, logs string) map[string]any {

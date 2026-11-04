@@ -30,7 +30,7 @@ import (
 )
 
 const deleteMutation = `
-mutation($input: DeleteProcessingActivityInput!) {
+mutation ProcessingActivityDelete($input: DeleteProcessingActivityInput!) {
   deleteProcessingActivity(input: $input) {
     deletedProcessingActivityId
   }

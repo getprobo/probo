@@ -31,7 +31,7 @@ import (
 )
 
 const createMutation = `
-mutation($input: CreateCompliancePortalReferenceInput!) {
+mutation CompliancePortalReferenceCreate($input: CreateCompliancePortalReferenceInput!) {
   createCompliancePortalReference(input: $input) {
     compliancePortalReferenceEdge {
       node {

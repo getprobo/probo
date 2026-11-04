@@ -30,7 +30,7 @@ import (
 )
 
 const createMutation = `
-mutation($input: CreateFrameworkInput!) {
+mutation FrameworkCreate($input: CreateFrameworkInput!) {
   createFramework(input: $input) {
     frameworkEdge {
       node {

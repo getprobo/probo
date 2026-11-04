@@ -29,7 +29,7 @@ import (
 )
 
 const listQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: DocumentOrder, $filter: DocumentFilter) {
+query DocumentList($id: ID!, $first: Int, $after: CursorKey, $orderBy: DocumentOrder, $filter: DocumentFilter) {
   node(id: $id) {
     __typename
     ... on Organization {

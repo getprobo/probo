@@ -30,7 +30,7 @@ import (
 )
 
 const createMutation = `
-mutation($input: CreateFindingInput!) {
+mutation FindingCreate($input: CreateFindingInput!) {
   createFinding(input: $input) {
     findingEdge {
       node {

@@ -31,7 +31,7 @@ import (
 )
 
 const createMutation = `
-mutation($input: CreateAiSystemInput!) {
+mutation AisystemCreate($input: CreateAiSystemInput!) {
   createAiSystem(input: $input) {
     aiSystemEdge {
       node {

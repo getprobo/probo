@@ -31,7 +31,7 @@ import (
 
 const (
 	sourceQuery = `
-query($id: ID!) {
+query AccessReviewSourceProbeSource($id: ID!) {
   node(id: $id) {
     __typename
     ... on AccessReviewSource {
@@ -43,7 +43,7 @@ query($id: ID!) {
 `
 
 	probeMutation = `
-mutation($input: ProbeConnectorInput!) {
+mutation AccessReviewSourceProbe($input: ProbeConnectorInput!) {
   probeConnector(input: $input) {
     ok
   }

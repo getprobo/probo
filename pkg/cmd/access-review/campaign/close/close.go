@@ -31,7 +31,7 @@ import (
 )
 
 const closeMutation = `
-mutation($input: CloseAccessReviewCampaignInput!) {
+mutation AccessReviewCampaignClose($input: CloseAccessReviewCampaignInput!) {
   closeAccessReviewCampaign(input: $input) {
     accessReviewCampaign {
       id

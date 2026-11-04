@@ -30,7 +30,7 @@ import (
 )
 
 const deleteMutation = `
-mutation($input: DeleteAccessReviewSourceInput!) {
+mutation AccessReviewSourceDelete($input: DeleteAccessReviewSourceInput!) {
   deleteAccessReviewSource(input: $input) {
     deletedAccessReviewSourceId
   }

@@ -30,7 +30,7 @@ import (
 )
 
 const regenerateMutation = `
-mutation($input: RegenerateCookieBannerTrackerPolicyInput!) {
+mutation CookieBannerRegeneratePolicy($input: RegenerateCookieBannerTrackerPolicyInput!) {
   regenerateCookieBannerTrackerPolicy(input: $input) {
     cookieBanner {
       id

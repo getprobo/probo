@@ -29,7 +29,7 @@ import (
 )
 
 const listQuery = `
-query($id: ID!, $teamId: String!, $first: Int, $after: String, $query: String) {
+query TaskListLinearIssues($id: ID!, $teamId: String!, $first: Int, $after: String, $query: String) {
   node(id: $id) {
     __typename
     ... on Organization {

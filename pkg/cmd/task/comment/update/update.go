@@ -30,7 +30,7 @@ import (
 )
 
 const updateMutation = `
-mutation($input: UpdateTaskCommentInput!) {
+mutation TaskCommentUpdate($input: UpdateTaskCommentInput!) {
   updateTaskComment(input: $input) {
     taskComment {
       id

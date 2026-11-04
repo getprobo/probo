@@ -29,7 +29,7 @@ import (
 )
 
 const listQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: WebhookSubscriptionOrder) {
+query WebhookList($id: ID!, $first: Int, $after: CursorKey, $orderBy: WebhookSubscriptionOrder) {
   node(id: $id) {
     __typename
     ... on Organization {

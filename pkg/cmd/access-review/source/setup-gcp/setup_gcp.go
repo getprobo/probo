@@ -30,7 +30,7 @@ import (
 )
 
 const setupQuery = `
-query($organizationId: ID!) {
+query AccessReviewSourceSetupGcp($organizationId: ID!) {
   gcpConnectorSetup(organizationId: $organizationId) {
     issuer
     audience

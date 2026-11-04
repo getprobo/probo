@@ -30,7 +30,7 @@ import (
 )
 
 const createMutation = `
-mutation($input: CreateSCIMConfigurationInput!) {
+mutation ScimCreate($input: CreateSCIMConfigurationInput!) {
   createSCIMConfiguration(input: $input) {
     scimConfiguration {
       id

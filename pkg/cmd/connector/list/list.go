@@ -29,7 +29,7 @@ import (
 )
 
 const listQuery = `
-query($id: ID!) {
+query ConnectorList($id: ID!) {
   node(id: $id) {
     __typename
     ... on Organization {

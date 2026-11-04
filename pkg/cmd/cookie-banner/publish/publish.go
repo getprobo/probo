@@ -30,7 +30,7 @@ import (
 )
 
 const publishMutation = `
-mutation($input: PublishCookieBannerVersionInput!) {
+mutation CookieBannerPublish($input: PublishCookieBannerVersionInput!) {
   publishCookieBannerVersion(input: $input) {
     cookieBannerVersion {
       id

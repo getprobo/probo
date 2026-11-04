@@ -30,7 +30,7 @@ import (
 )
 
 const deleteMutation = `
-mutation($input: DeleteTrackerResourceInput!) {
+mutation TrackerResourceDelete($input: DeleteTrackerResourceInput!) {
   deleteTrackerResource(input: $input) {
     deletedTrackerResourceId
     cookieBanner {

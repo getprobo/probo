@@ -31,7 +31,7 @@ import (
 )
 
 const createMutation = `
-mutation($input: CreateProcessingActivityInput!) {
+mutation ProcessingActivityCreate($input: CreateProcessingActivityInput!) {
   createProcessingActivity(input: $input) {
     processingActivityEdge {
       node {

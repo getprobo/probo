@@ -30,7 +30,7 @@ import (
 )
 
 const deleteMutation = `
-mutation($input: DeleteControlInput!) {
+mutation ControlDelete($input: DeleteControlInput!) {
   deleteControl(input: $input) {
     deletedControlId
   }

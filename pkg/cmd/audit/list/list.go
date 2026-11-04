@@ -29,7 +29,7 @@ import (
 )
 
 const listQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: AuditOrder) {
+query AuditList($id: ID!, $first: Int, $after: CursorKey, $orderBy: AuditOrder) {
   node(id: $id) {
     __typename
     ... on Organization {

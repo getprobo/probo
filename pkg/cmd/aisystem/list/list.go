@@ -29,7 +29,7 @@ import (
 )
 
 const listQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: AiSystemOrder, $filter: AiSystemFilter) {
+query AisystemList($id: ID!, $first: Int, $after: CursorKey, $orderBy: AiSystemOrder, $filter: AiSystemFilter) {
   node(id: $id) {
     __typename
     ... on Organization {

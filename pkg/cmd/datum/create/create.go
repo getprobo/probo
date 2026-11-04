@@ -31,7 +31,7 @@ import (
 )
 
 const createMutation = `
-mutation($input: CreateDatumInput!) {
+mutation DatumCreate($input: CreateDatumInput!) {
   createDatum(input: $input) {
     datumEdge {
       node {

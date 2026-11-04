@@ -31,7 +31,7 @@ import (
 )
 
 const createMutation = `
-mutation($input: CreateCookieBannerInput!) {
+mutation CookieBannerCreate($input: CreateCookieBannerInput!) {
   createCookieBanner(input: $input) {
     cookieBannerEdge {
       node {

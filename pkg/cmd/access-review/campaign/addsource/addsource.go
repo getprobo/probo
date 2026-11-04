@@ -30,7 +30,7 @@ import (
 )
 
 const addSourceMutation = `
-mutation($input: AddAccessReviewCampaignSourceInput!) {
+mutation AccessReviewCampaignAddSource($input: AddAccessReviewCampaignSourceInput!) {
   addAccessReviewCampaignSource(input: $input) {
     accessReviewCampaign {
       id

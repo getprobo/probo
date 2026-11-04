@@ -34,12 +34,12 @@ The MCP workflows in the same package are separate skills. `prb` does not embed 
 
 ## Leaf command pattern
 
-Every leaf command follows this structure:
+Every leaf command follows this structure. Name the operation. `prb` sends that name as `operationName`, which is what server logs record.
 
 ```go
 package list
 
-const listQuery = `query($id: ID!, $first: Int, $after: CursorKey) { ... }`
+const listQuery = `query AssetList($id: ID!, $first: Int, $after: CursorKey) { ... }`
 
 type listResponse struct { ... } // unexported, shaped to match GraphQL response
 
@@ -285,6 +285,6 @@ Use `http://` explicitly — hosts without a scheme default to HTTPS. Config is 
 
 1. **Group command** — `pkg/cmd/<resource>/<resource>.go` with `NewCmd<Resource>(f)`, wiring all verb subcommands
 2. **Leaf commands** — one file per verb in `pkg/cmd/<resource>/<verb>/<verb>.go`
-3. **Each leaf file** — MIT license header, GraphQL const, unexported response struct, `NewCmd<Verb>(f)` function
+3. **Each leaf file** — MIT license header, named GraphQL operation, unexported response struct, `NewCmd<Verb>(f)` function
 4. **Register in root** — import and `cmd.AddCommand()` in `pkg/cmd/root/root.go`
 5. **API surface** — update GraphQL schema, MCP tools, and e2e tests

@@ -33,7 +33,7 @@ import (
 )
 
 const viewQuery = `
-query($id: ID!) {
+query DeviceView($id: ID!) {
   node(id: $id) {
     __typename
     ... on Device {

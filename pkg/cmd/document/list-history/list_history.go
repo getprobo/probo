@@ -30,7 +30,7 @@ import (
 )
 
 const listQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: DocumentRevisionOrder) {
+query DocumentListHistory($id: ID!, $first: Int, $after: CursorKey, $orderBy: DocumentRevisionOrder) {
   node(id: $id) {
     __typename
     ... on Document {

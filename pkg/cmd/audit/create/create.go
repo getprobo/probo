@@ -32,7 +32,7 @@ import (
 )
 
 const createMutation = `
-mutation($input: CreateAuditInput!) {
+mutation AuditCreate($input: CreateAuditInput!) {
   createAudit(input: $input) {
     auditEdge {
       node {
@@ -247,7 +247,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 }
 
 const frameworksQuery = `
-query($id: ID!, $first: Int, $after: CursorKey) {
+query AuditCreateFrameworks($id: ID!, $first: Int, $after: CursorKey) {
   node(id: $id) {
     __typename
     ... on Organization {

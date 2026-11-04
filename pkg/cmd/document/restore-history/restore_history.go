@@ -31,7 +31,7 @@ import (
 )
 
 const restoreMutation = `
-mutation($input: RestoreDocumentHistoryInput!) {
+mutation DocumentRestoreHistory($input: RestoreDocumentHistoryInput!) {
   restoreDocumentHistory(input: $input) {
     document {
       id

@@ -79,6 +79,21 @@ func (t TracingExtension) InterceptField(ctx context.Context, next graphql.Resol
 	return next(ctx)
 }
 
+// loggedOperationName prefers the request operationName, then the name on
+// the operation. A single named operation is selected even when the
+// request omits operationName, and that name is what the log should show.
+func loggedOperationName(opCtx *graphql.OperationContext) string {
+	if opCtx.OperationName != "" {
+		return opCtx.OperationName
+	}
+
+	if opCtx.Operation != nil && opCtx.Operation.Name != "" {
+		return opCtx.Operation.Name
+	}
+
+	return "unnamed"
+}
+
 func (t TracingExtension) InterceptOperation(ctx context.Context, next graphql.OperationHandler) graphql.ResponseHandler {
 	requestContext := graphql.GetOperationContext(ctx)
 	startTime := time.Now()
@@ -88,18 +103,20 @@ func (t TracingExtension) InterceptOperation(ctx context.Context, next graphql.O
 
 	var operationSpan trace.Span
 
+	operationName := loggedOperationName(requestContext)
+
 	if rootSpan.IsRecording() {
 		tracer := otel.Tracer("graphql-operation")
 
-		operationName := "GraphQL Operation"
-		if requestContext.OperationName != "" {
-			operationName = "GraphQL " + requestContext.OperationName
+		spanName := "GraphQL Operation"
+		if operationName != "unnamed" {
+			spanName = "GraphQL " + operationName
 		}
 
-		spanCtx, operationSpan = tracer.Start(ctx, operationName)
+		spanCtx, operationSpan = tracer.Start(ctx, spanName)
 
 		operationSpan.SetAttributes(
-			attribute.String("graphql.operation_name", requestContext.OperationName),
+			attribute.String("graphql.operation_name", operationName),
 			attribute.String("graphql.operation_type", string(requestContext.Operation.Operation)),
 			attribute.String("graphql.query", requestContext.RawQuery),
 		)
@@ -108,11 +125,6 @@ func (t TracingExtension) InterceptOperation(ctx context.Context, next graphql.O
 	handler := next(spanCtx)
 
 	operationType := string(requestContext.Operation.Operation)
-
-	operationName := requestContext.OperationName
-	if operationName == "" {
-		operationName = "unnamed"
-	}
 
 	var (
 		errs     gqlerror.List

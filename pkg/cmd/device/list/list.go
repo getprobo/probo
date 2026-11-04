@@ -32,7 +32,7 @@ import (
 
 const (
 	listQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: DeviceOrder, $filter: DeviceFilter) {
+query DeviceList($id: ID!, $first: Int, $after: CursorKey, $orderBy: DeviceOrder, $filter: DeviceFilter) {
   node(id: $id) {
     __typename
     ... on Organization {
@@ -65,7 +65,7 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: DeviceOrder, $filter: 
 `
 
 	listWithPosturesQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: DeviceOrder, $filter: DeviceFilter) {
+query DeviceListWithPostures($id: ID!, $first: Int, $after: CursorKey, $orderBy: DeviceOrder, $filter: DeviceFilter) {
   node(id: $id) {
     __typename
     ... on Organization {

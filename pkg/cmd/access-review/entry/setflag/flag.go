@@ -31,7 +31,7 @@ import (
 )
 
 const flagMutation = `
-mutation($input: FlagAccessReviewEntryInput!) {
+mutation AccessReviewEntrySetFlag($input: FlagAccessReviewEntryInput!) {
   flagAccessReviewEntry(input: $input) {
     accessReviewEntry {
       id

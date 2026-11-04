@@ -30,7 +30,7 @@ import (
 )
 
 const reactivateMutation = `
-mutation($input: ReactivateSCIMBridgeInput!) {
+mutation ScimBridgeReactivate($input: ReactivateSCIMBridgeInput!) {
   reactivateSCIMBridge(input: $input) {
     scimBridge {
       id

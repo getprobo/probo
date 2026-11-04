@@ -30,7 +30,7 @@ import (
 )
 
 const updateMutation = `
-mutation($input: UpdateSCIMBridgeInput!) {
+mutation ScimBridgeUpdate($input: UpdateSCIMBridgeInput!) {
   updateSCIMBridge(input: $input) {
     scimBridge {
       id

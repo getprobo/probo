@@ -31,7 +31,7 @@ import (
 )
 
 const updateMutation = `
-mutation($input: UpdateLinearSettingsInput!) {
+mutation TaskUpdateLinearSettings($input: UpdateLinearSettingsInput!) {
   updateLinearSettings(input: $input) {
     organization {
       linearSettings {

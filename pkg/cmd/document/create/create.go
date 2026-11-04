@@ -31,7 +31,7 @@ import (
 )
 
 const createMutation = `
-mutation($input: CreateDocumentInput!) {
+mutation DocumentCreate($input: CreateDocumentInput!) {
   createDocument(input: $input) {
     documentEdge {
       node {

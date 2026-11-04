@@ -29,7 +29,7 @@ import (
 )
 
 const removeMutation = `
-mutation($input: RemoveCookieBannerGVLVendorInput!) {
+mutation CookieBannerRemoveGvlVendor($input: RemoveCookieBannerGVLVendorInput!) {
   removeCookieBannerGVLVendor(input: $input) {
     cookieBanner {
       id

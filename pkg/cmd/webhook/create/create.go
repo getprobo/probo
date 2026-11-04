@@ -33,7 +33,7 @@ import (
 )
 
 const createMutation = `
-mutation($input: CreateWebhookSubscriptionInput!) {
+mutation WebhookCreate($input: CreateWebhookSubscriptionInput!) {
   createWebhookSubscription(input: $input) {
     webhookSubscriptionEdge {
       node {

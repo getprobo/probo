@@ -30,7 +30,7 @@ import (
 )
 
 const deleteMutation = `
-mutation($input: DeleteCompliancePortalInput!) {
+mutation CompliancePortalDelete($input: DeleteCompliancePortalInput!) {
   deleteCompliancePortal(input: $input) {
     deletedCompliancePortalId
   }

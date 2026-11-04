@@ -29,7 +29,7 @@ import (
 )
 
 const listQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: DocumentVersionOrder, $filter: DocumentVersionFilter) {
+query DocumentListVersions($id: ID!, $first: Int, $after: CursorKey, $orderBy: DocumentVersionOrder, $filter: DocumentVersionFilter) {
   node(id: $id) {
     __typename
     ... on Document {

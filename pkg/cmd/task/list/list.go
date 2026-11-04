@@ -29,7 +29,7 @@ import (
 )
 
 const listQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: TaskOrder, $filter: TaskFilter) {
+query TaskList($id: ID!, $first: Int, $after: CursorKey, $orderBy: TaskOrder, $filter: TaskFilter) {
   node(id: $id) {
     __typename
     ... on Organization {

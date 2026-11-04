@@ -30,7 +30,7 @@ import (
 )
 
 const publishMutation = `
-mutation($input: PublishFindingListInput!) {
+mutation FindingPublish($input: PublishFindingListInput!) {
   publishFindingList(input: $input) {
     documentEdge {
       node {

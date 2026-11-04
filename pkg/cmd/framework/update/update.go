@@ -30,7 +30,7 @@ import (
 )
 
 const updateMutation = `
-mutation($input: UpdateFrameworkInput!) {
+mutation FrameworkUpdate($input: UpdateFrameworkInput!) {
   updateFramework(input: $input) {
     framework {
       id

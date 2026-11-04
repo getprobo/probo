@@ -29,7 +29,7 @@ import (
 )
 
 const retryFetchMutation = `
-mutation($input: RetryAccessReviewCampaignSourceFetchInput!) {
+mutation AccessReviewCampaignRetryFetch($input: RetryAccessReviewCampaignSourceFetchInput!) {
   retryAccessReviewCampaignSourceFetch(input: $input) {
     accessReviewCampaign {
       id

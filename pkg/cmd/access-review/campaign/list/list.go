@@ -29,7 +29,7 @@ import (
 )
 
 const listQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: AccessReviewCampaignOrder) {
+query AccessReviewCampaignList($id: ID!, $first: Int, $after: CursorKey, $orderBy: AccessReviewCampaignOrder) {
   node(id: $id) {
     __typename
     ... on Organization {

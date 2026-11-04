@@ -30,7 +30,7 @@ import (
 )
 
 const setupQuery = `
-query($organizationId: ID!) {
+query AccessReviewSourceSetupAws($organizationId: ID!) {
   awsConnectorSetup(organizationId: $organizationId) {
     issuer
     audience

@@ -31,7 +31,7 @@ import (
 )
 
 const createMutation = `
-mutation($input: CreateRightsRequestInput!) {
+mutation RightsRequestCreate($input: CreateRightsRequestInput!) {
   createRightsRequest(input: $input) {
     rightsRequestEdge {
       node {

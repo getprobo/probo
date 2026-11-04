@@ -33,7 +33,7 @@ import (
 )
 
 const updateMutation = `
-mutation($input: UpdateWebhookSubscriptionInput!) {
+mutation WebhookUpdate($input: UpdateWebhookSubscriptionInput!) {
   updateWebhookSubscription(input: $input) {
     webhookSubscription {
       id

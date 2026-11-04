@@ -30,7 +30,7 @@ import (
 )
 
 const publishMutation = `
-mutation($input: PublishTaskToLinearInput!) {
+mutation TaskPublishLinear($input: PublishTaskToLinearInput!) {
   publishTaskToLinear(input: $input) {
     task {
       id

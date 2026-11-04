@@ -30,7 +30,7 @@ import (
 )
 
 const deleteMutation = `
-mutation($input: DeleteAiSystemInput!) {
+mutation AisystemDelete($input: DeleteAiSystemInput!) {
   deleteAiSystem(input: $input) {
     deletedAiSystemId
   }

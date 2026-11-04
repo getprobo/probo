@@ -29,7 +29,7 @@ import (
 )
 
 const listQuery = `
-query($first: Int, $after: CursorKey, $filter: CommonGVLVendorFilter) {
+query CookieBannerListGvlCatalog($first: Int, $after: CursorKey, $filter: CommonGVLVendorFilter) {
   commonGVLVendors(first: $first, after: $after, filter: $filter) {
     totalCount
     edges {

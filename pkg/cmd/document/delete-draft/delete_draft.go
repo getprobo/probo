@@ -30,7 +30,7 @@ import (
 )
 
 const deleteDraftMutation = `
-mutation($input: DeleteDocumentDraftInput!) {
+mutation DocumentDeleteDraft($input: DeleteDocumentDraftInput!) {
   deleteDocumentDraft(input: $input) {
     document {
       id

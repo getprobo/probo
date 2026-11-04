@@ -30,7 +30,7 @@ import (
 )
 
 const updateMutation = `
-mutation($input: UpdateObligationInput!) {
+mutation ObligationUpdate($input: UpdateObligationInput!) {
   updateObligation(input: $input) {
     obligation {
       id

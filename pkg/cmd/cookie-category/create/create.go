@@ -31,7 +31,7 @@ import (
 )
 
 const createMutation = `
-mutation($input: CreateCookieCategoryInput!) {
+mutation CookieCategoryCreate($input: CreateCookieCategoryInput!) {
   createCookieCategory(input: $input) {
     cookieCategoryEdge {
       node {

@@ -29,7 +29,7 @@ import (
 )
 
 const listScanTrackersQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $direction: OrderDirection!, $trackerTypes: [TrackerType!]) {
+query CookieBannerListScanTrackers($id: ID!, $first: Int, $after: CursorKey, $direction: OrderDirection!, $trackerTypes: [TrackerType!]) {
   node(id: $id) {
     __typename
     ... on CookieBannerScan {

@@ -30,7 +30,7 @@ import (
 )
 
 const deleteMutation = `
-mutation($input: DeleteFrameworkInput!) {
+mutation FrameworkDelete($input: DeleteFrameworkInput!) {
   deleteFramework(input: $input) {
     deletedFrameworkId
   }

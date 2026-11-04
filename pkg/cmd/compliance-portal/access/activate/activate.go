@@ -30,7 +30,7 @@ import (
 )
 
 const activateMutation = `
-mutation($input: ActivateCompliancePortalAccessInput!) {
+mutation CompliancePortalAccessActivate($input: ActivateCompliancePortalAccessInput!) {
   activateCompliancePortalAccess(input: $input) {
     compliancePortalAccess {
       id

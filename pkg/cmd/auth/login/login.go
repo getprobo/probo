@@ -486,7 +486,7 @@ func pollForToken(
 }
 
 const viewerOrganizationsQuery = `
-query($first: Int, $filter: ProfileFilter) {
+query AuthLoginViewerOrganizations($first: Int, $filter: ProfileFilter) {
   viewer {
     profiles(first: $first, filter: $filter) {
       edges {

@@ -29,7 +29,7 @@ import (
 )
 
 const linkThreatMutation = `
-mutation($input: LinkRiskAnalysisScenarioThreatInput!) {
+mutation RiskAnalysisScenarioLinkThreat($input: LinkRiskAnalysisScenarioThreatInput!) {
   linkRiskAnalysisScenarioThreat(input: $input) {
     riskAnalysisScenario {
       id

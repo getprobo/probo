@@ -29,7 +29,7 @@ import (
 )
 
 const listQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: ThirdPartyOrder, $filter: ThirdPartyFilter) {
+query ThirdPartyList($id: ID!, $first: Int, $after: CursorKey, $orderBy: ThirdPartyOrder, $filter: ThirdPartyFilter) {
   node(id: $id) {
     __typename
     ... on Organization {

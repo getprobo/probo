@@ -30,7 +30,7 @@ import (
 )
 
 const deleteMutation = `
-mutation($input: DeleteSCIMConfigurationInput!) {
+mutation ScimDelete($input: DeleteSCIMConfigurationInput!) {
   deleteSCIMConfiguration(input: $input) {
     deletedScimConfigurationId
   }

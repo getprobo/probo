@@ -30,7 +30,7 @@ import (
 )
 
 const viewQuery = `
-query($id: ID!, $revisionId: ID!) {
+query DocumentViewHistorySnapshot($id: ID!, $revisionId: ID!) {
   node(id: $id) {
     __typename
     ... on Document {

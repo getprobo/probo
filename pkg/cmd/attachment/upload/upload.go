@@ -33,7 +33,7 @@ import (
 )
 
 const uploadMutation = `
-mutation($input: UploadFileInput!) {
+mutation AttachmentUpload($input: UploadFileInput!) {
   uploadFile(input: $input) {
     file {
       id

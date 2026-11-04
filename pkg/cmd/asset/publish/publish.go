@@ -30,7 +30,7 @@ import (
 )
 
 const publishMutation = `
-mutation($input: PublishAssetListInput!) {
+mutation AssetPublish($input: PublishAssetListInput!) {
   publishAssetList(input: $input) {
     documentEdge {
       node {

@@ -31,7 +31,7 @@ import (
 )
 
 const regenerateMutation = `
-mutation($input: RegenerateSCIMTokenInput!) {
+mutation ScimRegenerateToken($input: RegenerateSCIMTokenInput!) {
   regenerateSCIMToken(input: $input) {
     scimConfiguration {
       id

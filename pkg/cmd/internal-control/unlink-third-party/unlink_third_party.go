@@ -29,7 +29,7 @@ import (
 )
 
 const unlinkThirdPartyMutation = `
-mutation($input: DeleteInternalControlThirdPartyMappingInput!) {
+mutation InternalControlUnlinkThirdParty($input: DeleteInternalControlThirdPartyMappingInput!) {
   deleteInternalControlThirdPartyMapping(input: $input) {
     deletedInternalControlId
     deletedThirdPartyId

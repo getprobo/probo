@@ -33,7 +33,7 @@ import (
 )
 
 const updateMutation = `
-mutation($input: UpdateCookieCategoryInput!) {
+mutation CookieCategoryUpdate($input: UpdateCookieCategoryInput!) {
   updateCookieCategory(input: $input) {
     cookieCategory {
       id

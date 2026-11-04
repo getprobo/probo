@@ -30,7 +30,7 @@ import (
 )
 
 const moveMutation = `
-mutation($input: MoveTrackerPatternToCategoryInput!) {
+mutation TrackerPatternMove($input: MoveTrackerPatternToCategoryInput!) {
   moveTrackerPatternToCategory(input: $input) {
     trackerPattern {
       id

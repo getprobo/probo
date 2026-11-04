@@ -30,7 +30,7 @@ import (
 )
 
 const deleteMutation = `
-mutation($input: DeleteAssetInput!) {
+mutation AssetDelete($input: DeleteAssetInput!) {
   deleteAsset(input: $input) {
     deletedAssetId
   }

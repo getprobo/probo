@@ -31,7 +31,7 @@ import (
 )
 
 const deleteMutation = `
-mutation($input: DeleteEvidenceInput!) {
+mutation EvidenceDelete($input: DeleteEvidenceInput!) {
   deleteEvidence(input: $input) {
     deletedEvidenceId
   }

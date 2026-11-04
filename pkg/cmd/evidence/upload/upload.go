@@ -32,7 +32,7 @@ import (
 )
 
 const uploadMutation = `
-mutation($input: UploadInternalControlEvidenceInput!) {
+mutation EvidenceUpload($input: UploadInternalControlEvidenceInput!) {
   uploadInternalControlEvidence(input: $input) {
     evidenceEdge {
       node {

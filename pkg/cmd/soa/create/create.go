@@ -30,7 +30,7 @@ import (
 )
 
 const createMutation = `
-mutation($input: CreateStatementOfApplicabilityInput!) {
+mutation SoaCreate($input: CreateStatementOfApplicabilityInput!) {
   createStatementOfApplicability(input: $input) {
     statementOfApplicabilityEdge {
       node {

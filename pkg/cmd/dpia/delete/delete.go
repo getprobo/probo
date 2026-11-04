@@ -30,7 +30,7 @@ import (
 )
 
 const deleteMutation = `
-mutation($input: DeleteDataProtectionImpactAssessmentInput!) {
+mutation DpiaDelete($input: DeleteDataProtectionImpactAssessmentInput!) {
   deleteDataProtectionImpactAssessment(input: $input) {
     deletedDataProtectionImpactAssessmentId
   }

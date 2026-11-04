@@ -31,7 +31,7 @@ import (
 
 const (
 	connectMutation = `
-mutation($input: CreateWorkloadIdentityConnectorInput!) {
+mutation ConnectorConnect($input: CreateWorkloadIdentityConnectorInput!) {
   createWorkloadIdentityConnector(input: $input) {
     connector {
       id
@@ -45,7 +45,7 @@ mutation($input: CreateWorkloadIdentityConnectorInput!) {
 `
 
 	connectOrganizationMutation = `
-mutation($input: CreateOrganizationConnectorInput!) {
+mutation ConnectorConnectOrganization($input: CreateOrganizationConnectorInput!) {
   createOrganizationConnector(input: $input) {
     connector {
       id

@@ -30,7 +30,7 @@ import (
 )
 
 const updateMutation = `
-mutation($input: UpdateProcessingActivityInput!) {
+mutation ProcessingActivityUpdate($input: UpdateProcessingActivityInput!) {
   updateProcessingActivity(input: $input) {
     processingActivity {
       id

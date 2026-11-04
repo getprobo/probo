@@ -30,7 +30,7 @@ import (
 )
 
 const publishMutation = `
-mutation($input: PublishObligationListInput!) {
+mutation ObligationPublish($input: PublishObligationListInput!) {
   publishObligationList(input: $input) {
     documentEdge {
       node {

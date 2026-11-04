@@ -29,7 +29,7 @@ import (
 )
 
 const listQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: FrameworkOrder) {
+query FrameworkList($id: ID!, $first: Int, $after: CursorKey, $orderBy: FrameworkOrder) {
   node(id: $id) {
     __typename
     ... on Organization {

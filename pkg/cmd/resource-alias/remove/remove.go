@@ -30,7 +30,7 @@ import (
 )
 
 const removeMutation = `
-mutation($input: RemoveResourceAliasInput!) {
+mutation ResourceAliasRemove($input: RemoveResourceAliasInput!) {
   removeResourceAlias(input: $input) {
     deletedResourceId
   }

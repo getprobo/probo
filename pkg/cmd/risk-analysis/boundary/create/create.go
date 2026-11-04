@@ -31,7 +31,7 @@ import (
 )
 
 const createMutation = `
-mutation($input: CreateRiskAnalysisBoundaryInput!) {
+mutation RiskAnalysisBoundaryCreate($input: CreateRiskAnalysisBoundaryInput!) {
   createRiskAnalysisBoundary(input: $input) {
     riskAnalysisBoundaryEdge {
       node {

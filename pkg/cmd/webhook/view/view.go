@@ -32,7 +32,7 @@ import (
 )
 
 const viewQuery = `
-query($id: ID!) {
+query WebhookView($id: ID!) {
   node(id: $id) {
     __typename
     ... on WebhookSubscription {

@@ -32,7 +32,7 @@ import (
 )
 
 const createMutation = `
-mutation($input: CreateBusinessFunctionInput!) {
+mutation BusinessFunctionCreate($input: CreateBusinessFunctionInput!) {
   createBusinessFunction(input: $input) {
     businessFunctionEdge {
       node {

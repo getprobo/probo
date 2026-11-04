@@ -30,7 +30,7 @@ import (
 )
 
 const listByOrgQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: TreatmentPlanOrder, $filter: TreatmentPlanFilter) {
+query TreatmentPlanListByOrg($id: ID!, $first: Int, $after: CursorKey, $orderBy: TreatmentPlanOrder, $filter: TreatmentPlanFilter) {
   node(id: $id) {
     __typename
     ... on Organization {
@@ -60,7 +60,7 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: TreatmentPlanOrder, $f
 `
 
 const listByRiskQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: TreatmentPlanOrder, $filter: TreatmentPlanFilter) {
+query TreatmentPlanListByRisk($id: ID!, $first: Int, $after: CursorKey, $orderBy: TreatmentPlanOrder, $filter: TreatmentPlanFilter) {
   node(id: $id) {
     __typename
     ... on Risk {
@@ -90,7 +90,7 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: TreatmentPlanOrder, $f
 `
 
 const listByAnalysisQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: TreatmentPlanOrder, $filter: TreatmentPlanFilter, $asOf: Datetime) {
+query TreatmentPlanListByAnalysis($id: ID!, $first: Int, $after: CursorKey, $orderBy: TreatmentPlanOrder, $filter: TreatmentPlanFilter, $asOf: Datetime) {
   node(id: $id) {
     __typename
     ... on RiskAnalysis {

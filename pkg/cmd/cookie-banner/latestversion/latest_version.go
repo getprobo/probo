@@ -31,7 +31,7 @@ import (
 )
 
 const versionsQuery = `
-query($id: ID!) {
+query CookieBannerLatestVersion($id: ID!) {
   node(id: $id) {
     ... on CookieBanner {
       latestVersion {

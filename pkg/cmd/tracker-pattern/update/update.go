@@ -30,7 +30,7 @@ import (
 )
 
 const updateMutation = `
-mutation($input: UpdateTrackerPatternInput!) {
+mutation TrackerPatternUpdate($input: UpdateTrackerPatternInput!) {
   updateTrackerPattern(input: $input) {
     trackerPattern {
       id

@@ -30,7 +30,7 @@ import (
 )
 
 const listByOrgQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: RiskOrder, $filter: RiskFilter) {
+query RiskListByOrg($id: ID!, $first: Int, $after: CursorKey, $orderBy: RiskOrder, $filter: RiskFilter) {
   node(id: $id) {
     __typename
     ... on Organization {
@@ -58,7 +58,7 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: RiskOrder, $filter: Ri
 `
 
 const listByAnalysisQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: RiskOrder, $filter: RiskFilter) {
+query RiskListByAnalysis($id: ID!, $first: Int, $after: CursorKey, $orderBy: RiskOrder, $filter: RiskFilter) {
   node(id: $id) {
     __typename
     ... on RiskAnalysis {

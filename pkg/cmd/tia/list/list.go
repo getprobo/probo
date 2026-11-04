@@ -29,7 +29,7 @@ import (
 )
 
 const listQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: TransferImpactAssessmentOrder) {
+query TiaList($id: ID!, $first: Int, $after: CursorKey, $orderBy: TransferImpactAssessmentOrder) {
   node(id: $id) {
     __typename
     ... on Organization {

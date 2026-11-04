@@ -30,7 +30,7 @@ import (
 )
 
 const deleteMutation = `
-mutation($input: DeleteTaskCommentInput!) {
+mutation TaskCommentDelete($input: DeleteTaskCommentInput!) {
   deleteTaskComment(input: $input) {
     deletedTaskCommentId
   }

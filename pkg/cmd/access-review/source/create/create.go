@@ -31,7 +31,7 @@ import (
 )
 
 const createMutation = `
-mutation($input: CreateAccessReviewSourcesInput!) {
+mutation AccessReviewSourceCreate($input: CreateAccessReviewSourcesInput!) {
   createAccessReviewSources(input: $input) {
     results {
       created

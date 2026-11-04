@@ -30,7 +30,7 @@ import (
 )
 
 const createMutation = `
-mutation($input: CreateAccessReviewCampaignInput!) {
+mutation AccessReviewCampaignCreate($input: CreateAccessReviewCampaignInput!) {
   createAccessReviewCampaign(input: $input) {
     accessReviewCampaignEdge {
       node {

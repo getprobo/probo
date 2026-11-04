@@ -29,7 +29,7 @@ import (
 )
 
 const linkTreatmentPlanMutation = `
-mutation($input: CreateTreatmentPlanInternalControlMappingInput!) {
+mutation InternalControlLinkTreatmentPlan($input: CreateTreatmentPlanInternalControlMappingInput!) {
   createTreatmentPlanInternalControlMapping(input: $input) {
     internalControlEdge {
       node { id }

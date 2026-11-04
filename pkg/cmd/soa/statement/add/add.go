@@ -31,7 +31,7 @@ import (
 )
 
 const createMutation = `
-mutation($input: CreateApplicabilityStatementInput!) {
+mutation SoaStatementAdd($input: CreateApplicabilityStatementInput!) {
   createApplicabilityStatement(input: $input) {
     applicabilityStatementEdge {
       node {

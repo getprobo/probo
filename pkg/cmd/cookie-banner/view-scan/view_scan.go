@@ -30,7 +30,7 @@ import (
 )
 
 const viewScanQuery = `
-query($id: ID!) {
+query CookieBannerViewScan($id: ID!) {
   node(id: $id) {
     __typename
     ... on CookieBannerScan {

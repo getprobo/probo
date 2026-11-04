@@ -30,7 +30,7 @@ import (
 )
 
 const setupQuery = `
-query($organizationId: ID!) {
+query AccessReviewSourceSetupAzure($organizationId: ID!) {
   azureConnectorSetup(organizationId: $organizationId) {
     issuer
     audience

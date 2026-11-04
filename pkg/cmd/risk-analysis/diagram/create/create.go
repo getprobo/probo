@@ -31,7 +31,7 @@ import (
 )
 
 const createMutation = `
-mutation($input: CreateRiskAnalysisDiagramInput!) {
+mutation RiskAnalysisDiagramCreate($input: CreateRiskAnalysisDiagramInput!) {
   createRiskAnalysisDiagram(input: $input) {
     riskAnalysisDiagramEdge {
       node {

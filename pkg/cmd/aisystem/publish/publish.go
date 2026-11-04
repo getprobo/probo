@@ -30,7 +30,7 @@ import (
 )
 
 const publishMutation = `
-mutation($input: PublishAiSystemListInput!) {
+mutation AisystemPublish($input: PublishAiSystemListInput!) {
   publishAiSystemList(input: $input) {
     documentEdge {
       node {

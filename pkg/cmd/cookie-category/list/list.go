@@ -29,7 +29,7 @@ import (
 )
 
 const listQuery = `
-query($id: ID!, $first: Int, $after: CursorKey) {
+query CookieCategoryList($id: ID!, $first: Int, $after: CursorKey) {
   node(id: $id) {
     __typename
     ... on CookieBanner {

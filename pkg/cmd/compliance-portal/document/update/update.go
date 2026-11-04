@@ -30,7 +30,7 @@ import (
 )
 
 const updateMutation = `
-mutation($input: UpdateCompliancePortalDocumentVisibilityInput!) {
+mutation CompliancePortalDocumentUpdate($input: UpdateCompliancePortalDocumentVisibilityInput!) {
   updateCompliancePortalDocumentVisibility(input: $input) {
     catalogDocument {
       id

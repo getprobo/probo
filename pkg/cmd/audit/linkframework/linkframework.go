@@ -29,7 +29,7 @@ import (
 )
 
 const linkMutation = `
-mutation($input: CreateAuditFrameworkMappingInput!) {
+mutation AuditLinkFramework($input: CreateAuditFrameworkMappingInput!) {
   createAuditFrameworkMapping(input: $input) {
     auditEdge { node { id } }
     frameworkEdge { node { id name } }

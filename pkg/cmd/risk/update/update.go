@@ -30,7 +30,7 @@ import (
 )
 
 const updateMutation = `
-mutation($input: UpdateRiskInput!) {
+mutation RiskUpdate($input: UpdateRiskInput!) {
   updateRisk(input: $input) {
     risk {
       id

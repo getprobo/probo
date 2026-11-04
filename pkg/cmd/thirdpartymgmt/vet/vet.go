@@ -32,7 +32,7 @@ import (
 )
 
 const vetMutation = `
-mutation($input: VetThirdPartyInput!) {
+mutation ThirdPartyVet($input: VetThirdPartyInput!) {
   vetThirdParty(input: $input) {
     thirdParty {
       id

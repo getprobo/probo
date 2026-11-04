@@ -30,7 +30,7 @@ import (
 )
 
 const deactivateMutation = `
-mutation($input: DeactivateCookieBannerInput!) {
+mutation CookieBannerDeactivate($input: DeactivateCookieBannerInput!) {
   deactivateCookieBanner(input: $input) {
     cookieBanner {
       id

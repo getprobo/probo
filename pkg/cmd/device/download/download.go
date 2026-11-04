@@ -30,7 +30,7 @@ import (
 )
 
 const downloadMutation = `
-mutation($input: DownloadDeviceEvidenceInput!) {
+mutation DeviceDownload($input: DownloadDeviceEvidenceInput!) {
   downloadDeviceEvidence(input: $input) {
     downloadUrl
   }

@@ -30,7 +30,7 @@ import (
 )
 
 const deleteMutation = `
-mutation($input: DeleteCookieCategoryInput!) {
+mutation CookieCategoryDelete($input: DeleteCookieCategoryInput!) {
   deleteCookieCategory(input: $input) {
     deletedCookieCategoryId
     cookieBanner {

@@ -31,7 +31,7 @@ import (
 )
 
 const revokeMutation = `
-mutation($input: RevokeDevicesInput!) {
+mutation DeviceRevoke($input: RevokeDevicesInput!) {
   revokeDevices(input: $input) {
     devices {
       id

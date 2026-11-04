@@ -29,7 +29,7 @@ import (
 )
 
 const listQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: ApplicabilityStatementOrder) {
+query SoaStatementList($id: ID!, $first: Int, $after: CursorKey, $orderBy: ApplicabilityStatementOrder) {
   node(id: $id) {
     __typename
     ... on StatementOfApplicability {

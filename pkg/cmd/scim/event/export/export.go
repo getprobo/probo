@@ -30,7 +30,7 @@ import (
 )
 
 const exportMutation = `
-mutation($input: RequestSCIMEventExportInput!) {
+mutation ScimEventExport($input: RequestSCIMEventExportInput!) {
   requestSCIMEventExport(input: $input) {
     exportJobId
   }

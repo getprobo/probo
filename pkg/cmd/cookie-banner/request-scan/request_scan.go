@@ -29,7 +29,7 @@ import (
 )
 
 const requestScanMutation = `
-mutation($input: RequestCookieBannerScanInput!) {
+mutation CookieBannerRequestScan($input: RequestCookieBannerScanInput!) {
   requestCookieBannerScan(input: $input) {
     cookieBannerScan {
       id

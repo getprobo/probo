@@ -30,7 +30,7 @@ import (
 )
 
 const updateMutation = `
-mutation($input: UpdateFindingInput!) {
+mutation FindingUpdate($input: UpdateFindingInput!) {
   updateFinding(input: $input) {
     finding {
       id
