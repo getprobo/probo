@@ -3040,7 +3040,7 @@
     "emptyEntries": "Geen items gevonden voor deze bron.",
     "filters": {
       "searchEmail": "Zoek e-mail...",
-      "allConnectors": "Alle connectoren",
+      "allProviders": "Alle providers",
       "allMfa": "Alle MFA",
       "allAuthMethods": "Alle authenticatiemethoden",
       "allAdmin": "Alle beheerders",

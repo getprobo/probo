@@ -27,9 +27,9 @@ import { FilterMultiSelect, type FilterMultiSelectOption } from "./FilterMultiSe
 type Props = {
   emailFilter: string;
   onEmailFilterChange: (value: string) => void;
-  connectorOptions: ReadonlyArray<FilterMultiSelectOption>;
-  connectorFilter: ReadonlyArray<string>;
-  onConnectorFilterChange: (value: string[]) => void;
+  providerOptions: ReadonlyArray<FilterMultiSelectOption>;
+  providerFilter: ReadonlyArray<string>;
+  onProviderFilterChange: (value: string[]) => void;
   mfaFilter: ReadonlyArray<string>;
   onMfaFilterChange: (value: string[]) => void;
   authMethodFilter: ReadonlyArray<string>;
@@ -45,9 +45,9 @@ type Props = {
 export function AccessEntriesToolbar({
   emailFilter,
   onEmailFilterChange,
-  connectorOptions,
-  connectorFilter,
-  onConnectorFilterChange,
+  providerOptions,
+  providerFilter,
+  onProviderFilterChange,
   mfaFilter,
   onMfaFilterChange,
   authMethodFilter,
@@ -63,10 +63,10 @@ export function AccessEntriesToolbar({
     <div className="flex min-h-10 flex-wrap items-center gap-3">
       <div className="w-44 max-sm:w-full">
         <FilterMultiSelect
-          placeholder={t("campaignDetailPage.filters.allConnectors")}
-          options={connectorOptions}
-          value={connectorFilter}
-          onChange={onConnectorFilterChange}
+          placeholder={t("campaignDetailPage.filters.allProviders")}
+          options={providerOptions}
+          value={providerFilter}
+          onChange={onProviderFilterChange}
         />
       </div>
       <div className="w-40 max-sm:w-full">

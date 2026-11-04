@@ -1908,7 +1908,7 @@
     "emptyEntries": "No entries found for this source.",
     "filters": {
       "searchEmail": "Search email...",
-      "allConnectors": "All connectors",
+      "allProviders": "All providers",
       "allMfa": "All MFA",
       "allAuthMethods": "All auth methods",
       "allAdmin": "All admins",

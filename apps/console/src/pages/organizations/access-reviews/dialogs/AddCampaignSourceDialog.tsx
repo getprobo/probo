@@ -51,6 +51,10 @@ const addCampaignSourceMutation = graphql`
           source {
             id
             name
+            connector {
+              provider
+              displayName
+            }
             connectorAccount {
               name
             }

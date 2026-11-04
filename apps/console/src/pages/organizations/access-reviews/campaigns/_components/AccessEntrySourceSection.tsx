@@ -27,6 +27,8 @@ import type { AccessEntrySourceSection_entry$key } from "#/__generated__/core/Ac
 import type { AccessEntrySourceSection_source$key } from "#/__generated__/core/AccessEntrySourceSection_source.graphql";
 import type { AccessEntrySourceSectionPaginationQuery } from "#/__generated__/core/AccessEntrySourceSectionPaginationQuery.graphql";
 
+import { isSourceExcluded } from "../_lib/providerFilter";
+
 import { AccessEntrySection } from "./AccessEntrySection";
 import { AccessEntrySectionList } from "./AccessEntrySectionList";
 
@@ -41,6 +43,11 @@ const accessEntrySourceSectionFragment = graphql`
     after: { type: "CursorKey", defaultValue: null }
   ) {
     id
+    source {
+      connector {
+        provider
+      }
+    }
     fetchAttempts(first: 1) {
       edges {
         node {
@@ -78,7 +85,7 @@ const accessEntrySourceSectionEntryFragment = graphql`
 
 export type EntryFilters = {
   email: string;
-  connectorIds: ReadonlyArray<string>;
+  providers: ReadonlyArray<string>;
   mfa: ReadonlyArray<string>;
   authMethod: ReadonlyArray<string>;
   admin: ReadonlyArray<string>;
@@ -182,9 +189,10 @@ export function AccessEntrySourceSection({
   const latestAttempt = source.fetchAttempts.edges[0]?.node ?? null;
   const fetchStatus = latestAttempt?.status ?? null;
   const isFetchRunning = fetchStatus === "QUEUED" || fetchStatus === "FETCHING";
-  const isExcluded = filters.connectorIds.length > 0
-    && !filters.connectorIds.includes(sourceId);
-  // The connector filter picks whole sections, so only the per-entry filters
+  const isExcluded = isSourceExcluded(filters, {
+    provider: source.source?.connector?.provider ?? null,
+  });
+  // The provider filter picks whole sections, so only the per-entry filters
   // make the loaded count diverge from the connector's real total.
   const hasEntryFilters = filters.email !== ""
     || filters.mfa.length > 0
@@ -203,7 +211,7 @@ export function AccessEntrySourceSection({
     [matchedEntries],
   );
 
-  // An excluded connector contributes nothing and must not keep paginating in
+  // An excluded source contributes nothing and must not keep paginating in
   // the background looking for matches it would never show.
   const contributedIds = isExcluded ? EMPTY_IDS : matchedIds;
   const isPending = !isExcluded && hasNext;

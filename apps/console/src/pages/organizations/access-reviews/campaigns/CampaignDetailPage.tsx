@@ -59,7 +59,6 @@ import type { CampaignDetailPageStartMutation } from "#/__generated__/core/Campa
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { isCampaignDeletableStatus } from "../_components/accessReviewHelpers";
-import { campaignSourceLabel } from "../_lib/sourceLabel";
 import { AddCampaignSourceDialog } from "../dialogs/AddCampaignSourceDialog";
 
 import { AccessEntriesSelectionBar } from "./_components/AccessEntriesSelectionBar";
@@ -67,6 +66,7 @@ import { AccessEntriesToolbar } from "./_components/AccessEntriesToolbar";
 import type { EntryFilters, SourceMatches } from "./_components/AccessEntrySourceSection";
 import { AccessEntrySourceSection } from "./_components/AccessEntrySourceSection";
 import { accessEntriesLayout } from "./_components/variants";
+import { providerFilterOptions } from "./_lib/providerFilter";
 import { usePendingCountRefresh } from "./_lib/usePendingCountRefresh";
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -157,8 +157,9 @@ export const campaignDetailPageQuery = graphql`
           source {
             id
             name
-            connectorAccount {
-              name
+            connector {
+              provider
+              displayName
             }
           }
           fetchAttempts(first: 1) {
@@ -236,7 +237,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
   };
   const [emailFilter, setEmailFilter] = useState("");
   const [appliedEmailFilter, setAppliedEmailFilter] = useState("");
-  const [connectorFilter, setConnectorFilter] = useState<string[]>([]);
+  const [providerFilter, setProviderFilter] = useState<string[]>([]);
   const [mfaFilter, setMfaFilter] = useState<string[]>([]);
   const [authMethodFilter, setAuthMethodFilter] = useState<string[]>([]);
   const [adminFilter, setAdminFilter] = useState<string[]>([]);
@@ -255,9 +256,9 @@ export default function CampaignDetailPage({ queryRef }: Props) {
     },
     [debouncedApplyEmailFilter],
   );
-  const handleConnectorFilterChange = useCallback(
+  const handleProviderFilterChange = useCallback(
     (value: string[]) => {
-      startTransition(() => setConnectorFilter(value));
+      startTransition(() => setProviderFilter(value));
     },
     [],
   );
@@ -348,16 +349,23 @@ export default function CampaignDetailPage({ queryRef }: Props) {
 
   const filters = useMemo<EntryFilters>(() => ({
     email: appliedEmailFilter.trim().toLowerCase(),
-    connectorIds: connectorFilter,
+    providers: providerFilter,
     mfa: mfaFilter,
     authMethod: authMethodFilter,
     admin: adminFilter,
     active: activeFilter,
-  }), [appliedEmailFilter, connectorFilter, mfaFilter, authMethodFilter, adminFilter, activeFilter]);
+  }), [
+    appliedEmailFilter,
+    providerFilter,
+    mfaFilter,
+    authMethodFilter,
+    adminFilter,
+    activeFilter,
+  ]);
   const deferredFilters = useDeferredValue(filters);
 
   const hasActiveFilters = deferredFilters.email !== ""
-    || deferredFilters.connectorIds.length > 0
+    || deferredFilters.providers.length > 0
     || deferredFilters.mfa.length > 0
     || deferredFilters.authMethod.length > 0
     || deferredFilters.admin.length > 0
@@ -401,19 +409,11 @@ export default function CampaignDetailPage({ queryRef }: Props) {
     source => sourceMatches[source.id]?.hasNext ?? false,
   );
 
-  const connectorOptions = useMemo(
-    () => campaign.sources.map(source => ({
-      value: source.id,
-      label: campaignSourceLabel({
-        name: source.name,
-        source: source.source == null
-          ? null
-          : {
-              name: source.source.name,
-              accountName: source.source.connectorAccount?.name,
-            },
-      }),
-    })),
+  const providerOptions = useMemo(
+    () => providerFilterOptions(campaign.sources.map(source => ({
+      provider: source.source?.connector?.provider ?? null,
+      displayName: source.source?.connector?.displayName ?? null,
+    }))),
     [campaign.sources],
   );
 
@@ -880,9 +880,9 @@ export default function CampaignDetailPage({ queryRef }: Props) {
         <AccessEntriesToolbar
           emailFilter={emailFilter}
           onEmailFilterChange={handleEmailFilterChange}
-          connectorOptions={connectorOptions}
-          connectorFilter={connectorFilter}
-          onConnectorFilterChange={handleConnectorFilterChange}
+          providerOptions={providerOptions}
+          providerFilter={providerFilter}
+          onProviderFilterChange={handleProviderFilterChange}
           mfaFilter={mfaFilter}
           onMfaFilterChange={handleMfaFilterChange}
           authMethodFilter={authMethodFilter}

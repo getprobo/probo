@@ -83,7 +83,11 @@ describe("AddCampaignSourceDialogMutation", () => {
               source: {
                 id: "source-1",
                 name: "Slack",
-                connector: { id: "connector-1", provider: "SLACK" },
+                connector: {
+                  id: "connector-1",
+                  provider: "SLACK",
+                  displayName: "Slack",
+                },
                 connectorAccount: { id: "account-1", name: "Acme" },
               },
               fetchAttempts: { edges: [] },
