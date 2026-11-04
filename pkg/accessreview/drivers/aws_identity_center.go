@@ -360,7 +360,7 @@ func discoverIdentityCenter(
 				logger.WarnCtx(
 					ctx,
 					"iam identity center region did not answer, skipping it",
-					log.String("region", region),
+					log.String("aws_region", region),
 				)
 			}
 
@@ -376,7 +376,7 @@ func discoverIdentityCenter(
 			logger.InfoCtx(
 				ctx,
 				"discovered iam identity center in a non-session region",
-				log.String("region", region),
+				log.String("aws_region", region),
 			)
 		}
 

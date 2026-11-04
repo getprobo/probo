@@ -55,7 +55,7 @@ func NewConfig(logger *log.Logger, httpClient *http.Client, opts Options) (aws.C
 	logger = logger.Named(
 		"aws.client",
 		log.WithAttributes(
-			log.String("region", opts.Region),
+			log.String("aws_region", opts.Region),
 			log.String("endpoint", opts.Endpoint),
 			log.String("session_name", opts.SessionName),
 		),
