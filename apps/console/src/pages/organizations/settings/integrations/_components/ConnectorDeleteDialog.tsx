@@ -21,18 +21,26 @@
 import { TrashIcon } from "@phosphor-icons/react";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Dialog } from "@probo/ui/src/v2/Dialog/Dialog";
+import { DialogBody } from "@probo/ui/src/v2/Dialog/DialogBody";
 import { DialogClose } from "@probo/ui/src/v2/Dialog/DialogClose";
 import { DialogDescription } from "@probo/ui/src/v2/Dialog/DialogDescription";
 import { DialogFooter } from "@probo/ui/src/v2/Dialog/DialogFooter";
 import { DialogHeader } from "@probo/ui/src/v2/Dialog/DialogHeader";
 import { DialogPopup } from "@probo/ui/src/v2/Dialog/DialogPopup";
 import { DialogTitle } from "@probo/ui/src/v2/Dialog/DialogTitle";
+import { ErrorBoundary } from "@probo/ui/src/v2/ErrorBoundary/ErrorBoundary";
+import { InlineError } from "@probo/ui/src/v2/InlineError/InlineError";
+import { ListSkeleton } from "@probo/ui/src/v2/List/ListSkeleton";
+import { Suspense, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, useFragment } from "react-relay";
+import { graphql, useFragment, useQueryLoader } from "react-relay";
 
 import type { ConnectorDeleteDialog_connector$key } from "#/__generated__/core/ConnectorDeleteDialog_connector.graphql";
+import type { ConnectorDeleteDialogSourcesQuery } from "#/__generated__/core/ConnectorDeleteDialogSourcesQuery.graphql";
 
 import { useDeleteConnector } from "../_lib/useDeleteConnector";
+
+import { ConnectorDeleteDialogSources, connectorDeleteDialogSourcesQuery } from "./ConnectorDeleteDialogSources";
 
 const connectorDeleteDialogFragment = graphql`
   fragment ConnectorDeleteDialog_connector on Connector {
@@ -40,6 +48,7 @@ const connectorDeleteDialogFragment = graphql`
     provider
     displayName
     canDelete: permission(action: "core:connector:delete")
+    canDeleteSources: permission(action: "access-review:source:delete")
   }
 `;
 
@@ -59,6 +68,16 @@ export function ConnectorDeleteDialog({
   const { t } = useTranslation("organizations/settings/integrations");
   const connector = useFragment(connectorDeleteDialogFragment, connectorKey);
   const [deleteConnector, isDeleting] = useDeleteConnector();
+  const [sourcesQueryRef, loadSources, disposeSources] = useQueryLoader<ConnectorDeleteDialogSourcesQuery>(
+    connectorDeleteDialogSourcesQuery,
+  );
+
+  // Deleting the connector deletes its sources, so list them fresh on open.
+  useEffect(() => {
+    if (open && connector.canDeleteSources) {
+      loadSources({ connectorId: connector.id }, { fetchPolicy: "network-only" });
+    }
+  }, [open, connector.canDeleteSources, connector.id, loadSources]);
 
   if (!connector.canDelete) {
     return null;
@@ -71,43 +90,98 @@ export function ConnectorDeleteDialog({
         onDeleted?.();
       },
       () => {
-        // useMutation has already shown the refusal, which names the feature
-        // still holding the credential.
+        // useMutation has already shown the refusal.
         onOpenChange(false);
       },
     );
   }
 
+  function footer(disabled: boolean) {
+    return (
+      <DialogFooter>
+        <DialogClose
+          render={(
+            <Button variant="soft" color="neutral">
+              {t("detailsPage.actions.cancel")}
+            </Button>
+          )}
+        />
+        <Button
+          type="button"
+          variant="solid"
+          color="red"
+          iconStart={<TrashIcon />}
+          disabled={disabled}
+          loading={isDeleting}
+          onClick={handleDelete}
+        >
+          {t("detailsPage.delete.confirm")}
+        </Button>
+      </DialogFooter>
+    );
+  }
+
+  // Disconnect waits for the sources it removes to be on screen.
+  const waitingForSources = connector.canDeleteSources;
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={onOpenChange}
+      // Keep the list through the close fade so the popup does not shrink.
+      onOpenChangeComplete={(isOpen) => {
+        if (!isOpen) {
+          disposeSources();
+        }
+      }}
+    >
       <DialogPopup>
         <DialogHeader>
           <DialogTitle>{t("detailsPage.delete.title")}</DialogTitle>
           <DialogDescription>
-            {t("detailsPage.delete.description", {
-              name: connector.displayName,
-            })}
+            {t(
+              connector.canDeleteSources
+                ? "detailsPage.delete.descriptionWithSources"
+                : "detailsPage.delete.description",
+              { name: connector.displayName },
+            )}
           </DialogDescription>
         </DialogHeader>
-        <DialogFooter>
-          <DialogClose
-            render={(
-              <Button variant="soft" color="neutral">
-                {t("detailsPage.actions.cancel")}
-              </Button>
+        {sourcesQueryRef == null
+          ? footer(waitingForSources)
+          : (
+              <ErrorBoundary
+                fallback={(_, reset) => (
+                  <>
+                    <DialogBody>
+                      <InlineError
+                        message={t("detailsPage.delete.sourcesError")}
+                        retryLabel={t("detailsPage.delete.retry")}
+                        onRetry={() => {
+                          loadSources({ connectorId: connector.id }, { fetchPolicy: "network-only" });
+                          reset();
+                        }}
+                      />
+                    </DialogBody>
+                    {footer(true)}
+                  </>
+                )}
+              >
+                <Suspense
+                  fallback={(
+                    <>
+                      <DialogBody>
+                        <ListSkeleton count={1} />
+                      </DialogBody>
+                      {footer(true)}
+                    </>
+                  )}
+                >
+                  <ConnectorDeleteDialogSources queryRef={sourcesQueryRef} />
+                  {footer(false)}
+                </Suspense>
+              </ErrorBoundary>
             )}
-          />
-          <Button
-            type="button"
-            variant="solid"
-            color="red"
-            iconStart={<TrashIcon />}
-            loading={isDeleting}
-            onClick={handleDelete}
-          >
-            {t("detailsPage.delete.confirm")}
-          </Button>
-        </DialogFooter>
       </DialogPopup>
     </Dialog>
   );

@@ -217,6 +217,11 @@
     "delete": {
       "title": "Verbinding met integratie verbreken",
       "description": "Het verbreken verwijdert de credential die Probo voor {{name}} bewaart. Alles wat deze nog gebruikt moet eerst worden verwijderd.",
+      "descriptionWithSources": "Het verbreken verwijdert de credential die Probo voor {{name}} bewaart. Alles wat deze verder nog gebruikt moet eerst worden verwijderd.",
+      "sources_one": "Deze toegangsbron gebruikt deze en wordt ook verwijderd. Eerdere campagnes behouden hun resultaten.",
+      "sources_other": "Deze {{count}} toegangsbronnen gebruiken deze en worden ook verwijderd. Eerdere campagnes behouden hun resultaten.",
+      "sourcesError": "Kan de toegangsbronnen die worden verwijderd niet weergeven.",
+      "retry": "Opnieuw proberen",
       "confirm": "Verbinding verbreken"
     },
     "messages": {

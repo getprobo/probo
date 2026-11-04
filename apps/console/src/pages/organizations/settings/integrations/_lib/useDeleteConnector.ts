@@ -29,6 +29,7 @@ const deleteConnectorMutation = graphql`
   mutation useDeleteConnectorMutation($input: DeleteConnectorInput!) {
     deleteConnector(input: $input) {
       deletedConnectorId
+      deletedAccessReviewSourceIds
     }
   }
 `;
@@ -50,12 +51,9 @@ export function useDeleteConnector() {
       // Organization.connectors is a plain list, so there is no edge for
       // @deleteEdge to remove. The vendor page reads the same field with a
       // provider filter, which Relay stores separately.
-      updater: (store) => {
-        const deletedId = store
-          .getRootField("deleteConnector")
-          ?.getValue("deletedConnectorId");
-
-        if (typeof deletedId !== "string") {
+      updater: (store, data) => {
+        const deletedId = data?.deleteConnector?.deletedConnectorId;
+        if (!deletedId) {
           return;
         }
 
@@ -77,6 +75,16 @@ export function useDeleteConnector() {
               "connectors",
               args,
             );
+          }
+        }
+
+        // Pages that read these sources, or the organization's list of them,
+        // refetch on their next load.
+        const deletedSourceIds = data?.deleteConnector?.deletedAccessReviewSourceIds ?? [];
+        if (deletedSourceIds.length > 0) {
+          organization?.invalidateRecord();
+          for (const sourceId of deletedSourceIds) {
+            store.get(sourceId)?.invalidateRecord();
           }
         }
 
