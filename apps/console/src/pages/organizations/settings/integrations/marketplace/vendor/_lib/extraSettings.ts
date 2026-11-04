@@ -84,6 +84,9 @@ export function mapAPIKeyExtraSettingToField(
     case "TWINGATE":
       if (settingKey === "network") return "twingateNetwork";
       break;
+    case "UNIFI":
+      if (settingKey === "consoleId") return "unifiConsoleId";
+      break;
   }
   return null;
 }

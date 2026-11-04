@@ -65,6 +65,30 @@ func TestApiKeyConnectorSettings_LangfuseBaseURL(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestApiKeyConnectorSettings_UniFiConsoleID(t *testing.T) {
+	t.Parallel()
+
+	consoleID := " 70a741be825d0000:1946460215 "
+
+	raw, err := apiKeyConnectorSettings(types.CreateAPIKeyConnectorInput{
+		Provider:       coredata.ConnectorProviderUniFi,
+		UnifiConsoleID: &consoleID,
+	})
+	require.NoError(t, err)
+
+	var settings coredata.UniFiConnectorSettings
+	require.NoError(t, json.Unmarshal(raw, &settings))
+	assert.Equal(t, "70A741BE825D0000:1946460215", settings.ConsoleID)
+
+	for _, invalid := range []string{"", "..", "70A741BE825D0000/1946460215"} {
+		_, err = apiKeyConnectorSettings(types.CreateAPIKeyConnectorInput{
+			Provider:       coredata.ConnectorProviderUniFi,
+			UnifiConsoleID: &invalid,
+		})
+		assert.Error(t, err, invalid)
+	}
+}
+
 func TestApiKeyConnectorSettings_OnePasswordSCIMBridgeURL(t *testing.T) {
 	t.Parallel()
 

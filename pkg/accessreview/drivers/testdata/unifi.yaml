@@ -1,0 +1,121 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.ui.com
+        headers:
+            Accept:
+                - application/json
+        url: https://api.ui.com/v1/connector/consoles/FFFFFFFFFFFF0000000000000000000000000000000000000000000000000000:1000000000/proxy/network/api/stat/admin
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: 1431
+        body: '{"meta":{"rc":"ok"},"data":[{"_id":"000000000000000000000001","avatar_url":null,"email":"admin1@example.com","email_alert_enabled":true,"first_name":"Admin","is_owner":true,"is_super":true,"is_verified":true,"last_name":"1","last_site_name":"default","name":"Admin 1","org_role":"","push_alert_enabled":true,"requires_new_password":false,"roles":[{"permissions":[],"role":"admin","site_desc":"Default","site_id":"000000000000000000000100","site_name":"default"}],"super_roles":[{"permissions":[],"role":"admin","site_id":"000000000000000000000101","site_name":"super"}],"time_created":1729669569,"ubic_name":"admin1@example.com","ubic_uuid":"00000000-0000-4000-9000-000000000001","uid":"00000000-0000-4000-8000-000000000001"},{"_id":"000000000000000000000002","avatar_url":null,"email":"admin2@example.com","email_alert_enabled":true,"first_name":"Admin","is_owner":false,"is_super":false,"is_verified":true,"last_name":"2","last_site_name":"default","name":"Admin 2","org_role":"","push_alert_enabled":true,"requires_new_password":false,"roles":[{"permissions":[],"role":"readonly","site_desc":"Default","site_id":"000000000000000000000100","site_name":"default"}],"super_roles":[{"permissions":[],"role":"nobody","site_id":"000000000000000000000101","site_name":"super"}],"time_created":1793559390,"ubic_name":"admin2@example.com","ubic_uuid":"00000000-0000-4000-9000-000000000002","uid":"00000000-0000-4000-8000-000000000002"}]}'
+        headers:
+            Content-Security-Policy:
+                - default-src 'self'; script-src 'self'; upgrade-insecure-requests
+            Content-Type:
+                - application/json;charset=UTF-8
+            Date:
+                - Sun, 01 Nov 2026 19:18:39 GMT
+            Feature-Policy:
+                - accelerometer 'none'; ambient-light-sensor 'none'; autoplay 'none'; battery 'none'; camera 'none'; display-capture 'none'; document-domain 'none'; encrypted-media 'none'; execution-while-not-rendered 'none'; execution-while-out-of-viewport 'none'; fullscreen 'none'; gamepad 'none'; geolocation 'none'; gyroscope 'none'; layout-animations 'none'; legacy-image-formats 'none'; magnetometer 'none'; microphone 'none'; midi 'none'; navigation-override 'none'; oversized-images 'none'; payment 'none'; picture-in-picture 'none'; publickey-credentials-get 'none'; speaker-selection 'none'; sync-xhr 'none'; unoptimized-images 'none'; unsized-media 'none'; usb 'none'; screen-wake-lock 'none'; web-share 'none'; xr-spatial-tracking 'none'
+            Referrer-Policy:
+                - strict-origin-when-cross-origin
+            X-Content-Type-Options:
+                - nosniff
+            X-Frame-Options:
+                - DENY
+            X-Request-Id:
+                - eea470df6da0d04ede6d290303c502e0
+        status: 200 OK
+        code: 200
+        duration: 945.904291ms
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.ui.com
+        headers:
+            Accept:
+                - application/json
+        url: https://api.ui.com/v1/connector/consoles/FFFFFFFFFFFF0000000000000000000000000000000000000000000000000000:1000000000/proxy/network/api/self/sites
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: 307
+        body: '{"meta":{"rc":"ok"},"data":[{"_id":"000000000000000000000100","anonymous_id":"00000000-0000-4000-8000-000000000256","attr_hidden_id":"default","attr_no_delete":true,"desc":"Default","device_count":5,"external_id":"00000000-0000-4000-9000-000000000256","name":"default","role":"admin","role_hotspot":false}]}'
+        headers:
+            Content-Length:
+                - "307"
+            Content-Security-Policy:
+                - default-src 'self'; script-src 'self'; upgrade-insecure-requests
+            Content-Type:
+                - application/json;charset=UTF-8
+            Date:
+                - Sun, 01 Nov 2026 19:18:40 GMT
+            Feature-Policy:
+                - accelerometer 'none'; ambient-light-sensor 'none'; autoplay 'none'; battery 'none'; camera 'none'; display-capture 'none'; document-domain 'none'; encrypted-media 'none'; execution-while-not-rendered 'none'; execution-while-out-of-viewport 'none'; fullscreen 'none'; gamepad 'none'; geolocation 'none'; gyroscope 'none'; layout-animations 'none'; legacy-image-formats 'none'; magnetometer 'none'; microphone 'none'; midi 'none'; navigation-override 'none'; oversized-images 'none'; payment 'none'; picture-in-picture 'none'; publickey-credentials-get 'none'; speaker-selection 'none'; sync-xhr 'none'; unoptimized-images 'none'; unsized-media 'none'; usb 'none'; screen-wake-lock 'none'; web-share 'none'; xr-spatial-tracking 'none'
+            Referrer-Policy:
+                - strict-origin-when-cross-origin
+            X-Content-Type-Options:
+                - nosniff
+            X-Frame-Options:
+                - DENY
+            X-Request-Id:
+                - 344de80f9ede972ab629b40221377c66
+        status: 200 OK
+        code: 200
+        duration: 407.533ms
+    - id: 2
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.ui.com
+        headers:
+            Accept:
+                - application/json
+        url: https://api.ui.com/v1/connector/consoles/FFFFFFFFFFFF0000000000000000000000000000000000000000000000000000:1000000000/proxy/network/api/s/default/rest/account
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: 221
+        body: '{"meta":{"rc":"ok"},"data":[{"_id":"000000000000000000000101","group_policy":"GLOBAL","name":"radius-user-1","site_id":"000000000000000000000100","tunnel_medium_type":6,"tunnel_type":13,"vlan":3,"x_password":"redacted"}]}'
+        headers:
+            Content-Length:
+                - "221"
+            Content-Security-Policy:
+                - default-src 'self'; script-src 'self'; upgrade-insecure-requests
+            Content-Type:
+                - application/json;charset=UTF-8
+            Date:
+                - Sun, 01 Nov 2026 19:18:40 GMT
+            Feature-Policy:
+                - accelerometer 'none'; ambient-light-sensor 'none'; autoplay 'none'; battery 'none'; camera 'none'; display-capture 'none'; document-domain 'none'; encrypted-media 'none'; execution-while-not-rendered 'none'; execution-while-out-of-viewport 'none'; fullscreen 'none'; gamepad 'none'; geolocation 'none'; gyroscope 'none'; layout-animations 'none'; legacy-image-formats 'none'; magnetometer 'none'; microphone 'none'; midi 'none'; navigation-override 'none'; oversized-images 'none'; payment 'none'; picture-in-picture 'none'; publickey-credentials-get 'none'; speaker-selection 'none'; sync-xhr 'none'; unoptimized-images 'none'; unsized-media 'none'; usb 'none'; screen-wake-lock 'none'; web-share 'none'; xr-spatial-tracking 'none'
+            Referrer-Policy:
+                - strict-origin-when-cross-origin
+            X-Content-Type-Options:
+                - nosniff
+            X-Frame-Options:
+                - DENY
+            X-Request-Id:
+                - a0273d60b3d2239c7e097977cf5a1c6d
+        status: 200 OK
+        code: 200
+        duration: 408.814375ms

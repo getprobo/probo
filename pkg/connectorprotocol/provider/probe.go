@@ -555,6 +555,68 @@ func probeBetterStack(
 	)
 }
 
+// probeUniFi reads the console's Network administrators, the list the driver
+// reads first. The connector refuses a console the key cannot reach with its
+// own 403 or 400, which the check blames on the Console ID.
+func probeUniFi(
+	ctx context.Context,
+	httpClient *http.Client,
+	conn *coredata.Connector,
+	ep Endpoints,
+) error {
+	s, err := coredata.ConnectorSettings[coredata.UniFiConnectorSettings](conn)
+	if err != nil {
+		return fmt.Errorf("cannot read unifi connector settings: %w", err)
+	}
+
+	networkURL, err := drivers.UniFiNetworkURL(ep.APIBase, s.ConsoleID)
+	if err != nil {
+		return fmt.Errorf("cannot build unifi probe URL: %w", err)
+	}
+
+	endpoint, err := drivers.UniFiAdminsURL(networkURL)
+	if err != nil {
+		return fmt.Errorf("cannot build unifi probe URL: %w", err)
+	}
+
+	req, err := newProbeGET(ctx, endpoint)
+	if err != nil {
+		return err
+	}
+
+	return sendProbe(
+		httpClient,
+		req,
+		func(resp *http.Response) error {
+			if rejected := drivers.UniFiConnectorRejection(resp); rejected != nil {
+				rejected.Setting = unifiConsoleIDSetting
+
+				return rejected
+			}
+
+			if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+				return probeVerdict(resp)
+			}
+
+			body, err := io.ReadAll(io.LimitReader(resp.Body, 8<<20))
+			if err != nil {
+				return fmt.Errorf("cannot read unifi probe response: %w", err)
+			}
+
+			if respondsWithHTML(bytes.NewReader(body)) {
+				return &NotAnAPIEndpointError{StatusCode: resp.StatusCode}
+			}
+
+			// The legacy API refuses some requests with a 200 and an error flag.
+			if drivers.UniFiLegacyRefused(body) {
+				return newCredentialRejected(http.StatusForbidden)
+			}
+
+			return nil
+		},
+	)
+}
+
 func buildScalewayProbeURL(conn *coredata.Connector, ep Endpoints) (string, error) {
 	s, err := coredata.ConnectorSettings[coredata.ScalewayConnectorSettings](conn)
 	if err != nil {
