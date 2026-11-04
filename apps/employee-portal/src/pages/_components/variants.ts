@@ -64,7 +64,7 @@ export const getStartedStep = tv({
 
 export const dashboardCard = tv({
   slots: {
-    frame: "relative flex h-75 flex-col gap-8 overflow-hidden p-8",
+    frame: "relative flex flex-col gap-8 overflow-hidden p-8",
     wash: [
       "pointer-events-none absolute inset-x-0 bottom-0 z-0 h-3/5",
       "bg-[radial-gradient(ellipse_85%_55%_at_50%_100%,color-mix(in_srgb,var(--color-lime-9)_72%,transparent)_0%,color-mix(in_srgb,var(--color-lime-9)_28%,transparent)_35%,transparent_62%)]",
@@ -87,9 +87,30 @@ export const dashboardCard = tv({
         wash: "hidden",
       },
     },
+    grow: {
+      true: {
+        frame: "h-auto min-h-75",
+      },
+      false: {
+        frame: "h-75",
+      },
+    },
   },
   defaultVariants: {
     wash: false,
+    grow: false,
+  },
+});
+
+export const devicePostureChecks = tv({
+  slots: {
+    root: "flex w-full min-w-0 flex-col items-center gap-3",
+    hostname: "block max-w-full truncate",
+    empty: "text-sand-9",
+    list: "m-0 flex list-none flex-col gap-1 p-0",
+    item: "flex items-center gap-1",
+    failIcon: "size-3 shrink-0 text-red-11",
+    unknownIcon: "size-3 shrink-0",
   },
 });
 

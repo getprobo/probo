@@ -31,7 +31,8 @@ import type { DeviceCard_organization$key } from "#/__generated__/core/DeviceCar
 import type { DeviceCard_viewer$key } from "#/__generated__/core/DeviceCard_viewer.graphql";
 import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
-import { dashboardCard, deviceCard } from "./variants";
+import { DeviceCardListItem } from "./DeviceCardListItem";
+import { dashboardCard } from "./variants";
 
 const deviceCardViewerFragment = graphql`
   fragment DeviceCard_viewer on Viewer
@@ -44,7 +45,9 @@ const deviceCardViewerFragment = graphql`
     ) {
       edges {
         node {
+          id
           state
+          ...DeviceCardListItem_device
         }
       }
     }
@@ -68,14 +71,13 @@ export function DeviceCard({
 }: DeviceCardProps) {
   const { t } = useTranslation();
   const { employeePortalId } = useEmployeePortalRoute();
-  const slots = dashboardCard();
-  const status = deviceCard();
+  const slots = dashboardCard({ grow: true });
   const viewer = useFragment(deviceCardViewerFragment, viewerKey);
   const organization = useFragment(deviceCardOrganizationFragment, organizationKey);
 
-  const connected = viewer.enrolledDevices.edges.some(({ node }) => {
-    return node.state === "ACTIVE" || node.state === "PENDING";
-  });
+  const connectedDevices = viewer.enrolledDevices.edges
+    .map(edge => edge.node)
+    .filter(device => device.state === "ACTIVE" || device.state === "PENDING");
   const canEnroll = organization.canEnrollDevice;
 
   return (
@@ -101,18 +103,14 @@ export function DeviceCard({
         </Link>
       </div>
       <div className={slots.body()}>
-        {connected
-          ? (
-              <div className={slots.empty()}>
-                <span className={status.status()}>
-                  <span className={status.ring()} aria-hidden />
-                  <span className={status.pip()} />
-                </span>
-                <Text size={2} weight="medium" color="current" className={slots.emptyLabel()}>
-                  {t("homePage.dashboard.devices.connected")}
-                </Text>
-              </div>
-            )
+        {connectedDevices.length > 0
+          ? connectedDevices.map(device => (
+              <DeviceCardListItem
+                key={device.id}
+                deviceKey={device}
+                showHostname={connectedDevices.length > 1}
+              />
+            ))
           : (
               <div className={slots.empty()}>
                 <TrayIcon className={slots.emptyIcon()} />
