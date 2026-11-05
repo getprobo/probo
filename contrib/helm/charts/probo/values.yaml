@@ -410,6 +410,30 @@ probo:
     # Anthropic compatible endpoint. Empty uses api.anthropic.com.
     baseUrl: ""
 
+  # Google Gemini integration (optional; set agents.default.provider to
+  # "gemini" to use it). Talks to the Generative Language API natively.
+  gemini:
+    apiKey: ""
+    # Empty uses generativelanguage.googleapis.com. Point it at a Vertex AI
+    # endpoint or a regional mirror to override.
+    baseUrl: ""
+
+  # Any server speaking the OpenAI /v1/chat/completions format: llama.cpp's
+  # llama-server, vLLM, Ollama, LM Studio, LiteLLM, OpenRouter, or Gemini's
+  # compatibility endpoint. Set agents.default.provider to "openai_compatible".
+  #
+  # This provider is enabled by baseUrl, NOT by apiKey -- a self-hosted model
+  # commonly has no authentication at all, and an empty bearer token upsets
+  # some servers, so the header is omitted entirely when apiKey is empty.
+  #
+  # http is accepted only when the host is local (loopback, a private address,
+  # or a single-label service name); anything else must be https.
+  openaiCompatible:
+    # Required. The API root, i.e. the part before /chat/completions.
+    # e.g. "http://llama-server:8080/v1"
+    baseUrl: ""
+    apiKey: ""
+
   # Agent tools (optional, shared across agents)
   agentTools:
     # Firecrawl web search API key (used by tracker mapping and third-party vetter agents)

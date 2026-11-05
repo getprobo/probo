@@ -21,6 +21,7 @@
 package probod
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -29,7 +30,9 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"go.probo.inc/probo/pkg/llm"
 	llmanthropic "go.probo.inc/probo/pkg/llm/anthropic"
+	llmgemini "go.probo.inc/probo/pkg/llm/gemini"
 	llmopenai "go.probo.inc/probo/pkg/llm/openai"
+	llmopenaicompat "go.probo.inc/probo/pkg/llm/openaicompat"
 )
 
 // buildLLMClient creates an LLM client for the given provider config.
@@ -85,6 +88,40 @@ func (impl *Implm) buildLLMClient(
 		return llm.NewClient(
 			p,
 			"anthropic",
+			llm.WithLogger(l),
+			llm.WithTracerProvider(tp),
+		), nil
+	case "gemini":
+		opts := []llmgemini.Option{llmgemini.WithHTTPClient(httpClient)}
+		if cfg.BaseURL != "" {
+			opts = append(opts, llmgemini.WithBaseURL(cfg.BaseURL))
+		}
+
+		p := llmgemini.NewProvider(cfg.APIKey, opts...)
+
+		return llm.NewClient(
+			p,
+			"gemini",
+			llm.WithLogger(l),
+			llm.WithTracerProvider(tp),
+		), nil
+	case "openai_compatible":
+		// BaseURL is the whole point of this provider -- there is no default
+		// host to fall back to -- so an empty one is a configuration error
+		// rather than something to paper over.
+		if cfg.BaseURL == "" {
+			return nil, errors.New("openai_compatible provider requires a base URL")
+		}
+
+		p := llmopenaicompat.NewProvider(
+			cfg.BaseURL,
+			cfg.APIKey,
+			llmopenaicompat.WithHTTPClient(httpClient),
+		)
+
+		return llm.NewClient(
+			p,
+			"openai_compatible",
 			llm.WithLogger(l),
 			llm.WithTracerProvider(tp),
 		), nil

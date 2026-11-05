@@ -794,6 +794,12 @@ func (b *Builder) validateRequired() error {
 			providerAPIKey = "PROBOD_OPENAI_API_KEY"
 		case "anthropic":
 			providerAPIKey = "PROBOD_ANTHROPIC_API_KEY"
+		case "gemini":
+			providerAPIKey = "PROBOD_GEMINI_API_KEY"
+		case "openai_compatible":
+			// Deliberately no required key: the base URL is what configures
+			// this provider, and a local server commonly has no auth.
+			providerAPIKey = ""
 		}
 
 		if providerAPIKey != "" && b.resolver.getEnv(providerAPIKey) == "" {
@@ -1035,6 +1041,24 @@ func (b *Builder) buildLLMProviders() map[string]probodconfig.LLMProviderConfig 
 			Type:    "anthropic",
 			APIKey:  apiKey,
 			BaseURL: b.resolver.getEnv("PROBOD_ANTHROPIC_BASE_URL"),
+		}
+	}
+
+	if apiKey := b.resolver.getEnv("PROBOD_GEMINI_API_KEY"); apiKey != "" {
+		providers["gemini"] = probodconfig.LLMProviderConfig{
+			Type:    "gemini",
+			APIKey:  apiKey,
+			BaseURL: b.resolver.getEnv("PROBOD_GEMINI_BASE_URL"),
+		}
+	}
+
+	// Keyed on the base URL, not the API key: a self-hosted server is the
+	// reason this provider exists and usually has no key at all.
+	if baseURL := b.resolver.getEnv("PROBOD_OPENAI_COMPATIBLE_BASE_URL"); baseURL != "" {
+		providers["openai_compatible"] = probodconfig.LLMProviderConfig{
+			Type:    "openai_compatible",
+			APIKey:  b.resolver.getEnv("PROBOD_OPENAI_COMPATIBLE_API_KEY"),
+			BaseURL: baseURL,
 		}
 	}
 
