@@ -18,7 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { Plugin } from "vite";
+import faroUploader from "@grafana/faro-rollup-plugin";
+import type { Plugin, PluginOption } from "vite";
 
 export const faroMetaBlock = [
   "{{if .FaroEnabled}}",
@@ -50,5 +51,79 @@ export function omitFaroDevPlaceholders(): Plugin {
         return omitFaroMeta(html);
       },
     },
+  };
+}
+
+export interface FaroSourcemapEnv {
+  FARO_SOURCEMAP_ENDPOINT?: string;
+  FARO_SOURCEMAP_API_KEY?: string;
+  FARO_STACK_ID?: string;
+  GITHUB_SHA?: string;
+}
+
+export interface FaroSourcemapUploadOptions {
+  appName: string;
+  appId: string | undefined;
+  prefixPath?: string;
+}
+
+export interface FaroSourcemapUpload {
+  sourcemap: false | "hidden";
+  plugins: PluginOption[];
+}
+
+const sourcemapsOff: FaroSourcemapUpload = {
+  sourcemap: false,
+  plugins: [],
+};
+
+function credential(value: string | undefined): string | null {
+  const trimmed = value?.trim() ?? "";
+  if (trimmed === "") {
+    return null;
+  }
+
+  return trimmed;
+}
+
+// A blank credential skips the uploader. Local and staging builds have none.
+export function faroSourcemapUpload(
+  options: FaroSourcemapUploadOptions,
+  env: FaroSourcemapEnv = process.env,
+): FaroSourcemapUpload {
+  const endpoint = credential(env.FARO_SOURCEMAP_ENDPOINT);
+  const apiKey = credential(env.FARO_SOURCEMAP_API_KEY);
+  const stackId = credential(env.FARO_STACK_ID);
+  const appId = credential(options.appId);
+  if (
+    endpoint === null
+    || apiKey === null
+    || stackId === null
+    || appId === null
+  ) {
+    return sourcemapsOff;
+  }
+
+  const gitHash = credential(env.GITHUB_SHA);
+
+  return {
+    sourcemap: "hidden",
+    plugins: [
+      faroUploader({
+        appName: options.appName,
+        appId,
+        endpoint,
+        apiKey,
+        stackId,
+        gzipContents: true,
+        keepSourcemaps: false,
+        recursive: true,
+        verbose: true,
+        ...(gitHash === null ? {} : { gitHash }),
+        ...(options.prefixPath === undefined
+          ? {}
+          : { prefixPath: options.prefixPath }),
+      }),
+    ],
   };
 }

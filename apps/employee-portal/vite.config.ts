@@ -23,7 +23,11 @@ import { readFileSync } from "node:fs";
 import { isIP } from "node:net";
 import { fileURLToPath, URL } from "node:url";
 
-import { omitFaroCollectorOrigin, omitFaroDevPlaceholders } from "@probo/faro/vite";
+import {
+  faroSourcemapUpload,
+  omitFaroCollectorOrigin,
+  omitFaroDevPlaceholders,
+} from "@probo/faro/vite";
 import babel from "@rolldown/plugin-babel";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
@@ -218,6 +222,14 @@ export default defineConfig(({ mode, command }) => {
   const env = loadEnv(mode, envDir, "");
   const appOrigin = appOriginFromEnv(env);
   const fileStorageOrigin = fileStorageOriginFromEnv(env);
+  const faroUpload = command === "build"
+    ? faroSourcemapUpload({
+        appName: "employee-portal",
+        appId: process.env.FARO_APP_ID_EMPLOYEE_PORTAL,
+        // Source map paths omit the SPA base, which stack traces include.
+        prefixPath: "employee-portal/",
+      })
+    : null;
 
   return {
     // Absolute base: host-routed SPA lives under /employee-portal/. A
@@ -256,11 +268,13 @@ export default defineConfig(({ mode, command }) => {
         ],
       }),
       tailwindcss(),
+      ...(faroUpload?.plugins ?? []),
     ],
     // Dev-only: Vite stamps scripts (incl. React Fast Refresh preamble) with
     // this nonce; production Go CSP does not use nonces.
     html: command === "serve" ? { cspNonce: viteDevCspNonce } : undefined,
     build: {
+      ...(faroUpload ? { sourcemap: faroUpload.sourcemap } : {}),
       assetsDir: "assets",
       rolldownOptions: {
         output: {

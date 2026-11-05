@@ -23,7 +23,11 @@ import { readFileSync } from "node:fs";
 import { isIP } from "node:net";
 import { fileURLToPath, URL } from "node:url";
 
-import { omitFaroCollectorOrigin, omitFaroMeta } from "@probo/faro/vite";
+import {
+  faroSourcemapUpload,
+  omitFaroCollectorOrigin,
+  omitFaroMeta,
+} from "@probo/faro/vite";
 import babel from "@rolldown/plugin-babel";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
@@ -243,17 +247,26 @@ export default defineConfig(({ mode, command }) => {
     );
   }
 
+  const faroUpload = command === "build"
+    ? faroSourcemapUpload({
+        appName: "compliance-portal",
+        appId: process.env.FARO_APP_ID_COMPLIANCE_PORTAL,
+      })
+    : null;
+
   return {
     plugins: [
       goHtmlTemplateDevDefaults(),
       react(),
       babel({ plugins: ["relay"] }),
       tailwindcss(),
+      ...(faroUpload?.plugins ?? []),
     ],
     // Dev-only: Vite stamps scripts (incl. React Fast Refresh preamble) with
     // this nonce; production Go CSP does not use nonces.
     html: command === "serve" ? { cspNonce: viteDevCspNonce } : undefined,
     build: {
+      ...(faroUpload ? { sourcemap: faroUpload.sourcemap } : {}),
       assetsDir: "assets",
       rolldownOptions: {
         output: {
