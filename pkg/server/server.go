@@ -28,7 +28,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
-	complianceportalstatics "go.probo.inc/probo/apps/compliance-portal"
 	"go.probo.inc/probo/apps/console"
 	employeeportalstatics "go.probo.inc/probo/apps/employee-portal"
 	"go.probo.inc/probo/pkg/accessreview"
@@ -62,7 +61,6 @@ import (
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api"
 	connect_v1 "go.probo.inc/probo/pkg/server/api/connect/v1"
-	"go.probo.inc/probo/pkg/server/complianceportalsourcemaps"
 	"go.probo.inc/probo/pkg/server/gqlx"
 	server_identityfederation "go.probo.inc/probo/pkg/server/identityfederation"
 	"go.probo.inc/probo/pkg/server/mailactions"
@@ -141,7 +139,6 @@ type Server struct {
 	consoleSecurityPolicy        string
 	employeePortalWebServer      *employeeportal_web.Server
 	employeePortalSecurityPolicy string
-	compliancePortalSourceMaps   http.Handler
 	employeePortal               *employeeportalmgmt.Service
 	router                       *chi.Mux
 	extraHeaderFields            map[string]string
@@ -222,13 +219,6 @@ func NewServer(cfg Config) (*Server, error) {
 		return nil, err
 	}
 
-	compliancePortalSourceMaps, err := complianceportalsourcemaps.NewHandler(
-		complianceportalstatics.StaticFiles,
-	)
-	if err != nil {
-		return nil, err
-	}
-
 	appOrigin := ""
 
 	if cfg.BaseURL != nil {
@@ -285,7 +275,6 @@ func NewServer(cfg Config) (*Server, error) {
 		consoleSecurityPolicy:        consoleCSP,
 		employeePortalWebServer:      employeePortalWebServer,
 		employeePortalSecurityPolicy: employeePortalCSP,
-		compliancePortalSourceMaps:   compliancePortalSourceMaps,
 		employeePortal:               cfg.EmployeePortal,
 		router:                       router,
 		extraHeaderFields:            cfg.ExtraHeaderFields,
@@ -341,11 +330,6 @@ func (s *Server) setupRoutes() {
 				ContentSecurityPolicy: s.employeePortalSecurityPolicy,
 			},
 		)(http.StripPrefix(employeeportal_web.PathPrefix, employeePortalHandler)),
-	)
-
-	s.router.Mount(
-		complianceportalsourcemaps.PathPrefix,
-		http.StripPrefix(complianceportalsourcemaps.PathPrefix, s.compliancePortalSourceMaps),
 	)
 
 	s.router.Mount(
