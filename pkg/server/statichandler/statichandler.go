@@ -281,6 +281,7 @@ func (s *Server) ServeSPA(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("ETag", quotedETag)
 
 	if strings.HasSuffix(path, ".js") || strings.HasSuffix(path, ".css") ||
+		strings.HasSuffix(path, ".map") ||
 		strings.HasSuffix(path, ".png") || strings.HasSuffix(path, ".jpg") ||
 		strings.HasSuffix(path, ".svg") || strings.HasSuffix(path, ".woff2") {
 		w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
