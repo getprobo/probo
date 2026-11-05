@@ -18,23 +18,44 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   type FaroSourcemapEnv,
   faroSourcemapUpload,
 } from "./vite";
 
+const faroUploader = vi.hoisted(() =>
+  vi.fn(() => ({ name: "faro-uploader" })),
+);
+
+vi.mock("@grafana/faro-rollup-plugin", () => ({
+  default: faroUploader,
+}));
+
 const app = { appName: "console", appId: "app-1" };
+
+const gitHash = "0123456789abcdef0123456789abcdef01234567";
 
 const complete: FaroSourcemapEnv = {
   FARO_SOURCEMAP_ENDPOINT: "https://faro.example/api",
   FARO_SOURCEMAP_API_KEY: "token",
   FARO_STACK_ID: "stack",
-  GITHUB_SHA: "0123456789abcdef0123456789abcdef01234567",
+  GITHUB_SHA: gitHash,
+};
+
+const uploadDefaults = {
+  gzipContents: true,
+  keepSourcemaps: false,
+  recursive: true,
+  verbose: true,
 };
 
 describe("faroSourcemapUpload", () => {
+  beforeEach(() => {
+    faroUploader.mockClear();
+  });
+
   it("leaves sourcemaps off when any credential is missing", () => {
     expect(faroSourcemapUpload(app, {}).plugins).toEqual([]);
     expect(faroSourcemapUpload(app, {}).sourcemap).toBe(false);
@@ -51,9 +72,10 @@ describe("faroSourcemapUpload", () => {
       ...complete,
       FARO_STACK_ID: undefined,
     }).plugins).toEqual([]);
+    expect(faroUploader).not.toHaveBeenCalled();
   });
 
-  it("enables hidden sourcemaps when every credential is set", () => {
+  it("passes trimmed credentials, the path prefix, and the git hash", () => {
     const upload = faroSourcemapUpload(
       {
         appName: "employee-portal",
@@ -67,6 +89,32 @@ describe("faroSourcemapUpload", () => {
     );
 
     expect(upload.sourcemap).toBe("hidden");
-    expect(upload.plugins).toHaveLength(1);
+    expect(faroUploader).toHaveBeenCalledExactlyOnceWith({
+      ...uploadDefaults,
+      appName: "employee-portal",
+      appId: "app-2",
+      endpoint: "https://faro.example/api",
+      apiKey: "token",
+      stackId: "stack",
+      gitHash,
+      prefixPath: "employee-portal/",
+    });
+  });
+
+  it("omits the git hash and path prefix when they are unset", () => {
+    const upload = faroSourcemapUpload(
+      { appName: "console", appId: "app-1" },
+      { ...complete, GITHUB_SHA: undefined },
+    );
+
+    expect(upload.sourcemap).toBe("hidden");
+    expect(faroUploader).toHaveBeenCalledExactlyOnceWith({
+      ...uploadDefaults,
+      appName: "console",
+      appId: "app-1",
+      endpoint: "https://faro.example/api",
+      apiKey: "token",
+      stackId: "stack",
+    });
   });
 });
