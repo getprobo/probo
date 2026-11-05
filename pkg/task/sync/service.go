@@ -37,6 +37,7 @@ import (
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
+	"go.probo.inc/probo/pkg/notification"
 	"go.probo.inc/probo/pkg/task/sync/linear"
 	"go.probo.inc/probo/pkg/webhook"
 )
@@ -912,6 +913,18 @@ func (s *Service) finishLinearLink(
 				return fmt.Errorf("cannot emit task updated webhook: %w", err)
 			}
 
+			if current.State.IsClosed() {
+				if err := notification.ResolveLinkedTaskNotifications(
+					ctx,
+					tx,
+					scope,
+					current.OrganizationID,
+					current.ID,
+				); err != nil {
+					return fmt.Errorf("cannot resolve linked task notifications: %w", err)
+				}
+			}
+
 			hash := ContentHash(
 				current.Name,
 				markdown,
@@ -1029,6 +1042,18 @@ func (s *Service) restoreLinkedTask(
 
 			if err := webhook.InsertTaskUpdated(ctx, tx, scope, &oldTask, current, internalControlIDs, internalControlIDs); err != nil {
 				return fmt.Errorf("cannot emit task updated webhook: %w", err)
+			}
+
+			if current.State != oldTask.State && current.State.IsClosed() {
+				if err := notification.ResolveLinkedTaskNotifications(
+					ctx,
+					tx,
+					scope,
+					current.OrganizationID,
+					current.ID,
+				); err != nil {
+					return fmt.Errorf("cannot resolve restored task notifications: %w", err)
+				}
 			}
 
 			return nil

@@ -54,3 +54,30 @@ func Resolve(
 
 	return nil
 }
+
+// ResolveLinkedTaskNotifications marks every pending assignment and mention
+// notification for the task resolved, for every recipient.
+func ResolveLinkedTaskNotifications(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+	taskID gid.GID,
+) error {
+	if err := (&coredata.Notifications{}).ResolvePendingBySubjectTypes(
+		ctx,
+		tx,
+		scope,
+		organizationID,
+		taskID,
+		[]coredata.NotificationType{
+			coredata.NotificationTypeTaskAssigned,
+			coredata.NotificationTypeTaskMentioned,
+		},
+		time.Now(),
+	); err != nil {
+		return fmt.Errorf("cannot resolve task notifications: %w", err)
+	}
+
+	return nil
+}

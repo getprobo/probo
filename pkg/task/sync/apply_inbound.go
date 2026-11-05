@@ -272,6 +272,18 @@ func (s *Service) ApplyInboundIssue(
 				}
 			}
 
+			if task.State.IsClosed() {
+				if err := notification.ResolveLinkedTaskNotifications(
+					ctx,
+					tx,
+					scope,
+					task.OrganizationID,
+					task.ID,
+				); err != nil {
+					return fmt.Errorf("cannot resolve closed task notifications: %w", err)
+				}
+			}
+
 			internalControlIDs, err := (coredata.InternalControlTask{}).LoadInternalControlIDsByTaskID(ctx, tx, scope, task.ID)
 			if err != nil {
 				return fmt.Errorf("cannot load task internal controls: %w", err)

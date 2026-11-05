@@ -469,3 +469,52 @@ WHERE
 
 	return nil
 }
+
+func (n *Notifications) ResolvePendingBySubjectTypes(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	organizationID gid.GID,
+	subjectID gid.GID,
+	types []NotificationType,
+	now time.Time,
+) error {
+	if len(types) == 0 {
+		return nil
+	}
+
+	typeFilter := make([]string, len(types))
+	for i, notificationType := range types {
+		typeFilter[i] = notificationType.String()
+	}
+
+	q := `
+UPDATE
+    notifications
+SET
+    status = 'RESOLVED',
+    updated_at = @updated_at
+WHERE
+    %s
+    AND organization_id = @organization_id
+    AND subject_id = @subject_id
+    AND status = 'PENDING'
+    AND type::text = ANY(@types::text[])
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"organization_id": organizationID,
+		"subject_id":      subjectID,
+		"types":           typeFilter,
+		"updated_at":      now,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot resolve notifications by subject: %w", err)
+	}
+
+	return nil
+}

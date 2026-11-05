@@ -32,6 +32,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/notification"
 	"go.probo.inc/probo/pkg/task/sync/linear"
 )
 
@@ -265,6 +266,18 @@ func (s *Service) importLinearIssueForConnector(
 		actorID,
 	); err != nil {
 		return fmt.Errorf("cannot notify synced mentions: %w", err)
+	}
+
+	if task.State.IsClosed() {
+		if err := notification.ResolveLinkedTaskNotifications(
+			ctx,
+			tx,
+			scope,
+			task.OrganizationID,
+			task.ID,
+		); err != nil {
+			return fmt.Errorf("cannot resolve imported task notifications: %w", err)
+		}
 	}
 
 	if s.recordImportedTask == nil {
