@@ -32,6 +32,7 @@ import (
 	"io"
 	"io/fs"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -294,6 +295,7 @@ func (s *Server) ServeExisting(w http.ResponseWriter, r *http.Request) {
 
 	if s.shouldCompressWithGzip(r) {
 		w.Header().Set("Content-Encoding", "gzip")
+		w.Header().Set("Vary", "Accept-Encoding")
 		gz := gzip.NewWriter(w)
 
 		defer func() { _ = gz.Close() }()
@@ -347,7 +349,7 @@ func (w gzipResponseWriter) Write(b []byte) (int, error) {
 }
 
 func (s *Server) shouldCompressWithGzip(r *http.Request) bool {
-	if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+	if !acceptsGzip(r.Header.Get("Accept-Encoding")) {
 		return false
 	}
 
@@ -365,9 +367,41 @@ func (s *Server) shouldCompressWithGzip(r *http.Request) bool {
 	return false
 }
 
+// acceptsGzip reports whether the client accepts a gzip body. A quality of
+// zero means the client refused that encoding.
+func acceptsGzip(header string) bool {
+	for part := range strings.SplitSeq(header, ",") {
+		coding, params, _ := strings.Cut(part, ";")
+		coding = strings.TrimSpace(coding)
+		if !strings.EqualFold(coding, "gzip") && !strings.EqualFold(coding, "x-gzip") {
+			continue
+		}
+
+		quality := 1.0
+		for param := range strings.SplitSeq(params, ";") {
+			key, value, ok := strings.Cut(param, "=")
+			if !ok || !strings.EqualFold(strings.TrimSpace(key), "q") {
+				continue
+			}
+
+			parsed, err := strconv.ParseFloat(strings.TrimSpace(value), 64)
+			if err != nil || parsed <= 0 {
+				return false
+			}
+
+			quality = parsed
+		}
+
+		return quality > 0
+	}
+
+	return false
+}
+
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if s.shouldCompressWithGzip(r) {
 		w.Header().Set("Content-Encoding", "gzip")
+		w.Header().Set("Vary", "Accept-Encoding")
 		gz := gzip.NewWriter(w)
 
 		defer func() { _ = gz.Close() }()
