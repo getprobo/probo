@@ -14,6 +14,13 @@ jobs:
     runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
     permissions:
       contents: "read"
+    env:
+      FARO_SOURCEMAP_ENDPOINT: "${{ secrets.FARO_SOURCEMAP_ENDPOINT }}"
+      FARO_SOURCEMAP_API_KEY: "${{ secrets.FARO_SOURCEMAP_API_KEY }}"
+      FARO_STACK_ID: "${{ secrets.FARO_STACK_ID }}"
+      FARO_APP_ID_CONSOLE: "${{ secrets.FARO_APP_ID_CONSOLE }}"
+      FARO_APP_ID_EMPLOYEE_PORTAL: "${{ secrets.FARO_APP_ID_EMPLOYEE_PORTAL }}"
+      FARO_APP_ID_COMPLIANCE_PORTAL: "${{ secrets.FARO_APP_ID_COMPLIANCE_PORTAL }}"
     steps:
       - uses: "actions/checkout@v7.0.1"
         with:
