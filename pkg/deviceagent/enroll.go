@@ -20,111 +20,18 @@
 
 package deviceagent
 
-import (
-	"context"
-	"errors"
-	"fmt"
-	"os"
+import "errors"
+
+var (
+	// ErrEnrollmentTokenUsed is returned for a replayed or unknown enrollment token.
+	ErrEnrollmentTokenUsed = errors.New("this link was already used")
+
+	// ErrEnrollmentTokenExpired is returned when the enrollment token is past its expiry.
+	ErrEnrollmentTokenExpired = errors.New("this enrollment link has expired")
+
+	// ErrEnrollmentTokenInvalid is returned when the enrollment token cannot be exchanged.
+	ErrEnrollmentTokenInvalid = errors.New("this enrollment link is invalid")
+
+	// ErrAlreadyEnrolledInOrganization is returned when this machine is already enrolled in that organization.
+	ErrAlreadyEnrolledInOrganization = errors.New("this machine is already enrolled in that organization")
 )
-
-// ErrServerURLMismatch is returned when install is re-run with a --server
-// that differs from the persisted config.
-var ErrServerURLMismatch = errors.New("server URL does not match persisted config; uninstall first")
-
-// LoadOrExchangeAPIKey returns a persisted API key for install.
-// If agent.key already exists, it is returned without contacting the server
-// only when serverURL matches the server_url persisted in config.json.
-// Otherwise the enrollment token is exchanged, the key and server binding
-// are saved to disk immediately, and then the key is returned.
-//
-// Concurrent callers are serialized with an exclusive lock so only one
-// process exchanges a one-shot enrollment token for a given state dir.
-func LoadOrExchangeAPIKey(
-	ctx context.Context,
-	dir string,
-	client *Client,
-	serverURL string,
-	enrollmentToken string,
-) (string, error) {
-	normalized, err := NormalizeServerURL(serverURL)
-	if err != nil {
-		return "", fmt.Errorf("invalid server URL: %w", err)
-	}
-
-	release, err := AcquireEnrollmentLock(dir)
-	if err != nil {
-		return "", fmt.Errorf("cannot acquire enrollment lock: %w", err)
-	}
-	defer release()
-
-	if err := ensureSecureAgentDir(dir); err != nil {
-		return "", fmt.Errorf("cannot prepare agent data dir: %w", err)
-	}
-
-	apiKey, err := LoadAPIKey(dir)
-	if err == nil {
-		if err := validatePersistedServerURL(dir, normalized); err != nil {
-			return "", err
-		}
-
-		return apiKey, nil
-	}
-
-	if !errors.Is(err, ErrKeyNotFound) {
-		return "", fmt.Errorf("cannot load device api key: %w", err)
-	}
-
-	apiKey, err = client.ExchangeEnrollmentToken(ctx, enrollmentToken)
-	if err != nil {
-		return "", fmt.Errorf("cannot exchange enrollment token: %w", err)
-	}
-
-	if err := SaveAPIKey(dir, apiKey); err != nil {
-		return "", fmt.Errorf("cannot save device api key: %w", err)
-	}
-
-	if err := SaveConfig(dir, &Config{ServerURL: normalized}); err != nil {
-		if delErr := DeleteAPIKey(dir); delErr != nil {
-			return "", fmt.Errorf(
-				"cannot save device config: %w (also cannot delete device api key: %v)",
-				err,
-				delErr,
-			)
-		}
-
-		return "", fmt.Errorf("cannot save device config: %w", err)
-	}
-
-	return apiKey, nil
-}
-
-func validatePersistedServerURL(dir, serverURL string) error {
-	normalized, err := NormalizeServerURL(serverURL)
-	if err != nil {
-		return fmt.Errorf("invalid server URL: %w", err)
-	}
-
-	cfg, err := LoadConfig(dir)
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return ErrServerURLMismatch
-		}
-
-		return fmt.Errorf("cannot load device config: %w", err)
-	}
-
-	if cfg.ServerURL == "" {
-		return ErrServerURLMismatch
-	}
-
-	persisted, err := NormalizeServerURL(cfg.ServerURL)
-	if err != nil {
-		return fmt.Errorf("invalid persisted server URL: %w", err)
-	}
-
-	if persisted != normalized {
-		return ErrServerURLMismatch
-	}
-
-	return nil
-}

@@ -27,8 +27,8 @@ import (
 )
 
 const (
-	// EnrollmentLockFileName serializes concurrent LoadOrExchangeAPIKey
-	// calls that exchange enrollment tokens and write agent.key. It lives
+	// EnrollmentLockFileName serializes concurrent install calls that
+	// exchange enrollment tokens and write enrollments.json. It lives
 	// under EnrollmentRunDir so a reboot clears it with the run tree.
 	EnrollmentLockFileName = "enrolling.lock"
 

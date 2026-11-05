@@ -544,6 +544,76 @@ WHERE %s
 	return nil
 }
 
+// DiscardPending clears the API key, revokes, and soft-deletes a pending
+// device in one update. An active or already deleted row is left unchanged.
+// The hash is cleared because Revoke keeps it, and DeleteOrphans skips any
+// device that still has one.
+func (d *Device) DiscardPending(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+) error {
+	q := fmt.Sprintf(`
+UPDATE devices
+SET
+    api_key_hash = NULL,
+    state = @revoked_state,
+    revoked_at = @now,
+    deleted_at = @now,
+    updated_at = @now
+WHERE %s
+    AND id = @device_id
+    AND state = @pending_state
+    AND deleted_at IS NULL
+RETURNING
+    id,
+    tenant_id,
+    organization_id,
+    state,
+    hardware_uuid,
+    serial_number,
+    hostname,
+    platform,
+    os_version,
+    agent_version,
+    api_key_hash,
+    owner_profile_id,
+    labels,
+    enrolled_at,
+    last_seen_at,
+    revoked_at,
+    deleted_at,
+    created_at,
+    updated_at
+`, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"device_id":     d.ID,
+		"revoked_state": DeviceStateRevoked,
+		"pending_state": DeviceStatePending,
+		"now":           time.Now(),
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot discard pending device: %w", err)
+	}
+
+	device, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Device])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect discarded device: %w", err)
+	}
+
+	*d = device
+
+	return nil
+}
+
 func (d *Device) Activate(
 	ctx context.Context,
 	conn pg.Tx,

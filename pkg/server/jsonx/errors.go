@@ -31,6 +31,10 @@ func RenderForbidden(w http.ResponseWriter) {
 	httpserver.RenderError(w, http.StatusForbidden, fmt.Errorf("forbidden"))
 }
 
+func RenderGone(w http.ResponseWriter, err error) {
+	httpserver.RenderError(w, http.StatusGone, err)
+}
+
 func RenderInternalServerError(w http.ResponseWriter) {
 	httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal server error"))
 }
@@ -41,6 +45,10 @@ func RenderNotFound(w http.ResponseWriter, err error) {
 
 func RenderBadRequest(w http.ResponseWriter, err error) {
 	httpserver.RenderError(w, http.StatusBadRequest, err)
+}
+
+func RenderConflict(w http.ResponseWriter, err error) {
+	httpserver.RenderError(w, http.StatusConflict, err)
 }
 
 func RenderUnauthorized(w http.ResponseWriter, err error) {

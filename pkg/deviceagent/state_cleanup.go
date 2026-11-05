@@ -36,6 +36,8 @@ const (
 var stateCleanupNames = []string{
 	ConfigFileName,
 	configFileTmpName,
+	EnrollmentsFileName,
+	EnrollmentsFileName + ".tmp",
 	KeyFileName,
 	KeyFileName + ".tmp",
 	KeyFileName + ".old",

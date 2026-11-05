@@ -56,7 +56,11 @@ const (
 type (
 	// Config is the persisted agent configuration.
 	Config struct {
-		ServerURL         string        `json:"server_url"`
+		// DEPRECATED: ServerURL is a legacy single-enrollment field.
+		// LoadEnrollments migrates it into enrollments.json and clears it.
+		ServerURL string `json:"server_url,omitempty"`
+		// DEPRECATED: DeviceID is a legacy single-enrollment field.
+		// LoadEnrollments migrates it into enrollments.json and clears it.
 		DeviceID          string        `json:"device_id,omitempty"`
 		HeartbeatInterval time.Duration `json:"heartbeat_interval,omitempty"`
 		PostureInterval   time.Duration `json:"posture_interval,omitempty"`
@@ -147,12 +151,8 @@ func normalizeUpdateInterval(v time.Duration) time.Duration {
 
 func normalizeInterval(v, fallback, floor time.Duration) time.Duration {
 	if v <= 0 {
-		v = fallback
+		return max(fallback, floor)
 	}
 
-	if v < floor {
-		return floor
-	}
-
-	return v
+	return max(v, floor)
 }

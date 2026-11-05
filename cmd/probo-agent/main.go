@@ -135,10 +135,7 @@ func newEnrollURLCmd() *cobra.Command {
 					return fmt.Errorf("cannot check enrollment state: %w", err)
 				}
 
-				trust := deviceagent.TrustUnknown
-				if !enrolled {
-					trust = deviceagent.ProbeEnrollmentTrust(cmd.Context(), serverURL)
-				}
+				trust := deviceagent.ProbeEnrollmentTrust(cmd.Context(), serverURL)
 
 				return writeEnrollPreflight(
 					cmd.OutOrStdout(),
@@ -148,15 +145,6 @@ func newEnrollURLCmd() *cobra.Command {
 					enrolled,
 					trust,
 				)
-			}
-
-			already, err := reportIfAlreadyEnrolled(dir)
-			if err != nil {
-				return err
-			}
-
-			if already {
-				return nil
 			}
 
 			if !confirmBrowserEnrollment(serverURL) {
@@ -228,24 +216,6 @@ func writeEnrollPreflight(
 	}
 
 	return nil
-}
-
-// reportIfAlreadyEnrolled prints a success message and returns true when
-// the local enrollment marker is already present. Deep-link retries must
-// exit 0 so the macOS URL handler does not show "Enrollment failed".
-func reportIfAlreadyEnrolled(dir string) (bool, error) {
-	enrolled, err := deviceagent.IsEnrolled(deviceagent.EnrollmentRunDir(dir))
-	if err != nil {
-		return false, fmt.Errorf("cannot check enrollment state: %w", err)
-	}
-
-	if !enrolled {
-		return false, nil
-	}
-
-	fmt.Println("Device is already enrolled.")
-
-	return true, nil
 }
 
 // newUpdater returns an Updater scoped to the running binary, or nil
@@ -337,13 +307,15 @@ func newInstallCmd() *cobra.Command {
 
 			dir := resolveDir(cmd)
 
-			already, err := reportIfAlreadyEnrolled(dir)
+			release, err := deviceagent.AcquireEnrollmentLock(dir)
 			if err != nil {
-				return err
+				return fmt.Errorf("cannot acquire enrollment lock: %w", err)
 			}
+			defer release()
 
-			if already {
-				return nil
+			already, err := deviceagent.IsEnrolled(deviceagent.EnrollmentRunDir(dir))
+			if err != nil {
+				return fmt.Errorf("cannot check enrollment state: %w", err)
 			}
 
 			ctx, cancel := context.WithTimeout(cmd.Context(), 60*time.Second)
@@ -354,34 +326,92 @@ func newInstallCmd() *cobra.Command {
 				"",
 				fmt.Sprintf("probo-agent/%s", version),
 			)
-
-			apiKey, err := deviceagent.LoadOrExchangeAPIKey(ctx, dir, client, serverURL, enrollmentToken)
-			if err != nil {
-				return fmt.Errorf("cannot obtain device api key: %w", err)
-			}
-
 			agent := deviceagent.New(dir, version, newAgentLogger())
 
-			resp, err := agent.ConfigureDevice(ctx, serverURL, apiKey)
-			if err != nil {
-				return fmt.Errorf("device configuration failed: %w", err)
+			apiKey, exchangeErr := client.ExchangeEnrollmentToken(ctx, enrollmentToken)
+			switch {
+			case exchangeErr == nil:
+				resp, err := agent.AddEnrollment(ctx, serverURL, apiKey)
+				if err != nil {
+					if errors.Is(err, deviceagent.ErrAlreadyEnrolledInOrganization) {
+						return err
+					}
+
+					return fmt.Errorf("device configuration failed: %w", err)
+				}
+
+				fmt.Printf(
+					"Configured device %s (heartbeat %ds, posture %ds)\n",
+					resp.DeviceID,
+					resp.HeartbeatSeconds,
+					resp.PostureSeconds,
+				)
+
+				if noAutoUpdate || allowPrereleases {
+					if err := persistInstallFlags(dir, noAutoUpdate, allowPrereleases); err != nil {
+						return fmt.Errorf("cannot persist install flags: %w", err)
+					}
+
+					if noAutoUpdate {
+						fmt.Println("Auto-update disabled.")
+					}
+
+					if allowPrereleases {
+						fmt.Println("Prerelease auto-updates enabled.")
+					}
+				}
+			case deviceagent.IsUnauthorized(exchangeErr):
+				items, err := deviceagent.LoadEnrollments(dir)
+				if err != nil {
+					return err
+				}
+
+				if len(items) == 0 {
+					return deviceagent.ErrEnrollmentTokenUsed
+				}
+
+				if already {
+					if skipService {
+						return deviceagent.ErrEnrollmentTokenUsed
+					}
+
+					if err := service.Restart(service.Config{Dir: dir}); err != nil {
+						return fmt.Errorf("%w: %w", deviceagent.ErrEnrollmentTokenUsed, err)
+					}
+
+					fmt.Println("Service restarted.")
+
+					return nil
+				}
+
+				if _, err := fmt.Fprintf(
+					os.Stderr,
+					"%s; continuing service setup\n",
+					deviceagent.ErrEnrollmentTokenUsed,
+				); err != nil {
+					return fmt.Errorf("cannot write rejected enrollment link: %w", err)
+				}
+			case deviceagent.IsGone(exchangeErr):
+				return deviceagent.ErrEnrollmentTokenExpired
+			case deviceagent.IsForbidden(exchangeErr):
+				return deviceagent.ErrEnrollmentTokenInvalid
+			default:
+				return fmt.Errorf("cannot exchange enrollment token: %w", exchangeErr)
 			}
 
-			fmt.Printf("Configured device %s (heartbeat %ds, posture %ds)\n",
-				resp.DeviceID, resp.HeartbeatSeconds, resp.PostureSeconds)
-
-			if noAutoUpdate || allowPrereleases {
-				if err := persistInstallFlags(dir, noAutoUpdate, allowPrereleases); err != nil {
-					return fmt.Errorf("cannot persist install flags: %w", err)
+			if already {
+				if skipService {
+					fmt.Println("Service installation skipped (--skip-service).")
+					return nil
 				}
 
-				if noAutoUpdate {
-					fmt.Println("Auto-update disabled.")
+				if err := service.Restart(service.Config{Dir: dir}); err != nil {
+					return fmt.Errorf("cannot restart OS service: %w", err)
 				}
 
-				if allowPrereleases {
-					fmt.Println("Prerelease auto-updates enabled.")
-				}
+				fmt.Println("Service restarted.")
+
+				return nil
 			}
 
 			if skipService {
@@ -434,7 +464,7 @@ func newInstallCmd() *cobra.Command {
 }
 
 // clearEnrollmentMarkerOnSetupFailure drops the public enrollment marker
-// so a later install can retry service/tray setup after ConfigureDevice
+// so a later install can retry service/tray setup after AddEnrollment
 // already succeeded. Credentials, config, and any already-installed OS
 // service are left in place; service.Install is idempotent on retry.
 func clearEnrollmentMarkerOnSetupFailure(dir string, setupErr error) error {
@@ -581,22 +611,30 @@ func newStatusCmd() *cobra.Command {
 
 			cfg, err := deviceagent.LoadConfig(dir)
 			if err != nil {
-				return err
+				return fmt.Errorf("cannot load config: %w", err)
 			}
 
-			haveKey := true
-			if _, err := deviceagent.LoadAPIKey(dir); err != nil {
-				haveKey = false
+			items, err := deviceagent.LoadEnrollments(dir)
+			if err != nil {
+				return fmt.Errorf("cannot load enrollments: %w", err)
 			}
 
-			fmt.Printf("Server URL:           %s\n", cfg.ServerURL)
-			fmt.Printf("Device ID:            %s\n", cfg.DeviceID)
+			if len(items) == 0 {
+				fmt.Printf("Enrollments:          0\n")
+			}
+
+			for i, item := range items {
+				fmt.Printf("Enrollment %d:\n", i+1)
+				fmt.Printf("  Server URL:           %s\n", item.ServerURL)
+				fmt.Printf("  Device ID:            %s\n", item.DeviceID)
+				fmt.Printf("  API key on disk:      %v\n", item.APIKey != "")
+			}
+
 			fmt.Printf("Heartbeat interval:   %s\n", cfg.HeartbeatInterval)
 			fmt.Printf("Posture interval:     %s\n", cfg.PostureInterval)
 			fmt.Printf("Update interval:      %s\n", cfg.UpdateInterval)
 			fmt.Printf("Auto-update enabled:  %v\n", !cfg.UpdatesDisabled)
 			fmt.Printf("Allow prereleases:    %v\n", cfg.AllowPrereleases)
-			fmt.Printf("API key on disk:      %v\n", haveKey)
 			fmt.Printf("Config directory:     %s\n", dir)
 
 			return nil

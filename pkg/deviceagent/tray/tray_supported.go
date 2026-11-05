@@ -83,7 +83,9 @@ func Run(opts Options) error {
 }
 
 type enrollmentMenu struct {
-	items []*systray.MenuItem
+	items         []*systray.MenuItem
+	idleTitle     string
+	enrolledTitle string
 }
 
 func (m enrollmentMenu) show() {
@@ -96,6 +98,19 @@ func (m enrollmentMenu) hide() {
 	for _, item := range m.items {
 		item.Hide()
 	}
+}
+
+func (m enrollmentMenu) setEnrolled(enrolled bool) {
+	if len(m.items) == 0 {
+		return
+	}
+
+	if enrolled {
+		m.items[0].SetTitle(m.enrolledTitle)
+		return
+	}
+
+	m.items[0].SetTitle(m.idleTitle)
 }
 
 func onReady(opts Options, done <-chan struct{}) {
@@ -147,12 +162,14 @@ func onReady(opts Options, done <-chan struct{}) {
 		statusUnavailableItem.Hide()
 
 		if enrolled {
-			enrollMenu.hide()
+			enrollMenu.show()
+			enrollMenu.setEnrolled(true)
 			enrollmentRequiredItem.Hide()
 			connectedItem.Show()
 			systray.SetTooltip("Probo Device Posture Agent — Connected")
 		} else {
 			enrollMenu.show()
+			enrollMenu.setEnrolled(false)
 			connectedItem.Hide()
 			enrollmentRequiredItem.Show()
 			systray.SetTooltip("Probo Device Posture Agent — Enrollment required")
@@ -196,7 +213,11 @@ func setupEnrollmentMenu(opts Options, done <-chan struct{}) enrollmentMenu {
 			openConsoleEnroll(opts.ServerURL)
 		})
 
-		return enrollmentMenu{items: []*systray.MenuItem{enrollItem}}
+		return enrollmentMenu{
+			items:         []*systray.MenuItem{enrollItem},
+			idleTitle:     "Enroll in browser",
+			enrolledTitle: "Enroll another organization",
+		}
 	}
 
 	enrollRoot := systray.AddMenuItem("Enroll via…", enrollTooltip)
@@ -223,7 +244,11 @@ func setupEnrollmentMenu(opts Options, done <-chan struct{}) enrollmentMenu {
 	)
 	bindMenuClick(selfHostedItem, done, openSelfHostedEnroll)
 
-	return enrollmentMenu{items: []*systray.MenuItem{enrollRoot}}
+	return enrollmentMenu{
+		items:         []*systray.MenuItem{enrollRoot},
+		idleTitle:     "Enroll via…",
+		enrolledTitle: "Enroll another organization",
+	}
 }
 
 func bindMenuClick(item *systray.MenuItem, done <-chan struct{}, fn func()) {

@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -33,6 +34,35 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+const testDeviceID = "device-1"
+
+func setTestEnrollment(a *Agent, serverURL, deviceID, apiKey string) {
+	a.cfg = &Config{}
+	a.enrollments = []trackedEnrollment{
+		{
+			ServerURL: serverURL,
+			DeviceID:  deviceID,
+			APIKey:    apiKey,
+			client:    NewClient(serverURL, apiKey, a.UserAgent),
+		},
+	}
+}
+
+func TestLoadPostureQueues_DropsLegacyArray(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	path := pendingPosturesPath(dir)
+	require.NoError(t, os.WriteFile(path, []byte("[]"), 0o600))
+
+	queues, err := loadPostureQueues(dir)
+	require.NoError(t, err)
+	require.Empty(t, queues)
+
+	_, err = os.Stat(path)
+	require.ErrorIs(t, err, os.ErrNotExist)
+}
 
 func TestPendingPostureQueue_EnqueueTrimsOldestBatches(t *testing.T) {
 	t.Parallel()
@@ -49,6 +79,7 @@ func TestPendingPostureQueue_EnqueueTrimsOldestBatches(t *testing.T) {
 		}
 		dropped, err := enqueuePendingPostureBatch(
 			dir,
+			testDeviceID,
 			"0.1",
 			results,
 			time.Unix(int64(i), 0),
@@ -63,7 +94,7 @@ func TestPendingPostureQueue_EnqueueTrimsOldestBatches(t *testing.T) {
 		assert.Equal(t, 1, dropped)
 	}
 
-	batches, err := loadPendingPostureBatches(dir)
+	batches, err := loadPendingPostureBatches(dir, testDeviceID)
 	require.NoError(t, err)
 	require.Len(t, batches, maxPendingPostureBatches)
 	assert.Equal(t, "check-3", batches[0].Results[0].CheckKey)
@@ -81,6 +112,7 @@ func TestAgent_flushQueuedPostures(t *testing.T) {
 			dir := t.TempDir()
 			_, err := enqueuePendingPostureBatch(
 				dir,
+				testDeviceID,
 				"0.1",
 				[]PostureResultPayload{{CheckKey: "first", Status: "pass", ObservedAt: time.Now().UTC()}},
 				time.Now().UTC(),
@@ -88,6 +120,7 @@ func TestAgent_flushQueuedPostures(t *testing.T) {
 			require.NoError(t, err)
 			_, err = enqueuePendingPostureBatch(
 				dir,
+				testDeviceID,
 				"0.1",
 				[]PostureResultPayload{{CheckKey: "second", Status: "pass", ObservedAt: time.Now().UTC()}},
 				time.Now().UTC(),
@@ -104,10 +137,10 @@ func TestAgent_flushQueuedPostures(t *testing.T) {
 			defer srv.Close()
 
 			a := New(dir, "test", nil)
-			a.client = NewClient(srv.URL, "api-key", "test-agent")
+			setTestEnrollment(a, srv.URL, testDeviceID, "api-key")
 			a.flushQueuedPostures(context.Background())
 
-			batches, err := loadPendingPostureBatches(dir)
+			batches, err := loadPendingPostureBatches(dir, testDeviceID)
 			require.NoError(t, err)
 			assert.Len(t, batches, 0)
 			assert.Equal(t, int32(2), calls.Load())
@@ -122,6 +155,7 @@ func TestAgent_flushQueuedPostures(t *testing.T) {
 			dir := t.TempDir()
 			_, err := enqueuePendingPostureBatch(
 				dir,
+				testDeviceID,
 				"0.1",
 				[]PostureResultPayload{{CheckKey: "first", Status: "pass", ObservedAt: time.Now().UTC()}},
 				time.Now().UTC(),
@@ -129,6 +163,7 @@ func TestAgent_flushQueuedPostures(t *testing.T) {
 			require.NoError(t, err)
 			_, err = enqueuePendingPostureBatch(
 				dir,
+				testDeviceID,
 				"0.1",
 				[]PostureResultPayload{{CheckKey: "second", Status: "pass", ObservedAt: time.Now().UTC()}},
 				time.Now().UTC(),
@@ -151,10 +186,10 @@ func TestAgent_flushQueuedPostures(t *testing.T) {
 			defer srv.Close()
 
 			a := New(dir, "test", nil)
-			a.client = NewClient(srv.URL, "api-key", "test-agent")
+			setTestEnrollment(a, srv.URL, testDeviceID, "api-key")
 			a.flushQueuedPostures(context.Background())
 
-			batches, err := loadPendingPostureBatches(dir)
+			batches, err := loadPendingPostureBatches(dir, testDeviceID)
 			require.NoError(t, err)
 			require.Len(t, batches, 1)
 			assert.Equal(t, "second", batches[0].Results[0].CheckKey)
@@ -170,6 +205,7 @@ func TestAgent_flushQueuedPostures(t *testing.T) {
 			dir := t.TempDir()
 			_, err := enqueuePendingPostureBatch(
 				dir,
+				testDeviceID,
 				"0.1",
 				[]PostureResultPayload{{CheckKey: "first", Status: "pass", ObservedAt: time.Now().UTC()}},
 				time.Now().UTC(),
@@ -187,7 +223,7 @@ func TestAgent_flushQueuedPostures(t *testing.T) {
 
 			now := time.Unix(10_000, 0).UTC()
 			a := New(dir, "test", nil)
-			a.client = NewClient(srv.URL, "api-key", "test-agent")
+			setTestEnrollment(a, srv.URL, testDeviceID, "api-key")
 			a.now = func() time.Time { return now }
 			a.randInt63n = func(n int64) int64 { return n / 2 }
 
@@ -216,6 +252,7 @@ func TestAgent_flushQueuedPostures(t *testing.T) {
 			dir := t.TempDir()
 			_, err := enqueuePendingPostureBatch(
 				dir,
+				testDeviceID,
 				"0.1",
 				[]PostureResultPayload{{CheckKey: "first", Status: "pass", ObservedAt: time.Now().UTC()}},
 				time.Now().UTC(),
@@ -239,7 +276,7 @@ func TestAgent_flushQueuedPostures(t *testing.T) {
 
 			now := time.Unix(20_000, 0).UTC()
 			a := New(dir, "test", nil)
-			a.client = NewClient(srv.URL, "api-key", "test-agent")
+			setTestEnrollment(a, srv.URL, testDeviceID, "api-key")
 			a.now = func() time.Time { return now }
 			a.randInt63n = func(n int64) int64 { return n / 2 }
 
@@ -255,7 +292,7 @@ func TestAgent_flushQueuedPostures(t *testing.T) {
 			assert.Zero(t, a.pendingFlushBackoff)
 			assert.True(t, a.pendingFlushRetryAt.IsZero())
 
-			batches, err := loadPendingPostureBatches(dir)
+			batches, err := loadPendingPostureBatches(dir, testDeviceID)
 			require.NoError(t, err)
 			assert.Len(t, batches, 0)
 		},
@@ -269,6 +306,7 @@ func TestAgent_flushQueuedPostures(t *testing.T) {
 			dir := t.TempDir()
 			_, err := enqueuePendingPostureBatch(
 				dir,
+				testDeviceID,
 				"",
 				[]PostureResultPayload{{CheckKey: "legacy", Status: "pass", ObservedAt: time.Now().UTC()}},
 				time.Now().UTC(),
@@ -289,7 +327,7 @@ func TestAgent_flushQueuedPostures(t *testing.T) {
 			defer srv.Close()
 
 			a := New(dir, "2.0.0", nil)
-			a.client = NewClient(srv.URL, "api-key", "test-agent")
+			setTestEnrollment(a, srv.URL, testDeviceID, "api-key")
 			a.flushQueuedPostures(context.Background())
 
 			require.Equal(t, int32(1), calls.Load())

@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -48,40 +49,84 @@ func pendingPosturesPath(dir string) string {
 	return filepath.Join(dir, pendingPosturesFileName)
 }
 
-func loadPendingPostureBatches(dir string) ([]pendingPostureBatch, error) {
-	data, err := os.ReadFile(pendingPosturesPath(dir))
+type pendingPostureFile struct {
+	ByDevice map[string][]pendingPostureBatch `json:"by_device"`
+}
+
+func loadPendingPostureBatches(dir, deviceID string) ([]pendingPostureBatch, error) {
+	queues, err := loadPostureQueues(dir)
+	if err != nil {
+		return nil, err
+	}
+
+	return filterPostureBatches(queues[deviceID]), nil
+}
+
+func loadPostureQueues(dir string) (map[string][]pendingPostureBatch, error) {
+	path := pendingPosturesPath(dir)
+
+	data, err := os.ReadFile(path)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			return nil, nil
+			return map[string][]pendingPostureBatch{}, nil
 		}
 
 		return nil, fmt.Errorf("cannot read pending postures: %w", err)
 	}
 
-	var batches []pendingPostureBatch
-	if err := json.Unmarshal(data, &batches); err != nil {
+	// A leading '[' is the v0.8.0 queue, a JSON array with no device id.
+	// Those batches are dropped; the next posture run starts clean.
+	trimmed := strings.TrimSpace(string(data))
+	if len(trimmed) > 0 && trimmed[0] == '[' {
+		if err := os.Remove(path); err != nil && !errors.Is(err, os.ErrNotExist) {
+			return nil, fmt.Errorf("cannot delete pending postures: %w", err)
+		}
+
+		return map[string][]pendingPostureBatch{}, nil
+	}
+
+	var file pendingPostureFile
+	if err := json.Unmarshal(data, &file); err != nil {
 		return nil, fmt.Errorf("cannot decode pending postures: %w", err)
 	}
 
-	filtered := make([]pendingPostureBatch, 0, len(batches))
-	for _, batch := range batches {
-		if len(batch.Results) == 0 {
-			continue
-		}
-
-		filtered = append(filtered, batch)
+	if file.ByDevice == nil {
+		file.ByDevice = map[string][]pendingPostureBatch{}
 	}
 
-	return filtered, nil
+	for deviceID, batches := range file.ByDevice {
+		file.ByDevice[deviceID] = filterPostureBatches(batches)
+		if len(file.ByDevice[deviceID]) == 0 {
+			delete(file.ByDevice, deviceID)
+		}
+	}
+
+	return file.ByDevice, nil
 }
 
-func savePendingPostureBatches(dir string, batches []pendingPostureBatch) error {
+func savePendingPostureBatches(dir, deviceID string, batches []pendingPostureBatch) error {
+	queues, err := loadPostureQueues(dir)
+	if err != nil {
+		return err
+	}
+
+	batches = filterPostureBatches(batches)
+	if len(batches) == 0 {
+		delete(queues, deviceID)
+	} else {
+		queues[deviceID] = batches
+	}
+
+	return savePostureQueues(dir, queues)
+}
+
+func savePostureQueues(dir string, queues map[string][]pendingPostureBatch) error {
 	if dir == "" {
 		dir = DefaultConfigDir()
 	}
 
 	path := pendingPosturesPath(dir)
-	if len(batches) == 0 {
+	if len(queues) == 0 {
 		if err := os.Remove(path); err != nil && !errors.Is(err, os.ErrNotExist) {
 			return fmt.Errorf("cannot delete pending postures: %w", err)
 		}
@@ -93,18 +138,13 @@ func savePendingPostureBatches(dir string, batches []pendingPostureBatch) error 
 		return err
 	}
 
-	data, err := json.MarshalIndent(batches, "", "  ")
+	data, err := json.MarshalIndent(pendingPostureFile{ByDevice: queues}, "", "  ")
 	if err != nil {
 		return fmt.Errorf("cannot encode pending postures: %w", err)
 	}
 
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, data, 0o600); err != nil {
-		return fmt.Errorf("cannot write pending postures: %w", err)
-	}
-
-	if err := os.Rename(tmp, path); err != nil {
-		return fmt.Errorf("cannot atomically replace pending postures: %w", err)
+	if err := replaceRegularFile(path, data, 0o600); err != nil {
+		return fmt.Errorf("cannot replace pending postures: %w", err)
 	}
 
 	return nil
@@ -112,15 +152,16 @@ func savePendingPostureBatches(dir string, batches []pendingPostureBatch) error 
 
 func enqueuePendingPostureBatch(
 	dir string,
+	deviceID string,
 	agentVersion string,
 	results []PostureResultPayload,
 	queuedAt time.Time,
 ) (int, error) {
-	if len(results) == 0 {
+	if len(results) == 0 || deviceID == "" {
 		return 0, nil
 	}
 
-	batches, err := loadPendingPostureBatches(dir)
+	batches, err := loadPendingPostureBatches(dir, deviceID)
 	if err != nil {
 		return 0, err
 	}
@@ -143,13 +184,26 @@ func enqueuePendingPostureBatch(
 		batches = batches[dropped:]
 	}
 
-	if err := savePendingPostureBatches(dir, batches); err != nil {
+	if err := savePendingPostureBatches(dir, deviceID, batches); err != nil {
 		return 0, err
 	}
 
 	return dropped, nil
 }
 
-func clearPendingPostureBatches(dir string) error {
-	return savePendingPostureBatches(dir, nil)
+func clearPendingPostureBatches(dir, deviceID string) error {
+	return savePendingPostureBatches(dir, deviceID, nil)
+}
+
+func filterPostureBatches(batches []pendingPostureBatch) []pendingPostureBatch {
+	filtered := make([]pendingPostureBatch, 0, len(batches))
+	for _, batch := range batches {
+		if len(batch.Results) == 0 {
+			continue
+		}
+
+		filtered = append(filtered, batch)
+	}
+
+	return filtered
 }

@@ -1079,10 +1079,45 @@ func (s *Service) RecordHeartbeat(
 		},
 	)
 	if err != nil {
+		if errors.Is(err, ErrDeviceHardwareConflict) {
+			if cleanErr := s.discardPendingHardwareConflict(ctx, scope, deviceID); cleanErr != nil {
+				return nil, fmt.Errorf("cannot discard pending device after hardware conflict: %w", cleanErr)
+			}
+		}
+
 		return nil, err
 	}
 
 	return device, nil
+}
+
+// discardPendingHardwareConflict clears the API key, then revokes and
+// soft-deletes a pending device whose activation lost the per-organization
+// hardware UUID slot. The conflicting active device is left in place. The
+// exchange transaction has already stored an API key, so this runs in its
+// own transaction after the heartbeat transaction rolls back. The key is
+// cleared because Revoke keeps it, and DeleteOrphans skips any device that
+// still has one.
+func (s *Service) discardPendingHardwareConflict(
+	ctx context.Context,
+	scope coredata.Scoper,
+	deviceID gid.GID,
+) error {
+	return s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, conn pg.Tx) error {
+			device := &coredata.Device{ID: deviceID}
+			if err := device.DiscardPending(ctx, conn, scope); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return nil
+				}
+
+				return fmt.Errorf("cannot discard conflicting device: %w", err)
+			}
+
+			return nil
+		},
+	)
 }
 
 // RecordPostures appends posture results for a device.

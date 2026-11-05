@@ -102,6 +102,39 @@ func Install(cfg Config) error {
 	return nil
 }
 
+// Restart stops and starts the Windows service so it reloads enrollments.
+func Restart(cfg Config) error {
+	_ = cfg
+
+	name := DefaultWindowsName
+	_ = exec.Command("sc.exe", "stop", name).Run()
+
+	var lastErr error
+	for range 10 {
+		out, err := exec.Command("sc.exe", "start", name).CombinedOutput()
+		if err == nil {
+			return nil
+		}
+
+		msg := strings.TrimSpace(string(out))
+		lower := strings.ToLower(msg)
+		if strings.Contains(msg, "1056") ||
+			strings.Contains(lower, "already been started") ||
+			strings.Contains(lower, "already running") {
+			return nil
+		}
+
+		lastErr = fmt.Errorf("cannot run sc.exe start: %w: %s", err, msg)
+		time.Sleep(500 * time.Millisecond)
+	}
+
+	if lastErr == nil {
+		return errors.New("cannot restart windows service")
+	}
+
+	return lastErr
+}
+
 func Uninstall(cfg Config) error {
 	name := DefaultWindowsName
 

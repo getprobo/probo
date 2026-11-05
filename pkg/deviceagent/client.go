@@ -187,6 +187,40 @@ func IsUnauthorized(err error) bool {
 	return herr.StatusCode == http.StatusUnauthorized
 }
 
+// IsGone reports whether err is an API 410. The enroll endpoint
+// returns 410 when the enrollment token is expired.
+func IsGone(err error) bool {
+	var herr *HTTPError
+	if !errors.As(err, &herr) {
+		return false
+	}
+
+	return herr.StatusCode == http.StatusGone
+}
+
+// IsForbidden reports whether err is an API 403. The enroll endpoint
+// returns 403 when the enrollment token is invalid.
+func IsForbidden(err error) bool {
+	var herr *HTTPError
+	if !errors.As(err, &herr) {
+		return false
+	}
+
+	return herr.StatusCode == http.StatusForbidden
+}
+
+// IsHardwareConflict reports whether err is the same-organization
+// hardware UUID rejection from heartbeat. The agent API reserves
+// 409 for that conflict.
+func IsHardwareConflict(err error) bool {
+	var herr *HTTPError
+	if !errors.As(err, &herr) {
+		return false
+	}
+
+	return herr.StatusCode == http.StatusConflict
+}
+
 func (c *Client) do(
 	ctx context.Context,
 	method, path string,

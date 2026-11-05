@@ -197,8 +197,7 @@ func TestAgent_doPosturesDropsTruncatedRun(t *testing.T) {
 	deviceID := gid.New(gid.NewTenantID(), coredata.DeviceEntityType)
 
 	a := New(dir, "test", nil)
-	a.cfg = &Config{ServerURL: srv.URL, DeviceID: deviceID.String()}
-	a.client = NewClient(srv.URL, "api-key", "test-agent")
+	setTestEnrollment(a, srv.URL, deviceID.String(), "api-key")
 	a.checkSet = func() []checks.Check {
 		return []checks.Check{
 			passingCheck("FIRST"),
@@ -218,7 +217,7 @@ func TestAgent_doPosturesDropsTruncatedRun(t *testing.T) {
 
 	assert.Equal(t, int32(0), pushes.Load(), "a truncated run must not be pushed")
 
-	batches, err := loadPendingPostureBatches(dir)
+	batches, err := loadPendingPostureBatches(dir, deviceID.String())
 	require.NoError(t, err)
 	assert.Empty(t, batches, "a truncated run must not be queued for replay")
 }
@@ -239,8 +238,7 @@ func TestAgent_doPosturesPushesCompleteRun(t *testing.T) {
 	deviceID := gid.New(gid.NewTenantID(), coredata.DeviceEntityType)
 
 	a := New(dir, "test", nil)
-	a.cfg = &Config{ServerURL: srv.URL, DeviceID: deviceID.String()}
-	a.client = NewClient(srv.URL, "api-key", "test-agent")
+	setTestEnrollment(a, srv.URL, deviceID.String(), "api-key")
 	a.checkSet = func() []checks.Check {
 		return []checks.Check{passingCheck("FIRST"), passingCheck("SECOND")}
 	}
@@ -249,7 +247,7 @@ func TestAgent_doPosturesPushesCompleteRun(t *testing.T) {
 
 	assert.Equal(t, int32(1), pushes.Load())
 
-	batches, err := loadPendingPostureBatches(dir)
+	batches, err := loadPendingPostureBatches(dir, deviceID.String())
 	require.NoError(t, err)
 	assert.Empty(t, batches)
 }

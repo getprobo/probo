@@ -24,234 +24,137 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
-	"os"
-	"path/filepath"
-	"sync/atomic"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 )
 
-func TestLoadOrExchangeAPIKey(t *testing.T) {
+func TestLoadEnrollments_MigratesLegacyKey(t *testing.T) {
 	t.Parallel()
 
-	const (
-		persistedKey = "persisted-device-key"
-		serverURL    = "https://us.probo.com"
-	)
+	dir := t.TempDir()
+	deviceID := gid.New(gid.NewTenantID(), coredata.DeviceEntityType)
+
+	require.NoError(t, SaveAPIKey(dir, "legacy-key"))
+	require.NoError(t, SaveConfig(dir, &Config{
+		ServerURL: "https://US.probo.com",
+		DeviceID:  deviceID.String(),
+	}))
+
+	items, err := LoadEnrollments(dir)
+	require.NoError(t, err)
+	require.Len(t, items, 1)
+	assert.Equal(t, "https://us.probo.com", items[0].ServerURL)
+	assert.Equal(t, deviceID.String(), items[0].DeviceID)
+	assert.Equal(t, "legacy-key", items[0].APIKey)
+
+	_, err = LoadAPIKey(dir)
+	require.ErrorIs(t, err, ErrKeyNotFound)
+
+	cfg, err := LoadConfig(dir)
+	require.NoError(t, err)
+	assert.Empty(t, cfg.ServerURL)
+	assert.Empty(t, cfg.DeviceID)
+}
+
+func TestAddEnrollment(t *testing.T) {
+	t.Parallel()
 
 	t.Run(
-		"reuses key when persisted server URL matches",
+		"stores a second enrollment on another server",
 		func(t *testing.T) {
 			t.Parallel()
 
 			dir := t.TempDir()
-			require.NoError(t, SaveAPIKey(dir, persistedKey))
-			require.NoError(t, SaveConfig(dir, &Config{ServerURL: serverURL}))
-
-			client := NewClient("https://wrong.example.com", "", "probo-agent/test")
-
-			apiKey, err := LoadOrExchangeAPIKey(
-				context.Background(),
-				dir,
-				client,
-				serverURL,
-				"unused-token",
-			)
-			require.NoError(t, err)
-			assert.Equal(t, persistedKey, apiKey)
-		},
-	)
-
-	t.Run(
-		"rejects key reuse when persisted server URL differs",
-		func(t *testing.T) {
-			t.Parallel()
-
-			dir := t.TempDir()
-			require.NoError(t, SaveAPIKey(dir, persistedKey))
-			require.NoError(t, SaveConfig(dir, &Config{ServerURL: serverURL}))
-
-			client := NewClient(serverURL, "", "probo-agent/test")
-
-			_, err := LoadOrExchangeAPIKey(
-				context.Background(),
-				dir,
-				client,
-				"https://eu.probo.com",
-				"unused-token",
-			)
-			require.ErrorIs(t, err, ErrServerURLMismatch)
-		},
-	)
-
-	t.Run(
-		"reuses key when server URL differs only by hostname case",
-		func(t *testing.T) {
-			t.Parallel()
-
-			dir := t.TempDir()
-			require.NoError(t, SaveAPIKey(dir, persistedKey))
-			require.NoError(t, SaveConfig(dir, &Config{ServerURL: serverURL}))
-
-			client := NewClient("https://wrong.example.com", "", "probo-agent/test")
-
-			apiKey, err := LoadOrExchangeAPIKey(
-				context.Background(),
-				dir,
-				client,
-				"https://US.probo.com",
-				"unused-token",
-			)
-			require.NoError(t, err)
-			assert.Equal(t, persistedKey, apiKey)
-		},
-	)
-
-	t.Run(
-		"rejects key reuse when config is missing",
-		func(t *testing.T) {
-			t.Parallel()
-
-			dir := t.TempDir()
-			require.NoError(t, SaveAPIKey(dir, persistedKey))
-
-			client := NewClient(serverURL, "", "probo-agent/test")
-
-			_, err := LoadOrExchangeAPIKey(
-				context.Background(),
-				dir,
-				client,
-				serverURL,
-				"unused-token",
-			)
-			require.ErrorIs(t, err, ErrServerURLMismatch)
-		},
-	)
-
-	t.Run(
-		"rejects key reuse when config is missing and server differs",
-		func(t *testing.T) {
-			t.Parallel()
-
-			dir := t.TempDir()
-			require.NoError(t, SaveAPIKey(dir, persistedKey))
-
-			client := NewClient(serverURL, "", "probo-agent/test")
-
-			_, err := LoadOrExchangeAPIKey(
-				context.Background(),
-				dir,
-				client,
-				"https://eu.probo.com",
-				"unused-token",
-			)
-			require.ErrorIs(t, err, ErrServerURLMismatch)
-		},
-	)
-
-	t.Run(
-		"exchanges token when key is missing",
-		func(t *testing.T) {
-			t.Parallel()
-
-			const exchangedKey = "exchanged-device-key"
+			firstID := gid.New(gid.NewTenantID(), coredata.DeviceEntityType)
+			secondID := gid.New(gid.NewTenantID(), coredata.DeviceEntityType)
 
 			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				assert.Equal(t, http.MethodPost, r.Method)
-				assert.Equal(t, "/api/agent/v1/enroll", r.URL.Path)
-
+				assert.Equal(t, "/api/agent/v1/heartbeat", r.URL.Path)
 				w.Header().Set("Content-Type", "application/json")
-				_, _ = w.Write([]byte(`{"api_key":"` + exchangedKey + `"}`))
+
+				deviceID := firstID.String()
+				if r.Header.Get("Authorization") == "Bearer second-key" {
+					deviceID = secondID.String()
+				}
+
+				_, _ = w.Write([]byte(
+					`{"device_id":"` + deviceID + `","heartbeat_interval_seconds":300,"posture_interval_seconds":3600}`,
+				))
 			}))
 			t.Cleanup(srv.Close)
 
-			dir := t.TempDir()
-			client := NewClient(srv.URL, "", "probo-agent/test")
-
-			apiKey, err := LoadOrExchangeAPIKey(
-				context.Background(),
-				dir,
-				client,
-				srv.URL,
-				"enroll-token",
-			)
+			agent := New(dir, "test", nil)
+			_, err := agent.AddEnrollment(context.Background(), srv.URL, "first-key")
 			require.NoError(t, err)
-			assert.Equal(t, exchangedKey, apiKey)
 
-			loaded, err := LoadAPIKey(dir)
+			resp, err := agent.AddEnrollment(context.Background(), srv.URL, "second-key")
 			require.NoError(t, err)
-			assert.Equal(t, exchangedKey, loaded)
+			assert.Equal(t, secondID.String(), resp.DeviceID)
 
-			cfg, err := LoadConfig(dir)
+			items, err := LoadEnrollments(dir)
 			require.NoError(t, err)
-			assert.Equal(t, srv.URL, cfg.ServerURL)
+			require.Len(t, items, 2)
+			assert.Equal(t, "first-key", items[0].APIKey)
+			assert.Equal(t, firstID.String(), items[0].DeviceID)
+			assert.Equal(t, "second-key", items[1].APIKey)
+			assert.Equal(t, secondID.String(), items[1].DeviceID)
+
+			enrolled, err := IsEnrolled(EnrollmentRunDir(dir))
+			require.NoError(t, err)
+			assert.True(t, enrolled)
 		},
 	)
 
 	t.Run(
-		"rejects invalid server URL before exchange",
+		"drops the key when the organization already has this machine",
 		func(t *testing.T) {
 			t.Parallel()
 
-			var hits atomic.Int32
-
+			dir := t.TempDir()
 			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				hits.Add(1)
-				w.WriteHeader(http.StatusInternalServerError)
+				http.Error(w, "device hardware uuid already enrolled", http.StatusConflict)
 			}))
 			t.Cleanup(srv.Close)
 
-			dir := t.TempDir()
-			client := NewClient(srv.URL, "", "probo-agent/test")
+			agent := New(dir, "test", nil)
+			_, err := agent.AddEnrollment(context.Background(), srv.URL, "conflict-key")
+			require.ErrorIs(t, err, ErrAlreadyEnrolledInOrganization)
 
-			_, err := LoadOrExchangeAPIKey(
-				context.Background(),
-				dir,
-				client,
-				"ftp://example.com",
-				"enroll-token",
-			)
-			require.Error(t, err)
-			assert.Contains(t, err.Error(), "invalid server URL")
-			assert.Equal(t, int32(0), hits.Load())
+			items, err := LoadEnrollments(dir)
+			require.NoError(t, err)
+			assert.Empty(t, items)
 
-			_, err = LoadAPIKey(dir)
-			require.ErrorIs(t, err, ErrKeyNotFound)
+			enrolled, err := IsEnrolled(EnrollmentRunDir(dir))
+			require.NoError(t, err)
+			assert.False(t, enrolled)
 		},
 	)
 
 	t.Run(
-		"rolls back key when config save fails",
+		"keeps the key when activation cannot reach the server",
 		func(t *testing.T) {
 			t.Parallel()
 
-			const exchangedKey = "exchanged-device-key"
-
+			dir := t.TempDir()
 			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.Header().Set("Content-Type", "application/json")
-				_, _ = w.Write([]byte(`{"api_key":"` + exchangedKey + `"}`))
+				http.Error(w, "unavailable", http.StatusServiceUnavailable)
 			}))
 			t.Cleanup(srv.Close)
 
-			dir := t.TempDir()
-			require.NoError(t, os.Mkdir(filepath.Join(dir, ConfigFileName), 0o700))
-
-			client := NewClient(srv.URL, "", "probo-agent/test")
-
-			_, err := LoadOrExchangeAPIKey(
-				context.Background(),
-				dir,
-				client,
-				srv.URL,
-				"enroll-token",
-			)
+			agent := New(dir, "test", nil)
+			_, err := agent.AddEnrollment(context.Background(), srv.URL, "retry-key")
 			require.Error(t, err)
-			assert.Contains(t, err.Error(), "cannot save device config")
+			assert.ErrorContains(t, err, "cannot activate device")
 
-			_, err = LoadAPIKey(dir)
-			require.ErrorIs(t, err, ErrKeyNotFound)
+			items, err := LoadEnrollments(dir)
+			require.NoError(t, err)
+			require.Len(t, items, 1)
+			assert.Equal(t, "retry-key", items[0].APIKey)
+			assert.Empty(t, items[0].DeviceID)
 		},
 	)
 }

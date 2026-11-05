@@ -22,6 +22,7 @@ package console_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -33,8 +34,10 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/e2e/internal/factory"
 	"go.probo.inc/probo/e2e/internal/testutil"
+	"go.probo.inc/probo/internal/test"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 )
@@ -608,7 +611,44 @@ func TestDeviceEnrollment(t *testing.T) {
 		require.Equal(t, http.StatusUnauthorized, replayStatus)
 	})
 
-	t.Run("revoked device enrollment token returns unauthorized", func(t *testing.T) {
+	t.Run("expired enrollment token returns gone", func(t *testing.T) {
+		t.Parallel()
+
+		employee := sharedEmployee.ForTest(t)
+
+		enrolled := enrollDevice(t, employee, orgID)
+
+		err := test.PGClient(t).WithConn(
+			context.Background(),
+			func(ctx context.Context, conn pg.Querier) error {
+				tag, err := conn.Exec(
+					ctx,
+					`
+						UPDATE device_enrollment_tokens
+						SET expires_at = $1
+						WHERE device_id = $2
+					`,
+					time.Now().Add(-time.Hour),
+					enrolled.EnrollDevice.Device.ID,
+				)
+				if err != nil {
+					return err
+				}
+
+				if tag.RowsAffected() != 1 {
+					return fmt.Errorf("expected 1 enrollment token update, got %d", tag.RowsAffected())
+				}
+
+				return nil
+			},
+		)
+		require.NoError(t, err)
+
+		status, _ := exchangeEnrollmentToken(t, enrolled.EnrollDevice.EnrollmentToken)
+		require.Equal(t, http.StatusGone, status)
+	})
+
+	t.Run("revoked device enrollment token returns forbidden", func(t *testing.T) {
 		t.Parallel()
 
 		owner := sharedOwner.ForTest(t)
@@ -629,7 +669,7 @@ func TestDeviceEnrollment(t *testing.T) {
 		}{})
 
 		status, _ := exchangeEnrollmentToken(t, enrolled.EnrollDevice.EnrollmentToken)
-		require.Equal(t, http.StatusUnauthorized, status)
+		require.Equal(t, http.StatusForbidden, status)
 	})
 
 	t.Run("revoked device API key is rejected on heartbeat", func(t *testing.T) {
@@ -698,6 +738,29 @@ func TestDeviceEnrollment(t *testing.T) {
 		employee.MustExecute(getDeviceQuery, map[string]any{"id": reEnrolled.EnrollDevice.Device.ID}, &result)
 		require.Equal(t, reEnrolled.EnrollDevice.Device.ID, result.Node.ID)
 		require.Equal(t, "ACTIVE", result.Node.State)
+	})
+
+	t.Run("second enrollment of the same hardware is discarded", func(t *testing.T) {
+		t.Parallel()
+
+		employee := sharedEmployee.ForTest(t)
+
+		enrolled, apiKey := enrollActivateAndAuthenticateDevice(t, employee, orgID)
+		hardwareUUID := enrolled.EnrollDevice.Device.ID + "-hw"
+
+		second := enrollDevice(t, employee, orgID)
+		status, payload := exchangeEnrollmentToken(t, second.EnrollDevice.EnrollmentToken)
+		require.Equal(t, http.StatusOK, status)
+		require.NotEmpty(t, payload.APIKey)
+
+		require.Equal(t, http.StatusConflict, sendHeartbeat(t, payload.APIKey, hardwareUUID))
+		require.Equal(t, http.StatusUnauthorized, sendHeartbeat(t, payload.APIKey, hardwareUUID))
+		require.Equal(t, http.StatusOK, sendHeartbeat(t, apiKey, hardwareUUID))
+
+		_, err := employee.Do(getDeviceQuery, map[string]any{
+			"id": second.EnrollDevice.Device.ID,
+		})
+		require.Error(t, err)
 	})
 
 	t.Run("owner can enroll device", func(t *testing.T) {

@@ -96,6 +96,17 @@ func Install(cfg Config) error {
 	return nil
 }
 
+// Restart reloads the running agent so it picks up a new enrollment.
+func Restart(cfg Config) error {
+	_ = cfg
+
+	if out, err := exec.Command("service", "probo_agent", "restart").CombinedOutput(); err != nil {
+		return fmt.Errorf("cannot run service probo_agent restart: %w: %s", err, strings.TrimSpace(string(out)))
+	}
+
+	return nil
+}
+
 func Uninstall(cfg Config) error {
 	_ = exec.Command("service", "probo_agent", "stop").Run()
 	_ = exec.Command("service", "probo_agent", "disable").Run()

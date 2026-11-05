@@ -58,14 +58,6 @@ private final class URLHandlerApp: NSObject, NSApplicationDelegate {
             do {
                 NSLog("probo-agent url-handler: preflight…")
                 let preflight = try EnrollmentFlow.runPreflight(rawURL: rawURL)
-                if preflight.alreadyEnrolled {
-                    NSLog("probo-agent url-handler: already enrolled")
-                    DispatchQueue.main.async {
-                        NSApp.terminate(nil)
-                    }
-                    return
-                }
-
                 if preflight.trust != "probo_cloud" {
                     let confirmed = DispatchQueue.main.sync {
                         self.presentEnrollmentConfirm(preflight: preflight)

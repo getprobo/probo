@@ -83,10 +83,12 @@ func (h *Handler) handleEnroll(w http.ResponseWriter, r *http.Request) {
 	apiKey, err := h.itamSvc.ExchangeEnrollmentToken(r.Context(), req.Token)
 	if err != nil {
 		switch {
-		case errors.Is(err, itam.ErrEnrollmentTokenExpired),
-			errors.Is(err, itam.ErrEnrollmentTokenAlreadyUsed),
-			errors.Is(err, itam.ErrEnrollmentTokenInvalid):
+		case errors.Is(err, itam.ErrEnrollmentTokenAlreadyUsed):
 			jsonx.RenderUnauthorized(w, errors.New("unauthorized"))
+		case errors.Is(err, itam.ErrEnrollmentTokenExpired):
+			jsonx.RenderGone(w, errors.New("gone"))
+		case errors.Is(err, itam.ErrEnrollmentTokenInvalid):
+			jsonx.RenderForbidden(w)
 		default:
 			h.logger.ErrorCtx(r.Context(), "cannot exchange enrollment token", log.Error(err))
 			jsonx.RenderInternalServerError(w)
@@ -140,7 +142,7 @@ func (h *Handler) handleHeartbeat(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if errors.Is(err, itam.ErrDeviceHardwareConflict) {
-			jsonx.RenderBadRequest(w, errors.New("device hardware uuid already enrolled"))
+			jsonx.RenderConflict(w, itam.ErrDeviceHardwareConflict)
 			return
 		}
 

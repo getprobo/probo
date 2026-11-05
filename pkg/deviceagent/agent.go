@@ -25,6 +25,7 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"slices"
 	"time"
 
 	"go.gearno.de/kit/log"
@@ -49,6 +50,11 @@ const (
 // so the OS service supervisor relaunches the new binary.
 var ErrRestartRequired = errors.New("agent: restart required after self-update")
 
+type trackedEnrollment struct {
+	Enrollment
+	client *Client
+}
+
 // Agent runs enrollment, heartbeat, and posture sync loops.
 type Agent struct {
 	Dir       string
@@ -60,9 +66,8 @@ type Agent struct {
 	// disabled (e.g. dev builds, --no-auto-update at install time).
 	Updater *update.Updater
 
-	cfg     *Config
-	client  *Client
-	revoked bool
+	cfg         *Config
+	enrollments []trackedEnrollment
 
 	collectHostInfo     func() HostInfo
 	checkSet            func() []checks.Check
@@ -98,9 +103,11 @@ func New(dir, version string, logger *log.Logger) *Agent {
 	}
 }
 
-// ConfigureDevice persists local credentials and performs the first
-// heartbeat that activates the device on the server.
-func (a *Agent) ConfigureDevice(
+// AddEnrollment stores an API key and activates that organization
+// enrollment with a heartbeat. A retryable heartbeat failure keeps the
+// key so the one-shot token is not lost. A hardware conflict or 401
+// removes the key.
+func (a *Agent) AddEnrollment(
 	ctx context.Context,
 	serverURL, apiKey string,
 ) (*HeartbeatResponse, error) {
@@ -112,49 +119,107 @@ func (a *Agent) ConfigureDevice(
 		return nil, errors.New("api key is required")
 	}
 
-	if err := SaveAPIKey(a.Dir, apiKey); err != nil {
-		return nil, fmt.Errorf("cannot save api key: %w", err)
+	normalized, err := NormalizeServerURL(serverURL)
+	if err != nil {
+		return nil, fmt.Errorf("invalid server URL: %w", err)
 	}
 
-	host := a.currentHostInfo(time.Now())
-	client := NewClient(serverURL, apiKey, a.UserAgent)
+	if err := ensureSecureAgentDir(a.Dir); err != nil {
+		return nil, err
+	}
 
-	resp, err := client.Heartbeat(
-		ctx,
-		a.heartbeatRequest(host),
-	)
+	items, err := LoadEnrollments(a.Dir)
 	if err != nil {
+		return nil, err
+	}
+
+	cfg, err := loadOrCreateConfig(a.Dir)
+	if err != nil {
+		return nil, err
+	}
+
+	idx := slices.IndexFunc(items, func(item Enrollment) bool {
+		return item.ServerURL == normalized && item.APIKey == apiKey
+	})
+	if idx < 0 {
+		items = append(items, Enrollment{ServerURL: normalized, APIKey: apiKey})
+
+		idx = len(items) - 1
+		if err := SaveEnrollments(a.Dir, items); err != nil {
+			return nil, fmt.Errorf("cannot save enrollments: %w", err)
+		}
+	}
+
+	client := NewClient(normalized, apiKey, a.UserAgent)
+	host := a.currentHostInfo(time.Now())
+
+	resp, err := client.Heartbeat(ctx, a.heartbeatRequest(host))
+	if err != nil {
+		if IsHardwareConflict(err) || IsUnauthorized(err) {
+			items = slices.Delete(items, idx, idx+1)
+			if saveErr := SaveEnrollments(a.Dir, items); saveErr != nil {
+				return nil, fmt.Errorf("cannot remove enrollment: %w", saveErr)
+			}
+
+			if IsHardwareConflict(err) {
+				return nil, ErrAlreadyEnrolledInOrganization
+			}
+
+			return nil, fmt.Errorf("cannot activate device: %w", err)
+		}
+
+		a.cfg = cfg
+		a.setEnrollments(items)
+
 		return nil, fmt.Errorf("cannot activate device: %w", err)
 	}
 
-	cfg := &Config{
-		ServerURL:         serverURL,
-		DeviceID:          resp.DeviceID,
-		HeartbeatInterval: time.Duration(resp.HeartbeatSeconds) * time.Second,
-		PostureInterval:   time.Duration(resp.PostureSeconds) * time.Second,
+	items[idx].DeviceID = resp.DeviceID
+	if err := SaveEnrollments(a.Dir, items); err != nil {
+		return nil, fmt.Errorf("cannot save enrollment device id: %w", err)
 	}
+
+	cfg.HeartbeatInterval = serverInterval(
+		cfg.HeartbeatInterval,
+		time.Duration(resp.HeartbeatSeconds)*time.Second,
+		MinHeartbeatInterval,
+	)
+	cfg.PostureInterval = serverInterval(
+		cfg.PostureInterval,
+		time.Duration(resp.PostureSeconds)*time.Second,
+		MinPostureInterval,
+	)
+
+	cfg.ServerURL = ""
+	cfg.DeviceID = ""
+
 	if err := SaveConfig(a.Dir, cfg); err != nil {
 		return nil, fmt.Errorf("cannot save config: %w", err)
 	}
 
-	if err := MarkEnrolled(EnrollmentRunDir(a.Dir)); err != nil {
-		return nil, fmt.Errorf("cannot mark device enrolled: %w", err)
-	}
-
-	if err := clearPendingPostureBatches(a.Dir); err != nil {
-		a.Logger.Warn("cannot clear pending posture queue after configuration", log.Error(err))
+	if err := syncPublicEnrollmentState(a.Dir, items); err != nil {
+		return nil, fmt.Errorf("cannot update enrollment state: %w", err)
 	}
 
 	a.cfg = cfg
-	a.client = NewClient(serverURL, apiKey, a.UserAgent)
+	a.setEnrollments(items)
 
 	return resp, nil
 }
 
-// LoadLocalState loads persisted config and API key.
+// LoadLocalState loads persisted config and enrollments.
 func (a *Agent) LoadLocalState() error {
 	if err := ensureSecureAgentDir(a.Dir); err != nil {
 		return err
+	}
+
+	items, err := LoadEnrollments(a.Dir)
+	if err != nil {
+		return err
+	}
+
+	if len(items) == 0 {
+		return errors.New("no enrollments")
 	}
 
 	cfg, err := LoadConfig(a.Dir)
@@ -162,41 +227,97 @@ func (a *Agent) LoadLocalState() error {
 		return err
 	}
 
-	key, err := LoadAPIKey(a.Dir)
-	if err != nil {
-		return err
-	}
-
-	if cfg.ServerURL == "" {
-		return errors.New("config has no server URL")
-	}
-
 	a.cfg = cfg
-	a.client = NewClient(cfg.ServerURL, key, a.UserAgent)
+	a.setEnrollments(items)
+
+	if len(a.enrollments) == 0 {
+		return errors.New("no enrollments")
+	}
 
 	return nil
+}
+
+func (a *Agent) setEnrollments(items []Enrollment) {
+	tracked := make([]trackedEnrollment, 0, len(items))
+	for _, item := range items {
+		if item.ServerURL == "" || item.APIKey == "" {
+			continue
+		}
+
+		tracked = append(tracked, trackedEnrollment{
+			Enrollment: item,
+			client:     NewClient(item.ServerURL, item.APIKey, a.UserAgent),
+		})
+	}
+
+	a.enrollments = tracked
+}
+
+func (a *Agent) enrollmentItems() []Enrollment {
+	items := make([]Enrollment, len(a.enrollments))
+	for i, enrollment := range a.enrollments {
+		items[i] = enrollment.Enrollment
+	}
+
+	return items
+}
+
+func (a *Agent) dropEnrollment(apiKey string) {
+	if apiKey == "" {
+		return
+	}
+
+	var deviceID string
+
+	kept := make([]Enrollment, 0, len(a.enrollments))
+	for _, enrollment := range a.enrollments {
+		if enrollment.APIKey == apiKey {
+			deviceID = enrollment.DeviceID
+			continue
+		}
+
+		kept = append(kept, enrollment.Enrollment)
+	}
+
+	a.setEnrollments(kept)
+
+	if deviceID != "" {
+		if err := clearPendingPostureBatches(a.Dir, deviceID); err != nil {
+			a.Logger.Error(
+				"cannot delete pending posture queue",
+				log.Error(err),
+				log.String("device_id", deviceID),
+			)
+		}
+	}
+
+	if err := SaveEnrollments(a.Dir, kept); err != nil {
+		a.Logger.Error("cannot save enrollments", log.Error(err))
+	}
+
+	if err := syncPublicEnrollmentState(a.Dir, kept); err != nil {
+		a.Logger.Error("cannot update enrollment state", log.Error(err))
+	}
 }
 
 // Run starts the long-running heartbeat and posture loops. It returns
 // ErrRestartRequired after a successful self-update so the caller can
 // exit cleanly and let the service supervisor restart the new binary.
 func (a *Agent) Run(ctx context.Context) error {
-	if a.cfg == nil || a.client == nil {
+	if a.cfg == nil || len(a.enrollments) == 0 {
 		if err := a.LoadLocalState(); err != nil {
 			return fmt.Errorf("cannot load agent state: %w", err)
 		}
 	}
 
-	if err := MarkEnrolled(EnrollmentRunDir(a.Dir)); err != nil {
+	if err := syncPublicEnrollmentState(a.Dir, a.enrollmentItems()); err != nil {
 		return fmt.Errorf("cannot sync enrollment marker: %w", err)
 	}
-
-	a.Logger = a.Logger.With(log.String("device_id", a.cfg.DeviceID))
 
 	a.Logger.InfoCtx(
 		ctx,
 		"agent starting",
-		log.String("server", a.cfg.ServerURL),
+		log.Int("enrollments", len(a.enrollments)),
 		log.Duration("heartbeat_interval", a.cfg.HeartbeatInterval),
 		log.Duration("posture_interval", a.cfg.PostureInterval),
 		log.Duration("host_info_refresh_interval", hostInfoRefreshInterval),
@@ -382,22 +503,29 @@ func (a *Agent) checks() []checks.Check {
 // Missing credentials or server failures are logged and ignored so
 // uninstall can continue.
 func (a *Agent) Unenroll(ctx context.Context) error {
-	if a.cfg == nil || a.client == nil {
+	if a.cfg == nil || len(a.enrollments) == 0 {
 		if err := a.LoadLocalState(); err != nil {
 			a.Logger.WarnCtx(ctx, "cannot load local state for unenroll", log.Error(err))
 			return nil
 		}
 	}
 
-	if err := a.client.Unenroll(ctx); err != nil {
-		a.Logger.WarnCtx(ctx, "unenroll server-side revocation failed", log.Error(err))
+	for _, enrollment := range a.enrollments {
+		if err := enrollment.client.Unenroll(ctx); err != nil {
+			a.Logger.WarnCtx(
+				ctx,
+				"unenroll server-side revocation failed",
+				log.Error(err),
+				log.String("device_id", enrollment.DeviceID),
+			)
+		}
 	}
 
 	return nil
 }
 
 func (a *Agent) doHeartbeat(ctx context.Context) (bool, bool) {
-	if a.revoked {
+	if len(a.enrollments) == 0 {
 		return false, false
 	}
 
@@ -405,33 +533,58 @@ func (a *Agent) doHeartbeat(ctx context.Context) (bool, bool) {
 	oldPostureInterval := a.cfg.PostureInterval
 
 	host := a.currentHostInfo(time.Now())
+	req := a.heartbeatRequest(host)
 
-	resp, err := a.client.Heartbeat(
-		ctx,
-		a.heartbeatRequest(host),
+	var (
+		dropped       []string
+		identityDirty bool
 	)
-	if err != nil {
-		a.Logger.ErrorCtx(ctx, "heartbeat failed", log.Error(err))
 
-		if IsUnauthorized(err) {
-			a.handleUnauthorized()
+	for i := range a.enrollments {
+		enrollment := &a.enrollments[i]
+
+		resp, err := enrollment.client.Heartbeat(ctx, req)
+		if err != nil {
+			a.Logger.ErrorCtx(
+				ctx,
+				"heartbeat failed",
+				log.Error(err),
+				log.String("device_id", enrollment.DeviceID),
+				log.String("server", enrollment.ServerURL),
+			)
+
+			if IsUnauthorized(err) || IsHardwareConflict(err) {
+				dropped = append(dropped, enrollment.APIKey)
+			}
+
+			continue
 		}
 
-		return false, false
+		if resp.DeviceID != "" && enrollment.DeviceID != resp.DeviceID {
+			enrollment.DeviceID = resp.DeviceID
+			identityDirty = true
+		}
+
+		a.cfg.HeartbeatInterval = serverInterval(
+			a.cfg.HeartbeatInterval,
+			time.Duration(resp.HeartbeatSeconds)*time.Second,
+			MinHeartbeatInterval,
+		)
+		a.cfg.PostureInterval = serverInterval(
+			a.cfg.PostureInterval,
+			time.Duration(resp.PostureSeconds)*time.Second,
+			MinPostureInterval,
+		)
 	}
 
-	if resp.HeartbeatSeconds > 0 {
-		next := normalizeHeartbeatInterval(time.Duration(resp.HeartbeatSeconds) * time.Second)
-		if next != a.cfg.HeartbeatInterval {
-			a.cfg.HeartbeatInterval = next
+	if identityDirty && len(dropped) == 0 {
+		if err := SaveEnrollments(a.Dir, a.enrollmentItems()); err != nil {
+			a.Logger.WarnCtx(ctx, "cannot persist enrollment device ids", log.Error(err))
 		}
 	}
 
-	if resp.PostureSeconds > 0 {
-		next := normalizePostureInterval(time.Duration(resp.PostureSeconds) * time.Second)
-		if next != a.cfg.PostureInterval {
-			a.cfg.PostureInterval = next
-		}
+	for _, apiKey := range dropped {
+		a.dropEnrollment(apiKey)
 	}
 
 	a.flushQueuedPostures(ctx)
@@ -453,7 +606,7 @@ func (a *Agent) doHeartbeat(ctx context.Context) (bool, bool) {
 }
 
 func (a *Agent) doPostures(ctx context.Context) {
-	if a.revoked {
+	if len(a.enrollments) == 0 {
 		return
 	}
 
@@ -508,70 +661,101 @@ func (a *Agent) doPostures(ctx context.Context) {
 		log.Duration("per_check_timeout", perCheckTimeout),
 	)
 
-	deviceID, err := gid.ParseGID(a.cfg.DeviceID)
+	a.flushQueuedPostures(ctx)
+
+	enrollments := append([]trackedEnrollment(nil), a.enrollments...)
+	for _, enrollment := range enrollments {
+		if enrollment.DeviceID == "" || enrollment.client == nil {
+			continue
+		}
+
+		payload, err := posturePayload(enrollment.DeviceID, results)
+		if err != nil {
+			a.Logger.ErrorCtx(
+				ctx,
+				"cannot build posture payload",
+				log.Error(err),
+				log.String("device_id", enrollment.DeviceID),
+			)
+
+			continue
+		}
+
+		if err := enrollment.client.PushPostures(
+			ctx,
+			PosturesRequest{AgentVersion: a.Version, Results: payload},
+		); err != nil {
+			a.Logger.ErrorCtx(
+				ctx,
+				"posture push failed",
+				log.Error(err),
+				log.String("device_id", enrollment.DeviceID),
+			)
+
+			if IsUnauthorized(err) {
+				a.dropEnrollment(enrollment.APIKey)
+				continue
+			}
+
+			dropped, enqueueErr := enqueuePendingPostureBatch(
+				a.Dir,
+				enrollment.DeviceID,
+				a.Version,
+				payload,
+				a.currentTime(),
+			)
+			if enqueueErr != nil {
+				a.Logger.ErrorCtx(
+					ctx,
+					"cannot queue posture batch after failed push",
+					log.Error(enqueueErr),
+					log.String("device_id", enrollment.DeviceID),
+				)
+
+				continue
+			}
+
+			a.Logger.WarnCtx(
+				ctx,
+				"queued posture batch for retry",
+				log.Int("queued_results", len(payload)),
+				log.Int("dropped_old_batches", dropped),
+				log.String("device_id", enrollment.DeviceID),
+			)
+		}
+	}
+}
+
+func posturePayload(deviceID string, results []checks.Result) ([]PostureResultPayload, error) {
+	parsed, err := gid.ParseGID(deviceID)
 	if err != nil {
-		a.Logger.ErrorCtx(ctx, "cannot parse device id for posture correlation", log.Error(err))
-		return
+		return nil, fmt.Errorf("cannot parse device id: %w", err)
 	}
 
 	correlationID := gid.New(
-		deviceID.TenantID(),
+		parsed.TenantID(),
 		coredata.DevicePostureReportEntityType,
 	).String()
 
 	payload := make([]PostureResultPayload, 0, len(results))
-	for _, r := range results {
+	for _, result := range results {
 		payload = append(
 			payload,
 			PostureResultPayload{
-				CheckKey:      r.CheckKey,
-				Status:        string(r.Status),
-				Evidence:      checks.EvidenceJSON(r.Evidence),
-				ObservedAt:    r.ObservedAt,
+				CheckKey:      result.CheckKey,
+				Status:        string(result.Status),
+				Evidence:      checks.EvidenceJSON(result.Evidence),
+				ObservedAt:    result.ObservedAt,
 				CorrelationID: correlationID,
 			},
 		)
 	}
 
-	a.flushQueuedPostures(ctx)
-
-	if a.revoked {
-		return
-	}
-
-	if err := a.client.PushPostures(
-		ctx,
-		PosturesRequest{AgentVersion: a.Version, Results: payload},
-	); err != nil {
-		a.Logger.ErrorCtx(ctx, "posture push failed", log.Error(err))
-
-		if IsUnauthorized(err) {
-			a.handleUnauthorized()
-			return
-		}
-
-		dropped, enqueueErr := enqueuePendingPostureBatch(
-			a.Dir,
-			a.Version,
-			payload,
-			a.currentTime(),
-		)
-		if enqueueErr != nil {
-			a.Logger.ErrorCtx(ctx, "cannot queue posture batch after failed push", log.Error(enqueueErr))
-			return
-		}
-
-		a.Logger.WarnCtx(
-			ctx,
-			"queued posture batch for retry",
-			log.Int("queued_results", len(payload)),
-			log.Int("dropped_old_batches", dropped),
-		)
-	}
+	return payload, nil
 }
 
 func (a *Agent) flushQueuedPostures(ctx context.Context) {
-	if a.revoked || a.client == nil {
+	if len(a.enrollments) == 0 {
 		return
 	}
 
@@ -580,51 +764,102 @@ func (a *Agent) flushQueuedPostures(ctx context.Context) {
 		return
 	}
 
-	batches, err := loadPendingPostureBatches(a.Dir)
+	queues, err := loadPostureQueues(a.Dir)
 	if err != nil {
 		a.Logger.WarnCtx(ctx, "cannot load pending posture batches", log.Error(err))
 		return
 	}
 
-	if len(batches) == 0 {
+	if len(queues) == 0 {
 		a.resetPendingFlushRetry()
 		return
 	}
 
-	for i, batch := range batches {
-		if err := a.client.PushPostures(
-			ctx,
-			PosturesRequest{AgentVersion: batch.AgentVersion, Results: batch.Results},
-		); err != nil {
-			if IsUnauthorized(err) {
-				a.handleUnauthorized()
-				return
-			}
+	failed := false
+	flushed := 0
 
-			if saveErr := savePendingPostureBatches(a.Dir, batches[i:]); saveErr != nil {
-				a.Logger.ErrorCtx(ctx, "cannot persist pending posture batches", log.Error(saveErr))
-			}
+	enrollments := append([]trackedEnrollment(nil), a.enrollments...)
+	for _, enrollment := range enrollments {
+		if enrollment.DeviceID == "" || enrollment.client == nil {
+			continue
+		}
 
-			retryIn := a.schedulePendingFlushRetry(now)
-			a.Logger.WarnCtx(
+		batches := queues[enrollment.DeviceID]
+		if len(batches) == 0 {
+			continue
+		}
+
+		remainingFrom := -1
+		unauthorized := false
+
+		for i, batch := range batches {
+			err := enrollment.client.PushPostures(
 				ctx,
-				"cannot flush pending posture batch",
-				log.Error(err),
-				log.Int("remaining_batches", len(batches)-i),
-				log.Duration("retry_in", retryIn),
+				PosturesRequest{AgentVersion: batch.AgentVersion, Results: batch.Results},
 			)
+			if err != nil {
+				if IsUnauthorized(err) {
+					unauthorized = true
+					break
+				}
 
-			return
+				remainingFrom = i
+				failed = true
+
+				a.Logger.WarnCtx(
+					ctx,
+					"cannot flush pending posture batch",
+					log.Error(err),
+					log.String("device_id", enrollment.DeviceID),
+					log.Int("remaining_batches", len(batches)-i),
+				)
+
+				break
+			}
+
+			flushed++
+		}
+
+		if unauthorized {
+			a.dropEnrollment(enrollment.APIKey)
+			continue
+		}
+
+		if remainingFrom >= 0 {
+			if saveErr := savePendingPostureBatches(a.Dir, enrollment.DeviceID, batches[remainingFrom:]); saveErr != nil {
+				a.Logger.ErrorCtx(
+					ctx,
+					"cannot persist pending posture batches",
+					log.Error(saveErr),
+					log.String("device_id", enrollment.DeviceID),
+				)
+			}
+
+			continue
+		}
+
+		if err := clearPendingPostureBatches(a.Dir, enrollment.DeviceID); err != nil {
+			a.Logger.ErrorCtx(
+				ctx,
+				"cannot clear pending posture batches",
+				log.Error(err),
+				log.String("device_id", enrollment.DeviceID),
+			)
 		}
 	}
 
-	if err := clearPendingPostureBatches(a.Dir); err != nil {
-		a.Logger.ErrorCtx(ctx, "cannot clear pending posture batches", log.Error(err))
+	if failed {
+		retryIn := a.schedulePendingFlushRetry(now)
+		a.Logger.WarnCtx(ctx, "posture flush will retry", log.Duration("retry_in", retryIn))
+
 		return
 	}
 
 	a.resetPendingFlushRetry()
-	a.Logger.InfoCtx(ctx, "flushed pending posture batches", log.Int("batches", len(batches)))
+
+	if flushed > 0 {
+		a.Logger.InfoCtx(ctx, "flushed pending posture batches", log.Int("batches", flushed))
+	}
 }
 
 func (a *Agent) currentHostInfo(now time.Time) HostInfo {
@@ -690,34 +925,6 @@ func (a *Agent) schedulePendingFlushRetry(now time.Time) time.Duration {
 func (a *Agent) resetPendingFlushRetry() {
 	a.pendingFlushBackoff = 0
 	a.pendingFlushRetryAt = time.Time{}
-}
-
-// handleUnauthorized wipes local auth state after a 401 response.
-func (a *Agent) handleUnauthorized() {
-	if a.revoked {
-		return
-	}
-
-	a.revoked = true
-	if a.client != nil {
-		a.client.APIKey = ""
-	}
-
-	a.Logger.Warn("agent API returned 401, wiping local key and requiring re-enrollment")
-
-	if err := DeleteAPIKey(a.Dir); err != nil {
-		a.Logger.Error("cannot delete local key after 401", log.Error(err))
-	}
-
-	if err := clearPendingPostureBatches(a.Dir); err != nil {
-		a.Logger.Error("cannot delete pending posture queue after 401", log.Error(err))
-	}
-
-	if err := ClearEnrollmentMarker(EnrollmentRunDir(a.Dir)); err != nil {
-		a.Logger.Error("cannot clear enrollment marker after 401", log.Error(err))
-	}
-
-	a.resetPendingFlushRetry()
 }
 
 func (a *Agent) heartbeatRequest(host HostInfo) HeartbeatRequest {

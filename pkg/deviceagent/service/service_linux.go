@@ -92,6 +92,17 @@ func Install(cfg Config) error {
 	return nil
 }
 
+// Restart reloads the running agent so it picks up a new enrollment.
+func Restart(cfg Config) error {
+	_ = cfg
+
+	if out, err := exec.Command("systemctl", "restart", "probo-agent.service").CombinedOutput(); err != nil {
+		return fmt.Errorf("cannot run systemctl restart: %w: %s", err, strings.TrimSpace(string(out)))
+	}
+
+	return nil
+}
+
 func Uninstall(cfg Config) error {
 	_ = exec.Command("systemctl", "disable", "--now", "probo-agent.service").Run()
 

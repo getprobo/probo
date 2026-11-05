@@ -141,6 +141,21 @@ func WritePlist(cfg Config) error {
 	return nil
 }
 
+// Restart asks launchd to stop and start the agent daemon so it
+// reloads enrollments.json.
+func Restart(cfg Config) error {
+	label := cfg.Label
+	if label == "" {
+		label = DefaultLabel
+	}
+
+	if out, err := exec.Command("launchctl", "kickstart", "-k", "system/"+label).CombinedOutput(); err != nil {
+		return fmt.Errorf("cannot run launchctl kickstart: %w: %s", err, strings.TrimSpace(string(out)))
+	}
+
+	return nil
+}
+
 func reloadNow() error {
 	// `bootout` first keeps install idempotent.
 	_ = exec.Command("launchctl", "bootout", "system", plistPath).Run()

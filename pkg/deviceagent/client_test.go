@@ -74,4 +74,38 @@ func TestClientExchangeEnrollmentTokenUnauthorized(t *testing.T) {
 	_, err := client.ExchangeEnrollmentToken(context.Background(), "used-token")
 	require.Error(t, err)
 	assert.True(t, IsUnauthorized(err))
+	assert.False(t, IsGone(err))
+	assert.False(t, IsForbidden(err))
+}
+
+func TestClientExchangeEnrollmentTokenExpired(t *testing.T) {
+	t.Parallel()
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		http.Error(w, "gone", http.StatusGone)
+	}))
+	t.Cleanup(srv.Close)
+
+	client := NewClient(srv.URL, "", "probo-agent/test")
+
+	_, err := client.ExchangeEnrollmentToken(context.Background(), "expired-token")
+	require.Error(t, err)
+	assert.True(t, IsGone(err))
+	assert.False(t, IsUnauthorized(err))
+}
+
+func TestClientExchangeEnrollmentTokenInvalid(t *testing.T) {
+	t.Parallel()
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		http.Error(w, "forbidden", http.StatusForbidden)
+	}))
+	t.Cleanup(srv.Close)
+
+	client := NewClient(srv.URL, "", "probo-agent/test")
+
+	_, err := client.ExchangeEnrollmentToken(context.Background(), "invalid-token")
+	require.Error(t, err)
+	assert.True(t, IsForbidden(err))
+	assert.False(t, IsUnauthorized(err))
 }
