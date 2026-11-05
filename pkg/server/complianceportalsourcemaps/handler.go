@@ -34,6 +34,9 @@ import (
 
 const (
 	// PathPrefix is the API route Faro fetches after stripping "https://".
+	// The route sits on the public API server. The bytes are the same files
+	// already served on each compliance portal hostname. Faro and CloudFront
+	// both reach this router, so the handler does not try to tell them apart.
 	PathPrefix = "/compliance-portal-maps"
 )
 

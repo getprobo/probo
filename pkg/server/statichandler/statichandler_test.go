@@ -150,6 +150,101 @@ func TestNewRequestIndexRenderer_RendersPerRequest(t *testing.T) {
 	assert.Equal(t, "<title>Beta</title>", beta)
 }
 
+func TestServeHTTP_MapFileIsImmutable(t *testing.T) {
+	t.Parallel()
+
+	server := newMapServer(t)
+
+	plain := httptest.NewRecorder()
+	server.ServeHTTP(
+		plain,
+		httptest.NewRequest(http.MethodGet, "/assets/app.js.map", nil),
+	)
+
+	assert.Equal(t, http.StatusOK, plain.Code)
+	assert.Equal(
+		t,
+		"public, max-age=31536000, immutable",
+		plain.Header().Get("Cache-Control"),
+	)
+	assert.Empty(t, plain.Header().Get("Content-Encoding"))
+
+	gzipped := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodGet, "/assets/app.js.map", nil)
+	request.Header.Set("Accept-Encoding", "gzip")
+	server.ServeHTTP(gzipped, request)
+
+	assert.Equal(t, http.StatusOK, gzipped.Code)
+	assert.Equal(t, "gzip", gzipped.Header().Get("Content-Encoding"))
+	assert.Equal(t, "Accept-Encoding", gzipped.Header().Get("Vary"))
+	assert.Equal(
+		t,
+		"public, max-age=31536000, immutable",
+		gzipped.Header().Get("Cache-Control"),
+	)
+}
+
+func TestServeHTTP_RefusesGzipQualityZero(t *testing.T) {
+	t.Parallel()
+
+	server := newMapServer(t)
+
+	tests := []struct {
+		name     string
+		encoding string
+		gzip     bool
+	}{
+		{name: "plain gzip", encoding: "gzip", gzip: true},
+		{name: "quality zero", encoding: "gzip;q=0", gzip: false},
+		{name: "quality zero decimal", encoding: "gzip;q=0.0", gzip: false},
+		{name: "identity only", encoding: "identity", gzip: false},
+		{name: "gzip after another coding", encoding: "deflate, gzip;q=0.8", gzip: true},
+	}
+
+	for _, test := range tests {
+		t.Run(
+			test.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				request := httptest.NewRequest(http.MethodGet, "/assets/app.js.map", nil)
+				request.Header.Set("Accept-Encoding", test.encoding)
+
+				response := httptest.NewRecorder()
+				server.ServeHTTP(response, request)
+
+				require.Equal(t, http.StatusOK, response.Code)
+				if test.gzip {
+					assert.Equal(t, "gzip", response.Header().Get("Content-Encoding"))
+					return
+				}
+
+				assert.Empty(t, response.Header().Get("Content-Encoding"))
+				assert.Equal(t, []byte(`{"version":3}`), response.Body.Bytes())
+			},
+		)
+	}
+}
+
+func newMapServer(t *testing.T) *statichandler.Server {
+	t.Helper()
+
+	server, err := statichandler.NewServer(
+		fstest.MapFS{
+			"dist/index.html":        &fstest.MapFile{Data: []byte("index")},
+			"dist/assets/app.js.map": &fstest.MapFile{Data: []byte(`{"version":3}`)},
+		},
+		"dist",
+		statichandler.GzipOptions{
+			EnableFileTypeCheck: true,
+			FileTypes:           []string{".map"},
+		},
+	)
+	require.NoError(t, err)
+
+	return server
+}
+
 func indexFiles(indexHTML string) fs.FS {
 	return fstest.MapFS{
 		"dist/index.html": &fstest.MapFile{Data: []byte(indexHTML)},
