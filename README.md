@@ -100,8 +100,8 @@ npm ci
 # 3. Start infrastructure services (PostgreSQL, object storage, etc.)
 make stack-up
 
-# 4. Build
-make build
+# 4. Build (WITH_APPS=1 also runs codegen and builds the web console)
+make build WITH_APPS=1
 
 # 5. Generate the local dev config
 make dev-config
