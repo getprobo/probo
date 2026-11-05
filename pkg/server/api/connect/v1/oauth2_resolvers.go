@@ -45,6 +45,10 @@ func (r *mutationResolver) AuthorizeDevice(ctx context.Context, input types.Auth
 			}, nil
 		}
 
+		if errors.Is(err, oauth2.ErrUnauthorizedMember) {
+			return nil, gqlx.Forbidden(ctx, err)
+		}
+
 		if oauthErr, ok := errors.AsType[*oauth2.OAuth2Error](err); ok {
 			return nil, gqlx.Invalidf(ctx, "%s", oauthErr.Description())
 		}
@@ -75,7 +79,12 @@ func (r *mutationResolver) ApproveConsent(ctx context.Context, input types.Appro
 		},
 	)
 	if err != nil {
+		if errors.Is(err, oauth2.ErrUnauthorizedMember) {
+			return nil, gqlx.Forbidden(ctx, err)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot approve oauth2 consent", log.Error(err))
+
 		return nil, gqlx.Internal(ctx)
 	}
 

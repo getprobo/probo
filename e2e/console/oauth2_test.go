@@ -2138,6 +2138,42 @@ func TestOAuth2_Security(t *testing.T) {
 	)
 
 	t.Run(
+		"private client rejects non-member at device verify",
+		func(t *testing.T) {
+			t.Parallel()
+
+			client := factory.CreatePublicOAuth2Client(owner, nil)
+
+			deviceResp, raw, err := testutil.OAuth2DeviceAuth(
+				owner,
+				client.ClientID,
+				"openid",
+			)
+			require.NoError(t, err)
+			require.Equal(t, http.StatusOK, raw.StatusCode, "device auth failed: %s", string(raw.Body))
+			require.NotNil(t, deviceResp)
+
+			otherOwner := testutil.NewClient(t, testutil.RoleOwner)
+
+			verifyResp, err := testutil.OAuth2DeviceVerify(otherOwner, deviceResp.UserCode)
+			require.NoError(t, err)
+			assert.Contains(t, strings.ToLower(string(verifyResp.Body)), "error",
+				"a member of another organization must not authorize a private client")
+			assert.NotContains(t, string(verifyResp.Body), `"success":true`)
+
+			_, errResp, _, err := testutil.OAuth2TokenWithDeviceCode(
+				owner,
+				client.ClientID,
+				deviceResp.DeviceCode,
+			)
+			require.NoError(t, err)
+			require.NotNil(t, errResp)
+			assert.Equal(t, "authorization_pending", errResp.Code,
+				"a rejected device authorization must not issue a token")
+		},
+	)
+
+	t.Run(
 		"private client rejects non-member at authorize",
 		func(t *testing.T) {
 			t.Parallel()
@@ -2741,44 +2777,55 @@ func TestOAuth2_RegisterClient_EdgeCases(t *testing.T) {
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
 	t.Run(
-		"public client with http redirect URI rejected",
+		"public visibility is rejected",
 		func(t *testing.T) {
 			t.Parallel()
 
-			_, raw, err := testutil.OAuth2RegisterClient(owner, map[string]any{
-				"organization_id":            owner.GetOrganizationID().String(),
-				"client_name":                factory.SafeName("Public HTTP"),
-				"visibility":                 "public",
-				"redirect_uris":              []string{"http://example.com/callback"},
-				"grant_types":                []string{"authorization_code"},
-				"response_types":             []string{"code"},
-				"token_endpoint_auth_method": "none",
-				"scopes":                     "openid",
-			})
-			require.NoError(t, err)
-			assert.Equal(t, http.StatusBadRequest, raw.StatusCode,
-				"public clients must require https redirect URIs")
+			for _, redirectURI := range []string{
+				"http://example.com/callback",
+				"https://example.com/callback",
+				"https://redirect.invalid/callback",
+			} {
+				_, raw, err := testutil.OAuth2RegisterClient(owner, map[string]any{
+					"organization_id":            owner.GetOrganizationID().String(),
+					"client_name":                factory.SafeName("Public Client"),
+					"visibility":                 "public",
+					"redirect_uris":              []string{redirectURI},
+					"grant_types":                []string{"authorization_code"},
+					"response_types":             []string{"code"},
+					"token_endpoint_auth_method": "none",
+					"scopes":                     "openid",
+				})
+				require.NoError(t, err)
+				assert.Equal(t, http.StatusBadRequest, raw.StatusCode,
+					"public visibility must be rejected for %s, body: %s", redirectURI, string(raw.Body))
+
+				var errResp testutil.OAuth2ErrorResponse
+				require.NoError(t, json.Unmarshal(raw.Body, &errResp))
+				assert.Equal(t, "invalid_request", errResp.Code)
+				assert.Contains(t, errResp.Description, "must be private")
+			}
 		},
 	)
 
 	t.Run(
-		"public client with https redirect URI accepted",
+		"omitted visibility defaults to private",
 		func(t *testing.T) {
 			t.Parallel()
 
 			resp, raw, err := testutil.OAuth2RegisterClient(owner, map[string]any{
 				"organization_id":            owner.GetOrganizationID().String(),
-				"client_name":                factory.SafeName("Public HTTPS"),
-				"visibility":                 "public",
+				"client_name":                factory.SafeName("Default Visibility"),
 				"redirect_uris":              []string{"https://example.com/callback"},
 				"grant_types":                []string{"authorization_code"},
 				"response_types":             []string{"code"},
-				"token_endpoint_auth_method": "none",
+				"token_endpoint_auth_method": "client_secret_basic",
 				"scopes":                     "openid",
 			})
 			require.NoError(t, err)
 			require.Equal(t, http.StatusCreated, raw.StatusCode, "body: %s", string(raw.Body))
-			assert.NotEmpty(t, resp.ClientID)
+			assert.Equal(t, "private", resp.Visibility)
+			assert.NotEmpty(t, resp.ClientSecret)
 		},
 	)
 }

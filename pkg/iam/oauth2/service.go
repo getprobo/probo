@@ -1013,6 +1013,10 @@ func (s *Service) AuthorizeDevice(
 				return fmt.Errorf("cannot load oauth2 client: %w", err)
 			}
 
+			if err := s.requirePrivateClientMembership(ctx, tx, &client, identityID); err != nil {
+				return err
+			}
+
 			// RFC 6819 §5.2.3.2 / §5.2.4.1: public clients must always
 			// require explicit user consent since they cannot be strongly
 			// authenticated.
@@ -1070,37 +1074,35 @@ func (s *Service) RegisterClient(
 	ctx context.Context,
 	req *RegisterClientRequest,
 ) (gid.GID, string, error) {
+	// Public skips the organization check, so dynamic registration cannot set it.
+	if req.Visibility != coredata.OAuth2ClientVisibilityPrivate {
+		return gid.Nil,
+			"",
+			NewError(
+				ErrInvalidRequest,
+				WithDescription("dynamically registered clients must be private"),
+			)
+	}
+
 	for _, u := range req.RedirectURIs {
 		parsed, _ := url.Parse(u.String())
 
-		switch req.Visibility {
-		case coredata.OAuth2ClientVisibilityPublic:
-			if parsed.Scheme != "https" {
+		if parsed.Scheme == "http" {
+			if !netx.IsLoopback(parsed.Hostname()) {
 				return gid.Nil,
 					"",
 					NewError(
 						ErrInvalidRequest,
-						WithDescription("public clients require https redirect_uris"),
+						WithDescription("http redirect_uris are only allowed for localhost"),
 					)
 			}
-		case coredata.OAuth2ClientVisibilityPrivate:
-			if parsed.Scheme == "http" {
-				if !netx.IsLoopback(parsed.Hostname()) {
-					return gid.Nil,
-						"",
-						NewError(
-							ErrInvalidRequest,
-							WithDescription("http redirect_uris are only allowed for localhost"),
-						)
-				}
-			} else if parsed.Scheme != "https" {
-				return gid.Nil,
-					"",
-					NewError(
-						ErrInvalidRequest,
-						WithDescription(fmt.Sprintf("unsupported redirect_uri scheme: %s", parsed.Scheme)),
-					)
-			}
+		} else if parsed.Scheme != "https" {
+			return gid.Nil,
+				"",
+				NewError(
+					ErrInvalidRequest,
+					WithDescription(fmt.Sprintf("unsupported redirect_uri scheme: %s", parsed.Scheme)),
+				)
 		}
 	}
 
@@ -1469,6 +1471,40 @@ func (s *Service) RevokeToken(
 	)
 }
 
+// requirePrivateClientMembership limits a private client to active members of
+// its organization. Public clients, such as the CLI and CIMD clients, have no
+// organization and stay reachable by any signed-in user.
+func (s *Service) requirePrivateClientMembership(
+	ctx context.Context,
+	conn pg.Querier,
+	client *coredata.OAuth2Client,
+	identityID gid.GID,
+) error {
+	if client.Visibility != coredata.OAuth2ClientVisibilityPrivate {
+		return nil
+	}
+
+	if client.OrganizationID == nil {
+		return fmt.Errorf("cannot authorize: private client has no organization")
+	}
+
+	var membership coredata.Membership
+	if err := membership.LoadActiveByIdentityIDAndOrganizationID(
+		ctx,
+		conn,
+		identityID,
+		*client.OrganizationID,
+	); err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return ErrUnauthorizedMember
+		}
+
+		return fmt.Errorf("cannot check membership: %w", err)
+	}
+
+	return nil
+}
+
 func (s *Service) Authorize(
 	ctx context.Context,
 	req *AuthorizeRequest,
@@ -1497,24 +1533,8 @@ func (s *Service) Authorize(
 				return err
 			}
 
-			if client.Visibility == coredata.OAuth2ClientVisibilityPrivate {
-				if client.OrganizationID == nil {
-					return fmt.Errorf("cannot authorize: private client has no organization")
-				}
-
-				var membership coredata.Membership
-				if err := membership.LoadActiveByIdentityIDAndOrganizationID(
-					ctx,
-					tx,
-					req.IdentityID,
-					*client.OrganizationID,
-				); err != nil {
-					if errors.Is(err, coredata.ErrResourceNotFound) {
-						return ErrUnauthorizedMember
-					}
-
-					return fmt.Errorf("cannot check membership: %w", err)
-				}
+			if err := s.requirePrivateClientMembership(ctx, tx, client, req.IdentityID); err != nil {
+				return err
 			}
 
 			if req.ResponseType != coredata.OAuth2ResponseTypeCode {
@@ -1725,6 +1745,10 @@ func (s *Service) ApproveConsent(
 			var client coredata.OAuth2Client
 			if err := client.LoadByID(ctx, tx, coredata.NewNoScope(), consent.ClientID); err != nil {
 				return fmt.Errorf("cannot load client: %w", err)
+			}
+
+			if err := s.requirePrivateClientMembership(ctx, tx, &client, req.IdentityID); err != nil {
+				return err
 			}
 
 			isDeviceFlow := consent.DeviceCodeID != nil

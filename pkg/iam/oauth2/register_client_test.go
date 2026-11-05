@@ -40,7 +40,7 @@ func TestRegisterClient_RejectsNonWebURIs(t *testing.T) {
 				context.Background(),
 				&RegisterClientRequest{
 					ClientName:   "Acme",
-					Visibility:   coredata.OAuth2ClientVisibilityPublic,
+					Visibility:   coredata.OAuth2ClientVisibilityPrivate,
 					RedirectURIs: []uri.URI{"https://example.com/callback"},
 					ClientURI:    &clientURI,
 				},
@@ -60,7 +60,7 @@ func TestRegisterClient_RejectsNonWebURIs(t *testing.T) {
 				context.Background(),
 				&RegisterClientRequest{
 					ClientName:   "Acme",
-					Visibility:   coredata.OAuth2ClientVisibilityPublic,
+					Visibility:   coredata.OAuth2ClientVisibilityPrivate,
 					RedirectURIs: []uri.URI{"https://example.com/callback"},
 					LogoURI:      &logoURI,
 				},
@@ -68,4 +68,21 @@ func TestRegisterClient_RejectsNonWebURIs(t *testing.T) {
 			require.Error(t, err)
 		},
 	)
+}
+
+func TestRegisterClient_RejectsPublicVisibility(t *testing.T) {
+	t.Parallel()
+
+	svc := NewService(nil, nil, "", log.NewLogger())
+
+	_, _, err := svc.RegisterClient(
+		context.Background(),
+		&RegisterClientRequest{
+			ClientName:   "Acme",
+			Visibility:   coredata.OAuth2ClientVisibilityPublic,
+			RedirectURIs: []uri.URI{"https://redirect.invalid/callback"},
+		},
+	)
+	require.ErrorIs(t, err, ErrInvalidRequest)
+	require.ErrorContains(t, err, "dynamically registered clients must be private")
 }
