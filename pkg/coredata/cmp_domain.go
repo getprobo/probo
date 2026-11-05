@@ -475,7 +475,9 @@ RETURNING source_promotion_attempts, source_promotion_attempted_at
 }
 
 // RequeueSourcePromotionRequested puts a failed attempt back on the queue
-// without resetting the budget.
+// without resetting the budget. The update matches the claim that failed,
+// so an older task cannot queue the domain after a newer claim has taken
+// it. A superseded claim is a no-op.
 func (d *CMPDomain) RequeueSourcePromotionRequested(
 	ctx context.Context,
 	tx pg.Tx,
@@ -485,24 +487,29 @@ UPDATE cmp_domains
 SET
 	source_promotion_requested_at = COALESCE(source_promotion_requested_at, NOW()),
 	updated_at = NOW()
-WHERE id = @id
+WHERE
+	id = @id
+	AND source_promotion_attempts = @source_promotion_attempts
+	AND source_promotion_attempted_at IS NOT DISTINCT FROM @source_promotion_attempted_at
 `
 
-	args := pgx.StrictNamedArgs{"id": d.ID}
-
-	result, err := tx.Exec(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot requeue cmp domain source promotion: %w", err)
+	args := pgx.StrictNamedArgs{
+		"id":                            d.ID,
+		"source_promotion_attempts":     d.SourcePromotionAttempts,
+		"source_promotion_attempted_at": d.SourcePromotionAttemptedAt,
 	}
 
-	if result.RowsAffected() == 0 {
-		return ErrResourceNotFound
+	_, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot requeue cmp domain source promotion: %w", err)
 	}
 
 	return nil
 }
 
 // ResetSourcePromotionAttempts clears the budget after a promotion finishes.
+// It matches the claim that finished, so a late success cannot wipe the
+// budget of a newer claim. A superseded claim is a no-op.
 func (d *CMPDomain) ResetSourcePromotionAttempts(
 	ctx context.Context,
 	tx pg.Tx,
@@ -513,10 +520,17 @@ SET
 	source_promotion_attempts = 0,
 	source_promotion_attempted_at = NULL,
 	updated_at = NOW()
-WHERE id = @id
+WHERE
+	id = @id
+	AND source_promotion_attempts = @source_promotion_attempts
+	AND source_promotion_attempted_at IS NOT DISTINCT FROM @source_promotion_attempted_at
 `
 
-	args := pgx.StrictNamedArgs{"id": d.ID}
+	args := pgx.StrictNamedArgs{
+		"id":                            d.ID,
+		"source_promotion_attempts":     d.SourcePromotionAttempts,
+		"source_promotion_attempted_at": d.SourcePromotionAttemptedAt,
+	}
 
 	result, err := tx.Exec(ctx, q, args)
 	if err != nil {
@@ -524,7 +538,7 @@ WHERE id = @id
 	}
 
 	if result.RowsAffected() == 0 {
-		return ErrResourceNotFound
+		return nil
 	}
 
 	d.SourcePromotionAttempts = 0
