@@ -64,6 +64,11 @@ export function bridgeStatus(state: string): BridgeStatus {
   return "connected";
 }
 
+// FAILED retries later. DISABLED stays on hold. Settings can resume either.
+export function bridgeCanResume(state: string): boolean {
+  return state === "FAILED" || state === "DISABLED";
+}
+
 export function isExcludedUserEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }

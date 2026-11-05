@@ -32,6 +32,7 @@ import type { SCIMProviderCard_scimConfiguration$key } from "#/__generated__/iam
 import { TonedCard } from "#/components/TonedCard/TonedCard";
 
 import {
+  bridgeCanResume,
   bridgeStatus,
   bridgeStatusBadgeColor,
   bridgeStatusTone,
@@ -80,7 +81,7 @@ export function SCIMProviderCard({ scimConfigurationKey }: SCIMProviderCardProps
   const copy = scimProviderCopy(bridge.type);
   const status = bridgeStatus(bridge.state);
   const tone = bridgeStatusTone[status];
-  const hasError = status === "error" || status === "disabled";
+  const canResume = bridgeCanResume(bridge.state);
   const connectedAt = bridge.connector?.createdAt ?? bridge.createdAt;
 
   return (
@@ -106,7 +107,7 @@ export function SCIMProviderCard({ scimConfigurationKey }: SCIMProviderCardProps
             date: dateTimeFormat(i18n.language, connectedAt),
           })}
         </Text>
-        {hasError && (
+        {canResume && (
           <>
             <Callout color={status === "disabled" ? "neutral" : "red"}>
               <div className={errorCopy()}>

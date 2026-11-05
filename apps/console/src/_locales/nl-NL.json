@@ -2567,7 +2567,7 @@
     "name": "Google Workspace / Cloud Identity",
     "connectedOn": "Verbonden op {{date}}",
     "status": {
-      "disabled": "Uitgeschakeld",
+      "disabled": "In de wacht",
       "error": "Fout",
       "syncing": "Synchroniseren",
       "connected": "Verbonden"
@@ -2578,7 +2578,7 @@
     },
     "errors": {
       "bridgeSync": "De bridge kan momenteel niet synchroniseren. Bekijk de gebeurtenisgeschiedenis voor meer details.",
-      "bridgeDisabled": "Bridge is uitgeschakeld",
+      "bridgeDisabled": "Synchronisatie staat in de wacht",
       "bridgeFailed": "Bridge bevindt zich in een foutstatus",
       "update": "Bijwerken van uitgesloten gebruikers mislukt",
       "disconnect": "Verbinding met Google Workspace / Cloud Identity verbreken mislukt"
@@ -2608,7 +2608,7 @@
     "name": "Microsoft 365",
     "connectedOn": "Verbonden op {{date}}",
     "status": {
-      "disabled": "Uitgeschakeld",
+      "disabled": "In de wacht",
       "error": "Fout",
       "syncing": "Synchroniseren",
       "connected": "Verbonden"
@@ -2619,7 +2619,7 @@
     },
     "errors": {
       "bridgeSync": "De bridge kan momenteel niet synchroniseren. Bekijk de gebeurtenisgeschiedenis voor meer details.",
-      "bridgeDisabled": "Bridge is uitgeschakeld",
+      "bridgeDisabled": "Synchronisatie staat in de wacht",
       "bridgeFailed": "Bridge bevindt zich in een foutstatus",
       "update": "Bijwerken van uitgesloten gebruikers mislukt",
       "disconnect": "Verbinding met Microsoft 365 verbreken mislukt"
@@ -6124,10 +6124,11 @@
     "notes": "Opmerkingen"
   },
   "reactivateSCIMBridge": {
-    "actions": { "reactivate": "Opnieuw activeren" },
-    "dialog": { "title": "SCIM-brug opnieuw activeren", "description": "De volgende synchronisatie wordt nu ingepland. Opeenvolgende fouten worden gewist, en een mislukte, uitgeschakelde of vastgelopen brug wordt weer actief." },
-    "messages": { "success": "De SCIM-brug is opnieuw geactiveerd. De volgende run is nu ingepland." },
-    "errors": { "reactivate": "SCIM-brug opnieuw activeren mislukt" }
+    "actions": { "resume": "Synchronisatie hervatten" },
+    "hold": { "description": "Herhaalde synchronisatiefouten hebben deze bridge in de wacht gezet. Hervat de synchronisatie om het nu opnieuw te proberen." },
+    "failed": { "description": "De bridge probeert het vanzelf opnieuw. Hervat de synchronisatie om die nu uit te voeren." },
+    "messages": { "success": "Synchronisatie hervat. De volgende run is nu ingepland." },
+    "errors": { "reactivate": "SCIM-synchronisatie hervatten mislukt" }
   },
   "country": {
     "GLOBAL": "Wereldwijd",

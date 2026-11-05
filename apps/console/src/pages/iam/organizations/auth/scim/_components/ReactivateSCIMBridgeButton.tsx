@@ -29,6 +29,7 @@ import type { ReactivateSCIMBridgeButtonFragment$key } from "#/__generated__/iam
 import type { ReactivateSCIMBridgeButtonMutation } from "#/__generated__/iam/ReactivateSCIMBridgeButtonMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
 
+import { bridgeCanResume } from "../_lib/scimProvider";
 import { scimProviderCard } from "../variants";
 
 const reactivateSCIMBridgeButtonFragment = graphql`
@@ -70,11 +71,13 @@ export function ReactivateSCIMBridgeButton({
       },
     );
 
-  if (!bridge.canUpdate || bridge.state === "ACTIVE") {
+  if (!bridge.canUpdate || !bridgeCanResume(bridge.state)) {
     return null;
   }
 
-  function handleReactivate() {
+  const held = bridge.state === "DISABLED";
+
+  function handleResume() {
     void reactivateSCIMBridge({
       variables: {
         input: {
@@ -88,20 +91,19 @@ export function ReactivateSCIMBridgeButton({
 
   return (
     <div className={reactivate()}>
-      <Text size={2} weight="medium" highContrast>
-        {t("reactivateSCIMBridge.dialog.title")}
-      </Text>
       <Text size={2} color="faint">
-        {t("reactivateSCIMBridge.dialog.description")}
+        {held
+          ? t("reactivateSCIMBridge.hold.description")
+          : t("reactivateSCIMBridge.failed.description")}
       </Text>
       <Button
-        variant="soft"
+        variant="solid"
         color="neutral"
         loading={isReactivating}
         iconStart={<ArrowsClockwiseIcon />}
-        onClick={handleReactivate}
+        onClick={handleResume}
       >
-        {t("reactivateSCIMBridge.actions.reactivate")}
+        {t("reactivateSCIMBridge.actions.resume")}
       </Button>
     </div>
   );

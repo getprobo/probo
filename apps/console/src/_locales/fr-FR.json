@@ -2568,7 +2568,7 @@
     "name": "Google Workspace / Cloud Identity",
     "connectedOn": "Connecté le {{date}}",
     "status": {
-      "disabled": "Désactivé",
+      "disabled": "En pause",
       "error": "Erreur",
       "syncing": "Synchronisation en cours",
       "connected": "Connecté"
@@ -2579,7 +2579,7 @@
     },
     "errors": {
       "bridgeSync": "Le pont ne parvient pas à se synchroniser actuellement. Consultez l’historique des événements pour plus de détails.",
-      "bridgeDisabled": "Le pont est désactivé",
+      "bridgeDisabled": "La synchronisation est en pause",
       "bridgeFailed": "Le pont est en état d’erreur",
       "update": "Échec de la mise à jour des utilisateurs exclus",
       "disconnect": "Échec de la déconnexion de Google Workspace / Cloud Identity"
@@ -2609,7 +2609,7 @@
     "name": "Microsoft 365",
     "connectedOn": "Connecté le {{date}}",
     "status": {
-      "disabled": "Désactivé",
+      "disabled": "En pause",
       "error": "Erreur",
       "syncing": "Synchronisation en cours",
       "connected": "Connecté"
@@ -2620,7 +2620,7 @@
     },
     "errors": {
       "bridgeSync": "Le pont ne parvient actuellement pas à se synchroniser. Consultez l’historique des événements pour plus de détails.",
-      "bridgeDisabled": "Le pont est désactivé",
+      "bridgeDisabled": "La synchronisation est en pause",
       "bridgeFailed": "Le pont est en état d’erreur",
       "update": "Échec de la mise à jour des utilisateurs exclus",
       "disconnect": "Échec de la déconnexion de Microsoft 365"
@@ -6136,10 +6136,11 @@
     "notes": "Notes"
   },
   "reactivateSCIMBridge": {
-    "actions": { "reactivate": "Réactiver" },
-    "dialog": { "title": "Réactiver le pont SCIM", "description": "La prochaine synchronisation est planifiée pour maintenant. Les erreurs consécutives sont remises à zéro, et un pont en échec, désactivé ou bloqué redevient actif." },
-    "messages": { "success": "Le pont SCIM a été réactivé. La prochaine exécution est planifiée pour maintenant." },
-    "errors": { "reactivate": "Échec de la réactivation du pont SCIM" }
+    "actions": { "resume": "Reprendre la synchronisation" },
+    "hold": { "description": "Des échecs répétés ont mis ce pont en pause. Reprenez la synchronisation pour réessayer maintenant." },
+    "failed": { "description": "Le pont réessaiera de lui-même. Reprenez la synchronisation pour l’exécuter maintenant." },
+    "messages": { "success": "Synchronisation reprise. La prochaine exécution est planifiée pour maintenant." },
+    "errors": { "reactivate": "Échec de la reprise de la synchronisation SCIM" }
   },
   "country": {
     "GLOBAL": "Mondial",
