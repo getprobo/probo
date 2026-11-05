@@ -30,8 +30,8 @@ import (
 )
 
 // origin is a scheme, host and port. The host has no leading "www." and
-// default ports are dropped, matching CanonicalizeOrigin plus port folding.
-// Userinfo is rejected.
+// no trailing DNS dot, and default ports are dropped, matching
+// CanonicalizeOrigin plus port folding. Userinfo is rejected.
 type origin struct {
 	scheme string
 	host   string
@@ -49,6 +49,7 @@ func parseOrigin(raw string) (origin, bool) {
 	}
 
 	host := strings.TrimPrefix(strings.ToLower(u.Hostname()), "www.")
+	host = strings.TrimSuffix(host, ".")
 	if host == "" {
 		return origin{}, false
 	}

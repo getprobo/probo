@@ -123,6 +123,7 @@ SELECT
 			FROM cookie_banners
 			WHERE cookie_banners.cmp_domain_id = cmp_domain_surfaces.cmp_domain_id
 				AND lower(cookie_banners.origin) = lower(cmp_domain_surfaces.origin)
+				AND cookie_banners.state = @active_banner_state
 		) THEN @covered_state::text
 		ELSE cmp_domain_surfaces.status
 	END AS state,
@@ -141,8 +142,9 @@ LIMIT 1
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"surface_id":    surfaceID,
-		"covered_state": CMPDomainSurfaceStateCovered,
+		"surface_id":          surfaceID,
+		"covered_state":       CMPDomainSurfaceStateCovered,
+		"active_banner_state": CookieBannerStateActive,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -190,6 +192,7 @@ SELECT
 			FROM cookie_banners
 			WHERE cookie_banners.cmp_domain_id = cmp_domain_surfaces.cmp_domain_id
 				AND lower(cookie_banners.origin) = lower(cmp_domain_surfaces.origin)
+				AND cookie_banners.state = @active_banner_state
 		) THEN @covered_state::text
 		ELSE cmp_domain_surfaces.status
 	END AS state,
@@ -332,6 +335,7 @@ INSERT INTO cmp_domain_surfaces (
 // UpsertSeen inserts the surface or, when the origin was already
 // discovered, refreshes when it was last seen and which scan saw it.
 // The stored status and the banner that discovered it first stay.
+// The caller sets ID; this method does not allocate one.
 func (s *CMPDomainSurface) UpsertSeen(
 	ctx context.Context,
 	tx pg.Tx,
@@ -339,7 +343,7 @@ func (s *CMPDomainSurface) UpsertSeen(
 	now time.Time,
 ) error {
 	if s.ID == gid.Nil {
-		s.ID = gid.New(scope.GetTenantID(), CMPDomainSurfaceEntityType)
+		return fmt.Errorf("cmp domain surface id is required")
 	}
 
 	if s.Status == "" {

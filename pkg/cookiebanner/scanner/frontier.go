@@ -74,6 +74,7 @@ func newFrontier(start Checkpoint, maxQueue int) frontier {
 		siblings: map[string]struct{}{},
 		maxQueue: maxQueue,
 	}
+
 	for _, origin := range start.SiblingOrigins {
 		if origin == "" {
 			continue

@@ -372,6 +372,8 @@ func seedSiblingBanners(
 			return err
 		}
 
+		domain.ID = gid.New(tenantID, coredata.CMPDomainEntityType)
+
 		return domain.UpsertByOrganizationAndDomain(ctx, tx, tenantID, orgID, domainName, now)
 	}))
 
@@ -583,6 +585,51 @@ func setCorsless(
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		return banner.Update(ctx, tx, scope)
+	}))
+}
+
+func TestCMPDomainWorker_DoesNotRequeueAtTheCap(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	client := test.PGClient(t)
+	fx := seedSiblingBanners(t, ctx, client, "cap.example")
+	handler := &cmpDomainHandler{
+		svc:    NewService(client, false, 0),
+		pg:     client,
+		logger: log.NewLogger(log.WithOutput(io.Discard)),
+	}
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		if err := fx.domain.SetSourcePromotionRequested(ctx, tx); err != nil {
+			return err
+		}
+
+		for range cmpDomainSourcePromotionMaxAttempts {
+			if err := fx.domain.ClearSourcePromotionRequested(ctx, tx); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}))
+
+	assert.Equal(t, cmpDomainSourcePromotionMaxAttempts, fx.domain.SourcePromotionAttempts)
+
+	canceled, cancel := context.WithCancel(ctx)
+	cancel()
+	require.Error(t, handler.Process(canceled, cmpDomainTask{domain: &fx.domain}))
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		loaded := coredata.CMPDomain{}
+		if err := loaded.LoadByID(ctx, conn, fx.scope, fx.domain.ID); err != nil {
+			return err
+		}
+
+		assert.Nil(t, loaded.SourcePromotionRequestedAt)
+		assert.Equal(t, cmpDomainSourcePromotionMaxAttempts, loaded.SourcePromotionAttempts)
+
+		return nil
 	}))
 }
 
