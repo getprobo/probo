@@ -30,15 +30,16 @@ import (
 	"testing"
 	"unicode"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 var (
 	operationLead = regexp.MustCompile(`^(?:query|mutation|subscription)\b`)
-	// Source templates may contain %s or ${...} and still need a name in
-	// the document text. Runtime code uses the GraphQL parser instead.
+	// Source templates may contain %s or ${...}, so this is not a parser.
+	// Without multiline mode, only the leading operation can satisfy it.
 	namedOperationLead = regexp.MustCompile(
-		`(?m)^[ \t]*(?:query|mutation|subscription)\s+[_A-Za-z][_0-9A-Za-z]*\b`,
+		`^\s*(?:query|mutation|subscription)\s+[_A-Za-z][_0-9A-Za-z]*\b`,
 	)
 )
 
@@ -102,6 +103,43 @@ func TestShippedGraphQLOperationsAreNamed(t *testing.T) {
 
 	if len(failures) > 0 {
 		t.Fatalf("GraphQL operations without a name:\n%s", strings.Join(failures, "\n"))
+	}
+}
+
+func TestNamedOperationLead_MatchesOnlyTheLeadingOperation(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		query string
+		want  bool
+	}{
+		{
+			name:  "named query after leading whitespace",
+			query: "\nquery AssetList($id: ID!) {\n  node(id: $id) { id }\n}\n",
+			want:  true,
+		},
+		{
+			name:  "anonymous query with a later query line",
+			query: "query {\n  query viewer {\n    id\n  }\n}\n",
+			want:  false,
+		},
+		{
+			name:  "anonymous first operation before a named one",
+			query: "query {\n  node { id }\n}\nquery AssetView {\n  node { id }\n}\n",
+			want:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				assert.Equal(t, tt.want, namedOperationLead.MatchString(tt.query))
+			},
+		)
 	}
 }
 
