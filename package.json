@@ -34,6 +34,7 @@
     "glob": "14.0.3",
     "handlebars": "4.7.10",
     "html-to-text": "10.0.1",
+    "minimatch@>=10 <11": "6.2.3",
     "postcss-selector-parser": "^7.1.6",
     "qs": "^6.16.0",
     "stream-json": "^3.6.0",
