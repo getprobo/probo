@@ -22,6 +22,8 @@ package statichandler_test
 
 import (
 	"bytes"
+	"compress/gzip"
+	"io"
 	"io/fs"
 	"net/http"
 	"net/http/httptest"
@@ -182,6 +184,7 @@ func TestServeHTTP_MapFileIsImmutable(t *testing.T) {
 		"public, max-age=31536000, immutable",
 		gzipped.Header().Get("Cache-Control"),
 	)
+	assert.Equal(t, []byte(`{"version":3}`), gunzipBody(t, gzipped.Body))
 }
 
 func TestServeHTTP_RefusesGzipQualityZero(t *testing.T) {
@@ -214,8 +217,11 @@ func TestServeHTTP_RefusesGzipQualityZero(t *testing.T) {
 				server.ServeHTTP(response, request)
 
 				require.Equal(t, http.StatusOK, response.Code)
+
 				if test.gzip {
 					assert.Equal(t, "gzip", response.Header().Get("Content-Encoding"))
+					assert.Equal(t, []byte(`{"version":3}`), gunzipBody(t, response.Body))
+
 					return
 				}
 
@@ -243,6 +249,18 @@ func newMapServer(t *testing.T) *statichandler.Server {
 	require.NoError(t, err)
 
 	return server
+}
+
+func gunzipBody(t *testing.T, body io.Reader) []byte {
+	t.Helper()
+
+	reader, err := gzip.NewReader(body)
+	require.NoError(t, err)
+
+	decoded, err := io.ReadAll(reader)
+	require.NoError(t, err)
+
+	return decoded
 }
 
 func indexFiles(indexHTML string) fs.FS {

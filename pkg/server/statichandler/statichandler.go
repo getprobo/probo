@@ -373,11 +373,13 @@ func acceptsGzip(header string) bool {
 	for part := range strings.SplitSeq(header, ",") {
 		coding, params, _ := strings.Cut(part, ";")
 		coding = strings.TrimSpace(coding)
+
 		if !strings.EqualFold(coding, "gzip") && !strings.EqualFold(coding, "x-gzip") {
 			continue
 		}
 
 		quality := 1.0
+
 		for param := range strings.SplitSeq(params, ";") {
 			key, value, ok := strings.Cut(param, "=")
 			if !ok || !strings.EqualFold(strings.TrimSpace(key), "q") {
