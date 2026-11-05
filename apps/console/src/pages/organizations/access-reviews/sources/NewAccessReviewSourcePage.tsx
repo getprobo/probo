@@ -66,6 +66,7 @@ export const newAccessReviewSourcePageQuery = graphql`
         connectors {
           id
           provider
+          usedByScimBridge
           ...AddableConnectorListItem_connector
         }
       }
@@ -116,10 +117,12 @@ export function NewAccessReviewSourcePage({ queryRef }: NewAccessReviewSourcePag
       return [];
     }
     return groupByProvider(
-      organization.connectors.map(connector => ({
-        provider: connector.provider,
-        connector,
-      })),
+      organization.connectors
+        .filter(connector => !connector.usedByScimBridge)
+        .map(connector => ({
+          provider: connector.provider,
+          connector,
+        })),
     ).map(group => group.map(entry => entry.connector));
   }, [organization]);
   if (organization.__typename !== "Organization") {

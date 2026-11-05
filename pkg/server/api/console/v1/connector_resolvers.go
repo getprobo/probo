@@ -197,6 +197,23 @@ func (r *connectorResolver) DistinctAccountCount(ctx context.Context, obj *types
 	return count, nil
 }
 
+// UsedByScimBridge is the resolver for the usedByScimBridge field.
+func (r *connectorResolver) UsedByScimBridge(ctx context.Context, obj *types.Connector) (bool, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionConnectorGet)
+	if err != nil {
+		return false, err
+	}
+
+	used, err := r.probo.Connectors.UsedBySCIMBridge(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot check SCIM bridge for connector", log.Error(err))
+
+		return false, gqlx.Internal(ctx)
+	}
+
+	return used, nil
+}
+
 // DiscoveredAccounts is the resolver for the discoveredAccounts field.
 func (r *connectorResolver) DiscoveredAccounts(ctx context.Context, obj *types.Connector) ([]*types.DiscoveredConnectorAccount, error) {
 	discovery, err := r.AccountDiscovery(ctx, obj)
