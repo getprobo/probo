@@ -272,45 +272,6 @@ func (s *Server) ServeSPA(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.serveStaticFile(w, r)
-}
-
-// ServeExisting writes one file from the embedded tree. A missing file or a
-// directory is a 404. It does not fall back to index.html, which Faro would
-// accept as a source map.
-func (s *Server) ServeExisting(w http.ResponseWriter, r *http.Request) {
-	f, err := s.spaFS.Open(r.URL.Path)
-	if err != nil {
-		http.NotFound(w, r)
-		return
-	}
-
-	info, statErr := f.Stat()
-	_ = f.Close()
-
-	if statErr != nil || info.IsDir() {
-		http.NotFound(w, r)
-		return
-	}
-
-	if s.shouldCompressWithGzip(r) {
-		w.Header().Set("Content-Encoding", "gzip")
-		w.Header().Set("Vary", "Accept-Encoding")
-		gz := gzip.NewWriter(w)
-
-		defer func() { _ = gz.Close() }()
-
-		s.serveStaticFile(gzipResponseWriter{Writer: gz, ResponseWriter: w}, r)
-
-		return
-	}
-
-	s.serveStaticFile(w, r)
-}
-
-func (s *Server) serveStaticFile(w http.ResponseWriter, r *http.Request) {
-	path := r.URL.Path
-
 	etag, ok := s.etags[path]
 	if !ok {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
