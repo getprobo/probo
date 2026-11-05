@@ -3592,6 +3592,7 @@ func (s *Service) persistDetectedTracker(
 	// Scanner rows are upserted even when the pattern did not change, so
 	// cookie_banner_scan_id and the cookie attributes refresh on the next scan.
 	wrote := false
+
 	if needsMetadata || info.ObservedBy == coredata.DetectedTrackerObserverScanner {
 		if _, err := tracker.Upsert(ctx, tx, scope); err != nil {
 			return nil, false, fmt.Errorf("cannot upsert detected tracker: %w", err)

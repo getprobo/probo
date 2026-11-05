@@ -44,6 +44,8 @@ type (
 		OrganizationID             gid.GID    `db:"organization_id"`
 		Domain                     string     `db:"domain"`
 		SourcePromotionRequestedAt *time.Time `db:"source_promotion_requested_at"`
+		SourcePromotionAttempts    int        `db:"source_promotion_attempts"`
+		SourcePromotionAttemptedAt *time.Time `db:"source_promotion_attempted_at"`
 		CreatedAt                  time.Time  `db:"created_at"`
 		UpdatedAt                  time.Time  `db:"updated_at"`
 	}
@@ -111,6 +113,8 @@ SELECT
 	organization_id,
 	domain,
 	source_promotion_requested_at,
+	source_promotion_attempts,
+	source_promotion_attempted_at,
 	created_at,
 	updated_at
 FROM cmp_domains
@@ -162,6 +166,8 @@ SELECT
 	organization_id,
 	domain,
 	source_promotion_requested_at,
+	source_promotion_attempts,
+	source_promotion_attempted_at,
 	created_at,
 	updated_at
 FROM cmp_domains
@@ -206,6 +212,8 @@ INSERT INTO cmp_domains (
 	organization_id,
 	domain,
 	source_promotion_requested_at,
+	source_promotion_attempts,
+	source_promotion_attempted_at,
 	created_at,
 	updated_at
 ) VALUES (
@@ -214,6 +222,8 @@ INSERT INTO cmp_domains (
 	@organization_id,
 	@domain,
 	@source_promotion_requested_at,
+	@source_promotion_attempts,
+	@source_promotion_attempted_at,
 	@created_at,
 	@updated_at
 )
@@ -225,6 +235,8 @@ INSERT INTO cmp_domains (
 		"organization_id":               d.OrganizationID,
 		"domain":                        d.Domain,
 		"source_promotion_requested_at": d.SourcePromotionRequestedAt,
+		"source_promotion_attempts":     d.SourcePromotionAttempts,
+		"source_promotion_attempted_at": d.SourcePromotionAttemptedAt,
 		"created_at":                    d.CreatedAt,
 		"updated_at":                    d.UpdatedAt,
 	}
@@ -245,7 +257,7 @@ INSERT INTO cmp_domains (
 
 // UpsertByOrganizationAndDomain inserts the domain or returns the row
 // that already occupies (organization, domain). An existing row is not
-// modified.
+// modified. The caller sets ID; this method does not allocate one.
 func (d *CMPDomain) UpsertByOrganizationAndDomain(
 	ctx context.Context,
 	tx pg.Tx,
@@ -254,7 +266,10 @@ func (d *CMPDomain) UpsertByOrganizationAndDomain(
 	domain string,
 	now time.Time,
 ) error {
-	d.ID = gid.New(tenantID, CMPDomainEntityType)
+	if d.ID == gid.Nil {
+		return fmt.Errorf("cmp domain id is required")
+	}
+
 	d.OrganizationID = organizationID
 	d.Domain = domain
 	d.CreatedAt = now
@@ -267,6 +282,8 @@ INSERT INTO cmp_domains (
 	organization_id,
 	domain,
 	source_promotion_requested_at,
+	source_promotion_attempts,
+	source_promotion_attempted_at,
 	created_at,
 	updated_at
 ) VALUES (
@@ -275,6 +292,8 @@ INSERT INTO cmp_domains (
 	@organization_id,
 	@domain,
 	@source_promotion_requested_at,
+	@source_promotion_attempts,
+	@source_promotion_attempted_at,
 	@created_at,
 	@updated_at
 )
@@ -285,6 +304,8 @@ RETURNING
 	organization_id,
 	domain,
 	source_promotion_requested_at,
+	source_promotion_attempts,
+	source_promotion_attempted_at,
 	created_at,
 	updated_at
 `
@@ -295,6 +316,8 @@ RETURNING
 		"organization_id":               organizationID,
 		"domain":                        domain,
 		"source_promotion_requested_at": nil,
+		"source_promotion_attempts":     0,
+		"source_promotion_attempted_at": nil,
 		"created_at":                    now,
 		"updated_at":                    now,
 	}
@@ -377,7 +400,9 @@ WHERE
 
 // SetSourcePromotionRequested asks the CMP domain worker to compare
 // cookie sources across the domain's banners. A request that is already
-// waiting keeps its original time, so a busy domain is not pushed back.
+// waiting keeps its original time and its attempt budget, so a busy
+// domain is not pushed back. A new request, including one after the
+// budget was exhausted, starts the budget over.
 func (d *CMPDomain) SetSourcePromotionRequested(
 	ctx context.Context,
 	tx pg.Tx,
@@ -385,6 +410,14 @@ func (d *CMPDomain) SetSourcePromotionRequested(
 	q := `
 UPDATE cmp_domains
 SET
+	source_promotion_attempts = CASE
+		WHEN source_promotion_requested_at IS NULL THEN 0
+		ELSE source_promotion_attempts
+	END,
+	source_promotion_attempted_at = CASE
+		WHEN source_promotion_requested_at IS NULL THEN NULL
+		ELSE source_promotion_attempted_at
+	END,
 	source_promotion_requested_at = COALESCE(source_promotion_requested_at, NOW()),
 	updated_at = NOW()
 WHERE id = @id
@@ -404,6 +437,9 @@ WHERE id = @id
 	return nil
 }
 
+// ClearSourcePromotionRequested removes the domain from the queue and
+// counts the attempt. The attempt is recorded before the work runs, so a
+// crash between claim and completion still spends budget.
 func (d *CMPDomain) ClearSourcePromotionRequested(
 	ctx context.Context,
 	tx pg.Tx,
@@ -412,18 +448,121 @@ func (d *CMPDomain) ClearSourcePromotionRequested(
 UPDATE cmp_domains
 SET
 	source_promotion_requested_at = NULL,
+	source_promotion_attempts = source_promotion_attempts + 1,
+	source_promotion_attempted_at = NOW(),
+	updated_at = NOW()
+WHERE id = @id
+RETURNING source_promotion_attempts, source_promotion_attempted_at
+`
+
+	args := pgx.StrictNamedArgs{"id": d.ID}
+
+	var (
+		attempts    int
+		attemptedAt *time.Time
+	)
+
+	err := tx.QueryRow(ctx, q, args).Scan(&attempts, &attemptedAt)
+	if err != nil {
+		return fmt.Errorf("cannot clear cmp domain source promotion: %w", err)
+	}
+
+	d.SourcePromotionRequestedAt = nil
+	d.SourcePromotionAttempts = attempts
+	d.SourcePromotionAttemptedAt = attemptedAt
+
+	return nil
+}
+
+// RequeueSourcePromotionRequested puts a failed attempt back on the queue
+// without resetting the budget.
+func (d *CMPDomain) RequeueSourcePromotionRequested(
+	ctx context.Context,
+	tx pg.Tx,
+) error {
+	q := `
+UPDATE cmp_domains
+SET
+	source_promotion_requested_at = COALESCE(source_promotion_requested_at, NOW()),
 	updated_at = NOW()
 WHERE id = @id
 `
 
 	args := pgx.StrictNamedArgs{"id": d.ID}
 
-	_, err := tx.Exec(ctx, q, args)
+	result, err := tx.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot clear cmp domain source promotion: %w", err)
+		return fmt.Errorf("cannot requeue cmp domain source promotion: %w", err)
 	}
 
-	d.SourcePromotionRequestedAt = nil
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
+	}
+
+	return nil
+}
+
+// ResetSourcePromotionAttempts clears the budget after a promotion finishes.
+func (d *CMPDomain) ResetSourcePromotionAttempts(
+	ctx context.Context,
+	tx pg.Tx,
+) error {
+	q := `
+UPDATE cmp_domains
+SET
+	source_promotion_attempts = 0,
+	source_promotion_attempted_at = NULL,
+	updated_at = NOW()
+WHERE id = @id
+`
+
+	args := pgx.StrictNamedArgs{"id": d.ID}
+
+	result, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot reset cmp domain source promotion attempts: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
+	}
+
+	d.SourcePromotionAttempts = 0
+	d.SourcePromotionAttemptedAt = nil
+
+	return nil
+}
+
+// ResetStaleSourcePromotions requeues a claim that was taken but never
+// finished and has been idle longer than staleAfter. A finished promotion
+// has a zero attempt count, and a claim at the cap stays clear.
+func ResetStaleSourcePromotions(
+	ctx context.Context,
+	conn pg.Querier,
+	staleAfter time.Duration,
+	maxAttempts int,
+) error {
+	q := `
+UPDATE cmp_domains
+SET
+	source_promotion_requested_at = NOW(),
+	updated_at = NOW()
+WHERE
+	source_promotion_requested_at IS NULL
+	AND source_promotion_attempts > 0
+	AND source_promotion_attempts < @max_attempts
+	AND source_promotion_attempted_at < @stale_before
+`
+
+	args := pgx.StrictNamedArgs{
+		"max_attempts": maxAttempts,
+		"stale_before": time.Now().Add(-staleAfter),
+	}
+
+	_, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot reset stale cmp domain source promotions: %w", err)
+	}
 
 	return nil
 }
@@ -438,6 +577,8 @@ SELECT
 	organization_id,
 	domain,
 	source_promotion_requested_at,
+	source_promotion_attempts,
+	source_promotion_attempted_at,
 	created_at,
 	updated_at
 FROM cmp_domains

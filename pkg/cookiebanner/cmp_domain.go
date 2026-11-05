@@ -65,6 +65,7 @@ func hostOfOrigin(origin string) string {
 // sent to host. A public suffix never covers a host.
 func cookieDomainCoversHost(cookieDomain, host string) bool {
 	cookieDomain = strings.ToLower(strings.TrimPrefix(strings.TrimSpace(cookieDomain), "."))
+
 	host = strings.ToLower(strings.TrimSpace(host))
 	if cookieDomain == "" || host == "" {
 		return false
@@ -93,6 +94,7 @@ func canonicalSurfaceOrigin(raw string) (string, bool) {
 	}
 
 	host := strings.TrimPrefix(strings.ToLower(parsed.Hostname()), "www.")
+	host = strings.TrimSuffix(host, ".")
 	if host == "" {
 		return "", false
 	}
@@ -133,7 +135,9 @@ func (s *Service) ensureCMPDomain(
 	origin string,
 	now time.Time,
 ) (*coredata.CMPDomain, error) {
-	var domain coredata.CMPDomain
+	domain := coredata.CMPDomain{
+		ID: gid.New(tenantID, coredata.CMPDomainEntityType),
+	}
 	if err := domain.UpsertByOrganizationAndDomain(
 		ctx,
 		tx,
@@ -197,6 +201,7 @@ func (s *Service) recordDiscoveredSurfaces(
 		seen[origin] = struct{}{}
 
 		surface := &coredata.CMPDomainSurface{
+			ID:                         gid.New(banner.ID.TenantID(), coredata.CMPDomainSurfaceEntityType),
 			OrganizationID:             banner.OrganizationID,
 			CMPDomainID:                *banner.CMPDomainID,
 			Origin:                     origin,
@@ -283,6 +288,7 @@ func (s *Service) promoteSiblingCookieSources(
 			},
 			func(ctx context.Context, cursor *page.Cursor[coredata.DetectedTrackerOrderField]) ([]*coredata.DetectedTracker, error) {
 				var batch coredata.DetectedTrackers
+
 				filter := coredata.NewDetectedTrackerFilter([]coredata.TrackerType{coredata.TrackerTypeCookie})
 				if err := batch.LoadByCookieBannerID(ctx, tx, scope, banner.ID, filter, cursor); err != nil {
 					return nil, fmt.Errorf("cannot load detected trackers: %w", err)
@@ -303,8 +309,10 @@ func (s *Service) promoteSiblingCookieSources(
 	}
 
 	best := map[gid.GID]siblingSourceCandidate{}
+
 	for _, banner := range loaded {
 		hostOnly := map[string]struct{}{}
+
 		for _, detection := range banner.detections {
 			if detection.HostOnly != nil && *detection.HostOnly {
 				hostOnly[detection.Identifier] = struct{}{}
@@ -346,6 +354,7 @@ func (s *Service) promoteSiblingCookieSources(
 	}
 
 	now := time.Now()
+
 	for patternID, candidate := range best {
 		var pattern coredata.TrackerPattern
 		if err := pattern.LoadByIDForUpdate(ctx, tx, scope, patternID); err != nil {
@@ -408,6 +417,7 @@ func siblingCandidate(
 	}
 
 	matched := false
+
 	for _, existing := range bannerDetections {
 		if existing.TrackerPatternID == nil || *existing.TrackerPatternID != pattern.ID || existing.Source == nil || *existing.Source != coredata.CookieSourcePreExisting {
 			continue

@@ -216,6 +216,7 @@ func (s *Service) ingestScanPage(
 
 	for i := range page.Cookies {
 		cookie := page.Cookies[i]
+
 		_, promote, err := s.persistDetectedTracker(
 			ctx,
 			tx,
@@ -253,6 +254,7 @@ func (s *Service) ingestScanPage(
 
 	for i := range page.Storage {
 		item := page.Storage[i]
+
 		_, promote, err := s.persistDetectedTracker(
 			ctx,
 			tx,

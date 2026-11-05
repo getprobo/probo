@@ -23,11 +23,18 @@ package cookiebanner
 import (
 	"context"
 	"errors"
+	"fmt"
+	"time"
 
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/kit/worker"
 	"go.probo.inc/probo/pkg/coredata"
+)
+
+const (
+	cmpDomainSourcePromotionMaxAttempts = 3
+	cmpDomainSourcePromotionStaleAfter  = 10 * time.Minute
 )
 
 type cmpDomainTask struct {
@@ -101,21 +108,52 @@ func (h *cmpDomainHandler) Process(ctx context.Context, task cmpDomainTask) erro
 	err := h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			return h.svc.promoteSiblingCookieSources(ctx, tx, task.domain)
+			if err := h.svc.promoteSiblingCookieSources(ctx, tx, task.domain); err != nil {
+				return err
+			}
+
+			return task.domain.ResetSourcePromotionAttempts(ctx, tx)
 		},
 	)
 	if err != nil {
-		if retryErr := h.pg.WithTx(
-			ctx,
-			func(ctx context.Context, tx pg.Tx) error {
-				return task.domain.SetSourcePromotionRequested(ctx, tx)
-			},
-		); retryErr != nil {
-			h.logger.ErrorCtx(ctx, "cannot requeue cmp domain source promotion", log.Error(retryErr))
+		if task.domain.SourcePromotionAttempts < cmpDomainSourcePromotionMaxAttempts {
+			if retryErr := h.pg.WithTx(
+				ctx,
+				func(ctx context.Context, tx pg.Tx) error {
+					return task.domain.RequeueSourcePromotionRequested(ctx, tx)
+				},
+			); retryErr != nil {
+				h.logger.ErrorCtx(ctx, "cannot requeue cmp domain source promotion", log.Error(retryErr))
+			}
+		} else {
+			h.logger.ErrorCtx(
+				ctx,
+				"cmp domain source promotion exhausted its attempts",
+				log.Error(err),
+				log.Int("attempts", task.domain.SourcePromotionAttempts),
+			)
 		}
 
 		return err
 	}
 
 	return nil
+}
+
+func (h *cmpDomainHandler) RecoverStale(ctx context.Context) error {
+	return h.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := coredata.ResetStaleSourcePromotions(
+				ctx,
+				conn,
+				cmpDomainSourcePromotionStaleAfter,
+				cmpDomainSourcePromotionMaxAttempts,
+			); err != nil {
+				return fmt.Errorf("cannot reset stale cmp domain source promotions: %w", err)
+			}
+
+			return nil
+		},
+	)
 }

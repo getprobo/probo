@@ -133,6 +133,7 @@ func ExtractDomain(rawURL string) string {
 func RegistrableDomain(host string) string {
 	host = strings.ToLower(strings.TrimSpace(host))
 	host = strings.TrimSuffix(host, ".")
+
 	host = strings.Trim(host, "[]")
 	if host == "" {
 		return ""
@@ -161,6 +162,7 @@ func RegistrableDomain(host string) string {
 func ICANNRegistrableDomain(host string) string {
 	host = strings.ToLower(strings.TrimSpace(host))
 	host = strings.TrimSuffix(host, ".")
+
 	host = strings.Trim(host, "[]")
 	if host == "" {
 		return ""
@@ -205,6 +207,7 @@ func icannPublicSuffix(host string) string {
 		}
 
 		suffix = suffix[dot+1:]
+
 		shorter, icannSuffix := publicsuffix.PublicSuffix(suffix)
 		if icannSuffix && shorter == suffix {
 			return suffix

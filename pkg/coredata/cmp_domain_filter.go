@@ -34,8 +34,8 @@ func (f *CMPDomainFilter) SQLFragment() string {
 	return `
 (
 	CASE
-		WHEN @filter_domain::text IS NOT NULL THEN
-			domain = @filter_domain::text
+		WHEN @filter_domain::citext IS NOT NULL THEN
+			domain = @filter_domain::citext
 		ELSE TRUE
 	END
 )`

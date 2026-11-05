@@ -44,6 +44,10 @@ func TestSiblingOrigin(t *testing.T) {
 	_, found = siblingOrigin(site, api, "https://www.example.com/pricing")
 	assert.False(t, found)
 
+	_, found = siblingOrigin(site, api, "https://example.com./pricing")
+	assert.False(t, found)
+	assert.True(t, site.contains("https://example.com./pricing"))
+
 	sibling, found = siblingOrigin(site, api, "https://WWW.SHOP.EXAMPLE.COM/cart")
 	assert.True(t, found)
 	assert.Equal(t, "https://shop.example.com", sibling)
@@ -59,6 +63,7 @@ func TestSiblingOrigin(t *testing.T) {
 
 	vercel, ok := parseOrigin("https://foo.vercel.app")
 	require.True(t, ok)
+
 	sibling, found = siblingOrigin(vercel, origin{}, "https://bar.vercel.app")
 	assert.True(t, found)
 	assert.Equal(t, "https://bar.vercel.app", sibling)

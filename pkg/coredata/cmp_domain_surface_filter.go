@@ -31,9 +31,9 @@ func NewCMPDomainSurfaceFilter(states []CMPDomainSurfaceState) *CMPDomainSurface
 }
 
 func (f *CMPDomainSurfaceFilter) SQLFragment() string {
-	// COVERED wins over the stored status while any banner in the domain
-	// uses the same origin. The comparison is case-insensitive because
-	// banner origins are not stored in a single case.
+	// COVERED wins over the stored status while an active banner in the
+	// domain uses the same origin. The comparison is case-insensitive
+	// because banner origins are not stored in a single case.
 	return `
 (
 	CASE
@@ -45,6 +45,7 @@ func (f *CMPDomainSurfaceFilter) SQLFragment() string {
 					FROM cookie_banners
 					WHERE cookie_banners.cmp_domain_id = cmp_domain_surfaces.cmp_domain_id
 						AND lower(cookie_banners.origin) = lower(cmp_domain_surfaces.origin)
+						AND cookie_banners.state = @active_banner_state
 				) THEN @covered_state::text
 				ELSE cmp_domain_surfaces.status
 			END
@@ -60,7 +61,8 @@ func (f *CMPDomainSurfaceFilter) SQLArguments() pgx.StrictNamedArgs {
 	}
 
 	return pgx.StrictNamedArgs{
-		"filter_states": filterStrings(states),
-		"covered_state": CMPDomainSurfaceStateCovered,
+		"filter_states":       filterStrings(states),
+		"covered_state":       CMPDomainSurfaceStateCovered,
+		"active_banner_state": CookieBannerStateActive,
 	}
 }

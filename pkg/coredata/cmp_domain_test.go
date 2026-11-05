@@ -63,6 +63,8 @@ func seedCMPDomainFixture(t *testing.T, ctx context.Context, client *pg.Client, 
 			return err
 		}
 
+		domain.ID = gid.New(tenantID, coredata.CMPDomainEntityType)
+
 		return domain.UpsertByOrganizationAndDomain(ctx, tx, tenantID, orgID, domainName, now)
 	}))
 
@@ -94,6 +96,7 @@ func insertCMPBanner(
 
 	bannerID := gid.New(fx.tenantID, coredata.CookieBannerEntityType)
 	categoryID := gid.New(fx.tenantID, coredata.CookieCategoryEntityType)
+
 	now := time.Now().UTC().Truncate(time.Microsecond)
 	if createdAt.IsZero() {
 		createdAt = now
@@ -142,6 +145,18 @@ func insertCMPBanner(
 	return bannerID, categoryID
 }
 
+func domainCursor() *page.Cursor[coredata.CMPDomainOrderField] {
+	return page.NewCursor(
+		20,
+		nil,
+		page.Head,
+		page.OrderBy[coredata.CMPDomainOrderField]{
+			Field:     coredata.CMPDomainOrderFieldCreatedAt,
+			Direction: page.OrderDirectionAsc,
+		},
+	)
+}
+
 func surfaceCursor() *page.Cursor[coredata.CMPDomainSurfaceOrderField] {
 	return page.NewCursor(
 		20,
@@ -166,7 +181,9 @@ func TestCMPDomain_UpsertIsUniquePerOrganization(t *testing.T) {
 			return err
 		}
 
-		var again coredata.CMPDomain
+		again := coredata.CMPDomain{
+			ID: gid.New(fx.tenantID, coredata.CMPDomainEntityType),
+		}
 		if err := again.UpsertByOrganizationAndDomain(
 			ctx,
 			tx,
@@ -186,6 +203,21 @@ func TestCMPDomain_UpsertIsUniquePerOrganization(t *testing.T) {
 		}
 
 		assert.NotNil(t, loaded.SourcePromotionRequestedAt)
+
+		var matched coredata.CMPDomains
+		if err := matched.LoadByOrganizationID(
+			ctx,
+			tx,
+			fx.scope,
+			fx.orgID,
+			domainCursor(),
+			coredata.NewCMPDomainFilter(new("EXAMPLE.com")),
+		); err != nil {
+			return err
+		}
+
+		require.Len(t, matched, 1)
+		assert.Equal(t, fx.domain.ID, matched[0].ID)
 
 		return nil
 	}))
@@ -218,6 +250,7 @@ func TestCMPDomainSurface_EffectiveStateAndUpsert(t *testing.T) {
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		surface = coredata.CMPDomainSurface{
+			ID:             gid.New(fx.tenantID, coredata.CMPDomainSurfaceEntityType),
 			OrganizationID: fx.orgID,
 			CMPDomainID:    domainID,
 			Origin:         origin,
@@ -241,8 +274,10 @@ func TestCMPDomainSurface_EffectiveStateAndUpsert(t *testing.T) {
 	}))
 
 	later := firstSeen.Add(time.Minute)
+
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		again := coredata.CMPDomainSurface{
+			ID:                         gid.New(fx.tenantID, coredata.CMPDomainSurfaceEntityType),
 			OrganizationID:             fx.orgID,
 			CMPDomainID:                domainID,
 			Origin:                     origin,
@@ -321,7 +356,39 @@ func TestCMPDomainSurface_EffectiveStateAndUpsert(t *testing.T) {
 
 		assert.Equal(t, 1, coveredCount)
 
-		banner := &coredata.CookieBanner{ID: bannerID}
+		banner := &coredata.CookieBanner{}
+		if err := banner.LoadByID(ctx, tx, fx.scope, bannerID); err != nil {
+			return err
+		}
+
+		banner.State = coredata.CookieBannerStateInactive
+		banner.UpdatedAt = time.Now()
+		if err := banner.Update(ctx, tx, fx.scope); err != nil {
+			return err
+		}
+
+		inactive := coredata.CMPDomainSurface{}
+		if err := inactive.LoadByID(ctx, tx, fx.scope, surface.ID); err != nil {
+			return err
+		}
+
+		assert.Equal(t, coredata.CMPDomainSurfaceStateIgnored, inactive.State)
+
+		inactiveCovered, err := surfaces.CountByCMPDomainID(
+			ctx,
+			tx,
+			fx.scope,
+			domainID,
+			coredata.NewCMPDomainSurfaceFilter([]coredata.CMPDomainSurfaceState{
+				coredata.CMPDomainSurfaceStateCovered,
+			}),
+		)
+		if err != nil {
+			return err
+		}
+
+		assert.Equal(t, 0, inactiveCovered)
+
 		if err := banner.Delete(ctx, tx, fx.scope); err != nil {
 			return err
 		}
@@ -356,6 +423,111 @@ func TestCMPDomainSurface_EffectiveStateAndUpsert(t *testing.T) {
 		}
 
 		require.Len(t, all, 1)
+
+		return nil
+	}))
+}
+
+func TestCMPDomain_SourcePromotionBudget(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	client := test.PGClient(t)
+	fx := seedCMPDomainFixture(t, ctx, client, "budget.example")
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		if err := fx.domain.SetSourcePromotionRequested(ctx, tx); err != nil {
+			return err
+		}
+
+		if err := fx.domain.ClearSourcePromotionRequested(ctx, tx); err != nil {
+			return err
+		}
+
+		assert.Equal(t, 1, fx.domain.SourcePromotionAttempts)
+		assert.Nil(t, fx.domain.SourcePromotionRequestedAt)
+
+		if err := fx.domain.RequeueSourcePromotionRequested(ctx, tx); err != nil {
+			return err
+		}
+
+		if err := fx.domain.SetSourcePromotionRequested(ctx, tx); err != nil {
+			return err
+		}
+
+		waiting := coredata.CMPDomain{}
+		if err := waiting.LoadByID(ctx, tx, fx.scope, fx.domain.ID); err != nil {
+			return err
+		}
+
+		assert.Equal(t, 1, waiting.SourcePromotionAttempts)
+		assert.NotNil(t, waiting.SourcePromotionRequestedAt)
+
+		if err := fx.domain.ClearSourcePromotionRequested(ctx, tx); err != nil {
+			return err
+		}
+
+		if err := fx.domain.ResetSourcePromotionAttempts(ctx, tx); err != nil {
+			return err
+		}
+
+		finished := coredata.CMPDomain{}
+		if err := finished.LoadByID(ctx, tx, fx.scope, fx.domain.ID); err != nil {
+			return err
+		}
+
+		assert.Equal(t, 0, finished.SourcePromotionAttempts)
+		assert.Nil(t, finished.SourcePromotionAttemptedAt)
+
+		if err := fx.domain.SetSourcePromotionRequested(ctx, tx); err != nil {
+			return err
+		}
+
+		if err := fx.domain.ClearSourcePromotionRequested(ctx, tx); err != nil {
+			return err
+		}
+
+		if err := coredata.ResetStaleSourcePromotions(ctx, tx, -time.Minute, 3); err != nil {
+			return err
+		}
+
+		retried := coredata.CMPDomain{}
+		if err := retried.LoadByID(ctx, tx, fx.scope, fx.domain.ID); err != nil {
+			return err
+		}
+
+		assert.NotNil(t, retried.SourcePromotionRequestedAt)
+		assert.Equal(t, 1, retried.SourcePromotionAttempts)
+
+		for fx.domain.SourcePromotionAttempts < 3 {
+			if err := fx.domain.ClearSourcePromotionRequested(ctx, tx); err != nil {
+				return err
+			}
+		}
+
+		if err := coredata.ResetStaleSourcePromotions(ctx, tx, -time.Minute, 3); err != nil {
+			return err
+		}
+
+		capped := coredata.CMPDomain{}
+		if err := capped.LoadByID(ctx, tx, fx.scope, fx.domain.ID); err != nil {
+			return err
+		}
+
+		assert.Nil(t, capped.SourcePromotionRequestedAt)
+		assert.Equal(t, 3, capped.SourcePromotionAttempts)
+
+		if err := fx.domain.SetSourcePromotionRequested(ctx, tx); err != nil {
+			return err
+		}
+
+		fresh := coredata.CMPDomain{}
+		if err := fresh.LoadByID(ctx, tx, fx.scope, fx.domain.ID); err != nil {
+			return err
+		}
+
+		assert.Equal(t, 0, fresh.SourcePromotionAttempts)
+		assert.NotNil(t, fresh.SourcePromotionRequestedAt)
 
 		return nil
 	}))
