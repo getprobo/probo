@@ -362,6 +362,7 @@ func TestCMPDomainSurface_EffectiveStateAndUpsert(t *testing.T) {
 		}
 
 		banner.State = coredata.CookieBannerStateInactive
+
 		banner.UpdatedAt = time.Now()
 		if err := banner.Update(ctx, tx, fx.scope); err != nil {
 			return err
@@ -528,6 +529,54 @@ func TestCMPDomain_SourcePromotionBudget(t *testing.T) {
 
 		assert.Equal(t, 0, fresh.SourcePromotionAttempts)
 		assert.NotNil(t, fresh.SourcePromotionRequestedAt)
+
+		return nil
+	}))
+}
+
+func TestCMPDomain_RequeueKeepsANewerClaim(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	client := test.PGClient(t)
+	fx := seedCMPDomainFixture(t, ctx, client, "requeue.example")
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		if err := fx.domain.SetSourcePromotionRequested(ctx, tx); err != nil {
+			return err
+		}
+
+		if err := fx.domain.ClearSourcePromotionRequested(ctx, tx); err != nil {
+			return err
+		}
+
+		older := fx.domain
+
+		if err := fx.domain.RequeueSourcePromotionRequested(ctx, tx); err != nil {
+			return err
+		}
+
+		if err := fx.domain.ClearSourcePromotionRequested(ctx, tx); err != nil {
+			return err
+		}
+
+		if err := older.RequeueSourcePromotionRequested(ctx, tx); err != nil {
+			return err
+		}
+
+		if err := older.ResetSourcePromotionAttempts(ctx, tx); err != nil {
+			return err
+		}
+
+		loaded := coredata.CMPDomain{}
+		if err := loaded.LoadByID(ctx, tx, fx.scope, fx.domain.ID); err != nil {
+			return err
+		}
+
+		assert.Nil(t, loaded.SourcePromotionRequestedAt)
+		assert.Equal(t, 2, loaded.SourcePromotionAttempts)
+		require.NotNil(t, loaded.SourcePromotionAttemptedAt)
+		assert.True(t, loaded.SourcePromotionAttemptedAt.Equal(*fx.domain.SourcePromotionAttemptedAt))
 
 		return nil
 	}))

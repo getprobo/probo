@@ -49,6 +49,7 @@ func parseOrigin(raw string) (origin, bool) {
 	}
 
 	host := strings.TrimPrefix(strings.ToLower(u.Hostname()), "www.")
+
 	host = strings.TrimSuffix(host, ".")
 	if host == "" {
 		return origin{}, false

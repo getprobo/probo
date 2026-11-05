@@ -94,6 +94,7 @@ func canonicalSurfaceOrigin(raw string) (string, bool) {
 	}
 
 	host := strings.TrimPrefix(strings.ToLower(parsed.Hostname()), "www.")
+
 	host = strings.TrimSuffix(host, ".")
 	if host == "" {
 		return "", false
