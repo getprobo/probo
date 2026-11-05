@@ -24,11 +24,7 @@ import { createRequire } from "node:module";
 import { isIP } from "node:net";
 import { fileURLToPath, URL } from "node:url";
 
-import {
-  faroSourcemapUpload,
-  omitFaroCollectorOrigin,
-  omitFaroDevPlaceholders,
-} from "@probo/faro/vite";
+import { omitFaroCollectorOrigin, omitFaroDevPlaceholders } from "@probo/faro/vite";
 import babel from "@rolldown/plugin-babel";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
@@ -287,12 +283,6 @@ export default defineConfig(({ mode, command }) => {
   const fileStorageOrigin
     = configuredFileStorageOrigin
       || (command === "serve" ? defaultDevFileStorageOrigin : "");
-  const faroUpload = command === "build"
-    ? faroSourcemapUpload({
-        appName: "console",
-        appId: process.env.FARO_APP_ID_CONSOLE,
-      })
-    : null;
 
   return {
     // Expose CSP peer origins to the client for Markdown img allowlisting.
@@ -330,14 +320,13 @@ export default defineConfig(({ mode, command }) => {
         ],
       }),
       tailwindcss(),
-      ...(faroUpload?.plugins ?? []),
     ],
     // Dev-only: Vite stamps scripts (incl. React Fast Refresh preamble) with
     // this nonce; production Go CSP does not use nonces.
     html: command === "serve" ? { cspNonce: viteDevCspNonce } : undefined,
-    ...(faroUpload
-      ? { build: { sourcemap: faroUpload.sourcemap } }
-      : {}),
+    build: {
+      sourcemap: true,
+    },
     server: {
       headers: {
         "Content-Security-Policy": consoleContentSecurityPolicy(

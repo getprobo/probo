@@ -25,10 +25,8 @@
     "react-router": "^8.4.0"
   },
   "devDependencies": {
-    "@grafana/faro-rollup-plugin": "0.13.2",
     "@types/node": "^26.6.5",
     "react-router": "^8.4.0",
-    "rollup": "4.64.5",
     "typescript": "6.0.3",
     "vite": "^8.3.5",
     "vitest": "^5.0.5"
