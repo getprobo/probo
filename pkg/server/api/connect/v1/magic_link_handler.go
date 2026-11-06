@@ -192,6 +192,7 @@ func (h *MagicLinkHandler) VerifyHandler(w http.ResponseWriter, r *http.Request)
 	metadata := OAuth2ServerMetadata(
 		h.proboBaseURL,
 		h.iam.OAuth2ScopeRegistry.RegisteredScopes(),
+		h.iam.OAuth2ServerService.CIMDSupported(),
 	)
 
 	redirectURL := metadata.AuthorizationEndpoint.String()

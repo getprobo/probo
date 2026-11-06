@@ -21,6 +21,7 @@
 package oauth2
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -80,33 +81,83 @@ func TestIsCIMDClientID(t *testing.T) {
 	}
 }
 
-func TestCIMDAllowFromClientIDs(t *testing.T) {
+func TestService_CIMDAllowance(t *testing.T) {
 	t.Parallel()
 
 	clientID := "https://chatgpt.com/oauth/client.json"
-	allow := CIMDAllowFromClientIDs(nil)
 
-	allowance, err := allow(t.Context(), clientID)
-	require.NoError(t, err)
-	assert.Equal(t, CIMDAllowanceDenied, allowance)
+	for _, tt := range []struct {
+		name      string
+		clientIDs []string
+		allow     CIMDAllowFunc
+		supported bool
+		want      CIMDAllowance
+	}{
+		{
+			name:      "denied without allowlist",
+			clientIDs: nil,
+			supported: false,
+			want:      CIMDAllowanceDenied,
+		},
+		{
+			name:      "denied with empty allowlist",
+			clientIDs: []string{},
+			supported: false,
+			want:      CIMDAllowanceDenied,
+		},
+		{
+			name:      "allowed when listed",
+			clientIDs: []string{clientID},
+			supported: true,
+			want:      CIMDAllowanceAllowed,
+		},
+		{
+			name:      "denied when not listed",
+			clientIDs: []string{"https://other.example.com/oauth/client.json"},
+			supported: true,
+			want:      CIMDAllowanceDenied,
+		},
+		{
+			name:      "hook allowance wins over allowlist",
+			clientIDs: nil,
+			allow: func(_ context.Context, _ string) (CIMDAllowance, error) {
+				return CIMDAllowanceAllowedSkipConsent, nil
+			},
+			supported: false,
+			want:      CIMDAllowanceAllowedSkipConsent,
+		},
+		{
+			name:      "allowlist used when hook denies",
+			clientIDs: []string{clientID},
+			allow: func(_ context.Context, _ string) (CIMDAllowance, error) {
+				return CIMDAllowanceDenied, nil
+			},
+			supported: true,
+			want:      CIMDAllowanceAllowed,
+		},
+	} {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
 
-	allow = CIMDAllowFromClientIDs([]string{})
+				svc := NewService(
+					nil,
+					nil,
+					"",
+					log.NewLogger(),
+					WithCIMDAllowedClientIDs(tt.clientIDs),
+					WithCIMDAllow(tt.allow),
+				)
 
-	allowance, err = allow(t.Context(), clientID)
-	require.NoError(t, err)
-	assert.Equal(t, CIMDAllowanceDenied, allowance)
+				assert.Equal(t, tt.supported, svc.CIMDSupported())
 
-	allow = CIMDAllowFromClientIDs([]string{clientID})
-
-	allowance, err = allow(t.Context(), clientID)
-	require.NoError(t, err)
-	assert.Equal(t, CIMDAllowanceAllowed, allowance)
-
-	allow = CIMDAllowFromClientIDs([]string{"https://other.example.com/oauth/client.json"})
-
-	allowance, err = allow(t.Context(), clientID)
-	require.NoError(t, err)
-	assert.Equal(t, CIMDAllowanceDenied, allowance)
+				allowance, err := svc.cimdAllowance(t.Context(), clientID)
+				require.NoError(t, err)
+				assert.Equal(t, tt.want, allowance)
+			},
+		)
+	}
 }
 
 func TestValidateClientMetadataDocument(t *testing.T) {

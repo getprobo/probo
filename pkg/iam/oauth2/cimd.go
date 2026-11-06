@@ -93,18 +93,6 @@ func (a CIMDAllowance) SkipsConsent() bool {
 	return a == CIMDAllowanceAllowedSkipConsent
 }
 
-func CIMDAllowFromClientIDs(clientIDs []string) CIMDAllowFunc {
-	allowed := slices.Clone(clientIDs)
-
-	return func(_ context.Context, clientIDURL string) (CIMDAllowance, error) {
-		if slices.Contains(allowed, clientIDURL) {
-			return CIMDAllowanceAllowed, nil
-		}
-
-		return CIMDAllowanceDenied, nil
-	}
-}
-
 func CIMDClientIDHost(raw string) (string, bool) {
 	if !IsCIMDClientID(raw) {
 		return "", false
@@ -534,11 +522,18 @@ func (s *Service) cimdAllowance(ctx context.Context, clientIDRaw string) (CIMDAl
 		return CIMDAllowanceDenied, nil
 	}
 
-	if s.cimdAllow == nil {
-		return CIMDAllowanceDenied, nil
+	if s.cimdAllow != nil {
+		allowance, err := s.cimdAllow(ctx, clientIDRaw)
+		if err != nil || allowance.Allowed() {
+			return allowance, err
+		}
 	}
 
-	return s.cimdAllow(ctx, clientIDRaw)
+	if slices.Contains(s.cimdAllowedClientIDs, clientIDRaw) {
+		return CIMDAllowanceAllowed, nil
+	}
+
+	return CIMDAllowanceDenied, nil
 }
 
 func (s *Service) cimdScopes(doc *ClientMetadataDocument) (coredata.OAuth2Scopes, error) {
