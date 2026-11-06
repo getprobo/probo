@@ -152,11 +152,14 @@ func (h *completionCertificateHandler) generateAndCommit(
 	scope := coredata.NewScopeFromObjectID(signature.ID)
 
 	var (
-		signedFile   coredata.File
-		organization coredata.Organization
+		signedFile       coredata.File
+		organization     coredata.Organization
+		signedFileLoaded bool
 	)
 
-	if ref.UnrefOrZero(signature.EmailSubject) != "" {
+	sendCompletionEmail := ref.UnrefOrZero(signature.EmailSubject) != ""
+
+	if sendCompletionEmail {
 		if err := h.pg.WithConn(
 			ctx,
 			func(ctx context.Context, conn pg.Querier) error {
@@ -173,6 +176,8 @@ func (h *completionCertificateHandler) generateAndCommit(
 		); err != nil {
 			return err
 		}
+
+		signedFileLoaded = true
 	}
 
 	certificateFile, err := h.generateCertificate(ctx, signature, scope)
@@ -185,7 +190,7 @@ func (h *completionCertificateHandler) generateAndCommit(
 		attachments coredata.EmailAttachments
 	)
 
-	if ref.UnrefOrZero(signature.EmailSubject) != "" {
+	if sendCompletionEmail {
 		email, attachments, err = h.generateCompletionEmail(
 			ctx,
 			signature,
@@ -195,6 +200,43 @@ func (h *completionCertificateHandler) generateAndCommit(
 		)
 		if err != nil {
 			return err
+		}
+	}
+
+	var bundleFile *coredata.File
+
+	if !signedFileLoaded {
+		if err := h.pg.WithConn(
+			ctx,
+			func(ctx context.Context, conn pg.Querier) error {
+				if err := signedFile.LoadByID(ctx, conn, scope, signature.FileID); err != nil {
+					return fmt.Errorf("cannot load signed file: %w", err)
+				}
+
+				return nil
+			},
+		); err != nil {
+			h.logger.ErrorCtx(ctx, "cannot load signed file for bundle", log.Error(err))
+		} else {
+			signedFileLoaded = true
+		}
+	}
+
+	if signedFileLoaded {
+		uploadedBundle, err := uploadSignatureBundle(
+			ctx,
+			h.fileManager,
+			h.bucket,
+			signature,
+			&signedFile,
+			certificateFile,
+		)
+		if err != nil {
+			// The certificate and email should still go out. EnsureBundle will
+			// create the zip the first time the console asks for it.
+			h.logger.ErrorCtx(ctx, "cannot upload signature bundle", log.Error(err))
+		} else {
+			bundleFile = &uploadedBundle
 		}
 	}
 
@@ -231,7 +273,62 @@ func (h *completionCertificateHandler) generateAndCommit(
 			return nil
 		},
 	); err != nil {
+		signature.CertificateFileID = nil
+
+		if bundleFile != nil {
+			_ = h.fileManager.DeleteFile(ctx, bundleFile)
+		}
+
 		return err
+	}
+
+	if bundleFile == nil {
+		return nil
+	}
+
+	keptBundle := false
+
+	if err := h.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			var locked coredata.ElectronicSignature
+
+			if err := locked.LoadByIDForUpdate(ctx, tx, scope, signature.ID); err != nil {
+				return fmt.Errorf("cannot lock electronic signature: %w", err)
+			}
+
+			if locked.BundleFileID != nil {
+				signature.BundleFileID = locked.BundleFileID
+
+				return nil
+			}
+
+			if err := bundleFile.Insert(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot insert signature bundle: %w", err)
+			}
+
+			locked.BundleFileID = &bundleFile.ID
+			locked.UpdatedAt = time.Now()
+
+			if err := locked.Update(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot update signature bundle: %w", err)
+			}
+
+			signature.BundleFileID = &bundleFile.ID
+			keptBundle = true
+
+			return nil
+		},
+	); err != nil {
+		signature.BundleFileID = nil
+		_ = h.fileManager.DeleteFile(ctx, bundleFile)
+		h.logger.ErrorCtx(ctx, "cannot store signature bundle", log.Error(err))
+
+		return nil
+	}
+
+	if !keptBundle {
+		_ = h.fileManager.DeleteFile(ctx, bundleFile)
 	}
 
 	return nil
