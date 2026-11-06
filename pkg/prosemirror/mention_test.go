@@ -90,7 +90,7 @@ func TestSanitizeDocumentJSON_Mention(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := SanitizeDocumentJSON(tt.in)
+			got, err := DocumentSchema.Sanitize(tt.in)
 			if tt.wantErr {
 				require.Error(t, err)
 
@@ -114,7 +114,7 @@ func TestRenderMention(t *testing.T) {
 	t.Run("html", func(t *testing.T) {
 		t.Parallel()
 
-		got, err := RenderHTML(node)
+		got, err := DocumentSchema.RenderHTML(node)
 		require.NoError(t, err)
 		assert.Equal(
 			t,
@@ -126,7 +126,7 @@ func TestRenderMention(t *testing.T) {
 	t.Run("markdown", func(t *testing.T) {
 		t.Parallel()
 
-		got, err := RenderMarkdown(node)
+		got, err := DocumentSchema.RenderMarkdown(node)
 		require.NoError(t, err)
 		assert.Contains(t, got, "Hi @Jane")
 	})

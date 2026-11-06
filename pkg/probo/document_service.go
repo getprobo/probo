@@ -168,8 +168,8 @@ func (cdr *CreateDocumentRequest) Validate() error {
 		cdr.Content,
 		"content",
 		validator.MaxLen(documentContentMaxJSONBytes),
-		validator.ProseMirrorDocumentContent(),
-		validator.ProseMirrorDocumentMaxTextLength(documentContentMaxTextLength),
+		validator.ProseMirrorContent(prosemirror.DocumentSchema),
+		validator.ProseMirrorMaxTextLength(prosemirror.DocumentSchema, documentContentMaxTextLength),
 	)
 	v.Check(cdr.Classification, "classification", validator.Required(), validator.OneOfSlice(coredata.DocumentClassifications()))
 	v.Check(cdr.DocumentType, "document_type", validator.Required(), validator.OneOfSlice(coredata.DocumentTypes()))
@@ -236,8 +236,8 @@ func (udr *UpdateDocumentRequest) Validate() error {
 		udr.Content,
 		"content",
 		validator.MaxLen(documentContentMaxJSONBytes),
-		validator.ProseMirrorDocumentContent(),
-		validator.ProseMirrorDocumentMaxTextLength(documentContentMaxTextLength),
+		validator.ProseMirrorContent(prosemirror.DocumentSchema),
+		validator.ProseMirrorMaxTextLength(prosemirror.DocumentSchema, documentContentMaxTextLength),
 	)
 	v.Check(udr.DocumentType, "document_type", validator.OneOfSlice(coredata.DocumentTypes()))
 
@@ -739,7 +739,7 @@ func (s *DocumentService) Create(
 	if strings.TrimSpace(content) != "" {
 		var sanitizeErr error
 
-		content, sanitizeErr = prosemirror.SanitizeDocumentJSON(content)
+		content, sanitizeErr = prosemirror.DocumentSchema.Sanitize(content)
 		if sanitizeErr != nil {
 			return nil, fmt.Errorf("cannot sanitize document content: %w", sanitizeErr)
 		}
@@ -2152,7 +2152,7 @@ func (s *DocumentService) Update(
 			if req.Content != nil {
 				content := *req.Content
 				if strings.TrimSpace(content) != "" {
-					sanitized, sanitizeErr := prosemirror.SanitizeDocumentJSON(content)
+					sanitized, sanitizeErr := prosemirror.DocumentSchema.Sanitize(content)
 					if sanitizeErr != nil {
 						return fmt.Errorf("cannot sanitize document content: %w", sanitizeErr)
 					}

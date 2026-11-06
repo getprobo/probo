@@ -40,7 +40,7 @@ func FormatRichText(content string) (string, error) {
 		return "", fmt.Errorf("cannot parse content: %w", err)
 	}
 
-	markdown, err := prosemirror.RenderMarkdown(node)
+	markdown, err := prosemirror.DocumentSchema.RenderMarkdown(node)
 	if err != nil {
 		return "", fmt.Errorf("cannot render content: %w", err)
 	}
@@ -53,7 +53,7 @@ func FormatRichText(content string) (string, error) {
 // lists, and links to /api/files/v1/{id}, is parsed as markdown.
 func CLIContent(text string) (string, error) {
 	trimmed := strings.TrimSpace(text)
-	if strings.HasPrefix(trimmed, "{") && prosemirror.ValidateDocumentContentJSON(text) == nil {
+	if strings.HasPrefix(trimmed, "{") && prosemirror.DocumentSchema.ValidateJSON(text) == nil {
 		return text, nil
 	}
 

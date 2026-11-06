@@ -23,7 +23,6 @@ package prosemirror
 import (
 	"encoding/json"
 	"fmt"
-	"unicode/utf8"
 )
 
 type (
@@ -75,8 +74,8 @@ type (
 	ImageAttrs struct {
 		FileID *string `json:"fileId,omitempty"`
 		Src    string  `json:"src"`
-		Alt    *string `json:"alt"`
-		Title  *string `json:"title"`
+		Alt    *string `json:"alt,omitempty"`
+		Title  *string `json:"title,omitempty"`
 		Width  *int    `json:"width,omitempty"`
 	}
 
@@ -106,10 +105,10 @@ type (
 	// LinkAttrs contains attributes for link marks.
 	LinkAttrs struct {
 		Href   string  `json:"href"`
-		Target *string `json:"target"`
-		Rel    *string `json:"rel"`
-		Class  *string `json:"class"`
-		Title  *string `json:"title"`
+		Target *string `json:"target,omitempty"`
+		Rel    *string `json:"rel,omitempty"`
+		Class  *string `json:"class,omitempty"`
+		Title  *string `json:"title,omitempty"`
 	}
 )
 

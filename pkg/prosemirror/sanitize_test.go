@@ -196,7 +196,7 @@ func TestValidateDocumentContentJSON_Schema(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			err := ValidateDocumentContentJSON(tt.in)
+			err := DocumentSchema.ValidateJSON(tt.in)
 			if tt.wantErr {
 				require.Error(t, err)
 				return
@@ -276,7 +276,7 @@ func TestValidateDocumentContentJSON_TestdataDocument(t *testing.T) {
 
 	raw, err := json.Marshal(loadTestDocument(t))
 	require.NoError(t, err)
-	require.NoError(t, ValidateDocumentContentJSON(string(raw)))
+	require.NoError(t, DocumentSchema.ValidateJSON(string(raw)))
 }
 
 func TestDefaultDocumentJSON_EmptyBecomesDoc(t *testing.T) {
@@ -319,11 +319,11 @@ func TestDefaultDocumentJSON_Sanitizes(t *testing.T) {
 func TestSanitizeDocumentJSON_EmptyUnchanged(t *testing.T) {
 	t.Parallel()
 
-	got, err := SanitizeDocumentJSON("")
+	got, err := DocumentSchema.Sanitize("")
 	require.NoError(t, err)
 	assert.Equal(t, "", got)
 
-	got, err = SanitizeDocumentJSON("   ")
+	got, err = DocumentSchema.Sanitize("   ")
 	require.NoError(t, err)
 	assert.Equal(t, "   ", got)
 }
@@ -331,14 +331,14 @@ func TestSanitizeDocumentJSON_EmptyUnchanged(t *testing.T) {
 func TestSanitizeDocumentJSON_NonJSONError(t *testing.T) {
 	t.Parallel()
 
-	_, err := SanitizeDocumentJSON("plain text is not valid document JSON")
+	_, err := DocumentSchema.Sanitize("plain text is not valid document JSON")
 	require.Error(t, err)
 }
 
 func TestSanitizeDocumentJSON_NonDocRootError(t *testing.T) {
 	t.Parallel()
 
-	_, err := SanitizeDocumentJSON(`{"type":"paragraph","content":[]}`)
+	_, err := DocumentSchema.Sanitize(`{"type":"paragraph","content":[]}`)
 	require.Error(t, err)
 }
 
@@ -347,7 +347,7 @@ func TestSanitizeDocumentJSON_LinkHref(t *testing.T) {
 
 	raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"javascript:alert(1)","target":"_blank"}}],"text":"click"}]}]}`
 
-	out, err := SanitizeDocumentJSON(raw)
+	out, err := DocumentSchema.Sanitize(raw)
 	require.NoError(t, err)
 
 	var doc Node
@@ -366,7 +366,7 @@ func TestSanitizeDocumentJSON_PreservesSafeHref(t *testing.T) {
 
 	raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"https://example.com"}}],"text":"ok"}]}]}`
 
-	out, err := SanitizeDocumentJSON(raw)
+	out, err := DocumentSchema.Sanitize(raw)
 	require.NoError(t, err)
 
 	var doc Node
@@ -380,7 +380,7 @@ func TestSanitizeDocumentJSON_PreservesSafeHref(t *testing.T) {
 func TestSanitizeDocumentJSON_ImageWidth(t *testing.T) {
 	t.Parallel()
 
-	kept, err := SanitizeDocumentJSON(`{"type":"doc","content":[{"type":"image","attrs":{"src":"https://example.com/img.png","width":50}}]}`)
+	kept, err := DocumentSchema.Sanitize(`{"type":"doc","content":[{"type":"image","attrs":{"src":"https://example.com/img.png","width":50}}]}`)
 	require.NoError(t, err)
 
 	doc, err := Parse(kept)
@@ -391,7 +391,7 @@ func TestSanitizeDocumentJSON_ImageWidth(t *testing.T) {
 	require.NotNil(t, attrs.Width)
 	assert.Equal(t, 50, *attrs.Width)
 
-	full, err := SanitizeDocumentJSON(`{"type":"doc","content":[{"type":"image","attrs":{"src":"https://example.com/img.png","width":100}}]}`)
+	full, err := DocumentSchema.Sanitize(`{"type":"doc","content":[{"type":"image","attrs":{"src":"https://example.com/img.png","width":100}}]}`)
 	require.NoError(t, err)
 
 	doc, err = Parse(full)
@@ -402,10 +402,10 @@ func TestSanitizeDocumentJSON_ImageWidth(t *testing.T) {
 	require.NotNil(t, attrs.Width)
 	assert.Equal(t, 100, *attrs.Width)
 
-	err = ValidateDocumentContentJSON(`{"type":"doc","content":[{"type":"image","attrs":{"src":"https://example.com/img.png","width":0}}]}`)
+	err = DocumentSchema.ValidateJSON(`{"type":"doc","content":[{"type":"image","attrs":{"src":"https://example.com/img.png","width":0}}]}`)
 	require.Error(t, err)
 
-	err = ValidateDocumentContentJSON(`{"type":"doc","content":[{"type":"image","attrs":{"src":"https://example.com/img.png","width":101}}]}`)
+	err = DocumentSchema.ValidateJSON(`{"type":"doc","content":[{"type":"image","attrs":{"src":"https://example.com/img.png","width":101}}]}`)
 	require.Error(t, err)
 }
 
@@ -414,7 +414,7 @@ func TestSanitizeDocumentJSON_ImageSrc(t *testing.T) {
 
 	raw := `{"type":"doc","content":[{"type":"image","attrs":{"src":"javascript:alert(1)","alt":"xss"}}]}`
 
-	out, err := SanitizeDocumentJSON(raw)
+	out, err := DocumentSchema.Sanitize(raw)
 	require.NoError(t, err)
 
 	var doc Node
@@ -432,7 +432,7 @@ func TestSanitizeDocumentJSON_PreservesSafeImageSrc(t *testing.T) {
 
 	raw := `{"type":"doc","content":[{"type":"image","attrs":{"src":"https://example.com/img.png","alt":"ok"}}]}`
 
-	out, err := SanitizeDocumentJSON(raw)
+	out, err := DocumentSchema.Sanitize(raw)
 	require.NoError(t, err)
 
 	var doc Node
@@ -448,7 +448,7 @@ func TestSanitizeDocumentJSON_DropsDataImageSrc(t *testing.T) {
 
 	raw := `{"type":"doc","content":[{"type":"image","attrs":{"src":"data:image/png;base64,iVBOR","alt":"preview"}}]}`
 
-	out, err := SanitizeDocumentJSON(raw)
+	out, err := DocumentSchema.Sanitize(raw)
 	require.NoError(t, err)
 
 	var doc Node
@@ -463,7 +463,7 @@ func TestSanitizeDocumentJSON_BlankImageFileIDIsAbsent(t *testing.T) {
 
 	raw := `{"type":"doc","content":[{"type":"image","attrs":{"fileId":"  ","src":"https://example.com/img.png"}}]}`
 
-	out, err := SanitizeDocumentJSON(raw)
+	out, err := DocumentSchema.Sanitize(raw)
 	require.NoError(t, err)
 
 	var doc Node
@@ -483,7 +483,7 @@ func TestSanitizeDocumentJSON_ImageFileIDClearsSrc(t *testing.T) {
 		fileID,
 	)
 
-	out, err := SanitizeDocumentJSON(raw)
+	out, err := DocumentSchema.Sanitize(raw)
 	require.NoError(t, err)
 
 	var doc Node
@@ -504,7 +504,7 @@ func TestSanitizeDocumentJSON_TrimsImageFileID(t *testing.T) {
 		fileID,
 	)
 
-	out, err := SanitizeDocumentJSON(raw)
+	out, err := DocumentSchema.Sanitize(raw)
 	require.NoError(t, err)
 
 	var doc Node

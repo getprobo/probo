@@ -124,8 +124,8 @@ func (ctr *CreateTaskRequest) Validate() error {
 		ctr.Content,
 		"content",
 		validator.MaxLen(richTextMaxJSONBytes),
-		validator.ProseMirrorDocumentContent(),
-		validator.ProseMirrorDocumentMaxTextLength(ContentMaxLength),
+		validator.ProseMirrorContent(prosemirror.DocumentSchema),
+		validator.ProseMirrorMaxTextLength(prosemirror.DocumentSchema, ContentMaxLength),
 	)
 	v.Check(ctr.State, "state", validator.OneOfSlice(coredata.TaskStates()))
 	v.Check(ctr.Priority, "priority", validator.Required(), validator.OneOfSlice(coredata.TaskPriorities()))
@@ -177,8 +177,8 @@ func (utr *UpdateTaskRequest) Validate() error {
 		utr.Content,
 		"content",
 		validator.MaxLen(richTextMaxJSONBytes),
-		validator.ProseMirrorDocumentContent(),
-		validator.ProseMirrorDocumentMaxTextLength(ContentMaxLength),
+		validator.ProseMirrorContent(prosemirror.DocumentSchema),
+		validator.ProseMirrorMaxTextLength(prosemirror.DocumentSchema, ContentMaxLength),
 	)
 	v.Check(utr.Priority, "priority", validator.OneOfSlice(coredata.TaskPriorities()))
 	v.Check(utr.TimeEstimate, "time_estimate", validator.RangeDuration(0, 1000*time.Hour))

@@ -104,7 +104,7 @@ func mustParseDoc(t *testing.T, raw string) prosemirror.Node {
 
 	encoded, err := json.Marshal(node)
 	require.NoError(t, err)
-	require.NoError(t, prosemirror.ValidateDocumentContentJSON(string(encoded)))
+	require.NoError(t, prosemirror.DocumentSchema.ValidateJSON(string(encoded)))
 
 	return node
 }

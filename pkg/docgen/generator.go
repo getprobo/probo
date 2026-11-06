@@ -651,7 +651,7 @@ func ProseMirrorJSONToHTML(content json.RawMessage) template.HTML {
 		return template.HTML(fmt.Sprintf("<p>%s</p>", html.EscapeString(s)))
 	}
 
-	htmlStr, err := prosemirror.RenderHTML(node)
+	htmlStr, err := prosemirror.DocumentSchema.RenderHTML(node)
 	if err != nil {
 		return template.HTML(fmt.Sprintf("<p>%s</p>", html.EscapeString(s)))
 	}

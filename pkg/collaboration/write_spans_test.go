@@ -69,7 +69,7 @@ func TestWriteSpans_LargeDocument(t *testing.T) {
 	got, err := materialize(context.Background(), document)
 	require.NoError(t, err)
 
-	want, err := prosemirror.SanitizeDocumentJSON(content.String())
+	want, err := prosemirror.DocumentSchema.Sanitize(content.String())
 	require.NoError(t, err)
 	assert.Equal(t, want, got)
 }

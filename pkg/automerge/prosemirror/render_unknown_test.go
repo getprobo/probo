@@ -40,10 +40,10 @@ func assertCanonicalRenderable(t *testing.T, content string) {
 	node, err := prosemirror.Parse(content)
 	require.NoError(t, err)
 
-	_, err = prosemirror.RenderMarkdown(node)
+	_, err = prosemirror.DocumentSchema.RenderMarkdown(node)
 	require.NoError(t, err)
 
-	_, err = prosemirror.RenderHTML(node)
+	_, err = prosemirror.DocumentSchema.RenderHTML(node)
 	require.NoError(t, err)
 }
 

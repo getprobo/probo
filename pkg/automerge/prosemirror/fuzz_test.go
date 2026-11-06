@@ -120,11 +120,11 @@ func FuzzRender(f *testing.F) {
 				t.Fatalf("cannot parse rendered document %q: %v", content, err)
 			}
 
-			if _, err := prosemirror.RenderMarkdown(node); err != nil {
+			if _, err := prosemirror.DocumentSchema.RenderMarkdown(node); err != nil {
 				t.Fatalf("rendered document is not valid Markdown %q: %v", content, err)
 			}
 
-			if _, err := prosemirror.RenderHTML(node); err != nil {
+			if _, err := prosemirror.DocumentSchema.RenderHTML(node); err != nil {
 				t.Fatalf("rendered document is not valid HTML %q: %v", content, err)
 			}
 		},

@@ -465,7 +465,7 @@ func (r *documentContentResolver) Markdown(ctx context.Context, obj *types.Docum
 		return "", gqlx.Internal(ctx)
 	}
 
-	md, err := prosemirror.RenderMarkdown(node)
+	md, err := prosemirror.DocumentSchema.RenderMarkdown(node)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot render document content as markdown", log.Error(err))
 		return "", gqlx.Internal(ctx)

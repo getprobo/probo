@@ -4505,7 +4505,7 @@ func riskAnalysisDescriptionMarkdown(raw *string) (string, error) {
 		return "", fmt.Errorf("cannot parse risk analysis description: %w", err)
 	}
 
-	markdown, err := prosemirror.RenderMarkdown(node)
+	markdown, err := prosemirror.DocumentSchema.RenderMarkdown(node)
 	if err != nil {
 		return "", fmt.Errorf("cannot render risk analysis description: %w", err)
 	}
@@ -4899,7 +4899,7 @@ func (s *GeneratedDocumentService) publishOrRequestApproval(
 		return err
 	}
 
-	content, err := prosemirror.SanitizeDocumentJSON(version.Content)
+	content, err := prosemirror.DocumentSchema.Sanitize(version.Content)
 	if err != nil {
 		return fmt.Errorf("cannot sanitize generated document content: %w", err)
 	}

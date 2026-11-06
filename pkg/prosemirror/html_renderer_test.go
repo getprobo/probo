@@ -38,7 +38,7 @@ func TestRenderHTML_Document(t *testing.T) {
 	require.NoError(t, err)
 
 	doc := loadTestDocument(t)
-	got, err := RenderHTML(doc)
+	got, err := DocumentSchema.RenderHTML(doc)
 	require.NoError(t, err)
 	assert.Equal(t, string(expected), got)
 }
@@ -47,7 +47,7 @@ func TestRenderHTML_EmptyParagraph(t *testing.T) {
 	t.Parallel()
 
 	node := Node{Type: NodeParagraph}
-	got, err := RenderHTML(Node{Type: NodeDoc, Content: []Node{node}})
+	got, err := DocumentSchema.RenderHTML(Node{Type: NodeDoc, Content: []Node{node}})
 	require.NoError(t, err)
 	assert.Equal(t, "<p></p>", got)
 }
@@ -76,7 +76,7 @@ func TestRenderHTML_HeadingLevels(t *testing.T) {
 				var n Node
 				require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-				got, err := RenderHTML(n)
+				got, err := DocumentSchema.RenderHTML(n)
 				require.NoError(t, err)
 				assert.Equal(t, tc.expected, got)
 			},
@@ -92,7 +92,7 @@ func TestRenderHTML_HeadingInvalidLevel(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	_, err := RenderHTML(n)
+	_, err := DocumentSchema.RenderHTML(n)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "invalid level")
 }
@@ -105,7 +105,7 @@ func TestRenderHTML_CodeBlockWithLanguage(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderHTML(n)
+	got, err := DocumentSchema.RenderHTML(n)
 	require.NoError(t, err)
 	assert.Equal(t, `<pre><code class="language-go">fmt.Println()</code></pre>`, got)
 }
@@ -118,7 +118,7 @@ func TestRenderHTML_CodeBlockMermaid(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderHTML(n)
+	got, err := DocumentSchema.RenderHTML(n)
 	require.NoError(t, err)
 	assert.Equal(t, "<pre class=\"mermaid\">graph TD\n  A--&gt;B</pre>", got)
 }
@@ -131,7 +131,7 @@ func TestRenderHTML_CodeBlockWithoutLanguage(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderHTML(n)
+	got, err := DocumentSchema.RenderHTML(n)
 	require.NoError(t, err)
 	assert.Equal(t, "<pre><code>hello</code></pre>", got)
 }
@@ -144,7 +144,7 @@ func TestRenderHTML_TaskList(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderHTML(n)
+	got, err := DocumentSchema.RenderHTML(n)
 	require.NoError(t, err)
 	assert.Equal(
 		t,
@@ -161,7 +161,7 @@ func TestRenderHTML_OrderedListWithStart(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderHTML(n)
+	got, err := DocumentSchema.RenderHTML(n)
 	require.NoError(t, err)
 	assert.Equal(t, `<ol start="5"><li><p>item</p></li></ol>`, got)
 }
@@ -174,7 +174,7 @@ func TestRenderHTML_TableCellColspan(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderHTML(n)
+	got, err := DocumentSchema.RenderHTML(n)
 	require.NoError(t, err)
 	assert.Equal(t, `<td colspan="2"><p>wide</p></td>`, got)
 }
@@ -187,7 +187,7 @@ func TestRenderHTML_TableCellColwidth(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderHTML(n)
+	got, err := DocumentSchema.RenderHTML(n)
 	require.NoError(t, err)
 	assert.Equal(t, `<td style="min-width: 100px"><p>X</p></td>`, got)
 }
@@ -202,7 +202,7 @@ func TestRenderHTML_HTMLEscaping(t *testing.T) {
 			{Type: NodeText, Text: &text},
 		},
 	}
-	got, err := RenderHTML(Node{Type: NodeDoc, Content: []Node{node}})
+	got, err := DocumentSchema.RenderHTML(Node{Type: NodeDoc, Content: []Node{node}})
 	require.NoError(t, err)
 	assert.Equal(t, `<p>&lt;script&gt;alert(&#34;xss&#34;)&lt;/script&gt; &amp; more</p>`, got)
 }
@@ -215,7 +215,7 @@ func TestRenderHTML_LinkAllAttrs(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderHTML(n)
+	got, err := DocumentSchema.RenderHTML(n)
 	require.NoError(t, err)
 	assert.Equal(t, `<a href="https://example.com" target="_blank" rel="noopener" class="btn" title="Click">hi</a>`, got)
 }
@@ -228,7 +228,7 @@ func TestRenderHTML_LinkMinimalAttrs(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderHTML(n)
+	got, err := DocumentSchema.RenderHTML(n)
 	require.NoError(t, err)
 	assert.Equal(t, `<a href="https://example.com">hi</a>`, got)
 }
@@ -285,7 +285,7 @@ func TestRenderHTML_LinkBlankTargetDefaultRel(t *testing.T) {
 				var n Node
 				require.NoError(t, json.Unmarshal([]byte(tc.raw), &n))
 
-				got, err := RenderHTML(n)
+				got, err := DocumentSchema.RenderHTML(n)
 				require.NoError(t, err)
 				assert.Equal(t, tc.want, got)
 			},
@@ -330,7 +330,7 @@ func TestRenderHTML_LinkSanitizesDangerousHrefs(t *testing.T) {
 				var n Node
 				require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-				got, err := RenderHTML(n)
+				got, err := DocumentSchema.RenderHTML(n)
 				require.NoError(t, err)
 
 				want := fmt.Sprintf(`<a href="%s">x</a>`, html.EscapeString(tc.wantHref))
@@ -348,7 +348,7 @@ func TestRenderHTML_Image(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderHTML(n)
+	got, err := DocumentSchema.RenderHTML(n)
 	require.NoError(t, err)
 	assert.Equal(t, `<img src="https://example.com/img.png" alt="A photo" title="My image">`, got)
 }
@@ -361,7 +361,7 @@ func TestRenderHTML_File(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderHTML(n)
+	got, err := DocumentSchema.RenderHTML(n)
 	require.NoError(t, err)
 	assert.Equal(t, `<a href="/api/files/v1/file-1" class="document-file">policy.pdf</a>`, got)
 }
@@ -374,7 +374,7 @@ func TestRenderHTML_ImageWidth(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderHTML(n)
+	got, err := DocumentSchema.RenderHTML(n)
 	require.NoError(t, err)
 	assert.Equal(t, `<img src="https://example.com/img.png" alt="A photo" width="50%">`, got)
 }
@@ -414,7 +414,7 @@ func TestRenderHTML_ImageSanitizesDangerousSrc(t *testing.T) {
 				var n Node
 				require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-				got, err := RenderHTML(n)
+				got, err := DocumentSchema.RenderHTML(n)
 				require.NoError(t, err)
 
 				want := fmt.Sprintf(`<img src="%s">`, html.EscapeString(tc.wantSrc))
@@ -432,7 +432,7 @@ func TestRenderHTML_MultipleMarks(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderHTML(n)
+	got, err := DocumentSchema.RenderHTML(n)
 	require.NoError(t, err)
 	assert.Equal(t, "<strong><em>hello</em></strong>", got)
 }
@@ -441,7 +441,7 @@ func TestRenderHTML_UnknownNodeType(t *testing.T) {
 	t.Parallel()
 
 	node := Node{Type: NodeType("unknownWidget")}
-	_, err := RenderHTML(node)
+	_, err := DocumentSchema.RenderHTML(node)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "unknown type")
 }
@@ -457,7 +457,7 @@ func TestRenderHTML_UnknownMarkType(t *testing.T) {
 			{Type: MarkType("superscript")},
 		},
 	}
-	_, err := RenderHTML(node)
+	_, err := DocumentSchema.RenderHTML(node)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "unknown type")
 }
@@ -509,7 +509,7 @@ func TestRenderHTML_NodesWithoutAttrs(t *testing.T) {
 				var n Node
 				require.NoError(t, json.Unmarshal([]byte(tc.raw), &n))
 
-				got, err := RenderHTML(n)
+				got, err := DocumentSchema.RenderHTML(n)
 				require.NoError(t, err)
 				assert.Equal(t, tc.expected, got)
 			},

@@ -120,7 +120,7 @@ func (s *Service) ApplyContent(
 	scope coredata.Scoper,
 	req CollaborationApplyContentRequest,
 ) (*CollaborationWriteResult, error) {
-	sanitized, err := prosemirror.SanitizeDocumentJSON(req.Content)
+	sanitized, err := prosemirror.DocumentSchema.Sanitize(req.Content)
 	if err != nil {
 		return nil, fmt.Errorf("cannot sanitize collaboration content: %w", err)
 	}
@@ -372,7 +372,7 @@ func (s *Service) ApplyEdits(
 		return nil, fmt.Errorf("cannot encode edited collaboration document: %w", err)
 	}
 
-	sanitized, err := prosemirror.SanitizeDocumentJSON(string(encoded))
+	sanitized, err := prosemirror.DocumentSchema.Sanitize(string(encoded))
 	if err != nil {
 		return nil, fmt.Errorf("cannot sanitize edited collaboration document: %w", err)
 	}
@@ -552,7 +552,7 @@ func validateContentLength(contentJSON string) error {
 	v.Check(
 		contentJSON,
 		"content",
-		validator.ProseMirrorDocumentMaxTextLength(contentMaxText),
+		validator.ProseMirrorMaxTextLength(prosemirror.DocumentSchema, contentMaxText),
 	)
 
 	return v.Error()

@@ -461,7 +461,7 @@ func TestTextLength(t *testing.T) {
 			t.Parallel()
 
 			n := Node{Type: NodeDoc}
-			assert.Equal(t, 0, n.TextLength())
+			assert.Equal(t, 0, DocumentSchema.TextLength(n))
 		},
 	)
 
@@ -472,7 +472,7 @@ func TestTextLength(t *testing.T) {
 
 			text := "hello"
 			n := Node{Type: NodeText, Text: &text}
-			assert.Equal(t, 5, n.TextLength())
+			assert.Equal(t, 5, DocumentSchema.TextLength(n))
 		},
 	)
 
@@ -484,7 +484,7 @@ func TestTextLength(t *testing.T) {
 			raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"hello world"}]}]}`
 			doc, err := Parse(raw)
 			require.NoError(t, err)
-			assert.Equal(t, 11, doc.TextLength())
+			assert.Equal(t, 11, DocumentSchema.TextLength(doc))
 		},
 	)
 
@@ -509,7 +509,7 @@ func TestTextLength(t *testing.T) {
 			raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"aaa"}]},{"type":"paragraph","content":[{"type":"text","text":"bb"}]}]}`
 			doc, err := Parse(raw)
 			require.NoError(t, err)
-			assert.Equal(t, 5, doc.TextLength())
+			assert.Equal(t, 5, DocumentSchema.TextLength(doc))
 		},
 	)
 
@@ -521,7 +521,7 @@ func TestTextLength(t *testing.T) {
 			raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"plain "},{"type":"text","marks":[{"type":"bold"}],"text":"bold"}]}]}`
 			doc, err := Parse(raw)
 			require.NoError(t, err)
-			assert.Equal(t, 10, doc.TextLength())
+			assert.Equal(t, 10, DocumentSchema.TextLength(doc))
 		},
 	)
 
@@ -533,7 +533,7 @@ func TestTextLength(t *testing.T) {
 			raw := `{"type":"doc","content":[{"type":"bulletList","content":[{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"item 1"}]}]},{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"item 2"}]}]}]}]}`
 			doc, err := Parse(raw)
 			require.NoError(t, err)
-			assert.Equal(t, 12, doc.TextLength())
+			assert.Equal(t, 12, DocumentSchema.TextLength(doc))
 		},
 	)
 
@@ -545,7 +545,7 @@ func TestTextLength(t *testing.T) {
 			raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"café résumé"}]}]}`
 			doc, err := Parse(raw)
 			require.NoError(t, err)
-			assert.Equal(t, 11, doc.TextLength())
+			assert.Equal(t, 11, DocumentSchema.TextLength(doc))
 		},
 	)
 
@@ -554,7 +554,7 @@ func TestTextLength(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 			doc := loadTestDocument(t)
-			assert.Greater(t, doc.TextLength(), 0)
+			assert.Greater(t, DocumentSchema.TextLength(doc), 0)
 		},
 	)
 }

@@ -124,7 +124,7 @@ func TestFinding_PublishFindingList(t *testing.T) {
 
 			// The stored content is sanitized before insert, so it must be a
 			// parseable ProseMirror document rooted at a "doc" node.
-			require.NoError(t, prosemirror.ValidateDocumentContentJSON(ver.Content.Prosemirror))
+			require.NoError(t, prosemirror.DocumentSchema.ValidateJSON(ver.Content.Prosemirror))
 		},
 	)
 

@@ -55,7 +55,7 @@ func TestFromPlainText(t *testing.T) {
 			got := prosemirror.FromPlainText(tt.in)
 			assert.Equal(t, tt.want, got)
 
-			require.NoError(t, prosemirror.ValidateDocumentContentJSON(got))
+			require.NoError(t, prosemirror.DocumentSchema.ValidateJSON(got))
 		})
 	}
 }

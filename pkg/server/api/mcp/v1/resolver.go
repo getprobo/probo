@@ -287,7 +287,7 @@ func (r *Resolver) fillSourceConnectorIDs(
 }
 
 func validateMCPDocumentContent(content string) error {
-	if err := prosemirror.ValidateDocumentContentJSON(content); err != nil {
+	if err := prosemirror.DocumentSchema.ValidateJSON(content); err != nil {
 		return fmt.Errorf("invalid document content: %w", err)
 	}
 

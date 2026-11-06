@@ -21,11 +21,7 @@
 package prosemirror
 
 import (
-	"fmt"
 	"strings"
-
-	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/gid"
 
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -183,29 +179,7 @@ func DefaultDocumentJSON(s *string) (string, error) {
 		return FromPlainText(""), nil
 	}
 
-	return SanitizeDocumentJSON(*s)
-}
-
-// SanitizeDocumentJSON parses a ProseMirror/Tiptap JSON document, replaces
-// unsafe link mark href values using the same rules as RenderHTML, and
-// re-serializes the document. Whitespace-only input is returned unchanged.
-// Non-empty content must be valid JSON whose root node has type "doc".
-func SanitizeDocumentJSON(s string) (string, error) {
-	if strings.TrimSpace(s) == "" {
-		return s, nil
-	}
-
-	return DocumentSchema.Sanitize(s)
-}
-
-// RenderHTML renders a ProseMirror document node tree to an HTML string.
-func RenderHTML(node Node) (string, error) {
-	return DocumentSchema.RenderHTML(node)
-}
-
-// RenderMarkdown renders a ProseMirror document node tree to a Markdown string.
-func RenderMarkdown(node Node) (string, error) {
-	return DocumentSchema.RenderMarkdown(node)
+	return DocumentSchema.Sanitize(*s)
 }
 
 func validateDocument(n Node) error {

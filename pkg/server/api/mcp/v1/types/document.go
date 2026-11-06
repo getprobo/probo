@@ -39,7 +39,7 @@ func proseMirrorJSONToMarkdown(pmJSON string) (string, error) {
 		return "", fmt.Errorf("cannot parse prosemirror json: %w", err)
 	}
 
-	md, err := prosemirror.RenderMarkdown(node)
+	md, err := prosemirror.DocumentSchema.RenderMarkdown(node)
 	if err != nil {
 		return "", fmt.Errorf("cannot render markdown: %w", err)
 	}

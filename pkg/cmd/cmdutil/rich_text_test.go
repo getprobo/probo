@@ -82,7 +82,7 @@ func TestCLIContent(t *testing.T) {
 		got, err := cmdutil.CLIContent(" \n\t")
 		require.NoError(t, err)
 		assert.Equal(t, prosemirror.FromPlainText(""), got)
-		require.NoError(t, prosemirror.ValidateDocumentContentJSON(got))
+		require.NoError(t, prosemirror.DocumentSchema.ValidateJSON(got))
 	})
 
 	t.Run("plain text keeps one paragraph per line", func(t *testing.T) {

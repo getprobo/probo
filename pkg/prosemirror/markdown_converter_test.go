@@ -386,7 +386,7 @@ func TestParseMarkdown_ImageWidthRoundTrip(t *testing.T) {
 	require.NotNil(t, attrs.Alt)
 	assert.Equal(t, "diagram", *attrs.Alt)
 
-	rendered, err := RenderMarkdown(doc)
+	rendered, err := DocumentSchema.RenderMarkdown(doc)
 	require.NoError(t, err)
 	assert.Equal(t, `<img src="/api/files/v1/`+fileID+`" alt="diagram" width="50%">`+"\n", rendered)
 }
@@ -754,7 +754,7 @@ func TestParseMarkdown_TaskList(t *testing.T) {
 		assert.Equal(t, NodeParagraph, item.Content[0].Type)
 	}
 
-	rendered, err := RenderMarkdown(doc)
+	rendered, err := DocumentSchema.RenderMarkdown(doc)
 	require.NoError(t, err)
 	assert.Equal(t, "- [ ] open\n- [x] done\n- [x] also\n", rendered)
 }
@@ -805,7 +805,7 @@ func TestParseMarkdown_MixedTaskList(t *testing.T) {
 	assert.Equal(t, NodeTaskList, doc.Content[1].Type)
 	assert.Equal(t, NodeBulletList, doc.Content[2].Type)
 
-	rendered, err := RenderMarkdown(doc)
+	rendered, err := DocumentSchema.RenderMarkdown(doc)
 	require.NoError(t, err)
 	assert.Equal(t, "- plain\n\n- [ ] task\n\n- after\n", rendered)
 }

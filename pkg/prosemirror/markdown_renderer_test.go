@@ -36,7 +36,7 @@ func TestRenderMarkdown_Document(t *testing.T) {
 	require.NoError(t, err)
 
 	doc := loadTestDocument(t)
-	got, err := RenderMarkdown(doc)
+	got, err := DocumentSchema.RenderMarkdown(doc)
 	require.NoError(t, err)
 	assert.Equal(t, string(expected), got)
 }
@@ -44,7 +44,7 @@ func TestRenderMarkdown_Document(t *testing.T) {
 func TestRenderMarkdown_EmptyDoc(t *testing.T) {
 	t.Parallel()
 
-	got, err := RenderMarkdown(Node{Type: NodeDoc})
+	got, err := DocumentSchema.RenderMarkdown(Node{Type: NodeDoc})
 	require.NoError(t, err)
 	assert.Equal(t, "", got)
 }
@@ -52,7 +52,7 @@ func TestRenderMarkdown_EmptyDoc(t *testing.T) {
 func TestRenderMarkdown_EmptyParagraph(t *testing.T) {
 	t.Parallel()
 
-	got, err := RenderMarkdown(Node{
+	got, err := DocumentSchema.RenderMarkdown(Node{
 		Type:    NodeDoc,
 		Content: []Node{{Type: NodeParagraph}},
 	})
@@ -64,7 +64,7 @@ func TestRenderMarkdown_Paragraph(t *testing.T) {
 	t.Parallel()
 
 	text := "Hello world"
-	got, err := RenderMarkdown(Node{
+	got, err := DocumentSchema.RenderMarkdown(Node{
 		Type: NodeDoc,
 		Content: []Node{
 			{
@@ -103,7 +103,7 @@ func TestRenderMarkdown_HeadingLevels(t *testing.T) {
 				var n Node
 				require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-				got, err := RenderMarkdown(n)
+				got, err := DocumentSchema.RenderMarkdown(n)
 				require.NoError(t, err)
 				assert.Equal(t, tc.want, got)
 			},
@@ -119,7 +119,7 @@ func TestRenderMarkdown_HeadingInvalidLevel(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	_, err := RenderMarkdown(n)
+	_, err := DocumentSchema.RenderMarkdown(n)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "invalid level")
 }
@@ -132,7 +132,7 @@ func TestRenderMarkdown_Bold(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderMarkdown(n)
+	got, err := DocumentSchema.RenderMarkdown(n)
 	require.NoError(t, err)
 	assert.Equal(t, "**bold**\n", got)
 }
@@ -145,7 +145,7 @@ func TestRenderMarkdown_Italic(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderMarkdown(n)
+	got, err := DocumentSchema.RenderMarkdown(n)
 	require.NoError(t, err)
 	assert.Equal(t, "*italic*\n", got)
 }
@@ -158,7 +158,7 @@ func TestRenderMarkdown_ItalicTrailingSpace(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderMarkdown(n)
+	got, err := DocumentSchema.RenderMarkdown(n)
 	require.NoError(t, err)
 	assert.Equal(t, "*italic* rest\n", got)
 }
@@ -171,7 +171,7 @@ func TestRenderMarkdown_Strikethrough(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderMarkdown(n)
+	got, err := DocumentSchema.RenderMarkdown(n)
 	require.NoError(t, err)
 	assert.Equal(t, "~~deleted~~\n", got)
 }
@@ -184,7 +184,7 @@ func TestRenderMarkdown_Underline(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderMarkdown(n)
+	got, err := DocumentSchema.RenderMarkdown(n)
 	require.NoError(t, err)
 	assert.Equal(t, "<u>underlined</u>\n", got)
 }
@@ -197,7 +197,7 @@ func TestRenderMarkdown_InlineCode(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderMarkdown(n)
+	got, err := DocumentSchema.RenderMarkdown(n)
 	require.NoError(t, err)
 	assert.Equal(t, "`code`\n", got)
 }
@@ -210,7 +210,7 @@ func TestRenderMarkdown_InlineCodeWithBacktick(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderMarkdown(n)
+	got, err := DocumentSchema.RenderMarkdown(n)
 	require.NoError(t, err)
 	assert.Equal(t, "`` a ` b ``\n", got)
 }
@@ -224,7 +224,7 @@ func TestRenderMarkdown_InlineCodeWithDoubleBacktickRun(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderMarkdown(n)
+	got, err := DocumentSchema.RenderMarkdown(n)
 	require.NoError(t, err)
 	assert.Equal(t, "``` ``x ```\n", got)
 }
@@ -237,7 +237,7 @@ func TestRenderMarkdown_InlineCodeWithTripleBacktickRun(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderMarkdown(n)
+	got, err := DocumentSchema.RenderMarkdown(n)
 	require.NoError(t, err)
 	assert.Equal(t, "```` ``` ````\n", got)
 }
@@ -250,7 +250,7 @@ func TestRenderMarkdown_Link(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderMarkdown(n)
+	got, err := DocumentSchema.RenderMarkdown(n)
 	require.NoError(t, err)
 	assert.Equal(t, "[click](https://example.com)\n", got)
 }
@@ -263,7 +263,7 @@ func TestRenderMarkdown_LinkWithTitle(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderMarkdown(n)
+	got, err := DocumentSchema.RenderMarkdown(n)
 	require.NoError(t, err)
 	assert.Equal(t, "[click](https://example.com \"My Title\")\n", got)
 }
@@ -296,7 +296,7 @@ func TestRenderMarkdown_LinkSanitizesDangerousHrefs(t *testing.T) {
 				var n Node
 				require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-				got, err := RenderMarkdown(n)
+				got, err := DocumentSchema.RenderMarkdown(n)
 				require.NoError(t, err)
 				assert.Equal(t, "[x]("+tc.wantHref+")\n", got)
 			},
@@ -312,7 +312,7 @@ func TestRenderMarkdown_MultipleMarks(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderMarkdown(n)
+	got, err := DocumentSchema.RenderMarkdown(n)
 	require.NoError(t, err)
 	assert.Equal(t, "***hello***\n", got)
 }
@@ -325,7 +325,7 @@ func TestRenderMarkdown_CodeBlockWithLanguage(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderMarkdown(n)
+	got, err := DocumentSchema.RenderMarkdown(n)
 	require.NoError(t, err)
 	assert.Equal(t, "```go\nfmt.Println()\n```\n", got)
 }
@@ -338,7 +338,7 @@ func TestRenderMarkdown_CodeBlockWithoutLanguage(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderMarkdown(n)
+	got, err := DocumentSchema.RenderMarkdown(n)
 	require.NoError(t, err)
 	assert.Equal(t, "```\nhello\n```\n", got)
 }
@@ -351,7 +351,7 @@ func TestRenderMarkdown_CodeBlockWithTripleBackticks(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderMarkdown(n)
+	got, err := DocumentSchema.RenderMarkdown(n)
 	require.NoError(t, err)
 	assert.Contains(t, got, "````")
 	assert.Contains(t, got, "```\nsome code")
@@ -360,7 +360,7 @@ func TestRenderMarkdown_CodeBlockWithTripleBackticks(t *testing.T) {
 func TestRenderMarkdown_HorizontalRule(t *testing.T) {
 	t.Parallel()
 
-	got, err := RenderMarkdown(Node{
+	got, err := DocumentSchema.RenderMarkdown(Node{
 		Type: NodeDoc,
 		Content: []Node{
 			{Type: NodeHorizontalRule},
@@ -375,7 +375,7 @@ func TestRenderMarkdown_HardBreak(t *testing.T) {
 
 	line1 := "line one"
 	line2 := "line two"
-	got, err := RenderMarkdown(Node{
+	got, err := DocumentSchema.RenderMarkdown(Node{
 		Type: NodeDoc,
 		Content: []Node{
 			{
@@ -400,7 +400,7 @@ func TestRenderMarkdown_Image(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderMarkdown(n)
+	got, err := DocumentSchema.RenderMarkdown(n)
 	require.NoError(t, err)
 	assert.Equal(t, "![A photo](https://example.com/img.png \"My image\")\n", got)
 }
@@ -413,7 +413,7 @@ func TestRenderMarkdown_ImageWithoutTitle(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderMarkdown(n)
+	got, err := DocumentSchema.RenderMarkdown(n)
 	require.NoError(t, err)
 	assert.Equal(t, "![A photo](https://example.com/img.png)\n", got)
 }
@@ -426,28 +426,28 @@ func TestRenderMarkdown_ImageWidth(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderMarkdown(n)
+	got, err := DocumentSchema.RenderMarkdown(n)
 	require.NoError(t, err)
 	assert.Equal(t, "<img src=\"https://example.com/img.png\" alt=\"A photo\" width=\"50%\">\n", got)
 
 	full := `{"type":"doc","content":[{"type":"image","attrs":{"src":"https://example.com/img.png","alt":"A photo","width":100}}]}`
 	require.NoError(t, json.Unmarshal([]byte(full), &n))
 
-	got, err = RenderMarkdown(n)
+	got, err = DocumentSchema.RenderMarkdown(n)
 	require.NoError(t, err)
 	assert.Equal(t, "<img src=\"https://example.com/img.png\" alt=\"A photo\" width=\"100%\">\n", got)
 
 	titled := `{"type":"doc","content":[{"type":"image","attrs":{"src":"https://example.com/img.png","alt":"A photo","title":"My image","width":50}}]}`
 	require.NoError(t, json.Unmarshal([]byte(titled), &n))
 
-	got, err = RenderMarkdown(n)
+	got, err = DocumentSchema.RenderMarkdown(n)
 	require.NoError(t, err)
 	assert.Equal(t, "<img src=\"https://example.com/img.png\" alt=\"A photo\" title=\"My image\" width=\"50%\">\n", got)
 
 	dangerous := `{"type":"doc","content":[{"type":"image","attrs":{"src":"javascript:alert(1)","alt":null,"title":null,"width":50}}]}`
 	require.NoError(t, json.Unmarshal([]byte(dangerous), &n))
 
-	got, err = RenderMarkdown(n)
+	got, err = DocumentSchema.RenderMarkdown(n)
 	require.NoError(t, err)
 	assert.Equal(t, "<img src=\"\" width=\"50%\">\n", got)
 }
@@ -460,7 +460,7 @@ func TestRenderMarkdown_ImageSanitizesDangerousSrc(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderMarkdown(n)
+	got, err := DocumentSchema.RenderMarkdown(n)
 	require.NoError(t, err)
 	assert.Equal(t, "![]()\n", got)
 }
@@ -473,7 +473,7 @@ func TestRenderMarkdown_BulletList(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderMarkdown(n)
+	got, err := DocumentSchema.RenderMarkdown(n)
 	require.NoError(t, err)
 	assert.Equal(t, "- one\n- two\n- three\n", got)
 }
@@ -486,7 +486,7 @@ func TestRenderMarkdown_OrderedList(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderMarkdown(n)
+	got, err := DocumentSchema.RenderMarkdown(n)
 	require.NoError(t, err)
 	assert.Equal(t, "1. first\n2. second\n", got)
 }
@@ -499,7 +499,7 @@ func TestRenderMarkdown_OrderedListWithStart(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderMarkdown(n)
+	got, err := DocumentSchema.RenderMarkdown(n)
 	require.NoError(t, err)
 	assert.Equal(t, "5. item\n", got)
 }
@@ -512,7 +512,7 @@ func TestRenderMarkdown_NestedList(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderMarkdown(n)
+	got, err := DocumentSchema.RenderMarkdown(n)
 	require.NoError(t, err)
 	assert.Equal(t, "- parent\n  \n  - child\n", got)
 }
@@ -525,7 +525,7 @@ func TestRenderMarkdown_Blockquote(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderMarkdown(n)
+	got, err := DocumentSchema.RenderMarkdown(n)
 	require.NoError(t, err)
 	assert.Equal(t, "> quoted\n", got)
 }
@@ -538,7 +538,7 @@ func TestRenderMarkdown_BlockquoteMultipleParagraphs(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderMarkdown(n)
+	got, err := DocumentSchema.RenderMarkdown(n)
 	require.NoError(t, err)
 	assert.Equal(t, "> first\n> \n> second\n", got)
 }
@@ -551,7 +551,7 @@ func TestRenderMarkdown_GFMTable(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderMarkdown(n)
+	got, err := DocumentSchema.RenderMarkdown(n)
 	require.NoError(t, err)
 	assert.Equal(t, "| Name | Age |\n| --- | --- |\n| Alice | 30 |\n", got)
 }
@@ -564,7 +564,7 @@ func TestRenderMarkdown_TableWithBlockContent(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderMarkdown(n)
+	got, err := DocumentSchema.RenderMarkdown(n)
 	require.NoError(t, err)
 	assert.Equal(t, "| Header |\n| --- |\n| <ul><li><p>item</p></li></ul> |\n", got)
 }
@@ -577,7 +577,7 @@ func TestRenderMarkdown_FileEscapesAmpersand(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderMarkdown(n)
+	got, err := DocumentSchema.RenderMarkdown(n)
 	require.NoError(t, err)
 	assert.Equal(t, "[report \\&amp;.pdf](/api/files/v1/file-1)\n", got)
 }
@@ -586,7 +586,7 @@ func TestRenderMarkdown_MarkdownEscaping(t *testing.T) {
 	t.Parallel()
 
 	text := `*bold* _italic_ ` + "`code`" + ` [link] ~strike~ |pipe| <html>`
-	got, err := RenderMarkdown(Node{
+	got, err := DocumentSchema.RenderMarkdown(Node{
 		Type: NodeDoc,
 		Content: []Node{
 			{
@@ -612,7 +612,7 @@ func TestRenderMarkdown_UnknownNodeType(t *testing.T) {
 	t.Parallel()
 
 	node := Node{Type: NodeType("unknownWidget")}
-	_, err := RenderMarkdown(node)
+	_, err := DocumentSchema.RenderMarkdown(node)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "unknown type")
 }
@@ -638,7 +638,7 @@ func TestRenderMarkdown_UnknownMarkType(t *testing.T) {
 			},
 		},
 	}
-	_, err := RenderMarkdown(node)
+	_, err := DocumentSchema.RenderMarkdown(node)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "unknown type")
 }
@@ -651,7 +651,7 @@ func TestRenderMarkdown_MixedContent(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderMarkdown(n)
+	got, err := DocumentSchema.RenderMarkdown(n)
 	require.NoError(t, err)
 	assert.Equal(t, "Normal **bold** and *italic* text\n", got)
 }
@@ -664,7 +664,7 @@ func TestRenderMarkdown_BlockquoteWithHardBreak(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderMarkdown(n)
+	got, err := DocumentSchema.RenderMarkdown(n)
 	require.NoError(t, err)
 	assert.Equal(t, "> line one\\\n> line two\n", got)
 }
@@ -677,7 +677,7 @@ func TestRenderMarkdown_GFMTableWithMarks(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderMarkdown(n)
+	got, err := DocumentSchema.RenderMarkdown(n)
 	require.NoError(t, err)
 	assert.Equal(t, "| Header |\n| --- |\n| **bold** and *italic* |\n", got)
 }
@@ -696,7 +696,7 @@ func TestRenderMarkdown_TextNil(t *testing.T) {
 			},
 		},
 	}
-	_, err := RenderMarkdown(node)
+	_, err := DocumentSchema.RenderMarkdown(node)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "text is nil")
 }
@@ -731,7 +731,7 @@ func TestRenderMarkdown_CodeBlockInBlockquote(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderMarkdown(n)
+	got, err := DocumentSchema.RenderMarkdown(n)
 	require.NoError(t, err)
 	assert.Equal(t, "> ```go\n> fmt.Println()\n> ```\n", got)
 }
@@ -744,7 +744,7 @@ func TestRenderMarkdown_TaskList(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderMarkdown(n)
+	got, err := DocumentSchema.RenderMarkdown(n)
 	require.NoError(t, err)
 	assert.Equal(t, "- [ ] open\n- [x] done\n", got)
 }
@@ -752,7 +752,7 @@ func TestRenderMarkdown_TaskList(t *testing.T) {
 func TestRenderMarkdown_ListItemOutsideList(t *testing.T) {
 	t.Parallel()
 
-	_, err := RenderMarkdown(Node{Type: NodeListItem})
+	_, err := DocumentSchema.RenderMarkdown(Node{Type: NodeListItem})
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "list item outside of list context")
 }
@@ -760,7 +760,7 @@ func TestRenderMarkdown_ListItemOutsideList(t *testing.T) {
 func TestRenderMarkdown_TableRowOutsideTable(t *testing.T) {
 	t.Parallel()
 
-	_, err := RenderMarkdown(Node{Type: NodeTableRow})
+	_, err := DocumentSchema.RenderMarkdown(Node{Type: NodeTableRow})
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "outside of table context")
 }
@@ -773,13 +773,26 @@ func TestRenderMarkdown_TableBlockCellEscapesPipes(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderMarkdown(n)
+	got, err := DocumentSchema.RenderMarkdown(n)
 	require.NoError(t, err)
 	assert.Contains(t, got, `a \| b`)
 	assert.NotContains(t, got, "<table>")
 }
 
-func TestRenderMarkdown_MentionEscapesLabel(t *testing.T) {
+func TestRenderMarkdown_Mention(t *testing.T) {
+	t.Parallel()
+
+	raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Hi "},{"type":"mention","attrs":{"id":"profile_01HQZX","label":"Jane Doe"}}]}]}`
+
+	var n Node
+	require.NoError(t, json.Unmarshal([]byte(raw), &n))
+
+	got, err := DocumentSchema.RenderMarkdown(n)
+	require.NoError(t, err)
+	assert.Equal(t, "Hi @Jane Doe\n", got)
+}
+
+>func TestRenderMarkdown_MentionEscapesLabel(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"mention","attrs":{"id":"profile_01HQZX","label":"*Jane* [Doe]"}}]}]}`
@@ -787,7 +800,7 @@ func TestRenderMarkdown_MentionEscapesLabel(t *testing.T) {
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
-	got, err := RenderMarkdown(n)
+	got, err := DocumentSchema.RenderMarkdown(n)
 	require.NoError(t, err)
 	assert.Equal(t, `@\*Jane\* \[Doe\]`+"\n", got)
 }

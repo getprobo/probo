@@ -462,7 +462,7 @@ func TestBuildDocuments_ProduceParseableProseMirror(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, prosemirror.NodeDoc, node.Type)
 
-				require.NoError(t, prosemirror.ValidateDocumentContentJSON(content))
+				require.NoError(t, prosemirror.DocumentSchema.ValidateJSON(content))
 			},
 		)
 	}
@@ -532,7 +532,7 @@ func TestBuildDocuments_EmptyDataProducesParseableProseMirror(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, prosemirror.NodeDoc, node.Type)
 
-				require.NoError(t, prosemirror.ValidateDocumentContentJSON(content))
+				require.NoError(t, prosemirror.DocumentSchema.ValidateJSON(content))
 			},
 		)
 	}

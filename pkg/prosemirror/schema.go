@@ -342,8 +342,10 @@ func (s *Schema) checkContent(n *Node, c compiledContent, mode CheckMode) error 
 
 		for i := range n.Content {
 			child := &n.Content[i]
-			if i > 0 && !s.childAllowed(c, child.Type) {
-				return fmt.Errorf("invalid child type %q in %s (expected %s)", child.Type, n.Type, c.expected)
+			if i > 0 {
+				if err := s.requireChild(c, n.Type, child.Type); err != nil {
+					return err
+				}
 			}
 
 			if err := s.validateNode(child, mode); err != nil {
@@ -360,8 +362,8 @@ func (s *Schema) checkContent(n *Node, c compiledContent, mode CheckMode) error 
 
 	for i := range n.Content {
 		child := &n.Content[i]
-		if !s.childAllowed(c, child.Type) {
-			return fmt.Errorf("invalid child type %q in %s (expected %s)", child.Type, n.Type, c.expected)
+		if err := s.requireChild(c, n.Type, child.Type); err != nil {
+			return err
 		}
 
 		if c.rejectChildMarks && len(child.Marks) > 0 {
@@ -371,6 +373,18 @@ func (s *Schema) checkContent(n *Node, c compiledContent, mode CheckMode) error 
 		if err := s.validateNode(child, mode); err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (s *Schema) requireChild(c compiledContent, parent, child NodeType) error {
+	if _, inSchema := s.index[child]; !inSchema {
+		return s.unknownNode(child)
+	}
+
+	if !s.childAllowed(c, child) {
+		return fmt.Errorf("invalid child type %q in %s (expected %s)", child, parent, c.expected)
 	}
 
 	return nil
@@ -407,9 +421,34 @@ func (s *Schema) Parse(raw string) (Node, error) {
 	return n, nil
 }
 
+// ValidateJSON returns nil if raw is empty or whitespace-only. Otherwise raw
+// must be valid ProseMirror JSON whose root node has type "doc" and whose node
+// tree matches the schema, including parent-child content rules.
+func (s *Schema) ValidateJSON(raw string) error {
+	if strings.TrimSpace(raw) == "" {
+		return nil
+	}
+
+	n, err := s.Parse(raw)
+	if err != nil {
+		return err
+	}
+
+	if err := s.Validate(n); err != nil {
+		return fmt.Errorf("cannot validate document content: %w", err)
+	}
+
+	return nil
+}
+
 // Sanitize parses, validates, and normalizes raw ProseMirror JSON, returning
-// the re-serialized document.
+// the re-serialized document. Empty and whitespace-only input is returned
+// unchanged.
 func (s *Schema) Sanitize(raw string) (string, error) {
+	if strings.TrimSpace(raw) == "" {
+		return raw, nil
+	}
+
 	n, err := s.Parse(raw)
 	if err != nil {
 		return "", err
@@ -445,7 +484,7 @@ func (s *Schema) TextLength(n Node) int {
 }
 
 // HasVisibleContent reports whether the node tree renders any visible content:
-// a node marked visible, or non-blank text.
+// a node marked visible, or non-blank text on a text node.
 func (s *Schema) HasVisibleContent(n Node) bool {
 	if idx, ok := s.index[n.Type]; ok {
 		if s.entries[idx].visible {
@@ -453,7 +492,7 @@ func (s *Schema) HasVisibleContent(n Node) bool {
 		}
 	}
 
-	if n.Text != nil && strings.TrimSpace(*n.Text) != "" {
+	if n.Type == NodeText && n.Text != nil && strings.TrimSpace(*n.Text) != "" {
 		return true
 	}
 

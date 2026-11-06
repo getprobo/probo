@@ -60,9 +60,9 @@ func (req *CreateTaskCommentRequest) Validate() error {
 		v.Check(
 			req.Content,
 			"content",
-			validator.HasVisibleRichText(),
-			validator.ProseMirrorDocumentContent(),
-			validator.ProseMirrorDocumentMaxTextLength(ContentMaxLength),
+			validator.HasVisibleRichText(prosemirror.DocumentSchema),
+			validator.ProseMirrorContent(prosemirror.DocumentSchema),
+			validator.ProseMirrorMaxTextLength(prosemirror.DocumentSchema, ContentMaxLength),
 		)
 	}
 
@@ -83,8 +83,8 @@ func (req *UpdateTaskCommentRequest) Validate() error {
 			req.Content,
 			"content",
 			validator.MaxLen(richTextMaxJSONBytes),
-			validator.ProseMirrorDocumentContent(),
-			validator.ProseMirrorDocumentMaxTextLength(ContentMaxLength),
+			validator.ProseMirrorContent(prosemirror.DocumentSchema),
+			validator.ProseMirrorMaxTextLength(prosemirror.DocumentSchema, ContentMaxLength),
 		)
 	}
 

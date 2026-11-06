@@ -55,7 +55,7 @@ func BenchmarkValidate(b *testing.B) {
 				b.SetBytes(int64(len(fixture.raw)))
 
 				for b.Loop() {
-					if err := prosemirror.ValidateDocumentContentJSON(fixture.raw); err != nil {
+					if err := prosemirror.DocumentSchema.ValidateJSON(fixture.raw); err != nil {
 						b.Fatal(err)
 					}
 				}
@@ -73,7 +73,7 @@ func BenchmarkSanitize(b *testing.B) {
 				b.SetBytes(int64(len(fixture.raw)))
 
 				for b.Loop() {
-					if _, err := prosemirror.SanitizeDocumentJSON(fixture.raw); err != nil {
+					if _, err := prosemirror.DocumentSchema.Sanitize(fixture.raw); err != nil {
 						b.Fatal(err)
 					}
 				}
@@ -96,7 +96,7 @@ func BenchmarkRenderHTML(b *testing.B) {
 				b.SetBytes(int64(len(fixture.raw)))
 
 				for b.Loop() {
-					if _, err := prosemirror.RenderHTML(node); err != nil {
+					if _, err := prosemirror.DocumentSchema.RenderHTML(node); err != nil {
 						b.Fatal(err)
 					}
 				}
@@ -119,7 +119,7 @@ func BenchmarkRenderMarkdown(b *testing.B) {
 				b.SetBytes(int64(len(fixture.raw)))
 
 				for b.Loop() {
-					if _, err := prosemirror.RenderMarkdown(node); err != nil {
+					if _, err := prosemirror.DocumentSchema.RenderMarkdown(node); err != nil {
 						b.Fatal(err)
 					}
 				}
@@ -142,7 +142,7 @@ func BenchmarkTextLength(b *testing.B) {
 				b.SetBytes(int64(len(fixture.raw)))
 
 				for b.Loop() {
-					_ = node.TextLength()
+					_ = prosemirror.DocumentSchema.TextLength(node)
 				}
 			},
 		)

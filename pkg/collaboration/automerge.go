@@ -106,7 +106,7 @@ func materialize(ctx context.Context, document *automerge.Document) (string, err
 		return "", fmt.Errorf("cannot render collaboration spans: %w", err)
 	}
 
-	content, err = prosemirror.SanitizeDocumentJSON(content)
+	content, err = prosemirror.DocumentSchema.Sanitize(content)
 	if err != nil {
 		return "", fmt.Errorf("cannot sanitize collaboration content: %w", err)
 	}

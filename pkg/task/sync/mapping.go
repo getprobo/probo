@@ -244,7 +244,7 @@ func ContentToMarkdown(content string) (string, error) {
 	// Width has no markdown syntax Linear accepts, so the description omits it.
 	omitImageWidth(&node)
 
-	md, err := prosemirror.RenderMarkdown(node)
+	md, err := prosemirror.DocumentSchema.RenderMarkdown(node)
 	if err != nil {
 		return "", fmt.Errorf("cannot render markdown: %w", err)
 	}
