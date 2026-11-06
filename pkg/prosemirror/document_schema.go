@@ -21,12 +21,49 @@
 package prosemirror
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
+)
+
+// DocumentSchema is the Tiptap-compatible schema the console editor produces.
+// A mention accepts any GID, matching the current document behavior.
+var DocumentSchema = NewSchema(
+	[]NodeSpec{
+		Doc(),
+		Paragraph(),
+		Text(),
+		Heading(),
+		Blockquote(),
+		CodeBlock(),
+		HorizontalRule(),
+		HardBreak(),
+		Image(),
+		File(),
+		Mention(MentionOptions{}),
+		BulletList(),
+		OrderedList(),
+		ListItem(),
+		TaskList(),
+		TaskItem(),
+		Table(),
+		TableRow(),
+		TableCell(),
+		TableHeader(),
+	},
+	[]MarkSpec{
+		Bold(),
+		Italic(),
+		Underline(),
+		Strike(),
+		Code(),
+		Link(),
+	},
 )
 
 // ValidateDocumentContentJSON returns nil if s is empty or whitespace-only.
@@ -38,12 +75,12 @@ func ValidateDocumentContentJSON(s string) error {
 		return nil
 	}
 
-	n, err := parseDocRoot(s)
+	n, err := DocumentSchema.Parse(s)
 	if err != nil {
 		return err
 	}
 
-	if err := validateDocument(n); err != nil {
+	if err := DocumentSchema.Validate(n); err != nil {
 		return fmt.Errorf("cannot validate document content: %w", err)
 	}
 
@@ -158,110 +195,19 @@ func SanitizeDocumentJSON(s string) (string, error) {
 		return s, nil
 	}
 
-	n, err := parseDocRoot(s)
-	if err != nil {
-		return "", err
-	}
-
-	if err := validateDocument(n); err != nil {
-		return "", fmt.Errorf("cannot sanitize document content: %w", err)
-	}
-
-	sanitizeNode(&n)
-
-	out, err := json.Marshal(n)
-	if err != nil {
-		return "", fmt.Errorf("cannot marshal sanitized document: %w", err)
-	}
-
-	return string(out), nil
+	return DocumentSchema.Sanitize(s)
 }
 
-func sanitizeNode(n *Node) {
-	switch n.Type {
-	case NodeImage:
-		sanitizeImageNode(n)
-	case NodeMention:
-		sanitizeMentionNode(n)
-	}
-
-	for i := range n.Marks {
-		sanitizeLinkMark(&n.Marks[i])
-	}
-
-	for i := range n.Content {
-		sanitizeNode(&n.Content[i])
-	}
+// RenderHTML renders a ProseMirror document node tree to an HTML string.
+func RenderHTML(node Node) (string, error) {
+	return DocumentSchema.RenderHTML(node)
 }
 
-func sanitizeImageNode(n *Node) {
-	attrs, err := n.ImageAttrs()
-	if err != nil {
-		n.Attrs = []byte(`{"src":""}`)
-		return
-	}
-
-	if attrs.FileID != nil {
-		id := strings.TrimSpace(*attrs.FileID)
-		if id == "" {
-			attrs.FileID = nil
-		} else {
-			attrs.FileID = &id
-			attrs.Src = ""
-		}
-	}
-
-	if attrs.FileID == nil {
-		attrs.Src = persistedImageSrc(attrs.Src)
-	}
-
-	if attrs.Width != nil && (*attrs.Width < 1 || *attrs.Width > 100) {
-		attrs.Width = nil
-	}
-
-	raw, err := json.Marshal(attrs)
-	if err != nil {
-		n.Attrs = []byte(`{"src":""}`)
-		return
-	}
-
-	n.Attrs = raw
+// RenderMarkdown renders a ProseMirror document node tree to a Markdown string.
+func RenderMarkdown(node Node) (string, error) {
+	return DocumentSchema.RenderMarkdown(node)
 }
 
-func sanitizeMentionNode(n *Node) {
-	attrs, err := n.MentionAttrs()
-	if err != nil {
-		return
-	}
-
-	attrs.Label = strings.TrimSpace(attrs.Label)
-
-	raw, err := json.Marshal(attrs)
-	if err != nil {
-		return
-	}
-
-	n.Attrs = raw
-}
-
-func sanitizeLinkMark(m *Mark) {
-	if m.Type != MarkLink {
-		return
-	}
-
-	attrs, err := m.LinkAttrs()
-	if err != nil {
-		m.Attrs = []byte(`{"href":"#"}`)
-		return
-	}
-
-	attrs.Href = safeLinkHref(attrs.Href)
-
-	raw, err := json.Marshal(attrs)
-	if err != nil {
-		m.Attrs = []byte(`{"href":"#"}`)
-		return
-	}
-
-	m.Attrs = raw
+func validateDocument(n Node) error {
+	return DocumentSchema.Validate(n)
 }
