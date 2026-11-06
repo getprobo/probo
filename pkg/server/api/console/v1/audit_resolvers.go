@@ -21,6 +21,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlx"
+	"go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -419,6 +420,50 @@ func (r *findingResolver) Risk(ctx context.Context, obj *types.Finding) (*types.
 	return types.NewRisk(risk), nil
 }
 
+// Tasks is the resolver for the tasks field.
+func (r *findingResolver) Tasks(ctx context.Context, obj *types.Finding, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy, filter *types.TaskFilter) (*types.TaskConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, task.ActionTaskList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.TaskOrderField]{
+		Field:     coredata.TaskOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.TaskOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	taskFilter := coredata.NewTaskFilter(nil, nil, nil, nil, nil, nil, nil, nil)
+	if filter != nil {
+		taskFilter = coredata.NewTaskFilter(
+			filter.Query,
+			filter.State,
+			filter.AssignedToID,
+			filter.InternalControlID,
+			filter.DeadlineOnOrBefore,
+			filter.DeadlineOnOrAfter,
+			filter.HasDeadline,
+			filter.HasAssignee,
+		)
+	}
+
+	page, err := r.task.ListForFindingID(ctx, scope, obj.ID, cursor, taskFilter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list finding tasks", log.Error(err))
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return types.NewTaskConnection(page, r, obj.ID, taskFilter), nil
+}
+
 // Permission is the resolver for the permission field.
 func (r *findingResolver) Permission(ctx context.Context, obj *types.Finding, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
@@ -638,6 +683,7 @@ func (r *mutationResolver) CreateFinding(ctx context.Context, input types.Create
 	req := probo.CreateFindingRequest{
 		OrganizationID:     input.OrganizationID,
 		Kind:               input.Kind,
+		Title:              input.Title,
 		Description:        input.Description,
 		Source:             input.Source,
 		IdentifiedOn:       input.IdentifiedOn,
@@ -676,6 +722,7 @@ func (r *mutationResolver) UpdateFinding(ctx context.Context, input types.Update
 
 	req := probo.UpdateFindingRequest{
 		ID:                 input.ID,
+		Title:              gqlx.UnwrapOmittable(input.Title),
 		Description:        gqlx.UnwrapOmittable(input.Description),
 		Source:             gqlx.UnwrapOmittable(input.Source),
 		IdentifiedOn:       gqlx.UnwrapOmittable(input.IdentifiedOn),
@@ -767,6 +814,62 @@ func (r *mutationResolver) DeleteFindingAuditMapping(ctx context.Context, input 
 	return &types.DeleteFindingAuditMappingPayload{
 		DeletedFindingID: &finding.ID,
 		DeletedAuditID:   &audit.ID,
+	}, nil
+}
+
+// CreateFindingTaskMapping is the resolver for the createFindingTaskMapping field.
+func (r *mutationResolver) CreateFindingTaskMapping(ctx context.Context, input types.CreateFindingTaskMappingInput) (*types.CreateFindingTaskMappingPayload, error) {
+	scope, err := r.authorize(ctx, input.FindingID, probo.ActionFindingTaskMappingCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := r.authorize(ctx, input.TaskID, task.ActionTaskGet); err != nil {
+		return nil, err
+	}
+
+	finding, linkedTask, err := r.probo.Findings.CreateTaskMapping(ctx, scope, input.FindingID, input.TaskID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+			return nil, gqlx.Conflictf(ctx, "task is already linked to the finding")
+		}
+
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlx.NotFoundf(ctx, "finding or task not found")
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot create finding task mapping", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return &types.CreateFindingTaskMappingPayload{
+		FindingEdge: types.NewFindingEdge(finding, coredata.FindingOrderFieldCreatedAt),
+		TaskEdge:    types.NewTaskEdge(linkedTask, coredata.TaskOrderFieldCreatedAt),
+	}, nil
+}
+
+// DeleteFindingTaskMapping is the resolver for the deleteFindingTaskMapping field.
+func (r *mutationResolver) DeleteFindingTaskMapping(ctx context.Context, input types.DeleteFindingTaskMappingInput) (*types.DeleteFindingTaskMappingPayload, error) {
+	scope, err := r.authorize(ctx, input.FindingID, probo.ActionFindingTaskMappingDelete)
+	if err != nil {
+		return nil, err
+	}
+
+	finding, linkedTask, err := r.probo.Findings.DeleteTaskMapping(ctx, scope, input.FindingID, input.TaskID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlx.NotFoundf(ctx, "finding or task not found")
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot delete finding task mapping", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return &types.DeleteFindingTaskMappingPayload{
+		DeletedFindingID: &finding.ID,
+		DeletedTaskID:    &linkedTask.ID,
 	}, nil
 }
 

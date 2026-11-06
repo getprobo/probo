@@ -813,6 +813,135 @@ WHERE
 	return nil
 }
 
+func (t *Tasks) CountByFindingID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	findingID gid.GID,
+	filter *TaskFilter,
+) (int, error) {
+	q := `
+WITH linked_tasks AS (
+    SELECT
+        t.id,
+        t.tenant_id,
+        t.name,
+        t.state,
+        t.assigned_to_profile_id,
+        t.deadline
+    FROM
+        tasks t
+    INNER JOIN
+        findings_tasks ft ON ft.task_id = t.id
+    WHERE
+        ft.finding_id = @finding_id
+)
+SELECT
+    COUNT(id)
+FROM
+    linked_tasks
+WHERE
+    %s
+    AND %s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"finding_id": findingID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+
+	row := conn.QueryRow(ctx, q, args)
+
+	var count int
+
+	err := row.Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("cannot count finding tasks: %w", err)
+	}
+
+	return count, nil
+}
+
+func (t *Tasks) LoadByFindingID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	findingID gid.GID,
+	cursor *page.Cursor[TaskOrderField],
+	filter *TaskFilter,
+) error {
+	q := `
+WITH linked_tasks AS (
+    SELECT
+        t.id,
+        t.organization_id,
+        t.name,
+        t.content,
+        t.state,
+        t.priority,
+        t.reference_id,
+        t.time_estimate,
+        t.assigned_to_profile_id,
+        t.deadline,
+        t.recurrence,
+        t.rank,
+        t.priority_rank,
+        t.created_at,
+        t.updated_at,
+        t.tenant_id
+    FROM
+        tasks t
+    INNER JOIN
+        findings_tasks ft ON ft.task_id = t.id
+    WHERE
+        ft.finding_id = @finding_id
+)
+SELECT
+    id,
+    organization_id,
+    name,
+    content,
+    state,
+    priority,
+    reference_id,
+    time_estimate,
+    assigned_to_profile_id,
+    deadline,
+    recurrence,
+    rank,
+    priority_rank,
+    created_at,
+    updated_at
+FROM
+    linked_tasks
+WHERE
+    %s
+    AND %s
+    AND %s
+`
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"finding_id": findingID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query finding tasks: %w", err)
+	}
+
+	tasks, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Task])
+	if err != nil {
+		return fmt.Errorf("cannot collect finding tasks: %w", err)
+	}
+
+	*t = tasks
+
+	return nil
+}
+
 func (t *Task) Update(
 	ctx context.Context,
 	conn pg.Tx,

@@ -49,6 +49,7 @@ export async function execute(
 			node(id: $findingId) {
 				... on Finding {
 					id
+					title
 					kind
 					description
 					source

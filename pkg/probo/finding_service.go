@@ -40,6 +40,7 @@ type (
 	CreateFindingRequest struct {
 		OrganizationID     gid.GID
 		Kind               coredata.FindingKind
+		Title              string
 		Description        *string
 		Source             *string
 		IdentifiedOn       *time.Time
@@ -55,6 +56,7 @@ type (
 
 	UpdateFindingRequest struct {
 		ID                 gid.GID
+		Title              **string
 		Description        **string
 		Source             **string
 		IdentifiedOn       **time.Time
@@ -74,6 +76,7 @@ func (r *CreateFindingRequest) Validate() error {
 
 	v.Check(r.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
 	v.Check(r.Kind, "kind", validator.Required(), validator.OneOfSlice(coredata.FindingKinds()))
+	v.Check(r.Title, "title", validator.Required(), validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(r.Description, "description", validator.SafeText(ContentMaxLength))
 	v.Check(r.Source, "source", validator.SafeText(ContentMaxLength))
 	v.Check(r.RootCause, "root_cause", validator.SafeText(ContentMaxLength))
@@ -95,6 +98,11 @@ func (r *UpdateFindingRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(r.ID, "id", validator.Required(), validator.GID(coredata.FindingEntityType))
+
+	if r.Title != nil {
+		v.Check(*r.Title, "title", validator.Required(), validator.SafeTextNoNewLine(TitleMaxLength))
+	}
+
 	v.Check(r.Description, "description", validator.SafeText(ContentMaxLength))
 	v.Check(r.Source, "source", validator.SafeText(ContentMaxLength))
 	v.Check(r.RootCause, "root_cause", validator.SafeText(ContentMaxLength))
@@ -141,6 +149,7 @@ func (s *FindingService) Create(
 		ID:                 gid.New(scope.GetTenantID(), coredata.FindingEntityType),
 		OrganizationID:     req.OrganizationID,
 		Kind:               req.Kind,
+		Title:              req.Title,
 		Description:        req.Description,
 		Source:             req.Source,
 		IdentifiedOn:       req.IdentifiedOn,
@@ -215,6 +224,10 @@ func (s *FindingService) Update(
 		func(ctx context.Context, conn pg.Tx) error {
 			if err := finding.LoadByID(ctx, conn, scope, req.ID); err != nil {
 				return fmt.Errorf("cannot load finding: %w", err)
+			}
+
+			if req.Title != nil {
+				finding.Title = **req.Title
 			}
 
 			if req.Description != nil {
@@ -363,6 +376,90 @@ func (s FindingService) CountForOrganizationID(
 	}
 
 	return count, nil
+}
+
+func (s FindingService) CreateTaskMapping(
+	ctx context.Context,
+	scope coredata.Scoper,
+	findingID gid.GID,
+	taskID gid.GID,
+) (*coredata.Finding, *coredata.Task, error) {
+	finding := &coredata.Finding{}
+	linkedTask := &coredata.Task{}
+	findingTask := &coredata.FindingTask{
+		FindingID: findingID,
+		TaskID:    taskID,
+		CreatedAt: time.Now(),
+	}
+
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := finding.LoadByID(ctx, tx, scope, findingID); err != nil {
+				return fmt.Errorf("cannot load finding: %w", err)
+			}
+
+			if err := linkedTask.LoadByID(ctx, tx, scope, taskID); err != nil {
+				return fmt.Errorf("cannot load task: %w", err)
+			}
+
+			if finding.OrganizationID != linkedTask.OrganizationID {
+				return fmt.Errorf("cannot create finding task mapping: finding and task belong to different organizations: %w", coredata.ErrResourceNotFound)
+			}
+
+			findingTask.OrganizationID = finding.OrganizationID
+
+			if err := findingTask.Insert(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot create finding task mapping: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return finding, linkedTask, nil
+}
+
+func (s FindingService) DeleteTaskMapping(
+	ctx context.Context,
+	scope coredata.Scoper,
+	findingID gid.GID,
+	taskID gid.GID,
+) (*coredata.Finding, *coredata.Task, error) {
+	finding := &coredata.Finding{}
+	linkedTask := &coredata.Task{}
+
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := finding.LoadByID(ctx, tx, scope, findingID); err != nil {
+				return fmt.Errorf("cannot load finding: %w", err)
+			}
+
+			if err := linkedTask.LoadByID(ctx, tx, scope, taskID); err != nil {
+				return fmt.Errorf("cannot load task: %w", err)
+			}
+
+			if finding.OrganizationID != linkedTask.OrganizationID {
+				return fmt.Errorf("cannot delete finding task mapping: finding and task belong to different organizations: %w", coredata.ErrResourceNotFound)
+			}
+
+			findingTask := coredata.FindingTask{}
+			if err := findingTask.Delete(ctx, tx, scope, finding.ID, linkedTask.ID); err != nil {
+				return fmt.Errorf("cannot delete finding task mapping: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, nil, fmt.Errorf("cannot delete finding task mapping: %w", err)
+	}
+
+	return finding, linkedTask, nil
 }
 
 func (s FindingService) CreateAuditMapping(

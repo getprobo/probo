@@ -36,6 +36,7 @@ mutation FindingCreate($input: CreateFindingInput!) {
       node {
         id
         referenceId
+        title
         kind
         status
         priority
@@ -51,6 +52,7 @@ type createResponse struct {
 			Node struct {
 				ID          string `json:"id"`
 				ReferenceID string `json:"referenceId"`
+				Title       string `json:"title"`
 				Kind        string `json:"kind"`
 				Status      string `json:"status"`
 				Priority    string `json:"priority"`
@@ -63,6 +65,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagOrg              string
 		flagKind             string
+		flagTitle            string
 		flagDescription      string
 		flagSource           string
 		flagIdentifiedOn     string
@@ -80,7 +83,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		Use:   "create",
 		Short: "Create a new finding",
 		Example: `  # Create a finding
-  prb finding create --org ORG_ID --kind MINOR_NONCONFORMITY --owner-id OWNER_ID --status OPEN --priority HIGH`,
+  prb finding create --org ORG_ID --kind MINOR_NONCONFORMITY --title "Missing access review" --owner-id OWNER_ID --status OPEN --priority HIGH`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateEnum("kind", flagKind, []string{"MINOR_NONCONFORMITY", "MAJOR_NONCONFORMITY", "OBSERVATION", "EXCEPTION"}); err != nil {
@@ -121,6 +124,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			input := map[string]any{
 				"organizationId": flagOrg,
 				"kind":           flagKind,
+				"title":          flagTitle,
 				"status":         flagStatus,
 				"priority":       flagPriority,
 			}
@@ -188,6 +192,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 
 	cmdutil.AddOrganizationFlag(cmd, &flagOrg, "Organization ID")
 	cmd.Flags().StringVar(&flagKind, "kind", "", "Finding kind: MINOR_NONCONFORMITY, MAJOR_NONCONFORMITY, OBSERVATION, EXCEPTION (required)")
+	cmd.Flags().StringVar(&flagTitle, "title", "", "Finding title (required)")
 	cmd.Flags().StringVar(&flagDescription, "description", "", "Finding description")
 	cmd.Flags().StringVar(&flagSource, "source", "", "Finding source")
 	cmd.Flags().StringVar(&flagIdentifiedOn, "identified-on", "", "Date identified (RFC3339)")
@@ -201,6 +206,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagEffectivenessChk, "effectiveness-check", "", "Effectiveness check")
 
 	_ = cmd.MarkFlagRequired("kind")
+	_ = cmd.MarkFlagRequired("title")
 	_ = cmd.MarkFlagRequired("status")
 	_ = cmd.MarkFlagRequired("priority")
 

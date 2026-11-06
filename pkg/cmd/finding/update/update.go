@@ -35,6 +35,7 @@ mutation FindingUpdate($input: UpdateFindingInput!) {
     finding {
       id
       referenceId
+      title
       kind
       status
       priority
@@ -48,6 +49,7 @@ type updateResponse struct {
 		Finding struct {
 			ID          string `json:"id"`
 			ReferenceID string `json:"referenceId"`
+			Title       string `json:"title"`
 			Kind        string `json:"kind"`
 			Status      string `json:"status"`
 			Priority    string `json:"priority"`
@@ -57,6 +59,7 @@ type updateResponse struct {
 
 func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	var (
+		flagTitle            string
 		flagDescription      string
 		flagSource           string
 		flagIdentifiedOn     string
@@ -95,6 +98,10 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 
 			input := map[string]any{
 				"id": args[0],
+			}
+
+			if cmd.Flags().Changed("title") {
+				input["title"] = flagTitle
 			}
 
 			if cmd.Flags().Changed("description") {
@@ -210,6 +217,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
+	cmd.Flags().StringVar(&flagTitle, "title", "", "Finding title")
 	cmd.Flags().StringVar(&flagDescription, "description", "", "Finding description")
 	cmd.Flags().StringVar(&flagSource, "source", "", "Finding source")
 	cmd.Flags().StringVar(&flagIdentifiedOn, "identified-on", "", "Date identified (RFC3339)")

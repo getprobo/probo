@@ -25,12 +25,11 @@ import { useParams } from "react-router";
 import type { FindingDetailsPageQuery } from "#/__generated__/core/FindingDetailsPageQuery.graphql";
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 
-import FindingDetailsPage, { findingDetailsPageQuery } from "./FindingDetailsPage";
+import { FindingDetailsPage, findingDetailsPageQuery } from "./FindingDetailsPage";
 
 export default function FindingDetailsPageLoader() {
   const { findingId } = useParams<{ findingId: string }>();
-  const [queryRef, loadQuery]
-    = useQueryLoader<FindingDetailsPageQuery>(findingDetailsPageQuery);
+  const [queryRef, loadQuery] = useQueryLoader<FindingDetailsPageQuery>(findingDetailsPageQuery);
 
   useEffect(() => {
     if (findingId) {
@@ -38,13 +37,17 @@ export default function FindingDetailsPageLoader() {
     }
   }, [loadQuery, findingId]);
 
-  if (!queryRef) {
+  const currentQueryRef = queryRef != null && queryRef.variables.findingId === findingId
+    ? queryRef
+    : null;
+
+  if (!currentQueryRef) {
     return <PageSkeleton />;
   }
 
   return (
     <Suspense fallback={<PageSkeleton />}>
-      <FindingDetailsPage queryRef={queryRef} />
+      <FindingDetailsPage key={findingId} queryRef={currentQueryRef} />
     </Suspense>
   );
 }

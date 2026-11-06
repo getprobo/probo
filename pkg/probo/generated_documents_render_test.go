@@ -157,6 +157,7 @@ func TestBuildDocuments_ProduceParseableProseMirror(t *testing.T) {
 						Rows: []docgen.FindingListRow{
 							{
 								ReferenceID:        hostileText,
+								Title:              hostileText,
 								Kind:               hostileText,
 								Description:        hostileText,
 								Source:             hostileText,
