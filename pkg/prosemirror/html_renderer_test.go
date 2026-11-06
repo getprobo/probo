@@ -516,3 +516,28 @@ func TestRenderHTML_NodesWithoutAttrs(t *testing.T) {
 		)
 	}
 }
+
+func TestRenderHTML_Mention(t *testing.T) {
+	t.Parallel()
+
+	attrs, err := json.Marshal(MentionAttrs{ID: "profile", Label: "Alice <Bob>"})
+	require.NoError(t, err)
+
+	got, err := RenderHTML(Node{
+		Type: NodeDoc,
+		Content: []Node{
+			{
+				Type: NodeParagraph,
+				Content: []Node{
+					{Type: NodeMention, Attrs: attrs},
+				},
+			},
+		},
+	})
+	require.NoError(t, err)
+	assert.Equal(
+		t,
+		`<p><span class="mention" data-type="mention" data-id="profile" data-label="Alice &lt;Bob&gt;">@Alice &lt;Bob&gt;</span></p>`,
+		got,
+	)
+}

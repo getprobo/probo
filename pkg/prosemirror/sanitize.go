@@ -24,6 +24,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 // ValidateDocumentContentJSON returns nil if s is empty or whitespace-only.
@@ -45,6 +48,82 @@ func ValidateDocumentContentJSON(s string) error {
 	}
 
 	return nil
+}
+
+// ValidateCommentContentJSON returns nil if s is empty or whitespace-only.
+// Otherwise s must be valid ProseMirror JSON that also stays within the
+// comment allowlist: paragraphs, lists, blockquotes, hard breaks, mentions,
+// and the bold/italic/strike/code/link marks.
+func ValidateCommentContentJSON(s string) error {
+	if strings.TrimSpace(s) == "" {
+		return nil
+	}
+
+	n, err := parseDocRoot(s)
+	if err != nil {
+		return err
+	}
+
+	if err := validateDocument(n); err != nil {
+		return fmt.Errorf("cannot validate comment document: %w", err)
+	}
+
+	if err := validateCommentAllowlist(n); err != nil {
+		return fmt.Errorf("cannot validate comment allowlist: %w", err)
+	}
+
+	return nil
+}
+
+func validateCommentAllowlist(n Node) error {
+	if !isCommentNode(n.Type) {
+		return fmt.Errorf("node type %q is not allowed in comments", n.Type)
+	}
+
+	if n.Type == NodeMention {
+		attrs, err := n.MentionAttrs()
+		if err != nil {
+			return fmt.Errorf("cannot validate mention node: %w", err)
+		}
+
+		parsed, err := gid.ParseGID(strings.TrimSpace(attrs.ID))
+		if err != nil || parsed.EntityType() != coredata.MembershipProfileEntityType {
+			return fmt.Errorf("cannot validate mention node: invalid id")
+		}
+	}
+
+	for _, mark := range n.Marks {
+		if !isCommentMark(mark.Type) {
+			return fmt.Errorf("mark type %q is not allowed in comments", mark.Type)
+		}
+	}
+
+	for _, child := range n.Content {
+		if err := validateCommentAllowlist(child); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func isCommentNode(t NodeType) bool {
+	switch t {
+	case NodeDoc, NodeParagraph, NodeBlockquote, NodeBulletList, NodeOrderedList,
+		NodeListItem, NodeText, NodeHardBreak, NodeMention:
+		return true
+	default:
+		return false
+	}
+}
+
+func isCommentMark(t MarkType) bool {
+	switch t {
+	case MarkStrong, MarkEm, MarkStrike, MarkCode, MarkLink:
+		return true
+	default:
+		return false
+	}
 }
 
 func parseDocRoot(s string) (Node, error) {

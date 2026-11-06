@@ -27,6 +27,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 )
 
@@ -34,6 +35,7 @@ func TestValidateDocumentContentJSON_Schema(t *testing.T) {
 	t.Parallel()
 
 	fileID := gid.New(gid.TenantID{}, 25).String()
+	profileID := gid.New(gid.TenantID{}, coredata.MembershipProfileEntityType).String()
 
 	tests := []struct {
 		name    string
@@ -46,6 +48,29 @@ func TestValidateDocumentContentJSON_Schema(t *testing.T) {
 			name:    "valid paragraph",
 			in:      `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"hi"}]}]}`,
 			wantErr: false,
+		},
+		{
+			name: "valid mention",
+			in: fmt.Sprintf(
+				`{"type":"doc","content":[{"type":"paragraph","content":[{"type":"mention","attrs":{"id":"%s","label":"Alice"}}]}]}`,
+				profileID,
+			),
+			wantErr: false,
+		},
+		{
+			name:    "mention missing id",
+			in:      `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"mention","attrs":{"id":"","label":"Alice"}}]}]}`,
+			wantErr: true,
+		},
+		{
+			name:    "mention missing label",
+			in:      fmt.Sprintf(`{"type":"doc","content":[{"type":"paragraph","content":[{"type":"mention","attrs":{"id":"%s","label":""}}]}]}`, profileID),
+			wantErr: true,
+		},
+		{
+			name:    "mention at doc root",
+			in:      fmt.Sprintf(`{"type":"doc","content":[{"type":"mention","attrs":{"id":"%s","label":"Alice"}}]}`, profileID),
+			wantErr: true,
 		},
 		{name: "plain text", in: "not json", wantErr: true},
 		{name: "non-doc root", in: `{"type":"paragraph","content":[]}`, wantErr: true},
@@ -172,6 +197,70 @@ func TestValidateDocumentContentJSON_Schema(t *testing.T) {
 			t.Parallel()
 
 			err := ValidateDocumentContentJSON(tt.in)
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+		})
+	}
+}
+
+func TestValidateCommentContentJSON(t *testing.T) {
+	t.Parallel()
+
+	profileID := gid.New(gid.TenantID{}, coredata.MembershipProfileEntityType).String()
+
+	tests := []struct {
+		name    string
+		in      string
+		wantErr bool
+	}{
+		{name: "empty", in: "", wantErr: false},
+		{
+			name:    "paragraph",
+			in:      `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"hi"}]}]}`,
+			wantErr: false,
+		},
+		{
+			name: "mention",
+			in: fmt.Sprintf(
+				`{"type":"doc","content":[{"type":"paragraph","content":[{"type":"mention","attrs":{"id":"%s","label":"Alice"}}]}]}`,
+				profileID,
+			),
+			wantErr: false,
+		},
+		{
+			name: "mention wrong entity type",
+			in: fmt.Sprintf(
+				`{"type":"doc","content":[{"type":"paragraph","content":[{"type":"mention","attrs":{"id":"%s","label":"Alice"}}]}]}`,
+				gid.New(gid.TenantID{}, coredata.DocumentEntityType).String(),
+			),
+			wantErr: true,
+		},
+		{
+			name:    "heading rejected",
+			in:      `{"type":"doc","content":[{"type":"heading","attrs":{"level":1},"content":[{"type":"text","text":"hi"}]}]}`,
+			wantErr: true,
+		},
+		{
+			name:    "image rejected",
+			in:      `{"type":"doc","content":[{"type":"image","attrs":{"src":"https://example.com/img.png"}}]}`,
+			wantErr: true,
+		},
+		{
+			name:    "underline rejected",
+			in:      `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","marks":[{"type":"underline"}],"text":"hi"}]}]}`,
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			err := ValidateCommentContentJSON(tt.in)
 			if tt.wantErr {
 				require.Error(t, err)
 				return

@@ -56,6 +56,34 @@ func ProseMirrorDocumentContent() ValidatorFunc {
 	}
 }
 
+// ProseMirrorCommentContent requires non-empty string values to be valid
+// ProseMirror/Tiptap JSON restricted to the comment allowlist (paragraphs,
+// lists, blockquotes, mentions, and the bold/italic/strike/code/link marks).
+// Empty and whitespace-only strings are allowed.
+func ProseMirrorCommentContent() ValidatorFunc {
+	return func(value any) *ValidationError {
+		actualValue, isNil := dereferenceValue(value)
+		if isNil {
+			return nil
+		}
+
+		s, ok := actualValue.(string)
+		if !ok {
+			return newValidationError(ErrorCodeInvalidFormat, "value must be a string")
+		}
+
+		if strings.TrimSpace(s) == "" {
+			return nil
+		}
+
+		if err := prosemirror.ValidateCommentContentJSON(s); err != nil {
+			return newValidationError(ErrorCodeInvalidFormat, err.Error())
+		}
+
+		return nil
+	}
+}
+
 // ProseMirrorDocumentMaxTextLength validates that the total text content
 // within a ProseMirror/Tiptap JSON document does not exceed maxLength bytes.
 // Only user-visible text is counted; structural markup is excluded.

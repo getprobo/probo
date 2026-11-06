@@ -110,6 +110,50 @@ func TestProseMirrorDocumentMaxTextLength(t *testing.T) {
 	}
 }
 
+func TestProseMirrorCommentContent(t *testing.T) {
+	t.Parallel()
+
+	validDoc := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"hi"}]}]}`
+	heading := `{"type":"doc","content":[{"type":"heading","attrs":{"level":1},"content":[{"type":"text","text":"hi"}]}]}`
+	image := `{"type":"doc","content":[{"type":"image","attrs":{"src":"https://example.com/img.png"}}]}`
+	underline := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","marks":[{"type":"underline"}],"text":"hi"}]}]}`
+	list := `{"type":"doc","content":[{"type":"bulletList","content":[{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"hi"}]}]}]}]}`
+	blockquote := `{"type":"doc","content":[{"type":"blockquote","content":[{"type":"paragraph","content":[{"type":"text","text":"hi"}]}]}]}`
+
+	tests := []struct {
+		name      string
+		value     any
+		wantError bool
+	}{
+		{"empty string", "", false},
+		{"valid paragraph", validDoc, false},
+		{"valid list", list, false},
+		{"valid blockquote", blockquote, false},
+		{"heading rejected", heading, true},
+		{"image rejected", image, true},
+		{"underline rejected", underline, true},
+		{"plain text", "not json", true},
+		{"non-string", 1, true},
+	}
+
+	fn := ProseMirrorCommentContent()
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			err := fn(tt.value)
+			if (err != nil) != tt.wantError {
+				t.Errorf("ProseMirrorCommentContent() error = %v, wantError %v", err, tt.wantError)
+			}
+
+			if err != nil && err.Code != ErrorCodeInvalidFormat {
+				t.Errorf("expected code %s, got %s", ErrorCodeInvalidFormat, err.Code)
+			}
+		})
+	}
+}
+
 func TestHasVisibleRichText(t *testing.T) {
 	t.Parallel()
 

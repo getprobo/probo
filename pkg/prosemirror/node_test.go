@@ -489,6 +489,19 @@ func TestTextLength(t *testing.T) {
 	)
 
 	t.Run(
+		"mention counts label",
+		func(t *testing.T) {
+			t.Parallel()
+
+			attrs, err := json.Marshal(MentionAttrs{ID: "unused", Label: "Alice"})
+			require.NoError(t, err)
+
+			n := Node{Type: NodeMention, Attrs: attrs}
+			assert.Equal(t, 6, n.TextLength())
+		},
+	)
+
+	t.Run(
 		"multiple paragraphs",
 		func(t *testing.T) {
 			t.Parallel()

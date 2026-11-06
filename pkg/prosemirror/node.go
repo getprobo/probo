@@ -88,18 +88,19 @@ type (
 		Size     int64  `json:"size"`
 	}
 
+	// MentionAttrs contains attributes for mention nodes.
+	// ID is the membership-profile GID of the tagged person.
+	// Label is the display name captured at write time.
+	MentionAttrs struct {
+		ID    string `json:"id"`
+		Label string `json:"label"`
+	}
+
 	// TableCellAttrs contains attributes for table cell and table header nodes.
 	TableCellAttrs struct {
 		Colspan  int   `json:"colspan"`
 		Rowspan  int   `json:"rowspan"`
 		Colwidth []int `json:"colwidth"`
-	}
-
-	// MentionAttrs contains attributes for mention nodes. ID is the
-	// mentioned membership profile GID; Label is its display name.
-	MentionAttrs struct {
-		ID    string `json:"id"`
-		Label string `json:"label"`
 	}
 
 	// LinkAttrs contains attributes for link marks.
@@ -126,6 +127,7 @@ const (
 	NodeText           NodeType = "text"
 	NodeImage          NodeType = "image"
 	NodeFile           NodeType = "file"
+	NodeMention        NodeType = "mention"
 	NodeBulletList     NodeType = "bulletList"
 	NodeOrderedList    NodeType = "orderedList"
 	NodeListItem       NodeType = "listItem"
@@ -135,7 +137,6 @@ const (
 	NodeTableRow       NodeType = "tableRow"
 	NodeTableCell      NodeType = "tableCell"
 	NodeTableHeader    NodeType = "tableHeader"
-	NodeMention        NodeType = "mention"
 
 	MarkStrong    MarkType = "bold"
 	MarkEm        MarkType = "italic"
@@ -273,10 +274,18 @@ func (n Node) TableCellAttrs() (TableCellAttrs, error) {
 
 // TextLength returns the total number of characters (Unicode code points)
 // across all text nodes in the tree. Structural markup is excluded.
+// Mentions count as "@" plus their label.
 func (n Node) TextLength() int {
 	length := 0
 	if n.Text != nil {
 		length += utf8.RuneCountInString(*n.Text)
+	}
+
+	if n.Type == NodeMention {
+		attrs, err := n.MentionAttrs()
+		if err == nil {
+			length += 1 + utf8.RuneCountInString(attrs.Label)
+		}
 	}
 
 	for _, child := range n.Content {
