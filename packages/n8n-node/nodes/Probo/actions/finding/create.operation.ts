@@ -60,6 +60,20 @@ export const description: INodeProperties[] = [
 		required: true,
 	},
 	{
+		displayName: 'Title',
+		name: 'title',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['finding'],
+				operation: ['create'],
+			},
+		},
+		default: '',
+		description: 'The title of the finding',
+		required: true,
+	},
+	{
 		displayName: 'Description',
 		name: 'description',
 		type: 'string',
@@ -199,6 +213,7 @@ export async function execute(
 ): Promise<INodeExecutionData> {
 	const organizationId = this.getNodeParameter('organizationId', itemIndex, '', { extractValue: true }) as string;
 	const kind = this.getNodeParameter('kind', itemIndex) as string;
+	const title = this.getNodeParameter('title', itemIndex) as string;
 	const description = this.getNodeParameter('description', itemIndex) as string;
 	const additionalFields = this.getNodeParameter('additionalFields', itemIndex, {}) as {
 		source?: string;
@@ -219,6 +234,7 @@ export async function execute(
 				findingEdge {
 					node {
 						id
+						title
 						kind
 						description
 						source
@@ -240,6 +256,7 @@ export async function execute(
 	const input: Record<string, unknown> = {
 		organizationId,
 		kind,
+		title,
 		description,
 	};
 	if (additionalFields.source) input.source = additionalFields.source;

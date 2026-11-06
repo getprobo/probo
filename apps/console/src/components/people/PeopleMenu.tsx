@@ -30,19 +30,19 @@ import { type ReactNode, Suspense, use, useEffect, useRef, useState, useTransiti
 import { useTranslation } from "react-i18next";
 import { graphql, useLazyLoadQuery, usePaginationFragment } from "react-relay";
 
-import type { TaskAssigneeMenu_organization$key } from "#/__generated__/core/TaskAssigneeMenu_organization.graphql";
-import type { TaskAssigneeMenuQuery } from "#/__generated__/core/TaskAssigneeMenuQuery.graphql";
+import type { PeopleMenu_organization$key } from "#/__generated__/core/PeopleMenu_organization.graphql";
+import type { PeopleMenuQuery } from "#/__generated__/core/PeopleMenuQuery.graphql";
 import type {
+  PeopleMenuRefetchQuery,
   ProfileFilter,
-  TaskAssigneeMenuRefetchQuery,
-} from "#/__generated__/core/TaskAssigneeMenuRefetchQuery.graphql";
+} from "#/__generated__/core/PeopleMenuRefetchQuery.graphql";
 import { UserSelectOption } from "#/components/form/UserSelectOption";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { CurrentUser, type CurrentUserProfile } from "#/providers/CurrentUser";
 
 const pageSize = 10;
 const searchDebounceMs = 300;
-const assigneeMenuSkeletonWidths = ["w-24", "w-16", "w-28", "w-20"] as const;
+const peopleMenuSkeletonWidths = ["w-24", "w-16", "w-28", "w-20"] as const;
 
 function assigneeFilter(query: string | null, hideEndedContracts: boolean): ProfileFilter {
   return {
@@ -53,19 +53,19 @@ function assigneeFilter(query: string | null, hideEndedContracts: boolean): Prof
 }
 
 const taskAssigneeMenuQuery = graphql`
-  query TaskAssigneeMenuQuery($organizationId: ID!, $filter: ProfileFilter) {
+  query PeopleMenuQuery($organizationId: ID!, $filter: ProfileFilter) {
     organization: node(id: $organizationId) @required(action: THROW) {
       __typename
       ... on Organization {
-        ...TaskAssigneeMenu_organization @arguments(filter: $filter)
+        ...PeopleMenu_organization @arguments(filter: $filter)
       }
     }
   }
 `;
 
 const taskAssigneeMenuFragment = graphql`
-  fragment TaskAssigneeMenu_organization on Organization
-  @refetchable(queryName: "TaskAssigneeMenuRefetchQuery")
+  fragment PeopleMenu_organization on Organization
+  @refetchable(queryName: "PeopleMenuRefetchQuery")
   @argumentDefinitions(
     first: { type: "Int", defaultValue: 10 }
     after: { type: "CursorKey", defaultValue: null }
@@ -76,7 +76,7 @@ const taskAssigneeMenuFragment = graphql`
       after: $after
       orderBy: { direction: DESC, field: CREATED_AT }
       filter: $filter
-    ) @connection(key: "TaskAssigneeMenu_profiles", filters: ["filter"]) {
+    ) @connection(key: "PeopleMenu_profiles", filters: ["filter"]) {
       edges {
         node {
           id
@@ -91,16 +91,16 @@ const taskAssigneeMenuFragment = graphql`
   }
 `;
 
-export interface TaskAssigneeOption {
+export interface PeopleOption {
   id: string;
   fullName: string;
   emailAddress: string;
   avatarUrl?: string | null;
 }
 
-export interface TaskAssigneeMenuProps {
+export interface PeopleMenuProps {
   value: string | null;
-  emptyLabel: string;
+  emptyLabel?: string;
   emptyValue: string | null;
   // Icon shown beside the empty choice. The user filter leaves this unset
   // because "All users" is not an assignee.
@@ -114,18 +114,18 @@ export interface TaskAssigneeMenuProps {
   disabled?: boolean;
   hideEndedContracts?: boolean;
   onValueChange: (value: string | null) => void;
-  onSelect?: (assignee: TaskAssigneeOption | null) => void;
+  onSelect?: (assignee: PeopleOption | null) => void;
 }
 
-export function TaskAssigneeMenu(props: TaskAssigneeMenuProps) {
+export function PeopleMenu(props: PeopleMenuProps) {
   return (
-    <Suspense fallback={<AssigneeMenuSkeleton disabled={props.disabled} />}>
-      <TaskAssigneeMenuLoaded {...props} />
+    <Suspense fallback={<PeopleMenuSkeleton disabled={props.disabled} />}>
+      <PeopleMenuLoaded {...props} />
     </Suspense>
   );
 }
 
-function TaskAssigneeMenuLoaded({
+function PeopleMenuLoaded({
   value,
   emptyLabel,
   emptyValue,
@@ -135,9 +135,8 @@ function TaskAssigneeMenuLoaded({
   hideEndedContracts = true,
   onValueChange,
   onSelect,
-}: TaskAssigneeMenuProps) {
-  const { t } = useTranslation("organizations/tasks");
-  const { t: tCommon } = useTranslation();
+}: PeopleMenuProps) {
+  const { t } = useTranslation();
   const { size } = useDropdownContext();
   const organizationId = useOrganizationId();
   const { profile } = use(CurrentUser);
@@ -145,7 +144,7 @@ function TaskAssigneeMenuLoaded({
   const [graphqlQuery, setGraphqlQuery] = useState<string | null>(null);
   const [, startTransition] = useTransition();
   const skipFirstRefetch = useRef(true);
-  const data = useLazyLoadQuery<TaskAssigneeMenuQuery>(
+  const data = useLazyLoadQuery<PeopleMenuQuery>(
     taskAssigneeMenuQuery,
     { organizationId, filter: assigneeFilter(null, hideEndedContracts) },
   );
@@ -156,8 +155,8 @@ function TaskAssigneeMenuLoaded({
     isLoadingNext,
     refetch,
   } = usePaginationFragment<
-    TaskAssigneeMenuRefetchQuery,
-    TaskAssigneeMenu_organization$key
+    PeopleMenuRefetchQuery,
+    PeopleMenu_organization$key
   >(
     taskAssigneeMenuFragment,
     data.organization.__typename === "Organization" ? data.organization : null,
@@ -225,29 +224,31 @@ function TaskAssigneeMenuLoaded({
 
   return (
     <div className="flex w-64 flex-col gap-1">
-      <AssigneeMenuSearch
+      <PeopleMenuSearch
         value={input}
         size={size}
         disabled={disabled}
         onValueChange={setInput}
       />
       <div className="flex max-h-64 flex-col gap-1 overflow-y-auto">
-        <DropdownItem
-          disabled={disabled}
-          onClick={() => {
-            select(emptyValue);
-          }}
-        >
-          {emptyIcon == null
-            ? emptyLabel
-            : (
-                <UserSelectOption
-                  fullName={emptyLabel}
-                  size={size}
-                  fallback={emptyIcon}
-                />
-              )}
-        </DropdownItem>
+        {emptyLabel != null && (
+          <DropdownItem
+            disabled={disabled}
+            onClick={() => {
+              select(emptyValue);
+            }}
+          >
+            {emptyIcon == null
+              ? emptyLabel
+              : (
+                  <UserSelectOption
+                    fullName={emptyLabel}
+                    size={size}
+                    fallback={emptyIcon}
+                  />
+                )}
+          </DropdownItem>
+        )}
         {unassigned != null && (
           <DropdownItem
             disabled={disabled}
@@ -280,7 +281,7 @@ function TaskAssigneeMenuLoaded({
         ))}
         {users.length === 0 && (
           <Text size={2} color="faint" className="px-3 py-1.5">
-            {t("detailsPage.assigneeMenu.empty")}
+            {t("peopleMenu.empty")}
           </Text>
         )}
       </div>
@@ -296,20 +297,20 @@ function TaskAssigneeMenuLoaded({
             loadNext(pageSize);
           }}
         >
-          {tCommon("userSelect.loadMore")}
+          {t("userSelect.loadMore")}
         </Button>
       )}
     </div>
   );
 }
 
-function AssigneeMenuSkeleton({ disabled }: { disabled?: boolean }) {
+function PeopleMenuSkeleton({ disabled }: { disabled?: boolean }) {
   const { size } = useDropdownContext();
 
   return (
     <div className="flex w-64 flex-col gap-1" aria-busy="true">
-      <AssigneeMenuSearch size={size} disabled={disabled} />
-      {assigneeMenuSkeletonWidths.map(width => (
+      <PeopleMenuSearch size={size} disabled={disabled} />
+      {peopleMenuSkeletonWidths.map(width => (
         <div
           key={width}
           className={size === 1
@@ -329,7 +330,7 @@ function AssigneeMenuSkeleton({ disabled }: { disabled?: boolean }) {
   );
 }
 
-function AssigneeMenuSearch({
+function PeopleMenuSearch({
   value = "",
   size,
   disabled,
@@ -340,7 +341,7 @@ function AssigneeMenuSearch({
   disabled?: boolean;
   onValueChange?: (value: string) => void;
 }) {
-  const { t } = useTranslation("organizations/tasks");
+  const { t } = useTranslation();
 
   return (
     <div
@@ -355,17 +356,17 @@ function AssigneeMenuSearch({
         value={value}
         disabled={disabled}
         onValueChange={onValueChange}
-        placeholder={t("detailsPage.assigneeMenu.searchPlaceholder")}
-        aria-label={t("detailsPage.assigneeMenu.searchPlaceholder")}
+        placeholder={t("peopleMenu.searchPlaceholder")}
+        aria-label={t("peopleMenu.searchPlaceholder")}
       />
     </div>
   );
 }
 
 function pinViewer(
-  users: readonly TaskAssigneeOption[],
+  users: readonly PeopleOption[],
   profile: CurrentUserProfile | null,
-): TaskAssigneeOption[] {
+): PeopleOption[] {
   if (profile == null || profile.id === "") {
     return [...users];
   }

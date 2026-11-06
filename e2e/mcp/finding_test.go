@@ -40,16 +40,19 @@ func TestMCP_Finding_CRUD(t *testing.T) {
 		Finding struct {
 			ID          string  `json:"id"`
 			Kind        string  `json:"kind"`
+			Title       string  `json:"title"`
 			Description *string `json:"description"`
 		} `json:"finding"`
 	}
 	mc.CallToolInto("addFinding", map[string]any{
 		"organization_id": orgID,
 		"kind":            "OBSERVATION",
+		"title":           "Access review gap",
 		"description":     factory.SafeName("Finding"),
 	}, &addResult)
 	require.NotEmpty(t, addResult.Finding.ID)
 	assert.Equal(t, "OBSERVATION", addResult.Finding.Kind)
+	assert.Equal(t, "Access review gap", addResult.Finding.Title)
 
 	// Get
 	var getResult struct {

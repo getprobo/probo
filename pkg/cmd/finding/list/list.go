@@ -39,6 +39,7 @@ query FindingList($id: ID!, $first: Int, $after: CursorKey, $orderBy: FindingOrd
           node {
             id
             referenceId
+            title
             kind
             status
             priority
@@ -58,6 +59,7 @@ query FindingList($id: ID!, $first: Int, $after: CursorKey, $orderBy: FindingOrd
 type finding struct {
 	ID          string  `json:"id"`
 	ReferenceID string  `json:"referenceId"`
+	Title       string  `json:"title"`
 	Kind        string  `json:"kind"`
 	Status      string  `json:"status"`
 	Priority    string  `json:"priority"`
@@ -162,7 +164,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					Empty:      "No findings found.",
 					Noun:       "findings",
 					NextCursor: nextCursor,
-					Headers:    []string{"ID", "REFERENCE", "KIND", "STATUS", "PRIORITY", "DUE DATE"},
+					Headers:    []string{"ID", "REFERENCE", "TITLE", "KIND", "STATUS", "PRIORITY", "DUE DATE"},
 					Row: func(fi finding) ([]string, error) {
 						dueDate := "-"
 						if fi.DueDate != nil {
@@ -172,6 +174,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 						return []string{
 							fi.ID,
 							fi.ReferenceID,
+							fi.Title,
 							fi.Kind,
 							fi.Status,
 							fi.Priority,

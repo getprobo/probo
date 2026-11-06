@@ -354,6 +354,7 @@ type (
 
 	FindingListRow struct {
 		ReferenceID        string
+		Title              string
 		Kind               string
 		Description        string
 		Source             string

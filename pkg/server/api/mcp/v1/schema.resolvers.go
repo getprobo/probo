@@ -941,6 +941,7 @@ func (r *Resolver) AddFindingTool(ctx context.Context, req *mcp.CallToolRequest,
 		&probo.CreateFindingRequest{
 			OrganizationID:     input.OrganizationID,
 			Kind:               input.Kind,
+			Title:              input.Title,
 			Description:        input.Description,
 			Source:             input.Source,
 			IdentifiedOn:       input.IdentifiedOn,
@@ -975,6 +976,7 @@ func (r *Resolver) UpdateFindingTool(ctx context.Context, req *mcp.CallToolReque
 		ctx, scope,
 		&probo.UpdateFindingRequest{
 			ID:                 input.ID,
+			Title:              UnwrapOmittable(input.Title),
 			Description:        UnwrapOmittable(input.Description),
 			Source:             UnwrapOmittable(input.Source),
 			IdentifiedOn:       UnwrapOmittable(input.IdentifiedOn),
@@ -11680,4 +11682,84 @@ func (r *Resolver) ListScanTrackerResourcesTool(ctx context.Context, req *mcp.Ca
 	}
 
 	return nil, types.NewListScanTrackerResourcesOutput(page.NewPage(resources, cursor)), nil
+}
+
+func (r *Resolver) LinkFindingTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkFindingTaskInput) (*mcp.CallToolResult, types.LinkFindingTaskOutput, error) {
+	scope, err := r.Authorize(ctx, input.FindingID, probo.ActionFindingTaskMappingCreate)
+	if err != nil {
+		return nil, types.LinkFindingTaskOutput{}, err
+	}
+
+	finding, linkedTask, err := r.proboSvc.Findings.CreateTaskMapping(ctx, scope, input.FindingID, input.TaskID)
+	if err != nil {
+		return nil, types.LinkFindingTaskOutput{}, fmt.Errorf("cannot link finding to task: %w", err)
+	}
+
+	result, err := r.taskWithExternalLink(ctx, scope, linkedTask)
+	if err != nil {
+		return nil, types.LinkFindingTaskOutput{}, err
+	}
+
+	return nil, types.LinkFindingTaskOutput{
+		Finding: types.NewFinding(finding),
+		Task:    result,
+	}, nil
+}
+
+func (r *Resolver) UnlinkFindingTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkFindingTaskInput) (*mcp.CallToolResult, types.UnlinkFindingTaskOutput, error) {
+	scope, err := r.Authorize(ctx, input.FindingID, probo.ActionFindingTaskMappingDelete)
+	if err != nil {
+		return nil, types.UnlinkFindingTaskOutput{}, err
+	}
+
+	finding, linkedTask, err := r.proboSvc.Findings.DeleteTaskMapping(ctx, scope, input.FindingID, input.TaskID)
+	if err != nil {
+		return nil, types.UnlinkFindingTaskOutput{}, fmt.Errorf("cannot unlink finding from task: %w", err)
+	}
+
+	return nil, types.UnlinkFindingTaskOutput{
+		DeletedFindingID: finding.ID,
+		DeletedTaskID:    linkedTask.ID,
+	}, nil
+}
+
+func (r *Resolver) ListFindingTasksTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListFindingTasksInput) (*mcp.CallToolResult, types.ListFindingTasksOutput, error) {
+	scope, err := r.Authorize(ctx, input.FindingID, task.ActionTaskList)
+	if err != nil {
+		return nil, types.ListFindingTasksOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.TaskOrderField]{
+		Field:     coredata.TaskOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.TaskOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+	taskFilter := coredata.NewTaskFilter(nil, nil, nil, nil, nil, nil, nil, nil)
+
+	taskPage, err := r.task.ListForFindingID(ctx, scope, input.FindingID, cursor, taskFilter)
+	if err != nil {
+		return nil, types.ListFindingTasksOutput{}, fmt.Errorf("cannot list finding tasks: %w", err)
+	}
+
+	links, err := r.taskExternalLinksByTasks(ctx, scope, taskPage.Data)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load task external links", log.Error(err))
+		return nil, types.ListFindingTasksOutput{}, fmt.Errorf("internal error")
+	}
+
+	internalControlIDs, err := r.internalControlIDsByTasks(ctx, scope, taskPage.Data)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load task internal controls", log.Error(err))
+		return nil, types.ListFindingTasksOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, types.NewListFindingTasksOutput(taskPage, links, internalControlIDs), nil
 }

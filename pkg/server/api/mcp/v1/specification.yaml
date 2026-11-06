@@ -4215,6 +4215,7 @@ components:
         - organization_id
         - kind
         - reference_id
+        - title
         - status
         - priority
         - created_at
@@ -4232,6 +4233,9 @@ components:
         reference_id:
           type: string
           description: Reference ID
+        title:
+          type: string
+          description: Title
         description:
           type:
             - string
@@ -4377,6 +4381,7 @@ components:
       required:
         - organization_id
         - kind
+        - title
       properties:
         organization_id:
           $ref: "#/components/schemas/GID"
@@ -4384,6 +4389,9 @@ components:
         kind:
           $ref: "#/components/schemas/FindingKind"
           description: Finding kind
+        title:
+          type: string
+          description: Title
         description:
           type: string
           description: Description
@@ -4450,6 +4458,10 @@ components:
         id:
           $ref: "#/components/schemas/GID"
           description: Finding ID
+        title:
+          type: ["string", "null"]
+          description: Title
+          go.probo.inc/mcpgen/omittable: true
         description:
           type: ["string", "null"]
           description: Description
@@ -4610,6 +4622,87 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Audit"
+
+    LinkFindingTaskInput:
+      type: object
+      required:
+        - finding_id
+        - task_id
+      properties:
+        finding_id:
+          $ref: "#/components/schemas/GID"
+          description: Finding ID
+        task_id:
+          $ref: "#/components/schemas/GID"
+          description: Task ID
+
+    LinkFindingTaskOutput:
+      type: object
+      required:
+        - finding
+        - task
+      properties:
+        finding:
+          $ref: "#/components/schemas/Finding"
+        task:
+          $ref: "#/components/schemas/Task"
+
+    UnlinkFindingTaskInput:
+      type: object
+      required:
+        - finding_id
+        - task_id
+      properties:
+        finding_id:
+          $ref: "#/components/schemas/GID"
+          description: Finding ID
+        task_id:
+          $ref: "#/components/schemas/GID"
+          description: Task ID
+
+    UnlinkFindingTaskOutput:
+      type: object
+      required:
+        - deleted_finding_id
+        - deleted_task_id
+      properties:
+        deleted_finding_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted finding ID
+        deleted_task_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted task ID
+
+    ListFindingTasksInput:
+      type: object
+      required:
+        - finding_id
+      properties:
+        finding_id:
+          $ref: "#/components/schemas/GID"
+          description: Finding ID
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+        size:
+          type: integer
+          description: Page size
+        order_by:
+          $ref: "#/components/schemas/TaskOrderBy"
+          description: Task order by
+
+    ListFindingTasksOutput:
+      type: object
+      required:
+        - tasks
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/Task"
 
     ObligationStatus:
       type: string
@@ -19017,6 +19110,42 @@ tools:
       $ref: "#/components/schemas/ListFindingAuditsInput"
     outputSchema:
       $ref: "#/components/schemas/ListFindingAuditsOutput"
+  - name: linkFindingTask
+    title: Link Finding Task
+    description: Link a task to a finding
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/LinkFindingTaskInput"
+    outputSchema:
+      $ref: "#/components/schemas/LinkFindingTaskOutput"
+  - name: unlinkFindingTask
+    title: Unlink Finding Task
+    description: Unlink a task from a finding
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/UnlinkFindingTaskInput"
+    outputSchema:
+      $ref: "#/components/schemas/UnlinkFindingTaskOutput"
+  - name: listFindingTasks
+    title: List Finding Tasks
+    description: List tasks linked to a finding
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListFindingTasksInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListFindingTasksOutput"
   - name: listObligations
     title: List Obligations
     description: List all obligations for the organization

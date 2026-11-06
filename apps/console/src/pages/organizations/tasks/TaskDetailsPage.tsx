@@ -42,6 +42,7 @@ import { NotFoundError } from "#/lib/relay/errors";
 import { TaskDeleteDialog } from "./_components/TaskDeleteDialog";
 import { TaskDescriptionSection } from "./_components/TaskDescriptionSection";
 import { TaskEngagementSection } from "./_components/TaskEngagementSection";
+import { TaskFindingsSection } from "./_components/TaskFindingsSection";
 import { TaskInternalControlsSection } from "./_components/TaskInternalControlsSection";
 import { TaskLinearField } from "./_components/TaskLinearField";
 import { TaskNameField } from "./_components/TaskNameField";
@@ -61,6 +62,7 @@ export const taskDetailsPageFragment = graphql`
     ...TaskEngagementSection_task
     ...TaskPropertiesSection_task
     ...TaskInternalControlsSection_task
+    ...TaskFindingsSection_task
     ...TaskLinearField_task
   }
 `;
@@ -145,6 +147,7 @@ export function TaskDetailsPage({ queryRef }: TaskDetailsPageProps) {
             <TaskPropertiesSection taskKey={task} />
             <TaskLinearField taskKey={task} />
             <TaskInternalControlsSection taskKey={task} />
+            <TaskFindingsSection taskKey={task} />
           </div>
         )}
       />

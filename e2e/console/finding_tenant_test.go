@@ -53,6 +53,7 @@ func TestFinding_TenantIsolation(t *testing.T) {
 			"input": map[string]any{
 				"organizationId": org1Owner.GetOrganizationID().String(),
 				"kind":           "OBSERVATION",
+				"title":          "Access review gap",
 				"status":         "OPEN",
 				"priority":       "LOW",
 				"riskId":         org2RiskID,
@@ -78,6 +79,7 @@ func TestFinding_TenantIsolation(t *testing.T) {
 			"input": map[string]any{
 				"organizationId": org1Owner.GetOrganizationID().String(),
 				"kind":           "OBSERVATION",
+				"title":          "Access review gap",
 				"status":         "OPEN",
 				"priority":       "LOW",
 			},

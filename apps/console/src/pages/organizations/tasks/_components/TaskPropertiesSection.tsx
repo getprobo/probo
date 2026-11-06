@@ -24,7 +24,7 @@ import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { TaskPropertiesSection_task$key } from "#/__generated__/core/TaskPropertiesSection_task.graphql";
-import { TaskAssigneeMenu } from "#/components/tasks/TaskAssigneeMenu";
+import { PeopleMenu } from "#/components/people/PeopleMenu";
 
 import { useUpdateTask } from "../_lib/useUpdateTask";
 
@@ -107,7 +107,7 @@ export function TaskPropertiesSection({ taskKey }: TaskPropertiesSectionProps) {
           className={stateOption()}
           renderAssigneeMenu={task.canAssign
             ? () => (
-                <TaskAssigneeMenu
+                <PeopleMenu
                   value={assignedTo?.id ?? null}
                   emptyLabel={t("detailsPage.unassigned")}
                   emptyValue={noneValue}

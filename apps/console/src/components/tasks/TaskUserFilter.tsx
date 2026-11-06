@@ -30,7 +30,7 @@ import { graphql, useLazyLoadQuery } from "react-relay";
 
 import type { TaskUserFilterProfileQuery } from "#/__generated__/core/TaskUserFilterProfileQuery.graphql";
 import { UserSelectOption } from "#/components/form/UserSelectOption";
-import { TaskAssigneeMenu } from "#/components/tasks/TaskAssigneeMenu";
+import { PeopleMenu } from "#/components/people/PeopleMenu";
 import { unassignedAssignee } from "#/pages/organizations/tasks/_lib/taskPath";
 
 const taskUserFilterProfileQuery = graphql`
@@ -89,7 +89,7 @@ export function TaskUserFilter({ value, onValueChange }: TaskUserFilterProps) {
         </span>
       </DropdownTrigger>
       <DropdownPopup size={2} align="start">
-        <TaskAssigneeMenu
+        <PeopleMenu
           value={value}
           emptyLabel={emptyLabel}
           emptyValue={null}

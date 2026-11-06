@@ -13,6 +13,7 @@ import (
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
@@ -441,6 +442,58 @@ func (r *taskResolver) InternalControls(ctx context.Context, obj *types.Task, fi
 	return types.NewInternalControlConnection(internalControlPage, r, obj.ID, internalControlFilter), nil
 }
 
+// Findings is the resolver for the findings field.
+func (r *taskResolver) Findings(ctx context.Context, obj *types.Task, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.FindingOrder, filter *types.FindingFilter) (*types.FindingConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionFindingList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.FindingOrderField]{
+		Field:     coredata.FindingOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.FindingOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	var (
+		kind     *coredata.FindingKind
+		status   *coredata.FindingStatus
+		priority *coredata.FindingPriority
+		ownerID  *gid.GID
+		auditID  *gid.GID
+	)
+	if filter != nil {
+		kind = filter.Kind
+		status = filter.Status
+		priority = filter.Priority
+		ownerID = filter.OwnerID
+		auditID = filter.AuditID
+	}
+
+	findingFilter := coredata.NewFindingFilter(kind, status, priority, ownerID, auditID)
+
+	findingPage, err := r.probo.Findings.ListForTaskID(ctx, scope, obj.ID, cursor, findingFilter)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlx.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot list task findings", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return types.NewFindingConnection(findingPage, r, obj.ID, filter), nil
+}
+
 // Evidences is the resolver for the evidences field.
 func (r *taskResolver) Evidences(ctx context.Context, obj *types.Task, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.EvidenceOrderBy) (*types.EvidenceConnection, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionEvidenceList)
@@ -571,6 +624,14 @@ func (r *taskConnectionResolver) TotalCount(ctx context.Context, obj *types.Task
 	}
 
 	switch obj.Resolver.(type) {
+	case *findingResolver:
+		count, err := r.task.CountForFindingID(ctx, scope, obj.ParentID, obj.Filter)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot count tasks", log.Error(err))
+			return 0, gqlx.Internal(ctx)
+		}
+
+		return count, nil
 	case *internalControlResolver:
 		count, err := r.task.CountForInternalControlID(ctx, scope, obj.ParentID, obj.Filter)
 		if err != nil {

@@ -1005,6 +1005,10 @@
     "empty": "Geen personen beschikbaar",
     "remove": "{{name}} verwijderen"
   },
+  "peopleMenu": {
+    "searchPlaceholder": "Zoeken op naam of e-mail",
+    "empty": "Geen gebruikers"
+  },
   "userSelect": {
     "loadMore": "Meer laden"
   },

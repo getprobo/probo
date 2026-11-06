@@ -7,13 +7,11 @@
     "linkInternalControls": "Lier à des contrôles internes",
     "searchInternalControls": "Rechercher des contrôles internes",
     "noInternalControls": "Aucun contrôle interne",
+    "findings": "Constats",
+    "noFindings": "Aucun constat lié",
     "internalControlsLoadError": "Impossible de charger les contrôles internes",
     "noDescription": "Aucune description",
     "unassigned": "Non assigné",
-    "assigneeMenu": {
-      "searchPlaceholder": "Rechercher par nom ou e-mail",
-      "empty": "Aucun utilisateur"
-    },
     "fields": {
       "name": "Nom",
       "description": "Description",
@@ -65,6 +63,7 @@
       "clearRecurrence": "Effacer l'intervalle",
       "delete": "Supprimer",
       "loadMoreInternalControls": "Charger plus",
+      "loadMoreFindings": "Charger plus",
       "removeInternalControl": "Retirer",
       "cancel": "Annuler",
       "retry": "Réessayer"

@@ -56,9 +56,9 @@ import type { NewTaskPagePublishMutation } from "#/__generated__/core/NewTaskPag
 import type { NewTaskPageQuery } from "#/__generated__/core/NewTaskPageQuery.graphql";
 import type { TaskLinearDraftField_organization$key } from "#/__generated__/core/TaskLinearDraftField_organization.graphql";
 import {
-  TaskAssigneeMenu,
-  type TaskAssigneeOption,
-} from "#/components/tasks/TaskAssigneeMenu";
+  PeopleMenu,
+  type PeopleOption,
+} from "#/components/people/PeopleMenu";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 import { RichEditor } from "#/pages/organizations/_components/RichEditor";
@@ -159,7 +159,7 @@ export function NewTaskPage({ queryRef }: NewTaskPageProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [state, setState] = useState<TaskState>("TODO");
   const [priority, setPriority] = useState<TaskPriority>("MEDIUM");
-  const [assignee, setAssignee] = useState<TaskAssigneeOption | null>(null);
+  const [assignee, setAssignee] = useState<PeopleOption | null>(null);
   const [timeEstimate, setTimeEstimate] = useState<string | null>(null);
   const [deadline, setDeadline] = useState<string | null>(null);
   const [recurrenceInterval, setRecurrenceInterval] = useState<string | null>(null);
@@ -411,7 +411,7 @@ export function NewTaskPage({ queryRef }: NewTaskPageProps) {
                   placeholder={tTasks("placeholders.assignee")}
                   className={stateOption()}
                   renderAssigneeMenu={() => (
-                    <TaskAssigneeMenu
+                    <PeopleMenu
                       value={assignee?.id ?? null}
                       emptyLabel={t("detailsPage.unassigned")}
                       emptyValue={unassignedValue}

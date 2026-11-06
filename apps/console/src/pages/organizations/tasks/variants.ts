@@ -59,6 +59,16 @@ export const taskInternalControls = tv({
   },
 });
 
+export const taskFindings = tv({
+  slots: {
+    root: "flex w-full flex-col items-stretch gap-3",
+    list: "flex w-full flex-col items-stretch gap-2",
+    item: "flex min-w-0 flex-col items-start",
+    title: "min-w-0 max-w-full truncate",
+    more: "self-start",
+  },
+});
+
 export const taskLinearField = tv({
   slots: {
     root: "flex w-full flex-col items-stretch gap-3",

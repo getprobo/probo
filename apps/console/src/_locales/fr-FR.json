@@ -1006,6 +1006,10 @@
     "empty": "Aucune personne disponible",
     "remove": "Retirer {{name}}"
   },
+  "peopleMenu": {
+    "searchPlaceholder": "Rechercher par nom ou e-mail",
+    "empty": "Aucun utilisateur"
+  },
   "userSelect": {
     "loadMore": "Charger plus"
   },

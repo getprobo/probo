@@ -617,6 +617,10 @@
     "empty": "No people available",
     "remove": "Remove {{name}}"
   },
+  "peopleMenu": {
+    "searchPlaceholder": "Search by name or email",
+    "empty": "No users"
+  },
   "userSelect": {
     "loadMore": "Load more"
   },

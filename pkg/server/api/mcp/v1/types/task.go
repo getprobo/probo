@@ -97,6 +97,29 @@ func NewListInternalControlTasksOutput(
 	}
 }
 
+func NewListFindingTasksOutput(
+	taskPage *page.Page[*coredata.Task, coredata.TaskOrderField],
+	links map[gid.GID]*coredata.TaskExternalLink,
+	internalControlIDs map[gid.GID][]gid.GID,
+) ListFindingTasksOutput {
+	tasks := make([]*Task, 0, len(taskPage.Data))
+	for _, v := range taskPage.Data {
+		tasks = append(tasks, NewTaskWithLink(v, links[v.ID], internalControlIDs[v.ID]))
+	}
+
+	var nextCursor *page.CursorKey
+
+	if len(taskPage.Data) > 0 {
+		cursorKey := taskPage.Data[len(taskPage.Data)-1].CursorKey(taskPage.Cursor.OrderBy.Field)
+		nextCursor = &cursorKey
+	}
+
+	return ListFindingTasksOutput{
+		NextCursor: nextCursor,
+		Tasks:      tasks,
+	}
+}
+
 func NewListTasksOutput(
 	taskPage *page.Page[*coredata.Task, coredata.TaskOrderField],
 	links map[gid.GID]*coredata.TaskExternalLink,

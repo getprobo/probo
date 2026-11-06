@@ -148,6 +148,7 @@ export {
   type TaskListItemTask,
 } from "./TaskListItem/TaskListItem";
 export { TaskListItemAssignee } from "./TaskListItem/TaskListItemAssignee";
+export { TaskListItemDeadline } from "./TaskListItem/TaskListItemDeadline";
 export { TaskPriorityIcon } from "./TaskPriorityIcon";
 export { TaskStateIcon } from "./TaskStateIcon";
 export {

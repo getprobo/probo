@@ -74,6 +74,15 @@ type Task implements Node {
         filter: InternalControlFilter
     ): InternalControlConnection! @goField(forceResolver: true)
 
+    findings(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: FindingOrder
+        filter: FindingFilter
+    ): FindingConnection! @goField(forceResolver: true)
+
     evidences(
         first: Int
         after: CursorKey

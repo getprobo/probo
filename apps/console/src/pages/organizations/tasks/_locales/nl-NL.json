@@ -7,13 +7,11 @@
     "linkInternalControls": "Koppelen aan interne controles",
     "searchInternalControls": "Interne controles zoeken",
     "noInternalControls": "Geen interne controles",
+    "findings": "Bevindingen",
+    "noFindings": "Geen gekoppelde bevindingen",
     "internalControlsLoadError": "Interne controles konden niet worden geladen",
     "noDescription": "Geen beschrijving",
     "unassigned": "Niet toegewezen",
-    "assigneeMenu": {
-      "searchPlaceholder": "Zoeken op naam of e-mail",
-      "empty": "Geen gebruikers"
-    },
     "fields": {
       "name": "Naam",
       "description": "Beschrijving",
@@ -65,6 +63,7 @@
       "clearRecurrence": "Interval wissen",
       "delete": "Verwijderen",
       "loadMoreInternalControls": "Meer laden",
+      "loadMoreFindings": "Meer laden",
       "removeInternalControl": "Verwijderen",
       "cancel": "Annuleren",
       "retry": "Opnieuw proberen"

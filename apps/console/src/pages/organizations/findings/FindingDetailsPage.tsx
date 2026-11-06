@@ -18,509 +18,138 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import {
-  formatDatetime,
-  formatError,
-  getStatusVariant,
-} from "@probo/helpers";
-import {
-  ActionDropdown,
-  Badge,
-  Button,
-  Card,
-  DropdownItem,
-  Field,
-  IconTrashCan,
-  Input,
-  Label,
-  Option,
-  Select,
-  Textarea,
-  useConfirm,
-} from "@probo/ui";
-import useToast from "@probo/ui/src/v2/Toaster/useToast";
-import { useEffect } from "react";
-import { Controller } from "react-hook-form";
+import { CaretLeftIcon, TrashIcon } from "@phosphor-icons/react";
+import { usePageTitle } from "@probo/hooks";
+import { TaskDetails } from "@probo/tasks";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { Link } from "@probo/ui/src/v2/Link/Link";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  ConnectionHandler,
-  graphql,
-  type PreloadedQuery,
-  useMutation,
-  usePreloadedQuery,
-} from "react-relay";
+import { graphql, type PreloadedQuery, useFragment, usePreloadedQuery } from "react-relay";
+import { useLocation, useNavigate } from "react-router";
 
-import type { FindingDetailsPageDeleteMutation } from "#/__generated__/core/FindingDetailsPageDeleteMutation.graphql";
+import type { FindingDetailsPage_finding$key } from "#/__generated__/core/FindingDetailsPage_finding.graphql";
 import type { FindingDetailsPageQuery } from "#/__generated__/core/FindingDetailsPageQuery.graphql";
-import type { FindingDetailsPageUpdateMutation } from "#/__generated__/core/FindingDetailsPageUpdateMutation.graphql";
-import { ControlledField } from "#/components/form/ControlledField";
-import { PeopleSelectField } from "#/components/form/PeopleSelectField";
-import { RiskSelectField } from "#/components/form/RiskSelectField";
-import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
-import { z } from "#/lib/zod";
+import { NotFoundError } from "#/lib/relay/errors";
 
-import { FindingAuditsCard } from "./_components/FindingAuditsCard";
-import { FindingsConnectionKey } from "./FindingsPage";
+import { FindingAuditsSection } from "./_components/FindingAuditsSection";
+import { FindingDeleteDialog } from "./_components/FindingList/FindingDeleteDialog";
+import { FindingNarrativeSection } from "./_components/FindingNarrativeSection";
+import { FindingPropertiesSection } from "./_components/FindingPropertiesSection";
+import { FindingTasksSection } from "./_components/FindingTasksSection";
+import { FindingTitleField } from "./_components/FindingTitleField";
+import { findingsPage } from "./_components/variants";
+import { useUpdateFinding } from "./_lib/useUpdateFinding";
+
+export const findingDetailsPageFragment = graphql`
+  fragment FindingDetailsPage_finding on Finding {
+    id
+    title
+    referenceId
+    canUpdate: permission(action: "core:finding:update")
+    canDelete: permission(action: "core:finding:delete")
+    organization {
+      id
+    }
+    ...FindingPropertiesSection_finding
+    ...FindingNarrativeSection_finding
+    ...FindingTasksSection_finding
+    ...FindingAuditsSection_finding
+  }
+`;
 
 export const findingDetailsPageQuery = graphql`
   query FindingDetailsPageQuery($findingId: ID!) {
-    node(id: $findingId) {
+    node(id: $findingId) @required(action: THROW) {
+      __typename
       ... on Finding {
-        id
-        kind
-        referenceId
-        description
-        source
-        identifiedOn
-        rootCause
-        correctiveAction
-        dueDate
-        status
-        priority
-        effectivenessCheck
-        owner {
-          id
-        }
-        risk {
-          id
-          name
-        }
-        canUpdate: permission(action: "core:finding:update")
-        canDelete: permission(action: "core:finding:delete")
-        canListAudits: permission(action: "core:audit:list")
+        ...FindingDetailsPage_finding
       }
     }
   }
 `;
 
-const updateFindingMutation = graphql`
-  mutation FindingDetailsPageUpdateMutation($input: UpdateFindingInput!) {
-    updateFinding(input: $input) {
-      finding {
-        id
-        kind
-        referenceId
-        description
-        source
-        identifiedOn
-        rootCause
-        correctiveAction
-        dueDate
-        status
-        priority
-        effectivenessCheck
-        owner {
-          id
-          fullName
-        }
-        risk {
-          id
-          name
-        }
-        updatedAt
-      }
-    }
-  }
-`;
-
-const deleteFindingMutation = graphql`
-  mutation FindingDetailsPageDeleteMutation(
-    $input: DeleteFindingInput!
-    $connections: [ID!]!
-  ) {
-    deleteFinding(input: $input) {
-      deletedFindingId @deleteEdge(connections: $connections)
-    }
-  }
-`;
-
-const updateFindingSchema = z
-  .object({
-    description: z.string().optional(),
-    source: z.string().optional(),
-    identifiedOn: z.string().optional(),
-    dueDate: z.string().optional(),
-    rootCause: z.string().optional(),
-    correctiveAction: z.string().optional(),
-    effectivenessCheck: z.string().optional(),
-    status: z.enum([
-      "OPEN",
-      "IN_PROGRESS",
-      "CLOSED",
-      "MITIGATED",
-      "FALSE_POSITIVE",
-      "RISK_ACCEPTED",
-    ]),
-    priority: z.enum(["LOW", "MEDIUM", "HIGH"]),
-    ownerId: z.string().nullable().optional(),
-    riskId: z.string().nullable().optional(),
-  })
-  .refine(
-    data => data.status !== "RISK_ACCEPTED" || Boolean(data.riskId),
-    {
-      message: "A risk is required when status is Risk Accepted",
-      path: ["riskId"],
-    },
-  );
-
-type Props = {
+interface FindingDetailsPageProps {
   queryRef: PreloadedQuery<FindingDetailsPageQuery>;
-};
+}
 
-export default function FindingDetailsPage(props: Props) {
-  const { node: finding } = usePreloadedQuery<FindingDetailsPageQuery>(
-    findingDetailsPageQuery,
-    props.queryRef,
-  );
-  const { t } = useTranslation();
-  const toast = useToast();
+export function FindingDetailsPage({ queryRef }: FindingDetailsPageProps) {
+  const data = usePreloadedQuery<FindingDetailsPageQuery>(findingDetailsPageQuery, queryRef);
+  const { t } = useTranslation("organizations/findings");
+  const { back, side } = findingsPage();
+  const navigate = useNavigate();
+  const location = useLocation();
   const organizationId = useOrganizationId();
-  const confirm = useConfirm();
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const findingKey = data.node.__typename === "Finding" ? data.node : null;
+  const finding = useFragment<FindingDetailsPage_finding$key>(
+    findingDetailsPageFragment,
+    findingKey,
+  );
+  const [updateFinding] = useUpdateFinding();
+  usePageTitle(finding?.title ?? "");
 
-  const [updateFinding] = useMutation<FindingDetailsPageUpdateMutation>(updateFindingMutation);
-  const [deleteFinding] = useMutation<FindingDetailsPageDeleteMutation>(deleteFindingMutation);
+  if (!finding || finding.organization?.id !== organizationId) {
+    throw new NotFoundError(t("details.notFound"));
+  }
 
-  const connections = [
-    ConnectionHandler.getConnectionID(
-      organizationId,
-      FindingsConnectionKey,
-      {
-        filter: {
-          kind: null,
-          status: null,
-          priority: null,
-          ownerId: null,
-        },
-      },
-    ),
-    ConnectionHandler.getConnectionID(
-      organizationId,
-      FindingsConnectionKey,
-      {
-        filter: {
-          kind: finding.kind,
-          status: null,
-          priority: null,
-          ownerId: null,
-        },
-      },
-    ),
-  ];
-
-  const handleDelete = () => {
-    confirm(
-      () =>
-        new Promise<void>((resolve) => {
-          deleteFinding({
-            variables: {
-              input: { findingId: finding.id! },
-              connections,
-            },
-            onCompleted(_, error) {
-              if (error) {
-                toast.add({
-                  title: t("findingDetails.errors.title"),
-                  description: formatError(
-                    t("findingDetails.errors.delete"),
-                    error,
-                  ),
-                  type: "error",
-                });
-              } else {
-                toast.add({
-                  title: t("findingDetails.messages.successTitle"),
-                  description: t("findingDetails.messages.deleted"),
-                  type: "success",
-                });
-              }
-              resolve();
-            },
-            onError(error) {
-              toast.add({
-                title: t("findingDetails.errors.title"),
-                description: formatError(
-                  t("findingDetails.errors.delete"),
-                  error,
-                ),
-                type: "error",
-              });
-              resolve();
-            },
-          });
-        }),
-      {
-        message: t("findingDetails.deleteConfirmation", {
-          referenceId: finding.referenceId,
-        }),
-      },
-    );
+  const backTarget = {
+    pathname: `/organizations/${organizationId}/governance/findings`,
+    search: location.search,
   };
 
-  const { control, formState, handleSubmit, register, reset, watch, setValue }
-    = useFormWithSchema(updateFindingSchema, {
-      defaultValues: {
-        description: finding.description || "",
-        source: finding.source || "",
-        identifiedOn: finding.identifiedOn?.split("T")[0] || "",
-        dueDate: finding.dueDate?.split("T")[0] || "",
-        rootCause: finding.rootCause || "",
-        correctiveAction: finding.correctiveAction || "",
-        effectivenessCheck: finding.effectivenessCheck || "",
-        status: finding.status || "OPEN",
-        priority: finding.priority || "MEDIUM",
-        ownerId: finding.owner?.id ?? null,
-        riskId: finding.risk?.id ?? null,
-      },
-    });
-
-  const status = watch("status");
-
-  useEffect(() => {
-    if (status !== "RISK_ACCEPTED") {
-      setValue("riskId", null);
-    }
-  }, [status, setValue]);
-
-  const onSubmit = handleSubmit((formData) => {
-    if (!finding.id) return;
-
-    updateFinding({
-      variables: {
-        input: {
-          id: finding.id,
-          description: formData.description || undefined,
-          source: formData.source || undefined,
-          identifiedOn: formatDatetime(formData.identifiedOn) ?? null,
-          dueDate: formatDatetime(formData.dueDate) ?? null,
-          rootCause: formData.rootCause || undefined,
-          correctiveAction: formData.correctiveAction || undefined,
-          effectivenessCheck: formData.effectivenessCheck || undefined,
-          status: formData.status,
-          priority: formData.priority,
-          ownerId: formData.ownerId || undefined,
-          riskId: formData.status === "RISK_ACCEPTED"
-            ? formData.riskId || null
-            : null,
-        },
-      },
-      onCompleted() {
-        reset(formData);
-        toast.add({
-          title: t("findingDetails.messages.successTitle"),
-          description: t("findingDetails.messages.updated"),
-          type: "success",
-        });
-      },
-      onError(error) {
-        toast.add({
-          title: t("findingDetails.errors.title"),
-          description: formatError(
-            t("findingDetails.errors.update"),
-            error,
-          ),
-          type: "error",
-        });
-      },
-    });
-  });
-
-  const statusOptions = ["OPEN", "IN_PROGRESS", "CLOSED", "RISK_ACCEPTED", "MITIGATED", "FALSE_POSITIVE"] as const;
-  const priorityOptions = [
-    { value: "LOW", label: t("findingDetails.priority.low") },
-    { value: "MEDIUM", label: t("findingDetails.priority.medium") },
-    { value: "HIGH", label: t("findingDetails.priority.high") },
-  ];
-
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-start">
-        <div className="flex items-center gap-4">
-          <div className="text-2xl font-semibold">
-            {finding.referenceId}
-          </div>
-          <Badge variant="neutral">
-            {t(`findingDetails.kinds.${(finding.kind || "").toLowerCase()}`)}
-          </Badge>
-          <Badge variant={getStatusVariant(finding.status || "OPEN")}>
-            {t(`findingDetails.status.${(finding.status || "OPEN").toLowerCase()}`)}
-          </Badge>
-          <Badge
-            variant={
-              finding.priority === "HIGH"
-                ? "danger"
-                : finding.priority === "MEDIUM"
-                  ? "warning"
-                  : "success"
-            }
+    <>
+      <TaskDetails
+        back={(
+          <Link
+            to={backTarget}
+            size={2}
+            color="neutral"
+            underline={false}
+            iconStart={<CaretLeftIcon />}
+            className={back()}
           >
-            {finding.priority === "HIGH"
-              ? t("findingDetails.priority.high")
-              : finding.priority === "MEDIUM"
-                ? t("findingDetails.priority.medium")
-                : t("findingDetails.priority.low")}
-          </Badge>
-        </div>
-        <ActionDropdown variant="secondary">
-          {finding.canDelete && (
-            <DropdownItem
-              variant="danger"
-              icon={IconTrashCan}
-              onClick={handleDelete}
-            >
-              {t("findingDetails.actions.delete")}
-            </DropdownItem>
-          )}
-        </ActionDropdown>
-      </div>
-
-      <div className="max-w-4xl">
-        {finding.canListAudits && (
-          <div className="mb-6">
-            <FindingAuditsCard />
+            {t("details.back")}
+          </Link>
+        )}
+        name={(
+          <FindingTitleField
+            title={finding.title}
+            canUpdate={finding.canUpdate}
+            onSave={title => updateFinding({
+              variables: { input: { id: finding.id, title } },
+            })}
+          />
+        )}
+        actions={finding.canDelete
+          ? (
+              <Button color="red" iconStart={<TrashIcon />} onClick={() => setDeleteOpen(true)}>
+                {t("list.actions.delete")}
+              </Button>
+            )
+          : undefined}
+        engagement={<FindingNarrativeSection findingKey={finding} />}
+        properties={(
+          <div className={side()}>
+            <FindingPropertiesSection findingKey={finding} />
+            <FindingTasksSection findingKey={finding} />
+            <FindingAuditsSection findingKey={finding} />
           </div>
         )}
-        <Card padded>
-          <form onSubmit={e => void onSubmit(e)} className="space-y-6">
-            <Field label={t("findingDetails.fields.description")}>
-              <Textarea
-                {...register("description")}
-                placeholder={t("findingDetails.placeholders.description")}
-                rows={3}
-              />
-            </Field>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Field
-                label={t("findingDetails.fields.source")}
-                error={formState.errors.source?.message}
-              >
-                <Input
-                  {...register("source")}
-                  placeholder={t("findingDetails.placeholders.source")}
-                />
-              </Field>
-
-              <PeopleSelectField
-                organizationId={organizationId}
-                control={control}
-                name="ownerId"
-                label={t("findingDetails.fields.owner")}
-                error={formState.errors.ownerId?.message}
-                optional
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <ControlledField
-                control={control}
-                name="status"
-                type="select"
-                label={t("findingDetails.fields.status")}
-                required
-              >
-                {statusOptions.map(status => (
-                  <Option key={status} value={status}>
-                    {t(`findingDetails.status.${status.toLowerCase()}`)}
-                  </Option>
-                ))}
-              </ControlledField>
-
-              <Controller
-                control={control}
-                name="priority"
-                render={({ field }) => (
-                  <div>
-                    <Label>
-                      {t("findingDetails.fields.priority")}
-                      {" "}
-                      *
-                    </Label>
-                    <Select
-                      value={field.value}
-                      onValueChange={field.onChange}
-                    >
-                      {priorityOptions.map(option => (
-                        <Option key={option.value} value={option.value}>
-                          {option.label}
-                        </Option>
-                      ))}
-                    </Select>
-                    {formState.errors.priority?.message && (
-                      <div className="text-red-500 text-sm mt-1">
-                        {formState.errors.priority.message}
-                      </div>
-                    )}
-                  </div>
-                )}
-              />
-            </div>
-
-            {status === "RISK_ACCEPTED" && (
-              <RiskSelectField
-                organizationId={organizationId}
-                control={control}
-                name="riskId"
-                label={t("findingDetails.fields.acceptedRisk")}
-                error={formState.errors.riskId?.message}
-                selectedRisk={finding.risk}
-                required
-              />
-            )}
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Field label={t("findingDetails.fields.dateIdentified")}>
-                <Input
-                  {...register("identifiedOn")}
-                  type="date"
-                />
-              </Field>
-
-              <Field label={t("findingDetails.fields.dueDate")}>
-                <Input
-                  {...register("dueDate")}
-                  type="date"
-                />
-              </Field>
-            </div>
-
-            <Field label={t("findingDetails.fields.rootCause")}>
-              <Textarea
-                {...register("rootCause")}
-                placeholder={t("findingDetails.placeholders.rootCause")}
-                rows={3}
-              />
-            </Field>
-
-            <Field label={t("findingDetails.fields.correctiveAction")}>
-              <Textarea
-                {...register("correctiveAction")}
-                placeholder={t("findingDetails.placeholders.correctiveAction")}
-                rows={3}
-              />
-            </Field>
-
-            <Field label={t("findingDetails.fields.effectivenessCheck")}>
-              <Textarea
-                {...register("effectivenessCheck")}
-                placeholder={t("findingDetails.placeholders.effectivenessCheck")}
-                rows={3}
-              />
-            </Field>
-
-            <div className="flex justify-end">
-              {formState.isDirty
-                && finding.canUpdate && (
-                <Button type="submit" disabled={formState.isSubmitting}>
-                  {formState.isSubmitting
-                    ? t("findingDetails.actions.updating")
-                    : t("findingDetails.actions.update")}
-                </Button>
-              )}
-            </div>
-          </form>
-        </Card>
-      </div>
-    </div>
+      />
+      {finding.canDelete && (
+        <FindingDeleteDialog
+          findingId={finding.id}
+          referenceId={finding.referenceId}
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+          onDeleted={() => {
+            void navigate(backTarget);
+          }}
+        />
+      )}
+    </>
   );
 }

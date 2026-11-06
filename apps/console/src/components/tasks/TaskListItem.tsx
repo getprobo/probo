@@ -28,7 +28,7 @@ import type { RecordSourceSelectorProxy } from "relay-runtime";
 
 import type { TaskListItem_task$key } from "#/__generated__/core/TaskListItem_task.graphql";
 import type { TaskListItemUpdateStateMutation } from "#/__generated__/core/TaskListItemUpdateStateMutation.graphql";
-import { TaskAssigneeMenu } from "#/components/tasks/TaskAssigneeMenu";
+import { PeopleMenu } from "#/components/people/PeopleMenu";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 import { TaskDeleteDialog } from "#/pages/organizations/tasks/_components/TaskDeleteDialog";
@@ -304,7 +304,7 @@ export const TaskListItem = memo(function TaskListItem(props: TaskListItemProps)
         }}
         renderAssigneeMenu={canUpdate
           ? () => (
-              <TaskAssigneeMenu
+              <PeopleMenu
                 value={assigneeSelectProps.value}
                 emptyLabel={assigneeSelectProps.emptyLabel}
                 emptyValue={assigneeSelectProps.emptyValue}
