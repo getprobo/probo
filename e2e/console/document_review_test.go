@@ -69,7 +69,7 @@ func TestDocumentReview_PublishBlockedByOpenSuggestion(t *testing.T) {
 		`, map[string]any{
 			"input": map[string]any{
 				"documentId": commentDocumentID,
-				"content":    "A comment",
+				"content":    factory.ProseMirrorPlainText("A comment"),
 				"quote":      "Keep this sentence.",
 			},
 		}, &created)
@@ -153,7 +153,7 @@ func TestDocumentReview_RBAC(t *testing.T) {
 	`, map[string]any{
 		"input": map[string]any{
 			"documentId": documentID,
-			"content":    "Viewer comment",
+			"content":    factory.ProseMirrorPlainText("Viewer comment"),
 			"quote":      "Keep this sentence.",
 		},
 	}, &thread)
@@ -203,7 +203,7 @@ func TestDocumentReview_RBAC(t *testing.T) {
 		"input": map[string]any{
 			"documentId":   documentID,
 			"suggestionId": suggestionID,
-			"content":      "Please consider this",
+			"content":      factory.ProseMirrorPlainText("Please consider this"),
 		},
 	}, &reply)
 	require.NoError(t, err, "viewer should reply on a redline")
