@@ -317,6 +317,26 @@ var knownNodeTypes = map[NodeType]struct{}{
 	NodeMention:        {},
 }
 
+// NodeTypes returns the node types the schema accepts, in unspecified order.
+func (s *Schema) NodeTypes() []NodeType {
+	types := make([]NodeType, 0, len(s.index))
+	for t := range s.index {
+		types = append(types, t)
+	}
+
+	return types
+}
+
+// MarkTypes returns the mark types the schema accepts, in unspecified order.
+func (s *Schema) MarkTypes() []MarkType {
+	types := make([]MarkType, 0, len(s.marks))
+	for t := range s.marks {
+		types = append(types, t)
+	}
+
+	return types
+}
+
 // Validate reports whether n is a valid document for the schema.
 func (s *Schema) Validate(n Node) error {
 	if n.Type != NodeDoc {

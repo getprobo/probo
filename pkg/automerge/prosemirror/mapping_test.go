@@ -27,6 +27,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	pm "go.probo.inc/probo/pkg/prosemirror"
 )
 
 type schemaMappingLedger struct {
@@ -56,14 +57,21 @@ func loadSchemaMappingLedger(t *testing.T) schemaMappingLedger {
 	return ledger
 }
 
-// TestSchemaMappingLedger keeps the Go renderer's block and mark tables in lockstep
-// with the shared ledger. Its counterpart schemaMappingParity.test.ts holds the
-// frontend adapter to the same ledger, so the two implementations cannot drift
-// apart without a test failing.
+// TestSchemaMappingLedger keeps the codec registry in lockstep with the shared
+// ledger. Its counterpart schemaMappingParity.test.ts holds the frontend adapter
+// to the same ledger, so the two implementations cannot drift apart without a
+// test failing.
 func TestSchemaMappingLedger(t *testing.T) {
 	t.Parallel()
 
 	ledger := loadSchemaMappingLedger(t)
+
+	blockCodecs := make(map[string]nodeCodec)
+	for _, codec := range nodeCodecs {
+		if codec.Block() != "" {
+			blockCodecs[codec.Block()] = codec
+		}
+	}
 
 	t.Run(
 		"blocks match",
@@ -75,13 +83,52 @@ func TestSchemaMappingLedger(t *testing.T) {
 				want[entry.Automerge] = entry.ProseMirror
 			}
 
-			got := make(map[string]string, len(blockMappings))
-			for _, mapping := range blockMappings {
-				got[mapping.Automerge] = mapping.ProseMirror
+			got := make(map[string]string, len(blockCodecs))
+			for blockType, codec := range blockCodecs {
+				got[blockType] = string(codec.Node())
 			}
 
 			assert.Equal(t, want, got)
 			assert.Equal(t, want, blockNodeNames)
+		},
+	)
+
+	t.Run(
+		"block list wrappers match",
+		func(t *testing.T) {
+			t.Parallel()
+
+			for _, entry := range ledger.Blocks {
+				codec, ok := blockCodecs[entry.Automerge]
+				require.Truef(t, ok, "ledger block %q has no codec", entry.Automerge)
+				assert.Equalf(
+					t,
+					entry.Outer,
+					string(codec.Outer()),
+					"block %q must map to list wrapper %q",
+					entry.Automerge,
+					entry.Outer,
+				)
+			}
+		},
+	)
+
+	t.Run(
+		"block embeds match",
+		func(t *testing.T) {
+			t.Parallel()
+
+			for _, entry := range ledger.Blocks {
+				codec, ok := blockCodecs[entry.Automerge]
+				require.Truef(t, ok, "ledger block %q has no codec", entry.Automerge)
+				assert.Equalf(
+					t,
+					entry.IsEmbed,
+					codec.Role() == roleInlineEmbed,
+					"block %q embed flag must match the ledger",
+					entry.Automerge,
+				)
+			}
 		},
 	)
 
@@ -95,9 +142,9 @@ func TestSchemaMappingLedger(t *testing.T) {
 				want[entry.Automerge] = entry.ProseMirror
 			}
 
-			got := make(map[string]string, len(markMappings))
-			for _, mapping := range markMappings {
-				got[mapping.Automerge] = mapping.ProseMirror
+			got := make(map[string]string, len(markCodecs))
+			for _, codec := range markCodecs {
+				got[codec.Automerge()] = string(codec.Mark())
 			}
 
 			assert.Equal(t, want, got)
@@ -119,9 +166,76 @@ func TestSchemaMappingLedger(t *testing.T) {
 					entry.Automerge,
 					index,
 				)
+				assert.Equalf(
+					t,
+					entry.Automerge,
+					markCodecs[index].Automerge(),
+					"mark codec at rank %d must be %q",
+					index,
+					entry.Automerge,
+				)
 			}
 
 			assert.Len(t, markRenderOrder, len(ledger.Marks))
+			assert.Len(t, markCodecs, len(ledger.Marks))
+		},
+	)
+}
+
+// TestCodecsCoverDocumentSchema fails if a node or mark the console editor can
+// produce (prosemirror.DocumentSchema) has no bridge codec, which would silently
+// drop that content when seeding or rendering a collaboration document. The doc
+// root and the inline text node are structural and never need a codec.
+//
+// TODO: mention has no codec yet; the next commit adds one and drops it from this
+// exclusion list.
+func TestCodecsCoverDocumentSchema(t *testing.T) {
+	t.Parallel()
+
+	t.Run(
+		"nodes",
+		func(t *testing.T) {
+			t.Parallel()
+
+			covered := make(map[pm.NodeType]struct{}, len(nodeCodecs))
+			for _, codec := range nodeCodecs {
+				covered[codec.Node()] = struct{}{}
+				if codec.Outer() != "" {
+					covered[codec.Outer()] = struct{}{}
+				}
+			}
+
+			excluded := map[pm.NodeType]struct{}{
+				pm.NodeDoc:     {},
+				pm.NodeText:    {},
+				pm.NodeMention: {},
+			}
+
+			for _, nodeType := range pm.DocumentSchema.NodeTypes() {
+				if _, skip := excluded[nodeType]; skip {
+					continue
+				}
+
+				_, ok := covered[nodeType]
+				assert.Truef(t, ok, "node %q in DocumentSchema has no codec", nodeType)
+			}
+		},
+	)
+
+	t.Run(
+		"marks",
+		func(t *testing.T) {
+			t.Parallel()
+
+			covered := make(map[pm.MarkType]struct{}, len(markCodecs))
+			for _, codec := range markCodecs {
+				covered[codec.Mark()] = struct{}{}
+			}
+
+			for _, markType := range pm.DocumentSchema.MarkTypes() {
+				_, ok := covered[markType]
+				assert.Truef(t, ok, "mark %q in DocumentSchema has no codec", markType)
+			}
 		},
 	)
 }
