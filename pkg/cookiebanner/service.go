@@ -3251,6 +3251,12 @@ func (s *Service) ReportDetectedTrackers(
 				return fmt.Errorf("cannot load cookie banner: %w", err)
 			}
 
+			// Config and consents already 404 for inactive banners. Report must
+			// match them so a deactivated banner cannot keep accepting writes.
+			if banner.State != coredata.CookieBannerStateActive {
+				return ErrBannerNotFound
+			}
+
 			if !banner.Capabilities.ResourceReporting {
 				req.Resources = nil
 			}
