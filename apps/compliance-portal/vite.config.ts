@@ -205,6 +205,11 @@ function goHtmlTemplateDevDefaults(): Plugin {
               "en",
             )
             .replace(
+              // eslint-disable-next-line @stylistic/max-len
+              /\{\{if and \.AppOrigin \.FaviconURL\}\}<link rel="preconnect" href="\{\{\.AppOrigin\}\}">\{\{end\}\}\s*/g,
+              "",
+            )
+            .replace(
               /\{\{if \.FaviconURL\}\}\{\{\.FaviconURL\}\}\{\{else\}\}(\/favicons\/favicon\.ico)\{\{end\}\}/g,
               "$1",
             )

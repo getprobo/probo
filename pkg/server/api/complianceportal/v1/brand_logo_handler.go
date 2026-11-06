@@ -89,6 +89,8 @@ func (h *brandLogoHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Cache-Control", "no-store")
+	// The target URL is immutable per logo file, so a short cache lets repeat
+	// visits skip this hop while a logo change still shows within minutes.
+	w.Header().Set("Cache-Control", "public, max-age=300")
 	http.Redirect(w, r, h.fileManager.GenerateFileURL(file), http.StatusTemporaryRedirect)
 }

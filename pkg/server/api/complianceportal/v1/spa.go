@@ -46,6 +46,9 @@ type (
 	indexPageData struct {
 		HeadData
 		statichandler.IndexData
+		// AppOrigin serves the brand logo behind the portal /brand/logo
+		// redirect; index.html preconnects to it when the portal has a logo.
+		AppOrigin string
 	}
 
 	HeadDataFunc func(r *http.Request) HeadData
@@ -57,6 +60,7 @@ type (
 
 func NewServer(
 	headDataFunc HeadDataFunc,
+	appOrigin string,
 	faroEnabled bool,
 	faroCollectorURL string,
 	faroAPIKey string,
@@ -66,10 +70,13 @@ func NewServer(
 		"dist",
 		func(r *http.Request) any {
 			return indexPageData{
-				HeadData:         headDataFunc(r),
-				FaroEnabled:      faroEnabled,
-				FaroCollectorURL: faroCollectorURL,
-				FaroAPIKey:       faroAPIKey,
+				HeadData: headDataFunc(r),
+				IndexData: statichandler.IndexData{
+					FaroEnabled:      faroEnabled,
+					FaroCollectorURL: faroCollectorURL,
+					FaroAPIKey:       faroAPIKey,
+				},
+				AppOrigin: appOrigin,
 			}
 		},
 	)
