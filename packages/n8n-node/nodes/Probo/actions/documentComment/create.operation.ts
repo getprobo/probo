@@ -20,6 +20,7 @@
 
 import type { IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
+import { fromPlainText } from '../../fromPlainText';
 import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
@@ -79,7 +80,7 @@ export async function execute(this: IExecuteFunctions, itemIndex: number): Promi
 			{ itemIndex },
 		);
 	}
-	const input: Record<string, string | number> = { documentId, content };
+	const input: Record<string, string | number> = { documentId, content: fromPlainText(content) };
 	if (quote) {
 		input.quote = quote;
 		input.quoteOccurrence = quoteOccurrence;

@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import type { IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
+import { fromPlainText } from '../../fromPlainText';
 import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
@@ -51,6 +52,8 @@ export async function execute(this: IExecuteFunctions, itemIndex: number): Promi
 			}
 		}
 	`;
-	const responseData = await proboApiRequest.call(this, query, { input: { threadId, content } });
+	const responseData = await proboApiRequest.call(this, query, {
+		input: { threadId, content: fromPlainText(content) },
+	});
 	return { json: responseData, pairedItem: { item: itemIndex } };
 }
