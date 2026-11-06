@@ -677,3 +677,46 @@ func TestReportDetectedTrackers_PromotesSourceOnInsertConflict(t *testing.T) {
 	require.NotNil(t, loaded.Source)
 	assert.Equal(t, coredata.CookieSourceScript, *loaded.Source)
 }
+
+func TestReportDetectedTrackers_InactiveBanner(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedWorkerFixture(t, ctx, client)
+	svc := NewService(client, false, 0)
+
+	_, err := svc.DeactivateCookieBanner(ctx, fx.scope, fx.banner.ID)
+	require.NoError(t, err)
+
+	err = svc.ReportDetectedTrackers(
+		ctx,
+		fx.banner.ID,
+		ReportDetectedTrackersRequest{
+			Cookies: []DetectedCookie{
+				{
+					Name:   "inactive_banner_cookie",
+					Source: coredata.CookieSourceScript,
+				},
+			},
+		},
+	)
+	require.ErrorIs(t, err, ErrBannerNotFound)
+
+	var pattern coredata.TrackerPattern
+	err = client.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return pattern.LoadByBannerIDTypeAndPattern(
+				ctx,
+				conn,
+				fx.scope,
+				fx.banner.ID,
+				coredata.TrackerTypeCookie,
+				"inactive_banner_cookie",
+				nil,
+			)
+		},
+	)
+	require.ErrorIs(t, err, coredata.ErrResourceNotFound)
+}
