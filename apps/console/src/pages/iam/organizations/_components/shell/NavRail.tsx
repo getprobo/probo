@@ -59,6 +59,8 @@ const navRailFragment = graphql`
 export interface NavRailProps {
   organizationKey: NavRail_organization$key;
   slackbotAvailable: boolean;
+  linearSynchronizationAvailable: boolean;
+  asanaSynchronizationAvailable: boolean;
   onOpenSpotlight: () => void;
 }
 
@@ -118,12 +120,15 @@ function isAccessReviewVisible(permissions: NavPermissions): boolean {
 function isSettingsVisible(
   permissions: NavPermissions,
   slackbotAvailable: boolean,
+  linearSynchronizationAvailable: boolean,
+  asanaSynchronizationAvailable: boolean,
 ): boolean {
   return permissions.canUpdateOrganization
     || permissions.canGetContext
     || permissions.canListWebhookSubscriptions
     || (slackbotAvailable && (permissions.canConnectSlack || permissions.canUninstallSlack))
     || permissions.canListConnectors
+    || ((linearSynchronizationAvailable || asanaSynchronizationAvailable) && permissions.canListTasks)
     || permissions.canListMembers
     || permissions.canListAuditLogEntries;
 }
@@ -132,6 +137,8 @@ function navGroupIsVisible(
   key: NavGroupKey,
   permissions: NavPermissions,
   slackbotAvailable: boolean,
+  linearSynchronizationAvailable: boolean,
+  asanaSynchronizationAvailable: boolean,
 ): boolean {
   switch (key) {
     case "governance":
@@ -155,16 +162,29 @@ function navGroupIsVisible(
     case "accessReview":
       return isAccessReviewVisible(permissions);
     case "settings":
-      return isSettingsVisible(permissions, slackbotAvailable);
+      return isSettingsVisible(
+        permissions,
+        slackbotAvailable,
+        linearSynchronizationAvailable,
+        asanaSynchronizationAvailable,
+      );
   }
 }
 
 export function visibleNavGroups(
   permissions: NavPermissions,
   slackbotAvailable: boolean,
+  linearSynchronizationAvailable: boolean,
+  asanaSynchronizationAvailable: boolean,
 ): NavGroup[] {
   return NAV_GROUPS.filter(group =>
-    navGroupIsVisible(group.key, permissions, slackbotAvailable),
+    navGroupIsVisible(
+      group.key,
+      permissions,
+      slackbotAvailable,
+      linearSynchronizationAvailable,
+      asanaSynchronizationAvailable,
+    ),
   );
 }
 
@@ -245,6 +265,8 @@ function settingsHref(
   organizationId: string,
   permissions: NavPermissions,
   slackbotAvailable: boolean,
+  linearSynchronizationAvailable: boolean,
+  asanaSynchronizationAvailable: boolean,
 ): string {
   if (permissions.canUpdateOrganization) {
     return groupHref(organizationId, "settings", "general");
@@ -267,12 +289,17 @@ function settingsHref(
   if (permissions.canListConnectors) {
     return groupHref(organizationId, "settings", "integrations");
   }
+  if ((linearSynchronizationAvailable || asanaSynchronizationAvailable) && permissions.canListTasks) {
+    return groupHref(organizationId, "settings", "task-synchronization");
+  }
   return groupHref(organizationId, "settings", "audit-log");
 }
 
 export function NavRail({
   organizationKey,
   slackbotAvailable,
+  linearSynchronizationAvailable,
+  asanaSynchronizationAvailable,
   onOpenSpotlight,
 }: NavRailProps) {
   const { t } = useTranslation();
@@ -285,8 +312,13 @@ export function NavRail({
     organization,
   );
   const groups = useMemo(
-    () => visibleNavGroups(permissions, slackbotAvailable),
-    [permissions, slackbotAvailable],
+    () => visibleNavGroups(
+      permissions,
+      slackbotAvailable,
+      linearSynchronizationAvailable,
+      asanaSynchronizationAvailable,
+    ),
+    [permissions, slackbotAvailable, linearSynchronizationAvailable, asanaSynchronizationAvailable],
   );
   const activeGroup = useActiveNavGroup(groups);
   const activeKey = activeGroup?.key;
@@ -379,11 +411,22 @@ export function NavRail({
               active={activeKey === "accessReview"}
             />
           )}
-          {isSettingsVisible(permissions, slackbotAvailable) && (
+          {isSettingsVisible(
+            permissions,
+            slackbotAvailable,
+            linearSynchronizationAvailable,
+            asanaSynchronizationAvailable,
+          ) && (
             <NavRailItem
               icon={navGroupByKey("settings").icon}
               label={t("nav.groups.settings")}
-              to={settingsHref(organizationId, permissions, slackbotAvailable)}
+              to={settingsHref(
+                organizationId,
+                permissions,
+                slackbotAvailable,
+                linearSynchronizationAvailable,
+                asanaSynchronizationAvailable,
+              )}
               active={activeKey === "settings"}
             />
           )}

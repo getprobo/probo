@@ -405,26 +405,24 @@ WHERE
 	return nil
 }
 
-func (j *TaskSyncJob) TouchLease(
+func (j *TaskSyncJob) Touch(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
 	now time.Time,
 ) error {
 	if j.ProcessingOwnerToken == nil || *j.ProcessingOwnerToken == "" {
-		panic("task sync job lease touch requires an owner token")
+		panic("task sync job touch requires an owner token")
 	}
 
 	q := `
 UPDATE task_sync_jobs
 SET
-    started_at = @now,
     updated_at = @now
 WHERE
     %s
     AND id = @id
     AND processing_owner_token = @processing_owner_token
-    AND status = @processing_status
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -433,20 +431,18 @@ WHERE
 		"id":                     j.ID,
 		"now":                    now,
 		"processing_owner_token": j.ProcessingOwnerToken,
-		"processing_status":      TaskSyncJobStatusProcessing,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
 	result, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot touch task sync job lease: %w", err)
+		return fmt.Errorf("cannot touch task sync job: %w", err)
 	}
 
 	if result.RowsAffected() == 0 {
 		return ErrProcessingLeaseLost
 	}
 
-	j.StartedAt = &now
 	j.UpdatedAt = now
 
 	return nil
@@ -663,8 +659,7 @@ SET
     END
 WHERE
     status = @processing_status
-    AND started_at IS NOT NULL
-    AND started_at < @stale_threshold
+    AND updated_at < @stale_threshold
 `
 
 	_, err := conn.Exec(

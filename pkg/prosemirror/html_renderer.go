@@ -320,7 +320,7 @@ func openMark(buf *bytes.Buffer, m Mark) error {
 		}
 
 		buf.WriteString("<a")
-		writeAttr(buf, "href", safeLinkHref(attrs.Href))
+		writeAttr(buf, "href", SafeLinkHref(attrs.Href))
 
 		if attrs.Target != nil {
 			writeAttr(buf, "target", *attrs.Target)
@@ -450,11 +450,11 @@ func writeAttr(buf *bytes.Buffer, name, value string) {
 	buf.WriteByte('"')
 }
 
-// safeLinkHref returns a value safe to use in link mark attrs and to emit in an
+// SafeLinkHref returns a value safe to use in link mark attrs and to emit in an
 // HTML href attribute. URLs with disallowed schemes (for example javascript: or
 // data:) are replaced with "#" so escaped text content cannot be combined with an
 // executable URL.
-func safeLinkHref(href string) string {
+func SafeLinkHref(href string) string {
 	href = strings.TrimSpace(href)
 	if href == "" {
 		return "#"

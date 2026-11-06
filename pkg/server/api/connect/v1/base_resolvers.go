@@ -285,6 +285,14 @@ func (r *queryResolver) SlackbotAvailable(ctx context.Context) (bool, error) {
 	return r.slackbotAvailable, nil
 }
 
+func (r *queryResolver) LinearSynchronizationAvailable(ctx context.Context) (bool, error) {
+	return r.linearSynchronizationAvailable, nil
+}
+
+func (r *queryResolver) AsanaSynchronizationAvailable(ctx context.Context) (bool, error) {
+	return r.asanaSynchronizationAvailable, nil
+}
+
 // Oauth2ScopesSupported is the resolver for the oauth2ScopesSupported field.
 func (r *queryResolver) Oauth2ScopesSupported(ctx context.Context) ([]coredata.OAuth2Scope, error) {
 	return r.scopeRegistry.RegisteredScopes(), nil

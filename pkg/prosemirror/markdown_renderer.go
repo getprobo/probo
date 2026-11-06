@@ -423,7 +423,7 @@ func (r *mdRenderer) closeMark(m Mark) error {
 		}
 
 		r.buf.WriteString("](")
-		r.buf.WriteString(safeLinkHref(attrs.Href))
+		r.buf.WriteString(SafeLinkHref(attrs.Href))
 
 		if attrs.Title != nil {
 			r.buf.WriteString(` "`)

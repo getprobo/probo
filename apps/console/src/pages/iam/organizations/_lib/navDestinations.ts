@@ -28,7 +28,12 @@ interface NavDestination {
   group: NavGroupKey;
   labelKey: string;
   path: string;
-  isVisible: (permissions: NavPermissions, slackbotAvailable: boolean) => boolean;
+  isVisible: (
+    permissions: NavPermissions,
+    slackbotAvailable: boolean,
+    linearSynchronizationAvailable: boolean,
+    asanaSynchronizationAvailable: boolean,
+  ) => boolean;
 }
 
 const NAV_DESTINATIONS = [
@@ -229,14 +234,6 @@ const NAV_DESTINATIONS = [
     isVisible: permissions => permissions.canListWebhookSubscriptions,
   },
   {
-    id: "slackbot",
-    group: "settings",
-    labelKey: "nav.slackBot",
-    path: "slackbot",
-    isVisible: (permissions, slackbotAvailable) =>
-      slackbotAvailable && (permissions.canConnectSlack || permissions.canUninstallSlack),
-  },
-  {
     id: "users",
     group: "settings",
     labelKey: "nav.users",
@@ -271,6 +268,22 @@ const NAV_DESTINATIONS = [
     path: "integrations",
     isVisible: permissions => permissions.canListConnectors,
   },
+  {
+    id: "slackbot",
+    group: "settings",
+    labelKey: "nav.slackBot",
+    path: "slackbot",
+    isVisible: (permissions, slackbotAvailable) =>
+      slackbotAvailable && (permissions.canConnectSlack || permissions.canUninstallSlack),
+  },
+  {
+    id: "task-synchronization",
+    group: "settings",
+    labelKey: "nav.taskSynchronization",
+    path: "task-synchronization",
+    isVisible: (permissions, _slackbotAvailable, linearSynchronizationAvailable, asanaSynchronizationAvailable) =>
+      (linearSynchronizationAvailable || asanaSynchronizationAvailable) && permissions.canListTasks,
+  },
 ] as const satisfies readonly NavDestination[];
 
 export type NavDestinationConfig = (typeof NAV_DESTINATIONS)[number];
@@ -278,8 +291,15 @@ export type NavDestinationConfig = (typeof NAV_DESTINATIONS)[number];
 export function visibleNavDestinations(
   permissions: NavPermissions,
   slackbotAvailable: boolean,
+  linearSynchronizationAvailable: boolean,
+  asanaSynchronizationAvailable: boolean,
 ): NavDestinationConfig[] {
   return NAV_DESTINATIONS.filter(destination =>
-    destination.isVisible(permissions, slackbotAvailable),
+    destination.isVisible(
+      permissions,
+      slackbotAvailable,
+      linearSynchronizationAvailable,
+      asanaSynchronizationAvailable,
+    ),
   );
 }

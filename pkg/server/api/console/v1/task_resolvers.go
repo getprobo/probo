@@ -22,7 +22,9 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlx"
 	"go.probo.inc/probo/pkg/task"
-	tasksync "go.probo.inc/probo/pkg/task/sync"
+	asanasvc "go.probo.inc/probo/pkg/task/sync/asana"
+	linearsvc "go.probo.inc/probo/pkg/task/sync/linear"
+	"go.probo.inc/probo/pkg/task/sync/shared"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -42,7 +44,7 @@ func (r *mutationResolver) CreateTask(ctx context.Context, input types.CreateTas
 		explicitTeamID = input.LinearTeamID.Value()
 	}
 
-	teamID, publish, err := r.task.Sync.TeamForNewTask(
+	teamID, publish, err := r.task.Sync.Linear.TeamForNewTask(
 		ctx,
 		scope,
 		input.OrganizationID,
@@ -55,9 +57,33 @@ func (r *mutationResolver) CreateTask(ctx context.Context, input types.CreateTas
 		return nil, gqlx.Internal(ctx)
 	}
 
-	publishScope := scope
+	asanaSet := input.AsanaProjectID.IsSet()
+
+	var explicitProjectID *string
+	if asanaSet {
+		explicitProjectID = input.AsanaProjectID.Value()
+	}
+
+	projectID, publishAsana, err := r.task.Sync.Asana.ProjectForNewTask(
+		ctx,
+		scope,
+		input.OrganizationID,
+		asanaSet,
+		explicitProjectID,
+	)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot resolve Asana project for new task", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
 
 	if publish {
+		publishAsana = false
+	}
+
+	publishScope := scope
+
+	if publish || publishAsana {
 		updateScope, err := r.authorize(ctx, input.OrganizationID, task.ActionTaskUpdate)
 		if err != nil {
 			return nil, err
@@ -100,8 +126,14 @@ func (r *mutationResolver) CreateTask(ctx context.Context, input types.CreateTas
 		return nil, gqlx.Internal(ctx)
 	}
 
+	if publishAsana {
+		if _, err := r.task.Sync.Asana.PublishToAsana(ctx, publishScope, created.ID, projectID); err != nil {
+			graphql.AddError(ctx, r.asanaPublishError(ctx, err))
+		}
+	}
+
 	if publish {
-		if _, err := r.task.Sync.PublishToLinear(ctx, publishScope, created.ID, teamID); err != nil {
+		if _, err := r.task.Sync.Linear.PublishToLinear(ctx, publishScope, created.ID, teamID); err != nil {
 			graphql.AddError(ctx, r.linearPublishError(ctx, err))
 		}
 	}
@@ -190,10 +222,10 @@ func (r *mutationResolver) PublishTaskToLinear(ctx context.Context, input types.
 	}
 
 	if input.TeamID == "" {
-		return nil, gqlx.Invalid(ctx, tasksync.ErrLinearTeamIDRequired)
+		return nil, gqlx.Invalid(ctx, linearsvc.ErrLinearTeamIDRequired)
 	}
 
-	link, err := r.task.Sync.PublishToLinear(ctx, scope, input.TaskID, input.TeamID)
+	link, err := r.task.Sync.Linear.PublishToLinear(ctx, scope, input.TaskID, input.TeamID)
 	if err != nil {
 		return nil, r.linearPublishError(ctx, err)
 	}
@@ -217,31 +249,31 @@ func (r *mutationResolver) LinkTaskToLinear(ctx context.Context, input types.Lin
 	}
 
 	if input.TeamID == "" {
-		return nil, gqlx.Invalid(ctx, tasksync.ErrLinearTeamIDRequired)
+		return nil, gqlx.Invalid(ctx, linearsvc.ErrLinearTeamIDRequired)
 	}
 
 	if input.IssueID == "" {
-		return nil, gqlx.Invalid(ctx, tasksync.ErrLinearIssueIDRequired)
+		return nil, gqlx.Invalid(ctx, linearsvc.ErrLinearIssueIDRequired)
 	}
 
 	identity := authn.IdentityFromContext(ctx)
 
-	link, err := r.task.Sync.LinkToLinear(ctx, scope, input.TaskID, input.TeamID, input.IssueID, &identity.ID)
+	link, err := r.task.Sync.Linear.LinkToLinear(ctx, scope, input.TaskID, input.TeamID, input.IssueID, &identity.ID)
 	if err != nil {
 		switch {
 		case errors.Is(err, coredata.ErrResourceNotFound):
 			return nil, gqlx.NotFound(ctx, err)
-		case errors.Is(err, tasksync.ErrLinearNotConnected):
+		case errors.Is(err, linearsvc.ErrLinearNotConnected):
 			return nil, gqlx.Invalid(ctx, err)
-		case errors.Is(err, tasksync.ErrLinearReconnectRequired):
+		case errors.Is(err, linearsvc.ErrLinearReconnectRequired):
 			return nil, gqlx.Invalid(ctx, err)
-		case errors.Is(err, tasksync.ErrTaskAlreadyLinked),
+		case errors.Is(err, shared.ErrTaskAlreadyLinked),
 			errors.Is(err, coredata.ErrResourceAlreadyExists):
 			return nil, gqlx.Conflict(ctx, err)
-		case errors.Is(err, tasksync.ErrLinearTeamIDRequired),
-			errors.Is(err, tasksync.ErrLinearTeamNotFound),
-			errors.Is(err, tasksync.ErrLinearIssueIDRequired),
-			errors.Is(err, tasksync.ErrLinearIssueNotFound):
+		case errors.Is(err, linearsvc.ErrLinearTeamIDRequired),
+			errors.Is(err, linearsvc.ErrLinearTeamNotFound),
+			errors.Is(err, linearsvc.ErrLinearIssueIDRequired),
+			errors.Is(err, linearsvc.ErrLinearIssueNotFound):
 			return nil, gqlx.Invalid(ctx, err)
 		default:
 			r.logger.ErrorCtx(ctx, "cannot link task to Linear", log.Error(err))
@@ -271,7 +303,7 @@ func (r *mutationResolver) UnlinkTaskExternal(ctx context.Context, input types.U
 		switch {
 		case errors.Is(err, coredata.ErrResourceNotFound):
 			return nil, gqlx.NotFound(ctx, err)
-		case errors.Is(err, tasksync.ErrTaskNotLinked):
+		case errors.Is(err, shared.ErrTaskNotLinked):
 			return nil, gqlx.NotFound(ctx, err)
 		default:
 			r.logger.ErrorCtx(ctx, "cannot unlink task external link", log.Error(err))
@@ -297,7 +329,7 @@ func (r *mutationResolver) UpdateLinearSettings(ctx context.Context, input types
 		return nil, err
 	}
 
-	update := tasksync.LinearSyncSettingsUpdate{}
+	update := linearsvc.LinearSyncSettingsUpdate{}
 
 	if input.DefaultTeamID.IsSet() {
 		teamID := input.DefaultTeamID.Value()
@@ -312,15 +344,15 @@ func (r *mutationResolver) UpdateLinearSettings(ctx context.Context, input types
 		}
 	}
 
-	if err := r.task.Sync.UpdateLinearSettings(ctx, scope, input.OrganizationID, update); err != nil {
+	if err := r.task.Sync.Linear.UpdateLinearSettings(ctx, scope, input.OrganizationID, update); err != nil {
 		switch {
 		case errors.Is(err, coredata.ErrResourceNotFound):
 			return nil, gqlx.NotFound(ctx, err)
-		case errors.Is(err, tasksync.ErrLinearNotConnected),
-			errors.Is(err, tasksync.ErrLinearReconnectRequired),
-			errors.Is(err, tasksync.ErrLinearTeamNotFound),
-			errors.Is(err, tasksync.ErrLinearDefaultTeamRequired),
-			errors.Is(err, tasksync.ErrLinearSettingsRequired):
+		case errors.Is(err, linearsvc.ErrLinearNotConnected),
+			errors.Is(err, linearsvc.ErrLinearReconnectRequired),
+			errors.Is(err, linearsvc.ErrLinearTeamNotFound),
+			errors.Is(err, linearsvc.ErrLinearDefaultTeamRequired),
+			errors.Is(err, linearsvc.ErrLinearSettingsRequired):
 			return nil, gqlx.Invalid(ctx, err)
 		default:
 			r.logger.ErrorCtx(ctx, "cannot update Linear settings", log.Error(err))
@@ -343,6 +375,144 @@ func (r *mutationResolver) UpdateLinearSettings(ctx context.Context, input types
 	return &types.UpdateLinearSettingsPayload{
 		Organization: types.NewOrganization(organization),
 	}, nil
+}
+
+// PublishTaskToAsana is the resolver for the publishTaskToAsana field.
+func (r *mutationResolver) PublishTaskToAsana(ctx context.Context, input types.PublishTaskToAsanaInput) (*types.PublishTaskToAsanaPayload, error) {
+	scope, err := r.authorize(ctx, input.TaskID, task.ActionTaskUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	if input.ProjectID == "" {
+		return nil, gqlx.Invalid(ctx, asanasvc.ErrAsanaProjectIDRequired)
+	}
+
+	link, err := r.task.Sync.Asana.PublishToAsana(ctx, scope, input.TaskID, input.ProjectID)
+	if err != nil {
+		return nil, r.asanaPublishError(ctx, err)
+	}
+
+	loaded, err := r.task.Get(ctx, scope, link.TaskID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load published task", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return &types.PublishTaskToAsanaPayload{Task: types.NewTask(loaded)}, nil
+}
+
+// LinkTaskToAsana is the resolver for the linkTaskToAsana field.
+func (r *mutationResolver) LinkTaskToAsana(ctx context.Context, input types.LinkTaskToAsanaInput) (*types.LinkTaskToAsanaPayload, error) {
+	scope, err := r.authorize(ctx, input.TaskID, task.ActionTaskUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	if input.ProjectID == "" {
+		return nil, gqlx.Invalid(ctx, asanasvc.ErrAsanaProjectIDRequired)
+	}
+
+	if input.TaskGid == "" {
+		return nil, gqlx.Invalid(ctx, asanasvc.ErrAsanaTaskIDRequired)
+	}
+
+	link, err := r.task.Sync.Asana.LinkToAsana(ctx, scope, input.TaskID, input.ProjectID, input.TaskGid)
+	if err != nil {
+		return nil, r.asanaPublishError(ctx, err)
+	}
+
+	loaded, err := r.task.Get(ctx, scope, link.TaskID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load linked task", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return &types.LinkTaskToAsanaPayload{Task: types.NewTask(loaded)}, nil
+}
+
+// UpdateAsanaSettings is the resolver for the updateAsanaSettings field.
+func (r *mutationResolver) UpdateAsanaSettings(ctx context.Context, input types.UpdateAsanaSettingsInput) (*types.UpdateAsanaSettingsPayload, error) {
+	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionConnectorInitiate)
+	if err != nil {
+		return nil, err
+	}
+
+	update := asanasvc.AsanaSettingsUpdate{}
+
+	if input.DefaultProjectID.IsSet() {
+		projectID := input.DefaultProjectID.Value()
+		update.DefaultProjectID = &projectID
+	}
+
+	if input.TaskImport.IsSet() {
+		status := input.TaskImport.Value()
+		if status != nil {
+			active := *status == types.AsanaTaskImportActive
+			update.ImportNewTasks = &active
+		}
+	}
+
+	if err := r.task.Sync.Asana.UpdateAsanaSettings(ctx, scope, input.OrganizationID, update); err != nil {
+		return nil, r.asanaSettingsError(ctx, err)
+	}
+
+	organization, err := r.probo.Organizations.Get(ctx, scope, input.OrganizationID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlx.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return &types.UpdateAsanaSettingsPayload{Organization: types.NewOrganization(organization)}, nil
+}
+
+// UpdateAsanaProjectMapping is the resolver for the updateAsanaProjectMapping field.
+func (r *mutationResolver) UpdateAsanaProjectMapping(ctx context.Context, input types.UpdateAsanaProjectMappingInput) (*types.UpdateAsanaProjectMappingPayload, error) {
+	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionConnectorInitiate)
+	if err != nil {
+		return nil, err
+	}
+
+	update := asanasvc.AsanaMappingUpdate{
+		ProjectGID: input.ProjectID,
+		Clear:      input.Clear != nil && *input.Clear,
+	}
+	if input.States.IsSet() {
+		update.StatesSet = true
+		update.States = asanaStateInputs(input.States.Value())
+	}
+
+	if input.PriorityFieldID.IsSet() {
+		update.PriorityFieldSet = true
+		update.PriorityFieldGID = input.PriorityFieldID.Value()
+	}
+
+	if input.Priorities.IsSet() {
+		update.PrioritiesSet = true
+		update.Priorities = asanaPriorityInputs(input.Priorities.Value())
+	}
+
+	if err := r.task.Sync.Asana.UpdateAsanaProjectMapping(ctx, scope, input.OrganizationID, update); err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
+		}
+
+		return nil, r.asanaSettingsError(ctx, err)
+	}
+
+	setup, mapping, err := r.task.Sync.Asana.AsanaProjectSetup(ctx, scope, input.OrganizationID, input.ProjectID)
+	if err != nil {
+		return nil, r.asanaSettingsError(ctx, err)
+	}
+
+	return &types.UpdateAsanaProjectMappingPayload{Setup: asanaSetupNode(setup, mapping)}, nil
 }
 
 // AssignedTo is the resolver for the assignedTo field.

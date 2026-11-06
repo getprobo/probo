@@ -560,7 +560,7 @@ func (c *converter) convertCodeSpan(n ast.Node) ([]Node, error) {
 
 func (c *converter) convertLink(n *ast.Link) ([]Node, error) {
 	linkAttrs := LinkAttrs{
-		Href: safeLinkHref(string(n.Destination)),
+		Href: SafeLinkHref(string(n.Destination)),
 	}
 
 	if n.Title != nil {
@@ -587,7 +587,7 @@ func (c *converter) convertLink(n *ast.Link) ([]Node, error) {
 func (c *converter) convertAutoLink(n *ast.AutoLink) ([]Node, error) {
 	url := string(n.URL(c.source))
 
-	linkAttrs := LinkAttrs{Href: safeLinkHref(url)}
+	linkAttrs := LinkAttrs{Href: SafeLinkHref(url)}
 
 	attrs, err := json.Marshal(linkAttrs)
 	if err != nil {

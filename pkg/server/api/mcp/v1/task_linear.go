@@ -29,44 +29,33 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/server/api/mcp/v1/types"
-	tasksync "go.probo.inc/probo/pkg/task/sync"
+	linearsvc "go.probo.inc/probo/pkg/task/sync/linear"
 )
 
 func linearPublishToolError(r *Resolver, ctx context.Context, err error) error {
-	switch {
-	case errors.Is(err, coredata.ErrResourceNotFound):
-		return fmt.Errorf("task not found")
-	case errors.Is(err, tasksync.ErrLinearNotConnected):
-		return fmt.Errorf("linear connector is not connected")
-	case errors.Is(err, tasksync.ErrLinearReconnectRequired):
-		return fmt.Errorf("linear connector must be reconnected with write scopes")
-	case errors.Is(err, tasksync.ErrTaskAlreadyLinked),
-		errors.Is(err, coredata.ErrResourceAlreadyExists):
-		return fmt.Errorf("task is already linked to an external issue")
-	case errors.Is(err, tasksync.ErrLinearTeamIDRequired):
-		return fmt.Errorf("linear team id is required")
-	case errors.Is(err, tasksync.ErrLinearTeamNotFound):
-		return fmt.Errorf("linear team was not found")
-	default:
+	message, known := linearsvc.LinearPublishClientMessage(err)
+	if !known {
 		r.logger.ErrorCtx(ctx, "cannot publish task to Linear", log.Error(err))
 
 		return fmt.Errorf("internal error")
 	}
+
+	return errors.New(message)
 }
 
 func linearSettingsToolError(r *Resolver, ctx context.Context, err error) error {
 	switch {
 	case errors.Is(err, coredata.ErrResourceNotFound):
 		return fmt.Errorf("organization not found")
-	case errors.Is(err, tasksync.ErrLinearNotConnected):
+	case errors.Is(err, linearsvc.ErrLinearNotConnected):
 		return fmt.Errorf("linear connector is not connected")
-	case errors.Is(err, tasksync.ErrLinearReconnectRequired):
+	case errors.Is(err, linearsvc.ErrLinearReconnectRequired):
 		return fmt.Errorf("linear connector must be reconnected with write scopes")
-	case errors.Is(err, tasksync.ErrLinearTeamNotFound):
+	case errors.Is(err, linearsvc.ErrLinearTeamNotFound):
 		return fmt.Errorf("linear team was not found")
-	case errors.Is(err, tasksync.ErrLinearDefaultTeamRequired):
+	case errors.Is(err, linearsvc.ErrLinearDefaultTeamRequired):
 		return fmt.Errorf("a default Linear team is required")
-	case errors.Is(err, tasksync.ErrLinearSettingsRequired):
+	case errors.Is(err, linearsvc.ErrLinearSettingsRequired):
 		return fmt.Errorf("a Linear team or an issue import status is required")
 	default:
 		r.logger.ErrorCtx(ctx, "cannot update Linear settings", log.Error(err))
@@ -75,20 +64,20 @@ func linearSettingsToolError(r *Resolver, ctx context.Context, err error) error 
 	}
 }
 
-func linearSyncSettingsUpdate(raw json.RawMessage, issueImport *types.LinearIssueImport) (tasksync.LinearSyncSettingsUpdate, error) {
+func linearSyncSettingsUpdate(raw json.RawMessage, issueImport *types.LinearIssueImport) (linearsvc.LinearSyncSettingsUpdate, error) {
 	teamSet, teamID, err := rawOptionalString(raw, "default_team_id")
 	if err != nil {
-		return tasksync.LinearSyncSettingsUpdate{}, err
+		return linearsvc.LinearSyncSettingsUpdate{}, err
 	}
 
-	update := tasksync.LinearSyncSettingsUpdate{}
+	update := linearsvc.LinearSyncSettingsUpdate{}
 	if teamSet {
 		update.DefaultTeamID = &teamID
 	}
 
 	if issueImport != nil {
 		if !issueImport.IsValid() {
-			return tasksync.LinearSyncSettingsUpdate{}, fmt.Errorf("issue_import must be ACTIVE or INACTIVE")
+			return linearsvc.LinearSyncSettingsUpdate{}, fmt.Errorf("issue_import must be ACTIVE or INACTIVE")
 		}
 
 		active := *issueImport == types.LinearIssueImportACTIVE
@@ -125,7 +114,7 @@ func rawOptionalString(raw json.RawMessage, key string) (bool, *string, error) {
 	return true, &value, nil
 }
 
-func mcpLinearSettings(settings tasksync.LinearSettings) *types.LinearSettings {
+func mcpLinearSettings(settings linearsvc.LinearSettings) *types.LinearSettings {
 	status := types.LinearIssueImportINACTIVE
 	if settings.ImportNewIssues {
 		status = types.LinearIssueImportACTIVE

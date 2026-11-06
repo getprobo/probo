@@ -36,7 +36,7 @@ import (
 	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/prosemirror"
-	tasksync "go.probo.inc/probo/pkg/task/sync"
+	"go.probo.inc/probo/pkg/task/sync/shared"
 )
 
 type attachmentReader struct {
@@ -50,9 +50,9 @@ func (r *attachmentReader) ReadAttachment(
 	scope coredata.Scoper,
 	organizationID gid.GID,
 	fileID gid.GID,
-) (tasksync.Attachment, error) {
+) (shared.Attachment, error) {
 	if r == nil || r.files == nil {
-		return tasksync.Attachment{}, fmt.Errorf("cannot read attachment %q: storage is not configured", fileID)
+		return shared.Attachment{}, fmt.Errorf("cannot read attachment %q: storage is not configured", fileID)
 	}
 
 	file := &coredata.File{}
@@ -68,24 +68,24 @@ func (r *attachmentReader) ReadAttachment(
 		},
 	)
 	if err != nil {
-		return tasksync.Attachment{}, fmt.Errorf("cannot read attachment %q: %w", fileID, err)
+		return shared.Attachment{}, fmt.Errorf("cannot read attachment %q: %w", fileID, err)
 	}
 
 	if file.OrganizationID != organizationID {
-		return tasksync.Attachment{}, fmt.Errorf("cannot read attachment %q: file belongs to another organization", fileID)
+		return shared.Attachment{}, fmt.Errorf("cannot read attachment %q: file belongs to another organization", fileID)
 	}
 
 	if file.DeletedAt != nil {
-		return tasksync.Attachment{}, fmt.Errorf("cannot read attachment %q: file is deleted", fileID)
+		return shared.Attachment{}, fmt.Errorf("cannot read attachment %q: file is deleted", fileID)
 	}
 
 	if file.Visibility != coredata.FileVisibilityPrivate {
-		return tasksync.Attachment{}, fmt.Errorf("cannot read attachment %q: file is not private", fileID)
+		return shared.Attachment{}, fmt.Errorf("cannot read attachment %q: file is not private", fileID)
 	}
 
 	body, err := r.files.GetFileBytes(ctx, file)
 	if err != nil {
-		return tasksync.Attachment{}, fmt.Errorf("cannot read attachment %q: %w", fileID, err)
+		return shared.Attachment{}, fmt.Errorf("cannot read attachment %q: %w", fileID, err)
 	}
 
 	name := strings.TrimSpace(file.FileName)
@@ -98,7 +98,7 @@ func (r *attachmentReader) ReadAttachment(
 		mimeType = "application/octet-stream"
 	}
 
-	return tasksync.Attachment{
+	return shared.Attachment{
 		Name:     name,
 		MimeType: mimeType,
 		Body:     body,
@@ -109,20 +109,20 @@ func (r *attachmentReader) StoreAttachment(
 	ctx context.Context,
 	scope coredata.Scoper,
 	organizationID gid.GID,
-	file tasksync.Attachment,
-) (tasksync.StoredAttachment, error) {
+	file shared.Attachment,
+) (shared.Stored, error) {
 	if r == nil || r.files == nil || r.pg == nil || r.bucket == "" {
-		return tasksync.StoredAttachment{}, fmt.Errorf("cannot store attachment: storage is not configured")
+		return shared.Stored{}, fmt.Errorf("cannot store attachment: storage is not configured")
 	}
 
 	name, mimeType, err := normalizeStoredAttachment(file.Name, file.MimeType, int64(len(file.Body)))
 	if err != nil {
-		return tasksync.StoredAttachment{}, err
+		return shared.Stored{}, err
 	}
 
 	objectKey, err := uuid.NewV7()
 	if err != nil {
-		return tasksync.StoredAttachment{}, fmt.Errorf("cannot generate object key: %w", err)
+		return shared.Stored{}, fmt.Errorf("cannot generate object key: %w", err)
 	}
 
 	now := time.Now()
@@ -148,7 +148,7 @@ func (r *attachmentReader) StoreAttachment(
 		},
 	)
 	if err != nil {
-		return tasksync.StoredAttachment{}, fmt.Errorf("cannot upload attachment: %w", err)
+		return shared.Stored{}, fmt.Errorf("cannot upload attachment: %w", err)
 	}
 
 	record.FileSize = size
@@ -164,10 +164,10 @@ func (r *attachmentReader) StoreAttachment(
 		},
 	)
 	if err != nil {
-		return tasksync.StoredAttachment{}, err
+		return shared.Stored{}, err
 	}
 
-	return tasksync.StoredAttachment{
+	return shared.Stored{
 		ID:       record.ID,
 		Name:     record.FileName,
 		MimeType: record.MimeType,

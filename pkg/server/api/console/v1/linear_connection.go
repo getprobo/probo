@@ -22,17 +22,17 @@ package console_v1
 
 import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
-	tasksync "go.probo.inc/probo/pkg/task/sync"
+	linearsvc "go.probo.inc/probo/pkg/task/sync/linear"
 )
 
-func linearIssueNode(issue tasksync.LinearIssue) (*types.LinearIssue, error) {
+func linearIssueNode(issue linearsvc.LinearIssue) (*types.LinearIssue, error) {
 	node := &types.LinearIssue{
 		ID:         issue.ID,
 		Identifier: issue.Identifier,
 		Title:      issue.Title,
 	}
 
-	content, err := tasksync.MarkdownToContent(issue.Description)
+	content, err := linearsvc.MarkdownToContent(issue.Description)
 	if err != nil {
 		return nil, err
 	}
@@ -40,11 +40,11 @@ func linearIssueNode(issue tasksync.LinearIssue) (*types.LinearIssue, error) {
 	node.Content = &content
 
 	if issue.StateType != "" {
-		state := tasksync.LinearTypeToTaskState(issue.StateType)
+		state := linearsvc.LinearTypeToTaskState(issue.StateType)
 		node.State = &state
 	}
 
-	if priority, ok := tasksync.LinearPriorityToTask(issue.Priority); ok {
+	if priority, ok := linearsvc.LinearPriorityToTask(issue.Priority); ok {
 		node.Priority = &priority
 	}
 

@@ -43,6 +43,7 @@ import (
 	"go.probo.inc/probo/pkg/connectorprotocol"
 	"go.probo.inc/probo/pkg/connectorprotocol/provider"
 	"go.probo.inc/probo/pkg/cookiebanner"
+	"go.probo.inc/probo/pkg/coredata"
 	employeeportalmgmt "go.probo.inc/probo/pkg/employeeportal/management"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/filemanager"
@@ -62,6 +63,7 @@ import (
 	"go.probo.inc/probo/pkg/saferedirect"
 	"go.probo.inc/probo/pkg/securecookie"
 	agent_v1 "go.probo.inc/probo/pkg/server/api/agent/v1"
+	asana_v1 "go.probo.inc/probo/pkg/server/api/asana/v1"
 	collaboration_v1 "go.probo.inc/probo/pkg/server/api/collaboration/v1"
 	connect_v1 "go.probo.inc/probo/pkg/server/api/connect/v1"
 	console_v1 "go.probo.inc/probo/pkg/server/api/console/v1"
@@ -147,6 +149,7 @@ type (
 		mcpHandler           http.Handler
 		slackHandler         http.Handler
 		linearHandler        http.Handler
+		asanaHandler         http.Handler
 		connectHandler       http.Handler
 		agentHandler         http.Handler
 	}
@@ -229,6 +232,10 @@ func NewServer(cfg Config) (*Server, error) {
 	// Linear webhooks are signed POSTs from Linear's servers. Authentication
 	// is HMAC, not cookies, so CSRF does not apply.
 	csrf.AddInsecureBypassPattern("POST /linear/v1/webhooks")
+
+	// Asana webhooks are signed POSTs from Asana's servers. The handshake
+	// echoes X-Hook-Secret and later requests carry X-Hook-Signature.
+	csrf.AddInsecureBypassPattern("POST /asana/v1/webhooks/{rest...}")
 
 	// The cookie banner API is called cross-origin from customer websites
 	// by the JS SDK. CORS is handled by the cookie banner middleware.
@@ -381,9 +388,13 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.Slackbot,
 			cfg.SlackbotInstallations,
 		),
+		asanaHandler: asana_v1.NewMux(
+			cfg.Logger.Named("asana.v1"),
+			cfg.Task.Sync.Asana,
+		),
 		linearHandler: linear_v1.NewMux(
 			cfg.Logger.Named("linear.v1"),
-			cfg.Task.Sync,
+			cfg.Task.Sync.Linear,
 			cfg.LinearWebhookSecret,
 		),
 		connectHandler: connect_v1.NewMux(
@@ -402,6 +413,8 @@ func NewServer(cfg Config) (*Server, error) {
 			),
 			cfg.GraphQLLimits,
 			cfg.SlackbotInstallations != nil,
+			syncProviderAvailable(cfg.ConnectorRegistry, coredata.ConnectorProviderLinearSync),
+			syncProviderAvailable(cfg.ConnectorRegistry, coredata.ConnectorProviderAsana),
 		),
 		agentHandler: agent_v1.NewMux(
 			cfg.Logger.Named("agent.v1"),
@@ -413,6 +426,16 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.Cookie,
 		),
 	}, nil
+}
+
+func syncProviderAvailable(registry *connectorprotocol.Registry, provider coredata.ConnectorProvider) bool {
+	if registry == nil {
+		return false
+	}
+
+	_, err := registry.Get(string(provider))
+
+	return err == nil
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -457,6 +480,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		r.Mount("/mcp/v1", http.StripPrefix("/mcp/v1", s.mcpHandler))
 		r.Mount("/slack/v1", http.StripPrefix("/slack/v1", s.slackHandler))
 		r.Mount("/linear/v1", http.StripPrefix("/linear/v1", s.linearHandler))
+		r.Mount("/asana/v1", http.StripPrefix("/asana/v1", s.asanaHandler))
 	})
 
 	s.csrf.Handler(router).ServeHTTP(w, r)

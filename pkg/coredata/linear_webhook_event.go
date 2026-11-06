@@ -215,24 +215,21 @@ WHERE delivery_id = @delivery_id
 	return nil
 }
 
-func (e *LinearWebhookEvent) TouchLease(
+func (e *LinearWebhookEvent) Touch(
 	ctx context.Context,
 	conn pg.Querier,
 	now time.Time,
 ) error {
 	if e.ProcessingOwnerToken == nil || *e.ProcessingOwnerToken == "" {
-		panic("Linear webhook event lease touch requires an owner token")
+		panic("Linear webhook event touch requires an owner token")
 	}
 
 	q := `
 UPDATE linear_webhook_events
 SET
-    processing_started_at = @now,
     updated_at = @now
 WHERE delivery_id = @delivery_id
     AND processing_owner_token = @processing_owner_token
-    AND processed_at IS NULL
-    AND dead_lettered_at IS NULL
 `
 
 	result, err := conn.Exec(
@@ -245,14 +242,13 @@ WHERE delivery_id = @delivery_id
 		},
 	)
 	if err != nil {
-		return fmt.Errorf("cannot touch Linear webhook event lease: %w", err)
+		return fmt.Errorf("cannot touch Linear webhook event: %w", err)
 	}
 
 	if result.RowsAffected() == 0 {
 		return ErrProcessingLeaseLost
 	}
 
-	e.ProcessingStartedAt = &now
 	e.UpdatedAt = now
 
 	return nil
@@ -311,8 +307,9 @@ SET
     last_error = @stale_error,
     updated_at = @now
 WHERE processed_at IS NULL
-    AND processing_started_at IS NOT NULL
-    AND processing_started_at < @stale_threshold
+    AND dead_lettered_at IS NULL
+    AND processing_owner_token IS NOT NULL
+    AND updated_at < @stale_threshold
 `
 
 	_, err := conn.Exec(

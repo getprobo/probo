@@ -176,7 +176,7 @@ func sanitizeLinkMark(m *Mark) {
 		return
 	}
 
-	attrs.Href = safeLinkHref(attrs.Href)
+	attrs.Href = SafeLinkHref(attrs.Href)
 
 	raw, err := json.Marshal(attrs)
 	if err != nil {

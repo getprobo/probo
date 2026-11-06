@@ -67,17 +67,19 @@ import (
 
 type (
 	Resolver struct {
-		authorize         authz.AuthorizeFunc
-		batchAuthorize    authz.BatchAuthorizeFunc
-		logger            *log.Logger
-		iam               *iam.Service
-		scopeRegistry     *oauth2scope.Registry
-		fileManager       *filemanager.Service
-		employeePortal    *employeeportalmgmt.Service
-		notification      *notification.Service
-		baseURL           *baseurl.BaseURL
-		sessionCookie     *authn.Cookie
-		slackbotAvailable bool
+		authorize                      authz.AuthorizeFunc
+		batchAuthorize                 authz.BatchAuthorizeFunc
+		logger                         *log.Logger
+		iam                            *iam.Service
+		scopeRegistry                  *oauth2scope.Registry
+		fileManager                    *filemanager.Service
+		employeePortal                 *employeeportalmgmt.Service
+		notification                   *notification.Service
+		baseURL                        *baseurl.BaseURL
+		sessionCookie                  *authn.Cookie
+		slackbotAvailable              bool
+		linearSynchronizationAvailable bool
+		asanaSynchronizationAvailable  bool
 	}
 )
 
@@ -93,6 +95,8 @@ func NewMux(
 	allowedRedirectHost saferedirect.AllowedHostFunc,
 	graphqlLimits gqlx.Limits,
 	slackbotAvailable bool,
+	linearSynchronizationAvailable bool,
+	asanaSynchronizationAvailable bool,
 ) *chi.Mux {
 	r := chi.NewMux()
 
@@ -109,6 +113,8 @@ func NewMux(
 		cookieConfig,
 		graphqlLimits,
 		slackbotAvailable,
+		linearSynchronizationAvailable,
+		asanaSynchronizationAvailable,
 	)
 	samlHandler := NewSAMLHandler(svc, cookieConfig, baseURL, logger)
 	scimHandler := NewSCIMHandler(svc, logger.Named("scim"))

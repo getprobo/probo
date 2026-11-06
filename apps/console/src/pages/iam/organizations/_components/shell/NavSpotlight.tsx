@@ -65,6 +65,8 @@ interface SpotlightDestination {
 export interface NavSpotlightProps {
   organizationKey: NavSpotlight_organization$key;
   slackbotAvailable: boolean;
+  linearSynchronizationAvailable: boolean;
+  asanaSynchronizationAvailable: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -72,6 +74,8 @@ export interface NavSpotlightProps {
 export function NavSpotlight({
   organizationKey,
   slackbotAvailable,
+  linearSynchronizationAvailable,
+  asanaSynchronizationAvailable,
   open,
   onOpenChange,
 }: NavSpotlightProps) {
@@ -86,7 +90,12 @@ export function NavSpotlight({
   const slots = navSpotlight();
 
   const destinations = useMemo(() => {
-    return visibleNavDestinations(permissions, slackbotAvailable).map(
+    return visibleNavDestinations(
+      permissions,
+      slackbotAvailable,
+      linearSynchronizationAvailable,
+      asanaSynchronizationAvailable,
+    ).map(
       (destination) => {
         const group = navGroupByKey(destination.group);
         return {
@@ -97,7 +106,14 @@ export function NavSpotlight({
         };
       },
     );
-  }, [organizationId, permissions, slackbotAvailable, t]);
+  }, [
+    organizationId,
+    permissions,
+    slackbotAvailable,
+    linearSynchronizationAvailable,
+    asanaSynchronizationAvailable,
+    t,
+  ]);
 
   useHotkeys("mod+k", () => {
     onOpenChange(!open);
