@@ -24,6 +24,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"unicode/utf8"
 
 	"go.probo.inc/probo/pkg/gid"
 )
@@ -118,9 +119,15 @@ type (
 	// Schema is a compiled set of node and mark specs. It drives validation,
 	// sanitization, and rendering.
 	Schema struct {
-		index   map[NodeType]uint8
-		entries []nodeEntry
-		marks   map[MarkType]MarkSpec
+		index              map[NodeType]uint8
+		entries            []nodeEntry
+		marks              map[MarkType]MarkSpec
+		markEntries        map[MarkType]markEntry
+		hasExtraTextLength bool
+	}
+
+	markEntry struct {
+		spec MarkSpec
 	}
 
 	nodeEntry struct {
@@ -200,6 +207,7 @@ func NewSchema(nodes []NodeSpec, marks []MarkSpec) *Schema {
 	}
 
 	markIndex := make(map[MarkType]MarkSpec, len(marks))
+	markEntries := make(map[MarkType]markEntry, len(marks))
 
 	for _, spec := range marks {
 		name := spec.Name()
@@ -208,12 +216,23 @@ func NewSchema(nodes []NodeSpec, marks []MarkSpec) *Schema {
 		}
 
 		markIndex[name] = spec
+		markEntries[name] = markEntry{spec: spec}
+	}
+
+	hasExtraTextLength := false
+	for i := range entries {
+		if entries[i].textLen != nil {
+			hasExtraTextLength = true
+			break
+		}
 	}
 
 	return &Schema{
-		index:   index,
-		entries: entries,
-		marks:   markIndex,
+		index:              index,
+		entries:            entries,
+		marks:              markIndex,
+		markEntries:        markEntries,
+		hasExtraTextLength: hasExtraTextLength,
 	}
 }
 
@@ -314,18 +333,18 @@ func (s *Schema) validateNode(n *Node, mode CheckMode) error {
 	}
 
 	entry := &s.entries[idx]
-	if err := entry.spec.Check(n, mode); err != nil {
+	if err := checkNodeSpec(entry.spec, n, mode); err != nil {
 		return err
 	}
 
 	if n.Type == NodeText {
 		for i := range n.Marks {
-			mark, ok := s.marks[n.Marks[i].Type]
+			mark, ok := s.markEntries[n.Marks[i].Type]
 			if !ok {
 				return fmt.Errorf("cannot validate mark: unknown type %q", n.Marks[i].Type)
 			}
 
-			if err := mark.Check(&n.Marks[i], mode); err != nil {
+			if err := checkMarkSpec(mark.spec, &n.Marks[i], mode); err != nil {
 				return err
 			}
 		}
@@ -467,12 +486,19 @@ func (s *Schema) Sanitize(raw string) (string, error) {
 }
 
 // TextLength returns the number of text characters across the node tree.
+// Plain text on any node is counted directly; specs may add more via
+// textLengthSpec (for example mentions, once they opt in).
 func (s *Schema) TextLength(n Node) int {
 	length := 0
+	if n.Text != nil {
+		length += utf8.RuneCountInString(*n.Text)
+	}
 
-	if idx, ok := s.index[n.Type]; ok {
-		if tl := s.entries[idx].textLen; tl != nil {
-			length += tl.TextLength(n)
+	if s.hasExtraTextLength {
+		if idx, ok := s.index[n.Type]; ok {
+			if tl := s.entries[idx].textLen; tl != nil {
+				length += tl.TextLength(n)
+			}
 		}
 	}
 

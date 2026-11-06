@@ -23,7 +23,6 @@ package prosemirror
 import (
 	"fmt"
 	"slices"
-	"unicode/utf8"
 )
 
 type textNode struct{}
@@ -55,14 +54,6 @@ func (textNode) Check(n *Node, _ CheckMode) error {
 	}
 
 	return nil
-}
-
-func (textNode) TextLength(n Node) int {
-	if n.Text == nil {
-		return 0
-	}
-
-	return utf8.RuneCountInString(*n.Text)
 }
 
 func (textNode) RenderHTML(w *HTMLWriter, n Node) error {

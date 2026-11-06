@@ -1,0 +1,140 @@
+goos: darwin
+goarch: arm64
+pkg: go.probo.inc/probo/pkg/automerge/prosemirror
+cpu: Apple M4 Max
+                                   │ pkg/prosemirror/testdata/benchstat/baseline.txt │
+                                   │                     sec/op                      │
+ToSpans/bench_small-16                                                   994.8n ± 1%
+ToSpans/bench_large-16                                                   188.3µ ± 1%
+ToSpans/bench_mentions-16                                                288.8µ ± 2%
+Render/PlainText10KiB-16                                                 6.001µ ± 1%
+Render/ThousandParagraphs100KiB-16                                       413.8µ ± 1%
+Render/Table100x10x20B-16                                                1.306m ± 1%
+Render/MalformedHierarchy100KiB-16                                       432.2µ ± 1%
+geomean                                                                  96.12µ
+
+                                   │ pkg/prosemirror/testdata/benchstat/baseline.txt │
+                                   │                       B/s                       │
+ToSpans/bench_small-16                                                  117.0Mi ± 1%
+ToSpans/bench_large-16                                                  199.5Mi ± 1%
+ToSpans/bench_mentions-16                                               103.1Mi ± 2%
+Render/PlainText10KiB-16                                                1.589Gi ± 1%
+Render/ThousandParagraphs100KiB-16                                      230.5Mi ± 1%
+Render/Table100x10x20B-16                                               14.61Mi ± 1%
+Render/MalformedHierarchy100KiB-16                                      220.7Mi ± 1%
+geomean                                                                 161.8Mi
+
+                                   │ pkg/prosemirror/testdata/benchstat/baseline.txt │
+                                   │                      B/op                       │
+ToSpans/bench_small-16                                                  1.879Ki ± 0%
+ToSpans/bench_large-16                                                  394.5Ki ± 0%
+ToSpans/bench_mentions-16                                               524.1Ki ± 0%
+Render/PlainText10KiB-16                                                21.82Ki ± 0%
+Render/ThousandParagraphs100KiB-16                                      1.131Mi ± 0%
+Render/Table100x10x20B-16                                               2.423Mi ± 1%
+Render/MalformedHierarchy100KiB-16                                      1.197Mi ± 1%
+geomean                                                                 225.7Ki
+
+                                   │ pkg/prosemirror/testdata/benchstat/baseline.txt │
+                                   │                    allocs/op                    │
+ToSpans/bench_small-16                                                    16.00 ± 0%
+ToSpans/bench_large-16                                                   2.690k ± 0%
+ToSpans/bench_mentions-16                                                4.275k ± 0%
+Render/PlainText10KiB-16                                                  8.000 ± 0%
+Render/ThousandParagraphs100KiB-16                                       3.034k ± 0%
+Render/Table100x10x20B-16                                                23.35k ± 0%
+Render/MalformedHierarchy100KiB-16                                       4.035k ± 0%
+geomean                                                                   883.7
+
+pkg: go.probo.inc/probo/pkg/prosemirror
+                                 │ pkg/prosemirror/testdata/benchstat/baseline.txt │ pkg/prosemirror/testdata/benchstat/after.txt │
+                                 │                     sec/op                      │        sec/op         vs base                │
+Parse/bench_small-16                                                   770.0n ± 6%            717.5n ± 1%   -6.81% (p=0.002 n=10)
+Parse/bench_large-16                                                   143.8µ ± 1%            142.8µ ± 1%        ~ (p=0.105 n=10)
+Parse/bench_mentions-16                                                149.8µ ± 2%            145.4µ ± 1%   -2.90% (p=0.002 n=10)
+Validate/bench_small-16                                                773.4n ± 1%            820.3n ± 1%   +6.06% (p=0.000 n=10)
+Validate/bench_large-16                                                150.8µ ± 1%            159.6µ ± 1%   +5.83% (p=0.000 n=10)
+Validate/bench_mentions-16                                             173.9µ ± 0%            184.8µ ± 1%   +6.28% (p=0.000 n=10)
+Sanitize/bench_small-16                                                1.269µ ± 1%            1.333µ ± 1%   +5.05% (p=0.000 n=10)
+Sanitize/bench_large-16                                                243.7µ ± 3%            247.5µ ± 1%        ~ (p=0.105 n=10)
+Sanitize/bench_mentions-16                                             377.8µ ± 2%            342.6µ ± 1%   -9.32% (p=0.000 n=10)
+RenderHTML/bench_small-16                                              49.88n ± 2%            58.39n ± 2%  +17.07% (p=0.000 n=10)
+RenderHTML/bench_large-16                                              26.93µ ± 3%            28.56µ ± 0%   +6.04% (p=0.000 n=10)
+RenderHTML/bench_mentions-16                                           69.13µ ± 5%            70.76µ ± 1%   +2.35% (p=0.023 n=10)
+RenderMarkdown/bench_small-16                                          113.6n ± 1%            124.2n ± 1%   +9.29% (p=0.000 n=10)
+RenderMarkdown/bench_large-16                                          68.81µ ± 1%            70.25µ ± 1%   +2.10% (p=0.000 n=10)
+RenderMarkdown/bench_mentions-16                                       67.28µ ± 1%            69.13µ ± 1%   +2.75% (p=0.000 n=10)
+TextLength/bench_small-16                                              8.096n ± 1%            8.986n ± 2%  +10.98% (p=0.000 n=10)
+TextLength/bench_large-16                                              6.244µ ± 1%            6.496µ ± 3%   +4.04% (p=0.000 n=10)
+TextLength/bench_mentions-16                                           1.574µ ± 1%            1.851µ ± 1%  +17.60% (p=0.000 n=10)
+geomean                                                                9.008µ                 9.375µ        +4.08%
+
+                                 │ pkg/prosemirror/testdata/benchstat/baseline.txt │ pkg/prosemirror/testdata/benchstat/after.txt │
+                                 │                       B/s                       │         B/s           vs base                │
+Parse/bench_small-16                                                  151.1Mi ± 7%           162.1Mi ± 1%   +7.31% (p=0.002 n=10)
+Parse/bench_large-16                                                  261.4Mi ± 1%           263.1Mi ± 1%        ~ (p=0.105 n=10)
+Parse/bench_mentions-16                                               198.8Mi ± 2%           204.7Mi ± 1%   +2.98% (p=0.002 n=10)
+Validate/bench_small-16                                               150.4Mi ± 1%           141.8Mi ± 1%   -5.71% (p=0.000 n=10)
+Validate/bench_large-16                                               249.1Mi ± 1%           235.4Mi ± 1%   -5.51% (p=0.000 n=10)
+Validate/bench_mentions-16                                            171.2Mi ± 0%           161.1Mi ± 1%   -5.90% (p=0.000 n=10)
+Sanitize/bench_small-16                                               91.72Mi ± 1%           87.32Mi ± 1%   -4.80% (p=0.000 n=10)
+Sanitize/bench_large-16                                               154.2Mi ± 3%           151.8Mi ± 1%        ~ (p=0.105 n=10)
+Sanitize/bench_mentions-16                                            78.79Mi ± 2%           86.89Mi ± 1%  +10.28% (p=0.000 n=10)
+RenderHTML/bench_small-16                                             2.278Gi ± 2%           1.946Gi ± 2%  -14.58% (p=0.000 n=10)
+RenderHTML/bench_large-16                                             1.362Gi ± 3%           1.285Gi ± 0%   -5.70% (p=0.000 n=10)
+RenderHTML/bench_mentions-16                                          430.6Mi ± 5%           420.7Mi ± 1%   -2.30% (p=0.023 n=10)
+RenderMarkdown/bench_small-16                                        1024.3Mi ± 1%           937.2Mi ± 1%   -8.51% (p=0.000 n=10)
+RenderMarkdown/bench_large-16                                         546.1Mi ± 1%           534.9Mi ± 1%   -2.05% (p=0.000 n=10)
+RenderMarkdown/bench_mentions-16                                      442.5Mi ± 1%           430.6Mi ± 1%   -2.67% (p=0.000 n=10)
+TextLength/bench_small-16                                             14.03Gi ± 1%           12.64Gi ± 1%   -9.90% (p=0.000 n=10)
+TextLength/bench_large-16                                             5.877Gi ± 1%           5.649Gi ± 3%   -3.87% (p=0.000 n=10)
+TextLength/bench_mentions-16                                          18.47Gi ± 1%           15.71Gi ± 1%  -14.96% (p=0.000 n=10)
+geomean                                                               562.6Mi                540.5Mi        -3.92%
+
+                                 │ pkg/prosemirror/testdata/benchstat/baseline.txt │ pkg/prosemirror/testdata/benchstat/after.txt │
+                                 │                      B/op                       │        B/op         vs base                  │
+Parse/bench_small-16                                                  496.0 ± 0%             496.0 ± 0%        ~ (p=1.000 n=10) ¹
+Parse/bench_large-16                                                198.9Ki ± 0%           198.9Ki ± 0%        ~ (p=0.989 n=10)
+Parse/bench_mentions-16                                             152.6Ki ± 0%           152.6Ki ± 0%   +0.00% (p=0.000 n=10)
+Validate/bench_small-16                                               496.0 ± 0%             593.0 ± 0%  +19.56% (p=0.000 n=10)
+Validate/bench_large-16                                             198.9Ki ± 0%           199.0Ki ± 0%   +0.06% (p=0.000 n=10)
+Validate/bench_mentions-16                                          157.6Ki ± 0%           157.7Ki ± 0%   +0.07% (p=0.000 n=10)
+Sanitize/bench_small-16                                               948.0 ± 0%            1044.0 ± 0%  +10.13% (p=0.000 n=10)
+Sanitize/bench_large-16                                             297.4Ki ± 0%           297.7Ki ± 0%        ~ (p=0.247 n=10)
+Sanitize/bench_mentions-16                                          444.6Ki ± 0%           417.8Ki ± 0%   -6.03% (p=0.000 n=10)
+RenderHTML/bench_small-16                                             112.0 ± 0%             112.0 ± 0%        ~ (p=1.000 n=10) ¹
+RenderHTML/bench_large-16                                           87.53Ki ± 0%           87.53Ki ± 0%        ~ (p=1.000 n=10) ¹
+RenderHTML/bench_mentions-16                                        108.8Ki ± 0%           108.8Ki ± 0%        ~ (p=0.137 n=10)
+RenderMarkdown/bench_small-16                                         160.0 ± 0%             160.0 ± 0%        ~ (p=1.000 n=10) ¹
+RenderMarkdown/bench_large-16                                       104.7Ki ± 0%           104.7Ki ± 0%        ~ (p=1.000 n=10) ¹
+RenderMarkdown/bench_mentions-16                                    55.78Ki ± 0%           55.78Ki ± 0%        ~ (p=0.670 n=10)
+TextLength/bench_small-16                                             0.000 ± 0%             0.000 ± 0%        ~ (p=1.000 n=10) ¹
+TextLength/bench_large-16                                             0.000 ± 0%             0.000 ± 0%        ~ (p=1.000 n=10) ¹
+TextLength/bench_mentions-16                                          0.000 ± 0%             0.000 ± 0%        ~ (p=1.000 n=10) ¹
+geomean                                                                          ²                        +1.20%                ²
+¹ all samples are equal
+² summaries must be >0 to compute geomean
+
+                                 │ pkg/prosemirror/testdata/benchstat/baseline.txt │ pkg/prosemirror/testdata/benchstat/after.txt │
+                                 │                    allocs/op                    │     allocs/op       vs base                  │
+Parse/bench_small-16                                                  8.000 ± 0%             8.000 ± 0%        ~ (p=1.000 n=10) ¹
+Parse/bench_large-16                                                 1.033k ± 0%            1.033k ± 0%        ~ (p=1.000 n=10) ¹
+Parse/bench_mentions-16                                              1.010k ± 0%            1.010k ± 0%        ~ (p=1.000 n=10) ¹
+Validate/bench_small-16                                               8.000 ± 0%             9.000 ± 0%  +12.50% (p=0.000 n=10)
+Validate/bench_large-16                                              1.033k ± 0%            1.034k ± 0%   +0.10% (p=0.000 n=10)
+Validate/bench_mentions-16                                           1.246k ± 0%            1.247k ± 0%   +0.08% (p=0.000 n=10)
+Sanitize/bench_small-16                                               12.00 ± 0%             13.00 ± 0%   +8.33% (p=0.000 n=10)
+Sanitize/bench_large-16                                              1.042k ± 0%            1.043k ± 0%   +0.10% (p=0.000 n=10)
+Sanitize/bench_mentions-16                                           2.305k ± 0%            2.077k ± 0%   -9.89% (p=0.000 n=10)
+RenderHTML/bench_small-16                                             2.000 ± 0%             2.000 ± 0%        ~ (p=1.000 n=10) ¹
+RenderHTML/bench_large-16                                             61.00 ± 0%             61.00 ± 0%        ~ (p=1.000 n=10) ¹
+RenderHTML/bench_mentions-16                                          545.0 ± 0%             545.0 ± 0%        ~ (p=1.000 n=10) ¹
+RenderMarkdown/bench_small-16                                         5.000 ± 0%             5.000 ± 0%        ~ (p=1.000 n=10) ¹
+RenderMarkdown/bench_large-16                                         312.0 ± 0%             312.0 ± 0%        ~ (p=1.000 n=10) ¹
+RenderMarkdown/bench_mentions-16                                      844.0 ± 0%             844.0 ± 0%        ~ (p=1.000 n=10) ¹
+TextLength/bench_small-16                                             0.000 ± 0%             0.000 ± 0%        ~ (p=1.000 n=10) ¹
+TextLength/bench_large-16                                             0.000 ± 0%             0.000 ± 0%        ~ (p=1.000 n=10) ¹
+TextLength/bench_mentions-16                                          0.000 ± 0%             0.000 ± 0%        ~ (p=1.000 n=10) ¹
+geomean                                                                          ²                        +0.54%                ²
+¹ all samples are equal
+² summaries must be >0 to compute geomean

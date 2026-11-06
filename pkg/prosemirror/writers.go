@@ -68,40 +68,44 @@ func (w *HTMLWriter) RenderChildren(nodes []Node) error {
 }
 
 func (w *HTMLWriter) openMark(m Mark) error {
-	spec, ok := w.schema.marks[m.Type]
-	if !ok {
-		return fmt.Errorf("cannot render mark: unknown type %q", m.Type)
+	if w.schema != DocumentSchema {
+		if _, ok := w.schema.markEntries[m.Type]; !ok {
+			return fmt.Errorf("cannot render mark: unknown type %q", m.Type)
+		}
 	}
 
-	return spec.OpenHTML(w, m)
+	return openHTMLMarkByType(w, m)
 }
 
 func (w *HTMLWriter) closeMark(m Mark) {
-	spec, ok := w.schema.marks[m.Type]
-	if !ok {
-		return
+	if w.schema != DocumentSchema {
+		if _, ok := w.schema.markEntries[m.Type]; !ok {
+			return
+		}
 	}
 
-	spec.CloseHTML(w, m)
+	closeHTMLMarkByType(w, m)
 }
 
 // RenderHTML renders a node tree to an HTML string.
 func (s *Schema) RenderHTML(n Node) (string, error) {
-	w := &HTMLWriter{buf: &bytes.Buffer{}, schema: s}
-	if err := s.renderHTMLNode(w, n); err != nil {
+	var buf bytes.Buffer
+	w := HTMLWriter{buf: &buf, schema: s}
+	if err := s.renderHTMLNode(&w, n); err != nil {
 		return "", err
 	}
 
-	return w.buf.String(), nil
+	return buf.String(), nil
 }
 
 func (s *Schema) renderHTMLNode(w *HTMLWriter, n Node) error {
-	idx, ok := s.index[n.Type]
-	if !ok {
-		return fmt.Errorf("cannot render node: unknown type %q", n.Type)
+	if s != DocumentSchema {
+		if _, ok := s.index[n.Type]; !ok {
+			return fmt.Errorf("cannot render node: unknown type %q", n.Type)
+		}
 	}
 
-	return s.entries[idx].spec.RenderHTML(w, n)
+	return renderHTMLByType(w, n)
 }
 
 // MarkdownWriter accumulates the Markdown rendering of a node tree. It tracks
@@ -273,21 +277,23 @@ func (w *MarkdownWriter) renderCodeText(n Node) error {
 }
 
 func (w *MarkdownWriter) openMark(m Mark) error {
-	spec, ok := w.schema.marks[m.Type]
-	if !ok {
-		return fmt.Errorf("cannot render mark: unknown type %q", m.Type)
+	if w.schema != DocumentSchema {
+		if _, ok := w.schema.markEntries[m.Type]; !ok {
+			return fmt.Errorf("cannot render mark: unknown type %q", m.Type)
+		}
 	}
 
-	return spec.OpenMarkdown(w, m)
+	return openMarkdownMarkByType(w, m)
 }
 
 func (w *MarkdownWriter) closeMark(m Mark) error {
-	spec, ok := w.schema.marks[m.Type]
-	if !ok {
-		return fmt.Errorf("cannot render mark: unknown type %q", m.Type)
+	if w.schema != DocumentSchema {
+		if _, ok := w.schema.markEntries[m.Type]; !ok {
+			return fmt.Errorf("cannot render mark: unknown type %q", m.Type)
+		}
 	}
 
-	return spec.CloseMarkdown(w, m)
+	return closeMarkdownMarkByType(w, m)
 }
 
 // listItemMarker returns the marker written before an item's content (such
@@ -351,16 +357,17 @@ func (w *MarkdownWriter) renderCellInline(cell Node) error {
 
 // RenderMarkdown renders a node tree to a Markdown string.
 func (s *Schema) RenderMarkdown(n Node) (string, error) {
-	w := &MarkdownWriter{
-		buf:         &bytes.Buffer{},
+	var buf bytes.Buffer
+	w := MarkdownWriter{
+		buf:         &buf,
 		schema:      s,
 		atLineStart: true,
 	}
-	if err := s.renderMarkdownNode(w, n); err != nil {
+	if err := s.renderMarkdownNode(&w, n); err != nil {
 		return "", err
 	}
 
-	out := strings.TrimRight(w.buf.String(), "\n")
+	out := strings.TrimRight(buf.String(), "\n")
 	if out != "" {
 		out += "\n"
 	}
@@ -369,12 +376,13 @@ func (s *Schema) RenderMarkdown(n Node) (string, error) {
 }
 
 func (s *Schema) renderMarkdownNode(w *MarkdownWriter, n Node) error {
-	idx, ok := s.index[n.Type]
-	if !ok {
-		return fmt.Errorf("cannot render node: unknown type %q", n.Type)
+	if s != DocumentSchema {
+		if _, ok := s.index[n.Type]; !ok {
+			return fmt.Errorf("cannot render node: unknown type %q", n.Type)
+		}
 	}
 
-	return s.entries[idx].spec.RenderMarkdown(w, n)
+	return renderMarkdownByType(w, n)
 }
 
 func writeAttr(buf *bytes.Buffer, name, value string) {
