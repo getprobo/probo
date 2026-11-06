@@ -73,7 +73,7 @@ CREATE TABLE document_comments (
         ON UPDATE CASCADE ON DELETE CASCADE,
     author_profile_id TEXT NOT NULL REFERENCES iam_membership_profiles(id)
         ON UPDATE CASCADE ON DELETE RESTRICT,
-    content TEXT NOT NULL,
+    content JSONB NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL
 );

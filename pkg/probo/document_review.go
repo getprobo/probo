@@ -33,6 +33,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/prosemirror"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -40,6 +41,7 @@ const (
 	documentCommentMaxLength = 10000
 	documentQuoteMaxLength   = 2000
 	documentAnchorMaxBytes   = 512
+	richTextMaxJSONBytes     = 64 << 10
 )
 
 var (
@@ -89,7 +91,18 @@ func (req *CreateDocumentCommentThreadRequest) Validate() error {
 	v := validator.New()
 	v.Check(req.DocumentID, "document_id", validator.Required(), validator.GID(coredata.DocumentEntityType))
 	v.Check(req.IdentityID, "identity_id", validator.Required(), validator.GID(coredata.IdentityEntityType))
-	v.Check(req.Content, "content", validator.Required(), validator.MaxLen(documentCommentMaxLength))
+	v.Check(req.Content, "content", validator.MaxLen(richTextMaxJSONBytes))
+
+	if len(req.Content) <= richTextMaxJSONBytes {
+		v.Check(
+			req.Content,
+			"content",
+			validator.HasVisibleRichText(),
+			validator.ProseMirrorCommentContent(),
+			validator.ProseMirrorDocumentMaxTextLength(documentCommentMaxLength),
+		)
+	}
+
 	v.Check(req.Quote, "quote", validator.MaxLen(documentQuoteMaxLength))
 	v.Check(req.AnchorStart, "anchor_start", validator.MaxLen(documentAnchorMaxBytes*2))
 	v.Check(req.AnchorEnd, "anchor_end", validator.MaxLen(documentAnchorMaxBytes*2))
@@ -102,7 +115,18 @@ func (req *CreateDocumentCommentRequest) Validate() error {
 	v := validator.New()
 	v.Check(req.ThreadID, "thread_id", validator.Required(), validator.GID(coredata.DocumentCommentThreadEntityType))
 	v.Check(req.IdentityID, "identity_id", validator.Required(), validator.GID(coredata.IdentityEntityType))
-	v.Check(req.Content, "content", validator.Required(), validator.MaxLen(documentCommentMaxLength))
+	v.Check(req.Content, "content", validator.MaxLen(richTextMaxJSONBytes))
+
+	if len(req.Content) <= richTextMaxJSONBytes {
+		v.Check(
+			req.Content,
+			"content",
+			validator.HasVisibleRichText(),
+			validator.ProseMirrorCommentContent(),
+			validator.ProseMirrorDocumentMaxTextLength(documentCommentMaxLength),
+		)
+	}
+
 	return v.Error()
 }
 
@@ -110,7 +134,18 @@ func (req *UpdateDocumentCommentRequest) Validate() error {
 	v := validator.New()
 	v.Check(req.CommentID, "comment_id", validator.Required(), validator.GID(coredata.DocumentCommentEntityType))
 	v.Check(req.IdentityID, "identity_id", validator.Required(), validator.GID(coredata.IdentityEntityType))
-	v.Check(req.Content, "content", validator.Required(), validator.MaxLen(documentCommentMaxLength))
+	v.Check(req.Content, "content", validator.MaxLen(richTextMaxJSONBytes))
+
+	if len(req.Content) <= richTextMaxJSONBytes {
+		v.Check(
+			req.Content,
+			"content",
+			validator.HasVisibleRichText(),
+			validator.ProseMirrorCommentContent(),
+			validator.ProseMirrorDocumentMaxTextLength(documentCommentMaxLength),
+		)
+	}
+
 	return v.Error()
 }
 
@@ -294,6 +329,11 @@ func (s *DocumentService) CreateCommentThread(
 		return nil, nil, ErrInvalidDocumentAnchor
 	}
 
+	content, err := prosemirror.DefaultDocumentJSON(&req.Content)
+	if err != nil {
+		return nil, nil, fmt.Errorf("cannot sanitize document comment content: %w", err)
+	}
+
 	now := time.Now()
 	thread := &coredata.DocumentCommentThread{
 		ID:          gid.New(scope.GetTenantID(), coredata.DocumentCommentThreadEntityType),
@@ -306,7 +346,7 @@ func (s *DocumentService) CreateCommentThread(
 	comment := &coredata.DocumentComment{
 		ID:        gid.New(scope.GetTenantID(), coredata.DocumentCommentEntityType),
 		ThreadID:  thread.ID,
-		Content:   req.Content,
+		Content:   content,
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
@@ -403,18 +443,23 @@ func (s *DocumentService) CreateComment(
 		return nil, err
 	}
 
+	content, err := prosemirror.DefaultDocumentJSON(&req.Content)
+	if err != nil {
+		return nil, fmt.Errorf("cannot sanitize document comment content: %w", err)
+	}
+
 	now := time.Now()
 	comment := &coredata.DocumentComment{
 		ID:        gid.New(scope.GetTenantID(), coredata.DocumentCommentEntityType),
 		ThreadID:  req.ThreadID,
-		Content:   req.Content,
+		Content:   content,
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
 
 	var documentID gid.GID
 
-	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+	err = s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		thread := &coredata.DocumentCommentThread{}
 		if err := thread.LoadByIDForUpdate(ctx, tx, scope, req.ThreadID); err != nil {
 			return fmt.Errorf("cannot load document comment thread: %w", err)
@@ -461,10 +506,15 @@ func (s *DocumentService) UpdateComment(
 		return nil, err
 	}
 
+	content, err := prosemirror.DefaultDocumentJSON(&req.Content)
+	if err != nil {
+		return nil, fmt.Errorf("cannot sanitize document comment content: %w", err)
+	}
+
 	comment := &coredata.DocumentComment{}
 	var documentID gid.GID
 
-	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+	err = s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		if err := comment.LoadByID(ctx, tx, scope, req.CommentID); err != nil {
 			return fmt.Errorf("cannot load document comment: %w", err)
 		}
@@ -487,7 +537,7 @@ func (s *DocumentService) UpdateComment(
 			return ErrNotDocumentCommentAuthor
 		}
 
-		comment.Content = req.Content
+		comment.Content = content
 		comment.UpdatedAt = time.Now()
 		documentID = thread.DocumentID
 

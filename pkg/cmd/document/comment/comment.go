@@ -28,6 +28,7 @@ import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
+	"go.probo.inc/probo/pkg/prosemirror"
 )
 
 func NewCmdComment(f *cmdutil.Factory) *cobra.Command {
@@ -311,7 +312,7 @@ func newCreateCmd(f *cmdutil.Factory) *cobra.Command {
 
 			input := map[string]any{
 				"documentId": args[0],
-				"content":    flagContent,
+				"content":    prosemirror.FromPlainText(flagContent),
 			}
 			if flagQuote != "" {
 				input["quote"] = flagQuote
@@ -380,7 +381,7 @@ func newReplyCmd(f *cmdutil.Factory) *cobra.Command {
 				map[string]any{
 					"input": map[string]any{
 						"threadId": args[0],
-						"content":  flagContent,
+						"content":  prosemirror.FromPlainText(flagContent),
 					},
 				},
 				func(data json.RawMessage) (string, error) {
@@ -434,7 +435,7 @@ func newUpdateCmd(f *cmdutil.Factory) *cobra.Command {
 				map[string]any{
 					"input": map[string]any{
 						"commentId": args[0],
-						"content":   flagContent,
+						"content":   prosemirror.FromPlainText(flagContent),
 					},
 				},
 				func(data json.RawMessage) (string, error) {

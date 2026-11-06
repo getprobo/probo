@@ -11663,7 +11663,7 @@ func (r *Resolver) CreateDocumentCommentThreadTool(ctx context.Context, req *mcp
 		probo.CreateDocumentCommentThreadRequest{
 			DocumentID:      input.DocumentID,
 			IdentityID:      identity.ID,
-			Content:         input.Content,
+			Content:         prosemirror.FromPlainText(input.Content),
 			Quote:           optionalString(input.Quote),
 			SuggestionID:    input.SuggestionID,
 			QuoteOccurrence: optionalInt(input.QuoteOccurrence),
@@ -11693,7 +11693,7 @@ func (r *Resolver) CreateDocumentCommentTool(ctx context.Context, req *mcp.CallT
 		probo.CreateDocumentCommentRequest{
 			ThreadID:   input.ThreadID,
 			IdentityID: identity.ID,
-			Content:    input.Content,
+			Content:    prosemirror.FromPlainText(input.Content),
 		},
 	)
 	if err != nil {
@@ -11717,7 +11717,7 @@ func (r *Resolver) UpdateDocumentCommentTool(ctx context.Context, req *mcp.CallT
 		probo.UpdateDocumentCommentRequest{
 			CommentID:  input.ID,
 			IdentityID: identity.ID,
-			Content:    input.Content,
+			Content:    prosemirror.FromPlainText(input.Content),
 		},
 	)
 	if err != nil {
