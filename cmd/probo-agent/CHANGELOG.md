@@ -5,6 +5,14 @@ documented in this file.
 
 ## Unreleased
 
+## [0.9.0-rc.1] - 2026-11-06
+
+### Added
+
+- One machine can be enrolled in multiple organizations. The agent keeps
+  an enrollment per organization and reports posture to each of them.
+  A second enrollment in the same organization is still rejected.
+
 ## [0.8.0] - 2026-11-03
 
 ### Added
