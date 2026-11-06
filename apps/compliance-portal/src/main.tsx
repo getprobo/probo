@@ -24,6 +24,7 @@ import { createRoot } from "react-dom/client";
 
 import "./index.css";
 import "#/lib/i18n/i18n";
+import { preloadInitialRoute } from "#/lib/preload/preloadInitialRoute";
 
 import { App } from "./App";
 import { router } from "./routes";
@@ -35,5 +36,7 @@ const faro = new FaroClient({
 void faro.start(router);
 
 initDisplayMode();
+
+preloadInitialRoute(window.location.pathname);
 
 createRoot(document.getElementById("root")!).render(<App />);
