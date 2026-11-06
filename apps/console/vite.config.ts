@@ -324,6 +324,9 @@ export default defineConfig(({ mode, command }) => {
     // Dev-only: Vite stamps scripts (incl. React Fast Refresh preamble) with
     // this nonce; production Go CSP does not use nonces.
     html: command === "serve" ? { cspNonce: viteDevCspNonce } : undefined,
+    build: {
+      sourcemap: true,
+    },
     server: {
       headers: {
         "Content-Security-Policy": consoleContentSecurityPolicy(
