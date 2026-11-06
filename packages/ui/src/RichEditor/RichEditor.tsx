@@ -131,6 +131,26 @@ export const richEditorCollaborationExtensions = [
   AutomergeTableStructureExtension,
 ];
 
+const richEditorCommentExtensions = [
+  Document,
+  Paragraph,
+  Text,
+  Bold,
+  Italic,
+  Strike,
+  Code,
+  LinkExtension,
+  Blockquote,
+  BulletList,
+  OrderedList,
+  ListItem,
+  ListKeymap,
+  HardBreak,
+  UndoRedo,
+  MentionExtension,
+  PlaceholderExtension,
+];
+
 const richEditorVariants = tv({
   base: ["relative flex flex-1 flex-col min-w-0 overflow-auto py-14 pr-8 bg-level-1 shadow-base"],
   variants: {
@@ -214,10 +234,13 @@ type RichEditorProps = ComponentProps<"div"> & {
   toolbar?: ReactNode;
   // TipTap binds Mod-Enter to a hard break. Composers override it to submit.
   onModEnter?: () => void;
+  // Restricts the schema to comment-safe nodes (paragraphs, lists, blockquotes, mentions).
+  preset?: "full" | "comment";
   placeholder?: string;
   onChangeContent?: (content: string) => void;
   onUploadingChange?: (uploading: boolean) => void;
   onUploadFile?: UploadAttachment;
+  mentionSource?: MentionSource;
   historyHighlights?: RichEditorHistoryHighlight[];
   editorExtensions?: Extensions;
   initialContent?: Content;
@@ -225,7 +248,6 @@ type RichEditorProps = ComponentProps<"div"> & {
   onEditor?: (editor: Editor | null) => void;
   formatting?: boolean;
   suspendContentChanges?: boolean;
-  mentionSource?: MentionSource;
   // Review cards rendered inside the scrollport so they move with the page.
   margin?: ReactNode;
 };
@@ -252,10 +274,12 @@ export function RichEditor(props: RichEditorProps) {
     attachments = false,
     toolbar,
     onModEnter,
+    preset = "full",
     placeholder,
     onChangeContent,
     onUploadingChange,
     onUploadFile,
+    mentionSource,
     historyHighlights,
     editorExtensions: editorExtensionOverride,
     initialContent: initialContentOverride,
@@ -263,7 +287,6 @@ export function RichEditor(props: RichEditorProps) {
     onEditor,
     formatting = true,
     suspendContentChanges = false,
-    mentionSource,
     margin,
     ...divProps
   } = props;
@@ -354,13 +377,16 @@ export function RichEditor(props: RichEditorProps) {
         return editorExtensionOverride;
       }
 
+      const base = preset === "comment"
+        ? richEditorCommentExtensions
+        : richEditorExtensions;
       if (!historyHighlights?.length) {
-        return richEditorExtensions;
+        return base;
       }
 
-      return [...richEditorExtensions, createRichEditorHistoryExtension(historyHighlights)];
+      return [...base, createRichEditorHistoryExtension(historyHighlights)];
     },
-    [editorExtensionOverride, historyHighlights],
+    [editorExtensionOverride, historyHighlights, preset],
   );
   const initialContent = initialContentOverride ?? parseContent(content);
 
@@ -500,17 +526,21 @@ export function RichEditor(props: RichEditorProps) {
         && (
           <>
             <BubbleMenu editor={editor} />
-            <BlockMenu
-              editor={editor}
-              compact={compact}
-              handles={controls}
-              onPickFiles={canUpload ? openFilePicker : undefined}
-            />
-            {controls && <OptionsMenu editor={editor} compact={compact} />}
-            <TableSelectionOverlay editor={editor} />
-            <TableCellMenu editor={editor} />
-            <TableColumnMenu editor={editor} />
-            <TableRowMenu editor={editor} />
+            {preset !== "comment" && (
+              <>
+                <BlockMenu
+                  editor={editor}
+                  compact={compact}
+                  handles={controls}
+                  onPickFiles={canUpload ? openFilePicker : undefined}
+                />
+                {controls && <OptionsMenu editor={editor} compact={compact} />}
+                <TableSelectionOverlay editor={editor} />
+                <TableCellMenu editor={editor} />
+                <TableColumnMenu editor={editor} />
+                <TableRowMenu editor={editor} />
+              </>
+            )}
             <MentionMenu editor={editor} />
           </>
         )}

@@ -160,12 +160,14 @@ export function BubbleMenu(props: BubbleMenuProps) {
         >
           <TextItalicIcon size={16} weight="bold" />
         </MenuButton>
-        <MenuButton
-          active={state.isUnderline}
-          onClick={() => editor.chain().focus().toggleUnderline().run()}
-        >
-          <TextUnderlineIcon size={16} weight="bold" />
-        </MenuButton>
+        {editor.schema.marks.underline != null && (
+          <MenuButton
+            active={state.isUnderline}
+            onClick={() => editor.chain().focus().toggleUnderline().run()}
+          >
+            <TextUnderlineIcon size={16} weight="bold" />
+          </MenuButton>
+        )}
         <MenuButton
           active={state.isStrike}
           onClick={() => editor.chain().focus().toggleStrike().run()}

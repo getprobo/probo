@@ -58,6 +58,7 @@ function isEmptyBlock(node: JSONContent): boolean {
     case "horizontalRule":
     case "image":
     case "file":
+    case "mention":
       return false;
     case "hardBreak":
       return true;
@@ -118,6 +119,11 @@ export function isRichEditorContentEmpty(content: string): boolean {
 
 function jsonContentTextLength(node: JSONContent): number {
   let length = typeof node.text === "string" ? [...node.text].length : 0;
+
+  if (node.type === "mention") {
+    const label = typeof node.attrs?.label === "string" ? node.attrs.label : "";
+    length += 1 + [...label].length;
+  }
 
   for (const child of node.content ?? []) {
     length += jsonContentTextLength(child);
