@@ -49,7 +49,7 @@ func NewDomainMiddleware(
 				return
 			}
 
-			compliancePage, err := visitorSvc.GetPortalByDomainName(ctx, host)
+			compliancePage, canonicalHost, err := visitorSvc.GetPortalAndCanonicalHostByDomainName(ctx, host)
 			if err != nil {
 				if errors.Is(err, visitor.ErrPageNotFound) {
 					next.ServeHTTP(w, r)
@@ -93,28 +93,6 @@ func NewDomainMiddleware(
 			// page is only ever served under a single origin. ACME HTTP-01
 			// challenges are handled upstream and never reach this middleware.
 			if !strings.HasPrefix(r.URL.Path, "/.well-known/") {
-				canonicalHost, err := visitorSvc.GetPortalEffectiveCanonicalHost(ctx, compliancePage.ID)
-				if err != nil {
-					httpserver.LoggerFromContext(ctx).ErrorCtx(
-						ctx,
-						"cannot get compliance portal canonical host",
-						log.Error(err),
-						log.String("compliance_portal_id", compliancePage.ID.String()),
-					)
-
-					httpserver.RenderJSON(
-						w,
-						http.StatusInternalServerError,
-						&graphql.Response{
-							Errors: gqlerror.List{
-								gqlx.Internal(ctx),
-							},
-						},
-					)
-
-					return
-				}
-
 				canonicalHost, canonicalHostValid := normalizeCompliancePortalHost(canonicalHost)
 				if canonicalHost != "" && canonicalHostValid && canonicalHost != host {
 					target := &url.URL{

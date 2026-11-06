@@ -315,6 +315,14 @@ func (s *Server) serveIndex(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(s.indexContent)
 }
 
+// HasFile reports whether filePath (e.g. "/assets/app.js") is a file in the
+// embedded build, as opposed to a route the SPA fallback would answer with
+// index.html.
+func (s *Server) HasFile(filePath string) bool {
+	_, ok := s.etags[filePath]
+	return ok
+}
+
 func (s *Server) ServeSPA(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
 
