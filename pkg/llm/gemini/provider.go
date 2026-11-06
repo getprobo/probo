@@ -46,6 +46,7 @@ import (
 	"time"
 
 	"go.probo.inc/probo/pkg/llm"
+	"golang.org/x/oauth2"
 )
 
 const (
@@ -62,6 +63,14 @@ type (
 		baseURL        string
 		apiKey         string
 		requestTimeout time.Duration
+
+		// Vertex mode. When project is set the provider targets Vertex AI
+		// and authenticates with Application Default Credentials instead of
+		// an API key, so a workload running on GCP needs no credential of its
+		// own. tokenSource is nil in API-key mode.
+		project     string
+		location    string
+		tokenSource oauth2.TokenSource
 	}
 
 	Option func(*Provider)
@@ -172,6 +181,23 @@ func WithBaseURL(baseURL string) Option {
 
 func WithRequestTimeout(d time.Duration) Option {
 	return func(p *Provider) { p.requestTimeout = d }
+}
+
+// WithVertex switches the provider to Vertex AI in the given GCP project and
+// location, authenticating with Application Default Credentials.
+//
+// This is the mode to use from anything already running on GCP: the workload's
+// own service account is the credential, so there is no API key to mint, store
+// or rotate, and inference stays inside the project rather than going to the
+// public Generative Language endpoint.
+//
+// location may be a region ("us-east4") or "global".
+func WithVertex(project, location string, ts oauth2.TokenSource) Option {
+	return func(p *Provider) {
+		p.project = project
+		p.location = location
+		p.tokenSource = ts
+	}
 }
 
 func NewProvider(apiKey string, opts ...Option) *Provider {
@@ -301,11 +327,11 @@ func (p *Provider) do(
 	body []byte,
 	streaming bool,
 ) (*http.Response, error) {
-	if model == "" {
-		return nil, errors.New("model is required")
+	endpoint, err := p.endpointFor(model, method)
+	if err != nil {
+		return nil, err
 	}
 
-	endpoint := fmt.Sprintf("%s/models/%s:%s", p.baseURL, url.PathEscape(model), method)
 	if streaming {
 		// Without alt=sse the streaming endpoint returns a JSON array that
 		// only completes at the end, which is not a stream in any useful sense.
@@ -321,9 +347,20 @@ func (p *Provider) do(
 	}
 
 	httpReq.Header.Set("Content-Type", "application/json")
-	// Header rather than ?key=, so the credential stays out of request URLs
-	// and therefore out of access logs.
-	httpReq.Header.Set("x-goog-api-key", p.apiKey)
+
+	if p.tokenSource != nil {
+		token, err := p.tokenSource.Token()
+		if err != nil {
+			cancel()
+			return nil, fmt.Errorf("cannot obtain google credentials: %w", err)
+		}
+
+		token.SetAuthHeader(httpReq)
+	} else {
+		// Header rather than ?key=, so the credential stays out of request
+		// URLs and therefore out of access logs.
+		httpReq.Header.Set("x-goog-api-key", p.apiKey)
+	}
 
 	resp, err := p.httpClient.Do(httpReq)
 	if err != nil {
@@ -342,6 +379,41 @@ func (p *Provider) do(
 	}
 
 	return resp, nil
+}
+
+// endpointFor builds the request URL for whichever mode the provider is in.
+// Vertex nests the model under a project and location and uses a different
+// host per region, so the two shapes do not differ by base URL alone.
+func (p *Provider) endpointFor(model, method string) (string, error) {
+	if model == "" {
+		return "", errors.New("model is required")
+	}
+
+	if p.tokenSource == nil {
+		return fmt.Sprintf("%s/models/%s:%s", p.baseURL, url.PathEscape(model), method), nil
+	}
+
+	if p.project == "" || p.location == "" {
+		return "", errors.New("vertex mode requires a project and a location")
+	}
+
+	host := fmt.Sprintf("https://%s-aiplatform.googleapis.com", p.location)
+	if p.location == "global" {
+		host = "https://aiplatform.googleapis.com"
+	}
+
+	if p.baseURL != defaultBaseURL {
+		host = p.baseURL
+	}
+
+	return fmt.Sprintf(
+		"%s/v1/projects/%s/locations/%s/publishers/google/models/%s:%s",
+		host,
+		url.PathEscape(p.project),
+		url.PathEscape(p.location),
+		url.PathEscape(model),
+		method,
+	), nil
 }
 
 type cancelOnClose struct {

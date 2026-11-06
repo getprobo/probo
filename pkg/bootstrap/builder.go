@@ -795,7 +795,12 @@ func (b *Builder) validateRequired() error {
 		case "anthropic":
 			providerAPIKey = "PROBOD_ANTHROPIC_API_KEY"
 		case "gemini":
-			providerAPIKey = "PROBOD_GEMINI_API_KEY"
+			// Vertex mode has no key; the project is what configures it.
+			if b.resolver.getEnv("PROBOD_GEMINI_PROJECT") != "" {
+				providerAPIKey = ""
+			} else {
+				providerAPIKey = "PROBOD_GEMINI_API_KEY"
+			}
 		case "openai_compatible":
 			// Deliberately no required key: the base URL is what configures
 			// this provider, and a local server commonly has no auth.
@@ -1044,11 +1049,23 @@ func (b *Builder) buildLLMProviders() map[string]probodconfig.LLMProviderConfig 
 		}
 	}
 
-	if apiKey := b.resolver.getEnv("PROBOD_GEMINI_API_KEY"); apiKey != "" {
+	// Either an API key (Generative Language API) or a project (Vertex AI,
+	// authenticated with Application Default Credentials) configures gemini.
+	geminiAPIKey := b.resolver.getEnv("PROBOD_GEMINI_API_KEY")
+	geminiProject := b.resolver.getEnv("PROBOD_GEMINI_PROJECT")
+
+	if geminiAPIKey != "" || geminiProject != "" {
+		location := b.resolver.getEnv("PROBOD_GEMINI_LOCATION")
+		if geminiProject != "" && location == "" {
+			location = "global"
+		}
+
 		providers["gemini"] = probodconfig.LLMProviderConfig{
-			Type:    "gemini",
-			APIKey:  apiKey,
-			BaseURL: b.resolver.getEnv("PROBOD_GEMINI_BASE_URL"),
+			Type:     "gemini",
+			APIKey:   geminiAPIKey,
+			BaseURL:  b.resolver.getEnv("PROBOD_GEMINI_BASE_URL"),
+			Project:  geminiProject,
+			Location: location,
 		}
 	}
 

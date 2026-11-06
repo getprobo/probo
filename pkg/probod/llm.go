@@ -21,6 +21,7 @@
 package probod
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -33,6 +34,7 @@ import (
 	llmgemini "go.probo.inc/probo/pkg/llm/gemini"
 	llmopenai "go.probo.inc/probo/pkg/llm/openai"
 	llmopenaicompat "go.probo.inc/probo/pkg/llm/openaicompat"
+	"golang.org/x/oauth2/google"
 )
 
 // buildLLMClient creates an LLM client for the given provider config.
@@ -95,6 +97,20 @@ func (impl *Implm) buildLLMClient(
 		opts := []llmgemini.Option{llmgemini.WithHTTPClient(httpClient)}
 		if cfg.BaseURL != "" {
 			opts = append(opts, llmgemini.WithBaseURL(cfg.BaseURL))
+		}
+
+		// A project selects Vertex AI, where the workload's own service
+		// account is the credential and no API key exists to configure.
+		if cfg.Project != "" {
+			ts, err := google.DefaultTokenSource(
+				context.Background(),
+				"https://www.googleapis.com/auth/cloud-platform",
+			)
+			if err != nil {
+				return nil, fmt.Errorf("cannot load google default credentials: %w", err)
+			}
+
+			opts = append(opts, llmgemini.WithVertex(cfg.Project, cfg.Location, ts))
 		}
 
 		p := llmgemini.NewProvider(cfg.APIKey, opts...)

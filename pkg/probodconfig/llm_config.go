@@ -35,6 +35,13 @@ type (
 		Type    string `json:"type"`               // "openai", "anthropic", "gemini", "openai_compatible", "bedrock"
 		APIKey  string `json:"api-key,omitempty"`  // optional for openai_compatible: a locally hosted server often has no auth
 		BaseURL string `json:"base-url,omitempty"` // required for openai_compatible; empty uses the provider default elsewhere
+
+		// Vertex mode for the gemini provider. When Project is set the
+		// provider authenticates with Application Default Credentials
+		// instead of APIKey, so a workload on GCP needs no credential of
+		// its own.
+		Project  string `json:"project,omitempty"`
+		Location string `json:"location,omitempty"`
 	}
 
 	// LLMAgentConfig holds model parameters for a single agent. Provider
@@ -198,7 +205,7 @@ func isLocalHost(host string) bool {
 // dropped such a provider from the registry, which surfaced only as
 // "unknown LLM provider" at startup.
 func (c LLMProviderConfig) IsZero() bool {
-	return c.APIKey == "" && c.BaseURL == ""
+	return c.APIKey == "" && c.BaseURL == "" && c.Project == ""
 }
 
 func (c LLMAgentConfig) IsZero() bool {

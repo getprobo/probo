@@ -33,6 +33,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/llm"
 	"go.probo.inc/probo/pkg/llm/gemini"
+	"golang.org/x/oauth2"
 )
 
 func TestChatCompletion_TextAndSystemInstruction(t *testing.T) {
@@ -296,6 +297,55 @@ func TestChatCompletionStream_UsesSSEAndAccumulates(t *testing.T) {
 	assert.Equal(t, "bonjour", text)
 	require.NotNil(t, usage)
 	assert.Equal(t, 6, usage.InputTokens)
+}
+
+func TestChatCompletion_VertexModeUsesProjectPathAndBearerAuth(t *testing.T) {
+	t.Parallel()
+
+	var (
+		gotPath string
+		gotAuth string
+		gotKey  string
+	)
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		gotAuth = r.Header.Get("Authorization")
+		gotKey = r.Header.Get("x-goog-api-key")
+
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"candidates":[{"content":{"parts":[{"text":"ok"}]},"finishReason":"STOP"}]}`))
+	}))
+	defer srv.Close()
+
+	ts := oauth2.StaticTokenSource(&oauth2.Token{
+		AccessToken: "ya29.test",
+		TokenType:   "Bearer",
+	})
+
+	p := gemini.NewProvider(
+		"",
+		gemini.WithBaseURL(srv.URL),
+		gemini.WithVertex("benedoc-dev", "us-east4", ts),
+	)
+
+	_, err := p.ChatCompletion(context.Background(), &llm.ChatCompletionRequest{
+		Model:    "gemini-3.7-flash",
+		Messages: []llm.Message{{Role: llm.RoleUser, Parts: []llm.Part{llm.TextPart{Text: "hi"}}}},
+	})
+	require.NoError(t, err)
+
+	// Vertex nests the model under a project and location rather than
+	// serving /models/{model} like the Generative Language API.
+	assert.Equal(
+		t,
+		"/v1/projects/benedoc-dev/locations/us-east4/publishers/google/models/gemini-3.7-flash:generateContent",
+		gotPath,
+	)
+
+	// ADC, not an API key: the workload's own identity is the credential.
+	assert.Equal(t, "Bearer ya29.test", gotAuth)
+	assert.Empty(t, gotKey)
 }
 
 func TestChatCompletion_RejectsUnsupportedOptions(t *testing.T) {
