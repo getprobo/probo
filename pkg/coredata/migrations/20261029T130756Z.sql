@@ -53,34 +53,10 @@ CREATE TABLE tag_assignments (
 
 CREATE INDEX tag_assignments_tag_id_idx ON tag_assignments (tag_id);
 
+-- Add to the scopes already granted rather than replacing them, so scopes
+-- added by later migrations survive. Keep in sync with pkg/cli/config.CLIClientScopes.
 UPDATE iam_oauth2_clients
-SET scopes = '{
-    openid,
-    profile,
-    email,
-    offline_access,
-    v1:access-review,
-    v1:agent,
-    v1:ai-system,
-    v1:asset,
-    v1:audit,
-    v1:business-function,
-    v1:common-third-party,
-    v1:compliance-page,
-    v1:connector,
-    v1:control,
-    v1:datum,
-    v1:document,
-    v1:iam,
-    v1:itam,
-    v1:org,
-    v1:privacy,
-    v1:risk,
-    v1:slack-connection,
-    v1:tag,
-    v1:task,
-    v1:third-party,
-    v1:webhook
-}'::TEXT[],
+SET scopes = scopes || '{v1:tag}'::TEXT[],
     updated_at = NOW()
-WHERE id = 'AAAAAAAAAAAASwAAAAAAAAAAcHJiY2xp';
+WHERE id = 'AAAAAAAAAAAASwAAAAAAAAAAcHJiY2xp'
+    AND NOT (scopes @> '{v1:tag}'::TEXT[]);
