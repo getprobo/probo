@@ -21,14 +21,55 @@
 package probo
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/prosemirror"
 	"go.probo.inc/probo/pkg/validator"
 )
+
+func TestCommentSchemaParity(t *testing.T) {
+	t.Parallel()
+
+	raw, err := os.ReadFile(filepath.Join("testdata", "comment-schema.json"))
+	require.NoError(t, err)
+
+	var ledger struct {
+		Nodes []string `json:"nodes"`
+		Marks []string `json:"marks"`
+	}
+	require.NoError(t, json.Unmarshal(raw, &ledger))
+
+	gotNodes := make([]string, 0, len(CommentSchema.NodeTypes()))
+	for _, nodeType := range CommentSchema.NodeTypes() {
+		gotNodes = append(gotNodes, string(nodeType))
+	}
+
+	gotMarks := make([]string, 0, len(CommentSchema.MarkTypes()))
+	for _, markType := range CommentSchema.MarkTypes() {
+		gotMarks = append(gotMarks, string(markType))
+	}
+
+	assert.ElementsMatch(t, ledger.Nodes, gotNodes)
+	assert.ElementsMatch(t, ledger.Marks, gotMarks)
+
+	// Sanity: CommentSchema stays a strict subset of DocumentSchema.
+	docNodes := map[prosemirror.NodeType]struct{}{}
+	for _, nodeType := range prosemirror.DocumentSchema.NodeTypes() {
+		docNodes[nodeType] = struct{}{}
+	}
+	for _, nodeType := range CommentSchema.NodeTypes() {
+		_, ok := docNodes[nodeType]
+		assert.Truef(t, ok, "comment node %q missing from DocumentSchema", nodeType)
+	}
+}
 
 func TestCommentSchema_ValidateJSON(t *testing.T) {
 	t.Parallel()

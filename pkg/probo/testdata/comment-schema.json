@@ -1,0 +1,21 @@
+{
+  "_comment": "Shared Go CommentSchema <-> richEditorCommentExtensions ledger. Drift-guarded by TestCommentSchemaParity (Go) and commentSchemaParity.test.ts (frontend).",
+  "nodes": [
+    "blockquote",
+    "bulletList",
+    "doc",
+    "hardBreak",
+    "listItem",
+    "mention",
+    "orderedList",
+    "paragraph",
+    "text"
+  ],
+  "marks": [
+    "bold",
+    "code",
+    "italic",
+    "link",
+    "strike"
+  ]
+}

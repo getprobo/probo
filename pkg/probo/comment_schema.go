@@ -21,6 +21,8 @@
 package probo
 
 import (
+	"strings"
+
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/prosemirror"
 )
@@ -52,3 +54,13 @@ var CommentSchema = prosemirror.NewSchema(
 		prosemirror.Link(),
 	},
 )
+
+// DefaultCommentJSON sanitizes comment content with CommentSchema. A nil or
+// whitespace-only value becomes an empty document (one empty paragraph).
+func DefaultCommentJSON(s *string) (string, error) {
+	if s == nil || strings.TrimSpace(*s) == "" {
+		return prosemirror.FromPlainText(""), nil
+	}
+
+	return CommentSchema.Sanitize(*s)
+}
