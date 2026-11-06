@@ -100,7 +100,8 @@ export interface TaskAssigneeOption {
 
 export interface TaskAssigneeMenuProps {
   value: string | null;
-  emptyLabel: string;
+  // Label of the empty choice. Leave unset when the value cannot be cleared.
+  emptyLabel?: string;
   emptyValue: string | null;
   // Icon shown beside the empty choice. The user filter leaves this unset
   // because "All users" is not an assignee.
@@ -232,22 +233,24 @@ function TaskAssigneeMenuLoaded({
         onValueChange={setInput}
       />
       <div className="flex max-h-64 flex-col gap-1 overflow-y-auto">
-        <DropdownItem
-          disabled={disabled}
-          onClick={() => {
-            select(emptyValue);
-          }}
-        >
-          {emptyIcon == null
-            ? emptyLabel
-            : (
-                <UserSelectOption
-                  fullName={emptyLabel}
-                  size={size}
-                  fallback={emptyIcon}
-                />
-              )}
-        </DropdownItem>
+        {emptyLabel != null && (
+          <DropdownItem
+            disabled={disabled}
+            onClick={() => {
+              select(emptyValue);
+            }}
+          >
+            {emptyIcon == null
+              ? emptyLabel
+              : (
+                  <UserSelectOption
+                    fullName={emptyLabel}
+                    size={size}
+                    fallback={emptyIcon}
+                  />
+                )}
+          </DropdownItem>
+        )}
         {unassigned != null && (
           <DropdownItem
             disabled={disabled}

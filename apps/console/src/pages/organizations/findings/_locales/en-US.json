@@ -1,0 +1,146 @@
+{
+  "list": {
+    "title": "Findings",
+    "description": "Manage your organization's findings.",
+    "page": "Page {{page}}",
+    "columns": {
+      "reference": "Reference",
+      "title": "Title",
+      "kind": "Kind",
+      "status": "Status",
+      "priority": "Priority",
+      "owner": "Owner",
+      "due": "Due date"
+    },
+    "filters": {
+      "allKinds": "All kinds",
+      "allStatuses": "All statuses",
+      "allPriorities": "All priorities",
+      "allOwners": "All owners",
+      "allAudits": "All audits",
+      "loadMoreAudits": "Load more"
+    },
+    "kinds": {
+      "minor_nonconformity": "Minor nonconformity",
+      "major_nonconformity": "Major nonconformity",
+      "observation": "Observation",
+      "exception": "Exception"
+    },
+    "statuses": {
+      "open": "Open",
+      "in_progress": "In progress",
+      "closed": "Closed",
+      "risk_accepted": "Risk accepted",
+      "mitigated": "Mitigated",
+      "false_positive": "False positive"
+    },
+    "priorities": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High"
+    },
+    "values": {
+      "unassigned": "Unassigned",
+      "noDueDate": "No due date"
+    },
+    "actions": {
+      "new": "Add finding",
+      "delete": "Delete",
+      "menu": "Finding actions",
+      "previous": "Previous",
+      "next": "Next",
+      "document": "Document",
+      "publish": "Publish",
+      "clearFilters": "Clear filters",
+      "cancel": "Cancel"
+    },
+    "empty": {
+      "title": "No findings yet",
+      "description": "Create your first finding to get started.",
+      "filteredTitle": "No matching findings",
+      "filteredDescription": "Clear the filters to see every finding."
+    },
+    "messages": {
+      "deleted": "Finding deleted",
+      "created": "Finding created"
+    },
+    "errors": {
+      "delete": "Failed to delete finding",
+      "create": "Failed to create finding"
+    },
+    "deleteConfirmation": "This will permanently delete {{referenceId}}. This action cannot be undone."
+  },
+  "details": {
+    "back": "Findings",
+    "notFound": "Finding not found",
+    "properties": "Properties",
+    "fields": {
+      "title": "Title",
+      "description": "Description",
+      "noDescription": "No description",
+      "kind": "Kind",
+      "status": "Status",
+      "priority": "Priority",
+      "owner": "Owner",
+      "acceptedRisk": "Accepted risk",
+      "dateIdentified": "Date identified",
+      "dueDate": "Due date",
+      "source": "Source",
+      "rootCause": "Root cause",
+      "correctiveAction": "Corrective action",
+      "effectivenessCheck": "Effectiveness check"
+    },
+    "placeholders": {
+      "description": "Describe the finding",
+      "owner": "Set owner",
+      "dateIdentified": "Set date identified",
+      "dueDate": "Set due date",
+      "risk": "Set accepted risk"
+    },
+    "tasks": {
+      "title": "Tasks",
+      "empty": "No tasks linked",
+      "search": "Link a task",
+      "emptySearch": "No tasks found",
+      "loadError": "Could not load tasks",
+      "loadMore": "Load more",
+      "unlink": "Unlink task",
+      "linkError": "Failed to link task",
+      "unlinkError": "Failed to unlink task"
+    },
+    "audits": {
+      "title": "Linked audits",
+      "empty": "No audits linked",
+      "search": "Link an audit",
+      "emptySearch": "No audits found",
+      "loadError": "Could not load audits",
+      "loadMore": "Load more",
+      "unlink": "Unlink audit",
+      "reference": "Audit reference",
+      "referencePlaceholder": "Reference",
+      "link": "Link",
+      "cancel": "Cancel",
+      "untitled": "Untitled audit",
+      "linkError": "Failed to link audit",
+      "unlinkError": "Failed to unlink audit"
+    },
+    "risks": {
+      "empty": "No risks found",
+      "loadError": "Could not load risks",
+      "loadMore": "Load more"
+    },
+    "errors": {
+      "update": "Failed to update finding",
+      "riskRequired": "Select the accepted risk"
+    }
+  },
+  "create": {
+    "title": "New finding",
+    "placeholders": {
+      "title": "Finding title"
+    },
+    "actions": {
+      "create": "Create finding"
+    }
+  }
+}

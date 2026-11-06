@@ -230,7 +230,7 @@ func TestCLI_ResourceLifecycles(t *testing.T) {
 	session.must("framework", "delete", auditFrameworkID, "--yes")
 	session.roundTrip(
 		"finding",
-		[]string{"--kind", "OBSERVATION", "--status", "OPEN", "--priority", "LOW"},
+		[]string{"--kind", "OBSERVATION", "--title", name + "-finding", "--status", "OPEN", "--priority", "LOW"},
 		[]string{"--priority", "HIGH"},
 		"HIGH",
 		nil,

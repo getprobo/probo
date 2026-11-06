@@ -174,6 +174,13 @@ export const description: INodeProperties[] = [
 				default: '',
 				description: 'The status of the finding',
 			},
+			{
+				displayName: 'Title',
+				name: 'title',
+				type: 'string',
+				default: '',
+				description: 'The title of the finding',
+			},
 		],
 	},
 ];
@@ -184,6 +191,7 @@ export async function execute(
 ): Promise<INodeExecutionData> {
 	const findingId = this.getNodeParameter('findingId', itemIndex) as string;
 	const additionalFields = this.getNodeParameter('additionalFields', itemIndex, {}) as {
+		title?: string;
 		description?: string;
 		source?: string;
 		identifiedOn?: string;
@@ -202,6 +210,7 @@ export async function execute(
 			updateFinding(input: $input) {
 				finding {
 					id
+					title
 					kind
 					description
 					source
@@ -220,6 +229,7 @@ export async function execute(
 	`;
 
 	const input: Record<string, unknown> = { id: findingId };
+	if (additionalFields.title) input.title = additionalFields.title;
 	if (additionalFields.description !== undefined) input.description = additionalFields.description === '' ? null : additionalFields.description;
 	if (additionalFields.source !== undefined) input.source = additionalFields.source === '' ? null : additionalFields.source;
 	if (additionalFields.identifiedOn !== undefined) input.identifiedOn = additionalFields.identifiedOn === '' ? null : additionalFields.identifiedOn;

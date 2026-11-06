@@ -31,6 +31,7 @@ func NewFinding(f *coredata.Finding) *Finding {
 		OrganizationID:     f.OrganizationID,
 		Kind:               f.Kind,
 		ReferenceID:        f.ReferenceID,
+		Title:              f.Title,
 		Description:        f.Description,
 		Source:             f.Source,
 		IdentifiedOn:       f.IdentifiedOn,

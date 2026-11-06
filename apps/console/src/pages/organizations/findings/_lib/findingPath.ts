@@ -18,26 +18,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { lazy } from "@probo/react-lazy";
-import type { AppRoute } from "@probo/routes";
+export function findingListPath(organizationId: string) {
+  return `/organizations/${organizationId}/governance/findings`;
+}
 
-import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
+export function findingNewPath(organizationId: string) {
+  return `${findingListPath(organizationId)}/new`;
+}
 
-export const findingRoutes = [
-  {
-    path: "findings",
-    Fallback: PageSkeleton,
-    Component: lazy(
-      () =>
-        import("#/pages/organizations/findings/FindingsPageLoader"),
-    ),
-  },
-  {
-    path: "findings/:findingId",
-    Fallback: PageSkeleton,
-    Component: lazy(
-      () =>
-        import("#/pages/organizations/findings/FindingDetailsPageLoader"),
-    ),
-  },
-] satisfies AppRoute[];
+export function findingDetailsPath(organizationId: string, findingId: string) {
+  return `${findingListPath(organizationId)}/${findingId}`;
+}
+
+export function findingDocumentPath(organizationId: string, documentId: string) {
+  return `/organizations/${organizationId}/governance/documents/${documentId}`;
+}

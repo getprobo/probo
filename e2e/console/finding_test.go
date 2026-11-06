@@ -43,6 +43,7 @@ func TestFinding_CreateNonconformity(t *testing.T) {
 						id
 						kind
 						referenceId
+						title
 						description
 						rootCause
 						correctiveAction
@@ -61,6 +62,7 @@ func TestFinding_CreateNonconformity(t *testing.T) {
 					ID               string `json:"id"`
 					Kind             string `json:"kind"`
 					ReferenceID      string `json:"referenceId"`
+					Title            string `json:"title"`
 					Description      string `json:"description"`
 					RootCause        string `json:"rootCause"`
 					CorrectiveAction string `json:"correctiveAction"`
@@ -75,6 +77,7 @@ func TestFinding_CreateNonconformity(t *testing.T) {
 		"input": map[string]any{
 			"organizationId":   owner.GetOrganizationID().String(),
 			"kind":             "MINOR_NONCONFORMITY",
+			"title":            "Access review gap",
 			"description":      "Unauthorized access detected",
 			"rootCause":        "Insufficient access controls",
 			"correctiveAction": "Implement MFA",
@@ -88,6 +91,7 @@ func TestFinding_CreateNonconformity(t *testing.T) {
 	node := result.CreateFinding.FindingEdge.Node
 	assert.NotEmpty(t, node.ID)
 	assert.Equal(t, "MINOR_NONCONFORMITY", node.Kind)
+	assert.Equal(t, "Access review gap", node.Title)
 	assert.Equal(t, "Unauthorized access detected", node.Description)
 	assert.Equal(t, "Insufficient access controls", node.RootCause)
 	assert.Equal(t, "Implement MFA", node.CorrectiveAction)
@@ -136,6 +140,7 @@ func TestFinding_CreateObservation(t *testing.T) {
 		"input": map[string]any{
 			"organizationId": owner.GetOrganizationID().String(),
 			"kind":           "OBSERVATION",
+			"title":          "Access review gap",
 			"description":    "Improve security training program",
 			"source":         "Internal Audit",
 			"ownerId":        profileID,
@@ -185,6 +190,7 @@ func TestFinding_Update(t *testing.T) {
 		"input": map[string]any{
 			"organizationId": owner.GetOrganizationID().String(),
 			"kind":           "MINOR_NONCONFORMITY",
+			"title":          "Access review gap",
 			"description":    "Original description",
 			"ownerId":        profileID,
 			"status":         "OPEN",
@@ -275,6 +281,7 @@ func TestFinding_Delete(t *testing.T) {
 		"input": map[string]any{
 			"organizationId": owner.GetOrganizationID().String(),
 			"kind":           "OBSERVATION",
+			"title":          "Access review gap",
 			"ownerId":        profileID,
 			"status":         "OPEN",
 			"priority":       "LOW",
@@ -339,6 +346,7 @@ func TestFinding_List(t *testing.T) {
 			"input": map[string]any{
 				"organizationId": owner.GetOrganizationID().String(),
 				"kind":           "MINOR_NONCONFORMITY",
+				"title":          "Access review gap",
 				"description":    fmt.Sprintf("Finding %d", i),
 				"ownerId":        profileID,
 				"status":         "OPEN",
@@ -426,6 +434,7 @@ func TestFinding_ListWithKindFilter(t *testing.T) {
 			"input": map[string]any{
 				"organizationId": owner.GetOrganizationID().String(),
 				"kind":           kind,
+				"title":          "Access review gap",
 				"ownerId":        profileID,
 				"status":         "OPEN",
 				"priority":       "LOW",
@@ -513,6 +522,7 @@ func TestFinding_ListWithAuditFilter(t *testing.T) {
 			"input": map[string]any{
 				"organizationId": owner.GetOrganizationID().String(),
 				"kind":           "OBSERVATION",
+				"title":          "Access review gap",
 				"ownerId":        profileID,
 				"status":         "OPEN",
 				"priority":       "LOW",
@@ -659,6 +669,7 @@ func TestFinding_CreateAuditMapping(t *testing.T) {
 		"input": map[string]any{
 			"organizationId": owner.GetOrganizationID().String(),
 			"kind":           "MINOR_NONCONFORMITY",
+			"title":          "Access review gap",
 			"ownerId":        profileID,
 			"status":         "OPEN",
 			"priority":       "HIGH",
@@ -801,6 +812,7 @@ func TestFinding_DeleteAuditMapping(t *testing.T) {
 		"input": map[string]any{
 			"organizationId": owner.GetOrganizationID().String(),
 			"kind":           "OBSERVATION",
+			"title":          "Access review gap",
 			"ownerId":        profileID,
 			"status":         "OPEN",
 			"priority":       "LOW",
@@ -950,6 +962,7 @@ func TestFinding_StatusAndPriorityValues(t *testing.T) {
 						input := map[string]any{
 							"organizationId": owner.GetOrganizationID().String(),
 							"kind":           "MINOR_NONCONFORMITY",
+							"title":          "Access review gap",
 							"ownerId":        profileID,
 							"status":         status,
 							"priority":       "LOW",
@@ -998,6 +1011,7 @@ func TestFinding_StatusAndPriorityValues(t *testing.T) {
 							"input": map[string]any{
 								"organizationId": owner.GetOrganizationID().String(),
 								"kind":           "OBSERVATION",
+								"title":          "Access review gap",
 								"ownerId":        profileID,
 								"status":         "OPEN",
 								"priority":       priority,
@@ -1010,6 +1024,140 @@ func TestFinding_StatusAndPriorityValues(t *testing.T) {
 			}
 		},
 	)
+}
+
+func TestFinding_LinkTask(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	profileID := factory.CreateUser(owner)
+	taskID := factory.CreateTask(owner, nil)
+
+	var created struct {
+		CreateFinding struct {
+			FindingEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"findingEdge"`
+		} `json:"createFinding"`
+	}
+
+	err := owner.Execute(`
+		mutation($input: CreateFindingInput!) {
+			createFinding(input: $input) {
+				findingEdge { node { id } }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"organizationId": owner.GetOrganizationID().String(),
+			"kind":           "OBSERVATION",
+			"title":          "Access review gap",
+			"ownerId":        profileID,
+			"status":         "OPEN",
+			"priority":       "LOW",
+		},
+	}, &created)
+	require.NoError(t, err)
+
+	findingID := created.CreateFinding.FindingEdge.Node.ID
+
+	err = owner.Execute(`
+		mutation($input: CreateFindingTaskMappingInput!) {
+			createFindingTaskMapping(input: $input) {
+				taskEdge { node { id } }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"findingId": findingID,
+			"taskId":    taskID,
+		},
+	}, nil)
+	require.NoError(t, err)
+
+	var listed struct {
+		Node struct {
+			Tasks struct {
+				TotalCount int `json:"totalCount"`
+				Edges      []struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"tasks"`
+		} `json:"node"`
+	}
+
+	err = owner.Execute(`
+		query($id: ID!) {
+			node(id: $id) {
+				... on Finding {
+					tasks(first: 10) {
+						totalCount
+						edges { node { id } }
+					}
+				}
+			}
+		}
+	`, map[string]any{"id": findingID}, &listed)
+	require.NoError(t, err)
+	assert.Equal(t, 1, listed.Node.Tasks.TotalCount)
+	require.Len(t, listed.Node.Tasks.Edges, 1)
+	assert.Equal(t, taskID, listed.Node.Tasks.Edges[0].Node.ID)
+
+	var unlinked struct {
+		DeleteFindingTaskMapping struct {
+			DeletedFindingID string `json:"deletedFindingId"`
+			DeletedTaskID    string `json:"deletedTaskId"`
+		} `json:"deleteFindingTaskMapping"`
+	}
+
+	err = owner.Execute(`
+		mutation($input: DeleteFindingTaskMappingInput!) {
+			deleteFindingTaskMapping(input: $input) {
+				deletedFindingId
+				deletedTaskId
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"findingId": findingID,
+			"taskId":    taskID,
+		},
+	}, &unlinked)
+	require.NoError(t, err)
+	assert.Equal(t, findingID, unlinked.DeleteFindingTaskMapping.DeletedFindingID)
+	assert.Equal(t, taskID, unlinked.DeleteFindingTaskMapping.DeletedTaskID)
+
+	var afterUnlink struct {
+		Node struct {
+			Tasks struct {
+				TotalCount int `json:"totalCount"`
+				Edges      []struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"tasks"`
+		} `json:"node"`
+	}
+
+	err = owner.Execute(`
+		query($id: ID!) {
+			node(id: $id) {
+				... on Finding {
+					tasks(first: 10) {
+						totalCount
+						edges { node { id } }
+					}
+				}
+			}
+		}
+	`, map[string]any{"id": findingID}, &afterUnlink)
+	require.NoError(t, err)
+	assert.Equal(t, 0, afterUnlink.Node.Tasks.TotalCount)
+	assert.Empty(t, afterUnlink.Node.Tasks.Edges)
 }
 
 // TestFinding_TenantIsolation covers GHSA-c74x-79w6-63jh: a finding must not

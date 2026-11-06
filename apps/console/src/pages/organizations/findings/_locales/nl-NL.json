@@ -1,0 +1,146 @@
+{
+  "list": {
+    "title": "Bevindingen",
+    "description": "Beheer de bevindingen van uw organisatie.",
+    "page": "Pagina {{page}}",
+    "columns": {
+      "reference": "Referentie",
+      "title": "Titel",
+      "kind": "Soort",
+      "status": "Status",
+      "priority": "Prioriteit",
+      "owner": "Eigenaar",
+      "due": "Vervaldatum"
+    },
+    "filters": {
+      "allKinds": "Alle soorten",
+      "allStatuses": "Alle statussen",
+      "allPriorities": "Alle prioriteiten",
+      "allOwners": "Alle eigenaren",
+      "allAudits": "Alle audits",
+      "loadMoreAudits": "Meer laden"
+    },
+    "kinds": {
+      "minor_nonconformity": "Kleine non-conformiteit",
+      "major_nonconformity": "Grote non-conformiteit",
+      "observation": "Observatie",
+      "exception": "Uitzondering"
+    },
+    "statuses": {
+      "open": "Open",
+      "in_progress": "In uitvoering",
+      "closed": "Gesloten",
+      "risk_accepted": "Risico geaccepteerd",
+      "mitigated": "Beperkt",
+      "false_positive": "Fout-positief"
+    },
+    "priorities": {
+      "low": "Laag",
+      "medium": "Gemiddeld",
+      "high": "Hoog"
+    },
+    "values": {
+      "unassigned": "Niet toegewezen",
+      "noDueDate": "Geen vervaldatum"
+    },
+    "actions": {
+      "new": "Bevinding toevoegen",
+      "delete": "Verwijderen",
+      "menu": "Acties voor bevinding",
+      "previous": "Vorige",
+      "next": "Volgende",
+      "document": "Document",
+      "publish": "Publiceren",
+      "clearFilters": "Filters wissen",
+      "cancel": "Annuleren"
+    },
+    "empty": {
+      "title": "Nog geen bevindingen",
+      "description": "Maak uw eerste bevinding om te beginnen.",
+      "filteredTitle": "Geen overeenkomende bevindingen",
+      "filteredDescription": "Wis de filters om alle bevindingen te zien."
+    },
+    "messages": {
+      "deleted": "Bevinding verwijderd",
+      "created": "Bevinding aangemaakt"
+    },
+    "errors": {
+      "delete": "Bevinding verwijderen mislukt",
+      "create": "Bevinding aanmaken mislukt"
+    },
+    "deleteConfirmation": "Dit verwijdert {{referenceId}} permanent. Deze actie kan niet ongedaan worden gemaakt."
+  },
+  "details": {
+    "back": "Bevindingen",
+    "notFound": "Bevinding niet gevonden",
+    "properties": "Eigenschappen",
+    "fields": {
+      "title": "Titel",
+      "description": "Beschrijving",
+      "noDescription": "Geen beschrijving",
+      "kind": "Soort",
+      "status": "Status",
+      "priority": "Prioriteit",
+      "owner": "Eigenaar",
+      "acceptedRisk": "Geaccepteerd risico",
+      "dateIdentified": "Datum vastgesteld",
+      "dueDate": "Vervaldatum",
+      "source": "Bron",
+      "rootCause": "Grondoorzaak",
+      "correctiveAction": "Corrigerende maatregel",
+      "effectivenessCheck": "Effectiviteitscontrole"
+    },
+    "placeholders": {
+      "description": "Beschrijf de bevinding",
+      "owner": "Eigenaar instellen",
+      "dateIdentified": "Datum vastgesteld instellen",
+      "dueDate": "Vervaldatum instellen",
+      "risk": "Geaccepteerd risico instellen"
+    },
+    "tasks": {
+      "title": "Taken",
+      "empty": "Geen gekoppelde taken",
+      "search": "Een taak koppelen",
+      "emptySearch": "Geen taken gevonden",
+      "loadError": "Taken laden mislukt",
+      "loadMore": "Meer laden",
+      "unlink": "Taak ontkoppelen",
+      "linkError": "Taak koppelen mislukt",
+      "unlinkError": "Taak ontkoppelen mislukt"
+    },
+    "audits": {
+      "title": "Gekoppelde audits",
+      "empty": "Geen gekoppelde audits",
+      "search": "Een audit koppelen",
+      "emptySearch": "Geen audits gevonden",
+      "loadError": "Audits laden mislukt",
+      "loadMore": "Meer laden",
+      "unlink": "Audit ontkoppelen",
+      "reference": "Auditreferentie",
+      "referencePlaceholder": "Referentie",
+      "link": "Koppelen",
+      "cancel": "Annuleren",
+      "untitled": "Naamloze audit",
+      "linkError": "Audit koppelen mislukt",
+      "unlinkError": "Audit ontkoppelen mislukt"
+    },
+    "risks": {
+      "empty": "Geen risico's gevonden",
+      "loadError": "Risico's laden mislukt",
+      "loadMore": "Meer laden"
+    },
+    "errors": {
+      "update": "Bevinding bijwerken mislukt",
+      "riskRequired": "Selecteer het geaccepteerde risico"
+    }
+  },
+  "create": {
+    "title": "Nieuwe bevinding",
+    "placeholders": {
+      "title": "Titel van de bevinding"
+    },
+    "actions": {
+      "create": "Bevinding aanmaken"
+    }
+  }
+}

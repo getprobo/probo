@@ -215,6 +215,8 @@ const (
 	ActionFindingDelete             = "core:finding:delete"
 	ActionFindingAuditMappingCreate = "core:finding:create-audit-mapping"
 	ActionFindingAuditMappingDelete = "core:finding:delete-audit-mapping"
+	ActionFindingTaskMappingCreate  = "core:finding:create-task-mapping"
+	ActionFindingTaskMappingDelete  = "core:finding:delete-task-mapping"
 	ActionFindingPublish            = "core:finding:publish"
 
 	// Obligation actions

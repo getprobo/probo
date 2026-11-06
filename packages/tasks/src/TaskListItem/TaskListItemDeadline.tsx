@@ -46,6 +46,7 @@ export function TaskListItemDeadline({
   size = 1,
   placeholder,
   slots,
+  icon,
   onDeadlineChange,
 }: {
   deadline?: string | null;
@@ -55,6 +56,8 @@ export function TaskListItemDeadline({
   size?: 1 | 2;
   placeholder?: string;
   slots: ReturnType<typeof taskListItem>;
+  // Replaces the deadline calendar when this date is not a due date.
+  icon?: ReactNode;
   onDeadlineChange: (deadline: string | null) => void;
 }): ReactNode {
   const { t, i18n } = useTranslation(TASKS_NAMESPACE);
@@ -62,9 +65,9 @@ export function TaskListItemDeadline({
   const label = deadline == null ? null : deadlineDateFormat(i18n.language, deadline);
   const tooltip = label ?? placeholder ?? t("metadata.deadline");
   const shown = label ?? placeholder ?? null;
-  const icon = isOverdue
+  const dateIcon = icon ?? (isOverdue
     ? <CalendarXIcon className={slots.deadlineIcon()} weight="bold" />
-    : <CalendarBlankIcon className={slots.deadlineIcon()} weight="bold" />;
+    : <CalendarBlankIcon className={slots.deadlineIcon()} weight="bold" />);
 
   function commitDeadline(next: string | null) {
     if (toDateInput(next) === toDateInput(deadline)) {
@@ -78,7 +81,7 @@ export function TaskListItemDeadline({
   if (!canUpdate) {
     return (
       <span className={slots.deadline()} title={tooltip}>
-        {icon}
+        {dateIcon}
         {shown != null && (
           <Text size={size} color={label == null ? "faint" : "current"}>
             {label == null
@@ -115,7 +118,7 @@ export function TaskListItemDeadline({
                   className={`${slots.deadline()} ${slots.chipTrigger()}`}
                   aria-label={label == null ? tooltip : `${tooltip}, ${label}`}
                 >
-                  {icon}
+                  {dateIcon}
                   {shown != null && (
                     <Text size={size} color={label == null ? "faint" : "current"}>
                       {label == null

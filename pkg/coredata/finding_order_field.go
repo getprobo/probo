@@ -37,6 +37,7 @@ const (
 	FindingOrderFieldPriority     FindingOrderField = "PRIORITY"
 	FindingOrderFieldReferenceId  FindingOrderField = "REFERENCE_ID"
 	FindingOrderFieldKind         FindingOrderField = "KIND"
+	FindingOrderFieldTitle        FindingOrderField = "TITLE"
 )
 
 var (
@@ -55,6 +56,7 @@ func FindingOrderFields() []FindingOrderField {
 		FindingOrderFieldPriority,
 		FindingOrderFieldReferenceId,
 		FindingOrderFieldKind,
+		FindingOrderFieldTitle,
 	}
 }
 

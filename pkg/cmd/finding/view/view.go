@@ -37,6 +37,7 @@ query FindingView($id: ID!) {
     ... on Finding {
       id
       referenceId
+      title
       kind
       description
       source
@@ -67,6 +68,7 @@ type viewResponse struct {
 		Typename         string  `json:"__typename"`
 		ID               string  `json:"id"`
 		ReferenceID      string  `json:"referenceId"`
+		Title            string  `json:"title"`
 		Kind             string  `json:"kind"`
 		Description      *string `json:"description"`
 		Source           *string `json:"source"`
@@ -151,9 +153,10 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			bold := lipgloss.NewStyle().Bold(true)
 			label := lipgloss.NewStyle().Foreground(lipgloss.Color("242")).Width(22)
 
-			_, _ = fmt.Fprintf(out, "%s\n\n", bold.Render(n.ReferenceID))
+			_, _ = fmt.Fprintf(out, "%s\n\n", bold.Render(n.Title))
 
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("ID:"), n.ID)
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Reference:"), n.ReferenceID)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Kind:"), n.Kind)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Status:"), n.Status)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Priority:"), n.Priority)

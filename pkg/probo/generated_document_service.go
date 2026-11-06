@@ -1148,6 +1148,7 @@ func (s *GeneratedDocumentService) buildFindingListDocumentData(
 
 		rows = append(rows, docgen.FindingListRow{
 			ReferenceID:        f.ReferenceID,
+			Title:              f.Title,
 			Kind:               formatFindingKind(f.Kind),
 			Description:        description,
 			Source:             source,

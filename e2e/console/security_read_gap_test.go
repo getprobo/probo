@@ -119,6 +119,7 @@ func TestSecurity_ReadGap_FindingRisk(t *testing.T) {
 		"input": map[string]any{
 			"organizationId": org1Owner.GetOrganizationID().String(),
 			"kind":           "OBSERVATION",
+			"title":          "Access review gap",
 			"status":         "OPEN",
 			"priority":       "LOW",
 		},

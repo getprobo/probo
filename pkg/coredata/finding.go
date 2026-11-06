@@ -40,6 +40,7 @@ type (
 		OrganizationID     gid.GID         `db:"organization_id"`
 		Kind               FindingKind     `db:"kind"`
 		ReferenceID        string          `db:"reference_id"`
+		Title              string          `db:"title"`
 		Description        *string         `db:"description"`
 		Source             *string         `db:"source"`
 		IdentifiedOn       *time.Time      `db:"identified_on"`
@@ -72,6 +73,8 @@ func (f *Finding) CursorKey(field FindingOrderField) page.CursorKey {
 		return page.NewCursorKey(f.ID, f.Priority)
 	case FindingOrderFieldReferenceId:
 		return page.NewCursorKey(f.ID, f.ReferenceID)
+	case FindingOrderFieldTitle:
+		return page.NewCursorKey(f.ID, f.Title)
 	case FindingOrderFieldKind:
 		return page.NewCursorKey(f.ID, f.Kind)
 	}
@@ -130,6 +133,7 @@ SELECT
 	organization_id,
 	kind,
 	reference_id,
+	title,
 	description,
 	source,
 	identified_on,
@@ -221,6 +225,7 @@ SELECT
 	organization_id,
 	kind,
 	reference_id,
+	title,
 	description,
 	source,
 	identified_on,
@@ -296,6 +301,7 @@ INSERT INTO findings (
 	organization_id,
 	kind,
 	reference_id,
+	title,
 	description,
 	source,
 	identified_on,
@@ -316,6 +322,7 @@ SELECT
 	@organization_id,
 	@kind,
 	'FND-' || LPAD(next_ref.next_num::TEXT, 3, '0'),
+	@title,
 	@description,
 	@source,
 	@identified_on,
@@ -338,6 +345,7 @@ RETURNING reference_id
 		"tenant_id":           scope.GetTenantID(),
 		"organization_id":     f.OrganizationID,
 		"kind":                f.Kind,
+		"title":               f.Title,
 		"description":         f.Description,
 		"source":              f.Source,
 		"identified_on":       f.IdentifiedOn,
@@ -369,6 +377,7 @@ func (f *Finding) Update(
 	q := `
 UPDATE findings
 SET
+	title = @title,
 	description = @description,
 	source = @source,
 	identified_on = @identified_on,
@@ -390,6 +399,7 @@ WHERE
 
 	args := pgx.StrictNamedArgs{
 		"id":                  f.ID,
+		"title":               f.Title,
 		"description":         f.Description,
 		"source":              f.Source,
 		"identified_on":       f.IdentifiedOn,
@@ -454,6 +464,7 @@ WITH f AS (
 		fi.organization_id,
 		fi.kind,
 		fi.reference_id,
+		fi.title,
 		fi.description,
 		fi.source,
 		fi.identified_on,
@@ -479,6 +490,7 @@ SELECT
 	organization_id,
 	kind,
 	reference_id,
+	title,
 	description,
 	source,
 	identified_on,

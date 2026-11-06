@@ -18,43 +18,46 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Option, Select } from "@probo/ui";
-import { useRef, useState } from "react";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { Select } from "@probo/ui/src/v2/Select/Select";
+import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
+import { SelectList } from "@probo/ui/src/v2/Select/SelectList";
+import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
+import { SelectTrigger } from "@probo/ui/src/v2/Select/SelectTrigger";
+import { Suspense } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useLazyLoadQuery, usePaginationFragment } from "react-relay";
 
-import type { AuditFilterSelectFragment$key } from "#/__generated__/core/AuditFilterSelectFragment.graphql";
+import type { AuditFilterSelect_organization$key } from "#/__generated__/core/AuditFilterSelect_organization.graphql";
 import type { AuditFilterSelectPaginationQuery } from "#/__generated__/core/AuditFilterSelectPaginationQuery.graphql";
 import type { AuditFilterSelectQuery } from "#/__generated__/core/AuditFilterSelectQuery.graphql";
 import type { AuditFrameworkNames_audit$key } from "#/__generated__/core/AuditFrameworkNames_audit.graphql";
 import { useAuditFrameworkNames } from "#/components/audits/AuditFrameworkNames";
 
-const PAGE_SIZE = 20;
-const LOAD_MORE_VALUE = "__LOAD_MORE__";
+import { auditFilterSelect } from "./variants";
+
+const auditFilterPageSize = 20;
 
 const auditFilterSelectQuery = graphql`
   query AuditFilterSelectQuery($organizationId: ID!) {
     organization: node(id: $organizationId) {
-      id
+      __typename
       ... on Organization {
-        ...AuditFilterSelectFragment
+        ...AuditFilterSelect_organization
       }
     }
   }
 `;
 
 const auditFilterSelectFragment = graphql`
-  fragment AuditFilterSelectFragment on Organization
+  fragment AuditFilterSelect_organization on Organization
   @refetchable(queryName: "AuditFilterSelectPaginationQuery")
   @argumentDefinitions(
     first: { type: "Int", defaultValue: 20 }
     after: { type: "CursorKey", defaultValue: null }
   ) {
-    audits(
-      first: $first
-      after: $after
-      orderBy: { field: CREATED_AT, direction: DESC }
-    ) @connection(key: "AuditFilterSelect_audits") {
+    audits(first: $first, after: $after, orderBy: { field: CREATED_AT, direction: DESC })
+      @connection(key: "AuditFilterSelect_audits") {
       edges {
         node {
           id
@@ -66,86 +69,108 @@ const auditFilterSelectFragment = graphql`
   }
 `;
 
-type AuditFilterSelectProps = {
+interface AuditFilterSelectProps {
   organizationId: string;
   value: string | null;
-  onChange: (value: string) => void;
-};
+  onChange: (value: string | null) => void;
+}
 
-export function AuditFilterSelect({
-  organizationId,
-  value,
-  onChange,
-}: AuditFilterSelectProps) {
-  const { t } = useTranslation();
-  const query = useLazyLoadQuery<AuditFilterSelectQuery>(
+export function AuditFilterSelect(props: AuditFilterSelectProps) {
+  const { t } = useTranslation("organizations/findings");
+
+  return (
+    <Suspense
+      fallback={(
+        <Select value={null} disabled>
+          <SelectTrigger
+            size={2}
+            placeholder={t("list.filters.allAudits")}
+            aria-label={t("list.filters.allAudits")}
+          />
+        </Select>
+      )}
+    >
+      <AuditFilterSelectQueryRenderer {...props} />
+    </Suspense>
+  );
+}
+
+function AuditFilterSelectQueryRenderer({ organizationId, ...props }: AuditFilterSelectProps) {
+  const data = useLazyLoadQuery<AuditFilterSelectQuery>(
     auditFilterSelectQuery,
     { organizationId },
   );
-  const { data, loadNext, hasNext, isLoadingNext }
-    = usePaginationFragment<
-      AuditFilterSelectPaginationQuery,
-      AuditFilterSelectFragment$key
-    >(auditFilterSelectFragment, query.organization as AuditFilterSelectFragment$key);
-  const audits = data.audits?.edges?.map(edge => edge.node) ?? [];
-  const [isOpen, setIsOpen] = useState(false);
-  // Selecting an option closes the popup; loading a page must not.
-  const keepOpenRef = useRef(false);
 
-  const handleValueChange = (next: string) => {
-    if (next === LOAD_MORE_VALUE) {
-      keepOpenRef.current = true;
-      loadNext(PAGE_SIZE);
-      return;
-    }
+  if (data.organization?.__typename !== "Organization") {
+    return null;
+  }
 
-    onChange(next);
-  };
+  return <AuditFilterSelectOptions organizationKey={data.organization} {...props} />;
+}
 
-  const handleOpenChange = (open: boolean) => {
-    if (!open && keepOpenRef.current) {
-      keepOpenRef.current = false;
-      return;
-    }
-
-    setIsOpen(open);
-  };
+function AuditFilterSelectOptions({
+  organizationKey,
+  value,
+  onChange,
+}: Omit<AuditFilterSelectProps, "organizationId"> & {
+  organizationKey: AuditFilterSelect_organization$key;
+}) {
+  const { t } = useTranslation("organizations/findings");
+  const { data, loadNext, hasNext, isLoadingNext } = usePaginationFragment<
+    AuditFilterSelectPaginationQuery,
+    AuditFilterSelect_organization$key
+  >(auditFilterSelectFragment, organizationKey);
+  const audits = data.audits?.edges.map(edge => edge.node) ?? [];
+  const { loadMore } = auditFilterSelect();
 
   return (
-    <Select
-      value={value ?? "ALL"}
-      open={isOpen}
-      onOpenChange={handleOpenChange}
-      onValueChange={handleValueChange}
-    >
-      <Option value="ALL">{t("findingsPage.filters.allAudits")}</Option>
-      {audits.map(audit => (
-        <AuditFilterOption key={audit.id} audit={audit} />
-      ))}
-      {hasNext && (
-        <Option
-          value={LOAD_MORE_VALUE}
-          className="justify-center text-txt-secondary"
-        >
-          {isLoadingNext
-            ? t("findingsPage.loading")
-            : t("findingsPage.actions.loadMore")}
-        </Option>
-      )}
+    <Select<string | null> value={value} onValueChange={onChange}>
+      <SelectTrigger
+        size={2}
+        placeholder={t("list.filters.allAudits")}
+        aria-label={t("list.filters.allAudits")}
+      >
+        {(selected: string | null) => {
+          if (selected == null) {
+            return t("list.filters.allAudits");
+          }
+          const audit = audits.find(item => item.id === selected);
+          return audit ? <AuditLabel audit={audit} /> : selected;
+        }}
+      </SelectTrigger>
+      <SelectPopup align="end">
+        <SelectList>
+          <SelectItem value={null}>{t("list.filters.allAudits")}</SelectItem>
+          {audits.map(audit => (
+            <SelectItem key={audit.id} value={audit.id}>
+              <AuditLabel audit={audit} />
+            </SelectItem>
+          ))}
+        </SelectList>
+        {hasNext && (
+          <Button
+            variant="ghost"
+            color="neutral"
+            size={1}
+            className={loadMore()}
+            loading={isLoadingNext}
+            onClick={() => {
+              loadNext(auditFilterPageSize);
+            }}
+          >
+            {t("list.filters.loadMoreAudits")}
+          </Button>
+        )}
+      </SelectPopup>
     </Select>
   );
 }
 
-function AuditFilterOption({
+function AuditLabel({
   audit,
 }: {
-  audit: AuditFrameworkNames_audit$key & {
-    id: string;
-    name?: string | null;
-  };
+  audit: AuditFrameworkNames_audit$key & { id: string; name?: string | null };
 }) {
   const { label: frameworkLabel } = useAuditFrameworkNames(audit);
-  const label = audit.name || frameworkLabel || audit.id;
-
-  return <Option value={audit.id}>{label}</Option>;
+  return audit.name || frameworkLabel || audit.id;
 }

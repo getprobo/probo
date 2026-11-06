@@ -370,6 +370,7 @@ func createFindingForPublish(t *testing.T, client *testutil.Client, description 
 		"input": map[string]any{
 			"organizationId": client.GetOrganizationID().String(),
 			"kind":           "OBSERVATION",
+			"title":          "Access review gap",
 			"description":    description,
 			"status":         "OPEN",
 			"priority":       "MEDIUM",

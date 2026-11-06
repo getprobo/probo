@@ -94,6 +94,7 @@ export async function execute(
 						edges {
 							node {
 								id
+								title
 								kind
 								description
 								source

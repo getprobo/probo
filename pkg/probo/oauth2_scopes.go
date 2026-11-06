@@ -131,6 +131,8 @@ var OAuth2ScopeMappings = map[coredata.OAuth2Scope][]string{
 		ActionFindingDelete,
 		ActionFindingAuditMappingCreate,
 		ActionFindingAuditMappingDelete,
+		ActionFindingTaskMappingCreate,
+		ActionFindingTaskMappingDelete,
 		ActionFindingPublish,
 	},
 	ScopeV1BusinessFunctionRead: {

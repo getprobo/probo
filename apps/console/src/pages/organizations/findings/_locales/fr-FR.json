@@ -1,0 +1,146 @@
+{
+  "list": {
+    "title": "Constats",
+    "description": "Gérez les constats de votre organisation.",
+    "page": "Page {{page}}",
+    "columns": {
+      "reference": "Référence",
+      "title": "Titre",
+      "kind": "Type",
+      "status": "Statut",
+      "priority": "Priorité",
+      "owner": "Propriétaire",
+      "due": "Date d’échéance"
+    },
+    "filters": {
+      "allKinds": "Tous les types",
+      "allStatuses": "Tous les statuts",
+      "allPriorities": "Toutes les priorités",
+      "allOwners": "Tous les propriétaires",
+      "allAudits": "Tous les audits",
+      "loadMoreAudits": "Charger plus"
+    },
+    "kinds": {
+      "minor_nonconformity": "Non-conformité mineure",
+      "major_nonconformity": "Non-conformité majeure",
+      "observation": "Observation",
+      "exception": "Exception"
+    },
+    "statuses": {
+      "open": "Ouvert",
+      "in_progress": "En cours",
+      "closed": "Fermé",
+      "risk_accepted": "Risque accepté",
+      "mitigated": "Atténué",
+      "false_positive": "Faux positif"
+    },
+    "priorities": {
+      "low": "Faible",
+      "medium": "Moyenne",
+      "high": "Élevée"
+    },
+    "values": {
+      "unassigned": "Non assigné",
+      "noDueDate": "Aucune échéance"
+    },
+    "actions": {
+      "new": "Ajouter un constat",
+      "delete": "Supprimer",
+      "menu": "Actions du constat",
+      "previous": "Précédent",
+      "next": "Suivant",
+      "document": "Document",
+      "publish": "Publier",
+      "clearFilters": "Effacer les filtres",
+      "cancel": "Annuler"
+    },
+    "empty": {
+      "title": "Aucun constat",
+      "description": "Créez votre premier constat pour commencer.",
+      "filteredTitle": "Aucun constat correspondant",
+      "filteredDescription": "Effacez les filtres pour afficher tous les constats."
+    },
+    "messages": {
+      "deleted": "Constat supprimé",
+      "created": "Constat créé"
+    },
+    "errors": {
+      "delete": "Échec de la suppression du constat",
+      "create": "Échec de la création du constat"
+    },
+    "deleteConfirmation": "Cela supprimera définitivement {{referenceId}}. Cette action est irréversible."
+  },
+  "details": {
+    "back": "Constats",
+    "notFound": "Constat introuvable",
+    "properties": "Propriétés",
+    "fields": {
+      "title": "Titre",
+      "description": "Description",
+      "noDescription": "Aucune description",
+      "kind": "Type",
+      "status": "Statut",
+      "priority": "Priorité",
+      "owner": "Propriétaire",
+      "acceptedRisk": "Risque accepté",
+      "dateIdentified": "Date d’identification",
+      "dueDate": "Date d’échéance",
+      "source": "Source",
+      "rootCause": "Cause racine",
+      "correctiveAction": "Action corrective",
+      "effectivenessCheck": "Vérification de l’efficacité"
+    },
+    "placeholders": {
+      "description": "Décrivez le constat",
+      "owner": "Définir le propriétaire",
+      "dateIdentified": "Définir la date d’identification",
+      "dueDate": "Définir la date d’échéance",
+      "risk": "Définir le risque accepté"
+    },
+    "tasks": {
+      "title": "Tâches",
+      "empty": "Aucune tâche liée",
+      "search": "Lier une tâche",
+      "emptySearch": "Aucune tâche trouvée",
+      "loadError": "Impossible de charger les tâches",
+      "loadMore": "Charger plus",
+      "unlink": "Dissocier la tâche",
+      "linkError": "Échec de la liaison de la tâche",
+      "unlinkError": "Échec de la dissociation de la tâche"
+    },
+    "audits": {
+      "title": "Audits liés",
+      "empty": "Aucun audit lié",
+      "search": "Lier un audit",
+      "emptySearch": "Aucun audit trouvé",
+      "loadError": "Impossible de charger les audits",
+      "loadMore": "Charger plus",
+      "unlink": "Dissocier l'audit",
+      "reference": "Référence d'audit",
+      "referencePlaceholder": "Référence",
+      "link": "Lier",
+      "cancel": "Annuler",
+      "untitled": "Audit sans titre",
+      "linkError": "Échec de la liaison de l'audit",
+      "unlinkError": "Échec de la dissociation de l'audit"
+    },
+    "risks": {
+      "empty": "Aucun risque trouvé",
+      "loadError": "Impossible de charger les risques",
+      "loadMore": "Charger plus"
+    },
+    "errors": {
+      "update": "Échec de la mise à jour du constat",
+      "riskRequired": "Sélectionnez le risque accepté"
+    }
+  },
+  "create": {
+    "title": "Nouveau constat",
+    "placeholders": {
+      "title": "Titre du constat"
+    },
+    "actions": {
+      "create": "Créer le constat"
+    }
+  }
+}
