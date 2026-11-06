@@ -29,7 +29,6 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/validator"
 )
@@ -359,22 +358,13 @@ func (s *Service) Attach(
 
 			result.Tag = tag
 
-			resourceOrganizationID, err := loadResourceOrganizationID(ctx, tx, req.ResourceID)
-			if err != nil {
-				return err
-			}
-
-			if resourceOrganizationID != tag.OrganizationID {
-				return fmt.Errorf("cannot attach tag from another organization: %w", coredata.ErrResourceNotFound)
-			}
-
 			if err := coredata.LockTagAssignmentKey(ctx, tx, req.ResourceID, tag.Key); err != nil {
 				return err
 			}
 
 			existing := &coredata.TagAssignment{}
 
-			err = existing.LoadByResourceIDAndKey(ctx, tx, scope, req.ResourceID, tag.Key)
+			err := existing.LoadByResourceIDAndKey(ctx, tx, scope, req.ResourceID, tag.Key)
 			switch {
 			case err == nil && existing.TagID == tag.ID:
 				result.Assignment = existing
@@ -413,39 +403,6 @@ func (s *Service) Attach(
 	}
 
 	return result, nil
-}
-
-func loadResourceOrganizationID(
-	ctx context.Context,
-	conn pg.Querier,
-	resourceID gid.GID,
-) (gid.GID, error) {
-	entity, ok := coredata.NewEntityFromID(resourceID)
-	if !ok {
-		return gid.GID{}, fmt.Errorf("unsupported resource type %d: %w", resourceID.EntityType(), coredata.ErrResourceNotFound)
-	}
-
-	attributer, ok := entity.(iam.AuthorizationAttributer)
-	if !ok {
-		return gid.GID{}, fmt.Errorf("resource type %d has no organization: %w", resourceID.EntityType(), coredata.ErrResourceNotFound)
-	}
-
-	attrsByID, err := attributer.AuthorizationAttributes(ctx, conn, []gid.GID{resourceID})
-	if err != nil {
-		return gid.GID{}, fmt.Errorf("cannot load resource organization: %w", err)
-	}
-
-	attrs, ok := attrsByID[resourceID]
-	if !ok {
-		return gid.GID{}, coredata.ErrResourceNotFound
-	}
-
-	organizationID, err := gid.ParseGID(attrs["organization_id"])
-	if err != nil {
-		return gid.GID{}, fmt.Errorf("cannot parse resource organization: %w", err)
-	}
-
-	return organizationID, nil
 }
 
 // Detach removes the tag from the resource. Detaching a tag that is not
@@ -574,37 +531,6 @@ func (s *Service) LoadByResourceIDs(
 	}
 
 	return result, nil
-}
-
-// FilterResourceIDs returns candidates that have all of the given tags (AND).
-func (s *Service) FilterResourceIDs(
-	ctx context.Context,
-	scope coredata.Scoper,
-	candidateIDs []gid.GID,
-	tagIDs []gid.GID,
-) ([]gid.GID, error) {
-	var filtered []gid.GID
-
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			assignments := &coredata.TagAssignments{}
-
-			var err error
-
-			filtered, err = assignments.FilterResourceIDs(ctx, conn, scope, candidateIDs, tagIDs)
-			if err != nil {
-				return fmt.Errorf("cannot filter resource ids by tags: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return filtered, nil
 }
 
 // ListAssignmentsForTagID returns a page of assignments for the given tag.

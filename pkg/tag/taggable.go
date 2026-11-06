@@ -22,8 +22,10 @@ package tag
 
 import "go.probo.inc/probo/pkg/coredata"
 
-// TaggableEntityTypes lists the resources a tag can be attached to. Each one
-// must resolve through the console Query.node so assignments can load it.
+// TaggableEntityTypes is the allowlist of resources a tag can be attached to.
+// It is not every entity type. An assignment's resource is loaded through
+// Query.node, so only types that node can resolve belong here. Join rows,
+// jobs, and records that exist only as part of a parent stay off the list.
 var TaggableEntityTypes = []uint16{
 	coredata.AiSystemEntityType,
 	coredata.AssetEntityType,
@@ -43,6 +45,11 @@ var TaggableEntityTypes = []uint16{
 	coredata.RightsRequestEntityType,
 	coredata.RiskEntityType,
 	coredata.RiskAnalysisEntityType,
+	coredata.RiskAnalysisBoundaryEntityType,
+	coredata.RiskAnalysisDiagramEntityType,
+	coredata.RiskAnalysisProcessEntityType,
+	coredata.RiskAnalysisScenarioEntityType,
+	coredata.RiskAnalysisThreatEntityType,
 	coredata.StatementOfApplicabilityEntityType,
 	coredata.TaskEntityType,
 	coredata.ThirdPartyEntityType,
