@@ -26,8 +26,7 @@ import { richEditorCollaborationExtensions } from "./RichEditor";
 // Nodes that round-trip through collaboration without their own block mapping:
 // the document root, the text leaf, and the list containers whose identity is
 // carried by their items. contentUpload is a UI-only upload placeholder that is
-// stripped before a document is saved. mention has no mapping yet; adding it is
-// a follow-up commit, so it is listed here as an explicit opt-out.
+// stripped before a document is saved.
 const nodesWithoutAutomerge = new Set([
   "doc",
   "text",
@@ -35,7 +34,6 @@ const nodesWithoutAutomerge = new Set([
   "orderedList",
   "taskList",
   "contentUpload",
-  "mention",
 ]);
 
 function automergeField(spec: unknown): unknown {

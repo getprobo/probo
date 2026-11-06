@@ -127,6 +127,89 @@ func TestToSpans_RoundTripsCanonicalDocuments(t *testing.T) {
 	}
 }
 
+func TestToSpans_MentionRoundTrip(t *testing.T) {
+	t.Parallel()
+
+	const document = `{
+		"type": "doc",
+		"content": [
+			{
+				"type": "paragraph",
+				"content": [
+					{"type": "text", "text": "Hi "},
+					{"type": "mention", "attrs": {"id": "profile-1", "label": "Jane Doe"}},
+					{"type": "text", "text": " and "},
+					{
+						"type": "text",
+						"text": "Ada",
+						"marks": [{"type": "bold"}]
+					},
+					{"type": "hardBreak"},
+					{"type": "mention", "attrs": {"id": "profile-2", "label": "Ada Lovelace"}}
+				]
+			},
+			{
+				"type": "bulletList",
+				"content": [
+					{
+						"type": "listItem",
+						"content": [
+							{
+								"type": "paragraph",
+								"content": [
+									{"type": "text", "text": "ping "},
+									{"type": "mention", "attrs": {"id": "profile-1", "label": "Jane Doe"}}
+								]
+							}
+						]
+					}
+				]
+			}
+		]
+	}`
+
+	spans, err := prosemirror.ToSpans(document)
+	require.NoError(t, err)
+
+	var mentionSpans int
+	for _, span := range spans {
+		if span.Block == nil {
+			continue
+		}
+
+		blockType, _ := span.Block["type"].(string)
+		if blockType != "mention" {
+			continue
+		}
+
+		mentionSpans++
+		assert.Equal(t, true, span.Block["isEmbed"])
+		attrs, ok := span.Block["attrs"].(map[string]any)
+		require.True(t, ok)
+		assert.Contains(t, attrs, "id")
+		assert.Contains(t, attrs, "label")
+	}
+	assert.Equal(t, 3, mentionSpans)
+
+	actorID, err := automerge.NewActorID()
+	require.NoError(t, err)
+
+	doc, err := automerge.New(actorID)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = doc.Close() })
+
+	text, err := doc.CreateText("body")
+	require.NoError(t, err)
+	require.NoError(t, text.UpdateSpans(spans, prosemirror.UpdateSpansConfig()))
+
+	readback, err := text.Spans()
+	require.NoError(t, err)
+
+	rendered, err := prosemirror.Render(readback)
+	require.NoError(t, err)
+	assert.JSONEq(t, document, rendered)
+}
+
 func TestToSpans_TaskListRoundTrip(t *testing.T) {
 	t.Parallel()
 

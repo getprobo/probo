@@ -12,6 +12,7 @@
     { "automerge": "image", "prosemirror": "image", "isEmbed": false },
     { "automerge": "file", "prosemirror": "file", "isEmbed": false },
     { "automerge": "hard-break", "prosemirror": "hardBreak", "isEmbed": true },
+    { "automerge": "mention", "prosemirror": "mention", "isEmbed": true },
     { "automerge": "table", "prosemirror": "table", "isEmbed": false },
     { "automerge": "table-cell", "prosemirror": "tableCell", "isEmbed": false },
     { "automerge": "table-header", "prosemirror": "tableHeader", "isEmbed": false },

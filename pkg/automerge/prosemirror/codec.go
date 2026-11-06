@@ -54,7 +54,7 @@ const (
 	roleEmbed
 
 	// roleInlineEmbed is an inline leaf emitted inside a text block (hard
-	// break).
+	// break, mention).
 	roleInlineEmbed
 )
 
@@ -128,6 +128,7 @@ var (
 		imageCodec{},
 		fileCodec{},
 		hardBreakCodec{},
+		mentionCodec{},
 		tableCodec{},
 		tableRowCodec{},
 		tableCellCodec{},
@@ -155,9 +156,18 @@ var (
 	outerCodecs = map[prosemirror.NodeType]nodeCodec{}
 
 	// renderCodecs maps an Automerge block type to its codec for the reverse
-	// traversal. Inline embeds and wrappers are absent: hard breaks are handled
-	// while collecting blocks, and wrappers are recreated from item codecs.
+	// traversal. Inline embeds and wrappers are absent: inline embeds are
+	// handled while collecting blocks, and wrappers are recreated from item
+	// codecs.
 	renderCodecs = map[string]nodeCodec{}
+
+	// inlineEmbedCodecs maps a ProseMirror node type to its inline-embed codec
+	// for the forward traversal (emitInline).
+	inlineEmbedCodecs = map[prosemirror.NodeType]nodeCodec{}
+
+	// inlineEmbedByBlock maps an Automerge block type to its inline-embed codec
+	// for the reverse traversal (collectBlocks).
+	inlineEmbedByBlock = map[string]nodeCodec{}
 
 	markCodecsByPM        = map[prosemirror.MarkType]markCodec{}
 	markCodecsByAutomerge = map[string]markCodec{}
@@ -180,7 +190,12 @@ func init() {
 		}
 
 		switch codec.Role() {
-		case roleWrapper, roleInlineEmbed:
+		case roleWrapper:
+		case roleInlineEmbed:
+			inlineEmbedCodecs[codec.Node()] = codec
+			if codec.Block() != "" {
+				inlineEmbedByBlock[codec.Block()] = codec
+			}
 		default:
 			if codec.Block() != "" {
 				renderCodecs[codec.Block()] = codec

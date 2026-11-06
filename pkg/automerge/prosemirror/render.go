@@ -59,6 +59,7 @@ const (
 	blockTypeHorizontalRule    = "horizontal-rule"
 	blockTypeImage             = "image"
 	blockTypeFile              = "file"
+	blockTypeMention           = "mention"
 	blockTypeOrderedListItem   = "ordered-list-item"
 	blockTypeParagraph         = "paragraph"
 	blockTypeTable             = "table"
@@ -107,7 +108,7 @@ func collectBlocks(spans []automerge.Span) ([]block, error) {
 				blockType = "__unknown__"
 			}
 
-			if blockType == blockTypeHardBreak {
+			if codec, ok := inlineEmbedByBlock[blockType]; ok {
 				if len(blocks) == 0 || !acceptsInlineContent(blocks[len(blocks)-1].Type) {
 					parents := tolerantStringSlice(span.Block["parents"])
 					blocks = append(
@@ -119,9 +120,15 @@ func collectBlocks(spans []automerge.Span) ([]block, error) {
 					)
 				}
 
+				inline := node{Type: string(codec.Node())}
+				attrs, _ := span.Block["attrs"].(map[string]any)
+				if filtered := codec.ToAttrs(attrs); len(filtered) > 0 {
+					inline.Attrs = filtered
+				}
+
 				blocks[len(blocks)-1].Content = append(
 					blocks[len(blocks)-1].Content,
-					node{Type: blockNodeNames[blockTypeHardBreak]},
+					inline,
 				)
 
 				continue

@@ -194,10 +194,13 @@ func emitInline(spans []automerge.SpanInput, inline []pmNode, blockParents []str
 			}
 
 			spans = append(spans, span)
-		case string(prosemirror.NodeHardBreak):
-			spans = append(spans, hardBreakSpan(blockParents))
 		default:
-			continue
+			codec, ok := inlineEmbedCodecs[prosemirror.NodeType(child.Type)]
+			if !ok {
+				continue
+			}
+
+			spans = append(spans, inlineEmbedSpan(codec, child.Attrs, blockParents))
 		}
 	}
 
@@ -243,12 +246,17 @@ func blockSpan(blockType string, parents []string, attrs map[string]any) automer
 	}
 }
 
-func hardBreakSpan(parents []string) automerge.SpanInput {
+func inlineEmbedSpan(codec nodeCodec, attrs map[string]any, parents []string) automerge.SpanInput {
+	blockAttrs := codec.ToAttrs(attrs)
+	if blockAttrs == nil {
+		blockAttrs = map[string]any{}
+	}
+
 	return automerge.SpanInput{
 		Block: map[string]any{
-			"type":    blockTypeHardBreak,
+			"type":    codec.Block(),
 			"parents": toAnySlice(parents),
-			"attrs":   map[string]any{},
+			"attrs":   blockAttrs,
 			"isEmbed": true,
 		},
 	}

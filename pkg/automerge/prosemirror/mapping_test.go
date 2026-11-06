@@ -186,9 +186,6 @@ func TestSchemaMappingLedger(t *testing.T) {
 // produce (prosemirror.DocumentSchema) has no bridge codec, which would silently
 // drop that content when seeding or rendering a collaboration document. The doc
 // root and the inline text node are structural and never need a codec.
-//
-// TODO: mention has no codec yet; the next commit adds one and drops it from this
-// exclusion list.
 func TestCodecsCoverDocumentSchema(t *testing.T) {
 	t.Parallel()
 
@@ -206,9 +203,8 @@ func TestCodecsCoverDocumentSchema(t *testing.T) {
 			}
 
 			excluded := map[pm.NodeType]struct{}{
-				pm.NodeDoc:     {},
-				pm.NodeText:    {},
-				pm.NodeMention: {},
+				pm.NodeDoc:  {},
+				pm.NodeText: {},
 			}
 
 			for _, nodeType := range pm.DocumentSchema.NodeTypes() {
