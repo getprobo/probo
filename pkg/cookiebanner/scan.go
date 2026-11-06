@@ -211,11 +211,13 @@ func (s *Service) ingestScanPage(
 	}
 
 	inserted := 0
+	sourcePromotion := false
 	now := time.Now()
 
 	for i := range page.Cookies {
 		cookie := page.Cookies[i]
-		if _, err := s.persistDetectedTracker(
+
+		_, promote, err := s.persistDetectedTracker(
 			ctx,
 			tx,
 			scope,
@@ -240,14 +242,20 @@ func (s *Service) ingestScanPage(
 				ScanID:        &scanID,
 			},
 			&inserted,
-		); err != nil {
+		)
+		if err != nil {
 			return 0, err
+		}
+
+		if promote {
+			sourcePromotion = true
 		}
 	}
 
 	for i := range page.Storage {
 		item := page.Storage[i]
-		if _, err := s.persistDetectedTracker(
+
+		_, promote, err := s.persistDetectedTracker(
 			ctx,
 			tx,
 			scope,
@@ -262,8 +270,13 @@ func (s *Service) ingestScanPage(
 				ScanID:      &scanID,
 			},
 			&inserted,
-		); err != nil {
+		)
+		if err != nil {
 			return 0, err
+		}
+
+		if promote {
+			sourcePromotion = true
 		}
 	}
 
@@ -295,6 +308,16 @@ func (s *Service) ingestScanPage(
 		if err := banner.SetPatternAnalysisRequested(ctx, tx); err != nil {
 			return 0, fmt.Errorf("cannot request pattern analysis: %w", err)
 		}
+	}
+
+	if sourcePromotion {
+		if err := s.requestCMPSourcePromotion(ctx, tx, banner); err != nil {
+			return 0, err
+		}
+	}
+
+	if err := s.recordDiscoveredSurfaces(ctx, tx, banner, scanID, page.SiblingOrigins); err != nil {
+		return 0, err
 	}
 
 	return inserted, nil

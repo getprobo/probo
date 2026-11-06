@@ -39,6 +39,7 @@ type (
 	CookieBanner struct {
 		ID                          gid.GID                  `db:"id"`
 		OrganizationID              gid.GID                  `db:"organization_id"`
+		CMPDomainID                 *gid.GID                 `db:"cmp_domain_id"`
 		Name                        string                   `db:"name"`
 		Origin                      string                   `db:"origin"`
 		State                       CookieBannerState        `db:"state"`
@@ -118,6 +119,7 @@ func (b *CookieBanner) LoadByID(
 SELECT
 	id,
 	organization_id,
+	cmp_domain_id,
 	name,
 	origin,
 	state,
@@ -175,6 +177,7 @@ func (b *CookieBanner) LoadActiveByID(
 SELECT
 	id,
 	organization_id,
+	cmp_domain_id,
 	name,
 	origin,
 	state,
@@ -233,6 +236,7 @@ func (b *CookieBanner) LoadActiveByOrigin(
 SELECT
 	id,
 	organization_id,
+	cmp_domain_id,
 	name,
 	origin,
 	state,
@@ -295,6 +299,7 @@ func (b *CookieBanners) LoadByIDs(
 SELECT
 	id,
 	organization_id,
+	cmp_domain_id,
 	name,
 	origin,
 	state,
@@ -354,6 +359,7 @@ func (b *CookieBanners) LoadByOrganizationID(
 SELECT
 	id,
 	organization_id,
+	cmp_domain_id,
 	name,
 	origin,
 	state,
@@ -394,6 +400,63 @@ WHERE
 	banners, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CookieBanner])
 	if err != nil {
 		return fmt.Errorf("cannot collect cookie banners: %w", err)
+	}
+
+	*b = banners
+
+	return nil
+}
+
+func (b *CookieBanners) LoadByCMPDomainID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	cmpDomainID gid.GID,
+	cursor *page.Cursor[CookieBannerOrderField],
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	cmp_domain_id,
+	name,
+	origin,
+	state,
+	privacy_policy_url,
+	cookie_policy_url,
+	consent_expiry_days,
+	show_branding,
+	capabilities,
+	force_opt_in,
+	default_language,
+	publisher_country_code,
+	pattern_analysis_requested_at,
+	policy_document_id,
+	policy_generation_requested_at,
+	created_at,
+	updated_at
+FROM
+	cookie_banners
+WHERE
+	%s
+	AND cmp_domain_id = @cmp_domain_id
+	AND %s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"cmp_domain_id": cmpDomainID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query cookie banners by cmp domain: %w", err)
+	}
+
+	banners, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CookieBanner])
+	if err != nil {
+		return fmt.Errorf("cannot collect cookie banners by cmp domain: %w", err)
 	}
 
 	*b = banners
@@ -445,6 +508,7 @@ INSERT INTO cookie_banners (
 	id,
 	tenant_id,
 	organization_id,
+	cmp_domain_id,
 	name,
 	origin,
 	state,
@@ -465,6 +529,7 @@ INSERT INTO cookie_banners (
 	@id,
 	@tenant_id,
 	@organization_id,
+	@cmp_domain_id,
 	@name,
 	@origin,
 	@state,
@@ -488,6 +553,7 @@ INSERT INTO cookie_banners (
 		"id":                             b.ID,
 		"tenant_id":                      scope.GetTenantID(),
 		"organization_id":                b.OrganizationID,
+		"cmp_domain_id":                  b.CMPDomainID,
 		"name":                           b.Name,
 		"origin":                         b.Origin,
 		"state":                          b.State,
@@ -654,6 +720,7 @@ func (b *CookieBanner) LoadNextForPatternAnalysisForUpdateSkipLocked(
 SELECT
 	id,
 	organization_id,
+	cmp_domain_id,
 	name,
 	origin,
 	state,
@@ -750,6 +817,7 @@ func (b *CookieBanner) LoadNextForPolicyGenerationForUpdateSkipLocked(
 SELECT
 	id,
 	organization_id,
+	cmp_domain_id,
 	name,
 	origin,
 	state,

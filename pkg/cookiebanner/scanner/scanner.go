@@ -44,6 +44,10 @@ const (
 	maxNameBytes = 256
 	maxURLBytes  = 2048
 	readTimeout  = 5 * time.Second
+
+	// MaxSiblingOrigins bounds the other origins under the site's
+	// eTLD+1 that one scan records. The crawl never follows them.
+	MaxSiblingOrigins = 64
 )
 
 var (
@@ -123,6 +127,7 @@ type (
 		VisitedTemplates []string    `json:"visited_templates"`
 		Queue            []QueueItem `json:"queue"`
 		CoveredHosts     []string    `json:"covered_hosts,omitempty"`
+		SiblingOrigins   []string    `json:"sibling_origins,omitempty"`
 		PagesScanned     int         `json:"pages_scanned"`
 		ElapsedMS        int64       `json:"elapsed_ms"`
 		Truncated        bool        `json:"truncated"`
@@ -162,10 +167,11 @@ type (
 
 	// Page is the new observations from one finished page.
 	Page struct {
-		URL       string
-		Cookies   []Cookie
-		Storage   []StorageItem
-		Resources []Resource
+		URL            string
+		Cookies        []Cookie
+		Storage        []StorageItem
+		Resources      []Resource
+		SiblingOrigins []string
 	}
 
 	// OnPage is called after each page that finished loading. The context
