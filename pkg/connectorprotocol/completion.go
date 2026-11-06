@@ -75,7 +75,9 @@ func (r *Registry) CompleteGitHubAppFromRequest(
 	return r.completeGitHubAppFromState(ctx, req)
 }
 
-func (r *Registry) ValidateGitHubAppState(stateToken string) (*GitHubAppState, error) {
+// ValidateGitHubAppStateAllowExpired checks the state token's signature but
+// not its expiry. Use it only to find a failed callback's continue URL.
+func (r *Registry) ValidateGitHubAppStateAllowExpired(stateToken string) (*GitHubAppState, error) {
 	registered, err := r.GetProtocol(GitHubProvider, ProtocolGitHubApp)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get github app connector: %w", err)
@@ -86,7 +88,7 @@ func (r *Registry) ValidateGitHubAppState(stateToken string) (*GitHubAppState, e
 		return nil, fmt.Errorf("registered github app connector has unexpected type")
 	}
 
-	payload, err := statelesstoken.ValidateToken[GitHubAppState](
+	payload, err := statelesstoken.ValidateTokenAllowExpired[GitHubAppState](
 		gitHubApp.ClientSecret,
 		gitHubAppStateType,
 		stateToken,

@@ -624,7 +624,7 @@ func TestDeleteConnector(t *testing.T) {
 	assert.Equal(t, connectorID, deleteResult.DeleteConnector.DeletedConnectorID)
 }
 
-func TestDeleteConnectorRefusedWhileReferenced(t *testing.T) {
+func TestDeleteConnectorDeletesItsSources(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
@@ -638,7 +638,85 @@ func TestDeleteConnectorRefusedWhileReferenced(t *testing.T) {
 		WithName("Production").
 		WithConnectorID(connectorID).
 		Create()
-	require.NotEmpty(t, sourceID)
+
+	campaignID := factory.NewAccessReviewCampaign(owner, orgID).
+		WithAccessReviewSourceIDs([]string{sourceID}).
+		Create()
+
+	var listed struct {
+		Node struct {
+			CanDeleteSources    bool `json:"canDeleteSources"`
+			AccessReviewSources []struct {
+				ID string `json:"id"`
+			} `json:"accessReviewSources"`
+		} `json:"node"`
+	}
+
+	require.NoError(t, owner.Execute(`
+		query($id: ID!) {
+			node(id: $id) {
+				... on Connector {
+					canDeleteSources: permission(action: "access-review:source:delete")
+					accessReviewSources { id }
+				}
+			}
+		}
+	`, map[string]any{"id": connectorID}, &listed))
+	assert.True(t, listed.Node.CanDeleteSources, "the owner's dialog lists the sources")
+	require.Len(t, listed.Node.AccessReviewSources, 1)
+	assert.Equal(t, sourceID, listed.Node.AccessReviewSources[0].ID)
+
+	var deleted struct {
+		DeleteConnector struct {
+			DeletedAccessReviewSourceIDs []string `json:"deletedAccessReviewSourceIds"`
+		} `json:"deleteConnector"`
+	}
+
+	require.NoError(t, owner.Execute(`
+		mutation($input: DeleteConnectorInput!) {
+			deleteConnector(input: $input) { deletedAccessReviewSourceIds }
+		}
+	`, map[string]any{
+		"input": map[string]any{"connectorId": connectorID},
+	}, &deleted))
+	assert.Equal(t, []string{sourceID}, deleted.DeleteConnector.DeletedAccessReviewSourceIDs)
+
+	var source struct {
+		Node *struct {
+			ID string `json:"id"`
+		} `json:"node"`
+	}
+
+	err := owner.Execute(`query($id: ID!) { node(id: $id) { id } }`, map[string]any{"id": sourceID}, &source)
+	testutil.RequireErrorCode(t, err, "NOT_FOUND")
+
+	var campaign struct {
+		Node struct {
+			Sources []struct {
+				Source *struct {
+					ID string `json:"id"`
+				} `json:"source"`
+			} `json:"sources"`
+		} `json:"node"`
+	}
+
+	require.NoError(t, owner.Execute(`
+		query($id: ID!) {
+			node(id: $id) {
+				... on AccessReviewCampaign { sources { source { id } } }
+			}
+		}
+	`, map[string]any{"id": campaignID}, &campaign))
+	require.Len(t, campaign.Node.Sources, 1, "the campaign keeps its snapshot of the source")
+	assert.Nil(t, campaign.Node.Sources[0].Source)
+}
+
+func TestDeleteConnectorRequiresSourceDelete(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	manager := testutil.NewClientInOrg(t, testutil.RoleCompliancePortalManager, owner)
+	orgID := owner.GetOrganizationID().String()
 
 	const deleteQuery = `
 		mutation($input: DeleteConnectorInput!) {
@@ -648,17 +726,70 @@ func TestDeleteConnectorRefusedWhileReferenced(t *testing.T) {
 
 	var deleted struct{}
 
-	err := owner.Execute(deleteQuery, map[string]any{
-		"input": map[string]any{"connectorId": connectorID},
+	unused := factory.NewConnector(owner).
+		WithAWSRoleARN(connectorAccountAWSRoleARN).
+		Create()
+
+	require.NoError(t, manager.Execute(deleteQuery, map[string]any{
+		"input": map[string]any{"connectorId": unused},
+	}, &deleted), "a connector no source reads needs only connector delete")
+
+	used := factory.NewConnector(owner).
+		WithAWSRoleARN(connectorAccountAWSRoleARN).
+		Create()
+
+	sourceID := factory.NewAccessReviewSource(owner, orgID).
+		WithConnectorID(used).
+		Create()
+
+	var permission struct {
+		Node struct {
+			CanDeleteSources bool `json:"canDeleteSources"`
+		} `json:"node"`
+	}
+
+	require.NoError(t, manager.Execute(`
+		query($id: ID!) {
+			node(id: $id) {
+				... on Connector { canDeleteSources: permission(action: "access-review:source:delete") }
+			}
+		}
+	`, map[string]any{"id": used}, &permission))
+	assert.False(t, permission.Node.CanDeleteSources)
+
+	var sources struct{}
+
+	err := manager.Execute(`
+		query($id: ID!) {
+			node(id: $id) {
+				... on Connector { accessReviewSources { name } }
+			}
+		}
+	`, map[string]any{"id": used}, &sources)
+	testutil.RequireForbiddenError(t, err, "source names stay with roles that can list sources")
+
+	err = manager.Execute(deleteQuery, map[string]any{
+		"input": map[string]any{"connectorId": used},
 	}, &deleted)
-	testutil.RequireErrorCode(t, err, "CONFLICT")
-	assert.Contains(t, err.Error(), "access review source")
+	testutil.RequireForbiddenError(t, err)
 
-	var alive connectorAccountsResult
+	err = manager.Execute(`
+		mutation($input: DeleteSlackConnectionInput!) {
+			deleteSlackConnection(input: $input) { deletedSlackConnectionId }
+		}
+	`, map[string]any{
+		"input": map[string]any{"slackConnectionId": used},
+	}, &deleted)
+	testutil.RequireConflictError(t, err, "the legacy Slack delete must not remove sources")
 
-	require.NoError(t, owner.Execute(connectorAccountsQuery, map[string]any{"id": connectorID}, &alive))
-	assert.Equal(t, connectorID, alive.Node.ID)
-	assert.Equal(t, 1, alive.Node.Accounts.TotalCount)
+	var source struct {
+		Node struct {
+			ID string `json:"id"`
+		} `json:"node"`
+	}
+
+	require.NoError(t, owner.Execute(`query($id: ID!) { node(id: $id) { id } }`, map[string]any{"id": sourceID}, &source))
+	assert.Equal(t, sourceID, source.Node.ID)
 }
 
 func TestConnectorPermission(t *testing.T) {

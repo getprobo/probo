@@ -28,9 +28,11 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.gearno.de/kit/httpclient"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/accessreview/drivers"
@@ -41,6 +43,7 @@ import (
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/saferedirect"
+	"go.probo.inc/probo/pkg/statelesstoken"
 )
 
 func TestFinishConnectorCompletion_FailedInstallCheck(t *testing.T) {
@@ -112,7 +115,7 @@ func TestFinishConnectorCompletion_FailedInstallCheck(t *testing.T) {
 	}
 }
 
-func TestHandleConnectorCallbackError_GitHubAppPreservesContinuation(t *testing.T) {
+func TestRedirectConnectorCallbackError_GitHubAppPreservesContinuation(t *testing.T) {
 	t.Parallel()
 
 	c := &connectorprotocol.GitHubAppConnector{
@@ -158,14 +161,13 @@ func TestHandleConnectorCallbackError_GitHubAppPreservesContinuation(t *testing.
 		return host == "console.example"
 	})
 
-	handleConnectorCallbackError(
+	redirectConnectorCallbackError(
 		recorder,
 		callbackReq,
-		log.NewLogger(log.WithName("test")),
 		baseurl.MustParse("https://console.example"),
 		registry,
 		safeRedirect,
-		callbackReq.URL.Query(),
+		"access_denied",
 	)
 
 	assert.Equal(t, http.StatusSeeOther, recorder.Code)
@@ -174,6 +176,169 @@ func TestHandleConnectorCallbackError_GitHubAppPreservesContinuation(t *testing.
 	require.NoError(t, err)
 	assert.Equal(t, "https://console.example/organizations/acme", location.Scheme+"://"+location.Host+location.Path)
 	assert.Equal(t, "access_denied", location.Query().Get("error"))
+}
+
+func TestHandleConnectorComplete_TokenRefusalRedirects(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte(`{"error":"invalid_grant"}`))
+	}))
+	defer server.Close()
+
+	c := &connectorprotocol.OAuth2Connector{
+		ClientID:     "client-id",
+		ClientSecret: "client-secret",
+		RedirectURI:  "https://probo.test/api/console/v1/connectors/complete",
+		AuthURL:      "https://provider.example/authorize",
+		TokenURL:     server.URL,
+		HTTPClient:   httpclient.DefaultClient(httpclient.WithSSRFProtection(), httpclient.WithSSRFAllowLoopback()),
+	}
+	registry := connectorprotocol.NewConnectorRegistry()
+	require.NoError(t, registry.RegisterProtocol("TEST", connectorprotocol.ProtocolOAuth2, c))
+
+	authorizeURL, err := c.InitiateWithState(
+		context.Background(),
+		connectorprotocol.OAuth2State{
+			OrganizationID: gid.New(gid.NewTenantID(), 0).String(),
+			Provider:       "TEST",
+			ContinueURL:    "https://console.example/organizations/acme/settings/integrations",
+		},
+		connectorprotocol.InitiateOptions{Scopes: []string{"read"}},
+	)
+	require.NoError(t, err)
+
+	parsedAuthorizeURL, err := url.Parse(authorizeURL)
+	require.NoError(t, err)
+
+	callbackReq := httptest.NewRequest(
+		http.MethodGet,
+		"/?code=the-code&state="+url.QueryEscape(parsedAuthorizeURL.Query().Get("state")),
+		nil,
+	)
+	recorder := httptest.NewRecorder()
+	safeRedirect := saferedirect.New(func(_ context.Context, host string) bool {
+		return host == "console.example"
+	})
+
+	handleConnectorComplete(
+		log.NewLogger(log.WithName("test")),
+		baseurl.MustParse("https://console.example"),
+		nil,
+		nil,
+		registry,
+		safeRedirect,
+	)(recorder, callbackReq)
+
+	assert.Equal(t, http.StatusSeeOther, recorder.Code)
+
+	location, err := url.Parse(recorder.Header().Get("Location"))
+	require.NoError(t, err)
+	assert.Equal(t, "/organizations/acme/settings/integrations", location.Path)
+	assert.Equal(t, connectorCompleteFailedMessage, location.Query().Get("error"))
+}
+
+func TestHandleConnectorGitHubAppComplete_FailureRedirects(t *testing.T) {
+	t.Parallel()
+
+	c := &connectorprotocol.GitHubAppConnector{
+		ClientID:     "client-id",
+		ClientSecret: "client-secret",
+		InstallBase:  "https://github.example/apps",
+		RedirectURI:  "https://probo.test/api/console/v1/connectors/github-app/complete",
+	}
+	registry := connectorprotocol.NewConnectorRegistry()
+	require.NoError(
+		t,
+		registry.RegisterProtocol(
+			connectorprotocol.GitHubProvider,
+			connectorprotocol.ProtocolGitHubApp,
+			c,
+		),
+	)
+
+	authorizeURL, err := c.Initiate(
+		context.Background(),
+		connectorprotocol.GitHubProvider,
+		gid.New(gid.NewTenantID(), 0),
+		connectorprotocol.InitiateOptions{},
+		httptest.NewRequest(
+			http.MethodGet,
+			"/?continue=https%3A%2F%2Fconsole.example%2Forganizations%2Facme",
+			nil,
+		),
+	)
+	require.NoError(t, err)
+
+	parsedAuthorizeURL, err := url.Parse(authorizeURL)
+	require.NoError(t, err)
+
+	// No code, so completion fails right after the state check.
+	callbackReq := httptest.NewRequest(
+		http.MethodGet,
+		"/?state="+url.QueryEscape(parsedAuthorizeURL.Query().Get("state")),
+		nil,
+	)
+	recorder := httptest.NewRecorder()
+	safeRedirect := saferedirect.New(func(_ context.Context, host string) bool {
+		return host == "console.example"
+	})
+
+	handleConnectorGitHubAppComplete(
+		log.NewLogger(log.WithName("test")),
+		baseurl.MustParse("https://console.example"),
+		nil,
+		nil,
+		registry,
+		safeRedirect,
+	)(recorder, callbackReq)
+
+	assert.Equal(t, http.StatusSeeOther, recorder.Code)
+
+	location, err := url.Parse(recorder.Header().Get("Location"))
+	require.NoError(t, err)
+	assert.Equal(t, "/organizations/acme", location.Path)
+	assert.Equal(t, connectorCompleteFailedMessage, location.Query().Get("error"))
+}
+
+func TestRedirectConnectorCallbackError_MalformedContinueFallsBack(t *testing.T) {
+	t.Parallel()
+
+	stateToken, err := statelesstoken.NewToken(
+		"state-secret",
+		connectorprotocol.OAuth2TokenType,
+		time.Minute,
+		connectorprotocol.OAuth2State{Provider: "TEST", ContinueURL: "http://a b"},
+	)
+	require.NoError(t, err)
+
+	callbackReq := httptest.NewRequest(
+		http.MethodGet,
+		"/?code=the-code&state="+url.QueryEscape(stateToken),
+		nil,
+	)
+	recorder := httptest.NewRecorder()
+	safeRedirect := saferedirect.New(func(_ context.Context, host string) bool {
+		return host == "console.example"
+	})
+
+	redirectConnectorCallbackError(
+		recorder,
+		callbackReq,
+		baseurl.MustParse("https://console.example"),
+		connectorprotocol.NewConnectorRegistry(),
+		safeRedirect,
+		connectorCompleteFailedMessage,
+	)
+
+	assert.Equal(t, http.StatusSeeOther, recorder.Code)
+
+	location, err := url.Parse(recorder.Header().Get("Location"))
+	require.NoError(t, err)
+	assert.Equal(t, "console.example", location.Host)
+	assert.Equal(t, connectorCompleteFailedMessage, location.Query().Get("error"))
 }
 
 func TestOAuthConnectorRawSettings_PagerDutyReconnectMetadata(t *testing.T) {
