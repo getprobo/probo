@@ -17,7 +17,6 @@ package complianceportal_v1
 import (
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/log"
@@ -93,11 +92,7 @@ func NewMux(cfg MuxConfig) (http.Handler, error) {
 		return nil, fmt.Errorf("cannot build content security policy: %w", err)
 	}
 
-	r.Use(
-		skipForStaticFiles(
-			complianceportal.NewDomainMiddleware(cfg.Visitor, cfg.ExternallyTerminatedTLS),
-		),
-	)
+	r.Use(complianceportal.NewDomainMiddleware(cfg.Visitor, cfg.ExternallyTerminatedTLS))
 	r.Use(
 		server.NewSecurityHeadersMiddleware(
 			server.SecurityHeadersOptions{
@@ -106,13 +101,6 @@ func NewMux(cfg MuxConfig) (http.Handler, error) {
 			},
 		),
 	)
-
-	// Build output is identical for every portal, so it is served without
-	// resolving the portal (see skipForStaticFiles).
-	staticFiles := staticFilesHandler(webServer)
-	for _, prefix := range staticPathPrefixes {
-		r.Handle(prefix+"*", staticFiles)
-	}
 
 	markdownHandler := complianceportal.NewHandler(cfg.Visitor)
 
@@ -177,55 +165,6 @@ func NewMux(cfg MuxConfig) (http.Handler, error) {
 	)
 
 	return r, nil
-}
-
-// staticPathPrefixes lists the top-level folders of the SPA build. Requests
-// under them never depend on which portal is served.
-var staticPathPrefixes = []string{"/assets/", "/favicons/", "/scripts/"}
-
-func isStaticFilePath(path string) bool {
-	for _, prefix := range staticPathPrefixes {
-		if strings.HasPrefix(path, prefix) {
-			return true
-		}
-	}
-
-	return false
-}
-
-// skipForStaticFiles bypasses middleware for static build files. The domain
-// middleware queries the database on every request, and a first visit loads
-// about 25 static files in parallel before anything renders.
-func skipForStaticFiles(middleware func(http.Handler) http.Handler) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		wrapped := middleware(next)
-
-		return http.HandlerFunc(
-			func(w http.ResponseWriter, r *http.Request) {
-				if isStaticFilePath(r.URL.Path) {
-					next.ServeHTTP(w, r)
-					return
-				}
-
-				wrapped.ServeHTTP(w, r)
-			},
-		)
-	}
-}
-
-// staticFilesHandler serves files from the SPA build and answers 404 for
-// anything else, instead of the index.html fallback the SPA uses for routes.
-func staticFilesHandler(webServer *Server) http.Handler {
-	return http.HandlerFunc(
-		func(w http.ResponseWriter, r *http.Request) {
-			if !webServer.HasFile(r.URL.Path) {
-				http.NotFound(w, r)
-				return
-			}
-
-			webServer.ServeHTTP(w, r)
-		},
-	)
 }
 
 func compliancePageHeadData() HeadDataFunc {
