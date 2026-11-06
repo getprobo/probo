@@ -202,12 +202,13 @@ func seedCompliancePortalAccessForIdentity(
 						organization_id,
 						identity_id,
 						compliance_portal_id,
+						nda_bypassed,
 						state,
 						authenticated_at,
 						created_at,
 						updated_at
 					)
-					VALUES ($1, $2, $3, $4, $5, 'ACTIVE', $6, $6, $6)
+					VALUES ($1, $2, $3, $4, $5, FALSE, 'ACTIVE', $6, $6, $6)
 				`,
 				accessID.String(),
 				tenantID.String(),

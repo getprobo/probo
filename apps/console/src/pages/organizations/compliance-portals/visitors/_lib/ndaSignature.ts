@@ -36,6 +36,42 @@ export function ndaSignatureTone(
   }
 }
 
+export function accessNdaListKey(access: {
+  ndaBypassed: boolean;
+  recordedNda: { readonly id: string } | null | undefined;
+  ndaSignature: { readonly status: NdaSignatureStatus } | null | undefined;
+}): string | null {
+  if (access.recordedNda != null) {
+    return "accessListItem.nda.recorded";
+  }
+
+  if (access.ndaBypassed) {
+    return "accessListItem.nda.bypassed";
+  }
+
+  if (access.ndaSignature != null) {
+    return ndaSignatureListKey(access.ndaSignature.status);
+  }
+
+  return null;
+}
+
+export function accessNdaListTone(access: {
+  ndaBypassed: boolean;
+  recordedNda: { readonly id: string } | null | undefined;
+  ndaSignature: { readonly status: NdaSignatureStatus } | null | undefined;
+}): "green" | "sky" | "amber" | "red" {
+  if (access.recordedNda != null) {
+    return "green";
+  }
+
+  if (access.ndaBypassed) {
+    return "sky";
+  }
+
+  return ndaSignatureTone(access.ndaSignature?.status ?? "PENDING");
+}
+
 export function ndaSignatureListKey(status: NdaSignatureStatus): string {
   switch (status) {
     case "COMPLETED":

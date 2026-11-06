@@ -133,6 +133,18 @@ export const visitorPageSkeleton = tv({
   },
 });
 
+export const visitorNda = tv({
+  slots: {
+    root: "flex flex-col gap-4",
+    intro: "flex flex-col gap-1",
+    actions: "flex flex-wrap items-center gap-2",
+    record: "flex flex-col gap-4 rounded-4 border border-sand-a3 bg-sand-1 p-5",
+    recordRow: "flex flex-wrap items-center justify-between gap-3",
+    copy: "flex min-w-0 flex-col gap-1",
+    date: "w-56 max-w-full",
+  },
+});
+
 export const electronicSignatureSection = tv({
   slots: {
     root: "col-span-2 h-full min-w-0 max-lg:col-span-1",
