@@ -28,5 +28,10 @@ type RichEditorProps = Omit<ComponentProps<typeof Editor>, "onUploadFile">;
 export function RichEditor(props: RichEditorProps) {
   const onUploadFile = useUploadRichTextFile();
 
+  // Comment composers do not upload attachments.
+  if (props.preset === "comment") {
+    return <Editor {...props} />;
+  }
+
   return <Editor {...props} onUploadFile={onUploadFile} />;
 }

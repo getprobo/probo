@@ -19,9 +19,16 @@
 // SOFTWARE.
 
 import { CheckIcon } from "@phosphor-icons/react";
+import type { MentionSource } from "@probo/ui";
 import { Button } from "@probo/ui/src/v2/Button/Button";
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+
+import { RichEditor } from "#/pages/organizations/_components/RichEditor";
+import {
+  isRichEditorContentEmpty,
+  richEditorContentTextLength,
+} from "#/pages/organizations/_lib/richEditorContent";
 
 export interface DocumentReviewMarginThread {
   id: string;
@@ -48,6 +55,7 @@ export interface DocumentReviewMarginCommentsProps {
   canComment: boolean;
   replyText: string;
   replying: boolean;
+  mentionSource: MentionSource;
   onReplyText: (value: string) => void;
   onReply: (content: string) => void;
   onUpdate: (commentId: string, content: string) => void;
@@ -56,6 +64,8 @@ export interface DocumentReviewMarginCommentsProps {
   onLayout?: () => void;
 }
 
+const commentMaxLength = 10000;
+
 export function DocumentReviewMarginComments({
   thread,
   active,
@@ -63,6 +73,7 @@ export function DocumentReviewMarginComments({
   canComment,
   replyText,
   replying,
+  mentionSource,
   onReplyText,
   onReply,
   onUpdate,
@@ -73,10 +84,18 @@ export function DocumentReviewMarginComments({
   const { t } = useTranslation();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState("");
+  const [editorKey, setEditorKey] = useState(0);
   const root = useRef<HTMLDivElement>(null);
   const lastHeight = useRef(0);
+  const previousReplyText = useRef(replyText);
   const comments = thread?.comments.edges ?? [];
   const visible = active ? comments : comments.slice(0, 1);
+  useEffect(() => {
+    if (previousReplyText.current !== "" && replyText === "") {
+      setEditorKey(key => key + 1);
+    }
+    previousReplyText.current = replyText;
+  }, [replyText]);
   useLayoutEffect(() => {
     const height = root.current?.offsetHeight ?? 0;
     if (height === lastHeight.current) return;
@@ -104,23 +123,39 @@ export function DocumentReviewMarginComments({
           {editingId === node.id
             ? (
                 <form
+                  className="flex flex-col gap-1"
                   onSubmit={(event) => {
                     event.preventDefault();
+                    if (isRichEditorContentEmpty(editingText)) return;
+                    if (richEditorContentTextLength(editingText) > commentMaxLength) return;
                     onUpdate(node.id, editingText);
                     setEditingId(null);
                   }}
                 >
-                  <textarea
-                    className="min-h-12 w-full rounded-2 border border-sand-7 bg-sand-1 p-2 text-2 text-sand-12"
-                    value={editingText}
-                    onChange={event => setEditingText(event.target.value)}
+                  <RichEditor
+                    preset="comment"
+                    controls={false}
+                    className="min-h-12 rounded-2 border border-sand-7 bg-sand-1 p-2 text-2"
+                    content={editingText}
+                    mentionSource={mentionSource}
+                    onChangeContent={setEditingText}
+                    aria-label={t("documentDescriptionPage.review.edit")}
                   />
                   <Button variant="solid" color="neutral" size={1} type="submit">
                     {t("documentDescriptionPage.review.save")}
                   </Button>
                 </form>
               )
-            : <p>{node.content}</p>}
+            : (
+                <RichEditor
+                  preset="comment"
+                  controls={false}
+                  disabled
+                  formatting={false}
+                  className="text-2"
+                  content={node.content}
+                />
+              )}
           {active && profileId === node.author.id && editingId !== node.id && (
             <div className="mt-1 flex gap-2 text-1 text-sand-11 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100">
               <button
@@ -144,15 +179,21 @@ export function DocumentReviewMarginComments({
           className="flex flex-col gap-1"
           onSubmit={(event) => {
             event.preventDefault();
-            if (replyText.trim() === "") return;
+            if (isRichEditorContentEmpty(replyText)) return;
+            if (richEditorContentTextLength(replyText) > commentMaxLength) return;
             onReply(replyText);
           }}
         >
-          <textarea
-            className="min-h-12 rounded-2 border border-sand-7 bg-sand-1 p-2 text-2 text-sand-12 outline-none focus:border-sand-8"
-            value={replyText}
-            onChange={event => onReplyText(event.target.value)}
+          <RichEditor
+            key={editorKey}
+            preset="comment"
+            controls={false}
+            className="min-h-12 rounded-2 border border-sand-7 bg-sand-1 p-2 text-2 outline-none focus-within:border-sand-8"
+            content={replyText}
+            mentionSource={mentionSource}
             placeholder={t("documentDescriptionPage.review.replyPlaceholder")}
+            onChangeContent={onReplyText}
+            aria-label={t("documentDescriptionPage.review.replyPlaceholder")}
           />
           <div className="flex justify-end">
             <Button variant="solid" color="indigo" size={1} type="submit" disabled={replying}>
