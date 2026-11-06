@@ -99,6 +99,7 @@ import (
 	"go.probo.inc/probo/pkg/server/gqlx"
 	"go.probo.inc/probo/pkg/server/trustedproxy"
 	"go.probo.inc/probo/pkg/slack"
+	"go.probo.inc/probo/pkg/tag"
 	"go.probo.inc/probo/pkg/task"
 	tasksync "go.probo.inc/probo/pkg/task/sync"
 	"go.probo.inc/probo/pkg/thirdparty"
@@ -641,6 +642,7 @@ func (impl *Implm) Run(
 		Register(agentexecution.OAuth2ScopeMappings).
 		Register(accessreview.OAuth2ScopeMappings).
 		Register(resourcealias.OAuth2ScopeMappings).
+		Register(tag.OAuth2ScopeMappings).
 		Register(itam.OAuth2ScopeMappings).
 		Register(riskmanagement.OAuth2ScopeMappings).
 		Register(task.OAuth2ScopeMappings)
@@ -768,6 +770,7 @@ func (impl *Implm) Run(
 	)
 
 	resourceAliasService := resourcealias.NewService(pgClient)
+	tagService := tag.NewService(pgClient)
 	botService := bot.NewService(
 		bot.ServiceConfig{
 			Disabled: !impl.cfg.Slackbot.Enabled,
@@ -893,6 +896,7 @@ func (impl *Implm) Run(
 	iamService.Authorizer.RegisterPolicySet(agentexecution.PolicySet())
 	iamService.Authorizer.RegisterPolicySet(accessreview.PolicySet())
 	iamService.Authorizer.RegisterPolicySet(resourcealias.PolicySet())
+	iamService.Authorizer.RegisterPolicySet(tag.PolicySet())
 	iamService.Authorizer.RegisterPolicySet(management.PolicySet())
 	iamService.Authorizer.RegisterPolicySet(employeeportalmgmt.PolicySet())
 	iamService.Authorizer.RegisterPolicySet(riskmanagement.PolicySet())
@@ -1039,6 +1043,7 @@ func (impl *Implm) Run(
 			CollaborationEvents:     collaborationEvents,
 			ShutdownContext:         apiServerCtx,
 			ResourceAlias:           resourceAliasService,
+			Tag:                     tagService,
 			File:                    fileManagerService,
 			IAM:                     iamService,
 			Visitor:                 visitorService,
