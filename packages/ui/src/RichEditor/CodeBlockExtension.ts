@@ -5,9 +5,22 @@
 import { CodeBlock } from "@tiptap/extension-code-block";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 
+import { readNullableStringAttribute } from "./automergeMapping";
 import { MermaidNodeView } from "./MermaidNodeView";
 
 export const CodeBlockExtension = CodeBlock.extend({
+  automerge: () => ({
+    block: "code-block",
+    explicitIdentity: "topLevelBlock",
+    attrParsers: {
+      fromAutomerge: block => ({
+        language: readNullableStringAttribute(block.attrs, "language"),
+      }),
+      fromProsemirror: node => ({
+        language: readNullableStringAttribute(node.attrs, "language"),
+      }),
+    },
+  }),
   addNodeView() {
     return ReactNodeViewRenderer(MermaidNodeView);
   },

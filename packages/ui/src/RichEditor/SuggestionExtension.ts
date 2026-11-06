@@ -28,6 +28,11 @@ import type { EditorView } from "@tiptap/pm/view";
 import type { MutableRefObject } from "react";
 
 import {
+  type AutomergeMarkMapping,
+  parseJSONObject,
+  readStringAttribute,
+} from "./automergeMapping";
+import {
   adjacentSuggestionId,
   isTextblockBoundary,
   keepsSuggestionBurst,
@@ -79,9 +84,29 @@ const suggestionMark = {
   },
 };
 
+// suggestionAutomergeMapping stores each suggestion mark in Automerge as a
+// JSON object carrying its suggestion id. Kebab-case mark names are the write
+// format; the legacy camelCase aliases are added by the collaboration adapter.
+function suggestionAutomergeMapping(markName: string): () => AutomergeMarkMapping {
+  return () => ({
+    markName,
+    parsers: {
+      fromAutomerge: (value) => {
+        if (typeof value !== "string") return { id: "" };
+        const parsed = parseJSONObject(value);
+        return { id: readStringAttribute(parsed, "id", "") };
+      },
+      fromProsemirror: (mark: ProseMirrorMark) => JSON.stringify({
+        id: readStringAttribute(mark.attrs, "id", ""),
+      }),
+    },
+  });
+}
+
 export const SuggestionInsert = Mark.create({
   name: suggestionInsertName,
   ...suggestionMark,
+  automerge: suggestionAutomergeMapping("suggestion-insert"),
   parseHTML() {
     return [{ tag: "span[data-suggestion-insert]" }];
   },
@@ -96,6 +121,7 @@ export const SuggestionInsert = Mark.create({
 export const SuggestionDelete = Mark.create({
   name: suggestionDeleteName,
   ...suggestionMark,
+  automerge: suggestionAutomergeMapping("suggestion-delete"),
   parseHTML() {
     return [{ tag: "span[data-suggestion-delete]" }];
   },

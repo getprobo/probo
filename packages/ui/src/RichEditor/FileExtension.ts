@@ -22,7 +22,21 @@ import { Node } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 
 import { attachmentPath, fileIDFromAttachmentURL } from "./attachments";
+import {
+  presentStrings,
+  readNumberAttribute,
+} from "./automergeMapping";
 import { FileNodeView } from "./FileNodeView";
+
+function fileAttrsFromBlock(attributes: unknown): Record<string, string | number> {
+  const attrs = presentStrings(attributes, ["fileId", "fileName", "mimeType"]);
+  const size = readNumberAttribute(attributes, "size", Number.NaN);
+  if (Number.isFinite(size) && size >= 0) {
+    attrs.size = size;
+  }
+
+  return attrs;
+}
 
 function fileIdFromHTML(element: { getAttribute(name: string): string | null }): string | null {
   const id = element.getAttribute("data-file-id")?.trim() ?? "";
@@ -38,6 +52,14 @@ export const FileExtension = Node.create({
   group: "block",
   atom: true,
   draggable: true,
+  automerge: () => ({
+    block: "file",
+    structural: true,
+    attrParsers: {
+      fromAutomerge: block => fileAttrsFromBlock(block.attrs),
+      fromProsemirror: node => fileAttrsFromBlock(node.attrs),
+    },
+  }),
   addAttributes() {
     return {
       fileId: {

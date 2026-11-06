@@ -20,20 +20,9 @@
 
 import { PaperclipIcon } from "@phosphor-icons/react";
 import { type Extensions } from "@tiptap/core";
-import { Blockquote } from "@tiptap/extension-blockquote";
-import { Bold } from "@tiptap/extension-bold";
-import { Code } from "@tiptap/extension-code";
 import { Document } from "@tiptap/extension-document";
-import { HardBreak } from "@tiptap/extension-hard-break";
-import { Heading } from "@tiptap/extension-heading";
-import { HorizontalRule } from "@tiptap/extension-horizontal-rule";
-import { Italic } from "@tiptap/extension-italic";
-import { BulletList, ListItem, ListKeymap, OrderedList, TaskItem, TaskList } from "@tiptap/extension-list";
-import { Paragraph } from "@tiptap/extension-paragraph";
-import { Strike } from "@tiptap/extension-strike";
-import { TableKit } from "@tiptap/extension-table";
+import { BulletList, ListKeymap, OrderedList, TaskList } from "@tiptap/extension-list";
 import { Text } from "@tiptap/extension-text";
-import { Underline } from "@tiptap/extension-underline";
 import { Dropcursor, UndoRedo } from "@tiptap/extensions";
 import { type Content, Editor, EditorContent, type JSONContent, useEditor } from "@tiptap/react";
 import { type ComponentProps, type ReactNode, useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react";
@@ -43,6 +32,25 @@ import { tv } from "tailwind-variants";
 import useToast from "../v2/Toaster/useToast";
 
 import { anyAttachmentAccept, fileAccept, imageAccept } from "./attachments";
+import {
+  BlockquoteExtension,
+  BoldExtension,
+  CodeExtension,
+  HardBreakExtension,
+  HeadingExtension,
+  HorizontalRuleExtension,
+  ItalicExtension,
+  ListItemExtension,
+  ParagraphExtension,
+  StrikeExtension,
+  TableCellExtension,
+  TableExtension,
+  TableHeaderExtension,
+  TableRowExtension,
+  TaskItemExtension,
+  UnderlineExtension,
+} from "./automergeExtensions";
+import { AutomergeMappingExtension } from "./automergeMapping";
 import { AutomergeTableStructureExtension } from "./AutomergeTableStructureExtension";
 import { AutomergeUnknownBlockExtension } from "./AutomergeUnknownBlockExtension";
 import { BlockMenu } from "./BlockMenu/BlockMenu";
@@ -75,42 +83,41 @@ import {
   uploadAttachments,
 } from "./uploadAttachments";
 
-const tableExtension = TableKit.configure({
-  table: { resizable: true },
-});
-
 const coreExtensions = [
   Document,
-  Paragraph,
+  ParagraphExtension,
   Text,
-  Heading,
-  Bold,
-  Italic,
-  Strike,
-  Underline,
-  Code,
+  HeadingExtension,
+  BoldExtension,
+  ItalicExtension,
+  StrikeExtension,
+  UnderlineExtension,
+  CodeExtension,
   CodeBlockExtension,
   LinkExtension,
   SuggestionInsert,
   SuggestionDelete,
   SlashCommandExtension,
   MentionExtension,
-  Blockquote,
+  BlockquoteExtension,
   BulletList,
   OrderedList,
-  ListItem,
+  ListItemExtension,
   TaskList,
-  TaskItem.configure({ nested: true }),
+  TaskItemExtension,
   TaskItemFocusExtension,
   ListKeymap,
-  HorizontalRule,
-  HardBreak,
+  HorizontalRuleExtension,
+  HardBreakExtension,
   Dropcursor.configure({
     color: "#0081f1",
     width: 2,
   }),
   UndoRedo,
-  tableExtension,
+  TableExtension,
+  TableCellExtension,
+  TableHeaderExtension,
+  TableRowExtension,
   AutomergeUnknownBlockExtension,
   MarkdownPasteExtension,
   PlaceholderExtension,
@@ -128,6 +135,7 @@ export const richEditorCollaborationExtensions = [
   ImageExtension,
   FileExtension,
   ContentUploadExtension,
+  AutomergeMappingExtension,
   AutomergeTableStructureExtension,
 ];
 

@@ -5,6 +5,12 @@
 import { Link } from "@tiptap/extension-link";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 
+import {
+  parseJSONObject,
+  readNullableStringAttribute,
+  readStringAttribute,
+} from "./automergeMapping";
+
 export type LinkEditorRequest = {
   id: number;
   href: string;
@@ -70,6 +76,23 @@ export function openLink(href: string) {
 }
 
 export const LinkExtension = Link.extend({
+  automerge: () => ({
+    markName: "link",
+    parsers: {
+      fromAutomerge: (value) => {
+        if (typeof value !== "string") return { href: "", title: null };
+        const parsed = parseJSONObject(value);
+        return {
+          href: readStringAttribute(parsed, "href", ""),
+          title: readNullableStringAttribute(parsed, "title"),
+        };
+      },
+      fromProsemirror: mark => JSON.stringify({
+        href: readStringAttribute(mark.attrs, "href", ""),
+        title: readNullableStringAttribute(mark.attrs, "title"),
+      }),
+    },
+  }),
   addProseMirrorPlugins() {
     const { editor } = this;
     let editingOnPointerDown = false;

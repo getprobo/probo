@@ -24,6 +24,7 @@ export const AutomergeUnknownBlockExtension = Node.create({
   name: "automergeUnknownBlock",
   group: "block",
   content: "block+",
+  automerge: () => ({ unknownBlock: true }),
 
   parseHTML() {
     return [{ tag: "div[data-automerge-unknown-block]" }];
