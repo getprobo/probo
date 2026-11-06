@@ -473,8 +473,16 @@ func (r *organizationResolver) AuditLogEntries(ctx context.Context, obj *types.O
 			coredataFilter.WithAction(*filter.Action)
 		}
 
+		if filter.ActionPrefix != nil {
+			coredataFilter.WithActionPrefix(*filter.ActionPrefix)
+		}
+
 		if filter.ActorID != nil {
 			coredataFilter.WithActorID(*filter.ActorID)
+		}
+
+		if filter.ActorType != nil {
+			coredataFilter.WithActorType(*filter.ActorType)
 		}
 
 		if filter.ResourceType != nil {
@@ -483,6 +491,22 @@ func (r *organizationResolver) AuditLogEntries(ctx context.Context, obj *types.O
 
 		if filter.ResourceID != nil {
 			coredataFilter.WithResourceID(*filter.ResourceID)
+		}
+
+		if filter.Outcome != nil {
+			coredataFilter.WithOutcome(*filter.Outcome)
+		}
+
+		if filter.RequestID != nil {
+			coredataFilter.WithRequestID(*filter.RequestID)
+		}
+
+		if filter.CreatedFrom != nil {
+			coredataFilter.WithCreatedAtGte(*filter.CreatedFrom)
+		}
+
+		if filter.CreatedTo != nil {
+			coredataFilter.WithCreatedAtLt(*filter.CreatedTo)
 		}
 	}
 

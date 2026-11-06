@@ -169,7 +169,7 @@ func TestAuthorizer_AuthorizeBatch(t *testing.T) {
 		assert.Equal(t, coredata.OAuth2RefreshTokenEntityType, errUnsupported.EntityType)
 	})
 
-	t.Run("single deny rolls back entire batch", func(t *testing.T) {
+	t.Run("single deny records the refusal and no allows", func(t *testing.T) {
 		t.Parallel()
 
 		client := test.PGClient(t)
@@ -192,7 +192,20 @@ func TestAuthorizer_AuthorizeBatch(t *testing.T) {
 
 		_, ok := err.(*iam.ErrInsufficientPermissions)
 		require.True(t, ok)
-		assert.Equal(t, 0, countAuditLogsForAction(t, context.Background(), client, action))
+		assert.Equal(t, 1, countAuditLogsForActionAndOutcome(
+			t,
+			context.Background(),
+			client,
+			action,
+			coredata.AuditLogOutcomeDenied,
+		))
+		assert.Equal(t, 0, countAuditLogsForActionAndOutcome(
+			t,
+			context.Background(),
+			client,
+			action,
+			coredata.AuditLogOutcomeAllowed,
+		))
 	})
 
 	t.Run("duplicate resources in batch", func(t *testing.T) {
@@ -316,7 +329,7 @@ func TestAuthorizer_AuthorizeBatch(t *testing.T) {
 		)
 		require.Error(t, err)
 		assert.Nil(t, scope)
-		assert.ErrorContains(t, err, "cannot commit transaction")
+		assert.ErrorContains(t, err, "cannot bulk insert audit log entries")
 		assert.Equal(t, 0, countAuditLogsForAction(t, context.Background(), client, action))
 	})
 
@@ -345,7 +358,13 @@ func TestAuthorizer_AuthorizeBatch(t *testing.T) {
 
 		_, ok := err.(*iam.ErrAssumptionRequired)
 		require.True(t, ok)
-		assert.Equal(t, 0, countAuditLogsForAction(t, context.Background(), client, action))
+		assert.Equal(t, 2, countAuditLogsForActionAndOutcome(
+			t,
+			context.Background(),
+			client,
+			action,
+			coredata.AuditLogOutcomeDenied,
+		))
 	})
 
 	t.Run("assumption succeeds with active child session", func(t *testing.T) {
@@ -418,7 +437,13 @@ func TestAuthorizer_AuthorizeBatch(t *testing.T) {
 
 		_, ok := errors.AsType[*iam.ErrAssumptionRequired](err)
 		require.True(t, ok)
-		assert.Equal(t, 0, countAuditLogsForAction(t, context.Background(), client, action))
+		assert.Equal(t, 2, countAuditLogsForActionAndOutcome(
+			t,
+			context.Background(),
+			client,
+			action,
+			coredata.AuditLogOutcomeDenied,
+		))
 	})
 
 	t.Run("no membership ignores assumption check", func(t *testing.T) {
@@ -455,7 +480,13 @@ func TestAuthorizer_AuthorizeBatch(t *testing.T) {
 		insufficientPermissionsErr, ok := errors.AsType[*iam.ErrInsufficientPermissions](err)
 		require.True(t, ok)
 		assert.Equal(t, identityWithoutMembershipID, insufficientPermissionsErr.IdentityID)
-		assert.Equal(t, 0, countAuditLogsForAction(t, context.Background(), client, action))
+		assert.Equal(t, 1, countAuditLogsForActionAndOutcome(
+			t,
+			context.Background(),
+			client,
+			action,
+			coredata.AuditLogOutcomeDenied,
+		))
 	})
 }
 
@@ -538,10 +569,23 @@ func TestAuthorizer_AuthorizeMulti(t *testing.T) {
 		require.True(t, ok)
 		assert.Equal(t, fixture.frameworkID2, denied.EntityID)
 
-		assert.Equal(t, 1, countAuditLogsForAction(t, context.Background(), client, action))
+		assert.Equal(t, 1, countAuditLogsForActionAndOutcome(
+			t,
+			context.Background(),
+			client,
+			action,
+			coredata.AuditLogOutcomeAllowed,
+		))
+		assert.Equal(t, 1, countAuditLogsForActionAndOutcome(
+			t,
+			context.Background(),
+			client,
+			action,
+			coredata.AuditLogOutcomeDenied,
+		))
 	})
 
-	t.Run("writes no audit logs when every item is denied", func(t *testing.T) {
+	t.Run("writes a denial row when every item is denied", func(t *testing.T) {
 		t.Parallel()
 
 		client := test.PGClient(t)
@@ -575,7 +619,13 @@ func TestAuthorizer_AuthorizeMulti(t *testing.T) {
 		require.Len(t, decisions, 2)
 		require.Error(t, decisions[0])
 		require.Error(t, decisions[1])
-		assert.Equal(t, 0, countAuditLogsForAction(t, context.Background(), client, action))
+		assert.Equal(t, 2, countAuditLogsForActionAndOutcome(
+			t,
+			context.Background(),
+			client,
+			action,
+			coredata.AuditLogOutcomeDenied,
+		))
 	})
 
 	t.Run("skips audit log entries for dry-run allowed items", func(t *testing.T) {
@@ -731,7 +781,20 @@ func TestAuthorizer_AuthorizeMulti(t *testing.T) {
 		_, ok := errors.AsType[*iam.ErrAssumptionRequired](decisions[1])
 		require.True(t, ok)
 
-		assert.Equal(t, 1, countAuditLogsForAction(t, context.Background(), client, action))
+		assert.Equal(t, 1, countAuditLogsForActionAndOutcome(
+			t,
+			context.Background(),
+			client,
+			action,
+			coredata.AuditLogOutcomeAllowed,
+		))
+		assert.Equal(t, 1, countAuditLogsForActionAndOutcome(
+			t,
+			context.Background(),
+			client,
+			action,
+			coredata.AuditLogOutcomeDenied,
+		))
 	})
 
 	t.Run("per-item resource attributes are honoured by the policy", func(t *testing.T) {
@@ -775,7 +838,20 @@ func TestAuthorizer_AuthorizeMulti(t *testing.T) {
 		require.True(t, ok)
 		assert.Equal(t, fixture.frameworkID2, denied.EntityID)
 
-		assert.Equal(t, 1, countAuditLogsForAction(t, context.Background(), client, action))
+		assert.Equal(t, 1, countAuditLogsForActionAndOutcome(
+			t,
+			context.Background(),
+			client,
+			action,
+			coredata.AuditLogOutcomeAllowed,
+		))
+		assert.Equal(t, 1, countAuditLogsForActionAndOutcome(
+			t,
+			context.Background(),
+			client,
+			action,
+			coredata.AuditLogOutcomeDenied,
+		))
 	})
 }
 
@@ -1037,6 +1113,33 @@ func insertBatchTestChildSession(
 	}))
 
 	return childSessionID
+}
+
+func countAuditLogsForActionAndOutcome(
+	t *testing.T,
+	ctx context.Context,
+	client *pg.Client,
+	action string,
+	outcome coredata.AuditLogOutcome,
+) int {
+	t.Helper()
+
+	var count int
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		if err := tx.QueryRow(
+			ctx,
+			"SELECT COUNT(id) FROM audit_log_entries WHERE action = $1 AND outcome = $2",
+			action,
+			outcome,
+		).Scan(&count); err != nil {
+			return fmt.Errorf("cannot query audit log count: %w", err)
+		}
+
+		return nil
+	}))
+
+	return count
 }
 
 func countAuditLogsForAction(t *testing.T, ctx context.Context, client *pg.Client, action string) int {
