@@ -172,8 +172,8 @@ const (
 	DocumentCollaborationSessionEntityType           uint16 = 140
 	CookieBannerScanEntityType                       uint16 = 141
 	EmployeePortalDocumentEntityType                 uint16 = 142
-	TagEntityType                            uint16 = 143
-	TagAssignmentEntityType                  uint16 = 144
+	TagEntityType                                    uint16 = 143
+	TagAssignmentEntityType                          uint16 = 144
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
