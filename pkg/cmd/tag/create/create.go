@@ -31,7 +31,7 @@ import (
 )
 
 const createMutation = `
-mutation($input: CreateTagInput!) {
+mutation TagCreate($input: CreateTagInput!) {
   createTag(input: $input) {
     tagEdge {
       node {

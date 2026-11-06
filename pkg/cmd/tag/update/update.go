@@ -31,7 +31,7 @@ import (
 )
 
 const updateMutation = `
-mutation($input: UpdateTagInput!) {
+mutation TagUpdate($input: UpdateTagInput!) {
   updateTag(input: $input) {
     tag {
       id

@@ -31,7 +31,7 @@ import (
 )
 
 const attachMutation = `
-mutation($input: AttachTagInput!) {
+mutation TagAttach($input: AttachTagInput!) {
   attachTag(input: $input) {
     tag {
       id

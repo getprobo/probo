@@ -30,7 +30,7 @@ import (
 )
 
 const deleteMutation = `
-mutation($input: DeleteTagInput!) {
+mutation TagDelete($input: DeleteTagInput!) {
   deleteTag(input: $input) {
     deletedTagId
   }

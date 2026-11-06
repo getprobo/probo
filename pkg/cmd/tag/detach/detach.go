@@ -31,7 +31,7 @@ import (
 )
 
 const detachMutation = `
-mutation($input: DetachTagInput!) {
+mutation TagDetach($input: DetachTagInput!) {
   detachTag(input: $input) {
     tag {
       id
