@@ -7,6 +7,7 @@
 
   <meta name="color-scheme" content="light dark" />
 
+  {{if and .AppOrigin .FaviconURL}}<link rel="preconnect" href="{{.AppOrigin}}">{{end}}
   <link rel="icon" id="favicon" href="{{if .FaviconURL}}{{.FaviconURL}}{{else}}/favicons/favicon.ico{{end}}">
 
   <meta name="application-name" content="&nbsp;" />

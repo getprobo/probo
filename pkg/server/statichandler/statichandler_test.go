@@ -22,6 +22,9 @@ package statichandler_test
 
 import (
 	"bytes"
+	"compress/gzip"
+	"crypto/rand"
+	"io"
 	"io/fs"
 	"net/http"
 	"net/http/httptest"
@@ -148,6 +151,162 @@ func TestNewRequestIndexRenderer_RendersPerRequest(t *testing.T) {
 		alpha,
 	)
 	assert.Equal(t, "<title>Beta</title>", beta)
+}
+
+func TestServer_ServeHTTP(t *testing.T) {
+	t.Parallel()
+
+	script := bytes.Repeat([]byte("console.log('probo');\n"), 200)
+	incompressible := make([]byte, 4096)
+	_, err := rand.Read(incompressible)
+	require.NoError(t, err)
+
+	staticFiles := fstest.MapFS{
+		"dist/index.html":        &fstest.MapFile{Data: []byte("<html></html>")},
+		"dist/assets/app.js":     &fstest.MapFile{Data: script},
+		"dist/assets/worker.mjs": &fstest.MapFile{Data: script},
+		"dist/assets/logo.png":   &fstest.MapFile{Data: incompressible},
+	}
+
+	newServer := func(t *testing.T) *statichandler.Server {
+		t.Helper()
+
+		server, err := statichandler.NewServer(
+			staticFiles,
+			"dist",
+			statichandler.GzipOptions{
+				EnableFileTypeCheck: true,
+				FileTypes:           []string{".js", ".mjs", ".png"},
+			},
+		)
+		require.NoError(t, err)
+
+		return server
+	}
+
+	serve := func(t *testing.T, server *statichandler.Server, r *http.Request) *httptest.ResponseRecorder {
+		t.Helper()
+
+		w := httptest.NewRecorder()
+		server.ServeHTTP(w, r)
+
+		return w
+	}
+
+	gzipRequest := func(target string) *http.Request {
+		r := httptest.NewRequest(http.MethodGet, target, nil)
+		r.Header.Set("Accept-Encoding", "gzip, br")
+
+		return r
+	}
+
+	t.Run(
+		"serves precompressed assets",
+		func(t *testing.T) {
+			t.Parallel()
+
+			w := serve(t, newServer(t), gzipRequest("/assets/app.js"))
+
+			require.Equal(t, http.StatusOK, w.Code)
+			assert.Equal(t, "gzip", w.Header().Get("Content-Encoding"))
+			assert.Equal(t, "Accept-Encoding", w.Header().Get("Vary"))
+			assert.Equal(t, "public, max-age=31536000, immutable", w.Header().Get("Cache-Control"))
+			assert.Contains(t, w.Header().Get("Content-Type"), "javascript")
+			assert.Contains(t, w.Header().Get("ETag"), "-gzip")
+
+			gz, err := gzip.NewReader(w.Body)
+			require.NoError(t, err)
+
+			body, err := io.ReadAll(gz)
+			require.NoError(t, err)
+			assert.Equal(t, script, body)
+		},
+	)
+
+	t.Run(
+		"returns not modified for a matching gzip etag",
+		func(t *testing.T) {
+			t.Parallel()
+
+			server := newServer(t)
+			first := serve(t, server, gzipRequest("/assets/app.js"))
+
+			r := gzipRequest("/assets/app.js")
+			r.Header.Set("If-None-Match", first.Header().Get("ETag"))
+			w := serve(t, server, r)
+
+			assert.Equal(t, http.StatusNotModified, w.Code)
+			assert.Empty(t, w.Body.Bytes())
+		},
+	)
+
+	t.Run(
+		"caches module scripts as immutable",
+		func(t *testing.T) {
+			t.Parallel()
+
+			w := serve(t, newServer(t), gzipRequest("/assets/worker.mjs"))
+
+			require.Equal(t, http.StatusOK, w.Code)
+			assert.Equal(t, "gzip", w.Header().Get("Content-Encoding"))
+			assert.Equal(t, "public, max-age=31536000, immutable", w.Header().Get("Cache-Control"))
+		},
+	)
+
+	t.Run(
+		"serves identity encoding without gzip support",
+		func(t *testing.T) {
+			t.Parallel()
+
+			w := serve(t, newServer(t), httptest.NewRequest(http.MethodGet, "/assets/app.js", nil))
+
+			require.Equal(t, http.StatusOK, w.Code)
+			assert.Empty(t, w.Header().Get("Content-Encoding"))
+			assert.NotContains(t, w.Header().Get("ETag"), "-gzip")
+			assert.Equal(t, script, w.Body.Bytes())
+		},
+	)
+
+	t.Run(
+		"serves byte ranges from the identity encoding",
+		func(t *testing.T) {
+			t.Parallel()
+
+			r := httptest.NewRequest(http.MethodGet, "/assets/app.js", nil)
+			r.Header.Set("Range", "bytes=0-6")
+			w := serve(t, newServer(t), r)
+
+			require.Equal(t, http.StatusPartialContent, w.Code)
+			assert.Equal(t, script[:7], w.Body.Bytes())
+		},
+	)
+
+	t.Run(
+		"skips precompression when gzip does not shrink the file",
+		func(t *testing.T) {
+			t.Parallel()
+
+			w := serve(t, newServer(t), gzipRequest("/assets/logo.png"))
+
+			require.Equal(t, http.StatusOK, w.Code)
+			assert.NotContains(t, w.Header().Get("ETag"), "-gzip")
+		},
+	)
+
+	t.Run(
+		"omits body for head requests",
+		func(t *testing.T) {
+			t.Parallel()
+
+			r := gzipRequest("/assets/app.js")
+			r.Method = http.MethodHead
+			w := serve(t, newServer(t), r)
+
+			require.Equal(t, http.StatusOK, w.Code)
+			assert.NotEmpty(t, w.Header().Get("Content-Length"))
+			assert.Empty(t, w.Body.Bytes())
+		},
+	)
 }
 
 func indexFiles(indexHTML string) fs.FS {
