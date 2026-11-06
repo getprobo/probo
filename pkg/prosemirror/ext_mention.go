@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"unicode/utf8"
 
 	"go.probo.inc/probo/pkg/gid"
 )
@@ -58,6 +59,17 @@ func (mentionNodeSpec) Content() ContentRule {
 
 func (mentionNodeSpec) Visible() bool {
 	return true
+}
+
+// TextLength counts a mention as "@" plus its label, matching the editor's
+// content-length accounting for comments and notes.
+func (mentionNodeSpec) TextLength(n Node) int {
+	attrs, err := n.MentionAttrs()
+	if err != nil {
+		return 0
+	}
+
+	return 1 + utf8.RuneCountInString(attrs.Label)
 }
 
 func (m mentionNodeSpec) Check(n *Node, mode CheckMode) error {
