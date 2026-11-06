@@ -56,6 +56,13 @@ import type { DocumentReviewMargin_startSuggestionMutation } from "#/__generated
 import type { DocumentReviewMargin_updateCommentMutation } from "#/__generated__/core/DocumentReviewMargin_updateCommentMutation.graphql";
 import type { DocumentReviewMarginQuery } from "#/__generated__/core/DocumentReviewMarginQuery.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
+import { RichEditor } from "#/pages/organizations/_components/RichEditor";
+import {
+  isRichEditorContentEmpty,
+  richEditorContentPlainText,
+  richEditorContentTextLength,
+} from "#/pages/organizations/_lib/richEditorContent";
+import { useMentionMembers } from "#/pages/organizations/_lib/useMentionMembers";
 import { CurrentUser } from "#/providers/CurrentUser";
 
 import { collectSuggestionAnchors, type SuggestionPreview } from "../../_lib/suggestionPreview";
@@ -65,6 +72,8 @@ import {
   DocumentReviewMarginComments,
   type DocumentReviewMarginThread,
 } from "./DocumentReviewMarginComments";
+
+const commentMaxLength = 10000;
 
 export type CommentDraft = {
   quote: string;
@@ -133,7 +142,9 @@ export function DocumentReviewMargin(props: DocumentReviewMarginProps) {
   const { t } = useTranslation();
   const toast = useToast();
   const currentUser = useContext(CurrentUser);
+  const mentionSource = useMentionMembers();
   const environment = useRelayEnvironment();
+  const [draftEditorKey, setDraftEditorKey] = useState(0);
   const queryData = useLazyLoadQuery<DocumentReviewMarginQuery>(
     reviewQuery,
     { documentId: documentId },
@@ -638,6 +649,7 @@ export function DocumentReviewMargin(props: DocumentReviewMarginProps) {
         profileId={currentUser.profile?.id ?? null}
         canComment={canComment}
         replyText={active ? replyText : ""}
+        mentionSource={mentionSource}
         onReplyText={setReplyText}
         replying={replying}
         onReply={(content) => {
@@ -804,6 +816,7 @@ export function DocumentReviewMargin(props: DocumentReviewMarginProps) {
           profileId={currentUser.profile?.id ?? null}
           canComment={canComment && !suggestion.id.startsWith("local:")}
           replyText={active ? replyText : ""}
+          mentionSource={mentionSource}
           onReplyText={setReplyText}
           replying={replying}
           onLayout={() => setLayoutTick(value => value + 1)}
@@ -883,7 +896,8 @@ export function DocumentReviewMargin(props: DocumentReviewMarginProps) {
         className="flex flex-col gap-2"
         onSubmit={(event) => {
           event.preventDefault();
-          if (!draft || draftText.trim() === "") return;
+          if (!draft || isRichEditorContentEmpty(draftText)) return;
+          if (richEditorContentTextLength(draftText) > commentMaxLength) return;
           onOwnReview();
           void createThread({
             variables: {
@@ -903,6 +917,7 @@ export function DocumentReviewMargin(props: DocumentReviewMarginProps) {
                 return;
               }
               setDraftText("");
+              setDraftEditorKey(key => key + 1);
               setDraft(null);
             },
             onError: (error) => {
@@ -912,12 +927,16 @@ export function DocumentReviewMargin(props: DocumentReviewMarginProps) {
           });
         }}
       >
-        <textarea
-          autoFocus
-          className="min-h-16 w-full rounded-2 border border-sand-7 bg-sand-1 p-2 text-2 text-sand-12 outline-none focus:border-sand-8"
-          value={draftText}
-          onChange={event => setDraftText(event.target.value)}
+        <RichEditor
+          key={draftEditorKey}
+          preset="comment"
+          controls={false}
+          className="min-h-16 w-full rounded-2 border border-sand-7 bg-sand-1 p-2 text-2 outline-none focus-within:border-sand-8"
+          content={draftText}
+          mentionSource={mentionSource}
           placeholder={t("documentDescriptionPage.review.commentPlaceholder")}
+          onChangeContent={setDraftText}
+          aria-label={t("documentDescriptionPage.review.commentPlaceholder")}
         />
         <div className="flex justify-end gap-2">
           <Button variant="ghost" color="neutral" size={1} onClick={() => setDraft(null)}>
@@ -953,7 +972,9 @@ export function DocumentReviewMargin(props: DocumentReviewMarginProps) {
               {resolvedThreads.map(thread => (
                 <div key={thread.id} className="flex flex-col gap-1">
                   <p className="whitespace-pre-wrap text-2 text-sand-12">{thread.anchorQuote}</p>
-                  <p className="text-1 text-sand-11">{thread.comments.edges[0]?.node.content}</p>
+                  <p className="text-1 text-sand-11">
+                    {richEditorContentPlainText(thread.comments.edges[0]?.node.content ?? "")}
+                  </p>
                   <Button
                     variant="ghost"
                     color="neutral"
