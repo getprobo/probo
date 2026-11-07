@@ -737,7 +737,10 @@ func (s AuthService) CheckCredentials(
 
 			isPasswordMatch, err := s.hp.ComparePasswordAndHash([]byte(password), identity.HashedPassword)
 			if err != nil {
-				return fmt.Errorf("cannot verify password: %w", err)
+				// Pending invites, SCIM, and SAML identities have no password
+				// hash. A compare error must look like a wrong password.
+				_, _ = s.hp.ComparePasswordAndHash([]byte(password), s.dummyHash)
+				return NewInvalidCredentialsError("invalid email or password")
 			}
 
 			if !isPasswordMatch {
