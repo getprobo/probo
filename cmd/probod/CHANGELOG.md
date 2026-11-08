@@ -4,6 +4,12 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Added
+
+- `uploadInternalControlEvidence` in MCP uploads a base64-encoded file
+  as evidence for an internal control, with the same file types and
+  size limit as the console
+
 ## [0.340.0] - 2026-11-04
 
 ### Changed

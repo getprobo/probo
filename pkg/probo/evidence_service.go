@@ -48,6 +48,20 @@ type (
 	}
 )
 
+func newEvidenceFileValidator() *filevalidation.FileValidator {
+	return filevalidation.NewValidator(
+		filevalidation.WithCategories(
+			filevalidation.CategoryDocument,
+			filevalidation.CategorySpreadsheet,
+			filevalidation.CategoryPresentation,
+			filevalidation.CategoryData,
+			filevalidation.CategoryText,
+			filevalidation.CategoryImage,
+			filevalidation.CategoryVideo,
+		),
+	)
+}
+
 func (umer *UploadInternalControlEvidenceRequest) Validate() error {
 	v := validator.New()
 
@@ -57,6 +71,17 @@ func (umer *UploadInternalControlEvidenceRequest) Validate() error {
 	v.Check(umer.File.Size, "file.size", validator.Min(1))
 
 	return v.Error()
+}
+
+// MaxFileSize is the largest file UploadInternalControlEvidence accepts.
+func (s EvidenceService) MaxFileSize() int64 {
+	return s.fileValidator.MaxFileSize
+}
+
+// ContentTypeForFilename returns the MIME type UploadInternalControlEvidence
+// accepts for filename's extension.
+func (s EvidenceService) ContentTypeForFilename(filename string) (string, bool) {
+	return s.fileValidator.ContentTypeForFilename(filename)
 }
 
 func (s EvidenceService) Get(

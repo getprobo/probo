@@ -21,6 +21,7 @@
 package mcp_test
 
 import (
+	"encoding/base64"
 	"io"
 	"net/http"
 	"testing"
@@ -118,4 +119,119 @@ func TestMCP_InternalControlEvidence_FileURL(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, response.StatusCode)
 	assert.Equal(t, fileContent, downloaded)
+}
+
+func TestMCP_UploadInternalControlEvidence(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	mc := testutil.NewMCPClient(t, owner)
+	internalControlID := factory.NewInternalControl(owner).
+		WithName(factory.SafeName("MCP evidence upload")).
+		WithCategory("EVIDENCE").
+		Create()
+	fileContent := []byte(`{"check":"s3_account_block_public_access","result":true}`)
+
+	type uploadResult struct {
+		Evidence struct {
+			ID                string `json:"id"`
+			InternalControlID string `json:"internal_control_id"`
+			Type              string `json:"type"`
+			State             string `json:"state"`
+			URL               string `json:"url"`
+			File              *struct {
+				FileName string `json:"file_name"`
+				MimeType string `json:"mime_type"`
+			} `json:"file"`
+		} `json:"evidence"`
+	}
+
+	var uploaded uploadResult
+	mc.CallToolInto("uploadInternalControlEvidence", map[string]any{
+		"internal_control_id": internalControlID,
+		"file_name":           "aws-evidence.json",
+		"content_base64":      base64.StdEncoding.EncodeToString(fileContent),
+	}, &uploaded)
+	require.NotEmpty(t, uploaded.Evidence.ID)
+	assert.Equal(t, internalControlID, uploaded.Evidence.InternalControlID)
+	assert.Equal(t, "FILE", uploaded.Evidence.Type)
+	assert.Equal(t, "FULFILLED", uploaded.Evidence.State)
+	require.NotNil(t, uploaded.Evidence.File)
+	assert.Equal(t, "aws-evidence.json", uploaded.Evidence.File.FileName)
+	assert.Equal(t, "application/json", uploaded.Evidence.File.MimeType)
+	require.NotEmpty(t, uploaded.Evidence.URL)
+
+	response, err := owner.HTTPClient().Get(uploaded.Evidence.URL)
+	require.NoError(t, err)
+
+	defer func() { _ = response.Body.Close() }()
+
+	downloaded, err := io.ReadAll(response.Body)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+	assert.Equal(t, fileContent, downloaded)
+
+	var listResult struct {
+		Evidences []struct {
+			ID string `json:"id"`
+		} `json:"evidences"`
+	}
+	mc.CallToolInto("listInternalControlEvidences", map[string]any{
+		"internal_control_id": internalControlID,
+	}, &listResult)
+	require.Len(t, listResult.Evidences, 1)
+	assert.Equal(t, uploaded.Evidence.ID, listResult.Evidences[0].ID)
+}
+
+func TestMCP_UploadInternalControlEvidence_RejectsInvalidInput(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	mc := testutil.NewMCPClient(t, owner)
+	internalControlID := factory.NewInternalControl(owner).
+		WithName(factory.SafeName("MCP evidence invalid")).
+		WithCategory("EVIDENCE").
+		Create()
+
+	msg := mc.CallToolExpectToolError("uploadInternalControlEvidence", map[string]any{
+		"internal_control_id": internalControlID,
+		"file_name":           "evidence.json",
+		"content_base64":      "not base64!",
+	})
+	assert.Contains(t, msg, "base64")
+
+	msg = mc.CallToolExpectToolError("uploadInternalControlEvidence", map[string]any{
+		"internal_control_id": internalControlID,
+		"file_name":           "payload.exe",
+		"content_base64":      base64.StdEncoding.EncodeToString([]byte("MZ")),
+	})
+	assert.Contains(t, msg, "mime_type")
+
+	msg = mc.CallToolExpectToolError("uploadInternalControlEvidence", map[string]any{
+		"internal_control_id": internalControlID,
+		"file_name":           "empty.json",
+		"content_base64":      "",
+	})
+	assert.NotContains(t, msg, "pq:")
+	assert.NotContains(t, msg, "sql:")
+}
+
+func TestMCP_UploadInternalControlEvidence_PermissionDenied(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	internalControlID := factory.NewInternalControl(owner).
+		WithName(factory.SafeName("MCP evidence denied")).
+		WithCategory("EVIDENCE").
+		Create()
+
+	viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+	viewerMC := testutil.NewMCPClient(t, viewer)
+
+	msg := viewerMC.CallToolExpectToolError("uploadInternalControlEvidence", map[string]any{
+		"internal_control_id": internalControlID,
+		"file_name":           "evidence.json",
+		"content_base64":      base64.StdEncoding.EncodeToString([]byte(`{}`)),
+	})
+	assert.Contains(t, msg, "permission denied")
 }

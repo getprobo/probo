@@ -167,18 +167,8 @@ func NewService(
 	}
 	svc.InternalControls = &InternalControlService{svc: svc}
 	svc.Evidences = &EvidenceService{
-		svc: svc,
-		fileValidator: filevalidation.NewValidator(
-			filevalidation.WithCategories(
-				filevalidation.CategoryDocument,
-				filevalidation.CategorySpreadsheet,
-				filevalidation.CategoryPresentation,
-				filevalidation.CategoryData,
-				filevalidation.CategoryText,
-				filevalidation.CategoryImage,
-				filevalidation.CategoryVideo,
-			),
-		),
+		svc:           svc,
+		fileValidator: newEvidenceFileValidator(),
 	}
 	svc.ThirdParties = &ThirdPartyService{svc: svc}
 	svc.Documents = &DocumentService{

@@ -74,3 +74,47 @@ func TestFileUploadValidationErrors_PreservesCause(t *testing.T) {
 	_, ok = fileUploadValidationErrors(fmt.Errorf("cannot upload file to S3"))
 	assert.False(t, ok)
 }
+
+func TestEvidenceService_ContentTypeForFilename(t *testing.T) {
+	t.Parallel()
+
+	svc := EvidenceService{fileValidator: newEvidenceFileValidator()}
+
+	t.Run(
+		"infers the content type of accepted evidence files",
+		func(t *testing.T) {
+			t.Parallel()
+
+			for filename, want := range map[string]string{
+				"report.pdf":         "application/pdf",
+				"aws-evidence.json":  "application/json",
+				"screenshot.PNG":     "image/png",
+				"access-review.xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+			} {
+				got, ok := svc.ContentTypeForFilename(filename)
+				require.True(t, ok, filename)
+				assert.Equal(t, want, got, filename)
+			}
+		},
+	)
+
+	t.Run(
+		"rejects files without an accepted extension",
+		func(t *testing.T) {
+			t.Parallel()
+
+			for _, filename := range []string{"payload.exe", "no-extension"} {
+				_, ok := svc.ContentTypeForFilename(filename)
+				assert.False(t, ok, filename)
+			}
+		},
+	)
+}
+
+func TestEvidenceService_MaxFileSize(t *testing.T) {
+	t.Parallel()
+
+	svc := EvidenceService{fileValidator: newEvidenceFileValidator()}
+
+	assert.Equal(t, int64(filevalidation.DefaultMaxFileSize), svc.MaxFileSize())
+}

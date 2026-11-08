@@ -2874,6 +2874,34 @@ components:
           items:
             $ref: "#/components/schemas/Evidence"
 
+    UploadInternalControlEvidenceInput:
+      type: object
+      required:
+        - internal_control_id
+        - file_name
+        - content_base64
+      properties:
+        internal_control_id:
+          $ref: "#/components/schemas/GID"
+          description: Internal control ID
+        file_name:
+          type: string
+          description: File name, including its extension
+        mime_type:
+          type: string
+          description: MIME type. Inferred from the file name when omitted
+        content_base64:
+          type: string
+          description: File bytes encoded as base64
+
+    UploadInternalControlEvidenceOutput:
+      type: object
+      required:
+        - evidence
+      properties:
+        evidence:
+          $ref: "#/components/schemas/Evidence"
+
     Evidence:
       type: object
       required:
@@ -18606,6 +18634,18 @@ tools:
       $ref: "#/components/schemas/ListInternalControlEvidencesInput"
     outputSchema:
       $ref: "#/components/schemas/ListInternalControlEvidencesOutput"
+  - name: uploadInternalControlEvidence
+    title: Upload Internal Control Evidence
+    description: Upload a file as evidence for an internal control
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/UploadInternalControlEvidenceInput"
+    outputSchema:
+      $ref: "#/components/schemas/UploadInternalControlEvidenceOutput"
   - name: deleteEvidence
     title: Delete Evidence
     description: Delete an evidence

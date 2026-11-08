@@ -3039,6 +3039,10 @@ func (r *Resolver) ListInternalControlEvidencesTool(ctx context.Context, req *mc
 	return nil, types.NewListInternalControlEvidencesOutput(evidencePage, filesByID), nil
 }
 
+func (r *Resolver) UploadInternalControlEvidenceTool(ctx context.Context, _ *mcp.CallToolRequest, input *types.UploadInternalControlEvidenceInput) (*mcp.CallToolResult, types.UploadInternalControlEvidenceOutput, error) {
+	return r.uploadInternalControlEvidence(ctx, input)
+}
+
 func (r *Resolver) LinkInternalControlTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkInternalControlInput) (*mcp.CallToolResult, types.LinkInternalControlOutput, error) {
 	svc := r.proboSvc
 
