@@ -26,6 +26,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
@@ -67,13 +68,10 @@ func (s *Selector) GetCertificate(hello *tls.ClientHelloInfo) (*tls.Certificate,
 
 	if cached, ok := s.cache.Load(domain); ok {
 		if cert, ok := cached.(*tls.Certificate); ok {
-			if err := s.checkRoutable(domain); err == nil {
+			if beforeRenewalWindow(cert) && s.checkRoutable(domain) == nil {
 				return cert, nil
 			}
 
-			// The domain was deleted or is no longer routable since the
-			// cache entry was stored; evict it and fall through to a fresh
-			// database load below.
 			s.cache.Delete(domain)
 		}
 	}
@@ -86,6 +84,11 @@ func (s *Selector) GetCertificate(hello *tls.ClientHelloInfo) (*tls.Certificate,
 	s.cache.Store(domain, cert)
 
 	return cert, nil
+}
+
+// beforeRenewalWindow reports whether cert expires after RenewalWindow.
+func beforeRenewalWindow(cert *tls.Certificate) bool {
+	return cert.Leaf != nil && time.Until(cert.Leaf.NotAfter) > RenewalWindow
 }
 
 // checkRoutable reports whether domain is still a routable custom domain

@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
@@ -25,6 +26,10 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 )
+
+// RenewalWindow is how long before expiry an active certificate is renewed.
+// ACME does not define this window.
+const RenewalWindow = 30 * 24 * time.Hour
 
 type renewHandler struct {
 	pg            *pg.Client
@@ -63,7 +68,11 @@ func (h *renewHandler) Claim(ctx context.Context) (coredata.Certificate, error) 
 	if err := h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := certificate.LoadNextForRenewalForUpdateSkipLocked(ctx, tx); err != nil {
+			if err := certificate.LoadNextForRenewalForUpdateSkipLocked(
+				ctx,
+				tx,
+				RenewalWindow,
+			); err != nil {
 				return err
 			}
 
