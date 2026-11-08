@@ -66,6 +66,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		flagAddress         string
 		flagWebsite         string
 		flagAdministratorID []string
+		flagParentID        string
 	)
 
 	cmd := &cobra.Command{
@@ -75,7 +76,10 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
   prb third-party create
 
   # Create a third party non-interactively
-  prb third-party create --name "Acme Corp" --category CLOUD_PROVIDER`,
+  prb third-party create --name "Acme Corp" --category CLOUD_PROVIDER
+
+  # Add a sub-processor to a vendor's supply chain
+  prb third-party create --name "Datadog" --category CLOUD_MONITORING --parent-id <vendor-id>`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
 			if err != nil {
@@ -180,6 +184,10 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				input["administratorIds"] = flagAdministratorID
 			}
 
+			if flagParentID != "" {
+				input["parentThirdPartyId"] = flagParentID
+			}
+
 			data, err := client.Do(
 				createMutation,
 				map[string]any{"input": input},
@@ -213,6 +221,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagAddress, "address", "", "Headquarter address")
 	cmd.Flags().StringVar(&flagWebsite, "website", "", "Website URL")
 	cmd.Flags().StringArrayVar(&flagAdministratorID, "administrator-id", nil, "Administrator profile ID (can be repeated)")
+	cmd.Flags().StringVar(&flagParentID, "parent-id", "", "Parent third party ID, to add this third party to the parent's supply chain")
 
 	return cmd
 }

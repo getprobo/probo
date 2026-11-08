@@ -4,6 +4,11 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Added
+
+- `addThirdParty` in MCP accepts `parent_third_party_id`, so an agent
+  can add a sub-processor to a third party's supply chain
+
 ## [0.340.0] - 2026-11-04
 
 ### Changed

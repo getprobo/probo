@@ -4,6 +4,11 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+### Added
+
+- `prb third-party create --parent-id` adds the new third party to a
+  parent's supply chain
+
 ## [0.264.0] - 2026-11-03
 
 ### Added

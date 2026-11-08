@@ -122,6 +122,12 @@ func (r *Resolver) AddThirdPartyTool(ctx context.Context, req *mcp.CallToolReque
 		return nil, types.AddThirdPartyOutput{}, err
 	}
 
+	if input.ParentThirdPartyID != nil {
+		if _, err := r.Authorize(ctx, *input.ParentThirdPartyID, probo.ActionThirdPartyRelationCreate); err != nil {
+			return nil, types.AddThirdPartyOutput{}, err
+		}
+	}
+
 	svc := r.proboSvc
 
 	var category *coredata.ThirdPartyCategory
@@ -161,6 +167,7 @@ func (r *Resolver) AddThirdPartyTool(ctx context.Context, req *mcp.CallToolReque
 			TermsOfServiceURL:             input.TermsOfServiceURL,
 			SecurityPageURL:               input.SecurityPageURL,
 			TrustPageURL:                  input.TrustPageURL,
+			ParentThirdPartyID:            input.ParentThirdPartyID,
 		},
 	)
 	if err != nil {

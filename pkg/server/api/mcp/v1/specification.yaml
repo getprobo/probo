@@ -1124,6 +1124,9 @@ components:
         trust_page_url:
           type: string
           description: Trust page URL
+        parent_third_party_id:
+          $ref: "#/components/schemas/GID"
+          description: Parent third party ID. Set it to add this third party to the parent's supply chain, for example a sub-processor of a vendor
 
     AddThirdPartyOutput:
       type: object
