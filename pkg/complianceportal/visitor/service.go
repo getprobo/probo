@@ -183,37 +183,96 @@ func (s *Service) GetPortalCanonicalBaseURL(
 }
 
 func (s *Service) GetPortalByDomainName(ctx context.Context, domain string) (*coredata.CompliancePortal, error) {
-	compliancePage := &coredata.CompliancePortal{}
+	var compliancePage *coredata.CompliancePortal
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			var customDomain coredata.CustomDomain
-			if err := customDomain.LoadByDomain(ctx, conn, coredata.NewNoScope(), domain); err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return ErrPageNotFound
-				}
+			var err error
 
-				return fmt.Errorf("cannot load custom domain: %w", err)
-			}
+			compliancePage, err = loadPortalByDomainName(ctx, conn, domain)
 
-			compliancePage = &coredata.CompliancePortal{}
-			if err := compliancePage.LoadByDomainID(ctx, conn, customDomain.ID); err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return ErrPageNotFound
-				}
-
-				return fmt.Errorf("cannot load compliance page: %w", err)
-			}
-
-			return nil
+			return err
 		},
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	return compliancePage, err
+	return compliancePage, nil
+}
+
+// GetPortalAndCanonicalHostByDomainName resolves the portal served on domain
+// and its effective canonical host on a single connection. It backs the
+// per-request domain middleware, so it avoids reloading the portal by ID the
+// way GetPortalEffectiveCanonicalHost does.
+func (s *Service) GetPortalAndCanonicalHostByDomainName(
+	ctx context.Context,
+	domain string,
+) (*coredata.CompliancePortal, string, error) {
+	var (
+		compliancePage *coredata.CompliancePortal
+		canonicalHost  string
+	)
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var err error
+
+			compliancePage, err = loadPortalByDomainName(ctx, conn, domain)
+			if err != nil {
+				return err
+			}
+
+			effectiveDomain, err := s.management.EffectiveDomainForCompliancePortal(
+				ctx,
+				conn,
+				coredata.NewNoScope(),
+				compliancePage,
+			)
+			if err != nil {
+				return fmt.Errorf("cannot resolve canonical host: %w", err)
+			}
+
+			if effectiveDomain != nil {
+				canonicalHost = effectiveDomain.Domain
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, "", err
+	}
+
+	return compliancePage, canonicalHost, nil
+}
+
+func loadPortalByDomainName(
+	ctx context.Context,
+	conn pg.Querier,
+	domain string,
+) (*coredata.CompliancePortal, error) {
+	var customDomain coredata.CustomDomain
+	if err := customDomain.LoadByDomain(ctx, conn, coredata.NewNoScope(), domain); err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, ErrPageNotFound
+		}
+
+		return nil, fmt.Errorf("cannot load custom domain: %w", err)
+	}
+
+	compliancePage := &coredata.CompliancePortal{}
+	if err := compliancePage.LoadByDomainID(ctx, conn, customDomain.ID); err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, ErrPageNotFound
+		}
+
+		return nil, fmt.Errorf("cannot load compliance page: %w", err)
+	}
+
+	return compliancePage, nil
 }
 
 func (s *Service) IsVerifiedRedirectHost(ctx context.Context, host string) bool {

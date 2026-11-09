@@ -31,9 +31,16 @@ import (
 	"html/template"
 	"io"
 	"io/fs"
+	"mime"
 	"net/http"
+	"path"
+	"strconv"
 	"strings"
 )
+
+// minGzipRatio is the largest compressed/original size ratio worth serving:
+// already-compressed formats (png, woff2) barely shrink and are served as is.
+const minGzipRatio = 0.9
 
 type (
 	// FileRenderer renders dynamic content for a given file path. When
@@ -63,6 +70,15 @@ type (
 		indexContent  []byte
 		gzipOptions   GzipOptions
 		fileRenderers map[string]FileRenderer
+		gzipped       map[string]gzippedFile
+	}
+
+	// gzippedFile is a static file compressed once at startup so requests do
+	// not pay for gzip on every hit.
+	gzippedFile struct {
+		content     []byte
+		etag        string
+		contentType string
 	}
 )
 
@@ -132,6 +148,7 @@ func NewServer(staticFiles fs.FS, distPath string, gzipOptions GzipOptions, opts
 	}
 
 	etags := make(map[string]string)
+	compressible := make(map[string][]byte)
 
 	err = fs.WalkDir(
 		subFS,
@@ -168,6 +185,10 @@ func NewServer(staticFiles fs.FS, distPath string, gzipOptions GzipOptions, opts
 			etag := hex.EncodeToString(hash[:])
 			etags["/"+path] = etag
 
+			if gzipOptions.allows("/" + path) {
+				compressible["/"+path] = content
+			}
+
 			return nil
 		},
 	)
@@ -197,13 +218,73 @@ func NewServer(staticFiles fs.FS, distPath string, gzipOptions GzipOptions, opts
 		etags:         etags,
 		gzipOptions:   gzipOptions,
 		fileRenderers: make(map[string]FileRenderer),
+		gzipped:       make(map[string]gzippedFile),
 	}
 
 	for _, opt := range opts {
 		opt(s)
 	}
 
+	for filePath, content := range compressible {
+		// Rendered files change per request; they keep on-the-fly gzip.
+		if _, ok := s.fileRenderers[filePath]; ok {
+			continue
+		}
+
+		compressed, err := gzipBytes(content)
+		if err != nil {
+			return nil, fmt.Errorf("cannot gzip %s: %w", filePath, err)
+		}
+
+		if float64(len(compressed)) > float64(len(content))*minGzipRatio {
+			continue
+		}
+
+		s.gzipped[filePath] = gzippedFile{
+			content: compressed,
+			// A strong ETag must differ per content encoding.
+			etag:        etags[filePath] + "-gzip",
+			contentType: contentTypeFor(filePath),
+		}
+	}
+
 	return s, nil
+}
+
+func gzipBytes(content []byte) ([]byte, error) {
+	var buf bytes.Buffer
+
+	gz, err := gzip.NewWriterLevel(&buf, gzip.BestCompression)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := gz.Write(content); err != nil {
+		return nil, err
+	}
+
+	if err := gz.Close(); err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
+}
+
+func contentTypeFor(filePath string) string {
+	if contentType := mime.TypeByExtension(path.Ext(filePath)); contentType != "" {
+		return contentType
+	}
+
+	return "application/octet-stream"
+}
+
+func cacheControlFor(filePath string) string {
+	switch path.Ext(filePath) {
+	case ".js", ".mjs", ".css", ".png", ".jpg", ".svg", ".woff2":
+		return "public, max-age=31536000, immutable"
+	default:
+		return "public, max-age=3600"
+	}
 }
 
 func (s *Server) serveIndex(w http.ResponseWriter, r *http.Request) {
@@ -280,13 +361,7 @@ func (s *Server) ServeSPA(w http.ResponseWriter, r *http.Request) {
 	quotedETag := `"` + etag + `"`
 	w.Header().Set("ETag", quotedETag)
 
-	if strings.HasSuffix(path, ".js") || strings.HasSuffix(path, ".css") ||
-		strings.HasSuffix(path, ".png") || strings.HasSuffix(path, ".jpg") ||
-		strings.HasSuffix(path, ".svg") || strings.HasSuffix(path, ".woff2") {
-		w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
-	} else {
-		w.Header().Set("Cache-Control", "public, max-age=3600")
-	}
+	w.Header().Set("Cache-Control", cacheControlFor(path))
 
 	if matchETag := r.Header.Get("If-None-Match"); matchETag != "" {
 		if matchETag == quotedETag {
@@ -307,18 +382,13 @@ func (w gzipResponseWriter) Write(b []byte) (int, error) {
 	return w.Writer.Write(b)
 }
 
-func (s *Server) shouldCompressWithGzip(r *http.Request) bool {
-	if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
-		return false
-	}
-
-	if !s.gzipOptions.EnableFileTypeCheck {
+func (o GzipOptions) allows(filePath string) bool {
+	if !o.EnableFileTypeCheck {
 		return true
 	}
 
-	path := r.URL.Path
-	for _, fileType := range s.gzipOptions.FileTypes {
-		if strings.HasSuffix(path, fileType) {
+	for _, fileType := range o.FileTypes {
+		if strings.HasSuffix(filePath, fileType) {
 			return true
 		}
 	}
@@ -326,8 +396,61 @@ func (s *Server) shouldCompressWithGzip(r *http.Request) bool {
 	return false
 }
 
+func acceptsGzip(r *http.Request) bool {
+	return strings.Contains(r.Header.Get("Accept-Encoding"), "gzip")
+}
+
+func (s *Server) shouldCompressWithGzip(r *http.Request) bool {
+	return acceptsGzip(r) && s.gzipOptions.allows(r.URL.Path)
+}
+
+// serveGzipped writes the precompressed variant of the requested file and
+// reports whether it handled the request.
+func (s *Server) serveGzipped(w http.ResponseWriter, r *http.Request) bool {
+	if r.Method != http.MethodGet && r.Method != http.MethodHead {
+		return false
+	}
+
+	// Byte ranges address the identity encoding; let http.FileServer handle them.
+	if r.Header.Get("Range") != "" || !acceptsGzip(r) {
+		return false
+	}
+
+	file, ok := s.gzipped[r.URL.Path]
+	if !ok {
+		return false
+	}
+
+	quotedETag := `"` + file.etag + `"`
+
+	w.Header().Set("ETag", quotedETag)
+	w.Header().Set("Cache-Control", cacheControlFor(r.URL.Path))
+	w.Header().Add("Vary", "Accept-Encoding")
+
+	if r.Header.Get("If-None-Match") == quotedETag {
+		w.WriteHeader(http.StatusNotModified)
+		return true
+	}
+
+	w.Header().Set("Content-Type", file.contentType)
+	w.Header().Set("Content-Encoding", "gzip")
+	w.Header().Set("Content-Length", strconv.Itoa(len(file.content)))
+	w.WriteHeader(http.StatusOK)
+
+	if r.Method != http.MethodHead {
+		_, _ = w.Write(file.content)
+	}
+
+	return true
+}
+
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if s.serveGzipped(w, r) {
+		return
+	}
+
 	if s.shouldCompressWithGzip(r) {
+		w.Header().Add("Vary", "Accept-Encoding")
 		w.Header().Set("Content-Encoding", "gzip")
 		gz := gzip.NewWriter(w)
 
