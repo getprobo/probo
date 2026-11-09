@@ -89,7 +89,7 @@ func newListCmd(f *cmdutil.Factory) *cobra.Command {
 				variables["filter"] = map[string]any{"resolved": flagResolved == "true"}
 			}
 
-			client, err := newClient(f)
+			client, _, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
@@ -206,7 +206,7 @@ func newViewCmd(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			client, err := newClient(f)
+			client, _, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
@@ -585,7 +585,7 @@ func runMutation(
 		return err
 	}
 
-	client, err := newClient(f)
+	client, _, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 	if err != nil {
 		return err
 	}
@@ -607,26 +607,6 @@ func runMutation(
 	_, _ = fmt.Fprintln(f.IOStreams.Out, msg)
 
 	return nil
-}
-
-func newClient(f *cmdutil.Factory) (*api.Client, error) {
-	cfg, err := f.Config()
-	if err != nil {
-		return nil, err
-	}
-
-	host, hc, err := cfg.DefaultHost()
-	if err != nil {
-		return nil, err
-	}
-
-	return api.NewClient(
-		host,
-		hc.Token,
-		"/api/console/v1/graphql",
-		cfg.HTTPTimeoutDuration(),
-		cmdutil.TokenRefreshOption(cfg, host, hc),
-	), nil
 }
 
 const listQuery = `

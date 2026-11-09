@@ -652,6 +652,9 @@ export function DocumentReviewMargin(props: DocumentReviewMarginProps) {
   const commentCard = (thread: DocumentReviewMarginThread, active: boolean) => (
     <DocumentReviewMarginCard
       active={active}
+      label={t("documentDescriptionPage.review.selectComment", {
+        name: thread.comments.edges[0]?.node.author.fullName ?? "",
+      })}
       onActivate={() => {
         onActiveThread(thread.id);
         onActiveSuggestion(null);
@@ -744,6 +747,9 @@ export function DocumentReviewMargin(props: DocumentReviewMarginProps) {
     return (
       <DocumentReviewMarginCard
         active={active}
+        label={t("documentDescriptionPage.review.selectSuggestion", {
+          name: suggestion.author.fullName ?? "",
+        })}
         onActivate={() => {
           onActiveSuggestion(suggestion.id);
           onActiveThread(null);
@@ -905,7 +911,10 @@ export function DocumentReviewMargin(props: DocumentReviewMarginProps) {
   };
 
   const composer = (
-    <DocumentReviewMarginCard active onActivate={() => {}}>
+    <DocumentReviewMarginCard
+      active
+      label={t("documentDescriptionPage.review.commentPlaceholder")}
+    >
       <form
         className="flex flex-col gap-2"
         onSubmit={(event) => {

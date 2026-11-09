@@ -26,7 +26,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/e2e/internal/testutil"
-	"go.probo.inc/probo/pkg/prosemirror"
 	"go.probo.inc/probo/pkg/richtext"
 )
 

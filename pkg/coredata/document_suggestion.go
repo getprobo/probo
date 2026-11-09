@@ -162,27 +162,6 @@ func (s *DocumentSuggestion) LoadByID(
 	scope Scoper,
 	suggestionID gid.GID,
 ) error {
-	return s.loadByID(ctx, conn, scope, suggestionID, false)
-}
-
-// LoadByIDForUpdate is LoadByID under FOR UPDATE so concurrent accept/reject
-// decisions serialize on the same row.
-func (s *DocumentSuggestion) LoadByIDForUpdate(
-	ctx context.Context,
-	tx pg.Tx,
-	scope Scoper,
-	suggestionID gid.GID,
-) error {
-	return s.loadByID(ctx, tx, scope, suggestionID, true)
-}
-
-func (s *DocumentSuggestion) loadByID(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	suggestionID gid.GID,
-	forUpdate bool,
-) error {
 	q := `
 SELECT
     id,
@@ -202,10 +181,47 @@ WHERE
 LIMIT 1
 `
 
-	if forUpdate {
-		q += "\nFOR UPDATE"
-	}
+	return s.collectByID(ctx, conn, scope, suggestionID, q)
+}
 
+// LoadByIDForUpdate is LoadByID under FOR UPDATE so concurrent accept/reject
+// decisions serialize on the same row.
+func (s *DocumentSuggestion) LoadByIDForUpdate(
+	ctx context.Context,
+	tx pg.Tx,
+	scope Scoper,
+	suggestionID gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    document_id,
+    author_profile_id,
+    status,
+    created_at,
+    updated_at,
+    resolved_at,
+    resolved_by_profile_id
+FROM
+    document_suggestions
+WHERE
+    %s
+    AND id = @suggestion_id
+LIMIT 1
+FOR UPDATE
+`
+
+	return s.collectByID(ctx, tx, scope, suggestionID, q)
+}
+
+func (s *DocumentSuggestion) collectByID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	suggestionID gid.GID,
+	q string,
+) error {
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"suggestion_id": suggestionID}
@@ -226,6 +242,62 @@ LIMIT 1
 	}
 
 	*s = suggestion
+
+	return nil
+}
+
+func (s *DocumentSuggestions) LoadOpenByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	documentID gid.GID,
+	suggestionIDs []gid.GID,
+) error {
+	if len(suggestionIDs) == 0 {
+		*s = nil
+		return nil
+	}
+
+	q := `
+SELECT
+    id,
+    organization_id,
+    document_id,
+    author_profile_id,
+    status,
+    created_at,
+    updated_at,
+    resolved_at,
+    resolved_by_profile_id
+FROM
+    document_suggestions
+WHERE
+    %s
+    AND document_id = @document_id
+    AND status = @open_status
+    AND id = ANY(@suggestion_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"document_id":    documentID,
+		"open_status":    DocumentSuggestionStatusOpen,
+		"suggestion_ids": suggestionIDs,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query open document suggestions: %w", err)
+	}
+
+	suggestions, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[DocumentSuggestion])
+	if err != nil {
+		return fmt.Errorf("cannot collect open document suggestions: %w", err)
+	}
+
+	*s = suggestions
 
 	return nil
 }
@@ -280,6 +352,44 @@ WHERE
 	}
 
 	*s = suggestions
+
+	return nil
+}
+
+func (s *DocumentSuggestions) RejectOpenByDocumentID(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	documentID gid.GID,
+	now time.Time,
+) error {
+	q := `
+UPDATE
+    document_suggestions
+SET
+    status = @rejected_status,
+    resolved_at = @resolved_at,
+    updated_at = @updated_at
+WHERE
+    %s
+    AND document_id = @document_id
+    AND status = @open_status
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"document_id":     documentID,
+		"rejected_status": DocumentSuggestionStatusRejected,
+		"open_status":     DocumentSuggestionStatusOpen,
+		"resolved_at":     now,
+		"updated_at":      now,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot reject open document suggestions: %w", err)
+	}
 
 	return nil
 }

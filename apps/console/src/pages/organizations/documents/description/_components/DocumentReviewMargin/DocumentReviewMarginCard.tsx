@@ -19,11 +19,10 @@
 // SOFTWARE.
 
 import { type ReactNode } from "react";
-import { useTranslation } from "react-i18next";
 import { tv } from "tailwind-variants/lite";
 
 const reviewCard = tv({
-  base: "relative rounded-3 border bg-sand-1 p-3",
+  base: "group/review-card relative rounded-3 border bg-sand-1 p-3",
   variants: {
     active: {
       true: "border-sand-8 shadow-2",
@@ -34,26 +33,31 @@ const reviewCard = tv({
 
 export interface DocumentReviewMarginCardProps {
   active: boolean;
+  label: string;
   children: ReactNode;
-  onActivate: () => void;
+  onActivate?: () => void;
 }
 
 export function DocumentReviewMarginCard({
   active,
+  label,
   children,
   onActivate,
 }: DocumentReviewMarginCardProps) {
-  const { t } = useTranslation();
   return (
     <article className={reviewCard({ active })}>
-      <button
-        type="button"
-        aria-label={t("documentDescriptionPage.review.selectCard")}
-        aria-pressed={active}
-        className="absolute inset-0 z-0 rounded-3 outline-none focus-visible:ring-2 focus-visible:ring-sand-8 focus-visible:ring-offset-1 focus-visible:ring-offset-sand-1"
-        onMouseDown={event => event.preventDefault()}
-        onClick={onActivate}
-      />
+      {onActivate
+        ? (
+            <button
+              type="button"
+              aria-label={label}
+              aria-pressed={active}
+              className="absolute inset-0 z-0 rounded-3 outline-none focus-visible:ring-2 focus-visible:ring-sand-8 focus-visible:ring-offset-1 focus-visible:ring-offset-sand-1"
+              onMouseDown={event => event.preventDefault()}
+              onClick={onActivate}
+            />
+          )
+        : null}
       <div className="pointer-events-none relative z-10 flex flex-col gap-2 [&_a]:pointer-events-auto [&_button]:pointer-events-auto [&_input]:pointer-events-auto [&_label]:pointer-events-auto [&_textarea]:pointer-events-auto">
         {children}
       </div>

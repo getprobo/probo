@@ -111,27 +111,6 @@ func (t *DocumentCommentThread) LoadByID(
 	scope Scoper,
 	threadID gid.GID,
 ) error {
-	return t.loadByID(ctx, conn, scope, threadID, false)
-}
-
-// LoadByIDForUpdate is LoadByID under FOR UPDATE so a reply insert and a
-// concurrent resolve serialize on the same thread row.
-func (t *DocumentCommentThread) LoadByIDForUpdate(
-	ctx context.Context,
-	tx pg.Tx,
-	scope Scoper,
-	threadID gid.GID,
-) error {
-	return t.loadByID(ctx, tx, scope, threadID, true)
-}
-
-func (t *DocumentCommentThread) loadByID(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	threadID gid.GID,
-	forUpdate bool,
-) error {
 	q := `
 SELECT
     id,
@@ -153,10 +132,49 @@ WHERE
 LIMIT 1
 `
 
-	if forUpdate {
-		q += "\nFOR UPDATE"
-	}
+	return t.collectByID(ctx, conn, scope, threadID, q)
+}
 
+// LoadByIDForUpdate is LoadByID under FOR UPDATE so a reply insert and a
+// concurrent resolve serialize on the same thread row.
+func (t *DocumentCommentThread) LoadByIDForUpdate(
+	ctx context.Context,
+	tx pg.Tx,
+	scope Scoper,
+	threadID gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    document_id,
+    suggestion_id,
+    anchor_start,
+    anchor_end,
+    anchor_quote,
+    resolved_at,
+    resolved_by_profile_id,
+    created_at,
+    updated_at
+FROM
+    document_comment_threads
+WHERE
+    %s
+    AND id = @thread_id
+LIMIT 1
+FOR UPDATE
+`
+
+	return t.collectByID(ctx, tx, scope, threadID, q)
+}
+
+func (t *DocumentCommentThread) collectByID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	threadID gid.GID,
+	q string,
+) error {
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"thread_id": threadID}
@@ -285,6 +303,42 @@ WHERE
 	}
 
 	*t = threads
+
+	return nil
+}
+
+func (t *DocumentCommentThreads) ResolveOpenBySuggestionDocumentID(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	documentID gid.GID,
+	now time.Time,
+) error {
+	q := `
+UPDATE
+    document_comment_threads
+SET
+    resolved_at = @resolved_at,
+    updated_at = @updated_at
+WHERE
+    %s
+    AND document_id = @document_id
+    AND suggestion_id IS NOT NULL
+    AND resolved_at IS NULL
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"document_id": documentID,
+		"resolved_at": now,
+		"updated_at":  now,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot resolve open suggestion comment threads: %w", err)
+	}
 
 	return nil
 }

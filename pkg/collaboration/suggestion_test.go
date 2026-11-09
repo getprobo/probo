@@ -132,6 +132,8 @@ func TestCommentChangeAllowed_RejectsUntrackedSuggestionID(t *testing.T) {
 	assert.False(t, CommentChangeAllowed(before, inserted, map[string]bool{}))
 	assert.False(t, CommentChangeAllowed(before, inserted, map[string]bool{"other": true}))
 	assert.True(t, CommentChangeAllowed(before, inserted, map[string]bool{"phantom": true}))
+	assert.Equal(t, []string{"phantom"}, NewSuggestionIDs(before, inserted))
+	assert.Empty(t, NewSuggestionIDs(inserted, inserted))
 }
 
 func TestCommentChangeAllowed_ParagraphSplit(t *testing.T) {
@@ -337,7 +339,7 @@ func TestQuoteCursors_ResolvesAcrossParagraphs(t *testing.T) {
 }
 
 func textBetween(spans []automerge.Span, start uint32, end uint32) string {
-	var builder strings.Builder
+	selected := make([]uint16, 0, end-start)
 
 	var absolute uint32
 	for _, span := range spans {
@@ -347,14 +349,14 @@ func textBetween(spans []automerge.Span, start uint32, end uint32) string {
 
 		for _, unit := range utf16.Encode([]rune(span.Text)) {
 			if absolute >= start && absolute < end {
-				builder.WriteString(string(utf16.Decode([]uint16{unit})))
+				selected = append(selected, unit)
 			}
 
 			absolute++
 		}
 	}
 
-	return builder.String()
+	return string(utf16.Decode(selected))
 }
 
 func TestMaterialize_DropsInsertionsAndOmitsSuggestionMarks(t *testing.T) {

@@ -65,6 +65,13 @@ func NewClientConn(config ClientConfig, sync SyncSession) (*ClientConn, error) {
 		return nil, fmt.Errorf("client connection requires a document id")
 	}
 
+	canonicalID, err := CanonicalDocumentID(config.DocumentID)
+	if err != nil {
+		return nil, fmt.Errorf("client connection document id: %w", err)
+	}
+
+	config.DocumentID = canonicalID
+
 	return &ClientConn{
 		config:       config,
 		sync:         sync,

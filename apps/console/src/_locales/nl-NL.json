@@ -563,7 +563,8 @@
       "suggestionBy": "Voorstel van {{name}}",
       "commentFailed": "De opmerking kon niet worden toegevoegd",
       "suggestionFailed": "Het voorstel kon niet worden gestart",
-      "selectCard": "Revisie-item selecteren"
+      "selectComment": "Opmerking van {{name}} selecteren",
+      "selectSuggestion": "Voorstel van {{name}} selecteren"
     }
   },
   "documentSignaturesPage": {

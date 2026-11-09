@@ -40,7 +40,6 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
-	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/jsonx"
@@ -105,14 +104,14 @@ type (
 		PublishEphemeral func(ctx context.Context, frame []byte) error
 		// Session is the handshake already completed with this client. The
 		// peer reply has been written; document loading must not delay it.
-		Session           *collabpkg.ServerSession
-		DisplayName       string
-		IdentityID        string
-		AvatarURL         string
-		RecordActors      func(ctx context.Context, actors [][]byte) error
-		Incoming          <-chan Incoming
-		OpenSuggestionIDs func(ctx context.Context) (map[string]bool, error)
-		CanUpdate         bool
+		Session         *collabpkg.ServerSession
+		DisplayName     string
+		IdentityID      string
+		AvatarURL       string
+		RecordActors    func(ctx context.Context, actors [][]byte) error
+		Incoming        <-chan Incoming
+		OpenSuggestions func(ctx context.Context, ids []string) (map[string]bool, error)
+		CanUpdate       bool
 	}
 )
 
@@ -264,8 +263,8 @@ func (h *Handler) HandleRepo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !canUpdate {
-		config.OpenSuggestionIDs = func(ctx context.Context) (map[string]bool, error) {
-			return h.loadOpenSuggestionIDs(ctx, scope, documentID)
+		config.OpenSuggestions = func(ctx context.Context, ids []string) (map[string]bool, error) {
+			return h.Probo.Documents.LoadOpenSuggestionIDs(ctx, scope, documentID, ids)
 		}
 	}
 
@@ -326,44 +325,6 @@ func insufficientAuthorization(err error) bool {
 	}
 
 	return false
-}
-
-func (h *Handler) loadOpenSuggestionIDs(
-	ctx context.Context,
-	scope coredata.Scoper,
-	documentID gid.GID,
-) (map[string]bool, error) {
-	status := coredata.DocumentSuggestionStatusOpen
-	filter := coredata.NewDocumentSuggestionFilter(&status)
-
-	suggestions, err := page.LoadAll(
-		ctx,
-		page.OrderBy[coredata.DocumentSuggestionOrderField]{
-			Field:     coredata.DocumentSuggestionOrderFieldCreatedAt,
-			Direction: page.OrderDirectionAsc,
-		},
-		func(
-			ctx context.Context,
-			cursor *page.Cursor[coredata.DocumentSuggestionOrderField],
-		) ([]*coredata.DocumentSuggestion, error) {
-			result, err := h.Probo.Documents.ListSuggestions(ctx, scope, documentID, cursor, filter)
-			if err != nil {
-				return nil, err
-			}
-
-			return result.Data, nil
-		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf("cannot load open document suggestions: %w", err)
-	}
-
-	ids := make(map[string]bool, len(suggestions))
-	for _, suggestion := range suggestions {
-		ids[suggestion.ID.String()] = true
-	}
-
-	return ids, nil
 }
 
 func (h *Handler) releaseSeedClaim(
@@ -911,7 +872,11 @@ func applyRepoFrame(
 
 	kind, kindErr := collabpkg.FrameKind(data)
 	if kindErr != nil {
-		return nil, nil, fmt.Errorf("cannot read repo frame type: %w", kindErr)
+		return restoreCommentOnlySpans(
+			lease,
+			beforeSpans,
+			fmt.Errorf("cannot read repo frame type: %w", kindErr),
+		)
 	}
 
 	frameType := collabpkg.MessageType(kind)
@@ -921,14 +886,23 @@ func applyRepoFrame(
 
 	afterSpans, spanErr := collaboration.BodySpans(lease.Collaboration().Document)
 	if spanErr != nil {
-		return nil, nil, fmt.Errorf("cannot read collaboration spans: %w", spanErr)
+		return restoreCommentOnlySpans(
+			lease,
+			beforeSpans,
+			fmt.Errorf("cannot read collaboration spans: %w", spanErr),
+		)
 	}
 
-	var openSuggestionIDs map[string]bool
-	if config.OpenSuggestionIDs != nil {
-		openSuggestionIDs, err = config.OpenSuggestionIDs(ctx)
+	openSuggestionIDs := map[string]bool{}
+	newIDs := collaboration.NewSuggestionIDs(beforeSpans, afterSpans)
+	if len(newIDs) > 0 && config.OpenSuggestions != nil {
+		openSuggestionIDs, err = config.OpenSuggestions(ctx, newIDs)
 		if err != nil {
-			return nil, nil, fmt.Errorf("cannot load open collaboration suggestions: %w", err)
+			return restoreCommentOnlySpans(
+				lease,
+				beforeSpans,
+				fmt.Errorf("cannot load open collaboration suggestions: %w", err),
+			)
 		}
 	}
 
@@ -936,12 +910,8 @@ func applyRepoFrame(
 		return reply, fanout, nil
 	}
 
-	if err := collaboration.WriteBodySpans(lease.Collaboration().Document, beforeSpans); err != nil {
-		return nil, nil, fmt.Errorf("cannot restore collaboration spans: %w", err)
-	}
-
-	if _, err := lease.Collaboration().Document.Commit("Reject direct edit", time.Now()); err != nil && !errors.Is(err, automerge.ErrNoOperations) {
-		return nil, nil, fmt.Errorf("cannot commit restored collaboration spans: %w", err)
+	if err := restoreCommentOnlyDocument(lease, beforeSpans); err != nil {
+		return nil, nil, err
 	}
 
 	restored, syncErr := conn.SyncChanged()
@@ -952,6 +922,30 @@ func applyRepoFrame(
 	reply = append(reply, restored...)
 
 	return reply, fanout, nil
+}
+
+func restoreCommentOnlySpans(
+	lease *RoomLease,
+	beforeSpans []automerge.Span,
+	err error,
+) ([][]byte, []byte, error) {
+	if restoreErr := restoreCommentOnlyDocument(lease, beforeSpans); restoreErr != nil {
+		return nil, nil, restoreErr
+	}
+
+	return nil, nil, err
+}
+
+func restoreCommentOnlyDocument(lease *RoomLease, beforeSpans []automerge.Span) error {
+	if err := collaboration.WriteBodySpans(lease.Collaboration().Document, beforeSpans); err != nil {
+		return fmt.Errorf("cannot restore collaboration spans: %w", err)
+	}
+
+	if _, err := lease.Collaboration().Document.Commit("Reject direct edit", time.Now()); err != nil && !errors.Is(err, automerge.ErrNoOperations) {
+		return fmt.Errorf("cannot commit restored collaboration spans: %w", err)
+	}
+
+	return nil
 }
 
 func refreshDocument(

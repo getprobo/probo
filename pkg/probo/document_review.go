@@ -675,6 +675,50 @@ func (s *DocumentService) SetCommentThreadResolved(
 	return thread, nil
 }
 
+func (s *DocumentService) LoadOpenSuggestionIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	documentID gid.GID,
+	suggestionIDs []string,
+) (map[string]bool, error) {
+	if len(suggestionIDs) == 0 {
+		return map[string]bool{}, nil
+	}
+
+	ids := make([]gid.GID, 0, len(suggestionIDs))
+	for _, raw := range suggestionIDs {
+		id, err := gid.ParseGID(raw)
+		if err != nil || id.EntityType() != coredata.DocumentSuggestionEntityType {
+			continue
+		}
+
+		ids = append(ids, id)
+	}
+
+	if len(ids) == 0 {
+		return map[string]bool{}, nil
+	}
+
+	var suggestions coredata.DocumentSuggestions
+	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		if err := suggestions.LoadOpenByIDs(ctx, conn, scope, documentID, ids); err != nil {
+			return fmt.Errorf("cannot load open document suggestions: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	open := make(map[string]bool, len(suggestions))
+	for _, suggestion := range suggestions {
+		open[suggestion.ID.String()] = true
+	}
+
+	return open, nil
+}
+
 func (s *DocumentService) ListSuggestions(
 	ctx context.Context,
 	scope coredata.Scoper,

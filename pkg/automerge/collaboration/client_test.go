@@ -214,6 +214,65 @@ func TestClientConn_PushesLocalEdits(t *testing.T) {
 	assert.Equal(t, "from the agent", value)
 }
 
+func TestClientConn_AcceptsAutomergeURLAlias(t *testing.T) {
+	t.Parallel()
+
+	documentID := collaboration.DeriveDocumentID("alias-seed")
+
+	client, err := automerge.New(actor(2))
+	require.NoError(t, err)
+	defer func() { _ = client.Close() }()
+
+	sync, err := client.NewSyncState()
+	require.NoError(t, err)
+	defer func() { _ = sync.Close() }()
+
+	conn, err := collaboration.NewClientConn(
+		collaboration.ClientConfig{
+			ClientPeerID: "agent",
+			DocumentID:   collaboration.AutomergeURL(documentID),
+			StartsEmpty:  true,
+		},
+		sync,
+	)
+	require.NoError(t, err)
+
+	peer, err := collaboration.EncodePeerFrame(
+		collaboration.PeerFrame{
+			Type:                    collaboration.FramePeer,
+			SenderID:                "server",
+			TargetID:                "agent",
+			SelectedProtocolVersion: collaboration.ProtocolV1,
+		},
+	)
+	require.NoError(t, err)
+
+	inbound, err := conn.Receive(peer)
+	require.NoError(t, err)
+	require.NotEmpty(t, inbound.Outgoing)
+
+	outbound, err := collaboration.DecodeMessage(inbound.Outgoing[0])
+	require.NoError(t, err)
+	assert.Equal(t, documentID, outbound.DocumentID)
+
+	ephemeral, err := collaboration.EncodeMessage(
+		collaboration.Message{
+			Type:       collaboration.MessageEphemeral,
+			SenderID:   "server",
+			TargetID:   "agent",
+			DocumentID: documentID,
+			SessionID:  "session-1",
+			Count:      1,
+			Data:       []byte("presence"),
+		},
+	)
+	require.NoError(t, err)
+
+	inbound, err = conn.Receive(ephemeral)
+	require.NoError(t, err)
+	require.NotNil(t, inbound.Ephemeral)
+}
+
 // TestClientConn_FirstMessageIsRequestWhenEmpty checks the request/sync
 // selection an empty client uses for its first outbound message.
 func TestClientConn_FirstMessageIsRequestWhenEmpty(t *testing.T) {

@@ -2244,6 +2244,7 @@ func (s *DocumentService) DeleteDraft(
 	documentID gid.GID,
 ) (*coredata.Document, error) {
 	document := &coredata.Document{}
+	discarded := false
 
 	err := s.svc.pg.WithTx(
 		ctx,
@@ -2279,12 +2280,13 @@ func (s *DocumentService) DeleteDraft(
 			}
 
 			previous := *document
+			now := time.Now()
 			document.Title = published.Title
 			document.Classification = published.Classification
 			document.DocumentType = published.DocumentType
 			document.Orientation = published.Orientation
 			document.Content = published.Content
-			document.UpdatedAt = time.Now()
+			document.UpdatedAt = now
 
 			if err := s.collaboration.PutContent(
 				ctx,
@@ -2295,6 +2297,16 @@ func (s *DocumentService) DeleteDraft(
 				collaboration.WithDiscardOpenSuggestions(),
 			); err != nil {
 				return fmt.Errorf("cannot restore published content: %w", err)
+			}
+
+			var suggestions coredata.DocumentSuggestions
+			if err := suggestions.RejectOpenByDocumentID(ctx, tx, scope, document.ID, now); err != nil {
+				return err
+			}
+
+			var threads coredata.DocumentCommentThreads
+			if err := threads.ResolveOpenBySuggestionDocumentID(ctx, tx, scope, document.ID, now); err != nil {
+				return err
 			}
 
 			if err := document.Update(ctx, tx, scope); err != nil {
@@ -2319,11 +2331,17 @@ func (s *DocumentService) DeleteDraft(
 				return fmt.Errorf("cannot emit document updated webhook: %w", err)
 			}
 
+			discarded = true
+
 			return nil
 		},
 	)
 	if err != nil {
 		return nil, err
+	}
+
+	if discarded {
+		s.notifyReview(ctx, document.ID)
 	}
 
 	return document, nil

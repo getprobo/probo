@@ -676,6 +676,22 @@ func suggestionSpanIDs(spans []automerge.Span) map[string]bool {
 	return ids
 }
 
+// NewSuggestionIDs returns suggestion ids that appear in after but not in before.
+func NewSuggestionIDs(before []automerge.Span, after []automerge.Span) []string {
+	beforeIDs := suggestionSpanIDs(before)
+	ids := make([]string, 0)
+
+	for id := range suggestionSpanIDs(after) {
+		if beforeIDs[id] {
+			continue
+		}
+
+		ids = append(ids, id)
+	}
+
+	return ids
+}
+
 func splitMarkerIDs(spans []automerge.Span) map[string]bool {
 	ids := map[string]bool{}
 
@@ -710,13 +726,7 @@ func newSuggestionsTracked(
 	after []automerge.Span,
 	openSuggestionIDs map[string]bool,
 ) bool {
-	beforeIDs := suggestionSpanIDs(before)
-
-	for id := range suggestionSpanIDs(after) {
-		if beforeIDs[id] {
-			continue
-		}
-
+	for _, id := range NewSuggestionIDs(before, after) {
 		if !openSuggestionIDs[id] {
 			return false
 		}

@@ -154,7 +154,7 @@ export function DocumentReviewMarginComments({
                 />
               )}
           {active && profileId === node.author.id && editingId !== node.id && (
-            <div className="mt-1 flex gap-2 text-1 text-sand-11 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100">
+            <div className="mt-1 flex gap-2 text-1 text-sand-11 opacity-0 group-hover/review-card:opacity-100 group-focus-within/review-card:opacity-100">
               <button
                 type="button"
                 onClick={() => {
