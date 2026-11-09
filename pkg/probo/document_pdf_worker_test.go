@@ -120,11 +120,21 @@ func newPublicationPDFVersion(
 		func() {
 			assert.NoError(
 				t,
-				client.WithConn(
+				client.WithTx(
 					context.Background(),
-					func(ctx context.Context, conn pg.Querier) error {
-						_, err := conn.Exec(ctx, `DELETE FROM organizations WHERE id = $1`, organizationID)
-						return err
+					func(ctx context.Context, tx pg.Tx) error {
+						if _, err := tx.Exec(ctx, `DELETE FROM organizations WHERE id = $1`, organizationID); err != nil {
+							return err
+						}
+						if _, err := tx.Exec(ctx, `DELETE FROM files WHERE organization_id = $1`, organizationID); err != nil {
+							return err
+						}
+						var remaining int
+						if err := tx.QueryRow(ctx, `SELECT COUNT(*) FROM files WHERE organization_id = $1`, organizationID).Scan(&remaining); err != nil {
+							return err
+						}
+						assert.Zero(t, remaining, "publication PDF fixtures must not leave file records")
+						return nil
 					},
 				),
 			)
