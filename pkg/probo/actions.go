@@ -124,15 +124,13 @@ const (
 	ActionEvidenceDelete = "core:evidence:delete"
 
 	// Document actions
-	ActionDocumentGet         = "core:document:get"
-	ActionDocumentList        = "core:document:list"
-	ActionDocumentCreate      = "core:document:create"
-	ActionDocumentUpdate      = "core:document:update"
-	ActionDocumentDelete      = "core:document:delete"
-	ActionDocumentArchive     = "core:document:archive"
-	ActionDocumentUnarchive   = "core:document:unarchive"
-	ActionDocumentDeleteDraft = "core:document:delete-draft"
-
+	ActionDocumentGet       = "core:document:get"
+	ActionDocumentList      = "core:document:list"
+	ActionDocumentCreate    = "core:document:create"
+	ActionDocumentUpdate    = "core:document:update"
+	ActionDocumentDelete    = "core:document:delete"
+	ActionDocumentArchive   = "core:document:archive"
+	ActionDocumentUnarchive = "core:document:unarchive"
 	// Document comment actions
 	ActionDocumentComment        = "core:document:comment"
 	ActionDocumentCommentUpdate  = "core:document:comment-update"

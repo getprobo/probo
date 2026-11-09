@@ -140,7 +140,6 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
 
   const publishDialogRef = useRef<PublishDialogRef>(null);
   const [approvalRequestedAt, setApprovalRequestedAt] = useState(0);
-  const [versionChangedAt, setVersionChangedAt] = useState(0);
 
   const handlePublishOrApproval = useCallback(() => {
     onRefetch();
@@ -183,20 +182,6 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
     }
   }, [versionId, currentTab, navigate, organizationId, document.id, onRefetch]);
 
-  // For structural version changes (delete draft, revert).
-  // Refreshes layout data AND remounts the editor via versionChangedAt.
-  const handleVersionChanged = useCallback(() => {
-    if (versionId) {
-      void navigate(
-        `/organizations/${organizationId}/governance/documents/${document.id}/${currentTab}`,
-        { replace: true },
-      );
-    } else {
-      onRefetch();
-      setVersionChangedAt(Date.now());
-    }
-  }, [versionId, currentTab, navigate, organizationId, document.id, onRefetch]);
-
   const urlPrefix = versionId
     ? `/organizations/${organizationId}/governance/documents/${document.id}/versions/${versionId}`
     : `/organizations/${organizationId}/governance/documents/${document.id}`;
@@ -218,8 +203,6 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
             <DocumentActionsDropdown
               documentFragmentRef={document}
               versionFragmentRef={snapshot ?? published}
-              isLive={isLive}
-              onVersionChanged={handleVersionChanged}
             />
           </div>
         </div>
@@ -288,7 +271,6 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
             onRefetch,
             onDocumentUpdated: handleDocumentUpdated,
             approvalRequestedAt,
-            versionChangedAt,
             isEditable,
           }}
         />

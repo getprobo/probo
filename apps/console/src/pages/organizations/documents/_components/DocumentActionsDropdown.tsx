@@ -28,7 +28,6 @@ import { useNavigate } from "react-router";
 import { ConnectionHandler, graphql } from "relay-runtime";
 
 import type { DocumentActionsDropdown_archiveMutation } from "#/__generated__/core/DocumentActionsDropdown_archiveMutation.graphql";
-import type { DocumentActionsDropdown_deleteDocumentDraftMutation } from "#/__generated__/core/DocumentActionsDropdown_deleteDocumentDraftMutation.graphql";
 import type { DocumentActionsDropdown_documentFragment$key } from "#/__generated__/core/DocumentActionsDropdown_documentFragment.graphql";
 import type { DocumentActionsDropdown_exportVersionMutation } from "#/__generated__/core/DocumentActionsDropdown_exportVersionMutation.graphql";
 import type { DocumentActionsDropdown_unarchiveMutation } from "#/__generated__/core/DocumentActionsDropdown_unarchiveMutation.graphql";
@@ -45,11 +44,9 @@ const documentFragment = graphql`
     id
     title
     status
-    currentPublishedMajor
     canArchive: permission(action: "core:document:archive")
     canUnarchive: permission(action: "core:document:unarchive")
     canDelete: permission(action: "core:document:delete")
-    canDeleteDraft: permission(action: "core:document:delete-draft")
   }
 `;
 
@@ -87,19 +84,6 @@ const unarchiveDocumentMutation = graphql`
   }
 `;
 
-const deleteDocumentDraftMutation = graphql`
-  mutation DocumentActionsDropdown_deleteDocumentDraftMutation(
-    $input: DeleteDocumentDraftInput!
-  ) {
-    deleteDocumentDraft(input: $input) {
-      document {
-        id
-        status
-      }
-    }
-  }
-`;
-
 const versionFragment = graphql`
   fragment DocumentActionsDropdown_versionFragment on DocumentVersion {
     id
@@ -123,10 +107,8 @@ const exportDocumentVersionMutation = graphql`
 export function DocumentActionsDropdown(props: {
   documentFragmentRef: DocumentActionsDropdown_documentFragment$key;
   versionFragmentRef: DocumentActionsDropdown_versionFragment$key | null;
-  isLive: boolean;
-  onVersionChanged: () => void;
 }) {
-  const { documentFragmentRef, versionFragmentRef, isLive, onVersionChanged } = props;
+  const { documentFragmentRef, versionFragmentRef } = props;
 
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
@@ -144,8 +126,6 @@ export function DocumentActionsDropdown(props: {
     = useMutation<DocumentActionsDropdown_archiveMutation>(archiveDocumentMutation);
   const [unarchiveDocument, isUnarchiving]
     = useMutation<DocumentActionsDropdown_unarchiveMutation>(unarchiveDocumentMutation);
-  const [deleteDocumentDraft, isDeletingDraft]
-    = useMutation<DocumentActionsDropdown_deleteDocumentDraftMutation>(deleteDocumentDraftMutation);
   const [exportDocumentVersion, isExporting]
     = useMutation<DocumentActionsDropdown_exportVersionMutation>(exportDocumentVersionMutation);
 
@@ -191,36 +171,6 @@ export function DocumentActionsDropdown(props: {
         toast.add({ title: t("documentActions.errors.title"), description: error.message, type: "error" });
       },
     });
-  };
-
-  const handleDeleteDraft = () => {
-    confirm(
-      () =>
-        new Promise<void>((resolve) => {
-          deleteDocumentDraft({
-            variables: { input: { documentId: document.id } },
-            onCompleted(_, errors) {
-              if (errors?.length) {
-                toast.add({ title: t("documentActions.errors.title"), description: formatError(t("documentActions.errors.deleteDraft"), errors), type: "error" });
-              } else {
-                toast.add({ title: t("documentActions.messages.successTitle"), description: t("documentActions.messages.draftDeleted"), type: "success" });
-                onVersionChanged();
-                void navigate(`/organizations/${organizationId}/governance/documents/${document.id}/description`);
-              }
-              resolve();
-            },
-            onError(error) {
-              toast.add({ title: t("documentActions.errors.title"), description: error.message, type: "error" });
-              resolve();
-            },
-          });
-        }),
-      {
-        message: t("documentActions.confirmations.deleteDraft"),
-        variant: "danger",
-        label: t("documentActions.actions.deleteDraft"),
-      },
-    );
   };
 
   const documentsConnectionId = ConnectionHandler.getConnectionID(
@@ -295,15 +245,6 @@ export function DocumentActionsDropdown(props: {
         >
           {t("documentActions.actions.downloadPdf")}
         </DropdownItem>
-        {document.canDeleteDraft && isLive && document.currentPublishedMajor != null && (
-          <DropdownItem
-            icon={IconTrashCan}
-            disabled={isDeletingDraft}
-            onClick={handleDeleteDraft}
-          >
-            {t("documentActions.actions.deleteDraft")}
-          </DropdownItem>
-        )}
         {document.canArchive && document.status === "ACTIVE" && (
           <DropdownItem
             icon={IconArchive}

@@ -27,7 +27,6 @@ import (
 	"go.probo.inc/probo/pkg/cmd/document/comment"
 	"go.probo.inc/probo/pkg/cmd/document/create"
 	"go.probo.inc/probo/pkg/cmd/document/delete"
-	deletedraft "go.probo.inc/probo/pkg/cmd/document/delete-draft"
 	"go.probo.inc/probo/pkg/cmd/document/list"
 	listapprovaldecisions "go.probo.inc/probo/pkg/cmd/document/list-approval-decisions"
 	listapprovalquorums "go.probo.inc/probo/pkg/cmd/document/list-approval-quorums"
@@ -63,7 +62,6 @@ func NewCmdDocument(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(viewversion.NewCmdViewVersion(f))
 	cmd.AddCommand(viewhistorysnapshot.NewCmdViewHistorySnapshot(f))
 	cmd.AddCommand(restorehistory.NewCmdRestoreHistory(f))
-	cmd.AddCommand(deletedraft.NewCmdDeleteDraft(f))
 	cmd.AddCommand(publish.NewCmdPublish(f))
 	cmd.AddCommand(listapprovalquorums.NewCmdListApprovalQuorums(f))
 	cmd.AddCommand(viewapprovalquorum.NewCmdViewApprovalQuorum(f))

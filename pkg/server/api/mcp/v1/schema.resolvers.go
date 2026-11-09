@@ -4649,24 +4649,6 @@ func (r *Resolver) VoidDocumentVersionApprovalTool(ctx context.Context, req *mcp
 	}, nil
 }
 
-func (r *Resolver) DeleteDocumentDraftTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteDocumentDraftInput) (*mcp.CallToolResult, types.DeleteDocumentDraftOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionDocumentDeleteDraft)
-	if err != nil {
-		return nil, types.DeleteDocumentDraftOutput{}, err
-	}
-
-	svc := r.proboSvc
-
-	document, err := svc.Documents.DeleteDraft(ctx, scope, input.ID)
-	if err != nil {
-		return nil, types.DeleteDocumentDraftOutput{}, fmt.Errorf("cannot delete document draft: %w", err)
-	}
-
-	return nil, types.DeleteDocumentDraftOutput{
-		Document: types.NewDocument(document),
-	}, nil
-}
-
 func (r *Resolver) PublishStatementOfApplicabilityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.PublishStatementOfApplicabilityInput) (*mcp.CallToolResult, types.PublishStatementOfApplicabilityOutput, error) {
 	scope, err := r.Authorize(ctx, input.ID, probo.ActionStatementOfApplicabilityPublish)
 	if err != nil {

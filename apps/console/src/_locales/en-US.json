@@ -167,23 +167,19 @@
     "messages": {
       "successTitle": "Success",
       "archived": "Document archived successfully.",
-      "unarchived": "Document unarchived successfully.",
-      "draftDeleted": "Draft deleted successfully."
+      "unarchived": "Document unarchived successfully."
     },
     "errors": {
       "title": "Error",
       "archive": "Failed to archive document",
       "unarchive": "Failed to unarchive document",
-      "deleteDraft": "Failed to delete draft",
       "generatePdf": "Failed to generate PDF"
     },
     "confirmations": {
-      "archive": "This will archive the document \"{{title}}\". It will no longer be editable.",
-      "deleteDraft": "This will delete the current draft and revert to the last published version."
+      "archive": "This will archive the document \"{{title}}\". It will no longer be editable."
     },
     "actions": {
       "downloadPdf": "Download PDF",
-      "deleteDraft": "Delete draft",
       "archive": "Archive",
       "archiveDocument": "Archive document",
       "unarchiveDocument": "Unarchive document",

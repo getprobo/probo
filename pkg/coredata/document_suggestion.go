@@ -356,44 +356,6 @@ WHERE
 	return nil
 }
 
-func (s *DocumentSuggestions) RejectOpenByDocumentID(
-	ctx context.Context,
-	conn pg.Tx,
-	scope Scoper,
-	documentID gid.GID,
-	now time.Time,
-) error {
-	q := `
-UPDATE
-    document_suggestions
-SET
-    status = @rejected_status,
-    resolved_at = @resolved_at,
-    updated_at = @updated_at
-WHERE
-    %s
-    AND document_id = @document_id
-    AND status = @open_status
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"document_id":     documentID,
-		"rejected_status": DocumentSuggestionStatusRejected,
-		"open_status":     DocumentSuggestionStatusOpen,
-		"resolved_at":     now,
-		"updated_at":      now,
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	if _, err := conn.Exec(ctx, q, args); err != nil {
-		return fmt.Errorf("cannot reject open document suggestions: %w", err)
-	}
-
-	return nil
-}
-
 func (s *DocumentSuggestions) CountByDocumentID(
 	ctx context.Context,
 	conn pg.Querier,

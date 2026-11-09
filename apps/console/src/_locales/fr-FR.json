@@ -206,23 +206,19 @@
     "messages": {
       "successTitle": "Succès",
       "archived": "Document archivé avec succès.",
-      "unarchived": "Document désarchivé avec succès.",
-      "draftDeleted": "Brouillon supprimé avec succès."
+      "unarchived": "Document désarchivé avec succès."
     },
     "errors": {
       "title": "Erreur",
       "archive": "Échec de l’archivage du document",
       "unarchive": "Échec du désarchivage du document",
-      "deleteDraft": "Échec de la suppression du brouillon",
       "generatePdf": "Échec de la génération du PDF"
     },
     "confirmations": {
-      "archive": "Cette action archivera le document « {{title}} ». Il ne sera plus modifiable.",
-      "deleteDraft": "Cette action supprimera le brouillon actuel et rétablira la dernière version publiée."
+      "archive": "Cette action archivera le document « {{title}} ». Il ne sera plus modifiable."
     },
     "actions": {
       "downloadPdf": "Télécharger le PDF",
-      "deleteDraft": "Supprimer le brouillon",
       "archive": "Archiver",
       "archiveDocument": "Archiver le document",
       "unarchiveDocument": "Désarchiver le document",

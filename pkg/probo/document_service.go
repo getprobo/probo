@@ -80,9 +80,6 @@ type (
 	ErrDocumentVersionPendingApproval struct {
 	}
 
-	ErrDocumentDraftNotDeletable struct {
-	}
-
 	ErrDocumentNotArchived struct {
 	}
 
@@ -272,10 +269,6 @@ func (e ErrDocumentVersionNotCurrent) Error() string {
 
 func (e ErrDocumentVersionPendingApproval) Error() string {
 	return "cannot publish a document version that is pending approval"
-}
-
-func (e ErrDocumentDraftNotDeletable) Error() string {
-	return "latest version is not a deletable draft"
 }
 
 func (e ErrDocumentNotArchived) Error() string {
@@ -2234,114 +2227,6 @@ func (s *DocumentService) Update(
 	)
 	if err != nil {
 		return nil, err
-	}
-
-	return document, nil
-}
-
-func (s *DocumentService) DeleteDraft(
-	ctx context.Context, scope coredata.Scoper,
-	documentID gid.GID,
-) (*coredata.Document, error) {
-	document := &coredata.Document{}
-	discarded := false
-
-	err := s.svc.pg.WithTx(
-		ctx,
-		func(ctx context.Context, tx pg.Tx) error {
-			if err := document.LoadByID(ctx, tx, scope, documentID); err != nil {
-				return fmt.Errorf("cannot load document %q: %w", documentID, err)
-			}
-
-			if document.ArchivedAt != nil {
-				return &collaboration.ErrDocumentArchived{}
-			}
-
-			if err := s.ensureNoPendingApproval(ctx, scope, tx, documentID); err != nil {
-				return err
-			}
-
-			published := &coredata.DocumentVersion{}
-			if err := published.LoadLatestPublishedVersion(ctx, tx, scope, documentID); err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return &ErrDocumentDraftNotDeletable{}
-				}
-
-				return fmt.Errorf("cannot load published version: %w", err)
-			}
-
-			changed, err := s.liveDocumentChanged(ctx, scope, tx, document, published)
-			if err != nil {
-				return err
-			}
-
-			if !changed {
-				return nil
-			}
-
-			previous := *document
-			now := time.Now()
-			document.Title = published.Title
-			document.Classification = published.Classification
-			document.DocumentType = published.DocumentType
-			document.Orientation = published.Orientation
-			document.Content = published.Content
-			document.UpdatedAt = now
-
-			if err := s.collaboration.PutContent(
-				ctx,
-				tx,
-				scope,
-				document.ID,
-				published.Content,
-				collaboration.WithDiscardOpenSuggestions(),
-			); err != nil {
-				return fmt.Errorf("cannot restore published content: %w", err)
-			}
-
-			var suggestions coredata.DocumentSuggestions
-			if err := suggestions.RejectOpenByDocumentID(ctx, tx, scope, document.ID, now); err != nil {
-				return err
-			}
-
-			var threads coredata.DocumentCommentThreads
-			if err := threads.ResolveOpenBySuggestionDocumentID(ctx, tx, scope, document.ID, now); err != nil {
-				return err
-			}
-
-			if err := document.Update(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot restore published document: %w", err)
-			}
-
-			if err := document.UpdateContent(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot restore published document content: %w", err)
-			}
-
-			if err := s.emitDocumentEvent(
-				ctx,
-				scope,
-				tx,
-				document.ID,
-				coredata.WebhookEventTypeDocumentUpdated,
-				nil,
-				nil,
-				nil,
-				webhooktypes.NewDocument(&previous),
-			); err != nil {
-				return fmt.Errorf("cannot emit document updated webhook: %w", err)
-			}
-
-			discarded = true
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	if discarded {
-		s.notifyReview(ctx, document.ID)
 	}
 
 	return document, nil

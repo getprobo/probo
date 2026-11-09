@@ -205,23 +205,19 @@
     "messages": {
       "successTitle": "Succes",
       "archived": "Document succesvol gearchiveerd.",
-      "unarchived": "Document succesvol uit archief gehaald.",
-      "draftDeleted": "Concept succesvol verwijderd."
+      "unarchived": "Document succesvol uit archief gehaald."
     },
     "errors": {
       "title": "Fout",
       "archive": "Archiveren van document mislukt",
       "unarchive": "Uit archief halen van document mislukt",
-      "deleteDraft": "Verwijderen van concept mislukt",
       "generatePdf": "Genereren van PDF mislukt"
     },
     "confirmations": {
-      "archive": "Hiermee wordt het document \"{{title}}\" gearchiveerd. Het is dan niet meer bewerkbaar.",
-      "deleteDraft": "Hiermee wordt het huidige concept verwijderd en teruggezet naar de laatst gepubliceerde versie."
+      "archive": "Hiermee wordt het document \"{{title}}\" gearchiveerd. Het is dan niet meer bewerkbaar."
     },
     "actions": {
       "downloadPdf": "PDF downloaden",
-      "deleteDraft": "Concept verwijderen",
       "archive": "Archiveren",
       "archiveDocument": "Document archiveren",
       "unarchiveDocument": "Document uit archief halen",

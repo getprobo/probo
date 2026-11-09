@@ -109,9 +109,8 @@ const updateContentMutation = graphql`
 
 export function DocumentDescriptionPage(props: {
   queryRef: PreloadedQuery<DocumentDescriptionPageQuery>;
-  versionChangedAt: number;
 }) {
-  const { queryRef, versionChangedAt } = props;
+  const { queryRef } = props;
 
   const { t } = useTranslation();
   const toast = useToast();
@@ -337,42 +336,9 @@ export function DocumentDescriptionPage(props: {
       active: thread.id === activeThreadId || thread.id === "draft",
     })), [activeThreadId, reviewThreads]);
 
-  // The editor key must change on explicit actions (delete draft, edit
-  // title/type) but NOT on auto-save side effects (cursor preservation).
-  // We track a "data generation" that only increments when an explicit
-  // action (versionChangedAt change) is followed by fresh data arriving
-  // (currentVersion.id change). This uses React's "adjust state during
-  // render" pattern so we avoid refs-during-render and setState-in-effects.
-  const [prevVCA, setPrevVCA] = useState(versionChangedAt);
-  const [prevVersionId, setPrevVersionId] = useState(editorIdentity);
-  const [dataGeneration, setDataGeneration] = useState(0);
-  const [pendingExplicit, setPendingExplicit] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [historyQueryRef, loadHistoryQuery]
     = useQueryLoader<DocumentHistoryPanelQuery>(documentHistoryPanelQuery);
-
-  if (versionChangedAt !== prevVCA) {
-    setPrevVCA(versionChangedAt);
-    if (editorIdentity !== prevVersionId) {
-      // Both changed at once — data was already available.
-      setPrevVersionId(editorIdentity);
-      setDataGeneration(g => g + 1);
-      setPendingExplicit(false);
-    } else {
-      // Explicit action fired but data hasn't arrived yet.
-      setPendingExplicit(true);
-    }
-  } else if (editorIdentity !== prevVersionId) {
-    setPrevVersionId(editorIdentity);
-    if (pendingExplicit) {
-      // Fresh data arrived for a pending explicit action — remount.
-      setDataGeneration(g => g + 1);
-      setPendingExplicit(false);
-    }
-    // Otherwise auto-save changed the version — don't bump generation.
-  }
-
-  const editorKey = `${editorIdentity}-${dataGeneration}`;
   const historyAvailable = document.canViewHistory
     && supportsRichEditorCollaboration(content);
 
@@ -476,7 +442,7 @@ export function DocumentDescriptionPage(props: {
           ? (
               <>
                 <CollaborativeRichEditor
-                  key={editorKey}
+                  key={editorIdentity}
                   className="flex-1"
                   collaborationHandle={collaborationHandle}
                   margin={editor
@@ -534,7 +500,7 @@ export function DocumentDescriptionPage(props: {
             )
           : (
               <RichEditor
-                key={editorKey}
+                key={editorIdentity}
                 className="flex-1"
                 content={content}
                 data-theme="document"

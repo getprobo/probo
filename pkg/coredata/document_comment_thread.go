@@ -307,42 +307,6 @@ WHERE
 	return nil
 }
 
-func (t *DocumentCommentThreads) ResolveOpenBySuggestionDocumentID(
-	ctx context.Context,
-	conn pg.Tx,
-	scope Scoper,
-	documentID gid.GID,
-	now time.Time,
-) error {
-	q := `
-UPDATE
-    document_comment_threads
-SET
-    resolved_at = @resolved_at,
-    updated_at = @updated_at
-WHERE
-    %s
-    AND document_id = @document_id
-    AND suggestion_id IS NOT NULL
-    AND resolved_at IS NULL
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"document_id": documentID,
-		"resolved_at": now,
-		"updated_at":  now,
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	if _, err := conn.Exec(ctx, q, args); err != nil {
-		return fmt.Errorf("cannot resolve open suggestion comment threads: %w", err)
-	}
-
-	return nil
-}
-
 func (t *DocumentCommentThreads) CountByDocumentID(
 	ctx context.Context,
 	conn pg.Querier,

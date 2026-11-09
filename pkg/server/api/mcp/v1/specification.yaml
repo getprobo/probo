@@ -9440,23 +9440,6 @@ components:
         document_version:
           $ref: "#/components/schemas/DocumentVersion"
 
-    DeleteDocumentDraftInput:
-      type: object
-      required:
-        - id
-      properties:
-        id:
-          $ref: "#/components/schemas/GID"
-          description: Document ID
-
-    DeleteDocumentDraftOutput:
-      type: object
-      required:
-        - document
-      properties:
-        document:
-          $ref: "#/components/schemas/Document"
-
     ArchiveDocumentInput:
       type: object
       required:
@@ -20793,18 +20776,6 @@ tools:
       $ref: "#/components/schemas/UpdateDocumentInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateDocumentOutput"
-  - name: deleteDocumentDraft
-    title: Delete Document Draft
-    description: Delete the latest draft version of a document, reverting to the last published version. Cannot delete the initial v0.1 draft.
-    hints:
-      readonly: false
-      destructive: true
-      idempotent: true
-      openWorld: false
-    inputSchema:
-      $ref: "#/components/schemas/DeleteDocumentDraftInput"
-    outputSchema:
-      $ref: "#/components/schemas/DeleteDocumentDraftOutput"
   - name: archiveDocument
     title: Archive Document
     description: Archive a document to prevent further modifications

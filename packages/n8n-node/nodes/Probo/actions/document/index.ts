@@ -30,7 +30,6 @@ import * as getVersionOp from './getVersion.operation';
 import * as getLatestPublishedVersionIdOp from './getLatestPublishedVersionId.operation';
 import * as getAllVersionsOp from './getAllVersions.operation';
 import * as updateVersionOp from './updateVersion.operation';
-import * as deleteDraftVersionOp from './deleteDraftVersion.operation';
 import * as publishOp from './publish.operation';
 import * as voidApprovalOp from './voidApproval.operation';
 import * as getSignatureOp from './getSignature.operation';
@@ -79,12 +78,6 @@ export const description: INodeProperties[] = [
 				value: 'delete',
 				description: 'Delete a document',
 				action: 'Delete a document',
-			},
-			{
-				name: 'Delete Draft Version',
-				value: 'deleteDraftVersion',
-				description: 'Delete a draft document version',
-				action: 'Delete a draft document version',
 			},
 			{
 				name: 'Get',
@@ -214,7 +207,6 @@ export const description: INodeProperties[] = [
 	...getLatestPublishedVersionIdOp.description,
 	...getAllVersionsOp.description,
 	...updateVersionOp.description,
-	...deleteDraftVersionOp.description,
 	...publishOp.description,
 	...voidApprovalOp.description,
 	...getSignatureOp.description,
@@ -241,7 +233,6 @@ export {
 	getLatestPublishedVersionIdOp as getLatestPublishedVersionId,
 	getAllVersionsOp as getAllVersions,
 	updateVersionOp as updateVersion,
-	deleteDraftVersionOp as deleteDraftVersion,
 	publishOp as publish,
 	voidApprovalOp as voidApproval,
 	getSignatureOp as getSignature,

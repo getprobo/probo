@@ -681,7 +681,6 @@ type EmployeeDocumentVersionEdge
 extend type Mutation {
     createDocument(input: CreateDocumentInput!): CreateDocumentPayload!
     updateDocument(input: UpdateDocumentInput!): UpdateDocumentPayload!
-    deleteDocumentDraft(input: DeleteDocumentDraftInput!): DeleteDocumentDraftPayload!
     archiveDocument(input: ArchiveDocumentInput!): ArchiveDocumentPayload!
     unarchiveDocument(input: UnarchiveDocumentInput!): UnarchiveDocumentPayload!
     deleteDocument(input: DeleteDocumentInput!): DeleteDocumentPayload!
@@ -756,10 +755,6 @@ input UpdateDocumentInput {
     classification: DocumentClassification
     documentType: DocumentType
     defaultApproverIds: [ID!]
-}
-
-input DeleteDocumentDraftInput {
-    documentId: ID!
 }
 
 input ArchiveDocumentInput {
@@ -860,10 +855,6 @@ type UpdateDocumentPayload {
     document: Document!
     documentVersion: DocumentVersion
     documentVersionEdge: DocumentVersionEdge
-}
-
-type DeleteDocumentDraftPayload {
-    document: Document!
 }
 
 type ArchiveDocumentPayload {

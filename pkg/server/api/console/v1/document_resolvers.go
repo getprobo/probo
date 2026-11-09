@@ -1317,37 +1317,6 @@ func (r *mutationResolver) UpdateDocument(ctx context.Context, input types.Updat
 	}, nil
 }
 
-// DeleteDocumentDraft is the resolver for the deleteDocumentDraft field.
-func (r *mutationResolver) DeleteDocumentDraft(ctx context.Context, input types.DeleteDocumentDraftInput) (*types.DeleteDocumentDraftPayload, error) {
-	scope, err := r.authorize(ctx, input.DocumentID, probo.ActionDocumentDeleteDraft)
-	if err != nil {
-		return nil, err
-	}
-
-	document, err := r.probo.Documents.DeleteDraft(ctx, scope, input.DocumentID)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlx.NotFound(ctx, err)
-		}
-
-		if errNotDeletable, ok := errors.AsType[*probo.ErrDocumentDraftNotDeletable](err); ok {
-			return nil, gqlx.Conflict(ctx, errNotDeletable)
-		}
-
-		if errArchived, ok := errors.AsType[*collaboration.ErrDocumentArchived](err); ok {
-			return nil, gqlx.Conflict(ctx, errArchived)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot delete document draft", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
-	}
-
-	return &types.DeleteDocumentDraftPayload{
-		Document: types.NewDocument(document),
-	}, nil
-}
-
 // ArchiveDocument is the resolver for the archiveDocument field.
 func (r *mutationResolver) ArchiveDocument(ctx context.Context, input types.ArchiveDocumentInput) (*types.ArchiveDocumentPayload, error) {
 	scope, err := r.authorize(ctx, input.DocumentID, probo.ActionDocumentArchive)
