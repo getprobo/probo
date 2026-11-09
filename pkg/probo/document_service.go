@@ -59,6 +59,10 @@ import (
 
 const DocumentSignatureConsentText = "By clicking \"Review and sign\", I consent to sign this document electronically and agree that my electronic signature has the same legal validity as a handwritten signature."
 
+var (
+	errPublicationPDFClaimLost = errors.New("publication PDF claim lost")
+)
+
 type (
 	DocumentService struct {
 		svc               *Service
@@ -3753,17 +3757,22 @@ func (s *DocumentService) generateAndUploadPublicationPDF(
 				return fmt.Errorf("cannot insert file record: %w", err)
 			}
 
-			documentVersion.FileID = &fileRecord.ID
-
-			documentVersion.UpdatedAt = now
-			if err := documentVersion.Update(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot update document version with file ID: %w", err)
+			attached, err := documentVersion.AttachPDFFile(ctx, tx, scope, fileRecord.ID, now)
+			if err != nil {
+				return fmt.Errorf("cannot attach publication PDF: %w", err)
+			}
+			if !attached {
+				return errPublicationPDFClaimLost
 			}
 
 			return nil
 		},
 	)
 	if err != nil {
+		if errors.Is(err, errPublicationPDFClaimLost) {
+			return nil
+		}
+
 		return fmt.Errorf("cannot save publication PDF file record: %w", err)
 	}
 
