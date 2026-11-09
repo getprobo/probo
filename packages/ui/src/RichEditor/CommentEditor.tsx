@@ -23,13 +23,14 @@ import { richEditorCommentExtensions } from "./RichEditor";
 
 type CommentEditorProps = Omit<
   RichEditorProps,
-  "onUploadFile" | "attachments" | "onUploadingChange"
+  "onUploadFile" | "attachments" | "onUploadingChange" | "editorExtensions"
 >;
 
 export function CommentEditor(props: CommentEditorProps) {
   return (
     <BaseRichEditor
       {...props}
+      editorExtensions={undefined}
       extensions={richEditorCommentExtensions}
       blockMenu={false}
     />

@@ -638,15 +638,14 @@ export function DocumentReviewMargin(props: DocumentReviewMarginProps) {
     onActiveSuggestion(null);
   };
 
-  const bindCard = (node: HTMLDivElement | null) => {
-    if (node) {
-      const key = node.dataset.reviewCard;
-      if (key) cardRefs.current.set(key, node);
-      return;
-    }
-    for (const [key, element] of cardRefs.current) {
-      if (!element.isConnected) cardRefs.current.delete(key);
-    }
+  const bindCard = (node: HTMLDivElement) => {
+    const key = node.dataset.reviewCard;
+    if (!key) return;
+    const cards = cardRefs.current;
+    cards.set(key, node);
+    return () => {
+      if (cards.get(key) === node) cards.delete(key);
+    };
   };
 
   const commentCard = (thread: DocumentReviewMarginThread, active: boolean) => (
