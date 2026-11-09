@@ -50,13 +50,21 @@ func NewCompliancePortalAccessEdge(tca *coredata.CompliancePortalAccess, orderBy
 }
 
 func NewCompliancePortalAccess(tca *coredata.CompliancePortalAccess) *CompliancePortalAccess {
-	return &CompliancePortalAccess{
-		ID:              tca.ID,
-		OrganizationID:  tca.OrganizationID,
-		IdentityID:      tca.IdentityID,
-		State:           tca.State,
-		AuthenticatedAt: tca.AuthenticatedAt,
-		CreatedAt:       tca.CreatedAt,
-		UpdatedAt:       tca.UpdatedAt,
+	access := &CompliancePortalAccess{
+		ID:                  tca.ID,
+		OrganizationID:      tca.OrganizationID,
+		IdentityID:          tca.IdentityID,
+		State:               tca.State,
+		AuthenticatedAt:     tca.AuthenticatedAt,
+		NdaBypassed:         tca.NDABypassed,
+		RecordedNdaSignedAt: tca.RecordedNDASignedAt,
+		CreatedAt:           tca.CreatedAt,
+		UpdatedAt:           tca.UpdatedAt,
 	}
+
+	if tca.RecordedNDAFileID != nil {
+		access.RecordedNda = &File{ID: *tca.RecordedNDAFileID}
+	}
+
+	return access
 }

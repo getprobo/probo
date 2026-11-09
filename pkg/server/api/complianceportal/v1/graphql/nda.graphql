@@ -1,7 +1,16 @@
+enum ViewerNDADisposition {
+  SIGN
+  BYPASSED
+  RECORDED
+}
+
 type NonDisclosureAgreement {
   fileName: String!
   fileUrl: String! @goField(forceResolver: true)
   viewerSignature: ElectronicSignature @goField(forceResolver: true)
+  # SIGN until the visitor completes the in-portal signature. BYPASSED and
+  # RECORDED already satisfy the gate, even when a pending signature exists.
+  viewerDisposition: ViewerNDADisposition! @goField(forceResolver: true)
 }
 
 enum ElectronicSignatureStatus

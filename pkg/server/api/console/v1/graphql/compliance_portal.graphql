@@ -536,6 +536,9 @@ type CompliancePortalAccess implements Node {
     id: ID!
     state: CompliancePortalAccessState!
     authenticatedAt: Datetime
+    ndaBypassed: Boolean!
+    recordedNdaSignedAt: Datetime
+    recordedNda: File @goField(forceResolver: true)
     ndaSignature: ElectronicSignature @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
@@ -843,6 +846,15 @@ extend type Mutation {
     activateCompliancePortalAccess(
         input: ActivateCompliancePortalAccessInput!
     ): ActivateCompliancePortalAccessPayload!
+    setCompliancePortalAccessNDABypass(
+        input: SetCompliancePortalAccessNDABypassInput!
+    ): SetCompliancePortalAccessNDABypassPayload!
+    uploadCompliancePortalAccessRecordedNDA(
+        input: UploadCompliancePortalAccessRecordedNDAInput!
+    ): UploadCompliancePortalAccessRecordedNDAPayload!
+    deleteCompliancePortalAccessRecordedNDA(
+        input: DeleteCompliancePortalAccessRecordedNDAInput!
+    ): DeleteCompliancePortalAccessRecordedNDAPayload!
     deleteCompliancePortalAccess(
         input: DeleteCompliancePortalAccessInput!
     ): DeleteCompliancePortalAccessPayload!
@@ -1213,6 +1225,34 @@ type DeactivateCompliancePortalAccessPayload {
 }
 
 type ActivateCompliancePortalAccessPayload {
+    compliancePortalAccess: CompliancePortalAccess!
+}
+
+input SetCompliancePortalAccessNDABypassInput {
+    id: ID!
+    bypassed: Boolean!
+}
+
+type SetCompliancePortalAccessNDABypassPayload {
+    compliancePortalAccess: CompliancePortalAccess!
+}
+
+input UploadCompliancePortalAccessRecordedNDAInput {
+    compliancePortalAccessId: ID!
+    fileName: String!
+    file: Upload!
+    signedAt: Datetime!
+}
+
+type UploadCompliancePortalAccessRecordedNDAPayload {
+    compliancePortalAccess: CompliancePortalAccess!
+}
+
+input DeleteCompliancePortalAccessRecordedNDAInput {
+    compliancePortalAccessId: ID!
+}
+
+type DeleteCompliancePortalAccessRecordedNDAPayload {
     compliancePortalAccess: CompliancePortalAccess!
 }
 

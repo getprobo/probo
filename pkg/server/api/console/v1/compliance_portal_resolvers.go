@@ -484,6 +484,19 @@ func (r *compliancePortalResolver) Permission(ctx context.Context, obj *types.Co
 	return r.Resolver.Permission(ctx, obj, action)
 }
 
+// RecordedNda is the resolver for the recordedNda field.
+func (r *compliancePortalAccessResolver) RecordedNda(ctx context.Context, obj *types.CompliancePortalAccess) (*types.File, error) {
+	if _, err := r.authorize(ctx, obj.ID, management.ActionCompliancePortalAccessGet); err != nil {
+		return nil, err
+	}
+
+	if obj.RecordedNda == nil {
+		return nil, nil
+	}
+
+	return r.loadFile(ctx, obj.RecordedNda.ID)
+}
+
 // NdaSignature is the resolver for the ndaSignature field.
 func (r *compliancePortalAccessResolver) NdaSignature(ctx context.Context, obj *types.CompliancePortalAccess) (*types.ElectronicSignature, error) {
 	scope, err := r.authorize(ctx, obj.ID, management.ActionCompliancePortalAccessGet)
@@ -1702,6 +1715,86 @@ func (r *mutationResolver) ActivateCompliancePortalAccess(ctx context.Context, i
 	}
 
 	return &types.ActivateCompliancePortalAccessPayload{
+		CompliancePortalAccess: types.NewCompliancePortalAccess(access),
+	}, nil
+}
+
+// SetCompliancePortalAccessNDABypass is the resolver for the setCompliancePortalAccessNDABypass field.
+func (r *mutationResolver) SetCompliancePortalAccessNDABypass(ctx context.Context, input types.SetCompliancePortalAccessNDABypassInput) (*types.SetCompliancePortalAccessNDABypassPayload, error) {
+	scope, err := r.authorize(ctx, input.ID, management.ActionCompliancePortalAccessUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	access, err := r.management.SetAccessNDABypass(ctx, scope, input.ID, input.Bypassed)
+	if err != nil {
+		if mapped := mapRecordedNDAError(ctx, err); mapped != nil {
+			return nil, mapped
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot set compliance portal NDA bypass", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return &types.SetCompliancePortalAccessNDABypassPayload{
+		CompliancePortalAccess: types.NewCompliancePortalAccess(access),
+	}, nil
+}
+
+// UploadCompliancePortalAccessRecordedNda is the resolver for the uploadCompliancePortalAccessRecordedNDA field.
+func (r *mutationResolver) UploadCompliancePortalAccessRecordedNda(ctx context.Context, input types.UploadCompliancePortalAccessRecordedNDAInput) (*types.UploadCompliancePortalAccessRecordedNDAPayload, error) {
+	scope, err := r.authorize(ctx, input.CompliancePortalAccessID, management.ActionCompliancePortalAccessUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	access, err := r.management.UploadRecordedNDA(
+		ctx,
+		scope,
+		&management.UploadRecordedNDARequest{
+			AccessID:    input.CompliancePortalAccessID,
+			File:        input.File.File,
+			FileName:    input.FileName,
+			ContentType: input.File.ContentType,
+			Size:        input.File.Size,
+			SignedAt:    input.SignedAt,
+		},
+	)
+	if err != nil {
+		if mapped := mapRecordedNDAError(ctx, err); mapped != nil {
+			return nil, mapped
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot upload recorded compliance portal NDA", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return &types.UploadCompliancePortalAccessRecordedNDAPayload{
+		CompliancePortalAccess: types.NewCompliancePortalAccess(access),
+	}, nil
+}
+
+// DeleteCompliancePortalAccessRecordedNda is the resolver for the deleteCompliancePortalAccessRecordedNDA field.
+func (r *mutationResolver) DeleteCompliancePortalAccessRecordedNda(ctx context.Context, input types.DeleteCompliancePortalAccessRecordedNDAInput) (*types.DeleteCompliancePortalAccessRecordedNDAPayload, error) {
+	scope, err := r.authorize(ctx, input.CompliancePortalAccessID, management.ActionCompliancePortalAccessUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	access, err := r.management.DeleteRecordedNDA(ctx, scope, input.CompliancePortalAccessID)
+	if err != nil {
+		if mapped := mapRecordedNDAError(ctx, err); mapped != nil {
+			return nil, mapped
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot delete recorded compliance portal NDA", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return &types.DeleteCompliancePortalAccessRecordedNDAPayload{
 		CompliancePortalAccess: types.NewCompliancePortalAccess(access),
 	}, nil
 }

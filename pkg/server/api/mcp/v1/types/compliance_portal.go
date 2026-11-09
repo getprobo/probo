@@ -49,15 +49,23 @@ func NewCompliancePortal(tc *coredata.CompliancePortal) *CompliancePortal {
 }
 
 func NewCompliancePortalAccess(access *coredata.CompliancePortalAccess, identity *coredata.Identity) *CompliancePortalAccess {
-	return &CompliancePortalAccess{
-		ID:              access.ID,
-		State:           access.State,
-		Email:           identity.EmailAddress,
-		FullName:        identity.FullName,
-		AuthenticatedAt: access.AuthenticatedAt,
-		CreatedAt:       access.CreatedAt,
-		UpdatedAt:       access.UpdatedAt,
+	out := &CompliancePortalAccess{
+		ID:                  access.ID,
+		State:               access.State,
+		AuthenticatedAt:     access.AuthenticatedAt,
+		NdaBypassed:         access.NDABypassed,
+		RecordedNdaFileID:   access.RecordedNDAFileID,
+		RecordedNdaSignedAt: access.RecordedNDASignedAt,
+		CreatedAt:           access.CreatedAt,
+		UpdatedAt:           access.UpdatedAt,
 	}
+
+	if identity != nil {
+		out.Email = identity.EmailAddress
+		out.FullName = identity.FullName
+	}
+
+	return out
 }
 
 func NewListCompliancePortalsOutput(

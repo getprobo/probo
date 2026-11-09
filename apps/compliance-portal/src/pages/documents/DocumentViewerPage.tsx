@@ -22,6 +22,7 @@ import type { PreloadedQuery } from "react-relay";
 import { graphql, usePreloadedQuery } from "react-relay";
 
 import { useLocalizedPath } from "#/lib/i18n/useLocale";
+import { viewerMustSignNda } from "#/lib/nda";
 import { NotFoundError } from "#/lib/relay/errors";
 
 import type { DocumentViewerPageQuery } from "./__generated__/DocumentViewerPageQuery.graphql";
@@ -64,6 +65,7 @@ export const documentViewerPageQuery = graphql`
     }
     currentCompliancePortal {
       nonDisclosureAgreement {
+        viewerDisposition
         viewerSignature {
           status
         }
@@ -126,8 +128,8 @@ export function DocumentViewerPage({ queryRef }: DocumentViewerPageProps) {
   const localizedPath = useLocalizedPath();
 
   if (!node.isAuthorized) {
-    const signature = data.currentCompliancePortal?.nonDisclosureAgreement?.viewerSignature;
-    const needsNda = signature != null && signature.status !== "COMPLETED";
+    const agreement = data.currentCompliancePortal?.nonDisclosureAgreement;
+    const needsNda = viewerMustSignNda(agreement?.viewerSignature, agreement?.viewerDisposition);
     const ndaHref = needsNda
       ? `${localizedPath("/nda")}?continue=${encodeURIComponent(window.location.href)}`
       : null;
