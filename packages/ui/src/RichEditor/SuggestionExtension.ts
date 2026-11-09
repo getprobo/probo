@@ -20,11 +20,10 @@
 
 import { Mark, mergeAttributes } from "@tiptap/core";
 import { splitBlock } from "@tiptap/pm/commands";
-import type { Mark as ProseMirrorMark } from "@tiptap/pm/model";
-import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
+import type { Mark as ProseMirrorMark, Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { type EditorState, Plugin, PluginKey, TextSelection, type Transaction } from "@tiptap/pm/state";
-import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import type { EditorView } from "@tiptap/pm/view";
+import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import type { MutableRefObject } from "react";
 
 import {
@@ -110,10 +109,10 @@ export const SuggestionInsert = Mark.create({
   parseHTML() {
     return [{ tag: "span[data-suggestion-insert]" }];
   },
-  renderHTML({ HTMLAttributes }) {
+  renderHTML({ HTMLAttributes }: { HTMLAttributes: Record<string, unknown> }) {
     return ["span", mergeAttributes(HTMLAttributes, {
-      "data-suggestion-insert": HTMLAttributes.id,
-      class: "text-green-11",
+      "data-suggestion-insert": stringAttr(HTMLAttributes, "id"),
+      "class": "text-green-11",
     }), 0];
   },
 });
@@ -125,10 +124,10 @@ export const SuggestionDelete = Mark.create({
   parseHTML() {
     return [{ tag: "span[data-suggestion-delete]" }];
   },
-  renderHTML({ HTMLAttributes }) {
+  renderHTML({ HTMLAttributes }: { HTMLAttributes: Record<string, unknown> }) {
     return ["span", mergeAttributes(HTMLAttributes, {
-      "data-suggestion-delete": HTMLAttributes.id,
-      class: "text-red-11 line-through",
+      "data-suggestion-delete": stringAttr(HTMLAttributes, "id"),
+      "class": "text-red-11 line-through",
     }), 0];
   },
 });
@@ -171,7 +170,7 @@ export function createSuggestingExtension(
               return null;
             }
             const ownInput = transactions.some(transaction =>
-              transaction.getMeta(suggestingPluginKey)?.input,
+              metaInput(transactionMeta(transaction, suggestingPluginKey)),
             );
             if (ownInput || keepsSuggestionBurst(transactions)) return null;
             const moved = transactions.some(transaction => transaction.selectionSet)
@@ -223,7 +222,7 @@ function suggestionFocusPlugin() {
     state: {
       init: () => ({ id: "", decorations: DecorationSet.empty }),
       apply(transaction, previous) {
-        const meta = transaction.getMeta(suggestionFocusKey);
+        const meta = transactionMeta(transaction, suggestionFocusKey);
         const id = typeof meta === "string" ? meta : previous.id;
         if (typeof meta !== "string" && !transaction.docChanged) {
           return {
@@ -342,8 +341,7 @@ function applySuggestingEnter(
   const blockPos = transaction.selection.$from.before();
   const block = transaction.doc.nodeAt(blockPos);
   if (block?.type.spec.attrs?.unknownAttrs) {
-    const unknown = block.attrs.unknownAttrs;
-    const current = unknown && typeof unknown === "object" ? unknown : {};
+    const current = attrRecord(nodeUnknownAttrs(block));
     transaction.setNodeMarkup(blockPos, undefined, {
       ...block.attrs,
       unknownAttrs: {
@@ -395,7 +393,7 @@ function applySuggestingText(
     id = controller.suggestionId;
     if (!id) {
       queuePendingText(controller, view, from, to, text);
-      void pendingRequest.then(nextID => {
+      void pendingRequest.then((nextID) => {
         if (!nextID) return;
         controller.suggestionId = nextID;
         flushPendingText(controller);
@@ -538,7 +536,7 @@ function insertSuggestionText(tr: Transaction, cursor: number, text: string, id:
 }
 
 function suggestionSplitId(node: ProseMirrorNode): string | null {
-  const unknown = node.attrs.unknownAttrs;
+  const unknown = nodeUnknownAttrs(node);
   if (!unknown || typeof unknown !== "object") return null;
   const id = (unknown as { suggestionSplit?: unknown }).suggestionSplit;
   return typeof id === "string" && id !== "" ? id : null;
@@ -626,8 +624,7 @@ export function reassignSuggestionId(
     const mapped = tr.mapping.map(pos);
     const block = tr.doc.nodeAt(mapped);
     if (!block?.type.spec.attrs?.unknownAttrs) continue;
-    const unknown = block.attrs.unknownAttrs;
-    const current = unknown && typeof unknown === "object" ? unknown : {};
+    const current = attrRecord(nodeUnknownAttrs(block));
     tr.setNodeMarkup(mapped, undefined, {
       ...block.attrs,
       unknownAttrs: { ...current, [suggestionSplitAttr]: toId },
@@ -687,10 +684,7 @@ export function discardSuggestionId(
     const mapped = tr.mapping.map(pos);
     const block = tr.doc.nodeAt(mapped);
     if (!block?.type.spec.attrs?.unknownAttrs) continue;
-    const unknown = block.attrs.unknownAttrs;
-    const current = unknown && typeof unknown === "object"
-      ? { ...(unknown as Record<string, unknown>) }
-      : {};
+    const current = attrRecord(nodeUnknownAttrs(block));
     delete current[suggestionSplitAttr];
     delete current[suggestionSplitKindAttr];
     tr.setNodeMarkup(mapped, undefined, {
@@ -767,6 +761,38 @@ function suggestionIdAt(view: EditorView, pos: number): string | null {
   const mark = marks.find(item =>
     item.type.name === suggestionInsertName || item.type.name === suggestionDeleteName,
   );
-  const id = mark?.attrs.id;
+  const id = mark ? markAttr(mark, "id") : null;
   return typeof id === "string" && id !== "" ? id : null;
+}
+
+function transactionMeta<Key>(
+  transaction: { getMeta: (key: Key) => unknown },
+  key: Key,
+): unknown {
+  return transaction.getMeta(key);
+}
+
+function metaInput(meta: unknown): boolean {
+  return typeof meta === "object"
+    && meta !== null
+    && "input" in meta
+    && meta.input === true;
+}
+
+function stringAttr(attrs: Record<string, unknown>, name: string): string {
+  const value = attrs[name];
+  return typeof value === "string" ? value : "";
+}
+
+function nodeUnknownAttrs(node: { attrs: { unknownAttrs?: unknown } }): unknown {
+  return node.attrs.unknownAttrs;
+}
+
+function attrRecord(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  return { ...(value as Record<string, unknown>) };
+}
+
+function markAttr(mark: { attrs: { id?: unknown } }, name: "id"): unknown {
+  return mark.attrs[name];
 }

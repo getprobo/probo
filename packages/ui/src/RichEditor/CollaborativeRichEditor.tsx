@@ -29,9 +29,9 @@ import {
 } from "./collaboration";
 import {
   type CommentAnchor,
+  type CommentAnchorController,
   createCommentAnchorExtension,
   refreshCommentAnchors,
-  type CommentAnchorController,
 } from "./commentAnchors";
 import { createRichEditorHistoryExtension } from "./historyDecorations";
 import {

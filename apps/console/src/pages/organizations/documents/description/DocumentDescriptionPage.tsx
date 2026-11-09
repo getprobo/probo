@@ -195,7 +195,7 @@ export function DocumentDescriptionPage(props: {
     && supportsRichEditorCollaboration(content);
   const [mode, setMode] = useState<"viewing" | "editing" | "suggesting">("viewing");
   const [editor, setEditor] = useState<Editor | null>(null);
-  const reviewToolbarRef = useRef<HTMLDivElement>(null);
+  const [reviewToolbarHost, setReviewToolbarHost] = useState<HTMLDivElement | null>(null);
   const reviewLayoutRef = useRef<HTMLDivElement>(null);
   const [reviewMarginHost, setReviewMarginHost] = useState<HTMLElement | null>(null);
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
@@ -453,7 +453,7 @@ export function DocumentDescriptionPage(props: {
               </DropdownPopup>
             </Dropdown>
           )}
-          <div ref={reviewToolbarRef} className="flex items-center" />
+          <div ref={setReviewToolbarHost} className="flex items-center" />
           {collaborationHandle && (
             <DocumentPresence collaborationHandle={collaborationHandle} />
           )}
@@ -502,7 +502,7 @@ export function DocumentDescriptionPage(props: {
                             }}
                             reviewVersion={reviewVersion}
                             suggesting={suggestingRef}
-                            toolbarHost={reviewToolbarRef}
+                            toolbarHost={reviewToolbarHost}
                             marginHost={reviewMarginHost}
                           />
                         </Suspense>

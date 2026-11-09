@@ -37,7 +37,7 @@ import { PopoverTrigger } from "@probo/ui/src/v2/Popover/PopoverTrigger";
 import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import type { Editor } from "@tiptap/core";
 import type { Transaction } from "@tiptap/pm/state";
-import { type MutableRefObject, type RefObject, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { type MutableRefObject, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useFragment, useLazyLoadQuery, useRelayEnvironment } from "react-relay";
@@ -101,7 +101,7 @@ interface DocumentReviewMarginProps {
   activeThreadId: string | null;
   activeSuggestionId: string | null;
   reviewVersion: number;
-  toolbarHost: RefObject<HTMLDivElement | null>;
+  toolbarHost: HTMLElement | null;
   marginHost: HTMLElement | null;
   onActiveThread: (id: string | null) => void;
   onActiveSuggestion: (id: string | null) => void;
@@ -205,12 +205,17 @@ export function DocumentReviewMargin(props: DocumentReviewMarginProps) {
   const [replyText, setReplyText] = useState("");
   const [draftText, setDraftText] = useState("");
   const [draft, setDraft] = useState<CommentDraft | null>(null);
-  const [selectionTop, setSelectionTop] = useState<number | null>(null);
+  const activeCardKey = `${activeThreadId ?? ""}:${activeSuggestionId ?? ""}`;
+  const [trackedActiveCardKey, setTrackedActiveCardKey] = useState(activeCardKey);
+  if (trackedActiveCardKey !== activeCardKey) {
+    setTrackedActiveCardKey(activeCardKey);
+    if (activeThreadId || activeSuggestionId) setDraft(null);
+  }
   const [selectionTick, setSelectionTick] = useState(0);
   const [layoutTick, setLayoutTick] = useState(0);
   const [narrow, setNarrow] = useState(() => window.matchMedia("(max-width: 1023px)").matches);
-  const [toolbarNode, setToolbarNode] = useState<HTMLElement | null>(null);
   const [tops, setTops] = useState<Record<string, number>>({});
+  const [previewMap, setPreviewMap] = useState<Map<string, SuggestionPreview>>(() => new Map());
   const [startedSuggestions, setStartedSuggestions] = useState<Array<{
     id: string;
     author: { fullName: string | null | undefined };
@@ -228,19 +233,27 @@ export function DocumentReviewMargin(props: DocumentReviewMarginProps) {
     anchorQuote?: string | null;
   }>>([]);
   const ownedSuggestionIds = useRef(new Set<string>());
+  const controllerRef = useRef(suggesting.current);
 
   const threads = reviewDocument?.commentThreads.edges.map(edge => edge.node) ?? [];
   const loadedSuggestions = reviewDocument?.suggestions.edges.map(edge => edge.node) ?? [];
   const profileId = currentUser.profile?.id;
-  for (const suggestion of loadedSuggestions) {
-    if (profileId && suggestion.author.id === profileId) {
+  useEffect(() => {
+    controllerRef.current = suggesting.current;
+  }, [suggesting]);
+  useEffect(() => {
+    if (profileId) {
+      for (const suggestion of loadedSuggestions) {
+        if (suggestion.author.id === profileId) {
+          ownedSuggestionIds.current.add(suggestion.id);
+        }
+      }
+    }
+    for (const suggestion of startedSuggestions) {
       ownedSuggestionIds.current.add(suggestion.id);
     }
-  }
-  for (const suggestion of startedSuggestions) {
-    ownedSuggestionIds.current.add(suggestion.id);
-  }
-  suggesting.current.ownsSuggestion = id => ownedSuggestionIds.current.has(id);
+    controllerRef.current.ownsSuggestion = id => ownedSuggestionIds.current.has(id);
+  }, [loadedSuggestions, profileId, startedSuggestions]);
   const suggestionsById = new Map<string, (typeof loadedSuggestions)[number] | {
     id: string;
     status: "OPEN";
@@ -261,14 +274,16 @@ export function DocumentReviewMargin(props: DocumentReviewMarginProps) {
   }
   // Cards follow marks in the document, not the SQL page. Open rows with no
   // remaining redline stay out of the margin.
-  const suggestions = [...suggestionPreviews.current.keys()]
+  const suggestions = [...previewMap.keys()]
     .map(id => suggestionsById.get(id))
     .filter((suggestion): suggestion is NonNullable<typeof suggestion> => suggestion != null);
   const suggestionIds = new Set(suggestionsById.keys());
   const commentThreads = threads.filter(thread =>
     thread.suggestionId == null || !suggestionIds.has(thread.suggestionId),
   );
-  threadsRef.current = threads;
+  useLayoutEffect(() => {
+    threadsRef.current = threads;
+  });
 
   const threadSignature = threads
     .map(thread => `${thread.id}:${thread.suggestionId ?? ""}:${thread.anchorStart}:${thread.anchorEnd}`)
@@ -298,8 +313,8 @@ export function DocumentReviewMargin(props: DocumentReviewMarginProps) {
   }, [threadSignature, draft]);
 
   useEffect(() => {
-    suggesting.current.onNeedId = () => {
-      const controller = suggesting.current;
+    controllerRef.current.onNeedId = () => {
+      const controller = controllerRef.current;
       if (controller.suggestionId) return Promise.resolve(controller.suggestionId);
 
       const localId = `local:${crypto.randomUUID()}`;
@@ -352,8 +367,8 @@ export function DocumentReviewMargin(props: DocumentReviewMarginProps) {
       controller.request = request;
       return request;
     };
-    suggesting.current.onBurstFinished = () => {
-      suggesting.current.suggestionId = null;
+    controllerRef.current.onBurstFinished = () => {
+      controllerRef.current.suggestionId = null;
     };
   }, [
     activeSuggestionId,
@@ -364,28 +379,19 @@ export function DocumentReviewMargin(props: DocumentReviewMarginProps) {
     onOwnReview,
     onOwnReviewFailed,
     startSuggestion,
-    suggesting,
     t,
     toast,
   ]);
 
   useEffect(() => {
     if (mode === "editing") {
-      suggesting.current.suggestionId = null;
+      controllerRef.current.suggestionId = null;
     }
-  }, [mode, suggesting]);
+  }, [mode]);
 
   useEffect(() => {
     refreshSuggestionFocus(editor, activeSuggestionId);
   }, [activeSuggestionId, editor]);
-
-  useEffect(() => {
-    if (activeThreadId || activeSuggestionId) setDraft(null);
-  }, [activeSuggestionId, activeThreadId]);
-
-  useEffect(() => {
-    setToolbarNode(toolbarHost.current);
-  }, [toolbarHost]);
 
   useEffect(() => {
     if (!historyOpen) return;
@@ -410,6 +416,7 @@ export function DocumentReviewMargin(props: DocumentReviewMarginProps) {
       if (cardFrame !== 0) return;
       cardFrame = window.requestAnimationFrame(() => {
         cardFrame = 0;
+        setPreviewMap(new Map(suggestionPreviews.current));
         setLayoutTick(value => value + 1);
       });
     };
@@ -485,20 +492,21 @@ export function DocumentReviewMargin(props: DocumentReviewMarginProps) {
     }
     commentPositions.current = next;
     suggestionPreviews.current = collectSuggestionAnchors(editor.state.doc);
-    setLayoutTick(value => value + 1);
+    const frame = window.requestAnimationFrame(() => {
+      setPreviewMap(new Map(suggestionPreviews.current));
+      setLayoutTick(value => value + 1);
+    });
+    return () => window.cancelAnimationFrame(frame);
     // threadSignature is the open comment list. Cursor resolution waits for it
     // or a remote document change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [threadSignature, editor]);
 
-  useEffect(() => {
+  const selectionTop = useMemo(() => {
     const { from, to, empty } = editor.state.selection;
-    if (empty || !canComment || draft) {
-      setSelectionTop(null);
-      return;
-    }
-    setSelectionTop(editorContentTop(editor, from < to ? from : to));
-  }, [draft, selectionTick, canComment, editor]);
+    if (empty || !canComment || draft) return null;
+    return editorContentTop(editor, from < to ? from : to);
+  }, [canComment, draft, editor, selectionTick]);
 
   const reportError = (error: Error) => {
     toast.add({
@@ -580,7 +588,7 @@ export function DocumentReviewMargin(props: DocumentReviewMarginProps) {
   });
   const suggestionCards = suggestions.flatMap((suggestion) => {
     const top = tops[suggestion.id];
-    const preview = suggestionPreviews.current.get(suggestion.id);
+    const preview = previewMap.get(suggestion.id);
     if (top == null || !preview) return [];
     return [{ key: suggestion.id, anchor: top, suggestion, preview }];
   });
@@ -610,7 +618,7 @@ export function DocumentReviewMargin(props: DocumentReviewMarginProps) {
 
   const floatingThreads = commentThreads.filter(thread => tops[thread.id] == null);
   const floatingSuggestions = suggestions.filter(suggestion => (
-    suggestionPreviews.current.has(suggestion.id) && tops[suggestion.id] == null
+    previewMap.has(suggestion.id) && tops[suggestion.id] == null
   ));
 
   const openComposer = () => {
@@ -630,9 +638,15 @@ export function DocumentReviewMargin(props: DocumentReviewMarginProps) {
     onActiveSuggestion(null);
   };
 
-  const bindCard = (key: string) => (node: HTMLDivElement | null) => {
-    if (node) cardRefs.current.set(key, node);
-    else cardRefs.current.delete(key);
+  const bindCard = (node: HTMLDivElement | null) => {
+    if (node) {
+      const key = node.dataset.reviewCard;
+      if (key) cardRefs.current.set(key, node);
+      return;
+    }
+    for (const [key, element] of cardRefs.current) {
+      if (!element.isConnected) cardRefs.current.delete(key);
+    }
   };
 
   const commentCard = (thread: DocumentReviewMarginThread, active: boolean) => (
@@ -950,7 +964,7 @@ export function DocumentReviewMargin(props: DocumentReviewMarginProps) {
     </DocumentReviewMarginCard>
   );
 
-  const history = toolbarNode
+  const history = toolbarHost
     ? createPortal(
         <Popover open={historyOpen} onOpenChange={setHistoryOpen}>
           <PopoverTrigger
@@ -1005,7 +1019,7 @@ export function DocumentReviewMargin(props: DocumentReviewMarginProps) {
             </div>
           </PopoverPopup>
         </Popover>,
-        toolbarNode,
+        toolbarHost,
       )
     : null;
 
@@ -1030,7 +1044,7 @@ export function DocumentReviewMargin(props: DocumentReviewMarginProps) {
         <div key={suggestion.id}>
           {suggestionCard(
             suggestion,
-            suggestionPreviews.current.get(suggestion.id) ?? { inserted: "", deleted: "", parts: [] },
+            previewMap.get(suggestion.id) ?? { from: 0, inserted: "", deleted: "", parts: [] },
             activeSuggestionId === suggestion.id && !draft,
           )}
         </div>
@@ -1070,7 +1084,7 @@ export function DocumentReviewMargin(props: DocumentReviewMarginProps) {
       {positioned.map(item => (
         <div
           key={item.key}
-          ref={bindCard(item.key)}
+          ref={bindCard}
           data-review-card={item.key}
           className="absolute right-3 z-10 w-60"
           style={{ top: tops[item.key] ?? item.anchor }}
@@ -1081,7 +1095,7 @@ export function DocumentReviewMargin(props: DocumentReviewMarginProps) {
       {suggestionCards.map(item => (
         <div
           key={item.key}
-          ref={bindCard(item.key)}
+          ref={bindCard}
           data-review-card={item.key}
           className="absolute right-3 z-10 w-60"
           style={{ top: tops[item.key] ?? item.anchor }}
@@ -1091,7 +1105,7 @@ export function DocumentReviewMargin(props: DocumentReviewMarginProps) {
       ))}
       {draft && tops.draft != null && (
         <div
-          ref={bindCard("draft")}
+          ref={bindCard}
           data-review-card="draft"
           className="absolute right-3 z-10 w-60"
           style={{ top: tops.draft }}

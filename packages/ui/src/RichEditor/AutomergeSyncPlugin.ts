@@ -42,6 +42,11 @@ import {
 } from "@tiptap/pm/state";
 
 import type { RichEditorAutomergeDocument } from "./collaboration";
+import {
+  collaborationDebug,
+  summarizeAutomergeSpans,
+  summarizeProseMirrorDocument,
+} from "./collaborationDebug";
 import { applyDocumentSteps, reassignSuggestionBlocks } from "./documentSteps";
 import {
   suggestionReassignmentFrom,
@@ -49,11 +54,6 @@ import {
 } from "./suggestionSplit";
 
 export const automergeRemoteTransaction = "automerge-remote";
-import {
-  collaborationDebug,
-  summarizeAutomergeSpans,
-  summarizeProseMirrorDocument,
-} from "./collaborationDebug";
 
 export const automergeSyncPluginKey = new PluginKey("automerge-sync");
 

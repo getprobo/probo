@@ -168,15 +168,19 @@ function markIds(node: ProseMirrorNode, name: string): string[] {
 }
 
 function suggestionSplitId(node: ProseMirrorNode): string | null {
-  const unknown = node.attrs.unknownAttrs;
+  const unknown = nodeUnknownAttrs(node);
   if (!unknown || typeof unknown !== "object") return null;
   const id = (unknown as { suggestionSplit?: unknown }).suggestionSplit;
   return typeof id === "string" && id !== "" ? id : null;
 }
 
 function suggestionSplitKind(node: ProseMirrorNode): string | null {
-  const unknown = node.attrs.unknownAttrs;
+  const unknown = nodeUnknownAttrs(node);
   if (!unknown || typeof unknown !== "object") return null;
   const kind = (unknown as { splitKind?: unknown }).splitKind;
   return kind === "insertion" || kind === "structural" ? kind : null;
+}
+
+function nodeUnknownAttrs(node: { attrs: { unknownAttrs?: unknown } }): unknown {
+  return node.attrs.unknownAttrs;
 }

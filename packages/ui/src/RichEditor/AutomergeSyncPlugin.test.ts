@@ -753,11 +753,15 @@ function expectSameDocument(editor: {
 function canonicalDocument(editor: {
   adapter: ReturnType<typeof createSchemaAdapter>;
   state: EditorState;
-}) {
-  return pmDocFromSpans(
+}): unknown {
+  return nodeJSON(pmDocFromSpans(
     editor.adapter,
     pmNodeToSpans(editor.adapter, editor.state.doc),
-  ).toJSON();
+  ));
+}
+
+function nodeJSON(node: { toJSON: () => unknown }): unknown {
+  return node.toJSON();
 }
 
 function paragraphs(doc: {

@@ -175,7 +175,7 @@ function decorationsForAnchors(
     if (!range) continue;
     const attrs = {
       "data-comment-thread": anchor.id,
-      class: anchor.active ? "bg-amber-5" : "bg-amber-4",
+      "class": anchor.active ? "bg-amber-5" : "bg-amber-4",
     };
     for (const highlight of commentHighlightRanges(doc, range.from, range.to)) {
       const spec = { ...attrs };

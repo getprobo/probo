@@ -64,7 +64,6 @@ import {
 } from "./historyDecorations";
 import { ImageExtension } from "./ImageExtension";
 import { LinkExtension } from "./LinkExtension";
-import { SuggestionDelete, SuggestionInsert } from "./SuggestionExtension";
 import { MarkdownPasteExtension } from "./MarkdownPasteExtension";
 import { getMentionStorage, MentionExtension, type MentionSource } from "./MentionExtension";
 import { MentionMenu } from "./MentionMenu/MentionMenu";
@@ -72,6 +71,7 @@ import { OptionsMenu } from "./OptionsMenu/OptionsMenu";
 import { PlaceholderExtension, setPlaceholder } from "./PlaceholderExtension";
 import { SlashCommandExtension } from "./SlashCommandExtension";
 import { submitOnModEnter } from "./submitOnModEnter";
+import { SuggestionDelete, SuggestionInsert } from "./SuggestionExtension";
 import { TableCellMenu } from "./TableCellMenu/TableCellMenu";
 import { TableColumnMenu } from "./TableColumnMenu/TableColumnMenu";
 import { TableRowMenu } from "./TableRowMenu/TableRowMenu";

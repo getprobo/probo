@@ -45,12 +45,12 @@ describe("comment schema parity", () => {
     const schema = getSchema(richEditorCommentExtensions);
 
     const nodes: string[] = [];
-    schema.spec.nodes.forEach(name => {
+    schema.spec.nodes.forEach((name) => {
       nodes.push(name);
     });
 
     const marks: string[] = [];
-    schema.spec.marks.forEach(name => {
+    schema.spec.marks.forEach((name) => {
       marks.push(name);
     });
 

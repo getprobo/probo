@@ -106,7 +106,7 @@ export function adjacentSuggestionId(state: EditorState): string | null {
 }
 
 function suggestionIdOnBlock(node: ProseMirrorNode): string | null {
-  const unknown = node.attrs.unknownAttrs;
+  const unknown = nodeUnknownAttrs(node);
   if (!unknown || typeof unknown !== "object") return null;
   const id = (unknown as { suggestionSplit?: unknown }).suggestionSplit;
   const kind = (unknown as { splitKind?: unknown }).splitKind;
@@ -149,7 +149,7 @@ export function textblockSplit(
   right: ProseMirrorNode;
   ancestors: ProseMirrorNode[];
 } | null {
-  if (step.toJSON().stepType !== "replace") return null;
+  if (jsonStepType(step) !== "replace") return null;
   const replace = step as unknown as {
     from: number;
     to: number;
@@ -185,7 +185,7 @@ export function textblockJoin(
   step: Transaction["steps"][number],
   doc: ProseMirrorNode,
 ): { from: number; to: number } | null {
-  if (step.toJSON().stepType !== "replace") return null;
+  if (jsonStepType(step) !== "replace") return null;
   const replace = step as unknown as {
     from: number;
     to: number;
@@ -207,7 +207,7 @@ export function textblockRemoval(
   step: Transaction["steps"][number],
   doc: ProseMirrorNode,
 ): { at: number } | null {
-  if (step.toJSON().stepType !== "replace") return null;
+  if (jsonStepType(step) !== "replace") return null;
   const replace = step as unknown as {
     from: number;
     to: number;
@@ -218,4 +218,15 @@ export function textblockRemoval(
   if (!node?.isTextblock) return null;
   if (node.content.size !== 0 || node.nodeSize !== 2) return null;
   return { at: replace.from };
+}
+
+function jsonStepType(step: { toJSON: () => unknown }): string | null {
+  const json = step.toJSON();
+  if (typeof json !== "object" || json === null || !("stepType" in json)) return null;
+  const stepType = json.stepType;
+  return typeof stepType === "string" ? stepType : null;
+}
+
+function nodeUnknownAttrs(node: { attrs: { unknownAttrs?: unknown } }): unknown {
+  return node.attrs.unknownAttrs;
 }

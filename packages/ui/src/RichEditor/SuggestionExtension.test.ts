@@ -35,10 +35,10 @@ import { richEditorCollaborationExtensions } from "./RichEditor";
 import {
   createSuggestingExtension,
   reassignSuggestionId,
+  type SuggestingController,
   suggestionDeleteName,
   suggestionInputTransaction,
   suggestionInsertName,
-  type SuggestingController,
 } from "./SuggestionExtension";
 
 const schema = getSchema(richEditorCollaborationExtensions);
@@ -163,7 +163,7 @@ describe("suggesting input", () => {
       suggestionId: null,
       pending: null,
       request: null,
-      ownsSuggestion: (id) => id === suggestionId,
+      ownsSuggestion: id => id === suggestionId,
       onNeedId: () => {
         needed = true;
         controller.suggestionId = "other";

@@ -225,7 +225,7 @@ function isEditorAttributeStep(
   step: Transaction["steps"][number],
   doc: ProseMirrorNode,
 ): boolean {
-  if (step.toJSON().stepType !== "replaceAround") return false;
+  if (jsonStepType(step) !== "replaceAround") return false;
   const applied = step.apply(doc).doc;
   if (!applied) return false;
   return samePersistedDocument(doc, applied);
@@ -260,7 +260,7 @@ function textDeletion(
   step: Transaction["steps"][number],
   doc: ProseMirrorNode,
 ): { from: number; to: number } | null {
-  if (step.toJSON().stepType !== "replace") return null;
+  if (jsonStepType(step) !== "replace") return null;
   const replace = step as unknown as {
     from: number;
     to: number;
@@ -274,7 +274,7 @@ function textDeletion(
 }
 
 function isSingleTextReplace(step: Transaction["steps"][number]): boolean {
-  if (step.toJSON().stepType !== "replace") return false;
+  if (jsonStepType(step) !== "replace") return false;
   const content = (step as unknown as {
     slice: { content: { childCount: number; firstChild: { isText: boolean } | null } };
   }).slice.content;
@@ -320,8 +320,8 @@ function automergeBlock(
   const mapping = mappingFor(adapter, node, ancestors);
   if (!mapping || mapping.isEmbed) return null;
 
-  const attrs = { ...(mapping.attrParsers?.fromProsemirror(node) ?? {}) };
-  const unknown = node.attrs.unknownAttrs;
+  const attrs = recordValue(readParsedAttrs(mapping, node));
+  const unknown = nodeUnknownAttrs(node);
   if (unknown && typeof unknown === "object") {
     const values = unknown as Record<string, Automerge.MaterializeValue>;
     for (const [key, value] of Object.entries(values)) {
@@ -361,7 +361,7 @@ function applyMappedMarkStep(
   spans: ReturnType<typeof Automerge.spans>,
   step: Transaction["steps"][number],
 ): boolean | null {
-  const stepType = step.toJSON().stepType;
+  const stepType = jsonStepType(step);
   if (stepType !== "addMark" && stepType !== "removeMark") return null;
 
   const marked = step as unknown as {
@@ -391,6 +391,29 @@ function applyMappedMarkStep(
     Automerge.unmark(document, path, { start, end, expand }, name);
   }
   return true;
+}
+
+function jsonStepType(step: { toJSON: () => unknown }): string | null {
+  const json = step.toJSON();
+  if (typeof json !== "object" || json === null || !("stepType" in json)) return null;
+  const stepType = json.stepType;
+  return typeof stepType === "string" ? stepType : null;
+}
+
+function readParsedAttrs(
+  mapping: { attrParsers?: { fromProsemirror: (node: ProseMirrorNode) => unknown } },
+  node: ProseMirrorNode,
+): unknown {
+  return mapping.attrParsers?.fromProsemirror(node) ?? {};
+}
+
+function recordValue(value: unknown): Record<string, Automerge.MaterializeValue> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  return { ...(value as Record<string, Automerge.MaterializeValue>) };
+}
+
+function nodeUnknownAttrs(node: { attrs: { unknownAttrs?: unknown } }): unknown {
+  return node.attrs.unknownAttrs;
 }
 
 function blockAttrs(
