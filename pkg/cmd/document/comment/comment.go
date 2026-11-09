@@ -63,6 +63,7 @@ func newListCmd(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagResolved string
 		flagLimit    int
+		flagAfter    string
 		flagOutput   *string
 	)
 
@@ -92,11 +93,12 @@ func newListCmd(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			threads, totalCount, err := api.Paginate(
+			threads, totalCount, nextCursor, err := api.Paginate(
 				client,
 				listQuery,
 				variables,
 				flagLimit,
+				flagAfter,
 				func(data json.RawMessage) (*api.Connection[commentThread], error) {
 					var resp struct {
 						Node *struct {
@@ -123,55 +125,43 @@ func newListCmd(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, threads)
-			}
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				threads,
+				totalCount,
+				cmdutil.ListView[commentThread]{
+					Empty:      "No comment threads found.",
+					Noun:       "comment threads",
+					NextCursor: nextCursor,
+					Headers:    []string{"ID", "QUOTE", "RESOLVED", "SUGGESTION", "CREATED"},
+					Row: func(thread commentThread) ([]string, error) {
+						resolved := "no"
+						if thread.ResolvedAt != "" {
+							resolved = "yes"
+						}
 
-			if len(threads) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No comment threads found.")
-				return nil
-			}
+						suggestion := ""
+						if thread.Suggestion != nil {
+							suggestion = thread.Suggestion.ID
+						}
 
-			rows := make([][]string, 0, len(threads))
-			for _, t := range threads {
-				resolved := "no"
-				if t.ResolvedAt != "" {
-					resolved = "yes"
-				}
-
-				suggestion := ""
-				if t.Suggestion != nil {
-					suggestion = t.Suggestion.ID
-				}
-
-				rows = append(rows, []string{
-					t.ID,
-					t.AnchorQuote,
-					resolved,
-					suggestion,
-					cmdutil.FormatTime(t.CreatedAt),
-				})
-			}
-
-			tbl := cmdutil.NewTable("ID", "QUOTE", "RESOLVED", "SUGGESTION", "CREATED").Rows(rows...)
-
-			_, _ = fmt.Fprintln(f.IOStreams.Out, tbl)
-
-			if totalCount > len(threads) {
-				_, _ = fmt.Fprintf(
-					f.IOStreams.ErrOut,
-					"\nShowing %d of %d comment threads\n",
-					len(threads),
-					totalCount,
-				)
-			}
-
-			return nil
+						return []string{
+							thread.ID,
+							thread.AnchorQuote,
+							resolved,
+							suggestion,
+							cmdutil.FormatTime(thread.CreatedAt),
+						}, nil
+					},
+				},
+			)
 		},
 	}
 
 	cmd.Flags().StringVar(&flagResolved, "resolved", "", "Filter by resolved state (true or false)")
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of threads")
+	cmdutil.AddAfterFlag(cmd, &flagAfter)
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd

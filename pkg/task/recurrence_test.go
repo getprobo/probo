@@ -229,7 +229,9 @@ func TestRepeatLockedRecurringTask(t *testing.T) {
 			require.NotNil(t, cloned.Recurrence)
 			assert.Equal(t, mustInterval(t, "P21D"), *cloned.Recurrence)
 			require.NotNil(t, cloned.Deadline)
-			assert.True(t, cloned.Deadline.Equal(deadline.Add(21*24*time.Hour)))
+			// Day intervals keep the local wall time, so a 21-day step that
+			// crosses a daylight-saving change is not 21*24h.
+			assert.True(t, cloned.Deadline.Equal(stored.Deadline.AddDate(0, 0, 21)))
 			assert.Equal(t, 1, countTaskActivities(t, client, cloned.ID, coredata.TaskActivityTypeCreated))
 		},
 	)

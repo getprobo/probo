@@ -59,6 +59,7 @@ func newListCmd(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagStatus string
 		flagLimit  int
+		flagAfter  string
 		flagOutput *string
 	)
 
@@ -88,11 +89,12 @@ func newListCmd(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			suggestions, totalCount, err := api.Paginate(
+			suggestions, totalCount, nextCursor, err := api.Paginate(
 				client,
 				listQuery,
 				variables,
 				flagLimit,
+				flagAfter,
 				func(data json.RawMessage) (*api.Connection[suggestion], error) {
 					var resp struct {
 						Node *struct {
@@ -119,49 +121,37 @@ func newListCmd(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, suggestions)
-			}
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				suggestions,
+				totalCount,
+				cmdutil.ListView[suggestion]{
+					Empty:      "No suggestions found.",
+					Noun:       "suggestions",
+					NextCursor: nextCursor,
+					Headers:    []string{"ID", "STATUS", "AUTHOR", "CREATED"},
+					Row: func(item suggestion) ([]string, error) {
+						author := ""
+						if item.Author != nil {
+							author = item.Author.FullName
+						}
 
-			if len(suggestions) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No suggestions found.")
-				return nil
-			}
-
-			rows := make([][]string, 0, len(suggestions))
-			for _, s := range suggestions {
-				author := ""
-				if s.Author != nil {
-					author = s.Author.FullName
-				}
-
-				rows = append(rows, []string{
-					s.ID,
-					s.Status,
-					author,
-					cmdutil.FormatTime(s.CreatedAt),
-				})
-			}
-
-			tbl := cmdutil.NewTable("ID", "STATUS", "AUTHOR", "CREATED").Rows(rows...)
-
-			_, _ = fmt.Fprintln(f.IOStreams.Out, tbl)
-
-			if totalCount > len(suggestions) {
-				_, _ = fmt.Fprintf(
-					f.IOStreams.ErrOut,
-					"\nShowing %d of %d suggestions\n",
-					len(suggestions),
-					totalCount,
-				)
-			}
-
-			return nil
+						return []string{
+							item.ID,
+							item.Status,
+							author,
+							cmdutil.FormatTime(item.CreatedAt),
+						}, nil
+					},
+				},
+			)
 		},
 	}
 
 	cmd.Flags().StringVar(&flagStatus, "status", "OPEN", "Suggestion status filter")
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of suggestions")
+	cmdutil.AddAfterFlag(cmd, &flagAfter)
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd
