@@ -28,7 +28,7 @@ import { useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { OIDCButtonFragment$key } from "#/__generated__/iam/OIDCButtonFragment.graphql";
-import { useSafeContinueUrl } from "#/hooks/useSafeContinueUrl";
+import { useSafeContinueURL } from "#/hooks/useSafeContinueURL";
 
 const fragment = graphql`
   fragment OIDCButtonFragment on OIDCProviderInfo {
@@ -54,7 +54,7 @@ export function OIDCButton({
 }) {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
-  const safeContinueUrl = useSafeContinueUrl();
+  const safeContinueUrl = useSafeContinueURL();
   const provider = useFragment(fragment, providerRef);
   const Icon = providerIcons[provider.name];
   const organizationId = searchParams.get("organization-id");
