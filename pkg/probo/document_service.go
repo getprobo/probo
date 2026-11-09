@@ -3750,7 +3750,21 @@ func (s *DocumentService) generateAndUploadPublicationPDF(
 
 	fileRecord.FileSize = fileSize
 
-	err = s.svc.pg.WithTx(
+	if err := s.savePublicationPDF(ctx, scope, documentVersion, fileRecord, now); err != nil {
+		return fmt.Errorf("cannot save publication PDF file record: %w", err)
+	}
+
+	return nil
+}
+
+func (s *DocumentService) savePublicationPDF(
+	ctx context.Context,
+	scope coredata.Scoper,
+	documentVersion *coredata.DocumentVersion,
+	fileRecord *coredata.File,
+	now time.Time,
+) error {
+	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			if err := fileRecord.Insert(ctx, tx, scope); err != nil {
@@ -3768,15 +3782,12 @@ func (s *DocumentService) generateAndUploadPublicationPDF(
 			return nil
 		},
 	)
-	if err != nil {
-		if errors.Is(err, errPublicationPDFClaimLost) {
-			return nil
-		}
-
-		return fmt.Errorf("cannot save publication PDF file record: %w", err)
+	// A rollback failure joined to claim loss must still reach the worker.
+	if err == errPublicationPDFClaimLost {
+		return nil
 	}
 
-	return nil
+	return err
 }
 
 func (s *DocumentService) CollaborationHeads(

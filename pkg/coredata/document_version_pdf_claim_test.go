@@ -63,9 +63,11 @@ func newDocumentPDFClaimFixture(t *testing.T) documentPDFClaimFixture {
 	}
 	opts := []pg.Option{
 		pg.WithAddr(net.JoinHostPort(u.Hostname(), port)),
-		pg.WithDatabase(u.Path[1:]),
 		pg.WithPoolSize(1),
 		pg.WithRegisterer(prometheus.NewRegistry()),
+	}
+	if len(u.Path) > 1 {
+		opts = append(opts, pg.WithDatabase(u.Path[1:]))
 	}
 	if u.User != nil {
 		opts = append(opts, pg.WithUser(u.User.Username()))
@@ -109,10 +111,13 @@ func newDocumentPDFClaimFixture(t *testing.T) documentPDFClaimFixture {
 		client.WithTx(
 			t.Context(),
 			func(ctx context.Context, tx pg.Tx) error {
-				if _, err := tx.Exec(ctx, `
+				if _, err := tx.Exec(
+					ctx,
+					`
 CREATE TEMP TABLE documents (LIKE public.documents INCLUDING ALL);
 CREATE TEMP TABLE document_versions (LIKE public.document_versions INCLUDING ALL);
-`); err != nil {
+`,
+				); err != nil {
 					return err
 				}
 				if err := document.Insert(ctx, tx, scope); err != nil {
