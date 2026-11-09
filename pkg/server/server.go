@@ -67,6 +67,7 @@ import (
 	console_web "go.probo.inc/probo/pkg/server/web"
 	employeeportal_web "go.probo.inc/probo/pkg/server/web/employeeportal"
 	"go.probo.inc/probo/pkg/slack"
+	"go.probo.inc/probo/pkg/tag"
 	"go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/thirdparty"
 	"go.probo.inc/probo/pkg/uri"
@@ -85,6 +86,7 @@ type Config struct {
 	CollaborationEvents     *realtime.Events
 	ShutdownContext         context.Context
 	ResourceAlias           *resourcealias.Service
+	Tag                     *tag.Service
 	File                    *filemanager.Service
 	IAM                     *iam.Service
 	Visitor                 *visitor.Service
@@ -156,6 +158,7 @@ func NewServer(cfg Config) (*Server, error) {
 		CollaborationEvents:      cfg.CollaborationEvents,
 		ShutdownContext:          cfg.ShutdownContext,
 		ResourceAlias:            cfg.ResourceAlias,
+		Tag:                      cfg.Tag,
 		File:                     cfg.File,
 		IAM:                      cfg.IAM,
 		Visitor:                  cfg.Visitor,
