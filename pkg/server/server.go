@@ -47,6 +47,7 @@ import (
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/geoloc"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/iam/oauth2"
 	"go.probo.inc/probo/pkg/identityfederation"
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mailman"
@@ -296,7 +297,7 @@ func (s *Server) setupRoutes() {
 	s.router.Get("/.well-known/oauth-authorization-server", s.oidcDiscoveryHandler)
 	s.router.Get("/.well-known/oauth-protected-resource", s.protectedResourceMetadataHandler)
 	s.router.Get(
-		"/.well-known/oauth-protected-resource/api/mcp/v1",
+		oauth2.MCPProtectedResourceMetadataPath,
 		s.mcpProtectedResourceMetadataHandler,
 	)
 

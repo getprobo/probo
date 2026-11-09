@@ -34,7 +34,9 @@ const (
 	BearerErrInsufficientScope = "insufficient_scope"
 )
 
-func protectedResourceMetadataURL(baseURL *baseurl.BaseURL) string {
+// ProtectedResourceMetadataURL returns the URL of the RFC 9728 metadata
+// document for the resource identified by baseURL itself.
+func ProtectedResourceMetadataURL(baseURL *baseurl.BaseURL) string {
 	return baseURL.WithPath("/.well-known/oauth-protected-resource").MustString()
 }
 
@@ -46,8 +48,20 @@ func BearerChallenge(
 	errorCode string,
 	scopes ...coredata.OAuth2Scope,
 ) string {
-	metadataURL := protectedResourceMetadataURL(baseURL)
+	return BearerChallengeWithMetadataURL(
+		ProtectedResourceMetadataURL(baseURL),
+		errorCode,
+		scopes...,
+	)
+}
 
+// BearerChallengeWithMetadataURL is BearerChallenge for a protected resource
+// whose RFC 9728 metadata is not the base URL's root document.
+func BearerChallengeWithMetadataURL(
+	metadataURL string,
+	errorCode string,
+	scopes ...coredata.OAuth2Scope,
+) string {
 	var parts []string
 
 	if errorCode != "" {
@@ -75,6 +89,18 @@ func SetBearerChallenge(
 	scopes ...coredata.OAuth2Scope,
 ) {
 	w.Header().Set("WWW-Authenticate", BearerChallenge(baseURL, errorCode, scopes...))
+}
+
+func SetBearerChallengeWithMetadataURL(
+	w http.ResponseWriter,
+	metadataURL string,
+	errorCode string,
+	scopes ...coredata.OAuth2Scope,
+) {
+	w.Header().Set(
+		"WWW-Authenticate",
+		BearerChallengeWithMetadataURL(metadataURL, errorCode, scopes...),
+	)
 }
 
 // SetBearerUnauthenticated sets a discovery-only challenge (RFC 9728 resource_metadata).
