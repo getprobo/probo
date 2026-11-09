@@ -180,8 +180,9 @@ renders). Keep these invariants:
 - **Benchmark gate.** `BenchmarkParse`, `BenchmarkValidate`, `BenchmarkSanitize`,
   `BenchmarkRenderHTML`, `BenchmarkRenderMarkdown`, and `BenchmarkTextLength`
   (plus Automerge `BenchmarkToSpans` / `BenchmarkRender`) must not regress more
-  than ~5% ns/op or grow allocs/op versus the recorded baseline under
-  `pkg/prosemirror/testdata/benchstat/`.
+  than ~5% ns/op or grow allocs/op versus a baseline captured on the parent
+  commit (for example with `go test -bench ... -count 10` and `benchstat`).
+  Baseline output is not committed.
 
 ## Tests to keep green
 
