@@ -19,12 +19,11 @@
 // SOFTWARE.
 
 import { CheckIcon } from "@phosphor-icons/react";
-import type { MentionSource } from "@probo/ui";
+import { CommentEditor, type MentionSource } from "@probo/ui";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { RichEditor } from "#/pages/organizations/_components/RichEditor";
 import {
   isRichEditorContentEmpty,
   richEditorContentTextLength,
@@ -132,8 +131,7 @@ export function DocumentReviewMarginComments({
                     setEditingId(null);
                   }}
                 >
-                  <RichEditor
-                    preset="comment"
+                  <CommentEditor
                     controls={false}
                     className="min-h-12 rounded-2 border border-sand-7 bg-sand-1 p-2 text-2"
                     content={editingText}
@@ -147,8 +145,7 @@ export function DocumentReviewMarginComments({
                 </form>
               )
             : (
-                <RichEditor
-                  preset="comment"
+                <CommentEditor
                   controls={false}
                   disabled
                   formatting={false}
@@ -184,9 +181,8 @@ export function DocumentReviewMarginComments({
             onReply(replyText);
           }}
         >
-          <RichEditor
+          <CommentEditor
             key={editorKey}
-            preset="comment"
             controls={false}
             className="min-h-12 rounded-2 border border-sand-7 bg-sand-1 p-2 text-2 outline-none focus-within:border-sand-8"
             content={replyText}

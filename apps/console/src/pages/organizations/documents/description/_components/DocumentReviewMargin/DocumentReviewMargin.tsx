@@ -21,6 +21,7 @@
 import { ChatCircleIcon, CheckIcon, XIcon } from "@phosphor-icons/react";
 import type { RepoCollaborationHandle } from "@probo/collaboration";
 import { formatError } from "@probo/helpers";
+import { CommentEditor } from "@probo/ui";
 import { automergeRemoteTransaction } from "@probo/ui/src/RichEditor/AutomergeSyncPlugin";
 import { commentAnchorRange, encodeDocumentAnchor } from "@probo/ui/src/RichEditor/commentAnchors";
 import { presenceFromPmSelection, richEditorPresenceAdapter } from "@probo/ui/src/RichEditor/repoPresence";
@@ -56,7 +57,6 @@ import type { DocumentReviewMargin_startSuggestionMutation } from "#/__generated
 import type { DocumentReviewMargin_updateCommentMutation } from "#/__generated__/core/DocumentReviewMargin_updateCommentMutation.graphql";
 import type { DocumentReviewMarginQuery } from "#/__generated__/core/DocumentReviewMarginQuery.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
-import { RichEditor } from "#/pages/organizations/_components/RichEditor";
 import {
   isRichEditorContentEmpty,
   richEditorContentPlainText,
@@ -941,9 +941,8 @@ export function DocumentReviewMargin(props: DocumentReviewMarginProps) {
           });
         }}
       >
-        <RichEditor
+        <CommentEditor
           key={draftEditorKey}
-          preset="comment"
           controls={false}
           className="min-h-16 w-full rounded-2 border border-sand-7 bg-sand-1 p-2 text-2 outline-none focus-within:border-sand-8"
           content={draftText}
