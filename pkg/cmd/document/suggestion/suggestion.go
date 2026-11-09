@@ -64,9 +64,10 @@ func newListCmd(f *cmdutil.Factory) *cobra.Command {
 	)
 
 	cmd := &cobra.Command{
-		Use:   "list <document-id>",
-		Short: "List suggestions on a document",
-		Args:  cobra.ExactArgs(1),
+		Use:     "list <document-id>",
+		Aliases: []string{"ls"},
+		Short:   "List suggestions on a document",
+		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
 				return err
@@ -398,7 +399,7 @@ func newClient(f *cmdutil.Factory) (*api.Client, error) {
 }
 
 const listQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $filter: DocumentSuggestionFilter) {
+query DocumentSuggestions($id: ID!, $first: Int, $after: CursorKey, $filter: DocumentSuggestionFilter) {
   node(id: $id) {
     __typename
     ... on Document {
@@ -416,7 +417,7 @@ query($id: ID!, $first: Int, $after: CursorKey, $filter: DocumentSuggestionFilte
 `
 
 const viewQuery = `
-query($id: ID!) {
+query DocumentSuggestion($id: ID!) {
   node(id: $id) {
     __typename
     ... on DocumentSuggestion {
@@ -432,7 +433,7 @@ query($id: ID!) {
 `
 
 const startMutation = `
-mutation($input: StartDocumentSuggestionInput!) {
+mutation StartDocumentSuggestion($input: StartDocumentSuggestionInput!) {
   startDocumentSuggestion(input: $input) {
     documentSuggestionEdge { node { id status } }
   }
@@ -440,7 +441,7 @@ mutation($input: StartDocumentSuggestionInput!) {
 `
 
 const acceptMutation = `
-mutation($input: AcceptDocumentSuggestionInput!) {
+mutation AcceptDocumentSuggestion($input: AcceptDocumentSuggestionInput!) {
   acceptDocumentSuggestion(input: $input) {
     documentSuggestion { id status resolvedAt }
   }
@@ -448,7 +449,7 @@ mutation($input: AcceptDocumentSuggestionInput!) {
 `
 
 const rejectMutation = `
-mutation($input: RejectDocumentSuggestionInput!) {
+mutation RejectDocumentSuggestion($input: RejectDocumentSuggestionInput!) {
   rejectDocumentSuggestion(input: $input) {
     documentSuggestion { id status resolvedAt }
   }

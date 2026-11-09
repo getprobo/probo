@@ -68,9 +68,10 @@ func newListCmd(f *cmdutil.Factory) *cobra.Command {
 	)
 
 	cmd := &cobra.Command{
-		Use:   "list <document-id>",
-		Short: "List comment threads on a document",
-		Args:  cobra.ExactArgs(1),
+		Use:     "list <document-id>",
+		Aliases: []string{"ls"},
+		Short:   "List comment threads on a document",
+		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
 				return err
@@ -629,7 +630,7 @@ func newClient(f *cmdutil.Factory) (*api.Client, error) {
 }
 
 const listQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $filter: DocumentCommentThreadFilter) {
+query DocumentCommentThreads($id: ID!, $first: Int, $after: CursorKey, $filter: DocumentCommentThreadFilter) {
   node(id: $id) {
     __typename
     ... on Document {
@@ -655,7 +656,7 @@ query($id: ID!, $first: Int, $after: CursorKey, $filter: DocumentCommentThreadFi
 `
 
 const viewQuery = `
-query($id: ID!) {
+query DocumentCommentThread($id: ID!) {
   node(id: $id) {
     __typename
     ... on DocumentCommentThread {
@@ -672,7 +673,7 @@ query($id: ID!) {
 `
 
 const createMutation = `
-mutation($input: CreateDocumentCommentThreadInput!) {
+mutation CreateDocumentCommentThread($input: CreateDocumentCommentThreadInput!) {
   createDocumentCommentThread(input: $input) {
     documentCommentThreadEdge { node { id anchorQuote suggestion { id } } }
   }
@@ -680,7 +681,7 @@ mutation($input: CreateDocumentCommentThreadInput!) {
 `
 
 const replyMutation = `
-mutation($input: CreateDocumentCommentInput!) {
+mutation CreateDocumentComment($input: CreateDocumentCommentInput!) {
   createDocumentComment(input: $input) {
     documentCommentEdge { node { id content } }
   }
@@ -688,7 +689,7 @@ mutation($input: CreateDocumentCommentInput!) {
 `
 
 const updateMutation = `
-mutation($input: UpdateDocumentCommentInput!) {
+mutation UpdateDocumentComment($input: UpdateDocumentCommentInput!) {
   updateDocumentComment(input: $input) {
     documentComment { id content }
   }
@@ -696,7 +697,7 @@ mutation($input: UpdateDocumentCommentInput!) {
 `
 
 const deleteMutation = `
-mutation($input: DeleteDocumentCommentInput!) {
+mutation DeleteDocumentComment($input: DeleteDocumentCommentInput!) {
   deleteDocumentComment(input: $input) {
     deletedDocumentCommentId
     deletedDocumentCommentThreadId
@@ -705,7 +706,7 @@ mutation($input: DeleteDocumentCommentInput!) {
 `
 
 const resolveMutation = `
-mutation($input: ResolveDocumentCommentThreadInput!) {
+mutation ResolveDocumentCommentThread($input: ResolveDocumentCommentThreadInput!) {
   resolveDocumentCommentThread(input: $input) {
     documentCommentThread { id resolvedAt }
   }
@@ -713,7 +714,7 @@ mutation($input: ResolveDocumentCommentThreadInput!) {
 `
 
 const reopenMutation = `
-mutation($input: ReopenDocumentCommentThreadInput!) {
+mutation ReopenDocumentCommentThread($input: ReopenDocumentCommentThreadInput!) {
   reopenDocumentCommentThread(input: $input) {
     documentCommentThread { id resolvedAt }
   }
