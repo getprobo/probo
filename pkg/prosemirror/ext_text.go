@@ -20,10 +20,7 @@
 
 package prosemirror
 
-import (
-	"fmt"
-	"slices"
-)
+import "fmt"
 
 type textNode struct{}
 
@@ -45,7 +42,7 @@ func (textNode) Content() ContentRule {
 }
 
 func (textNode) Check(n *Node, _ CheckMode) error {
-	if n.Text == nil {
+	if n.Text == "" {
 		return fmt.Errorf("text node text is nil")
 	}
 
@@ -54,28 +51,4 @@ func (textNode) Check(n *Node, _ CheckMode) error {
 	}
 
 	return nil
-}
-
-func (textNode) RenderHTML(w *HTMLWriter, n Node) error {
-	if n.Text == nil {
-		return fmt.Errorf("cannot render text node: text is nil")
-	}
-
-	for _, m := range n.Marks {
-		if err := w.openMark(m); err != nil {
-			return err
-		}
-	}
-
-	w.WriteEscaped(*n.Text)
-
-	for _, v := range slices.Backward(n.Marks) {
-		w.closeMark(v)
-	}
-
-	return nil
-}
-
-func (textNode) RenderMarkdown(w *MarkdownWriter, n Node) error {
-	return w.renderText(n)
 }

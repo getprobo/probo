@@ -25,6 +25,7 @@ import (
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/prosemirror"
 	"go.probo.inc/probo/pkg/resourcealias"
+	"go.probo.inc/probo/pkg/richtext"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/clientip"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
@@ -465,7 +466,7 @@ func (r *documentContentResolver) Markdown(ctx context.Context, obj *types.Docum
 		return "", gqlx.Internal(ctx)
 	}
 
-	md, err := prosemirror.DocumentSchema.RenderMarkdown(node)
+	md, err := richtext.DocumentMarkdown.Render(node)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot render document content as markdown", log.Error(err))
 		return "", gqlx.Internal(ctx)

@@ -33,6 +33,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/richtext"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -96,9 +97,9 @@ func (req *CreateDocumentCommentThreadRequest) Validate() error {
 		v.Check(
 			req.Content,
 			"content",
-			validator.HasVisibleRichText(CommentSchema),
-			validator.ProseMirrorContent(CommentSchema),
-			validator.ProseMirrorMaxTextLength(CommentSchema, documentCommentMaxLength),
+			validator.HasVisibleRichText(),
+			validator.ProseMirrorCommentContent(),
+			validator.ProseMirrorDocumentMaxTextLength(documentCommentMaxLength),
 		)
 	}
 
@@ -120,9 +121,9 @@ func (req *CreateDocumentCommentRequest) Validate() error {
 		v.Check(
 			req.Content,
 			"content",
-			validator.HasVisibleRichText(CommentSchema),
-			validator.ProseMirrorContent(CommentSchema),
-			validator.ProseMirrorMaxTextLength(CommentSchema, documentCommentMaxLength),
+			validator.HasVisibleRichText(),
+			validator.ProseMirrorCommentContent(),
+			validator.ProseMirrorDocumentMaxTextLength(documentCommentMaxLength),
 		)
 	}
 
@@ -139,9 +140,9 @@ func (req *UpdateDocumentCommentRequest) Validate() error {
 		v.Check(
 			req.Content,
 			"content",
-			validator.HasVisibleRichText(CommentSchema),
-			validator.ProseMirrorContent(CommentSchema),
-			validator.ProseMirrorMaxTextLength(CommentSchema, documentCommentMaxLength),
+			validator.HasVisibleRichText(),
+			validator.ProseMirrorCommentContent(),
+			validator.ProseMirrorDocumentMaxTextLength(documentCommentMaxLength),
 		)
 	}
 
@@ -328,7 +329,7 @@ func (s *DocumentService) CreateCommentThread(
 		return nil, nil, ErrInvalidDocumentAnchor
 	}
 
-	content, err := DefaultCommentJSON(&req.Content)
+	content, err := richtext.DefaultCommentJSON(&req.Content)
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot sanitize document comment content: %w", err)
 	}
@@ -442,7 +443,7 @@ func (s *DocumentService) CreateComment(
 		return nil, err
 	}
 
-	content, err := DefaultCommentJSON(&req.Content)
+	content, err := richtext.DefaultCommentJSON(&req.Content)
 	if err != nil {
 		return nil, fmt.Errorf("cannot sanitize document comment content: %w", err)
 	}
@@ -505,7 +506,7 @@ func (s *DocumentService) UpdateComment(
 		return nil, err
 	}
 
-	content, err := DefaultCommentJSON(&req.Content)
+	content, err := richtext.DefaultCommentJSON(&req.Content)
 	if err != nil {
 		return nil, fmt.Errorf("cannot sanitize document comment content: %w", err)
 	}

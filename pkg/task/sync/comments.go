@@ -27,6 +27,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"go.probo.inc/probo/pkg/richtext/attachment"
 	"strings"
 	"time"
 
@@ -37,7 +38,6 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
-	"go.probo.inc/probo/pkg/prosemirror"
 	"go.probo.inc/probo/pkg/task/sync/linear"
 	"go.probo.inc/probo/pkg/webhook"
 	webhooktypes "go.probo.inc/probo/pkg/webhook/types"
@@ -1088,7 +1088,7 @@ func (h *outboundHandler) processCommentUpsert(
 		var known map[string]string
 
 		if mapping != nil && mapping.ContentHash != nil && *mapping.ContentHash == hash {
-			ids, err := prosemirror.FileIDs(comment.Content)
+			ids, err := attachment.FileIDs(comment.Content)
 			if err != nil {
 				return fmt.Errorf("cannot read comment attachment file ids: %w", err)
 			}

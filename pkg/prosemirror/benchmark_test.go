@@ -26,6 +26,7 @@ import (
 	"testing"
 
 	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/richtext"
 )
 
 func BenchmarkParse(b *testing.B) {
@@ -46,6 +47,19 @@ func BenchmarkParse(b *testing.B) {
 	}
 }
 
+func BenchmarkParseMarkdown(b *testing.B) {
+	const src = "# Policy\n\nA **bold** word and a [link](https://example.com).\n\n- one\n- two\n"
+
+	b.ReportAllocs()
+	b.SetBytes(int64(len(src)))
+
+	for b.Loop() {
+		if _, err := richtext.ParseMarkdown(src); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
 func BenchmarkValidate(b *testing.B) {
 	for _, fixture := range benchFixtures(b) {
 		b.Run(
@@ -55,7 +69,7 @@ func BenchmarkValidate(b *testing.B) {
 				b.SetBytes(int64(len(fixture.raw)))
 
 				for b.Loop() {
-					if err := prosemirror.DocumentSchema.ValidateJSON(fixture.raw); err != nil {
+					if err := richtext.DocumentSchema.ValidateJSON(fixture.raw); err != nil {
 						b.Fatal(err)
 					}
 				}
@@ -73,7 +87,7 @@ func BenchmarkSanitize(b *testing.B) {
 				b.SetBytes(int64(len(fixture.raw)))
 
 				for b.Loop() {
-					if _, err := prosemirror.DocumentSchema.Sanitize(fixture.raw); err != nil {
+					if _, err := richtext.DocumentSchema.Sanitize(fixture.raw); err != nil {
 						b.Fatal(err)
 					}
 				}
@@ -96,7 +110,7 @@ func BenchmarkRenderHTML(b *testing.B) {
 				b.SetBytes(int64(len(fixture.raw)))
 
 				for b.Loop() {
-					if _, err := prosemirror.DocumentSchema.RenderHTML(node); err != nil {
+					if _, err := richtext.DocumentHTML.Render(node); err != nil {
 						b.Fatal(err)
 					}
 				}
@@ -119,7 +133,7 @@ func BenchmarkRenderMarkdown(b *testing.B) {
 				b.SetBytes(int64(len(fixture.raw)))
 
 				for b.Loop() {
-					if _, err := prosemirror.DocumentSchema.RenderMarkdown(node); err != nil {
+					if _, err := richtext.DocumentMarkdown.Render(node); err != nil {
 						b.Fatal(err)
 					}
 				}
@@ -142,7 +156,7 @@ func BenchmarkTextLength(b *testing.B) {
 				b.SetBytes(int64(len(fixture.raw)))
 
 				for b.Loop() {
-					_ = prosemirror.DocumentSchema.TextLength(node)
+					_ = richtext.DocumentSchema.TextLength(node)
 				}
 			},
 		)

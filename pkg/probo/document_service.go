@@ -51,7 +51,7 @@ import (
 	"go.probo.inc/probo/pkg/notification"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/pdfutils"
-	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/richtext"
 	"go.probo.inc/probo/pkg/validator"
 	"go.probo.inc/probo/pkg/webhook"
 	webhooktypes "go.probo.inc/probo/pkg/webhook/types"
@@ -168,8 +168,8 @@ func (cdr *CreateDocumentRequest) Validate() error {
 		cdr.Content,
 		"content",
 		validator.MaxLen(documentContentMaxJSONBytes),
-		validator.ProseMirrorContent(prosemirror.DocumentSchema),
-		validator.ProseMirrorMaxTextLength(prosemirror.DocumentSchema, documentContentMaxTextLength),
+		validator.ProseMirrorDocumentContent(),
+		validator.ProseMirrorDocumentMaxTextLength(documentContentMaxTextLength),
 	)
 	v.Check(cdr.Classification, "classification", validator.Required(), validator.OneOfSlice(coredata.DocumentClassifications()))
 	v.Check(cdr.DocumentType, "document_type", validator.Required(), validator.OneOfSlice(coredata.DocumentTypes()))
@@ -236,8 +236,8 @@ func (udr *UpdateDocumentRequest) Validate() error {
 		udr.Content,
 		"content",
 		validator.MaxLen(documentContentMaxJSONBytes),
-		validator.ProseMirrorContent(prosemirror.DocumentSchema),
-		validator.ProseMirrorMaxTextLength(prosemirror.DocumentSchema, documentContentMaxTextLength),
+		validator.ProseMirrorDocumentContent(),
+		validator.ProseMirrorDocumentMaxTextLength(documentContentMaxTextLength),
 	)
 	v.Check(udr.DocumentType, "document_type", validator.OneOfSlice(coredata.DocumentTypes()))
 
@@ -739,7 +739,7 @@ func (s *DocumentService) Create(
 	if strings.TrimSpace(content) != "" {
 		var sanitizeErr error
 
-		content, sanitizeErr = prosemirror.DocumentSchema.Sanitize(content)
+		content, sanitizeErr = richtext.DocumentSchema.Sanitize(content)
 		if sanitizeErr != nil {
 			return nil, fmt.Errorf("cannot sanitize document content: %w", sanitizeErr)
 		}
@@ -2152,7 +2152,7 @@ func (s *DocumentService) Update(
 			if req.Content != nil {
 				content := *req.Content
 				if strings.TrimSpace(content) != "" {
-					sanitized, sanitizeErr := prosemirror.DocumentSchema.Sanitize(content)
+					sanitized, sanitizeErr := richtext.DocumentSchema.Sanitize(content)
 					if sanitizeErr != nil {
 						return fmt.Errorf("cannot sanitize document content: %w", sanitizeErr)
 					}

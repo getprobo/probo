@@ -21,17 +21,18 @@
 package prosemirror
 
 import (
-	"net/url"
 	"strings"
+
+	"go.probo.inc/probo/pkg/prosemirror/internal/urlsafe"
 )
 
 const linkRelBlankTargetDefault = "noopener noreferrer"
 
-// linkRelToEmit returns the rel attribute value for a link mark, or empty when
+// LinkRelToEmit returns the rel attribute value for a link mark, or empty when
 // the attribute should be omitted. When target opens a new browsing context
 // (_blank), noopener is always injected to prevent the opened page from
 // accessing window.opener, even when the document supplies a custom rel.
-func linkRelToEmit(attrs LinkAttrs) string {
+func LinkRelToEmit(attrs LinkAttrs) string {
 	blanksTarget := attrs.Target != nil &&
 		strings.EqualFold(strings.TrimSpace(*attrs.Target), "_blank")
 
@@ -64,113 +65,28 @@ func ensureNoopener(rel string) string {
 	return rel + " noopener"
 }
 
-// safeLinkHref returns a value safe to use in link mark attrs and to emit in an
+// SafeLinkHref returns a value safe to use in link mark attrs and to emit in an
 // HTML href attribute. URLs with disallowed schemes (for example javascript: or
 // data:) are replaced with "#" so escaped text content cannot be combined with an
 // executable URL.
-func safeLinkHref(href string) string {
-	href = strings.TrimSpace(href)
-	if href == "" {
-		return "#"
-	}
-
-	if href[0] == '#' {
-		return href
-	}
-
-	if strings.HasPrefix(href, "/") {
-		if len(href) > 1 && (href[1] == '/' || href[1] == '\\') {
-			return "#"
-		}
-
-		return href
-	}
-
-	u, err := url.Parse(href)
-	if err != nil {
-		return "#"
-	}
-
-	if u.Scheme != "" {
-		switch strings.ToLower(u.Scheme) {
-		case "http", "https", "mailto", "tel":
-			return href
-		default:
-			return "#"
-		}
-	}
-
-	if u.Host != "" {
-		return "#"
-	}
-
-	return href
+func SafeLinkHref(href string) string {
+	return urlsafe.LinkHref(href)
 }
 
-// safeImageSrc returns a value safe to use in an HTML img src attribute.
-// http, https, same-origin paths, and base64 image data URLs are kept.
-// javascript: and other schemes become an empty string.
 func safeImageSrc(src string) string {
-	src = strings.TrimSpace(src)
-	if src == "" {
-		return ""
-	}
-
-	if strings.HasPrefix(src, "/") {
-		if len(src) > 1 && (src[1] == '/' || src[1] == '\\') {
-			return ""
-		}
-
-		return src
-	}
-
-	u, err := url.Parse(src)
-	if err != nil {
-		return ""
-	}
-
-	if u.Scheme != "" {
-		switch strings.ToLower(u.Scheme) {
-		case "http", "https":
-			return src
-		case "data":
-			if isSafeImageDataURL(src) {
-				return src
-			}
-
-			return ""
-		default:
-			return ""
-		}
-	}
-
-	if u.Host != "" {
-		return ""
-	}
-
-	return src
+	return urlsafe.ImageSrc(src)
 }
 
-// persistedImageSrc is the src stored in a document. Data URLs are dropped so
-// an upload preview is never saved; PDF export injects data URLs only in memory.
 func persistedImageSrc(src string) string {
-	if strings.HasPrefix(strings.ToLower(strings.TrimSpace(src)), "data:") {
-		return ""
-	}
+	return urlsafe.PersistedImageSrc(src)
+}
 
+// SafeImageSrc returns a value safe to emit in an HTML img src attribute.
+func SafeImageSrc(src string) string {
 	return safeImageSrc(src)
 }
 
-func isSafeImageDataURL(src string) bool {
-	lower := strings.ToLower(strings.TrimSpace(src))
-	switch {
-	case strings.HasPrefix(lower, "data:image/png;"),
-		strings.HasPrefix(lower, "data:image/jpeg;"),
-		strings.HasPrefix(lower, "data:image/webp;"),
-		strings.HasPrefix(lower, "data:image/gif;"),
-		strings.HasPrefix(lower, "data:image/svg+xml;"):
-		return strings.Contains(lower, ";base64,")
-	default:
-		return false
-	}
+// PersistedImageSrc returns the src stored on an image node after sanitize.
+func PersistedImageSrc(src string) string {
+	return persistedImageSrc(src)
 }

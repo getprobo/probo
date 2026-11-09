@@ -35,7 +35,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/docgen"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/richtext"
 )
 
 var (
@@ -64,7 +64,7 @@ func BuildTrackerPolicyDocument(data docgen.TrackerPolicyData) (string, error) {
 		return "", fmt.Errorf("cannot execute tracker policy template: %w", err)
 	}
 
-	node, err := prosemirror.ParseMarkdown(buf.String())
+	node, err := richtext.ParseMarkdown(buf.String())
 	if err != nil {
 		return "", fmt.Errorf("cannot convert tracker policy markdown: %w", err)
 	}

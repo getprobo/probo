@@ -27,6 +27,7 @@ import (
 	"go.probo.inc/probo/pkg/automerge"
 	automergeprosemirror "go.probo.inc/probo/pkg/automerge/prosemirror"
 	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/richtext"
 )
 
 func FuzzRender(f *testing.F) {
@@ -120,11 +121,11 @@ func FuzzRender(f *testing.F) {
 				t.Fatalf("cannot parse rendered document %q: %v", content, err)
 			}
 
-			if _, err := prosemirror.DocumentSchema.RenderMarkdown(node); err != nil {
+			if _, err := richtext.DocumentMarkdown.Render(node); err != nil {
 				t.Fatalf("rendered document is not valid Markdown %q: %v", content, err)
 			}
 
-			if _, err := prosemirror.DocumentSchema.RenderHTML(node); err != nil {
+			if _, err := richtext.DocumentHTML.Render(node); err != nil {
 				t.Fatalf("rendered document is not valid HTML %q: %v", content, err)
 			}
 		},

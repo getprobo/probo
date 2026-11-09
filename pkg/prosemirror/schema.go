@@ -25,8 +25,6 @@ import (
 	"fmt"
 	"strings"
 	"unicode/utf8"
-
-	"go.probo.inc/probo/pkg/gid"
 )
 
 const (
@@ -88,18 +86,12 @@ type (
 		Group() Group
 		Content() ContentRule
 		Check(n *Node, mode CheckMode) error
-		RenderHTML(w *HTMLWriter, n Node) error
-		RenderMarkdown(w *MarkdownWriter, n Node) error
 	}
 
 	// MarkSpec describes one mark type in a Schema.
 	MarkSpec interface {
 		Name() MarkType
 		Check(m *Mark, mode CheckMode) error
-		OpenHTML(w *HTMLWriter, m Mark) error
-		CloseHTML(w *HTMLWriter, m Mark)
-		OpenMarkdown(w *MarkdownWriter, m Mark) error
-		CloseMarkdown(w *MarkdownWriter, m Mark) error
 	}
 
 	// textLengthSpec is an optional NodeSpec capability contributing to
@@ -116,14 +108,18 @@ type (
 )
 
 type (
-	// Schema is a compiled set of node and mark specs. It drives validation,
-	// sanitization, and rendering.
+	// Schema is a compiled set of node and mark specs. It drives validation and
+	// sanitization.
 	Schema struct {
-		index              map[NodeType]uint8
-		entries            []nodeEntry
-		marks              map[MarkType]MarkSpec
-		markEntries        map[MarkType]markEntry
-		hasExtraTextLength bool
+		index       map[NodeType]uint8
+		entries     []nodeEntry
+		marks       map[MarkType]MarkSpec
+		markEntries map[MarkType]markEntry
+		// mentionTextLen is the mention spec's TextLength, cached so the
+		// common walk does not look the type up in a map. otherTextLength
+		// is set when some other spec also contributes length.
+		mentionTextLen  textLengthSpec
+		otherTextLength bool
 	}
 
 	markEntry struct {
@@ -219,20 +215,43 @@ func NewSchema(nodes []NodeSpec, marks []MarkSpec) *Schema {
 		markEntries[name] = markEntry{spec: spec}
 	}
 
-	hasExtraTextLength := false
+	var (
+		mentionTextLen  textLengthSpec
+		otherTextLength bool
+	)
+
 	for i := range entries {
-		if entries[i].textLen != nil {
-			hasExtraTextLength = true
-			break
+		if entries[i].textLen == nil {
+			continue
 		}
+
+		if entries[i].spec.Name() == NodeMention {
+			mentionTextLen = entries[i].textLen
+			continue
+		}
+
+		otherTextLength = true
 	}
 
 	return &Schema{
-		index:              index,
-		entries:            entries,
-		marks:              markIndex,
-		markEntries:        markEntries,
-		hasExtraTextLength: hasExtraTextLength,
+		index:           index,
+		entries:         entries,
+		marks:           markIndex,
+		markEntries:     markEntries,
+		mentionTextLen:  mentionTextLen,
+		otherTextLength: otherTextLength,
+	}
+}
+
+// Walk visits n and its descendants. fn reports whether to walk the node's
+// children.
+func Walk(n *Node, fn func(*Node) bool) {
+	if n == nil || !fn(n) {
+		return
+	}
+
+	for i := range n.Content {
+		Walk(&n.Content[i], fn)
 	}
 }
 
@@ -315,6 +334,13 @@ var knownNodeTypes = map[NodeType]struct{}{
 	NodeTableCell:      {},
 	NodeTableHeader:    {},
 	NodeMention:        {},
+}
+
+// NodeIndex returns the dense lookup index for t in this schema.
+func (s *Schema) NodeIndex(t NodeType) (int, bool) {
+	idx, ok := s.index[t]
+
+	return int(idx), ok
 }
 
 // NodeTypes returns the node types the schema accepts, in unspecified order.
@@ -509,12 +535,14 @@ func (s *Schema) Sanitize(raw string) (string, error) {
 // Plain text on any node is counted directly; specs may add more via
 // textLengthSpec (for example mentions, once they opt in).
 func (s *Schema) TextLength(n Node) int {
-	length := 0
-	if n.Text != nil {
-		length += utf8.RuneCountInString(*n.Text)
+	var length int
+	if n.Text != "" {
+		length = utf8.RuneCountInString(n.Text)
 	}
 
-	if s.hasExtraTextLength {
+	if n.Type == NodeMention && s.mentionTextLen != nil {
+		length += s.mentionTextLen.TextLength(n)
+	} else if s.otherTextLength {
 		if idx, ok := s.index[n.Type]; ok {
 			if tl := s.entries[idx].textLen; tl != nil {
 				length += tl.TextLength(n)
@@ -538,7 +566,7 @@ func (s *Schema) HasVisibleContent(n Node) bool {
 		}
 	}
 
-	if n.Type == NodeText && n.Text != nil && strings.TrimSpace(*n.Text) != "" {
+	if n.Type == NodeText && strings.TrimSpace(n.Text) != "" {
 		return true
 	}
 
@@ -551,13 +579,8 @@ func (s *Schema) HasVisibleContent(n Node) bool {
 	return false
 }
 
-func validFileID(id string) bool {
-	_, err := gid.ParseGID(id)
-
-	return err == nil
-}
-
-func validateLeaf(n *Node) error {
+// ValidateLeaf reports whether n is a leaf: no children, text, or marks.
+func ValidateLeaf(n *Node) error {
 	if len(n.Content) > 0 {
 		return fmt.Errorf("%s cannot have children", n.Type)
 	}
@@ -570,7 +593,7 @@ func validateLeaf(n *Node) error {
 }
 
 func rejectNonTextPayload(n *Node) error {
-	if n.Text != nil {
+	if n.Text != "" {
 		return fmt.Errorf("%s cannot have text", n.Type)
 	}
 

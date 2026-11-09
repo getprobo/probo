@@ -32,6 +32,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/richtext"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -120,7 +121,7 @@ func (s *Service) ApplyContent(
 	scope coredata.Scoper,
 	req CollaborationApplyContentRequest,
 ) (*CollaborationWriteResult, error) {
-	sanitized, err := prosemirror.DocumentSchema.Sanitize(req.Content)
+	sanitized, err := richtext.DocumentSchema.Sanitize(req.Content)
 	if err != nil {
 		return nil, fmt.Errorf("cannot sanitize collaboration content: %w", err)
 	}
@@ -372,7 +373,7 @@ func (s *Service) ApplyEdits(
 		return nil, fmt.Errorf("cannot encode edited collaboration document: %w", err)
 	}
 
-	sanitized, err := prosemirror.DocumentSchema.Sanitize(string(encoded))
+	sanitized, err := richtext.DocumentSchema.Sanitize(string(encoded))
 	if err != nil {
 		return nil, fmt.Errorf("cannot sanitize edited collaboration document: %w", err)
 	}
@@ -552,7 +553,7 @@ func validateContentLength(contentJSON string) error {
 	v.Check(
 		contentJSON,
 		"content",
-		validator.ProseMirrorMaxTextLength(prosemirror.DocumentSchema, contentMaxText),
+		validator.ProseMirrorDocumentMaxTextLength(contentMaxText),
 	)
 
 	return v.Error()

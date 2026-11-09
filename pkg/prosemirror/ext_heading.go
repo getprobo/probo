@@ -20,12 +20,21 @@
 
 package prosemirror
 
-import (
-	"fmt"
-	"strconv"
-)
+import "fmt"
 
 type headingNode struct{}
+
+// HeadingAttrs contains attributes for heading nodes.
+type HeadingAttrs struct {
+	Level int `json:"level"`
+}
+
+// HeadingAttrs parses and returns the heading attributes from a heading node.
+// Attributes are optional in the Tiptap schema: a node that omits them, or
+// omits individual keys, takes the schema defaults.
+func (n Node) HeadingAttrs() (HeadingAttrs, error) {
+	return decodeAttrs(n.Attrs, HeadingAttrs{Level: 1}, "heading")
+}
 
 // Heading is a section heading of level 1 to 6 holding inline content.
 func Heading() NodeSpec {
@@ -57,60 +66,6 @@ func (headingNode) Check(n *Node, _ CheckMode) error {
 	if attrs.Level < 1 || attrs.Level > 6 {
 		return fmt.Errorf("cannot validate heading node: invalid level %d", attrs.Level)
 	}
-
-	return nil
-}
-
-func (headingNode) RenderHTML(w *HTMLWriter, n Node) error {
-	attrs, err := n.HeadingAttrs()
-	if err != nil {
-		return fmt.Errorf("cannot render heading node: %w", err)
-	}
-
-	if attrs.Level < 1 || attrs.Level > 6 {
-		return fmt.Errorf("cannot render heading node: invalid level %d", attrs.Level)
-	}
-
-	level := strconv.Itoa(attrs.Level)
-
-	w.WriteString("<h")
-	w.WriteString(level)
-	w.WriteByte('>')
-
-	if err := w.RenderChildren(n.Content); err != nil {
-		return err
-	}
-
-	w.WriteString("</h")
-	w.WriteString(level)
-	w.WriteByte('>')
-
-	return nil
-}
-
-func (headingNode) RenderMarkdown(w *MarkdownWriter, n Node) error {
-	attrs, err := n.HeadingAttrs()
-	if err != nil {
-		return fmt.Errorf("cannot render heading node: %w", err)
-	}
-
-	if attrs.Level < 1 || attrs.Level > 6 {
-		return fmt.Errorf("cannot render heading node: invalid level %d", attrs.Level)
-	}
-
-	w.ensurePrefix()
-
-	for i := 0; i < attrs.Level; i++ {
-		w.buf.WriteByte('#')
-	}
-
-	w.buf.WriteByte(' ')
-
-	if err := w.RenderInline(n.Content); err != nil {
-		return err
-	}
-
-	w.newLine()
 
 	return nil
 }

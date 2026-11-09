@@ -28,7 +28,7 @@ import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
-	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/richtext"
 )
 
 func NewCmdComment(f *cmdutil.Factory) *cobra.Command {
@@ -310,9 +310,14 @@ func newCreateCmd(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("quote or suggestion is required")
 			}
 
+			content, err := richtext.FromPlainText(flagContent)
+			if err != nil {
+				return err
+			}
+
 			input := map[string]any{
 				"documentId": args[0],
-				"content":    prosemirror.FromPlainText(flagContent),
+				"content":    content,
 			}
 			if flagQuote != "" {
 				input["quote"] = flagQuote
@@ -374,6 +379,11 @@ func newReplyCmd(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("content is required")
 			}
 
+			content, err := richtext.FromPlainText(flagContent)
+			if err != nil {
+				return err
+			}
+
 			return runMutation(
 				f,
 				flagOutput,
@@ -381,7 +391,7 @@ func newReplyCmd(f *cmdutil.Factory) *cobra.Command {
 				map[string]any{
 					"input": map[string]any{
 						"threadId": args[0],
-						"content":  prosemirror.FromPlainText(flagContent),
+						"content":  content,
 					},
 				},
 				func(data json.RawMessage) (string, error) {
@@ -428,6 +438,11 @@ func newUpdateCmd(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("content is required")
 			}
 
+			content, err := richtext.FromPlainText(flagContent)
+			if err != nil {
+				return err
+			}
+
 			return runMutation(
 				f,
 				flagOutput,
@@ -435,7 +450,7 @@ func newUpdateCmd(f *cmdutil.Factory) *cobra.Command {
 				map[string]any{
 					"input": map[string]any{
 						"commentId": args[0],
-						"content":   prosemirror.FromPlainText(flagContent),
+						"content":   content,
 					},
 				},
 				func(data json.RawMessage) (string, error) {

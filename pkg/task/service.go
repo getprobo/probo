@@ -24,6 +24,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"go.probo.inc/probo/pkg/richtext/mention"
 	"time"
 
 	"go.gearno.de/crypto/uuid"
@@ -36,7 +37,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/notification"
 	"go.probo.inc/probo/pkg/page"
-	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/richtext"
 	tasksync "go.probo.inc/probo/pkg/task/sync"
 	"go.probo.inc/probo/pkg/timespan"
 	"go.probo.inc/probo/pkg/validator"
@@ -124,8 +125,8 @@ func (ctr *CreateTaskRequest) Validate() error {
 		ctr.Content,
 		"content",
 		validator.MaxLen(richTextMaxJSONBytes),
-		validator.ProseMirrorContent(prosemirror.DocumentSchema),
-		validator.ProseMirrorMaxTextLength(prosemirror.DocumentSchema, ContentMaxLength),
+		validator.ProseMirrorDocumentContent(),
+		validator.ProseMirrorDocumentMaxTextLength(ContentMaxLength),
 	)
 	v.Check(ctr.State, "state", validator.OneOfSlice(coredata.TaskStates()))
 	v.Check(ctr.Priority, "priority", validator.Required(), validator.OneOfSlice(coredata.TaskPriorities()))
@@ -177,8 +178,8 @@ func (utr *UpdateTaskRequest) Validate() error {
 		utr.Content,
 		"content",
 		validator.MaxLen(richTextMaxJSONBytes),
-		validator.ProseMirrorContent(prosemirror.DocumentSchema),
-		validator.ProseMirrorMaxTextLength(prosemirror.DocumentSchema, ContentMaxLength),
+		validator.ProseMirrorDocumentContent(),
+		validator.ProseMirrorDocumentMaxTextLength(ContentMaxLength),
 	)
 	v.Check(utr.Priority, "priority", validator.OneOfSlice(coredata.TaskPriorities()))
 	v.Check(utr.TimeEstimate, "time_estimate", validator.RangeDuration(0, 1000*time.Hour))
@@ -207,7 +208,7 @@ func (s *Service) Create(
 	now := time.Now()
 	taskID := gid.New(scope.GetTenantID(), coredata.TaskEntityType)
 
-	content, err := prosemirror.DefaultDocumentJSON(req.Content)
+	content, err := richtext.DefaultDocumentJSON(req.Content)
 	if err != nil {
 		return nil, fmt.Errorf("cannot sanitize task content: %w", err)
 	}
@@ -571,7 +572,7 @@ func (s *Service) Update(
 			}
 
 			if req.Content != nil {
-				content, err := prosemirror.DefaultDocumentJSON(*req.Content)
+				content, err := richtext.DefaultDocumentJSON(*req.Content)
 				if err != nil {
 					return fmt.Errorf("cannot sanitize task content: %w", err)
 				}
@@ -1080,7 +1081,7 @@ func notifyNewMentions(
 	newContent string,
 	actorID *gid.GID,
 ) error {
-	mentionedIDs, err := prosemirror.NewlyMentionedProfileIDs(oldContent, newContent)
+	mentionedIDs, err := mention.NewProfileIDs(oldContent, newContent)
 	if err != nil {
 		return fmt.Errorf("cannot collect new mentions: %w", err)
 	}

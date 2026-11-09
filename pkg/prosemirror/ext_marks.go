@@ -20,11 +20,7 @@
 
 package prosemirror
 
-import (
-	"encoding/json"
-	"fmt"
-	"strings"
-)
+import "fmt"
 
 type boldMark struct{}
 
@@ -38,28 +34,6 @@ func (boldMark) Name() MarkType {
 }
 
 func (boldMark) Check(_ *Mark, _ CheckMode) error {
-	return nil
-}
-
-func (boldMark) OpenHTML(w *HTMLWriter, _ Mark) error {
-	w.WriteString("<strong>")
-
-	return nil
-}
-
-func (boldMark) CloseHTML(w *HTMLWriter, _ Mark) {
-	w.WriteString("</strong>")
-}
-
-func (boldMark) OpenMarkdown(w *MarkdownWriter, _ Mark) error {
-	w.buf.WriteString("**")
-
-	return nil
-}
-
-func (boldMark) CloseMarkdown(w *MarkdownWriter, _ Mark) error {
-	w.buf.WriteString("**")
-
 	return nil
 }
 
@@ -78,28 +52,6 @@ func (italicMark) Check(_ *Mark, _ CheckMode) error {
 	return nil
 }
 
-func (italicMark) OpenHTML(w *HTMLWriter, _ Mark) error {
-	w.WriteString("<em>")
-
-	return nil
-}
-
-func (italicMark) CloseHTML(w *HTMLWriter, _ Mark) {
-	w.WriteString("</em>")
-}
-
-func (italicMark) OpenMarkdown(w *MarkdownWriter, _ Mark) error {
-	w.buf.WriteByte('*')
-
-	return nil
-}
-
-func (italicMark) CloseMarkdown(w *MarkdownWriter, _ Mark) error {
-	w.buf.WriteByte('*')
-
-	return nil
-}
-
 type underlineMark struct{}
 
 // Underline renders underlined text.
@@ -112,28 +64,6 @@ func (underlineMark) Name() MarkType {
 }
 
 func (underlineMark) Check(_ *Mark, _ CheckMode) error {
-	return nil
-}
-
-func (underlineMark) OpenHTML(w *HTMLWriter, _ Mark) error {
-	w.WriteString("<u>")
-
-	return nil
-}
-
-func (underlineMark) CloseHTML(w *HTMLWriter, _ Mark) {
-	w.WriteString("</u>")
-}
-
-func (underlineMark) OpenMarkdown(w *MarkdownWriter, _ Mark) error {
-	w.buf.WriteString("<u>")
-
-	return nil
-}
-
-func (underlineMark) CloseMarkdown(w *MarkdownWriter, _ Mark) error {
-	w.buf.WriteString("</u>")
-
 	return nil
 }
 
@@ -152,28 +82,6 @@ func (strikeMark) Check(_ *Mark, _ CheckMode) error {
 	return nil
 }
 
-func (strikeMark) OpenHTML(w *HTMLWriter, _ Mark) error {
-	w.WriteString("<s>")
-
-	return nil
-}
-
-func (strikeMark) CloseHTML(w *HTMLWriter, _ Mark) {
-	w.WriteString("</s>")
-}
-
-func (strikeMark) OpenMarkdown(w *MarkdownWriter, _ Mark) error {
-	w.buf.WriteString("~~")
-
-	return nil
-}
-
-func (strikeMark) CloseMarkdown(w *MarkdownWriter, _ Mark) error {
-	w.buf.WriteString("~~")
-
-	return nil
-}
-
 type codeMark struct{}
 
 // Code renders inline monospaced text.
@@ -189,27 +97,24 @@ func (codeMark) Check(_ *Mark, _ CheckMode) error {
 	return nil
 }
 
-func (codeMark) OpenHTML(w *HTMLWriter, _ Mark) error {
-	w.WriteString("<code>")
-
-	return nil
-}
-
-func (codeMark) CloseHTML(w *HTMLWriter, _ Mark) {
-	w.WriteString("</code>")
-}
-
 // Markdown renders inline code through the writer's code-text path, so these
 // hooks are never invoked.
-func (codeMark) OpenMarkdown(_ *MarkdownWriter, _ Mark) error {
-	return nil
-}
-
-func (codeMark) CloseMarkdown(_ *MarkdownWriter, _ Mark) error {
-	return nil
-}
 
 type linkMark struct{}
+
+// LinkAttrs contains attributes for link marks.
+type LinkAttrs struct {
+	Href   string  `json:"href"`
+	Target *string `json:"target,omitempty"`
+	Rel    *string `json:"rel,omitempty"`
+	Class  *string `json:"class,omitempty"`
+	Title  *string `json:"title,omitempty"`
+}
+
+// LinkAttrs parses and returns the link attributes from a link mark.
+func (m Mark) LinkAttrs() (LinkAttrs, error) {
+	return decodeAttrs(m.Attrs, LinkAttrs{}, "link")
+}
 
 // Link renders a hyperlink.
 func Link() MarkSpec {
@@ -221,86 +126,25 @@ func (linkMark) Name() MarkType {
 }
 
 func (linkMark) Check(m *Mark, mode CheckMode) error {
+	attrs, err := m.LinkAttrs()
+	if err != nil {
+		if mode == CheckSanitize {
+			m.Attrs = []byte(`{"href":"#"}`)
+			return nil
+		}
+
+		return fmt.Errorf("cannot validate link mark: %w", err)
+	}
+
 	if mode != CheckSanitize {
 		return nil
 	}
 
-	attrs, err := m.LinkAttrs()
-	if err != nil {
-		m.Attrs = []byte(`{"href":"#"}`)
-		return nil
+	attrs.Href = SafeLinkHref(attrs.Href)
+
+	if err := writeAttrs(&m.Attrs, attrs); err != nil {
+		return fmt.Errorf("cannot validate link mark: %w", err)
 	}
-
-	attrs.Href = safeLinkHref(attrs.Href)
-
-	raw, err := json.Marshal(attrs)
-	if err != nil {
-		m.Attrs = []byte(`{"href":"#"}`)
-		return nil
-	}
-
-	m.Attrs = raw
-
-	return nil
-}
-
-func (linkMark) OpenHTML(w *HTMLWriter, m Mark) error {
-	attrs, err := m.LinkAttrs()
-	if err != nil {
-		return fmt.Errorf("cannot render link mark: %w", err)
-	}
-
-	w.WriteString("<a")
-	w.WriteAttr("href", safeLinkHref(attrs.Href))
-
-	if attrs.Target != nil {
-		w.WriteAttr("target", *attrs.Target)
-	}
-
-	rel := linkRelToEmit(attrs)
-	if rel != "" {
-		w.WriteAttr("rel", rel)
-	}
-
-	if attrs.Class != nil {
-		w.WriteAttr("class", *attrs.Class)
-	}
-
-	if attrs.Title != nil {
-		w.WriteAttr("title", *attrs.Title)
-	}
-
-	w.WriteByte('>')
-
-	return nil
-}
-
-func (linkMark) CloseHTML(w *HTMLWriter, _ Mark) {
-	w.WriteString("</a>")
-}
-
-func (linkMark) OpenMarkdown(w *MarkdownWriter, _ Mark) error {
-	w.buf.WriteByte('[')
-
-	return nil
-}
-
-func (linkMark) CloseMarkdown(w *MarkdownWriter, m Mark) error {
-	attrs, err := m.LinkAttrs()
-	if err != nil {
-		return fmt.Errorf("cannot render link mark: %w", err)
-	}
-
-	w.buf.WriteString("](")
-	w.buf.WriteString(safeLinkHref(attrs.Href))
-
-	if attrs.Title != nil {
-		w.buf.WriteString(` "`)
-		w.buf.WriteString(strings.ReplaceAll(*attrs.Title, `"`, `\"`))
-		w.buf.WriteByte('"')
-	}
-
-	w.buf.WriteByte(')')
 
 	return nil
 }

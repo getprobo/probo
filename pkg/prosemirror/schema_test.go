@@ -28,8 +28,13 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/prosemirror/html"
+	"go.probo.inc/probo/pkg/prosemirror/markdown"
+	"go.probo.inc/probo/pkg/richtext"
+	"go.probo.inc/probo/pkg/richtext/mention"
 )
 
 func commentSchema() *prosemirror.Schema {
@@ -43,7 +48,7 @@ func commentSchema() *prosemirror.Schema {
 			prosemirror.OrderedList(),
 			prosemirror.ListItem(),
 			prosemirror.HardBreak(),
-			prosemirror.Mention(prosemirror.MentionOptions{}),
+			mention.Document(),
 		},
 		[]prosemirror.MarkSpec{
 			prosemirror.Bold(),
@@ -115,39 +120,60 @@ func TestRestrictedSchemaRejectsExcludedNodesAndMarks(t *testing.T) {
 	}
 }
 
-func TestMentionOptionsEntityTypes(t *testing.T) {
+func TestMentionProfileVsDocument(t *testing.T) {
 	t.Parallel()
 
-	const allowedType uint16 = 7
-	const otherType uint16 = 25
-
-	schema := prosemirror.NewSchema(
+	profileSchema := prosemirror.NewSchema(
 		[]prosemirror.NodeSpec{
 			prosemirror.Doc(),
 			prosemirror.Paragraph(),
 			prosemirror.Text(),
-			prosemirror.Mention(prosemirror.MentionOptions{EntityTypes: []uint16{allowedType}}),
+			mention.Profile(),
+		},
+		nil,
+	)
+	documentSchema := prosemirror.NewSchema(
+		[]prosemirror.NodeSpec{
+			prosemirror.Doc(),
+			prosemirror.Paragraph(),
+			prosemirror.Text(),
+			mention.Document(),
 		},
 		nil,
 	)
 
-	allowedID := gid.New(gid.TenantID{}, allowedType).String()
-	otherID := gid.New(gid.TenantID{}, otherType).String()
+	profileID := gid.New(gid.TenantID{}, coredata.MembershipProfileEntityType).String()
+	otherID := gid.New(gid.TenantID{}, 25).String()
 
 	require.NoError(
 		t,
-		schema.ValidateJSON(fmt.Sprintf(
+		profileSchema.ValidateJSON(fmt.Sprintf(
 			`{"type":"doc","content":[{"type":"paragraph","content":[{"type":"mention","attrs":{"id":"%s","label":"Alice"}}]}]}`,
-			allowedID,
+			profileID,
 		)),
 	)
 
-	err := schema.ValidateJSON(fmt.Sprintf(
+	err := profileSchema.ValidateJSON(fmt.Sprintf(
 		`{"type":"doc","content":[{"type":"paragraph","content":[{"type":"mention","attrs":{"id":"%s","label":"Alice"}}]}]}`,
 		otherID,
 	))
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "invalid id")
+
+	require.NoError(
+		t,
+		documentSchema.ValidateJSON(fmt.Sprintf(
+			`{"type":"doc","content":[{"type":"paragraph","content":[{"type":"mention","attrs":{"id":"%s","label":"Alice"}}]}]}`,
+			otherID,
+		)),
+	)
+	require.NoError(
+		t,
+		documentSchema.ValidateJSON(fmt.Sprintf(
+			`{"type":"doc","content":[{"type":"paragraph","content":[{"type":"mention","attrs":{"id":"%s","label":"Alice"}}]}]}`,
+			profileID,
+		)),
+	)
 }
 
 func TestNewSchemaPanics(t *testing.T) {
@@ -218,6 +244,276 @@ func TestSchemaGroupResolutionFollowsSchema(t *testing.T) {
 	assert.Contains(t, err.Error(), `codeBlock node is not allowed in this schema`)
 }
 
+type (
+	renderCallout struct{}
+
+	calloutHTMLRenderer     struct{}
+	calloutMarkdownRenderer struct{}
+)
+
+func (renderCallout) Name() prosemirror.NodeType { return "callout" }
+
+func (renderCallout) Group() prosemirror.Group { return prosemirror.GroupBlock }
+
+func (renderCallout) Content() prosemirror.ContentRule {
+	return prosemirror.ContentRule{Groups: []prosemirror.Group{prosemirror.GroupInline}}
+}
+
+func (renderCallout) Check(_ *prosemirror.Node, _ prosemirror.CheckMode) error {
+	return nil
+}
+
+func (calloutHTMLRenderer) Node() prosemirror.NodeType { return "callout" }
+
+func (calloutHTMLRenderer) Render(w *html.Writer, n prosemirror.Node) error {
+	w.WriteString(`<aside class="callout">`)
+
+	if err := w.RenderChildren(n.Content); err != nil {
+		return err
+	}
+
+	w.WriteString("</aside>")
+
+	return nil
+}
+
+func (calloutMarkdownRenderer) Node() prosemirror.NodeType { return "callout" }
+
+func (calloutMarkdownRenderer) Render(w *markdown.Writer, n prosemirror.Node) error {
+	return w.RenderInline(n.Content)
+}
+
+func TestRender_CustomNodeSpec(t *testing.T) {
+	t.Parallel()
+
+	schema := prosemirror.NewSchema(
+		[]prosemirror.NodeSpec{
+			prosemirror.Doc(),
+			prosemirror.Paragraph(),
+			prosemirror.Text(),
+			renderCallout{},
+		},
+		nil,
+	)
+	raw := `{"type":"doc","content":[{"type":"callout","content":[{"type":"text","text":"hello"}]}]}`
+	node, err := schema.Parse(raw)
+	require.NoError(t, err)
+
+	htmlRenderer := html.NewRenderer(schema, []html.NodeRenderer{
+		html.Doc(),
+		html.Paragraph(),
+		html.Text(),
+		calloutHTMLRenderer{},
+	}, html.Marks())
+	gotHTML, err := htmlRenderer.Render(node)
+	require.NoError(t, err)
+	assert.Equal(t, `<aside class="callout">hello</aside>`, gotHTML)
+
+	mdRenderer := markdown.NewRenderer(schema, htmlRenderer, []markdown.NodeRenderer{
+		markdown.Doc(),
+		markdown.Paragraph(),
+		markdown.Text(),
+		calloutMarkdownRenderer{},
+	}, markdown.Marks())
+	gotMD, err := mdRenderer.Render(node)
+	require.NoError(t, err)
+	assert.Equal(t, "hello\n", gotMD)
+}
+
+type (
+	replacedHeading struct{}
+
+	replacedHeadingHTMLRenderer     struct{}
+	replacedHeadingMarkdownRenderer struct{}
+)
+
+func (replacedHeading) Name() prosemirror.NodeType { return prosemirror.NodeHeading }
+
+func (replacedHeading) Group() prosemirror.Group { return prosemirror.GroupBlock }
+
+func (replacedHeading) Content() prosemirror.ContentRule {
+	return prosemirror.ContentRule{Groups: []prosemirror.Group{prosemirror.GroupInline}}
+}
+
+func (replacedHeading) Check(_ *prosemirror.Node, _ prosemirror.CheckMode) error {
+	return nil
+}
+
+func (replacedHeadingHTMLRenderer) Node() prosemirror.NodeType { return prosemirror.NodeHeading }
+
+func (replacedHeadingHTMLRenderer) Render(w *html.Writer, n prosemirror.Node) error {
+	w.WriteString(`<h1 class="replaced">`)
+
+	if err := w.RenderChildren(n.Content); err != nil {
+		return err
+	}
+
+	w.WriteString("</h1>")
+
+	return nil
+}
+
+func (replacedHeadingMarkdownRenderer) Node() prosemirror.NodeType { return prosemirror.NodeHeading }
+
+func (replacedHeadingMarkdownRenderer) Render(w *markdown.Writer, n prosemirror.Node) error {
+	return w.RenderInline(n.Content)
+}
+
+func TestRender_ReplacementHeadingSpec(t *testing.T) {
+	t.Parallel()
+
+	schema := prosemirror.NewSchema(
+		[]prosemirror.NodeSpec{
+			prosemirror.Doc(),
+			prosemirror.Paragraph(),
+			prosemirror.Text(),
+			replacedHeading{},
+		},
+		nil,
+	)
+	raw := `{"type":"doc","content":[{"type":"heading","content":[{"type":"text","text":"Hi"}]}]}`
+	node, err := schema.Parse(raw)
+	require.NoError(t, err)
+
+	nodes := []html.NodeRenderer{
+		DocHTMLRenderer(),
+		ParagraphHTMLRenderer(),
+		TextHTMLRenderer(),
+		replacedHeadingHTMLRenderer{},
+	}
+	htmlRenderer := html.NewRenderer(schema, nodes, html.Marks())
+	gotHTML, err := htmlRenderer.Render(node)
+	require.NoError(t, err)
+	assert.Equal(t, `<h1 class="replaced">Hi</h1>`, gotHTML)
+
+	mdNodes := []markdown.NodeRenderer{
+		markdown.Doc(),
+		markdown.Paragraph(),
+		markdown.Text(),
+		replacedHeadingMarkdownRenderer{},
+	}
+	mdRenderer := markdown.NewRenderer(schema, htmlRenderer, mdNodes, markdown.Marks())
+	gotMD, err := mdRenderer.Render(node)
+	require.NoError(t, err)
+	assert.Equal(t, "Hi\n", gotMD)
+}
+
+func DocHTMLRenderer() html.NodeRenderer {
+	for _, n := range html.Nodes() {
+		if n.Node() == prosemirror.NodeDoc {
+			return n
+		}
+	}
+
+	panic("doc renderer missing")
+}
+
+func ParagraphHTMLRenderer() html.NodeRenderer {
+	for _, n := range html.Nodes() {
+		if n.Node() == prosemirror.NodeParagraph {
+			return n
+		}
+	}
+
+	panic("paragraph renderer missing")
+}
+
+func TextHTMLRenderer() html.NodeRenderer {
+	for _, n := range html.Nodes() {
+		if n.Node() == prosemirror.NodeText {
+			return n
+		}
+	}
+
+	panic("text renderer missing")
+}
+
+type (
+	highlightMark struct{}
+
+	highlightHTMLRenderer     struct{}
+	highlightMarkdownRenderer struct{}
+)
+
+func (highlightMark) Name() prosemirror.MarkType { return "highlight" }
+
+func (highlightMark) Check(_ *prosemirror.Mark, _ prosemirror.CheckMode) error {
+	return nil
+}
+
+func (highlightHTMLRenderer) Mark() prosemirror.MarkType { return "highlight" }
+
+func (highlightHTMLRenderer) Open(w *html.Writer, _ prosemirror.Mark) error {
+	w.WriteString("<mark>")
+
+	return nil
+}
+
+func (highlightHTMLRenderer) Close(w *html.Writer, _ prosemirror.Mark) {
+	w.WriteString("</mark>")
+}
+
+func (highlightMarkdownRenderer) Mark() prosemirror.MarkType { return "highlight" }
+
+func (highlightMarkdownRenderer) Open(_ *markdown.Writer, _ prosemirror.Mark) error {
+	return nil
+}
+
+func (highlightMarkdownRenderer) Close(_ *markdown.Writer, _ prosemirror.Mark) error {
+	return nil
+}
+
+func TestRender_CustomMarkSpec(t *testing.T) {
+	t.Parallel()
+
+	schema := prosemirror.NewSchema(
+		[]prosemirror.NodeSpec{
+			prosemirror.Doc(),
+			prosemirror.Paragraph(),
+			prosemirror.Text(),
+		},
+		[]prosemirror.MarkSpec{highlightMark{}},
+	)
+	raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"hi","marks":[{"type":"highlight"}]}]}]}`
+	node, err := schema.Parse(raw)
+	require.NoError(t, err)
+
+	htmlRenderer := html.NewRenderer(
+		schema,
+		html.Nodes(),
+		append(html.Marks(), highlightHTMLRenderer{}),
+	)
+	gotHTML, err := htmlRenderer.Render(node)
+	require.NoError(t, err)
+	assert.Equal(t, "<p><mark>hi</mark></p>", gotHTML)
+}
+
+func FuzzParse(f *testing.F) {
+	seeds := []string{
+		"",
+		`{"type":"doc"}`,
+		`{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"hi"}]}]}`,
+		`not json`,
+	}
+	for _, seed := range seeds {
+		f.Add(seed)
+	}
+
+	f.Fuzz(func(t *testing.T, raw string) {
+		node, err := prosemirror.Parse(raw)
+		if err != nil {
+			return
+		}
+
+		encoded, err := json.Marshal(node)
+		require.NoError(t, err)
+
+		again, err := prosemirror.Parse(string(encoded))
+		require.NoError(t, err)
+		assert.Equal(t, node.Type, again.Type)
+	})
+}
+
 func FuzzSanitize(f *testing.F) {
 	seeds := []string{
 		"",
@@ -231,16 +527,16 @@ func FuzzSanitize(f *testing.F) {
 	}
 
 	f.Fuzz(func(t *testing.T, raw string) {
-		once, err := prosemirror.DocumentSchema.Sanitize(raw)
+		once, err := richtext.DocumentSchema.Sanitize(raw)
 		if err != nil {
 			return
 		}
 
-		twice, err := prosemirror.DocumentSchema.Sanitize(once)
+		twice, err := richtext.DocumentSchema.Sanitize(once)
 		require.NoError(t, err)
 		assert.Equal(t, once, twice)
 
-		require.NoError(t, prosemirror.DocumentSchema.ValidateJSON(once))
+		require.NoError(t, richtext.DocumentSchema.ValidateJSON(once))
 
 		if strings.TrimSpace(once) == "" {
 			return

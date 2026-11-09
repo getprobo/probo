@@ -23,8 +23,6 @@ package validator
 import (
 	"strings"
 	"testing"
-
-	"go.probo.inc/probo/pkg/prosemirror"
 )
 
 func TestProseMirrorDocumentContent(t *testing.T) {
@@ -50,7 +48,7 @@ func TestProseMirrorDocumentContent(t *testing.T) {
 		{"non-string", 1, true},
 	}
 
-	fn := ProseMirrorContent(prosemirror.DocumentSchema)
+	fn := ProseMirrorDocumentContent()
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -58,7 +56,7 @@ func TestProseMirrorDocumentContent(t *testing.T) {
 
 			err := fn(tt.value)
 			if (err != nil) != tt.wantError {
-				t.Errorf("ProseMirrorContent() error = %v, wantError %v", err, tt.wantError)
+				t.Errorf("ProseMirrorDocumentContent() error = %v, wantError %v", err, tt.wantError)
 			}
 
 			if err != nil && err.Code != ErrorCodeInvalidFormat {
@@ -94,7 +92,7 @@ func TestProseMirrorDocumentMaxTextLength(t *testing.T) {
 		{"non-string", 42, true, ErrorCodeInvalidFormat},
 	}
 
-	fn := ProseMirrorMaxTextLength(prosemirror.DocumentSchema, maxLen)
+	fn := ProseMirrorDocumentMaxTextLength(maxLen)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -102,7 +100,7 @@ func TestProseMirrorDocumentMaxTextLength(t *testing.T) {
 
 			err := fn(tt.value)
 			if (err != nil) != tt.wantError {
-				t.Errorf("ProseMirrorMaxTextLength() error = %v, wantError %v", err, tt.wantError)
+				t.Errorf("ProseMirrorDocumentMaxTextLength() error = %v, wantError %v", err, tt.wantError)
 			}
 
 			if err != nil && tt.wantCode != "" && err.Code != tt.wantCode {
@@ -186,7 +184,7 @@ func TestHasVisibleRichText(t *testing.T) {
 		{"non-string", 1, true, ErrorCodeInvalidFormat},
 	}
 
-	fn := HasVisibleRichText(prosemirror.DocumentSchema)
+	fn := HasVisibleRichText()
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

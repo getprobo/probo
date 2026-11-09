@@ -21,6 +21,7 @@
 package cmdutil_test
 
 import (
+	"go.probo.inc/probo/pkg/richtext/attachment"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -28,7 +29,17 @@ import (
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/richtext"
 )
+
+func mustPlain(t *testing.T, text string) string {
+	t.Helper()
+
+	got, err := richtext.FromPlainText(text)
+	require.NoError(t, err)
+
+	return got
+}
 
 func TestFormatRichText(t *testing.T) {
 	t.Parallel()
@@ -44,7 +55,7 @@ func TestFormatRichText(t *testing.T) {
 	t.Run("prosemirror json", func(t *testing.T) {
 		t.Parallel()
 
-		got, err := cmdutil.FormatRichText(prosemirror.FromPlainText("Review access controls"))
+		got, err := cmdutil.FormatRichText(mustPlain(t, "Review access controls"))
 		require.NoError(t, err)
 		assert.Equal(t, "Review access controls", got)
 	})
@@ -52,7 +63,7 @@ func TestFormatRichText(t *testing.T) {
 	t.Run("empty document", func(t *testing.T) {
 		t.Parallel()
 
-		got, err := cmdutil.FormatRichText(prosemirror.FromPlainText(""))
+		got, err := cmdutil.FormatRichText(mustPlain(t, ""))
 		require.NoError(t, err)
 		assert.Equal(t, "", got)
 	})
@@ -73,7 +84,7 @@ func TestCLIContent(t *testing.T) {
 
 		got, err := cmdutil.CLIContent("Review access controls")
 		require.NoError(t, err)
-		assert.Equal(t, prosemirror.FromPlainText("Review access controls"), got)
+		assert.Equal(t, mustPlain(t, "Review access controls"), got)
 	})
 
 	t.Run("whitespace is an empty paragraph", func(t *testing.T) {
@@ -81,8 +92,8 @@ func TestCLIContent(t *testing.T) {
 
 		got, err := cmdutil.CLIContent(" \n\t")
 		require.NoError(t, err)
-		assert.Equal(t, prosemirror.FromPlainText(""), got)
-		require.NoError(t, prosemirror.DocumentSchema.ValidateJSON(got))
+		assert.Equal(t, mustPlain(t, ""), got)
+		require.NoError(t, richtext.DocumentSchema.ValidateJSON(got))
 	})
 
 	t.Run("plain text keeps one paragraph per line", func(t *testing.T) {
@@ -90,13 +101,13 @@ func TestCLIContent(t *testing.T) {
 
 		got, err := cmdutil.CLIContent("line one\nline two")
 		require.NoError(t, err)
-		assert.Equal(t, prosemirror.FromPlainText("line one\nline two"), got)
+		assert.Equal(t, mustPlain(t, "line one\nline two"), got)
 	})
 
 	t.Run("json passthrough", func(t *testing.T) {
 		t.Parallel()
 
-		raw := "  " + prosemirror.FromPlainText("kept")
+		raw := "  " + mustPlain(t, "kept")
 		got, err := cmdutil.CLIContent(raw)
 		require.NoError(t, err)
 		assert.Equal(t, raw, got)
@@ -107,7 +118,7 @@ func TestCLIContent(t *testing.T) {
 
 		got, err := cmdutil.CLIContent("{see the note}")
 		require.NoError(t, err)
-		assert.Equal(t, prosemirror.FromPlainText("{see the note}"), got)
+		assert.Equal(t, mustPlain(t, "{see the note}"), got)
 	})
 
 	t.Run("json object is plain text", func(t *testing.T) {
@@ -116,7 +127,7 @@ func TestCLIContent(t *testing.T) {
 		raw := `{"hello":"world"}`
 		got, err := cmdutil.CLIContent(raw)
 		require.NoError(t, err)
-		assert.Equal(t, prosemirror.FromPlainText(raw), got)
+		assert.Equal(t, mustPlain(t, raw), got)
 	})
 
 	t.Run("markdown heading", func(t *testing.T) {
@@ -152,7 +163,7 @@ func TestCLIContent(t *testing.T) {
 		t.Parallel()
 
 		fileID := gid.New(gid.TenantID{}, 25).String()
-		path := prosemirror.AttachmentPath(fileID)
+		path := attachment.Path(fileID)
 		got, err := cmdutil.CLIContent("![diagram](" + path + ")\n\n[policy.pdf](" + path + ")")
 		require.NoError(t, err)
 

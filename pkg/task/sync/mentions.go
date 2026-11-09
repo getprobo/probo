@@ -25,6 +25,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"go.probo.inc/probo/pkg/richtext/mention"
 	"regexp"
 	"strings"
 	"unicode/utf8"
@@ -36,6 +37,7 @@ import (
 	"go.probo.inc/probo/pkg/notification"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/richtext"
 	"go.probo.inc/probo/pkg/task/sync/linear"
 )
 
@@ -54,7 +56,7 @@ func (s *Service) linearIssueDescriptionMarkdown(
 	organizationID gid.GID,
 	content string,
 ) (string, error) {
-	ids, err := prosemirror.MentionedProfileIDs(content)
+	ids, err := mention.ProfileIDs(content)
 	if err != nil {
 		return "", fmt.Errorf("cannot read task mentions: %w", err)
 	}
@@ -73,7 +75,7 @@ func (s *Service) linearCommentMarkdown(
 	organizationID gid.GID,
 	content string,
 ) (string, error) {
-	ids, err := prosemirror.MentionedProfileIDs(content)
+	ids, err := mention.ProfileIDs(content)
 	if err != nil {
 		return "", fmt.Errorf("cannot read comment mentions: %w", err)
 	}
@@ -340,7 +342,7 @@ func (s *Service) attachLinearMentions(
 		return fmt.Errorf("cannot convert Linear mentions: %w", err)
 	}
 
-	ids, err := prosemirror.MentionedProfileIDs(content)
+	ids, err := mention.ProfileIDs(content)
 	if err != nil {
 		return fmt.Errorf("cannot read applied Linear mentions: %w", err)
 	}
@@ -398,7 +400,7 @@ func (s *Service) applyLinearProfileMentions(
 
 	encodedJSON := string(encoded)
 
-	sanitized, err := prosemirror.DefaultDocumentJSON(&encodedJSON)
+	sanitized, err := richtext.DefaultDocumentJSON(&encodedJSON)
 	if err != nil {
 		return "", false, fmt.Errorf("cannot sanitize Linear mentions: %w", err)
 	}
@@ -640,7 +642,7 @@ func (s *Service) notifySyncedMentions(
 		return nil
 	}
 
-	mentionedIDs, err := prosemirror.NewlyMentionedProfileIDs(oldContent, newContent)
+	mentionedIDs, err := mention.NewProfileIDs(oldContent, newContent)
 	if err != nil {
 		return fmt.Errorf("cannot collect new mentions: %w", err)
 	}
@@ -682,7 +684,7 @@ func rewriteOutboundMentionNodes(
 
 		text := url
 
-		return prosemirror.Node{Type: prosemirror.NodeText, Text: &text}
+		return prosemirror.Node{Type: prosemirror.NodeText, Text: text}
 	}
 
 	if node.Type == prosemirror.NodeCodeBlock {
@@ -799,11 +801,11 @@ func splitProfileURLText(
 	node prosemirror.Node,
 	resolve func(string) (prosemirror.MentionAttrs, bool),
 ) ([]prosemirror.Node, bool) {
-	if node.Text == nil {
+	if node.Text == "" {
 		return []prosemirror.Node{node}, false
 	}
 
-	text := *node.Text
+	text := node.Text
 	spans := profileURLSpans(text)
 
 	if len(spans) == 0 {
@@ -895,7 +897,7 @@ func textNode(value string, marks []prosemirror.Mark) prosemirror.Node {
 
 	return prosemirror.Node{
 		Type:  prosemirror.NodeText,
-		Text:  &text,
+		Text:  text,
 		Marks: append([]prosemirror.Mark(nil), marks...),
 	}
 }

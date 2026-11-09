@@ -22,10 +22,19 @@ package prosemirror
 
 import (
 	"fmt"
-	"strings"
 )
 
 type codeBlockNode struct{}
+
+// CodeBlockAttrs contains attributes for code block nodes.
+type CodeBlockAttrs struct {
+	Language *string `json:"language"`
+}
+
+// CodeBlockAttrs parses and returns the code block attributes.
+func (n Node) CodeBlockAttrs() (CodeBlockAttrs, error) {
+	return decodeAttrs(n.Attrs, CodeBlockAttrs{}, "code block")
+}
 
 // CodeBlock holds preformatted text, optionally tagged with a language.
 func CodeBlock() NodeSpec {
@@ -48,72 +57,6 @@ func (codeBlockNode) Check(n *Node, _ CheckMode) error {
 	if err := rejectNonTextPayload(n); err != nil {
 		return fmt.Errorf("cannot validate %s node: %w", n.Type, err)
 	}
-
-	return nil
-}
-
-func (codeBlockNode) RenderHTML(w *HTMLWriter, n Node) error {
-	attrs, err := n.CodeBlockAttrs()
-	if err != nil {
-		return fmt.Errorf("cannot render code block node: %w", err)
-	}
-
-	if attrs.Language != nil && *attrs.Language == "mermaid" {
-		w.WriteString(`<pre class="mermaid">`)
-
-		if err := w.RenderChildren(n.Content); err != nil {
-			return err
-		}
-
-		w.WriteString("</pre>")
-
-		return nil
-	}
-
-	w.WriteString("<pre><code")
-
-	if attrs.Language != nil {
-		w.WriteAttr("class", "language-"+*attrs.Language)
-	}
-
-	w.WriteByte('>')
-
-	if err := w.RenderChildren(n.Content); err != nil {
-		return err
-	}
-
-	w.WriteString("</code></pre>")
-
-	return nil
-}
-
-func (codeBlockNode) RenderMarkdown(w *MarkdownWriter, n Node) error {
-	attrs, err := n.CodeBlockAttrs()
-	if err != nil {
-		return fmt.Errorf("cannot render code block node: %w", err)
-	}
-
-	code := collectText(n.Content)
-	fence := chooseFence(code)
-
-	w.ensurePrefix()
-	w.buf.WriteString(fence)
-
-	if attrs.Language != nil {
-		w.buf.WriteString(*attrs.Language)
-	}
-
-	w.newLine()
-
-	for line := range strings.SplitSeq(code, "\n") {
-		w.ensurePrefix()
-		w.buf.WriteString(line)
-		w.newLine()
-	}
-
-	w.ensurePrefix()
-	w.buf.WriteString(fence)
-	w.newLine()
 
 	return nil
 }

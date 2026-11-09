@@ -26,6 +26,7 @@ import (
 	"strings"
 
 	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/richtext"
 )
 
 const thirdPartyRegisterNotesHeadingDemote = 3
@@ -98,7 +99,7 @@ func notesLabelParagraph() prosemirror.Node {
 		Content: []prosemirror.Node{
 			{
 				Type:  prosemirror.NodeText,
-				Text:  &label,
+				Text:  label,
 				Marks: []prosemirror.Mark{{Type: prosemirror.MarkStrong}},
 			},
 		},
@@ -113,7 +114,7 @@ func rawMarkdownNotesFromParagraph(node prosemirror.Node) (string, bool) {
 	}
 
 	label := node.Content[0]
-	if label.Type != prosemirror.NodeText || label.Text == nil || *label.Text != "Notes: " {
+	if label.Type != prosemirror.NodeText || label.Text == "" || label.Text != "Notes: " {
 		return "", false
 	}
 
@@ -133,11 +134,11 @@ func rawMarkdownNotesFromParagraph(node prosemirror.Node) (string, bool) {
 	var notes strings.Builder
 
 	for _, child := range node.Content[1:] {
-		if child.Type != prosemirror.NodeText || child.Text == nil {
+		if child.Type != prosemirror.NodeText || child.Text == "" {
 			return "", false
 		}
 
-		notes.WriteString(*child.Text)
+		notes.WriteString(child.Text)
 	}
 
 	text := notes.String()
@@ -208,7 +209,7 @@ func markdownNotesToProseMirrorNodes(notes string) ([]prosemirror.Node, error) {
 		notes = "—"
 	}
 
-	doc, err := prosemirror.ParseMarkdown(notes)
+	doc, err := richtext.ParseMarkdown(notes)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse notes markdown: %w", err)
 	}
@@ -236,7 +237,7 @@ func plainTextNotesNodes(notes string) []prosemirror.Node {
 		{
 			Type: prosemirror.NodeParagraph,
 			Content: []prosemirror.Node{
-				{Type: prosemirror.NodeText, Text: &text},
+				{Type: prosemirror.NodeText, Text: text},
 			},
 		},
 	}

@@ -34,7 +34,7 @@ type CommentSchemaLedger = {
 
 const ledgerPath = join(
   dirname(fileURLToPath(import.meta.url)),
-  "../../../../pkg/probo/testdata/comment-schema.json",
+  "../../../../pkg/richtext/testdata/comment-schema.json",
 );
 
 describe("comment schema parity", () => {

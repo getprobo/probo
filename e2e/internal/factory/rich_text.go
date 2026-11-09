@@ -24,13 +24,18 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/richtext"
 )
 
 // ProseMirrorPlainText wraps plaintext as a ProseMirror document (one
 // paragraph per line), matching the task/comment SQL backfill.
 func ProseMirrorPlainText(text string) string {
-	return prosemirror.FromPlainText(text)
+	encoded, err := richtext.FromPlainText(text)
+	if err != nil {
+		panic(err)
+	}
+
+	return encoded
 }
 
 // AssertProseMirrorPlainText compares JSONB content to a plaintext document.

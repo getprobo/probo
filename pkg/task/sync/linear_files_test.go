@@ -24,6 +24,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"go.probo.inc/probo/pkg/richtext/attachment"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -39,7 +40,6 @@ import (
 	"go.probo.inc/probo/internal/test"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/prosemirror"
 	"go.probo.inc/probo/pkg/task/sync/linear"
 )
 
@@ -102,12 +102,12 @@ func TestEmbedLinearFiles_UploadsAndRestoresFileID(t *testing.T) {
 	t.Parallel()
 
 	fileID := gid.New(gid.NewTenantID(), coredata.FileEntityType)
-	content, err := MarkdownToContent("![diagram](" + prosemirror.AttachmentPath(fileID.String()) + ")")
+	content, err := MarkdownToContent("![diagram](" + attachment.Path(fileID.String()) + ")")
 	require.NoError(t, err)
 
 	markdown, err := ContentToMarkdown(content)
 	require.NoError(t, err)
-	require.Contains(t, markdown, prosemirror.AttachmentPath(fileID.String()))
+	require.Contains(t, markdown, attachment.Path(fileID.String()))
 
 	var (
 		srv        *httptest.Server
@@ -199,7 +199,7 @@ func TestEmbedLinearFiles_UploadsAndRestoresFileID(t *testing.T) {
 	assert.Equal(t, "diagram.png", name)
 	assert.Equal(t, "image/png", mime)
 	assert.Contains(t, remote, "https://uploads.linear.app/file/diagram")
-	assert.NotContains(t, remote, prosemirror.AttachmentPath(fileID.String()))
+	assert.NotContains(t, remote, attachment.Path(fileID.String()))
 	assert.Equal(t, "https://uploads.linear.app/file/diagram", files[fileID.String()])
 
 	restored, err := MarkdownToContent(restoreLinearFiles(remote, files))
@@ -225,7 +225,7 @@ func TestEmbedLinearFiles_KnownFilesSkipStorage(t *testing.T) {
 	t.Parallel()
 
 	fileID := gid.New(gid.NewTenantID(), coredata.FileEntityType)
-	content, err := MarkdownToContent("![diagram](" + prosemirror.AttachmentPath(fileID.String()) + ")")
+	content, err := MarkdownToContent("![diagram](" + attachment.Path(fileID.String()) + ")")
 	require.NoError(t, err)
 
 	markdown, err := ContentToMarkdown(content)
@@ -331,8 +331,8 @@ func TestEmbedLinearFiles_KeepsTextWhenOneAttachmentFails(t *testing.T) {
 
 	goodID := gid.New(gid.NewTenantID(), coredata.FileEntityType)
 	badID := gid.New(gid.NewTenantID(), coredata.FileEntityType)
-	goodPath := prosemirror.AttachmentPath(goodID.String())
-	badPath := prosemirror.AttachmentPath(badID.String())
+	goodPath := attachment.Path(goodID.String())
+	badPath := attachment.Path(badID.String())
 	content, err := MarkdownToContent("![diagram](" + goodPath + ")\n\n![other](" + badPath + ")")
 	require.NoError(t, err)
 
@@ -369,8 +369,8 @@ func TestEmbedLinearFiles_UploadsOneFileWhenAnotherFails(t *testing.T) {
 
 	goodID := gid.New(gid.NewTenantID(), coredata.FileEntityType)
 	badID := gid.New(gid.NewTenantID(), coredata.FileEntityType)
-	goodPath := prosemirror.AttachmentPath(goodID.String())
-	badPath := prosemirror.AttachmentPath(badID.String())
+	goodPath := attachment.Path(goodID.String())
+	badPath := attachment.Path(badID.String())
 	content, err := MarkdownToContent("![diagram](" + goodPath + ")\n\n![other](" + badPath + ")")
 	require.NoError(t, err)
 
@@ -455,7 +455,7 @@ func TestLinearFilesMissing(t *testing.T) {
 	t.Parallel()
 
 	fileID := gid.New(gid.NewTenantID(), coredata.FileEntityType)
-	content, err := MarkdownToContent("![diagram](" + prosemirror.AttachmentPath(fileID.String()) + ")")
+	content, err := MarkdownToContent("![diagram](" + attachment.Path(fileID.String()) + ")")
 	require.NoError(t, err)
 
 	missing, err := linearFilesMissing(nil, content)

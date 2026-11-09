@@ -27,6 +27,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/e2e/internal/testutil"
 	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/richtext"
 )
 
 func TestFinding_PublishFindingList(t *testing.T) {
@@ -124,7 +125,7 @@ func TestFinding_PublishFindingList(t *testing.T) {
 
 			// The stored content is sanitized before insert, so it must be a
 			// parseable ProseMirror document rooted at a "doc" node.
-			require.NoError(t, prosemirror.DocumentSchema.ValidateJSON(ver.Content.Prosemirror))
+			require.NoError(t, richtext.DocumentSchema.ValidateJSON(ver.Content.Prosemirror))
 		},
 	)
 

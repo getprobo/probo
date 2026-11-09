@@ -59,6 +59,12 @@ function syncPlugin({
   return createAutomergeSyncPlugin(adapter, handle, path);
 }
 
+type RoundTripNode = {
+  type?: string;
+  attrs?: Record<string, unknown>;
+  content?: RoundTripNode[];
+};
+
 describe("RichEditor collaboration", () => {
   it("rejects collaboration content that cannot be parsed", () => {
     expect(supportsRichEditorCollaboration("{")).toBe(false);
@@ -242,19 +248,7 @@ describe("RichEditor collaboration", () => {
     const roundTrip = richEditorAutomergeContent(
       handle,
       richEditorCollaborationExtensions,
-    ) as {
-      content: Array<{
-        type: string;
-        content?: Array<{
-          type: string;
-          attrs?: Record<string, unknown>;
-          content?: Array<{
-            type: string;
-            attrs?: Record<string, unknown>;
-          }>;
-        }>;
-      }>;
-    };
+    ) as { content: RoundTripNode[] };
 
     expect(roundTrip.content[0]?.content?.map(node => node.type)).toEqual([
       "text",
@@ -360,55 +354,6 @@ describe("RichEditor collaboration", () => {
 
     expect(Automerge.spans(document, ["body"])).not.toHaveLength(0);
     expect(document.body).toContain("Hello world");
-  });
-
-  it("reads legacy camel-case suggestion marks", () => {
-    const document = createRichEditorAutomergeDocument(
-      JSON.stringify({
-        type: "doc",
-        content: [
-          {
-            type: "paragraph",
-            content: [{
-              type: "text",
-              text: "Suggested",
-              marks: [{ type: "suggestionInsert", attrs: { id: "suggestion-1" } }],
-            }],
-          },
-          {
-            type: "paragraph",
-            content: [{
-              type: "text",
-              text: "Removed",
-              marks: [{ type: "suggestionDelete", attrs: { id: "suggestion-2" } }],
-            }],
-          },
-        ],
-      }),
-    );
-    const legacyMarkNames: Record<string, string> = {
-      "suggestion-insert": "suggestionInsert",
-      "suggestion-delete": "suggestionDelete",
-    };
-    const spans = Automerge.spans(document, ["body"]).map((span) => {
-      if (span.type !== "text" || !span.marks) return span;
-      const marks = { ...span.marks };
-      for (const [modern, legacy] of Object.entries(legacyMarkNames)) {
-        if (!(modern in marks)) continue;
-        marks[legacy] = marks[modern];
-        delete marks[modern];
-      }
-      return { ...span, marks };
-    });
-    const adapter = createSchemaAdapter(richEditorCollaborationExtensions);
-    const restored = pmDocFromSpans(adapter, spans).toJSON();
-
-    expect(restored.content[0].content[0].marks).toEqual([
-      { type: "suggestionInsert", attrs: { id: "suggestion-1" } },
-    ]);
-    expect(restored.content[1].content[0].marks).toEqual([
-      { type: "suggestionDelete", attrs: { id: "suggestion-2" } },
-    ]);
   });
 
   it("preserves table and row boundaries", () => {

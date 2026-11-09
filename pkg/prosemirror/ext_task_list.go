@@ -49,41 +49,18 @@ func (taskListNode) Check(n *Node, _ CheckMode) error {
 	return nil
 }
 
-func (taskListNode) RenderHTML(w *HTMLWriter, n Node) error {
-	w.WriteString("<ul")
-	w.WriteAttr("data-type", "taskList")
-	w.WriteByte('>')
-
-	if err := w.RenderChildren(n.Content); err != nil {
-		return err
-	}
-
-	w.WriteString("</ul>")
-
-	return nil
-}
-
-func (taskListNode) RenderMarkdown(w *MarkdownWriter, n Node) error {
-	tight, err := listTightness(n, NodeTaskItem)
-	if err != nil {
-		return fmt.Errorf("cannot render task list: %w", err)
-	}
-
-	return w.renderListItems(n.Content, tight, func(_ int, item Node) (string, string, error) {
-		attrs, err := item.TaskItemAttrs()
-		if err != nil {
-			return "", "", fmt.Errorf("cannot render task item: %w", err)
-		}
-
-		if attrs.Checked {
-			return "- [x] ", "  ", nil
-		}
-
-		return "- [ ] ", "  ", nil
-	})
-}
-
 type taskItemNode struct{}
+
+// TaskItemAttrs contains attributes for task item nodes.
+type TaskItemAttrs struct {
+	Checked bool `json:"checked"`
+}
+
+// TaskItemAttrs parses and returns the task item attributes.
+// A missing checked attribute means the item is unchecked.
+func (n Node) TaskItemAttrs() (TaskItemAttrs, error) {
+	return decodeAttrs(n.Attrs, TaskItemAttrs{}, "task item")
+}
 
 // TaskItem is one entry of a task list. It starts with a paragraph and may
 // hold further block content.
@@ -113,43 +90,4 @@ func (taskItemNode) Check(n *Node, _ CheckMode) error {
 	}
 
 	return nil
-}
-
-func (taskItemNode) RenderHTML(w *HTMLWriter, n Node) error {
-	attrs, err := n.TaskItemAttrs()
-	if err != nil {
-		return fmt.Errorf("cannot render task item node: %w", err)
-	}
-
-	w.WriteString("<li")
-	w.WriteAttr("data-type", "taskItem")
-
-	if attrs.Checked {
-		w.WriteAttr("data-checked", "true")
-	} else {
-		w.WriteAttr("data-checked", "false")
-	}
-
-	w.WriteByte('>')
-	w.WriteString("<input")
-
-	if attrs.Checked {
-		w.WriteAttr("checked", "checked")
-	}
-
-	w.WriteAttr("disabled", "disabled")
-	w.WriteAttr("type", "checkbox")
-	w.WriteByte('>')
-
-	if err := w.RenderChildren(n.Content); err != nil {
-		return err
-	}
-
-	w.WriteString("</li>")
-
-	return nil
-}
-
-func (taskItemNode) RenderMarkdown(_ *MarkdownWriter, _ Node) error {
-	return fmt.Errorf("cannot render list item outside of list context")
 }

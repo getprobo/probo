@@ -20,11 +20,7 @@
 
 package prosemirror
 
-import (
-	"fmt"
-	"strconv"
-	"strings"
-)
+import "fmt"
 
 type bulletListNode struct{}
 
@@ -53,30 +49,18 @@ func (bulletListNode) Check(n *Node, _ CheckMode) error {
 	return nil
 }
 
-func (bulletListNode) RenderHTML(w *HTMLWriter, n Node) error {
-	w.WriteString("<ul>")
-
-	if err := w.RenderChildren(n.Content); err != nil {
-		return err
-	}
-
-	w.WriteString("</ul>")
-
-	return nil
-}
-
-func (bulletListNode) RenderMarkdown(w *MarkdownWriter, n Node) error {
-	tight, err := listTightness(n, NodeListItem)
-	if err != nil {
-		return fmt.Errorf("cannot render bullet list: %w", err)
-	}
-
-	return w.renderListItems(n.Content, tight, func(_ int, _ Node) (string, string, error) {
-		return "- ", "  ", nil
-	})
-}
-
 type orderedListNode struct{}
+
+// OrderedListAttrs contains attributes for ordered list nodes.
+type OrderedListAttrs struct {
+	Start int     `json:"start"`
+	Type  *string `json:"type"`
+}
+
+// OrderedListAttrs parses and returns the ordered list attributes.
+func (n Node) OrderedListAttrs() (OrderedListAttrs, error) {
+	return decodeAttrs(n.Attrs, OrderedListAttrs{Start: 1}, "ordered list")
+}
 
 // OrderedList is a numbered list of list items.
 func OrderedList() NodeSpec {
@@ -101,53 +85,6 @@ func (orderedListNode) Check(n *Node, _ CheckMode) error {
 	}
 
 	return nil
-}
-
-func (orderedListNode) RenderHTML(w *HTMLWriter, n Node) error {
-	attrs, err := n.OrderedListAttrs()
-	if err != nil {
-		return fmt.Errorf("cannot render ordered list node: %w", err)
-	}
-
-	w.WriteString("<ol")
-
-	if attrs.Start != 1 {
-		w.WriteAttr("start", strconv.Itoa(attrs.Start))
-	}
-
-	if attrs.Type != nil {
-		w.WriteAttr("type", *attrs.Type)
-	}
-
-	w.WriteByte('>')
-
-	if err := w.RenderChildren(n.Content); err != nil {
-		return err
-	}
-
-	w.WriteString("</ol>")
-
-	return nil
-}
-
-func (orderedListNode) RenderMarkdown(w *MarkdownWriter, n Node) error {
-	attrs, err := n.OrderedListAttrs()
-	if err != nil {
-		return fmt.Errorf("cannot render ordered list node: %w", err)
-	}
-
-	tight, err := listTightness(n, NodeListItem)
-	if err != nil {
-		return fmt.Errorf("cannot render ordered list: %w", err)
-	}
-
-	start := max(attrs.Start, 1)
-
-	return w.renderListItems(n.Content, tight, func(i int, _ Node) (string, string, error) {
-		num := strconv.Itoa(start + i)
-
-		return num + ". ", strings.Repeat(" ", len(num)+2), nil
-	})
 }
 
 type listItemNode struct{}
@@ -176,20 +113,4 @@ func (listItemNode) Check(n *Node, _ CheckMode) error {
 	}
 
 	return nil
-}
-
-func (listItemNode) RenderHTML(w *HTMLWriter, n Node) error {
-	w.WriteString("<li>")
-
-	if err := w.RenderChildren(n.Content); err != nil {
-		return err
-	}
-
-	w.WriteString("</li>")
-
-	return nil
-}
-
-func (listItemNode) RenderMarkdown(_ *MarkdownWriter, _ Node) error {
-	return fmt.Errorf("cannot render list item outside of list context")
 }

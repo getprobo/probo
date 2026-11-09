@@ -20,121 +20,15 @@
 
 package prosemirror
 
-import (
-	"encoding/json"
-	"fmt"
-	"slices"
-	"strings"
-	"unicode/utf8"
-
-	"go.probo.inc/probo/pkg/gid"
-)
-
-// MentionOptions configures a mention node. EntityTypes, when non-empty,
-// restricts mentions to GIDs of those entity types; empty accepts any GID.
-type MentionOptions struct {
-	EntityTypes []uint16
+// MentionAttrs contains attributes for mention nodes.
+// ID is the membership-profile GID of the tagged person.
+// Label is the display name captured at write time.
+type MentionAttrs struct {
+	ID    string `json:"id"`
+	Label string `json:"label"`
 }
 
-type mentionNodeSpec struct {
-	entityTypes []uint16
-}
-
-// Mention is a leaf node referencing an entity by GID with a display label.
-func Mention(opts MentionOptions) NodeSpec {
-	return mentionNodeSpec{entityTypes: opts.EntityTypes}
-}
-
-func (mentionNodeSpec) Name() NodeType {
-	return NodeMention
-}
-
-func (mentionNodeSpec) Group() Group {
-	return GroupInline
-}
-
-func (mentionNodeSpec) Content() ContentRule {
-	return ContentRule{}
-}
-
-func (mentionNodeSpec) Visible() bool {
-	return true
-}
-
-// TextLength counts a mention as "@" plus its label, matching the editor's
-// content-length accounting for comments and notes.
-func (mentionNodeSpec) TextLength(n Node) int {
-	attrs, err := n.MentionAttrs()
-	if err != nil {
-		return 0
-	}
-
-	return 1 + utf8.RuneCountInString(attrs.Label)
-}
-
-func (m mentionNodeSpec) Check(n *Node, mode CheckMode) error {
-	if err := validateLeaf(n); err != nil {
-		return fmt.Errorf("cannot validate mention node: %w", err)
-	}
-
-	attrs, err := n.MentionAttrs()
-	if err != nil {
-		return fmt.Errorf("cannot validate mention node: %w", err)
-	}
-
-	parsed, err := gid.ParseGID(attrs.ID)
-	if err != nil {
-		return fmt.Errorf("cannot validate mention node: invalid id")
-	}
-
-	if len(m.entityTypes) > 0 && !slices.Contains(m.entityTypes, parsed.EntityType()) {
-		return fmt.Errorf("cannot validate mention node: invalid id")
-	}
-
-	if strings.TrimSpace(attrs.Label) == "" || len(attrs.Label) > MaxMentionLabelBytes {
-		return fmt.Errorf("cannot validate mention node: invalid label")
-	}
-
-	if mode != CheckSanitize {
-		return nil
-	}
-
-	attrs.Label = strings.TrimSpace(attrs.Label)
-
-	raw, err := json.Marshal(attrs)
-	if err != nil {
-		return nil
-	}
-
-	n.Attrs = raw
-
-	return nil
-}
-
-func (mentionNodeSpec) RenderHTML(w *HTMLWriter, n Node) error {
-	attrs, err := n.MentionAttrs()
-	if err != nil {
-		return fmt.Errorf("cannot render mention node: %w", err)
-	}
-
-	w.WriteString(`<span class="mention" data-type="mention"`)
-	w.WriteAttr("data-id", attrs.ID)
-	w.WriteAttr("data-label", attrs.Label)
-	w.WriteByte('>')
-	w.WriteEscaped("@" + attrs.Label)
-	w.WriteString("</span>")
-
-	return nil
-}
-
-func (mentionNodeSpec) RenderMarkdown(w *MarkdownWriter, n Node) error {
-	attrs, err := n.MentionAttrs()
-	if err != nil {
-		return fmt.Errorf("cannot render mention node: %w", err)
-	}
-
-	w.ensurePrefix()
-	w.buf.WriteString(escapeMarkdown("@" + attrs.Label))
-
-	return nil
+// MentionAttrs parses and returns the mention attributes.
+func (n Node) MentionAttrs() (MentionAttrs, error) {
+	return decodeAttrs(n.Attrs, MentionAttrs{}, "mention")
 }

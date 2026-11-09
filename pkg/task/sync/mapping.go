@@ -31,6 +31,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/richtext"
 	"go.probo.inc/probo/pkg/task/sync/linear"
 )
 
@@ -244,7 +245,7 @@ func ContentToMarkdown(content string) (string, error) {
 	// Width has no markdown syntax Linear accepts, so the description omits it.
 	omitImageWidth(&node)
 
-	md, err := prosemirror.DocumentSchema.RenderMarkdown(node)
+	md, err := richtext.DocumentMarkdown.Render(node)
 	if err != nil {
 		return "", fmt.Errorf("cannot render markdown: %w", err)
 	}
@@ -272,10 +273,10 @@ func omitImageWidth(node *prosemirror.Node) {
 
 func MarkdownToContent(markdown string) (string, error) {
 	if strings.TrimSpace(markdown) == "" {
-		return prosemirror.DefaultDocumentJSON(nil)
+		return richtext.DefaultDocumentJSON(nil)
 	}
 
-	node, err := prosemirror.ParseMarkdown(markdown)
+	node, err := richtext.ParseMarkdown(markdown)
 	if err != nil {
 		return "", fmt.Errorf("cannot parse markdown: %w", err)
 	}
@@ -285,7 +286,7 @@ func MarkdownToContent(markdown string) (string, error) {
 	// and uploaded images and files are restored from their file URLs.
 	node = dropUnsupportedLinearContent(node)
 	if len(node.Content) == 0 {
-		return prosemirror.DefaultDocumentJSON(nil)
+		return richtext.DefaultDocumentJSON(nil)
 	}
 
 	encoded, err := json.Marshal(node)
@@ -295,7 +296,7 @@ func MarkdownToContent(markdown string) (string, error) {
 
 	encodedJSON := string(encoded)
 
-	content, err := prosemirror.DefaultDocumentJSON(&encodedJSON)
+	content, err := richtext.DefaultDocumentJSON(&encodedJSON)
 	if err != nil {
 		return "", fmt.Errorf("cannot sanitize task content: %w", err)
 	}
@@ -410,7 +411,7 @@ func pruneLinearNode(n prosemirror.Node) *prosemirror.Node {
 
 		text := "@" + attrs.Label
 
-		return &prosemirror.Node{Type: prosemirror.NodeText, Text: &text}
+		return &prosemirror.Node{Type: prosemirror.NodeText, Text: text}
 	}
 
 	next := n

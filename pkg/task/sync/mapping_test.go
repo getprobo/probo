@@ -22,6 +22,7 @@ package tasksync
 
 import (
 	"encoding/json"
+	"go.probo.inc/probo/pkg/richtext/attachment"
 	"strings"
 	"testing"
 	"time"
@@ -253,7 +254,7 @@ func TestContentToMarkdown_SizedImageUsesMarkdown(t *testing.T) {
 
 	markdown, err := ContentToMarkdown(content)
 	require.NoError(t, err)
-	assert.Equal(t, "![probo-logo-only.svg]("+prosemirror.AttachmentPath(fileID.String())+")\n", markdown)
+	assert.Equal(t, "![probo-logo-only.svg]("+attachment.Path(fileID.String())+")\n", markdown)
 	assert.NotContains(t, markdown, "<img")
 }
 
@@ -261,7 +262,7 @@ func TestMarkdownToContent_RestoresUploadedFilesBothWays(t *testing.T) {
 	t.Parallel()
 
 	fileID := gid.New(gid.TenantID{}, 25).String()
-	path := prosemirror.AttachmentPath(fileID)
+	path := attachment.Path(fileID)
 	markdown := "![diagram](" + path + ")\n\n[policy.pdf](" + path + ")"
 
 	content, err := MarkdownToContent(markdown)

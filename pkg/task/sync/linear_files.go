@@ -27,6 +27,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"go.probo.inc/probo/pkg/richtext/attachment"
 	"maps"
 	"sort"
 	"strings"
@@ -37,7 +38,6 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/prosemirror"
 	"go.probo.inc/probo/pkg/task/sync/linear"
 )
 
@@ -211,7 +211,7 @@ func (s *Service) embedLinearFiles(
 	content string,
 	known map[string]string,
 ) (string, map[string]string, bool, error) {
-	ids, err := prosemirror.FileIDs(content)
+	ids, err := attachment.FileIDs(content)
 	if err != nil {
 		return "", nil, false, fmt.Errorf("cannot read attachment file ids: %w", err)
 	}
@@ -255,7 +255,7 @@ func (s *Service) embedLinearFiles(
 		}
 
 		files[fileID] = assetURL
-		path := prosemirror.AttachmentPath(fileID)
+		path := attachment.Path(fileID)
 
 		if path == "" || !strings.Contains(remote, path) {
 			missing := fmt.Errorf("cannot embed attachment %q: missing from markdown", fileID)
@@ -312,7 +312,7 @@ func (s *Service) uploadLinearFile(
 }
 
 func linearFilesMissing(known map[string]string, content string) (bool, error) {
-	ids, err := prosemirror.FileIDs(content)
+	ids, err := attachment.FileIDs(content)
 	if err != nil {
 		return false, fmt.Errorf("cannot read attachment file ids: %w", err)
 	}
@@ -474,7 +474,7 @@ func restoreLinearFiles(markdown string, files map[string]string) string {
 			continue
 		}
 
-		pairs = append(pairs, pair{asset: assetURL, path: prosemirror.AttachmentPath(id)})
+		pairs = append(pairs, pair{asset: assetURL, path: attachment.Path(id)})
 	}
 
 	sort.Slice(pairs, func(i, j int) bool {

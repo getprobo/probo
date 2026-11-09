@@ -48,27 +48,3 @@ func (paragraphNode) Check(n *Node, _ CheckMode) error {
 
 	return nil
 }
-
-func (paragraphNode) RenderHTML(w *HTMLWriter, n Node) error {
-	w.WriteString("<p>")
-
-	if err := w.RenderChildren(n.Content); err != nil {
-		return err
-	}
-
-	w.WriteString("</p>")
-
-	return nil
-}
-
-func (paragraphNode) RenderMarkdown(w *MarkdownWriter, n Node) error {
-	w.ensurePrefix()
-
-	if err := w.RenderInline(n.Content); err != nil {
-		return err
-	}
-
-	w.newLine()
-
-	return nil
-}

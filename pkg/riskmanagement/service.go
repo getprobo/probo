@@ -30,7 +30,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
-	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/richtext"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -183,7 +183,7 @@ func optionalDocumentJSON(s *string) (*string, error) {
 		return nil, nil
 	}
 
-	sanitized, err := prosemirror.DocumentSchema.Sanitize(*s)
+	sanitized, err := richtext.DocumentSchema.Sanitize(*s)
 	if err != nil {
 		return nil, err
 	}
@@ -199,8 +199,8 @@ func (r *CreateRiskAnalysisRequest) Validate() error {
 		r.Description,
 		"description",
 		validator.MaxLen(richTextMaxJSONBytes),
-		validator.ProseMirrorContent(prosemirror.DocumentSchema),
-		validator.ProseMirrorMaxTextLength(prosemirror.DocumentSchema, ContentMaxLength),
+		validator.ProseMirrorDocumentContent(),
+		validator.ProseMirrorDocumentMaxTextLength(ContentMaxLength),
 	)
 	v.Check(r.MatrixSize, "matrix_size", validator.Required())
 	validateMatrixSize(v, r.MatrixSize)
@@ -220,8 +220,8 @@ func (r *UpdateRiskAnalysisRequest) Validate() error {
 		r.Description,
 		"description",
 		validator.MaxLen(richTextMaxJSONBytes),
-		validator.ProseMirrorContent(prosemirror.DocumentSchema),
-		validator.ProseMirrorMaxTextLength(prosemirror.DocumentSchema, ContentMaxLength),
+		validator.ProseMirrorDocumentContent(),
+		validator.ProseMirrorDocumentMaxTextLength(ContentMaxLength),
 	)
 
 	if r.Period != nil {
@@ -239,8 +239,8 @@ func (r *ForkRiskAnalysisRequest) Validate() error {
 		r.Description,
 		"description",
 		validator.MaxLen(richTextMaxJSONBytes),
-		validator.ProseMirrorContent(prosemirror.DocumentSchema),
-		validator.ProseMirrorMaxTextLength(prosemirror.DocumentSchema, ContentMaxLength),
+		validator.ProseMirrorDocumentContent(),
+		validator.ProseMirrorDocumentMaxTextLength(ContentMaxLength),
 	)
 
 	if r.Period != nil {

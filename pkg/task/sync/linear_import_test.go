@@ -35,7 +35,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/richtext/attachment"
 	"go.probo.inc/probo/pkg/task/sync/linear"
 )
 
@@ -257,7 +257,7 @@ func TestImportLinearMarkdown_ReusesKnownAsset(t *testing.T) {
 	assert.Nil(t, metas)
 	assert.Empty(t, store.files)
 	assert.Equal(t, assetURL, files[fileID.String()])
-	assert.Contains(t, rewritten, prosemirror.AttachmentPath(fileID.String()))
+	assert.Contains(t, rewritten, attachment.Path(fileID.String()))
 	assert.NotContains(t, rewritten, assetURL)
 }
 

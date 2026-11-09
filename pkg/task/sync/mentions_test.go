@@ -22,12 +22,14 @@ package tasksync
 
 import (
 	"encoding/json"
+	"go.probo.inc/probo/pkg/richtext/mention"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/richtext"
 	"go.probo.inc/probo/pkg/task/sync/linear"
 )
 
@@ -211,7 +213,7 @@ func TestNewlyMentionedProfileIDs_SameDocumentOnly(t *testing.T) {
 	t.Run("skips a profile already in this document", func(t *testing.T) {
 		t.Parallel()
 
-		ids, err := prosemirror.NewlyMentionedProfileIDs(janeContent, both)
+		ids, err := mention.NewProfileIDs(janeContent, both)
 		require.NoError(t, err)
 		assert.Equal(t, []gid.GID{ada}, ids)
 	})
@@ -219,7 +221,7 @@ func TestNewlyMentionedProfileIDs_SameDocumentOnly(t *testing.T) {
 	t.Run("notifies a profile that is new to this document", func(t *testing.T) {
 		t.Parallel()
 
-		ids, err := prosemirror.NewlyMentionedProfileIDs(adaContent, janeContent)
+		ids, err := mention.NewProfileIDs(adaContent, janeContent)
 		require.NoError(t, err)
 		assert.Equal(t, []gid.GID{jane}, ids)
 	})
@@ -227,7 +229,7 @@ func TestNewlyMentionedProfileIDs_SameDocumentOnly(t *testing.T) {
 	t.Run("returns nothing when this document is unchanged", func(t *testing.T) {
 		t.Parallel()
 
-		ids, err := prosemirror.NewlyMentionedProfileIDs(janeContent, janeContent)
+		ids, err := mention.NewProfileIDs(janeContent, janeContent)
 		require.NoError(t, err)
 		assert.Empty(t, ids)
 	})
@@ -255,7 +257,7 @@ func rewriteTestMention(t *testing.T, markdown string, profileID gid.GID, label 
 	require.NoError(t, err)
 
 	encodedJSON := string(encoded)
-	sanitized, err := prosemirror.DefaultDocumentJSON(&encodedJSON)
+	sanitized, err := richtext.DefaultDocumentJSON(&encodedJSON)
 	require.NoError(t, err)
 
 	return sanitized
@@ -301,7 +303,7 @@ func mentionContentWithIDs(t *testing.T, first gid.GID, second gid.GID) string {
 				Type: prosemirror.NodeParagraph,
 				Content: []prosemirror.Node{
 					firstMention,
-					{Type: prosemirror.NodeText, Text: &gap},
+					{Type: prosemirror.NodeText, Text: gap},
 					secondMention,
 				},
 			},
@@ -312,7 +314,7 @@ func mentionContentWithIDs(t *testing.T, first gid.GID, second gid.GID) string {
 	require.NoError(t, err)
 
 	encodedJSON := string(encoded)
-	sanitized, err := prosemirror.DefaultDocumentJSON(&encodedJSON)
+	sanitized, err := richtext.DefaultDocumentJSON(&encodedJSON)
 	require.NoError(t, err)
 
 	return sanitized
@@ -331,7 +333,7 @@ func mentionContent(t *testing.T, profileID gid.GID, label string) string {
 			{
 				Type: prosemirror.NodeParagraph,
 				Content: []prosemirror.Node{
-					{Type: prosemirror.NodeText, Text: &text},
+					{Type: prosemirror.NodeText, Text: text},
 					mention,
 				},
 			},
@@ -342,7 +344,7 @@ func mentionContent(t *testing.T, profileID gid.GID, label string) string {
 	require.NoError(t, err)
 
 	encodedJSON := string(encoded)
-	sanitized, err := prosemirror.DefaultDocumentJSON(&encodedJSON)
+	sanitized, err := richtext.DefaultDocumentJSON(&encodedJSON)
 	require.NoError(t, err)
 
 	return sanitized
@@ -351,7 +353,7 @@ func mentionContent(t *testing.T, profileID gid.GID, label string) string {
 func mentionedIDs(t *testing.T, content string) []gid.GID {
 	t.Helper()
 
-	ids, err := prosemirror.MentionedProfileIDs(content)
+	ids, err := mention.ProfileIDs(content)
 	require.NoError(t, err)
 
 	return ids

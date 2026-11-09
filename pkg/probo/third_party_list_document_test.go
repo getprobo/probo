@@ -264,7 +264,7 @@ func containsNodeType(n prosemirror.Node, nodeType prosemirror.NodeType) bool {
 }
 
 func containsBoldText(n prosemirror.Node, text string) bool {
-	if n.Type == prosemirror.NodeText && n.Text != nil && *n.Text == text {
+	if n.Type == prosemirror.NodeText && n.Text != "" && n.Text == text {
 		for _, mark := range n.Marks {
 			if mark.Type == prosemirror.MarkStrong {
 				return true
@@ -282,7 +282,7 @@ func containsBoldText(n prosemirror.Node, text string) bool {
 }
 
 func anyTextNodeContains(n prosemirror.Node, substr string) bool {
-	if n.Type == prosemirror.NodeText && n.Text != nil && strings.Contains(*n.Text, substr) {
+	if n.Type == prosemirror.NodeText && n.Text != "" && strings.Contains(n.Text, substr) {
 		return true
 	}
 
@@ -296,7 +296,7 @@ func anyTextNodeContains(n prosemirror.Node, substr string) bool {
 }
 
 func anyTextNodeHasPrefix(n prosemirror.Node, prefix string) bool {
-	if n.Type == prosemirror.NodeText && n.Text != nil && strings.HasPrefix(strings.TrimSpace(*n.Text), prefix) {
+	if n.Type == prosemirror.NodeText && n.Text != "" && strings.HasPrefix(strings.TrimSpace(n.Text), prefix) {
 		return true
 	}
 
@@ -310,8 +310,8 @@ func anyTextNodeHasPrefix(n prosemirror.Node, prefix string) bool {
 }
 
 func collectText(n prosemirror.Node) string {
-	if n.Text != nil {
-		return *n.Text
+	if n.Text != "" {
+		return n.Text
 	}
 
 	var out strings.Builder

@@ -33,6 +33,7 @@ import (
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/prosemirror"
 	"go.probo.inc/probo/pkg/resourcealias"
+	"go.probo.inc/probo/pkg/richtext"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/authz"
@@ -11869,13 +11870,18 @@ func (r *Resolver) CreateDocumentCommentThreadTool(ctx context.Context, req *mcp
 
 	identity := authn.IdentityFromContext(ctx)
 
+	content, err := richtext.FromPlainText(input.Content)
+	if err != nil {
+		return nil, types.CreateDocumentCommentThreadOutput{}, err
+	}
+
 	thread, comment, err := r.proboSvc.Documents.CreateCommentThread(
 		ctx,
 		scope,
 		probo.CreateDocumentCommentThreadRequest{
 			DocumentID:      input.DocumentID,
 			IdentityID:      identity.ID,
-			Content:         prosemirror.FromPlainText(input.Content),
+			Content:         content,
 			Quote:           optionalString(input.Quote),
 			SuggestionID:    input.SuggestionID,
 			QuoteOccurrence: optionalInt(input.QuoteOccurrence),
@@ -11899,13 +11905,18 @@ func (r *Resolver) CreateDocumentCommentTool(ctx context.Context, req *mcp.CallT
 
 	identity := authn.IdentityFromContext(ctx)
 
+	content, err := richtext.FromPlainText(input.Content)
+	if err != nil {
+		return nil, types.CreateDocumentCommentOutput{}, err
+	}
+
 	comment, err := r.proboSvc.Documents.CreateComment(
 		ctx,
 		scope,
 		probo.CreateDocumentCommentRequest{
 			ThreadID:   input.ThreadID,
 			IdentityID: identity.ID,
-			Content:    prosemirror.FromPlainText(input.Content),
+			Content:    content,
 		},
 	)
 	if err != nil {
@@ -11923,13 +11934,18 @@ func (r *Resolver) UpdateDocumentCommentTool(ctx context.Context, req *mcp.CallT
 
 	identity := authn.IdentityFromContext(ctx)
 
+	content, err := richtext.FromPlainText(input.Content)
+	if err != nil {
+		return nil, types.UpdateDocumentCommentOutput{}, err
+	}
+
 	comment, err := r.proboSvc.Documents.UpdateComment(
 		ctx,
 		scope,
 		probo.UpdateDocumentCommentRequest{
 			CommentID:  input.ID,
 			IdentityID: identity.ID,
-			Content:    prosemirror.FromPlainText(input.Content),
+			Content:    content,
 		},
 	)
 	if err != nil {

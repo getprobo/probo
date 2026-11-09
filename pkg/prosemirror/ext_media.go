@@ -20,241 +20,31 @@
 
 package prosemirror
 
-import (
-	"encoding/json"
-	"fmt"
-	"strings"
-)
-
-type imageNode struct{}
-
-// Image is a leaf node referencing an uploaded or remote image.
-func Image() NodeSpec {
-	return imageNode{}
+// ImageAttrs contains attributes for image nodes.
+// FileID is set for an uploaded image. Src is set for a remote image.
+// Width is the display width as a percentage of the column.
+type ImageAttrs struct {
+	FileID *string `json:"fileId,omitempty"`
+	Src    string  `json:"src"`
+	Alt    *string `json:"alt,omitempty"`
+	Title  *string `json:"title,omitempty"`
+	Width  *int    `json:"width,omitempty"`
 }
 
-func (imageNode) Name() NodeType {
-	return NodeImage
+// ImageAttrs parses and returns the image attributes.
+func (n Node) ImageAttrs() (ImageAttrs, error) {
+	return decodeAttrs(n.Attrs, ImageAttrs{}, "image")
 }
 
-func (imageNode) Group() Group {
-	return GroupBlock
+// FileAttrs contains attributes for file attachment nodes.
+type FileAttrs struct {
+	FileID   string `json:"fileId"`
+	FileName string `json:"fileName"`
+	MimeType string `json:"mimeType"`
+	Size     int64  `json:"size"`
 }
 
-func (imageNode) Content() ContentRule {
-	return ContentRule{}
-}
-
-func (imageNode) Visible() bool {
-	return true
-}
-
-func (imageNode) Check(n *Node, mode CheckMode) error {
-	if err := validateLeaf(n); err != nil {
-		return fmt.Errorf("cannot validate image node: %w", err)
-	}
-
-	attrs, err := n.ImageAttrs()
-	if err != nil {
-		return fmt.Errorf("cannot validate image node: %w", err)
-	}
-
-	if attrs.FileID != nil {
-		id := strings.TrimSpace(*attrs.FileID)
-		if id != "" && !validFileID(id) {
-			return fmt.Errorf("cannot validate image node: invalid file id")
-		}
-	}
-
-	if attrs.Width != nil && (*attrs.Width < 1 || *attrs.Width > 100) {
-		return fmt.Errorf("cannot validate image node: invalid width")
-	}
-
-	if mode != CheckSanitize {
-		return nil
-	}
-
-	if attrs.FileID != nil {
-		id := strings.TrimSpace(*attrs.FileID)
-		if id == "" {
-			attrs.FileID = nil
-		} else {
-			attrs.FileID = &id
-			attrs.Src = ""
-		}
-	}
-
-	if attrs.FileID == nil {
-		attrs.Src = persistedImageSrc(attrs.Src)
-	}
-
-	if attrs.Width != nil && (*attrs.Width < 1 || *attrs.Width > 100) {
-		attrs.Width = nil
-	}
-
-	raw, err := json.Marshal(attrs)
-	if err != nil {
-		n.Attrs = []byte(`{"src":""}`)
-		return nil
-	}
-
-	n.Attrs = raw
-
-	return nil
-}
-
-func (imageNode) RenderHTML(w *HTMLWriter, n Node) error {
-	attrs, err := n.ImageAttrs()
-	if err != nil {
-		return fmt.Errorf("cannot render image node: %w", err)
-	}
-
-	w.WriteString("<img")
-	w.WriteAttr("src", imageSrc(attrs))
-
-	if attrs.Alt != nil {
-		w.WriteAttr("alt", *attrs.Alt)
-	}
-
-	if attrs.Title != nil {
-		w.WriteAttr("title", *attrs.Title)
-	}
-
-	if attrs.Width != nil {
-		w.WriteAttr("width", fmt.Sprintf("%d%%", *attrs.Width))
-	}
-
-	w.WriteByte('>')
-
-	return nil
-}
-
-func (imageNode) RenderMarkdown(w *MarkdownWriter, n Node) error {
-	attrs, err := n.ImageAttrs()
-	if err != nil {
-		return fmt.Errorf("cannot render image node: %w", err)
-	}
-
-	w.ensurePrefix()
-
-	if attrs.Width != nil {
-		w.buf.WriteString("<img")
-		writeAttr(w.buf, "src", imageSrc(attrs))
-
-		if attrs.Alt != nil {
-			writeAttr(w.buf, "alt", *attrs.Alt)
-		}
-
-		if attrs.Title != nil {
-			writeAttr(w.buf, "title", *attrs.Title)
-		}
-
-		writeAttr(w.buf, "width", fmt.Sprintf("%d%%", *attrs.Width))
-		w.buf.WriteByte('>')
-
-		return nil
-	}
-
-	w.buf.WriteString("![")
-
-	if attrs.Alt != nil {
-		w.buf.WriteString(escapeMarkdown(*attrs.Alt))
-	}
-
-	w.buf.WriteString("](")
-	w.buf.WriteString(imageSrc(attrs))
-
-	if attrs.Title != nil {
-		w.buf.WriteString(` "`)
-		w.buf.WriteString(strings.ReplaceAll(*attrs.Title, `"`, `\"`))
-		w.buf.WriteByte('"')
-	}
-
-	w.buf.WriteByte(')')
-
-	return nil
-}
-
-type fileNode struct{}
-
-// File is a leaf node referencing an uploaded file attachment.
-func File() NodeSpec {
-	return fileNode{}
-}
-
-func (fileNode) Name() NodeType {
-	return NodeFile
-}
-
-func (fileNode) Group() Group {
-	return GroupBlock
-}
-
-func (fileNode) Content() ContentRule {
-	return ContentRule{}
-}
-
-func (fileNode) Visible() bool {
-	return true
-}
-
-func (fileNode) Check(n *Node, _ CheckMode) error {
-	if err := validateLeaf(n); err != nil {
-		return fmt.Errorf("cannot validate file node: %w", err)
-	}
-
-	attrs, err := n.FileAttrs()
-	if err != nil {
-		return fmt.Errorf("cannot validate file node: %w", err)
-	}
-
-	if !validFileID(attrs.FileID) {
-		return fmt.Errorf("cannot validate file node: invalid file id")
-	}
-
-	if strings.TrimSpace(attrs.FileName) == "" || len(attrs.FileName) > MaxFileNameBytes {
-		return fmt.Errorf("cannot validate file node: invalid file name")
-	}
-
-	if strings.TrimSpace(attrs.MimeType) == "" || len(attrs.MimeType) > 255 {
-		return fmt.Errorf("cannot validate file node: invalid mime type")
-	}
-
-	if attrs.Size < 0 {
-		return fmt.Errorf("cannot validate file node: invalid size")
-	}
-
-	return nil
-}
-
-func (fileNode) RenderHTML(w *HTMLWriter, n Node) error {
-	attrs, err := n.FileAttrs()
-	if err != nil {
-		return fmt.Errorf("cannot render file node: %w", err)
-	}
-
-	w.WriteString("<a")
-	w.WriteAttr("href", AttachmentPath(attrs.FileID))
-	w.WriteAttr("class", "document-file")
-	w.WriteByte('>')
-	w.WriteEscaped(attrs.FileName)
-	w.WriteString("</a>")
-
-	return nil
-}
-
-func (fileNode) RenderMarkdown(w *MarkdownWriter, n Node) error {
-	attrs, err := n.FileAttrs()
-	if err != nil {
-		return fmt.Errorf("cannot render file node: %w", err)
-	}
-
-	w.ensurePrefix()
-	w.buf.WriteByte('[')
-	w.buf.WriteString(strings.ReplaceAll(escapeMarkdown(attrs.FileName), "&", `\&`))
-	w.buf.WriteString("](")
-	w.buf.WriteString(AttachmentPath(attrs.FileID))
-	w.buf.WriteByte(')')
-
-	return nil
+// FileAttrs parses and returns the file attachment attributes.
+func (n Node) FileAttrs() (FileAttrs, error) {
+	return decodeAttrs(n.Attrs, FileAttrs{}, "file")
 }

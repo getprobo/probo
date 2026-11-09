@@ -19,7 +19,10 @@ Detailed guides for specific subsystems live in `contrib/claude/`:
 - [`contrib/claude/cli.md`](contrib/claude/cli.md) — CLI command patterns (cobra, huh prompts, pagination, output formatting)
 - [`contrib/claude/authorization.md`](contrib/claude/authorization.md) — IAM policy-based authorization (policies, conditions, roles, AuthorizationAttributer)
 - [`contrib/claude/validation.md`](contrib/claude/validation.md) — Validation framework (fluent API, validators, error codes, propagation)
-- [`contrib/claude/prosemirror.md`](contrib/claude/prosemirror.md) — ProseMirror schemas (extensions, DocumentSchema, Automerge codecs, append-only + perf rules)
+- [`contrib/claude/prosemirror.md`](contrib/claude/prosemirror.md) — ProseMirror schemas (extensions, HTML/Markdown renderers, DocumentSchema, Automerge codecs, append-only + perf rules)
+- `pkg/richtext` — product ProseMirror schemas (`DocumentSchema`, `CommentSchema`, `DocumentHTML`, `DocumentMarkdown`), validated markdown import
+- `pkg/richtext/attachment` — image/file specs, renderers, import rule, file URL helpers
+- `pkg/richtext/mention` — document/profile mention specs, renderers, profile-id helpers
 - [`contrib/claude/e2e.md`](contrib/claude/e2e.md) — End-to-end testing (factory builders, RBAC tests, tenant isolation, assertions)
 - [`contrib/claude/e2e-refactor.md`](contrib/claude/e2e-refactor.md) — E2E suite migration plan, fixture isolation, batch acceptance
 - [`contrib/claude/agent.md`](contrib/claude/agent.md) — Agent orchestration framework (tools, handoffs, execution)

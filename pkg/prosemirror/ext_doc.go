@@ -45,14 +45,6 @@ func (docNode) Check(_ *Node, _ CheckMode) error {
 	return nil
 }
 
-func (docNode) RenderHTML(w *HTMLWriter, n Node) error {
-	return w.RenderChildren(n.Content)
-}
-
-func (docNode) RenderMarkdown(w *MarkdownWriter, n Node) error {
-	return w.RenderBlocks(n.Content)
-}
-
 type blockquoteNode struct{}
 
 // Blockquote wraps one or more block nodes in a quotation.
@@ -76,32 +68,6 @@ func (blockquoteNode) Check(n *Node, _ CheckMode) error {
 	if err := rejectNonTextPayload(n); err != nil {
 		return fmt.Errorf("cannot validate %s node: %w", n.Type, err)
 	}
-
-	return nil
-}
-
-func (blockquoteNode) RenderHTML(w *HTMLWriter, n Node) error {
-	w.WriteString("<blockquote>")
-
-	if err := w.RenderChildren(n.Content); err != nil {
-		return err
-	}
-
-	w.WriteString("</blockquote>")
-
-	return nil
-}
-
-func (blockquoteNode) RenderMarkdown(w *MarkdownWriter, n Node) error {
-	oldPrefix := w.prefix
-
-	w.prefix += "> "
-	if err := w.RenderBlocks(n.Content); err != nil {
-		w.prefix = oldPrefix
-		return err
-	}
-
-	w.prefix = oldPrefix
 
 	return nil
 }

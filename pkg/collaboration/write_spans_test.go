@@ -29,7 +29,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/richtext"
 )
 
 func TestWriteSpans_LargeDocument(t *testing.T) {
@@ -69,7 +69,7 @@ func TestWriteSpans_LargeDocument(t *testing.T) {
 	got, err := materialize(context.Background(), document)
 	require.NoError(t, err)
 
-	want, err := prosemirror.DocumentSchema.Sanitize(content.String())
+	want, err := richtext.DocumentSchema.Sanitize(content.String())
 	require.NoError(t, err)
 	assert.Equal(t, want, got)
 }

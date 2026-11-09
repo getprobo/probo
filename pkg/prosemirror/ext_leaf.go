@@ -40,25 +40,11 @@ func (horizontalRuleNode) Content() ContentRule {
 }
 
 func (horizontalRuleNode) Check(n *Node, _ CheckMode) error {
-	return validateLeaf(n)
+	return ValidateLeaf(n)
 }
 
 func (horizontalRuleNode) Visible() bool {
 	return true
-}
-
-func (horizontalRuleNode) RenderHTML(w *HTMLWriter, _ Node) error {
-	w.WriteString("<hr>")
-
-	return nil
-}
-
-func (horizontalRuleNode) RenderMarkdown(w *MarkdownWriter, _ Node) error {
-	w.ensurePrefix()
-	w.buf.WriteString("---")
-	w.newLine()
-
-	return nil
 }
 
 type hardBreakNode struct{}
@@ -81,18 +67,5 @@ func (hardBreakNode) Content() ContentRule {
 }
 
 func (hardBreakNode) Check(n *Node, _ CheckMode) error {
-	return validateLeaf(n)
-}
-
-func (hardBreakNode) RenderHTML(w *HTMLWriter, _ Node) error {
-	w.WriteString("<br>")
-
-	return nil
-}
-
-func (hardBreakNode) RenderMarkdown(w *MarkdownWriter, _ Node) error {
-	w.buf.WriteByte('\\')
-	w.newLine()
-
-	return nil
+	return ValidateLeaf(n)
 }

@@ -28,6 +28,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	pm "go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/richtext"
 )
 
 type schemaMappingLedger struct {
@@ -183,7 +184,7 @@ func TestSchemaMappingLedger(t *testing.T) {
 }
 
 // TestCodecsCoverDocumentSchema fails if a node or mark the console editor can
-// produce (prosemirror.DocumentSchema) has no bridge codec, which would silently
+// produce (richtext.DocumentSchema) has no bridge codec, which would silently
 // drop that content when seeding or rendering a collaboration document. The doc
 // root and the inline text node are structural and never need a codec.
 func TestCodecsCoverDocumentSchema(t *testing.T) {
@@ -207,7 +208,7 @@ func TestCodecsCoverDocumentSchema(t *testing.T) {
 				pm.NodeText: {},
 			}
 
-			for _, nodeType := range pm.DocumentSchema.NodeTypes() {
+			for _, nodeType := range richtext.DocumentSchema.NodeTypes() {
 				if _, skip := excluded[nodeType]; skip {
 					continue
 				}
@@ -228,7 +229,7 @@ func TestCodecsCoverDocumentSchema(t *testing.T) {
 				covered[codec.Mark()] = struct{}{}
 			}
 
-			for _, markType := range pm.DocumentSchema.MarkTypes() {
+			for _, markType := range richtext.DocumentSchema.MarkTypes() {
 				_, ok := covered[markType]
 				assert.Truef(t, ok, "mark %q in DocumentSchema has no codec", markType)
 			}

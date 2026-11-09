@@ -21,13 +21,14 @@
 package mcp_test
 
 import (
+	"go.probo.inc/probo/pkg/richtext/attachment"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/e2e/internal/factory"
 	"go.probo.inc/probo/e2e/internal/testutil"
-	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/richtext"
 )
 
 // 1x1 PNG.
@@ -78,10 +79,10 @@ func TestMCP_UploadFile(t *testing.T) {
 		"name":            factory.SafeName("File"),
 		"content":         "![diagram](/api/files/v1/" + uploaded.ID + ")",
 	}, &added)
-	doc, err := prosemirror.ParseMarkdown(added.Task.Content)
+	doc, err := richtext.ParseMarkdown(added.Task.Content)
 	require.NoError(t, err)
 
-	refs := prosemirror.ReferencedFiles(doc)
+	refs := attachment.Referenced(doc)
 	require.Len(t, refs, 1)
 	assert.True(t, refs[0].Image)
 	assert.Equal(t, uploaded.ID, refs[0].ID)

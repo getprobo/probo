@@ -25,6 +25,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"go.probo.inc/probo/pkg/richtext/attachment"
 	"maps"
 	"net/url"
 	"path"
@@ -38,6 +39,7 @@ import (
 	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/richtext"
 	"go.probo.inc/probo/pkg/task/sync/linear"
 )
 
@@ -259,7 +261,7 @@ func (s *Service) importLinearFiles(
 		}
 
 		if linearImageType(meta.MimeType) {
-			imagePaths = append(imagePaths, prosemirror.AttachmentPath(fileID))
+			imagePaths = append(imagePaths, attachment.Path(fileID))
 		}
 	}
 
@@ -909,7 +911,7 @@ func referencedAttachments(markdown string, files map[string]string) map[string]
 	referenced := make(map[string]string, len(files))
 
 	for id, assetURL := range files {
-		filePath := prosemirror.AttachmentPath(id)
+		filePath := attachment.Path(id)
 		if filePath != "" && strings.Contains(markdown, filePath) {
 			referenced[id] = assetURL
 
@@ -1101,7 +1103,7 @@ func replaceLinearAssets(markdown string, files map[string]string) string {
 			continue
 		}
 
-		pairs = append(pairs, pair{asset: assetURL, path: prosemirror.AttachmentPath(id)})
+		pairs = append(pairs, pair{asset: assetURL, path: attachment.Path(id)})
 	}
 
 	sort.Slice(pairs, func(i, j int) bool {
@@ -1167,7 +1169,7 @@ func annotateStoredFiles(content string, metas map[string]importedFileMeta) (str
 
 	raw := string(encoded)
 
-	sanitized, err := prosemirror.DefaultDocumentJSON(&raw)
+	sanitized, err := richtext.DefaultDocumentJSON(&raw)
 	if err != nil {
 		return "", fmt.Errorf("cannot sanitize imported content: %w", err)
 	}
