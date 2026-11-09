@@ -123,6 +123,18 @@ export function reassignSuggestionBlocks(
   }
 }
 
+// amIndexAt maps a ProseMirror position to the Automerge index of its span.
+// It returns null when the position has no span, so callers can bail out
+// before mutating the document.
+function amIndexAt(
+  adapter: SchemaAdapter,
+  spans: ReturnType<typeof Automerge.spans>,
+  pos: number,
+): number | null {
+  const range = pmRangeToAmRange(adapter, spans, { from: pos, to: pos });
+  return range ? range.start : null;
+}
+
 function applyTextblockRemoval(
   adapter: SchemaAdapter,
   document: Automerge.Doc<RichEditorAutomergeDocument>,
@@ -139,7 +151,8 @@ function applyTextblockRemoval(
   // previous paragraph. The first paragraph has no previous position.
   const index = removal.at === 0
     ? 0
-    : pmRangeToAmRange(adapter, spans, { from: removal.at - 1, to: removal.at - 1 }).start;
+    : amIndexAt(adapter, spans, removal.at - 1);
+  if (index === null) return false;
   Automerge.joinBlock(document, path, index);
   if (isLoneDefaultParagraph(applied)) {
     const next = Automerge.spans(document, path);
@@ -158,7 +171,8 @@ function applyTextblockJoin(
 ): boolean {
   const join = textblockJoin(step, pmDoc);
   if (!join) return false;
-  const index = pmRangeToAmRange(adapter, spans, { from: join.from, to: join.from }).start;
+  const index = amIndexAt(adapter, spans, join.from);
+  if (index === null) return false;
   const applied = step.apply(pmDoc).doc;
   if (!applied) return false;
   Automerge.joinBlock(document, path, index);
@@ -187,10 +201,8 @@ function applyTextblockSplit(
     right.attrs[suggestionSplitAttr] = suggestion.id;
     right.attrs[suggestionSplitKindAttr] = suggestion.kind;
   }
-  const index = pmRangeToAmRange(adapter, spans, {
-    from: split.from,
-    to: split.from,
-  }).start;
+  const index = amIndexAt(adapter, spans, split.from);
+  if (index === null) return false;
   const openingNeeded = needsOpeningMarker(adapter, spans, split.ancestors, index);
   const opening = openingNeeded
     ? automergeBlock(adapter, split.left, split.ancestors)

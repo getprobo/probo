@@ -491,7 +491,7 @@ describe("Automerge sync plugin", () => {
     });
     const blocks = Automerge.spans(editor.document, ["body"])
       .filter(span => span.type === "block");
-    expect(blocks.at(-1)?.value).toMatchObject({
+    expect(blocks[blocks.length - 1]?.value).toMatchObject({
       attrs: { suggestionSplit: "s1", splitKind: "insertion" },
     });
 
@@ -502,7 +502,7 @@ describe("Automerge sync plugin", () => {
     editor.apply(remap);
     const remapped = Automerge.spans(editor.document, ["body"])
       .filter(span => span.type === "block");
-    expect(remapped.at(-1)?.value).toMatchObject({
+    expect(remapped[remapped.length - 1]?.value).toMatchObject({
       attrs: { suggestionSplit: "server", splitKind: "insertion" },
     });
   });

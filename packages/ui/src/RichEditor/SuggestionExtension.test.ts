@@ -22,7 +22,12 @@ import { getSchema } from "@tiptap/core";
 import { baseKeymap, joinBackward } from "@tiptap/pm/commands";
 import { keymap } from "@tiptap/pm/keymap";
 import { type Node as ProseMirrorNode } from "@tiptap/pm/model";
-import { EditorState, TextSelection, type Transaction } from "@tiptap/pm/state";
+import {
+  EditorState,
+  Plugin,
+  TextSelection,
+  type Transaction,
+} from "@tiptap/pm/state";
 import type { EditorView } from "@tiptap/pm/view";
 import { describe, expect, it } from "vitest";
 
@@ -39,6 +44,18 @@ import {
 const schema = getSchema(richEditorCollaborationExtensions);
 const suggestionId = "suggestion-1";
 
+// Tiptap types addProseMirrorPlugins with the editor context a live Mark
+// receives. These tests only read the plugin list, so the mark stands in for
+// that context here.
+function suggestingPlugins(controller: SuggestingController): Plugin[] {
+  const extension = createSuggestingExtension({ current: controller });
+  const addPlugins = extension.config.addProseMirrorPlugins;
+  if (!addPlugins) return [];
+  return addPlugins.call(
+    extension as unknown as ThisParameterType<typeof addPlugins>,
+  );
+}
+
 describe("suggesting input", () => {
   it("lets enter split the paragraph without ending the suggestion", () => {
     let finished = false;
@@ -53,8 +70,7 @@ describe("suggesting input", () => {
       },
       onOpenSuggestion: () => {},
     };
-    const extension = createSuggestingExtension({ current: controller });
-    const plugins = extension.config.addProseMirrorPlugins?.call(extension) ?? [];
+    const plugins = suggestingPlugins(controller);
     const suggesting = plugins[0];
     if (!suggesting?.props.handleKeyDown) {
       throw new Error("expected a suggesting key handler");
@@ -118,8 +134,7 @@ describe("suggesting input", () => {
       },
       onOpenSuggestion: () => {},
     };
-    const extension = createSuggestingExtension({ current: controller });
-    const plugins = extension.config.addProseMirrorPlugins?.call(extension) ?? [];
+    const plugins = suggestingPlugins(controller);
     const suggesting = plugins[0];
     const doc = schema.node("doc", null, [
       schema.node("paragraph", null, [schema.text("Hello", [
@@ -157,8 +172,7 @@ describe("suggesting input", () => {
       onBurstFinished: () => {},
       onOpenSuggestion: () => {},
     };
-    const extension = createSuggestingExtension({ current: controller });
-    const plugins = extension.config.addProseMirrorPlugins?.call(extension) ?? [];
+    const plugins = suggestingPlugins(controller);
     const suggesting = plugins[0];
     if (!suggesting?.props.handleTextInput) {
       throw new Error("expected a suggesting text handler");
@@ -184,6 +198,7 @@ describe("suggesting input", () => {
       6,
       6,
       "!",
+      () => state.tr,
     )).toBe(true);
     expect(needed).toBe(false);
     expect(controller.suggestionId).toBe(suggestionId);
@@ -208,8 +223,7 @@ describe("suggesting input", () => {
       onBurstFinished: () => {},
       onOpenSuggestion: () => {},
     };
-    const extension = createSuggestingExtension({ current: controller });
-    const plugins = extension.config.addProseMirrorPlugins?.call(extension) ?? [];
+    const plugins = suggestingPlugins(controller);
     const suggesting = plugins[0];
     if (!suggesting?.props.handleTextInput) {
       throw new Error("expected a suggesting text handler");
@@ -235,6 +249,7 @@ describe("suggesting input", () => {
       6,
       6,
       "!",
+      () => state.tr,
     )).toBe(true);
     expect(needed).toBe(true);
     expect(controller.suggestionId).toBe("other");
@@ -253,8 +268,7 @@ describe("suggesting input", () => {
       },
       onOpenSuggestion: () => {},
     };
-    const extension = createSuggestingExtension({ current: controller });
-    const plugins = extension.config.addProseMirrorPlugins?.call(extension) ?? [];
+    const plugins = suggestingPlugins(controller);
     const suggesting = plugins[0];
     if (!suggesting?.props.handleKeyDown) {
       throw new Error("expected a suggesting key handler");
@@ -299,8 +313,7 @@ describe("suggesting input", () => {
       onBurstFinished: () => {},
       onOpenSuggestion: () => {},
     };
-    const extension = createSuggestingExtension({ current: controller });
-    const plugins = extension.config.addProseMirrorPlugins?.call(extension) ?? [];
+    const plugins = suggestingPlugins(controller);
     const suggesting = plugins[0];
     if (!suggesting?.props.handleKeyDown) {
       throw new Error("expected a suggesting key handler");

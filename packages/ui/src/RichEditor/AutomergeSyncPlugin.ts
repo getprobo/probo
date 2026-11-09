@@ -163,10 +163,7 @@ export function createAutomergeSyncPlugin(
       ignoreTransaction = true;
       try {
         handle.change((document) => {
-          if (
-            hasStructuralLeaf(state.doc)
-            || hasMarkStep(changedTransactions)
-          ) {
+          if (hasStructuralLeaf(state.doc)) {
             Automerge.updateSpans(
               document,
               path,
@@ -324,15 +321,6 @@ function hasContentUpload(document: ProseMirrorNode, id: string): boolean {
     return !found;
   });
   return found;
-}
-
-function hasMarkStep(transactions: Transaction[]): boolean {
-  return transactions.some(transaction =>
-    transaction.steps.some((step) => {
-      const stepType = step.constructor.name;
-      return stepType === "AddMarkStep" || stepType === "RemoveMarkStep";
-    }),
-  );
 }
 
 function findDocumentDiff(
