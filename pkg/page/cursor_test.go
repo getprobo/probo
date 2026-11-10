@@ -126,6 +126,36 @@ func TestCursor_SQLFragment_DirectionalOrderField(t *testing.T) {
 		)
 	})
 
+	t.Run("ascending head uses the ascending expression", func(t *testing.T) {
+		t.Parallel()
+
+		cursor := NewCursor(10, &key, Head, OrderBy[testDirectionalOrderField]{
+			Field:     "due",
+			Direction: OrderDirectionAsc,
+		})
+
+		assert.Equal(
+			t,
+			"(due_ASC >= map_ASC(@cursor_field_value)) AND NOT (due_ASC = map_ASC(@cursor_field_value) AND id < @cursor_id) ORDER BY due_ASC ASC, id ASC LIMIT @cursor_limit",
+			cursor.SQLFragment(),
+		)
+	})
+
+	t.Run("ascending tail keeps the ascending expression", func(t *testing.T) {
+		t.Parallel()
+
+		cursor := NewCursor(10, &key, Tail, OrderBy[testDirectionalOrderField]{
+			Field:     "due",
+			Direction: OrderDirectionAsc,
+		})
+
+		assert.Equal(
+			t,
+			"(due_ASC <= map_ASC(@cursor_field_value)) AND NOT (due_ASC = map_ASC(@cursor_field_value) AND id > @cursor_id) ORDER BY due_ASC DESC, id DESC LIMIT @cursor_limit",
+			cursor.SQLFragment(),
+		)
+	})
+
 	t.Run("plain fields are unchanged", func(t *testing.T) {
 		t.Parallel()
 
