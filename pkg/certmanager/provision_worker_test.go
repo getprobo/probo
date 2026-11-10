@@ -191,19 +191,16 @@ func TestDecideProvisioningOutcome_RateLimitWithoutOrderStaysPending(t *testing.
 	assert.False(t, outcome.clearACMEState)
 }
 
-func TestNextPollAttemptAt_WaitsOutIntervalNotLease(t *testing.T) {
+func TestNextPollAttemptAt_StoresIntervalMinusLease(t *testing.T) {
 	t.Parallel()
 
 	now := time.Date(2026, 11, 10, 12, 0, 0, 0, time.UTC)
-	attemptAt := nextPollAttemptAt(now)
 
-	assert.False(t, pollAttemptEligible(attemptAt, now))
-	assert.False(t, pollAttemptEligible(attemptAt, now.Add(provisioningPollInterval)))
-	assert.True(t, pollAttemptEligible(attemptAt, now.Add(provisioningPollInterval+time.Millisecond)))
-}
-
-// pollAttemptEligible mirrors the open-order predicate in
-// LoadNextForPollOrderForUpdateSkipLocked, which uses a strict less-than.
-func pollAttemptEligible(attemptAt, now time.Time) bool {
-	return attemptAt.Before(now.Add(-provisioningPollLease))
+	// Timestamp arithmetic only. Eligibility is the SQL predicate in
+	// LoadNextForPollOrderForUpdateSkipLocked.
+	assert.Equal(
+		t,
+		now.Add(provisioningPollInterval-provisioningPollLease),
+		nextPollAttemptAt(now),
+	)
 }

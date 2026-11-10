@@ -608,6 +608,12 @@ func (h *pollOrderHandler) issueCertificate(
 				log.String("certificate_id", certificate.ID.String()),
 			)
 
+			if err := h.scheduleNextPoll(ctx, certificate.ID); err != nil {
+				h.recordSpanError(span, err, "")
+
+				return err
+			}
+
 			return nil
 		}
 
