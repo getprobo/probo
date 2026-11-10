@@ -23,6 +23,7 @@ package prosemirror
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
 	"unicode/utf8"
 )
@@ -570,13 +571,7 @@ func (s *Schema) HasVisibleContent(n Node) bool {
 		return true
 	}
 
-	for _, child := range n.Content {
-		if s.HasVisibleContent(child) {
-			return true
-		}
-	}
-
-	return false
+	return slices.ContainsFunc(n.Content, s.HasVisibleContent)
 }
 
 // ValidateLeaf reports whether n is a leaf: no children, text, or marks.

@@ -25,6 +25,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"strings"
 	"time"
 	"unicode/utf16"
@@ -604,9 +605,7 @@ func clearSuggestionSplit(span automerge.Span) automerge.Span {
 
 func copyMap(value map[string]any) map[string]any {
 	next := make(map[string]any, len(value))
-	for key, item := range value {
-		next[key] = item
-	}
+	maps.Copy(next, value)
 
 	return next
 }
@@ -959,10 +958,7 @@ func absoluteUTF16(offsets []visibleOffset, visible uint32) (uint32, bool) {
 			continue
 		}
 
-		absolute := previous.absolute + (visible - previous.visible)
-		if absolute > current.absolute {
-			absolute = current.absolute
-		}
+		absolute := min(previous.absolute+(visible-previous.visible), current.absolute)
 
 		return absolute, true
 	}
