@@ -2489,6 +2489,18 @@ func (s *DocumentService) CancelSignatureRequest(
 				return fmt.Errorf("cannot delete document version signature: %w", err)
 			}
 
+			if err := notification.Resolve(
+				ctx,
+				tx,
+				scope,
+				documentVersionSignature.OrganizationID,
+				documentVersionSignature.SignedBy,
+				coredata.NotificationTypeDocumentSignatureRequested,
+				documentVersion.DocumentID,
+			); err != nil {
+				return fmt.Errorf("cannot resolve signature notification: %w", err)
+			}
+
 			if err := s.emitDocumentEvent(
 				ctx,
 				scope,
