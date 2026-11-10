@@ -2037,6 +2037,32 @@ func (r *trackerPatternResolver) CookieCategory(ctx context.Context, obj *types.
 	return types.NewCookieCategory(category), nil
 }
 
+// SourceCookieBanner is the resolver for the sourceCookieBanner field.
+func (r *trackerPatternResolver) SourceCookieBanner(ctx context.Context, obj *types.TrackerPattern) (*types.CookieBanner, error) {
+	if obj.SourceCookieBannerID == nil {
+		return nil, nil
+	}
+
+	if _, err := r.authorize(ctx, *obj.SourceCookieBannerID, probo.ActionCookieBannerGet); err != nil {
+		return nil, err
+	}
+
+	loaders := dataloader.FromContext(ctx)
+
+	banner, err := loaders.CookieBanner.Load(ctx, *obj.SourceCookieBannerID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get source cookie banner", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return types.NewCookieBanner(banner), nil
+}
+
 // DetectedCount is the resolver for the detectedCount field.
 func (r *trackerPatternResolver) DetectedCount(ctx context.Context, obj *types.TrackerPattern) (int, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionTrackerPatternGet)

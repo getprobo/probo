@@ -71,6 +71,7 @@
     "actions": { "include": "Opnemen", "exclude": "Uitsluiten", "delete": "Verwijderen", "cancel": "Annuleren", "more": "Meer acties", "description": "Beschrijving tonen" },
     "types": { "cookie": "Cookie", "cookieShort": "C", "localStorage": "localStorage", "localStorageShort": "LS", "sessionStorage": "sessionStorage", "sessionStorageShort": "SS", "indexedDb": "IndexedDB", "indexedDbShort": "IDB", "cacheStorage": "Cache-opslag", "cacheStorageShort": "CS" },
     "sources": { "script": "Script", "preExisting": "Vooraf bestaand", "http": "HTTP", "extension": "Extensie" },
+    "sourceVia": "via {{origin}}",
     "duration": { "session": "Sessie", "persistent": "Permanent" }
   },
   "trackerProperties": {
@@ -93,6 +94,7 @@
     "empty": "Nog geen detecties voor deze tracker.",
     "sort": { "initiatorUrl": "Sorteren op initiator-URL", "firstSeen": "Sorteren op eerst gezien" },
     "actions": { "showMore": "Meer weergeven" },
+    "promotedNote": "Deze detecties komen van deze banner. De bron {{source}} is waargenomen op {{origin}}.",
     "summary_one": "{{count}} detectie",
     "summary_other": "{{count}} detecties"
   },

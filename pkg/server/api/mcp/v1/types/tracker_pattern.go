@@ -56,6 +56,7 @@ func NewTrackerPatternWithAttribution(
 		MaxAgeSeconds:          p.MaxAgeSeconds,
 		Description:            p.Description,
 		Source:                 source,
+		SourceCookieBannerID:   p.SourceCookieBannerID,
 		Excluded:               p.Excluded,
 		CommonTrackerPatternID: p.CommonTrackerPatternID,
 		Attribution:            mapped,

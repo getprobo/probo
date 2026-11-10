@@ -71,6 +71,7 @@
     "actions": { "include": "Include", "exclude": "Exclude", "delete": "Delete", "cancel": "Cancel", "more": "More actions", "description": "Show description" },
     "types": { "cookie": "Cookie", "cookieShort": "C", "localStorage": "localStorage", "localStorageShort": "LS", "sessionStorage": "sessionStorage", "sessionStorageShort": "SS", "indexedDb": "IndexedDB", "indexedDbShort": "IDB", "cacheStorage": "Cache storage", "cacheStorageShort": "CS" },
     "sources": { "script": "Script", "preExisting": "Pre-existing", "http": "HTTP", "extension": "Extension" },
+    "sourceVia": "via {{origin}}",
     "duration": { "session": "Session", "persistent": "Persistent" }
   },
   "trackerProperties": {
@@ -93,6 +94,7 @@
     "empty": "No detections for this tracker yet.",
     "sort": { "initiatorUrl": "Sort by initiator URL", "firstSeen": "Sort by first seen" },
     "actions": { "showMore": "Show more" },
+    "promotedNote": "These detections are from this banner. The {{source}} source was observed on {{origin}}.",
     "summary_one": "{{count}} detection",
     "summary_other": "{{count}} detections"
   },

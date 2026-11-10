@@ -20,7 +20,6 @@
 
 import { DotsThreeVerticalIcon, EyeIcon, EyeSlashIcon, InfoIcon, TrashIcon } from "@phosphor-icons/react";
 import { humanizeSeconds } from "@probo/i18n";
-import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
 import { DropdownItem } from "@probo/ui/src/v2/Dropdown/DropdownItem";
 import { DropdownPopup } from "@probo/ui/src/v2/Dropdown/DropdownPopup";
@@ -51,11 +50,12 @@ import { cookieBannerPath } from "../../../_lib/cookieBannerPaths";
 import { trackerPatternListItem } from "../../../variants";
 import { MoveToCategorySelect } from "../../_components/MoveToCategorySelect";
 import { persistentTrackerTypes } from "../../_lib/persistentTrackerTypes";
-import { cookieSourceBadges, trackerTypeBadges } from "../_lib/trackerBadges";
+import { trackerTypeBadges } from "../_lib/trackerBadges";
 
 import { DeleteTrackerPatternDialog } from "./DeleteTrackerPatternDialog";
 import { TrackerAttributionLabel } from "./TrackerAttributionLabel";
 import { TrackerObserverBadges } from "./TrackerObserverBadges";
+import { TrackerSourceBadge } from "./TrackerSourceBadge";
 import { TrackerTypeBadge } from "./TrackerTypeBadge";
 
 const trackerPatternFragment = graphql`
@@ -64,7 +64,11 @@ const trackerPatternFragment = graphql`
     trackerType
     pattern
     source
+    sourceCookieBanner {
+      id
+    }
     description
+    ...TrackerSourceBadge_trackerPattern
     maxAgeSeconds
     excluded
     cookieCategory {
@@ -208,7 +212,6 @@ export function TrackerPatternListItem({
   }
 
   const typeBadge = trackerTypeBadges[pattern.trackerType];
-  const sourceBadge = pattern.source == null ? null : cookieSourceBadges[pattern.source];
   const detailPath = `${cookieBannerPath(organizationId, cookieBannerId)}/trackers/${pattern.id}`;
   const durationSeconds = pattern.maxAgeSeconds == null || pattern.maxAgeSeconds <= 0
     ? null
@@ -283,17 +286,11 @@ export function TrackerPatternListItem({
                 )
               : <TrackerAttributionLabel attribution={pattern.attribution} />}
         </TableCell>
-        <TableCell className={optional()}>
-          {sourceBadge == null
-            ? <Text size={2} color="faint">-</Text>
-            : (
-                <Badge
-                  variant={sourceBadge.variant}
-                  color={sourceBadge.color}
-                >
-                  {t(`trackerPatternRow.sources.${sourceBadge.labelKey}`)}
-                </Badge>
-              )}
+        <TableCell
+          interactive={pattern.sourceCookieBanner != null ? true : undefined}
+          className={optional()}
+        >
+          <TrackerSourceBadge layout="stacked" trackerPatternKey={pattern} />
         </TableCell>
         <TableCell className={optional()}>
           <TrackerObserverBadges observers={pattern.observedBy} />

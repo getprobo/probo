@@ -54,6 +54,7 @@ export async function execute(
 					maxAgeSeconds
 					description
 					source
+					sourceCookieBanner { id origin }
 					excluded
 					commonTrackerPatternId
 					attribution

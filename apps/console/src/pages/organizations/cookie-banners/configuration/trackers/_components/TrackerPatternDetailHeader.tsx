@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { CaretLeftIcon, EyeIcon, EyeSlashIcon } from "@phosphor-icons/react";
-import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Link } from "@probo/ui/src/v2/Link/Link";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
@@ -36,8 +35,9 @@ import { useMutation } from "#/lib/relay/useMutation";
 
 import { cookieBannerPath } from "../../../_lib/cookieBannerPaths";
 import { trackerPatternDetailHeader } from "../../../variants";
-import { cookieSourceBadges, trackerTypeBadges } from "../_lib/trackerBadges";
+import { trackerTypeBadges } from "../_lib/trackerBadges";
 
+import { TrackerSourceBadge } from "./TrackerSourceBadge";
 import { TrackerTypeBadge } from "./TrackerTypeBadge";
 
 const trackerPatternDetailHeaderFragment = graphql`
@@ -45,7 +45,7 @@ const trackerPatternDetailHeaderFragment = graphql`
     id
     pattern
     trackerType
-    source
+    ...TrackerSourceBadge_trackerPattern
     excluded
     canUpdate: permission(action: "core:tracker-pattern:update")
   }
@@ -86,7 +86,6 @@ export function TrackerPatternDetailHeader({
   const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
   const pattern = useFragment(trackerPatternDetailHeaderFragment, trackerPatternKey);
   const { root, back, bar, titleRow, title, badges, actions } = trackerPatternDetailHeader();
-  const sourceBadge = pattern.source == null ? null : cookieSourceBadges[pattern.source];
   const [updatePattern, isUpdating] = useMutation<TrackerPatternDetailHeaderUpdateMutation>(
     updatePatternMutation,
     {
@@ -134,11 +133,11 @@ export function TrackerPatternDetailHeader({
             <Text size={2}>
               {t(`trackerPatternRow.types.${trackerTypeBadges[pattern.trackerType].labelKey}`)}
             </Text>
-            {sourceBadge != null && (
-              <Badge variant={sourceBadge.variant} color={sourceBadge.color}>
-                {t(`trackerPatternRow.sources.${sourceBadge.labelKey}`)}
-              </Badge>
-            )}
+            <TrackerSourceBadge
+              layout="inline"
+              empty="hidden"
+              trackerPatternKey={pattern}
+            />
           </div>
         </div>
         {pattern.canUpdate && (

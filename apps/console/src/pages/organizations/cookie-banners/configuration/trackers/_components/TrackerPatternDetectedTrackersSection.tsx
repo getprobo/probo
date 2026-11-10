@@ -46,8 +46,10 @@ import {
   nextDetectedTrackersOrder,
 } from "../_lib/detectedTrackersOrder";
 import { DETECTED_TRACKERS_PAGE_SIZE } from "../_lib/pageSize";
+import { cookieSourceBadges } from "../_lib/trackerBadges";
 
 import { DetectedTrackerListItem } from "./DetectedTrackerListItem";
+import { originHost } from "./TrackerSourceBadge";
 
 export const trackerPatternDetectedTrackersSectionFragment = graphql`
   fragment TrackerPatternDetectedTrackersSection_trackerPattern on TrackerPattern
@@ -59,6 +61,10 @@ export const trackerPatternDetectedTrackersSectionFragment = graphql`
     before: { type: "CursorKey", defaultValue: null }
     last: { type: "Int", defaultValue: null }
   ) {
+    source
+    sourceCookieBanner {
+      origin
+    }
     detectedCount
     detectedTrackers(
       first: $first
@@ -99,6 +105,14 @@ export function TrackerPatternDetectedTrackersSection({
   });
   const trackers = data.detectedTrackers?.edges.map(edge => edge.node) ?? [];
   const summary = t("detectedTrackersSection.summary", { count: data.detectedCount });
+  const sourceBanner = data.sourceCookieBanner;
+  const sourceBadge = data.source == null ? null : cookieSourceBadges[data.source];
+  const promotedNote = sourceBanner == null || sourceBadge == null
+    ? null
+    : t("detectedTrackersSection.promotedNote", {
+        source: t(`trackerPatternRow.sources.${sourceBadge.labelKey}`),
+        origin: originHost(sourceBanner.origin),
+      });
 
   function handleSort(field: DetectedTrackerOrderField) {
     const next = nextDetectedTrackersOrder(field, order);
@@ -123,6 +137,11 @@ export function TrackerPatternDetectedTrackersSection({
         <Text size={2} color="neutral">
           {summary}
         </Text>
+        {promotedNote != null && (
+          <Text size={2} color="neutral">
+            {promotedNote}
+          </Text>
+        )}
       </div>
 
       {trackers.length > 0

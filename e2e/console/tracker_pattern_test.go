@@ -999,6 +999,83 @@ func seedDetectedTracker(
 	})
 }
 
+func TestTrackerPattern_SourceCookieBanner(t *testing.T) {
+	t.Parallel()
+
+	const query = `
+		query TrackerPatternSourceBanner($id: ID!) {
+			node(id: $id) {
+				__typename
+				... on TrackerPattern {
+					sourceCookieBanner { id }
+				}
+			}
+		}
+	`
+
+	t.Run("null when the source was observed on this banner", func(t *testing.T) {
+		t.Parallel()
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+
+		bannerID := factory.CreateCookieBanner(owner)
+		categoryID := factory.CreateCookieCategory(owner, bannerID)
+		patternID := factory.CreateTrackerPattern(owner, categoryID)
+
+		var result struct {
+			Node struct {
+				SourceCookieBanner *struct {
+					ID string `json:"id"`
+				} `json:"sourceCookieBanner"`
+			} `json:"node"`
+		}
+
+		err := owner.Execute(query, map[string]any{"id": patternID}, &result)
+		require.NoError(t, err)
+		assert.Nil(t, result.Node.SourceCookieBanner)
+	})
+
+	t.Run("the sibling banner that promoted the source", func(t *testing.T) {
+		t.Parallel()
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+
+		bannerID := factory.CreateCookieBanner(owner)
+		siblingID := factory.CreateCookieBanner(owner, factory.Attrs{
+			"origin": "https://sibling.example.com",
+		})
+		categoryID := factory.CreateCookieCategory(owner, bannerID)
+		patternID := factory.CreateTrackerPattern(owner, categoryID)
+		setSourceCookieBanner(t, patternID, siblingID)
+
+		var result struct {
+			Node struct {
+				SourceCookieBanner *struct {
+					ID string `json:"id"`
+				} `json:"sourceCookieBanner"`
+			} `json:"node"`
+		}
+
+		err := owner.Execute(query, map[string]any{"id": patternID}, &result)
+		require.NoError(t, err)
+		require.NotNil(t, result.Node.SourceCookieBanner)
+		assert.Equal(t, siblingID, result.Node.SourceCookieBanner.ID)
+	})
+}
+
+func setSourceCookieBanner(t *testing.T, patternID string, bannerID string) {
+	t.Helper()
+
+	ctx := context.Background()
+	conn := dialTestPg(t, ctx)
+	t.Cleanup(func() { _ = conn.Close(ctx) })
+
+	_, err := conn.Exec(ctx, `
+		UPDATE tracker_patterns
+		SET source_cookie_banner_id = $1
+		WHERE id = $2
+	`, bannerID, patternID)
+	require.NoError(t, err)
+}
+
 func seedCommonTrackerPattern(t *testing.T) gid.GID {
 	t.Helper()
 

@@ -15778,6 +15778,11 @@ components:
           type: string
           enum: [SCRIPT, PRE_EXISTING, HTTP, EXTENSION]
           description: How the pattern was discovered
+        source_cookie_banner_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Sibling banner whose detection promoted source. Null when the source was observed on this pattern's own banner.
         excluded:
           type: boolean
           description: Whether this pattern is excluded from the consent banner
