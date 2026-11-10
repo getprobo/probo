@@ -254,6 +254,7 @@ export default defineConfig(({ mode, command }) => {
     // this nonce; production Go CSP does not use nonces.
     html: command === "serve" ? { cspNonce: viteDevCspNonce } : undefined,
     build: {
+      sourcemap: true,
       assetsDir: "assets",
       rolldownOptions: {
         output: {
