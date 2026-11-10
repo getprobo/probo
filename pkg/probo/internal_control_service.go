@@ -560,6 +560,7 @@ func (s InternalControlService) Import(
 					taskID := gid.New(organization.ID.TenantID(), coredata.TaskEntityType)
 
 					taskDescription := req.InternalControls[i].Tasks[j].Description
+
 					taskContent, err := richtext.FromPlainText(taskDescription)
 					if err != nil {
 						return fmt.Errorf("cannot encode task description: %w", err)

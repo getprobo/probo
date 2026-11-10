@@ -82,10 +82,12 @@ func newListCmd(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			variables := map[string]any{"id": args[0]}
+
 			if flagResolved != "" {
 				if err := cmdutil.ValidateEnum("resolved", flagResolved, []string{"true", "false"}); err != nil {
 					return err
 				}
+
 				variables["filter"] = map[string]any{"resolved": flagResolved == "true"}
 			}
 
@@ -297,6 +299,7 @@ func newCreateCmd(f *cmdutil.Factory) *cobra.Command {
 			if flagContent == "" {
 				return fmt.Errorf("content is required")
 			}
+
 			if flagQuote == "" && flagSuggestion == "" {
 				return fmt.Errorf("quote or suggestion is required")
 			}
@@ -314,6 +317,7 @@ func newCreateCmd(f *cmdutil.Factory) *cobra.Command {
 				input["quote"] = flagQuote
 				input["quoteOccurrence"] = flagOccurrence
 			}
+
 			if flagSuggestion != "" {
 				input["suggestionId"] = flagSuggestion
 			}

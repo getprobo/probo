@@ -62,7 +62,9 @@ func TestFromPlainText(t *testing.T) {
 
 func mustPlain(t *testing.T, text string) string {
 	t.Helper()
+
 	got, err := richtext.FromPlainText(text)
 	require.NoError(t, err)
+
 	return got
 }

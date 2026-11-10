@@ -11951,6 +11951,7 @@ func (r *Resolver) DeleteDocumentCommentTool(ctx context.Context, req *mcp.CallT
 	}
 
 	var deletedThread *string
+
 	if deletedThreadID != nil {
 		value := deletedThreadID.String()
 		deletedThread = &value

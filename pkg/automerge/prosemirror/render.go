@@ -121,6 +121,7 @@ func collectBlocks(spans []automerge.Span) ([]block, error) {
 				}
 
 				inline := node{Type: string(codec.Node())}
+
 				attrs, _ := span.Block["attrs"].(map[string]any)
 				if filtered := codec.ToAttrs(attrs); len(filtered) > 0 {
 					inline.Attrs = filtered

@@ -307,6 +307,7 @@ func (h *Handler) authorize(
 	}
 
 	params.Action = probo.ActionDocumentComment
+
 	authScope, err = h.IAM.Authorizer.Authorize(ctx, params)
 	if err != nil {
 		return nil, nil, false, fmt.Errorf("cannot authorize document collaboration: %w", err)
@@ -894,6 +895,7 @@ func applyRepoFrame(
 	}
 
 	openSuggestionIDs := map[string]bool{}
+
 	newIDs := collaboration.NewSuggestionIDs(beforeSpans, afterSpans)
 	if len(newIDs) > 0 && config.OpenSuggestions != nil {
 		openSuggestionIDs, err = config.OpenSuggestions(ctx, newIDs)

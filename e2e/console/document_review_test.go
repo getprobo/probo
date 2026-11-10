@@ -108,6 +108,7 @@ func TestDocumentReview_PublishBlockedByOpenSuggestion(t *testing.T) {
 				} `json:"content"`
 			} `json:"node"`
 		}
+
 		err = owner.Execute(`
 			query($id: ID!) {
 				node(id: $id) {
@@ -144,6 +145,7 @@ func TestDocumentReview_RBAC(t *testing.T) {
 			} `json:"documentCommentThreadEdge"`
 		} `json:"createDocumentCommentThread"`
 	}
+
 	err := viewer.Execute(`
 		mutation($input: CreateDocumentCommentThreadInput!) {
 			createDocumentCommentThread(input: $input) {
@@ -169,6 +171,7 @@ func TestDocumentReview_RBAC(t *testing.T) {
 			} `json:"documentSuggestionEdge"`
 		} `json:"startDocumentSuggestion"`
 	}
+
 	err = viewer.Execute(`
 		mutation($input: StartDocumentSuggestionInput!) {
 			startDocumentSuggestion(input: $input) {
@@ -193,6 +196,7 @@ func TestDocumentReview_RBAC(t *testing.T) {
 			} `json:"documentCommentThreadEdge"`
 		} `json:"createDocumentCommentThread"`
 	}
+
 	err = viewer.Execute(`
 		mutation($input: CreateDocumentCommentThreadInput!) {
 			createDocumentCommentThread(input: $input) {
@@ -240,6 +244,7 @@ func TestDocumentReview_RBAC(t *testing.T) {
 			} `json:"documentSuggestion"`
 		} `json:"acceptDocumentSuggestion"`
 	}
+
 	err = admin.Execute(`
 		mutation($input: AcceptDocumentSuggestionInput!) {
 			acceptDocumentSuggestion(input: $input) {
@@ -257,6 +262,7 @@ func TestDocumentReview_RBAC(t *testing.T) {
 			ResolvedAt *string `json:"resolvedAt"`
 		} `json:"node"`
 	}
+
 	err = admin.Execute(`
 		query($id: ID!) {
 			node(id: $id) {
@@ -274,6 +280,7 @@ func TestDocumentReview_RBAC(t *testing.T) {
 			} `json:"content"`
 		} `json:"node"`
 	}
+
 	err = owner.Execute(`
 		query($id: ID!) {
 			node(id: $id) {
@@ -295,6 +302,7 @@ func paintSuggestionInsert(t *testing.T, documentID string, suggestionID string,
 	t.Cleanup(func() { _ = conn.Close(ctx) })
 
 	var snapshot []byte
+
 	err := conn.QueryRow(
 		ctx,
 		`SELECT snapshot FROM collaboration_documents WHERE document_id = $1 AND seeded = true`,
@@ -307,6 +315,7 @@ func paintSuggestionInsert(t *testing.T, documentID string, suggestionID string,
 
 	document, err := automerge.Load(snapshot, actorID)
 	require.NoError(t, err)
+
 	defer func() { _ = document.Close() }()
 
 	spans, err := collaboration.BodySpans(document)

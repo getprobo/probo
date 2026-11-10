@@ -36,7 +36,9 @@ func renderTableCellHTML(w *Writer, n prosemirror.Node, tag string) error {
 		return err
 	}
 
-	writeTableCellClose(w, tag)
+	if err := writeTableCellClose(w, tag); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -47,7 +49,10 @@ func writeTableCellOpen(w *Writer, n prosemirror.Node, tag string) error {
 		return fmt.Errorf("cannot render %s node: %w", tag, err)
 	}
 
-	w.WriteByte('<')
+	if err := w.WriteByte('<'); err != nil {
+		return fmt.Errorf("cannot write %s tag: %w", tag, err)
+	}
+
 	w.WriteString(tag)
 
 	if attrs.Colspan > 1 {
@@ -67,13 +72,20 @@ func writeTableCellOpen(w *Writer, n prosemirror.Node, tag string) error {
 		w.WriteAttr("style", "min-width: "+strconv.Itoa(total)+"px")
 	}
 
-	w.WriteByte('>')
+	if err := w.WriteByte('>'); err != nil {
+		return fmt.Errorf("cannot finish %s tag: %w", tag, err)
+	}
 
 	return nil
 }
 
-func writeTableCellClose(w *Writer, tag string) {
+func writeTableCellClose(w *Writer, tag string) error {
 	w.WriteString("</")
 	w.WriteString(tag)
-	w.WriteByte('>')
+
+	if err := w.WriteByte('>'); err != nil {
+		return fmt.Errorf("cannot write %s close tag: %w", tag, err)
+	}
+
+	return nil
 }

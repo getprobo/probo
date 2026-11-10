@@ -20,7 +20,11 @@
 
 package html
 
-import "go.probo.inc/probo/pkg/prosemirror"
+import (
+	"fmt"
+
+	"go.probo.inc/probo/pkg/prosemirror"
+)
 
 type taskListRenderer struct{}
 
@@ -31,7 +35,10 @@ func (taskListRenderer) Node() prosemirror.NodeType { return prosemirror.NodeTas
 func (taskListRenderer) Render(w *Writer, n prosemirror.Node) error {
 	w.WriteString("<ul")
 	w.WriteAttr("data-type", "taskList")
-	w.WriteByte('>')
+
+	if err := w.WriteByte('>'); err != nil {
+		return fmt.Errorf("cannot write task list node: %w", err)
+	}
 
 	if err := w.RenderChildren(n.Content); err != nil {
 		return err

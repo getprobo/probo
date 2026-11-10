@@ -108,6 +108,7 @@ func (req *CreateDocumentCommentThreadRequest) Validate() error {
 	v.Check(req.AnchorEnd, "anchor_end", validator.MaxLen(documentAnchorMaxBytes*2))
 	v.Check(req.SuggestionID, "suggestion_id", validator.GID(coredata.DocumentSuggestionEntityType))
 	v.Check(req.QuoteOccurrence, "quote_occurrence", validator.Min(0))
+
 	return v.Error()
 }
 
@@ -181,8 +182,11 @@ func (s *DocumentService) CountCommentThreads(
 	var count int
 
 	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		var threads coredata.DocumentCommentThreads
-		var err error
+		var (
+			threads coredata.DocumentCommentThreads
+			err     error
+		)
+
 		count, err = threads.CountByDocumentID(ctx, conn, scope, documentID, filter)
 		if err != nil {
 			return fmt.Errorf("cannot count document comment threads: %w", err)
@@ -269,8 +273,11 @@ func (s *DocumentService) CountComments(
 	var count int
 
 	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		var comments coredata.DocumentComments
-		var err error
+		var (
+			comments coredata.DocumentComments
+			err      error
+		)
+
 		count, err = comments.CountByThreadID(ctx, conn, scope, threadID)
 		if err != nil {
 			return fmt.Errorf("cannot count document comments: %w", err)
@@ -368,6 +375,7 @@ func (s *DocumentService) CreateCommentThread(
 
 		thread.SuggestionID = &suggestion.ID
 		thread.AnchorStart = start
+
 		thread.AnchorEnd = end
 		if quote != "" {
 			thread.AnchorQuote = quote
@@ -512,6 +520,7 @@ func (s *DocumentService) UpdateComment(
 	}
 
 	comment := &coredata.DocumentComment{}
+
 	var documentID gid.GID
 
 	err = s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
@@ -596,6 +605,7 @@ func (s *DocumentService) DeleteComment(
 		}
 
 		var comments coredata.DocumentComments
+
 		remaining, err := comments.CountByThreadID(ctx, tx, scope, thread.ID)
 		if err != nil {
 			return fmt.Errorf("cannot count document comments: %w", err)
@@ -630,6 +640,7 @@ func (s *DocumentService) SetCommentThreadResolved(
 	v := validator.New()
 	v.Check(req.ThreadID, "thread_id", validator.Required(), validator.GID(coredata.DocumentCommentThreadEntityType))
 	v.Check(req.IdentityID, "identity_id", validator.Required(), validator.GID(coredata.IdentityEntityType))
+
 	if err := v.Error(); err != nil {
 		return nil, err
 	}
@@ -700,6 +711,7 @@ func (s *DocumentService) LoadOpenSuggestionIDs(
 	}
 
 	var suggestions coredata.DocumentSuggestions
+
 	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		if err := suggestions.LoadOpenByIDs(ctx, conn, scope, documentID, ids); err != nil {
 			return fmt.Errorf("cannot load open document suggestions: %w", err)
@@ -751,8 +763,11 @@ func (s *DocumentService) CountSuggestions(
 	var count int
 
 	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		var suggestions coredata.DocumentSuggestions
-		var err error
+		var (
+			suggestions coredata.DocumentSuggestions
+			err         error
+		)
+
 		count, err = suggestions.CountByDocumentID(ctx, conn, scope, documentID, filter)
 		if err != nil {
 			return fmt.Errorf("cannot count document suggestions: %w", err)
@@ -797,6 +812,7 @@ func (s *DocumentService) StartSuggestion(
 	v := validator.New()
 	v.Check(documentID, "document_id", validator.Required(), validator.GID(coredata.DocumentEntityType))
 	v.Check(identityID, "identity_id", validator.Required(), validator.GID(coredata.IdentityEntityType))
+
 	if err := v.Error(); err != nil {
 		return nil, err
 	}
@@ -847,6 +863,7 @@ func (s *DocumentService) DecideSuggestion(
 	v := validator.New()
 	v.Check(req.SuggestionID, "suggestion_id", validator.Required(), validator.GID(coredata.DocumentSuggestionEntityType))
 	v.Check(req.IdentityID, "identity_id", validator.Required(), validator.GID(coredata.IdentityEntityType))
+
 	if err := v.Error(); err != nil {
 		return nil, err
 	}
@@ -870,10 +887,12 @@ func (s *DocumentService) DecideSuggestion(
 				!errors.Is(err, collaboration.ErrSuggestionNotInDocument) {
 				return err
 			}
+
 			return nil
 		}
 
 		now := time.Now()
+
 		if req.Accept {
 			suggestion.Status = coredata.DocumentSuggestionStatusAccepted
 		} else {
@@ -882,18 +901,22 @@ func (s *DocumentService) DecideSuggestion(
 
 		suggestion.ResolvedAt = &now
 		suggestion.ResolvedByProfileID = &profile.ID
+
 		suggestion.UpdatedAt = now
 		if err := suggestion.UpdateIfOpen(ctx, tx, scope); err != nil {
 			if errors.Is(err, coredata.ErrResourceNotFound) {
 				if err := suggestion.LoadByID(ctx, tx, scope, req.SuggestionID); err != nil {
 					return fmt.Errorf("cannot reload document suggestion: %w", err)
 				}
+
 				return nil
 			}
+
 			return fmt.Errorf("cannot update document suggestion: %w", err)
 		}
 
 		thread := &coredata.DocumentCommentThread{}
+
 		err = thread.LoadOpenBySuggestionID(ctx, tx, scope, suggestion.ID)
 		if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 			return fmt.Errorf("cannot load suggestion comment thread: %w", err)
@@ -902,6 +925,7 @@ func (s *DocumentService) DecideSuggestion(
 		if err == nil {
 			thread.ResolvedAt = &now
 			thread.ResolvedByProfileID = &profile.ID
+
 			thread.UpdatedAt = now
 			if err := thread.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot resolve suggestion comment thread: %w", err)

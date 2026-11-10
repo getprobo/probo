@@ -122,6 +122,7 @@ func (r *mutationResolver) setDocumentCommentThread(
 	}
 
 	identity := authn.IdentityFromContext(ctx)
+
 	thread, err := r.probo.Documents.SetCommentThreadResolved(
 		ctx,
 		scope,

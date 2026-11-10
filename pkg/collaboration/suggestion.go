@@ -233,6 +233,7 @@ func QuoteCursors(
 
 	startUTF16 := utf16Len(visible[:index])
 	endUTF16 := startUTF16 + utf16Len(quote)
+
 	absoluteStart, ok := absoluteUTF16(offsets, startUTF16)
 	if !ok {
 		return nil, nil, ErrQuoteNotFound
@@ -288,10 +289,12 @@ func SuggestionQuote(spans []automerge.Span, suggestionID string) string {
 
 		if pendingBreak {
 			quote.WriteByte('\n')
+
 			pendingBreak = false
 		}
 
 		quote.WriteString(span.Text)
+
 		wrote = true
 	}
 
@@ -364,6 +367,7 @@ func (s *Service) EnsureNoOpenSuggestions(
 	openStatus := coredata.DocumentSuggestionStatusOpen
 
 	var suggestions coredata.DocumentSuggestions
+
 	openCount, err := suggestions.CountByDocumentID(
 		ctx,
 		tx,
@@ -442,6 +446,7 @@ func decideSuggestionSpans(
 			id, kind := suggestionSplit(span)
 			if id == suggestionID {
 				changed = true
+
 				if !accept && kind == suggestionSplitStructural {
 					continue
 				}
@@ -453,6 +458,7 @@ func decideSuggestionSpans(
 			}
 
 			next = append(next, span)
+
 			continue
 		}
 
@@ -516,6 +522,7 @@ func dropEmptyInsertionBlocks(spans []automerge.Span, suggestionID string) []aut
 			}
 
 			next = append(next, clearSuggestionSplit(span))
+
 			continue
 		}
 
@@ -583,6 +590,7 @@ func suggestionSplit(span automerge.Span) (string, string) {
 
 func clearSuggestionSplit(span automerge.Span) automerge.Span {
 	block := copyMap(span.Block)
+
 	attrs, ok := block["attrs"].(map[string]any)
 	if !ok {
 		span.Block = block
@@ -592,6 +600,7 @@ func clearSuggestionSplit(span automerge.Span) automerge.Span {
 	nextAttrs := copyMap(attrs)
 	delete(nextAttrs, suggestionSplitAttr)
 	delete(nextAttrs, suggestionSplitKindAttr)
+
 	if len(nextAttrs) == 0 {
 		delete(block, "attrs")
 	} else {
@@ -793,6 +802,7 @@ func spansEqual(left []automerge.Span, right []automerge.Span) bool {
 
 func jsonEqual(left any, right any) bool {
 	leftRaw, leftErr := json.Marshal(left)
+
 	rightRaw, rightErr := json.Marshal(right)
 	if leftErr != nil || rightErr != nil {
 		return false
@@ -904,8 +914,12 @@ func visibleText(spans []automerge.Span) (string, []visibleOffset) {
 	var visible strings.Builder
 
 	offsets := make([]visibleOffset, 0, len(spans)+1)
-	var visibleUTF16 uint32
-	var absolute uint32
+
+	var (
+		visibleUTF16 uint32
+		absolute     uint32
+	)
+
 	wrote := false
 	pendingBreak := false
 
@@ -926,12 +940,14 @@ func visibleText(spans []automerge.Span) (string, []visibleOffset) {
 		if span.Type == automerge.SpanTypeText && span.Text != "" {
 			if pendingBreak {
 				visible.WriteByte('\n')
+
 				visibleUTF16++
 				offsets = append(offsets, visibleOffset{visible: visibleUTF16, absolute: absolute})
 				pendingBreak = false
 			}
 
 			visible.WriteString(span.Text)
+
 			visibleUTF16 += width
 			absolute += width
 			offsets = append(offsets, visibleOffset{visible: visibleUTF16, absolute: absolute})
@@ -953,6 +969,7 @@ func absoluteUTF16(offsets []visibleOffset, visible uint32) (uint32, bool) {
 
 	for index := 1; index < len(offsets); index++ {
 		previous := offsets[index-1]
+
 		current := offsets[index]
 		if visible < previous.visible || visible > current.visible {
 			continue
@@ -1025,6 +1042,7 @@ func (s *Service) NotifyReview(
 			log.String("document_id", documentID.String()),
 			log.Error(err),
 		)
+
 		return err
 	}
 

@@ -56,7 +56,10 @@ func (imageMarkdownRenderer) Render(w *markdown.Writer, n prosemirror.Node) erro
 		}
 
 		w.WriteAttr("width", fmt.Sprintf("%d%%", *attrs.Width))
-		w.WriteByte('>')
+
+		if err := w.WriteByte('>'); err != nil {
+			return fmt.Errorf("cannot write image tag: %w", err)
+		}
 
 		return nil
 	}
@@ -73,10 +76,15 @@ func (imageMarkdownRenderer) Render(w *markdown.Writer, n prosemirror.Node) erro
 	if attrs.Title != nil {
 		w.WriteString(` "`)
 		w.WriteString(strings.ReplaceAll(*attrs.Title, `"`, `\"`))
-		w.WriteByte('"')
+
+		if err := w.WriteByte('"'); err != nil {
+			return fmt.Errorf("cannot write image title: %w", err)
+		}
 	}
 
-	w.WriteByte(')')
+	if err := w.WriteByte(')'); err != nil {
+		return fmt.Errorf("cannot write image link: %w", err)
+	}
 
 	return nil
 }
@@ -95,11 +103,18 @@ func (fileMarkdownRenderer) Render(w *markdown.Writer, n prosemirror.Node) error
 	}
 
 	w.EnsurePrefix()
-	w.WriteByte('[')
+
+	if err := w.WriteByte('['); err != nil {
+		return fmt.Errorf("cannot write file link start: %w", err)
+	}
+
 	w.WriteLinkText(attrs.FileName)
 	w.WriteString("](")
 	w.WriteString(Path(attrs.FileID))
-	w.WriteByte(')')
+
+	if err := w.WriteByte(')'); err != nil {
+		return fmt.Errorf("cannot write file link end: %w", err)
+	}
 
 	return nil
 }

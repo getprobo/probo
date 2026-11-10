@@ -56,7 +56,9 @@ func (codeBlockRenderer) Render(w *Writer, n prosemirror.Node) error {
 		w.WriteAttr("class", "language-"+*attrs.Language)
 	}
 
-	w.WriteByte('>')
+	if err := w.WriteByte('>'); err != nil {
+		return fmt.Errorf("cannot write code block node: %w", err)
+	}
 
 	if err := w.RenderChildren(n.Content); err != nil {
 		return err

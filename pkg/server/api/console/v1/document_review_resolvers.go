@@ -111,6 +111,7 @@ func (r *documentCommentThreadResolver) Comments(ctx context.Context, obj *types
 		}
 
 		cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
 		comments, err := r.probo.Documents.ListComments(ctx, scope, obj.ID, cursor)
 		if err != nil {
 			return nil, r.documentReviewError(ctx, "cannot list document comments", err)
@@ -134,9 +135,11 @@ func (r *documentCommentThreadResolver) Comments(ctx context.Context, obj *types
 	if first != nil && *first > 0 {
 		limit = *first
 	}
+
 	if limit > page.MaxCursorSize {
 		limit = page.MaxCursorSize
 	}
+
 	if len(loaded) > limit+1 {
 		loaded = loaded[:limit+1]
 	}
@@ -213,6 +216,7 @@ func (r *mutationResolver) CreateDocumentCommentThread(ctx context.Context, inpu
 	}
 
 	identity := authn.IdentityFromContext(ctx)
+
 	occurrence := 0
 	if input.QuoteOccurrence != nil {
 		occurrence = *input.QuoteOccurrence

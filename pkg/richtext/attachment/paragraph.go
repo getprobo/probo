@@ -59,6 +59,7 @@ func AttachmentFromParagraph(n prosemirror.Node) (prosemirror.Node, bool) {
 		}
 
 		fileID = id
+
 		name.WriteString(child.Text)
 	}
 

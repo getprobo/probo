@@ -43,7 +43,11 @@ func (htmlRenderer) Render(w *html.Writer, n prosemirror.Node) error {
 	w.WriteString(`<span class="mention" data-type="mention"`)
 	w.WriteAttr("data-id", attrs.ID)
 	w.WriteAttr("data-label", attrs.Label)
-	w.WriteByte('>')
+
+	if err := w.WriteByte('>'); err != nil {
+		return fmt.Errorf("cannot write mention node: %w", err)
+	}
+
 	w.WriteEscaped("@" + attrs.Label)
 	w.WriteString("</span>")
 

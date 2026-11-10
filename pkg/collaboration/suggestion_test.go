@@ -342,6 +342,7 @@ func textBetween(spans []automerge.Span, start uint32, end uint32) string {
 	selected := make([]uint16, 0, end-start)
 
 	var absolute uint32
+
 	for _, span := range spans {
 		if span.Type != automerge.SpanTypeText {
 			continue
@@ -380,6 +381,7 @@ func TestMaterialize_DropsInsertionsAndOmitsSuggestionMarks(t *testing.T) {
 	require.NoError(t, err)
 
 	var block automerge.Span
+
 	for _, span := range spans {
 		if span.Type == automerge.SpanTypeBlock {
 			block = span

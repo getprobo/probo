@@ -49,7 +49,9 @@ func (orderedListRenderer) Render(w *Writer, n prosemirror.Node) error {
 		w.WriteAttr("type", *attrs.Type)
 	}
 
-	w.WriteByte('>')
+	if err := w.WriteByte('>'); err != nil {
+		return fmt.Errorf("cannot write ordered list node: %w", err)
+	}
 
 	if err := w.RenderChildren(n.Content); err != nil {
 		return err

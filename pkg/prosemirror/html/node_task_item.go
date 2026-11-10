@@ -47,7 +47,10 @@ func (taskItemRenderer) Render(w *Writer, n prosemirror.Node) error {
 		w.WriteAttr("data-checked", "false")
 	}
 
-	w.WriteByte('>')
+	if err := w.WriteByte('>'); err != nil {
+		return fmt.Errorf("cannot write task item node: %w", err)
+	}
+
 	w.WriteString("<input")
 
 	if attrs.Checked {
@@ -56,7 +59,10 @@ func (taskItemRenderer) Render(w *Writer, n prosemirror.Node) error {
 
 	w.WriteAttr("disabled", "disabled")
 	w.WriteAttr("type", "checkbox")
-	w.WriteByte('>')
+
+	if err := w.WriteByte('>'); err != nil {
+		return fmt.Errorf("cannot write task item checkbox: %w", err)
+	}
 
 	if err := w.RenderChildren(n.Content); err != nil {
 		return err

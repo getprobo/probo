@@ -55,7 +55,9 @@ func (imageHTMLRenderer) Render(w *html.Writer, n prosemirror.Node) error {
 		w.WriteAttr("width", fmt.Sprintf("%d%%", *attrs.Width))
 	}
 
-	w.WriteByte('>')
+	if err := w.WriteByte('>'); err != nil {
+		return fmt.Errorf("cannot write image node: %w", err)
+	}
 
 	return nil
 }
@@ -76,7 +78,11 @@ func (fileHTMLRenderer) Render(w *html.Writer, n prosemirror.Node) error {
 	w.WriteString("<a")
 	w.WriteAttr("href", Path(attrs.FileID))
 	w.WriteAttr("class", "document-file")
-	w.WriteByte('>')
+
+	if err := w.WriteByte('>'); err != nil {
+		return fmt.Errorf("cannot write file node: %w", err)
+	}
+
 	w.WriteEscaped(attrs.FileName)
 	w.WriteString("</a>")
 

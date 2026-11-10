@@ -213,12 +213,14 @@ func embedImageDataURLs(n *prosemirror.Node, dataURLByFileID map[string]string) 
 		}
 
 		id := strings.TrimSpace(*attrs.FileID)
+
 		dataURL, ok := dataURLByFileID[id]
 		if !ok {
 			return true
 		}
 
 		attrs.FileID = nil
+
 		attrs.Src = dataURL
 		if raw, marshalErr := json.Marshal(attrs); marshalErr == nil {
 			node.Attrs = raw

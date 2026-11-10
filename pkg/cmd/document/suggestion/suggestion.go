@@ -78,10 +78,12 @@ func newListCmd(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			variables := map[string]any{"id": args[0]}
+
 			if flagStatus != "" {
 				if err := cmdutil.ValidateEnum("status", flagStatus, []string{"OPEN", "ACCEPTED", "REJECTED"}); err != nil {
 					return err
 				}
+
 				variables["filter"] = map[string]any{"status": flagStatus}
 			}
 

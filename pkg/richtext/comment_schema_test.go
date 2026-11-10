@@ -64,6 +64,7 @@ func TestCommentSchemaParity(t *testing.T) {
 	for _, nodeType := range DocumentSchema.NodeTypes() {
 		docNodes[nodeType] = struct{}{}
 	}
+
 	for _, nodeType := range CommentSchema.NodeTypes() {
 		_, ok := docNodes[nodeType]
 		assert.Truef(t, ok, "comment node %q missing from DocumentSchema", nodeType)

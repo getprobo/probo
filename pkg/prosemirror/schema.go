@@ -284,6 +284,7 @@ func compileContent(
 	}
 
 	expected := ""
+
 	switch {
 	case len(rule.Types) > 0:
 		expected = string(rule.Types[0])

@@ -172,6 +172,7 @@ func TestToSpans_MentionRoundTrip(t *testing.T) {
 	require.NoError(t, err)
 
 	var mentionSpans int
+
 	for _, span := range spans {
 		if span.Block == nil {
 			continue
@@ -183,12 +184,14 @@ func TestToSpans_MentionRoundTrip(t *testing.T) {
 		}
 
 		mentionSpans++
+
 		assert.Equal(t, true, span.Block["isEmbed"])
 		attrs, ok := span.Block["attrs"].(map[string]any)
 		require.True(t, ok)
 		assert.Contains(t, attrs, "id")
 		assert.Contains(t, attrs, "label")
 	}
+
 	assert.Equal(t, 3, mentionSpans)
 
 	actorID, err := automerge.NewActorID()

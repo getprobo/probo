@@ -221,10 +221,12 @@ func TestClientConn_AcceptsAutomergeURLAlias(t *testing.T) {
 
 	client, err := automerge.New(actor(2))
 	require.NoError(t, err)
+
 	defer func() { _ = client.Close() }()
 
 	sync, err := client.NewSyncState()
 	require.NoError(t, err)
+
 	defer func() { _ = sync.Close() }()
 
 	conn, err := collaboration.NewClientConn(

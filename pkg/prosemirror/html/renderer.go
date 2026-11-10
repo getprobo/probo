@@ -79,6 +79,7 @@ func NewRenderer(
 	}
 
 	maxIndex := -1
+
 	for _, t := range s.NodeTypes() {
 		idx, ok := s.NodeIndex(t)
 		if !ok {
@@ -95,6 +96,7 @@ func NewRenderer(
 	}
 
 	byIndex := make([]NodeRenderer, maxIndex+1)
+
 	for _, t := range s.NodeTypes() {
 		idx, ok := s.NodeIndex(t)
 		if !ok {
@@ -121,6 +123,7 @@ func NewRenderer(
 // Render renders n to an HTML string.
 func (r *Renderer) Render(n prosemirror.Node) (string, error) {
 	var buf bytes.Buffer
+
 	w := &Writer{buf: &buf, renderer: r}
 	if err := r.render(w, n); err != nil {
 		return "", err

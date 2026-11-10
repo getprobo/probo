@@ -68,6 +68,7 @@ func TestSchemaMappingLedger(t *testing.T) {
 	ledger := loadSchemaMappingLedger(t)
 
 	blockCodecs := make(map[string]nodeCodec)
+
 	for _, codec := range nodeCodecs {
 		if codec.Block() != "" {
 			blockCodecs[codec.Block()] = codec

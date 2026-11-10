@@ -47,7 +47,10 @@ func (headingRenderer) Render(w *Writer, n prosemirror.Node) error {
 
 	w.WriteString("<h")
 	w.WriteString(level)
-	w.WriteByte('>')
+
+	if err := w.WriteByte('>'); err != nil {
+		return fmt.Errorf("cannot write heading node: %w", err)
+	}
 
 	if err := w.RenderChildren(n.Content); err != nil {
 		return err
@@ -55,7 +58,10 @@ func (headingRenderer) Render(w *Writer, n prosemirror.Node) error {
 
 	w.WriteString("</h")
 	w.WriteString(level)
-	w.WriteByte('>')
+
+	if err := w.WriteByte('>'); err != nil {
+		return fmt.Errorf("cannot close heading node: %w", err)
+	}
 
 	return nil
 }

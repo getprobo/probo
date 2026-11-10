@@ -49,6 +49,7 @@ func (linkRenderer) Close(w *Writer, m prosemirror.Mark) error {
 	attrs, ok := w.popLinkAttrs()
 	if !ok {
 		var err error
+
 		attrs, err = m.LinkAttrs()
 		if err != nil {
 			return fmt.Errorf("cannot render link mark: %w", err)

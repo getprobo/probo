@@ -58,7 +58,9 @@ func (linkRenderer) Open(w *Writer, m prosemirror.Mark) error {
 		w.WriteAttr("title", *attrs.Title)
 	}
 
-	w.WriteByte('>')
+	if err := w.WriteByte('>'); err != nil {
+		return fmt.Errorf("cannot write link mark: %w", err)
+	}
 
 	return nil
 }

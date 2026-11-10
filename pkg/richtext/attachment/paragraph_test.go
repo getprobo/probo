@@ -58,6 +58,7 @@ func TestAttachmentFromParagraph_IgnoresSurroundingSpace(t *testing.T) {
 
 	file, ok := attachment.AttachmentFromParagraph(paragraph)
 	require.True(t, ok)
+
 	attrs, err := file.FileAttrs()
 	require.NoError(t, err)
 	assert.Equal(t, fileID, attrs.FileID)

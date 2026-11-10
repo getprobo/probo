@@ -91,6 +91,7 @@ func labelRunes(raw []byte) (int, bool) {
 		}
 
 		rest = rest[i+len(labelKey):]
+
 		rest = bytes.TrimLeft(rest, " \t\r\n")
 		if len(rest) == 0 || rest[0] != ':' {
 			continue
@@ -103,6 +104,7 @@ func labelRunes(raw []byte) (int, bool) {
 
 		rest = rest[1:]
 		n := 0
+
 		for len(rest) > 0 {
 			if rest[0] == '\\' {
 				return 0, false

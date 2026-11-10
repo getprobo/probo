@@ -41,7 +41,11 @@ func (markdownRenderer) Render(w *markdown.Writer, n prosemirror.Node) error {
 	}
 
 	w.EnsurePrefix()
-	w.WriteByte('@')
+
+	if err := w.WriteByte('@'); err != nil {
+		return fmt.Errorf("cannot write mention node: %w", err)
+	}
+
 	w.WriteEscaped(attrs.Label)
 
 	return nil
