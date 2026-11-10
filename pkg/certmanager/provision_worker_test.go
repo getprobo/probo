@@ -24,6 +24,7 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -188,4 +189,21 @@ func TestDecideProvisioningOutcome_RateLimitWithoutOrderStaysPending(t *testing.
 	require.Equal(t, coredata.CertificateStatusPending, outcome.status)
 	assert.Equal(t, 1, outcome.retryCount)
 	assert.False(t, outcome.clearACMEState)
+}
+
+func TestNextPollAttemptAt_WaitsOutIntervalNotLease(t *testing.T) {
+	t.Parallel()
+
+	now := time.Date(2026, 11, 10, 12, 0, 0, 0, time.UTC)
+	attemptAt := nextPollAttemptAt(now)
+
+	assert.False(t, pollAttemptEligible(attemptAt, now))
+	assert.False(t, pollAttemptEligible(attemptAt, now.Add(provisioningPollInterval)))
+	assert.True(t, pollAttemptEligible(attemptAt, now.Add(provisioningPollInterval+time.Millisecond)))
+}
+
+// pollAttemptEligible mirrors the open-order predicate in
+// LoadNextForPollOrderForUpdateSkipLocked, which uses a strict less-than.
+func pollAttemptEligible(attemptAt, now time.Time) bool {
+	return attemptAt.Before(now.Add(-provisioningPollLease))
 }
