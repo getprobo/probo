@@ -24,9 +24,21 @@ export const bundledConfig = {
   gcmEnabled: true,
 } as const;
 
-export const hasBundledConfig = Boolean(
-  bundledConfig.bannerId && bundledConfig.baseUrl,
-);
+// An app-specific id wins. The shared id remains the fallback so a
+// single-banner playground still compiles the hosted app.
+export function resolveBannerId(specific: string | undefined): string {
+  const trimmed = specific?.trim() ?? "";
+  if (trimmed !== "") {
+    return trimmed;
+  }
+  return bundledConfig.bannerId.trim();
+}
+
+export function hasBundledBanner(specific: string | undefined): boolean {
+  return resolveBannerId(specific) !== "" && bundledConfig.baseUrl.trim() !== "";
+}
+
+export const hasBundledConfig = hasBundledBanner(undefined);
 
 export function isValidBannerApiBaseUrl(value: string): boolean {
   try {

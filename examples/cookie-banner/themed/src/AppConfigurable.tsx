@@ -27,6 +27,7 @@ import {
   EventLog,
   ExampleShell,
   enableNamedLoggers,
+  themedTcfExampleOrigin,
   getExampleLogger,
   scheduleEnableNamedLoggers,
   isValidBannerApiBaseUrl,
@@ -101,6 +102,7 @@ export function App() {
   return (
     <ExampleShell
       title="@probo/cookie-banner — themed"
+      siblingHref={themedTcfExampleOrigin()}
       description={
         <>
           Category banner only. This app never installs the TCF stub or starts

@@ -28,6 +28,9 @@ import {
   EventLog,
   ExampleShell,
   enableNamedLoggers,
+  resolveBannerId,
+  setParentDomainExampleCookie,
+  themedExampleOrigin,
   getExampleLogger,
   scheduleEnableNamedLoggers,
   useEventLog,
@@ -46,6 +49,7 @@ const themedLogger = getExampleLogger("themed-tcf");
 let started = false;
 
 export function App() {
+  const bannerId = resolveBannerId(import.meta.env.PUBLIC_THEMED_TCF_BANNER_ID);
   const { events, pushEvent } = useEventLog();
   const posthogStatus = usePosthogStatus();
   const [manualPing, setManualPing] = useState<string | null>(null);
@@ -58,6 +62,7 @@ export function App() {
       started = true;
     }
     scheduleEnableNamedLoggers();
+    setParentDomainExampleCookie();
     initPosthog();
   }, []);
 
@@ -114,17 +119,18 @@ export function App() {
           has the capability on.
         </>
       }
+      siblingHref={themedExampleOrigin()}
     >
       <probo-cookie-banner
-        key={`${bundledConfig.bannerId}:${bundledConfig.baseUrl}:${bundledConfig.gcmEnabled}`}
+        key={`${bannerId}:${bundledConfig.baseUrl}:${bundledConfig.gcmEnabled}`}
         ref={attachListeners}
-        banner-id={bundledConfig.bannerId}
+        banner-id={bannerId}
         base-url={bundledConfig.baseUrl}
         position="bottom-right"
         gcm-enabled={bundledConfig.gcmEnabled ? "true" : "false"}
       />
 
-      <DebugPanel bannerId={bundledConfig.bannerId} gcmEnabled={bundledConfig.gcmEnabled}>
+      <DebugPanel bannerId={bannerId} gcmEnabled={bundledConfig.gcmEnabled}>
         <PosthogPanel
           status={posthogStatus}
           manualPing={manualPing}

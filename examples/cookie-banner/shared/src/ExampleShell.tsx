@@ -23,10 +23,19 @@ import type { ReactNode } from "react";
 interface ExampleShellProps {
   title: string;
   description: ReactNode;
+  siblingHref?: string | null;
   children: ReactNode;
 }
 
-export function ExampleShell({ title, description, children }: ExampleShellProps) {
+function siblingHost(href: string): string {
+  try {
+    return new URL(href).host;
+  } catch {
+    return href;
+  }
+}
+
+export function ExampleShell({ title, description, siblingHref, children }: ExampleShellProps) {
   return (
     <div
       style={{
@@ -48,6 +57,11 @@ export function ExampleShell({ title, description, children }: ExampleShellProps
         <div>
           <h1 style={{ margin: "0 0 4px" }}>{title}</h1>
           <p style={{ color: "#666", margin: 0 }}>{description}</p>
+          {siblingHref != null && siblingHref !== "" && (
+            <p style={{ margin: "8px 0 0" }}>
+              <a href={siblingHref}>Sibling site ({siblingHost(siblingHref)})</a>
+            </p>
+          )}
         </div>
         <probo-settings-link
           style={{

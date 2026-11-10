@@ -26,6 +26,8 @@ import {
   DebugPanel,
   EventLog,
   ExampleShell,
+  resolveBannerId,
+  themedTcfExampleOrigin,
   enableNamedLoggers,
   getExampleLogger,
   scheduleEnableNamedLoggers,
@@ -43,6 +45,7 @@ import {
 const themedLogger = getExampleLogger("themed");
 
 export function App() {
+  const bannerId = resolveBannerId(import.meta.env.PUBLIC_THEMED_BANNER_ID);
   const { events, pushEvent } = useEventLog();
   const posthogStatus = usePosthogStatus();
   const [manualPing, setManualPing] = useState<string | null>(null);
@@ -105,17 +108,18 @@ export function App() {
           The banner appears in the bottom-right corner.
         </>
       }
+      siblingHref={themedTcfExampleOrigin()}
     >
       <probo-cookie-banner
-        key={`${bundledConfig.bannerId}:${bundledConfig.baseUrl}:${bundledConfig.gcmEnabled}`}
+        key={`${bannerId}:${bundledConfig.baseUrl}:${bundledConfig.gcmEnabled}`}
         ref={attachListeners}
-        banner-id={bundledConfig.bannerId}
+        banner-id={bannerId}
         base-url={bundledConfig.baseUrl}
         position="bottom-right"
         gcm-enabled={bundledConfig.gcmEnabled ? "true" : "false"}
       />
 
-      <DebugPanel bannerId={bundledConfig.bannerId} gcmEnabled={bundledConfig.gcmEnabled}>
+      <DebugPanel bannerId={bannerId} gcmEnabled={bundledConfig.gcmEnabled}>
         <PosthogPanel
           status={posthogStatus}
           manualPing={manualPing}

@@ -31,6 +31,8 @@ import {
   getExampleLogger,
   scheduleEnableNamedLoggers,
   isValidBannerApiBaseUrl,
+  setParentDomainExampleCookie,
+  themedExampleOrigin,
   useConfig,
   useEventLog,
 } from "@probo/example-cookie-banner-shared";
@@ -61,6 +63,7 @@ export function App() {
       started = true;
     }
     scheduleEnableNamedLoggers();
+    setParentDomainExampleCookie();
     initPosthog();
   }, []);
 
@@ -119,6 +122,7 @@ export function App() {
           has the capability on.
         </>
       }
+      siblingHref={themedExampleOrigin()}
     >
       <ConfigForm />
 

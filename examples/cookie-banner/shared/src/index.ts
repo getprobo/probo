@@ -20,13 +20,21 @@
 
 export {
   bundledConfig,
+  hasBundledBanner,
   hasBundledConfig,
   isValidBannerApiBaseUrl,
+  resolveBannerId,
 } from "./bundledConfig";
 export { ConfigForm } from "./ConfigForm";
 export { DebugPanel } from "./DebugPanel";
 export { EventLog } from "./EventLog";
 export { ExampleShell } from "./ExampleShell";
+export {
+  exampleDomain,
+  setParentDomainExampleCookie,
+  themedExampleOrigin,
+  themedTcfExampleOrigin,
+} from "./exampleSites";
 export { enableNamedLoggers, getExampleLogger, scheduleEnableNamedLoggers } from "./logger";
 export { useConfig, type Config } from "./useConfig";
 export { useEventLog, type EventEntry } from "./useEventLog";

@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { hasBundledConfig } from "@probo/example-cookie-banner-shared";
+import { hasBundledBanner } from "@probo/example-cookie-banner-shared";
 
-export const App = hasBundledConfig
+export const App = hasBundledBanner(import.meta.env.PUBLIC_THEMED_BANNER_ID)
   ? (await import("./AppHosted")).App
   : (await import("./AppConfigurable")).App;

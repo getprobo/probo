@@ -27,8 +27,10 @@ export function createExampleViteConfig(port: number): UserConfig {
     envPrefix: "PUBLIC_",
     envDir: "..",
     server: {
+      host: true,
       port,
       strictPort: true,
+      allowedHosts: ["localhost", ".localhost"],
     },
     optimizeDeps: {
       exclude: ["@probo/example-cookie-banner-shared"],
