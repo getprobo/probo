@@ -9,6 +9,15 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 - `addThirdParty` in MCP accepts `parent_third_party_id`, so an agent
   can add a sub-processor to a third party's supply chain
 
+### Fixed
+
+- PDF previews in the compliance portal, the employee portal, and the
+  console work on older Safari, iOS, and Chromium browsers. The viewer
+  used pdf.js APIs those browsers do not provide
+- Outlook SafeLinks no longer shows up as an error when it opens a
+  portal link. The scanner rejects a promise; that is not a visitor
+  failure
+
 ## [0.340.0] - 2026-11-04
 
 ### Changed

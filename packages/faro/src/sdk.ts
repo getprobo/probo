@@ -27,6 +27,7 @@ import { getWebInstrumentations, initializeFaro } from "@grafana/faro-web-sdk";
 import { TracingInstrumentation } from "@grafana/faro-web-tracing";
 import { type DataRouter, matchRoutes } from "react-router";
 
+import { ignoredErrorPatterns } from "./ignore";
 import { routePattern } from "./route";
 
 export interface InitFaroOptions {
@@ -45,6 +46,7 @@ export function initFaro(options: InitFaroOptions): void {
     app: {
       name: options.appName,
     },
+    ignoreErrors: ignoredErrorPatterns,
     pageTracking: {
       generatePageId: location => routePattern(
         router.routes,

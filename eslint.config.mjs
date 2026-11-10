@@ -18,7 +18,10 @@ const browserDirs = [
   "packages/collaboration/**",
   "packages/faro/**",
 ];
-const lintedDirs = [...browserDirs, "packages/eslint-config/**"];
+// Node-side Vite helpers shared by the apps. Not a workspace package, so they
+// are not covered by the app globs above.
+const viteDirs = ["apps/vite/**"];
+const lintedDirs = [...browserDirs, "packages/eslint-config/**", ...viteDirs];
 
 export default defineConfig([
   // Keep `configs.base` global so its `globalIgnores` (dist, __generated__,
@@ -144,7 +147,7 @@ export default defineConfig([
     extends: [configs.languageOptions.browser],
   },
   {
-    files: ["packages/eslint-config/**"],
+    files: ["packages/eslint-config/**", ...viteDirs],
     extends: [configs.languageOptions.node],
   },
   {
