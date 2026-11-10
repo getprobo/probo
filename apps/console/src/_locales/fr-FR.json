@@ -2199,10 +2199,8 @@
       "scopes": "Portées"
     },
     "expirations": {
-      "month_one": "{{count}} mois",
-      "month_other": "{{count}} mois",
-      "year_one": "{{count}} an",
-      "year_other": "{{count}} ans"
+      "day_one": "{{count}} jour",
+      "day_other": "{{count}} jours"
     },
     "actions": {
       "create": "Créer le jeton",

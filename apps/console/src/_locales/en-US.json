@@ -1464,7 +1464,7 @@
     "messages": { "created": "OAuth token created successfully." },
     "errors": { "create": "Failed to create OAuth token" },
     "fields": { "name": "Name", "expiration": "Expiration", "scopes": "Scopes" },
-    "expirations": { "month_one": "{{count}} month", "month_other": "{{count}} months", "year_one": "{{count}} year", "year_other": "{{count}} years" },
+    "expirations": { "day_one": "{{count}} day", "day_other": "{{count}} days" },
     "actions": { "create": "Create token", "selectAll": "Select all", "deselectAll": "Deselect all", "cancel": "Cancel" }
   },
   "oauthTokensPage": {

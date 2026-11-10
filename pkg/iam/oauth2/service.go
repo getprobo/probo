@@ -54,6 +54,11 @@ const (
 	tokenTypeBearer           = "Bearer"
 	oauthGrantAccessTokenName = "OAuth grant"
 
+	// CreateManualAccessToken only. Grant-flow tokens use accessTokenDuration.
+	manualAccessTokenMaxLifetime = 180 * 24 * time.Hour
+	// A client clock a few minutes fast can still request the maximum.
+	manualAccessTokenExpirySkew = 5 * time.Minute
+
 	// userCodeAlphabet excludes ambiguous characters: 0/O, 1/I/L.
 	userCodeAlphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
 )
@@ -2148,6 +2153,18 @@ func (s *Service) CreateManualAccessToken(
 	now := time.Now()
 	if !req.ExpiresAt.After(now) {
 		return "", nil, NewError(ErrInvalidRequest, WithDescription("expires_at must be in the future"))
+	}
+
+	maxExpiresAt := now.Add(manualAccessTokenMaxLifetime + manualAccessTokenExpirySkew)
+	if req.ExpiresAt.After(maxExpiresAt) {
+		days := int(manualAccessTokenMaxLifetime / (24 * time.Hour))
+
+		return "", nil, NewError(
+			ErrInvalidRequest,
+			WithDescription(
+				fmt.Sprintf("expires_at must not be more than %d days in the future", days),
+			),
+		)
 	}
 
 	if len(req.Scopes) == 0 {

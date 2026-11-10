@@ -2198,10 +2198,8 @@
       "scopes": "Scopes"
     },
     "expirations": {
-      "month_one": "{{count}} maand",
-      "month_other": "{{count}} maanden",
-      "year_one": "{{count}} jaar",
-      "year_other": "{{count}} jaren"
+      "day_one": "{{count}} dag",
+      "day_other": "{{count}} dagen"
     },
     "actions": {
       "create": "Token aanmaken",
