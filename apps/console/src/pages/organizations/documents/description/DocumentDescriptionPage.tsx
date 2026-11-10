@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CaretDownIcon, PencilSimpleIcon } from "@phosphor-icons/react";
 import {
   connectRepoDocument,
   type RepoCollaborationHandle,
@@ -31,12 +30,6 @@ import {
 } from "@probo/ui/src/RichEditor/CollaborativeRichEditor";
 import { type CommentAnchor } from "@probo/ui/src/RichEditor/commentAnchors";
 import { type SuggestingController } from "@probo/ui/src/RichEditor/SuggestionExtension";
-import { Button as ButtonV2 } from "@probo/ui/src/v2/Button/Button";
-import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
-import { DropdownPopup } from "@probo/ui/src/v2/Dropdown/DropdownPopup";
-import { DropdownRadioGroup } from "@probo/ui/src/v2/Dropdown/DropdownRadioGroup";
-import { DropdownRadioItem } from "@probo/ui/src/v2/Dropdown/DropdownRadioItem";
-import { DropdownTrigger } from "@probo/ui/src/v2/Dropdown/DropdownTrigger";
 import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import type { Editor } from "@tiptap/core";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -56,6 +49,10 @@ import { useUploadRichTextFile } from "#/pages/organizations/_lib/useUploadRichT
 import { documentHistoryPanelQuery, DocumentHistoryView } from "./_components/DocumentHistoryPanel";
 import { DocumentPresence } from "./_components/DocumentPresence";
 import { DocumentReviewMargin } from "./_components/DocumentReviewMargin/DocumentReviewMargin";
+import {
+  DocumentReviewModeMenu,
+  type DocumentReviewMode,
+} from "./_components/DocumentReviewModeMenu";
 
 const autoSaveIntervalMs = 1000;
 
@@ -192,7 +189,7 @@ export function DocumentDescriptionPage(props: {
   const content = contentSource;
   const collaborationSupported = canReview
     && supportsRichEditorCollaboration(content);
-  const [mode, setMode] = useState<"viewing" | "editing" | "suggesting">("viewing");
+  const [mode, setMode] = useState<DocumentReviewMode>("viewing");
   const [editor, setEditor] = useState<Editor | null>(null);
   const [reviewToolbarHost, setReviewToolbarHost] = useState<HTMLDivElement | null>(null);
   const reviewLayoutRef = useRef<HTMLDivElement>(null);
@@ -279,6 +276,9 @@ export function DocumentDescriptionPage(props: {
 
   useEffect(() => {
     suggestingRef.current.enabled = mode === "suggesting";
+    if (mode !== "suggesting") {
+      suggestingRef.current.suggestionId = null;
+    }
     suggestingRef.current.onOpenSuggestion = (id: string) => {
       setActiveSuggestionId(id);
       setActiveThreadId(null);
@@ -377,47 +377,12 @@ export function DocumentDescriptionPage(props: {
       {(historyAvailable || collaborationHandle) && (
         <div className="flex items-center justify-end gap-3 px-4 pb-2">
           {collaborationHandle && (canEdit || document.canComment || document.canSuggest) && (
-            <Dropdown>
-              <DropdownTrigger
-                render={(
-                  <ButtonV2
-                    variant="ghost"
-                    color={mode === "suggesting" ? "green" : "neutral"}
-                    size={2}
-                    iconStart={<PencilSimpleIcon />}
-                    iconEnd={<CaretDownIcon />}
-                  >
-                    {mode === "viewing"
-                      ? t("documentDescriptionPage.review.viewing")
-                      : mode === "suggesting"
-                        ? t("documentDescriptionPage.review.suggesting")
-                        : t("documentDescriptionPage.review.editing")}
-                  </ButtonV2>
-                )}
-              />
-              <DropdownPopup align="end">
-                <DropdownRadioGroup
-                  value={mode}
-                  onValueChange={(value: string) => {
-                    if (value === "viewing" || value === "editing" || value === "suggesting") setMode(value);
-                  }}
-                >
-                  <DropdownRadioItem value="viewing">
-                    {t("documentDescriptionPage.review.viewing")}
-                  </DropdownRadioItem>
-                  {canEdit && (
-                    <DropdownRadioItem value="editing">
-                      {t("documentDescriptionPage.review.editing")}
-                    </DropdownRadioItem>
-                  )}
-                  {document.canSuggest && (
-                    <DropdownRadioItem value="suggesting">
-                      {t("documentDescriptionPage.review.suggesting")}
-                    </DropdownRadioItem>
-                  )}
-                </DropdownRadioGroup>
-              </DropdownPopup>
-            </Dropdown>
+            <DocumentReviewModeMenu
+              mode={mode}
+              canEdit={canEdit}
+              canSuggest={document.canSuggest}
+              onModeChange={setMode}
+            />
           )}
           <div ref={setReviewToolbarHost} className="flex items-center" />
           {collaborationHandle && (
@@ -456,7 +421,6 @@ export function DocumentDescriptionPage(props: {
                             collaborationHandle={collaborationHandle}
                             documentId={documentId}
                             editor={editor}
-                            mode={mode}
                             onActiveSuggestion={setActiveSuggestionId}
                             onActiveThread={setActiveThreadId}
                             onThreads={setReviewThreads}
