@@ -22,9 +22,6 @@ package coredata_test
 
 import (
 	"context"
-	"net"
-	"net/url"
-	"os"
 	"testing"
 	"time"
 
@@ -51,30 +48,13 @@ func newDocumentPDFClaimFixture(t *testing.T) documentPDFClaimFixture {
 	// Migrate the real schema before copying it. Claims scan across tenants, so
 	// connection-local tables keep parallel fixtures out of each other's queue.
 	test.PGClient(t)
-	dsn := os.Getenv("PROBO_TEST_PG_URL")
-	if dsn == "" {
-		dsn = "postgres://probod:probod@localhost:5432/probod_test"
-	}
-	u, err := url.Parse(dsn)
+	opts, err := test.PGClientOptions()
 	require.NoError(t, err)
-	port := u.Port()
-	if port == "" {
-		port = "5432"
-	}
-	opts := []pg.Option{
-		pg.WithAddr(net.JoinHostPort(u.Hostname(), port)),
+	opts = append(
+		opts,
 		pg.WithPoolSize(1),
 		pg.WithRegisterer(prometheus.NewRegistry()),
-	}
-	if len(u.Path) > 1 {
-		opts = append(opts, pg.WithDatabase(u.Path[1:]))
-	}
-	if u.User != nil {
-		opts = append(opts, pg.WithUser(u.User.Username()))
-		if password, ok := u.User.Password(); ok {
-			opts = append(opts, pg.WithPassword(password))
-		}
-	}
+	)
 	client, err := pg.NewClient(opts...)
 	require.NoError(t, err)
 	t.Cleanup(client.Close)
