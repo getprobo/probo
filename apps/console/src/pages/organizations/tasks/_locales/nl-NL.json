@@ -9,6 +9,9 @@
     "noInternalControls": "Geen interne controles",
     "findings": "Bevindingen",
     "noFindings": "Geen gekoppelde bevindingen",
+    "searchFindings": "Bevindingen zoeken",
+    "noFindingsFound": "Geen bevindingen gevonden",
+    "findingsLoadError": "Bevindingen laden mislukt",
     "internalControlsLoadError": "Interne controles konden niet worden geladen",
     "noDescription": "Geen beschrijving",
     "unassigned": "Niet toegewezen",
@@ -65,6 +68,7 @@
       "loadMoreInternalControls": "Meer laden",
       "loadMoreFindings": "Meer laden",
       "removeInternalControl": "Verwijderen",
+      "unlinkFinding": "Bevinding ontkoppelen",
       "cancel": "Annuleren",
       "retry": "Opnieuw proberen"
     },
@@ -111,7 +115,9 @@
     "errors": {
       "delete": "Verwijderen van taak mislukt",
       "update": "Bijwerken van taak mislukt",
-      "content": "Deze beschrijving kon niet worden weergegeven"
+      "content": "Deze beschrijving kon niet worden weergegeven",
+      "linkFinding": "Bevinding koppelen mislukt",
+      "unlinkFinding": "Bevinding ontkoppelen mislukt"
     },
     "comments": {
       "title": "Opmerkingen",

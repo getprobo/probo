@@ -469,6 +469,7 @@ func (r *taskResolver) Findings(ctx context.Context, obj *types.Task, first *int
 		priority *coredata.FindingPriority
 		ownerID  *gid.GID
 		auditID  *gid.GID
+		query    *string
 	)
 	if filter != nil {
 		kind = filter.Kind
@@ -476,9 +477,10 @@ func (r *taskResolver) Findings(ctx context.Context, obj *types.Task, first *int
 		priority = filter.Priority
 		ownerID = filter.OwnerID
 		auditID = filter.AuditID
+		query = filter.Query
 	}
 
-	findingFilter := coredata.NewFindingFilter(kind, status, priority, ownerID, auditID)
+	findingFilter := coredata.NewFindingFilter(kind, status, priority, ownerID, auditID, query)
 
 	findingPage, err := r.probo.Findings.ListForTaskID(ctx, scope, obj.ID, cursor, findingFilter)
 	if err != nil {

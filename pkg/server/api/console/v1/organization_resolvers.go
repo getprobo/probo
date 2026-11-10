@@ -426,6 +426,7 @@ func (r *organizationResolver) Findings(ctx context.Context, obj *types.Organiza
 		priority *coredata.FindingPriority
 		ownerID  *gid.GID
 		auditID  *gid.GID
+		query    *string
 	)
 	if filter != nil {
 		kind = filter.Kind
@@ -433,9 +434,10 @@ func (r *organizationResolver) Findings(ctx context.Context, obj *types.Organiza
 		priority = filter.Priority
 		ownerID = filter.OwnerID
 		auditID = filter.AuditID
+		query = filter.Query
 	}
 
-	findingFilter := coredata.NewFindingFilter(kind, status, priority, ownerID, auditID)
+	findingFilter := coredata.NewFindingFilter(kind, status, priority, ownerID, auditID, query)
 
 	page, err := r.probo.Findings.ListForOrganizationID(ctx, scope, obj.ID, cursor, findingFilter)
 	if err != nil {

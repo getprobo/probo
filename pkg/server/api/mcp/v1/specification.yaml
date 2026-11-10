@@ -4345,6 +4345,11 @@ components:
                 - $ref: "#/components/schemas/GID"
                 - type: "null"
               description: Filter by the audit the finding is linked to. Defaults to null which returns findings of all audits.
+            query:
+              anyOf:
+                - type: string
+                - type: "null"
+              description: Search findings by title or reference ID. Defaults to null which returns every finding.
 
     ListFindingsOutput:
       type: object

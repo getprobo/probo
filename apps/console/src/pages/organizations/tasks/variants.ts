@@ -63,7 +63,8 @@ export const taskFindings = tv({
   slots: {
     root: "flex w-full flex-col items-stretch gap-3",
     list: "flex w-full flex-col items-stretch gap-2",
-    item: "flex min-w-0 flex-col items-start",
+    item: "flex min-w-0 items-center justify-between gap-2",
+    text: "flex min-w-0 flex-1 flex-col items-start",
     title: "min-w-0 max-w-full truncate",
     more: "self-start",
   },

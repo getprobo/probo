@@ -22,6 +22,7 @@ package console_test
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -1213,3 +1214,253 @@ func TestFinding_LinkTask(t *testing.T) {
 // check, and findingResolver.Risk authorized the finding (caller's org)
 // instead of the risk, letting the caller read another org's risk through
 // the dataloader's NewScopeFromObjectID(riskID) scope.
+
+func TestFinding_ListWithQuery(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	profileID := factory.CreateUser(owner)
+
+	createQuery := `
+		mutation CreateFinding($input: CreateFindingInput!) {
+			createFinding(input: $input) {
+				findingEdge {
+					node {
+						id
+						referenceId
+					}
+				}
+			}
+		}
+	`
+
+	createFinding := func(title string) (string, string) {
+		var created struct {
+			CreateFinding struct {
+				FindingEdge struct {
+					Node struct {
+						ID          string `json:"id"`
+						ReferenceID string `json:"referenceId"`
+					} `json:"node"`
+				} `json:"findingEdge"`
+			} `json:"createFinding"`
+		}
+
+		err := owner.Execute(createQuery, map[string]any{
+			"input": map[string]any{
+				"organizationId": owner.GetOrganizationID().String(),
+				"kind":           "OBSERVATION",
+				"title":          title,
+				"ownerId":        profileID,
+				"status":         "OPEN",
+				"priority":       "LOW",
+			},
+		}, &created)
+		require.NoError(t, err)
+
+		return created.CreateFinding.FindingEdge.Node.ID, created.CreateFinding.FindingEdge.Node.ReferenceID
+	}
+
+	linkedID, linkedReference := createFinding("Picker alpha gap")
+	createFinding("Picker beta control")
+
+	query := `
+		query GetFindings($id: ID!, $filter: FindingFilter) {
+			node(id: $id) {
+				... on Organization {
+					findings(first: 10, filter: $filter) {
+						edges {
+							node { id }
+						}
+						totalCount
+					}
+				}
+			}
+		}
+	`
+
+	var result struct {
+		Node struct {
+			Findings struct {
+				Edges []struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"edges"`
+				TotalCount int `json:"totalCount"`
+			} `json:"findings"`
+		} `json:"node"`
+	}
+
+	ids := func() []string {
+		found := make([]string, 0, len(result.Node.Findings.Edges))
+		for _, edge := range result.Node.Findings.Edges {
+			found = append(found, edge.Node.ID)
+		}
+
+		return found
+	}
+
+	err := owner.Execute(query, map[string]any{
+		"id":     owner.GetOrganizationID().String(),
+		"filter": map[string]any{"query": "alpha gap"},
+	}, &result)
+	require.NoError(t, err)
+	assert.Equal(t, 1, result.Node.Findings.TotalCount)
+	assert.Equal(t, []string{linkedID}, ids())
+
+	err = owner.Execute(query, map[string]any{
+		"id":     owner.GetOrganizationID().String(),
+		"filter": map[string]any{"query": linkedReference},
+	}, &result)
+	require.NoError(t, err)
+	assert.Equal(t, []string{linkedID}, ids())
+
+	err = owner.Execute(query, map[string]any{
+		"id":     owner.GetOrganizationID().String(),
+		"filter": map[string]any{"query": "alph"},
+	}, &result)
+	require.NoError(t, err)
+	assert.Equal(t, []string{linkedID}, ids())
+
+	digits := linkedReference[strings.LastIndex(linkedReference, "-")+1:]
+	err = owner.Execute(query, map[string]any{
+		"id":     owner.GetOrganizationID().String(),
+		"filter": map[string]any{"query": digits},
+	}, &result)
+	require.NoError(t, err)
+	assert.Equal(t, []string{linkedID}, ids())
+
+	err = owner.Execute(query, map[string]any{
+		"id":     owner.GetOrganizationID().String(),
+		"filter": map[string]any{"query": "%"},
+	}, &result)
+	require.NoError(t, err)
+	assert.Equal(t, 2, result.Node.Findings.TotalCount)
+}
+
+func TestFinding_CountForAudit(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	profileID := factory.CreateUser(owner)
+	frameworkID := factory.CreateFramework(owner)
+	auditID := factory.CreateAudit(owner, frameworkID)
+
+	createQuery := `
+		mutation CreateFinding($input: CreateFindingInput!) {
+			createFinding(input: $input) {
+				findingEdge {
+					node {
+						id
+					}
+				}
+			}
+		}
+	`
+
+	createFinding := func(kind string) string {
+		var created struct {
+			CreateFinding struct {
+				FindingEdge struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"findingEdge"`
+			} `json:"createFinding"`
+		}
+
+		err := owner.Execute(createQuery, map[string]any{
+			"input": map[string]any{
+				"organizationId": owner.GetOrganizationID().String(),
+				"kind":           kind,
+				"title":          "Audit count " + kind,
+				"ownerId":        profileID,
+				"status":         "OPEN",
+				"priority":       "LOW",
+			},
+		}, &created)
+		require.NoError(t, err)
+
+		return created.CreateFinding.FindingEdge.Node.ID
+	}
+
+	linkQuery := `
+		mutation CreateFindingAuditMapping($input: CreateFindingAuditMappingInput!) {
+			createFindingAuditMapping(input: $input) {
+				findingEdge {
+					node {
+						id
+					}
+				}
+			}
+		}
+	`
+
+	linkFinding := func(findingID string, referenceID string) {
+		err := owner.Execute(linkQuery, map[string]any{
+			"input": map[string]any{
+				"findingId":   findingID,
+				"auditId":     auditID,
+				"referenceId": referenceID,
+			},
+		}, nil)
+		require.NoError(t, err)
+	}
+
+	observationID := createFinding("OBSERVATION")
+	exceptionID := createFinding("EXCEPTION")
+
+	linkFinding(observationID, "OBS/001")
+	linkFinding(exceptionID, "EXC/001")
+
+	query := `
+		query AuditFindings($id: ID!, $filter: FindingFilter) {
+			node(id: $id) {
+				... on Audit {
+					findings(first: 10, filter: $filter) {
+						edges {
+							node { id }
+						}
+						totalCount
+					}
+				}
+			}
+		}
+	`
+
+	var result struct {
+		Node struct {
+			Findings struct {
+				Edges []struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"edges"`
+				TotalCount int `json:"totalCount"`
+			} `json:"findings"`
+		} `json:"node"`
+	}
+
+	ids := func() []string {
+		found := make([]string, 0, len(result.Node.Findings.Edges))
+		for _, edge := range result.Node.Findings.Edges {
+			found = append(found, edge.Node.ID)
+		}
+
+		return found
+	}
+
+	err := owner.Execute(query, map[string]any{
+		"id": auditID,
+	}, &result)
+	require.NoError(t, err)
+	assert.Equal(t, 2, result.Node.Findings.TotalCount)
+	assert.ElementsMatch(t, []string{observationID, exceptionID}, ids())
+
+	err = owner.Execute(query, map[string]any{
+		"id":     auditID,
+		"filter": map[string]any{"kind": "OBSERVATION"},
+	}, &result)
+	require.NoError(t, err)
+	assert.Equal(t, 1, result.Node.Findings.TotalCount)
+	assert.Equal(t, []string{observationID}, ids())
+}

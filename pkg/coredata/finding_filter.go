@@ -32,6 +32,7 @@ type (
 		priority *FindingPriority
 		ownerID  *gid.GID
 		auditID  *gid.GID
+		query    *string
 	}
 )
 
@@ -41,6 +42,7 @@ func NewFindingFilter(
 	priority *FindingPriority,
 	ownerID *gid.GID,
 	auditID *gid.GID,
+	query *string,
 ) *FindingFilter {
 	return &FindingFilter{
 		kind:     kind,
@@ -48,6 +50,7 @@ func NewFindingFilter(
 		priority: priority,
 		ownerID:  ownerID,
 		auditID:  auditID,
+		query:    query,
 	}
 }
 
@@ -63,6 +66,7 @@ func (f *FindingFilter) SQLArguments() pgx.StrictNamedArgs {
 		"filter_owner_id":     nil,
 		"has_audit_filter":    false,
 		"filter_audit_id":     nil,
+		"query":               f.query,
 	}
 
 	if f.kind != nil {
@@ -131,6 +135,15 @@ func (f *FindingFilter) SQLFragment() string {
                 SELECT finding_id
                 FROM findings_audits
                 WHERE audit_id = @filter_audit_id::text
+            )
+        ELSE TRUE
+    END
+    AND
+    CASE
+        WHEN to_tsvector('simple', translate(COALESCE(@query::text, ''), '-+', '  ')) <> ''::tsvector THEN
+            search_vector @@ (
+                SELECT to_tsquery('simple', string_agg(quote_literal(lexeme) || ':*', ' & '))
+                FROM unnest(to_tsvector('simple', translate(COALESCE(@query::text, ''), '-+', '  '))) AS lex(lexeme, positions)
             )
         ELSE TRUE
     END

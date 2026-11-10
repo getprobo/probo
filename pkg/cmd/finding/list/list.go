@@ -75,6 +75,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		flagOrderDir string
 		flagKind     string
 		flagAudit    string
+		flagQuery    string
 		flagOutput   *string
 	)
 
@@ -89,7 +90,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
   prb finding ls --org <organization-id> --kind MINOR_NONCONFORMITY --json
 
   # List findings linked to an audit
-  prb finding ls --org <organization-id> --audit <audit-id>`,
+  prb finding ls --org <organization-id> --audit <audit-id>
+
+  # Search by title or reference ID
+  prb finding ls --org <organization-id> --query FND-001`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
@@ -137,6 +141,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 			if flagAudit != "" {
 				filter["auditId"] = flagAudit
+			}
+
+			if flagQuery != "" {
+				filter["query"] = flagQuery
 			}
 
 			if len(filter) > 0 {
@@ -193,6 +201,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmdutil.AddOrderDirectionFlag(cmd, &flagOrderDir, "DESC")
 	cmd.Flags().StringVar(&flagKind, "kind", "", "Filter by kind (MINOR_NONCONFORMITY, MAJOR_NONCONFORMITY, OBSERVATION, EXCEPTION)")
 	cmd.Flags().StringVar(&flagAudit, "audit", "", "Filter by audit ID")
+	cmd.Flags().StringVarP(&flagQuery, "query", "q", "", "Search findings by title or reference ID")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd

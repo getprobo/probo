@@ -9,6 +9,9 @@
     "noInternalControls": "No internal controls",
     "findings": "Findings",
     "noFindings": "No linked findings",
+    "searchFindings": "Search findings",
+    "noFindingsFound": "No findings found",
+    "findingsLoadError": "Could not load findings",
     "internalControlsLoadError": "Could not load internal controls",
     "noDescription": "No description",
     "unassigned": "Not assigned",
@@ -65,6 +68,7 @@
       "loadMoreInternalControls": "Load more",
       "loadMoreFindings": "Load more",
       "removeInternalControl": "Remove",
+      "unlinkFinding": "Unlink finding",
       "cancel": "Cancel",
       "retry": "Retry"
     },
@@ -111,7 +115,9 @@
     "errors": {
       "delete": "Failed to delete task",
       "update": "Failed to update task",
-      "content": "Could not display this description"
+      "content": "Could not display this description",
+      "linkFinding": "Failed to link finding",
+      "unlinkFinding": "Failed to unlink finding"
     },
     "comments": {
       "title": "Comments",

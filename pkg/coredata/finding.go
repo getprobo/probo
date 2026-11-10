@@ -475,7 +475,8 @@ WITH f AS (
 		fi.risk_id,
 		fi.effectiveness_check,
 		fi.created_at,
-		fi.updated_at
+		fi.updated_at,
+		fi.search_vector
 	FROM
 		findings fi
 	INNER JOIN
@@ -541,7 +542,12 @@ func (fs *Findings) CountByAuditID(
 WITH f AS (
 	SELECT
 		fi.id,
-		fi.tenant_id
+		fi.tenant_id,
+		fi.kind,
+		fi.status,
+		fi.priority,
+		fi.owner_id,
+		fi.search_vector
 	FROM
 		findings fi
 	INNER JOIN
@@ -605,7 +611,8 @@ WITH f AS (
 		fi.risk_id,
 		fi.effectiveness_check,
 		fi.created_at,
-		fi.updated_at
+		fi.updated_at,
+		fi.search_vector
 	FROM
 		findings fi
 	INNER JOIN
@@ -675,7 +682,8 @@ WITH f AS (
 		fi.kind,
 		fi.status,
 		fi.priority,
-		fi.owner_id
+		fi.owner_id,
+		fi.search_vector
 	FROM
 		findings fi
 	INNER JOIN
