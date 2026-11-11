@@ -1019,17 +1019,28 @@ func TestClient_SearchTeamsAndIssues(t *testing.T) {
 						},
 					},
 				})
+			case strings.Contains(req.Query, "TaskSyncLinearIssueDocument"):
+				writeJSON(w, map[string]any{
+					"data": map[string]any{
+						"issue": map[string]any{
+							"documentContent": map[string]any{
+								"content": "[evidence.pdf](https://uploads.linear.app/org/file/evidence.pdf)",
+							},
+						},
+					},
+				})
 			case strings.Contains(req.Query, "TaskSyncLinearIssue("):
 				writeJSON(w, map[string]any{
 					"data": map[string]any{
 						"issue": map[string]any{
-							"id":         "issue-1",
-							"identifier": "ENG-12",
-							"title":      "Fix login",
-							"url":        "https://linear.app/eng/issue/ENG-12",
-							"updatedAt":  "2026-09-14T12:00:00Z",
-							"archivedAt": nil,
-							"team":       map[string]any{"id": "team-1"},
+							"id":          "issue-1",
+							"identifier":  "ENG-12",
+							"title":       "Fix login",
+							"description": "Evidence is attached.",
+							"url":         "https://linear.app/eng/issue/ENG-12",
+							"updatedAt":   "2026-09-14T12:00:00Z",
+							"archivedAt":  nil,
+							"team":        map[string]any{"id": "team-1"},
 						},
 					},
 				})
@@ -1083,6 +1094,57 @@ func TestClient_SearchTeamsAndIssues(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "team-1", issue.TeamID)
 	assert.Equal(t, "ENG-12", issue.Identifier)
+	assert.Equal(
+		t,
+		"Evidence is attached.\n[evidence.pdf](https://uploads.linear.app/org/file/evidence.pdf)\n",
+		issue.Description,
+	)
+}
+
+func TestClient_GetIssue_KeepsDescriptionWhenDocumentContentFails(t *testing.T) {
+	t.Parallel()
+
+	server := newLinearGraphQLServer(
+		t,
+		func(w http.ResponseWriter, r *http.Request) {
+			body, err := io.ReadAll(r.Body)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+
+				return
+			}
+
+			if strings.Contains(string(body), "TaskSyncLinearIssueDocument") {
+				writeJSON(w, map[string]any{
+					"errors": []map[string]any{
+						{"message": "Cannot query field \"documentContent\" on type \"Issue\"."},
+					},
+				})
+
+				return
+			}
+
+			writeJSON(w, map[string]any{
+				"data": map[string]any{
+					"issue": map[string]any{
+						"id":          "issue-1",
+						"identifier":  "ENG-12",
+						"title":       "Fix login",
+						"description": "Evidence is attached.",
+						"url":         "https://linear.app/eng/issue/ENG-12",
+						"updatedAt":   "2026-09-14T12:00:00Z",
+						"team":        map[string]any{"id": "team-1"},
+					},
+				},
+			})
+		},
+	)
+
+	issue, err := NewClient(server.Client(), server.URL).GetIssue(context.Background(), "issue-1")
+
+	require.NoError(t, err)
+	assert.Equal(t, "Evidence is attached.", issue.Description)
+	assert.Equal(t, "team-1", issue.TeamID)
 }
 
 func TestClient_CreateComment_SetsAuthor(t *testing.T) {

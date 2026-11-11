@@ -23,6 +23,7 @@ package tasksync
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 	"net/http"
 	"strings"
@@ -148,6 +149,91 @@ func TestImportLinearMarkdown_StoresImageAndFile(t *testing.T) {
 			assert.Contains(t, content, id)
 		}
 	}
+}
+
+func TestImportLinearMarkdown_DescriptionDataFile(t *testing.T) {
+	t.Parallel()
+
+	const fileURL = "https://uploads.linear.app/org/file/evidence.pdf"
+
+	markdown := linear.MergeDescriptionFiles(
+		"Evidence is attached.",
+		json.RawMessage(`{"type":"doc","content":[{"type":"file","attrs":{"href":"`+fileURL+`","name":"evidence.pdf","mimetype":"application/pdf"}}]}`),
+	)
+
+	store := &memoryAttachmentStore{}
+	client := linear.NewClient(&http.Client{
+		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			header := make(http.Header)
+			header.Set("Content-Type", "application/pdf")
+
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Header:     header,
+				Body:       io.NopCloser(strings.NewReader("pdf-bytes")),
+				Request:    req,
+			}, nil
+		}),
+	}, "https://api.linear.app")
+
+	svc := &Service{stores: store}
+	rewritten, files, metas, err := svc.importLinearMarkdown(
+		t.Context(),
+		client,
+		nil,
+		gid.Nil,
+		gid.Nil,
+		markdown,
+		nil,
+	)
+	require.NoError(t, err)
+	assert.NotContains(t, rewritten, "uploads.linear.app")
+	assert.Contains(t, rewritten, "Evidence is attached.")
+	require.Len(t, store.files, 1)
+	assert.Equal(t, "evidence.pdf", store.files[0].Name)
+	assert.Equal(t, "application/pdf", store.files[0].MimeType)
+	require.Len(t, files, 1)
+
+	for id, assetURL := range files {
+		assert.Equal(t, fileURL, assetURL)
+		assert.Equal(t, "application/pdf", metas[id].MimeType)
+		assert.Contains(t, rewritten, prosemirror.AttachmentPath(id))
+	}
+}
+
+func TestImportLinearMarkdown_SkipsUnsafeLinkLabel(t *testing.T) {
+	t.Parallel()
+
+	const fileURL = "https://uploads.linear.app/org/file/uuid"
+
+	store := &memoryAttachmentStore{}
+	client := linear.NewClient(&http.Client{
+		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			header := make(http.Header)
+			header.Set("Content-Type", "application/pdf")
+
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Header:     header,
+				Body:       io.NopCloser(strings.NewReader("pdf-bytes")),
+				Request:    req,
+			}, nil
+		}),
+	}, "https://api.linear.app")
+
+	svc := &Service{stores: store}
+	_, _, _, err := svc.importLinearMarkdown(
+		t.Context(),
+		client,
+		nil,
+		gid.Nil,
+		gid.Nil,
+		"[notes].pdf]("+fileURL+")",
+		nil,
+	)
+	require.NoError(t, err)
+	require.Len(t, store.files, 1)
+	assert.Equal(t, "uuid", store.files[0].Name)
 }
 
 func TestImportLinearMarkdown_ReusesKnownAsset(t *testing.T) {

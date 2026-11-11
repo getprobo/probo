@@ -70,8 +70,9 @@ type (
 		Team struct {
 			ID string `json:"id"`
 		} `json:"team"`
-		Assignee *IssueWebhookAssignee `json:"assignee"`
-		present  map[string]struct{}
+		Assignee        *IssueWebhookAssignee `json:"assignee"`
+		DescriptionData json.RawMessage       `json:"descriptionData"`
+		present         map[string]struct{}
 	}
 
 	IssueWebhookAssignee struct {
@@ -145,6 +146,14 @@ func (e *WebhookEnvelope) IssueData() (*IssueWebhookData, error) {
 	for key := range raw {
 		data.present[key] = struct{}{}
 	}
+
+	// File nodes live in descriptionData. Fold them into the markdown
+	// description the importer already scans when this event includes it.
+	if data.Has("description") {
+		data.Description = MergeDescriptionFiles(data.Description, data.DescriptionData)
+	}
+
+	data.DescriptionData = nil
 
 	return &data, nil
 }

@@ -182,7 +182,7 @@ func (s *Service) importLinearFiles(
 	s.forgetKnownInboundFiles(connectorID, known)
 	markdown = restoreLinearFiles(markdown, known)
 
-	urls := linearAssetURLs(markdown)
+	urls := linear.AssetURLs(markdown)
 	if len(urls) == 0 {
 		metas, err := s.knownFileMetas(ctx, scope, organizationID, referencedAttachments(markdown, known))
 		if err != nil {
@@ -216,8 +216,8 @@ func (s *Service) importLinearFiles(
 	)
 
 	for _, assetURL := range urls {
-		name := linearAssetLabel(markdown, assetURL)
-		if name == "" {
+		name := linear.AssetLabel(markdown, assetURL)
+		if name == "" || strings.ContainsAny(name, "\n[]") {
 			name = linearAssetFileName(assetURL)
 		}
 
@@ -290,7 +290,7 @@ func (s *Service) prepareLinearImport(
 ) (*linearImport, error) {
 	var client *linear.Client
 
-	if len(linearAssetURLs(restoreLinearFiles(markdown, known))) > 0 {
+	if len(linear.AssetURLs(restoreLinearFiles(markdown, known))) > 0 {
 		loaded, err := s.linearClientForConnectorID(ctx, scope, connectorID)
 		if err != nil {
 			return nil, err
@@ -1068,78 +1068,6 @@ func linearImageType(mimeType string) bool {
 	default:
 		return false
 	}
-}
-
-func linearAssetURLs(markdown string) []string {
-	const marker = "https://uploads.linear.app/"
-
-	var urls []string
-
-	seen := map[string]struct{}{}
-	rest := markdown
-
-	for {
-		index := strings.Index(rest, marker)
-		if index < 0 {
-			return urls
-		}
-
-		raw := rest[index:]
-		end := 0
-
-		for end < len(raw) {
-			char := raw[end]
-			if char <= ' ' || strings.ContainsRune(")>\"'],", rune(char)) {
-				break
-			}
-
-			end++
-		}
-
-		candidate := raw[:end]
-		rest = raw[end:]
-
-		if _, ok := seen[candidate]; ok || !linearUploadURL(candidate) {
-			continue
-		}
-
-		seen[candidate] = struct{}{}
-		urls = append(urls, candidate)
-	}
-}
-
-func linearUploadURL(raw string) bool {
-	parsed, err := url.Parse(raw)
-	if err != nil || parsed.User != nil {
-		return false
-	}
-
-	if parsed.Scheme != "https" || !strings.EqualFold(parsed.Hostname(), "uploads.linear.app") {
-		return false
-	}
-
-	return parsed.Path != "" && parsed.Path != "/"
-}
-
-func linearAssetLabel(markdown, assetURL string) string {
-	needle := "](" + assetURL + ")"
-	index := strings.Index(markdown, needle)
-
-	if index < 0 {
-		return ""
-	}
-
-	start := strings.LastIndex(markdown[:index], "[")
-	if start < 0 || start+1 >= index {
-		return ""
-	}
-
-	label := strings.TrimSpace(markdown[start+1 : index])
-	if label == "" || strings.ContainsAny(label, "\n[]") {
-		return ""
-	}
-
-	return label
 }
 
 func linearAssetFileName(assetURL string) string {

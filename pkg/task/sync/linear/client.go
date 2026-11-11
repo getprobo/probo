@@ -1113,7 +1113,47 @@ query TaskSyncLinearIssue($id: String!) {
 
 	issue.TeamID = resp.Data.Issue.Team.ID
 
+	issue.Description = appendMissingUploadLinks(
+		issue.Description,
+		c.issueDocumentMarkdown(ctx, issueID),
+	)
+
 	return issue, nil
+}
+
+// issueDocumentMarkdown reads the issue description derived from Linear's
+// document state. A failure leaves the markdown description in place.
+func (c *Client) issueDocumentMarkdown(ctx context.Context, issueID string) string {
+	const request = `
+query TaskSyncLinearIssueDocument($id: String!) {
+  issue(id: $id) {
+    documentContent {
+      content
+    }
+  }
+}
+`
+
+	var resp struct {
+		Data struct {
+			Issue *struct {
+				DocumentContent *struct {
+					Content string `json:"content"`
+				} `json:"documentContent"`
+			} `json:"issue"`
+		} `json:"data"`
+		Errors []graphqlError `json:"errors"`
+	}
+
+	if err := c.do(ctx, request, map[string]any{"id": issueID}, &resp); err != nil {
+		return ""
+	}
+
+	if resp.Data.Issue == nil || resp.Data.Issue.DocumentContent == nil {
+		return ""
+	}
+
+	return resp.Data.Issue.DocumentContent.Content
 }
 
 func (c *Client) ListIssueComments(ctx context.Context, issueID string) ([]Comment, error) {
