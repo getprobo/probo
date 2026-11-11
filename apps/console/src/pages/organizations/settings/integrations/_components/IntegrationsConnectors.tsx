@@ -18,6 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { PlusIcon } from "@phosphor-icons/react";
+import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
 import { Select } from "@probo/ui/src/v2/Select/Select";
 import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
 import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
@@ -25,7 +27,7 @@ import { SelectTrigger } from "@probo/ui/src/v2/Select/SelectTrigger";
 import { Spinner } from "@probo/ui/src/v2/Spinner/Spinner";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { Suspense, useEffect, useRef, useTransition } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useRefetchableFragment } from "react-relay";
 
@@ -33,8 +35,10 @@ import type { IntegrationsConnectors_organization$key } from "#/__generated__/co
 import type { IntegrationsConnectors_query$key } from "#/__generated__/core/IntegrationsConnectors_query.graphql";
 import type { IntegrationsConnectorsRefetchQuery } from "#/__generated__/core/IntegrationsConnectorsRefetchQuery.graphql";
 import { SearchField } from "#/components/SearchField/SearchField";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 import type { ConnectorConnectionStatus } from "#/pages/organizations/_lib/connectorStatus";
 
+import { marketplacePath } from "../_lib/integrationPath";
 import {
   connectionStatuses,
   integrationsListFilter,
@@ -42,6 +46,12 @@ import {
   useIntegrationsListFilters,
 } from "../_lib/useIntegrationsListFilters";
 import { useIntegrationsListSearch } from "../_lib/useIntegrationsListSearch";
+import { MarketplaceThirdPartyMatches } from "../marketplace/_components/MarketplaceThirdPartyMatches";
+import { MarketplaceThirdPartyNotice } from "../marketplace/_components/MarketplaceThirdPartyNotice";
+import {
+  connectableThirdPartyProviders,
+  credentialCountByProvider,
+} from "../marketplace/_lib/thirdPartyConnectorMatch";
 import { integrationsList, integrationsPage } from "../variants";
 
 import { ConnectorGroupList } from "./ConnectorGroupList";
@@ -49,6 +59,11 @@ import { ConnectorGroupList } from "./ConnectorGroupList";
 const integrationsConnectorsFragment = graphql`
   fragment IntegrationsConnectors_query on Query {
     ...ConnectorGroupList_query
+    ...MarketplaceThirdPartyMatches_query
+    connectorProviders {
+      provider
+      displayName
+    }
   }
 `;
 
@@ -58,6 +73,12 @@ const integrationsConnectorsOrganizationFragment = graphql`
   @argumentDefinitions(
     filter: { type: "ConnectorFilter", defaultValue: null }
   ) {
+    canCreateConnector: permission(action: "core:connector:create")
+    canListThirdParties: permission(action: "core:thirdParty:list")
+    # Unfiltered, so a search or status filter cannot mark a connected vendor as available.
+    connectedConnectors: connectors {
+      provider
+    }
     ...ConnectorGroupList_organization @arguments(filter: $filter)
   }
 `;
@@ -72,6 +93,17 @@ export function IntegrationsConnectors({
   organizationKey,
 }: IntegrationsConnectorsProps) {
   const { t } = useTranslation("organizations/settings/integrations");
+  const organizationId = useOrganizationId();
+  const [matchedProviders, setMatchedProviders] = useState<ReadonlySet<string>>(() => new Set());
+  const handleMatchedProviders = useCallback((next: ReadonlySet<string>) => {
+    setMatchedProviders((current) => {
+      if (current.size === next.size && [...next].every(provider => current.has(provider))) {
+        return current;
+      }
+
+      return next;
+    });
+  }, []);
   const integrationsQuery = useFragment(integrationsConnectorsFragment, queryKey);
   const { query, status, setStatus } = useIntegrationsListFilters();
   const [searchInput, setSearchInput] = useIntegrationsListSearch();
@@ -98,6 +130,16 @@ export function IntegrationsConnectors({
 
   const isSearching = query.trim() !== "";
   const isFiltering = isSearching || status != null;
+  const connectableThirdParties = connectableThirdPartyProviders(
+    integrationsQuery.connectorProviders.map(provider => ({
+      provider: provider.provider,
+      displayName: provider.displayName,
+    })),
+    matchedProviders,
+    credentialCountByProvider(organization.connectedConnectors.map(connector => ({
+      provider: connector.provider,
+    }))),
+  );
 
   const { root, header, intro } = integrationsPage();
   const {
@@ -112,6 +154,30 @@ export function IntegrationsConnectors({
 
   return (
     <div className={root()}>
+      {organization.canCreateConnector && organization.canListThirdParties && (
+        <MarketplaceThirdPartyMatches
+          queryKey={integrationsQuery}
+          onMatched={handleMatchedProviders}
+        />
+      )}
+      {connectableThirdParties.length > 0 && (
+        <MarketplaceThirdPartyNotice
+          providers={connectableThirdParties}
+          description={t("listPage.suggestDescription")}
+          control={(
+            <ButtonLink
+              to={marketplacePath(organizationId)}
+              size={2}
+              variant="solid"
+              color="neutral"
+              highContrast
+              iconStart={<PlusIcon />}
+            >
+              {t("listPage.addMore")}
+            </ButtonLink>
+          )}
+        />
+      )}
       <div className={header()}>
         <div className={intro()}>
           <Heading level={1} size={6} weight="medium" highContrast>

@@ -133,6 +133,7 @@
       "available": "Beschikbaar"
     },
     "addMore": "Meer toevoegen",
+    "suggestDescription": "Selecteer \"Meer toevoegen\" om de volledige lijst met integraties te zien die Probo ondersteunt.",
     "emptyConnected": "Er is nog geen leverancier verbonden.",
     "emptyConnectedSearch": "Geen verbonden leverancier komt overeen met uw zoekopdracht.",
     "checkingStatuses": "Verbindingsstatussen worden gecontroleerd…",

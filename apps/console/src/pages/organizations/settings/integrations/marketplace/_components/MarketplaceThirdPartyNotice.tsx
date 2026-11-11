@@ -18,11 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { LightbulbIcon, SparkleIcon } from "@phosphor-icons/react";
+import { LightbulbIcon } from "@phosphor-icons/react";
 import { ThirdPartyLogo } from "@probo/ui";
-import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 import { TonedCard } from "#/components/TonedCard/TonedCard";
@@ -32,12 +32,14 @@ interface MarketplaceThirdPartyNoticeProps {
     provider: string;
     displayName: string;
   }[];
-  onSuggest: () => void;
+  control: ReactNode;
+  description?: string;
 }
 
 export function MarketplaceThirdPartyNotice({
   providers,
-  onSuggest,
+  control,
+  description,
 }: MarketplaceThirdPartyNoticeProps) {
   const { t } = useTranslation("organizations/settings/integrations");
 
@@ -52,22 +54,11 @@ export function MarketplaceThirdPartyNotice({
           {t("marketplacePage.thirdParties.title")}
         </Heading>
       )}
-      control={(
-        <Button
-          size={2}
-          variant="solid"
-          color="neutral"
-          highContrast
-          iconStart={<SparkleIcon />}
-          onClick={onSuggest}
-        >
-          {t("marketplacePage.thirdParties.filterAction")}
-        </Button>
-      )}
+      control={control}
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Text size={2} color="neutral" className="min-w-48 flex-1">
-          {t("marketplacePage.thirdParties.description")}
+          {description ?? t("marketplacePage.thirdParties.description")}
         </Text>
         <ul
           aria-label={t("marketplacePage.thirdParties.title")}

@@ -18,8 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CaretLeftIcon } from "@phosphor-icons/react";
+import { CaretLeftIcon, SparkleIcon } from "@phosphor-icons/react";
 import { usePageTitle } from "@probo/hooks";
+import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { Link } from "@probo/ui/src/v2/Link/Link";
 import { Select } from "@probo/ui/src/v2/Select/Select";
@@ -44,6 +45,11 @@ import { integrationsList, integrationsPage } from "../variants";
 import { ConnectorProviderListItem } from "./_components/ConnectorProviderListItem";
 import { MarketplaceThirdPartyMatches } from "./_components/MarketplaceThirdPartyMatches";
 import { MarketplaceThirdPartyNotice } from "./_components/MarketplaceThirdPartyNotice";
+import {
+  connectableThirdPartyProviders,
+  credentialCountByProvider,
+  isConnectableThirdParty,
+} from "./_lib/thirdPartyConnectorMatch";
 
 export const marketplacePageQuery = graphql`
   query MarketplacePageQuery($organizationId: ID!) {
@@ -66,18 +72,6 @@ export const marketplacePageQuery = graphql`
     }
   }
 `;
-
-function credentialCountByProvider(
-  connectors: readonly { provider: string }[],
-): Map<string, number> {
-  const counts = new Map<string, number>();
-
-  for (const connector of connectors) {
-    counts.set(connector.provider, (counts.get(connector.provider) ?? 0) + 1);
-  }
-
-  return counts;
-}
 
 interface MarketplacePageProps {
   queryRef: PreloadedQuery<MarketplacePageQuery>;
@@ -112,13 +106,12 @@ export function MarketplacePage({ queryRef }: MarketplacePageProps) {
   const canListThirdParties = organization.canListThirdParties;
   const normalizedSearch = searchQuery.trim().toLowerCase();
   const isSearching = normalizedSearch !== "";
-  const isConnectableThirdParty = (provider: string) =>
-    matchedProviders.has(provider)
-    && (credentialCounts.get(provider) ?? 0) === 0;
+  const isConnectable = (provider: string) =>
+    isConnectableThirdParty(provider, matchedProviders, credentialCounts);
   const providers = canCreateConnector
     ? connectorProviders
         .filter((provider) => {
-          if (thirdPartyOnly && !isConnectableThirdParty(provider.provider)) {
+          if (thirdPartyOnly && !isConnectable(provider.provider)) {
             return false;
           }
 
@@ -135,9 +128,11 @@ export function MarketplacePage({ queryRef }: MarketplacePageProps) {
         .sort((a, b) => a.displayName.localeCompare(b.displayName)
           || a.provider.localeCompare(b.provider))
     : [];
-  const connectableThirdParties = connectorProviders
-    .filter(provider => isConnectableThirdParty(provider.provider))
-    .sort((a, b) => a.displayName.localeCompare(b.displayName));
+  const connectableThirdParties = connectableThirdPartyProviders(
+    connectorProviders,
+    matchedProviders,
+    credentialCounts,
+  );
   const { root, header, intro } = integrationsPage();
   const { root: list, tools, search, filters, filter, marketplaceGrid, empty } = integrationsList();
 
@@ -152,7 +147,18 @@ export function MarketplacePage({ queryRef }: MarketplacePageProps) {
       {connectableThirdParties.length > 0 && (
         <MarketplaceThirdPartyNotice
           providers={connectableThirdParties}
-          onSuggest={() => setThirdPartyOnly(true)}
+          control={(
+            <Button
+              size={2}
+              variant="solid"
+              color="neutral"
+              highContrast
+              iconStart={<SparkleIcon />}
+              onClick={() => setThirdPartyOnly(true)}
+            >
+              {t("marketplacePage.thirdParties.filterAction")}
+            </Button>
+          )}
         />
       )}
       <div className={header()}>
@@ -257,7 +263,7 @@ export function MarketplacePage({ queryRef }: MarketplacePageProps) {
                       key={provider.provider}
                       providerKey={provider}
                       credentialCount={credentialCounts.get(provider.provider) ?? 0}
-                      matchesThirdParty={isConnectableThirdParty(provider.provider)}
+                      matchesThirdParty={isConnectable(provider.provider)}
                     />
                   ))}
                 </div>

@@ -133,6 +133,7 @@
       "available": "Available"
     },
     "addMore": "Add more",
+    "suggestDescription": "Select \"Add more\" to see the full list of integrations Probo supports.",
     "emptyConnected": "No vendor is connected yet.",
     "emptyConnectedSearch": "No connected vendor matches your search.",
     "checkingStatuses": "Checking connection statuses…",
