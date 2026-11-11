@@ -4,10 +4,42 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.341.0] - 2026-11-11
+
 ### Added
 
 - `addThirdParty` in MCP accepts `parent_third_party_id`, so an agent
   can add a sub-processor to a third party's supply chain
+- Findings have a required title. Existing findings are backfilled
+  from the first 200 characters of the description, or from the
+  reference id when that is blank. The title is available on GraphQL,
+  MCP, the CLI, and the n8n node, and in the published findings
+  document
+- Tasks can be linked to a finding, matching the existing finding-audit
+  link. Link and unlink are available on GraphQL, MCP, and n8n
+- The console findings list, details, and create pages use the v2 UI.
+  The list filters by kind, status, priority, owner, and audit. Details
+  show an inline title, property chips, linked tasks, and linked
+  audits. Creation is a page at findings/new
+- A task's findings card can search for a finding and link or unlink
+  it, for viewers who can create or delete the task mapping
+- Linear description files are imported. Attachments stored in the
+  issue's ProseMirror description are downloaded on webhook updates
+  and when an issue is linked. Already linked tasks pick them up on
+  the next description update
+- One machine can be enrolled in more than one organization and report
+  posture to each. A second enrollment in the same organization still
+  conflicts on the hardware UUID, and the pending device is revoked
+
+### Changed
+
+- People who have not saved a notification preference now get reminder
+  emails for task mentions, the same as task assignments. A saved
+  preference still wins
+- The add-source page hides SCIM connectors and leaves their accounts
+  out of the vendor account count
+- GraphQL traces and logs use the name written on the operation when
+  the request omits operationName
 
 ### Fixed
 
@@ -17,6 +49,12 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 - Outlook SafeLinks no longer shows up as an error when it opens a
   portal link. The scanner rejects a promise; that is not a visitor
   failure
+- Cancelling a signature request resolves the recipient's pending
+  signature notification in the same transaction. It stays pending
+  when they still have an open request on another version of the
+  document
+- Running processes load renewed TLS certificates during the 30-day
+  renewal window, instead of keeping the previously parsed certificate
 
 ## [0.340.0] - 2026-11-04
 
