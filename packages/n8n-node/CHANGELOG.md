@@ -4,6 +4,20 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.267.0] - 2026-11-11
+
+### Added
+
+- Finding `Link Task` and `Unlink Task` operations connect a task to
+  a finding
+- Finding `Get All` accepts a `Query` filter that searches by title or
+  reference ID
+- Finding `Create` and `Update` take a `Title`, and `Get` returns it
+
+### Changed
+
+- **Breaking**: finding `Create` requires `Title`
+
 ## [0.266.0] - 2026-11-03
 
 ### Added
