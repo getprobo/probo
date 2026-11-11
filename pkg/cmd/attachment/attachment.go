@@ -22,6 +22,7 @@ package attachment
 
 import (
 	"github.com/spf13/cobra"
+	"go.probo.inc/probo/pkg/cmd/attachment/download"
 	"go.probo.inc/probo/pkg/cmd/attachment/upload"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 )
@@ -29,10 +30,11 @@ import (
 func NewCmdAttachment(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "file <command>",
-		Short: "Upload private files embedded in rich text",
+		Short: "Upload and download private files embedded in rich text",
 	}
 
 	cmd.AddCommand(upload.NewCmdUpload(f))
+	cmd.AddCommand(download.NewCmdDownload(f))
 
 	return cmd
 }
