@@ -4,10 +4,21 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.265.0] - 2026-11-11
+
 ### Added
 
+- `prb file download <id> [path]` downloads a private file. An existing
+  destination is left in place. Pass `-` to write the bytes to stdout
 - `prb third-party create --parent-id` adds the new third party to a
   parent's supply chain
+- `prb finding ls --query` (`-q`) searches by title or reference ID.
+  `prb finding update --title` sets the title
+
+### Changed
+
+- **Breaking**: `prb finding create` requires `--title`. `finding ls`
+  includes the title, and `finding view` uses it as the heading
 
 ## [0.264.0] - 2026-11-03
 
