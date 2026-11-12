@@ -30,12 +30,14 @@ type (
 		fmt.Stringer
 	}
 
-	// NullsOrderField places NULL values first or last in both sort directions.
+	// NullsOrderField sets NULL placement (FIRST or LAST) for both sort
+	// directions. NullsDefault leaves placement to the database default.
 	NullsOrderField interface {
 		OrderField
 		Nulls() Nulls
 	}
 
+	// Nulls is where NULL values sort relative to every other value.
 	Nulls string
 )
 

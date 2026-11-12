@@ -230,5 +230,9 @@ func TestInternalControl_CursorKey_NextDue(t *testing.T) {
 	assert.Equal(t, due, control.CursorKey(InternalControlOrderFieldNextDue).Value)
 
 	control.NextEvidenceDue = nil
+	control.NextTestDue = &due
+	assert.Equal(t, due, control.CursorKey(InternalControlOrderFieldNextDue).Value)
+
+	control.NextTestDue = nil
 	assert.Nil(t, control.CursorKey(InternalControlOrderFieldNextDue).Value)
 }
