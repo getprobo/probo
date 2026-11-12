@@ -30,12 +30,6 @@ type (
 		fmt.Stringer
 	}
 
-	// CursorValuer maps the bound cursor placeholder into the same space as Column.
-	CursorValuer interface {
-		OrderField
-		CursorValue(placeholder string) string
-	}
-
 	// NullsOrderField places NULL values first or last in both sort directions.
 	NullsOrderField interface {
 		OrderField
