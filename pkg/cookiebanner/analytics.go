@@ -55,7 +55,7 @@ func analyticsSince(now time.Time, days int) time.Time {
 	return utcDay(now).AddDate(0, 0, 1-days)
 }
 
-func validateAnalyticsDays(days int) error {
+func ValidateAnalyticsDays(days int) error {
 	v := validator.New()
 
 	v.Check(days, "days", validator.Min(1), validator.Max(MaxAnalyticsDays))
@@ -69,7 +69,7 @@ func (s *Service) GetPageLoads(
 	cookieBannerIDs []gid.GID,
 	days int,
 ) (map[gid.GID][]BrowserFamilyCount, error) {
-	if err := validateAnalyticsDays(days); err != nil {
+	if err := ValidateAnalyticsDays(days); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
@@ -147,7 +147,7 @@ func (s *Service) GetHitSplitsForPatterns(
 	patternIDsByDays := make(map[int][]gid.GID)
 
 	for _, query := range queries {
-		if err := validateAnalyticsDays(query.Days); err != nil {
+		if err := ValidateAnalyticsDays(query.Days); err != nil {
 			return nil, fmt.Errorf("invalid request: %w", err)
 		}
 

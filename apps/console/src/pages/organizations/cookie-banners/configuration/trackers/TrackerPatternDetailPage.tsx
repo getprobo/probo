@@ -24,7 +24,7 @@ import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import type { TrackerPatternDetailPageQuery } from "#/__generated__/core/TrackerPatternDetailPageQuery.graphql";
 import { NotFoundError } from "#/lib/relay/errors";
 
-import { SampleFamilyCounts } from "../_components/SampleFamilyCounts";
+import { FamilyHitRates } from "../_components/FamilyHitRates";
 
 import { TrackerPatternDetailHeader } from "./_components/TrackerPatternDetailHeader";
 import { TrackerPatternDetectedTrackersSection } from "./_components/TrackerPatternDetectedTrackersSection";
@@ -39,7 +39,7 @@ export const trackerPatternDetailPageQuery = graphql`
       __typename
       ... on CookieBanner {
         ...TrackerPatternPropertiesSection_cookieBanner
-        ...SampleFamilyCounts_cookieBanner
+        ...FamilyHitRates_cookieBanner
       }
     }
     node(id: $trackerPatternId) @required(action: THROW) {
@@ -47,7 +47,7 @@ export const trackerPatternDetailPageQuery = graphql`
       ... on TrackerPattern {
         pattern
         ...TrackerPatternDetailHeader_trackerPattern
-        ...SampleFamilyCounts_trackerPattern
+        ...FamilyHitRates_trackerPattern
         ...TrackerPatternPropertiesSection_trackerPattern
         ...TrackerPatternDetectedTrackersSection_trackerPattern
       }
@@ -78,7 +78,7 @@ export default function TrackerPatternDetailPage({
     <div className="space-y-6">
       <TrackerPatternDetailHeader trackerPatternKey={pattern} />
 
-      <SampleFamilyCounts
+      <FamilyHitRates
         trackerPatternKey={pattern}
         cookieBannerKey={data.cookieBanner}
       />

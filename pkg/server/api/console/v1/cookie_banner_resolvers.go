@@ -429,54 +429,9 @@ func (r *cookieBannerResolver) GvlVendorIds(ctx context.Context, obj *types.Cook
 	return ids, nil
 }
 
-// LatestSample is the resolver for the latestSample field.
-func (r *cookieBannerResolver) LatestSample(ctx context.Context, obj *types.CookieBanner) (*types.CookieBannerSample, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionCookieBannerGet)
-	if err != nil {
-		return nil, err
-	}
-
-	sample, err := r.cookieBanner.GetLatestCookieBannerSample(ctx, scope, obj.ID)
-	if err != nil {
-		if errors.Is(err, cookiebanner.ErrSampleNotFound) {
-			return nil, nil
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot get latest cookie banner sample", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
-	}
-
-	return types.NewCookieBannerSample(sample), nil
-}
-
-// Samples is the resolver for the samples field.
-func (r *cookieBannerResolver) Samples(ctx context.Context, obj *types.CookieBanner, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.CookieBannerSampleOrderBy) (*types.CookieBannerSampleConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionCookieBannerGet)
-	if err != nil {
-		return nil, err
-	}
-
-	pageOrderBy := page.OrderBy[coredata.CookieBannerSampleOrderField]{
-		Field:     coredata.CookieBannerSampleOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.CookieBannerSampleOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	samples, err := r.cookieBanner.ListCookieBannerSamples(ctx, scope, obj.ID, cursor)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list cookie banner samples", log.Error(err))
-		return nil, gqlx.Internal(ctx)
-	}
-
-	return types.NewCookieBannerSampleConnection(page.NewPage(samples, cursor), r, obj.ID), nil
+// PageLoads is the resolver for the pageLoads field.
+func (r *cookieBannerResolver) PageLoads(ctx context.Context, obj *types.CookieBanner, days *int) ([]*cookiebanner.BrowserFamilyCount, error) {
+	return r.loadPageLoads(ctx, obj, days)
 }
 
 // UncategorisedTrackerResources is the resolver for the uncategorisedTrackerResources field.
@@ -585,53 +540,6 @@ func (r *cookieBannerConnectionResolver) TotalCount(ctx context.Context, obj *ty
 	count, err := r.cookieBanner.CountCookieBannersForOrganization(ctx, scope, obj.ParentID, coredata.NewCookieBannerFilter(nil))
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count cookie banners", log.Error(err))
-		return 0, gqlx.Internal(ctx)
-	}
-
-	return count, nil
-}
-
-// CookieBanner is the resolver for the cookieBanner field.
-func (r *cookieBannerSampleResolver) CookieBanner(ctx context.Context, obj *types.CookieBannerSample) (*types.CookieBanner, error) {
-	if obj.CookieBanner == nil {
-		return nil, nil
-	}
-
-	if _, err := r.authorize(ctx, obj.CookieBanner.ID, probo.ActionCookieBannerGet); err != nil {
-		return nil, err
-	}
-
-	loaders := dataloader.FromContext(ctx)
-
-	banner, err := loaders.CookieBanner.Load(ctx, obj.CookieBanner.ID)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlx.NotFound(ctx, err)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot get cookie banner", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
-	}
-
-	return types.NewCookieBanner(banner), nil
-}
-
-// PageLoads is the resolver for the pageLoads field.
-func (r *cookieBannerSampleResolver) PageLoads(ctx context.Context, obj *types.CookieBannerSample) ([]*cookiebanner.BrowserFamilyCount, error) {
-	return r.loadPageLoads(ctx, obj)
-}
-
-// TotalCount is the resolver for the totalCount field.
-func (r *cookieBannerSampleConnectionResolver) TotalCount(ctx context.Context, obj *types.CookieBannerSampleConnection) (int, error) {
-	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionCookieBannerGet)
-	if err != nil {
-		return 0, err
-	}
-
-	count, err := r.cookieBanner.CountCookieBannerSamples(ctx, scope, obj.ParentID)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot count cookie banner samples", log.Error(err))
 		return 0, gqlx.Internal(ctx)
 	}
 
@@ -1084,66 +992,6 @@ func (r *mutationResolver) UpdateCookieBanner(ctx context.Context, input types.U
 
 	return &types.UpdateCookieBannerPayload{
 		CookieBanner: types.NewCookieBanner(banner),
-	}, nil
-}
-
-// StartCookieBannerSample is the resolver for the startCookieBannerSample field.
-func (r *mutationResolver) StartCookieBannerSample(ctx context.Context, input types.StartCookieBannerSampleInput) (*types.StartCookieBannerSamplePayload, error) {
-	scope, err := r.authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerUpdate)
-	if err != nil {
-		return nil, err
-	}
-
-	sample, err := r.cookieBanner.StartCookieBannerSample(ctx, scope, input.CookieBannerID)
-	if err != nil {
-		if errors.Is(err, cookiebanner.ErrBannerNotFound) {
-			return nil, gqlx.NotFound(ctx, err)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot start cookie banner sample", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
-	}
-
-	banner, err := r.cookieBanner.GetCookieBanner(ctx, scope, input.CookieBannerID)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get cookie banner", log.Error(err))
-		return nil, gqlx.Internal(ctx)
-	}
-
-	return &types.StartCookieBannerSamplePayload{
-		CookieBannerSample: types.NewCookieBannerSample(sample),
-		CookieBanner:       types.NewCookieBanner(banner),
-	}, nil
-}
-
-// StopCookieBannerSample is the resolver for the stopCookieBannerSample field.
-func (r *mutationResolver) StopCookieBannerSample(ctx context.Context, input types.StopCookieBannerSampleInput) (*types.StopCookieBannerSamplePayload, error) {
-	scope, err := r.authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerUpdate)
-	if err != nil {
-		return nil, err
-	}
-
-	sample, err := r.cookieBanner.StopCookieBannerSample(ctx, scope, input.CookieBannerID)
-	if err != nil {
-		if errors.Is(err, cookiebanner.ErrSampleNotFound) || errors.Is(err, cookiebanner.ErrBannerNotFound) {
-			return nil, gqlx.NotFound(ctx, err)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot stop cookie banner sample", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
-	}
-
-	banner, err := r.cookieBanner.GetCookieBanner(ctx, scope, input.CookieBannerID)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get cookie banner", log.Error(err))
-		return nil, gqlx.Internal(ctx)
-	}
-
-	return &types.StopCookieBannerSamplePayload{
-		CookieBannerSample: types.NewCookieBannerSample(sample),
-		CookieBanner:       types.NewCookieBanner(banner),
 	}, nil
 }
 
@@ -2053,9 +1901,9 @@ func (r *trackerPatternResolver) DetectedCount(ctx context.Context, obj *types.T
 	return count, nil
 }
 
-// SampleHits is the resolver for the sampleHits field.
-func (r *trackerPatternResolver) SampleHits(ctx context.Context, obj *types.TrackerPattern, sampleID *gid.GID) ([]*cookiebanner.BrowserFamilyCount, error) {
-	splits, err := r.loadSampleHitSplits(ctx, obj, sampleID)
+// Hits is the resolver for the hits field.
+func (r *trackerPatternResolver) Hits(ctx context.Context, obj *types.TrackerPattern, days *int) ([]*cookiebanner.BrowserFamilyCount, error) {
+	splits, err := r.loadHitSplits(ctx, obj, days)
 	if err != nil {
 		return nil, err
 	}
@@ -2063,9 +1911,9 @@ func (r *trackerPatternResolver) SampleHits(ctx context.Context, obj *types.Trac
 	return cookiebanner.NewBrowserFamilyCountPtrs(splits.Total), nil
 }
 
-// AllowedSampleHits is the resolver for the allowedSampleHits field.
-func (r *trackerPatternResolver) AllowedSampleHits(ctx context.Context, obj *types.TrackerPattern, sampleID *gid.GID) ([]*cookiebanner.BrowserFamilyCount, error) {
-	splits, err := r.loadSampleHitSplits(ctx, obj, sampleID)
+// AllowedHits is the resolver for the allowedHits field.
+func (r *trackerPatternResolver) AllowedHits(ctx context.Context, obj *types.TrackerPattern, days *int) ([]*cookiebanner.BrowserFamilyCount, error) {
+	splits, err := r.loadHitSplits(ctx, obj, days)
 	if err != nil {
 		return nil, err
 	}
@@ -2073,9 +1921,9 @@ func (r *trackerPatternResolver) AllowedSampleHits(ctx context.Context, obj *typ
 	return cookiebanner.NewBrowserFamilyCountPtrs(splits.Allowed), nil
 }
 
-// DeniedSampleHits is the resolver for the deniedSampleHits field.
-func (r *trackerPatternResolver) DeniedSampleHits(ctx context.Context, obj *types.TrackerPattern, sampleID *gid.GID) ([]*cookiebanner.BrowserFamilyCount, error) {
-	splits, err := r.loadSampleHitSplits(ctx, obj, sampleID)
+// DeniedHits is the resolver for the deniedHits field.
+func (r *trackerPatternResolver) DeniedHits(ctx context.Context, obj *types.TrackerPattern, days *int) ([]*cookiebanner.BrowserFamilyCount, error) {
+	splits, err := r.loadHitSplits(ctx, obj, days)
 	if err != nil {
 		return nil, err
 	}
@@ -2338,16 +2186,6 @@ func (r *Resolver) CookieBannerConnection() schema.CookieBannerConnectionResolve
 	return &cookieBannerConnectionResolver{r}
 }
 
-// CookieBannerSample returns schema.CookieBannerSampleResolver implementation.
-func (r *Resolver) CookieBannerSample() schema.CookieBannerSampleResolver {
-	return &cookieBannerSampleResolver{r}
-}
-
-// CookieBannerSampleConnection returns schema.CookieBannerSampleConnectionResolver implementation.
-func (r *Resolver) CookieBannerSampleConnection() schema.CookieBannerSampleConnectionResolver {
-	return &cookieBannerSampleConnectionResolver{r}
-}
-
 // CookieBannerScan returns schema.CookieBannerScanResolver implementation.
 func (r *Resolver) CookieBannerScan() schema.CookieBannerScanResolver {
 	return &cookieBannerScanResolver{r}
@@ -2402,8 +2240,6 @@ func (r *Resolver) TrackerResourceConnection() schema.TrackerResourceConnectionR
 type (
 	cookieBannerResolver                  struct{ *Resolver }
 	cookieBannerConnectionResolver        struct{ *Resolver }
-	cookieBannerSampleResolver            struct{ *Resolver }
-	cookieBannerSampleConnectionResolver  struct{ *Resolver }
 	cookieBannerScanResolver              struct{ *Resolver }
 	cookieBannerScanConnectionResolver    struct{ *Resolver }
 	cookieBannerVersionResolver           struct{ *Resolver }

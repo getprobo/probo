@@ -333,24 +333,20 @@
       "version": "v{{version}}",
       "deactivated": "Cette bannière est désactivée et n’est pas affichée aux visiteurs.",
       "deactivatedDraft": "Cette bannière est désactivée et n’est pas affichée aux visiteurs. Cette version contient des modifications non publiées.",
-      "samplingUnpublished": "Mesure du trafic et des taux de détection des trackers sur toutes les vues et sur les vues où un tracker devrait se déclencher. Publier l’arrêtera. Ces modifications ne sont pas encore en ligne.",
-      "sampling": "Mesure du trafic et des taux de détection des trackers sur toutes les vues et sur les vues où un tracker devrait se déclencher.",
       "draft": "Cette version contient des modifications non publiées.",
-      "published": "Cette version est publiée et en ligne. Commencez une mesure pour voir à quelle fréquence les trackers apparaissent.",
+      "published": "Cette version est publiée et en ligne.",
       "unpublished": "Cette bannière n’a pas encore été publiée."
     },
-    "messages": { "copiedTitle": "Copié", "activated": "Bannière activée", "deactivated": "Bannière désactivée", "published": "Version publiée", "sampleStarted": "Mesure démarrée", "sampleStopped": "Mesure arrêtée", "idCopied": "ID de la bannière copié dans le presse-papiers", "deleted": "Bannière de cookies supprimée avec succès" },
-    "errors": { "title": "Erreur", "activate": "Échec de l’activation", "deactivate": "Échec de la désactivation", "publish": "Échec de la publication", "startSample": "Échec du démarrage de la mesure", "stopSample": "Échec de l’arrêt de la mesure", "delete": "Échec de la suppression de la bannière de cookies", "copy": "Échec de la copie de l’ID de la bannière" },
+    "messages": { "copiedTitle": "Copié", "activated": "Bannière activée", "deactivated": "Bannière désactivée", "published": "Version publiée", "idCopied": "ID de la bannière copié dans le presse-papiers", "deleted": "Bannière de cookies supprimée avec succès" },
+    "errors": { "title": "Erreur", "activate": "Échec de l’activation", "deactivate": "Échec de la désactivation", "publish": "Échec de la publication", "delete": "Échec de la suppression de la bannière de cookies", "copy": "Échec de la copie de l’ID de la bannière" },
     "deleteConfirmation": "Cette action supprimera définitivement la bannière de cookies \"{{name}}\". Elle est irréversible.",
     "dialogs": { "deleteTitle": "Supprimer la bannière de cookies" },
     "status": { "active": "Active", "inactive": "Inactive" },
-    "actions": { "publish": "Publier les modifications", "startSample": "Commencer la mesure", "stopSample": "Arrêter la mesure", "activate": "Activer", "deactivate": "Désactiver", "delete": "Supprimer", "cancel": "Annuler", "copyId": "Copier l’ID de la bannière" },
-    "sample": { "pageLoads": "Chargements de page", "empty": "Aucun pour le moment" }
+    "actions": { "publish": "Publier les modifications", "activate": "Activer", "deactivate": "Désactiver", "delete": "Supprimer", "cancel": "Annuler", "copyId": "Copier l’ID de la bannière" },
+    "pageLoads": { "label": "Chargements de page (7 derniers jours)", "empty": "Aucun pour le moment" }
   },
-  "trackerSample": {
-    "empty": "Aucun signalement pour le moment.",
-    "hits": "signalements",
-    "loads": "chargements",
+  "trackerHits": {
+    "empty": "Aucun signalement ces 7 derniers jours.",
     "hitRate": "Taux de détection global",
     "expectedHitRate": "Taux de détection valide",
     "driftRate": "Taux de dérive"

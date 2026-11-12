@@ -333,24 +333,20 @@
       "version": "v{{version}}",
       "deactivated": "Deze banner is gedeactiveerd en wordt niet getoond aan bezoekers.",
       "deactivatedDraft": "Deze banner is gedeactiveerd en wordt niet getoond aan bezoekers. Deze versie heeft ongepubliceerde wijzigingen.",
-      "samplingUnpublished": "Verkeer en tracker-hitrates meten op alle weergaven en op weergaven waar een tracker zou moeten afgaan. Publiceren stopt dit. Deze wijzigingen zijn nog niet live.",
-      "sampling": "Verkeer en tracker-hitrates meten op alle weergaven en op weergaven waar een tracker zou moeten afgaan.",
       "draft": "Deze versie heeft ongepubliceerde wijzigingen.",
-      "published": "Deze versie is gepubliceerd en live. Start een meting om te zien hoe vaak trackers voorkomen.",
+      "published": "Deze versie is gepubliceerd en live.",
       "unpublished": "Deze banner is nog niet gepubliceerd."
     },
-    "messages": { "copiedTitle": "Gekopieerd", "activated": "Banner geactiveerd", "deactivated": "Banner gedeactiveerd", "published": "Versie gepubliceerd", "sampleStarted": "Meting gestart", "sampleStopped": "Meting gestopt", "idCopied": "Banner-ID gekopieerd naar klembord", "deleted": "Cookiebanner succesvol verwijderd" },
-    "errors": { "title": "Fout", "activate": "Activeren mislukt", "deactivate": "Deactiveren mislukt", "publish": "Publiceren mislukt", "startSample": "Meting starten mislukt", "stopSample": "Meting stoppen mislukt", "delete": "Cookiebanner verwijderen mislukt", "copy": "Banner-ID kopiëren mislukt" },
+    "messages": { "copiedTitle": "Gekopieerd", "activated": "Banner geactiveerd", "deactivated": "Banner gedeactiveerd", "published": "Versie gepubliceerd", "idCopied": "Banner-ID gekopieerd naar klembord", "deleted": "Cookiebanner succesvol verwijderd" },
+    "errors": { "title": "Fout", "activate": "Activeren mislukt", "deactivate": "Deactiveren mislukt", "publish": "Publiceren mislukt", "delete": "Cookiebanner verwijderen mislukt", "copy": "Banner-ID kopiëren mislukt" },
     "deleteConfirmation": "Hiermee wordt de cookiebanner \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
     "dialogs": { "deleteTitle": "Cookiebanner verwijderen" },
     "status": { "active": "Actief", "inactive": "Inactief" },
-    "actions": { "publish": "Wijzigingen publiceren", "startSample": "Meting starten", "stopSample": "Meting stoppen", "activate": "Activeren", "deactivate": "Deactiveren", "delete": "Verwijderen", "cancel": "Annuleren", "copyId": "Banner-ID kopiëren" },
-    "sample": { "pageLoads": "Paginaladingen", "empty": "Nog geen" }
+    "actions": { "publish": "Wijzigingen publiceren", "activate": "Activeren", "deactivate": "Deactiveren", "delete": "Verwijderen", "cancel": "Annuleren", "copyId": "Banner-ID kopiëren" },
+    "pageLoads": { "label": "Paginaladingen (laatste 7 dagen)", "empty": "Nog geen" }
   },
-  "trackerSample": {
-    "empty": "Nog geen hits.",
-    "hits": "hits",
-    "loads": "paginaladingen",
+  "trackerHits": {
+    "empty": "Geen hits in de laatste 7 dagen.",
     "hitRate": "Globale hitrate",
     "expectedHitRate": "Geldige hitrate",
     "driftRate": "Afwijkingspercentage"

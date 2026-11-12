@@ -20,7 +20,7 @@
 
 import { Text } from "@probo/ui/src/v2/typography/Text";
 
-import { sampleFamilyCounts } from "../../variants";
+import { familyHitRates } from "../../variants";
 
 interface StatValueProps {
   value: string;
@@ -28,7 +28,7 @@ interface StatValueProps {
 }
 
 export function StatValue({ value, label }: StatValueProps) {
-  const { rateLead, value: valueClass } = sampleFamilyCounts();
+  const { rateLead, value: valueClass } = familyHitRates();
 
   return (
     <div className={rateLead()}>

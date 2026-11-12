@@ -767,20 +767,6 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 			return types.NewCookieBannerScan(scan), nil
 		}
-	case coredata.CookieBannerSampleEntityType:
-		action = probo.ActionCookieBannerGet
-		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
-			sample, err := r.cookieBanner.GetCookieBannerSample(ctx, scope, id)
-			if err != nil {
-				if errors.Is(err, cookiebanner.ErrSampleNotFound) {
-					return nil, coredata.ErrResourceNotFound
-				}
-
-				return nil, err
-			}
-
-			return types.NewCookieBannerSample(sample), nil
-		}
 	default:
 	}
 

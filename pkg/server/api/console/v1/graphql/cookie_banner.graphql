@@ -210,52 +210,12 @@ enum BrowserFamily
         )
 }
 
-type SampleFamilyCount
+type BrowserFamilyCount
     @goModel(
         model: "go.probo.inc/probo/pkg/cookiebanner.BrowserFamilyCount"
     ) {
     family: BrowserFamily!
     count: Int!
-}
-
-type CookieBannerSample implements Node {
-    id: ID!
-    cookieBanner: CookieBanner! @goField(forceResolver: true)
-    pageLoads: [SampleFamilyCount!]! @goField(forceResolver: true)
-    frozenAt: Datetime
-    createdAt: Datetime!
-}
-
-enum CookieBannerSampleOrderField
-    @goModel(
-        model: "go.probo.inc/probo/pkg/coredata.CookieBannerSampleOrderField"
-    ) {
-    CREATED_AT
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.CookieBannerSampleOrderFieldCreatedAt"
-        )
-}
-
-input CookieBannerSampleOrder
-    @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CookieBannerSampleOrderBy"
-    ) {
-    direction: OrderDirection!
-    field: CookieBannerSampleOrderField!
-}
-
-type CookieBannerSampleConnection
-    @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CookieBannerSampleConnection"
-    ) {
-    totalCount: Int! @goField(forceResolver: true)
-    edges: [CookieBannerSampleEdge!]!
-    pageInfo: PageInfo!
-}
-
-type CookieBannerSampleEdge {
-    cursor: CursorKey!
-    node: CookieBannerSample!
 }
 
 enum CookieBannerScanState
@@ -486,15 +446,12 @@ type CookieBanner implements Node {
 
     gvlVendorIds: [Int!]! @goField(forceResolver: true)
 
-    latestSample: CookieBannerSample @goField(forceResolver: true)
-
-    samples(
-        first: Int
-        after: CursorKey
-        last: Int
-        before: CursorKey
-        orderBy: CookieBannerSampleOrder
-    ): CookieBannerSampleConnection! @goField(forceResolver: true)
+    """
+    Page loads per browser family over the last `days` UTC days,
+    today included. Defaults to 7 days; at most 90.
+    """
+    pageLoads(days: Int): [BrowserFamilyCount!]!
+        @goField(forceResolver: true)
 
     uncategorisedTrackerResources(
         first: Int
@@ -639,11 +596,16 @@ type TrackerPattern implements Node
     source: CookieSource
     excluded: Boolean!
     detectedCount: Int! @goField(forceResolver: true)
-    sampleHits(sampleId: ID): [SampleFamilyCount!]!
+    """
+    Detections of this pattern per browser family over the last `days`
+    UTC days, today included. Defaults to 7 days; at most 90.
+    allowedHits and deniedHits split them by whether the visitor had
+    granted the pattern's category.
+    """
+    hits(days: Int): [BrowserFamilyCount!]! @goField(forceResolver: true)
+    allowedHits(days: Int): [BrowserFamilyCount!]!
         @goField(forceResolver: true)
-    allowedSampleHits(sampleId: ID): [SampleFamilyCount!]!
-        @goField(forceResolver: true)
-    deniedSampleHits(sampleId: ID): [SampleFamilyCount!]!
+    deniedHits(days: Int): [BrowserFamilyCount!]!
         @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
@@ -987,12 +949,6 @@ extend type Mutation {
     updateCookieBanner(
         input: UpdateCookieBannerInput!
     ): UpdateCookieBannerPayload!
-    startCookieBannerSample(
-        input: StartCookieBannerSampleInput!
-    ): StartCookieBannerSamplePayload!
-    stopCookieBannerSample(
-        input: StopCookieBannerSampleInput!
-    ): StopCookieBannerSamplePayload!
     deleteCookieBanner(
         input: DeleteCookieBannerInput!
     ): DeleteCookieBannerPayload!
@@ -1090,24 +1046,6 @@ input UpdateCookieBannerInput {
     publisherCountryCode: String
     capabilities: CookieBannerCapabilitiesInput
     forceOptIn: Boolean
-}
-
-input StartCookieBannerSampleInput {
-    cookieBannerId: ID!
-}
-
-type StartCookieBannerSamplePayload {
-    cookieBannerSample: CookieBannerSample!
-    cookieBanner: CookieBanner!
-}
-
-input StopCookieBannerSampleInput {
-    cookieBannerId: ID!
-}
-
-type StopCookieBannerSamplePayload {
-    cookieBannerSample: CookieBannerSample!
-    cookieBanner: CookieBanner!
 }
 
 input DeleteCookieBannerInput {

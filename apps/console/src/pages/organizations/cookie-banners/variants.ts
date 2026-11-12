@@ -39,12 +39,11 @@ export const cookieBannerConfigLayout = tv({
     meta: "flex shrink-0 items-center gap-1.5",
     id: "font-mono",
     version: "shrink-0 font-mono",
-    sample: "flex flex-col gap-1",
-    sampleRow: "flex flex-wrap items-center gap-x-2 gap-y-0.5",
-    sampleItem: "flex items-center gap-1.5",
-    sampleLogo: "shrink-0 text-sand-a8",
-    sampleSeparator: "text-sand-8",
-    sampleActions: "flex flex-wrap items-center gap-2",
+    body: "flex flex-col gap-1",
+    loadsRow: "flex flex-wrap items-center gap-x-2 gap-y-0.5",
+    loadsItem: "flex items-center gap-1.5",
+    loadsLogo: "shrink-0 text-sand-a8",
+    loadsSeparator: "text-sand-8",
   },
 });
 
@@ -210,7 +209,7 @@ export const trackerMaxAgeField = tv({
   },
 });
 
-export const sampleFamilyCounts = tv({
+export const familyHitRates = tv({
   slots: {
     root: "flex flex-wrap gap-3",
     card: "flex min-w-72 flex-col items-stretch gap-3",

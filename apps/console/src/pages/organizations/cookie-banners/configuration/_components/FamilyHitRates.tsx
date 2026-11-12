@@ -24,78 +24,76 @@ import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { SampleFamilyCounts_cookieBanner$key } from "#/__generated__/core/SampleFamilyCounts_cookieBanner.graphql";
-import type { SampleFamilyCounts_trackerPattern$key } from "#/__generated__/core/SampleFamilyCounts_trackerPattern.graphql";
+import type { FamilyHitRates_cookieBanner$key } from "#/__generated__/core/FamilyHitRates_cookieBanner.graphql";
+import type { FamilyHitRates_trackerPattern$key } from "#/__generated__/core/FamilyHitRates_trackerPattern.graphql";
 
-import { sampleFamilyCounts } from "../../variants";
+import { familyHitRates } from "../../variants";
 import { familyLabel } from "../_lib/familyLabel";
 
 import { FamilyLogo } from "./FamilyLogo";
 import { StatValue } from "./StatCard";
 
 const cookieBannerFragment = graphql`
-  fragment SampleFamilyCounts_cookieBanner on CookieBanner {
-    latestSample {
-      pageLoads {
-        family
-        count
-      }
+  fragment FamilyHitRates_cookieBanner on CookieBanner {
+    pageLoads(days: 7) {
+      family
+      count
     }
   }
 `;
 
 const trackerPatternFragment = graphql`
-  fragment SampleFamilyCounts_trackerPattern on TrackerPattern {
-    sampleHits {
+  fragment FamilyHitRates_trackerPattern on TrackerPattern {
+    hits(days: 7) {
       family
       count
     }
-    allowedSampleHits {
+    allowedHits(days: 7) {
       family
       count
     }
-    deniedSampleHits {
+    deniedHits(days: 7) {
       family
       count
     }
   }
 `;
 
-interface SampleFamilyCountsProps {
-  cookieBannerKey: SampleFamilyCounts_cookieBanner$key;
-  trackerPatternKey: SampleFamilyCounts_trackerPattern$key;
+interface FamilyHitRatesProps {
+  cookieBannerKey: FamilyHitRates_cookieBanner$key;
+  trackerPatternKey: FamilyHitRates_trackerPattern$key;
 }
 
-export function SampleFamilyCounts({
+export function FamilyHitRates({
   cookieBannerKey,
   trackerPatternKey,
-}: SampleFamilyCountsProps) {
+}: FamilyHitRatesProps) {
   const { t, i18n } = useTranslation("organizations/cookie-banners");
   const banner = useFragment(cookieBannerFragment, cookieBannerKey);
   const pattern = useFragment(trackerPatternFragment, trackerPatternKey);
   const { root, card, family, logo, rates, rate, fraction }
-    = sampleFamilyCounts();
+    = familyHitRates();
   const loadsByFamily = new Map(
-    (banner.latestSample?.pageLoads ?? []).map(entry => [entry.family, entry.count]),
+    banner.pageLoads.map(entry => [entry.family, entry.count]),
   );
   const allowedHitsByFamily = new Map(
-    pattern.allowedSampleHits.map(entry => [entry.family, entry.count]),
+    pattern.allowedHits.map(entry => [entry.family, entry.count]),
   );
   const deniedHitsByFamily = new Map(
-    pattern.deniedSampleHits.map(entry => [entry.family, entry.count]),
+    pattern.deniedHits.map(entry => [entry.family, entry.count]),
   );
 
-  if (pattern.sampleHits.length === 0) {
+  if (pattern.hits.length === 0) {
     return (
       <Text size={2} color="faint">
-        {t("trackerSample.empty")}
+        {t("trackerHits.empty")}
       </Text>
     );
   }
 
   return (
     <div className={root()}>
-      {pattern.sampleHits.map((entry) => {
+      {pattern.hits.map((entry) => {
         const loads = loadsByFamily.get(entry.family) ?? 0;
         const allowedHitCount = allowedHitsByFamily.get(entry.family) ?? 0;
         const deniedHitCount = deniedHitsByFamily.get(entry.family) ?? 0;
@@ -118,7 +116,7 @@ export function SampleFamilyCounts({
             </div>
             <div className={rates()}>
               <RateRow
-                label={t("trackerSample.hitRate")}
+                label={t("trackerHits.hitRate")}
                 hits={entry.count}
                 loads={loads}
                 locale={i18n.language}
@@ -126,7 +124,7 @@ export function SampleFamilyCounts({
                 fractionClass={fraction()}
               />
               <RateRow
-                label={t("trackerSample.expectedHitRate")}
+                label={t("trackerHits.expectedHitRate")}
                 hits={allowedHitCount}
                 loads={loads}
                 locale={i18n.language}
@@ -134,7 +132,7 @@ export function SampleFamilyCounts({
                 fractionClass={fraction()}
               />
               <RateRow
-                label={t("trackerSample.driftRate")}
+                label={t("trackerHits.driftRate")}
                 hits={deniedHitCount}
                 loads={loads}
                 locale={i18n.language}
