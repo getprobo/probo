@@ -139,6 +139,7 @@ func sqlIdent(s string) bool {
 
 	for i, r := range s {
 		letter := r == '_' || (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z')
+
 		digit := r >= '0' && r <= '9'
 		if !letter && (i == 0 || !digit) {
 			return false
@@ -166,6 +167,7 @@ func (c *Cursor[T]) sqlDirection() string {
 func cursorWhere(field string, value string, direction string, nullsLast bool, valueNull bool) string {
 	cmp := ">="
 	idExclude := "id < @cursor_id"
+
 	if direction == "DESC" {
 		cmp = "<="
 		idExclude = "id > @cursor_id"
