@@ -189,7 +189,7 @@ type (
 		PageView      bool
 		ConsentAction *coredata.CookieConsentAction
 		Family        coredata.BrowserFamily
-		Presentation  Presentation
+		Presentation  coredata.CookieBannerPresentation
 	}
 
 	CreateTrackerPatternRequest struct {
@@ -3264,7 +3264,7 @@ func (s *Service) ReportDetectedTrackers(
 			}
 
 			if banner.ForceOptIn {
-				req.Presentation = PresentationOptIn
+				req.Presentation = coredata.CookieBannerPresentationOptIn
 			}
 
 			var uncategorised coredata.CookieCategory

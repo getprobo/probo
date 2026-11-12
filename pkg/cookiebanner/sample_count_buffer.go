@@ -66,7 +66,7 @@ func (s *Service) addPatternHit(key sampleHitKey) {
 // pageLoadGranted reports whether non-necessary trackers may fire on a view
 // with this presentation and consent action. An empty presentation is a
 // legacy discovery bucket and counts as granted.
-func pageLoadGranted(presentation Presentation, action *coredata.CookieConsentAction) bool {
+func pageLoadGranted(presentation coredata.CookieBannerPresentation, action *coredata.CookieConsentAction) bool {
 	if presentation == "" {
 		return true
 	}
@@ -77,9 +77,9 @@ func pageLoadGranted(presentation Presentation, action *coredata.CookieConsentAc
 	}
 
 	switch presentation {
-	case PresentationOptIn:
+	case coredata.CookieBannerPresentationOptIn:
 		return actionValue == coredata.CookieConsentActionAcceptAll.String()
-	case PresentationOptOut, PresentationNotice:
+	case coredata.CookieBannerPresentationOptOut, coredata.CookieBannerPresentationNotice:
 		return actionValue != coredata.CookieConsentActionRejectAll.String() &&
 			actionValue != coredata.CookieConsentActionGPC.String()
 	default:
@@ -91,7 +91,7 @@ func pageLoadGranted(presentation Presentation, action *coredata.CookieConsentAc
 // fire. CUSTOMIZE uses the SDK flag. A missing flag on a customize view is
 // not granted. Every other action is derived from the presentation.
 func categoryGrantedForHit(
-	presentation Presentation,
+	presentation coredata.CookieBannerPresentation,
 	action *coredata.CookieConsentAction,
 	reported *bool,
 ) bool {
@@ -113,7 +113,7 @@ func consentActionValue(action *coredata.CookieConsentAction) string {
 func (s *Service) recordSampleIncrements(
 	bannerID gid.GID,
 	family coredata.BrowserFamily,
-	presentation Presentation,
+	presentation coredata.CookieBannerPresentation,
 	action *coredata.CookieConsentAction,
 	pageView bool,
 	patternGrants map[gid.GID]bool,

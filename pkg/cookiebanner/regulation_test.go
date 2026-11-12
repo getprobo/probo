@@ -112,24 +112,24 @@ func TestPresentationForRegulation(t *testing.T) {
 
 	tests := []struct {
 		regulation Regulation
-		want       Presentation
+		want       coredata.CookieBannerPresentation
 	}{
-		{RegulationGDPR, PresentationOptIn},
-		{RegulationUKGDPR, PresentationOptIn},
-		{RegulationFADP, PresentationOptIn},
-		{RegulationPOPIA, PresentationOptIn},
-		{RegulationCCPA, PresentationOptOut},
-		{RegulationTDPSA, PresentationOptOut},
-		{RegulationVCDPA, PresentationOptOut},
-		{RegulationPIPEDA, PresentationOptOut},
-		{RegulationPIPAAB, PresentationOptOut},
-		{RegulationPIPABC, PresentationOptOut},
-		{RegulationPIPACA, PresentationOptOut},
-		{RegulationLaw25, PresentationOptIn},
-		{RegulationLGPD, PresentationOptIn},
-		{RegulationAPPI, PresentationOptOut},
-		{RegulationNone, PresentationOptOut},
-		{RegulationLFPDPPP, PresentationNotice},
+		{RegulationGDPR, coredata.CookieBannerPresentationOptIn},
+		{RegulationUKGDPR, coredata.CookieBannerPresentationOptIn},
+		{RegulationFADP, coredata.CookieBannerPresentationOptIn},
+		{RegulationPOPIA, coredata.CookieBannerPresentationOptIn},
+		{RegulationCCPA, coredata.CookieBannerPresentationOptOut},
+		{RegulationTDPSA, coredata.CookieBannerPresentationOptOut},
+		{RegulationVCDPA, coredata.CookieBannerPresentationOptOut},
+		{RegulationPIPEDA, coredata.CookieBannerPresentationOptOut},
+		{RegulationPIPAAB, coredata.CookieBannerPresentationOptOut},
+		{RegulationPIPABC, coredata.CookieBannerPresentationOptOut},
+		{RegulationPIPACA, coredata.CookieBannerPresentationOptOut},
+		{RegulationLaw25, coredata.CookieBannerPresentationOptIn},
+		{RegulationLGPD, coredata.CookieBannerPresentationOptIn},
+		{RegulationAPPI, coredata.CookieBannerPresentationOptOut},
+		{RegulationNone, coredata.CookieBannerPresentationOptOut},
+		{RegulationLFPDPPP, coredata.CookieBannerPresentationNotice},
 	}
 
 	for _, tt := range tests {
@@ -148,7 +148,7 @@ func TestLayoutForRegulation(t *testing.T) {
 		t.Parallel()
 
 		layout := LayoutForRegulation(RegulationGDPR)
-		require.Equal(t, PresentationOptIn, layout.Presentation)
+		require.Equal(t, coredata.CookieBannerPresentationOptIn, layout.Presentation)
 		require.Equal(t, StateBanner, layout.InitialState)
 		require.Equal(t, StatePanel, layout.ReopenState)
 		require.False(t, layout.DefaultNonNecessaryGranted)
@@ -160,7 +160,7 @@ func TestLayoutForRegulation(t *testing.T) {
 		t.Parallel()
 
 		layout := LayoutForRegulation(RegulationCCPA)
-		require.Equal(t, PresentationOptOut, layout.Presentation)
+		require.Equal(t, coredata.CookieBannerPresentationOptOut, layout.Presentation)
 		require.Equal(t, StateHidden, layout.InitialState)
 		require.Equal(t, StatePrivacyChoices, layout.ReopenState)
 		require.True(t, layout.DefaultNonNecessaryGranted)
@@ -172,7 +172,7 @@ func TestLayoutForRegulation(t *testing.T) {
 		t.Parallel()
 
 		layout := LayoutForRegulation(RegulationTDPSA)
-		require.Equal(t, PresentationOptOut, layout.Presentation)
+		require.Equal(t, coredata.CookieBannerPresentationOptOut, layout.Presentation)
 		require.Equal(t, StateHidden, layout.InitialState)
 		require.Equal(t, StateBanner, layout.ReopenState)
 		require.Equal(t, SettingsLinkDefault, layout.SettingsLink)
@@ -182,7 +182,7 @@ func TestLayoutForRegulation(t *testing.T) {
 		t.Parallel()
 
 		layout := LayoutForRegulation(RegulationPIPEDA)
-		require.Equal(t, PresentationOptOut, layout.Presentation)
+		require.Equal(t, coredata.CookieBannerPresentationOptOut, layout.Presentation)
 		require.Equal(t, StateHidden, layout.InitialState)
 		require.Equal(t, SettingsLinkDefault, layout.SettingsLink)
 	})
@@ -191,7 +191,7 @@ func TestLayoutForRegulation(t *testing.T) {
 		t.Parallel()
 
 		layout := LayoutForRegulation(RegulationLGPD)
-		require.Equal(t, PresentationOptIn, layout.Presentation)
+		require.Equal(t, coredata.CookieBannerPresentationOptIn, layout.Presentation)
 		require.Equal(t, StateBanner, layout.InitialState)
 		require.Equal(t, StatePanel, layout.ReopenState)
 		require.False(t, layout.DefaultNonNecessaryGranted)
@@ -201,7 +201,7 @@ func TestLayoutForRegulation(t *testing.T) {
 		t.Parallel()
 
 		layout := LayoutForRegulation(RegulationAPPI)
-		require.Equal(t, PresentationOptOut, layout.Presentation)
+		require.Equal(t, coredata.CookieBannerPresentationOptOut, layout.Presentation)
 		require.Equal(t, StateHidden, layout.InitialState)
 		require.Equal(t, StateBanner, layout.ReopenState)
 		require.True(t, layout.DefaultNonNecessaryGranted)
@@ -212,7 +212,7 @@ func TestLayoutForRegulation(t *testing.T) {
 		t.Parallel()
 
 		layout := LayoutForRegulation(RegulationNone)
-		require.Equal(t, PresentationOptOut, layout.Presentation)
+		require.Equal(t, coredata.CookieBannerPresentationOptOut, layout.Presentation)
 		require.Equal(t, StateHidden, layout.InitialState)
 		require.Equal(t, StateBanner, layout.ReopenState)
 		require.True(t, layout.DefaultNonNecessaryGranted)
@@ -223,7 +223,7 @@ func TestLayoutForRegulation(t *testing.T) {
 		t.Parallel()
 
 		layout := LayoutForRegulation(RegulationLFPDPPP)
-		require.Equal(t, PresentationNotice, layout.Presentation)
+		require.Equal(t, coredata.CookieBannerPresentationNotice, layout.Presentation)
 		require.Equal(t, StateBanner, layout.InitialState)
 		require.Equal(t, StateBanner, layout.ReopenState)
 		require.True(t, layout.DefaultNonNecessaryGranted)
@@ -242,7 +242,7 @@ func TestLayoutForBanner(t *testing.T) {
 		t.Parallel()
 
 		layout := LayoutForBanner(RegulationTDPSA, true)
-		require.Equal(t, PresentationOptIn, layout.Presentation)
+		require.Equal(t, coredata.CookieBannerPresentationOptIn, layout.Presentation)
 		require.Equal(t, StateBanner, layout.InitialState)
 		require.Equal(t, StatePanel, layout.ReopenState)
 		require.False(t, layout.DefaultNonNecessaryGranted)
@@ -257,7 +257,7 @@ func TestLayoutForBanner(t *testing.T) {
 		t.Parallel()
 
 		layout := LayoutForBanner(RegulationLFPDPPP, true)
-		require.Equal(t, PresentationOptIn, layout.Presentation)
+		require.Equal(t, coredata.CookieBannerPresentationOptIn, layout.Presentation)
 		require.Equal(t, StateBanner, layout.InitialState)
 		require.Equal(t, StatePanel, layout.ReopenState)
 		require.False(t, layout.DefaultNonNecessaryGranted)
@@ -268,7 +268,7 @@ func TestLayoutForBanner(t *testing.T) {
 		t.Parallel()
 
 		layout := LayoutForBanner(RegulationNone, true)
-		require.Equal(t, PresentationOptIn, layout.Presentation)
+		require.Equal(t, coredata.CookieBannerPresentationOptIn, layout.Presentation)
 		require.Equal(t, StateBanner, layout.InitialState)
 		require.Equal(t, StatePanel, layout.ReopenState)
 		require.False(t, layout.DefaultNonNecessaryGranted)
@@ -285,7 +285,7 @@ func TestLayoutForBanner(t *testing.T) {
 		t.Parallel()
 
 		layout := LayoutForBanner(RegulationCCPA, true)
-		require.Equal(t, PresentationOptIn, layout.Presentation)
+		require.Equal(t, coredata.CookieBannerPresentationOptIn, layout.Presentation)
 		require.Equal(t, StateBanner, layout.InitialState)
 		require.Equal(t, StatePrivacyChoices, layout.ReopenState)
 		require.False(t, layout.DefaultNonNecessaryGranted)
@@ -343,7 +343,7 @@ func TestLayoutOpensOnlyWhereRequired(t *testing.T) {
 			layout := LayoutForRegulation(regulation)
 
 			switch layout.Presentation {
-			case PresentationOptIn, PresentationNotice:
+			case coredata.CookieBannerPresentationOptIn, coredata.CookieBannerPresentationNotice:
 				require.Equal(t, StateBanner, layout.InitialState)
 			default:
 				require.Equal(t, StateHidden, layout.InitialState)
@@ -363,7 +363,7 @@ func TestConsentModeMatchesPresentation(t *testing.T) {
 			t.Parallel()
 
 			want := ConsentModeOptOut
-			if PresentationForRegulation(regulation) == PresentationOptIn {
+			if PresentationForRegulation(regulation) == coredata.CookieBannerPresentationOptIn {
 				want = ConsentModeOptIn
 			}
 
