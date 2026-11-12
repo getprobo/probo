@@ -28,6 +28,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/automerge"
+	"go.probo.inc/probo/pkg/coredata"
 )
 
 const (
@@ -126,21 +127,59 @@ func TestReadStableChanges_NothingNew(t *testing.T) {
 	assert.Equal(t, canonicalHeads, heads)
 }
 
-func TestPersistFast_LiveDocumentBehindCanonical(t *testing.T) {
+func TestMergeCanonical_CatchesUpLiveDocument(t *testing.T) {
 	t.Parallel()
 
 	canonical, live := newPersistTestDocuments(t)
 
-	// Another instance advanced the canonical document. The live document
-	// does not hold its heads, which is what sends persist to the merge path.
+	// Another instance advanced the canonical document while this one made
+	// its own edit. The live document does not hold the canonical heads,
+	// which is what makes persist catch up before it appends.
 	commitPersistTestContent(t, canonical, persistTestEdit)
+	require.NoError(t, live.PutString("note", "local edit"))
+	_, err := live.Commit("Local edit", time.Now())
+	require.NoError(t, err)
 
 	canonicalHeads, err := canonical.Heads()
 	require.NoError(t, err)
 
 	covered, err := live.HasHeads(canonicalHeads)
 	require.NoError(t, err)
-	assert.False(t, covered)
+	require.False(t, covered)
+
+	snapshot, err := canonical.Save()
+	require.NoError(t, err)
+
+	require.NoError(
+		t,
+		mergeCanonical(
+			context.Background(),
+			&coredata.CollaborationDocument{Snapshot: snapshot},
+			nil,
+			live,
+		),
+	)
+
+	covered, err = live.HasHeads(canonicalHeads)
+	require.NoError(t, err)
+	require.True(t, covered)
+
+	// Only the local edit is left to append, and replaying it on the
+	// canonical document converges both sides.
+	heads, changes, stable, err := readStableChanges(live, canonicalHeads)
+	require.NoError(t, err)
+	require.True(t, stable)
+	require.Len(t, changes, 1)
+
+	require.NoError(t, canonical.ApplyChanges(changes))
+
+	replayedHeads, err := canonical.Heads()
+	require.NoError(t, err)
+	assert.Equal(t, heads, replayedHeads)
+
+	content, err := materializeAtHeads(live, heads)
+	require.NoError(t, err)
+	assert.Contains(t, content, "Beta")
 }
 
 func TestMaterializeAtHeads_PinsOlderHeads(t *testing.T) {
