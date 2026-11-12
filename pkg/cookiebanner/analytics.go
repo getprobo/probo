@@ -36,10 +36,18 @@ const (
 	MaxAnalyticsDays     = 90
 )
 
-type HitSplitQuery struct {
-	PatternID gid.GID
-	Days      int
-}
+type (
+	HitSplitQuery struct {
+		PatternID gid.GID
+		Days      int
+	}
+
+	HitSplits struct {
+		Total   []BrowserFamilyCount
+		Allowed []BrowserFamilyCount
+		Denied  []BrowserFamilyCount
+	}
+)
 
 // utcDay returns the UTC midnight that starts the day of t. Analytics are
 // bucketed by UTC day because organizations have no timezone.
