@@ -35,7 +35,7 @@ type (
 	// type via @goModel. The first block contains the fields gqlgen
 	// fulfills directly from the model; resolver-only fields
 	// (cookieCategory, detectedTrackers, commonThirdParty, attribution,
-	// sourceCookieBanner, detectedCount, sampleHits, permission) are
+	// sourceCookieBanner, detectedCount, hits, permission) are
 	// populated by the resolver. SourceCookieBannerID is the sibling
 	// banner that promoted source, when one did.
 	//
