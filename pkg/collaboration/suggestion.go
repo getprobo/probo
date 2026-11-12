@@ -47,6 +47,7 @@ const (
 	suggestionSplitKindAttr   = "splitKind"
 	suggestionSplitInsertion  = "insertion"
 	suggestionSplitStructural = "structural"
+	suggestionSplitDeletion   = "deletion"
 
 	// BlockSpanWidth is the cursor-index width of one block marker. Block
 	// operations are not characters in this text index, so the width is zero.
@@ -271,6 +272,16 @@ func SuggestionQuote(spans []automerge.Span, suggestionID string) string {
 
 	for _, span := range spans {
 		if span.Type == automerge.SpanTypeBlock {
+			id, kind := suggestionSplit(span)
+			if id == suggestionID && kind == suggestionSplitDeletion {
+				quote.WriteByte('\n')
+
+				wrote = true
+				pendingBreak = false
+
+				continue
+			}
+
 			if wrote {
 				pendingBreak = true
 			}
@@ -320,9 +331,11 @@ func SuggestionCursors(
 
 	for _, span := range spans {
 		width := spanUTF16Width(span)
-		matches := span.Type == automerge.SpanTypeText &&
+		splitID, splitKind := suggestionSplit(span)
+		matches := (span.Type == automerge.SpanTypeText &&
 			(markID(span.Marks, SuggestionInsertMark) == suggestionID ||
-				markID(span.Marks, SuggestionDeleteMark) == suggestionID)
+				markID(span.Marks, SuggestionDeleteMark) == suggestionID)) ||
+			(splitID == suggestionID && splitKind == suggestionSplitDeletion)
 
 		if matches {
 			if !found {
@@ -446,6 +459,16 @@ func decideSuggestionSpans(
 			id, kind := suggestionSplit(span)
 			if id == suggestionID {
 				changed = true
+
+				if accept && kind == suggestionSplitDeletion {
+					continue
+				}
+
+				if !accept && kind == suggestionSplitDeletion {
+					next = append(next, clearSuggestionSplit(span))
+
+					continue
+				}
 
 				if !accept && kind == suggestionSplitStructural {
 					continue
@@ -627,8 +650,13 @@ func normalizeSuggestionSpans(spans []automerge.Span) []automerge.Span {
 	normalized := make([]automerge.Span, 0, len(spans))
 
 	for _, span := range spans {
-		if id, _ := suggestionSplit(span); id != "" {
+		id, kind := suggestionSplit(span)
+		if id != "" && kind != suggestionSplitDeletion {
 			continue
+		}
+
+		if kind == suggestionSplitDeletion {
+			span = clearSuggestionSplit(span)
 		}
 
 		if span.Type == automerge.SpanTypeText && markID(span.Marks, SuggestionInsertMark) != "" {

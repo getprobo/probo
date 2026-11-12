@@ -22,7 +22,7 @@ import * as Automerge from "@automerge/automerge";
 import type { SchemaAdapter } from "@automerge/prosemirror";
 import pmToAm from "@automerge/prosemirror/dist/pmToAm.js";
 import { amMarksFromPmMarks } from "@automerge/prosemirror/dist/schema.js";
-import { pmRangeToAmRange } from "@automerge/prosemirror/dist/traversal.js";
+import { blockAtIdx, pmRangeToAmRange } from "@automerge/prosemirror/dist/traversal.js";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import type { Transaction } from "@tiptap/pm/state";
 
@@ -75,6 +75,8 @@ export function applyDocumentSteps(
         // The empty paragraph marker is gone.
       } else if (applyTextblockSplit(adapter, document, path, spans, step, pmDoc, suggestion)) {
         // The new block marker is in place.
+      } else if (applySuggestionSplitAttrs(adapter, document, path, spans, step, pmDoc)) {
+        // A deleted line break is stored on the following block.
       } else if (isEditorAttributeStep(step, pmDoc)) {
         // isAmgBlock and suggestionSplit live on the editor node. The block
         // marker was already written by the split, so this step must not
@@ -197,7 +199,7 @@ function applyTextblockSplit(
 
   const right = automergeBlock(adapter, split.right, split.ancestors);
   if (!right) return false;
-  if (suggestion) {
+  if (suggestion && suggestion.kind !== "deletion") {
     right.attrs[suggestionSplitAttr] = suggestion.id;
     right.attrs[suggestionSplitKindAttr] = suggestion.kind;
   }
@@ -219,6 +221,64 @@ function isLoneDefaultParagraph(doc: ProseMirrorNode): boolean {
   const only = doc.firstChild;
   if (!only?.isTextblock) return false;
   return doc.type.contentMatch.defaultType === only.type;
+}
+
+function applySuggestionSplitAttrs(
+  adapter: SchemaAdapter,
+  document: Automerge.Doc<RichEditorAutomergeDocument>,
+  path: Automerge.Prop[],
+  spans: ReturnType<typeof Automerge.spans>,
+  step: Transaction["steps"][number],
+  pmDoc: ProseMirrorNode,
+): boolean {
+  if (jsonStepType(step) !== "replaceAround") return false;
+  const from = (step as { from?: unknown }).from;
+  if (typeof from !== "number") return false;
+  const before = pmDoc.nodeAt(from);
+  const applied = step.apply(pmDoc).doc;
+  if (!applied || !before?.isTextblock) return false;
+  const after = applied.nodeAt(from);
+  if (!after?.isTextblock) return false;
+  if (suggestionSplitValue(before) === suggestionSplitValue(after)) return false;
+
+  const index = amIndexAt(adapter, spans, from);
+  if (index === null) return false;
+  const located = blockAtIdx(spans, index);
+  if (!located) return false;
+  const attrs = { ...blockAttrRecord(located.block.attrs) };
+  delete attrs[suggestionSplitAttr];
+  delete attrs[suggestionSplitKindAttr];
+  const unknown = nodeUnknownAttrs(after);
+  if (unknown && typeof unknown === "object") {
+    const values = unknown as Record<string, Automerge.MaterializeValue>;
+    const id = values[suggestionSplitAttr];
+    const kind = values[suggestionSplitKindAttr];
+    if (typeof id === "string" && id !== "") {
+      attrs[suggestionSplitAttr] = id;
+      if (typeof kind === "string") attrs[suggestionSplitKindAttr] = kind;
+    }
+  }
+  Automerge.updateBlock(document, path, located.index, {
+    ...located.block,
+    attrs,
+  });
+  return true;
+}
+
+function suggestionSplitValue(node: ProseMirrorNode): string {
+  const unknown = nodeUnknownAttrs(node);
+  if (!unknown || typeof unknown !== "object") return "";
+  const id = (unknown as { suggestionSplit?: unknown }).suggestionSplit;
+  const kind = (unknown as { splitKind?: unknown }).splitKind;
+  if (typeof id !== "string" || id === "") return "";
+  return `${id}:${typeof kind === "string" ? kind : ""}`;
+}
+
+function blockAttrRecord(
+  value: unknown,
+): { [key: string]: Automerge.MaterializeValue } {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  return { ...(value as { [key: string]: Automerge.MaterializeValue }) };
 }
 
 function isEditorAttributeStep(

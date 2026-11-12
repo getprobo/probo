@@ -21,7 +21,7 @@
 import { PaperclipIcon } from "@phosphor-icons/react";
 import { type Extensions } from "@tiptap/core";
 import { type Content, Editor, EditorContent, type JSONContent, useEditor } from "@tiptap/react";
-import { type ComponentProps, type ReactNode, useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { type ComponentProps, type MouseEvent as ReactMouseEvent, type ReactNode, useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { tv } from "tailwind-variants";
 
@@ -50,11 +50,15 @@ import {
 } from "./uploadAttachments";
 
 const richEditorVariants = tv({
-  base: ["relative flex flex-1 flex-col min-w-0 overflow-auto py-14 pr-8 bg-level-1 shadow-base"],
+  base: "relative flex min-w-0 flex-col",
   variants: {
+    page: {
+      true: "flex-1 overflow-auto bg-level-1 py-14 pr-8 shadow-base",
+      false: "",
+    },
     disabled: {
-      true: "pl-8",
-      false: "pl-14",
+      true: "",
+      false: "pointer-events-auto",
     },
     compact: {
       true: "",
@@ -66,9 +70,14 @@ const richEditorVariants = tv({
     },
   },
   compoundVariants: [
-    { compact: true, disabled: false, class: "pl-12" },
-    { controls: false, class: "!pl-0" },
+    { page: true, disabled: true, class: "pl-8" },
+    { page: true, disabled: false, class: "pl-14" },
+    { page: true, compact: true, disabled: false, class: "pl-12" },
+    { page: true, controls: false, class: "!pl-0" },
   ],
+  defaultVariants: {
+    page: true,
+  },
 });
 
 const attachmentToolbar = tv({
@@ -142,6 +151,12 @@ export type RichEditorProps = ComponentProps<"div"> & {
   initialContent?: Content;
   onPresence?: (anchor: number, head: number) => void;
   onEditor?: (editor: Editor | null) => void;
+  // Focus the caret when the editor mounts. Comment composers use this so
+  // typing starts in the new box instead of the document.
+  autoFocus?: boolean;
+  // Document page chrome (gutter, paper background, page padding). Comment
+  // editors turn this off.
+  page?: boolean;
   formatting?: boolean;
   suspendContentChanges?: boolean;
   // Review cards rendered inside the scrollport so they move with the page.
@@ -185,6 +200,8 @@ export function BaseRichEditor(props: BaseRichEditorProps) {
     initialContent: initialContentOverride,
     onPresence,
     onEditor,
+    autoFocus = false,
+    page = true,
     formatting = true,
     suspendContentChanges = false,
     margin,
@@ -409,17 +426,28 @@ export function BaseRichEditor(props: BaseRichEditorProps) {
     editor.setEditable(!disabled, false);
   }, [editor, disabled]);
 
+  useEffect(() => {
+    if (!autoFocus || !editor || editor.isDestroyed || disabled) return;
+    editor.commands.focus("end");
+  }, [autoFocus, disabled, editor]);
+
   if (!editor) return null;
 
+  const { onMouseDown, ...editorDomProps } = divProps;
   const showAttachment = attachments && onUploadFile != null;
   const showToolbar = showAttachment || toolbar != null;
   const { bar, attach } = attachmentToolbar();
 
   return (
     <div
-      className={richEditorVariants({ className, disabled, compact, controls })}
-      {...divProps}
+      className={richEditorVariants({ className, disabled, compact, controls, page })}
+      {...editorDomProps}
       data-review-scroll={margin ? "" : undefined}
+      onMouseDown={(event) => {
+        onMouseDown?.(event);
+        if (disabled) return;
+        reclaimSwallowedEditorFocus(editor, event);
+      }}
     >
       {!disabled && formatting
         && (
@@ -491,6 +519,29 @@ export function BaseRichEditor(props: BaseRichEditorProps) {
       />
     </div>
   );
+}
+
+// Clicks on editor padding are lost when an ancestor has pointer-events: none.
+// Put the caret in the editor instead of letting the click fall through.
+function reclaimSwallowedEditorFocus(
+  editor: Editor,
+  event: ReactMouseEvent<HTMLDivElement>,
+) {
+  if (event.defaultPrevented || editor.isDestroyed) return;
+  const target = event.target;
+  if (!(target instanceof Element) || editor.view.dom.contains(target)) return;
+  const shell = event.currentTarget;
+  if (target !== shell && target !== editor.view.dom.parentElement) return;
+
+  let parent = shell.parentElement;
+  while (parent) {
+    if (getComputedStyle(parent).pointerEvents === "none") {
+      event.preventDefault();
+      editor.commands.focus();
+      return;
+    }
+    parent = parent.parentElement;
+  }
 }
 
 function describeUploadError(

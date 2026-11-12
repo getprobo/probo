@@ -91,6 +91,36 @@ describe("suggestion preview", () => {
     ]);
   });
 
+  it("counts a deleted line break", () => {
+    const doc = schema.node("doc", null, [
+      schema.node("paragraph", null, [schema.text("Hello")]),
+      schema.node("paragraph", {
+        unknownAttrs: { suggestionSplit: id, splitKind: "deletion" },
+      }, [schema.text("World")]),
+    ]);
+
+    expect(collectSuggestionAnchors(doc).get(id)?.deleted).toBe("\n");
+    expect(collectSuggestionAnchors(doc).get(id)?.parts).toEqual([
+      { kind: "deleted", text: "\n" },
+    ]);
+  });
+
+  it("counts the line between two deleted lines", () => {
+    const deleted = schema.marks.suggestionDelete.create({ id });
+    const doc = schema.node("doc", null, [
+      schema.node("paragraph", null, [
+        schema.text("Hello", [deleted]),
+      ]),
+      schema.node("paragraph", {
+        unknownAttrs: { suggestionSplit: id, splitKind: "deletion" },
+      }, [
+        schema.text("World", [deleted]),
+      ]),
+    ]);
+
+    expect(collectSuggestionAnchors(doc).get(id)?.deleted).toBe("Hello\nWorld");
+  });
+
   it("does not count a structural split as an inserted line", () => {
     const doc = schema.node("doc", null, [
       schema.node("paragraph", null, [schema.text("Hello")]),

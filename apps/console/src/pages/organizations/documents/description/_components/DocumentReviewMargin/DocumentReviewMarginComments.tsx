@@ -104,21 +104,23 @@ export function DocumentReviewMarginComments({
 
   return (
     <div ref={root} className="flex flex-col gap-2">
-      {onResolve && (
-        <div className="flex justify-end">
-          <Button
-            variant="ghost"
-            color="neutral"
-            size={1}
-            aria-label={t("documentDescriptionPage.review.resolve")}
-            iconStart={<CheckIcon />}
-            onClick={onResolve}
-          />
-        </div>
-      )}
-      {visible.map(({ node }) => (
+      {visible.map(({ node }, index) => (
         <div key={node.id} className="group text-2 text-sand-12">
-          <p className="font-medium">{node.author.fullName}</p>
+          <div className="flex items-center justify-between gap-2">
+            <p className="font-medium">{node.author.fullName}</p>
+            {index === 0 && onResolve
+              ? (
+                  <Button
+                    variant="ghost"
+                    color="neutral"
+                    size={1}
+                    aria-label={t("documentDescriptionPage.review.resolve")}
+                    iconStart={<CheckIcon />}
+                    onClick={onResolve}
+                  />
+                )
+              : null}
+          </div>
           {editingId === node.id
             ? (
                 <form
@@ -149,7 +151,7 @@ export function DocumentReviewMarginComments({
                   controls={false}
                   disabled
                   formatting={false}
-                  className="text-2"
+                  className="text-2 [&_.tiptap>p:first-child]:mt-0 [&_.tiptap>p:last-child]:mb-0"
                   content={node.content}
                 />
               )}

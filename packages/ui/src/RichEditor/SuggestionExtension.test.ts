@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { getSchema } from "@tiptap/core";
-import { baseKeymap, joinBackward } from "@tiptap/pm/commands";
+import { baseKeymap } from "@tiptap/pm/commands";
 import { keymap } from "@tiptap/pm/keymap";
 import { type Node as ProseMirrorNode } from "@tiptap/pm/model";
 import {
@@ -255,7 +255,7 @@ describe("suggesting input", () => {
     expect(controller.suggestionId).toBe("other");
   });
 
-  it("leaves a paragraph boundary to the editor without ending the suggestion", () => {
+  it("counts a deleted line break without joining or ending the suggestion", () => {
     let finished = false;
     const controller: SuggestingController = {
       enabled: true,
@@ -292,15 +292,105 @@ describe("suggesting input", () => {
       },
     } as EditorView;
 
-    expect(suggesting.props.handleKeyDown.call(suggesting, view, { key: "Backspace" } as KeyboardEvent)).toBe(false);
-    const before = state;
-    let join = state.tr;
-    const joined = joinBackward(state, (next) => {
-      join = next;
-    });
-    if (!joined) throw new Error("expected backspace to join the paragraphs");
-    suggesting.spec.appendTransaction?.([join], before, before.apply(join));
+    expect(suggesting.props.handleKeyDown.call(suggesting, view, { key: "Backspace" } as KeyboardEvent)).toBe(true);
     expect(finished).toBe(false);
+    expect(state.doc.childCount).toBe(2);
+    expect(state.doc.child(0).textContent).toBe("Hello");
+    expect(state.doc.child(1).textContent).toBe("World");
+    expect(state.doc.child(1).attrs.unknownAttrs).toMatchObject({
+      suggestionSplit: suggestionId,
+      splitKind: "deletion",
+    });
+
+    expect(suggesting.props.handleKeyDown.call(suggesting, view, { key: "Backspace" } as KeyboardEvent)).toBe(true);
+    expect(state.doc.childCount).toBe(2);
+    expect(state.doc.textContent).toBe("HelloWorld");
+    expect(state.doc.child(0).attrs.unknownAttrs?.suggestionSplit).toBeUndefined();
+    expect(markedText(state.doc)).toEqual([
+      { text: "Hell", marks: [] },
+      { text: "o", marks: [suggestionDeleteName] },
+      { text: "World", marks: [] },
+    ]);
+  });
+
+  it("keeps deleting blank lines with repeated backspace", () => {
+    const controller: SuggestingController = {
+      enabled: true,
+      suggestionId: suggestionId,
+      pending: null,
+      request: null,
+      onNeedId: () => Promise.resolve(suggestionId),
+      onBurstFinished: () => {},
+      onOpenSuggestion: () => {},
+    };
+    const plugins = suggestingPlugins(controller);
+    const suggesting = plugins[0];
+    if (!suggesting?.props.handleKeyDown) {
+      throw new Error("expected a suggesting key handler");
+    }
+    const doc = schema.node("doc", null, [
+      schema.node("paragraph"),
+      schema.node("paragraph"),
+      schema.node("paragraph"),
+    ]);
+    let state = EditorState.create({
+      schema,
+      doc,
+      selection: TextSelection.create(doc, doc.content.size - 1),
+      plugins,
+    });
+    const view = {
+      get state() {
+        return state;
+      },
+      dispatch(transaction: Transaction) {
+        state = state.apply(transaction);
+      },
+    } as EditorView;
+
+    expect(suggesting.props.handleKeyDown.call(suggesting, view, { key: "Backspace" } as KeyboardEvent)).toBe(true);
+    expect(suggesting.props.handleKeyDown.call(suggesting, view, { key: "Backspace" } as KeyboardEvent)).toBe(true);
+    expect(suggesting.props.handleKeyDown.call(suggesting, view, { key: "Backspace" } as KeyboardEvent)).toBe(true);
+
+    expect(state.doc.childCount).toBe(3);
+    expect(state.doc.child(0).attrs.unknownAttrs).toMatchObject({
+      suggestionSplit: suggestionId,
+      splitKind: "deletion",
+    });
+    expect(state.doc.child(1).attrs.unknownAttrs).toMatchObject({
+      suggestionSplit: suggestionId,
+      splitKind: "deletion",
+    });
+    expect(state.doc.child(2).attrs.unknownAttrs).toMatchObject({
+      suggestionSplit: suggestionId,
+      splitKind: "deletion",
+    });
+    expect(state.selection.$from.pos).toBe(1);
+
+    const before = state.doc.toJSON();
+    expect(suggesting.props.handleKeyDown.call(suggesting, view, { key: "Backspace" } as KeyboardEvent)).toBe(true);
+    expect(state.doc.toJSON()).toEqual(before);
+    expect(state.selection.$from.pos).toBe(1);
+  });
+
+  it("marks a line break inside a deleted selection", () => {
+    const doc = schema.node("doc", null, [
+      schema.node("paragraph", null, [schema.text("Hello")]),
+      schema.node("paragraph", null, [schema.text("World")]),
+    ]);
+    const state = EditorState.create({ schema, doc });
+    const next = state.apply(suggestionInputTransaction(state, 3, 10, "", suggestionId));
+
+    expect(next.doc.child(1).attrs.unknownAttrs).toMatchObject({
+      suggestionSplit: suggestionId,
+      splitKind: "deletion",
+    });
+    expect(markedText(next.doc)).toEqual([
+      { text: "He", marks: [] },
+      { text: "llo", marks: [suggestionDeleteName] },
+      { text: "Wo", marks: [suggestionDeleteName] },
+      { text: "rld", marks: [] },
+    ]);
   });
 
   it("marks an enter inside existing text as a structural split", () => {

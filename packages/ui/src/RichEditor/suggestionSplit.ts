@@ -21,7 +21,7 @@
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import type { EditorState, Transaction } from "@tiptap/pm/state";
 
-export type SuggestionSplitKind = "insertion" | "structural";
+export type SuggestionSplitKind = "insertion" | "structural" | "deletion";
 
 export type SuggestionSplit = {
   id: string;
@@ -91,6 +91,8 @@ export function adjacentSuggestionId(state: EditorState): string | null {
   if (after) return after;
 
   if ($from.parentOffset === 0) {
+    const deleted = deletionSplitId($from.parent);
+    if (deleted) return deleted;
     const previous = state.doc.resolve($from.before()).nodeBefore;
     if (previous?.isTextblock) {
       return suggestionIdOnBlock(previous) ?? suggestionIdOnText(previous.lastChild);
@@ -99,7 +101,9 @@ export function adjacentSuggestionId(state: EditorState): string | null {
   if ($from.parentOffset === $from.parent.content.size) {
     const next = state.doc.resolve($from.after()).nodeAfter;
     if (next?.isTextblock) {
-      return suggestionIdOnBlock(next) ?? suggestionIdOnText(next.firstChild);
+      return suggestionIdOnBlock(next)
+        ?? deletionSplitId(next)
+        ?? suggestionIdOnText(next.firstChild);
     }
   }
   return null;
@@ -111,6 +115,15 @@ function suggestionIdOnBlock(node: ProseMirrorNode): string | null {
   const id = (unknown as { suggestionSplit?: unknown }).suggestionSplit;
   const kind = (unknown as { splitKind?: unknown }).splitKind;
   if (kind !== "insertion") return null;
+  return typeof id === "string" && id !== "" ? id : null;
+}
+
+function deletionSplitId(node: ProseMirrorNode): string | null {
+  const unknown = nodeUnknownAttrs(node);
+  if (!unknown || typeof unknown !== "object") return null;
+  const id = (unknown as { suggestionSplit?: unknown }).suggestionSplit;
+  const kind = (unknown as { splitKind?: unknown }).splitKind;
+  if (kind !== "deletion") return null;
   return typeof id === "string" && id !== "" ? id : null;
 }
 
@@ -126,7 +139,9 @@ function suggestionIdOnText(node: ProseMirrorNode | null | undefined): string | 
 export function suggestionSplitFrom(transaction: Transaction): SuggestionSplit | null {
   const value = transaction.getMeta(suggestionSplitMeta) as SuggestionSplit | undefined;
   if (!value || value.id === "") return null;
-  if (value.kind !== "insertion" && value.kind !== "structural") return null;
+  if (value.kind !== "insertion" && value.kind !== "structural" && value.kind !== "deletion") {
+    return null;
+  }
   return value;
 }
 

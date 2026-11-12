@@ -58,7 +58,7 @@ export function DocumentReviewMarginCard({
             />
           )
         : null}
-      <div className="pointer-events-none relative z-10 flex flex-col gap-2 [&_a]:pointer-events-auto [&_button]:pointer-events-auto [&_input]:pointer-events-auto [&_label]:pointer-events-auto [&_textarea]:pointer-events-auto">
+      <div className="pointer-events-none relative z-10 flex flex-col gap-2 [&_a]:pointer-events-auto [&_button]:pointer-events-auto [&_input]:pointer-events-auto [&_label]:pointer-events-auto [&_textarea]:pointer-events-auto [&_[contenteditable=true]]:pointer-events-auto">
         {children}
       </div>
     </article>

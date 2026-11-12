@@ -30,6 +30,7 @@ export function CommentEditor(props: CommentEditorProps) {
   return (
     <BaseRichEditor
       {...props}
+      page={false}
       editorExtensions={undefined}
       extensions={richEditorCommentExtensions}
       blockMenu={false}

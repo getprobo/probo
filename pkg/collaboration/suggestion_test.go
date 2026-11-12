@@ -227,6 +227,148 @@ func TestDecideSuggestionSpans_Splits(t *testing.T) {
 	assert.Equal(t, "World", projected[2].Text)
 }
 
+func TestDecideSuggestionSpans_DeletedLine(t *testing.T) {
+	t.Parallel()
+
+	before := []automerge.Span{
+		paragraphBlock(),
+		{Type: automerge.SpanTypeText, Text: "Hello"},
+		paragraphBlock(),
+		{Type: automerge.SpanTypeText, Text: "World"},
+	}
+	deleted := []automerge.Span{
+		paragraphBlock(),
+		{Type: automerge.SpanTypeText, Text: "Hello"},
+		splitBlock("s1", suggestionSplitDeletion),
+		{Type: automerge.SpanTypeText, Text: "World"},
+	}
+
+	assert.True(t, CommentChangeAllowed(before, deleted, map[string]bool{"s1": true}))
+	assert.False(t, CommentChangeAllowed(before, deleted, map[string]bool{}))
+	assert.Equal(t, "\n", SuggestionQuote(deleted, "s1"))
+
+	accepted, changed := decideSuggestionSpans(deleted, "s1", true)
+	require.True(t, changed)
+	require.Len(t, accepted, 3)
+	assert.Equal(t, "Hello", accepted[1].Text)
+	assert.Equal(t, "World", accepted[2].Text)
+
+	rejected, changed := decideSuggestionSpans(deleted, "s1", false)
+	require.True(t, changed)
+	require.Len(t, rejected, 4)
+	_, kind := suggestionSplit(rejected[2])
+	assert.Empty(t, kind)
+	assert.Equal(t, "World", rejected[3].Text)
+
+	projected := ProjectAcceptedSpans(deleted)
+	require.Len(t, projected, 4)
+	_, projectedKind := suggestionSplit(projected[2])
+	assert.Empty(t, projectedKind)
+}
+
+func TestApplySuggestionDecision_ClearsDeletedLine(t *testing.T) {
+	t.Parallel()
+
+	actorID, err := automerge.NewActorID()
+	require.NoError(t, err)
+
+	document, err := automerge.New(actorID)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = document.Close() })
+
+	require.NoError(t, writeSpans(
+		document,
+		`{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Hello"}]},{"type":"paragraph","content":[{"type":"text","text":"World"}]}]}`,
+		true,
+	))
+
+	spans, err := BodySpans(document)
+	require.NoError(t, err)
+
+	marked := false
+
+	for index, span := range spans {
+		if span.Type != automerge.SpanTypeBlock {
+			continue
+		}
+
+		if span.Block["type"] != "paragraph" {
+			continue
+		}
+
+		// The following paragraph carries the deleted line break.
+		if !marked && index > 0 {
+			spans[index].Block = withSuggestionSplit(span.Block, "s1", suggestionSplitDeletion)
+			marked = true
+		}
+	}
+
+	require.True(t, marked)
+	require.NoError(t, WriteBodySpans(document, spans))
+	_, err = document.Commit("Suggest deleted line", time.Now())
+	require.NoError(t, err)
+
+	stored, err := BodySpans(document)
+	require.NoError(t, err)
+
+	var storedKind string
+
+	for _, span := range stored {
+		id, kind := suggestionSplit(span)
+		if id == "s1" {
+			storedKind = kind
+		}
+	}
+
+	require.Equal(t, suggestionSplitDeletion, storedKind)
+
+	changed, err := ApplySuggestionDecision(document, "s1", false)
+	require.NoError(t, err)
+	require.True(t, changed)
+
+	rejected, err := BodySpans(document)
+	require.NoError(t, err)
+
+	for _, span := range rejected {
+		id, kind := suggestionSplit(span)
+		assert.Empty(t, id)
+		assert.Empty(t, kind)
+	}
+
+	assert.Equal(t, "Hello", rejectedText(rejected, 0))
+	assert.Equal(t, "World", rejectedText(rejected, 1))
+}
+
+func withSuggestionSplit(block map[string]any, id string, kind string) map[string]any {
+	next := copyMap(block)
+	attrs, _ := next["attrs"].(map[string]any)
+	nextAttrs := copyMap(attrs)
+	nextAttrs[suggestionSplitAttr] = id
+	nextAttrs[suggestionSplitKindAttr] = kind
+	next["attrs"] = nextAttrs
+
+	return next
+}
+
+func rejectedText(spans []automerge.Span, paragraph int) string {
+	seen := -1
+	var text string
+
+	for _, span := range spans {
+		if span.Type == automerge.SpanTypeBlock {
+			seen++
+
+			continue
+		}
+
+		if seen == paragraph {
+			text += span.Text
+		}
+	}
+
+	return text
+}
+
 func paragraphBlock() automerge.Span {
 	return automerge.Span{
 		Type:  automerge.SpanTypeBlock,

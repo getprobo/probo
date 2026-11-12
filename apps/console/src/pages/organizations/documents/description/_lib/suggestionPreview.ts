@@ -51,7 +51,7 @@ type BlockChunk = {
 
 // Groups every run of one suggestion in document order. Text that stays
 // between two pieces of the same suggestion stays between them on the card.
-// A blank inserted line is part of the change.
+// A blank inserted line, and a deleted line break, are part of the change.
 export function collectSuggestionAnchors(doc: ProseMirrorNode) {
   const chunks: BlockChunk[] = [];
 
@@ -77,7 +77,9 @@ export function collectSuggestionAnchors(doc: ProseMirrorNode) {
   const previews = new Map<string, SuggestionPreview>();
   const ids = new Set<string>();
   for (const block of chunks) {
-    if (block.splitId && block.splitKind === "insertion") ids.add(block.splitId);
+    if (block.splitId && (block.splitKind === "insertion" || block.splitKind === "deletion")) {
+      ids.add(block.splitId);
+    }
     for (const piece of block.pieces) {
       for (const id of piece.insertIds) ids.add(id);
       for (const id of piece.deleteIds) ids.add(id);
@@ -124,8 +126,9 @@ function previewParts(blocks: BlockChunk[], id: string): SuggestionPreviewPart[]
   for (let index = first; index <= last; index += 1) {
     const block = blocks[index];
     if (index > first) {
-      const ownsLine = block.splitId === id && block.splitKind === "insertion";
-      pushPart(parts, ownsLine ? "inserted" : "kept", "\n");
+      pushPart(parts, lineKind(block, id), "\n");
+    } else if (block.splitId === id && block.splitKind === "deletion") {
+      pushPart(parts, "deleted", "\n");
     }
     for (const piece of block.pieces) {
       if (piece.insertIds.includes(id)) pushPart(parts, "inserted", piece.text);
@@ -139,8 +142,17 @@ function previewParts(blocks: BlockChunk[], id: string): SuggestionPreviewPart[]
   return parts;
 }
 
+function lineKind(block: BlockChunk, id: string): SuggestionPreviewPart["kind"] {
+  if (block.splitId !== id) return "kept";
+  if (block.splitKind === "insertion") return "inserted";
+  if (block.splitKind === "deletion") return "deleted";
+  return "kept";
+}
+
 function blockInvolves(block: BlockChunk, id: string): boolean {
-  if (block.splitId === id && block.splitKind === "insertion") return true;
+  if (block.splitId === id && (block.splitKind === "insertion" || block.splitKind === "deletion")) {
+    return true;
+  }
   return block.pieces.some(piece => piece.insertIds.includes(id) || piece.deleteIds.includes(id));
 }
 
@@ -178,7 +190,7 @@ function suggestionSplitKind(node: ProseMirrorNode): string | null {
   const unknown = nodeUnknownAttrs(node);
   if (!unknown || typeof unknown !== "object") return null;
   const kind = (unknown as { splitKind?: unknown }).splitKind;
-  return kind === "insertion" || kind === "structural" ? kind : null;
+  return kind === "insertion" || kind === "structural" || kind === "deletion" ? kind : null;
 }
 
 function nodeUnknownAttrs(node: { attrs: { unknownAttrs?: unknown } }): unknown {

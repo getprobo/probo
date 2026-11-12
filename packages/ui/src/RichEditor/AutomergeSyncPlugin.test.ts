@@ -543,6 +543,31 @@ describe("Automerge sync plugin", () => {
     expectSameDocument(editor);
   });
 
+  it("stores a deleted line break on the following block", () => {
+    const editor = twoParagraphs();
+    const start = textPosition(editor.state, "World");
+    const blockPos = editor.state.doc.resolve(start).before();
+    const block = editor.state.doc.nodeAt(blockPos);
+    if (!block) throw new Error("expected the following paragraph");
+    const marked = editor.state.tr.setNodeMarkup(blockPos, undefined, {
+      ...block.attrs,
+      unknownAttrs: {
+        ...(block.attrs.unknownAttrs ?? {}),
+        suggestionSplit: "s1",
+        splitKind: "deletion",
+      },
+    });
+    expectNoSpanRewrite(() => {
+      editor.apply(marked);
+    });
+    const blocks = Automerge.spans(editor.document, ["body"])
+      .filter(span => span.type === "block");
+    expect(blocks.at(-1)?.value).toMatchObject({
+      attrs: { suggestionSplit: "s1", splitKind: "deletion" },
+    });
+    expectSameDocument(editor);
+  });
+
   it("joins a paragraph with backspace without rewriting every span", () => {
     const editor = twoParagraphs();
     editor.select(textPosition(editor.state, "World"));

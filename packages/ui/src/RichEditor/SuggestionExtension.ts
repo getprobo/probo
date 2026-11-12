@@ -220,7 +220,10 @@ function suggestionFocusPlugin() {
   return new Plugin<SuggestionFocusState>({
     key: suggestionFocusKey,
     state: {
-      init: () => ({ id: "", decorations: DecorationSet.empty }),
+      init: (_config, state) => ({
+        id: "",
+        decorations: suggestionFocusDecorations(state.doc, ""),
+      }),
       apply(transaction, previous) {
         const meta = transactionMeta(transaction, suggestionFocusKey);
         const id = typeof meta === "string" ? meta : previous.id;
@@ -242,10 +245,16 @@ function suggestionFocusPlugin() {
 }
 
 function suggestionFocusDecorations(doc: ProseMirrorNode, id: string) {
-  if (id === "") return DecorationSet.empty;
   const decorations: Decoration[] = [];
   doc.descendants((node, pos) => {
-    if (!node.isText) return;
+    const split = node.isTextblock ? suggestionSplitOn(node) : null;
+    if (split?.kind === "deletion") {
+      const focused = id !== "" && split.id === id;
+      decorations.push(Decoration.node(pos, pos + node.nodeSize, {
+        class: focused ? "suggestion-deleted-line bg-red-3" : "suggestion-deleted-line",
+      }));
+    }
+    if (!node.isText || id === "") return;
     for (const mark of node.marks) {
       if (mark.attrs.id !== id) continue;
       const focused = mark.type.name === suggestionInsertName
@@ -276,7 +285,9 @@ function applySuggestingKey(
   // let the default handler insert one untracked.
   if (event.key === "Enter" && event.shiftKey) return true;
   if (event.key !== "Backspace" && event.key !== "Delete") return false;
-  if (isTextblockBoundary(view.state, event.key)) return false;
+  if (isTextblockBoundary(view.state, event.key)) {
+    return applySuggestingLineBreak(view, controller, event.key);
+  }
 
   const { state } = view;
   let id = suggestionIdForInput(state, controller);
@@ -292,19 +303,31 @@ function applySuggestingKey(
   }
 
   const deleteForward = event.key === "Delete";
-  const span = deleteForward
-    ? (nextCodePoint(state.doc, from)?.text.length ?? 1)
-    : (prevCodePoint(state.doc, from)?.length ?? 1);
-  const start = deleteForward ? from : from - span;
-  const end = deleteForward ? from + span : from;
-  if (start < 0 || end > state.doc.content.size) return true;
+  if (deleteForward) {
+    const next = nextCodePoint(state.doc, from);
+    if (!next) return true;
+    const end = from + next.text.length;
+    const tr = state.tr;
+    if (markCovers(next.marks, suggestionInsertName, id)) {
+      tr.delete(from, end);
+    } else if (!hasDeletion(next.marks)) {
+      markDeletion(tr, from, end, id);
+      tr.setSelection(TextSelection.create(tr.doc, from));
+    }
+    tr.setMeta(suggestingPluginKey, { input: true });
+    view.dispatch(tr.scrollIntoView());
+    return true;
+  }
 
-  const tr = state.tr;
+  const prev = prevCodePoint(state.doc, from);
+  if (!prev) return true;
+  const start = from - prev.length;
   const covered = nextCodePoint(state.doc, start)?.marks ?? [];
+  const tr = state.tr;
   if (markCovers(covered, suggestionInsertName, id)) {
-    tr.delete(start, end);
+    tr.delete(start, from);
   } else if (!hasDeletion(covered)) {
-    markDeletion(tr, start, end, id);
+    markDeletion(tr, start, from, id);
     tr.setSelection(TextSelection.create(tr.doc, start));
   } else {
     tr.setSelection(TextSelection.create(state.doc, start));
@@ -313,6 +336,174 @@ function applySuggestingKey(
   tr.setMeta(suggestingPluginKey, { input: true });
   view.dispatch(tr.scrollIntoView());
   return true;
+}
+
+// Backspace or Delete at a paragraph boundary suggests removing that line
+// break. The paragraphs stay apart until the suggestion is accepted.
+function applySuggestingLineBreak(
+  view: EditorView,
+  controller: SuggestingController,
+  key: string,
+): boolean {
+  const blockPos = lineBreakBlockPos(view.state, key);
+  if (blockPos == null) return false;
+
+  let id = suggestionIdForInput(view.state, controller);
+  if (!id) {
+    void controller.onNeedId();
+    id = controller.suggestionId;
+  }
+  if (!id) return true;
+
+  const block = view.state.doc.nodeAt(blockPos);
+  if (!block?.isTextblock) return false;
+  const split = suggestionSplitOn(block);
+  if (split?.id === id && split.kind === "insertion") return false;
+  if (split && split.id !== id) return true;
+  if (split?.kind === "deletion") {
+    return deleteBesideDeletedLine(view, controller, key, blockPos);
+  }
+  if (!block.type.spec.attrs?.unknownAttrs) return false;
+
+  const tr = view.state.tr;
+  const current = attrRecord(nodeUnknownAttrs(block));
+  tr.setNodeMarkup(blockPos, undefined, {
+    ...block.attrs,
+    unknownAttrs: {
+      ...current,
+      [suggestionSplitAttr]: id,
+      [suggestionSplitKindAttr]: "deletion",
+    },
+  });
+  tr.setMeta(suggestingPluginKey, { input: true });
+  view.dispatch(tr.scrollIntoView());
+  return true;
+}
+
+function lineBreakBlockPos(state: EditorState, key: string): number | null {
+  const { empty, $from } = state.selection;
+  if (!empty || !$from.parent.isTextblock) return null;
+  if (key === "Backspace" && $from.parentOffset === 0) return $from.before();
+  if (key === "Delete" && $from.parentOffset === $from.parent.content.size) {
+    return $from.after();
+  }
+  return null;
+}
+
+function deleteBesideDeletedLine(
+  view: EditorView,
+  controller: SuggestingController,
+  key: string,
+  blockPos: number,
+): boolean {
+  let id = suggestionIdForInput(view.state, controller);
+  if (!id) {
+    void controller.onNeedId();
+    id = controller.suggestionId;
+  }
+  if (!id) return true;
+
+  const { doc } = view.state;
+  if (key === "Backspace") {
+    const prev = doc.resolve(blockPos).nodeBefore;
+    if (!prev?.isTextblock) return true;
+    const prevPos = blockPos - prev.nodeSize;
+    const undeleted = lastUndeletedRange(doc, prevPos, prev);
+    if (undeleted) {
+      return applySuggestingText(view, controller, undeleted.from, undeleted.to, "");
+    }
+    return continueDeletedLine(view, id, prevPos, prevPos + 1);
+  }
+
+  const block = doc.nodeAt(blockPos);
+  if (!block?.isTextblock) return true;
+  const undeleted = firstUndeletedRange(doc, blockPos, block);
+  if (undeleted) {
+    return applySuggestingText(view, controller, undeleted.from, undeleted.to, "");
+  }
+  const nextPos = blockPos + block.nodeSize;
+  const next = doc.nodeAt(nextPos);
+  if (!next?.isTextblock) return true;
+  return continueDeletedLine(
+    view,
+    id,
+    nextPos,
+    blockPos + 1 + block.content.size,
+  );
+}
+
+// Empty or fully deleted paragraphs keep walking: mark the next break for this
+// suggestion, or move onto a break this suggestion already owns.
+function continueDeletedLine(
+  view: EditorView,
+  id: string,
+  blockPos: number,
+  caret: number,
+): boolean {
+  const block = view.state.doc.nodeAt(blockPos);
+  if (!block?.isTextblock) return true;
+  const split = suggestionSplitOn(block);
+  if (split && split.id !== id) return true;
+
+  const tr = view.state.tr;
+  if (split?.kind === "deletion") {
+    tr.setSelection(TextSelection.create(tr.doc, caret));
+    tr.setMeta(suggestingPluginKey, { input: true });
+    view.dispatch(tr.scrollIntoView());
+    return true;
+  }
+  if (!block.type.spec.attrs?.unknownAttrs) return true;
+
+  const current = attrRecord(nodeUnknownAttrs(block));
+  tr.setNodeMarkup(blockPos, undefined, {
+    ...block.attrs,
+    unknownAttrs: {
+      ...current,
+      [suggestionSplitAttr]: id,
+      [suggestionSplitKindAttr]: "deletion",
+    },
+  });
+  tr.setSelection(TextSelection.create(tr.doc, caret));
+  tr.setMeta(suggestingPluginKey, { input: true });
+  view.dispatch(tr.scrollIntoView());
+  return true;
+}
+
+function lastUndeletedRange(
+  doc: ProseMirrorNode,
+  blockPos: number,
+  block: ProseMirrorNode,
+): { from: number; to: number } | null {
+  let pos = blockPos + block.nodeSize - 1;
+  while (pos > blockPos) {
+    const char = prevCodePoint(doc, pos);
+    if (!char) break;
+    const from = pos - char.length;
+    const covered = nextCodePoint(doc, from);
+    if (covered && !hasDeletion(covered.marks)) {
+      return { from, to: from + covered.text.length };
+    }
+    pos = from;
+  }
+  return null;
+}
+
+function firstUndeletedRange(
+  doc: ProseMirrorNode,
+  blockPos: number,
+  block: ProseMirrorNode,
+): { from: number; to: number } | null {
+  let pos = blockPos + 1;
+  const end = blockPos + block.nodeSize - 1;
+  while (pos < end) {
+    const covered = nextCodePoint(doc, pos);
+    if (!covered) break;
+    if (!hasDeletion(covered.marks)) {
+      return { from: pos, to: pos + covered.text.length };
+    }
+    pos += covered.text.length;
+  }
+  return null;
 }
 
 function applySuggestingEnter(
@@ -536,10 +727,19 @@ function insertSuggestionText(tr: Transaction, cursor: number, text: string, id:
 }
 
 function suggestionSplitId(node: ProseMirrorNode): string | null {
+  return suggestionSplitOn(node)?.id ?? null;
+}
+
+function suggestionSplitOn(
+  node: ProseMirrorNode,
+): { id: string; kind: string } | null {
   const unknown = nodeUnknownAttrs(node);
   if (!unknown || typeof unknown !== "object") return null;
   const id = (unknown as { suggestionSplit?: unknown }).suggestionSplit;
-  return typeof id === "string" && id !== "" ? id : null;
+  const kind = (unknown as { splitKind?: unknown }).splitKind;
+  if (typeof id !== "string" || id === "") return null;
+  if (kind !== "insertion" && kind !== "structural" && kind !== "deletion") return null;
+  return { id, kind };
 }
 
 function rewriteText(
@@ -562,8 +762,17 @@ function markDeletion(
   const deleteMark = tr.doc.type.schema.marks[suggestionDeleteName].create({ id });
   const removals: Array<{ from: number; to: number }> = [];
   const rewrites: Array<{ from: number; to: number; marks: ProseMirrorMark[] }> = [];
+  const lineBreaks: number[] = [];
 
   tr.doc.nodesBetween(from, to, (node, pos) => {
+    if (
+      node.isTextblock
+      && pos >= from
+      && pos < to
+      && tr.doc.resolve(pos).nodeBefore?.isTextblock
+    ) {
+      lineBreaks.push(pos);
+    }
     if (!node.isText) return;
     const start = Math.max(from, pos);
     const end = Math.min(to, pos + node.nodeSize);
@@ -586,8 +795,26 @@ function markDeletion(
   for (const range of removals.reverse()) {
     tr.delete(range.from, range.to);
   }
+  for (const pos of lineBreaks.reverse()) {
+    markLineDeletion(tr, tr.mapping.map(pos), id);
+  }
 
   return tr;
+}
+
+function markLineDeletion(tr: Transaction, pos: number, id: string) {
+  const block = tr.doc.nodeAt(pos);
+  if (!block?.isTextblock || !block.type.spec.attrs?.unknownAttrs) return;
+  if (suggestionSplitOn(block)) return;
+  const current = attrRecord(nodeUnknownAttrs(block));
+  tr.setNodeMarkup(pos, undefined, {
+    ...block.attrs,
+    unknownAttrs: {
+      ...current,
+      [suggestionSplitAttr]: id,
+      [suggestionSplitKindAttr]: "deletion",
+    },
+  });
 }
 
 export function reassignSuggestionId(

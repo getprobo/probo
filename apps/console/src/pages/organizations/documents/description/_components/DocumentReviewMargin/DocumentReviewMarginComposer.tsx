@@ -119,6 +119,7 @@ export function DocumentReviewMarginComposer({
       >
         <CommentEditor
           key={draftEditorKey}
+          autoFocus
           controls={false}
           className="min-h-16 w-full rounded-2 border border-sand-7 bg-sand-1 p-2 text-2 outline-none focus-within:border-sand-8"
           content={draftText}
