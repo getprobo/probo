@@ -2240,22 +2240,8 @@ func (impl *Implm) runCompliancePortalServer(
 	)
 
 	httpsServer.TLSConfig = &tls.Config{
-		GetCertificate: func(hello *tls.ClientHelloInfo) (*tls.Certificate, error) {
-			cert, err := certSelector.GetCertificate(hello)
-			// Silently reject connections without SNI (load balancers, health checks, scanners)
-			if err != nil {
-				if _, ok := errors.AsType[*certmanager.NoSNIError](err); ok {
-					return nil, nil
-				}
-
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return nil, nil
-				}
-			}
-
-			return cert, err
-		},
-		MinVersion: tls.VersionTLS12,
+		GetCertificate: certSelector.GetHandshakeCertificate,
+		MinVersion:     tls.VersionTLS12,
 		CipherSuites: []uint16{
 			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
 			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,

@@ -22,6 +22,7 @@ package coredata
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -72,6 +73,11 @@ LIMIT 1
 
 	cache, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CachedCertificate])
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			// Missing and expired rows are both unusable.
+			return ErrResourceNotFound
+		}
+
 		return fmt.Errorf("cannot collect certificate cache: %w", err)
 	}
 

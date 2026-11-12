@@ -156,6 +156,20 @@ func newSelectorFixture(t *testing.T, expiresAt time.Time) *selectorFixture {
 	return f
 }
 
+func assertCertificateUnavailable(t *testing.T, f *selectorFixture) {
+	t.Helper()
+
+	selector := certmanager.NewSelector(f.client, f.key)
+	hello := &tls.ClientHelloInfo{ServerName: f.domain.Domain}
+	cert, err := selector.GetCertificate(hello)
+	assert.ErrorIs(t, err, certmanager.ErrCertificateUnavailable)
+	assert.Nil(t, cert)
+
+	handshakeCert, err := selector.GetHandshakeCertificate(hello)
+	assert.NoError(t, err)
+	assert.Nil(t, handshakeCert)
+}
+
 func TestSelectorGetCertificate_Renewal(t *testing.T) {
 	t.Parallel()
 
@@ -272,6 +286,10 @@ func TestSelectorGetCertificate_DomainNoLongerRoutable(t *testing.T) {
 					cert, err := selector.GetCertificate(hello)
 					assert.ErrorIs(t, err, coredata.ErrResourceNotFound)
 					assert.Nil(t, cert)
+
+					handshakeCert, err := selector.GetHandshakeCertificate(hello)
+					assert.NoError(t, err)
+					assert.Nil(t, handshakeCert)
 				},
 			)
 		}
@@ -316,4 +334,94 @@ func TestSelectorGetCertificate_NoSNI(t *testing.T) {
 	cert, err := selector.GetCertificate(&tls.ClientHelloInfo{})
 	assert.IsType(t, &certmanager.NoSNIError{}, err)
 	assert.Nil(t, cert)
+
+	handshakeCert, err := selector.GetHandshakeCertificate(&tls.ClientHelloInfo{})
+	assert.NoError(t, err)
+	assert.Nil(t, handshakeCert)
+}
+
+func TestSelectorGetCertificate_RebuildsUnexpiredCertificateWhenNotActive(t *testing.T) {
+	t.Parallel()
+
+	for _, status := range []coredata.CertificateStatus{
+		coredata.CertificateStatusPending,
+		coredata.CertificateStatusProvisioning,
+		coredata.CertificateStatusRenewing,
+		coredata.CertificateStatusFailed,
+	} {
+		t.Run(
+			strings.ToLower(string(status)),
+			func(t *testing.T) {
+				t.Parallel()
+
+				f := newSelectorFixture(t, time.Now().Add(90*24*time.Hour))
+				f.certificate.Status = status
+				require.NoError(
+					t,
+					f.client.WithTx(
+						t.Context(),
+						func(ctx context.Context, tx pg.Tx) error {
+							if err := f.certificate.Update(ctx, tx, f.scope); err != nil {
+								return err
+							}
+
+							_, err := tx.Exec(ctx, "DELETE FROM cached_certificates WHERE domain = $1", f.domain.Domain)
+
+							return err
+						},
+					),
+				)
+
+				selector := certmanager.NewSelector(f.client, f.key)
+				hello := &tls.ClientHelloInfo{ServerName: f.domain.Domain}
+				cert, err := selector.GetCertificate(hello)
+				require.NoError(t, err)
+				assert.Equal(t, f.certificate.SSLCertificate.Certificate, cert.Certificate)
+			},
+		)
+	}
+}
+
+func TestSelectorGetCertificate_UnavailableWithoutServableMaterial(t *testing.T) {
+	t.Parallel()
+
+	t.Run(
+		"pending without material",
+		func(t *testing.T) {
+			t.Parallel()
+
+			f := newSelectorFixture(t, time.Now().Add(90*24*time.Hour))
+			f.certificate.Status = coredata.CertificateStatusPending
+			f.certificate.SSLCertificatePEM = nil
+			f.certificate.EncryptedSSLPrivateKey = nil
+			f.certificate.SSLExpiresAt = nil
+			require.NoError(
+				t,
+				f.client.WithTx(
+					t.Context(),
+					func(ctx context.Context, tx pg.Tx) error {
+						if err := f.certificate.Update(ctx, tx, f.scope); err != nil {
+							return err
+						}
+
+						_, err := tx.Exec(ctx, "DELETE FROM cached_certificates WHERE domain = $1", f.domain.Domain)
+
+						return err
+					},
+				),
+			)
+
+			assertCertificateUnavailable(t, f)
+		},
+	)
+
+	t.Run(
+		"expired",
+		func(t *testing.T) {
+			t.Parallel()
+
+			f := newSelectorFixture(t, time.Now().Add(-time.Minute))
+			assertCertificateUnavailable(t, f)
+		},
+	)
 }

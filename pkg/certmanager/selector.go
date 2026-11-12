@@ -44,6 +44,11 @@ type (
 	NoSNIError struct{}
 )
 
+// ErrCertificateUnavailable is returned when a hostname has no certificate
+// that can be presented, such as while provisioning is pending or the
+// certificate has expired.
+var ErrCertificateUnavailable = errors.New("hostname does not have active SSL certificate")
+
 func (e *NoSNIError) Error() string {
 	return "no SNI provided"
 }
@@ -78,12 +83,31 @@ func (s *Selector) GetCertificate(hello *tls.ClientHelloInfo) (*tls.Certificate,
 
 	cert, err := s.loadFromDatabase(domain)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load certificate from database: %w", err)
+		return nil, fmt.Errorf("cannot load certificate from database for %q: %w", domain, err)
 	}
 
 	s.cache.Store(domain, cert)
 
 	return cert, nil
+}
+
+// GetHandshakeCertificate is the tls.Config GetCertificate callback.
+// A nil certificate and a nil error abort the handshake without a logged fault.
+func (s *Selector) GetHandshakeCertificate(hello *tls.ClientHelloInfo) (*tls.Certificate, error) {
+	cert, err := s.GetCertificate(hello)
+	if err == nil {
+		return cert, nil
+	}
+
+	if _, ok := errors.AsType[*NoSNIError](err); ok {
+		return nil, nil
+	}
+
+	if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, ErrCertificateUnavailable) {
+		return nil, nil
+	}
+
+	return nil, err
 }
 
 // beforeRenewalWindow reports whether cert expires after RenewalWindow.
@@ -120,6 +144,10 @@ func (s *Selector) loadFromDatabase(domain string) (*tls.Certificate, error) {
 
 			var cache coredata.CachedCertificate
 			if err := cache.LoadByDomain(ctx, conn, domain); err != nil {
+				if !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load certificate cache: %w", err)
+				}
+
 				if err := s.rebuildCacheEntry(ctx, conn, domain); err != nil {
 					return fmt.Errorf("cannot rebuild cache entry: %w", err)
 				}
@@ -161,24 +189,12 @@ func (s *Selector) rebuildCacheEntry(ctx context.Context, conn pg.Querier, domai
 		return fmt.Errorf("cannot load certificate: %w", err)
 	}
 
-	if certificate.Status != coredata.CertificateStatusActive {
-		return fmt.Errorf("hostname does not have active SSL certificate")
+	if !certificateServable(&certificate) {
+		return ErrCertificateUnavailable
 	}
 
 	if err := certificate.ParseCertificate(s.encryptionKey); err != nil {
 		return fmt.Errorf("cannot parse certificate: %w", err)
-	}
-
-	if len(certificate.SSLCertificatePEM) == 0 {
-		return fmt.Errorf("certificate has no certificate PEM data")
-	}
-
-	if len(certificate.EncryptedSSLPrivateKey) == 0 {
-		return fmt.Errorf("certificate has no encrypted private key data")
-	}
-
-	if certificate.SSLExpiresAt == nil {
-		return fmt.Errorf("certificate has no expiry")
 	}
 
 	s.cache.Store(domain, certificate.SSLCertificate)
@@ -189,6 +205,14 @@ func (s *Selector) rebuildCacheEntry(ctx context.Context, conn pg.Querier, domai
 	}
 
 	return nil
+}
+
+func certificateServable(certificate *coredata.Certificate) bool {
+	if certificate.SSLExpiresAt == nil || !time.Now().Before(*certificate.SSLExpiresAt) {
+		return false
+	}
+
+	return len(certificate.SSLCertificatePEM) > 0 && len(certificate.EncryptedSSLPrivateKey) > 0
 }
 
 func requireRoutableDomain(ctx context.Context, conn pg.Querier, domain string) error {
