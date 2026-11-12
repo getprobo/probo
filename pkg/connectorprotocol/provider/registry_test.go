@@ -178,6 +178,7 @@ func TestEveryCredentialPathLinksItsPage(t *testing.T) {
 
 	pageless := map[coredata.ConnectorProvider]string{
 		coredata.ConnectorProviderAttio:      "the page sits under the workspace slug, which the form does not ask for",
+		coredata.ConnectorProviderBitwarden:  "the page sits under the organization id, and the host follows the region",
 		coredata.ConnectorProviderClickHouse: "the page sits under the organization id, which is only discovered after connect",
 		coredata.ConnectorProviderDeepgram:   "keys are per project, and the project id is only discovered after connect",
 		coredata.ConnectorProviderDotfile:    "the page sits under the workspace id, which the form does not ask for",

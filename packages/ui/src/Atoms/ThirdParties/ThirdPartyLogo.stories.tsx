@@ -81,3 +81,9 @@ export const UniFi: Story = {
     thirdParty: "UNIFI",
   },
 };
+
+export const Bitwarden: Story = {
+  args: {
+    thirdParty: "BITWARDEN",
+  },
+};

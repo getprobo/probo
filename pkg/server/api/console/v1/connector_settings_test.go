@@ -187,6 +187,62 @@ func TestClientCredentialsConnectorSettings_OnePassword(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestClientCredentialsConnectorSettings_Bitwarden(t *testing.T) {
+	t.Parallel()
+
+	reg, ok := provider.NewBuiltinRegistry().Get(coredata.ConnectorProviderBitwarden)
+	require.True(t, ok)
+	require.Len(t, reg.ClientCredentialsExtraSettings(), 1)
+	require.Equal(t, "region", reg.ClientCredentialsExtraSettings()[0].Key)
+
+	clientID := "organization.00000000-0000-0000-0000-000000000001"
+	region := " eu "
+
+	raw, err := clientCredentialsConnectorSettings(types.CreateClientCredentialsConnectorInput{
+		Provider:        coredata.ConnectorProviderBitwarden,
+		ClientID:        clientID,
+		BitwardenRegion: &region,
+	})
+	require.NoError(t, err)
+
+	var settings coredata.BitwardenConnectorSettings
+	require.NoError(t, json.Unmarshal(raw, &settings))
+	assert.Equal(t, "EU", settings.Region)
+	assert.Equal(t, "00000000-0000-0000-0000-000000000001", settings.OrganizationID)
+
+	for _, tc := range []struct {
+		name     string
+		clientID string
+		region   *string
+	}{
+		{name: "no region", clientID: clientID},
+		{name: "a region Bitwarden does not run", clientID: clientID, region: new("CA")},
+		// The personal API key from the CLI docs is the likely mistake: it
+		// mints a token the Public API refuses.
+		{name: "a personal API key", clientID: "user.00000000-0000-0000-0000-000000000002", region: new("EU")},
+		// The client ID is stored as sent, so anything but the exact value
+		// would reach the token exchange and be refused there.
+		{name: "a padded client ID", clientID: " " + clientID, region: new("EU")},
+		{name: "a trailing space", clientID: clientID + " ", region: new("EU")},
+		{name: "no organization ID", clientID: "organization.", region: new("EU")},
+		{name: "an undashed organization ID", clientID: "organization.00000000000000000000000000000001", region: new("EU")},
+	} {
+		t.Run(
+			tc.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				_, err := clientCredentialsConnectorSettings(types.CreateClientCredentialsConnectorInput{
+					Provider:        coredata.ConnectorProviderBitwarden,
+					ClientID:        tc.clientID,
+					BitwardenRegion: tc.region,
+				})
+				assert.Error(t, err)
+			},
+		)
+	}
+}
+
 // TestClientCredentialsTokenURL pins which endpoint a client-credentials
 // connector POSTs its client secret to: always one the registration names,
 // pinned or derived from the connector's settings, never one the client sends.
@@ -245,6 +301,26 @@ func TestClientCredentialsTokenURL(t *testing.T) {
 				got, err := clientCredentialsTokenURL(registry, c)
 				require.NoError(t, err)
 				assert.Equal(t, tc.want, got)
+			},
+		)
+	}
+
+	// Bitwarden's identity host follows the cloud the organization lives on.
+	for region, want := range map[string]string{
+		"US": "https://identity.bitwarden.com/connect/token",
+		"EU": "https://identity.bitwarden.eu/connect/token",
+	} {
+		t.Run(
+			"bitwarden derives it from region "+region,
+			func(t *testing.T) {
+				t.Parallel()
+
+				c := &coredata.Connector{Provider: coredata.ConnectorProviderBitwarden}
+				require.NoError(t, c.SetSettings(&coredata.BitwardenConnectorSettings{Region: region}))
+
+				got, err := clientCredentialsTokenURL(registry, c)
+				require.NoError(t, err)
+				assert.Equal(t, want, got)
 			},
 		)
 	}

@@ -456,6 +456,28 @@ func clientCredentialsConnectorSettings(input types.CreateClientCredentialsConne
 			AccountID: accountID,
 			Region:    region,
 		})
+	case coredata.ConnectorProviderBitwarden:
+		region := ""
+		if input.BitwardenRegion != nil {
+			region = strings.ToUpper(strings.TrimSpace(*input.BitwardenRegion))
+		}
+
+		if !drivers.IsBitwardenRegion(region) {
+			return nil, fmt.Errorf("cannot create bitwarden connector: bitwardenRegion must be US or EU")
+		}
+
+		// The client ID is stored as sent, so it is checked as sent.
+		orgID, ok := drivers.BitwardenOrganizationID(input.ClientID)
+		if !ok {
+			return nil, fmt.Errorf("cannot create bitwarden connector: clientId must be the client_id of the organization API key (organization.<id>)")
+		}
+
+		return json.Marshal(
+			&coredata.BitwardenConnectorSettings{
+				Region:         region,
+				OrganizationID: orgID,
+			},
+		)
 	}
 
 	return nil, nil

@@ -100,6 +100,9 @@ export function mapClientCredentialsExtraSettingToField(
       if (settingKey === "accountId") return "onePasswordAccountId";
       if (settingKey === "region") return "onePasswordRegion";
       break;
+    case "BITWARDEN":
+      if (settingKey === "region") return "bitwardenRegion";
+      break;
   }
   return null;
 }

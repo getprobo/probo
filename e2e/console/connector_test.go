@@ -559,6 +559,47 @@ func TestCreateClientCredentialsConnector(t *testing.T) {
 		})
 		testutil.RequireErrorCode(t, err, "INVALID", "an account name must return INVALID not INTERNAL")
 	})
+
+	t.Run("bitwarden takes an organization key and a region", func(t *testing.T) {
+		t.Parallel()
+
+		var created struct {
+			CreateClientCredentialsConnector struct {
+				Connector struct {
+					Provider string `json:"provider"`
+				} `json:"connector"`
+			} `json:"createClientCredentialsConnector"`
+		}
+
+		err := owner.Execute(query, map[string]any{
+			"input": map[string]any{
+				"organizationId":  orgID,
+				"name":            "Bitwarden",
+				"provider":        "BITWARDEN",
+				"clientId":        "organization.00000000-0000-0000-0000-000000000001",
+				"clientSecret":    "test-secret",
+				"bitwardenRegion": "eu",
+			},
+		}, &created)
+		require.NoError(t, err)
+		assert.Equal(t, "BITWARDEN", created.CreateClientCredentialsConnector.Connector.Provider)
+	})
+
+	t.Run("a personal bitwarden key is refused", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := owner.Do(query, map[string]any{
+			"input": map[string]any{
+				"organizationId":  orgID,
+				"name":            "Personal key",
+				"provider":        "BITWARDEN",
+				"clientId":        "user.00000000-0000-0000-0000-000000000002",
+				"clientSecret":    "test-secret",
+				"bitwardenRegion": "eu",
+			},
+		})
+		testutil.RequireErrorCode(t, err, "INVALID", "a personal key must return INVALID not INTERNAL")
+	})
 }
 
 func TestDeleteConnector(t *testing.T) {
