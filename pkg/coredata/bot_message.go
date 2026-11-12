@@ -453,6 +453,59 @@ WHERE id IN (SELECT id FROM doomed)
 	return result.RowsAffected(), nil
 }
 
+func (m *BotMessage) LoadLatestBySubjectAndPurpose(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	organizationID gid.GID,
+	subjectNamespace string,
+	subjectKey string,
+	purpose BotMessagePurpose,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	capability,
+	message_type,
+	attributes,
+	subject_namespace,
+	subject_key,
+	event_key,
+	purpose,
+	processing_owner_token,
+	processing_started_at,
+	processed_at,
+	attempt_count,
+	max_attempts,
+	next_attempt_at,
+	last_error,
+	dead_lettered_at,
+	created_at,
+	updated_at
+FROM bot_messages
+WHERE
+	%s
+	AND organization_id = @organization_id
+	AND subject_namespace = @subject_namespace
+	AND subject_key = @subject_key
+	AND purpose = @purpose::bot_message_purpose
+ORDER BY created_at DESC, id DESC
+LIMIT 1
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+	args := pgx.StrictNamedArgs{
+		"organization_id":   organizationID,
+		"subject_namespace": subjectNamespace,
+		"subject_key":       subjectKey,
+		"purpose":           purpose,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	return m.loadExactlyOne(ctx, conn, q, args)
+}
+
 func (m *BotMessage) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,

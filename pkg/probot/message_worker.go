@@ -48,6 +48,10 @@ type (
 	permanentMessageError struct {
 		err error
 	}
+
+	pendingMessageError struct {
+		err error
+	}
 )
 
 const (
@@ -55,6 +59,14 @@ const (
 	defaultMessageRetryBase            = time.Second
 	defaultMessageRetryMax             = 5 * time.Minute
 	defaultMessageStaleAfter           = 5 * time.Minute
+)
+
+var (
+	// ErrInitialPostPending asks the worker to wait without consuming an attempt.
+	ErrInitialPostPending = errors.New("initial bot post is not delivered yet")
+
+	// ErrInitialPostUnavailable is permanent: the initial post will not be delivered.
+	ErrInitialPostUnavailable = errors.New("initial bot post is not available")
 )
 
 var (
@@ -67,6 +79,14 @@ func (e *permanentMessageError) Error() string {
 }
 
 func (e *permanentMessageError) Unwrap() error {
+	return e.err
+}
+
+func (e *pendingMessageError) Error() string {
+	return e.err.Error()
+}
+
+func (e *pendingMessageError) Unwrap() error {
 	return e.err
 }
 
@@ -143,6 +163,20 @@ func (h *messageWorkerHandler) Process(ctx context.Context, message coredata.Bot
 				return message.UpdateProcessingState(ctx, conn)
 			}
 
+			if isPendingMessageError(processingErr) {
+				if message.AttemptCount > 0 {
+					message.AttemptCount--
+				}
+
+				message.LastError = new(processingErr.Error())
+				message.ProcessedAt = nil
+				message.DeadLetteredAt = nil
+				nextAttemptAt := now.Add(h.initialPostWait(message.CreatedAt, now))
+				message.NextAttemptAt = &nextAttemptAt
+
+				return message.UpdateProcessingState(ctx, conn)
+			}
+
 			message.LastError = new(processingErr.Error())
 			if isPermanentMessageError(processingErr) {
 				message.AttemptCount = message.MaxAttempts
@@ -167,6 +201,17 @@ func (h *messageWorkerHandler) Process(ctx context.Context, message coredata.Bot
 		}
 
 		return fmt.Errorf("cannot persist bot message outcome: %w", persistErr)
+	}
+
+	if isPendingMessageError(processingErr) {
+		logger.InfoCtx(
+			ctx,
+			"waiting for initial bot post",
+			log.Int("attempt_count", message.AttemptCount),
+			log.Error(processingErr),
+		)
+
+		return nil
 	}
 
 	if processingErr != nil {
@@ -236,7 +281,16 @@ func (h *messageWorkerHandler) deliver(
 			Result:           result,
 		},
 	); err != nil {
-		return fmt.Errorf("cannot deliver outbound bot message: %w", err)
+		wrapped := fmt.Errorf("cannot deliver outbound bot message: %w", err)
+		if errors.Is(err, ErrInitialPostPending) {
+			return &pendingMessageError{err: wrapped}
+		}
+
+		if errors.Is(err, ErrInitialPostUnavailable) {
+			return &permanentMessageError{err: wrapped}
+		}
+
+		return wrapped
 	}
 
 	return nil
@@ -265,8 +319,41 @@ func (h *messageWorkerHandler) retryDelay(attempt int) time.Duration {
 	return ExponentialRetryDelay(attempt, h.retryBase, h.retryMax)
 }
 
+// initialPostWait grows with time already spent waiting so a slow Slack
+// delivery does not hot-loop. Attempts stay unchanged while waiting.
+func (h *messageWorkerHandler) initialPostWait(createdAt, now time.Time) time.Duration {
+	waited := now.Sub(createdAt)
+	if waited < 0 {
+		waited = 0
+	}
+
+	delay := h.retryBase
+	var elapsed time.Duration
+
+	for elapsed+delay <= waited && delay < h.retryMax {
+		elapsed += delay
+		if delay > h.retryMax/2 {
+			return h.retryMax
+		}
+
+		delay *= 2
+	}
+
+	if delay > h.retryMax {
+		return h.retryMax
+	}
+
+	return delay
+}
+
 func isPermanentMessageError(err error) bool {
 	_, ok := errors.AsType[*permanentMessageError](err)
+
+	return ok
+}
+
+func isPendingMessageError(err error) bool {
+	_, ok := errors.AsType[*pendingMessageError](err)
 
 	return ok
 }

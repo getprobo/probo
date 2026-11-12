@@ -26,6 +26,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.gearno.de/kit/log"
@@ -670,6 +671,407 @@ func TestMessageService_RestoreDestination_CASSkipsClearWhenReplaced(t *testing.
 	current, err := service.GetDestination(t.Context(), scope, organizationID, target)
 	require.NoError(t, err)
 	assert.Equal(t, "C-other", current.ExternalDestinationID)
+}
+
+func TestMessageService_UpdateWaitsUntilInitialPostIsDelivered(t *testing.T) {
+	t.Parallel()
+
+	t.Run("unprocessed post", func(t *testing.T) {
+		t.Parallel()
+
+		pgClient, scope, organizationID := newQueueTestOrganization(t)
+		namespace, key := newUpdateSubject(scope)
+		insertBotPost(t, pgClient, scope, organizationID, namespace, key, false, false)
+		service := newUpdateMessageService(pgClient, true, false)
+
+		err := service.DeliverOutbound(
+			t.Context(),
+			updateDelivery(scope, organizationID, namespace, key),
+		)
+		require.ErrorIs(t, err, probot.ErrInitialPostPending)
+		require.ErrorContains(t, err, "before the initial post is queued")
+	})
+
+	t.Run("queued slack message", func(t *testing.T) {
+		t.Parallel()
+
+		pgClient, scope, organizationID := newQueueTestOrganization(t)
+		namespace, key := newUpdateSubject(scope)
+		post := insertBotPost(t, pgClient, scope, organizationID, namespace, key, true, false)
+		insertSlackbotPost(t, pgClient, scope, organizationID, post.ID, false, false)
+		service := newUpdateMessageService(pgClient, true, false)
+
+		err := service.DeliverOutbound(
+			t.Context(),
+			updateDelivery(scope, organizationID, namespace, key),
+		)
+		require.ErrorIs(t, err, probot.ErrInitialPostPending)
+		require.ErrorContains(t, err, "before the initial post is delivered")
+	})
+}
+
+func TestMessageService_UpdateUnavailableWhenInitialPostCannotDeliver(t *testing.T) {
+	t.Parallel()
+
+	t.Run("missing post", func(t *testing.T) {
+		t.Parallel()
+
+		pgClient, scope, organizationID := newQueueTestOrganization(t)
+		namespace, key := newUpdateSubject(scope)
+		service := newUpdateMessageService(pgClient, true, false)
+
+		err := service.DeliverOutbound(
+			t.Context(),
+			updateDelivery(scope, organizationID, namespace, key),
+		)
+		require.ErrorIs(t, err, probot.ErrInitialPostUnavailable)
+	})
+
+	t.Run("dead-lettered post", func(t *testing.T) {
+		t.Parallel()
+
+		pgClient, scope, organizationID := newQueueTestOrganization(t)
+		namespace, key := newUpdateSubject(scope)
+		insertBotPost(t, pgClient, scope, organizationID, namespace, key, false, true)
+		service := newUpdateMessageService(pgClient, true, false)
+
+		err := service.DeliverOutbound(
+			t.Context(),
+			updateDelivery(scope, organizationID, namespace, key),
+		)
+		require.ErrorIs(t, err, probot.ErrInitialPostUnavailable)
+	})
+
+	t.Run("terminal slack delivery", func(t *testing.T) {
+		t.Parallel()
+
+		pgClient, scope, organizationID := newQueueTestOrganization(t)
+		namespace, key := newUpdateSubject(scope)
+		post := insertBotPost(t, pgClient, scope, organizationID, namespace, key, true, false)
+		insertSlackbotPost(t, pgClient, scope, organizationID, post.ID, false, true)
+		service := newUpdateMessageService(pgClient, true, false)
+
+		err := service.DeliverOutbound(
+			t.Context(),
+			updateDelivery(scope, organizationID, namespace, key),
+		)
+		require.ErrorIs(t, err, probot.ErrInitialPostUnavailable)
+		require.ErrorContains(t, err, "initial provider post failed")
+	})
+}
+
+func TestMessageService_UpdateAppliesWhenInitialPostIsDeliveredWithoutSubject(t *testing.T) {
+	t.Parallel()
+
+	t.Run("modern slack message", func(t *testing.T) {
+		t.Parallel()
+
+		pgClient, scope, organizationID := newQueueTestOrganization(t)
+		namespace, key := newUpdateSubject(scope)
+		post := insertBotPost(t, pgClient, scope, organizationID, namespace, key, true, false)
+		insertSlackbotPost(t, pgClient, scope, organizationID, post.ID, true, false)
+		service := newUpdateMessageService(pgClient, true, false)
+		delivery := updateDelivery(scope, organizationID, namespace, key)
+
+		require.NoError(t, service.DeliverOutbound(t.Context(), delivery))
+
+		var revision coredata.SlackbotMessage
+		require.NoError(
+			t,
+			pgClient.WithConn(
+				t.Context(),
+				func(ctx context.Context, conn pg.Querier) error {
+					return revision.LoadBySourceEventID(ctx, conn, scope, delivery.SourceEventID)
+				},
+			),
+		)
+		assert.NotEqual(t, revision.ID, revision.InitialSlackbotMessageID)
+		require.NotNil(t, revision.MessageTS)
+		assert.Equal(t, "111.222", *revision.MessageTS)
+	})
+
+	t.Run("legacy message when modern queue is configured", func(t *testing.T) {
+		t.Parallel()
+
+		pgClient, scope, organizationID := newQueueTestOrganization(t)
+		namespace, key := newUpdateSubject(scope)
+		post := insertBotPost(t, pgClient, scope, organizationID, namespace, key, true, false)
+		insertLegacyPost(t, pgClient, scope, organizationID, post.ID)
+		service := newUpdateMessageService(pgClient, true, true)
+		delivery := updateDelivery(scope, organizationID, namespace, key)
+
+		require.NoError(t, service.DeliverOutbound(t.Context(), delivery))
+
+		var revision coredata.SlackMessage
+		require.NoError(
+			t,
+			pgClient.WithConn(
+				t.Context(),
+				func(ctx context.Context, conn pg.Querier) error {
+					return revision.LoadBySourceEventID(ctx, conn, scope, delivery.SourceEventID)
+				},
+			),
+		)
+		assert.NotEqual(t, revision.ID, revision.InitialSlackMessageID)
+	})
+
+	t.Run("legacy slack message", func(t *testing.T) {
+		t.Parallel()
+
+		pgClient, scope, organizationID := newQueueTestOrganization(t)
+		namespace, key := newUpdateSubject(scope)
+		post := insertBotPost(t, pgClient, scope, organizationID, namespace, key, true, false)
+		insertLegacyPost(t, pgClient, scope, organizationID, post.ID)
+		service := newUpdateMessageService(pgClient, false, true)
+		delivery := updateDelivery(scope, organizationID, namespace, key)
+
+		require.NoError(t, service.DeliverOutbound(t.Context(), delivery))
+
+		var revision coredata.SlackMessage
+		require.NoError(
+			t,
+			pgClient.WithConn(
+				t.Context(),
+				func(ctx context.Context, conn pg.Querier) error {
+					return revision.LoadBySourceEventID(ctx, conn, scope, delivery.SourceEventID)
+				},
+			),
+		)
+		assert.NotEqual(t, revision.ID, revision.InitialSlackMessageID)
+		require.NotNil(t, revision.MessageTS)
+		assert.Equal(t, "111.222", *revision.MessageTS)
+	})
+}
+
+func TestMessageService_UpdateUsesDeliveredThreadSubject(t *testing.T) {
+	t.Parallel()
+
+	pgClient, scope, organizationID := newQueueTestOrganization(t)
+	insertSlackbotPost(t, pgClient, scope, organizationID, gid.Nil, true, false)
+	insertThreadSubject(t, pgClient, organizationID, "C-posted", "111.222", map[string]any{})
+	service := newUpdateMessageService(pgClient, true, false)
+	delivery := updateDelivery(scope, organizationID, "subject", "stable")
+
+	require.NoError(t, service.DeliverOutbound(t.Context(), delivery))
+
+	var revision coredata.SlackbotMessage
+	require.NoError(
+		t,
+		pgClient.WithConn(
+			t.Context(),
+			func(ctx context.Context, conn pg.Querier) error {
+				return revision.LoadBySourceEventID(ctx, conn, scope, delivery.SourceEventID)
+			},
+		),
+	)
+	assert.NotEqual(t, revision.ID, revision.InitialSlackbotMessageID)
+}
+
+func newUpdateMessageService(
+	pgClient *pg.Client,
+	modern bool,
+	legacy bool,
+) *MessageService {
+	var modernQueue ModernMessageQueue
+	if modern {
+		modernQueue = NewNotificationService(pgClient)
+	}
+
+	var legacyQueue LegacyMessageQueue
+	if legacy {
+		legacyQueue = legacyslack.NewService(pgClient, "test-secret", "https://slack.test", log.NewLogger())
+	}
+
+	return NewMessageService(pgClient, nil, modernQueue, legacyQueue, log.NewLogger())
+}
+
+func newUpdateSubject(scope coredata.Scoper) (string, string) {
+	return "compliance_portal_access", gid.New(scope.GetTenantID(), coredata.BotMessageEntityType).String()
+}
+
+func updateDelivery(
+	scope coredata.Scoper,
+	organizationID gid.GID,
+	namespace string,
+	key string,
+) probot.OutboundDelivery {
+	return probot.OutboundDelivery{
+		OrganizationID:   organizationID,
+		Purpose:          coredata.BotMessagePurposeUpdate,
+		SourceEventID:    gid.New(scope.GetTenantID(), coredata.BotMessageEntityType).String(),
+		SubjectNamespace: namespace,
+		SubjectKey:       key,
+		Capability:       "compliance_access",
+		MessageType:      "ACCESS",
+		Result: probot.OutboundMessage{
+			Message: bot.Message{
+				OrganizationID: organizationID,
+				Type:           "ACCESS",
+			},
+			Intent: bot.MessageIntent{FallbackText: "updated"},
+		},
+	}
+}
+
+func insertBotPost(
+	t *testing.T,
+	pgClient *pg.Client,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+	namespace string,
+	key string,
+	processed bool,
+	deadLettered bool,
+) *coredata.BotMessage {
+	t.Helper()
+
+	var message *coredata.BotMessage
+
+	require.NoError(
+		t,
+		pgClient.WithTx(
+			t.Context(),
+			func(ctx context.Context, tx pg.Tx) error {
+				var err error
+				message, err = bot.NewService(bot.ServiceConfig{}).EnqueueMessage(
+					ctx,
+					tx,
+					scope,
+					bot.MessageParams{
+						OrganizationID:   organizationID,
+						Capability:       "compliance_access",
+						MessageType:      "ACCESS",
+						SubjectNamespace: namespace,
+						SubjectKey:       key,
+						EventKey:         "post",
+						Purpose:          coredata.BotMessagePurposePost,
+					},
+				)
+
+				return err
+			},
+		),
+	)
+	require.NotNil(t, message)
+
+	if !processed && !deadLettered {
+		return message
+	}
+
+	require.NoError(
+		t,
+		pgClient.WithConn(
+			t.Context(),
+			func(ctx context.Context, conn pg.Querier) error {
+				_, err := conn.Exec(
+					ctx,
+					`
+UPDATE bot_messages
+SET
+	processed_at = CASE WHEN @processed THEN NOW() ELSE NULL END,
+	dead_lettered_at = CASE WHEN @dead_lettered THEN NOW() ELSE NULL END,
+	updated_at = NOW()
+WHERE id = @id
+`,
+					pgx.StrictNamedArgs{
+						"id":            message.ID,
+						"processed":     processed,
+						"dead_lettered": deadLettered,
+					},
+				)
+
+				return err
+			},
+		),
+	)
+
+	return message
+}
+
+func insertSlackbotPost(
+	t *testing.T,
+	pgClient *pg.Client,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+	postID gid.GID,
+	delivered bool,
+	terminal bool,
+) {
+	t.Helper()
+
+	metadata := map[string]any{}
+	if postID != gid.Nil {
+		metadata[coredata.SlackbotMessageMetadataSourceEventID] = postID.String()
+	}
+
+	message := coredata.NewSlackbotMessage(
+		scope,
+		organizationID,
+		"ACCESS",
+		map[string]any{"text": "posted"},
+		metadata,
+	)
+	message.ChannelID = new("C-posted")
+	message.MessageTS = new("111.222")
+
+	now := time.Now()
+	if delivered {
+		message.SentAt = &now
+	}
+
+	if terminal {
+		message.Error = new("cannot create Slackbot message")
+		message.SentAt = nil
+	}
+
+	require.NoError(
+		t,
+		pgClient.WithTx(
+			t.Context(),
+			func(ctx context.Context, tx pg.Tx) error {
+				return message.Insert(ctx, tx, scope)
+			},
+		),
+	)
+}
+
+func insertLegacyPost(
+	t *testing.T,
+	pgClient *pg.Client,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+	postID gid.GID,
+) {
+	t.Helper()
+
+	message := coredata.NewSlackMessage(
+		scope,
+		organizationID,
+		coredata.SlackMessageTypeWelcome,
+		map[string]any{"text": "posted"},
+	)
+	message.Metadata = map[string]any{
+		coredata.SlackMessageMetadataSourceEventID: postID.String(),
+	}
+	message.ChannelID = new("C-posted")
+	message.MessageTS = new("111.222")
+	now := time.Now()
+	message.SentAt = &now
+	message.UpdatedAt = now
+
+	require.NoError(
+		t,
+		pgClient.WithTx(
+			t.Context(),
+			func(ctx context.Context, tx pg.Tx) error {
+				if err := message.Insert(ctx, tx, scope); err != nil {
+					return err
+				}
+
+				return message.Update(ctx, tx, scope)
+			},
+		),
+	)
 }
 
 func insertQueueDestinationWithExternalID(
