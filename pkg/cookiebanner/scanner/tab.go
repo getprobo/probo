@@ -62,6 +62,9 @@ var scrollJS string
 //go:embed scripts/storage.js
 var storageJS string
 
+//go:embed scripts/banner_id.js
+var bannerIDJS string
+
 type (
 	storageRead struct {
 		Local   []storageKey `json:"local"`

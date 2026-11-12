@@ -60,12 +60,13 @@ var (
 	// the navigation, for example with HTTP 401, 403, 429 or 503.
 	ErrBlocked = errors.New("scanner: page blocked")
 
-	// ErrBannerNotInstalled means the homepage HTML has no probo banner.
-	// The scan stops before any page is opened.
+	// ErrBannerNotInstalled means the homepage has no probo banner in its
+	// HTML or in the document after JavaScript runs. The scan stops before
+	// the crawl.
 	ErrBannerNotInstalled = errors.New("scanner: banner is not installed")
 
-	// ErrDifferentBanner means the homepage embeds a probo banner, but not
-	// the one this scan is for. The scan stops before any page is opened.
+	// ErrDifferentBanner means the homepage has a probo banner, but not
+	// the one this scan is for. The scan stops before the crawl.
 	ErrDifferentBanner = errors.New("scanner: a different banner is installed")
 )
 

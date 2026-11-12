@@ -192,6 +192,10 @@ func Run(ctx context.Context, allocCtx context.Context, in Input) (*Result, erro
 		}
 
 		confirmed, err := s.probeEmbeds(runCtx, sitemapURLs)
+		if errors.Is(err, ErrBannerNotInstalled) {
+			confirmed, err = s.confirmRenderedBanner()
+		}
+
 		if err != nil {
 			return nil, err
 		}
@@ -335,6 +339,120 @@ func (s *scan) loop() (stopCause, error) {
 			}
 		}
 	}
+}
+
+// confirmRenderedBanner reads a banner id the script-tag and npm installs
+// add only after JavaScript runs. The static probe cannot see it.
+func (s *scan) confirmRenderedBanner() (bool, error) {
+	deadline := time.Now().Add(s.in.Limits.NavigationTimeout + s.in.Limits.HomepageDwell)
+
+	// The crawl visits this page again. Drop observations from this load
+	// so they are not treated as already recorded.
+	mark := s.rec.markObservations()
+	defer s.rec.beginPage()
+	defer s.rec.restoreObservations(mark)
+	s.rec.beginPage()
+
+	if s.cancelled() != nil || s.runExpired() {
+		return false, nil
+	}
+
+	navLimit := s.navigationBudget(false)
+	if remain := time.Until(deadline); remain < navLimit {
+		navLimit = max(remain, 0)
+	}
+
+	navCtx, cancel := context.WithTimeout(s.tabCtx, navLimit)
+	err := chromedp.Do(navCtx, chromedp.Navigate(s.startURL))
+
+	cancel()
+
+	if err != nil {
+		if s.cancelled() != nil || s.runExpired() {
+			return false, nil
+		}
+
+		return false, classifyNavigation(err)
+	}
+
+	if err := s.blockedDocument(); err != nil {
+		return false, err
+	}
+
+	var (
+		sawRead bool
+		readErr error
+		id      string
+	)
+
+	ticker := time.NewTicker(100 * time.Millisecond)
+	defer ticker.Stop()
+
+	for {
+		if s.cancelled() != nil || s.runExpired() {
+			return false, nil
+		}
+
+		id, readErr = s.renderedBannerID()
+		if readErr == nil {
+			sawRead = true
+
+			if id != "" {
+				if id != s.in.BannerID {
+					return false, ErrDifferentBanner
+				}
+
+				return true, nil
+			}
+		}
+
+		if !time.Now().Before(deadline) {
+			break
+		}
+
+		select {
+		case <-s.scanCtx.Done():
+			return false, nil
+		case <-s.runDone():
+			return false, nil
+		case <-ticker.C:
+		}
+	}
+
+	if s.cancelled() != nil || s.runExpired() {
+		return false, nil
+	}
+
+	if err := s.blockedDocument(); err != nil {
+		return false, err
+	}
+
+	if !sawRead {
+		return false, fmt.Errorf("cannot read banner: %w", readErr)
+	}
+
+	return false, fmt.Errorf("%w: homepage has no probo banner", ErrBannerNotInstalled)
+}
+
+func (s *scan) renderedBannerID() (string, error) {
+	ctx, cancel := context.WithTimeout(s.tabCtx, readTimeout)
+	defer cancel()
+
+	id, err := chromedp.Run(ctx, chromedp.Evaluate[string](bannerIDJS))
+	if err != nil {
+		return "", err
+	}
+
+	return strings.TrimSpace(id), nil
+}
+
+func (s *scan) blockedDocument() error {
+	status := s.rec.mainStatus()
+	if !blockedStatus(status) {
+		return nil
+	}
+
+	return fmt.Errorf("%w: HTTP %d", ErrBlocked, status)
 }
 
 func (s *scan) visit(item QueueItem, grace bool) (Page, []string, error) {

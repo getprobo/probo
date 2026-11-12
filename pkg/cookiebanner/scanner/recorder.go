@@ -22,6 +22,7 @@ package scanner
 
 import (
 	"encoding/json"
+	"maps"
 	"net"
 	"net/http"
 	"net/url"
@@ -81,6 +82,14 @@ type (
 		Initiator string `json:"initiator"`
 		Host      string `json:"host"`
 		Domain    string `json:"domain"`
+	}
+
+	observationMark struct {
+		seenCookie map[string]struct{}
+		seenRes    map[string]struct{}
+		seenStore  map[string]struct{}
+		total      int
+		truncated  bool
 	}
 )
 
@@ -145,6 +154,30 @@ func (r *recorder) handleSession(session string, ev any) {
 	case runtime.EventBindingCalled:
 		r.recordBinding(&ev)
 	}
+}
+
+func (r *recorder) markObservations() observationMark {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	return observationMark{
+		seenCookie: maps.Clone(r.seenCookie),
+		seenRes:    maps.Clone(r.seenRes),
+		seenStore:  maps.Clone(r.seenStore),
+		total:      r.total,
+		truncated:  r.truncated,
+	}
+}
+
+func (r *recorder) restoreObservations(mark observationMark) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	r.seenCookie = mark.seenCookie
+	r.seenRes = mark.seenRes
+	r.seenStore = mark.seenStore
+	r.total = mark.total
+	r.truncated = mark.truncated
 }
 
 func (r *recorder) beginPage() {

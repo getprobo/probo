@@ -41,11 +41,12 @@ import (
 //
 // CookieBannerScanFailureReasonInternal: any other error on our side.
 //
-// CookieBannerScanFailureReasonBannerNotInstalled: the homepage HTML has
-// no probo banner, so no page was opened.
+// CookieBannerScanFailureReasonBannerNotInstalled: the homepage has no
+// probo banner in its HTML or in the document after JavaScript runs, so
+// the crawl did not start.
 //
-// CookieBannerScanFailureReasonDifferentBanner: the homepage embeds a
-// probo banner, but not this one, so no page was opened.
+// CookieBannerScanFailureReasonDifferentBanner: the homepage has a probo
+// banner, but not this one, so the crawl did not start.
 type CookieBannerScanFailureReason string
 
 const (
