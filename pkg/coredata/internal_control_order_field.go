@@ -39,7 +39,7 @@ const (
 
 var (
 	_ page.OrderField          = InternalControlOrderField("")
-	_ page.NullsLastOrderField = InternalControlOrderField("")
+	_ page.NullsOrderField     = InternalControlOrderField("")
 	_ fmt.Stringer             = InternalControlOrderField("")
 	_ encoding.TextMarshaler   = InternalControlOrderField("")
 	_ encoding.TextUnmarshaler = (*InternalControlOrderField)(nil)
@@ -77,6 +77,10 @@ func (p InternalControlOrderField) Column() string {
 	return string(p)
 }
 
-func (p InternalControlOrderField) NullsLast() bool {
-	return p == InternalControlOrderFieldNextDue
+func (p InternalControlOrderField) Nulls() page.Nulls {
+	if p == InternalControlOrderFieldNextDue {
+		return page.NullsLast
+	}
+
+	return page.NullsDefault
 }
