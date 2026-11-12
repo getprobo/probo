@@ -4,6 +4,21 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.268.0] - 2026-11-12
+
+### Added
+
+- Document Comment resource with `Create`, `Get`, `Get Many`,
+  `Reply`, `Update`, `Delete`, `Resolve`, and `Reopen` operations.
+  `Get` returns every comment of the thread
+- Document Suggestion resource with `Start`, `Get`, `Get Many`,
+  `Reply`, `Accept`, and `Reject` operations
+
+### Removed
+
+- Document `Delete Draft Version` operation, which called a mutation
+  the API does not expose
+
 ## [0.267.0] - 2026-11-11
 
 ### Added
