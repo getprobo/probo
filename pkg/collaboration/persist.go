@@ -35,7 +35,251 @@ import (
 	"go.probo.inc/probo/pkg/realtime"
 )
 
+// stableReadAttempts bounds how often the fast persist re-reads a live
+// document that peers keep editing before it falls back to the merge path.
+const stableReadAttempts = 3
+
+// Persist appends the changes of a live document to the canonical change log
+// and returns the canonical revision.
 func (s *Service) Persist(
+	ctx context.Context,
+	scope coredata.Scoper,
+	documentID gid.GID,
+	document *automerge.Document,
+) (int64, error) {
+	revision, persisted, err := s.persistFast(ctx, scope, documentID, document)
+	if err != nil {
+		return 0, err
+	}
+
+	if persisted {
+		return revision, nil
+	}
+
+	return s.persistMerge(ctx, scope, documentID, document)
+}
+
+// persistFast handles the common case where the live document already
+// contains everything the canonical document has. The merged state is then
+// the live document itself, so nothing is loaded while the row is locked: the
+// lock only covers SQL and reads of the in-memory document. It reports false
+// when the canonical document holds changes the live one lacks.
+func (s *Service) persistFast(
+	ctx context.Context,
+	scope coredata.Scoper,
+	documentID gid.GID,
+	document *automerge.Document,
+) (int64, bool, error) {
+	var (
+		revision  int64
+		persisted bool
+	)
+
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			organizationID, err := assertDraftEditable(
+				ctx,
+				scope,
+				tx,
+				documentID,
+			)
+			if err != nil {
+				return err
+			}
+
+			doc, err := lockCollaborationDocument(ctx, tx, scope, documentID)
+			if err != nil {
+				return err
+			}
+
+			if !doc.Seeded {
+				return nil
+			}
+
+			canonicalHeads, err := decodeHeads(doc.Heads)
+			if err != nil {
+				return fmt.Errorf("cannot decode canonical collaboration heads: %w", err)
+			}
+
+			if len(canonicalHeads) == 0 {
+				return nil
+			}
+
+			// Holding every canonical head means holding the whole canonical
+			// history, so the live document is the merged document.
+			covered, err := document.HasHeads(canonicalHeads)
+			if err != nil {
+				return fmt.Errorf("cannot inspect local collaboration heads: %w", err)
+			}
+
+			if !covered {
+				return nil
+			}
+
+			heads, changes, stable, err := readStableChanges(document, canonicalHeads)
+			if err != nil {
+				return err
+			}
+
+			if !stable {
+				return nil
+			}
+
+			persisted = true
+			revision = doc.Revision
+
+			if len(changes) == 0 {
+				return nil
+			}
+
+			now := time.Now()
+
+			for _, change := range changes {
+				doc.ChangeRevision++
+
+				storedChange := coredata.CollaborationChange{
+					DocumentID:     documentID,
+					OrganizationID: organizationID,
+					Revision:       doc.ChangeRevision,
+					ChangeHash:     append([]byte(nil), change.Hash[:]...),
+					ChangeBytes:    change.Bytes,
+					CreatedAt:      now,
+				}
+				if err := storedChange.Insert(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot append collaboration change: %w", err)
+				}
+			}
+
+			doc.Revision++
+			doc.Heads = encodeHeads(heads)
+
+			if doc.ChangeRevision-doc.SnapshotRevision >= compactionChanges {
+				if err := s.compactFromLive(ctx, tx, scope, doc, document, heads); err != nil {
+					return err
+				}
+			}
+
+			doc.SeedClaimedAt = nil
+
+			doc.UpdatedAt = now
+			if err := doc.Update(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot persist collaboration document: %w", err)
+			}
+
+			if _, err := tx.Exec(
+				ctx,
+				`SELECT pg_notify(@channel, @payload)`,
+				pgx.StrictNamedArgs{
+					"channel": realtime.CollaborationChannel,
+					"payload": documentID.String(),
+				},
+			); err != nil {
+				return fmt.Errorf("cannot notify collaboration change: %w", err)
+			}
+
+			content, err := materializeAtHeads(document, heads)
+			if err != nil {
+				return fmt.Errorf("cannot materialize collaboration: %w", err)
+			}
+
+			if err := writeLiveContent(ctx, scope, tx, documentID, content); err != nil {
+				return err
+			}
+
+			revision = doc.Revision
+
+			return nil
+		},
+	)
+	if err != nil {
+		return 0, false, err
+	}
+
+	return revision, persisted, nil
+}
+
+// readStableChanges returns the changes the live document has on top of
+// canonicalHeads together with the heads those changes lead to. Peers edit the
+// document concurrently, so the read is accepted only when the heads did not
+// move around it.
+func readStableChanges(
+	document *automerge.Document,
+	canonicalHeads []automerge.Hash,
+) ([]automerge.Hash, []automerge.Change, bool, error) {
+	for range stableReadAttempts {
+		before, err := document.Heads()
+		if err != nil {
+			return nil, nil, false, fmt.Errorf("cannot read local collaboration heads: %w", err)
+		}
+
+		changes, err := document.ChangesSince(canonicalHeads)
+		if err != nil {
+			return nil, nil, false, fmt.Errorf("cannot read local collaboration changes: %w", err)
+		}
+
+		after, err := document.Heads()
+		if err != nil {
+			return nil, nil, false, fmt.Errorf("cannot read local collaboration heads: %w", err)
+		}
+
+		if slices.Equal(before, after) {
+			return after, changes, true, nil
+		}
+	}
+
+	return nil, nil, false, nil
+}
+
+// compactFromLive replaces the canonical snapshot with a save of the live
+// document. The save is used only when the document still sits at heads once
+// it is taken. Otherwise compaction waits for a later persist.
+func (s *Service) compactFromLive(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	doc *coredata.CollaborationDocument,
+	document *automerge.Document,
+	heads []automerge.Hash,
+) error {
+	snapshot, err := document.Save()
+	if err != nil {
+		return fmt.Errorf("cannot compact collaboration snapshot: %w", err)
+	}
+
+	current, err := document.Heads()
+	if err != nil {
+		return fmt.Errorf("cannot read local collaboration heads: %w", err)
+	}
+
+	if !slices.Equal(current, heads) {
+		return nil
+	}
+
+	if len(snapshot) > snapshotMaxBytes {
+		return &ErrCollaborationStateTooLarge{Size: len(snapshot)}
+	}
+
+	doc.Snapshot = snapshot
+	doc.SnapshotRevision = doc.ChangeRevision
+
+	if err := coredata.DeleteCollaborationChangesThroughRevision(
+		ctx,
+		tx,
+		scope,
+		doc.DocumentID,
+		doc.SnapshotRevision,
+	); err != nil {
+		return fmt.Errorf("cannot delete compacted collaboration changes: %w", err)
+	}
+
+	return nil
+}
+
+// persistMerge rebuilds the canonical document and merges the live one into
+// it. It is the path taken when another writer advanced the canonical
+// document past what the live one holds.
+func (s *Service) persistMerge(
 	ctx context.Context,
 	scope coredata.Scoper,
 	documentID gid.GID,
