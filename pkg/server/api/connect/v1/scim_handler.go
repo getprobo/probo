@@ -381,15 +381,9 @@ func redactSCIMValue(value any, redacted *bool) any {
 		}
 
 		// A PATCH operation carries its target in "path" and the payload in
-		// "value", so the attribute name never appears as a key.
-		if path, ok := v["path"].(string); ok && isSCIMPasswordAttribute(path) {
-			if _, ok := v["value"]; ok {
-				v["value"] = scimRedactedValue
-				*redacted = true
-			}
-		}
-
-		if path, ok := foldedString(v, "path"); ok && scimPathTargetsPhoto(path) {
+		// "value", so the attribute name never appears as a key. Clients
+		// have sent those envelope keys in either case.
+		if path, ok := foldedString(v, "path"); ok && (isSCIMPasswordAttribute(path) || scimPathTargetsPhoto(path)) {
 			for key := range v {
 				if strings.EqualFold(key, "value") {
 					v[key] = scimRedactedValue

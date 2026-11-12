@@ -118,6 +118,19 @@ func TestRedactSCIMCredentials(t *testing.T) {
 		)
 	})
 
+	t.Run("redacts a password patch with mixed-case keys", func(t *testing.T) {
+		t.Parallel()
+
+		got := redactSCIMCredentials([]byte(`{"Operations":[{"Op":"add","Path":"urn:ietf:params:scim:schemas:core:2.0:User:Password","Value":"s3cret"}]}`))
+
+		assert.JSONEq(
+			t,
+			`{"Operations":[{"Op":"add","Path":"urn:ietf:params:scim:schemas:core:2.0:User:Password","Value":"[REDACTED]"}]}`,
+			string(got),
+		)
+		assert.NotContains(t, string(got), "s3cret")
+	})
+
 	t.Run("keeps other patch operations intact", func(t *testing.T) {
 		t.Parallel()
 
