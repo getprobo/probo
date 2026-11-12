@@ -28,7 +28,6 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"sync"
 	"testing"
 
@@ -163,7 +162,7 @@ func TestBridge_Run_SyncsPhotoWhenETagChanges(t *testing.T) {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
 		case (r.Method == http.MethodPost && r.URL.Path == "/Users") ||
-			(r.Method == http.MethodPut && strings.HasPrefix(r.URL.Path, "/Users/")):
+			(r.Method == http.MethodPut && r.URL.Path == "/Users/profile-1"):
 			body, err := io.ReadAll(r.Body)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusBadRequest)

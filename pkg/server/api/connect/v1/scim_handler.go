@@ -371,7 +371,7 @@ func redactSCIMValue(value any, redacted *bool) any {
 				continue
 			}
 
-			if strings.EqualFold(key, "photos") {
+			if scimPathTargetsPhoto(key) {
 				v[key] = redactSCIMPhotos(nested, redacted)
 
 				continue
@@ -389,10 +389,12 @@ func redactSCIMValue(value any, redacted *bool) any {
 			}
 		}
 
-		if path, ok := v["path"].(string); ok && scimPathTargetsPhoto(path) {
-			if _, ok := v["value"]; ok {
-				v["value"] = scimRedactedValue
-				*redacted = true
+		if path, ok := foldedString(v, "path"); ok && scimPathTargetsPhoto(path) {
+			for key := range v {
+				if strings.EqualFold(key, "value") {
+					v[key] = scimRedactedValue
+					*redacted = true
+				}
 			}
 		}
 
@@ -440,37 +442,39 @@ func redactSCIMPhotos(value any, redacted *bool) any {
 	return items
 }
 
-// scimPathTargetsPhoto reports whether a PATCH path addresses the photos
-// attribute, including a schema URN and a filter such as
-// photos[type eq "photo"].value.
+// scimPathTargetsPhoto reports whether an attribute name or PATCH path
+// addresses the photos attribute. A SCIM path names its attribute before any
+// "[" filter, and a schema URN prefix ends at the last ":", so neither the
+// filter text nor the URN version (2.0) needs to be parsed.
 func scimPathTargetsPhoto(path string) bool {
-	var plain strings.Builder
-
-	depth := 0
-	for _, r := range path {
-		switch r {
-		case '[':
-			depth++
-		case ']':
-			if depth > 0 {
-				depth--
-			}
-		default:
-			if depth == 0 {
-				plain.WriteRune(r)
-			}
-		}
+	attr := path
+	if i := strings.Index(attr, "["); i >= 0 {
+		attr = attr[:i]
 	}
 
-	for _, part := range strings.FieldsFunc(plain.String(), func(r rune) bool {
-		return r == '.' || r == ':'
-	}) {
-		if strings.EqualFold(part, "photos") {
-			return true
-		}
+	if i := strings.LastIndex(attr, ":"); i >= 0 {
+		attr = attr[i+1:]
 	}
 
-	return false
+	if i := strings.Index(attr, "."); i >= 0 {
+		attr = attr[:i]
+	}
+
+	return strings.EqualFold(strings.TrimSpace(attr), "photos")
+}
+
+func foldedString(object map[string]any, name string) (string, bool) {
+	for key, value := range object {
+		if !strings.EqualFold(key, name) {
+			continue
+		}
+
+		text, ok := value.(string)
+
+		return text, ok
+	}
+
+	return "", false
 }
 
 // isSCIMPasswordAttribute reports whether an attribute name or PATCH path

@@ -191,20 +191,41 @@ func (s *Service) CreateUser(
 	)
 
 	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
-	photo, reason := s.prepareSCIMPhoto(ctx, attrs.PhotoURI, attrs.PhotoETag, "")
-	if reason != "" {
-		s.warnPhoto(ctx, nil, reason)
-		photo = nil
-	}
+	newIdentityID := gid.New(gid.NilTenant, coredata.IdentityEntityType)
 
-	staged, unreadable := s.stageProfilePhoto(ctx, gid.Nil, "", photo)
+	var (
+		photo      *scimPhoto
+		staged     *coredata.File
+		unreadable bool
+		attached   bool
+	)
+
+	if attrs.PhotoURI != nil || attrs.PhotoETag != nil {
+		identityID, storedPhotoETag, err := s.createPhotoTarget(ctx, config, emailAddr)
+		if err != nil {
+			return scim.Resource{}, err
+		}
+
+		if identityID == gid.Nil {
+			identityID = newIdentityID
+		}
+
+		var reason string
+		photo, reason = s.prepareSCIMPhoto(ctx, attrs.PhotoURI, attrs.PhotoETag, storedPhotoETag)
+		if reason != "" {
+			s.warnPhoto(ctx, &coredata.MembershipProfile{IdentityID: identityID}, reason)
+			photo = nil
+		}
+
+		staged, unreadable = s.stageProfilePhoto(ctx, identityID, storedPhotoETag, photo)
+	}
 
 	err = s.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		identity := &coredata.Identity{}
 		if err := identity.LoadByEmail(ctx, tx, emailAddr); err != nil {
 			if errors.Is(err, coredata.ErrResourceNotFound) {
 				identity = &coredata.Identity{
-					ID:                   gid.New(gid.NilTenant, coredata.IdentityEntityType),
+					ID:                   newIdentityID,
 					EmailAddress:         emailAddr,
 					FullName:             attrs.FullName,
 					HashedPassword:       nil,
@@ -392,9 +413,12 @@ func (s *Service) CreateUser(
 			previousUser = webhooktypes.NewUser(previousProfile, membership)
 		}
 
-		if err := s.syncProfilePhoto(ctx, tx, scope, profile, photo, staged, unreadable); err != nil {
-			return err
+		photoAttached, photoErr := s.syncProfilePhoto(ctx, tx, scope, profile, photo, staged, unreadable)
+		if photoErr != nil {
+			return photoErr
 		}
+
+		attached = photoAttached
 
 		if err := webhook.InsertUpdateData(ctx, tx, scope, config.OrganizationID, eventType, webhooktypes.NewUser(profile, membership), previousUser); err != nil {
 			return fmt.Errorf("cannot insert webhook event: %w", err)
@@ -402,6 +426,10 @@ func (s *Service) CreateUser(
 
 		return nil
 	})
+	if err != nil || !attached {
+		s.discardStagedPhoto(ctx, staged)
+	}
+
 	if err != nil {
 		return scim.Resource{}, err
 	}
@@ -546,25 +574,35 @@ func (s *Service) updateUser(
 ) (*coredata.MembershipProfile, error) {
 	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
 	now := time.Now()
-	storedPhotoETag, identityID, err := s.storedPhotoVersion(ctx, config, profileID)
-	if err != nil {
-		return nil, err
-	}
+	var (
+		photo      *scimPhoto
+		staged     *coredata.File
+		unreadable bool
+		attached   bool
+	)
 
-	photo, reason := s.prepareSCIMPhoto(ctx, attrs.PhotoURI, attrs.PhotoETag, storedPhotoETag)
-	if reason != "" {
-		s.warnPhoto(ctx, &coredata.MembershipProfile{IdentityID: identityID}, reason)
-		photo = nil
-	}
+	if attrs.PhotoURI != nil || attrs.PhotoETag != nil {
+		storedPhotoETag, identityID, err := s.storedPhotoVersion(ctx, config, profileID)
+		if err != nil {
+			return nil, err
+		}
 
-	staged, unreadable := s.stageProfilePhoto(ctx, identityID, storedPhotoETag, photo)
+		var reason string
+		photo, reason = s.prepareSCIMPhoto(ctx, attrs.PhotoURI, attrs.PhotoETag, storedPhotoETag)
+		if reason != "" {
+			s.warnPhoto(ctx, &coredata.MembershipProfile{IdentityID: identityID}, reason)
+			photo = nil
+		}
+
+		staged, unreadable = s.stageProfilePhoto(ctx, identityID, storedPhotoETag, photo)
+	}
 
 	var (
 		membership *coredata.Membership
 		profile    *coredata.MembershipProfile
 	)
 
-	err = s.pg.WithTx(
+	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			profile = &coredata.MembershipProfile{}
@@ -875,9 +913,12 @@ func (s *Service) updateUser(
 				}
 			}
 
-			if err := s.syncProfilePhoto(ctx, tx, scope, profile, photo, staged, unreadable); err != nil {
-				return err
+			photoAttached, photoErr := s.syncProfilePhoto(ctx, tx, scope, profile, photo, staged, unreadable)
+			if photoErr != nil {
+				return photoErr
 			}
+
+			attached = photoAttached
 
 			if err := webhook.InsertUpdateData(ctx, tx, scope, config.OrganizationID, coredata.WebhookEventTypeUserUpdated, webhooktypes.NewUser(profile, membership), previousUser); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
@@ -886,11 +927,70 @@ func (s *Service) updateUser(
 			return nil
 		},
 	)
+	if err != nil || !attached {
+		s.discardStagedPhoto(ctx, staged)
+	}
+
 	if err != nil {
 		return nil, err
 	}
 
 	return profile, nil
+}
+
+// createPhotoTarget returns the identity that a created user will have and
+// the photo version already stored for it in the organization. A zero
+// identity means the email is new and CreateUser inserts the identity.
+func (s *Service) createPhotoTarget(
+	ctx context.Context,
+	config *coredata.SCIMConfiguration,
+	emailAddr mail.Addr,
+) (gid.GID, string, error) {
+	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
+
+	var (
+		identityID gid.GID
+		stored     string
+	)
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			identity := &coredata.Identity{}
+			if err := identity.LoadByEmail(ctx, conn, emailAddr); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return nil
+				}
+
+				return fmt.Errorf("cannot load identity: %w", err)
+			}
+
+			identityID = identity.ID
+
+			profile := &coredata.MembershipProfile{}
+			if err := profile.LoadByIdentityIDAndOrganizationID(
+				ctx,
+				conn,
+				scope,
+				identity.ID,
+				config.OrganizationID,
+			); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return nil
+				}
+
+				return fmt.Errorf("cannot load profile: %w", err)
+			}
+
+			if profile.SCIMPhotoETag != nil {
+				stored = *profile.SCIMPhotoETag
+			}
+
+			return nil
+		},
+	)
+
+	return identityID, stored, err
 }
 
 func (s *Service) storedPhotoVersion(

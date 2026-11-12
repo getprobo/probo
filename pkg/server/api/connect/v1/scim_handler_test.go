@@ -156,28 +156,80 @@ func TestRedactSCIMCredentials(t *testing.T) {
 	t.Run("redacts a photo value under any key casing", func(t *testing.T) {
 		t.Parallel()
 
-		got := redactSCIMCredentials([]byte(`{"photos":[{"Value":"data:image/png;base64,bbbb","type":"photo"},"https://cdn.example.com/secret.png"]}`))
+		got := redactSCIMCredentials([]byte(`{"userName":"a@example.com","photos":[{"Value":"data:image/png;base64,bbbb","type":"photo"},"https://cdn.example.com/secret.png"]}`))
 
-		assert.NotContains(t, string(got), "bbbb")
-		assert.NotContains(t, string(got), "secret.png")
+		assert.JSONEq(
+			t,
+			`{"userName":"a@example.com","photos":[{"Value":"[REDACTED]","type":"photo"},"[REDACTED]"]}`,
+			string(got),
+		)
+	})
+
+	t.Run("redacts a schema-qualified photos key", func(t *testing.T) {
+		t.Parallel()
+
+		got := redactSCIMCredentials([]byte(`{"Operations":[{"op":"replace","value":{"urn:ietf:params:scim:schemas:core:2.0:User:photos":[{"value":"data:image/png;base64,dddd"}],"displayName":"Ada"}}]}`))
+
+		assert.JSONEq(
+			t,
+			`{"Operations":[{"op":"replace","value":{"urn:ietf:params:scim:schemas:core:2.0:User:photos":[{"value":"[REDACTED]"}],"displayName":"Ada"}}]}`,
+			string(got),
+		)
 	})
 
 	t.Run("redacts a photo sent on a patch path", func(t *testing.T) {
 		t.Parallel()
 
-		bodies := []string{
-			`{"Operations":[{"op":"replace","path":"photos","value":[{"value":"data:image/png;base64,aaaa"}]}]}`,
-			`{"Operations":[{"op":"replace","path":"urn:ietf:params:scim:schemas:core:2.0:User:photos","value":"data:image/png;base64,cccc"}]}`,
-			`{"Operations":[{"op":"replace","path":"photos[type eq \"photo\"].value","value":"https://cdn.example.com/secret.png"}]}`,
+		cases := []struct {
+			name string
+			body string
+			want string
+		}{
+			{
+				name: "plain path",
+				body: `{"Operations":[{"op":"replace","path":"photos","value":[{"value":"data:image/png;base64,aaaa"}]}]}`,
+				want: `{"Operations":[{"op":"replace","path":"photos","value":"[REDACTED]"}]}`,
+			},
+			{
+				name: "schema-qualified path",
+				body: `{"Operations":[{"op":"replace","path":"urn:ietf:params:scim:schemas:core:2.0:User:photos","value":"data:image/png;base64,cccc"}]}`,
+				want: `{"Operations":[{"op":"replace","path":"urn:ietf:params:scim:schemas:core:2.0:User:photos","value":"[REDACTED]"}]}`,
+			},
+			{
+				name: "filtered path",
+				body: `{"Operations":[{"op":"replace","path":"photos[type eq \"photo\"].value","value":"https://cdn.example.com/secret.png"}]}`,
+				want: `{"Operations":[{"op":"replace","path":"photos[type eq \"photo\"].value","value":"[REDACTED]"}]}`,
+			},
+			{
+				name: "bracket inside a quoted filter value",
+				body: `{"Operations":[{"op":"replace","path":"photos[type eq \"]\"].value","value":"https://cdn.example.com/secret.png"}]}`,
+				want: `{"Operations":[{"op":"replace","path":"photos[type eq \"]\"].value","value":"[REDACTED]"}]}`,
+			},
+			{
+				name: "mixed-case envelope keys",
+				body: `{"Operations":[{"Op":"replace","Path":"photos","Value":"data:image/png;base64,eeee"}]}`,
+				want: `{"Operations":[{"Op":"replace","Path":"photos","Value":"[REDACTED]"}]}`,
+			},
 		}
 
-		for _, body := range bodies {
-			got := redactSCIMCredentials([]byte(body))
-			require.NotNil(t, got, body)
-			assert.NotContains(t, string(got), "aaaa", body)
-			assert.NotContains(t, string(got), "cccc", body)
-			assert.NotContains(t, string(got), "secret.png", body)
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				t.Parallel()
+
+				got := redactSCIMCredentials([]byte(tc.body))
+
+				require.NotNil(t, got)
+				assert.JSONEq(t, tc.want, string(got))
+			})
 		}
+	})
+
+	t.Run("keeps a patch body that does not target photos", func(t *testing.T) {
+		t.Parallel()
+
+		body := []byte(`{"Operations":[{"op":"replace","path":"name.givenName","value":"Ada"}]}`)
+
+		assert.Equal(t, body, redactSCIMCredentials(body))
 	})
 
 	t.Run("never leaks the credential", func(t *testing.T) {

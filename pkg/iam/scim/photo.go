@@ -346,7 +346,7 @@ func (s *Service) syncProfilePhoto(
 	photo *scimPhoto,
 	staged *coredata.File,
 	unreadable bool,
-) error {
+) (bool, error) {
 	stored := ""
 	if profile.SCIMPhotoETag != nil {
 		stored = *profile.SCIMPhotoETag
@@ -354,21 +354,43 @@ func (s *Service) syncProfilePhoto(
 
 	switch photoActionFor(stored, photo) {
 	case photoActionNone:
-		return nil
+		return false, nil
 	case photoActionClear:
-		return s.savePhotoETag(ctx, tx, scope, profile, nil)
+		return false, s.savePhotoETag(ctx, tx, scope, profile, nil)
 	case photoActionApply:
 		if unreadable {
-			return s.savePhotoETag(ctx, tx, scope, profile, &photo.ETag)
+			return false, s.savePhotoETag(ctx, tx, scope, profile, &photo.ETag)
 		}
 
 		if staged == nil {
-			return nil
+			return false, nil
 		}
 
-		return s.attachProfilePhoto(ctx, tx, scope, profile, photo, staged)
+		if err := s.attachProfilePhoto(ctx, tx, scope, profile, photo, staged); err != nil {
+			return false, err
+		}
+
+		return true, nil
 	default:
-		return nil
+		return false, nil
+	}
+}
+
+// discardStagedPhoto removes an uploaded avatar that no committed row
+// references, such as after a rollback or a concurrent update that already
+// stored the same version.
+func (s *Service) discardStagedPhoto(ctx context.Context, staged *coredata.File) {
+	if staged == nil || s.fm == nil {
+		return
+	}
+
+	if err := s.fm.DeleteFile(ctx, staged); err != nil && s.logger != nil {
+		s.logger.WarnCtx(
+			ctx,
+			"cannot delete unused SCIM avatar",
+			log.String("file_id", staged.ID.String()),
+			log.Error(err),
+		)
 	}
 }
 
