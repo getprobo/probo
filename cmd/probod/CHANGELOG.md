@@ -4,6 +4,17 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.342.0] - 2026-11-12
+
+### Added
+
+- The console integrations page suggests third-party connectors that
+  match the organization's third parties, in the connectors list and
+  the marketplace
+- The cookie banner scanner detects banners installed through a script
+  tag or an npm package, and reports a dedicated failure reason when
+  the install cannot be read
+
 ## [0.341.0] - 2026-11-11
 
 ### Added
