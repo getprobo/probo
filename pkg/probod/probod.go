@@ -1672,6 +1672,24 @@ func (impl *Implm) Run(
 		},
 	)
 
+	cookieBannerAnalyticsRetentionWorker := cookiebanner.NewAnalyticsRetentionWorker(
+		pgClient,
+		l.Named("cookie-banner-analytics-retention-worker"),
+		worker.WithRegisterer(r),
+		worker.WithTracerProvider(tp),
+	)
+	cookieBannerAnalyticsRetentionWorkerCtx, stopCookieBannerAnalyticsRetentionWorker := context.WithCancel(
+		context.WithoutCancel(ctx),
+	)
+
+	wg.Go(
+		func() {
+			if err := cookieBannerAnalyticsRetentionWorker.Run(cookieBannerAnalyticsRetentionWorkerCtx); err != nil {
+				cancel(fmt.Errorf("cookie banner analytics retention worker crashed: %w", err))
+			}
+		},
+	)
+
 	stopCookieBannerScanWorker := func() {}
 
 	if impl.cfg.ChromeDPAddr != "" {
@@ -1884,6 +1902,7 @@ func (impl *Implm) Run(
 	stopCertManagerService()
 	stopTrackerPatternAnalysisWorker()
 	stopBannerSourcePromotionWorker()
+	stopCookieBannerAnalyticsRetentionWorker()
 	stopCookieBannerScanWorker()
 	stopTrackerPolicyWorker()
 	stopTrackerMappingWorker()
