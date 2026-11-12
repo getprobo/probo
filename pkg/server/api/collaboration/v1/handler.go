@@ -360,25 +360,11 @@ func (h *Handler) closeOpenError(
 	_ = connection.Close(websocket.StatusInternalError, "collaboration failed")
 }
 
+// collaborationOpenUnavailable reports whether a room could not be opened
+// because the document has no collaboration document, as generated documents
+// do not.
 func collaborationOpenUnavailable(err error) bool {
-	if errors.Is(err, coredata.ErrResourceNotFound) ||
-		errors.Is(err, collaboration.ErrDocumentCollaborationNotFound) {
-		return true
-	}
-
-	if _, ok := errors.AsType[*collaboration.ErrDocumentArchived](err); ok {
-		return true
-	}
-
-	if _, ok := errors.AsType[*collaboration.ErrDocumentVersionGenerated](err); ok {
-		return true
-	}
-
-	if _, ok := errors.AsType[*collaboration.ErrCollaborationStateTooLarge](err); ok {
-		return true
-	}
-
-	return false
+	return errors.Is(err, collaboration.ErrDocumentCollaborationNotFound)
 }
 
 func (h *Handler) closeWithError(
