@@ -35,11 +35,11 @@ const (
 )
 
 var (
-	_ page.OrderField            = ApplicabilityStatementOrderField("")
-	_ page.DirectionalOrderField = ApplicabilityStatementOrderField("")
-	_ fmt.Stringer               = ApplicabilityStatementOrderField("")
-	_ encoding.TextMarshaler     = ApplicabilityStatementOrderField("")
-	_ encoding.TextUnmarshaler   = (*ApplicabilityStatementOrderField)(nil)
+	_ page.OrderField          = ApplicabilityStatementOrderField("")
+	_ page.CursorValuer        = ApplicabilityStatementOrderField("")
+	_ fmt.Stringer             = ApplicabilityStatementOrderField("")
+	_ encoding.TextMarshaler   = ApplicabilityStatementOrderField("")
+	_ encoding.TextUnmarshaler = (*ApplicabilityStatementOrderField)(nil)
 )
 
 func ApplicabilityStatementOrderFields() []ApplicabilityStatementOrderField {
@@ -76,17 +76,8 @@ func (p ApplicabilityStatementOrderField) Column() string {
 	panic("unknown ApplicabilityStatementOrderField")
 }
 
-// DirectionalColumn ignores the direction: section titles sort by the same
-// natural-sort key both ways.
-func (p ApplicabilityStatementOrderField) DirectionalColumn(direction page.OrderDirection) string {
-	return p.Column()
-}
-
-// DirectionalCursorValue maps the bound cursor value into the same space as
-// Column. Cursor keys hold the raw section title, so comparing the sort key
-// against an unmapped cursor value silently drops rows from every page but
-// the first.
-func (p ApplicabilityStatementOrderField) DirectionalCursorValue(direction page.OrderDirection, placeholder string) string {
+// Cursor keys store the raw section title, not its sort key.
+func (p ApplicabilityStatementOrderField) CursorValue(placeholder string) string {
 	if p == ApplicabilityStatementOrderFieldControlSectionTitle {
 		return "section_title_sort_key(" + placeholder + ")"
 	}

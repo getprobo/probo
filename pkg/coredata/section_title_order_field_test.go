@@ -24,32 +24,26 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/page"
 )
 
 const sectionTitleCursorPlaceholder = "@cursor_field_value"
 
-func sectionTitleOrderDirections() []page.OrderDirection {
-	return []page.OrderDirection{page.OrderDirectionAsc, page.OrderDirectionDesc}
-}
-
 func TestControlOrderField_SectionTitle(t *testing.T) {
 	t.Parallel()
 
-	t.Run("section title maps the cursor value like the column", func(t *testing.T) {
+	t.Run("section title sorts the cursor value like the column", func(t *testing.T) {
 		t.Parallel()
 
 		field := coredata.ControlOrderFieldSectionTitle
 
-		for _, direction := range sectionTitleOrderDirections() {
-			assert.Equal(t, "section_title_sort_key(section_title)", field.DirectionalColumn(direction))
-			assert.Equal(
-				t,
-				"section_title_sort_key("+sectionTitleCursorPlaceholder+")",
-				field.DirectionalCursorValue(direction, sectionTitleCursorPlaceholder),
-			)
-		}
+		assert.Equal(t, "section_title_sort_key(section_title)", field.Column())
+		assert.Equal(
+			t,
+			"section_title_sort_key("+sectionTitleCursorPlaceholder+")",
+			field.CursorValue(sectionTitleCursorPlaceholder),
+		)
 	})
 
 	t.Run("other fields bind the cursor value unchanged", func(t *testing.T) {
@@ -57,33 +51,25 @@ func TestControlOrderField_SectionTitle(t *testing.T) {
 
 		field := coredata.ControlOrderFieldCreatedAt
 
-		for _, direction := range sectionTitleOrderDirections() {
-			assert.Equal(t, "created_at", field.DirectionalColumn(direction))
-			assert.Equal(
-				t,
-				sectionTitleCursorPlaceholder,
-				field.DirectionalCursorValue(direction, sectionTitleCursorPlaceholder),
-			)
-		}
+		assert.Equal(t, "created_at", field.Column())
+		assert.Equal(t, sectionTitleCursorPlaceholder, field.CursorValue(sectionTitleCursorPlaceholder))
 	})
 }
 
 func TestApplicabilityStatementOrderField_ControlSectionTitle(t *testing.T) {
 	t.Parallel()
 
-	t.Run("section title maps the cursor value like the column", func(t *testing.T) {
+	t.Run("section title sorts the cursor value like the column", func(t *testing.T) {
 		t.Parallel()
 
 		field := coredata.ApplicabilityStatementOrderFieldControlSectionTitle
 
-		for _, direction := range sectionTitleOrderDirections() {
-			assert.Equal(t, "section_title_sort_key(section_title)", field.DirectionalColumn(direction))
-			assert.Equal(
-				t,
-				"section_title_sort_key("+sectionTitleCursorPlaceholder+")",
-				field.DirectionalCursorValue(direction, sectionTitleCursorPlaceholder),
-			)
-		}
+		assert.Equal(t, "section_title_sort_key(section_title)", field.Column())
+		assert.Equal(
+			t,
+			"section_title_sort_key("+sectionTitleCursorPlaceholder+")",
+			field.CursorValue(sectionTitleCursorPlaceholder),
+		)
 	})
 
 	t.Run("other fields bind the cursor value unchanged", func(t *testing.T) {
@@ -91,13 +77,7 @@ func TestApplicabilityStatementOrderField_ControlSectionTitle(t *testing.T) {
 
 		field := coredata.ApplicabilityStatementOrderFieldCreatedAt
 
-		for _, direction := range sectionTitleOrderDirections() {
-			assert.Equal(t, "created_at", field.DirectionalColumn(direction))
-			assert.Equal(
-				t,
-				sectionTitleCursorPlaceholder,
-				field.DirectionalCursorValue(direction, sectionTitleCursorPlaceholder),
-			)
-		}
+		assert.Equal(t, "created_at", field.Column())
+		assert.Equal(t, sectionTitleCursorPlaceholder, field.CursorValue(sectionTitleCursorPlaceholder))
 	})
 }

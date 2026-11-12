@@ -26,7 +26,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/timespan"
 )
 
@@ -204,54 +204,30 @@ func TestInternalControlNextDueValue(t *testing.T) {
 
 	sooner := time.Date(2026, 3, 1, 0, 0, 0, 0, time.UTC)
 	later := time.Date(2026, 6, 1, 0, 0, 0, 0, time.UTC)
-	empty := time.Date(9999, 12, 31, 23, 59, 59, 0, time.UTC)
 
+	require.NotNil(t, internalControlNextDueValue(&sooner, &later))
 	assert.True(t, internalControlNextDueValue(&sooner, &later).Equal(sooner))
 	assert.True(t, internalControlNextDueValue(&later, &sooner).Equal(sooner))
 	assert.True(t, internalControlNextDueValue(&sooner, nil).Equal(sooner))
 	assert.True(t, internalControlNextDueValue(nil, &later).Equal(later))
-	assert.True(t, internalControlNextDueValue(nil, nil).Equal(empty))
-	assert.Equal(t, internalControlNextDueExpr, InternalControlOrderFieldNextDue.Column())
+	assert.Nil(t, internalControlNextDueValue(nil, nil))
+	assert.Equal(t, "LEAST(next_evidence_due, next_test_due)", InternalControlOrderFieldNextDue.Column())
+	assert.True(t, InternalControlOrderFieldNextDue.NullsLast())
 	assert.Equal(t, "NAME", InternalControlOrderFieldName.Column())
+	assert.False(t, InternalControlOrderFieldName.NullsLast())
 }
 
-func TestInternalControlNextDueDirectionalOrder(t *testing.T) {
+func TestInternalControl_CursorKey_NextDue(t *testing.T) {
 	t.Parallel()
 
-	t.Run("ascending keeps empty due dates at the latest instant", func(t *testing.T) {
-		t.Parallel()
+	due := time.Date(2026, 3, 1, 0, 0, 0, 0, time.UTC)
+	control := InternalControl{
+		ID:              gid.New(gid.NewTenantID(), InternalControlEntityType),
+		NextEvidenceDue: &due,
+	}
 
-		assert.Equal(
-			t,
-			internalControlNextDueExpr,
-			InternalControlOrderFieldNextDue.DirectionalColumn(page.OrderDirectionAsc),
-		)
-		assert.Equal(
-			t,
-			"@v",
-			InternalControlOrderFieldNextDue.DirectionalCursorValue(page.OrderDirectionAsc, "@v"),
-		)
-	})
+	assert.Equal(t, due, control.CursorKey(InternalControlOrderFieldNextDue).Value)
 
-	t.Run("descending maps empty due dates to the earliest instant", func(t *testing.T) {
-		t.Parallel()
-
-		assert.Equal(
-			t,
-			internalControlNextDueDescExpr,
-			InternalControlOrderFieldNextDue.DirectionalColumn(page.OrderDirectionDesc),
-		)
-		assert.Equal(
-			t,
-			"COALESCE(NULLIF(@v::timestamptz, '9999-12-31 23:59:59+00'::timestamptz), '0001-01-01 00:00:00+00'::timestamptz)",
-			InternalControlOrderFieldNextDue.DirectionalCursorValue(page.OrderDirectionDesc, "@v"),
-		)
-	})
-
-	t.Run("other fields ignore the direction", func(t *testing.T) {
-		t.Parallel()
-
-		assert.Equal(t, "NAME", InternalControlOrderFieldName.DirectionalColumn(page.OrderDirectionDesc))
-		assert.Equal(t, "@v", InternalControlOrderFieldName.DirectionalCursorValue(page.OrderDirectionDesc, "@v"))
-	})
+	control.NextEvidenceDue = nil
+	assert.Nil(t, control.CursorKey(InternalControlOrderFieldNextDue).Value)
 }

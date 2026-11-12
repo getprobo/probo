@@ -21,6 +21,8 @@
 package page
 
 import (
+	"strings"
+
 	"github.com/jackc/pgx/v5"
 )
 
@@ -64,37 +66,26 @@ func NewCursor[T OrderField](size int, from *CursorKey, pos Position, orderBy Or
 }
 
 func (c *Cursor[T]) SQLFragment() string {
-	fieldName := c.OrderBy.Field.Column()
-	cursorValue := "@cursor_field_value"
+	field := c.OrderBy.Field.Column()
+	value := cursorValue(c.OrderBy.Field)
+	direction := c.sqlDirection()
+	nullsLast := fieldSortsNullsLast(c.OrderBy.Field)
 
-	if f, ok := any(c.OrderBy.Field).(DirectionalOrderField); ok {
-		fieldName = f.DirectionalColumn(c.OrderBy.Direction)
-		cursorValue = f.DirectionalCursorValue(c.OrderBy.Direction, cursorValue)
+	where := "TRUE"
+	if c.Key != nil {
+		where = cursorWhere(
+			field,
+			value,
+			direction,
+			nullsLast,
+			c.Position,
+			c.Key.Value == nil,
+		)
 	}
 
-	var orderDirection string
+	orderBy := field + " " + direction + nullsClause(nullsLast, c.Position) + ", id " + direction
 
-	switch {
-	case c.OrderBy.Direction == OrderDirectionAsc && c.Position == Head:
-		orderDirection = "ASC"
-	case c.OrderBy.Direction == OrderDirectionDesc && c.Position == Head:
-		orderDirection = "DESC"
-	case c.OrderBy.Direction == OrderDirectionAsc && c.Position == Tail:
-		orderDirection = "DESC"
-	case c.OrderBy.Direction == OrderDirectionDesc && c.Position == Tail:
-		orderDirection = "ASC"
-	}
-
-	whereClause := "TRUE"
-	if c.Key != nil && orderDirection == "DESC" {
-		whereClause = "(" + fieldName + " <= " + cursorValue + ") AND NOT (" + fieldName + " = " + cursorValue + " AND id > @cursor_id)"
-	} else if c.Key != nil && orderDirection == "ASC" {
-		whereClause = "(" + fieldName + " >= " + cursorValue + ") AND NOT (" + fieldName + " = " + cursorValue + " AND id < @cursor_id)"
-	}
-
-	orderByClause := fieldName + " " + orderDirection + ", id " + orderDirection
-
-	return whereClause + " ORDER BY " + orderByClause + " LIMIT @cursor_limit"
+	return where + " ORDER BY " + orderBy + " LIMIT @cursor_limit"
 }
 
 func (c *Cursor[T]) SQLArguments() pgx.NamedArgs {
@@ -109,10 +100,86 @@ func (c *Cursor[T]) SQLArguments() pgx.NamedArgs {
 		"cursor_limit": size,
 	}
 
-	if c.Key != nil {
-		arguments["cursor_id"] = c.Key.ID
+	if c.Key == nil {
+		return arguments
+	}
+
+	arguments["cursor_id"] = c.Key.ID
+	if strings.Contains(c.SQLFragment(), "@cursor_field_value") {
 		arguments["cursor_field_value"] = c.Key.Value
 	}
 
 	return arguments
+}
+
+func cursorValue[T OrderField](field T) string {
+	if mapped, ok := any(field).(CursorValuer); ok {
+		return mapped.CursorValue("@cursor_field_value")
+	}
+
+	return "@cursor_field_value"
+}
+
+func (c *Cursor[T]) sqlDirection() string {
+	switch {
+	case c.OrderBy.Direction == OrderDirectionAsc && c.Position == Head:
+		return "ASC"
+	case c.OrderBy.Direction == OrderDirectionDesc && c.Position == Head:
+		return "DESC"
+	case c.OrderBy.Direction == OrderDirectionAsc && c.Position == Tail:
+		return "DESC"
+	case c.OrderBy.Direction == OrderDirectionDesc && c.Position == Tail:
+		return "ASC"
+	default:
+		return ""
+	}
+}
+
+func fieldSortsNullsLast[T OrderField](field T) bool {
+	sortable, ok := any(field).(NullsLastOrderField)
+	return ok && sortable.NullsLast()
+}
+
+// Tail walks the order backwards, so NULLS LAST becomes NULLS FIRST.
+func nullsClause(nullsLast bool, position Position) string {
+	if !nullsLast {
+		return ""
+	}
+
+	if position == Head {
+		return " NULLS LAST"
+	}
+
+	return " NULLS FIRST"
+}
+
+func cursorWhere(
+	field string,
+	value string,
+	direction string,
+	nullsLast bool,
+	position Position,
+	valueNull bool,
+) string {
+	cmp := ">="
+	idExclude := "id < @cursor_id"
+	if direction == "DESC" {
+		cmp = "<="
+		idExclude = "id > @cursor_id"
+	}
+
+	if nullsLast && valueNull {
+		if position == Head {
+			return field + " IS NULL AND NOT (" + idExclude + ")"
+		}
+
+		return "NOT (" + field + " IS NULL AND " + idExclude + ")"
+	}
+
+	matched := "(" + field + " " + cmp + " " + value + ") AND NOT (" + field + " = " + value + " AND " + idExclude + ")"
+	if nullsLast && position == Head {
+		return "(" + field + " IS NULL OR (" + matched + "))"
+	}
+
+	return matched
 }
