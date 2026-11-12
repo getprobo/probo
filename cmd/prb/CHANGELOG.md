@@ -4,6 +4,19 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.266.0] - 2026-11-12
+
+### Added
+
+- `prb document comment` lists (`ls`), views, creates, replies to,
+  updates, deletes, resolves, and reopens document comments
+- `prb document suggestion` lists (`ls`), views, starts, accepts, and
+  rejects document suggestions
+
+### Removed
+
+- **Breaking**: `prb document delete-draft`
+
 ## [0.265.0] - 2026-11-11
 
 ### Added
