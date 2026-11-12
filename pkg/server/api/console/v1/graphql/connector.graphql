@@ -149,6 +149,7 @@ enum ConnectorProvider
     DAYTONA
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderDaytona")
     UNIFI @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderUniFi")
+    IRU @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderIru")
 }
 
 enum AzureEnvironment
@@ -696,6 +697,11 @@ input CreateAPIKeyConnectorInput {
     retoolBaseUrl: String
     twingateNetwork: String
     unifiConsoleId: String
+    """
+    iruApiUrl is the API URL Iru shows under Settings > Access, such as
+    acme.api.kandji.io.
+    """
+    iruApiUrl: String
 }
 
 type CreateAPIKeyConnectorPayload {

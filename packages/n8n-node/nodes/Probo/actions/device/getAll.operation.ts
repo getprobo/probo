@@ -96,9 +96,13 @@ export const description: INodeProperties[] = [
 				name: 'platforms',
 				type: 'multiOptions',
 				options: [
+					{ name: 'Android', value: 'ANDROID' },
 					{ name: 'FreeBSD', value: 'FREEBSD' },
+					{ name: 'iOS', value: 'IOS' },
+					{ name: 'iPadOS', value: 'IPADOS' },
 					{ name: 'Linux', value: 'LINUX' },
 					{ name: 'macOS', value: 'DARWIN' },
+					{ name: 'tvOS', value: 'TVOS' },
 					{ name: 'Windows', value: 'WINDOWS' },
 				],
 				default: [],
@@ -110,6 +114,17 @@ export const description: INodeProperties[] = [
 				type: 'string',
 				default: '',
 				description: 'Search devices by owner name. Each word is a prefix match, and every word must match.',
+			},
+			{
+				displayName: 'Sources',
+				name: 'sources',
+				type: 'multiOptions',
+				options: [
+					{ name: 'Agent', value: 'AGENT' },
+					{ name: 'MDM', value: 'MDM' },
+				],
+				default: [],
+				description: 'Only devices from one of these sources. MDM devices are synced from an MDM connector such as Iru.',
 			},
 			{
 				displayName: 'States',
@@ -146,6 +161,7 @@ export async function execute(
 		includePostures?: boolean;
 		query?: string;
 		states?: string[];
+		sources?: string[];
 		platforms?: string[];
 		agentVersions?: string;
 		hasPostureWarning?: boolean;
@@ -183,6 +199,9 @@ export async function execute(
 	if (options.states?.length) {
 		filter.states = options.states;
 	}
+	if (options.sources?.length) {
+		filter.sources = options.sources;
+	}
 	if (options.platforms?.length) {
 		filter.platforms = options.platforms;
 	}
@@ -214,10 +233,15 @@ export async function execute(
 							node {
 								id
 								state
+								source
 								hostname
 								platform
 								osVersion
 								agentVersion
+								model
+								mdmProvider
+								mdmDeviceId
+								mdmLastCheckInAt
 								serialNumber
 								lastSeenAt
 								enrolledAt

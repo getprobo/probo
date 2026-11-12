@@ -110,6 +110,16 @@ func TestEveryProviderRegistered(t *testing.T) {
 				return
 			}
 
+			// A device-sync provider feeds the device list. Iru's API has no
+			// roster of who can administer Iru, so it reviews no access and
+			// registers no connector driver.
+			if p == coredata.ConnectorProviderIru {
+				assert.NotNilf(t, reg.NewDeviceDriver, "provider %q has nil NewDeviceDriver", p)
+				assert.Nilf(t, reg.NewDriver, "provider %q must not register a connector driver", p)
+
+				return
+			}
+
 			// LINEAR_SYNC is an OAuth app for task issue write.
 			// ConnectorProviders skips a nil NewDriver, so this factory
 			// must stay unset.
@@ -184,6 +194,7 @@ func TestEveryCredentialPathLinksItsPage(t *testing.T) {
 		coredata.ConnectorProviderDotfile:    "the page sits under the workspace id, which the form does not ask for",
 		coredata.ConnectorProviderHubSpot:    "private apps sit under the portal id, and HubSpot stops creating them on 2026-10-26",
 		coredata.ConnectorProviderIntercom:   "Intercom's terms forbid asking customers for their access token, so the path is not promoted while its future is decided",
+		coredata.ConnectorProviderIru:        "the API token page sits on the tenant's own web host, which the form asks for only as its API host",
 		coredata.ConnectorProviderLangfuse:   "the page sits under the organization id, which an organization key cannot read",
 		coredata.ConnectorProviderNeon:       "the organization API keys page has no documented URL",
 		coredata.ConnectorProviderNewRelic:   "the host follows the region, which is not a URL",

@@ -33,6 +33,7 @@ import (
 	"go.probo.inc/probo/pkg/cloud"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/identityfederation"
+	"go.probo.inc/probo/pkg/itam/mdm"
 )
 
 // Endpoints groups every host-bearing URL a provider owns, so a deployment
@@ -204,6 +205,12 @@ type Registration struct {
 	NewDriver               func(context.Context, *http.Client, *coredata.Connector, *log.Logger, Endpoints) (drivers.Driver, error)
 	NewNameResolver         func(context.Context, *http.Client, *coredata.Connector, *log.Logger, Endpoints) drivers.NameResolver
 	SetOrganizationSettings func(*coredata.Connector, string) error
+
+	// NewDeviceDriver builds the driver of a provider that syncs the devices
+	// it manages into the organization's device list. It is independent of
+	// NewDriver: a provider may feed access reviews, the device list, or both.
+	// It receives the resolved Endpoints for the same reason NewDriver does.
+	NewDeviceDriver func(context.Context, *http.Client, *coredata.Connector, *log.Logger, Endpoints) (mdm.Driver, error)
 
 	// InitialAccountFunc is the account present from the start, before any
 	// account discovered or enabled later. Register sets a func that returns
@@ -623,6 +630,18 @@ type DiscoveredAccount struct {
 // workload identity rather than by a stored credential.
 func (r *Registration) SupportsWorkloadIdentity() bool {
 	return r.WorkloadIdentity != nil
+}
+
+// SyncsDevices reports whether the provider feeds the device list.
+func (r *Registration) SyncsDevices() bool {
+	return r.NewDeviceDriver != nil
+}
+
+// HasDriver reports whether connecting the provider gives Probo something to
+// read: accounts for access reviews, through an HTTP or a cloud session, or
+// devices for the device list. The connector catalog lists only these.
+func (r *Registration) HasDriver() bool {
+	return r.NewDriver != nil || r.SupportsWorkloadIdentity() || r.SyncsDevices()
 }
 
 // SupportsAPIKey reports whether the CUSTOMER supplies this provider's API key,

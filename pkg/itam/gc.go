@@ -107,11 +107,17 @@ func (h *gcHandler) cleanup(ctx context.Context) error {
 				return fmt.Errorf("cannot delete orphan devices: %w", err)
 			}
 
+			devicesRevoked, err := device.RevokeDetachedMDM(ctx, tx, now)
+			if err != nil {
+				return fmt.Errorf("cannot revoke detached mdm devices: %w", err)
+			}
+
 			h.logger.InfoCtx(
 				ctx,
 				"itam garbage collector cleaned up",
 				log.Int64("device_enrollment_tokens_deleted", tokensDeleted),
 				log.Int64("orphan_devices_deleted", devicesDeleted),
+				log.Int64("detached_mdm_devices_revoked", devicesRevoked),
 			)
 
 			return nil
