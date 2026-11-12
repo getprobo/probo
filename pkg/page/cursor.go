@@ -67,7 +67,7 @@ func NewCursor[T OrderField](size int, from *CursorKey, pos Position, orderBy Or
 
 func (c *Cursor[T]) SQLFragment() string {
 	field := c.OrderBy.Field.Column()
-	value := cursorValue(c.OrderBy.Field)
+	value := cursorValue(field)
 	direction := c.sqlDirection()
 	nulls := c.sqlNulls()
 
@@ -105,12 +105,41 @@ func (c *Cursor[T]) SQLArguments() pgx.NamedArgs {
 	return arguments
 }
 
-func cursorValue[T OrderField](field T) string {
-	if mapped, ok := any(field).(CursorValuer); ok {
-		return mapped.CursorValue("@cursor_field_value")
+// cursorValue keeps the cursor key's raw value. When Column is a single-argument
+// call such as section_title_sort_key(section_title), the comparison applies
+// that same function to the bound value.
+func cursorValue(column string) string {
+	name, arg, ok := sqlCall(column)
+	if !ok || !sqlIdent(name) || !sqlIdent(arg) {
+		return "@cursor_field_value"
 	}
 
-	return "@cursor_field_value"
+	return name + "(@cursor_field_value)"
+}
+
+func sqlCall(column string) (string, string, bool) {
+	open := strings.IndexByte(column, '(')
+	if open <= 0 || !strings.HasSuffix(column, ")") || strings.Contains(column[open+1:], "(") {
+		return "", "", false
+	}
+
+	return column[:open], column[open+1 : len(column)-1], true
+}
+
+func sqlIdent(s string) bool {
+	if s == "" {
+		return false
+	}
+
+	for i, r := range s {
+		letter := r == '_' || (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z')
+		digit := r >= '0' && r <= '9'
+		if !letter && (i == 0 || !digit) {
+			return false
+		}
+	}
+
+	return true
 }
 
 func (c *Cursor[T]) sqlDirection() string {
