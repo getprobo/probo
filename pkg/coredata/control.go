@@ -58,7 +58,7 @@ func (c Control) CursorKey(orderBy ControlOrderField) page.CursorKey {
 	case ControlOrderFieldCreatedAt:
 		return page.CursorKey{ID: c.ID, Value: c.CreatedAt}
 	case ControlOrderFieldSectionTitle:
-		return page.CursorKey{ID: c.ID, Value: sectionTitleSortKey(c.SectionTitle)}
+		return page.CursorKey{ID: c.ID, Value: c.SectionTitle}
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))

@@ -83,6 +83,14 @@ type testNullsOrderField struct {
 	nulls  Nulls
 }
 
+type testCursorValuer string
+
+func (f testCursorValuer) Column() string { return "section_title_sort_key(section_title)" }
+func (f testCursorValuer) String() string { return string(f) }
+func (f testCursorValuer) CursorValue(placeholder string) string {
+	return "section_title_sort_key(" + placeholder + ")"
+}
+
 func (f testNullsOrderField) Column() string { return f.column }
 func (f testNullsOrderField) String() string { return f.column }
 func (f testNullsOrderField) Nulls() Nulls   { return f.nulls }
@@ -225,6 +233,21 @@ func TestCursor_SQLFragment_DefaultAndMapped(t *testing.T) {
 		assert.Equal(
 			t,
 			"(name <= @cursor_field_value) AND NOT (name = @cursor_field_value AND id > @cursor_id) ORDER BY name DESC, id DESC LIMIT @cursor_limit",
+			cursor.SQLFragment(),
+		)
+	})
+
+	t.Run("a mapped cursor value uses the same expression as the column", func(t *testing.T) {
+		t.Parallel()
+
+		cursor := NewCursor(10, &valueKey, Head, OrderBy[testCursorValuer]{
+			Field:     "section_title",
+			Direction: OrderDirectionDesc,
+		})
+
+		assert.Equal(
+			t,
+			"(section_title_sort_key(section_title) <= section_title_sort_key(@cursor_field_value)) AND NOT (section_title_sort_key(section_title) = section_title_sort_key(@cursor_field_value) AND id > @cursor_id) ORDER BY section_title_sort_key(section_title) DESC, id DESC LIMIT @cursor_limit",
 			cursor.SQLFragment(),
 		)
 	})

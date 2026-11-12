@@ -18,73 +18,93 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package coredata
+package coredata_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
+	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 )
 
-func TestSectionTitleSortKey(t *testing.T) {
+const sectionTitleCursorPlaceholder = "@cursor_field_value"
+
+func TestControlOrderField_SectionTitle(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		title string
-		want  string
-	}{
-		{title: "A.5", want: "A.0000000005"},
-		{title: "A.10", want: "A.0000000010"},
-		{title: "A.5.12 foo", want: "A.0000000005.0000000012 foo"},
-		{title: "12abc", want: "0000000012abc"},
-		{title: "a1b2", want: "a0000000001b0000000002"},
-		{title: "hello", want: "hello"},
-		{title: "", want: ""},
-		{title: "A.12345678901", want: "A.1234567890"},
-		{title: "10", want: "0000000010"},
-		{title: "2", want: "0000000002"},
-		{title: "é2", want: "é0000000002"},
-	}
+	t.Run("section title sorts the cursor value like the column", func(t *testing.T) {
+		t.Parallel()
 
-	for _, tt := range tests {
-		t.Run(tt.title, func(t *testing.T) {
-			t.Parallel()
+		field := coredata.ControlOrderFieldSectionTitle
 
-			assert.Equal(t, tt.want, sectionTitleSortKey(tt.title))
-		})
-	}
+		assert.Equal(t, "section_title_sort_key(section_title)", field.Column())
+		assert.Equal(
+			t,
+			"section_title_sort_key("+sectionTitleCursorPlaceholder+")",
+			field.CursorValue(sectionTitleCursorPlaceholder),
+		)
+	})
+
+	t.Run("the cursor key stores the raw section title", func(t *testing.T) {
+		t.Parallel()
+
+		control := coredata.Control{
+			ID:           gid.New(gid.NewTenantID(), coredata.ControlEntityType),
+			SectionTitle: "A.10",
+		}
+
+		assert.Equal(t, "A.10", control.CursorKey(coredata.ControlOrderFieldSectionTitle).Value)
+	})
+
+	t.Run("other fields bind the cursor value unchanged", func(t *testing.T) {
+		t.Parallel()
+
+		field := coredata.ControlOrderFieldCreatedAt
+
+		assert.Equal(t, "created_at", field.Column())
+		assert.Equal(t, sectionTitleCursorPlaceholder, field.CursorValue(sectionTitleCursorPlaceholder))
+	})
 }
 
-func TestControl_CursorKey_SectionTitle(t *testing.T) {
+func TestApplicabilityStatementOrderField_ControlSectionTitle(t *testing.T) {
 	t.Parallel()
 
-	control := Control{
-		ID:           gid.New(gid.NewTenantID(), ControlEntityType),
-		SectionTitle: "A.10",
-	}
+	t.Run("section title sorts the cursor value like the column", func(t *testing.T) {
+		t.Parallel()
 
-	assert.Equal(t, "A.0000000010", control.CursorKey(ControlOrderFieldSectionTitle).Value)
-	assert.Equal(t, "section_title_sort_key(section_title)", ControlOrderFieldSectionTitle.Column())
-}
+		field := coredata.ApplicabilityStatementOrderFieldControlSectionTitle
 
-func TestApplicabilityStatement_CursorKey_SectionTitle(t *testing.T) {
-	t.Parallel()
+		assert.Equal(t, "section_title_sort_key(section_title)", field.Column())
+		assert.Equal(
+			t,
+			"section_title_sort_key("+sectionTitleCursorPlaceholder+")",
+			field.CursorValue(sectionTitleCursorPlaceholder),
+		)
+	})
 
-	statement := ApplicabilityStatement{
-		ID:           gid.New(gid.NewTenantID(), ApplicabilityStatementEntityType),
-		SectionTitle: "A.5.12 foo",
-	}
+	t.Run("the cursor key stores the raw section title", func(t *testing.T) {
+		t.Parallel()
 
-	assert.Equal(
-		t,
-		"A.0000000005.0000000012 foo",
-		statement.CursorKey(ApplicabilityStatementOrderFieldControlSectionTitle).Value,
-	)
-	assert.Equal(
-		t,
-		"section_title_sort_key(section_title)",
-		ApplicabilityStatementOrderFieldControlSectionTitle.Column(),
-	)
+		statement := coredata.ApplicabilityStatement{
+			ID:           gid.New(gid.NewTenantID(), coredata.ApplicabilityStatementEntityType),
+			SectionTitle: "A.5.12 foo",
+		}
+
+		assert.Equal(
+			t,
+			"A.5.12 foo",
+			statement.CursorKey(coredata.ApplicabilityStatementOrderFieldControlSectionTitle).Value,
+		)
+	})
+
+	t.Run("other fields bind the cursor value unchanged", func(t *testing.T) {
+		t.Parallel()
+
+		field := coredata.ApplicabilityStatementOrderFieldCreatedAt
+
+		assert.Equal(t, "created_at", field.Column())
+		assert.Equal(t, sectionTitleCursorPlaceholder, field.CursorValue(sectionTitleCursorPlaceholder))
+	})
 }
