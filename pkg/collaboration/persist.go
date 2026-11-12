@@ -28,11 +28,13 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/automerge"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/realtime"
+	"go.probo.inc/probo/pkg/richtext"
 )
 
 const (
@@ -62,12 +64,18 @@ func (s *Service) Persist(
 	document *automerge.Document,
 ) (int64, error) {
 	for range persistCatchUpAttempts {
-		revision, persisted, err := s.appendLiveChanges(ctx, scope, documentID, document)
+		revision, compactAt, persisted, err := s.appendLiveChanges(ctx, scope, documentID, document)
 		if err != nil {
 			return 0, err
 		}
 
 		if persisted {
+			if compactAt != nil {
+				if err := s.compact(ctx, scope, documentID, document, compactAt); err != nil {
+					return 0, err
+				}
+			}
+
 			return revision, nil
 		}
 
@@ -85,15 +93,18 @@ func (s *Service) Persist(
 // the canonical document has. The merged state is then the live document
 // itself, so nothing is loaded while the row is locked: the lock only covers
 // SQL and reads of the in-memory document. It reports false, and writes
-// nothing, when the canonical document holds changes the live one lacks.
+// nothing, when the canonical document holds changes the live one lacks. When
+// the change log is long enough to compact, it also returns the heads the
+// canonical document was left at.
 func (s *Service) appendLiveChanges(
 	ctx context.Context,
 	scope coredata.Scoper,
 	documentID gid.GID,
 	document *automerge.Document,
-) (int64, bool, error) {
+) (int64, []automerge.Hash, bool, error) {
 	var (
 		revision  int64
+		compactAt []automerge.Hash
 		persisted bool
 	)
 
@@ -169,9 +180,7 @@ func (s *Service) appendLiveChanges(
 			doc.Heads = encodeHeads(heads)
 
 			if doc.ChangeRevision-doc.SnapshotRevision >= compactionChanges {
-				if err := s.compactFromLive(ctx, tx, scope, doc, document, heads); err != nil {
-					return err
-				}
+				compactAt = heads
 			}
 
 			doc.UpdatedAt = now
@@ -195,6 +204,11 @@ func (s *Service) appendLiveChanges(
 				return fmt.Errorf("cannot materialize collaboration: %w", err)
 			}
 
+			content, err = richtext.DocumentSchema.Sanitize(content)
+			if err != nil {
+				return fmt.Errorf("cannot sanitize collaboration content: %w", err)
+			}
+
 			if err := writeLiveContent(ctx, scope, tx, documentID, content); err != nil {
 				return err
 			}
@@ -205,10 +219,10 @@ func (s *Service) appendLiveChanges(
 		},
 	)
 	if err != nil {
-		return 0, false, err
+		return 0, nil, false, err
 	}
 
-	return revision, persisted, nil
+	return revision, compactAt, persisted, nil
 }
 
 // readStableChanges returns the changes the live document has on top of
@@ -243,25 +257,31 @@ func readStableChanges(
 	return nil, nil, false, nil
 }
 
-// compactFromLive replaces the canonical snapshot with a save of the live
-// document. The save is used only when the document still sits at heads once
-// it is taken. Otherwise compaction waits for a later persist.
-func (s *Service) compactFromLive(
+// compact replaces the canonical snapshot with a save of the live document
+// and drops the change log it covers. The document is saved before the row is
+// locked, so the lock only covers SQL. The save is used only when both the
+// live and the canonical document still sit at heads. Otherwise compaction
+// waits for a later persist. Only an oversized snapshot is reported: the
+// changes are already persisted, so any other failure is retried later.
+func (s *Service) compact(
 	ctx context.Context,
-	tx pg.Tx,
 	scope coredata.Scoper,
-	doc *coredata.CollaborationDocument,
+	documentID gid.GID,
 	document *automerge.Document,
 	heads []automerge.Hash,
 ) error {
 	snapshot, err := document.Save()
 	if err != nil {
-		return fmt.Errorf("cannot compact collaboration snapshot: %w", err)
+		s.logCompactionFailure(ctx, documentID, err)
+
+		return nil
 	}
 
 	current, err := document.Heads()
 	if err != nil {
-		return fmt.Errorf("cannot read local collaboration heads: %w", err)
+		s.logCompactionFailure(ctx, documentID, err)
+
+		return nil
 	}
 
 	if !slices.Equal(current, heads) {
@@ -272,20 +292,68 @@ func (s *Service) compactFromLive(
 		return &ErrCollaborationStateTooLarge{Size: len(snapshot)}
 	}
 
-	doc.Snapshot = snapshot
-	doc.SnapshotRevision = doc.ChangeRevision
-
-	if err := coredata.DeleteCollaborationChangesThroughRevision(
+	err = s.pg.WithTx(
 		ctx,
-		tx,
-		scope,
-		doc.DocumentID,
-		doc.SnapshotRevision,
-	); err != nil {
-		return fmt.Errorf("cannot delete compacted collaboration changes: %w", err)
+		func(ctx context.Context, tx pg.Tx) error {
+			doc, err := lockCollaborationDocument(ctx, tx, scope, documentID)
+			if err != nil {
+				return err
+			}
+
+			canonicalHeads, err := decodeHeads(doc.Heads)
+			if err != nil {
+				return fmt.Errorf("cannot decode canonical collaboration heads: %w", err)
+			}
+
+			// Another writer moved the canonical document, or compacted it.
+			if !slices.Equal(canonicalHeads, heads) ||
+				doc.ChangeRevision-doc.SnapshotRevision < compactionChanges {
+				return nil
+			}
+
+			doc.Snapshot = snapshot
+			doc.SnapshotRevision = doc.ChangeRevision
+
+			if err := coredata.DeleteCollaborationChangesThroughRevision(
+				ctx,
+				tx,
+				scope,
+				documentID,
+				doc.SnapshotRevision,
+			); err != nil {
+				return fmt.Errorf("cannot delete compacted collaboration changes: %w", err)
+			}
+
+			doc.UpdatedAt = time.Now()
+			if err := doc.Update(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot store compacted collaboration snapshot: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		s.logCompactionFailure(ctx, documentID, err)
 	}
 
 	return nil
+}
+
+func (s *Service) logCompactionFailure(
+	ctx context.Context,
+	documentID gid.GID,
+	err error,
+) {
+	if s.logger == nil {
+		return
+	}
+
+	s.logger.WarnCtx(
+		ctx,
+		"cannot compact collaboration document",
+		log.Error(err),
+		log.String("document_id", documentID.String()),
+	)
 }
 
 func (s *Service) Refresh(
