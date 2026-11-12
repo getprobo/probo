@@ -322,10 +322,7 @@ func (h *messageWorkerHandler) retryDelay(attempt int) time.Duration {
 // initialPostWait grows with time already spent waiting so a slow Slack
 // delivery does not hot-loop. Attempts stay unchanged while waiting.
 func (h *messageWorkerHandler) initialPostWait(createdAt, now time.Time) time.Duration {
-	waited := now.Sub(createdAt)
-	if waited < 0 {
-		waited = 0
-	}
+	waited := max(now.Sub(createdAt), 0)
 
 	delay := h.retryBase
 	var elapsed time.Duration
