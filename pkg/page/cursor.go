@@ -69,14 +69,20 @@ func (c *Cursor[T]) SQLFragment() string {
 	field := c.OrderBy.Field.Column()
 	value := cursorValue(field)
 	direction := c.sqlDirection()
-	nulls := c.sqlNulls()
+	// NULLs sort after every real value. A reverse page flips that with the scan.
+	nullsLast := c.Position != Tail
 
 	where := "TRUE"
 	if c.Key != nil {
-		where = cursorWhere(field, value, direction, nulls, c.Key.Value == nil)
+		where = cursorWhere(field, value, direction, nullsLast, c.Key.Value == nil)
 	}
 
-	orderBy := field + " " + direction + nullsSQL(nulls) + ", id " + direction
+	nulls := " NULLS FIRST"
+	if nullsLast {
+		nulls = " NULLS LAST"
+	}
+
+	orderBy := field + " " + direction + nulls + ", id " + direction
 
 	return where + " ORDER BY " + orderBy + " LIMIT @cursor_limit"
 }
@@ -157,41 +163,7 @@ func (c *Cursor[T]) sqlDirection() string {
 	}
 }
 
-func fieldNulls[T OrderField](field T) Nulls {
-	ordered, ok := any(field).(NullsOrderField)
-	if !ok {
-		return NullsDefault
-	}
-
-	return ordered.Nulls()
-}
-
-// Tail walks the order backwards, so FIRST and LAST swap.
-func (c *Cursor[T]) sqlNulls() Nulls {
-	nulls := fieldNulls(c.OrderBy.Field)
-	if nulls == NullsDefault || c.Position == Head {
-		return nulls
-	}
-
-	if nulls == NullsLast {
-		return NullsFirst
-	}
-
-	return NullsLast
-}
-
-func nullsSQL(nulls Nulls) string {
-	switch nulls {
-	case NullsFirst:
-		return " NULLS FIRST"
-	case NullsLast:
-		return " NULLS LAST"
-	default:
-		return ""
-	}
-}
-
-func cursorWhere(field string, value string, direction string, nulls Nulls, valueNull bool) string {
+func cursorWhere(field string, value string, direction string, nullsLast bool, valueNull bool) string {
 	cmp := ">="
 	idExclude := "id < @cursor_id"
 	if direction == "DESC" {
@@ -201,20 +173,17 @@ func cursorWhere(field string, value string, direction string, nulls Nulls, valu
 
 	matched := "(" + field + " " + cmp + " " + value + ") AND NOT (" + field + " = " + value + " AND " + idExclude + ")"
 
-	switch nulls {
-	case NullsLast:
-		if valueNull {
-			return field + " IS NULL AND NOT (" + idExclude + ")"
-		}
-
-		return "(" + field + " IS NULL OR (" + matched + "))"
-	case NullsFirst:
+	if !nullsLast {
 		if valueNull {
 			return "NOT (" + field + " IS NULL AND " + idExclude + ")"
 		}
 
 		return matched
-	default:
-		return matched
 	}
+
+	if valueNull {
+		return field + " IS NULL AND NOT (" + idExclude + ")"
+	}
+
+	return "(" + field + " IS NULL OR (" + matched + "))"
 }
