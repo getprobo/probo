@@ -776,6 +776,7 @@ func TestMessageService_UpdateAppliesWhenInitialPostIsDeliveredWithoutSubject(t 
 		require.NoError(t, service.DeliverOutbound(t.Context(), delivery))
 
 		var revision coredata.SlackbotMessage
+
 		require.NoError(
 			t,
 			pgClient.WithConn(
@@ -803,6 +804,7 @@ func TestMessageService_UpdateAppliesWhenInitialPostIsDeliveredWithoutSubject(t 
 		require.NoError(t, service.DeliverOutbound(t.Context(), delivery))
 
 		var revision coredata.SlackMessage
+
 		require.NoError(
 			t,
 			pgClient.WithConn(
@@ -828,6 +830,7 @@ func TestMessageService_UpdateAppliesWhenInitialPostIsDeliveredWithoutSubject(t 
 		require.NoError(t, service.DeliverOutbound(t.Context(), delivery))
 
 		var revision coredata.SlackMessage
+
 		require.NoError(
 			t,
 			pgClient.WithConn(
@@ -855,6 +858,7 @@ func TestMessageService_UpdateUsesDeliveredThreadSubject(t *testing.T) {
 	require.NoError(t, service.DeliverOutbound(t.Context(), delivery))
 
 	var revision coredata.SlackbotMessage
+
 	require.NoError(
 		t,
 		pgClient.WithConn(
@@ -933,6 +937,7 @@ func insertBotPost(
 			t.Context(),
 			func(ctx context.Context, tx pg.Tx) error {
 				var err error
+
 				message, err = bot.NewService(bot.ServiceConfig{}).EnqueueMessage(
 					ctx,
 					tx,
@@ -1055,6 +1060,7 @@ func insertLegacyPost(
 	}
 	message.ChannelID = new("C-posted")
 	message.MessageTS = new("111.222")
+
 	now := time.Now()
 	message.SentAt = &now
 	message.UpdatedAt = now

@@ -325,6 +325,7 @@ func (h *messageWorkerHandler) initialPostWait(createdAt, now time.Time) time.Du
 	waited := max(now.Sub(createdAt), 0)
 
 	delay := h.retryBase
+
 	var elapsed time.Duration
 
 	for elapsed+delay <= waited && delay < h.retryMax {
