@@ -195,7 +195,7 @@ func (s *Service) CountScans(
 
 // ingestScanPage writes one finished page and asks for pattern analysis
 // when something new was stored. It ignores ResourceReporting: that
-// capability only gates SDK reports. It does not record sample hits.
+// capability only gates SDK reports. It does not record pattern hits.
 func (s *Service) ingestScanPage(
 	ctx context.Context,
 	tx pg.Tx,

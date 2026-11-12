@@ -130,8 +130,8 @@ type (
 		File                                       *dataloadgen.Loader[gid.GID, *coredata.File]
 		CookieBanner                               *dataloadgen.Loader[gid.GID, *coredata.CookieBanner]
 		CookieCategory                             *dataloadgen.Loader[gid.GID, *coredata.CookieCategory]
-		SamplePageLoads                            *dataloadgen.Loader[gid.GID, []cookiebanner.SampleFamilyCount]
-		SampleHitSplits                            *dataloadgen.Loader[SampleHitSplitKey, cookiebanner.SampleHitSplits]
+		SamplePageLoads                            *dataloadgen.Loader[gid.GID, []cookiebanner.BrowserFamilyCount]
+		SampleHitSplits                            *dataloadgen.Loader[SampleHitSplitKey, cookiebanner.HitSplits]
 		TrackerPatternObservers                    *dataloadgen.Loader[gid.GID, []coredata.DetectedTrackerObserver]
 		CommonTrackerPattern                       *dataloadgen.Loader[gid.GID, *coredata.CommonTrackerPattern]
 		CommonThirdParty                           *dataloadgen.Loader[gid.GID, *coredata.CommonThirdParty]
@@ -1079,8 +1079,8 @@ func (f *batchFetcher) fetchCookieBanners(ctx context.Context, keys []gid.GID) (
 func (f *batchFetcher) fetchSamplePageLoads(
 	ctx context.Context,
 	keys []gid.GID,
-) (map[gid.GID][]cookiebanner.SampleFamilyCount, error) {
-	result := make(map[gid.GID][]cookiebanner.SampleFamilyCount, len(keys))
+) (map[gid.GID][]cookiebanner.BrowserFamilyCount, error) {
+	result := make(map[gid.GID][]cookiebanner.BrowserFamilyCount, len(keys))
 	idsByTenant := make(map[gid.TenantID][]gid.GID)
 
 	for _, sampleID := range keys {
@@ -1102,8 +1102,8 @@ func (f *batchFetcher) fetchSamplePageLoads(
 func (f *batchFetcher) fetchSampleHitSplits(
 	ctx context.Context,
 	keys []SampleHitSplitKey,
-) (map[SampleHitSplitKey]cookiebanner.SampleHitSplits, error) {
-	result := make(map[SampleHitSplitKey]cookiebanner.SampleHitSplits, len(keys))
+) (map[SampleHitSplitKey]cookiebanner.HitSplits, error) {
+	result := make(map[SampleHitSplitKey]cookiebanner.HitSplits, len(keys))
 	queriesByTenant := make(map[gid.TenantID][]cookiebanner.SampleHitSplitQuery)
 
 	for _, key := range keys {

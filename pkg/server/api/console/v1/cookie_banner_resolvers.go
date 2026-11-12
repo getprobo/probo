@@ -618,7 +618,7 @@ func (r *cookieBannerSampleResolver) CookieBanner(ctx context.Context, obj *type
 }
 
 // PageLoads is the resolver for the pageLoads field.
-func (r *cookieBannerSampleResolver) PageLoads(ctx context.Context, obj *types.CookieBannerSample) ([]*cookiebanner.SampleFamilyCount, error) {
+func (r *cookieBannerSampleResolver) PageLoads(ctx context.Context, obj *types.CookieBannerSample) ([]*cookiebanner.BrowserFamilyCount, error) {
 	return r.loadPageLoads(ctx, obj)
 }
 
@@ -2054,33 +2054,33 @@ func (r *trackerPatternResolver) DetectedCount(ctx context.Context, obj *types.T
 }
 
 // SampleHits is the resolver for the sampleHits field.
-func (r *trackerPatternResolver) SampleHits(ctx context.Context, obj *types.TrackerPattern, sampleID *gid.GID) ([]*cookiebanner.SampleFamilyCount, error) {
+func (r *trackerPatternResolver) SampleHits(ctx context.Context, obj *types.TrackerPattern, sampleID *gid.GID) ([]*cookiebanner.BrowserFamilyCount, error) {
 	splits, err := r.loadSampleHitSplits(ctx, obj, sampleID)
 	if err != nil {
 		return nil, err
 	}
 
-	return cookiebanner.NewSampleFamilyCountPtrs(splits.Total), nil
+	return cookiebanner.NewBrowserFamilyCountPtrs(splits.Total), nil
 }
 
 // AllowedSampleHits is the resolver for the allowedSampleHits field.
-func (r *trackerPatternResolver) AllowedSampleHits(ctx context.Context, obj *types.TrackerPattern, sampleID *gid.GID) ([]*cookiebanner.SampleFamilyCount, error) {
+func (r *trackerPatternResolver) AllowedSampleHits(ctx context.Context, obj *types.TrackerPattern, sampleID *gid.GID) ([]*cookiebanner.BrowserFamilyCount, error) {
 	splits, err := r.loadSampleHitSplits(ctx, obj, sampleID)
 	if err != nil {
 		return nil, err
 	}
 
-	return cookiebanner.NewSampleFamilyCountPtrs(splits.Allowed), nil
+	return cookiebanner.NewBrowserFamilyCountPtrs(splits.Allowed), nil
 }
 
 // DeniedSampleHits is the resolver for the deniedSampleHits field.
-func (r *trackerPatternResolver) DeniedSampleHits(ctx context.Context, obj *types.TrackerPattern, sampleID *gid.GID) ([]*cookiebanner.SampleFamilyCount, error) {
+func (r *trackerPatternResolver) DeniedSampleHits(ctx context.Context, obj *types.TrackerPattern, sampleID *gid.GID) ([]*cookiebanner.BrowserFamilyCount, error) {
 	splits, err := r.loadSampleHitSplits(ctx, obj, sampleID)
 	if err != nil {
 		return nil, err
 	}
 
-	return cookiebanner.NewSampleFamilyCountPtrs(splits.Denied), nil
+	return cookiebanner.NewBrowserFamilyCountPtrs(splits.Denied), nil
 }
 
 // CommonThirdParty is the resolver for the commonThirdParty field.

@@ -38,9 +38,9 @@ func (r *trackerPatternResolver) loadSampleHitSplits(
 	ctx context.Context,
 	obj *types.TrackerPattern,
 	sampleID *gid.GID,
-) (cookiebanner.SampleHitSplits, error) {
+) (cookiebanner.HitSplits, error) {
 	if _, err := r.authorize(ctx, obj.ID, probo.ActionTrackerPatternGet); err != nil {
-		return cookiebanner.SampleHitSplits{}, err
+		return cookiebanner.HitSplits{}, err
 	}
 
 	key := dataloader.SampleHitSplitKey{
@@ -54,16 +54,16 @@ func (r *trackerPatternResolver) loadSampleHitSplits(
 	splits, err := dataloader.FromContext(ctx).SampleHitSplits.Load(ctx, key)
 	if err != nil {
 		if errors.Is(err, cookiebanner.ErrSampleNotFound) || errors.Is(err, cookiebanner.ErrTrackerPatternNotFound) {
-			return cookiebanner.SampleHitSplits{}, gqlx.NotFound(ctx, err)
+			return cookiebanner.HitSplits{}, gqlx.NotFound(ctx, err)
 		}
 
 		if errors.Is(err, dataloadgen.ErrNotFound) {
-			return cookiebanner.SampleHitSplits{}, nil
+			return cookiebanner.HitSplits{}, nil
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get tracker pattern sample hits", log.Error(err))
 
-		return cookiebanner.SampleHitSplits{}, gqlx.Internal(ctx)
+		return cookiebanner.HitSplits{}, gqlx.Internal(ctx)
 	}
 
 	return splits, nil

@@ -1656,14 +1656,14 @@ func (impl *Implm) Run(
 		)
 	}
 
-	sampleCountFlusherCtx, stopSampleCountFlusher := context.WithCancel(context.Background())
-	sampleCountFlusherDone := make(chan struct{})
+	analyticsFlusherCtx, stopAnalyticsFlusher := context.WithCancel(context.Background())
+	analyticsFlusherDone := make(chan struct{})
 
 	go func() {
-		defer close(sampleCountFlusherDone)
+		defer close(analyticsFlusherDone)
 
-		if err := cookieBannerService.RunSampleCountFlusher(sampleCountFlusherCtx, l); err != nil {
-			cancel(fmt.Errorf("sample count flusher crashed: %w", err))
+		if err := cookieBannerService.RunAnalyticsFlusher(analyticsFlusherCtx, l); err != nil {
+			cancel(fmt.Errorf("analytics flusher crashed: %w", err))
 		}
 	}()
 
@@ -1875,8 +1875,8 @@ func (impl *Implm) Run(
 
 	wg.Wait()
 
-	stopSampleCountFlusher()
-	<-sampleCountFlusherDone
+	stopAnalyticsFlusher()
+	<-analyticsFlusherDone
 
 	pgClient.Close()
 

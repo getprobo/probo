@@ -248,8 +248,8 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 						return fmt.Errorf("cannot relink detected trackers from pattern %q: %w", exactPattern.Pattern, err)
 					}
 
-					if err := coredata.AddSampleHits(ctx, tx, scope, exactPattern.ID, globPattern.ID); err != nil {
-						return fmt.Errorf("cannot add sample hits from pattern %q: %w", exactPattern.Pattern, err)
+					if err := coredata.AddDailyPatternHits(ctx, tx, scope, exactPattern.ID, globPattern.ID); err != nil {
+						return fmt.Errorf("cannot add daily hits from pattern %q: %w", exactPattern.Pattern, err)
 					}
 
 					if err := exactPattern.Delete(ctx, tx, scope); err != nil {
@@ -933,8 +933,8 @@ func (h *patternAnalysisHandler) adoptUncategorisedPatterns(
 			}
 		}
 
-		if err := coredata.AddSampleHits(ctx, tx, scope, ep.ID, match.ID); err != nil {
-			return false, fmt.Errorf("cannot add sample hits from pattern %q: %w", ep.Pattern, err)
+		if err := coredata.AddDailyPatternHits(ctx, tx, scope, ep.ID, match.ID); err != nil {
+			return false, fmt.Errorf("cannot add daily hits from pattern %q: %w", ep.Pattern, err)
 		}
 
 		if err := ep.Delete(ctx, tx, scope); err != nil {

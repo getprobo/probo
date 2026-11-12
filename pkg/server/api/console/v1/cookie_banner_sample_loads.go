@@ -36,7 +36,7 @@ import (
 func (r *cookieBannerSampleResolver) loadPageLoads(
 	ctx context.Context,
 	obj *types.CookieBannerSample,
-) ([]*cookiebanner.SampleFamilyCount, error) {
+) ([]*cookiebanner.BrowserFamilyCount, error) {
 	if _, err := r.authorize(ctx, obj.ID, probo.ActionCookieBannerGet); err != nil {
 		return nil, err
 	}
@@ -44,7 +44,7 @@ func (r *cookieBannerSampleResolver) loadPageLoads(
 	pageLoads, err := dataloader.FromContext(ctx).SamplePageLoads.Load(ctx, obj.ID)
 	if err != nil {
 		if errors.Is(err, dataloadgen.ErrNotFound) {
-			return []*cookiebanner.SampleFamilyCount{}, nil
+			return []*cookiebanner.BrowserFamilyCount{}, nil
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get cookie banner sample page loads", log.Error(err))
@@ -52,5 +52,5 @@ func (r *cookieBannerSampleResolver) loadPageLoads(
 		return nil, gqlx.Internal(ctx)
 	}
 
-	return cookiebanner.NewSampleFamilyCountPtrs(pageLoads), nil
+	return cookiebanner.NewBrowserFamilyCountPtrs(pageLoads), nil
 }

@@ -50,6 +50,7 @@ type Service struct {
 	pg               *pg.Client
 	showBranding     bool
 	tcfCmpID         int
+	now              func() time.Time
 	pageLoadCounts   sync.Map
 	patternHitCounts sync.Map
 	// afterPatternLookup runs after FindMatchingPattern in
@@ -64,6 +65,7 @@ func NewService(pgClient *pg.Client, showBranding bool, tcfCmpID int) *Service {
 		pg:           pgClient,
 		showBranding: showBranding,
 		tcfCmpID:     normalizeTCFCmpID(tcfCmpID),
+		now:          time.Now,
 	}
 }
 
@@ -158,7 +160,7 @@ type (
 		InitiatorURL    *string
 		CookieDomain    *string
 		HostOnly        *bool
-		SampleHit       bool
+		Hit             bool
 		CategoryGranted *bool
 	}
 
@@ -172,7 +174,7 @@ type (
 		ValueSize       *int
 		Source          *coredata.CookieSource
 		InitiatorURL    *string
-		SampleHit       bool
+		Hit             bool
 		CategoryGranted *bool
 	}
 
@@ -1067,7 +1069,7 @@ func (s *Service) StartCookieBannerSample(
 	scope coredata.Scoper,
 	cookieBannerID gid.GID,
 ) (*coredata.CookieBannerSample, error) {
-	_ = s.FlushSampleCounts(ctx)
+	_ = s.FlushAnalytics(ctx)
 
 	var sample coredata.CookieBannerSample
 
@@ -1115,7 +1117,7 @@ func (s *Service) StopCookieBannerSample(
 	scope coredata.Scoper,
 	cookieBannerID gid.GID,
 ) (*coredata.CookieBannerSample, error) {
-	_ = s.FlushSampleCounts(ctx)
+	_ = s.FlushAnalytics(ctx)
 
 	var sample coredata.CookieBannerSample
 
@@ -1152,10 +1154,10 @@ func (s *Service) GetSamplePageLoadsByIDs(
 	ctx context.Context,
 	scope coredata.Scoper,
 	sampleIDs []gid.GID,
-) (map[gid.GID][]SampleFamilyCount, error) {
-	result := make(map[gid.GID][]SampleFamilyCount, len(sampleIDs))
+) (map[gid.GID][]BrowserFamilyCount, error) {
+	result := make(map[gid.GID][]BrowserFamilyCount, len(sampleIDs))
 	for _, sampleID := range sampleIDs {
-		result[sampleID] = []SampleFamilyCount{}
+		result[sampleID] = []BrowserFamilyCount{}
 	}
 
 	if len(sampleIDs) == 0 {
@@ -1181,12 +1183,10 @@ func (s *Service) GetSamplePageLoadsByIDs(
 		return nil, err
 	}
 
-	grouped := make(map[gid.GID][]coredata.SamplePageLoad, len(sampleIDs))
+	grouped := make(map[gid.GID][]coredata.DailyPageLoad, len(sampleIDs))
 	for _, row := range rows {
-		grouped[row.SampleID] = append(grouped[row.SampleID], coredata.SamplePageLoad{
+		grouped[row.SampleID] = append(grouped[row.SampleID], coredata.DailyPageLoad{
 			BrowserFamily: row.BrowserFamily,
-			Presentation:  row.Presentation,
-			ConsentAction: row.ConsentAction,
 			Count:         row.Count,
 		})
 	}
@@ -1198,10 +1198,10 @@ func (s *Service) GetSamplePageLoadsByIDs(
 	return result, nil
 }
 
-type SampleHitSplits struct {
-	Total   []SampleFamilyCount
-	Allowed []SampleFamilyCount
-	Denied  []SampleFamilyCount
+type HitSplits struct {
+	Total   []BrowserFamilyCount
+	Allowed []BrowserFamilyCount
+	Denied  []BrowserFamilyCount
 }
 
 type SampleHitSplitQuery struct {
@@ -1215,7 +1215,7 @@ func (s *Service) GetSampleHitSplits(
 	scope coredata.Scoper,
 	trackerPatternID gid.GID,
 	sampleID *gid.GID,
-) (SampleHitSplits, error) {
+) (HitSplits, error) {
 	query := SampleHitSplitQuery{
 		PatternID: trackerPatternID,
 		Latest:    sampleID == nil,
@@ -1226,7 +1226,7 @@ func (s *Service) GetSampleHitSplits(
 
 	splits, err := s.GetSampleHitSplitsForPatterns(ctx, scope, []SampleHitSplitQuery{query})
 	if err != nil {
-		return SampleHitSplits{}, err
+		return HitSplits{}, err
 	}
 
 	return splits[query], nil
@@ -1236,8 +1236,8 @@ func (s *Service) GetSampleHitSplitsForPatterns(
 	ctx context.Context,
 	scope coredata.Scoper,
 	queries []SampleHitSplitQuery,
-) (map[SampleHitSplitQuery]SampleHitSplits, error) {
-	result := make(map[SampleHitSplitQuery]SampleHitSplits, len(queries))
+) (map[SampleHitSplitQuery]HitSplits, error) {
+	result := make(map[SampleHitSplitQuery]HitSplits, len(queries))
 	if len(queries) == 0 {
 		return result, nil
 	}
@@ -1342,7 +1342,7 @@ func (s *Service) GetSampleHitSplitsForPatterns(
 				}
 
 				if sampleID == (gid.GID{}) {
-					result[query] = SampleHitSplits{}
+					result[query] = HitSplits{}
 
 					continue
 				}
@@ -1365,7 +1365,7 @@ func (s *Service) GetSampleHitSplitsForPatterns(
 				return err
 			}
 
-			rowsByPair := make(map[hitPair][]coredata.SamplePatternHit)
+			rowsByPair := make(map[hitPair][]coredata.DailyPatternHit)
 
 			for _, hit := range hits {
 				pair := hitPair{sampleID: hit.SampleID, patternID: hit.TrackerPatternID}
@@ -1373,10 +1373,8 @@ func (s *Service) GetSampleHitSplitsForPatterns(
 					continue
 				}
 
-				rowsByPair[pair] = append(rowsByPair[pair], coredata.SamplePatternHit{
+				rowsByPair[pair] = append(rowsByPair[pair], coredata.DailyPatternHit{
 					BrowserFamily:   hit.BrowserFamily,
-					Presentation:    hit.Presentation,
-					ConsentAction:   hit.ConsentAction,
 					CategoryGranted: hit.CategoryGranted,
 					Count:           hit.Count,
 				})
@@ -1387,7 +1385,7 @@ func (s *Service) GetSampleHitSplitsForPatterns(
 					sampleID:  sampleID,
 					patternID: query.PatternID,
 				}])
-				result[query] = SampleHitSplits{
+				result[query] = HitSplits{
 					Total:   total,
 					Allowed: allowed,
 					Denied:  denied,
@@ -1885,7 +1883,7 @@ func (s *Service) PublishCookieBannerVersion(
 ) (*coredata.CookieBannerVersion, error) {
 	// Best-effort: a leftover write for another banner must not
 	// block this publish. Freeze still closes this banner's window.
-	_ = s.FlushSampleCounts(ctx)
+	_ = s.FlushAnalytics(ctx)
 
 	var version coredata.CookieBannerVersion
 
@@ -3284,7 +3282,7 @@ func (s *Service) ReportDetectedTrackers(
 						InitiatorURL:  dc.InitiatorURL,
 						CookieDomain:  dc.CookieDomain,
 						HostOnly:      dc.HostOnly,
-						SampleHit:     dc.SampleHit,
+						Hit:           dc.Hit,
 						Granted:       categoryGrantedForHit(req.Presentation, req.ConsentAction, dc.CategoryGranted),
 					},
 					&inserted,
@@ -3309,7 +3307,7 @@ func (s *Service) ReportDetectedTrackers(
 						Source:       ds.Source,
 						ObservedBy:   coredata.DetectedTrackerObserverSDK,
 						InitiatorURL: ds.InitiatorURL,
-						SampleHit:    ds.SampleHit,
+						Hit:          ds.Hit,
 						Granted:      categoryGrantedForHit(req.Presentation, req.ConsentAction, ds.CategoryGranted),
 					},
 					&inserted,
@@ -3351,7 +3349,7 @@ func (s *Service) ReportDetectedTrackers(
 		return err
 	}
 
-	s.recordSampleIncrements(
+	s.recordAnalytics(
 		bannerID,
 		req.Family,
 		req.Presentation,
@@ -3379,7 +3377,7 @@ type detectedTrackerInfo struct {
 	Partitioned   *bool
 	SetByURL      *string
 	ScanID        *gid.GID
-	SampleHit     bool
+	Hit           bool
 	Granted       bool
 }
 
@@ -3408,7 +3406,7 @@ func (s *Service) reportDetectedTracker(
 		return err
 	}
 
-	if info.SampleHit && patternID != nil {
+	if info.Hit && patternID != nil {
 		if _, seen := countedHits[*patternID]; !seen {
 			countedHits[*patternID] = info.Granted
 		}
@@ -3418,7 +3416,7 @@ func (s *Service) reportDetectedTracker(
 }
 
 // persistDetectedTracker writes the pattern and the detected row on tx.
-// The pattern id is nil when the identifier is skipped. Sample hits are
+// The pattern id is nil when the identifier is skipped. Pattern hits are
 // recorded by the caller, after this returns.
 func (s *Service) persistDetectedTracker(
 	ctx context.Context,

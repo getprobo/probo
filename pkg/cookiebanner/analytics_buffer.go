@@ -22,7 +22,6 @@ package cookiebanner
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sync/atomic"
 	"time"
@@ -33,32 +32,34 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
-const sampleCountFlushInterval = 10 * time.Second
+const analyticsFlushInterval = 10 * time.Second
 
 type (
-	sampleLoadKey struct {
+	pageLoadKey struct {
 		bannerID      gid.GID
+		day           time.Time
 		family        coredata.BrowserFamily
-		presentation  string
-		consentAction string
+		presentation  coredata.CookieBannerPresentation
+		consentAction coredata.CookieConsentAction
 	}
 
-	sampleHitKey struct {
+	patternHitKey struct {
 		bannerID        gid.GID
 		patternID       gid.GID
+		day             time.Time
 		family          coredata.BrowserFamily
-		presentation    string
-		consentAction   string
+		presentation    coredata.CookieBannerPresentation
+		consentAction   coredata.CookieConsentAction
 		categoryGranted bool
 	}
 )
 
-func (s *Service) addPageLoad(key sampleLoadKey) {
+func (s *Service) addPageLoad(key pageLoadKey) {
 	actual, _ := s.pageLoadCounts.LoadOrStore(key, &atomic.Int64{})
 	actual.(*atomic.Int64).Add(1)
 }
 
-func (s *Service) addPatternHit(key sampleHitKey) {
+func (s *Service) addPatternHit(key patternHitKey) {
 	actual, _ := s.patternHitCounts.LoadOrStore(key, &atomic.Int64{})
 	actual.(*atomic.Int64).Add(1)
 }
@@ -102,15 +103,15 @@ func categoryGrantedForHit(
 	return pageLoadGranted(presentation, action)
 }
 
-func consentActionValue(action *coredata.CookieConsentAction) string {
+func consentActionValue(action *coredata.CookieConsentAction) coredata.CookieConsentAction {
 	if action == nil {
 		return ""
 	}
 
-	return action.String()
+	return *action
 }
 
-func (s *Service) recordSampleIncrements(
+func (s *Service) recordAnalytics(
 	bannerID gid.GID,
 	family coredata.BrowserFamily,
 	presentation coredata.CookieBannerPresentation,
@@ -122,38 +123,51 @@ func (s *Service) recordSampleIncrements(
 		family = coredata.BrowserFamilyOther
 	}
 
+	day := utcDay(s.now())
 	consentAction := consentActionValue(action)
 
 	if pageView {
-		s.addPageLoad(sampleLoadKey{
+		s.addPageLoad(pageLoadKey{
 			bannerID:      bannerID,
+			day:           day,
 			family:        family,
-			presentation:  string(presentation),
+			presentation:  presentation,
 			consentAction: consentAction,
 		})
 	}
 
 	for patternID, granted := range patternGrants {
-		s.addPatternHit(sampleHitKey{
+		s.addPatternHit(patternHitKey{
 			bannerID:        bannerID,
 			patternID:       patternID,
+			day:             day,
 			family:          family,
-			presentation:    string(presentation),
+			presentation:    presentation,
 			consentAction:   consentAction,
 			categoryGranted: granted,
 		})
 	}
 }
 
-func (s *Service) FlushSampleCounts(ctx context.Context) error {
+// FlushAnalytics writes the buffered counts to their day buckets. A
+// counter of a past day is dropped once a flush finds it empty: increments
+// pick their day right before adding, so none can still be in flight a
+// whole flush interval after midnight.
+func (s *Service) FlushAnalytics(ctx context.Context) error {
 	var firstErr error
+
+	today := utcDay(s.now())
 
 	s.pageLoadCounts.Range(
 		func(key, value any) bool {
-			loadKey := key.(sampleLoadKey)
+			loadKey := key.(pageLoadKey)
 
 			count := value.(*atomic.Int64).Swap(0)
 			if count == 0 {
+				if loadKey.day.Before(today) {
+					s.pageLoadCounts.CompareAndDelete(key, value)
+				}
+
 				return true
 			}
 
@@ -167,10 +181,14 @@ func (s *Service) FlushSampleCounts(ctx context.Context) error {
 
 	s.patternHitCounts.Range(
 		func(key, value any) bool {
-			hitKey := key.(sampleHitKey)
+			hitKey := key.(patternHitKey)
 
 			count := value.(*atomic.Int64).Swap(0)
 			if count == 0 {
+				if hitKey.day.Before(today) {
+					s.patternHitCounts.CompareAndDelete(key, value)
+				}
+
 				return true
 			}
 
@@ -187,34 +205,24 @@ func (s *Service) FlushSampleCounts(ctx context.Context) error {
 
 func (s *Service) writePageLoad(
 	ctx context.Context,
-	key sampleLoadKey,
+	key pageLoadKey,
 	count int64,
 ) error {
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			scope := coredata.NewScopeFromObjectID(key.bannerID)
-
-			sampleID, ok, err := resolveWritableSample(ctx, tx, scope, key.bannerID)
-			if err != nil {
-				return err
-			}
-
-			if !ok {
-				return nil
-			}
-
-			if err := coredata.RecordSamplePageLoad(
+			if err := coredata.RecordDailyPageLoad(
 				ctx,
 				tx,
-				scope,
-				sampleID,
+				coredata.NewScopeFromObjectID(key.bannerID),
+				key.bannerID,
+				key.day,
 				key.family,
 				key.presentation,
 				key.consentAction,
 				count,
 			); err != nil {
-				return fmt.Errorf("cannot record sample page load: %w", err)
+				return fmt.Errorf("cannot record page load: %w", err)
 			}
 
 			return nil
@@ -224,37 +232,26 @@ func (s *Service) writePageLoad(
 
 func (s *Service) writePatternHit(
 	ctx context.Context,
-	key sampleHitKey,
+	key patternHitKey,
 	count int64,
 ) error {
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			scope := coredata.NewScopeFromObjectID(key.bannerID)
-
-			sampleID, ok, err := resolveWritableSample(ctx, tx, scope, key.bannerID)
-			if err != nil {
-				return err
-			}
-
-			if !ok {
-				return nil
-			}
-
-			if err := coredata.RecordSamplePatternHit(
+			if err := coredata.RecordDailyPatternHit(
 				ctx,
 				tx,
-				scope,
-				sampleID,
+				coredata.NewScopeFromObjectID(key.bannerID),
 				key.bannerID,
 				key.patternID,
+				key.day,
 				key.family,
 				key.presentation,
 				key.consentAction,
 				key.categoryGranted,
 				count,
 			); err != nil {
-				return fmt.Errorf("cannot record sample pattern hit: %w", err)
+				return fmt.Errorf("cannot record pattern hit: %w", err)
 			}
 
 			return nil
@@ -262,83 +259,24 @@ func (s *Service) writePatternHit(
 	)
 }
 
-func resolveWritableSample(
-	ctx context.Context,
-	tx pg.Tx,
-	scope coredata.Scoper,
-	bannerID gid.GID,
-) (gid.GID, bool, error) {
-	var open coredata.CookieBannerSample
+func (s *Service) RunAnalyticsFlusher(ctx context.Context, logger *log.Logger) error {
+	logger = logger.Named("analytics-flusher")
 
-	err := open.LoadOpenByCookieBannerID(ctx, tx, scope, bannerID)
-	if err == nil {
-		return open.ID, true, nil
-	}
-
-	if !errors.Is(err, coredata.ErrResourceNotFound) {
-		return gid.GID{}, false, fmt.Errorf("cannot load open cookie banner sample: %w", err)
-	}
-
-	var samples coredata.CookieBannerSamples
-
-	count, err := samples.CountByCookieBannerID(ctx, tx, scope, bannerID)
-	if err != nil {
-		return gid.GID{}, false, err
-	}
-
-	if count > 0 {
-		return gid.GID{}, false, nil
-	}
-
-	var banner coredata.CookieBanner
-	if err := banner.LoadByID(ctx, tx, scope, bannerID); err != nil {
-		return gid.GID{}, false, fmt.Errorf("cannot load cookie banner: %w", err)
-	}
-
-	now := time.Now()
-
-	sample := coredata.CookieBannerSample{
-		ID:             gid.New(scope.GetTenantID(), coredata.CookieBannerSampleEntityType),
-		OrganizationID: banner.OrganizationID,
-		CookieBannerID: bannerID,
-		CreatedAt:      now,
-		UpdatedAt:      now,
-	}
-
-	inserted, err := sample.InsertOpen(ctx, tx, scope)
-	if err != nil {
-		return gid.GID{}, false, err
-	}
-
-	if !inserted {
-		if err := open.LoadOpenByCookieBannerID(ctx, tx, scope, bannerID); err != nil {
-			return gid.GID{}, false, fmt.Errorf("cannot reload open cookie banner sample: %w", err)
-		}
-
-		return open.ID, true, nil
-	}
-
-	return sample.ID, true, nil
-}
-
-func (s *Service) RunSampleCountFlusher(ctx context.Context, logger *log.Logger) error {
-	logger = logger.Named("sample-count-flusher")
-
-	ticker := time.NewTicker(sampleCountFlushInterval)
+	ticker := time.NewTicker(analyticsFlushInterval)
 	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ctx.Done():
 			flushCtx := context.WithoutCancel(ctx)
-			if err := s.FlushSampleCounts(flushCtx); err != nil {
-				logger.ErrorCtx(flushCtx, "cannot flush sample counts on shutdown", log.Error(err))
+			if err := s.FlushAnalytics(flushCtx); err != nil {
+				logger.ErrorCtx(flushCtx, "cannot flush analytics on shutdown", log.Error(err))
 			}
 
 			return nil
 		case <-ticker.C:
-			if err := s.FlushSampleCounts(ctx); err != nil {
-				logger.ErrorCtx(ctx, "cannot flush sample counts", log.Error(err))
+			if err := s.FlushAnalytics(ctx); err != nil {
+				logger.ErrorCtx(ctx, "cannot flush analytics", log.Error(err))
 			}
 		}
 	}
