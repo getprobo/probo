@@ -21,16 +21,20 @@
 package bridge_test
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.gearno.de/kit/log"
 
 	scimbridge "go.probo.inc/probo/pkg/iam/scim/bridge"
 	scimclient "go.probo.inc/probo/pkg/iam/scim/bridge/client"
@@ -158,7 +162,8 @@ func TestBridge_Run_SyncsPhotoWhenETagChanges(t *testing.T) {
 			}); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
-		case r.Method == http.MethodPost && r.URL.Path == "/Users":
+		case (r.Method == http.MethodPost && r.URL.Path == "/Users") ||
+			(r.Method == http.MethodPut && strings.HasPrefix(r.URL.Path, "/Users/")):
 			body, err := io.ReadAll(r.Body)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusBadRequest)
@@ -180,7 +185,13 @@ func TestBridge_Run_SyncsPhotoWhenETagChanges(t *testing.T) {
 			requests = append(requests, string(body))
 			mu.Unlock()
 
-			w.WriteHeader(http.StatusCreated)
+			if r.Method == http.MethodPost {
+				w.WriteHeader(http.StatusCreated)
+
+				return
+			}
+
+			w.WriteHeader(http.StatusOK)
 		default:
 			http.NotFound(w, r)
 		}
@@ -189,11 +200,12 @@ func TestBridge_Run_SyncsPhotoWhenETagChanges(t *testing.T) {
 
 	directory := &photoProvider{
 		users: scimclient.Users{{
-			UserName:    "ada@example.com",
-			DisplayName: "Ada",
-			Active:      true,
-			ExternalID:  "ada",
-			PhotoETag:   "v1",
+			UserName:       "ada@example.com",
+			DisplayName:    "Ada",
+			Active:         true,
+			ExternalID:     "ada",
+			PhotoETag:      "v1",
+			PhotoETagKnown: true,
 		}},
 		photo: provider.Photo{Body: []byte("face"), MIME: "image/png"},
 	}
@@ -221,4 +233,82 @@ func TestBridge_Run_SyncsPhotoWhenETagChanges(t *testing.T) {
 	assert.Equal(t, 0, updated)
 	assert.Equal(t, 1, skipped)
 	assert.Equal(t, 1, directory.calls)
+
+	directory.users[0].PhotoETag = "v2"
+	directory.photo.Body = []byte("face-2")
+
+	created, updated, _, _, skipped, err = syncer.Run(context.Background())
+
+	require.NoError(t, err)
+	assert.Equal(t, 0, created)
+	assert.Equal(t, 1, updated)
+	assert.Equal(t, 0, skipped)
+	assert.Equal(t, 2, directory.calls)
+
+	mu.Lock()
+	require.Len(t, requests, 2)
+	assert.Contains(t, requests[1], `"photoETag":"v2"`)
+	assert.Contains(t, requests[1], base64.StdEncoding.EncodeToString([]byte("face-2")))
+	mu.Unlock()
+}
+
+func TestBridge_Run_KeepsStoredPhotoWhenFetchFails(t *testing.T) {
+	t.Parallel()
+
+	var logs bytes.Buffer
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet && r.URL.Path == "/Users" {
+			w.Header().Set("Content-Type", "application/scim+json")
+			_, _ = io.WriteString(w, `{
+				"schemas": ["urn:ietf:params:scim:api:messages:2.0:ListResponse"],
+				"totalResults": 1,
+				"startIndex": 1,
+				"itemsPerPage": 100,
+				"Resources": [{
+					"id": "profile-1",
+					"userName": "ada@example.com",
+					"displayName": "Ada",
+					"active": true,
+					"externalId": "ada",
+					"photoETag": "v1"
+				}]
+			}`)
+
+			return
+		}
+
+		http.NotFound(w, r)
+	}))
+	t.Cleanup(server.Close)
+
+	directory := &photoProvider{
+		users: scimclient.Users{{
+			UserName:       "ada@example.com",
+			DisplayName:    "Ada",
+			Active:         true,
+			ExternalID:     "ada",
+			PhotoETag:      "v2",
+			PhotoETagKnown: true,
+		}},
+		err: assert.AnError,
+	}
+	client := scimclient.NewClient(server.Client(), server.URL, "token")
+	syncer := scimbridge.NewBridge(
+		directory,
+		client,
+		scimbridge.WithLogger(log.NewLogger(log.WithOutput(&logs))),
+	)
+
+	created, updated, _, _, skipped, err := syncer.Run(context.Background())
+
+	require.NoError(t, err)
+	assert.Equal(t, 0, created)
+	assert.Equal(t, 0, updated)
+	assert.Equal(t, 1, skipped)
+	assert.Equal(t, 1, directory.calls)
+	assert.Contains(t, logs.String(), "skipping directory photo")
+	assert.Contains(t, logs.String(), "photo fetch failed")
+	assert.Contains(t, logs.String(), "ada")
+	assert.NotContains(t, logs.String(), "ada@example.com")
 }

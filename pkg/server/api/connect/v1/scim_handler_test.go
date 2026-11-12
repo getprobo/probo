@@ -153,6 +153,33 @@ func TestRedactSCIMCredentials(t *testing.T) {
 		assert.NotContains(t, string(got), "aaaa")
 	})
 
+	t.Run("redacts a photo value under any key casing", func(t *testing.T) {
+		t.Parallel()
+
+		got := redactSCIMCredentials([]byte(`{"photos":[{"Value":"data:image/png;base64,bbbb","type":"photo"},"https://cdn.example.com/secret.png"]}`))
+
+		assert.NotContains(t, string(got), "bbbb")
+		assert.NotContains(t, string(got), "secret.png")
+	})
+
+	t.Run("redacts a photo sent on a patch path", func(t *testing.T) {
+		t.Parallel()
+
+		bodies := []string{
+			`{"Operations":[{"op":"replace","path":"photos","value":[{"value":"data:image/png;base64,aaaa"}]}]}`,
+			`{"Operations":[{"op":"replace","path":"urn:ietf:params:scim:schemas:core:2.0:User:photos","value":"data:image/png;base64,cccc"}]}`,
+			`{"Operations":[{"op":"replace","path":"photos[type eq \"photo\"].value","value":"https://cdn.example.com/secret.png"}]}`,
+		}
+
+		for _, body := range bodies {
+			got := redactSCIMCredentials([]byte(body))
+			require.NotNil(t, got, body)
+			assert.NotContains(t, string(got), "aaaa", body)
+			assert.NotContains(t, string(got), "cccc", body)
+			assert.NotContains(t, string(got), "secret.png", body)
+		}
+	})
+
 	t.Run("never leaks the credential", func(t *testing.T) {
 		t.Parallel()
 

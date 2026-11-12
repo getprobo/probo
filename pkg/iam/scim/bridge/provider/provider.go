@@ -30,7 +30,9 @@ import (
 
 type (
 	// Photo is one user's directory picture. Absent means the directory has
-	// no picture for that user.
+	// no picture for that user, and the bridge clears the stored version.
+	// A zero Photo with a nil error means the picture could not be read,
+	// and the bridge keeps the previous version.
 	Photo struct {
 		ETag   string
 		Body   []byte

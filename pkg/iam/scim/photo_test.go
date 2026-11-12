@@ -23,6 +23,7 @@ package scim
 import (
 	"context"
 	"encoding/base64"
+	"net/http"
 	"testing"
 
 	"github.com/elimity-com/scim"
@@ -89,7 +90,7 @@ func TestPrepareSCIMPhoto(t *testing.T) {
 
 		payload := base64.StdEncoding.EncodeToString([]byte("face"))
 		value := "data:image/jpeg;base64," + payload
-		photo, reason := svc.prepareSCIMPhoto(context.Background(), &value, nil)
+		photo, reason := svc.prepareSCIMPhoto(context.Background(), &value, nil, "")
 
 		require.Empty(t, reason)
 		require.NotNil(t, photo)
@@ -104,7 +105,7 @@ func TestPrepareSCIMPhoto(t *testing.T) {
 		payload := base64.StdEncoding.EncodeToString([]byte("face"))
 		value := "data:image/png;base64," + payload
 		etag := "directory-etag"
-		photo, reason := svc.prepareSCIMPhoto(context.Background(), &value, &etag)
+		photo, reason := svc.prepareSCIMPhoto(context.Background(), &value, &etag, "")
 
 		require.Empty(t, reason)
 		require.NotNil(t, photo)
@@ -115,7 +116,7 @@ func TestPrepareSCIMPhoto(t *testing.T) {
 		t.Parallel()
 
 		value := "http://cdn.example.com/face.jpg"
-		photo, reason := svc.prepareSCIMPhoto(context.Background(), &value, nil)
+		photo, reason := svc.prepareSCIMPhoto(context.Background(), &value, nil, "")
 
 		assert.Nil(t, photo)
 		assert.Equal(t, "unsupported image", reason)
@@ -125,7 +126,7 @@ func TestPrepareSCIMPhoto(t *testing.T) {
 		t.Parallel()
 
 		value := "https://user:secret@cdn.example.com/face.jpg"
-		photo, reason := svc.prepareSCIMPhoto(context.Background(), &value, nil)
+		photo, reason := svc.prepareSCIMPhoto(context.Background(), &value, nil, "")
 
 		assert.Nil(t, photo)
 		assert.Equal(t, "unsupported image", reason)
@@ -135,7 +136,7 @@ func TestPrepareSCIMPhoto(t *testing.T) {
 		t.Parallel()
 
 		value := ""
-		photo, reason := svc.prepareSCIMPhoto(context.Background(), &value, nil)
+		photo, reason := svc.prepareSCIMPhoto(context.Background(), &value, nil, "")
 
 		require.Empty(t, reason)
 		require.NotNil(t, photo)
@@ -145,10 +146,30 @@ func TestPrepareSCIMPhoto(t *testing.T) {
 	t.Run("leaves the avatar alone when no photo attribute is present", func(t *testing.T) {
 		t.Parallel()
 
-		photo, reason := svc.prepareSCIMPhoto(context.Background(), nil, nil)
+		photo, reason := svc.prepareSCIMPhoto(context.Background(), nil, nil, "")
 
 		assert.Nil(t, photo)
 		assert.Empty(t, reason)
+	})
+
+	t.Run("skips the download when the etag is unchanged", func(t *testing.T) {
+		t.Parallel()
+
+		client := &http.Client{Transport: roundTripFunc(func(*http.Request) (*http.Response, error) {
+			t.Fatal("unchanged photo was downloaded")
+
+			return nil, nil
+		})}
+		unchanged := &Service{httpClient: client}
+		value := "https://cdn.example.com/face.jpg"
+		etag := "directory-etag"
+		photo, reason := unchanged.prepareSCIMPhoto(context.Background(), &value, &etag, etag)
+
+		require.Empty(t, reason)
+		require.NotNil(t, photo)
+		assert.Empty(t, photo.Body)
+		assert.Equal(t, etag, photo.ETag)
+		assert.False(t, photo.Remove)
 	})
 }
 

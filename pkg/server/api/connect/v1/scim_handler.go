@@ -380,9 +380,16 @@ func redactSCIMValue(value any, redacted *bool) any {
 			v[key] = redactSCIMValue(nested, redacted)
 		}
 
-		// A PATCH operation carries its target in "path" and the credential in
+		// A PATCH operation carries its target in "path" and the payload in
 		// "value", so the attribute name never appears as a key.
 		if path, ok := v["path"].(string); ok && isSCIMPasswordAttribute(path) {
+			if _, ok := v["value"]; ok {
+				v["value"] = scimRedactedValue
+				*redacted = true
+			}
+		}
+
+		if path, ok := v["path"].(string); ok && scimPathTargetsPhoto(path) {
 			if _, ok := v["value"]; ok {
 				v["value"] = scimRedactedValue
 				*redacted = true
@@ -401,10 +408,6 @@ func redactSCIMValue(value any, redacted *bool) any {
 	}
 }
 
-// isSCIMPasswordAttribute reports whether an attribute name or PATCH path
-// targets the password. SCIM attributes may be qualified by their schema URN
-// (urn:ietf:params:scim:schemas:core:2.0:User:password), so only the trailing
-// segment identifies the attribute.
 func redactSCIMPhotos(value any, redacted *bool) any {
 	items, ok := value.([]any)
 	if !ok {
@@ -416,11 +419,18 @@ func redactSCIMPhotos(value any, redacted *bool) any {
 	for i, item := range items {
 		photo, ok := item.(map[string]any)
 		if !ok {
+			items[i] = scimRedactedValue
+			*redacted = true
+
 			continue
 		}
 
-		if _, exists := photo["value"]; exists {
-			photo["value"] = scimRedactedValue
+		for key := range photo {
+			if !strings.EqualFold(key, "value") {
+				continue
+			}
+
+			photo[key] = scimRedactedValue
 			*redacted = true
 		}
 
@@ -430,6 +440,43 @@ func redactSCIMPhotos(value any, redacted *bool) any {
 	return items
 }
 
+// scimPathTargetsPhoto reports whether a PATCH path addresses the photos
+// attribute, including a schema URN and a filter such as
+// photos[type eq "photo"].value.
+func scimPathTargetsPhoto(path string) bool {
+	var plain strings.Builder
+
+	depth := 0
+	for _, r := range path {
+		switch r {
+		case '[':
+			depth++
+		case ']':
+			if depth > 0 {
+				depth--
+			}
+		default:
+			if depth == 0 {
+				plain.WriteRune(r)
+			}
+		}
+	}
+
+	for _, part := range strings.FieldsFunc(plain.String(), func(r rune) bool {
+		return r == '.' || r == ':'
+	}) {
+		if strings.EqualFold(part, "photos") {
+			return true
+		}
+	}
+
+	return false
+}
+
+// isSCIMPasswordAttribute reports whether an attribute name or PATCH path
+// targets the password. SCIM attributes may be qualified by their schema URN
+// (urn:ietf:params:scim:schemas:core:2.0:User:password), so only the trailing
+// segment identifies the attribute.
 func isSCIMPasswordAttribute(name string) bool {
 	if i := strings.LastIndex(name, ":"); i >= 0 {
 		name = name[i+1:]

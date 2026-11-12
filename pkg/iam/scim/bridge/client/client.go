@@ -57,8 +57,13 @@ type (
 		ManagerValue           string `json:"-"`
 		PreferredLanguage      string `json:"-"`
 		PhotoETag              string `json:"photoETag,omitempty"`
-		Photo                  []byte `json:"-"`
-		PhotoMIME              string `json:"-"`
+		// PhotoETagKnown reports that PhotoETag was read from the directory.
+		// An empty PhotoETag is a removed picture only when this is true.
+		// A false value means the version was not read, and the bridge keeps
+		// the stored picture.
+		PhotoETagKnown bool   `json:"-"`
+		Photo          []byte `json:"-"`
+		PhotoMIME      string `json:"-"`
 	}
 
 	Users []User

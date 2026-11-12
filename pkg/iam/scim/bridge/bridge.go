@@ -28,6 +28,7 @@ import (
 	"fmt"
 	"strings"
 
+	"go.gearno.de/kit/log"
 	scimclient "go.probo.inc/probo/pkg/iam/scim/bridge/client"
 	"go.probo.inc/probo/pkg/iam/scim/bridge/provider"
 )
@@ -37,6 +38,7 @@ type (
 		provider          provider.Provider
 		scimClient        *scimclient.Client
 		excludedUserNames []string
+		logger            *log.Logger
 	}
 
 	Option func(*Bridge)
@@ -45,6 +47,12 @@ type (
 func WithExcludedUserNames(excludedUserNames []string) Option {
 	return func(s *Bridge) {
 		s.excludedUserNames = excludedUserNames
+	}
+}
+
+func WithLogger(logger *log.Logger) Option {
+	return func(s *Bridge) {
+		s.logger = logger
 	}
 }
 
@@ -160,11 +168,19 @@ func (s *Bridge) Run(ctx context.Context) (created, updated, deleted, deactivate
 }
 
 func (s *Bridge) loadPhoto(ctx context.Context, user *scimclient.User, previousETag string) {
+	if !user.PhotoETagKnown {
+		user.PhotoETag = previousETag
+
+		return
+	}
+
 	if user.PhotoETag == previousETag {
 		return
 	}
 
 	if user.PhotoETag == "" {
+		user.Photo = nil
+
 		return
 	}
 
@@ -177,6 +193,13 @@ func (s *Bridge) loadPhoto(ctx context.Context, user *scimclient.User, previousE
 
 	photo, err := source.UserPhoto(ctx, *user)
 	if err != nil || (len(photo.Body) == 0 && !photo.Absent) {
+		reason := "empty photo"
+		if err != nil {
+			reason = "photo fetch failed"
+		}
+
+		s.warnSkippedPhoto(ctx, user, reason)
+
 		user.PhotoETag = previousETag
 		user.Photo = nil
 
@@ -195,6 +218,20 @@ func (s *Bridge) loadPhoto(ctx context.Context, user *scimclient.User, previousE
 	if photo.ETag != "" {
 		user.PhotoETag = photo.ETag
 	}
+}
+
+func (s *Bridge) warnSkippedPhoto(ctx context.Context, user *scimclient.User, reason string) {
+	if s.logger == nil || user == nil {
+		return
+	}
+
+	s.logger.WarnCtx(
+		ctx,
+		"skipping directory photo",
+		log.String("provider", s.provider.Name()),
+		log.String("external_id", user.ExternalID),
+		log.String("reason", reason),
+	)
 }
 
 func (s *Bridge) isExcluded(email string) bool {

@@ -48,17 +48,29 @@ func TestScimUserFromDirectory_IncludesPhotoETag(t *testing.T) {
 	assert.Equal(t, "Ada Lovelace", user.DisplayName)
 	assert.Equal(t, "directory-id", user.ExternalID)
 	assert.Equal(t, "photo-etag", user.PhotoETag)
+	assert.True(t, user.PhotoETagKnown)
 	assert.True(t, user.Active)
 }
 
 func TestDecodeGooglePhoto(t *testing.T) {
 	t.Parallel()
 
-	raw := []byte("directory-photo")
+	// 0xfb, 0xff encodes as "+/8=", which uses the alphabet and padding
+	// Google rewrites before the photo is stored.
+	raw := []byte{0xfb, 0xff}
 	encoded := base64.StdEncoding.EncodeToString(raw)
-	encoded = strings.NewReplacer("+", "-", "/", "_", "=", "*").Replace(encoded)
+	require.Contains(t, encoded, "+")
+	require.Contains(t, encoded, "/")
+	require.Contains(t, encoded, "=")
 
-	decoded, err := decodeGooglePhoto(encoded)
+	googleEncoded := strings.NewReplacer("+", "-", "/", "_", "=", "*").Replace(encoded)
+	decoded, err := decodeGooglePhoto(googleEncoded)
+
+	require.NoError(t, err)
+	assert.Equal(t, raw, decoded)
+
+	dotPadding := strings.ReplaceAll(googleEncoded, "*", ".")
+	decoded, err = decodeGooglePhoto(dotPadding)
 
 	require.NoError(t, err)
 	assert.Equal(t, raw, decoded)

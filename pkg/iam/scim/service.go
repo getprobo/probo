@@ -191,11 +191,13 @@ func (s *Service) CreateUser(
 	)
 
 	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
-	photo, reason := s.prepareSCIMPhoto(ctx, attrs.PhotoURI, attrs.PhotoETag)
+	photo, reason := s.prepareSCIMPhoto(ctx, attrs.PhotoURI, attrs.PhotoETag, "")
 	if reason != "" {
 		s.warnPhoto(ctx, nil, reason)
 		photo = nil
 	}
+
+	staged, unreadable := s.stageProfilePhoto(ctx, gid.Nil, "", photo)
 
 	err = s.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		identity := &coredata.Identity{}
@@ -390,7 +392,7 @@ func (s *Service) CreateUser(
 			previousUser = webhooktypes.NewUser(previousProfile, membership)
 		}
 
-		if err := s.syncProfilePhoto(ctx, tx, scope, profile, photo); err != nil {
+		if err := s.syncProfilePhoto(ctx, tx, scope, profile, photo, staged, unreadable); err != nil {
 			return err
 		}
 
@@ -544,18 +546,25 @@ func (s *Service) updateUser(
 ) (*coredata.MembershipProfile, error) {
 	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
 	now := time.Now()
-	photo, reason := s.prepareSCIMPhoto(ctx, attrs.PhotoURI, attrs.PhotoETag)
+	storedPhotoETag, identityID, err := s.storedPhotoVersion(ctx, config, profileID)
+	if err != nil {
+		return nil, err
+	}
+
+	photo, reason := s.prepareSCIMPhoto(ctx, attrs.PhotoURI, attrs.PhotoETag, storedPhotoETag)
 	if reason != "" {
-		s.warnPhoto(ctx, nil, reason)
+		s.warnPhoto(ctx, &coredata.MembershipProfile{IdentityID: identityID}, reason)
 		photo = nil
 	}
+
+	staged, unreadable := s.stageProfilePhoto(ctx, identityID, storedPhotoETag, photo)
 
 	var (
 		membership *coredata.Membership
 		profile    *coredata.MembershipProfile
 	)
 
-	err := s.pg.WithTx(
+	err = s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			profile = &coredata.MembershipProfile{}
@@ -866,7 +875,7 @@ func (s *Service) updateUser(
 				}
 			}
 
-			if err := s.syncProfilePhoto(ctx, tx, scope, profile, photo); err != nil {
+			if err := s.syncProfilePhoto(ctx, tx, scope, profile, photo, staged, unreadable); err != nil {
 				return err
 			}
 
@@ -882,6 +891,46 @@ func (s *Service) updateUser(
 	}
 
 	return profile, nil
+}
+
+func (s *Service) storedPhotoVersion(
+	ctx context.Context,
+	config *coredata.SCIMConfiguration,
+	profileID gid.GID,
+) (string, gid.GID, error) {
+	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
+
+	var (
+		stored     string
+		identityID gid.GID
+	)
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			profile := &coredata.MembershipProfile{}
+			if err := profile.LoadByID(ctx, conn, scope, profileID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return scimerrors.ScimErrorResourceNotFound(profileID.String())
+				}
+
+				return fmt.Errorf("cannot load profile: %w", err)
+			}
+
+			if profile.OrganizationID != config.OrganizationID {
+				return scimerrors.ScimErrorResourceNotFound(profileID.String())
+			}
+
+			identityID = profile.IdentityID
+			if profile.SCIMPhotoETag != nil {
+				stored = *profile.SCIMPhotoETag
+			}
+
+			return nil
+		},
+	)
+
+	return stored, identityID, err
 }
 
 func applyUserAttributes(

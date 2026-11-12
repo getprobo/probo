@@ -30,6 +30,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 
 	scimclient "go.probo.inc/probo/pkg/iam/scim/bridge/client"
 	"go.probo.inc/probo/pkg/iam/scim/bridge/provider"
@@ -46,6 +47,9 @@ var (
 type Provider struct {
 	httpClient        *http.Client
 	excludedUserNames []string
+
+	mu    sync.Mutex
+	admin *admin.Service
 }
 
 func New(httpClient *http.Client, excludedUserNames []string) *Provider {
@@ -71,9 +75,9 @@ func (p *Provider) isExcluded(email string) bool {
 }
 
 func (p *Provider) ListUsers(ctx context.Context) (scimclient.Users, error) {
-	adminService, err := admin.NewService(ctx, option.WithHTTPClient(p.httpClient))
+	adminService, err := p.directory(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create admin service: %w", err)
+		return nil, err
 	}
 
 	var allUsers scimclient.Users
@@ -121,14 +125,33 @@ func (p *Provider) ListUsers(ctx context.Context) (scimclient.Users, error) {
 
 func scimUserFromDirectory(u *admin.User) scimclient.User {
 	return scimclient.User{
-		UserName:    u.PrimaryEmail,
-		DisplayName: u.Name.FullName,
-		GivenName:   u.Name.GivenName,
-		FamilyName:  u.Name.FamilyName,
-		Active:      !u.Suspended && !u.Archived,
-		ExternalID:  u.Id,
-		PhotoETag:   u.ThumbnailPhotoEtag,
+		UserName:       u.PrimaryEmail,
+		DisplayName:    u.Name.FullName,
+		GivenName:      u.Name.GivenName,
+		FamilyName:     u.Name.FamilyName,
+		Active:         !u.Suspended && !u.Archived,
+		ExternalID:     u.Id,
+		PhotoETag:      u.ThumbnailPhotoEtag,
+		PhotoETagKnown: true,
 	}
+}
+
+func (p *Provider) directory(ctx context.Context) (*admin.Service, error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	if p.admin != nil {
+		return p.admin, nil
+	}
+
+	service, err := admin.NewService(ctx, option.WithHTTPClient(p.httpClient))
+	if err != nil {
+		return nil, fmt.Errorf("cannot create admin service: %w", err)
+	}
+
+	p.admin = service
+
+	return service, nil
 }
 
 func (p *Provider) UserPhoto(ctx context.Context, user scimclient.User) (provider.Photo, error) {
@@ -141,9 +164,9 @@ func (p *Provider) UserPhoto(ctx context.Context, user scimclient.User) (provide
 		return provider.Photo{}, nil
 	}
 
-	adminService, err := admin.NewService(ctx, option.WithHTTPClient(p.httpClient))
+	adminService, err := p.directory(ctx)
 	if err != nil {
-		return provider.Photo{}, fmt.Errorf("cannot create admin service: %w", err)
+		return provider.Photo{}, err
 	}
 
 	photo, err := adminService.Users.Photos.Get(key).Context(ctx).Do()

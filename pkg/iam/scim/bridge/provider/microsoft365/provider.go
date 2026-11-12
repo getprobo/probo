@@ -63,8 +63,9 @@ const graphMaxPages = 1000
 const graphMemberFilter = "userType eq 'Member'"
 
 const (
-	graphPhotoConcurrency = 8
-	maxPhotoBytes         = 5 << 20
+	graphPhotoConcurrency      = 8
+	graphPhotoAuthFailureLimit = 3
+	maxPhotoBytes              = 5 << 20
 )
 
 var (
@@ -76,6 +77,11 @@ type Provider struct {
 	httpClient        *http.Client
 	excludedUserNames []string
 	graphBaseURL      string
+
+	// photoLookupConcurrency and photoAuthFailureLimit override the defaults
+	// in tests. Zero uses the production limits.
+	photoLookupConcurrency int
+	photoAuthFailureLimit  int
 }
 
 func New(httpClient *http.Client, excludedUserNames []string) *Provider {
@@ -240,8 +246,9 @@ func (p *Provider) fetchPage(ctx context.Context, endpoint string) ([]graphUser,
 func (p *Provider) attachPhotoETags(ctx context.Context, users scimclient.Users) {
 	var (
 		wg       sync.WaitGroup
-		sem      = make(chan struct{}, graphPhotoConcurrency)
+		sem      = make(chan struct{}, p.photoWorkers())
 		disabled atomic.Bool
+		authFail atomic.Int32
 	)
 
 	for i := range users {
@@ -272,17 +279,48 @@ func (p *Provider) attachPhotoETags(ctx context.Context, users scimclient.Users)
 				return
 			}
 
-			if status == http.StatusUnauthorized || status == http.StatusForbidden {
-				disabled.Store(true)
+			// Only a photo response or a confirmed 404 records a version.
+			// A transport error, an empty etag, or any other status stays
+			// unknown so the bridge keeps the stored picture.
+			switch status {
+			case http.StatusOK:
+				if etag == "" {
+					return
+				}
 
-				return
+				users[i].PhotoETag = etag
+				users[i].PhotoETagKnown = true
+			case http.StatusNotFound:
+				users[i].PhotoETag = ""
+				users[i].PhotoETagKnown = true
+			case http.StatusUnauthorized, http.StatusForbidden:
+				// One forbidden user can be a per-user restriction. Repeated
+				// auth failures mean the token cannot read photos, so the
+				// remaining lookups stop.
+				if authFail.Add(1) >= int32(p.authFailureLimit()) {
+					disabled.Store(true)
+				}
 			}
-
-			users[i].PhotoETag = etag
 		}(i)
 	}
 
 	wg.Wait()
+}
+
+func (p *Provider) photoWorkers() int {
+	if p.photoLookupConcurrency > 0 {
+		return p.photoLookupConcurrency
+	}
+
+	return graphPhotoConcurrency
+}
+
+func (p *Provider) authFailureLimit() int {
+	if p.photoAuthFailureLimit > 0 {
+		return p.photoAuthFailureLimit
+	}
+
+	return graphPhotoAuthFailureLimit
 }
 
 func (p *Provider) photoETag(ctx context.Context, userID string) (string, int, error) {

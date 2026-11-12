@@ -190,7 +190,7 @@ func photoActionFor(stored string, photo *scimPhoto) photoAction {
 	return photoActionApply
 }
 
-func (s *Service) prepareSCIMPhoto(ctx context.Context, uri *string, etag *string) (*scimPhoto, string) {
+func (s *Service) prepareSCIMPhoto(ctx context.Context, uri *string, etag *string, stored string) (*scimPhoto, string) {
 	if uri == nil && etag == nil {
 		return nil, ""
 	}
@@ -213,6 +213,10 @@ func (s *Service) prepareSCIMPhoto(ctx context.Context, uri *string, etag *strin
 	}
 
 	value := strings.TrimSpace(*uri)
+	if etagValue != "" && etagValue == stored {
+		return &scimPhoto{ETag: etagValue}, ""
+	}
+
 	if strings.HasPrefix(strings.ToLower(value), "data:") {
 		body, reason := decodePhotoDataURI(value)
 		if reason != "" {
@@ -233,6 +237,10 @@ func (s *Service) prepareSCIMPhoto(ctx context.Context, uri *string, etag *strin
 
 	if etagValue == "" {
 		etagValue = photoURL.String()
+	}
+
+	if etagValue == stored {
+		return &scimPhoto{ETag: etagValue}, ""
 	}
 
 	body, reason := s.fetchPhoto(ctx, photoURL)
@@ -336,6 +344,8 @@ func (s *Service) syncProfilePhoto(
 	scope coredata.Scoper,
 	profile *coredata.MembershipProfile,
 	photo *scimPhoto,
+	staged *coredata.File,
+	unreadable bool,
 ) error {
 	stored := ""
 	if profile.SCIMPhotoETag != nil {
@@ -348,33 +358,45 @@ func (s *Service) syncProfilePhoto(
 	case photoActionClear:
 		return s.savePhotoETag(ctx, tx, scope, profile, nil)
 	case photoActionApply:
-		return s.applyProfilePhoto(ctx, tx, scope, profile, photo)
+		if unreadable {
+			return s.savePhotoETag(ctx, tx, scope, profile, &photo.ETag)
+		}
+
+		if staged == nil {
+			return nil
+		}
+
+		return s.attachProfilePhoto(ctx, tx, scope, profile, photo, staged)
 	default:
 		return nil
 	}
 }
 
-func (s *Service) applyProfilePhoto(
+// stageProfilePhoto uploads a changed picture before the provisioning
+// transaction opens. The stored etag skips work when the directory version
+// is already saved. A decode failure is reported so the transaction can
+// remember the version without a file. An upload failure leaves the stored
+// version alone so a later sync can retry.
+func (s *Service) stageProfilePhoto(
 	ctx context.Context,
-	tx pg.Tx,
-	scope coredata.Scoper,
-	profile *coredata.MembershipProfile,
+	identityID gid.GID,
+	stored string,
 	photo *scimPhoto,
-) error {
-	if s.fm == nil || s.bucket == "" {
-		return nil
+) (*coredata.File, bool) {
+	if photo == nil || s.fm == nil || s.bucket == "" {
+		return nil, false
 	}
 
+	if photoActionFor(stored, photo) != photoActionApply {
+		return nil, false
+	}
+
+	profile := &coredata.MembershipProfile{IdentityID: identityID}
 	normalized, err := imageutil.Downscale(bytes.NewReader(photo.Body), avatarMaxEdge)
 	if err != nil {
 		s.warnPhoto(ctx, profile, "unsupported image")
 
-		return s.savePhotoETag(ctx, tx, scope, profile, &photo.ETag)
-	}
-
-	identity := &coredata.Identity{}
-	if err := identity.LoadByID(ctx, tx, profile.IdentityID); err != nil {
-		return fmt.Errorf("cannot load identity: %w", err)
+		return nil, true
 	}
 
 	now := time.Now()
@@ -403,17 +425,34 @@ func (s *Service) applyProfilePhoto(
 		bytes.NewReader(normalized.Bytes),
 		map[string]string{
 			"file-id":     fileID.String(),
-			"identity-id": profile.IdentityID.String(),
+			"identity-id": identityID.String(),
 			"type":        "identity-avatar",
 		},
 	)
 	if err != nil {
 		s.warnPhoto(ctx, profile, "photo upload failed")
 
-		return nil
+		return nil, false
 	}
 
 	avatarFile.FileSize = fileSize
+
+	return avatarFile, false
+}
+
+func (s *Service) attachProfilePhoto(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	profile *coredata.MembershipProfile,
+	photo *scimPhoto,
+	avatarFile *coredata.File,
+) error {
+	identity := &coredata.Identity{}
+	if err := identity.LoadByID(ctx, tx, profile.IdentityID); err != nil {
+		return fmt.Errorf("cannot load identity: %w", err)
+	}
+
 	fileScope := coredata.NewScope(gid.NilTenant, gid.Nil)
 	if err := avatarFile.Insert(ctx, tx, fileScope); err != nil {
 		return fmt.Errorf("cannot insert avatar file: %w", err)
@@ -427,7 +466,7 @@ func (s *Service) applyProfilePhoto(
 	}
 
 	identity.AvatarFileID = &avatarFile.ID
-	identity.UpdatedAt = now
+	identity.UpdatedAt = time.Now()
 	if err := identity.Update(ctx, tx); err != nil {
 		return fmt.Errorf("cannot update identity avatar: %w", err)
 	}
