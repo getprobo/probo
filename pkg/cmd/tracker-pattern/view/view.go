@@ -31,7 +31,7 @@ import (
 )
 
 const viewQuery = `
-query TrackerPatternView($id: ID!) {
+query TrackerPatternView($id: ID!, $days: Int) {
   node(id: $id) {
     __typename
     ... on TrackerPattern {
@@ -49,7 +49,7 @@ query TrackerPatternView($id: ID!) {
       excluded
       commonTrackerPatternId
       attribution
-      sampleHits {
+      hits(days: $days) {
         family
         count
       }
@@ -77,17 +77,20 @@ type viewResponse struct {
 		Excluded               bool    `json:"excluded"`
 		CommonTrackerPatternID *string `json:"commonTrackerPatternId"`
 		Attribution            *string `json:"attribution"`
-		SampleHits             []struct {
+		Hits                   []struct {
 			Family string `json:"family"`
 			Count  int    `json:"count"`
-		} `json:"sampleHits"`
+		} `json:"hits"`
 		CreatedAt string `json:"createdAt"`
 		UpdatedAt string `json:"updatedAt"`
 	} `json:"node"`
 }
 
 func NewCmdView(f *cmdutil.Factory) *cobra.Command {
-	var flagOutput *string
+	var (
+		flagDays   int
+		flagOutput *string
+	)
 
 	cmd := &cobra.Command{
 		Use:   "view <id>",
@@ -116,7 +119,13 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
-			data, err := client.Do(viewQuery, map[string]any{"id": args[0]})
+			data, err := client.Do(
+				viewQuery,
+				map[string]any{
+					"id":   args[0],
+					"days": flagDays,
+				},
+			)
 			if err != nil {
 				return err
 			}
@@ -173,11 +182,12 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Attribution:"), *v.Attribution)
 			}
 
-			if len(v.SampleHits) == 0 {
-				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Sample Hits:"), "none")
+			hitsLabel := label.Render(fmt.Sprintf("Hits (%d days):", flagDays))
+			if len(v.Hits) == 0 {
+				_, _ = fmt.Fprintf(out, "%s%s\n", hitsLabel, "none")
 			} else {
-				_, _ = fmt.Fprintf(out, "%s\n", label.Render("Sample Hits:"))
-				for _, hit := range v.SampleHits {
+				_, _ = fmt.Fprintf(out, "%s\n", hitsLabel)
+				for _, hit := range v.Hits {
 					_, _ = fmt.Fprintf(out, "%s%s %d\n", label.Render(""), hit.Family, hit.Count)
 				}
 			}
@@ -190,6 +200,7 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
+	cmd.Flags().IntVar(&flagDays, "days", 7, "Number of UTC days of hits, today included (at most 90)")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd

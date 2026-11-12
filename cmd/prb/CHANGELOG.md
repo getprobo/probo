@@ -4,6 +4,26 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+### Added
+
+- `cookie-banner view --days` and `tracker-pattern view --days` set
+  how many UTC days to count, today included. The default is 7 and the
+  maximum is 90
+
+### Changed
+
+- **Breaking**: `cookie-banner view` shows page loads for the last
+  days instead of the latest sample. The JSON output has `pageLoads`
+  instead of `latestSample`
+- **Breaking**: `tracker-pattern view` shows hits for the last days
+  instead of sample hits. The JSON output has `hits` instead of
+  `sampleHits`
+
+### Removed
+
+- **Breaking**: `cookie-banner start-sample`, `stop-sample`, and
+  `list-samples`. Page views are always counted, by UTC day
+
 ## [0.270.1] - 2026-11-17
 
 ### Fixed
@@ -56,6 +76,7 @@ All notable changes to the `prb` CLI will be documented in this file.
   `prb task update-asana-settings` updates the organization's settings
 - `prb task create --asana-project` publishes the new task to an Asana
   project, and `--no-asana-project` skips the default project
+
 
 ## [0.266.0] - 2026-11-12
 

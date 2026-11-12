@@ -31,7 +31,7 @@ import (
 )
 
 const viewQuery = `
-query CookieBannerView($id: ID!) {
+query CookieBannerView($id: ID!, $days: Int) {
   node(id: $id) {
     __typename
     ... on CookieBanner {
@@ -52,14 +52,9 @@ query CookieBannerView($id: ID!) {
       defaultLanguage
       publisherCountryCode
       tcfCmpId
-      latestSample {
-        id
-        createdAt
-        frozenAt
-        pageLoads {
-          family
-          count
-        }
+      pageLoads(days: $days) {
+        family
+        count
       }
       createdAt
       updatedAt
@@ -88,22 +83,20 @@ type viewResponse struct {
 		DefaultLanguage      string `json:"defaultLanguage"`
 		PublisherCountryCode string `json:"publisherCountryCode"`
 		TcfCmpId             int    `json:"tcfCmpId"`
-		LatestSample         *struct {
-			ID        string  `json:"id"`
-			CreatedAt string  `json:"createdAt"`
-			FrozenAt  *string `json:"frozenAt"`
-			PageLoads []struct {
-				Family string `json:"family"`
-				Count  int    `json:"count"`
-			} `json:"pageLoads"`
-		} `json:"latestSample"`
+		PageLoads            []struct {
+			Family string `json:"family"`
+			Count  int    `json:"count"`
+		} `json:"pageLoads"`
 		CreatedAt string `json:"createdAt"`
 		UpdatedAt string `json:"updatedAt"`
 	} `json:"node"`
 }
 
 func NewCmdView(f *cmdutil.Factory) *cobra.Command {
-	var flagOutput *string
+	var (
+		flagDays   int
+		flagOutput *string
+	)
 
 	cmd := &cobra.Command{
 		Use:   "view <id>",
@@ -132,7 +125,13 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
-			data, err := client.Do(viewQuery, map[string]any{"id": args[0]})
+			data, err := client.Do(
+				viewQuery,
+				map[string]any{
+					"id":   args[0],
+					"days": flagDays,
+				},
+			)
 			if err != nil {
 				return err
 			}
@@ -177,25 +176,13 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Privacy Policy:"), *v.PrivacyPolicyUrl)
 			}
 
-			if v.LatestSample == nil {
-				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Latest Sample:"), "none")
+			pageLoadsLabel := label.Render(fmt.Sprintf("Page Loads (%d days):", flagDays))
+			if len(v.PageLoads) == 0 {
+				_, _ = fmt.Fprintf(out, "%s%s\n", pageLoadsLabel, "none")
 			} else {
-				sample := v.LatestSample
-
-				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Latest Sample:"), sample.ID)
-				if sample.FrozenAt != nil {
-					_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Sample Frozen:"), cmdutil.FormatTime(*sample.FrozenAt))
-				} else {
-					_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Sample Frozen:"), "no")
-				}
-
-				if len(sample.PageLoads) == 0 {
-					_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Sample Loads:"), "none")
-				} else {
-					_, _ = fmt.Fprintf(out, "%s\n", label.Render("Sample Loads:"))
-					for _, load := range sample.PageLoads {
-						_, _ = fmt.Fprintf(out, "%s%s %d\n", label.Render(""), load.Family, load.Count)
-					}
+				_, _ = fmt.Fprintf(out, "%s\n", pageLoadsLabel)
+				for _, load := range v.PageLoads {
+					_, _ = fmt.Fprintf(out, "%s%s %d\n", label.Render(""), load.Family, load.Count)
 				}
 			}
 
@@ -207,6 +194,7 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
+	cmd.Flags().IntVar(&flagDays, "days", 7, "Number of UTC days of page loads, today included (at most 90)")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd

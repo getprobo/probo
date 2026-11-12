@@ -34,9 +34,6 @@ import * as listGVLCatalogOp from './listGVLCatalog.operation';
 import * as listGVLVendorsOp from './listGVLVendors.operation';
 import * as addGVLVendorOp from './addGVLVendor.operation';
 import * as removeGVLVendorOp from './removeGVLVendor.operation';
-import * as startSampleOp from './startSample.operation';
-import * as stopSampleOp from './stopSample.operation';
-import * as getSamplesOp from './getSamples.operation';
 import * as getScanOp from './getScan.operation';
 import * as getScansOp from './getScans.operation';
 import * as getScanResourcesOp from './getScanResources.operation';
@@ -104,12 +101,6 @@ export const description: INodeProperties[] = [
 				action: 'Get many cookie banners',
 			},
 			{
-				name: 'Get Samples',
-				value: 'getSamples',
-				description: 'Get sample windows for a cookie banner',
-				action: 'Get cookie banner samples',
-			},
-			{
 				name: 'Get Scan',
 				value: 'getScan',
 				description: 'Get a cookie banner scan',
@@ -170,18 +161,6 @@ export const description: INodeProperties[] = [
 				action: 'Request a cookie banner scan',
 			},
 			{
-				name: 'Start Sample',
-				value: 'startSample',
-				description: 'Start a new sample window for a cookie banner',
-				action: 'Start a cookie banner sample',
-			},
-			{
-				name: 'Stop Sample',
-				value: 'stopSample',
-				description: 'Freeze the open sample window for a cookie banner',
-				action: 'Stop a cookie banner sample',
-			},
-			{
 				name: 'Translate',
 				value: 'translate',
 				description: 'Upsert a cookie banner translation',
@@ -211,9 +190,6 @@ export const description: INodeProperties[] = [
 	...listGVLVendorsOp.description,
 	...addGVLVendorOp.description,
 	...removeGVLVendorOp.description,
-	...startSampleOp.description,
-	...stopSampleOp.description,
-	...getSamplesOp.description,
 	...getScanOp.description,
 	...getScansOp.description,
 	...getScanResourcesOp.description,
@@ -237,9 +213,6 @@ export {
 	listGVLVendorsOp as listGVLVendors,
 	addGVLVendorOp as addGVLVendor,
 	removeGVLVendorOp as removeGVLVendor,
-	startSampleOp as startSample,
-	stopSampleOp as stopSample,
-	getSamplesOp as getSamples,
 	getScanOp as getScan,
 	getScansOp as getScans,
 	getScanResourcesOp as getScanResources,
