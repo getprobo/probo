@@ -475,9 +475,72 @@ Rules:
 
 - Keep enums as string types only (no iota/int enums).
 - `UnmarshalText` must validate via `IsValid`; do not duplicate validation switches in `Scan`/`Value`.
-- Do not implement `database/sql` `Scan`/`Value` on singular enums in coredata; pgx uses `MarshalText` / `UnmarshalText`.
+- Do not implement `database/sql` `Scan`/`Value` on singular enums in coredata; pgx uses `MarshalText` / `UnmarshalText`. A slice of the enum passed as a Postgres array is the exception below.
 - Add compile-time interface checks in a `var` block for every enum (`fmt.Stringer`, `encoding.TextMarshaler`, `encoding.TextUnmarshaler`).
 - Keep a `Values()` helper named as the pluralized enum type when there is no naming conflict.
+
+## Enum arrays
+
+pgx does not know our PostgreSQL enum array types. A single enum value encodes through `MarshalText`. A slice of the named type does not: `[]XXXType` has no encode plan, and the query fails before it reaches Postgres.
+
+Pass a named slice type that implements `database/sql/driver.Valuer`. `Value` returns the Postgres array literal (`{"ALPHA","BETA"}`). Do not loop the values into `[]string` at the call site.
+
+Name the slice type the plural of the enum when that name is free (`DocumentVersionSignatureStates`). When a `XXXTypes()` helper already uses it, name the slice `XXXTypeValues` (`ProfileStateValues`, `CompliancePortalDocumentAccessStatusValues`).
+
+```go
+type (
+    XXXType  string
+    XXXTypes []XXXType
+)
+
+var (
+    _ driver.Valuer = XXXTypes(nil)
+)
+
+func (values XXXTypes) Value() (driver.Value, error) {
+    if len(values) == 0 {
+        return nil, nil
+    }
+
+    var result strings.Builder
+    result.WriteString("{")
+
+    for i, value := range values {
+        if i > 0 {
+            result.WriteString(",")
+        }
+
+        fmt.Fprintf(&result, "%q", value.String())
+    }
+
+    result.WriteString("}")
+
+    return result.String(), nil
+}
+```
+
+An empty slice encodes as SQL NULL, so a filter written as `WHEN @states::xxx_type[] IS NOT NULL` stays off when no values were supplied.
+
+The SQL still casts the parameter:
+
+```sql
+status = ANY(@statuses::xxx_type[])
+```
+
+```go
+// GOOD
+"statuses": XXXTypes{XXXTypeAlpha, XXXTypeBeta},
+
+// BAD — pgx cannot encode a slice of the named type
+"statuses": []XXXType{XXXTypeAlpha, XXXTypeBeta},
+
+// BAD — converts at the call site instead of implementing driver.Valuer
+encoded := make([]string, len(values))
+for i, value := range values {
+    encoded[i] = value.String()
+}
+"statuses": encoded,
+```
 
 Collection enum wrappers (`OAuth2Scopes`, `CountryCodes`, etc.) may keep custom parsing/encoding methods when wire format differs from a single enum token.
 
