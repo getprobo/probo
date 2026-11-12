@@ -27,24 +27,24 @@ import (
 
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
-
-const sectionTitleCursorPlaceholder = "@cursor_field_value"
 
 func TestControlOrderField_SectionTitle(t *testing.T) {
 	t.Parallel()
 
-	t.Run("section title sorts the cursor value like the column", func(t *testing.T) {
+	t.Run("section title sorts the raw cursor value with the column function", func(t *testing.T) {
 		t.Parallel()
 
-		field := coredata.ControlOrderFieldSectionTitle
+		id := gid.New(gid.NewTenantID(), coredata.ControlEntityType)
+		key := page.NewCursorKey(id, "A.10")
+		cursor := page.NewCursor(10, &key, page.Head, page.OrderBy[coredata.ControlOrderField]{
+			Field:     coredata.ControlOrderFieldSectionTitle,
+			Direction: page.OrderDirectionAsc,
+		})
 
-		assert.Equal(t, "section_title_sort_key(section_title)", field.Column())
-		assert.Equal(
-			t,
-			"section_title_sort_key("+sectionTitleCursorPlaceholder+")",
-			field.CursorValue(sectionTitleCursorPlaceholder),
-		)
+		assert.Contains(t, cursor.SQLFragment(), "section_title_sort_key(section_title) >= section_title_sort_key(@cursor_field_value)")
+		assert.Equal(t, "A.10", cursor.SQLArguments()["cursor_field_value"])
 	})
 
 	t.Run("the cursor key stores the raw section title", func(t *testing.T) {
@@ -61,27 +61,33 @@ func TestControlOrderField_SectionTitle(t *testing.T) {
 	t.Run("other fields bind the cursor value unchanged", func(t *testing.T) {
 		t.Parallel()
 
-		field := coredata.ControlOrderFieldCreatedAt
+		id := gid.New(gid.NewTenantID(), coredata.ControlEntityType)
+		key := page.NewCursorKey(id, "created")
+		cursor := page.NewCursor(10, &key, page.Head, page.OrderBy[coredata.ControlOrderField]{
+			Field:     coredata.ControlOrderFieldCreatedAt,
+			Direction: page.OrderDirectionAsc,
+		})
 
-		assert.Equal(t, "created_at", field.Column())
-		assert.Equal(t, sectionTitleCursorPlaceholder, field.CursorValue(sectionTitleCursorPlaceholder))
+		assert.Contains(t, cursor.SQLFragment(), "created_at >= @cursor_field_value")
+		assert.NotContains(t, cursor.SQLFragment(), "section_title_sort_key(@cursor_field_value)")
 	})
 }
 
 func TestApplicabilityStatementOrderField_ControlSectionTitle(t *testing.T) {
 	t.Parallel()
 
-	t.Run("section title sorts the cursor value like the column", func(t *testing.T) {
+	t.Run("section title sorts the raw cursor value with the column function", func(t *testing.T) {
 		t.Parallel()
 
-		field := coredata.ApplicabilityStatementOrderFieldControlSectionTitle
+		id := gid.New(gid.NewTenantID(), coredata.ApplicabilityStatementEntityType)
+		key := page.NewCursorKey(id, "A.5.12 foo")
+		cursor := page.NewCursor(10, &key, page.Head, page.OrderBy[coredata.ApplicabilityStatementOrderField]{
+			Field:     coredata.ApplicabilityStatementOrderFieldControlSectionTitle,
+			Direction: page.OrderDirectionAsc,
+		})
 
-		assert.Equal(t, "section_title_sort_key(section_title)", field.Column())
-		assert.Equal(
-			t,
-			"section_title_sort_key("+sectionTitleCursorPlaceholder+")",
-			field.CursorValue(sectionTitleCursorPlaceholder),
-		)
+		assert.Contains(t, cursor.SQLFragment(), "section_title_sort_key(section_title) >= section_title_sort_key(@cursor_field_value)")
+		assert.Equal(t, "A.5.12 foo", cursor.SQLArguments()["cursor_field_value"])
 	})
 
 	t.Run("the cursor key stores the raw section title", func(t *testing.T) {
@@ -102,9 +108,14 @@ func TestApplicabilityStatementOrderField_ControlSectionTitle(t *testing.T) {
 	t.Run("other fields bind the cursor value unchanged", func(t *testing.T) {
 		t.Parallel()
 
-		field := coredata.ApplicabilityStatementOrderFieldCreatedAt
+		id := gid.New(gid.NewTenantID(), coredata.ApplicabilityStatementEntityType)
+		key := page.NewCursorKey(id, "created")
+		cursor := page.NewCursor(10, &key, page.Head, page.OrderBy[coredata.ApplicabilityStatementOrderField]{
+			Field:     coredata.ApplicabilityStatementOrderFieldCreatedAt,
+			Direction: page.OrderDirectionAsc,
+		})
 
-		assert.Equal(t, "created_at", field.Column())
-		assert.Equal(t, sectionTitleCursorPlaceholder, field.CursorValue(sectionTitleCursorPlaceholder))
+		assert.Contains(t, cursor.SQLFragment(), "created_at >= @cursor_field_value")
+		assert.NotContains(t, cursor.SQLFragment(), "section_title_sort_key(@cursor_field_value)")
 	})
 }
