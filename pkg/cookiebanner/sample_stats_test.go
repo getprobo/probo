@@ -534,24 +534,24 @@ func TestReportDetectedTrackers_PageLoadGrant(t *testing.T) {
 			PageView:      true,
 			ConsentAction: &acceptAll,
 			Family:        coredata.BrowserFamilyChrome,
-			Presentation:  PresentationOptIn,
+			Presentation:  coredata.CookieBannerPresentationOptIn,
 		}))
 		require.NoError(t, svc.ReportDetectedTrackers(ctx, fx.banner.ID, ReportDetectedTrackersRequest{
 			PageView:     true,
 			Family:       coredata.BrowserFamilyFirefox,
-			Presentation: PresentationOptIn,
+			Presentation: coredata.CookieBannerPresentationOptIn,
 		}))
 		require.NoError(t, svc.ReportDetectedTrackers(ctx, fx.banner.ID, ReportDetectedTrackersRequest{
 			PageView:      true,
 			ConsentAction: &rejectAll,
 			Family:        coredata.BrowserFamilySafari,
-			Presentation:  PresentationOptIn,
+			Presentation:  coredata.CookieBannerPresentationOptIn,
 		}))
 		require.NoError(t, svc.ReportDetectedTrackers(ctx, fx.banner.ID, ReportDetectedTrackersRequest{
 			PageView:      true,
 			ConsentAction: &acknowledge,
 			Family:        coredata.BrowserFamilyEdge,
-			Presentation:  PresentationOptIn,
+			Presentation:  coredata.CookieBannerPresentationOptIn,
 		}))
 		requireFlushSampleCounts(t, ctx, svc)
 
@@ -577,25 +577,25 @@ func TestReportDetectedTrackers_PageLoadGrant(t *testing.T) {
 		require.NoError(t, svc.ReportDetectedTrackers(ctx, fx.banner.ID, ReportDetectedTrackersRequest{
 			PageView:     true,
 			Family:       coredata.BrowserFamilyChrome,
-			Presentation: PresentationOptOut,
+			Presentation: coredata.CookieBannerPresentationOptOut,
 		}))
 		require.NoError(t, svc.ReportDetectedTrackers(ctx, fx.banner.ID, ReportDetectedTrackersRequest{
 			PageView:      true,
 			ConsentAction: &acceptAll,
 			Family:        coredata.BrowserFamilyFirefox,
-			Presentation:  PresentationOptOut,
+			Presentation:  coredata.CookieBannerPresentationOptOut,
 		}))
 		require.NoError(t, svc.ReportDetectedTrackers(ctx, fx.banner.ID, ReportDetectedTrackersRequest{
 			PageView:      true,
 			ConsentAction: &rejectAll,
 			Family:        coredata.BrowserFamilySafari,
-			Presentation:  PresentationOptOut,
+			Presentation:  coredata.CookieBannerPresentationOptOut,
 		}))
 		require.NoError(t, svc.ReportDetectedTrackers(ctx, fx.banner.ID, ReportDetectedTrackersRequest{
 			PageView:      true,
 			ConsentAction: &gpc,
 			Family:        coredata.BrowserFamilyEdge,
-			Presentation:  PresentationOptOut,
+			Presentation:  coredata.CookieBannerPresentationOptOut,
 		}))
 		requireFlushSampleCounts(t, ctx, svc)
 
@@ -621,19 +621,19 @@ func TestReportDetectedTrackers_PageLoadGrant(t *testing.T) {
 		require.NoError(t, svc.ReportDetectedTrackers(ctx, fx.banner.ID, ReportDetectedTrackersRequest{
 			PageView:     true,
 			Family:       coredata.BrowserFamilyChrome,
-			Presentation: PresentationNotice,
+			Presentation: coredata.CookieBannerPresentationNotice,
 		}))
 		require.NoError(t, svc.ReportDetectedTrackers(ctx, fx.banner.ID, ReportDetectedTrackersRequest{
 			PageView:      true,
 			ConsentAction: &acknowledge,
 			Family:        coredata.BrowserFamilyFirefox,
-			Presentation:  PresentationNotice,
+			Presentation:  coredata.CookieBannerPresentationNotice,
 		}))
 		require.NoError(t, svc.ReportDetectedTrackers(ctx, fx.banner.ID, ReportDetectedTrackersRequest{
 			PageView:      true,
 			ConsentAction: &rejectAll,
 			Family:        coredata.BrowserFamilySafari,
-			Presentation:  PresentationNotice,
+			Presentation:  coredata.CookieBannerPresentationNotice,
 		}))
 		requireFlushSampleCounts(t, ctx, svc)
 
@@ -663,7 +663,7 @@ func TestReportDetectedTrackers_PageLoadGrant(t *testing.T) {
 		require.NoError(t, svc.ReportDetectedTrackers(ctx, fx.banner.ID, ReportDetectedTrackersRequest{
 			PageView:     true,
 			Family:       coredata.BrowserFamilyChrome,
-			Presentation: PresentationOptOut,
+			Presentation: coredata.CookieBannerPresentationOptOut,
 		}))
 		requireFlushSampleCounts(t, ctx, svc)
 
@@ -772,7 +772,7 @@ func loadsOf(
 	var counts loadCounts
 
 	for _, row := range rows {
-		allowed := pageLoadGranted(Presentation(row.Presentation), consentActionPtr(row.ConsentAction))
+		allowed := pageLoadGranted(coredata.CookieBannerPresentation(row.Presentation), consentActionPtr(row.ConsentAction))
 		switch row.BrowserFamily {
 		case coredata.BrowserFamilyChrome:
 			counts.ChromePageLoads += row.Count

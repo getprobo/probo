@@ -34,13 +34,13 @@ func TestPageLoadsByFamily_SumsBuckets(t *testing.T) {
 		{BrowserFamily: coredata.BrowserFamilyChrome, Presentation: "", Count: 4},
 		{
 			BrowserFamily: coredata.BrowserFamilyChrome,
-			Presentation:  string(PresentationOptIn),
+			Presentation:  string(coredata.CookieBannerPresentationOptIn),
 			ConsentAction: string(coredata.CookieConsentActionRejectAll),
 			Count:         1,
 		},
 		{
 			BrowserFamily: coredata.BrowserFamilyFirefox,
-			Presentation:  string(PresentationOptIn),
+			Presentation:  string(coredata.CookieBannerPresentationOptIn),
 			ConsentAction: string(coredata.CookieConsentActionAcceptAll),
 			Count:         2,
 		},

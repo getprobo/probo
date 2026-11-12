@@ -20,34 +20,7 @@
 
 package cookiebanner
 
-// Presentation is the UI presentation policy of the banner. It is a separate
-// concern from the consent mode: the consent mode (OPT_IN / OPT_OUT) is the
-// legal tracker-firing model, while the presentation decides how the banner
-// looks and behaves (which buttons, initial visibility, wording variant).
-//
-// A regulation maps to exactly one presentation; several regulations can share
-// the same presentation.
-type Presentation string
-
-const (
-	// PresentationOptIn blocks non-necessary trackers until the visitor gives
-	// explicit consent and offers accept / reject / customize choices.
-	PresentationOptIn Presentation = "OPT_IN"
-
-	// PresentationOptOut lets trackers fire immediately but must offer the
-	// visitor a way to opt out (e.g. CCPA "Do Not Sell or Share"). Nothing
-	// opens on first load: the settings link the integrator places in the
-	// footer is the only surface the visitor ever sees unaided.
-	PresentationOptOut Presentation = "OPT_OUT"
-
-	// PresentationNotice is a purely informational banner used where the law
-	// mandates a *visible* cookie notice without requiring consent: trackers
-	// fire immediately and the visitor only acknowledges the notice. It is the
-	// only non-opt-in presentation that opens on first load, so a regulation
-	// belongs here only when a statute demands the disclosure be displayed
-	// rather than merely published in a privacy policy.
-	PresentationNotice Presentation = "NOTICE"
-)
+import "go.probo.inc/probo/pkg/coredata"
 
 // SettingsLinkStyle selects how the reopen ("settings") link renders.
 type SettingsLinkStyle string
@@ -85,12 +58,12 @@ type LayoutButtons struct {
 // keys) the client previously relied on. The wording the client renders is
 // selected from Presentation; there is no separate text-variant axis.
 type Layout struct {
-	Presentation               Presentation      `json:"presentation"`
-	InitialState               string            `json:"initial_state"`
-	ReopenState                string            `json:"reopen_state"`
-	DefaultNonNecessaryGranted bool              `json:"default_non_necessary_granted"`
-	Buttons                    LayoutButtons     `json:"buttons"`
-	SettingsLink               SettingsLinkStyle `json:"settings_link"`
+	Presentation               coredata.CookieBannerPresentation `json:"presentation"`
+	InitialState               string                            `json:"initial_state"`
+	ReopenState                string                            `json:"reopen_state"`
+	DefaultNonNecessaryGranted bool                              `json:"default_non_necessary_granted"`
+	Buttons                    LayoutButtons                     `json:"buttons"`
+	SettingsLink               SettingsLinkStyle                 `json:"settings_link"`
 }
 
 // PresentationForRegulation maps a regulation to its banner presentation.
@@ -104,7 +77,7 @@ type Layout struct {
 // requires the cookie disclosure to be displayed in a visible location, which
 // a privacy-policy link alone does not satisfy. Everything else defaults to
 // the strict opt-in presentation.
-func PresentationForRegulation(r Regulation) Presentation {
+func PresentationForRegulation(r Regulation) coredata.CookieBannerPresentation {
 	switch r {
 	case RegulationCCPA,
 		RegulationVCDPA,
@@ -132,13 +105,13 @@ func PresentationForRegulation(r Regulation) Presentation {
 		RegulationPIPACA,
 		RegulationAPPI,
 		RegulationNone:
-		return PresentationOptOut
+		return coredata.CookieBannerPresentationOptOut
 
 	case RegulationLFPDPPP:
-		return PresentationNotice
+		return coredata.CookieBannerPresentationNotice
 
 	default:
-		return PresentationOptIn
+		return coredata.CookieBannerPresentationOptIn
 	}
 }
 
@@ -164,7 +137,7 @@ func LayoutForRegulation(r Regulation) Layout {
 func LayoutForBanner(r Regulation, forceOptIn bool) Layout {
 	presentation := PresentationForRegulation(r)
 	if forceOptIn {
-		presentation = PresentationOptIn
+		presentation = coredata.CookieBannerPresentationOptIn
 	}
 
 	layout := layoutForPresentation(presentation)
@@ -180,11 +153,11 @@ func LayoutForBanner(r Regulation, forceOptIn bool) Layout {
 	return layout
 }
 
-func layoutForPresentation(p Presentation) Layout {
+func layoutForPresentation(p coredata.CookieBannerPresentation) Layout {
 	switch p {
-	case PresentationOptOut:
+	case coredata.CookieBannerPresentationOptOut:
 		return Layout{
-			Presentation:               PresentationOptOut,
+			Presentation:               coredata.CookieBannerPresentationOptOut,
 			InitialState:               StateHidden,
 			ReopenState:                StateBanner,
 			DefaultNonNecessaryGranted: true,
@@ -197,9 +170,9 @@ func layoutForPresentation(p Presentation) Layout {
 			SettingsLink: SettingsLinkDefault,
 		}
 
-	case PresentationNotice:
+	case coredata.CookieBannerPresentationNotice:
 		return Layout{
-			Presentation:               PresentationNotice,
+			Presentation:               coredata.CookieBannerPresentationNotice,
 			InitialState:               StateBanner,
 			ReopenState:                StateBanner,
 			DefaultNonNecessaryGranted: true,
@@ -214,7 +187,7 @@ func layoutForPresentation(p Presentation) Layout {
 
 	default:
 		return Layout{
-			Presentation:               PresentationOptIn,
+			Presentation:               coredata.CookieBannerPresentationOptIn,
 			InitialState:               StateBanner,
 			ReopenState:                StatePanel,
 			DefaultNonNecessaryGranted: false,
