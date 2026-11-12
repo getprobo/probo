@@ -483,21 +483,21 @@ Rules:
 
 pgx does not know our PostgreSQL enum array types. A single enum value encodes through `MarshalText`. A slice of the named type does not: `[]XXXType` has no encode plan, and the query fails before it reaches Postgres.
 
-Pass a named slice type that implements `database/sql/driver.Valuer`. `Value` returns the Postgres array literal (`{"ALPHA","BETA"}`). Do not loop the values into `[]string` at the call site.
+Pass a named slice type that implements `database/sql/driver.Valuer`. `Value` returns the Postgres array literal. Do not loop the values into `[]string` at the call site. Enum labels are plain ASCII tokens, so `%q` produces the same literal PostgreSQL parses.
 
-Name the slice type the plural of the enum when that name is free (`DocumentVersionSignatureStates`). When a `XXXTypes()` helper already uses it, name the slice `XXXTypeValues` (`ProfileStateValues`, `CompliancePortalDocumentAccessStatusValues`).
+Name the slice type `XXXTypeValues` when an `XXXTypes()` helper already exists (`ProfileStateValues`, `CompliancePortalDocumentAccessStatusValues`). Use the plural of the enum when that name is free (`DocumentVersionSignatureStates`).
 
 ```go
 type (
-    XXXType  string
-    XXXTypes []XXXType
+    XXXType       string
+    XXXTypeValues []XXXType
 )
 
 var (
-    _ driver.Valuer = XXXTypes(nil)
+    _ driver.Valuer = XXXTypeValues(nil)
 )
 
-func (values XXXTypes) Value() (driver.Value, error) {
+func (values XXXTypeValues) Value() (driver.Value, error) {
     if len(values) == 0 {
         return nil, nil
     }
@@ -529,7 +529,7 @@ status = ANY(@statuses::xxx_type[])
 
 ```go
 // GOOD
-"statuses": XXXTypes{XXXTypeAlpha, XXXTypeBeta},
+"statuses": XXXTypeValues{XXXTypeAlpha, XXXTypeBeta},
 
 // BAD — pgx cannot encode a slice of the named type
 "statuses": []XXXType{XXXTypeAlpha, XXXTypeBeta},

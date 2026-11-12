@@ -8,14 +8,14 @@ alwaysApply: false
 
 pgx has no encode plan for a slice of a named string enum (`[]Status`) into an unregistered Postgres enum array. Passing that slice fails before the query runs.
 
-Implement `database/sql/driver.Valuer` on a named slice type. `Value` returns the Postgres array literal. Keep `Scan` and `Value` off the singular enum; a single value encodes through `MarshalText`.
+Implement `database/sql/driver.Valuer` on a named slice type. `Value` returns the Postgres array literal via `%q`. Enum labels are plain ASCII tokens, so that matches what PostgreSQL parses. Keep `Scan` and `Value` off the singular enum; a single value encodes through `MarshalText`.
 
 Do not loop the values into `[]string` at the call site.
 
-Name the slice the plural of the enum when that name is free. When a `Statuses()` helper already uses it, name the slice `StatusValues`.
+Name the slice `XXXTypeValues` when an `XXXTypes()` helper already exists. Use the plural of the enum when that name is free.
 
 ```go
-// GOOD — the slice type implements driver.Valuer
+// GOOD
 type StatusValues []Status
 
 var (
