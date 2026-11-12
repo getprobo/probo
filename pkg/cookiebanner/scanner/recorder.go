@@ -22,7 +22,6 @@ package scanner
 
 import (
 	"encoding/json"
-	"maps"
 	"net"
 	"net/http"
 	"net/url"
@@ -75,6 +74,7 @@ type (
 		idleSince   time.Time
 		mainFrame   string
 		docStatus   int
+		hold        bool
 	}
 
 	cookieBindingPayload struct {
@@ -82,14 +82,6 @@ type (
 		Initiator string `json:"initiator"`
 		Host      string `json:"host"`
 		Domain    string `json:"domain"`
-	}
-
-	observationMark struct {
-		seenCookie map[string]struct{}
-		seenRes    map[string]struct{}
-		seenStore  map[string]struct{}
-		total      int
-		truncated  bool
 	}
 )
 
@@ -128,6 +120,17 @@ func (r *recorder) handleSession(session string, ev any) {
 
 	r.session = session
 
+	if r.hold {
+		switch ev := ev.(type) {
+		case *network.EventResponseReceived:
+			r.recordStatus(ev)
+		case network.EventResponseReceived:
+			r.recordStatus(&ev)
+		}
+
+		return
+	}
+
 	switch ev := ev.(type) {
 	case *network.EventRequestWillBeSent:
 		r.recordRequest(ev)
@@ -156,34 +159,29 @@ func (r *recorder) handleSession(session string, ev any) {
 	}
 }
 
-func (r *recorder) markObservations() observationMark {
+func (r *recorder) holdObservations() {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	return observationMark{
-		seenCookie: maps.Clone(r.seenCookie),
-		seenRes:    maps.Clone(r.seenRes),
-		seenStore:  maps.Clone(r.seenStore),
-		total:      r.total,
-		truncated:  r.truncated,
-	}
-}
-
-func (r *recorder) restoreObservations(mark observationMark) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	r.seenCookie = mark.seenCookie
-	r.seenRes = mark.seenRes
-	r.seenStore = mark.seenStore
-	r.total = mark.total
-	r.truncated = mark.truncated
+	r.hold = true
 }
 
 func (r *recorder) beginPage() {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
+	r.hold = false
+	r.clearPage()
+}
+
+func (r *recorder) discardPage() {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	r.clearPage()
+}
+
+func (r *recorder) clearPage() {
 	r.requests = map[string]requestMeta{}
 	r.inflight = map[string]struct{}{}
 	r.earlyFinish = map[string]struct{}{}

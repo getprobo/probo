@@ -19,11 +19,15 @@
 // SOFTWARE.
 
 (() => {
-  var el = document.querySelector(
+  var nodes = document.querySelectorAll(
     "probo-cookie-banner[banner-id], probo-cookie-banner-root[banner-id], script[data-banner-id]"
   );
-  if (!el) {
-    return "";
+  for (var i = 0; i < nodes.length; i++) {
+    var el = nodes[i];
+    var id = (el.getAttribute("banner-id") || el.getAttribute("data-banner-id") || "").trim();
+    if (id) {
+      return id;
+    }
   }
-  return el.getAttribute("banner-id") || el.getAttribute("data-banner-id") || "";
+  return "";
 })();

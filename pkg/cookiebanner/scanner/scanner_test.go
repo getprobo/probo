@@ -958,6 +958,55 @@ func TestNavigationBudget_GraceVisitUsesTheFullTimeout(t *testing.T) {
 	assert.Equal(t, 30*time.Second, s.navigationBudget(true))
 }
 
+func TestRenderedReadTimeout_StopsAtTheSoonerDeadline(t *testing.T) {
+	t.Parallel()
+
+	runCtx, cancel := context.WithDeadline(context.Background(), time.Now().Add(2*time.Second))
+	defer cancel()
+
+	s := &scan{runCtx: runCtx}
+
+	capped := s.renderedReadTimeout(time.Now().Add(time.Hour))
+	assert.Less(t, capped, 3*time.Second)
+	assert.Greater(t, capped, time.Second)
+	assert.Less(t, s.renderedReadTimeout(time.Now().Add(20*time.Millisecond)), 100*time.Millisecond)
+	assert.Equal(t, time.Duration(0), s.renderedReadTimeout(time.Now().Add(-time.Second)))
+}
+
+func TestRecorder_HoldDropsEventsUntilTheNextPage(t *testing.T) {
+	t.Parallel()
+
+	site, err := mustOrigin("https://example.com")
+	require.NoError(t, err)
+
+	rec := newRecorder(site, origin{}, "banner", "binding", 10)
+	rec.setMainFrame("main")
+	rec.beginPage()
+	rec.holdObservations()
+
+	rec.handleEvent(scriptRequest("1"))
+	rec.handleEvent(network.EventResponseReceived{
+		Type:     network.ResourceTypeDocument,
+		FrameID:  "main",
+		Response: &network.Response{Status: http.StatusForbidden},
+	})
+
+	assert.Equal(t, http.StatusForbidden, rec.mainStatus())
+	assert.Empty(t, rec.endPage(nil, nil).Resources)
+	assert.Equal(t, 0, rec.total)
+
+	rec.discardPage()
+	rec.handleEvent(scriptRequest("2"))
+	assert.Empty(t, rec.endPage(nil, nil).Resources)
+
+	rec.beginPage()
+	rec.handleEvent(scriptRequest("3"))
+
+	page := rec.endPage(nil, nil)
+	require.Len(t, page.Resources, 1)
+	assert.Equal(t, "/a.js", page.Resources[0].Path)
+}
+
 func TestFrontier_PopsUncoveredEmbedHostFirst(t *testing.T) {
 	t.Parallel()
 
@@ -1058,6 +1107,15 @@ func TestSectionOf_SkipsLocale(t *testing.T) {
 	assert.Equal(t, "en/blog", sectionOf("https://example.com/en/blog/post"))
 	assert.Equal(t, "fr-fr/pricing", sectionOf("https://example.com/fr-fr/pricing"))
 	assert.Equal(t, "en", sectionOf("https://example.com/en"))
+}
+
+func scriptRequest(id network.RequestID) network.EventRequestWillBeSent {
+	return network.EventRequestWillBeSent{
+		RequestID: id,
+		Request:   &network.Request{URL: "https://cdn.example.net/a.js"},
+		Type:      network.ResourceTypeScript,
+		FrameID:   "main",
+	}
 }
 
 func testRecorder(t *testing.T) *recorder {

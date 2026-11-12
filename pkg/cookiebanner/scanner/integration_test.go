@@ -209,6 +209,7 @@ func TestRun_AcceptsBannerMountedByScript(t *testing.T) {
 		w.Header().Set("Content-Type", "text/html")
 		_, _ = w.Write([]byte(`<!doctype html>
 <p>home</p>
+<script data-banner-id=""></script>
 <script>
 var el = document.createElement("probo-cookie-banner");
 el.setAttribute("banner-id", "banner");

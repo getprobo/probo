@@ -346,12 +346,12 @@ func (s *scan) loop() (stopCause, error) {
 func (s *scan) confirmRenderedBanner() (bool, error) {
 	deadline := time.Now().Add(s.in.Limits.NavigationTimeout + s.in.Limits.HomepageDwell)
 
-	// The crawl visits this page again. Drop observations from this load
-	// so they are not treated as already recorded.
-	mark := s.rec.markObservations()
-	defer s.rec.beginPage()
-	defer s.rec.restoreObservations(mark)
+	// Events from this load can arrive after the check returns. Hold them
+	// until visit opens the page.
 	s.rec.beginPage()
+
+	s.rec.holdObservations()
+	defer s.rec.discardPage()
 
 	if s.cancelled() != nil || s.runExpired() {
 		return false, nil
@@ -393,7 +393,11 @@ func (s *scan) confirmRenderedBanner() (bool, error) {
 			return false, nil
 		}
 
-		id, readErr = s.renderedBannerID()
+		if !time.Now().Before(deadline) {
+			break
+		}
+
+		id, readErr = s.renderedBannerID(deadline)
 		if readErr == nil {
 			sawRead = true
 
@@ -404,10 +408,6 @@ func (s *scan) confirmRenderedBanner() (bool, error) {
 
 				return true, nil
 			}
-		}
-
-		if !time.Now().Before(deadline) {
-			break
 		}
 
 		select {
@@ -428,15 +428,33 @@ func (s *scan) confirmRenderedBanner() (bool, error) {
 	}
 
 	if !sawRead {
-		return false, fmt.Errorf("cannot read banner: %w", readErr)
+		if readErr != nil {
+			s.warn(s.scanCtx, "cannot read banner", readErr)
+		}
+
+		return false, nil
 	}
 
 	return false, fmt.Errorf("%w: homepage has no probo banner", ErrBannerNotInstalled)
 }
 
-func (s *scan) renderedBannerID() (string, error) {
-	ctx, cancel := context.WithTimeout(s.tabCtx, readTimeout)
+func (s *scan) renderedBannerID(deadline time.Time) (string, error) {
+	timeout := s.renderedReadTimeout(deadline)
+	if timeout <= 0 {
+		return "", context.DeadlineExceeded
+	}
+
+	// Stay under the tab context so chromedp can find the target, and
+	// cancel when the run deadline passes.
+	ctx, cancel := context.WithCancel(s.tabCtx)
 	defer cancel()
+
+	if s.runCtx != nil {
+		defer context.AfterFunc(s.runCtx, cancel)()
+	}
+
+	ctx, cancelTimeout := context.WithTimeout(ctx, timeout)
+	defer cancelTimeout()
 
 	id, err := chromedp.Run(ctx, chromedp.Evaluate[string](bannerIDJS))
 	if err != nil {
@@ -444,6 +462,28 @@ func (s *scan) renderedBannerID() (string, error) {
 	}
 
 	return strings.TrimSpace(id), nil
+}
+
+func (s *scan) renderedReadTimeout(deadline time.Time) time.Duration {
+	timeout := readTimeout
+
+	if remain := time.Until(deadline); remain < timeout {
+		timeout = remain
+	}
+
+	if s.runCtx != nil {
+		if until, ok := s.runCtx.Deadline(); ok {
+			if remain := time.Until(until); remain < timeout {
+				timeout = remain
+			}
+		}
+	}
+
+	if timeout < 0 {
+		return 0
+	}
+
+	return timeout
 }
 
 func (s *scan) blockedDocument() error {
