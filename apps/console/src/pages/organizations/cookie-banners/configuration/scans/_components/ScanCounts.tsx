@@ -30,6 +30,7 @@ import type { ScanCounts_scan$key } from "#/__generated__/core/ScanCounts_scan.g
 
 import { cookieBannerList } from "../../../variants";
 import { scanPageRows, scanPageTotals } from "../_lib/scanPages";
+import { isActiveScanState } from "../_lib/scanStates";
 
 import { ScanCookies, ScanStorage } from "./ScanDetectedTrackers";
 import { ScanPages } from "./ScanPages";
@@ -37,6 +38,8 @@ import { ScanResources } from "./ScanResources";
 
 const scanCountsFragment = graphql`
   fragment ScanCounts_scan on CookieBannerScan {
+    state
+    pagesScanned
     checkpoint {
       pagesScanned
       visitedTemplates
@@ -44,16 +47,16 @@ const scanCountsFragment = graphql`
         url
       }
     }
-    cookiesInfo: detectedTrackers(first: 0, filter: { trackerTypes: [COOKIE] }) {
+    cookiesInfo: detectedTrackers(first: 1, filter: { trackerTypes: [COOKIE] }) {
       totalCount
     }
     storageInfo: detectedTrackers(
-      first: 0
+      first: 1
       filter: { trackerTypes: [LOCAL_STORAGE, SESSION_STORAGE] }
     ) {
       totalCount
     }
-    resourcesInfo: trackerResources(first: 0) {
+    resourcesInfo: trackerResources(first: 1) {
       totalCount
     }
     ...ScanPages_scan
@@ -85,7 +88,10 @@ export function ScanCounts({ scanKey }: ScanCountsProps) {
     scan.checkpoint?.visitedTemplates ?? [],
     (scan.checkpoint?.queue ?? []).map(item => ({ url: item.url })),
   );
-  const pageTotals = scanPageTotals(pageRows, scan.checkpoint?.pagesScanned ?? 0);
+  const pagesScanned = isActiveScanState(scan.state)
+    ? scan.checkpoint?.pagesScanned ?? 0
+    : scan.pagesScanned;
+  const pageTotals = scanPageTotals(pageRows, pagesScanned);
 
   return (
     <div className="flex flex-col gap-4">

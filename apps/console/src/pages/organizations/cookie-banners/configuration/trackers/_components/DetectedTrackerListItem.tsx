@@ -158,7 +158,7 @@ export function DetectedTrackerListItem({ detectedTrackerKey }: DetectedTrackerL
         {tracker.initiatorUrl == null
           ? <Text size={2} color="faint">-</Text>
           : (
-              <Text size={2} className={initiator()}>
+              <Text size={2} className={initiator()} title={tracker.initiatorUrl}>
                 {tracker.initiatorUrl}
               </Text>
             )}
