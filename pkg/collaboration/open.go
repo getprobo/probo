@@ -33,14 +33,31 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
+// Open returns the live collaboration document. A seeded document is read
+// without the row lock: only the first open, which seeds the CRDT, has to
+// serialize with other writers.
 func (s *Service) Open(
 	ctx context.Context,
 	scope coredata.Scoper,
 	documentID gid.GID,
 ) (*DocumentCollaboration, error) {
-	var opened *DocumentCollaboration
+	opened, err := s.openIfSeeded(ctx, scope, documentID)
+	if err == nil {
+		return opened, nil
+	}
 
-	err := s.pg.WithTx(
+	if !errors.Is(err, ErrDocumentCollaborationNotSeeded) {
+		return nil, err
+	}
+
+	// The CRDT work for a document another opener seeded in the meantime
+	// happens after the transaction, so the row lock only covers SQL.
+	var (
+		seeded  *coredata.CollaborationDocument
+		changes []automerge.Change
+	)
+
+	err = s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			doc, err := lockCollaborationDocument(ctx, tx, scope, documentID)
@@ -75,7 +92,7 @@ func (s *Service) Open(
 				return nil
 			}
 
-			changes, err := s.collectChanges(
+			loaded, err := s.collectChanges(
 				ctx,
 				tx,
 				scope,
@@ -87,23 +104,8 @@ func (s *Service) Open(
 				return err
 			}
 
-			automergeDocument, err := loadAutomergeDocument(ctx, doc.Snapshot)
-			if err != nil {
-				return fmt.Errorf("cannot open collaboration snapshot: %w", err)
-			}
-
-			if len(changes) > 0 {
-				if err := automergeDocument.ApplyChanges(changes); err != nil {
-					_ = automergeDocument.Close()
-
-					return fmt.Errorf("cannot apply collaboration changes: %w", err)
-				}
-			}
-
-			opened = &DocumentCollaboration{
-				Document: automergeDocument,
-				Revision: doc.Revision,
-			}
+			seeded = doc
+			changes = loaded
 
 			return nil
 		},
@@ -116,7 +118,27 @@ func (s *Service) Open(
 		return nil, err
 	}
 
-	return opened, nil
+	if opened != nil {
+		return opened, nil
+	}
+
+	automergeDocument, err := loadAutomergeDocument(ctx, seeded.Snapshot)
+	if err != nil {
+		return nil, fmt.Errorf("cannot open collaboration snapshot: %w", err)
+	}
+
+	if len(changes) > 0 {
+		if err := automergeDocument.ApplyChanges(changes); err != nil {
+			_ = automergeDocument.Close()
+
+			return nil, fmt.Errorf("cannot apply collaboration changes: %w", err)
+		}
+	}
+
+	return &DocumentCollaboration{
+		Document: automergeDocument,
+		Revision: seeded.Revision,
+	}, nil
 }
 
 // openIfSeeded loads a collaboration document that is already seeded. It does
