@@ -37,11 +37,11 @@ const (
 )
 
 var (
-	_ page.OrderField            = ControlOrderField("")
-	_ page.DirectionalOrderField = ControlOrderField("")
-	_ fmt.Stringer               = ControlOrderField("")
-	_ encoding.TextMarshaler     = ControlOrderField("")
-	_ encoding.TextUnmarshaler   = (*ControlOrderField)(nil)
+	_ page.OrderField          = ControlOrderField("")
+	_ page.CursorValuer        = ControlOrderField("")
+	_ fmt.Stringer             = ControlOrderField("")
+	_ encoding.TextMarshaler   = ControlOrderField("")
+	_ encoding.TextUnmarshaler = (*ControlOrderField)(nil)
 )
 
 func ControlOrderFields() []ControlOrderField {
@@ -78,17 +78,8 @@ func (p ControlOrderField) Column() string {
 	}
 }
 
-// DirectionalColumn ignores the direction: section titles sort by the same
-// natural-sort key both ways.
-func (p ControlOrderField) DirectionalColumn(direction page.OrderDirection) string {
-	return p.Column()
-}
-
-// DirectionalCursorValue maps the bound cursor value into the same space as
-// Column. Cursor keys hold the raw section title, so comparing the sort key
-// against an unmapped cursor value silently drops rows from every page but
-// the first.
-func (p ControlOrderField) DirectionalCursorValue(direction page.OrderDirection, placeholder string) string {
+// Cursor keys store the raw section title, not its sort key.
+func (p ControlOrderField) CursorValue(placeholder string) string {
 	if p == ControlOrderFieldSectionTitle {
 		return "section_title_sort_key(" + placeholder + ")"
 	}

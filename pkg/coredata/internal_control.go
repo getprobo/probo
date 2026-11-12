@@ -72,31 +72,31 @@ func (m InternalControl) CursorKey(orderBy InternalControlOrderField) page.Curso
 	case InternalControlOrderFieldName:
 		return page.NewCursorKey(m.ID, m.Name)
 	case InternalControlOrderFieldNextDue:
-		return page.NewCursorKey(m.ID, internalControlNextDueValue(m.NextEvidenceDue, m.NextTestDue))
+		due := internalControlNextDueValue(m.NextEvidenceDue, m.NextTestDue)
+		if due == nil {
+			return page.NewCursorKey(m.ID, nil)
+		}
+
+		return page.NewCursorKey(m.ID, *due)
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func internalControlNextDueValue(evidenceDue *time.Time, testDue *time.Time) time.Time {
+func internalControlNextDueValue(evidenceDue *time.Time, testDue *time.Time) *time.Time {
 	switch {
 	case evidenceDue != nil && testDue != nil:
 		if evidenceDue.Before(*testDue) {
-			return *evidenceDue
+			return evidenceDue
 		}
 
-		return *testDue
+		return testDue
 	case evidenceDue != nil:
-		return *evidenceDue
+		return evidenceDue
 	case testDue != nil:
-		return *testDue
+		return testDue
 	default:
-		empty, err := time.Parse(time.RFC3339, "9999-12-31T23:59:59Z")
-		if err != nil {
-			panic(err)
-		}
-
-		return empty
+		return nil
 	}
 }
 
