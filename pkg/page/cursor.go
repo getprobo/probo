@@ -67,13 +67,12 @@ func NewCursor[T OrderField](size int, from *CursorKey, pos Position, orderBy Or
 
 func (c *Cursor[T]) SQLFragment() string {
 	field := c.OrderBy.Field.Column()
-	value := cursorValue(c.OrderBy.Field)
 	direction := c.sqlDirection()
 	nulls := c.sqlNulls()
 
 	where := "TRUE"
 	if c.Key != nil {
-		where = cursorWhere(field, value, direction, nulls, c.Key.Value == nil)
+		where = cursorWhere(field, direction, nulls, c.Key.Value == nil)
 	}
 
 	orderBy := field + " " + direction + nullsSQL(nulls) + ", id " + direction
@@ -103,14 +102,6 @@ func (c *Cursor[T]) SQLArguments() pgx.NamedArgs {
 	}
 
 	return arguments
-}
-
-func cursorValue[T OrderField](field T) string {
-	if mapped, ok := any(field).(CursorValuer); ok {
-		return mapped.CursorValue("@cursor_field_value")
-	}
-
-	return "@cursor_field_value"
 }
 
 func (c *Cursor[T]) sqlDirection() string {
@@ -162,13 +153,7 @@ func nullsSQL(nulls Nulls) string {
 	}
 }
 
-func cursorWhere(
-	field string,
-	value string,
-	direction string,
-	nulls Nulls,
-	valueNull bool,
-) string {
+func cursorWhere(field string, direction string, nulls Nulls, valueNull bool) string {
 	cmp := ">="
 	idExclude := "id < @cursor_id"
 	if direction == "DESC" {
@@ -176,7 +161,7 @@ func cursorWhere(
 		idExclude = "id > @cursor_id"
 	}
 
-	matched := "(" + field + " " + cmp + " " + value + ") AND NOT (" + field + " = " + value + " AND " + idExclude + ")"
+	matched := "(" + field + " " + cmp + " @cursor_field_value) AND NOT (" + field + " = @cursor_field_value AND " + idExclude + ")"
 
 	switch nulls {
 	case NullsLast:

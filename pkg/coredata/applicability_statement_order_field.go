@@ -36,7 +36,6 @@ const (
 
 var (
 	_ page.OrderField          = ApplicabilityStatementOrderField("")
-	_ page.CursorValuer        = ApplicabilityStatementOrderField("")
 	_ fmt.Stringer             = ApplicabilityStatementOrderField("")
 	_ encoding.TextMarshaler   = ApplicabilityStatementOrderField("")
 	_ encoding.TextUnmarshaler = (*ApplicabilityStatementOrderField)(nil)
@@ -74,13 +73,4 @@ func (p ApplicabilityStatementOrderField) Column() string {
 	}
 
 	panic("unknown ApplicabilityStatementOrderField")
-}
-
-// Cursor keys store the raw section title, not its sort key.
-func (p ApplicabilityStatementOrderField) CursorValue(placeholder string) string {
-	if p == ApplicabilityStatementOrderFieldControlSectionTitle {
-		return "section_title_sort_key(" + placeholder + ")"
-	}
-
-	return placeholder
 }
