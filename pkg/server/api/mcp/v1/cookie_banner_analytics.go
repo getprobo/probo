@@ -21,26 +21,13 @@
 package mcp_v1
 
 import (
-	"context"
-	"fmt"
-
-	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/server/api/mcp/v1/types"
+	"go.probo.inc/probo/pkg/cookiebanner"
 )
 
-func (r *Resolver) cookieBannerSampleWithLoads(
-	ctx context.Context,
-	scope coredata.Scoper,
-	sample *coredata.CookieBannerSample,
-) (*types.CookieBannerSample, error) {
-	loadsBySample, err := r.cookieBanner.GetSamplePageLoadsByIDs(ctx, scope, []gid.GID{sample.ID})
-	if err != nil {
-		return nil, fmt.Errorf("cannot get cookie banner sample page loads: %w", err)
+func analyticsDays(days *int) int {
+	if days == nil {
+		return cookiebanner.DefaultAnalyticsDays
 	}
 
-	out := types.NewCookieBannerSample(sample)
-	out.SetPageLoads(loadsBySample[sample.ID])
-
-	return out, nil
+	return *days
 }

@@ -4,6 +4,28 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+### Added
+
+- Cookie Banner `Get` and Tracker Pattern `Get` take a `Days` field:
+  how many UTC days to count, today included. The default is 7 and
+  the maximum is 90
+- Tracker Pattern `Get` returns `allowedHits` and `deniedHits`
+
+### Changed
+
+- **Breaking**: Cookie Banner `Get` returns `pageLoads` instead of
+  `latestSample`. Saved workflows that read `latestSample` must read
+  `pageLoads`
+- **Breaking**: Tracker Pattern `Get` returns `hits` instead of
+  `sampleHits`. Saved workflows that read `sampleHits` must read
+  `hits`
+
+### Removed
+
+- **Breaking**: Cookie Banner `Start Sample`, `Stop Sample`, and
+  `Get Samples`. Page views are always counted, by UTC day. Saved
+  workflows that use these operations must remove them
+
 ## [0.267.0] - 2026-11-11
 
 ### Added

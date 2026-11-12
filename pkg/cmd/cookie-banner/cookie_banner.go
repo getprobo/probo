@@ -33,7 +33,6 @@ import (
 	"go.probo.inc/probo/pkg/cmd/cookie-banner/list"
 	listgvlcatalog "go.probo.inc/probo/pkg/cmd/cookie-banner/list-gvl-catalog"
 	listgvlvendors "go.probo.inc/probo/pkg/cmd/cookie-banner/list-gvl-vendors"
-	listsamples "go.probo.inc/probo/pkg/cmd/cookie-banner/list-samples"
 	listscanresources "go.probo.inc/probo/pkg/cmd/cookie-banner/list-scan-resources"
 	listscantrackers "go.probo.inc/probo/pkg/cmd/cookie-banner/list-scan-trackers"
 	listscans "go.probo.inc/probo/pkg/cmd/cookie-banner/list-scans"
@@ -42,8 +41,6 @@ import (
 	regeneratepolicy "go.probo.inc/probo/pkg/cmd/cookie-banner/regenerate-policy"
 	removegvlvendor "go.probo.inc/probo/pkg/cmd/cookie-banner/remove-gvl-vendor"
 	requestscan "go.probo.inc/probo/pkg/cmd/cookie-banner/request-scan"
-	startsample "go.probo.inc/probo/pkg/cmd/cookie-banner/start-sample"
-	stopsample "go.probo.inc/probo/pkg/cmd/cookie-banner/stop-sample"
 	"go.probo.inc/probo/pkg/cmd/cookie-banner/translate"
 	"go.probo.inc/probo/pkg/cmd/cookie-banner/update"
 	"go.probo.inc/probo/pkg/cmd/cookie-banner/view"
@@ -64,9 +61,6 @@ func NewCmdCookieBanner(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(activate.NewCmdActivate(f))
 	cmd.AddCommand(deactivate.NewCmdDeactivate(f))
 	cmd.AddCommand(publish.NewCmdPublish(f))
-	cmd.AddCommand(startsample.NewCmdStartSample(f))
-	cmd.AddCommand(stopsample.NewCmdStopSample(f))
-	cmd.AddCommand(listsamples.NewCmdListSamples(f))
 	cmd.AddCommand(listscans.NewCmdListScans(f))
 	cmd.AddCommand(listscantrackers.NewCmdListScanTrackers(f))
 	cmd.AddCommand(listscanresources.NewCmdListScanResources(f))

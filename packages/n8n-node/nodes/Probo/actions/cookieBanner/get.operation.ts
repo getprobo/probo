@@ -33,6 +33,23 @@ export const description: INodeProperties[] = [
 		resource: ['cookieBanner'],
 		operation: ['get'],
 	}),
+	{
+		displayName: 'Days',
+		name: 'days',
+		type: 'number',
+		displayOptions: {
+			show: {
+				resource: ['cookieBanner'],
+				operation: ['get'],
+			},
+		},
+		typeOptions: {
+			minValue: 1,
+			maxValue: 90,
+		},
+		default: 7,
+		description: 'Number of UTC days of page loads to return, today included',
+	},
 ];
 
 export async function execute(
@@ -40,9 +57,10 @@ export async function execute(
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
 	const cookieBannerId = this.getNodeParameter('cookieBannerId', itemIndex, '', { extractValue: true }) as string;
+	const days = this.getNodeParameter('days', itemIndex, 7) as number;
 
 	const query = `
-		query GetCookieBanner($cookieBannerId: ID!) {
+		query GetCookieBanner($cookieBannerId: ID!, $days: Int) {
 			node(id: $cookieBannerId) {
 				... on CookieBanner {
 					id
@@ -58,12 +76,7 @@ export async function execute(
 					defaultLanguage
 					publisherCountryCode
 					tcfCmpId
-					latestSample {
-						id
-						createdAt
-						frozenAt
-						pageLoads { family count }
-					}
+					pageLoads(days: $days) { family count }
 					createdAt
 					updatedAt
 					publishedVersion {
@@ -78,7 +91,7 @@ export async function execute(
 		}
 	`;
 
-	const responseData = await proboApiRequest.call(this, query, { cookieBannerId });
+	const responseData = await proboApiRequest.call(this, query, { cookieBannerId, days });
 
 	return {
 		json: responseData,

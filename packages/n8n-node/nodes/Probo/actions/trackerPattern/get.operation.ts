@@ -36,6 +36,23 @@ export const description: INodeProperties[] = [
 		description: 'The ID of the tracker pattern',
 		required: true,
 	},
+	{
+		displayName: 'Days',
+		name: 'days',
+		type: 'number',
+		displayOptions: {
+			show: {
+				resource: ['trackerPattern'],
+				operation: ['get'],
+			},
+		},
+		typeOptions: {
+			minValue: 1,
+			maxValue: 90,
+		},
+		default: 7,
+		description: 'Number of UTC days of hits to return, today included',
+	},
 ];
 
 export async function execute(
@@ -43,9 +60,10 @@ export async function execute(
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
 	const trackerPatternId = this.getNodeParameter('trackerPatternId', itemIndex) as string;
+	const days = this.getNodeParameter('days', itemIndex, 7) as number;
 
 	const query = `
-		query GetTrackerPattern($trackerPatternId: ID!) {
+		query GetTrackerPattern($trackerPatternId: ID!, $days: Int) {
 			node(id: $trackerPatternId) {
 				... on TrackerPattern {
 					id
@@ -57,7 +75,9 @@ export async function execute(
 					excluded
 					commonTrackerPatternId
 					attribution
-					sampleHits { family count }
+					hits(days: $days) { family count }
+					allowedHits(days: $days) { family count }
+					deniedHits(days: $days) { family count }
 					createdAt
 					updatedAt
 				}
@@ -65,7 +85,7 @@ export async function execute(
 		}
 	`;
 
-	const responseData = await proboApiRequest.call(this, query, { trackerPatternId });
+	const responseData = await proboApiRequest.call(this, query, { trackerPatternId, days });
 
 	return {
 		json: responseData,
