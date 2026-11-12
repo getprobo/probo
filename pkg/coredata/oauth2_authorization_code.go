@@ -213,6 +213,31 @@ WHERE
 	return nil
 }
 
+func (c *OAuth2AuthorizationCode) DeleteByIdentityID(
+	ctx context.Context,
+	conn pg.Tx,
+	identityID gid.GID,
+) (int64, error) {
+	q := `
+DELETE FROM iam_oauth2_authorization_codes
+WHERE
+	identity_id = @identity_id
+`
+
+	result, err := conn.Exec(
+		ctx,
+		q,
+		pgx.StrictNamedArgs{
+			"identity_id": identityID,
+		},
+	)
+	if err != nil {
+		return 0, fmt.Errorf("cannot delete oauth2_authorization_codes by identity: %w", err)
+	}
+
+	return result.RowsAffected(), nil
+}
+
 func (c *OAuth2AuthorizationCode) DeleteExpired(ctx context.Context, conn pg.Tx, now time.Time) (int64, error) {
 	q := `
 DELETE FROM iam_oauth2_authorization_codes

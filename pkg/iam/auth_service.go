@@ -492,8 +492,9 @@ func (s AuthService) ResetPassword(
 				return fmt.Errorf("cannot load identity: %w", err)
 			}
 
+			now := time.Now()
 			identity.HashedPassword = hashedPassword
-			identity.UpdatedAt = time.Now()
+			identity.UpdatedAt = now
 
 			err = identity.Update(ctx, tx)
 			if err != nil {
@@ -507,6 +508,27 @@ func (s AuthService) ResetPassword(
 			sessions := coredata.Sessions{}
 			if _, err := sessions.ExpireAllForIdentity(ctx, tx, identity.ID); err != nil {
 				return fmt.Errorf("cannot expire sessions: %w", err)
+			}
+
+			// Account recovery revokes every bearer credential for this identity.
+			refreshToken := coredata.OAuth2RefreshToken{}
+			if _, err := refreshToken.RevokeByIdentityID(ctx, tx, identity.ID, now); err != nil {
+				return fmt.Errorf("cannot revoke oauth2 refresh tokens: %w", err)
+			}
+
+			accessToken := coredata.OAuth2AccessToken{}
+			if _, err := accessToken.DeleteByIdentityID(ctx, tx, identity.ID); err != nil {
+				return fmt.Errorf("cannot delete oauth2 access tokens: %w", err)
+			}
+
+			authorizationCode := coredata.OAuth2AuthorizationCode{}
+			if _, err := authorizationCode.DeleteByIdentityID(ctx, tx, identity.ID); err != nil {
+				return fmt.Errorf("cannot delete oauth2 authorization codes: %w", err)
+			}
+
+			deviceCode := coredata.OAuth2DeviceCode{}
+			if _, err := deviceCode.DeleteByIdentityID(ctx, tx, identity.ID); err != nil {
+				return fmt.Errorf("cannot delete oauth2 device codes: %w", err)
 			}
 
 			return nil

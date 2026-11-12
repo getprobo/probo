@@ -249,25 +249,33 @@ func (t *OAuth2RefreshToken) Revoke(
 	ctx context.Context,
 	conn pg.Tx,
 	now time.Time,
-) error {
+) (int64, error) {
 	q := `
 UPDATE iam_oauth2_refresh_tokens
 SET
 	revoked_at = @revoked_at
 WHERE
 	id = @id
+	AND revoked_at IS NULL
 `
 
-	args := pgx.StrictNamedArgs{
-		"id":         t.ID,
-		"revoked_at": now,
+	result, err := conn.Exec(
+		ctx,
+		q,
+		pgx.StrictNamedArgs{
+			"id":         t.ID,
+			"revoked_at": now,
+		},
+	)
+	if err != nil {
+		return 0, fmt.Errorf("cannot revoke oauth2_refresh_token: %w", err)
 	}
 
-	if _, err := conn.Exec(ctx, q, args); err != nil {
-		return fmt.Errorf("cannot revoke oauth2_refresh_token: %w", err)
+	if result.RowsAffected() > 0 {
+		t.RevokedAt = &now
 	}
 
-	return nil
+	return result.RowsAffected(), nil
 }
 
 func (t *OAuth2RefreshToken) RevokeByClientAndIdentity(
@@ -298,6 +306,36 @@ WHERE
 	)
 	if err != nil {
 		return 0, fmt.Errorf("cannot revoke oauth2_refresh_tokens by client and identity: %w", err)
+	}
+
+	return result.RowsAffected(), nil
+}
+
+func (t *OAuth2RefreshToken) RevokeByIdentityID(
+	ctx context.Context,
+	conn pg.Tx,
+	identityID gid.GID,
+	now time.Time,
+) (int64, error) {
+	q := `
+UPDATE iam_oauth2_refresh_tokens
+SET
+	revoked_at = @revoked_at
+WHERE
+	identity_id = @identity_id
+	AND revoked_at IS NULL
+`
+
+	result, err := conn.Exec(
+		ctx,
+		q,
+		pgx.StrictNamedArgs{
+			"identity_id": identityID,
+			"revoked_at":  now,
+		},
+	)
+	if err != nil {
+		return 0, fmt.Errorf("cannot revoke oauth2_refresh_tokens by identity: %w", err)
 	}
 
 	return result.RowsAffected(), nil

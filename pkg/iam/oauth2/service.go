@@ -618,8 +618,22 @@ func (s *Service) RefreshToken(
 	if err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := previousRefreshToken.Revoke(ctx, tx, now); err != nil {
+			// Password reset locks the identity row, then revokes refresh tokens.
+			// Take that lock first so its revoke starts after this transaction
+			// commits and sees any pair inserted below.
+			if err := identity.LoadByIDForUpdate(ctx, tx, previousRefreshToken.IdentityID); err != nil {
+				return fmt.Errorf("cannot lock identity: %w", err)
+			}
+
+			// Revoke updates a row only while revoked_at is null. Zero rows
+			// means password reset or another refresh already revoked it.
+			revoked, err := previousRefreshToken.Revoke(ctx, tx, now)
+			if err != nil {
 				return fmt.Errorf("cannot revoke previous refresh token: %w", err)
+			}
+
+			if revoked == 0 {
+				return fmt.Errorf("refresh token already revoked")
 			}
 
 			// Attempt to delete the previous (legacy) access token.
@@ -1384,7 +1398,7 @@ func (s *Service) RevokeToken(
 
 				if err == nil {
 					now := time.Now()
-					if err := refreshToken.Revoke(ctx, tx, now); err != nil {
+					if _, err := refreshToken.Revoke(ctx, tx, now); err != nil {
 						return fmt.Errorf("cannot revoke refresh token: %w", err)
 					}
 
@@ -1438,7 +1452,7 @@ func (s *Service) RevokeToken(
 
 			if err == nil {
 				now := time.Now()
-				if err := refreshToken.Revoke(ctx, tx, now); err != nil {
+				if _, err := refreshToken.Revoke(ctx, tx, now); err != nil {
 					return fmt.Errorf("cannot revoke refresh token: %w", err)
 				}
 

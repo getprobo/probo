@@ -411,3 +411,28 @@ WHERE
 
 	return result.RowsAffected(), nil
 }
+
+func (t *OAuth2AccessToken) DeleteByIdentityID(
+	ctx context.Context,
+	conn pg.Tx,
+	identityID gid.GID,
+) (int64, error) {
+	q := `
+DELETE FROM iam_oauth2_access_tokens
+WHERE
+	identity_id = @identity_id
+`
+
+	result, err := conn.Exec(
+		ctx,
+		q,
+		pgx.StrictNamedArgs{
+			"identity_id": identityID,
+		},
+	)
+	if err != nil {
+		return 0, fmt.Errorf("cannot delete oauth2_access_tokens by identity: %w", err)
+	}
+
+	return result.RowsAffected(), nil
+}
