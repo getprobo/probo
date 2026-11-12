@@ -371,6 +371,12 @@ func redactSCIMValue(value any, redacted *bool) any {
 				continue
 			}
 
+			if strings.EqualFold(key, "photos") {
+				v[key] = redactSCIMPhotos(nested, redacted)
+
+				continue
+			}
+
 			v[key] = redactSCIMValue(nested, redacted)
 		}
 
@@ -399,6 +405,31 @@ func redactSCIMValue(value any, redacted *bool) any {
 // targets the password. SCIM attributes may be qualified by their schema URN
 // (urn:ietf:params:scim:schemas:core:2.0:User:password), so only the trailing
 // segment identifies the attribute.
+func redactSCIMPhotos(value any, redacted *bool) any {
+	items, ok := value.([]any)
+	if !ok {
+		*redacted = true
+
+		return scimRedactedValue
+	}
+
+	for i, item := range items {
+		photo, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+
+		if _, exists := photo["value"]; exists {
+			photo["value"] = scimRedactedValue
+			*redacted = true
+		}
+
+		items[i] = photo
+	}
+
+	return items
+}
+
 func isSCIMPasswordAttribute(name string) bool {
 	if i := strings.LastIndex(name, ":"); i >= 0 {
 		name = name[i+1:]

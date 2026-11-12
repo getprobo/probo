@@ -140,6 +140,21 @@ func UserSchema() schema.Schema {
 			schema.SimpleCoreAttribute(
 				schema.SimpleReferenceParams(schema.ReferenceParams{Name: "profileUrl"}),
 			),
+			schema.ComplexCoreAttribute(
+				schema.ComplexParams{
+					Name:        "photos",
+					MultiValued: true,
+					SubAttributes: []schema.SimpleParams{
+						schema.SimpleStringParams(schema.StringParams{Name: "value"}),
+						schema.SimpleStringParams(schema.StringParams{Name: "type"}),
+						schema.SimpleStringParams(schema.StringParams{Name: "display"}),
+						schema.SimpleBooleanParams(schema.BooleanParams{Name: "primary"}),
+					},
+				},
+			),
+			schema.SimpleCoreAttribute(
+				schema.SimpleStringParams(schema.StringParams{Name: "photoETag"}),
+			),
 		},
 	}
 }

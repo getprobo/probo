@@ -28,7 +28,25 @@ import (
 	scimclient "go.probo.inc/probo/pkg/iam/scim/bridge/client"
 )
 
-type Provider interface {
-	Name() string
-	ListUsers(ctx context.Context) (scimclient.Users, error)
-}
+type (
+	// Photo is one user's directory picture. Absent means the directory has
+	// no picture for that user.
+	Photo struct {
+		ETag   string
+		Body   []byte
+		MIME   string
+		Absent bool
+	}
+
+	Provider interface {
+		Name() string
+		ListUsers(ctx context.Context) (scimclient.Users, error)
+	}
+
+	// PhotoSource is a provider that can read a directory picture. Providers
+	// that cannot read pictures do not implement it. The bridge still
+	// provisions the user when a picture cannot be read.
+	PhotoSource interface {
+		UserPhoto(ctx context.Context, user scimclient.User) (Photo, error)
+	}
+)

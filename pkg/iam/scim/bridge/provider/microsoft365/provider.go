@@ -32,6 +32,8 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
+	"sync/atomic"
 
 	scimclient "go.probo.inc/probo/pkg/iam/scim/bridge/client"
 	"go.probo.inc/probo/pkg/iam/scim/bridge/provider"
@@ -60,11 +62,20 @@ const graphMaxPages = 1000
 // should not be provisioned into the connected organization.
 const graphMemberFilter = "userType eq 'Member'"
 
-var _ provider.Provider = (*Provider)(nil)
+const (
+	graphPhotoConcurrency = 8
+	maxPhotoBytes         = 5 << 20
+)
+
+var (
+	_ provider.Provider    = (*Provider)(nil)
+	_ provider.PhotoSource = (*Provider)(nil)
+)
 
 type Provider struct {
 	httpClient        *http.Client
 	excludedUserNames []string
+	graphBaseURL      string
 }
 
 func New(httpClient *http.Client, excludedUserNames []string) *Provider {
@@ -115,8 +126,16 @@ type graphUsersResponse struct {
 	NextLink string      `json:"@odata.nextLink"`
 }
 
+func (p *Provider) baseURL() string {
+	if p.graphBaseURL != "" {
+		return p.graphBaseURL
+	}
+
+	return graphBaseURL
+}
+
 func (p *Provider) ListUsers(ctx context.Context) (scimclient.Users, error) {
-	endpoint, err := buildListUsersURL()
+	endpoint, err := p.listUsersURL()
 	if err != nil {
 		return nil, fmt.Errorf("cannot build list users URL: %w", err)
 	}
@@ -159,6 +178,8 @@ func (p *Provider) ListUsers(ctx context.Context) (scimclient.Users, error) {
 		}
 
 		if next == "" {
+			p.attachPhotoETags(ctx, allUsers)
+
 			return allUsers, nil
 		}
 
@@ -168,10 +189,15 @@ func (p *Provider) ListUsers(ctx context.Context) (scimclient.Users, error) {
 	return nil, fmt.Errorf("microsoft 365: pagination limit of %d pages reached", graphMaxPages)
 }
 
-func buildListUsersURL() (string, error) {
-	u, err := url.Parse(graphBaseURL + "/users")
+func (p *Provider) listUsersURL() (string, error) {
+	joined, err := url.JoinPath(p.baseURL(), "users")
 	if err != nil {
-		return "", fmt.Errorf("cannot parse graph base URL: %w", err)
+		return "", fmt.Errorf("cannot join graph users URL: %w", err)
+	}
+
+	u, err := url.Parse(joined)
+	if err != nil {
+		return "", fmt.Errorf("cannot parse graph users URL: %w", err)
 	}
 
 	q := u.Query()
@@ -209,4 +235,167 @@ func (p *Provider) fetchPage(ctx context.Context, endpoint string) ([]graphUser,
 	}
 
 	return page.Value, page.NextLink, nil
+}
+
+func (p *Provider) attachPhotoETags(ctx context.Context, users scimclient.Users) {
+	var (
+		wg       sync.WaitGroup
+		sem      = make(chan struct{}, graphPhotoConcurrency)
+		disabled atomic.Bool
+	)
+
+	for i := range users {
+		if users[i].ExternalID == "" || disabled.Load() || ctx.Err() != nil {
+			continue
+		}
+
+		select {
+		case <-ctx.Done():
+			wg.Wait()
+
+			return
+		case sem <- struct{}{}:
+		}
+
+		wg.Add(1)
+
+		go func(i int) {
+			defer wg.Done()
+			defer func() { <-sem }()
+
+			if disabled.Load() || ctx.Err() != nil {
+				return
+			}
+
+			etag, status, err := p.photoETag(ctx, users[i].ExternalID)
+			if err != nil {
+				return
+			}
+
+			if status == http.StatusUnauthorized || status == http.StatusForbidden {
+				disabled.Store(true)
+
+				return
+			}
+
+			users[i].PhotoETag = etag
+		}(i)
+	}
+
+	wg.Wait()
+}
+
+func (p *Provider) photoETag(ctx context.Context, userID string) (string, int, error) {
+	endpoint, err := p.userPhotoURL(userID, false)
+	if err != nil {
+		return "", 0, fmt.Errorf("cannot build graph photo URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return "", 0, fmt.Errorf("cannot create graph photo request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := p.httpClient.Do(req)
+	if err != nil {
+		return "", 0, fmt.Errorf("cannot fetch graph photo: %w", err)
+	}
+
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode == http.StatusNotFound || resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
+		return "", resp.StatusCode, nil
+	}
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return "", resp.StatusCode, nil
+	}
+
+	var meta struct {
+		MediaETag string `json:"@odata.mediaEtag"`
+	}
+
+	if err := json.NewDecoder(io.LimitReader(resp.Body, 1<<20)).Decode(&meta); err != nil {
+		return "", resp.StatusCode, fmt.Errorf("cannot decode graph photo: %w", err)
+	}
+
+	return meta.MediaETag, resp.StatusCode, nil
+}
+
+func (p *Provider) UserPhoto(ctx context.Context, user scimclient.User) (provider.Photo, error) {
+	if user.ExternalID == "" {
+		return provider.Photo{}, nil
+	}
+
+	endpoint, err := p.userPhotoURL(user.ExternalID, true)
+	if err != nil {
+		return provider.Photo{}, fmt.Errorf("cannot build graph photo URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return provider.Photo{}, fmt.Errorf("cannot create graph photo request: %w", err)
+	}
+
+	req.Header.Set("Accept", "image/jpeg, image/png, */*")
+
+	resp, err := p.httpClient.Do(req)
+	if err != nil {
+		return provider.Photo{}, fmt.Errorf("cannot fetch graph photo: %w", err)
+	}
+
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode == http.StatusNotFound {
+		return provider.Photo{Absent: true}, nil
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return provider.Photo{}, fmt.Errorf("cannot fetch graph photo: status %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(io.LimitReader(resp.Body, maxPhotoBytes+1))
+	if err != nil {
+		return provider.Photo{}, fmt.Errorf("cannot read graph photo: %w", err)
+	}
+
+	if len(body) == 0 || len(body) > maxPhotoBytes {
+		return provider.Photo{}, fmt.Errorf("cannot read graph photo: unexpected size")
+	}
+
+	return provider.Photo{
+		ETag: user.PhotoETag,
+		Body: body,
+		MIME: photoMIME(resp.Header.Get("Content-Type")),
+	}, nil
+}
+
+func (p *Provider) userPhotoURL(userID string, content bool) (string, error) {
+	parts := []string{"users", url.PathEscape(userID), "photo"}
+	if content {
+		parts = append(parts, "$value")
+	}
+
+	joined, err := url.JoinPath(p.baseURL(), parts...)
+	if err != nil {
+		return "", fmt.Errorf("cannot join graph photo URL: %w", err)
+	}
+
+	return joined, nil
+}
+
+func photoMIME(header string) string {
+	mime := header
+	if i := strings.Index(mime, ";"); i >= 0 {
+		mime = mime[:i]
+	}
+
+	mime = strings.ToLower(strings.TrimSpace(mime))
+	if mime == "image/png" {
+		return mime
+	}
+
+	return "image/jpeg"
 }

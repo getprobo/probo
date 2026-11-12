@@ -25,6 +25,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/http"
 	"strings"
 	"time"
 
@@ -33,6 +34,7 @@ import (
 	"github.com/elimity-com/scim/optional"
 	"github.com/prometheus/client_golang/prometheus"
 	scimfilter "github.com/scim2/filter-parser/v2"
+	"go.gearno.de/kit/httpclient"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/x/ref"
@@ -42,6 +44,7 @@ import (
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/crypto/hash"
 	"go.probo.inc/probo/pkg/crypto/rand"
+	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
@@ -54,6 +57,9 @@ const scimEventLogTimeout = 5 * time.Second
 type (
 	Service struct {
 		pg           *pg.Client
+		fm           *filemanager.Service
+		bucket       string
+		httpClient   *http.Client
 		logger       *log.Logger
 		bridgeRunner *BridgeRunner
 	}
@@ -64,6 +70,9 @@ type (
 		EncryptionKey     cipher.EncryptionKey
 		ConnectorRegistry *connectorprotocol.Registry
 		BridgeRunner      BridgeRunnerConfig
+		FileManager       *filemanager.Service
+		Bucket            string
+		HTTPClient        *http.Client
 	}
 )
 
@@ -82,8 +91,24 @@ func NewService(
 		cfg.BridgeRunner,
 	)
 
+	httpClient := cfg.HTTPClient
+	if httpClient == nil {
+		options := []httpclient.Option{
+			httpclient.WithLogger(logger),
+			httpclient.WithSSRFProtection(),
+		}
+		if cfg.TracerProvider != nil {
+			options = append(options, httpclient.WithTracerProvider(cfg.TracerProvider))
+		}
+
+		httpClient = httpclient.DefaultPooledClient(options...)
+	}
+
 	return &Service{
 		pg:           pg,
+		fm:           cfg.FileManager,
+		bucket:       cfg.Bucket,
+		httpClient:   httpClient,
 		logger:       logger,
 		bridgeRunner: bridgeRunner,
 	}
@@ -166,6 +191,11 @@ func (s *Service) CreateUser(
 	)
 
 	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
+	photo, reason := s.prepareSCIMPhoto(ctx, attrs.PhotoURI, attrs.PhotoETag)
+	if reason != "" {
+		s.warnPhoto(ctx, nil, reason)
+		photo = nil
+	}
 
 	err = s.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		identity := &coredata.Identity{}
@@ -360,6 +390,10 @@ func (s *Service) CreateUser(
 			previousUser = webhooktypes.NewUser(previousProfile, membership)
 		}
 
+		if err := s.syncProfilePhoto(ctx, tx, scope, profile, photo); err != nil {
+			return err
+		}
+
 		if err := webhook.InsertUpdateData(ctx, tx, scope, config.OrganizationID, eventType, webhooktypes.NewUser(profile, membership), previousUser); err != nil {
 			return fmt.Errorf("cannot insert webhook event: %w", err)
 		}
@@ -510,6 +544,11 @@ func (s *Service) updateUser(
 ) (*coredata.MembershipProfile, error) {
 	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
 	now := time.Now()
+	photo, reason := s.prepareSCIMPhoto(ctx, attrs.PhotoURI, attrs.PhotoETag)
+	if reason != "" {
+		s.warnPhoto(ctx, nil, reason)
+		photo = nil
+	}
 
 	var (
 		membership *coredata.Membership
@@ -827,6 +866,10 @@ func (s *Service) updateUser(
 				}
 			}
 
+			if err := s.syncProfilePhoto(ctx, tx, scope, profile, photo); err != nil {
+				return err
+			}
+
 			if err := webhook.InsertUpdateData(ctx, tx, scope, config.OrganizationID, coredata.WebhookEventTypeUserUpdated, webhooktypes.NewUser(profile, membership), previousUser); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
@@ -1139,6 +1182,8 @@ type scimUserAttributes struct {
 	EnterpriseOrganization string
 	Division               string
 	ManagerValue           string
+	PhotoURI               *string
+	PhotoETag              *string
 }
 
 func ParseUserFromAttributes(attributes scim.ResourceAttributes) scimUserAttributes {
@@ -1222,6 +1267,8 @@ func ParseUserFromAttributes(attributes scim.ResourceAttributes) scimUserAttribu
 		}
 	}
 
+	attrs.PhotoURI, attrs.PhotoETag = photoInputFromMap(attributes)
+
 	return attrs
 }
 
@@ -1249,6 +1296,8 @@ type scimReplaceAttributes struct {
 	EnterpriseOrganization *string
 	Division               *string
 	ManagerValue           *string
+	PhotoURI               *string
+	PhotoETag              *string
 }
 
 func ParseUserFromReplaceAttributes(attributes scim.ResourceAttributes) scimReplaceAttributes {
@@ -1356,6 +1405,8 @@ func ParseUserFromReplaceAttributes(attributes scim.ResourceAttributes) scimRepl
 		}
 	}
 
+	attrs.PhotoURI, attrs.PhotoETag = photoInputFromMap(attributes)
+
 	return attrs
 }
 
@@ -1430,6 +1481,10 @@ func ParseUserFromPatchOperations(operations []scim.PatchOperation) scimReplaceA
 			case "urn:ietf:params:scim:schemas:extension:enterprise:2.0:user:manager",
 				"urn:ietf:params:scim:schemas:extension:enterprise:2.0:user:manager.value":
 				attrs.ManagerValue = &empty
+			case "photos":
+				attrs.PhotoURI = &empty
+			case "photoetag":
+				attrs.PhotoETag = &empty
 			}
 
 			continue
@@ -1595,6 +1650,15 @@ func ParseUserFromPatchOperations(operations []scim.PatchOperation) scimReplaceA
 							}
 						}
 					}
+
+					uri, etag := photoInputFromMap(valueMap)
+					if uri != nil {
+						attrs.PhotoURI = uri
+					}
+
+					if etag != nil {
+						attrs.PhotoETag = etag
+					}
 				}
 
 				continue
@@ -1759,6 +1823,16 @@ func ParseUserFromPatchOperations(operations []scim.PatchOperation) scimReplaceA
 				if mv, ok := op.Value.(string); ok {
 					attrs.ManagerValue = &mv
 				}
+			case "photos":
+				if selected, ok := selectPhotoURI(op.Value); ok {
+					attrs.PhotoURI = &selected
+				} else if text, ok := op.Value.(string); ok {
+					attrs.PhotoURI = &text
+				}
+			case "photoetag":
+				if text, ok := op.Value.(string); ok {
+					attrs.PhotoETag = &text
+				}
 			}
 		}
 	}
@@ -1833,6 +1907,7 @@ func userToResource(p *coredata.MembershipProfile) scim.Resource {
 			"timezone":          ref.UnrefOrZero(p.Timezone),
 			"profileUrl":        ref.UnrefOrZero(p.ProfileUrl),
 			"preferredLanguage": ref.UnrefOrZero(p.PreferredLanguage),
+			"photoETag":         ref.UnrefOrZero(p.SCIMPhotoETag),
 			"urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": enterpriseAttrs,
 		},
 		Meta: scim.Meta{

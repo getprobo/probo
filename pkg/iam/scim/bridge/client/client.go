@@ -23,6 +23,7 @@ package scimclient
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -55,6 +56,9 @@ type (
 		UserType               string `json:"-"`
 		ManagerValue           string `json:"-"`
 		PreferredLanguage      string `json:"-"`
+		PhotoETag              string `json:"photoETag,omitempty"`
+		Photo                  []byte `json:"-"`
+		PhotoMIME              string `json:"-"`
 	}
 
 	Users []User
@@ -233,9 +237,28 @@ func buildUserPayload(user *User) map[string]any {
 			},
 		},
 		"urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": enterprise,
+		"photoETag": user.PhotoETag,
+	}
+
+	if len(user.Photo) > 0 {
+		payload["photos"] = []map[string]any{
+			{
+				"value":   photoDataURI(user.PhotoMIME, user.Photo),
+				"type":    "photo",
+				"primary": true,
+			},
+		}
 	}
 
 	return payload
+}
+
+func photoDataURI(mime string, body []byte) string {
+	if mime != "image/png" {
+		mime = "image/jpeg"
+	}
+
+	return "data:" + mime + ";base64," + base64.StdEncoding.EncodeToString(body)
 }
 
 func (c *Client) DeactivateUser(ctx context.Context, userID string) error {
@@ -315,6 +338,7 @@ func (u *User) UnmarshalJSON(data []byte) error {
 		ExternalID        string `json:"externalId"`
 		UserType          string `json:"userType"`
 		PreferredLanguage string `json:"preferredLanguage"`
+		PhotoETag         string `json:"photoETag"`
 		Name              struct {
 			GivenName  string `json:"givenName"`
 			FamilyName string `json:"familyName"`
@@ -343,6 +367,7 @@ func (u *User) UnmarshalJSON(data []byte) error {
 	u.ExternalID = raw.ExternalID
 	u.UserType = raw.UserType
 	u.PreferredLanguage = raw.PreferredLanguage
+	u.PhotoETag = raw.PhotoETag
 	u.GivenName = raw.Name.GivenName
 	u.FamilyName = raw.Name.FamilyName
 	u.EmployeeNumber = raw.Enterprise.EmployeeNumber

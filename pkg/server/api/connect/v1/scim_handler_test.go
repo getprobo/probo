@@ -144,6 +144,15 @@ func TestRedactSCIMCredentials(t *testing.T) {
 		assert.Equal(t, body, redactSCIMCredentials(body))
 	})
 
+	t.Run("redacts photo values", func(t *testing.T) {
+		t.Parallel()
+
+		got := redactSCIMCredentials([]byte(`{"photos":[{"value":"data:image/png;base64,aaaa","type":"photo","primary":true}]}`))
+
+		assert.JSONEq(t, `{"photos":[{"primary":true,"type":"photo","value":"[REDACTED]"}]}`, string(got))
+		assert.NotContains(t, string(got), "aaaa")
+	})
+
 	t.Run("never leaks the credential", func(t *testing.T) {
 		t.Parallel()
 

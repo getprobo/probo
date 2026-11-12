@@ -4,6 +4,14 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Added
+
+- SCIM provisioning stores a user's avatar when a photo is available.
+  Google Workspace and Microsoft 365 bridges send the directory picture,
+  and a SCIM client can send a photo URL or data URI on the User `photos`
+  attribute. A picture that cannot be read is skipped and does not fail
+  provisioning
+
 ## [0.342.0] - 2026-11-12
 
 ### Added
