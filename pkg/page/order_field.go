@@ -30,6 +30,14 @@ type (
 		fmt.Stringer
 	}
 
+	// CursorValuer maps the bound cursor placeholder into the same expression
+	// as Column. The cursor key keeps the raw value; Postgres applies the
+	// expression.
+	CursorValuer interface {
+		OrderField
+		CursorValue(placeholder string) string
+	}
+
 	// NullsOrderField sets NULL placement (FIRST or LAST) for both sort
 	// directions. NullsDefault leaves placement to the database default.
 	NullsOrderField interface {

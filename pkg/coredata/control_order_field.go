@@ -38,6 +38,7 @@ const (
 
 var (
 	_ page.OrderField          = ControlOrderField("")
+	_ page.CursorValuer        = ControlOrderField("")
 	_ fmt.Stringer             = ControlOrderField("")
 	_ encoding.TextMarshaler   = ControlOrderField("")
 	_ encoding.TextUnmarshaler = (*ControlOrderField)(nil)
@@ -75,4 +76,12 @@ func (p ControlOrderField) Column() string {
 	default:
 		return string(p)
 	}
+}
+
+func (p ControlOrderField) CursorValue(placeholder string) string {
+	if p == ControlOrderFieldSectionTitle {
+		return "section_title_sort_key(" + placeholder + ")"
+	}
+
+	return placeholder
 }

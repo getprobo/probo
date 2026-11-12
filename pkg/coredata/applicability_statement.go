@@ -58,7 +58,7 @@ func (s ApplicabilityStatement) CursorKey(orderBy ApplicabilityStatementOrderFie
 	case ApplicabilityStatementOrderFieldCreatedAt:
 		return page.NewCursorKey(s.ID, s.CreatedAt)
 	case ApplicabilityStatementOrderFieldControlSectionTitle:
-		return page.NewCursorKey(s.ID, sectionTitleSortKey(s.SectionTitle))
+		return page.NewCursorKey(s.ID, s.SectionTitle)
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))

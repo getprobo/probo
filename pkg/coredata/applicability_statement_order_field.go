@@ -36,6 +36,7 @@ const (
 
 var (
 	_ page.OrderField          = ApplicabilityStatementOrderField("")
+	_ page.CursorValuer        = ApplicabilityStatementOrderField("")
 	_ fmt.Stringer             = ApplicabilityStatementOrderField("")
 	_ encoding.TextMarshaler   = ApplicabilityStatementOrderField("")
 	_ encoding.TextUnmarshaler = (*ApplicabilityStatementOrderField)(nil)
@@ -73,4 +74,12 @@ func (p ApplicabilityStatementOrderField) Column() string {
 	}
 
 	panic("unknown ApplicabilityStatementOrderField")
+}
+
+func (p ApplicabilityStatementOrderField) CursorValue(placeholder string) string {
+	if p == ApplicabilityStatementOrderFieldControlSectionTitle {
+		return "section_title_sort_key(" + placeholder + ")"
+	}
+
+	return placeholder
 }
