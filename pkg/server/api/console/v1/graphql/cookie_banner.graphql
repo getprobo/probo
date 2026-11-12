@@ -212,7 +212,7 @@ enum BrowserFamily
 
 type SampleFamilyCount
     @goModel(
-        model: "go.probo.inc/probo/pkg/cookiebanner.SampleFamilyCount"
+        model: "go.probo.inc/probo/pkg/cookiebanner.BrowserFamilyCount"
     ) {
     family: BrowserFamily!
     count: Int!

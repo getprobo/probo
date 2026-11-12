@@ -22,13 +22,13 @@ package cookiebanner
 
 import "go.probo.inc/probo/pkg/coredata"
 
-type SampleFamilyCount struct {
+type BrowserFamilyCount struct {
 	Family coredata.BrowserFamily
 	Count  int
 }
 
-func NewSampleFamilyCountPtrs(counts []SampleFamilyCount) []*SampleFamilyCount {
-	out := make([]*SampleFamilyCount, len(counts))
+func NewBrowserFamilyCountPtrs(counts []BrowserFamilyCount) []*BrowserFamilyCount {
+	out := make([]*BrowserFamilyCount, len(counts))
 	for i := range counts {
 		out[i] = &counts[i]
 	}
@@ -36,7 +36,7 @@ func NewSampleFamilyCountPtrs(counts []SampleFamilyCount) []*SampleFamilyCount {
 	return out
 }
 
-func PageLoadsByFamily(rows []coredata.SamplePageLoad) []SampleFamilyCount {
+func PageLoadsByFamily(rows []coredata.DailyPageLoad) []BrowserFamilyCount {
 	totals := map[coredata.BrowserFamily]int{}
 
 	for _, row := range rows {
@@ -46,7 +46,7 @@ func PageLoadsByFamily(rows []coredata.SamplePageLoad) []SampleFamilyCount {
 	return countsByFamily(totals)
 }
 
-func SplitPatternHits(rows []coredata.SamplePatternHit) (total, allowed, denied []SampleFamilyCount) {
+func SplitPatternHits(rows []coredata.DailyPatternHit) (total, allowed, denied []BrowserFamilyCount) {
 	totals := map[coredata.BrowserFamily]int{}
 	alloweds := map[coredata.BrowserFamily]int{}
 	denieds := map[coredata.BrowserFamily]int{}
@@ -63,25 +63,15 @@ func SplitPatternHits(rows []coredata.SamplePatternHit) (total, allowed, denied 
 	return countsByFamily(totals), countsByFamily(alloweds), countsByFamily(denieds)
 }
 
-func consentActionPtr(action string) *coredata.CookieConsentAction {
-	if action == "" {
-		return nil
-	}
-
-	value := coredata.CookieConsentAction(action)
-
-	return &value
-}
-
-func countsByFamily(sums map[coredata.BrowserFamily]int) []SampleFamilyCount {
-	out := make([]SampleFamilyCount, 0, len(sums))
+func countsByFamily(sums map[coredata.BrowserFamily]int) []BrowserFamilyCount {
+	out := make([]BrowserFamilyCount, 0, len(sums))
 	for _, family := range coredata.BrowserFamilies() {
 		count := sums[family]
 		if count == 0 {
 			continue
 		}
 
-		out = append(out, SampleFamilyCount{Family: family, Count: count})
+		out = append(out, BrowserFamilyCount{Family: family, Count: count})
 	}
 
 	return out

@@ -67,11 +67,11 @@ func NewCookieBannerSample(s *coredata.CookieBannerSample) *CookieBannerSample {
 	}
 }
 
-func (s *CookieBannerSample) SetPageLoads(loads []cookiebanner.SampleFamilyCount) {
+func (s *CookieBannerSample) SetPageLoads(loads []cookiebanner.BrowserFamilyCount) {
 	s.PageLoads = NewSampleFamilyCounts(loads)
 }
 
-func NewSampleFamilyCounts(counts []cookiebanner.SampleFamilyCount) []*SampleFamilyCount {
+func NewSampleFamilyCounts(counts []cookiebanner.BrowserFamilyCount) []*SampleFamilyCount {
 	out := make([]*SampleFamilyCount, 0, len(counts))
 	for _, count := range counts {
 		out = append(

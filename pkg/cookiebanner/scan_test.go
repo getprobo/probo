@@ -85,7 +85,7 @@ func TestRequestScan_RejectsASecondActiveScan(t *testing.T) {
 	assert.Equal(t, 1, count)
 }
 
-func TestIngestScanPage_StampsScannerRowsWithoutSamples(t *testing.T) {
+func TestIngestScanPage_StampsScannerRowsWithoutAnalytics(t *testing.T) {
 	t.Parallel()
 
 	client := test.PGClient(t)

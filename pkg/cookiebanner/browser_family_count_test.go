@@ -30,23 +30,23 @@ import (
 func TestPageLoadsByFamily_SumsBuckets(t *testing.T) {
 	t.Parallel()
 
-	loads := PageLoadsByFamily([]coredata.SamplePageLoad{
+	loads := PageLoadsByFamily([]coredata.DailyPageLoad{
 		{BrowserFamily: coredata.BrowserFamilyChrome, Presentation: "", Count: 4},
 		{
 			BrowserFamily: coredata.BrowserFamilyChrome,
-			Presentation:  string(coredata.CookieBannerPresentationOptIn),
-			ConsentAction: string(coredata.CookieConsentActionRejectAll),
+			Presentation:  coredata.CookieBannerPresentationOptIn,
+			ConsentAction: coredata.CookieConsentActionRejectAll,
 			Count:         1,
 		},
 		{
 			BrowserFamily: coredata.BrowserFamilyFirefox,
-			Presentation:  string(coredata.CookieBannerPresentationOptIn),
-			ConsentAction: string(coredata.CookieConsentActionAcceptAll),
+			Presentation:  coredata.CookieBannerPresentationOptIn,
+			ConsentAction: coredata.CookieConsentActionAcceptAll,
 			Count:         2,
 		},
 	})
 
-	assert.Equal(t, []SampleFamilyCount{
+	assert.Equal(t, []BrowserFamilyCount{
 		{Family: coredata.BrowserFamilyChrome, Count: 5},
 		{Family: coredata.BrowserFamilyFirefox, Count: 2},
 	}, loads)
@@ -55,20 +55,20 @@ func TestPageLoadsByFamily_SumsBuckets(t *testing.T) {
 func TestSplitPatternHits_SplitsGranted(t *testing.T) {
 	t.Parallel()
 
-	total, allowed, denied := SplitPatternHits([]coredata.SamplePatternHit{
+	total, allowed, denied := SplitPatternHits([]coredata.DailyPatternHit{
 		{BrowserFamily: coredata.BrowserFamilyChrome, CategoryGranted: true, Count: 3},
 		{BrowserFamily: coredata.BrowserFamilyChrome, CategoryGranted: false, Count: 1},
 		{BrowserFamily: coredata.BrowserFamilySafari, CategoryGranted: false, Count: 2},
 	})
 
-	assert.Equal(t, []SampleFamilyCount{
+	assert.Equal(t, []BrowserFamilyCount{
 		{Family: coredata.BrowserFamilyChrome, Count: 4},
 		{Family: coredata.BrowserFamilySafari, Count: 2},
 	}, total)
-	assert.Equal(t, []SampleFamilyCount{
+	assert.Equal(t, []BrowserFamilyCount{
 		{Family: coredata.BrowserFamilyChrome, Count: 3},
 	}, allowed)
-	assert.Equal(t, []SampleFamilyCount{
+	assert.Equal(t, []BrowserFamilyCount{
 		{Family: coredata.BrowserFamilyChrome, Count: 1},
 		{Family: coredata.BrowserFamilySafari, Count: 2},
 	}, denied)
