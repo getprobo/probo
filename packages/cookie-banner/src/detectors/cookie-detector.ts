@@ -62,7 +62,7 @@ export class CookieDetector implements Detector {
 
     // Another SDK instance may already own the prototype hook. Still
     // observe cookieStore so this instance reports HTTP-source
-    // changes; the client scans leftovers after published names land.
+    // changes.
     this.installPrototypeHooks();
     this.observeCookieStore();
   }
@@ -149,9 +149,7 @@ export class CookieDetector implements Detector {
     this.queue.reportCookie(entry);
   }
 
-  // scanExisting reports leftovers as PRE_EXISTING. Call after
-  // published snapshot names are in knownNames so inventoried
-  // cookies are not re-queued on every page load.
+  // scanExisting reports leftovers as PRE_EXISTING.
   scanExisting(): void {
     if (!this.started) return;
 
