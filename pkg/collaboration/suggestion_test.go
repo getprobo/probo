@@ -352,6 +352,7 @@ func withSuggestionSplit(block map[string]any, id string, kind string) map[strin
 
 func rejectedText(spans []automerge.Span, paragraph int) string {
 	seen := -1
+
 	var text string
 
 	for _, span := range spans {
