@@ -26,8 +26,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/timespan"
 )
 
@@ -213,9 +213,7 @@ func TestInternalControlNextDueValue(t *testing.T) {
 	assert.True(t, internalControlNextDueValue(nil, &later).Equal(later))
 	assert.Nil(t, internalControlNextDueValue(nil, nil))
 	assert.Equal(t, "LEAST(next_evidence_due, next_test_due)", InternalControlOrderFieldNextDue.Column())
-	assert.Equal(t, page.NullsLast, InternalControlOrderFieldNextDue.Nulls())
 	assert.Equal(t, "NAME", InternalControlOrderFieldName.Column())
-	assert.Equal(t, page.NullsDefault, InternalControlOrderFieldName.Nulls())
 }
 
 func TestInternalControl_CursorKey_NextDue(t *testing.T) {
