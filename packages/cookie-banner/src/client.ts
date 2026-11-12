@@ -93,7 +93,6 @@ export class CookieBannerClient {
   private observer: MutationObserver | null = null;
   private detectors: Detector[] = [];
   private reportQueue: ReportQueue | null = null;
-  private knownCookieNames: Set<string> | null = null;
   private _gpcApplied = false;
 
   constructor(config: CookieBannerClientOptions) {
@@ -152,12 +151,7 @@ export class CookieBannerClient {
     for (const integration of this.integrations) {
       integration.setDefaults(config.categories);
     }
-    if (!config.sample_active) {
-      this.ignorePublishedCookieNames(config);
-    }
-    if (config.sample_active) {
-      this.reportQueue?.reportPageView();
-    }
+    this.reportQueue?.reportPageView();
     this.scanExistingCookies();
     this.startResourceDetector(config);
 
@@ -460,34 +454,18 @@ export class CookieBannerClient {
   private startCookieAndStorageDetectors(): void {
     if (this.reportQueue) return;
 
-    this.knownCookieNames = new Set<string>([COOKIE_NAME]);
     const reportUrl = new URL(`${this.bannerId}/report`, this.baseUrl);
     this.reportQueue = new ReportQueue(reportUrl);
     this.syncReportGrant();
 
     const apiOrigin = this.baseUrl.origin;
     this.detectors = [
-      new CookieDetector(this.reportQueue, apiOrigin, this.knownCookieNames),
+      new CookieDetector(this.reportQueue, apiOrigin, new Set([COOKIE_NAME])),
       new StorageDetector(this.reportQueue, apiOrigin),
     ];
 
     for (const d of this.detectors) {
       d.start();
-    }
-  }
-
-  // Published snapshot cookies are already inventoried. After the
-  // first publish, discovery is frozen, so keep reporting them would
-  // only add traffic. The same Set is shared with CookieDetector;
-  // mutating it here takes effect on later writes and on the deferred
-  // pre-existing scan.
-  private ignorePublishedCookieNames(config: BannerConfig): void {
-    if (!this.knownCookieNames) return;
-
-    for (const cat of config.categories) {
-      for (const cookie of cat.cookies) {
-        this.knownCookieNames.add(cookie.name);
-      }
     }
   }
 
@@ -514,7 +492,6 @@ export class CookieBannerClient {
       d.stop();
     }
     this.detectors = [];
-    this.knownCookieNames = null;
     if (this.reportQueue) {
       this.reportQueue.stop();
       this.reportQueue = null;

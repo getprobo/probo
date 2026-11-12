@@ -157,23 +157,6 @@ describe("CookieDetector", () => {
     detector.stop();
   });
 
-  it("skips published names added to the shared set before the scan", () => {
-    const { document } = installFakeCookieDocument();
-    document.cookie = "_ga=GA1; path=/";
-
-    const { queue, reported } = fakeQueue();
-    const known = new Set([COOKIE_NAME]);
-    const detector = new CookieDetector(queue, "https://api.example.com", known);
-
-    detector.start();
-    known.add("_ga");
-    detector.scanExisting();
-
-    expect(reported).toEqual([]);
-
-    detector.stop();
-  });
-
   it("still observes cookieStore when another instance already hooked the prototype", () => {
     const { emitCookieStoreChange } = installFakeCookieDocument();
     const first = fakeQueue();
