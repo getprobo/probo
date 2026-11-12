@@ -49,6 +49,15 @@ func CompliancePortalDocumentAccessStatuses() []CompliancePortalDocumentAccessSt
 	}
 }
 
+// Returned as []string because pgx cannot encode a slice of the named
+// status type into the unregistered enum array.
+func retryableCompliancePortalDocumentAccessStatuses() []string {
+	return []string{
+		CompliancePortalDocumentAccessStatusRejected.String(),
+		CompliancePortalDocumentAccessStatusRevoked.String(),
+	}
+}
+
 func (v CompliancePortalDocumentAccessStatus) IsValid() bool {
 	switch v {
 	case

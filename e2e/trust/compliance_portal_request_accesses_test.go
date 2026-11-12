@@ -244,6 +244,58 @@ func TestCompliancePortal_RequestAccesses_EmptyRejects(t *testing.T) {
 	)
 }
 
+// TestCompliancePortal_RequestAccesses_ExistingRow verifies that requesting an
+// item that already has an access row succeeds. The second call reactivates
+// the existing row instead of inserting a new one.
+func TestCompliancePortal_RequestAccesses_ExistingRow(t *testing.T) {
+	t.Parallel()
+
+	for _, kind := range []string{"document", "report", "file"} {
+		t.Run(kind, func(t *testing.T) {
+			t.Parallel()
+
+			owner := testutil.NewClient(t, testutil.RoleOwner)
+			target := setupRestrictedAccessTarget(t, owner, kind)
+			visitor := testutil.SelfProvisionCompliancePortalVisitor(t, target.trustHost)
+
+			first := requestRestrictedAccess(t, visitor, target)
+			assert.Equal(t, "REQUESTED", first.Status)
+
+			second := requestRestrictedAccess(t, visitor, target)
+			assert.Equal(t, "REQUESTED", second.Status)
+			assert.Equal(t, first.ID, second.ID, "the second request must reuse the existing access row")
+		})
+	}
+}
+
+// TestCompliancePortal_RequestAccesses_RetryAfterRejection verifies that a
+// visitor can request an item again after the owner rejects it, and that the
+// same access row returns to REQUESTED.
+func TestCompliancePortal_RequestAccesses_RetryAfterRejection(t *testing.T) {
+	t.Parallel()
+
+	for _, kind := range []string{"document", "report", "file"} {
+		t.Run(kind, func(t *testing.T) {
+			t.Parallel()
+
+			owner := testutil.NewClient(t, testutil.RoleOwner)
+			target := setupRestrictedAccessTarget(t, owner, kind)
+			visitor := testutil.SelfProvisionCompliancePortalVisitor(t, target.trustHost)
+
+			first := requestRestrictedAccess(t, visitor, target)
+			assert.Equal(t, "REQUESTED", first.Status)
+
+			accessID := lookupVisitorAccessID(t, owner, target.compliancePortalID, visitor.GetEmail())
+			rejectRestrictedAccess(t, owner, accessID, target)
+			assert.Equal(t, "REJECTED", visitorAccessStatus(t, visitor, target))
+
+			retried := requestRestrictedAccess(t, visitor, target)
+			assert.Equal(t, "REQUESTED", retried.Status)
+			assert.Equal(t, first.ID, retried.ID, "the retry must reactivate the rejected access row")
+		})
+	}
+}
+
 // setupRestrictedPortalDocument creates a published document with restricted
 // visibility on the owner's compliance portal.
 func setupRestrictedPortalDocument(t *testing.T, owner *testutil.Client) (documentID, compliancePortalID string) {
@@ -288,4 +340,309 @@ func setupRestrictedPortalDocument(t *testing.T, owner *testutil.Client) (docume
 	require.NoError(t, err)
 
 	return documentID, compliancePortalID
+}
+
+const requestAccessStatusMutation = `
+	mutation RequestAccesses($input: RequestAccessesInput!) {
+		requestAccesses(input: $input) {
+			documents {
+				id
+				access { id status }
+			}
+			audits {
+				reportFile {
+					id
+					access { id status }
+				}
+			}
+			files {
+				id
+				access { id status }
+			}
+		}
+	}
+`
+
+type (
+	requestedAccessStatus struct {
+		ID     string `json:"id"`
+		Status string `json:"status"`
+	}
+
+	requestAccessStatusResult struct {
+		RequestAccesses struct {
+			Documents []struct {
+				ID     string                 `json:"id"`
+				Access *requestedAccessStatus `json:"access"`
+			} `json:"documents"`
+			Audits []struct {
+				ReportFile struct {
+					ID     string                 `json:"id"`
+					Access *requestedAccessStatus `json:"access"`
+				} `json:"reportFile"`
+			} `json:"audits"`
+			Files []struct {
+				ID     string                 `json:"id"`
+				Access *requestedAccessStatus `json:"access"`
+			} `json:"files"`
+		} `json:"requestAccesses"`
+	}
+
+	restrictedAccessTarget struct {
+		kind               string
+		targetID           string
+		compliancePortalID string
+		trustHost          string
+	}
+)
+
+func setupRestrictedAccessTarget(
+	t *testing.T,
+	owner *testutil.Client,
+	kind string,
+) restrictedAccessTarget {
+	t.Helper()
+
+	var (
+		targetID           string
+		compliancePortalID string
+	)
+
+	switch kind {
+	case "document":
+		targetID, compliancePortalID = setupRestrictedPortalDocument(t, owner)
+	case "report":
+		targetID, compliancePortalID = setupRestrictedPortalReport(t, owner)
+	case "file":
+		compliancePortalID = lookupCompliancePortalID(t, owner)
+		targetID = setupRestrictedPortalFile(t, owner, compliancePortalID)
+	default:
+		t.Fatalf("unknown access target %q", kind)
+	}
+
+	return restrictedAccessTarget{
+		kind:               kind,
+		targetID:           targetID,
+		compliancePortalID: compliancePortalID,
+		trustHost:          lookupTrustHost(t, owner, compliancePortalID),
+	}
+}
+
+func requestRestrictedAccess(
+	t *testing.T,
+	visitor *testutil.Client,
+	target restrictedAccessTarget,
+) requestedAccessStatus {
+	t.Helper()
+
+	input := map[string]any{
+		"documentIds":             []string{},
+		"reportIds":               []string{},
+		"compliancePortalFileIds": []string{},
+	}
+
+	switch target.kind {
+	case "document":
+		input["documentIds"] = []string{target.targetID}
+	case "report":
+		input["reportIds"] = []string{target.targetID}
+	case "file":
+		input["compliancePortalFileIds"] = []string{target.targetID}
+	}
+
+	var result requestAccessStatusResult
+
+	err := visitor.ExecuteTrust(
+		target.trustHost,
+		requestAccessStatusMutation,
+		map[string]any{"input": input},
+		&result,
+	)
+	require.NoError(t, err, "visitor must be able to request restricted %s access", target.kind)
+
+	var access *requestedAccessStatus
+
+	switch target.kind {
+	case "document":
+		require.Len(t, result.RequestAccesses.Documents, 1)
+		access = result.RequestAccesses.Documents[0].Access
+	case "report":
+		require.Len(t, result.RequestAccesses.Audits, 1)
+		access = result.RequestAccesses.Audits[0].ReportFile.Access
+	case "file":
+		require.Len(t, result.RequestAccesses.Files, 1)
+		access = result.RequestAccesses.Files[0].Access
+	}
+
+	require.NotNil(t, access, "requested %s must carry an access record", target.kind)
+
+	return *access
+}
+
+func rejectRestrictedAccess(
+	t *testing.T,
+	owner *testutil.Client,
+	accessID string,
+	target restrictedAccessTarget,
+) {
+	t.Helper()
+
+	input := map[string]any{
+		"id": accessID,
+	}
+	entries := []map[string]any{
+		{"id": target.targetID, "status": "REJECTED"},
+	}
+
+	switch target.kind {
+	case "document":
+		input["documents"] = entries
+	case "report":
+		input["reports"] = entries
+	case "file":
+		input["compliancePortalFiles"] = entries
+	}
+
+	err := owner.Execute(
+		`
+		mutation($input: UpdateCompliancePortalAccessInput!) {
+			updateCompliancePortalAccess(input: $input) {
+				compliancePortalAccess { id }
+			}
+		}
+	`,
+		map[string]any{"input": input},
+		nil,
+	)
+	require.NoError(t, err, "owner must be able to reject the visitor %s request", target.kind)
+}
+
+func visitorAccessStatus(
+	t *testing.T,
+	visitor *testutil.Client,
+	target restrictedAccessTarget,
+) string {
+	t.Helper()
+
+	var query string
+
+	switch target.kind {
+	case "document":
+		query = `
+			query($id: ID!) {
+				node(id: $id) {
+					... on Document { access { status } }
+				}
+			}
+		`
+	case "report":
+		query = `
+			query($id: ID!) {
+				node(id: $id) {
+					... on AuditReport { access { status } }
+				}
+			}
+		`
+	case "file":
+		query = `
+			query($id: ID!) {
+				node(id: $id) {
+					... on CompliancePortalFile { access { status } }
+				}
+			}
+		`
+	}
+
+	var result struct {
+		Node struct {
+			Access *struct {
+				Status string `json:"status"`
+			} `json:"access"`
+		} `json:"node"`
+	}
+
+	err := visitor.ExecuteTrust(
+		target.trustHost,
+		query,
+		map[string]any{"id": target.targetID},
+		&result,
+	)
+	require.NoError(t, err)
+	require.NotNil(t, result.Node.Access, "visitor must see an access record for the %s", target.kind)
+
+	return result.Node.Access.Status
+}
+
+// setupRestrictedPortalReport creates an audit with an uploaded report and
+// restricted portal visibility. The returned id is the report file id.
+func setupRestrictedPortalReport(t *testing.T, owner *testutil.Client) (reportFileID, compliancePortalID string) {
+	t.Helper()
+
+	frameworkID := factory.NewFramework(owner).WithName(factory.SafeName("Framework")).Create()
+	auditID := factory.NewAudit(owner, frameworkID).WithName(factory.SafeName("Audit")).Create()
+
+	var uploadResult struct {
+		UploadAuditReport struct {
+			Audit struct {
+				ReportFile struct {
+					ID string `json:"id"`
+				} `json:"reportFile"`
+			} `json:"audit"`
+		} `json:"uploadAuditReport"`
+	}
+
+	err := owner.ExecuteWithFile(
+		`
+		mutation UploadAuditReport($input: UploadAuditReportInput!) {
+			uploadAuditReport(input: $input) {
+				audit {
+					reportFile { id }
+				}
+			}
+		}
+	`,
+		map[string]any{
+			"input": map[string]any{
+				"auditId": auditID,
+				"file":    nil,
+			},
+		},
+		"input.file",
+		testutil.UploadFile{
+			Filename:    "audit-report.pdf",
+			ContentType: "application/pdf",
+			Content:     []byte("%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF"),
+		},
+		&uploadResult,
+	)
+	require.NoError(t, err)
+
+	reportFileID = uploadResult.UploadAuditReport.Audit.ReportFile.ID
+	require.NotEmpty(t, reportFileID)
+
+	compliancePortalID = lookupCompliancePortalID(t, owner)
+
+	err = owner.Execute(
+		`
+		mutation UpdateCompliancePortalAuditVisibility($input: UpdateCompliancePortalAuditVisibilityInput!) {
+			updateCompliancePortalAuditVisibility(input: $input) {
+				catalogAudit {
+					visibility
+					audit { id }
+				}
+			}
+		}
+	`,
+		map[string]any{
+			"input": map[string]any{
+				"compliancePortalId":         compliancePortalID,
+				"auditId":                    auditID,
+				"compliancePortalVisibility": "RESTRICTED",
+			},
+		},
+		nil,
+	)
+	require.NoError(t, err)
+
+	return reportFileID, compliancePortalID
 }
