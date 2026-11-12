@@ -68,7 +68,7 @@
     "errors": { "deleteTracker": "Failed to delete tracker", "moveCookie": "Failed to move cookie", "updateCookie": "Failed to update cookie" },
     "deleteConfirmation": "Are you sure you want to delete \"{{name}}\"?",
     "dialogs": { "deleteTitle": "Delete tracker" },
-    "actions": { "include": "Include", "exclude": "Exclude", "delete": "Delete", "cancel": "Cancel", "more": "More actions", "description": "Show description" },
+    "actions": { "include": "Include", "exclude": "Exclude", "delete": "Delete", "cancel": "Cancel", "more": "More actions", "description": "Show description", "sourceBanner": "Show source banner" },
     "types": { "cookie": "Cookie", "cookieShort": "C", "localStorage": "localStorage", "localStorageShort": "LS", "sessionStorage": "sessionStorage", "sessionStorageShort": "SS", "indexedDb": "IndexedDB", "indexedDbShort": "IDB", "cacheStorage": "Cache storage", "cacheStorageShort": "CS" },
     "sources": { "script": "Script", "preExisting": "Pre-existing", "http": "HTTP", "extension": "Extension" },
     "sourceVia": "via {{origin}}",

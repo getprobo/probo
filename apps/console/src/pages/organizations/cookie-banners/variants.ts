@@ -143,7 +143,7 @@ export const trackerSourceBadge = tv({
   variants: {
     layout: {
       stacked: {
-        root: "flex-col items-start gap-1",
+        root: "flex-row items-center gap-1",
       },
       inline: {
         root: "flex-row flex-wrap items-center gap-1.5",

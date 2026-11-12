@@ -18,8 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { ArrowSquareOutIcon } from "@phosphor-icons/react";
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
+import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { Link } from "@probo/ui/src/v2/Link/Link";
+import { Popover } from "@probo/ui/src/v2/Popover/Popover";
+import { PopoverPopup } from "@probo/ui/src/v2/Popover/PopoverPopup";
+import { PopoverTrigger } from "@probo/ui/src/v2/Popover/PopoverTrigger";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
@@ -82,12 +87,9 @@ export function TrackerSourceBadge({
     search.set("q", pattern.pattern);
   }
 
-  return (
-    <div className={root()}>
-      <Badge variant={sourceBadge.variant} color={sourceBadge.color}>
-        {t(`trackerPatternRow.sources.${sourceBadge.labelKey}`)}
-      </Badge>
-      {sourceBanner != null && (
+  const sourceLink = sourceBanner == null
+    ? null
+    : (
         <Link
           to={{
             pathname: cookieBannerTrackersPath(organizationId, sourceBanner.id),
@@ -96,11 +98,38 @@ export function TrackerSourceBadge({
           size={1}
           color="neutral"
           underline={false}
-          className={via()}
+          className={layout === "inline" ? via() : undefined}
         >
           {t("trackerPatternRow.sourceVia", { origin: originHost(sourceBanner.origin) })}
         </Link>
-      )}
+      );
+
+  return (
+    <div className={root()}>
+      <Badge variant={sourceBadge.variant} color={sourceBadge.color}>
+        {t(`trackerPatternRow.sources.${sourceBadge.labelKey}`)}
+      </Badge>
+      {layout === "stacked" && sourceLink != null
+        ? (
+            <Popover>
+              <PopoverTrigger
+                render={(
+                  <IconButton
+                    size={1}
+                    variant="ghost"
+                    color="neutral"
+                    aria-label={t("trackerPatternRow.actions.sourceBanner")}
+                  />
+                )}
+              >
+                <ArrowSquareOutIcon />
+              </PopoverTrigger>
+              <PopoverPopup>
+                {sourceLink}
+              </PopoverPopup>
+            </Popover>
+          )
+        : sourceLink}
     </div>
   );
 }
