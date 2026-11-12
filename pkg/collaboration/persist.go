@@ -71,9 +71,7 @@ func (s *Service) Persist(
 
 		if persisted {
 			if compactAt != nil {
-				if err := s.compact(ctx, scope, documentID, document, compactAt); err != nil {
-					return 0, err
-				}
+				s.compact(ctx, scope, documentID, document, compactAt)
 			}
 
 			return revision, nil
@@ -155,6 +153,12 @@ func (s *Service) appendLiveChanges(
 			revision = doc.Revision
 
 			if len(changes) == 0 {
+				// A compaction that failed earlier is retried even though
+				// this persist has nothing to append.
+				if doc.ChangeRevision-doc.SnapshotRevision >= compactionChanges {
+					compactAt = heads
+				}
+
 				return nil
 			}
 
@@ -261,35 +265,41 @@ func readStableChanges(
 // and drops the change log it covers. The document is saved before the row is
 // locked, so the lock only covers SQL. The save is used only when both the
 // live and the canonical document still sit at heads. Otherwise compaction
-// waits for a later persist. Only an oversized snapshot is reported: the
-// changes are already persisted, so any other failure is retried later.
+// waits for a later persist. The changes are already persisted when it runs,
+// so a failure is logged and retried later rather than reported.
 func (s *Service) compact(
 	ctx context.Context,
 	scope coredata.Scoper,
 	documentID gid.GID,
 	document *automerge.Document,
 	heads []automerge.Hash,
-) error {
+) {
 	snapshot, err := document.Save()
 	if err != nil {
 		s.logCompactionFailure(ctx, documentID, err)
 
-		return nil
+		return
 	}
 
 	current, err := document.Heads()
 	if err != nil {
 		s.logCompactionFailure(ctx, documentID, err)
 
-		return nil
+		return
 	}
 
 	if !slices.Equal(current, heads) {
-		return nil
+		return
 	}
 
 	if len(snapshot) > snapshotMaxBytes {
-		return &ErrCollaborationStateTooLarge{Size: len(snapshot)}
+		s.logCompactionFailure(
+			ctx,
+			documentID,
+			&ErrCollaborationStateTooLarge{Size: len(snapshot)},
+		)
+
+		return
 	}
 
 	err = s.pg.WithTx(
@@ -335,8 +345,6 @@ func (s *Service) compact(
 	if err != nil {
 		s.logCompactionFailure(ctx, documentID, err)
 	}
-
-	return nil
 }
 
 func (s *Service) logCompactionFailure(
