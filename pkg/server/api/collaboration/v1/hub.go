@@ -122,6 +122,7 @@ const EphemeralBuffer = 64
 const (
 	PersistDebounce = 50 * time.Millisecond
 	PersistTimeout  = 5 * time.Second
+	PersistRetryMax = 5 * time.Second
 	PresenceTTL     = 30 * time.Second
 	RoomOpenTimeout = 20 * time.Second
 )
@@ -621,6 +622,7 @@ func (r *Room) run() {
 	var timer *time.Timer
 
 	dirty := false
+	failures := 0
 
 	for {
 		var timerChannel <-chan time.Time
@@ -631,6 +633,12 @@ func (r *Room) run() {
 		select {
 		case <-r.dirty:
 			dirty = true
+
+			// A failing persist is already scheduled with a backoff. New
+			// edits must not pull that retry forward.
+			if failures > 0 {
+				continue
+			}
 
 			if timer == nil {
 				timer = time.NewTimer(PersistDebounce)
@@ -647,11 +655,13 @@ func (r *Room) run() {
 		case <-timerChannel:
 			if dirty {
 				if err := r.persist(); err != nil {
-					timer.Reset(PersistDebounce)
+					failures++
+					timer.Reset(persistRetryDelay(failures))
 
 					continue
 				}
 
+				failures = 0
 				dirty = false
 			}
 
@@ -668,6 +678,21 @@ func (r *Room) run() {
 			return
 		}
 	}
+}
+
+// persistRetryDelay doubles the wait after each consecutive failure so a
+// persist that cannot succeed stops contending for the document row.
+func persistRetryDelay(failures int) time.Duration {
+	delay := PersistDebounce
+
+	for range failures {
+		delay *= 2
+		if delay >= PersistRetryMax {
+			return PersistRetryMax
+		}
+	}
+
+	return delay
 }
 
 func (r *Room) persist() error {

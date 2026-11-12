@@ -621,6 +621,72 @@ func TestRoom_RetriesPersistAfterError(t *testing.T) {
 	require.NoError(t, document.Close())
 }
 
+func TestRoom_BacksOffPersistRetries(t *testing.T) {
+	t.Parallel()
+
+	tenantID := gid.NewTenantID()
+	documentID := gid.New(tenantID, coredata.DocumentEntityType)
+	document, err := automerge.New(automerge.ActorID{9})
+	require.NoError(t, err)
+
+	documents := &fakeDocuments{
+		opened: &collaboration.DocumentCollaboration{
+			Document: document,
+			Revision: 1,
+		},
+	}
+	documents.failAttempts.Store(3)
+	room := &Room{
+		collaboration: documents.opened,
+		documents:     documents,
+		scope:         coredata.NewScope(tenantID, gid.Nil),
+		documentID:    documentID,
+		peers:         make(map[uint64]RoomPeer),
+		dirty:         make(chan struct{}, 1),
+		stop:          make(chan struct{}),
+		done:          make(chan struct{}),
+	}
+
+	room.revision.Store(1)
+
+	go room.run()
+
+	lease := &RoomLease{room: room}
+	lease.SchedulePersist()
+
+	started := time.Now()
+
+	// Edits arriving while a retry is pending must not shorten the backoff.
+	require.Eventually(
+		t,
+		func() bool {
+			if documents.attempts.Load() > 0 {
+				lease.SchedulePersist()
+			}
+
+			return documents.persisted.Load() >= 1
+		},
+		5*time.Second,
+		5*time.Millisecond,
+	)
+
+	// One debounce, then retries after 2x, 4x and 8x the debounce.
+	assert.GreaterOrEqual(t, time.Since(started), 14*PersistDebounce)
+
+	close(room.stop)
+	<-room.done
+	require.NoError(t, document.Close())
+}
+
+func TestPersistRetryDelay(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, 2*PersistDebounce, persistRetryDelay(1))
+	assert.Equal(t, 4*PersistDebounce, persistRetryDelay(2))
+	assert.Equal(t, PersistRetryMax, persistRetryDelay(20))
+	assert.Equal(t, PersistRetryMax, persistRetryDelay(1000))
+}
+
 func TestRoom_PersistsDirtyOnCloseAfterError(t *testing.T) {
 	t.Parallel()
 
