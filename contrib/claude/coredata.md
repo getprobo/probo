@@ -485,7 +485,7 @@ pgx does not know our PostgreSQL enum array types. A single enum value encodes t
 
 Pass a named slice type that implements `database/sql/driver.Valuer`. `Value` returns the Postgres array literal. Do not loop the values into `[]string` at the call site. Enum labels are plain ASCII tokens, so `%q` produces the same literal PostgreSQL parses.
 
-Name the slice type `XXXTypeValues` when an `XXXTypes()` helper already exists (`ProfileStateValues`, `CompliancePortalDocumentAccessStatusValues`). Use the plural of the enum when that name is free (`DocumentVersionSignatureStates`).
+Name the slice type the plural of the enum when that name is free (`DocumentVersionSignatureStates`). When a plural helper already uses that name (`ProfileStates()`, `CompliancePortalDocumentAccessStatuses()`, `DocumentTypes()`), append `Values` to the enum type (`ProfileStateValues`, `CompliancePortalDocumentAccessStatusValues`).
 
 ```go
 type (

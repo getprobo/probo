@@ -12,7 +12,7 @@ Implement `database/sql/driver.Valuer` on a named slice type. `Value` returns th
 
 Do not loop the values into `[]string` at the call site.
 
-Name the slice `XXXTypeValues` when an `XXXTypes()` helper already exists. Use the plural of the enum when that name is free.
+Name the slice the plural of the enum when that name is free (`DocumentVersionSignatureStates`). When a plural helper already uses it (`Statuses()`, `States()`, `Types()`, or a longer name such as `AccessReviewCampaignStatuses()`), append `Values` to the enum type (`StatusValues`).
 
 ```go
 // GOOD
