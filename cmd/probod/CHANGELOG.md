@@ -4,6 +4,51 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.344.0] - 2026-11-12
+
+### Added
+
+- Document review. Members comment on a quote in a document, with
+  rich text and member mentions, and reply to, resolve, or reopen
+  threads. Suggesting mode records inserts, deletions, and removed
+  line breaks as redlines that reviewers accept or reject in place.
+  Review cards sit in the margin beside the page and stay in sync
+  across open tabs. Comments and suggestions are also available on
+  the GraphQL and MCP APIs
+- Viewers and auditors can comment on a document without editing it
+- Separate permissions for commenting, updating and deleting
+  comments, resolving threads, suggesting, and accepting or rejecting
+  suggestions. The suggesting mode only shows for members who can
+  suggest
+- Publishing or restoring a document is blocked while a suggestion is
+  still open
+
+### Changed
+
+- Opening and saving a large collaborative document no longer holds
+  the document lock while its history is rebuilt, so saves stop timing
+  out and concurrent editors are not stalled. A failed save retries
+  with a backoff of up to five seconds
+- Every authorization check writes its own audit log entry, including
+  repeated reads of the same document or profile in one request
+
+### Removed
+
+- **Breaking**: the discard-draft action on documents, along with the
+  `deleteDocumentDraft` GraphQL mutation and MCP tool and the
+  `core:document:delete-draft` permission
+- **Breaking**: the MCP `updateDocument` tool no longer accepts
+  `content`. Use fragment edits to change document content
+- Lazy seeding of collaboration documents on first open, announced in
+  0.325.0, and the `migrate-collaboration-documents` command
+
+### Fixed
+
+- Shutting down the server while a collaboration socket is open no
+  longer panics
+- A session write that fails on a live request is reported instead of
+  being ignored when the request is canceled at the same time
+
 ## [0.343.0] - 2026-11-12
 
 ### Added
