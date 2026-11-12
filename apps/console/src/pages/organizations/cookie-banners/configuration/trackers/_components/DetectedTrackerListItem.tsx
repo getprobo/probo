@@ -79,7 +79,7 @@ interface DetectedTrackerListItemProps {
 export function DetectedTrackerListItem({ detectedTrackerKey }: DetectedTrackerListItemProps) {
   const { t, i18n } = useTranslation("organizations/cookie-banners");
   const tracker = useFragment(detectedTrackerFragment, detectedTrackerKey);
-  const { heading, identifier, info, detail, fact, url, date } = detectedTrackerListItem();
+  const { heading, identifier, info, detail, fact, url, initiator, date } = detectedTrackerListItem();
   const sourceBadge = tracker.source == null ? null : cookieSourceBadges[tracker.source];
   const yesNo = (value: boolean | null | undefined) => (
     value == null ? null : t(value ? "detectedTrackerRow.details.yes" : "detectedTrackerRow.details.no")
@@ -103,7 +103,7 @@ export function DetectedTrackerListItem({ detectedTrackerKey }: DetectedTrackerL
 
   return (
     <TableRow align="center">
-      <TableRowHeaderCell overflow="truncate">
+      <TableRowHeaderCell overflow="break">
         <div className={heading()}>
           <Text size={2} className={identifier()}>
             {tracker.identifier}
@@ -154,11 +154,11 @@ export function DetectedTrackerListItem({ detectedTrackerKey }: DetectedTrackerL
                 </Text>
               )}
       </TableCell>
-      <TableCell overflow="truncate">
+      <TableCell overflow="break">
         {tracker.initiatorUrl == null
           ? <Text size={2} color="faint">-</Text>
           : (
-              <Text size={2} className={url()}>
+              <Text size={2} className={initiator()}>
                 {tracker.initiatorUrl}
               </Text>
             )}

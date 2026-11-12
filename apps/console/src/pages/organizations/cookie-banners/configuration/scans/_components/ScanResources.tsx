@@ -118,10 +118,10 @@ export function ScanResources({ scanKey }: { scanKey: ScanResources_scan$key }) 
                 <TableCell>
                   <Text size={2}>{t(`resourcesPage.types.${resourceTypeBadges[resource.type].labelKey}`)}</Text>
                 </TableCell>
-                <TableCell overflow="truncate">
+                <TableCell overflow="break">
                   <Text size={2} className="break-all font-mono">{resource.origin}</Text>
                 </TableCell>
-                <TableCell overflow="truncate">
+                <TableCell overflow="break">
                   <Text size={2} className="break-all font-mono">{resource.path}</Text>
                 </TableCell>
               </TableRow>

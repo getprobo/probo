@@ -254,11 +254,12 @@ export const trackerPatternDetectedTrackersSection = tv({
 export const detectedTrackerListItem = tv({
   slots: {
     heading: "flex min-w-0 items-center gap-2",
-    identifier: "min-w-0 truncate font-mono",
+    identifier: "min-w-0 break-all font-mono",
     info: "relative z-1 shrink-0",
     detail: "flex flex-col gap-2",
     fact: "flex items-baseline justify-between gap-4",
     url: "min-w-0 truncate font-mono",
+    initiator: "line-clamp-2 break-all font-mono",
     date: "whitespace-nowrap",
   },
 });

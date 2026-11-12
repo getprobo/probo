@@ -37,16 +37,25 @@ import { ScanResources } from "./ScanResources";
 
 const scanCountsFragment = graphql`
   fragment ScanCounts_scan on CookieBannerScan {
-    pagesScanned
-    cookiesFound
     checkpoint {
+      pagesScanned
       visitedTemplates
       queue {
         url
       }
     }
-    storageFound
-    resourcesFound
+    cookiesInfo: detectedTrackers(first: 0, filter: { trackerTypes: [COOKIE] }) {
+      totalCount
+    }
+    storageInfo: detectedTrackers(
+      first: 0
+      filter: { trackerTypes: [LOCAL_STORAGE, SESSION_STORAGE] }
+    ) {
+      totalCount
+    }
+    resourcesInfo: trackerResources(first: 0) {
+      totalCount
+    }
     ...ScanPages_scan
     ...ScanDetectedTrackers_cookies
     ...ScanDetectedTrackers_storage
@@ -76,7 +85,7 @@ export function ScanCounts({ scanKey }: ScanCountsProps) {
     scan.checkpoint?.visitedTemplates ?? [],
     (scan.checkpoint?.queue ?? []).map(item => ({ url: item.url })),
   );
-  const pageTotals = scanPageTotals(pageRows, scan.pagesScanned);
+  const pageTotals = scanPageTotals(pageRows, scan.checkpoint?.pagesScanned ?? 0);
 
   return (
     <div className="flex flex-col gap-4">
@@ -103,17 +112,17 @@ export function ScanCounts({ scanKey }: ScanCountsProps) {
           <SegmentedControlItem value="cookies">
             <CookieIcon />
             {t("scanPage.counts.cookies")}
-            <span className={countClass}>{format.format(scan.cookiesFound)}</span>
+            <span className={countClass}>{format.format(scan.cookiesInfo.totalCount)}</span>
           </SegmentedControlItem>
           <SegmentedControlItem value="storage">
             <DatabaseIcon />
             {t("scanPage.counts.storage")}
-            <span className={countClass}>{format.format(scan.storageFound)}</span>
+            <span className={countClass}>{format.format(scan.storageInfo.totalCount)}</span>
           </SegmentedControlItem>
           <SegmentedControlItem value="resources">
             <CodeIcon />
             {t("scanPage.counts.resources")}
-            <span className={countClass}>{format.format(scan.resourcesFound)}</span>
+            <span className={countClass}>{format.format(scan.resourcesInfo.totalCount)}</span>
           </SegmentedControlItem>
         </SegmentedControl>
       </div>
