@@ -46,6 +46,15 @@ type fakeDocuments struct {
 	persistedCh    chan struct{}
 	persistStarted chan struct{}
 	persistGate    chan struct{}
+	attemptsMu     sync.Mutex
+	attemptTimes   []time.Time
+}
+
+func (f *fakeDocuments) attemptedAt() []time.Time {
+	f.attemptsMu.Lock()
+	defer f.attemptsMu.Unlock()
+
+	return append([]time.Time(nil), f.attemptTimes...)
 }
 
 func (f *fakeDocuments) Open(
@@ -62,6 +71,10 @@ func (f *fakeDocuments) Persist(
 	gid.GID,
 	*automerge.Document,
 ) (int64, error) {
+	f.attemptsMu.Lock()
+	f.attemptTimes = append(f.attemptTimes, time.Now())
+	f.attemptsMu.Unlock()
+
 	call := f.attempts.Add(1)
 	if f.persistGate != nil && call == 1 {
 		close(f.persistStarted)
@@ -600,8 +613,6 @@ func TestRoom_BacksOffPersistRetries(t *testing.T) {
 	lease := &RoomLease{room: room}
 	lease.SchedulePersist()
 
-	started := time.Now()
-
 	// Edits arriving while a retry is pending must not shorten the backoff.
 	require.Eventually(
 		t,
@@ -616,8 +627,13 @@ func TestRoom_BacksOffPersistRetries(t *testing.T) {
 		5*time.Millisecond,
 	)
 
-	// One debounce, then retries after 2x, 4x and 8x the debounce.
-	assert.GreaterOrEqual(t, time.Since(started), 14*PersistDebounce)
+	// One debounce, then retries after 2x, 4x and 8x the debounce. Each gap
+	// is checked on its own so a fixed retry delay cannot pass.
+	attempts := documents.attemptedAt()
+	require.GreaterOrEqual(t, len(attempts), 4)
+	assert.GreaterOrEqual(t, attempts[1].Sub(attempts[0]), 2*PersistDebounce)
+	assert.GreaterOrEqual(t, attempts[2].Sub(attempts[1]), 4*PersistDebounce)
+	assert.GreaterOrEqual(t, attempts[3].Sub(attempts[2]), 8*PersistDebounce)
 
 	close(room.stop)
 	<-room.done
