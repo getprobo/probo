@@ -28,7 +28,11 @@
       "serialNumber": "Serial number",
       "agentVersion": "Agent version",
       "enrolledAt": "Enrolled at",
-      "lastSeen": "Last seen"
+      "lastSeen": "Last seen",
+      "source": "Source",
+      "model": "Model",
+      "mdm": "MDM",
+      "mdmLastCheckIn": "Last MDM check-in"
     },
     "views": {
       "allRegistered": "All devices",
@@ -44,18 +48,28 @@
       "allPlatforms": "All platforms",
       "selectedCount": "{{count}} selected",
       "search": "Search by owner",
-      "empty": "No devices match these filters"
+      "empty": "No devices match these filters",
+      "allSources": "All sources"
     },
     "platforms": {
       "darwin": "macOS",
       "linux": "Linux",
       "freebsd": "FreeBSD",
-      "windows": "Windows"
+      "windows": "Windows",
+      "ios": "iOS",
+      "ipados": "iPadOS",
+      "tvos": "tvOS",
+      "android": "Android"
+    },
+    "sources": {
+      "agent": "Agent",
+      "mdm": "MDM"
     },
     "values": {
       "pending": "(pending)",
       "never": "Never",
-      "unassigned": "Unassigned"
+      "unassigned": "Unassigned",
+      "noAgent": "No agent"
     },
     "messages": {
       "ownerUpdated": "Device owner updated",
