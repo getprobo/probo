@@ -37,13 +37,13 @@ import type { DocumentReviewMarginSuggestion_suggestion$key } from "#/__generate
 import type { DocumentReviewMarginThread_thread$key } from "#/__generated__/core/DocumentReviewMarginThread_thread.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
 
-import type { SuggestionPreview } from "../../_lib/suggestionPreview";
 import {
   closeSuggestion,
   deleteCommentEdge,
   insertCommentEdge,
   insertThreadEdge,
 } from "../../_lib/reviewMarginStore";
+import type { SuggestionPreview } from "../../_lib/suggestionPreview";
 
 import { DocumentReviewMarginCard } from "./DocumentReviewMarginCard";
 import { DocumentReviewMarginComments } from "./DocumentReviewMarginComments";

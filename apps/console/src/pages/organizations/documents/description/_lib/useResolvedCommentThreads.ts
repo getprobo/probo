@@ -68,7 +68,6 @@ export function useResolvedCommentThreads({
 
   useEffect(() => {
     if (!historyOpen) return;
-    setInvalidNode(false);
     const subscription = fetchQuery<useResolvedCommentThreadsQuery>(
       environment,
       historyQuery,

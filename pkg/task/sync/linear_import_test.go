@@ -197,7 +197,7 @@ func TestImportLinearMarkdown_DescriptionDataFile(t *testing.T) {
 	for id, assetURL := range files {
 		assert.Equal(t, fileURL, assetURL)
 		assert.Equal(t, "application/pdf", metas[id].MimeType)
-		assert.Contains(t, rewritten, prosemirror.AttachmentPath(id))
+		assert.Contains(t, rewritten, attachment.Path(id))
 	}
 }
 

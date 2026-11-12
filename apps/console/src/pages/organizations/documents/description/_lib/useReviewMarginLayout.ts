@@ -24,13 +24,13 @@ import type { Editor } from "@tiptap/core";
 import type { Transaction } from "@tiptap/pm/state";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
-import { collectSuggestionAnchors, type SuggestionPreview } from "./suggestionPreview";
 import {
   editorContentTop,
   placeCardTops,
-  threadPosition,
   type ReviewMarginAnchorThread,
+  threadPosition,
 } from "./reviewMarginLayout";
+import { collectSuggestionAnchors, type SuggestionPreview } from "./suggestionPreview";
 
 export type CommentDraft = {
   quote: string;

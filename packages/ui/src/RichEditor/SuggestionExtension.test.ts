@@ -305,7 +305,7 @@ describe("suggesting input", () => {
     expect(suggesting.props.handleKeyDown.call(suggesting, view, { key: "Backspace" } as KeyboardEvent)).toBe(true);
     expect(state.doc.childCount).toBe(2);
     expect(state.doc.textContent).toBe("HelloWorld");
-    expect(state.doc.child(0).attrs.unknownAttrs?.suggestionSplit).toBeUndefined();
+    expect(suggestionSplitOf(state.doc.child(0))).toBeUndefined();
     expect(markedText(state.doc)).toEqual([
       { text: "Hell", marks: [] },
       { text: "o", marks: [suggestionDeleteName] },
@@ -367,9 +367,9 @@ describe("suggesting input", () => {
     });
     expect(state.selection.$from.pos).toBe(1);
 
-    const before = state.doc.toJSON();
+    const before = documentSnapshot(state.doc);
     expect(suggesting.props.handleKeyDown.call(suggesting, view, { key: "Backspace" } as KeyboardEvent)).toBe(true);
-    expect(state.doc.toJSON()).toEqual(before);
+    expect(documentSnapshot(state.doc)).toEqual(before);
     expect(state.selection.$from.pos).toBe(1);
   });
 
@@ -566,6 +566,19 @@ describe("suggesting input", () => {
     });
   });
 });
+
+function suggestionSplitOf(node: { attrs: { unknownAttrs?: unknown } }): unknown {
+  const attrs = node.attrs.unknownAttrs;
+  if (attrs === null || typeof attrs !== "object" || !("suggestionSplit" in attrs)) {
+    return undefined;
+  }
+
+  return attrs.suggestionSplit;
+}
+
+function documentSnapshot(doc: { toJSON(): unknown }): unknown {
+  return doc.toJSON();
+}
 
 function editorState(text: ProseMirrorNode): EditorState {
   return EditorState.create({

@@ -552,7 +552,7 @@ describe("Automerge sync plugin", () => {
     const marked = editor.state.tr.setNodeMarkup(blockPos, undefined, {
       ...block.attrs,
       unknownAttrs: {
-        ...(block.attrs.unknownAttrs ?? {}),
+        ...unknownAttrsOf(block),
         suggestionSplit: "s1",
         splitKind: "deletion",
       },
@@ -562,7 +562,8 @@ describe("Automerge sync plugin", () => {
     });
     const blocks = Automerge.spans(editor.document, ["body"])
       .filter(span => span.type === "block");
-    expect(blocks.at(-1)?.value).toMatchObject({
+    const last = blocks[blocks.length - 1];
+    expect(last?.value).toMatchObject({
       attrs: { suggestionSplit: "s1", splitKind: "deletion" },
     });
     expectSameDocument(editor);
@@ -653,6 +654,13 @@ describe("surrogate pairs", () => {
     expect(isSurrogatePair("a")).toBe(false);
   });
 });
+
+function unknownAttrsOf(block: { attrs: { unknownAttrs?: unknown } }): Record<string, unknown> {
+  const attrs = block.attrs.unknownAttrs;
+  if (attrs === null || typeof attrs !== "object" || Array.isArray(attrs)) return {};
+
+  return { ...attrs };
+}
 
 function blockTypes(document: Automerge.Doc<RichEditorAutomergeDocument>): string[] {
   return Automerge.spans(document, ["body"])

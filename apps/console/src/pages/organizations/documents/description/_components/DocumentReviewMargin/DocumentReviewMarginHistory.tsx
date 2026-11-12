@@ -31,11 +31,11 @@ import type { DocumentReviewMarginMutations_reopenMutation } from "#/__generated
 import { useMutation } from "#/lib/relay/useMutation";
 import { richEditorContentPlainText } from "#/pages/organizations/_lib/richEditorContent";
 
+import { reopenThreadEdge } from "../../_lib/reviewMarginStore";
 import {
   type ResolvedCommentThread,
   useResolvedCommentThreads,
 } from "../../_lib/useResolvedCommentThreads";
-import { reopenThreadEdge } from "../../_lib/reviewMarginStore";
 
 import { reopenMutation } from "./DocumentReviewMarginMutations";
 

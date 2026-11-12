@@ -32,8 +32,8 @@ import {
   richEditorContentTextLength,
 } from "#/pages/organizations/_lib/richEditorContent";
 
-import { type CommentDraft } from "../../_lib/useReviewMarginLayout";
 import { insertThreadEdge } from "../../_lib/reviewMarginStore";
+import { type CommentDraft } from "../../_lib/useReviewMarginLayout";
 
 import { DocumentReviewMarginCard } from "./DocumentReviewMarginCard";
 import { createThreadMutation } from "./DocumentReviewMarginMutations";

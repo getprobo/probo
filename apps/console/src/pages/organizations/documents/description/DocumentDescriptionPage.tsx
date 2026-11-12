@@ -50,8 +50,8 @@ import { documentHistoryPanelQuery, DocumentHistoryView } from "./_components/Do
 import { DocumentPresence } from "./_components/DocumentPresence";
 import { DocumentReviewMargin } from "./_components/DocumentReviewMargin/DocumentReviewMargin";
 import {
-  DocumentReviewModeMenu,
   type DocumentReviewMode,
+  DocumentReviewModeMenu,
 } from "./_components/DocumentReviewModeMenu";
 
 const autoSaveIntervalMs = 1000;
