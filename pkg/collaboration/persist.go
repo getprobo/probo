@@ -115,10 +115,6 @@ func (s *Service) appendLiveChanges(
 				return err
 			}
 
-			if !doc.Seeded {
-				return ErrDocumentCollaborationNotSeeded
-			}
-
 			canonicalHeads, err := decodeHeads(doc.Heads)
 			if err != nil {
 				return fmt.Errorf("cannot decode canonical collaboration heads: %w", err)
@@ -177,8 +173,6 @@ func (s *Service) appendLiveChanges(
 					return err
 				}
 			}
-
-			doc.SeedClaimedAt = nil
 
 			doc.UpdatedAt = now
 			if err := doc.Update(ctx, tx, scope); err != nil {

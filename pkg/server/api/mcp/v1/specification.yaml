@@ -8494,9 +8494,9 @@ components:
           items:
             type: string
           description: >
-            Automerge heads for the live document (lowercase hex). Empty when
-            collaboration is not seeded. Pass as base_heads with edits on
-            updateDocument.
+            Automerge heads for the live document (lowercase hex). Empty for a
+            document that has no live collaborative content, such as a
+            generated one. Pass as base_heads with edits on updateDocument.
         current_published_major:
           type:
             - integer
@@ -9397,27 +9397,21 @@ components:
         title:
           type: string
           description: Document title
-        content:
-          type: string
-          description: >
-            Full ProseMirror document JSON. Allowed only while collaboration is
-            not seeded. Once collaboration_heads is set on getDocument, use
-            base_heads and edits instead.
         base_heads:
           type: array
           items:
             type: string
           description: >
             Automerge heads from getDocument.collaboration_heads. Required
-            with edits on a seeded document.
+            with edits.
         edits:
           type: array
           items:
             $ref: "#/components/schemas/DocumentCollaborationEdit"
           description: >
-            Fragment replacements for a seeded document. Each target must match
-            exactly once in the latest document. Rejected while collaboration is
-            not seeded; use content then.
+            Fragment replacements applied to the live document. Each target
+            must match exactly once in the latest document. This is the only
+            way to change document content.
         classification:
           $ref: "#/components/schemas/DocumentClassification"
           description: Document classification

@@ -2538,26 +2538,7 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 		panic(fmt.Errorf("cannot load document: %w", err))
 	}
 
-	seeded, err := svc.Documents.CollaborationSeeded(ctx, scope, document.ID)
-	if err != nil {
-		panic(fmt.Errorf("cannot load document collaboration seed state: %w", err))
-	}
-
-	hasEdits := len(input.Edits) > 0
-	if hasEdits && input.Content != nil {
-		return nil, types.UpdateDocumentOutput{}, fmt.Errorf(
-			"cannot update document: content and edits cannot be set together",
-		)
-	}
-
-	if hasEdits {
-		if !seeded {
-			return nil, types.UpdateDocumentOutput{}, fmt.Errorf(
-				"cannot update document: %w",
-				collaboration.ErrDocumentCollaborationEditsNotSeeded,
-			)
-		}
-
+	if len(input.Edits) > 0 {
 		if input.Title != nil || input.Classification != nil || input.DocumentType != nil || input.DefaultApproverIds != nil {
 			return nil, types.UpdateDocumentOutput{}, fmt.Errorf(
 				"cannot update document: fragment edits cannot be combined with metadata updates",
@@ -2597,8 +2578,7 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 			switch {
 			case errors.Is(err, collaboration.ErrDocumentCollaborationBaseHeadsUnknown),
 				errors.Is(err, collaboration.ErrDocumentCollaborationStale),
-				errors.Is(err, collaboration.ErrDocumentCollaborationEditsNotSeeded),
-				errors.Is(err, collaboration.ErrSeedInProgress),
+				errors.Is(err, collaboration.ErrDocumentCollaborationNotFound),
 				errors.Is(err, collaboration.ErrOpenSuggestions),
 				errors.Is(err, prosemirror.ErrFragmentEditAmbiguous):
 				return nil, types.UpdateDocumentOutput{}, fmt.Errorf("cannot update document: %w", err)
@@ -2628,19 +2608,6 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 		}, nil
 	}
 
-	if input.Content != nil {
-		if seeded {
-			return nil, types.UpdateDocumentOutput{}, fmt.Errorf(
-				"cannot update document: %w",
-				collaboration.ErrDocumentCollaborationContentOnSeeded,
-			)
-		}
-
-		if err := validateMCPDocumentContent(*input.Content); err != nil {
-			return nil, types.UpdateDocumentOutput{}, err
-		}
-	}
-
 	var defaultApproverIDs *[]gid.GID
 	if input.DefaultApproverIds != nil {
 		defaultApproverIDs = &input.DefaultApproverIds
@@ -2651,18 +2618,12 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 		probo.UpdateDocumentRequest{
 			DocumentID:         input.ID,
 			Title:              input.Title,
-			Content:            input.Content,
 			Classification:     input.Classification,
 			DocumentType:       input.DocumentType,
 			DefaultApproverIDs: defaultApproverIDs,
 		},
 	)
 	if err != nil {
-		if errors.Is(err, collaboration.ErrDocumentCollaborationContentOnSeeded) ||
-			errors.Is(err, collaboration.ErrSeedInProgress) {
-			return nil, types.UpdateDocumentOutput{}, fmt.Errorf("cannot update document: %w", err)
-		}
-
 		panic(fmt.Errorf("cannot update document: %w", err))
 	}
 
@@ -11367,8 +11328,7 @@ func (r *Resolver) GetDocumentHistorySnapshotTool(ctx context.Context, req *mcp.
 		parsedPrevious,
 	)
 	if err != nil {
-		if errors.Is(err, collaboration.ErrDocumentCollaborationNotSeeded) ||
-			errors.Is(err, collaboration.ErrSeedInProgress) {
+		if errors.Is(err, collaboration.ErrDocumentCollaborationNotFound) {
 			return nil, types.GetDocumentHistorySnapshotOutput{}, fmt.Errorf("cannot get history snapshot: %w", err)
 		}
 
@@ -11398,8 +11358,7 @@ func (r *Resolver) RestoreDocumentHistoryTool(ctx context.Context, req *mcp.Call
 		switch {
 		case errors.Is(err, coredata.ErrResourceNotFound):
 			return nil, types.RestoreDocumentHistoryOutput{}, fmt.Errorf("cannot restore history: %w", err)
-		case errors.Is(err, collaboration.ErrDocumentCollaborationNotSeeded),
-			errors.Is(err, collaboration.ErrSeedInProgress),
+		case errors.Is(err, collaboration.ErrDocumentCollaborationNotFound),
 			errors.Is(err, collaboration.ErrOpenSuggestions):
 			return nil, types.RestoreDocumentHistoryOutput{}, fmt.Errorf("cannot restore history: %w", err)
 		}

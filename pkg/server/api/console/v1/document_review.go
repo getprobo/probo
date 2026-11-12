@@ -146,8 +146,7 @@ func (r *Resolver) documentReviewError(ctx context.Context, message string, err 
 	case errors.Is(err, coredata.ErrResourceAlreadyExists),
 		errors.Is(err, probo.ErrDocumentCommentThreadResolved),
 		errors.Is(err, collaboration.ErrOpenSuggestions),
-		errors.Is(err, collaboration.ErrDocumentCollaborationNotSeeded),
-		errors.Is(err, collaboration.ErrSeedInProgress):
+		errors.Is(err, collaboration.ErrDocumentCollaborationNotFound):
 		return gqlx.Conflict(ctx, err)
 	case errors.Is(err, probo.ErrNotDocumentCommentAuthor),
 		errors.Is(err, probo.ErrInvalidDocumentAnchor),

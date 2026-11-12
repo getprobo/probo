@@ -3707,14 +3707,6 @@ func (s *DocumentService) CollaborationHeads(
 	return s.collaboration.Heads(ctx, scope, documentID)
 }
 
-func (s *DocumentService) CollaborationSeeded(
-	ctx context.Context,
-	scope coredata.Scoper,
-	documentID gid.GID,
-) (bool, error) {
-	return s.collaboration.Seeded(ctx, scope, documentID)
-}
-
 func (s *DocumentService) LoadDocument(
 	ctx context.Context,
 	scope coredata.Scoper,

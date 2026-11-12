@@ -33,7 +33,6 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/automerge"
 	collabpkg "go.probo.inc/probo/pkg/automerge/collaboration"
-	automergeprosemirror "go.probo.inc/probo/pkg/automerge/prosemirror"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/bearertoken"
 	"go.probo.inc/probo/pkg/collaboration"
@@ -204,15 +203,6 @@ func (h *Handler) HandleRepo(w http.ResponseWriter, r *http.Request) {
 
 	defer lease.Close()
 
-	if lease.SeedOwner() {
-		if err := SeedRepoCollaboration(collaborationCtx, lease); err != nil {
-			h.releaseSeedClaim(collaborationCtx, scope, documentID, lease)
-			h.closeOpenError(collaborationCtx, connection, documentIDString, err)
-
-			return
-		}
-	}
-
 	syncState, err := lease.Collaboration().Document.NewSyncState()
 	if err != nil {
 		h.closeWithError(r.Context(), connection, documentIDString, err)
@@ -328,40 +318,6 @@ func insufficientAuthorization(err error) bool {
 	return false
 }
 
-func (h *Handler) releaseSeedClaim(
-	ctx context.Context,
-	scope coredata.Scoper,
-	documentID gid.GID,
-	lease *RoomLease,
-) {
-	releaseCtx, cancel := context.WithTimeout(
-		context.WithoutCancel(ctx),
-		PersistTimeout,
-	)
-	defer cancel()
-
-	err := h.Probo.Collaboration.ReleaseSeed(
-		releaseCtx,
-		scope,
-		documentID,
-		lease.SeedClaimedAt(),
-	)
-	if err != nil {
-		if h.Logger != nil {
-			h.Logger.ErrorCtx(
-				releaseCtx,
-				"cannot release collaboration seed",
-				log.Error(err),
-				log.String("document_id", documentID.String()),
-			)
-		}
-
-		return
-	}
-
-	lease.markSeedReleased()
-}
-
 func (h *Handler) renderAuthorizationError(w http.ResponseWriter, err error) {
 	if scopeErr, ok := errors.AsType[*iam.ErrInsufficientOAuth2Scope](err); ok {
 		bearertoken.SetBearerInsufficientScope(w, h.BaseURL, scopeErr.Scopes...)
@@ -405,7 +361,8 @@ func (h *Handler) closeOpenError(
 }
 
 func collaborationOpenUnavailable(err error) bool {
-	if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, collaboration.ErrSeedInProgress) {
+	if errors.Is(err, coredata.ErrResourceNotFound) ||
+		errors.Is(err, collaboration.ErrDocumentCollaborationNotFound) {
 		return true
 	}
 
@@ -501,41 +458,6 @@ func collaborationPresenceAvatarURL(
 	}
 
 	return avatarURL
-}
-
-func SeedRepoCollaboration(ctx context.Context, lease *RoomLease) error {
-	content := lease.Collaboration().SeedContent
-	if content == "" {
-		content = collaboration.EmptyProseMirrorDocument
-	}
-
-	spans, err := automergeprosemirror.ToSpans(content)
-	if err != nil {
-		return fmt.Errorf("cannot convert seed content to spans: %w", err)
-	}
-
-	document := lease.Collaboration().Document
-
-	text, err := document.Text("body")
-	if err != nil {
-		text, err = document.CreateText("body")
-		if err != nil {
-			return fmt.Errorf("cannot create seed text object: %w", err)
-		}
-	}
-
-	if err := text.UpdateSpans(spans, automergeprosemirror.UpdateSpansConfig()); err != nil {
-		return fmt.Errorf("cannot write seed spans: %w", err)
-	}
-
-	if _, err := document.Commit("Seed collaboration document", time.Now()); err != nil {
-		return fmt.Errorf("cannot commit seed: %w", err)
-	}
-
-	lease.SchedulePersist()
-	lease.completeSeed()
-
-	return nil
 }
 
 func announceCollaborationDeparture(

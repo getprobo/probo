@@ -405,10 +405,6 @@ func (s *Service) EnsureNoOpenSuggestions(
 		return fmt.Errorf("cannot load collaboration document: %w", err)
 	}
 
-	if !doc.Seeded {
-		return nil
-	}
-
 	changes, err := s.collectChanges(
 		ctx,
 		tx,

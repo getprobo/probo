@@ -306,8 +306,7 @@ func (r *Resolver) documentWithHeads(
 	heads, err := r.proboSvc.Documents.CollaborationHeads(ctx, scope, document.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) ||
-			errors.Is(err, collaboration.ErrDocumentCollaborationNotSeeded) ||
-			errors.Is(err, collaboration.ErrSeedInProgress) {
+			errors.Is(err, collaboration.ErrDocumentCollaborationNotFound) {
 			return types.NewDocument(document), nil
 		}
 

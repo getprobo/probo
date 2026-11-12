@@ -166,62 +166,6 @@ LIMIT 1;
 	return nil
 }
 
-func (p *Document) LoadByIDForUpdate(
-	ctx context.Context,
-	tx pg.Tx,
-	scope Scoper,
-	documentID gid.GID,
-) error {
-	q := `
-SELECT
-    documents.id,
-    documents.organization_id,
-    documents.current_published_major,
-    documents.current_published_minor,
-    documents.write_mode,
-    documents.status,
-    documents.archived_at,
-    documents.created_at,
-    documents.updated_at,
-    documents.title,
-    documents.classification,
-    documents.document_type,
-    documents.orientation,
-    documents.content
-FROM
-    documents
-WHERE
-    %s
-    AND documents.deleted_at IS NULL
-    AND documents.id = @document_id
-LIMIT 1
-FOR UPDATE;
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{"document_id": documentID}
-	maps.Copy(args, scope.SQLArguments())
-
-	rows, err := tx.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query document for update: %w", err)
-	}
-
-	document, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Document])
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return ErrResourceNotFound
-		}
-
-		return fmt.Errorf("cannot collect document for update: %w", err)
-	}
-
-	*p = document
-
-	return nil
-}
-
 func (p *Document) LoadByIDWithFilter(
 	ctx context.Context,
 	conn pg.Querier,

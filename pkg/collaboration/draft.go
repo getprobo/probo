@@ -71,25 +71,8 @@ func assertDraftEditable(
 	return document.OrganizationID, nil
 }
 
-// loadSeedContent returns the text used to seed a collaboration document
-// that has never been opened. The live text lives on the document until the
-// CRDT is seeded.
-func loadSeedContent(
-	ctx context.Context,
-	scope coredata.Scoper,
-	conn pg.Querier,
-	documentID gid.GID,
-) (string, error) {
-	document := &coredata.Document{}
-	if err := document.LoadByID(ctx, conn, scope, documentID); err != nil {
-		return "", fmt.Errorf("cannot load document for seed: %w", err)
-	}
-
-	return document.Content, nil
-}
-
 // writeLiveContent stores the materialized CRDT text on the document. Versions
-// stay frozen snapshots; this is the projection readers use until they open
+// stay frozen snapshots; this is the projection readers use without opening
 // the CRDT.
 func writeLiveContent(
 	ctx context.Context,

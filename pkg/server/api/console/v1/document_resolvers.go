@@ -524,8 +524,7 @@ func (r *documentRevisionResolver) Snapshot(ctx context.Context, obj *types.Docu
 		previousHeads,
 	)
 	if err != nil {
-		if errors.Is(err, collaboration.ErrDocumentCollaborationNotSeeded) ||
-			errors.Is(err, collaboration.ErrSeedInProgress) {
+		if errors.Is(err, collaboration.ErrDocumentCollaborationNotFound) {
 			return nil, gqlx.Conflict(ctx, err)
 		}
 
@@ -1298,11 +1297,6 @@ func (r *mutationResolver) UpdateDocument(ctx context.Context, input types.Updat
 			return nil, gqlx.Conflict(ctx, errGenerated)
 		}
 
-		if errors.Is(err, collaboration.ErrDocumentCollaborationContentOnSeeded) ||
-			errors.Is(err, collaboration.ErrSeedInProgress) {
-			return nil, gqlx.Conflict(ctx, err)
-		}
-
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
@@ -2056,8 +2050,7 @@ func (r *mutationResolver) RestoreDocumentHistory(ctx context.Context, input typ
 		switch {
 		case errors.Is(err, coredata.ErrResourceNotFound):
 			return nil, gqlx.NotFound(ctx, err)
-		case errors.Is(err, collaboration.ErrDocumentCollaborationNotSeeded),
-			errors.Is(err, collaboration.ErrSeedInProgress):
+		case errors.Is(err, collaboration.ErrDocumentCollaborationNotFound):
 			return nil, gqlx.Conflict(ctx, err)
 		case errors.Is(err, collaboration.ErrOpenSuggestions):
 			return nil, gqlx.Conflictf(ctx, "resolve open suggestions before restoring")

@@ -74,10 +74,8 @@ func (r *Resolver) documentReviewError(ctx context.Context, message string, err 
 		return collaboration.ErrSuggestionNotInDocument
 	case errors.Is(err, collaboration.ErrOpenSuggestions):
 		return collaboration.ErrOpenSuggestions
-	case errors.Is(err, collaboration.ErrDocumentCollaborationNotSeeded):
-		return collaboration.ErrDocumentCollaborationNotSeeded
-	case errors.Is(err, collaboration.ErrSeedInProgress):
-		return collaboration.ErrSeedInProgress
+	case errors.Is(err, collaboration.ErrDocumentCollaborationNotFound):
+		return collaboration.ErrDocumentCollaborationNotFound
 	}
 
 	if errArchived, ok := errors.AsType[*collaboration.ErrDocumentArchived](err); ok {

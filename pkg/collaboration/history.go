@@ -146,9 +146,9 @@ func (s *Service) loadRevisions(
 	scope coredata.Scoper,
 	documentID gid.GID,
 ) ([]*DocumentRevision, error) {
-	opened, err := s.openIfSeeded(ctx, scope, documentID)
+	opened, err := s.Open(ctx, scope, documentID)
 	if err != nil {
-		if errors.Is(err, ErrDocumentCollaborationNotSeeded) || errors.Is(err, ErrSeedInProgress) {
+		if errors.Is(err, ErrDocumentCollaborationNotFound) {
 			return nil, nil
 		}
 
@@ -186,9 +186,9 @@ func (s *Service) GetHistorySnapshot(
 		return nil, fmt.Errorf("collaboration history snapshot requires heads")
 	}
 
-	opened, err := s.openIfSeeded(ctx, scope, documentID)
+	opened, err := s.Open(ctx, scope, documentID)
 	if err != nil {
-		if errors.Is(err, ErrDocumentCollaborationNotSeeded) || errors.Is(err, ErrSeedInProgress) {
+		if errors.Is(err, ErrDocumentCollaborationNotFound) {
 			return nil, err
 		}
 
@@ -278,7 +278,7 @@ func (s *Service) RestoreHistory(
 
 	opened, err := s.openWithActor(ctx, scope, documentID, actorID)
 	if err != nil {
-		if errors.Is(err, ErrDocumentCollaborationNotSeeded) || errors.Is(err, ErrSeedInProgress) {
+		if errors.Is(err, ErrDocumentCollaborationNotFound) {
 			return 0, err
 		}
 
