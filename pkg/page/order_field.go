@@ -36,9 +36,17 @@ type (
 		CursorValue(placeholder string) string
 	}
 
-	// NullsLastOrderField sorts NULL values after every other value in both directions.
-	NullsLastOrderField interface {
+	// NullsOrderField places NULL values first or last in both sort directions.
+	NullsOrderField interface {
 		OrderField
-		NullsLast() bool
+		Nulls() Nulls
 	}
+
+	Nulls string
+)
+
+const (
+	NullsDefault Nulls = ""
+	NullsFirst   Nulls = "FIRST"
+	NullsLast    Nulls = "LAST"
 )

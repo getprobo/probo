@@ -78,14 +78,14 @@ func TestNewCursor(t *testing.T) {
 	}
 }
 
-type testNullsLastOrderField struct {
+type testNullsOrderField struct {
 	column string
-	last   bool
+	nulls  Nulls
 }
 
-func (f testNullsLastOrderField) Column() string  { return f.column }
-func (f testNullsLastOrderField) String() string  { return f.column }
-func (f testNullsLastOrderField) NullsLast() bool { return f.last }
+func (f testNullsOrderField) Column() string { return f.column }
+func (f testNullsOrderField) String() string { return f.column }
+func (f testNullsOrderField) Nulls() Nulls   { return f.nulls }
 
 type testCursorValuer string
 
@@ -101,8 +101,8 @@ func TestCursor_SQLFragment_NullsLast(t *testing.T) {
 	id := gid.New(gid.NewTenantID(), 1)
 	valueKey := NewCursorKey(id, "v")
 	nullKey := NewCursorKey(id, nil)
-	orderBy := OrderBy[testNullsLastOrderField]{
-		Field:     testNullsLastOrderField{column: "due", last: true},
+	orderBy := OrderBy[testNullsOrderField]{
+		Field:     testNullsOrderField{column: "due", nulls: NullsLast},
 		Direction: OrderDirectionDesc,
 	}
 
@@ -119,7 +119,7 @@ func TestCursor_SQLFragment_NullsLast(t *testing.T) {
 			want:     "(due IS NULL OR ((due <= @cursor_field_value) AND NOT (due = @cursor_field_value AND id > @cursor_id))) ORDER BY due DESC NULLS LAST, id DESC LIMIT @cursor_limit",
 		},
 		{
-			name:     "descending tail has already passed the nulls",
+			name:     "descending tail walks with nulls first",
 			position: Tail,
 			key:      &valueKey,
 			want:     "(due >= @cursor_field_value) AND NOT (due = @cursor_field_value AND id < @cursor_id) ORDER BY due ASC NULLS FIRST, id ASC LIMIT @cursor_limit",
@@ -131,7 +131,7 @@ func TestCursor_SQLFragment_NullsLast(t *testing.T) {
 			want:     "due IS NULL AND NOT (id > @cursor_id) ORDER BY due DESC NULLS LAST, id DESC LIMIT @cursor_limit",
 		},
 		{
-			name:     "descending tail on a null cursor includes the values after it",
+			name:     "descending tail on a null cursor keeps later values",
 			position: Tail,
 			key:      &nullKey,
 			want:     "NOT (due IS NULL AND id < @cursor_id) ORDER BY due ASC NULLS FIRST, id ASC LIMIT @cursor_limit",
@@ -150,8 +150,8 @@ func TestCursor_SQLFragment_NullsLast(t *testing.T) {
 	t.Run("ascending head includes nulls after the cursor value", func(t *testing.T) {
 		t.Parallel()
 
-		cursor := NewCursor(10, &valueKey, Head, OrderBy[testNullsLastOrderField]{
-			Field:     testNullsLastOrderField{column: "due", last: true},
+		cursor := NewCursor(10, &valueKey, Head, OrderBy[testNullsOrderField]{
+			Field:     testNullsOrderField{column: "due", nulls: NullsLast},
 			Direction: OrderDirectionAsc,
 		})
 
@@ -161,12 +161,72 @@ func TestCursor_SQLFragment_NullsLast(t *testing.T) {
 			cursor.SQLFragment(),
 		)
 	})
+}
 
-	t.Run("a false NullsLast flag leaves the fragment unchanged", func(t *testing.T) {
+func TestCursor_SQLFragment_NullsFirst(t *testing.T) {
+	t.Parallel()
+
+	id := gid.New(gid.NewTenantID(), 1)
+	valueKey := NewCursorKey(id, "v")
+	nullKey := NewCursorKey(id, nil)
+	orderBy := OrderBy[testNullsOrderField]{
+		Field:     testNullsOrderField{column: "due", nulls: NullsFirst},
+		Direction: OrderDirectionDesc,
+	}
+
+	tests := []struct {
+		name     string
+		position Position
+		key      *CursorKey
+		want     string
+	}{
+		{
+			name:     "descending head has already passed the nulls",
+			position: Head,
+			key:      &valueKey,
+			want:     "(due <= @cursor_field_value) AND NOT (due = @cursor_field_value AND id > @cursor_id) ORDER BY due DESC NULLS FIRST, id DESC LIMIT @cursor_limit",
+		},
+		{
+			name:     "descending tail walks with nulls last",
+			position: Tail,
+			key:      &valueKey,
+			want:     "(due IS NULL OR ((due >= @cursor_field_value) AND NOT (due = @cursor_field_value AND id < @cursor_id))) ORDER BY due ASC NULLS LAST, id ASC LIMIT @cursor_limit",
+		},
+		{
+			name:     "descending head on a null cursor keeps later values",
+			position: Head,
+			key:      &nullKey,
+			want:     "NOT (due IS NULL AND id > @cursor_id) ORDER BY due DESC NULLS FIRST, id DESC LIMIT @cursor_limit",
+		},
+		{
+			name:     "descending tail on a null cursor stays in the nulls",
+			position: Tail,
+			key:      &nullKey,
+			want:     "due IS NULL AND NOT (id < @cursor_id) ORDER BY due ASC NULLS LAST, id ASC LIMIT @cursor_limit",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			cursor := NewCursor(10, tt.key, tt.position, orderBy)
+			assert.Equal(t, tt.want, cursor.SQLFragment())
+		})
+	}
+}
+
+func TestCursor_SQLFragment_DefaultAndMapped(t *testing.T) {
+	t.Parallel()
+
+	id := gid.New(gid.NewTenantID(), 1)
+	valueKey := NewCursorKey(id, "v")
+
+	t.Run("default nulls leave the fragment unchanged", func(t *testing.T) {
 		t.Parallel()
 
-		cursor := NewCursor(10, &valueKey, Head, OrderBy[testNullsLastOrderField]{
-			Field:     testNullsLastOrderField{column: "name", last: false},
+		cursor := NewCursor(10, &valueKey, Head, OrderBy[testNullsOrderField]{
+			Field:     testNullsOrderField{column: "name", nulls: NullsDefault},
 			Direction: OrderDirectionDesc,
 		})
 
@@ -208,13 +268,13 @@ func TestCursor_SQLFragment_NullsLast(t *testing.T) {
 	})
 }
 
-func TestCursor_SQLArguments_NullsLastOmitsEmptyValue(t *testing.T) {
+func TestCursor_SQLArguments_NullsOmitsEmptyValue(t *testing.T) {
 	t.Parallel()
 
 	id := gid.New(gid.NewTenantID(), 1)
 	key := NewCursorKey(id, nil)
-	cursor := NewCursor(10, &key, Head, OrderBy[testNullsLastOrderField]{
-		Field:     testNullsLastOrderField{column: "due", last: true},
+	cursor := NewCursor(10, &key, Head, OrderBy[testNullsOrderField]{
+		Field:     testNullsOrderField{column: "due", nulls: NullsLast},
 		Direction: OrderDirectionDesc,
 	})
 

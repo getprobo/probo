@@ -69,21 +69,14 @@ func (c *Cursor[T]) SQLFragment() string {
 	field := c.OrderBy.Field.Column()
 	value := cursorValue(c.OrderBy.Field)
 	direction := c.sqlDirection()
-	nullsLast := fieldSortsNullsLast(c.OrderBy.Field)
+	nulls := c.sqlNulls()
 
 	where := "TRUE"
 	if c.Key != nil {
-		where = cursorWhere(
-			field,
-			value,
-			direction,
-			nullsLast,
-			c.Position,
-			c.Key.Value == nil,
-		)
+		where = cursorWhere(field, value, direction, nulls, c.Key.Value == nil)
 	}
 
-	orderBy := field + " " + direction + nullsClause(nullsLast, c.Position) + ", id " + direction
+	orderBy := field + " " + direction + nullsSQL(nulls) + ", id " + direction
 
 	return where + " ORDER BY " + orderBy + " LIMIT @cursor_limit"
 }
@@ -135,30 +128,45 @@ func (c *Cursor[T]) sqlDirection() string {
 	}
 }
 
-func fieldSortsNullsLast[T OrderField](field T) bool {
-	sortable, ok := any(field).(NullsLastOrderField)
-	return ok && sortable.NullsLast()
+func fieldNulls[T OrderField](field T) Nulls {
+	ordered, ok := any(field).(NullsOrderField)
+	if !ok {
+		return NullsDefault
+	}
+
+	return ordered.Nulls()
 }
 
-// Tail walks the order backwards, so NULLS LAST becomes NULLS FIRST.
-func nullsClause(nullsLast bool, position Position) string {
-	if !nullsLast {
+// Tail walks the order backwards, so FIRST and LAST swap.
+func (c *Cursor[T]) sqlNulls() Nulls {
+	nulls := fieldNulls(c.OrderBy.Field)
+	if nulls == NullsDefault || c.Position == Head {
+		return nulls
+	}
+
+	if nulls == NullsLast {
+		return NullsFirst
+	}
+
+	return NullsLast
+}
+
+func nullsSQL(nulls Nulls) string {
+	switch nulls {
+	case NullsFirst:
+		return " NULLS FIRST"
+	case NullsLast:
+		return " NULLS LAST"
+	default:
 		return ""
 	}
-
-	if position == Head {
-		return " NULLS LAST"
-	}
-
-	return " NULLS FIRST"
 }
 
 func cursorWhere(
 	field string,
 	value string,
 	direction string,
-	nullsLast bool,
-	position Position,
+	nulls Nulls,
 	valueNull bool,
 ) string {
 	cmp := ">="
@@ -168,18 +176,22 @@ func cursorWhere(
 		idExclude = "id > @cursor_id"
 	}
 
-	if nullsLast && valueNull {
-		if position == Head {
+	matched := "(" + field + " " + cmp + " " + value + ") AND NOT (" + field + " = " + value + " AND " + idExclude + ")"
+
+	switch nulls {
+	case NullsLast:
+		if valueNull {
 			return field + " IS NULL AND NOT (" + idExclude + ")"
 		}
 
-		return "NOT (" + field + " IS NULL AND " + idExclude + ")"
-	}
-
-	matched := "(" + field + " " + cmp + " " + value + ") AND NOT (" + field + " = " + value + " AND " + idExclude + ")"
-	if nullsLast && position == Head {
 		return "(" + field + " IS NULL OR (" + matched + "))"
-	}
+	case NullsFirst:
+		if valueNull {
+			return "NOT (" + field + " IS NULL AND " + idExclude + ")"
+		}
 
-	return matched
+		return matched
+	default:
+		return matched
+	}
 }
