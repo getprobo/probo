@@ -4,6 +4,27 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.343.0] - 2026-11-12
+
+### Added
+
+- UniFi access review connector. A Site Manager API key reviews the
+  administrators of a console's Network application and the users of
+  its built-in RADIUS server
+
+### Fixed
+
+- Cookie banner scan tab badges show live counts while a scan runs and
+  the final count once it ends. Long identifiers and resource URLs
+  wrap, and the full initiator URL is readable
+- Listing controls or applicability statements ordered by section
+  title no longer skips rows after the first page
+- Compliance portal visitors can re-request access to a document,
+  report, or file they already requested
+- TLS handshakes for a custom domain whose certificate is pending,
+  failed, or expired abort without logging an error, and a still-valid
+  certificate is kept in the cache during renewal
+
 ## [0.342.0] - 2026-11-12
 
 ### Added
