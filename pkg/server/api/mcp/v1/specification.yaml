@@ -9710,6 +9710,18 @@ components:
         document_id:
           $ref: "#/components/schemas/GID"
           description: Document ID
+        quote:
+          type: string
+          description: Text to replace. The match is the editor selection. Without it, only an ID is allocated.
+        replacement:
+          type: string
+          description: Suggested text. Empty deletes the quote. Required when quote is set.
+        comment:
+          type: string
+          description: Plain-text note attached to the redline.
+        quote_occurrence:
+          type: integer
+          description: Zero-based occurrence of quote. Defaults to the first match.
 
     StartDocumentSuggestionOutput:
       type: object
@@ -21242,7 +21254,7 @@ tools:
       $ref: "#/components/schemas/GetDocumentSuggestionOutput"
   - name: startDocumentSuggestion
     title: Start Document Suggestion
-    description: Allocate an ID for a new redline. Paint that ID on suggestion marks in the collaborative document.
+    description: "Start a redline. Pass quote and replacement to mark that text in the document the way the editor does: the quote becomes a deletion, the replacement an insertion, and the rest of the document stays unchanged. Pass comment to attach a plain-text note. Without quote, only an ID is allocated. Do not paint suggestion marks with updateDocument."
     hints:
       readonly: false
       destructive: false

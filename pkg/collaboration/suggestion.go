@@ -57,6 +57,7 @@ const (
 var (
 	ErrOpenSuggestions         = errors.New("document has open suggestions")
 	ErrSuggestionNotInDocument = errors.New("suggestion is not in the document")
+	ErrSuggestionUnchanged     = errors.New("suggestion does not change the quoted text")
 	ErrQuoteNotFound           = errors.New("quoted text was not found in the document")
 )
 

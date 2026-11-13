@@ -23,6 +23,7 @@ package suggestion
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
@@ -252,19 +253,39 @@ func newViewCmd(f *cmdutil.Factory) *cobra.Command {
 }
 
 func newStartCmd(f *cmdutil.Factory) *cobra.Command {
-	var flagOutput *string
+	var (
+		flagOutput      *string
+		flagQuote       string
+		flagReplacement string
+		flagComment     string
+		flagOccurrence  int
+	)
 
 	cmd := &cobra.Command{
 		Use:   "start <document-id>",
-		Short: "Allocate a suggestion ID",
+		Short: "Start a redline, or allocate an ID",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			input := map[string]any{"documentId": args[0]}
+			if strings.TrimSpace(flagQuote) != "" {
+				input["quote"] = flagQuote
+				input["replacement"] = flagReplacement
+			}
+
+			if strings.TrimSpace(flagComment) != "" {
+				input["comment"] = flagComment
+			}
+
+			if flagOccurrence != 0 {
+				input["quoteOccurrence"] = flagOccurrence
+			}
+
 			return runMutation(
 				f,
 				flagOutput,
 				startMutation,
 				map[string]any{
-					"input": map[string]any{"documentId": args[0]},
+					"input": input,
 				},
 				func(data json.RawMessage) (string, error) {
 					var resp struct {
@@ -290,6 +311,10 @@ func newStartCmd(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	flagOutput = cmdutil.AddOutputFlag(cmd)
+	cmd.Flags().StringVar(&flagQuote, "quote", "", "Text to replace")
+	cmd.Flags().StringVar(&flagReplacement, "replacement", "", "Suggested text; empty deletes the quote")
+	cmd.Flags().StringVar(&flagComment, "comment", "", "Plain-text note on the redline")
+	cmd.Flags().IntVar(&flagOccurrence, "occurrence", 0, "Zero-based occurrence of the quote")
 
 	return cmd
 }

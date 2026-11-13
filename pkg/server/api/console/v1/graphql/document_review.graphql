@@ -199,6 +199,12 @@ extend type Mutation {
     reopenDocumentCommentThread(
         input: ReopenDocumentCommentThreadInput!
     ): ReopenDocumentCommentThreadPayload!
+    """
+    Allocate a redline ID. Pass quote and replacement to mark that text in the
+    document: the quote is a deletion, the replacement is an insertion, and the
+    rest of the document is left unchanged. Pass comment to attach a plain-text
+    note. Without quote, only an ID is allocated.
+    """
     startDocumentSuggestion(
         input: StartDocumentSuggestionInput!
     ): StartDocumentSuggestionPayload!
@@ -244,6 +250,14 @@ input ReopenDocumentCommentThreadInput {
 
 input StartDocumentSuggestionInput {
     documentId: ID!
+    "Text to replace. The match is the editor selection."
+    quote: String
+    "Suggested text. Empty deletes the quote. Required when quote is set."
+    replacement: String
+    "Plain-text note attached to the redline."
+    comment: String
+    "Zero-based occurrence of quote. Defaults to the first match."
+    quoteOccurrence: Int
 }
 
 input AcceptDocumentSuggestionInput {

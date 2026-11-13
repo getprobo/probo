@@ -7,6 +7,7 @@ package console_v1
 
 import (
 	"context"
+	"strings"
 
 	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/coredata"
@@ -345,7 +346,39 @@ func (r *mutationResolver) StartDocumentSuggestion(ctx context.Context, input ty
 
 	identity := authn.IdentityFromContext(ctx)
 
-	suggestion, err := r.probo.Documents.StartSuggestion(ctx, scope, input.DocumentID, identity.ID)
+	if input.Comment != nil && strings.TrimSpace(*input.Comment) != "" {
+		if _, err := r.authorize(ctx, input.DocumentID, probo.ActionDocumentComment); err != nil {
+			return nil, err
+		}
+	}
+
+	occurrence := 0
+	if input.QuoteOccurrence != nil {
+		occurrence = *input.QuoteOccurrence
+	}
+
+	comment := ""
+	if input.Comment != nil {
+		comment = *input.Comment
+	}
+
+	quote := ""
+	if input.Quote != nil {
+		quote = *input.Quote
+	}
+
+	suggestion, err := r.probo.Documents.SuggestChange(
+		ctx,
+		scope,
+		probo.SuggestDocumentChangeRequest{
+			DocumentID:  input.DocumentID,
+			IdentityID:  identity.ID,
+			Quote:       quote,
+			Replacement: input.Replacement,
+			Comment:     comment,
+			Occurrence:  occurrence,
+		},
+	)
 	if err != nil {
 		return nil, r.documentReviewError(ctx, "cannot start document suggestion", err)
 	}
