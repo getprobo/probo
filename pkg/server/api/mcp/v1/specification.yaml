@@ -9279,6 +9279,17 @@ components:
         - CREATED_AT
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DocumentSuggestionOrderField
 
+    DocumentSuggestionTableOperation:
+      type: string
+      enum:
+        - INSERT_ROW
+        - DELETE_ROW
+        - INSERT_COLUMN
+        - DELETE_COLUMN
+        - INSERT_TABLE
+        - DELETE_TABLE
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/collaboration.TableSuggestionOperation
+
     DocumentSuggestionOrderBy:
       type: object
       required:
@@ -9770,6 +9781,56 @@ components:
           description: Zero-based occurrence of quote. Defaults to the first match.
 
     AddDocumentSuggestionChangeOutput:
+      type: object
+      required:
+        - suggestion
+      properties:
+        suggestion:
+          $ref: "#/components/schemas/DocumentSuggestion"
+
+    AddDocumentSuggestionTableChangeInput:
+      type: object
+      required:
+        - id
+        - operation
+        - quote
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Open suggestion ID
+        operation:
+          $ref: "#/components/schemas/DocumentSuggestionTableOperation"
+          description: Structural change to suggest
+        quote:
+          type: string
+          description: Text inside a cell of the row, column, or table to change. For INSERT_TABLE, text of the top-level block the new table goes beside.
+        quote_occurrence:
+          type: integer
+          minimum: 0
+          description: Zero-based occurrence of quote. Defaults to the first match.
+        before:
+          type: boolean
+          description: Insert before the quoted row, column, or block instead of after it.
+        cells:
+          type: array
+          maxItems: 100
+          items:
+            type: string
+          description: Text of the new row's cells left to right (INSERT_ROW), or the new column's cells top to bottom (INSERT_COLUMN). Omit for empty cells. A newline starts a new paragraph in the cell.
+        rows:
+          type: array
+          maxItems: 100
+          items:
+            type: array
+            maxItems: 20
+            items:
+              type: string
+          description: Rows of the new table for INSERT_TABLE, each with the same cell count.
+        header_row:
+          type: boolean
+          description: Make the new table's first row a header row (INSERT_TABLE).
+
+    AddDocumentSuggestionTableChangeOutput:
       type: object
       required:
         - suggestion
@@ -21322,6 +21383,18 @@ tools:
       $ref: "#/components/schemas/AddDocumentSuggestionChangeInput"
     outputSchema:
       $ref: "#/components/schemas/AddDocumentSuggestionChangeOutput"
+  - name: addDocumentSuggestionTableChange
+    title: Add Document Suggestion Table Change
+    description: "Add a structural table redline to an open suggestion: insert or delete a row or column, insert a new table, or delete a table. Accepting the suggestion applies the change and rejecting it leaves the table as it was. Tables with merged cells only accept INSERT_TABLE and DELETE_TABLE. Start an empty suggestion with startDocumentSuggestion first. Do not edit tables with updateDocument while suggesting."
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/AddDocumentSuggestionTableChangeInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddDocumentSuggestionTableChangeOutput"
   - name: acceptDocumentSuggestion
     title: Accept Document Suggestion
     description: Keep suggested insertions, drop suggested deletions, and resolve the suggestion thread

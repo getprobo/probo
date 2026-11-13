@@ -154,7 +154,14 @@ func (r *Resolver) documentReviewError(ctx context.Context, message string, err 
 		errors.Is(err, collaboration.ErrQuoteNotFound),
 		errors.Is(err, collaboration.ErrSuggestionUnchanged),
 		errors.Is(err, collaboration.ErrSuggestionOverlaps),
-		errors.Is(err, collaboration.ErrSuggestionNotInDocument):
+		errors.Is(err, collaboration.ErrSuggestionNotInDocument),
+		errors.Is(err, collaboration.ErrQuoteNotInTable),
+		errors.Is(err, collaboration.ErrTableHasMergedCells),
+		errors.Is(err, collaboration.ErrTableCellCount),
+		errors.Is(err, collaboration.ErrTableShape),
+		errors.Is(err, collaboration.ErrTableLastRow),
+		errors.Is(err, collaboration.ErrTableLastColumn),
+		errors.Is(err, collaboration.ErrTableOperation):
 		return gqlx.Invalid(ctx, err)
 	case errors.Is(err, probo.ErrDocumentSuggestionClosed):
 		return gqlx.Conflict(ctx, err)

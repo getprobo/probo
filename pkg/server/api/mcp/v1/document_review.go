@@ -86,6 +86,20 @@ func (r *Resolver) documentReviewError(ctx context.Context, message string, err 
 		return collaboration.ErrDocumentCollaborationNotFound
 	}
 
+	for _, tableErr := range []error{
+		collaboration.ErrQuoteNotInTable,
+		collaboration.ErrTableHasMergedCells,
+		collaboration.ErrTableCellCount,
+		collaboration.ErrTableShape,
+		collaboration.ErrTableLastRow,
+		collaboration.ErrTableLastColumn,
+		collaboration.ErrTableOperation,
+	} {
+		if errors.Is(err, tableErr) {
+			return tableErr
+		}
+	}
+
 	if errArchived, ok := errors.AsType[*collaboration.ErrDocumentArchived](err); ok {
 		return errArchived
 	}

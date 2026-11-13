@@ -12372,3 +12372,38 @@ func (r *Resolver) AddDocumentSuggestionChangeTool(ctx context.Context, req *mcp
 
 	return nil, types.AddDocumentSuggestionChangeOutput{Suggestion: types.NewDocumentSuggestion(suggestion)}, nil
 }
+
+func (r *Resolver) AddDocumentSuggestionTableChangeTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddDocumentSuggestionTableChangeInput) (*mcp.CallToolResult, types.AddDocumentSuggestionTableChangeOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionDocumentSuggest)
+	if err != nil {
+		return nil, types.AddDocumentSuggestionTableChangeOutput{}, err
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+
+	occurrence := 0
+	if input.QuoteOccurrence != nil {
+		occurrence = *input.QuoteOccurrence
+	}
+
+	suggestion, err := r.proboSvc.Documents.AddSuggestionTableChange(
+		ctx,
+		scope,
+		probo.AddDocumentSuggestionTableChangeRequest{
+			SuggestionID: input.ID,
+			IdentityID:   identity.ID,
+			Operation:    input.Operation,
+			Quote:        input.Quote,
+			Occurrence:   occurrence,
+			Before:       input.Before != nil && *input.Before,
+			Cells:        input.Cells,
+			Rows:         input.Rows,
+			HeaderRow:    input.HeaderRow != nil && *input.HeaderRow,
+		},
+	)
+	if err != nil {
+		return nil, types.AddDocumentSuggestionTableChangeOutput{}, r.documentReviewError(ctx, "cannot add document suggestion table change", err)
+	}
+
+	return nil, types.AddDocumentSuggestionTableChangeOutput{Suggestion: types.NewDocumentSuggestion(suggestion)}, nil
+}
