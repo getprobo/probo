@@ -157,10 +157,11 @@ type (
 		BaseURL string `json:"base_url"`
 	}
 
-	// DatadogConnectorSettings holds the per-customer Datadog site captured
-	// during the OAuth callback. Region is the site key (e.g. "US3") used for
-	// the AccessReviewSource title; Domain is the API domain (e.g.
-	// "us3.datadoghq.com") the driver and name resolver use to build hosts.
+	// DatadogConnectorSettings holds the per-customer Datadog site, captured
+	// at the OAuth callback or picked on the API-key form. Region is the site
+	// key (e.g. "US3") used for the AccessReviewSource title; Domain is the
+	// API domain (e.g. "us3.datadoghq.com") the driver and name resolver use
+	// to build hosts.
 	DatadogConnectorSettings struct {
 		Region string `json:"region"`
 		Domain string `json:"domain"`

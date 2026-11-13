@@ -51,6 +51,8 @@
       "clientSecret": "Client secret",
       "scope": "Scope",
       "datadogSite": "Datadog site",
+      "datadogSitePlaceholder": "Select a site",
+      "datadogTokenHint": "Paste a service access token from a Datadog service account, with the user_access_read scope. A personal access token also works until it expires.",
       "zendeskSubdomain": "Zendesk subdomain",
       "region": "Region",
       "regionPlaceholder": "Select a region",

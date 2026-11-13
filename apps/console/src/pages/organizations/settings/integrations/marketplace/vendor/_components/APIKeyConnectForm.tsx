@@ -20,7 +20,8 @@
 
 import { Field } from "@probo/ui/src/v2/form/Field";
 import { TextField } from "@probo/ui/src/v2/form/TextField";
-import { useState } from "react";
+import { Text } from "@probo/ui/src/v2/typography/Text";
+import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
@@ -82,6 +83,11 @@ export function APIKeyConnectForm({
     key: setting.key,
     required: setting.required,
   }));
+  const keyHintId = useId();
+  // Datadog's own word for the credential that cannot work here is "API key".
+  const keyHint = provider.provider === "DATADOG"
+    ? t("marketplacePage.fields.datadogTokenHint")
+    : null;
   const [apiKey, setApiKey] = useState("");
   const [extras, setExtras] = useState<Record<string, string>>({});
   const [createAPIKeyConnector] = useMutation<APIKeyConnectFormCreateMutation>(
@@ -128,9 +134,15 @@ export function APIKeyConnectForm({
             required
             value={apiKey}
             autoComplete="off"
+            aria-describedby={keyHint ? keyHintId : undefined}
             onValueChange={setApiKey}
           />
         </Field>
+      )}
+      {!provider.apiKeyManaged && keyHint && (
+        <Text id={keyHintId} size={1} color="faint">
+          {keyHint}
+        </Text>
       )}
       <APIKeyExtraFields
         providerKey={provider}

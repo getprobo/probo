@@ -33,10 +33,10 @@ interface CapturedOrganizationProps {
   sourceKey: CapturedOrganization_source$key;
 }
 
-// The organization a 2-auto provider captured during its OAuth callback
-// (PagerDuty's subdomain, Vercel's team, Datadog's domain, Zendesk's
-// subdomain). It is not user-editable: the value came from the handshake, and
-// the only way to change it is to reconnect against a different one.
+// The organization a 2-auto provider captured at connect time (PagerDuty's
+// subdomain, Vercel's team, Datadog's domain, Zendesk's subdomain). It is not
+// user-editable: the only way to change it is to connect again against a
+// different one.
 //
 // No empty state: these providers register no organization lister, so an unset
 // organization leaves needsConfiguration false and the parent renders no

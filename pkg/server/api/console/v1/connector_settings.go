@@ -405,6 +405,21 @@ func apiKeyConnectorSettings(input types.CreateAPIKeyConnectorInput) (json.RawMe
 		}
 
 		return json.Marshal(&coredata.ScalewayConnectorSettings{OrganizationID: *input.ScalewayOrganizationID})
+	case coredata.ConnectorProviderDatadog:
+		site := ""
+		if input.DatadogSite != nil {
+			site = strings.ToUpper(strings.TrimSpace(*input.DatadogSite))
+		}
+
+		// The site selects the API host and is not discoverable from the
+		// token; resolving it against the fixed allow-list keeps an
+		// unexpected value from reaching a URL.
+		domain, ok := connectorprotocol.DatadogAPIDomain(site)
+		if !ok {
+			return nil, fmt.Errorf("cannot create datadog connector: datadogSite must be a known Datadog site")
+		}
+
+		return json.Marshal(&coredata.DatadogConnectorSettings{Region: site, Domain: domain})
 	case coredata.ConnectorProviderSegment:
 		region := ""
 		if input.SegmentRegion != nil {

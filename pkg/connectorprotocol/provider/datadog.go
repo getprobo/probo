@@ -24,12 +24,18 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/connectorprotocol"
 	"go.probo.inc/probo/pkg/coredata"
 )
+
+// datadogKeyPattern accepts the two token classes that authenticate alone as a
+// Bearer: service access tokens and personal access tokens. It turns away an
+// application key, which works only paired with an API key.
+var datadogKeyPattern = regexp.MustCompile(`^dd[ps]at_[\s\S]`)
 
 func datadogRegistration() *Registration {
 	// Datadog is multi-site: the customer's region drives the authorize
@@ -45,12 +51,29 @@ func datadogRegistration() *Registration {
 				return s.Domain
 			},
 		),
-		DisplayName: "Datadog",
+		DisplayName:      "Datadog",
+		DocumentationURL: accessReviewDocsURL("datadog"),
 		OAuth2: &OAuth2Config{
 			Scopes:                 []string{"user_access_read"},
 			RequiresPKCE:           true,
 			BuildAuthURLForSite:    connectorprotocol.DatadogAuthorizeURL,
 			BuildTokenURLForDomain: connectorprotocol.DatadogTokenURL,
+		},
+		// A token does not reveal its site, so the customer picks it; the
+		// settings resolver maps it to the same domain OAuth stores.
+		APIKey: &APIKeyConfig{
+			KeyFormat: &KeyFormat{
+				Pattern: datadogKeyPattern,
+				Example: "ddsat_…",
+			},
+			ExtraSettings: []ExtraSetting{
+				{
+					Key:         "site",
+					Label:       "Site",
+					Required:    true,
+					Description: "The site key, such as US1 or EU1, matching the address you sign in at: app.datadoghq.com is US1, app.datadoghq.eu is EU1.",
+				},
+			},
 		},
 		BuildProbeURL: buildDatadogProbeURL,
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
@@ -60,8 +83,8 @@ func datadogRegistration() *Registration {
 			}
 
 			// Re-validate the stored domain against the fixed allow-list at
-			// the construction site (defense-in-depth). The OAuth callback
-			// validates on write, but pinning the SSRF invariant here keeps
+			// the construction site (defense-in-depth). Both writers
+			// validate on write, but pinning the SSRF invariant here keeps
 			// the driver safe regardless of how the connector row was
 			// populated. An empty domain also fails this check.
 			if !connectorprotocol.IsValidDatadogDomain(s.Domain) {

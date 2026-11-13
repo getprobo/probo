@@ -203,6 +203,9 @@ func TestConnectorProviders(t *testing.T) {
 	assert.Equal(t, []string{"baseUrl"}, apiKeySettingKeys["LANGFUSE"])
 	assert.Empty(t, clientCredentialsSettingKeys["LANGFUSE"])
 
+	// A token does not reveal its Datadog site, so the API-key path asks for it.
+	assert.Equal(t, []string{"site"}, apiKeySettingKeys["DATADOG"])
+
 	// A documented provider exposes its probo.com docs URL; an undocumented one
 	// exposes null. See pkg/connectorprotocol/provider/docs.go.
 	require.Contains(t, docURLByProvider, "ANTHROPIC")
