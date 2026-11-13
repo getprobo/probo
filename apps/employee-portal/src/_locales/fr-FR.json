@@ -83,7 +83,7 @@
         "action": "Examiner les documents"
       },
       "tasks": {
-        "title": "Tâches",
+        "title": "Mes tâches",
         "description": "Consultez et terminez les tâches attribuées.",
         "empty": "Rien à faire pour le moment",
         "pendingCount_one": "{{count}} tâche à faire",

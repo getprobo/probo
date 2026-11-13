@@ -82,7 +82,7 @@
         "action": "Documenten beoordelen"
       },
       "tasks": {
-        "title": "Taken",
+        "title": "Mijn taken",
         "description": "Bekijk en voltooi toegewezen taken.",
         "empty": "Nog niets te doen",
         "pendingCount_one": "{{count}} taak te doen",

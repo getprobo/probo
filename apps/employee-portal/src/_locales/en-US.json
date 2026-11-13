@@ -82,7 +82,7 @@
         "action": "Review documents"
       },
       "tasks": {
-        "title": "Tasks",
+        "title": "My tasks",
         "description": "Review and complete assigned tasks.",
         "empty": "Nothing to do yet",
         "pendingCount_one": "{{count}} task to do",
