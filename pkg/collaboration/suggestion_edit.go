@@ -35,10 +35,12 @@ import (
 
 // suggestionUnit is one UTF-16 code unit of the text a reviewer can quote.
 // A newline between blocks points at that block marker. Engine is the index
-// Splice and Mark use, which counts each block as one unit.
+// Splice and Mark use, which counts each block as one unit. Marked means the
+// unit already belongs to a suggestion, so another redline must not cover it.
 type suggestionUnit struct {
 	engine uint32
 	block  bool
+	marked bool
 }
 
 // PaintSuggestion marks quote on the live document and commits that change.
@@ -125,6 +127,10 @@ func ApplySuggestionEdit(
 		return ErrSuggestionUnchanged
 	}
 
+	if suggestionRangeMarked(units, deleteStart, deleteEnd) {
+		return ErrSuggestionOverlaps
+	}
+
 	text, err := document.Text("body")
 	if err != nil {
 		return fmt.Errorf("cannot get collaboration body: %w", err)
@@ -204,8 +210,13 @@ func suggestionUnits(spans []automerge.Span) (string, []suggestionUnit, uint32) 
 	for _, span := range spans {
 		if span.Type == automerge.SpanTypeBlock {
 			if wrote {
+				splitID, _ := suggestionSplit(span)
 				visible.WriteByte('\n')
-				units = append(units, suggestionUnit{engine: engine, block: true})
+				units = append(units, suggestionUnit{
+					engine: engine,
+					block:  true,
+					marked: splitID != "",
+				})
 			}
 
 			engine++
@@ -217,8 +228,11 @@ func suggestionUnits(spans []automerge.Span) (string, []suggestionUnit, uint32) 
 			continue
 		}
 
+		marked := markID(span.Marks, SuggestionInsertMark) != "" ||
+			markID(span.Marks, SuggestionDeleteMark) != ""
+
 		for range utf16.Encode([]rune(span.Text)) {
-			units = append(units, suggestionUnit{engine: engine, block: false})
+			units = append(units, suggestionUnit{engine: engine, block: false, marked: marked})
 			engine++
 		}
 
@@ -274,6 +288,20 @@ func edgeTrimmed(value string, prefix uint32, suffix uint32) string {
 	}
 
 	return string(utf16.Decode(units[prefix : len(units)-int(suffix)]))
+}
+
+func suggestionRangeMarked(units []suggestionUnit, from uint32, to uint32) bool {
+	if from == to {
+		return int(from) < len(units) && units[from].marked
+	}
+
+	for index := from; index < to && int(index) < len(units); index++ {
+		if units[index].marked {
+			return true
+		}
+	}
+
+	return false
 }
 
 func suggestionRanges(units []suggestionUnit, from uint32, to uint32) ([][2]uint32, []uint32) {

@@ -388,6 +388,40 @@ func (r *mutationResolver) StartDocumentSuggestion(ctx context.Context, input ty
 	}, nil
 }
 
+// AddDocumentSuggestionChange is the resolver for the addDocumentSuggestionChange field.
+func (r *mutationResolver) AddDocumentSuggestionChange(ctx context.Context, input types.AddDocumentSuggestionChangeInput) (*types.AddDocumentSuggestionChangePayload, error) {
+	scope, err := r.authorize(ctx, input.SuggestionID, probo.ActionDocumentSuggest)
+	if err != nil {
+		return nil, err
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+
+	occurrence := 0
+	if input.QuoteOccurrence != nil {
+		occurrence = *input.QuoteOccurrence
+	}
+
+	suggestion, err := r.probo.Documents.AddSuggestionChange(
+		ctx,
+		scope,
+		probo.AddDocumentSuggestionChangeRequest{
+			SuggestionID: input.SuggestionID,
+			IdentityID:   identity.ID,
+			Quote:        input.Quote,
+			Replacement:  input.Replacement,
+			Occurrence:   occurrence,
+		},
+	)
+	if err != nil {
+		return nil, r.documentReviewError(ctx, "cannot add document suggestion change", err)
+	}
+
+	return &types.AddDocumentSuggestionChangePayload{
+		DocumentSuggestion: types.NewDocumentSuggestion(suggestion),
+	}, nil
+}
+
 // AcceptDocumentSuggestion is the resolver for the acceptDocumentSuggestion field.
 func (r *mutationResolver) AcceptDocumentSuggestion(ctx context.Context, input types.AcceptDocumentSuggestionInput) (*types.AcceptDocumentSuggestionPayload, error) {
 	scope, err := r.authorize(ctx, input.SuggestionID, probo.ActionDocumentSuggestAccept)

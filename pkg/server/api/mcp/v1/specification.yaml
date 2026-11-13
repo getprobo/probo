@@ -9748,6 +9748,35 @@ components:
         suggestion:
           $ref: "#/components/schemas/DocumentSuggestion"
 
+    AddDocumentSuggestionChangeInput:
+      type: object
+      required:
+        - id
+        - quote
+        - replacement
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Open suggestion ID
+        quote:
+          type: string
+          description: Text to replace. The match must not overlap an existing redline.
+        replacement:
+          type: string
+          description: Suggested text. Empty deletes the quote.
+        quote_occurrence:
+          type: integer
+          minimum: 0
+          description: Zero-based occurrence of quote. Defaults to the first match.
+
+    AddDocumentSuggestionChangeOutput:
+      type: object
+      required:
+        - suggestion
+      properties:
+        suggestion:
+          $ref: "#/components/schemas/DocumentSuggestion"
+
     AcceptDocumentSuggestionInput:
       type: object
       required:
@@ -21281,6 +21310,18 @@ tools:
       $ref: "#/components/schemas/StartDocumentSuggestionInput"
     outputSchema:
       $ref: "#/components/schemas/StartDocumentSuggestionOutput"
+  - name: addDocumentSuggestionChange
+    title: Add Document Suggestion Change
+    description: "Add another redline to an open suggestion, the way the editor keeps marking text under one suggestion. The quote becomes a deletion and the replacement an insertion. The quote must not overlap a redline that is already in the document."
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/AddDocumentSuggestionChangeInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddDocumentSuggestionChangeOutput"
   - name: acceptDocumentSuggestion
     title: Accept Document Suggestion
     description: Keep suggested insertions, drop suggested deletions, and resolve the suggestion thread

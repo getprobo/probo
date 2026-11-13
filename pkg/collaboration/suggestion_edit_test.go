@@ -138,6 +138,40 @@ func TestQuoteRange_HugeOccurrenceDoesNotPanic(t *testing.T) {
 	require.ErrorIs(t, err, ErrQuoteNotFound)
 }
 
+func TestApplySuggestionEdit_AddsAnotherRedlineToTheSameSuggestion(t *testing.T) {
+	t.Parallel()
+
+	document := suggestionDocument(
+		t,
+		`{"type":"doc","content":[`+paragraphJSON("Keep the first sentence. Keep the second sentence.")+`]}`,
+	)
+
+	require.NoError(t, ApplySuggestionEdit(document, suggestionEditID, "first", "opening", 0))
+	require.NoError(t, ApplySuggestionEdit(document, suggestionEditID, "second", "closing", 0))
+
+	assert.Equal(t, []markedRun{
+		{text: "Keep the "},
+		{text: "first", mark: SuggestionDeleteMark},
+		{text: "opening", mark: SuggestionInsertMark},
+		{text: " sentence. Keep the "},
+		{text: "second", mark: SuggestionDeleteMark},
+		{text: "closing", mark: SuggestionInsertMark},
+		{text: " sentence."},
+	}, markedRuns(t, document))
+
+	err := ApplySuggestionEdit(document, suggestionEditID, "opening", "initial", 0)
+	require.ErrorIs(t, err, ErrSuggestionOverlaps)
+
+	changed, err := ApplySuggestionDecision(document, suggestionEditID, true)
+	require.NoError(t, err)
+	require.True(t, changed)
+	assert.Equal(
+		t,
+		[]markedRun{{text: "Keep the opening sentence. Keep the closing sentence."}},
+		markedRuns(t, document),
+	)
+}
+
 func TestApplySuggestionEdit_LeavesTheRestOfTheDocumentUnmarked(t *testing.T) {
 	t.Parallel()
 

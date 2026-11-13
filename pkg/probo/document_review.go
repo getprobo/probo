@@ -47,7 +47,9 @@ const (
 
 var (
 	ErrNotDocumentCommentAuthor      = errors.New("only the comment author can change this comment")
+	ErrNotDocumentSuggestionAuthor   = errors.New("only the suggestion author can add to this suggestion")
 	ErrDocumentCommentThreadResolved = errors.New("comment thread is resolved")
+	ErrDocumentSuggestionClosed      = errors.New("document suggestion is not open")
 	ErrInvalidDocumentAnchor         = errors.New("document comment anchor is invalid")
 )
 
@@ -94,6 +96,14 @@ type (
 		Replacement *string
 		Comment     string
 		Occurrence  int
+	}
+
+	AddDocumentSuggestionChangeRequest struct {
+		SuggestionID gid.GID
+		IdentityID   gid.GID
+		Quote        string
+		Replacement  string
+		Occurrence   int
 	}
 )
 
@@ -1010,6 +1020,98 @@ func (s *DocumentService) SuggestChange(
 
 			return nil, err
 		}
+	}
+
+	s.notifyReview(ctx, suggestion.DocumentID)
+
+	return suggestion, nil
+}
+
+// AddSuggestionChange paints another redline onto an open suggestion. The
+// editor does the same thing while suggesting stays on: later keystrokes keep
+// the suggestion ID and mark a new range. The quote must not cover a redline
+// that is already there.
+func (s *DocumentService) AddSuggestionChange(
+	ctx context.Context,
+	scope coredata.Scoper,
+	req AddDocumentSuggestionChangeRequest,
+) (*coredata.DocumentSuggestion, error) {
+	v := validator.New()
+	v.Check(req.SuggestionID, "suggestion_id", validator.Required(), validator.GID(coredata.DocumentSuggestionEntityType))
+	v.Check(req.IdentityID, "identity_id", validator.Required(), validator.GID(coredata.IdentityEntityType))
+	v.Check(req.Quote, "quote", validator.Required(), validator.MaxLen(documentQuoteMaxLength))
+	v.Check(req.Replacement, "replacement", validator.MaxLen(documentQuoteMaxLength))
+	v.Check(req.Occurrence, "quote_occurrence", validator.Min(0))
+
+	if err := v.Error(); err != nil {
+		return nil, err
+	}
+
+	suggestion := &coredata.DocumentSuggestion{}
+	var profileID gid.GID
+
+	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		if err := suggestion.LoadByIDForUpdate(ctx, tx, scope, req.SuggestionID); err != nil {
+			return fmt.Errorf("cannot load document suggestion: %w", err)
+		}
+
+		if suggestion.Status != coredata.DocumentSuggestionStatusOpen {
+			return ErrDocumentSuggestionClosed
+		}
+
+		if _, err := s.editableReviewDocument(ctx, tx, scope, suggestion.DocumentID); err != nil {
+			return err
+		}
+
+		profile, err := s.reviewProfile(ctx, tx, scope, suggestion.OrganizationID, req.IdentityID)
+		if err != nil {
+			return err
+		}
+
+		if profile.ID != suggestion.AuthorProfileID {
+			return ErrNotDocumentSuggestionAuthor
+		}
+
+		profileID = profile.ID
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	painted, actorID, err := s.collaboration.PaintSuggestion(
+		ctx,
+		scope,
+		suggestion.DocumentID,
+		suggestion.OrganizationID,
+		req.IdentityID,
+		&profileID,
+		suggestion.ID.String(),
+		req.Quote,
+		req.Replacement,
+		req.Occurrence,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() { _ = painted.Close() }()
+
+	if err := s.collaboration.RecordActors(
+		ctx,
+		scope,
+		suggestion.DocumentID,
+		suggestion.OrganizationID,
+		req.IdentityID,
+		&profileID,
+		[][]byte{actorID[:]},
+	); err != nil {
+		return nil, fmt.Errorf("cannot record suggestion actor: %w", err)
+	}
+
+	if _, err := s.collaboration.Persist(ctx, scope, suggestion.DocumentID, painted); err != nil {
+		return nil, fmt.Errorf("cannot persist suggestion: %w", err)
 	}
 
 	s.notifyReview(ctx, suggestion.DocumentID)

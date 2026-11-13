@@ -12341,3 +12341,34 @@ func (r *Resolver) UpdateAsanaProjectMappingTool(ctx context.Context, req *mcp.C
 
 	return nil, types.UpdateAsanaProjectMappingOutput{Setup: mcpAsanaSetup(setup, mapping)}, nil
 }
+
+func (r *Resolver) AddDocumentSuggestionChangeTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddDocumentSuggestionChangeInput) (*mcp.CallToolResult, types.AddDocumentSuggestionChangeOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionDocumentSuggest)
+	if err != nil {
+		return nil, types.AddDocumentSuggestionChangeOutput{}, err
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+
+	occurrence := 0
+	if input.QuoteOccurrence != nil {
+		occurrence = *input.QuoteOccurrence
+	}
+
+	suggestion, err := r.proboSvc.Documents.AddSuggestionChange(
+		ctx,
+		scope,
+		probo.AddDocumentSuggestionChangeRequest{
+			SuggestionID: input.ID,
+			IdentityID:   identity.ID,
+			Quote:        input.Quote,
+			Replacement:  input.Replacement,
+			Occurrence:   occurrence,
+		},
+	)
+	if err != nil {
+		return nil, types.AddDocumentSuggestionChangeOutput{}, r.documentReviewError(ctx, "cannot add document suggestion change", err)
+	}
+
+	return nil, types.AddDocumentSuggestionChangeOutput{Suggestion: types.NewDocumentSuggestion(suggestion)}, nil
+}

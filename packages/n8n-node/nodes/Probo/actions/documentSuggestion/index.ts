@@ -20,6 +20,7 @@
 
 import type { INodeProperties } from 'n8n-workflow';
 import * as acceptOp from './accept.operation';
+import * as addOp from './add.operation';
 import * as getOp from './get.operation';
 import * as getAllOp from './getAll.operation';
 import * as rejectOp from './reject.operation';
@@ -35,6 +36,7 @@ export const description: INodeProperties[] = [
 		displayOptions: { show: { resource: ['documentSuggestion'] } },
 		options: [
 			{ name: 'Accept', value: 'accept', description: 'Accept a redline', action: 'Accept a document suggestion' },
+			{ name: 'Add Change', value: 'add', description: 'Add a redline to an open suggestion', action: 'Add a document suggestion change' },
 			{ name: 'Get', value: 'get', description: 'Get a suggestion', action: 'Get a document suggestion' },
 			{ name: 'Get Many', value: 'getAll', description: 'List suggestions on a document', action: 'List document suggestions' },
 			{ name: 'Reject', value: 'reject', description: 'Reject a redline', action: 'Reject a document suggestion' },
@@ -44,6 +46,7 @@ export const description: INodeProperties[] = [
 		default: 'getAll',
 	},
 	...acceptOp.description,
+	...addOp.description,
 	...getOp.description,
 	...getAllOp.description,
 	...rejectOp.description,
@@ -53,6 +56,7 @@ export const description: INodeProperties[] = [
 
 export {
 	acceptOp as accept,
+	addOp as add,
 	getOp as get,
 	getAllOp as getAll,
 	rejectOp as reject,
