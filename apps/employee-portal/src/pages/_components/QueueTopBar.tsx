@@ -91,17 +91,19 @@ export function QueueTopBar() {
           {t(progressKey, { current, total })}
         </Text>
       </div>
-      <Button
-        variant="outline"
-        color="neutral"
-        size={2}
-        iconStart={<XIcon />}
-        onClick={() => {
-          close();
-        }}
-      >
-        {t("queue.close")}
-      </Button>
+      <div className={slots.end()}>
+        <Button
+          variant="outline"
+          color="neutral"
+          size={2}
+          iconStart={<XIcon />}
+          onClick={() => {
+            close();
+          }}
+        >
+          {t("queue.close")}
+        </Button>
+      </div>
     </header>
   );
 }
