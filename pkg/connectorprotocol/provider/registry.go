@@ -33,6 +33,7 @@ package provider
 
 import (
 	"fmt"
+	"net/http"
 	"net/url"
 	"slices"
 	"strings"
@@ -116,6 +117,12 @@ func (r *Registry) Register(reg *Registration) error {
 		case APIKeyAuthHeaderPair:
 			if reg.APIKey.Auth.Name == "" || reg.APIKey.Auth.PairName == "" {
 				return fmt.Errorf("cannot register connector provider %q: API-key auth mode %q requires a Name and a PairName", reg.Provider, reg.APIKey.Auth.Mode)
+			}
+
+			// Header names are case-insensitive: the same header twice would
+			// have the second credential overwrite the first.
+			if http.CanonicalHeaderKey(reg.APIKey.Auth.Name) == http.CanonicalHeaderKey(reg.APIKey.Auth.PairName) {
+				return fmt.Errorf("cannot register connector provider %q: API-key auth mode %q needs two different headers", reg.Provider, reg.APIKey.Auth.Mode)
 			}
 		case APIKeyAuthBearer, APIKeyAuthBasic, APIKeyAuthBasicUserPass:
 			if reg.APIKey.Auth.Name != "" {

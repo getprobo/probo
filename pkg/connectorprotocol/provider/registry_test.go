@@ -297,6 +297,18 @@ func TestRegistry_Register(t *testing.T) {
 				auth: provider.APIKeyAuth{Name: "x-api-key"},
 				want: `mode "" ignores Name`,
 			},
+			"header pair without a pair name": {
+				auth: provider.APIKeyAuth{Mode: provider.APIKeyAuthHeaderPair, Name: "DD-API-KEY"},
+				want: `mode "header-pair" requires a Name and a PairName`,
+			},
+			"header pair naming one header twice": {
+				auth: provider.APIKeyAuth{Mode: provider.APIKeyAuthHeaderPair, Name: "DD-API-KEY", PairName: "dd-api-key"},
+				want: `mode "header-pair" needs two different headers`,
+			},
+			"header with a pair name": {
+				auth: provider.APIKeyAuth{Mode: provider.APIKeyAuthHeader, Name: "x-api-key", PairName: "x-other"},
+				want: `mode "header" ignores PairName`,
+			},
 			"basic with a name": {
 				auth: provider.APIKeyAuth{Mode: provider.APIKeyAuthBasic, Name: "x-api-key"},
 				want: `mode "basic" ignores Name`,

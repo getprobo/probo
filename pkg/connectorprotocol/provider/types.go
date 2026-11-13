@@ -268,11 +268,11 @@ const (
 type APIKeyAuth struct {
 	Mode APIKeyAuthMode
 
-	// Name is the request header name for APIKeyAuthHeader and the
-	// Authorization scheme for APIKeyAuthScheme. The two never coexist, so one
-	// field serves both. Empty and unused for every other mode; Register
-	// rejects a Name that would be ignored or a mode that needs one and lacks
-	// it.
+	// Name is the request header name for APIKeyAuthHeader, the first of the
+	// two headers for APIKeyAuthHeaderPair, and the Authorization scheme for
+	// APIKeyAuthScheme. A provider has one mode, so one field serves all
+	// three. Empty and unused for every other mode; Register rejects a Name
+	// that would be ignored or a mode that needs one and lacks it.
 	Name string
 
 	// PairName is the second request header of APIKeyAuthHeaderPair. Register
