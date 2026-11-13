@@ -125,6 +125,54 @@ func TestUpdateSpans_NullBlockAttributeEqualsOmittedAttribute(t *testing.T) {
 	assert.Equal(t, "!", patches[0].Text)
 }
 
+func TestUpdateSpans_NestedNullAttributeIsNotDropped(t *testing.T) {
+	t.Parallel()
+
+	meta := func(note any) automerge.SpanInput {
+		attrs := map[string]any{"meta": map[string]any{}}
+		if note != struct{}{} {
+			attrs["meta"] = map[string]any{"note": note}
+		}
+
+		return automerge.SpanInput{
+			Block: map[string]any{
+				"type":    "paragraph",
+				"parents": []any{},
+				"attrs":   attrs,
+				"isEmbed": false,
+			},
+		}
+	}
+
+	document, text := newSpansDocument(
+		t,
+		[]automerge.SpanInput{
+			meta(nil),
+			{Text: "Hi"},
+		},
+	)
+
+	before, err := document.Heads()
+	require.NoError(t, err)
+
+	require.NoError(t, text.UpdateSpans(
+		[]automerge.SpanInput{
+			meta(struct{}{}),
+			{Text: "Hi"},
+		},
+		automerge.UpdateSpansConfig{},
+	))
+	_, err = document.CommitNow("edit")
+	require.NoError(t, err)
+
+	after, err := document.Heads()
+	require.NoError(t, err)
+
+	patches, err := document.Diff(before, after)
+	require.NoError(t, err)
+	assert.NotEmpty(t, patches, "a nested null that becomes absent is a real block change")
+}
+
 func TestDiff_IndexesStayInUTF16UnitsAfterMixedInsertRun(t *testing.T) {
 	t.Parallel()
 

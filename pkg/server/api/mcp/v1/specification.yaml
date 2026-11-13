@@ -9721,7 +9721,24 @@ components:
           description: Plain-text note attached to the redline.
         quote_occurrence:
           type: integer
+          minimum: 0
           description: Zero-based occurrence of quote. Defaults to the first match.
+      oneOf:
+        - not:
+            anyOf:
+              - required:
+                  - quote
+              - required:
+                  - replacement
+              - required:
+                  - comment
+              - required:
+                  - quote_occurrence
+          description: Allocate an ID only.
+        - required:
+            - quote
+            - replacement
+          description: Mark quote as a deletion and insert replacement.
 
     StartDocumentSuggestionOutput:
       type: object

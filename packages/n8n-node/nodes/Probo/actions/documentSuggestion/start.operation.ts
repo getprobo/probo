@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
+import { NodeOperationError, type IExecuteFunctions, type INodeExecutionData, type INodeProperties } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
 
 const startOptions = { show: { resource: ['documentSuggestion'], operation: ['start'] } };
@@ -61,6 +61,7 @@ export const description: INodeProperties[] = [
 		displayName: 'Quote Occurrence',
 		name: 'quoteOccurrence',
 		type: 'number',
+		typeOptions: { minValue: 0 },
 		default: 0,
 		description: 'Zero-based occurrence of the quote.',
 		displayOptions: startOptions,
@@ -73,6 +74,9 @@ export async function execute(this: IExecuteFunctions, itemIndex: number): Promi
 	const replacement = this.getNodeParameter('replacement', itemIndex, '') as string;
 	const comment = this.getNodeParameter('comment', itemIndex, '') as string;
 	const quoteOccurrence = this.getNodeParameter('quoteOccurrence', itemIndex, 0) as number;
+	if (quote === '' && (comment !== '' || quoteOccurrence !== 0)) {
+		throw new NodeOperationError(this.getNode(), 'Quote is required when Replacement, Comment, or Quote Occurrence is set');
+	}
 	const input: Record<string, unknown> = { documentId };
 	if (quote !== '') {
 		input.quote = quote;

@@ -266,6 +266,13 @@ func newStartCmd(f *cmdutil.Factory) *cobra.Command {
 		Short: "Start a redline, or allocate an ID",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if strings.TrimSpace(flagQuote) == "" &&
+				(cmd.Flags().Changed("replacement") ||
+					cmd.Flags().Changed("occurrence") ||
+					cmd.Flags().Changed("comment")) {
+				return fmt.Errorf("quote is required with --replacement, --occurrence, or --comment")
+			}
+
 			input := map[string]any{"documentId": args[0]}
 			if strings.TrimSpace(flagQuote) != "" {
 				input["quote"] = flagQuote

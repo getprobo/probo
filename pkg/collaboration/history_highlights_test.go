@@ -77,6 +77,13 @@ func highlightTable(rows [][]string) string {
 	return table.String()
 }
 
+func highlightCode(text string) string {
+	return fmt.Sprintf(
+		`{"type":"codeBlock","attrs":{"language":null},"content":[{"type":"text","text":%q}]}`,
+		text,
+	)
+}
+
 func highlightDocument(blocks ...string) string {
 	return `{"type":"doc","content":[` + strings.Join(blocks, ",") + `]}`
 }
@@ -105,6 +112,10 @@ func editedDocument(
 
 			if _, ok := attrs["colspan"]; ok {
 				attrs["colwidth"] = nil
+			}
+
+			if spans[i].Block["type"] == "code-block" {
+				attrs["language"] = nil
 			}
 		}
 
@@ -266,8 +277,8 @@ func TestHistoryHighlights_UnchangedBrowserBlocksAreNotRewritten(t *testing.T) {
 
 	rows := [][]string{{"Right", "What it means"}, {"Access", "Obtain a copy."}}
 
-	seed := highlightDocument(highlightParagraph("Intro"), highlightTable(rows))
-	edited := highlightDocument(highlightParagraph("Intro text"), highlightTable(rows))
+	seed := highlightDocument(highlightParagraph("Intro"), highlightCode("keep this"), highlightTable(rows))
+	edited := highlightDocument(highlightParagraph("Intro text"), highlightCode("keep this"), highlightTable(rows))
 
 	document, before, after := editedDocument(t, seed, edited, true)
 
@@ -295,10 +306,12 @@ func TestHistoryHighlights_ReplayReconstructsTheBeforeText(t *testing.T) {
 	}
 
 	randomBlock := func(r *rand.Rand) string {
-		switch r.Intn(4) {
+		switch r.Intn(5) {
 		case 0:
 			return highlightHeading(1+r.Intn(3), randomText(r))
 		case 1:
+			return highlightCode(randomText(r))
+		case 2:
 			rows := make([][]string, 1+r.Intn(3))
 			for i := range rows {
 				rows[i] = []string{randomText(r), randomText(r)}

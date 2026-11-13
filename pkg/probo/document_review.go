@@ -977,16 +977,22 @@ func (s *DocumentService) SuggestChange(
 		&profileID,
 		[][]byte{actorID[:]},
 	); err != nil {
+		s.abandonSuggestion(ctx, scope, suggestion.ID, req.IdentityID)
+
 		return nil, fmt.Errorf("cannot record suggestion actor: %w", err)
 	}
 
 	if _, err := s.collaboration.Persist(ctx, scope, req.DocumentID, painted); err != nil {
+		s.abandonSuggestion(ctx, scope, suggestion.ID, req.IdentityID)
+
 		return nil, fmt.Errorf("cannot persist suggestion: %w", err)
 	}
 
 	if strings.TrimSpace(req.Comment) != "" {
 		content, err := richtext.FromPlainText(req.Comment)
 		if err != nil {
+			s.abandonSuggestion(ctx, scope, suggestion.ID, req.IdentityID)
+
 			return nil, fmt.Errorf("cannot encode suggestion comment: %w", err)
 		}
 
@@ -1000,6 +1006,8 @@ func (s *DocumentService) SuggestChange(
 				SuggestionID: &suggestion.ID,
 			},
 		); err != nil {
+			s.abandonSuggestion(ctx, scope, suggestion.ID, req.IdentityID)
+
 			return nil, err
 		}
 	}
@@ -1007,6 +1015,34 @@ func (s *DocumentService) SuggestChange(
 	s.notifyReview(ctx, suggestion.DocumentID)
 
 	return suggestion, nil
+}
+
+// abandonSuggestion rejects a suggestion whose body or comment did not finish.
+// Reject drops any marks already stored and closes the row, so a retry does
+// not leave an open redline behind the error.
+func (s *DocumentService) abandonSuggestion(
+	ctx context.Context,
+	scope coredata.Scoper,
+	suggestionID gid.GID,
+	identityID gid.GID,
+) {
+	_, err := s.DecideSuggestion(
+		ctx,
+		scope,
+		DecideDocumentSuggestionRequest{
+			SuggestionID: suggestionID,
+			IdentityID:   identityID,
+			Accept:       false,
+		},
+	)
+	if err != nil {
+		s.svc.logger.ErrorCtx(
+			ctx,
+			"cannot roll back document suggestion",
+			log.String("suggestion_id", suggestionID.String()),
+			log.Error(err),
+		)
+	}
 }
 
 func (s *DocumentService) DecideSuggestion(
