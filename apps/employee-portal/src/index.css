@@ -27,7 +27,7 @@
 
 /* The rich editor's chrome is styled for the console kit. The portal only
  * loads the v2 theme, so the placeholder, slash menu, focus ring, mentions,
- * and task lists have to be painted with v2 tokens here. */
+ * task lists, and links have to be painted with v2 tokens here. */
 .ProseMirror-focused {
   outline: none !important;
 }
@@ -130,6 +130,23 @@
 
 .tiptap[contenteditable="false"] ul[data-type="taskList"] > li > label input {
   pointer-events: none;
+}
+
+.tiptap a {
+  cursor: pointer;
+  font-weight: 400;
+  color: var(--color-sky-11);
+  text-decoration-line: underline;
+}
+
+.tiptap.ProseMirror-focused a:not(.rich-file) {
+  cursor: text;
+}
+
+.tiptap a.rich-file {
+  color: inherit;
+  font-weight: inherit;
+  text-decoration-line: none;
 }
 
 .tiptap .mention {
