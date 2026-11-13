@@ -25,6 +25,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 
@@ -224,30 +225,37 @@ type siblingSourceCandidate struct {
 	source    coredata.CookieSource
 }
 
-// collectPages reads every page. LoadAll stops at 10_000 rows, and one
-// banner's cookie detections can pass that. Promotion has to see all of
-// them to compare siblings.
-func collectPages[T page.Paginable[U], U page.OrderField](
-	ctx context.Context,
-	orderBy page.OrderBy[U],
-	fetch page.Loader[T, U, []T],
-) ([]T, error) {
-	var all []T
+// cookieDomainSet is the pre-existing detections of one pattern. A nil
+// cookie domain matches every sibling domain.
+type cookieDomainSet struct {
+	anyDomain bool
+	domains   map[string]struct{}
+}
 
-	err := page.WalkAll(
-		ctx,
-		orderBy,
-		fetch,
-		func(rows []T) error {
-			all = append(all, rows...)
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
+func (s *cookieDomainSet) add(domain *string) {
+	if domain == nil {
+		s.anyDomain = true
+		return
 	}
 
-	return all, nil
+	if s.domains == nil {
+		s.domains = map[string]struct{}{}
+	}
+
+	s.domains[strings.ToLower(*domain)] = struct{}{}
+}
+
+func (s *cookieDomainSet) covers(domain string) bool {
+	if s == nil {
+		return false
+	}
+
+	if s.anyDomain {
+		return true
+	}
+
+	_, ok := s.domains[strings.ToLower(domain)]
+	return ok
 }
 
 func (s *Service) promoteSiblingCookieSources(
@@ -260,11 +268,12 @@ func (s *Service) promoteSiblingCookieSources(
 	}
 
 	scope := coredata.NewScopeFromObjectID(banner.ID)
-	cookie := coredata.TrackerTypeCookie
 	recentFilter := coredata.NewDetectedTrackerFilter([]coredata.TrackerType{coredata.TrackerTypeCookie}).
 		WithUpdatedSince(banner.SourcePromotionSince)
 
-	recent, err := collectPages(
+	candidates := map[string]struct{}{}
+
+	err := page.WalkAll(
 		ctx,
 		page.OrderBy[coredata.DetectedTrackerOrderField]{
 			Field:     coredata.DetectedTrackerOrderFieldCreatedAt,
@@ -278,56 +287,78 @@ func (s *Service) promoteSiblingCookieSources(
 
 			return batch, nil
 		},
+		func(rows []*coredata.DetectedTracker) error {
+			for _, detection := range rows {
+				if !sourcePromotionRelevant(detectedTrackerInfo{
+					TrackerType: detection.TrackerType,
+					Source:      detection.Source,
+					HostOnly:    detection.HostOnly,
+				}) {
+					continue
+				}
+
+				candidates[detection.Identifier] = struct{}{}
+			}
+
+			return nil
+		},
 	)
 	if err != nil {
 		return err
-	}
-
-	candidates := map[string]struct{}{}
-	for _, detection := range recent {
-		if !sourcePromotionRelevant(detectedTrackerInfo{
-			TrackerType: detection.TrackerType,
-			Source:      detection.Source,
-			HostOnly:    detection.HostOnly,
-		}) {
-			continue
-		}
-
-		candidates[detection.Identifier] = struct{}{}
 	}
 
 	if len(candidates) == 0 {
 		return nil
 	}
 
-	banners, err := collectPages(
-		ctx,
+	cursor := page.NewCursor(
+		page.MaxCursorSize,
+		nil,
+		page.Head,
 		page.OrderBy[coredata.CookieBannerOrderField]{
 			Field:     coredata.CookieBannerOrderFieldCreatedAt,
 			Direction: page.OrderDirectionAsc,
 		},
-		func(ctx context.Context, cursor *page.Cursor[coredata.CookieBannerOrderField]) ([]*coredata.CookieBanner, error) {
-			var batch coredata.CookieBanners
-			if err := batch.LoadByCMPDomainID(ctx, tx, scope, *banner.CMPDomainID, cursor); err != nil {
-				return nil, fmt.Errorf("cannot load cmp domain banners: %w", err)
-			}
-
-			return []*coredata.CookieBanner(batch), nil
-		},
 	)
-	if err != nil {
-		return err
+
+	var domainBanners coredata.CookieBanners
+	if err := domainBanners.LoadByCMPDomainID(ctx, tx, scope, *banner.CMPDomainID, cursor); err != nil {
+		return fmt.Errorf("cannot load cmp domain banners: %w", err)
 	}
+
+	banners := page.NewPage([]*coredata.CookieBanner(domainBanners), cursor).Data
 
 	names := make([]string, 0, len(candidates))
 	for name := range candidates {
 		names = append(names, name)
 	}
 
+	slices.Sort(names)
+
+	for batch := range slices.Chunk(names, page.MaxCursorSize) {
+		if err := s.promoteSiblingCookieNames(ctx, tx, scope, banners, batch); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *Service) promoteSiblingCookieNames(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	banners []*coredata.CookieBanner,
+	names []string,
+) error {
+	cookie := coredata.TrackerTypeCookie
+
 	type bannerTrackers struct {
-		banner     *coredata.CookieBanner
-		patterns   []*coredata.TrackerPattern
-		detections []*coredata.DetectedTracker
+		banner      *coredata.CookieBanner
+		patterns    []*coredata.TrackerPattern
+		byName      map[string][]*coredata.TrackerPattern
+		hostOnly    map[string]struct{}
+		preExisting map[gid.GID]*cookieDomainSet
 	}
 
 	patternsForNames := coredata.NewTrackerPatternFilter(nil, nil, new(false)).
@@ -336,13 +367,13 @@ func (s *Service) promoteSiblingCookieSources(
 	detectionsForNames := coredata.NewDetectedTrackerFilter([]coredata.TrackerType{coredata.TrackerTypeCookie}).
 		WithIdentifiers(names)
 
-	loaded := make([]bannerTrackers, 0, len(banners))
+	loaded := make([]*bannerTrackers, 0, len(banners))
 	for _, banner := range banners {
 		if banner.Capabilities.Corsless {
 			continue
 		}
 
-		patterns, err := collectPages(
+		patterns, err := page.LoadAll(
 			ctx,
 			page.OrderBy[coredata.TrackerPatternOrderField]{
 				Field:     coredata.TrackerPatternOrderFieldCreatedAt,
@@ -361,74 +392,107 @@ func (s *Service) promoteSiblingCookieSources(
 			return err
 		}
 
-		detections, err := collectPages(
+		tracked := &bannerTrackers{
+			banner:      banner,
+			patterns:    patterns,
+			byName:      map[string][]*coredata.TrackerPattern{},
+			hostOnly:    map[string]struct{}{},
+			preExisting: map[gid.GID]*cookieDomainSet{},
+		}
+		for _, pattern := range patterns {
+			if pattern.Excluded || pattern.TrackerType != coredata.TrackerTypeCookie || pattern.Source == nil || *pattern.Source != coredata.CookieSourcePreExisting {
+				continue
+			}
+
+			tracked.byName[pattern.Pattern] = append(tracked.byName[pattern.Pattern], pattern)
+		}
+
+		err = walkBannerCookieDetections(
 			ctx,
-			page.OrderBy[coredata.DetectedTrackerOrderField]{
-				Field:     coredata.DetectedTrackerOrderFieldCreatedAt,
-				Direction: page.OrderDirectionAsc,
-			},
-			func(ctx context.Context, cursor *page.Cursor[coredata.DetectedTrackerOrderField]) ([]*coredata.DetectedTracker, error) {
-				var batch coredata.DetectedTrackers
-				if err := batch.LoadByCookieBannerID(ctx, tx, scope, banner.ID, detectionsForNames, cursor); err != nil {
-					return nil, fmt.Errorf("cannot load detected trackers: %w", err)
+			tx,
+			scope,
+			banner.ID,
+			detectionsForNames,
+			func(rows []*coredata.DetectedTracker) error {
+				for _, detection := range rows {
+					if detection.HostOnly != nil && *detection.HostOnly {
+						tracked.hostOnly[detection.Identifier] = struct{}{}
+					}
+
+					if detection.TrackerPatternID == nil || detection.Source == nil || *detection.Source != coredata.CookieSourcePreExisting {
+						continue
+					}
+
+					set := tracked.preExisting[*detection.TrackerPatternID]
+					if set == nil {
+						set = &cookieDomainSet{}
+						tracked.preExisting[*detection.TrackerPatternID] = set
+					}
+
+					set.add(detection.CookieDomain)
 				}
 
-				return batch, nil
+				return nil
 			},
 		)
 		if err != nil {
 			return err
 		}
 
-		loaded = append(loaded, bannerTrackers{
-			banner:     banner,
-			patterns:   patterns,
-			detections: detections,
-		})
+		loaded = append(loaded, tracked)
 	}
 
 	best := map[gid.GID]siblingSourceCandidate{}
 
-	for _, banner := range loaded {
-		hostOnly := map[string]struct{}{}
-
-		for _, detection := range banner.detections {
-			if detection.HostOnly != nil && *detection.HostOnly {
-				hostOnly[detection.Identifier] = struct{}{}
-			}
+	for _, sibling := range loaded {
+		patternsByID := make(map[gid.GID]*coredata.TrackerPattern, len(sibling.patterns))
+		for _, pattern := range sibling.patterns {
+			patternsByID[pattern.ID] = pattern
 		}
 
-		for _, other := range loaded {
-			if other.banner.ID == banner.banner.ID {
-				continue
-			}
+		err := walkBannerCookieDetections(
+			ctx,
+			tx,
+			scope,
+			sibling.banner.ID,
+			detectionsForNames,
+			func(rows []*coredata.DetectedTracker) error {
+				for _, detection := range rows {
+					for _, reader := range loaded {
+						if reader.banner.ID == sibling.banner.ID {
+							continue
+						}
 
-			patternsByID := make(map[gid.GID]*coredata.TrackerPattern, len(other.patterns))
-			for _, pattern := range other.patterns {
-				patternsByID[pattern.ID] = pattern
-			}
+						if _, blocked := reader.hostOnly[detection.Identifier]; blocked {
+							continue
+						}
 
-			for _, pattern := range banner.patterns {
-				if pattern.Excluded || pattern.TrackerType != coredata.TrackerTypeCookie || pattern.Source == nil || *pattern.Source != coredata.CookieSourcePreExisting {
-					continue
-				}
+						for _, pattern := range reader.byName[detection.Identifier] {
+							candidate, ok := siblingCandidate(
+								pattern,
+								reader.banner,
+								reader.preExisting[pattern.ID],
+								detection,
+								patternsByID,
+								sibling.banner.ID,
+							)
+							if !ok {
+								continue
+							}
 
-				if _, blocked := hostOnly[pattern.Pattern]; blocked {
-					continue
-				}
-
-				for _, detection := range other.detections {
-					candidate, ok := siblingCandidate(pattern, banner.banner, banner.detections, detection, patternsByID, other.banner.ID)
-					if !ok {
-						continue
+							current, seen := best[pattern.ID]
+							if !seen || preferSiblingEvidence(candidate, current) {
+								best[pattern.ID] = candidate
+							}
+						}
 					}
-
-					current, seen := best[pattern.ID]
-					if !seen || preferSiblingEvidence(candidate, current) {
-						best[pattern.ID] = candidate
-					}
 				}
-			}
+
+				return nil
+			},
+		)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -466,10 +530,36 @@ func (s *Service) promoteSiblingCookieSources(
 	return nil
 }
 
+func walkBannerCookieDetections(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	bannerID gid.GID,
+	filter *coredata.DetectedTrackerFilter,
+	walk func([]*coredata.DetectedTracker) error,
+) error {
+	return page.WalkAll(
+		ctx,
+		page.OrderBy[coredata.DetectedTrackerOrderField]{
+			Field:     coredata.DetectedTrackerOrderFieldCreatedAt,
+			Direction: page.OrderDirectionAsc,
+		},
+		func(ctx context.Context, cursor *page.Cursor[coredata.DetectedTrackerOrderField]) ([]*coredata.DetectedTracker, error) {
+			var batch coredata.DetectedTrackers
+			if err := batch.LoadByCookieBannerID(ctx, tx, scope, bannerID, filter, cursor); err != nil {
+				return nil, fmt.Errorf("cannot load detected trackers: %w", err)
+			}
+
+			return batch, nil
+		},
+		walk,
+	)
+}
+
 func siblingCandidate(
 	pattern *coredata.TrackerPattern,
 	banner *coredata.CookieBanner,
-	bannerDetections []*coredata.DetectedTracker,
+	preExisting *cookieDomainSet,
 	detection *coredata.DetectedTracker,
 	siblingPatterns map[gid.GID]*coredata.TrackerPattern,
 	siblingBannerID gid.GID,
@@ -495,20 +585,7 @@ func siblingCandidate(
 		return siblingSourceCandidate{}, false
 	}
 
-	matched := false
-
-	for _, existing := range bannerDetections {
-		if existing.TrackerPatternID == nil || *existing.TrackerPatternID != pattern.ID || existing.Source == nil || *existing.Source != coredata.CookieSourcePreExisting {
-			continue
-		}
-
-		if existing.CookieDomain == nil || strings.EqualFold(*existing.CookieDomain, *detection.CookieDomain) {
-			matched = true
-			break
-		}
-	}
-
-	if !matched {
+	if !preExisting.covers(*detection.CookieDomain) {
 		return siblingSourceCandidate{}, false
 	}
 
