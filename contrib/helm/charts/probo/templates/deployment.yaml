@@ -358,6 +358,28 @@ spec:
               value: {{ .Values.probo.anthropic.baseUrl | quote }}
             {{- end }}
             {{- end }}
+            {{- if .Values.probo.gemini.apiKey }}
+            - name: PROBOD_GEMINI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" . }}
+                  key: gemini-api-key
+            {{- if .Values.probo.gemini.baseUrl }}
+            - name: PROBOD_GEMINI_BASE_URL
+              value: {{ .Values.probo.gemini.baseUrl | quote }}
+            {{- end }}
+            {{- end }}
+            {{- if .Values.probo.openaiCompatible.baseUrl }}
+            - name: PROBOD_OPENAI_COMPATIBLE_BASE_URL
+              value: {{ .Values.probo.openaiCompatible.baseUrl | quote }}
+            {{- if .Values.probo.openaiCompatible.apiKey }}
+            - name: PROBOD_OPENAI_COMPATIBLE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" . }}
+                  key: openai-compatible-api-key
+            {{- end }}
+            {{- end }}
             # Agent Tools
             {{- if .Values.probo.agentTools.firecrawlApiKey }}
             - name: PROBOD_FIRECRAWL_API_KEY

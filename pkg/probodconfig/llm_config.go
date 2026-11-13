@@ -21,17 +21,27 @@
 package probodconfig
 
 import (
+	"errors"
 	"fmt"
+	"net"
 	"net/url"
+	"strings"
 )
 
 type (
 	// LLMProviderConfig holds authentication and connection settings for an
 	// LLM provider (e.g. OpenAI, Anthropic).
 	LLMProviderConfig struct {
-		Type    string `json:"type"`               // "openai", "anthropic", "bedrock"
-		APIKey  string `json:"api-key,omitempty"`  // for OpenAI and Anthropic
-		BaseURL string `json:"base-url,omitempty"` // https OpenAI or Anthropic compatible endpoint; empty uses the provider default
+		Type    string `json:"type"`               // "openai", "anthropic", "gemini", "openai_compatible", "bedrock"
+		APIKey  string `json:"api-key,omitempty"`  // optional for openai_compatible: a locally hosted server often has no auth
+		BaseURL string `json:"base-url,omitempty"` // required for openai_compatible; empty uses the provider default elsewhere
+
+		// Vertex mode for the gemini provider. When Project is set the
+		// provider authenticates with Application Default Credentials
+		// instead of APIKey, so a workload on GCP needs no credential of
+		// its own.
+		Project  string `json:"project,omitempty"`
+		Location string `json:"location,omitempty"`
 	}
 
 	// LLMAgentConfig holds model parameters for a single agent. Provider
@@ -123,11 +133,23 @@ type (
 	}
 )
 
-// Validate reports a BaseURL that is not an absolute https URL, so a
-// typo fails at startup instead of on every LLM call. An empty
-// BaseURL is valid and selects the provider default.
+// Validate reports a BaseURL that is not an absolute URL, so a typo fails at
+// startup instead of on every LLM call. An empty BaseURL is valid for every
+// provider except openai_compatible and selects the provider default.
+//
+// https is required except when the host is local. A self-hosted model served
+// by llama.cpp, vLLM or Ollama listens on plain http -- on loopback, on a
+// private address, or on a single-label service name inside a compose project
+// or cluster -- and requiring TLS there would make the openai_compatible
+// provider unusable for the case it exists to serve. Nothing outside those
+// hosts may go over plaintext, because that is where a credential would
+// actually cross a network.
 func (c LLMProviderConfig) Validate() error {
 	if c.BaseURL == "" {
+		if c.Type == "openai_compatible" {
+			return errors.New("openai_compatible provider requires a base URL")
+		}
+
 		return nil
 	}
 
@@ -136,15 +158,54 @@ func (c LLMProviderConfig) Validate() error {
 		return fmt.Errorf("cannot parse %s base URL: %w", c.Type, err)
 	}
 
-	if u.Scheme != "https" || u.Host == "" {
-		return fmt.Errorf("%s base URL must be an absolute https URL, got %q", c.Type, c.BaseURL)
+	if u.Host == "" {
+		return fmt.Errorf("%s base URL must be an absolute URL, got %q", c.Type, c.BaseURL)
 	}
 
-	return nil
+	switch u.Scheme {
+	case "https":
+		return nil
+	case "http":
+		if isLocalHost(u.Hostname()) {
+			return nil
+		}
+
+		return fmt.Errorf(
+			"%s base URL must use https unless the host is local, got %q",
+			c.Type,
+			c.BaseURL,
+		)
+	}
+
+	return fmt.Errorf("%s base URL must be http or https, got %q", c.Type, c.BaseURL)
 }
 
+// isLocalHost reports whether plaintext to this host stays inside the
+// deployment: loopback, a private or link-local address, or a name with no dot
+// in it (a compose service or a Kubernetes service in the same namespace).
+func isLocalHost(host string) bool {
+	if host == "" {
+		return false
+	}
+
+	if ip := net.ParseIP(host); ip != nil {
+		return ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast()
+	}
+
+	if host == "localhost" || strings.HasSuffix(host, ".localhost") {
+		return true
+	}
+
+	return !strings.Contains(host, ".")
+}
+
+// IsZero reports whether the provider is unconfigured. A base URL alone is
+// enough to count as configured: openai_compatible pointed at a local server
+// legitimately has no API key, and keying this on APIKey alone silently
+// dropped such a provider from the registry, which surfaced only as
+// "unknown LLM provider" at startup.
 func (c LLMProviderConfig) IsZero() bool {
-	return c.APIKey == ""
+	return c.APIKey == "" && c.BaseURL == "" && c.Project == ""
 }
 
 func (c LLMAgentConfig) IsZero() bool {

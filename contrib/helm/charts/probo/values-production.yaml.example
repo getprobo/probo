@@ -243,6 +243,28 @@ probo:
   #   # Anthropic compatible endpoint. Empty uses api.anthropic.com.
   #   baseUrl: ""
 
+  # Google Gemini, spoken natively rather than through its OpenAI shim.
+  # Set agents.default.provider to "gemini" to make the agents use it.
+  # gemini:
+  #   apiKey: "CHANGE_ME_GEMINI_API_KEY"
+  #   # Empty uses generativelanguage.googleapis.com.
+  #   baseUrl: ""
+
+  # A model you host yourself, or any other server speaking the OpenAI
+  # /v1/chat/completions format: llama.cpp's llama-server, vLLM, Ollama,
+  # LM Studio, LiteLLM, OpenRouter. Set agents.default.provider to
+  # "openai_compatible".
+  #
+  # Note this is NOT the `openai` block above with a different baseUrl: that
+  # one targets OpenAI's Responses API, which none of these implement.
+  #
+  # Enabled by baseUrl, not apiKey -- a self-hosted model usually has no auth,
+  # and the Authorization header is omitted entirely when apiKey is empty.
+  # http is accepted only for a local host; anything else must be https.
+  # openaiCompatible:
+  #   baseUrl: "http://llama-server:8080/v1"
+  #   apiKey: ""
+
   # Agent tools (optional, shared across agents)
   # agentTools:
   #   firecrawlApiKey: "CHANGE_ME_FIRECRAWL_API_KEY"
