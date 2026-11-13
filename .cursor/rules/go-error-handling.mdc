@@ -52,6 +52,12 @@ if execution.ProcessingOwnerToken == nil || *execution.ProcessingOwnerToken == "
 }
 ```
 
+## GraphQL resolvers
+
+Do not return `fmt.Errorf` from a GraphQL resolver. The client must see a
+`gqlx` error, or the operation is logged as `UNKNOWN`. See
+[`.cursor/rules/graphql-resolver-errors.mdc`](graphql-resolver-errors.mdc).
+
 ## Type assertions on errors
 
 Use `errors.AsType[T](err)` (generic form), not `errors.As(err, &ptr)`:
