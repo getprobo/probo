@@ -20,10 +20,8 @@
 
 export {
   bundledConfig,
-  hasBundledBanner,
   hasBundledConfig,
   isValidBannerApiBaseUrl,
-  resolveBannerId,
 } from "./bundledConfig";
 export { ConfigForm } from "./ConfigForm";
 export { DebugPanel } from "./DebugPanel";

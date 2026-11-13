@@ -28,7 +28,6 @@ import {
   EventLog,
   ExampleShell,
   enableNamedLoggers,
-  resolveBannerId,
   setParentDomainExampleCookie,
   themedExampleOrigin,
   getExampleLogger,
@@ -49,7 +48,7 @@ const themedLogger = getExampleLogger("themed-tcf");
 let started = false;
 
 export function App() {
-  const bannerId = resolveBannerId(import.meta.env.PUBLIC_THEMED_TCF_BANNER_ID);
+  const bannerId = bundledConfig.bannerId;
   const { events, pushEvent } = useEventLog();
   const posthogStatus = usePosthogStatus();
   const [manualPing, setManualPing] = useState<string | null>(null);

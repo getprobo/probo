@@ -1007,6 +1007,7 @@ func TestTrackerPattern_SourceCookieBanner(t *testing.T) {
 			node(id: $id) {
 				__typename
 				... on TrackerPattern {
+					source
 					sourceCookieBanner { id }
 				}
 			}
@@ -1020,9 +1021,11 @@ func TestTrackerPattern_SourceCookieBanner(t *testing.T) {
 		bannerID := factory.CreateCookieBanner(owner)
 		categoryID := factory.CreateCookieCategory(owner, bannerID)
 		patternID := factory.CreateTrackerPattern(owner, categoryID)
+		setTrackerPatternSource(t, patternID, coredata.CookieSourceScript)
 
 		var result struct {
 			Node struct {
+				Source             *string `json:"source"`
 				SourceCookieBanner *struct {
 					ID string `json:"id"`
 				} `json:"sourceCookieBanner"`
@@ -1031,6 +1034,8 @@ func TestTrackerPattern_SourceCookieBanner(t *testing.T) {
 
 		err := owner.Execute(query, map[string]any{"id": patternID}, &result)
 		require.NoError(t, err)
+		require.NotNil(t, result.Node.Source)
+		assert.Equal(t, string(coredata.CookieSourceScript), *result.Node.Source)
 		assert.Nil(t, result.Node.SourceCookieBanner)
 	})
 
@@ -1059,6 +1064,22 @@ func TestTrackerPattern_SourceCookieBanner(t *testing.T) {
 		require.NotNil(t, result.Node.SourceCookieBanner)
 		assert.Equal(t, siblingID, result.Node.SourceCookieBanner.ID)
 	})
+}
+
+func setTrackerPatternSource(t *testing.T, patternID string, source coredata.CookieSource) {
+	t.Helper()
+
+	ctx := context.Background()
+	conn := dialTestPg(t, ctx)
+	t.Cleanup(func() { _ = conn.Close(ctx) })
+
+	_, err := conn.Exec(ctx, `
+		UPDATE tracker_patterns
+		SET source = $1
+		WHERE id = $2
+		  AND source_cookie_banner_id IS NULL
+	`, source, patternID)
+	require.NoError(t, err)
 }
 
 func setSourceCookieBanner(t *testing.T, patternID string, bannerID string) {

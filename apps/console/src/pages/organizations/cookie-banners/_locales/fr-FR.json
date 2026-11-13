@@ -94,7 +94,7 @@
     "empty": "Aucune détection pour ce traceur pour le moment.",
     "sort": { "initiatorUrl": "Trier par URL initiatrice", "firstSeen": "Trier par première détection" },
     "actions": { "showMore": "Afficher plus" },
-    "promotedNote": "Ces détections proviennent de cette bannière. La source {{source}} a été observée sur {{origin}}.",
+    "promotedNote": "Ces détections proviennent de cette bannière. La source « {{source}} » a été observée sur {{origin}}.",
     "summary_one": "{{count}} détection",
     "summary_other": "{{count}} détections"
   },

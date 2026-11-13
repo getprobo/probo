@@ -19,26 +19,13 @@
 // SOFTWARE.
 
 export const bundledConfig = {
-  bannerId: import.meta.env.PUBLIC_COOKIE_BANNER_ID ?? "",
+  bannerId: import.meta.env.PUBLIC_COOKIE_BANNER_ID?.trim() ?? "",
   baseUrl: import.meta.env.PUBLIC_COOKIE_BANNER_API_BASE_URL ?? "",
   gcmEnabled: true,
 } as const;
 
-// An app-specific id wins. The shared id remains the fallback so a
-// single-banner playground still compiles the hosted app.
-export function resolveBannerId(specific: string | undefined): string {
-  const trimmed = specific?.trim() ?? "";
-  if (trimmed !== "") {
-    return trimmed;
-  }
-  return bundledConfig.bannerId.trim();
-}
-
-export function hasBundledBanner(specific: string | undefined): boolean {
-  return resolveBannerId(specific) !== "" && bundledConfig.baseUrl.trim() !== "";
-}
-
-export const hasBundledConfig = hasBundledBanner(undefined);
+export const hasBundledConfig =
+  bundledConfig.bannerId !== "" && bundledConfig.baseUrl.trim() !== "";
 
 export function isValidBannerApiBaseUrl(value: string): boolean {
   try {

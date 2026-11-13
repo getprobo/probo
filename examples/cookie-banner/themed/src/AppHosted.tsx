@@ -26,7 +26,6 @@ import {
   DebugPanel,
   EventLog,
   ExampleShell,
-  resolveBannerId,
   themedTcfExampleOrigin,
   enableNamedLoggers,
   getExampleLogger,
@@ -45,7 +44,7 @@ import {
 const themedLogger = getExampleLogger("themed");
 
 export function App() {
-  const bannerId = resolveBannerId(import.meta.env.PUBLIC_THEMED_BANNER_ID);
+  const bannerId = bundledConfig.bannerId;
   const { events, pushEvent } = useEventLog();
   const posthogStatus = usePosthogStatus();
   const [manualPing, setManualPing] = useState<string | null>(null);
