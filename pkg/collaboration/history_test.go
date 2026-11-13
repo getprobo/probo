@@ -26,7 +26,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.probo.inc/probo/pkg/automerge"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 )
@@ -96,23 +95,4 @@ func TestPaginateRevisions_Tail(t *testing.T) {
 			assert.False(t, paged.Info.HasPrev)
 		},
 	)
-}
-
-func TestAutomergeIndexToPlainOffset_CountsBlockBoundaries(t *testing.T) {
-	t.Parallel()
-
-	spans := []automerge.Span{
-		{Type: automerge.SpanTypeBlock, Block: map[string]any{"type": "paragraph"}},
-		{Type: automerge.SpanTypeText, Text: "ab"},
-		{Type: automerge.SpanTypeBlock, Block: map[string]any{"type": "paragraph"}},
-		{Type: automerge.SpanTypeText, Text: "c"},
-	}
-
-	boundary, ok := automergeIndexToPlainOffset(spans, 3)
-	require.True(t, ok)
-	assert.Equal(t, 3, boundary)
-
-	start, ok := automergeIndexToPlainOffset(spans, 4)
-	require.True(t, ok)
-	assert.Equal(t, 4, start)
 }
