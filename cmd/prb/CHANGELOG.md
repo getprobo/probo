@@ -4,6 +4,20 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.267.0] - 2026-11-13
+
+### Added
+
+- Asana task sync commands: `prb task publish-asana` publishes a task
+  as a new Asana task, `prb task link-asana` links it to an existing
+  one, `prb task list-asana-teams`, `list-asana-projects`, and
+  `list-asana-tasks` search Asana, `prb task asana-project-setup`
+  shows a project's sections, priority fields, and mapping,
+  `prb task update-asana-project-mapping` saves that mapping, and
+  `prb task update-asana-settings` updates the organization's settings
+- `prb task create --asana-project` publishes the new task to an Asana
+  project, and `--no-asana-project` skips the default project
+
 ## [0.266.0] - 2026-11-12
 
 ### Added
