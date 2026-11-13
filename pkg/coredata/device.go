@@ -1443,7 +1443,7 @@ SET
     mdm_provider = @mdm_provider,
     mdm_connector_id = @mdm_connector_id,
     mdm_device_id = @mdm_device_id,
-    mdm_last_check_in_at = @mdm_last_check_in_at,
+    mdm_last_check_in_at = COALESCE(@mdm_last_check_in_at, mdm_last_check_in_at),
     model = COALESCE(@model, model),
     updated_at = @now
 WHERE %s
@@ -1481,7 +1481,10 @@ WHERE %s
 	d.MDMConnectorID = &connectorID
 	d.MDMDeviceID = &mdmDeviceID
 
-	d.MDMLastCheckInAt = lastCheckInAt
+	if lastCheckInAt != nil {
+		d.MDMLastCheckInAt = lastCheckInAt
+	}
+
 	if model != nil {
 		d.Model = model
 	}

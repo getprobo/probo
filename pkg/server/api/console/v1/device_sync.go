@@ -29,7 +29,8 @@ import (
 
 // scheduleDeviceSync makes a device-sync connector's devices sync on the
 // worker's next poll. The connector is already saved, so a failure here is
-// logged rather than failing the mutation; reconnecting schedules it again.
+// logged rather than failing the mutation: the worker creates the sync of any
+// connector left without one on its own next poll.
 func (r *mutationResolver) scheduleDeviceSync(
 	ctx context.Context,
 	scope coredata.Scoper,

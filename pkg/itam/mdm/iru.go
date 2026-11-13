@@ -182,10 +182,20 @@ func (u *iruUser) UnmarshalJSON(data []byte) error {
 func (d *IruDriver) ListDevices(ctx context.Context) ([]DeviceRecord, error) {
 	var records []DeviceRecord
 
-	for page := range iruMaxPages {
+	// One page past the cap is read so that a fleet of exactly the cap,
+	// whose last allowed page is full, is told apart from a larger one.
+	for page := range iruMaxPages + 1 {
 		devices, err := d.listPage(ctx, page*iruDevicesPageSize)
 		if err != nil {
 			return nil, err
+		}
+
+		if page == iruMaxPages {
+			if len(devices) > 0 {
+				break
+			}
+
+			return records, nil
 		}
 
 		for _, device := range devices {
@@ -238,6 +248,13 @@ func (d *IruDriver) listPage(ctx context.Context, offset int) ([]iruDevice, erro
 	var devices []iruDevice
 	if err := json.NewDecoder(resp.Body).Decode(&devices); err != nil {
 		return nil, fmt.Errorf("cannot decode iru devices response: %w", err)
+	}
+
+	// A JSON null decodes to a nil slice without error. Read as an empty
+	// page it would end the listing and revoke every synced device, so
+	// only a literal empty array means there are no more devices.
+	if devices == nil {
+		return nil, fmt.Errorf("cannot decode iru devices response: device list is null")
 	}
 
 	return devices, nil

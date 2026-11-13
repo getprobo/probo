@@ -299,6 +299,35 @@ func TestService_ApplyDeviceSync(t *testing.T) {
 	)
 
 	t.Run(
+		"keeps stored fields a later sync leaves out",
+		func(t *testing.T) {
+			t.Parallel()
+
+			f := newDeviceSyncFixture(t)
+
+			f.sync(macRecord("iru-1", "SERIAL-1", nil))
+
+			partial := mdm.DeviceRecord{ExternalID: "iru-1"}
+			result := f.sync(partial)
+			assert.Equal(t, 1, result.Updated)
+
+			devices := f.devices()
+			require.Len(t, devices, 1)
+
+			device := devices[0]
+			require.NotNil(t, device.SerialNumber)
+			assert.Equal(t, "SERIAL-1", *device.SerialNumber)
+			require.NotNil(t, device.Model)
+			assert.Equal(t, "MacBook Air (M2, 2022)", *device.Model)
+			assert.NotNil(t, device.Hostname)
+			assert.NotNil(t, device.Platform)
+			assert.NotNil(t, device.OSVersion)
+			assert.NotNil(t, device.MDMLastCheckInAt)
+			assert.NotNil(t, device.LastSeenAt)
+		},
+	)
+
+	t.Run(
 		"links an agent device with the same serial instead of adding one",
 		func(t *testing.T) {
 			t.Parallel()

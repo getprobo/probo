@@ -33,3 +33,6 @@ CREATE TABLE device_syncs (
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL
 );
+
+-- The worker looks for the earliest due sync on every poll.
+CREATE INDEX device_syncs_next_sync_at_idx ON device_syncs (next_sync_at);

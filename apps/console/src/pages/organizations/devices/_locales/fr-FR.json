@@ -32,7 +32,7 @@
       "source": "Source",
       "model": "Modèle",
       "mdm": "MDM",
-      "mdmLastCheckIn": "Dernière synchronisation MDM"
+      "mdmLastCheckIn": "Dernier contact avec le MDM"
     },
     "views": {
       "allRegistered": "Tous les appareils",

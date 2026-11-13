@@ -99,6 +99,62 @@ SET
 	return nil
 }
 
+// ScheduleMissingDeviceSyncs creates a sync, due at now, for every connector
+// of the given providers that has none, across every tenant. The console
+// schedules a connector's sync when it is saved, but that runs after the
+// connector is committed; this is what makes a failed scheduling heal on the
+// worker's next poll instead of leaving the connector never synced.
+func ScheduleMissingDeviceSyncs(
+	ctx context.Context,
+	conn pg.Querier,
+	providers []ConnectorProvider,
+	now time.Time,
+) (int64, error) {
+	if len(providers) == 0 {
+		return 0, nil
+	}
+
+	q := `
+INSERT INTO device_syncs (
+    connector_id,
+    tenant_id,
+    organization_id,
+    attempts,
+    next_sync_at,
+    created_at,
+    updated_at
+)
+SELECT
+    c.id,
+    c.tenant_id,
+    c.organization_id,
+    0,
+    @now,
+    @now,
+    @now
+FROM
+    connectors c
+WHERE
+    c.provider = ANY(@providers::connector_provider[])
+    AND NOT EXISTS (
+        SELECT 1 FROM device_syncs s WHERE s.connector_id = c.id
+    )
+ON CONFLICT (connector_id) DO NOTHING
+`
+
+	args := pgx.StrictNamedArgs{
+		"providers": filterStrings(providers),
+		"now":       now,
+	}
+
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return 0, fmt.Errorf("cannot schedule missing device syncs: %w", err)
+	}
+
+	return result.RowsAffected(), nil
+}
+
 // LoadByConnectorID loads the sync of a connector.
 func (s *DeviceSync) LoadByConnectorID(
 	ctx context.Context,
@@ -193,15 +249,19 @@ FOR UPDATE SKIP LOCKED;
 	return nil
 }
 
-// RecordAttempt charges one attempt and pushes next_sync_at out before the
-// provider is called, so a crash mid-sync cannot leave the row due again on
-// the next poll.
+// RecordAttempt charges one attempt and leases the row until leaseUntil
+// before the provider is called, so a crash mid-sync cannot leave the row due
+// again on the next poll, and no other worker claims it while the lease runs.
+//
+// The attempt count and lease it stores identify this claim: RecordSuccess
+// and RecordFailure only apply while both are unchanged, so a Schedule that
+// lands mid-sync is never overwritten.
 func (s *DeviceSync) RecordAttempt(
 	ctx context.Context,
 	conn pg.Tx,
 	scope Scoper,
 	now time.Time,
-	nextSyncAt time.Time,
+	leaseUntil time.Time,
 ) error {
 	q := fmt.Sprintf(`
 UPDATE device_syncs
@@ -211,32 +271,39 @@ SET
     updated_at = @now
 WHERE %s
     AND connector_id = @connector_id
+RETURNING
+    attempts,
+    next_sync_at
 `, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"connector_id": s.ConnectorID,
-		"next_sync_at": nextSyncAt,
+		"next_sync_at": leaseUntil,
 		"now":          now,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
-	result, err := conn.Exec(ctx, q, args)
+	// The stored values are read back rather than kept from Go: the
+	// database rounds timestamps to the microsecond, and completion
+	// compares against what it stored.
+	err := conn.QueryRow(ctx, q, args).Scan(&s.Attempts, &s.NextSyncAt)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
 		return fmt.Errorf("cannot record device sync attempt: %w", err)
 	}
 
-	if result.RowsAffected() == 0 {
-		return ErrResourceNotFound
-	}
-
-	s.Attempts++
-	s.NextSyncAt = nextSyncAt
 	s.UpdatedAt = now
 
 	return nil
 }
 
 // RecordSuccess resets the retry budget and schedules the next regular sync.
+// It returns ErrResourceNotFound, and changes nothing, when the claim was
+// superseded: the connector was reconnected or deleted, or its lease ran out
+// and another worker claimed it.
 func (s *DeviceSync) RecordSuccess(
 	ctx context.Context,
 	conn pg.Querier,
@@ -253,12 +320,16 @@ SET
     updated_at = @now
 WHERE %s
     AND connector_id = @connector_id
+    AND attempts = @claimed_attempts
+    AND next_sync_at = @claimed_next_sync_at
 `, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"connector_id": s.ConnectorID,
-		"next_sync_at": nextSyncAt,
-		"now":          now,
+		"connector_id":         s.ConnectorID,
+		"next_sync_at":         nextSyncAt,
+		"now":                  now,
+		"claimed_attempts":     s.Attempts,
+		"claimed_next_sync_at": s.NextSyncAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -279,26 +350,33 @@ WHERE %s
 	return nil
 }
 
-// RecordFailure stamps the failure. The backoff was already charged by
-// RecordAttempt, so next_sync_at is left as it is.
+// RecordFailure stamps the failure and schedules the retry. Like
+// RecordSuccess, it changes nothing once the claim was superseded.
 func (s *DeviceSync) RecordFailure(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
 	now time.Time,
+	nextSyncAt time.Time,
 ) error {
 	q := fmt.Sprintf(`
 UPDATE device_syncs
 SET
     last_failed_at = @now,
+    next_sync_at = @next_sync_at,
     updated_at = @now
 WHERE %s
     AND connector_id = @connector_id
+    AND attempts = @claimed_attempts
+    AND next_sync_at = @claimed_next_sync_at
 `, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"connector_id": s.ConnectorID,
-		"now":          now,
+		"connector_id":         s.ConnectorID,
+		"next_sync_at":         nextSyncAt,
+		"now":                  now,
+		"claimed_attempts":     s.Attempts,
+		"claimed_next_sync_at": s.NextSyncAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -312,6 +390,7 @@ WHERE %s
 	}
 
 	s.LastFailedAt = &now
+	s.NextSyncAt = nextSyncAt
 	s.UpdatedAt = now
 
 	return nil

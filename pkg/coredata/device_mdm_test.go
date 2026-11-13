@@ -34,6 +34,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 )
 
@@ -181,25 +182,76 @@ func TestDevices_LoadByOrganizationIDAndOwnerID_ExcludesMDMDevices(t *testing.T)
 	scope, organizationID, connectorID, _ := insertMDMFixture(t, client)
 	now := time.Now().UTC().Truncate(time.Microsecond)
 	provider := coredata.ConnectorProviderIru
-	ownerID := gid.New(organizationID.TenantID(), coredata.MembershipProfileEntityType)
+	tenantID := organizationID.TenantID()
+	ownerID := gid.New(tenantID, coredata.MembershipProfileEntityType)
+	agentID := gid.New(tenantID, coredata.DeviceEntityType)
 
-	// The owner column references a profile, so the MDM row is inserted
-	// without one and the query is checked to filter on source rather than
-	// on the owner alone.
+	// One owner holds both an MDM device and an agent device, so a query
+	// that filtered on the owner alone would return both.
 	require.NoError(t, client.WithTx(t.Context(), func(ctx context.Context, tx pg.Tx) error {
-		device := coredata.Device{
-			ID:             gid.New(organizationID.TenantID(), coredata.DeviceEntityType),
+		identity := coredata.Identity{
+			ID:                   gid.New(gid.NilTenant, coredata.IdentityEntityType),
+			EmailAddress:         mail.Addr("owner." + tenantID.String() + "@example.com"),
+			FullName:             "Owner",
+			EmailAddressVerified: true,
+			CreatedAt:            now,
+			UpdatedAt:            now,
+		}
+		if err := identity.Insert(ctx, tx); err != nil {
+			return err
+		}
+
+		profile := coredata.MembershipProfile{
+			ID:             ownerID,
+			IdentityID:     identity.ID,
+			OrganizationID: organizationID,
+			Source:         coredata.ProfileSourceManual,
+			State:          coredata.ProfileStateActive,
+			FullName:       "Owner",
+			CreatedAt:      now,
+			UpdatedAt:      now,
+		}
+		if err := profile.Insert(ctx, tx); err != nil {
+			return err
+		}
+
+		mdmDevice := coredata.Device{
+			ID:             gid.New(tenantID, coredata.DeviceEntityType),
 			OrganizationID: organizationID,
 			State:          coredata.DeviceStateActive,
 			Source:         coredata.DeviceSourceMDM,
 			MDMProvider:    &provider,
 			MDMConnectorID: &connectorID,
 			MDMDeviceID:    new("iru-active"),
+			OwnerID:        &ownerID,
+			CreatedAt:      now,
+			UpdatedAt:      now,
+		}
+		if err := mdmDevice.Insert(ctx, tx, scope); err != nil {
+			return err
+		}
+
+		platform := coredata.DevicePlatformDarwin
+		agentDevice := coredata.Device{
+			ID:             agentID,
+			OrganizationID: organizationID,
+			State:          coredata.DeviceStateActive,
+			Source:         coredata.DeviceSourceAgent,
+			HardwareUUID:   new(agentID.String()),
+			SerialNumber:   new("SERIAL-" + agentID.String()),
+			Hostname:       new("agent-host"),
+			Platform:       &platform,
+			OSVersion:      new("15.1"),
+			AgentVersion:   new("1.0.0"),
+			APIKeyHash:     []byte("device-mdm-test-" + agentID.String()),
+			OwnerID:        &ownerID,
+			EnrolledAt:     &now,
+			LastSeenAt:     &now,
 			CreatedAt:      now,
 			UpdatedAt:      now,
 		}
 
-		return device.Insert(ctx, tx, scope)
+		return agentDevice.Insert(ctx, tx, scope)
 	}))
 
 	var devices coredata.Devices
@@ -210,7 +262,7 @@ func TestDevices_LoadByOrganizationIDAndOwnerID_ExcludesMDMDevices(t *testing.T)
 			return err
 		}
 
-		assert.Equal(t, 0, count)
+		assert.Equal(t, 1, count)
 
 		return devices.LoadByOrganizationIDAndOwnerID(
 			ctx,
@@ -229,7 +281,8 @@ func TestDevices_LoadByOrganizationIDAndOwnerID_ExcludesMDMDevices(t *testing.T)
 			),
 		)
 	}))
-	assert.Empty(t, devices)
+	require.Len(t, devices, 1)
+	assert.Equal(t, agentID, devices[0].ID)
 
 	sources := []coredata.DeviceSource{coredata.DeviceSourceMDM}
 
@@ -258,7 +311,7 @@ func TestDevices_LoadByOrganizationIDAndOwnerID_ExcludesMDMDevices(t *testing.T)
 			return err
 		}
 
-		assert.Equal(t, 0, agentOnly)
+		assert.Equal(t, 1, agentOnly)
 
 		return nil
 	}))
@@ -321,4 +374,179 @@ func TestDeviceSync_Schedule(t *testing.T) {
 		return loaded.LoadByConnectorID(ctx, conn, scope, connectorID)
 	})
 	assert.True(t, errors.Is(err, coredata.ErrResourceNotFound))
+}
+
+// claimDeviceSync schedules the fixture connector's sync and claims it the way
+// the worker does, returning the claim.
+func claimDeviceSync(
+	t *testing.T,
+	client *pg.Client,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+	connectorID gid.GID,
+	now time.Time,
+) *coredata.DeviceSync {
+	t.Helper()
+
+	claim := &coredata.DeviceSync{
+		ConnectorID:    connectorID,
+		OrganizationID: organizationID,
+		NextSyncAt:     now,
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
+
+	require.NoError(t, client.WithTx(t.Context(), func(ctx context.Context, tx pg.Tx) error {
+		if err := claim.Schedule(ctx, tx, scope); err != nil {
+			return err
+		}
+
+		// Nanoseconds the database cannot store, so the claim has to read
+		// back the lease it was given to recognize it later.
+		return claim.RecordAttempt(ctx, tx, scope, now, now.Add(15*time.Minute+123*time.Nanosecond))
+	}))
+
+	return claim
+}
+
+func TestDeviceSync_Completion(t *testing.T) {
+	t.Parallel()
+
+	t.Run(
+		"success resets the budget",
+		func(t *testing.T) {
+			t.Parallel()
+
+			client := test.PGClient(t)
+			scope, organizationID, connectorID, _ := insertMDMFixture(t, client)
+			now := time.Now().UTC().Truncate(time.Microsecond)
+			claim := claimDeviceSync(t, client, scope, organizationID, connectorID, now)
+
+			require.NoError(t, client.WithConn(t.Context(), func(ctx context.Context, conn pg.Querier) error {
+				return claim.RecordSuccess(ctx, conn, scope, now, now.Add(time.Hour))
+			}))
+
+			loaded := &coredata.DeviceSync{}
+
+			require.NoError(t, client.WithConn(t.Context(), func(ctx context.Context, conn pg.Querier) error {
+				return loaded.LoadByConnectorID(ctx, conn, scope, connectorID)
+			}))
+			assert.Equal(t, 0, loaded.Attempts)
+			assert.True(t, loaded.NextSyncAt.Equal(now.Add(time.Hour)))
+			require.NotNil(t, loaded.LastSyncedAt)
+		},
+	)
+
+	t.Run(
+		"failure keeps the budget and schedules the retry",
+		func(t *testing.T) {
+			t.Parallel()
+
+			client := test.PGClient(t)
+			scope, organizationID, connectorID, _ := insertMDMFixture(t, client)
+			now := time.Now().UTC().Truncate(time.Microsecond)
+			claim := claimDeviceSync(t, client, scope, organizationID, connectorID, now)
+
+			require.NoError(t, client.WithConn(t.Context(), func(ctx context.Context, conn pg.Querier) error {
+				return claim.RecordFailure(ctx, conn, scope, now, now.Add(5*time.Minute))
+			}))
+
+			loaded := &coredata.DeviceSync{}
+
+			require.NoError(t, client.WithConn(t.Context(), func(ctx context.Context, conn pg.Querier) error {
+				return loaded.LoadByConnectorID(ctx, conn, scope, connectorID)
+			}))
+			assert.Equal(t, 1, loaded.Attempts)
+			assert.True(t, loaded.NextSyncAt.Equal(now.Add(5*time.Minute)))
+			require.NotNil(t, loaded.LastFailedAt)
+		},
+	)
+
+	t.Run(
+		"a reconnect during the sync wins",
+		func(t *testing.T) {
+			t.Parallel()
+
+			client := test.PGClient(t)
+			scope, organizationID, connectorID, _ := insertMDMFixture(t, client)
+			now := time.Now().UTC().Truncate(time.Microsecond)
+			claim := claimDeviceSync(t, client, scope, organizationID, connectorID, now)
+
+			reconnectedAt := now.Add(time.Second)
+			reconnect := &coredata.DeviceSync{
+				ConnectorID:    connectorID,
+				OrganizationID: organizationID,
+				NextSyncAt:     reconnectedAt,
+				CreatedAt:      reconnectedAt,
+				UpdatedAt:      reconnectedAt,
+			}
+
+			require.NoError(t, client.WithTx(t.Context(), func(ctx context.Context, tx pg.Tx) error {
+				return reconnect.Schedule(ctx, tx, scope)
+			}))
+
+			err := client.WithConn(t.Context(), func(ctx context.Context, conn pg.Querier) error {
+				return claim.RecordSuccess(ctx, conn, scope, now, now.Add(time.Hour))
+			})
+			require.ErrorIs(t, err, coredata.ErrResourceNotFound)
+
+			err = client.WithConn(t.Context(), func(ctx context.Context, conn pg.Querier) error {
+				return claim.RecordFailure(ctx, conn, scope, now, now.Add(time.Hour))
+			})
+			require.ErrorIs(t, err, coredata.ErrResourceNotFound)
+
+			loaded := &coredata.DeviceSync{}
+
+			require.NoError(t, client.WithConn(t.Context(), func(ctx context.Context, conn pg.Querier) error {
+				return loaded.LoadByConnectorID(ctx, conn, scope, connectorID)
+			}))
+			assert.Equal(t, 0, loaded.Attempts)
+			assert.True(t, loaded.NextSyncAt.Equal(reconnectedAt))
+			assert.Nil(t, loaded.LastSyncedAt)
+			assert.Nil(t, loaded.LastFailedAt)
+		},
+	)
+}
+
+func TestScheduleMissingDeviceSyncs(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	scope, _, connectorID, _ := insertMDMFixture(t, client)
+	now := time.Now().UTC().Truncate(time.Microsecond)
+
+	providers := []coredata.ConnectorProvider{coredata.ConnectorProviderIru}
+
+	require.NoError(t, client.WithConn(t.Context(), func(ctx context.Context, conn pg.Querier) error {
+		_, err := coredata.ScheduleMissingDeviceSyncs(ctx, conn, providers, now)
+
+		return err
+	}))
+
+	loaded := &coredata.DeviceSync{}
+
+	require.NoError(t, client.WithConn(t.Context(), func(ctx context.Context, conn pg.Querier) error {
+		return loaded.LoadByConnectorID(ctx, conn, scope, connectorID)
+	}))
+	assert.Equal(t, 0, loaded.Attempts)
+	assert.WithinDuration(t, now, loaded.NextSyncAt, time.Minute)
+
+	// A sync that already exists is left as it is.
+	claim := &coredata.DeviceSync{ConnectorID: connectorID}
+
+	require.NoError(t, client.WithTx(t.Context(), func(ctx context.Context, tx pg.Tx) error {
+		return claim.RecordAttempt(ctx, tx, scope, now, now.Add(time.Hour))
+	}))
+
+	require.NoError(t, client.WithConn(t.Context(), func(ctx context.Context, conn pg.Querier) error {
+		_, err := coredata.ScheduleMissingDeviceSyncs(ctx, conn, providers, now)
+
+		return err
+	}))
+
+	require.NoError(t, client.WithConn(t.Context(), func(ctx context.Context, conn pg.Querier) error {
+		return loaded.LoadByConnectorID(ctx, conn, scope, connectorID)
+	}))
+	assert.Equal(t, 1, loaded.Attempts)
+	assert.True(t, loaded.NextSyncAt.Equal(now.Add(time.Hour)))
 }

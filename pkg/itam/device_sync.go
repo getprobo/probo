@@ -194,12 +194,15 @@ func (s *Service) applyDeviceRecord(
 		return nil
 	}
 
-	linked.Hostname = record.Name
-	linked.SerialNumber = record.SerialNumber
-	linked.Platform = record.Platform
-	linked.OSVersion = record.OSVersion
-	linked.Model = record.Model
-	linked.MDMLastCheckInAt = record.LastCheckInAt
+	// A field the provider leaves out this time keeps what an earlier sync
+	// stored: losing a serial would stop a later agent from merging with
+	// this row, and losing the check-in would reset the last-seen time.
+	linked.Hostname = keepUnlessSet(linked.Hostname, record.Name)
+	linked.SerialNumber = keepUnlessSet(linked.SerialNumber, record.SerialNumber)
+	linked.Platform = keepUnlessSet(linked.Platform, record.Platform)
+	linked.OSVersion = keepUnlessSet(linked.OSVersion, record.OSVersion)
+	linked.Model = keepUnlessSet(linked.Model, record.Model)
+	linked.MDMLastCheckInAt = keepUnlessSet(linked.MDMLastCheckInAt, record.LastCheckInAt)
 
 	if err := linked.UpdateFromMDM(ctx, tx, scope); err != nil {
 		return fmt.Errorf("cannot update synced device: %w", err)
@@ -409,4 +412,14 @@ func (s *Service) ownerFromMDM(
 	}
 
 	return &profile.ID, nil
+}
+
+// keepUnlessSet returns next when the provider reported it, and current
+// otherwise.
+func keepUnlessSet[T any](current, next *T) *T {
+	if next != nil {
+		return next
+	}
+
+	return current
 }

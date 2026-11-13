@@ -89,10 +89,6 @@ func sanitizeIruDevices(i *cassette.Interaction) error {
 		return fmt.Errorf("cannot decode recorded iru devices: %w", err)
 	}
 
-	if len(devices) == 0 {
-		return fmt.Errorf("recorded iru response lists no devices")
-	}
-
 	if len(devices) > iruCassetteMaxDevices {
 		devices = devices[:iruCassetteMaxDevices]
 	}
@@ -452,4 +448,65 @@ func TestIruDriver_ListDevices(t *testing.T) {
 			require.Error(t, err)
 		},
 	)
+
+	t.Run(
+		"fails on a null device list",
+		func(t *testing.T) {
+			t.Parallel()
+
+			server, _ := iruStub(t, map[string]string{"0": `null`})
+
+			_, err := NewIruDriver(server.Client(), server.URL).ListDevices(context.Background())
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "null")
+		},
+	)
+
+	t.Run(
+		"lists a fleet of exactly the page cap",
+		func(t *testing.T) {
+			t.Parallel()
+
+			server := iruFullPagesStub(t, iruMaxPages)
+
+			records, err := NewIruDriver(server.Client(), server.URL).ListDevices(context.Background())
+			require.NoError(t, err)
+			assert.Len(t, records, iruMaxPages*iruDevicesPageSize)
+		},
+	)
+
+	t.Run(
+		"fails on a fleet beyond the page cap",
+		func(t *testing.T) {
+			t.Parallel()
+
+			server := iruFullPagesStub(t, iruMaxPages+1)
+
+			_, err := NewIruDriver(server.Client(), server.URL).ListDevices(context.Background())
+			require.ErrorIs(t, err, ErrPaginationLimitReached)
+		},
+	)
+}
+
+// iruFullPagesStub serves fullPages full pages of devices, then empty ones.
+func iruFullPagesStub(t *testing.T, fullPages int) *httptest.Server {
+	t.Helper()
+
+	fullPage := iruDevicesJSON(t, 0, iruDevicesPageSize)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body := "[]"
+
+		var offset int
+		if _, err := fmt.Sscan(r.URL.Query().Get("offset"), &offset); err == nil &&
+			offset < fullPages*iruDevicesPageSize {
+			body = fullPage
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(body))
+	}))
+	t.Cleanup(server.Close)
+
+	return server
 }

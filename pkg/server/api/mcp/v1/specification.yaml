@@ -19864,7 +19864,7 @@ tools:
       $ref: "#/components/schemas/ListDevicesOutput"
   - name: getDevice
     title: Get Device
-    description: "include_postures defaults to false. When it is false, postures_included is false and latest_postures is empty. Get one ITAM device by ID (soft-deleted devices are not returned). Same state machine as listDevices: PENDING (enrollment token issued, agent has never checked in), ACTIVE (agent heartbeating), REVOKED (enrollment revoked). Use last_seen_at as the staleness signal. When include_postures is true, latest_postures holds the newest result per check_key and is empty for PENDING devices."
+    description: "include_postures defaults to false. When it is false, postures_included is false and latest_postures is empty. Get one ITAM device by ID (soft-deleted devices are not returned). Same state machine as listDevices: PENDING (enrollment token issued, agent has never checked in), ACTIVE (agent heartbeating, or listed by its MDM), REVOKED (enrollment revoked, or no longer listed by its MDM). Devices with source MDM are synced from an MDM connector such as Iru and never report postures. Use last_seen_at as the staleness signal. When include_postures is true, latest_postures holds the newest result per check_key and is empty for PENDING devices."
     hints:
       readonly: true
       destructive: false

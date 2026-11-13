@@ -48,6 +48,15 @@ const (
 	// deviceSyncFetchTimeout bounds one provider listing. A large fleet is a
 	// few hundred paged requests.
 	deviceSyncFetchTimeout = 10 * time.Minute
+
+	// deviceSyncTimeout bounds a whole sync: the listing, then applying it.
+	deviceSyncTimeout = deviceSyncFetchTimeout + 3*time.Minute
+
+	// deviceSyncLease is how long a claimed sync stays out of every other
+	// worker's reach. It outlasts deviceSyncTimeout, so a sync still running
+	// is never claimed a second time; a worker that crashed mid-sync leaves
+	// the row due again once it runs out.
+	deviceSyncLease = deviceSyncTimeout + 2*time.Minute
 )
 
 type (
@@ -59,6 +68,7 @@ type (
 		encryptionKey     cipher.EncryptionKey
 		connectorRegistry *connectorprotocol.Registry
 		providerRegistry  *provider.Registry
+		providers         []coredata.ConnectorProvider
 		interval          time.Duration
 		logger            *log.Logger
 	}
@@ -75,7 +85,16 @@ func NewDeviceSyncWorker(
 	logger *log.Logger,
 	opts ...worker.Option,
 ) *DeviceSyncWorker {
+	var providers []coredata.ConnectorProvider
+
+	for _, reg := range providerRegistry.All() {
+		if reg != nil && reg.SyncsDevices() {
+			providers = append(providers, reg.Provider)
+		}
+	}
+
 	h := &deviceSyncHandler{
+		providers:         providers,
 		pg:                pgClient,
 		itam:              itamSvc,
 		encryptionKey:     encryptionKey,
@@ -118,6 +137,10 @@ func (h *deviceSyncHandler) Claim(ctx context.Context) (coredata.DeviceSync, err
 		func(ctx context.Context, tx pg.Tx) error {
 			now := time.Now()
 
+			if _, err := coredata.ScheduleMissingDeviceSyncs(ctx, tx, h.providers, now); err != nil {
+				return err
+			}
+
 			if err := sync.LoadNextDueForUpdateSkipLocked(ctx, tx, now); err != nil {
 				return err
 			}
@@ -129,7 +152,7 @@ func (h *deviceSyncHandler) Claim(ctx context.Context) (coredata.DeviceSync, err
 				tx,
 				coredata.NewScopeFromObjectID(sync.ConnectorID),
 				now,
-				now.Add(deviceSyncBackoff(sync.Attempts+1, h.interval)),
+				now.Add(deviceSyncLease),
 			)
 		},
 	)
@@ -148,15 +171,30 @@ func (h *deviceSyncHandler) Process(ctx context.Context, sync coredata.DeviceSyn
 	logger := h.logger.With(log.String("connector_id", sync.ConnectorID.String()))
 	scope := coredata.NewScopeFromObjectID(sync.ConnectorID)
 
-	result, err := h.sync(ctx, &sync)
+	syncCtx, cancel := context.WithTimeout(ctx, deviceSyncTimeout)
+	defer cancel()
+
+	result, err := h.sync(syncCtx, &sync)
 	if err != nil {
 		failErr := h.pg.WithConn(
 			ctx,
 			func(ctx context.Context, conn pg.Querier) error {
-				return sync.RecordFailure(ctx, conn, scope, time.Now())
+				now := time.Now()
+
+				return sync.RecordFailure(
+					ctx,
+					conn,
+					scope,
+					now,
+					now.Add(deviceSyncBackoff(sync.Attempts, h.interval)),
+				)
 			},
 		)
-		if failErr != nil {
+
+		switch {
+		case errors.Is(failErr, coredata.ErrResourceNotFound):
+			logger.InfoCtx(ctx, "device sync superseded, keeping its newer schedule")
+		case failErr != nil:
 			logger.ErrorCtx(ctx, "cannot record device sync failure", log.Error(failErr))
 		}
 
@@ -178,7 +216,11 @@ func (h *deviceSyncHandler) Process(ctx context.Context, sync coredata.DeviceSyn
 			return sync.RecordSuccess(ctx, conn, scope, now, now.Add(h.interval))
 		},
 	)
-	if err != nil {
+	if errors.Is(err, coredata.ErrResourceNotFound) {
+		// Reconnected, deleted or re-claimed while this sync ran. The newer
+		// schedule wins; the devices applied above stay applied.
+		logger.InfoCtx(ctx, "device sync superseded, keeping its newer schedule")
+	} else if err != nil {
 		return fmt.Errorf("cannot record device sync success: %w", err)
 	}
 
