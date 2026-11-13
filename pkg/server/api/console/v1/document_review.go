@@ -151,6 +151,7 @@ func (r *Resolver) documentReviewError(ctx context.Context, message string, err 
 	case errors.Is(err, probo.ErrNotDocumentCommentAuthor),
 		errors.Is(err, probo.ErrInvalidDocumentAnchor),
 		errors.Is(err, collaboration.ErrQuoteNotFound),
+		errors.Is(err, collaboration.ErrSuggestionUnchanged),
 		errors.Is(err, collaboration.ErrSuggestionNotInDocument):
 		return gqlx.Invalid(ctx, err)
 	}

@@ -70,6 +70,8 @@ func (r *Resolver) documentReviewError(ctx context.Context, message string, err 
 		return probo.ErrInvalidDocumentAnchor
 	case errors.Is(err, collaboration.ErrQuoteNotFound):
 		return collaboration.ErrQuoteNotFound
+	case errors.Is(err, collaboration.ErrSuggestionUnchanged):
+		return collaboration.ErrSuggestionUnchanged
 	case errors.Is(err, collaboration.ErrSuggestionNotInDocument):
 		return collaboration.ErrSuggestionNotInDocument
 	case errors.Is(err, collaboration.ErrOpenSuggestions):
