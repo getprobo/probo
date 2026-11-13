@@ -40,10 +40,6 @@ export const cookieBannerConfigLayout = tv({
     id: "font-mono",
     version: "shrink-0 font-mono",
     body: "flex flex-col gap-1",
-    loadsRow: "flex flex-wrap items-center gap-x-2 gap-y-0.5",
-    loadsItem: "flex items-center gap-1.5",
-    loadsLogo: "shrink-0 text-sand-a8",
-    loadsSeparator: "text-sand-8",
   },
 });
 

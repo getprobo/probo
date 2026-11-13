@@ -127,6 +127,64 @@ func (s *Service) GetPageLoads(
 	return result, nil
 }
 
+func (s *Service) GetDailyPageLoads(
+	ctx context.Context,
+	scope coredata.Scoper,
+	cookieBannerIDs []gid.GID,
+	days int,
+) (map[gid.GID][]DailyPageLoads, error) {
+	if err := ValidateAnalyticsDays(days); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
+	since := analyticsSince(s.now(), days)
+
+	result := make(map[gid.GID][]DailyPageLoads, len(cookieBannerIDs))
+	for _, cookieBannerID := range cookieBannerIDs {
+		result[cookieBannerID] = dailyPageLoadsSeries(nil, since, days)
+	}
+
+	if len(cookieBannerIDs) == 0 {
+		return result, nil
+	}
+
+	var rows []coredata.DailyPageLoad
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			loaded, err := coredata.LoadDailyPageLoadsByCookieBannerIDs(
+				ctx,
+				conn,
+				scope,
+				cookieBannerIDs,
+				since,
+			)
+			if err != nil {
+				return err
+			}
+
+			rows = loaded
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	rowsByBanner := make(map[gid.GID][]coredata.DailyPageLoad, len(cookieBannerIDs))
+	for _, row := range rows {
+		rowsByBanner[row.CookieBannerID] = append(rowsByBanner[row.CookieBannerID], row)
+	}
+
+	for cookieBannerID, bannerRows := range rowsByBanner {
+		result[cookieBannerID] = dailyPageLoadsSeries(bannerRows, since, days)
+	}
+
+	return result, nil
+}
+
 func (s *Service) GetHitSplits(
 	ctx context.Context,
 	scope coredata.Scoper,

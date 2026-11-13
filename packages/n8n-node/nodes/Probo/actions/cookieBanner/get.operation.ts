@@ -76,7 +76,7 @@ export async function execute(
 					defaultLanguage
 					publisherCountryCode
 					tcfCmpId
-					pageLoads(days: $days) { family count }
+					dailyPageLoads(days: $days) { day pageLoads { family count } }
 					createdAt
 					updatedAt
 					publishedVersion {

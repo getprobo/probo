@@ -35,9 +35,11 @@ import { StatValue } from "./StatCard";
 
 const cookieBannerFragment = graphql`
   fragment FamilyHitRates_cookieBanner on CookieBanner {
-    pageLoads(days: 7) {
-      family
-      count
+    dailyPageLoads(days: 7) {
+      pageLoads {
+        family
+        count
+      }
     }
   }
 `;
@@ -73,9 +75,12 @@ export function FamilyHitRates({
   const pattern = useFragment(trackerPatternFragment, trackerPatternKey);
   const { root, card, family, logo, rates, rate, fraction }
     = familyHitRates();
-  const loadsByFamily = new Map(
-    banner.pageLoads.map(entry => [entry.family, entry.count]),
-  );
+  const loadsByFamily = new Map<string, number>();
+  for (const day of banner.dailyPageLoads) {
+    for (const load of day.pageLoads) {
+      loadsByFamily.set(load.family, (loadsByFamily.get(load.family) ?? 0) + load.count);
+    }
+  }
   const allowedHitsByFamily = new Map(
     pattern.allowedHits.map(entry => [entry.family, entry.count]),
   );

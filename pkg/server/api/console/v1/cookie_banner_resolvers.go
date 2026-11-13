@@ -429,9 +429,9 @@ func (r *cookieBannerResolver) GvlVendorIds(ctx context.Context, obj *types.Cook
 	return ids, nil
 }
 
-// PageLoads is the resolver for the pageLoads field.
-func (r *cookieBannerResolver) PageLoads(ctx context.Context, obj *types.CookieBanner, days *int) ([]*cookiebanner.BrowserFamilyCount, error) {
-	return r.loadPageLoads(ctx, obj, days)
+// DailyPageLoads is the resolver for the dailyPageLoads field.
+func (r *cookieBannerResolver) DailyPageLoads(ctx context.Context, obj *types.CookieBanner, days *int) ([]*cookiebanner.DailyPageLoads, error) {
+	return r.loadDailyPageLoads(ctx, obj, days)
 }
 
 // UncategorisedTrackerResources is the resolver for the uncategorisedTrackerResources field.

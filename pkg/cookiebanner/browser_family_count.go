@@ -20,11 +20,22 @@
 
 package cookiebanner
 
-import "go.probo.inc/probo/pkg/coredata"
+import (
+	"time"
+
+	"go.probo.inc/probo/pkg/coredata"
+)
 
 type BrowserFamilyCount struct {
 	Family coredata.BrowserFamily
 	Count  int
+}
+
+// DailyPageLoads is one UTC day of page loads. PageLoads is empty when the
+// day has none, so a series can stay dense without the caller filling gaps.
+type DailyPageLoads struct {
+	Day       time.Time
+	PageLoads []BrowserFamilyCount
 }
 
 func NewBrowserFamilyCountPtrs(counts []BrowserFamilyCount) []*BrowserFamilyCount {
@@ -34,6 +45,37 @@ func NewBrowserFamilyCountPtrs(counts []BrowserFamilyCount) []*BrowserFamilyCoun
 	}
 
 	return out
+}
+
+func NewDailyPageLoadsPtrs(series []DailyPageLoads) []*DailyPageLoads {
+	out := make([]*DailyPageLoads, len(series))
+	for i := range series {
+		out[i] = &series[i]
+	}
+
+	return out
+}
+
+// dailyPageLoadsSeries returns exactly days entries, oldest first, starting
+// at since. since must be a UTC midnight. Rows on other days are dropped,
+// and days with no rows keep an empty family list.
+func dailyPageLoadsSeries(rows []coredata.DailyPageLoad, since time.Time, days int) []DailyPageLoads {
+	rowsByDay := map[time.Time][]coredata.DailyPageLoad{}
+	for _, row := range rows {
+		day := utcDay(row.Day)
+		rowsByDay[day] = append(rowsByDay[day], row)
+	}
+
+	series := make([]DailyPageLoads, days)
+	for i := range days {
+		day := since.AddDate(0, 0, i)
+		series[i] = DailyPageLoads{
+			Day:       day,
+			PageLoads: PageLoadsByFamily(rowsByDay[day]),
+		}
+	}
+
+	return series
 }
 
 func PageLoadsByFamily(rows []coredata.DailyPageLoad) []BrowserFamilyCount {

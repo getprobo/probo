@@ -6129,12 +6129,12 @@ func (r *Resolver) GetCookieBannerTool(ctx context.Context, req *mcp.CallToolReq
 
 	out := types.NewCookieBanner(banner, r.cookieBanner.TCFCmpID())
 
-	pageLoads, err := r.cookieBanner.GetPageLoads(ctx, scope, []gid.GID{input.ID}, analyticsDays(input.Days))
+	dailyPageLoads, err := r.cookieBanner.GetDailyPageLoads(ctx, scope, []gid.GID{input.ID}, analyticsDays(input.Days))
 	if err != nil {
-		return nil, types.GetCookieBannerOutput{}, mcpx.MapError(ctx, r.logger, "cannot get cookie banner page loads", err)
+		return nil, types.GetCookieBannerOutput{}, mcpx.MapError(ctx, r.logger, "cannot get cookie banner daily page loads", err)
 	}
 
-	out.PageLoads = types.NewBrowserFamilyCounts(pageLoads[input.ID])
+	out.DailyPageLoads = types.NewDailyPageLoads(dailyPageLoads[input.ID])
 
 	if _, err := r.Authorize(ctx, input.ID, probo.ActionCookieBannerVersionList); err == nil {
 		published, err := r.cookieBanner.GetLatestPublishedCookieBannerVersion(ctx, scope, input.ID)

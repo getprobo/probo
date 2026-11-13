@@ -6,15 +6,17 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ### Added
 
+- `cookie-banner view` prints page loads for each UTC day in the
+  requested window, oldest first
 - `cookie-banner view --days` and `tracker-pattern view --days` set
   how many UTC days to count, today included. The default is 7 and the
   maximum is 90
 
 ### Changed
 
-- **Breaking**: `cookie-banner view` shows page loads for the last
-  days instead of the latest sample. The JSON output has `pageLoads`
-  instead of `latestSample`
+- **Breaking**: `cookie-banner view` shows page loads for each UTC day
+  in the requested window instead of the latest sample. The JSON
+  output has `dailyPageLoads` instead of `latestSample`
 - **Breaking**: `tracker-pattern view` shows hits for the last days
   instead of sample hits. The JSON output has `hits` instead of
   `sampleHits`

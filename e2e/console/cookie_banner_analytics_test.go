@@ -36,7 +36,7 @@ type browserFamilyCount struct {
 	Count  int    `json:"count"`
 }
 
-func TestCookieBanner_PageLoads(t *testing.T) {
+func TestCookieBanner_DailyPageLoads(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
@@ -45,32 +45,28 @@ func TestCookieBanner_PageLoads(t *testing.T) {
 		query($id: ID!, $days: Int) {
 			node(id: $id) {
 				... on CookieBanner {
-					pageLoads(days: $days) {
-						family
-						count
+					dailyPageLoads(days: $days) {
+						day
+						pageLoads {
+							family
+							count
+						}
 					}
 				}
 			}
 		}
 	`
 
-	type pageLoadsResult struct {
+	type dailyPageLoadsResult struct {
 		Node struct {
-			PageLoads []browserFamilyCount `json:"pageLoads"`
+			DailyPageLoads []struct {
+				Day       string               `json:"day"`
+				PageLoads []browserFamilyCount `json:"pageLoads"`
+			} `json:"dailyPageLoads"`
 		} `json:"node"`
 	}
 
-	t.Run("empty for a new banner", func(t *testing.T) {
-		t.Parallel()
-
-		bannerID := factory.CreateCookieBanner(owner)
-
-		var result pageLoadsResult
-		require.NoError(t, owner.Execute(query, map[string]any{"id": bannerID}, &result))
-		assert.Empty(t, result.Node.PageLoads)
-	})
-
-	t.Run("sums the last seven days by default", func(t *testing.T) {
+	t.Run("returns one entry per day oldest first", func(t *testing.T) {
 		t.Parallel()
 
 		bannerID := factory.CreateCookieBanner(owner)
@@ -81,27 +77,37 @@ func TestCookieBanner_PageLoads(t *testing.T) {
 		seedDailyPageLoad(t, bannerID, today.AddDate(0, 0, -6), "FIREFOX", "OPT_IN", 4)
 		seedDailyPageLoad(t, bannerID, today.AddDate(0, 0, -7), "SAFARI", "OPT_IN", 5)
 
-		var lastWeek pageLoadsResult
-		require.NoError(t, owner.Execute(query, map[string]any{"id": bannerID}, &lastWeek))
+		var result dailyPageLoadsResult
+		require.NoError(t, owner.Execute(query, map[string]any{"id": bannerID}, &result))
+		require.Len(t, result.Node.DailyPageLoads, 7)
+
+		for i, entry := range result.Node.DailyPageLoads {
+			day, err := time.Parse(time.RFC3339Nano, entry.Day)
+			require.NoError(t, err)
+			assert.True(t, day.Equal(today.AddDate(0, 0, i-6)), "entry %d", i)
+		}
+
 		assert.Equal(
 			t,
-			[]browserFamilyCount{
-				{Family: "CHROME", Count: 3},
-				{Family: "FIREFOX", Count: 4},
-			},
-			lastWeek.Node.PageLoads,
+			[]browserFamilyCount{{Family: "FIREFOX", Count: 4}},
+			result.Node.DailyPageLoads[0].PageLoads,
+		)
+		for _, entry := range result.Node.DailyPageLoads[1:6] {
+			assert.Empty(t, entry.PageLoads)
+		}
+		assert.Equal(
+			t,
+			[]browserFamilyCount{{Family: "CHROME", Count: 3}},
+			result.Node.DailyPageLoads[6].PageLoads,
 		)
 
-		var lastEightDays pageLoadsResult
-		require.NoError(t, owner.Execute(query, map[string]any{"id": bannerID, "days": 8}, &lastEightDays))
+		var wider dailyPageLoadsResult
+		require.NoError(t, owner.Execute(query, map[string]any{"id": bannerID, "days": 8}, &wider))
+		require.Len(t, wider.Node.DailyPageLoads, 8)
 		assert.Equal(
 			t,
-			[]browserFamilyCount{
-				{Family: "CHROME", Count: 3},
-				{Family: "FIREFOX", Count: 4},
-				{Family: "SAFARI", Count: 5},
-			},
-			lastEightDays.Node.PageLoads,
+			[]browserFamilyCount{{Family: "SAFARI", Count: 5}},
+			wider.Node.DailyPageLoads[0].PageLoads,
 		)
 	})
 
@@ -111,7 +117,7 @@ func TestCookieBanner_PageLoads(t *testing.T) {
 		bannerID := factory.CreateCookieBanner(owner)
 
 		for _, days := range []int{0, 91} {
-			err := owner.Execute(query, map[string]any{"id": bannerID, "days": days}, &pageLoadsResult{})
+			err := owner.Execute(query, map[string]any{"id": bannerID, "days": days}, &dailyPageLoadsResult{})
 			testutil.RequireErrorCode(t, err, "INVALID", "days=%d must be rejected", days)
 		}
 	})

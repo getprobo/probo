@@ -52,11 +52,11 @@ func analyticsDays(ctx context.Context, days *int) (int, error) {
 	return *days, nil
 }
 
-func (r *cookieBannerResolver) loadPageLoads(
+func (r *cookieBannerResolver) loadDailyPageLoads(
 	ctx context.Context,
 	obj *types.CookieBanner,
 	days *int,
-) ([]*cookiebanner.BrowserFamilyCount, error) {
+) ([]*cookiebanner.DailyPageLoads, error) {
 	if _, err := r.authorize(ctx, obj.ID, probo.ActionCookieBannerGet); err != nil {
 		return nil, err
 	}
@@ -71,18 +71,18 @@ func (r *cookieBannerResolver) loadPageLoads(
 		Days:           window,
 	}
 
-	pageLoads, err := dataloader.FromContext(ctx).PageLoads.Load(ctx, key)
+	series, err := dataloader.FromContext(ctx).DailyPageLoads.Load(ctx, key)
 	if err != nil {
 		if errors.Is(err, dataloadgen.ErrNotFound) {
-			return []*cookiebanner.BrowserFamilyCount{}, nil
+			return []*cookiebanner.DailyPageLoads{}, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get cookie banner page loads", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot get cookie banner daily page loads", log.Error(err))
 
 		return nil, gqlx.Internal(ctx)
 	}
 
-	return cookiebanner.NewBrowserFamilyCountPtrs(pageLoads), nil
+	return cookiebanner.NewDailyPageLoadsPtrs(series), nil
 }
 
 func (r *trackerPatternResolver) loadHitSplits(

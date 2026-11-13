@@ -14392,11 +14392,27 @@ components:
         published_version:
           $ref: "#/components/schemas/CookieBannerVersion"
           description: Latest published cookie banner version, if any
+        daily_page_loads:
+          type: array
+          items:
+            $ref: "#/components/schemas/DailyPageLoads"
+          description: Page loads by browser family for each requested UTC day, today included and oldest first. Days with no loads are included with an empty list. Only set by getCookieBanner.
+
+    DailyPageLoads:
+      type: object
+      required:
+        - day
+        - page_loads
+      properties:
+        day:
+          type: string
+          format: date-time
+          description: UTC midnight that starts this day
         page_loads:
           type: array
           items:
             $ref: "#/components/schemas/BrowserFamilyCount"
-          description: Page loads by browser family over the requested UTC days, today included. Families with zero page loads are omitted. Only set by getCookieBanner.
+          description: Page loads by browser family on this day. Families with zero page loads are omitted.
 
     CookieBannerScanState:
       type: string

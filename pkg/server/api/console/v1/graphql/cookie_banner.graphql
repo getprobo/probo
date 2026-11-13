@@ -218,6 +218,14 @@ type BrowserFamilyCount
     count: Int!
 }
 
+type DailyPageLoads
+    @goModel(
+        model: "go.probo.inc/probo/pkg/cookiebanner.DailyPageLoads"
+    ) {
+    day: Datetime!
+    pageLoads: [BrowserFamilyCount!]!
+}
+
 enum CookieBannerScanState
     @goModel(model: "go.probo.inc/probo/pkg/coredata.CookieBannerScanState") {
     PENDING
@@ -447,10 +455,11 @@ type CookieBanner implements Node {
     gvlVendorIds: [Int!]! @goField(forceResolver: true)
 
     """
-    Page loads per browser family over the last `days` UTC days,
-    today included. Defaults to 7 days; at most 90.
+    Page loads per browser family for each of the last `days` UTC days,
+    today included and oldest first. Days with no loads are included
+    with an empty list. Defaults to 7 days; at most 90.
     """
-    pageLoads(days: Int): [BrowserFamilyCount!]!
+    dailyPageLoads(days: Int): [DailyPageLoads!]!
         @goField(forceResolver: true)
 
     uncategorisedTrackerResources(

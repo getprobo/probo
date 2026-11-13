@@ -134,7 +134,7 @@ type (
 		File                                       *dataloadgen.Loader[gid.GID, *coredata.File]
 		CookieBanner                               *dataloadgen.Loader[gid.GID, *coredata.CookieBanner]
 		CookieCategory                             *dataloadgen.Loader[gid.GID, *coredata.CookieCategory]
-		PageLoads                                  *dataloadgen.Loader[PageLoadsKey, []cookiebanner.BrowserFamilyCount]
+		DailyPageLoads                             *dataloadgen.Loader[PageLoadsKey, []cookiebanner.DailyPageLoads]
 		HitSplits                                  *dataloadgen.Loader[HitSplitsKey, cookiebanner.HitSplits]
 		TrackerPatternObservers                    *dataloadgen.Loader[gid.GID, []coredata.DetectedTrackerObserver]
 		CommonTrackerPattern                       *dataloadgen.Loader[gid.GID, *coredata.CommonTrackerPattern]
@@ -225,7 +225,7 @@ func (f *batchFetcher) newLoaders() *Loaders {
 		File:                                     dataloadgen.NewMappedLoader(f.fetchFiles),
 		CookieBanner:                             dataloadgen.NewMappedLoader(f.fetchCookieBanners),
 		CookieCategory:                           dataloadgen.NewMappedLoader(f.fetchCookieCategories),
-		PageLoads:                                dataloadgen.NewMappedLoader(f.fetchPageLoads),
+		DailyPageLoads:                           dataloadgen.NewMappedLoader(f.fetchDailyPageLoads),
 		HitSplits:                                dataloadgen.NewMappedLoader(f.fetchHitSplits),
 		TrackerPatternObservers:                  dataloadgen.NewMappedLoader(f.fetchTrackerPatternObservers),
 		CommonTrackerPattern:                     dataloadgen.NewMappedLoader(f.fetchCommonTrackerPatterns),
@@ -1080,16 +1080,16 @@ func (f *batchFetcher) fetchCookieBanners(ctx context.Context, keys []gid.GID) (
 	return result, nil
 }
 
-func (f *batchFetcher) fetchPageLoads(
+func (f *batchFetcher) fetchDailyPageLoads(
 	ctx context.Context,
 	keys []PageLoadsKey,
-) (map[PageLoadsKey][]cookiebanner.BrowserFamilyCount, error) {
+) (map[PageLoadsKey][]cookiebanner.DailyPageLoads, error) {
 	type batchKey struct {
 		tenantID gid.TenantID
 		days     int
 	}
 
-	result := make(map[PageLoadsKey][]cookiebanner.BrowserFamilyCount, len(keys))
+	result := make(map[PageLoadsKey][]cookiebanner.DailyPageLoads, len(keys))
 	idsByBatch := make(map[batchKey][]gid.GID)
 
 	for _, key := range keys {
@@ -1098,18 +1098,18 @@ func (f *batchFetcher) fetchPageLoads(
 	}
 
 	for batch, cookieBannerIDs := range idsByBatch {
-		loads, err := f.cookieBanner.GetPageLoads(
+		loads, err := f.cookieBanner.GetDailyPageLoads(
 			ctx,
 			scopeFromContext(ctx, batch.tenantID),
 			cookieBannerIDs,
 			batch.days,
 		)
 		if err != nil {
-			return nil, fmt.Errorf("cannot batch load page loads: %w", err)
+			return nil, fmt.Errorf("cannot batch load daily page loads: %w", err)
 		}
 
-		for cookieBannerID, counts := range loads {
-			result[PageLoadsKey{CookieBannerID: cookieBannerID, Days: batch.days}] = counts
+		for cookieBannerID, series := range loads {
+			result[PageLoadsKey{CookieBannerID: cookieBannerID, Days: batch.days}] = series
 		}
 	}
 

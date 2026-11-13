@@ -342,8 +342,19 @@
     "deleteConfirmation": "Cette action supprimera définitivement la bannière de cookies \"{{name}}\". Elle est irréversible.",
     "dialogs": { "deleteTitle": "Supprimer la bannière de cookies" },
     "status": { "active": "Active", "inactive": "Inactive" },
-    "actions": { "publish": "Publier les modifications", "activate": "Activer", "deactivate": "Désactiver", "delete": "Supprimer", "cancel": "Annuler", "copyId": "Copier l’ID de la bannière" },
-    "pageLoads": { "label": "Chargements de page (7 derniers jours)", "empty": "Aucun pour le moment" }
+    "actions": { "publish": "Publier les modifications", "activate": "Activer", "deactivate": "Désactiver", "delete": "Supprimer", "cancel": "Annuler", "copyId": "Copier l’ID de la bannière" }
+  },
+  "overview": {
+    "title": "Vue d'ensemble",
+    "description": "Chargements de page des 30 derniers jours.",
+    "chart": {
+      "title": "Chargements de page",
+      "total": "Total",
+      "empty": {
+        "title": "Aucun chargement de page",
+        "description": "Les visites des 30 derniers jours apparaîtront ici."
+      }
+    }
   },
   "trackerHits": {
     "empty": "Aucun signalement ces 7 derniers jours.",

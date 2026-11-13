@@ -25,14 +25,13 @@ import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { Fragment, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, useFragment, usePreloadedQuery } from "react-relay";
 import { Outlet } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { CookieBannerConfigLayout_cookieBanner$key } from "#/__generated__/core/CookieBannerConfigLayout_cookieBanner.graphql";
-import type { CookieBannerConfigLayout_pageLoad$key } from "#/__generated__/core/CookieBannerConfigLayout_pageLoad.graphql";
 import type { CookieBannerConfigLayoutPublishMutation } from "#/__generated__/core/CookieBannerConfigLayoutPublishMutation.graphql";
 import type { CookieBannerConfigLayoutQuery } from "#/__generated__/core/CookieBannerConfigLayoutQuery.graphql";
 import { TonedCard } from "#/components/TonedCard/TonedCard";
@@ -41,16 +40,6 @@ import { NotFoundError } from "#/lib/relay/errors";
 import { useMutation } from "#/lib/relay/useMutation";
 
 import { cookieBannerConfigLayout } from "../variants";
-
-import { FamilyLogo } from "./_components/FamilyLogo";
-import { familyLabel } from "./_lib/familyLabel";
-
-const pageLoadFragment = graphql`
-  fragment CookieBannerConfigLayout_pageLoad on BrowserFamilyCount {
-    family
-    count
-  }
-`;
 
 const cookieBannerFragment = graphql`
   fragment CookieBannerConfigLayout_cookieBanner on CookieBanner {
@@ -61,9 +50,6 @@ const cookieBannerFragment = graphql`
       id
       version
       state
-    }
-    pageLoads(days: 7) {
-      ...CookieBannerConfigLayout_pageLoad
     }
   }
 `;
@@ -116,10 +102,6 @@ export function CookieBannerConfigLayout({
     id,
     version: versionClass,
     body,
-    loadsRow,
-    loadsItem,
-    loadsLogo,
-    loadsSeparator,
   } = cookieBannerConfigLayout();
 
   const data = usePreloadedQuery<CookieBannerConfigLayoutQuery>(
@@ -253,110 +235,9 @@ export function CookieBannerConfigLayout({
       >
         <div className={body()}>
           <Text size={2} color="neutral">{message}</Text>
-          <PageLoadRow
-            label={t("configLayout.pageLoads.label")}
-            pageLoads={banner.pageLoads}
-            empty={t("configLayout.pageLoads.empty")}
-            loadsRow={loadsRow()}
-            loadsItem={loadsItem()}
-            loadsLogo={loadsLogo()}
-            loadsSeparator={loadsSeparator()}
-          />
         </div>
       </TonedCard>
       <Outlet />
     </div>
-  );
-}
-
-interface PageLoadRowProps {
-  label: string;
-  pageLoads: readonly CookieBannerConfigLayout_pageLoad$key[];
-  empty: string;
-  loadsRow: string;
-  loadsItem: string;
-  loadsLogo: string;
-  loadsSeparator: string;
-}
-
-function PageLoadRow({
-  label,
-  pageLoads,
-  empty,
-  loadsRow,
-  loadsItem,
-  loadsLogo,
-  loadsSeparator,
-}: PageLoadRowProps) {
-  return (
-    <div className={loadsRow}>
-      <Text size={2} color="faint">
-        {label}
-      </Text>
-      {pageLoads.length > 0
-        ? pageLoads.map((pageLoad, index) => (
-            <PageLoadItem
-              key={index}
-              pageLoadKey={pageLoad}
-              showSeparator={index > 0}
-              loadsItem={loadsItem}
-              loadsLogo={loadsLogo}
-              loadsSeparator={loadsSeparator}
-            />
-          ))
-        : (
-            <Text size={2} color="faint">
-              {empty}
-            </Text>
-          )}
-    </div>
-  );
-}
-
-interface PageLoadItemProps {
-  pageLoadKey: CookieBannerConfigLayout_pageLoad$key;
-  showSeparator: boolean;
-  loadsItem: string;
-  loadsLogo: string;
-  loadsSeparator: string;
-}
-
-function PageLoadItem({
-  pageLoadKey,
-  showSeparator,
-  loadsItem,
-  loadsLogo,
-  loadsSeparator,
-}: PageLoadItemProps) {
-  const { t } = useTranslation("organizations/cookie-banners");
-  const load = useFragment(pageLoadFragment, pageLoadKey);
-
-  return (
-    <Fragment>
-      {showSeparator
-        ? (
-            <Text
-              size={2}
-              color="faint"
-              className={loadsSeparator}
-            >
-              ·
-            </Text>
-          )
-        : null}
-      <div className={loadsItem}>
-        <FamilyLogo
-          family={load.family}
-          size={16}
-          className={loadsLogo}
-        />
-        <Text size={2} color="faint">
-          {familyLabel(load.family, t)}
-        </Text>
-        <Text size={2} weight="medium" highContrast>
-          {load.count}
-        </Text>
-      </div>
-    </Fragment>
   );
 }
