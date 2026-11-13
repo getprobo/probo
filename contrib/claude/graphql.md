@@ -197,16 +197,16 @@ Default page size is **25** when neither `first` nor `last` is provided.
 
 ## Resolver errors
 
-A resolver must not return a plain `error` (`fmt.Errorf`, `errors.New`, `graphql.ErrorOnPath`, or a hand-built `&gqlerror.Error`). Those responses have no `extensions.code`, and [`pkg/server/gqlx/tracing.go`](../../pkg/server/gqlx/tracing.go) logs them as `UNKNOWN` at error level.
+A resolver must not return a plain `error` (`fmt.Errorf`, `errors.New`, or `graphql.ErrorOnPath`). Those responses have no `extensions.code`, and [`pkg/server/gqlx/tracing.go`](../../pkg/server/gqlx/tracing.go) logs them as `UNKNOWN` at error level. Do not build `&gqlerror.Error` by hand either. A hand-built error can set `extensions.code`, but it skips the helpers that set the path and the message.
 
 Use the helpers in `pkg/server/gqlx`. `r.authorize` already returns a coded error; return it unchanged.
 
-- The row the field was supposed to load is missing: `gqlx.NotFound`, or `gqlx.MapError` when that call can also fail another way. `MapError` maps `coredata.ErrResourceNotFound` to `NOT_FOUND` and `validator.ValidationErrors` to `INVALID`. Anything else is logged and returned as `INTERNAL`.
-- Not-found is already handled and the load still failed: log with `r.logger.ErrorCtx` and return `gqlx.Internal`. Do not put `err.Error()` in the response.
+- The row the field was supposed to load is missing: `gqlx.NotFound`, or `gqlx.MapError` when that call can also fail another way. `MapError` maps `coredata.ErrResourceNotFound` to `NOT_FOUND` and `validator.ValidationErrors` to `INVALID`. `NOT_FOUND` shows `err.Error()`, so a wrap prefix reaches the client. That message is `resource not found` only when the sentinel is returned unwrapped. Anything else is logged and returned as `gqlx.Internal(ctx)`.
+- Not-found is already handled and the load still failed: log with `r.logger.ErrorCtx` and return `gqlx.Internal(ctx)`. Do not put `err.Error()` in the response.
 - The client sent a value the server refuses: `Invalid` / `Invalidf`, `Unauthenticated` / `Unauthenticatedf`, `Forbidden` / `Forbiddenf`, `Conflict`, or another named helper in [`pkg/server/gqlx/errors.go`](../../pkg/server/gqlx/errors.go).
 - The schema already models absence as null (no alias, no generated document): return `nil, nil`.
 
-A new code needs a helper and an entry in `safeGraphQLErrorCodes`. A code missing from that list is logged as `UNKNOWN` at error level. `INTERNAL` stays at error. Every other allowlisted code logs at info.
+A new resolver-owned code needs a helper and an entry in `safeGraphQLErrorCodes`. A gqlgen protocol code such as `GRAPHQL_PARSE_FAILED` or `COMPLEXITY_LIMIT_EXCEEDED` is not returned by a resolver; it only needs the allowlist entry. A code missing from that list is logged as `UNKNOWN` at error level. `INTERNAL` stays at error. Every other allowlisted code logs at info.
 
 ```go
 doc, err := r.probo.Documents.Get(ctx, scope, documentID)

@@ -12,7 +12,8 @@ A GraphQL resolver must not return a plain `error`. gqlgen publishes
 `UNKNOWN` at error level.
 
 Return a helper from `pkg/server/gqlx`. Do not build `&gqlerror.Error` by
-hand.
+hand. A hand-built error can set `extensions.code`, but it skips the
+helpers that set the path and the message.
 
 `r.authorize` already returns a coded error. Return that error unchanged.
 
@@ -24,8 +25,8 @@ hand.
   `validator.ValidationErrors` to `INVALID`. Anything else is logged and
   returned as `INTERNAL`.
 - The load failed and not-found is already handled: log with
-  `r.logger.ErrorCtx` and return `gqlx.Internal`. Do not put `err.Error()`
-  in the response.
+  `r.logger.ErrorCtx` and return `gqlx.Internal(ctx)`. Do not put
+  `err.Error()` in the response.
 - The client sent a value the server refuses: `gqlx.Invalid` /
   `Invalidf`, `Unauthenticated` / `Unauthenticatedf`, `Forbidden` /
   `Forbiddenf`, `Conflict`, or another named helper in
@@ -33,19 +34,28 @@ hand.
 - The schema already models absence as null (no alias, no generated
   document): return `nil, nil`. That is not an error.
 
-A new code needs a helper in `pkg/server/gqlx/errors.go` and an entry in
-`safeGraphQLErrorCodes` in `pkg/server/gqlx/tracing.go`. A code missing from
-that list is logged as `UNKNOWN` at error level. `INTERNAL` stays at error.
-Every other allowlisted code logs at info.
+A new resolver-owned code needs a helper in `pkg/server/gqlx/errors.go`
+and an entry in `safeGraphQLErrorCodes` in `pkg/server/gqlx/tracing.go`.
+A gqlgen protocol code such as `GRAPHQL_PARSE_FAILED` or
+`COMPLEXITY_LIMIT_EXCEEDED` is not returned by a resolver; it only needs
+the allowlist entry. A code missing from that list is logged as `UNKNOWN`
+at error level. `INTERNAL` stays at error. Every other allowlisted code
+logs at info.
 
 ```go
-// GOOD — missing row or store failure, message stays generic
+// GOOD — missing row or store failure. MapError sends err.Error() for
+// NOT_FOUND, so a wrap prefix reaches the client. The message is
+// "resource not found" only when the sentinel is unwrapped.
 doc, err := r.probo.Documents.Get(ctx, scope, documentID)
 if err != nil {
 	return nil, gqlx.MapError(ctx, r.logger, "cannot get document", err)
 }
 
 // GOOD — not-found already returned; the rest is internal
+owner, err := loaders.Profile.Load(ctx, ownerID)
+if errors.Is(err, coredata.ErrResourceNotFound) {
+	return nil, gqlx.NotFound(ctx, err)
+}
 if err != nil {
 	r.logger.ErrorCtx(ctx, "cannot get owner", log.Error(err))
 	return nil, gqlx.Internal(ctx)

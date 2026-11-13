@@ -41,7 +41,7 @@ Log the original error server-side (with request/trace IDs) so it can be investi
 
 ### Pattern in resolvers
 
-A GraphQL resolver must not return `fmt.Errorf`, `errors.New`, `graphql.ErrorOnPath`, or a hand-built `&gqlerror.Error`. Those have no `extensions.code`, and the tracing logger records them as `UNKNOWN` at error level. Return a `gqlx` helper. `authorize` already returns one; pass that error through.
+A GraphQL resolver must not return `fmt.Errorf`, `errors.New`, or `graphql.ErrorOnPath`. Those have no `extensions.code`, and the tracing logger records them as `UNKNOWN` at error level. Do not build `&gqlerror.Error` by hand either: it can set a code, but it skips the helpers. Return a `gqlx` helper. `authorize` already returns one; pass that error through.
 
 ```go
 result, err := s.doSomething(ctx, req)
@@ -60,6 +60,6 @@ if err != nil {
 
 The `default` branch must **always** be present and must **always** return the generic internal error.
 
-`gqlx.MapError` is that switch for the common case: `coredata.ErrResourceNotFound` becomes `NOT_FOUND`, `validator.ValidationErrors` become `INVALID`, and every other error is logged and returned as `INTERNAL`. When not-found is already handled, log and return `gqlx.Internal` for what remains. A field the schema models as optional (no alias, no generated document) returns `nil, nil` instead of an error.
+`gqlx.MapError` is that switch for the common case: `coredata.ErrResourceNotFound` becomes `NOT_FOUND`, `validator.ValidationErrors` become `INVALID`, and every other error is logged and returned as `INTERNAL`. `NOT_FOUND` shows `err.Error()`, so a wrap prefix reaches the client. That message is `resource not found` only when the sentinel is returned unwrapped. When not-found is already handled, log and return `gqlx.Internal(ctx)` for what remains. A field the schema models as optional (no alias, no generated document) returns `nil, nil` instead of an error.
 
-A new code needs a helper in `pkg/server/gqlx/errors.go` and an entry in `safeGraphQLErrorCodes` (`pkg/server/gqlx/tracing.go`). A code missing from that list is logged as `UNKNOWN` at error level. `INTERNAL` stays at error. Every other allowlisted code logs at info. See [`graphql.md`](graphql.md).
+A new resolver-owned code needs a helper in `pkg/server/gqlx/errors.go` and an entry in `safeGraphQLErrorCodes` (`pkg/server/gqlx/tracing.go`). A gqlgen protocol code such as `GRAPHQL_PARSE_FAILED` or `COMPLEXITY_LIMIT_EXCEEDED` only needs the allowlist entry. A code missing from that list is logged as `UNKNOWN` at error level. `INTERNAL` stays at error. Every other allowlisted code logs at info. See [`graphql.md`](graphql.md).
