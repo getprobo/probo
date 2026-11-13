@@ -4,6 +4,16 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.269.0] - 2026-11-13
+
+### Added
+
+- Task `Publish To Asana` and `Link To Asana` operations
+- Task `List Asana Teams`, `List Asana Projects`, and `List Asana Tasks`
+  operations search Asana
+- Task `Get Asana Project Setup`, `Update Asana Project Mapping`, and
+  `Update Asana Settings` operations configure the Asana sync
+
 ## [0.268.0] - 2026-11-12
 
 ### Added
