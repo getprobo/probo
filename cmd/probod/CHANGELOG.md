@@ -4,6 +4,30 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.345.0] - 2026-11-13
+
+### Added
+
+- Bidirectional Asana task sync beside the existing Linear sync. Name,
+  description, deadline, assignee, comments, files, and mentions sync
+  both ways. Without a mapped project, state follows completion only;
+  a saved project mapping also moves sections and writes a chosen
+  priority field. Publish and link tasks from the console, GraphQL,
+  and MCP
+- Cookie banners that share a registrable domain are grouped, so a
+  banner reuses a stronger cookie source seen by a sibling domain.
+  Existing banners are attached by the migration
+
+### Changed
+
+- GraphQL client errors log at info with their code instead of
+  UNKNOWN at error level. Store failures and recovered panics are
+  coded INTERNAL
+- Looking up the SSO URL for a domain with no enabled SAML
+  configuration returns null instead of an error
+- TLS handshakes that share no key exchange with the server are no
+  longer logged
+
 ### Fixed
 
 - Cookie tracker pattern analysis no longer collapses distinct names
@@ -12,6 +36,10 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
   emitted only when the wildcard replaces a segment `looksVariable`
   already accepts, so a short project id such as `_ga_ABC123` stays
   exact
+- A replayed SAML assertion is reported as a replay instead of a
+  generic insert error
+- The HTTPS server logger is named `probod.http.server` instead of
+  `probod..http.server`
 
 ## [0.344.0] - 2026-11-12
 
