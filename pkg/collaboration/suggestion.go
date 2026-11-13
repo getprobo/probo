@@ -58,6 +58,7 @@ var (
 	ErrOpenSuggestions         = errors.New("document has open suggestions")
 	ErrSuggestionNotInDocument = errors.New("suggestion is not in the document")
 	ErrSuggestionUnchanged     = errors.New("suggestion does not change the quoted text")
+	ErrSuggestionOverlaps      = errors.New("quoted text overlaps an existing suggestion")
 	ErrQuoteNotFound           = errors.New("quoted text was not found in the document")
 )
 

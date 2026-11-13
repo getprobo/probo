@@ -208,6 +208,14 @@ extend type Mutation {
     startDocumentSuggestion(
         input: StartDocumentSuggestionInput!
     ): StartDocumentSuggestionPayload!
+    """
+    Add another redline to an open suggestion. The quote is a deletion and the
+    replacement is an insertion under the same suggestion. The quote must not
+    overlap a redline that is already in the document.
+    """
+    addDocumentSuggestionChange(
+        input: AddDocumentSuggestionChangeInput!
+    ): AddDocumentSuggestionChangePayload!
     acceptDocumentSuggestion(
         input: AcceptDocumentSuggestionInput!
     ): AcceptDocumentSuggestionPayload!
@@ -260,6 +268,16 @@ input StartDocumentSuggestionInput {
     quoteOccurrence: Int
 }
 
+input AddDocumentSuggestionChangeInput {
+    suggestionId: ID!
+    "Text to replace. The match is the editor selection."
+    quote: String!
+    "Suggested text. Empty deletes the quote."
+    replacement: String!
+    "Zero-based occurrence of quote. Defaults to the first match."
+    quoteOccurrence: Int
+}
+
 input AcceptDocumentSuggestionInput {
     suggestionId: ID!
 }
@@ -295,6 +313,10 @@ type ReopenDocumentCommentThreadPayload {
 
 type StartDocumentSuggestionPayload {
     documentSuggestionEdge: DocumentSuggestionEdge!
+}
+
+type AddDocumentSuggestionChangePayload {
+    documentSuggestion: DocumentSuggestion!
 }
 
 type AcceptDocumentSuggestionPayload {

@@ -294,6 +294,116 @@ func TestDocumentReview_RBAC(t *testing.T) {
 	require.NotContains(t, content.Node.Content.Prosemirror, collaboration.SuggestionDeleteMark)
 }
 
+func TestDocumentReview_AddsAnotherRedlineToTheSuggestion(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	documentID := factory.NewDocument(owner).
+		WithTitle(factory.SafeName("Review multi suggestion")).
+		Create()
+	updateDocumentContent(t, owner, documentID, "Keep the first sentence. Keep the second sentence.")
+
+	var started struct {
+		StartDocumentSuggestion struct {
+			DocumentSuggestionEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"documentSuggestionEdge"`
+		} `json:"startDocumentSuggestion"`
+	}
+
+	err := owner.Execute(`
+		mutation($input: StartDocumentSuggestionInput!) {
+			startDocumentSuggestion(input: $input) {
+				documentSuggestionEdge { node { id } }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"documentId":  documentID,
+			"quote":       "first",
+			"replacement": "opening",
+		},
+	}, &started)
+	require.NoError(t, err, "owner should start a suggestion")
+
+	suggestionID := started.StartDocumentSuggestion.DocumentSuggestionEdge.Node.ID
+	require.NotEmpty(t, suggestionID)
+
+	var added struct {
+		AddDocumentSuggestionChange struct {
+			DocumentSuggestion struct {
+				ID     string `json:"id"`
+				Status string `json:"status"`
+			} `json:"documentSuggestion"`
+		} `json:"addDocumentSuggestionChange"`
+	}
+
+	err = owner.Execute(`
+		mutation($input: AddDocumentSuggestionChangeInput!) {
+			addDocumentSuggestionChange(input: $input) {
+				documentSuggestion { id status }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"suggestionId": suggestionID,
+			"quote":        "second",
+			"replacement":  "closing",
+		},
+	}, &added)
+	require.NoError(t, err, "owner should add a second redline")
+	require.Equal(t, suggestionID, added.AddDocumentSuggestionChange.DocumentSuggestion.ID)
+	require.Equal(t, "OPEN", added.AddDocumentSuggestionChange.DocumentSuggestion.Status)
+
+	_, err = owner.Do(`
+		mutation($input: AddDocumentSuggestionChangeInput!) {
+			addDocumentSuggestionChange(input: $input) {
+				documentSuggestion { id }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"suggestionId": suggestionID,
+			"quote":        "opening",
+			"replacement":  "initial",
+		},
+	})
+	testutil.RequireErrorCode(t, err, "INVALID", "a redline must not cover an existing suggestion")
+
+	err = owner.Execute(`
+		mutation($input: AcceptDocumentSuggestionInput!) {
+			acceptDocumentSuggestion(input: $input) {
+				documentSuggestion { id }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{"suggestionId": suggestionID},
+	}, &struct{}{})
+	require.NoError(t, err, "owner should accept both redlines")
+
+	var content struct {
+		Node struct {
+			Content struct {
+				Prosemirror string `json:"prosemirror"`
+			} `json:"content"`
+		} `json:"node"`
+	}
+
+	err = owner.Execute(`
+		query($id: ID!) {
+			node(id: $id) {
+				... on Document { content { prosemirror } }
+			}
+		}
+	`, map[string]any{"id": documentID}, &content)
+	require.NoError(t, err)
+	require.Contains(t, content.Node.Content.Prosemirror, "Keep the opening sentence. Keep the closing sentence.")
+	require.NotContains(t, content.Node.Content.Prosemirror, collaboration.SuggestionInsertMark)
+	require.NotContains(t, content.Node.Content.Prosemirror, collaboration.SuggestionDeleteMark)
+}
+
 func paintSuggestionInsert(t *testing.T, documentID string, suggestionID string, text string) {
 	t.Helper()
 
