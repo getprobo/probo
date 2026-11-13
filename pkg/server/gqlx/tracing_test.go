@@ -180,6 +180,7 @@ func TestInterceptOperation(t *testing.T) {
 						&gqlerror.Error{Extensions: map[string]any{"code": "NOT_FOUND"}},
 					},
 					level: "INFO",
+					codes: "NOT_FOUND",
 				},
 				{
 					name: "forbidden",
@@ -187,6 +188,7 @@ func TestInterceptOperation(t *testing.T) {
 						&gqlerror.Error{Extensions: map[string]any{"code": "FORBIDDEN"}},
 					},
 					level: "INFO",
+					codes: "FORBIDDEN",
 				},
 				{
 					name: "unauthenticated",
@@ -194,6 +196,7 @@ func TestInterceptOperation(t *testing.T) {
 						&gqlerror.Error{Extensions: map[string]any{"code": "UNAUTHENTICATED"}},
 					},
 					level: "INFO",
+					codes: "UNAUTHENTICATED",
 				},
 				{
 					name: "invalid",
@@ -201,6 +204,7 @@ func TestInterceptOperation(t *testing.T) {
 						&gqlerror.Error{Extensions: map[string]any{"code": "INVALID"}},
 					},
 					level: "INFO",
+					codes: "INVALID",
 				},
 				{
 					name: "internal",
@@ -208,19 +212,31 @@ func TestInterceptOperation(t *testing.T) {
 						&gqlerror.Error{Extensions: map[string]any{"code": "INTERNAL"}},
 					},
 					level: "ERROR",
+					codes: "INTERNAL",
 				},
 				{
 					name:  "no code",
 					errs:  gqlerror.List{gqlerror.Errorf("boom")},
 					level: "ERROR",
+					codes: "UNKNOWN",
 				},
 				{
 					name: "invalid and internal",
 					errs: gqlerror.List{
 						&gqlerror.Error{Extensions: map[string]any{"code": "INVALID"}},
 						&gqlerror.Error{Extensions: map[string]any{"code": "INTERNAL"}},
+						&gqlerror.Error{Extensions: map[string]any{"code": "INVALID"}},
 					},
 					level: "ERROR",
+					codes: "INTERNAL,INVALID",
+				},
+				{
+					name: "unallowlisted code",
+					errs: gqlerror.List{
+						&gqlerror.Error{Extensions: map[string]any{"code": "user-submitted-value"}},
+					},
+					level: "ERROR",
+					codes: "UNKNOWN",
 				},
 				{
 					name: "parse failed",
@@ -291,10 +307,7 @@ func TestInterceptOperation(t *testing.T) {
 						require.NoError(t, json.Unmarshal([]byte(strings.TrimSpace(logs.String())), &entry))
 						assert.Equal(t, tt.level, entry["level"])
 						assert.Contains(t, entry["msg"], "query Viewer failed")
-
-						if tt.codes != "" {
-							assert.Equal(t, tt.codes, entry["graphql_operation_error_codes"])
-						}
+						assert.Equal(t, tt.codes, entry["graphql_operation_error_codes"])
 					},
 				)
 			}
