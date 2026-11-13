@@ -221,7 +221,9 @@ func (h *deviceSyncHandler) Process(ctx context.Context, sync coredata.DeviceSyn
 
 		switch {
 		case errors.Is(failErr, coredata.ErrResourceNotFound):
-			logger.InfoCtx(ctx, "device sync claim lost, keeping the newer claim's outcome")
+			// The connector was deleted, or the lease ran out and another
+			// worker claimed the sync. Either way this claim records nothing.
+			logger.InfoCtx(ctx, "device sync claim lost, failure not recorded")
 		case failErr != nil:
 			logger.ErrorCtx(ctx, "cannot record device sync failure", log.Error(failErr))
 		}
@@ -245,8 +247,10 @@ func (h *deviceSyncHandler) Process(ctx context.Context, sync coredata.DeviceSyn
 		},
 	)
 	if errors.Is(err, coredata.ErrResourceNotFound) {
-		// The connector was deleted after the devices were applied.
-		logger.InfoCtx(ctx, "device sync claim lost after applying")
+		// The devices were applied, then the connector was deleted or the
+		// lease ran out and another worker claimed the sync. Either way this
+		// claim records nothing.
+		logger.InfoCtx(ctx, "device sync claim lost after applying, success not recorded")
 	} else if err != nil {
 		return fmt.Errorf("cannot record device sync success: %w", err)
 	}
