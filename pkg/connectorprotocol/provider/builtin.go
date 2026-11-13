@@ -73,6 +73,7 @@ func NewBuiltinRegistryWith(opts ...Option) (*Registry, error) {
 		azureRegistration(),
 		betterStackRegistration(),
 		bitbucketRegistration(),
+		bitwardenRegistration(),
 		brevoRegistration(),
 		brexRegistration(),
 		calComRegistration(),

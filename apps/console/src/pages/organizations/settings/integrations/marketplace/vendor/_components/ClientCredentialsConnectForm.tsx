@@ -99,10 +99,12 @@ export function ClientCredentialsConnectForm({
   // OVHcloud declares account/all and the create mutation uses that, so a
   // typed scope cannot take effect. Each region is its own provider.
   // 1Password takes no scope: the OAuth app's own scopes ride on every token.
+  // Bitwarden grants an organization key its one scope without being asked.
   const scopeField
     = provider.provider !== "OVHCLOUD"
       && provider.provider !== "OVHCLOUD_US"
-      && provider.provider !== "ONE_PASSWORD";
+      && provider.provider !== "ONE_PASSWORD"
+      && provider.provider !== "BITWARDEN";
 
   return (
     <ConnectForm

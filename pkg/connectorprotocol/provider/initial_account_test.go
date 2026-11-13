@@ -118,6 +118,24 @@ func TestRegistration_ResolveInitialAccount(t *testing.T) {
 		assert.Equal(t, "", name)
 	})
 
+	t.Run("bitwarden uses the organization of the api key", func(t *testing.T) {
+		t.Parallel()
+
+		reg, ok := registry.Get(coredata.ConnectorProviderBitwarden)
+		require.True(t, ok)
+
+		c := &coredata.Connector{Provider: coredata.ConnectorProviderBitwarden}
+		require.NoError(t, c.SetSettings(coredata.BitwardenConnectorSettings{
+			Region:         "EU",
+			OrganizationID: "00000000-0000-0000-0000-000000000001",
+		}))
+
+		id, name, err := reg.ResolveInitialAccount(c)
+		require.NoError(t, err)
+		assert.Equal(t, "00000000-0000-0000-0000-000000000001", id)
+		assert.Equal(t, "Bitwarden", name)
+	})
+
 	t.Run("onepassword users api uses account id", func(t *testing.T) {
 		t.Parallel()
 

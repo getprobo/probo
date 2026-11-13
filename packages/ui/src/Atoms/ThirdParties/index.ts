@@ -7,6 +7,7 @@ export { Attio } from "./Attio";
 export { Authentik } from "./Authentik";
 export { BetterStack } from "./BetterStack";
 export { Bitbucket } from "./Bitbucket";
+export { Bitwarden } from "./Bitwarden";
 export { Brevo } from "./Brevo";
 export { Brex } from "./Brex";
 export { CalCom } from "./CalCom";

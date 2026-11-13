@@ -149,6 +149,8 @@ enum ConnectorProvider
     DAYTONA
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderDaytona")
     UNIFI @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderUniFi")
+    BITWARDEN
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderBitwarden")
 }
 
 enum AzureEnvironment
@@ -728,6 +730,11 @@ input CreateClientCredentialsConnectorInput {
     (1password.ca), EU (1password.eu) or ENT (ent.1password.com).
     """
     onePasswordRegion: String
+    """
+    The Bitwarden cloud the organization lives on: US (bitwarden.com) or EU
+    (bitwarden.eu).
+    """
+    bitwardenRegion: String
 }
 
 type CreateClientCredentialsConnectorPayload {

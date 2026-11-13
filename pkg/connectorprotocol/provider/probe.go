@@ -1398,6 +1398,22 @@ func buildRetoolProbeURL(conn *coredata.Connector, ep Endpoints) (string, error)
 	return endpoint + "?" + url.Values{"limit": {"1"}}.Encode(), nil
 }
 
+// buildBitwardenProbeURL lists the policies: a few rows at any organization
+// size, where the members endpoint has no page size.
+func buildBitwardenProbeURL(conn *coredata.Connector, _ Endpoints) (string, error) {
+	baseURL, err := bitwardenAPIBaseURL(conn)
+	if err != nil {
+		return "", fmt.Errorf("cannot build bitwarden probe URL: %w", err)
+	}
+
+	endpoint, err := url.JoinPath(baseURL, "public", "policies")
+	if err != nil {
+		return "", fmt.Errorf("cannot build bitwarden probe URL: %w", err)
+	}
+
+	return endpoint, nil
+}
+
 // buildOnePasswordProbeURL asks for one user wherever the connector reads its
 // roster: the Users API of its region for client credentials, the customer's
 // own SCIM bridge for an API key.
