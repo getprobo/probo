@@ -1520,17 +1520,21 @@ func (r *Resolver) ListAuditsTool(ctx context.Context, req *mcp.CallToolRequest,
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	page, err := prb.Audits.ListForOrganizationID(ctx, scope, input.OrganizationID, cursor)
+	auditPage, err := prb.Audits.ListForOrganizationID(ctx, scope, input.OrganizationID, cursor)
 	if err != nil {
+		if errors.Is(err, page.ErrInvalidCursorValue) {
+			return nil, types.ListAuditsOutput{}, fmt.Errorf("invalid cursor")
+		}
+
 		panic(fmt.Errorf("cannot list organization audits: %w", err))
 	}
 
-	frameworkIDs, err := r.auditFrameworkIDs(ctx, scope, auditIDs(page.Data))
+	frameworkIDs, err := r.auditFrameworkIDs(ctx, scope, auditIDs(auditPage.Data))
 	if err != nil {
 		return nil, types.ListAuditsOutput{}, err
 	}
 
-	return nil, types.NewListAuditsOutput(page, frameworkIDs), nil
+	return nil, types.NewListAuditsOutput(auditPage, frameworkIDs), nil
 }
 
 func (r *Resolver) GetAuditTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetAuditInput) (*mcp.CallToolResult, types.GetAuditOutput, error) {
@@ -1984,6 +1988,10 @@ func (r *Resolver) ListControlAuditsTool(ctx context.Context, req *mcp.CallToolR
 
 	auditPage, err := prb.Audits.ListForControlID(ctx, scope, input.ControlID, cursor)
 	if err != nil {
+		if errors.Is(err, page.ErrInvalidCursorValue) {
+			return nil, types.ListControlAuditsOutput{}, fmt.Errorf("invalid cursor")
+		}
+
 		return nil, types.ListControlAuditsOutput{}, fmt.Errorf("failed to list control audits: %w", err)
 	}
 
@@ -3797,6 +3805,10 @@ func (r *Resolver) ListFindingAuditsTool(ctx context.Context, req *mcp.CallToolR
 
 	auditPage, err := prb.Audits.ListForFindingID(ctx, scope, input.FindingID, cursor)
 	if err != nil {
+		if errors.Is(err, page.ErrInvalidCursorValue) {
+			return nil, types.ListFindingAuditsOutput{}, fmt.Errorf("invalid cursor")
+		}
+
 		return nil, types.ListFindingAuditsOutput{}, fmt.Errorf("cannot list finding audits: %w", err)
 	}
 
@@ -9335,6 +9347,10 @@ func (r *Resolver) ListCompliancePortalAuditsTool(ctx context.Context, req *mcp.
 
 	entryPage, err := r.management.ListAudits(ctx, scope, input.CompliancePortalID, cursor)
 	if err != nil {
+		if errors.Is(err, page.ErrInvalidCursorValue) {
+			return nil, types.ListCompliancePortalAuditsOutput{}, fmt.Errorf("invalid cursor")
+		}
+
 		return nil, types.ListCompliancePortalAuditsOutput{}, fmt.Errorf("cannot list compliance portal audits: %w", err)
 	}
 

@@ -347,6 +347,10 @@ func (r *findingResolver) Audits(ctx context.Context, obj *types.Finding, first 
 
 	p, err := r.probo.Audits.ListForFindingID(ctx, scope, obj.ID, cursor)
 	if err != nil {
+		if errors.Is(err, page.ErrInvalidCursorValue) {
+			return nil, gqlx.Invalidf(ctx, "invalid cursor")
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot list finding audits", log.Error(err))
 		return nil, gqlx.Internal(ctx)
 	}

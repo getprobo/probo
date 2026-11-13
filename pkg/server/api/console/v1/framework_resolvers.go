@@ -67,6 +67,10 @@ func (r *frameworkResolver) Audits(ctx context.Context, obj *types.Framework, fi
 
 	auditPage, err := r.probo.Audits.ListForFrameworkID(ctx, scope, obj.ID, cursor)
 	if err != nil {
+		if errors.Is(err, page.ErrInvalidCursorValue) {
+			return nil, gqlx.Invalidf(ctx, "invalid cursor")
+		}
+
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlx.NotFoundf(ctx, "framework %q not found", obj.ID)
 		}

@@ -282,13 +282,17 @@ func (r *controlResolver) Audits(ctx context.Context, obj *types.Control, first 
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := r.probo.Audits.ListForControlID(ctx, scope, obj.ID, cursor)
+	auditPage, err := r.probo.Audits.ListForControlID(ctx, scope, obj.ID, cursor)
 	if err != nil {
+		if errors.Is(err, page.ErrInvalidCursorValue) {
+			return nil, gqlx.Invalidf(ctx, "invalid cursor")
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot list control audits", log.Error(err))
 		return nil, gqlx.Internal(ctx)
 	}
 
-	return types.NewAuditConnection(page, r, obj.ID), nil
+	return types.NewAuditConnection(auditPage, r, obj.ID), nil
 }
 
 // Obligations is the resolver for the obligations field.
