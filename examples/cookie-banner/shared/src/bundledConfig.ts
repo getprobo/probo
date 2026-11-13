@@ -20,12 +20,12 @@
 
 export const bundledConfig = {
   bannerId: import.meta.env.PUBLIC_COOKIE_BANNER_ID?.trim() ?? "",
-  baseUrl: import.meta.env.PUBLIC_COOKIE_BANNER_API_BASE_URL ?? "",
+  baseUrl: import.meta.env.PUBLIC_COOKIE_BANNER_API_BASE_URL?.trim() ?? "",
   gcmEnabled: true,
 } as const;
 
 export const hasBundledConfig =
-  bundledConfig.bannerId !== "" && bundledConfig.baseUrl.trim() !== "";
+  bundledConfig.bannerId !== "" && bundledConfig.baseUrl !== "";
 
 export function isValidBannerApiBaseUrl(value: string): boolean {
   try {
