@@ -37,9 +37,7 @@ func (r *mutationResolver) SignIn(ctx context.Context, input types.SignInInput) 
 			}
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot check credentials", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot check credentials", err)
 	}
 
 	if !identity.EmailAddressVerified {
@@ -62,13 +60,11 @@ func (r *mutationResolver) SignIn(ctx context.Context, input types.SignInInput) 
 			identity.ID,
 		)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot create session", log.Error(err))
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, r.logger, "cannot create session", err)
 		}
 	case session.IdentityID != identity.ID:
 		if err := r.iam.SessionService.CloseSession(ctx, session.ID); err != nil {
-			r.logger.ErrorCtx(ctx, "cannot close session", log.Error(err))
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, r.logger, "cannot close session", err)
 		}
 
 		session, err = r.iam.AuthService.OpenSessionWithPassword(
@@ -76,8 +72,7 @@ func (r *mutationResolver) SignIn(ctx context.Context, input types.SignInInput) 
 			identity.ID,
 		)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot create session", log.Error(err))
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, r.logger, "cannot create session", err)
 		}
 	}
 
@@ -98,9 +93,7 @@ func (r *mutationResolver) SignIn(ctx context.Context, input types.SignInInput) 
 				return nil, gqlx.Forbiddenf(ctx, "forbidden")
 			}
 
-			r.logger.ErrorCtx(ctx, "cannot assume organization", log.Error(err))
-
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, r.logger, "cannot assume organization", err)
 		}
 	}
 
@@ -129,9 +122,7 @@ func (r *mutationResolver) SignUp(ctx context.Context, input types.SignUpInput) 
 			return nil, gqlx.Forbidden(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot create identity with password", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot create identity with password", err)
 	}
 
 	return &types.SignUpPayload{
@@ -149,9 +140,7 @@ func (r *mutationResolver) SignOut(ctx context.Context) (*types.SignOutPayload, 
 			return &types.SignOutPayload{}, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot close session", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot close session", err)
 	}
 
 	w := gqlx.HTTPResponseWriterFromContext(ctx)
@@ -169,8 +158,7 @@ func (r *mutationResolver) ActivateAccountFromInvitation(ctx context.Context, in
 		err := r.iam.SessionService.CloseSession(ctx, session.ID)
 		if err != nil {
 			if _, ok := errors.AsType[*iam.ErrSessionNotFound](err); !ok {
-				r.logger.ErrorCtx(ctx, "cannot close session", log.Error(err))
-				return nil, gqlx.Internal(ctx)
+				return nil, gqlx.Report(ctx, r.logger, "cannot close session", err)
 			}
 		}
 
@@ -205,17 +193,14 @@ func (r *mutationResolver) ActivateAccountFromInvitation(ctx context.Context, in
 			return nil, gqlx.ActivationNotRequired(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot activate account from invitation", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot activate account from invitation", err)
 	}
 
 	var ssoLoginURL *string
 
 	samlConfigs, err := r.iam.AccountService.ListSAMLConfigurationsForEmail(ctx, user.EmailAddress)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list saml configurations", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list saml configurations", err)
 	}
 
 	for _, samlConfig := range samlConfigs {
@@ -250,9 +235,7 @@ func (r *mutationResolver) AcceptInvitation(ctx context.Context, input types.Acc
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot load pending invitation", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load pending invitation", err)
 	}
 
 	if _, err := r.authorize(
@@ -282,9 +265,7 @@ func (r *mutationResolver) AcceptInvitation(ctx context.Context, input types.Acc
 			return nil, gqlx.ActivationNotRequired(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot accept invitation", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot accept invitation", err)
 	}
 
 	return &types.AcceptInvitationPayload{
@@ -299,8 +280,7 @@ func (r *mutationResolver) ForgotPassword(ctx context.Context, input types.Forgo
 		input.Email,
 	)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot send password reset instruction by email", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot send password reset instruction by email", err)
 	}
 
 	return &types.ForgotPasswordPayload{
@@ -322,9 +302,7 @@ func (r *mutationResolver) ResetPassword(ctx context.Context, input types.ResetP
 			return nil, gqlx.Invalid(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot reset password", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot reset password", err)
 	}
 
 	return &types.ResetPasswordPayload{
@@ -348,9 +326,7 @@ func (r *mutationResolver) VerifyEmail(ctx context.Context, input types.VerifyEm
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot verify email", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot verify email", err)
 	}
 
 	if newlyVerified {
@@ -360,22 +336,16 @@ func (r *mutationResolver) VerifyEmail(ctx context.Context, input types.VerifyEm
 		case session == nil:
 			session, err = r.iam.AuthService.OpenSessionWithPassword(ctx, identity.ID)
 			if err != nil {
-				r.logger.ErrorCtx(ctx, "cannot create session", log.Error(err))
-
-				return nil, gqlx.Internal(ctx)
+				return nil, gqlx.Report(ctx, r.logger, "cannot create session", err)
 			}
 		case session.IdentityID != identity.ID:
 			if err := r.iam.SessionService.CloseSession(ctx, session.ID); err != nil {
-				r.logger.ErrorCtx(ctx, "cannot close session", log.Error(err))
-
-				return nil, gqlx.Internal(ctx)
+				return nil, gqlx.Report(ctx, r.logger, "cannot close session", err)
 			}
 
 			session, err = r.iam.AuthService.OpenSessionWithPassword(ctx, identity.ID)
 			if err != nil {
-				r.logger.ErrorCtx(ctx, "cannot create session", log.Error(err))
-
-				return nil, gqlx.Internal(ctx)
+				return nil, gqlx.Report(ctx, r.logger, "cannot create session", err)
 			}
 		}
 
@@ -392,8 +362,7 @@ func (r *mutationResolver) VerifyEmail(ctx context.Context, input types.VerifyEm
 func (r *mutationResolver) ResendVerificationEmail(ctx context.Context, input types.ResendVerificationEmailInput) (*types.ResendVerificationEmailPayload, error) {
 	err := r.iam.AccountService.ResendVerificationEmail(ctx, input.Email)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot resend verification email", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot resend verification email", err)
 	}
 
 	return &types.ResendVerificationEmailPayload{
@@ -424,9 +393,7 @@ func (r *mutationResolver) ChangePassword(ctx context.Context, input types.Chang
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot change password", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot change password", err)
 	}
 
 	return &types.ChangePasswordPayload{
@@ -455,9 +422,7 @@ func (r *mutationResolver) ChangeEmail(ctx context.Context, input types.ChangeEm
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot change email", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot change email", err)
 	}
 
 	return &types.ChangeEmailPayload{
@@ -491,9 +456,7 @@ func (r *mutationResolver) AssumeOrganizationSession(ctx context.Context, input 
 			}, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot assume organization session", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot assume organization session", err)
 	}
 
 	return &types.AssumeOrganizationSessionPayload{
@@ -541,9 +504,7 @@ func (r *mutationResolver) AssumeEmployeePortalSession(ctx context.Context, inpu
 			}, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot assume employee portal session", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot assume employee portal session", err)
 	}
 
 	return &types.AssumeEmployeePortalSessionPayload{
@@ -569,9 +530,7 @@ func (r *mutationResolver) RevokeSession(ctx context.Context, input types.Revoke
 			return &types.RevokeSessionPayload{Success: true}, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot revoke session", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot revoke session", err)
 	}
 
 	return &types.RevokeSessionPayload{Success: true}, nil
@@ -587,8 +546,7 @@ func (r *mutationResolver) RevokeAllSessions(ctx context.Context) (*types.Revoke
 
 	revokedCount, err := r.iam.SessionService.RevokeAllSessions(ctx, session.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot revoke all sessions", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot revoke all sessions", err)
 	}
 
 	return &types.RevokeAllSessionsPayload{RevokedCount: int(revokedCount)}, nil
@@ -604,8 +562,7 @@ func (r *sessionResolver) Identity(ctx context.Context, obj *types.Session) (*ty
 
 	identity, err := r.iam.AccountService.GetIdentity(ctx, obj.Identity.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get identity for session", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get identity for session", err)
 	}
 
 	return types.NewIdentity(identity), nil
@@ -622,8 +579,7 @@ func (r *sessionConnectionResolver) TotalCount(ctx context.Context, obj *types.S
 	case *identityResolver:
 		count, err := r.iam.AccountService.CountSessions(ctx, obj.ParentID)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count sessions", log.Error(err))
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, r.logger, "cannot count sessions", err)
 		}
 
 		return &count, nil

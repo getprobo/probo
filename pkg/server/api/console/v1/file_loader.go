@@ -25,7 +25,6 @@ import (
 	"errors"
 
 	"github.com/vikstrous/dataloadgen"
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
@@ -41,9 +40,7 @@ func (r *Resolver) loadFile(ctx context.Context, fileID gid.GID) (*types.File, e
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot load file", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load file", err)
 	}
 
 	return types.NewFile(file, r.fileManager), nil

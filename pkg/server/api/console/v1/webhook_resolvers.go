@@ -43,9 +43,7 @@ func (r *mutationResolver) CreateWebhookSubscription(ctx context.Context, input 
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot create webhook subscription", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot create webhook subscription", err)
 	}
 
 	return &types.CreateWebhookSubscriptionPayload{
@@ -73,9 +71,7 @@ func (r *mutationResolver) UpdateWebhookSubscription(ctx context.Context, input 
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot update webhook subscription", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot update webhook subscription", err)
 	}
 
 	return &types.UpdateWebhookSubscriptionPayload{
@@ -91,8 +87,7 @@ func (r *mutationResolver) DeleteWebhookSubscription(ctx context.Context, input 
 	}
 
 	if err := r.probo.WebhookSubscriptions.Delete(ctx, scope, input.WebhookSubscriptionID); err != nil {
-		r.logger.ErrorCtx(ctx, "cannot delete webhook subscription", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot delete webhook subscription", err)
 	}
 
 	return &types.DeleteWebhookSubscriptionPayload{
@@ -109,8 +104,7 @@ func (r *webhookEventConnectionResolver) TotalCount(ctx context.Context, obj *ty
 
 	count, err := r.probo.WebhookSubscriptions.CountEventsForSubscriptionID(ctx, scope, obj.ParentID, obj.Filters)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot count webhook events", log.Error(err))
-		return 0, gqlx.Internal(ctx)
+		return 0, gqlx.Report(ctx, r.logger, "cannot count webhook events", err)
 	}
 
 	return count, nil
@@ -130,9 +124,7 @@ func (r *webhookSubscriptionResolver) Organization(ctx context.Context, obj *typ
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot load organization", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load organization", err)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -147,8 +139,7 @@ func (r *webhookSubscriptionResolver) SigningSecret(ctx context.Context, obj *ty
 
 	signingSecret, err := r.probo.WebhookSubscriptions.GetSigningSecret(ctx, scope, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get signing secret", log.Error(err))
-		return "", gqlx.Internal(ctx)
+		return "", gqlx.Report(ctx, r.logger, "cannot get signing secret", err)
 	}
 
 	return signingSecret, nil
@@ -184,8 +175,7 @@ func (r *webhookSubscriptionResolver) Events(ctx context.Context, obj *types.Web
 
 	page, err := r.probo.WebhookSubscriptions.ListEventsForSubscriptionID(ctx, scope, obj.ID, cursor, coredataFilter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list webhook events", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list webhook events", err)
 	}
 
 	dataIDs := make([]gid.GID, 0, len(page.Data))
@@ -195,8 +185,7 @@ func (r *webhookSubscriptionResolver) Events(ctx context.Context, obj *types.Web
 
 	dataByID, err := r.probo.WebhookSubscriptions.ListWebhookDataByIDs(ctx, scope, dataIDs)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list webhook data", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list webhook data", err)
 	}
 
 	return types.NewWebhookEventConnection(page, r, obj.ID, coredataFilter, dataByID), nil
@@ -218,8 +207,7 @@ func (r *webhookSubscriptionConnectionResolver) TotalCount(ctx context.Context, 
 	case *organizationResolver:
 		count, err := r.probo.WebhookSubscriptions.CountForOrganizationID(ctx, scope, obj.ParentID)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count webhook subscriptions", log.Error(err))
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count webhook subscriptions", err)
 		}
 
 		return count, nil

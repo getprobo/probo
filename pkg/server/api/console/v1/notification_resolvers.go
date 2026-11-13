@@ -9,7 +9,6 @@ import (
 	"context"
 	"errors"
 
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/notification"
 	"go.probo.inc/probo/pkg/server/api/authn"
@@ -37,9 +36,7 @@ func (r *mutationResolver) MarkAllNotificationsRead(ctx context.Context, input t
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot mark notifications read", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot mark notifications read", err)
 	}
 
 	return &types.MarkAllNotificationsReadPayload{
@@ -70,9 +67,7 @@ func (r *notificationConnectionResolver) TotalCount(ctx context.Context, obj *ty
 				return 0, gqlx.NotFound(ctx, err)
 			}
 
-			r.logger.ErrorCtx(ctx, "cannot count notifications", log.Error(err))
-
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count notifications", err)
 		}
 
 		return count, nil

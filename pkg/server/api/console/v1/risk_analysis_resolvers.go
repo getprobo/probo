@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/vikstrous/dataloadgen"
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
@@ -60,9 +59,7 @@ func (r *mutationResolver) CreateRiskAnalysis(ctx context.Context, input types.C
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot create risk assessment", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot create risk assessment", err)
 	}
 
 	return &types.CreateRiskAnalysisPayload{
@@ -102,9 +99,7 @@ func (r *mutationResolver) UpdateRiskAnalysis(ctx context.Context, input types.U
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot update risk assessment", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot update risk assessment", err)
 	}
 
 	return &types.UpdateRiskAnalysisPayload{RiskAnalysis: types.NewRiskAnalysis(ra)}, nil
@@ -122,9 +117,7 @@ func (r *mutationResolver) DeleteRiskAnalysis(ctx context.Context, input types.D
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot delete risk assessment", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot delete risk assessment", err)
 	}
 
 	return &types.DeleteRiskAnalysisPayload{DeletedRiskAnalysisID: input.RiskAnalysisID}, nil
@@ -147,9 +140,7 @@ func (r *mutationResolver) ForkRiskAnalysis(ctx context.Context, input types.For
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot load risk analysis", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load risk analysis", err)
 	}
 
 	scope, err = r.authorize(ctx, source.OrganizationID, riskmanagement.ActionRiskAnalysisCreate)
@@ -190,9 +181,7 @@ func (r *mutationResolver) ForkRiskAnalysis(ctx context.Context, input types.For
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot fork risk analysis", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot fork risk analysis", err)
 	}
 
 	return &types.ForkRiskAnalysisPayload{
@@ -224,9 +213,7 @@ func (r *mutationResolver) CreateRiskAnalysisDiagram(ctx context.Context, input 
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot create risk assessment scope", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot create risk assessment scope", err)
 	}
 
 	return &types.CreateRiskAnalysisDiagramPayload{
@@ -254,9 +241,7 @@ func (r *mutationResolver) UpdateRiskAnalysisDiagram(ctx context.Context, input 
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot update risk assessment scope", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot update risk assessment scope", err)
 	}
 
 	return &types.UpdateRiskAnalysisDiagramPayload{RiskAnalysisDiagram: types.NewRiskAnalysisDiagram(raDiagram)}, nil
@@ -274,9 +259,7 @@ func (r *mutationResolver) DeleteRiskAnalysisDiagram(ctx context.Context, input 
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot delete risk assessment scope", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot delete risk assessment scope", err)
 	}
 
 	return &types.DeleteRiskAnalysisDiagramPayload{DeletedRiskAnalysisDiagramID: input.RiskAnalysisDiagramID}, nil
@@ -308,9 +291,7 @@ func (r *mutationResolver) CreateRiskAnalysisNode(ctx context.Context, input typ
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot create risk assessment node", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot create risk assessment node", err)
 	}
 
 	return &types.CreateRiskAnalysisNodePayload{
@@ -343,9 +324,7 @@ func (r *mutationResolver) UpdateRiskAnalysisNode(ctx context.Context, input typ
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot update risk assessment node", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot update risk assessment node", err)
 	}
 
 	return &types.UpdateRiskAnalysisNodePayload{RiskAnalysisNode: types.NewRiskAnalysisNode(node)}, nil
@@ -363,9 +342,7 @@ func (r *mutationResolver) DeleteRiskAnalysisNode(ctx context.Context, input typ
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot delete risk assessment node", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot delete risk assessment node", err)
 	}
 
 	return &types.DeleteRiskAnalysisNodePayload{DeletedRiskAnalysisNodeID: input.RiskAnalysisNodeID}, nil
@@ -396,9 +373,7 @@ func (r *mutationResolver) CreateRiskAnalysisBoundary(ctx context.Context, input
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot create risk assessment boundary", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot create risk assessment boundary", err)
 	}
 
 	return &types.CreateRiskAnalysisBoundaryPayload{
@@ -434,9 +409,7 @@ func (r *mutationResolver) UpdateRiskAnalysisBoundary(ctx context.Context, input
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot update risk assessment boundary", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot update risk assessment boundary", err)
 	}
 
 	return &types.UpdateRiskAnalysisBoundaryPayload{RiskAnalysisBoundary: types.NewRiskAnalysisBoundary(boundary)}, nil
@@ -454,9 +427,7 @@ func (r *mutationResolver) DeleteRiskAnalysisBoundary(ctx context.Context, input
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot delete risk assessment boundary", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot delete risk assessment boundary", err)
 	}
 
 	return &types.DeleteRiskAnalysisBoundaryPayload{DeletedRiskAnalysisBoundaryID: input.RiskAnalysisBoundaryID}, nil
@@ -488,9 +459,7 @@ func (r *mutationResolver) CreateRiskAnalysisProcess(ctx context.Context, input 
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot create risk assessment process", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot create risk assessment process", err)
 	}
 
 	return &types.CreateRiskAnalysisProcessPayload{
@@ -523,9 +492,7 @@ func (r *mutationResolver) UpdateRiskAnalysisProcess(ctx context.Context, input 
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot update risk assessment process", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot update risk assessment process", err)
 	}
 
 	return &types.UpdateRiskAnalysisProcessPayload{RiskAnalysisProcess: types.NewRiskAnalysisProcess(process)}, nil
@@ -543,9 +510,7 @@ func (r *mutationResolver) DeleteRiskAnalysisProcess(ctx context.Context, input 
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot delete risk assessment process", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot delete risk assessment process", err)
 	}
 
 	return &types.DeleteRiskAnalysisProcessPayload{DeletedRiskAnalysisProcessID: input.RiskAnalysisProcessID}, nil
@@ -577,9 +542,7 @@ func (r *mutationResolver) CreateRiskAnalysisThreat(ctx context.Context, input t
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot create risk threat", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot create risk threat", err)
 	}
 
 	return &types.CreateRiskAnalysisThreatPayload{
@@ -612,9 +575,7 @@ func (r *mutationResolver) UpdateRiskAnalysisThreat(ctx context.Context, input t
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot update risk threat", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot update risk threat", err)
 	}
 
 	return &types.UpdateRiskAnalysisThreatPayload{RiskAnalysisThreat: types.NewRiskAnalysisThreat(threat)}, nil
@@ -632,9 +593,7 @@ func (r *mutationResolver) DeleteRiskAnalysisThreat(ctx context.Context, input t
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot delete risk threat", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot delete risk threat", err)
 	}
 
 	return &types.DeleteRiskAnalysisThreatPayload{DeletedRiskAnalysisThreatID: input.RiskAnalysisThreatID}, nil
@@ -665,9 +624,7 @@ func (r *mutationResolver) CreateRiskAnalysisScenario(ctx context.Context, input
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot create risk scenario", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot create risk scenario", err)
 	}
 
 	return &types.CreateRiskAnalysisScenarioPayload{
@@ -699,9 +656,7 @@ func (r *mutationResolver) UpdateRiskAnalysisScenario(ctx context.Context, input
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot update risk scenario", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot update risk scenario", err)
 	}
 
 	return &types.UpdateRiskAnalysisScenarioPayload{RiskAnalysisScenario: types.NewRiskAnalysisScenario(scenario)}, nil
@@ -719,9 +674,7 @@ func (r *mutationResolver) DeleteRiskAnalysisScenario(ctx context.Context, input
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot delete risk scenario", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot delete risk scenario", err)
 	}
 
 	return &types.DeleteRiskAnalysisScenarioPayload{DeletedRiskAnalysisScenarioID: input.RiskAnalysisScenarioID}, nil
@@ -750,15 +703,12 @@ func (r *mutationResolver) LinkRiskAnalysisScenarioThreat(ctx context.Context, i
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot link risk scenario threat", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot link risk scenario threat", err)
 	}
 
 	scenario, err := r.riskManagement.GetScenario(ctx, scope, input.RiskAnalysisScenarioID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load risk scenario", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load risk scenario", err)
 	}
 
 	return &types.LinkRiskAnalysisScenarioThreatPayload{RiskAnalysisScenario: types.NewRiskAnalysisScenario(scenario)}, nil
@@ -783,15 +733,12 @@ func (r *mutationResolver) UnlinkRiskAnalysisScenarioThreat(ctx context.Context,
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot unlink risk scenario threat", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot unlink risk scenario threat", err)
 	}
 
 	scenario, err := r.riskManagement.GetScenario(ctx, scope, input.RiskAnalysisScenarioID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load risk scenario", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load risk scenario", err)
 	}
 
 	return &types.UnlinkRiskAnalysisScenarioThreatPayload{RiskAnalysisScenario: types.NewRiskAnalysisScenario(scenario)}, nil
@@ -820,15 +767,12 @@ func (r *mutationResolver) LinkRiskAnalysisScenarioRisk(ctx context.Context, inp
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot link risk scenario risk", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot link risk scenario risk", err)
 	}
 
 	scenario, err := r.riskManagement.GetScenario(ctx, scope, input.RiskAnalysisScenarioID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load risk scenario", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load risk scenario", err)
 	}
 
 	s := types.NewRiskAnalysisScenario(scenario)
@@ -861,15 +805,12 @@ func (r *mutationResolver) UnlinkRiskAnalysisScenarioRisk(ctx context.Context, i
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot unlink risk scenario risk", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot unlink risk scenario risk", err)
 	}
 
 	scenario, err := r.riskManagement.GetScenario(ctx, scope, input.RiskAnalysisScenarioID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load risk scenario", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load risk scenario", err)
 	}
 
 	return &types.UnlinkRiskAnalysisScenarioRiskPayload{
@@ -897,9 +838,7 @@ func (r *mutationResolver) PublishRiskAnalysis(ctx context.Context, input types.
 			return nil, gqlx.Conflict(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot publish risk analysis", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot publish risk analysis", err)
 	}
 
 	return &types.PublishRiskAnalysisPayload{
@@ -926,9 +865,7 @@ func (r *riskAnalysisResolver) Document(ctx context.Context, obj *types.RiskAnal
 			return nil, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot load document", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load document", err)
 	}
 
 	return types.NewDocument(document), nil
@@ -948,9 +885,7 @@ func (r *riskAnalysisResolver) Organization(ctx context.Context, obj *types.Risk
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get organization", err)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -1000,9 +935,7 @@ func (r *riskAnalysisResolver) TreatmentPlans(ctx context.Context, obj *types.Ri
 				return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 			}
 
-			r.logger.ErrorCtx(ctx, "cannot list treatment plans as of", log.Error(err))
-
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, r.logger, "cannot list treatment plans as of", err)
 		}
 
 		return types.NewTreatmentPlanConnectionAsOf(
@@ -1022,9 +955,7 @@ func (r *riskAnalysisResolver) TreatmentPlans(ctx context.Context, obj *types.Ri
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot list treatment plans", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list treatment plans", err)
 	}
 
 	return types.NewTreatmentPlanConnection(p, r, obj.ID, planFilter), nil
@@ -1043,9 +974,7 @@ func (r *riskAnalysisResolver) MatrixCells(ctx context.Context, obj *types.RiskA
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get treatment plan matrix cells", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get treatment plan matrix cells", err)
 	}
 
 	return counts, nil
@@ -1078,8 +1007,7 @@ func (r *riskAnalysisResolver) ScenarioRisks(ctx context.Context, obj *types.Ris
 
 	p, err := r.riskManagement.ListRisksForRiskAnalysisID(ctx, scope, obj.ID, cursor, riskFilter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list scenario risks on analysis", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list scenario risks on analysis", err)
 	}
 
 	return types.NewRiskConnection(p, r, obj.ID, riskFilter), nil
@@ -1104,8 +1032,7 @@ func (r *riskAnalysisResolver) Diagrams(ctx context.Context, obj *types.RiskAnal
 
 	p, err := r.riskManagement.ListDiagramsForRiskAnalysisID(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list risk assessment scopes", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list risk assessment scopes", err)
 	}
 
 	return types.NewRiskAnalysisDiagramConnection(p, r, obj.ID), nil
@@ -1125,8 +1052,7 @@ func (r *riskAnalysisBoundaryConnectionResolver) TotalCount(ctx context.Context,
 
 	count, err := r.riskManagement.CountBoundariesForDiagramID(ctx, scope, obj.ParentID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot count risk assessment boundaries", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot count risk assessment boundaries", err)
 	}
 
 	return &count, nil
@@ -1141,8 +1067,7 @@ func (r *riskAnalysisConnectionResolver) TotalCount(ctx context.Context, obj *ty
 
 	count, err := r.riskManagement.CountForOrganizationID(ctx, scope, obj.ParentID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot count risk assessments", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot count risk assessments", err)
 	}
 
 	return &count, nil
@@ -1167,8 +1092,7 @@ func (r *riskAnalysisDiagramResolver) Nodes(ctx context.Context, obj *types.Risk
 
 	p, err := r.riskManagement.ListNodesForDiagramID(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list risk assessment nodes", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list risk assessment nodes", err)
 	}
 
 	return types.NewRiskAnalysisNodeConnection(p, r, obj.ID), nil
@@ -1193,8 +1117,7 @@ func (r *riskAnalysisDiagramResolver) Boundaries(ctx context.Context, obj *types
 
 	p, err := r.riskManagement.ListBoundariesForDiagramID(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list risk assessment boundaries", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list risk assessment boundaries", err)
 	}
 
 	return types.NewRiskAnalysisBoundaryConnection(p, r, obj.ID), nil
@@ -1219,8 +1142,7 @@ func (r *riskAnalysisDiagramResolver) Processes(ctx context.Context, obj *types.
 
 	p, err := r.riskManagement.ListProcessesForDiagramID(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list risk assessment processes", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list risk assessment processes", err)
 	}
 
 	return types.NewRiskAnalysisProcessConnection(p, r, obj.ID), nil
@@ -1245,8 +1167,7 @@ func (r *riskAnalysisDiagramResolver) Threats(ctx context.Context, obj *types.Ri
 
 	p, err := r.riskManagement.ListThreatsForDiagramID(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list risk threats", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list risk threats", err)
 	}
 
 	return types.NewRiskAnalysisThreatConnection(p, r, obj.ID), nil
@@ -1271,8 +1192,7 @@ func (r *riskAnalysisDiagramResolver) Scenarios(ctx context.Context, obj *types.
 
 	p, err := r.riskManagement.ListScenariosForDiagramID(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list risk scenarios", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list risk scenarios", err)
 	}
 
 	return types.NewRiskAnalysisScenarioConnection(p, r, obj.ID), nil
@@ -1287,8 +1207,7 @@ func (r *riskAnalysisDiagramResolver) MermaidChart(ctx context.Context, obj *typ
 
 	chart, err := r.riskManagement.BuildDiagramMermaidChart(ctx, scope, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot build risk assessment scope mermaid chart", log.Error(err))
-		return "", gqlx.Internal(ctx)
+		return "", gqlx.Report(ctx, r.logger, "cannot build risk assessment scope mermaid chart", err)
 	}
 
 	return chart, nil
@@ -1303,8 +1222,7 @@ func (r *riskAnalysisDiagramConnectionResolver) TotalCount(ctx context.Context, 
 
 	count, err := r.riskManagement.CountDiagramsForRiskAnalysisID(ctx, scope, obj.ParentID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot count risk assessment scopes", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot count risk assessment scopes", err)
 	}
 
 	return &count, nil
@@ -1319,8 +1237,7 @@ func (r *riskAnalysisNodeConnectionResolver) TotalCount(ctx context.Context, obj
 
 	count, err := r.riskManagement.CountNodesForDiagramID(ctx, scope, obj.ParentID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot count risk assessment nodes", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot count risk assessment nodes", err)
 	}
 
 	return &count, nil
@@ -1335,8 +1252,7 @@ func (r *riskAnalysisProcessConnectionResolver) TotalCount(ctx context.Context, 
 
 	count, err := r.riskManagement.CountProcessesForDiagramID(ctx, scope, obj.ParentID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot count risk assessment processes", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot count risk assessment processes", err)
 	}
 
 	return &count, nil
@@ -1351,8 +1267,7 @@ func (r *riskAnalysisScenarioResolver) Diagram(ctx context.Context, obj *types.R
 
 	raDiagram, err := r.riskManagement.GetDiagram(ctx, scope, obj.RiskAnalysisDiagramID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load risk assessment scope", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load risk assessment scope", err)
 	}
 
 	return types.NewRiskAnalysisDiagram(raDiagram), nil
@@ -1377,8 +1292,7 @@ func (r *riskAnalysisScenarioResolver) Threats(ctx context.Context, obj *types.R
 
 	p, err := r.riskManagement.ListThreatsForScenarioID(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list scenario threats", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list scenario threats", err)
 	}
 
 	return types.NewRiskAnalysisThreatConnection(p, r, obj.ID), nil
@@ -1403,8 +1317,7 @@ func (r *riskAnalysisScenarioResolver) Risks(ctx context.Context, obj *types.Ris
 
 	p, err := r.riskManagement.ListRisksForScenarioID(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list scenario risks", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list scenario risks", err)
 	}
 
 	return types.NewRiskConnection(p, r, obj.ID, nil), nil
@@ -1421,24 +1334,21 @@ func (r *riskAnalysisScenarioConnectionResolver) TotalCount(ctx context.Context,
 	case *riskAnalysisDiagramResolver:
 		count, err := r.riskManagement.CountScenariosForDiagramID(ctx, scope, obj.ParentID)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count risk scenarios", log.Error(err))
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, r.logger, "cannot count risk scenarios", err)
 		}
 
 		return &count, nil
 	case *organizationResolver:
 		count, err := r.riskManagement.CountScenariosForOrganizationID(ctx, scope, obj.ParentID)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count risk scenarios", log.Error(err))
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, r.logger, "cannot count risk scenarios", err)
 		}
 
 		return &count, nil
 	default:
 		count, err := r.riskManagement.CountScenariosForRiskID(ctx, scope, obj.ParentID)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count risk scenarios", log.Error(err))
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, r.logger, "cannot count risk scenarios", err)
 		}
 
 		return &count, nil
@@ -1456,16 +1366,14 @@ func (r *riskAnalysisThreatConnectionResolver) TotalCount(ctx context.Context, o
 	case *riskAnalysisScenarioResolver:
 		count, err := r.riskManagement.CountThreatsForScenarioID(ctx, scope, obj.ParentID)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count scenario threats", log.Error(err))
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, r.logger, "cannot count scenario threats", err)
 		}
 
 		return &count, nil
 	default:
 		count, err := r.riskManagement.CountThreatsForDiagramID(ctx, scope, obj.ParentID)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count risk threats", log.Error(err))
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, r.logger, "cannot count risk threats", err)
 		}
 
 		return &count, nil

@@ -25,7 +25,6 @@ import (
 	"errors"
 
 	"github.com/vikstrous/dataloadgen"
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/probo"
@@ -61,9 +60,7 @@ func (r *trackerPatternResolver) loadSampleHitSplits(
 			return cookiebanner.SampleHitSplits{}, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get tracker pattern sample hits", log.Error(err))
-
-		return cookiebanner.SampleHitSplits{}, gqlx.Internal(ctx)
+		return cookiebanner.SampleHitSplits{}, gqlx.Report(ctx, r.logger, "cannot get tracker pattern sample hits", err)
 	}
 
 	return splits, nil

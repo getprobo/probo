@@ -9,7 +9,6 @@ import (
 	"context"
 	"errors"
 
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/server/api/authn"
@@ -37,8 +36,7 @@ func (r *auditLogEntryConnectionResolver) TotalCount(ctx context.Context, obj *t
 
 	count, err := r.iam.OrganizationService.CountAuditLogEntries(ctx, obj.ParentID, filter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot count audit log entries", log.Error(err))
-		return 0, gqlx.Internal(ctx)
+		return 0, gqlx.Report(ctx, r.logger, "cannot count audit log entries", err)
 	}
 
 	return count, nil
@@ -70,9 +68,7 @@ func (r *mutationResolver) RequestAuditLogExport(ctx context.Context, input type
 			return nil, gqlx.Invalid(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot request audit log export", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot request audit log export", err)
 	}
 
 	return &types.RequestAuditLogExportPayload{

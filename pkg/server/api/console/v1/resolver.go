@@ -339,8 +339,7 @@ func (r *Resolver) treatmentPlanNetScores(
 
 	progress, err := loaders.TreatmentProgress.Load(ctx, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get treatment plan progress", log.Error(err))
-		return 0, 0, 0, gqlx.Internal(ctx)
+		return 0, 0, 0, gqlx.Report(ctx, r.logger, "cannot get treatment plan progress", err)
 	}
 
 	likelihood, impact, score := riskmanagement.NetScores(

@@ -10,7 +10,6 @@ import (
 	"errors"
 
 	"github.com/vikstrous/dataloadgen"
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/probo"
@@ -34,9 +33,7 @@ func (r *cookieConsentRecordResolver) CookieBanner(ctx context.Context, obj *typ
 			return nil, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get cookie banner", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get cookie banner", err)
 	}
 
 	return types.NewCookieBanner(banner), nil
@@ -55,9 +52,7 @@ func (r *cookieConsentRecordResolver) CookieBannerVersion(ctx context.Context, o
 			return nil, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get cookie banner version", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get cookie banner version", err)
 	}
 
 	return &types.CookieBannerVersion{
@@ -78,8 +73,7 @@ func (r *cookieConsentRecordConnectionResolver) TotalCount(ctx context.Context, 
 
 	count, err := r.cookieBanner.CountCookieConsentRecordsForBanner(ctx, scope, obj.ParentID, obj.Filter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot count consent records", log.Error(err))
-		return 0, gqlx.Internal(ctx)
+		return 0, gqlx.Report(ctx, r.logger, "cannot count consent records", err)
 	}
 
 	return count, nil

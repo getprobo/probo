@@ -10,7 +10,6 @@ import (
 	"errors"
 
 	"github.com/vikstrous/dataloadgen"
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/page"
@@ -36,9 +35,7 @@ func (r *businessFunctionResolver) Organization(ctx context.Context, obj *types.
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get business function organization", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get business function organization", err)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -62,9 +59,7 @@ func (r *businessFunctionResolver) Owner(ctx context.Context, obj *types.Busines
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get business function owner", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get business function owner", err)
 	}
 
 	return types.NewProfile(owner), nil
@@ -93,8 +88,7 @@ func (r *businessFunctionResolver) Assets(ctx context.Context, obj *types.Busine
 
 	pageResult, err := r.probo.BusinessFunctions.ListAssets(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list business function assets", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list business function assets", err)
 	}
 
 	return types.NewAssetConnection(pageResult, r, obj.ID), nil
@@ -123,8 +117,7 @@ func (r *businessFunctionResolver) ThirdParties(ctx context.Context, obj *types.
 
 	pageResult, err := r.probo.BusinessFunctions.ListThirdParties(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list business function third parties", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list business function third parties", err)
 	}
 
 	return types.NewThirdPartyConnection(pageResult, r, obj.ID, nil), nil
@@ -151,8 +144,7 @@ func (r *businessFunctionConnectionResolver) TotalCount(ctx context.Context, obj
 
 	count, err := r.probo.BusinessFunctions.CountForOrganizationID(ctx, scope, obj.ParentID, filter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot count business functions", log.Error(err))
-		return 0, gqlx.Internal(ctx)
+		return 0, gqlx.Report(ctx, r.logger, "cannot count business functions", err)
 	}
 
 	return count, nil
@@ -189,9 +181,7 @@ func (r *mutationResolver) CreateBusinessFunction(ctx context.Context, input typ
 			return nil, gqlx.Conflictf(ctx, "business function reference already exists")
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot create business function", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot create business function", err)
 	}
 
 	return &types.CreateBusinessFunctionPayload{
@@ -236,9 +226,7 @@ func (r *mutationResolver) UpdateBusinessFunction(ctx context.Context, input typ
 			return nil, gqlx.Conflictf(ctx, "business function reference already exists")
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot update business function", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot update business function", err)
 	}
 
 	return &types.UpdateBusinessFunctionPayload{
@@ -254,8 +242,7 @@ func (r *mutationResolver) DeleteBusinessFunction(ctx context.Context, input typ
 	}
 
 	if err := r.probo.BusinessFunctions.Delete(ctx, scope, input.BusinessFunctionID); err != nil {
-		r.logger.ErrorCtx(ctx, "cannot delete business function", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot delete business function", err)
 	}
 
 	return &types.DeleteBusinessFunctionPayload{
@@ -282,9 +269,7 @@ func (r *mutationResolver) PublishBusinessFunctionList(ctx context.Context, inpu
 			return nil, gqlx.Conflict(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot publish business function list", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot publish business function list", err)
 	}
 
 	return &types.PublishBusinessFunctionListPayload{

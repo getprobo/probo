@@ -9,7 +9,6 @@ import (
 	"context"
 	"errors"
 
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
@@ -41,9 +40,7 @@ func (r *mutationResolver) SetResourceAlias(ctx context.Context, input types.Set
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot set resource alias", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot set resource alias", err)
 	}
 
 	return &types.SetResourceAliasPayload{
@@ -60,9 +57,7 @@ func (r *mutationResolver) RemoveResourceAlias(ctx context.Context, input types.
 
 	err = r.resourceAlias.Remove(ctx, scope, input.ResourceID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot remove resource alias", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot remove resource alias", err)
 	}
 
 	return &types.RemoveResourceAliasPayload{

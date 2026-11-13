@@ -80,9 +80,7 @@ func NewAuthorizeFunc(logger *log.Logger) authz.AuthorizeFunc {
 				return nil, gqlx.NotFoundf(ctx, "resource not found")
 			}
 
-			logger.ErrorCtx(ctx, "cannot authorize", log.Error(err))
-
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, logger, "cannot authorize", err)
 		}
 
 		return result.Scope, nil

@@ -10,7 +10,6 @@ import (
 	"errors"
 
 	"github.com/vikstrous/dataloadgen"
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
@@ -39,9 +38,7 @@ func (r *evidenceResolver) File(ctx context.Context, obj *types.Evidence) (*type
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot load evidence file", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load evidence file", err)
 	}
 
 	return types.NewFile(file, r.fileManager), nil
@@ -65,9 +62,7 @@ func (r *evidenceResolver) Task(ctx context.Context, obj *types.Evidence) (*type
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot load task", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load task", err)
 	}
 
 	return types.NewTask(task), nil
@@ -87,9 +82,7 @@ func (r *evidenceResolver) InternalControl(ctx context.Context, obj *types.Evide
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot load internal control", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load internal control", err)
 	}
 
 	return types.NewInternalControl(internalControl), nil
@@ -111,16 +104,14 @@ func (r *evidenceConnectionResolver) TotalCount(ctx context.Context, obj *types.
 	case *internalControlResolver:
 		count, err := r.probo.Evidences.CountForInternalControlID(ctx, scope, obj.ParentID)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count internal control evidence", log.Error(err))
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count internal control evidence", err)
 		}
 
 		return count, nil
 	case *taskResolver:
 		count, err := r.probo.Evidences.CountForTaskID(ctx, scope, obj.ParentID)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count task evidence", log.Error(err))
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count task evidence", err)
 		}
 
 		return count, nil
@@ -139,8 +130,7 @@ func (r *mutationResolver) DeleteEvidence(ctx context.Context, input types.Delet
 	}
 
 	if err := r.probo.Evidences.Delete(ctx, scope, input.EvidenceID); err != nil {
-		r.logger.ErrorCtx(ctx, "cannot delete evidence", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot delete evidence", err)
 	}
 
 	return &types.DeleteEvidencePayload{
@@ -172,9 +162,7 @@ func (r *mutationResolver) UploadInternalControlEvidence(ctx context.Context, in
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot upload internal control evidence", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot upload internal control evidence", err)
 	}
 
 	return &types.UploadInternalControlEvidencePayload{

@@ -11,7 +11,6 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/vikstrous/dataloadgen"
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
@@ -51,9 +50,7 @@ func (r *mutationResolver) CreateTask(ctx context.Context, input types.CreateTas
 		explicitTeamID,
 	)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot resolve Linear team for new task", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot resolve Linear team for new task", err)
 	}
 
 	publishScope := scope
@@ -96,9 +93,7 @@ func (r *mutationResolver) CreateTask(ctx context.Context, input types.CreateTas
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot create task", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot create task", err)
 	}
 
 	if publish {
@@ -156,9 +151,7 @@ func (r *mutationResolver) UpdateTask(ctx context.Context, input types.UpdateTas
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot update task", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot update task", err)
 	}
 
 	return &types.UpdateTaskPayload{
@@ -174,8 +167,7 @@ func (r *mutationResolver) DeleteTask(ctx context.Context, input types.DeleteTas
 	}
 
 	if err := r.task.Delete(ctx, scope, input.TaskID); err != nil {
-		r.logger.ErrorCtx(ctx, "cannot delete task", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot delete task", err)
 	}
 
 	return &types.DeleteTaskPayload{
@@ -201,8 +193,7 @@ func (r *mutationResolver) PublishTaskToLinear(ctx context.Context, input types.
 
 	task, err := r.task.Get(ctx, scope, link.TaskID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load published task", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load published task", err)
 	}
 
 	return &types.PublishTaskToLinearPayload{
@@ -245,15 +236,13 @@ func (r *mutationResolver) LinkTaskToLinear(ctx context.Context, input types.Lin
 			errors.Is(err, tasksync.ErrLinearIssueNotFound):
 			return nil, gqlx.Invalid(ctx, err)
 		default:
-			r.logger.ErrorCtx(ctx, "cannot link task to Linear", log.Error(err))
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, r.logger, "cannot link task to Linear", err)
 		}
 	}
 
 	task, err := r.task.Get(ctx, scope, link.TaskID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load linked task", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load linked task", err)
 	}
 
 	return &types.LinkTaskToLinearPayload{
@@ -275,15 +264,13 @@ func (r *mutationResolver) UnlinkTaskExternal(ctx context.Context, input types.U
 		case errors.Is(err, tasksync.ErrTaskNotLinked):
 			return nil, gqlx.NotFound(ctx, err)
 		default:
-			r.logger.ErrorCtx(ctx, "cannot unlink task external link", log.Error(err))
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, r.logger, "cannot unlink task external link", err)
 		}
 	}
 
 	task, err := r.task.Get(ctx, scope, input.TaskID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load unlinked task", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load unlinked task", err)
 	}
 
 	return &types.UnlinkTaskExternalPayload{
@@ -324,9 +311,7 @@ func (r *mutationResolver) UpdateLinearSettings(ctx context.Context, input types
 			errors.Is(err, tasksync.ErrLinearSettingsRequired):
 			return nil, gqlx.Invalid(ctx, err)
 		default:
-			r.logger.ErrorCtx(ctx, "cannot update Linear settings", log.Error(err))
-
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, r.logger, "cannot update Linear settings", err)
 		}
 	}
 
@@ -336,9 +321,7 @@ func (r *mutationResolver) UpdateLinearSettings(ctx context.Context, input types
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get organization", err)
 	}
 
 	return &types.UpdateLinearSettingsPayload{
@@ -364,9 +347,7 @@ func (r *taskResolver) AssignedTo(ctx context.Context, obj *types.Task) (*types.
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get assigned to", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get assigned to", err)
 	}
 
 	return types.NewProfile(assignee), nil
@@ -386,9 +367,7 @@ func (r *taskResolver) Organization(ctx context.Context, obj *types.Task) (*type
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get organization", err)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -434,9 +413,7 @@ func (r *taskResolver) InternalControls(ctx context.Context, obj *types.Task, fi
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot list task internal controls", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list task internal controls", err)
 	}
 
 	return types.NewInternalControlConnection(internalControlPage, r, obj.ID, internalControlFilter), nil
@@ -488,9 +465,7 @@ func (r *taskResolver) Findings(ctx context.Context, obj *types.Task, first *int
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot list task findings", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list task findings", err)
 	}
 
 	return types.NewFindingConnection(findingPage, r, obj.ID, filter), nil
@@ -519,8 +494,7 @@ func (r *taskResolver) Evidences(ctx context.Context, obj *types.Task, first *in
 
 	page, err := r.probo.Evidences.ListForTaskID(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list task evidences", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list task evidences", err)
 	}
 
 	return types.NewEvidenceConnection(page, r, obj.ID), nil
@@ -549,8 +523,7 @@ func (r *taskResolver) Comments(ctx context.Context, obj *types.Task, first *int
 
 	page, err := r.task.ListCommentsForTaskID(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list task comments", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list task comments", err)
 	}
 
 	return types.NewTaskCommentConnection(page, r, obj.ID), nil
@@ -579,8 +552,7 @@ func (r *taskResolver) Activities(ctx context.Context, obj *types.Task, first *i
 
 	page, err := r.task.ListActivitiesForTaskID(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list task activities", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list task activities", err)
 	}
 
 	return types.NewTaskActivityConnection(page, r, obj.ID), nil
@@ -598,9 +570,7 @@ func (r *taskResolver) ExternalLink(ctx context.Context, obj *types.Task) (*type
 			return nil, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot load task external link", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load task external link", err)
 	}
 
 	return types.NewTaskExternalLink(link), nil
@@ -629,24 +599,21 @@ func (r *taskConnectionResolver) TotalCount(ctx context.Context, obj *types.Task
 	case *findingResolver:
 		count, err := r.task.CountForFindingID(ctx, scope, obj.ParentID, obj.Filter)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count tasks", log.Error(err))
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count tasks", err)
 		}
 
 		return count, nil
 	case *internalControlResolver:
 		count, err := r.task.CountForInternalControlID(ctx, scope, obj.ParentID, obj.Filter)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count tasks", log.Error(err))
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count tasks", err)
 		}
 
 		return count, nil
 	case *organizationResolver, *viewerResolver:
 		count, err := r.task.CountForOrganizationID(ctx, scope, obj.ParentID, obj.Filter)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count tasks", log.Error(err))
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count tasks", err)
 		}
 
 		return count, nil

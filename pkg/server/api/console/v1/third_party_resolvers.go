@@ -12,7 +12,6 @@ import (
 
 	pgx "github.com/jackc/pgx/v5"
 	"github.com/vikstrous/dataloadgen"
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -74,9 +73,7 @@ func (r *mutationResolver) CreateThirdParty(ctx context.Context, input types.Cre
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot create thirdParty", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot create thirdParty", err)
 	}
 
 	return &types.CreateThirdPartyPayload{
@@ -103,9 +100,7 @@ func (r *mutationResolver) ImportThirdPartyFromCommon(ctx context.Context, input
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot import thirdParty from common", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot import thirdParty from common", err)
 	}
 
 	return &types.ImportThirdPartyFromCommonPayload{
@@ -155,9 +150,7 @@ func (r *mutationResolver) UpdateThirdParty(ctx context.Context, input types.Upd
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot update thirdParty", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot update thirdParty", err)
 	}
 
 	return &types.UpdateThirdPartyPayload{
@@ -173,8 +166,7 @@ func (r *mutationResolver) DeleteThirdParty(ctx context.Context, input types.Del
 	}
 
 	if err := r.probo.ThirdParties.Delete(ctx, scope, input.ThirdPartyID); err != nil {
-		r.logger.ErrorCtx(ctx, "cannot delete thirdParty", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot delete thirdParty", err)
 	}
 
 	return &types.DeleteThirdPartyPayload{
@@ -203,9 +195,7 @@ func (r *mutationResolver) CreateThirdPartyContact(ctx context.Context, input ty
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot create thirdParty contact", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot create thirdParty contact", err)
 	}
 
 	return &types.CreateThirdPartyContactPayload{
@@ -234,9 +224,7 @@ func (r *mutationResolver) UpdateThirdPartyContact(ctx context.Context, input ty
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot update thirdParty contact", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot update thirdParty contact", err)
 	}
 
 	return &types.UpdateThirdPartyContactPayload{
@@ -252,8 +240,7 @@ func (r *mutationResolver) DeleteThirdPartyContact(ctx context.Context, input ty
 	}
 
 	if err := r.probo.ThirdPartyContacts.Delete(ctx, scope, input.ThirdPartyContactID); err != nil {
-		r.logger.ErrorCtx(ctx, "cannot delete thirdParty contact", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot delete thirdParty contact", err)
 	}
 
 	return &types.DeleteThirdPartyContactPayload{
@@ -280,9 +267,7 @@ func (r *mutationResolver) CreateThirdPartyService(ctx context.Context, input ty
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot create thirdParty service", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot create thirdParty service", err)
 	}
 
 	return &types.CreateThirdPartyServicePayload{
@@ -309,9 +294,7 @@ func (r *mutationResolver) UpdateThirdPartyService(ctx context.Context, input ty
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot update thirdParty service", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot update thirdParty service", err)
 	}
 
 	return &types.UpdateThirdPartyServicePayload{
@@ -327,8 +310,7 @@ func (r *mutationResolver) DeleteThirdPartyService(ctx context.Context, input ty
 	}
 
 	if err := r.probo.ThirdPartyServices.Delete(ctx, scope, input.ThirdPartyServiceID); err != nil {
-		r.logger.ErrorCtx(ctx, "cannot delete thirdParty service", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot delete thirdParty service", err)
 	}
 
 	return &types.DeleteThirdPartyServicePayload{
@@ -358,9 +340,7 @@ func (r *mutationResolver) UploadThirdPartyComplianceReport(ctx context.Context,
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot upload thirdParty compliance report", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot upload thirdParty compliance report", err)
 	}
 
 	return &types.UploadThirdPartyComplianceReportPayload{
@@ -376,8 +356,7 @@ func (r *mutationResolver) DeleteThirdPartyComplianceReport(ctx context.Context,
 	}
 
 	if err := r.probo.ThirdPartyComplianceReports.Delete(ctx, scope, input.ReportID); err != nil {
-		r.logger.ErrorCtx(ctx, "cannot delete thirdParty compliance report", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot delete thirdParty compliance report", err)
 	}
 
 	return &types.DeleteThirdPartyComplianceReportPayload{
@@ -409,9 +388,7 @@ func (r *mutationResolver) UploadThirdPartyBusinessAssociateAgreement(ctx contex
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot upload thirdParty business associate agreement", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot upload thirdParty business associate agreement", err)
 	}
 
 	return &types.UploadThirdPartyBusinessAssociateAgreementPayload{
@@ -441,9 +418,7 @@ func (r *mutationResolver) UpdateThirdPartyBusinessAssociateAgreement(ctx contex
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot update thirdParty business associate agreement", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot update thirdParty business associate agreement", err)
 	}
 
 	return &types.UpdateThirdPartyBusinessAssociateAgreementPayload{
@@ -459,8 +434,7 @@ func (r *mutationResolver) DeleteThirdPartyBusinessAssociateAgreement(ctx contex
 	}
 
 	if err := r.probo.ThirdPartyBusinessAssociateAgreements.DeleteByThirdPartyID(ctx, scope, input.ThirdPartyID); err != nil {
-		r.logger.ErrorCtx(ctx, "cannot delete thirdParty business associate agreement", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot delete thirdParty business associate agreement", err)
 	}
 
 	return &types.DeleteThirdPartyBusinessAssociateAgreementPayload{
@@ -492,9 +466,7 @@ func (r *mutationResolver) UploadThirdPartyDataPrivacyAgreement(ctx context.Cont
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot upload thirdParty data privacy agreement", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot upload thirdParty data privacy agreement", err)
 	}
 
 	return &types.UploadThirdPartyDataPrivacyAgreementPayload{
@@ -524,9 +496,7 @@ func (r *mutationResolver) UpdateThirdPartyDataPrivacyAgreement(ctx context.Cont
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot update thirdParty data privacy agreement", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot update thirdParty data privacy agreement", err)
 	}
 
 	return &types.UpdateThirdPartyDataPrivacyAgreementPayload{
@@ -542,8 +512,7 @@ func (r *mutationResolver) DeleteThirdPartyDataPrivacyAgreement(ctx context.Cont
 	}
 
 	if err := r.probo.ThirdPartyDataPrivacyAgreements.DeleteByThirdPartyID(ctx, scope, input.ThirdPartyID); err != nil {
-		r.logger.ErrorCtx(ctx, "cannot delete thirdParty data privacy agreement", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot delete thirdParty data privacy agreement", err)
 	}
 
 	return &types.DeleteThirdPartyDataPrivacyAgreementPayload{
@@ -573,9 +542,7 @@ func (r *mutationResolver) CreateThirdPartyRiskAssessment(ctx context.Context, i
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot create thirdParty risk assessment", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot create thirdParty risk assessment", err)
 	}
 
 	return &types.CreateThirdPartyRiskAssessmentPayload{
@@ -615,9 +582,7 @@ func (r *mutationResolver) VetThirdParty(ctx context.Context, input types.VetThi
 			return nil, gqlx.Conflict(ctx, thirdparty.ErrVettingInProgress)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot vet thirdParty", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot vet thirdParty", err)
 	}
 
 	return &types.VetThirdPartyPayload{
@@ -644,9 +609,7 @@ func (r *mutationResolver) PublishThirdPartyList(ctx context.Context, input type
 			return nil, gqlx.Conflict(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot publish thirdParty list", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot publish thirdParty list", err)
 	}
 
 	return &types.PublishThirdPartyListPayload{
@@ -669,9 +632,7 @@ func (r *thirdPartyResolver) Organization(ctx context.Context, obj *types.ThirdP
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get organization", err)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -697,9 +658,7 @@ func (r *thirdPartyResolver) CompliancePortalThirdParty(ctx context.Context, obj
 			return nil, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot load compliance portal third party", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load compliance portal third party", err)
 	}
 
 	return types.NewCompliancePortalThirdParty(link), nil
@@ -728,8 +687,7 @@ func (r *thirdPartyResolver) ComplianceReports(ctx context.Context, obj *types.T
 
 	page, err := r.probo.ThirdPartyComplianceReports.ListForThirdPartyID(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list thirdParty compliance reports", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list thirdParty compliance reports", err)
 	}
 
 	return types.NewThirdPartyComplianceReportConnection(page), nil
@@ -748,9 +706,7 @@ func (r *thirdPartyResolver) BusinessAssociateAgreement(ctx context.Context, obj
 			return nil, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get thirdParty business associate agreement", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get thirdParty business associate agreement", err)
 	}
 
 	return types.NewThirdPartyBusinessAssociateAgreement(thirdPartyBusinessAssociateAgreement), nil
@@ -769,9 +725,7 @@ func (r *thirdPartyResolver) DataPrivacyAgreement(ctx context.Context, obj *type
 			return nil, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get thirdParty data privacy agreement", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get thirdParty data privacy agreement", err)
 	}
 
 	return types.NewThirdPartyDataPrivacyAgreement(thirdPartyDataPrivacyAgreement), nil
@@ -800,8 +754,7 @@ func (r *thirdPartyResolver) Contacts(ctx context.Context, obj *types.ThirdParty
 
 	page, err := r.probo.ThirdPartyContacts.List(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list thirdParty contacts", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list thirdParty contacts", err)
 	}
 
 	return types.NewThirdPartyContactConnection(page), nil
@@ -830,8 +783,7 @@ func (r *thirdPartyResolver) Services(ctx context.Context, obj *types.ThirdParty
 
 	page, err := r.probo.ThirdPartyServices.List(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list thirdParty services", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list thirdParty services", err)
 	}
 
 	return types.NewThirdPartyServiceConnection(page), nil
@@ -860,8 +812,7 @@ func (r *thirdPartyResolver) RiskAssessments(ctx context.Context, obj *types.Thi
 
 	page, err := r.probo.ThirdParties.ListRiskAssessments(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list thirdParty risk assessments", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list thirdParty risk assessments", err)
 	}
 
 	return types.NewThirdPartyRiskAssessmentConnection(page), nil
@@ -902,8 +853,7 @@ func (r *thirdPartyResolver) InternalControls(ctx context.Context, obj *types.Th
 
 	page, err := r.probo.InternalControls.ListForThirdPartyID(ctx, scope, obj.ID, cursor, internalControlFilter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list third party internal controls", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list third party internal controls", err)
 	}
 
 	return types.NewInternalControlConnection(page, r, obj.ID, internalControlFilter), nil
@@ -919,8 +869,7 @@ func (r *thirdPartyResolver) Administrators(ctx context.Context, obj *types.Thir
 
 	administratorIDs, err := loaders.ThirdPartyAdministratorIDs.Load(ctx, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get third party administrator ids", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get third party administrator ids", err)
 	}
 
 	if len(administratorIDs) == 0 {
@@ -937,9 +886,7 @@ func (r *thirdPartyResolver) Administrators(ctx context.Context, obj *types.Thir
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get third party administrators", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get third party administrators", err)
 	}
 
 	result := make([]*types.Profile, len(profiles))
@@ -968,9 +915,7 @@ func (r *thirdPartyResolver) ParentThirdParty(ctx context.Context, obj *types.Th
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot load parent third party", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load parent third party", err)
 	}
 
 	return types.NewThirdParty(parent), nil
@@ -985,8 +930,7 @@ func (r *thirdPartyResolver) Ancestors(ctx context.Context, obj *types.ThirdPart
 
 	ancestors, err := r.probo.ThirdParties.GetAncestors(ctx, scope, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load ancestors", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load ancestors", err)
 	}
 
 	result := make([]*types.ThirdParty, len(ancestors))
@@ -1019,8 +963,7 @@ func (r *thirdPartyResolver) ChildThirdParties(ctx context.Context, obj *types.T
 
 	page, err := r.probo.ThirdParties.ListForParentThirdPartyID(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list child third parties", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list child third parties", err)
 	}
 
 	return types.NewThirdPartyConnection(page, r, obj.ID, nil), nil
@@ -1035,8 +978,7 @@ func (r *thirdPartyResolver) VettingStatus(ctx context.Context, obj *types.Third
 
 	status, err := r.thirdParty.VettingStatus(ctx, scope, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get vetting status", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get vetting status", err)
 	}
 
 	return status, nil
@@ -1093,9 +1035,7 @@ func (r *thirdPartyComplianceReportResolver) ThirdParty(ctx context.Context, obj
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get thirdParty", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get thirdParty", err)
 	}
 
 	return types.NewThirdParty(thirdParty), nil
@@ -1110,8 +1050,7 @@ func (r *thirdPartyComplianceReportResolver) File(ctx context.Context, obj *type
 
 	evidence, err := r.probo.ThirdPartyComplianceReports.Get(ctx, scope, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load evidence", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load evidence", err)
 	}
 
 	if evidence.ReportFileId == nil {
@@ -1124,9 +1063,7 @@ func (r *thirdPartyComplianceReportResolver) File(ctx context.Context, obj *type
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot load evidence file", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load evidence file", err)
 	}
 
 	return types.NewFile(file, r.fileManager), nil
@@ -1148,24 +1085,21 @@ func (r *thirdPartyConnectionResolver) TotalCount(ctx context.Context, obj *type
 	case *organizationResolver:
 		count, err := r.probo.ThirdParties.CountForOrganizationID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count thirdParties", log.Error(err))
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count thirdParties", err)
 		}
 
 		return count, nil
 	case *assetResolver:
 		count, err := r.probo.ThirdParties.CountForAssetID(ctx, scope, obj.ParentID)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count thirdParties", log.Error(err))
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count thirdParties", err)
 		}
 
 		return count, nil
 	case *datumResolver:
 		count, err := r.probo.ThirdParties.CountForDatumID(ctx, scope, obj.ParentID)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count thirdParties", log.Error(err))
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count thirdParties", err)
 		}
 
 		return count, nil
@@ -1176,24 +1110,21 @@ func (r *thirdPartyConnectionResolver) TotalCount(ctx context.Context, obj *type
 
 		count, err := r.probo.ThirdParties.CountForParentThirdPartyID(ctx, scope, obj.ParentID)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count child third parties", log.Error(err))
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count child third parties", err)
 		}
 
 		return count, nil
 	case *internalControlResolver:
 		count, err := r.probo.ThirdParties.CountForInternalControlID(ctx, scope, obj.ParentID)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count thirdParties", log.Error(err))
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count thirdParties", err)
 		}
 
 		return count, nil
 	case *businessFunctionResolver:
 		count, err := r.probo.BusinessFunctions.CountThirdParties(ctx, scope, obj.ParentID)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count business function third parties", log.Error(err))
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count business function third parties", err)
 		}
 
 		return count, nil
@@ -1214,8 +1145,7 @@ func (r *thirdPartyContactResolver) ThirdParty(ctx context.Context, obj *types.T
 	// Get the thirdParty contact to access the ThirdPartyID
 	thirdPartyContact, err := r.probo.ThirdPartyContacts.Get(ctx, scope, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get thirdParty contact", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get thirdParty contact", err)
 	}
 
 	thirdParty, err := r.probo.ThirdParties.Get(ctx, scope, thirdPartyContact.ThirdPartyID)
@@ -1224,9 +1154,7 @@ func (r *thirdPartyContactResolver) ThirdParty(ctx context.Context, obj *types.T
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get thirdParty", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get thirdParty", err)
 	}
 
 	return types.NewThirdParty(thirdParty), nil
@@ -1250,9 +1178,7 @@ func (r *thirdPartyDataPrivacyAgreementResolver) ThirdParty(ctx context.Context,
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get thirdParty", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get thirdParty", err)
 	}
 
 	return types.NewThirdParty(thirdParty), nil
@@ -1285,9 +1211,7 @@ func (r *thirdPartyRiskAssessmentResolver) ThirdParty(ctx context.Context, obj *
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get thirdParty", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get thirdParty", err)
 	}
 
 	return types.NewThirdParty(thirdParty), nil
@@ -1312,9 +1236,7 @@ func (r *thirdPartyServiceResolver) ThirdParty(ctx context.Context, obj *types.T
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get thirdParty", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get thirdParty", err)
 	}
 
 	return types.NewThirdParty(thirdParty), nil

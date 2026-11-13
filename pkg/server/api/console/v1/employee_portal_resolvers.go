@@ -9,7 +9,6 @@ import (
 	"context"
 	"errors"
 
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	employeeportalmgmt "go.probo.inc/probo/pkg/employeeportal/management"
 	"go.probo.inc/probo/pkg/gid"
@@ -65,9 +64,7 @@ func (r *employeePortalResolver) Organization(ctx context.Context, obj *types.Em
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get organization", err)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -108,9 +105,7 @@ func (r *employeePortalResolver) Documents(ctx context.Context, obj *types.Emplo
 			return nil, gqlx.NotFoundf(ctx, "employee portal %q not found", obj.ID)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot list employee portal documents", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list employee portal documents", err)
 	}
 
 	return types.NewEmployeePortalDocumentConnection(documentPage, obj.ID), nil
@@ -125,9 +120,7 @@ func (r *employeePortalConnectionResolver) TotalCount(ctx context.Context, obj *
 
 	count, err := r.employeePortal.CountForOrganizationID(ctx, scope, obj.ParentID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot count employee portals", log.Error(err))
-
-		return 0, gqlx.Internal(ctx)
+		return 0, gqlx.Report(ctx, r.logger, "cannot count employee portals", err)
 	}
 
 	return count, nil
@@ -188,9 +181,7 @@ func (r *employeePortalDocumentConnectionResolver) TotalCount(ctx context.Contex
 			return 0, gqlx.NotFoundf(ctx, "employee portal %q not found", obj.ParentID)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot count employee portal documents", log.Error(err))
-
-		return 0, gqlx.Internal(ctx)
+		return 0, gqlx.Report(ctx, r.logger, "cannot count employee portal documents", err)
 	}
 
 	return count, nil
@@ -225,9 +216,7 @@ func (r *mutationResolver) UpdateEmployeePortal(ctx context.Context, input types
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot update employee portal", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot update employee portal", err)
 	}
 
 	return &types.UpdateEmployeePortalPayload{
@@ -286,9 +275,7 @@ func (r *mutationResolver) UpdateEmployeePortalBrand(ctx context.Context, input 
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot update employee portal brand", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot update employee portal brand", err)
 	}
 
 	return &types.UpdateEmployeePortalBrandPayload{
@@ -324,9 +311,7 @@ func (r *mutationResolver) AddEmployeePortalDocument(ctx context.Context, input 
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot add employee portal document", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot add employee portal document", err)
 	}
 
 	return &types.AddEmployeePortalDocumentPayload{
@@ -345,9 +330,7 @@ func (r *mutationResolver) DeleteEmployeePortalDocument(ctx context.Context, inp
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot validate employee portal document delete", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot validate employee portal document delete", err)
 	}
 
 	scope, err := r.authorize(ctx, input.ID, employeeportalmgmt.ActionEmployeePortalUpdate)
@@ -369,9 +352,7 @@ func (r *mutationResolver) DeleteEmployeePortalDocument(ctx context.Context, inp
 			}, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot load employee portal document", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load employee portal document", err)
 	}
 
 	err = r.employeePortal.DeleteDocument(
@@ -384,9 +365,7 @@ func (r *mutationResolver) DeleteEmployeePortalDocument(ctx context.Context, inp
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot delete employee portal document", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot delete employee portal document", err)
 	}
 
 	return &types.DeleteEmployeePortalDocumentPayload{

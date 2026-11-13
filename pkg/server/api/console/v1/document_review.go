@@ -30,6 +30,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
@@ -69,9 +70,7 @@ func (r *Resolver) loadReviewProfile(ctx context.Context, profileID gid.GID) (*t
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot load document review profile", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load document review profile", err)
 	}
 
 	return types.NewProfile(profile), nil
@@ -88,9 +87,7 @@ func (r *Resolver) loadReviewDocument(ctx context.Context, documentID gid.GID) (
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot load document review document", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load document review document", err)
 	}
 
 	return types.NewDocument(document), nil
@@ -165,6 +162,10 @@ func (r *Resolver) documentReviewError(ctx context.Context, message string, err 
 
 	if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 		return gqlx.InvalidValidationErrors(ctx, validationErrors)
+	}
+
+	if errors.Is(err, page.ErrInvalidCursorValue) {
+		return gqlx.Invalidf(ctx, "invalid cursor")
 	}
 
 	r.logger.ErrorCtx(ctx, message, log.Error(err))

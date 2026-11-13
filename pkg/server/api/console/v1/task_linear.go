@@ -24,7 +24,6 @@ import (
 	"context"
 	"errors"
 
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/server/gqlx"
 	tasksync "go.probo.inc/probo/pkg/task/sync"
@@ -43,8 +42,6 @@ func (r *mutationResolver) linearPublishError(ctx context.Context, err error) er
 		errors.Is(err, coredata.ErrResourceAlreadyExists):
 		return gqlx.Conflict(ctx, err)
 	default:
-		r.logger.ErrorCtx(ctx, "cannot publish task to Linear", log.Error(err))
-
-		return gqlx.Internal(ctx)
+		return gqlx.Report(ctx, r.logger, "cannot publish task to Linear", err)
 	}
 }

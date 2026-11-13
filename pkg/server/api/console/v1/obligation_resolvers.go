@@ -10,7 +10,6 @@ import (
 	"errors"
 
 	"github.com/vikstrous/dataloadgen"
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
@@ -48,9 +47,7 @@ func (r *mutationResolver) CreateObligation(ctx context.Context, input types.Cre
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot create obligation", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot create obligation", err)
 	}
 
 	return &types.CreateObligationPayload{
@@ -85,9 +82,7 @@ func (r *mutationResolver) UpdateObligation(ctx context.Context, input types.Upd
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot update obligation", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot update obligation", err)
 	}
 
 	return &types.UpdateObligationPayload{
@@ -103,8 +98,7 @@ func (r *mutationResolver) DeleteObligation(ctx context.Context, input types.Del
 	}
 
 	if err := r.probo.Obligations.Delete(ctx, scope, input.ObligationID); err != nil {
-		r.logger.ErrorCtx(ctx, "cannot delete obligation", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot delete obligation", err)
 	}
 
 	return &types.DeleteObligationPayload{
@@ -131,9 +125,7 @@ func (r *mutationResolver) PublishObligationList(ctx context.Context, input type
 			return nil, gqlx.Conflict(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot publish obligation list", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot publish obligation list", err)
 	}
 
 	return &types.PublishObligationListPayload{
@@ -156,9 +148,7 @@ func (r *obligationResolver) Organization(ctx context.Context, obj *types.Obliga
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get obligation organization", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get obligation organization", err)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -178,9 +168,7 @@ func (r *obligationResolver) Owner(ctx context.Context, obj *types.Obligation) (
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get obligation owner", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get obligation owner", err)
 	}
 
 	return types.NewProfile(owner), nil
@@ -202,24 +190,21 @@ func (r *obligationConnectionResolver) TotalCount(ctx context.Context, obj *type
 	case *organizationResolver:
 		count, err := r.probo.Obligations.CountForOrganizationID(ctx, scope, obj.ParentID)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count obligations", log.Error(err))
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count obligations", err)
 		}
 
 		return count, nil
 	case *riskResolver:
 		count, err := r.probo.Obligations.CountForRiskID(ctx, scope, obj.ParentID)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count risk obligations", log.Error(err))
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count risk obligations", err)
 		}
 
 		return count, nil
 	case *controlResolver:
 		count, err := r.probo.Obligations.CountForControlID(ctx, scope, obj.ParentID)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count control obligations", log.Error(err))
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count control obligations", err)
 		}
 
 		return count, nil

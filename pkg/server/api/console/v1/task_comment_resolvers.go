@@ -10,7 +10,6 @@ import (
 	"errors"
 
 	"github.com/vikstrous/dataloadgen"
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
@@ -55,9 +54,7 @@ func (r *mutationResolver) CreateTaskComment(ctx context.Context, input types.Cr
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot create task comment", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot create task comment", err)
 	}
 
 	return &types.CreateTaskCommentPayload{
@@ -90,9 +87,7 @@ func (r *mutationResolver) UpdateTaskComment(ctx context.Context, input types.Up
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot update task comment", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot update task comment", err)
 	}
 
 	return &types.UpdateTaskCommentPayload{
@@ -113,9 +108,7 @@ func (r *mutationResolver) DeleteTaskComment(ctx context.Context, input types.De
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot delete task comment", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot delete task comment", err)
 	}
 
 	var deletedTaskActivityID *gid.GID
@@ -147,9 +140,7 @@ func (r *taskCommentResolver) Owner(ctx context.Context, obj *types.TaskComment)
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get task comment owner", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get task comment owner", err)
 	}
 
 	return types.NewProfile(owner), nil
@@ -169,9 +160,7 @@ func (r *taskCommentResolver) Task(ctx context.Context, obj *types.TaskComment) 
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get task", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get task", err)
 	}
 
 	return types.NewTask(task), nil
@@ -191,9 +180,7 @@ func (r *taskCommentConnectionResolver) TotalCount(ctx context.Context, obj *typ
 
 	count, err := r.task.CountCommentsForTaskID(ctx, scope, obj.ParentID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot count task comments", log.Error(err))
-
-		return 0, gqlx.Internal(ctx)
+		return 0, gqlx.Report(ctx, r.logger, "cannot count task comments", err)
 	}
 
 	return count, nil

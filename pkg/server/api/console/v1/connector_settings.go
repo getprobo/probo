@@ -29,7 +29,6 @@ import (
 	"net/url"
 	"strings"
 
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/connectorprotocol"
 	"go.probo.inc/probo/pkg/connectorprotocol/provider"
@@ -124,9 +123,7 @@ func (r *Resolver) resolveTallySettingsWith(ctx context.Context, apiKey string, 
 
 	httpClient, err := conn.Client(ctx)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot build tally validation client", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot build tally validation client", err)
 	}
 
 	user, err := fetch(ctx, httpClient, reg.Endpoints.APIBase)
@@ -135,9 +132,7 @@ func (r *Resolver) resolveTallySettingsWith(ctx context.Context, apiKey string, 
 	case errors.Is(err, drivers.ErrTallyUnauthorized):
 		return nil, gqlx.Invalidf(ctx, "Tally rejected the API key: create a key under Settings > API keys and try again")
 	case err != nil:
-		r.logger.ErrorCtx(ctx, "cannot fetch tally current user", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot fetch tally current user", err)
 	}
 
 	if user.OrganizationID == "" {

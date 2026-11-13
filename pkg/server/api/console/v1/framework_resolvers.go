@@ -37,9 +37,7 @@ func (r *frameworkResolver) Organization(ctx context.Context, obj *types.Framewo
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot load organization", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load organization", err)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -75,9 +73,7 @@ func (r *frameworkResolver) Audits(ctx context.Context, obj *types.Framework, fi
 			return nil, gqlx.NotFoundf(ctx, "framework %q not found", obj.ID)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot list framework audits", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list framework audits", err)
 	}
 
 	return types.NewAuditConnection(auditPage, r, obj.ID), nil
@@ -111,8 +107,7 @@ func (r *frameworkResolver) Controls(ctx context.Context, obj *types.Framework, 
 
 	page, err := r.probo.Controls.ListForFrameworkID(ctx, scope, obj.ID, cursor, controlFilter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list controls", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list controls", err)
 	}
 
 	return types.NewControlConnection(page, r, obj.ID, controlFilter), nil
@@ -160,16 +155,14 @@ func (r *frameworkConnectionResolver) TotalCount(ctx context.Context, obj *types
 	case *organizationResolver:
 		count, err := r.probo.Frameworks.CountForOrganizationID(ctx, scope, obj.ParentID)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count frameworks", log.Error(err))
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count frameworks", err)
 		}
 
 		return count, nil
 	case *auditResolver:
 		count, err := r.probo.Audits.CountFrameworksForAuditID(ctx, scope, obj.ParentID)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count frameworks", log.Error(err))
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count frameworks", err)
 		}
 
 		return count, nil
@@ -199,9 +192,7 @@ func (r *mutationResolver) CreateFramework(ctx context.Context, input types.Crea
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot create framework", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot create framework", err)
 	}
 
 	return &types.CreateFrameworkPayload{
@@ -229,9 +220,7 @@ func (r *mutationResolver) UpdateFramework(ctx context.Context, input types.Upda
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot update framework", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot update framework", err)
 	}
 
 	return &types.UpdateFrameworkPayload{
@@ -248,8 +237,7 @@ func (r *mutationResolver) ImportFramework(ctx context.Context, input types.Impo
 
 	req := probo.ImportFrameworkRequest{}
 	if err := json.NewDecoder(input.File.File).Decode(&req.Framework); err != nil {
-		r.logger.ErrorCtx(ctx, "cannot decode framework", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot decode framework", err)
 	}
 
 	framework, err := r.probo.Frameworks.Import(ctx, scope, input.OrganizationID, req)
@@ -258,9 +246,7 @@ func (r *mutationResolver) ImportFramework(ctx context.Context, input types.Impo
 			return nil, gqlx.Conflict(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot import framework", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot import framework", err)
 	}
 
 	return &types.ImportFrameworkPayload{
@@ -276,8 +262,7 @@ func (r *mutationResolver) DeleteFramework(ctx context.Context, input types.Dele
 	}
 
 	if err := r.probo.Frameworks.Delete(ctx, scope, input.FrameworkID); err != nil {
-		r.logger.ErrorCtx(ctx, "cannot delete framework", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot delete framework", err)
 	}
 
 	return &types.DeleteFrameworkPayload{

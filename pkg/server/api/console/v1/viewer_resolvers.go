@@ -10,7 +10,6 @@ import (
 	"errors"
 	"time"
 
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
@@ -60,9 +59,7 @@ func (r *viewerResolver) SignableDocument(ctx context.Context, obj *types.Viewer
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get signable document", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get signable document", err)
 	}
 
 	return &types.EmployeeDocument{
@@ -109,9 +106,7 @@ func (r *viewerResolver) ApprovableDocument(ctx context.Context, obj *types.View
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get approvable document", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get approvable document", err)
 	}
 
 	return &types.EmployeeDocument{
@@ -156,17 +151,14 @@ func (r *viewerResolver) EnrolledDevices(ctx context.Context, obj *types.Viewer,
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get enrolled devices owner profile", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get enrolled devices owner profile", err)
 	}
 
 	devicesPage, err := r.itam.ListForOrganizationIDAndOwnerID(
 		ctx, scope, organizationID, profile.ID, cursor,
 	)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list enrolled devices", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list enrolled devices", err)
 	}
 
 	return types.NewEmployeeDeviceConnection(devicesPage), nil
@@ -204,9 +196,7 @@ func (r *viewerResolver) AssignedTasks(ctx context.Context, obj *types.Viewer, o
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get assigned tasks owner profile", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get assigned tasks owner profile", err)
 	}
 
 	var (
@@ -240,8 +230,7 @@ func (r *viewerResolver) AssignedTasks(ctx context.Context, obj *types.Viewer, o
 
 	page, err := r.task.ListForOrganizationID(ctx, scope, organizationID, cursor, taskFilter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list assigned tasks", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list assigned tasks", err)
 	}
 
 	return types.NewTaskConnection(page, r, organizationID, taskFilter), nil
@@ -269,9 +258,7 @@ func (r *viewerResolver) EnrolledDevice(ctx context.Context, obj *types.Viewer, 
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get enrolled device", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get enrolled device", err)
 	}
 
 	return types.NewDevice(device), nil
@@ -290,9 +277,7 @@ func (r *viewerResolver) ProbotIdentityBindings(ctx context.Context, obj *types.
 
 	bindings, err := r.probotIdentityBindings.ListByIdentity(ctx, identity.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list Probot identity bindings", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list Probot identity bindings", err)
 	}
 
 	return types.NewProbotIdentityBindings(bindings), nil
@@ -340,16 +325,12 @@ func (r *viewerResolver) Notifications(ctx context.Context, obj *types.Viewer, o
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot list notifications", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list notifications", err)
 	}
 
 	connection, err := types.NewNotificationConnection(notifications, r, organizationID, notificationFilter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list notifications", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list notifications", err)
 	}
 
 	return connection, nil

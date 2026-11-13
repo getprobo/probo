@@ -10,7 +10,6 @@ import (
 	"errors"
 
 	"github.com/vikstrous/dataloadgen"
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
@@ -43,9 +42,7 @@ func (r *deviceResolver) Owner(ctx context.Context, obj *types.Device) (*types.P
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get device owner profile", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get device owner profile", err)
 	}
 
 	return types.NewProfile(owner), nil
@@ -60,8 +57,7 @@ func (r *deviceResolver) LatestPostures(ctx context.Context, obj *types.Device) 
 
 	postures, err := r.itam.GetLatestPostures(ctx, scope, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load latest device postures", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load latest device postures", err)
 	}
 
 	return types.NewDevicePostures(postures), nil
@@ -89,9 +85,7 @@ func (r *deviceResolver) PostureReports(ctx context.Context, obj *types.Device, 
 
 	p, err := r.itam.ListPostureReports(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list device posture reports", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list device posture reports", err)
 	}
 
 	return types.NewDevicePostureReportConnection(p, r, obj.ID), nil
@@ -108,8 +102,7 @@ func (r *deviceConnectionResolver) TotalCount(ctx context.Context, obj *types.De
 	case *organizationResolver:
 		count, err := r.itam.CountForOrganizationID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count devices", log.Error(err))
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count devices", err)
 		}
 
 		return count, nil
@@ -127,9 +120,7 @@ func (r *devicePostureReportConnectionResolver) TotalCount(ctx context.Context, 
 
 	count, err := r.itam.CountPostureReports(ctx, scope, obj.ParentID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot count device posture reports", log.Error(err))
-
-		return 0, gqlx.Internal(ctx)
+		return 0, gqlx.Report(ctx, r.logger, "cannot count device posture reports", err)
 	}
 
 	return count, nil
@@ -163,15 +154,12 @@ func (r *mutationResolver) EnrollDevice(ctx context.Context, input types.EnrollD
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot enroll device", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot enroll device", err)
 	}
 
 	urls, err := itam.BuildEnrollmentURLs(r.baseURL, result.EnrollmentToken)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot build enrollment URLs", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot build enrollment URLs", err)
 	}
 
 	return &types.CreateDevicePayload{
@@ -205,15 +193,12 @@ func (r *mutationResolver) CreateDevice(ctx context.Context, input types.CreateD
 			return nil, gqlx.Invalid(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot create device", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot create device", err)
 	}
 
 	urls, err := itam.BuildEnrollmentURLs(r.baseURL, result.EnrollmentToken)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot build enrollment URLs", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot build enrollment URLs", err)
 	}
 
 	return &types.CreateDevicePayload{
@@ -241,9 +226,7 @@ func (r *mutationResolver) RevokeDevices(ctx context.Context, input types.Revoke
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot revoke devices", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot revoke devices", err)
 	}
 
 	payload := make([]*types.Device, len(devices))
@@ -275,9 +258,7 @@ func (r *mutationResolver) DeleteDevices(ctx context.Context, input types.Delete
 			return nil, gqlx.Conflict(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot delete devices", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot delete devices", err)
 	}
 
 	deletedDeviceIDs := make([]gid.GID, len(devices))
@@ -305,9 +286,7 @@ func (r *mutationResolver) SetDeviceOwner(ctx context.Context, input types.SetDe
 			return nil, gqlx.Invalid(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot set device owner", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot set device owner", err)
 	}
 
 	return &types.SetDeviceOwnerPayload{Device: types.NewDevice(d)}, nil
@@ -338,9 +317,7 @@ func (r *mutationResolver) DownloadDeviceEvidence(ctx context.Context, input typ
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot export device evidence", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot export device evidence", err)
 	}
 
 	return &types.DownloadDeviceEvidencePayload{DownloadURL: downloadURL}, nil

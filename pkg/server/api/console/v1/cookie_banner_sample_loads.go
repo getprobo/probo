@@ -25,7 +25,6 @@ import (
 	"errors"
 
 	"github.com/vikstrous/dataloadgen"
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
@@ -47,9 +46,7 @@ func (r *cookieBannerSampleResolver) loadPageLoads(
 			return []*cookiebanner.SampleFamilyCount{}, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get cookie banner sample page loads", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get cookie banner sample page loads", err)
 	}
 
 	return cookiebanner.NewSampleFamilyCountPtrs(pageLoads), nil

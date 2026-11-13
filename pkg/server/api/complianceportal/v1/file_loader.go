@@ -24,7 +24,6 @@ import (
 	"context"
 	"errors"
 
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/server/api/complianceportal/v1/types"
@@ -38,9 +37,7 @@ func (r *Resolver) loadPublicFile(ctx context.Context, fileID gid.GID) (*types.F
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot load public file", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load public file", err)
 	}
 
 	return types.NewFile(file, r.fileManager), nil

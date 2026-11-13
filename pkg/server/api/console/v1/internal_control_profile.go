@@ -25,7 +25,6 @@ import (
 	"errors"
 
 	"github.com/vikstrous/dataloadgen"
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
@@ -50,9 +49,7 @@ func (r *internalControlResolver) loadProfile(ctx context.Context, profile *type
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get profile", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get profile", err)
 	}
 
 	return types.NewProfile(loaded), nil

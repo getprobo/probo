@@ -8,7 +8,6 @@ package console_v1
 import (
 	"context"
 
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
@@ -26,8 +25,7 @@ func (r *commonGVLVendorConnectionResolver) TotalCount(ctx context.Context, obj 
 
 		count, err := r.cookieBanner.CountCookieBannerGVLVendors(ctx, scope, *obj.ParentID)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count cookie banner gvl vendors", log.Error(err))
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count cookie banner gvl vendors", err)
 		}
 
 		return count, nil
@@ -41,8 +39,7 @@ func (r *commonGVLVendorConnectionResolver) TotalCount(ctx context.Context, obj 
 
 	count, err := r.cookieBanner.CountCommonGVLVendors(ctx, obj.Filter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot count common gvl vendors", log.Error(err))
-		return 0, gqlx.Internal(ctx)
+		return 0, gqlx.Report(ctx, r.logger, "cannot count common gvl vendors", err)
 	}
 
 	return count, nil

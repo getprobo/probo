@@ -11,7 +11,6 @@ import (
 	"fmt"
 
 	"github.com/99designs/gqlgen/graphql"
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
@@ -88,8 +87,7 @@ func (r *identityResolver) Profiles(ctx context.Context, obj *types.Identity, fi
 
 	page, err := r.iam.AccountService.ListProfilesForIdentity(ctx, obj.ID, cursor, filters)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list profiles", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list profiles", err)
 	}
 
 	return types.NewProfileConnection(page, r, obj.ID, filters), nil
@@ -123,8 +121,7 @@ func (r *identityResolver) Sessions(ctx context.Context, obj *types.Identity, fi
 
 	page, err := r.iam.AccountService.ListSessions(ctx, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list sessions", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list sessions", err)
 	}
 
 	return types.NewSessionConnection(page, r, obj.ID), nil
@@ -152,9 +149,7 @@ func (r *identityResolver) Oauth2AccessTokens(ctx context.Context, obj *types.Id
 
 	tokenPage, err := r.iam.OAuth2ServerService.ListAccessTokensByIdentityID(ctx, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list oauth2 access tokens", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list oauth2 access tokens", err)
 	}
 
 	return types.NewOAuth2AccessTokenConnection(tokenPage, r, obj.ID), nil
@@ -168,8 +163,7 @@ func (r *identityResolver) InvitingOrganizations(ctx context.Context, obj *types
 
 	organizations, err := r.iam.AccountService.ListInvitingOrganizations(ctx, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list inviting organizations", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list inviting organizations", err)
 	}
 
 	result := make([]*types.Organization, len(organizations))
@@ -190,8 +184,7 @@ func (r *identityResolver) SsoLoginURL(ctx context.Context, obj *types.Identity)
 
 	count, err := r.iam.AccountService.CountSAMLConfigurationsForEmail(ctx, identity.EmailAddress)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot count SAML configurations for email", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot count SAML configurations for email", err)
 	}
 
 	if count != 1 {
@@ -210,8 +203,7 @@ func (r *identityResolver) SsoLoginURL(ctx context.Context, obj *types.Identity)
 
 	samlConfigs, err := r.iam.AccountService.ListSAMLConfigurationsForEmail(ctx, identity.EmailAddress)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list SAML configurations for email", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list SAML configurations for email", err)
 	}
 
 	if len(samlConfigs) == 0 {
@@ -250,9 +242,7 @@ func (r *identityResolver) NotificationPreferences(ctx context.Context, obj *typ
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot list notification preferences", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list notification preferences", err)
 	}
 
 	nodes := make([]*types.NotificationPreference, 0, len(preferences))
@@ -290,9 +280,7 @@ func (r *mutationResolver) UpdateAvatar(ctx context.Context, input types.UpdateA
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot update identity avatar", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot update identity avatar", err)
 	}
 
 	return &types.UpdateAvatarPayload{
@@ -309,8 +297,7 @@ func (r *mutationResolver) DeleteAvatar(ctx context.Context) (*types.DeleteAvata
 
 	updated, err := r.iam.AccountService.DeleteAvatar(ctx, identity.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot delete identity avatar", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot delete identity avatar", err)
 	}
 
 	return &types.DeleteAvatarPayload{

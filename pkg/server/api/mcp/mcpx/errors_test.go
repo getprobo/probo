@@ -34,6 +34,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/server/api/mcp/mcpx"
 	"go.probo.inc/probo/pkg/validator"
 )
@@ -93,6 +94,11 @@ func TestMapError(t *testing.T) {
 			wantIs: mcpx.ErrAssumptionRequired,
 		},
 		{
+			name: "invalid cursor",
+			err:  fmt.Errorf("cannot collect audits: %w", page.ErrInvalidCursorValue),
+			want: "invalid cursor",
+		},
+		{
 			name:   "unknown error",
 			err:    errors.New("database is down"),
 			want:   mcpx.ErrInternal.Error(),
@@ -108,7 +114,9 @@ func TestMapError(t *testing.T) {
 
 			require.Error(t, got)
 			assert.Equal(t, tt.want, got.Error())
-			assert.ErrorIs(t, got, tt.wantIs)
+			if tt.wantIs != nil {
+				assert.ErrorIs(t, got, tt.wantIs)
+			}
 		})
 	}
 

@@ -10,7 +10,6 @@ import (
 	"errors"
 
 	"github.com/vikstrous/dataloadgen"
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
@@ -35,9 +34,7 @@ func (r *aiSystemResolver) Organization(ctx context.Context, obj *types.AiSystem
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get ai system organization", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get ai system organization", err)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -61,9 +58,7 @@ func (r *aiSystemResolver) Owner(ctx context.Context, obj *types.AiSystem) (*typ
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get ai system owner", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get ai system owner", err)
 	}
 
 	return types.NewProfile(owner), nil
@@ -95,8 +90,7 @@ func (r *aiSystemConnectionResolver) TotalCount(ctx context.Context, obj *types.
 
 	count, err := r.probo.AiSystems.CountForOrganizationID(ctx, scope, obj.ParentID, filter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot count ai systems", log.Error(err))
-		return 0, gqlx.Internal(ctx)
+		return 0, gqlx.Report(ctx, r.logger, "cannot count ai systems", err)
 	}
 
 	return count, nil
@@ -142,9 +136,7 @@ func (r *mutationResolver) CreateAiSystem(ctx context.Context, input types.Creat
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot create ai system", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot create ai system", err)
 	}
 
 	return &types.CreateAiSystemPayload{
@@ -190,9 +182,7 @@ func (r *mutationResolver) UpdateAiSystem(ctx context.Context, input types.Updat
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot update ai system", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot update ai system", err)
 	}
 
 	return &types.UpdateAiSystemPayload{
@@ -212,9 +202,7 @@ func (r *mutationResolver) DeleteAiSystem(ctx context.Context, input types.Delet
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot delete ai system", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot delete ai system", err)
 	}
 
 	return &types.DeleteAiSystemPayload{
@@ -241,9 +229,7 @@ func (r *mutationResolver) PublishAiSystemList(ctx context.Context, input types.
 			return nil, gqlx.Conflict(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot publish ai system list", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot publish ai system list", err)
 	}
 
 	return &types.PublishAiSystemListPayload{

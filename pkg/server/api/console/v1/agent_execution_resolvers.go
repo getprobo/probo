@@ -36,9 +36,7 @@ func (r *agentExecutionResolver) Organization(ctx context.Context, obj *types.Ag
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot load organization", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load organization", err)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -60,8 +58,7 @@ func (r *agentExecutionConnectionResolver) TotalCount(ctx context.Context, obj *
 	case *organizationResolver:
 		count, err := r.agentExecution.CountForOrganizationID(ctx, scope, obj.ParentID)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count agent executions", log.Error(err))
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count agent executions", err)
 		}
 
 		return count, nil
@@ -102,8 +99,7 @@ func (r *mutationResolver) SubmitAgentExecutionApproval(ctx context.Context, inp
 		case errors.Is(err, agentexecution.ErrApprovalDecisionsMismatch):
 			return nil, gqlx.Invalidf(ctx, "approval decisions must match the run's pending approvals")
 		default:
-			r.logger.ErrorCtx(ctx, "cannot submit agent execution approval", log.Error(err))
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, r.logger, "cannot submit agent execution approval", err)
 		}
 	}
 

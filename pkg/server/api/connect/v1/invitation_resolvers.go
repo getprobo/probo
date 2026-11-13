@@ -9,7 +9,6 @@ import (
 	"context"
 	"errors"
 
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
@@ -44,9 +43,7 @@ func (r *mutationResolver) InviteUser(ctx context.Context, input types.InviteUse
 			return nil, gqlx.Conflict(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot invite user", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot invite user", err)
 	}
 
 	return &types.InviteUserPayload{

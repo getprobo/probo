@@ -10,7 +10,6 @@ import (
 	"errors"
 
 	"github.com/vikstrous/dataloadgen"
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
@@ -39,9 +38,7 @@ func (r *taskActivityResolver) Actor(ctx context.Context, obj *types.TaskActivit
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get task activity actor", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get task activity actor", err)
 	}
 
 	return types.NewProfile(actor), nil
@@ -55,9 +52,7 @@ func (r *taskActivityResolver) Comment(ctx context.Context, obj *types.TaskActiv
 
 	commentID, err := gid.ParseGID(*obj.NewValue)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot parse task comment activity", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot parse task comment activity", err)
 	}
 
 	if _, err := r.authorize(ctx, commentID, task.ActionTaskCommentGet); err != nil {
@@ -70,9 +65,7 @@ func (r *taskActivityResolver) Comment(ctx context.Context, obj *types.TaskActiv
 			return nil, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get task activity comment", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get task activity comment", err)
 	}
 
 	return types.NewTaskComment(comment), nil
@@ -92,9 +85,7 @@ func (r *taskActivityConnectionResolver) TotalCount(ctx context.Context, obj *ty
 
 	count, err := r.task.CountActivitiesForTaskID(ctx, scope, obj.ParentID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot count task activities", log.Error(err))
-
-		return 0, gqlx.Internal(ctx)
+		return 0, gqlx.Report(ctx, r.logger, "cannot count task activities", err)
 	}
 
 	return count, nil

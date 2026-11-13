@@ -197,9 +197,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			return nil, gqlx.Invalidf(ctx, "%s", oauthErr.Description())
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot load node", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load node", err)
 	}
 
 	return node, nil
@@ -223,8 +221,7 @@ func (r *queryResolver) Viewer(ctx context.Context) (*types.Identity, error) {
 func (r *queryResolver) SsoLoginURL(ctx context.Context, email mail.Addr) (*string, error) {
 	count, err := r.iam.AccountService.CountSAMLConfigurationsForEmail(ctx, email)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot count SAML configurations for email", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot count SAML configurations for email", err)
 	}
 
 	if count != 1 {
@@ -243,8 +240,7 @@ func (r *queryResolver) SsoLoginURL(ctx context.Context, email mail.Addr) (*stri
 
 	samlConfigs, err := r.iam.AccountService.ListSAMLConfigurationsForEmail(ctx, email)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list SAML configurations for email", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list SAML configurations for email", err)
 	}
 
 	samlConfig := samlConfigs[0]

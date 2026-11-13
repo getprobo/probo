@@ -9,7 +9,6 @@ import (
 	"context"
 	"errors"
 
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/complianceportal"
@@ -41,9 +40,7 @@ func (r *mutationResolver) SubscribeToMailingList(ctx context.Context) (*types.S
 			return nil, gqlx.Conflictf(ctx, "already subscribed to this mailing list")
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot subscribe to mailing list", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot subscribe to mailing list", err)
 	}
 
 	return &types.SubscribeToMailingListPayload{
@@ -59,8 +56,7 @@ func (r *mutationResolver) UnsubscribeFromMailingList(ctx context.Context) (*typ
 
 	subscriber, err := r.mailman.GetSubscriber(ctx, compliancePortal.MailingListID, identity.EmailAddress)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get mailing list subscription", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get mailing list subscription", err)
 	}
 
 	if subscriber == nil {
@@ -72,9 +68,7 @@ func (r *mutationResolver) UnsubscribeFromMailingList(ctx context.Context) (*typ
 			return nil, gqlx.NotFoundf(ctx, "not subscribed to this mailing list")
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot unsubscribe from mailing list", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot unsubscribe from mailing list", err)
 	}
 
 	return &types.UnsubscribeFromMailingListPayload{DeletedMailingListSubscriberID: &subscriber.ID}, nil

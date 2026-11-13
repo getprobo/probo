@@ -24,7 +24,6 @@ import (
 	"context"
 	"errors"
 
-	"go.gearno.de/kit/log"
 	"go.gearno.de/x/ref"
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
 	cloudazure "go.probo.inc/probo/pkg/cloud/azure"
@@ -83,9 +82,7 @@ func (r *Resolver) workloadIdentitySettings(
 	)
 	if err != nil {
 		if errors.Is(err, probo.ErrMarshalWorkloadIdentitySettings) {
-			r.logger.ErrorCtx(ctx, "cannot marshal workload identity connector settings", log.Error(err))
-
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, r.logger, "cannot marshal workload identity connector settings", err)
 		}
 
 		return nil, gqlx.Invalid(ctx, err)
@@ -113,9 +110,7 @@ func (r *Resolver) organizationConnectorSettings(
 	)
 	if err != nil {
 		if errors.Is(err, probo.ErrMarshalWorkloadIdentitySettings) {
-			r.logger.ErrorCtx(ctx, "cannot marshal organization connector settings", log.Error(err))
-
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, r.logger, "cannot marshal organization connector settings", err)
 		}
 
 		return nil, gqlx.Invalid(ctx, err)

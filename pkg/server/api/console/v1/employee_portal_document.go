@@ -25,7 +25,6 @@ import (
 	"errors"
 
 	"github.com/vikstrous/dataloadgen"
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
@@ -42,9 +41,7 @@ func (r *employeePortalDocumentResolver) publishedVersion(
 			return nil, gqlx.NotFoundf(ctx, "published document %q not found", documentID)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot load published document version", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load published document version", err)
 	}
 
 	return version, nil

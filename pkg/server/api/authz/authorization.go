@@ -122,9 +122,7 @@ func NewAuthorizeFunc(
 				return nil, gqlx.NotFoundf(ctx, "resource not found")
 			}
 
-			logger.ErrorCtx(ctx, "cannot authorize", log.Error(err))
-
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, logger, "cannot authorize", err)
 		}
 
 		return scope, nil
@@ -188,9 +186,7 @@ func NewBatchAuthorizeFunc(
 				return nil, gqlx.NotFoundf(ctx, "resource not found")
 			}
 
-			logger.ErrorCtx(ctx, "cannot batch authorize", log.Error(err))
-
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, logger, "cannot batch authorize", err)
 		}
 
 		return scope, nil

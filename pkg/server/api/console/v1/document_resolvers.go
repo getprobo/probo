@@ -48,9 +48,7 @@ func (r *documentResolver) Content(ctx context.Context, obj *types.Document) (*t
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot load document content", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load document content", err)
 	}
 
 	return types.NewDocumentContent(content), nil
@@ -80,9 +78,7 @@ func (r *documentResolver) Organization(ctx context.Context, obj *types.Document
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get organization", err)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -108,9 +104,7 @@ func (r *documentResolver) CompliancePortalDocument(ctx context.Context, obj *ty
 			return nil, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot load compliance portal document", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load compliance portal document", err)
 	}
 
 	return types.NewCompliancePortalDocument(link), nil
@@ -129,9 +123,7 @@ func (r *documentResolver) EmployeePortalDocument(ctx context.Context, obj *type
 			return nil, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot load employee portal", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load employee portal", err)
 	}
 
 	scope, err := r.authorize(ctx, portal.ID, employeeportalmgmt.ActionEmployeePortalGet)
@@ -152,9 +144,7 @@ func (r *documentResolver) EmployeePortalDocument(ctx context.Context, obj *type
 			return nil, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot load employee portal document", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load employee portal document", err)
 	}
 
 	return types.NewEmployeePortalDocument(link), nil
@@ -180,9 +170,7 @@ func (r *documentResolver) CompliancePortalDocumentAccess(ctx context.Context, o
 			return nil, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot load compliance portal document access", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load compliance portal document access", err)
 	}
 
 	return types.NewCompliancePortalDocumentAccess(access), nil
@@ -216,8 +204,7 @@ func (r *documentResolver) Versions(ctx context.Context, obj *types.Document, fi
 
 	page, err := r.probo.Documents.ListVersions(ctx, scope, obj.ID, cursor, versionFilter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list document versions", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list document versions", err)
 	}
 
 	return types.NewDocumentVersionConnection(page, r, obj.ID), nil
@@ -309,8 +296,7 @@ func (r *documentResolver) Controls(ctx context.Context, obj *types.Document, fi
 
 	page, err := r.probo.Controls.ListForDocumentID(ctx, scope, obj.ID, cursor, controlFilter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list document controls", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list document controls", err)
 	}
 
 	return types.NewControlConnection(page, r, obj.ID, controlFilter), nil
@@ -325,8 +311,7 @@ func (r *documentResolver) DefaultApprovers(ctx context.Context, obj *types.Docu
 
 	profiles, err := r.probo.Documents.GetDefaultApprovers(ctx, scope, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get default approvers", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get default approvers", err)
 	}
 
 	result := make([]*types.Profile, len(profiles))
@@ -364,8 +349,7 @@ func (r *documentResolver) History(ctx context.Context, obj *types.Document, fir
 		cursor,
 	)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list revisions", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list revisions", err)
 	}
 
 	return types.NewDocumentRevisionConnection(
@@ -389,9 +373,7 @@ func (r *documentResolver) Revision(ctx context.Context, obj *types.Document, id
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot load revision", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load revision", err)
 	}
 
 	return types.NewDocumentRevision(session), nil
@@ -413,32 +395,28 @@ func (r *documentConnectionResolver) TotalCount(ctx context.Context, obj *types.
 	case *controlResolver:
 		count, err := r.probo.Documents.CountForControlID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count controls", log.Error(err))
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count controls", err)
 		}
 
 		return count, nil
 	case *organizationResolver:
 		count, err := r.probo.Documents.CountForOrganizationID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count documents", log.Error(err))
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count documents", err)
 		}
 
 		return count, nil
 	case *riskResolver:
 		count, err := r.probo.Documents.CountForRiskID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count risks", log.Error(err))
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count risks", err)
 		}
 
 		return count, nil
 	case *internalControlResolver:
 		count, err := r.probo.Documents.CountForInternalControlID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count documents", log.Error(err))
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count documents", err)
 		}
 
 		return count, nil
@@ -462,14 +440,12 @@ func (r *documentContentResolver) Markdown(ctx context.Context, obj *types.Docum
 
 	node, err := prosemirror.Parse(obj.Source)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot parse document content", log.Error(err))
-		return "", gqlx.Internal(ctx)
+		return "", gqlx.Report(ctx, r.logger, "cannot parse document content", err)
 	}
 
 	md, err := richtext.DocumentMarkdown.Render(node)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot render document content as markdown", log.Error(err))
-		return "", gqlx.Internal(ctx)
+		return "", gqlx.Report(ctx, r.logger, "cannot render document content as markdown", err)
 	}
 
 	return md, nil
@@ -491,9 +467,7 @@ func (r *documentRevisionResolver) Author(ctx context.Context, obj *types.Docume
 			return nil, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot load history author", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load history author", err)
 	}
 
 	return types.NewProfile(profile), nil
@@ -528,9 +502,7 @@ func (r *documentRevisionResolver) Snapshot(ctx context.Context, obj *types.Docu
 			return nil, gqlx.Conflict(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot load history snapshot", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load history snapshot", err)
 	}
 
 	return types.NewDocumentHistorySnapshot(snapshot), nil
@@ -555,9 +527,7 @@ func (r *documentVersionResolver) Document(ctx context.Context, obj *types.Docum
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get document", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get document", err)
 	}
 
 	return types.NewDocument(document), nil
@@ -591,8 +561,7 @@ func (r *documentVersionResolver) Approvers(ctx context.Context, obj *types.Docu
 
 	p, err := r.probo.Documents.ListVersionApprovers(ctx, scope, obj.ID, c)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list document version approvers", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list document version approvers", err)
 	}
 
 	return types.NewProfileConnection(p, r, obj.ID, nil), nil
@@ -643,8 +612,7 @@ func (r *documentVersionResolver) Signatures(ctx context.Context, obj *types.Doc
 
 	page, err := r.probo.Documents.ListSignatures(ctx, scope, obj.ID, cursor, signatureFilter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list document version signatures", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list document version signatures", err)
 	}
 
 	return types.NewDocumentVersionSignatureConnection(page, r, obj.ID, signatureFilter), nil
@@ -673,8 +641,7 @@ func (r *documentVersionResolver) ApprovalQuorums(ctx context.Context, obj *type
 
 	p, err := r.probo.DocumentApprovals.ListQuorums(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list approval quorums", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list approval quorums", err)
 	}
 
 	return types.NewDocumentVersionApprovalQuorumConnection(p, r, obj.ID), nil
@@ -691,8 +658,7 @@ func (r *documentVersionResolver) Signed(ctx context.Context, obj *types.Documen
 
 	signed, err := r.probo.Documents.IsVersionSignedByUserEmail(ctx, scope, obj.ID, identity.EmailAddress)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot check if document version is signed", log.Error(err))
-		return false, gqlx.Internal(ctx)
+		return false, gqlx.Report(ctx, r.logger, "cannot check if document version is signed", err)
 	}
 
 	return signed, nil
@@ -716,9 +682,7 @@ func (r *documentVersionApprovalDecisionResolver) Quorum(ctx context.Context, ob
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get approval quorum", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get approval quorum", err)
 	}
 
 	return types.NewDocumentVersionApprovalQuorum(quorum), nil
@@ -737,9 +701,7 @@ func (r *documentVersionApprovalDecisionResolver) DocumentVersion(ctx context.Co
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get approval quorum", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get approval quorum", err)
 	}
 
 	documentVersion, err := r.probo.Documents.GetVersion(ctx, scope, quorum.VersionID)
@@ -748,9 +710,7 @@ func (r *documentVersionApprovalDecisionResolver) DocumentVersion(ctx context.Co
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get document version", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get document version", err)
 	}
 
 	return types.NewDocumentVersion(documentVersion), nil
@@ -768,9 +728,7 @@ func (r *documentVersionApprovalDecisionResolver) Approver(ctx context.Context, 
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get approver profile", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get approver profile", err)
 	}
 
 	return types.NewProfile(profile), nil
@@ -822,8 +780,7 @@ func (r *documentVersionApprovalDecisionConnectionResolver) TotalCount(ctx conte
 
 	count, err := r.probo.DocumentApprovals.CountDecisions(ctx, scope, obj.ParentID, filter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot count approval decisions", log.Error(err))
-		return 0, gqlx.Internal(ctx)
+		return 0, gqlx.Report(ctx, r.logger, "cannot count approval decisions", err)
 	}
 
 	return count, nil
@@ -842,9 +799,7 @@ func (r *documentVersionApprovalQuorumResolver) DocumentVersion(ctx context.Cont
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get document version", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get document version", err)
 	}
 
 	return types.NewDocumentVersion(documentVersion), nil
@@ -880,8 +835,7 @@ func (r *documentVersionApprovalQuorumResolver) Decisions(ctx context.Context, o
 
 	p, err := r.probo.DocumentApprovals.ListDecisions(ctx, scope, obj.ID, cursor, approvalFilter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list approval decisions", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list approval decisions", err)
 	}
 
 	return types.NewDocumentVersionApprovalDecisionConnection(p, r, obj.ID, approvalFilter), nil
@@ -901,8 +855,7 @@ func (r *documentVersionApprovalQuorumConnectionResolver) TotalCount(ctx context
 
 	count, err := r.probo.DocumentApprovals.CountQuorums(ctx, scope, obj.ParentID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot count approval quorums", log.Error(err))
-		return 0, gqlx.Internal(ctx)
+		return 0, gqlx.Report(ctx, r.logger, "cannot count approval quorums", err)
 	}
 
 	return count, nil
@@ -924,8 +877,7 @@ func (r *documentVersionConnectionResolver) TotalCount(ctx context.Context, obj 
 
 		count, err := r.probo.Documents.CountVersionsForDocumentID(ctx, scope, obj.ParentID, filter)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count document versions", log.Error(err))
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count document versions", err)
 		}
 
 		return count, nil
@@ -949,9 +901,7 @@ func (r *documentVersionSignatureResolver) DocumentVersion(ctx context.Context, 
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get document version", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get document version", err)
 	}
 
 	return types.NewDocumentVersion(documentVersion), nil
@@ -971,9 +921,7 @@ func (r *documentVersionSignatureResolver) SignedBy(ctx context.Context, obj *ty
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get people", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get people", err)
 	}
 
 	return types.NewProfile(signatory), nil
@@ -1000,8 +948,7 @@ func (r *documentVersionSignatureConnectionResolver) TotalCount(ctx context.Cont
 
 		count, err := r.probo.Documents.CountSignaturesForVersionID(ctx, scope, obj.ParentID, filter)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count signatures", log.Error(err))
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count signatures", err)
 		}
 
 		return count, nil
@@ -1027,9 +974,7 @@ func (r *employeeDocumentResolver) Signed(ctx context.Context, obj *types.Employ
 			return nil, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot check if document is signed", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot check if document is signed", err)
 	}
 
 	return &signed, nil
@@ -1050,9 +995,7 @@ func (r *employeeDocumentResolver) ApprovalState(ctx context.Context, obj *types
 			return nil, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get viewer approval state", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get viewer approval state", err)
 	}
 
 	return &state, nil
@@ -1106,8 +1049,7 @@ func (r *employeeDocumentResolver) Versions(ctx context.Context, obj *types.Empl
 
 	versionsPage, err := r.probo.Documents.ListVersions(ctx, scope, obj.ID, cursor, versionFilter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list employee document versions", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list employee document versions", err)
 	}
 
 	employeeVersions := make([]*types.EmployeeDocumentVersion, len(versionsPage.Data))
@@ -1145,8 +1087,7 @@ func (r *employeeDocumentConnectionResolver) TotalCount(ctx context.Context, obj
 
 	count, err := r.probo.Documents.CountForOrganizationID(ctx, scope, obj.ParentID, obj.Filters)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot count employee documents", log.Error(err))
-		return 0, gqlx.Internal(ctx)
+		return 0, gqlx.Report(ctx, r.logger, "cannot count employee documents", err)
 	}
 
 	return count, nil
@@ -1163,8 +1104,7 @@ func (r *employeeDocumentVersionResolver) Signed(ctx context.Context, obj *types
 
 	signed, err := r.probo.Documents.IsVersionSignedByUserEmail(ctx, scope, obj.ID, identity.EmailAddress)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot check if version is signed", log.Error(err))
-		return false, gqlx.Internal(ctx)
+		return false, gqlx.Report(ctx, r.logger, "cannot check if version is signed", err)
 	}
 
 	return signed, nil
@@ -1190,9 +1130,7 @@ func (r *employeeDocumentVersionResolver) ApprovalDecision(ctx context.Context, 
 			return nil, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get viewer approval decision", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get viewer approval decision", err)
 	}
 
 	return types.NewDocumentVersionApprovalDecision(decision), nil
@@ -1212,8 +1150,7 @@ func (r *employeeDocumentVersionConnectionResolver) TotalCount(ctx context.Conte
 
 	count, err := r.probo.Documents.CountVersionsForDocumentID(ctx, scope, obj.ParentID, filter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot count employee document versions", log.Error(err))
-		return 0, gqlx.Internal(ctx)
+		return 0, gqlx.Report(ctx, r.logger, "cannot count employee document versions", err)
 	}
 
 	return count, nil
@@ -1251,9 +1188,7 @@ func (r *mutationResolver) CreateDocument(ctx context.Context, input types.Creat
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot create document", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot create document", err)
 	}
 
 	return &types.CreateDocumentPayload{
@@ -1301,9 +1236,7 @@ func (r *mutationResolver) UpdateDocument(ctx context.Context, input types.Updat
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot update document", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot update document", err)
 	}
 
 	return &types.UpdateDocumentPayload{
@@ -1324,9 +1257,7 @@ func (r *mutationResolver) ArchiveDocument(ctx context.Context, input types.Arch
 			return nil, gqlx.Conflict(ctx, errArchived)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot archive document", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot archive document", err)
 	}
 
 	return &types.ArchiveDocumentPayload{
@@ -1347,9 +1278,7 @@ func (r *mutationResolver) UnarchiveDocument(ctx context.Context, input types.Un
 			return nil, gqlx.Conflict(ctx, errNotArchived)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot unarchive document", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot unarchive document", err)
 	}
 
 	return &types.UnarchiveDocumentPayload{
@@ -1365,8 +1294,7 @@ func (r *mutationResolver) DeleteDocument(ctx context.Context, input types.Delet
 	}
 
 	if err := r.probo.Documents.SoftDelete(ctx, scope, input.DocumentID); err != nil {
-		r.logger.ErrorCtx(ctx, "cannot soft delete document", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot soft delete document", err)
 	}
 
 	return &types.DeleteDocumentPayload{
@@ -1411,9 +1339,7 @@ func (r *mutationResolver) PublishDocument(ctx context.Context, input types.Publ
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot publish document", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot publish document", err)
 	}
 
 	payload := &types.PublishDocumentPayload{
@@ -1467,9 +1393,7 @@ func (r *mutationResolver) BulkPublishDocuments(ctx context.Context, input types
 			return nil, gqlx.Conflict(ctx, errArchived)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot bulk publish documents", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot bulk publish documents", err)
 	}
 
 	typesVersions := make([]*types.DocumentVersion, len(versions))
@@ -1509,9 +1433,7 @@ func (r *mutationResolver) VoidDocumentVersionApproval(ctx context.Context, inpu
 			return nil, gqlx.Conflict(ctx, errNotPending)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot void document version approval", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot void document version approval", err)
 	}
 
 	return &types.VoidDocumentVersionApprovalPayload{
@@ -1542,8 +1464,7 @@ func (r *mutationResolver) BulkDeleteDocuments(ctx context.Context, input types.
 	}
 
 	if err := r.probo.Documents.BulkSoftDelete(ctx, scope, input.DocumentIds); err != nil {
-		r.logger.ErrorCtx(ctx, "cannot bulk delete documents", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot bulk delete documents", err)
 	}
 
 	return &types.BulkDeleteDocumentsPayload{
@@ -1573,8 +1494,7 @@ func (r *mutationResolver) BulkArchiveDocuments(ctx context.Context, input types
 	}
 
 	if err := r.probo.Documents.BulkArchive(ctx, scope, input.DocumentIds); err != nil {
-		r.logger.ErrorCtx(ctx, "cannot bulk archive documents", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot bulk archive documents", err)
 	}
 
 	return &types.BulkArchiveDocumentsPayload{
@@ -1604,8 +1524,7 @@ func (r *mutationResolver) BulkUnarchiveDocuments(ctx context.Context, input typ
 	}
 
 	if err := r.probo.Documents.BulkUnarchive(ctx, scope, input.DocumentIds); err != nil {
-		r.logger.ErrorCtx(ctx, "cannot bulk unarchive documents", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot bulk unarchive documents", err)
 	}
 
 	return &types.BulkUnarchiveDocumentsPayload{
@@ -1703,9 +1622,7 @@ func (r *mutationResolver) RequestSignature(ctx context.Context, input types.Req
 			return nil, gqlx.Conflict(ctx, errContractEnded)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot request signature", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot request signature", err)
 	}
 
 	return &types.RequestSignaturePayload{
@@ -1754,9 +1671,7 @@ func (r *mutationResolver) BulkRequestSignatures(ctx context.Context, input type
 			return nil, gqlx.Conflict(ctx, errContractEnded)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot bulk request signatures", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot bulk request signatures", err)
 	}
 
 	return &types.BulkRequestSignaturesPayload{
@@ -1776,9 +1691,7 @@ func (r *mutationResolver) CancelSignatureRequest(ctx context.Context, input typ
 			return nil, gqlx.Conflict(ctx, errArchived)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot cancel signature request", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot cancel signature request", err)
 	}
 
 	return &types.CancelSignatureRequestPayload{
@@ -1827,9 +1740,7 @@ func (r *mutationResolver) SignDocument(ctx context.Context, input types.SignDoc
 			return nil, gqlx.Conflict(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot sign document", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot sign document", err)
 	}
 
 	return &types.SignDocumentPayload{
@@ -1875,9 +1786,7 @@ func (r *mutationResolver) ApproveDocumentVersion(ctx context.Context, input typ
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot approve document version", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot approve document version", err)
 	}
 
 	return &types.ApproveDocumentVersionPayload{
@@ -1916,9 +1825,7 @@ func (r *mutationResolver) RejectDocumentVersion(ctx context.Context, input type
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot reject document version", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot reject document version", err)
 	}
 
 	return &types.RejectDocumentVersionPayload{
@@ -1957,8 +1864,7 @@ func (r *mutationResolver) ExportDocumentVersionPDF(ctx context.Context, input t
 
 	pdf, err := r.probo.Documents.ExportPDF(ctx, scope, input.DocumentVersionID, options)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot export document version PDF", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot export document version PDF", err)
 	}
 
 	return &types.ExportDocumentVersionPDFPayload{
@@ -1975,8 +1881,7 @@ func (r *mutationResolver) ExportEmployeeDocumentVersionPDF(ctx context.Context,
 
 	documentVersion, err := r.probo.Documents.GetVersion(ctx, scope, input.DocumentVersionID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get document version", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get document version", err)
 	}
 
 	identity := authn.IdentityFromContext(ctx)
@@ -1989,9 +1894,7 @@ func (r *mutationResolver) ExportEmployeeDocumentVersionPDF(ctx context.Context,
 	_, err = r.probo.Documents.GetWithFilter(ctx, scope, documentVersion.DocumentID, documentFilter)
 	if err != nil {
 		if !errors.Is(err, coredata.ErrResourceNotFound) {
-			r.logger.ErrorCtx(ctx, "cannot get employee document", log.Error(err))
-
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, r.logger, "cannot get employee document", err)
 		}
 
 		shared, shareErr := r.employeePortal.IsSharedPublishedVersion(
@@ -2020,8 +1923,7 @@ func (r *mutationResolver) ExportEmployeeDocumentVersionPDF(ctx context.Context,
 
 	pdf, err := r.probo.Documents.ExportPDF(ctx, scope, input.DocumentVersionID, options)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot export employee document PDF", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot export employee document PDF", err)
 	}
 
 	return &types.ExportEmployeeDocumentVersionPDFPayload{
@@ -2064,15 +1966,12 @@ func (r *mutationResolver) RestoreDocumentHistory(ctx context.Context, input typ
 			return nil, gqlx.Conflict(ctx, errGenerated)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot restore document history", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot restore document history", err)
 	}
 
 	document, err := r.probo.Documents.Get(ctx, scope, input.DocumentID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load restored document", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load restored document", err)
 	}
 
 	return &types.RestoreDocumentHistoryPayload{

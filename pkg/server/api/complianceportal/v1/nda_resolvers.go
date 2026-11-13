@@ -58,9 +58,7 @@ func (r *mutationResolver) AcceptElectronicSignature(ctx context.Context, input 
 			return nil, mapped
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot accept electronic signature", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot accept electronic signature", err)
 	}
 
 	return &types.AcceptElectronicSignaturePayload{
@@ -106,9 +104,7 @@ func (r *mutationResolver) RecordSigningEvent(ctx context.Context, input types.R
 			return nil, mapped
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot record signing event", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot record signing event", err)
 	}
 
 	return &types.RecordSigningEventPayload{Success: true}, nil

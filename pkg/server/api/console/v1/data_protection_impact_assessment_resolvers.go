@@ -10,7 +10,6 @@ import (
 	"errors"
 
 	"github.com/vikstrous/dataloadgen"
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
@@ -29,14 +28,12 @@ func (r *dataProtectionImpactAssessmentResolver) ProcessingActivity(ctx context.
 
 	dpia, err := r.probo.DataProtectionImpactAssessments.Get(ctx, scope, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get processing activity dpia", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get processing activity dpia", err)
 	}
 
 	processingActivity, err := r.probo.ProcessingActivities.Get(ctx, scope, dpia.ProcessingActivityID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get processing activity", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get processing activity", err)
 	}
 
 	return types.NewProcessingActivity(processingActivity), nil
@@ -51,8 +48,7 @@ func (r *dataProtectionImpactAssessmentResolver) Organization(ctx context.Contex
 
 	dpia, err := r.probo.DataProtectionImpactAssessments.Get(ctx, scope, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get processing activity dpia", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get processing activity dpia", err)
 	}
 
 	organization, err := r.probo.Organizations.Get(ctx, scope, dpia.OrganizationID)
@@ -61,9 +57,7 @@ func (r *dataProtectionImpactAssessmentResolver) Organization(ctx context.Contex
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get organization", err)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -85,8 +79,7 @@ func (r *dataProtectionImpactAssessmentConnectionResolver) TotalCount(ctx contex
 	case *organizationResolver:
 		count, err := r.probo.DataProtectionImpactAssessments.CountForOrganizationID(ctx, scope, obj.ParentID)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count organization data protection impact assessments", log.Error(err))
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count organization data protection impact assessments", err)
 		}
 
 		return count, nil
@@ -123,9 +116,7 @@ func (r *mutationResolver) CreateDataProtectionImpactAssessment(ctx context.Cont
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot create data protection impact assessment", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot create data protection impact assessment", err)
 	}
 
 	return &types.CreateDataProtectionImpactAssessmentPayload{
@@ -155,9 +146,7 @@ func (r *mutationResolver) UpdateDataProtectionImpactAssessment(ctx context.Cont
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot update data protection impact assessment", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot update data protection impact assessment", err)
 	}
 
 	return &types.UpdateDataProtectionImpactAssessmentPayload{
@@ -173,8 +162,7 @@ func (r *mutationResolver) DeleteDataProtectionImpactAssessment(ctx context.Cont
 	}
 
 	if err := r.probo.DataProtectionImpactAssessments.Delete(ctx, scope, input.DataProtectionImpactAssessmentID); err != nil {
-		r.logger.ErrorCtx(ctx, "cannot delete data protection impact assessment", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot delete data protection impact assessment", err)
 	}
 
 	return &types.DeleteDataProtectionImpactAssessmentPayload{
@@ -208,9 +196,7 @@ func (r *mutationResolver) CreateTransferImpactAssessment(ctx context.Context, i
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot create transfer impact assessment", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot create transfer impact assessment", err)
 	}
 
 	return &types.CreateTransferImpactAssessmentPayload{
@@ -240,9 +226,7 @@ func (r *mutationResolver) UpdateTransferImpactAssessment(ctx context.Context, i
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot update transfer impact assessment", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot update transfer impact assessment", err)
 	}
 
 	return &types.UpdateTransferImpactAssessmentPayload{
@@ -258,8 +242,7 @@ func (r *mutationResolver) DeleteTransferImpactAssessment(ctx context.Context, i
 	}
 
 	if err := r.probo.TransferImpactAssessments.Delete(ctx, scope, input.TransferImpactAssessmentID); err != nil {
-		r.logger.ErrorCtx(ctx, "cannot delete transfer impact assessment", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot delete transfer impact assessment", err)
 	}
 
 	return &types.DeleteTransferImpactAssessmentPayload{
@@ -286,9 +269,7 @@ func (r *mutationResolver) PublishDataProtectionImpactAssessmentList(ctx context
 			return nil, gqlx.Conflict(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot publish data protection impact assessment list", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot publish data protection impact assessment list", err)
 	}
 
 	return &types.PublishDataProtectionImpactAssessmentListPayload{
@@ -316,9 +297,7 @@ func (r *mutationResolver) PublishTransferImpactAssessmentList(ctx context.Conte
 			return nil, gqlx.Conflict(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot publish transfer impact assessment list", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot publish transfer impact assessment list", err)
 	}
 
 	return &types.PublishTransferImpactAssessmentListPayload{
@@ -336,8 +315,7 @@ func (r *transferImpactAssessmentResolver) ProcessingActivity(ctx context.Contex
 
 	processingActivity, err := r.probo.ProcessingActivities.Get(ctx, scope, obj.ProcessingActivity.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get processing activity", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get processing activity", err)
 	}
 
 	return types.NewProcessingActivity(processingActivity), nil
@@ -357,9 +335,7 @@ func (r *transferImpactAssessmentResolver) Organization(ctx context.Context, obj
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get organization", err)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -381,8 +357,7 @@ func (r *transferImpactAssessmentConnectionResolver) TotalCount(ctx context.Cont
 	case *organizationResolver:
 		count, err := r.probo.TransferImpactAssessments.CountForOrganizationID(ctx, scope, obj.ParentID)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count organization transfer impact assessments", log.Error(err))
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count organization transfer impact assessments", err)
 		}
 
 		return count, nil

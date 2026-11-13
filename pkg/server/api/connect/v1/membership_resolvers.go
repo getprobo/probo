@@ -9,7 +9,6 @@ import (
 	"context"
 	"errors"
 
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/authz"
@@ -35,9 +34,7 @@ func (r *membershipResolver) LastSession(ctx context.Context, obj *types.Members
 			return nil, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get active session for membership", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get active session for membership", err)
 	}
 
 	return types.NewSession(childSession), nil
@@ -72,9 +69,7 @@ func (r *mutationResolver) UpdateMembership(ctx context.Context, input types.Upd
 			return nil, gqlx.Conflictf(ctx, "cannot demote last active owner")
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot update membership", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot update membership", err)
 	}
 
 	return &types.UpdateMembershipPayload{

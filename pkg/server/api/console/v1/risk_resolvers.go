@@ -10,7 +10,6 @@ import (
 	"errors"
 
 	"github.com/vikstrous/dataloadgen"
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/page"
@@ -49,9 +48,7 @@ func (r *mutationResolver) CreateRisk(ctx context.Context, input types.CreateRis
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot create risk", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot create risk", err)
 	}
 
 	return &types.CreateRiskPayload{
@@ -81,9 +78,7 @@ func (r *mutationResolver) UpdateRisk(ctx context.Context, input types.UpdateRis
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot update risk", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot update risk", err)
 	}
 
 	return &types.UpdateRiskPayload{
@@ -103,9 +98,7 @@ func (r *mutationResolver) DeleteRisk(ctx context.Context, input types.DeleteRis
 			return nil, gqlx.Conflict(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot delete risk", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot delete risk", err)
 	}
 
 	return &types.DeleteRiskPayload{
@@ -122,8 +115,7 @@ func (r *mutationResolver) CreateRiskInternalControlMapping(ctx context.Context,
 
 	risk, internalControl, err := r.probo.Risks.CreateInternalControlMapping(ctx, scope, input.RiskID, input.InternalControlID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot create risk internal control mapping", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot create risk internal control mapping", err)
 	}
 
 	return &types.CreateRiskInternalControlMappingPayload{
@@ -141,8 +133,7 @@ func (r *mutationResolver) DeleteRiskInternalControlMapping(ctx context.Context,
 
 	risk, internalControl, err := r.probo.Risks.DeleteInternalControlMapping(ctx, scope, input.RiskID, input.InternalControlID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot delete risk internal control mapping", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot delete risk internal control mapping", err)
 	}
 
 	return &types.DeleteRiskInternalControlMappingPayload{
@@ -160,8 +151,7 @@ func (r *mutationResolver) CreateRiskDocumentMapping(ctx context.Context, input 
 
 	risk, document, err := r.probo.Risks.CreateDocumentMapping(ctx, scope, input.RiskID, input.DocumentID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot create risk document mapping", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot create risk document mapping", err)
 	}
 
 	return &types.CreateRiskDocumentMappingPayload{
@@ -179,8 +169,7 @@ func (r *mutationResolver) DeleteRiskDocumentMapping(ctx context.Context, input 
 
 	risk, document, err := r.probo.Risks.DeleteDocumentMapping(ctx, scope, input.RiskID, input.DocumentID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot delete risk document mapping", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot delete risk document mapping", err)
 	}
 
 	return &types.DeleteRiskDocumentMappingPayload{
@@ -198,8 +187,7 @@ func (r *mutationResolver) CreateRiskObligationMapping(ctx context.Context, inpu
 
 	risk, obligation, err := r.probo.Risks.CreateObligationMapping(ctx, scope, input.RiskID, input.ObligationID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot create risk obligation mapping", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot create risk obligation mapping", err)
 	}
 
 	return &types.CreateRiskObligationMappingPayload{
@@ -217,8 +205,7 @@ func (r *mutationResolver) DeleteRiskObligationMapping(ctx context.Context, inpu
 
 	risk, obligation, err := r.probo.Risks.DeleteObligationMapping(ctx, scope, input.RiskID, input.ObligationID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot delete risk obligation mapping", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot delete risk obligation mapping", err)
 	}
 
 	return &types.DeleteRiskObligationMappingPayload{
@@ -246,9 +233,7 @@ func (r *mutationResolver) PublishRiskList(ctx context.Context, input types.Publ
 			return nil, gqlx.Conflict(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot publish risk list", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot publish risk list", err)
 	}
 
 	return &types.PublishRiskListPayload{
@@ -275,9 +260,7 @@ func (r *riskResolver) Owner(ctx context.Context, obj *types.Risk) (*types.Profi
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get owner", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get owner", err)
 	}
 
 	return types.NewProfile(owner), nil
@@ -297,9 +280,7 @@ func (r *riskResolver) Organization(ctx context.Context, obj *types.Risk) (*type
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get organization", err)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -341,8 +322,7 @@ func (r *riskResolver) InternalControls(ctx context.Context, obj *types.Risk, fi
 
 	page, err := r.probo.InternalControls.ListForRiskID(ctx, scope, obj.ID, cursor, internalControlFilter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list risk internal controls", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list risk internal controls", err)
 	}
 
 	return types.NewInternalControlConnection(page, r, obj.ID, internalControlFilter), nil
@@ -379,8 +359,7 @@ func (r *riskResolver) Documents(ctx context.Context, obj *types.Risk, first *in
 
 	page, err := r.probo.Documents.ListForRiskID(ctx, scope, obj.ID, cursor, documentFilter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list risk documents", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list risk documents", err)
 	}
 
 	return types.NewDocumentConnection(page, r, obj.ID, documentFilter), nil
@@ -414,8 +393,7 @@ func (r *riskResolver) Controls(ctx context.Context, obj *types.Risk, first *int
 
 	page, err := r.probo.Controls.ListForRiskID(ctx, scope, obj.ID, cursor, filters)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list risk controls", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list risk controls", err)
 	}
 
 	return types.NewControlConnection(page, r, obj.ID, filters), nil
@@ -444,8 +422,7 @@ func (r *riskResolver) Obligations(ctx context.Context, obj *types.Risk, first *
 
 	page, err := r.probo.Obligations.ListForRiskID(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list risk obligations", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list risk obligations", err)
 	}
 
 	return types.NewObligationConnection(page, r, obj.ID), nil
@@ -471,8 +448,7 @@ func (r *riskResolver) Scenarios(ctx context.Context, obj *types.Risk, first *in
 
 	p, err := r.riskManagement.ListScenariosForRiskID(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list risk scenarios", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list risk scenarios", err)
 	}
 
 	return types.NewRiskAnalysisScenarioConnection(p, r, obj.ID), nil
@@ -510,9 +486,7 @@ func (r *riskResolver) TreatmentPlans(ctx context.Context, obj *types.Risk, firs
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot list treatment plans", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list treatment plans", err)
 	}
 
 	return types.NewTreatmentPlanConnection(p, r, obj.ID, planFilter), nil
@@ -527,8 +501,7 @@ func (r *riskResolver) RiskAnalysisHistoryCount(ctx context.Context, obj *types.
 
 	count, err := r.probo.Risks.CountRiskAnalysisHistory(ctx, scope, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot count risk analysis history", log.Error(err))
-		return 0, gqlx.Internal(ctx)
+		return 0, gqlx.Report(ctx, r.logger, "cannot count risk analysis history", err)
 	}
 
 	return count, nil
@@ -550,32 +523,28 @@ func (r *riskConnectionResolver) TotalCount(ctx context.Context, obj *types.Risk
 	case *internalControlResolver:
 		count, err := r.probo.Risks.CountForInternalControlID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count risks", log.Error(err))
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count risks", err)
 		}
 
 		return count, nil
 	case *organizationResolver:
 		count, err := r.probo.Risks.CountForOrganizationID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count risks", log.Error(err))
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count risks", err)
 		}
 
 		return count, nil
 	case *riskAnalysisScenarioResolver:
 		count, err := r.riskManagement.CountRisksForScenarioID(ctx, scope, obj.ParentID)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count scenario risks", log.Error(err))
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count scenario risks", err)
 		}
 
 		return count, nil
 	case *riskAnalysisResolver:
 		count, err := r.riskManagement.CountRisksForRiskAnalysisID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count scenario risks on analysis", log.Error(err))
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count scenario risks on analysis", err)
 		}
 
 		return count, nil

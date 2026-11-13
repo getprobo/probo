@@ -25,7 +25,6 @@ import (
 	"errors"
 
 	"github.com/vikstrous/dataloadgen"
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
@@ -47,9 +46,7 @@ func (r *compliancePortalDocumentAccessResolver) authorizedDocumentAccess(
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot load compliance portal document access", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load compliance portal document access", err)
 	}
 
 	return access, nil
@@ -74,9 +71,7 @@ func (r *compliancePortalDocumentAccessResolver) auditLink(
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot load compliance portal audit", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load compliance portal audit", err)
 	}
 
 	return link, nil

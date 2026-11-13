@@ -41,9 +41,7 @@ func (r *mutationResolver) CreateSCIMConfiguration(ctx context.Context, input ty
 			return nil, gqlx.Invalid(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot create scim configuration", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot create scim configuration", err)
 	}
 
 	var bridge *types.SCIMBridge
@@ -68,8 +66,7 @@ func (r *mutationResolver) DeleteSCIMConfiguration(ctx context.Context, input ty
 
 	err := r.iam.OrganizationService.DeleteSCIMConfiguration(ctx, input.OrganizationID, input.ScimConfigurationID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot delete scim configuration", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot delete scim configuration", err)
 	}
 
 	return &types.DeleteSCIMConfigurationPayload{DeletedScimConfigurationID: input.ScimConfigurationID}, nil
@@ -83,8 +80,7 @@ func (r *mutationResolver) RegenerateSCIMToken(ctx context.Context, input types.
 
 	config, token, err := r.iam.OrganizationService.RegenerateSCIMToken(ctx, input.OrganizationID, input.ScimConfigurationID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot regenerate scim token", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot regenerate scim token", err)
 	}
 
 	return &types.RegenerateSCIMTokenPayload{
@@ -101,8 +97,7 @@ func (r *mutationResolver) UpdateSCIMBridge(ctx context.Context, input types.Upd
 
 	bridge, err := r.iam.OrganizationService.UpdateSCIMBridge(ctx, input.OrganizationID, input.ScimBridgeID, input.ExcludedUserNames)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot update scim bridge excluded user names", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot update scim bridge excluded user names", err)
 	}
 
 	return &types.UpdateSCIMBridgePayload{
@@ -122,9 +117,7 @@ func (r *mutationResolver) ReactivateSCIMBridge(ctx context.Context, input types
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot reactivate scim bridge", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot reactivate scim bridge", err)
 	}
 
 	return &types.ReactivateSCIMBridgePayload{
@@ -158,9 +151,7 @@ func (r *mutationResolver) RequestSCIMEventExport(ctx context.Context, input typ
 			return nil, gqlx.Invalid(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot request SCIM event export", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot request SCIM event export", err)
 	}
 
 	return &types.RequestSCIMEventExportPayload{
@@ -212,8 +203,7 @@ func (r *sCIMBridgeResolver) Connector(ctx context.Context, obj *types.SCIMBridg
 	// Use metadata-only loading since we don't need the encrypted connection data
 	connector, err := r.iam.OrganizationService.GetConnectorMetadataByID(ctx, obj.Connector.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get connector", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get connector", err)
 	}
 
 	return types.NewConnector(connector), nil
@@ -247,9 +237,7 @@ func (r *sCIMConfigurationResolver) Organization(ctx context.Context, obj *types
 			return nil, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get organization for scim configuration", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get organization for scim configuration", err)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -271,9 +259,7 @@ func (r *sCIMConfigurationResolver) Bridge(ctx context.Context, obj *types.SCIMC
 			return nil, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get scim bridge", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get scim bridge", err)
 	}
 
 	return types.NewSCIMBridge(bridge), nil
@@ -298,8 +284,7 @@ func (r *sCIMConfigurationResolver) Events(ctx context.Context, obj *types.SCIMC
 
 	events, err := r.iam.OrganizationService.ListSCIMEventsByConfigID(ctx, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list scim events", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list scim events", err)
 	}
 
 	return types.NewSCIMEventConnection(events, r, obj.ID), nil
@@ -325,8 +310,7 @@ func (r *sCIMEventConnectionResolver) TotalCount(ctx context.Context, obj *types
 	case *sCIMConfigurationResolver:
 		count, err := r.iam.OrganizationService.CountSCIMEvents(ctx, obj.ParentID)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count scim events", log.Error(err))
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, r.logger, "cannot count scim events", err)
 		}
 
 		return &count, nil

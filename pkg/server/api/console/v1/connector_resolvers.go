@@ -131,9 +131,7 @@ func (r *connectorResolver) InitialAccountExternalID(ctx context.Context, obj *t
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot resolve initial connector account", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot resolve initial connector account", err)
 	}
 
 	if externalID == "" {
@@ -169,9 +167,7 @@ func (r *connectorResolver) Accounts(ctx context.Context, obj *types.Connector, 
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot list connector accounts", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list connector accounts", err)
 	}
 
 	return types.NewConnectorAccountConnection(p, r, obj.ID), nil
@@ -190,9 +186,7 @@ func (r *connectorResolver) DistinctAccountCount(ctx context.Context, obj *types
 			return 0, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot count distinct connector accounts", log.Error(err))
-
-		return 0, gqlx.Internal(ctx)
+		return 0, gqlx.Report(ctx, r.logger, "cannot count distinct connector accounts", err)
 	}
 
 	return count, nil
@@ -206,9 +200,7 @@ func (r *connectorResolver) UsedByScimBridge(ctx context.Context, obj *types.Con
 
 	used, err := dataloader.FromContext(ctx).ConnectorUsedBySCIMBridge.Load(ctx, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot check SCIM bridge for connector", log.Error(err))
-
-		return false, gqlx.Internal(ctx)
+		return false, gqlx.Report(ctx, r.logger, "cannot check SCIM bridge for connector", err)
 	}
 
 	return used, nil
@@ -364,9 +356,7 @@ func (r *connectorResolver) SelectedOrganization(ctx context.Context, obj *types
 			return nil, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot read selected organization", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot read selected organization", err)
 	}
 
 	if slug == "" {
@@ -394,9 +384,7 @@ func (r *connectorAccountResolver) Connector(ctx context.Context, obj *types.Con
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot load connector for account", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load connector for account", err)
 	}
 
 	return types.NewConnector(cnnctr), nil
@@ -430,9 +418,7 @@ func (r *connectorAccountConnectionResolver) TotalCount(ctx context.Context, obj
 
 	count, err := r.probo.Connectors.CountAccounts(ctx, scope, obj.ParentID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot count connector accounts", log.Error(err))
-
-		return 0, gqlx.Internal(ctx)
+		return 0, gqlx.Report(ctx, r.logger, "cannot count connector accounts", err)
 	}
 
 	return count, nil
@@ -684,9 +670,7 @@ func (r *mutationResolver) EnableConnectorAccounts(ctx context.Context, input ty
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot enable connector accounts", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot enable connector accounts", err)
 	}
 
 	accounts := make([]*types.ConnectorAccount, len(enabled))
@@ -719,9 +703,7 @@ func (r *mutationResolver) DisableConnectorAccount(ctx context.Context, input ty
 			return nil, gqlx.Conflictf(ctx, "connector account is the initial account")
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot disable connector account", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot disable connector account", err)
 	}
 
 	return &types.DisableConnectorAccountPayload{
@@ -741,9 +723,7 @@ func (r *mutationResolver) DeleteConnector(ctx context.Context, input types.Dele
 			return nil, gqlx.Conflict(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot delete connector", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot delete connector", err)
 	}
 
 	return &types.DeleteConnectorPayload{
@@ -855,16 +835,12 @@ func (r *mutationResolver) ConfigureConnectorOrganization(ctx context.Context, i
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot set connector organization", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot set connector organization", err)
 	}
 
 	cnnctr, err := r.probo.Connectors.Get(ctx, scope, input.ConnectorID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get connector", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get connector", err)
 	}
 
 	return &types.ConfigureConnectorOrganizationPayload{
@@ -880,8 +856,7 @@ func (r *mutationResolver) DeleteSlackConnection(ctx context.Context, input type
 	}
 
 	if err := r.probo.Connectors.Delete(ctx, scope, input.SlackConnectionID); err != nil {
-		r.logger.ErrorCtx(ctx, "cannot delete slack connection", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot delete slack connection", err)
 	}
 
 	return &types.DeleteSlackConnectionPayload{

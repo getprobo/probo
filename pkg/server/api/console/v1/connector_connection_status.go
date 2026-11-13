@@ -95,9 +95,7 @@ func (r *Resolver) connectorConnectionStatus(
 			return "", err
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot determine connector reconnect requirement", log.Error(err))
-
-		return "", gqlx.Internal(ctx)
+		return "", gqlx.Report(ctx, r.logger, "cannot determine connector reconnect requirement", err)
 	}
 
 	if needsReconnect {

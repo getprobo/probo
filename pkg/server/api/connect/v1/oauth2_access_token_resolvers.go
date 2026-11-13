@@ -47,9 +47,7 @@ func (r *mutationResolver) CreateOAuth2AccessToken(ctx context.Context, input ty
 			return nil, gqlx.Invalid(ctx, oauth2Err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot create oauth2 access token", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot create oauth2 access token", err)
 	}
 
 	return &types.CreateOAuth2AccessTokenPayload{
@@ -68,9 +66,7 @@ func (r *mutationResolver) RevokeOAuth2AccessToken(ctx context.Context, input ty
 	}
 
 	if err := r.iam.OAuth2ServerService.RevokeAccessToken(ctx, input.Oauth2AccessTokenID); err != nil {
-		r.logger.ErrorCtx(ctx, "cannot revoke oauth2 access token", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot revoke oauth2 access token", err)
 	}
 
 	return &types.RevokeOAuth2AccessTokenPayload{
@@ -93,9 +89,7 @@ func (r *oAuth2AccessTokenConnectionResolver) TotalCount(ctx context.Context, ob
 
 		count, err := r.iam.OAuth2ServerService.CountAccessTokensByIdentityID(ctx, obj.ParentID)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count oauth2 access tokens", log.Error(err))
-
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, r.logger, "cannot count oauth2 access tokens", err)
 		}
 
 		return &count, nil

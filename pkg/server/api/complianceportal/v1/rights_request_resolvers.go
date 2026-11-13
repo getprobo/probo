@@ -9,7 +9,6 @@ import (
 	"context"
 	"errors"
 
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/server/api/authn"
@@ -46,9 +45,7 @@ func (r *mutationResolver) CreateRightsRequest(ctx context.Context, input types.
 			return nil, gqlx.NotFoundf(ctx, "rights requests are not available on this compliance portal")
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot create rights request", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot create rights request", err)
 	}
 
 	return &types.CreateRightsRequestPayload{

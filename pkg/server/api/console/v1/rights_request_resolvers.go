@@ -9,7 +9,6 @@ import (
 	"context"
 	"errors"
 
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
@@ -43,9 +42,7 @@ func (r *mutationResolver) CreateRightsRequest(ctx context.Context, input types.
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot create rights request", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot create rights request", err)
 	}
 
 	return &types.CreateRightsRequestPayload{
@@ -77,9 +74,7 @@ func (r *mutationResolver) UpdateRightsRequest(ctx context.Context, input types.
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot update rights request", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot update rights request", err)
 	}
 
 	return &types.UpdateRightsRequestPayload{
@@ -95,8 +90,7 @@ func (r *mutationResolver) DeleteRightsRequest(ctx context.Context, input types.
 	}
 
 	if err := r.probo.RightsRequests.Delete(ctx, scope, input.RightsRequestID); err != nil {
-		r.logger.ErrorCtx(ctx, "cannot delete rights request", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot delete rights request", err)
 	}
 
 	return &types.DeleteRightsRequestPayload{
@@ -113,8 +107,7 @@ func (r *rightsRequestResolver) Organization(ctx context.Context, obj *types.Rig
 
 	rightsRequest, err := r.probo.RightsRequests.Get(ctx, scope, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get rights request", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get rights request", err)
 	}
 
 	organization, err := r.probo.Organizations.Get(ctx, scope, rightsRequest.OrganizationID)
@@ -123,9 +116,7 @@ func (r *rightsRequestResolver) Organization(ctx context.Context, obj *types.Rig
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get organization", err)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -147,8 +138,7 @@ func (r *rightsRequestConnectionResolver) TotalCount(ctx context.Context, obj *t
 	case *organizationResolver:
 		count, err := r.probo.RightsRequests.CountByOrganizationID(ctx, scope, obj.ParentID)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count rights requests", log.Error(err))
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count rights requests", err)
 		}
 
 		return count, nil

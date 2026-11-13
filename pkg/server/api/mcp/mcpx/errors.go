@@ -28,6 +28,7 @@ import (
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -65,6 +66,10 @@ func MapError(ctx context.Context, logger *log.Logger, message string, err error
 		return ErrResourceAlreadyExists
 	case errors.Is(err, coredata.ErrResourceInUse):
 		return ErrResourceInUse
+	}
+
+	if errors.Is(err, page.ErrInvalidCursorValue) {
+		return errors.New("invalid cursor")
 	}
 
 	if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {

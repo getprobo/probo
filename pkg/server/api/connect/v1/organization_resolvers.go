@@ -9,7 +9,6 @@ import (
 	"context"
 	"errors"
 
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	employeeportalmgmt "go.probo.inc/probo/pkg/employeeportal/management"
 	"go.probo.inc/probo/pkg/iam"
@@ -41,9 +40,7 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 	if !r.iam.IsSignUpEnabled() {
 		hasMembership, err := r.iam.IdentityHasMembership(ctx, identity.ID, nil)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot check identity membership", log.Error(err))
-
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, r.logger, "cannot check identity membership", err)
 		}
 
 		if !hasMembership {
@@ -59,9 +56,7 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 			new(coredata.MembershipRoleOwner),
 		)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot check identity owner membership", log.Error(err))
-
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, r.logger, "cannot check identity owner membership", err)
 		}
 
 		if !hasOwnerMembership {
@@ -114,9 +109,7 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot create organization", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot create organization", err)
 	}
 
 	return &types.CreateOrganizationPayload{
@@ -164,9 +157,7 @@ func (r *mutationResolver) UpdateOrganization(ctx context.Context, input types.U
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot update organization", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot update organization", err)
 	}
 
 	return &types.UpdateOrganizationPayload{
@@ -182,8 +173,7 @@ func (r *mutationResolver) DeleteOrganization(ctx context.Context, input types.D
 
 	err := r.iam.OrganizationService.DeleteOrganization(ctx, input.OrganizationID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot delete organization", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot delete organization", err)
 	}
 
 	return &types.DeleteOrganizationPayload{DeletedOrganizationID: input.OrganizationID}, nil
@@ -197,8 +187,7 @@ func (r *mutationResolver) DeleteOrganizationHorizontalLogo(ctx context.Context,
 
 	organization, err := r.iam.OrganizationService.DeleteHorizontalLogo(ctx, input.OrganizationID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot delete organization horizontal logo", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot delete organization horizontal logo", err)
 	}
 
 	return &types.DeleteOrganizationHorizontalLogoPayload{
@@ -210,8 +199,7 @@ func (r *mutationResolver) DeleteOrganizationHorizontalLogo(ctx context.Context,
 func (r *organizationResolver) Logo(ctx context.Context, obj *types.Organization) (*types.File, error) {
 	file, err := r.iam.OrganizationService.LogoFile(ctx, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load logo file", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load logo file", err)
 	}
 
 	if file == nil {
@@ -225,8 +213,7 @@ func (r *organizationResolver) Logo(ctx context.Context, obj *types.Organization
 func (r *organizationResolver) HorizontalLogo(ctx context.Context, obj *types.Organization) (*types.File, error) {
 	file, err := r.iam.OrganizationService.HorizontalLogoFile(ctx, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load horizontal logo file", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load horizontal logo file", err)
 	}
 
 	if file == nil {
@@ -286,8 +273,7 @@ func (r *organizationResolver) Profiles(ctx context.Context, obj *types.Organiza
 
 	page, err := r.iam.OrganizationService.ListProfiles(ctx, obj.ID, cursor, filters)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list profiles", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list profiles", err)
 	}
 
 	return types.NewProfileConnection(page, r, obj.ID, filters), nil
@@ -315,8 +301,7 @@ func (r *organizationResolver) SamlConfigurations(ctx context.Context, obj *type
 
 	page, err := r.iam.OrganizationService.ListSAMLConfigurations(ctx, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list saml configurations", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list saml configurations", err)
 	}
 
 	return types.NewSAMLConfigurationConnection(page, r, obj.ID), nil
@@ -334,9 +319,7 @@ func (r *organizationResolver) ScimConfiguration(ctx context.Context, obj *types
 			return nil, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get scim configuration", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get scim configuration", err)
 	}
 
 	return types.NewSCIMConfiguration(config), nil
@@ -397,8 +380,7 @@ func (r *organizationResolver) AuditLogEntries(ctx context.Context, obj *types.O
 
 	p, err := r.iam.OrganizationService.ListAuditLogEntries(ctx, obj.ID, c, coredataFilter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list audit log entries", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list audit log entries", err)
 	}
 
 	return types.NewAuditLogEntryConnection(p, r, obj.ID, coredataFilter), nil
@@ -418,9 +400,7 @@ func (r *organizationResolver) Viewer(ctx context.Context, obj *types.Organizati
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get profile", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get profile", err)
 	}
 
 	return types.NewProfile(profile), nil
@@ -458,8 +438,7 @@ func (r *organizationResolver) EmployeePortals(ctx context.Context, obj *types.O
 
 	p, err := r.employeePortal.ListForOrganizationID(ctx, scope, obj.ID, c)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list employee portals", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list employee portals", err)
 	}
 
 	return types.NewEmployeePortalConnection(p, obj.ID), nil

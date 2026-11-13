@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/vikstrous/dataloadgen"
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/page"
@@ -56,9 +55,7 @@ func (r *mutationResolver) CreateTreatmentPlan(ctx context.Context, input types.
 				return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 			}
 
-			r.logger.ErrorCtx(ctx, "cannot create treatment plan", log.Error(err))
-
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, r.logger, "cannot create treatment plan", err)
 		}
 	}
 
@@ -96,9 +93,7 @@ func (r *mutationResolver) UpdateTreatmentPlan(ctx context.Context, input types.
 				return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 			}
 
-			r.logger.ErrorCtx(ctx, "cannot update treatment plan", log.Error(err))
-
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, r.logger, "cannot update treatment plan", err)
 		}
 	}
 
@@ -117,9 +112,7 @@ func (r *mutationResolver) DeleteTreatmentPlan(ctx context.Context, input types.
 		case errors.Is(err, coredata.ErrResourceNotFound):
 			return nil, gqlx.NotFound(ctx, err)
 		default:
-			r.logger.ErrorCtx(ctx, "cannot delete treatment plan", log.Error(err))
-
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, r.logger, "cannot delete treatment plan", err)
 		}
 	}
 
@@ -145,9 +138,7 @@ func (r *mutationResolver) CreateTreatmentPlanInternalControlMapping(ctx context
 				return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 			}
 
-			r.logger.ErrorCtx(ctx, "cannot create treatment plan internal control mapping", log.Error(err))
-
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, r.logger, "cannot create treatment plan internal control mapping", err)
 		}
 	}
 
@@ -170,8 +161,7 @@ func (r *mutationResolver) DeleteTreatmentPlanInternalControlMapping(ctx context
 		case errors.Is(err, coredata.ErrResourceNotFound):
 			return nil, gqlx.NotFound(ctx, err)
 		default:
-			r.logger.ErrorCtx(ctx, "cannot delete treatment plan internal control mapping", log.Error(err))
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, r.logger, "cannot delete treatment plan internal control mapping", err)
 		}
 	}
 
@@ -222,9 +212,7 @@ func (r *treatmentPlanResolver) Progress(ctx context.Context, obj *types.Treatme
 
 	progress, err := loaders.TreatmentProgress.Load(ctx, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get treatment plan progress", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get treatment plan progress", err)
 	}
 
 	return &progress, nil
@@ -250,9 +238,7 @@ func (r *treatmentPlanResolver) Owner(ctx context.Context, obj *types.TreatmentP
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get owner", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get owner", err)
 	}
 
 	return types.NewProfile(owner), nil
@@ -279,9 +265,7 @@ func (r *treatmentPlanResolver) Risk(ctx context.Context, obj *types.TreatmentPl
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get risk", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get risk", err)
 	}
 
 	return types.NewRisk(risk), nil
@@ -305,9 +289,7 @@ func (r *treatmentPlanResolver) RiskAnalysis(ctx context.Context, obj *types.Tre
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get risk analysis", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get risk analysis", err)
 	}
 
 	return types.NewRiskAnalysis(analysis), nil
@@ -331,9 +313,7 @@ func (r *treatmentPlanResolver) Organization(ctx context.Context, obj *types.Tre
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get organization", err)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -404,9 +384,7 @@ func (r *treatmentPlanResolver) InternalControls(ctx context.Context, obj *types
 				return nil, gqlx.NotFound(ctx, err)
 			}
 
-			r.logger.ErrorCtx(ctx, "cannot list treatment plan internal controls as of", log.Error(err))
-
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, r.logger, "cannot list treatment plan internal controls as of", err)
 		}
 
 		connection := types.NewInternalControlConnectionAsOf(page, r, obj.ID, internalControlFilter, *asOf, total)
@@ -416,8 +394,7 @@ func (r *treatmentPlanResolver) InternalControls(ctx context.Context, obj *types
 
 	page, err := r.probo.InternalControls.ListForTreatmentPlanID(ctx, scope, obj.ID, cursor, internalControlFilter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list treatment plan internal controls", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list treatment plan internal controls", err)
 	}
 
 	return types.NewInternalControlConnection(page, r, obj.ID, internalControlFilter), nil
@@ -451,9 +428,7 @@ func (r *treatmentPlanConnectionResolver) TotalCount(ctx context.Context, obj *t
 				return 0, gqlx.InvalidValidationErrors(ctx, validationErrors)
 			}
 
-			r.logger.ErrorCtx(ctx, "cannot count treatment plans", log.Error(err))
-
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count treatment plans", err)
 		}
 
 		return count, nil
@@ -464,9 +439,7 @@ func (r *treatmentPlanConnectionResolver) TotalCount(ctx context.Context, obj *t
 				return 0, gqlx.InvalidValidationErrors(ctx, validationErrors)
 			}
 
-			r.logger.ErrorCtx(ctx, "cannot count treatment plans", log.Error(err))
-
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count treatment plans", err)
 		}
 
 		return count, nil
@@ -477,9 +450,7 @@ func (r *treatmentPlanConnectionResolver) TotalCount(ctx context.Context, obj *t
 				return 0, gqlx.InvalidValidationErrors(ctx, validationErrors)
 			}
 
-			r.logger.ErrorCtx(ctx, "cannot count treatment plans", log.Error(err))
-
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count treatment plans", err)
 		}
 
 		return count, nil
@@ -490,9 +461,7 @@ func (r *treatmentPlanConnectionResolver) TotalCount(ctx context.Context, obj *t
 				return 0, gqlx.InvalidValidationErrors(ctx, validationErrors)
 			}
 
-			r.logger.ErrorCtx(ctx, "cannot count treatment plans", log.Error(err))
-
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count treatment plans", err)
 		}
 
 		return count, nil

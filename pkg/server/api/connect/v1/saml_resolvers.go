@@ -49,9 +49,7 @@ func (r *mutationResolver) CreateSAMLConfiguration(ctx context.Context, input ty
 			return nil, gqlx.Conflict(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot create saml configuration", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot create saml configuration", err)
 	}
 
 	return &types.CreateSAMLConfigurationPayload{
@@ -90,8 +88,7 @@ func (r *mutationResolver) UpdateSAMLConfiguration(ctx context.Context, input ty
 		req,
 	)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot update saml configuration", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot update saml configuration", err)
 	}
 
 	return &types.UpdateSAMLConfigurationPayload{
@@ -107,8 +104,7 @@ func (r *mutationResolver) DeleteSAMLConfiguration(ctx context.Context, input ty
 
 	err := r.iam.OrganizationService.DeleteSAMLConfiguration(ctx, input.OrganizationID, input.SamlConfigurationID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot delete saml configuration", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot delete saml configuration", err)
 	}
 
 	return &types.DeleteSAMLConfigurationPayload{DeletedSamlConfigurationID: input.SamlConfigurationID}, nil
@@ -130,8 +126,7 @@ func (r *sAMLConfigurationConnectionResolver) TotalCount(ctx context.Context, ob
 	case *organizationResolver:
 		count, err := r.iam.OrganizationService.CountSAMLConfigurations(ctx, obj.ParentID)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count saml configurations", log.Error(err))
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, r.logger, "cannot count saml configurations", err)
 		}
 
 		return &count, nil

@@ -9,7 +9,6 @@ import (
 	"context"
 	"errors"
 
-	"go.gearno.de/kit/log"
 	employeeportalmgmt "go.probo.inc/probo/pkg/employeeportal/management"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/server/api/authz"
@@ -35,9 +34,7 @@ func (r *employeePortalResolver) Organization(ctx context.Context, obj *types.Em
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get organization", err)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -57,9 +54,7 @@ func (r *employeePortalConnectionResolver) TotalCount(ctx context.Context, obj *
 
 	count, err := r.employeePortal.CountForOrganizationID(ctx, scope, obj.ParentID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot count employee portals", log.Error(err))
-
-		return 0, gqlx.Internal(ctx)
+		return 0, gqlx.Report(ctx, r.logger, "cannot count employee portals", err)
 	}
 
 	return count, nil

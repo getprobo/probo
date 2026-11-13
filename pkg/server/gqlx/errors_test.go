@@ -32,6 +32,7 @@ import (
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/server/gqlx"
 	"go.probo.inc/probo/pkg/validator"
 )
@@ -82,6 +83,22 @@ func TestMapError(t *testing.T) {
 		assert.Equal(t, "INVALID", list[0].Extensions["code"])
 		assert.Equal(t, "name", list[0].Extensions["field"])
 		assert.Equal(t, validator.ErrorCodeRequired, list[0].Extensions["cause"])
+	})
+
+	t.Run("invalid cursor", func(t *testing.T) {
+		t.Parallel()
+
+		err := gqlx.MapError(
+			ctx,
+			logger,
+			"cannot list audits",
+			fmt.Errorf("cannot collect audits: %w", page.ErrInvalidCursorValue),
+		)
+
+		gqlErr, ok := errors.AsType[*gqlerror.Error](err)
+		require.True(t, ok)
+		assert.Equal(t, "INVALID", gqlErr.Extensions["code"])
+		assert.Equal(t, "invalid cursor", gqlErr.Message)
 	})
 
 	t.Run("unknown error", func(t *testing.T) {

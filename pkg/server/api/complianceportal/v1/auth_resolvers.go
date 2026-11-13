@@ -9,7 +9,6 @@ import (
 	"context"
 	"errors"
 
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/complianceportal/v1/types"
@@ -35,9 +34,7 @@ func (r *mutationResolver) UpdateFullName(ctx context.Context, input types.Updat
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot update identity", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot update identity", err)
 	}
 
 	return &types.UpdateFullNamePayload{Success: true}, nil
@@ -62,9 +59,7 @@ func (r *mutationResolver) UpdateLocale(ctx context.Context, input types.UpdateL
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot update identity locale", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot update identity locale", err)
 	}
 
 	return &types.UpdateLocalePayload{
@@ -90,8 +85,7 @@ func (r *mutationResolver) SignOut(ctx context.Context) (*types.SignOutPayload, 
 
 		_, expired := errors.AsType[*iam.ErrSessionExpired](err)
 		if !notFound && !expired {
-			r.logger.ErrorCtx(ctx, "cannot close session", log.Error(err))
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, r.logger, "cannot close session", err)
 		}
 
 		// Already closed or missing — still clear the cookie so the browser

@@ -24,7 +24,6 @@ import (
 	"context"
 	"errors"
 
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/complianceportal"
@@ -68,8 +67,7 @@ func (r *Resolver) requireCompletedNDA(ctx context.Context) error {
 
 	membership, err := r.visitor.GetPortalMembership(ctx, compliancePage.ID, identity.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get compliance page membership", log.Error(err))
-		return gqlx.Internal(ctx)
+		return gqlx.Report(ctx, r.logger, "cannot get compliance page membership", err)
 	}
 
 	if membership.ElectronicSignatureID == nil {
@@ -80,8 +78,7 @@ func (r *Resolver) requireCompletedNDA(ctx context.Context) error {
 
 	sig, err := r.esign.GetSignatureByID(ctx, scope, *membership.ElectronicSignatureID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get NDA signature", log.Error(err))
-		return gqlx.Internal(ctx)
+		return gqlx.Report(ctx, r.logger, "cannot get NDA signature", err)
 	}
 
 	// Full name before NDA so export paths send users to /full-name first.

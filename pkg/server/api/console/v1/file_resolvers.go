@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
@@ -48,9 +47,7 @@ func (r *mutationResolver) UploadFile(ctx context.Context, input types.UploadFil
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot upload file", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot upload file", err)
 	}
 
 	return &types.UploadFilePayload{

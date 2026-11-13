@@ -56,9 +56,7 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input types.CreateUse
 			return nil, gqlx.Conflict(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot create user", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot create user", err)
 	}
 
 	return &types.CreateUserPayload{
@@ -83,9 +81,7 @@ func (r *mutationResolver) DeactivateUser(ctx context.Context, input types.Deact
 			return nil, gqlx.Conflictf(ctx, "cannot deactivate last active owner")
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot deactivate user", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot deactivate user", err)
 	}
 
 	return &types.DeactivateUserPayload{
@@ -116,8 +112,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input types.UpdateUse
 		},
 	)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot update profile", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot update profile", err)
 	}
 
 	return &types.UpdateUserPayload{
@@ -146,9 +141,7 @@ func (r *mutationResolver) RemoveUser(ctx context.Context, input types.RemoveUse
 			return nil, gqlx.Conflictf(ctx, "cannot remove person: referenced by other resources")
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot remove user from organization", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot remove user from organization", err)
 	}
 
 	return &types.RemoveUserPayload{DeletedProfileID: input.ProfileID}, nil
@@ -177,9 +170,7 @@ func (r *profileResolver) Avatar(ctx context.Context, obj *types.Profile) (*type
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot load profile identity", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load profile identity", err)
 	}
 
 	if identity.AvatarFileID == nil {
@@ -206,9 +197,7 @@ func (r *profileResolver) Identity(ctx context.Context, obj *types.Profile) (*ty
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get identity", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get identity", err)
 	}
 
 	return types.NewIdentity(identity), nil
@@ -226,9 +215,7 @@ func (r *profileResolver) Organization(ctx context.Context, obj *types.Profile) 
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get organization", err)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -246,9 +233,7 @@ func (r *profileResolver) Membership(ctx context.Context, obj *types.Profile) (*
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get membership", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get membership", err)
 	}
 
 	return types.NewMembership(membership), nil
@@ -269,8 +254,7 @@ func (r *profileResolver) PendingInvitations(ctx context.Context, obj *types.Pro
 
 	page, err := r.iam.AccountService.ListPendingInvitations(ctx, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list pending invitations", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list pending invitations", err)
 	}
 
 	return types.NewInvitationConnection(page, r, obj.ID, nil), nil
@@ -287,16 +271,14 @@ func (r *profileConnectionResolver) TotalCount(ctx context.Context, obj *types.P
 	case *identityResolver:
 		count, err := r.iam.AccountService.CountProfiles(ctx, obj.ParentID, obj.Filters)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count profiles", log.Error(err))
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, r.logger, "cannot count profiles", err)
 		}
 
 		return &count, nil
 	case *organizationResolver:
 		count, err := r.iam.OrganizationService.CountProfiles(ctx, obj.ParentID, obj.Filters)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count profiles", log.Error(err))
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, r.logger, "cannot count profiles", err)
 		}
 
 		return &count, nil

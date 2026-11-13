@@ -294,6 +294,16 @@ func MapError(ctx context.Context, logger *log.Logger, message string, err error
 		return InvalidValidationErrors(ctx, validationErrors)
 	}
 
+	return Report(ctx, logger, message, err)
+}
+
+// Report returns INVALID for a cursor the database would reject, and logs
+// every other error as INTERNAL.
+func Report(ctx context.Context, logger *log.Logger, message string, err error) error {
+	if errors.Is(err, page.ErrInvalidCursorValue) {
+		return Invalidf(ctx, "invalid cursor")
+	}
+
 	logger.ErrorCtx(ctx, message, log.Error(err))
 
 	return Internal(ctx)

@@ -11,7 +11,6 @@ import (
 	"errors"
 	"time"
 
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
@@ -57,8 +56,7 @@ func (r *internalControlResolver) Evidences(ctx context.Context, obj *types.Inte
 
 	page, err := r.probo.Evidences.ListForInternalControlID(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list internal control evidences", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list internal control evidences", err)
 	}
 
 	return types.NewEvidenceConnection(page, r, obj.ID), nil
@@ -101,8 +99,7 @@ func (r *internalControlResolver) Tasks(ctx context.Context, obj *types.Internal
 
 	page, err := r.task.ListForInternalControlID(ctx, scope, obj.ID, cursor, taskFilter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list internal control tasks", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list internal control tasks", err)
 	}
 
 	return types.NewTaskConnection(page, r, obj.ID, taskFilter), nil
@@ -136,8 +133,7 @@ func (r *internalControlResolver) Risks(ctx context.Context, obj *types.Internal
 
 	page, err := r.probo.Risks.ListForInternalControlID(ctx, scope, obj.ID, cursor, riskFilter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list internal control risks", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list internal control risks", err)
 	}
 
 	return types.NewRiskConnection(page, r, obj.ID, riskFilter), nil
@@ -171,8 +167,7 @@ func (r *internalControlResolver) Controls(ctx context.Context, obj *types.Inter
 
 	page, err := r.probo.Controls.ListForInternalControlID(ctx, scope, obj.ID, cursor, controlFilter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list internal control controls", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list internal control controls", err)
 	}
 
 	return types.NewControlConnection(page, r, obj.ID, controlFilter), nil
@@ -209,8 +204,7 @@ func (r *internalControlResolver) Documents(ctx context.Context, obj *types.Inte
 
 	pg, err := r.probo.Documents.ListForInternalControlID(ctx, scope, obj.ID, cursor, documentFilter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list documents", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list documents", err)
 	}
 
 	return types.NewDocumentConnection(pg, r, obj.ID, documentFilter), nil
@@ -238,8 +232,7 @@ func (r *internalControlResolver) ThirdParties(ctx context.Context, obj *types.I
 
 	page, err := r.probo.ThirdParties.ListForInternalControlID(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list internal control third parties", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list internal control third parties", err)
 	}
 
 	return types.NewThirdPartyConnection(page, r, obj.ID, nil), nil
@@ -289,9 +282,7 @@ func (r *internalControlResolver) TreatmentPlans(ctx context.Context, obj *types
 				return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 			}
 
-			r.logger.ErrorCtx(ctx, "cannot list internal control treatment plans as of", log.Error(err))
-
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, r.logger, "cannot list internal control treatment plans as of", err)
 		}
 
 		return types.NewTreatmentPlanConnectionAsOf(
@@ -311,9 +302,7 @@ func (r *internalControlResolver) TreatmentPlans(ctx context.Context, obj *types
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot list internal control treatment plans", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list internal control treatment plans", err)
 	}
 
 	return types.NewTreatmentPlanConnection(page, r, obj.ID, planFilter), nil
@@ -343,48 +332,42 @@ func (r *internalControlConnectionResolver) TotalCount(ctx context.Context, obj 
 	case *organizationResolver:
 		count, err := r.probo.InternalControls.CountForOrganizationID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count internal controls", log.Error(err))
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count internal controls", err)
 		}
 
 		return count, nil
 	case *controlResolver:
 		count, err := r.probo.InternalControls.CountForControlID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count internal controls", log.Error(err))
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count internal controls", err)
 		}
 
 		return count, nil
 	case *riskResolver:
 		count, err := r.probo.InternalControls.CountForRiskID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count internal controls", log.Error(err))
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count internal controls", err)
 		}
 
 		return count, nil
 	case *thirdPartyResolver:
 		count, err := r.probo.InternalControls.CountForThirdPartyID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count internal controls", log.Error(err))
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count internal controls", err)
 		}
 
 		return count, nil
 	case *treatmentPlanResolver:
 		count, err := r.probo.InternalControls.CountForTreatmentPlanID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count internal controls", log.Error(err))
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count internal controls", err)
 		}
 
 		return count, nil
 	case *taskResolver:
 		count, err := r.probo.InternalControls.CountForTaskID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count internal controls", log.Error(err))
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count internal controls", err)
 		}
 
 		return count, nil
@@ -433,9 +416,7 @@ func (r *mutationResolver) CreateInternalControl(ctx context.Context, input type
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot create internal control", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot create internal control", err)
 	}
 
 	return &types.CreateInternalControlPayload{
@@ -482,9 +463,7 @@ func (r *mutationResolver) UpdateInternalControl(ctx context.Context, input type
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot update internal control", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot update internal control", err)
 	}
 
 	return &types.UpdateInternalControlPayload{
@@ -503,16 +482,14 @@ func (r *mutationResolver) ImportInternalControl(ctx context.Context, input type
 
 	var req probo.ImportInternalControlRequest
 	if err := json.NewDecoder(input.File.File).Decode(&req.InternalControls); err != nil {
-		r.logger.ErrorCtx(ctx, "cannot unmarshal internal control", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot unmarshal internal control", err)
 	}
 
 	req.IdentityID = &identity.ID
 
 	internalControls, err := r.probo.InternalControls.Import(ctx, scope, input.OrganizationID, req)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot import internal control", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot import internal control", err)
 	}
 
 	internalControlEdges := make([]*types.InternalControlEdge, len(internalControls.Data))
@@ -533,9 +510,7 @@ func (r *mutationResolver) DeleteInternalControl(ctx context.Context, input type
 	}
 
 	if err := r.probo.InternalControls.Delete(ctx, scope, input.InternalControlID); err != nil {
-		r.logger.ErrorCtx(ctx, "cannot delete internal control", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot delete internal control", err)
 	}
 
 	return &types.DeleteInternalControlPayload{
@@ -556,9 +531,7 @@ func (r *mutationResolver) CreateInternalControlDocumentMapping(ctx context.Cont
 			return nil, gqlx.Conflict(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot create internal control document mapping", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot create internal control document mapping", err)
 	}
 
 	return &types.CreateInternalControlDocumentMappingPayload{
@@ -576,8 +549,7 @@ func (r *mutationResolver) DeleteInternalControlDocumentMapping(ctx context.Cont
 
 	internalControl, document, err := r.probo.InternalControls.DeleteDocumentMapping(ctx, scope, input.InternalControlID, input.DocumentID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot delete internal control document mapping", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot delete internal control document mapping", err)
 	}
 
 	return &types.DeleteInternalControlDocumentMappingPayload{
@@ -595,8 +567,7 @@ func (r *mutationResolver) CreateInternalControlThirdPartyMapping(ctx context.Co
 
 	internalControl, thirdParty, err := r.probo.InternalControls.CreateThirdPartyMapping(ctx, scope, input.InternalControlID, input.ThirdPartyID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot create internal control third party mapping", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot create internal control third party mapping", err)
 	}
 
 	return &types.CreateInternalControlThirdPartyMappingPayload{
@@ -614,8 +585,7 @@ func (r *mutationResolver) DeleteInternalControlThirdPartyMapping(ctx context.Co
 
 	internalControl, thirdParty, err := r.probo.InternalControls.DeleteThirdPartyMapping(ctx, scope, input.InternalControlID, input.ThirdPartyID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot delete internal control third party mapping", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot delete internal control third party mapping", err)
 	}
 
 	return &types.DeleteInternalControlThirdPartyMappingPayload{

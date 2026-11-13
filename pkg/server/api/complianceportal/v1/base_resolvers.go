@@ -10,7 +10,6 @@ import (
 	"errors"
 	"strings"
 
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -64,9 +63,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 				return nil, gqlx.NotFoundf(ctx, "node %q not found", id)
 			}
 
-			r.logger.ErrorCtx(ctx, "cannot get document", log.Error(err))
-
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, r.logger, "cannot get document", err)
 		}
 
 		return types.NewDocument(document), nil
@@ -78,9 +75,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 				return nil, gqlx.NotFoundf(ctx, "node %q not found", id)
 			}
 
-			r.logger.ErrorCtx(ctx, "cannot get framework", log.Error(err))
-
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, r.logger, "cannot get framework", err)
 		}
 
 		return types.NewFramework(framework), nil
@@ -92,9 +87,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 				return nil, gqlx.NotFoundf(ctx, "node %q not found", id)
 			}
 
-			r.logger.ErrorCtx(ctx, "cannot get audit report file", log.Error(err))
-
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, r.logger, "cannot get audit report file", err)
 		}
 
 		return types.NewAuditReport(file), nil
@@ -106,9 +99,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 				return nil, gqlx.NotFoundf(ctx, "node %q not found", id)
 			}
 
-			r.logger.ErrorCtx(ctx, "cannot get audit", log.Error(err))
-
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, r.logger, "cannot get audit", err)
 		}
 
 		return types.NewAudit(audit), nil
@@ -120,9 +111,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 				return nil, gqlx.NotFoundf(ctx, "node %q not found", id)
 			}
 
-			r.logger.ErrorCtx(ctx, "cannot get thirdParty", log.Error(err))
-
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, r.logger, "cannot get thirdParty", err)
 		}
 
 		return types.NewSubprocessor(thirdParty), nil
@@ -140,9 +129,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 				return nil, gqlx.NotFoundf(ctx, "node %q not found", id)
 			}
 
-			r.logger.ErrorCtx(ctx, "cannot get compliance portal", log.Error(err))
-
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, r.logger, "cannot get compliance portal", err)
 		}
 
 		return types.NewCompliancePortal(portal), nil
@@ -154,9 +141,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 				return nil, gqlx.NotFoundf(ctx, "node %q not found", id)
 			}
 
-			r.logger.ErrorCtx(ctx, "cannot get compliance portal reference", log.Error(err))
-
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, r.logger, "cannot get compliance portal reference", err)
 		}
 
 		return types.NewCompliancePortalReference(reference), nil
@@ -168,9 +153,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 				return nil, gqlx.NotFoundf(ctx, "node %q not found", id)
 			}
 
-			r.logger.ErrorCtx(ctx, "cannot get compliance portal file", log.Error(err))
-
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, r.logger, "cannot get compliance portal file", err)
 		}
 
 		return types.NewCompliancePortalFile(portalFile), nil
@@ -182,9 +165,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 				return nil, gqlx.NotFoundf(ctx, "node %q not found", id)
 			}
 
-			r.logger.ErrorCtx(ctx, "cannot get mailing list update", log.Error(err))
-
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, r.logger, "cannot get mailing list update", err)
 		}
 
 		return types.NewMailingListUpdate(update), nil
@@ -211,9 +192,7 @@ func (r *queryResolver) AliasedNode(ctx context.Context, alias string) (types.No
 				return nil, gqlx.NotFoundf(ctx, "node %q not found", alias)
 			}
 
-			r.logger.ErrorCtx(ctx, "cannot resolve resource alias", log.Error(err))
-
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, r.logger, "cannot resolve resource alias", err)
 		}
 	}
 
@@ -229,8 +208,7 @@ func (r *queryResolver) CurrentCompliancePortal(ctx context.Context) (*types.Com
 
 	compliancePortal, err := visitorService.GetPortal(ctx, scope, compliancePortal.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get compliance portal", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get compliance portal", err)
 	}
 
 	return types.NewCompliancePortal(compliancePortal), nil
@@ -284,8 +262,7 @@ func (r *queryResolver) MyRightsRequests(ctx context.Context, first *int, after 
 		cursor,
 	)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list rights requests", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list rights requests", err)
 	}
 
 	return types.NewRightsRequestConnection(result), nil

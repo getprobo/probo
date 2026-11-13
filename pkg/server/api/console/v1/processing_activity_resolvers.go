@@ -10,7 +10,6 @@ import (
 	"errors"
 
 	"github.com/vikstrous/dataloadgen"
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/page"
@@ -53,8 +52,7 @@ func (r *mutationResolver) CreateProcessingActivity(ctx context.Context, input t
 
 	activity, err := r.probo.ProcessingActivities.Create(ctx, scope, &req)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot create processing activity", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot create processing activity", err)
 	}
 
 	return &types.CreateProcessingActivityPayload{
@@ -94,8 +92,7 @@ func (r *mutationResolver) UpdateProcessingActivity(ctx context.Context, input t
 
 	activity, err := r.probo.ProcessingActivities.Update(ctx, scope, &req)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot update processing activity", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot update processing activity", err)
 	}
 
 	return &types.UpdateProcessingActivityPayload{
@@ -111,8 +108,7 @@ func (r *mutationResolver) DeleteProcessingActivity(ctx context.Context, input t
 	}
 
 	if err := r.probo.ProcessingActivities.Delete(ctx, scope, input.ProcessingActivityID); err != nil {
-		r.logger.ErrorCtx(ctx, "cannot delete processing activity", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot delete processing activity", err)
 	}
 
 	return &types.DeleteProcessingActivityPayload{
@@ -139,9 +135,7 @@ func (r *mutationResolver) PublishProcessingActivityList(ctx context.Context, in
 			return nil, gqlx.Conflict(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot publish processing activity list", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot publish processing activity list", err)
 	}
 
 	return &types.PublishProcessingActivityListPayload{
@@ -164,9 +158,7 @@ func (r *processingActivityResolver) Organization(ctx context.Context, obj *type
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get organization", err)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -190,9 +182,7 @@ func (r *processingActivityResolver) DataProtectionOfficer(ctx context.Context, 
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get data protection officer", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get data protection officer", err)
 	}
 
 	return types.NewProfile(dpo), nil
@@ -221,8 +211,7 @@ func (r *processingActivityResolver) ThirdParties(ctx context.Context, obj *type
 
 	page, err := r.probo.ThirdParties.ListForProcessingActivityID(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list processing activity thirdParties", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list processing activity thirdParties", err)
 	}
 
 	return types.NewThirdPartyConnection(page, r, obj.ID, nil), nil
@@ -241,9 +230,7 @@ func (r *processingActivityResolver) DataProtectionImpactAssessment(ctx context.
 			return nil, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get processing activity dpia", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get processing activity dpia", err)
 	}
 
 	return types.NewDataProtectionImpactAssessment(dpia), nil
@@ -262,9 +249,7 @@ func (r *processingActivityResolver) TransferImpactAssessment(ctx context.Contex
 			return nil, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get processing activity tia", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get processing activity tia", err)
 	}
 
 	return types.NewTransferImpactAssessment(tia), nil
@@ -286,8 +271,7 @@ func (r *processingActivityConnectionResolver) TotalCount(ctx context.Context, o
 	case *organizationResolver:
 		count, err := r.probo.ProcessingActivities.CountForOrganizationID(ctx, scope, obj.ParentID)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count organization processing activities", log.Error(err))
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count organization processing activities", err)
 		}
 
 		return count, nil

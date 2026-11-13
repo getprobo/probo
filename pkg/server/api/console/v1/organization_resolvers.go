@@ -56,9 +56,7 @@ func (r *mutationResolver) UpdateOrganizationContext(ctx context.Context, input 
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot update organization context", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot update organization context", err)
 	}
 
 	return &types.UpdateOrganizationContextPayload{
@@ -101,8 +99,7 @@ func (r *organizationResolver) Context(ctx context.Context, obj *types.Organizat
 
 	orgContext, err := r.probo.Organizations.GetContext(ctx, scope, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load organization context", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load organization context", err)
 	}
 
 	return types.NewOrganizationContext(orgContext), nil
@@ -156,8 +153,7 @@ func (r *organizationResolver) Profiles(ctx context.Context, obj *types.Organiza
 
 	page, err := r.iam.OrganizationService.ListProfiles(ctx, obj.ID, cursor, filters)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list profiles", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list profiles", err)
 	}
 
 	return types.NewProfileConnection(page, r, obj.ID, filters), nil
@@ -172,8 +168,7 @@ func (r *organizationResolver) InternalControlCategories(ctx context.Context, ob
 
 	categories, err := r.probo.InternalControls.ListDistinctCategoriesForOrganizationID(ctx, scope, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list internal control categories", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list internal control categories", err)
 	}
 
 	return categories, nil
@@ -284,8 +279,7 @@ func (r *organizationResolver) Assets(ctx context.Context, obj *types.Organizati
 
 	page, err := r.probo.Assets.ListForOrganizationID(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization assets", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list organization assets", err)
 	}
 
 	return types.NewAssetConnection(page, r, obj.ID), nil
@@ -338,8 +332,7 @@ func (r *organizationResolver) Data(ctx context.Context, obj *types.Organization
 
 	page, err := r.probo.Data.ListForOrganizationID(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization data", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list organization data", err)
 	}
 
 	return types.NewDataConnection(page, r, obj.ID), nil
@@ -372,8 +365,7 @@ func (r *organizationResolver) Audits(ctx context.Context, obj *types.Organizati
 			return nil, gqlx.Invalidf(ctx, "invalid cursor")
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot list organization audits", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list organization audits", err)
 	}
 
 	return types.NewAuditConnection(auditPage, r, obj.ID), nil
@@ -445,8 +437,7 @@ func (r *organizationResolver) Findings(ctx context.Context, obj *types.Organiza
 
 	page, err := r.probo.Findings.ListForOrganizationID(ctx, scope, obj.ID, cursor, findingFilter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization findings", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list organization findings", err)
 	}
 
 	return types.NewFindingConnection(page, r, obj.ID, filter), nil
@@ -494,8 +485,7 @@ func (r *organizationResolver) AuditLogEntries(ctx context.Context, obj *types.O
 
 	p, err := r.iam.OrganizationService.ListAuditLogEntries(ctx, obj.ID, cursor, coredataFilter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list audit log entries", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list audit log entries", err)
 	}
 
 	return types.NewAuditLogEntryConnection(p, r, obj.ID, coredataFilter), nil
@@ -520,8 +510,7 @@ func (r *organizationResolver) SlackConnections(ctx context.Context, obj *types.
 
 	page, err := r.probo.Connectors.ListForOrganizationID(ctx, scope, obj.ID, cursor, filter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization slack connections", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list organization slack connections", err)
 	}
 
 	return types.NewSlackConnectionConnection(page), nil
@@ -587,9 +576,7 @@ func (r *organizationResolver) LinearTeams(ctx context.Context, obj *types.Organ
 			return emptyLinearTeamConnection(), nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot search Linear teams", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot search Linear teams", err)
 	}
 
 	edges := make([]*types.LinearTeamEdge, 0, len(page.Teams))
@@ -624,9 +611,7 @@ func (r *organizationResolver) LinearSettings(ctx context.Context, obj *types.Or
 
 	settings, err := r.task.Sync.LinearSettings(ctx, scope, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load Linear settings", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load Linear settings", err)
 	}
 
 	issueImport := types.LinearIssueImportInactive
@@ -676,9 +661,7 @@ func (r *organizationResolver) LinearIssues(ctx context.Context, obj *types.Orga
 		case errors.Is(err, tasksync.ErrLinearTeamIDRequired):
 			return nil, gqlx.Invalid(ctx, err)
 		default:
-			r.logger.ErrorCtx(ctx, "cannot search Linear issues", log.Error(err))
-
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, r.logger, "cannot search Linear issues", err)
 		}
 	}
 
@@ -686,9 +669,7 @@ func (r *organizationResolver) LinearIssues(ctx context.Context, obj *types.Orga
 	for _, issue := range page.Issues {
 		node, err := linearIssueNode(issue)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot map Linear issue", log.Error(err))
-
-			return nil, gqlx.Internal(ctx)
+			return nil, gqlx.Report(ctx, r.logger, "cannot map Linear issue", err)
 		}
 
 		edges = append(edges, &types.LinearIssueEdge{
@@ -738,8 +719,7 @@ func (r *organizationResolver) SlackbotInstallation(ctx context.Context, obj *ty
 	}
 
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load Slackbot installation", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load Slackbot installation", err)
 	}
 
 	r.slackbotInstallations.RememberTeamName(ctx, scope, installation)
@@ -784,8 +764,7 @@ func (r *organizationResolver) SlackbotChannels(ctx context.Context, obj *types.
 	}
 
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list Slackbot channels", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list Slackbot channels", err)
 	}
 
 	channels := make([]*types.SlackbotChannel, len(page.Conversations))
@@ -835,8 +814,7 @@ func (r *organizationResolver) Controls(ctx context.Context, obj *types.Organiza
 
 	page, err := r.probo.Controls.ListForOrganizationID(ctx, scope, obj.ID, cursor, controlFilter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list controls", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list controls", err)
 	}
 
 	return types.NewControlConnection(page, r, obj.ID, controlFilter), nil
@@ -865,8 +843,7 @@ func (r *organizationResolver) StatementsOfApplicability(ctx context.Context, ob
 
 	page, err := r.probo.StatementsOfApplicability.ListForOrganizationID(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization statements_of_applicability", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list organization statements_of_applicability", err)
 	}
 
 	return types.NewStatementOfApplicabilityConnection(page, r, obj.ID), nil
@@ -895,8 +872,7 @@ func (r *organizationResolver) DataProtectionImpactAssessments(ctx context.Conte
 
 	page, err := r.probo.DataProtectionImpactAssessments.ListForOrganizationID(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization data protection impact assessments", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list organization data protection impact assessments", err)
 	}
 
 	return types.NewDataProtectionImpactAssessmentConnection(page, r, obj.ID), nil
@@ -911,8 +887,7 @@ func (r *organizationResolver) DataProtectionImpactAssessmentsDocument(ctx conte
 
 	documentID, err := r.probo.GeneratedDocuments.GetDataProtectionImpactAssessmentsDocumentID(ctx, scope, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get DPIA list document ID", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get DPIA list document ID", err)
 	}
 
 	if documentID == nil {
@@ -925,9 +900,7 @@ func (r *organizationResolver) DataProtectionImpactAssessmentsDocument(ctx conte
 			return nil, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot load DPIA list document", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load DPIA list document", err)
 	}
 
 	return types.NewDocument(document), nil
@@ -956,8 +929,7 @@ func (r *organizationResolver) TransferImpactAssessments(ctx context.Context, ob
 
 	page, err := r.probo.TransferImpactAssessments.ListForOrganizationID(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization transfer impact assessments", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list organization transfer impact assessments", err)
 	}
 
 	return types.NewTransferImpactAssessmentConnection(page, r, obj.ID), nil
@@ -972,8 +944,7 @@ func (r *organizationResolver) TransferImpactAssessmentsDocument(ctx context.Con
 
 	documentID, err := r.probo.GeneratedDocuments.GetTransferImpactAssessmentsDocumentID(ctx, scope, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get TIA list document ID", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get TIA list document ID", err)
 	}
 
 	if documentID == nil {
@@ -986,9 +957,7 @@ func (r *organizationResolver) TransferImpactAssessmentsDocument(ctx context.Con
 			return nil, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot load TIA list document", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load TIA list document", err)
 	}
 
 	return types.NewDocument(document), nil
@@ -1027,8 +996,7 @@ func (r *organizationResolver) Documents(ctx context.Context, obj *types.Organiz
 
 	page, err := r.probo.Documents.ListByOrganizationID(ctx, scope, obj.ID, cursor, documentFilter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization documents", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list organization documents", err)
 	}
 
 	return types.NewDocumentConnection(page, r, obj.ID, documentFilter), nil
@@ -1057,8 +1025,7 @@ func (r *organizationResolver) Frameworks(ctx context.Context, obj *types.Organi
 
 	page, err := r.probo.Frameworks.ListForOrganizationID(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization frameworks", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list organization frameworks", err)
 	}
 
 	return types.NewFrameworkConnection(page, r, obj.ID), nil
@@ -1100,8 +1067,7 @@ func (r *organizationResolver) InternalControls(ctx context.Context, obj *types.
 
 	page, err := r.probo.InternalControls.ListForOrganizationID(ctx, scope, obj.ID, cursor, internalControlFilter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization internal controls", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list organization internal controls", err)
 	}
 
 	return types.NewInternalControlConnection(page, r, obj.ID, internalControlFilter), nil
@@ -1154,8 +1120,7 @@ func (r *organizationResolver) Obligations(ctx context.Context, obj *types.Organ
 
 	page, err := r.probo.Obligations.ListForOrganizationID(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization obligations", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list organization obligations", err)
 	}
 
 	return types.NewObligationConnection(page, r, obj.ID), nil
@@ -1170,8 +1135,7 @@ func (r *organizationResolver) BusinessFunctionsDocument(ctx context.Context, ob
 
 	businessFunctionDocumentID, err := r.probo.GeneratedDocuments.GetBusinessFunctionsDocumentID(ctx, scope, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get business function list document ID", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get business function list document ID", err)
 	}
 
 	if businessFunctionDocumentID == nil {
@@ -1184,9 +1148,7 @@ func (r *organizationResolver) BusinessFunctionsDocument(ctx context.Context, ob
 			return nil, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot load business function list document", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load business function list document", err)
 	}
 
 	return types.NewDocument(doc), nil
@@ -1222,8 +1184,7 @@ func (r *organizationResolver) BusinessFunctions(ctx context.Context, obj *types
 
 	pageResult, err := r.probo.BusinessFunctions.ListForOrganizationID(ctx, scope, obj.ID, cursor, businessFunctionFilter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization business functions", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list organization business functions", err)
 	}
 
 	return types.NewBusinessFunctionConnection(pageResult, r, obj.ID, filter), nil
@@ -1238,8 +1199,7 @@ func (r *organizationResolver) AiSystemsDocument(ctx context.Context, obj *types
 
 	aiSystemDocumentID, err := r.probo.GeneratedDocuments.GetAiSystemsDocumentID(ctx, scope, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get ai system list document ID", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get ai system list document ID", err)
 	}
 
 	if aiSystemDocumentID == nil {
@@ -1252,9 +1212,7 @@ func (r *organizationResolver) AiSystemsDocument(ctx context.Context, obj *types
 			return nil, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot load ai system list document", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load ai system list document", err)
 	}
 
 	return types.NewDocument(doc), nil
@@ -1295,8 +1253,7 @@ func (r *organizationResolver) AiSystems(ctx context.Context, obj *types.Organiz
 
 	pageResult, err := r.probo.AiSystems.ListForOrganizationID(ctx, scope, obj.ID, cursor, aiSystemFilter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization ai systems", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list organization ai systems", err)
 	}
 
 	return types.NewAiSystemConnection(pageResult, r, obj.ID, filter), nil
@@ -1325,8 +1282,7 @@ func (r *organizationResolver) ProcessingActivities(ctx context.Context, obj *ty
 
 	page, err := r.probo.ProcessingActivities.ListForOrganizationID(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization processing activities", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list organization processing activities", err)
 	}
 
 	return types.NewProcessingActivityConnection(page, r, obj.ID), nil
@@ -1341,8 +1297,7 @@ func (r *organizationResolver) ProcessingActivitiesDocument(ctx context.Context,
 
 	documentID, err := r.probo.GeneratedDocuments.GetProcessingActivitiesDocumentID(ctx, scope, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get processing activities document ID", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get processing activities document ID", err)
 	}
 
 	if documentID == nil {
@@ -1355,9 +1310,7 @@ func (r *organizationResolver) ProcessingActivitiesDocument(ctx context.Context,
 			return nil, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot load processing activities document", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load processing activities document", err)
 	}
 
 	return types.NewDocument(document), nil
@@ -1386,8 +1339,7 @@ func (r *organizationResolver) RightsRequests(ctx context.Context, obj *types.Or
 
 	page, err := r.probo.RightsRequests.ListForOrganizationID(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization rights requests", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list organization rights requests", err)
 	}
 
 	return types.NewRightsRequestConnection(page, r, obj.ID), nil
@@ -1421,8 +1373,7 @@ func (r *organizationResolver) Risks(ctx context.Context, obj *types.Organizatio
 
 	page, err := r.probo.Risks.ListForOrganizationID(ctx, scope, obj.ID, cursor, riskFilter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization risks", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list organization risks", err)
 	}
 
 	return types.NewRiskConnection(page, r, obj.ID, riskFilter), nil
@@ -1437,8 +1388,7 @@ func (r *organizationResolver) RisksDocument(ctx context.Context, obj *types.Org
 
 	documentID, err := r.probo.GeneratedDocuments.GetRisksDocumentID(ctx, scope, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get risks document ID", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get risks document ID", err)
 	}
 
 	if documentID == nil {
@@ -1451,9 +1401,7 @@ func (r *organizationResolver) RisksDocument(ctx context.Context, obj *types.Org
 			return nil, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot load risks document", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load risks document", err)
 	}
 
 	return types.NewDocument(document), nil
@@ -1482,8 +1430,7 @@ func (r *organizationResolver) RiskAnalyses(ctx context.Context, obj *types.Orga
 
 	p, err := r.riskManagement.ListForOrganizationID(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list risk assessments", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list risk assessments", err)
 	}
 
 	return types.NewRiskAnalysisConnection(p, r, obj.ID), nil
@@ -1521,9 +1468,7 @@ func (r *organizationResolver) TreatmentPlans(ctx context.Context, obj *types.Or
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot list treatment plans", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list treatment plans", err)
 	}
 
 	return types.NewTreatmentPlanConnection(p, r, obj.ID, planFilter), nil
@@ -1552,8 +1497,7 @@ func (r *organizationResolver) RiskAnalysisScenarios(ctx context.Context, obj *t
 
 	p, err := r.riskManagement.ListScenariosForOrganizationID(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list risk scenarios", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list risk scenarios", err)
 	}
 
 	return types.NewRiskAnalysisScenarioConnection(p, r, obj.ID), nil
@@ -1596,8 +1540,7 @@ func (r *organizationResolver) Tasks(ctx context.Context, obj *types.Organizatio
 
 	page, err := r.task.ListForOrganizationID(ctx, scope, obj.ID, cursor, taskFilter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization tasks", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list organization tasks", err)
 	}
 
 	return types.NewTaskConnection(page, r, obj.ID, taskFilter), nil
@@ -1626,8 +1569,7 @@ func (r *organizationResolver) AgentExecutions(ctx context.Context, obj *types.O
 
 	page, err := r.agentExecution.ListForOrganizationID(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization agent executions", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list organization agent executions", err)
 	}
 
 	return types.NewAgentExecutionConnection(page, r, obj.ID), nil
@@ -1656,8 +1598,7 @@ func (r *organizationResolver) CompliancePortals(ctx context.Context, obj *types
 
 	p, err := r.management.ListForOrganizationID(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list compliance portals", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list compliance portals", err)
 	}
 
 	return types.NewCompliancePortalConnection(p, obj.ID), nil
@@ -1690,8 +1631,7 @@ func (r *organizationResolver) EmployeePortals(ctx context.Context, obj *types.O
 
 	p, err := r.employeePortal.ListForOrganizationID(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list employee portals", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list employee portals", err)
 	}
 
 	return types.NewEmployeePortalConnection(p, obj.ID), nil
@@ -1720,8 +1660,7 @@ func (r *organizationResolver) CookieBanners(ctx context.Context, obj *types.Org
 
 	banners, err := r.cookieBanner.ListCookieBannersForOrganization(ctx, scope, obj.ID, cursor, coredata.NewCookieBannerFilter(nil))
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list cookie banners", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list cookie banners", err)
 	}
 
 	p := page.NewPage(banners, cursor)
@@ -1763,8 +1702,7 @@ func (r *organizationResolver) ThirdParties(ctx context.Context, obj *types.Orga
 
 	page, err := r.probo.ThirdParties.ListForOrganizationID(ctx, scope, obj.ID, cursor, thirdPartyFilter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization thirdParties", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list organization thirdParties", err)
 	}
 
 	return types.NewThirdPartyConnection(page, r, obj.ID, thirdPartyFilter), nil
@@ -1779,8 +1717,7 @@ func (r *organizationResolver) ThirdPartiesDocument(ctx context.Context, obj *ty
 
 	documentID, err := r.probo.GeneratedDocuments.GetThirdPartiesDocumentID(ctx, scope, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get thirdParties document ID", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot get thirdParties document ID", err)
 	}
 
 	if documentID == nil {
@@ -1793,9 +1730,7 @@ func (r *organizationResolver) ThirdPartiesDocument(ctx context.Context, obj *ty
 			return nil, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot load thirdParties document", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load thirdParties document", err)
 	}
 
 	return types.NewDocument(document), nil
@@ -1810,8 +1745,7 @@ func (r *organizationResolver) DeviceAgentVersions(ctx context.Context, obj *typ
 
 	versions, err := r.itam.ListAgentVersionsForOrganizationID(ctx, scope, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list device agent versions", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list device agent versions", err)
 	}
 
 	return versions, nil
@@ -1850,8 +1784,7 @@ func (r *organizationResolver) Devices(ctx context.Context, obj *types.Organizat
 
 	devicesPage, err := r.itam.ListForOrganizationID(ctx, scope, obj.ID, cursor, deviceFilter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization devices", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list organization devices", err)
 	}
 
 	return types.NewDeviceConnection(devicesPage, r, obj.ID, deviceFilter), nil
@@ -1880,8 +1813,7 @@ func (r *organizationResolver) WebhookSubscriptions(ctx context.Context, obj *ty
 
 	page, err := r.probo.WebhookSubscriptions.ListForOrganizationID(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization webhook subscriptions", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot list organization webhook subscriptions", err)
 	}
 
 	return types.NewWebhookSubscriptionConnection(page, r, obj.ID), nil
@@ -1902,14 +1834,12 @@ func (r *profileResolver) Avatar(ctx context.Context, obj *types.Profile) (*type
 
 	profile, err := loaders.Profile.Load(ctx, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load profile", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load profile", err)
 	}
 
 	identity, err := loaders.Identity.Load(ctx, profile.IdentityID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load profile identity", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load profile identity", err)
 	}
 
 	if identity.AvatarFileID == nil {
@@ -1935,16 +1865,14 @@ func (r *profileConnectionResolver) TotalCount(ctx context.Context, obj *types.P
 	case *organizationResolver:
 		count, err := r.iam.OrganizationService.CountProfiles(ctx, obj.ParentID, obj.Filters)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count profiles", log.Error(err))
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count profiles", err)
 		}
 
 		return count, nil
 	case *documentVersionResolver:
 		count, err := r.probo.Documents.CountVersionApprovers(ctx, scope, obj.ParentID)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count document version approvers", log.Error(err))
-			return 0, gqlx.Internal(ctx)
+			return 0, gqlx.Report(ctx, r.logger, "cannot count document version approvers", err)
 		}
 
 		return count, nil

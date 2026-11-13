@@ -23,7 +23,6 @@ package complianceportal_v1
 import (
 	"context"
 
-	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/server/api/complianceportal"
@@ -39,9 +38,7 @@ func (r *Resolver) ResourceAliasResolver(
 
 	alias, err := r.resourceAlias.GetByResourceID(ctx, scope, storageResourceID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load resource alias", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.Report(ctx, r.logger, "cannot load resource alias", err)
 	}
 
 	return alias, nil
