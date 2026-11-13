@@ -23,6 +23,7 @@ package probo
 import (
 	"context"
 	"errors"
+	"time"
 
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
@@ -62,7 +63,7 @@ func (h *documentPDFHandler) Claim(ctx context.Context) (coredata.DocumentVersio
 	if err := h.service.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			return version.ClaimNextPublishedWithoutFileForUpdate(ctx, tx, maxPDFAttempts)
+			return version.ClaimNextPublishedWithoutFileForUpdate(ctx, tx, maxPDFAttempts, time.Now(), pdfClaimLease)
 		},
 	); err != nil {
 		if errors.Is(err, coredata.ErrNoDocumentPDFJobAvailable) {
@@ -87,8 +88,30 @@ func (h *documentPDFHandler) Process(ctx context.Context, version coredata.Docum
 			log.Int("attempt", version.PdfAttemptCount),
 		)
 
+		if err := h.releasePDFClaim(ctx, scope, &version); err != nil {
+			h.logger.ErrorCtx(
+				ctx,
+				"cannot release document pdf claim",
+				log.Error(err),
+				log.String("document_version_id", version.ID.String()),
+			)
+		}
+
 		return err
 	}
 
 	return nil
+}
+
+func (h *documentPDFHandler) releasePDFClaim(
+	ctx context.Context,
+	scope coredata.Scoper,
+	version *coredata.DocumentVersion,
+) error {
+	return h.service.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			return version.ReleasePDFClaim(ctx, tx, scope, time.Now())
+		},
+	)
 }

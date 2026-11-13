@@ -59,6 +59,10 @@ import (
 
 const DocumentSignatureConsentText = "By clicking \"Review and sign\", I consent to sign this document electronically and agree that my electronic signature has the same legal validity as a handwritten signature."
 
+var (
+	errPublicationPDFClaimLost = errors.New("publication PDF claim lost")
+)
+
 type (
 	DocumentService struct {
 		svc               *Service
@@ -3675,28 +3679,44 @@ func (s *DocumentService) generateAndUploadPublicationPDF(
 
 	fileRecord.FileSize = fileSize
 
-	err = s.svc.pg.WithTx(
+	if err := s.savePublicationPDF(ctx, scope, documentVersion, fileRecord, now); err != nil {
+		return fmt.Errorf("cannot save publication PDF file record: %w", err)
+	}
+
+	return nil
+}
+
+func (s *DocumentService) savePublicationPDF(
+	ctx context.Context,
+	scope coredata.Scoper,
+	documentVersion *coredata.DocumentVersion,
+	fileRecord *coredata.File,
+	now time.Time,
+) error {
+	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			if err := fileRecord.Insert(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot insert file record: %w", err)
 			}
 
-			documentVersion.FileID = &fileRecord.ID
-
-			documentVersion.UpdatedAt = now
-			if err := documentVersion.Update(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot update document version with file ID: %w", err)
+			attached, err := documentVersion.AttachPDFFile(ctx, tx, scope, fileRecord.ID, now)
+			if err != nil {
+				return fmt.Errorf("cannot attach publication PDF: %w", err)
+			}
+			if !attached {
+				return errPublicationPDFClaimLost
 			}
 
 			return nil
 		},
 	)
-	if err != nil {
-		return fmt.Errorf("cannot save publication PDF file record: %w", err)
+	// A rollback failure joined to claim loss must still reach the worker.
+	if err == errPublicationPDFClaimLost {
+		return nil
 	}
 
-	return nil
+	return err
 }
 
 func (s *DocumentService) CollaborationHeads(

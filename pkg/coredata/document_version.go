@@ -51,6 +51,7 @@ type (
 		Orientation     DocumentVersionOrientation `db:"orientation"`
 		FileID          *gid.GID                   `db:"file_id"`
 		PdfAttemptCount int                        `db:"pdf_attempt_count"`
+		PdfClaimedAt    *time.Time                 `db:"pdf_claimed_at"`
 		PublishedAt     *time.Time                 `db:"published_at"`
 		CreatedAt       time.Time                  `db:"created_at"`
 		UpdatedAt       time.Time                  `db:"updated_at"`
@@ -123,6 +124,7 @@ SELECT
 	orientation,
 	file_id,
 	pdf_attempt_count,
+	pdf_claimed_at,
 	published_at,
 	created_at,
 	updated_at
@@ -180,6 +182,7 @@ SELECT
 	orientation,
 	file_id,
 	pdf_attempt_count,
+	pdf_claimed_at,
 	published_at,
 	created_at,
 	updated_at
@@ -245,6 +248,7 @@ SELECT
 	orientation,
 	file_id,
 	pdf_attempt_count,
+	pdf_claimed_at,
 	published_at,
 	created_at,
 	updated_at
@@ -304,6 +308,7 @@ INSERT INTO document_versions (
 	orientation,
 	file_id,
 	pdf_attempt_count,
+	pdf_claimed_at,
 	published_at,
 	created_at,
 	updated_at
@@ -324,6 +329,7 @@ VALUES (
 	@orientation,
 	@file_id,
 	@pdf_attempt_count,
+	@pdf_claimed_at,
 	@published_at,
 	@created_at,
 	@updated_at
@@ -345,6 +351,7 @@ VALUES (
 		"orientation":       dv.Orientation,
 		"file_id":           dv.FileID,
 		"pdf_attempt_count": dv.PdfAttemptCount,
+		"pdf_claimed_at":    dv.PdfClaimedAt,
 		"published_at":      dv.PublishedAt,
 		"created_at":        dv.CreatedAt,
 		"updated_at":        dv.UpdatedAt,
@@ -390,6 +397,7 @@ SELECT
 	orientation,
 	file_id,
 	pdf_attempt_count,
+	pdf_claimed_at,
 	published_at,
 	created_at,
 	updated_at
@@ -455,6 +463,7 @@ SELECT
 	orientation,
 	file_id,
 	pdf_attempt_count,
+	pdf_claimed_at,
 	published_at,
 	created_at,
 	updated_at
@@ -514,6 +523,7 @@ SELECT
 	orientation,
 	file_id,
 	pdf_attempt_count,
+	pdf_claimed_at,
 	published_at,
 	created_at,
 	updated_at
@@ -575,6 +585,7 @@ SELECT
 	orientation,
 	file_id,
 	pdf_attempt_count,
+	pdf_claimed_at,
 	published_at,
 	created_at,
 	updated_at
@@ -695,7 +706,11 @@ func (dv *DocumentVersion) ClaimNextPublishedWithoutFileForUpdate(
 	ctx context.Context,
 	conn pg.Tx,
 	maxAttempts int,
+	now time.Time,
+	lease time.Duration,
 ) error {
+	now = now.UTC().Truncate(time.Microsecond)
+
 	q := `
 SELECT
 	dv.id,
@@ -712,6 +727,7 @@ SELECT
 	dv.orientation,
 	dv.file_id,
 	dv.pdf_attempt_count,
+	dv.pdf_claimed_at,
 	dv.published_at,
 	dv.created_at,
 	dv.updated_at
@@ -720,10 +736,14 @@ FROM
 INNER JOIN
 	documents d ON d.id = dv.document_id AND d.tenant_id = dv.tenant_id
 WHERE
-	dv.status = 'PUBLISHED'
+	dv.status = @status
 	AND dv.file_id IS NULL
 	AND dv.pdf_attempt_count < @max_pdf_attempts
 	AND d.deleted_at IS NULL
+	AND (
+		dv.pdf_claimed_at IS NULL
+		OR dv.pdf_claimed_at < @claimed_before
+	)
 ORDER BY dv.created_at ASC
 LIMIT 1
 FOR UPDATE OF dv SKIP LOCKED;
@@ -734,6 +754,8 @@ FOR UPDATE OF dv SKIP LOCKED;
 		q,
 		pgx.StrictNamedArgs{
 			"max_pdf_attempts": maxAttempts,
+			"status":           DocumentVersionStatusPublished,
+			"claimed_before":   now.Add(-lease),
 		},
 	)
 	if err != nil {
@@ -749,13 +771,14 @@ FOR UPDATE OF dv SKIP LOCKED;
 		return fmt.Errorf("cannot collect document version: %w", err)
 	}
 
-	now := time.Now()
 	result.PdfAttemptCount++
+	result.PdfClaimedAt = new(now)
 	result.UpdatedAt = now
 
 	uq := `
 UPDATE document_versions SET
 	pdf_attempt_count = @pdf_attempt_count,
+	pdf_claimed_at = @pdf_claimed_at,
 	updated_at = @updated_at
 WHERE
 	tenant_id = @tenant_id
@@ -765,6 +788,7 @@ WHERE
 		"id":                result.ID,
 		"tenant_id":         result.ID.TenantID(),
 		"pdf_attempt_count": result.PdfAttemptCount,
+		"pdf_claimed_at":    result.PdfClaimedAt,
 		"updated_at":        result.UpdatedAt,
 	}
 
@@ -773,6 +797,92 @@ WHERE
 	}
 
 	*dv = result
+
+	return nil
+}
+
+func (dv *DocumentVersion) AttachPDFFile(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	fileID gid.GID,
+	now time.Time,
+) (bool, error) {
+	if dv.PdfClaimedAt == nil {
+		return false, nil
+	}
+
+	q := `
+UPDATE document_versions
+SET
+	file_id = @file_id,
+	updated_at = @updated_at
+WHERE
+	%s
+	AND id = @id
+	AND file_id IS NULL
+	AND status = @status
+	AND pdf_claimed_at = @pdf_claimed_at
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+	args := pgx.StrictNamedArgs{
+		"id":             dv.ID,
+		"file_id":        fileID,
+		"status":         DocumentVersionStatusPublished,
+		"pdf_claimed_at": dv.PdfClaimedAt,
+		"updated_at":     now,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	commandTag, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return false, fmt.Errorf("cannot attach document version PDF: %w", err)
+	}
+	if commandTag.RowsAffected() == 0 {
+		return false, nil
+	}
+
+	dv.FileID = new(fileID)
+	dv.UpdatedAt = now
+
+	return true, nil
+}
+
+func (dv *DocumentVersion) ReleasePDFClaim(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	now time.Time,
+) error {
+	if dv.PdfClaimedAt == nil {
+		return nil
+	}
+
+	q := `
+UPDATE document_versions
+SET
+	pdf_claimed_at = NULL,
+	updated_at = @updated_at
+WHERE
+	%s
+	AND id = @id
+	AND file_id IS NULL
+	AND pdf_claimed_at = @pdf_claimed_at
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+	args := pgx.StrictNamedArgs{
+		"id":             dv.ID,
+		"pdf_claimed_at": dv.PdfClaimedAt,
+		"updated_at":     now,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot release document version PDF claim: %w", err)
+	}
+
+	dv.PdfClaimedAt = nil
+	dv.UpdatedAt = now
 
 	return nil
 }
