@@ -213,6 +213,10 @@ func deleteRow(
 	rowIndex int,
 	suggestionID string,
 ) ([]automerge.Span, error) {
+	if layout.hasMergedCells(spans) {
+		return nil, ErrTableHasMergedCells
+	}
+
 	remaining := 0
 
 	for index, row := range layout.rows {

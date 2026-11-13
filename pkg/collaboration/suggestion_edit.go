@@ -61,6 +61,54 @@ func (s *Service) PaintSuggestion(
 	replacement string,
 	occurrence int,
 ) (*automerge.Document, automerge.ActorID, error) {
+	return s.paint(
+		ctx,
+		scope,
+		documentID,
+		organizationID,
+		identityID,
+		profileID,
+		func(document *automerge.Document) error {
+			return ApplySuggestionEdit(document, suggestionID, quote, replacement, occurrence)
+		},
+	)
+}
+
+// PaintTableSuggestion writes a structural table redline on the live
+// document and commits it. Like PaintSuggestion, the caller persists and
+// closes the returned document.
+func (s *Service) PaintTableSuggestion(
+	ctx context.Context,
+	scope coredata.Scoper,
+	documentID gid.GID,
+	organizationID gid.GID,
+	identityID gid.GID,
+	profileID *gid.GID,
+	suggestionID string,
+	change TableSuggestion,
+) (*automerge.Document, automerge.ActorID, error) {
+	return s.paint(
+		ctx,
+		scope,
+		documentID,
+		organizationID,
+		identityID,
+		profileID,
+		func(document *automerge.Document) error {
+			return ApplyTableSuggestion(document, suggestionID, change)
+		},
+	)
+}
+
+func (s *Service) paint(
+	ctx context.Context,
+	scope coredata.Scoper,
+	documentID gid.GID,
+	organizationID gid.GID,
+	identityID gid.GID,
+	profileID *gid.GID,
+	apply func(document *automerge.Document) error,
+) (*automerge.Document, automerge.ActorID, error) {
 	actorID, err := s.actorForIdentity(
 		ctx,
 		scope,
@@ -78,7 +126,7 @@ func (s *Service) PaintSuggestion(
 		return nil, automerge.ActorID{}, err
 	}
 
-	if err := ApplySuggestionEdit(opened.Document, suggestionID, quote, replacement, occurrence); err != nil {
+	if err := apply(opened.Document); err != nil {
 		_ = opened.Document.Close()
 
 		return nil, automerge.ActorID{}, err

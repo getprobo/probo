@@ -322,6 +322,12 @@ func TestApplyTableSuggestion_Errors(t *testing.T) {
 			want:    ErrTableHasMergedCells,
 		},
 		{
+			name:    "delete a row of a table with merged cells",
+			content: merged,
+			change:  TableSuggestion{Operation: TableSuggestionDeleteRow, Quote: "Left"},
+			want:    ErrTableHasMergedCells,
+		},
+		{
 			name:    "ragged new table",
 			content: tableDocumentJSON(),
 			change:  TableSuggestion{Operation: TableSuggestionInsertTable, Quote: "Intro", Rows: [][]string{{"a", "b"}, {"c"}}},
