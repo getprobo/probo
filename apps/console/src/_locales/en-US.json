@@ -417,7 +417,7 @@
     }
   },
   "tasks": {
-    "title": "My tasks",
+    "title": "Tasks",
     "description": "Track your assigned compliance tasks and keep progress on track.",
     "actions": {
       "create": "Add Task"
@@ -1489,7 +1489,7 @@
     "slackBot": "SlackBot",
     "taskSynchronization": "Task synchronization",
     "integrations": "INTEGRATIONS",
-    "tasks": "My tasks",
+    "tasks": "Tasks",
     "internalControls": "Internal controls",
     "risks": "Risks",
     "allRisks": "All Risks",

@@ -1,7 +1,7 @@
 {
   "detailsPage": {
     "notFound": "Task not found",
-    "back": "My tasks",
+    "back": "Tasks",
     "empty": "—",
     "none": "None",
     "linkInternalControls": "Link to internal controls",
