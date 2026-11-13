@@ -79,6 +79,7 @@ func TestCommonPatternIDsForSnapshotTrackers(t *testing.T) {
 	meta := gidWithSuffix(2)
 	hotjar := gidWithSuffix(3)
 	extensionVendor := gidWithSuffix(4)
+	moved := gidWithSuffix(5)
 	maxAge := new(3600)
 	otherAge := new(60)
 	extension := coredata.CookieSourceExtension
@@ -109,6 +110,11 @@ func TestCommonPatternIDsForSnapshotTrackers(t *testing.T) {
 					{
 						Name:        "ext_key",
 						TrackerType: coredata.TrackerTypeCookie,
+					},
+					{
+						Name:          "moved_off_category",
+						TrackerType:   coredata.TrackerTypeCookie,
+						MaxAgeSeconds: maxAge,
 					},
 				},
 			},
@@ -145,6 +151,12 @@ func TestCommonPatternIDsForSnapshotTrackers(t *testing.T) {
 			CommonTrackerPatternID: &hotjar,
 		},
 		{
+			Pattern:                "moved_off_category",
+			TrackerType:            coredata.TrackerTypeCookie,
+			MaxAgeSeconds:          maxAge,
+			CommonTrackerPatternID: &moved,
+		},
+		{
 			Pattern:                "draft_only",
 			TrackerType:            coredata.TrackerTypeCookie,
 			CommonTrackerPatternID: &hotjar,
@@ -166,7 +178,7 @@ func TestCommonPatternIDsForSnapshotTrackers(t *testing.T) {
 
 	ids := commonPatternIDsForSnapshotTrackers(patterns, snapshot)
 
-	assert.Equal(t, []gid.GID{google, meta}, ids)
+	assert.Equal(t, []gid.GID{google, meta, moved}, ids)
 }
 
 func gidWithSuffix(suffix byte) gid.GID {

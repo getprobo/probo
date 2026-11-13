@@ -332,15 +332,24 @@ func (s *GeneratedDocumentService) buildTrackerPolicyThirdParties(
 	cookieBannerID gid.GID,
 	snapshot coredata.CookieBannerVersionSnapshot,
 ) ([]docgen.TrackerPolicyThirdParty, error) {
-	filter := coredata.NewTrackerPatternFilter(nil, nil, new(false)).WithCategorized(new(true))
+	keys := snapshotTrackerKeys(snapshot)
+	if len(keys) == 0 {
+		return nil, nil
+	}
 
-	patterns, err := page.LoadAll(
+	// Category is live state. A published tracker may already be uncategorised.
+	filter := coredata.NewTrackerPatternFilter(nil, nil, new(false))
+
+	seen := make(map[gid.GID]struct{})
+	var commonPatternIDs []gid.GID
+
+	err := page.WalkAll(
 		ctx,
 		page.OrderBy[coredata.TrackerPatternOrderField]{
 			Field:     coredata.TrackerPatternOrderFieldCreatedAt,
 			Direction: page.OrderDirectionAsc,
 		},
-		func(ctx context.Context, cursor *page.Cursor[coredata.TrackerPatternOrderField]) ([]*coredata.TrackerPattern, error) {
+		func(ctx context.Context, cursor *page.Cursor[coredata.TrackerPatternOrderField]) (coredata.TrackerPatterns, error) {
 			var batch coredata.TrackerPatterns
 			if err := batch.LoadByCookieBannerID(ctx, conn, scope, cookieBannerID, cursor, filter); err != nil {
 				return nil, fmt.Errorf("cannot load tracker patterns: %w", err)
@@ -348,12 +357,16 @@ func (s *GeneratedDocumentService) buildTrackerPolicyThirdParties(
 
 			return batch, nil
 		},
+		func(batch coredata.TrackerPatterns) error {
+			commonPatternIDs = appendCommonPatternIDs(commonPatternIDs, seen, batch, keys)
+
+			return nil
+		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load consent tracker patterns: %w", err)
+		return nil, fmt.Errorf("cannot walk tracker patterns: %w", err)
 	}
 
-	commonPatternIDs := commonPatternIDsForSnapshotTrackers(patterns, snapshot)
 	if len(commonPatternIDs) == 0 {
 		return nil, nil
 	}
@@ -363,7 +376,7 @@ func (s *GeneratedDocumentService) buildTrackerPolicyThirdParties(
 		return nil, fmt.Errorf("cannot load common tracker patterns: %w", err)
 	}
 
-	seen := make(map[gid.GID]struct{}, len(commonPatterns))
+	seenParty := make(map[gid.GID]struct{}, len(commonPatterns))
 	commonThirdPartyIDs := make([]gid.GID, 0, len(commonPatterns))
 
 	for _, cp := range commonPatterns {
@@ -371,11 +384,11 @@ func (s *GeneratedDocumentService) buildTrackerPolicyThirdParties(
 			continue
 		}
 
-		if _, ok := seen[*cp.CommonThirdPartyID]; ok {
+		if _, ok := seenParty[*cp.CommonThirdPartyID]; ok {
 			continue
 		}
 
-		seen[*cp.CommonThirdPartyID] = struct{}{}
+		seenParty[*cp.CommonThirdPartyID] = struct{}{}
 		commonThirdPartyIDs = append(commonThirdPartyIDs, *cp.CommonThirdPartyID)
 	}
 
@@ -405,11 +418,9 @@ func snapshotTrackerMaxAge(maxAge *int) int {
 	return *maxAge
 }
 
-// Excluded and extension-sourced patterns are not attributed vendors.
-func commonPatternIDsForSnapshotTrackers(
-	patterns coredata.TrackerPatterns,
+func snapshotTrackerKeys(
 	snapshot coredata.CookieBannerVersionSnapshot,
-) []gid.GID {
+) map[snapshotTrackerKey]struct{} {
 	keys := make(map[snapshotTrackerKey]struct{})
 
 	for _, category := range snapshot.Categories {
@@ -422,12 +433,30 @@ func commonPatternIDsForSnapshotTrackers(
 		}
 	}
 
+	return keys
+}
+
+// Excluded and extension-sourced patterns are not attributed vendors.
+func commonPatternIDsForSnapshotTrackers(
+	patterns coredata.TrackerPatterns,
+	snapshot coredata.CookieBannerVersionSnapshot,
+) []gid.GID {
+	return appendCommonPatternIDs(nil, nil, patterns, snapshotTrackerKeys(snapshot))
+}
+
+func appendCommonPatternIDs(
+	ids []gid.GID,
+	seen map[gid.GID]struct{},
+	patterns coredata.TrackerPatterns,
+	keys map[snapshotTrackerKey]struct{},
+) []gid.GID {
 	if len(keys) == 0 {
-		return nil
+		return ids
 	}
 
-	seen := make(map[gid.GID]struct{})
-	var ids []gid.GID
+	if seen == nil {
+		seen = make(map[gid.GID]struct{})
+	}
 
 	for _, pattern := range patterns {
 		if pattern.Excluded {
