@@ -382,6 +382,7 @@ func (r *Resolver) ListRisksTool(ctx context.Context, req *mcp.CallToolRequest, 
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot list risks", log.Error(err))
+
 		return nil, types.ListRisksOutput{}, fmt.Errorf("internal server error")
 	}
 
@@ -2443,6 +2444,7 @@ func (r *Resolver) ListTasksTool(ctx context.Context, req *mcp.CallToolRequest, 
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load task external links", log.Error(err))
+
 		return nil, types.ListTasksOutput{}, fmt.Errorf("internal error")
 	}
 
@@ -2453,6 +2455,7 @@ func (r *Resolver) ListTasksTool(ctx context.Context, req *mcp.CallToolRequest, 
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load task internal controls", log.Error(err))
+
 		return nil, types.ListTasksOutput{}, fmt.Errorf("internal error")
 	}
 
@@ -2481,6 +2484,7 @@ func (r *Resolver) GetTaskTool(ctx context.Context, req *mcp.CallToolRequest, in
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load task external link", log.Error(err))
+
 		return nil, types.GetTaskOutput{}, fmt.Errorf("internal error")
 	}
 
@@ -2590,6 +2594,7 @@ func (r *Resolver) AddTaskTool(ctx context.Context, req *mcp.CallToolRequest, in
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load task external link", log.Error(err))
+
 		return nil, types.AddTaskOutput{}, fmt.Errorf("internal error")
 	}
 
@@ -2649,6 +2654,7 @@ func (r *Resolver) UpdateTaskTool(ctx context.Context, req *mcp.CallToolRequest,
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load task external link", log.Error(err))
+
 		return nil, types.UpdateTaskOutput{}, fmt.Errorf("internal error")
 	}
 
@@ -2681,6 +2687,7 @@ func (r *Resolver) AssignTaskTool(ctx context.Context, req *mcp.CallToolRequest,
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load task external link", log.Error(err))
+
 		return nil, types.AssignTaskOutput{}, fmt.Errorf("internal error")
 	}
 
@@ -2713,6 +2720,7 @@ func (r *Resolver) UnassignTaskTool(ctx context.Context, req *mcp.CallToolReques
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load task external link", log.Error(err))
+
 		return nil, types.UnassignTaskOutput{}, fmt.Errorf("internal error")
 	}
 
@@ -3363,6 +3371,7 @@ func (r *Resolver) ListInternalControlTasksTool(ctx context.Context, req *mcp.Ca
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load task external links", log.Error(err))
+
 		return nil, types.ListInternalControlTasksOutput{}, fmt.Errorf("internal error")
 	}
 
@@ -3373,6 +3382,7 @@ func (r *Resolver) ListInternalControlTasksTool(ctx context.Context, req *mcp.Ca
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load task internal controls", log.Error(err))
+
 		return nil, types.ListInternalControlTasksOutput{}, fmt.Errorf("internal error")
 	}
 
@@ -3410,6 +3420,7 @@ func (r *Resolver) ListInternalControlEvidencesTool(ctx context.Context, req *mc
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load evidence files", log.Error(err))
+
 		return nil, types.ListInternalControlEvidencesOutput{}, fmt.Errorf("internal error")
 	}
 
@@ -11560,6 +11571,7 @@ func (r *Resolver) ListTaskCommentsTool(ctx context.Context, req *mcp.CallToolRe
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot list task comments", log.Error(err))
+
 		return nil, types.ListTaskCommentsOutput{}, fmt.Errorf("internal server error")
 	}
 
@@ -11764,6 +11776,7 @@ func (r *Resolver) ListTaskActivitiesTool(ctx context.Context, req *mcp.CallTool
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot list task activities", log.Error(err))
+
 		return nil, types.ListTaskActivitiesOutput{}, fmt.Errorf("internal server error")
 	}
 
@@ -12217,6 +12230,7 @@ func (r *Resolver) PublishTaskToLinearTool(ctx context.Context, req *mcp.CallToo
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load published task", log.Error(err))
+
 		return nil, types.PublishTaskToLinearOutput{}, fmt.Errorf("internal error")
 	}
 
@@ -12227,6 +12241,7 @@ func (r *Resolver) PublishTaskToLinearTool(ctx context.Context, req *mcp.CallToo
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load published task external link", log.Error(err))
+
 		return nil, types.PublishTaskToLinearOutput{}, fmt.Errorf("internal error")
 	}
 
@@ -12251,6 +12266,7 @@ func (r *Resolver) UnlinkTaskExternalTool(ctx context.Context, req *mcp.CallTool
 			}
 
 			r.logger.ErrorCtx(ctx, "cannot unlink task external link", log.Error(err))
+
 			return nil, types.UnlinkTaskExternalOutput{}, fmt.Errorf("internal error")
 		}
 	}
@@ -12262,6 +12278,7 @@ func (r *Resolver) UnlinkTaskExternalTool(ctx context.Context, req *mcp.CallTool
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load unlinked task", log.Error(err))
+
 		return nil, types.UnlinkTaskExternalOutput{}, fmt.Errorf("internal error")
 	}
 
@@ -12272,6 +12289,7 @@ func (r *Resolver) UnlinkTaskExternalTool(ctx context.Context, req *mcp.CallTool
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load unlinked task external link", log.Error(err))
+
 		return nil, types.UnlinkTaskExternalOutput{}, fmt.Errorf("internal error")
 	}
 
@@ -12491,6 +12509,7 @@ func (r *Resolver) LinkTaskToLinearTool(ctx context.Context, req *mcp.CallToolRe
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load linked task", log.Error(err))
+
 		return nil, types.LinkTaskToLinearOutput{}, fmt.Errorf("internal error")
 	}
 
@@ -12501,6 +12520,7 @@ func (r *Resolver) LinkTaskToLinearTool(ctx context.Context, req *mcp.CallToolRe
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load linked task external link", log.Error(err))
+
 		return nil, types.LinkTaskToLinearOutput{}, fmt.Errorf("internal error")
 	}
 
@@ -13421,6 +13441,7 @@ func (r *Resolver) ListFindingTasksTool(ctx context.Context, req *mcp.CallToolRe
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load task external links", log.Error(err))
+
 		return nil, types.ListFindingTasksOutput{}, fmt.Errorf("internal error")
 	}
 
@@ -13431,6 +13452,7 @@ func (r *Resolver) ListFindingTasksTool(ctx context.Context, req *mcp.CallToolRe
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load task internal controls", log.Error(err))
+
 		return nil, types.ListFindingTasksOutput{}, fmt.Errorf("internal error")
 	}
 

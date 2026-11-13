@@ -375,10 +375,12 @@ WHERE
 	}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
+
 	cursorArgs, err := cursor.SQLArguments()
 	if err != nil {
 		return fmt.Errorf("cannot validate cursor: %w", err)
 	}
+
 	maps.Copy(args, cursorArgs)
 
 	rows, err := conn.Query(ctx, q, args)
@@ -606,10 +608,12 @@ WHERE
 		"tracker_pattern_id": trackerPatternID,
 	}
 	maps.Copy(args, scope.SQLArguments())
+
 	cursorArgs, err := cursor.SQLArguments()
 	if err != nil {
 		return fmt.Errorf("cannot validate cursor: %w", err)
 	}
+
 	maps.Copy(args, cursorArgs)
 
 	rows, err := conn.Query(ctx, q, args)
@@ -676,10 +680,12 @@ WHERE
 	args := pgx.StrictNamedArgs{"cookie_banner_id": cookieBannerID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
+
 	cursorArgs, err := cursor.SQLArguments()
 	if err != nil {
 		return fmt.Errorf("cannot validate cursor: %w", err)
 	}
+
 	maps.Copy(args, cursorArgs)
 
 	rows, err := conn.Query(ctx, q, args)

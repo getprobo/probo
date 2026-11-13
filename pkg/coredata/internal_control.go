@@ -301,10 +301,12 @@ WHERE %s
 	args := pgx.StrictNamedArgs{"risk_id": riskID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
+
 	cursorArgs, err := cursor.SQLArguments()
 	if err != nil {
 		return fmt.Errorf("cannot validate cursor: %w", err)
 	}
+
 	maps.Copy(args, cursorArgs)
 
 	rows, err := conn.Query(ctx, q, args)
@@ -447,10 +449,12 @@ WHERE %s
 	args := pgx.StrictNamedArgs{"treatment_plan_id": treatmentPlanID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
+
 	cursorArgs, err := cursor.SQLArguments()
 	if err != nil {
 		return fmt.Errorf("cannot validate cursor: %w", err)
 	}
+
 	maps.Copy(args, cursorArgs)
 
 	rows, err := conn.Query(ctx, q, args)
@@ -591,10 +595,12 @@ WHERE
 	}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
+
 	cursorArgs, err := cursor.SQLArguments()
 	if err != nil {
 		return fmt.Errorf("cannot validate cursor: %w", err)
 	}
+
 	maps.Copy(args, cursorArgs)
 
 	rows, err := conn.Query(ctx, q, args)
@@ -815,10 +821,12 @@ WHERE %s
 	args := pgx.StrictNamedArgs{"control_id": controlID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
+
 	cursorArgs, err := cursor.SQLArguments()
 	if err != nil {
 		return fmt.Errorf("cannot validate cursor: %w", err)
 	}
+
 	maps.Copy(args, cursorArgs)
 
 	rows, err := conn.Query(ctx, q, args)
@@ -949,10 +957,12 @@ WHERE
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
+
 	cursorArgs, err := cursor.SQLArguments()
 	if err != nil {
 		return fmt.Errorf("cannot validate cursor: %w", err)
 	}
+
 	maps.Copy(args, cursorArgs)
 
 	rows, err := conn.Query(ctx, q, args)
@@ -1549,10 +1559,12 @@ WHERE %s
 	args := pgx.StrictNamedArgs{"third_party_id": thirdPartyID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
+
 	cursorArgs, err := cursor.SQLArguments()
 	if err != nil {
 		return fmt.Errorf("cannot validate cursor: %w", err)
 	}
+
 	maps.Copy(args, cursorArgs)
 
 	rows, err := conn.Query(ctx, q, args)
@@ -1695,10 +1707,12 @@ WHERE %s
 	args := pgx.StrictNamedArgs{"task_id": taskID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
+
 	cursorArgs, err := cursor.SQLArguments()
 	if err != nil {
 		return fmt.Errorf("cannot validate cursor: %w", err)
 	}
+
 	maps.Copy(args, cursorArgs)
 
 	rows, err := conn.Query(ctx, q, args)

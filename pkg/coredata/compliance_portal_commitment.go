@@ -367,10 +367,12 @@ WHERE
 
 	args := pgx.StrictNamedArgs{"group_id": groupID}
 	maps.Copy(args, scope.SQLArguments())
+
 	cursorArgs, err := cursor.SQLArguments()
 	if err != nil {
 		return fmt.Errorf("cannot validate cursor: %w", err)
 	}
+
 	maps.Copy(args, cursorArgs)
 
 	rows, err := conn.Query(ctx, q, args)

@@ -413,10 +413,12 @@ WHERE
 
 	args := pgx.NamedArgs{"compliance_portal_id": compliancePortalID}
 	maps.Copy(args, scope.SQLArguments())
+
 	cursorArgs, err := cursor.SQLArguments()
 	if err != nil {
 		return fmt.Errorf("cannot validate cursor: %w", err)
 	}
+
 	maps.Copy(args, cursorArgs)
 
 	rows, err := conn.Query(ctx, q, args)
@@ -474,10 +476,12 @@ WHERE %s
 
 	args := pgx.NamedArgs{"compliance_portal_id": compliancePortalID}
 	maps.Copy(args, scope.SQLArguments())
+
 	cursorArgs, err := cursor.SQLArguments()
 	if err != nil {
 		return fmt.Errorf("cannot validate cursor: %w", err)
 	}
+
 	maps.Copy(args, cursorArgs)
 
 	rows, err := conn.Query(ctx, q, args)

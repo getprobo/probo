@@ -380,10 +380,12 @@ WHERE
 
 	args := pgx.StrictNamedArgs{"mailing_list_id": mailingListID}
 	maps.Copy(args, scope.SQLArguments())
+
 	cursorArgs, err := cursor.SQLArguments()
 	if err != nil {
 		return fmt.Errorf("cannot validate cursor: %w", err)
 	}
+
 	maps.Copy(args, cursorArgs)
 
 	rows, err := conn.Query(ctx, q, args)
@@ -432,10 +434,12 @@ WHERE
 		"mailing_list_id": mailingListID,
 	}
 	maps.Copy(args, scope.SQLArguments())
+
 	cursorArgs, err := cursor.SQLArguments()
 	if err != nil {
 		return fmt.Errorf("cannot validate cursor: %w", err)
 	}
+
 	maps.Copy(args, cursorArgs)
 
 	rows, err := conn.Query(ctx, q, args)

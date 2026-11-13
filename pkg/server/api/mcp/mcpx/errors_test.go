@@ -114,6 +114,7 @@ func TestMapError(t *testing.T) {
 
 			require.Error(t, got)
 			assert.Equal(t, tt.want, got.Error())
+
 			if tt.wantIs != nil {
 				assert.ErrorIs(t, got, tt.wantIs)
 			}
