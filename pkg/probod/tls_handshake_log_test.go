@@ -33,19 +33,19 @@ import (
 	"go.gearno.de/kit/log"
 )
 
-func TestNoisyTLSHandshakeError_DropsKnownFragments(t *testing.T) {
+func TestSkipNoisyTLSHandshake_DropsKnownFragments(t *testing.T) {
 	t.Parallel()
 
 	for _, fragment := range noisyTLSHandshakeFragments {
 		t.Run(fragment, func(t *testing.T) {
 			t.Parallel()
 
-			assert.True(t, noisyTLSHandshakeError(fragment))
+			assert.True(t, skipNoisyTLSHandshake(log.LevelError, fragment, nil))
 		})
 	}
 }
 
-func TestNoisyTLSHandshakeError_KeepsOperationalErrors(t *testing.T) {
+func TestSkipNoisyTLSHandshake_KeepsOperationalErrors(t *testing.T) {
 	t.Parallel()
 
 	kept := []string{
@@ -58,12 +58,12 @@ func TestNoisyTLSHandshakeError_KeepsOperationalErrors(t *testing.T) {
 		t.Run(msg, func(t *testing.T) {
 			t.Parallel()
 
-			assert.False(t, noisyTLSHandshakeError(msg))
+			assert.False(t, skipNoisyTLSHandshake(log.LevelError, msg, nil))
 		})
 	}
 }
 
-func TestIgnoreNoisyTLSHandshakeErrors_DropsScannerNoise(t *testing.T) {
+func TestHTTPSServerLogger_DropsScannerNoise(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
@@ -73,13 +73,13 @@ func TestIgnoreNoisyTLSHandshakeErrors_DropsScannerNoise(t *testing.T) {
 		log.WithOutput(&buf),
 		log.WithFormat(log.FormatJSON),
 	)
+	httpsServerLogger := logger.Named("https", log.SkipMatch(skipNoisyTLSHandshake))
 	server := httpserver.NewServer(
 		"127.0.0.1:0",
 		http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}),
-		httpserver.WithLogger(logger),
+		httpserver.WithLogger(httpsServerLogger),
 		httpserver.WithRegisterer(prometheus.NewRegistry()),
 	)
-	ignoreNoisyTLSHandshakeErrors(server)
 
 	server.ErrorLog.Printf(
 		"http: TLS handshake error from 192.0.2.1:30050: tls: no key exchanges supported by both client and server",
@@ -92,7 +92,7 @@ func TestIgnoreNoisyTLSHandshakeErrors_DropsScannerNoise(t *testing.T) {
 
 	var entry map[string]any
 	require.NoError(t, json.Unmarshal(buf.Bytes(), &entry))
-	assert.Equal(t, "probod.http.server", entry["name"])
+	assert.Equal(t, "probod.https.http.server", entry["name"])
 	assert.Equal(t, kept, entry["msg"])
 	assert.Equal(t, "ERROR", entry["level"])
 }

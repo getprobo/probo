@@ -21,12 +21,13 @@
 package probod
 
 import (
-	"io"
-	"log"
-	"net/http"
 	"strings"
+
+	"go.gearno.de/kit/log"
 )
 
+// noisyTLSHandshakeFragments are client handshake failures. Scanners emit
+// them constantly, and they do not describe a fault in this server.
 var noisyTLSHandshakeFragments = []string{
 	"tls: no certificates configured",
 	"client sent an HTTP request to an HTTPS server",
@@ -42,7 +43,7 @@ var noisyTLSHandshakeFragments = []string{
 	"tls: received record with version",
 }
 
-func noisyTLSHandshakeError(msg string) bool {
+func skipNoisyTLSHandshake(_ log.Level, msg string, _ []log.Attr) bool {
 	for _, fragment := range noisyTLSHandshakeFragments {
 		if strings.Contains(msg, fragment) {
 			return true
@@ -50,26 +51,4 @@ func noisyTLSHandshakeError(msg string) bool {
 	}
 
 	return false
-}
-
-type tlsHandshakeLogWriter struct {
-	dst io.Writer
-}
-
-func (w tlsHandshakeLogWriter) Write(p []byte) (int, error) {
-	if noisyTLSHandshakeError(string(p)) {
-		return len(p), nil
-	}
-
-	return w.dst.Write(p)
-}
-
-// Filter the server ErrorLog. SkipMatch via Logger.Named("") leaves an
-// empty path segment, so the recorded name is "probod..http.server".
-func ignoreNoisyTLSHandshakeErrors(server *http.Server) {
-	server.ErrorLog = log.New(
-		tlsHandshakeLogWriter{dst: server.ErrorLog.Writer()},
-		"",
-		0,
-	)
 }

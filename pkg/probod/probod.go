@@ -2229,14 +2229,14 @@ func (impl *Implm) runCompliancePortalServer(
 
 	handler := acmeHandler.Handle(trustRouter)
 
+	httpsServerLogger := l.Named("https", log.SkipMatch(skipNoisyTLSHandshake))
 	httpsServer := httpserver.NewServer(
 		impl.cfg.CompliancePortal.HTTPSAddr,
 		handler,
-		httpserver.WithLogger(l),
+		httpserver.WithLogger(httpsServerLogger),
 		httpserver.WithRegisterer(r),
 		httpserver.WithTracerProvider(tp),
 	)
-	ignoreNoisyTLSHandshakeErrors(httpsServer)
 
 	httpsServer.TLSConfig = &tls.Config{
 		GetCertificate: certSelector.GetHandshakeCertificate,
