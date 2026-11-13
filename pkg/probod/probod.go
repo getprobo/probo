@@ -2229,27 +2229,14 @@ func (impl *Implm) runCompliancePortalServer(
 
 	handler := acmeHandler.Handle(trustRouter)
 
-	ignoreTLSHandshakeErrors := func(level log.Level, msg string, attrs []log.Attr) bool {
-		return strings.Contains(msg, "tls: no certificates configured") ||
-			strings.Contains(msg, "client sent an HTTP request to an HTTPS server") ||
-			strings.Contains(msg, "tls: client offered only unsupported versions") ||
-			strings.Contains(msg, "EOF") ||
-			strings.Contains(msg, " i/o timeout") ||
-			strings.Contains(msg, "tls: first record does not look like a TLS handshake") ||
-			strings.Contains(msg, "tls: client requested unsupported application protocols") ||
-			strings.Contains(msg, "read: connection reset by peer") ||
-			strings.Contains(msg, "tls: unsupported SSLv2 handshake received") ||
-			strings.Contains(msg, "tls: no cipher suite supported by both client and server") ||
-			strings.Contains(msg, "tls: received record with version")
-	}
-	httpServerLogger := l.Named("", log.SkipMatch(ignoreTLSHandshakeErrors))
 	httpsServer := httpserver.NewServer(
 		impl.cfg.CompliancePortal.HTTPSAddr,
 		handler,
-		httpserver.WithLogger(httpServerLogger),
+		httpserver.WithLogger(l),
 		httpserver.WithRegisterer(r),
 		httpserver.WithTracerProvider(tp),
 	)
+	ignoreNoisyTLSHandshakeErrors(httpsServer)
 
 	httpsServer.TLSConfig = &tls.Config{
 		GetCertificate: certSelector.GetHandshakeCertificate,
