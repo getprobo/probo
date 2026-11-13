@@ -56,7 +56,7 @@ type (
 		UserType               string `json:"-"`
 		ManagerValue           string `json:"-"`
 		PreferredLanguage      string `json:"-"`
-		PhotoETag              string `json:"photoETag,omitempty"`
+		PhotoETag              string `json:"-"`
 		// PhotoETagKnown reports that PhotoETag was read from the directory.
 		// An empty PhotoETag is a removed picture only when this is true.
 		// A false value means the version was not read, and the bridge keeps
@@ -205,10 +205,15 @@ func (c *Client) UpdateUser(ctx context.Context, userID string, user *User) erro
 	return nil
 }
 
+// PhotoExtensionURN carries photoETag. RFC 7643 does not define that
+// attribute on the core User, so it travels in the Probo extension.
+const PhotoExtensionURN = "urn:ietf:params:scim:schemas:extension:probo:2.0:User"
+
 func buildUserPayload(user *User) map[string]any {
 	schemas := []string{
 		"urn:ietf:params:scim:schemas:core:2.0:User",
 		"urn:ietf:params:scim:schemas:extension:enterprise:2.0:User",
+		PhotoExtensionURN,
 	}
 
 	enterprise := map[string]any{
@@ -242,7 +247,9 @@ func buildUserPayload(user *User) map[string]any {
 			},
 		},
 		"urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": enterprise,
-		"photoETag": user.PhotoETag,
+		PhotoExtensionURN: map[string]any{
+			"photoETag": user.PhotoETag,
+		},
 	}
 
 	if len(user.Photo) > 0 {
@@ -343,7 +350,6 @@ func (u *User) UnmarshalJSON(data []byte) error {
 		ExternalID        string `json:"externalId"`
 		UserType          string `json:"userType"`
 		PreferredLanguage string `json:"preferredLanguage"`
-		PhotoETag         string `json:"photoETag"`
 		Name              struct {
 			GivenName  string `json:"givenName"`
 			FamilyName string `json:"familyName"`
@@ -364,6 +370,21 @@ func (u *User) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
+	var photo struct {
+		PhotoETag string `json:"photoETag"`
+	}
+
+	var envelope map[string]json.RawMessage
+	if err := json.Unmarshal(data, &envelope); err != nil {
+		return err
+	}
+
+	if extension, ok := envelope[PhotoExtensionURN]; ok {
+		if err := json.Unmarshal(extension, &photo); err != nil {
+			return err
+		}
+	}
+
 	u.ID = raw.ID
 	u.UserName = raw.UserName
 	u.DisplayName = raw.DisplayName
@@ -372,7 +393,7 @@ func (u *User) UnmarshalJSON(data []byte) error {
 	u.ExternalID = raw.ExternalID
 	u.UserType = raw.UserType
 	u.PreferredLanguage = raw.PreferredLanguage
-	u.PhotoETag = raw.PhotoETag
+	u.PhotoETag = photo.PhotoETag
 	u.GivenName = raw.Name.GivenName
 	u.FamilyName = raw.Name.FamilyName
 	u.EmployeeNumber = raw.Enterprise.EmployeeNumber

@@ -198,6 +198,7 @@ func (s *Service) CreateUser(
 		staged     *coredata.File
 		unreadable bool
 		attached   bool
+		photoETag  string
 	)
 
 	if attrs.PhotoURI != nil || attrs.PhotoETag != nil {
@@ -420,6 +421,13 @@ func (s *Service) CreateUser(
 
 		attached = photoAttached
 
+		etag, etagErr := s.storedPhotoETag(ctx, tx, scope, profile.ID)
+		if etagErr != nil {
+			return etagErr
+		}
+
+		photoETag = etag
+
 		if err := webhook.InsertUpdateData(ctx, tx, scope, config.OrganizationID, eventType, webhooktypes.NewUser(profile, membership), previousUser); err != nil {
 			return fmt.Errorf("cannot insert webhook event: %w", err)
 		}
@@ -434,7 +442,7 @@ func (s *Service) CreateUser(
 		return scim.Resource{}, err
 	}
 
-	return userToResource(profile), nil
+	return userToResource(profile, photoETag), nil
 }
 
 func (s *Service) GetUser(
@@ -444,7 +452,10 @@ func (s *Service) GetUser(
 ) (scim.Resource, error) {
 	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
 
-	var profile *coredata.MembershipProfile
+	var (
+		profile   *coredata.MembershipProfile
+		photoETag string
+	)
 
 	err := s.pg.WithConn(
 		ctx,
@@ -462,6 +473,13 @@ func (s *Service) GetUser(
 				return scimerrors.ScimErrorResourceNotFound(profileID.String())
 			}
 
+			etag, err := s.storedPhotoETag(ctx, conn, scope, profile.ID)
+			if err != nil {
+				return err
+			}
+
+			photoETag = etag
+
 			return nil
 		},
 	)
@@ -469,7 +487,7 @@ func (s *Service) GetUser(
 		return scim.Resource{}, err
 	}
 
-	return userToResource(profile), nil
+	return userToResource(profile, photoETag), nil
 }
 
 func (s *Service) ListUsers(
@@ -493,7 +511,10 @@ func (s *Service) ListUsers(
 
 	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
 
-	var profiles coredata.MembershipProfiles
+	var (
+		profiles   coredata.MembershipProfiles
+		photoETags = make(map[gid.GID]string)
+	)
 
 	err = s.pg.WithConn(
 		ctx,
@@ -519,6 +540,20 @@ func (s *Service) ListUsers(
 
 			profiles = loaded
 
+			profileIDs := make([]gid.GID, 0, len(profiles))
+			for _, p := range profiles {
+				profileIDs = append(profileIDs, p.ID)
+			}
+
+			photos := coredata.SCIMProfilePhotos{}
+			if err := photos.LoadByMembershipProfileIDs(ctx, conn, scope, profileIDs); err != nil {
+				return fmt.Errorf("cannot load scim profile photos: %w", err)
+			}
+
+			for _, photo := range photos {
+				photoETags[photo.MembershipProfileID] = photo.ETag
+			}
+
 			return nil
 		},
 	)
@@ -528,7 +563,7 @@ func (s *Service) ListUsers(
 
 	resources := make([]scim.Resource, 0, len(profiles))
 	for _, p := range profiles {
-		resources = append(resources, userToResource(p))
+		resources = append(resources, userToResource(p, photoETags[p.ID]))
 	}
 
 	return resources, len(resources), nil
@@ -542,12 +577,12 @@ func (s *Service) ReplaceUser(
 ) (scim.Resource, error) {
 	attrs := ParseUserFromReplaceAttributes(attributes)
 
-	profile, err := s.updateUser(ctx, config, profileID, attrs)
+	profile, photoETag, err := s.updateUser(ctx, config, profileID, attrs)
 	if err != nil {
 		return scim.Resource{}, err
 	}
 
-	return userToResource(profile), nil
+	return userToResource(profile, photoETag), nil
 }
 
 func (s *Service) PatchUser(
@@ -558,12 +593,12 @@ func (s *Service) PatchUser(
 ) (scim.Resource, error) {
 	attrs := ParseUserFromPatchOperations(operations)
 
-	profile, err := s.updateUser(ctx, config, profileID, attrs)
+	profile, photoETag, err := s.updateUser(ctx, config, profileID, attrs)
 	if err != nil {
 		return scim.Resource{}, err
 	}
 
-	return userToResource(profile), nil
+	return userToResource(profile, photoETag), nil
 }
 
 func (s *Service) updateUser(
@@ -571,7 +606,7 @@ func (s *Service) updateUser(
 	config *coredata.SCIMConfiguration,
 	profileID gid.GID,
 	attrs scimReplaceAttributes,
-) (*coredata.MembershipProfile, error) {
+) (*coredata.MembershipProfile, string, error) {
 	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
 	now := time.Now()
 	var (
@@ -579,12 +614,13 @@ func (s *Service) updateUser(
 		staged     *coredata.File
 		unreadable bool
 		attached   bool
+		photoETag  string
 	)
 
 	if attrs.PhotoURI != nil || attrs.PhotoETag != nil {
 		storedPhotoETag, identityID, err := s.storedPhotoVersion(ctx, config, profileID)
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
 
 		var reason string
@@ -920,6 +956,13 @@ func (s *Service) updateUser(
 
 			attached = photoAttached
 
+			etag, etagErr := s.storedPhotoETag(ctx, tx, scope, profile.ID)
+			if etagErr != nil {
+				return etagErr
+			}
+
+			photoETag = etag
+
 			if err := webhook.InsertUpdateData(ctx, tx, scope, config.OrganizationID, coredata.WebhookEventTypeUserUpdated, webhooktypes.NewUser(profile, membership), previousUser); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
@@ -932,10 +975,10 @@ func (s *Service) updateUser(
 	}
 
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
-	return profile, nil
+	return profile, photoETag, nil
 }
 
 // createPhotoTarget returns the identity that a created user will have and
@@ -982,9 +1025,12 @@ func (s *Service) createPhotoTarget(
 				return fmt.Errorf("cannot load profile: %w", err)
 			}
 
-			if profile.SCIMPhotoETag != nil {
-				stored = *profile.SCIMPhotoETag
+			photoETag, err := s.storedPhotoETag(ctx, conn, scope, profile.ID)
+			if err != nil {
+				return err
 			}
+
+			stored = photoETag
 
 			return nil
 		},
@@ -1022,9 +1068,13 @@ func (s *Service) storedPhotoVersion(
 			}
 
 			identityID = profile.IdentityID
-			if profile.SCIMPhotoETag != nil {
-				stored = *profile.SCIMPhotoETag
+
+			photoETag, err := s.storedPhotoETag(ctx, conn, scope, profile.ID)
+			if err != nil {
+				return err
 			}
+
+			stored = photoETag
 
 			return nil
 		},
@@ -1632,7 +1682,8 @@ func ParseUserFromPatchOperations(operations []scim.PatchOperation) scimReplaceA
 				attrs.ManagerValue = &empty
 			case "photos":
 				attrs.PhotoURI = &empty
-			case "photoetag":
+			case "urn:ietf:params:scim:schemas:extension:probo:2.0:user",
+				"urn:ietf:params:scim:schemas:extension:probo:2.0:user:photoetag":
 				attrs.PhotoETag = &empty
 			}
 
@@ -1978,7 +2029,13 @@ func ParseUserFromPatchOperations(operations []scim.PatchOperation) scimReplaceA
 				} else if text, ok := op.Value.(string); ok {
 					attrs.PhotoURI = &text
 				}
-			case "photoetag":
+			case "urn:ietf:params:scim:schemas:extension:probo:2.0:user":
+				if extension, ok := op.Value.(map[string]any); ok {
+					if etag := photoETagFromExtension(map[string]any{PhotoExtensionURN: extension}); etag != nil {
+						attrs.PhotoETag = etag
+					}
+				}
+			case "urn:ietf:params:scim:schemas:extension:probo:2.0:user:photoetag":
 				if text, ok := op.Value.(string); ok {
 					attrs.PhotoETag = &text
 				}
@@ -2003,7 +2060,7 @@ func ParseUserFromPatchOperations(operations []scim.PatchOperation) scimReplaceA
 	return attrs
 }
 
-func userToResource(p *coredata.MembershipProfile) scim.Resource {
+func userToResource(p *coredata.MembershipProfile, photoETag string) scim.Resource {
 	externalID := optional.NewString(p.ID.String())
 	if p.ExternalID != nil {
 		externalID = optional.NewString(*p.ExternalID)
@@ -2034,7 +2091,7 @@ func userToResource(p *coredata.MembershipProfile) scim.Resource {
 		},
 	}
 
-	return scim.Resource{
+	resource := scim.Resource{
 		ID:         p.ID.String(),
 		ExternalID: externalID,
 		Attributes: scim.ResourceAttributes{
@@ -2056,7 +2113,6 @@ func userToResource(p *coredata.MembershipProfile) scim.Resource {
 			"timezone":          ref.UnrefOrZero(p.Timezone),
 			"profileUrl":        ref.UnrefOrZero(p.ProfileUrl),
 			"preferredLanguage": ref.UnrefOrZero(p.PreferredLanguage),
-			"photoETag":         ref.UnrefOrZero(p.SCIMPhotoETag),
 			"urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": enterpriseAttrs,
 		},
 		Meta: scim.Meta{
@@ -2064,4 +2120,12 @@ func userToResource(p *coredata.MembershipProfile) scim.Resource {
 			LastModified: &p.UpdatedAt,
 		},
 	}
+
+	if photoETag != "" {
+		resource.Attributes[PhotoExtensionURN] = map[string]any{
+			"photoETag": photoETag,
+		}
+	}
+
+	return resource
 }

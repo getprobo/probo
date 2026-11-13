@@ -217,7 +217,10 @@ func TestParseUserFromAttributes_Photos(t *testing.T) {
 		"photos": []any{
 			map[string]any{"value": "https://cdn.example.com/ada.jpg", "type": "photo", "primary": true},
 		},
-		"photoETag": "etag-1",
+		"photoETag": "not-a-core-attribute",
+		PhotoExtensionURN: map[string]any{
+			"photoETag": "etag-1",
+		},
 	})
 
 	require.NotNil(t, attrs.PhotoURI)

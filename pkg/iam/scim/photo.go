@@ -26,6 +26,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -66,25 +67,55 @@ const (
 
 func photoInputFromMap(attributes map[string]any) (uri *string, etag *string) {
 	for key, value := range attributes {
-		switch strings.ToLower(key) {
-		case "photos":
-			selected, ok := selectPhotoURI(value)
-			if !ok {
-				continue
-			}
-
-			uri = &selected
-		case "photoetag":
-			text, ok := value.(string)
-			if !ok {
-				continue
-			}
-
-			etag = &text
+		if !strings.EqualFold(key, "photos") {
+			continue
 		}
+
+		selected, ok := selectPhotoURI(value)
+		if !ok {
+			continue
+		}
+
+		uri = &selected
 	}
 
-	return uri, etag
+	return uri, photoETagFromExtension(attributes)
+}
+
+func photoETagFromExtension(attributes map[string]any) *string {
+	var extension map[string]any
+
+	for key, value := range attributes {
+		if !strings.EqualFold(key, PhotoExtensionURN) {
+			continue
+		}
+
+		parsed, ok := value.(map[string]any)
+		if !ok {
+			return nil
+		}
+
+		extension = parsed
+	}
+
+	if extension == nil {
+		return nil
+	}
+
+	for key, value := range extension {
+		if !strings.EqualFold(key, "photoETag") {
+			continue
+		}
+
+		text, ok := value.(string)
+		if !ok {
+			return nil
+		}
+
+		return &text
+	}
+
+	return nil
 }
 
 func selectPhotoURI(raw any) (string, bool) {
@@ -347,19 +378,19 @@ func (s *Service) syncProfilePhoto(
 	staged *coredata.File,
 	unreadable bool,
 ) (bool, error) {
-	stored := ""
-	if profile.SCIMPhotoETag != nil {
-		stored = *profile.SCIMPhotoETag
+	stored, err := s.storedPhotoETag(ctx, tx, scope, profile.ID)
+	if err != nil {
+		return false, err
 	}
 
 	switch photoActionFor(stored, photo) {
 	case photoActionNone:
 		return false, nil
 	case photoActionClear:
-		return false, s.savePhotoETag(ctx, tx, scope, profile, nil)
+		return false, s.deletePhotoETag(ctx, tx, scope, profile.ID)
 	case photoActionApply:
 		if unreadable {
-			return false, s.savePhotoETag(ctx, tx, scope, profile, &photo.ETag)
+			return false, s.savePhotoETag(ctx, tx, scope, profile, photo.ETag)
 		}
 
 		if staged == nil {
@@ -493,7 +524,25 @@ func (s *Service) attachProfilePhoto(
 		return fmt.Errorf("cannot update identity avatar: %w", err)
 	}
 
-	return s.savePhotoETag(ctx, tx, scope, profile, &photo.ETag)
+	return s.savePhotoETag(ctx, tx, scope, profile, photo.ETag)
+}
+
+func (s *Service) storedPhotoETag(
+	ctx context.Context,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	profileID gid.GID,
+) (string, error) {
+	photo := &coredata.SCIMProfilePhoto{}
+	if err := photo.LoadByMembershipProfileID(ctx, conn, scope, profileID); err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return "", nil
+		}
+
+		return "", fmt.Errorf("cannot load scim profile photo: %w", err)
+	}
+
+	return photo.ETag, nil
 }
 
 func (s *Service) savePhotoETag(
@@ -501,35 +550,32 @@ func (s *Service) savePhotoETag(
 	tx pg.Tx,
 	scope coredata.Scoper,
 	profile *coredata.MembershipProfile,
-	etag *string,
+	etag string,
 ) error {
-	next := ""
-	if etag != nil {
-		next = *etag
+	now := time.Now()
+	photo := &coredata.SCIMProfilePhoto{
+		MembershipProfileID: profile.ID,
+		OrganizationID:      profile.OrganizationID,
+		ETag:                etag,
+		CreatedAt:           now,
+		UpdatedAt:           now,
 	}
 
-	current := ""
-	if profile.SCIMPhotoETag != nil {
-		current = *profile.SCIMPhotoETag
-	}
-
-	if current == next {
-		return nil
-	}
-
-	if next == "" {
-		profile.SCIMPhotoETag = nil
-	} else {
-		value := next
-		profile.SCIMPhotoETag = &value
-	}
-
-	profile.UpdatedAt = time.Now()
-	if err := profile.Update(ctx, tx, scope); err != nil {
-		return fmt.Errorf("cannot update profile photo etag: %w", err)
+	if err := photo.Upsert(ctx, tx, scope); err != nil {
+		return fmt.Errorf("cannot save scim profile photo: %w", err)
 	}
 
 	return nil
+}
+
+func (s *Service) deletePhotoETag(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	profileID gid.GID,
+) error {
+	photo := &coredata.SCIMProfilePhoto{}
+	return photo.Delete(ctx, tx, scope, profileID)
 }
 
 func (s *Service) warnPhoto(ctx context.Context, profile *coredata.MembershipProfile, reason string) {

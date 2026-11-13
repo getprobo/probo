@@ -23,7 +23,12 @@ package scim
 import (
 	"github.com/elimity-com/scim/optional"
 	"github.com/elimity-com/scim/schema"
+	scimclient "go.probo.inc/probo/pkg/iam/scim/bridge/client"
 )
+
+// PhotoExtensionURN is the Probo User extension. photoETag is not a core
+// User attribute in RFC 7643, so the directory photo version lives here.
+const PhotoExtensionURN = scimclient.PhotoExtensionURN
 
 func UserSchema() schema.Schema {
 	return schema.Schema{
@@ -152,6 +157,16 @@ func UserSchema() schema.Schema {
 					},
 				},
 			),
+		},
+	}
+}
+
+func PhotoExtensionSchema() schema.Schema {
+	return schema.Schema{
+		ID:          PhotoExtensionURN,
+		Name:        optional.NewString("ProboUser"),
+		Description: optional.NewString("Probo User extension"),
+		Attributes: []schema.CoreAttribute{
 			schema.SimpleCoreAttribute(
 				schema.SimpleStringParams(schema.StringParams{Name: "photoETag"}),
 			),

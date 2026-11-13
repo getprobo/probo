@@ -270,7 +270,9 @@ func TestBridge_Run_KeepsStoredPhotoWhenFetchFails(t *testing.T) {
 					"displayName": "Ada",
 					"active": true,
 					"externalId": "ada",
-					"photoETag": "v1"
+					"urn:ietf:params:scim:schemas:extension:probo:2.0:User": {
+						"photoETag": "v1"
+					}
 				}]
 			}`)
 

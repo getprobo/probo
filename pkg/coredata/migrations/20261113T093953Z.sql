@@ -18,5 +18,11 @@
 -- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 -- SOFTWARE.
 
-ALTER TABLE iam_membership_profiles
-    ADD COLUMN scim_photo_etag TEXT;
+CREATE TABLE scim_profile_photos (
+    membership_profile_id TEXT PRIMARY KEY REFERENCES iam_membership_profiles(id) ON DELETE CASCADE,
+    organization_id TEXT NOT NULL,
+    tenant_id TEXT NOT NULL,
+    etag TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL
+);

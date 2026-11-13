@@ -151,6 +151,7 @@ func NewSCIMServer(h *SCIMHandler) http.Handler {
 			Schema:      scimservice.UserSchema(),
 			SchemaExtensions: []scim.SchemaExtension{
 				{Schema: scimservice.EnterpriseUserSchema()},
+				{Schema: scimservice.PhotoExtensionSchema()},
 			},
 			Handler: &scimResourceHandler{handler: h},
 		},
