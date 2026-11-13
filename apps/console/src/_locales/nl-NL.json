@@ -805,7 +805,7 @@
     }
   },
   "tasks": {
-    "title": "Taken",
+    "title": "Mijn taken",
     "description": "Houd uw toegewezen compliancetaken bij en houd de voortgang op koers.",
     "actions": {
       "create": "Taak toevoegen"
@@ -2279,7 +2279,7 @@
     "slackBot": "SlackBot",
     "taskSynchronization": "Takensynchronisatie",
     "integrations": "INTEGRATIES",
-    "tasks": "Taken",
+    "tasks": "Mijn taken",
     "internalControls": "Interne controles",
     "risks": "Risico's",
     "allRisks": "Alle risico's",

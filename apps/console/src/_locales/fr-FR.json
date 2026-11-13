@@ -806,7 +806,7 @@
     }
   },
   "tasks": {
-    "title": "Tâches",
+    "title": "Mes tâches",
     "description": "Suivez les tâches de conformité qui vous sont assignées et gardez votre progression sur la bonne voie.",
     "actions": {
       "create": "Ajouter une tâche"
@@ -2280,7 +2280,7 @@
     "slackBot": "SlackBot",
     "taskSynchronization": "Synchronisation des tâches",
     "integrations": "INTÉGRATIONS",
-    "tasks": "Tâches",
+    "tasks": "Mes tâches",
     "internalControls": "Contrôles internes",
     "risks": "Risques",
     "allRisks": "Tous les risques",
