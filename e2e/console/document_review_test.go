@@ -305,7 +305,7 @@ func paintSuggestionInsert(t *testing.T, documentID string, suggestionID string,
 
 	err := conn.QueryRow(
 		ctx,
-		`SELECT snapshot FROM collaboration_documents WHERE document_id = $1 AND seeded = true`,
+		`SELECT snapshot FROM collaboration_documents WHERE document_id = $1`,
 		documentID,
 	).Scan(&snapshot)
 	require.NoError(t, err)
