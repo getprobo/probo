@@ -294,6 +294,40 @@ func TestRequired(t *testing.T) {
 	})
 }
 
+func TestMaxItems(t *testing.T) {
+	t.Run("nil slice", func(t *testing.T) {
+		var slice []string
+
+		if err := MaxItems(1)(slice); err != nil {
+			t.Errorf("expected no error for nil slice, got: %v", err)
+		}
+	})
+
+	t.Run("at the limit", func(t *testing.T) {
+		if err := MaxItems(2)([]string{"a", "b"}); err != nil {
+			t.Errorf("expected no error, got: %v", err)
+		}
+	})
+
+	t.Run("over the limit", func(t *testing.T) {
+		err := MaxItems(2)([][]string{{"a"}, {"b"}, {"c"}})
+		if err == nil {
+			t.Fatal("expected validation error over the limit")
+		} else if err.Code != ErrorCodeTooLong {
+			t.Errorf("expected error code %s, got %s", ErrorCodeTooLong, err.Code)
+		}
+	})
+
+	t.Run("not a slice", func(t *testing.T) {
+		err := MaxItems(2)("ab")
+		if err == nil {
+			t.Fatal("expected validation error for a non-slice")
+		} else if err.Code != ErrorCodeInvalidFormat {
+			t.Errorf("expected error code %s, got %s", ErrorCodeInvalidFormat, err.Code)
+		}
+	})
+}
+
 func TestNoDuplicates(t *testing.T) {
 	t.Run("nil slice", func(t *testing.T) {
 		var slice []string
