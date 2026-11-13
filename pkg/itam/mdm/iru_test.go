@@ -471,7 +471,18 @@ func TestIruDriver_ListDevices(t *testing.T) {
 
 			records, err := NewIruDriver(server.Client(), server.URL).ListDevices(context.Background())
 			require.NoError(t, err)
-			assert.Len(t, records, iruMaxPages*iruDevicesPageSize)
+			require.Len(t, records, iruMaxPages*iruDevicesPageSize)
+
+			// Every page was read at its own offset: no device repeats and
+			// none is missing.
+			seen := make(map[string]struct{}, len(records))
+			for _, record := range records {
+				seen[record.ExternalID] = struct{}{}
+			}
+
+			assert.Len(t, seen, iruMaxPages*iruDevicesPageSize)
+			assert.Equal(t, "device-0", records[0].ExternalID)
+			assert.Equal(t, fmt.Sprintf("device-%d", iruMaxPages*iruDevicesPageSize-1), records[len(records)-1].ExternalID)
 		},
 	)
 
@@ -488,11 +499,10 @@ func TestIruDriver_ListDevices(t *testing.T) {
 	)
 }
 
-// iruFullPagesStub serves fullPages full pages of devices, then empty ones.
+// iruFullPagesStub serves fullPages full pages of distinct devices, each page
+// built from the offset it is asked for, then empty pages.
 func iruFullPagesStub(t *testing.T, fullPages int) *httptest.Server {
 	t.Helper()
-
-	fullPage := iruDevicesJSON(t, 0, iruDevicesPageSize)
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body := "[]"
@@ -500,7 +510,7 @@ func iruFullPagesStub(t *testing.T, fullPages int) *httptest.Server {
 		var offset int
 		if _, err := fmt.Sscan(r.URL.Query().Get("offset"), &offset); err == nil &&
 			offset < fullPages*iruDevicesPageSize {
-			body = fullPage
+			body = iruDevicesJSON(t, offset, iruDevicesPageSize)
 		}
 
 		w.Header().Set("Content-Type", "application/json")

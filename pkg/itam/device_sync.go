@@ -44,36 +44,6 @@ type (
 	}
 )
 
-// ScheduleDeviceSync makes a connector's devices sync on the next poll. It is
-// called when a device-sync connector is created or its credential replaced,
-// which also resets the retry budget of a sync that was failing.
-func (s *Service) ScheduleDeviceSync(
-	ctx context.Context,
-	scope coredata.Scoper,
-	connector *coredata.Connector,
-) error {
-	now := time.Now()
-
-	sync := &coredata.DeviceSync{
-		ConnectorID:    connector.ID,
-		OrganizationID: connector.OrganizationID,
-		NextSyncAt:     now,
-		CreatedAt:      now,
-		UpdatedAt:      now,
-	}
-
-	return s.pg.WithTx(
-		ctx,
-		func(ctx context.Context, tx pg.Tx) error {
-			if err := sync.Schedule(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot schedule device sync: %w", err)
-			}
-
-			return nil
-		},
-	)
-}
-
 // ApplyDeviceSync makes the organization's device list match what an MDM
 // connector lists, in one transaction:
 //
@@ -87,8 +57,15 @@ func (s *Service) ScheduleDeviceSync(
 //     the MDM's assigned user. An owner already set is never changed.
 //   - MDM rows the connector no longer lists are revoked, and agent rows it
 //     no longer lists lose their link.
+//
+// When claim is not nil, the claim is locked and checked first, in the same
+// transaction, so only the worker that holds the sync writes its devices,
+// and nothing fetched with credentials the connector has since replaced is
+// written. It then returns coredata.ErrResourceNotFound or
+// coredata.ErrDeviceSyncSuperseded and changes nothing.
 func (s *Service) ApplyDeviceSync(
 	ctx context.Context,
+	claim *coredata.DeviceSync,
 	connector *coredata.Connector,
 	records []mdm.DeviceRecord,
 ) (*DeviceSyncResult, error) {
@@ -98,6 +75,12 @@ func (s *Service) ApplyDeviceSync(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			if claim != nil {
+				if err := claim.LockClaim(ctx, tx, scope); err != nil {
+					return err
+				}
+			}
+
 			listedIDs := make([]string, 0, len(records))
 			seen := make(map[string]struct{}, len(records))
 

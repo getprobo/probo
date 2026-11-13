@@ -500,7 +500,6 @@ func (r *mutationResolver) CreateAPIKeyConnector(ctx context.Context, input type
 	}
 
 	r.accessReview.SelectSoleOrganization(ctx, scope, cnnctr.ID)
-	r.scheduleDeviceSync(ctx, scope, cnnctr)
 
 	return &types.CreateAPIKeyConnectorPayload{
 		Connector: types.NewConnector(cnnctr),
@@ -829,10 +828,6 @@ func (r *mutationResolver) UpdateAPIKeyConnector(ctx context.Context, input type
 
 		return nil, gqlx.MapError(ctx, r.logger, "cannot update connector API key", err)
 	}
-
-	// A replaced key is retried at once rather than after the failing
-	// sync's backoff.
-	r.scheduleDeviceSync(ctx, scope, updated)
 
 	return &types.UpdateAPIKeyConnectorPayload{
 		Connector: types.NewConnector(updated),

@@ -175,6 +175,34 @@ func (h *deviceSyncHandler) Process(ctx context.Context, sync coredata.DeviceSyn
 	defer cancel()
 
 	result, err := h.sync(syncCtx, &sync)
+
+	switch {
+	case errors.Is(err, coredata.ErrDeviceSyncSuperseded):
+		// The connector was saved while this sync ran, so what it fetched
+		// used the previous credentials and was not applied. The save made
+		// the sync due again; giving up the lease lets it run now.
+		releaseErr := h.pg.WithConn(
+			ctx,
+			func(ctx context.Context, conn pg.Querier) error {
+				return sync.Release(ctx, conn, scope, time.Now())
+			},
+		)
+		if releaseErr != nil && !errors.Is(releaseErr, coredata.ErrResourceNotFound) {
+			logger.ErrorCtx(ctx, "cannot release device sync", log.Error(releaseErr))
+		}
+
+		logger.InfoCtx(ctx, "device sync superseded by a connector update, not applied")
+
+		return nil
+	case errors.Is(err, coredata.ErrResourceNotFound):
+		// The connector was deleted, or the lease ran out and another worker
+		// claimed the sync. Nothing was applied, and there is either no sync
+		// left or a newer claim that owns its outcome.
+		logger.InfoCtx(ctx, "device sync claim lost, not applied")
+
+		return nil
+	}
+
 	if err != nil {
 		failErr := h.pg.WithConn(
 			ctx,
@@ -193,7 +221,7 @@ func (h *deviceSyncHandler) Process(ctx context.Context, sync coredata.DeviceSyn
 
 		switch {
 		case errors.Is(failErr, coredata.ErrResourceNotFound):
-			logger.InfoCtx(ctx, "device sync superseded, keeping its newer schedule")
+			logger.InfoCtx(ctx, "device sync claim lost, keeping the newer claim's outcome")
 		case failErr != nil:
 			logger.ErrorCtx(ctx, "cannot record device sync failure", log.Error(failErr))
 		}
@@ -217,9 +245,8 @@ func (h *deviceSyncHandler) Process(ctx context.Context, sync coredata.DeviceSyn
 		},
 	)
 	if errors.Is(err, coredata.ErrResourceNotFound) {
-		// Reconnected, deleted or re-claimed while this sync ran. The newer
-		// schedule wins; the devices applied above stay applied.
-		logger.InfoCtx(ctx, "device sync superseded, keeping its newer schedule")
+		// The connector was deleted after the devices were applied.
+		logger.InfoCtx(ctx, "device sync claim lost after applying")
 	} else if err != nil {
 		return fmt.Errorf("cannot record device sync success: %w", err)
 	}
@@ -274,7 +301,7 @@ func (h *deviceSyncHandler) sync(ctx context.Context, sync *coredata.DeviceSync)
 		return nil, fmt.Errorf("cannot list devices: %w", err)
 	}
 
-	result, err := h.itam.ApplyDeviceSync(ctx, &connector, records)
+	result, err := h.itam.ApplyDeviceSync(ctx, sync, &connector, records)
 	if err != nil {
 		return nil, fmt.Errorf("cannot apply device sync: %w", err)
 	}

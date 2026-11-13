@@ -189,7 +189,7 @@ func (f *deviceSyncFixture) agentDevice(organizationID gid.GID, serialNumber str
 func (f *deviceSyncFixture) sync(records ...mdm.DeviceRecord) *DeviceSyncResult {
 	f.t.Helper()
 
-	result, err := f.svc.ApplyDeviceSync(f.t.Context(), f.connector, records)
+	result, err := f.svc.ApplyDeviceSync(f.t.Context(), nil, f.connector, records)
 	require.NoError(f.t, err)
 
 	return result
@@ -295,6 +295,49 @@ func TestService_ApplyDeviceSync(t *testing.T) {
 			require.Len(t, devices, 1)
 			require.NotNil(t, devices[0].OSVersion)
 			assert.Equal(t, "15.2", *devices[0].OSVersion)
+		},
+	)
+
+	t.Run(
+		"writes nothing for a claim the connector was saved after",
+		func(t *testing.T) {
+			t.Parallel()
+
+			f := newDeviceSyncFixture(t)
+			now := time.Now().UTC().Truncate(time.Microsecond)
+
+			claim := &coredata.DeviceSync{
+				ConnectorID:    f.connector.ID,
+				OrganizationID: f.organizationID,
+				NextSyncAt:     now,
+				CreatedAt:      now,
+				UpdatedAt:      now,
+			}
+
+			require.NoError(t, f.svc.pg.WithTx(t.Context(), func(ctx context.Context, tx pg.Tx) error {
+				if err := claim.Schedule(ctx, tx, f.scope); err != nil {
+					return err
+				}
+
+				return claim.RecordAttempt(ctx, tx, f.scope, now, now.Add(15*time.Minute))
+			}))
+
+			// The key is replaced while the sync is fetching.
+			save := &coredata.DeviceSync{
+				ConnectorID:    f.connector.ID,
+				OrganizationID: f.organizationID,
+				NextSyncAt:     now,
+				CreatedAt:      now,
+				UpdatedAt:      now,
+			}
+
+			require.NoError(t, f.svc.pg.WithTx(t.Context(), func(ctx context.Context, tx pg.Tx) error {
+				return save.Schedule(ctx, tx, f.scope)
+			}))
+
+			_, err := f.svc.ApplyDeviceSync(t.Context(), claim, f.connector, []mdm.DeviceRecord{macRecord("iru-1", "SERIAL-1", nil)})
+			require.ErrorIs(t, err, coredata.ErrDeviceSyncSuperseded)
+			assert.Empty(t, f.devices())
 		},
 	)
 

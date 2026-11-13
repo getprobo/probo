@@ -346,7 +346,8 @@ func TestDeviceSync_Schedule(t *testing.T) {
 		return loaded.LoadByConnectorID(ctx, conn, scope, connectorID)
 	}))
 	assert.Equal(t, 1, loaded.Attempts)
-	assert.True(t, loaded.NextSyncAt.After(now))
+	require.NotNil(t, loaded.LeaseUntil)
+	assert.True(t, loaded.LeaseUntil.After(now))
 
 	// Scheduling again, as a reconnect does, resets the budget and makes the
 	// sync due at once.
@@ -463,7 +464,7 @@ func TestDeviceSync_Completion(t *testing.T) {
 	)
 
 	t.Run(
-		"a reconnect during the sync wins",
+		"a reconnect during the sync keeps the lease and wins the schedule",
 		func(t *testing.T) {
 			t.Parallel()
 
@@ -485,13 +486,89 @@ func TestDeviceSync_Completion(t *testing.T) {
 				return reconnect.Schedule(ctx, tx, scope)
 			}))
 
-			err := client.WithConn(t.Context(), func(ctx context.Context, conn pg.Querier) error {
-				return claim.RecordSuccess(ctx, conn, scope, now, now.Add(time.Hour))
+			loaded := &coredata.DeviceSync{}
+
+			require.NoError(t, client.WithConn(t.Context(), func(ctx context.Context, conn pg.Querier) error {
+				return loaded.LoadByConnectorID(ctx, conn, scope, connectorID)
+			}))
+
+			// The reconnect leaves the running sync's lease in place, so no
+			// other worker can claim the connector until it is done.
+			require.NotNil(t, loaded.LeaseUntil)
+			assert.True(t, loaded.LeaseUntil.Equal(*claim.LeaseUntil))
+			assert.Equal(t, claim.Generation+1, loaded.Generation)
+
+			// Nothing fetched with the old credentials may be applied.
+			err := client.WithTx(t.Context(), func(ctx context.Context, tx pg.Tx) error {
+				return claim.LockClaim(ctx, tx, scope)
+			})
+			require.ErrorIs(t, err, coredata.ErrDeviceSyncSuperseded)
+
+			// Completing releases the lease but keeps the reconnect's
+			// schedule and fresh budget.
+			require.NoError(t, client.WithConn(t.Context(), func(ctx context.Context, conn pg.Querier) error {
+				return claim.RecordFailure(ctx, conn, scope, now, now.Add(time.Hour))
+			}))
+
+			require.NoError(t, client.WithConn(t.Context(), func(ctx context.Context, conn pg.Querier) error {
+				return loaded.LoadByConnectorID(ctx, conn, scope, connectorID)
+			}))
+			assert.Nil(t, loaded.LeaseUntil)
+			assert.Equal(t, 0, loaded.Attempts)
+			assert.True(t, loaded.NextSyncAt.Equal(reconnectedAt))
+		},
+	)
+
+	t.Run(
+		"a superseded sync releases without an outcome",
+		func(t *testing.T) {
+			t.Parallel()
+
+			client := test.PGClient(t)
+			scope, organizationID, connectorID, _ := insertMDMFixture(t, client)
+			now := time.Now().UTC().Truncate(time.Microsecond)
+			claim := claimDeviceSync(t, client, scope, organizationID, connectorID, now)
+
+			require.NoError(t, client.WithConn(t.Context(), func(ctx context.Context, conn pg.Querier) error {
+				return claim.Release(ctx, conn, scope, now)
+			}))
+
+			loaded := &coredata.DeviceSync{}
+
+			require.NoError(t, client.WithConn(t.Context(), func(ctx context.Context, conn pg.Querier) error {
+				return loaded.LoadByConnectorID(ctx, conn, scope, connectorID)
+			}))
+			assert.Nil(t, loaded.LeaseUntil)
+			assert.Nil(t, loaded.LastSyncedAt)
+			assert.Nil(t, loaded.LastFailedAt)
+		},
+	)
+
+	t.Run(
+		"a claim whose lease was taken over changes nothing",
+		func(t *testing.T) {
+			t.Parallel()
+
+			client := test.PGClient(t)
+			scope, organizationID, connectorID, _ := insertMDMFixture(t, client)
+			now := time.Now().UTC().Truncate(time.Microsecond)
+			stale := claimDeviceSync(t, client, scope, organizationID, connectorID, now)
+
+			// The lease ran out and another worker claimed the sync.
+			later := now.Add(20 * time.Minute)
+			current := &coredata.DeviceSync{ConnectorID: connectorID}
+
+			require.NoError(t, client.WithTx(t.Context(), func(ctx context.Context, tx pg.Tx) error {
+				return current.RecordAttempt(ctx, tx, scope, later, later.Add(15*time.Minute))
+			}))
+
+			err := client.WithTx(t.Context(), func(ctx context.Context, tx pg.Tx) error {
+				return stale.LockClaim(ctx, tx, scope)
 			})
 			require.ErrorIs(t, err, coredata.ErrResourceNotFound)
 
 			err = client.WithConn(t.Context(), func(ctx context.Context, conn pg.Querier) error {
-				return claim.RecordFailure(ctx, conn, scope, now, now.Add(time.Hour))
+				return stale.RecordSuccess(ctx, conn, scope, now, now.Add(time.Hour))
 			})
 			require.ErrorIs(t, err, coredata.ErrResourceNotFound)
 
@@ -500,10 +577,9 @@ func TestDeviceSync_Completion(t *testing.T) {
 			require.NoError(t, client.WithConn(t.Context(), func(ctx context.Context, conn pg.Querier) error {
 				return loaded.LoadByConnectorID(ctx, conn, scope, connectorID)
 			}))
-			assert.Equal(t, 0, loaded.Attempts)
-			assert.True(t, loaded.NextSyncAt.Equal(reconnectedAt))
+			require.NotNil(t, loaded.LeaseUntil)
+			assert.True(t, loaded.LeaseUntil.Equal(*current.LeaseUntil))
 			assert.Nil(t, loaded.LastSyncedAt)
-			assert.Nil(t, loaded.LastFailedAt)
 		},
 	)
 }
@@ -548,5 +624,6 @@ func TestScheduleMissingDeviceSyncs(t *testing.T) {
 		return loaded.LoadByConnectorID(ctx, conn, scope, connectorID)
 	}))
 	assert.Equal(t, 1, loaded.Attempts)
-	assert.True(t, loaded.NextSyncAt.Equal(now.Add(time.Hour)))
+	require.NotNil(t, loaded.LeaseUntil)
+	assert.True(t, loaded.LeaseUntil.Equal(now.Add(time.Hour)))
 }
