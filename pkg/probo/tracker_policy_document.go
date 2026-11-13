@@ -341,6 +341,7 @@ func (s *GeneratedDocumentService) buildTrackerPolicyThirdParties(
 	filter := coredata.NewTrackerPatternFilter(nil, nil, new(false))
 
 	seen := make(map[gid.GID]struct{})
+
 	var commonPatternIDs []gid.GID
 
 	err := page.WalkAll(
