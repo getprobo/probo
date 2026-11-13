@@ -1,6 +1,6 @@
 {
-  "title": "Tareas",
-  "breadcrumb": "Tareas",
+  "title": "Mis tareas",
+  "breadcrumb": "Mis tareas",
   "delete": {
     "title": "Eliminar tarea",
     "description": "¿Seguro que quiere eliminar esta tarea?",

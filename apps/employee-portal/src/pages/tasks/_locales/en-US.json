@@ -1,6 +1,6 @@
 {
-  "title": "Tasks",
-  "breadcrumb": "Tasks",
+  "title": "My tasks",
+  "breadcrumb": "My tasks",
   "delete": {
     "title": "Delete task",
     "description": "Are you sure you want to delete this task?",
