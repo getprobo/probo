@@ -4,6 +4,15 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Fixed
+
+- Cookie tracker pattern analysis no longer collapses distinct names
+  that share a short vendor stem, such as `tt_sessionId` and
+  `tt_appInfo`, into one prefix glob. A prefix or sandwich glob is
+  emitted only when the wildcard replaces a segment `looksVariable`
+  already accepts, so a short project id such as `_ga_ABC123` stays
+  exact
+
 ## [0.344.0] - 2026-11-12
 
 ### Added

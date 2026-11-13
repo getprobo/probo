@@ -482,6 +482,14 @@ func templateCandidates(name string) []string {
 
 	for i, ch := range name {
 		if ch == '_' || ch == '-' {
+			// Only a final segment looksVariable already accepts. A
+			// short project id (ABC123) is stable on one site, and a
+			// tail that still contains a separator is another name.
+			suffix := name[i+1:]
+			if suffix == "" || strings.ContainsAny(suffix, primarySeparators+"-") || !looksVariable(suffix) {
+				continue
+			}
+
 			tmpl := name[:i+1] + "*"
 			if templateHasFixedAnchor(tmpl) {
 				candidates = append(candidates, tmpl)
@@ -492,6 +500,10 @@ func templateCandidates(name string) []string {
 	tokens, seps := splitTokens(name)
 	if len(tokens) >= 3 && len(seps) > 0 {
 		for pos := 1; pos < len(tokens)-1; pos++ {
+			if !looksVariable(tokens[pos]) {
+				continue
+			}
+
 			left := joinTokens(tokens[:pos], seps[:pos-1])
 			right := joinTokens(tokens[pos+1:], seps[pos+1:])
 

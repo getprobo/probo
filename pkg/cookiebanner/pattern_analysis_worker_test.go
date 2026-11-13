@@ -393,29 +393,21 @@ func TestTemplateCandidates(t *testing.T) {
 		expected []string
 	}{
 		{
-			name:  "single underscore produces prefix candidate",
-			input: "ph_abc123",
+			name:     "short project id produces no prefix candidate",
+			input:    "ph_abc123",
+			expected: nil,
+		},
+		{
+			name:  "variable suffix produces a prefix candidate",
+			input: "ph_phc_abc12345",
 			expected: []string{
-				"ph_*",
+				"ph_phc_*",
 			},
 		},
 		{
-			name:  "multiple underscores produces prefix and sandwich candidates",
-			input: "ph_phc_abc123",
+			name:  "variable middle token produces a sandwich candidate",
+			input: "ph_phc_abc12345_posthog",
 			expected: []string{
-				"ph_*",
-				"ph_phc_*",
-				"ph_*_abc123",
-			},
-		},
-		{
-			name:  "four tokens produces multiple sandwich candidates",
-			input: "ph_phc_abc123_posthog",
-			expected: []string{
-				"ph_*",
-				"ph_phc_*",
-				"ph_phc_abc123_*",
-				"ph_*_abc123_posthog",
 				"ph_phc_*_posthog",
 			},
 		},
@@ -424,17 +416,12 @@ func TestTemplateCandidates(t *testing.T) {
 			input: "_ga_GB2J3DLBHE",
 			expected: []string{
 				"_ga_*",
-				"_*_GB2J3DLBHE",
 			},
 		},
 		{
-			name:  "dash separator",
-			input: "c15t-consent-abc123",
-			expected: []string{
-				"c15t-*",
-				"c15t-consent-*",
-				"c15t-*-abc123",
-			},
+			name:     "short project id after a dash produces no prefix candidate",
+			input:    "c15t-consent-abc123",
+			expected: nil,
 		},
 		{
 			name:     "no separators",
@@ -442,45 +429,39 @@ func TestTemplateCandidates(t *testing.T) {
 			expected: nil,
 		},
 		{
-			name:  "brand with digits",
-			input: "auth0_session_abc123",
-			expected: []string{
-				"auth0_*",
-				"auth0_session_*",
-				"auth0_*_abc123",
-			},
+			name:     "short project id after a stem produces no prefix candidate",
+			input:    "auth0_session_abc123",
+			expected: nil,
 		},
 		{
-			name:  "double leading underscore drops anchor-free prefixes",
-			input: "__support__",
-			expected: []string{
-				"__support_*",
-				"__support__*",
-				"_*_support__",
-				"__support_*_",
-			},
+			name:     "short measurement id stays exact",
+			input:    "_ga_ABC123",
+			expected: nil,
 		},
 		{
-			name:  "double underscore extension key drops anchor-free prefixes",
-			input: "__darkreader__wasEnabledForHost",
-			expected: []string{
-				"__darkreader_*",
-				"__darkreader__*",
-				"_*_darkreader__wasEnabledForHost",
-				"__*__wasEnabledForHost",
-				"__darkreader_*_wasEnabledForHost",
-			},
+			name:     "word suffixes produce no prefix glob",
+			input:    "tt_sessionId",
+			expected: nil,
 		},
 		{
-			name:  "double leading dash drops anchor-free prefixes",
-			input: "--leading-dash-foo",
-			expected: []string{
-				"--leading-*",
-				"--leading-dash-*",
-				"-*-leading-dash-foo",
-				"--*-dash-foo",
-				"--leading-*-foo",
-			},
+			name:     "multi-segment name does not collapse to the vendor stem",
+			input:    "tt_pixel_session_index",
+			expected: nil,
+		},
+		{
+			name:     "double leading underscore drops anchor-free prefixes",
+			input:    "__support__",
+			expected: nil,
+		},
+		{
+			name:     "double underscore extension key drops anchor-free prefixes",
+			input:    "__darkreader__wasEnabledForHost",
+			expected: nil,
+		},
+		{
+			name:     "double leading dash drops anchor-free prefixes",
+			input:    "--leading-dash-foo",
+			expected: nil,
 		},
 	}
 
@@ -723,9 +704,9 @@ func TestFindMergeGroups(t *testing.T) {
 			t.Parallel()
 
 			patterns := coredata.TrackerPatterns{
-				makePattern("ph_phc_abc123", &oneYear),
-				makePattern("ph_phc_def456", &oneYear),
-				makePattern("ph_phc_ghi789", &oneYear),
+				makePattern("ph_phc_abc12345", &oneYear),
+				makePattern("ph_phc_def45678", &oneYear),
+				makePattern("ph_phc_ghi78901", &oneYear),
 			}
 
 			groups := findMergeGroups(patterns, 3)
@@ -738,7 +719,7 @@ func TestFindMergeGroups(t *testing.T) {
 	)
 
 	t.Run(
-		"leading separator cookies",
+		"short project ids stay exact",
 		func(t *testing.T) {
 			t.Parallel()
 
@@ -749,11 +730,7 @@ func TestFindMergeGroups(t *testing.T) {
 			}
 
 			groups := findMergeGroups(patterns, 3)
-			require.Len(t, groups, 1)
-
-			group, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, template: "_ga_*", durationBucket: durationBucket(&oneYear)}]
-			require.True(t, ok)
-			assert.Len(t, group, 3)
+			assert.Empty(t, groups)
 		},
 	)
 
@@ -763,9 +740,9 @@ func TestFindMergeGroups(t *testing.T) {
 			t.Parallel()
 
 			patterns := coredata.TrackerPatterns{
-				makePattern("auth0_session_abc123", &oneYear),
-				makePattern("auth0_session_def456", &oneYear),
-				makePattern("auth0_session_ghi789", &oneYear),
+				makePattern("auth0_session_abc12345", &oneYear),
+				makePattern("auth0_session_def45678", &oneYear),
+				makePattern("auth0_session_ghi78901", &oneYear),
 			}
 
 			groups := findMergeGroups(patterns, 3)
@@ -798,12 +775,12 @@ func TestFindMergeGroups(t *testing.T) {
 			t.Parallel()
 
 			patterns := coredata.TrackerPatterns{
-				makePattern("foo_bar_aaa", &oneYear),
-				makePattern("foo_bar_bbb", &oneYear),
-				makePattern("foo_bar_ccc", &oneYear),
-				makePattern("foo_baz_xxx", &oneYear),
-				makePattern("foo_baz_yyy", &oneYear),
-				makePattern("foo_baz_zzz", &oneYear),
+				makePattern("foo_bar_abc12345", &oneYear),
+				makePattern("foo_bar_def45678", &oneYear),
+				makePattern("foo_bar_ghi78901", &oneYear),
+				makePattern("foo_baz_jkl01234", &oneYear),
+				makePattern("foo_baz_mno34567", &oneYear),
+				makePattern("foo_baz_pqr67890", &oneYear),
 			}
 
 			groups := findMergeGroups(patterns, 3)
@@ -825,9 +802,9 @@ func TestFindMergeGroups(t *testing.T) {
 			t.Parallel()
 
 			patterns := coredata.TrackerPatterns{
-				makePattern("ph_phc_abc123", &oneYear),
-				makePattern("ph_phc_def456", &oneYear),
-				makePattern("ph_phc_ghi789", &oneYear),
+				makePattern("ph_phc_abc12345", &oneYear),
+				makePattern("ph_phc_def45678", &oneYear),
+				makePattern("ph_phc_ghi78901", &oneYear),
 				makePattern("ph_session_xyz", &oneYear),
 			}
 
@@ -846,12 +823,12 @@ func TestFindMergeGroups(t *testing.T) {
 			t.Parallel()
 
 			patterns := coredata.TrackerPatterns{
-				makePattern("ph_phc_abc123", &oneYear),
-				makePattern("ph_phc_def456", &oneYear),
-				makePattern("ph_phc_ghi789", &oneYear),
-				makePattern("ph_session_aaa", &oneYear),
-				makePattern("ph_session_bbb", &oneYear),
-				makePattern("ph_session_ccc", &oneYear),
+				makePattern("ph_phc_abc12345", &oneYear),
+				makePattern("ph_phc_def45678", &oneYear),
+				makePattern("ph_phc_ghi78901", &oneYear),
+				makePattern("ph_session_jkl01234", &oneYear),
+				makePattern("ph_session_mno34567", &oneYear),
+				makePattern("ph_session_pqr67890", &oneYear),
 			}
 
 			groups := findMergeGroups(patterns, 3)
@@ -889,12 +866,12 @@ func TestFindMergeGroups(t *testing.T) {
 			t.Parallel()
 
 			patterns := coredata.TrackerPatterns{
-				makePattern("_ga_ABC123", nil),
-				makePattern("_ga_DEF456", nil),
-				makePattern("_ga_GHI789", nil),
-				makePattern("_ga_JKL012", &oneYear),
-				makePattern("_ga_MNO345", &oneYear),
-				makePattern("_ga_PQR678", &oneYear),
+				makePattern("_ga_ABC12345", nil),
+				makePattern("_ga_DEF45678", nil),
+				makePattern("_ga_GHI78901", nil),
+				makePattern("_ga_JKL01234", &oneYear),
+				makePattern("_ga_MNO34567", &oneYear),
+				makePattern("_ga_PQR67890", &oneYear),
 			}
 
 			groups := findMergeGroups(patterns, 3)
@@ -919,9 +896,9 @@ func TestFindMergeGroups(t *testing.T) {
 			almostYear := 364 * 24 * 3600
 
 			patterns := coredata.TrackerPatterns{
-				makePattern("_ga_ABC123", &exactYear),
-				makePattern("_ga_DEF456", &almostYear),
-				makePattern("_ga_GHI789", &exactYear),
+				makePattern("_ga_ABC12345", &exactYear),
+				makePattern("_ga_DEF45678", &almostYear),
+				makePattern("_ga_GHI78901", &exactYear),
 			}
 
 			groups := findMergeGroups(patterns, 3)
@@ -938,12 +915,12 @@ func TestFindMergeGroups(t *testing.T) {
 			thirtyDays := 30 * 24 * 3600
 
 			patterns := coredata.TrackerPatterns{
-				makePattern("_ga_ABC123", &oneDay),
-				makePattern("_ga_DEF456", &oneDay),
-				makePattern("_ga_GHI789", &oneDay),
-				makePattern("_ga_JKL012", &thirtyDays),
-				makePattern("_ga_MNO345", &thirtyDays),
-				makePattern("_ga_PQR678", &thirtyDays),
+				makePattern("_ga_ABC12345", &oneDay),
+				makePattern("_ga_DEF45678", &oneDay),
+				makePattern("_ga_GHI78901", &oneDay),
+				makePattern("_ga_JKL01234", &thirtyDays),
+				makePattern("_ga_MNO34567", &thirtyDays),
+				makePattern("_ga_PQR67890", &thirtyDays),
 			}
 
 			groups := findMergeGroups(patterns, 3)
@@ -965,9 +942,9 @@ func TestFindMergeGroups(t *testing.T) {
 			t.Parallel()
 
 			patterns := coredata.TrackerPatterns{
-				makePattern("ph_phc_abc123_posthog", &oneYear),
-				makePattern("ph_phc_def456_posthog", &oneYear),
-				makePattern("ph_phc_ghi789_posthog", &oneYear),
+				makePattern("ph_phc_abc12345_posthog", &oneYear),
+				makePattern("ph_phc_def45678_posthog", &oneYear),
+				makePattern("ph_phc_ghi78901_posthog", &oneYear),
 			}
 
 			groups := findMergeGroups(patterns, 3)
@@ -985,9 +962,9 @@ func TestFindMergeGroups(t *testing.T) {
 			t.Parallel()
 
 			patterns := coredata.TrackerPatterns{
-				makePattern("ph_phc_abc123_posthog", &oneYear),
-				makePattern("ph_phc_def456_posthog", &oneYear),
-				makePattern("ph_phc_ghi789_posthog", &oneYear),
+				makePattern("ph_phc_abc12345_posthog", &oneYear),
+				makePattern("ph_phc_def45678_posthog", &oneYear),
+				makePattern("ph_phc_ghi78901_posthog", &oneYear),
 				makePattern("ph_phc_other", &oneYear),
 			}
 
@@ -1047,13 +1024,32 @@ func TestFindMergeGroups(t *testing.T) {
 	)
 
 	t.Run(
-		"patterns without variable tokens still require statistical threshold",
+		"distinct names sharing a vendor stem do not merge",
 		func(t *testing.T) {
 			t.Parallel()
 
 			patterns := coredata.TrackerPatterns{
-				makePattern("foo_bar_aaa", &oneYear),
-				makePattern("foo_bar_bbb", &oneYear),
+				makePattern("tt_pixel_is_enrich_ipv6_triggered_by_enrich_am", &oneYear),
+				makePattern("tt_sessionId", &oneYear),
+				makePattern("tt_appInfo", &oneYear),
+				makePattern("tt_pixel_session_index", &oneYear),
+				makePattern("tt_adInfo", &oneYear),
+			}
+
+			groups := findMergeGroups(patterns, 3)
+			assert.Empty(t, groups)
+		},
+	)
+
+	t.Run(
+		"digit-free project ids stay exact",
+		func(t *testing.T) {
+			t.Parallel()
+
+			patterns := coredata.TrackerPatterns{
+				makePattern("_ga_ABCDEFGHIJ", &oneYear),
+				makePattern("_ga_KLMNOPQRST", &oneYear),
+				makePattern("_ga_UVWXYZABCD", &oneYear),
 			}
 
 			groups := findMergeGroups(patterns, 3)
@@ -1068,9 +1064,9 @@ func TestFindMergeGroups(t *testing.T) {
 
 			patterns := coredata.TrackerPatterns{
 				makePattern("ph_phc_XBwJ2pHAf0MoYgh3TNZK32Qk7zLlTldhk4p9llGtZMN_window_id", &oneYear),
-				makePattern("foo_bar_aaa", &oneYear),
-				makePattern("foo_bar_bbb", &oneYear),
-				makePattern("foo_bar_ccc", &oneYear),
+				makePattern("foo_bar_abc12345", &oneYear),
+				makePattern("foo_bar_def45678", &oneYear),
+				makePattern("foo_bar_ghi78901", &oneYear),
 			}
 
 			groups := findMergeGroups(patterns, 3)

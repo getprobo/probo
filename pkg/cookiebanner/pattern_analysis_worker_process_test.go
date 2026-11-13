@@ -256,9 +256,9 @@ func TestPatternAnalysisWorker_PromotesSourceOnExistingGlob(t *testing.T) {
 		&maxAge,
 	)
 	exacts := []*coredata.TrackerPattern{
-		newExactPattern(fx, "_ga_abc123", fx.normalCategoryID, coredata.CookieSourceScript, &maxAge),
-		newExactPattern(fx, "_ga_def456", fx.normalCategoryID, coredata.CookieSourceScript, &maxAge),
-		newExactPattern(fx, "_ga_xyz789", fx.normalCategoryID, coredata.CookieSourceScript, &maxAge),
+		newExactPattern(fx, "_ga_abc12345", fx.normalCategoryID, coredata.CookieSourceScript, &maxAge),
+		newExactPattern(fx, "_ga_def45678", fx.normalCategoryID, coredata.CookieSourceScript, &maxAge),
+		newExactPattern(fx, "_ga_xyz78901", fx.normalCategoryID, coredata.CookieSourceScript, &maxAge),
 	}
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
@@ -350,9 +350,9 @@ func TestPatternAnalysisWorker_AdoptionTriggersDraftVersion(t *testing.T) {
 		&maxAge,
 	)
 	exacts := []*coredata.TrackerPattern{
-		newExactPattern(fx, "_ga_abc123", fx.uncategorisedID, coredata.CookieSourcePreExisting, &maxAge),
-		newExactPattern(fx, "_ga_def456", fx.uncategorisedID, coredata.CookieSourcePreExisting, &maxAge),
-		newExactPattern(fx, "_ga_xyz789", fx.uncategorisedID, coredata.CookieSourcePreExisting, &maxAge),
+		newExactPattern(fx, "_ga_abc12345", fx.uncategorisedID, coredata.CookieSourcePreExisting, &maxAge),
+		newExactPattern(fx, "_ga_def45678", fx.uncategorisedID, coredata.CookieSourcePreExisting, &maxAge),
+		newExactPattern(fx, "_ga_xyz78901", fx.uncategorisedID, coredata.CookieSourcePreExisting, &maxAge),
 	}
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
@@ -618,9 +618,9 @@ func TestPatternAnalysisWorker_MergeWithoutAdoptionSkipsDraftVersion(t *testing.
 	maxAge := 7 * 24 * 3600
 
 	exacts := []*coredata.TrackerPattern{
-		newExactPattern(fx, "_ga_abc123", fx.normalCategoryID, coredata.CookieSourceScript, &maxAge),
-		newExactPattern(fx, "_ga_def456", fx.normalCategoryID, coredata.CookieSourceScript, &maxAge),
-		newExactPattern(fx, "_ga_xyz789", fx.normalCategoryID, coredata.CookieSourceScript, &maxAge),
+		newExactPattern(fx, "_ga_abc12345", fx.normalCategoryID, coredata.CookieSourceScript, &maxAge),
+		newExactPattern(fx, "_ga_def45678", fx.normalCategoryID, coredata.CookieSourceScript, &maxAge),
+		newExactPattern(fx, "_ga_xyz78901", fx.normalCategoryID, coredata.CookieSourceScript, &maxAge),
 	}
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
