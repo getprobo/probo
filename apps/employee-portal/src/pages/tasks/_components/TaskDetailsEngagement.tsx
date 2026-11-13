@@ -30,7 +30,6 @@ import {
   taskCommentsSection,
   TASKS_NAMESPACE,
 } from "@probo/tasks";
-import { RichEditor } from "@probo/ui/src/RichEditor/RichEditor";
 import { isRichEditorContentEmpty, richEditorContentTextLength } from "@probo/ui/src/RichEditor/richEditorContent";
 import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
 import { Button } from "@probo/ui/src/v2/Button/Button";
@@ -70,6 +69,8 @@ import { useMutation } from "#/lib/relay/useMutation";
 import { taskCommentMaxLength } from "../_lib/richText";
 import { taskActivitiesConnectionId } from "../_lib/taskPath";
 import { useMentionMembers } from "../_lib/useMentionMembers";
+
+import { RichEditor } from "./RichEditor";
 
 const taskDetailsActivityListQuery = graphql`
   query TaskDetailsEngagementQuery($taskId: ID!) {
@@ -339,6 +340,7 @@ function CommentStep({
   const { i18n, t } = useTranslation("tasks");
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(comment.content);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string>();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const mentionSource = useMentionMembers();
@@ -356,6 +358,9 @@ function CommentStep({
   const showActions = comment.canUpdate || comment.canDelete;
 
   async function saveComment() {
+    if (uploading || isSaving) {
+      return;
+    }
     if (isRichEditorContentEmpty(draft)) {
       setError(t("details.commentRequired"));
       return;
@@ -448,6 +453,7 @@ function CommentStep({
                 className={taskCommentEditor({ editing })}
                 content={editing ? draft : comment.content}
                 controls={false}
+                attachments={editing}
                 disabled={!editing}
                 aria-label={t("details.commentPlaceholder")}
                 mentionSource={mentionSource}
@@ -457,6 +463,7 @@ function CommentStep({
                       setError(undefined);
                     }
                   : undefined}
+                onUploadingChange={editing ? setUploading : undefined}
               />
             </Field>
           </ErrorBoundary>
@@ -480,6 +487,7 @@ function CommentStep({
                 color="neutral"
                 highContrast
                 loading={isSaving}
+                disabled={uploading}
                 onClick={() => {
                   void saveComment();
                 }}
@@ -505,12 +513,13 @@ export function TaskDetailsCommentForm({ taskId }: { taskId: string }) {
   );
   const mentionSource = useMentionMembers();
   const [content, setContent] = useState("");
+  const [uploading, setUploading] = useState(false);
   const [editorKey, setEditorKey] = useState(0);
   const [error, setError] = useState<string>();
-  const { root, actions, editor } = taskCommentForm();
+  const { root, editor } = taskCommentForm();
 
   function handleSubmit() {
-    if (isCreating) {
+    if (uploading || isCreating) {
       return;
     }
     if (isRichEditorContentEmpty(content)) {
@@ -546,6 +555,7 @@ export function TaskDetailsCommentForm({ taskId }: { taskId: string }) {
           <RichEditor
             key={editorKey}
             controls={false}
+            attachments
             className={editor()}
             content={content}
             disabled={isCreating}
@@ -553,25 +563,29 @@ export function TaskDetailsCommentForm({ taskId }: { taskId: string }) {
             aria-label={t("details.commentPlaceholder")}
             mentionSource={mentionSource}
             onModEnter={handleSubmit}
+            toolbar={(
+              <Button
+                type="submit"
+                size={1}
+                variant="solid"
+                color="neutral"
+                highContrast
+                disabled={uploading}
+                loading={isCreating}
+                aria-keyshortcuts={
+                  uploading || isCreating ? undefined : shortcutAria("Enter")
+                }
+              >
+                {t("details.send")}
+              </Button>
+            )}
             onChangeContent={(next) => {
               setContent(next);
               setError(undefined);
             }}
+            onUploadingChange={setUploading}
           />
         </Field>
-        <div className={actions()}>
-          <Button
-            type="submit"
-            size={1}
-            variant="solid"
-            color="neutral"
-            highContrast
-            loading={isCreating}
-            aria-keyshortcuts={isCreating ? undefined : shortcutAria("Enter")}
-          >
-            {t("details.send")}
-          </Button>
-        </div>
       </Form>
     </Card>
   );

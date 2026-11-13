@@ -28,7 +28,6 @@ import {
   TaskProperties,
   TASKS_NAMESPACE,
 } from "@probo/tasks";
-import { RichEditor } from "@probo/ui/src/RichEditor/RichEditor";
 import { isRichEditorContentEmpty } from "@probo/ui/src/RichEditor/richEditorContent";
 import { Link } from "@probo/ui/src/v2/Link/Link";
 import { Text } from "@probo/ui/src/v2/typography/Text";
@@ -48,6 +47,7 @@ import { requestNotificationRefresh } from "#/components/notifications/requestNo
 import { NotFoundError } from "#/lib/relay/errors";
 import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
+import { RichEditor } from "./_components/RichEditor";
 import { TaskDetailsActivity, TaskDetailsCommentForm } from "./_components/TaskDetailsEngagement";
 import { useMentionMembers } from "./_lib/useMentionMembers";
 import { useUpdateTask } from "./_lib/useUpdateTask";
@@ -159,7 +159,7 @@ function TaskDetailsBody({ task }: { task: TaskDetailsPage_task$data }) {
         description={(
           <TaskDetailsDescription
             content={task.content}
-            canAssign={task.canAssign}
+            canUpdate={task.canUpdate}
             onSave={saveDescription}
           />
         )}
@@ -214,11 +214,11 @@ function TaskDetailsBody({ task }: { task: TaskDetailsPage_task$data }) {
 
 function TaskDetailsDescription({
   content,
-  canAssign,
+  canUpdate,
   onSave,
 }: {
   content: string;
-  canAssign: boolean;
+  canUpdate: boolean;
   onSave: (content: string | null) => Promise<unknown>;
 }) {
   const { t } = useTranslation("tasks");
@@ -226,6 +226,7 @@ function TaskDetailsDescription({
   const [base, setBase] = useState(content);
   const [draft, setDraft] = useState(content);
   const [editorKey, setEditorKey] = useState(content);
+  const [uploading, setUploading] = useState(false);
   if (content !== base && (draft === base || draft === content)) {
     setBase(content);
     if (draft !== content) {
@@ -235,7 +236,7 @@ function TaskDetailsDescription({
   }
 
   useEffect(() => {
-    if (!canAssign || draft === content) {
+    if (!canUpdate || uploading || draft === content) {
       return;
     }
 
@@ -249,9 +250,9 @@ function TaskDetailsDescription({
     return () => {
       clearTimeout(handle);
     };
-  }, [canAssign, content, draft, onSave]);
+  }, [canUpdate, content, draft, onSave, uploading]);
 
-  if (!canAssign && isRichEditorContentEmpty(content)) {
+  if (!canUpdate && isRichEditorContentEmpty(content)) {
     return <Text size={2} color="faint">{t("details.noDescription")}</Text>;
   }
 
@@ -259,13 +260,15 @@ function TaskDetailsDescription({
     <RichEditor
       key={editorKey}
       className="min-h-40 bg-transparent! py-0! pr-0! shadow-none!"
-      content={canAssign ? draft : content}
+      content={canUpdate ? draft : content}
       controls={false}
-      disabled={!canAssign}
+      attachments={canUpdate}
+      disabled={!canUpdate}
       placeholder={t("details.descriptionPlaceholder")}
       aria-label={t("details.description")}
       mentionSource={mentionSource}
-      onChangeContent={canAssign ? setDraft : undefined}
+      onUploadingChange={canUpdate ? setUploading : undefined}
+      onChangeContent={canUpdate ? setDraft : undefined}
     />
   );
 }
