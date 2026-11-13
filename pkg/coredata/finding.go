@@ -64,9 +64,9 @@ func (f *Finding) CursorKey(field FindingOrderField) page.CursorKey {
 	case FindingOrderFieldCreatedAt:
 		return page.NewCursorKey(f.ID, f.CreatedAt)
 	case FindingOrderFieldIdentifiedOn:
-		return page.NewCursorKey(f.ID, f.IdentifiedOn)
+		return page.NewDateCursorKey(f.ID, f.IdentifiedOn)
 	case FindingOrderFieldDueDate:
-		return page.NewCursorKey(f.ID, f.DueDate)
+		return page.NewDateCursorKey(f.ID, f.DueDate)
 	case FindingOrderFieldStatus:
 		return page.NewCursorKey(f.ID, f.Status)
 	case FindingOrderFieldPriority:

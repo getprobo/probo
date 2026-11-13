@@ -40,7 +40,7 @@ type loadAllItem struct {
 }
 
 func (i *loadAllItem) CursorKey(_ testOrderField) CursorKey {
-	return CursorKey{ID: i.id, Value: i.value}
+	return NewCursorKey(i.id, i.value)
 }
 
 // newLoadAllStore builds n items pre-sorted ascending by value (value == i).

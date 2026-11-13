@@ -58,13 +58,13 @@ func (a *Audit) CursorKey(field AuditOrderField) page.CursorKey {
 	case AuditOrderFieldCreatedAt:
 		return page.NewCursorKey(a.ID, a.CreatedAt)
 	case AuditOrderFieldValidFrom:
-		return page.NewCursorKey(a.ID, a.ValidFrom)
+		return page.NewDateCursorKey(a.ID, a.ValidFrom)
 	case AuditOrderFieldValidUntil:
-		return page.NewCursorKey(a.ID, a.ValidUntil)
+		return page.NewDateCursorKey(a.ID, a.ValidUntil)
 	case AuditOrderFieldAuditStartDate:
-		return page.NewCursorKey(a.ID, a.AuditStartDate)
+		return page.NewDateCursorKey(a.ID, a.AuditStartDate)
 	case AuditOrderFieldAuditEndDate:
-		return page.NewCursorKey(a.ID, a.AuditEndDate)
+		return page.NewDateCursorKey(a.ID, a.AuditEndDate)
 	case AuditOrderFieldState:
 		return page.NewCursorKey(a.ID, a.State)
 	}

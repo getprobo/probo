@@ -54,11 +54,11 @@ type (
 func (vc ThirdPartyContact) CursorKey(orderBy ThirdPartyContactOrderField) page.CursorKey {
 	switch orderBy {
 	case ThirdPartyContactOrderFieldCreatedAt:
-		return page.CursorKey{ID: vc.ID, Value: vc.CreatedAt}
+		return page.NewCursorKey(vc.ID, vc.CreatedAt)
 	case ThirdPartyContactOrderFieldFullName:
-		return page.CursorKey{ID: vc.ID, Value: vc.FullName}
+		return page.NewCursorKey(vc.ID, vc.FullName)
 	case ThirdPartyContactOrderFieldEmail:
-		return page.CursorKey{ID: vc.ID, Value: vc.Email}
+		return page.NewCursorKey(vc.ID, vc.Email)
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))

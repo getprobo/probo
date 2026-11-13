@@ -21,144 +21,96 @@
 package page
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
-	"regexp"
-	"strconv"
-	"strings"
+	"fmt"
+	"reflect"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-// ErrInvalidCursorValue is a cursor value that cannot be compared with the
-// ordered column. Callers refuse it before querying.
+// ErrInvalidCursorValue is a cursor value that does not match the type stored
+// in the cursor. Callers refuse it before querying.
 var ErrInvalidCursorValue = errors.New("invalid cursor")
 
-type cursorValueKind int
+// CursorKind is the type of the value stored in a cursor key.
+type CursorKind string
 
 const (
-	cursorValueRaw cursorValueKind = iota
-	cursorValueDate
-	cursorValueTimestamp
-	cursorValueNumber
+	CursorText   CursorKind = "text"
+	CursorTime   CursorKind = "time"
+	CursorDate   CursorKind = "date"
+	CursorNumber CursorKind = "number"
 )
 
-var cursorIdentPattern = regexp.MustCompile(`[A-Za-z_][A-Za-z0-9_]*`)
-
-// coerceCursorValue parses a cursor key into the type PostgreSQL will compare
-// it with. A text parameter compared with a date fails inside the database.
-func coerceCursorValue(column string, value any) (any, error) {
-	if value == nil || cursorValueNil(value) {
-		return nil, nil
+func classifyCursorValue(value any) (CursorKind, any) {
+	if value == nil {
+		return CursorText, nil
 	}
 
-	switch cursorColumnKind(column) {
-	case cursorValueDate:
-		return coerceCursorDate(value)
-	case cursorValueTimestamp:
-		return coerceCursorTimestamp(value)
-	case cursorValueNumber:
-		return coerceCursorNumber(value)
-	default:
-		return value, nil
-	}
-}
-
-func cursorValueNil(value any) bool {
-	switch v := value.(type) {
-	case *time.Time:
-		return v == nil
-	default:
-		return false
-	}
-}
-
-func cursorColumnKind(column string) cursorValueKind {
-	if strings.Contains(column, "||") || strings.Contains(strings.ToLower(column), "to_char") {
-		return cursorValueRaw
-	}
-
-	var kind cursorValueKind
-	for _, ident := range cursorIdentPattern.FindAllString(stripSQLQuotes(column), -1) {
-		next := cursorIdentKind(strings.ToLower(ident))
-		if next == cursorValueRaw {
-			continue
-		}
-
-		if kind != cursorValueRaw && kind != next {
-			return cursorValueRaw
-		}
-
-		kind = next
-	}
-
-	return kind
-}
-
-func stripSQLQuotes(column string) string {
-	var b strings.Builder
-	quoted := false
-	for i := 0; i < len(column); i++ {
-		if column[i] == '\'' {
-			quoted = !quoted
-			continue
-		}
-
-		if !quoted {
-			b.WriteByte(column[i])
-		}
-	}
-
-	return b.String()
-}
-
-func cursorIdentKind(ident string) cursorValueKind {
-	switch ident {
-	case "valid_from", "valid_until", "identified_on", "deadline":
-		return cursorValueDate
-	}
-
-	switch {
-	case strings.HasSuffix(ident, "_date"):
-		return cursorValueDate
-	case strings.HasSuffix(ident, "_at"):
-		return cursorValueTimestamp
-	case strings.HasSuffix(ident, "_due"):
-		return cursorValueTimestamp
-	case ident == "rank" || strings.HasSuffix(ident, "_rank") || strings.HasSuffix(ident, "_score"):
-		return cursorValueNumber
-	default:
-		return cursorValueRaw
-	}
-}
-
-func coerceCursorDate(value any) (pgtype.Date, error) {
 	switch v := value.(type) {
 	case time.Time:
-		return cursorDate(v), nil
+		return CursorTime, v
 	case *time.Time:
 		if v == nil {
-			return pgtype.Date{}, nil
+			return CursorTime, nil
 		}
 
-		return cursorDate(*v), nil
-	case string:
-		if t, err := time.Parse(time.DateOnly, v); err == nil {
-			return cursorDate(t), nil
+		return CursorTime, *v
+	case pgtype.Date:
+		if !v.Valid {
+			return CursorDate, nil
 		}
 
-		if t, err := time.Parse(time.RFC3339Nano, v); err == nil {
-			return cursorDate(t), nil
+		return CursorDate, v
+	}
+
+	rv := reflect.ValueOf(value)
+	for rv.Kind() == reflect.Pointer {
+		if rv.IsNil() {
+			return kindOf(rv.Type().Elem()), nil
 		}
 
-		return pgtype.Date{}, ErrInvalidCursorValue
+		rv = rv.Elem()
+	}
+
+	switch rv.Kind() {
+	case reflect.String:
+		return CursorText, rv.String()
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
+		reflect.Float32, reflect.Float64:
+		return CursorNumber, rv.Interface()
+	}
+
+	if s, ok := rv.Interface().(fmt.Stringer); ok {
+		return CursorText, s.String()
+	}
+
+	return CursorText, fmt.Sprint(rv.Interface())
+}
+
+func kindOf(t reflect.Type) CursorKind {
+	if t == reflect.TypeOf(time.Time{}) {
+		return CursorTime
+	}
+
+	switch t.Kind() {
+	case reflect.String:
+		return CursorText
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
+		reflect.Float32, reflect.Float64:
+		return CursorNumber
 	default:
-		return pgtype.Date{}, ErrInvalidCursorValue
+		return CursorText
 	}
 }
 
-func cursorDate(t time.Time) pgtype.Date {
-	year, month, day := t.UTC().Date()
+func dateCursorValue(value time.Time) pgtype.Date {
+	year, month, day := value.UTC().Date()
 
 	return pgtype.Date{
 		Time:  time.Date(year, month, day, 0, 0, 0, 0, time.UTC),
@@ -166,43 +118,89 @@ func cursorDate(t time.Time) pgtype.Date {
 	}
 }
 
-func coerceCursorTimestamp(value any) (any, error) {
-	switch v := value.(type) {
-	case time.Time:
-		return v, nil
-	case *time.Time:
-		if v == nil {
-			return nil, nil
-		}
+func marshalCursorValue(kind CursorKind, value any) ([]byte, error) {
+	if value == nil {
+		return []byte("null"), nil
+	}
 
-		return *v, nil
-	case string:
-		t, err := time.Parse(time.RFC3339Nano, v)
-		if err != nil {
+	switch kind {
+	case CursorTime:
+		t, ok := value.(time.Time)
+		if !ok {
 			return nil, ErrInvalidCursorValue
 		}
 
-		return t, nil
+		return json.Marshal(t.Format(time.RFC3339Nano))
+	case CursorDate:
+		d, ok := value.(pgtype.Date)
+		if !ok || !d.Valid {
+			return nil, ErrInvalidCursorValue
+		}
+
+		return json.Marshal(d.Time.Format(time.DateOnly))
+	case CursorNumber, CursorText:
+		return json.Marshal(value)
 	default:
 		return nil, ErrInvalidCursorValue
 	}
 }
 
-func coerceCursorNumber(value any) (any, error) {
-	switch v := value.(type) {
-	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
-		return v, nil
-	case string:
-		if n, err := strconv.ParseInt(v, 10, 64); err == nil {
-			return n, nil
+func unmarshalCursorValue(kind CursorKind, raw []byte) (any, error) {
+	if bytes.Equal(raw, []byte("null")) {
+		return nil, nil
+	}
+
+	switch kind {
+	case CursorTime:
+		var s string
+		if err := json.Unmarshal(raw, &s); err != nil {
+			return nil, ErrInvalidCursorValue
 		}
 
-		n, err := strconv.ParseFloat(v, 64)
+		t, err := time.Parse(time.RFC3339Nano, s)
 		if err != nil {
 			return nil, ErrInvalidCursorValue
 		}
 
-		return n, nil
+		return t, nil
+	case CursorDate:
+		var s string
+		if err := json.Unmarshal(raw, &s); err != nil {
+			return nil, ErrInvalidCursorValue
+		}
+
+		t, err := time.Parse(time.DateOnly, s)
+		if err != nil {
+			return nil, ErrInvalidCursorValue
+		}
+
+		return dateCursorValue(t), nil
+	case CursorNumber:
+		dec := json.NewDecoder(bytes.NewReader(raw))
+		dec.UseNumber()
+
+		var n json.Number
+		if err := dec.Decode(&n); err != nil {
+			return nil, ErrInvalidCursorValue
+		}
+
+		if i, err := n.Int64(); err == nil {
+			return i, nil
+		}
+
+		f, err := n.Float64()
+		if err != nil {
+			return nil, ErrInvalidCursorValue
+		}
+
+		return f, nil
+	case CursorText:
+		var s string
+		if err := json.Unmarshal(raw, &s); err != nil {
+			return nil, ErrInvalidCursorValue
+		}
+
+		return s, nil
 	default:
 		return nil, ErrInvalidCursorValue
 	}

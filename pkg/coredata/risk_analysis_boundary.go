@@ -52,9 +52,9 @@ type (
 func (b *RiskAnalysisBoundary) CursorKey(orderBy RiskAnalysisBoundaryOrderField) page.CursorKey {
 	switch orderBy {
 	case RiskAnalysisBoundaryOrderFieldCreatedAt:
-		return page.CursorKey{ID: b.ID, Value: b.CreatedAt}
+		return page.NewCursorKey(b.ID, b.CreatedAt)
 	case RiskAnalysisBoundaryOrderFieldName:
-		return page.CursorKey{ID: b.ID, Value: b.Name}
+		return page.NewCursorKey(b.ID, b.Name)
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))

@@ -60,9 +60,9 @@ func (o *Obligation) CursorKey(field ObligationOrderField) page.CursorKey {
 	case ObligationOrderFieldCreatedAt:
 		return page.NewCursorKey(o.ID, o.CreatedAt)
 	case ObligationOrderFieldLastReviewDate:
-		return page.NewCursorKey(o.ID, o.LastReviewDate)
+		return page.NewDateCursorKey(o.ID, o.LastReviewDate)
 	case ObligationOrderFieldDueDate:
-		return page.NewCursorKey(o.ID, o.DueDate)
+		return page.NewDateCursorKey(o.ID, o.DueDate)
 	case ObligationOrderFieldStatus:
 		return page.NewCursorKey(o.ID, o.Status)
 	}

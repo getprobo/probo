@@ -24,12 +24,15 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"time"
 
 	"go.probo.inc/probo/pkg/gid"
 )
 
 type CursorKey struct {
 	ID    gid.GID
+	Kind  CursorKind
 	Value any
 }
 
@@ -56,35 +59,40 @@ func ParseCursorKey(s string) (CursorKey, error) {
 		return CursorKeyNil, ErrInvalidFormat
 	}
 
-	if len(arr) != 2 {
-		return CursorKeyNil, ErrInvalidFormat
-	}
-
-	var idStr string
-	if err := json.Unmarshal(arr[0], &idStr); err != nil {
-		return CursorKeyNil, ErrInvalidFormat
-	}
-
-	id, err := gid.ParseGID(idStr)
+	key, err := cursorKeyFromArray(arr)
 	if err != nil {
-		return CursorKeyNil, ErrInvalidFormat
+		return CursorKeyNil, err
 	}
 
-	var value any
-	if err := json.Unmarshal(arr[1], &value); err != nil {
-		return CursorKeyNil, ErrInvalidFormat
-	}
-
-	return CursorKey{
-		ID:    id,
-		Value: value,
-	}, nil
+	return key, nil
 }
 
 func NewCursorKey(id gid.GID, value any) CursorKey {
+	kind, typed := classifyCursorValue(value)
+
 	return CursorKey{
 		ID:    id,
-		Value: value,
+		Kind:  kind,
+		Value: typed,
+	}
+}
+
+// NewDateCursorKey encodes a calendar day. A time.Time passed to NewCursorKey
+// is a timestamp, and a date column cannot be compared with one.
+func NewDateCursorKey(id gid.GID, value any) CursorKey {
+	switch v := value.(type) {
+	case nil:
+		return CursorKey{ID: id, Kind: CursorDate}
+	case time.Time:
+		return CursorKey{ID: id, Kind: CursorDate, Value: dateCursorValue(v)}
+	case *time.Time:
+		if v == nil {
+			return CursorKey{ID: id, Kind: CursorDate}
+		}
+
+		return CursorKey{ID: id, Kind: CursorDate, Value: dateCursorValue(*v)}
+	default:
+		panic(fmt.Sprintf("date cursor value must be a time, got %T", value))
 	}
 }
 
@@ -122,40 +130,70 @@ func (ck *CursorKey) UnmarshalText(data []byte) error {
 }
 
 func (ck CursorKey) MarshalBinary() ([]byte, error) {
-	arr := []any{ck.ID.String(), ck.Value}
-	return json.Marshal(arr)
+	idJSON, err := json.Marshal(ck.ID.String())
+	if err != nil {
+		return nil, err
+	}
+
+	kindJSON, err := json.Marshal(string(ck.Kind))
+	if err != nil {
+		return nil, err
+	}
+
+	valueJSON, err := marshalCursorValue(ck.Kind, ck.Value)
+	if err != nil {
+		return nil, err
+	}
+
+	return json.Marshal([]json.RawMessage{idJSON, kindJSON, valueJSON})
 }
 
 func (ck *CursorKey) UnmarshalBinary(data []byte) error {
 	var arr []json.RawMessage
 	if err := json.Unmarshal(data, &arr); err != nil {
+		return ErrInvalidFormat
+	}
+
+	key, err := cursorKeyFromArray(arr)
+	if err != nil {
 		return err
 	}
 
-	if len(arr) != 2 {
-		return ErrInvalidFormat
+	*ck = key
+
+	return nil
+}
+
+func cursorKeyFromArray(arr []json.RawMessage) (CursorKey, error) {
+	if len(arr) != 3 {
+		return CursorKeyNil, ErrInvalidFormat
 	}
 
-	// Parse the ID
 	var idStr string
 	if err := json.Unmarshal(arr[0], &idStr); err != nil {
-		return ErrInvalidFormat
+		return CursorKeyNil, ErrInvalidFormat
 	}
 
 	id, err := gid.ParseGID(idStr)
 	if err != nil {
-		return ErrInvalidFormat
+		return CursorKeyNil, ErrInvalidFormat
 	}
 
-	var value any
-	if err := json.Unmarshal(arr[1], &value); err != nil {
-		return ErrInvalidFormat
+	var kind string
+	if err := json.Unmarshal(arr[1], &kind); err != nil {
+		return CursorKeyNil, ErrInvalidFormat
 	}
 
-	ck.ID = id
-	ck.Value = value
+	value, err := unmarshalCursorValue(CursorKind(kind), arr[2])
+	if err != nil {
+		return CursorKeyNil, err
+	}
 
-	return nil
+	return CursorKey{
+		ID:    id,
+		Kind:  CursorKind(kind),
+		Value: value,
+	}, nil
 }
 
 func (ck CursorKey) MarshalJSON() ([]byte, error) {

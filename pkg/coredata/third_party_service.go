@@ -51,9 +51,9 @@ type (
 func (vs ThirdPartyService) CursorKey(orderBy ThirdPartyServiceOrderField) page.CursorKey {
 	switch orderBy {
 	case ThirdPartyServiceOrderFieldCreatedAt:
-		return page.CursorKey{ID: vs.ID, Value: vs.CreatedAt}
+		return page.NewCursorKey(vs.ID, vs.CreatedAt)
 	case ThirdPartyServiceOrderFieldName:
-		return page.CursorKey{ID: vs.ID, Value: vs.Name}
+		return page.NewCursorKey(vs.ID, vs.Name)
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))

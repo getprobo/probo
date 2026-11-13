@@ -104,13 +104,8 @@ func (c *Cursor[T]) SQLArguments() (pgx.NamedArgs, error) {
 	}
 
 	arguments["cursor_id"] = c.Key.ID
-	if strings.Contains(c.SQLFragment(), "@cursor_field_value") {
-		value, err := coerceCursorValue(c.OrderBy.Field.Column(), c.Key.Value)
-		if err != nil {
-			return nil, err
-		}
-
-		arguments["cursor_field_value"] = value
+	if c.Key.Value != nil && strings.Contains(c.SQLFragment(), "@cursor_field_value") {
+		arguments["cursor_field_value"] = c.Key.Value
 	}
 
 	return arguments, nil

@@ -50,9 +50,9 @@ type (
 func (s *RiskAnalysisDiagram) CursorKey(orderBy RiskAnalysisDiagramOrderField) page.CursorKey {
 	switch orderBy {
 	case RiskAnalysisDiagramOrderFieldCreatedAt:
-		return page.CursorKey{ID: s.ID, Value: s.CreatedAt}
+		return page.NewCursorKey(s.ID, s.CreatedAt)
 	case RiskAnalysisDiagramOrderFieldName:
-		return page.CursorKey{ID: s.ID, Value: s.Name}
+		return page.NewCursorKey(s.ID, s.Name)
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))

@@ -51,7 +51,7 @@ type (
 func (v ThirdPartyDataPrivacyAgreement) CursorKey(orderBy ThirdPartyDataPrivacyAgreementOrderField) page.CursorKey {
 	switch orderBy {
 	case ThirdPartyDataPrivacyAgreementOrderFieldValidFrom:
-		return page.NewCursorKey(v.ID, v.ValidFrom)
+		return page.NewDateCursorKey(v.ID, v.ValidFrom)
 	case ThirdPartyDataPrivacyAgreementOrderFieldCreatedAt:
 		return page.NewCursorKey(v.ID, v.CreatedAt)
 	}

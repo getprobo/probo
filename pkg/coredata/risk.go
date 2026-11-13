@@ -173,23 +173,23 @@ type (
 func (r *Risk) CursorKey(orderBy RiskOrderField) page.CursorKey {
 	switch orderBy {
 	case RiskOrderFieldCreatedAt:
-		return page.CursorKey{ID: r.ID, Value: r.CreatedAt}
+		return page.NewCursorKey(r.ID, r.CreatedAt)
 	case RiskOrderFieldUpdatedAt:
-		return page.CursorKey{ID: r.ID, Value: r.UpdatedAt}
+		return page.NewCursorKey(r.ID, r.UpdatedAt)
 	case RiskOrderFieldReferenceID:
-		return page.CursorKey{ID: r.ID, Value: r.ReferenceID}
+		return page.NewCursorKey(r.ID, r.ReferenceID)
 	case RiskOrderFieldName:
-		return page.CursorKey{ID: r.ID, Value: r.Name}
+		return page.NewCursorKey(r.ID, r.Name)
 	case RiskOrderFieldCategory:
-		return page.CursorKey{ID: r.ID, Value: r.Category}
+		return page.NewCursorKey(r.ID, r.Category)
 	case RiskOrderFieldTreatment:
-		return page.CursorKey{ID: r.ID, Value: r.Treatment}
+		return page.NewCursorKey(r.ID, r.Treatment)
 	case RiskOrderFieldInherentRiskScore:
-		return page.CursorKey{ID: r.ID, Value: r.InherentRiskScore}
+		return page.NewCursorKey(r.ID, r.InherentRiskScore)
 	case RiskOrderFieldResidualRiskScore:
-		return page.CursorKey{ID: r.ID, Value: r.ResidualRiskScore}
+		return page.NewCursorKey(r.ID, r.ResidualRiskScore)
 	case RiskOrderFieldOwnerFullName:
-		return page.CursorKey{ID: r.ID, Value: r.OwnerFullName}
+		return page.NewCursorKey(r.ID, r.OwnerFullName)
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))

@@ -52,7 +52,7 @@ type (
 func (c ThirdPartyComplianceReport) CursorKey(orderBy ThirdPartyComplianceReportOrderField) page.CursorKey {
 	switch orderBy {
 	case ThirdPartyComplianceReportOrderFieldReportDate:
-		return page.NewCursorKey(c.ID, c.ReportDate)
+		return page.NewDateCursorKey(c.ID, c.ReportDate)
 	case ThirdPartyComplianceReportOrderFieldCreatedAt:
 		return page.NewCursorKey(c.ID, c.CreatedAt)
 	}

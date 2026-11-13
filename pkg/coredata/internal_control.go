@@ -74,7 +74,7 @@ func (m InternalControl) CursorKey(orderBy InternalControlOrderField) page.Curso
 	case InternalControlOrderFieldNextDue:
 		due := internalControlNextDueValue(m.NextEvidenceDue, m.NextTestDue)
 		if due == nil {
-			return page.NewCursorKey(m.ID, nil)
+			return page.NewCursorKey(m.ID, (*time.Time)(nil))
 		}
 
 		return page.NewCursorKey(m.ID, *due)

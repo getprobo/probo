@@ -58,7 +58,7 @@ func (rr *RightsRequest) CursorKey(field RightsRequestOrderField) page.CursorKey
 	case RightsRequestOrderFieldCreatedAt:
 		return page.NewCursorKey(rr.ID, rr.CreatedAt)
 	case RightsRequestOrderFieldDeadline:
-		return page.NewCursorKey(rr.ID, rr.Deadline)
+		return page.NewDateCursorKey(rr.ID, rr.Deadline)
 	case RightsRequestOrderFieldState:
 		return page.NewCursorKey(rr.ID, rr.RequestState)
 	case RightsRequestOrderFieldType:
