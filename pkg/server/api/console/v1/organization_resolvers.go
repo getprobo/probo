@@ -247,7 +247,8 @@ func (r *organizationResolver) AssetListDocument(ctx context.Context, obj *types
 
 	assetDocumentID, err := r.probo.GeneratedDocuments.GetAssetListDocumentID(ctx, scope, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get asset list document ID: %w", err)
+		r.logger.ErrorCtx(ctx, "cannot get asset list document ID", log.Error(err))
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if assetDocumentID == nil {
@@ -256,7 +257,7 @@ func (r *organizationResolver) AssetListDocument(ctx context.Context, obj *types
 
 	doc, err := r.probo.Documents.Get(ctx, scope, *assetDocumentID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get asset list document: %w", err)
+		return nil, gqlx.MapError(ctx, r.logger, "cannot get asset list document", err)
 	}
 
 	return types.NewDocument(doc), nil
@@ -301,7 +302,8 @@ func (r *organizationResolver) DataListDocument(ctx context.Context, obj *types.
 
 	dataDocumentID, err := r.probo.GeneratedDocuments.GetDataListDocumentID(ctx, scope, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get data export document ID: %w", err)
+		r.logger.ErrorCtx(ctx, "cannot get data export document ID", log.Error(err))
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if dataDocumentID == nil {
@@ -310,7 +312,7 @@ func (r *organizationResolver) DataListDocument(ctx context.Context, obj *types.
 
 	doc, err := r.probo.Documents.Get(ctx, scope, *dataDocumentID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get data export document: %w", err)
+		return nil, gqlx.MapError(ctx, r.logger, "cannot get data export document", err)
 	}
 
 	return types.NewDocument(doc), nil
@@ -385,7 +387,8 @@ func (r *organizationResolver) FindingsDocument(ctx context.Context, obj *types.
 
 	findingDocumentID, err := r.probo.GeneratedDocuments.GetFindingsDocumentID(ctx, scope, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get finding list document ID: %w", err)
+		r.logger.ErrorCtx(ctx, "cannot get finding list document ID", log.Error(err))
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if findingDocumentID == nil {
@@ -394,7 +397,7 @@ func (r *organizationResolver) FindingsDocument(ctx context.Context, obj *types.
 
 	doc, err := r.probo.Documents.Get(ctx, scope, *findingDocumentID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get finding list document: %w", err)
+		return nil, gqlx.MapError(ctx, r.logger, "cannot get finding list document", err)
 	}
 
 	return types.NewDocument(doc), nil
@@ -1313,7 +1316,8 @@ func (r *organizationResolver) ObligationsDocument(ctx context.Context, obj *typ
 
 	obligationDocumentID, err := r.probo.GeneratedDocuments.GetObligationsDocumentID(ctx, scope, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get obligation list document ID: %w", err)
+		r.logger.ErrorCtx(ctx, "cannot get obligation list document ID", log.Error(err))
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if obligationDocumentID == nil {
@@ -1322,7 +1326,7 @@ func (r *organizationResolver) ObligationsDocument(ctx context.Context, obj *typ
 
 	doc, err := r.probo.Documents.Get(ctx, scope, *obligationDocumentID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get obligation list document: %w", err)
+		return nil, gqlx.MapError(ctx, r.logger, "cannot get obligation list document", err)
 	}
 
 	return types.NewDocument(doc), nil

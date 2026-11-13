@@ -60,6 +60,26 @@ func Unauthenticatedf(ctx context.Context, format string, a ...any) *gqlerror.Er
 	return Unauthenticated(ctx, fmt.Errorf(format, a...))
 }
 
+func InvalidCredentials(ctx context.Context, err error) *gqlerror.Error {
+	return &gqlerror.Error{
+		Message: err.Error(),
+		Path:    graphql.GetPath(ctx),
+		Extensions: map[string]any{
+			"code": "INVALID_CREDENTIALS",
+		},
+	}
+}
+
+func EmailNotVerified(ctx context.Context, err error) *gqlerror.Error {
+	return &gqlerror.Error{
+		Message: err.Error(),
+		Path:    graphql.GetPath(ctx),
+		Extensions: map[string]any{
+			"code": "EMAIL_NOT_VERIFIED",
+		},
+	}
+}
+
 func AssumptionRequired(ctx context.Context, err error) *gqlerror.Error {
 	return &gqlerror.Error{
 		Message: err.Error(),

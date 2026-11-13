@@ -172,6 +172,7 @@ func TestInterceptOperation(t *testing.T) {
 				name  string
 				errs  gqlerror.List
 				level string
+				codes string
 			}{
 				{
 					name: "not found",
@@ -221,6 +222,46 @@ func TestInterceptOperation(t *testing.T) {
 					},
 					level: "ERROR",
 				},
+				{
+					name: "parse failed",
+					errs: gqlerror.List{
+						&gqlerror.Error{Extensions: map[string]any{"code": "GRAPHQL_PARSE_FAILED"}},
+					},
+					level: "INFO",
+					codes: "GRAPHQL_PARSE_FAILED",
+				},
+				{
+					name: "validation failed",
+					errs: gqlerror.List{
+						&gqlerror.Error{Extensions: map[string]any{"code": "GRAPHQL_VALIDATION_FAILED"}},
+					},
+					level: "INFO",
+					codes: "GRAPHQL_VALIDATION_FAILED",
+				},
+				{
+					name: "invalid credentials",
+					errs: gqlerror.List{
+						&gqlerror.Error{Extensions: map[string]any{"code": "INVALID_CREDENTIALS"}},
+					},
+					level: "INFO",
+					codes: "INVALID_CREDENTIALS",
+				},
+				{
+					name: "email not verified",
+					errs: gqlerror.List{
+						&gqlerror.Error{Extensions: map[string]any{"code": "EMAIL_NOT_VERIFIED"}},
+					},
+					level: "INFO",
+					codes: "EMAIL_NOT_VERIFIED",
+				},
+				{
+					name: "complexity limit",
+					errs: gqlerror.List{
+						&gqlerror.Error{Extensions: map[string]any{"code": "COMPLEXITY_LIMIT_EXCEEDED"}},
+					},
+					level: "INFO",
+					codes: "COMPLEXITY_LIMIT_EXCEEDED",
+				},
 			}
 
 			for _, tt := range tests {
@@ -250,6 +291,10 @@ func TestInterceptOperation(t *testing.T) {
 						require.NoError(t, json.Unmarshal([]byte(strings.TrimSpace(logs.String())), &entry))
 						assert.Equal(t, tt.level, entry["level"])
 						assert.Contains(t, entry["msg"], "query Viewer failed")
+
+						if tt.codes != "" {
+							assert.Equal(t, tt.codes, entry["graphql_operation_error_codes"])
+						}
 					},
 				)
 			}

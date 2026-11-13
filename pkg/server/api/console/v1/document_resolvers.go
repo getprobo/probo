@@ -63,7 +63,13 @@ func (r *documentResolver) Alias(ctx context.Context, obj *types.Document) (*str
 		return nil, err
 	}
 
-	return r.resourceAlias.GetByResourceID(ctx, scope, obj.ID)
+	alias, err := r.resourceAlias.GetByResourceID(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load resource alias", log.Error(err))
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return alias, nil
 }
 
 // Organization is the resolver for the organization field.

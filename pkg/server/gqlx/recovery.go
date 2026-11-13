@@ -62,7 +62,7 @@ func RecoverFunc(ctx context.Context, err any) error {
 	logger := httpserver.LoggerFromContext(ctx)
 	logger.Error("resolver panic", log.Any("error", err), log.String("stack", string(debug.Stack())))
 
-	return errors.New("internal server error")
+	return Internal(ctx)
 }
 
 func asError(err any) error {

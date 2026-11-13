@@ -8,7 +8,6 @@ package console_v1
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	pgx "github.com/jackc/pgx/v5"
 	"github.com/vikstrous/dataloadgen"
@@ -1060,7 +1059,9 @@ func (r *thirdPartyBusinessAssociateAgreementResolver) ThirdParty(ctx context.Co
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		return nil, fmt.Errorf("cannot get thirdParty: %w", err)
+		r.logger.ErrorCtx(ctx, "cannot get thirdParty", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewThirdParty(thirdParty), nil

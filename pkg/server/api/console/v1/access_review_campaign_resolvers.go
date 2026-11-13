@@ -1241,7 +1241,12 @@ func (r *mutationResolver) RecordAccessReviewEntryDecisions(ctx context.Context,
 
 	const maxBatchSize = 100
 	if len(input.Decisions) > maxBatchSize {
-		return nil, fmt.Errorf("cannot record decisions: batch size %d exceeds maximum of %d", len(input.Decisions), maxBatchSize)
+		return nil, gqlx.Invalidf(
+			ctx,
+			"cannot record decisions: batch size %d exceeds maximum of %d",
+			len(input.Decisions),
+			maxBatchSize,
+		)
 	}
 
 	// Authorize each entry individually to prevent cross-org bypass.
@@ -1254,7 +1259,7 @@ func (r *mutationResolver) RecordAccessReviewEntryDecisions(ctx context.Context,
 
 	identity := authn.IdentityFromContext(ctx)
 	if identity == nil {
-		return nil, fmt.Errorf("no identity in context")
+		return nil, gqlx.Unauthenticatedf(ctx, "no identity in context")
 	}
 
 	tenantID := input.Decisions[0].AccessReviewEntryID.TenantID()

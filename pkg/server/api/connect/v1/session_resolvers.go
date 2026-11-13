@@ -9,7 +9,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
@@ -29,12 +28,7 @@ func (r *mutationResolver) SignIn(ctx context.Context, input types.SignInInput) 
 		}
 
 		if _, ok := errors.AsType[*iam.ErrInvalidCredentials](err); ok {
-			return nil, &gqlerror.Error{
-				Message: err.Error(),
-				Extensions: map[string]any{
-					"code": "INVALID_CREDENTIALS",
-				},
-			}
+			return nil, gqlx.InvalidCredentials(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot check credentials", log.Error(err))
@@ -43,12 +37,7 @@ func (r *mutationResolver) SignIn(ctx context.Context, input types.SignInInput) 
 	}
 
 	if !identity.EmailAddressVerified {
-		return nil, &gqlerror.Error{
-			Message: iam.NewEmailNotVerifiedError().Error(),
-			Extensions: map[string]any{
-				"code": "EMAIL_NOT_VERIFIED",
-			},
-		}
+		return nil, gqlx.EmailNotVerified(ctx, iam.NewEmailNotVerifiedError())
 	}
 
 	session := authn.SessionFromContext(ctx)

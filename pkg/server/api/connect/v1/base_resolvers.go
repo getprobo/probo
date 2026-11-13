@@ -8,7 +8,6 @@ package connect_v1
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strings"
 
 	"go.gearno.de/kit/log"
@@ -155,7 +154,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			return types.NewEmployeePortal(employeePortal), nil
 		}
 	default:
-		return nil, fmt.Errorf("unsupported entity type: %d", id.EntityType())
+		return nil, gqlx.Invalidf(ctx, "unsupported entity type: %d", id.EntityType())
 	}
 
 	if _, err := r.authorize(ctx, id, action); err != nil {
