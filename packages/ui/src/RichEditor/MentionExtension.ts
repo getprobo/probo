@@ -23,7 +23,12 @@ import { PluginKey } from "@tiptap/pm/state";
 import { type Editor, ReactNodeViewRenderer } from "@tiptap/react";
 import type { SuggestionProps } from "@tiptap/suggestion";
 
+import { presentStrings } from "./automergeMapping";
 import { MentionNodeView } from "./MentionNodeView";
+
+function mentionAttrsFromBlock(attributes: unknown): Record<string, string | number> {
+  return presentStrings(attributes, ["id", "label"]);
+}
 
 export type MentionItem = {
   id: string;
@@ -99,6 +104,14 @@ export const MentionExtension = Mention.extend<
   MentionOptions<MentionItem, MentionNodeAttrs>,
   MentionStorage
 >({
+  automerge: () => ({
+    block: "mention",
+    isEmbed: true,
+    attrParsers: {
+      fromAutomerge: block => mentionAttrsFromBlock(block.attrs),
+      fromProsemirror: node => mentionAttrsFromBlock(node.attrs),
+    },
+  }),
   addStorage() {
     return {
       source: null,

@@ -18,35 +18,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Field } from "@probo/ui/src/v2/form/Field";
-import { Select } from "@probo/ui/src/v2/Select/Select";
-import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
-import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
-import { SelectTrigger } from "@probo/ui/src/v2/Select/SelectTrigger";
 import { useState } from "react";
-import { useTranslation } from "react-i18next";
 
 import type { OAuthConnectForm_provider$key } from "#/__generated__/core/OAuthConnectForm_provider.graphql";
 
+import { DatadogSiteField } from "./DatadogSiteField";
 import { OAuthConnectForm } from "./OAuthConnectForm";
-
-// Labels are technical identifiers (region code + hostname).
-const DATADOG_SITES: { value: string; label: string }[] = [
-  { value: "US1", label: "US1 (app.datadoghq.com)" },
-  { value: "US3", label: "US3 (us3.datadoghq.com)" },
-  { value: "US5", label: "US5 (us5.datadoghq.com)" },
-  { value: "EU1", label: "EU1 (app.datadoghq.eu)" },
-  { value: "AP1", label: "AP1 (ap1.datadoghq.com)" },
-  { value: "AP2", label: "AP2 (ap2.datadoghq.com)" },
-  { value: "US1-FED", label: "US1-FED (app.ddog-gov.com)" },
-];
 
 export function DatadogConnectForm({
   providerKey,
 }: {
   providerKey: OAuthConnectForm_provider$key;
 }) {
-  const { t } = useTranslation("organizations/settings/integrations");
   const [site, setSite] = useState("US1");
 
   return (
@@ -54,18 +37,7 @@ export function DatadogConnectForm({
       providerKey={providerKey}
       extras={{ site }}
     >
-      <Field required label={t("marketplacePage.fields.datadogSite")}>
-        <Select value={site} onValueChange={(value: string | null) => setSite(value ?? "US1")}>
-          <SelectTrigger>
-            {(value: string | null) => DATADOG_SITES.find(entry => entry.value === value)?.label ?? null}
-          </SelectTrigger>
-          <SelectPopup>
-            {DATADOG_SITES.map(entry => (
-              <SelectItem key={entry.value} value={entry.value}>{entry.label}</SelectItem>
-            ))}
-          </SelectPopup>
-        </Select>
-      </Field>
+      <DatadogSiteField value={site} onValueChange={value => setSite(value || "US1")} />
     </OAuthConnectForm>
   );
 }

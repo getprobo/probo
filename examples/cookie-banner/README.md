@@ -42,6 +42,34 @@ GitHub Actions, then add these variables on the
 Both must be non-empty so Vite bakes the hosted banner in. An empty
 id compiles the playground form, which this workflow rejects.
 
+## Two sites on one domain
+
+macOS resolves `*.localhost` to `127.0.0.1`. `shop.example.localhost` and
+`blog.example.localhost` share the CMP domain `example.localhost`.
+`shop.localhost` and `blog.localhost` do not.
+
+`.env.example` sets `PUBLIC_EXAMPLE_DOMAIN` to `example.localhost`. An empty
+value stays on localhost: the sibling links are omitted and the writer
+does not set the parent-domain cookie.
+
+The themed app is the reader at `http://shop.<domain>:5180`. The themed
+TCF app is the writer at `http://blog.<domain>:5181` and sets
+`probo_example=1; Domain=<domain>; Path=/`. The headless app stays on
+`http://localhost:5182`.
+
+A console scan of these hosts fails: the scanner refuses loopback. This
+exercises the visitor SDK. Open the writer first, then the reader, in
+the same browser. The reader's tracker source becomes Script with a link
+back to the writer.
+
+1. Create both banners in one organization. The origins must be exactly
+   `http://shop.example.localhost:5180` and
+   `http://blog.example.localhost:5181`. The API only reflects an origin
+   that matches the banner.
+2. Set `PUBLIC_COOKIE_BANNER_ID` to the banner for the site you are
+   opening, then restart Vite. Switch that id when you move from the
+   writer to the reader. Leave it empty to keep the playground form.
+
 ## Run
 
 1. Copy `.env.example` to `.env` in this directory and fill in values.

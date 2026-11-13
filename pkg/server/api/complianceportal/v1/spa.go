@@ -79,7 +79,7 @@ func NewServer(
 
 	gzipOptions := statichandler.GzipOptions{
 		EnableFileTypeCheck: true,
-		FileTypes:           []string{".js", ".css", ".html"},
+		FileTypes:           []string{".js", ".css", ".html", ".map"},
 	}
 
 	spaServer, err := statichandler.NewServer(

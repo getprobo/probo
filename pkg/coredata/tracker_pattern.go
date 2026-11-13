@@ -50,6 +50,7 @@ type (
 		Excluded               bool                    `db:"excluded"`
 		MaxAgeSeconds          *int                    `db:"max_age_seconds"`
 		Source                 *CookieSource           `db:"source"`
+		SourceCookieBannerID   *gid.GID                `db:"source_cookie_banner_id"`
 		MappingRequestedAt     *time.Time              `db:"mapping_requested_at"`
 		CreatedAt              time.Time               `db:"created_at"`
 		UpdatedAt              time.Time               `db:"updated_at"`
@@ -122,6 +123,30 @@ func (tp *TrackerPattern) LoadByID(
 	scope Scoper,
 	trackerPatternID gid.GID,
 ) error {
+	return tp.loadByID(ctx, conn, scope, trackerPatternID, false)
+}
+
+func (tp *TrackerPattern) LoadByIDForUpdate(
+	ctx context.Context,
+	tx pg.Tx,
+	scope Scoper,
+	trackerPatternID gid.GID,
+) error {
+	return tp.loadByID(ctx, tx, scope, trackerPatternID, true)
+}
+
+func (tp *TrackerPattern) loadByID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	trackerPatternID gid.GID,
+	forUpdate bool,
+) error {
+	lock := ""
+	if forUpdate {
+		lock = "FOR UPDATE"
+	}
+
 	q := `
 SELECT
 	id,
@@ -136,6 +161,7 @@ SELECT
 	excluded,
 	max_age_seconds,
 	source,
+	source_cookie_banner_id,
 	mapping_requested_at,
 	created_at,
 	updated_at
@@ -144,10 +170,11 @@ FROM
 WHERE
 	%s
 	AND id = @tracker_pattern_id
-LIMIT 1;
+LIMIT 1
+%s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), lock)
 
 	args := pgx.StrictNamedArgs{"tracker_pattern_id": trackerPatternID}
 	maps.Copy(args, scope.SQLArguments())
@@ -202,6 +229,7 @@ SELECT
 	excluded,
 	max_age_seconds,
 	source,
+	source_cookie_banner_id,
 	mapping_requested_at,
 	created_at,
 	updated_at
@@ -263,6 +291,7 @@ SELECT
 	excluded,
 	max_age_seconds,
 	source,
+	source_cookie_banner_id,
 	mapping_requested_at,
 	created_at,
 	updated_at
@@ -328,6 +357,7 @@ SELECT
 	excluded,
 	max_age_seconds,
 	source,
+	source_cookie_banner_id,
 	mapping_requested_at,
 	created_at,
 	updated_at
@@ -403,6 +433,7 @@ INSERT INTO tracker_patterns (
 	excluded,
 	max_age_seconds,
 	source,
+	source_cookie_banner_id,
 	mapping_requested_at,
 	created_at,
 	updated_at
@@ -420,6 +451,7 @@ INSERT INTO tracker_patterns (
 	@excluded,
 	@max_age_seconds,
 	@source,
+	@source_cookie_banner_id,
 	@mapping_requested_at,
 	@created_at,
 	@updated_at
@@ -440,6 +472,7 @@ INSERT INTO tracker_patterns (
 		"excluded":                  tp.Excluded,
 		"max_age_seconds":           tp.MaxAgeSeconds,
 		"source":                    tp.Source,
+		"source_cookie_banner_id":   tp.SourceCookieBannerID,
 		"mapping_requested_at":      tp.MappingRequestedAt,
 		"created_at":                tp.CreatedAt,
 		"updated_at":                tp.UpdatedAt,
@@ -479,6 +512,7 @@ INSERT INTO tracker_patterns (
 	excluded,
 	max_age_seconds,
 	source,
+	source_cookie_banner_id,
 	mapping_requested_at,
 	created_at,
 	updated_at
@@ -496,6 +530,7 @@ INSERT INTO tracker_patterns (
 	@excluded,
 	@max_age_seconds,
 	@source,
+	@source_cookie_banner_id,
 	@mapping_requested_at,
 	@created_at,
 	@updated_at
@@ -517,6 +552,7 @@ ON CONFLICT (cookie_banner_id, tracker_type, pattern, COALESCE(max_age_seconds, 
 		"excluded":                  tp.Excluded,
 		"max_age_seconds":           tp.MaxAgeSeconds,
 		"source":                    tp.Source,
+		"source_cookie_banner_id":   tp.SourceCookieBannerID,
 		"mapping_requested_at":      tp.MappingRequestedAt,
 		"created_at":                tp.CreatedAt,
 		"updated_at":                tp.UpdatedAt,
@@ -550,6 +586,7 @@ SET
 	description = @description,
 	excluded = @excluded,
 	source = @source,
+	source_cookie_banner_id = @source_cookie_banner_id,
 	updated_at = @updated_at
 WHERE
 	%s
@@ -566,6 +603,7 @@ WHERE
 		"description":               tp.Description,
 		"excluded":                  tp.Excluded,
 		"source":                    tp.Source,
+		"source_cookie_banner_id":   tp.SourceCookieBannerID,
 		"updated_at":                tp.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
@@ -687,6 +725,7 @@ SELECT
 	excluded,
 	max_age_seconds,
 	source,
+	source_cookie_banner_id,
 	mapping_requested_at,
 	created_at,
 	updated_at
@@ -780,6 +819,7 @@ SELECT
 	excluded,
 	max_age_seconds,
 	source,
+	source_cookie_banner_id,
 	mapping_requested_at,
 	created_at,
 	updated_at
@@ -969,6 +1009,7 @@ SELECT
 	excluded,
 	max_age_seconds,
 	source,
+	source_cookie_banner_id,
 	mapping_requested_at,
 	created_at,
 	updated_at

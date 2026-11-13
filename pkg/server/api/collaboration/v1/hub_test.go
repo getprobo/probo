@@ -46,6 +46,15 @@ type fakeDocuments struct {
 	persistedCh    chan struct{}
 	persistStarted chan struct{}
 	persistGate    chan struct{}
+	attemptsMu     sync.Mutex
+	attemptTimes   []time.Time
+}
+
+func (f *fakeDocuments) attemptedAt() []time.Time {
+	f.attemptsMu.Lock()
+	defer f.attemptsMu.Unlock()
+
+	return append([]time.Time(nil), f.attemptTimes...)
 }
 
 func (f *fakeDocuments) Open(
@@ -62,6 +71,10 @@ func (f *fakeDocuments) Persist(
 	gid.GID,
 	*automerge.Document,
 ) (int64, error) {
+	f.attemptsMu.Lock()
+	f.attemptTimes = append(f.attemptTimes, time.Now())
+	f.attemptsMu.Unlock()
+
 	call := f.attempts.Add(1)
 	if f.persistGate != nil && call == 1 {
 		close(f.persistStarted)
@@ -81,60 +94,6 @@ func (f *fakeDocuments) Persist(
 	}
 
 	return revision, nil
-}
-
-type gatingDocuments struct {
-	opens    atomic.Int64
-	releases atomic.Int64
-}
-
-func (g *gatingDocuments) Open(
-	context.Context,
-	coredata.Scoper,
-	gid.GID,
-) (*collaboration.DocumentCollaboration, error) {
-	opened := g.opens.Add(1)
-
-	document, err := automerge.New(automerge.ActorID{byte(opened)})
-	if err != nil {
-		return nil, err
-	}
-
-	return &collaboration.DocumentCollaboration{
-		Document:  document,
-		Revision:  1,
-		NeedsSeed: opened == 1,
-	}, nil
-}
-
-func (g *gatingDocuments) Persist(
-	context.Context,
-	coredata.Scoper,
-	gid.GID,
-	*automerge.Document,
-) (int64, error) {
-	return 1, nil
-}
-
-func (g *gatingDocuments) ReleaseSeed(
-	context.Context,
-	coredata.Scoper,
-	gid.GID,
-	time.Time,
-) error {
-	g.releases.Add(1)
-
-	return nil
-}
-
-func newGatingFixture(t *testing.T) (*Hub, *gatingDocuments, coredata.Scoper, gid.GID) {
-	t.Helper()
-
-	tenantID := gid.NewTenantID()
-	documentID := gid.New(tenantID, coredata.DocumentEntityType)
-	documents := &gatingDocuments{}
-
-	return NewHub(documents, nil), documents, coredata.NewScope(tenantID, gid.Nil), documentID
 }
 
 func TestRoom_NotifiesOtherPeers(t *testing.T) {
@@ -621,6 +580,75 @@ func TestRoom_RetriesPersistAfterError(t *testing.T) {
 	require.NoError(t, document.Close())
 }
 
+func TestRoom_BacksOffPersistRetries(t *testing.T) {
+	t.Parallel()
+
+	tenantID := gid.NewTenantID()
+	documentID := gid.New(tenantID, coredata.DocumentEntityType)
+	document, err := automerge.New(automerge.ActorID{9})
+	require.NoError(t, err)
+
+	documents := &fakeDocuments{
+		opened: &collaboration.DocumentCollaboration{
+			Document: document,
+			Revision: 1,
+		},
+	}
+	documents.failAttempts.Store(3)
+	room := &Room{
+		collaboration: documents.opened,
+		documents:     documents,
+		scope:         coredata.NewScope(tenantID, gid.Nil),
+		documentID:    documentID,
+		peers:         make(map[uint64]RoomPeer),
+		dirty:         make(chan struct{}, 1),
+		stop:          make(chan struct{}),
+		done:          make(chan struct{}),
+	}
+
+	room.revision.Store(1)
+
+	go room.run()
+
+	lease := &RoomLease{room: room}
+	lease.SchedulePersist()
+
+	// Edits arriving while a retry is pending must not shorten the backoff.
+	require.Eventually(
+		t,
+		func() bool {
+			if documents.attempts.Load() > 0 {
+				lease.SchedulePersist()
+			}
+
+			return documents.persisted.Load() >= 1
+		},
+		5*time.Second,
+		5*time.Millisecond,
+	)
+
+	// One debounce, then retries after 2x, 4x and 8x the debounce. Each gap
+	// is checked on its own so a fixed retry delay cannot pass.
+	attempts := documents.attemptedAt()
+	require.GreaterOrEqual(t, len(attempts), 4)
+	assert.GreaterOrEqual(t, attempts[1].Sub(attempts[0]), 2*PersistDebounce)
+	assert.GreaterOrEqual(t, attempts[2].Sub(attempts[1]), 4*PersistDebounce)
+	assert.GreaterOrEqual(t, attempts[3].Sub(attempts[2]), 8*PersistDebounce)
+
+	close(room.stop)
+	<-room.done
+	require.NoError(t, document.Close())
+}
+
+func TestPersistRetryDelay(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, 2*PersistDebounce, persistRetryDelay(1))
+	assert.Equal(t, 4*PersistDebounce, persistRetryDelay(2))
+	assert.Equal(t, PersistRetryMax, persistRetryDelay(20))
+	assert.Equal(t, PersistRetryMax, persistRetryDelay(1000))
+}
+
 func TestRoom_PersistsDirtyOnCloseAfterError(t *testing.T) {
 	t.Parallel()
 
@@ -763,86 +791,4 @@ func TestAcquire_OpenFollowsCallerContext(t *testing.T) {
 	case <-time.After(time.Second):
 		require.Fail(t, "acquire did not return")
 	}
-}
-
-func TestHub_GatesUnseededRoom(t *testing.T) {
-	t.Parallel()
-
-	t.Run(
-		"peer waits until seed completes",
-		func(t *testing.T) {
-			t.Parallel()
-
-			hub, documents, scope, documentID := newGatingFixture(t)
-			owner, err := hub.Acquire(context.Background(), scope, documentID, "owner")
-			require.NoError(t, err)
-			require.True(t, owner.SeedOwner())
-
-			waitCtx, cancel := context.WithTimeout(context.Background(), 150*time.Millisecond)
-			defer cancel()
-
-			_, err = hub.Acquire(waitCtx, scope, documentID, "early")
-			require.ErrorIs(t, err, context.DeadlineExceeded)
-			assert.Equal(t, int64(1), documents.opens.Load())
-
-			owner.completeSeed()
-
-			peer, err := hub.Acquire(context.Background(), scope, documentID, "peer")
-			require.NoError(t, err)
-			assert.False(t, peer.SeedOwner())
-			assert.Equal(t, owner.room, peer.room)
-			assert.Equal(t, int64(1), documents.opens.Load())
-
-			peer.Close()
-			owner.Close()
-		},
-	)
-
-	t.Run(
-		"failed seed releases the claim once and retries",
-		func(t *testing.T) {
-			t.Parallel()
-
-			hub, documents, scope, documentID := newGatingFixture(t)
-			owner, err := hub.Acquire(context.Background(), scope, documentID, "owner")
-			require.NoError(t, err)
-			require.True(t, owner.SeedOwner())
-
-			waitCtx, cancel := context.WithTimeout(context.Background(), 150*time.Millisecond)
-			defer cancel()
-
-			_, err = hub.Acquire(waitCtx, scope, documentID, "early")
-			require.ErrorIs(t, err, context.DeadlineExceeded)
-
-			require.NoError(t, owner.releaseUnseeded(context.Background()))
-			assert.Equal(t, int64(1), documents.releases.Load())
-
-			owner.Close()
-			assert.Equal(t, int64(1), documents.releases.Load())
-			assert.NotContains(t, hub.rooms, documentID)
-
-			peer, err := hub.Acquire(context.Background(), scope, documentID, "peer")
-			require.NoError(t, err)
-			assert.False(t, peer.SeedOwner())
-			assert.Equal(t, int64(2), documents.opens.Load())
-
-			peer.Close()
-		},
-	)
-
-	t.Run(
-		"closing the seed owner releases the claim",
-		func(t *testing.T) {
-			t.Parallel()
-
-			hub, documents, scope, documentID := newGatingFixture(t)
-			owner, err := hub.Acquire(context.Background(), scope, documentID, "owner")
-			require.NoError(t, err)
-
-			owner.Close()
-
-			assert.Equal(t, int64(1), documents.releases.Load())
-			assert.NotContains(t, hub.rooms, documentID)
-		},
-	)
 }

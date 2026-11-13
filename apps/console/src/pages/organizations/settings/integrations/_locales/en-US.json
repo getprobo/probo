@@ -51,6 +51,8 @@
       "clientSecret": "Client secret",
       "scope": "Scope",
       "datadogSite": "Datadog site",
+      "datadogSitePlaceholder": "Select a site",
+      "datadogTokenHint": "Paste a service access token from a Datadog service account, with the user_access_read scope. A personal access token also works until it expires.",
       "zendeskSubdomain": "Zendesk subdomain",
       "region": "Region",
       "regionPlaceholder": "Select a region",
@@ -133,6 +135,7 @@
       "available": "Available"
     },
     "addMore": "Add more",
+    "suggestDescription": "Select \"Add more\" to see the full list of integrations Probo supports.",
     "emptyConnected": "No vendor is connected yet.",
     "emptyConnectedSearch": "No connected vendor matches your search.",
     "checkingStatuses": "Checking connection statuses…",

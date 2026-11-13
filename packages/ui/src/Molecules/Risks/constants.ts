@@ -24,6 +24,10 @@ export const levelColors = [
     bg: "bg-success",
   },
   {
+    color: "bg-txt-medium",
+    bg: "bg-medium",
+  },
+  {
     color: "bg-txt-warning",
     bg: "bg-warning",
   },

@@ -21,8 +21,6 @@
 package collaboration
 
 import (
-	"time"
-
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/automerge"
@@ -31,7 +29,6 @@ import (
 const (
 	changeBatchSize   = 1000
 	compactionChanges = 500
-	seedLease         = 30 * time.Second
 	snapshotMaxBytes  = 8 * 1024 * 1024
 	contentMaxText    = 200_000
 )
@@ -43,11 +40,8 @@ type (
 	}
 
 	DocumentCollaboration struct {
-		Document      *automerge.Document
-		Revision      int64
-		SeedContent   string
-		NeedsSeed     bool
-		SeedClaimedAt *time.Time
+		Document *automerge.Document
+		Revision int64
 	}
 )
 

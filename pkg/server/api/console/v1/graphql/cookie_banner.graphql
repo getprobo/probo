@@ -637,6 +637,11 @@ type TrackerPattern implements Node
     maxAgeSeconds: Int
     description: String!
     source: CookieSource
+    """
+    The sibling banner in the same CMP domain whose detection promoted
+    source. Null when the source was observed on this pattern's own banner.
+    """
+    sourceCookieBanner: CookieBanner @goField(forceResolver: true)
     excluded: Boolean!
     detectedCount: Int! @goField(forceResolver: true)
     sampleHits(sampleId: ID): [SampleFamilyCount!]!

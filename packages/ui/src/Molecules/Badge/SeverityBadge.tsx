@@ -30,9 +30,10 @@ type Props = {
 };
 
 const severityByLevel = {
-  0: { variant: "neutral" as const, key: "low" },
-  1: { variant: "warning" as const, key: "high" },
-  2: { variant: "danger" as const, key: "critical" },
+  0: { variant: "success" as const, key: "low" },
+  1: { variant: "medium" as const, key: "medium" },
+  2: { variant: "warning" as const, key: "high" },
+  3: { variant: "danger" as const, key: "critical" },
 } as const;
 
 export function SeverityBadge({ score, label, matrixSize }: Props) {

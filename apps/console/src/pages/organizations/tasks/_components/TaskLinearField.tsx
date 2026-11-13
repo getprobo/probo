@@ -44,6 +44,7 @@ const taskLinearFieldFragment = graphql`
     id
     canUpdate: permission(action: "core:task:update")
     externalLink {
+      provider
       identifier
       url
     }
@@ -100,8 +101,9 @@ function TaskLinearFieldContent({ taskKey }: { taskKey: TaskLinearField_task$key
   const organization = data.node?.__typename === "Organization" ? data.node : null;
   const connected = (organization?.connectors.length ?? 0) > 0;
   const { root, title, titleIcon, link, issue } = taskLinearField();
+  const linked = task.externalLink?.provider === "LINEAR_SYNC";
 
-  if (!connected) {
+  if (!connected || (task.externalLink != null && !linked)) {
     return null;
   }
 
@@ -109,7 +111,7 @@ function TaskLinearFieldContent({ taskKey }: { taskKey: TaskLinearField_task$key
     <Text size={1} color="faint">{t("detailsPage.empty")}</Text>
   );
 
-  if (task.externalLink) {
+  if (linked && task.externalLink) {
     const externalLink = task.externalLink;
     value = (
       <div className={link()}>
@@ -162,7 +164,7 @@ function TaskLinearFieldContent({ taskKey }: { taskKey: TaskLinearField_task$key
         <div className={title()}>
           <Linear className={titleIcon()} aria-hidden />
           <Heading level={2} size={2} weight="medium">
-            {task.externalLink
+            {linked
               ? t("detailsPage.fields.linear")
               : t("detailsPage.linear.linkHint")}
           </Heading>

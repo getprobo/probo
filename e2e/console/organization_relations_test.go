@@ -333,6 +333,7 @@ func createOrganizationRelationFinding(
 		"input": map[string]any{
 			"organizationId":   owner.GetOrganizationID().String(),
 			"kind":             "MINOR_NONCONFORMITY",
+			"title":            "Access review gap",
 			"description":      marker + " finding",
 			"rootCause":        "Fixture root cause",
 			"correctiveAction": "Fixture corrective action",

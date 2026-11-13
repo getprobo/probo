@@ -124,14 +124,23 @@ const (
 	ActionEvidenceDelete = "core:evidence:delete"
 
 	// Document actions
-	ActionDocumentGet         = "core:document:get"
-	ActionDocumentList        = "core:document:list"
-	ActionDocumentCreate      = "core:document:create"
-	ActionDocumentUpdate      = "core:document:update"
-	ActionDocumentDelete      = "core:document:delete"
-	ActionDocumentArchive     = "core:document:archive"
-	ActionDocumentUnarchive   = "core:document:unarchive"
-	ActionDocumentDeleteDraft = "core:document:delete-draft"
+	ActionDocumentGet       = "core:document:get"
+	ActionDocumentList      = "core:document:list"
+	ActionDocumentCreate    = "core:document:create"
+	ActionDocumentUpdate    = "core:document:update"
+	ActionDocumentDelete    = "core:document:delete"
+	ActionDocumentArchive   = "core:document:archive"
+	ActionDocumentUnarchive = "core:document:unarchive"
+	// Document comment actions
+	ActionDocumentComment        = "core:document:comment"
+	ActionDocumentCommentUpdate  = "core:document:comment-update"
+	ActionDocumentCommentDelete  = "core:document:comment-delete"
+	ActionDocumentCommentResolve = "core:document:comment-resolve"
+
+	// Document suggestion actions
+	ActionDocumentSuggest       = "core:document:suggest"
+	ActionDocumentSuggestAccept = "core:document:suggest-accept"
+	ActionDocumentSuggestReject = "core:document:suggest-reject"
 
 	// DocumentVersion actions
 	ActionDocumentVersionGet             = "core:document-version:get"
@@ -215,6 +224,8 @@ const (
 	ActionFindingDelete             = "core:finding:delete"
 	ActionFindingAuditMappingCreate = "core:finding:create-audit-mapping"
 	ActionFindingAuditMappingDelete = "core:finding:delete-audit-mapping"
+	ActionFindingTaskMappingCreate  = "core:finding:create-task-mapping"
+	ActionFindingTaskMappingDelete  = "core:finding:delete-task-mapping"
 	ActionFindingPublish            = "core:finding:publish"
 
 	// Obligation actions

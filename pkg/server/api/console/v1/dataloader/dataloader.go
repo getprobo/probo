@@ -35,6 +35,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/iam/policy"
+	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/authn"
@@ -150,6 +151,7 @@ type (
 		CompliancePortalDocumentAccessByFile       *dataloadgen.Loader[CompliancePortalDocumentAccessByFileKey, *coredata.CompliancePortalDocumentAccess]
 		Audit                                      *dataloadgen.Loader[gid.GID, *coredata.Audit]
 		Authorize                                  *dataloadgen.Loader[AuthorizeKey, AuthorizeResult]
+		DocumentCommentsByThread                   *dataloadgen.Loader[gid.GID, []*coredata.DocumentComment]
 	}
 
 	batchFetcher struct {
@@ -244,6 +246,7 @@ func (f *batchFetcher) newLoaders() *Loaders {
 			f.fetchAuthorizes,
 			dataloadgen.WithoutCache(),
 		),
+		DocumentCommentsByThread: dataloadgen.NewMappedLoader(f.fetchDocumentCommentsByThread),
 	}
 }
 
@@ -333,6 +336,41 @@ func (f *batchFetcher) fetchCurrentPublishedDocumentVersions(
 
 		for _, version := range versions {
 			result[version.DocumentID] = version
+		}
+	}
+
+	return result, nil
+}
+
+func (f *batchFetcher) fetchDocumentCommentsByThread(
+	ctx context.Context,
+	keys []gid.GID,
+) (map[gid.GID][]*coredata.DocumentComment, error) {
+	result := make(map[gid.GID][]*coredata.DocumentComment, len(keys))
+	for _, key := range keys {
+		result[key] = []*coredata.DocumentComment{}
+	}
+
+	for tenantID, threadIDs := range gidKeysByTenant(keys) {
+		comments, err := f.probo.Documents.LoadCommentsByThreadIDs(
+			ctx,
+			scopeFromContext(ctx, tenantID),
+			threadIDs,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("cannot batch load document comments: %w", err)
+		}
+
+		// The default Comments resolver serves at most one unpaginated page
+		// (MaxCursorSize) plus a look-ahead row from this batch, so cap each
+		// thread to that bound and drop the rest to avoid materializing an
+		// unbounded per-thread slice for large documents.
+		for _, comment := range comments {
+			if len(result[comment.ThreadID]) >= page.MaxCursorSize+1 {
+				continue
+			}
+
+			result[comment.ThreadID] = append(result[comment.ThreadID], comment)
 		}
 	}
 
@@ -873,32 +911,42 @@ func (f *batchFetcher) fetchThirdParties(ctx context.Context, keys []gid.GID) (m
 }
 
 func (f *batchFetcher) fetchDocuments(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.Document, error) {
-	scope := scopeFromContext(ctx, keys[0].TenantID())
+	result := make(map[gid.GID]*coredata.Document, len(keys))
 
-	documents, err := f.probo.Documents.GetByIDs(ctx, scope, keys...)
-	if err != nil {
-		return nil, fmt.Errorf("cannot batch load documents: %w", err)
-	}
+	for tenantID, documentIDs := range gidKeysByTenant(keys) {
+		documents, err := f.probo.Documents.GetByIDs(
+			ctx,
+			scopeFromContext(ctx, tenantID),
+			documentIDs...,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("cannot batch load documents: %w", err)
+		}
 
-	result := make(map[gid.GID]*coredata.Document, len(documents))
-	for _, v := range documents {
-		result[v.ID] = v
+		for _, document := range documents {
+			result[document.ID] = document
+		}
 	}
 
 	return result, nil
 }
 
 func (f *batchFetcher) fetchProfiles(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.MembershipProfile, error) {
-	scope := scopeFromContext(ctx, keys[0].TenantID())
+	result := make(map[gid.GID]*coredata.MembershipProfile, len(keys))
 
-	profiles, err := f.iam.OrganizationService.GetProfilesByIDs(ctx, scope, keys...)
-	if err != nil {
-		return nil, fmt.Errorf("cannot batch load profiles: %w", err)
-	}
+	for tenantID, profileIDs := range gidKeysByTenant(keys) {
+		profiles, err := f.iam.OrganizationService.GetProfilesByIDs(
+			ctx,
+			scopeFromContext(ctx, tenantID),
+			profileIDs...,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("cannot batch load profiles: %w", err)
+		}
 
-	result := make(map[gid.GID]*coredata.MembershipProfile, len(profiles))
-	for _, v := range profiles {
-		result[v.ID] = v
+		for _, profile := range profiles {
+			result[profile.ID] = profile
+		}
 	}
 
 	return result, nil

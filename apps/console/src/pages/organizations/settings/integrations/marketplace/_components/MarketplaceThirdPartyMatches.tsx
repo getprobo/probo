@@ -112,8 +112,13 @@ export function MarketplaceThirdPartyMatches({
   }
 
   return (
-    // Best effort. A failed query shows no matches and leaves the marketplace up.
-    <ErrorBoundary fallback={null}>
+    // Best effort. A failed query shows no matches and leaves the page up.
+    <ErrorBoundary
+      fallback={null}
+      onError={() => {
+        onMatched(new Set());
+      }}
+    >
       <Suspense fallback={null}>
         <MarketplaceThirdPartyMatchesContent
           queryRef={currentQueryRef}
@@ -151,14 +156,23 @@ function MarketplaceThirdPartyMatchesContent({
     })),
     [providers],
   );
+  const organization = data.organization?.__typename === "Organization"
+    ? data.organization
+    : null;
 
-  if (data.organization?.__typename !== "Organization") {
+  useEffect(() => {
+    if (organization == null) {
+      onMatched(new Set());
+    }
+  }, [organization, onMatched]);
+
+  if (organization == null) {
     return null;
   }
 
   return (
     <MarketplaceThirdPartyMatchPages
-      organizationKey={data.organization}
+      organizationKey={organization}
       connectorProviders={connectorProviders}
       onMatched={onMatched}
     />
@@ -184,6 +198,7 @@ function MarketplaceThirdPartyMatchPages({
 
   useEffect(() => {
     if (failedRef.current) {
+      onMatched(new Set());
       return;
     }
 
@@ -193,6 +208,7 @@ function MarketplaceThirdPartyMatchPages({
           onComplete: (error) => {
             if (error != null) {
               failedRef.current = true;
+              onMatched(new Set());
             }
           },
         });

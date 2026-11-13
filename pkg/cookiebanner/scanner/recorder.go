@@ -74,6 +74,7 @@ type (
 		idleSince   time.Time
 		mainFrame   string
 		docStatus   int
+		hold        bool
 	}
 
 	cookieBindingPayload struct {
@@ -119,6 +120,17 @@ func (r *recorder) handleSession(session string, ev any) {
 
 	r.session = session
 
+	if r.hold {
+		switch ev := ev.(type) {
+		case *network.EventResponseReceived:
+			r.recordStatus(ev)
+		case network.EventResponseReceived:
+			r.recordStatus(&ev)
+		}
+
+		return
+	}
+
 	switch ev := ev.(type) {
 	case *network.EventRequestWillBeSent:
 		r.recordRequest(ev)
@@ -147,10 +159,29 @@ func (r *recorder) handleSession(session string, ev any) {
 	}
 }
 
+func (r *recorder) holdObservations() {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	r.hold = true
+}
+
 func (r *recorder) beginPage() {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
+	r.hold = false
+	r.clearPage()
+}
+
+func (r *recorder) discardPage() {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	r.clearPage()
+}
+
+func (r *recorder) clearPage() {
 	r.requests = map[string]requestMeta{}
 	r.inflight = map[string]struct{}{}
 	r.earlyFinish = map[string]struct{}{}

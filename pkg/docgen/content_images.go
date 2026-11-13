@@ -23,6 +23,8 @@ package docgen
 import (
 	"context"
 	"encoding/json"
+	"go.probo.inc/probo/pkg/richtext/attachment"
+	"net/url"
 	"strings"
 
 	"go.gearno.de/kit/log"
@@ -63,7 +65,7 @@ func ContentImageFiles(
 
 	seen := map[string]struct{}{}
 
-	for _, ref := range prosemirror.ReferencedFiles(node) {
+	for _, ref := range attachment.Referenced(node) {
 		if !ref.Image {
 			continue
 		}
@@ -93,7 +95,7 @@ func ContentImageFiles(
 			continue
 		}
 
-		if !prosemirror.IsImageMime(file.MimeType) {
+		if !isImageMime(file.MimeType) {
 			logger.WarnCtx(
 				ctx,
 				"skipping non-image file in PDF",
@@ -148,8 +150,8 @@ func EmbedContentImages(
 		dataURLs[file.ID.String()] = "data:" + mimeType + ";base64," + encoded
 	}
 
-	prosemirror.EmbedImageDataURLs(&node, dataURLs)
-	prosemirror.DropRemoteImageSrcs(&node)
+	embedImageDataURLs(&node, dataURLs)
+	dropRemoteImageSrcs(&node)
 
 	out, err := json.Marshal(node)
 	if err != nil {
@@ -159,4 +161,71 @@ func EmbedContentImages(
 	}
 
 	return string(out)
+}
+
+func isImageMime(mime string) bool {
+	return strings.HasPrefix(strings.ToLower(strings.TrimSpace(mime)), "image/")
+}
+
+func dropRemoteImageSrcs(n *prosemirror.Node) {
+	prosemirror.Walk(n, func(node *prosemirror.Node) bool {
+		if node.Type != prosemirror.NodeImage {
+			return true
+		}
+
+		attrs, err := node.ImageAttrs()
+		if err != nil || !isRemoteImageSrc(attrs.Src) {
+			return true
+		}
+
+		attrs.Src = ""
+		if raw, marshalErr := json.Marshal(attrs); marshalErr == nil {
+			node.Attrs = raw
+		}
+
+		return true
+	})
+}
+
+func isRemoteImageSrc(src string) bool {
+	u, err := url.Parse(strings.TrimSpace(src))
+	if err != nil || u.Scheme == "" {
+		return false
+	}
+
+	switch strings.ToLower(u.Scheme) {
+	case "http", "https":
+		return true
+	default:
+		return false
+	}
+}
+
+func embedImageDataURLs(n *prosemirror.Node, dataURLByFileID map[string]string) {
+	prosemirror.Walk(n, func(node *prosemirror.Node) bool {
+		if node.Type != prosemirror.NodeImage {
+			return true
+		}
+
+		attrs, err := node.ImageAttrs()
+		if err != nil || attrs.FileID == nil {
+			return true
+		}
+
+		id := strings.TrimSpace(*attrs.FileID)
+
+		dataURL, ok := dataURLByFileID[id]
+		if !ok {
+			return true
+		}
+
+		attrs.FileID = nil
+
+		attrs.Src = dataURL
+		if raw, marshalErr := json.Marshal(attrs); marshalErr == nil {
+			node.Attrs = raw
+		}
+
+		return true
+	})
 }

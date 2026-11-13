@@ -279,6 +279,96 @@ func TestAdoptingServerConn_LearnsDocumentIDFromEphemeral(t *testing.T) {
 	assert.Equal(t, ephemeral, fanout)
 }
 
+func TestAdoptingServerConn_AcceptsAutomergeURLAlias(t *testing.T) {
+	t.Parallel()
+
+	conn, err := NewAdoptingServerConn(ServerConfig{ServerPeerID: "server"}, &scriptedSync{})
+	require.NoError(t, err)
+
+	_, _, err = conn.Start(joinFixture(t))
+	require.NoError(t, err)
+
+	first, err := EncodeMessage(
+		Message{
+			Type: MessageSync, SenderID: "peer-a", TargetID: "server",
+			DocumentID: "client-chosen-doc", Data: []byte{1},
+		},
+	)
+	require.NoError(t, err)
+	_, _, err = conn.Receive(first)
+	require.NoError(t, err)
+
+	payload, err := EncodePresence(PresenceMessage{Type: PresenceHeartbeat})
+	require.NoError(t, err)
+	second, err := EncodeMessage(
+		Message{
+			Type: MessageEphemeral, SenderID: "peer-a", TargetID: "server",
+			DocumentID: AutomergeURL("client-chosen-doc"), SessionID: "session",
+			Data: payload,
+		},
+	)
+	require.NoError(t, err)
+	_, _, err = conn.Receive(second)
+	require.NoError(t, err)
+	assert.Equal(t, "client-chosen-doc", conn.DocumentID())
+}
+
+func TestAdoptingServerConn_BindsCanonicalIDFromAutomergeURL(t *testing.T) {
+	t.Parallel()
+
+	conn, err := NewAdoptingServerConn(ServerConfig{ServerPeerID: "server"}, &scriptedSync{})
+	require.NoError(t, err)
+
+	_, _, err = conn.Start(joinFixture(t))
+	require.NoError(t, err)
+
+	first, err := EncodeMessage(
+		Message{
+			Type: MessageSync, SenderID: "peer-a", TargetID: "server",
+			DocumentID: AutomergeURL("client-chosen-doc"), Data: []byte{1},
+		},
+	)
+	require.NoError(t, err)
+	_, _, err = conn.Receive(first)
+	require.NoError(t, err)
+	assert.Equal(t, "client-chosen-doc", conn.DocumentID())
+
+	second, err := EncodeMessage(
+		Message{
+			Type: MessageSync, SenderID: "peer-a", TargetID: "server",
+			DocumentID: "client-chosen-doc", Data: []byte{2},
+		},
+	)
+	require.NoError(t, err)
+	_, _, err = conn.Receive(second)
+	require.NoError(t, err)
+}
+
+func TestServerConn_CanonicalizesConfiguredAutomergeURL(t *testing.T) {
+	t.Parallel()
+
+	conn, err := NewServerConn(
+		ServerConfig{ServerPeerID: "server"},
+		AutomergeURL("doc-1"),
+		&scriptedSync{},
+	)
+	require.NoError(t, err)
+	assert.Equal(t, "doc-1", conn.DocumentID())
+
+	_, _, err = conn.Start(joinFixture(t))
+	require.NoError(t, err)
+
+	frame, err := EncodeMessage(
+		Message{
+			Type: MessageSync, SenderID: "peer-a", TargetID: "server",
+			DocumentID: "doc-1", Data: []byte{1},
+		},
+	)
+	require.NoError(t, err)
+	_, _, err = conn.Receive(frame)
+	require.NoError(t, err)
+}
+
 // TestAdoptingServerConn_RejectsSecondDocument holds the connection to the first
 // document id it adopts.
 func TestAdoptingServerConn_RejectsSecondDocument(t *testing.T) {
@@ -353,6 +443,24 @@ func TestHandshakenServerConn_BindsExpectedDocument(t *testing.T) {
 		reply, _, err := conn.Receive(request)
 		require.NoError(t, err)
 		require.Len(t, reply, 1)
+		assert.Equal(t, "doc-a", conn.DocumentID())
+	})
+
+	t.Run("accepts the automerge URL alias", func(t *testing.T) {
+		t.Parallel()
+
+		conn := handshakenConn(t, &scriptedSync{})
+
+		request, err := EncodeMessage(
+			Message{
+				Type: MessageRequest, SenderID: "peer-a", TargetID: "server",
+				DocumentID: AutomergeURL("doc-a"), Data: []byte{7, 7},
+			},
+		)
+		require.NoError(t, err)
+
+		_, _, err = conn.Receive(request)
+		require.NoError(t, err)
 		assert.Equal(t, "doc-a", conn.DocumentID())
 	})
 

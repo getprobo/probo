@@ -18,6 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import react from "@vitejs/plugin-react";
+import { defineConfig } from "vite";
 import { createExampleViteConfig } from "../vite.shared";
 
-export default createExampleViteConfig(5182);
+export default defineConfig(({ mode }) => ({
+  ...createExampleViteConfig(5182, mode),
+  plugins: [react()],
+}));

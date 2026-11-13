@@ -63,8 +63,8 @@ func TestUnmarshalDocument(t *testing.T) {
 
 			require.Len(t, h1.Content, 1)
 			assert.Equal(t, NodeText, h1.Content[0].Type)
-			require.NotNil(t, h1.Content[0].Text)
-			assert.Equal(t, "Heading 1", *h1.Content[0].Text)
+			require.NotEmpty(t, h1.Content[0].Text)
+			assert.Equal(t, "Heading 1", h1.Content[0].Text)
 		},
 	)
 
@@ -81,8 +81,8 @@ func TestUnmarshalDocument(t *testing.T) {
 			boldNode := p.Content[1]
 			require.Len(t, boldNode.Marks, 1)
 			assert.Equal(t, MarkStrong, boldNode.Marks[0].Type)
-			require.NotNil(t, boldNode.Text)
-			assert.Equal(t, "with some bold", *boldNode.Text)
+			require.NotEmpty(t, boldNode.Text)
+			assert.Equal(t, "with some bold", boldNode.Text)
 
 			// Italic text
 			italicNode := p.Content[3]
@@ -151,8 +151,8 @@ func TestUnmarshalDocument(t *testing.T) {
 			assert.Nil(t, attrs.Language)
 
 			require.Len(t, cb.Content, 1)
-			require.NotNil(t, cb.Content[0].Text)
-			assert.Equal(t, "code block", *cb.Content[0].Text)
+			require.NotEmpty(t, cb.Content[0].Text)
+			assert.Equal(t, "code block", cb.Content[0].Text)
 		},
 	)
 
@@ -461,7 +461,7 @@ func TestTextLength(t *testing.T) {
 			t.Parallel()
 
 			n := Node{Type: NodeDoc}
-			assert.Equal(t, 0, n.TextLength())
+			assert.Equal(t, 0, testDocumentSchema.TextLength(n))
 		},
 	)
 
@@ -471,8 +471,8 @@ func TestTextLength(t *testing.T) {
 			t.Parallel()
 
 			text := "hello"
-			n := Node{Type: NodeText, Text: &text}
-			assert.Equal(t, 5, n.TextLength())
+			n := Node{Type: NodeText, Text: text}
+			assert.Equal(t, 5, testDocumentSchema.TextLength(n))
 		},
 	)
 
@@ -484,7 +484,7 @@ func TestTextLength(t *testing.T) {
 			raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"hello world"}]}]}`
 			doc, err := Parse(raw)
 			require.NoError(t, err)
-			assert.Equal(t, 11, doc.TextLength())
+			assert.Equal(t, 11, testDocumentSchema.TextLength(doc))
 		},
 	)
 
@@ -496,7 +496,7 @@ func TestTextLength(t *testing.T) {
 			raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"aaa"}]},{"type":"paragraph","content":[{"type":"text","text":"bb"}]}]}`
 			doc, err := Parse(raw)
 			require.NoError(t, err)
-			assert.Equal(t, 5, doc.TextLength())
+			assert.Equal(t, 5, testDocumentSchema.TextLength(doc))
 		},
 	)
 
@@ -508,7 +508,7 @@ func TestTextLength(t *testing.T) {
 			raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"plain "},{"type":"text","marks":[{"type":"bold"}],"text":"bold"}]}]}`
 			doc, err := Parse(raw)
 			require.NoError(t, err)
-			assert.Equal(t, 10, doc.TextLength())
+			assert.Equal(t, 10, testDocumentSchema.TextLength(doc))
 		},
 	)
 
@@ -520,7 +520,7 @@ func TestTextLength(t *testing.T) {
 			raw := `{"type":"doc","content":[{"type":"bulletList","content":[{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"item 1"}]}]},{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"item 2"}]}]}]}]}`
 			doc, err := Parse(raw)
 			require.NoError(t, err)
-			assert.Equal(t, 12, doc.TextLength())
+			assert.Equal(t, 12, testDocumentSchema.TextLength(doc))
 		},
 	)
 
@@ -532,7 +532,7 @@ func TestTextLength(t *testing.T) {
 			raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"café résumé"}]}]}`
 			doc, err := Parse(raw)
 			require.NoError(t, err)
-			assert.Equal(t, 11, doc.TextLength())
+			assert.Equal(t, 11, testDocumentSchema.TextLength(doc))
 		},
 	)
 
@@ -541,7 +541,7 @@ func TestTextLength(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 			doc := loadTestDocument(t)
-			assert.Greater(t, doc.TextLength(), 0)
+			assert.Greater(t, testDocumentSchema.TextLength(doc), 0)
 		},
 	)
 }
@@ -557,8 +557,8 @@ func TestNodeWithNoAttrs(t *testing.T) {
 	assert.Equal(t, NodeParagraph, n.Type)
 	assert.Nil(t, n.Attrs)
 	require.Len(t, n.Content, 1)
-	require.NotNil(t, n.Content[0].Text)
-	assert.Equal(t, "Hello", *n.Content[0].Text)
+	require.NotEmpty(t, n.Content[0].Text)
+	assert.Equal(t, "Hello", n.Content[0].Text)
 }
 
 func TestAttrs_SchemaDefaults(t *testing.T) {

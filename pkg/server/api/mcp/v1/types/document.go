@@ -27,6 +27,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/richtext"
 )
 
 func proseMirrorJSONToMarkdown(pmJSON string) (string, error) {
@@ -39,7 +40,7 @@ func proseMirrorJSONToMarkdown(pmJSON string) (string, error) {
 		return "", fmt.Errorf("cannot parse prosemirror json: %w", err)
 	}
 
-	md, err := prosemirror.RenderMarkdown(node)
+	md, err := richtext.DocumentMarkdown.Render(node)
 	if err != nil {
 		return "", fmt.Errorf("cannot render markdown: %w", err)
 	}

@@ -29,7 +29,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
-	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/richtext"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -196,7 +196,7 @@ func (s *Service) CreateComment(
 		return nil, nil, err
 	}
 
-	content, err := prosemirror.DefaultDocumentJSON(&req.Content)
+	content, err := richtext.DefaultDocumentJSON(&req.Content)
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot sanitize task comment content: %w", err)
 	}
@@ -311,7 +311,7 @@ func (s *Service) UpdateComment(
 			}
 
 			if req.Content != nil {
-				content, err := prosemirror.DefaultDocumentJSON(*req.Content)
+				content, err := richtext.DefaultDocumentJSON(*req.Content)
 				if err != nil {
 					return fmt.Errorf("cannot sanitize task comment content: %w", err)
 				}

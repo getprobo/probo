@@ -27,6 +27,7 @@
     --color-txt-success: #5d770d;
     --color-txt-info: #006adc;
     --color-txt-warning: #ad5700;
+    --color-txt-medium: #b8860b;
 
     /* Backgrounds */
     --color-primary: #141e12;
@@ -43,6 +44,7 @@
     --color-success: #eefadc;
     --color-info: #edf6ff;
     --color-warning: #fff4d5;
+    --color-medium: #fff3a0;
     --color-dialog: #141e12;
 
     /* Borders */
@@ -196,6 +198,7 @@
             --color-txt-success: rgba(181, 255, 44, 0.72);
             --color-txt-info: #52a9ff;
             --color-txt-warning: #f1a10d;
+            --color-txt-medium: #b8860b;
 
             /* Backgrounds */
             --color-primary: #c4f042;
@@ -212,6 +215,7 @@
             --color-success: rgba(184, 253, 106, 0.06);
             --color-info: rgba(22, 119, 254, 0.14);
             --color-warning: rgba(254, 115, 0, 0.09);
+            --color-medium: rgba(255, 214, 0, 0.2);
             --color-dialog: #151715;
 
             /* Borders */

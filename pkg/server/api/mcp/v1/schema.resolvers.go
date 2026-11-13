@@ -33,13 +33,16 @@ import (
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/prosemirror"
 	"go.probo.inc/probo/pkg/resourcealias"
+	"go.probo.inc/probo/pkg/richtext"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/mcp/mcpx"
 	"go.probo.inc/probo/pkg/server/api/mcp/v1/types"
 	"go.probo.inc/probo/pkg/task"
-	tasksync "go.probo.inc/probo/pkg/task/sync"
+	asanasvc "go.probo.inc/probo/pkg/task/sync/asana"
+	syncerrors "go.probo.inc/probo/pkg/task/sync/errors"
+	linearsvc "go.probo.inc/probo/pkg/task/sync/linear"
 	"go.probo.inc/probo/pkg/thirdparty"
 	"go.probo.inc/probo/pkg/validator"
 )
@@ -122,6 +125,12 @@ func (r *Resolver) AddThirdPartyTool(ctx context.Context, req *mcp.CallToolReque
 		return nil, types.AddThirdPartyOutput{}, err
 	}
 
+	if input.ParentThirdPartyID != nil {
+		if _, err := r.Authorize(ctx, *input.ParentThirdPartyID, probo.ActionThirdPartyRelationCreate); err != nil {
+			return nil, types.AddThirdPartyOutput{}, err
+		}
+	}
+
 	svc := r.proboSvc
 
 	var category *coredata.ThirdPartyCategory
@@ -161,6 +170,7 @@ func (r *Resolver) AddThirdPartyTool(ctx context.Context, req *mcp.CallToolReque
 			TermsOfServiceURL:             input.TermsOfServiceURL,
 			SecurityPageURL:               input.SecurityPageURL,
 			TrustPageURL:                  input.TrustPageURL,
+			ParentThirdPartyID:            input.ParentThirdPartyID,
 		},
 	)
 	if err != nil {
@@ -884,7 +894,7 @@ func (r *Resolver) ListFindingsTool(ctx context.Context, req *mcp.CallToolReques
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	findingFilter := coredata.NewFindingFilter(nil, nil, nil, nil, nil)
+	findingFilter := coredata.NewFindingFilter(nil, nil, nil, nil, nil, nil)
 	if input.Filter != nil {
 		findingFilter = coredata.NewFindingFilter(
 			input.Filter.Kind,
@@ -892,6 +902,7 @@ func (r *Resolver) ListFindingsTool(ctx context.Context, req *mcp.CallToolReques
 			input.Filter.Priority,
 			input.Filter.OwnerID,
 			input.Filter.AuditID,
+			input.Filter.Query,
 		)
 	}
 
@@ -934,6 +945,7 @@ func (r *Resolver) AddFindingTool(ctx context.Context, req *mcp.CallToolRequest,
 		&probo.CreateFindingRequest{
 			OrganizationID:     input.OrganizationID,
 			Kind:               input.Kind,
+			Title:              input.Title,
 			Description:        input.Description,
 			Source:             input.Source,
 			IdentifiedOn:       input.IdentifiedOn,
@@ -968,6 +980,7 @@ func (r *Resolver) UpdateFindingTool(ctx context.Context, req *mcp.CallToolReque
 		ctx, scope,
 		&probo.UpdateFindingRequest{
 			ID:                 input.ID,
+			Title:              UnwrapOmittable(input.Title),
 			Description:        UnwrapOmittable(input.Description),
 			Source:             UnwrapOmittable(input.Source),
 			IdentifiedOn:       UnwrapOmittable(input.IdentifiedOn),
@@ -2227,7 +2240,7 @@ func (r *Resolver) AddTaskTool(ctx context.Context, req *mcp.CallToolRequest, in
 		explicitTeamID = value
 	}
 
-	teamID, publish, err := r.task.Sync.TeamForNewTask(
+	teamID, publish, err := r.task.Sync.Linear.TeamForNewTask(
 		ctx,
 		scope,
 		input.OrganizationID,
@@ -2274,8 +2287,8 @@ func (r *Resolver) AddTaskTool(ctx context.Context, req *mcp.CallToolRequest, in
 	var linearPublishError *string
 
 	if publish {
-		if _, err := r.task.Sync.PublishToLinear(ctx, publishScope, created.ID, teamID); err != nil {
-			message, known := tasksync.LinearPublishClientMessage(err)
+		if _, err := r.task.Sync.Linear.PublishToLinear(ctx, publishScope, created.ID, teamID); err != nil {
+			message, known := linearsvc.LinearPublishClientMessage(err)
 			if !known {
 				r.logger.ErrorCtx(ctx, "cannot publish task to Linear", log.Error(err))
 			}
@@ -2527,26 +2540,7 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 		panic(fmt.Errorf("cannot load document: %w", err))
 	}
 
-	seeded, err := svc.Documents.CollaborationSeeded(ctx, scope, document.ID)
-	if err != nil {
-		panic(fmt.Errorf("cannot load document collaboration seed state: %w", err))
-	}
-
-	hasEdits := len(input.Edits) > 0
-	if hasEdits && input.Content != nil {
-		return nil, types.UpdateDocumentOutput{}, fmt.Errorf(
-			"cannot update document: content and edits cannot be set together",
-		)
-	}
-
-	if hasEdits {
-		if !seeded {
-			return nil, types.UpdateDocumentOutput{}, fmt.Errorf(
-				"cannot update document: %w",
-				collaboration.ErrDocumentCollaborationEditsNotSeeded,
-			)
-		}
-
+	if len(input.Edits) > 0 {
 		if input.Title != nil || input.Classification != nil || input.DocumentType != nil || input.DefaultApproverIds != nil {
 			return nil, types.UpdateDocumentOutput{}, fmt.Errorf(
 				"cannot update document: fragment edits cannot be combined with metadata updates",
@@ -2586,8 +2580,8 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 			switch {
 			case errors.Is(err, collaboration.ErrDocumentCollaborationBaseHeadsUnknown),
 				errors.Is(err, collaboration.ErrDocumentCollaborationStale),
-				errors.Is(err, collaboration.ErrDocumentCollaborationEditsNotSeeded),
-				errors.Is(err, collaboration.ErrSeedInProgress),
+				errors.Is(err, collaboration.ErrDocumentCollaborationNotFound),
+				errors.Is(err, collaboration.ErrOpenSuggestions),
 				errors.Is(err, prosemirror.ErrFragmentEditAmbiguous):
 				return nil, types.UpdateDocumentOutput{}, fmt.Errorf("cannot update document: %w", err)
 			}
@@ -2616,19 +2610,6 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 		}, nil
 	}
 
-	if input.Content != nil {
-		if seeded {
-			return nil, types.UpdateDocumentOutput{}, fmt.Errorf(
-				"cannot update document: %w",
-				collaboration.ErrDocumentCollaborationContentOnSeeded,
-			)
-		}
-
-		if err := validateMCPDocumentContent(*input.Content); err != nil {
-			return nil, types.UpdateDocumentOutput{}, err
-		}
-	}
-
 	var defaultApproverIDs *[]gid.GID
 	if input.DefaultApproverIds != nil {
 		defaultApproverIDs = &input.DefaultApproverIds
@@ -2639,18 +2620,12 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 		probo.UpdateDocumentRequest{
 			DocumentID:         input.ID,
 			Title:              input.Title,
-			Content:            input.Content,
 			Classification:     input.Classification,
 			DocumentType:       input.DocumentType,
 			DefaultApproverIDs: defaultApproverIDs,
 		},
 	)
 	if err != nil {
-		if errors.Is(err, collaboration.ErrDocumentCollaborationContentOnSeeded) ||
-			errors.Is(err, collaboration.ErrSeedInProgress) {
-			return nil, types.UpdateDocumentOutput{}, fmt.Errorf("cannot update document: %w", err)
-		}
-
 		panic(fmt.Errorf("cannot update document: %w", err))
 	}
 
@@ -4634,24 +4609,6 @@ func (r *Resolver) VoidDocumentVersionApprovalTool(ctx context.Context, req *mcp
 
 	return nil, types.VoidDocumentVersionApprovalOutput{
 		DocumentVersion: types.NewDocumentVersion(documentVersion),
-	}, nil
-}
-
-func (r *Resolver) DeleteDocumentDraftTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteDocumentDraftInput) (*mcp.CallToolResult, types.DeleteDocumentDraftOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionDocumentDeleteDraft)
-	if err != nil {
-		return nil, types.DeleteDocumentDraftOutput{}, err
-	}
-
-	svc := r.proboSvc
-
-	document, err := svc.Documents.DeleteDraft(ctx, scope, input.ID)
-	if err != nil {
-		return nil, types.DeleteDocumentDraftOutput{}, fmt.Errorf("cannot delete document draft: %w", err)
-	}
-
-	return nil, types.DeleteDocumentDraftOutput{
-		Document: types.NewDocument(document),
 	}, nil
 }
 
@@ -6938,6 +6895,10 @@ func (r *Resolver) PublishDocumentTool(ctx context.Context, req *mcp.CallToolReq
 		},
 	)
 	if err != nil {
+		if errors.Is(err, collaboration.ErrOpenSuggestions) {
+			return nil, types.PublishDocumentOutput{}, err
+		}
+
 		panic(fmt.Errorf("cannot publish document: %w", err))
 	}
 
@@ -10626,7 +10587,7 @@ func (r *Resolver) ListLinearTeamsTool(ctx context.Context, req *mcp.CallToolReq
 		return nil, types.ListLinearTeamsOutput{}, err
 	}
 
-	page, err := r.task.Sync.SearchLinearTeams(
+	page, err := r.task.Sync.Linear.SearchLinearTeams(
 		ctx,
 		scope,
 		input.OrganizationID,
@@ -10635,8 +10596,8 @@ func (r *Resolver) ListLinearTeamsTool(ctx context.Context, req *mcp.CallToolReq
 		input.Cursor,
 	)
 	if err != nil {
-		if errors.Is(err, tasksync.ErrLinearNotConnected) ||
-			errors.Is(err, tasksync.ErrLinearReconnectRequired) {
+		if errors.Is(err, linearsvc.ErrLinearNotConnected) ||
+			errors.Is(err, linearsvc.ErrLinearReconnectRequired) {
 			return nil, types.ListLinearTeamsOutput{Teams: []*types.LinearTeam{}}, nil
 		}
 
@@ -10667,10 +10628,10 @@ func (r *Resolver) PublishTaskToLinearTool(ctx context.Context, req *mcp.CallToo
 	}
 
 	if input.TeamID == "" {
-		return nil, types.PublishTaskToLinearOutput{}, tasksync.ErrLinearTeamIDRequired
+		return nil, types.PublishTaskToLinearOutput{}, linearsvc.ErrLinearTeamIDRequired
 	}
 
-	link, err := r.task.Sync.PublishToLinear(ctx, scope, input.TaskID, input.TeamID)
+	link, err := r.task.Sync.Linear.PublishToLinear(ctx, scope, input.TaskID, input.TeamID)
 	if err != nil {
 		return nil, types.PublishTaskToLinearOutput{}, linearPublishToolError(r, ctx, err)
 	}
@@ -10700,7 +10661,7 @@ func (r *Resolver) UnlinkTaskExternalTool(ctx context.Context, req *mcp.CallTool
 
 	if err := r.task.Sync.Unlink(ctx, scope, input.TaskID); err != nil {
 		switch {
-		case errors.Is(err, coredata.ErrResourceNotFound), errors.Is(err, tasksync.ErrTaskNotLinked):
+		case errors.Is(err, coredata.ErrResourceNotFound), errors.Is(err, syncerrors.ErrTaskNotLinked):
 			return nil, types.UnlinkTaskExternalOutput{}, fmt.Errorf("task is not linked to an external issue")
 		default:
 			r.logger.ErrorCtx(ctx, "cannot unlink task external link", log.Error(err))
@@ -10869,34 +10830,34 @@ func (r *Resolver) LinkTaskToLinearTool(ctx context.Context, req *mcp.CallToolRe
 	}
 
 	if input.TeamID == "" {
-		return nil, types.LinkTaskToLinearOutput{}, tasksync.ErrLinearTeamIDRequired
+		return nil, types.LinkTaskToLinearOutput{}, linearsvc.ErrLinearTeamIDRequired
 	}
 
 	if input.IssueID == "" {
-		return nil, types.LinkTaskToLinearOutput{}, tasksync.ErrLinearIssueIDRequired
+		return nil, types.LinkTaskToLinearOutput{}, linearsvc.ErrLinearIssueIDRequired
 	}
 
 	identity := authn.IdentityFromContext(ctx)
 
-	link, err := r.task.Sync.LinkToLinear(ctx, scope, input.TaskID, input.TeamID, input.IssueID, &identity.ID)
+	link, err := r.task.Sync.Linear.LinkToLinear(ctx, scope, input.TaskID, input.TeamID, input.IssueID, &identity.ID)
 	if err != nil {
 		switch {
 		case errors.Is(err, coredata.ErrResourceNotFound):
 			return nil, types.LinkTaskToLinearOutput{}, fmt.Errorf("task not found")
-		case errors.Is(err, tasksync.ErrLinearNotConnected):
+		case errors.Is(err, linearsvc.ErrLinearNotConnected):
 			return nil, types.LinkTaskToLinearOutput{}, fmt.Errorf("linear connector is not connected")
-		case errors.Is(err, tasksync.ErrLinearReconnectRequired):
+		case errors.Is(err, linearsvc.ErrLinearReconnectRequired):
 			return nil, types.LinkTaskToLinearOutput{}, fmt.Errorf("linear connector must be reconnected with write scopes")
-		case errors.Is(err, tasksync.ErrTaskAlreadyLinked),
+		case errors.Is(err, syncerrors.ErrTaskAlreadyLinked),
 			errors.Is(err, coredata.ErrResourceAlreadyExists):
 			return nil, types.LinkTaskToLinearOutput{}, fmt.Errorf("task is already linked to an external issue")
-		case errors.Is(err, tasksync.ErrLinearTeamIDRequired):
+		case errors.Is(err, linearsvc.ErrLinearTeamIDRequired):
 			return nil, types.LinkTaskToLinearOutput{}, fmt.Errorf("linear team id is required")
-		case errors.Is(err, tasksync.ErrLinearTeamNotFound):
+		case errors.Is(err, linearsvc.ErrLinearTeamNotFound):
 			return nil, types.LinkTaskToLinearOutput{}, fmt.Errorf("linear team was not found")
-		case errors.Is(err, tasksync.ErrLinearIssueIDRequired):
+		case errors.Is(err, linearsvc.ErrLinearIssueIDRequired):
 			return nil, types.LinkTaskToLinearOutput{}, fmt.Errorf("linear issue id is required")
-		case errors.Is(err, tasksync.ErrLinearIssueNotFound):
+		case errors.Is(err, linearsvc.ErrLinearIssueNotFound):
 			return nil, types.LinkTaskToLinearOutput{}, fmt.Errorf("linear issue was not found")
 		default:
 			r.logger.ErrorCtx(ctx, "cannot link task to Linear", log.Error(err))
@@ -10929,10 +10890,10 @@ func (r *Resolver) ListLinearIssuesTool(ctx context.Context, req *mcp.CallToolRe
 	}
 
 	if input.TeamID == "" {
-		return nil, types.ListLinearIssuesOutput{}, tasksync.ErrLinearTeamIDRequired
+		return nil, types.ListLinearIssuesOutput{}, linearsvc.ErrLinearTeamIDRequired
 	}
 
-	page, err := r.task.Sync.SearchLinearIssues(
+	page, err := r.task.Sync.Linear.SearchLinearIssues(
 		ctx,
 		scope,
 		input.OrganizationID,
@@ -10943,9 +10904,9 @@ func (r *Resolver) ListLinearIssuesTool(ctx context.Context, req *mcp.CallToolRe
 	)
 	if err != nil {
 		switch {
-		case errors.Is(err, tasksync.ErrLinearNotConnected),
-			errors.Is(err, tasksync.ErrLinearReconnectRequired),
-			errors.Is(err, tasksync.ErrLinearTeamNotFound):
+		case errors.Is(err, linearsvc.ErrLinearNotConnected),
+			errors.Is(err, linearsvc.ErrLinearReconnectRequired),
+			errors.Is(err, linearsvc.ErrLinearTeamNotFound):
 			return nil, types.ListLinearIssuesOutput{Issues: []*types.LinearIssue{}}, nil
 		default:
 			r.logger.ErrorCtx(ctx, "cannot search Linear issues", log.Error(err))
@@ -10996,14 +10957,14 @@ func linearNextCursor(endCursor string, hasNextPage bool) *string {
 	return &endCursor
 }
 
-func linearMCPIssue(issue tasksync.LinearIssue) (*types.LinearIssue, error) {
+func linearMCPIssue(issue linearsvc.LinearIssue) (*types.LinearIssue, error) {
 	node := &types.LinearIssue{
 		ID:         issue.ID,
 		Identifier: issue.Identifier,
 		Title:      issue.Title,
 	}
 
-	content, err := tasksync.MarkdownToContent(issue.Description)
+	content, err := linearsvc.MarkdownToContent(issue.Description)
 	if err != nil {
 		return nil, err
 	}
@@ -11011,11 +10972,11 @@ func linearMCPIssue(issue tasksync.LinearIssue) (*types.LinearIssue, error) {
 	node.Content = &content
 
 	if issue.StateType != "" {
-		state := tasksync.LinearTypeToTaskState(issue.StateType)
+		state := linearsvc.LinearTypeToTaskState(issue.StateType)
 		node.State = &state
 	}
 
-	if priority, ok := tasksync.LinearPriorityToTask(issue.Priority); ok {
+	if priority, ok := linearsvc.LinearPriorityToTask(issue.Priority); ok {
 		node.Priority = &priority
 	}
 
@@ -11241,11 +11202,11 @@ func (r *Resolver) UpdateLinearSettingsTool(ctx context.Context, req *mcp.CallTo
 		return nil, types.UpdateLinearSettingsOutput{}, err
 	}
 
-	if err := r.task.Sync.UpdateLinearSettings(ctx, scope, input.OrganizationID, update); err != nil {
+	if err := r.task.Sync.Linear.UpdateLinearSettings(ctx, scope, input.OrganizationID, update); err != nil {
 		return nil, types.UpdateLinearSettingsOutput{}, linearSettingsToolError(r, ctx, err)
 	}
 
-	settings, err := r.task.Sync.LinearSettings(ctx, scope, input.OrganizationID)
+	settings, err := r.task.Sync.Linear.LinearSettings(ctx, scope, input.OrganizationID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load Linear settings", log.Error(err))
 
@@ -11369,8 +11330,7 @@ func (r *Resolver) GetDocumentHistorySnapshotTool(ctx context.Context, req *mcp.
 		parsedPrevious,
 	)
 	if err != nil {
-		if errors.Is(err, collaboration.ErrDocumentCollaborationNotSeeded) ||
-			errors.Is(err, collaboration.ErrSeedInProgress) {
+		if errors.Is(err, collaboration.ErrDocumentCollaborationNotFound) {
 			return nil, types.GetDocumentHistorySnapshotOutput{}, fmt.Errorf("cannot get history snapshot: %w", err)
 		}
 
@@ -11400,8 +11360,8 @@ func (r *Resolver) RestoreDocumentHistoryTool(ctx context.Context, req *mcp.Call
 		switch {
 		case errors.Is(err, coredata.ErrResourceNotFound):
 			return nil, types.RestoreDocumentHistoryOutput{}, fmt.Errorf("cannot restore history: %w", err)
-		case errors.Is(err, collaboration.ErrDocumentCollaborationNotSeeded),
-			errors.Is(err, collaboration.ErrSeedInProgress):
+		case errors.Is(err, collaboration.ErrDocumentCollaborationNotFound),
+			errors.Is(err, collaboration.ErrOpenSuggestions):
 			return nil, types.RestoreDocumentHistoryOutput{}, fmt.Errorf("cannot restore history: %w", err)
 		}
 
@@ -11673,4 +11633,678 @@ func (r *Resolver) ListScanTrackerResourcesTool(ctx context.Context, req *mcp.Ca
 	}
 
 	return nil, types.NewListScanTrackerResourcesOutput(page.NewPage(resources, cursor)), nil
+}
+
+func (r *Resolver) LinkFindingTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkFindingTaskInput) (*mcp.CallToolResult, types.LinkFindingTaskOutput, error) {
+	scope, err := r.Authorize(ctx, input.FindingID, probo.ActionFindingTaskMappingCreate)
+	if err != nil {
+		return nil, types.LinkFindingTaskOutput{}, err
+	}
+
+	finding, linkedTask, err := r.proboSvc.Findings.CreateTaskMapping(ctx, scope, input.FindingID, input.TaskID)
+	if err != nil {
+		return nil, types.LinkFindingTaskOutput{}, fmt.Errorf("cannot link finding to task: %w", err)
+	}
+
+	result, err := r.taskWithExternalLink(ctx, scope, linkedTask)
+	if err != nil {
+		return nil, types.LinkFindingTaskOutput{}, err
+	}
+
+	return nil, types.LinkFindingTaskOutput{
+		Finding: types.NewFinding(finding),
+		Task:    result,
+	}, nil
+}
+
+func (r *Resolver) UnlinkFindingTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkFindingTaskInput) (*mcp.CallToolResult, types.UnlinkFindingTaskOutput, error) {
+	scope, err := r.Authorize(ctx, input.FindingID, probo.ActionFindingTaskMappingDelete)
+	if err != nil {
+		return nil, types.UnlinkFindingTaskOutput{}, err
+	}
+
+	finding, linkedTask, err := r.proboSvc.Findings.DeleteTaskMapping(ctx, scope, input.FindingID, input.TaskID)
+	if err != nil {
+		return nil, types.UnlinkFindingTaskOutput{}, fmt.Errorf("cannot unlink finding from task: %w", err)
+	}
+
+	return nil, types.UnlinkFindingTaskOutput{
+		DeletedFindingID: finding.ID,
+		DeletedTaskID:    linkedTask.ID,
+	}, nil
+}
+
+func (r *Resolver) ListFindingTasksTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListFindingTasksInput) (*mcp.CallToolResult, types.ListFindingTasksOutput, error) {
+	scope, err := r.Authorize(ctx, input.FindingID, task.ActionTaskList)
+	if err != nil {
+		return nil, types.ListFindingTasksOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.TaskOrderField]{
+		Field:     coredata.TaskOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.TaskOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+	taskFilter := coredata.NewTaskFilter(nil, nil, nil, nil, nil, nil, nil, nil)
+
+	taskPage, err := r.task.ListForFindingID(ctx, scope, input.FindingID, cursor, taskFilter)
+	if err != nil {
+		return nil, types.ListFindingTasksOutput{}, fmt.Errorf("cannot list finding tasks: %w", err)
+	}
+
+	links, err := r.taskExternalLinksByTasks(ctx, scope, taskPage.Data)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load task external links", log.Error(err))
+		return nil, types.ListFindingTasksOutput{}, fmt.Errorf("internal error")
+	}
+
+	internalControlIDs, err := r.internalControlIDsByTasks(ctx, scope, taskPage.Data)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load task internal controls", log.Error(err))
+		return nil, types.ListFindingTasksOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, types.NewListFindingTasksOutput(taskPage, links, internalControlIDs), nil
+}
+
+func (r *Resolver) ListDocumentCommentThreadsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListDocumentCommentThreadsInput) (*mcp.CallToolResult, types.ListDocumentCommentThreadsOutput, error) {
+	scope, err := r.Authorize(ctx, input.DocumentID, probo.ActionDocumentGet)
+	if err != nil {
+		return nil, types.ListDocumentCommentThreadsOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.DocumentCommentThreadOrderField]{
+		Field:     coredata.DocumentCommentThreadOrderFieldCreatedAt,
+		Direction: page.OrderDirectionAsc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy.Field = input.OrderBy.Field
+		pageOrderBy.Direction = input.OrderBy.Direction
+	}
+
+	var filter *coredata.DocumentCommentThreadFilter
+	if input.Resolved != nil {
+		filter = coredata.NewDocumentCommentThreadFilter(input.Resolved)
+	}
+
+	threads, err := r.proboSvc.Documents.ListCommentThreads(
+		ctx,
+		scope,
+		input.DocumentID,
+		types.NewCursor(input.Size, input.Cursor, pageOrderBy),
+		filter,
+	)
+	if err != nil {
+		return nil, types.ListDocumentCommentThreadsOutput{}, r.documentReviewError(ctx, "cannot list document comment threads", err)
+	}
+
+	return nil, types.NewListDocumentCommentThreadsOutput(threads), nil
+}
+
+func (r *Resolver) GetDocumentCommentThreadTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetDocumentCommentThreadInput) (*mcp.CallToolResult, types.GetDocumentCommentThreadOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionDocumentGet)
+	if err != nil {
+		return nil, types.GetDocumentCommentThreadOutput{}, err
+	}
+
+	thread, err := r.proboSvc.Documents.GetCommentThread(ctx, scope, input.ID)
+	if err != nil {
+		return nil, types.GetDocumentCommentThreadOutput{}, r.documentReviewError(ctx, "cannot get document comment thread", err)
+	}
+
+	return nil, types.GetDocumentCommentThreadOutput{Thread: types.NewDocumentCommentThread(thread)}, nil
+}
+
+func (r *Resolver) ListDocumentCommentsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListDocumentCommentsInput) (*mcp.CallToolResult, types.ListDocumentCommentsOutput, error) {
+	scope, err := r.Authorize(ctx, input.ThreadID, probo.ActionDocumentGet)
+	if err != nil {
+		return nil, types.ListDocumentCommentsOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.DocumentCommentOrderField]{
+		Field:     coredata.DocumentCommentOrderFieldCreatedAt,
+		Direction: page.OrderDirectionAsc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy.Field = input.OrderBy.Field
+		pageOrderBy.Direction = input.OrderBy.Direction
+	}
+
+	comments, err := r.proboSvc.Documents.ListComments(
+		ctx,
+		scope,
+		input.ThreadID,
+		types.NewCursor(input.Size, input.Cursor, pageOrderBy),
+	)
+	if err != nil {
+		return nil, types.ListDocumentCommentsOutput{}, r.documentReviewError(ctx, "cannot list document comments", err)
+	}
+
+	return nil, types.NewListDocumentCommentsOutput(comments), nil
+}
+
+func (r *Resolver) GetDocumentCommentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetDocumentCommentInput) (*mcp.CallToolResult, types.GetDocumentCommentOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionDocumentGet)
+	if err != nil {
+		return nil, types.GetDocumentCommentOutput{}, err
+	}
+
+	comment, err := r.proboSvc.Documents.GetComment(ctx, scope, input.ID)
+	if err != nil {
+		return nil, types.GetDocumentCommentOutput{}, r.documentReviewError(ctx, "cannot get document comment", err)
+	}
+
+	return nil, types.GetDocumentCommentOutput{Comment: types.NewDocumentComment(comment)}, nil
+}
+
+func (r *Resolver) CreateDocumentCommentThreadTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateDocumentCommentThreadInput) (*mcp.CallToolResult, types.CreateDocumentCommentThreadOutput, error) {
+	scope, err := r.Authorize(ctx, input.DocumentID, probo.ActionDocumentComment)
+	if err != nil {
+		return nil, types.CreateDocumentCommentThreadOutput{}, err
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+
+	content, err := richtext.FromPlainText(input.Content)
+	if err != nil {
+		return nil, types.CreateDocumentCommentThreadOutput{}, err
+	}
+
+	thread, comment, err := r.proboSvc.Documents.CreateCommentThread(
+		ctx,
+		scope,
+		probo.CreateDocumentCommentThreadRequest{
+			DocumentID:      input.DocumentID,
+			IdentityID:      identity.ID,
+			Content:         content,
+			Quote:           optionalString(input.Quote),
+			SuggestionID:    input.SuggestionID,
+			QuoteOccurrence: optionalInt(input.QuoteOccurrence),
+		},
+	)
+	if err != nil {
+		return nil, types.CreateDocumentCommentThreadOutput{}, r.documentReviewError(ctx, "cannot create document comment thread", err)
+	}
+
+	return nil, types.CreateDocumentCommentThreadOutput{
+		Thread:  types.NewDocumentCommentThread(thread),
+		Comment: types.NewDocumentComment(comment),
+	}, nil
+}
+
+func (r *Resolver) CreateDocumentCommentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateDocumentCommentInput) (*mcp.CallToolResult, types.CreateDocumentCommentOutput, error) {
+	scope, err := r.Authorize(ctx, input.ThreadID, probo.ActionDocumentComment)
+	if err != nil {
+		return nil, types.CreateDocumentCommentOutput{}, err
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+
+	content, err := richtext.FromPlainText(input.Content)
+	if err != nil {
+		return nil, types.CreateDocumentCommentOutput{}, err
+	}
+
+	comment, err := r.proboSvc.Documents.CreateComment(
+		ctx,
+		scope,
+		probo.CreateDocumentCommentRequest{
+			ThreadID:   input.ThreadID,
+			IdentityID: identity.ID,
+			Content:    content,
+		},
+	)
+	if err != nil {
+		return nil, types.CreateDocumentCommentOutput{}, r.documentReviewError(ctx, "cannot create document comment", err)
+	}
+
+	return nil, types.CreateDocumentCommentOutput{Comment: types.NewDocumentComment(comment)}, nil
+}
+
+func (r *Resolver) UpdateDocumentCommentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateDocumentCommentInput) (*mcp.CallToolResult, types.UpdateDocumentCommentOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionDocumentCommentUpdate)
+	if err != nil {
+		return nil, types.UpdateDocumentCommentOutput{}, err
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+
+	content, err := richtext.FromPlainText(input.Content)
+	if err != nil {
+		return nil, types.UpdateDocumentCommentOutput{}, err
+	}
+
+	comment, err := r.proboSvc.Documents.UpdateComment(
+		ctx,
+		scope,
+		probo.UpdateDocumentCommentRequest{
+			CommentID:  input.ID,
+			IdentityID: identity.ID,
+			Content:    content,
+		},
+	)
+	if err != nil {
+		return nil, types.UpdateDocumentCommentOutput{}, r.documentReviewError(ctx, "cannot update document comment", err)
+	}
+
+	return nil, types.UpdateDocumentCommentOutput{Comment: types.NewDocumentComment(comment)}, nil
+}
+
+func (r *Resolver) DeleteDocumentCommentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteDocumentCommentInput) (*mcp.CallToolResult, types.DeleteDocumentCommentOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionDocumentCommentDelete)
+	if err != nil {
+		return nil, types.DeleteDocumentCommentOutput{}, err
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+
+	deletedThreadID, err := r.proboSvc.Documents.DeleteComment(ctx, scope, input.ID, identity.ID)
+	if err != nil {
+		return nil, types.DeleteDocumentCommentOutput{}, r.documentReviewError(ctx, "cannot delete document comment", err)
+	}
+
+	var deletedThread *string
+
+	if deletedThreadID != nil {
+		value := deletedThreadID.String()
+		deletedThread = &value
+	}
+
+	return nil, types.DeleteDocumentCommentOutput{
+		DeletedCommentID: input.ID,
+		DeletedThreadID:  deletedThread,
+	}, nil
+}
+
+func (r *Resolver) ResolveDocumentCommentThreadTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ResolveDocumentCommentThreadInput) (*mcp.CallToolResult, types.ResolveDocumentCommentThreadOutput, error) {
+	thread, err := r.setDocumentCommentThreadResolved(ctx, input.ID, true)
+	if err != nil {
+		return nil, types.ResolveDocumentCommentThreadOutput{}, err
+	}
+
+	return nil, types.ResolveDocumentCommentThreadOutput{Thread: thread}, nil
+}
+
+func (r *Resolver) ReopenDocumentCommentThreadTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ReopenDocumentCommentThreadInput) (*mcp.CallToolResult, types.ReopenDocumentCommentThreadOutput, error) {
+	thread, err := r.setDocumentCommentThreadResolved(ctx, input.ID, false)
+	if err != nil {
+		return nil, types.ReopenDocumentCommentThreadOutput{}, err
+	}
+
+	return nil, types.ReopenDocumentCommentThreadOutput{Thread: thread}, nil
+}
+
+func (r *Resolver) ListDocumentSuggestionsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListDocumentSuggestionsInput) (*mcp.CallToolResult, types.ListDocumentSuggestionsOutput, error) {
+	scope, err := r.Authorize(ctx, input.DocumentID, probo.ActionDocumentGet)
+	if err != nil {
+		return nil, types.ListDocumentSuggestionsOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.DocumentSuggestionOrderField]{
+		Field:     coredata.DocumentSuggestionOrderFieldCreatedAt,
+		Direction: page.OrderDirectionAsc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy.Field = input.OrderBy.Field
+		pageOrderBy.Direction = input.OrderBy.Direction
+	}
+
+	var filter *coredata.DocumentSuggestionFilter
+	if input.Status != nil {
+		filter = coredata.NewDocumentSuggestionFilter(input.Status)
+	}
+
+	suggestions, err := r.proboSvc.Documents.ListSuggestions(
+		ctx,
+		scope,
+		input.DocumentID,
+		types.NewCursor(input.Size, input.Cursor, pageOrderBy),
+		filter,
+	)
+	if err != nil {
+		return nil, types.ListDocumentSuggestionsOutput{}, r.documentReviewError(ctx, "cannot list document suggestions", err)
+	}
+
+	return nil, types.NewListDocumentSuggestionsOutput(suggestions), nil
+}
+
+func (r *Resolver) GetDocumentSuggestionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetDocumentSuggestionInput) (*mcp.CallToolResult, types.GetDocumentSuggestionOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionDocumentGet)
+	if err != nil {
+		return nil, types.GetDocumentSuggestionOutput{}, err
+	}
+
+	suggestion, err := r.proboSvc.Documents.GetSuggestion(ctx, scope, input.ID)
+	if err != nil {
+		return nil, types.GetDocumentSuggestionOutput{}, r.documentReviewError(ctx, "cannot get document suggestion", err)
+	}
+
+	return nil, types.GetDocumentSuggestionOutput{Suggestion: types.NewDocumentSuggestion(suggestion)}, nil
+}
+
+func (r *Resolver) StartDocumentSuggestionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.StartDocumentSuggestionInput) (*mcp.CallToolResult, types.StartDocumentSuggestionOutput, error) {
+	scope, err := r.Authorize(ctx, input.DocumentID, probo.ActionDocumentSuggest)
+	if err != nil {
+		return nil, types.StartDocumentSuggestionOutput{}, err
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+
+	suggestion, err := r.proboSvc.Documents.StartSuggestion(ctx, scope, input.DocumentID, identity.ID)
+	if err != nil {
+		return nil, types.StartDocumentSuggestionOutput{}, r.documentReviewError(ctx, "cannot start document suggestion", err)
+	}
+
+	return nil, types.StartDocumentSuggestionOutput{Suggestion: types.NewDocumentSuggestion(suggestion)}, nil
+}
+
+func (r *Resolver) AcceptDocumentSuggestionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AcceptDocumentSuggestionInput) (*mcp.CallToolResult, types.AcceptDocumentSuggestionOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionDocumentSuggestAccept)
+	if err != nil {
+		return nil, types.AcceptDocumentSuggestionOutput{}, err
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+
+	suggestion, err := r.proboSvc.Documents.DecideSuggestion(
+		ctx,
+		scope,
+		probo.DecideDocumentSuggestionRequest{
+			SuggestionID: input.ID,
+			IdentityID:   identity.ID,
+			Accept:       true,
+		},
+	)
+	if err != nil {
+		return nil, types.AcceptDocumentSuggestionOutput{}, r.documentReviewError(ctx, "cannot accept document suggestion", err)
+	}
+
+	return nil, types.AcceptDocumentSuggestionOutput{Suggestion: types.NewDocumentSuggestion(suggestion)}, nil
+}
+
+func (r *Resolver) RejectDocumentSuggestionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RejectDocumentSuggestionInput) (*mcp.CallToolResult, types.RejectDocumentSuggestionOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionDocumentSuggestReject)
+	if err != nil {
+		return nil, types.RejectDocumentSuggestionOutput{}, err
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+
+	suggestion, err := r.proboSvc.Documents.DecideSuggestion(
+		ctx,
+		scope,
+		probo.DecideDocumentSuggestionRequest{
+			SuggestionID: input.ID,
+			IdentityID:   identity.ID,
+			Accept:       false,
+		},
+	)
+	if err != nil {
+		return nil, types.RejectDocumentSuggestionOutput{}, r.documentReviewError(ctx, "cannot reject document suggestion", err)
+	}
+
+	return nil, types.RejectDocumentSuggestionOutput{Suggestion: types.NewDocumentSuggestion(suggestion)}, nil
+}
+
+func (r *Resolver) ListAsanaTeamsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListAsanaTeamsInput) (*mcp.CallToolResult, types.ListAsanaTeamsOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, task.ActionTaskUpdate)
+	if err != nil {
+		return nil, types.ListAsanaTeamsOutput{}, err
+	}
+
+	page, err := r.task.Sync.Asana.ListAsanaTeams(
+		ctx,
+		scope,
+		input.OrganizationID,
+		optionalString(input.Query),
+		optionalInt(input.Size),
+		optionalString(input.Cursor),
+	)
+	if err != nil {
+		if errors.Is(err, asanasvc.ErrAsanaNotConnected) {
+			return nil, types.ListAsanaTeamsOutput{Teams: []*types.AsanaNamed{}}, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot list Asana teams", log.Error(err))
+
+		return nil, types.ListAsanaTeamsOutput{}, fmt.Errorf("internal error")
+	}
+
+	teams := make([]*types.AsanaNamed, 0, len(page.Items))
+	for _, team := range page.Items {
+		teams = append(teams, &types.AsanaNamed{ID: team.GID, Name: team.Name})
+	}
+
+	return nil, types.ListAsanaTeamsOutput{
+		Teams:      teams,
+		NextCursor: linearNextCursor(page.EndCursor, page.HasNextPage),
+	}, nil
+}
+
+func (r *Resolver) ListAsanaProjectsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListAsanaProjectsInput) (*mcp.CallToolResult, types.ListAsanaProjectsOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, task.ActionTaskUpdate)
+	if err != nil {
+		return nil, types.ListAsanaProjectsOutput{}, err
+	}
+
+	page, err := r.task.Sync.Asana.ListAsanaProjects(
+		ctx,
+		scope,
+		input.OrganizationID,
+		optionalString(input.TeamID),
+		optionalString(input.Query),
+		optionalInt(input.Size),
+		optionalString(input.Cursor),
+	)
+	if err != nil {
+		if errors.Is(err, asanasvc.ErrAsanaNotConnected) {
+			return nil, types.ListAsanaProjectsOutput{Projects: []*types.AsanaNamed{}}, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot list Asana projects", log.Error(err))
+
+		return nil, types.ListAsanaProjectsOutput{}, fmt.Errorf("internal error")
+	}
+
+	projects := make([]*types.AsanaNamed, 0, len(page.Items))
+	for _, project := range page.Items {
+		projects = append(projects, &types.AsanaNamed{ID: project.GID, Name: project.Name})
+	}
+
+	return nil, types.ListAsanaProjectsOutput{
+		Projects:   projects,
+		NextCursor: linearNextCursor(page.EndCursor, page.HasNextPage),
+	}, nil
+}
+
+func (r *Resolver) ListAsanaTasksTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListAsanaTasksInput) (*mcp.CallToolResult, types.ListAsanaTasksOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, task.ActionTaskUpdate)
+	if err != nil {
+		return nil, types.ListAsanaTasksOutput{}, err
+	}
+
+	page, err := r.task.Sync.Asana.ListAsanaTasks(
+		ctx,
+		scope,
+		input.OrganizationID,
+		input.ProjectID,
+		optionalString(input.Query),
+		optionalInt(input.Size),
+		optionalString(input.Cursor),
+	)
+	if err != nil {
+		if errors.Is(err, asanasvc.ErrAsanaNotConnected) || errors.Is(err, asanasvc.ErrAsanaProjectNotFound) {
+			return nil, types.ListAsanaTasksOutput{Tasks: []*types.AsanaTaskSummary{}}, nil
+		}
+
+		if errors.Is(err, asanasvc.ErrAsanaProjectIDRequired) {
+			return nil, types.ListAsanaTasksOutput{}, fmt.Errorf("asana project id is required")
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot list Asana tasks", log.Error(err))
+
+		return nil, types.ListAsanaTasksOutput{}, fmt.Errorf("internal error")
+	}
+
+	tasks := make([]*types.AsanaTaskSummary, 0, len(page.Tasks))
+	for _, item := range page.Tasks {
+		tasks = append(tasks, &types.AsanaTaskSummary{
+			ID:        item.GID,
+			Name:      item.Name,
+			Completed: item.Completed,
+		})
+	}
+
+	return nil, types.ListAsanaTasksOutput{
+		Tasks:      tasks,
+		NextCursor: linearNextCursor(page.EndCursor, page.HasNextPage),
+	}, nil
+}
+
+func (r *Resolver) PublishTaskToAsanaTool(ctx context.Context, req *mcp.CallToolRequest, input *types.PublishTaskToAsanaInput) (*mcp.CallToolResult, types.PublishTaskToAsanaOutput, error) {
+	scope, err := r.Authorize(ctx, input.TaskID, task.ActionTaskUpdate)
+	if err != nil {
+		return nil, types.PublishTaskToAsanaOutput{}, err
+	}
+
+	if input.ProjectID == "" {
+		return nil, types.PublishTaskToAsanaOutput{}, asanasvc.ErrAsanaProjectIDRequired
+	}
+
+	link, err := r.task.Sync.Asana.PublishToAsana(ctx, scope, input.TaskID, input.ProjectID)
+	if err != nil {
+		return nil, types.PublishTaskToAsanaOutput{}, asanaPublishToolError(r, ctx, err)
+	}
+
+	loaded, err := r.task.Get(ctx, scope, link.TaskID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load published task", log.Error(err))
+
+		return nil, types.PublishTaskToAsanaOutput{}, fmt.Errorf("internal error")
+	}
+
+	taskWithLink, err := r.taskWithExternalLink(ctx, scope, loaded)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load published task external link", log.Error(err))
+
+		return nil, types.PublishTaskToAsanaOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, types.PublishTaskToAsanaOutput{Task: taskWithLink}, nil
+}
+
+func (r *Resolver) LinkTaskToAsanaTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkTaskToAsanaInput) (*mcp.CallToolResult, types.LinkTaskToAsanaOutput, error) {
+	scope, err := r.Authorize(ctx, input.TaskID, task.ActionTaskUpdate)
+	if err != nil {
+		return nil, types.LinkTaskToAsanaOutput{}, err
+	}
+
+	if input.ProjectID == "" {
+		return nil, types.LinkTaskToAsanaOutput{}, asanasvc.ErrAsanaProjectIDRequired
+	}
+
+	if input.TaskGid == "" {
+		return nil, types.LinkTaskToAsanaOutput{}, asanasvc.ErrAsanaTaskIDRequired
+	}
+
+	link, err := r.task.Sync.Asana.LinkToAsana(ctx, scope, input.TaskID, input.ProjectID, input.TaskGid)
+	if err != nil {
+		return nil, types.LinkTaskToAsanaOutput{}, asanaPublishToolError(r, ctx, err)
+	}
+
+	loaded, err := r.task.Get(ctx, scope, link.TaskID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load linked task", log.Error(err))
+
+		return nil, types.LinkTaskToAsanaOutput{}, fmt.Errorf("internal error")
+	}
+
+	taskWithLink, err := r.taskWithExternalLink(ctx, scope, loaded)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load linked task external link", log.Error(err))
+
+		return nil, types.LinkTaskToAsanaOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, types.LinkTaskToAsanaOutput{Task: taskWithLink}, nil
+}
+
+func (r *Resolver) UpdateAsanaSettingsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateAsanaSettingsInput) (*mcp.CallToolResult, types.UpdateAsanaSettingsOutput, error) {
+	var raw json.RawMessage
+	if req != nil && req.Params != nil {
+		raw = req.Params.Arguments
+	}
+
+	update, err := asanaSettingsUpdate(raw, input.TaskImport)
+	if err != nil {
+		return nil, types.UpdateAsanaSettingsOutput{}, err
+	}
+
+	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionConnectorInitiate)
+	if err != nil {
+		return nil, types.UpdateAsanaSettingsOutput{}, err
+	}
+
+	if err := r.task.Sync.Asana.UpdateAsanaSettings(ctx, scope, input.OrganizationID, update); err != nil {
+		return nil, types.UpdateAsanaSettingsOutput{}, asanaSettingsToolError(r, ctx, err)
+	}
+
+	settings, err := r.task.Sync.Asana.AsanaSettings(ctx, scope, input.OrganizationID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load Asana settings", log.Error(err))
+
+		return nil, types.UpdateAsanaSettingsOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, types.UpdateAsanaSettingsOutput{Settings: mcpAsanaSettings(settings)}, nil
+}
+
+func (r *Resolver) GetAsanaProjectSetupTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetAsanaProjectSetupInput) (*mcp.CallToolResult, types.GetAsanaProjectSetupOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionConnectorList)
+	if err != nil {
+		return nil, types.GetAsanaProjectSetupOutput{}, err
+	}
+
+	setup, mapping, err := r.task.Sync.Asana.AsanaProjectSetup(ctx, scope, input.OrganizationID, input.ProjectID)
+	if err != nil {
+		return nil, types.GetAsanaProjectSetupOutput{}, asanaSettingsToolError(r, ctx, err)
+	}
+
+	return nil, types.GetAsanaProjectSetupOutput{Setup: mcpAsanaSetup(setup, mapping)}, nil
+}
+
+func (r *Resolver) UpdateAsanaProjectMappingTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateAsanaProjectMappingInput) (*mcp.CallToolResult, types.UpdateAsanaProjectMappingOutput, error) {
+	var raw json.RawMessage
+	if req != nil && req.Params != nil {
+		raw = req.Params.Arguments
+	}
+
+	update, err := asanaMappingUpdate(raw, input)
+	if err != nil {
+		return nil, types.UpdateAsanaProjectMappingOutput{}, err
+	}
+
+	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionConnectorInitiate)
+	if err != nil {
+		return nil, types.UpdateAsanaProjectMappingOutput{}, err
+	}
+
+	if err := r.task.Sync.Asana.UpdateAsanaProjectMapping(ctx, scope, input.OrganizationID, update); err != nil {
+		return nil, types.UpdateAsanaProjectMappingOutput{}, asanaSettingsToolError(r, ctx, err)
+	}
+
+	setup, mapping, err := r.task.Sync.Asana.AsanaProjectSetup(ctx, scope, input.OrganizationID, input.ProjectID)
+	if err != nil {
+		return nil, types.UpdateAsanaProjectMappingOutput{}, asanaSettingsToolError(r, ctx, err)
+	}
+
+	return nil, types.UpdateAsanaProjectMappingOutput{Setup: mcpAsanaSetup(setup, mapping)}, nil
 }

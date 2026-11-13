@@ -24,10 +24,18 @@ import * as updateOp from './update.operation';
 import * as deleteOp from './delete.operation';
 import * as getOp from './get.operation';
 import * as getAllOp from './getAll.operation';
+import * as getAsanaProjectSetupOp from './getAsanaProjectSetup.operation';
+import * as linkToAsanaOp from './linkToAsana.operation';
 import * as linkToLinearOp from './linkToLinear.operation';
+import * as listAsanaProjectsOp from './listAsanaProjects.operation';
+import * as listAsanaTasksOp from './listAsanaTasks.operation';
+import * as listAsanaTeamsOp from './listAsanaTeams.operation';
 import * as listLinearIssuesOp from './listLinearIssues.operation';
 import * as listLinearTeamsOp from './listLinearTeams.operation';
+import * as publishToAsanaOp from './publishToAsana.operation';
 import * as publishToLinearOp from './publishToLinear.operation';
+import * as updateAsanaProjectMappingOp from './updateAsanaProjectMapping.operation';
+import * as updateAsanaSettingsOp from './updateAsanaSettings.operation';
 import * as updateLinearSettingsOp from './updateLinearSettings.operation';
 import * as unlinkExternalOp from './unlinkExternal.operation';
 
@@ -62,16 +70,46 @@ export const description: INodeProperties[] = [
 				action: 'Get a task',
 			},
 			{
+				name: 'Get Asana Project Setup',
+				value: 'getAsanaProjectSetup',
+				description: 'Read an Asana project sections, enum fields, and saved mapping',
+				action: 'Get asana project setup',
+			},
+			{
 				name: 'Get Many',
 				value: 'getAll',
 				description: 'Get many tasks',
 				action: 'Get many tasks',
 			},
 			{
+				name: 'Link To Asana',
+				value: 'linkToAsana',
+				description: 'Link a task to an existing Asana task. This updates the Probo task with the Asana task.',
+				action: 'Link a task to asana',
+			},
+			{
 				name: 'Link To Linear',
 				value: 'linkToLinear',
 				description: 'Link a task to an existing Linear issue. This updates the Probo task with the Linear issue.',
 				action: 'Link a task to linear',
+			},
+			{
+				name: 'List Asana Projects',
+				value: 'listAsanaProjects',
+				description: 'Search Asana projects for an organization',
+				action: 'List asana projects',
+			},
+			{
+				name: 'List Asana Tasks',
+				value: 'listAsanaTasks',
+				description: 'Search Asana tasks in a project',
+				action: 'List asana tasks',
+			},
+			{
+				name: 'List Asana Teams',
+				value: 'listAsanaTeams',
+				description: 'Search Asana teams for an organization',
+				action: 'List asana teams',
 			},
 			{
 				name: 'List Linear Issues',
@@ -84,6 +122,12 @@ export const description: INodeProperties[] = [
 				value: 'listLinearTeams',
 				description: 'Search Linear teams for an organization',
 				action: 'List linear teams',
+			},
+			{
+				name: 'Publish To Asana',
+				value: 'publishToAsana',
+				description: 'Publish a task as a new Asana task',
+				action: 'Publish a task to asana',
 			},
 			{
 				name: 'Publish To Linear',
@@ -104,6 +148,18 @@ export const description: INodeProperties[] = [
 				action: 'Update a task',
 			},
 			{
+				name: 'Update Asana Project Mapping',
+				value: 'updateAsanaProjectMapping',
+				description: 'Save how an Asana project sections and priority field map onto Probo',
+				action: 'Update asana project mapping',
+			},
+			{
+				name: 'Update Asana Settings',
+				value: 'updateAsanaSettings',
+				description: 'Update the organization default Asana project and task import',
+				action: 'Update asana settings',
+			},
+			{
 				name: 'Update Linear Settings',
 				value: 'updateLinearSettings',
 				description: 'Update the organization default Linear team and issue import',
@@ -120,7 +176,15 @@ export const description: INodeProperties[] = [
 	...linkToLinearOp.description,
 	...listLinearIssuesOp.description,
 	...listLinearTeamsOp.description,
+	...getAsanaProjectSetupOp.description,
+	...linkToAsanaOp.description,
+	...listAsanaProjectsOp.description,
+	...listAsanaTasksOp.description,
+	...listAsanaTeamsOp.description,
+	...publishToAsanaOp.description,
 	...publishToLinearOp.description,
+	...updateAsanaProjectMappingOp.description,
+	...updateAsanaSettingsOp.description,
 	...updateLinearSettingsOp.description,
 	...unlinkExternalOp.description,
 ];
@@ -134,7 +198,15 @@ export {
 	linkToLinearOp as linkToLinear,
 	listLinearIssuesOp as listLinearIssues,
 	listLinearTeamsOp as listLinearTeams,
+	getAsanaProjectSetupOp as getAsanaProjectSetup,
+	linkToAsanaOp as linkToAsana,
+	listAsanaProjectsOp as listAsanaProjects,
+	listAsanaTasksOp as listAsanaTasks,
+	listAsanaTeamsOp as listAsanaTeams,
+	publishToAsanaOp as publishToAsana,
 	publishToLinearOp as publishToLinear,
+	updateAsanaProjectMappingOp as updateAsanaProjectMapping,
+	updateAsanaSettingsOp as updateAsanaSettings,
 	updateLinearSettingsOp as updateLinearSettings,
 	unlinkExternalOp as unlinkExternal,
 };

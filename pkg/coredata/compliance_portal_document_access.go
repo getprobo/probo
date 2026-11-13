@@ -671,10 +671,7 @@ WHERE
 		"compliance_portal_document_ids": compliancePortalDocumentIDs,
 		"requested_at":                   requestedAt,
 		"requested_status":               CompliancePortalDocumentAccessStatusRequested,
-		"retryable_statuses": []CompliancePortalDocumentAccessStatus{
-			CompliancePortalDocumentAccessStatusRejected,
-			CompliancePortalDocumentAccessStatusRevoked,
-		},
+		"retryable_statuses":             retryableCompliancePortalDocumentAccessStatuses(),
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -801,10 +798,7 @@ WHERE
 		"compliance_portal_audit_ids": compliancePortalAuditIDs,
 		"requested_at":                requestedAt,
 		"requested_status":            CompliancePortalDocumentAccessStatusRequested,
-		"retryable_statuses": []CompliancePortalDocumentAccessStatus{
-			CompliancePortalDocumentAccessStatusRejected,
-			CompliancePortalDocumentAccessStatusRevoked,
-		},
+		"retryable_statuses":          retryableCompliancePortalDocumentAccessStatuses(),
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -1417,10 +1411,7 @@ WHERE
 		"compliance_portal_file_ids":  compliancePortalFileIDs,
 		"requested_at":                requestedAt,
 		"requested_status":            CompliancePortalDocumentAccessStatusRequested,
-		"retryable_statuses": []CompliancePortalDocumentAccessStatus{
-			CompliancePortalDocumentAccessStatusRejected,
-			CompliancePortalDocumentAccessStatusRevoked,
-		},
+		"retryable_statuses":          retryableCompliancePortalDocumentAccessStatuses(),
 	}
 	maps.Copy(args, scope.SQLArguments())
 

@@ -65,6 +65,7 @@ interface LinearDraftOverride {
 interface TaskLinearDraftFieldProps {
   organizationKey: TaskLinearDraftField_organization$key;
   disabled?: boolean;
+  cleared?: boolean;
   onChange: (selection: LinearDraft) => void;
   onIssue?: (issue: LinearIssueDraft) => void;
 }
@@ -72,6 +73,7 @@ interface TaskLinearDraftFieldProps {
 export function TaskLinearDraftField({
   organizationKey,
   disabled,
+  cleared = false,
   onChange,
   onIssue,
 }: TaskLinearDraftFieldProps) {
@@ -81,14 +83,22 @@ export function TaskLinearDraftField({
   const [override, setOverride] = useState<LinearDraftOverride | null>(null);
   const { root } = taskLinearPublishField();
   const newIssueLabel = t("detailsPage.linear.newIssue");
-  const teamId = override === null ? (defaultTeam?.id ?? null) : override.teamId;
-  const teamLabel = override === null
+  const draft = cleared
+    ? {
+        teamId: null,
+        teamLabel: null,
+        issueId: newLinearIssueId,
+        issueLabel: null,
+      }
+    : override;
+  const teamId = draft === null ? (defaultTeam?.id ?? null) : draft.teamId;
+  const teamLabel = draft === null
     ? (defaultTeam == null
         ? null
         : linearTeamLabel({ name: defaultTeam.name, key: defaultTeam.key }))
-    : override.teamLabel;
-  const issueId = override?.issueId ?? newLinearIssueId;
-  const issueLabel = override?.issueLabel ?? null;
+    : draft.teamLabel;
+  const issueId = draft?.issueId ?? newLinearIssueId;
+  const issueLabel = draft?.issueLabel ?? null;
 
   function emit(nextTeamId: string | null, nextIssueId: string) {
     onChange({

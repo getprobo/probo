@@ -172,6 +172,7 @@ func TestInterceptOperation(t *testing.T) {
 				name  string
 				errs  gqlerror.List
 				level string
+				codes string
 			}{
 				{
 					name: "not found",
@@ -179,6 +180,7 @@ func TestInterceptOperation(t *testing.T) {
 						&gqlerror.Error{Extensions: map[string]any{"code": "NOT_FOUND"}},
 					},
 					level: "INFO",
+					codes: "NOT_FOUND",
 				},
 				{
 					name: "forbidden",
@@ -186,6 +188,7 @@ func TestInterceptOperation(t *testing.T) {
 						&gqlerror.Error{Extensions: map[string]any{"code": "FORBIDDEN"}},
 					},
 					level: "INFO",
+					codes: "FORBIDDEN",
 				},
 				{
 					name: "unauthenticated",
@@ -193,6 +196,7 @@ func TestInterceptOperation(t *testing.T) {
 						&gqlerror.Error{Extensions: map[string]any{"code": "UNAUTHENTICATED"}},
 					},
 					level: "INFO",
+					codes: "UNAUTHENTICATED",
 				},
 				{
 					name: "invalid",
@@ -200,6 +204,7 @@ func TestInterceptOperation(t *testing.T) {
 						&gqlerror.Error{Extensions: map[string]any{"code": "INVALID"}},
 					},
 					level: "INFO",
+					codes: "INVALID",
 				},
 				{
 					name: "internal",
@@ -207,19 +212,71 @@ func TestInterceptOperation(t *testing.T) {
 						&gqlerror.Error{Extensions: map[string]any{"code": "INTERNAL"}},
 					},
 					level: "ERROR",
+					codes: "INTERNAL",
 				},
 				{
 					name:  "no code",
 					errs:  gqlerror.List{gqlerror.Errorf("boom")},
 					level: "ERROR",
+					codes: "UNKNOWN",
 				},
 				{
 					name: "invalid and internal",
 					errs: gqlerror.List{
 						&gqlerror.Error{Extensions: map[string]any{"code": "INVALID"}},
 						&gqlerror.Error{Extensions: map[string]any{"code": "INTERNAL"}},
+						&gqlerror.Error{Extensions: map[string]any{"code": "INVALID"}},
 					},
 					level: "ERROR",
+					codes: "INTERNAL,INVALID",
+				},
+				{
+					name: "unallowlisted code",
+					errs: gqlerror.List{
+						&gqlerror.Error{Extensions: map[string]any{"code": "user-submitted-value"}},
+					},
+					level: "ERROR",
+					codes: "UNKNOWN",
+				},
+				{
+					name: "parse failed",
+					errs: gqlerror.List{
+						&gqlerror.Error{Extensions: map[string]any{"code": "GRAPHQL_PARSE_FAILED"}},
+					},
+					level: "INFO",
+					codes: "GRAPHQL_PARSE_FAILED",
+				},
+				{
+					name: "validation failed",
+					errs: gqlerror.List{
+						&gqlerror.Error{Extensions: map[string]any{"code": "GRAPHQL_VALIDATION_FAILED"}},
+					},
+					level: "INFO",
+					codes: "GRAPHQL_VALIDATION_FAILED",
+				},
+				{
+					name: "invalid credentials",
+					errs: gqlerror.List{
+						&gqlerror.Error{Extensions: map[string]any{"code": "INVALID_CREDENTIALS"}},
+					},
+					level: "INFO",
+					codes: "INVALID_CREDENTIALS",
+				},
+				{
+					name: "email not verified",
+					errs: gqlerror.List{
+						&gqlerror.Error{Extensions: map[string]any{"code": "EMAIL_NOT_VERIFIED"}},
+					},
+					level: "INFO",
+					codes: "EMAIL_NOT_VERIFIED",
+				},
+				{
+					name: "complexity limit",
+					errs: gqlerror.List{
+						&gqlerror.Error{Extensions: map[string]any{"code": "COMPLEXITY_LIMIT_EXCEEDED"}},
+					},
+					level: "INFO",
+					codes: "COMPLEXITY_LIMIT_EXCEEDED",
 				},
 			}
 
@@ -250,6 +307,7 @@ func TestInterceptOperation(t *testing.T) {
 						require.NoError(t, json.Unmarshal([]byte(strings.TrimSpace(logs.String())), &entry))
 						assert.Equal(t, tt.level, entry["level"])
 						assert.Contains(t, entry["msg"], "query Viewer failed")
+						assert.Equal(t, tt.codes, entry["graphql_operation_error_codes"])
 					},
 				)
 			}

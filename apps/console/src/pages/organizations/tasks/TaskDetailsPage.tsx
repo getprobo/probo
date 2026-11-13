@@ -39,9 +39,11 @@ import { requestNotificationRefresh } from "#/components/notifications/requestNo
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { NotFoundError } from "#/lib/relay/errors";
 
+import { TaskAsanaField } from "./_components/TaskAsanaField";
 import { TaskDeleteDialog } from "./_components/TaskDeleteDialog";
 import { TaskDescriptionSection } from "./_components/TaskDescriptionSection";
 import { TaskEngagementSection } from "./_components/TaskEngagementSection";
+import { TaskFindingsSection } from "./_components/TaskFindingsSection";
 import { TaskInternalControlsSection } from "./_components/TaskInternalControlsSection";
 import { TaskLinearField } from "./_components/TaskLinearField";
 import { TaskNameField } from "./_components/TaskNameField";
@@ -61,7 +63,9 @@ export const taskDetailsPageFragment = graphql`
     ...TaskEngagementSection_task
     ...TaskPropertiesSection_task
     ...TaskInternalControlsSection_task
+    ...TaskFindingsSection_task
     ...TaskLinearField_task
+    ...TaskAsanaField_task
   }
 `;
 
@@ -144,7 +148,9 @@ export function TaskDetailsPage({ queryRef }: TaskDetailsPageProps) {
           <div className="flex flex-col gap-4">
             <TaskPropertiesSection taskKey={task} />
             <TaskLinearField taskKey={task} />
+            <TaskAsanaField taskKey={task} />
             <TaskInternalControlsSection taskKey={task} />
+            <TaskFindingsSection taskKey={task} />
           </div>
         )}
       />

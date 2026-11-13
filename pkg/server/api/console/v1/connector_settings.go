@@ -269,6 +269,18 @@ func apiKeyConnectorSettings(input types.CreateAPIKeyConnectorInput) (json.RawMe
 		}
 
 		return json.Marshal(&coredata.TwingateConnectorSettings{Network: network})
+	case coredata.ConnectorProviderUniFi:
+		if input.UnifiConsoleID == nil || *input.UnifiConsoleID == "" {
+			return nil, fmt.Errorf("cannot create unifi connector: unifiConsoleId is required")
+		}
+
+		// The console ID becomes a path segment on api.ui.com.
+		consoleID, err := drivers.UniFiConsoleID(*input.UnifiConsoleID)
+		if err != nil {
+			return nil, fmt.Errorf("cannot create unifi connector: unifiConsoleId must be a UniFi console ID")
+		}
+
+		return json.Marshal(&coredata.UniFiConnectorSettings{ConsoleID: consoleID})
 	case coredata.ConnectorProviderRetool:
 		// Optional: Retool Cloud routes every organization through the shared
 		// api.retool.com gateway, so only a self-hosted customer has a URL to
@@ -393,6 +405,21 @@ func apiKeyConnectorSettings(input types.CreateAPIKeyConnectorInput) (json.RawMe
 		}
 
 		return json.Marshal(&coredata.ScalewayConnectorSettings{OrganizationID: *input.ScalewayOrganizationID})
+	case coredata.ConnectorProviderDatadog:
+		site := ""
+		if input.DatadogSite != nil {
+			site = strings.ToUpper(strings.TrimSpace(*input.DatadogSite))
+		}
+
+		// The site selects the API host and is not discoverable from the
+		// token; resolving it against the fixed allow-list keeps an
+		// unexpected value from reaching a URL.
+		domain, ok := connectorprotocol.DatadogAPIDomain(site)
+		if !ok {
+			return nil, fmt.Errorf("cannot create datadog connector: datadogSite must be a known Datadog site")
+		}
+
+		return json.Marshal(&coredata.DatadogConnectorSettings{Region: site, Domain: domain})
 	case coredata.ConnectorProviderSegment:
 		region := ""
 		if input.SegmentRegion != nil {

@@ -28,6 +28,7 @@ import { graphql, useFragment } from "react-relay";
 
 import type { APIKeyExtraFields_provider$key } from "#/__generated__/core/APIKeyExtraFields_provider.graphql";
 
+import { DatadogSiteField } from "./DatadogSiteField";
 import { ExtraSettingField } from "./ExtraSettingField";
 import { PostHogDeploymentField } from "./PostHogDeploymentField";
 
@@ -58,6 +59,15 @@ export function APIKeyExtraFields({
 
   if (provider.provider === "POSTHOG") {
     return <PostHogDeploymentField values={extras} onChange={onChange} />;
+  }
+
+  if (provider.provider === "DATADOG") {
+    return (
+      <DatadogSiteField
+        value={extras.site || null}
+        onValueChange={value => onChange({ ...extras, site: value })}
+      />
+    );
   }
 
   if (provider.provider === "SEGMENT") {

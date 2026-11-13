@@ -27,6 +27,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/richtext"
 )
 
 func TestApplyFragmentEdits_ReplacesOneParagraph(t *testing.T) {
@@ -52,8 +53,8 @@ func TestApplyFragmentEdits_ReplacesOneParagraph(t *testing.T) {
 	)
 	require.NoError(t, err)
 	require.Len(t, out.Content, 3)
-	assert.Equal(t, "New", *out.Content[1].Content[0].Text)
-	assert.Equal(t, "Keep", *out.Content[2].Content[0].Text)
+	assert.Equal(t, "New", out.Content[1].Content[0].Text)
+	assert.Equal(t, "Keep", out.Content[2].Content[0].Text)
 	assert.Equal(t, prosemirror.NodeHeading, out.Content[0].Type)
 }
 
@@ -104,7 +105,7 @@ func mustParseDoc(t *testing.T, raw string) prosemirror.Node {
 
 	encoded, err := json.Marshal(node)
 	require.NoError(t, err)
-	require.NoError(t, prosemirror.ValidateDocumentContentJSON(string(encoded)))
+	require.NoError(t, richtext.DocumentSchema.ValidateJSON(string(encoded)))
 
 	return node
 }

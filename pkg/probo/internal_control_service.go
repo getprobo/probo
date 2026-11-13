@@ -32,7 +32,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
-	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/richtext"
 	taskpkg "go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/timespan"
 	"go.probo.inc/probo/pkg/validator"
@@ -560,11 +560,17 @@ func (s InternalControlService) Import(
 					taskID := gid.New(organization.ID.TenantID(), coredata.TaskEntityType)
 
 					taskDescription := req.InternalControls[i].Tasks[j].Description
+
+					taskContent, err := richtext.FromPlainText(taskDescription)
+					if err != nil {
+						return fmt.Errorf("cannot encode task description: %w", err)
+					}
+
 					task := &coredata.Task{
 						ID:             taskID,
 						OrganizationID: organizationID,
 						Name:           req.InternalControls[i].Tasks[j].Name,
-						Content:        prosemirror.FromPlainText(taskDescription),
+						Content:        taskContent,
 						ReferenceID:    req.InternalControls[i].Tasks[j].ReferenceID,
 						State:          coredata.TaskStateTodo,
 						Priority:       coredata.TaskPriorityMedium,

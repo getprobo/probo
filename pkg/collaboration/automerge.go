@@ -27,7 +27,7 @@ import (
 
 	"go.probo.inc/probo/pkg/automerge"
 	automergeprosemirror "go.probo.inc/probo/pkg/automerge/prosemirror"
-	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/richtext"
 )
 
 func newAutomergeDocument(ctx context.Context) (*automerge.Document, error) {
@@ -101,12 +101,12 @@ func materialize(ctx context.Context, document *automerge.Document) (string, err
 		return "", fmt.Errorf("cannot get collaboration spans: %w", err)
 	}
 
-	content, err := automergeprosemirror.Render(spans)
+	content, err := automergeprosemirror.Render(ProjectAcceptedSpans(spans))
 	if err != nil {
 		return "", fmt.Errorf("cannot render collaboration spans: %w", err)
 	}
 
-	content, err = prosemirror.SanitizeDocumentJSON(content)
+	content, err = richtext.DocumentSchema.Sanitize(content)
 	if err != nil {
 		return "", fmt.Errorf("cannot sanitize collaboration content: %w", err)
 	}

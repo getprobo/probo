@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { getRiskImpacts, getRiskLikelihoods } from "@probo/helpers";
-import { Card, IconClock, Input, RisksChart } from "@probo/ui";
+import { Card, IconClock, Input, levelColors, RisksChart } from "@probo/ui";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
@@ -33,8 +33,6 @@ import {
   type MatrixScoreType,
 } from "../_lib/matrixCell";
 import { useMatrixCellFilter } from "../_lib/useMatrixCellFilter";
-
-const severityColors = ["bg-txt-success", "bg-txt-warning", "bg-txt-danger"] as const;
 
 export const riskAnalysisMatricesFragment = graphql`
   fragment RiskAnalysisMatrices_analysis on RiskAnalysis
@@ -126,6 +124,7 @@ export function RiskAnalysisMatrices({
       .join(" · ");
   const severities = [
     t("ui.risk.severity.low"),
+    t("ui.risk.severity.medium"),
     t("ui.risk.severity.high"),
     t("ui.risk.severity.critical"),
   ];
@@ -196,7 +195,7 @@ export function RiskAnalysisMatrices({
         <div className="flex gap-3">
           {severities.map((label, index) => (
             <div key={label} className="flex items-center gap-1 text-xs text-txt-secondary">
-              <div className={`size-[10px] rounded-xs ${severityColors[index]}`} />
+              <div className={`size-[10px] rounded-xs ${levelColors[index].color}`} />
               <span>{label}</span>
             </div>
           ))}

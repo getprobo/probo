@@ -30,7 +30,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
-	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/richtext"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -183,7 +183,7 @@ func optionalDocumentJSON(s *string) (*string, error) {
 		return nil, nil
 	}
 
-	sanitized, err := prosemirror.SanitizeDocumentJSON(*s)
+	sanitized, err := richtext.DocumentSchema.Sanitize(*s)
 	if err != nil {
 		return nil, err
 	}

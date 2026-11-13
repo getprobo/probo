@@ -1,0 +1,205 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+import { CheckIcon } from "@phosphor-icons/react";
+import { CommentEditor, type MentionSource } from "@probo/ui";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+
+import {
+  isRichEditorContentEmpty,
+  richEditorContentTextLength,
+} from "#/pages/organizations/_lib/richEditorContent";
+
+export interface DocumentReviewMarginThread {
+  id: string;
+  anchorQuote: string;
+  anchorStart: string;
+  anchorEnd: string;
+  resolvedAt?: string | null;
+  suggestionId?: string | null;
+  comments: {
+    edges: ReadonlyArray<{
+      node: {
+        id: string;
+        content: string;
+        author: { id: string; fullName: string | null | undefined };
+      };
+    }>;
+  };
+}
+
+export interface DocumentReviewMarginCommentsProps {
+  thread?: DocumentReviewMarginThread | null;
+  active: boolean;
+  profileId: string | null;
+  canComment: boolean;
+  replyText: string;
+  replying: boolean;
+  mentionSource: MentionSource;
+  onReplyText: (value: string) => void;
+  onReply: (content: string) => void;
+  onUpdate: (commentId: string, content: string) => void;
+  onDelete: (commentId: string) => void;
+  onResolve?: () => void;
+  onLayout?: () => void;
+}
+
+const commentMaxLength = 10000;
+
+export function DocumentReviewMarginComments({
+  thread,
+  active,
+  profileId,
+  canComment,
+  replyText,
+  replying,
+  mentionSource,
+  onReplyText,
+  onReply,
+  onUpdate,
+  onDelete,
+  onResolve,
+  onLayout,
+}: DocumentReviewMarginCommentsProps) {
+  const { t } = useTranslation();
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState("");
+  const [editorKey, setEditorKey] = useState(0);
+  const root = useRef<HTMLDivElement>(null);
+  const lastHeight = useRef(0);
+  const previousReplyText = useRef(replyText);
+  const comments = thread?.comments.edges ?? [];
+  const visible = active ? comments : comments.slice(0, 1);
+  useEffect(() => {
+    if (previousReplyText.current !== "" && replyText === "") {
+      setEditorKey(key => key + 1);
+    }
+    previousReplyText.current = replyText;
+  }, [replyText]);
+  useLayoutEffect(() => {
+    const height = root.current?.offsetHeight ?? 0;
+    if (height === lastHeight.current) return;
+    lastHeight.current = height;
+    onLayout?.();
+  });
+
+  return (
+    <div ref={root} className="flex flex-col gap-2">
+      {visible.map(({ node }, index) => (
+        <div key={node.id} className="group text-2 text-sand-12">
+          <div className="flex items-center justify-between gap-2">
+            <p className="font-medium">{node.author.fullName}</p>
+            {index === 0 && onResolve
+              ? (
+                  <Button
+                    variant="ghost"
+                    color="neutral"
+                    size={1}
+                    aria-label={t("documentDescriptionPage.review.resolve")}
+                    iconStart={<CheckIcon />}
+                    onClick={onResolve}
+                  />
+                )
+              : null}
+          </div>
+          {editingId === node.id
+            ? (
+                <form
+                  className="flex flex-col gap-1"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    if (isRichEditorContentEmpty(editingText)) return;
+                    if (richEditorContentTextLength(editingText) > commentMaxLength) return;
+                    onUpdate(node.id, editingText);
+                    setEditingId(null);
+                  }}
+                >
+                  <CommentEditor
+                    controls={false}
+                    className="min-h-12 rounded-2 border border-sand-7 bg-sand-1 p-2 text-2"
+                    content={editingText}
+                    mentionSource={mentionSource}
+                    onChangeContent={setEditingText}
+                    aria-label={t("documentDescriptionPage.review.edit")}
+                  />
+                  <Button variant="solid" color="neutral" size={1} type="submit">
+                    {t("documentDescriptionPage.review.save")}
+                  </Button>
+                </form>
+              )
+            : (
+                <CommentEditor
+                  controls={false}
+                  disabled
+                  formatting={false}
+                  className="text-2 [&_.tiptap>p:first-child]:mt-0 [&_.tiptap>p:last-child]:mb-0"
+                  content={node.content}
+                />
+              )}
+          {active && profileId === node.author.id && editingId !== node.id && (
+            <div className="mt-1 flex gap-2 text-1 text-sand-11 opacity-0 group-hover/review-card:opacity-100 group-focus-within/review-card:opacity-100">
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingId(node.id);
+                  setEditingText(node.content);
+                }}
+              >
+                {t("documentDescriptionPage.review.edit")}
+              </button>
+              <button type="button" onClick={() => onDelete(node.id)}>
+                {t("documentDescriptionPage.review.delete")}
+              </button>
+            </div>
+          )}
+        </div>
+      ))}
+      {active && canComment && (
+        <form
+          className="flex flex-col gap-1"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (isRichEditorContentEmpty(replyText)) return;
+            if (richEditorContentTextLength(replyText) > commentMaxLength) return;
+            onReply(replyText);
+          }}
+        >
+          <CommentEditor
+            key={editorKey}
+            controls={false}
+            className="min-h-12 rounded-2 border border-sand-7 bg-sand-1 p-2 text-2 outline-none focus-within:border-sand-8"
+            content={replyText}
+            mentionSource={mentionSource}
+            placeholder={t("documentDescriptionPage.review.replyPlaceholder")}
+            onChangeContent={onReplyText}
+            aria-label={t("documentDescriptionPage.review.replyPlaceholder")}
+          />
+          <div className="flex justify-end">
+            <Button variant="solid" color="indigo" size={1} type="submit" disabled={replying}>
+              {t("documentDescriptionPage.review.reply")}
+            </Button>
+          </div>
+        </form>
+      )}
+    </div>
+  );
+}

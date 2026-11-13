@@ -33,7 +33,10 @@ import (
 	"go.gearno.de/kit/worker"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/task/sync/linear"
+	asanasvc "go.probo.inc/probo/pkg/task/sync/asana"
+	"go.probo.inc/probo/pkg/task/sync/internal"
+	"go.probo.inc/probo/pkg/task/sync/job"
+	linearsvc "go.probo.inc/probo/pkg/task/sync/linear"
 )
 
 const (
@@ -62,7 +65,7 @@ func NewOutboundWorker(
 		pg:                svc.pg,
 		logger:            logger,
 		staleAfter:        staleAfter,
-		heartbeatInterval: outboundLeaseHeartbeatInterval(staleAfter, outboundHeartbeatInterval),
+		heartbeatInterval: internal.OutboundLeaseHeartbeatInterval(staleAfter, outboundHeartbeatInterval),
 	}
 
 	return worker.New(
@@ -103,7 +106,7 @@ func (h *outboundHandler) Process(ctx context.Context, item coredata.TaskSyncJob
 	defer stopHeartbeat()
 
 	if err := job.handle(runCtx, &item); err != nil {
-		if processingLeaseLost(runCtx, err) {
+		if internal.ProcessingLeaseLost(runCtx, err) {
 			job.logger.InfoCtx(ctx, "lost task sync job processing lease")
 
 			return nil
@@ -135,353 +138,34 @@ func (h *outboundHandler) RecoverStale(ctx context.Context) error {
 }
 
 func (h *outboundHandler) handle(ctx context.Context, item *coredata.TaskSyncJob) error {
-	var payload JobPayload
+	var payload job.JobPayload
 	if err := json.Unmarshal(item.Payload, &payload); err != nil {
 		return fmt.Errorf("cannot unmarshal task sync payload: %w", err)
 	}
 
-	scope := coredata.NewScopeFromObjectID(item.ID)
-
-	client, err := h.linearClient(ctx, scope, payload.ConnectorID)
-	if err != nil {
-		return err
-	}
-
-	switch payload.Action {
-	case SyncActionCommentUpsert:
-		return h.processCommentUpsert(ctx, item, payload, scope, client)
-	case SyncActionCommentDelete:
-		return h.processCommentDelete(ctx, item, payload, client)
-	}
-
-	states, err := client.ListWorkflowStates(ctx, payload.TeamID)
-	if err != nil {
-		return fmt.Errorf("cannot list Linear workflow states: %w", err)
-	}
-
-	switch payload.Action {
-	case SyncActionCancel:
-		return h.processCancel(ctx, item, payload, scope, client, states)
-	case SyncActionUpdate:
-		return h.processUpdate(ctx, item, payload, scope, client, states)
-	default:
-		return fmt.Errorf("cannot process task sync job: unknown action %q", payload.Action)
-	}
-}
-
-func (h *outboundHandler) linearClient(
-	ctx context.Context,
-	scope coredata.Scoper,
-	connectorID gid.GID,
-) (*linear.Client, error) {
-	var dbConnector *coredata.Connector
-
-	err := h.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			dbConnector = &coredata.Connector{}
-			if err := dbConnector.LoadByID(
-				ctx,
-				conn,
-				scope,
-				connectorID,
-				h.svc.encryptionKey,
-			); err != nil {
-				return fmt.Errorf("cannot load Linear connector: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	client, _, err := h.svc.linearClientForConnector(ctx, scope, dbConnector)
-	if err != nil {
-		return nil, err
-	}
-
-	return client, nil
-}
-
-func (h *outboundHandler) processCancel(
-	ctx context.Context,
-	item *coredata.TaskSyncJob,
-	payload JobPayload,
-	scope coredata.Scoper,
-	client *linear.Client,
-	states []linear.WorkflowState,
-) error {
-	skip, err := h.hasNewerOutboundJob(ctx, item, payload.TaskID, scope)
-	if err != nil {
-		return err
-	}
-
-	if skip {
-		return h.succeed(ctx, item)
-	}
-
-	stateID, err := PickWorkflowStateID(states, coredata.TaskStateCanceled)
-	if err != nil {
-		return err
-	}
-
-	_, err = client.UpdateIssue(
-		ctx,
-		payload.ExternalID,
-		linear.IssueUpdateInput{StateID: &stateID},
-	)
-	if err != nil {
-		return fmt.Errorf("cannot cancel Linear issue: %w", err)
-	}
-
-	return h.succeed(ctx, item)
-}
-
-func (h *outboundHandler) processUpdate(
-	ctx context.Context,
-	item *coredata.TaskSyncJob,
-	payload JobPayload,
-	scope coredata.Scoper,
-	client *linear.Client,
-	states []linear.WorkflowState,
-) error {
-	sent := false
-
-	for range maxOutboundRevisionAttempts {
-		task, destination, skip, err := h.loadOutboundUpdate(ctx, item, payload, scope, sent)
-		if err != nil {
-			return err
-		}
-
-		if skip {
-			return h.succeed(ctx, item)
-		}
-
-		_, sentHash, err := outboundTaskHash(task)
-		if err != nil {
-			return fmt.Errorf("cannot hash outbound task: %w", err)
-		}
-
-		markdown, err := h.svc.linearIssueDescriptionMarkdown(
-			ctx,
-			scope,
-			client,
-			task.OrganizationID,
-			task.Content,
-		)
-		if err != nil {
-			return fmt.Errorf("cannot convert task mentions: %w", err)
-		}
-
-		stateID, err := PickWorkflowStateID(states, task.State)
-		if err != nil {
-			return err
-		}
-
-		priority, err := outboundLinearPriority(task.Priority, destination)
-		if err != nil {
-			return err
-		}
-
-		description, _, _, embedErr := h.svc.embedLinearDescription(
-			ctx,
-			client,
-			scope,
-			payload.ConnectorID,
-			payload.ExternalID,
-			task.OrganizationID,
-			task.ID,
-			markdown,
-			task.Content,
-		)
-		// A failed attachment stays in the text. The issue update still sends
-		// the title, state, priority, and assignee, and the job retries the file.
-		if embedErr != nil && !isPartialLinearEmbed(embedErr) {
-			return fmt.Errorf("cannot embed Linear files: %w", embedErr)
-		}
-
-		dueDate := DeadlineToLinearDate(task.Deadline)
-
-		issue, err := client.UpdateIssue(
-			ctx,
-			payload.ExternalID,
-			linear.IssueUpdateInput{
-				Title:       &task.Name,
-				Description: &description,
-				StateID:     &stateID,
-				Priority:    priority,
-				DueDate:     dueDate,
-				DueDateSet:  true,
-				AssigneeID:  h.svc.linearAssigneeID(ctx, scope, client, task.AssignedToID),
+	if payload.Provider == coredata.ConnectorProviderAsana {
+		return asanasvc.HandleOutbound(
+			h.svc.Asana,
+			asanasvc.OutboundHooks{
+				Newer: h.hasNewerOutboundJob,
+				Done:  h.succeed,
 			},
-		)
-		if err != nil {
-			return fmt.Errorf("cannot update Linear issue: %w", err)
-		}
-
-		if embedErr != nil {
-			return fmt.Errorf("cannot embed Linear files: %w", embedErr)
-		}
-
-		sent = true
-
-		stable, err := h.finishOutboundUpdate(
 			ctx,
+			item,
 			payload,
-			scope,
-			sentHash,
-			issue,
-			priority != nil,
 		)
-		if err != nil {
-			return err
-		}
-
-		if stable {
-			return h.succeed(ctx, item)
-		}
 	}
 
-	return fmt.Errorf("task changed during Linear update")
-}
-
-func (h *outboundHandler) loadOutboundUpdate(
-	ctx context.Context,
-	item *coredata.TaskSyncJob,
-	payload JobPayload,
-	scope coredata.Scoper,
-	sent bool,
-) (*coredata.Task, json.RawMessage, bool, error) {
-	var (
-		task        *coredata.Task
-		destination json.RawMessage
-		skip        bool
-	)
-
-	err := h.pg.WithTx(
-		ctx,
-		func(ctx context.Context, tx pg.Tx) error {
-			task = &coredata.Task{}
-			if err := task.LoadByID(ctx, tx, scope, payload.TaskID); err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					skip = true
-
-					return nil
-				}
-
-				return fmt.Errorf("cannot load task %q: %w", payload.TaskID, err)
-			}
-
-			link, err := loadCurrentOutboundLink(ctx, tx, scope, payload.TaskID)
-			if err != nil {
-				return err
-			}
-
-			if !outboundLinkMatchesJob(link, payload) {
-				skip = true
-
-				return nil
-			}
-
-			destination = link.Destination
-
-			if sent {
-				return nil
-			}
-
-			newer, err := item.HasNewerOutboundJob(ctx, tx, scope, payload.TaskID, commentSyncActions())
-			if err != nil {
-				return err
-			}
-
-			skip = newer
-
-			return nil
+	return linearsvc.HandleOutbound(
+		h.svc.Linear,
+		linearsvc.OutboundHooks{
+			Newer: h.hasNewerOutboundJob,
+			Done:  h.succeed,
 		},
-	)
-	if err != nil {
-		return nil, nil, false, err
-	}
-
-	return task, destination, skip, nil
-}
-
-func (h *outboundHandler) finishOutboundUpdate(
-	ctx context.Context,
-	payload JobPayload,
-	scope coredata.Scoper,
-	sentHash string,
-	issue *linear.Issue,
-	sentPriority bool,
-) (bool, error) {
-	var stable bool
-
-	err := h.pg.WithTx(
 		ctx,
-		func(ctx context.Context, tx pg.Tx) error {
-			task := &coredata.Task{}
-			if err := task.LoadByID(ctx, tx, scope, payload.TaskID); err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					stable = true
-
-					return nil
-				}
-
-				return fmt.Errorf("cannot load task %q: %w", payload.TaskID, err)
-			}
-
-			_, currentHash, err := outboundTaskHash(task)
-			if err != nil {
-				return err
-			}
-
-			if currentHash != sentHash {
-				return nil
-			}
-
-			link, err := loadCurrentOutboundLink(ctx, tx, scope, payload.TaskID)
-			if err != nil {
-				return err
-			}
-
-			if !outboundLinkMatchesJob(link, payload) {
-				stable = true
-
-				return nil
-			}
-
-			link.ContentHash = &sentHash
-			link.RemoteUpdatedAt = &issue.UpdatedAt
-			link.ExternalIdentifier = issue.Identifier
-			link.ExternalURL = issue.URL
-
-			if sentPriority {
-				destination, err := clearLinearNoneFromDestination(link.Destination)
-				if err != nil {
-					return err
-				}
-
-				link.Destination = destination
-			}
-
-			link.UpdatedAt = time.Now()
-
-			if err := link.Update(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot update task external link: %w", err)
-			}
-
-			stable = true
-
-			return nil
-		},
+		item,
+		payload,
 	)
-	if err != nil {
-		return false, err
-	}
-
-	return stable, nil
 }
 
 func (h *outboundHandler) hasNewerOutboundJob(
@@ -497,7 +181,7 @@ func (h *outboundHandler) hasNewerOutboundJob(
 		func(ctx context.Context, tx pg.Tx) error {
 			var err error
 
-			newer, err = item.HasNewerOutboundJob(ctx, tx, scope, taskID, commentSyncActions())
+			newer, err = item.HasNewerOutboundJob(ctx, tx, scope, taskID, job.CommentSyncActions())
 
 			return err
 		},
@@ -507,22 +191,6 @@ func (h *outboundHandler) hasNewerOutboundJob(
 	}
 
 	return newer, nil
-}
-
-func outboundTaskHash(task *coredata.Task) (string, string, error) {
-	markdown, err := ContentToMarkdown(task.Content)
-	if err != nil {
-		return "", "", err
-	}
-
-	return markdown, ContentHash(
-		task.Name,
-		markdown,
-		task.State,
-		task.Priority,
-		task.Deadline,
-		task.AssignedToID,
-	), nil
 }
 
 func (h *outboundHandler) succeed(ctx context.Context, item *coredata.TaskSyncJob) error {
@@ -550,7 +218,7 @@ func (h *outboundHandler) startHeartbeat(
 	item coredata.TaskSyncJob,
 ) func() {
 	if item.ProcessingOwnerToken == nil || *item.ProcessingOwnerToken == "" {
-		panic("task sync job heartbeat requires an owner token")
+		panic("task sync job touch requires an owner token")
 	}
 
 	stop := make(chan struct{})
@@ -579,7 +247,7 @@ func (h *outboundHandler) startHeartbeat(
 				err := h.pg.WithConn(
 					context.WithoutCancel(ctx),
 					func(ctx context.Context, conn pg.Querier) error {
-						return lease.TouchLease(
+						return lease.Touch(
 							ctx,
 							conn,
 							coredata.NewScopeFromObjectID(lease.ID),
@@ -600,7 +268,7 @@ func (h *outboundHandler) startHeartbeat(
 				if errors.Is(err, coredata.ErrProcessingLeaseLost) {
 					cancel(coredata.ErrProcessingLeaseLost)
 				} else {
-					cancel(fmt.Errorf("cannot heartbeat task sync job: %w", err))
+					cancel(fmt.Errorf("cannot touch task sync job: %w", err))
 				}
 
 				return
@@ -616,33 +284,6 @@ func (h *outboundHandler) startHeartbeat(
 			},
 		)
 	}
-}
-
-func processingLeaseLost(ctx context.Context, err error) bool {
-	return errors.Is(err, coredata.ErrProcessingLeaseLost) ||
-		errors.Is(context.Cause(ctx), coredata.ErrProcessingLeaseLost)
-}
-
-func loadCurrentOutboundLink(
-	ctx context.Context,
-	conn pg.Querier,
-	scope coredata.Scoper,
-	taskID gid.GID,
-) (*coredata.TaskExternalLink, error) {
-	link := &coredata.TaskExternalLink{}
-	if err := link.LoadByTaskID(ctx, conn, scope, taskID); err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, nil
-		}
-
-		return nil, fmt.Errorf("cannot load task external link: %w", err)
-	}
-
-	return link, nil
-}
-
-func outboundLinkMatchesJob(link *coredata.TaskExternalLink, payload JobPayload) bool {
-	return link != nil && link.ExternalID == payload.ExternalID
 }
 
 func (h *outboundHandler) fail(ctx context.Context, item *coredata.TaskSyncJob, processErr error) error {
@@ -679,12 +320,4 @@ func outboundRetryDelay(attemptCount int) time.Duration {
 	shift := min(max(attemptCount-1, 0), 5)
 
 	return time.Duration(1<<uint(shift)) * time.Minute
-}
-
-func outboundLeaseHeartbeatInterval(staleAfter, interval time.Duration) time.Duration {
-	if interval >= staleAfter {
-		return max(staleAfter/2, time.Millisecond)
-	}
-
-	return interval
 }

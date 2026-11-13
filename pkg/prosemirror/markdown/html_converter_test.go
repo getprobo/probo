@@ -1,0 +1,494 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+package markdown_test
+
+import (
+	"go.probo.inc/probo/pkg/prosemirror"
+	"strings"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/gid"
+)
+
+func TestParseMarkdown_BlockHTMLFileLink(t *testing.T) {
+	t.Parallel()
+
+	fileID := gid.New(gid.TenantID{}, 25).String()
+	path := "/api/files/v1/attachments/" + fileID
+
+	doc, err := parseMarkdown(`<a href="` + path + `" class="document-file">policy.pdf</a>` + "\n")
+	require.NoError(t, err)
+	require.Len(t, doc.Content, 1)
+	require.Equal(t, prosemirror.NodeFile, doc.Content[0].Type)
+	attrs, err := doc.Content[0].FileAttrs()
+	require.NoError(t, err)
+	assert.Equal(t, fileID, attrs.FileID)
+	assert.Equal(t, "policy.pdf", attrs.FileName)
+
+	wrapped, err := parseMarkdown(`<p><a href="` + path + `">policy.pdf</a></p>` + "\n")
+	require.NoError(t, err)
+	require.Len(t, wrapped.Content, 1)
+	require.Equal(t, prosemirror.NodeFile, wrapped.Content[0].Type)
+
+	mixed, err := parseMarkdown(`<p>see <a href="` + path + `">policy.pdf</a></p>` + "\n")
+	require.NoError(t, err)
+	require.Len(t, mixed.Content, 1)
+	assert.Equal(t, prosemirror.NodeParagraph, mixed.Content[0].Type)
+
+	cell, err := parseMarkdown("<table><tr><td><a href=\"" + path + "\">policy.pdf</a></td></tr></table>\n")
+	require.NoError(t, err)
+	require.Len(t, cell.Content, 1)
+	td := cell.Content[0].Content[0].Content[0]
+	require.Len(t, td.Content, 1)
+	assert.Equal(t, prosemirror.NodeFile, td.Content[0].Type)
+}
+
+func TestParseMarkdown_BlockHTML(t *testing.T) {
+	t.Parallel()
+
+	doc, err := parseMarkdown("<div>block</div>\n")
+	require.NoError(t, err)
+	require.Len(t, doc.Content, 1)
+	assert.Equal(t, prosemirror.NodeParagraph, doc.Content[0].Type)
+	require.Len(t, doc.Content[0].Content, 1)
+	assert.Equal(t, prosemirror.NodeText, doc.Content[0].Content[0].Type)
+	require.NotEmpty(t, doc.Content[0].Content[0].Text)
+	assert.Equal(t, "block", doc.Content[0].Content[0].Text)
+}
+
+func TestParseMarkdown_BlockHTMLDivPreservesInlineMarks(t *testing.T) {
+	t.Parallel()
+
+	doc, err := parseMarkdown("<div>hello <strong>world</strong></div>\n")
+	require.NoError(t, err)
+	require.Len(t, doc.Content, 1)
+	p := doc.Content[0]
+	require.Equal(t, prosemirror.NodeParagraph, p.Type)
+
+	var foundStrong bool
+
+	for _, ch := range p.Content {
+		if ch.Type != prosemirror.NodeText || ch.Text == "" {
+			continue
+		}
+
+		if ch.Text != "world" {
+			continue
+		}
+
+		require.Len(t, ch.Marks, 1)
+		assert.Equal(t, prosemirror.MarkStrong, ch.Marks[0].Type)
+
+		foundStrong = true
+	}
+
+	assert.True(t, foundStrong, "expected bold mark on 'world' inside a single paragraph")
+}
+
+func TestParseMarkdown_BlockHTMLDivAroundSectionWithParagraphs(t *testing.T) {
+	t.Parallel()
+
+	doc, err := parseMarkdown("<div><section><p>a</p><p>b</p></section></div>\n")
+	require.NoError(t, err)
+	require.Len(t, doc.Content, 2)
+	assert.Equal(t, prosemirror.NodeParagraph, doc.Content[0].Type)
+	assert.Equal(t, prosemirror.NodeParagraph, doc.Content[1].Type)
+	assert.Equal(t, "a", doc.Content[0].Content[0].Text)
+	assert.Equal(t, "b", doc.Content[1].Content[0].Text)
+}
+
+func TestParseMarkdown_BlockHTMLWithClosureLine(t *testing.T) {
+	t.Parallel()
+
+	// Type 1 HTML block: closing tag is stored on ClosureLine, not in Lines.
+	// Script is stripped by the HTML sanitizer; nothing safe remains.
+	md := "<script>\nconsole.log(1)\n</script>\n"
+	doc, err := parseMarkdown(md)
+	require.NoError(t, err)
+	assert.Empty(t, doc.Content)
+}
+
+func TestParseMarkdown_BlockHTMLParagraphAndHeading(t *testing.T) {
+	t.Parallel()
+
+	doc, err := parseMarkdown("<p>a</p>\n<h2>Title</h2>\n")
+	require.NoError(t, err)
+	require.Len(t, doc.Content, 2)
+	assert.Equal(t, prosemirror.NodeParagraph, doc.Content[0].Type)
+	require.Len(t, doc.Content[0].Content, 1)
+	assert.Equal(t, "a", doc.Content[0].Content[0].Text)
+	assert.Equal(t, prosemirror.NodeHeading, doc.Content[1].Type)
+	attrs, err := doc.Content[1].HeadingAttrs()
+	require.NoError(t, err)
+	assert.Equal(t, 2, attrs.Level)
+}
+
+func TestParseMarkdown_BlockHTMLListAndBlockquote(t *testing.T) {
+	t.Parallel()
+
+	doc, err := parseMarkdown("<ul><li>one</li></ul>\n<blockquote><p>q</p></blockquote>\n")
+	require.NoError(t, err)
+	require.Len(t, doc.Content, 2)
+	assert.Equal(t, prosemirror.NodeBulletList, doc.Content[0].Type)
+	assert.Equal(t, prosemirror.NodeBlockquote, doc.Content[1].Type)
+}
+
+func TestParseMarkdown_BlockHTMLCheckboxTypeMustMatchExactly(t *testing.T) {
+	t.Parallel()
+
+	doc, err := parseMarkdown(`<ul><li><input type="checkbox-custom"> not a task</li></ul>` + "\n")
+	require.NoError(t, err)
+	require.NoError(t, editorSchema.Validate(doc))
+	require.Len(t, doc.Content, 1)
+	require.Equal(t, prosemirror.NodeBulletList, doc.Content[0].Type)
+	require.Len(t, doc.Content[0].Content, 1)
+
+	item := doc.Content[0].Content[0]
+	assert.Equal(t, prosemirror.NodeListItem, item.Type)
+	require.Len(t, item.Content, 1)
+	require.Len(t, item.Content[0].Content, 1)
+	assert.Equal(t, " not a task", item.Content[0].Content[0].Text)
+}
+
+func TestParseMarkdown_BlockHTMLCheckboxOnlyTaskItem(t *testing.T) {
+	t.Parallel()
+
+	doc, err := parseMarkdown(`<ul><li><input type="checkbox" checked></li></ul>` + "\n")
+	require.NoError(t, err)
+	require.NoError(t, editorSchema.Validate(doc))
+	require.Len(t, doc.Content, 1)
+	require.Equal(t, prosemirror.NodeTaskList, doc.Content[0].Type)
+	require.Len(t, doc.Content[0].Content, 1)
+
+	item := doc.Content[0].Content[0]
+	assert.Equal(t, prosemirror.NodeTaskItem, item.Type)
+	attrs, err := item.TaskItemAttrs()
+	require.NoError(t, err)
+	assert.True(t, attrs.Checked)
+	require.Len(t, item.Content, 1)
+	assert.Equal(t, prosemirror.NodeParagraph, item.Content[0].Type)
+	assert.Empty(t, item.Content[0].Content)
+}
+
+func TestParseMarkdown_BlockHTMLOutOfOrderListWithEmptyItem(t *testing.T) {
+	t.Parallel()
+
+	doc, err := parseMarkdown(`<ol><li><input type="checkbox"> task</li><li></li><li>plain</li></ol>` + "\n")
+	require.NoError(t, err)
+	require.NoError(t, editorSchema.Validate(doc))
+	require.Len(t, doc.Content, 2)
+	assert.Equal(t, prosemirror.NodeTaskList, doc.Content[0].Type)
+
+	list := doc.Content[1]
+	assert.Equal(t, prosemirror.NodeOrderedList, list.Type)
+	require.Len(t, list.Content, 1)
+
+	attrs, err := list.OrderedListAttrs()
+	require.NoError(t, err)
+	assert.Equal(t, 3, attrs.Start)
+}
+
+func TestParseMarkdown_BlockHTMLOrderedListKeepsExplicitStart(t *testing.T) {
+	t.Parallel()
+
+	doc, err := parseMarkdown(`<ol start="5"><li>five</li></ol>` + "\n")
+	require.NoError(t, err)
+	require.NoError(t, editorSchema.Validate(doc))
+	require.Len(t, doc.Content, 1)
+	assert.Equal(t, prosemirror.NodeOrderedList, doc.Content[0].Type)
+
+	attrs, err := doc.Content[0].OrderedListAttrs()
+	require.NoError(t, err)
+	assert.Equal(t, 5, attrs.Start)
+}
+
+func TestParseMarkdown_BlockHTMLOrderedListStartingAtZero(t *testing.T) {
+	t.Parallel()
+
+	doc, err := parseMarkdown(`<ol start="0"><li>zero</li><li><input type="checkbox"> task</li><li>two</li></ol>` + "\n")
+	require.NoError(t, err)
+	require.NoError(t, editorSchema.Validate(doc))
+	require.Len(t, doc.Content, 3)
+
+	first := doc.Content[0]
+	assert.Equal(t, prosemirror.NodeOrderedList, first.Type)
+	firstAttrs, err := first.OrderedListAttrs()
+	require.NoError(t, err)
+	assert.Equal(t, 0, firstAttrs.Start)
+
+	assert.Equal(t, prosemirror.NodeTaskList, doc.Content[1].Type)
+
+	third := doc.Content[2]
+	assert.Equal(t, prosemirror.NodeOrderedList, third.Type)
+	thirdAttrs, err := third.OrderedListAttrs()
+	require.NoError(t, err)
+	assert.Equal(t, 2, thirdAttrs.Start)
+}
+
+func TestParseMarkdown_BlockHTMLOutOfOrderListSplitsPlainNumberingGap(t *testing.T) {
+	t.Parallel()
+
+	doc, err := parseMarkdown("<ol><li>one</li><li></li><li>three</li></ol>\n")
+	require.NoError(t, err)
+	require.NoError(t, editorSchema.Validate(doc))
+	require.Len(t, doc.Content, 2)
+
+	for i, want := range []int{1, 3} {
+		list := doc.Content[i]
+		assert.Equal(t, prosemirror.NodeOrderedList, list.Type)
+		require.Len(t, list.Content, 1)
+
+		attrs, attrErr := list.OrderedListAttrs()
+		require.NoError(t, attrErr)
+		assert.Equal(t, want, attrs.Start)
+	}
+}
+
+func TestParseMarkdown_BlockHTMLImagesInQuoteAndCell(t *testing.T) {
+	t.Parallel()
+
+	doc, err := parseMarkdown("<blockquote><img src=\"https://example.com/quote.png\" alt=\"diagram\"></blockquote>\n<table><tr><td><img src=\"https://example.com/cell.png\" alt=\"cell\"></td><th>Head <img src=\"https://example.com/head.png\" alt=\"head\"></th></tr></table>\n")
+	require.NoError(t, err)
+	require.NoError(t, editorSchema.Validate(doc))
+	require.Len(t, doc.Content, 2)
+
+	quote := doc.Content[0]
+	assert.Equal(t, prosemirror.NodeBlockquote, quote.Type)
+	require.Len(t, quote.Content, 1)
+	assert.Equal(t, prosemirror.NodeImage, quote.Content[0].Type)
+
+	row := doc.Content[1].Content[0]
+	cell := row.Content[0]
+	require.Len(t, cell.Content, 1)
+	assert.Equal(t, prosemirror.NodeImage, cell.Content[0].Type)
+
+	header := row.Content[1]
+	require.Len(t, header.Content, 2)
+	assert.Equal(t, prosemirror.NodeParagraph, header.Content[0].Type)
+	assert.Equal(t, prosemirror.NodeImage, header.Content[1].Type)
+}
+
+func TestParseMarkdown_BlockHTMLTable(t *testing.T) {
+	t.Parallel()
+
+	md := "<table><tr><th>A</th><td>B</td></tr></table>\n"
+	doc, err := parseMarkdown(md)
+	require.NoError(t, err)
+	require.Len(t, doc.Content, 1)
+	assert.Equal(t, prosemirror.NodeTable, doc.Content[0].Type)
+	require.Len(t, doc.Content[0].Content, 1)
+	assert.Equal(t, prosemirror.NodeTableRow, doc.Content[0].Content[0].Type)
+	require.Len(t, doc.Content[0].Content[0].Content, 2)
+	assert.Equal(t, prosemirror.NodeTableHeader, doc.Content[0].Content[0].Content[0].Type)
+	assert.Equal(t, prosemirror.NodeTableCell, doc.Content[0].Content[0].Content[1].Type)
+
+	thAttrs, err := doc.Content[0].Content[0].Content[0].TableCellAttrs()
+	require.NoError(t, err)
+	assert.Equal(t, 1, thAttrs.Colspan)
+	assert.Equal(t, 1, thAttrs.Rowspan)
+
+	tdAttrs, err := doc.Content[0].Content[0].Content[1].TableCellAttrs()
+	require.NoError(t, err)
+	assert.Equal(t, 1, tdAttrs.Colspan)
+	assert.Equal(t, 1, tdAttrs.Rowspan)
+}
+
+func TestParseMarkdown_BlockHTMLNestedTableDoesNotHoistInnerRows(t *testing.T) {
+	t.Parallel()
+
+	md := "<table><tr><td><table><tr><td>inner</td></tr></table></td></tr></table>\n"
+	doc, err := parseMarkdown(md)
+	require.NoError(t, err)
+	require.Len(t, doc.Content, 1)
+	assert.Equal(t, prosemirror.NodeTable, doc.Content[0].Type)
+	// Outer table must have exactly one row; inner <tr> must not become a second outer row.
+	require.Len(t, doc.Content[0].Content, 1)
+	assert.Equal(t, prosemirror.NodeTableRow, doc.Content[0].Content[0].Type)
+}
+
+func TestParseMarkdown_BlockHTMLTableCellSpans(t *testing.T) {
+	t.Parallel()
+
+	md := `<table><tr><td colspan="3" rowspan="2">X</td></tr></table>` + "\n"
+	doc, err := parseMarkdown(md)
+	require.NoError(t, err)
+	require.Len(t, doc.Content, 1)
+	cell := doc.Content[0].Content[0].Content[0]
+	require.Equal(t, prosemirror.NodeTableCell, cell.Type)
+	attrs, err := cell.TableCellAttrs()
+	require.NoError(t, err)
+	assert.Equal(t, 3, attrs.Colspan)
+	assert.Equal(t, 2, attrs.Rowspan)
+}
+
+func TestParseMarkdown_MarkdownTableCellWithBlockList(t *testing.T) {
+	t.Parallel()
+
+	md := "| Header |\n| --- |\n| <ul><li>one</li><li>two</li></ul> |\n"
+	doc, err := parseMarkdown(md)
+	require.NoError(t, err)
+	require.Len(t, doc.Content, 1)
+	assert.Equal(t, prosemirror.NodeTable, doc.Content[0].Type)
+
+	dataRow := doc.Content[0].Content[1]
+	assert.Equal(t, prosemirror.NodeTableRow, dataRow.Type)
+	cell := dataRow.Content[0]
+	assert.Equal(t, prosemirror.NodeTableCell, cell.Type)
+
+	require.Len(t, cell.Content, 1)
+	assert.Equal(t, prosemirror.NodeBulletList, cell.Content[0].Type)
+	require.Len(t, cell.Content[0].Content, 2)
+	assert.Equal(t, prosemirror.NodeListItem, cell.Content[0].Content[0].Type)
+	assert.Equal(t, prosemirror.NodeListItem, cell.Content[0].Content[1].Type)
+
+	li1Para := cell.Content[0].Content[0].Content[0]
+	require.Equal(t, prosemirror.NodeParagraph, li1Para.Type)
+	assert.Equal(t, "one", li1Para.Content[0].Text)
+
+	li2Para := cell.Content[0].Content[1].Content[0]
+	require.Equal(t, prosemirror.NodeParagraph, li2Para.Type)
+	assert.Equal(t, "two", li2Para.Content[0].Text)
+}
+
+func TestParseMarkdown_MarkdownTableCellWithOrderedList(t *testing.T) {
+	t.Parallel()
+
+	md := "| Header |\n| --- |\n| <ol><li>first</li><li>second</li></ol> |\n"
+	doc, err := parseMarkdown(md)
+	require.NoError(t, err)
+	require.Len(t, doc.Content, 1)
+	assert.Equal(t, prosemirror.NodeTable, doc.Content[0].Type)
+
+	dataRow := doc.Content[0].Content[1]
+	cell := dataRow.Content[0]
+	assert.Equal(t, prosemirror.NodeTableCell, cell.Type)
+
+	require.Len(t, cell.Content, 1)
+	assert.Equal(t, prosemirror.NodeOrderedList, cell.Content[0].Type)
+	require.Len(t, cell.Content[0].Content, 2)
+	assert.Equal(t, prosemirror.NodeListItem, cell.Content[0].Content[0].Type)
+	assert.Equal(t, prosemirror.NodeListItem, cell.Content[0].Content[1].Type)
+}
+
+func TestParseMarkdown_BlockHTMLScriptRemovedKeepsSafeContent(t *testing.T) {
+	t.Parallel()
+
+	md := "<p>ok</p>\n<script>bad()</script>\n"
+	doc, err := parseMarkdown(md)
+	require.NoError(t, err)
+	require.Len(t, doc.Content, 1)
+	assert.Equal(t, prosemirror.NodeParagraph, doc.Content[0].Type)
+	assert.Equal(t, "ok", doc.Content[0].Content[0].Text)
+}
+
+func TestParseMarkdown_InlineRawHTML(t *testing.T) {
+	t.Parallel()
+
+	doc, err := parseMarkdown("before <span>x</span> after")
+	require.NoError(t, err)
+	require.Len(t, doc.Content, 1)
+	p := doc.Content[0]
+	require.Equal(t, prosemirror.NodeParagraph, p.Type)
+
+	var joined strings.Builder
+
+	for _, ch := range p.Content {
+		require.Equal(t, prosemirror.NodeText, ch.Type)
+		require.NotEmpty(t, ch.Text)
+		joined.WriteString(ch.Text)
+	}
+
+	// Sanitized HTML: span is unwrapped to plain text content.
+	assert.Equal(t, "before x after", joined.String())
+}
+
+func TestParseMarkdown_InlineRawHTMLStrong(t *testing.T) {
+	t.Parallel()
+
+	doc, err := parseMarkdown(`a <strong>b</strong> c`)
+	require.NoError(t, err)
+	require.Len(t, doc.Content, 1)
+	p := doc.Content[0]
+	require.Len(t, p.Content, 3)
+	assert.Equal(t, "a ", p.Content[0].Text)
+	assert.Equal(t, "b", p.Content[1].Text)
+	require.Len(t, p.Content[1].Marks, 1)
+	assert.Equal(t, prosemirror.MarkStrong, p.Content[1].Marks[0].Type)
+	assert.Equal(t, " c", p.Content[2].Text)
+}
+
+func TestParseMarkdown_InlineRawHTMLScriptStripped(t *testing.T) {
+	t.Parallel()
+
+	doc, err := parseMarkdown(`hi <script>evil()</script> there`)
+	require.NoError(t, err)
+	require.Len(t, doc.Content, 1)
+	p := doc.Content[0]
+
+	var joined strings.Builder
+
+	for _, ch := range p.Content {
+		if ch.Type == prosemirror.NodeText && ch.Text != "" {
+			joined.WriteString(ch.Text)
+		}
+	}
+
+	assert.NotContains(t, joined.String(), "script")
+	assert.NotContains(t, joined.String(), "evil")
+	assert.Contains(t, joined.String(), "hi")
+	assert.Contains(t, joined.String(), "there")
+}
+
+func TestParseMarkdown_InlineRawHTMLWithOuterBold(t *testing.T) {
+	t.Parallel()
+
+	doc, err := parseMarkdown(`**a <em>b</em> c**`)
+	require.NoError(t, err)
+	require.Len(t, doc.Content, 1)
+	p := doc.Content[0]
+	require.GreaterOrEqual(t, len(p.Content), 3)
+
+	var joined strings.Builder
+
+	for _, ch := range p.Content {
+		require.Equal(t, prosemirror.NodeText, ch.Type)
+		require.NotEmpty(t, ch.Text)
+		joined.WriteString(ch.Text)
+	}
+
+	assert.Equal(t, "a b c", joined.String())
+
+	var mid *prosemirror.Node
+
+	for i := range p.Content {
+		if p.Content[i].Text != "" && p.Content[i].Text == "b" {
+			mid = &p.Content[i]
+			break
+		}
+	}
+
+	require.NotNil(t, mid, "expected inner <em> as text node b")
+	require.GreaterOrEqual(t, len(mid.Marks), 2)
+	assert.Equal(t, prosemirror.MarkStrong, mid.Marks[0].Type)
+	assert.Equal(t, prosemirror.MarkEm, mid.Marks[1].Type)
+}

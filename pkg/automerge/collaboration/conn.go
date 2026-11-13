@@ -66,7 +66,12 @@ func NewServerConn(config ServerConfig, documentID string, sync SyncSession) (*S
 		return nil, fmt.Errorf("server connection requires a document id")
 	}
 
-	return newServerConn(config, documentID, false, sync)
+	canonicalID, err := CanonicalDocumentID(documentID)
+	if err != nil {
+		return nil, fmt.Errorf("server connection document id: %w", err)
+	}
+
+	return newServerConn(config, canonicalID, false, sync)
 }
 
 // NewAdoptingServerConn creates a connection driver that learns its document id
@@ -99,10 +104,15 @@ func NewHandshakenServerConn(
 		return nil, fmt.Errorf("server connection requires a sync session")
 	}
 
+	canonicalID, err := CanonicalDocumentID(documentID)
+	if err != nil {
+		return nil, fmt.Errorf("server connection document id: %w", err)
+	}
+
 	return &ServerConn{
 		session:            session,
 		sync:               sync,
-		expectedDocumentID: documentID,
+		expectedDocumentID: canonicalID,
 		adoptDocID:         true,
 		serverPeerID:       session.config.ServerPeerID,
 		remotePeerID:       session.remotePeerID,
@@ -227,8 +237,13 @@ func (c *ServerConn) adoptDocumentID(id string) error {
 		return nil
 	}
 
+	canonicalID, err := CanonicalDocumentID(id)
+	if err != nil {
+		return fmt.Errorf("received a frame with a %w", err)
+	}
+
 	if c.documentID == "" {
-		if c.expectedDocumentID != "" && c.expectedDocumentID != id {
+		if c.expectedDocumentID != "" && c.expectedDocumentID != canonicalID {
 			return fmt.Errorf(
 				"connection scoped to document %q received a frame for document %q",
 				c.expectedDocumentID,
@@ -236,12 +251,12 @@ func (c *ServerConn) adoptDocumentID(id string) error {
 			)
 		}
 
-		c.documentID = id
+		c.documentID = canonicalID
 
 		return nil
 	}
 
-	if c.documentID != id {
+	if c.documentID != canonicalID {
 		return fmt.Errorf(
 			"connection scoped to document %q received a frame for document %q",
 			c.documentID,

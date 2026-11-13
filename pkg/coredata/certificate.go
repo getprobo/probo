@@ -640,6 +640,7 @@ func (certificates *Certificates) ListForRenewal(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
+	renewalWindow time.Duration,
 ) error {
 	q := `
 SELECT
@@ -664,14 +665,17 @@ FROM
 WHERE
 	%s
 	AND status = @status
-	AND ssl_expires_at <= CURRENT_TIMESTAMP + INTERVAL '30 days'
+	AND ssl_expires_at <= CURRENT_TIMESTAMP + @renewal_window::interval
 ORDER BY
 	ssl_expires_at ASC
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.NamedArgs{"status": string(CertificateStatusActive)}
+	args := pgx.StrictNamedArgs{
+		"status":         string(CertificateStatusActive),
+		"renewal_window": renewalWindow,
+	}
 	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -1032,6 +1036,7 @@ FOR UPDATE SKIP LOCKED
 func (c *Certificate) LoadNextForRenewalForUpdateSkipLocked(
 	ctx context.Context,
 	tx pg.Tx,
+	renewalWindow time.Duration,
 ) error {
 	q := `
 SELECT
@@ -1055,7 +1060,7 @@ FROM
 	certificates
 WHERE
 	status = @status
-	AND ssl_expires_at <= CURRENT_TIMESTAMP + INTERVAL '30 days'
+	AND ssl_expires_at <= CURRENT_TIMESTAMP + @renewal_window::interval
 ORDER BY
 	ssl_expires_at ASC
 LIMIT 1
@@ -1065,7 +1070,10 @@ FOR UPDATE SKIP LOCKED
 	rows, err := tx.Query(
 		ctx,
 		q,
-		pgx.StrictNamedArgs{"status": string(CertificateStatusActive)},
+		pgx.StrictNamedArgs{
+			"status":         string(CertificateStatusActive),
+			"renewal_window": renewalWindow,
+		},
 	)
 	if err != nil {
 		return fmt.Errorf("cannot query certificate renewal queue: %w", err)

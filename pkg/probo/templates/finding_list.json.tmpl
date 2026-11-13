@@ -23,6 +23,7 @@
           "type": "tableRow",
           "content": [
             { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [70] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Reference", "marks": [{ "type": "bold" }] }] }] },
+            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [120] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Title", "marks": [{ "type": "bold" }] }] }] },
             { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [90] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Kind", "marks": [{ "type": "bold" }] }] }] },
             { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [130] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Description", "marks": [{ "type": "bold" }] }] }] },
             { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [80] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Source", "marks": [{ "type": "bold" }] }] }] },
@@ -40,6 +41,7 @@
           "type": "tableRow",
           "content": [
             { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [70] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .ReferenceID}} }] }] },
+            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [120] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .Title}} }] }] },
             { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [90] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .Kind}} }] }] },
             { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [130] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .Description}} }] }] },
             { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [80] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .Source}} }] }] },

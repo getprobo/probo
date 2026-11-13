@@ -32,6 +32,7 @@ import (
 
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/richtext"
 )
 
 var (
@@ -354,6 +355,7 @@ type (
 
 	FindingListRow struct {
 		ReferenceID        string
+		Title              string
 		Kind               string
 		Description        string
 		Source             string
@@ -650,7 +652,7 @@ func ProseMirrorJSONToHTML(content json.RawMessage) template.HTML {
 		return template.HTML(fmt.Sprintf("<p>%s</p>", html.EscapeString(s)))
 	}
 
-	htmlStr, err := prosemirror.RenderHTML(node)
+	htmlStr, err := richtext.DocumentHTML.Render(node)
 	if err != nil {
 		return template.HTML(fmt.Sprintf("<p>%s</p>", html.EscapeString(s)))
 	}

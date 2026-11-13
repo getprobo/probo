@@ -22,18 +22,14 @@ package prosemirror
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.probo.inc/probo/pkg/gid"
 )
 
 func TestValidateDocumentContentJSON_Schema(t *testing.T) {
 	t.Parallel()
-
-	fileID := gid.New(gid.TenantID{}, 25).String()
 
 	tests := []struct {
 		name    string
@@ -115,63 +111,13 @@ func TestValidateDocumentContentJSON_Schema(t *testing.T) {
 			in:      `{"type":"doc","content":[{"type":"table","content":[{"type":"tableRow","content":[{"type":"tableCell","content":[{"type":"paragraph"}]}]}]}]}`,
 			wantErr: false,
 		},
-		{
-			name:    "valid image block",
-			in:      `{"type":"doc","content":[{"type":"image","attrs":{"src":"https://example.com/img.png"}}]}`,
-			wantErr: false,
-		},
-		{
-			name:    "image with empty file id",
-			in:      `{"type":"doc","content":[{"type":"image","attrs":{"fileId":"","src":"https://example.com/img.png"}}]}`,
-			wantErr: false,
-		},
-		{
-			name:    "image with whitespace file id",
-			in:      `{"type":"doc","content":[{"type":"image","attrs":{"fileId":"   ","src":"https://example.com/img.png"}}]}`,
-			wantErr: false,
-		},
-		{
-			name:    "image with invalid file id",
-			in:      `{"type":"doc","content":[{"type":"image","attrs":{"fileId":"not a file"}}]}`,
-			wantErr: true,
-		},
-		{
-			name:    "image with non-gid file id",
-			in:      `{"type":"doc","content":[{"type":"image","attrs":{"fileId":"abc"}}]}`,
-			wantErr: true,
-		},
-		{
-			name:    "image with padded file id",
-			in:      fmt.Sprintf(`{"type":"doc","content":[{"type":"image","attrs":{"fileId":" %s "}}]}`, fileID),
-			wantErr: false,
-		},
-		{
-			name:    "image with gid file id",
-			in:      fmt.Sprintf(`{"type":"doc","content":[{"type":"image","attrs":{"fileId":"%s"}}]}`, fileID),
-			wantErr: false,
-		},
-		{
-			name:    "image inside paragraph",
-			in:      `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"image","attrs":{"src":"https://example.com/img.png"}}]}]}`,
-			wantErr: true,
-		},
-		{
-			name:    "valid file block",
-			in:      fmt.Sprintf(`{"type":"doc","content":[{"type":"file","attrs":{"fileId":"%s","fileName":"policy.pdf","mimeType":"application/pdf","size":12}}]}`, fileID),
-			wantErr: false,
-		},
-		{
-			name:    "file block without id",
-			in:      `{"type":"doc","content":[{"type":"file","attrs":{"fileId":"","fileName":"policy.pdf","mimeType":"application/pdf","size":12}}]}`,
-			wantErr: true,
-		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			err := ValidateDocumentContentJSON(tt.in)
+			err := testDocumentSchema.ValidateJSON(tt.in)
 			if tt.wantErr {
 				require.Error(t, err)
 				return
@@ -187,54 +133,31 @@ func TestValidateDocumentContentJSON_TestdataDocument(t *testing.T) {
 
 	raw, err := json.Marshal(loadTestDocument(t))
 	require.NoError(t, err)
-	require.NoError(t, ValidateDocumentContentJSON(string(raw)))
+	require.NoError(t, testDocumentSchema.ValidateJSON(string(raw)))
 }
 
-func TestDefaultDocumentJSON_EmptyBecomesDoc(t *testing.T) {
+func TestLinkMark_InvalidAttrs(t *testing.T) {
 	t.Parallel()
 
-	empty := FromPlainText("")
+	raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"x","marks":[{"type":"link","attrs":{"href":1}}]}]}]}`
 
-	got, err := DefaultDocumentJSON(nil)
-	require.NoError(t, err)
-	assert.Equal(t, empty, got)
-
-	blank := "   "
-	got, err = DefaultDocumentJSON(&blank)
-	require.NoError(t, err)
-	assert.Equal(t, empty, got)
-}
-
-func TestDefaultDocumentJSON_InvalidJSON(t *testing.T) {
-	t.Parallel()
-
-	raw := "not json"
-	_, err := DefaultDocumentJSON(&raw)
+	err := testDocumentSchema.ValidateJSON(raw)
 	require.Error(t, err)
-}
+	assert.ErrorContains(t, err, "cannot parse link attrs")
 
-func TestDefaultDocumentJSON_Sanitizes(t *testing.T) {
-	t.Parallel()
-
-	raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"javascript:alert(1)"}}],"text":"click"}]}]}`
-	got, err := DefaultDocumentJSON(&raw)
+	got, err := testDocumentSchema.Sanitize(raw)
 	require.NoError(t, err)
-
-	var doc Node
-	require.NoError(t, json.Unmarshal([]byte(got), &doc))
-	attrs, err := doc.Content[0].Content[0].Marks[0].LinkAttrs()
-	require.NoError(t, err)
-	assert.Equal(t, "#", attrs.Href)
+	assert.Contains(t, got, `"href":"#"`)
 }
 
 func TestSanitizeDocumentJSON_EmptyUnchanged(t *testing.T) {
 	t.Parallel()
 
-	got, err := SanitizeDocumentJSON("")
+	got, err := testDocumentSchema.Sanitize("")
 	require.NoError(t, err)
 	assert.Equal(t, "", got)
 
-	got, err = SanitizeDocumentJSON("   ")
+	got, err = testDocumentSchema.Sanitize("   ")
 	require.NoError(t, err)
 	assert.Equal(t, "   ", got)
 }
@@ -242,14 +165,14 @@ func TestSanitizeDocumentJSON_EmptyUnchanged(t *testing.T) {
 func TestSanitizeDocumentJSON_NonJSONError(t *testing.T) {
 	t.Parallel()
 
-	_, err := SanitizeDocumentJSON("plain text is not valid document JSON")
+	_, err := testDocumentSchema.Sanitize("plain text is not valid document JSON")
 	require.Error(t, err)
 }
 
 func TestSanitizeDocumentJSON_NonDocRootError(t *testing.T) {
 	t.Parallel()
 
-	_, err := SanitizeDocumentJSON(`{"type":"paragraph","content":[]}`)
+	_, err := testDocumentSchema.Sanitize(`{"type":"paragraph","content":[]}`)
 	require.Error(t, err)
 }
 
@@ -258,7 +181,7 @@ func TestSanitizeDocumentJSON_LinkHref(t *testing.T) {
 
 	raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"javascript:alert(1)","target":"_blank"}}],"text":"click"}]}]}`
 
-	out, err := SanitizeDocumentJSON(raw)
+	out, err := testDocumentSchema.Sanitize(raw)
 	require.NoError(t, err)
 
 	var doc Node
@@ -277,7 +200,7 @@ func TestSanitizeDocumentJSON_PreservesSafeHref(t *testing.T) {
 
 	raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"https://example.com"}}],"text":"ok"}]}]}`
 
-	out, err := SanitizeDocumentJSON(raw)
+	out, err := testDocumentSchema.Sanitize(raw)
 	require.NoError(t, err)
 
 	var doc Node
@@ -286,143 +209,4 @@ func TestSanitizeDocumentJSON_PreservesSafeHref(t *testing.T) {
 	attrs, err := txt.Marks[0].LinkAttrs()
 	require.NoError(t, err)
 	assert.Equal(t, "https://example.com", attrs.Href)
-}
-
-func TestSanitizeDocumentJSON_ImageWidth(t *testing.T) {
-	t.Parallel()
-
-	kept, err := SanitizeDocumentJSON(`{"type":"doc","content":[{"type":"image","attrs":{"src":"https://example.com/img.png","width":50}}]}`)
-	require.NoError(t, err)
-
-	doc, err := Parse(kept)
-	require.NoError(t, err)
-
-	attrs, err := doc.Content[0].ImageAttrs()
-	require.NoError(t, err)
-	require.NotNil(t, attrs.Width)
-	assert.Equal(t, 50, *attrs.Width)
-
-	full, err := SanitizeDocumentJSON(`{"type":"doc","content":[{"type":"image","attrs":{"src":"https://example.com/img.png","width":100}}]}`)
-	require.NoError(t, err)
-
-	doc, err = Parse(full)
-	require.NoError(t, err)
-
-	attrs, err = doc.Content[0].ImageAttrs()
-	require.NoError(t, err)
-	require.NotNil(t, attrs.Width)
-	assert.Equal(t, 100, *attrs.Width)
-
-	err = ValidateDocumentContentJSON(`{"type":"doc","content":[{"type":"image","attrs":{"src":"https://example.com/img.png","width":0}}]}`)
-	require.Error(t, err)
-
-	err = ValidateDocumentContentJSON(`{"type":"doc","content":[{"type":"image","attrs":{"src":"https://example.com/img.png","width":101}}]}`)
-	require.Error(t, err)
-}
-
-func TestSanitizeDocumentJSON_ImageSrc(t *testing.T) {
-	t.Parallel()
-
-	raw := `{"type":"doc","content":[{"type":"image","attrs":{"src":"javascript:alert(1)","alt":"xss"}}]}`
-
-	out, err := SanitizeDocumentJSON(raw)
-	require.NoError(t, err)
-
-	var doc Node
-	require.NoError(t, json.Unmarshal([]byte(out), &doc))
-	img := doc.Content[0]
-	attrs, err := img.ImageAttrs()
-	require.NoError(t, err)
-	assert.Equal(t, "", attrs.Src)
-	require.NotNil(t, attrs.Alt)
-	assert.Equal(t, "xss", *attrs.Alt)
-}
-
-func TestSanitizeDocumentJSON_PreservesSafeImageSrc(t *testing.T) {
-	t.Parallel()
-
-	raw := `{"type":"doc","content":[{"type":"image","attrs":{"src":"https://example.com/img.png","alt":"ok"}}]}`
-
-	out, err := SanitizeDocumentJSON(raw)
-	require.NoError(t, err)
-
-	var doc Node
-	require.NoError(t, json.Unmarshal([]byte(out), &doc))
-	img := doc.Content[0]
-	attrs, err := img.ImageAttrs()
-	require.NoError(t, err)
-	assert.Equal(t, "https://example.com/img.png", attrs.Src)
-}
-
-func TestSanitizeDocumentJSON_DropsDataImageSrc(t *testing.T) {
-	t.Parallel()
-
-	raw := `{"type":"doc","content":[{"type":"image","attrs":{"src":"data:image/png;base64,iVBOR","alt":"preview"}}]}`
-
-	out, err := SanitizeDocumentJSON(raw)
-	require.NoError(t, err)
-
-	var doc Node
-	require.NoError(t, json.Unmarshal([]byte(out), &doc))
-	attrs, err := doc.Content[0].ImageAttrs()
-	require.NoError(t, err)
-	assert.Empty(t, attrs.Src)
-}
-
-func TestSanitizeDocumentJSON_BlankImageFileIDIsAbsent(t *testing.T) {
-	t.Parallel()
-
-	raw := `{"type":"doc","content":[{"type":"image","attrs":{"fileId":"  ","src":"https://example.com/img.png"}}]}`
-
-	out, err := SanitizeDocumentJSON(raw)
-	require.NoError(t, err)
-
-	var doc Node
-	require.NoError(t, json.Unmarshal([]byte(out), &doc))
-	attrs, err := doc.Content[0].ImageAttrs()
-	require.NoError(t, err)
-	assert.Nil(t, attrs.FileID)
-	assert.Equal(t, "https://example.com/img.png", attrs.Src)
-}
-
-func TestSanitizeDocumentJSON_ImageFileIDClearsSrc(t *testing.T) {
-	t.Parallel()
-
-	fileID := gid.New(gid.TenantID{}, 25).String()
-	raw := fmt.Sprintf(
-		`{"type":"doc","content":[{"type":"image","attrs":{"fileId":"%s","src":"data:image/png;base64,iVBOR"}}]}`,
-		fileID,
-	)
-
-	out, err := SanitizeDocumentJSON(raw)
-	require.NoError(t, err)
-
-	var doc Node
-	require.NoError(t, json.Unmarshal([]byte(out), &doc))
-	attrs, err := doc.Content[0].ImageAttrs()
-	require.NoError(t, err)
-	require.NotNil(t, attrs.FileID)
-	assert.Equal(t, fileID, *attrs.FileID)
-	assert.Empty(t, attrs.Src)
-}
-
-func TestSanitizeDocumentJSON_TrimsImageFileID(t *testing.T) {
-	t.Parallel()
-
-	fileID := gid.New(gid.TenantID{}, 25).String()
-	raw := fmt.Sprintf(
-		`{"type":"doc","content":[{"type":"image","attrs":{"fileId":" %s ","src":"https://example.com/img.png"}}]}`,
-		fileID,
-	)
-
-	out, err := SanitizeDocumentJSON(raw)
-	require.NoError(t, err)
-
-	var doc Node
-	require.NoError(t, json.Unmarshal([]byte(out), &doc))
-	attrs, err := doc.Content[0].ImageAttrs()
-	require.NoError(t, err)
-	require.NotNil(t, attrs.FileID)
-	assert.Equal(t, fileID, *attrs.FileID)
-	assert.Empty(t, attrs.Src)
 }

@@ -1,0 +1,60 @@
+---
+description: Encode enum slices for PostgreSQL with driver.Valuer
+globs: "pkg/coredata/**/*.go"
+alwaysApply: false
+---
+
+# Enum array arguments
+
+pgx has no encode plan for a slice of a named string enum (`[]Status`) into an unregistered Postgres enum array. Passing that slice fails before the query runs.
+
+Implement `database/sql/driver.Valuer` on a named slice type. `Value` returns the Postgres array literal via `%q`. Enum labels are plain ASCII tokens, so that matches what PostgreSQL parses. Keep `Scan` and `Value` off the singular enum; a single value encodes through `MarshalText`.
+
+Do not loop the values into `[]string` at the call site.
+
+Name the slice the plural of the enum when that name is free (`DocumentVersionSignatureStates`). When a plural helper already uses it (`Statuses()`, `States()`, `Types()`, or a longer name such as `AccessReviewCampaignStatuses()`), append `Values` to the enum type (`StatusValues`).
+
+```go
+// GOOD
+type StatusValues []Status
+
+var (
+	_ driver.Valuer = StatusValues(nil)
+)
+
+func (values StatusValues) Value() (driver.Value, error) {
+	if len(values) == 0 {
+		return nil, nil
+	}
+
+	var result strings.Builder
+	result.WriteString("{")
+
+	for i, value := range values {
+		if i > 0 {
+			result.WriteString(",")
+		}
+
+		fmt.Fprintf(&result, "%q", value.String())
+	}
+
+	result.WriteString("}")
+
+	return result.String(), nil
+}
+
+"statuses": StatusValues{StatusRejected, StatusRevoked},
+
+// BAD — no encode plan for []Status
+"statuses": []Status{StatusRejected, StatusRevoked},
+
+// BAD — converts to []string instead of implementing driver.Valuer
+encoded := make([]string, len(values))
+for i, value := range values {
+	encoded[i] = value.String()
+}
+```
+
+An empty slice returns `nil`, so `WHEN @statuses::status[] IS NOT NULL` leaves the filter off. The SQL still casts the parameter: `status = ANY(@statuses::status[])`.
+
+See [`contrib/claude/coredata.md`](../../contrib/claude/coredata.md) (Enum arrays).

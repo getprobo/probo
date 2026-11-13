@@ -107,6 +107,42 @@ func (h *retentionHandler) Run(ctx context.Context) error {
 			},
 		},
 		{
+			name: "asana_webhook_inbox",
+			err:  "cannot clean Asana webhook inbox",
+			run: func(ctx context.Context, tx pg.Tx) (int64, error) {
+				return coredata.DeleteProcessedAsanaWebhookEventsBeforeBatch(
+					ctx,
+					tx,
+					before,
+					h.batchSize,
+				)
+			},
+		},
+		{
+			name: "asana_webhook_dead_letters",
+			err:  "cannot clean Asana webhook dead letters",
+			run: func(ctx context.Context, tx pg.Tx) (int64, error) {
+				return coredata.DeleteDeadLetteredAsanaWebhookEventsBeforeBatch(
+					ctx,
+					tx,
+					deadLetterBefore,
+					h.batchSize,
+				)
+			},
+		},
+		{
+			name: "asana_webhook_handshakes",
+			err:  "cannot clean Asana webhook handshakes",
+			run: func(ctx context.Context, tx pg.Tx) (int64, error) {
+				return coredata.DeleteAsanaWebhookHandshakesBeforeBatch(
+					ctx,
+					tx,
+					before,
+					h.batchSize,
+				)
+			},
+		},
+		{
 			name: "task_sync_jobs",
 			err:  "cannot clean succeeded task sync jobs",
 			run: func(ctx context.Context, tx pg.Tx) (int64, error) {

@@ -159,9 +159,12 @@ function NavigateToSSOLoginURL(props: {
 
     if (!ssoLoginURL.value) {
       toast.add({
-        title: t("common.error"), description: t("ssoSignInPage.errors.unavailable"),
+        title: t("common.error"),
+        description: t("ssoSignInPage.errors.unavailable"),
         type: "error",
       });
+
+      void navigate({ pathname: "/auth/login", search: loginSearch });
       return;
     }
 

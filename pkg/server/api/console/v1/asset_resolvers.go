@@ -8,7 +8,6 @@ package console_v1
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
@@ -152,7 +151,9 @@ func (r *datumResolver) Owner(ctx context.Context, obj *types.Datum) (*types.Pro
 			return nil, gqlx.NotFound(ctx, err)
 		}
 
-		return nil, fmt.Errorf("cannot get owner: %w", err)
+		r.logger.ErrorCtx(ctx, "cannot get owner", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewProfile(owner), nil

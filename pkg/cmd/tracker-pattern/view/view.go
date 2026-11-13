@@ -42,6 +42,10 @@ query TrackerPatternView($id: ID!) {
       maxAgeSeconds
       description
       source
+      sourceCookieBanner {
+        id
+        origin
+      }
       excluded
       commonTrackerPatternId
       attribution
@@ -58,14 +62,18 @@ query TrackerPatternView($id: ID!) {
 
 type viewResponse struct {
 	Node *struct {
-		Typename               string  `json:"__typename"`
-		ID                     string  `json:"id"`
-		Pattern                string  `json:"pattern"`
-		MatchType              string  `json:"matchType"`
-		TrackerType            string  `json:"trackerType"`
-		MaxAgeSeconds          *int    `json:"maxAgeSeconds"`
-		Description            *string `json:"description"`
-		Source                 *string `json:"source"`
+		Typename           string  `json:"__typename"`
+		ID                 string  `json:"id"`
+		Pattern            string  `json:"pattern"`
+		MatchType          string  `json:"matchType"`
+		TrackerType        string  `json:"trackerType"`
+		MaxAgeSeconds      *int    `json:"maxAgeSeconds"`
+		Description        *string `json:"description"`
+		Source             *string `json:"source"`
+		SourceCookieBanner *struct {
+			ID     string `json:"id"`
+			Origin string `json:"origin"`
+		} `json:"sourceCookieBanner"`
 		Excluded               bool    `json:"excluded"`
 		CommonTrackerPatternID *string `json:"commonTrackerPatternId"`
 		Attribution            *string `json:"attribution"`
@@ -140,6 +148,10 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 
 			if v.Source != nil && *v.Source != "" {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Source:"), *v.Source)
+			}
+
+			if v.SourceCookieBanner != nil && v.SourceCookieBanner.Origin != "" {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Source Banner:"), v.SourceCookieBanner.Origin)
 			}
 
 			_, _ = fmt.Fprintf(out, "%s%v\n", label.Render("Excluded:"), v.Excluded)

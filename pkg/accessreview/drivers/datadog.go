@@ -33,8 +33,8 @@ import (
 )
 
 // DatadogDriver lists Datadog org members via GET /api/v2/users. The API
-// host is per-customer (api.<domain>), captured during the OAuth callback
-// and stored on the connector settings.
+// host is per-customer (api.<domain>), stored on the connector settings at
+// connect time.
 type DatadogDriver struct {
 	httpClient *http.Client
 	domain     string // e.g. "us3.datadoghq.com"
@@ -204,8 +204,8 @@ func (d *DatadogDriver) queryUsers(ctx context.Context, page int) (*datadogUsers
 	return &out, nil
 }
 
-// datadogNameResolver returns the Datadog site/region label stored in
-// connector settings (e.g. "US3"), captured during the OAuth callback. No
+// datadogNameResolver returns the Datadog site/region label (e.g. "US3")
+// stored in connector settings at connect time. No
 // HTTP call is required; the AccessReviewSource title becomes "Datadog <region>".
 // Org-name resolution is intentionally omitted to keep scopes to
 // user_access_read (the org name endpoint needs org_management).

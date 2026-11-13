@@ -25,26 +25,32 @@ describe("getRiskScoreLevel", () => {
     it("keeps the 5×5 bands when no matrix size is given", () => {
         expect(getRiskScoreLevel(4)).toBe(0);
         expect(getRiskScoreLevel(5)).toBe(1);
-        expect(getRiskScoreLevel(14)).toBe(1);
-        expect(getRiskScoreLevel(15)).toBe(2);
-        expect(getRiskScoreLevel(25)).toBe(2);
+        expect(getRiskScoreLevel(9)).toBe(1);
+        expect(getRiskScoreLevel(10)).toBe(2);
+        expect(getRiskScoreLevel(14)).toBe(2);
+        expect(getRiskScoreLevel(15)).toBe(3);
+        expect(getRiskScoreLevel(25)).toBe(3);
     });
 
     it("scales bands to a 3×3 matrix", () => {
         const matrixSize = { rows: 3, cols: 3 };
         expect(getRiskScoreLevel(1, matrixSize)).toBe(0);
         expect(getRiskScoreLevel(2, matrixSize)).toBe(1);
-        expect(getRiskScoreLevel(5, matrixSize)).toBe(1);
-        expect(getRiskScoreLevel(6, matrixSize)).toBe(2);
-        expect(getRiskScoreLevel(9, matrixSize)).toBe(2);
+        expect(getRiskScoreLevel(3, matrixSize)).toBe(1);
+        expect(getRiskScoreLevel(4, matrixSize)).toBe(2);
+        expect(getRiskScoreLevel(5, matrixSize)).toBe(2);
+        expect(getRiskScoreLevel(6, matrixSize)).toBe(3);
+        expect(getRiskScoreLevel(9, matrixSize)).toBe(3);
     });
 
     it("scales bands to a 4×4 matrix", () => {
         const matrixSize = { rows: 4, cols: 4 };
         expect(getRiskScoreLevel(3, matrixSize)).toBe(0);
         expect(getRiskScoreLevel(4, matrixSize)).toBe(1);
-        expect(getRiskScoreLevel(9, matrixSize)).toBe(1);
-        expect(getRiskScoreLevel(10, matrixSize)).toBe(2);
-        expect(getRiskScoreLevel(16, matrixSize)).toBe(2);
+        expect(getRiskScoreLevel(6, matrixSize)).toBe(1);
+        expect(getRiskScoreLevel(7, matrixSize)).toBe(2);
+        expect(getRiskScoreLevel(9, matrixSize)).toBe(2);
+        expect(getRiskScoreLevel(10, matrixSize)).toBe(3);
+        expect(getRiskScoreLevel(16, matrixSize)).toBe(3);
     });
 });

@@ -30,7 +30,8 @@ import (
 	"go.probo.inc/probo/pkg/server/gqlx"
 	"go.probo.inc/probo/pkg/server/gqlx/types/cursor"
 	"go.probo.inc/probo/pkg/task"
-	tasksync "go.probo.inc/probo/pkg/task/sync"
+	asanasvc "go.probo.inc/probo/pkg/task/sync/asana"
+	linearsvc "go.probo.inc/probo/pkg/task/sync/linear"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -246,7 +247,8 @@ func (r *organizationResolver) AssetListDocument(ctx context.Context, obj *types
 
 	assetDocumentID, err := r.probo.GeneratedDocuments.GetAssetListDocumentID(ctx, scope, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get asset list document ID: %w", err)
+		r.logger.ErrorCtx(ctx, "cannot get asset list document ID", log.Error(err))
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if assetDocumentID == nil {
@@ -255,7 +257,7 @@ func (r *organizationResolver) AssetListDocument(ctx context.Context, obj *types
 
 	doc, err := r.probo.Documents.Get(ctx, scope, *assetDocumentID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get asset list document: %w", err)
+		return nil, gqlx.MapError(ctx, r.logger, "cannot get asset list document", err)
 	}
 
 	return types.NewDocument(doc), nil
@@ -300,7 +302,8 @@ func (r *organizationResolver) DataListDocument(ctx context.Context, obj *types.
 
 	dataDocumentID, err := r.probo.GeneratedDocuments.GetDataListDocumentID(ctx, scope, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get data export document ID: %w", err)
+		r.logger.ErrorCtx(ctx, "cannot get data export document ID", log.Error(err))
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if dataDocumentID == nil {
@@ -309,7 +312,7 @@ func (r *organizationResolver) DataListDocument(ctx context.Context, obj *types.
 
 	doc, err := r.probo.Documents.Get(ctx, scope, *dataDocumentID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get data export document: %w", err)
+		return nil, gqlx.MapError(ctx, r.logger, "cannot get data export document", err)
 	}
 
 	return types.NewDocument(doc), nil
@@ -384,7 +387,8 @@ func (r *organizationResolver) FindingsDocument(ctx context.Context, obj *types.
 
 	findingDocumentID, err := r.probo.GeneratedDocuments.GetFindingsDocumentID(ctx, scope, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get finding list document ID: %w", err)
+		r.logger.ErrorCtx(ctx, "cannot get finding list document ID", log.Error(err))
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if findingDocumentID == nil {
@@ -393,7 +397,7 @@ func (r *organizationResolver) FindingsDocument(ctx context.Context, obj *types.
 
 	doc, err := r.probo.Documents.Get(ctx, scope, *findingDocumentID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get finding list document: %w", err)
+		return nil, gqlx.MapError(ctx, r.logger, "cannot get finding list document", err)
 	}
 
 	return types.NewDocument(doc), nil
@@ -426,6 +430,7 @@ func (r *organizationResolver) Findings(ctx context.Context, obj *types.Organiza
 		priority *coredata.FindingPriority
 		ownerID  *gid.GID
 		auditID  *gid.GID
+		query    *string
 	)
 	if filter != nil {
 		kind = filter.Kind
@@ -433,9 +438,10 @@ func (r *organizationResolver) Findings(ctx context.Context, obj *types.Organiza
 		priority = filter.Priority
 		ownerID = filter.OwnerID
 		auditID = filter.AuditID
+		query = filter.Query
 	}
 
-	findingFilter := coredata.NewFindingFilter(kind, status, priority, ownerID, auditID)
+	findingFilter := coredata.NewFindingFilter(kind, status, priority, ownerID, auditID, query)
 
 	page, err := r.probo.Findings.ListForOrganizationID(ctx, scope, obj.ID, cursor, findingFilter)
 	if err != nil {
@@ -574,10 +580,10 @@ func (r *organizationResolver) LinearTeams(ctx context.Context, obj *types.Organ
 		search = *query
 	}
 
-	page, err := r.task.Sync.SearchLinearTeams(ctx, scope, obj.ID, search, pageSize, after)
+	page, err := r.task.Sync.Linear.SearchLinearTeams(ctx, scope, obj.ID, search, pageSize, after)
 	if err != nil {
-		if errors.Is(err, tasksync.ErrLinearNotConnected) ||
-			errors.Is(err, tasksync.ErrLinearReconnectRequired) {
+		if errors.Is(err, linearsvc.ErrLinearNotConnected) ||
+			errors.Is(err, linearsvc.ErrLinearReconnectRequired) {
 			return emptyLinearTeamConnection(), nil
 		}
 
@@ -616,7 +622,7 @@ func (r *organizationResolver) LinearSettings(ctx context.Context, obj *types.Or
 		return nil, err
 	}
 
-	settings, err := r.task.Sync.LinearSettings(ctx, scope, obj.ID)
+	settings, err := r.task.Sync.Linear.LinearSettings(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load Linear settings", log.Error(err))
 
@@ -660,14 +666,14 @@ func (r *organizationResolver) LinearIssues(ctx context.Context, obj *types.Orga
 		search = *query
 	}
 
-	page, err := r.task.Sync.SearchLinearIssues(ctx, scope, obj.ID, teamID, search, pageSize, after)
+	page, err := r.task.Sync.Linear.SearchLinearIssues(ctx, scope, obj.ID, teamID, search, pageSize, after)
 	if err != nil {
 		switch {
-		case errors.Is(err, tasksync.ErrLinearNotConnected),
-			errors.Is(err, tasksync.ErrLinearReconnectRequired),
-			errors.Is(err, tasksync.ErrLinearTeamNotFound):
+		case errors.Is(err, linearsvc.ErrLinearNotConnected),
+			errors.Is(err, linearsvc.ErrLinearReconnectRequired),
+			errors.Is(err, linearsvc.ErrLinearTeamNotFound):
 			return emptyLinearIssueConnection(), nil
-		case errors.Is(err, tasksync.ErrLinearTeamIDRequired):
+		case errors.Is(err, linearsvc.ErrLinearTeamIDRequired):
 			return nil, gqlx.Invalid(ctx, err)
 		default:
 			r.logger.ErrorCtx(ctx, "cannot search Linear issues", log.Error(err))
@@ -700,6 +706,206 @@ func (r *organizationResolver) LinearIssues(ctx context.Context, obj *types.Orga
 		Edges:    edges,
 		PageInfo: linearPageInfo(startCursor, page.EndCursor, page.HasNextPage),
 	}, nil
+}
+
+// AsanaTeams is the resolver for the asanaTeams field.
+func (r *organizationResolver) AsanaTeams(ctx context.Context, obj *types.Organization, first *int, after *string, query *string) (*types.AsanaTeamConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, task.ActionTaskUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	// Typeahead cannot page. Ignore after and do not advertise a next cursor.
+	search := stringValue(query)
+
+	offset := stringValue(after)
+	if strings.TrimSpace(search) != "" {
+		offset = ""
+	}
+
+	page, err := r.task.Sync.Asana.ListAsanaTeams(ctx, scope, obj.ID, search, pageSize(first), offset)
+	if err != nil {
+		if errors.Is(err, asanasvc.ErrAsanaNotConnected) {
+			return emptyAsanaTeamConnection(), nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot list Asana teams", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	edges := make([]*types.AsanaTeamEdge, 0, len(page.Items))
+	for _, team := range page.Items {
+		edges = append(edges, &types.AsanaTeamEdge{
+			Cursor: team.GID,
+			Node:   &types.AsanaTeam{ID: team.GID, Name: team.Name},
+		})
+	}
+
+	endCursor := page.EndCursor
+
+	hasNextPage := page.HasNextPage
+
+	if strings.TrimSpace(search) != "" {
+		endCursor = ""
+		hasNextPage = false
+	}
+
+	return &types.AsanaTeamConnection{
+		Edges:    edges,
+		PageInfo: asanaPageInfo(edges, endCursor, hasNextPage),
+	}, nil
+}
+
+// AsanaProjects is the resolver for the asanaProjects field.
+func (r *organizationResolver) AsanaProjects(ctx context.Context, obj *types.Organization, teamID *string, first *int, after *string, query *string) (*types.AsanaProjectConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, task.ActionTaskUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	// Typeahead cannot page. Ignore after and do not advertise a next cursor.
+	search := stringValue(query)
+
+	offset := stringValue(after)
+	if strings.TrimSpace(search) != "" {
+		offset = ""
+	}
+
+	page, err := r.task.Sync.Asana.ListAsanaProjects(
+		ctx,
+		scope,
+		obj.ID,
+		stringValue(teamID),
+		search,
+		pageSize(first),
+		offset,
+	)
+	if err != nil {
+		if errors.Is(err, asanasvc.ErrAsanaNotConnected) {
+			return emptyAsanaProjectConnection(), nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot list Asana projects", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	edges := make([]*types.AsanaProjectEdge, 0, len(page.Items))
+	for _, project := range page.Items {
+		edges = append(edges, &types.AsanaProjectEdge{
+			Cursor: project.GID,
+			Node:   &types.AsanaProject{ID: project.GID, Name: project.Name},
+		})
+	}
+
+	endCursor := page.EndCursor
+
+	hasNextPage := page.HasNextPage
+
+	if strings.TrimSpace(search) != "" {
+		endCursor = ""
+		hasNextPage = false
+	}
+
+	return &types.AsanaProjectConnection{
+		Edges:    edges,
+		PageInfo: asanaProjectPageInfo(edges, endCursor, hasNextPage),
+	}, nil
+}
+
+// AsanaTasks is the resolver for the asanaTasks field.
+func (r *organizationResolver) AsanaTasks(ctx context.Context, obj *types.Organization, projectID string, first *int, after *string, query *string) (*types.AsanaTaskConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, task.ActionTaskUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	page, err := r.task.Sync.Asana.ListAsanaTasks(
+		ctx,
+		scope,
+		obj.ID,
+		projectID,
+		stringValue(query),
+		pageSize(first),
+		stringValue(after),
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, asanasvc.ErrAsanaNotConnected),
+			errors.Is(err, asanasvc.ErrAsanaProjectNotFound):
+			return emptyAsanaTaskConnection(), nil
+		case errors.Is(err, asanasvc.ErrAsanaProjectIDRequired):
+			return nil, gqlx.Invalid(ctx, err)
+		default:
+			r.logger.ErrorCtx(ctx, "cannot list Asana tasks", log.Error(err))
+
+			return nil, gqlx.Internal(ctx)
+		}
+	}
+
+	edges := make([]*types.AsanaTaskEdge, 0, len(page.Tasks))
+	for _, task := range page.Tasks {
+		edges = append(edges, &types.AsanaTaskEdge{
+			Cursor: task.GID,
+			Node: &types.AsanaTask{
+				ID:        task.GID,
+				Name:      task.Name,
+				Completed: task.Completed,
+			},
+		})
+	}
+
+	start := ""
+	if len(edges) > 0 {
+		start = edges[0].Cursor
+	}
+
+	return &types.AsanaTaskConnection{
+		Edges:    edges,
+		PageInfo: asanaPageInfoFrom(start, page.EndCursor, page.HasNextPage),
+	}, nil
+}
+
+// AsanaProjectSetup is the resolver for the asanaProjectSetup field.
+func (r *organizationResolver) AsanaProjectSetup(ctx context.Context, obj *types.Organization, projectID string) (*types.AsanaProjectSetup, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionConnectorList)
+	if err != nil {
+		return nil, err
+	}
+
+	setup, mapping, err := r.task.Sync.Asana.AsanaProjectSetup(ctx, scope, obj.ID, projectID)
+	if err != nil {
+		switch {
+		case errors.Is(err, asanasvc.ErrAsanaNotConnected),
+			errors.Is(err, asanasvc.ErrAsanaProjectNotFound),
+			errors.Is(err, asanasvc.ErrAsanaProjectIDRequired):
+			return nil, gqlx.Invalid(ctx, err)
+		default:
+			r.logger.ErrorCtx(ctx, "cannot load Asana project setup", log.Error(err))
+
+			return nil, gqlx.Internal(ctx)
+		}
+	}
+
+	return asanaSetupNode(setup, mapping), nil
+}
+
+// AsanaSettings is the resolver for the asanaSettings field.
+func (r *organizationResolver) AsanaSettings(ctx context.Context, obj *types.Organization) (*types.AsanaSettings, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionConnectorList)
+	if err != nil {
+		return nil, err
+	}
+
+	settings, err := r.task.Sync.Asana.AsanaSettings(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load Asana settings", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return asanaSettingsNode(settings), nil
 }
 
 // SlackbotAvailable is the resolver for the slackbotAvailable field.
@@ -1110,7 +1316,8 @@ func (r *organizationResolver) ObligationsDocument(ctx context.Context, obj *typ
 
 	obligationDocumentID, err := r.probo.GeneratedDocuments.GetObligationsDocumentID(ctx, scope, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get obligation list document ID: %w", err)
+		r.logger.ErrorCtx(ctx, "cannot get obligation list document ID", log.Error(err))
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if obligationDocumentID == nil {
@@ -1119,7 +1326,7 @@ func (r *organizationResolver) ObligationsDocument(ctx context.Context, obj *typ
 
 	doc, err := r.probo.Documents.Get(ctx, scope, *obligationDocumentID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get obligation list document: %w", err)
+		return nil, gqlx.MapError(ctx, r.logger, "cannot get obligation list document", err)
 	}
 
 	return types.NewDocument(doc), nil

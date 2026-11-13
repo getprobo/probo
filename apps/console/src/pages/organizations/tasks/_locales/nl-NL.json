@@ -7,13 +7,14 @@
     "linkInternalControls": "Koppelen aan interne controles",
     "searchInternalControls": "Interne controles zoeken",
     "noInternalControls": "Geen interne controles",
+    "findings": "Bevindingen",
+    "noFindings": "Geen gekoppelde bevindingen",
+    "searchFindings": "Bevindingen zoeken",
+    "noFindingsFound": "Geen bevindingen gevonden",
+    "findingsLoadError": "Bevindingen laden mislukt",
     "internalControlsLoadError": "Interne controles konden niet worden geladen",
     "noDescription": "Geen beschrijving",
     "unassigned": "Niet toegewezen",
-    "assigneeMenu": {
-      "searchPlaceholder": "Zoeken op naam of e-mail",
-      "empty": "Geen gebruikers"
-    },
     "fields": {
       "name": "Naam",
       "description": "Beschrijving",
@@ -29,7 +30,8 @@
       "recurrence": "Herhaling",
       "recurrenceUnit": "Herhalingseenheid",
       "createdAt": "Aangemaakt",
-      "updatedAt": "Bijgewerkt"
+      "updatedAt": "Bijgewerkt",
+      "asana": "Asana"
     },
     "duration": {
       "S": "Seconden",
@@ -65,7 +67,9 @@
       "clearRecurrence": "Interval wissen",
       "delete": "Verwijderen",
       "loadMoreInternalControls": "Meer laden",
+      "loadMoreFindings": "Meer laden",
       "removeInternalControl": "Verwijderen",
+      "unlinkFinding": "Bevinding ontkoppelen",
       "cancel": "Annuleren",
       "retry": "Opnieuw proberen"
     },
@@ -112,7 +116,9 @@
     "errors": {
       "delete": "Verwijderen van taak mislukt",
       "update": "Bijwerken van taak mislukt",
-      "content": "Deze beschrijving kon niet worden weergegeven"
+      "content": "Deze beschrijving kon niet worden weergegeven",
+      "linkFinding": "Bevinding koppelen mislukt",
+      "unlinkFinding": "Bevinding ontkoppelen mislukt"
     },
     "comments": {
       "title": "Opmerkingen",
@@ -159,6 +165,33 @@
       "actions": {
         "showMore": "Meer tonen"
       }
+    },
+    "asana": {
+      "noResults": "Geen resultaten",
+      "loadMore": "Meer laden",
+      "errors": {
+        "load": "Asana kan niet worden getoond",
+        "publish": "Taak aanmaken in Asana mislukt",
+        "link": "Taak koppelen aan Asana mislukt",
+        "unlink": "Asana-taak ontkoppelen mislukt"
+      },
+      "publish": "Aanmaken",
+      "link": "Koppelen",
+      "linkTo": "Koppelen aan",
+      "unlink": "Ontkoppelen",
+      "project": "Asana-project",
+      "task": "Asana-taak",
+      "chooseProject": "Project kiezen",
+      "noProject": "Geen project",
+      "chooseTask": "Taak kiezen",
+      "newTask": "Nieuwe taak",
+      "searchProject": "Zoeken op naam",
+      "searchTask": "Zoeken op naam",
+      "linkHint": "Koppelen aan Asana",
+      "linkedTask": "Gekoppeld aan taak <task>{{task}}</task>",
+      "published": "Taak aangemaakt in Asana.",
+      "linked": "Taak gekoppeld aan Asana.",
+      "unlinked": "Asana-taak ontkoppeld."
     }
   },
   "settingsDialog": {
@@ -166,11 +199,11 @@
     "title": "Instellingen",
     "integrations": {
       "title": "Taakintegraties",
-      "description": "Koppel tools om taken te publiceren en te synchroniseren."
+      "description": "Koppel Linear of Asana om taken te publiceren en naam, beschrijving, deadline, toegewezen persoon, opmerkingen, bestanden en vermeldingen in beide richtingen te synchroniseren. Personen komen overeen via e-mail."
     },
     "linear": {
       "name": "Linear",
-      "description": "Publiceer een taak naar Linear en synchroniseer naam, inhoud, status, prioriteit, deadline, toegewezene en opmerkingen wanneer e-mails overeenkomen.",
+      "description": "Synchroniseert ook status en prioriteit.",
       "defaultTeam": "Standaardteam",
       "defaultTeamDescription": "Nieuwe taken gebruiken dit Linear-team, tenzij een ander team wordt gekozen.",
       "defaultTeamReadOnly": "Je hebt geen toestemming om het standaardteam te wijzigen.",
@@ -208,6 +241,55 @@
       "connect": "Verbinden",
       "disconnect": "Ontkoppelen",
       "close": "Sluiten"
+    },
+    "asana": {
+      "name": "Asana",
+      "description": "Gebruikt een projectkoppeling voor status en prioriteit.",
+      "defaultProject": "Standaardproject",
+      "defaultProjectDescription": "Nieuwe taken worden in dit project gepubliceerd, tenzij een ander project wordt gekozen. Laat het leeg om nieuwe taken in Probo te houden.",
+      "noDefaultProject": "Geen standaardproject",
+      "searchProject": "Projecten zoeken",
+      "chooseProject": "Kies een project",
+      "taskImport": "Nieuwe taken importeren",
+      "taskImportDescription": "Actief maakt een Probo-taak voor elke nieuwe taak in het standaardproject.",
+      "taskImportReadOnly": "Je hebt geen toestemming om de taakimport te wijzigen.",
+      "taskImportNeedsProject": "Kies een standaardproject voordat je de taakimport activeert.",
+      "taskImportStatus": {
+        "active": "Actief",
+        "inactive": "Inactief"
+      },
+      "mapping": "Status- en prioriteitskoppeling",
+      "customFieldsUnavailable": "Prioriteit kan niet worden gekoppeld omdat deze Asana-werkruimte geen aangepaste velden bevat. Status kan nog steeds secties volgen. De gekoppelde Asana-werkruimte heeft een betaald abonnement nodig om prioriteit te koppelen.",
+      "mappingHint": "Kies een project om de secties en het prioriteitsveld te koppelen. Tot je een koppeling opslaat, volgt de status of de Asana-taak voltooid is.",
+      "loadingMapping": "Project laden…",
+      "noSection": "Sectie niet verplaatsen",
+      "priorityField": "Prioriteitsveld",
+      "noPriority": "Prioriteit niet synchroniseren",
+      "noOption": "Negeren",
+      "saveMapping": "Koppeling opslaan",
+      "deleteMapping": "Koppeling verwijderen",
+      "deleteMappingTitle": "Koppeling verwijderen?",
+      "deleteMappingDescription": "De status volgt of de Asana-taak voltooid is totdat je een nieuwe koppeling opslaat.",
+      "disconnect": {
+        "title": "Asana loskoppelen?",
+        "description": "Taken worden niet meer met Asana gesynchroniseerd. Je kunt later opnieuw verbinden.",
+        "confirm": "Loskoppelen"
+      },
+      "messages": {
+        "disconnected": "Asana losgekoppeld.",
+        "defaultProjectSaved": "Standaardproject opgeslagen.",
+        "taskImportSaved": "Taakimport opgeslagen.",
+        "mappingSaved": "Koppeling opgeslagen.",
+        "mappingDeleted": "Koppeling verwijderd."
+      },
+      "errors": {
+        "connect": "Verbinden van Asana mislukt",
+        "disconnect": "Asana loskoppelen mislukt",
+        "defaultProject": "Standaardproject opslaan mislukt",
+        "taskImport": "Taakimport opslaan mislukt",
+        "mapping": "Koppeling opslaan mislukt",
+        "deleteMapping": "Koppeling verwijderen mislukt"
+      }
     }
   },
   "newPage": {

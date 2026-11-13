@@ -159,3 +159,89 @@ func TestMCP_ThirdParty_PermissionDenied(t *testing.T) {
 	assert.NotContains(t, msg, "pq:")
 	assert.NotContains(t, msg, "sql:")
 }
+
+func TestMCP_ThirdParty_AddToSupplyChain(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	mc := testutil.NewMCPClient(t, owner)
+	orgID := owner.GetOrganizationID().String()
+
+	type thirdPartyResult struct {
+		ThirdParty struct {
+			ID    string `json:"id"`
+			Name  string `json:"name"`
+			Level int    `json:"level"`
+		} `json:"thirdParty"`
+	}
+
+	var parent thirdPartyResult
+	mc.CallToolInto("addThirdParty", map[string]any{
+		"organization_id": orgID,
+		"name":            factory.SafeName("Vendor"),
+	}, &parent)
+	require.NotEmpty(t, parent.ThirdParty.ID)
+	assert.Equal(t, 1, parent.ThirdParty.Level)
+
+	var child thirdPartyResult
+
+	childName := factory.SafeName("Sub-processor")
+	mc.CallToolInto("addThirdParty", map[string]any{
+		"organization_id":       orgID,
+		"name":                  childName,
+		"parent_third_party_id": parent.ThirdParty.ID,
+	}, &child)
+	require.NotEmpty(t, child.ThirdParty.ID)
+	assert.Equal(t, childName, child.ThirdParty.Name)
+	assert.Equal(t, 2, child.ThirdParty.Level)
+
+	var children struct {
+		ThirdParties []struct {
+			ID string `json:"id"`
+		} `json:"thirdParties"`
+	}
+	mc.CallToolInto("listChildThirdParties", map[string]any{
+		"parent_third_party_id": parent.ThirdParty.ID,
+	}, &children)
+	require.Len(t, children.ThirdParties, 1)
+	assert.Equal(t, child.ThirdParty.ID, children.ThirdParties[0].ID)
+}
+
+func TestMCP_ThirdParty_AddToSupplyChainOfAnotherOrganization(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	mc := testutil.NewMCPClient(t, owner)
+	orgID := owner.GetOrganizationID().String()
+
+	otherOwner := testutil.NewClient(t, testutil.RoleOwner)
+	otherMC := testutil.NewMCPClient(t, otherOwner)
+
+	var otherParent struct {
+		ThirdParty struct {
+			ID string `json:"id"`
+		} `json:"thirdParty"`
+	}
+	otherMC.CallToolInto("addThirdParty", map[string]any{
+		"organization_id": otherOwner.GetOrganizationID().String(),
+		"name":            factory.SafeName("Other vendor"),
+	}, &otherParent)
+	require.NotEmpty(t, otherParent.ThirdParty.ID)
+
+	msg := mc.CallToolExpectToolError("addThirdParty", map[string]any{
+		"organization_id":       orgID,
+		"name":                  factory.SafeName("Sub-processor"),
+		"parent_third_party_id": otherParent.ThirdParty.ID,
+	})
+	assert.NotEmpty(t, msg)
+	assert.NotContains(t, msg, "pq:")
+	assert.NotContains(t, msg, "sql:")
+
+	var children struct {
+		ThirdParties []struct {
+			ID string `json:"id"`
+		} `json:"thirdParties"`
+	}
+	otherMC.CallToolInto("listChildThirdParties", map[string]any{
+		"parent_third_party_id": otherParent.ThirdParty.ID,
+	}, &children)
+	assert.Empty(t, children.ThirdParties)
+}

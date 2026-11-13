@@ -4,6 +4,212 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.346.0] - 2026-11-13
+
+### Added
+
+- A tracker source names the sibling banner that promoted it. The
+  banner is on GraphQL and MCP, and the console opens that banner's
+  tracker list from an icon beside the source badge
+- Connect Datadog with a service access token or a personal access
+  token and the site the organization is on. The site list adds UK1
+  and US2-FED. An application key is turned away, because it only
+  works beside an API key
+- A Medium band on risk scores, between Low and High, with its own
+  gold color. Score labels use the pale wash behind solid-colored
+  text. Bands are ratios of the matrix maximum, so 3×3, 4×4, and
+  5×5 matrices scale the same way, and exported risk analysis
+  documents use the same labels
+
+### Changed
+
+- The employee portal Tasks heading and breadcrumb say My tasks, so
+  the page is distinct from the compliance console's Tasks area
+- Cookie source promotion runs from the banner that wrote the cookie
+  and compares only the names updated since that write
+- The cookie policy vendor list keeps only vendors of
+  consent-category trackers that match the published snapshot,
+  including a tracker that later moved to uncategorised, and walks
+  every pattern page
+- Assigned and mentioned tasks in the console bell open the console
+  task. Signature and approval notifications still open the employee
+  portal
+
+### Fixed
+
+- A select shows its placeholder when the value render function
+  returns nothing, including the Segment region picker and the
+  Datadog site picker
+- Links in employee portal task descriptions and comments use the
+  info color and an underline. A click follows the link while
+  reading and opens the link editor while the field is focused
+
+## [0.345.0] - 2026-11-13
+
+### Added
+
+- Bidirectional Asana task sync beside the existing Linear sync. Name,
+  description, deadline, assignee, comments, files, and mentions sync
+  both ways. Without a mapped project, state follows completion only;
+  a saved project mapping also moves sections and writes a chosen
+  priority field. Publish and link tasks from the console, GraphQL,
+  and MCP
+- Cookie banners that share a registrable domain are grouped, so a
+  banner reuses a stronger cookie source seen by a sibling domain.
+  Existing banners are attached by the migration
+
+### Changed
+
+- GraphQL client errors log at info with their code instead of
+  UNKNOWN at error level. Store failures and recovered panics are
+  coded INTERNAL
+- Looking up the SSO URL for a domain with no enabled SAML
+  configuration returns null instead of an error
+- TLS handshakes that share no key exchange with the server are no
+  longer logged
+
+### Fixed
+
+- Cookie tracker pattern analysis no longer collapses distinct names
+  that share a short vendor stem, such as `tt_sessionId` and
+  `tt_appInfo`, into one prefix glob. A prefix or sandwich glob is
+  emitted only when the wildcard replaces a segment `looksVariable`
+  already accepts, so a short project id such as `_ga_ABC123` stays
+  exact
+- A replayed SAML assertion is reported as a replay instead of a
+  generic insert error
+- The HTTPS server logger is named `probod.http.server` instead of
+  `probod..http.server`
+
+## [0.344.0] - 2026-11-12
+
+### Added
+
+- Document review. Members comment on a quote in a document, with
+  rich text and member mentions, and reply to, resolve, or reopen
+  threads. Suggesting mode records inserts, deletions, and removed
+  line breaks as redlines that reviewers accept or reject in place.
+  Review cards sit in the margin beside the page and stay in sync
+  across open tabs. Comments and suggestions are also available on
+  the GraphQL and MCP APIs
+- Viewers and auditors can comment on a document without editing it
+- Separate permissions for commenting, updating and deleting
+  comments, resolving threads, suggesting, and accepting or rejecting
+  suggestions. The suggesting mode only shows for members who can
+  suggest
+- Publishing or restoring a document is blocked while a suggestion is
+  still open
+
+### Changed
+
+- Opening and saving a large collaborative document no longer holds
+  the document lock while its history is rebuilt, so saves stop timing
+  out and concurrent editors are not stalled. A failed save retries
+  with a backoff of up to five seconds
+- Every authorization check writes its own audit log entry, including
+  repeated reads of the same document or profile in one request
+
+### Removed
+
+- **Breaking**: the discard-draft action on documents, along with the
+  `deleteDocumentDraft` GraphQL mutation and MCP tool and the
+  `core:document:delete-draft` permission
+- **Breaking**: the MCP `updateDocument` tool no longer accepts
+  `content`. Use fragment edits to change document content
+- Lazy seeding of collaboration documents on first open, announced in
+  0.325.0, and the `migrate-collaboration-documents` command
+
+### Fixed
+
+- Shutting down the server while a collaboration socket is open no
+  longer panics
+- A session write that fails on a live request is reported instead of
+  being ignored when the request is canceled at the same time
+
+## [0.343.0] - 2026-11-12
+
+### Added
+
+- UniFi access review connector. A Site Manager API key reviews the
+  administrators of a console's Network application and the users of
+  its built-in RADIUS server
+
+### Fixed
+
+- Cookie banner scan tab badges show live counts while a scan runs and
+  the final count once it ends. Long identifiers and resource URLs
+  wrap, and the full initiator URL is readable
+- Listing controls or applicability statements ordered by section
+  title no longer skips rows after the first page
+- Compliance portal visitors can re-request access to a document,
+  report, or file they already requested
+- TLS handshakes for a custom domain whose certificate is pending,
+  failed, or expired abort without logging an error, and a still-valid
+  certificate is kept in the cache during renewal
+
+## [0.342.0] - 2026-11-12
+
+### Added
+
+- The console integrations page suggests third-party connectors that
+  match the organization's third parties, in the connectors list and
+  the marketplace
+- The cookie banner scanner detects banners installed through a script
+  tag or an npm package, and reports a dedicated failure reason when
+  the install cannot be read
+
+## [0.341.0] - 2026-11-11
+
+### Added
+
+- `addThirdParty` in MCP accepts `parent_third_party_id`, so an agent
+  can add a sub-processor to a third party's supply chain
+- Findings have a required title. Existing findings are backfilled
+  from the first 200 characters of the description, or from the
+  reference id when that is blank. The title is available on GraphQL,
+  MCP, the CLI, and the n8n node, and in the published findings
+  document
+- Tasks can be linked to a finding, matching the existing finding-audit
+  link. Link and unlink are available on GraphQL, MCP, and n8n
+- The console findings list, details, and create pages use the v2 UI.
+  The list filters by kind, status, priority, owner, and audit. Details
+  show an inline title, property chips, linked tasks, and linked
+  audits. Creation is a page at findings/new
+- A task's findings card can search for a finding and link or unlink
+  it, for viewers who can create or delete the task mapping
+- Linear description files are imported. Attachments stored in the
+  issue's ProseMirror description are downloaded on webhook updates
+  and when an issue is linked. Already linked tasks pick them up on
+  the next description update
+- One machine can be enrolled in more than one organization and report
+  posture to each. A second enrollment in the same organization still
+  conflicts on the hardware UUID, and the pending device is revoked
+
+### Changed
+
+- People who have not saved a notification preference now get reminder
+  emails for task mentions, the same as task assignments. A saved
+  preference still wins
+- The add-source page hides SCIM connectors and leaves their accounts
+  out of the vendor account count
+- GraphQL traces and logs use the name written on the operation when
+  the request omits operationName
+
+### Fixed
+
+- PDF previews in the compliance portal, the employee portal, and the
+  console work on older Safari, iOS, and Chromium browsers. The viewer
+  used pdf.js APIs those browsers do not provide
+- Outlook SafeLinks no longer shows up as an error when it opens a
+  portal link. The scanner rejects a promise; that is not a visitor
+  failure
+- Cancelling a signature request resolves the recipient's pending
+  signature notification in the same transaction. It stays pending
+  when they still have an open request on another version of the
+  document
+- Running processes load renewed TLS certificates during the 30-day
+  renewal window, instead of keeping the previously parsed certificate
+
 ## [0.340.0] - 2026-11-04
 
 ### Changed

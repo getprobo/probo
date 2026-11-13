@@ -1124,6 +1124,9 @@ components:
         trust_page_url:
           type: string
           description: Trust page URL
+        parent_third_party_id:
+          $ref: "#/components/schemas/GID"
+          description: Parent third party ID. Set it to add this third party to the parent's supply chain, for example a sub-processor of a vendor
 
     AddThirdPartyOutput:
       type: object
@@ -4212,6 +4215,7 @@ components:
         - organization_id
         - kind
         - reference_id
+        - title
         - status
         - priority
         - created_at
@@ -4229,6 +4233,9 @@ components:
         reference_id:
           type: string
           description: Reference ID
+        title:
+          type: string
+          description: Title
         description:
           type:
             - string
@@ -4338,6 +4345,11 @@ components:
                 - $ref: "#/components/schemas/GID"
                 - type: "null"
               description: Filter by the audit the finding is linked to. Defaults to null which returns findings of all audits.
+            query:
+              anyOf:
+                - type: string
+                - type: "null"
+              description: Search findings by title or reference ID. Defaults to null which returns every finding.
 
     ListFindingsOutput:
       type: object
@@ -4374,6 +4386,7 @@ components:
       required:
         - organization_id
         - kind
+        - title
       properties:
         organization_id:
           $ref: "#/components/schemas/GID"
@@ -4381,6 +4394,9 @@ components:
         kind:
           $ref: "#/components/schemas/FindingKind"
           description: Finding kind
+        title:
+          type: string
+          description: Title
         description:
           type: string
           description: Description
@@ -4447,6 +4463,10 @@ components:
         id:
           $ref: "#/components/schemas/GID"
           description: Finding ID
+        title:
+          type: ["string", "null"]
+          description: Title
+          go.probo.inc/mcpgen/omittable: true
         description:
           type: ["string", "null"]
           description: Description
@@ -4607,6 +4627,87 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Audit"
+
+    LinkFindingTaskInput:
+      type: object
+      required:
+        - finding_id
+        - task_id
+      properties:
+        finding_id:
+          $ref: "#/components/schemas/GID"
+          description: Finding ID
+        task_id:
+          $ref: "#/components/schemas/GID"
+          description: Task ID
+
+    LinkFindingTaskOutput:
+      type: object
+      required:
+        - finding
+        - task
+      properties:
+        finding:
+          $ref: "#/components/schemas/Finding"
+        task:
+          $ref: "#/components/schemas/Task"
+
+    UnlinkFindingTaskInput:
+      type: object
+      required:
+        - finding_id
+        - task_id
+      properties:
+        finding_id:
+          $ref: "#/components/schemas/GID"
+          description: Finding ID
+        task_id:
+          $ref: "#/components/schemas/GID"
+          description: Task ID
+
+    UnlinkFindingTaskOutput:
+      type: object
+      required:
+        - deleted_finding_id
+        - deleted_task_id
+      properties:
+        deleted_finding_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted finding ID
+        deleted_task_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted task ID
+
+    ListFindingTasksInput:
+      type: object
+      required:
+        - finding_id
+      properties:
+        finding_id:
+          $ref: "#/components/schemas/GID"
+          description: Finding ID
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+        size:
+          type: integer
+          description: Page size
+        order_by:
+          $ref: "#/components/schemas/TaskOrderBy"
+          description: Task order by
+
+    ListFindingTasksOutput:
+      type: object
+      required:
+        - tasks
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/Task"
 
     ObligationStatus:
       type: string
@@ -7365,6 +7466,7 @@ components:
       enum:
         - PROBO
         - LINEAR
+        - ASANA
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.TaskExternalLinkOrigin
 
     TaskExternalLink:
@@ -7596,6 +7698,434 @@ components:
       properties:
         task:
           $ref: "#/components/schemas/Task"
+
+    AsanaNamed:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          description: Asana GID
+        name:
+          type: string
+          description: Asana name
+
+    AsanaTaskSummary:
+      type: object
+      required:
+        - id
+        - name
+        - completed
+      properties:
+        id:
+          type: string
+          description: Asana task GID
+        name:
+          type: string
+          description: Asana task name
+        completed:
+          type: boolean
+          description: Whether the Asana task is completed
+
+    ListAsanaTeamsInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        size:
+          type: integer
+          description: Page size. Defaults to 20.
+        cursor:
+          type: string
+          description: Page cursor
+        query:
+          type: string
+          description: Search teams by name
+
+    ListAsanaTeamsOutput:
+      type: object
+      required:
+        - teams
+      properties:
+        teams:
+          type: array
+          items:
+            $ref: "#/components/schemas/AsanaNamed"
+          description: Asana teams
+        next_cursor:
+          anyOf:
+            - type: string
+            - type: "null"
+          description: Next page cursor. Null when this is the last page.
+
+    ListAsanaProjectsInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        team_id:
+          type: string
+          description: Asana team GID. Omit it to list workspace projects.
+        size:
+          type: integer
+          description: Page size. Defaults to 20.
+        cursor:
+          type: string
+          description: Page cursor
+        query:
+          type: string
+          description: Search projects by name
+
+    ListAsanaProjectsOutput:
+      type: object
+      required:
+        - projects
+      properties:
+        projects:
+          type: array
+          items:
+            $ref: "#/components/schemas/AsanaNamed"
+          description: Asana projects
+        next_cursor:
+          anyOf:
+            - type: string
+            - type: "null"
+          description: Next page cursor. Null when this is the last page.
+
+    ListAsanaTasksInput:
+      type: object
+      required:
+        - organization_id
+        - project_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        project_id:
+          type: string
+          description: Asana project GID
+        size:
+          type: integer
+          description: Page size. Defaults to 20.
+        cursor:
+          type: string
+          description: Page cursor
+        query:
+          type: string
+          description: Search tasks by name
+
+    ListAsanaTasksOutput:
+      type: object
+      required:
+        - tasks
+      properties:
+        tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/AsanaTaskSummary"
+          description: Asana tasks
+        next_cursor:
+          anyOf:
+            - type: string
+            - type: "null"
+          description: Next page cursor. Null when this is the last page.
+
+    PublishTaskToAsanaInput:
+      type: object
+      required:
+        - task_id
+        - project_id
+      properties:
+        task_id:
+          $ref: "#/components/schemas/GID"
+          description: Task ID
+        project_id:
+          type: string
+          description: Asana project GID
+
+    PublishTaskToAsanaOutput:
+      type: object
+      required:
+        - task
+      properties:
+        task:
+          $ref: "#/components/schemas/Task"
+
+    LinkTaskToAsanaInput:
+      type: object
+      required:
+        - task_id
+        - project_id
+        - task_gid
+      properties:
+        task_id:
+          $ref: "#/components/schemas/GID"
+          description: Task ID
+        project_id:
+          type: string
+          description: Asana project GID
+        task_gid:
+          type: string
+          description: Asana task GID
+
+    LinkTaskToAsanaOutput:
+      type: object
+      required:
+        - task
+      properties:
+        task:
+          $ref: "#/components/schemas/Task"
+
+    AsanaTaskImport:
+      type: string
+      enum:
+        - ACTIVE
+        - INACTIVE
+
+    AsanaSettings:
+      type: object
+      required:
+        - task_import
+      properties:
+        default_project:
+          anyOf:
+            - $ref: "#/components/schemas/AsanaNamed"
+            - type: "null"
+          description: Default Asana project. Null when no default project is set.
+        task_import:
+          $ref: "#/components/schemas/AsanaTaskImport"
+          description: Whether new tasks in the default Asana project are imported.
+
+    UpdateAsanaSettingsInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        default_project_id:
+          anyOf:
+            - type: string
+              description: Asana project GID
+            - type: "null"
+              description: Clear the default Asana project
+          description: Asana project GID. Omit it to keep the current project. Null clears the project and turns task import off.
+        task_import:
+          $ref: "#/components/schemas/AsanaTaskImport"
+          description: Task import status. Omit it to keep the current status. Active requires a default project.
+
+    UpdateAsanaSettingsOutput:
+      type: object
+      required:
+        - settings
+      properties:
+        settings:
+          $ref: "#/components/schemas/AsanaSettings"
+          description: Asana settings after the update.
+
+    AsanaSection:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          description: Asana section GID
+        name:
+          type: string
+          description: Asana section name
+
+    AsanaEnumOption:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          description: Asana enum option GID
+        name:
+          type: string
+          description: Asana enum option name
+
+    AsanaEnumField:
+      type: object
+      required:
+        - id
+        - name
+        - options
+      properties:
+        id:
+          type: string
+          description: Asana custom field GID
+        name:
+          type: string
+          description: Asana custom field name
+        options:
+          type: array
+          items:
+            $ref: "#/components/schemas/AsanaEnumOption"
+          description: Enum options
+
+    AsanaStateMapping:
+      type: object
+      required:
+        - state
+        - section_id
+        - inbound
+      properties:
+        state:
+          $ref: "#/components/schemas/TaskState"
+          description: Probo task state
+        section_id:
+          type: string
+          description: Asana section GID. Empty when the state does not move the task.
+        inbound:
+          type: boolean
+          description: Unused. A shared section uses the first mapped state.
+
+    AsanaPriorityMapping:
+      type: object
+      required:
+        - priority
+        - option_id
+        - inbound
+      properties:
+        priority:
+          $ref: "#/components/schemas/TaskPriority"
+          description: Probo task priority
+        option_id:
+          type: string
+          description: Asana enum option GID. Empty when the priority is ignored.
+        inbound:
+          type: boolean
+          description: Unused. A shared option uses the first mapped priority.
+
+    AsanaProjectMapping:
+      type: object
+      required:
+        - states
+        - priorities
+      properties:
+        states:
+          type: array
+          items:
+            $ref: "#/components/schemas/AsanaStateMapping"
+          description: State to section mapping
+        priority_field_id:
+          anyOf:
+            - type: string
+            - type: "null"
+          description: Enum custom field used as priority. Null when priority is not synced.
+        priorities:
+          type: array
+          items:
+            $ref: "#/components/schemas/AsanaPriorityMapping"
+          description: Priority to enum option mapping
+
+    AsanaProjectSetup:
+      type: object
+      required:
+        - project
+        - sections
+        - enum_fields
+        - custom_fields_available
+      properties:
+        project:
+          $ref: "#/components/schemas/AsanaNamed"
+          description: Asana project
+        sections:
+          type: array
+          items:
+            $ref: "#/components/schemas/AsanaSection"
+          description: Project sections
+        enum_fields:
+          type: array
+          items:
+            $ref: "#/components/schemas/AsanaEnumField"
+          description: Enum custom fields that can be used as priority
+        custom_fields_available:
+          type: boolean
+          description: False when the connected Asana workspace does not include custom fields, so priority cannot be mapped.
+        mapping:
+          anyOf:
+            - $ref: "#/components/schemas/AsanaProjectMapping"
+            - type: "null"
+          description: Saved mapping. Null until one is saved.
+
+    GetAsanaProjectSetupInput:
+      type: object
+      required:
+        - organization_id
+        - project_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        project_id:
+          type: string
+          description: Asana project GID
+
+    GetAsanaProjectSetupOutput:
+      type: object
+      required:
+        - setup
+      properties:
+        setup:
+          $ref: "#/components/schemas/AsanaProjectSetup"
+          description: Sections, enum fields, and the saved mapping for the project.
+
+    UpdateAsanaProjectMappingInput:
+      type: object
+      required:
+        - organization_id
+        - project_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        project_id:
+          type: string
+          description: Asana project GID
+        clear:
+          type: boolean
+          description: Remove the saved mapping for the project.
+        states:
+          type: array
+          items:
+            $ref: "#/components/schemas/AsanaStateMapping"
+          description: State mapping. Omit it to keep the current states.
+        priority_field_id:
+          anyOf:
+            - type: string
+              description: Asana enum custom field GID
+            - type: "null"
+              description: Stop syncing priority
+          description: Priority field. Omit it to keep the current field. Null stops syncing priority.
+        priorities:
+          type: array
+          items:
+            $ref: "#/components/schemas/AsanaPriorityMapping"
+          description: Priority mapping. Omit it to keep the current priorities.
+
+    UpdateAsanaProjectMappingOutput:
+      type: object
+      required:
+        - setup
+      properties:
+        setup:
+          $ref: "#/components/schemas/AsanaProjectSetup"
+          description: Project setup after the mapping is saved.
 
     UnlinkTaskExternalInput:
       type: object
@@ -8393,9 +8923,9 @@ components:
           items:
             type: string
           description: >
-            Automerge heads for the live document (lowercase hex). Empty when
-            collaboration is not seeded. Pass as base_heads with edits on
-            updateDocument.
+            Automerge heads for the live document (lowercase hex). Empty for a
+            document that has no live collaborative content, such as a
+            generated one. Pass as base_heads with edits on updateDocument.
         current_published_major:
           type:
             - integer
@@ -8697,6 +9227,532 @@ components:
         document:
           $ref: "#/components/schemas/Document"
 
+    DocumentCommentThreadOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DocumentCommentThreadOrderField
+
+    DocumentCommentThreadOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/DocumentCommentThreadOrderField"
+          description: Comment thread order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Comment thread order direction
+
+    DocumentCommentOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DocumentCommentOrderField
+
+    DocumentCommentOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/DocumentCommentOrderField"
+          description: Comment order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Comment order direction
+
+    DocumentSuggestionStatus:
+      type: string
+      enum:
+        - OPEN
+        - ACCEPTED
+        - REJECTED
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DocumentSuggestionStatus
+
+    DocumentSuggestionOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DocumentSuggestionOrderField
+
+    DocumentSuggestionOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/DocumentSuggestionOrderField"
+          description: Suggestion order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Suggestion order direction
+
+    DocumentCommentThread:
+      type: object
+      required:
+        - id
+        - document_id
+        - anchor_start
+        - anchor_end
+        - anchor_quote
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Comment thread ID
+        document_id:
+          $ref: "#/components/schemas/GID"
+          description: Document ID
+        suggestion_id:
+          type:
+            - string
+            - "null"
+          go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/gid.GID
+          description: Suggestion this thread comments on, when the thread is a redline discussion
+        anchor_start:
+          type: string
+          description: Base64 Automerge cursor for the start of the anchored range
+        anchor_end:
+          type: string
+          description: Base64 Automerge cursor for the end of the anchored range
+        anchor_quote:
+          type: string
+          description: Text quote captured when the thread was created
+        resolved_at:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Resolution timestamp
+        resolved_by_profile_id:
+          type:
+            - string
+            - "null"
+          go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/gid.GID
+          description: Profile that resolved the thread
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    DocumentComment:
+      type: object
+      required:
+        - id
+        - thread_id
+        - author_profile_id
+        - content
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Comment ID
+        thread_id:
+          $ref: "#/components/schemas/GID"
+          description: Comment thread ID
+        author_profile_id:
+          $ref: "#/components/schemas/GID"
+          description: Author profile ID
+        content:
+          type: string
+          description: Comment text
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    DocumentSuggestion:
+      type: object
+      required:
+        - id
+        - document_id
+        - author_profile_id
+        - status
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Suggestion ID
+        document_id:
+          $ref: "#/components/schemas/GID"
+          description: Document ID
+        author_profile_id:
+          $ref: "#/components/schemas/GID"
+          description: Author profile ID
+        status:
+          $ref: "#/components/schemas/DocumentSuggestionStatus"
+          description: Suggestion status
+        resolved_at:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Resolution timestamp
+        resolved_by_profile_id:
+          type:
+            - string
+            - "null"
+          go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/gid.GID
+          description: Profile that accepted or rejected the suggestion
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    ListDocumentCommentThreadsInput:
+      type: object
+      required:
+        - document_id
+      properties:
+        document_id:
+          $ref: "#/components/schemas/GID"
+          description: Document ID
+        resolved:
+          type: boolean
+          description: When set, return only resolved or only open threads
+        order_by:
+          $ref: "#/components/schemas/DocumentCommentThreadOrderBy"
+          description: Comment thread order
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListDocumentCommentThreadsOutput:
+      type: object
+      required:
+        - threads
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        threads:
+          type: array
+          items:
+            $ref: "#/components/schemas/DocumentCommentThread"
+
+    GetDocumentCommentThreadInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Comment thread ID
+
+    GetDocumentCommentThreadOutput:
+      type: object
+      required:
+        - thread
+      properties:
+        thread:
+          $ref: "#/components/schemas/DocumentCommentThread"
+
+    ListDocumentCommentsInput:
+      type: object
+      required:
+        - thread_id
+      properties:
+        thread_id:
+          $ref: "#/components/schemas/GID"
+          description: Comment thread ID
+        order_by:
+          $ref: "#/components/schemas/DocumentCommentOrderBy"
+          description: Comment order
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListDocumentCommentsOutput:
+      type: object
+      required:
+        - comments
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        comments:
+          type: array
+          items:
+            $ref: "#/components/schemas/DocumentComment"
+
+    GetDocumentCommentInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Comment ID
+
+    GetDocumentCommentOutput:
+      type: object
+      required:
+        - comment
+      properties:
+        comment:
+          $ref: "#/components/schemas/DocumentComment"
+
+    CreateDocumentCommentThreadInput:
+      type: object
+      required:
+        - document_id
+        - content
+      properties:
+        document_id:
+          $ref: "#/components/schemas/GID"
+          description: Document ID
+        content:
+          type: string
+          description: First comment text
+        quote:
+          type: string
+          description: Text to anchor when cursors are not supplied
+        quote_occurrence:
+          type: integer
+          description: Zero-based occurrence of the quote to anchor
+        suggestion_id:
+          $ref: "#/components/schemas/GID"
+          description: Open suggestion to comment on. The server anchors the thread to that redline.
+
+    CreateDocumentCommentThreadOutput:
+      type: object
+      required:
+        - thread
+        - comment
+      properties:
+        thread:
+          $ref: "#/components/schemas/DocumentCommentThread"
+        comment:
+          $ref: "#/components/schemas/DocumentComment"
+
+    CreateDocumentCommentInput:
+      type: object
+      required:
+        - thread_id
+        - content
+      properties:
+        thread_id:
+          $ref: "#/components/schemas/GID"
+          description: Comment thread ID
+        content:
+          type: string
+          description: Reply text
+
+    CreateDocumentCommentOutput:
+      type: object
+      required:
+        - comment
+      properties:
+        comment:
+          $ref: "#/components/schemas/DocumentComment"
+
+    UpdateDocumentCommentInput:
+      type: object
+      required:
+        - id
+        - content
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Comment ID
+        content:
+          type: string
+          description: Replacement comment text
+
+    UpdateDocumentCommentOutput:
+      type: object
+      required:
+        - comment
+      properties:
+        comment:
+          $ref: "#/components/schemas/DocumentComment"
+
+    DeleteDocumentCommentInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Comment ID
+
+    DeleteDocumentCommentOutput:
+      type: object
+      required:
+        - deleted_comment_id
+      properties:
+        deleted_comment_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted comment ID
+        deleted_thread_id:
+          type:
+            - string
+            - "null"
+          go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/gid.GID
+          description: Deleted thread ID when the comment was the last one in the thread
+
+    ResolveDocumentCommentThreadInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Comment thread ID
+
+    ResolveDocumentCommentThreadOutput:
+      type: object
+      required:
+        - thread
+      properties:
+        thread:
+          $ref: "#/components/schemas/DocumentCommentThread"
+
+    ReopenDocumentCommentThreadInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Comment thread ID
+
+    ReopenDocumentCommentThreadOutput:
+      type: object
+      required:
+        - thread
+      properties:
+        thread:
+          $ref: "#/components/schemas/DocumentCommentThread"
+
+    ListDocumentSuggestionsInput:
+      type: object
+      required:
+        - document_id
+      properties:
+        document_id:
+          $ref: "#/components/schemas/GID"
+          description: Document ID
+        status:
+          $ref: "#/components/schemas/DocumentSuggestionStatus"
+          description: When set, return only suggestions with this status
+        order_by:
+          $ref: "#/components/schemas/DocumentSuggestionOrderBy"
+          description: Suggestion order
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListDocumentSuggestionsOutput:
+      type: object
+      required:
+        - suggestions
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        suggestions:
+          type: array
+          items:
+            $ref: "#/components/schemas/DocumentSuggestion"
+
+    GetDocumentSuggestionInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Suggestion ID
+
+    GetDocumentSuggestionOutput:
+      type: object
+      required:
+        - suggestion
+      properties:
+        suggestion:
+          $ref: "#/components/schemas/DocumentSuggestion"
+
+    StartDocumentSuggestionInput:
+      type: object
+      required:
+        - document_id
+      properties:
+        document_id:
+          $ref: "#/components/schemas/GID"
+          description: Document ID
+
+    StartDocumentSuggestionOutput:
+      type: object
+      required:
+        - suggestion
+      properties:
+        suggestion:
+          $ref: "#/components/schemas/DocumentSuggestion"
+
+    AcceptDocumentSuggestionInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Suggestion ID
+
+    AcceptDocumentSuggestionOutput:
+      type: object
+      required:
+        - suggestion
+      properties:
+        suggestion:
+          $ref: "#/components/schemas/DocumentSuggestion"
+
+    RejectDocumentSuggestionInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Suggestion ID
+
+    RejectDocumentSuggestionOutput:
+      type: object
+      required:
+        - suggestion
+      properties:
+        suggestion:
+          $ref: "#/components/schemas/DocumentSuggestion"
+
     AddDocumentInput:
       type: object
       required:
@@ -8770,27 +9826,21 @@ components:
         title:
           type: string
           description: Document title
-        content:
-          type: string
-          description: >
-            Full ProseMirror document JSON. Allowed only while collaboration is
-            not seeded. Once collaboration_heads is set on getDocument, use
-            base_heads and edits instead.
         base_heads:
           type: array
           items:
             type: string
           description: >
             Automerge heads from getDocument.collaboration_heads. Required
-            with edits on a seeded document.
+            with edits.
         edits:
           type: array
           items:
             $ref: "#/components/schemas/DocumentCollaborationEdit"
           description: >
-            Fragment replacements for a seeded document. Each target must match
-            exactly once in the latest document. Rejected while collaboration is
-            not seeded; use content then.
+            Fragment replacements applied to the live document. Each target
+            must match exactly once in the latest document. This is the only
+            way to change document content.
         classification:
           $ref: "#/components/schemas/DocumentClassification"
           description: Document classification
@@ -8812,23 +9862,6 @@ components:
           $ref: "#/components/schemas/Document"
         document_version:
           $ref: "#/components/schemas/DocumentVersion"
-
-    DeleteDocumentDraftInput:
-      type: object
-      required:
-        - id
-      properties:
-        id:
-          $ref: "#/components/schemas/GID"
-          description: Document ID
-
-    DeleteDocumentDraftOutput:
-      type: object
-      required:
-        - document
-      properties:
-        document:
-          $ref: "#/components/schemas/Document"
 
     ArchiveDocumentInput:
       type: object
@@ -14745,6 +15778,11 @@ components:
           type: string
           enum: [SCRIPT, PRE_EXISTING, HTTP, EXTENSION]
           description: How the pattern was discovered
+        source_cookie_banner_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Sibling banner whose detection promoted source. Null when the source was observed on this pattern's own banner.
         excluded:
           type: boolean
           description: Whether this pattern is excluded from the consent banner
@@ -19014,6 +20052,42 @@ tools:
       $ref: "#/components/schemas/ListFindingAuditsInput"
     outputSchema:
       $ref: "#/components/schemas/ListFindingAuditsOutput"
+  - name: linkFindingTask
+    title: Link Finding Task
+    description: Link a task to a finding
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/LinkFindingTaskInput"
+    outputSchema:
+      $ref: "#/components/schemas/LinkFindingTaskOutput"
+  - name: unlinkFindingTask
+    title: Unlink Finding Task
+    description: Unlink a task from a finding
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/UnlinkFindingTaskInput"
+    outputSchema:
+      $ref: "#/components/schemas/UnlinkFindingTaskOutput"
+  - name: listFindingTasks
+    title: List Finding Tasks
+    description: List tasks linked to a finding
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListFindingTasksInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListFindingTasksOutput"
   - name: listObligations
     title: List Obligations
     description: List all obligations for the organization
@@ -19806,6 +20880,102 @@ tools:
       $ref: "#/components/schemas/LinkTaskToLinearInput"
     outputSchema:
       $ref: "#/components/schemas/LinkTaskToLinearOutput"
+  - name: listAsanaTeams
+    title: List Asana Teams
+    description: Search Asana teams in the connected workspace. Personal workspaces have no teams.
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: true
+    inputSchema:
+      $ref: "#/components/schemas/ListAsanaTeamsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListAsanaTeamsOutput"
+  - name: listAsanaProjects
+    title: List Asana Projects
+    description: List Asana projects. Pass a team GID to filter, or omit it for the whole workspace.
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: true
+    inputSchema:
+      $ref: "#/components/schemas/ListAsanaProjectsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListAsanaProjectsOutput"
+  - name: listAsanaTasks
+    title: List Asana Tasks
+    description: Search tasks in an Asana project
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: true
+    inputSchema:
+      $ref: "#/components/schemas/ListAsanaTasksInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListAsanaTasksOutput"
+  - name: publishTaskToAsana
+    title: Publish Task To Asana
+    description: Publish a Probo task as a new Asana task in a project
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: true
+    inputSchema:
+      $ref: "#/components/schemas/PublishTaskToAsanaInput"
+    outputSchema:
+      $ref: "#/components/schemas/PublishTaskToAsanaOutput"
+  - name: linkTaskToAsana
+    title: Link Task To Asana
+    description: Link a Probo task to an existing Asana task. This updates the Probo task with the Asana task.
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: false
+      openWorld: true
+    inputSchema:
+      $ref: "#/components/schemas/LinkTaskToAsanaInput"
+    outputSchema:
+      $ref: "#/components/schemas/LinkTaskToAsanaOutput"
+  - name: updateAsanaSettings
+    title: Update Asana Settings
+    description: Update the organization's Asana settings. Omit a field to leave it unchanged. Null default_project_id clears the default project and turns task import off.
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: true
+    inputSchema:
+      $ref: "#/components/schemas/UpdateAsanaSettingsInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateAsanaSettingsOutput"
+  - name: getAsanaProjectSetup
+    title: Get Asana Project Setup
+    description: Read an Asana project's sections, enum custom fields, and saved state and priority mapping.
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: true
+    inputSchema:
+      $ref: "#/components/schemas/GetAsanaProjectSetupInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetAsanaProjectSetupOutput"
+  - name: updateAsanaProjectMapping
+    title: Update Asana Project Mapping
+    description: Save how an Asana project's sections and priority field map onto Probo states and priorities. When several states share a section, tasks coming from Asana use the first of those states.
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: true
+    inputSchema:
+      $ref: "#/components/schemas/UpdateAsanaProjectMappingInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateAsanaProjectMappingOutput"
   - name: unlinkTaskExternal
     title: Unlink Task External
     description: Unlink a task from its external issue
@@ -19926,6 +21096,186 @@ tools:
       $ref: "#/components/schemas/GetDocumentInput"
     outputSchema:
       $ref: "#/components/schemas/GetDocumentOutput"
+  - name: listDocumentCommentThreads
+    title: List Document Comment Threads
+    description: List comment threads on a live document. Pass resolved to show only open or only resolved threads.
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListDocumentCommentThreadsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListDocumentCommentThreadsOutput"
+  - name: getDocumentCommentThread
+    title: Get Document Comment Thread
+    description: Get a document comment thread by ID
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/GetDocumentCommentThreadInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetDocumentCommentThreadOutput"
+  - name: listDocumentComments
+    title: List Document Comments
+    description: List comments in a document comment thread
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListDocumentCommentsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListDocumentCommentsOutput"
+  - name: getDocumentComment
+    title: Get Document Comment
+    description: Get a document comment by ID
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/GetDocumentCommentInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetDocumentCommentOutput"
+  - name: createDocumentCommentThread
+    title: Create Document Comment Thread
+    description: Start a comment thread from a quote, or reply on an open suggestion by passing suggestion_id.
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/CreateDocumentCommentThreadInput"
+    outputSchema:
+      $ref: "#/components/schemas/CreateDocumentCommentThreadOutput"
+  - name: createDocumentComment
+    title: Create Document Comment
+    description: Reply on a document comment thread
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/CreateDocumentCommentInput"
+    outputSchema:
+      $ref: "#/components/schemas/CreateDocumentCommentOutput"
+  - name: updateDocumentComment
+    title: Update Document Comment
+    description: Edit your own document comment
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateDocumentCommentInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateDocumentCommentOutput"
+  - name: deleteDocumentComment
+    title: Delete Document Comment
+    description: Delete your own document comment. The thread is deleted when it has no comments left.
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/DeleteDocumentCommentInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteDocumentCommentOutput"
+  - name: resolveDocumentCommentThread
+    title: Resolve Document Comment Thread
+    description: Resolve a document comment thread
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ResolveDocumentCommentThreadInput"
+    outputSchema:
+      $ref: "#/components/schemas/ResolveDocumentCommentThreadOutput"
+  - name: reopenDocumentCommentThread
+    title: Reopen Document Comment Thread
+    description: Reopen a resolved document comment thread
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ReopenDocumentCommentThreadInput"
+    outputSchema:
+      $ref: "#/components/schemas/ReopenDocumentCommentThreadOutput"
+  - name: listDocumentSuggestions
+    title: List Document Suggestions
+    description: List redline suggestions on a live document. Pass status OPEN to list suggestions that still need a decision.
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListDocumentSuggestionsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListDocumentSuggestionsOutput"
+  - name: getDocumentSuggestion
+    title: Get Document Suggestion
+    description: Get a document suggestion by ID
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/GetDocumentSuggestionInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetDocumentSuggestionOutput"
+  - name: startDocumentSuggestion
+    title: Start Document Suggestion
+    description: Allocate an ID for a new redline. Paint that ID on suggestion marks in the collaborative document.
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/StartDocumentSuggestionInput"
+    outputSchema:
+      $ref: "#/components/schemas/StartDocumentSuggestionOutput"
+  - name: acceptDocumentSuggestion
+    title: Accept Document Suggestion
+    description: Keep suggested insertions, drop suggested deletions, and resolve the suggestion thread
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/AcceptDocumentSuggestionInput"
+    outputSchema:
+      $ref: "#/components/schemas/AcceptDocumentSuggestionOutput"
+  - name: rejectDocumentSuggestion
+    title: Reject Document Suggestion
+    description: Drop suggested insertions, keep the original text, and resolve the suggestion thread
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/RejectDocumentSuggestionInput"
+    outputSchema:
+      $ref: "#/components/schemas/RejectDocumentSuggestionOutput"
   - name: addDocument
     title: Add Document
     description: Add a new document to the organization
@@ -19950,18 +21300,6 @@ tools:
       $ref: "#/components/schemas/UpdateDocumentInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateDocumentOutput"
-  - name: deleteDocumentDraft
-    title: Delete Document Draft
-    description: Delete the latest draft version of a document, reverting to the last published version. Cannot delete the initial v0.1 draft.
-    hints:
-      readonly: false
-      destructive: true
-      idempotent: true
-      openWorld: false
-    inputSchema:
-      $ref: "#/components/schemas/DeleteDocumentDraftInput"
-    outputSchema:
-      $ref: "#/components/schemas/DeleteDocumentDraftOutput"
   - name: archiveDocument
     title: Archive Document
     description: Archive a document to prevent further modifications

@@ -21,13 +21,24 @@
 import { createRequire } from "node:module";
 import { dirname } from "node:path";
 
-// Hoisted pdfjs-dist (pdf-parse) is a different major than react-pdf's copy.
-// The worker import must resolve to the copy react-pdf actually loads.
+import type { Alias } from "vite";
+
+// Hoisted pdfjs-dist (pdf-parse) differs from react-pdf's copy, and its modern
+// build calls Promise.try with no polyfill. Resolve to react-pdf's legacy build.
 export function pdfjsDistDir(importMetaUrl: string): string {
   const reactPdfRequire = createRequire(
     createRequire(importMetaUrl).resolve("react-pdf/package.json"),
   );
   return dirname(reactPdfRequire.resolve("pdfjs-dist/package.json"));
+}
+
+export function pdfjsAliases(importMetaUrl: string): Alias[] {
+  const dir = pdfjsDistDir(importMetaUrl);
+  return [
+    { find: /^pdfjs-dist$/, replacement: `${dir}/legacy/build/pdf.mjs` },
+    { find: /^pdfjs-dist\/(build|web)\//, replacement: `${dir}/legacy/$1/` },
+    { find: /^pdfjs-dist\//, replacement: `${dir}/` },
+  ];
 }
 
 // Dev dep optimization prebundles this import and drops the `?url` default export.

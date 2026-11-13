@@ -24,14 +24,36 @@ import { ReactNodeViewRenderer } from "@tiptap/react";
 import { imagePreviewTriggerSelector } from "../v2/ImagePreview/variants";
 
 import { attachmentPath, fileIDFromAttachmentURL } from "./attachments";
+import {
+  presentStrings,
+  readNumberAttribute,
+} from "./automergeMapping";
 import { ImageNodeView } from "./ImageNodeView";
 import { imageWidthPercent } from "./imageWidth";
+
+function imageAttrsFromBlock(attributes: unknown): Record<string, string | number> {
+  const attrs = presentStrings(attributes, ["fileId", "src", "alt", "title"]);
+  const width = readNumberAttribute(attributes, "width", Number.NaN);
+  if (width > 0 && width <= 100) {
+    attrs.width = width;
+  }
+
+  return attrs;
+}
 
 export const ImageExtension = Node.create({
   name: "image",
   group: "block",
   atom: true,
   draggable: true,
+  automerge: () => ({
+    block: "image",
+    structural: true,
+    attrParsers: {
+      fromAutomerge: block => imageAttrsFromBlock(block.attrs),
+      fromProsemirror: node => imageAttrsFromBlock(node.attrs),
+    },
+  }),
   addAttributes() {
     return {
       fileId: {

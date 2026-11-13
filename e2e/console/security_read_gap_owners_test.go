@@ -167,6 +167,7 @@ func TestSecurity_ReadGap_FindingOwner(t *testing.T) {
 		"input": map[string]any{
 			"organizationId": org1Owner.GetOrganizationID().String(),
 			"kind":           "OBSERVATION",
+			"title":          "Access review gap",
 			"status":         "OPEN",
 			"priority":       "LOW",
 			"ownerId":        org1ProfileID,

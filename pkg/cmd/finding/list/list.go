@@ -39,6 +39,7 @@ query FindingList($id: ID!, $first: Int, $after: CursorKey, $orderBy: FindingOrd
           node {
             id
             referenceId
+            title
             kind
             status
             priority
@@ -58,6 +59,7 @@ query FindingList($id: ID!, $first: Int, $after: CursorKey, $orderBy: FindingOrd
 type finding struct {
 	ID          string  `json:"id"`
 	ReferenceID string  `json:"referenceId"`
+	Title       string  `json:"title"`
 	Kind        string  `json:"kind"`
 	Status      string  `json:"status"`
 	Priority    string  `json:"priority"`
@@ -73,6 +75,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		flagOrderDir string
 		flagKind     string
 		flagAudit    string
+		flagQuery    string
 		flagOutput   *string
 	)
 
@@ -87,7 +90,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
   prb finding ls --org <organization-id> --kind MINOR_NONCONFORMITY --json
 
   # List findings linked to an audit
-  prb finding ls --org <organization-id> --audit <audit-id>`,
+  prb finding ls --org <organization-id> --audit <audit-id>
+
+  # Search by title or reference ID
+  prb finding ls --org <organization-id> --query FND-001`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
@@ -137,6 +143,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				filter["auditId"] = flagAudit
 			}
 
+			if flagQuery != "" {
+				filter["query"] = flagQuery
+			}
+
 			if len(filter) > 0 {
 				variables["filter"] = filter
 			}
@@ -162,7 +172,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					Empty:      "No findings found.",
 					Noun:       "findings",
 					NextCursor: nextCursor,
-					Headers:    []string{"ID", "REFERENCE", "KIND", "STATUS", "PRIORITY", "DUE DATE"},
+					Headers:    []string{"ID", "REFERENCE", "TITLE", "KIND", "STATUS", "PRIORITY", "DUE DATE"},
 					Row: func(fi finding) ([]string, error) {
 						dueDate := "-"
 						if fi.DueDate != nil {
@@ -172,6 +182,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 						return []string{
 							fi.ID,
 							fi.ReferenceID,
+							fi.Title,
 							fi.Kind,
 							fi.Status,
 							fi.Priority,
@@ -190,6 +201,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmdutil.AddOrderDirectionFlag(cmd, &flagOrderDir, "DESC")
 	cmd.Flags().StringVar(&flagKind, "kind", "", "Filter by kind (MINOR_NONCONFORMITY, MAJOR_NONCONFORMITY, OBSERVATION, EXCEPTION)")
 	cmd.Flags().StringVar(&flagAudit, "audit", "", "Filter by audit ID")
+	cmd.Flags().StringVarP(&flagQuery, "query", "q", "", "Search findings by title or reference ID")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd

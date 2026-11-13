@@ -118,6 +118,20 @@ func TestAPIKeyFormatsAcceptAndReject(t *testing.T) {
 			rejected: []string{"keyid", keyTail, ":secret", "keyid:"},
 		},
 		{
+			provider: coredata.ConnectorProviderDatadog,
+			accepted: []string{"ddsat_" + keyTail, "ddpat_" + keyTail},
+			// An API key alone, or an application key (legacy or ddapp_),
+			// which needs an API key beside it.
+			rejected: []string{
+				"ddsat_",
+				"ddpat_",
+				"ddapp_" + keyTail,
+				"0123456789abcdef0123456789abcdef",
+				"0123456789abcdef0123456789abcdef01234567",
+				"0123456789abcdef0123456789abcdef:0123456789abcdef0123456789abcdef01234567",
+			},
+		},
+		{
 			provider: coredata.ConnectorProviderDotfile,
 			accepted: []string{"dotkey." + keyTail + "." + keyTail},
 			// The dot is a literal, not a wildcard.

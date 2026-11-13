@@ -74,6 +74,13 @@ export const description: INodeProperties[] = [
 				required: false,
 				description: 'Only return findings linked to this audit',
 			}),
+			{
+				displayName: 'Query',
+				name: 'query',
+				type: 'string',
+				default: '',
+				description: 'Search findings by title or reference ID',
+			},
 		],
 	},
 ];
@@ -94,6 +101,7 @@ export async function execute(
 						edges {
 							node {
 								id
+								title
 								kind
 								description
 								source
@@ -123,6 +131,10 @@ export async function execute(
 
 	if (this.getNodeParameter('filters.auditId', itemIndex, '', { extractValue: true }) as string) {
 		filter.auditId = this.getNodeParameter('filters.auditId', itemIndex, '', { extractValue: true }) as string;
+	}
+
+	if (this.getNodeParameter('filters.query', itemIndex, '') as string) {
+		filter.query = this.getNodeParameter('filters.query', itemIndex, '') as string;
 	}
 
 	if (Object.keys(filter).length > 0) {

@@ -206,23 +206,19 @@
     "messages": {
       "successTitle": "Succès",
       "archived": "Document archivé avec succès.",
-      "unarchived": "Document désarchivé avec succès.",
-      "draftDeleted": "Brouillon supprimé avec succès."
+      "unarchived": "Document désarchivé avec succès."
     },
     "errors": {
       "title": "Erreur",
       "archive": "Échec de l’archivage du document",
       "unarchive": "Échec du désarchivage du document",
-      "deleteDraft": "Échec de la suppression du brouillon",
       "generatePdf": "Échec de la génération du PDF"
     },
     "confirmations": {
-      "archive": "Cette action archivera le document « {{title}} ». Il ne sera plus modifiable.",
-      "deleteDraft": "Cette action supprimera le brouillon actuel et rétablira la dernière version publiée."
+      "archive": "Cette action archivera le document « {{title}} ». Il ne sera plus modifiable."
     },
     "actions": {
       "downloadPdf": "Télécharger le PDF",
-      "deleteDraft": "Supprimer le brouillon",
       "archive": "Archiver",
       "archiveDocument": "Archiver le document",
       "unarchiveDocument": "Désarchiver le document",
@@ -540,6 +536,32 @@
       "anonymous": "Collaborateur",
       "inactive": "{{name}} (inactif)",
       "overflow": "{{count}} personnes de plus"
+    },
+    "review": {
+      "viewing": "Lecture",
+      "editing": "Modification",
+      "suggesting": "Suggestion",
+      "comment": "Commenter",
+      "reply": "Répondre",
+      "resolve": "Résoudre",
+      "reopen": "Rouvrir",
+      "accept": "Accepter",
+      "reject": "Refuser",
+      "edit": "Modifier",
+      "delete": "Supprimer",
+      "save": "Enregistrer",
+      "showResolved": "Afficher les fils résolus",
+      "cancel": "Annuler",
+      "history": "Commentaires",
+      "resolvedEmpty": "Aucun commentaire résolu",
+      "detached": "Détaché du texte",
+      "commentPlaceholder": "Ajouter un commentaire",
+      "replyPlaceholder": "Répondre",
+      "suggestionBy": "Suggestion de {{name}}",
+      "commentFailed": "Impossible d'ajouter le commentaire",
+      "suggestionFailed": "Impossible de démarrer la suggestion",
+      "selectComment": "Sélectionner le commentaire de {{name}}",
+      "selectSuggestion": "Sélectionner la suggestion de {{name}}"
     }
   },
   "documentSignaturesPage": {
@@ -1005,6 +1027,10 @@
     "addPlaceholder": "Ajouter des personnes...",
     "empty": "Aucune personne disponible",
     "remove": "Retirer {{name}}"
+  },
+  "peopleMenu": {
+    "searchPlaceholder": "Rechercher par nom ou e-mail",
+    "empty": "Aucun utilisateur"
   },
   "userSelect": {
     "loadMore": "Charger plus"
@@ -1534,6 +1560,7 @@
     "riskSeverity": {
       "critical": "Critique",
       "high": "Élevée",
+      "medium": "Moyenne",
       "low": "Faible"
     },
     "trackerType": {
@@ -2251,6 +2278,7 @@
     "context": "Contexte",
     "webhooks": "Webhooks",
     "slackBot": "SlackBot",
+    "taskSynchronization": "Synchronisation des tâches",
     "integrations": "INTÉGRATIONS",
     "tasks": "Tâches",
     "internalControls": "Contrôles internes",

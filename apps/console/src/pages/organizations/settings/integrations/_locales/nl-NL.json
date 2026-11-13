@@ -51,6 +51,8 @@
       "clientSecret": "Clientgeheim",
       "scope": "Bereik",
       "datadogSite": "Datadog-site",
+      "datadogSitePlaceholder": "Selecteer een site",
+      "datadogTokenHint": "Plak een service access token van een Datadog-serviceaccount, met het bereik user_access_read. Een personal access token werkt ook, tot het verloopt.",
       "zendeskSubdomain": "Zendesk-subdomein",
       "region": "Regio",
       "regionPlaceholder": "Selecteer een regio",
@@ -133,6 +135,7 @@
       "available": "Beschikbaar"
     },
     "addMore": "Meer toevoegen",
+    "suggestDescription": "Selecteer \"Meer toevoegen\" om de volledige lijst met integraties te zien die Probo ondersteunt.",
     "emptyConnected": "Er is nog geen leverancier verbonden.",
     "emptyConnectedSearch": "Geen verbonden leverancier komt overeen met uw zoekopdracht.",
     "checkingStatuses": "Verbindingsstatussen worden gecontroleerd…",

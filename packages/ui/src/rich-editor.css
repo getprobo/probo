@@ -272,4 +272,9 @@
     .rich-upload {
         @apply my-2 rounded-lg border border-dashed border-border-solid px-3 py-2 text-sm text-txt-tertiary;
     }
+
+    .suggestion-deleted-line::before {
+        content: "¶";
+        @apply mr-0.5 text-red-11 line-through;
+    }
 }

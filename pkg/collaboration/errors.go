@@ -30,18 +30,11 @@ type ErrCollaborationStateTooLarge struct {
 }
 
 var (
-	ErrDocumentCollaborationNotSeeded = errors.New("collaboration document is not initialized")
-	ErrSeedInProgress                 = errors.New("collaboration document seed is in progress")
-	ErrDocumentCollaborationStale     = errors.New("collaboration document changed; read it again before editing")
+	ErrDocumentCollaborationNotFound = errors.New("document has no collaboration document")
+	ErrDocumentCollaborationStale    = errors.New("collaboration document changed; read it again before editing")
 
 	ErrDocumentCollaborationBaseHeadsUnknown = errors.New(
 		"collaboration base heads are unknown; read the document again",
-	)
-	ErrDocumentCollaborationContentOnSeeded = errors.New(
-		"seeded draft rejects full content; use fragment edits",
-	)
-	ErrDocumentCollaborationEditsNotSeeded = errors.New(
-		"collaboration document is not initialized; send full content first",
 	)
 )
 

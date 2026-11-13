@@ -18,17 +18,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import react from "@vitejs/plugin-react";
-import { defineConfig, type UserConfig } from "vite";
+import { fileURLToPath } from "node:url";
+import { defineConfig, loadEnv, type UserConfig } from "vite";
 
-export function createExampleViteConfig(port: number): UserConfig {
+const envDir = fileURLToPath(new URL(".", import.meta.url));
+
+function allowedHosts(mode: string): string[] {
+  const domain = (loadEnv(mode, envDir, "PUBLIC_").PUBLIC_EXAMPLE_DOMAIN ?? "")
+    .trim()
+    .replace(/^\.+|\.+$/g, "");
+  const hosts = ["localhost", ".localhost"];
+  if (domain !== "" && domain !== "localhost" && !domain.endsWith(".localhost")) {
+    hosts.push(`.${domain}`);
+  }
+  return hosts;
+}
+
+export function createExampleViteConfig(port: number, mode = "development"): UserConfig {
   return defineConfig({
-    plugins: [react()],
     envPrefix: "PUBLIC_",
-    envDir: "..",
+    envDir,
     server: {
       port,
       strictPort: true,
+      allowedHosts: allowedHosts(mode),
     },
     optimizeDeps: {
       exclude: ["@probo/example-cookie-banner-shared"],

@@ -43,6 +43,7 @@ import { compliancePortalRoutes } from "./pages/organizations/compliance-portals
 import { cookieBannerRoutes } from "./pages/organizations/cookie-banners/routes";
 import { deviceRoutes } from "./pages/organizations/devices/routes";
 import { employeePortalRoutes } from "./pages/organizations/employee-portal/routes";
+import { findingRoutes } from "./pages/organizations/findings/routes";
 import { internalControlRoutes } from "./pages/organizations/internal-controls/routes";
 import { riskRoutes } from "./pages/organizations/risks/routes";
 import { integrationRoutes } from "./pages/organizations/settings/integrations/routes";
@@ -54,7 +55,6 @@ import { auditRoutes } from "./routes/auditRoutes";
 import { contextRoutes } from "./routes/contextRoutes";
 import { dataRoutes } from "./routes/dataRoutes";
 import { documentsRoutes } from "./routes/documentsRoutes";
-import { findingRoutes } from "./routes/findingRoutes";
 import { frameworkRoutes } from "./routes/frameworkRoutes";
 import { obligationRoutes } from "./routes/obligationRoutes";
 import { processingActivityRoutes } from "./routes/processingActivityRoutes";
@@ -322,6 +322,14 @@ const routes = [
                 Component: lazy(
                   () =>
                     import("./pages/organizations/settings/SlackBotSettingsPageLoader"),
+                ),
+              },
+              {
+                path: "task-synchronization",
+                Fallback: PageSkeleton,
+                Component: lazy(
+                  () =>
+                    import("./pages/organizations/settings/TaskSynchronizationPageLoader"),
                 ),
               },
               ...integrationRoutes,

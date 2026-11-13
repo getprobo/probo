@@ -41,7 +41,9 @@ func TestDatadogAuthorizeURL(t *testing.T) {
 		{"EU1", "https://app.datadoghq.eu/oauth2/v1/authorize"},
 		{"AP1", "https://ap1.datadoghq.com/oauth2/v1/authorize"},
 		{"AP2", "https://ap2.datadoghq.com/oauth2/v1/authorize"},
+		{"UK1", "https://uk1.datadoghq.com/oauth2/v1/authorize"},
 		{"US1-FED", "https://app.ddog-gov.com/oauth2/v1/authorize"},
+		{"US2-FED", "https://us2.ddog-gov.com/oauth2/v1/authorize"},
 	} {
 		got, err := connectorprotocol.DatadogAuthorizeURL(tc.site)
 		require.NoError(t, err, tc.site)
@@ -65,7 +67,9 @@ func TestDatadogTokenURL(t *testing.T) {
 		{"datadoghq.eu", "https://api.datadoghq.eu/oauth2/v1/token"},
 		{"ap1.datadoghq.com", "https://api.ap1.datadoghq.com/oauth2/v1/token"},
 		{"ap2.datadoghq.com", "https://api.ap2.datadoghq.com/oauth2/v1/token"},
+		{"uk1.datadoghq.com", "https://api.uk1.datadoghq.com/oauth2/v1/token"},
 		{"ddog-gov.com", "https://api.ddog-gov.com/oauth2/v1/token"},
+		{"us2.ddog-gov.com", "https://api.us2.ddog-gov.com/oauth2/v1/token"},
 	} {
 		got, err := connectorprotocol.DatadogTokenURL(tc.domain)
 		require.NoError(t, err, tc.domain)
@@ -81,7 +85,8 @@ func TestIsValidDatadogDomain(t *testing.T) {
 
 	for _, domain := range []string{
 		"datadoghq.com", "us3.datadoghq.com", "us5.datadoghq.com",
-		"datadoghq.eu", "ap1.datadoghq.com", "ap2.datadoghq.com", "ddog-gov.com",
+		"datadoghq.eu", "ap1.datadoghq.com", "ap2.datadoghq.com", "uk1.datadoghq.com",
+		"ddog-gov.com", "us2.ddog-gov.com",
 	} {
 		assert.True(t, connectorprotocol.IsValidDatadogDomain(domain), domain)
 	}
@@ -106,4 +111,17 @@ func TestDatadogSiteForDomain(t *testing.T) {
 
 	_, ok = connectorprotocol.DatadogSiteForDomain("nope.com")
 	assert.False(t, ok)
+}
+
+func TestDatadogAPIDomain(t *testing.T) {
+	t.Parallel()
+
+	domain, ok := connectorprotocol.DatadogAPIDomain("UK1")
+	require.True(t, ok)
+	assert.Equal(t, "uk1.datadoghq.com", domain)
+
+	for _, site := range []string{"", "us1", "datadoghq.com", "evil.example.com"} {
+		_, ok := connectorprotocol.DatadogAPIDomain(site)
+		assert.False(t, ok, site)
+	}
 }

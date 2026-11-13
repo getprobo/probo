@@ -35,23 +35,26 @@ type (
 	// type via @goModel. The first block contains the fields gqlgen
 	// fulfills directly from the model; resolver-only fields
 	// (cookieCategory, detectedTrackers, commonThirdParty, attribution,
-	// detectedCount, sampleHits, permission) are populated by the resolver.
+	// sourceCookieBanner, detectedCount, sampleHits, permission) are
+	// populated by the resolver. SourceCookieBannerID is the sibling
+	// banner that promoted source, when one did.
 	//
 	// CommonTrackerPatternID is exposed directly as the
 	// commonTrackerPatternId field: a non-null value indicates the
 	// pattern is linked to the common tracker-pattern catalog, which is
 	// used to debug the provenance of agent-generated descriptions.
 	TrackerPattern struct {
-		ID            gid.GID                          `json:"id"`
-		TrackerType   coredata.TrackerType             `json:"trackerType"`
-		Pattern       string                           `json:"pattern"`
-		MatchType     coredata.TrackerPatternMatchType `json:"matchType"`
-		MaxAgeSeconds *int                             `json:"maxAgeSeconds,omitempty"`
-		Description   string                           `json:"description"`
-		Source        *coredata.CookieSource           `json:"source,omitempty"`
-		Excluded      bool                             `json:"excluded"`
-		CreatedAt     time.Time                        `json:"createdAt"`
-		UpdatedAt     time.Time                        `json:"updatedAt"`
+		ID                   gid.GID                          `json:"id"`
+		TrackerType          coredata.TrackerType             `json:"trackerType"`
+		Pattern              string                           `json:"pattern"`
+		MatchType            coredata.TrackerPatternMatchType `json:"matchType"`
+		MaxAgeSeconds        *int                             `json:"maxAgeSeconds,omitempty"`
+		Description          string                           `json:"description"`
+		Source               *coredata.CookieSource           `json:"source,omitempty"`
+		SourceCookieBannerID *gid.GID                         `json:"sourceCookieBannerId,omitempty"`
+		Excluded             bool                             `json:"excluded"`
+		CreatedAt            time.Time                        `json:"createdAt"`
+		UpdatedAt            time.Time                        `json:"updatedAt"`
 
 		CookieCategory   *CookieCategory            `json:"cookieCategory,omitempty"`
 		DetectedTrackers *DetectedTrackerConnection `json:"detectedTrackers,omitempty"`
@@ -154,6 +157,7 @@ func NewTrackerPatternNode(tp *coredata.TrackerPattern) *TrackerPattern {
 		MaxAgeSeconds:          tp.MaxAgeSeconds,
 		Description:            tp.Description,
 		Source:                 tp.Source,
+		SourceCookieBannerID:   tp.SourceCookieBannerID,
 		Excluded:               tp.Excluded,
 		CreatedAt:              tp.CreatedAt,
 		UpdatedAt:              tp.UpdatedAt,

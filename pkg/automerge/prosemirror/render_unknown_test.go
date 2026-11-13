@@ -28,6 +28,7 @@ import (
 	"go.probo.inc/probo/pkg/automerge"
 	automergeprosemirror "go.probo.inc/probo/pkg/automerge/prosemirror"
 	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/richtext"
 )
 
 // assertCanonicalRenderable proves the rendered JSON only contains node and mark
@@ -40,10 +41,10 @@ func assertCanonicalRenderable(t *testing.T, content string) {
 	node, err := prosemirror.Parse(content)
 	require.NoError(t, err)
 
-	_, err = prosemirror.RenderMarkdown(node)
+	_, err = richtext.DocumentMarkdown.Render(node)
 	require.NoError(t, err)
 
-	_, err = prosemirror.RenderHTML(node)
+	_, err = richtext.DocumentHTML.Render(node)
 	require.NoError(t, err)
 }
 
@@ -410,8 +411,8 @@ func testBlock(blockType string, parents []any) automerge.Span {
 
 func nodeText(node prosemirror.Node) string {
 	var text string
-	if node.Text != nil {
-		text = *node.Text
+	if node.Text != "" {
+		text = node.Text
 	}
 
 	for _, child := range node.Content {

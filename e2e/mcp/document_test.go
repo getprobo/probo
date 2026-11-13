@@ -128,7 +128,7 @@ func TestMCP_Document_CollaborationEdits(t *testing.T) {
 	mc := testutil.NewMCPClient(t, owner)
 	orgID := owner.GetOrganizationID().String()
 
-	initial := proseMirrorDoc("Old body", "Keep me")
+	initial := documentWithTable("Old body", "Keep me")
 
 	var addResult struct {
 		Document struct {
@@ -144,23 +144,6 @@ func TestMCP_Document_CollaborationEdits(t *testing.T) {
 	}, &addResult)
 	require.NotEmpty(t, addResult.Document.ID)
 
-	seeded := documentWithTable("Old body", "Keep me")
-
-	var seedResult struct {
-		Document struct {
-			Content            string   `json:"content"`
-			CollaborationHeads []string `json:"collaboration_heads"`
-		} `json:"document"`
-	}
-	mc.CallToolInto("updateDocument", map[string]any{
-		"id":      addResult.Document.ID,
-		"content": seeded,
-	}, &seedResult)
-	require.NotEmpty(t, seedResult.Document.CollaborationHeads)
-	assert.Contains(t, seedResult.Document.Content, `"type":"doc"`)
-	assert.Contains(t, seedResult.Document.Content, `"type":"table"`)
-	assert.NotContains(t, seedResult.Document.Content, "# ")
-
 	var getVersion struct {
 		Document struct {
 			ID                 string   `json:"id"`
@@ -171,24 +154,11 @@ func TestMCP_Document_CollaborationEdits(t *testing.T) {
 	mc.CallToolInto("getDocument", map[string]any{
 		"id": addResult.Document.ID,
 	}, &getVersion)
-	require.Equal(
-		t,
-		seedResult.Document.CollaborationHeads,
-		getVersion.Document.CollaborationHeads,
-	)
+	require.NotEmpty(t, getVersion.Document.CollaborationHeads)
+	assert.Contains(t, getVersion.Document.Content, `"type":"doc"`)
+	assert.Contains(t, getVersion.Document.Content, `"type":"table"`)
 	assert.Contains(t, getVersion.Document.Content, "Old body")
-
-	seededContentErr := mc.CallToolExpectToolError("updateDocument", map[string]any{
-		"id":      addResult.Document.ID,
-		"content": proseMirrorDoc("Should fail"),
-	})
-	assert.True(
-		t,
-		strings.Contains(seededContentErr, "fragment edits") ||
-			strings.Contains(seededContentErr, "seeded draft"),
-		"unexpected error: %s",
-		seededContentErr,
-	)
+	assert.NotContains(t, getVersion.Document.Content, "# ")
 
 	markdownErr := mc.CallToolExpectToolError("addDocument", map[string]any{
 		"organization_id": orgID,
@@ -330,7 +300,7 @@ func TestMCP_Document_CollaborationEdits(t *testing.T) {
 	}
 	mc.CallToolInto("restoreDocumentHistory", map[string]any{
 		"document_id": addResult.Document.ID,
-		"heads":       seedResult.Document.CollaborationHeads,
+		"heads":       getVersion.Document.CollaborationHeads,
 	}, &restoreResult)
 	assert.Equal(t, addResult.Document.ID, restoreResult.Document.ID)
 

@@ -143,13 +143,6 @@ func newRepoTestServerWithConfig(
 
 		defer lease.Close()
 
-		if lease.SeedOwner() {
-			if err := SeedRepoCollaboration(collaborationCtx, lease); err != nil {
-				_ = connection.Close(websocket.StatusInternalError, "collaboration failed")
-				return
-			}
-		}
-
 		syncState, err := lease.Collaboration().Document.NewSyncState()
 		if err != nil {
 			return
@@ -494,42 +487,6 @@ func TestServeRepoCollaboration_ConvergesRealDocument(t *testing.T) {
 
 	client := dialRepoClient(t, ctx, wsURL, "client-a", repoDocumentID)
 	client.waitForBody(t, ctx, "hello repo")
-}
-
-func TestServeRepoCollaboration_SeedsUnseededDocument(t *testing.T) {
-	t.Parallel()
-
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-	defer cancel()
-
-	tenantID := gid.NewTenantID()
-	documentID := gid.New(tenantID, coredata.DocumentEntityType)
-
-	serverDocument, err := automerge.New(automerge.ActorID{202})
-	require.NoError(t, err)
-
-	defer func() { _ = serverDocument.Close() }()
-
-	const seedContent = `{"type":"doc","content":[` +
-		`{"type":"heading","attrs":{"level":2},"content":[{"type":"text","text":"Seeded"}]},` +
-		`{"type":"paragraph","content":[{"type":"text","text":"body text"}]}]}`
-
-	documents := &fakeDocumentCollaborationDocuments{
-		opened: &collaboration.DocumentCollaboration{
-			Document:    serverDocument,
-			Revision:    1,
-			NeedsSeed:   true,
-			SeedContent: seedContent,
-		},
-	}
-	hub := NewHub(documents, nil)
-	server := newRepoTestServer(t, hub, coredata.NewScope(tenantID, gid.Nil), documentID, nil)
-
-	wsURL := "ws" + strings.TrimPrefix(server.URL, "http")
-	repoDocumentID := collabpkg.DeriveDocumentID(documentID.String())
-
-	client := dialRepoClient(t, ctx, wsURL, "client-a", repoDocumentID)
-	client.waitForBody(t, ctx, "\uFFFCSeeded\uFFFCbody text")
 }
 
 func TestServeRepoCollaboration_FansOutEphemeral(t *testing.T) {

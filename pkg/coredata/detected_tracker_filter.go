@@ -20,14 +20,35 @@
 
 package coredata
 
-import "github.com/jackc/pgx/v5"
+import (
+	"time"
+
+	"github.com/jackc/pgx/v5"
+)
 
 type DetectedTrackerFilter struct {
 	trackerTypes []TrackerType
+	identifiers  []string
+	updatedSince *time.Time
 }
 
 func NewDetectedTrackerFilter(trackerTypes []TrackerType) *DetectedTrackerFilter {
 	return &DetectedTrackerFilter{trackerTypes: trackerTypes}
+}
+
+// WithIdentifiers restricts results to detections whose identifier is one
+// of the given names. A nil slice disables the filter. An empty slice
+// matches nothing.
+func (f *DetectedTrackerFilter) WithIdentifiers(identifiers []string) *DetectedTrackerFilter {
+	f.identifiers = identifiers
+	return f
+}
+
+// WithUpdatedSince restricts results to detections updated at or after
+// since. A nil time disables the filter.
+func (f *DetectedTrackerFilter) WithUpdatedSince(since *time.Time) *DetectedTrackerFilter {
+	f.updatedSince = since
+	return f
 }
 
 func (f *DetectedTrackerFilter) SQLFragment() string {
@@ -38,16 +59,34 @@ func (f *DetectedTrackerFilter) SQLFragment() string {
 			tracker_type::text = ANY(@filter_tracker_types::text[])
 		ELSE TRUE
 	END
+	AND
+	CASE
+		WHEN @filter_identifiers::text[] IS NULL THEN TRUE
+		ELSE identifier = ANY(@filter_identifiers::text[])
+	END
+	AND
+	CASE
+		WHEN @filter_updated_since::timestamptz IS NULL THEN TRUE
+		ELSE updated_at >= @filter_updated_since::timestamptz
+	END
 )`
 }
 
 func (f *DetectedTrackerFilter) SQLArguments() pgx.StrictNamedArgs {
-	var trackerTypes []TrackerType
+	var (
+		trackerTypes []TrackerType
+		identifiers  []string
+		updatedSince *time.Time
+	)
 	if f != nil {
 		trackerTypes = f.trackerTypes
+		identifiers = f.identifiers
+		updatedSince = f.updatedSince
 	}
 
 	return pgx.StrictNamedArgs{
 		"filter_tracker_types": filterStrings(trackerTypes),
+		"filter_identifiers":   identifiers,
+		"filter_updated_since": updatedSince,
 	}
 }

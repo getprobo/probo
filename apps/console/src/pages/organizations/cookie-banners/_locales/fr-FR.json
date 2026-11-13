@@ -68,9 +68,10 @@
     "errors": { "deleteTracker": "Échec de la suppression du traceur", "moveCookie": "Échec du déplacement du cookie", "updateCookie": "Échec de la mise à jour du cookie" },
     "deleteConfirmation": "Voulez-vous vraiment supprimer \"{{name}}\" ?",
     "dialogs": { "deleteTitle": "Supprimer le traceur" },
-    "actions": { "include": "Inclure", "exclude": "Exclure", "delete": "Supprimer", "cancel": "Annuler", "more": "Plus d’actions", "description": "Afficher la description" },
+    "actions": { "include": "Inclure", "exclude": "Exclure", "delete": "Supprimer", "cancel": "Annuler", "more": "Plus d’actions", "description": "Afficher la description", "sourceBanner": "Afficher la bannière source" },
     "types": { "cookie": "Cookie", "cookieShort": "C", "localStorage": "localStorage", "localStorageShort": "LS", "sessionStorage": "sessionStorage", "sessionStorageShort": "SS", "indexedDb": "IndexedDB", "indexedDbShort": "IDB", "cacheStorage": "Stockage en cache", "cacheStorageShort": "CS" },
     "sources": { "script": "Script", "preExisting": "Préexistant", "http": "HTTP", "extension": "Extension" },
+    "sourceVia": "via {{origin}}",
     "duration": { "session": "Session", "persistent": "Persistant" }
   },
   "trackerProperties": {
@@ -93,6 +94,7 @@
     "empty": "Aucune détection pour ce traceur pour le moment.",
     "sort": { "initiatorUrl": "Trier par URL initiatrice", "firstSeen": "Trier par première détection" },
     "actions": { "showMore": "Afficher plus" },
+    "promotedNote": "Ces détections proviennent de cette bannière. La source « {{source}} » a été observée sur {{origin}}.",
     "summary_one": "{{count}} détection",
     "summary_other": "{{count}} détections"
   },

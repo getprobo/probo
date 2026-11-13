@@ -5,6 +5,13 @@ this file.
 
 ## Unreleased
 
+## [0.6.1] - 2026-11-11
+
+### Changed
+
+- `using-prb` lists `--title` on `finding create`, which the CLI now
+  requires
+
 ## [0.6.0] - 2026-11-02
 
 ### Changed

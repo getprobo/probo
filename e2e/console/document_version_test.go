@@ -305,7 +305,6 @@ func TestDocumentVersion(t *testing.T) {
 		{name: "PublishVersion", run: documentVersionPublishVersion},
 		{name: "PublishInitialMinorVersion", run: documentVersionPublishInitialMinorVersion},
 		{name: "AutoCreateDraft", run: documentVersionAutoCreateDraft},
-		{name: "AutoDeleteDraft", run: documentVersionAutoDeleteDraft},
 		{name: "RequestSignature", run: documentVersionRequestSignature},
 		{name: "BulkPublish", run: documentVersionBulkPublish},
 		{name: "BulkPublishRequestsApproval", run: documentVersionBulkPublishRequestsApproval},
@@ -320,7 +319,6 @@ func TestDocumentVersion(t *testing.T) {
 		{name: "PublishBlockedWhenPendingApproval", run: documentVersionPublishBlockedWhenPendingApproval},
 		{name: "PublishApproverIDsContract", run: documentVersionPublishApproverIDsContract},
 		{name: "DefaultApprovers", run: documentDefaultApprovers},
-		{name: "DeleteDraft", run: documentVersionDeleteDraft},
 		{name: "ExportPDFSignatures", run: documentVersionExportPDFSignatures},
 		{name: "MajorPublishCancelsSignatureRequests", run: documentVersionMajorPublishCancelsSignatureRequests},
 		{name: "MinorPublishKeepsSignatureRequests", run: documentVersionMinorPublishKeepsSignatureRequests},
@@ -551,46 +549,6 @@ func documentVersionAutoCreateDraft(t *testing.T, actors documentVersionActors) 
 	assert.Nil(t, result.UpdateDocument.DocumentVersion)
 	assert.Contains(t, result.UpdateDocument.Document.Content.Prosemirror, "Updated content")
 	assert.Contains(t, result.UpdateDocument.Document.Content.Markdown, "Updated content")
-}
-
-func documentVersionAutoDeleteDraft(t *testing.T, actors documentVersionActors) {
-	owner := actors.owner.ForTest(t)
-
-	docID, _ := createTestDocument(t, owner)
-	approveTestDocument(t, owner, docID)
-	updateDocumentContent(t, owner, docID, "Updated content")
-
-	_, err := owner.Do(`
-		mutation DeleteDocumentDraft($input: DeleteDocumentDraftInput!) {
-			deleteDocumentDraft(input: $input) {
-				document { id }
-			}
-		}
-	`, map[string]any{
-		"input": map[string]any{"documentId": docID},
-	})
-	require.NoError(t, err)
-
-	var restored struct {
-		Node struct {
-			Content struct {
-				Prosemirror string `json:"prosemirror"`
-			} `json:"content"`
-		} `json:"node"`
-	}
-
-	err = owner.Execute(`
-		query($id: ID!) {
-			node(id: $id) {
-				... on Document {
-					content { prosemirror }
-				}
-			}
-		}
-	`, map[string]any{"id": docID}, &restored)
-	require.NoError(t, err)
-	assert.Contains(t, restored.Node.Content.Prosemirror, "Initial content")
-	assert.NotContains(t, restored.Node.Content.Prosemirror, "Updated content")
 }
 
 func documentVersionRequestSignature(t *testing.T, actors documentVersionActors) {
@@ -1751,161 +1709,6 @@ func documentDefaultApprovers(t *testing.T, actors documentVersionActors) {
 		assert.Equal(t, "PUBLISHED", result.PublishDocument.DocumentVersion.Status)
 		assert.Empty(t, result.PublishDocument.Document.DefaultApprovers)
 	})
-}
-
-func documentVersionDeleteDraft(t *testing.T, actors documentVersionActors) {
-	const query = `
-		mutation DeleteDocumentDraft($input: DeleteDocumentDraftInput!) {
-			deleteDocumentDraft(input: $input) {
-				document {
-					id
-				}
-			}
-		}
-	`
-
-	t.Run(
-		"delete draft after publishing",
-		func(t *testing.T) {
-			t.Parallel()
-
-			owner := actors.owner.ForTest(t)
-
-			docID, _ := createTestDocument(t, owner)
-			approveTestDocument(t, owner, docID)
-
-			// Create a draft by updating content
-			updateQuery := `
-				mutation UpdateDocument($input: UpdateDocumentInput!) {
-					updateDocument(input: $input) {
-						document { id }
-						documentVersion { id status }
-					}
-				}
-			`
-
-			var updateResult struct {
-				UpdateDocument struct {
-					Document struct {
-						ID string `json:"id"`
-					} `json:"document"`
-					DocumentVersion *struct {
-						ID     string `json:"id"`
-						Status string `json:"status"`
-					} `json:"documentVersion"`
-				} `json:"updateDocument"`
-			}
-
-			err := owner.Execute(updateQuery, map[string]any{
-				"input": map[string]any{
-					"id":      docID,
-					"content": testutil.ProseMirrorTextDoc("Draft content"),
-				},
-			}, &updateResult)
-			require.NoError(t, err)
-
-			// Discard the live edits and restore the published snapshot.
-			var result struct {
-				DeleteDocumentDraft struct {
-					Document struct {
-						ID string `json:"id"`
-					} `json:"document"`
-				} `json:"deleteDocumentDraft"`
-			}
-
-			err = owner.Execute(query, map[string]any{
-				"input": map[string]any{"documentId": docID},
-			}, &result)
-			require.NoError(t, err)
-			assert.Equal(t, docID, result.DeleteDocumentDraft.Document.ID)
-		},
-	)
-
-	t.Run(
-		"cannot delete initial v0.1 draft",
-		func(t *testing.T) {
-			t.Parallel()
-
-			owner := actors.owner.ForTest(t)
-
-			docID, _ := createTestDocument(t, owner)
-
-			var result struct{}
-
-			err := owner.Execute(query, map[string]any{
-				"input": map[string]any{"documentId": docID},
-			}, &result)
-			require.Error(t, err)
-		},
-	)
-
-	t.Run(
-		"discard succeeds when the live document matches the publication",
-		func(t *testing.T) {
-			t.Parallel()
-
-			owner := actors.owner.ForTest(t)
-
-			docID, _ := createTestDocument(t, owner)
-			approveTestDocument(t, owner, docID)
-
-			var result struct{}
-
-			err := owner.Execute(query, map[string]any{
-				"input": map[string]any{"documentId": docID},
-			}, &result)
-			require.NoError(t, err)
-		},
-	)
-
-	t.Run(
-		"viewer cannot delete draft",
-		func(t *testing.T) {
-			t.Parallel()
-
-			owner := actors.owner.ForTest(t)
-			viewer := actors.viewer.ForTest(t)
-
-			docID, _ := createTestDocument(t, owner)
-			approveTestDocument(t, owner, docID)
-
-			// Create a draft
-			updateQuery := `
-				mutation UpdateDocument($input: UpdateDocumentInput!) {
-					updateDocument(input: $input) {
-						document { id }
-						documentVersion { id }
-					}
-				}
-			`
-
-			var updateResult struct {
-				UpdateDocument struct {
-					Document struct {
-						ID string `json:"id"`
-					} `json:"document"`
-					DocumentVersion *struct {
-						ID string `json:"id"`
-					} `json:"documentVersion"`
-				} `json:"updateDocument"`
-			}
-
-			err := owner.Execute(updateQuery, map[string]any{
-				"input": map[string]any{
-					"id":      docID,
-					"content": testutil.ProseMirrorTextDoc("Draft content"),
-				},
-			}, &updateResult)
-			require.NoError(t, err)
-
-			var result struct{}
-
-			err = viewer.Execute(query, map[string]any{
-				"input": map[string]any{"documentId": docID},
-			}, &result)
-			testutil.RequireForbiddenError(t, err, "viewer should not be able to delete document draft")
-		},
-	)
 }
 
 func documentVersionExportPDFSignatures(t *testing.T, actors documentVersionActors) {

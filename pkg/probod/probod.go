@@ -101,6 +101,8 @@ import (
 	"go.probo.inc/probo/pkg/slack"
 	"go.probo.inc/probo/pkg/task"
 	tasksync "go.probo.inc/probo/pkg/task/sync"
+	asanasvc "go.probo.inc/probo/pkg/task/sync/asana"
+	linearsvc "go.probo.inc/probo/pkg/task/sync/linear"
 	"go.probo.inc/probo/pkg/thirdparty"
 	"go.probo.inc/probo/pkg/webhook"
 	"golang.org/x/sync/errgroup"
@@ -447,6 +449,13 @@ func (impl *Implm) Run(
 	}
 
 	linearAPIBaseURL := linearRegistration.Endpoints.APIBase
+
+	asanaRegistration, ok := providerRegistry.Get(coredata.ConnectorProviderAsana)
+	if !ok {
+		return fmt.Errorf("cannot configure asana task sync: no asana connector provider registered")
+	}
+
+	asanaAPIBaseURL := asanaRegistration.Endpoints.APIBase
 
 	defaultConnectorRegistry := connectorprotocol.NewConnectorRegistry()
 
@@ -919,6 +928,7 @@ func (impl *Implm) Run(
 		defaultConnectorRegistry,
 		baseURL.String(),
 		linearAPIBaseURL,
+		asanaAPIBaseURL,
 		l.Named("task"),
 		fileManagerService,
 		impl.cfg.AWS.Bucket,
@@ -1443,8 +1453,19 @@ func (impl *Implm) Run(
 		},
 	)
 
-	linearWebhookWorker := tasksync.NewWebhookWorker(
-		taskService.Sync,
+	asanaWebhookWorker := asanasvc.NewAsanaWebhookWorker(
+		taskService.Sync.Asana,
+		l.Named("asana-webhook"),
+		worker.WithInterval(time.Second),
+		worker.WithRegisterer(r),
+		worker.WithTracerProvider(tp),
+	)
+	asanaWebhookWorkerCtx, stopAsanaWebhookWorker := context.WithCancel(
+		context.WithoutCancel(ctx),
+	)
+
+	linearWebhookWorker := linearsvc.NewWebhookWorker(
+		taskService.Sync.Linear,
 		l.Named("linear-webhook"),
 		worker.WithInterval(time.Second),
 		worker.WithRegisterer(r),
@@ -1468,6 +1489,14 @@ func (impl *Implm) Run(
 		func() {
 			if err := linearWebhookWorker.Run(linearWebhookWorkerCtx); err != nil {
 				cancel(fmt.Errorf("linear webhook worker crashed: %w", err))
+			}
+		},
+	)
+
+	wg.Go(
+		func() {
+			if err := asanaWebhookWorker.Run(asanaWebhookWorkerCtx); err != nil {
+				cancel(fmt.Errorf("asana webhook worker crashed: %w", err))
 			}
 		},
 	)
@@ -1624,10 +1653,21 @@ func (impl *Implm) Run(
 	trackerPatternAnalysisWorker := cookiebanner.NewPatternAnalysisWorker(cookieBannerService, pgClient, l)
 	trackerPatternAnalysisWorkerCtx, stopTrackerPatternAnalysisWorker := context.WithCancel(context.Background())
 
+	bannerSourcePromotionWorker := cookiebanner.NewBannerSourcePromotionWorker(cookieBannerService, pgClient, l)
+	bannerSourcePromotionWorkerCtx, stopBannerSourcePromotionWorker := context.WithCancel(context.Background())
+
 	wg.Go(
 		func() {
 			if err := trackerPatternAnalysisWorker.Run(trackerPatternAnalysisWorkerCtx); err != nil {
 				cancel(fmt.Errorf("tracker pattern analysis worker crashed: %w", err))
+			}
+		},
+	)
+
+	wg.Go(
+		func() {
+			if err := bannerSourcePromotionWorker.Run(bannerSourcePromotionWorkerCtx); err != nil {
+				cancel(fmt.Errorf("banner source promotion worker crashed: %w", err))
 			}
 		},
 	)
@@ -1843,6 +1883,7 @@ func (impl *Implm) Run(
 	stopESignService()
 	stopCertManagerService()
 	stopTrackerPatternAnalysisWorker()
+	stopBannerSourcePromotionWorker()
 	stopCookieBannerScanWorker()
 	stopTrackerPolicyWorker()
 	stopTrackerMappingWorker()
@@ -1854,6 +1895,7 @@ func (impl *Implm) Run(
 	stopTaskRecurrenceWorker()
 	stopTaskSyncOutboundWorker()
 	stopLinearWebhookWorker()
+	stopAsanaWebhookWorker()
 	stopLinearWebhookRetentionWorker()
 	stopDocumentPDFWorker()
 	stopDocumentApprovalQuorumPDFWorker()
@@ -2217,45 +2259,18 @@ func (impl *Implm) runCompliancePortalServer(
 
 	handler := acmeHandler.Handle(trustRouter)
 
-	ignoreTLSHandshakeErrors := func(level log.Level, msg string, attrs []log.Attr) bool {
-		return strings.Contains(msg, "tls: no certificates configured") ||
-			strings.Contains(msg, "client sent an HTTP request to an HTTPS server") ||
-			strings.Contains(msg, "tls: client offered only unsupported versions") ||
-			strings.Contains(msg, "EOF") ||
-			strings.Contains(msg, " i/o timeout") ||
-			strings.Contains(msg, "tls: first record does not look like a TLS handshake") ||
-			strings.Contains(msg, "tls: client requested unsupported application protocols") ||
-			strings.Contains(msg, "read: connection reset by peer") ||
-			strings.Contains(msg, "tls: unsupported SSLv2 handshake received") ||
-			strings.Contains(msg, "tls: no cipher suite supported by both client and server") ||
-			strings.Contains(msg, "tls: received record with version")
-	}
-	httpServerLogger := l.Named("", log.SkipMatch(ignoreTLSHandshakeErrors))
+	httpsServerLogger := l.Named("https", log.SkipMatch(skipNoisyTLSHandshake))
 	httpsServer := httpserver.NewServer(
 		impl.cfg.CompliancePortal.HTTPSAddr,
 		handler,
-		httpserver.WithLogger(httpServerLogger),
+		httpserver.WithLogger(httpsServerLogger),
 		httpserver.WithRegisterer(r),
 		httpserver.WithTracerProvider(tp),
 	)
 
 	httpsServer.TLSConfig = &tls.Config{
-		GetCertificate: func(hello *tls.ClientHelloInfo) (*tls.Certificate, error) {
-			cert, err := certSelector.GetCertificate(hello)
-			// Silently reject connections without SNI (load balancers, health checks, scanners)
-			if err != nil {
-				if _, ok := errors.AsType[*certmanager.NoSNIError](err); ok {
-					return nil, nil
-				}
-
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return nil, nil
-				}
-			}
-
-			return cert, err
-		},
-		MinVersion: tls.VersionTLS12,
+		GetCertificate: certSelector.GetHandshakeCertificate,
+		MinVersion:     tls.VersionTLS12,
 		CipherSuites: []uint16{
 			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
 			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,

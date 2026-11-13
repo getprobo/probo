@@ -155,6 +155,7 @@ input FindingFilter {
     priority: FindingPriority
     ownerId: ID
     auditId: ID
+    query: String
 }
 
 type Audit implements Node {
@@ -209,6 +210,7 @@ type Finding implements Node {
     organization: Organization @goField(forceResolver: true)
     kind: FindingKind!
     referenceId: String!
+    title: String!
     description: String
     source: String
     audits(
@@ -227,6 +229,14 @@ type Finding implements Node {
     priority: FindingPriority!
     risk: Risk @goField(forceResolver: true)
     effectivenessCheck: String
+    tasks(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TaskOrder
+        filter: TaskFilter
+    ): TaskConnection! @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
     permission(action: String!): Boolean! @goField(forceResolver: true)
@@ -282,6 +292,12 @@ extend type Mutation {
     deleteFindingAuditMapping(
         input: DeleteFindingAuditMappingInput!
     ): DeleteFindingAuditMappingPayload
+    createFindingTaskMapping(
+        input: CreateFindingTaskMappingInput!
+    ): CreateFindingTaskMappingPayload!
+    deleteFindingTaskMapping(
+        input: DeleteFindingTaskMappingInput!
+    ): DeleteFindingTaskMappingPayload!
     createAuditFrameworkMapping(
         input: CreateAuditFrameworkMappingInput!
     ): CreateAuditFrameworkMappingPayload
@@ -340,6 +356,7 @@ input DeleteAuditReportInput {
 input CreateFindingInput {
     organizationId: ID!
     kind: FindingKind!
+    title: String!
     description: String
     source: String
     identifiedOn: Datetime
@@ -355,6 +372,7 @@ input CreateFindingInput {
 
 input UpdateFindingInput {
     id: ID!
+    title: String @goField(omittable: true)
     description: String @goField(omittable: true)
     source: String @goField(omittable: true)
     identifiedOn: Datetime @goField(omittable: true)
@@ -381,6 +399,26 @@ input CreateFindingAuditMappingInput {
 input DeleteFindingAuditMappingInput {
     findingId: ID!
     auditId: ID!
+}
+
+input CreateFindingTaskMappingInput {
+    findingId: ID!
+    taskId: ID!
+}
+
+type CreateFindingTaskMappingPayload {
+    findingEdge: FindingEdge!
+    taskEdge: TaskEdge!
+}
+
+input DeleteFindingTaskMappingInput {
+    findingId: ID!
+    taskId: ID!
+}
+
+type DeleteFindingTaskMappingPayload {
+    deletedFindingId: ID!
+    deletedTaskId: ID!
 }
 
 type CreateAuditPayload {

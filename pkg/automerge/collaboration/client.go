@@ -65,6 +65,13 @@ func NewClientConn(config ClientConfig, sync SyncSession) (*ClientConn, error) {
 		return nil, fmt.Errorf("client connection requires a document id")
 	}
 
+	canonicalID, err := CanonicalDocumentID(config.DocumentID)
+	if err != nil {
+		return nil, fmt.Errorf("client connection document id: %w", err)
+	}
+
+	config.DocumentID = canonicalID
+
 	return &ClientConn{
 		config:       config,
 		sync:         sync,
@@ -192,7 +199,12 @@ func (c *ClientConn) Receive(frame []byte) (ClientInbound, error) {
 }
 
 func (c *ClientConn) validateDocument(message Message) error {
-	if message.DocumentID != c.config.DocumentID {
+	canonicalID, err := CanonicalDocumentID(message.DocumentID)
+	if err != nil {
+		return fmt.Errorf("client received a frame with a %w", err)
+	}
+
+	if canonicalID != c.config.DocumentID {
 		return fmt.Errorf(
 			"client scoped to document %q received a frame for document %q",
 			c.config.DocumentID,

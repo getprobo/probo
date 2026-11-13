@@ -21,6 +21,8 @@
 package page
 
 import (
+	"strings"
+
 	"github.com/jackc/pgx/v5"
 )
 
@@ -64,37 +66,25 @@ func NewCursor[T OrderField](size int, from *CursorKey, pos Position, orderBy Or
 }
 
 func (c *Cursor[T]) SQLFragment() string {
-	fieldName := c.OrderBy.Field.Column()
-	cursorValue := "@cursor_field_value"
+	field := c.OrderBy.Field.Column()
+	value := cursorValue(field)
+	direction := c.sqlDirection()
+	// NULLs sort after every real value. A reverse page flips that with the scan.
+	nullsLast := c.Position != Tail
 
-	if f, ok := any(c.OrderBy.Field).(DirectionalOrderField); ok {
-		fieldName = f.DirectionalColumn(c.OrderBy.Direction)
-		cursorValue = f.DirectionalCursorValue(c.OrderBy.Direction, cursorValue)
+	where := "TRUE"
+	if c.Key != nil {
+		where = cursorWhere(field, value, direction, nullsLast, c.Key.Value == nil)
 	}
 
-	var orderDirection string
-
-	switch {
-	case c.OrderBy.Direction == OrderDirectionAsc && c.Position == Head:
-		orderDirection = "ASC"
-	case c.OrderBy.Direction == OrderDirectionDesc && c.Position == Head:
-		orderDirection = "DESC"
-	case c.OrderBy.Direction == OrderDirectionAsc && c.Position == Tail:
-		orderDirection = "DESC"
-	case c.OrderBy.Direction == OrderDirectionDesc && c.Position == Tail:
-		orderDirection = "ASC"
+	nulls := " NULLS FIRST"
+	if nullsLast {
+		nulls = " NULLS LAST"
 	}
 
-	whereClause := "TRUE"
-	if c.Key != nil && orderDirection == "DESC" {
-		whereClause = "(" + fieldName + " <= " + cursorValue + ") AND NOT (" + fieldName + " = " + cursorValue + " AND id > @cursor_id)"
-	} else if c.Key != nil && orderDirection == "ASC" {
-		whereClause = "(" + fieldName + " >= " + cursorValue + ") AND NOT (" + fieldName + " = " + cursorValue + " AND id < @cursor_id)"
-	}
+	orderBy := field + " " + direction + nulls + ", id " + direction
 
-	orderByClause := fieldName + " " + orderDirection + ", id " + orderDirection
-
-	return whereClause + " ORDER BY " + orderByClause + " LIMIT @cursor_limit"
+	return where + " ORDER BY " + orderBy + " LIMIT @cursor_limit"
 }
 
 func (c *Cursor[T]) SQLArguments() pgx.NamedArgs {
@@ -109,10 +99,93 @@ func (c *Cursor[T]) SQLArguments() pgx.NamedArgs {
 		"cursor_limit": size,
 	}
 
-	if c.Key != nil {
-		arguments["cursor_id"] = c.Key.ID
+	if c.Key == nil {
+		return arguments
+	}
+
+	arguments["cursor_id"] = c.Key.ID
+	if strings.Contains(c.SQLFragment(), "@cursor_field_value") {
 		arguments["cursor_field_value"] = c.Key.Value
 	}
 
 	return arguments
+}
+
+// cursorValue keeps the cursor key's raw value. When Column is a single-argument
+// call such as section_title_sort_key(section_title), the comparison applies
+// that same function to the bound value.
+func cursorValue(column string) string {
+	name, arg, ok := sqlCall(column)
+	if !ok || !sqlIdent(name) || !sqlIdent(arg) {
+		return "@cursor_field_value"
+	}
+
+	return name + "(@cursor_field_value)"
+}
+
+func sqlCall(column string) (string, string, bool) {
+	open := strings.IndexByte(column, '(')
+	if open <= 0 || !strings.HasSuffix(column, ")") || strings.Contains(column[open+1:], "(") {
+		return "", "", false
+	}
+
+	return column[:open], column[open+1 : len(column)-1], true
+}
+
+func sqlIdent(s string) bool {
+	if s == "" {
+		return false
+	}
+
+	for i, r := range s {
+		letter := r == '_' || (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z')
+
+		digit := r >= '0' && r <= '9'
+		if !letter && (i == 0 || !digit) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (c *Cursor[T]) sqlDirection() string {
+	switch {
+	case c.OrderBy.Direction == OrderDirectionAsc && c.Position == Head:
+		return "ASC"
+	case c.OrderBy.Direction == OrderDirectionDesc && c.Position == Head:
+		return "DESC"
+	case c.OrderBy.Direction == OrderDirectionAsc && c.Position == Tail:
+		return "DESC"
+	case c.OrderBy.Direction == OrderDirectionDesc && c.Position == Tail:
+		return "ASC"
+	default:
+		return ""
+	}
+}
+
+func cursorWhere(field string, value string, direction string, nullsLast bool, valueNull bool) string {
+	cmp := ">="
+	idExclude := "id < @cursor_id"
+
+	if direction == "DESC" {
+		cmp = "<="
+		idExclude = "id > @cursor_id"
+	}
+
+	matched := "(" + field + " " + cmp + " " + value + ") AND NOT (" + field + " = " + value + " AND " + idExclude + ")"
+
+	if !nullsLast {
+		if valueNull {
+			return "NOT (" + field + " IS NULL AND " + idExclude + ")"
+		}
+
+		return matched
+	}
+
+	if valueNull {
+		return field + " IS NULL AND NOT (" + idExclude + ")"
+	}
+
+	return "(" + field + " IS NULL OR (" + matched + "))"
 }

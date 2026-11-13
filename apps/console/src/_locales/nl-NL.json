@@ -205,23 +205,19 @@
     "messages": {
       "successTitle": "Succes",
       "archived": "Document succesvol gearchiveerd.",
-      "unarchived": "Document succesvol uit archief gehaald.",
-      "draftDeleted": "Concept succesvol verwijderd."
+      "unarchived": "Document succesvol uit archief gehaald."
     },
     "errors": {
       "title": "Fout",
       "archive": "Archiveren van document mislukt",
       "unarchive": "Uit archief halen van document mislukt",
-      "deleteDraft": "Verwijderen van concept mislukt",
       "generatePdf": "Genereren van PDF mislukt"
     },
     "confirmations": {
-      "archive": "Hiermee wordt het document \"{{title}}\" gearchiveerd. Het is dan niet meer bewerkbaar.",
-      "deleteDraft": "Hiermee wordt het huidige concept verwijderd en teruggezet naar de laatst gepubliceerde versie."
+      "archive": "Hiermee wordt het document \"{{title}}\" gearchiveerd. Het is dan niet meer bewerkbaar."
     },
     "actions": {
       "downloadPdf": "PDF downloaden",
-      "deleteDraft": "Concept verwijderen",
       "archive": "Archiveren",
       "archiveDocument": "Document archiveren",
       "unarchiveDocument": "Document uit archief halen",
@@ -539,6 +535,32 @@
       "anonymous": "Medewerker",
       "inactive": "{{name}} (inactief)",
       "overflow": "{{count}} mensen meer"
+    },
+    "review": {
+      "viewing": "Lezen",
+      "editing": "Bewerken",
+      "suggesting": "Voorstellen",
+      "comment": "Opmerking",
+      "reply": "Antwoorden",
+      "resolve": "Oplossen",
+      "reopen": "Heropenen",
+      "accept": "Accepteren",
+      "reject": "Afwijzen",
+      "edit": "Bewerken",
+      "delete": "Verwijderen",
+      "save": "Opslaan",
+      "showResolved": "Opgeloste gesprekken tonen",
+      "cancel": "Annuleren",
+      "history": "Opmerkingen",
+      "resolvedEmpty": "Geen opgeloste opmerkingen",
+      "detached": "Los van de tekst",
+      "commentPlaceholder": "Opmerking toevoegen",
+      "replyPlaceholder": "Antwoorden",
+      "suggestionBy": "Voorstel van {{name}}",
+      "commentFailed": "De opmerking kon niet worden toegevoegd",
+      "suggestionFailed": "Het voorstel kon niet worden gestart",
+      "selectComment": "Opmerking van {{name}} selecteren",
+      "selectSuggestion": "Voorstel van {{name}} selecteren"
     }
   },
   "documentSignaturesPage": {
@@ -1004,6 +1026,10 @@
     "addPlaceholder": "Personen toevoegen...",
     "empty": "Geen personen beschikbaar",
     "remove": "{{name}} verwijderen"
+  },
+  "peopleMenu": {
+    "searchPlaceholder": "Zoeken op naam of e-mail",
+    "empty": "Geen gebruikers"
   },
   "userSelect": {
     "loadMore": "Meer laden"
@@ -1533,6 +1559,7 @@
     "riskSeverity": {
       "critical": "Kritiek",
       "high": "Hoog",
+      "medium": "Gemiddeld",
       "low": "Laag"
     },
     "trackerType": {
@@ -2250,6 +2277,7 @@
     "context": "Context",
     "webhooks": "Webhooks",
     "slackBot": "SlackBot",
+    "taskSynchronization": "Takensynchronisatie",
     "integrations": "INTEGRATIES",
     "tasks": "Taken",
     "internalControls": "Interne controles",

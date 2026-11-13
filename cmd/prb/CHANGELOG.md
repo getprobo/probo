@@ -4,6 +4,56 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.268.0] - 2026-11-13
+
+### Added
+
+- `prb tracker-pattern view` shows a `Source Banner:` line when a
+  tracker source was promoted from a sibling banner
+
+## [0.267.0] - 2026-11-13
+
+### Added
+
+- Asana task sync commands: `prb task publish-asana` publishes a task
+  as a new Asana task, `prb task link-asana` links it to an existing
+  one, `prb task list-asana-teams`, `list-asana-projects`, and
+  `list-asana-tasks` search Asana, `prb task asana-project-setup`
+  shows a project's sections, priority fields, and mapping,
+  `prb task update-asana-project-mapping` saves that mapping, and
+  `prb task update-asana-settings` updates the organization's settings
+- `prb task create --asana-project` publishes the new task to an Asana
+  project, and `--no-asana-project` skips the default project
+
+## [0.266.0] - 2026-11-12
+
+### Added
+
+- `prb document comment` lists (`ls`), views, creates, replies to,
+  updates, deletes, resolves, and reopens document comments
+- `prb document suggestion` lists (`ls`), views, starts, accepts, and
+  rejects document suggestions
+
+### Removed
+
+- **Breaking**: `prb document delete-draft`
+
+## [0.265.0] - 2026-11-11
+
+### Added
+
+- `prb file download <id> [path]` downloads a private file. An existing
+  destination is left in place. Pass `-` to write the bytes to stdout
+- `prb third-party create --parent-id` adds the new third party to a
+  parent's supply chain
+- `prb finding ls --query` (`-q`) searches by title or reference ID.
+  `prb finding update --title` sets the title
+
+### Changed
+
+- **Breaking**: `prb finding create` requires `--title`. `finding ls`
+  includes the title, and `finding view` uses it as the heading
+
 ## [0.264.0] - 2026-11-03
 
 ### Added

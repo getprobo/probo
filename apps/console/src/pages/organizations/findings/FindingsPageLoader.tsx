@@ -18,31 +18,44 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { useQueryLoader } from "react-relay";
 
-import type { FindingsPageListQuery } from "#/__generated__/core/FindingsPageListQuery.graphql";
-import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
+import type { FindingsPageQuery } from "#/__generated__/core/FindingsPageQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import FindingsPage, { findingsPageQuery } from "./FindingsPage";
+import { useFindingsListFilters } from "./_lib/useFindingsListFilters";
+import { FindingsPage, findingsPageQuery } from "./FindingsPage";
+import { FindingsPageSkeleton } from "./FindingsPageSkeleton";
 
 export default function FindingsPageLoader() {
   const organizationId = useOrganizationId();
-  const [queryRef, loadQuery]
-    = useQueryLoader<FindingsPageListQuery>(findingsPageQuery);
+  const filters = useFindingsListFilters();
+  const filtersRef = useRef(filters);
+  const [queryRef, loadQuery] = useQueryLoader<FindingsPageQuery>(findingsPageQuery);
 
   useEffect(() => {
-    loadQuery({ organizationId });
+    filtersRef.current = filters;
+  }, [filters]);
+
+  useEffect(() => {
+    loadQuery({
+      organizationId,
+      ...filtersRef.current.variables,
+    }, { fetchPolicy: "store-and-network" });
   }, [loadQuery, organizationId]);
 
-  if (!queryRef) {
-    return <PageSkeleton />;
+  const currentQueryRef = queryRef != null && queryRef.variables.organizationId === organizationId
+    ? queryRef
+    : null;
+
+  if (!currentQueryRef) {
+    return <FindingsPageSkeleton />;
   }
 
   return (
-    <Suspense fallback={<PageSkeleton />}>
-      <FindingsPage queryRef={queryRef} />
+    <Suspense fallback={<FindingsPageSkeleton />}>
+      <FindingsPage key={organizationId} queryRef={currentQueryRef} />
     </Suspense>
   );
 }

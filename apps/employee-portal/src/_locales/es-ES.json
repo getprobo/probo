@@ -82,7 +82,7 @@
         "action": "Revisar documentos"
       },
       "tasks": {
-        "title": "Tareas",
+        "title": "Mis tareas",
         "description": "Revise y complete las tareas asignadas.",
         "empty": "No hay nada que hacer por ahora",
         "pendingCount_one": "{{count}} tarea por hacer",

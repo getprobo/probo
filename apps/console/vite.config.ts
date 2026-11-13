@@ -30,7 +30,7 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig, loadEnv, type ProxyOptions } from "vite";
 
-import { pdfjsDistDir, pdfjsWorkerUrlId } from "../vite/pdfjsDistDir";
+import { pdfjsAliases, pdfjsWorkerUrlId } from "../vite/pdfjsDistDir";
 
 const require = createRequire(import.meta.url);
 
@@ -324,6 +324,9 @@ export default defineConfig(({ mode, command }) => {
     // Dev-only: Vite stamps scripts (incl. React Fast Refresh preamble) with
     // this nonce; production Go CSP does not use nonces.
     html: command === "serve" ? { cspNonce: viteDevCspNonce } : undefined,
+    build: {
+      sourcemap: true,
+    },
     server: {
       headers: {
         "Content-Security-Policy": consoleContentSecurityPolicy(
@@ -382,10 +385,7 @@ export default defineConfig(({ mode, command }) => {
           find: "mermaid",
           replacement: require.resolve("mermaid/dist/mermaid.esm.min.mjs"),
         },
-        {
-          find: "pdfjs-dist",
-          replacement: pdfjsDistDir(import.meta.url),
-        },
+        ...pdfjsAliases(import.meta.url),
       ],
     },
   };

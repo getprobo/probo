@@ -51,6 +51,8 @@
       "clientSecret": "Secret client",
       "scope": "Périmètre",
       "datadogSite": "Site Datadog",
+      "datadogSitePlaceholder": "Sélectionner un site",
+      "datadogTokenHint": "Collez un service access token issu d’un service account Datadog, avec le périmètre user_access_read. Un personal access token fonctionne aussi jusqu’à son expiration.",
       "zendeskSubdomain": "Sous-domaine Zendesk",
       "region": "Région",
       "regionPlaceholder": "Sélectionner une région",
@@ -133,6 +135,7 @@
       "available": "Disponibles"
     },
     "addMore": "Ajouter plus",
+    "suggestDescription": "Sélectionnez \"Ajouter plus\" pour voir la liste complète des intégrations prises en charge par Probo.",
     "emptyConnected": "Aucun fournisseur n'est encore connecté.",
     "emptyConnectedSearch": "Aucun fournisseur connecté ne correspond à votre recherche.",
     "checkingStatuses": "Vérification des statuts de connexion…",

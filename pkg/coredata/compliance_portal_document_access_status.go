@@ -21,11 +21,16 @@
 package coredata
 
 import (
+	"database/sql/driver"
 	"encoding"
 	"fmt"
+	"strings"
 )
 
-type CompliancePortalDocumentAccessStatus string
+type (
+	CompliancePortalDocumentAccessStatus       string
+	CompliancePortalDocumentAccessStatusValues []CompliancePortalDocumentAccessStatus
+)
 
 const (
 	CompliancePortalDocumentAccessStatusRequested CompliancePortalDocumentAccessStatus = "REQUESTED"
@@ -38,6 +43,7 @@ var (
 	_ fmt.Stringer             = CompliancePortalDocumentAccessStatus("")
 	_ encoding.TextMarshaler   = CompliancePortalDocumentAccessStatus("")
 	_ encoding.TextUnmarshaler = (*CompliancePortalDocumentAccessStatus)(nil)
+	_ driver.Valuer            = CompliancePortalDocumentAccessStatusValues(nil)
 )
 
 func CompliancePortalDocumentAccessStatuses() []CompliancePortalDocumentAccessStatus {
@@ -47,6 +53,34 @@ func CompliancePortalDocumentAccessStatuses() []CompliancePortalDocumentAccessSt
 		CompliancePortalDocumentAccessStatusRejected,
 		CompliancePortalDocumentAccessStatusRevoked,
 	}
+}
+
+func retryableCompliancePortalDocumentAccessStatuses() CompliancePortalDocumentAccessStatusValues {
+	return CompliancePortalDocumentAccessStatusValues{
+		CompliancePortalDocumentAccessStatusRejected,
+		CompliancePortalDocumentAccessStatusRevoked,
+	}
+}
+
+func (statuses CompliancePortalDocumentAccessStatusValues) Value() (driver.Value, error) {
+	if len(statuses) == 0 {
+		return nil, nil
+	}
+
+	var result strings.Builder
+	result.WriteString("{")
+
+	for i, status := range statuses {
+		if i > 0 {
+			result.WriteString(",")
+		}
+
+		fmt.Fprintf(&result, "%q", status.String())
+	}
+
+	result.WriteString("}")
+
+	return result.String(), nil
 }
 
 func (v CompliancePortalDocumentAccessStatus) IsValid() bool {

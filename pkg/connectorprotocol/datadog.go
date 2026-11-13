@@ -36,10 +36,10 @@ type datadogSite struct {
 
 // datadogSites is the fixed, exhaustive allow-list of Datadog sites. Every
 // site/domain that reaches URL construction MUST be validated against this
-// table — both `site` (operator-influenced, at initiate) and `domain`
-// (provider-supplied on the callback) feed URL hosts, so an unvetted value
-// would be an SSRF vector. Read-only after initialization (effectively
-// constant).
+// table — `site` (operator-influenced, at initiate and on the API-key form)
+// and `domain` (provider-supplied on the callback) feed URL hosts, so an
+// unvetted value would be an SSRF vector. Read-only after initialization
+// (effectively constant).
 var datadogSites = map[string]datadogSite{
 	"US1":     {appHost: "app.datadoghq.com", apiDomain: "datadoghq.com"},
 	"US3":     {appHost: "us3.datadoghq.com", apiDomain: "us3.datadoghq.com"},
@@ -47,7 +47,9 @@ var datadogSites = map[string]datadogSite{
 	"EU1":     {appHost: "app.datadoghq.eu", apiDomain: "datadoghq.eu"},
 	"AP1":     {appHost: "ap1.datadoghq.com", apiDomain: "ap1.datadoghq.com"},
 	"AP2":     {appHost: "ap2.datadoghq.com", apiDomain: "ap2.datadoghq.com"},
+	"UK1":     {appHost: "uk1.datadoghq.com", apiDomain: "uk1.datadoghq.com"},
 	"US1-FED": {appHost: "app.ddog-gov.com", apiDomain: "ddog-gov.com"},
+	"US2-FED": {appHost: "us2.ddog-gov.com", apiDomain: "us2.ddog-gov.com"},
 }
 
 // DatadogAuthorizeURL returns the OAuth2 authorize endpoint for a Datadog
@@ -96,4 +98,12 @@ func DatadogSiteForDomain(domain string) (string, bool) {
 	}
 
 	return "", false
+}
+
+// DatadogAPIDomain returns the API domain of a Datadog site key (e.g. "US3"
+// gives "us3.datadoghq.com"), or false for a site not in the allow-list.
+func DatadogAPIDomain(site string) (string, bool) {
+	s, ok := datadogSites[site]
+
+	return s.apiDomain, ok
 }

@@ -62,6 +62,9 @@ var scrollJS string
 //go:embed scripts/storage.js
 var storageJS string
 
+//go:embed scripts/banner_id.js
+var bannerIDJS string
+
 type (
 	storageRead struct {
 		Local   []storageKey `json:"local"`
@@ -223,12 +226,12 @@ func (s *scan) watchPopups(ctx context.Context) error {
 }
 
 func (s *scan) subscribe(tab *chromedp.Target) {
-	s.forwardEvents(cdp.Events(s.tabCtx, tab, network.RequestWillBeSent))
-	s.forwardEvents(cdp.Events(s.tabCtx, tab, network.LoadingFinished))
-	s.forwardEvents(cdp.Events(s.tabCtx, tab, network.LoadingFailed))
-	s.forwardEvents(cdp.Events(s.tabCtx, tab, network.ResponseReceived))
-	s.forwardEvents(cdp.Events(s.tabCtx, tab, network.ResponseReceivedExtraInfo))
-	s.forwardEvents(cdp.Events(s.tabCtx, tab, runtime.BindingCalled))
+	forwardEvents(s, cdp.Events(s.tabCtx, tab, network.RequestWillBeSent))
+	forwardEvents(s, cdp.Events(s.tabCtx, tab, network.LoadingFinished))
+	forwardEvents(s, cdp.Events(s.tabCtx, tab, network.LoadingFailed))
+	forwardEvents(s, cdp.Events(s.tabCtx, tab, network.ResponseReceived))
+	forwardEvents(s, cdp.Events(s.tabCtx, tab, network.ResponseReceivedExtraInfo))
+	forwardEvents(s, cdp.Events(s.tabCtx, tab, runtime.BindingCalled))
 
 	paused := cdp.Events(s.tabCtx, tab, fetch.RequestPaused)
 
@@ -245,7 +248,7 @@ func (s *scan) subscribe(tab *chromedp.Target) {
 	}()
 }
 
-func (s *scan) forwardEvents[E any](events iter.Seq2[E, error]) {
+func forwardEvents[E any](s *scan, events iter.Seq2[E, error]) {
 	go func() {
 		for ev, err := range events {
 			if err != nil {

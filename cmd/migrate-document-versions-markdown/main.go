@@ -35,7 +35,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/richtext"
 )
 
 func main() {
@@ -188,7 +188,7 @@ func migrateOne(ctx context.Context, tx pg.Tx, idStr string, dryRun bool) error 
 		return nil
 	}
 
-	doc, err := prosemirror.ParseMarkdown(dv.Content)
+	doc, err := richtext.ParseMarkdown(dv.Content)
 	if err != nil {
 		return fmt.Errorf("cannot parse markdown for %q: %w", idStr, err)
 	}

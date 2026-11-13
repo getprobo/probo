@@ -72,6 +72,9 @@ export function mapAPIKeyExtraSettingToField(
     case "SCALEWAY":
       if (settingKey === "organizationId") return "scalewayOrganizationId";
       break;
+    case "DATADOG":
+      if (settingKey === "site") return "datadogSite";
+      break;
     case "SEGMENT":
       if (settingKey === "region") return "segmentRegion";
       break;
@@ -83,6 +86,9 @@ export function mapAPIKeyExtraSettingToField(
       break;
     case "TWINGATE":
       if (settingKey === "network") return "twingateNetwork";
+      break;
+    case "UNIFI":
+      if (settingKey === "consoleId") return "unifiConsoleId";
       break;
   }
   return null;

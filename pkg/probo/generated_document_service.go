@@ -37,11 +37,56 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/richtext"
 	"go.probo.inc/probo/pkg/riskmanagement"
 )
 
 type GeneratedDocumentService struct {
 	svc *Service
+}
+
+// omitEmptyText drops text nodes whose text is empty. Generated templates emit
+// one for each blank field, and a text node must carry text.
+func omitEmptyText(raw string) (string, error) {
+	node, err := prosemirror.Parse(raw)
+	if err != nil {
+		return "", fmt.Errorf("cannot parse generated document: %w", err)
+	}
+
+	if !dropEmptyText(&node) {
+		return raw, nil
+	}
+
+	out, err := json.Marshal(node)
+	if err != nil {
+		return "", fmt.Errorf("cannot marshal generated document: %w", err)
+	}
+
+	return string(out), nil
+}
+
+func dropEmptyText(n *prosemirror.Node) bool {
+	changed := false
+	kept := make([]prosemirror.Node, 0, len(n.Content))
+
+	for i := range n.Content {
+		child := n.Content[i]
+		if child.Type == prosemirror.NodeText && child.Text == "" {
+			changed = true
+
+			continue
+		}
+
+		if dropEmptyText(&child) {
+			changed = true
+		}
+
+		kept = append(kept, child)
+	}
+
+	n.Content = kept
+
+	return changed
 }
 
 func (s *GeneratedDocumentService) PublishStatementOfApplicability(
@@ -600,7 +645,7 @@ func BuildDataListDocument(data docgen.DataListData) (string, error) {
 		return "", fmt.Errorf("cannot execute data list template: %w", err)
 	}
 
-	return buf.String(), nil
+	return omitEmptyText(buf.String())
 }
 
 func (s *GeneratedDocumentService) PublishAssetList(
@@ -880,7 +925,7 @@ func BuildAssetListDocument(data docgen.AssetListData) (string, error) {
 		return "", fmt.Errorf("cannot execute asset list template: %w", err)
 	}
 
-	return buf.String(), nil
+	return omitEmptyText(buf.String())
 }
 
 var soaTemplate = template.Must(
@@ -904,7 +949,7 @@ func BuildStatementOfApplicabilityDocument(data docgen.StatementOfApplicabilityD
 		return "", fmt.Errorf("cannot execute soa template: %w", err)
 	}
 
-	return buf.String(), nil
+	return omitEmptyText(buf.String())
 }
 
 func (s *GeneratedDocumentService) PublishFindingList(
@@ -1056,7 +1101,7 @@ func (s *GeneratedDocumentService) buildFindingListDocumentData(
 		},
 		func(ctx context.Context, cursor *page.Cursor[coredata.FindingOrderField]) ([]*coredata.Finding, error) {
 			var batch coredata.Findings
-			if err := batch.LoadByOrganizationID(ctx, conn, scope, organization.ID, cursor, coredata.NewFindingFilter(nil, nil, nil, nil, nil)); err != nil {
+			if err := batch.LoadByOrganizationID(ctx, conn, scope, organization.ID, cursor, coredata.NewFindingFilter(nil, nil, nil, nil, nil, nil)); err != nil {
 				return nil, fmt.Errorf("cannot load findings: %w", err)
 			}
 
@@ -1148,6 +1193,7 @@ func (s *GeneratedDocumentService) buildFindingListDocumentData(
 
 		rows = append(rows, docgen.FindingListRow{
 			ReferenceID:        f.ReferenceID,
+			Title:              f.Title,
 			Kind:               formatFindingKind(f.Kind),
 			Description:        description,
 			Source:             source,
@@ -1284,7 +1330,7 @@ func BuildFindingListDocument(data docgen.FindingListData) (string, error) {
 		return "", fmt.Errorf("cannot execute finding list template: %w", err)
 	}
 
-	return buf.String(), nil
+	return omitEmptyText(buf.String())
 }
 
 func (s *GeneratedDocumentService) PublishBusinessFunctionList(
@@ -1687,7 +1733,7 @@ func BuildBusinessFunctionListDocument(data docgen.BusinessFunctionListData) (st
 		return "", fmt.Errorf("cannot execute business function list template: %w", err)
 	}
 
-	node, err := prosemirror.ParseMarkdown(buf.String())
+	node, err := richtext.ParseMarkdown(buf.String())
 	if err != nil {
 		return "", fmt.Errorf("cannot convert business function list markdown: %w", err)
 	}
@@ -1981,7 +2027,7 @@ func BuildAiSystemListDocument(data docgen.AiSystemListData) (string, error) {
 		return "", fmt.Errorf("cannot execute ai system list template: %w", err)
 	}
 
-	node, err := prosemirror.ParseMarkdown(buf.String())
+	node, err := richtext.ParseMarkdown(buf.String())
 	if err != nil {
 		return "", fmt.Errorf("cannot convert ai system list markdown: %w", err)
 	}
@@ -2310,7 +2356,7 @@ func BuildObligationListDocument(data docgen.ObligationListData) (string, error)
 		return "", fmt.Errorf("cannot execute obligation list template: %w", err)
 	}
 
-	return buf.String(), nil
+	return omitEmptyText(buf.String())
 }
 
 func (s *GeneratedDocumentService) PublishProcessingActivityList(
@@ -2714,7 +2760,7 @@ func BuildProcessingActivityListDocument(data docgen.ProcessingActivityListData)
 		return "", fmt.Errorf("cannot execute processing activity list template: %w", err)
 	}
 
-	return buf.String(), nil
+	return omitEmptyText(buf.String())
 }
 
 func (s *GeneratedDocumentService) PublishDataProtectionImpactAssessmentList(
@@ -2955,7 +3001,7 @@ func BuildDataProtectionImpactAssessmentListDocument(data docgen.DataProtectionI
 		return "", fmt.Errorf("cannot execute DPIA list template: %w", err)
 	}
 
-	return buf.String(), nil
+	return omitEmptyText(buf.String())
 }
 
 func (s *GeneratedDocumentService) PublishTransferImpactAssessmentList(
@@ -3196,7 +3242,7 @@ func BuildTransferImpactAssessmentListDocument(data docgen.TransferImpactAssessm
 		return "", fmt.Errorf("cannot execute TIA list template: %w", err)
 	}
 
-	return buf.String(), nil
+	return omitEmptyText(buf.String())
 }
 
 func (s *GeneratedDocumentService) PublishThirdPartyList(
@@ -3796,7 +3842,7 @@ func BuildThirdPartyListDocument(data docgen.ThirdPartyListData) (string, error)
 		return "", fmt.Errorf("cannot execute thirdParty list template: %w", err)
 	}
 
-	return buf.String(), nil
+	return omitEmptyText(buf.String())
 }
 
 var riskListTemplate = template.Must(
@@ -3822,7 +3868,7 @@ func BuildRiskListDocument(data docgen.RiskListData) (string, error) {
 		return "", fmt.Errorf("cannot execute risk list template: %w", err)
 	}
 
-	return buf.String(), nil
+	return omitEmptyText(buf.String())
 }
 
 func (s *GeneratedDocumentService) PublishRiskList(
@@ -4068,8 +4114,10 @@ func riskSeverityLabelForSize(score, rows, cols int) string {
 	switch {
 	case score*25 >= max*15:
 		return "Critical"
-	case score*25 >= max*5:
+	case score*25 >= max*10:
 		return "High"
+	case score*25 >= max*5:
+		return "Medium"
 	default:
 		return "Low"
 	}
@@ -4201,7 +4249,7 @@ func BuildRiskAnalysisDocument(data docgen.RiskAnalysisData) (string, error) {
 		return "", fmt.Errorf("cannot execute risk analysis template: %w", err)
 	}
 
-	node, err := prosemirror.ParseMarkdown(buf.String())
+	node, err := richtext.ParseMarkdown(buf.String())
 	if err != nil {
 		return "", fmt.Errorf("cannot convert risk analysis markdown: %w", err)
 	}
@@ -4473,10 +4521,10 @@ func (s *GeneratedDocumentService) buildRiskAnalysisDocumentData(
 			Owner:              sanitizeTrackerCell(lookupProfileName(profileMap, &ownerID)),
 			InherentLikelihood: sanitizeTrackerCell(formatScoreCell(&inherentLikelihood, riskLikelihoodLabel(inherentLikelihood))),
 			InherentImpact:     sanitizeTrackerCell(formatScoreCell(&inherentImpact, riskImpactLabel(inherentImpact))),
-			InherentRiskScore:  sanitizeTrackerCell(formatScoreCell(&inherentRiskScore, riskSeverityLabel(inherentRiskScore))),
+			InherentRiskScore:  sanitizeTrackerCell(formatScoreCell(&inherentRiskScore, riskSeverityLabelForSize(inherentRiskScore, riskAnalysis.MatrixRows, riskAnalysis.MatrixCols))),
 			ResidualLikelihood: sanitizeTrackerCell(formatScoreCell(&residualLikelihood, riskLikelihoodLabel(residualLikelihood))),
 			ResidualImpact:     sanitizeTrackerCell(formatScoreCell(&residualImpact, riskImpactLabel(residualImpact))),
-			ResidualRiskScore:  sanitizeTrackerCell(formatScoreCell(&residualRiskScore, riskSeverityLabel(residualRiskScore))),
+			ResidualRiskScore:  sanitizeTrackerCell(formatScoreCell(&residualRiskScore, riskSeverityLabelForSize(residualRiskScore, riskAnalysis.MatrixRows, riskAnalysis.MatrixCols))),
 			InternalControls:   internalControlsByPlan[tp.ID],
 		})
 	}
@@ -4504,7 +4552,7 @@ func riskAnalysisDescriptionMarkdown(raw *string) (string, error) {
 		return "", fmt.Errorf("cannot parse risk analysis description: %w", err)
 	}
 
-	markdown, err := prosemirror.RenderMarkdown(node)
+	markdown, err := richtext.DocumentMarkdown.Render(node)
 	if err != nil {
 		return "", fmt.Errorf("cannot render risk analysis description: %w", err)
 	}
@@ -4898,7 +4946,7 @@ func (s *GeneratedDocumentService) publishOrRequestApproval(
 		return err
 	}
 
-	content, err := prosemirror.SanitizeDocumentJSON(version.Content)
+	content, err := richtext.DocumentSchema.Sanitize(version.Content)
 	if err != nil {
 		return fmt.Errorf("cannot sanitize generated document content: %w", err)
 	}

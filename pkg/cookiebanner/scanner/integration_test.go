@@ -199,6 +199,36 @@ func TestRun_StopsAtPageLimit(t *testing.T) {
 	assert.NotEmpty(t, result.Checkpoint.Queue)
 }
 
+func TestRun_AcceptsBannerMountedByScript(t *testing.T) {
+	t.Parallel()
+
+	alloc, cancel := testChrome(t)
+	defer cancel()
+
+	site := serve(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		_, _ = w.Write([]byte(`<!doctype html>
+<p>home</p>
+<script data-banner-id=""></script>
+<script>
+var el = document.createElement("probo-cookie-banner");
+el.setAttribute("banner-id", "banner");
+document.body.appendChild(el);
+</script>`))
+	}))
+
+	result, err := Run(context.Background(), alloc, Input{
+		Origin:             chromeURL(t, site),
+		BannerID:           "banner",
+		APIBaseURL:         "https://api.example.com",
+		Limits:             fastLimits(1),
+		skipPublicURLCheck: true,
+		httpClient:         testHTTPClient(),
+	})
+	require.NoError(t, err)
+	assert.Equal(t, 1, result.PagesScanned)
+}
+
 func TestRun_PausesWhenTheRunBudgetEnds(t *testing.T) {
 	t.Parallel()
 

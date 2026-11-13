@@ -26,13 +26,13 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/richtext"
 )
 
 func TestRichTextToMarkdown(t *testing.T) {
 	t.Parallel()
 
-	doc, err := prosemirror.ParseMarkdown("MCP **comment**")
+	doc, err := richtext.ParseMarkdown("MCP **comment**")
 	require.NoError(t, err)
 
 	encoded, err := json.Marshal(doc)

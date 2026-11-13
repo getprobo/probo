@@ -4,6 +4,52 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.270.0] - 2026-11-13
+
+### Added
+
+- Tracker Pattern `Get` and `Get Many` return the banner that promoted
+  a tracker source, as `sourceCookieBanner` with its `id` and `origin`
+
+## [0.269.0] - 2026-11-13
+
+### Added
+
+- Task `Publish To Asana` and `Link To Asana` operations
+- Task `List Asana Teams`, `List Asana Projects`, and `List Asana Tasks`
+  operations search Asana
+- Task `Get Asana Project Setup`, `Update Asana Project Mapping`, and
+  `Update Asana Settings` operations configure the Asana sync
+
+## [0.268.0] - 2026-11-12
+
+### Added
+
+- Document Comment resource with `Create`, `Get`, `Get Many`,
+  `Reply`, `Update`, `Delete`, `Resolve`, and `Reopen` operations.
+  `Get` returns every comment of the thread
+- Document Suggestion resource with `Start`, `Get`, `Get Many`,
+  `Reply`, `Accept`, and `Reject` operations
+
+### Removed
+
+- Document `Delete Draft Version` operation, which called a mutation
+  the API does not expose
+
+## [0.267.0] - 2026-11-11
+
+### Added
+
+- Finding `Link Task` and `Unlink Task` operations connect a task to
+  a finding
+- Finding `Get All` accepts a `Query` filter that searches by title or
+  reference ID
+- Finding `Create` and `Update` take a `Title`, and `Get` returns it
+
+### Changed
+
+- **Breaking**: finding `Create` requires `Title`
+
 ## [0.266.0] - 2026-11-03
 
 ### Added

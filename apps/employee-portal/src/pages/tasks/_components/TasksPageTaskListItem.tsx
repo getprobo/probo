@@ -46,6 +46,7 @@ const tasksPageTaskListItemFragment = graphql`
     canUpdate: permission(action: "core:task:update")
     canDelete: permission(action: "core:task:delete")
     externalLink {
+      provider
       identifier
       url
     }
@@ -132,6 +133,7 @@ export const TasksPageTaskListItem = memo(function TasksPageTaskListItem({
           externalLink: task.externalLink == null
             ? null
             : {
+                provider: task.externalLink.provider,
                 identifier: task.externalLink.identifier,
                 url: task.externalLink.url,
               },

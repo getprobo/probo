@@ -90,7 +90,7 @@ func (s *scan) probeEmbeds(ctx context.Context, sitemapURLs []string) (bool, err
 
 			return false, nil
 		default:
-			return false, fmt.Errorf("%w: homepage has no probo-cookie-banner", ErrBannerNotInstalled)
+			return false, fmt.Errorf("%w: homepage has no probo banner", ErrBannerNotInstalled)
 		}
 	}
 
@@ -137,6 +137,12 @@ func (s *scan) probeCandidates(ctx context.Context, links, sitemapURLs []string)
 	}
 
 	for _, link := range links {
+		if _, sibling := siblingOrigin(s.site, s.api, link); sibling {
+			s.noteSibling(link)
+
+			continue
+		}
+
 		if s.site.contains(link) && !s.policy.block(ctx, http.MethodGet, link, "", "") {
 			add(QueueItem{URL: link, Depth: 1})
 		}
@@ -295,7 +301,7 @@ func readStaticPage(base *url.URL, body io.Reader, site, api origin) (staticPage
 				attr := string(key)
 
 				switch {
-				case tag == "probo-cookie-banner" && attr == "banner-id" && page.bannerID == "":
+				case bannerAttribute(tag, attr) && page.bannerID == "":
 					page.bannerID = strings.TrimSpace(string(value))
 				case tag == "base" && attr == "href" && !sawBase:
 					sawBase = true
@@ -315,6 +321,18 @@ func readStaticPage(base *url.URL, body io.Reader, site, api origin) (staticPage
 				}
 			}
 		}
+	}
+}
+
+// The script-tag install puts the banner id on the script.
+func bannerAttribute(tag, attr string) bool {
+	switch tag {
+	case "probo-cookie-banner", "probo-cookie-banner-root":
+		return attr == "banner-id"
+	case "script":
+		return attr == "data-banner-id"
+	default:
+		return false
 	}
 }
 

@@ -50,8 +50,8 @@ import (
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/probot"
 	slackchannel "go.probo.inc/probo/pkg/probot/channel/slack"
-	"go.probo.inc/probo/pkg/prosemirror"
 	"go.probo.inc/probo/pkg/resourcealias"
+	"go.probo.inc/probo/pkg/richtext"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/authz"
@@ -101,7 +101,7 @@ type Resolver struct {
 }
 
 func markdownToProseMirrorJSON(markdown string) (string, error) {
-	node, err := prosemirror.ParseMarkdown(markdown)
+	node, err := richtext.ParseMarkdown(markdown)
 	if err != nil {
 		return "", fmt.Errorf("cannot parse markdown: %w", err)
 	}
@@ -287,7 +287,7 @@ func (r *Resolver) fillSourceConnectorIDs(
 }
 
 func validateMCPDocumentContent(content string) error {
-	if err := prosemirror.ValidateDocumentContentJSON(content); err != nil {
+	if err := richtext.DocumentSchema.ValidateJSON(content); err != nil {
 		return fmt.Errorf("invalid document content: %w", err)
 	}
 
@@ -306,8 +306,7 @@ func (r *Resolver) documentWithHeads(
 	heads, err := r.proboSvc.Documents.CollaborationHeads(ctx, scope, document.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) ||
-			errors.Is(err, collaboration.ErrDocumentCollaborationNotSeeded) ||
-			errors.Is(err, collaboration.ErrSeedInProgress) {
+			errors.Is(err, collaboration.ErrDocumentCollaborationNotFound) {
 			return types.NewDocument(document), nil
 		}
 

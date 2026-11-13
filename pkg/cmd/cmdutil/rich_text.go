@@ -26,6 +26,7 @@ import (
 	"strings"
 
 	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/richtext"
 )
 
 // FormatRichText renders stored ProseMirror JSON as markdown for human CLI
@@ -40,7 +41,7 @@ func FormatRichText(content string) (string, error) {
 		return "", fmt.Errorf("cannot parse content: %w", err)
 	}
 
-	markdown, err := prosemirror.RenderMarkdown(node)
+	markdown, err := richtext.DocumentMarkdown.Render(node)
 	if err != nil {
 		return "", fmt.Errorf("cannot render content: %w", err)
 	}
@@ -53,21 +54,21 @@ func FormatRichText(content string) (string, error) {
 // lists, and links to /api/files/v1/{id}, is parsed as markdown.
 func CLIContent(text string) (string, error) {
 	trimmed := strings.TrimSpace(text)
-	if strings.HasPrefix(trimmed, "{") && prosemirror.ValidateDocumentContentJSON(text) == nil {
+	if strings.HasPrefix(trimmed, "{") && richtext.DocumentSchema.ValidateJSON(text) == nil {
 		return text, nil
 	}
 
 	if trimmed == "" {
-		return prosemirror.FromPlainText(""), nil
+		return richtext.FromPlainText("")
 	}
 
-	node, err := prosemirror.ParseMarkdown(text)
+	node, err := richtext.ParseMarkdown(text)
 	if err != nil {
 		return "", fmt.Errorf("cannot parse markdown: %w", err)
 	}
 
 	if cliPlainParagraphs(node) && strings.Contains(text, "\n") {
-		return prosemirror.FromPlainText(text), nil
+		return richtext.FromPlainText(text)
 	}
 
 	encoded, err := json.Marshal(node)

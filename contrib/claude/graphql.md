@@ -195,3 +195,25 @@ Default page size is **25** when neither `first` nor `last` is provided.
 4. **Resolver** — implement the resolver (authorize, build order, build cursor, call service, build connection)
 5. **Codegen** — run `go generate` for the relevant API package
 
+## Resolver errors
+
+A resolver must not return a plain `error` (`fmt.Errorf`, `errors.New`, or `graphql.ErrorOnPath`). Those responses have no `extensions.code`, and [`pkg/server/gqlx/tracing.go`](../../pkg/server/gqlx/tracing.go) logs them as `UNKNOWN` at error level. Do not build `&gqlerror.Error` by hand either. A hand-built error can set `extensions.code`, but it skips the helpers that set the path and the message.
+
+Use the helpers in `pkg/server/gqlx`. `r.authorize` already returns a coded error; return it unchanged.
+
+- The row the field was supposed to load is missing: `gqlx.NotFound`, or `gqlx.MapError` when that call can also fail another way. `MapError` maps `coredata.ErrResourceNotFound` to `NOT_FOUND` and `validator.ValidationErrors` to `INVALID`. `NOT_FOUND` shows `err.Error()`, so wrap the sentinel only with client-safe text. Return the sentinel unwrapped, or `gqlx.NotFoundf(ctx, "resource not found")`, when the prefix could reveal internals. Anything else is logged and returned as `gqlx.Internal(ctx)`.
+- Not-found is already handled and the load still failed: log with `r.logger.ErrorCtx` and return `gqlx.Internal(ctx)`. Do not put `err.Error()` in the response.
+- The client sent a value the server refuses: `Invalid` / `Invalidf`, `Unauthenticated` / `Unauthenticatedf`, `Forbidden` / `Forbiddenf`, `Conflict`, or another named helper in [`pkg/server/gqlx/errors.go`](../../pkg/server/gqlx/errors.go).
+- The schema already models absence as null (no alias, no generated document): return `nil, nil`.
+
+A new resolver-owned code needs a helper and an entry in `safeGraphQLErrorCodes`. A gqlgen protocol code such as `GRAPHQL_PARSE_FAILED` or `COMPLEXITY_LIMIT_EXCEEDED` is not returned by a resolver; it only needs the allowlist entry. A code missing from that list is logged as `UNKNOWN` at error level. `INTERNAL` stays at error. Every other allowlisted code logs at info.
+
+```go
+doc, err := r.probo.Documents.Get(ctx, scope, documentID)
+if err != nil {
+    return nil, gqlx.MapError(ctx, r.logger, "cannot get document", err)
+}
+```
+
+See [`api-surface.md`](api-surface.md) for the user-facing categories. MCP resolvers are a separate error path and do not use these helpers.
+

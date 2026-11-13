@@ -135,6 +135,23 @@ export const cookieBannerListSkeleton = tv({
   },
 });
 
+export const trackerSourceBadge = tv({
+  slots: {
+    root: "flex min-w-0",
+    via: "min-w-0 truncate",
+  },
+  variants: {
+    layout: {
+      stacked: {
+        root: "flex-row items-center gap-1",
+      },
+      inline: {
+        root: "flex-row flex-wrap items-center gap-1.5",
+      },
+    },
+  },
+});
+
 export const trackerPatternListItem = tv({
   slots: {
     name: "flex min-w-0 flex-col gap-0.5",
@@ -254,11 +271,12 @@ export const trackerPatternDetectedTrackersSection = tv({
 export const detectedTrackerListItem = tv({
   slots: {
     heading: "flex min-w-0 items-center gap-2",
-    identifier: "min-w-0 truncate font-mono",
+    identifier: "min-w-0 break-all font-mono",
     info: "relative z-1 shrink-0",
     detail: "flex flex-col gap-2",
     fact: "flex items-baseline justify-between gap-4",
     url: "min-w-0 truncate font-mono",
+    initiator: "line-clamp-2 break-all font-mono",
     date: "whitespace-nowrap",
   },
 });

@@ -7,6 +7,13 @@ services:
       PROBOD_AUTH_COOKIE_SECRET: ${PROBOD_AUTH_COOKIE_SECRET}
       PROBOD_AUTH_PASSWORD_PEPPER: ${PROBOD_AUTH_PASSWORD_PEPPER}
       PROBOD_TRUST_AUTH_TOKEN_SECRET: ${PROBOD_TRUST_AUTH_TOKEN_SECRET}
+      # RSA private key (PEM) that signs OAuth2 tokens. Generate one with:
+      #   openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 > oauth2_signing_key.pem
+      # Then either export it before `docker compose up`:
+      #   export PROBOD_OAUTH2_SERVER_SIGNING_KEY="$(cat oauth2_signing_key.pem)"
+      # or set it in Compose's .env file as one double-quoted line with \n escapes:
+      #   PROBOD_OAUTH2_SERVER_SIGNING_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
+      PROBOD_OAUTH2_SERVER_SIGNING_KEY: ${PROBOD_OAUTH2_SERVER_SIGNING_KEY}
 
       # Application settings
       PROBOD_BASE_URL: ${PROBOD_BASE_URL}

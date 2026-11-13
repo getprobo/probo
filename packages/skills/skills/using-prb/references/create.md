@@ -21,7 +21,7 @@ default saved by `prb auth login --org`.
 | `business-function create` | `--name`, `--classification`, `--mtd-minutes`, `--rto-minutes`, `--rpo-minutes` |
 | `ai-system create` | `--name`, `--status`, `--risk-classification` |
 | `audit create` | `--name`, `--framework` (repeat `--framework` for another framework) |
-| `finding create` | `--kind`, `--status`, `--priority` |
+| `finding create` | `--kind`, `--title`, `--status`, `--priority` |
 | `third-party create` | `--name`, `--category` |
 | `webhook create` | `--url`, `--event` (repeat `--event` for another event) |
 

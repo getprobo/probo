@@ -70,10 +70,6 @@ type (
 		) (int64, error)
 	}
 
-	seedReleaser interface {
-		ReleaseSeed(context.Context, coredata.Scoper, gid.GID, time.Time) error
-	}
-
 	Hub struct {
 		mu         sync.Mutex
 		documents  Documents
@@ -83,6 +79,7 @@ type (
 
 	Room struct {
 		mu            sync.Mutex
+		docMu         sync.Mutex
 		collaboration *collaboration.DocumentCollaboration
 		documents     Documents
 		scope         coredata.Scoper
@@ -96,11 +93,6 @@ type (
 		done          chan struct{}
 		persistErr    error
 		opening       chan struct{}
-		seedWait      chan struct{}
-		seedOnce      sync.Once
-		seedReady     bool
-		seedReleased  bool
-		seedClaimedAt time.Time
 	}
 
 	RoomLease struct {
@@ -111,7 +103,6 @@ type (
 		remotePeerID string
 		WakeCh       <-chan Wake
 		EphemeralCh  <-chan []byte
-		seedOwner    bool
 		once         sync.Once
 	}
 )
@@ -121,6 +112,7 @@ const EphemeralBuffer = 64
 const (
 	PersistDebounce = 50 * time.Millisecond
 	PersistTimeout  = 5 * time.Second
+	PersistRetryMax = 5 * time.Second
 	PresenceTTL     = 30 * time.Second
 	RoomOpenTimeout = 20 * time.Second
 )
@@ -166,8 +158,6 @@ func (h *Hub) Acquire(
 		h.mu.Lock()
 		if room := h.rooms[documentID]; room != nil {
 			opening := room.opening
-			seedWait := room.seedWait
-			seedReady := room.seedReady
 			h.mu.Unlock()
 
 			if opening != nil {
@@ -180,20 +170,10 @@ func (h *Hub) Acquire(
 				continue
 			}
 
-			if !seedReady && seedWait != nil {
-				select {
-				case <-seedWait:
-				case <-ctx.Done():
-					return nil, fmt.Errorf("cannot wait for collaboration seed: %w", ctx.Err())
-				}
-
-				continue
-			}
-
 			h.mu.Lock()
 
 			current := h.rooms[documentID]
-			if current != room || current.opening != nil || (!current.seedReady && current.seedWait != nil) {
+			if current != room || current.opening != nil {
 				h.mu.Unlock()
 
 				continue
@@ -234,18 +214,7 @@ func (h *Hub) Acquire(
 		room.collaboration = opened
 		room.revision.Store(opened.Revision)
 
-		if opened.SeedClaimedAt != nil {
-			room.seedClaimedAt = *opened.SeedClaimedAt
-		}
-
-		if opened.NeedsSeed {
-			room.seedWait = make(chan struct{})
-		} else {
-			room.seedReady = true
-		}
-
 		lease := h.addPeerLocked(documentID, room, connectionID)
-		lease.seedOwner = opened.NeedsSeed
 
 		go room.run()
 		h.mu.Unlock()
@@ -301,20 +270,20 @@ func (l *RoomLease) Collaboration() *collaboration.DocumentCollaboration {
 	return l.room.collaboration
 }
 
+// LockDocument serializes mutations of the shared room document across every
+// connection in the room. It must wrap any read-modify-write on the document
+// (such as the comment-only snapshot/validate/restore) so a concurrent editor's
+// change on another socket cannot interleave and be rolled back.
+func (l *RoomLease) LockDocument() {
+	l.room.docMu.Lock()
+}
+
+func (l *RoomLease) UnlockDocument() {
+	l.room.docMu.Unlock()
+}
+
 func (l *RoomLease) Revision() int64 {
 	return l.room.revision.Load()
-}
-
-func (l *RoomLease) SeedOwner() bool {
-	return l.seedOwner
-}
-
-func (l *RoomLease) SeedClaimedAt() time.Time {
-	if l == nil || l.room == nil {
-		return time.Time{}
-	}
-
-	return l.room.seedClaimedAt
 }
 
 func (l *RoomLease) SetRevision(revision int64) {
@@ -506,24 +475,13 @@ func (l *RoomLease) Close() {
 		empty := len(l.room.peers) == 0
 		l.room.mu.Unlock()
 
-		abortSeed := l.seedOwner && !l.room.seedReady
-
-		remove := empty || abortSeed
-		if remove && l.hub.rooms[l.documentID] == l.room {
+		if empty && l.hub.rooms[l.documentID] == l.room {
 			delete(l.hub.rooms, l.documentID)
 		}
 
 		l.hub.mu.Unlock()
 
-		if abortSeed {
-			releaseCtx, cancel := context.WithTimeout(context.Background(), PersistTimeout)
-			_ = l.releaseUnseeded(releaseCtx)
-
-			cancel()
-			l.room.signalSeed()
-		}
-
-		if !remove {
+		if !empty {
 			return
 		}
 
@@ -538,76 +496,13 @@ func (l *RoomLease) Close() {
 	})
 }
 
-func (l *RoomLease) completeSeed() {
-	if l.hub == nil || l.room == nil {
-		return
-	}
-
-	l.hub.mu.Lock()
-	l.room.seedReady = true
-	l.hub.mu.Unlock()
-	l.room.signalSeed()
-}
-
-func (l *RoomLease) releaseUnseeded(ctx context.Context) error {
-	if l.hub == nil || l.room == nil || !l.seedOwner {
-		return nil
-	}
-
-	l.hub.mu.Lock()
-	if l.room.seedReady || l.room.seedReleased {
-		l.hub.mu.Unlock()
-
-		return nil
-	}
-
-	l.hub.mu.Unlock()
-
-	releaser, ok := l.room.documents.(seedReleaser)
-	if !ok {
-		l.markSeedReleased()
-
-		return nil
-	}
-
-	if err := releaser.ReleaseSeed(
-		ctx,
-		l.room.scope,
-		l.room.documentID,
-		l.room.seedClaimedAt,
-	); err != nil {
-		return err
-	}
-
-	l.markSeedReleased()
-
-	return nil
-}
-
-func (l *RoomLease) markSeedReleased() {
-	if l.hub == nil || l.room == nil {
-		return
-	}
-
-	l.hub.mu.Lock()
-	l.room.seedReleased = true
-	l.hub.mu.Unlock()
-}
-
-func (r *Room) signalSeed() {
-	r.seedOnce.Do(func() {
-		if r.seedWait != nil {
-			close(r.seedWait)
-		}
-	})
-}
-
 func (r *Room) run() {
 	defer close(r.done)
 
 	var timer *time.Timer
 
 	dirty := false
+	failures := 0
 
 	for {
 		var timerChannel <-chan time.Time
@@ -618,6 +513,12 @@ func (r *Room) run() {
 		select {
 		case <-r.dirty:
 			dirty = true
+
+			// A failing persist is already scheduled with a backoff. New
+			// edits must not pull that retry forward.
+			if failures > 0 {
+				continue
+			}
 
 			if timer == nil {
 				timer = time.NewTimer(PersistDebounce)
@@ -634,11 +535,13 @@ func (r *Room) run() {
 		case <-timerChannel:
 			if dirty {
 				if err := r.persist(); err != nil {
-					timer.Reset(PersistDebounce)
+					failures++
+					timer.Reset(persistRetryDelay(failures))
 
 					continue
 				}
 
+				failures = 0
 				dirty = false
 			}
 
@@ -655,6 +558,21 @@ func (r *Room) run() {
 			return
 		}
 	}
+}
+
+// persistRetryDelay doubles the wait after each consecutive failure so a
+// persist that cannot succeed stops contending for the document row.
+func persistRetryDelay(failures int) time.Duration {
+	delay := PersistDebounce
+
+	for range failures {
+		delay *= 2
+		if delay >= PersistRetryMax {
+			return PersistRetryMax
+		}
+	}
+
+	return delay
 }
 
 func (r *Room) persist() error {

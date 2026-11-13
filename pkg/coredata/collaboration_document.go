@@ -34,17 +34,15 @@ import (
 
 type (
 	CollaborationDocument struct {
-		DocumentID       gid.GID    `db:"document_id"`
-		OrganizationID   gid.GID    `db:"organization_id"`
-		Snapshot         []byte     `db:"snapshot"`
-		Heads            []byte     `db:"heads"`
-		Revision         int64      `db:"revision"`
-		SnapshotRevision int64      `db:"snapshot_revision"`
-		ChangeRevision   int64      `db:"change_revision"`
-		Seeded           bool       `db:"seeded"`
-		SeedClaimedAt    *time.Time `db:"seed_claimed_at"`
-		CreatedAt        time.Time  `db:"created_at"`
-		UpdatedAt        time.Time  `db:"updated_at"`
+		DocumentID       gid.GID   `db:"document_id"`
+		OrganizationID   gid.GID   `db:"organization_id"`
+		Snapshot         []byte    `db:"snapshot"`
+		Heads            []byte    `db:"heads"`
+		Revision         int64     `db:"revision"`
+		SnapshotRevision int64     `db:"snapshot_revision"`
+		ChangeRevision   int64     `db:"change_revision"`
+		CreatedAt        time.Time `db:"created_at"`
+		UpdatedAt        time.Time `db:"updated_at"`
 	}
 )
 
@@ -63,8 +61,6 @@ SELECT
 	revision,
 	snapshot_revision,
 	change_revision,
-	seeded,
-	seed_claimed_at,
 	created_at,
 	updated_at
 FROM
@@ -117,8 +113,6 @@ SELECT
 	revision,
 	snapshot_revision,
 	change_revision,
-	seeded,
-	seed_claimed_at,
 	created_at,
 	updated_at
 FROM
@@ -157,8 +151,8 @@ FOR UPDATE
 	return nil
 }
 
-// Insert creates the collaboration document for a document the first
-// time it is opened for editing. It reports whether the row was created.
+// Insert creates the collaboration document of a document. It reports
+// whether the row was created.
 func (d CollaborationDocument) Insert(
 	ctx context.Context,
 	tx pg.Tx,
@@ -174,8 +168,6 @@ INSERT INTO collaboration_documents (
 	revision,
 	snapshot_revision,
 	change_revision,
-	seeded,
-	seed_claimed_at,
 	created_at,
 	updated_at
 )
@@ -188,8 +180,6 @@ VALUES (
 	@revision,
 	@snapshot_revision,
 	@change_revision,
-	@seeded,
-	@seed_claimed_at,
 	@created_at,
 	@updated_at
 )
@@ -204,8 +194,6 @@ ON CONFLICT (document_id) DO NOTHING
 		"revision":          d.Revision,
 		"snapshot_revision": d.SnapshotRevision,
 		"change_revision":   d.ChangeRevision,
-		"seeded":            d.Seeded,
-		"seed_claimed_at":   d.SeedClaimedAt,
 		"created_at":        d.CreatedAt,
 		"updated_at":        d.UpdatedAt,
 	}
@@ -230,8 +218,6 @@ UPDATE collaboration_documents SET
 	revision = @revision,
 	snapshot_revision = @snapshot_revision,
 	change_revision = @change_revision,
-	seeded = @seeded,
-	seed_claimed_at = @seed_claimed_at,
 	updated_at = @updated_at
 WHERE
 	%s
@@ -246,8 +232,6 @@ WHERE
 		"revision":          d.Revision,
 		"snapshot_revision": d.SnapshotRevision,
 		"change_revision":   d.ChangeRevision,
-		"seeded":            d.Seeded,
-		"seed_claimed_at":   d.SeedClaimedAt,
 		"updated_at":        d.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
@@ -259,42 +243,6 @@ WHERE
 
 	if result.RowsAffected() == 0 {
 		return ErrResourceNotFound
-	}
-
-	return nil
-}
-
-// ReleaseSeedClaim clears seed_claimed_at only when it is still the claim
-// acquired by this opener. A newer claim is left in place.
-func ReleaseCollaborationSeedClaim(
-	ctx context.Context,
-	tx pg.Tx,
-	scope Scoper,
-	documentID gid.GID,
-	claimedAt time.Time,
-) error {
-	q := `
-UPDATE collaboration_documents SET
-	seed_claimed_at = NULL,
-	revision = revision + 1,
-	updated_at = @updated_at
-WHERE
-	%s
-	AND document_id = @document_id
-	AND seeded = FALSE
-	AND seed_claimed_at = @seed_claimed_at
-`
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"document_id":     documentID,
-		"seed_claimed_at": claimedAt,
-		"updated_at":      time.Now(),
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	if _, err := tx.Exec(ctx, q, args); err != nil {
-		return fmt.Errorf("cannot release collaboration seed claim: %w", err)
 	}
 
 	return nil

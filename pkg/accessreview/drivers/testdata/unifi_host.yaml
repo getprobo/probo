@@ -1,0 +1,41 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.ui.com
+        headers:
+            Accept:
+                - application/json
+        url: https://api.ui.com/v1/hosts/FFFFFFFFFFFF0000000000000000000000000000000000000000000000000000:1000000000
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: 219
+        body: '{"data":{"id":"FFFFFFFFFFFF0000000000000000000000000000000000000000000000000000:1000000000","reportedState":{"name":"Example Console"},"type":"console"},"httpStatusCode":200,"traceId":"00000000000000000000000000000000"}'
+        headers:
+            Content-Security-Policy:
+                - default-src 'self'; script-src 'self'; upgrade-insecure-requests
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Sun, 01 Nov 2026 19:18:39 GMT
+            Feature-Policy:
+                - accelerometer 'none'; ambient-light-sensor 'none'; autoplay 'none'; battery 'none'; camera 'none'; display-capture 'none'; document-domain 'none'; encrypted-media 'none'; execution-while-not-rendered 'none'; execution-while-out-of-viewport 'none'; fullscreen 'none'; gamepad 'none'; geolocation 'none'; gyroscope 'none'; layout-animations 'none'; legacy-image-formats 'none'; magnetometer 'none'; microphone 'none'; midi 'none'; navigation-override 'none'; oversized-images 'none'; payment 'none'; picture-in-picture 'none'; publickey-credentials-get 'none'; speaker-selection 'none'; sync-xhr 'none'; unoptimized-images 'none'; unsized-media 'none'; usb 'none'; screen-wake-lock 'none'; web-share 'none'; xr-spatial-tracking 'none'
+            Referrer-Policy:
+                - strict-origin-when-cross-origin
+            X-Content-Type-Options:
+                - nosniff
+            X-Frame-Options:
+                - DENY
+            X-Request-Id:
+                - 500f390026faedbf6bfd6ef702044b2b
+        status: 200 OK
+        code: 200
+        duration: 644.323333ms

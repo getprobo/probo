@@ -105,6 +105,20 @@ func DeriveAutomergeURL(seed string) string {
 	return AutomergeURL(DeriveDocumentID(seed))
 }
 
+// CanonicalDocumentID normalises a document id a peer put on the wire to the
+// single bare form a connection pins itself to. A peer refers to the same
+// document under two aliases (the bare id and the automerge: URL), so the
+// scheme is stripped before any equality check. It rejects the two malformed
+// shapes an alias can take: the scheme alone, and a doubly-prefixed id.
+func CanonicalDocumentID(id string) (string, error) {
+	canonicalID := strings.TrimPrefix(id, AutomergeURLPrefix)
+	if canonicalID == "" || strings.HasPrefix(canonicalID, AutomergeURLPrefix) {
+		return "", fmt.Errorf("malformed document id %q", id)
+	}
+
+	return canonicalID, nil
+}
+
 // ParseAutomergeURL extracts and validates the document id from an automerge:
 // URL, rejecting a missing scheme or a malformed id.
 func ParseAutomergeURL(url string) (string, error) {

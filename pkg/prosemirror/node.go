@@ -23,7 +23,6 @@ package prosemirror
 import (
 	"encoding/json"
 	"fmt"
-	"unicode/utf8"
 )
 
 type (
@@ -38,7 +37,7 @@ type (
 		Type    NodeType        `json:"type"`
 		Content []Node          `json:"content,omitempty"`
 		Marks   []Mark          `json:"marks,omitempty"`
-		Text    *string         `json:"text,omitempty"`
+		Text    string          `json:"text,omitempty"`
 		Attrs   json.RawMessage `json:"attrs,omitempty"`
 	}
 
@@ -46,69 +45,6 @@ type (
 	Mark struct {
 		Type  MarkType        `json:"type"`
 		Attrs json.RawMessage `json:"attrs,omitempty"`
-	}
-
-	// HeadingAttrs contains attributes for heading nodes.
-	HeadingAttrs struct {
-		Level int `json:"level"`
-	}
-
-	// CodeBlockAttrs contains attributes for code block nodes.
-	CodeBlockAttrs struct {
-		Language *string `json:"language"`
-	}
-
-	// OrderedListAttrs contains attributes for ordered list nodes.
-	OrderedListAttrs struct {
-		Start int     `json:"start"`
-		Type  *string `json:"type"`
-	}
-
-	// TaskItemAttrs contains attributes for task item nodes.
-	TaskItemAttrs struct {
-		Checked bool `json:"checked"`
-	}
-
-	// ImageAttrs contains attributes for image nodes.
-	// FileID is set for an uploaded image. Src is set for a remote image.
-	// Width is the display width as a percentage of the column.
-	ImageAttrs struct {
-		FileID *string `json:"fileId,omitempty"`
-		Src    string  `json:"src"`
-		Alt    *string `json:"alt"`
-		Title  *string `json:"title"`
-		Width  *int    `json:"width,omitempty"`
-	}
-
-	// FileAttrs contains attributes for file attachment nodes.
-	FileAttrs struct {
-		FileID   string `json:"fileId"`
-		FileName string `json:"fileName"`
-		MimeType string `json:"mimeType"`
-		Size     int64  `json:"size"`
-	}
-
-	// TableCellAttrs contains attributes for table cell and table header nodes.
-	TableCellAttrs struct {
-		Colspan  int   `json:"colspan"`
-		Rowspan  int   `json:"rowspan"`
-		Colwidth []int `json:"colwidth"`
-	}
-
-	// MentionAttrs contains attributes for mention nodes. ID is the
-	// mentioned membership profile GID; Label is its display name.
-	MentionAttrs struct {
-		ID    string `json:"id"`
-		Label string `json:"label"`
-	}
-
-	// LinkAttrs contains attributes for link marks.
-	LinkAttrs struct {
-		Href   string  `json:"href"`
-		Target *string `json:"target"`
-		Rel    *string `json:"rel"`
-		Class  *string `json:"class"`
-		Title  *string `json:"title"`
 	}
 )
 
@@ -126,6 +62,7 @@ const (
 	NodeText           NodeType = "text"
 	NodeImage          NodeType = "image"
 	NodeFile           NodeType = "file"
+	NodeMention        NodeType = "mention"
 	NodeBulletList     NodeType = "bulletList"
 	NodeOrderedList    NodeType = "orderedList"
 	NodeListItem       NodeType = "listItem"
@@ -135,7 +72,6 @@ const (
 	NodeTableRow       NodeType = "tableRow"
 	NodeTableCell      NodeType = "tableCell"
 	NodeTableHeader    NodeType = "tableHeader"
-	NodeMention        NodeType = "mention"
 
 	MarkStrong    MarkType = "bold"
 	MarkEm        MarkType = "italic"
@@ -154,144 +90,4 @@ func Parse(s string) (Node, error) {
 	}
 
 	return n, nil
-}
-
-// HeadingAttrs parses and returns the heading attributes from a heading node.
-// Attributes are optional in the Tiptap schema: a node that omits them, or
-// omits individual keys, takes the schema defaults.
-func (n Node) HeadingAttrs() (HeadingAttrs, error) {
-	a := HeadingAttrs{Level: 1}
-	if len(n.Attrs) == 0 {
-		return a, nil
-	}
-
-	if err := json.Unmarshal(n.Attrs, &a); err != nil {
-		return a, fmt.Errorf("cannot parse heading attrs: %w", err)
-	}
-
-	return a, nil
-}
-
-// CodeBlockAttrs parses and returns the code block attributes.
-func (n Node) CodeBlockAttrs() (CodeBlockAttrs, error) {
-	if len(n.Attrs) == 0 {
-		return CodeBlockAttrs{}, nil
-	}
-
-	var a CodeBlockAttrs
-	if err := json.Unmarshal(n.Attrs, &a); err != nil {
-		return a, fmt.Errorf("cannot parse code block attrs: %w", err)
-	}
-
-	return a, nil
-}
-
-// TaskItemAttrs parses and returns the task item attributes.
-// A missing checked attribute means the item is unchecked.
-func (n Node) TaskItemAttrs() (TaskItemAttrs, error) {
-	var a TaskItemAttrs
-	if len(n.Attrs) == 0 {
-		return a, nil
-	}
-
-	if err := json.Unmarshal(n.Attrs, &a); err != nil {
-		return a, fmt.Errorf("cannot parse task item attrs: %w", err)
-	}
-
-	return a, nil
-}
-
-// OrderedListAttrs parses and returns the ordered list attributes.
-func (n Node) OrderedListAttrs() (OrderedListAttrs, error) {
-	a := OrderedListAttrs{Start: 1}
-	if len(n.Attrs) == 0 {
-		return a, nil
-	}
-
-	if err := json.Unmarshal(n.Attrs, &a); err != nil {
-		return a, fmt.Errorf("cannot parse ordered list attrs: %w", err)
-	}
-
-	return a, nil
-}
-
-// ImageAttrs parses and returns the image attributes.
-func (n Node) ImageAttrs() (ImageAttrs, error) {
-	var a ImageAttrs
-	if len(n.Attrs) == 0 {
-		return a, nil
-	}
-
-	if err := json.Unmarshal(n.Attrs, &a); err != nil {
-		return a, fmt.Errorf("cannot parse image attrs: %w", err)
-	}
-
-	return a, nil
-}
-
-// FileAttrs parses and returns the file attachment attributes.
-func (n Node) FileAttrs() (FileAttrs, error) {
-	var a FileAttrs
-	if len(n.Attrs) == 0 {
-		return a, nil
-	}
-
-	if err := json.Unmarshal(n.Attrs, &a); err != nil {
-		return a, fmt.Errorf("cannot parse file attrs: %w", err)
-	}
-
-	return a, nil
-}
-
-// MentionAttrs parses and returns the mention attributes.
-func (n Node) MentionAttrs() (MentionAttrs, error) {
-	var a MentionAttrs
-	if len(n.Attrs) == 0 {
-		return a, nil
-	}
-
-	if err := json.Unmarshal(n.Attrs, &a); err != nil {
-		return a, fmt.Errorf("cannot parse mention attrs: %w", err)
-	}
-
-	return a, nil
-}
-
-// TableCellAttrs parses and returns the table cell/header attributes.
-func (n Node) TableCellAttrs() (TableCellAttrs, error) {
-	a := TableCellAttrs{Colspan: 1, Rowspan: 1}
-	if len(n.Attrs) == 0 {
-		return a, nil
-	}
-
-	if err := json.Unmarshal(n.Attrs, &a); err != nil {
-		return a, fmt.Errorf("cannot parse table cell attrs: %w", err)
-	}
-
-	return a, nil
-}
-
-// TextLength returns the total number of characters (Unicode code points)
-// across all text nodes in the tree. Structural markup is excluded.
-func (n Node) TextLength() int {
-	length := 0
-	if n.Text != nil {
-		length += utf8.RuneCountInString(*n.Text)
-	}
-
-	for _, child := range n.Content {
-		length += child.TextLength()
-	}
-
-	return length
-}
-
-// LinkAttrs parses and returns the link attributes from a link mark.
-func (m Mark) LinkAttrs() (LinkAttrs, error) {
-	var a LinkAttrs
-	if err := json.Unmarshal(m.Attrs, &a); err != nil {
-		return a, fmt.Errorf("cannot parse link attrs: %w", err)
-	}
-
-	return a, nil
 }

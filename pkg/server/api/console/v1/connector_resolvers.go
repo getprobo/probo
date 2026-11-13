@@ -9,7 +9,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
@@ -33,7 +32,7 @@ func (r *connectorResolver) CanReconnect(ctx context.Context, obj *types.Connect
 		obj.ID,
 	)
 	if err != nil {
-		return false, fmt.Errorf("cannot load connector connection: %w", err)
+		return false, gqlx.MapError(ctx, r.logger, "cannot load connector connection", err)
 	}
 
 	return connectorprotocol.SupportsReconnectFor(

@@ -26,6 +26,7 @@ import (
 	"strings"
 
 	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/richtext"
 )
 
 // ProseMirrorDocumentContent requires non-empty string values to be valid
@@ -48,7 +49,35 @@ func ProseMirrorDocumentContent() ValidatorFunc {
 			return nil
 		}
 
-		if err := prosemirror.ValidateDocumentContentJSON(s); err != nil {
+		if err := richtext.ValidateDocumentContentJSON(s); err != nil {
+			return newValidationError(ErrorCodeInvalidFormat, err.Error())
+		}
+
+		return nil
+	}
+}
+
+// ProseMirrorCommentContent requires non-empty string values to be valid
+// ProseMirror/Tiptap JSON restricted to the comment allowlist (paragraphs,
+// lists, blockquotes, mentions, and the bold/italic/strike/code/link marks).
+// Empty and whitespace-only strings are allowed.
+func ProseMirrorCommentContent() ValidatorFunc {
+	return func(value any) *ValidationError {
+		actualValue, isNil := dereferenceValue(value)
+		if isNil {
+			return nil
+		}
+
+		s, ok := actualValue.(string)
+		if !ok {
+			return newValidationError(ErrorCodeInvalidFormat, "value must be a string")
+		}
+
+		if strings.TrimSpace(s) == "" {
+			return nil
+		}
+
+		if err := richtext.ValidateCommentContentJSON(s); err != nil {
 			return newValidationError(ErrorCodeInvalidFormat, err.Error())
 		}
 
@@ -82,7 +111,7 @@ func ProseMirrorDocumentMaxTextLength(maxLength int) ValidatorFunc {
 			return nil
 		}
 
-		if n.TextLength() > maxLength {
+		if richtext.DocumentSchema.TextLength(n) > maxLength {
 			return newValidationError(
 				ErrorCodeTooLong,
 				fmt.Sprintf("text content must be at most %d characters", maxLength),
@@ -110,7 +139,7 @@ func nodeHasVisibleText(n prosemirror.Node) bool {
 		return true
 	}
 
-	if n.Type == prosemirror.NodeText && n.Text != nil && strings.TrimSpace(*n.Text) != "" {
+	if n.Type == prosemirror.NodeText && n.Text != "" && strings.TrimSpace(n.Text) != "" {
 		return true
 	}
 

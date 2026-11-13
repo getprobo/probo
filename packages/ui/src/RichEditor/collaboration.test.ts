@@ -59,6 +59,12 @@ function syncPlugin({
   return createAutomergeSyncPlugin(adapter, handle, path);
 }
 
+type RoundTripNode = {
+  type?: string;
+  attrs?: Record<string, unknown>;
+  content?: RoundTripNode[];
+};
+
 describe("RichEditor collaboration", () => {
   it("rejects collaboration content that cannot be parsed", () => {
     expect(supportsRichEditorCollaboration("{")).toBe(false);
@@ -168,6 +174,108 @@ describe("RichEditor collaboration", () => {
       fileName: "report.pdf",
       mimeType: "application/pdf",
       size: 12,
+    });
+  });
+
+  it("keeps mentions collaborative mid-paragraph, in lists, and next to marks", () => {
+    const content = JSON.stringify({
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [
+            { type: "text", text: "Hi " },
+            { type: "mention", attrs: { id: "profile-1", label: "Jane Doe" } },
+            { type: "text", text: " and " },
+            { type: "text", text: "Ada", marks: [{ type: "bold" }] },
+            { type: "hardBreak" },
+            { type: "mention", attrs: { id: "profile-2", label: "Ada Lovelace" } },
+          ],
+        },
+        {
+          type: "bulletList",
+          content: [{
+            type: "listItem",
+            content: [{
+              type: "paragraph",
+              content: [
+                { type: "text", text: "ping " },
+                { type: "mention", attrs: { id: "profile-1", label: "Jane Doe" } },
+              ],
+            }],
+          }],
+        },
+      ],
+    });
+
+    expect(supportsRichEditorCollaboration(content)).toBe(true);
+
+    const document = createRichEditorAutomergeDocument(content);
+    const spans = Automerge.spans(document, ["body"]);
+    expect(
+      spans
+        .filter(span => span.type === "block")
+        .filter(span => automergeString(span.value.type) === "mention")
+        .map(span => ({
+          isEmbed: span.value.isEmbed,
+          attrs: span.value.attrs,
+          parents: automergeStringArray(span.value.parents),
+        })),
+    ).toEqual([
+      {
+        isEmbed: true,
+        attrs: { id: "profile-1", label: "Jane Doe" },
+        parents: ["paragraph"],
+      },
+      {
+        isEmbed: true,
+        attrs: { id: "profile-2", label: "Ada Lovelace" },
+        parents: ["paragraph"],
+      },
+      {
+        isEmbed: true,
+        attrs: { id: "profile-1", label: "Jane Doe" },
+        parents: ["unordered-list-item", "paragraph"],
+      },
+    ]);
+
+    const handle: DocHandle<RichEditorAutomergeDocument> = {
+      doc: () => document,
+      change: () => {},
+      on: () => {},
+      off: () => {},
+    };
+    const roundTrip = richEditorAutomergeContent(
+      handle,
+      richEditorCollaborationExtensions,
+    ) as { content: RoundTripNode[] };
+
+    expect(roundTrip.content[0]?.content?.map(node => node.type)).toEqual([
+      "text",
+      "mention",
+      "text",
+      "text",
+      "hardBreak",
+      "mention",
+    ]);
+    expect(roundTrip.content[0]?.content?.[1]?.attrs).toMatchObject({
+      id: "profile-1",
+      label: "Jane Doe",
+    });
+    expect(roundTrip.content[0]?.content?.[5]?.attrs).toMatchObject({
+      id: "profile-2",
+      label: "Ada Lovelace",
+    });
+    expect(
+      roundTrip.content[1]?.content?.[0]?.content?.[0]?.content?.map(
+        node => node.type,
+      ),
+    ).toEqual(["text", "mention"]);
+    expect(
+      roundTrip.content[1]?.content?.[0]?.content?.[0]?.content?.[1]?.attrs,
+    ).toMatchObject({
+      id: "profile-1",
+      label: "Jane Doe",
     });
   });
 

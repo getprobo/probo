@@ -49,6 +49,7 @@ export const Colors: Story = {
           "txt-success",
           "txt-info",
           "txt-warning",
+          "txt-medium",
         ],
       ],
       [
@@ -66,6 +67,7 @@ export const Colors: Story = {
           "bg-success",
           "bg-info",
           "bg-warning",
+          "bg-medium",
         ],
       ],
       [

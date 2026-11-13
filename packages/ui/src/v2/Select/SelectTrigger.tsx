@@ -42,11 +42,16 @@ export type SelectTriggerProps
 export function SelectTrigger(props: SelectTriggerProps) {
   const { className, size, variant, placeholder, children, ...rest } = props;
   const { trigger, value, icon } = selectTrigger({ size, variant });
+  // Base UI drops the placeholder once children is a function, so a render
+  // function that returns nothing falls back to it here.
+  const render = typeof children === "function"
+    ? (selected: unknown) => children(selected) ?? placeholder
+    : children;
 
   return (
     <BaseSelect.Trigger className={trigger({ className })} {...rest}>
       <BaseSelect.Value className={value()} placeholder={placeholder}>
-        {children}
+        {render}
       </BaseSelect.Value>
       <BaseSelect.Icon className={icon()}>
         <CaretDownIcon />

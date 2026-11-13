@@ -62,9 +62,22 @@ type createEnvelope struct {
 	Errors []graphQLError `json:"errors"`
 }
 
-type graphQLError struct {
-	Message string `json:"message"`
-}
+const (
+	publishProviderLinear = "LINEAR"
+	publishProviderAsana  = "ASANA"
+)
+
+type (
+	graphQLError struct {
+		Message    string          `json:"message"`
+		Path       json.RawMessage `json:"path"`
+		Extensions json.RawMessage `json:"extensions"`
+	}
+
+	publishErrorExtensions struct {
+		Provider string `json:"provider"`
+	}
+)
 
 func graphQLErrorMessage(errs []graphQLError) string {
 	messages := make([]string, 0, len(errs))
@@ -75,6 +88,54 @@ func graphQLErrorMessage(errs []graphQLError) string {
 	}
 
 	return strings.Join(messages, "; ")
+}
+
+func publishFailureLabel(errs []graphQLError) string {
+	sawLinear, sawAsana, sawLinkTask := publishErrorSources(errs)
+
+	switch {
+	case sawLinear && sawAsana:
+		return "Linear and Asana publish failed"
+	case sawLinear:
+		return "Linear publish failed"
+	case sawAsana:
+		return "Asana publish failed"
+	case sawLinkTask:
+		return "linkTask publish failed"
+	default:
+		return "External publish failed"
+	}
+}
+
+func publishErrorSources(errs []graphQLError) (linear bool, asana bool, linkTask bool) {
+	for _, graphErr := range errs {
+		switch publishErrorProvider(graphErr.Extensions) {
+		case publishProviderLinear:
+			linear = true
+		case publishProviderAsana:
+			asana = true
+		}
+
+		haystack := strings.ToLower(graphErr.Message + " " + string(graphErr.Path))
+		if strings.Contains(haystack, "linktask") {
+			linkTask = true
+		}
+	}
+
+	return linear, asana, linkTask
+}
+
+func publishErrorProvider(extensions json.RawMessage) string {
+	if len(extensions) == 0 {
+		return ""
+	}
+
+	var parsed publishErrorExtensions
+	if err := json.Unmarshal(extensions, &parsed); err != nil {
+		return ""
+	}
+
+	return parsed.Provider
 }
 
 func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
@@ -91,6 +152,8 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		flagRecurrenceInterval string
 		flagLinearTeam         string
 		flagNoLinearTeam       bool
+		flagAsanaProject       string
+		flagNoAsanaProject     bool
 	)
 
 	cmd := &cobra.Command{
@@ -231,6 +294,16 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				input["linearTeamId"] = flagLinearTeam
 			}
 
+			if flagNoAsanaProject && flagAsanaProject != "" {
+				return fmt.Errorf("--no-asana-project and --asana-project cannot be used together")
+			}
+
+			if flagNoAsanaProject {
+				input["asanaProjectId"] = nil
+			} else if flagAsanaProject != "" {
+				input["asanaProjectId"] = flagAsanaProject
+			}
+
 			raw, err := client.DoRaw(
 				createMutation,
 				map[string]any{"input": input},
@@ -263,7 +336,8 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			if len(resp.Errors) > 0 {
 				_, _ = fmt.Fprintf(
 					f.IOStreams.ErrOut,
-					"Linear publish failed: %s\n",
+					"%s: %s\n",
+					publishFailureLabel(resp.Errors),
 					graphQLErrorMessage(resp.Errors),
 				)
 			}
@@ -284,6 +358,8 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagRecurrenceInterval, "recurrence-interval", "", "Recurrence interval as an ISO-8601 duration, e.g. P7D, P1M or P1Y (requires --deadline). The next task is created when the deadline passes")
 	cmd.Flags().StringVar(&flagLinearTeam, "linear-team", "", "Linear team ID. Omit to use the organization's default Linear team. If the Linear publish attempt fails after the task is created, the task still exists")
 	cmd.Flags().BoolVar(&flagNoLinearTeam, "no-linear-team", false, "Create the task with no Linear team")
+	cmd.Flags().StringVar(&flagAsanaProject, "asana-project", "", "Asana project GID. Omit to use the organization's default Asana project. A Linear publish takes precedence when both would publish")
+	cmd.Flags().BoolVar(&flagNoAsanaProject, "no-asana-project", false, "Create the task with no Asana project")
 
 	return cmd
 }

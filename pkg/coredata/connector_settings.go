@@ -98,7 +98,27 @@ type (
 	}
 
 	AsanaConnectorSettings struct {
-		WorkspaceGID string `json:"workspace_gid"`
+		WorkspaceGID       string                                 `json:"workspace_gid"`
+		DefaultProjectGID  string                                 `json:"default_project_gid,omitempty"`
+		DefaultProjectName string                                 `json:"default_project_name,omitempty"`
+		ImportNewTasks     bool                                   `json:"import_new_tasks,omitempty"`
+		Webhooks           map[string]AsanaWebhookRegistration    `json:"webhooks,omitempty"`
+		Mappings           map[string]AsanaProjectMappingSettings `json:"mappings,omitempty"`
+	}
+
+	// Secret is ciphertext, base64-encoded, not the hook secret itself.
+	AsanaWebhookRegistration struct {
+		GID    string `json:"gid"`
+		Nonce  string `json:"nonce"`
+		Secret string `json:"secret"`
+	}
+
+	AsanaProjectMappingSettings struct {
+		States           map[string]string `json:"states,omitempty"`
+		SectionInbound   map[string]string `json:"section_inbound,omitempty"`
+		PriorityFieldGID string            `json:"priority_field_gid,omitempty"`
+		Priorities       map[string]string `json:"priorities,omitempty"`
+		OptionInbound    map[string]string `json:"option_inbound,omitempty"`
 	}
 
 	NetlifyConnectorSettings struct {
@@ -137,10 +157,11 @@ type (
 		BaseURL string `json:"base_url"`
 	}
 
-	// DatadogConnectorSettings holds the per-customer Datadog site captured
-	// during the OAuth callback. Region is the site key (e.g. "US3") used for
-	// the AccessReviewSource title; Domain is the API domain (e.g.
-	// "us3.datadoghq.com") the driver and name resolver use to build hosts.
+	// DatadogConnectorSettings holds the per-customer Datadog site, captured
+	// at the OAuth callback or picked on the API-key form. Region is the site
+	// key (e.g. "US3") used for the AccessReviewSource title; Domain is the
+	// API domain (e.g. "us3.datadoghq.com") the driver and name resolver use
+	// to build hosts.
 	DatadogConnectorSettings struct {
 		Region string `json:"region"`
 		Domain string `json:"domain"`
@@ -269,6 +290,12 @@ type (
 	// identifies the tenant.
 	TwingateConnectorSettings struct {
 		Network string `json:"network"`
+	}
+
+	// UniFiConnectorSettings holds the UniFi console the source reviews, as Site
+	// Manager identifies it in api.ui.com connector paths.
+	UniFiConnectorSettings struct {
+		ConsoleID string `json:"console_id"`
 	}
 
 	// AWSConnectorSettings names the IAM role Probo assumes. Every field is

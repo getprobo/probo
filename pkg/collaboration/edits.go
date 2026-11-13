@@ -32,6 +32,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/richtext"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -45,11 +46,6 @@ type (
 		DocumentID gid.GID
 		BaseHeads  []automerge.Hash
 		Edits      []DocumentCollaborationEdit
-	}
-
-	CollaborationApplyContentRequest struct {
-		DocumentID gid.GID
-		Content    string
 	}
 
 	CollaborationWriteResult struct {
@@ -79,156 +75,12 @@ func (s *Service) Heads(
 		return nil, fmt.Errorf("cannot load collaboration heads: %w", err)
 	}
 
-	if !doc.Seeded {
-		return nil, nil
-	}
-
 	heads, err := decodeHeads(doc.Heads)
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode collaboration heads: %w", err)
 	}
 
 	return heads, nil
-}
-
-func (s *Service) Seeded(
-	ctx context.Context,
-	scope coredata.Scoper,
-	documentID gid.GID,
-) (bool, error) {
-	doc := &coredata.CollaborationDocument{}
-
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			return doc.LoadByDocumentID(ctx, conn, scope, documentID)
-		},
-	)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return false, nil
-		}
-
-		return false, fmt.Errorf("cannot load collaboration seed state: %w", err)
-	}
-
-	return doc.Seeded, nil
-}
-
-func (s *Service) ApplyContent(
-	ctx context.Context,
-	scope coredata.Scoper,
-	req CollaborationApplyContentRequest,
-) (*CollaborationWriteResult, error) {
-	sanitized, err := prosemirror.SanitizeDocumentJSON(req.Content)
-	if err != nil {
-		return nil, fmt.Errorf("cannot sanitize collaboration content: %w", err)
-	}
-
-	if err := validateContentLength(sanitized); err != nil {
-		return nil, err
-	}
-
-	var result *CollaborationWriteResult
-
-	err = s.pg.WithTx(
-		ctx,
-		func(ctx context.Context, tx pg.Tx) error {
-			written, err := s.ReplaceUnseededContent(
-				ctx,
-				tx,
-				scope,
-				req.DocumentID,
-				sanitized,
-			)
-			if err != nil {
-				return err
-			}
-
-			result = written
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
-}
-
-// ReplaceUnseededContent seeds the CRDT from content and writes that
-// projection in the same transaction. A document that is already seeded is
-// rejected so a full-content write cannot drop concurrent edits.
-func (s *Service) ReplaceUnseededContent(
-	ctx context.Context,
-	tx pg.Tx,
-	scope coredata.Scoper,
-	documentID gid.GID,
-	content string,
-) (*CollaborationWriteResult, error) {
-	organizationID, err := assertDraftEditable(ctx, scope, tx, documentID)
-	if err != nil {
-		return nil, err
-	}
-
-	identityID, profileID, err := collaborationProfile(ctx, tx, scope, organizationID)
-	if err != nil {
-		return nil, err
-	}
-
-	doc, err := lockCollaborationDocument(ctx, tx, scope, documentID)
-	if err != nil {
-		return nil, err
-	}
-
-	if doc.Seeded {
-		return nil, ErrDocumentCollaborationContentOnSeeded
-	}
-
-	if seedClaimActive(doc, time.Now()) {
-		return nil, ErrSeedInProgress
-	}
-
-	var actorID *automerge.ActorID
-
-	if identityID != (gid.GID{}) {
-		id, err := s.lookupOrCreateActor(
-			ctx,
-			tx,
-			scope,
-			documentID,
-			organizationID,
-			identityID,
-			profileID,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		actorID = &id
-	}
-
-	automergeDocument, body, err := s.seedUnderDocumentLock(
-		ctx,
-		tx,
-		scope,
-		doc,
-		&content,
-		actorID,
-		time.Now(),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	defer func() { _ = automergeDocument.Close() }()
-
-	if err := writeLiveContent(ctx, scope, tx, documentID, body); err != nil {
-		return nil, err
-	}
-
-	return writeResult(automergeDocument)
 }
 
 func (s *Service) ApplyEdits(
@@ -296,14 +148,23 @@ func (s *Service) ApplyEdits(
 
 	opened, err := s.openWithActor(ctx, scope, req.DocumentID, actorID)
 	if err != nil {
-		if errors.Is(err, ErrDocumentCollaborationNotSeeded) {
-			return nil, ErrDocumentCollaborationEditsNotSeeded
+		if errors.Is(err, ErrDocumentCollaborationNotFound) {
+			return nil, err
 		}
 
 		return nil, fmt.Errorf("cannot open collaboration for edits: %w", err)
 	}
 
 	defer func() { _ = opened.Document.Close() }()
+
+	spans, err := BodySpans(opened.Document)
+	if err != nil {
+		return nil, err
+	}
+
+	if HasOpenSuggestions(spans) {
+		return nil, ErrOpenSuggestions
+	}
 
 	hasHeads, err := opened.Document.HasHeads(req.BaseHeads)
 	if err != nil {
@@ -363,7 +224,7 @@ func (s *Service) ApplyEdits(
 		return nil, fmt.Errorf("cannot encode edited collaboration document: %w", err)
 	}
 
-	sanitized, err := prosemirror.SanitizeDocumentJSON(string(encoded))
+	sanitized, err := richtext.DocumentSchema.Sanitize(string(encoded))
 	if err != nil {
 		return nil, fmt.Errorf("cannot sanitize edited collaboration document: %w", err)
 	}
@@ -494,7 +355,7 @@ func (s *Service) openWithActor(
 	documentID gid.GID,
 	actorID automerge.ActorID,
 ) (*DocumentCollaboration, error) {
-	opened, err := s.openIfSeeded(ctx, scope, documentID)
+	opened, err := s.Open(ctx, scope, documentID)
 	if err != nil {
 		return nil, err
 	}
@@ -514,10 +375,8 @@ func (s *Service) openWithActor(
 	}
 
 	return &DocumentCollaboration{
-		Document:    document,
-		Revision:    opened.Revision,
-		SeedContent: opened.SeedContent,
-		NeedsSeed:   opened.NeedsSeed,
+		Document: document,
+		Revision: opened.Revision,
 	}, nil
 }
 

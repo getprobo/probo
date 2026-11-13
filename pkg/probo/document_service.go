@@ -51,7 +51,7 @@ import (
 	"go.probo.inc/probo/pkg/notification"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/pdfutils"
-	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/richtext"
 	"go.probo.inc/probo/pkg/validator"
 	"go.probo.inc/probo/pkg/webhook"
 	webhooktypes "go.probo.inc/probo/pkg/webhook/types"
@@ -78,9 +78,6 @@ type (
 	}
 
 	ErrDocumentVersionPendingApproval struct {
-	}
-
-	ErrDocumentDraftNotDeletable struct {
 	}
 
 	ErrDocumentNotArchived struct {
@@ -272,10 +269,6 @@ func (e ErrDocumentVersionNotCurrent) Error() string {
 
 func (e ErrDocumentVersionPendingApproval) Error() string {
 	return "cannot publish a document version that is pending approval"
-}
-
-func (e ErrDocumentDraftNotDeletable) Error() string {
-	return "latest version is not a deletable draft"
 }
 
 func (e ErrDocumentNotArchived) Error() string {
@@ -580,7 +573,20 @@ func (s *DocumentService) publish(
 
 	result := &PublishDocumentResult{}
 
+	// Lock the collaboration document for the whole publish so the
+	// no-open-suggestions check and the snapshot materialization see one
+	// revision; a concurrent suggestion persist blocks on the same row.
+	collabDocument := &coredata.CollaborationDocument{}
+	if err := collabDocument.LoadByDocumentIDForUpdate(ctx, tx, scope, req.DocumentID); err != nil &&
+		!errors.Is(err, coredata.ErrResourceNotFound) {
+		return nil, fmt.Errorf("cannot lock collaboration document: %w", err)
+	}
+
 	if err := s.ensureNoPendingApproval(ctx, scope, tx, req.DocumentID); err != nil {
+		return nil, err
+	}
+
+	if err := s.collaboration.EnsureNoOpenSuggestions(ctx, tx, scope, req.DocumentID); err != nil {
 		return nil, err
 	}
 
@@ -726,7 +732,7 @@ func (s *DocumentService) Create(
 	if strings.TrimSpace(content) != "" {
 		var sanitizeErr error
 
-		content, sanitizeErr = prosemirror.SanitizeDocumentJSON(content)
+		content, sanitizeErr = richtext.DocumentSchema.Sanitize(content)
 		if sanitizeErr != nil {
 			return nil, fmt.Errorf("cannot sanitize document content: %w", sanitizeErr)
 		}
@@ -2139,7 +2145,7 @@ func (s *DocumentService) Update(
 			if req.Content != nil {
 				content := *req.Content
 				if strings.TrimSpace(content) != "" {
-					sanitized, sanitizeErr := prosemirror.SanitizeDocumentJSON(content)
+					sanitized, sanitizeErr := richtext.DocumentSchema.Sanitize(content)
 					if sanitizeErr != nil {
 						return fmt.Errorf("cannot sanitize document content: %w", sanitizeErr)
 					}
@@ -2213,95 +2219,6 @@ func (s *DocumentService) Update(
 			}
 
 			if err := s.emitDocumentEvent(ctx, scope, tx, req.DocumentID, coredata.WebhookEventTypeDocumentUpdated, nil, nil, nil, webhooktypes.NewDocument(&previousDocument)); err != nil {
-				return fmt.Errorf("cannot emit document updated webhook: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return document, nil
-}
-
-func (s *DocumentService) DeleteDraft(
-	ctx context.Context, scope coredata.Scoper,
-	documentID gid.GID,
-) (*coredata.Document, error) {
-	document := &coredata.Document{}
-
-	err := s.svc.pg.WithTx(
-		ctx,
-		func(ctx context.Context, tx pg.Tx) error {
-			if err := document.LoadByID(ctx, tx, scope, documentID); err != nil {
-				return fmt.Errorf("cannot load document %q: %w", documentID, err)
-			}
-
-			if document.ArchivedAt != nil {
-				return &collaboration.ErrDocumentArchived{}
-			}
-
-			if err := s.ensureNoPendingApproval(ctx, scope, tx, documentID); err != nil {
-				return err
-			}
-
-			published := &coredata.DocumentVersion{}
-			if err := published.LoadLatestPublishedVersion(ctx, tx, scope, documentID); err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return &ErrDocumentDraftNotDeletable{}
-				}
-
-				return fmt.Errorf("cannot load published version: %w", err)
-			}
-
-			changed, err := s.liveDocumentChanged(ctx, scope, tx, document, published)
-			if err != nil {
-				return err
-			}
-
-			if !changed {
-				return nil
-			}
-
-			previous := *document
-			document.Title = published.Title
-			document.Classification = published.Classification
-			document.DocumentType = published.DocumentType
-			document.Orientation = published.Orientation
-			document.Content = published.Content
-			document.UpdatedAt = time.Now()
-
-			if err := s.collaboration.PutContent(
-				ctx,
-				tx,
-				scope,
-				document.ID,
-				published.Content,
-			); err != nil {
-				return fmt.Errorf("cannot restore published content: %w", err)
-			}
-
-			if err := document.Update(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot restore published document: %w", err)
-			}
-
-			if err := document.UpdateContent(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot restore published document content: %w", err)
-			}
-
-			if err := s.emitDocumentEvent(
-				ctx,
-				scope,
-				tx,
-				document.ID,
-				coredata.WebhookEventTypeDocumentUpdated,
-				nil,
-				nil,
-				nil,
-				webhooktypes.NewDocument(&previous),
-			); err != nil {
 				return fmt.Errorf("cannot emit document updated webhook: %w", err)
 			}
 
@@ -2487,6 +2404,18 @@ func (s *DocumentService) CancelSignatureRequest(
 
 			if err := documentVersionSignature.Delete(ctx, tx, scope, documentVersionSignatureID); err != nil {
 				return fmt.Errorf("cannot delete document version signature: %w", err)
+			}
+
+			if err := notification.Resolve(
+				ctx,
+				tx,
+				scope,
+				documentVersionSignature.OrganizationID,
+				documentVersionSignature.SignedBy,
+				coredata.NotificationTypeDocumentSignatureRequested,
+				documentVersion.DocumentID,
+			); err != nil {
+				return fmt.Errorf("cannot resolve signature notification: %w", err)
 			}
 
 			if err := s.emitDocumentEvent(
@@ -3776,14 +3705,6 @@ func (s *DocumentService) CollaborationHeads(
 	documentID gid.GID,
 ) ([]automerge.Hash, error) {
 	return s.collaboration.Heads(ctx, scope, documentID)
-}
-
-func (s *DocumentService) CollaborationSeeded(
-	ctx context.Context,
-	scope coredata.Scoper,
-	documentID gid.GID,
-) (bool, error) {
-	return s.collaboration.Seeded(ctx, scope, documentID)
 }
 
 func (s *DocumentService) LoadDocument(

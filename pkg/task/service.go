@@ -24,6 +24,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"go.probo.inc/probo/pkg/richtext/mention"
 	"time"
 
 	"go.gearno.de/crypto/uuid"
@@ -36,8 +37,9 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/notification"
 	"go.probo.inc/probo/pkg/page"
-	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/richtext"
 	tasksync "go.probo.inc/probo/pkg/task/sync"
+	"go.probo.inc/probo/pkg/task/sync/job"
 	"go.probo.inc/probo/pkg/timespan"
 	"go.probo.inc/probo/pkg/validator"
 )
@@ -62,6 +64,7 @@ func NewService(
 	connectorRegistry *connectorprotocol.Registry,
 	baseURL string,
 	linearAPIBaseURL string,
+	asanaAPIBaseURL string,
 	logger *log.Logger,
 	files *filemanager.Service,
 	bucket string,
@@ -75,6 +78,7 @@ func NewService(
 			connectorRegistry,
 			baseURL,
 			linearAPIBaseURL,
+			asanaAPIBaseURL,
 			logger,
 			InsertUpdateActivities,
 			recordImportedTask,
@@ -207,7 +211,7 @@ func (s *Service) Create(
 	now := time.Now()
 	taskID := gid.New(scope.GetTenantID(), coredata.TaskEntityType)
 
-	content, err := prosemirror.DefaultDocumentJSON(req.Content)
+	content, err := richtext.DefaultDocumentJSON(req.Content)
 	if err != nil {
 		return nil, fmt.Errorf("cannot sanitize task content: %w", err)
 	}
@@ -458,7 +462,7 @@ func (s *Service) Assign(
 					conn,
 					scope,
 					task.ID,
-					tasksync.SyncActionUpdate,
+					job.SyncActionUpdate,
 				); err != nil {
 					return fmt.Errorf("cannot enqueue task sync: %w", err)
 				}
@@ -571,7 +575,7 @@ func (s *Service) Update(
 			}
 
 			if req.Content != nil {
-				content, err := prosemirror.DefaultDocumentJSON(*req.Content)
+				content, err := richtext.DefaultDocumentJSON(*req.Content)
 				if err != nil {
 					return fmt.Errorf("cannot sanitize task content: %w", err)
 				}
@@ -756,7 +760,7 @@ func (s *Service) Update(
 					conn,
 					scope,
 					task.ID,
-					tasksync.SyncActionUpdate,
+					job.SyncActionUpdate,
 				); err != nil {
 					return fmt.Errorf("cannot enqueue task sync: %w", err)
 				}
@@ -792,7 +796,7 @@ func (s *Service) Delete(
 					conn,
 					scope,
 					taskID,
-					tasksync.SyncActionCancel,
+					job.SyncActionCancel,
 				); err != nil {
 					return fmt.Errorf("cannot enqueue task sync: %w", err)
 				}
@@ -889,6 +893,63 @@ func (s *Service) CountForInternalControlID(
 	}
 
 	return count, nil
+}
+
+func (s *Service) CountForFindingID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	findingID gid.GID,
+	filter *coredata.TaskFilter,
+) (int, error) {
+	var count int
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) (err error) {
+			tasks := coredata.Tasks{}
+
+			count, err = tasks.CountByFindingID(ctx, conn, scope, findingID, filter)
+			if err != nil {
+				return fmt.Errorf("cannot count finding tasks: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (s *Service) ListForFindingID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	findingID gid.GID,
+	cursor *page.Cursor[coredata.TaskOrderField],
+	filter *coredata.TaskFilter,
+) (*page.Page[*coredata.Task, coredata.TaskOrderField], error) {
+	var tasks coredata.Tasks
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return tasks.LoadByFindingID(
+				ctx,
+				conn,
+				scope,
+				findingID,
+				cursor,
+				filter,
+			)
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(tasks, cursor), nil
 }
 
 func (s *Service) ListForInternalControlID(
@@ -1023,7 +1084,7 @@ func notifyNewMentions(
 	newContent string,
 	actorID *gid.GID,
 ) error {
-	mentionedIDs, err := prosemirror.NewlyMentionedProfileIDs(oldContent, newContent)
+	mentionedIDs, err := mention.NewProfileIDs(oldContent, newContent)
 	if err != nil {
 		return fmt.Errorf("cannot collect new mentions: %w", err)
 	}

@@ -50,6 +50,7 @@ type scan struct {
 	mu             sync.Mutex
 	in             Input
 	site           origin
+	api            origin
 	startURL       string
 	policy         *requestPolicy
 	rec            *recorder
@@ -66,6 +67,7 @@ type scan struct {
 	started        time.Time
 	elapsedBase    time.Duration
 	pages          int
+	freshSiblings  []string
 	firstErr       error
 	fatal          error
 }
@@ -149,6 +151,7 @@ func Run(ctx context.Context, allocCtx context.Context, in Input) (*Result, erro
 	s := &scan{
 		in:          in,
 		site:        site,
+		api:         api,
 		startURL:    startURL,
 		policy:      policy,
 		rec:         newRecorder(site, api, in.BannerID, binding, in.Limits.MaxObservations),
@@ -192,6 +195,10 @@ func Run(ctx context.Context, allocCtx context.Context, in Input) (*Result, erro
 		}
 
 		confirmed, err := s.probeEmbeds(runCtx, sitemapURLs)
+		if errors.Is(err, ErrBannerNotInstalled) {
+			confirmed, err = s.confirmRenderedBanner()
+		}
+
 		if err != nil {
 			return nil, err
 		}
@@ -317,7 +324,17 @@ func (s *scan) loop() (stopCause, error) {
 		if !item.FromSitemap && item.Depth < limits.MaxDepth {
 			for _, href := range links {
 				link, linkOK := resolveLink(item.URL, href)
-				if !linkOK || !s.site.contains(link) || s.policy.block(s.scanCtx, http.MethodGet, link, "", "") {
+				if !linkOK {
+					continue
+				}
+
+				if _, sibling := siblingOrigin(s.site, s.api, link); sibling {
+					s.noteSibling(link)
+
+					continue
+				}
+
+				if !s.site.contains(link) || s.policy.block(s.scanCtx, http.MethodGet, link, "", "") {
 					continue
 				}
 
@@ -327,6 +344,7 @@ func (s *scan) loop() (stopCause, error) {
 
 		s.pages++
 		page.URL = item.URL
+		page.SiblingOrigins = s.drainSiblings()
 
 		checkpoint := s.front.checkpoint(s.pages, s.elapsed(), s.rec.capped())
 		if s.in.OnPage != nil {
@@ -335,6 +353,160 @@ func (s *scan) loop() (stopCause, error) {
 			}
 		}
 	}
+}
+
+// confirmRenderedBanner reads a banner id the script-tag and npm installs
+// add only after JavaScript runs. The static probe cannot see it.
+func (s *scan) confirmRenderedBanner() (bool, error) {
+	deadline := time.Now().Add(s.in.Limits.NavigationTimeout + s.in.Limits.HomepageDwell)
+
+	// Events from this load can arrive after the check returns. Hold them
+	// until visit opens the page.
+	s.rec.beginPage()
+
+	s.rec.holdObservations()
+	defer s.rec.discardPage()
+
+	if s.cancelled() != nil || s.runExpired() {
+		return false, nil
+	}
+
+	navLimit := s.navigationBudget(false)
+	if remain := time.Until(deadline); remain < navLimit {
+		navLimit = max(remain, 0)
+	}
+
+	navCtx, cancel := context.WithTimeout(s.tabCtx, navLimit)
+	err := chromedp.Do(navCtx, chromedp.Navigate(s.startURL))
+
+	cancel()
+
+	if err != nil {
+		if s.cancelled() != nil || s.runExpired() {
+			return false, nil
+		}
+
+		return false, classifyNavigation(err)
+	}
+
+	if err := s.blockedDocument(); err != nil {
+		return false, err
+	}
+
+	var (
+		sawRead bool
+		readErr error
+		id      string
+	)
+
+	ticker := time.NewTicker(100 * time.Millisecond)
+	defer ticker.Stop()
+
+	for {
+		if s.cancelled() != nil || s.runExpired() {
+			return false, nil
+		}
+
+		if !time.Now().Before(deadline) {
+			break
+		}
+
+		id, readErr = s.renderedBannerID(deadline)
+		if readErr == nil {
+			sawRead = true
+
+			if id != "" {
+				if id != s.in.BannerID {
+					return false, ErrDifferentBanner
+				}
+
+				return true, nil
+			}
+		}
+
+		select {
+		case <-s.scanCtx.Done():
+			return false, nil
+		case <-s.runDone():
+			return false, nil
+		case <-ticker.C:
+		}
+	}
+
+	if s.cancelled() != nil || s.runExpired() {
+		return false, nil
+	}
+
+	if err := s.blockedDocument(); err != nil {
+		return false, err
+	}
+
+	if !sawRead {
+		if readErr != nil {
+			s.warn(s.scanCtx, "cannot read banner", readErr)
+		}
+
+		return false, nil
+	}
+
+	return false, fmt.Errorf("%w: homepage has no probo banner", ErrBannerNotInstalled)
+}
+
+func (s *scan) renderedBannerID(deadline time.Time) (string, error) {
+	timeout := s.renderedReadTimeout(deadline)
+	if timeout <= 0 {
+		return "", context.DeadlineExceeded
+	}
+
+	// Stay under the tab context so chromedp can find the target, and
+	// cancel when the run deadline passes.
+	ctx, cancel := context.WithCancel(s.tabCtx)
+	defer cancel()
+
+	if s.runCtx != nil {
+		defer context.AfterFunc(s.runCtx, cancel)()
+	}
+
+	ctx, cancelTimeout := context.WithTimeout(ctx, timeout)
+	defer cancelTimeout()
+
+	id, err := chromedp.Run(ctx, chromedp.Evaluate[string](bannerIDJS))
+	if err != nil {
+		return "", err
+	}
+
+	return strings.TrimSpace(id), nil
+}
+
+func (s *scan) renderedReadTimeout(deadline time.Time) time.Duration {
+	timeout := readTimeout
+
+	if remain := time.Until(deadline); remain < timeout {
+		timeout = remain
+	}
+
+	if s.runCtx != nil {
+		if until, ok := s.runCtx.Deadline(); ok {
+			if remain := time.Until(until); remain < timeout {
+				timeout = remain
+			}
+		}
+	}
+
+	if timeout < 0 {
+		return 0
+	}
+
+	return timeout
+}
+
+func (s *scan) blockedDocument() error {
+	status := s.rec.mainStatus()
+	if !blockedStatus(status) {
+		return nil
+	}
+
+	return fmt.Errorf("%w: HTTP %d", ErrBlocked, status)
 }
 
 func (s *scan) visit(item QueueItem, grace bool) (Page, []string, error) {

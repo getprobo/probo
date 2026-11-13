@@ -34,7 +34,7 @@ import (
 )
 
 // EmptyProseMirrorDocument is the ProseMirror document a version with no stored
-// content seeds from, matching the frontend's default empty editor.
+// content starts from, matching the frontend's default empty editor.
 const EmptyProseMirrorDocument = `{"type":"doc","content":[{"type":"paragraph"}]}`
 
 func collaborationProfile(
@@ -60,8 +60,9 @@ func collaborationProfile(
 	return identityID, &profile.ID, nil
 }
 
-// MaterializedContent returns the live ProseMirror JSON. A seeded CRDT wins.
-// fallback is the document row's content, used until the CRDT exists.
+// MaterializedContent returns the live ProseMirror JSON read from the CRDT.
+// fallback is the document row's content, returned for a document that has no
+// CRDT, such as a generated one.
 func (s *Service) MaterializedContent(
 	ctx context.Context,
 	scope coredata.Scoper,
@@ -77,7 +78,7 @@ func (s *Service) MaterializedContent(
 		doc := &coredata.CollaborationDocument{}
 
 		err := doc.LoadByDocumentID(ctx, conn, scope, documentID)
-		if errors.Is(err, coredata.ErrResourceNotFound) || (err == nil && !doc.Seeded) {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return fallback, nil
 		}
 
@@ -147,10 +148,14 @@ func (s *Service) PutContent(
 		content = EmptyProseMirrorDocument
 	}
 
-	doc, err := lockCollaborationDocument(ctx, tx, scope, documentID)
+	doc, err := lockOrCreateCollaborationDocument(ctx, tx, scope, documentID)
 	if err != nil {
 		return err
 	}
+
+	// A collaboration document created just above has no heads and no body
+	// text object yet.
+	fresh := len(doc.Heads) == 0
 
 	identityID, profileID, err := collaborationProfile(ctx, tx, scope, doc.OrganizationID)
 	if err != nil {
@@ -183,14 +188,25 @@ func (s *Service) PutContent(
 		return err
 	}
 
-	if err := writeSpans(automergeDocument, content, !doc.Seeded); err != nil {
+	if !fresh {
+		spans, err := BodySpans(automergeDocument)
+		if err != nil {
+			return err
+		}
+
+		if HasOpenSuggestions(spans) {
+			return ErrOpenSuggestions
+		}
+	}
+
+	if err := writeSpans(automergeDocument, content, fresh); err != nil {
 		return err
 	}
 
 	// Rewriting a document with the content it already has produces no
 	// operations. That is a successful replace: the live CRDT already matches.
 	if _, err := automergeDocument.Commit("Set document content", time.Now()); err != nil {
-		if errors.Is(err, automerge.ErrNoOperations) && doc.Seeded {
+		if errors.Is(err, automerge.ErrNoOperations) && !fresh {
 			return nil
 		}
 
@@ -224,8 +240,6 @@ func (s *Service) PutContent(
 	now := time.Now()
 	doc.Snapshot = snapshot
 	doc.Heads = encodeHeads(heads)
-	doc.Seeded = true
-	doc.SeedClaimedAt = nil
 	doc.Revision++
 	doc.SnapshotRevision = doc.Revision
 	doc.ChangeRevision = doc.Revision

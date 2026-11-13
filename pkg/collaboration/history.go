@@ -146,9 +146,9 @@ func (s *Service) loadRevisions(
 	scope coredata.Scoper,
 	documentID gid.GID,
 ) ([]*DocumentRevision, error) {
-	opened, err := s.openIfSeeded(ctx, scope, documentID)
+	opened, err := s.Open(ctx, scope, documentID)
 	if err != nil {
-		if errors.Is(err, ErrDocumentCollaborationNotSeeded) || errors.Is(err, ErrSeedInProgress) {
+		if errors.Is(err, ErrDocumentCollaborationNotFound) {
 			return nil, nil
 		}
 
@@ -186,9 +186,9 @@ func (s *Service) GetHistorySnapshot(
 		return nil, fmt.Errorf("collaboration history snapshot requires heads")
 	}
 
-	opened, err := s.openIfSeeded(ctx, scope, documentID)
+	opened, err := s.Open(ctx, scope, documentID)
 	if err != nil {
-		if errors.Is(err, ErrDocumentCollaborationNotSeeded) || errors.Is(err, ErrSeedInProgress) {
+		if errors.Is(err, ErrDocumentCollaborationNotFound) {
 			return nil, err
 		}
 
@@ -276,6 +276,37 @@ func (s *Service) RestoreHistory(
 		return 0, fmt.Errorf("cannot create collaboration restore actor: %w", err)
 	}
 
+	opened, err := s.openWithActor(ctx, scope, documentID, actorID)
+	if err != nil {
+		if errors.Is(err, ErrDocumentCollaborationNotFound) {
+			return 0, err
+		}
+
+		return 0, fmt.Errorf("cannot open collaboration for history restore: %w", err)
+	}
+
+	defer func() { _ = opened.Document.Close() }()
+
+	spans, err := BodySpans(opened.Document)
+	if err != nil {
+		return 0, err
+	}
+
+	if HasOpenSuggestions(spans) {
+		return 0, ErrOpenSuggestions
+	}
+
+	hasHeads, err := opened.Document.HasHeads(heads)
+	if err != nil {
+		return 0, fmt.Errorf("cannot verify collaboration history restore heads: %w", err)
+	}
+
+	if !hasHeads {
+		return 0, fmt.Errorf("collaboration history restore heads are unknown")
+	}
+
+	// Record the restore actor only after validation so a rejected restore
+	// leaves no actor attribution behind.
 	if err := s.RecordActors(
 		ctx,
 		scope,
@@ -288,32 +319,12 @@ func (s *Service) RestoreHistory(
 		return 0, fmt.Errorf("cannot record collaboration restore actor: %w", err)
 	}
 
-	opened, err := s.openWithActor(ctx, scope, documentID, actorID)
-	if err != nil {
-		if errors.Is(err, ErrDocumentCollaborationNotSeeded) || errors.Is(err, ErrSeedInProgress) {
-			return 0, err
-		}
-
-		return 0, fmt.Errorf("cannot open collaboration for history restore: %w", err)
-	}
-
-	defer func() { _ = opened.Document.Close() }()
-
-	hasHeads, err := opened.Document.HasHeads(heads)
-	if err != nil {
-		return 0, fmt.Errorf("cannot verify collaboration history restore heads: %w", err)
-	}
-
-	if !hasHeads {
-		return 0, fmt.Errorf("collaboration history restore heads are unknown")
-	}
-
 	content, err := materializeAtHeads(opened.Document, heads)
 	if err != nil {
 		return 0, err
 	}
 
-	spans, err := automergeprosemirror.ToSpans(content)
+	restored, err := automergeprosemirror.ToSpans(content)
 	if err != nil {
 		return 0, fmt.Errorf("cannot convert restored content to spans: %w", err)
 	}
@@ -323,7 +334,7 @@ func (s *Service) RestoreHistory(
 		return 0, fmt.Errorf("cannot get collaboration body for restore: %w", err)
 	}
 
-	if err := text.UpdateSpans(spans, automergeprosemirror.UpdateSpansConfig()); err != nil {
+	if err := text.UpdateSpans(restored, automergeprosemirror.UpdateSpansConfig()); err != nil {
 		return 0, fmt.Errorf("cannot write restored collaboration spans: %w", err)
 	}
 

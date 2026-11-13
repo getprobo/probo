@@ -29,6 +29,7 @@ import (
 	"go.probo.inc/probo/pkg/docgen"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/richtext"
 )
 
 // hostileText exercises the template escaping every generated document relies
@@ -157,6 +158,7 @@ func TestBuildDocuments_ProduceParseableProseMirror(t *testing.T) {
 						Rows: []docgen.FindingListRow{
 							{
 								ReferenceID:        hostileText,
+								Title:              hostileText,
 								Kind:               hostileText,
 								Description:        hostileText,
 								Source:             hostileText,
@@ -461,7 +463,7 @@ func TestBuildDocuments_ProduceParseableProseMirror(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, prosemirror.NodeDoc, node.Type)
 
-				require.NoError(t, prosemirror.ValidateDocumentContentJSON(content))
+				require.NoError(t, richtext.DocumentSchema.ValidateJSON(content))
 			},
 		)
 	}
@@ -531,7 +533,7 @@ func TestBuildDocuments_EmptyDataProducesParseableProseMirror(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, prosemirror.NodeDoc, node.Type)
 
-				require.NoError(t, prosemirror.ValidateDocumentContentJSON(content))
+				require.NoError(t, richtext.DocumentSchema.ValidateJSON(content))
 			},
 		)
 	}

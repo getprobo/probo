@@ -25,6 +25,7 @@ import (
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/prosemirror"
 	"go.probo.inc/probo/pkg/resourcealias"
+	"go.probo.inc/probo/pkg/richtext"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/clientip"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
@@ -62,7 +63,13 @@ func (r *documentResolver) Alias(ctx context.Context, obj *types.Document) (*str
 		return nil, err
 	}
 
-	return r.resourceAlias.GetByResourceID(ctx, scope, obj.ID)
+	alias, err := r.resourceAlias.GetByResourceID(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load resource alias", log.Error(err))
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return alias, nil
 }
 
 // Organization is the resolver for the organization field.
@@ -220,6 +227,64 @@ func (r *documentResolver) Versions(ctx context.Context, obj *types.Document, fi
 	}
 
 	return types.NewDocumentVersionConnection(page, r, obj.ID), nil
+}
+
+// CommentThreads is the resolver for the commentThreads field.
+func (r *documentResolver) CommentThreads(ctx context.Context, obj *types.Document, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentCommentThreadOrderBy, filter *types.DocumentCommentThreadFilter) (*types.DocumentCommentThreadConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.DocumentCommentThreadOrderField]{
+		Field:     coredata.DocumentCommentThreadOrderFieldCreatedAt,
+		Direction: page.OrderDirectionAsc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.DocumentCommentThreadOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	threadFilter := documentCommentThreadFilter(filter)
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	threads, err := r.probo.Documents.ListCommentThreads(ctx, scope, obj.ID, cursor, threadFilter)
+	if err != nil {
+		return nil, r.documentReviewError(ctx, "cannot list document comment threads", err)
+	}
+
+	return types.NewDocumentCommentThreadConnection(threads, r, obj.ID, threadFilter), nil
+}
+
+// Suggestions is the resolver for the suggestions field.
+func (r *documentResolver) Suggestions(ctx context.Context, obj *types.Document, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentSuggestionOrderBy, filter *types.DocumentSuggestionFilter) (*types.DocumentSuggestionConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.DocumentSuggestionOrderField]{
+		Field:     coredata.DocumentSuggestionOrderFieldCreatedAt,
+		Direction: page.OrderDirectionAsc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.DocumentSuggestionOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	suggestionFilter := documentSuggestionFilter(filter)
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	suggestions, err := r.probo.Documents.ListSuggestions(ctx, scope, obj.ID, cursor, suggestionFilter)
+	if err != nil {
+		return nil, r.documentReviewError(ctx, "cannot list document suggestions", err)
+	}
+
+	return types.NewDocumentSuggestionConnection(suggestions, r, obj.ID, suggestionFilter), nil
 }
 
 // Controls is the resolver for the controls field.
@@ -407,7 +472,7 @@ func (r *documentContentResolver) Markdown(ctx context.Context, obj *types.Docum
 		return "", gqlx.Internal(ctx)
 	}
 
-	md, err := prosemirror.RenderMarkdown(node)
+	md, err := richtext.DocumentMarkdown.Render(node)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot render document content as markdown", log.Error(err))
 		return "", gqlx.Internal(ctx)
@@ -465,8 +530,7 @@ func (r *documentRevisionResolver) Snapshot(ctx context.Context, obj *types.Docu
 		previousHeads,
 	)
 	if err != nil {
-		if errors.Is(err, collaboration.ErrDocumentCollaborationNotSeeded) ||
-			errors.Is(err, collaboration.ErrSeedInProgress) {
+		if errors.Is(err, collaboration.ErrDocumentCollaborationNotFound) {
 			return nil, gqlx.Conflict(ctx, err)
 		}
 
@@ -1239,11 +1303,6 @@ func (r *mutationResolver) UpdateDocument(ctx context.Context, input types.Updat
 			return nil, gqlx.Conflict(ctx, errGenerated)
 		}
 
-		if errors.Is(err, collaboration.ErrDocumentCollaborationContentOnSeeded) ||
-			errors.Is(err, collaboration.ErrSeedInProgress) {
-			return nil, gqlx.Conflict(ctx, err)
-		}
-
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
@@ -1254,37 +1313,6 @@ func (r *mutationResolver) UpdateDocument(ctx context.Context, input types.Updat
 	}
 
 	return &types.UpdateDocumentPayload{
-		Document: types.NewDocument(document),
-	}, nil
-}
-
-// DeleteDocumentDraft is the resolver for the deleteDocumentDraft field.
-func (r *mutationResolver) DeleteDocumentDraft(ctx context.Context, input types.DeleteDocumentDraftInput) (*types.DeleteDocumentDraftPayload, error) {
-	scope, err := r.authorize(ctx, input.DocumentID, probo.ActionDocumentDeleteDraft)
-	if err != nil {
-		return nil, err
-	}
-
-	document, err := r.probo.Documents.DeleteDraft(ctx, scope, input.DocumentID)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlx.NotFound(ctx, err)
-		}
-
-		if errNotDeletable, ok := errors.AsType[*probo.ErrDocumentDraftNotDeletable](err); ok {
-			return nil, gqlx.Conflict(ctx, errNotDeletable)
-		}
-
-		if errArchived, ok := errors.AsType[*collaboration.ErrDocumentArchived](err); ok {
-			return nil, gqlx.Conflict(ctx, errArchived)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot delete document draft", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
-	}
-
-	return &types.DeleteDocumentDraftPayload{
 		Document: types.NewDocument(document),
 	}, nil
 }
@@ -1371,6 +1399,10 @@ func (r *mutationResolver) PublishDocument(ctx context.Context, input types.Publ
 	if err != nil {
 		if errArchived, ok := errors.AsType[*collaboration.ErrDocumentArchived](err); ok {
 			return nil, gqlx.Conflict(ctx, errArchived)
+		}
+
+		if errors.Is(err, collaboration.ErrOpenSuggestions) {
+			return nil, gqlx.Conflictf(ctx, "resolve open suggestions before publishing")
 		}
 
 		if errPending, ok := errors.AsType[*probo.ErrDocumentVersionPendingApproval](err); ok {
@@ -2024,9 +2056,10 @@ func (r *mutationResolver) RestoreDocumentHistory(ctx context.Context, input typ
 		switch {
 		case errors.Is(err, coredata.ErrResourceNotFound):
 			return nil, gqlx.NotFound(ctx, err)
-		case errors.Is(err, collaboration.ErrDocumentCollaborationNotSeeded),
-			errors.Is(err, collaboration.ErrSeedInProgress):
+		case errors.Is(err, collaboration.ErrDocumentCollaborationNotFound):
 			return nil, gqlx.Conflict(ctx, err)
+		case errors.Is(err, collaboration.ErrOpenSuggestions):
+			return nil, gqlx.Conflictf(ctx, "resolve open suggestions before restoring")
 		}
 
 		if errArchived, ok := errors.AsType[*collaboration.ErrDocumentArchived](err); ok {

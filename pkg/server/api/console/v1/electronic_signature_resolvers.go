@@ -7,11 +7,11 @@ package console_v1
 
 import (
 	"context"
-	"fmt"
 
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 // Certificate is the resolver for the certificate field.
@@ -35,7 +35,7 @@ func (r *electronicSignatureResolver) Events(ctx context.Context, obj *types.Ele
 
 	events, err := r.esign.GetEventsBySignatureID(ctx, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load signature events: %w", err)
+		return nil, gqlx.MapError(ctx, r.logger, "cannot load signature events", err)
 	}
 
 	result := make([]*types.ElectronicSignatureEvent, len(events))

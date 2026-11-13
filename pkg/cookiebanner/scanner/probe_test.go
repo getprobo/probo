@@ -219,6 +219,10 @@ func TestProbeEmbeds_RequiresThisBanner(t *testing.T) {
 	}{
 		{name: "matching id", html: `<probo-cookie-banner banner-id="banner"></probo-cookie-banner>`},
 		{name: "different id", html: `<probo-cookie-banner banner-id="other"></probo-cookie-banner>`, err: ErrDifferentBanner},
+		{name: "script tag", html: `<script src="https://cdn.jsdelivr.net/npm/@probo/cookie-banner/dist/cookie-banner.iife.js" data-banner-id="banner"></script>`},
+		{name: "different script", html: `<script data-banner-id="other" src="https://cdn.example.com/cookie-banner.iife.js"></script>`, err: ErrDifferentBanner},
+		{name: "empty script id", html: `<script data-banner-id=""></script>`, err: ErrBannerNotInstalled},
+		{name: "headless root", html: `<probo-cookie-banner-root banner-id="banner"></probo-cookie-banner-root>`},
 		{name: "no element", html: `<p>home</p>`, err: ErrBannerNotInstalled},
 	}
 

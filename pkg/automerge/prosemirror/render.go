@@ -29,61 +29,6 @@ import (
 	"go.probo.inc/probo/pkg/automerge"
 )
 
-type schemaMapping struct {
-	Automerge   string
-	ProseMirror string
-}
-
-// blockMappings and markMappings are the Go half of the shared ProseMirror <->
-// Automerge schema ledger (testdata/schema-mapping.json). Keeping them as data
-// lets a drift test assert that this renderer, the frontend adapter, and the
-// ledger all agree on block-type strings, mark names, and mark order. markMappings
-// is ordered by ProseMirror schema rank because ProseMirror stores marks in that
-// order, so the renderer must emit them the same way for byte-identical documents.
-var (
-	blockMappings = []schemaMapping{
-		{Automerge: blockTypeParagraph, ProseMirror: "paragraph"},
-		{Automerge: blockTypeHeading, ProseMirror: "heading"},
-		{Automerge: blockTypeCode, ProseMirror: "codeBlock"},
-		{Automerge: blockTypeBlockquote, ProseMirror: "blockquote"},
-		{Automerge: blockTypeOrderedListItem, ProseMirror: "listItem"},
-		{Automerge: blockTypeUnorderedListItem, ProseMirror: "listItem"},
-		{Automerge: blockTypeTaskListItem, ProseMirror: "taskItem"},
-		{Automerge: blockTypeHorizontalRule, ProseMirror: "horizontalRule"},
-		{Automerge: blockTypeImage, ProseMirror: "image"},
-		{Automerge: blockTypeFile, ProseMirror: "file"},
-		{Automerge: blockTypeHardBreak, ProseMirror: "hardBreak"},
-		{Automerge: blockTypeTable, ProseMirror: "table"},
-		{Automerge: blockTypeTableCell, ProseMirror: "tableCell"},
-		{Automerge: blockTypeTableHeader, ProseMirror: "tableHeader"},
-		{Automerge: blockTypeTableRow, ProseMirror: "tableRow"},
-	}
-
-	markMappings = []schemaMapping{
-		{Automerge: "link", ProseMirror: "link"},
-		{Automerge: "strong", ProseMirror: "bold"},
-		{Automerge: "em", ProseMirror: "italic"},
-		{Automerge: "strike", ProseMirror: "strike"},
-		{Automerge: "underline", ProseMirror: "underline"},
-		{Automerge: "code", ProseMirror: "code"},
-	}
-
-	blockNodeNames  = map[string]string{}
-	markNodeNames   = map[string]string{}
-	markRenderOrder = map[string]int{}
-)
-
-func init() {
-	for _, mapping := range blockMappings {
-		blockNodeNames[mapping.Automerge] = mapping.ProseMirror
-	}
-
-	for index, mapping := range markMappings {
-		markNodeNames[mapping.Automerge] = mapping.ProseMirror
-		markRenderOrder[mapping.Automerge] = index
-	}
-}
-
 type (
 	node struct {
 		Type    string         `json:"type"`
@@ -114,6 +59,7 @@ const (
 	blockTypeHorizontalRule    = "horizontal-rule"
 	blockTypeImage             = "image"
 	blockTypeFile              = "file"
+	blockTypeMention           = "mention"
 	blockTypeOrderedListItem   = "ordered-list-item"
 	blockTypeParagraph         = "paragraph"
 	blockTypeTable             = "table"
@@ -162,7 +108,7 @@ func collectBlocks(spans []automerge.Span) ([]block, error) {
 				blockType = "__unknown__"
 			}
 
-			if blockType == blockTypeHardBreak {
+			if codec, ok := inlineEmbedByBlock[blockType]; ok {
 				if len(blocks) == 0 || !acceptsInlineContent(blocks[len(blocks)-1].Type) {
 					parents := tolerantStringSlice(span.Block["parents"])
 					blocks = append(
@@ -174,9 +120,16 @@ func collectBlocks(spans []automerge.Span) ([]block, error) {
 					)
 				}
 
+				inline := node{Type: string(codec.Node())}
+
+				attrs, _ := span.Block["attrs"].(map[string]any)
+				if filtered := codec.ToAttrs(attrs); len(filtered) > 0 {
+					inline.Attrs = filtered
+				}
+
 				blocks[len(blocks)-1].Content = append(
 					blocks[len(blocks)-1].Content,
-					node{Type: blockNodeNames[blockTypeHardBreak]},
+					inline,
 				)
 
 				continue
@@ -270,35 +223,6 @@ func hoistNodes(values []node) []node {
 	}
 
 	return result
-}
-
-// blockAllowedUnder reports whether a block type may appear directly beneath the
-// given ancestor path. Table parts only mean anything inside their container, and
-// the Markdown and HTML renderers reject them anywhere else, so a stray cell or row
-// degrades to its inline content instead of poisoning the whole document.
-func blockAllowedUnder(blockType string, parents []string) bool {
-	var parent string
-	if len(parents) > 0 {
-		parent = parents[len(parents)-1]
-	}
-
-	switch blockType {
-	case blockTypeTableCell, blockTypeTableHeader:
-		return parent == blockTypeTableRow
-	case blockTypeTableRow:
-		return parent == blockTypeTable
-	default:
-		return true
-	}
-}
-
-func acceptsInlineContent(blockType string) bool {
-	switch blockType {
-	case blockTypeHorizontalRule, blockTypeTable, blockTypeTableRow, blockTypeImage, blockTypeFile:
-		return false
-	default:
-		return true
-	}
 }
 
 func inlineFallbackParents(parents []string) []string {
@@ -398,156 +322,8 @@ func flattenBlocks(blocks []block) []node {
 }
 
 func renderBlock(source block, children []node) ([]node, string) {
-	switch source.Type {
-	case blockTypeParagraph:
-		rendered := node{Type: blockNodeNames[blockTypeParagraph], Content: source.Content}
-
-		return append([]node{rendered}, children...), ""
-	case blockTypeHeading:
-		level := intAttribute(source.Attrs, "level", 1)
-		if level < 1 || level > 6 {
-			level = 1
-		}
-
-		rendered := node{
-			Type:    blockNodeNames[blockTypeHeading],
-			Attrs:   map[string]any{"level": level},
-			Content: source.Content,
-		}
-
-		return append([]node{rendered}, children...), ""
-	case blockTypeCode:
-		attrs := map[string]any{"language": nil}
-		if language, ok := source.Attrs["language"].(string); ok {
-			attrs["language"] = language
-		}
-
-		rendered := node{
-			Type:    blockNodeNames[blockTypeCode],
-			Attrs:   attrs,
-			Content: source.Content,
-		}
-
-		return append([]node{rendered}, children...), ""
-	case blockTypeImage:
-		rendered := []node{{Type: "image", Attrs: source.Attrs}}
-
-		return append(rendered, children...), ""
-	case blockTypeFile:
-		rendered := []node{{Type: "file", Attrs: source.Attrs}}
-
-		return append(rendered, children...), ""
-	case blockTypeHorizontalRule:
-		rendered := []node{{Type: blockNodeNames[blockTypeHorizontalRule]}}
-		if len(source.Content) > 0 {
-			rendered = append(
-				rendered,
-				node{Type: blockNodeNames[blockTypeParagraph], Content: source.Content},
-			)
-		}
-
-		return append(rendered, children...), ""
-	case blockTypeBlockquote:
-		content := children
-		if len(source.Content) > 0 || len(children) == 0 {
-			paragraph := node{Type: blockNodeNames[blockTypeParagraph], Content: source.Content}
-			content = append([]node{paragraph}, children...)
-		}
-
-		return []node{{
-			Type:    blockNodeNames[blockTypeBlockquote],
-			Content: content,
-		}}, ""
-	case blockTypeOrderedListItem:
-		paragraph := node{Type: blockNodeNames[blockTypeParagraph], Content: source.Content}
-
-		return []node{{
-			Type:    blockNodeNames[blockTypeOrderedListItem],
-			Content: append([]node{paragraph}, children...),
-		}}, "orderedList"
-	case blockTypeUnorderedListItem:
-		paragraph := node{Type: blockNodeNames[blockTypeParagraph], Content: source.Content}
-
-		return []node{{
-			Type:    blockNodeNames[blockTypeUnorderedListItem],
-			Content: append([]node{paragraph}, children...),
-		}}, "bulletList"
-	case blockTypeTaskListItem:
-		paragraph := node{Type: blockNodeNames[blockTypeParagraph], Content: source.Content}
-
-		return []node{{
-			Type: blockNodeNames[blockTypeTaskListItem],
-			Attrs: map[string]any{
-				"checked": boolAttribute(source.Attrs, "checked"),
-			},
-			Content: append([]node{paragraph}, children...),
-		}}, "taskList"
-	case blockTypeTable:
-		rows, spills := partitionNodes(children, blockNodeNames[blockTypeTableRow])
-		rendered := make([]node, 0, 2+len(spills))
-
-		if len(rows) > 0 {
-			rendered = append(
-				rendered,
-				node{Type: blockNodeNames[blockTypeTable], Content: rows},
-			)
-		}
-
-		if len(source.Content) > 0 {
-			rendered = append(
-				rendered,
-				node{Type: blockNodeNames[blockTypeParagraph], Content: source.Content},
-			)
-		}
-
-		return append(rendered, hoistNodes(spills)...), ""
-	case blockTypeTableRow:
-		cells, spills := partitionNodes(
-			children,
-			blockNodeNames[blockTypeTableCell],
-			blockNodeNames[blockTypeTableHeader],
-		)
-		rendered := make([]node, 0, 2+len(spills))
-
-		if len(cells) > 0 {
-			rendered = append(
-				rendered,
-				node{Type: blockNodeNames[blockTypeTableRow], Content: cells},
-			)
-		}
-
-		if len(source.Content) > 0 {
-			rendered = append(
-				rendered,
-				node{Type: blockNodeNames[blockTypeParagraph], Content: source.Content},
-			)
-		}
-
-		return append(rendered, hoistNodes(spills)...), ""
-	case blockTypeTableCell, blockTypeTableHeader:
-		content := children
-		if len(source.Content) > 0 || len(children) == 0 {
-			paragraph := node{Type: blockNodeNames[blockTypeParagraph], Content: source.Content}
-			content = append([]node{paragraph}, children...)
-		}
-
-		attrs := map[string]any{
-			"colspan":  intAttribute(source.Attrs, "colspan", 1),
-			"rowspan":  intAttribute(source.Attrs, "rowspan", 1),
-			"colwidth": intSliceAttribute(source.Attrs, "colwidth"),
-		}
-
-		nodeType := blockNodeNames[blockTypeTableCell]
-		if source.Type == blockTypeTableHeader {
-			nodeType = blockNodeNames[blockTypeTableHeader]
-		}
-
-		return []node{{
-			Type:    nodeType,
-			Attrs:   attrs,
-			Content: content,
-		}}, ""
-	default:
+	codec, ok := renderCodecs[source.Type]
+	if !ok {
 		rendered := make([]node, 0, 1+len(children))
 		if len(source.Content) > 0 {
 			rendered = append(
@@ -558,6 +334,8 @@ func renderBlock(source block, children []node) ([]node, string) {
 
 		return append(rendered, hoistNodes(children)...), ""
 	}
+
+	return codec.Render(source, children)
 }
 
 func partitionNodes(values []node, allowed ...string) ([]node, []node) {
@@ -603,23 +381,12 @@ func renderMarks(values map[string]any) ([]mark, error) {
 	marks := make([]mark, 0, len(names))
 
 	for _, name := range names {
-		if name == "link" {
-			raw, ok := values[name].(string)
-			if !ok {
-				continue
-			}
-
-			var attrs map[string]any
-			if err := json.Unmarshal([]byte(raw), &attrs); err != nil {
-				continue
-			}
-
-			marks = append(marks, mark{Type: markNodeNames[name], Attrs: attrs})
-
+		rendered, ok := markCodecsByAutomerge[name].FromScalar(values[name])
+		if !ok {
 			continue
 		}
 
-		marks = append(marks, mark{Type: markNodeNames[name]})
+		marks = append(marks, rendered)
 	}
 
 	if len(marks) == 0 {

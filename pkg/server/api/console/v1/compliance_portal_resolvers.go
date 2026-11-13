@@ -8,7 +8,6 @@ package console_v1
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
@@ -493,7 +492,7 @@ func (r *compliancePortalAccessResolver) NdaSignature(ctx context.Context, obj *
 
 	access, err := r.management.GetAccess(ctx, scope, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load compliance portal access: %w", err)
+		return nil, gqlx.MapError(ctx, r.logger, "cannot load compliance portal access", err)
 	}
 
 	if access.ElectronicSignatureID == nil {
@@ -900,7 +899,13 @@ func (r *compliancePortalFileResolver) Alias(ctx context.Context, obj *types.Com
 		return nil, err
 	}
 
-	return r.resourceAlias.GetByResourceID(ctx, scope, obj.ID)
+	alias, err := r.resourceAlias.GetByResourceID(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load resource alias", log.Error(err))
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return alias, nil
 }
 
 // Organization is the resolver for the organization field.

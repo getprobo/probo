@@ -27,6 +27,7 @@ import (
 	"strings"
 
 	"go.probo.inc/probo/pkg/automerge"
+	"go.probo.inc/probo/pkg/prosemirror"
 )
 
 // ToSpans converts a ProseMirror document (the JSON the editor stores) into the
@@ -83,71 +84,49 @@ type (
 	}
 )
 
-// pmNodeToBlock maps a ProseMirror node name to its Automerge block type. List
-// items are absent because their type depends on the enclosing list wrapper.
-var pmNodeToBlock = map[string]string{
-	"paragraph":      blockTypeParagraph,
-	"heading":        blockTypeHeading,
-	"codeBlock":      blockTypeCode,
-	"blockquote":     blockTypeBlockquote,
-	"horizontalRule": blockTypeHorizontalRule,
-	"table":          blockTypeTable,
-	"tableRow":       blockTypeTableRow,
-	"tableCell":      blockTypeTableCell,
-	"tableHeader":    blockTypeTableHeader,
-}
-
-var pmMarkToAutomerge = map[string]string{}
-
-func init() {
-	for _, mapping := range markMappings {
-		pmMarkToAutomerge[mapping.ProseMirror] = mapping.Automerge
-	}
-}
-
+// emitBlock dispatches a ProseMirror node to its codec and emits the Automerge
+// spans for that node and its descendants. A list wrapper is reached through its
+// Outer codec; every other node through its parse codec by node type. Unknown
+// nodes are dropped rather than aborting, mirroring the renderer.
 func emitBlock(spans []automerge.SpanInput, n pmNode, parents []string) []automerge.SpanInput {
-	switch n.Type {
-	case "bulletList", "orderedList", "taskList":
-		itemType := blockTypeUnorderedListItem
-		itemName := "listItem"
-
-		if n.Type == "orderedList" {
-			itemType = blockTypeOrderedListItem
-		}
-
-		if n.Type == "taskList" {
-			itemType = blockTypeTaskListItem
-			itemName = "taskItem"
-		}
+	if codec, ok := outerCodecs[prosemirror.NodeType(n.Type)]; ok {
+		itemName := string(codec.Node())
 
 		for _, item := range n.Content {
 			if item.Type != itemName {
 				continue
 			}
 
-			spans = append(spans, blockSpan(itemType, parents, blockAttributes(itemType, item.Attrs)))
+			spans = append(spans, blockSpan(codec.Block(), parents, codec.ToAttrs(item.Attrs)))
 			// A list item always renders exactly one leading paragraph from its
 			// own content, so its first paragraph is always folded in.
-			spans = emitContainerChildren(spans, item.Content, childPath(parents, itemType), true)
+			spans = emitContainerChildren(spans, item.Content, childPath(parents, codec.Block()), true)
 		}
 
 		return spans
-	case "paragraph", "heading", "codeBlock":
-		blockType := pmNodeToBlock[n.Type]
-		spans = append(spans, blockSpan(blockType, parents, blockAttributes(blockType, n.Attrs)))
+	}
+
+	codec, ok := parseCodecs[prosemirror.NodeType(n.Type)]
+	if !ok {
+		return spans
+	}
+
+	blockType := codec.Block()
+
+	switch codec.Role() {
+	case roleTextblock:
+		spans = append(spans, blockSpan(blockType, parents, codec.ToAttrs(n.Attrs)))
 
 		return emitInline(spans, n.Content, childPath(parents, blockType))
-	case "blockquote", "tableCell", "tableHeader":
-		blockType := pmNodeToBlock[n.Type]
-		spans = append(spans, blockSpan(blockType, parents, blockAttributes(blockType, n.Attrs)))
+	case roleContainer:
+		spans = append(spans, blockSpan(blockType, parents, codec.ToAttrs(n.Attrs)))
 
-		// These containers only render a leading paragraph from their own content
-		// when it is non-empty (or they have no other children), so an empty
-		// first paragraph with siblings must stay an explicit block.
+		// A container only renders a leading paragraph from its own content when
+		// it is non-empty (or it has no other children), so an empty first
+		// paragraph with siblings must stay an explicit block.
 		return emitContainerChildren(spans, n.Content, childPath(parents, blockType), false)
-	case "table", "tableRow":
-		blockType := pmNodeToBlock[n.Type]
-		spans = append(spans, blockSpan(blockType, parents, blockAttributes(blockType, n.Attrs)))
+	case roleStructural:
+		spans = append(spans, blockSpan(blockType, parents, codec.ToAttrs(n.Attrs)))
 
 		childParents := childPath(parents, blockType)
 		for _, child := range n.Content {
@@ -155,17 +134,9 @@ func emitBlock(spans []automerge.SpanInput, n pmNode, parents []string) []autome
 		}
 
 		return spans
-	case "horizontalRule":
-		return append(spans, blockSpan(blockTypeHorizontalRule, parents, map[string]any{}))
-	case "image", "file":
-		blockType := blockTypeImage
-		if n.Type == "file" {
-			blockType = blockTypeFile
-		}
-
-		return append(spans, blockSpan(blockType, parents, blockAttributes(blockType, n.Attrs)))
+	case roleEmbed:
+		return append(spans, blockSpan(blockType, parents, codec.ToAttrs(n.Attrs)))
 	default:
-		// Unknown block node: drop it rather than abort, mirroring the renderer.
 		return spans
 	}
 }
@@ -223,10 +194,13 @@ func emitInline(spans []automerge.SpanInput, inline []pmNode, blockParents []str
 			}
 
 			spans = append(spans, span)
-		case "hardBreak":
-			spans = append(spans, hardBreakSpan(blockParents))
 		default:
-			continue
+			codec, ok := inlineEmbedCodecs[prosemirror.NodeType(child.Type)]
+			if !ok {
+				continue
+			}
+
+			spans = append(spans, inlineEmbedSpan(codec, child.Attrs, blockParents))
 		}
 	}
 
@@ -241,28 +215,17 @@ func convertMarks(marks []pmMark) map[string]automerge.Scalar {
 	result := make(map[string]automerge.Scalar, len(marks))
 
 	for _, mark := range marks {
-		name, ok := pmMarkToAutomerge[mark.Type]
+		codec, ok := markCodecsByPM[prosemirror.MarkType(mark.Type)]
 		if !ok {
 			continue
 		}
 
-		if name == "link" {
-			payload, err := json.Marshal(
-				map[string]any{
-					"href":  stringAttribute(mark.Attrs, "href"),
-					"title": nullableStringAttribute(mark.Attrs, "title"),
-				},
-			)
-			if err != nil {
-				continue
-			}
-
-			result[name] = automerge.StringScalar(string(payload))
-
+		scalar, ok := codec.ToScalar(mark)
+		if !ok {
 			continue
 		}
 
-		result[name] = automerge.BoolScalar(true)
+		result[codec.Automerge()] = scalar
 	}
 
 	return result
@@ -283,51 +246,19 @@ func blockSpan(blockType string, parents []string, attrs map[string]any) automer
 	}
 }
 
-func hardBreakSpan(parents []string) automerge.SpanInput {
+func inlineEmbedSpan(codec nodeCodec, attrs map[string]any, parents []string) automerge.SpanInput {
+	blockAttrs := codec.ToAttrs(attrs)
+	if blockAttrs == nil {
+		blockAttrs = map[string]any{}
+	}
+
 	return automerge.SpanInput{
 		Block: map[string]any{
-			"type":    blockTypeHardBreak,
+			"type":    codec.Block(),
 			"parents": toAnySlice(parents),
-			"attrs":   map[string]any{},
+			"attrs":   blockAttrs,
 			"isEmbed": true,
 		},
-	}
-}
-
-func blockAttributes(blockType string, attrs map[string]any) map[string]any {
-	switch blockType {
-	case blockTypeHeading:
-		level := intAttribute(attrs, "level", 1)
-		if level < 1 || level > 6 {
-			level = 1
-		}
-
-		return map[string]any{"level": level}
-	case blockTypeCode:
-		if language, ok := attrs["language"].(string); ok {
-			return map[string]any{"language": language}
-		}
-
-		return map[string]any{}
-	case blockTypeImage:
-		return attachmentAttributes(attrs, "fileId", "src", "alt", "title", "width")
-	case blockTypeFile:
-		return attachmentAttributes(attrs, "fileId", "fileName", "mimeType", "size")
-	case blockTypeTaskListItem:
-		return map[string]any{"checked": boolAttribute(attrs, "checked")}
-	case blockTypeTableCell, blockTypeTableHeader:
-		cellAttrs := map[string]any{
-			"colspan": intAttribute(attrs, "colspan", 1),
-			"rowspan": intAttribute(attrs, "rowspan", 1),
-		}
-
-		if colwidth := numberSliceAttribute(attrs, "colwidth"); colwidth != nil {
-			cellAttrs["colwidth"] = colwidth
-		}
-
-		return cellAttrs
-	default:
-		return map[string]any{}
 	}
 }
 

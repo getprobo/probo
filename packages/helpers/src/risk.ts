@@ -99,19 +99,23 @@ export type RiskMatrixSize = {
 
 const DEFAULT_MATRIX_SIZE: RiskMatrixSize = { rows: 5, cols: 5 };
 
-// 5×5 bands: low < 5, high < 15, else critical. Scale by max product.
-const HIGH_RATIO = 5 / 25;
+// 5×5 bands: low < 5, medium < 10, high < 15, else critical.
+const MEDIUM_RATIO = 5 / 25;
+const HIGH_RATIO = 10 / 25;
 const CRITICAL_RATIO = 15 / 25;
 
 export function getRiskScoreLevel(
     score: number,
     matrixSize: RiskMatrixSize = DEFAULT_MATRIX_SIZE,
-): 0 | 1 | 2 {
+): 0 | 1 | 2 | 3 {
     const max = matrixSize.rows * matrixSize.cols;
     if (score >= max * CRITICAL_RATIO) {
-        return 2;
+        return 3;
     }
     if (score >= max * HIGH_RATIO) {
+        return 2;
+    }
+    if (score >= max * MEDIUM_RATIO) {
         return 1;
     }
     return 0;
@@ -135,11 +139,18 @@ function getRiskSeverities(t: Translator, matrixSize: RiskMatrixSize) {
             color: "text-txt-warning",
         },
         {
+            min: max * MEDIUM_RATIO,
+            variant: "medium",
+            label: t("helpers.riskSeverity.medium"),
+            bg: "bg-medium",
+            color: "text-txt-medium",
+        },
+        {
             min: 0,
-            variant: "neutral",
+            variant: "success",
             label: t("helpers.riskSeverity.low"),
-            bg: "bg-txt-quaternary",
-            color: "text-txt-primary",
+            bg: "bg-success",
+            color: "text-txt-success",
         },
     ] as const;
 }

@@ -33,6 +33,7 @@ const connectorProviderAliases: Record<string, readonly string[]> = {
   MONGODB_ATLAS: ["MongoDB Atlas", "MongoDB"],
   ELASTIC_CLOUD: ["Elastic Cloud", "Elastic", "Elasticsearch"],
   OVHCLOUD: ["OVHcloud", "OVH"],
+  UNIFI: ["UniFi", "Ubiquiti"],
   MICROSOFT_365: ["Microsoft 365", "Office 365"],
   GOOGLE_WORKSPACE: ["Google Workspace"],
 };
@@ -71,4 +72,34 @@ export function matchingConnectorProviders(
   }
 
   return matched;
+}
+
+export function credentialCountByProvider(
+  connectors: readonly { provider: string }[],
+): Map<string, number> {
+  const counts = new Map<string, number>();
+
+  for (const connector of connectors) {
+    counts.set(connector.provider, (counts.get(connector.provider) ?? 0) + 1);
+  }
+
+  return counts;
+}
+
+export function isConnectableThirdParty(
+  provider: string,
+  matched: ReadonlySet<string>,
+  credentialCounts: ReadonlyMap<string, number>,
+): boolean {
+  return matched.has(provider) && (credentialCounts.get(provider) ?? 0) === 0;
+}
+
+export function connectableThirdPartyProviders<T extends ConnectorProviderName>(
+  providers: readonly T[],
+  matched: ReadonlySet<string>,
+  credentialCounts: ReadonlyMap<string, number>,
+): T[] {
+  return providers
+    .filter(provider => isConnectableThirdParty(provider.provider, matched, credentialCounts))
+    .sort((a, b) => a.displayName.localeCompare(b.displayName));
 }

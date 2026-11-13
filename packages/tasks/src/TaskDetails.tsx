@@ -27,7 +27,7 @@ export interface TaskDetailsProps {
   back?: ReactNode;
   name: ReactNode;
   actions?: ReactNode;
-  description: ReactNode;
+  description?: ReactNode;
   engagement?: ReactNode;
   properties: ReactNode;
 }
@@ -59,9 +59,11 @@ export function TaskDetails({
       </div>
       <div className={slots.body()}>
         <div className={slots.main()}>
-          <Card variant="ghost" size={2} className={slots.editorCard()}>
-            {description}
-          </Card>
+          {description != null && (
+            <Card variant="ghost" size={2} className={slots.editorCard()}>
+              {description}
+            </Card>
+          )}
           {engagement}
         </div>
         {properties}
