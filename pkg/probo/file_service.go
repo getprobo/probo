@@ -229,7 +229,6 @@ func (s FileService) UploadAndSaveFile(
 
 	var file *coredata.File
 
-	// Extract organization ID from S3 metadata
 	organizationIDStr, hasOrgID := s3Metadata["organization-id"]
 
 	var organizationID gid.GID

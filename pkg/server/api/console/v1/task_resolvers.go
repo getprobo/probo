@@ -151,9 +151,10 @@ func (r *mutationResolver) UpdateTask(ctx context.Context, input types.UpdateTas
 		return nil, err
 	}
 
-	// Employees may update the work on a task assigned to them, but not who
-	// owns it, which controls it belongs to, or its name and rank.
-	if input.Name != nil || input.Rank != nil || input.Content.IsSet() || input.AssignedToID.IsSet() || input.InternalControlIds.IsSet() {
+	// Employees may update the work on a task assigned to them, including its
+	// description, but not who owns it, which controls it belongs to, or its
+	// name and rank.
+	if input.Name != nil || input.Rank != nil || input.AssignedToID.IsSet() || input.InternalControlIds.IsSet() {
 		if _, err := r.authorize(ctx, input.TaskID, task.ActionTaskAssign); err != nil {
 			return nil, err
 		}
