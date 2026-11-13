@@ -304,11 +304,41 @@ func blockTokens(items []blockOrGrapheme) []string {
 			continue
 		}
 
-		encoded, _ := json.Marshal(item.block)
+		encoded, _ := json.Marshal(withoutNullAttributes(item.block))
 		tokens[i] = "b" + string(encoded)
 	}
 
 	return tokens
+}
+
+// withoutNullAttributes drops null-valued map entries so a block that carries
+// an explicit null attribute (as the JavaScript editor writes) compares equal
+// to the same block with the attribute omitted. Replacing such a block would
+// rewrite markers that did not change.
+func withoutNullAttributes(value any) any {
+	switch typed := value.(type) {
+	case map[string]any:
+		cleaned := make(map[string]any, len(typed))
+
+		for key, entry := range typed {
+			if entry == nil {
+				continue
+			}
+
+			cleaned[key] = withoutNullAttributes(entry)
+		}
+
+		return cleaned
+	case []any:
+		cleaned := make([]any, len(typed))
+		for index, entry := range typed {
+			cleaned[index] = withoutNullAttributes(entry)
+		}
+
+		return cleaned
+	default:
+		return value
+	}
 }
 
 // currentBlockGraphemes materializes the text object as the block/grapheme units
