@@ -35,6 +35,7 @@ import { useLazyLoadQuery } from "react-relay";
 
 import type { EvidenceGraphFileQuery } from "#/__generated__/core/EvidenceGraphFileQuery.graphql";
 import { CSVPreview } from "#/components/documents/CSVPreview";
+import { evidencePreviewFormat } from "#/components/documents/evidencePreviewFormat";
 import { PDFPreview } from "#/components/documents/PDFPreview";
 import { TextPreview } from "#/components/documents/TextPreview";
 import { evidenceFileQuery } from "#/hooks/graph/EvidenceGraph";
@@ -98,30 +99,14 @@ function EvidencePreviewContent({
   ).node;
   const { t } = useTranslation();
   const toast = useToast();
-  const mimeType
-    = evidence.file?.mimeType?.split(";")[0]?.trim().toLowerCase() ?? "";
-  const fileName = evidence.file?.fileName.toLowerCase() ?? "";
-  const isUriFile
-    = mimeType === "text/uri-list"
-      || mimeType === "text/uri";
-  const isCSVFile
-    = mimeType === "text/csv"
-      || mimeType === "application/csv"
-      || fileName.endsWith(".csv");
-  const isMarkdownFile
-    = mimeType === "text/markdown"
-      || fileName.endsWith(".md")
-      || fileName.endsWith(".markdown");
-  const isTextFile
-    = mimeType.startsWith("text/")
-      || fileName.endsWith(".txt")
-      || fileName.endsWith(".log");
+  const file = evidence.file;
+  const previewFormat = evidencePreviewFormat(file?.mimeType, file?.fileName);
   useEffect(() => {
-    if (!isUriFile) {
+    if (previewFormat !== "uri") {
       return;
     }
     const abortController = new AbortController();
-    fetchUrlFromUriFile(evidence.file?.downloadUrl ?? "", {
+    fetchUrlFromUriFile(file?.downloadUrl ?? "", {
       signal: abortController.signal,
     })
       .then((url) => {
@@ -149,13 +134,13 @@ function EvidencePreviewContent({
     return () => {
       abortController.abort();
     };
-  }, [evidence.file?.downloadUrl, isUriFile, onClose, t, toast]);
+  }, [file?.downloadUrl, onClose, previewFormat, t, toast]);
 
-  if (!evidence.file?.downloadUrl) {
+  if (file == null || !file.downloadUrl) {
     return null;
   }
 
-  if (isUriFile) {
+  if (previewFormat === "uri") {
     return (
       <div className="flex flex-col items-center gap-2 justify-center">
         <Spinner size={20} />
@@ -165,61 +150,80 @@ function EvidencePreviewContent({
 
   let preview;
 
-  if (evidence.file.mimeType?.startsWith("image/")) {
-    preview = (
-      <img
-        src={evidence.file.downloadUrl}
-        alt={evidence.file.fileName}
-        className="max-h-[70vh] object-contain"
-      />
-    );
-  } else if (evidence.file.mimeType?.includes("pdf")) {
-    preview = (
-      <div className="h-[70vh] overflow-hidden">
-        <PDFPreview
-          src={evidence.file.downloadUrl}
-          name={evidence.file.fileName}
+  switch (previewFormat) {
+    case "image":
+      preview = (
+        <img
+          src={file.downloadUrl}
+          alt={file.fileName}
+          className="max-h-[70vh] object-contain"
         />
-      </div>
-    );
-  } else if (isCSVFile) {
-    preview = (
-      <CSVPreview
-        src={evidence.file.downloadUrl}
-        columnLabel={t("evidencePreviewDialog.csv.column")}
-        emptyMessage={t("evidencePreviewDialog.csv.empty")}
-        errorMessage={t("evidencePreviewDialog.csv.error")}
-        retryLabel={t("evidencePreviewDialog.csv.retry")}
-        truncatedMessage={t("evidencePreviewDialog.csv.truncated")}
-      />
-    );
-  } else if (isMarkdownFile || isTextFile) {
-    preview = (
-      <TextPreview
-        src={evidence.file.downloadUrl}
-        emptyMessage={t("evidencePreviewDialog.text.empty")}
-        errorMessage={t("evidencePreviewDialog.text.error")}
-        format={isMarkdownFile ? "markdown" : "text"}
-        retryLabel={t("evidencePreviewDialog.text.retry")}
-        truncatedMessage={t("evidencePreviewDialog.text.truncated")}
-      />
-    );
-  } else {
-    preview = (
-      <div className="flex flex-col items-center gap-2 justify-center">
-        <IconWarning size={20} />
-        <p className="text-txt-secondary text-center">
-          {t("evidencePreviewDialog.previewUnavailable", {
-            mimeType: evidence.file.mimeType,
-          })}
-        </p>
-        <Button asChild variant="secondary" icon={IconArrowInbox}>
-          <a href={evidence.file.downloadUrl} target="_blank" rel="noreferrer">
-            {t("evidencePreviewDialog.actions.download")}
-          </a>
-        </Button>
-      </div>
-    );
+      );
+      break;
+    case "pdf":
+      preview = (
+        <div className="h-[70vh] overflow-hidden">
+          <PDFPreview
+            src={file.downloadUrl}
+            name={file.fileName}
+          />
+        </div>
+      );
+      break;
+    case "csv":
+      preview = (
+        <CSVPreview
+          src={file.downloadUrl}
+          columnLabel={t("evidencePreviewDialog.csv.column")}
+          emptyMessage={t("evidencePreviewDialog.csv.empty")}
+          errorMessage={t("evidencePreviewDialog.csv.error")}
+          retryLabel={t("evidencePreviewDialog.csv.retry")}
+          truncatedMessage={t("evidencePreviewDialog.csv.truncated")}
+        />
+      );
+      break;
+    case "json":
+      preview = (
+        <TextPreview
+          src={file.downloadUrl}
+          emptyMessage={t("evidencePreviewDialog.json.empty")}
+          errorMessage={t("evidencePreviewDialog.json.error")}
+          format="json"
+          retryLabel={t("evidencePreviewDialog.json.retry")}
+          truncatedMessage={t("evidencePreviewDialog.json.truncated")}
+        />
+      );
+      break;
+    case "markdown":
+    case "text":
+      preview = (
+        <TextPreview
+          src={file.downloadUrl}
+          emptyMessage={t("evidencePreviewDialog.text.empty")}
+          errorMessage={t("evidencePreviewDialog.text.error")}
+          format={previewFormat}
+          retryLabel={t("evidencePreviewDialog.text.retry")}
+          truncatedMessage={t("evidencePreviewDialog.text.truncated")}
+        />
+      );
+      break;
+    case "unavailable":
+      preview = (
+        <div className="flex flex-col items-center gap-2 justify-center">
+          <IconWarning size={20} />
+          <p className="text-txt-secondary text-center">
+            {t("evidencePreviewDialog.previewUnavailable", {
+              mimeType: file.mimeType,
+            })}
+          </p>
+          <Button asChild variant="secondary" icon={IconArrowInbox}>
+            <a href={file.downloadUrl} target="_blank" rel="noreferrer">
+              {t("evidencePreviewDialog.actions.download")}
+            </a>
+          </Button>
+        </div>
+      );
+      break;
   }
 
   return (
