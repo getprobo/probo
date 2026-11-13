@@ -155,6 +155,21 @@ func TestNewPage(t *testing.T) {
 			hasPrev:  true,
 		},
 		{
+			name:     "head from a cursor on the last full page drops the boundary and has no next page",
+			position: Head,
+			rows:     []record{a, b, c},
+			key:      &cursorA,
+			want:     []record{b, c},
+			hasPrev:  true,
+		},
+		{
+			name:     "head does not report a previous page when the first row of a short window is not the cursor",
+			position: Head,
+			rows:     []record{a, b},
+			key:      &other,
+			want:     []record{b},
+		},
+		{
 			name:     "head does not report a previous page when the first row is not the cursor",
 			position: Head,
 			rows:     []record{a, b, c, d},
@@ -184,6 +199,12 @@ func TestNewPage(t *testing.T) {
 			want:     []record{a, b},
 		},
 		{
+			name:     "tail without a cursor keeps a single row",
+			position: Tail,
+			rows:     []record{a},
+			want:     []record{a},
+		},
+		{
 			name:     "tail from a cursor reverses, drops the boundary, and reports a next page",
 			position: Tail,
 			rows:     []record{c, b, a},
@@ -206,6 +227,13 @@ func TestNewPage(t *testing.T) {
 			rows:     []record{c, b, a},
 			key:      &other,
 			want:     []record{a, b},
+		},
+		{
+			name:     "tail does not report a next page when the first scanned row of a short window is not the cursor",
+			position: Tail,
+			rows:     []record{b, a},
+			key:      &other,
+			want:     []record{a},
 		},
 		{
 			name:     "tail from a cursor that is the only row is empty and has a next page",
@@ -401,6 +429,14 @@ func TestCursor_SQLFragment(t *testing.T) {
 			position:  Head,
 			key:       &valueKey,
 			want:      "(fn(_a) IS NULL OR ((fn(_a) <= fn(@cursor_field_value)) AND NOT (fn(_a) = fn(@cursor_field_value) AND id > @cursor_id))) ORDER BY fn(_a) DESC NULLS LAST, id DESC LIMIT @cursor_limit",
+		},
+		{
+			name:      "identifiers may contain uppercase letters",
+			column:    "Fn(Col)",
+			direction: OrderDirectionDesc,
+			position:  Head,
+			key:       &valueKey,
+			want:      "(Fn(Col) IS NULL OR ((Fn(Col) <= Fn(@cursor_field_value)) AND NOT (Fn(Col) = Fn(@cursor_field_value) AND id > @cursor_id))) ORDER BY Fn(Col) DESC NULLS LAST, id DESC LIMIT @cursor_limit",
 		},
 	}
 
