@@ -269,6 +269,10 @@ func (a *Audits) LoadByCompliancePortalID(
 
 	filter = filter.WithCompliancePortalID(compliancePortalID)
 
+	if err := prepareAuditDateCursor(cursor); err != nil {
+		return fmt.Errorf("cannot validate cursor: %w", err)
+	}
+
 	q := `
 SELECT
 	audits.id,
@@ -324,6 +328,10 @@ func (a *Audits) LoadByOrganizationID(
 	cursor *page.Cursor[AuditOrderField],
 	filter *AuditFilter,
 ) error {
+	if err := prepareAuditDateCursor(cursor); err != nil {
+		return fmt.Errorf("cannot validate cursor: %w", err)
+	}
+
 	q := `
 SELECT
 	id,
@@ -508,6 +516,10 @@ func (a *Audits) LoadByControlID(
 	controlID gid.GID,
 	cursor *page.Cursor[AuditOrderField],
 ) error {
+	if err := prepareAuditDateCursor(cursor); err != nil {
+		return fmt.Errorf("cannot validate cursor: %w", err)
+	}
+
 	q := `
 WITH audits_by_control AS (
 	SELECT
@@ -577,6 +589,10 @@ func (a *Audits) LoadByFindingID(
 	findingID gid.GID,
 	cursor *page.Cursor[AuditOrderField],
 ) error {
+	if err := prepareAuditDateCursor(cursor); err != nil {
+		return fmt.Errorf("cannot validate cursor: %w", err)
+	}
+
 	q := `
 WITH audits_by_finding AS (
 	SELECT
@@ -901,6 +917,10 @@ func (a *Audits) LoadByFrameworkID(
 	frameworkID gid.GID,
 	cursor *page.Cursor[AuditOrderField],
 ) error {
+	if err := prepareAuditDateCursor(cursor); err != nil {
+		return fmt.Errorf("cannot validate cursor: %w", err)
+	}
+
 	q := `
 WITH audits_by_framework AS (
 	SELECT

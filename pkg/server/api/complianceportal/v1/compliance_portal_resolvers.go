@@ -358,6 +358,10 @@ func (r *compliancePortalResolver) Audits(ctx context.Context, obj *types.Compli
 
 	auditPage, err := visitorService.ListAuditsForCompliancePortalID(ctx, scope, compliancePortal.ID, cursor, auditFilter)
 	if err != nil {
+		if errors.Is(err, coredata.ErrInvalidCursorValue) {
+			return nil, gqlx.Invalidf(ctx, "invalid cursor")
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot list public audits", log.Error(err))
 		return nil, gqlx.Internal(ctx)
 	}
