@@ -115,3 +115,75 @@ func TestCookieBannerReport_BeaconPayload(t *testing.T) {
 	assert.Equal(t, cookieName, result.Node.TrackerPatterns.Edges[0].Node.Pattern)
 	assert.Equal(t, "COOKIE", result.Node.TrackerPatterns.Edges[0].Node.TrackerType)
 }
+
+func TestCookieBannerReport_InactiveBanner(t *testing.T) {
+	t.Parallel()
+
+	fixture := setupPublishedCookieBanner(t)
+	deactivateCookieBanner(t, fixture.Owner, fixture.BannerID)
+	cookieName := strings.ReplaceAll(factory.SafeName("inactive-report"), " ", "_")
+
+	body, err := json.Marshal(
+		map[string]any{
+			"cookies": []map[string]any{
+				{
+					"name":   cookieName,
+					"source": "script",
+				},
+			},
+		},
+	)
+	require.NoError(t, err)
+
+	resp := doCookieBannerHTTP(
+		t,
+		fixture.Owner,
+		cookieBannerHTTPOptions{
+			Method:   http.MethodPost,
+			BannerID: fixture.BannerID,
+			Path:     []string{"report"},
+			Origin:   fixture.Origin,
+			Body:     body,
+		},
+	)
+	assert.Equal(t, http.StatusNotFound, resp.StatusCode, "report body: %s", string(resp.Body))
+
+	const query = `
+		query CookieBannerReportInactiveBanner($id: ID!, $filter: TrackerPatternFilter) {
+			node(id: $id) {
+				... on CookieBanner {
+					state
+					trackerPatterns(first: 10, filter: $filter) {
+						totalCount
+					}
+				}
+			}
+		}
+	`
+
+	var result struct {
+		Node struct {
+			State           string `json:"state"`
+			TrackerPatterns struct {
+				TotalCount int `json:"totalCount"`
+			} `json:"trackerPatterns"`
+		} `json:"node"`
+	}
+
+	require.NoError(
+		t,
+		fixture.Owner.Execute(
+			query,
+			map[string]any{
+				"id": fixture.BannerID,
+				"filter": map[string]any{
+					"query":       cookieName,
+					"trackerType": "COOKIE",
+				},
+			},
+			&result,
+		),
+	)
+	assert.Equal(t, "INACTIVE", result.Node.State)
+	assert.Equal(t, 0, result.Node.TrackerPatterns.TotalCount)
+}
