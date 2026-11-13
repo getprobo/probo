@@ -24,6 +24,9 @@
   "topBar": {
     "tagline": "Portail employé"
   },
+  "consoleFooter": {
+    "proboConsole": "Console Probo"
+  },
   "userMenu": {
     "notifications": "Notifications",
     "oauthTokens": "Jetons OAuth",

@@ -182,6 +182,7 @@ export const queueTopBar = tv({
     start: "flex min-w-0 items-center gap-6",
     controls: "flex items-center gap-2",
     progress: "truncate",
+    end: "flex shrink-0 items-center gap-2",
   },
 });
 

@@ -23,6 +23,9 @@
   "topBar": {
     "tagline": "Employee Portal"
   },
+  "consoleFooter": {
+    "proboConsole": "Probo Console"
+  },
   "userMenu": {
     "notifications": "Notifications",
     "oauthTokens": "OAuth tokens",

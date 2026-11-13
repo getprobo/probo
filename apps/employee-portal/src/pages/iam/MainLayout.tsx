@@ -22,6 +22,7 @@ import type { PreloadedQuery } from "react-relay";
 import { graphql, useFragment, usePreloadedQuery } from "react-relay";
 import { Outlet } from "react-router";
 
+import type { ConsoleFooter_organization$key } from "#/__generated__/iam/ConsoleFooter_organization.graphql";
 import type { MainLayout_organization$key } from "#/__generated__/iam/MainLayout_organization.graphql";
 import type { MainLayoutQuery } from "#/__generated__/iam/MainLayoutQuery.graphql";
 import type { TopBar_organization$key } from "#/__generated__/iam/TopBar_organization.graphql";
@@ -29,6 +30,7 @@ import { NotFoundError } from "#/lib/relay/errors";
 import { RelayProvider } from "#/lib/relay/RelayProvider";
 import { QueueTopBar } from "#/pages/_components/QueueTopBar";
 import { DocumentQueueProvider, useDocumentQueueActive } from "#/pages/_lib/DocumentQueueContext";
+import { ConsoleFooter } from "#/pages/iam/_components/ConsoleFooter";
 import { TopBar } from "#/pages/iam/_components/TopBar/TopBar";
 import { EmployeePortalRouteProvider } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 import { ViewerIdentityProvider } from "#/pages/iam/_lib/ViewerIdentityContext";
@@ -46,6 +48,7 @@ export const mainLayoutQuery = graphql`
           id
           ...TopBar_organization
           ...MainLayout_organization
+          ...ConsoleFooter_organization
         }
       }
     }
@@ -96,7 +99,7 @@ export function MainLayout({ queryRef }: MainLayoutProps) {
 function MainLayoutChrome({
   organizationKey,
 }: {
-  organizationKey: TopBar_organization$key;
+  organizationKey: TopBar_organization$key & ConsoleFooter_organization$key;
 }) {
   const queueActive = useDocumentQueueActive();
 
@@ -108,6 +111,7 @@ function MainLayoutChrome({
       <RelayProvider>
         <div className="flex min-h-0 flex-1 flex-col overflow-auto overscroll-y-contain">
           <Outlet />
+          {!queueActive && <ConsoleFooter organizationKey={organizationKey} />}
         </div>
       </RelayProvider>
     </div>

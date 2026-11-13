@@ -23,6 +23,9 @@
   "topBar": {
     "tagline": "Medewerkersportaal"
   },
+  "consoleFooter": {
+    "proboConsole": "Probo-console"
+  },
   "userMenu": {
     "notifications": "Meldingen",
     "oauthTokens": "OAuth-tokens",
