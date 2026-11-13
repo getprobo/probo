@@ -41,6 +41,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/statelesstoken"
 )
 
 func TestGitHubAppConnector_InstallationFlow(t *testing.T) {
@@ -179,6 +180,47 @@ func TestGitHubAppConnector_RejectsInvalidState(t *testing.T) {
 	_, _, err := c.CompleteWithState(context.Background(), req)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "cannot validate github app state token")
+}
+
+func TestRegistry_ValidateGitHubAppStateAllowExpiredRejectsForged(t *testing.T) {
+	t.Parallel()
+
+	registry := NewConnectorRegistry()
+	require.NoError(
+		t,
+		registry.RegisterProtocol(
+			GitHubProvider,
+			ProtocolGitHubApp,
+			&GitHubAppConnector{
+				ClientID:     "github-app-client-id",
+				ClientSecret: "github-app-client-secret",
+				InstallBase:  "https://github.com/apps",
+			},
+		),
+	)
+
+	expired, err := statelesstoken.NewToken(
+		"github-app-client-secret",
+		gitHubAppStateType,
+		-time.Minute,
+		GitHubAppState{ContinueURL: "https://console.example/organizations/acme"},
+	)
+	require.NoError(t, err)
+
+	state, err := registry.ValidateGitHubAppStateAllowExpired(expired)
+	require.NoError(t, err)
+	assert.Equal(t, "https://console.example/organizations/acme", state.ContinueURL)
+
+	forged, err := statelesstoken.NewToken(
+		"another-secret",
+		gitHubAppStateType,
+		time.Minute,
+		GitHubAppState{ContinueURL: "https://console.example/organizations/acme"},
+	)
+	require.NoError(t, err)
+
+	_, err = registry.ValidateGitHubAppStateAllowExpired(forged)
+	assert.Error(t, err)
 }
 
 func TestGitHubAppConnector_BindsExistingOrganizationInstallation(t *testing.T) {

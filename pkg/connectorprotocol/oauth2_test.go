@@ -24,11 +24,13 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 	"time"
 
@@ -1892,19 +1894,118 @@ func TestRefreshableClient_RefreshScopes(t *testing.T) {
 	}
 }
 
-// TestCompleteWithState_PKCEMismatch confirms that a token endpoint
-// rejecting a stale or mismatched code_verifier (the standard PKCE
-// failure path) surfaces as an error from CompleteWithState rather
-// than being silently swallowed.
-func TestCompleteWithState_PKCEMismatch(t *testing.T) {
+func TestCompleteWithState_TokenRefusal(t *testing.T) {
 	t.Parallel()
 
+	tests := []struct {
+		name     string
+		status   int
+		body     string
+		wantCode string
+		hidden   string
+	}{
+		{
+			name:     "a PKCE mismatch keeps the error code",
+			status:   http.StatusBadRequest,
+			body:     `{"error":"invalid_grant","error_description":"code verifier does not match"}`,
+			wantCode: "invalid_grant",
+			hidden:   "code verifier does not match",
+		},
+		{
+			name:     "an error in a 200 is a refusal",
+			status:   http.StatusOK,
+			body:     `{"error":"bad_verification_code","error_description":"The code passed is incorrect or expired."}`,
+			wantCode: "bad_verification_code",
+			hidden:   "incorrect or expired",
+		},
+		{
+			name:     "a code carrying prose is dropped",
+			status:   http.StatusBadRequest,
+			body:     `{"error":"Rejected for alice@example.com"}`,
+			wantCode: "",
+			hidden:   "alice@example.com",
+		},
+		{
+			name:     "a code over 64 characters is dropped",
+			status:   http.StatusBadRequest,
+			body:     `{"error":"` + strings.Repeat("a", 65) + `"}`,
+			wantCode: "",
+			hidden:   strings.Repeat("a", 65),
+		},
+		{
+			name:     "a 200 without an access token is a refusal",
+			status:   http.StatusOK,
+			body:     `{"error":"","token_type":"bearer"}`,
+			wantCode: "",
+			hidden:   "bearer",
+		},
+		{
+			name:     "a non-JSON error page keeps the status",
+			status:   http.StatusBadGateway,
+			body:     "<html>bad gateway</html>",
+			wantCode: "",
+			hidden:   "bad gateway",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(tt.status)
+				_, _ = w.Write([]byte(tt.body))
+			}))
+			defer server.Close()
+
+			c := &OAuth2Connector{
+				ClientID:     "id",
+				ClientSecret: "secret",
+				RedirectURI:  "https://example.com/cb",
+				AuthURL:      "https://provider.example.com/authorize",
+				TokenURL:     server.URL,
+				RequiresPKCE: true,
+				HTTPClient:   httpclient.DefaultClient(httpclient.WithSSRFProtection(), httpclient.WithSSRFAllowLoopback()),
+			}
+
+			orgID := gid.New(gid.NewTenantID(), 0)
+			authURL, err := c.InitiateWithState(
+				context.Background(),
+				OAuth2State{OrganizationID: orgID.String(), Provider: "TEST"},
+				InitiateOptions{Scopes: []string{"read"}},
+			)
+			require.NoError(t, err)
+			parsed, err := url.Parse(authURL)
+			require.NoError(t, err)
+
+			req := httptest.NewRequest(
+				http.MethodGet,
+				"https://example.com/cb?code=the-code&state="+parsed.Query().Get("state"),
+				nil,
+			)
+			_, _, err = c.CompleteWithState(context.Background(), req)
+			require.Error(t, err, "a token refusal must propagate")
+
+			var code string
+			if retrieveErr, ok := errors.AsType[*oauth2.RetrieveError](err); ok {
+				code = retrieveErr.ErrorCode
+			}
+
+			assert.Equal(t, tt.wantCode, code)
+			assert.ErrorContains(t, err, fmt.Sprintf("answered %d", tt.status))
+			assert.NotContains(t, err.Error(), tt.hidden, "provider text must stay out of logs")
+		})
+	}
+}
+
+func TestCompleteWithState_SlackUserTokenOnly(t *testing.T) {
+	t.Parallel()
+
+	// A user_scope-only grant has no top-level access token.
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// The provider is supposed to validate the verifier; emulate a
-		// reject so we can observe the failure path.
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		_, _ = w.Write([]byte(`{"error":"invalid_grant","error_description":"invalid_grant"}`))
+		_, _ = w.Write([]byte(`{"ok":true,"authed_user":{"id":"U1","scope":"users:read","access_token":"xoxp-test","token_type":"user"}}`))
 	}))
 	defer server.Close()
 
@@ -1914,15 +2015,14 @@ func TestCompleteWithState_PKCEMismatch(t *testing.T) {
 		RedirectURI:  "https://example.com/cb",
 		AuthURL:      "https://provider.example.com/authorize",
 		TokenURL:     server.URL,
-		RequiresPKCE: true,
 		HTTPClient:   httpclient.DefaultClient(httpclient.WithSSRFProtection(), httpclient.WithSSRFAllowLoopback()),
 	}
 
 	orgID := gid.New(gid.NewTenantID(), 0)
 	authURL, err := c.InitiateWithState(
 		context.Background(),
-		OAuth2State{OrganizationID: orgID.String(), Provider: "TEST"},
-		InitiateOptions{Scopes: []string{"read"}},
+		OAuth2State{OrganizationID: orgID.String(), Provider: SlackProvider},
+		InitiateOptions{Scopes: []string{"users:read"}},
 	)
 	require.NoError(t, err)
 	parsed, err := url.Parse(authURL)
@@ -1933,6 +2033,10 @@ func TestCompleteWithState_PKCEMismatch(t *testing.T) {
 		"https://example.com/cb?code=the-code&state="+parsed.Query().Get("state"),
 		nil,
 	)
-	_, _, err = c.CompleteWithState(context.Background(), req)
-	require.Error(t, err, "PKCE rejection from token endpoint must propagate")
+	conn, _, err := c.CompleteWithState(context.Background(), req)
+	require.NoError(t, err)
+
+	slackConn, ok := conn.(*SlackConnection)
+	require.True(t, ok)
+	assert.Equal(t, "xoxp-test", slackConn.AccessToken)
 }

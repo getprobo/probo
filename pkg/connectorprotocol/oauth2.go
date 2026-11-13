@@ -43,10 +43,16 @@ import (
 	"golang.org/x/oauth2"
 )
 
-// tokenRequestTimeout bounds a token request. The callers reach it on a
-// worker context with no deadline of its own, so an unbounded exchange is an
-// unbounded worker.
-const tokenRequestTimeout = 30 * time.Second
+const (
+	// tokenRequestTimeout bounds a token request. The callers reach it on a
+	// worker context with no deadline of its own, so an unbounded exchange is
+	// an unbounded worker.
+	tokenRequestTimeout = 30 * time.Second
+
+	// tokenErrorCodeChars are the characters a token endpoint error code is
+	// made of.
+	tokenErrorCodeChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-."
+)
 
 // NOTE: the OAuth2 state token (and, for PKCE providers, the code verifier)
 // is keyed by stateSalt(). Public clients (CIMD, no client_secret) set
@@ -528,25 +534,45 @@ func (c *OAuth2Connector) CompleteWithState(ctx context.Context, r *http.Request
 
 	defer func() { _ = tokenResp.Body.Close() }()
 
-	if tokenResp.StatusCode != http.StatusOK {
-		return nil, nil, fmt.Errorf("token response status: %d", tokenResp.StatusCode)
-	}
-
-	body, err := io.ReadAll(tokenResp.Body)
+	body, err := io.ReadAll(io.LimitReader(tokenResp.Body, 1<<20))
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot read token response body: %w", err)
 	}
 
-	// Parse the raw token response (OAuth2 uses expires_in, not expires_at)
+	// Scope stays off tokenResponse so the refresh path ignores its shape.
 	var rawToken struct {
-		AccessToken  string `json:"access_token"`
-		RefreshToken string `json:"refresh_token"`
-		ExpiresIn    int64  `json:"expires_in"`
-		TokenType    string `json:"token_type"`
-		Scope        string `json:"scope"`
+		tokenResponse
+		Scope string `json:"scope"`
 	}
-	if err := json.Unmarshal(body, &rawToken); err != nil {
-		return nil, nil, fmt.Errorf("cannot decode token response: %w", err)
+
+	decodeErr := json.Unmarshal(body, &rawToken)
+
+	// GitHub refuses with a 200 and an error field.
+	if tokenResp.StatusCode != http.StatusOK || rawToken.ErrorCode != "" {
+		refusal := fmt.Errorf(
+			"cannot exchange authorization code: token endpoint answered %d",
+			tokenResp.StatusCode,
+		)
+
+		// Only a token-shaped code: the description, the body and a code
+		// carrying prose are provider-controlled.
+		code := rawToken.ErrorCode
+		if code != "" && len(code) <= 64 && strings.Trim(code, tokenErrorCodeChars) == "" {
+			refusal = fmt.Errorf(
+				"%w: %w",
+				refusal,
+				&oauth2.RetrieveError{
+					Response:  tokenResp,
+					ErrorCode: code,
+				},
+			)
+		}
+
+		return nil, nil, refusal
+	}
+
+	if decodeErr != nil {
+		return nil, nil, fmt.Errorf("cannot decode token response: %w", decodeErr)
 	}
 
 	grantedScope := rawToken.Scope
@@ -590,6 +616,10 @@ func (c *OAuth2Connector) CompleteWithState(ctx context.Context, r *http.Request
 	if payload.Data.Provider == SlackProvider {
 		conn, _, err := ParseSlackTokenResponse(body, oauth2Conn, organizationID)
 		return conn, &payload.Data, err
+	}
+
+	if oauth2Conn.AccessToken == "" {
+		return nil, nil, fmt.Errorf("cannot exchange authorization code: token endpoint answered 200 without an access token")
 	}
 
 	AbsorbPagerDutyTokenResponse(&payload.Data, body)
