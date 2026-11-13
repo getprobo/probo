@@ -112,6 +112,7 @@ func (h *OAuth2Handler) DiscoveryHandler(w http.ResponseWriter, r *http.Request)
 	metadata := OAuth2ServerMetadata(
 		h.baseURL,
 		h.iam.OAuth2ScopeRegistry.RegisteredScopes(),
+		h.iam.OAuth2ServerService.CIMDSupported(),
 	)
 
 	httpx.PublicCache(w, 1*time.Hour)
@@ -135,6 +136,7 @@ func (h *OAuth2Handler) AuthorizeHandler(w http.ResponseWriter, r *http.Request)
 		metadata := OAuth2ServerMetadata(
 			h.baseURL,
 			h.iam.OAuth2ScopeRegistry.RegisteredScopes(),
+			h.iam.OAuth2ServerService.CIMDSupported(),
 		)
 
 		continueURL, err := oauth2.AuthorizationURLWithQuery(metadata.AuthorizationEndpoint, r.URL.Query())
