@@ -151,9 +151,9 @@ export const table = tv({
   },
 });
 
-// Stretched in-row link (TableLink). ::after is positioned against the
-// interactive TableRow; do not make this relative or the overlay shrinks
-// to the title. Unstyled text — not the underlined Link recipe.
+// Stretched in-row control (TableLink, TableButton). ::after is positioned
+// against the interactive TableRow; do not make this relative or the overlay
+// shrinks to the title. Unstyled text — not the underlined Link recipe.
 export const tableLink = tv({
   base: [
     "min-w-0 pointer-events-auto",
