@@ -102,6 +102,7 @@ export { RiskBadge } from "./Molecules/Badge/RiskBadge";
 export { SeverityBadge } from "./Molecules/Badge/SeverityBadge";
 export { DocumentVersionBadge } from "./Molecules/Badge/DocumentVersionBadge";
 export { RisksChart } from "./Molecules/Risks/RisksChart";
+export { levelColors } from "./Molecules/Risks/constants";
 export { RiskOverview } from "./Molecules/Risks/RiskOverview";
 export { Combobox, ComboboxItem } from "./Molecules/Combobox/Combobox";
 export { FileButton } from "./Molecules/FileButton/FileButton";

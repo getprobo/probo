@@ -1559,6 +1559,7 @@
     "riskSeverity": {
       "critical": "Kritiek",
       "high": "Hoog",
+      "medium": "Gemiddeld",
       "low": "Laag"
     },
     "trackerType": {

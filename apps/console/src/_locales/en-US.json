@@ -1053,7 +1053,7 @@
         "4": { "1": "Unlikely", "2": "Possible", "3": "Likely", "4": "Almost certain" }
       }
     },
-    "riskSeverity": { "critical": "Critical", "high": "High", "low": "Low" },
+    "riskSeverity": { "critical": "Critical", "high": "High", "medium": "Medium", "low": "Low" },
     "trackerType": {
       "cookie": "Cookie",
       "localStorage": "localStorage",

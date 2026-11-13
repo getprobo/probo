@@ -120,6 +120,7 @@ export function RisksChart({
 
   const legend = [
     t("ui.risk.severity.low"),
+    t("ui.risk.severity.medium"),
     t("ui.risk.severity.high"),
     t("ui.risk.severity.critical"),
   ];

@@ -4114,8 +4114,10 @@ func riskSeverityLabelForSize(score, rows, cols int) string {
 	switch {
 	case score*25 >= max*15:
 		return "Critical"
-	case score*25 >= max*5:
+	case score*25 >= max*10:
 		return "High"
+	case score*25 >= max*5:
+		return "Medium"
 	default:
 		return "Low"
 	}
@@ -4519,10 +4521,10 @@ func (s *GeneratedDocumentService) buildRiskAnalysisDocumentData(
 			Owner:              sanitizeTrackerCell(lookupProfileName(profileMap, &ownerID)),
 			InherentLikelihood: sanitizeTrackerCell(formatScoreCell(&inherentLikelihood, riskLikelihoodLabel(inherentLikelihood))),
 			InherentImpact:     sanitizeTrackerCell(formatScoreCell(&inherentImpact, riskImpactLabel(inherentImpact))),
-			InherentRiskScore:  sanitizeTrackerCell(formatScoreCell(&inherentRiskScore, riskSeverityLabel(inherentRiskScore))),
+			InherentRiskScore:  sanitizeTrackerCell(formatScoreCell(&inherentRiskScore, riskSeverityLabelForSize(inherentRiskScore, riskAnalysis.MatrixRows, riskAnalysis.MatrixCols))),
 			ResidualLikelihood: sanitizeTrackerCell(formatScoreCell(&residualLikelihood, riskLikelihoodLabel(residualLikelihood))),
 			ResidualImpact:     sanitizeTrackerCell(formatScoreCell(&residualImpact, riskImpactLabel(residualImpact))),
-			ResidualRiskScore:  sanitizeTrackerCell(formatScoreCell(&residualRiskScore, riskSeverityLabel(residualRiskScore))),
+			ResidualRiskScore:  sanitizeTrackerCell(formatScoreCell(&residualRiskScore, riskSeverityLabelForSize(residualRiskScore, riskAnalysis.MatrixRows, riskAnalysis.MatrixCols))),
 			InternalControls:   internalControlsByPlan[tp.ID],
 		})
 	}

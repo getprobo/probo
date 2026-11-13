@@ -1560,6 +1560,7 @@
     "riskSeverity": {
       "critical": "Critique",
       "high": "Élevée",
+      "medium": "Moyenne",
       "low": "Faible"
     },
     "trackerType": {

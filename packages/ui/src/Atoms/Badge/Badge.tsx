@@ -32,7 +32,8 @@ type Props = {
     | "info"
     | "neutral"
     | "outline"
-    | "highlight";
+    | "highlight"
+    | "medium";
   size?: "sm" | "md";
 } & HTMLAttributes<HTMLElement>;
 
@@ -47,6 +48,7 @@ const badge = tv({
       neutral: "bg-subtle text-txt-secondary",
       outline: "text-txt-tertiary border border-border-low",
       highlight: "bg-highlight text-txt-primary",
+      medium: "bg-medium text-txt-medium",
     },
     size: {
       sm: "text-xs py-[2px] px-[6px]",
