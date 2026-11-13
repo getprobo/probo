@@ -57,7 +57,7 @@ const fragment = graphql`
   fragment ElectronicSignatureSectionFragment on ElectronicSignature {
     status
     signedAt
-    certificate {
+    bundle {
       downloadUrl
     }
     events {
@@ -116,7 +116,7 @@ export function ElectronicSignatureSection({
   const { root, copy, description, trigger, popup, event, timestamp }
     = electronicSignatureSection();
   const tone = ndaSignatureTone(signature.status);
-  const certificateUrl = signature.certificate?.downloadUrl;
+  const bundleUrl = signature.bundle?.downloadUrl ?? null;
   const descriptionCopy = signatureDescription(
     signature.status,
     signature.signedAt,
@@ -134,7 +134,7 @@ export function ElectronicSignatureSection({
             {t(signatureLeadKey(signature.status))}
           </Text>
         )}
-        control={certificateUrl != null
+        control={bundleUrl != null
           ? (
               <IconButton
                 size={1}
@@ -142,7 +142,7 @@ export function ElectronicSignatureSection({
                 color="neutral"
                 aria-label={t("electronicSignature.actions.download")}
                 onClick={() => {
-                  safeOpenUrl(certificateUrl);
+                  safeOpenUrl(bundleUrl);
                 }}
               >
                 <DownloadSimpleIcon />
