@@ -24,12 +24,18 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/connectorprotocol"
 	"go.probo.inc/probo/pkg/coredata"
 )
+
+// datadogKeyPattern asserts the separator and nothing else: neither Datadog
+// key carries a prefix, so what the check can catch is a customer who pasted
+// one key on its own, which would leave DD-APPLICATION-KEY empty.
+var datadogKeyPattern = regexp.MustCompile(`^[^:]+:[\s\S]`)
 
 func datadogRegistration() *Registration {
 	// Datadog is multi-site: the customer's region drives the authorize
@@ -51,6 +57,30 @@ func datadogRegistration() *Registration {
 			RequiresPKCE:           true,
 			BuildAuthURLForSite:    connectorprotocol.DatadogAuthorizeURL,
 			BuildTokenURLForDomain: connectorprotocol.DatadogTokenURL,
+		},
+		// The API-key path takes an API key and an application key, pasted
+		// together as apiKey:applicationKey, and the customer's site, which
+		// OAuth learns from the callback but a key does not reveal. The
+		// settings resolver maps the site to its API domain against the same
+		// allow-list, so both paths store the same settings.
+		APIKey: &APIKeyConfig{
+			Auth: APIKeyAuth{
+				Mode:     APIKeyAuthHeaderPair,
+				Name:     "DD-API-KEY",
+				PairName: "DD-APPLICATION-KEY",
+			},
+			KeyFormat: &KeyFormat{
+				Pattern: datadogKeyPattern,
+				Example: "apiKey:applicationKey",
+			},
+			ExtraSettings: []ExtraSetting{
+				{
+					Key:         "site",
+					Label:       "Site",
+					Required:    true,
+					Description: "The Datadog site your organization is on. Paste an API key and an application key as apiKey:applicationKey, and limit the application key to the user_access_read scope.",
+				},
+			},
 		},
 		BuildProbeURL: buildDatadogProbeURL,
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {

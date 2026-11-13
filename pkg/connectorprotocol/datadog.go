@@ -97,3 +97,14 @@ func DatadogSiteForDomain(domain string) (string, bool) {
 
 	return "", false
 }
+
+// DatadogAPIDomain returns the API domain of a Datadog site key (e.g. "US3"
+// gives "us3.datadoghq.com"). It errors on any site not in the allow-list.
+func DatadogAPIDomain(site string) (string, error) {
+	s, ok := datadogSites[site]
+	if !ok {
+		return "", fmt.Errorf("unknown datadog site")
+	}
+
+	return s.apiDomain, nil
+}

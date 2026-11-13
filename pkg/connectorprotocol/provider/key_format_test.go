@@ -118,6 +118,13 @@ func TestAPIKeyFormatsAcceptAndReject(t *testing.T) {
 			rejected: []string{"keyid", keyTail, ":secret", "keyid:"},
 		},
 		{
+			provider: coredata.ConnectorProviderDatadog,
+			// Neither key carries a prefix, so the separator is all there is
+			// to assert; an application key holding a colon still passes.
+			accepted: []string{"apikey:" + keyTail, "apikey:app:key"},
+			rejected: []string{"apikey", keyTail, ":appkey", "apikey:"},
+		},
+		{
 			provider: coredata.ConnectorProviderDotfile,
 			accepted: []string{"dotkey." + keyTail + "." + keyTail},
 			// The dot is a literal, not a wildcard.

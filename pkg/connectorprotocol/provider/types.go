@@ -254,6 +254,12 @@ const (
 	// APIKeyAuthScheme sends `Authorization: <Name> <key>` — required by
 	// providers such as Okta whose API tokens use the SSWS scheme.
 	APIKeyAuthScheme APIKeyAuthMode = "scheme"
+
+	// APIKeyAuthHeaderPair splits the key at its first ":" and sends the first
+	// half in the header named by Name and the second in the one named by
+	// PairName, omitting Authorization — required by Datadog, which takes an
+	// API key and an application key in two headers.
+	APIKeyAuthHeaderPair APIKeyAuthMode = "header-pair"
 )
 
 // APIKeyAuth is how a provider's API key goes on the wire. It is consumed by
@@ -268,6 +274,10 @@ type APIKeyAuth struct {
 	// rejects a Name that would be ignored or a mode that needs one and lacks
 	// it.
 	Name string
+
+	// PairName is the second request header of APIKeyAuthHeaderPair. Register
+	// requires it for that mode and rejects it for every other.
+	PairName string
 }
 
 // APIKeyConfig is the API-key connect path of a provider.

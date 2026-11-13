@@ -51,6 +51,8 @@
       "clientSecret": "Clientgeheim",
       "scope": "Bereik",
       "datadogSite": "Datadog-site",
+      "datadogSitePlaceholder": "Selecteer een site",
+      "datadogApiKeyHint": "Plak je API-sleutel en een applicatiesleutel als apiKey:applicationKey. Beperk de applicatiesleutel tot de scope user_access_read.",
       "zendeskSubdomain": "Zendesk-subdomein",
       "region": "Regio",
       "regionPlaceholder": "Selecteer een regio",

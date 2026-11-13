@@ -175,3 +175,49 @@ func TestAPIKeyConnection_Client_Scheme(t *testing.T) {
 	assert.Equal(t, "SSWS", transport.scheme)
 	assert.Equal(t, "00aBcDeF", transport.token)
 }
+
+func TestAPIKeyHeaderPairTransport_RoundTrip(t *testing.T) {
+	t.Parallel()
+
+	rec := &recordingRoundTripper{}
+	transport := &apiKeyHeaderPairTransport{
+		header:     "DD-API-KEY",
+		value:      "api-key",
+		pairHeader: "DD-APPLICATION-KEY",
+		pairValue:  "app-key",
+		underlying: rec,
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "https://api.datadoghq.com/api/v2/users", nil)
+	_, err := transport.RoundTrip(req)
+	require.NoError(t, err)
+
+	require.NotNil(t, rec.lastRequest)
+	assert.Equal(t, "api-key", rec.lastRequest.Header.Get("DD-API-KEY"))
+	assert.Equal(t, "app-key", rec.lastRequest.Header.Get("DD-APPLICATION-KEY"))
+	assert.Empty(t, rec.lastRequest.Header.Get("Authorization"))
+
+	// The original request must be left untouched (RoundTrip clones it).
+	assert.Empty(t, req.Header.Get("DD-API-KEY"), "original request must not be mutated")
+}
+
+func TestAPIKeyConnection_Client_HeaderPair(t *testing.T) {
+	t.Parallel()
+
+	conn := &APIKeyConnection{
+		APIKey:     "api-key:app:key",
+		Header:     "DD-API-KEY",
+		PairHeader: "DD-APPLICATION-KEY",
+	}
+
+	client, err := conn.Client(context.Background())
+	require.NoError(t, err)
+
+	transport, ok := client.Transport.(*apiKeyHeaderPairTransport)
+	require.Truef(t, ok, "expected *apiKeyHeaderPairTransport, got %T", client.Transport)
+	assert.Equal(t, "DD-API-KEY", transport.header)
+	assert.Equal(t, "api-key", transport.value)
+	assert.Equal(t, "DD-APPLICATION-KEY", transport.pairHeader)
+	// Only the first colon splits, so the second key keeps any of its own.
+	assert.Equal(t, "app:key", transport.pairValue)
+}

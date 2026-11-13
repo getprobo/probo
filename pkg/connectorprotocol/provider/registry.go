@@ -104,10 +104,18 @@ func (r *Registry) Register(reg *Registration) error {
 	// payload agree: a Name on a mode that ignores it is silently dead, and a
 	// mode that needs one without it would send a header with no name.
 	if reg.APIKey != nil {
+		if reg.APIKey.Auth.Mode != APIKeyAuthHeaderPair && reg.APIKey.Auth.PairName != "" {
+			return fmt.Errorf("cannot register connector provider %q: API-key auth mode %q ignores PairName", reg.Provider, reg.APIKey.Auth.Mode)
+		}
+
 		switch reg.APIKey.Auth.Mode {
 		case APIKeyAuthHeader, APIKeyAuthScheme:
 			if reg.APIKey.Auth.Name == "" {
 				return fmt.Errorf("cannot register connector provider %q: API-key auth mode %q requires a Name", reg.Provider, reg.APIKey.Auth.Mode)
+			}
+		case APIKeyAuthHeaderPair:
+			if reg.APIKey.Auth.Name == "" || reg.APIKey.Auth.PairName == "" {
+				return fmt.Errorf("cannot register connector provider %q: API-key auth mode %q requires a Name and a PairName", reg.Provider, reg.APIKey.Auth.Mode)
 			}
 		case APIKeyAuthBearer, APIKeyAuthBasic, APIKeyAuthBasicUserPass:
 			if reg.APIKey.Auth.Name != "" {
@@ -521,6 +529,9 @@ func (r *Registry) NewAPIKeyConnection(
 		conn.BasicAuthUserPass = true
 	case APIKeyAuthScheme:
 		conn.Scheme = auth.Name
+	case APIKeyAuthHeaderPair:
+		conn.Header = auth.Name
+		conn.PairHeader = auth.PairName
 	case APIKeyAuthBearer:
 		// The connection's zero value already means Bearer.
 	}

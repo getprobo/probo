@@ -23,11 +23,13 @@ import { Select } from "@probo/ui/src/v2/Select/Select";
 import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
 import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
 import { SelectTrigger } from "@probo/ui/src/v2/Select/SelectTrigger";
+import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { APIKeyExtraFields_provider$key } from "#/__generated__/core/APIKeyExtraFields_provider.graphql";
 
+import { DatadogSiteField } from "./DatadogSiteField";
 import { ExtraSettingField } from "./ExtraSettingField";
 import { PostHogDeploymentField } from "./PostHogDeploymentField";
 
@@ -58,6 +60,20 @@ export function APIKeyExtraFields({
 
   if (provider.provider === "POSTHOG") {
     return <PostHogDeploymentField values={extras} onChange={onChange} />;
+  }
+
+  if (provider.provider === "DATADOG") {
+    return (
+      <>
+        <DatadogSiteField
+          value={extras.site || null}
+          onValueChange={value => onChange({ ...extras, site: value })}
+        />
+        <Text size={1} color="faint">
+          {t("marketplacePage.fields.datadogApiKeyHint")}
+        </Text>
+      </>
+    );
   }
 
   if (provider.provider === "SEGMENT") {

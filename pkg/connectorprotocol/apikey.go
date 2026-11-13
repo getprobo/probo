@@ -25,6 +25,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"go.gearno.de/kit/httpclient"
 )
@@ -64,6 +65,13 @@ type APIKeyConnection struct {
 	// with Header and BasicAuth and is populated from the provider
 	// Registration at connector creation time.
 	Scheme string `json:"scheme,omitempty"`
+	// PairHeader, set together with Header, splits the stored key at its
+	// first ":" and sends the first half in Header and the second in
+	// PairHeader — required by providers such as Datadog that authenticate
+	// with two credentials in two headers (DD-API-KEY and
+	// DD-APPLICATION-KEY). It is populated from the provider Registration at
+	// connector creation time.
+	PairHeader string `json:"pair_header,omitempty"`
 }
 
 var (
@@ -95,6 +103,20 @@ func (c *APIKeyConnection) Client(ctx context.Context) (*http.Client, error) {
 		return &http.Client{
 			Transport: &basicAuthUserPassTransport{
 				credential: c.APIKey,
+				underlying: underlying,
+			},
+		}, nil
+	}
+
+	if c.Header != "" && c.PairHeader != "" {
+		first, second, _ := strings.Cut(c.APIKey, ":")
+
+		return &http.Client{
+			Transport: &apiKeyHeaderPairTransport{
+				header:     c.Header,
+				value:      first,
+				pairHeader: c.PairHeader,
+				pairValue:  second,
 				underlying: underlying,
 			},
 		}, nil
@@ -161,6 +183,26 @@ type apiKeyHeaderTransport struct {
 func (t *apiKeyHeaderTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	req2 := req.Clone(req.Context())
 	req2.Header.Set(t.header, t.value)
+
+	return t.underlying.RoundTrip(req2)
+}
+
+// apiKeyHeaderPairTransport sends two credentials in two custom request
+// headers and never sets Authorization. Datadog authenticates its API with an
+// API key in DD-API-KEY and an application key in DD-APPLICATION-KEY, which no
+// single-header transport can carry.
+type apiKeyHeaderPairTransport struct {
+	header     string
+	value      string
+	pairHeader string
+	pairValue  string
+	underlying http.RoundTripper
+}
+
+func (t *apiKeyHeaderPairTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	req2 := req.Clone(req.Context())
+	req2.Header.Set(t.header, t.value)
+	req2.Header.Set(t.pairHeader, t.pairValue)
 
 	return t.underlying.RoundTrip(req2)
 }

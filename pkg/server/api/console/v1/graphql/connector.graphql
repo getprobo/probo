@@ -687,6 +687,11 @@ input CreateAPIKeyConnectorInput {
     langfuseBaseUrl: String
     scalewayOrganizationId: String
     segmentRegion: String
+    """
+    The Datadog site key (US1, US3, US5, EU1, AP1, AP2 or US1-FED). Required
+    for a Datadog connector.
+    """
+    datadogSite: String
     authentikBaseUrl: String
     newRelicRegion: String
     retoolBaseUrl: String

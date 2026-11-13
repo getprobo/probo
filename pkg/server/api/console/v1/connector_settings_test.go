@@ -89,6 +89,36 @@ func TestApiKeyConnectorSettings_UniFiConsoleID(t *testing.T) {
 	}
 }
 
+func TestApiKeyConnectorSettings_DatadogSite(t *testing.T) {
+	t.Parallel()
+
+	site := " us3 "
+
+	raw, err := apiKeyConnectorSettings(types.CreateAPIKeyConnectorInput{
+		Provider:    coredata.ConnectorProviderDatadog,
+		DatadogSite: &site,
+	})
+	require.NoError(t, err)
+
+	var settings coredata.DatadogConnectorSettings
+	require.NoError(t, json.Unmarshal(raw, &settings))
+	assert.Equal(t, "US3", settings.Region)
+	assert.Equal(t, "us3.datadoghq.com", settings.Domain)
+
+	_, err = apiKeyConnectorSettings(types.CreateAPIKeyConnectorInput{
+		Provider: coredata.ConnectorProviderDatadog,
+	})
+	assert.Error(t, err)
+
+	for _, invalid := range []string{"", "US2", "datadoghq.com", "evil.example.com"} {
+		_, err = apiKeyConnectorSettings(types.CreateAPIKeyConnectorInput{
+			Provider:    coredata.ConnectorProviderDatadog,
+			DatadogSite: &invalid,
+		})
+		assert.Error(t, err, invalid)
+	}
+}
+
 func TestApiKeyConnectorSettings_OnePasswordSCIMBridgeURL(t *testing.T) {
 	t.Parallel()
 

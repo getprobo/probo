@@ -51,6 +51,8 @@
       "clientSecret": "Client secret",
       "scope": "Scope",
       "datadogSite": "Datadog site",
+      "datadogSitePlaceholder": "Select a site",
+      "datadogApiKeyHint": "Paste your API key and an application key as apiKey:applicationKey. Limit the application key to the user_access_read scope.",
       "zendeskSubdomain": "Zendesk subdomain",
       "region": "Region",
       "regionPlaceholder": "Select a region",

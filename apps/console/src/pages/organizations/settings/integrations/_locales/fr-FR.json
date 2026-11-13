@@ -51,6 +51,8 @@
       "clientSecret": "Secret client",
       "scope": "Périmètre",
       "datadogSite": "Site Datadog",
+      "datadogSitePlaceholder": "Sélectionnez un site",
+      "datadogApiKeyHint": "Collez votre clé d’API et une clé d’application sous la forme apiKey:applicationKey. Limitez la clé d’application au scope user_access_read.",
       "zendeskSubdomain": "Sous-domaine Zendesk",
       "region": "Région",
       "regionPlaceholder": "Sélectionner une région",
