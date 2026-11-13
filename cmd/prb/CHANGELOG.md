@@ -4,6 +4,13 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.268.0] - 2026-11-13
+
+### Added
+
+- `prb tracker-pattern view` shows a `Source Banner:` line when a
+  tracker source was promoted from a sibling banner
+
 ## [0.267.0] - 2026-11-13
 
 ### Added
