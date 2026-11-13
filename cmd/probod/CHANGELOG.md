@@ -4,6 +4,46 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.346.0] - 2026-11-13
+
+### Added
+
+- A tracker source names the sibling banner that promoted it. The
+  banner is on GraphQL and MCP, and the console opens that banner's
+  tracker list from an icon beside the source badge
+- Connect Datadog with a service access token or a personal access
+  token and the site the organization is on. The site list adds UK1
+  and US2-FED. An application key is turned away, because it only
+  works beside an API key
+- A Medium band on risk scores, between Low and High, with its own
+  gold color. Score labels use the pale wash behind solid-colored
+  text. Bands are ratios of the matrix maximum, so 3×3, 4×4, and
+  5×5 matrices scale the same way, and exported risk analysis
+  documents use the same labels
+
+### Changed
+
+- The employee portal Tasks heading and breadcrumb say My tasks, so
+  the page is distinct from the compliance console's Tasks area
+- Cookie source promotion runs from the banner that wrote the cookie
+  and compares only the names updated since that write
+- The cookie policy vendor list keeps only vendors of
+  consent-category trackers that match the published snapshot,
+  including a tracker that later moved to uncategorised, and walks
+  every pattern page
+- Assigned and mentioned tasks in the console bell open the console
+  task. Signature and approval notifications still open the employee
+  portal
+
+### Fixed
+
+- A select shows its placeholder when the value render function
+  returns nothing, including the Segment region picker and the
+  Datadog site picker
+- Links in employee portal task descriptions and comments use the
+  info color and an underline. A click follows the link while
+  reading and opens the link editor while the field is focused
+
 ## [0.345.0] - 2026-11-13
 
 ### Added
