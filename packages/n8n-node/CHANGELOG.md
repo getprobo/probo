@@ -4,6 +4,13 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.270.0] - 2026-11-13
+
+### Added
+
+- Tracker Pattern `Get` and `Get Many` return the banner that promoted
+  a tracker source, as `sourceCookieBanner` with its `id` and `origin`
+
 ## [0.269.0] - 2026-11-13
 
 ### Added
