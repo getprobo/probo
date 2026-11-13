@@ -230,17 +230,9 @@ func suggestionUnits(spans []automerge.Span) (string, []suggestionUnit, uint32) 
 }
 
 func quoteRange(visible string, quote string, occurrence int) (uint32, uint32, error) {
-	index := -1
-	searchFrom := 0
-
-	for range occurrence + 1 {
-		found := strings.Index(visible[searchFrom:], quote)
-		if found < 0 {
-			return 0, 0, ErrQuoteNotFound
-		}
-
-		index = searchFrom + found
-		searchFrom = index + len(quote)
+	index, err := findQuote(visible, quote, occurrence)
+	if err != nil {
+		return 0, 0, err
 	}
 
 	start := utf16Len(visible[:index])

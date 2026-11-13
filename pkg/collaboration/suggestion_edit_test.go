@@ -23,6 +23,7 @@ package collaboration
 import (
 	"encoding/json"
 	"errors"
+	"math"
 	"testing"
 	"time"
 
@@ -128,6 +129,13 @@ func TestApplySuggestionEdit_AcceptKeepsOnlyTheReplacement(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, changed)
 	assert.Equal(t, []markedRun{{text: "scope"}}, markedRuns(t, rejected))
+}
+
+func TestQuoteRange_HugeOccurrenceDoesNotPanic(t *testing.T) {
+	t.Parallel()
+
+	_, _, err := quoteRange("hello", "h", math.MaxInt)
+	require.ErrorIs(t, err, ErrQuoteNotFound)
 }
 
 func TestApplySuggestionEdit_LeavesTheRestOfTheDocumentUnmarked(t *testing.T) {
