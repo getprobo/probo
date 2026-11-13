@@ -44,21 +44,30 @@ type (
 		TenantID       gid.TenantID    `db:"tenant_id"`
 		OrganizationID gid.GID         `db:"organization_id"`
 		State          DeviceState     `db:"state"`
+		Source         DeviceSource    `db:"source"`
 		HardwareUUID   *string         `db:"hardware_uuid"`
 		SerialNumber   *string         `db:"serial_number"`
 		Hostname       *string         `db:"hostname"`
 		Platform       *DevicePlatform `db:"platform"`
 		OSVersion      *string         `db:"os_version"`
 		AgentVersion   *string         `db:"agent_version"`
+		Model          *string         `db:"model"`
 		APIKeyHash     []byte          `db:"api_key_hash"`
 		OwnerID        *gid.GID        `db:"owner_profile_id"`
 		Labels         json.RawMessage `db:"labels"`
 		EnrolledAt     *time.Time      `db:"enrolled_at"`
 		LastSeenAt     *time.Time      `db:"last_seen_at"`
 		RevokedAt      *time.Time      `db:"revoked_at"`
-		DeletedAt      *time.Time      `db:"deleted_at"`
-		CreatedAt      time.Time       `db:"created_at"`
-		UpdatedAt      time.Time       `db:"updated_at"`
+		// MDMConnectorID and MDMDeviceID link the row to the device an MDM
+		// connector lists. An MDM row always has them until its connector is
+		// deleted; an agent row has them once a sync matched it by serial.
+		MDMProvider      *ConnectorProvider `db:"mdm_provider"`
+		MDMConnectorID   *gid.GID           `db:"mdm_connector_id"`
+		MDMDeviceID      *string            `db:"mdm_device_id"`
+		MDMLastCheckInAt *time.Time         `db:"mdm_last_check_in_at"`
+		DeletedAt        *time.Time         `db:"deleted_at"`
+		CreatedAt        time.Time          `db:"created_at"`
+		UpdatedAt        time.Time          `db:"updated_at"`
 	}
 
 	Devices []*Device
@@ -198,6 +207,12 @@ SELECT
 	last_seen_at,
 	revoked_at,
 	deleted_at,
+	source,
+	model,
+	mdm_provider,
+	mdm_connector_id,
+	mdm_device_id,
+	mdm_last_check_in_at,
 	created_at,
 	updated_at
 FROM
@@ -257,6 +272,12 @@ SELECT
 	last_seen_at,
 	revoked_at,
 	deleted_at,
+	source,
+	model,
+	mdm_provider,
+	mdm_connector_id,
+	mdm_device_id,
+	mdm_last_check_in_at,
 	created_at,
 	updated_at
 FROM
@@ -318,6 +339,12 @@ SELECT
 	last_seen_at,
 	revoked_at,
 	deleted_at,
+	source,
+	model,
+	mdm_provider,
+	mdm_connector_id,
+	mdm_device_id,
+	mdm_last_check_in_at,
 	created_at,
 	updated_at
 FROM
@@ -379,6 +406,12 @@ SELECT
 	last_seen_at,
 	revoked_at,
 	deleted_at,
+	source,
+	model,
+	mdm_provider,
+	mdm_connector_id,
+	mdm_device_id,
+	mdm_last_check_in_at,
 	created_at,
 	updated_at
 FROM
@@ -433,18 +466,24 @@ INSERT INTO devices (
     tenant_id,
     organization_id,
     state,
+    source,
     hardware_uuid,
     serial_number,
     hostname,
     platform,
     os_version,
     agent_version,
+    model,
     api_key_hash,
     owner_profile_id,
     labels,
     enrolled_at,
     last_seen_at,
     revoked_at,
+    mdm_provider,
+    mdm_connector_id,
+    mdm_device_id,
+    mdm_last_check_in_at,
     created_at,
     updated_at
 ) VALUES (
@@ -452,41 +491,53 @@ INSERT INTO devices (
     @tenant_id,
     @organization_id,
     @state,
+    @source,
     @hardware_uuid,
     @serial_number,
     @hostname,
     @platform,
     @os_version,
     @agent_version,
+    @model,
     @api_key_hash,
     @owner_profile_id,
     @labels,
     @enrolled_at,
     @last_seen_at,
     @revoked_at,
+    @mdm_provider,
+    @mdm_connector_id,
+    @mdm_device_id,
+    @mdm_last_check_in_at,
     @created_at,
     @updated_at
 )
 `
 	args := pgx.StrictNamedArgs{
-		"device_id":        d.ID,
-		"tenant_id":        scope.GetTenantID(),
-		"organization_id":  d.OrganizationID,
-		"state":            d.State,
-		"hardware_uuid":    d.HardwareUUID,
-		"serial_number":    d.SerialNumber,
-		"hostname":         d.Hostname,
-		"platform":         d.Platform,
-		"os_version":       d.OSVersion,
-		"agent_version":    d.AgentVersion,
-		"api_key_hash":     d.APIKeyHash,
-		"owner_profile_id": d.OwnerID,
-		"labels":           labels,
-		"enrolled_at":      d.EnrolledAt,
-		"last_seen_at":     d.LastSeenAt,
-		"revoked_at":       d.RevokedAt,
-		"created_at":       d.CreatedAt,
-		"updated_at":       d.UpdatedAt,
+		"device_id":            d.ID,
+		"tenant_id":            scope.GetTenantID(),
+		"organization_id":      d.OrganizationID,
+		"state":                d.State,
+		"source":               d.Source,
+		"hardware_uuid":        d.HardwareUUID,
+		"serial_number":        d.SerialNumber,
+		"hostname":             d.Hostname,
+		"platform":             d.Platform,
+		"os_version":           d.OSVersion,
+		"agent_version":        d.AgentVersion,
+		"model":                d.Model,
+		"api_key_hash":         d.APIKeyHash,
+		"owner_profile_id":     d.OwnerID,
+		"labels":               labels,
+		"enrolled_at":          d.EnrolledAt,
+		"last_seen_at":         d.LastSeenAt,
+		"revoked_at":           d.RevokedAt,
+		"mdm_provider":         d.MDMProvider,
+		"mdm_connector_id":     d.MDMConnectorID,
+		"mdm_device_id":        d.MDMDeviceID,
+		"mdm_last_check_in_at": d.MDMLastCheckInAt,
+		"created_at":           d.CreatedAt,
+		"updated_at":           d.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -583,6 +634,12 @@ RETURNING
     last_seen_at,
     revoked_at,
     deleted_at,
+    source,
+    model,
+    mdm_provider,
+    mdm_connector_id,
+    mdm_device_id,
+    mdm_last_check_in_at,
     created_at,
     updated_at
 `, scope.SQLFragment())
@@ -833,6 +890,12 @@ SELECT
 	last_seen_at,
 	revoked_at,
 	deleted_at,
+	source,
+	model,
+	mdm_provider,
+	mdm_connector_id,
+	mdm_device_id,
+	mdm_last_check_in_at,
 	created_at,
 	updated_at
 FROM
@@ -893,6 +956,12 @@ SELECT
 	last_seen_at,
 	revoked_at,
 	deleted_at,
+	source,
+	model,
+	mdm_provider,
+	mdm_connector_id,
+	mdm_device_id,
+	mdm_last_check_in_at,
 	created_at,
 	updated_at
 FROM
@@ -902,6 +971,7 @@ WHERE
 	AND organization_id = @organization_id
 	AND owner_profile_id = @owner_profile_id
 	AND state = @active_state
+	AND source = @agent_source
 	AND deleted_at IS NULL
 	AND %s
 `
@@ -911,6 +981,7 @@ WHERE
 		"organization_id":  organizationID,
 		"owner_profile_id": ownerID,
 		"active_state":     DeviceStateActive,
+		"agent_source":     DeviceSourceAgent,
 	}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
@@ -1007,6 +1078,7 @@ WHERE
 	AND organization_id = @organization_id
 	AND owner_profile_id = @owner_profile_id
 	AND state = @active_state
+	AND source = @agent_source
 	AND deleted_at IS NULL
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -1015,6 +1087,7 @@ WHERE
 		"organization_id":  organizationID,
 		"owner_profile_id": ownerID,
 		"active_state":     DeviceStateActive,
+		"agent_source":     DeviceSourceAgent,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -1067,9 +1140,11 @@ WHERE %s
 	return nil
 }
 
-// DeleteOrphans hard-deletes PENDING and REVOKED devices that never received
-// an API key, have no posture history, and have no non-expired enrollment
-// token. Soft-deleted rows are included so user tombstones without history
+// DeleteOrphans hard-deletes PENDING and REVOKED agent devices that never
+// received an API key, have no posture history, and have no non-expired
+// enrollment token. MDM rows never hold an API key, so they are left out:
+// a device revoked because its MDM stopped listing it stays visible until an
+// admin deletes it. Soft-deleted rows are included so user tombstones without history
 // can be reclaimed; soft-deleted rows that retain posture history are kept.
 func (d *Device) DeleteOrphans(
 	ctx context.Context,
@@ -1079,7 +1154,8 @@ func (d *Device) DeleteOrphans(
 	q := `
 DELETE FROM devices d
 WHERE
-    d.state IN (@pending_state, @revoked_state)
+    d.source = @agent_source
+    AND d.state IN (@pending_state, @revoked_state)
     AND d.api_key_hash IS NULL
     AND NOT EXISTS (
         SELECT 1
@@ -1097,6 +1173,7 @@ WHERE
 	args := pgx.StrictNamedArgs{
 		"pending_state": DeviceStatePending,
 		"revoked_state": DeviceStateRevoked,
+		"agent_source":  DeviceSourceAgent,
 		"now":           now,
 	}
 
@@ -1132,4 +1209,447 @@ WHERE
 	}
 
 	return nil
+}
+
+// LoadByMDMDeviceIDForUpdate locks the live row an MDM connector's device is
+// linked to, whatever its source and state.
+func (d *Device) LoadByMDMDeviceIDForUpdate(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	connectorID gid.GID,
+	mdmDeviceID string,
+) error {
+	q := `
+SELECT
+	id,
+	tenant_id,
+	organization_id,
+	state,
+	hardware_uuid,
+	serial_number,
+	hostname,
+	platform,
+	os_version,
+	agent_version,
+	api_key_hash,
+	owner_profile_id,
+	labels,
+	enrolled_at,
+	last_seen_at,
+	revoked_at,
+	deleted_at,
+	source,
+	model,
+	mdm_provider,
+	mdm_connector_id,
+	mdm_device_id,
+	mdm_last_check_in_at,
+	created_at,
+	updated_at
+FROM
+	devices
+WHERE
+	%s
+	AND mdm_connector_id = @mdm_connector_id
+	AND mdm_device_id = @mdm_device_id
+	AND deleted_at IS NULL
+LIMIT 1
+FOR UPDATE;
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"mdm_connector_id": connectorID,
+		"mdm_device_id":    mdmDeviceID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query device by mdm device id: %w", err)
+	}
+
+	device, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Device])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect device: %w", err)
+	}
+
+	*d = device
+
+	return nil
+}
+
+// LoadAgentBySerialNumberForUpdate locks the live, non-revoked agent device of
+// an organization that reports serialNumber. When several match, the one the
+// agent reached most recently wins.
+func (d *Device) LoadAgentBySerialNumberForUpdate(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	organizationID gid.GID,
+	serialNumber string,
+) error {
+	q := `
+SELECT
+	id,
+	tenant_id,
+	organization_id,
+	state,
+	hardware_uuid,
+	serial_number,
+	hostname,
+	platform,
+	os_version,
+	agent_version,
+	api_key_hash,
+	owner_profile_id,
+	labels,
+	enrolled_at,
+	last_seen_at,
+	revoked_at,
+	deleted_at,
+	source,
+	model,
+	mdm_provider,
+	mdm_connector_id,
+	mdm_device_id,
+	mdm_last_check_in_at,
+	created_at,
+	updated_at
+FROM
+	devices
+WHERE
+	%s
+	AND organization_id = @organization_id
+	AND serial_number = @serial_number
+	AND source = @agent_source
+	AND state != @revoked_state
+	AND deleted_at IS NULL
+ORDER BY
+	last_seen_at DESC NULLS LAST,
+	id ASC
+LIMIT 1
+FOR UPDATE;
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"organization_id": organizationID,
+		"serial_number":   serialNumber,
+		"agent_source":    DeviceSourceAgent,
+		"revoked_state":   DeviceStateRevoked,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query agent device by serial number: %w", err)
+	}
+
+	device, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Device])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect device: %w", err)
+	}
+
+	*d = device
+
+	return nil
+}
+
+// UpdateFromMDM writes what an MDM reports onto a live, non-revoked MDM row.
+// A row an admin or a previous sync revoked keeps its state: a sync never
+// re-activates a device.
+func (d *Device) UpdateFromMDM(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+) error {
+	now := time.Now()
+
+	q := fmt.Sprintf(`
+UPDATE devices
+SET
+    hostname = @hostname,
+    serial_number = @serial_number,
+    platform = @platform,
+    os_version = @os_version,
+    model = @model,
+    last_seen_at = @mdm_last_check_in_at,
+    mdm_last_check_in_at = @mdm_last_check_in_at,
+    updated_at = @now
+WHERE %s
+    AND id = @device_id
+    AND source = @mdm_source
+    AND state != @revoked_state
+    AND deleted_at IS NULL
+`, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"device_id":            d.ID,
+		"hostname":             d.Hostname,
+		"serial_number":        d.SerialNumber,
+		"platform":             d.Platform,
+		"os_version":           d.OSVersion,
+		"model":                d.Model,
+		"mdm_last_check_in_at": d.MDMLastCheckInAt,
+		"mdm_source":           DeviceSourceMDM,
+		"revoked_state":        DeviceStateRevoked,
+		"now":                  now,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot update device from mdm: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
+	}
+
+	d.LastSeenAt = d.MDMLastCheckInAt
+	d.UpdatedAt = now
+
+	return nil
+}
+
+// LinkMDM records on an agent device that an MDM connector lists it. The
+// agent keeps reporting hostname, OS and heartbeats; the MDM adds the model
+// and its own check-in time.
+func (d *Device) LinkMDM(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	provider ConnectorProvider,
+	connectorID gid.GID,
+	mdmDeviceID string,
+	model *string,
+	lastCheckInAt *time.Time,
+) error {
+	now := time.Now()
+
+	q := fmt.Sprintf(`
+UPDATE devices
+SET
+    mdm_provider = @mdm_provider,
+    mdm_connector_id = @mdm_connector_id,
+    mdm_device_id = @mdm_device_id,
+    mdm_last_check_in_at = COALESCE(@mdm_last_check_in_at, mdm_last_check_in_at),
+    model = COALESCE(@model, model),
+    updated_at = @now
+WHERE %s
+    AND id = @device_id
+    AND source = @agent_source
+    AND deleted_at IS NULL
+`, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"device_id":            d.ID,
+		"mdm_provider":         provider,
+		"mdm_connector_id":     connectorID,
+		"mdm_device_id":        mdmDeviceID,
+		"mdm_last_check_in_at": lastCheckInAt,
+		"model":                model,
+		"agent_source":         DeviceSourceAgent,
+		"now":                  now,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" && pgErr.ConstraintName == "devices_mdm_device_idx" {
+			return ErrResourceAlreadyExists
+		}
+
+		return fmt.Errorf("cannot link device to mdm: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
+	}
+
+	d.MDMProvider = &provider
+	d.MDMConnectorID = &connectorID
+	d.MDMDeviceID = &mdmDeviceID
+
+	if lastCheckInAt != nil {
+		d.MDMLastCheckInAt = lastCheckInAt
+	}
+
+	if model != nil {
+		d.Model = model
+	}
+
+	d.UpdatedAt = now
+
+	return nil
+}
+
+// UnlinkMDM clears the MDM link of an agent device.
+func (d *Device) UnlinkMDM(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+) error {
+	now := time.Now()
+
+	q := fmt.Sprintf(`
+UPDATE devices
+SET
+    mdm_provider = NULL,
+    mdm_connector_id = NULL,
+    mdm_device_id = NULL,
+    mdm_last_check_in_at = NULL,
+    updated_at = @now
+WHERE %s
+    AND id = @device_id
+    AND source = @agent_source
+`, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"device_id":    d.ID,
+		"agent_source": DeviceSourceAgent,
+		"now":          now,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot unlink device from mdm: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
+	}
+
+	d.MDMProvider = nil
+	d.MDMConnectorID = nil
+	d.MDMDeviceID = nil
+	d.MDMLastCheckInAt = nil
+	d.UpdatedAt = now
+
+	return nil
+}
+
+// RevokeUnlistedMDM revokes the live MDM rows of a connector whose device the
+// connector no longer lists. listedIDs is every device ID the latest sync saw.
+func (ds *Devices) RevokeUnlistedMDM(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	connectorID gid.GID,
+	listedIDs []string,
+) (int64, error) {
+	q := fmt.Sprintf(`
+UPDATE devices
+SET
+    state = @revoked_state,
+    revoked_at = @now,
+    updated_at = @now
+WHERE %s
+    AND mdm_connector_id = @mdm_connector_id
+    AND source = @mdm_source
+    AND state != @revoked_state
+    AND deleted_at IS NULL
+    AND NOT (mdm_device_id = ANY(@listed_ids::text[]))
+`, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"mdm_connector_id": connectorID,
+		"listed_ids":       listedIDs,
+		"mdm_source":       DeviceSourceMDM,
+		"revoked_state":    DeviceStateRevoked,
+		"now":              time.Now(),
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return 0, fmt.Errorf("cannot revoke unlisted mdm devices: %w", err)
+	}
+
+	return result.RowsAffected(), nil
+}
+
+// UnlinkUnlistedMDM clears the MDM link of the agent devices a connector no
+// longer lists. The agent rows themselves stay as they are.
+func (ds *Devices) UnlinkUnlistedMDM(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	connectorID gid.GID,
+	listedIDs []string,
+) (int64, error) {
+	q := fmt.Sprintf(`
+UPDATE devices
+SET
+    mdm_provider = NULL,
+    mdm_connector_id = NULL,
+    mdm_device_id = NULL,
+    mdm_last_check_in_at = NULL,
+    updated_at = @now
+WHERE %s
+    AND mdm_connector_id = @mdm_connector_id
+    AND source = @agent_source
+    AND NOT (mdm_device_id = ANY(@listed_ids::text[]))
+`, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"mdm_connector_id": connectorID,
+		"listed_ids":       listedIDs,
+		"agent_source":     DeviceSourceAgent,
+		"now":              time.Now(),
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return 0, fmt.Errorf("cannot unlink unlisted mdm devices: %w", err)
+	}
+
+	return result.RowsAffected(), nil
+}
+
+// RevokeDetachedMDM revokes the MDM rows whose connector was deleted. The
+// foreign key clears mdm_connector_id on delete, and nothing will sync such
+// a row again.
+func (d *Device) RevokeDetachedMDM(
+	ctx context.Context,
+	conn pg.Tx,
+	now time.Time,
+) (int64, error) {
+	q := `
+UPDATE devices
+SET
+    state = @revoked_state,
+    revoked_at = @now,
+    updated_at = @now
+WHERE
+    source = @mdm_source
+    AND mdm_connector_id IS NULL
+    AND state != @revoked_state
+    AND deleted_at IS NULL
+`
+
+	args := pgx.StrictNamedArgs{
+		"mdm_source":    DeviceSourceMDM,
+		"revoked_state": DeviceStateRevoked,
+		"now":           now,
+	}
+
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return 0, fmt.Errorf("cannot revoke detached mdm devices: %w", err)
+	}
+
+	return result.RowsAffected(), nil
 }

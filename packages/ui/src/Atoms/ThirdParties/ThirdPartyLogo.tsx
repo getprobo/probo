@@ -58,6 +58,7 @@ import { Heroku } from "./Heroku";
 import { HubSpot } from "./HubSpot";
 import { IncidentIO } from "./IncidentIO";
 import { Intercom } from "./Intercom";
+import { Iru } from "./Iru";
 import { Langfuse } from "./Langfuse";
 import { Linear } from "./Linear";
 import { Mercury } from "./Mercury";
@@ -141,6 +142,7 @@ const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   HUBSPOT: HubSpot,
   INCIDENT_IO: IncidentIO,
   INTERCOM: Intercom,
+  IRU: Iru,
   LANGFUSE: Langfuse,
   LINEAR: Linear,
   LINEAR_SYNC: Linear,

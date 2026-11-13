@@ -119,6 +119,36 @@ func TestApiKeyConnectorSettings_DatadogSite(t *testing.T) {
 	}
 }
 
+func TestApiKeyConnectorSettings_IruAPIURL(t *testing.T) {
+	t.Parallel()
+
+	apiURL := " https://ACME.api.eu.kandji.io/ "
+
+	raw, err := apiKeyConnectorSettings(types.CreateAPIKeyConnectorInput{
+		Provider:  coredata.ConnectorProviderIru,
+		IruAPIURL: &apiURL,
+	})
+	require.NoError(t, err)
+
+	var settings coredata.IruConnectorSettings
+	require.NoError(t, json.Unmarshal(raw, &settings))
+	assert.Equal(t, "acme.api.eu.kandji.io", settings.APIHost)
+
+	_, err = apiKeyConnectorSettings(types.CreateAPIKeyConnectorInput{
+		Provider: coredata.ConnectorProviderIru,
+	})
+	require.Error(t, err)
+
+	// The host is where the token is sent, so only an Iru API host passes.
+	for _, invalid := range []string{"", "acme.example.com", "acme.api.kandji.io.evil.example", "http://acme.api.kandji.io"} {
+		_, err = apiKeyConnectorSettings(types.CreateAPIKeyConnectorInput{
+			Provider:  coredata.ConnectorProviderIru,
+			IruAPIURL: &invalid,
+		})
+		assert.Error(t, err, invalid)
+	}
+}
+
 func TestApiKeyConnectorSettings_OnePasswordSCIMBridgeURL(t *testing.T) {
 	t.Parallel()
 

@@ -32,6 +32,10 @@ const (
 	DevicePlatformLinux   DevicePlatform = "LINUX"
 	DevicePlatformFreeBSD DevicePlatform = "FREEBSD"
 	DevicePlatformWindows DevicePlatform = "WINDOWS"
+	DevicePlatformIOS     DevicePlatform = "IOS"
+	DevicePlatformIPadOS  DevicePlatform = "IPADOS"
+	DevicePlatformTVOS    DevicePlatform = "TVOS"
+	DevicePlatformAndroid DevicePlatform = "ANDROID"
 )
 
 var (
@@ -46,6 +50,10 @@ func DevicePlatforms() []DevicePlatform {
 		DevicePlatformLinux,
 		DevicePlatformFreeBSD,
 		DevicePlatformWindows,
+		DevicePlatformIOS,
+		DevicePlatformIPadOS,
+		DevicePlatformTVOS,
+		DevicePlatformAndroid,
 	}
 }
 
@@ -55,7 +63,11 @@ func (v DevicePlatform) IsValid() bool {
 		DevicePlatformDarwin,
 		DevicePlatformLinux,
 		DevicePlatformFreeBSD,
-		DevicePlatformWindows:
+		DevicePlatformWindows,
+		DevicePlatformIOS,
+		DevicePlatformIPadOS,
+		DevicePlatformTVOS,
+		DevicePlatformAndroid:
 		return true
 	}
 

@@ -113,19 +113,24 @@ func NewEmployeeDeviceEdge(
 
 func NewDevice(d *coredata.Device) *Device {
 	device := &Device{
-		ID:           d.ID,
-		State:        d.State,
-		Hostname:     d.Hostname,
-		SerialNumber: d.SerialNumber,
-		HardwareUUID: d.HardwareUUID,
-		Platform:     d.Platform,
-		OsVersion:    d.OSVersion,
-		AgentVersion: d.AgentVersion,
-		EnrolledAt:   d.EnrolledAt,
-		LastSeenAt:   d.LastSeenAt,
-		RevokedAt:    d.RevokedAt,
-		CreatedAt:    d.CreatedAt,
-		UpdatedAt:    d.UpdatedAt,
+		ID:               d.ID,
+		State:            d.State,
+		Source:           d.Source,
+		Hostname:         d.Hostname,
+		SerialNumber:     d.SerialNumber,
+		HardwareUUID:     d.HardwareUUID,
+		Platform:         d.Platform,
+		OsVersion:        d.OSVersion,
+		AgentVersion:     d.AgentVersion,
+		Model:            d.Model,
+		MdmProvider:      d.MDMProvider,
+		MdmDeviceID:      d.MDMDeviceID,
+		MdmLastCheckInAt: d.MDMLastCheckInAt,
+		EnrolledAt:       d.EnrolledAt,
+		LastSeenAt:       d.LastSeenAt,
+		RevokedAt:        d.RevokedAt,
+		CreatedAt:        d.CreatedAt,
+		UpdatedAt:        d.UpdatedAt,
 	}
 	if d.OwnerID != nil {
 		device.Owner = &Profile{ID: *d.OwnerID}

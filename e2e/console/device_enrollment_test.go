@@ -1648,6 +1648,9 @@ type ownerDeviceList struct {
 	Edges      []struct {
 		Node struct {
 			ID string `json:"id"`
+			// Selected by the filtered list only.
+			Source      string  `json:"source"`
+			MdmProvider *string `json:"mdmProvider"`
 		} `json:"node"`
 	} `json:"edges"`
 }
@@ -1823,6 +1826,32 @@ func TestDeviceListFilters(t *testing.T) {
 
 		assert.ElementsMatch(t, []string{"1.0.0", "2.0.0"}, listed.AgentVersions)
 	})
+
+	t.Run("matches the agent source", func(t *testing.T) {
+		t.Parallel()
+
+		listed := listDevicesFiltered(t, owner.ForTest(t), orgID, map[string]any{
+			"sources": []string{"AGENT"},
+		})
+
+		assert.Equal(t, 3, listed.Devices.TotalCount)
+		assert.ElementsMatch(t, []string{pendingID, darwinID, linuxID}, deviceIDs(listed.Devices))
+
+		for _, edge := range listed.Devices.Edges {
+			assert.Equal(t, "AGENT", edge.Node.Source)
+			assert.Nil(t, edge.Node.MdmProvider)
+		}
+	})
+
+	t.Run("matches no device from an MDM", func(t *testing.T) {
+		t.Parallel()
+
+		listed := listDevicesFiltered(t, owner.ForTest(t), orgID, map[string]any{
+			"sources": []string{"MDM"},
+		})
+
+		assert.Equal(t, 0, listed.Devices.TotalCount)
+	})
 }
 
 func TestDeviceList_PostureWarningFilter(t *testing.T) {
@@ -1872,7 +1901,7 @@ const listDevicesFilteredQuery = `
 				devices(first: 20, filter: $filter) {
 					totalCount
 					edges {
-						node { id }
+						node { id source mdmProvider }
 					}
 				}
 			}

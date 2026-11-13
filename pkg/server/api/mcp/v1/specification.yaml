@@ -3540,7 +3540,7 @@ components:
 
     DeviceState:
       type: string
-      description: Device lifecycle state. PENDING means an enrollment token was issued but the agent has never checked in; ACTIVE means the agent is heartbeating; REVOKED means enrollment was revoked.
+      description: Device lifecycle state. PENDING means an enrollment token was issued but the agent has never checked in; ACTIVE means the agent is heartbeating, or, for an MDM device, that its MDM lists it; REVOKED means enrollment was revoked, or that the MDM stopped listing the device.
       enum:
         - PENDING
         - ACTIVE
@@ -3549,12 +3549,25 @@ components:
 
     DevicePlatform:
       type: string
+      description: Device platform. IOS, IPADOS, TVOS and ANDROID are reported only by MDM devices; the agent does not run on them.
       enum:
         - DARWIN
         - LINUX
         - FREEBSD
         - WINDOWS
+        - IOS
+        - IPADOS
+        - TVOS
+        - ANDROID
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DevicePlatform
+
+    DeviceSource:
+      type: string
+      description: What created the device and keeps it current. AGENT means the Probo agent enrolled it; MDM means a device sync from an MDM connector (such as Iru) created it. An AGENT device that an MDM also lists keeps source AGENT and carries the mdm_* fields.
+      enum:
+        - AGENT
+        - MDM
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DeviceSource
 
     DevicePostureVersion:
       type: string
@@ -3672,6 +3685,7 @@ components:
         - id
         - organization_id
         - state
+        - source
         - postures_included
         - latest_postures
         - created_at
@@ -3686,6 +3700,9 @@ components:
         state:
           $ref: "#/components/schemas/DeviceState"
           description: Device lifecycle state (PENDING, ACTIVE, or REVOKED).
+        source:
+          $ref: "#/components/schemas/DeviceSource"
+          description: What created the device (AGENT or MDM).
         hostname:
           type:
             - string
@@ -3716,6 +3733,27 @@ components:
             - string
             - "null"
           description: Agent version
+        model:
+          type:
+            - string
+            - "null"
+          description: Hardware model, as reported by the device's MDM.
+        mdm_provider:
+          type:
+            - string
+            - "null"
+          description: Connector provider of the MDM that lists this device (for example IRU), or null when no MDM lists it.
+        mdm_device_id:
+          type:
+            - string
+            - "null"
+          description: The MDM's own identifier for this device.
+        mdm_last_check_in_at:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: When the device last checked in with its MDM.
         owner_id:
           anyOf:
             - type: string
@@ -3733,7 +3771,7 @@ components:
             - string
             - "null"
           format: date-time
-          description: Last agent heartbeat timestamp; use as the staleness signal. Null while the device is still PENDING.
+          description: Last agent heartbeat timestamp, or for an MDM device its last MDM check-in; use as the staleness signal. Null while the device is still PENDING.
         revoked_at:
           type:
             - string
@@ -3785,6 +3823,11 @@ components:
           description: Only devices in one of these states. Omit to include every state.
           items:
             $ref: "#/components/schemas/DeviceState"
+        sources:
+          type: array
+          description: Only devices from one of these sources. Omit to include every source.
+          items:
+            $ref: "#/components/schemas/DeviceSource"
         platforms:
           type: array
           description: Only devices on one of these platforms. Devices that have not reported a platform are excluded. Omit to include every platform.
@@ -19809,7 +19852,7 @@ tools:
       $ref: "#/components/schemas/DeleteAssetOutput"
   - name: listDevices
     title: List Devices
-    description: "include_postures defaults to false. When it is false, postures_included is false and latest_postures is empty. List ITAM devices for an organization. Use createDevice to issue a PENDING device and a one-shot enrollment token for the agent installer. Device states: PENDING (enrollment token issued, agent has never checked in), ACTIVE (agent heartbeating), REVOKED (enrollment revoked). Use last_seen_at as the staleness signal. When include_postures is true, latest_postures holds the newest result per check_key and is empty for PENDING devices. Pass query to search by the owner's name; each word is a prefix match and every word must match. Pass states, platforms, or agent_versions to keep devices that match any value in that list; omit a list to leave that dimension unconstrained. Page with size and cursor; when next_cursor is present, pass it as cursor on the next call."
+    description: "include_postures defaults to false. When it is false, postures_included is false and latest_postures is empty. List ITAM devices for an organization. Use createDevice to issue a PENDING device and a one-shot enrollment token for the agent installer. Device states: PENDING (enrollment token issued, agent has never checked in), ACTIVE (agent heartbeating, or listed by its MDM), REVOKED (enrollment revoked, or no longer listed by its MDM). Devices with source MDM are synced from an MDM connector such as Iru and never report postures. Use last_seen_at as the staleness signal. When include_postures is true, latest_postures holds the newest result per check_key and is empty for PENDING devices. Pass query to search by the owner's name; each word is a prefix match and every word must match. Pass states, sources, platforms, or agent_versions to keep devices that match any value in that list; omit a list to leave that dimension unconstrained. Page with size and cursor; when next_cursor is present, pass it as cursor on the next call."
     hints:
       readonly: true
       destructive: false
@@ -19821,7 +19864,7 @@ tools:
       $ref: "#/components/schemas/ListDevicesOutput"
   - name: getDevice
     title: Get Device
-    description: "include_postures defaults to false. When it is false, postures_included is false and latest_postures is empty. Get one ITAM device by ID (soft-deleted devices are not returned). Same state machine as listDevices: PENDING (enrollment token issued, agent has never checked in), ACTIVE (agent heartbeating), REVOKED (enrollment revoked). Use last_seen_at as the staleness signal. When include_postures is true, latest_postures holds the newest result per check_key and is empty for PENDING devices."
+    description: "include_postures defaults to false. When it is false, postures_included is false and latest_postures is empty. Get one ITAM device by ID (soft-deleted devices are not returned). Same state machine as listDevices: PENDING (enrollment token issued, agent has never checked in), ACTIVE (agent heartbeating, or listed by its MDM), REVOKED (enrollment revoked, or no longer listed by its MDM). Devices with source MDM are synced from an MDM connector such as Iru and never report postures. Use last_seen_at as the staleness signal. When include_postures is true, latest_postures holds the newest result per check_key and is empty for PENDING devices."
     hints:
       readonly: true
       destructive: false

@@ -28,6 +28,7 @@ type (
 	DeviceFilter struct {
 		query             *string
 		states            []DeviceState
+		sources           []DeviceSource
 		platforms         []DevicePlatform
 		agentVersions     []string
 		hasPostureWarning *bool
@@ -37,6 +38,7 @@ type (
 func NewDeviceFilter(
 	query *string,
 	states []DeviceState,
+	sources []DeviceSource,
 	platforms []DevicePlatform,
 	agentVersions []string,
 	hasPostureWarning *bool,
@@ -44,6 +46,7 @@ func NewDeviceFilter(
 	return &DeviceFilter{
 		query:             query,
 		states:            states,
+		sources:           sources,
 		platforms:         platforms,
 		agentVersions:     agentVersions,
 		hasPostureWarning: hasPostureWarning,
@@ -54,6 +57,7 @@ func (f *DeviceFilter) SQLArguments() pgx.StrictNamedArgs {
 	return pgx.StrictNamedArgs{
 		"query":                      f.query,
 		"filter_states":              filterStrings(f.states),
+		"filter_sources":             filterStrings(f.sources),
 		"filter_platforms":           filterStrings(f.platforms),
 		"filter_agent_versions":      filterStrings(f.agentVersions),
 		"filter_has_posture_warning": f.hasPostureWarning,
@@ -97,6 +101,14 @@ AND
 	CASE
 		WHEN @filter_states::device_state[] IS NOT NULL THEN
 			state = ANY(@filter_states::device_state[])
+		ELSE TRUE
+	END
+)
+AND
+(
+	CASE
+		WHEN @filter_sources::device_source[] IS NOT NULL THEN
+			source = ANY(@filter_sources::device_source[])
 		ELSE TRUE
 	END
 )

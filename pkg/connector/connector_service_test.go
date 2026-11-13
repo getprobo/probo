@@ -546,6 +546,58 @@ func TestUpdateAPIKey_ReplacesCustomerKey(t *testing.T) {
 	assert.Empty(t, conn.Header)
 }
 
+func TestCreateAndUpdateAPIKey_ScheduleDeviceSync(t *testing.T) {
+	t.Parallel()
+
+	svc, scope, organizationID := newConnectorCreateEnv(t)
+
+	created, err := svc.Create(t.Context(), scope, CreateConnectorRequest{
+		OrganizationID: organizationID,
+		Name:           "Iru",
+		Provider:       coredata.ConnectorProviderIru,
+		Protocol:       coredata.ConnectorProtocolAPIKey,
+		Connection:     &connectorprotocol.APIKeyConnection{APIKey: "iru-key"},
+		RawSettings:    json.RawMessage(`{"api_host":"acme.api.kandji.io"}`),
+	})
+	require.NoError(t, err)
+
+	// The sync is created with the connector, in the same transaction.
+	sync := &coredata.DeviceSync{}
+
+	require.NoError(t, svc.pg.WithConn(t.Context(), func(ctx context.Context, conn pg.Querier) error {
+		return sync.LoadByConnectorID(ctx, conn, scope, created.ID)
+	}))
+	assert.Equal(t, int64(0), sync.Generation)
+
+	// Replacing the key makes it due again under a new generation.
+	_, err = svc.UpdateAPIKey(t.Context(), scope, UpdateAPIKeyConnectorRequest{
+		ConnectorID: created.ID,
+		Connection:  &connectorprotocol.APIKeyConnection{APIKey: "rotated-key"},
+	})
+	require.NoError(t, err)
+
+	require.NoError(t, svc.pg.WithConn(t.Context(), func(ctx context.Context, conn pg.Querier) error {
+		return sync.LoadByConnectorID(ctx, conn, scope, created.ID)
+	}))
+	assert.Equal(t, int64(1), sync.Generation)
+	assert.Equal(t, 0, sync.Attempts)
+
+	// A provider that syncs no devices gets no sync.
+	other, err := svc.Create(t.Context(), scope, CreateConnectorRequest{
+		OrganizationID: organizationID,
+		Name:           "Brex",
+		Provider:       coredata.ConnectorProviderBrex,
+		Protocol:       coredata.ConnectorProtocolAPIKey,
+		Connection:     &connectorprotocol.APIKeyConnection{APIKey: "bxt_test-key"},
+	})
+	require.NoError(t, err)
+
+	err = svc.pg.WithConn(t.Context(), func(ctx context.Context, conn pg.Querier) error {
+		return (&coredata.DeviceSync{}).LoadByConnectorID(ctx, conn, scope, other.ID)
+	})
+	require.ErrorIs(t, err, coredata.ErrResourceNotFound)
+}
+
 func TestUpdateAPIKey_RefusesOtherProtocolsAndManagedKeys(t *testing.T) {
 	t.Parallel()
 

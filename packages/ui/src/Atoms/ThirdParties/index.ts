@@ -36,6 +36,7 @@ export { Heroku } from "./Heroku";
 export { HubSpot } from "./HubSpot";
 export { IncidentIO } from "./IncidentIO";
 export { Intercom } from "./Intercom";
+export { Iru } from "./Iru";
 export { Langfuse } from "./Langfuse";
 export { Linear } from "./Linear";
 export { Mercury } from "./Mercury";

@@ -28,7 +28,11 @@
       "serialNumber": "Serienummer",
       "agentVersion": "Agentversie",
       "enrolledAt": "Geregistreerd op",
-      "lastSeen": "Laatst gezien"
+      "lastSeen": "Laatst gezien",
+      "source": "Bron",
+      "model": "Model",
+      "mdm": "MDM",
+      "mdmLastCheckIn": "Laatste MDM-check-in"
     },
     "views": {
       "allRegistered": "Alle apparaten",
@@ -44,18 +48,28 @@
       "allPlatforms": "Alle platforms",
       "selectedCount": "{{count}} geselecteerd",
       "search": "Zoeken op eigenaar",
-      "empty": "Geen apparaten voldoen aan deze filters"
+      "empty": "Geen apparaten voldoen aan deze filters",
+      "allSources": "Alle bronnen"
     },
     "platforms": {
       "darwin": "macOS",
       "linux": "Linux",
       "freebsd": "FreeBSD",
-      "windows": "Windows"
+      "windows": "Windows",
+      "ios": "iOS",
+      "ipados": "iPadOS",
+      "tvos": "tvOS",
+      "android": "Android"
+    },
+    "sources": {
+      "agent": "Agent",
+      "mdm": "MDM"
     },
     "values": {
       "pending": "(in behandeling)",
       "never": "Nooit",
-      "unassigned": "Niet toegewezen"
+      "unassigned": "Niet toegewezen",
+      "noAgent": "Geen agent"
     },
     "messages": {
       "ownerUpdated": "Apparaateigenaar bijgewerkt",

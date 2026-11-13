@@ -74,7 +74,9 @@ import { DevicesListSearch } from "./_components/DevicesListSearch";
 import { devicesPage } from "./_components/variants";
 import {
   devicePlatforms,
+  deviceSources,
   platformLabel,
+  sourceLabel,
 } from "./_lib/deviceDisplay";
 import {
   isDeviceListView,
@@ -91,6 +93,7 @@ export const devicesPageQuery = graphql`
     $query: String
     $hasPostureWarning: Boolean
     $states: [DeviceState!]
+    $sources: [DeviceSource!]
     $platforms: [DevicePlatform!]
     $agentVersions: [String!]
   ) {
@@ -108,6 +111,7 @@ export const devicesPageQuery = graphql`
             query: $query
             hasPostureWarning: $hasPostureWarning
             states: $states
+            sources: $sources
             platforms: $platforms
             agentVersions: $agentVersions
           )
@@ -131,6 +135,7 @@ const devicesPageFragment = graphql`
     query: { type: "String", defaultValue: null }
     hasPostureWarning: { type: "Boolean", defaultValue: null }
     states: { type: "[DeviceState!]", defaultValue: null }
+    sources: { type: "[DeviceSource!]", defaultValue: null }
     platforms: { type: "[DevicePlatform!]", defaultValue: null }
     agentVersions: { type: "[String!]", defaultValue: null }
   ) {
@@ -145,6 +150,7 @@ const devicesPageFragment = graphql`
         query: $query
         hasPostureWarning: $hasPostureWarning
         states: $states
+        sources: $sources
         platforms: $platforms
         agentVersions: $agentVersions
       }
@@ -188,10 +194,12 @@ export function DevicesPage({ queryRef }: DevicesPageProps) {
     view,
     hasPostureWarning,
     states,
+    sources,
     platforms,
     agentVersions,
     setView,
     setStates,
+    setSources,
     setPlatforms,
     setAgentVersions,
   } = useDevicesListFilters();
@@ -224,6 +232,7 @@ export function DevicesPage({ queryRef }: DevicesPageProps) {
           query: ownerQuery,
           hasPostureWarning,
           states: optionalList(states),
+          sources: optionalList(sources),
           platforms: optionalList(platforms),
           agentVersions: optionalList(agentVersions),
           order,
@@ -235,7 +244,7 @@ export function DevicesPage({ queryRef }: DevicesPageProps) {
         { fetchPolicy: "store-and-network" },
       );
     });
-  }, [ownerQuery, hasPostureWarning, states, platforms, agentVersions, order, pagination.refetch]);
+  }, [ownerQuery, hasPostureWarning, states, sources, platforms, agentVersions, order, pagination.refetch]);
 
   const devices = pagination.data.devices.edges.map(edge => edge.node);
   const agentVersionOptions = deviceAgentVersions(
@@ -245,6 +254,7 @@ export function DevicesPage({ queryRef }: DevicesPageProps) {
   const hasListFilter = ownerQuery != null
     || hasPostureWarning != null
     || states.length > 0
+    || sources.length > 0
     || platforms.length > 0
     || agentVersions.length > 0;
   const connectionId = pagination.data.devices.__id;
@@ -287,6 +297,7 @@ export function DevicesPage({ queryRef }: DevicesPageProps) {
           query: ownerQuery,
           hasPostureWarning,
           states: optionalList(states),
+          sources: optionalList(sources),
           platforms: optionalList(platforms),
           agentVersions: optionalList(agentVersions),
           order,
@@ -462,6 +473,33 @@ export function DevicesPage({ queryRef }: DevicesPageProps) {
                   <SelectItem value="PENDING">{t("devices.filters.pending")}</SelectItem>
                   <SelectItem value="ACTIVE">{t("devices.filters.active")}</SelectItem>
                   <SelectItem value="REVOKED">{t("devices.filters.revoked")}</SelectItem>
+                </SelectPopup>
+              </Select>
+            </div>
+            <div className={filter()}>
+              <Select
+                multiple
+                value={sources}
+                onValueChange={setSources}
+              >
+                <SelectTrigger
+                  size={2}
+                  placeholder={t("devices.filters.allSources")}
+                  aria-label={t("devices.fields.source")}
+                >
+                  {(value: readonly string[]) => selectedFilterLabel(
+                    value,
+                    t("devices.filters.allSources"),
+                    source => sourceLabel(t, source) ?? source,
+                    t("devices.filters.selectedCount", { count: value.length }),
+                  )}
+                </SelectTrigger>
+                <SelectPopup align="end">
+                  {deviceSources.map(source => (
+                    <SelectItem key={source} value={source}>
+                      {sourceLabel(t, source)}
+                    </SelectItem>
+                  ))}
                 </SelectPopup>
               </Select>
             </div>

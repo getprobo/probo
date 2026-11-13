@@ -34,6 +34,7 @@ import (
 	"go.probo.inc/probo/pkg/connectorprotocol"
 	"go.probo.inc/probo/pkg/connectorprotocol/provider"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/itam/mdm"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlx"
 )
@@ -269,6 +270,20 @@ func apiKeyConnectorSettings(input types.CreateAPIKeyConnectorInput) (json.RawMe
 		}
 
 		return json.Marshal(&coredata.TwingateConnectorSettings{Network: network})
+	case coredata.ConnectorProviderIru:
+		if input.IruAPIURL == nil || *input.IruAPIURL == "" {
+			return nil, fmt.Errorf("cannot create iru connector: iruApiUrl is required")
+		}
+
+		// The host is where the API token is sent, so only an Iru API host
+		// is accepted, and it is stored in the canonical form the driver
+		// builds its URL from.
+		apiHost, err := mdm.IruAPIHost(*input.IruAPIURL)
+		if err != nil {
+			return nil, fmt.Errorf("cannot create iru connector: iruApiUrl must be an Iru API URL such as acme.api.kandji.io")
+		}
+
+		return json.Marshal(&coredata.IruConnectorSettings{APIHost: apiHost})
 	case coredata.ConnectorProviderUniFi:
 		if input.UnifiConsoleID == nil || *input.UnifiConsoleID == "" {
 			return nil, fmt.Errorf("cannot create unifi connector: unifiConsoleId is required")

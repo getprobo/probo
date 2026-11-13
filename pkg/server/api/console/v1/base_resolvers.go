@@ -927,9 +927,10 @@ func (r *queryResolver) ConnectorProviders(ctx context.Context) ([]*types.Connec
 
 	for _, reg := range registrations {
 		// A workload identity provider builds its driver from a cloud session
-		// rather than an HTTP client, so it registers NewCloudDriver and leaves
+		// rather than an HTTP client, and a device-sync provider feeds the
+		// device list rather than access reviews, so either may leave
 		// NewDriver nil.
-		if reg == nil || (reg.NewDriver == nil && !reg.SupportsWorkloadIdentity()) {
+		if reg == nil || !reg.HasDriver() {
 			continue
 		}
 

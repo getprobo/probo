@@ -28,6 +28,22 @@ enum DevicePlatform
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.DevicePlatformFreeBSD")
     WINDOWS
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.DevicePlatformWindows")
+    IOS @goEnum(value: "go.probo.inc/probo/pkg/coredata.DevicePlatformIOS")
+    IPADOS
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.DevicePlatformIPadOS")
+    TVOS @goEnum(value: "go.probo.inc/probo/pkg/coredata.DevicePlatformTVOS")
+    ANDROID
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.DevicePlatformAndroid")
+}
+
+"""
+What created a device and keeps it current: the Probo agent enrolling
+(AGENT), or a device sync from an MDM connector (MDM).
+"""
+enum DeviceSource
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.DeviceSource") {
+    AGENT @goEnum(value: "go.probo.inc/probo/pkg/coredata.DeviceSourceAgent")
+    MDM @goEnum(value: "go.probo.inc/probo/pkg/coredata.DeviceSourceMDM")
 }
 
 enum DeviceState
@@ -88,6 +104,7 @@ input DeviceOrder
 input DeviceFilter {
     query: String
     states: [DeviceState!]
+    sources: [DeviceSource!]
     platforms: [DevicePlatform!]
     agentVersions: [String!]
     hasPostureWarning: Boolean
@@ -96,12 +113,23 @@ input DeviceFilter {
 type Device implements Node {
     id: ID!
     state: DeviceState!
+    source: DeviceSource!
     hostname: String
     serialNumber: String
     hardwareUuid: String
     platform: DevicePlatform
     osVersion: String
     agentVersion: String
+    model: String
+    """
+    The MDM that lists this device, when a device sync from an MDM connector
+    created it or matched it by serial number.
+    """
+    mdmProvider: ConnectorProvider
+    "The MDM's own identifier for this device."
+    mdmDeviceId: String
+    "When the device last checked in with its MDM."
+    mdmLastCheckInAt: Datetime
     enrolledAt: Datetime
     lastSeenAt: Datetime
     revokedAt: Datetime

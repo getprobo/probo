@@ -39,10 +39,15 @@ query DeviceView($id: ID!) {
     ... on Device {
       id
       state
+      source
       hostname
       platform
       osVersion
       agentVersion
+      model
+      mdmProvider
+      mdmDeviceId
+      mdmLastCheckInAt
       serialNumber
       hardwareUuid
       enrolledAt
@@ -76,10 +81,15 @@ type viewResponse struct {
 		Typename     string  `json:"__typename"`
 		ID           string  `json:"id"`
 		State        string  `json:"state"`
+		Source       string  `json:"source"`
 		Hostname     *string `json:"hostname"`
 		Platform     *string `json:"platform"`
 		OsVersion    *string `json:"osVersion"`
 		AgentVersion *string `json:"agentVersion"`
+		Model        *string `json:"model"`
+		MdmProvider  *string `json:"mdmProvider"`
+		MdmDeviceID  *string `json:"mdmDeviceId"`
+		MdmLastCheck *string `json:"mdmLastCheckInAt"`
 		SerialNumber *string `json:"serialNumber"`
 		HardwareUUID *string `json:"hardwareUuid"`
 		EnrolledAt   *string `json:"enrolledAt"`
@@ -164,12 +174,23 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("ID:"), d.ID)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("State:"), d.State)
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Source:"), d.Source)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Hostname:"), ref.UnrefOrZero(d.Hostname))
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Platform:"), ref.UnrefOrZero(d.Platform))
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("OS Version:"), ref.UnrefOrZero(d.OsVersion))
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Agent Version:"), ref.UnrefOrZero(d.AgentVersion))
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Serial Number:"), ref.UnrefOrZero(d.SerialNumber))
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Hardware UUID:"), ref.UnrefOrZero(d.HardwareUUID))
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Model:"), ref.UnrefOrZero(d.Model))
+
+			if d.MdmProvider != nil {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("MDM:"), *d.MdmProvider)
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("MDM Device ID:"), ref.UnrefOrZero(d.MdmDeviceID))
+
+				if d.MdmLastCheck != nil {
+					_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("MDM Last Check-in:"), cmdutil.FormatTime(*d.MdmLastCheck))
+				}
+			}
 
 			if d.Owner != nil {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Owner:"), d.Owner.ID)

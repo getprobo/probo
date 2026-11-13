@@ -59,7 +59,7 @@ func catalogEntries(registry *provider.Registry) []*types.ConnectorProviderCatal
 	entries := make([]*types.ConnectorProviderCatalogEntry, 0, len(registrations))
 
 	for _, reg := range registrations {
-		if reg == nil || (reg.NewDriver == nil && !reg.SupportsWorkloadIdentity()) {
+		if reg == nil || !reg.HasDriver() {
 			continue
 		}
 
