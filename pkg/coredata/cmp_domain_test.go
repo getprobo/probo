@@ -434,6 +434,7 @@ func TestCookieBanner_SourcePromotionWindow(t *testing.T) {
 		if err := banner.SetSourcePromotionRequested(ctx, tx, later); err != nil {
 			return err
 		}
+
 		if err := banner.SetSourcePromotionRequested(ctx, tx, earlier); err != nil {
 			return err
 		}

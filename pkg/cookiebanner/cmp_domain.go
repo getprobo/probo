@@ -255,6 +255,7 @@ func (s *cookieDomainSet) covers(domain string) bool {
 	}
 
 	_, ok := s.domains[strings.ToLower(domain)]
+
 	return ok
 }
 

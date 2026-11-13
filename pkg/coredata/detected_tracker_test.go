@@ -517,6 +517,7 @@ func TestDetectedTrackerFilter_UpdatedSince(t *testing.T) {
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		stale := newDetectedTracker(fx, pattern.ID, "stale", coredata.DetectedTrackerObserverSDK)
 		stale.UpdatedAt = older
+
 		stale.CreatedAt = older
 		if _, err := stale.InsertIfNotExists(ctx, tx, fx.scope); err != nil {
 			return err
