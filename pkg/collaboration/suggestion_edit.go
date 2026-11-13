@@ -37,10 +37,13 @@ import (
 // A newline between blocks points at that block marker. Engine is the index
 // Splice and Mark use, which counts each block as one unit. Marked means the
 // unit already belongs to a suggestion, so another redline must not cover it.
+// Joinable means deleting the newline may merge the block into the previous
+// one; a boundary into, out of, or between table cells is never joinable.
 type suggestionUnit struct {
-	engine uint32
-	block  bool
-	marked bool
+	engine   uint32
+	block    bool
+	marked   bool
+	joinable bool
 }
 
 // PaintSuggestion marks quote on the live document and commits that change.
@@ -142,6 +145,10 @@ func ApplySuggestionEdit(
 	}
 
 	textRanges, blocks := suggestionRanges(units, deleteStart, deleteEnd)
+	if len(textRanges) == 0 && len(blocks) == 0 && inserted == "" {
+		return ErrSuggestionUnchanged
+	}
+
 	for _, textRange := range textRanges {
 		if err := text.Mark(
 			textRange[0],
@@ -203,22 +210,45 @@ func suggestionMark(suggestionID string) (automerge.Scalar, error) {
 func suggestionUnits(spans []automerge.Span) (string, []suggestionUnit, uint32) {
 	var visible strings.Builder
 
+	type openCell struct {
+		index int
+		path  []string
+	}
+
 	units := make([]suggestionUnit, 0)
 	engine := uint32(0)
 	wrote := false
+	cells := make([]openCell, 0)
+	previousOwner := -1
 
-	for _, span := range spans {
+	for index, span := range spans {
 		if span.Type == automerge.SpanTypeBlock {
+			parents := blockParents(span)
+			for len(cells) > 0 && !hasPathPrefix(parents, cells[len(cells)-1].path) {
+				cells = cells[:len(cells)-1]
+			}
+
+			if isTableCell(span) {
+				cells = append(cells, openCell{index: index, path: blockPath(span)})
+			}
+
+			owner := -1
+			if len(cells) > 0 {
+				owner = cells[len(cells)-1].index
+			}
+
 			if wrote {
 				splitID, _ := suggestionSplit(span)
 				visible.WriteByte('\n')
 				units = append(units, suggestionUnit{
-					engine: engine,
-					block:  true,
-					marked: splitID != "",
+					engine:   engine,
+					block:    true,
+					marked:   splitID != "",
+					joinable: !isTableStructure(span) && owner == previousOwner,
 				})
 			}
 
+			previousOwner = owner
 			engine++
 
 			continue
@@ -319,7 +349,9 @@ func suggestionRanges(units []suggestionUnit, from uint32, to uint32) ([][2]uint
 				open = false
 			}
 
-			blocks = append(blocks, unit.engine)
+			if unit.joinable {
+				blocks = append(blocks, unit.engine)
+			}
 
 			continue
 		}
