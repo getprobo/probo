@@ -6,6 +6,8 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ### Added
 
+- Cookie Banner `Get` returns `dailyPageLoads`, one entry per UTC day
+  in the requested window, oldest first
 - Cookie Banner `Get` and Tracker Pattern `Get` take a `Days` field:
   how many UTC days to count, today included. The default is 7 and
   the maximum is 90
@@ -13,9 +15,9 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ### Changed
 
-- **Breaking**: Cookie Banner `Get` returns `pageLoads` instead of
+- **Breaking**: Cookie Banner `Get` returns `dailyPageLoads` instead of
   `latestSample`. Saved workflows that read `latestSample` must read
-  `pageLoads`
+  `dailyPageLoads`
 - **Breaking**: Tracker Pattern `Get` returns `hits` instead of
   `sampleHits`. Saved workflows that read `sampleHits` must read
   `hits`

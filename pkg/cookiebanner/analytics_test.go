@@ -654,6 +654,9 @@ func TestGetPageLoads_RejectsDaysOutOfRange(t *testing.T) {
 		_, err := svc.GetPageLoads(ctx, fx.scope, []gid.GID{fx.banner.ID}, days)
 		assert.ErrorAs(t, err, &validationErrs)
 
+		_, err = svc.GetDailyPageLoads(ctx, fx.scope, []gid.GID{fx.banner.ID}, days)
+		assert.ErrorAs(t, err, &validationErrs)
+
 		_, err = svc.GetHitSplits(ctx, fx.scope, patternID, days)
 		assert.ErrorAs(t, err, &validationErrs)
 	}

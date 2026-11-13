@@ -26,6 +26,7 @@ import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 import { CookieBannerConsentRecordsPageSkeleton } from "./configuration/consent-records/CookieBannerConsentRecordsPageSkeleton";
 import { CookieBannerConfigLayoutSkeleton } from "./configuration/CookieBannerConfigLayoutSkeleton";
 import { CookieBannerInstallPageSkeleton } from "./configuration/install/CookieBannerInstallPageSkeleton";
+import { CookieBannerOverviewPageSkeleton } from "./configuration/overview/CookieBannerOverviewPageSkeleton";
 import { CookieBannerResourcesPageSkeleton } from "./configuration/resources/CookieBannerResourcesPageSkeleton";
 import { CookieBannerScansPageSkeleton } from "./configuration/scans/CookieBannerScansPageSkeleton";
 import { CookieBannerSettingsPageSkeleton } from "./configuration/settings/CookieBannerSettingsPageSkeleton";
@@ -50,6 +51,11 @@ export const cookieBannerRoutes = [
     Fallback: CookieBannerConfigLayoutSkeleton,
     Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/CookieBannerConfigLayoutLoader")),
     children: [
+      {
+        index: true,
+        Fallback: CookieBannerOverviewPageSkeleton,
+        Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/overview/CookieBannerOverviewPageLoader")),
+      },
       {
         path: "settings",
         Fallback: CookieBannerSettingsPageSkeleton,

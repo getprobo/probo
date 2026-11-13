@@ -28,6 +28,8 @@
     "@probo/tasks": "1.0.0",
     "@probo/ui": "1.0.0",
     "@tanstack/react-query": "^5.104.3",
+    "@visx/event": "^4.0.0",
+    "@visx/scale": "^4.0.0",
     "clsx": "^2.1.1",
     "i18next": "^26.4.7",
     "papaparse": "^5.7.0",

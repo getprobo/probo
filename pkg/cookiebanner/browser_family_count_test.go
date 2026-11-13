@@ -22,6 +22,7 @@ package cookiebanner
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"go.probo.inc/probo/pkg/coredata"
@@ -50,6 +51,52 @@ func TestPageLoadsByFamily_SumsBuckets(t *testing.T) {
 		{Family: coredata.BrowserFamilyChrome, Count: 5},
 		{Family: coredata.BrowserFamilyFirefox, Count: 2},
 	}, loads)
+}
+
+func TestDailyPageLoadsSeries_FillsTheWindowOldestFirst(t *testing.T) {
+	t.Parallel()
+
+	since := time.Date(2026, time.March, 8, 0, 0, 0, 0, time.UTC)
+	outside := since.AddDate(0, 0, -1)
+	firstDay := time.Date(2026, time.March, 8, 23, 30, 0, 0, time.UTC)
+	lastDay := since.AddDate(0, 0, 2)
+
+	series := dailyPageLoadsSeries(
+		[]coredata.DailyPageLoad{
+			{Day: outside, BrowserFamily: coredata.BrowserFamilySafari, Count: 9},
+			{Day: firstDay, BrowserFamily: coredata.BrowserFamilyChrome, Count: 2},
+			{Day: firstDay, BrowserFamily: coredata.BrowserFamilyFirefox, Count: 1},
+			{
+				Day:           lastDay,
+				BrowserFamily: coredata.BrowserFamilyChrome,
+				Presentation:  coredata.CookieBannerPresentationOptIn,
+				Count:         4,
+			},
+			{
+				Day:           lastDay,
+				BrowserFamily: coredata.BrowserFamilyChrome,
+				Presentation:  coredata.CookieBannerPresentationOptOut,
+				Count:         1,
+			},
+		},
+		since,
+		3,
+	)
+
+	assert.Equal(t, []DailyPageLoads{
+		{
+			Day: since,
+			PageLoads: []BrowserFamilyCount{
+				{Family: coredata.BrowserFamilyChrome, Count: 2},
+				{Family: coredata.BrowserFamilyFirefox, Count: 1},
+			},
+		},
+		{Day: since.AddDate(0, 0, 1), PageLoads: []BrowserFamilyCount{}},
+		{
+			Day:       lastDay,
+			PageLoads: []BrowserFamilyCount{{Family: coredata.BrowserFamilyChrome, Count: 5}},
+		},
+	}, series)
 }
 
 func TestSplitPatternHits_SplitsGranted(t *testing.T) {

@@ -35,6 +35,7 @@ import (
 // omitted them.
 type DailyPageLoad struct {
 	CookieBannerID gid.GID                  `db:"cookie_banner_id"`
+	Day            time.Time                `db:"day"`
 	BrowserFamily  BrowserFamily            `db:"browser_family"`
 	Presentation   CookieBannerPresentation `db:"presentation"`
 	ConsentAction  CookieConsentAction      `db:"consent_action"`
@@ -117,7 +118,7 @@ SET
 	return nil
 }
 
-// LoadDailyPageLoadsByCookieBannerIDs sums page loads per banner and
+// LoadDailyPageLoadsByCookieBannerIDs sums page loads per banner, day and
 // dimension over the days from since, a UTC midnight, onward.
 func LoadDailyPageLoadsByCookieBannerIDs(
 	ctx context.Context,
@@ -133,6 +134,7 @@ func LoadDailyPageLoadsByCookieBannerIDs(
 	q := `
 SELECT
 	cookie_banner_id,
+	day,
 	browser_family,
 	presentation,
 	consent_action,
@@ -144,6 +146,7 @@ WHERE
 	AND day >= @since::date
 GROUP BY
 	cookie_banner_id,
+	day,
 	browser_family,
 	presentation,
 	consent_action

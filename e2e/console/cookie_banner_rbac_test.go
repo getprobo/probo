@@ -108,7 +108,7 @@ func TestCookieBanner_RBAC(t *testing.T) {
 			query($bannerId: ID!, $patternId: ID!) {
 				banner: node(id: $bannerId) {
 					... on CookieBanner {
-						pageLoads { family count }
+						dailyPageLoads { day pageLoads { family count } }
 					}
 				}
 				pattern: node(id: $patternId) {
