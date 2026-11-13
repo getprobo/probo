@@ -157,13 +157,13 @@ func (s *Service) requestCMPSourcePromotion(
 	ctx context.Context,
 	tx pg.Tx,
 	banner *coredata.CookieBanner,
+	now time.Time,
 ) error {
 	if banner.Capabilities.Corsless || banner.CMPDomainID == nil {
 		return nil
 	}
 
-	domain := &coredata.CMPDomain{ID: *banner.CMPDomainID}
-	if err := domain.SetSourcePromotionRequested(ctx, tx); err != nil {
+	if err := banner.SetSourcePromotionRequested(ctx, tx, now); err != nil {
 		return fmt.Errorf("cannot request source promotion: %w", err)
 	}
 
@@ -224,14 +224,83 @@ type siblingSourceCandidate struct {
 	source    coredata.CookieSource
 }
 
+// collectPages reads every page. LoadAll stops at 10_000 rows, and one
+// banner's cookie detections can pass that. Promotion has to see all of
+// them to compare siblings.
+func collectPages[T page.Paginable[U], U page.OrderField](
+	ctx context.Context,
+	orderBy page.OrderBy[U],
+	fetch page.Loader[T, U, []T],
+) ([]T, error) {
+	var all []T
+
+	err := page.WalkAll(
+		ctx,
+		orderBy,
+		fetch,
+		func(rows []T) error {
+			all = append(all, rows...)
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return all, nil
+}
+
 func (s *Service) promoteSiblingCookieSources(
 	ctx context.Context,
 	tx pg.Tx,
-	domain *coredata.CMPDomain,
+	banner *coredata.CookieBanner,
 ) error {
-	scope := coredata.NewScopeFromObjectID(domain.ID)
+	if banner.Capabilities.Corsless || banner.CMPDomainID == nil || banner.SourcePromotionSince == nil {
+		return nil
+	}
 
-	banners, err := page.LoadAll(
+	scope := coredata.NewScopeFromObjectID(banner.ID)
+	cookie := coredata.TrackerTypeCookie
+	recentFilter := coredata.NewDetectedTrackerFilter([]coredata.TrackerType{coredata.TrackerTypeCookie}).
+		WithUpdatedSince(banner.SourcePromotionSince)
+
+	recent, err := collectPages(
+		ctx,
+		page.OrderBy[coredata.DetectedTrackerOrderField]{
+			Field:     coredata.DetectedTrackerOrderFieldCreatedAt,
+			Direction: page.OrderDirectionAsc,
+		},
+		func(ctx context.Context, cursor *page.Cursor[coredata.DetectedTrackerOrderField]) ([]*coredata.DetectedTracker, error) {
+			var batch coredata.DetectedTrackers
+			if err := batch.LoadByCookieBannerID(ctx, tx, scope, banner.ID, recentFilter, cursor); err != nil {
+				return nil, fmt.Errorf("cannot load detected trackers: %w", err)
+			}
+
+			return batch, nil
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	candidates := map[string]struct{}{}
+	for _, detection := range recent {
+		if !sourcePromotionRelevant(detectedTrackerInfo{
+			TrackerType: detection.TrackerType,
+			Source:      detection.Source,
+			HostOnly:    detection.HostOnly,
+		}) {
+			continue
+		}
+
+		candidates[detection.Identifier] = struct{}{}
+	}
+
+	if len(candidates) == 0 {
+		return nil
+	}
+
+	banners, err := collectPages(
 		ctx,
 		page.OrderBy[coredata.CookieBannerOrderField]{
 			Field:     coredata.CookieBannerOrderFieldCreatedAt,
@@ -239,7 +308,7 @@ func (s *Service) promoteSiblingCookieSources(
 		},
 		func(ctx context.Context, cursor *page.Cursor[coredata.CookieBannerOrderField]) ([]*coredata.CookieBanner, error) {
 			var batch coredata.CookieBanners
-			if err := batch.LoadByCMPDomainID(ctx, tx, scope, domain.ID, cursor); err != nil {
+			if err := batch.LoadByCMPDomainID(ctx, tx, scope, *banner.CMPDomainID, cursor); err != nil {
 				return nil, fmt.Errorf("cannot load cmp domain banners: %w", err)
 			}
 
@@ -250,11 +319,22 @@ func (s *Service) promoteSiblingCookieSources(
 		return err
 	}
 
+	names := make([]string, 0, len(candidates))
+	for name := range candidates {
+		names = append(names, name)
+	}
+
 	type bannerTrackers struct {
 		banner     *coredata.CookieBanner
 		patterns   []*coredata.TrackerPattern
 		detections []*coredata.DetectedTracker
 	}
+
+	patternsForNames := coredata.NewTrackerPatternFilter(nil, nil, new(false)).
+		WithTrackerType(&cookie).
+		WithIdentifiers(names)
+	detectionsForNames := coredata.NewDetectedTrackerFilter([]coredata.TrackerType{coredata.TrackerTypeCookie}).
+		WithIdentifiers(names)
 
 	loaded := make([]bannerTrackers, 0, len(banners))
 	for _, banner := range banners {
@@ -262,7 +342,7 @@ func (s *Service) promoteSiblingCookieSources(
 			continue
 		}
 
-		patterns, err := page.LoadAll(
+		patterns, err := collectPages(
 			ctx,
 			page.OrderBy[coredata.TrackerPatternOrderField]{
 				Field:     coredata.TrackerPatternOrderFieldCreatedAt,
@@ -270,7 +350,7 @@ func (s *Service) promoteSiblingCookieSources(
 			},
 			func(ctx context.Context, cursor *page.Cursor[coredata.TrackerPatternOrderField]) ([]*coredata.TrackerPattern, error) {
 				var batch coredata.TrackerPatterns
-				if err := batch.LoadByCookieBannerID(ctx, tx, scope, banner.ID, cursor, nil); err != nil {
+				if err := batch.LoadByCookieBannerID(ctx, tx, scope, banner.ID, cursor, patternsForNames); err != nil {
 					return nil, fmt.Errorf("cannot load tracker patterns: %w", err)
 				}
 
@@ -281,7 +361,7 @@ func (s *Service) promoteSiblingCookieSources(
 			return err
 		}
 
-		detections, err := page.LoadAll(
+		detections, err := collectPages(
 			ctx,
 			page.OrderBy[coredata.DetectedTrackerOrderField]{
 				Field:     coredata.DetectedTrackerOrderFieldCreatedAt,
@@ -289,9 +369,7 @@ func (s *Service) promoteSiblingCookieSources(
 			},
 			func(ctx context.Context, cursor *page.Cursor[coredata.DetectedTrackerOrderField]) ([]*coredata.DetectedTracker, error) {
 				var batch coredata.DetectedTrackers
-
-				filter := coredata.NewDetectedTrackerFilter([]coredata.TrackerType{coredata.TrackerTypeCookie})
-				if err := batch.LoadByCookieBannerID(ctx, tx, scope, banner.ID, filter, cursor); err != nil {
+				if err := batch.LoadByCookieBannerID(ctx, tx, scope, banner.ID, detectionsForNames, cursor); err != nil {
 					return nil, fmt.Errorf("cannot load detected trackers: %w", err)
 				}
 

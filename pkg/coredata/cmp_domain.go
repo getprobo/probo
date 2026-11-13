@@ -40,14 +40,11 @@ type (
 	// eTLD+1. The row stays when its last banner is deleted so the
 	// decisions recorded on its surfaces survive.
 	CMPDomain struct {
-		ID                         gid.GID    `db:"id"`
-		OrganizationID             gid.GID    `db:"organization_id"`
-		Domain                     string     `db:"domain"`
-		SourcePromotionRequestedAt *time.Time `db:"source_promotion_requested_at"`
-		SourcePromotionAttempts    int        `db:"source_promotion_attempts"`
-		SourcePromotionAttemptedAt *time.Time `db:"source_promotion_attempted_at"`
-		CreatedAt                  time.Time  `db:"created_at"`
-		UpdatedAt                  time.Time  `db:"updated_at"`
+		ID             gid.GID   `db:"id"`
+		OrganizationID gid.GID   `db:"organization_id"`
+		Domain         string    `db:"domain"`
+		CreatedAt      time.Time `db:"created_at"`
+		UpdatedAt      time.Time `db:"updated_at"`
 	}
 
 	CMPDomains []*CMPDomain
@@ -112,9 +109,6 @@ SELECT
 	id,
 	organization_id,
 	domain,
-	source_promotion_requested_at,
-	source_promotion_attempts,
-	source_promotion_attempted_at,
 	created_at,
 	updated_at
 FROM cmp_domains
@@ -165,9 +159,6 @@ SELECT
 	id,
 	organization_id,
 	domain,
-	source_promotion_requested_at,
-	source_promotion_attempts,
-	source_promotion_attempted_at,
 	created_at,
 	updated_at
 FROM cmp_domains
@@ -211,9 +202,6 @@ INSERT INTO cmp_domains (
 	tenant_id,
 	organization_id,
 	domain,
-	source_promotion_requested_at,
-	source_promotion_attempts,
-	source_promotion_attempted_at,
 	created_at,
 	updated_at
 ) VALUES (
@@ -221,24 +209,18 @@ INSERT INTO cmp_domains (
 	@tenant_id,
 	@organization_id,
 	@domain,
-	@source_promotion_requested_at,
-	@source_promotion_attempts,
-	@source_promotion_attempted_at,
 	@created_at,
 	@updated_at
 )
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":                            d.ID,
-		"tenant_id":                     scope.GetTenantID(),
-		"organization_id":               d.OrganizationID,
-		"domain":                        d.Domain,
-		"source_promotion_requested_at": d.SourcePromotionRequestedAt,
-		"source_promotion_attempts":     d.SourcePromotionAttempts,
-		"source_promotion_attempted_at": d.SourcePromotionAttemptedAt,
-		"created_at":                    d.CreatedAt,
-		"updated_at":                    d.UpdatedAt,
+		"id":              d.ID,
+		"tenant_id":       scope.GetTenantID(),
+		"organization_id": d.OrganizationID,
+		"domain":          d.Domain,
+		"created_at":      d.CreatedAt,
+		"updated_at":      d.UpdatedAt,
 	}
 
 	_, err := tx.Exec(ctx, q, args)
@@ -281,9 +263,6 @@ INSERT INTO cmp_domains (
 	tenant_id,
 	organization_id,
 	domain,
-	source_promotion_requested_at,
-	source_promotion_attempts,
-	source_promotion_attempted_at,
 	created_at,
 	updated_at
 ) VALUES (
@@ -291,9 +270,6 @@ INSERT INTO cmp_domains (
 	@tenant_id,
 	@organization_id,
 	@domain,
-	@source_promotion_requested_at,
-	@source_promotion_attempts,
-	@source_promotion_attempted_at,
 	@created_at,
 	@updated_at
 )
@@ -303,23 +279,17 @@ RETURNING
 	id,
 	organization_id,
 	domain,
-	source_promotion_requested_at,
-	source_promotion_attempts,
-	source_promotion_attempted_at,
 	created_at,
 	updated_at
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":                            d.ID,
-		"tenant_id":                     tenantID,
-		"organization_id":               organizationID,
-		"domain":                        domain,
-		"source_promotion_requested_at": nil,
-		"source_promotion_attempts":     0,
-		"source_promotion_attempted_at": nil,
-		"created_at":                    now,
-		"updated_at":                    now,
+		"id":              d.ID,
+		"tenant_id":       tenantID,
+		"organization_id": organizationID,
+		"domain":          domain,
+		"created_at":      now,
+		"updated_at":      now,
 	}
 
 	rows, err := tx.Query(ctx, q, args)
@@ -333,42 +303,6 @@ RETURNING
 	}
 
 	*d = upserted
-
-	return nil
-}
-
-func (d *CMPDomain) Update(
-	ctx context.Context,
-	tx pg.Tx,
-	scope Scoper,
-) error {
-	q := `
-UPDATE cmp_domains
-SET
-	source_promotion_requested_at = @source_promotion_requested_at,
-	updated_at = @updated_at
-WHERE
-	%s
-	AND id = @id
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"id":                            d.ID,
-		"source_promotion_requested_at": d.SourcePromotionRequestedAt,
-		"updated_at":                    d.UpdatedAt,
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	result, err := tx.Exec(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot update cmp domain: %w", err)
-	}
-
-	if result.RowsAffected() == 0 {
-		return ErrResourceNotFound
-	}
 
 	return nil
 }
@@ -394,229 +328,6 @@ WHERE
 	if err != nil {
 		return fmt.Errorf("cannot delete cmp domain: %w", err)
 	}
-
-	return nil
-}
-
-// SetSourcePromotionRequested asks the CMP domain worker to compare
-// cookie sources across the domain's banners. A request that is already
-// waiting keeps its original time and its attempt budget, so a busy
-// domain is not pushed back. A new request, including one after the
-// budget was exhausted, starts the budget over.
-func (d *CMPDomain) SetSourcePromotionRequested(
-	ctx context.Context,
-	tx pg.Tx,
-) error {
-	q := `
-UPDATE cmp_domains
-SET
-	source_promotion_attempts = CASE
-		WHEN source_promotion_requested_at IS NULL THEN 0
-		ELSE source_promotion_attempts
-	END,
-	source_promotion_attempted_at = CASE
-		WHEN source_promotion_requested_at IS NULL THEN NULL
-		ELSE source_promotion_attempted_at
-	END,
-	source_promotion_requested_at = COALESCE(source_promotion_requested_at, NOW()),
-	updated_at = NOW()
-WHERE id = @id
-`
-
-	args := pgx.StrictNamedArgs{"id": d.ID}
-
-	result, err := tx.Exec(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot request cmp domain source promotion: %w", err)
-	}
-
-	if result.RowsAffected() == 0 {
-		return ErrResourceNotFound
-	}
-
-	return nil
-}
-
-// ClearSourcePromotionRequested removes the domain from the queue and
-// counts the attempt. The attempt is recorded before the work runs, so a
-// crash between claim and completion still spends budget.
-func (d *CMPDomain) ClearSourcePromotionRequested(
-	ctx context.Context,
-	tx pg.Tx,
-) error {
-	q := `
-UPDATE cmp_domains
-SET
-	source_promotion_requested_at = NULL,
-	source_promotion_attempts = source_promotion_attempts + 1,
-	source_promotion_attempted_at = NOW(),
-	updated_at = NOW()
-WHERE id = @id
-RETURNING source_promotion_attempts, source_promotion_attempted_at
-`
-
-	args := pgx.StrictNamedArgs{"id": d.ID}
-
-	var (
-		attempts    int
-		attemptedAt *time.Time
-	)
-
-	err := tx.QueryRow(ctx, q, args).Scan(&attempts, &attemptedAt)
-	if err != nil {
-		return fmt.Errorf("cannot clear cmp domain source promotion: %w", err)
-	}
-
-	d.SourcePromotionRequestedAt = nil
-	d.SourcePromotionAttempts = attempts
-	d.SourcePromotionAttemptedAt = attemptedAt
-
-	return nil
-}
-
-// RequeueSourcePromotionRequested puts a failed attempt back on the queue
-// without resetting the budget. The update matches the claim that failed,
-// so an older task cannot queue the domain after a newer claim has taken
-// it. A superseded claim is a no-op.
-func (d *CMPDomain) RequeueSourcePromotionRequested(
-	ctx context.Context,
-	tx pg.Tx,
-) error {
-	q := `
-UPDATE cmp_domains
-SET
-	source_promotion_requested_at = COALESCE(source_promotion_requested_at, NOW()),
-	updated_at = NOW()
-WHERE
-	id = @id
-	AND source_promotion_attempts = @source_promotion_attempts
-	AND source_promotion_attempted_at IS NOT DISTINCT FROM @source_promotion_attempted_at
-`
-
-	args := pgx.StrictNamedArgs{
-		"id":                            d.ID,
-		"source_promotion_attempts":     d.SourcePromotionAttempts,
-		"source_promotion_attempted_at": d.SourcePromotionAttemptedAt,
-	}
-
-	_, err := tx.Exec(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot requeue cmp domain source promotion: %w", err)
-	}
-
-	return nil
-}
-
-// ResetSourcePromotionAttempts clears the budget after a promotion finishes.
-// It matches the claim that finished, so a late success cannot wipe the
-// budget of a newer claim. A superseded claim is a no-op.
-func (d *CMPDomain) ResetSourcePromotionAttempts(
-	ctx context.Context,
-	tx pg.Tx,
-) error {
-	q := `
-UPDATE cmp_domains
-SET
-	source_promotion_attempts = 0,
-	source_promotion_attempted_at = NULL,
-	updated_at = NOW()
-WHERE
-	id = @id
-	AND source_promotion_attempts = @source_promotion_attempts
-	AND source_promotion_attempted_at IS NOT DISTINCT FROM @source_promotion_attempted_at
-`
-
-	args := pgx.StrictNamedArgs{
-		"id":                            d.ID,
-		"source_promotion_attempts":     d.SourcePromotionAttempts,
-		"source_promotion_attempted_at": d.SourcePromotionAttemptedAt,
-	}
-
-	result, err := tx.Exec(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot reset cmp domain source promotion attempts: %w", err)
-	}
-
-	if result.RowsAffected() == 0 {
-		return nil
-	}
-
-	d.SourcePromotionAttempts = 0
-	d.SourcePromotionAttemptedAt = nil
-
-	return nil
-}
-
-// ResetStaleSourcePromotions requeues a claim that was taken but never
-// finished and has been idle longer than staleAfter. A finished promotion
-// has a zero attempt count, and a claim at the cap stays clear.
-func ResetStaleSourcePromotions(
-	ctx context.Context,
-	conn pg.Querier,
-	staleAfter time.Duration,
-	maxAttempts int,
-) error {
-	q := `
-UPDATE cmp_domains
-SET
-	source_promotion_requested_at = NOW(),
-	updated_at = NOW()
-WHERE
-	source_promotion_requested_at IS NULL
-	AND source_promotion_attempts > 0
-	AND source_promotion_attempts < @max_attempts
-	AND source_promotion_attempted_at < @stale_before
-`
-
-	args := pgx.StrictNamedArgs{
-		"max_attempts": maxAttempts,
-		"stale_before": time.Now().Add(-staleAfter),
-	}
-
-	_, err := conn.Exec(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot reset stale cmp domain source promotions: %w", err)
-	}
-
-	return nil
-}
-
-func (d *CMPDomain) LoadNextForSourcePromotionForUpdateSkipLocked(
-	ctx context.Context,
-	tx pg.Tx,
-) error {
-	q := `
-SELECT
-	id,
-	organization_id,
-	domain,
-	source_promotion_requested_at,
-	source_promotion_attempts,
-	source_promotion_attempted_at,
-	created_at,
-	updated_at
-FROM cmp_domains
-WHERE source_promotion_requested_at IS NOT NULL
-ORDER BY source_promotion_requested_at ASC, id ASC
-FOR UPDATE SKIP LOCKED
-LIMIT 1
-`
-
-	rows, err := tx.Query(ctx, q)
-	if err != nil {
-		return fmt.Errorf("cannot query cmp domains for source promotion: %w", err)
-	}
-
-	domain, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CMPDomain])
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return ErrResourceNotFound
-		}
-
-		return fmt.Errorf("cannot collect cmp domain for source promotion: %w", err)
-	}
-
-	*d = domain
 
 	return nil
 }

@@ -298,3 +298,71 @@ func TestTrackerPatternFilter_ObservedBy(t *testing.T) {
 		assert.Equal(t, []string{"both", "scan_only", "sdk_only", "unseen"}, load(t, nil))
 	})
 }
+
+func TestTrackerPatternFilter_Identifiers(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedTrackerPatternFixture(t, ctx, client)
+
+	seedTrackerPattern(t, ctx, client, fx, "keep", coredata.TrackerPatternMatchTypeExact, coredata.CookieSourcePreExisting)
+	seedTrackerPattern(t, ctx, client, fx, "drop", coredata.TrackerPatternMatchTypeExact, coredata.CookieSourceScript)
+
+	cursor := page.NewCursor(
+		10,
+		nil,
+		page.Head,
+		page.OrderBy[coredata.TrackerPatternOrderField]{
+			Field:     coredata.TrackerPatternOrderFieldName,
+			Direction: page.OrderDirectionAsc,
+		},
+	)
+
+	load := func(t *testing.T, identifiers []string, set bool) []string {
+		t.Helper()
+
+		filter := coredata.NewTrackerPatternFilter(nil, nil, nil)
+		if set {
+			filter.WithIdentifiers(identifiers)
+		}
+
+		var patterns coredata.TrackerPatterns
+
+		require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+			return patterns.LoadByCookieBannerID(
+				ctx,
+				conn,
+				fx.scope,
+				fx.cookieBannerID,
+				cursor,
+				filter,
+			)
+		}))
+
+		names := make([]string, 0, len(patterns))
+		for _, pattern := range patterns {
+			names = append(names, pattern.Pattern)
+		}
+
+		return names
+	}
+
+	t.Run("one name", func(t *testing.T) {
+		t.Parallel()
+
+		assert.Equal(t, []string{"keep"}, load(t, []string{"keep"}, true))
+	})
+
+	t.Run("nil selection", func(t *testing.T) {
+		t.Parallel()
+
+		assert.Equal(t, []string{"drop", "keep"}, load(t, nil, false))
+	})
+
+	t.Run("empty selection", func(t *testing.T) {
+		t.Parallel()
+
+		assert.Empty(t, load(t, []string{}, true))
+	})
+}

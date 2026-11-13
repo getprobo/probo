@@ -177,10 +177,6 @@ func TestCMPDomain_UpsertIsUniquePerOrganization(t *testing.T) {
 	fx := seedCMPDomainFixture(t, ctx, client, "example.com")
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		if err := fx.domain.SetSourcePromotionRequested(ctx, tx); err != nil {
-			return err
-		}
-
 		again := coredata.CMPDomain{
 			ID: gid.New(fx.tenantID, coredata.CMPDomainEntityType),
 		}
@@ -196,13 +192,6 @@ func TestCMPDomain_UpsertIsUniquePerOrganization(t *testing.T) {
 		}
 
 		assert.Equal(t, fx.domain.ID, again.ID)
-
-		loaded := coredata.CMPDomain{}
-		if err := loaded.LoadByID(ctx, tx, fx.scope, fx.domain.ID); err != nil {
-			return err
-		}
-
-		assert.NotNil(t, loaded.SourcePromotionRequestedAt)
 
 		var matched coredata.CMPDomains
 		if err := matched.LoadByOrganizationID(
@@ -429,62 +418,109 @@ func TestCMPDomainSurface_EffectiveStateAndUpsert(t *testing.T) {
 	}))
 }
 
-func TestCMPDomain_SourcePromotionBudget(t *testing.T) {
+func TestCookieBanner_SourcePromotionWindow(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	client := test.PGClient(t)
+	fx := seedCMPDomainFixture(t, ctx, client, "window.example")
+	bannerID, _ := insertCMPBanner(t, ctx, client, fx, "https://shop.window.example", &fx.domain.ID, time.Time{})
+
+	earlier := time.Now().UTC().Add(-time.Hour).Truncate(time.Microsecond)
+	later := time.Now().UTC().Truncate(time.Microsecond)
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		banner := coredata.CookieBanner{ID: bannerID}
+		if err := banner.SetSourcePromotionRequested(ctx, tx, later); err != nil {
+			return err
+		}
+		if err := banner.SetSourcePromotionRequested(ctx, tx, earlier); err != nil {
+			return err
+		}
+
+		loaded := coredata.CookieBanner{}
+		if err := loaded.LoadByID(ctx, tx, fx.scope, bannerID); err != nil {
+			return err
+		}
+
+		require.NotNil(t, loaded.SourcePromotionRequestedAt)
+		assert.True(t, loaded.SourcePromotionRequestedAt.Equal(earlier))
+		assert.Equal(t, 0, loaded.SourcePromotionAttempts)
+
+		return nil
+	}))
+}
+
+func TestCookieBanner_SourcePromotionBudget(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
 	client := test.PGClient(t)
 	fx := seedCMPDomainFixture(t, ctx, client, "budget.example")
+	bannerID, _ := insertCMPBanner(t, ctx, client, fx, "https://shop.budget.example", &fx.domain.ID, time.Time{})
+	requestedAt := time.Now().UTC().Add(-time.Minute).Truncate(time.Microsecond)
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		if err := fx.domain.SetSourcePromotionRequested(ctx, tx); err != nil {
+		banner := coredata.CookieBanner{}
+		if err := banner.LoadByID(ctx, tx, fx.scope, bannerID); err != nil {
 			return err
 		}
 
-		if err := fx.domain.ClearSourcePromotionRequested(ctx, tx); err != nil {
+		if err := banner.SetSourcePromotionRequested(ctx, tx, requestedAt); err != nil {
 			return err
 		}
 
-		assert.Equal(t, 1, fx.domain.SourcePromotionAttempts)
-		assert.Nil(t, fx.domain.SourcePromotionRequestedAt)
-
-		if err := fx.domain.RequeueSourcePromotionRequested(ctx, tx); err != nil {
+		if err := banner.ClearSourcePromotionRequested(ctx, tx); err != nil {
 			return err
 		}
 
-		if err := fx.domain.SetSourcePromotionRequested(ctx, tx); err != nil {
+		assert.Equal(t, 1, banner.SourcePromotionAttempts)
+		assert.Nil(t, banner.SourcePromotionRequestedAt)
+		require.NotNil(t, banner.SourcePromotionSince)
+		assert.True(t, banner.SourcePromotionSince.Equal(requestedAt))
+
+		if err := banner.RequeueSourcePromotionRequested(ctx, tx); err != nil {
 			return err
 		}
 
-		waiting := coredata.CMPDomain{}
-		if err := waiting.LoadByID(ctx, tx, fx.scope, fx.domain.ID); err != nil {
+		if err := banner.SetSourcePromotionRequested(ctx, tx, time.Now().UTC()); err != nil {
+			return err
+		}
+
+		waiting := coredata.CookieBanner{}
+		if err := waiting.LoadByID(ctx, tx, fx.scope, bannerID); err != nil {
 			return err
 		}
 
 		assert.Equal(t, 1, waiting.SourcePromotionAttempts)
-		assert.NotNil(t, waiting.SourcePromotionRequestedAt)
+		require.NotNil(t, waiting.SourcePromotionRequestedAt)
+		assert.True(t, waiting.SourcePromotionRequestedAt.Equal(requestedAt))
+		require.NotNil(t, waiting.SourcePromotionSince)
+		assert.True(t, waiting.SourcePromotionSince.Equal(requestedAt))
 
-		if err := fx.domain.ClearSourcePromotionRequested(ctx, tx); err != nil {
+		if err := banner.ClearSourcePromotionRequested(ctx, tx); err != nil {
 			return err
 		}
 
-		if err := fx.domain.ResetSourcePromotionAttempts(ctx, tx); err != nil {
+		if err := banner.ResetSourcePromotionAttempts(ctx, tx); err != nil {
 			return err
 		}
 
-		finished := coredata.CMPDomain{}
-		if err := finished.LoadByID(ctx, tx, fx.scope, fx.domain.ID); err != nil {
+		finished := coredata.CookieBanner{}
+		if err := finished.LoadByID(ctx, tx, fx.scope, bannerID); err != nil {
 			return err
 		}
 
 		assert.Equal(t, 0, finished.SourcePromotionAttempts)
 		assert.Nil(t, finished.SourcePromotionAttemptedAt)
+		require.NotNil(t, finished.SourcePromotionSince)
+		assert.True(t, finished.SourcePromotionSince.Equal(requestedAt))
 
-		if err := fx.domain.SetSourcePromotionRequested(ctx, tx); err != nil {
+		if err := banner.SetSourcePromotionRequested(ctx, tx, requestedAt); err != nil {
 			return err
 		}
 
-		if err := fx.domain.ClearSourcePromotionRequested(ctx, tx); err != nil {
+		if err := banner.ClearSourcePromotionRequested(ctx, tx); err != nil {
 			return err
 		}
 
@@ -492,16 +528,19 @@ func TestCMPDomain_SourcePromotionBudget(t *testing.T) {
 			return err
 		}
 
-		retried := coredata.CMPDomain{}
-		if err := retried.LoadByID(ctx, tx, fx.scope, fx.domain.ID); err != nil {
+		retried := coredata.CookieBanner{}
+		if err := retried.LoadByID(ctx, tx, fx.scope, bannerID); err != nil {
 			return err
 		}
 
-		assert.NotNil(t, retried.SourcePromotionRequestedAt)
+		require.NotNil(t, retried.SourcePromotionRequestedAt)
+		assert.True(t, retried.SourcePromotionRequestedAt.Equal(requestedAt))
+		require.NotNil(t, retried.SourcePromotionSince)
+		assert.True(t, retried.SourcePromotionSince.Equal(requestedAt))
 		assert.Equal(t, 1, retried.SourcePromotionAttempts)
 
-		for fx.domain.SourcePromotionAttempts < 3 {
-			if err := fx.domain.ClearSourcePromotionRequested(ctx, tx); err != nil {
+		for banner.SourcePromotionAttempts < 3 {
+			if err := banner.ClearSourcePromotionRequested(ctx, tx); err != nil {
 				return err
 			}
 		}
@@ -510,20 +549,20 @@ func TestCMPDomain_SourcePromotionBudget(t *testing.T) {
 			return err
 		}
 
-		capped := coredata.CMPDomain{}
-		if err := capped.LoadByID(ctx, tx, fx.scope, fx.domain.ID); err != nil {
+		capped := coredata.CookieBanner{}
+		if err := capped.LoadByID(ctx, tx, fx.scope, bannerID); err != nil {
 			return err
 		}
 
 		assert.Nil(t, capped.SourcePromotionRequestedAt)
 		assert.Equal(t, 3, capped.SourcePromotionAttempts)
 
-		if err := fx.domain.SetSourcePromotionRequested(ctx, tx); err != nil {
+		if err := banner.SetSourcePromotionRequested(ctx, tx, time.Now().UTC()); err != nil {
 			return err
 		}
 
-		fresh := coredata.CMPDomain{}
-		if err := fresh.LoadByID(ctx, tx, fx.scope, fx.domain.ID); err != nil {
+		fresh := coredata.CookieBanner{}
+		if err := fresh.LoadByID(ctx, tx, fx.scope, bannerID); err != nil {
 			return err
 		}
 
@@ -534,29 +573,35 @@ func TestCMPDomain_SourcePromotionBudget(t *testing.T) {
 	}))
 }
 
-func TestCMPDomain_RequeueKeepsANewerClaim(t *testing.T) {
+func TestCookieBanner_RequeueKeepsANewerClaim(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
 	client := test.PGClient(t)
 	fx := seedCMPDomainFixture(t, ctx, client, "requeue.example")
+	bannerID, _ := insertCMPBanner(t, ctx, client, fx, "https://shop.requeue.example", &fx.domain.ID, time.Time{})
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		if err := fx.domain.SetSourcePromotionRequested(ctx, tx); err != nil {
+		banner := coredata.CookieBanner{}
+		if err := banner.LoadByID(ctx, tx, fx.scope, bannerID); err != nil {
 			return err
 		}
 
-		if err := fx.domain.ClearSourcePromotionRequested(ctx, tx); err != nil {
+		if err := banner.SetSourcePromotionRequested(ctx, tx, time.Now().UTC()); err != nil {
 			return err
 		}
 
-		older := fx.domain
-
-		if err := fx.domain.RequeueSourcePromotionRequested(ctx, tx); err != nil {
+		if err := banner.ClearSourcePromotionRequested(ctx, tx); err != nil {
 			return err
 		}
 
-		if err := fx.domain.ClearSourcePromotionRequested(ctx, tx); err != nil {
+		older := banner
+
+		if err := banner.RequeueSourcePromotionRequested(ctx, tx); err != nil {
+			return err
+		}
+
+		if err := banner.ClearSourcePromotionRequested(ctx, tx); err != nil {
 			return err
 		}
 
@@ -568,15 +613,17 @@ func TestCMPDomain_RequeueKeepsANewerClaim(t *testing.T) {
 			return err
 		}
 
-		loaded := coredata.CMPDomain{}
-		if err := loaded.LoadByID(ctx, tx, fx.scope, fx.domain.ID); err != nil {
+		loaded := coredata.CookieBanner{}
+		if err := loaded.LoadByID(ctx, tx, fx.scope, bannerID); err != nil {
 			return err
 		}
 
 		assert.Nil(t, loaded.SourcePromotionRequestedAt)
 		assert.Equal(t, 2, loaded.SourcePromotionAttempts)
 		require.NotNil(t, loaded.SourcePromotionAttemptedAt)
-		assert.True(t, loaded.SourcePromotionAttemptedAt.Equal(*fx.domain.SourcePromotionAttemptedAt))
+		assert.True(t, loaded.SourcePromotionAttemptedAt.Equal(*banner.SourcePromotionAttemptedAt))
+		require.NotNil(t, loaded.SourcePromotionSince)
+		assert.True(t, loaded.SourcePromotionSince.Equal(*older.SourcePromotionSince))
 
 		return nil
 	}))

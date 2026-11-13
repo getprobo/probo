@@ -33,27 +33,27 @@ import (
 )
 
 const (
-	cmpDomainSourcePromotionMaxAttempts = 3
-	cmpDomainSourcePromotionStaleAfter  = 10 * time.Minute
+	bannerSourcePromotionMaxAttempts = 3
+	bannerSourcePromotionStaleAfter  = 10 * time.Minute
 )
 
-type cmpDomainTask struct {
-	domain *coredata.CMPDomain
+type bannerSourcePromotionTask struct {
+	banner *coredata.CookieBanner
 }
 
-type cmpDomainHandler struct {
+type bannerSourcePromotionHandler struct {
 	svc    *Service
 	pg     *pg.Client
 	logger *log.Logger
 }
 
-func NewCMPDomainWorker(
+func NewBannerSourcePromotionWorker(
 	svc *Service,
 	pgClient *pg.Client,
 	logger *log.Logger,
 	opts ...worker.Option,
-) *worker.Worker[cmpDomainTask] {
-	h := &cmpDomainHandler{
+) *worker.Worker[bannerSourcePromotionTask] {
+	h := &bannerSourcePromotionHandler{
 		svc:    svc,
 		pg:     pgClient,
 		logger: logger,
@@ -62,75 +62,75 @@ func NewCMPDomainWorker(
 	opts = append([]worker.Option{worker.WithMaxConcurrency(1)}, opts...)
 
 	return worker.New(
-		"cmp-domain-worker",
+		"banner-source-promotion-worker",
 		h,
 		logger,
 		opts...,
 	)
 }
 
-func (h *cmpDomainHandler) Claim(ctx context.Context) (cmpDomainTask, error) {
-	var task cmpDomainTask
+func (h *bannerSourcePromotionHandler) Claim(ctx context.Context) (bannerSourcePromotionTask, error) {
+	var task bannerSourcePromotionTask
 
 	err := h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			var domain coredata.CMPDomain
-			if err := domain.LoadNextForSourcePromotionForUpdateSkipLocked(ctx, tx); err != nil {
+			var banner coredata.CookieBanner
+			if err := banner.LoadNextForSourcePromotionForUpdateSkipLocked(ctx, tx); err != nil {
 				return err
 			}
 
-			if err := domain.ClearSourcePromotionRequested(ctx, tx); err != nil {
+			if err := banner.ClearSourcePromotionRequested(ctx, tx); err != nil {
 				return err
 			}
 
-			task.domain = &domain
+			task.banner = &banner
 
 			return nil
 		},
 	)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return cmpDomainTask{}, worker.ErrNoTask
+			return bannerSourcePromotionTask{}, worker.ErrNoTask
 		}
 
-		return cmpDomainTask{}, err
+		return bannerSourcePromotionTask{}, err
 	}
 
 	return task, nil
 }
 
-func (h *cmpDomainHandler) Process(ctx context.Context, task cmpDomainTask) error {
-	if task.domain == nil {
+func (h *bannerSourcePromotionHandler) Process(ctx context.Context, task bannerSourcePromotionTask) error {
+	if task.banner == nil {
 		return nil
 	}
 
 	err := h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := h.svc.promoteSiblingCookieSources(ctx, tx, task.domain); err != nil {
+			if err := h.svc.promoteSiblingCookieSources(ctx, tx, task.banner); err != nil {
 				return err
 			}
 
-			return task.domain.ResetSourcePromotionAttempts(ctx, tx)
+			return task.banner.ResetSourcePromotionAttempts(ctx, tx)
 		},
 	)
 	if err != nil {
-		if task.domain.SourcePromotionAttempts < cmpDomainSourcePromotionMaxAttempts {
+		if task.banner.SourcePromotionAttempts < bannerSourcePromotionMaxAttempts {
 			if retryErr := h.pg.WithTx(
 				ctx,
 				func(ctx context.Context, tx pg.Tx) error {
-					return task.domain.RequeueSourcePromotionRequested(ctx, tx)
+					return task.banner.RequeueSourcePromotionRequested(ctx, tx)
 				},
 			); retryErr != nil {
-				h.logger.ErrorCtx(ctx, "cannot requeue cmp domain source promotion", log.Error(retryErr))
+				h.logger.ErrorCtx(ctx, "cannot requeue banner source promotion", log.Error(retryErr))
 			}
 		} else {
 			h.logger.ErrorCtx(
 				ctx,
-				"cmp domain source promotion exhausted its attempts",
+				"banner source promotion exhausted its attempts",
 				log.Error(err),
-				log.Int("attempts", task.domain.SourcePromotionAttempts),
+				log.Int("attempts", task.banner.SourcePromotionAttempts),
 			)
 		}
 
@@ -140,17 +140,17 @@ func (h *cmpDomainHandler) Process(ctx context.Context, task cmpDomainTask) erro
 	return nil
 }
 
-func (h *cmpDomainHandler) RecoverStale(ctx context.Context) error {
+func (h *bannerSourcePromotionHandler) RecoverStale(ctx context.Context) error {
 	return h.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			if err := coredata.ResetStaleSourcePromotions(
 				ctx,
 				conn,
-				cmpDomainSourcePromotionStaleAfter,
-				cmpDomainSourcePromotionMaxAttempts,
+				bannerSourcePromotionStaleAfter,
+				bannerSourcePromotionMaxAttempts,
 			); err != nil {
-				return fmt.Errorf("cannot reset stale cmp domain source promotions: %w", err)
+				return fmt.Errorf("cannot reset stale banner source promotions: %w", err)
 			}
 
 			return nil

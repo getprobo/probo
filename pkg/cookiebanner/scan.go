@@ -311,7 +311,7 @@ func (s *Service) ingestScanPage(
 	}
 
 	if sourcePromotion {
-		if err := s.requestCMPSourcePromotion(ctx, tx, banner); err != nil {
+		if err := s.requestCMPSourcePromotion(ctx, tx, banner, now); err != nil {
 			return 0, err
 		}
 	}

@@ -114,7 +114,6 @@ func TestCreateCookieBanner_AttachesCMPDomain(t *testing.T) {
 		}
 
 		assert.Equal(t, "example.com", domain.Domain)
-		assert.NotNil(t, domain.SourcePromotionRequestedAt)
 
 		return nil
 	}))
@@ -333,6 +332,76 @@ func TestPromoteSiblingCookieSources(t *testing.T) {
 
 		assertPatternStaysPreExisting(t, ctx, client, owner.scope, ownerPatternB)
 	})
+
+	t.Run("promotes when the writer reports after the reader", func(t *testing.T) {
+		t.Parallel()
+
+		fx := seedSiblingBanners(t, ctx, client, "example.com")
+		patternB := insertSiblingPattern(t, ctx, client, fx, fx.bannerB, "_ga", coredata.CookieSourcePreExisting)
+		readerAt := time.Now().UTC().Add(-time.Hour).Truncate(time.Microsecond)
+		writerAt := readerAt.Add(time.Minute)
+		insertSiblingDetectionAt(
+			t, ctx, client, fx, fx.bannerA, patternIDFor(t, ctx, client, fx, fx.bannerA, "_ga", coredata.CookieSourceScript),
+			"_ga", coredata.CookieSourceScript, "example.com", false, writerAt,
+		)
+		insertSiblingDetectionAt(
+			t, ctx, client, fx, fx.bannerB, patternB,
+			"_ga", coredata.CookieSourcePreExisting, "example.com", false, readerAt,
+		)
+
+		promoteBanner(t, ctx, client, fx.bannerA, writerAt)
+
+		pattern := loadPromotedPattern(t, ctx, client, fx.scope, patternB)
+		require.NotNil(t, pattern.Source)
+		assert.Equal(t, coredata.CookieSourceScript, *pattern.Source)
+		require.NotNil(t, pattern.SourceCookieBannerID)
+		assert.Equal(t, fx.bannerA.ID, *pattern.SourceCookieBannerID)
+	})
+
+	t.Run("promotes when the reader reports after the writer", func(t *testing.T) {
+		t.Parallel()
+
+		fx := seedSiblingBanners(t, ctx, client, "example.com")
+		patternB := insertSiblingPattern(t, ctx, client, fx, fx.bannerB, "_ga", coredata.CookieSourcePreExisting)
+		writerAt := time.Now().UTC().Add(-time.Hour).Truncate(time.Microsecond)
+		readerAt := writerAt.Add(time.Minute)
+		insertSiblingDetectionAt(
+			t, ctx, client, fx, fx.bannerA, patternIDFor(t, ctx, client, fx, fx.bannerA, "_ga", coredata.CookieSourceScript),
+			"_ga", coredata.CookieSourceScript, "example.com", false, writerAt,
+		)
+		insertSiblingDetectionAt(
+			t, ctx, client, fx, fx.bannerB, patternB,
+			"_ga", coredata.CookieSourcePreExisting, "example.com", false, readerAt,
+		)
+
+		promoteBanner(t, ctx, client, fx.bannerB, readerAt)
+
+		pattern := loadPromotedPattern(t, ctx, client, fx.scope, patternB)
+		require.NotNil(t, pattern.Source)
+		assert.Equal(t, coredata.CookieSourceScript, *pattern.Source)
+		require.NotNil(t, pattern.SourceCookieBannerID)
+		assert.Equal(t, fx.bannerA.ID, *pattern.SourceCookieBannerID)
+	})
+
+	t.Run("ignores a detection older than the window", func(t *testing.T) {
+		t.Parallel()
+
+		fx := seedSiblingBanners(t, ctx, client, "example.com")
+		patternB := insertSiblingPattern(t, ctx, client, fx, fx.bannerB, "_ga", coredata.CookieSourcePreExisting)
+		writerAt := time.Now().UTC().Add(-time.Hour).Truncate(time.Microsecond)
+		insertSiblingDetectionAt(
+			t, ctx, client, fx, fx.bannerA, patternIDFor(t, ctx, client, fx, fx.bannerA, "_ga", coredata.CookieSourceScript),
+			"_ga", coredata.CookieSourceScript, "example.com", false, writerAt,
+		)
+		insertSiblingDetectionAt(
+			t, ctx, client, fx, fx.bannerB, patternB,
+			"_ga", coredata.CookieSourcePreExisting, "example.com", false, writerAt,
+		)
+
+		promoteBanner(t, ctx, client, fx.bannerA, writerAt.Add(time.Minute))
+
+		assertPatternStaysPreExisting(t, ctx, client, fx.scope, patternB)
+	})
 }
 
 type siblingBanners struct {
@@ -503,7 +572,25 @@ func insertSiblingDetection(
 ) {
 	t.Helper()
 
-	now := time.Now().UTC().Truncate(time.Microsecond)
+	insertSiblingDetectionAt(t, ctx, client, fx, banner, patternID, name, source, cookieDomain, hostOnly, time.Now())
+}
+
+func insertSiblingDetectionAt(
+	t *testing.T,
+	ctx context.Context,
+	client *pg.Client,
+	fx siblingBanners,
+	banner coredata.CookieBanner,
+	patternID gid.GID,
+	name string,
+	source coredata.CookieSource,
+	cookieDomain string,
+	hostOnly bool,
+	updatedAt time.Time,
+) {
+	t.Helper()
+
+	now := updatedAt.UTC().Truncate(time.Microsecond)
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		detection := &coredata.DetectedTracker{
@@ -588,25 +675,27 @@ func setCorsless(
 	}))
 }
 
-func TestCMPDomainWorker_DoesNotRequeueAtTheCap(t *testing.T) {
+func TestBannerSourcePromotionWorker_DoesNotRequeueAtTheCap(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
 	client := test.PGClient(t)
 	fx := seedSiblingBanners(t, ctx, client, "cap.example")
-	handler := &cmpDomainHandler{
+	handler := &bannerSourcePromotionHandler{
 		svc:    NewService(client, false, 0),
 		pg:     client,
 		logger: log.NewLogger(log.WithOutput(io.Discard)),
 	}
 
+	banner := fx.bannerA
+
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		if err := fx.domain.SetSourcePromotionRequested(ctx, tx); err != nil {
+		if err := banner.SetSourcePromotionRequested(ctx, tx, time.Now()); err != nil {
 			return err
 		}
 
-		for range cmpDomainSourcePromotionMaxAttempts {
-			if err := fx.domain.ClearSourcePromotionRequested(ctx, tx); err != nil {
+		for range bannerSourcePromotionMaxAttempts {
+			if err := banner.ClearSourcePromotionRequested(ctx, tx); err != nil {
 				return err
 			}
 		}
@@ -614,20 +703,20 @@ func TestCMPDomainWorker_DoesNotRequeueAtTheCap(t *testing.T) {
 		return nil
 	}))
 
-	assert.Equal(t, cmpDomainSourcePromotionMaxAttempts, fx.domain.SourcePromotionAttempts)
+	assert.Equal(t, bannerSourcePromotionMaxAttempts, banner.SourcePromotionAttempts)
 
 	canceled, cancel := context.WithCancel(ctx)
 	cancel()
-	require.Error(t, handler.Process(canceled, cmpDomainTask{domain: &fx.domain}))
+	require.Error(t, handler.Process(canceled, bannerSourcePromotionTask{banner: &banner}))
 
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		loaded := coredata.CMPDomain{}
-		if err := loaded.LoadByID(ctx, conn, fx.scope, fx.domain.ID); err != nil {
+		loaded := coredata.CookieBanner{}
+		if err := loaded.LoadByID(ctx, conn, fx.scope, banner.ID); err != nil {
 			return err
 		}
 
 		assert.Nil(t, loaded.SourcePromotionRequestedAt)
-		assert.Equal(t, cmpDomainSourcePromotionMaxAttempts, loaded.SourcePromotionAttempts)
+		assert.Equal(t, bannerSourcePromotionMaxAttempts, loaded.SourcePromotionAttempts)
 
 		return nil
 	}))
@@ -636,14 +725,28 @@ func TestCMPDomainWorker_DoesNotRequeueAtTheCap(t *testing.T) {
 func promoteDomain(t *testing.T, ctx context.Context, client *pg.Client, fx siblingBanners) {
 	t.Helper()
 
-	svc := NewService(client, false, 0)
-	handler := &cmpDomainHandler{
-		svc:    svc,
+	since := time.Time{}
+	promoteBanner(t, ctx, client, fx.bannerA, since)
+	promoteBanner(t, ctx, client, fx.bannerB, since)
+}
+
+func promoteBanner(
+	t *testing.T,
+	ctx context.Context,
+	client *pg.Client,
+	banner coredata.CookieBanner,
+	since time.Time,
+) {
+	t.Helper()
+
+	banner.SourcePromotionSince = &since
+	handler := &bannerSourcePromotionHandler{
+		svc:    NewService(client, false, 0),
 		pg:     client,
 		logger: log.NewLogger(log.WithOutput(io.Discard)),
 	}
 
-	require.NoError(t, handler.Process(ctx, cmpDomainTask{domain: &fx.domain}))
+	require.NoError(t, handler.Process(ctx, bannerSourcePromotionTask{banner: &banner}))
 }
 
 func excludePattern(

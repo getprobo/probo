@@ -424,3 +424,209 @@ func TestTrackerResource_LoadByCookieBannerScanID_SkipsExcluded(t *testing.T) {
 	assert.Equal(t, "/gtm.js", resources[0].Path)
 	assert.False(t, resources[0].Excluded)
 }
+
+func TestDetectedTrackerFilter_Identifiers(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedTrackerPatternFixture(t, ctx, client)
+
+	keep := seedTrackerPattern(t, ctx, client, fx, "keep", coredata.TrackerPatternMatchTypeExact, coredata.CookieSourcePreExisting)
+	drop := seedTrackerPattern(t, ctx, client, fx, "drop", coredata.TrackerPatternMatchTypeExact, coredata.CookieSourceScript)
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		if _, err := newDetectedTracker(fx, keep.ID, "keep", coredata.DetectedTrackerObserverSDK).InsertIfNotExists(ctx, tx, fx.scope); err != nil {
+			return err
+		}
+
+		_, err := newDetectedTracker(fx, drop.ID, "drop", coredata.DetectedTrackerObserverSDK).InsertIfNotExists(ctx, tx, fx.scope)
+
+		return err
+	}))
+
+	cursor := page.NewCursor(
+		10,
+		nil,
+		page.Head,
+		page.OrderBy[coredata.DetectedTrackerOrderField]{
+			Field:     coredata.DetectedTrackerOrderFieldCreatedAt,
+			Direction: page.OrderDirectionAsc,
+		},
+	)
+
+	load := func(t *testing.T, identifiers []string, set bool) []string {
+		t.Helper()
+
+		filter := coredata.NewDetectedTrackerFilter([]coredata.TrackerType{coredata.TrackerTypeCookie})
+		if set {
+			filter.WithIdentifiers(identifiers)
+		}
+
+		var detections coredata.DetectedTrackers
+
+		require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+			return detections.LoadByCookieBannerID(
+				ctx,
+				conn,
+				fx.scope,
+				fx.cookieBannerID,
+				filter,
+				cursor,
+			)
+		}))
+
+		names := make([]string, 0, len(detections))
+		for _, detection := range detections {
+			names = append(names, detection.Identifier)
+		}
+
+		return names
+	}
+
+	t.Run("one name", func(t *testing.T) {
+		t.Parallel()
+
+		assert.Equal(t, []string{"keep"}, load(t, []string{"keep"}, true))
+	})
+
+	t.Run("nil selection", func(t *testing.T) {
+		t.Parallel()
+
+		assert.ElementsMatch(t, []string{"drop", "keep"}, load(t, nil, false))
+	})
+
+	t.Run("empty selection", func(t *testing.T) {
+		t.Parallel()
+
+		assert.Empty(t, load(t, []string{}, true))
+	})
+}
+
+func TestDetectedTrackerFilter_UpdatedSince(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedTrackerPatternFixture(t, ctx, client)
+
+	pattern := seedTrackerPattern(t, ctx, client, fx, "keep", coredata.TrackerPatternMatchTypeExact, coredata.CookieSourceScript)
+	older := time.Now().UTC().Add(-time.Hour).Truncate(time.Microsecond)
+	newer := older.Add(time.Minute)
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		stale := newDetectedTracker(fx, pattern.ID, "stale", coredata.DetectedTrackerObserverSDK)
+		stale.UpdatedAt = older
+		stale.CreatedAt = older
+		if _, err := stale.InsertIfNotExists(ctx, tx, fx.scope); err != nil {
+			return err
+		}
+
+		fresh := newDetectedTracker(fx, pattern.ID, "fresh", coredata.DetectedTrackerObserverSDK)
+		fresh.UpdatedAt = newer
+		fresh.CreatedAt = newer
+		_, err := fresh.InsertIfNotExists(ctx, tx, fx.scope)
+
+		return err
+	}))
+
+	cursor := page.NewCursor(
+		10,
+		nil,
+		page.Head,
+		page.OrderBy[coredata.DetectedTrackerOrderField]{
+			Field:     coredata.DetectedTrackerOrderFieldCreatedAt,
+			Direction: page.OrderDirectionAsc,
+		},
+	)
+
+	load := func(t *testing.T, since *time.Time) []string {
+		t.Helper()
+
+		filter := coredata.NewDetectedTrackerFilter([]coredata.TrackerType{coredata.TrackerTypeCookie}).
+			WithUpdatedSince(since)
+
+		var detections coredata.DetectedTrackers
+
+		require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+			return detections.LoadByCookieBannerID(
+				ctx,
+				conn,
+				fx.scope,
+				fx.cookieBannerID,
+				filter,
+				cursor,
+			)
+		}))
+
+		names := make([]string, 0, len(detections))
+		for _, detection := range detections {
+			names = append(names, detection.Identifier)
+		}
+
+		return names
+	}
+
+	t.Run("from the newer row", func(t *testing.T) {
+		t.Parallel()
+
+		assert.Equal(t, []string{"fresh"}, load(t, &newer))
+	})
+
+	t.Run("nil bound", func(t *testing.T) {
+		t.Parallel()
+
+		assert.ElementsMatch(t, []string{"fresh", "stale"}, load(t, nil))
+	})
+}
+
+func TestDetectedTracker_Upsert_KeepsTheLatestUpdatedAt(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedTrackerPatternFixture(t, ctx, client)
+	pattern := seedTrackerPattern(t, ctx, client, fx, "kept", coredata.TrackerPatternMatchTypeExact, coredata.CookieSourceScript)
+
+	later := time.Now().UTC().Truncate(time.Microsecond)
+	earlier := later.Add(-time.Hour)
+
+	first := newDetectedTracker(fx, pattern.ID, "kept", coredata.DetectedTrackerObserverSDK)
+	first.UpdatedAt = later
+	first.CreatedAt = later
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		_, err := first.Upsert(ctx, tx, fx.scope)
+
+		return err
+	}))
+
+	second := newDetectedTracker(fx, pattern.ID, "kept", coredata.DetectedTrackerObserverSDK)
+	second.UpdatedAt = earlier
+	second.CreatedAt = earlier
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		_, err := second.Upsert(ctx, tx, fx.scope)
+
+		return err
+	}))
+
+	var trackers coredata.DetectedTrackers
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		cursor := page.NewCursor(
+			10,
+			nil,
+			page.Head,
+			page.OrderBy[coredata.DetectedTrackerOrderField]{
+				Field:     coredata.DetectedTrackerOrderFieldCreatedAt,
+				Direction: page.OrderDirectionAsc,
+			},
+		)
+
+		return trackers.LoadByTrackerPatternID(ctx, conn, fx.scope, pattern.ID, cursor)
+	}))
+
+	require.Len(t, trackers, 1)
+	assert.True(t, trackers[0].UpdatedAt.Equal(later))
+}

@@ -36,6 +36,7 @@ type TrackerPatternFilter struct {
 	trackerType        *TrackerType
 	commonThirdPartyID *gid.GID
 	observedBy         []DetectedTrackerObserver
+	identifiers        []string
 }
 
 func NewTrackerPatternFilter(
@@ -98,6 +99,14 @@ func (f *TrackerPatternFilter) WithCommonThirdPartyID(id *gid.GID) *TrackerPatte
 // disables the filter.
 func (f *TrackerPatternFilter) WithObservedBy(observedBy []DetectedTrackerObserver) *TrackerPatternFilter {
 	f.observedBy = observedBy
+	return f
+}
+
+// WithIdentifiers restricts results to patterns whose pattern is one of
+// the given names. A nil slice disables the filter. An empty slice
+// matches nothing.
+func (f *TrackerPatternFilter) WithIdentifiers(identifiers []string) *TrackerPatternFilter {
+	f.identifiers = identifiers
 	return f
 }
 
@@ -188,6 +197,11 @@ func (f *TrackerPatternFilter) SQLFragment() string {
 			)
 		ELSE TRUE
 	END
+	AND
+	CASE
+		WHEN @filter_identifiers::text[] IS NULL THEN TRUE
+		ELSE pattern = ANY(@filter_identifiers::text[])
+	END
 )`
 }
 
@@ -215,6 +229,7 @@ func (f *TrackerPatternFilter) SQLArguments() pgx.StrictNamedArgs {
 		"has_common_third_party_id_filter": false,
 		"filter_common_third_party_id":     nil,
 		"filter_observed_by":               filterStrings(f.observedBy),
+		"filter_identifiers":               f.identifiers,
 	}
 
 	if f.matchType != nil {

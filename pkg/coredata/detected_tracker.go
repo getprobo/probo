@@ -159,7 +159,7 @@ ON CONFLICT (cookie_banner_id, tracker_type, identifier, COALESCE(cookie_domain,
 		partitioned = COALESCE(EXCLUDED.partitioned, detected_trackers.partitioned),
 		set_by_url = COALESCE(EXCLUDED.set_by_url, detected_trackers.set_by_url),
 		cookie_banner_scan_id = COALESCE(EXCLUDED.cookie_banner_scan_id, detected_trackers.cookie_banner_scan_id),
-		updated_at = EXCLUDED.updated_at
+		updated_at = GREATEST(detected_trackers.updated_at, EXCLUDED.updated_at)
 `
 
 	args := pgx.StrictNamedArgs{

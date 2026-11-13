@@ -794,10 +794,6 @@ func (s *Service) CreateCookieBanner(
 				return fmt.Errorf("cannot insert cookie banner: %w", err)
 			}
 
-			if err := domain.SetSourcePromotionRequested(ctx, tx); err != nil {
-				return fmt.Errorf("cannot request source promotion: %w", err)
-			}
-
 			slugToGID := make(map[string]gid.GID, len(defaultCategories))
 			for _, dc := range defaultCategories {
 				gcmConsentTypes := dc.GCMConsentTypes
@@ -3367,7 +3363,7 @@ func (s *Service) ReportDetectedTrackers(
 			}
 
 			if sourcePromotion {
-				if err := s.requestCMPSourcePromotion(ctx, tx, &banner); err != nil {
+				if err := s.requestCMPSourcePromotion(ctx, tx, &banner, now); err != nil {
 					return err
 				}
 			}

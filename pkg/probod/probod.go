@@ -1653,8 +1653,8 @@ func (impl *Implm) Run(
 	trackerPatternAnalysisWorker := cookiebanner.NewPatternAnalysisWorker(cookieBannerService, pgClient, l)
 	trackerPatternAnalysisWorkerCtx, stopTrackerPatternAnalysisWorker := context.WithCancel(context.Background())
 
-	cmpDomainWorker := cookiebanner.NewCMPDomainWorker(cookieBannerService, pgClient, l)
-	cmpDomainWorkerCtx, stopCMPDomainWorker := context.WithCancel(context.Background())
+	bannerSourcePromotionWorker := cookiebanner.NewBannerSourcePromotionWorker(cookieBannerService, pgClient, l)
+	bannerSourcePromotionWorkerCtx, stopBannerSourcePromotionWorker := context.WithCancel(context.Background())
 
 	wg.Go(
 		func() {
@@ -1666,8 +1666,8 @@ func (impl *Implm) Run(
 
 	wg.Go(
 		func() {
-			if err := cmpDomainWorker.Run(cmpDomainWorkerCtx); err != nil {
-				cancel(fmt.Errorf("cmp domain worker crashed: %w", err))
+			if err := bannerSourcePromotionWorker.Run(bannerSourcePromotionWorkerCtx); err != nil {
+				cancel(fmt.Errorf("banner source promotion worker crashed: %w", err))
 			}
 		},
 	)
@@ -1883,7 +1883,7 @@ func (impl *Implm) Run(
 	stopESignService()
 	stopCertManagerService()
 	stopTrackerPatternAnalysisWorker()
-	stopCMPDomainWorker()
+	stopBannerSourcePromotionWorker()
 	stopCookieBannerScanWorker()
 	stopTrackerPolicyWorker()
 	stopTrackerMappingWorker()
