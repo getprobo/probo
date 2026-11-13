@@ -110,6 +110,17 @@ func TestCursorKey_RejectsMismatchedValue(t *testing.T) {
 		})
 	}
 
+	t.Run("null with an unknown type is rejected", func(t *testing.T) {
+		t.Parallel()
+
+		payload, err := json.Marshal([]any{id.String(), "bogus", nil})
+		require.NoError(t, err)
+
+		_, err = ParseCursorKey(base64.RawURLEncoding.EncodeToString(payload))
+
+		require.ErrorIs(t, err, ErrInvalidCursorValue)
+	})
+
 	t.Run("a cursor without a type is rejected", func(t *testing.T) {
 		t.Parallel()
 

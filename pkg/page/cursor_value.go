@@ -147,7 +147,12 @@ func marshalCursorValue(kind CursorKind, value any) ([]byte, error) {
 
 func unmarshalCursorValue(kind CursorKind, raw []byte) (any, error) {
 	if bytes.Equal(raw, []byte("null")) {
-		return nil, nil
+		switch kind {
+		case CursorText, CursorTime, CursorDate, CursorNumber:
+			return nil, nil
+		default:
+			return nil, ErrInvalidCursorValue
+		}
 	}
 
 	switch kind {
