@@ -8,9 +8,7 @@ package connect_v1
 import (
 	"context"
 	"errors"
-	"fmt"
 
-	"github.com/99designs/gqlgen/graphql"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -188,48 +186,7 @@ func (r *identityResolver) SsoLoginURL(ctx context.Context, obj *types.Identity)
 
 	identity := authn.IdentityFromContext(ctx)
 
-	count, err := r.iam.AccountService.CountSAMLConfigurationsForEmail(ctx, identity.EmailAddress)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot count SAML configurations for email", log.Error(err))
-		return nil, gqlx.Internal(ctx)
-	}
-
-	if count != 1 {
-		if count == 0 {
-			return nil, graphql.ErrorOnPath(
-				ctx,
-				fmt.Errorf("no SAML configuration for email"),
-			)
-		}
-
-		return nil, graphql.ErrorOnPath(
-			ctx,
-			fmt.Errorf("multiple SSO configurations found for this domain. Please use your organization-specific SSO login URL"),
-		)
-	}
-
-	samlConfigs, err := r.iam.AccountService.ListSAMLConfigurationsForEmail(ctx, identity.EmailAddress)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list SAML configurations for email", log.Error(err))
-		return nil, gqlx.Internal(ctx)
-	}
-
-	if len(samlConfigs) == 0 {
-		r.logger.ErrorCtx(ctx, "cannot find SAML config")
-		return nil, gqlx.NotFoundf(ctx, "cannot find SAML config")
-	}
-
-	samlConfig := samlConfigs[0]
-	if !samlConfig.SSOEnabled() {
-		return nil, graphql.ErrorOnPath(
-			ctx,
-			fmt.Errorf("no SAML configuration for email"),
-		)
-	}
-
-	loginURL := r.SSOLoginURL(samlConfig.ID)
-
-	return &loginURL, nil
+	return r.samlLoginURL(ctx, identity.EmailAddress)
 }
 
 // Permission is the resolver for the permission field.

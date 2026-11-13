@@ -55,6 +55,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/iam/oauth2scope"
+	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/notification"
 	"go.probo.inc/probo/pkg/saferedirect"
 	"go.probo.inc/probo/pkg/securecookie"
@@ -210,4 +211,42 @@ func (r *Resolver) permission(
 
 func (r *Resolver) SSOLoginURL(samlConfigID gid.GID) string {
 	return r.baseURL.WithPath("/api/connect/v1/saml/2.0/" + samlConfigID.String()).MustString()
+}
+
+// No enabled configuration is an absent URL, not a GraphQL error.
+func (r *Resolver) samlLoginURL(ctx context.Context, email mail.Addr) (*string, error) {
+	count, err := r.iam.AccountService.CountSAMLConfigurationsForEmail(ctx, email)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot count SAML configurations for email", log.Error(err))
+		return nil, gqlx.Internal(ctx)
+	}
+
+	if count == 0 {
+		return nil, nil
+	}
+
+	if count != 1 {
+		return nil, gqlx.Invalidf(
+			ctx,
+			"multiple SSO configurations found for this domain. Please use your organization-specific SSO login URL",
+		)
+	}
+
+	samlConfigs, err := r.iam.AccountService.ListSAMLConfigurationsForEmail(ctx, email)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list SAML configurations for email", log.Error(err))
+		return nil, gqlx.Internal(ctx)
+	}
+
+	if len(samlConfigs) == 0 {
+		r.logger.ErrorCtx(ctx, "cannot find SAML config")
+		return nil, gqlx.NotFoundf(ctx, "cannot find SAML config")
+	}
+
+	samlConfig := samlConfigs[0]
+	if !samlConfig.SSOEnabled() {
+		return nil, nil
+	}
+
+	return new(r.SSOLoginURL(samlConfig.ID)), nil
 }
