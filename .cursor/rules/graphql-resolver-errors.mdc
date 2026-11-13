@@ -44,14 +44,15 @@ logs at info.
 
 ```go
 // GOOD — missing row or store failure. MapError sends err.Error() for
-// NOT_FOUND, so a wrap prefix reaches the client. The message is
-// "resource not found" only when the sentinel is unwrapped.
+// NOT_FOUND. Wrap the sentinel only with client-safe text, or return
+// NotFoundf(ctx, "resource not found") when the prefix must stay private.
 doc, err := r.probo.Documents.Get(ctx, scope, documentID)
 if err != nil {
 	return nil, gqlx.MapError(ctx, r.logger, "cannot get document", err)
 }
 
-// GOOD — not-found already returned; the rest is internal
+// GOOD — not-found already returned; the rest is internal.
+// NotFound shows err.Error() too; use NotFoundf when that text is not client-safe.
 owner, err := loaders.Profile.Load(ctx, ownerID)
 if errors.Is(err, coredata.ErrResourceNotFound) {
 	return nil, gqlx.NotFound(ctx, err)

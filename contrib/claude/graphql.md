@@ -201,7 +201,7 @@ A resolver must not return a plain `error` (`fmt.Errorf`, `errors.New`, or `grap
 
 Use the helpers in `pkg/server/gqlx`. `r.authorize` already returns a coded error; return it unchanged.
 
-- The row the field was supposed to load is missing: `gqlx.NotFound`, or `gqlx.MapError` when that call can also fail another way. `MapError` maps `coredata.ErrResourceNotFound` to `NOT_FOUND` and `validator.ValidationErrors` to `INVALID`. `NOT_FOUND` shows `err.Error()`, so a wrap prefix reaches the client. That message is `resource not found` only when the sentinel is returned unwrapped. Anything else is logged and returned as `gqlx.Internal(ctx)`.
+- The row the field was supposed to load is missing: `gqlx.NotFound`, or `gqlx.MapError` when that call can also fail another way. `MapError` maps `coredata.ErrResourceNotFound` to `NOT_FOUND` and `validator.ValidationErrors` to `INVALID`. `NOT_FOUND` shows `err.Error()`, so wrap the sentinel only with client-safe text. Return the sentinel unwrapped, or `gqlx.NotFoundf(ctx, "resource not found")`, when the prefix could reveal internals. Anything else is logged and returned as `gqlx.Internal(ctx)`.
 - Not-found is already handled and the load still failed: log with `r.logger.ErrorCtx` and return `gqlx.Internal(ctx)`. Do not put `err.Error()` in the response.
 - The client sent a value the server refuses: `Invalid` / `Invalidf`, `Unauthenticated` / `Unauthenticatedf`, `Forbidden` / `Forbiddenf`, `Conflict`, or another named helper in [`pkg/server/gqlx/errors.go`](../../pkg/server/gqlx/errors.go).
 - The schema already models absence as null (no alias, no generated document): return `nil, nil`.
