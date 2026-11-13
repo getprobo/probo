@@ -422,6 +422,44 @@ func (r *mutationResolver) AddDocumentSuggestionChange(ctx context.Context, inpu
 	}, nil
 }
 
+// AddDocumentSuggestionTableChange is the resolver for the addDocumentSuggestionTableChange field.
+func (r *mutationResolver) AddDocumentSuggestionTableChange(ctx context.Context, input types.AddDocumentSuggestionTableChangeInput) (*types.AddDocumentSuggestionTableChangePayload, error) {
+	scope, err := r.authorize(ctx, input.SuggestionID, probo.ActionDocumentSuggest)
+	if err != nil {
+		return nil, err
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+
+	occurrence := 0
+	if input.QuoteOccurrence != nil {
+		occurrence = *input.QuoteOccurrence
+	}
+
+	suggestion, err := r.probo.Documents.AddSuggestionTableChange(
+		ctx,
+		scope,
+		probo.AddDocumentSuggestionTableChangeRequest{
+			SuggestionID: input.SuggestionID,
+			IdentityID:   identity.ID,
+			Operation:    input.Operation,
+			Quote:        input.Quote,
+			Occurrence:   occurrence,
+			Before:       input.Before != nil && *input.Before,
+			Cells:        input.Cells,
+			Rows:         input.Rows,
+			HeaderRow:    input.HeaderRow != nil && *input.HeaderRow,
+		},
+	)
+	if err != nil {
+		return nil, r.documentReviewError(ctx, "cannot add document suggestion table change", err)
+	}
+
+	return &types.AddDocumentSuggestionTableChangePayload{
+		DocumentSuggestion: types.NewDocumentSuggestion(suggestion),
+	}, nil
+}
+
 // AcceptDocumentSuggestion is the resolver for the acceptDocumentSuggestion field.
 func (r *mutationResolver) AcceptDocumentSuggestion(ctx context.Context, input types.AcceptDocumentSuggestionInput) (*types.AcceptDocumentSuggestionPayload, error) {
 	scope, err := r.authorize(ctx, input.SuggestionID, probo.ActionDocumentSuggestAccept)
