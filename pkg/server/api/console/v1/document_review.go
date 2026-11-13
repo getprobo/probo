@@ -149,10 +149,15 @@ func (r *Resolver) documentReviewError(ctx context.Context, message string, err 
 		errors.Is(err, collaboration.ErrDocumentCollaborationNotFound):
 		return gqlx.Conflict(ctx, err)
 	case errors.Is(err, probo.ErrNotDocumentCommentAuthor),
+		errors.Is(err, probo.ErrNotDocumentSuggestionAuthor),
 		errors.Is(err, probo.ErrInvalidDocumentAnchor),
 		errors.Is(err, collaboration.ErrQuoteNotFound),
+		errors.Is(err, collaboration.ErrSuggestionUnchanged),
+		errors.Is(err, collaboration.ErrSuggestionOverlaps),
 		errors.Is(err, collaboration.ErrSuggestionNotInDocument):
 		return gqlx.Invalid(ctx, err)
+	case errors.Is(err, probo.ErrDocumentSuggestionClosed):
+		return gqlx.Conflict(ctx, err)
 	}
 
 	if errArchived, ok := errors.AsType[*collaboration.ErrDocumentArchived](err); ok {

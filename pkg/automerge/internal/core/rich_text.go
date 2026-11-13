@@ -304,11 +304,52 @@ func blockTokens(items []blockOrGrapheme) []string {
 			continue
 		}
 
-		encoded, _ := json.Marshal(item.block)
+		encoded, _ := json.Marshal(blockForComparison(item.block))
 		tokens[i] = "b" + string(encoded)
 	}
 
 	return tokens
+}
+
+// blockForComparison drops null-valued entries of the block attrs map. The
+// editor writes those nulls explicitly (colwidth, language) where this side
+// omits the key. Nested values are kept, so a real nested change still differs.
+func blockForComparison(value any) any {
+	block, ok := value.(map[string]any)
+	if !ok {
+		return value
+	}
+
+	attrs, ok := block["attrs"].(map[string]any)
+	if !ok {
+		return value
+	}
+
+	cleaned := make(map[string]any, len(attrs))
+	dropped := false
+
+	for key, entry := range attrs {
+		if entry == nil {
+			dropped = true
+
+			continue
+		}
+
+		cleaned[key] = entry
+	}
+
+	if !dropped {
+		return value
+	}
+
+	compared := make(map[string]any, len(block))
+	for key, entry := range block {
+		compared[key] = entry
+	}
+
+	compared["attrs"] = cleaned
+
+	return compared
 }
 
 // currentBlockGraphemes materializes the text object as the block/grapheme units

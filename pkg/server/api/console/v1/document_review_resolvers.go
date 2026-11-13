@@ -7,6 +7,7 @@ package console_v1
 
 import (
 	"context"
+	"strings"
 
 	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/coredata"
@@ -345,13 +346,79 @@ func (r *mutationResolver) StartDocumentSuggestion(ctx context.Context, input ty
 
 	identity := authn.IdentityFromContext(ctx)
 
-	suggestion, err := r.probo.Documents.StartSuggestion(ctx, scope, input.DocumentID, identity.ID)
+	if input.Comment != nil && strings.TrimSpace(*input.Comment) != "" {
+		if _, err := r.authorize(ctx, input.DocumentID, probo.ActionDocumentComment); err != nil {
+			return nil, err
+		}
+	}
+
+	occurrence := 0
+	if input.QuoteOccurrence != nil {
+		occurrence = *input.QuoteOccurrence
+	}
+
+	comment := ""
+	if input.Comment != nil {
+		comment = *input.Comment
+	}
+
+	quote := ""
+	if input.Quote != nil {
+		quote = *input.Quote
+	}
+
+	suggestion, err := r.probo.Documents.SuggestChange(
+		ctx,
+		scope,
+		probo.SuggestDocumentChangeRequest{
+			DocumentID:  input.DocumentID,
+			IdentityID:  identity.ID,
+			Quote:       quote,
+			Replacement: input.Replacement,
+			Comment:     comment,
+			Occurrence:  occurrence,
+		},
+	)
 	if err != nil {
 		return nil, r.documentReviewError(ctx, "cannot start document suggestion", err)
 	}
 
 	return &types.StartDocumentSuggestionPayload{
 		DocumentSuggestionEdge: types.NewDocumentSuggestionEdge(suggestion, coredata.DocumentSuggestionOrderFieldCreatedAt),
+	}, nil
+}
+
+// AddDocumentSuggestionChange is the resolver for the addDocumentSuggestionChange field.
+func (r *mutationResolver) AddDocumentSuggestionChange(ctx context.Context, input types.AddDocumentSuggestionChangeInput) (*types.AddDocumentSuggestionChangePayload, error) {
+	scope, err := r.authorize(ctx, input.SuggestionID, probo.ActionDocumentSuggest)
+	if err != nil {
+		return nil, err
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+
+	occurrence := 0
+	if input.QuoteOccurrence != nil {
+		occurrence = *input.QuoteOccurrence
+	}
+
+	suggestion, err := r.probo.Documents.AddSuggestionChange(
+		ctx,
+		scope,
+		probo.AddDocumentSuggestionChangeRequest{
+			SuggestionID: input.SuggestionID,
+			IdentityID:   identity.ID,
+			Quote:        input.Quote,
+			Replacement:  input.Replacement,
+			Occurrence:   occurrence,
+		},
+	)
+	if err != nil {
+		return nil, r.documentReviewError(ctx, "cannot add document suggestion change", err)
+	}
+
+	return &types.AddDocumentSuggestionChangePayload{
+		DocumentSuggestion: types.NewDocumentSuggestion(suggestion),
 	}, nil
 }
 

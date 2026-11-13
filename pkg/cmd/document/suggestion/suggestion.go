@@ -23,6 +23,7 @@ package suggestion
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
@@ -39,6 +40,7 @@ func NewCmdSuggestion(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(newListCmd(f))
 	cmd.AddCommand(newViewCmd(f))
 	cmd.AddCommand(newStartCmd(f))
+	cmd.AddCommand(newAddCmd(f))
 	cmd.AddCommand(newAcceptCmd(f))
 	cmd.AddCommand(newRejectCmd(f))
 
@@ -252,19 +254,46 @@ func newViewCmd(f *cmdutil.Factory) *cobra.Command {
 }
 
 func newStartCmd(f *cmdutil.Factory) *cobra.Command {
-	var flagOutput *string
+	var (
+		flagOutput      *string
+		flagQuote       string
+		flagReplacement string
+		flagComment     string
+		flagOccurrence  int
+	)
 
 	cmd := &cobra.Command{
 		Use:   "start <document-id>",
-		Short: "Allocate a suggestion ID",
+		Short: "Start a redline, or allocate an ID",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if strings.TrimSpace(flagQuote) == "" &&
+				(cmd.Flags().Changed("replacement") ||
+					cmd.Flags().Changed("occurrence") ||
+					cmd.Flags().Changed("comment")) {
+				return fmt.Errorf("quote is required with --replacement, --occurrence, or --comment")
+			}
+
+			input := map[string]any{"documentId": args[0]}
+			if strings.TrimSpace(flagQuote) != "" {
+				input["quote"] = flagQuote
+				input["replacement"] = flagReplacement
+			}
+
+			if strings.TrimSpace(flagComment) != "" {
+				input["comment"] = flagComment
+			}
+
+			if flagOccurrence != 0 {
+				input["quoteOccurrence"] = flagOccurrence
+			}
+
 			return runMutation(
 				f,
 				flagOutput,
 				startMutation,
 				map[string]any{
-					"input": map[string]any{"documentId": args[0]},
+					"input": input,
 				},
 				func(data json.RawMessage) (string, error) {
 					var resp struct {
@@ -290,6 +319,74 @@ func newStartCmd(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	flagOutput = cmdutil.AddOutputFlag(cmd)
+	cmd.Flags().StringVar(&flagQuote, "quote", "", "Text to replace")
+	cmd.Flags().StringVar(&flagReplacement, "replacement", "", "Suggested text; empty deletes the quote")
+	cmd.Flags().StringVar(&flagComment, "comment", "", "Plain-text note on the redline")
+	cmd.Flags().IntVar(&flagOccurrence, "occurrence", 0, "Zero-based occurrence of the quote")
+
+	return cmd
+}
+
+func newAddCmd(f *cmdutil.Factory) *cobra.Command {
+	var (
+		flagOutput      *string
+		flagQuote       string
+		flagReplacement string
+		flagOccurrence  int
+	)
+
+	cmd := &cobra.Command{
+		Use:   "add <suggestion-id>",
+		Short: "Add a redline to a suggestion",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if strings.TrimSpace(flagQuote) == "" {
+				return fmt.Errorf("quote is required")
+			}
+
+			if !cmd.Flags().Changed("replacement") {
+				return fmt.Errorf("replacement is required; pass an empty value to delete the quote")
+			}
+
+			input := map[string]any{
+				"suggestionId": args[0],
+				"quote":        flagQuote,
+				"replacement":  flagReplacement,
+			}
+			if flagOccurrence != 0 {
+				input["quoteOccurrence"] = flagOccurrence
+			}
+
+			return runMutation(
+				f,
+				flagOutput,
+				addMutation,
+				map[string]any{"input": input},
+				func(data json.RawMessage) (string, error) {
+					var resp struct {
+						AddDocumentSuggestionChange struct {
+							DocumentSuggestion struct {
+								ID string `json:"id"`
+							} `json:"documentSuggestion"`
+						} `json:"addDocumentSuggestionChange"`
+					}
+					if err := json.Unmarshal(data, &resp); err != nil {
+						return "", fmt.Errorf("cannot parse response: %w", err)
+					}
+
+					return fmt.Sprintf(
+						"Added a redline to suggestion %s",
+						resp.AddDocumentSuggestionChange.DocumentSuggestion.ID,
+					), nil
+				},
+			)
+		},
+	}
+
+	flagOutput = cmdutil.AddOutputFlag(cmd)
+	cmd.Flags().StringVar(&flagQuote, "quote", "", "Text to replace")
+	cmd.Flags().StringVar(&flagReplacement, "replacement", "", "Suggested text; empty deletes the quote")
+	cmd.Flags().IntVar(&flagOccurrence, "occurrence", 0, "Zero-based occurrence of the quote")
 
 	return cmd
 }
@@ -418,6 +515,14 @@ const startMutation = `
 mutation StartDocumentSuggestion($input: StartDocumentSuggestionInput!) {
   startDocumentSuggestion(input: $input) {
     documentSuggestionEdge { node { id status } }
+  }
+}
+`
+
+const addMutation = `
+mutation AddDocumentSuggestionChange($input: AddDocumentSuggestionChangeInput!) {
+  addDocumentSuggestionChange(input: $input) {
+    documentSuggestion { id status }
   }
 }
 `

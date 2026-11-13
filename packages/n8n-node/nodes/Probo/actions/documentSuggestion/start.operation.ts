@@ -18,8 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
+import { NodeOperationError, type IExecuteFunctions, type INodeExecutionData, type INodeProperties } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
+
+const startOptions = { show: { resource: ['documentSuggestion'], operation: ['start'] } };
 
 export const description: INodeProperties[] = [
 	{
@@ -28,17 +30,69 @@ export const description: INodeProperties[] = [
 		type: 'string',
 		required: true,
 		default: '',
-		displayOptions: { show: { resource: ['documentSuggestion'], operation: ['start'] } },
+		displayOptions: startOptions,
+	},
+	{
+		displayName: 'Quote',
+		name: 'quote',
+		type: 'string',
+		default: '',
+		description: 'Text to replace. Leave empty to only allocate an ID.',
+		displayOptions: startOptions,
+	},
+	{
+		displayName: 'Replacement',
+		name: 'replacement',
+		type: 'string',
+		default: '',
+		description: 'Suggested text. Empty deletes the quote.',
+		displayOptions: startOptions,
+	},
+	{
+		displayName: 'Comment',
+		name: 'comment',
+		type: 'string',
+		typeOptions: { rows: 4 },
+		default: '',
+		description: 'Plain-text note attached to the redline.',
+		displayOptions: startOptions,
+	},
+	{
+		displayName: 'Quote Occurrence',
+		name: 'quoteOccurrence',
+		type: 'number',
+		typeOptions: { minValue: 0 },
+		default: 0,
+		description: 'Zero-based occurrence of the quote.',
+		displayOptions: startOptions,
 	},
 ];
 
 export async function execute(this: IExecuteFunctions, itemIndex: number): Promise<INodeExecutionData> {
 	const documentId = this.getNodeParameter('documentId', itemIndex) as string;
+	const quote = this.getNodeParameter('quote', itemIndex, '') as string;
+	const replacement = this.getNodeParameter('replacement', itemIndex, '') as string;
+	const comment = this.getNodeParameter('comment', itemIndex, '') as string;
+	const quoteOccurrence = this.getNodeParameter('quoteOccurrence', itemIndex, 0) as number;
+	if (quote === '' && (comment !== '' || quoteOccurrence !== 0)) {
+		throw new NodeOperationError(this.getNode(), 'Quote is required when Replacement, Comment, or Quote Occurrence is set');
+	}
+	const input: Record<string, unknown> = { documentId };
+	if (quote !== '') {
+		input.quote = quote;
+		input.replacement = replacement;
+	}
+	if (comment !== '') {
+		input.comment = comment;
+	}
+	if (quoteOccurrence !== 0) {
+		input.quoteOccurrence = quoteOccurrence;
+	}
 	const query = `
 		mutation StartDocumentSuggestion($input: StartDocumentSuggestionInput!) {
 			startDocumentSuggestion(input: $input) { documentSuggestionEdge { node { id status } } }
 		}
 	`;
-	const responseData = await proboApiRequest.call(this, query, { input: { documentId } });
+	const responseData = await proboApiRequest.call(this, query, { input });
 	return { json: responseData, pairedItem: { item: itemIndex } };
 }

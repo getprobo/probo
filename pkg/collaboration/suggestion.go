@@ -57,6 +57,8 @@ const (
 var (
 	ErrOpenSuggestions         = errors.New("document has open suggestions")
 	ErrSuggestionNotInDocument = errors.New("suggestion is not in the document")
+	ErrSuggestionUnchanged     = errors.New("suggestion does not change the quoted text")
+	ErrSuggestionOverlaps      = errors.New("quoted text overlaps an existing suggestion")
 	ErrQuoteNotFound           = errors.New("quoted text was not found in the document")
 )
 
@@ -219,17 +221,9 @@ func QuoteCursors(
 	}
 
 	visible, offsets := visibleText(spans)
-	index := -1
-	searchFrom := 0
-
-	for range occurrence + 1 {
-		found := strings.Index(visible[searchFrom:], quote)
-		if found < 0 {
-			return nil, nil, ErrQuoteNotFound
-		}
-
-		index = searchFrom + found
-		searchFrom = index + len(quote)
+	index, err := findQuote(visible, quote, occurrence)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	startUTF16 := utf16Len(visible[:index])
@@ -934,6 +928,38 @@ type visibleOffset struct {
 // visibleText joins block text with a newline so a quote spanning paragraphs
 // resolves. The separator is visible-only; it maps to the block boundary's
 // absolute position, which absoluteUTF16 clamps to.
+// findQuote returns the byte index of the occurrence-th match. The loop
+// counts down so occurrence == MaxInt cannot overflow into a negative range.
+func findQuote(visible string, quote string, occurrence int) (int, error) {
+	if quote == "" || occurrence < 0 {
+		return 0, ErrQuoteNotFound
+	}
+
+	searchFrom := 0
+	index := -1
+	remaining := occurrence
+
+	for {
+		found := strings.Index(visible[searchFrom:], quote)
+		if found < 0 {
+			return 0, ErrQuoteNotFound
+		}
+
+		index = searchFrom + found
+		if remaining == 0 {
+			return index, nil
+		}
+
+		next := index + len(quote)
+		if next <= searchFrom {
+			return 0, ErrQuoteNotFound
+		}
+
+		searchFrom = next
+		remaining--
+	}
+}
+
 func visibleText(spans []automerge.Span) (string, []visibleOffset) {
 	var visible strings.Builder
 

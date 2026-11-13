@@ -64,12 +64,20 @@ func (r *Resolver) documentReviewError(ctx context.Context, message string, err 
 	switch {
 	case errors.Is(err, probo.ErrNotDocumentCommentAuthor):
 		return probo.ErrNotDocumentCommentAuthor
+	case errors.Is(err, probo.ErrNotDocumentSuggestionAuthor):
+		return probo.ErrNotDocumentSuggestionAuthor
+	case errors.Is(err, probo.ErrDocumentSuggestionClosed):
+		return probo.ErrDocumentSuggestionClosed
 	case errors.Is(err, probo.ErrDocumentCommentThreadResolved):
 		return probo.ErrDocumentCommentThreadResolved
 	case errors.Is(err, probo.ErrInvalidDocumentAnchor):
 		return probo.ErrInvalidDocumentAnchor
 	case errors.Is(err, collaboration.ErrQuoteNotFound):
 		return collaboration.ErrQuoteNotFound
+	case errors.Is(err, collaboration.ErrSuggestionUnchanged):
+		return collaboration.ErrSuggestionUnchanged
+	case errors.Is(err, collaboration.ErrSuggestionOverlaps):
+		return collaboration.ErrSuggestionOverlaps
 	case errors.Is(err, collaboration.ErrSuggestionNotInDocument):
 		return collaboration.ErrSuggestionNotInDocument
 	case errors.Is(err, collaboration.ErrOpenSuggestions):

@@ -906,6 +906,23 @@ func (d *Document) LoadSyncState(data []byte) (*SyncState, error) {
 	return &SyncState{document: d, handle: handle}, nil
 }
 
+// ObjectID returns the identifier that patches use for this text object.
+func (t *Text) ObjectID() (string, error) {
+	t.document.mu.Lock()
+	defer t.document.mu.Unlock()
+
+	if t.document.closed {
+		return "", ErrClosed
+	}
+
+	id, err := t.document.engine.ObjectID(t.handle)
+	if err != nil {
+		return "", fmt.Errorf("cannot read Automerge text object id: %w", err)
+	}
+
+	return id, nil
+}
+
 // Splice replaces deleteCount UTF-16 code units at index with value.
 func (t *Text) Splice(index uint32, deleteCount int32, value string) error {
 	t.document.mu.Lock()

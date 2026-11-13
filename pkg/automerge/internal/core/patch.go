@@ -106,6 +106,17 @@ func objectIDString(object opset.ObjectID) string {
 	)
 }
 
+// ObjectID returns the patch identifier of the object behind handle, the value
+// reported as Obj on patches that target it.
+func (b *Engine) ObjectID(handle uint32) (string, error) {
+	object, err := b.object(handle)
+	if err != nil {
+		return "", err
+	}
+
+	return objectIDString(object), nil
+}
+
 func patchValueForOperation(state *State, operation opset.Operation) (patchValueOut, error) {
 	if objectType, err := actionObjectType(operation.Action); err == nil {
 		return patchValueOut{
@@ -1345,7 +1356,7 @@ func diffSequencePatches(
 					Conflict: len(target.visibleSequenceElementOperations(targetValues[j].Element)) > 1,
 				},
 			)
-			position++
+			position += width(targetValues[j])
 			j++
 		}
 

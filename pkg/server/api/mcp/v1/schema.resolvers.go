@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -11998,7 +11999,39 @@ func (r *Resolver) StartDocumentSuggestionTool(ctx context.Context, req *mcp.Cal
 
 	identity := authn.IdentityFromContext(ctx)
 
-	suggestion, err := r.proboSvc.Documents.StartSuggestion(ctx, scope, input.DocumentID, identity.ID)
+	quote := ""
+	if input.Quote != nil {
+		quote = *input.Quote
+	}
+
+	comment := ""
+	if input.Comment != nil {
+		comment = *input.Comment
+	}
+
+	occurrence := 0
+	if input.QuoteOccurrence != nil {
+		occurrence = *input.QuoteOccurrence
+	}
+
+	if strings.TrimSpace(comment) != "" {
+		if _, err := r.Authorize(ctx, input.DocumentID, probo.ActionDocumentComment); err != nil {
+			return nil, types.StartDocumentSuggestionOutput{}, err
+		}
+	}
+
+	suggestion, err := r.proboSvc.Documents.SuggestChange(
+		ctx,
+		scope,
+		probo.SuggestDocumentChangeRequest{
+			DocumentID:  input.DocumentID,
+			IdentityID:  identity.ID,
+			Quote:       quote,
+			Replacement: input.Replacement,
+			Comment:     comment,
+			Occurrence:  occurrence,
+		},
+	)
 	if err != nil {
 		return nil, types.StartDocumentSuggestionOutput{}, r.documentReviewError(ctx, "cannot start document suggestion", err)
 	}
@@ -12307,4 +12340,35 @@ func (r *Resolver) UpdateAsanaProjectMappingTool(ctx context.Context, req *mcp.C
 	}
 
 	return nil, types.UpdateAsanaProjectMappingOutput{Setup: mcpAsanaSetup(setup, mapping)}, nil
+}
+
+func (r *Resolver) AddDocumentSuggestionChangeTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddDocumentSuggestionChangeInput) (*mcp.CallToolResult, types.AddDocumentSuggestionChangeOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionDocumentSuggest)
+	if err != nil {
+		return nil, types.AddDocumentSuggestionChangeOutput{}, err
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+
+	occurrence := 0
+	if input.QuoteOccurrence != nil {
+		occurrence = *input.QuoteOccurrence
+	}
+
+	suggestion, err := r.proboSvc.Documents.AddSuggestionChange(
+		ctx,
+		scope,
+		probo.AddDocumentSuggestionChangeRequest{
+			SuggestionID: input.ID,
+			IdentityID:   identity.ID,
+			Quote:        input.Quote,
+			Replacement:  input.Replacement,
+			Occurrence:   occurrence,
+		},
+	)
+	if err != nil {
+		return nil, types.AddDocumentSuggestionChangeOutput{}, r.documentReviewError(ctx, "cannot add document suggestion change", err)
+	}
+
+	return nil, types.AddDocumentSuggestionChangeOutput{Suggestion: types.NewDocumentSuggestion(suggestion)}, nil
 }
