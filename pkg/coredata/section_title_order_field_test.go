@@ -44,7 +44,9 @@ func TestControlOrderField_SectionTitle(t *testing.T) {
 		})
 
 		assert.Contains(t, cursor.SQLFragment(), "section_title_sort_key(section_title) >= section_title_sort_key(@cursor_field_value)")
-		assert.Equal(t, "A.10", cursor.SQLArguments()["cursor_field_value"])
+		args, err := cursor.SQLArguments()
+		assert.NoError(t, err)
+		assert.Equal(t, "A.10", args["cursor_field_value"])
 	})
 
 	t.Run("the cursor key stores the raw section title", func(t *testing.T) {
@@ -87,7 +89,9 @@ func TestApplicabilityStatementOrderField_ControlSectionTitle(t *testing.T) {
 		})
 
 		assert.Contains(t, cursor.SQLFragment(), "section_title_sort_key(section_title) >= section_title_sort_key(@cursor_field_value)")
-		assert.Equal(t, "A.5.12 foo", cursor.SQLArguments()["cursor_field_value"])
+		args, err := cursor.SQLArguments()
+		assert.NoError(t, err)
+		assert.Equal(t, "A.5.12 foo", args["cursor_field_value"])
 	})
 
 	t.Run("the cursor key stores the raw section title", func(t *testing.T) {

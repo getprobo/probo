@@ -87,7 +87,7 @@ func (c *Cursor[T]) SQLFragment() string {
 	return where + " ORDER BY " + orderBy + " LIMIT @cursor_limit"
 }
 
-func (c *Cursor[T]) SQLArguments() pgx.NamedArgs {
+func (c *Cursor[T]) SQLArguments() (pgx.NamedArgs, error) {
 	var size = c.Size
 	if c.Key == nil {
 		size += 1
@@ -100,15 +100,20 @@ func (c *Cursor[T]) SQLArguments() pgx.NamedArgs {
 	}
 
 	if c.Key == nil {
-		return arguments
+		return arguments, nil
 	}
 
 	arguments["cursor_id"] = c.Key.ID
 	if strings.Contains(c.SQLFragment(), "@cursor_field_value") {
-		arguments["cursor_field_value"] = c.Key.Value
+		value, err := coerceCursorValue(c.OrderBy.Field.Column(), c.Key.Value)
+		if err != nil {
+			return nil, err
+		}
+
+		arguments["cursor_field_value"] = value
 	}
 
-	return arguments
+	return arguments, nil
 }
 
 // cursorValue keeps the cursor key's raw value. When Column is a single-argument

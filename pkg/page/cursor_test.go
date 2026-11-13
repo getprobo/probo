@@ -208,7 +208,8 @@ func TestCursor_SQLArguments_NullsOmitsEmptyValue(t *testing.T) {
 		Direction: OrderDirectionDesc,
 	})
 
-	args := cursor.SQLArguments()
+	args, err := cursor.SQLArguments()
+	assert.NoError(t, err)
 	_, hasValue := args["cursor_field_value"]
 	assert.False(t, hasValue)
 	assert.Equal(t, id, args["cursor_id"])

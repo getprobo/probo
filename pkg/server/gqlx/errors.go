@@ -30,6 +30,7 @@ import (
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -277,11 +278,16 @@ func Internal(ctx context.Context) *gqlerror.Error {
 }
 
 // MapError turns a service error into the GraphQL error a client should see.
-// coredata.ErrResourceNotFound becomes NOT_FOUND and validator.ValidationErrors
-// become INVALID. Any other error is logged and returned as INTERNAL.
+// coredata.ErrResourceNotFound becomes NOT_FOUND, an invalid cursor and
+// validator.ValidationErrors become INVALID. Any other error is logged and
+// returned as INTERNAL.
 func MapError(ctx context.Context, logger *log.Logger, message string, err error) error {
 	if errors.Is(err, coredata.ErrResourceNotFound) {
 		return NotFound(ctx, err)
+	}
+
+	if errors.Is(err, page.ErrInvalidCursorValue) {
+		return Invalidf(ctx, "invalid cursor")
 	}
 
 	if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {

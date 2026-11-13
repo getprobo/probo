@@ -21,17 +21,9 @@
 package coredata
 
 import (
-	"errors"
-	"time"
-
 	"github.com/jackc/pgx/v5"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/page"
 )
-
-// ErrInvalidCursorValue is a cursor value that cannot be compared with the
-// ordered column. Callers refuse it before querying.
-var ErrInvalidCursorValue = errors.New("invalid cursor")
 
 type (
 	AuditFilter struct {
@@ -85,60 +77,6 @@ func (f *AuditFilter) SQLArguments() pgx.NamedArgs {
 	}
 
 	return args
-}
-
-// prepareAuditDateCursor rejects a date cursor PostgreSQL cannot cast, and
-// rewrites RFC3339 to the UTC calendar day date columns accept.
-func prepareAuditDateCursor(cursor *page.Cursor[AuditOrderField]) error {
-	if cursor == nil || cursor.Key == nil || !auditDateOrderField(cursor.OrderBy.Field) {
-		return nil
-	}
-
-	parsed, ok := auditCursorDate(cursor.Key.Value)
-	if !ok {
-		return ErrInvalidCursorValue
-	}
-
-	cursor.Key.Value = parsed
-
-	return nil
-}
-
-func auditDateOrderField(field AuditOrderField) bool {
-	switch field {
-	case AuditOrderFieldValidFrom, AuditOrderFieldValidUntil,
-		AuditOrderFieldAuditStartDate, AuditOrderFieldAuditEndDate:
-		return true
-	default:
-		return false
-	}
-}
-
-func auditCursorDate(value any) (any, bool) {
-	switch v := value.(type) {
-	case nil:
-		return nil, true
-	case time.Time:
-		return v.UTC().Format(time.DateOnly), true
-	case *time.Time:
-		if v == nil {
-			return nil, true
-		}
-
-		return v.UTC().Format(time.DateOnly), true
-	case string:
-		if t, err := time.Parse(time.DateOnly, v); err == nil {
-			return t.Format(time.DateOnly), true
-		}
-
-		if t, err := time.Parse(time.RFC3339Nano, v); err == nil {
-			return t.UTC().Format(time.DateOnly), true
-		}
-
-		return nil, false
-	default:
-		return nil, false
-	}
 }
 
 func (f *AuditFilter) SQLFragment() string {

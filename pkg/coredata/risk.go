@@ -347,7 +347,11 @@ WHERE %s
 	args := pgx.NamedArgs{"internal_control_id": internalControlID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
-	maps.Copy(args, cursor.SQLArguments())
+	cursorArgs, err := cursor.SQLArguments()
+	if err != nil {
+		return fmt.Errorf("cannot validate cursor: %w", err)
+	}
+	maps.Copy(args, cursorArgs)
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -463,7 +467,11 @@ WHERE %s
 	args := pgx.NamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
-	maps.Copy(args, cursor.SQLArguments())
+	cursorArgs, err := cursor.SQLArguments()
+	if err != nil {
+		return fmt.Errorf("cannot validate cursor: %w", err)
+	}
+	maps.Copy(args, cursorArgs)
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -670,7 +678,11 @@ WHERE
 	args := pgx.StrictNamedArgs{"risk_ids": riskIDs}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
-	maps.Copy(args, cursor.SQLArguments())
+	cursorArgs, err := cursor.SQLArguments()
+	if err != nil {
+		return fmt.Errorf("cannot validate cursor: %w", err)
+	}
+	maps.Copy(args, cursorArgs)
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {

@@ -358,7 +358,7 @@ func (r *compliancePortalResolver) Audits(ctx context.Context, obj *types.Compli
 
 	auditPage, err := visitorService.ListAuditsForCompliancePortalID(ctx, scope, compliancePortal.ID, cursor, auditFilter)
 	if err != nil {
-		if errors.Is(err, coredata.ErrInvalidCursorValue) {
+		if errors.Is(err, page.ErrInvalidCursorValue) {
 			return nil, gqlx.Invalidf(ctx, "invalid cursor")
 		}
 

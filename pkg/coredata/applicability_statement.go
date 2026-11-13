@@ -471,7 +471,11 @@ WHERE
 		"statement_of_applicability_id": statementOfApplicabilityID,
 	}
 	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, cursor.SQLArguments())
+	cursorArgs, err := cursor.SQLArguments()
+	if err != nil {
+		return fmt.Errorf("cannot validate cursor: %w", err)
+	}
+	maps.Copy(args, cursorArgs)
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -568,7 +572,11 @@ WHERE
 
 	args := pgx.NamedArgs{"control_id": controlID}
 	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, cursor.SQLArguments())
+	cursorArgs, err := cursor.SQLArguments()
+	if err != nil {
+		return fmt.Errorf("cannot validate cursor: %w", err)
+	}
+	maps.Copy(args, cursorArgs)
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
