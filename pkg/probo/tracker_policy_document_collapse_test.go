@@ -72,6 +72,103 @@ func TestCollapseTrackerPolicyThirdParties_BackfillsEmptyPrivacyPolicyURL(t *tes
 	assert.Equal(t, *urlHigh, rows[0].PrivacyPolicyURL)
 }
 
+func TestCommonPatternIDsForSnapshotTrackers(t *testing.T) {
+	t.Parallel()
+
+	google := gidWithSuffix(1)
+	meta := gidWithSuffix(2)
+	hotjar := gidWithSuffix(3)
+	extensionVendor := gidWithSuffix(4)
+	maxAge := new(3600)
+	otherAge := new(60)
+	extension := coredata.CookieSourceExtension
+
+	snapshot := coredata.CookieBannerVersionSnapshot{
+		Categories: []coredata.CookieBannerVersionSnapshotCategory{
+			{
+				Cookies: coredata.CookieItems{
+					{
+						Name:          "_ga",
+						TrackerType:   coredata.TrackerTypeCookie,
+						MaxAgeSeconds: maxAge,
+					},
+					{
+						Name:          "_gid",
+						TrackerType:   coredata.TrackerTypeCookie,
+						MaxAgeSeconds: maxAge,
+					},
+					{
+						Name:        "_fbp",
+						TrackerType: coredata.TrackerTypeCookie,
+					},
+					{
+						Name:          "hidden",
+						TrackerType:   coredata.TrackerTypeCookie,
+						MaxAgeSeconds: maxAge,
+					},
+					{
+						Name:        "ext_key",
+						TrackerType: coredata.TrackerTypeCookie,
+					},
+				},
+			},
+		},
+	}
+
+	patterns := coredata.TrackerPatterns{
+		{
+			Pattern:                "_ga",
+			TrackerType:            coredata.TrackerTypeCookie,
+			MaxAgeSeconds:          maxAge,
+			CommonTrackerPatternID: &google,
+		},
+		{
+			Pattern:                "_gid",
+			TrackerType:            coredata.TrackerTypeCookie,
+			MaxAgeSeconds:          maxAge,
+			CommonTrackerPatternID: &google,
+		},
+		{
+			Pattern:                "_fbp",
+			TrackerType:            coredata.TrackerTypeCookie,
+			CommonTrackerPatternID: &meta,
+		},
+		{
+			Pattern:                "_fbp",
+			TrackerType:            coredata.TrackerTypeCookie,
+			MaxAgeSeconds:          otherAge,
+			CommonTrackerPatternID: &hotjar,
+		},
+		{
+			Pattern:                "uncategorised_pixel",
+			TrackerType:            coredata.TrackerTypeCookie,
+			CommonTrackerPatternID: &hotjar,
+		},
+		{
+			Pattern:                "draft_only",
+			TrackerType:            coredata.TrackerTypeCookie,
+			CommonTrackerPatternID: &hotjar,
+		},
+		{
+			Pattern:                "hidden",
+			TrackerType:            coredata.TrackerTypeCookie,
+			MaxAgeSeconds:          maxAge,
+			Excluded:               true,
+			CommonTrackerPatternID: &hotjar,
+		},
+		{
+			Pattern:                "ext_key",
+			TrackerType:            coredata.TrackerTypeCookie,
+			Source:                 &extension,
+			CommonTrackerPatternID: &extensionVendor,
+		},
+	}
+
+	ids := commonPatternIDsForSnapshotTrackers(patterns, snapshot)
+
+	assert.Equal(t, []gid.GID{google, meta}, ids)
+}
+
 func gidWithSuffix(suffix byte) gid.GID {
 	var id gid.GID
 
