@@ -43,6 +43,7 @@ import { employeePortalHref } from "#/lib/employeePortalHref";
 import { useMutation } from "#/lib/relay/useMutation";
 import { navRail } from "#/pages/iam/organizations/_components/shell/variants";
 
+import { notificationHref } from "./notificationHref";
 import { notificationsRefreshEvent } from "./requestNotificationRefresh";
 import { notificationsPanel } from "./variants";
 
@@ -400,7 +401,12 @@ export function NotificationsBell({ organizationId }: NotificationsBellProps) {
           : (
               <ul ref={listRef} className={panel.list()}>
                 {edges.map(({ node }) => {
-                  const href = notificationHref(organizationId, employeePortalId, node);
+                  const href = notificationHref(
+                    organizationId,
+                    employeePortalId,
+                    node.type,
+                    node.subjectId,
+                  );
                   const unread = isUnread(node);
                   const body = (
                     <>
@@ -475,42 +481,6 @@ function UnreadDot({ unread }: { unread: boolean }) {
   return (
     <span aria-hidden className={notificationsPanel({ unread }).dot()} />
   );
-}
-
-function notificationHref(
-  organizationId: string,
-  employeePortalId: string | null,
-  notification: NotificationNode,
-): { external: true; href: string } | { external: false; to: string } {
-  if (notification.type === "TASK_ASSIGNED" || notification.type === "TASK_MENTIONED") {
-    if (employeePortalId != null) {
-      return {
-        external: true,
-        href: employeePortalHref(employeePortalId, "tasks", notification.subjectId),
-      };
-    }
-
-    return {
-      external: false,
-      to: `/organizations/${organizationId}/governance/tasks/${notification.subjectId}`,
-    };
-  }
-
-  const section = notification.type === "DOCUMENT_APPROVAL_REQUESTED"
-    ? "approvals"
-    : "signatures";
-
-  if (employeePortalId != null) {
-    return {
-      external: true,
-      href: employeePortalHref(employeePortalId, section, notification.subjectId),
-    };
-  }
-
-  return {
-    external: false,
-    to: `/organizations/${organizationId}/governance/documents/${notification.subjectId}`,
-  };
 }
 
 function notificationMessage(
