@@ -109,7 +109,13 @@ var EmployeePolicy = policy.NewPolicy(
 		ActionTaskActivityGet, ActionTaskActivityList,
 	).WithSID("task-employee-assigned").
 		When(organizationCondition, assignedCondition),
-).WithDescription("Employees can list and update tasks assigned to them")
+	// The file handler authorizes the file's organization, not the task.
+	// Anyone who can read a task can download organization files until
+	// file rights are scoped to the task.
+	policy.Allow(actionFileGet, actionFileUpload).
+		WithSID("task-employee-attachments").
+		When(organizationCondition),
+).WithDescription("Employees can update assigned tasks, comment on them, and attach files")
 
 // PolicySet returns the PolicySet for the task service. It is owned by this
 // package and registered into the authorizer at composition time so task

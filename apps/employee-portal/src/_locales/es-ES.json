@@ -12,9 +12,18 @@
   },
   "ui": {
     "richEditor": {
+      "file": "Archivo",
+      "imageUnavailable": "Imagen no disponible",
+      "resizeImage": "Cambiar el tamaño de la imagen",
       "enlargeImage": "Ampliar imagen",
       "enlargeImageNamed": "Ampliar {{name}}",
       "closeImage": "Cerrar imagen",
+      "uploading": "Subiendo {{fileName}}…",
+      "uploadFailed": "No se pudo subir el archivo",
+      "couldNotUpload": "No se pudo subir {{fileName}}",
+      "tooLarge": "{{fileName}} es demasiado grande",
+      "unsupported": "{{fileName}} no es un archivo compatible",
+      "attachFiles": "Adjuntar archivos",
       "mentionMembers": "Mencionar a un miembro",
       "mentionLoading": "Buscando…",
       "mentionNoResults": "No se encontraron miembros"

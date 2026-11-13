@@ -12,9 +12,18 @@
   },
   "ui": {
     "richEditor": {
+      "file": "Bestand",
+      "imageUnavailable": "Afbeelding niet beschikbaar",
+      "resizeImage": "Afbeelding vergroten of verkleinen",
       "enlargeImage": "Afbeelding vergroten",
       "enlargeImageNamed": "{{name}} vergroten",
       "closeImage": "Afbeelding sluiten",
+      "uploading": "{{fileName}} uploaden…",
+      "uploadFailed": "Uploaden mislukt",
+      "couldNotUpload": "Kan {{fileName}} niet uploaden",
+      "tooLarge": "{{fileName}} is te groot",
+      "unsupported": "{{fileName}} is geen ondersteund bestand",
+      "attachFiles": "Bestanden bijvoegen",
       "mentionMembers": "Een lid vermelden",
       "mentionLoading": "Zoeken…",
       "mentionNoResults": "Geen leden gevonden"
