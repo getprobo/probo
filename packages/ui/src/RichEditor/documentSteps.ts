@@ -77,6 +77,9 @@ export function applyDocumentSteps(
         // The new block marker is in place.
       } else if (applySuggestionSplitAttrs(adapter, document, path, spans, step, pmDoc)) {
         // A deleted line break is stored on the following block.
+      } else if (changesStructuralSplit(step, pmDoc)) {
+        // A row, cell or table redline: the full rewrite carries its split.
+        return false;
       } else if (isEditorAttributeStep(step, pmDoc)) {
         // isAmgBlock and suggestionSplit live on the editor node. The block
         // marker was already written by the split, so this step must not
@@ -263,6 +266,20 @@ function applySuggestionSplitAttrs(
     attrs,
   });
   return true;
+}
+
+function changesStructuralSplit(
+  step: Transaction["steps"][number],
+  pmDoc: ProseMirrorNode,
+): boolean {
+  if (jsonStepType(step) !== "replaceAround") return false;
+  const from = (step as { from?: unknown }).from;
+  if (typeof from !== "number") return false;
+  const before = pmDoc.nodeAt(from);
+  if (!before || before.isText || before.isTextblock) return false;
+  const after = step.apply(pmDoc).doc?.nodeAt(from);
+  if (!after) return false;
+  return suggestionSplitValue(before) !== suggestionSplitValue(after);
 }
 
 function suggestionSplitValue(node: ProseMirrorNode): string {

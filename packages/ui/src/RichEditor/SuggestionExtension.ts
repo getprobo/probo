@@ -31,6 +31,7 @@ import {
   parseJSONObject,
   readStringAttribute,
 } from "./automergeMapping";
+import { automergeRemoteTransaction } from "./AutomergeSyncPlugin";
 import {
   adjacentSuggestionId,
   isTextblockBoundary,
@@ -41,6 +42,14 @@ import {
   suggestionSplitKindAttr,
   suggestionSplitMeta,
 } from "./suggestionSplit";
+import {
+  discardStructuralSuggestion,
+  reassignStructuralSuggestion,
+  structuralSuggestionNodes,
+  structuralSuggestionSplit,
+  structureSignature,
+  suggestionStructureMeta,
+} from "./suggestionStructure";
 
 export const suggestionInsertName = "suggestionInsert";
 export const suggestionDeleteName = "suggestionDelete";
@@ -69,7 +78,15 @@ export type SuggestingController = {
   ownsSuggestion?: (id: string) => boolean;
   onBurstFinished: () => void;
   onOpenSuggestion: (id: string) => void;
+  // Called when an edit cannot be tracked as a suggestion and was dropped.
+  onBlocked?: () => void;
 };
+
+export type SuggestingStorage = {
+  controller: MutableRefObject<SuggestingController> | null;
+};
+
+const suggestingExtensionName = "documentSuggesting";
 
 const suggestionMark = {
   inclusive: false,
@@ -135,15 +152,37 @@ export const SuggestionDelete = Mark.create({
 export function createSuggestingExtension(
   controller: MutableRefObject<SuggestingController>,
 ) {
-  return Mark.create({
-    name: "documentSuggesting",
+  return Mark.create<unknown, SuggestingStorage>({
+    name: suggestingExtensionName,
     // Paste/key handlers must run before MarkdownPaste (and the base keymap),
     // otherwise those extensions edit the document untracked while suggesting.
     priority: 1_000,
+    addStorage() {
+      return { controller };
+    },
     addProseMirrorPlugins() {
       return [
         new Plugin({
           key: suggestingPluginKey,
+          // Menus and commands that change the document structure (tables,
+          // images, lists) bypass the text handlers. Unless they were tracked,
+          // drop them rather than let an untracked edit through.
+          filterTransaction(transaction) {
+            if (!controller.current.enabled || !transaction.docChanged) return true;
+            if (
+              transaction.getMeta(suggestionStructureMeta)
+              || metaInput(transactionMeta(transaction, suggestingPluginKey))
+              || transaction.getMeta(automergeRemoteTransaction)
+              || transaction.getMeta("history$")
+            ) {
+              return true;
+            }
+            if (structureSignature(transaction.before) === structureSignature(transaction.doc)) {
+              return true;
+            }
+            controller.current.onBlocked?.();
+            return false;
+          },
           props: {
             handleTextInput(view, from, to, text) {
               return applySuggestingText(view, controller.current, from, to, text);
@@ -188,6 +227,60 @@ export function createSuggestingExtension(
       ];
     },
   });
+}
+
+type SuggestingEditor = {
+  isDestroyed?: boolean;
+  state: EditorState;
+  view?: { dispatch: (tr: Transaction) => void } | null;
+  storage: unknown;
+};
+
+export function isSuggesting(editor: SuggestingEditor): boolean {
+  return suggestingController(editor)?.current.enabled === true;
+}
+
+// applySuggestingStructure runs a structural edit as a suggestion when the
+// editor is suggesting. It returns false when the editor is not suggesting,
+// so the caller runs the plain command instead.
+export function applySuggestingStructure(
+  editor: SuggestingEditor,
+  build: (state: EditorState, id: string) => Transaction | null,
+): boolean {
+  const controller = suggestingController(editor);
+  if (!controller?.current.enabled) return false;
+
+  const current = controller.current;
+  if (!build(editor.state, "pending")) {
+    current.onBlocked?.();
+    return true;
+  }
+  let id = suggestionIdForInput(editor.state, current);
+  if (!id) {
+    void current.onNeedId();
+    id = current.suggestionId;
+  }
+  if (!id || !editorViewReady(editor)) {
+    current.onBlocked?.();
+    return true;
+  }
+
+  const tr = build(editor.state, id);
+  if (!tr) {
+    current.onBlocked?.();
+    return true;
+  }
+  editor.view.dispatch(tr);
+  return true;
+}
+
+function suggestingController(
+  editor: SuggestingEditor,
+): MutableRefObject<SuggestingController> | null {
+  const storage = (editor.storage as Record<string, SuggestingStorage | undefined>)[
+    suggestingExtensionName
+  ];
+  return storage?.controller ?? null;
 }
 
 export function refreshSuggestionFocus(
@@ -247,6 +340,21 @@ function suggestionFocusPlugin() {
 function suggestionFocusDecorations(doc: ProseMirrorNode, id: string) {
   const decorations: Decoration[] = [];
   doc.descendants((node, pos) => {
+    if (!node.isText && !node.isTextblock) {
+      const structural = structuralSuggestionSplit(node);
+      if (structural && structural.kind !== "structural") {
+        const focused = id !== "" && structural.id === id;
+        const base = structural.kind === "insertion"
+          ? "suggestion-inserted-block"
+          : "suggestion-deleted-block";
+        const highlight = structural.kind === "insertion" ? "bg-green-3" : "bg-red-3";
+        decorations.push(Decoration.node(pos, pos + node.nodeSize, {
+          "class": focused ? `${base} ${highlight}` : base,
+          "data-suggestion-block": structural.id,
+        }));
+      }
+      return;
+    }
     const split = node.isTextblock ? suggestionSplitOn(node) : null;
     if (split?.kind === "deletion") {
       const focused = id !== "" && split.id === id;
@@ -857,6 +965,7 @@ export function reassignSuggestionId(
       unknownAttrs: { ...current, [suggestionSplitAttr]: toId },
     });
   }
+  reassignStructuralSuggestion(tr, fromId, toId);
   tr.setMeta(suggestingPluginKey, { input: true });
   tr.setMeta(suggestionReassignMeta, { from: fromId, to: toId });
   tr.setMeta("addToHistory", false);
@@ -899,7 +1008,8 @@ export function discardSuggestionId(
       ),
     });
   });
-  if (rewrites.length === 0 && removals.length === 0 && blocks.length === 0) return;
+  const structural = structuralSuggestionNodes(editor.state.doc, id).length > 0;
+  if (rewrites.length === 0 && removals.length === 0 && blocks.length === 0 && !structural) return;
   const tr = editor.state.tr;
   for (const range of rewrites.reverse()) {
     rewriteText(tr, range.from, range.to, range.marks);
@@ -919,6 +1029,7 @@ export function discardSuggestionId(
       unknownAttrs: current,
     });
   }
+  discardStructuralSuggestion(tr, id);
   tr.setMeta(suggestingPluginKey, { input: true });
   tr.setMeta("addToHistory", false);
   editor.view.dispatch(tr);
