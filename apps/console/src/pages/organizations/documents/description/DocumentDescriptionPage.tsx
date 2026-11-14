@@ -444,6 +444,7 @@ export function DocumentDescriptionPage(props: {
                   data-theme="document"
                   disabled={collaborationConnecting || mode === "viewing" || (!canEdit && mode !== "suggesting")}
                   formatting={canEdit && mode === "editing"}
+                  suggestingMenus={mode === "suggesting"}
                   onChangeContent={handleContentChange}
                   onEditor={setEditor}
                   onUploadFile={onUploadFile}

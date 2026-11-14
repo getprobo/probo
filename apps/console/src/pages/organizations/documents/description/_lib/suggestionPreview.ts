@@ -46,6 +46,8 @@ type BlockChunk = {
   pos: number;
   splitId: string | null;
   splitKind: string | null;
+  // The split belongs to an enclosing row, cell or table, not to a line break.
+  inherited: boolean;
   pieces: Piece[];
 };
 
@@ -57,10 +59,13 @@ export function collectSuggestionAnchors(doc: ProseMirrorNode) {
 
   doc.descendants((node, pos) => {
     if (node.isTextblock) {
+      const ownId = suggestionSplitId(node);
+      const enclosing = ownId ? null : enclosingSplit(doc, pos);
       chunks.push({
         pos,
-        splitId: suggestionSplitId(node),
-        splitKind: suggestionSplitKind(node),
+        splitId: ownId ?? enclosing?.id ?? null,
+        splitKind: ownId ? suggestionSplitKind(node) : enclosing?.kind ?? null,
+        inherited: enclosing != null,
         pieces: [],
       });
       return;
@@ -127,7 +132,7 @@ function previewParts(blocks: BlockChunk[], id: string): SuggestionPreviewPart[]
     const block = blocks[index];
     if (index > first) {
       pushPart(parts, lineKind(block, id), "\n");
-    } else if (block.splitId === id && block.splitKind === "deletion") {
+    } else if (block.splitId === id && block.splitKind === "deletion" && !block.inherited) {
       pushPart(parts, "deleted", "\n");
     }
     for (const piece of block.pieces) {
@@ -177,6 +182,23 @@ function markIds(node: ProseMirrorNode, name: string): string[] {
     if (typeof mark.attrs.id === "string" && mark.attrs.id !== "") ids.push(mark.attrs.id);
   }
   return ids;
+}
+
+// enclosingSplit finds the insertion or deletion split of the nearest row,
+// cell or table around a textblock. Their first paragraph has no split of its
+// own because it is stored inside the enclosing block.
+function enclosingSplit(
+  doc: ProseMirrorNode,
+  pos: number,
+): { id: string; kind: string } | null {
+  const $pos = doc.resolve(pos);
+  for (let depth = $pos.depth; depth > 0; depth -= 1) {
+    const node = $pos.node(depth);
+    const id = suggestionSplitId(node);
+    const kind = suggestionSplitKind(node);
+    if (id && (kind === "insertion" || kind === "deletion")) return { id, kind };
+  }
+  return null;
 }
 
 function suggestionSplitId(node: ProseMirrorNode): string | null {
