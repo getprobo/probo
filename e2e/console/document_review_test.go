@@ -547,6 +547,121 @@ func TestDocumentReview_SuggestsTableStructure(t *testing.T) {
 	testutil.RequireErrorCode(t, err, "INVALID", "only the author adds redlines to a suggestion")
 }
 
+func TestDocumentReview_SuggestsFormatting(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	documentID := factory.NewDocument(owner).
+		WithTitle(factory.SafeName("Review format suggestion")).
+		Create()
+
+	_, err := owner.Do(`
+		mutation($input: UpdateDocumentInput!) {
+			updateDocument(input: $input) { documentVersion { id } }
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"id":      documentID,
+			"content": `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Keep this sentence.","marks":[{"type":"italic"}]}]}]}`,
+		},
+	})
+	require.NoError(t, err)
+
+	const formatChange = `
+		mutation($input: AddDocumentSuggestionFormatChangeInput!) {
+			addDocumentSuggestionFormatChange(input: $input) {
+				documentSuggestion { id status }
+			}
+		}
+	`
+
+	bold := startEmptySuggestion(t, owner, documentID)
+
+	var added struct {
+		AddDocumentSuggestionFormatChange struct {
+			DocumentSuggestion struct {
+				ID     string `json:"id"`
+				Status string `json:"status"`
+			} `json:"documentSuggestion"`
+		} `json:"addDocumentSuggestionFormatChange"`
+	}
+
+	err = owner.Execute(formatChange, map[string]any{
+		"input": map[string]any{
+			"suggestionId": bold,
+			"mark":         "BOLD",
+			"action":       "ADD",
+			"quote":        "Keep",
+		},
+	}, &added)
+	require.NoError(t, err, "owner should suggest bold")
+	require.Equal(t, bold, added.AddDocumentSuggestionFormatChange.DocumentSuggestion.ID)
+
+	published := documentProsemirror(t, owner, documentID)
+	require.NotContains(t, published, `"type":"bold"`)
+	require.Contains(t, published, `"type":"italic"`)
+
+	_, err = owner.Do(formatChange, map[string]any{
+		"input": map[string]any{
+			"suggestionId": bold,
+			"mark":         "LINK",
+			"action":       "ADD",
+			"quote":        "Keep",
+			"href":         "javascript:alert(1)",
+		},
+	})
+	testutil.RequireErrorCode(t, err, "INVALID", "an unsafe link must be refused")
+
+	decideSuggestion(t, owner, bold, true)
+	require.Contains(t, documentProsemirror(t, owner, documentID), `"type":"bold"`)
+
+	italic := startEmptySuggestion(t, owner, documentID)
+	err = owner.Execute(formatChange, map[string]any{
+		"input": map[string]any{
+			"suggestionId": italic,
+			"mark":         "ITALIC",
+			"action":       "REMOVE",
+			"quote":        "sentence",
+		},
+	}, &added)
+	require.NoError(t, err, "owner should suggest removing italic")
+	require.Contains(t, documentProsemirror(t, owner, documentID), `"type":"italic"`)
+
+	decideSuggestion(t, owner, italic, true)
+
+	var publishedNode documentContentNode
+	require.NoError(t, json.Unmarshal([]byte(documentProsemirror(t, owner, documentID)), &publishedNode))
+	sentence := textNode(publishedNode, "sentence")
+	require.NotNil(t, sentence)
+	require.NotContains(t, markTypes(sentence), "italic")
+	keep := textNode(publishedNode, "Keep")
+	require.NotNil(t, keep)
+	require.Contains(t, markTypes(keep), "bold")
+}
+
+func documentProsemirror(t *testing.T, client *testutil.Client, documentID string) string {
+	t.Helper()
+
+	var content struct {
+		Node struct {
+			Content struct {
+				Prosemirror string `json:"prosemirror"`
+			} `json:"content"`
+		} `json:"node"`
+	}
+
+	err := client.Execute(`
+		query($id: ID!) {
+			node(id: $id) {
+				... on Document { content { prosemirror } }
+			}
+		}
+	`, map[string]any{"id": documentID}, &content)
+	require.NoError(t, err)
+
+	return content.Node.Content.Prosemirror
+}
+
 func startEmptySuggestion(t *testing.T, client *testutil.Client, documentID string) string {
 	t.Helper()
 
@@ -602,7 +717,35 @@ func decideSuggestion(t *testing.T, client *testutil.Client, suggestionID string
 type documentContentNode struct {
 	Type    string                `json:"type"`
 	Text    string                `json:"text"`
+	Marks   []documentContentMark `json:"marks"`
 	Content []documentContentNode `json:"content"`
+}
+
+type documentContentMark struct {
+	Type string `json:"type"`
+}
+
+func markTypes(node *documentContentNode) []string {
+	types := make([]string, 0, len(node.Marks))
+	for _, mark := range node.Marks {
+		types = append(types, mark.Type)
+	}
+
+	return types
+}
+
+func textNode(node documentContentNode, text string) *documentContentNode {
+	if node.Text == text {
+		return &node
+	}
+
+	for _, child := range node.Content {
+		if found := textNode(child, text); found != nil {
+			return found
+		}
+	}
+
+	return nil
 }
 
 // documentTableCells returns the cell texts of the first table in the

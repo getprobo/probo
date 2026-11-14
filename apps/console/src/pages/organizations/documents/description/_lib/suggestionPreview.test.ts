@@ -39,6 +39,9 @@ const schema = new Schema({
     suggestionDelete: {
       attrs: { id: { default: null } },
     },
+    suggestionFormatBold: { attrs: { id: { default: null }, action: { default: "add" }, href: { default: null } } },
+    suggestionFormatItalic: { attrs: { id: { default: null }, action: { default: "add" }, href: { default: null } } },
+    suggestionFormatStrike: { attrs: { id: { default: null }, action: { default: "add" }, href: { default: null } } },
   },
 });
 
@@ -150,8 +153,9 @@ describe("suggestion preview", () => {
     ]);
 
     const preview = collectSuggestionAnchors(doc).get(id);
-    expect(preview?.deleted).toBe("Read\nYes");
-    expect(preview?.parts).toEqual([{ kind: "deleted", text: "Read\nYes" }]);
+    expect(preview?.structure).toEqual({ action: "remove", target: "row", text: "Read Yes" });
+    expect(preview?.parts).toEqual([]);
+    expect(preview?.from).toBeGreaterThan(0);
   });
 
   it("anchors an inserted empty table row", () => {
@@ -164,8 +168,56 @@ describe("suggestion preview", () => {
     ]);
 
     const preview = collectSuggestionAnchors(doc).get(id);
-    expect(preview?.inserted).toBe("\n");
+    expect(preview?.structure).toEqual({ action: "add", target: "row", text: "" });
+    expect(preview?.parts).toEqual([]);
     expect(preview?.from).toBeGreaterThan(0);
+  });
+
+  it("describes an added column from its cells", () => {
+    const split = { suggestionSplit: id, splitKind: "insertion" };
+    const doc = tableSchema.node("doc", null, [
+      tableSchema.node("table", null, [
+        tableSchema.node("tableRow", null, [
+          tableSchema.node("tableCell", null, [
+            tableSchema.node("paragraph", null, [tableSchema.text("Keep")]),
+          ]),
+          tableSchema.node("tableCell", { unknownAttrs: split }, [
+            tableSchema.node("paragraph", null, [tableSchema.text("dddd")]),
+          ]),
+        ]),
+        tableSchema.node("tableRow", null, [
+          tableSchema.node("tableCell", null, [
+            tableSchema.node("paragraph", null, [tableSchema.text("Stay")]),
+          ]),
+          tableSchema.node("tableCell", { unknownAttrs: split }, [
+            tableSchema.node("paragraph", null, [tableSchema.text("d")]),
+          ]),
+        ]),
+      ]),
+    ]);
+
+    expect(collectSuggestionAnchors(doc).get(id)?.structure).toEqual({
+      action: "add",
+      target: "column",
+      text: "dddd d",
+    });
+  });
+
+  it("describes suggested formatting without a text diff", () => {
+    const bold = schema.marks.suggestionFormatBold.create({ id, action: "add" });
+    const italic = schema.marks.suggestionFormatItalic.create({ id, action: "add" });
+    const strike = schema.marks.suggestionFormatStrike.create({ id: "other", action: "remove" });
+    const doc = schema.node("doc", null, [
+      schema.node("paragraph", null, [
+        schema.text("Keep", [bold, italic]),
+        schema.text(" this", [strike]),
+      ]),
+    ]);
+
+    const preview = collectSuggestionAnchors(doc).get(id);
+    expect(preview?.formats).toEqual({ adds: ["bold", "italic"], removes: [] });
+    expect(preview?.parts).toEqual([]);
+    expect(preview?.structure).toBeNull();
   });
 });
 

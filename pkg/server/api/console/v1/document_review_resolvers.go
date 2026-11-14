@@ -460,6 +460,47 @@ func (r *mutationResolver) AddDocumentSuggestionTableChange(ctx context.Context,
 	}, nil
 }
 
+// AddDocumentSuggestionFormatChange is the resolver for the addDocumentSuggestionFormatChange field.
+func (r *mutationResolver) AddDocumentSuggestionFormatChange(ctx context.Context, input types.AddDocumentSuggestionFormatChangeInput) (*types.AddDocumentSuggestionFormatChangePayload, error) {
+	scope, err := r.authorize(ctx, input.SuggestionID, probo.ActionDocumentSuggest)
+	if err != nil {
+		return nil, err
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+
+	occurrence := 0
+	if input.QuoteOccurrence != nil {
+		occurrence = *input.QuoteOccurrence
+	}
+
+	href := ""
+	if input.Href != nil {
+		href = *input.Href
+	}
+
+	suggestion, err := r.probo.Documents.AddSuggestionFormatChange(
+		ctx,
+		scope,
+		probo.AddDocumentSuggestionFormatChangeRequest{
+			SuggestionID: input.SuggestionID,
+			IdentityID:   identity.ID,
+			Mark:         input.Mark,
+			Action:       input.Action,
+			Quote:        input.Quote,
+			Occurrence:   occurrence,
+			Href:         href,
+		},
+	)
+	if err != nil {
+		return nil, r.documentReviewError(ctx, "cannot add document suggestion format change", err)
+	}
+
+	return &types.AddDocumentSuggestionFormatChangePayload{
+		DocumentSuggestion: types.NewDocumentSuggestion(suggestion),
+	}, nil
+}
+
 // AcceptDocumentSuggestion is the resolver for the acceptDocumentSuggestion field.
 func (r *mutationResolver) AcceptDocumentSuggestion(ctx context.Context, input types.AcceptDocumentSuggestionInput) (*types.AcceptDocumentSuggestionPayload, error) {
 	scope, err := r.authorize(ctx, input.SuggestionID, probo.ActionDocumentSuggestAccept)

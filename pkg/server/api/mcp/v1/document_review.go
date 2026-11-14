@@ -94,6 +94,8 @@ func (r *Resolver) documentReviewError(ctx context.Context, message string, err 
 		collaboration.ErrTableLastRow,
 		collaboration.ErrTableLastColumn,
 		collaboration.ErrTableOperation,
+		collaboration.ErrSuggestionFormat,
+		collaboration.ErrSuggestionHref,
 	} {
 		if errors.Is(err, tableErr) {
 			return tableErr

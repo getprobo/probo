@@ -22,6 +22,8 @@ import {
   suggestionDeleteName,
   suggestionInsertName,
 } from "@probo/ui/src/RichEditor/SuggestionExtension";
+import { structuralSuggestionSplit } from "@probo/ui/src/RichEditor/suggestionStructure";
+import { suggestionStyles } from "@probo/ui/src/RichEditor/suggestionStyle";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 
 export type SuggestionPreviewPart = {
@@ -29,17 +31,38 @@ export type SuggestionPreviewPart = {
   text: string;
 };
 
+export type SuggestionStructurePreview = {
+  action: "add" | "remove";
+  target: "row" | "column" | "table";
+  text: string;
+};
+
+export type SuggestionFormatPreview = {
+  adds: string[];
+  removes: string[];
+};
+
 export type SuggestionPreview = {
   from: number;
   inserted: string;
   deleted: string;
   parts: SuggestionPreviewPart[];
+  structure: SuggestionStructurePreview | null;
+  formats: SuggestionFormatPreview | null;
+};
+
+type PieceFormat = {
+  id: string;
+  action: "add" | "remove";
+  style: string;
 };
 
 type Piece = {
+  pos: number;
   text: string;
   insertIds: string[];
   deleteIds: string[];
+  formats: PieceFormat[];
 };
 
 type BlockChunk = {
@@ -73,9 +96,11 @@ export function collectSuggestionAnchors(doc: ProseMirrorNode) {
     const chunk = chunks[chunks.length - 1];
     if (!chunk || !node.isText || !node.text) return;
     chunk.pieces.push({
+      pos,
       text: node.text,
       insertIds: markIds(node, suggestionInsertName),
       deleteIds: markIds(node, suggestionDeleteName),
+      formats: formatMarks(node),
     });
   });
 
@@ -88,19 +113,26 @@ export function collectSuggestionAnchors(doc: ProseMirrorNode) {
     for (const piece of block.pieces) {
       for (const id of piece.insertIds) ids.add(id);
       for (const id of piece.deleteIds) ids.add(id);
+      for (const format of piece.formats) ids.add(format.id);
     }
   }
 
   for (const id of ids) {
-    const parts = previewParts(chunks, id);
-    if (parts.length === 0) continue;
-    const from = chunks.find(block => blockInvolves(block, id))?.pos;
+    const structure = structureFor(doc, id);
+    const formats = formatsFor(chunks, id);
+    const parts = structure ? [] : previewParts(chunks, id);
+    if (parts.length === 0 && !structure && !formats) continue;
+    const from = structure?.from
+      ?? formatPosition(chunks, id)
+      ?? chunks.find(block => blockInvolves(block, id))?.pos;
     if (from == null) continue;
     previews.set(id, {
       from,
-      inserted: parts.filter(part => part.kind === "inserted").map(part => part.text).join(""),
-      deleted: parts.filter(part => part.kind === "deleted").map(part => part.text).join(""),
+      inserted: structure ? "" : parts.filter(part => part.kind === "inserted").map(part => part.text).join(""),
+      deleted: structure ? "" : parts.filter(part => part.kind === "deleted").map(part => part.text).join(""),
       parts,
+      structure: structure ? { action: structure.action, target: structure.target, text: structure.text } : null,
+      formats,
     });
   }
   return previews;
@@ -173,6 +205,91 @@ function pushPart(
     return;
   }
   parts.push({ kind, text });
+}
+
+const styleOrder = ["bold", "italic", "underline", "strikethrough", "code", "link"];
+const styleByFormat = new Map<string, string>(suggestionStyles.map(style => [style.format, style.label]));
+
+function formatMarks(node: ProseMirrorNode): PieceFormat[] {
+  const formats: PieceFormat[] = [];
+  for (const mark of node.marks) {
+    const style = styleByFormat.get(mark.type.name);
+    if (!style || typeof mark.attrs.id !== "string" || mark.attrs.id === "") continue;
+    formats.push({
+      id: mark.attrs.id,
+      action: mark.attrs.action === "remove" ? "remove" : "add",
+      style,
+    });
+  }
+  return formats;
+}
+
+function formatsFor(blocks: BlockChunk[], id: string): SuggestionFormatPreview | null {
+  const adds = new Set<string>();
+  const removes = new Set<string>();
+  for (const block of blocks) {
+    for (const piece of block.pieces) {
+      for (const format of piece.formats) {
+        if (format.id !== id) continue;
+        if (format.action === "remove") removes.add(format.style);
+        else adds.add(format.style);
+      }
+    }
+  }
+  if (adds.size === 0 && removes.size === 0) return null;
+  return {
+    adds: styleOrder.filter(style => adds.has(style)),
+    removes: styleOrder.filter(style => removes.has(style)),
+  };
+}
+
+function formatPosition(blocks: BlockChunk[], id: string): number | null {
+  for (const block of blocks) {
+    for (const piece of block.pieces) {
+      if (piece.formats.some(format => format.id === id)) return piece.pos;
+    }
+  }
+  return null;
+}
+
+// structureFor describes a suggested table, row, or column. The outermost
+// block wins, so an added table is not also reported as its rows.
+function structureFor(
+  doc: ProseMirrorNode,
+  id: string,
+): (SuggestionStructurePreview & { from: number }) | null {
+  const hits: Array<{ pos: number; rank: number; kind: "insertion" | "deletion"; node: ProseMirrorNode }> = [];
+  doc.descendants((node, pos) => {
+    const split = structuralSuggestionSplit(node);
+    if (!split || split.id !== id || split.kind === "structural") return;
+    const rank = structureRank(node.type.name);
+    if (rank == null || (split.kind !== "insertion" && split.kind !== "deletion")) return;
+    hits.push({ pos, rank, kind: split.kind, node });
+  });
+  if (hits.length === 0) return null;
+  const rank = Math.min(...hits.map(hit => hit.rank));
+  const chosen = hits.filter(hit => hit.rank === rank);
+  const kind = chosen[0]?.kind;
+  if (!kind) return null;
+  const texts: string[] = [];
+  for (const hit of chosen) {
+    hit.node.descendants((child) => {
+      if (child.isText && child.text) texts.push(child.text);
+    });
+  }
+  return {
+    action: kind === "deletion" ? "remove" : "add",
+    target: rank === 0 ? "table" : rank === 1 ? "row" : "column",
+    text: texts.join(" ").replace(/\s+/g, " ").trim(),
+    from: Math.min(...chosen.map(hit => hit.pos)),
+  };
+}
+
+function structureRank(name: string): number | null {
+  if (name === "table") return 0;
+  if (name === "tableRow") return 1;
+  if (name === "tableCell" || name === "tableHeader") return 2;
+  return null;
 }
 
 function markIds(node: ProseMirrorNode, name: string): string[] {

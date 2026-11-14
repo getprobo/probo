@@ -102,6 +102,50 @@ enum DocumentSuggestionTableOperation
         )
 }
 
+enum DocumentSuggestionFormatMark
+    @goModel(
+        model: "go.probo.inc/probo/pkg/collaboration.FormatSuggestionMark"
+    ) {
+    BOLD
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/collaboration.FormatSuggestionBold"
+        )
+    ITALIC
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/collaboration.FormatSuggestionItalic"
+        )
+    UNDERLINE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/collaboration.FormatSuggestionUnderline"
+        )
+    STRIKE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/collaboration.FormatSuggestionStrike"
+        )
+    CODE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/collaboration.FormatSuggestionCode"
+        )
+    LINK
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/collaboration.FormatSuggestionLink"
+        )
+}
+
+enum DocumentSuggestionFormatAction
+    @goModel(
+        model: "go.probo.inc/probo/pkg/collaboration.FormatSuggestionAction"
+    ) {
+    ADD
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/collaboration.FormatSuggestionAdd"
+        )
+    REMOVE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/collaboration.FormatSuggestionRemove"
+        )
+}
+
 enum DocumentSuggestionOrderField
     @goModel(
         model: "go.probo.inc/probo/pkg/coredata.DocumentSuggestionOrderField"
@@ -249,6 +293,9 @@ extend type Mutation {
     addDocumentSuggestionTableChange(
         input: AddDocumentSuggestionTableChangeInput!
     ): AddDocumentSuggestionTableChangePayload!
+    addDocumentSuggestionFormatChange(
+        input: AddDocumentSuggestionFormatChangeInput!
+    ): AddDocumentSuggestionFormatChangePayload!
     acceptDocumentSuggestion(
         input: AcceptDocumentSuggestionInput!
     ): AcceptDocumentSuggestionPayload!
@@ -334,6 +381,18 @@ input AddDocumentSuggestionTableChangeInput {
     headerRow: Boolean
 }
 
+input AddDocumentSuggestionFormatChangeInput {
+    suggestionId: ID!
+    mark: DocumentSuggestionFormatMark!
+    action: DocumentSuggestionFormatAction!
+    "Text to format. The match is the editor selection."
+    quote: String!
+    "Zero-based occurrence of quote. Defaults to the first match."
+    quoteOccurrence: Int
+    "Link address when mark is LINK and action is ADD."
+    href: String
+}
+
 input AcceptDocumentSuggestionInput {
     suggestionId: ID!
 }
@@ -376,6 +435,10 @@ type AddDocumentSuggestionChangePayload {
 }
 
 type AddDocumentSuggestionTableChangePayload {
+    documentSuggestion: DocumentSuggestion!
+}
+
+type AddDocumentSuggestionFormatChangePayload {
     documentSuggestion: DocumentSuggestion!
 }
 

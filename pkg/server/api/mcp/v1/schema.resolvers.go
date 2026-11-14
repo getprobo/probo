@@ -12407,3 +12407,41 @@ func (r *Resolver) AddDocumentSuggestionTableChangeTool(ctx context.Context, req
 
 	return nil, types.AddDocumentSuggestionTableChangeOutput{Suggestion: types.NewDocumentSuggestion(suggestion)}, nil
 }
+
+func (r *Resolver) AddDocumentSuggestionFormatChangeTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddDocumentSuggestionFormatChangeInput) (*mcp.CallToolResult, types.AddDocumentSuggestionFormatChangeOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionDocumentSuggest)
+	if err != nil {
+		return nil, types.AddDocumentSuggestionFormatChangeOutput{}, err
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+
+	occurrence := 0
+	if input.QuoteOccurrence != nil {
+		occurrence = *input.QuoteOccurrence
+	}
+
+	href := ""
+	if input.Href != nil {
+		href = *input.Href
+	}
+
+	suggestion, err := r.proboSvc.Documents.AddSuggestionFormatChange(
+		ctx,
+		scope,
+		probo.AddDocumentSuggestionFormatChangeRequest{
+			SuggestionID: input.ID,
+			IdentityID:   identity.ID,
+			Mark:         input.Mark,
+			Action:       input.Action,
+			Quote:        input.Quote,
+			Occurrence:   occurrence,
+			Href:         href,
+		},
+	)
+	if err != nil {
+		return nil, types.AddDocumentSuggestionFormatChangeOutput{}, r.documentReviewError(ctx, "cannot add document suggestion format change", err)
+	}
+
+	return nil, types.AddDocumentSuggestionFormatChangeOutput{Suggestion: types.NewDocumentSuggestion(suggestion)}, nil
+}

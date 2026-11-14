@@ -152,5 +152,8 @@ export const UnderlineExtension = Underline.extend({
 });
 
 export const CodeExtension = Code.extend({
+  // Code replaces the other character styles, and still shares its span with
+  // suggestion marks so a suggested code change can be accepted or rejected.
+  excludes: "bold italic strike underline link",
   automerge: () => ({ markName: "code" }),
 });

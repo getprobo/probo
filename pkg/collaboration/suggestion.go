@@ -80,6 +80,7 @@ func ProjectAcceptedSpans(spans []automerge.Span) []automerge.Span {
 
 		if span.Type == automerge.SpanTypeText {
 			span.Marks = withoutMark(span.Marks, SuggestionDeleteMark)
+			span.Marks = revertFormatMarks(span.Marks)
 		}
 
 		projected = append(projected, span)
@@ -100,6 +101,10 @@ func HasOpenSuggestions(spans []automerge.Span) bool {
 		}
 
 		if markID(span.Marks, SuggestionInsertMark) != "" || markID(span.Marks, SuggestionDeleteMark) != "" {
+			return true
+		}
+
+		if len(formatMarkIDs(span.Marks)) > 0 {
 			return true
 		}
 	}
@@ -196,6 +201,7 @@ func WriteBodySpans(document *automerge.Document, spans []automerge.Span) error 
 
 	config.PerMarkExpands[SuggestionInsertMark] = automerge.MarkExpandNone
 	config.PerMarkExpands[SuggestionDeleteMark] = automerge.MarkExpandNone
+	registerFormatExpand(config.PerMarkExpands)
 
 	if err := text.UpdateSpans(inputs, config); err != nil {
 		return fmt.Errorf("cannot write collaboration spans: %w", err)
@@ -289,7 +295,8 @@ func SuggestionQuote(spans []automerge.Span, suggestionID string) string {
 		}
 
 		if markID(span.Marks, SuggestionInsertMark) != suggestionID &&
-			markID(span.Marks, SuggestionDeleteMark) != suggestionID {
+			markID(span.Marks, SuggestionDeleteMark) != suggestionID &&
+			!formatMarkMatches(span.Marks, suggestionID) {
 			continue
 		}
 
@@ -329,7 +336,8 @@ func SuggestionCursors(
 		splitID, splitKind := suggestionSplit(span)
 		matches := (span.Type == automerge.SpanTypeText &&
 			(markID(span.Marks, SuggestionInsertMark) == suggestionID ||
-				markID(span.Marks, SuggestionDeleteMark) == suggestionID)) ||
+				markID(span.Marks, SuggestionDeleteMark) == suggestionID ||
+				formatMarkMatches(span.Marks, suggestionID))) ||
 			(splitID == suggestionID && (splitKind == suggestionSplitDeletion || isTableStructure(span)))
 
 		if matches {
@@ -504,6 +512,13 @@ func decideSuggestionSpans(
 			changed = true
 		}
 
+		var formatChanged bool
+
+		span.Marks, formatChanged = decideFormatMarks(span.Marks, suggestionID, accept)
+		if formatChanged {
+			changed = true
+		}
+
 		next = append(next, span)
 	}
 
@@ -668,6 +683,7 @@ func normalizeSuggestionSpans(spans []automerge.Span) []automerge.Span {
 
 		if span.Type == automerge.SpanTypeText {
 			span.Marks = withoutMark(span.Marks, SuggestionDeleteMark)
+			span.Marks = revertFormatMarks(span.Marks)
 		}
 
 		normalized = appendMergingText(normalized, span)
@@ -708,6 +724,10 @@ func suggestionSpanIDs(spans []automerge.Span) map[string]bool {
 		}
 
 		if id := markID(span.Marks, SuggestionDeleteMark); id != "" {
+			ids[id] = true
+		}
+
+		for _, id := range formatMarkIDs(span.Marks) {
 			ids[id] = true
 		}
 	}

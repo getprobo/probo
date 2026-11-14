@@ -9279,6 +9279,24 @@ components:
         - CREATED_AT
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DocumentSuggestionOrderField
 
+    DocumentSuggestionFormatMark:
+      type: string
+      enum:
+        - BOLD
+        - ITALIC
+        - UNDERLINE
+        - STRIKE
+        - CODE
+        - LINK
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/collaboration.FormatSuggestionMark
+
+    DocumentSuggestionFormatAction:
+      type: string
+      enum:
+        - ADD
+        - REMOVE
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/collaboration.FormatSuggestionAction
+
     DocumentSuggestionTableOperation:
       type: string
       enum:
@@ -9781,6 +9799,42 @@ components:
           description: Zero-based occurrence of quote. Defaults to the first match.
 
     AddDocumentSuggestionChangeOutput:
+      type: object
+      required:
+        - suggestion
+      properties:
+        suggestion:
+          $ref: "#/components/schemas/DocumentSuggestion"
+
+    AddDocumentSuggestionFormatChangeInput:
+      type: object
+      required:
+        - id
+        - mark
+        - action
+        - quote
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Open suggestion ID
+        mark:
+          $ref: "#/components/schemas/DocumentSuggestionFormatMark"
+          description: Style to suggest
+        action:
+          $ref: "#/components/schemas/DocumentSuggestionFormatAction"
+          description: Add the style or remove it
+        quote:
+          type: string
+          description: Text to format. The match must not overlap another suggestion.
+        quote_occurrence:
+          type: integer
+          minimum: 0
+          description: Zero-based occurrence of quote. Defaults to the first match.
+        href:
+          type: string
+          description: Link address when mark is LINK and action is ADD.
+
+    AddDocumentSuggestionFormatChangeOutput:
       type: object
       required:
         - suggestion
@@ -21383,6 +21437,18 @@ tools:
       $ref: "#/components/schemas/AddDocumentSuggestionChangeInput"
     outputSchema:
       $ref: "#/components/schemas/AddDocumentSuggestionChangeOutput"
+  - name: addDocumentSuggestionFormatChange
+    title: Add Document Suggestion Format Change
+    description: "Suggest bold, italic, underline, strikethrough, code, or a link on quoted text. Accepting keeps the formatting and rejecting restores the text. Suggesting code also suggests removing the other styles on that text. Start an empty suggestion with startDocumentSuggestion first. Do not paint formatting marks with updateDocument."
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/AddDocumentSuggestionFormatChangeInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddDocumentSuggestionFormatChangeOutput"
   - name: addDocumentSuggestionTableChange
     title: Add Document Suggestion Table Change
     description: "Add a structural table redline to an open suggestion: insert or delete a row or column, insert a new table, or delete a table. Accepting the suggestion applies the change and rejecting it leaves the table as it was. Tables with merged cells only accept INSERT_TABLE and DELETE_TABLE. Start an empty suggestion with startDocumentSuggestion first. Do not edit tables with updateDocument while suggesting."

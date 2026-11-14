@@ -32,6 +32,7 @@ import {
   readStringAttribute,
 } from "./automergeMapping";
 import { automergeRemoteTransaction } from "./AutomergeSyncPlugin";
+import { linkEditorPluginKey } from "./LinkExtension";
 import {
   adjacentSuggestionId,
   isTextblockBoundary,
@@ -50,6 +51,16 @@ import {
   structureSignature,
   suggestionStructureMeta,
 } from "./suggestionStructure";
+import {
+  isFormatMark,
+  marksForSuggestionText,
+  reassignFormatMarks,
+  revertFormatSuggestion,
+  styleMarkStep,
+  type SuggestionStyleName,
+  suggestLink,
+  suggestStyleToggle,
+} from "./suggestionStyle";
 
 export const suggestionInsertName = "suggestionInsert";
 export const suggestionDeleteName = "suggestionDelete";
@@ -176,6 +187,10 @@ export function createSuggestingExtension(
               || transaction.getMeta("history$")
             ) {
               return true;
+            }
+            if (transaction.steps.some(styleMarkStep)) {
+              controller.current.onBlocked?.();
+              return false;
             }
             if (structureSignature(transaction.before) === structureSignature(transaction.doc)) {
               return true;
@@ -369,12 +384,92 @@ function suggestionFocusDecorations(doc: ProseMirrorNode, id: string) {
         ? "bg-green-3"
         : mark.type.name === suggestionDeleteName
           ? "bg-red-3"
-          : null;
+          : isFormatMark(mark)
+            ? mark.attrs.action === "remove" ? "bg-red-3" : "bg-green-3"
+            : null;
       if (!focused) continue;
       decorations.push(Decoration.inline(pos, pos + node.nodeSize, { class: focused }));
     }
   });
   return DecorationSet.create(doc, decorations);
+}
+
+const suggestingStyleKeys: Record<string, SuggestionStyleName> = {
+  b: "bold",
+  i: "italic",
+  u: "underline",
+  e: "code",
+};
+
+function suggestingStyleKey(key: string, shift: boolean): SuggestionStyleName | null {
+  if (!shift && key in suggestingStyleKeys) return suggestingStyleKeys[key];
+  if (shift && key === "s") return "strike";
+  return null;
+}
+
+export function suggestingControllerFrom(editor: { storage: object }): SuggestingController | null {
+  const storage = editor.storage as { documentSuggesting?: SuggestingStorage };
+  return storage.documentSuggesting?.controller?.current ?? null;
+}
+
+// applySuggestingStyle turns a bold, italic, or other style toggle into a
+// suggestion. An empty selection returns false so the stored mark still
+// applies to the next typed character.
+export function applySuggestingStyle(
+  view: EditorView,
+  controller: SuggestingController,
+  style: SuggestionStyleName,
+): boolean {
+  return applyFormatChange(view, controller, (state, id, from, to) =>
+    suggestStyleToggle(state, id, style, from, to),
+  );
+}
+
+// applySuggestingLink suggests adding or removing a link. A null href removes it.
+export function applySuggestingLink(
+  view: EditorView,
+  controller: SuggestingController,
+  href: string | null,
+): boolean {
+  return applyFormatChange(view, controller, (state, id, from, to) =>
+    suggestLink(state, id, from, to, href),
+  );
+}
+
+function applyFormatChange(
+  view: EditorView,
+  controller: SuggestingController,
+  change: (state: EditorState, id: string, from: number, to: number) => Transaction | null,
+): boolean {
+  if (!controller.enabled || view.state.selection.empty) return false;
+  let id = suggestionIdForInput(view.state, controller);
+  if (!id) {
+    void controller.onNeedId();
+    id = controller.suggestionId;
+  }
+  if (!id) {
+    controller.onBlocked?.();
+    return true;
+  }
+  const { from, to } = view.state.selection;
+  const tr = change(view.state, id, from, to);
+  if (!tr) {
+    controller.onBlocked?.();
+    return true;
+  }
+  tr.setMeta(suggestingPluginKey, { input: true });
+  view.dispatch(tr.scrollIntoView());
+  return true;
+}
+
+function linkHrefInSelection(state: EditorState): string {
+  const { from, to } = state.selection;
+  let href = "";
+  state.doc.nodesBetween(from, to, (node) => {
+    const link = node.marks.find(mark => mark.type.name === "link");
+    if (typeof link?.attrs.href === "string" && link.attrs.href !== "") href = link.attrs.href;
+  });
+  return href;
 }
 
 function applySuggestingKey(
@@ -383,8 +478,18 @@ function applySuggestingKey(
   event: KeyboardEvent,
 ): boolean {
   if (!controller.enabled) return false;
-  if ((event.metaKey || event.ctrlKey) && ["b", "i", "u", "e", "k"].includes(event.key.toLowerCase())) {
-    return true;
+  if (event.metaKey || event.ctrlKey) {
+    const key = event.key.toLowerCase();
+    const style = suggestingStyleKey(key, event.shiftKey);
+    if (style && !event.altKey) {
+      if (view.state.selection.empty) return false;
+      return applySuggestingStyle(view, controller, style);
+    }
+    if (key === "k" && !event.shiftKey && !event.altKey) {
+      if (view.state.selection.empty) return true;
+      view.dispatch(view.state.tr.setMeta(linkEditorPluginKey, linkHrefInSelection(view.state)));
+      return true;
+    }
   }
   if (event.key === "Enter" && !event.shiftKey) {
     return applySuggestingEnter(view, controller);
@@ -826,9 +931,7 @@ function sharedEdges(before: string, after: string): { prefix: number; suffix: n
 }
 
 function insertSuggestionText(tr: Transaction, cursor: number, text: string, id: string): number {
-  const inherited = tr.doc.resolve(cursor).marks().filter(mark =>
-    mark.type.name !== suggestionInsertName && mark.type.name !== suggestionDeleteName,
-  );
+  const inherited = marksForSuggestionText(tr.doc.resolve(cursor).marks());
   const mark = tr.doc.type.schema.marks[suggestionInsertName].create({ id });
   tr.replaceWith(cursor, cursor, tr.doc.type.schema.text(text, [...inherited, mark]));
   return cursor + text.length;
@@ -940,15 +1043,15 @@ export function reassignSuggestionId(
   editor.state.doc.descendants((node, pos) => {
     if (node.isTextblock && suggestionSplitId(node) === fromId) blocks.push(pos);
     if (!node.isText) return;
-    if (!node.marks.some(mark => mark.attrs.id === fromId && isSuggestionMark(mark))) return;
+    if (!node.marks.some(mark => mark.attrs.id === fromId && (isSuggestionMark(mark) || isFormatMark(mark)))) return;
     ranges.push({
       from: pos,
       to: pos + node.nodeSize,
-      marks: node.marks.map(mark =>
+      marks: reassignFormatMarks(node.marks.map(mark =>
         mark.attrs.id === fromId && isSuggestionMark(mark)
           ? mark.type.create({ id: toId })
           : mark,
-      ),
+      ), fromId, toId),
     });
   });
   const tr = editor.state.tr;
@@ -984,6 +1087,7 @@ export function discardSuggestionId(
   const rewrites: Array<{ from: number; to: number; marks: readonly ProseMirrorMark[] }> = [];
   const removals: Array<{ from: number; to: number }> = [];
   const blocks: number[] = [];
+  let hasFormat = false;
   editor.state.doc.descendants((node, pos) => {
     if (node.isTextblock && suggestionSplitId(node) === id) blocks.push(pos);
     if (!node.isText) return;
@@ -993,6 +1097,7 @@ export function discardSuggestionId(
     const deleted = node.marks.some(mark =>
       mark.type.name === suggestionDeleteName && mark.attrs.id === id,
     );
+    if (node.marks.some(mark => isFormatMark(mark) && mark.attrs.id === id)) hasFormat = true;
     if (!inserted && !deleted) return;
     const from = pos;
     const to = pos + node.nodeSize;
@@ -1009,7 +1114,7 @@ export function discardSuggestionId(
     });
   });
   const structural = structuralSuggestionNodes(editor.state.doc, id).length > 0;
-  if (rewrites.length === 0 && removals.length === 0 && blocks.length === 0 && !structural) return;
+  if (rewrites.length === 0 && removals.length === 0 && blocks.length === 0 && !structural && !hasFormat) return;
   const tr = editor.state.tr;
   for (const range of rewrites.reverse()) {
     rewriteText(tr, range.from, range.to, range.marks);
@@ -1030,6 +1135,7 @@ export function discardSuggestionId(
     });
   }
   discardStructuralSuggestion(tr, id);
+  revertFormatSuggestion(tr, id);
   tr.setMeta(suggestingPluginKey, { input: true });
   tr.setMeta("addToHistory", false);
   editor.view.dispatch(tr);
@@ -1097,7 +1203,9 @@ function hasDeletion(marks: readonly ProseMirrorMark[]): boolean {
 function suggestionIdAt(view: EditorView, pos: number): string | null {
   const marks = view.state.doc.resolve(pos).marks();
   const mark = marks.find(item =>
-    item.type.name === suggestionInsertName || item.type.name === suggestionDeleteName,
+    item.type.name === suggestionInsertName
+    || item.type.name === suggestionDeleteName
+    || isFormatMark(item),
   );
   const id = mark ? markAttr(mark, "id") : null;
   return typeof id === "string" && id !== "" ? id : null;

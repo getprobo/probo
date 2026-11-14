@@ -161,7 +161,9 @@ func (r *Resolver) documentReviewError(ctx context.Context, message string, err 
 		errors.Is(err, collaboration.ErrTableShape),
 		errors.Is(err, collaboration.ErrTableLastRow),
 		errors.Is(err, collaboration.ErrTableLastColumn),
-		errors.Is(err, collaboration.ErrTableOperation):
+		errors.Is(err, collaboration.ErrTableOperation),
+		errors.Is(err, collaboration.ErrSuggestionFormat),
+		errors.Is(err, collaboration.ErrSuggestionHref):
 		return gqlx.Invalid(ctx, err)
 	case errors.Is(err, probo.ErrDocumentSuggestionClosed):
 		return gqlx.Conflict(ctx, err)
