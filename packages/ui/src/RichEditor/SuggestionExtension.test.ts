@@ -34,7 +34,11 @@ import { describe, expect, it } from "vitest";
 import { richEditorCollaborationExtensions } from "./RichEditor";
 import {
   createSuggestingExtension,
+  discardSuggestionId,
   reassignSuggestionId,
+  releaseSuggestionId,
+  retainSuggestionId,
+  settledSuggestionId,
   type SuggestingController,
   suggestionDeleteName,
   suggestionInputTransaction,
@@ -564,6 +568,22 @@ describe("suggesting input", () => {
       suggestionSplit: "server",
       splitKind: "insertion",
     });
+  });
+
+  it("forgets a suggestion id once its upload settles", () => {
+    const editor = { isDestroyed: true };
+    retainSuggestionId("local:upload", 2);
+    reassignSuggestionId(editor, "local:upload", "server:upload");
+    discardSuggestionId(editor, "server:upload");
+    expect(settledSuggestionId("local:upload")).toBeNull();
+
+    reassignSuggestionId(editor, "local:other", "server:other");
+    expect(settledSuggestionId("local:other")).toBe("local:other");
+
+    releaseSuggestionId("local:upload");
+    expect(settledSuggestionId("local:upload")).toBeNull();
+    releaseSuggestionId("local:upload");
+    expect(settledSuggestionId("local:upload")).toBe("local:upload");
   });
 });
 
