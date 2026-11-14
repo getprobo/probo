@@ -477,7 +477,7 @@ func (s *DocumentService) blockChange(
 		file := &coredata.File{}
 
 		err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-			return file.LoadByID(ctx, conn, scope, req.FileID)
+			return file.LoadActiveByID(ctx, conn, scope, req.FileID)
 		})
 		if err != nil {
 			return collaboration.BlockChange{}, err

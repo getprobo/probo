@@ -274,6 +274,32 @@ describe("suggestion preview", () => {
     expect(preview?.parts).toEqual([]);
     expect(preview?.structure).toBeNull();
   });
+
+  it("previews an inserted divider", () => {
+    const leafSchema = new Schema({
+      nodes: {
+        doc: { content: "block+" },
+        paragraph: {
+          content: "text*",
+          group: "block",
+          attrs: { unknownAttrs: { default: null } },
+        },
+        horizontalRule: { group: "block", attrs: { unknownAttrs: { default: null } } },
+        text: { group: "inline" },
+      },
+    });
+    const doc = leafSchema.node("doc", null, [
+      leafSchema.node("horizontalRule", {
+        unknownAttrs: { suggestionSplit: id, splitKind: "insertion" },
+      }),
+    ]);
+
+    expect(collectSuggestionAnchors(doc).get(id)?.structure).toEqual({
+      action: "add",
+      target: "divider",
+      text: "",
+    });
+  });
 });
 
 const tableSchema = new Schema({

@@ -48,6 +48,38 @@ func TestApplyDirectText_BesideOpenSuggestion(t *testing.T) {
 	assert.True(t, HasOpenSuggestions(spans))
 }
 
+func TestApplyDirectTable_RefusesAQuoteInsideASuggestion(t *testing.T) {
+	t.Parallel()
+
+	document := suggestionDocument(t, tableDocumentJSON())
+	require.NoError(t, ApplySuggestionFormat(document, "s-bold", FormatSuggestion{
+		Mark:   FormatSuggestionBold,
+		Action: FormatSuggestionAdd,
+		Quote:  "Read",
+	}))
+
+	original := bodySpans(t, document)
+
+	err := ApplyDirectTable(document, TableSuggestion{
+		Operation: TableSuggestionInsertColumn,
+		Quote:     "Read",
+	})
+	require.ErrorIs(t, err, ErrSuggestionOverlaps)
+	assert.True(t, spansEqual(original, bodySpans(t, document)))
+
+	err = ApplyDirectTable(document, TableSuggestion{
+		Operation: TableSuggestionDeleteRow,
+		Quote:     "Read",
+	})
+	require.ErrorIs(t, err, ErrSuggestionOverlaps)
+	assert.True(t, spansEqual(original, bodySpans(t, document)))
+
+	require.NoError(t, ApplyDirectTable(document, TableSuggestion{
+		Operation: TableSuggestionInsertRow,
+		Quote:     "Right",
+	}))
+}
+
 func TestApplyDirectText_RefusesOverlap(t *testing.T) {
 	t.Parallel()
 

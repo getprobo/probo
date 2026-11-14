@@ -144,6 +144,10 @@ function stringMatrix(this: IExecuteFunctions, itemIndex: number, field: string,
 		throw new NodeOperationError(this.getNode(), `${field} must be a JSON array`, { itemIndex });
 	}
 
+	if (nested && parsed.length === 0) {
+		throw new NodeOperationError(this.getNode(), 'Rows must hold at least one row', { itemIndex });
+	}
+
 	if (!nested) {
 		return parsed.map((cell) => {
 			if (typeof cell !== 'string') {

@@ -136,7 +136,7 @@ func (r *Resolver) authorizeDocumentChange(
 
 	if derefGID(target) == gid.Nil {
 		v := validator.New()
-		v.Check(gid.Nil, field, validator.Required())
+		v.Check(nil, field, validator.Required())
 
 		return nil, r.documentReviewError(ctx, "cannot change document", v.Error())
 	}
