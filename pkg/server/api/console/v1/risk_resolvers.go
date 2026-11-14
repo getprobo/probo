@@ -242,13 +242,7 @@ func (r *mutationResolver) PublishRiskList(ctx context.Context, input types.Publ
 		input.Minor,
 	)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-			return nil, gqlx.Conflict(ctx, err)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot publish risk list", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, r.generatedPublishError(ctx, "cannot publish risk list", err)
 	}
 
 	return &types.PublishRiskListPayload{

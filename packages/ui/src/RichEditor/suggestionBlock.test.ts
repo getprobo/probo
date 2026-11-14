@@ -111,6 +111,7 @@ describe("suggestCommand", () => {
     expect(restored.doc.childCount).toBe(1);
     expect(restored.doc.firstChild?.type.name).toBe("paragraph");
     expect(restored.doc.textContent).toBe("Hello");
+    expect(blockMark(restored)).toBeNull();
   });
 
   it("records every paragraph a selection turns into headings", () => {

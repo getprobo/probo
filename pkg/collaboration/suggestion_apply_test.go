@@ -22,6 +22,7 @@ package collaboration
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -78,6 +79,18 @@ func TestApplyDirectTable_RefusesAQuoteInsideASuggestion(t *testing.T) {
 		Operation: TableSuggestionInsertRow,
 		Quote:     "Right",
 	}))
+
+	spans, err := BodySpans(document)
+	require.NoError(t, err)
+	assert.True(t, HasOpenSuggestions(spans))
+	assert.Contains(t, textMarks(spans, "Read")["suggestion-format-strong"], "s-bold")
+	assert.Equal(t, 3, countBlocks(spans, blockTypeTableRow))
+
+	accepted, err := materialize(context.Background(), document)
+	require.NoError(t, err)
+	assert.Contains(t, accepted, "Read")
+	assert.Contains(t, accepted, "Right")
+	assert.Equal(t, 3, strings.Count(accepted, `"type":"tableRow"`))
 }
 
 func TestApplyDirectText_RefusesOverlap(t *testing.T) {

@@ -139,6 +139,20 @@ func (r *mutationResolver) setDocumentCommentThread(
 	return types.NewDocumentCommentThread(thread), nil
 }
 
+func (r *Resolver) generatedPublishError(ctx context.Context, message string, err error) error {
+	if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+		return gqlx.Conflict(ctx, err)
+	}
+
+	if errors.Is(err, collaboration.ErrOpenSuggestions) {
+		return gqlx.Conflictf(ctx, "resolve open suggestions before publishing")
+	}
+
+	r.logger.ErrorCtx(ctx, message, log.Error(err))
+
+	return gqlx.Internal(ctx)
+}
+
 func (r *Resolver) documentReviewError(ctx context.Context, message string, err error) error {
 	switch {
 	case errors.Is(err, coredata.ErrResourceNotFound):

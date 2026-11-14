@@ -278,13 +278,7 @@ func (r *mutationResolver) PublishBusinessFunctionList(ctx context.Context, inpu
 		input.Minor,
 	)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-			return nil, gqlx.Conflict(ctx, err)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot publish business function list", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, r.generatedPublishError(ctx, "cannot publish business function list", err)
 	}
 
 	return &types.PublishBusinessFunctionListPayload{

@@ -237,13 +237,7 @@ func (r *mutationResolver) PublishAiSystemList(ctx context.Context, input types.
 		input.Minor,
 	)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-			return nil, gqlx.Conflict(ctx, err)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot publish ai system list", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, r.generatedPublishError(ctx, "cannot publish ai system list", err)
 	}
 
 	return &types.PublishAiSystemListPayload{

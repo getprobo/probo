@@ -893,13 +893,7 @@ func (r *mutationResolver) PublishRiskAnalysis(ctx context.Context, input types.
 		input.Minor,
 	)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-			return nil, gqlx.Conflict(ctx, err)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot publish risk analysis", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, r.generatedPublishError(ctx, "cannot publish risk analysis", err)
 	}
 
 	return &types.PublishRiskAnalysisPayload{
