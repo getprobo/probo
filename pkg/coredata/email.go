@@ -326,12 +326,29 @@ func ResetStaleProcessingEmails(
 ) error {
 	q := `
 UPDATE emails
-SET status = 'PENDING', processing_started_at = NULL, updated_at = NOW()
-WHERE status = 'PROCESSING'
-	AND processing_started_at < NOW() - $1::interval
+SET
+    status = CASE
+        WHEN attempt_count >= max_attempts THEN @failed_status
+        ELSE @pending_status
+    END,
+    processing_started_at = NULL,
+    last_error = @last_error,
+    updated_at = NOW()
+WHERE status = @processing_status
+    AND processing_started_at < NOW() - @stale_after::interval
 `
 
-	_, err := conn.Exec(ctx, q, staleAfter)
+	_, err := conn.Exec(
+		ctx,
+		q,
+		pgx.StrictNamedArgs{
+			"failed_status":     EmailStatusFailed,
+			"pending_status":    EmailStatusPending,
+			"processing_status": EmailStatusProcessing,
+			"last_error":        "email processing lease expired",
+			"stale_after":       staleAfter,
+		},
+	)
 	if err != nil {
 		return fmt.Errorf("cannot reset stale processing emails: %w", err)
 	}
