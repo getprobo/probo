@@ -76,7 +76,13 @@ func mergePreservingSuggestions(before []automerge.Span, after []automerge.SpanI
 
 	for _, step := range alignment {
 		switch {
-		case step.old >= 0 && step.new >= 0 && oldText[step.old] == newText[step.new]:
+		// The incoming content of a suggested block is its reader projection,
+		// which drops the redline, so an unchanged suggested block keeps its
+		// stored spans. Every other block takes the new content, including
+		// type, mark, and embed changes that leave the text alone.
+		case step.old >= 0 && step.new >= 0 &&
+			oldText[step.old] == newText[step.new] &&
+			blockHasSuggestion(oldBlocks[step.old]):
 			next = append(next, oldBlocks[step.old]...)
 		case step.old >= 0 && blockHasSuggestion(oldBlocks[step.old]):
 			return nil, ErrSuggestionOverlaps

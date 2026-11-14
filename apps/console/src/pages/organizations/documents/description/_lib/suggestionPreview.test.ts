@@ -114,6 +114,21 @@ describe("suggestion preview", () => {
     expect(preview?.structure).toEqual({ action: "format", target: "heading", text: "2" });
     expect(preview?.inserted).toBe("");
     expect(preview?.parts).toEqual([]);
+
+    const paragraph = headingSchema.node("doc", null, [
+      headingSchema.node("paragraph", {
+        unknownAttrs: {
+          suggestionBlock: JSON.stringify({
+            id,
+            type: "heading",
+            parents: [],
+            attrs: { level: 2 },
+          }),
+        },
+      }, [headingSchema.text("Scope")]),
+    ]);
+    expect(collectSuggestionAnchors(paragraph).get(id)?.structure)
+      .toEqual({ action: "format", target: "paragraph", text: "" });
   });
 
   it("keeps the letters between two deletions", () => {

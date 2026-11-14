@@ -250,6 +250,10 @@ func newTableCmd(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("--row is required with INSERT_TABLE")
 			}
 
+			if flagBefore && !insertsCells && flagOperation != "INSERT_TABLE" {
+				return fmt.Errorf("--before only applies to insert operations")
+			}
+
 			input, err := target.input()
 			if err != nil {
 				return err

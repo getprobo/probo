@@ -422,6 +422,7 @@ function formatStructureLabel(t: TFunction, structure: NonNullable<SuggestionPre
   if (structure.target === "heading") {
     return t("documentDescriptionPage.review.formatHeading", { level: structure.text });
   }
+  if (structure.target === "paragraph") return t("documentDescriptionPage.review.formatParagraph");
   if (structure.target === "quote") return t("documentDescriptionPage.review.formatQuote");
   if (structure.target === "code") return t("documentDescriptionPage.review.formatCode");
   if (structure.target === "task") {

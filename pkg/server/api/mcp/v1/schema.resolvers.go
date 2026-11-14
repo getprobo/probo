@@ -2583,6 +2583,7 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 				errors.Is(err, collaboration.ErrDocumentCollaborationStale),
 				errors.Is(err, collaboration.ErrDocumentCollaborationNotFound),
 				errors.Is(err, collaboration.ErrOpenSuggestions),
+				errors.Is(err, collaboration.ErrSuggestionOverlaps),
 				errors.Is(err, prosemirror.ErrFragmentEditAmbiguous):
 				return nil, types.UpdateDocumentOutput{}, fmt.Errorf("cannot update document: %w", err)
 			}

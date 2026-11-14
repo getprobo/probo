@@ -19,15 +19,17 @@
 // SOFTWARE.
 
 import { getSchema } from "@tiptap/core";
-import { EditorState } from "@tiptap/pm/state";
+import { EditorState, TextSelection } from "@tiptap/pm/state";
 import { describe, expect, it } from "vitest";
 
 import { richEditorCollaborationExtensions } from "./RichEditor";
 import {
   headingCommand,
   listCommand,
+  paragraphCommand,
   suggestCommand,
   suggestionBlockAttr,
+  suggestTurnInto,
 } from "./suggestionBlock";
 
 const schema = getSchema(richEditorCollaborationExtensions);
@@ -66,7 +68,56 @@ describe("suggestCommand", () => {
     expect(applied.doc.firstChild?.type.name).toBe("bulletList");
     const item = applied.doc.firstChild?.firstChild;
     const unknown = item?.attrs.unknownAttrs as Record<string, string> | null;
-    const mark = JSON.parse(unknown?.[suggestionBlockAttr] ?? "null") as { type: string };
-    expect(mark.type).toBe("paragraph");
+    const mark = JSON.parse(unknown?.[suggestionBlockAttr] ?? "null") as { id: string; type: string };
+    expect(mark).toMatchObject({ id: "sug-2", type: "paragraph" });
+  });
+
+  it("keeps the other items in their list when one becomes text", () => {
+    const item = (text: string) => schema.node("listItem", null, [schema.node("paragraph", null, [schema.text(text)])]);
+    const list = schema.node("bulletList", null, [item("One"), item("Two")]);
+    const state = EditorState.create({ doc: schema.node("doc", null, [list]), schema });
+    const next = suggestTurnInto(state, "sug-4", 0, list, paragraphCommand(), "textblock");
+    expect(next).not.toBeNull();
+    const applied = state.apply(next!);
+    const types: string[] = [];
+    applied.doc.forEach(node => types.push(node.type.name));
+    expect(types).toEqual(["paragraph", "bulletList"]);
+    expect(applied.doc.child(1).textContent).toBe("Two");
+  });
+
+  it("wraps every paragraph of a quote in the new list", () => {
+    const quote = schema.node("blockquote", null, [
+      schema.node("paragraph", null, [schema.text("One")]),
+      schema.node("paragraph", null, [schema.text("Two")]),
+    ]);
+    const state = EditorState.create({ doc: schema.node("doc", null, [quote]), schema });
+    const next = suggestTurnInto(state, "sug-5", 0, quote, listCommand("bulletList"), "wrapper");
+    expect(next).not.toBeNull();
+    const applied = state.apply(next!);
+    expect(applied.doc.childCount).toBe(1);
+    expect(applied.doc.firstChild?.type.name).toBe("bulletList");
+    expect(applied.doc.firstChild?.childCount).toBe(2);
+  });
+
+  it("records every paragraph a selection turns into headings", () => {
+    const doc = schema.node("doc", null, [
+      schema.node("paragraph", null, [schema.text("One")]),
+      schema.node("paragraph", null, [schema.text("Two")]),
+    ]);
+    const base = EditorState.create({ doc, schema });
+    const state = base.apply(base.tr.setSelection(TextSelection.create(base.doc, 1, base.doc.content.size - 1)));
+    const next = suggestCommand(state, "sug-3", headingCommand(1));
+    expect(next).not.toBeNull();
+    const applied = state.apply(next!);
+    const marks: Array<{ id: string; type: string }> = [];
+    applied.doc.forEach((node) => {
+      const unknown = node.attrs.unknownAttrs as Record<string, string> | null;
+      const raw = unknown?.[suggestionBlockAttr];
+      if (raw) marks.push(JSON.parse(raw) as { id: string; type: string });
+    });
+    expect(marks).toEqual([
+      expect.objectContaining({ id: "sug-3", type: "paragraph" }),
+      expect.objectContaining({ id: "sug-3", type: "paragraph" }),
+    ]);
   });
 });

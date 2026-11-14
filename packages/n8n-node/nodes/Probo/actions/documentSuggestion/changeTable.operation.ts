@@ -20,7 +20,7 @@
 
 import { NodeOperationError, type IExecuteFunctions, type INodeExecutionData, type INodeProperties } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
-import { changeModeFields, changeSelection, changeTarget } from './changeTarget';
+import { changeModeFields, changeOccurrence, changeSelection, changeTarget } from './changeTarget';
 
 const show = { resource: ['documentSuggestion'], operation: ['changeTable'] };
 
@@ -55,7 +55,7 @@ export const description: INodeProperties[] = [
 		displayName: 'Quote Occurrence',
 		name: 'quoteOccurrence',
 		type: 'number',
-		typeOptions: { minValue: 0 },
+		typeOptions: { minValue: 0, numberPrecision: 0 },
 		default: 0,
 		displayOptions: { show },
 	},
@@ -95,7 +95,7 @@ export const description: INodeProperties[] = [
 export async function execute(this: IExecuteFunctions, itemIndex: number): Promise<INodeExecutionData> {
 	const operation = this.getNodeParameter('tableOperation', itemIndex) as string;
 	const quote = this.getNodeParameter('quote', itemIndex) as string;
-	const quoteOccurrence = this.getNodeParameter('quoteOccurrence', itemIndex, 0) as number;
+	const quoteOccurrence = changeOccurrence.call(this, itemIndex);
 	if (quote === '') {
 		throw new NodeOperationError(this.getNode(), 'Quote is required', { itemIndex });
 	}

@@ -586,6 +586,7 @@
       "styleCode": "code",
       "styleLink": "lien",
       "formatHeading": "Format : Titre {{level}}",
+      "formatParagraph": "Format : texte normal",
       "formatQuote": "Format : citation",
       "formatCode": "Format : code",
       "listAdd": "Format de liste : ajouter à la liste",

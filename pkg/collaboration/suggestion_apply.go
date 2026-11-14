@@ -22,6 +22,7 @@ package collaboration
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"sync/atomic"
@@ -42,42 +43,40 @@ func syntheticSuggestionID() string {
 }
 
 // ApplyDirectText writes quote's replacement with no suggestion marks. A
-// newline inside one block becomes a hard break. A newline that replaces a
-// paragraph boundary stays a paragraph split, because the suggestion painter
-// already treats that boundary as a block.
+// newline inside one block becomes a hard break, except in a code block,
+// which keeps it as text. A newline that replaces a paragraph boundary stays
+// a paragraph split, because the suggestion painter already treats that
+// boundary as a block.
 func ApplyDirectText(
 	document *automerge.Document,
 	quote string,
 	replacement string,
 	occurrence int,
 ) error {
-	inserted := ""
+	split := false
 
 	err := applyThenAccept(document, func(id string) error {
-		spans, err := BodySpans(document)
-		if err != nil {
+		if err := ApplySuggestionEdit(document, id, quote, replacement, occurrence); err != nil {
 			return err
 		}
 
-		visible, _, _ := suggestionUnits(spans)
-		if _, _, err := quoteRange(visible, quote, occurrence); err != nil {
-			return err
+		if !strings.Contains(replacement, "\n") || strings.Contains(quote, "\n") {
+			return nil
 		}
 
-		prefix, suffix := sharedUTF16Edges(quote, replacement)
-		inserted = edgeTrimmed(replacement, prefix, suffix)
+		var err error
 
-		return ApplySuggestionEdit(document, id, quote, replacement, occurrence)
-	})
-	if err != nil {
+		split, err = splitHardBreaks(document, id)
+
 		return err
-	}
+	})
 
-	if !strings.Contains(inserted, "\n") || strings.Contains(quote, "\n") {
+	// An edit that only adds a line break leaves no marked text to accept.
+	if split && errors.Is(err, ErrSuggestionUnchanged) {
 		return nil
 	}
 
-	return splitHardBreaks(document, inserted)
+	return err
 }
 
 // ApplyDirectFormat sets or clears a style mark and leaves no suggestion mark.
@@ -192,75 +191,72 @@ func applyThenAccept(document *automerge.Document, paint func(id string) error) 
 	return nil
 }
 
-// splitHardBreaks turns newlines that were spliced as characters into hard-break
-// embeds. The quote stayed inside one block, so the newline is not a new paragraph.
-func splitHardBreaks(document *automerge.Document, inserted string) error {
+// splitHardBreaks turns the newlines this edit spliced as characters into
+// hard-break embeds. Only text carrying the edit's own insertion mark is
+// split, so the same text elsewhere in the document is left alone.
+func splitHardBreaks(document *automerge.Document, id string) (bool, error) {
 	spans, err := BodySpans(document)
 	if err != nil {
-		return err
+		return false, err
 	}
 
-	next, ok := spansWithHardBreaks(spans, inserted)
+	next, ok := spansWithHardBreaks(spans, id)
 	if !ok {
-		return nil
+		return false, nil
 	}
 
 	if err := WriteBodySpans(document, next); err != nil {
-		return fmt.Errorf("cannot write hard breaks: %w", err)
+		return false, fmt.Errorf("cannot write hard breaks: %w", err)
 	}
 
-	return nil
+	return true, nil
 }
 
-func spansWithHardBreaks(spans []automerge.Span, inserted string) ([]automerge.Span, bool) {
-	parents := []string(nil)
+func spansWithHardBreaks(spans []automerge.Span, id string) ([]automerge.Span, bool) {
+	var (
+		parents []string
+		code    bool
+		changed bool
+	)
 
-	for index, span := range spans {
+	next := make([]automerge.Span, 0, len(spans))
+
+	for _, span := range spans {
 		if span.Type == automerge.SpanTypeBlock {
 			if !blockIsEmbed(span) {
 				parents = blockPath(span)
+				code = blockType(span) == blockTypeCode
 			}
 
+			next = append(next, span)
+
 			continue
 		}
 
-		if span.Type != automerge.SpanTypeText || !strings.Contains(span.Text, inserted) {
+		split := span.Type == automerge.SpanTypeText &&
+			!code &&
+			strings.Contains(span.Text, "\n") &&
+			markID(span.Marks, SuggestionInsertMark) == id
+		if !split {
+			next = append(next, span)
+
 			continue
 		}
 
-		at := strings.Index(span.Text, inserted)
-		before := span.Text[:at]
-		after := span.Text[at+len(inserted):]
-		parts := strings.Split(inserted, "\n")
-		replacement := make([]automerge.Span, 0, len(parts)*2+2)
-
-		if before != "" {
-			replacement = append(replacement, textSpan(before, span.Marks))
-		}
-
-		for partIndex, part := range parts {
+		for partIndex, part := range strings.Split(span.Text, "\n") {
 			if partIndex > 0 {
-				replacement = append(replacement, hardBreakSpan(parents))
+				next = append(next, hardBreakSpan(parents))
 			}
 
 			if part != "" {
-				replacement = append(replacement, textSpan(part, span.Marks))
+				next = append(next, textSpan(part, span.Marks))
 			}
 		}
 
-		if after != "" {
-			replacement = append(replacement, textSpan(after, span.Marks))
-		}
-
-		next := make([]automerge.Span, 0, len(spans)+len(replacement))
-		next = append(next, spans[:index]...)
-		next = append(next, replacement...)
-		next = append(next, spans[index+1:]...)
-
-		return next, true
+		changed = true
 	}
 
-	return nil, false
+	return next, changed
 }
 
 func textSpan(text string, marks map[string]any) automerge.Span {

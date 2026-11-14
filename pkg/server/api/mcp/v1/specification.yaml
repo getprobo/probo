@@ -21541,7 +21541,7 @@ tools:
     description: "Replace quoted text. mode APPLY writes it. mode SUGGEST stores it on an open suggestion started with startDocumentSuggestion: the quote becomes a deletion and the replacement an insertion. An open suggestion elsewhere does not block APPLY. A range that already holds a suggestion is refused. Do not send ProseMirror through updateDocument for this change."
     hints:
       readonly: false
-      destructive: false
+      destructive: true
       idempotent: false
       openWorld: false
     inputSchema:
@@ -21565,7 +21565,7 @@ tools:
     description: "Insert or delete a table row, column, or table. mode APPLY writes the table. mode SUGGEST stores the change on an open suggestion: accepting applies it and rejecting leaves the table as it was. Tables with merged cells only accept INSERT_TABLE and DELETE_TABLE. Do not edit tables with updateDocument."
     hints:
       readonly: false
-      destructive: false
+      destructive: true
       idempotent: false
       openWorld: false
     inputSchema:
@@ -21577,7 +21577,7 @@ tools:
     description: "Change a heading, list, quote, code block, divider, image, file, or mention. mode APPLY writes the block. mode SUGGEST stores it on an open suggestion as its own card, separate from any text card. Upload a file first, then pass file_id. Do not send ProseMirror through updateDocument for these changes."
     hints:
       readonly: false
-      destructive: false
+      destructive: true
       idempotent: false
       openWorld: false
     inputSchema:

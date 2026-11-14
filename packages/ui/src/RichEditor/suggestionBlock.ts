@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { lift, setBlockType, wrapIn } from "@tiptap/pm/commands";
-import type { Node as ProseMirrorNode, NodeType, Schema } from "@tiptap/pm/model";
+import { Fragment, type Node as ProseMirrorNode, type NodeType, type Schema } from "@tiptap/pm/model";
 import { liftListItem, wrapInList } from "@tiptap/pm/schema-list";
 import { type Command, type EditorState, TextSelection, type Transaction } from "@tiptap/pm/state";
 
@@ -66,16 +66,38 @@ export function suggestCommand(
     return state.tr.setMeta(suggestionStructureMeta, true);
   }
 
-  const after = blockAt(produced.doc, produced.selection.from);
-  if (after) {
-    const oldPos = produced.mapping.invert().map(Math.min(after.pos + 1, state.doc.content.size));
-    const before = blockAt(state.doc, oldPos);
-    if (before && blockChanged(before.identity, after.identity)) {
-      stampBlock(produced, after.pos, id, before.identity);
-    }
+  for (const changed of changedBlocks(state, produced)) {
+    stampBlock(produced, changed.pos, id, changed.before);
   }
   produced.setMeta(suggestionStructureMeta, true);
   return produced.scrollIntoView();
+}
+
+// changedBlocks finds every block the command retyped in the selection, with
+// the identity it had before, so rejecting the suggestion restores each one.
+function changedBlocks(
+  state: EditorState,
+  produced: Transaction,
+): Array<{ pos: number; before: SuggestionBlockMark }> {
+  const result: Array<{ pos: number; before: SuggestionBlockMark }> = [];
+  const seen = new Set<number>();
+  const inverse = produced.mapping.invert();
+  const visit = (pos: number) => {
+    const after = blockAt(produced.doc, pos);
+    if (!after || seen.has(after.pos)) return;
+    seen.add(after.pos);
+    const before = blockAt(state.doc, inverse.map(Math.min(after.pos + 1, produced.doc.content.size)));
+    if (before && blockChanged(before.identity, after.identity)) {
+      result.push({ pos: after.pos, before: before.identity });
+    }
+  };
+
+  const { from, to } = produced.selection;
+  visit(from);
+  produced.doc.nodesBetween(from, to, (node, pos) => {
+    if (node.isTextblock) visit(pos + 1);
+  });
+  return result;
 }
 
 export function paragraphCommand(): Command {
@@ -168,6 +190,8 @@ export function suggestTurnInto(
   return suggestCommand(state, id, (current, dispatch) => {
     const schema = current.schema;
     const tr = current.tr;
+    // A new wrapper takes every paragraph that came out of the old one.
+    let wrappedSize = 0;
     if (targetKind === "textblock") {
       const { targetContent, remaining } = decomposeWrapper(node);
       if (!targetContent) return false;
@@ -181,20 +205,30 @@ export function suggestTurnInto(
       if (!paragraph) return false;
       const paragraphs = textBlocks.map(block => paragraph.create(null, block.content));
       tr.replaceWith(pos, pos + node.nodeSize, paragraphs);
+      wrappedSize = paragraphs.reduce((size, block) => size + block.nodeSize, 0);
     }
     const next = current.apply(tr);
     const $near = next.doc.resolve(Math.min(pos + 1, next.doc.content.size));
-    const selected = next.tr.setSelection(TextSelection.near($near));
+    const selection = wrappedSize > 0
+      ? TextSelection.create(next.doc, pos + 1, Math.min(pos + wrappedSize - 1, next.doc.content.size))
+      : TextSelection.near($near);
+    const selected = next.tr.setSelection(selection);
     const selectedState = next.apply(selected);
     const innerBox: { tr: Transaction | null } = { tr: null };
     const ran = command(selectedState, (nextTr) => {
       innerBox.tr = nextTr;
     });
-    const inner = innerBox.tr;
-    if (!ran || !inner) return false;
+    // Unwrapping already made the change when the command has nothing left
+    // to do, like turning a list item into the paragraph it now is.
+    const inner = ran ? innerBox.tr : null;
     if (!dispatch) return true;
     for (const step of selected.steps) dispatchStep(tr, step);
-    for (const step of inner.steps) dispatchStep(tr, step);
+    if (inner) {
+      for (const step of inner.steps) dispatchStep(tr, step);
+      keepSelection(tr, inner);
+    } else {
+      tr.setSelection(TextSelection.create(tr.doc, selection.from, selection.to));
+    }
     dispatch(tr);
     return true;
   });
@@ -301,9 +335,20 @@ function commandAt(pos: number, command: Command): Command {
     if (!ran || !inner) return false;
     if (!dispatch) return true;
     for (const step of inner.steps) dispatchStep(selected, step);
+    keepSelection(selected, inner);
     dispatch(selected);
     return true;
   };
+}
+
+// The stitched transaction replays inner's steps on the same document, so
+// inner's selection is valid there. suggestCommand reads it to find the
+// blocks the command changed.
+function keepSelection(tr: Transaction, inner: Transaction) {
+  const size = tr.doc.content.size;
+  const from = Math.min(inner.selection.from, size);
+  const to = Math.min(inner.selection.to, size);
+  tr.setSelection(TextSelection.between(tr.doc.resolve(from), tr.doc.resolve(to)));
 }
 
 function dispatchStep(tr: Transaction, step: Transaction["steps"][number]) {
@@ -495,10 +540,12 @@ function decomposeWrapper(node: ProseMirrorNode): {
       else promoted.push(child);
     });
   }
-  const remaining = [...promoted];
+  const rest: ProseMirrorNode[] = [];
   node.forEach((child, _offset, index) => {
-    if (index > 0) remaining.push(child);
+    if (index > 0) rest.push(child);
   });
+  const remaining = [...promoted];
+  if (rest.length > 0) remaining.push(node.copy(Fragment.from(rest)));
   return { targetContent, remaining };
 }
 

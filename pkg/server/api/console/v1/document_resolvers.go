@@ -1303,6 +1303,10 @@ func (r *mutationResolver) UpdateDocument(ctx context.Context, input types.Updat
 			return nil, gqlx.Conflict(ctx, errGenerated)
 		}
 
+		if errors.Is(err, collaboration.ErrSuggestionOverlaps) {
+			return nil, gqlx.Conflictf(ctx, "the edit changes text that holds an open suggestion")
+		}
+
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
