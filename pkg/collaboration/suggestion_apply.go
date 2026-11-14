@@ -24,6 +24,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"sync/atomic"
 
@@ -137,7 +138,7 @@ func blockOrAncestorSuggested(spans []automerge.Span, index int) bool {
 
 	quotePath := blockPath(spans[index])
 
-	for length := len(quotePath) - 1; length >= 0; length-- {
+	for length := range slices.Backward(quotePath) {
 		for cursor := index - 1; cursor >= 0; cursor-- {
 			span := spans[cursor]
 			if span.Type != automerge.SpanTypeBlock || blockIsEmbed(span) {

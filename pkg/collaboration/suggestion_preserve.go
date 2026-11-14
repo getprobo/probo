@@ -22,6 +22,7 @@ package collaboration
 
 import (
 	"fmt"
+	"strings"
 
 	"go.probo.inc/probo/pkg/automerge"
 	automergedm "go.probo.inc/probo/pkg/automerge/prosemirror"
@@ -118,10 +119,7 @@ func alignBlockText(before []string, after []string) []blockAlign {
 				continue
 			}
 
-			score[row][col] = score[row-1][col]
-			if score[row][col-1] > score[row][col] {
-				score[row][col] = score[row][col-1]
-			}
+			score[row][col] = max(score[row][col-1], score[row-1][col])
 		}
 	}
 
@@ -231,7 +229,7 @@ func inputParents(input automerge.SpanInput) []string {
 }
 
 func acceptedBlockText(spans []automerge.Span) string {
-	text := ""
+	var text strings.Builder
 
 	for _, span := range spans {
 		if span.Type != automerge.SpanTypeText {
@@ -242,20 +240,20 @@ func acceptedBlockText(spans []automerge.Span) string {
 			continue
 		}
 
-		text += span.Text
+		text.WriteString(span.Text)
 	}
 
-	return text
+	return text.String()
 }
 
 func inputBlockText(inputs []automerge.SpanInput) string {
-	text := ""
+	var text strings.Builder
 
 	for _, input := range inputs {
-		text += input.Text
+		text.WriteString(input.Text)
 	}
 
-	return text
+	return text.String()
 }
 
 func blockHasSuggestion(spans []automerge.Span) bool {
