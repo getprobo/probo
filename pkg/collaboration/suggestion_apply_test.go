@@ -321,21 +321,26 @@ func TestApplyBlock_SetBlockRefusedInsideOpenSuggestion(t *testing.T) {
 	require.NoError(t, err)
 
 	found := false
+
 	for _, span := range spans {
 		payload, ok := readBlockSuggestion(span)
+
 		if !ok {
 			continue
 		}
 
 		assert.NotEqual(t, "s-head", payload.ID)
+
 		if payload.ID != "s-other" {
 			continue
 		}
 
 		found = true
+
 		assert.Equal(t, blockTypeHeading, blockType(span))
 		assert.Equal(t, blockTypeParagraph, payload.Type)
 	}
+
 	assert.True(t, found)
 }
 
