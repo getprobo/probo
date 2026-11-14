@@ -27,12 +27,24 @@ import {
   TextTIcon,
   TreeStructureIcon,
 } from "@phosphor-icons/react";
+import type { EditorState, Transaction } from "@tiptap/pm/state";
 import { type Editor } from "@tiptap/react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import { EditorFloatingPortal } from "../_lib/EditorFloatingPortal";
 import { MenuButton } from "../MenuButton";
 import { deactivateSlashCommand } from "../SlashCommandExtension";
+import {
+  codeCommand,
+  headingCommand,
+  listCommand,
+  paragraphCommand,
+  suggestCommand,
+  suggestDivider,
+  wrapCommand,
+} from "../suggestionBlock";
+import { applySuggestingStructure } from "../SuggestionExtension";
+import { suggestInsertTable } from "../suggestionStructure";
 
 import { blockMenuVariants } from "./variants";
 
@@ -44,6 +56,7 @@ type BlockCommand = {
   label: string;
   icon: Icon;
   action: (chain: ChainCommands) => ChainCommands;
+  suggest?: (state: EditorState, id: string) => Transaction | null;
 };
 
 type BlockPicker = {
@@ -55,19 +68,19 @@ type BlockPicker = {
 type BlockItem = BlockCommand | BlockPicker;
 
 const BLOCK_ITEMS: BlockItem[] = [
-  { label: "Text", icon: TextTIcon, action: chain => chain.setParagraph() },
-  { label: "Heading 1", icon: TextHOneIcon, action: chain => chain.toggleHeading({ level: 1 }) },
-  { label: "Heading 2", icon: TextHTwoIcon, action: chain => chain.toggleHeading({ level: 2 }) },
-  { label: "Heading 3", icon: TextHThreeIcon, action: chain => chain.toggleHeading({ level: 3 }) },
-  { label: "Heading 4", icon: TextHFourIcon, action: chain => chain.toggleHeading({ level: 4 }) },
-  { label: "Bullet List", icon: ListBulletsIcon, action: chain => chain.toggleBulletList() },
-  { label: "Ordered List", icon: ListNumbersIcon, action: chain => chain.toggleOrderedList() },
-  { label: "Task List", icon: CheckSquareIcon, action: chain => chain.toggleTaskList() },
-  { label: "Code Block", icon: CodeBlockIcon, action: chain => chain.toggleCodeBlock() },
-  { label: "Blockquote", icon: QuotesIcon, action: chain => chain.toggleBlockquote() },
-  { label: "Mermaid Diagram", icon: TreeStructureIcon, action: chain => chain.setCodeBlock({ language: "mermaid" }) },
-  { label: "Divider", icon: MinusIcon, action: chain => chain.setHorizontalRule() },
-  { label: "Table", icon: GridFourIcon, action: chain => chain.insertTable() },
+  { label: "Text", icon: TextTIcon, action: chain => chain.setParagraph(), suggest: (state, id) => suggestCommand(state, id, paragraphCommand()) },
+  { label: "Heading 1", icon: TextHOneIcon, action: chain => chain.toggleHeading({ level: 1 }), suggest: (state, id) => suggestCommand(state, id, headingCommand(1)) },
+  { label: "Heading 2", icon: TextHTwoIcon, action: chain => chain.toggleHeading({ level: 2 }), suggest: (state, id) => suggestCommand(state, id, headingCommand(2)) },
+  { label: "Heading 3", icon: TextHThreeIcon, action: chain => chain.toggleHeading({ level: 3 }), suggest: (state, id) => suggestCommand(state, id, headingCommand(3)) },
+  { label: "Heading 4", icon: TextHFourIcon, action: chain => chain.toggleHeading({ level: 4 }), suggest: (state, id) => suggestCommand(state, id, headingCommand(4)) },
+  { label: "Bullet List", icon: ListBulletsIcon, action: chain => chain.toggleBulletList(), suggest: (state, id) => suggestCommand(state, id, listCommand("bulletList")) },
+  { label: "Ordered List", icon: ListNumbersIcon, action: chain => chain.toggleOrderedList(), suggest: (state, id) => suggestCommand(state, id, listCommand("orderedList")) },
+  { label: "Task List", icon: CheckSquareIcon, action: chain => chain.toggleTaskList(), suggest: (state, id) => suggestCommand(state, id, listCommand("taskList")) },
+  { label: "Code Block", icon: CodeBlockIcon, action: chain => chain.toggleCodeBlock(), suggest: (state, id) => suggestCommand(state, id, codeCommand()) },
+  { label: "Blockquote", icon: QuotesIcon, action: chain => chain.toggleBlockquote(), suggest: (state, id) => suggestCommand(state, id, wrapCommand("blockquote")) },
+  { label: "Mermaid Diagram", icon: TreeStructureIcon, action: chain => chain.setCodeBlock({ language: "mermaid" }), suggest: (state, id) => suggestCommand(state, id, codeCommand("mermaid")) },
+  { label: "Divider", icon: MinusIcon, action: chain => chain.setHorizontalRule(), suggest: suggestDivider },
+  { label: "Table", icon: GridFourIcon, action: chain => chain.insertTable(), suggest: (state, id) => suggestInsertTable(state, id, 3, 3, true) },
   { label: "Image", icon: ImageIcon, pick: "image" },
   { label: "File", icon: PaperclipIcon, pick: "file" },
 ];
@@ -138,7 +151,7 @@ export function BlockMenuContent({ editor, slashState, onPickFiles }: BlockMenuC
 
         if ("pick" in item) {
           onPickFiles?.(item.pick);
-        } else {
+        } else if (!item.suggest || !applySuggestingStructure(editor, item.suggest, { fresh: true })) {
           item.action(editor.chain().focus()).run();
         }
       } catch {

@@ -2583,6 +2583,7 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 				errors.Is(err, collaboration.ErrDocumentCollaborationStale),
 				errors.Is(err, collaboration.ErrDocumentCollaborationNotFound),
 				errors.Is(err, collaboration.ErrOpenSuggestions),
+				errors.Is(err, collaboration.ErrSuggestionOverlaps),
 				errors.Is(err, prosemirror.ErrFragmentEditAmbiguous):
 				return nil, types.UpdateDocumentOutput{}, fmt.Errorf("cannot update document: %w", err)
 			}
@@ -12342,59 +12343,81 @@ func (r *Resolver) UpdateAsanaProjectMappingTool(ctx context.Context, req *mcp.C
 	return nil, types.UpdateAsanaProjectMappingOutput{Setup: mcpAsanaSetup(setup, mapping)}, nil
 }
 
-func (r *Resolver) AddDocumentSuggestionChangeTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddDocumentSuggestionChangeInput) (*mcp.CallToolResult, types.AddDocumentSuggestionChangeOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionDocumentSuggest)
+func (r *Resolver) ChangeDocumentTextTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ChangeDocumentTextInput) (*mcp.CallToolResult, types.ChangeDocumentTextOutput, error) {
+	scope, err := r.authorizeDocumentChange(ctx, input.Mode, input.DocumentID, input.SuggestionID)
 	if err != nil {
-		return nil, types.AddDocumentSuggestionChangeOutput{}, err
+		return nil, types.ChangeDocumentTextOutput{}, err
 	}
 
-	identity := authn.IdentityFromContext(ctx)
-
-	occurrence := 0
-	if input.QuoteOccurrence != nil {
-		occurrence = *input.QuoteOccurrence
-	}
-
-	suggestion, err := r.proboSvc.Documents.AddSuggestionChange(
+	result, err := r.proboSvc.Documents.ChangeText(
 		ctx,
 		scope,
-		probo.AddDocumentSuggestionChangeRequest{
-			SuggestionID: input.ID,
-			IdentityID:   identity.ID,
+		probo.ChangeDocumentTextRequest{
+			Mode:         input.Mode,
+			DocumentID:   derefGID(input.DocumentID),
+			SuggestionID: derefGID(input.SuggestionID),
+			IdentityID:   authn.IdentityFromContext(ctx).ID,
 			Quote:        input.Quote,
 			Replacement:  input.Replacement,
-			Occurrence:   occurrence,
+			Occurrence:   derefInt(input.QuoteOccurrence),
 		},
 	)
 	if err != nil {
-		return nil, types.AddDocumentSuggestionChangeOutput{}, r.documentReviewError(ctx, "cannot add document suggestion change", err)
+		return nil, types.ChangeDocumentTextOutput{}, r.documentReviewError(ctx, "cannot change document text", err)
 	}
 
-	return nil, types.AddDocumentSuggestionChangeOutput{Suggestion: types.NewDocumentSuggestion(suggestion)}, nil
+	document, suggestion := changeDocumentParts(result)
+
+	return nil, types.ChangeDocumentTextOutput{Document: document, Suggestion: suggestion}, nil
 }
 
-func (r *Resolver) AddDocumentSuggestionTableChangeTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddDocumentSuggestionTableChangeInput) (*mcp.CallToolResult, types.AddDocumentSuggestionTableChangeOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionDocumentSuggest)
+func (r *Resolver) ChangeDocumentFormatTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ChangeDocumentFormatInput) (*mcp.CallToolResult, types.ChangeDocumentFormatOutput, error) {
+	scope, err := r.authorizeDocumentChange(ctx, input.Mode, input.DocumentID, input.SuggestionID)
 	if err != nil {
-		return nil, types.AddDocumentSuggestionTableChangeOutput{}, err
+		return nil, types.ChangeDocumentFormatOutput{}, err
 	}
 
-	identity := authn.IdentityFromContext(ctx)
-
-	occurrence := 0
-	if input.QuoteOccurrence != nil {
-		occurrence = *input.QuoteOccurrence
-	}
-
-	suggestion, err := r.proboSvc.Documents.AddSuggestionTableChange(
+	result, err := r.proboSvc.Documents.ChangeFormat(
 		ctx,
 		scope,
-		probo.AddDocumentSuggestionTableChangeRequest{
-			SuggestionID: input.ID,
-			IdentityID:   identity.ID,
+		probo.ChangeDocumentFormatRequest{
+			Mode:         input.Mode,
+			DocumentID:   derefGID(input.DocumentID),
+			SuggestionID: derefGID(input.SuggestionID),
+			IdentityID:   authn.IdentityFromContext(ctx).ID,
+			Mark:         input.Mark,
+			Action:       input.Action,
+			Quote:        input.Quote,
+			Occurrence:   derefInt(input.QuoteOccurrence),
+			Href:         derefString(input.Href),
+		},
+	)
+	if err != nil {
+		return nil, types.ChangeDocumentFormatOutput{}, r.documentReviewError(ctx, "cannot change document format", err)
+	}
+
+	document, suggestion := changeDocumentParts(result)
+
+	return nil, types.ChangeDocumentFormatOutput{Document: document, Suggestion: suggestion}, nil
+}
+
+func (r *Resolver) ChangeDocumentTableTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ChangeDocumentTableInput) (*mcp.CallToolResult, types.ChangeDocumentTableOutput, error) {
+	scope, err := r.authorizeDocumentChange(ctx, input.Mode, input.DocumentID, input.SuggestionID)
+	if err != nil {
+		return nil, types.ChangeDocumentTableOutput{}, err
+	}
+
+	result, err := r.proboSvc.Documents.ChangeTable(
+		ctx,
+		scope,
+		probo.ChangeDocumentTableRequest{
+			Mode:         input.Mode,
+			DocumentID:   derefGID(input.DocumentID),
+			SuggestionID: derefGID(input.SuggestionID),
+			IdentityID:   authn.IdentityFromContext(ctx).ID,
 			Operation:    input.Operation,
 			Quote:        input.Quote,
-			Occurrence:   occurrence,
+			Occurrence:   derefInt(input.QuoteOccurrence),
 			Before:       input.Before != nil && *input.Before,
 			Cells:        input.Cells,
 			Rows:         input.Rows,
@@ -12402,46 +12425,55 @@ func (r *Resolver) AddDocumentSuggestionTableChangeTool(ctx context.Context, req
 		},
 	)
 	if err != nil {
-		return nil, types.AddDocumentSuggestionTableChangeOutput{}, r.documentReviewError(ctx, "cannot add document suggestion table change", err)
+		return nil, types.ChangeDocumentTableOutput{}, r.documentReviewError(ctx, "cannot change document table", err)
 	}
 
-	return nil, types.AddDocumentSuggestionTableChangeOutput{Suggestion: types.NewDocumentSuggestion(suggestion)}, nil
+	document, suggestion := changeDocumentParts(result)
+
+	return nil, types.ChangeDocumentTableOutput{Document: document, Suggestion: suggestion}, nil
 }
 
-func (r *Resolver) AddDocumentSuggestionFormatChangeTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddDocumentSuggestionFormatChangeInput) (*mcp.CallToolResult, types.AddDocumentSuggestionFormatChangeOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionDocumentSuggest)
+func (r *Resolver) ChangeDocumentBlockTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ChangeDocumentBlockInput) (*mcp.CallToolResult, types.ChangeDocumentBlockOutput, error) {
+	scope, err := r.authorizeDocumentChange(ctx, input.Mode, input.DocumentID, input.SuggestionID)
 	if err != nil {
-		return nil, types.AddDocumentSuggestionFormatChangeOutput{}, err
+		return nil, types.ChangeDocumentBlockOutput{}, err
 	}
 
-	identity := authn.IdentityFromContext(ctx)
-
-	occurrence := 0
-	if input.QuoteOccurrence != nil {
-		occurrence = *input.QuoteOccurrence
+	var kind collaboration.BlockKind
+	if input.Block != nil {
+		kind = *input.Block
 	}
 
-	href := ""
-	if input.Href != nil {
-		href = *input.Href
-	}
-
-	suggestion, err := r.proboSvc.Documents.AddSuggestionFormatChange(
+	result, err := r.proboSvc.Documents.ChangeBlock(
 		ctx,
 		scope,
-		probo.AddDocumentSuggestionFormatChangeRequest{
-			SuggestionID: input.ID,
-			IdentityID:   identity.ID,
-			Mark:         input.Mark,
-			Action:       input.Action,
-			Quote:        input.Quote,
-			Occurrence:   occurrence,
-			Href:         href,
+		probo.ChangeDocumentBlockRequest{
+			Mode:         input.Mode,
+			DocumentID:   derefGID(input.DocumentID),
+			SuggestionID: derefGID(input.SuggestionID),
+			IdentityID:   authn.IdentityFromContext(ctx).ID,
+			Operation:    input.Operation,
+			Quote:        derefString(input.Quote),
+			Occurrence:   derefInt(input.QuoteOccurrence),
+			Before:       input.Before,
+			Block:        kind,
+			Level:        derefInt(input.Level),
+			Language:     derefString(input.Language),
+			Text:         derefString(input.Text),
+			Items:        input.Items,
+			Checked:      input.Checked,
+			FileID:       derefGID(input.FileID),
+			Src:          derefString(input.Src),
+			Alt:          derefString(input.Alt),
+			Width:        input.Width,
+			ProfileID:    derefGID(input.ProfileID),
 		},
 	)
 	if err != nil {
-		return nil, types.AddDocumentSuggestionFormatChangeOutput{}, r.documentReviewError(ctx, "cannot add document suggestion format change", err)
+		return nil, types.ChangeDocumentBlockOutput{}, r.documentReviewError(ctx, "cannot change document block", err)
 	}
 
-	return nil, types.AddDocumentSuggestionFormatChangeOutput{Suggestion: types.NewDocumentSuggestion(suggestion)}, nil
+	document, suggestion := changeDocumentParts(result)
+
+	return nil, types.ChangeDocumentBlockOutput{Document: document, Suggestion: suggestion}, nil
 }

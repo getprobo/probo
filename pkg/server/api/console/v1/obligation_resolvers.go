@@ -127,13 +127,7 @@ func (r *mutationResolver) PublishObligationList(ctx context.Context, input type
 		input.Minor,
 	)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-			return nil, gqlx.Conflict(ctx, err)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot publish obligation list", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, r.generatedPublishError(ctx, "cannot publish obligation list", err)
 	}
 
 	return &types.PublishObligationListPayload{

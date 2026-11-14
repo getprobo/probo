@@ -76,6 +76,61 @@ describe("suggestion preview", () => {
     expect(collectSuggestionAnchors(doc).get(id)?.inserted).toBe("\n");
   });
 
+  it("describes a heading change without repeating its text", () => {
+    const headingSchema = new Schema({
+      nodes: {
+        doc: { content: "block+" },
+        paragraph: {
+          content: "text*",
+          group: "block",
+          attrs: { unknownAttrs: { default: null } },
+        },
+        heading: {
+          content: "text*",
+          group: "block",
+          attrs: {
+            level: { default: 1 },
+            unknownAttrs: { default: null },
+          },
+        },
+        text: { group: "inline" },
+      },
+    });
+    const doc = headingSchema.node("doc", null, [
+      headingSchema.node("heading", {
+        level: 2,
+        unknownAttrs: {
+          suggestionBlock: JSON.stringify({
+            id,
+            type: "paragraph",
+            parents: [],
+            attrs: {},
+          }),
+        },
+      }, [headingSchema.text("Scope")]),
+    ]);
+
+    const preview = collectSuggestionAnchors(doc).get(id);
+    expect(preview?.structure).toEqual({ action: "format", target: "heading", text: "2" });
+    expect(preview?.inserted).toBe("");
+    expect(preview?.parts).toEqual([]);
+
+    const paragraph = headingSchema.node("doc", null, [
+      headingSchema.node("paragraph", {
+        unknownAttrs: {
+          suggestionBlock: JSON.stringify({
+            id,
+            type: "heading",
+            parents: [],
+            attrs: { level: 2 },
+          }),
+        },
+      }, [headingSchema.text("Scope")]),
+    ]);
+    expect(collectSuggestionAnchors(paragraph).get(id)?.structure)
+      .toEqual({ action: "format", target: "paragraph", text: "" });
+  });
+
   it("keeps the letters between two deletions", () => {
     const deleted = schema.marks.suggestionDelete.create({ id });
     const doc = schema.node("doc", null, [
@@ -218,6 +273,32 @@ describe("suggestion preview", () => {
     expect(preview?.formats).toEqual({ adds: ["bold", "italic"], removes: [] });
     expect(preview?.parts).toEqual([]);
     expect(preview?.structure).toBeNull();
+  });
+
+  it("previews an inserted divider", () => {
+    const leafSchema = new Schema({
+      nodes: {
+        doc: { content: "block+" },
+        paragraph: {
+          content: "text*",
+          group: "block",
+          attrs: { unknownAttrs: { default: null } },
+        },
+        horizontalRule: { group: "block", attrs: { unknownAttrs: { default: null } } },
+        text: { group: "inline" },
+      },
+    });
+    const doc = leafSchema.node("doc", null, [
+      leafSchema.node("horizontalRule", {
+        unknownAttrs: { suggestionSplit: id, splitKind: "insertion" },
+      }),
+    ]);
+
+    expect(collectSuggestionAnchors(doc).get(id)?.structure).toEqual({
+      action: "add",
+      target: "divider",
+      text: "",
+    });
   });
 });
 

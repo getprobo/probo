@@ -634,6 +634,7 @@ func TestDocumentReview_SuggestsFormatting(t *testing.T) {
 	sentence := textNode(publishedNode, "sentence")
 	require.NotNil(t, sentence)
 	require.NotContains(t, markTypes(sentence), "italic")
+
 	keep := textNode(publishedNode, "Keep")
 	require.NotNil(t, keep)
 	require.Contains(t, markTypes(keep), "bold")
@@ -801,6 +802,149 @@ func contentText(node documentContentNode) string {
 	}
 
 	return text
+}
+
+func TestDocumentReview_ChangeBesideOpenSuggestion(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	documentID := factory.NewDocument(owner).
+		WithTitle(factory.SafeName("Change beside suggestion")).
+		Create()
+	updateDocumentContent(t, owner, documentID, "Keep this sentence. Change this one.")
+
+	var started struct {
+		StartDocumentSuggestion struct {
+			DocumentSuggestionEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"documentSuggestionEdge"`
+		} `json:"startDocumentSuggestion"`
+	}
+
+	err := owner.Execute(`
+		mutation($input: StartDocumentSuggestionInput!) {
+			startDocumentSuggestion(input: $input) {
+				documentSuggestionEdge { node { id } }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"documentId":  documentID,
+			"quote":       "Keep this sentence.",
+			"replacement": "Kept this sentence.",
+		},
+	}, &started)
+	require.NoError(t, err)
+
+	suggestionID := started.StartDocumentSuggestion.DocumentSuggestionEdge.Node.ID
+	require.NotEmpty(t, suggestionID)
+
+	var changed struct {
+		ChangeDocumentText struct {
+			Document struct {
+				ID string `json:"id"`
+			} `json:"document"`
+		} `json:"changeDocumentText"`
+	}
+
+	err = owner.Execute(`
+		mutation($input: ChangeDocumentTextInput!) {
+			changeDocumentText(input: $input) {
+				document { id }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"mode":        "APPLY",
+			"documentId":  documentID,
+			"quote":       "Change this one.",
+			"replacement": "Changed this one.",
+		},
+	}, &changed)
+	require.NoError(t, err)
+	require.Equal(t, documentID, changed.ChangeDocumentText.Document.ID)
+
+	text := documentPlainText(t, owner, documentID)
+	require.Contains(t, text, "Changed this one.")
+	require.Contains(t, text, "Keep this sentence.")
+
+	var overlap struct {
+		ChangeDocumentText struct {
+			Document struct {
+				ID string `json:"id"`
+			} `json:"document"`
+		} `json:"changeDocumentText"`
+	}
+
+	err = owner.Execute(`
+		mutation($input: ChangeDocumentTextInput!) {
+			changeDocumentText(input: $input) {
+				document { id }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"mode":        "APPLY",
+			"documentId":  documentID,
+			"quote":       "Kept",
+			"replacement": "Nope",
+		},
+	}, &overlap)
+	require.Error(t, err)
+
+	var heading struct {
+		ChangeDocumentBlock struct {
+			DocumentSuggestion struct {
+				ID string `json:"id"`
+			} `json:"documentSuggestion"`
+		} `json:"changeDocumentBlock"`
+	}
+
+	err = owner.Execute(`
+		mutation($input: ChangeDocumentBlockInput!) {
+			changeDocumentBlock(input: $input) {
+				documentSuggestion { id }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"mode":         "SUGGEST",
+			"suggestionId": suggestionID,
+			"operation":    "SET_BLOCK",
+			"block":        "HEADING",
+			"level":        2,
+			"quote":        "Changed this one.",
+		},
+	}, &heading)
+	require.ErrorContains(t, err, "overlaps an existing suggestion")
+}
+
+func documentPlainText(t *testing.T, client *testutil.Client, documentID string) string {
+	t.Helper()
+
+	var content struct {
+		Node struct {
+			Content struct {
+				Prosemirror string `json:"prosemirror"`
+			} `json:"content"`
+		} `json:"node"`
+	}
+
+	err := client.Execute(`
+		query($id: ID!) {
+			node(id: $id) {
+				... on Document { content { prosemirror } }
+			}
+		}
+	`, map[string]any{"id": documentID}, &content)
+	require.NoError(t, err)
+
+	var root documentContentNode
+	require.NoError(t, json.Unmarshal([]byte(content.Node.Content.Prosemirror), &root))
+
+	return contentText(root)
 }
 
 func paintSuggestionInsert(t *testing.T, documentID string, suggestionID string, text string) {

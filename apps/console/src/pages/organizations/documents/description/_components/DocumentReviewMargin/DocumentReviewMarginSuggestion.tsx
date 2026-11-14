@@ -368,7 +368,38 @@ function SuggestionPreviewText(props: { parts: SuggestionPreview["parts"]; quote
 }
 
 function structureLabel(t: TFunction, structure: NonNullable<SuggestionPreview["structure"]>): string {
+  if (structure.action === "format") return formatStructureLabel(t, structure);
   const text = structure.text;
+  if (structure.target === "divider") {
+    return structure.action === "add"
+      ? t("documentDescriptionPage.review.addDivider")
+      : t("documentDescriptionPage.review.deleteDivider");
+  }
+  if (structure.target === "image") {
+    return structure.action === "add"
+      ? t("documentDescriptionPage.review.addImage")
+      : t("documentDescriptionPage.review.deleteImage");
+  }
+  if (structure.target === "file") {
+    if (structure.action === "add") {
+      return text === ""
+        ? t("documentDescriptionPage.review.addFile")
+        : t("documentDescriptionPage.review.addFileNamed", { name: text });
+    }
+    return text === ""
+      ? t("documentDescriptionPage.review.deleteFile")
+      : t("documentDescriptionPage.review.deleteFileNamed", { name: text });
+  }
+  if (structure.target === "mention") {
+    if (structure.action === "add") {
+      return text === ""
+        ? t("documentDescriptionPage.review.addMention")
+        : t("documentDescriptionPage.review.addMentionNamed", { name: text });
+    }
+    return text === ""
+      ? t("documentDescriptionPage.review.deleteMention")
+      : t("documentDescriptionPage.review.deleteMentionNamed", { name: text });
+  }
   if (structure.action === "add" && structure.target === "row") {
     return text === "" ? t("documentDescriptionPage.review.addRow") : t("documentDescriptionPage.review.addRowWithText", { text });
   }
@@ -385,6 +416,24 @@ function structureLabel(t: TFunction, structure: NonNullable<SuggestionPreview["
     return text === "" ? t("documentDescriptionPage.review.deleteColumn") : t("documentDescriptionPage.review.deleteColumnWithText", { text });
   }
   return text === "" ? t("documentDescriptionPage.review.deleteTable") : t("documentDescriptionPage.review.deleteTableWithText", { text });
+}
+
+function formatStructureLabel(t: TFunction, structure: NonNullable<SuggestionPreview["structure"]>): string {
+  if (structure.target === "heading") {
+    return t("documentDescriptionPage.review.formatHeading", { level: structure.text });
+  }
+  if (structure.target === "paragraph") return t("documentDescriptionPage.review.formatParagraph");
+  if (structure.target === "quote") return t("documentDescriptionPage.review.formatQuote");
+  if (structure.target === "code") return t("documentDescriptionPage.review.formatCode");
+  if (structure.target === "task") {
+    return structure.text === "uncheck"
+      ? t("documentDescriptionPage.review.uncheckTask")
+      : t("documentDescriptionPage.review.checkTask");
+  }
+  if (structure.text === "remove") return t("documentDescriptionPage.review.listRemove");
+  if (structure.text === "nest") return t("documentDescriptionPage.review.listNest");
+  if (structure.text === "unnest") return t("documentDescriptionPage.review.listUnnest");
+  return t("documentDescriptionPage.review.listAdd");
 }
 
 function styleList(t: TFunction, styles: string[]): string {

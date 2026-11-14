@@ -696,9 +696,15 @@ func markSubtreeDeleted(
 				return nil, ErrSuggestionOverlaps
 			}
 
+			if _, suggested := readBlockSuggestion(span); suggested {
+				return nil, ErrSuggestionOverlaps
+			}
+
 			next[index] = withDeletionSplit(span, suggestionID)
 		case automerge.SpanTypeText:
-			if markID(span.Marks, SuggestionInsertMark) != "" || markID(span.Marks, SuggestionDeleteMark) != "" {
+			if markID(span.Marks, SuggestionInsertMark) != "" ||
+				markID(span.Marks, SuggestionDeleteMark) != "" ||
+				len(formatMarkIDs(span.Marks)) > 0 {
 				return nil, ErrSuggestionOverlaps
 			}
 

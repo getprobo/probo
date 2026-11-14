@@ -61,13 +61,14 @@ func (s *Service) PaintSuggestion(
 	replacement string,
 	occurrence int,
 ) (*automerge.Document, automerge.ActorID, error) {
-	return s.paint(
+	return s.paintCommit(
 		ctx,
 		scope,
 		documentID,
 		organizationID,
 		identityID,
 		profileID,
+		"Suggest",
 		func(document *automerge.Document) error {
 			return ApplySuggestionEdit(document, suggestionID, quote, replacement, occurrence)
 		},
@@ -87,13 +88,14 @@ func (s *Service) PaintFormatSuggestion(
 	suggestionID string,
 	change FormatSuggestion,
 ) (*automerge.Document, automerge.ActorID, error) {
-	return s.paint(
+	return s.paintCommit(
 		ctx,
 		scope,
 		documentID,
 		organizationID,
 		identityID,
 		profileID,
+		"Suggest",
 		func(document *automerge.Document) error {
 			return ApplySuggestionFormat(document, suggestionID, change)
 		},
@@ -113,26 +115,28 @@ func (s *Service) PaintTableSuggestion(
 	suggestionID string,
 	change TableSuggestion,
 ) (*automerge.Document, automerge.ActorID, error) {
-	return s.paint(
+	return s.paintCommit(
 		ctx,
 		scope,
 		documentID,
 		organizationID,
 		identityID,
 		profileID,
+		"Suggest",
 		func(document *automerge.Document) error {
 			return ApplyTableSuggestion(document, suggestionID, change)
 		},
 	)
 }
 
-func (s *Service) paint(
+func (s *Service) paintCommit(
 	ctx context.Context,
 	scope coredata.Scoper,
 	documentID gid.GID,
 	organizationID gid.GID,
 	identityID gid.GID,
 	profileID *gid.GID,
+	message string,
 	apply func(document *automerge.Document) error,
 ) (*automerge.Document, automerge.ActorID, error) {
 	actorID, err := s.actorForIdentity(
@@ -158,10 +162,10 @@ func (s *Service) paint(
 		return nil, automerge.ActorID{}, err
 	}
 
-	if _, err := opened.Document.Commit("Suggest", time.Now()); err != nil {
+	if _, err := opened.Document.Commit(message, time.Now()); err != nil {
 		_ = opened.Document.Close()
 
-		return nil, automerge.ActorID{}, fmt.Errorf("cannot commit suggestion: %w", err)
+		return nil, automerge.ActorID{}, fmt.Errorf("cannot commit document change: %w", err)
 	}
 
 	return opened.Document, actorID, nil

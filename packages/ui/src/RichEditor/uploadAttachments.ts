@@ -22,6 +22,14 @@ import { Fragment, type Node as PmNode } from "@tiptap/pm/model";
 import type { EditorView } from "@tiptap/pm/view";
 
 import { type AttachmentKind, attachmentKind, maxAttachmentSize, prepareAttachment } from "./attachments";
+import { insertionSplitAttrs } from "./suggestionBlock";
+import {
+  releaseSuggestionId,
+  retainSuggestionId,
+  settledSuggestionId,
+  suggestingChangeId,
+} from "./SuggestionExtension";
+import { suggestionStructureMeta } from "./suggestionStructure";
 
 export type AttachmentUploadError = {
   fileName: string;
@@ -69,12 +77,16 @@ export async function uploadAttachments(
   }
 
   const insertAt = blockInsertPos(view.state.doc, pos);
+  const suggestionId = suggestingChangeId(view.state, true);
   const placeholders = accepted.map(item => view.state.schema.nodes.contentUpload.create({
     id: item.id,
     fileName: item.file.name,
   }));
 
-  view.dispatch(view.state.tr.insert(insertAt, Fragment.fromArray(placeholders)));
+  const inserted = view.state.tr.insert(insertAt, Fragment.fromArray(placeholders));
+  if (suggestionId) inserted.setMeta(suggestionStructureMeta, true);
+  view.dispatch(inserted);
+  if (suggestionId) retainSuggestionId(suggestionId, accepted.length);
 
   await Promise.all(accepted.map(async (item) => {
     try {
@@ -83,10 +95,18 @@ export async function uploadAttachments(
         return;
       }
 
-      replaceUpload(view, item.id, item.kind, uploaded);
+      const liveId = suggestionId ? settledSuggestionId(suggestionId) : null;
+      if (suggestionId && !liveId) {
+        removeUpload(view, item.id);
+        return;
+      }
+
+      replaceUpload(view, item.id, item.kind, uploaded, liveId);
     } catch {
       onError({ fileName: item.file.name, reason: "failed" });
       removeUpload(view, item.id);
+    } finally {
+      if (suggestionId) releaseSuggestionId(suggestionId);
     }
   }));
 }
@@ -96,6 +116,7 @@ function replaceUpload(
   id: string,
   kind: AttachmentKind,
   uploaded: UploadedAttachment,
+  suggestionId: string | null,
 ) {
   if (view.isDestroyed) {
     return;
@@ -114,11 +135,15 @@ function replaceUpload(
         mimeType: uploaded.mimeType,
         size: uploaded.size,
       };
-  const node = view.state.schema.nodes[kind].create(attrs);
+  const node = view.state.schema.nodes[kind].create({
+    ...attrs,
+    ...(suggestionId ? { unknownAttrs: insertionSplitAttrs(suggestionId) } : {}),
+  });
 
   const tr = view.state.tr
     .replaceWith(found.pos, found.pos + found.node.nodeSize, node)
     .setMeta("addToHistory", false);
+  if (suggestionId) tr.setMeta(suggestionStructureMeta, true);
   view.dispatch(tr);
 }
 
@@ -132,7 +157,11 @@ function removeUpload(view: EditorView, id: string) {
     return;
   }
 
-  view.dispatch(view.state.tr.delete(found.pos, found.pos + found.node.nodeSize));
+  view.dispatch(
+    view.state.tr
+      .delete(found.pos, found.pos + found.node.nodeSize)
+      .setMeta(suggestionStructureMeta, true),
+  );
 }
 
 function findUpload(doc: PmNode, id: string) {

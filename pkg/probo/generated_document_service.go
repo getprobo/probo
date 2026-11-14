@@ -4965,6 +4965,12 @@ func (s *GeneratedDocumentService) publishOrRequestApproval(
 	document.Content = content
 	document.UpdatedAt = now
 
+	// Generating a version replaces the live document. An open suggestion
+	// has to be resolved first, the same rule as publishing an authored one.
+	if err := s.svc.Documents.collaboration.EnsureNoOpenSuggestions(ctx, tx, scope, document.ID); err != nil {
+		return err
+	}
+
 	if err := s.svc.Documents.collaboration.PutContent(
 		ctx,
 		tx,

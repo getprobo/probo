@@ -21,6 +21,7 @@
 import { Mark, mergeAttributes } from "@tiptap/core";
 import { splitBlock } from "@tiptap/pm/commands";
 import type { Mark as ProseMirrorMark, Node as ProseMirrorNode } from "@tiptap/pm/model";
+import { liftListItem, sinkListItem } from "@tiptap/pm/schema-list";
 import { type EditorState, Plugin, PluginKey, TextSelection, type Transaction } from "@tiptap/pm/state";
 import type { EditorView } from "@tiptap/pm/view";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
@@ -33,6 +34,12 @@ import {
 } from "./automergeMapping";
 import { automergeRemoteTransaction } from "./AutomergeSyncPlugin";
 import { linkEditorPluginKey } from "./LinkExtension";
+import {
+  discardBlockSuggestions,
+  readSuggestionBlock,
+  reassignBlockSuggestions,
+  suggestCommand,
+} from "./suggestionBlock";
 import {
   adjacentSuggestionId,
   isTextblockBoundary,
@@ -65,7 +72,7 @@ import {
 export const suggestionInsertName = "suggestionInsert";
 export const suggestionDeleteName = "suggestionDelete";
 
-const suggestingPluginKey = new PluginKey("document-suggesting");
+const suggestingPluginKey = new PluginKey<SuggestingController>("document-suggesting");
 const suggestionFocusKey = new PluginKey<SuggestionFocusState>("document-suggestion-focus");
 
 type SuggestionFocusState = {
@@ -173,8 +180,12 @@ export function createSuggestingExtension(
     },
     addProseMirrorPlugins() {
       return [
-        new Plugin({
+        new Plugin<SuggestingController>({
           key: suggestingPluginKey,
+          state: {
+            init: () => controller.current,
+            apply: () => controller.current,
+          },
           // Menus and commands that change the document structure (tables,
           // images, lists) bypass the text handlers. Unless they were tracked,
           // drop them rather than let an untracked edit through.
@@ -255,12 +266,30 @@ export function isSuggesting(editor: SuggestingEditor): boolean {
   return suggestingController(editor)?.current.enabled === true;
 }
 
+// suggestingChangeId allocates the suggestion a structural edit should use.
+// fresh starts a new card instead of extending the text the user is typing.
+export function suggestingChangeId(state: EditorState, fresh: boolean): string | null {
+  const controller = suggestingPluginKey.getState(state);
+  if (!controller?.enabled) return null;
+  if (fresh) {
+    controller.onBurstFinished();
+    controller.suggestionId = null;
+  }
+  let id = fresh ? null : suggestionIdForInput(state, controller);
+  if (!id) {
+    void controller.onNeedId();
+    id = controller.suggestionId;
+  }
+  return id;
+}
+
 // applySuggestingStructure runs a structural edit as a suggestion when the
 // editor is suggesting. It returns false when the editor is not suggesting,
 // so the caller runs the plain command instead.
 export function applySuggestingStructure(
   editor: SuggestingEditor,
   build: (state: EditorState, id: string) => Transaction | null,
+  options?: { fresh?: boolean },
 ): boolean {
   const controller = suggestingController(editor);
   if (!controller?.current.enabled) return false;
@@ -270,7 +299,15 @@ export function applySuggestingStructure(
     current.onBlocked?.();
     return true;
   }
-  let id = suggestionIdForInput(editor.state, current);
+  // A heading or list is its own card. Reusing the open text burst would
+  // merge that card with the words typed just before it.
+  let id: string | null = null;
+  if (options?.fresh) {
+    current.onBurstFinished();
+    current.suggestionId = null;
+  } else {
+    id = suggestionIdForInput(editor.state, current);
+  }
   if (!id) {
     void current.onNeedId();
     id = current.suggestionId;
@@ -472,6 +509,42 @@ function linkHrefInSelection(state: EditorState): string {
   return href;
 }
 
+function applySuggestingStructureFromView(
+  view: EditorView,
+  controller: SuggestingController,
+  build: (state: EditorState, id: string) => Transaction | null,
+): boolean {
+  if (!build(view.state, "pending")) {
+    controller.onBlocked?.();
+    return true;
+  }
+  controller.onBurstFinished();
+  controller.suggestionId = null;
+  void controller.onNeedId();
+  const id = controller.suggestionId;
+  if (!id) {
+    controller.onBlocked?.();
+    return true;
+  }
+  const tr = build(view.state, id);
+  if (!tr) {
+    controller.onBlocked?.();
+    return true;
+  }
+  view.dispatch(tr);
+  return true;
+}
+
+function listItemType(state: EditorState) {
+  const { $from } = state.selection;
+  for (let depth = $from.depth; depth > 0; depth -= 1) {
+    const name = $from.node(depth).type.name;
+    if (name === "taskItem") return state.schema.nodes.taskItem ?? null;
+    if (name === "listItem") return state.schema.nodes.listItem ?? null;
+  }
+  return null;
+}
+
 function applySuggestingKey(
   view: EditorView,
   controller: SuggestingController,
@@ -490,6 +563,14 @@ function applySuggestingKey(
       view.dispatch(view.state.tr.setMeta(linkEditorPluginKey, linkHrefInSelection(view.state)));
       return true;
     }
+  }
+  if (event.key === "Tab" && !event.altKey && !event.metaKey && !event.ctrlKey) {
+    const item = listItemType(view.state);
+    if (!item) return false;
+    const command = event.shiftKey ? liftListItem(item) : sinkListItem(item);
+    return applySuggestingStructureFromView(view, controller, (state, id) =>
+      suggestCommand(state, id, command),
+    );
   }
   if (event.key === "Enter" && !event.shiftKey) {
     return applySuggestingEnter(view, controller);
@@ -1028,6 +1109,77 @@ function markLineDeletion(tr: Transaction, pos: number, id: string) {
   });
 }
 
+// An upload can finish after the server has renamed or dropped its local id.
+// Only ids an upload is still waiting on are kept, and they are dropped once
+// that upload settles.
+const settledSuggestionIds = new Map<string, string | null>();
+const retainedSuggestionIds = new Map<string, number>();
+
+export function settledSuggestionId(id: string): string | null {
+  let current: string | null = id;
+  const seen = new Set<string>();
+  while (current !== null && settledSuggestionIds.has(current) && !seen.has(current)) {
+    seen.add(current);
+    current = settledSuggestionIds.get(current) ?? null;
+  }
+  return current;
+}
+
+export function retainSuggestionId(id: string, count = 1) {
+  if (count <= 0) return;
+  retainedSuggestionIds.set(id, (retainedSuggestionIds.get(id) ?? 0) + count);
+}
+
+export function releaseSuggestionId(id: string) {
+  const next = (retainedSuggestionIds.get(id) ?? 0) - 1;
+  if (next > 0) {
+    retainedSuggestionIds.set(id, next);
+    return;
+  }
+  retainedSuggestionIds.delete(id);
+  pruneSettledSuggestions();
+}
+
+function noteSettlement(fromId: string, toId: string | null) {
+  if (!settlementNeeded(fromId)) return;
+  settledSuggestionIds.set(fromId, toId);
+}
+
+function settlementNeeded(fromId: string): boolean {
+  for (const id of retainedSuggestionIds.keys()) {
+    if (chainReaches(id, fromId)) return true;
+  }
+  return false;
+}
+
+function chainReaches(start: string, target: string): boolean {
+  let current: string | null = start;
+  const seen = new Set<string>();
+  while (current !== null && !seen.has(current)) {
+    if (current === target) return true;
+    seen.add(current);
+    if (!settledSuggestionIds.has(current)) return false;
+    current = settledSuggestionIds.get(current) ?? null;
+  }
+  return false;
+}
+
+function pruneSettledSuggestions() {
+  const keep = new Set<string>();
+  for (const id of retainedSuggestionIds.keys()) {
+    let current: string | null = id;
+    const seen = new Set<string>();
+    while (current !== null && settledSuggestionIds.has(current) && !seen.has(current)) {
+      seen.add(current);
+      keep.add(current);
+      current = settledSuggestionIds.get(current) ?? null;
+    }
+  }
+  for (const key of settledSuggestionIds.keys()) {
+    if (!keep.has(key)) settledSuggestionIds.delete(key);
+  }
+}
+
 export function reassignSuggestionId(
   editor: {
     isDestroyed?: boolean;
@@ -1037,6 +1189,7 @@ export function reassignSuggestionId(
   fromId: string,
   toId: string,
 ) {
+  noteSettlement(fromId, toId);
   if (!editorViewReady(editor)) return;
   const ranges: Array<{ from: number; to: number; marks: readonly ProseMirrorMark[] }> = [];
   const blocks: number[] = [];
@@ -1069,6 +1222,7 @@ export function reassignSuggestionId(
     });
   }
   reassignStructuralSuggestion(tr, fromId, toId);
+  reassignBlockSuggestions(tr, fromId, toId);
   tr.setMeta(suggestingPluginKey, { input: true });
   tr.setMeta(suggestionReassignMeta, { from: fromId, to: toId });
   tr.setMeta("addToHistory", false);
@@ -1083,6 +1237,7 @@ export function discardSuggestionId(
   },
   id: string,
 ) {
+  noteSettlement(id, null);
   if (!editorViewReady(editor)) return;
   const rewrites: Array<{ from: number; to: number; marks: readonly ProseMirrorMark[] }> = [];
   const removals: Array<{ from: number; to: number }> = [];
@@ -1114,7 +1269,17 @@ export function discardSuggestionId(
     });
   });
   const structural = structuralSuggestionNodes(editor.state.doc, id).length > 0;
-  if (rewrites.length === 0 && removals.length === 0 && blocks.length === 0 && !structural && !hasFormat) return;
+  let hasBlock = false;
+  editor.state.doc.descendants((node) => {
+    if (readSuggestionBlock(node)?.id === id) hasBlock = true;
+  });
+  const untouched = rewrites.length === 0
+    && removals.length === 0
+    && blocks.length === 0
+    && !structural
+    && !hasFormat
+    && !hasBlock;
+  if (untouched) return;
   const tr = editor.state.tr;
   for (const range of rewrites.reverse()) {
     rewriteText(tr, range.from, range.to, range.marks);
@@ -1135,6 +1300,7 @@ export function discardSuggestionId(
     });
   }
   discardStructuralSuggestion(tr, id);
+  discardBlockSuggestions(tr, id);
   revertFormatSuggestion(tr, id);
   tr.setMeta(suggestingPluginKey, { input: true });
   tr.setMeta("addToHistory", false);

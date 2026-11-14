@@ -9279,6 +9279,43 @@ components:
         - CREATED_AT
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DocumentSuggestionOrderField
 
+    DocumentChangeMode:
+      type: string
+      enum:
+        - APPLY
+        - SUGGEST
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/probo.DocumentChangeMode
+
+    DocumentBlockOperation:
+      type: string
+      enum:
+        - SET_BLOCK
+        - INSERT_BLOCK
+        - DELETE_BLOCK
+        - INSERT_LIST_ITEM
+        - DELETE_LIST_ITEM
+        - NEST_LIST_ITEM
+        - UNNEST_LIST_ITEM
+        - SET_TASK
+        - INSERT_DIVIDER
+        - INSERT_IMAGE
+        - INSERT_FILE
+        - INSERT_MENTION
+        - DELETE_MENTION
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/collaboration.BlockOperation
+
+    DocumentBlockKind:
+      type: string
+      enum:
+        - PARAGRAPH
+        - HEADING
+        - BLOCKQUOTE
+        - BULLET_LIST
+        - ORDERED_LIST
+        - TASK_LIST
+        - CODE_BLOCK
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/collaboration.BlockKind
+
     DocumentSuggestionFormatMark:
       type: string
       enum:
@@ -9777,49 +9814,64 @@ components:
         suggestion:
           $ref: "#/components/schemas/DocumentSuggestion"
 
-    AddDocumentSuggestionChangeInput:
+    ChangeDocumentOutput:
       type: object
       required:
-        - id
+        - document
+      properties:
+        document:
+          $ref: "#/components/schemas/Document"
+        suggestion:
+          $ref: "#/components/schemas/DocumentSuggestion"
+          description: Set when mode is SUGGEST.
+
+    ChangeDocumentTextInput:
+      type: object
+      required:
+        - mode
         - quote
         - replacement
       properties:
-        id:
+        mode:
+          $ref: "#/components/schemas/DocumentChangeMode"
+          description: APPLY writes the text. SUGGEST stores it on an open suggestion.
+        document_id:
           $ref: "#/components/schemas/GID"
-          description: Open suggestion ID
+          description: Document ID. Required when mode is APPLY.
+        suggestion_id:
+          $ref: "#/components/schemas/GID"
+          description: Open suggestion ID. Required when mode is SUGGEST.
         quote:
           type: string
-          description: Text to replace. The match must not overlap an existing redline.
+          description: Text to replace. The match must not overlap an existing suggestion.
         replacement:
           type: string
-          description: Suggested text. Empty deletes the quote.
+          description: New text. Empty deletes the quote. A newline inside the quote becomes a line break.
         quote_occurrence:
           type: integer
           minimum: 0
           description: Zero-based occurrence of quote. Defaults to the first match.
 
-    AddDocumentSuggestionChangeOutput:
+    ChangeDocumentFormatInput:
       type: object
       required:
-        - suggestion
-      properties:
-        suggestion:
-          $ref: "#/components/schemas/DocumentSuggestion"
-
-    AddDocumentSuggestionFormatChangeInput:
-      type: object
-      required:
-        - id
+        - mode
         - mark
         - action
         - quote
       properties:
-        id:
+        mode:
+          $ref: "#/components/schemas/DocumentChangeMode"
+          description: APPLY writes the style. SUGGEST stores it on an open suggestion.
+        document_id:
           $ref: "#/components/schemas/GID"
-          description: Open suggestion ID
+          description: Document ID. Required when mode is APPLY.
+        suggestion_id:
+          $ref: "#/components/schemas/GID"
+          description: Open suggestion ID. Required when mode is SUGGEST.
         mark:
           $ref: "#/components/schemas/DocumentSuggestionFormatMark"
-          description: Style to suggest
+          description: Style to add or remove
         action:
           $ref: "#/components/schemas/DocumentSuggestionFormatAction"
           description: Add the style or remove it
@@ -9834,27 +9886,25 @@ components:
           type: string
           description: Link address when mark is LINK and action is ADD.
 
-    AddDocumentSuggestionFormatChangeOutput:
+    ChangeDocumentTableInput:
       type: object
       required:
-        - suggestion
-      properties:
-        suggestion:
-          $ref: "#/components/schemas/DocumentSuggestion"
-
-    AddDocumentSuggestionTableChangeInput:
-      type: object
-      required:
-        - id
+        - mode
         - operation
         - quote
       properties:
-        id:
+        mode:
+          $ref: "#/components/schemas/DocumentChangeMode"
+          description: APPLY writes the table. SUGGEST stores it on an open suggestion.
+        document_id:
           $ref: "#/components/schemas/GID"
-          description: Open suggestion ID
+          description: Document ID. Required when mode is APPLY.
+        suggestion_id:
+          $ref: "#/components/schemas/GID"
+          description: Open suggestion ID. Required when mode is SUGGEST.
         operation:
           $ref: "#/components/schemas/DocumentSuggestionTableOperation"
-          description: Structural change to suggest
+          description: Structural table change
         quote:
           type: string
           description: Text inside a cell of the row, column, or table to change. For INSERT_TABLE, text of the top-level block the new table goes beside.
@@ -9884,13 +9934,74 @@ components:
           type: boolean
           description: Make the new table's first row a header row (INSERT_TABLE).
 
-    AddDocumentSuggestionTableChangeOutput:
+    ChangeDocumentBlockInput:
       type: object
       required:
-        - suggestion
+        - mode
+        - operation
       properties:
-        suggestion:
-          $ref: "#/components/schemas/DocumentSuggestion"
+        mode:
+          $ref: "#/components/schemas/DocumentChangeMode"
+          description: APPLY writes the block. SUGGEST stores it as its own card.
+        document_id:
+          $ref: "#/components/schemas/GID"
+          description: Document ID. Required when mode is APPLY.
+        suggestion_id:
+          $ref: "#/components/schemas/GID"
+          description: Open suggestion ID. Required when mode is SUGGEST. Use a different suggestion from any text card.
+        operation:
+          $ref: "#/components/schemas/DocumentBlockOperation"
+          description: Block change to apply
+        quote:
+          type: string
+          description: Text that locates the block. Empty inserts into an empty document.
+        quote_occurrence:
+          type: integer
+          minimum: 0
+          description: Zero-based occurrence of quote. Defaults to the first match.
+        before:
+          type: boolean
+          description: Insert before the quote, or delete the neighboring textless block on that side.
+        block:
+          $ref: "#/components/schemas/DocumentBlockKind"
+          description: Block kind for SET_BLOCK, INSERT_BLOCK, and INSERT_LIST_ITEM.
+        level:
+          type: integer
+          minimum: 1
+          maximum: 6
+          description: Heading level from 1 to 6.
+        language:
+          type: string
+          description: Code block language. mermaid draws a diagram.
+        text:
+          type: string
+          description: Text of the new block or list item.
+        items:
+          type: array
+          maxItems: 100
+          items:
+            type: string
+          description: List item texts when inserting a list.
+        checked:
+          type: boolean
+          description: Checked state for SET_TASK.
+        file_id:
+          $ref: "#/components/schemas/GID"
+          description: File already uploaded in this organization, for INSERT_IMAGE or INSERT_FILE.
+        src:
+          type: string
+          description: Image address when no file_id is set. Only http and https are accepted.
+        alt:
+          type: string
+          description: Image alternative text.
+        width:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Image width as a percentage from 1 to 100.
+        profile_id:
+          $ref: "#/components/schemas/GID"
+          description: Membership profile to mention. The server fills the label.
 
     AcceptDocumentSuggestionInput:
       type: object
@@ -21425,42 +21536,54 @@ tools:
       $ref: "#/components/schemas/StartDocumentSuggestionInput"
     outputSchema:
       $ref: "#/components/schemas/StartDocumentSuggestionOutput"
-  - name: addDocumentSuggestionChange
-    title: Add Document Suggestion Change
-    description: "Add another redline to an open suggestion, the way the editor keeps marking text under one suggestion. The quote becomes a deletion and the replacement an insertion. The quote must not overlap a redline that is already in the document."
+  - name: changeDocumentText
+    title: Change Document Text
+    description: "Replace quoted text. mode APPLY writes it. mode SUGGEST stores it on an open suggestion started with startDocumentSuggestion: the quote becomes a deletion and the replacement an insertion. An open suggestion elsewhere does not block APPLY. A range that already holds a suggestion is refused. Do not send ProseMirror through updateDocument for this change."
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ChangeDocumentTextInput"
+    outputSchema:
+      $ref: "#/components/schemas/ChangeDocumentOutput"
+  - name: changeDocumentFormat
+    title: Change Document Format
+    description: "Add or remove bold, italic, underline, strikethrough, code, or a link on quoted text. mode APPLY writes the style. mode SUGGEST stores it on an open suggestion: accepting keeps the style and rejecting restores the text. Suggesting code also removes the other styles on that text. Do not paint formatting marks with updateDocument."
     hints:
       readonly: false
       destructive: false
       idempotent: false
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/AddDocumentSuggestionChangeInput"
+      $ref: "#/components/schemas/ChangeDocumentFormatInput"
     outputSchema:
-      $ref: "#/components/schemas/AddDocumentSuggestionChangeOutput"
-  - name: addDocumentSuggestionFormatChange
-    title: Add Document Suggestion Format Change
-    description: "Suggest bold, italic, underline, strikethrough, code, or a link on quoted text. Accepting keeps the formatting and rejecting restores the text. Suggesting code also suggests removing the other styles on that text. Start an empty suggestion with startDocumentSuggestion first. Do not paint formatting marks with updateDocument."
+      $ref: "#/components/schemas/ChangeDocumentOutput"
+  - name: changeDocumentTable
+    title: Change Document Table
+    description: "Insert or delete a table row, column, or table. mode APPLY writes the table. mode SUGGEST stores the change on an open suggestion: accepting applies it and rejecting leaves the table as it was. Tables with merged cells only accept INSERT_TABLE and DELETE_TABLE. Do not edit tables with updateDocument."
     hints:
       readonly: false
-      destructive: false
+      destructive: true
       idempotent: false
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/AddDocumentSuggestionFormatChangeInput"
+      $ref: "#/components/schemas/ChangeDocumentTableInput"
     outputSchema:
-      $ref: "#/components/schemas/AddDocumentSuggestionFormatChangeOutput"
-  - name: addDocumentSuggestionTableChange
-    title: Add Document Suggestion Table Change
-    description: "Add a structural table redline to an open suggestion: insert or delete a row or column, insert a new table, or delete a table. Accepting the suggestion applies the change and rejecting it leaves the table as it was. Tables with merged cells only accept INSERT_TABLE and DELETE_TABLE. Start an empty suggestion with startDocumentSuggestion first. Do not edit tables with updateDocument while suggesting."
+      $ref: "#/components/schemas/ChangeDocumentOutput"
+  - name: changeDocumentBlock
+    title: Change Document Block
+    description: "Change a heading, list, quote, code block, divider, image, file, or mention. mode APPLY writes the block. mode SUGGEST stores it on an open suggestion as its own card, separate from any text card. Upload a file first, then pass file_id. Do not send ProseMirror through updateDocument for these changes."
     hints:
       readonly: false
-      destructive: false
+      destructive: true
       idempotent: false
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/AddDocumentSuggestionTableChangeInput"
+      $ref: "#/components/schemas/ChangeDocumentBlockInput"
     outputSchema:
-      $ref: "#/components/schemas/AddDocumentSuggestionTableChangeOutput"
+      $ref: "#/components/schemas/ChangeDocumentOutput"
   - name: acceptDocumentSuggestion
     title: Accept Document Suggestion
     description: Keep suggested insertions, drop suggested deletions, and resolve the suggestion thread
@@ -21499,7 +21622,7 @@ tools:
       $ref: "#/components/schemas/AddDocumentOutput"
   - name: updateDocument
     title: Update Document
-    description: Update an existing document
+    description: "Update a document's title, classification, and other fields. Change text, formatting, tables, and blocks with changeDocumentText, changeDocumentFormat, changeDocumentTable, and changeDocumentBlock instead of sending ProseMirror here."
     hints:
       readonly: false
       destructive: false

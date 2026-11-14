@@ -83,6 +83,10 @@ func ProjectAcceptedSpans(spans []automerge.Span) []automerge.Span {
 			span.Marks = revertFormatMarks(span.Marks)
 		}
 
+		if span.Type == automerge.SpanTypeBlock {
+			span = restoreBlockSuggestion(span)
+		}
+
 		projected = append(projected, span)
 	}
 
@@ -93,6 +97,10 @@ func ProjectAcceptedSpans(spans []automerge.Span) []automerge.Span {
 func HasOpenSuggestions(spans []automerge.Span) bool {
 	for _, span := range spans {
 		if id, _ := suggestionSplit(span); id != "" {
+			return true
+		}
+
+		if payload, ok := readBlockSuggestion(span); ok && payload.ID != "" {
 			return true
 		}
 
@@ -456,6 +464,18 @@ func decideSuggestionSpans(
 	for index := 0; index < len(spans); index++ {
 		span := spans[index]
 		if span.Type != automerge.SpanTypeText {
+			if payload, ok := readBlockSuggestion(span); ok && payload.ID == suggestionID {
+				changed = true
+
+				if accept {
+					next = append(next, clearBlockSuggestion(span))
+				} else {
+					next = append(next, restoreBlockSuggestion(span))
+				}
+
+				continue
+			}
+
 			id, kind := suggestionSplit(span)
 			if id == suggestionID {
 				changed = true
@@ -547,7 +567,7 @@ func omitOpenSplits(spans []automerge.Span) []automerge.Span {
 		}
 
 		if kind == suggestionSplitStructural ||
-			(kind == suggestionSplitInsertion && !blockHasFollowingText(spans, index)) {
+			(kind == suggestionSplitInsertion && (blockIsEmbed(span) || !blockHasFollowingText(spans, index))) {
 			continue
 		}
 
@@ -563,7 +583,7 @@ func dropEmptyInsertionBlocks(spans []automerge.Span, suggestionID string) []aut
 	for index, span := range spans {
 		id, kind := suggestionSplit(span)
 		if id == suggestionID && kind == suggestionSplitInsertion {
-			if !blockHasFollowingText(spans, index) {
+			if blockIsEmbed(span) || !blockHasFollowingText(spans, index) {
 				continue
 			}
 
@@ -668,6 +688,8 @@ func normalizeSuggestionSpans(spans []automerge.Span) []automerge.Span {
 	normalized := make([]automerge.Span, 0, len(spans))
 
 	for _, span := range spans {
+		span = restoreBlockSuggestion(span)
+
 		id, kind := suggestionSplit(span)
 		if id != "" && kind != suggestionSplitDeletion {
 			continue
@@ -713,6 +735,10 @@ func suggestionSpanIDs(spans []automerge.Span) map[string]bool {
 	for _, span := range spans {
 		if id, _ := suggestionSplit(span); id != "" {
 			ids[id] = true
+		}
+
+		if payload, ok := readBlockSuggestion(span); ok {
+			ids[payload.ID] = true
 		}
 
 		if span.Type != automerge.SpanTypeText {

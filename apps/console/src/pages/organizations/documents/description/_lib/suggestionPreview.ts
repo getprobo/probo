@@ -19,6 +19,12 @@
 // SOFTWARE.
 
 import {
+  automergeBlockType,
+  isListBlock,
+  readSuggestionBlock,
+  suggestionBlockParents,
+} from "@probo/ui/src/RichEditor/suggestionBlock";
+import {
   suggestionDeleteName,
   suggestionInsertName,
 } from "@probo/ui/src/RichEditor/SuggestionExtension";
@@ -32,8 +38,8 @@ export type SuggestionPreviewPart = {
 };
 
 export type SuggestionStructurePreview = {
-  action: "add" | "remove";
-  target: "row" | "column" | "table";
+  action: "add" | "remove" | "format";
+  target: "row" | "column" | "table" | "heading" | "paragraph" | "list" | "quote" | "code" | "task" | "divider" | "image" | "file" | "mention";
   text: string;
 };
 
@@ -116,6 +122,19 @@ export function collectSuggestionAnchors(doc: ProseMirrorNode) {
       for (const format of piece.formats) ids.add(format.id);
     }
   }
+
+  doc.descendants((node) => {
+    const block = readSuggestionBlock(node);
+    if (block) ids.add(block.id);
+    const split = structuralSuggestionSplit(node);
+    if (
+      split
+      && (split.kind === "insertion" || split.kind === "deletion")
+      && leafTarget(node.type.name)
+    ) {
+      ids.add(split.id);
+    }
+  });
 
   for (const id of ids) {
     const structure = structureFor(doc, id);
@@ -258,6 +277,12 @@ function structureFor(
   doc: ProseMirrorNode,
   id: string,
 ): (SuggestionStructurePreview & { from: number }) | null {
+  const blockChange = blockSuggestionFor(doc, id);
+  if (blockChange) return blockChange;
+
+  const leaf = leafSuggestionFor(doc, id);
+  if (leaf) return leaf;
+
   const hits: Array<{ pos: number; rank: number; kind: "insertion" | "deletion"; node: ProseMirrorNode }> = [];
   doc.descendants((node, pos) => {
     const split = structuralSuggestionSplit(node);
@@ -283,6 +308,110 @@ function structureFor(
     text: texts.join(" ").replace(/\s+/g, " ").trim(),
     from: Math.min(...chosen.map(hit => hit.pos)),
   };
+}
+
+function blockSuggestionFor(
+  doc: ProseMirrorNode,
+  id: string,
+): (SuggestionStructurePreview & { from: number }) | null {
+  const hits: Array<{ pos: number; node: ProseMirrorNode; parent: ProseMirrorNode | null }> = [];
+  doc.descendants((node, pos, parent) => {
+    if (hits.length > 0) return false;
+    const mark = readSuggestionBlock(node);
+    if (mark?.id !== id) return;
+    hits.push({ pos, node, parent });
+    return false;
+  });
+  const found = hits[0];
+  if (!found) return null;
+  const mark = readSuggestionBlock(found.node);
+  const live = automergeBlockType(found.node, found.parent);
+  if (!mark || !live) return null;
+  return {
+    ...blockCard(live, found.node, mark, suggestionBlockParents(doc, found.pos)),
+    from: found.pos,
+  };
+}
+
+function blockCard(
+  live: string,
+  node: ProseMirrorNode,
+  previous: { type: string; parents: string[]; attrs: Record<string, unknown> },
+  liveParents: string[],
+): SuggestionStructurePreview {
+  if (live === "heading") {
+    const level = typeof node.attrs.level === "number" ? node.attrs.level : 1;
+    return { action: "format", target: "heading", text: String(level) };
+  }
+  if (live === "blockquote") return { action: "format", target: "quote", text: "" };
+  if (live === "code-block") return { action: "format", target: "code", text: "" };
+  if (isListBlock(live) && !isListBlock(previous.type)) {
+    return { action: "format", target: "list", text: "add" };
+  }
+  if (!isListBlock(live) && isListBlock(previous.type)) {
+    return { action: "format", target: "list", text: "remove" };
+  }
+  if (isListBlock(live) && isListBlock(previous.type)) {
+    if (previous.parents.length < liveParents.length) {
+      return { action: "format", target: "list", text: "nest" };
+    }
+    if (previous.parents.length > liveParents.length) {
+      return { action: "format", target: "list", text: "unnest" };
+    }
+  }
+  if (live === "task-list-item" && node.attrs.checked === true && previous.attrs.checked !== true) {
+    return { action: "format", target: "task", text: "check" };
+  }
+  if (live === "task-list-item" && node.attrs.checked !== true && previous.attrs.checked === true) {
+    return { action: "format", target: "task", text: "uncheck" };
+  }
+  if (isListBlock(live)) return { action: "format", target: "list", text: "add" };
+  return { action: "format", target: "paragraph", text: "" };
+}
+
+function leafSuggestionFor(
+  doc: ProseMirrorNode,
+  id: string,
+): (SuggestionStructurePreview & { from: number }) | null {
+  let found: (SuggestionStructurePreview & { from: number }) | null = null;
+  doc.descendants((node, pos) => {
+    if (found) return false;
+    const split = structuralSuggestionSplit(node);
+    if (!split || split.id !== id || (split.kind !== "insertion" && split.kind !== "deletion")) return;
+    const target = leafTarget(node.type.name);
+    if (!target) return;
+    const text = leafText(node);
+    found = {
+      action: split.kind === "deletion" ? "remove" : "add",
+      target,
+      text,
+      from: pos,
+    };
+    return false;
+  });
+  return found;
+}
+
+function leafTarget(name: string): SuggestionStructurePreview["target"] | null {
+  switch (name) {
+    case "horizontalRule":
+      return "divider";
+    case "image":
+      return "image";
+    case "file":
+      return "file";
+    case "mention":
+      return "mention";
+    default:
+      return null;
+  }
+}
+
+function leafText(node: ProseMirrorNode): string {
+  if (typeof node.attrs.fileName === "string" && node.attrs.fileName !== "") return node.attrs.fileName;
+  if (typeof node.attrs.label === "string" && node.attrs.label !== "") return node.attrs.label;
+  if (typeof node.attrs.alt === "string" && node.attrs.alt !== "") return node.attrs.alt;
+  return "";
 }
 
 function structureRank(name: string): number | null {

@@ -25,11 +25,13 @@ import (
 	"errors"
 
 	"go.probo.inc/probo/pkg/collaboration"
+	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/mcp/mcpx"
 	"go.probo.inc/probo/pkg/server/api/mcp/v1/types"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 func (r *Resolver) setDocumentCommentThreadResolved(
@@ -96,6 +98,9 @@ func (r *Resolver) documentReviewError(ctx context.Context, message string, err 
 		collaboration.ErrTableOperation,
 		collaboration.ErrSuggestionFormat,
 		collaboration.ErrSuggestionHref,
+		collaboration.ErrBlockOperation,
+		collaboration.ErrBlockTarget,
+		collaboration.ErrLastListItem,
 	} {
 		if errors.Is(err, tableErr) {
 			return tableErr
@@ -111,4 +116,64 @@ func (r *Resolver) documentReviewError(ctx context.Context, message string, err 
 	}
 
 	return mcpx.MapError(ctx, r.logger, message, err)
+}
+
+func (r *Resolver) authorizeDocumentChange(
+	ctx context.Context,
+	mode probo.DocumentChangeMode,
+	documentID *gid.GID,
+	suggestionID *gid.GID,
+) (*coredata.Scope, error) {
+	target := documentID
+	field := "document_id"
+	action := probo.ActionDocumentUpdate
+
+	if mode == probo.DocumentChangeModeSuggest {
+		target = suggestionID
+		field = "suggestion_id"
+		action = probo.ActionDocumentSuggest
+	}
+
+	if derefGID(target) == gid.Nil {
+		v := validator.New()
+		v.Check(nil, field, validator.Required())
+
+		return nil, r.documentReviewError(ctx, "cannot change document", v.Error())
+	}
+
+	return r.Authorize(ctx, *target, action)
+}
+
+func derefGID(id *gid.GID) gid.GID {
+	if id == nil {
+		return gid.Nil
+	}
+
+	return *id
+}
+
+func derefString(value *string) string {
+	if value == nil {
+		return ""
+	}
+
+	return *value
+}
+
+func derefInt(value *int) int {
+	if value == nil {
+		return 0
+	}
+
+	return *value
+}
+
+func changeDocumentParts(result *probo.DocumentChangeResult) (*types.Document, *types.DocumentSuggestion) {
+	document := types.NewDocument(result.Document)
+
+	if result.Suggestion == nil {
+		return document, nil
+	}
+
+	return document, types.NewDocumentSuggestion(result.Suggestion)
 }
