@@ -39,9 +39,46 @@ func TestWritePreservingSuggestions_EditsTheOtherParagraph(t *testing.T) {
 
 	spans, err := BodySpans(document)
 	require.NoError(t, err)
-	assert.True(t, HasOpenSuggestions(spans))
+	assert.Equal(t, "pt", markedText(spans, SuggestionInsertMark, "s-keep"))
+	assert.Equal(t, "ep", markedText(spans, SuggestionDeleteMark, "s-keep"))
 	assert.Contains(t, joinedSpanText(spans), "range")
 	assert.NotContains(t, joinedSpanText(spans), "scope")
+}
+
+func TestWritePreservingSuggestions_KeepsATypeChangeWithTheSameText(t *testing.T) {
+	t.Parallel()
+
+	document := suggestionDocument(t, `{"type":"doc","content":[`+paragraphJSON("Keep")+`,`+paragraphJSON("scope")+`]}`)
+	require.NoError(t, ApplySuggestionEdit(document, "s-keep", "Keep", "Kept", 0))
+
+	heading := `{"type":"heading","attrs":{"level":2},"content":[{"type":"text","text":"scope"}]}`
+	replacement := `{"type":"doc","content":[` + paragraphJSON("Keep") + `,` + heading + `]}`
+	require.NoError(t, writePreservingSuggestions(document, replacement))
+
+	spans, err := BodySpans(document)
+	require.NoError(t, err)
+	assert.Equal(t, "pt", markedText(spans, SuggestionInsertMark, "s-keep"))
+
+	types := make([]string, 0, len(spans))
+	for _, span := range spans {
+		if span.Type == automerge.SpanTypeBlock {
+			types = append(types, blockType(span))
+		}
+	}
+
+	assert.Equal(t, []string{"paragraph", "heading"}, types)
+}
+
+func markedText(spans []automerge.Span, mark string, id string) string {
+	text := ""
+
+	for _, span := range spans {
+		if span.Type == automerge.SpanTypeText && markID(span.Marks, mark) == id {
+			text += span.Text
+		}
+	}
+
+	return text
 }
 
 func TestWritePreservingSuggestions_RefusesTheSuggestedParagraph(t *testing.T) {

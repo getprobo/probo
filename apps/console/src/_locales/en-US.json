@@ -371,6 +371,7 @@
       "styleCode": "code",
       "styleLink": "link",
       "formatHeading": "Format: Heading {{level}}",
+      "formatParagraph": "Format: normal text",
       "formatQuote": "Format: quote",
       "formatCode": "Format: code",
       "listAdd": "Format list: add to list",

@@ -1109,6 +1109,20 @@ function markLineDeletion(tr: Transaction, pos: number, id: string) {
   });
 }
 
+// A local id is replaced once the server answers, or dropped when it fails.
+// Work that finishes later, like an upload, follows this to the live id.
+const settledSuggestionIds = new Map<string, string | null>();
+
+export function settledSuggestionId(id: string): string | null {
+  let current: string | null = id;
+  const seen = new Set<string>();
+  while (current !== null && settledSuggestionIds.has(current) && !seen.has(current)) {
+    seen.add(current);
+    current = settledSuggestionIds.get(current) ?? null;
+  }
+  return current;
+}
+
 export function reassignSuggestionId(
   editor: {
     isDestroyed?: boolean;
@@ -1118,6 +1132,7 @@ export function reassignSuggestionId(
   fromId: string,
   toId: string,
 ) {
+  settledSuggestionIds.set(fromId, toId);
   if (!editorViewReady(editor)) return;
   const ranges: Array<{ from: number; to: number; marks: readonly ProseMirrorMark[] }> = [];
   const blocks: number[] = [];
@@ -1165,6 +1180,7 @@ export function discardSuggestionId(
   },
   id: string,
 ) {
+  settledSuggestionIds.set(id, null);
   if (!editorViewReady(editor)) return;
   const rewrites: Array<{ from: number; to: number; marks: readonly ProseMirrorMark[] }> = [];
   const removals: Array<{ from: number; to: number }> = [];

@@ -40,16 +40,18 @@ export function changeModeFields(operation: string): INodeProperties[] {
 			displayName: 'Document ID',
 			name: 'documentId',
 			type: 'string',
+			required: true,
 			default: '',
-			description: 'Required when Mode is Apply',
+			description: 'Document to write the change into',
 			displayOptions: { show: { ...show, changeMode: ['APPLY'] } },
 		},
 		{
 			displayName: 'Suggestion ID',
 			name: 'suggestionId',
 			type: 'string',
+			required: true,
 			default: '',
-			description: 'Open suggestion. Required when Mode is Suggest.',
+			description: 'Open suggestion that stores the change',
 			displayOptions: { show: { ...show, changeMode: ['SUGGEST'] } },
 		},
 	];
@@ -76,6 +78,15 @@ export function changeTarget(this: IExecuteFunctions, itemIndex: number): Record
 	}
 
 	return input;
+}
+
+export function changeOccurrence(this: IExecuteFunctions, itemIndex: number): number {
+	const occurrence = this.getNodeParameter('quoteOccurrence', itemIndex, 0) as number;
+	if (!Number.isInteger(occurrence) || occurrence < 0) {
+		throw new NodeOperationError(this.getNode(), 'Quote Occurrence must be a whole number of 0 or more', { itemIndex });
+	}
+
+	return occurrence;
 }
 
 export const changeSelection = 'document { id } documentSuggestion { id status }';

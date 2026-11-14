@@ -39,7 +39,7 @@ export type SuggestionPreviewPart = {
 
 export type SuggestionStructurePreview = {
   action: "add" | "remove" | "format";
-  target: "row" | "column" | "table" | "heading" | "list" | "quote" | "code" | "task" | "divider" | "image" | "file" | "mention";
+  target: "row" | "column" | "table" | "heading" | "paragraph" | "list" | "quote" | "code" | "task" | "divider" | "image" | "file" | "mention";
   text: string;
 };
 
@@ -357,7 +357,8 @@ function blockCard(
   if (live === "task-list-item" && node.attrs.checked !== true && previous.attrs.checked === true) {
     return { action: "format", target: "task", text: "uncheck" };
   }
-  return { action: "format", target: "list", text: "add" };
+  if (isListBlock(live)) return { action: "format", target: "list", text: "add" };
+  return { action: "format", target: "paragraph", text: "" };
 }
 
 function leafSuggestionFor(

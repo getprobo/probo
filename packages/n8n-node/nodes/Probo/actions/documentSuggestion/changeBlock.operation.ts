@@ -20,9 +20,12 @@
 
 import { NodeOperationError, type IExecuteFunctions, type INodeExecutionData, type INodeProperties } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
-import { changeModeFields, changeSelection, changeTarget } from './changeTarget';
+import { changeModeFields, changeOccurrence, changeSelection, changeTarget } from './changeTarget';
 
 const show = { show: { resource: ['documentSuggestion'], operation: ['changeBlock'] } };
+
+// These insert into an empty document when the quote is empty.
+const emptyDocumentOperations = ['INSERT_BLOCK', 'INSERT_DIVIDER', 'INSERT_IMAGE', 'INSERT_FILE'];
 
 const blockOperations = [
 	{ name: 'Delete Block', value: 'DELETE_BLOCK' },
@@ -63,7 +66,7 @@ export const description: INodeProperties[] = [
 		displayName: 'Quote Occurrence',
 		name: 'quoteOccurrence',
 		type: 'number',
-		typeOptions: { minValue: 0 },
+		typeOptions: { minValue: 0, numberPrecision: 0 },
 		default: 0,
 		displayOptions: show,
 	},
@@ -144,6 +147,7 @@ export const description: INodeProperties[] = [
 			show: {
 				resource: ['documentSuggestion'],
 				operation: ['changeBlock'],
+				blockOperation: ['INSERT_BLOCK'],
 				blockKind: ['BULLET_LIST', 'ORDERED_LIST', 'TASK_LIST'],
 			},
 		},
@@ -236,14 +240,21 @@ export const description: INodeProperties[] = [
 export async function execute(this: IExecuteFunctions, itemIndex: number): Promise<INodeExecutionData> {
 	const operation = this.getNodeParameter('blockOperation', itemIndex) as string;
 	const quote = this.getNodeParameter('quote', itemIndex, '') as string;
-	const quoteOccurrence = this.getNodeParameter('quoteOccurrence', itemIndex, 0) as number;
+	const quoteOccurrence = changeOccurrence.call(this, itemIndex);
+	if (quote.trim() === '' && !emptyDocumentOperations.includes(operation)) {
+		throw new NodeOperationError(this.getNode(), 'Quote is required for this operation', { itemIndex });
+	}
 	const input: Record<string, unknown> = {
 		...changeTarget.call(this, itemIndex),
 		operation,
 		quote,
 		quoteOccurrence,
-		before: this.getNodeParameter('before', itemIndex, false) as boolean,
 	};
+
+	// An omitted before deletes the quoted block; a set one deletes its neighbor.
+	if (this.getNodeParameter('before', itemIndex, false) as boolean) {
+		input.before = true;
+	}
 
 	if (['SET_BLOCK', 'INSERT_BLOCK', 'INSERT_LIST_ITEM'].includes(operation)) {
 		input.block = this.getNodeParameter('blockKind', itemIndex) as string;
@@ -265,7 +276,7 @@ export async function execute(this: IExecuteFunctions, itemIndex: number): Promi
 		input.text = text;
 	}
 
-	if (['BULLET_LIST', 'ORDERED_LIST', 'TASK_LIST'].includes(String(input.block))) {
+	if (operation === 'INSERT_BLOCK' && ['BULLET_LIST', 'ORDERED_LIST', 'TASK_LIST'].includes(String(input.block))) {
 		const raw = this.getNodeParameter('items', itemIndex, '[]');
 		let parsed: unknown = raw;
 		if (typeof raw === 'string') {

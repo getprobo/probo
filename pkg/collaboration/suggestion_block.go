@@ -248,8 +248,37 @@ func setBlock(spans []automerge.Span, change BlockChange) ([]automerge.Span, err
 		return nil, err
 	}
 
+	parents := blockParents(spans[index])
+	oldPath := blockPath(spans[index])
+
+	newPath := append(append([]string(nil), parents...), kind)
+
 	next := append([]automerge.Span(nil), spans...)
-	next[index] = rewrittenBlock(spans[index], kind, blockParents(spans[index]), attrs, change.SuggestionID)
+	next[index] = rewrittenBlock(spans[index], kind, parents, attrs, change.SuggestionID)
+
+	if equalPath(oldPath, newPath) {
+		return next, nil
+	}
+
+	// Nested blocks name their ancestors by type, so a changed container
+	// renames the path of everything under it. Each one records its previous
+	// path so rejecting the suggestion puts it back.
+	end := subtreeEnd(spans, index)
+	for cursor := index + 1; cursor < end; cursor++ {
+		current := blockParents(spans[cursor])
+		if spans[cursor].Type != automerge.SpanTypeBlock || !hasPathPrefix(current, oldPath) {
+			continue
+		}
+
+		updated := append(append([]string(nil), newPath...), current[len(oldPath):]...)
+		next[cursor] = rewrittenBlock(
+			spans[cursor],
+			blockType(spans[cursor]),
+			updated,
+			copyMap(blockAttrs(spans[cursor])),
+			change.SuggestionID,
+		)
+	}
 
 	return next, nil
 }
@@ -530,6 +559,10 @@ func insertMention(spans []automerge.Span, change BlockChange) ([]automerge.Span
 		engine = units[len(units)-1].engine + 1
 	}
 
+	if !engineTargetClear(spans, engine) {
+		return nil, ErrSuggestionOverlaps
+	}
+
 	parents := parentsAtEngine(spans, engine)
 	mention := plainBlock(blockTypeMention, parents, map[string]any{
 		"id":    change.ProfileID,
@@ -538,6 +571,62 @@ func insertMention(spans []automerge.Span, change BlockChange) ([]automerge.Span
 	mention.Block["isEmbed"] = true
 
 	return insertAtEngine(spans, engine, mention), nil
+}
+
+// engineTargetClear reports whether an embed can go at engine without landing
+// in another open suggestion: the text on either side carries no suggestion
+// mark and the enclosing block carries no split or block suggestion.
+func engineTargetClear(spans []automerge.Span, engine uint32) bool {
+	cursor := uint32(0)
+	block := -1
+
+	for index, span := range spans {
+		if cursor > engine {
+			break
+		}
+
+		if span.Type == automerge.SpanTypeBlock {
+			if cursor == engine {
+				break
+			}
+
+			if !blockIsEmbed(span) {
+				block = index
+			}
+
+			cursor++
+
+			continue
+		}
+
+		if span.Type != automerge.SpanTypeText || span.Text == "" {
+			continue
+		}
+
+		width := utf16Len(span.Text)
+		touches := engine >= cursor && engine <= cursor+width
+		marked := markID(span.Marks, SuggestionInsertMark) != "" ||
+			markID(span.Marks, SuggestionDeleteMark) != "" ||
+			len(formatMarkIDs(span.Marks)) > 0
+
+		if touches && marked {
+			return false
+		}
+
+		cursor += width
+	}
+
+	if block < 0 {
+		return true
+	}
+
+	if id, _ := suggestionSplit(spans[block]); id != "" {
+		return false
+	}
+
+	_, suggested := readBlockSuggestion(spans[block])
+
+	return !suggested
 }
 
 func deleteMention(spans []automerge.Span, change BlockChange) ([]automerge.Span, error) {

@@ -78,6 +78,46 @@ func TestApplyDirectText_HardBreak(t *testing.T) {
 	assert.True(t, found)
 }
 
+func TestApplyDirectText_HardBreakOnlyInTheEditedBlock(t *testing.T) {
+	t.Parallel()
+
+	document := suggestionDocument(
+		t,
+		`{"type":"doc","content":[`+paragraphJSON("a\nb")+`,`+paragraphJSON("HelloWorld")+`]}`,
+	)
+	require.NoError(t, ApplyDirectText(document, "HelloWorld", "Hello\nWorld", 0))
+
+	spans, err := BodySpans(document)
+	require.NoError(t, err)
+	assert.Equal(t, 1, countBlocks(spans, blockTypeHardBreak))
+	assert.Contains(t, joinedSpanText(spans), "a\nb")
+}
+
+func TestApplyDirectText_KeepsNewlinesInCode(t *testing.T) {
+	t.Parallel()
+
+	code := `{"type":"codeBlock","content":[{"type":"text","text":"ab"}]}`
+	document := suggestionDocument(t, `{"type":"doc","content":[`+code+`]}`)
+	require.NoError(t, ApplyDirectText(document, "ab", "a\nb", 0))
+
+	spans, err := BodySpans(document)
+	require.NoError(t, err)
+	assert.Equal(t, 0, countBlocks(spans, blockTypeHardBreak))
+	assert.Contains(t, joinedSpanText(spans), "a\nb")
+}
+
+func countBlocks(spans []automerge.Span, kind string) int {
+	count := 0
+
+	for _, span := range spans {
+		if blockType(span) == kind {
+			count++
+		}
+	}
+
+	return count
+}
+
 func TestApplyDirectFormat_WritesTheStyle(t *testing.T) {
 	t.Parallel()
 
@@ -166,6 +206,72 @@ func TestApplyBlock_ListAndImage(t *testing.T) {
 	require.NoError(t, err)
 	assert.Contains(t, withImage, "image")
 	assert.Contains(t, withImage, "https://example.com/diagram.png")
+}
+
+func TestApplyBlock_RetypesNestedItems(t *testing.T) {
+	t.Parallel()
+
+	child := `{"type":"bulletList","content":[{"type":"listItem","content":[` + paragraphJSON("Child") + `]}]}`
+	parent := `{"type":"bulletList","content":[{"type":"listItem","content":[` + paragraphJSON("Parent") + `,` + child + `]}]}`
+	document := suggestionDocument(t, `{"type":"doc","content":[`+parent+`]}`)
+
+	require.NoError(t, ApplyBlock(document, BlockChange{
+		Operation:    BlockSet,
+		Quote:        "Parent",
+		Block:        BlockKindOrderedList,
+		SuggestionID: "s-list",
+	}))
+	assert.Equal(t, []string{blockTypeOrderedListItem}, childParents(t, document))
+
+	require.NoError(t, WriteBodySpans(document, decidedSpans(t, document, "s-list", false)))
+	assert.Equal(t, []string{blockTypeUnorderedListItem}, childParents(t, document))
+}
+
+func childParents(t *testing.T, document *automerge.Document) []string {
+	t.Helper()
+
+	spans, err := BodySpans(document)
+	require.NoError(t, err)
+
+	for index, span := range spans {
+		if span.Type == automerge.SpanTypeText && span.Text == "Child" {
+			for cursor := index - 1; cursor >= 0; cursor-- {
+				if spans[cursor].Type == automerge.SpanTypeBlock {
+					return blockParents(spans[cursor])
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func TestApplyBlock_MentionRefusedInsideBlockSuggestion(t *testing.T) {
+	t.Parallel()
+
+	document := suggestionDocument(t, `{"type":"doc","content":[`+paragraphJSON("Hello")+`,`+paragraphJSON("World")+`]}`)
+	require.NoError(t, ApplyBlock(document, BlockChange{
+		Operation:    BlockSet,
+		Quote:        "Hello",
+		Block:        BlockKindHeading,
+		Level:        2,
+		SuggestionID: "s-head",
+	}))
+
+	err := ApplyBlock(document, BlockChange{
+		Operation: BlockInsertMention,
+		Quote:     "Hello",
+		ProfileID: "profile",
+		Label:     "Ada",
+	})
+	require.ErrorIs(t, err, ErrSuggestionOverlaps)
+
+	require.NoError(t, ApplyBlock(document, BlockChange{
+		Operation: BlockInsertMention,
+		Quote:     "World",
+		ProfileID: "profile",
+		Label:     "Ada",
+	}))
 }
 
 func TestApplyBlock_UnsafeImage(t *testing.T) {

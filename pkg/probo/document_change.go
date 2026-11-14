@@ -270,7 +270,16 @@ func (s *DocumentService) ChangeTable(
 	v.Check(req.Quote, "quote", validator.Required(), validator.MaxLen(documentQuoteMaxLength))
 	v.Check(req.Occurrence, "quote_occurrence", validator.Min(0))
 	v.Check(req.Cells, "cells", validator.MaxItems(documentTableMaxRows))
+	v.CheckEach(req.Cells, "cells", func(index int, item any) {
+		v.Check(item, fmt.Sprintf("cells[%d]", index), validator.MaxLen(documentQuoteMaxLength))
+	})
 	v.Check(req.Rows, "rows", validator.MaxItems(documentTableMaxRows))
+	v.CheckEach(req.Rows, "rows", func(index int, item any) {
+		v.Check(item, fmt.Sprintf("rows[%d]", index), validator.MaxItems(documentTableMaxColumns))
+		v.CheckEach(item, fmt.Sprintf("rows[%d]", index), func(cell int, value any) {
+			v.Check(value, fmt.Sprintf("rows[%d][%d]", index, cell), validator.MaxLen(documentQuoteMaxLength))
+		})
+	})
 
 	if err := v.Error(); err != nil {
 		return nil, err
@@ -353,6 +362,9 @@ func (s *DocumentService) ChangeBlock(
 	v.Check(req.Text, "text", validator.MaxLen(documentQuoteMaxLength))
 	v.Check(req.Occurrence, "quote_occurrence", validator.Min(0))
 	v.Check(req.Items, "items", validator.MaxItems(documentTableMaxRows))
+	v.CheckEach(req.Items, "items", func(index int, item any) {
+		v.Check(item, fmt.Sprintf("items[%d]", index), validator.MaxLen(documentQuoteMaxLength))
+	})
 
 	if err := v.Error(); err != nil {
 		return nil, err

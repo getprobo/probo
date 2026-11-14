@@ -23,7 +23,7 @@ import type { EditorView } from "@tiptap/pm/view";
 
 import { type AttachmentKind, attachmentKind, maxAttachmentSize, prepareAttachment } from "./attachments";
 import { insertionSplitAttrs } from "./suggestionBlock";
-import { suggestingChangeId } from "./SuggestionExtension";
+import { settledSuggestionId, suggestingChangeId } from "./SuggestionExtension";
 import { suggestionStructureMeta } from "./suggestionStructure";
 
 export type AttachmentUploadError = {
@@ -89,7 +89,13 @@ export async function uploadAttachments(
         return;
       }
 
-      replaceUpload(view, item.id, item.kind, uploaded, suggestionId);
+      const liveId = suggestionId ? settledSuggestionId(suggestionId) : null;
+      if (suggestionId && !liveId) {
+        removeUpload(view, item.id);
+        return;
+      }
+
+      replaceUpload(view, item.id, item.kind, uploaded, liveId);
     } catch {
       onError({ fileName: item.file.name, reason: "failed" });
       removeUpload(view, item.id);
