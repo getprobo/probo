@@ -55,7 +55,7 @@ export const description: INodeProperties[] = [
 		type: 'number',
 		typeOptions: { minValue: 0 },
 		default: 0,
-		description: 'Zero-based occurrence of the quote.',
+		description: 'Zero-based occurrence of the quote',
 		displayOptions: addOptions,
 	},
 ];

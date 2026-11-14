@@ -30,6 +30,7 @@ import (
 
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/automerge"
 	"go.probo.inc/probo/pkg/collaboration"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -41,6 +42,8 @@ import (
 const (
 	documentCommentMaxLength = 10000
 	documentQuoteMaxLength   = 2000
+	documentTableMaxRows     = 100
+	documentTableMaxColumns  = 20
 	documentAnchorMaxBytes   = 512
 	richTextMaxJSONBytes     = 64 << 10
 )
@@ -105,7 +108,28 @@ type (
 		Replacement  string
 		Occurrence   int
 	}
+
+	AddDocumentSuggestionTableChangeRequest struct {
+		SuggestionID gid.GID
+		IdentityID   gid.GID
+		Operation    collaboration.TableSuggestionOperation
+		Quote        string
+		Occurrence   int
+		Before       bool
+		Cells        []string
+		Rows         [][]string
+		HeaderRow    bool
+	}
 )
+
+var documentTableOperations = []collaboration.TableSuggestionOperation{
+	collaboration.TableSuggestionInsertRow,
+	collaboration.TableSuggestionDeleteRow,
+	collaboration.TableSuggestionInsertColumn,
+	collaboration.TableSuggestionDeleteColumn,
+	collaboration.TableSuggestionInsertTable,
+	collaboration.TableSuggestionDeleteTable,
+}
 
 func (req *CreateDocumentCommentThreadRequest) Validate() error {
 	v := validator.New()
@@ -1047,35 +1071,7 @@ func (s *DocumentService) AddSuggestionChange(
 		return nil, err
 	}
 
-	suggestion := &coredata.DocumentSuggestion{}
-	var profileID gid.GID
-
-	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		if err := suggestion.LoadByIDForUpdate(ctx, tx, scope, req.SuggestionID); err != nil {
-			return fmt.Errorf("cannot load document suggestion: %w", err)
-		}
-
-		if suggestion.Status != coredata.DocumentSuggestionStatusOpen {
-			return ErrDocumentSuggestionClosed
-		}
-
-		if _, err := s.editableReviewDocument(ctx, tx, scope, suggestion.DocumentID); err != nil {
-			return err
-		}
-
-		profile, err := s.reviewProfile(ctx, tx, scope, suggestion.OrganizationID, req.IdentityID)
-		if err != nil {
-			return err
-		}
-
-		if profile.ID != suggestion.AuthorProfileID {
-			return ErrNotDocumentSuggestionAuthor
-		}
-
-		profileID = profile.ID
-
-		return nil
-	})
+	suggestion, profileID, err := s.openSuggestionForChange(ctx, scope, req.SuggestionID, req.IdentityID)
 	if err != nil {
 		return nil, err
 	}
@@ -1098,25 +1094,153 @@ func (s *DocumentService) AddSuggestionChange(
 
 	defer func() { _ = painted.Close() }()
 
-	if err := s.collaboration.RecordActors(
+	if err := s.persistSuggestionChange(ctx, scope, suggestion, req.IdentityID, profileID, painted, actorID); err != nil {
+		return nil, err
+	}
+
+	return suggestion, nil
+}
+
+// AddSuggestionTableChange adds a structural table redline to an open
+// suggestion: a new or removed row, column, or table. Accepting the
+// suggestion applies it and rejecting it leaves the table as it was.
+func (s *DocumentService) AddSuggestionTableChange(
+	ctx context.Context,
+	scope coredata.Scoper,
+	req AddDocumentSuggestionTableChangeRequest,
+) (*coredata.DocumentSuggestion, error) {
+	v := validator.New()
+	v.Check(req.SuggestionID, "suggestion_id", validator.Required(), validator.GID(coredata.DocumentSuggestionEntityType))
+	v.Check(req.IdentityID, "identity_id", validator.Required(), validator.GID(coredata.IdentityEntityType))
+	v.Check(req.Operation, "operation", validator.Required(), validator.OneOfSlice(documentTableOperations))
+	v.Check(req.Quote, "quote", validator.Required(), validator.MaxLen(documentQuoteMaxLength))
+	v.Check(req.Occurrence, "quote_occurrence", validator.Min(0))
+	v.Check(req.Cells, "cells", validator.MaxItems(documentTableMaxRows))
+	v.CheckEach(req.Cells, "cells", func(index int, item any) {
+		v.Check(item, fmt.Sprintf("cells[%d]", index), validator.MaxLen(documentQuoteMaxLength))
+	})
+	v.Check(req.Rows, "rows", validator.MaxItems(documentTableMaxRows))
+	v.CheckEach(req.Rows, "rows", func(index int, item any) {
+		v.Check(item, fmt.Sprintf("rows[%d]", index), validator.MaxItems(documentTableMaxColumns))
+		v.CheckEach(item, fmt.Sprintf("rows[%d]", index), func(cell int, value any) {
+			v.Check(value, fmt.Sprintf("rows[%d][%d]", index, cell), validator.MaxLen(documentQuoteMaxLength))
+		})
+	})
+
+	if err := v.Error(); err != nil {
+		return nil, err
+	}
+
+	suggestion, profileID, err := s.openSuggestionForChange(ctx, scope, req.SuggestionID, req.IdentityID)
+	if err != nil {
+		return nil, err
+	}
+
+	painted, actorID, err := s.collaboration.PaintTableSuggestion(
 		ctx,
 		scope,
 		suggestion.DocumentID,
 		suggestion.OrganizationID,
 		req.IdentityID,
 		&profileID,
+		suggestion.ID.String(),
+		collaboration.TableSuggestion{
+			Operation:  req.Operation,
+			Quote:      req.Quote,
+			Occurrence: req.Occurrence,
+			Before:     req.Before,
+			Cells:      req.Cells,
+			Rows:       req.Rows,
+			HeaderRow:  req.HeaderRow,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() { _ = painted.Close() }()
+
+	if err := s.persistSuggestionChange(ctx, scope, suggestion, req.IdentityID, profileID, painted, actorID); err != nil {
+		return nil, err
+	}
+
+	return suggestion, nil
+}
+
+// openSuggestionForChange loads an open suggestion the caller wrote. Only its
+// author may add redlines, matching the editor where the suggestion id lives
+// in the author's own controller.
+func (s *DocumentService) openSuggestionForChange(
+	ctx context.Context,
+	scope coredata.Scoper,
+	suggestionID gid.GID,
+	identityID gid.GID,
+) (*coredata.DocumentSuggestion, gid.GID, error) {
+	suggestion := &coredata.DocumentSuggestion{}
+
+	var profileID gid.GID
+
+	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		if err := suggestion.LoadByIDForUpdate(ctx, tx, scope, suggestionID); err != nil {
+			return fmt.Errorf("cannot load document suggestion: %w", err)
+		}
+
+		if suggestion.Status != coredata.DocumentSuggestionStatusOpen {
+			return ErrDocumentSuggestionClosed
+		}
+
+		if _, err := s.editableReviewDocument(ctx, tx, scope, suggestion.DocumentID); err != nil {
+			return err
+		}
+
+		profile, err := s.reviewProfile(ctx, tx, scope, suggestion.OrganizationID, identityID)
+		if err != nil {
+			return err
+		}
+
+		if profile.ID != suggestion.AuthorProfileID {
+			return ErrNotDocumentSuggestionAuthor
+		}
+
+		profileID = profile.ID
+
+		return nil
+	})
+	if err != nil {
+		return nil, gid.GID{}, err
+	}
+
+	return suggestion, profileID, nil
+}
+
+func (s *DocumentService) persistSuggestionChange(
+	ctx context.Context,
+	scope coredata.Scoper,
+	suggestion *coredata.DocumentSuggestion,
+	identityID gid.GID,
+	profileID gid.GID,
+	painted *automerge.Document,
+	actorID automerge.ActorID,
+) error {
+	if err := s.collaboration.RecordActors(
+		ctx,
+		scope,
+		suggestion.DocumentID,
+		suggestion.OrganizationID,
+		identityID,
+		&profileID,
 		[][]byte{actorID[:]},
 	); err != nil {
-		return nil, fmt.Errorf("cannot record suggestion actor: %w", err)
+		return fmt.Errorf("cannot record suggestion actor: %w", err)
 	}
 
 	if _, err := s.collaboration.Persist(ctx, scope, suggestion.DocumentID, painted); err != nil {
-		return nil, fmt.Errorf("cannot persist suggestion: %w", err)
+		return fmt.Errorf("cannot persist suggestion: %w", err)
 	}
 
 	s.notifyReview(ctx, suggestion.DocumentID)
 
-	return suggestion, nil
+	return nil
 }
 
 // abandonSuggestion rejects a suggestion whose body or comment did not finish.

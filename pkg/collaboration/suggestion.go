@@ -221,6 +221,7 @@ func QuoteCursors(
 	}
 
 	visible, offsets := visibleText(spans)
+
 	index, err := findQuote(visible, quote, occurrence)
 	if err != nil {
 		return nil, nil, err
@@ -267,7 +268,7 @@ func SuggestionQuote(spans []automerge.Span, suggestionID string) string {
 	for _, span := range spans {
 		if span.Type == automerge.SpanTypeBlock {
 			id, kind := suggestionSplit(span)
-			if id == suggestionID && kind == suggestionSplitDeletion {
+			if id == suggestionID && kind == suggestionSplitDeletion && !isTableStructure(span) {
 				quote.WriteByte('\n')
 
 				wrote = true
@@ -329,7 +330,7 @@ func SuggestionCursors(
 		matches := (span.Type == automerge.SpanTypeText &&
 			(markID(span.Marks, SuggestionInsertMark) == suggestionID ||
 				markID(span.Marks, SuggestionDeleteMark) == suggestionID)) ||
-			(splitID == suggestionID && splitKind == suggestionSplitDeletion)
+			(splitID == suggestionID && (splitKind == suggestionSplitDeletion || isTableStructure(span)))
 
 		if matches {
 			if !found {
@@ -444,11 +445,21 @@ func decideSuggestionSpans(
 	next := make([]automerge.Span, 0, len(spans))
 	changed := false
 
-	for _, span := range spans {
+	for index := 0; index < len(spans); index++ {
+		span := spans[index]
 		if span.Type != automerge.SpanTypeText {
 			id, kind := suggestionSplit(span)
 			if id == suggestionID {
 				changed = true
+
+				// A table, row, or cell owns every block after it until the
+				// path leaves it. Removing only its marker would graft its
+				// children onto the previous sibling.
+				if isTableStructure(span) &&
+					((accept && kind == suggestionSplitDeletion) || (!accept && kind == suggestionSplitInsertion)) {
+					index = subtreeEnd(spans, index) - 1
+					continue
+				}
 
 				if accept && kind == suggestionSplitDeletion {
 					continue
@@ -506,10 +517,17 @@ func decideSuggestionSpans(
 func omitOpenSplits(spans []automerge.Span) []automerge.Span {
 	next := make([]automerge.Span, 0, len(spans))
 
-	for index, span := range spans {
+	for index := 0; index < len(spans); index++ {
+		span := spans[index]
+
 		id, kind := suggestionSplit(span)
 		if id == "" {
 			next = append(next, span)
+			continue
+		}
+
+		if kind == suggestionSplitInsertion && isTableStructure(span) {
+			index = subtreeEnd(spans, index) - 1
 			continue
 		}
 
@@ -614,12 +632,7 @@ func clearSuggestionSplit(span automerge.Span) automerge.Span {
 	delete(nextAttrs, suggestionSplitAttr)
 	delete(nextAttrs, suggestionSplitKindAttr)
 
-	if len(nextAttrs) == 0 {
-		delete(block, "attrs")
-	} else {
-		block["attrs"] = nextAttrs
-	}
-
+	block["attrs"] = nextAttrs
 	span.Block = block
 
 	return span
@@ -810,12 +823,27 @@ func spansEqual(left []automerge.Span, right []automerge.Span) bool {
 			return false
 		}
 
-		if !jsonEqual(left[index].Block, right[index].Block) || !jsonEqual(left[index].Marks, right[index].Marks) {
+		if !jsonEqual(comparableBlock(left[index].Block), comparableBlock(right[index].Block)) ||
+			!jsonEqual(left[index].Marks, right[index].Marks) {
 			return false
 		}
 	}
 
 	return true
+}
+
+// comparableBlock treats a block without attrs and one with empty attrs as
+// the same block, since clearing a split leaves the empty map behind.
+func comparableBlock(block map[string]any) map[string]any {
+	attrs, ok := block["attrs"].(map[string]any)
+	if !ok || len(attrs) != 0 {
+		return block
+	}
+
+	next := copyMap(block)
+	delete(next, "attrs")
+
+	return next
 }
 
 func jsonEqual(left any, right any) bool {
@@ -925,9 +953,6 @@ type visibleOffset struct {
 	absolute uint32
 }
 
-// visibleText joins block text with a newline so a quote spanning paragraphs
-// resolves. The separator is visible-only; it maps to the block boundary's
-// absolute position, which absoluteUTF16 clamps to.
 // findQuote returns the byte index of the occurrence-th match. The loop
 // counts down so occurrence == MaxInt cannot overflow into a negative range.
 func findQuote(visible string, quote string, occurrence int) (int, error) {
@@ -936,7 +961,6 @@ func findQuote(visible string, quote string, occurrence int) (int, error) {
 	}
 
 	searchFrom := 0
-	index := -1
 	remaining := occurrence
 
 	for {
@@ -945,7 +969,7 @@ func findQuote(visible string, quote string, occurrence int) (int, error) {
 			return 0, ErrQuoteNotFound
 		}
 
-		index = searchFrom + found
+		index := searchFrom + found
 		if remaining == 0 {
 			return index, nil
 		}
@@ -960,6 +984,9 @@ func findQuote(visible string, quote string, occurrence int) (int, error) {
 	}
 }
 
+// visibleText joins block text with a newline so a quote spanning paragraphs
+// resolves. The separator is visible-only; it maps to the block boundary's
+// absolute position, which absoluteUTF16 clamps to.
 func visibleText(spans []automerge.Span) (string, []visibleOffset) {
 	var visible strings.Builder
 

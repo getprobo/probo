@@ -41,6 +41,7 @@ func NewCmdSuggestion(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(newViewCmd(f))
 	cmd.AddCommand(newStartCmd(f))
 	cmd.AddCommand(newAddCmd(f))
+	cmd.AddCommand(newTableCmd(f))
 	cmd.AddCommand(newAcceptCmd(f))
 	cmd.AddCommand(newRejectCmd(f))
 
@@ -391,6 +392,136 @@ func newAddCmd(f *cmdutil.Factory) *cobra.Command {
 	return cmd
 }
 
+var tableOperations = []string{
+	"INSERT_ROW",
+	"DELETE_ROW",
+	"INSERT_COLUMN",
+	"DELETE_COLUMN",
+	"INSERT_TABLE",
+	"DELETE_TABLE",
+}
+
+func newTableCmd(f *cmdutil.Factory) *cobra.Command {
+	var (
+		flagOutput     *string
+		flagOperation  string
+		flagQuote      string
+		flagOccurrence int
+		flagBefore     bool
+		flagCells      []string
+		flagRows       []string
+		flagHeaderRow  bool
+	)
+
+	cmd := &cobra.Command{
+		Use:   "table <suggestion-id>",
+		Short: "Add a table row, column, or table redline to a suggestion",
+		Example: `  # Suggest a new row after the row holding "Read"
+  prb document suggestion table <id> --operation INSERT_ROW --quote Read --cell Write --cell No
+
+  # Suggest removing the column holding "Access"
+  prb document suggestion table <id> --operation DELETE_COLUMN --quote Access
+
+  # Suggest a new table after the paragraph holding "Scope"
+  prb document suggestion table <id> --operation INSERT_TABLE --quote Scope \
+    --header-row --row "Right|Access" --row "Read|Yes"`,
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := cmdutil.ValidateEnum("operation", flagOperation, tableOperations); err != nil {
+				return err
+			}
+
+			if strings.TrimSpace(flagQuote) == "" {
+				return fmt.Errorf("quote is required")
+			}
+
+			insertsCells := flagOperation == "INSERT_ROW" || flagOperation == "INSERT_COLUMN"
+			if len(flagCells) > 0 && !insertsCells {
+				return fmt.Errorf("--cell only applies to INSERT_ROW and INSERT_COLUMN")
+			}
+
+			if (len(flagRows) > 0 || flagHeaderRow) && flagOperation != "INSERT_TABLE" {
+				return fmt.Errorf("--row and --header-row only apply to INSERT_TABLE")
+			}
+
+			if flagOperation == "INSERT_TABLE" && len(flagRows) == 0 {
+				return fmt.Errorf("--row is required with INSERT_TABLE")
+			}
+
+			if flagBefore && !insertsCells && flagOperation != "INSERT_TABLE" {
+				return fmt.Errorf("--before only applies to insert operations")
+			}
+
+			input := map[string]any{
+				"suggestionId": args[0],
+				"operation":    flagOperation,
+				"quote":        flagQuote,
+			}
+			if flagOccurrence != 0 {
+				input["quoteOccurrence"] = flagOccurrence
+			}
+
+			if flagBefore {
+				input["before"] = true
+			}
+
+			if len(flagCells) > 0 {
+				input["cells"] = flagCells
+			}
+
+			if len(flagRows) > 0 {
+				rows := make([][]string, 0, len(flagRows))
+				for _, row := range flagRows {
+					rows = append(rows, strings.Split(row, "|"))
+				}
+
+				input["rows"] = rows
+			}
+
+			if flagHeaderRow {
+				input["headerRow"] = true
+			}
+
+			return runMutation(
+				f,
+				flagOutput,
+				tableMutation,
+				map[string]any{"input": input},
+				func(data json.RawMessage) (string, error) {
+					var resp struct {
+						AddDocumentSuggestionTableChange struct {
+							DocumentSuggestion struct {
+								ID string `json:"id"`
+							} `json:"documentSuggestion"`
+						} `json:"addDocumentSuggestionTableChange"`
+					}
+					if err := json.Unmarshal(data, &resp); err != nil {
+						return "", fmt.Errorf("cannot parse response: %w", err)
+					}
+
+					return fmt.Sprintf(
+						"Added a table redline to suggestion %s",
+						resp.AddDocumentSuggestionTableChange.DocumentSuggestion.ID,
+					), nil
+				},
+			)
+		},
+	}
+
+	flagOutput = cmdutil.AddOutputFlag(cmd)
+	cmd.Flags().StringVar(&flagOperation, "operation", "", "Change to suggest: "+strings.Join(tableOperations, ", "))
+	cmd.Flags().StringVar(&flagQuote, "quote", "", "Text in a cell of the target row, column, or table (or the block a new table goes beside)")
+	cmd.Flags().IntVar(&flagOccurrence, "occurrence", 0, "Zero-based occurrence of the quote")
+	cmd.Flags().BoolVar(&flagBefore, "before", false, "Insert before the quoted row, column, or block")
+	cmd.Flags().StringArrayVar(&flagCells, "cell", nil, "Cell text of the new row or column (can be repeated)")
+	cmd.Flags().StringArrayVar(&flagRows, "row", nil, "Row of the new table, cells separated by | (can be repeated)")
+	cmd.Flags().BoolVar(&flagHeaderRow, "header-row", false, "Make the new table's first row a header row")
+
+	_ = cmd.MarkFlagRequired("operation")
+
+	return cmd
+}
+
 func newAcceptCmd(f *cmdutil.Factory) *cobra.Command {
 	return newDecisionCmd(f, "accept", "Accept a suggestion", acceptMutation, "acceptDocumentSuggestion", "Accepted")
 }
@@ -522,6 +653,14 @@ mutation StartDocumentSuggestion($input: StartDocumentSuggestionInput!) {
 const addMutation = `
 mutation AddDocumentSuggestionChange($input: AddDocumentSuggestionChangeInput!) {
   addDocumentSuggestionChange(input: $input) {
+    documentSuggestion { id status }
+  }
+}
+`
+
+const tableMutation = `
+mutation AddDocumentSuggestionTableChange($input: AddDocumentSuggestionTableChangeInput!) {
+  addDocumentSuggestionTableChange(input: $input) {
     documentSuggestion { id status }
   }
 }

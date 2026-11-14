@@ -131,4 +131,70 @@ describe("suggestion preview", () => {
 
     expect(collectSuggestionAnchors(doc).has(id)).toBe(false);
   });
+
+  it("previews a deleted table row from its cells", () => {
+    const deleted = tableSchema.marks.suggestionDelete.create({ id });
+    const split = { suggestionSplit: id, splitKind: "deletion" };
+    const doc = tableSchema.node("doc", null, [
+      tableSchema.node("table", null, [
+        tableRow(null, ["Right", "Access"]),
+        tableSchema.node("tableRow", { unknownAttrs: split }, [
+          tableSchema.node("tableCell", { unknownAttrs: split }, [
+            tableSchema.node("paragraph", null, [tableSchema.text("Read", [deleted])]),
+          ]),
+          tableSchema.node("tableCell", { unknownAttrs: split }, [
+            tableSchema.node("paragraph", null, [tableSchema.text("Yes", [deleted])]),
+          ]),
+        ]),
+      ]),
+    ]);
+
+    const preview = collectSuggestionAnchors(doc).get(id);
+    expect(preview?.deleted).toBe("Read\nYes");
+    expect(preview?.parts).toEqual([{ kind: "deleted", text: "Read\nYes" }]);
+  });
+
+  it("anchors an inserted empty table row", () => {
+    const split = { suggestionSplit: id, splitKind: "insertion" };
+    const doc = tableSchema.node("doc", null, [
+      tableSchema.node("table", null, [
+        tableRow(null, ["Right", "Access"]),
+        tableRow(split, ["", ""], split),
+      ]),
+    ]);
+
+    const preview = collectSuggestionAnchors(doc).get(id);
+    expect(preview?.inserted).toBe("\n");
+    expect(preview?.from).toBeGreaterThan(0);
+  });
 });
+
+const tableSchema = new Schema({
+  nodes: {
+    doc: { content: "table+" },
+    table: { content: "tableRow+", attrs: { unknownAttrs: { default: null } } },
+    tableRow: { content: "tableCell+", attrs: { unknownAttrs: { default: null } } },
+    tableCell: { content: "paragraph+", attrs: { unknownAttrs: { default: null } } },
+    paragraph: {
+      content: "text*",
+      attrs: { unknownAttrs: { default: null } },
+    },
+    text: { group: "inline" },
+  },
+  marks: {
+    suggestionInsert: { attrs: { id: { default: null } } },
+    suggestionDelete: { attrs: { id: { default: null } } },
+  },
+});
+
+function tableRow(
+  unknownAttrs: Record<string, unknown> | null,
+  cells: string[],
+  cellAttrs: Record<string, unknown> | null = null,
+) {
+  return tableSchema.node("tableRow", { unknownAttrs }, cells.map(text =>
+    tableSchema.node("tableCell", { unknownAttrs: cellAttrs }, [
+      tableSchema.node("paragraph", null, text ? [tableSchema.text(text)] : []),
+    ]),
+  ));
+}

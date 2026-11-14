@@ -560,6 +560,7 @@
       "suggestionBy": "Suggestion de {{name}}",
       "commentFailed": "Impossible d'ajouter le commentaire",
       "suggestionFailed": "Impossible de démarrer la suggestion",
+      "suggestionUntracked": "Cette modification ne peut pas être suggérée. Passez en mode édition pour la faire.",
       "selectComment": "Sélectionner le commentaire de {{name}}",
       "selectSuggestion": "Sélectionner la suggestion de {{name}}"
     }

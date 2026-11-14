@@ -37,10 +37,13 @@ import (
 // A newline between blocks points at that block marker. Engine is the index
 // Splice and Mark use, which counts each block as one unit. Marked means the
 // unit already belongs to a suggestion, so another redline must not cover it.
+// Joinable means deleting the newline may merge the block into the previous
+// one; a boundary into, out of, or between table cells is never joinable.
 type suggestionUnit struct {
-	engine uint32
-	block  bool
-	marked bool
+	engine   uint32
+	block    bool
+	marked   bool
+	joinable bool
 }
 
 // PaintSuggestion marks quote on the live document and commits that change.
@@ -57,6 +60,54 @@ func (s *Service) PaintSuggestion(
 	quote string,
 	replacement string,
 	occurrence int,
+) (*automerge.Document, automerge.ActorID, error) {
+	return s.paint(
+		ctx,
+		scope,
+		documentID,
+		organizationID,
+		identityID,
+		profileID,
+		func(document *automerge.Document) error {
+			return ApplySuggestionEdit(document, suggestionID, quote, replacement, occurrence)
+		},
+	)
+}
+
+// PaintTableSuggestion writes a structural table redline on the live
+// document and commits it. Like PaintSuggestion, the caller persists and
+// closes the returned document.
+func (s *Service) PaintTableSuggestion(
+	ctx context.Context,
+	scope coredata.Scoper,
+	documentID gid.GID,
+	organizationID gid.GID,
+	identityID gid.GID,
+	profileID *gid.GID,
+	suggestionID string,
+	change TableSuggestion,
+) (*automerge.Document, automerge.ActorID, error) {
+	return s.paint(
+		ctx,
+		scope,
+		documentID,
+		organizationID,
+		identityID,
+		profileID,
+		func(document *automerge.Document) error {
+			return ApplyTableSuggestion(document, suggestionID, change)
+		},
+	)
+}
+
+func (s *Service) paint(
+	ctx context.Context,
+	scope coredata.Scoper,
+	documentID gid.GID,
+	organizationID gid.GID,
+	identityID gid.GID,
+	profileID *gid.GID,
+	apply func(document *automerge.Document) error,
 ) (*automerge.Document, automerge.ActorID, error) {
 	actorID, err := s.actorForIdentity(
 		ctx,
@@ -75,7 +126,7 @@ func (s *Service) PaintSuggestion(
 		return nil, automerge.ActorID{}, err
 	}
 
-	if err := ApplySuggestionEdit(opened.Document, suggestionID, quote, replacement, occurrence); err != nil {
+	if err := apply(opened.Document); err != nil {
 		_ = opened.Document.Close()
 
 		return nil, automerge.ActorID{}, err
@@ -110,6 +161,7 @@ func ApplySuggestionEdit(
 	}
 
 	visible, units, end := suggestionUnits(spans)
+
 	start, quoteEnd, err := quoteRange(visible, quote, occurrence)
 	if err != nil {
 		return err
@@ -122,6 +174,7 @@ func ApplySuggestionEdit(
 
 	deleteStart := start + prefix
 	deleteEnd := quoteEnd - suffix
+
 	inserted := edgeTrimmed(replacement, prefix, suffix)
 	if deleteStart == deleteEnd && inserted == "" {
 		return ErrSuggestionUnchanged
@@ -142,6 +195,10 @@ func ApplySuggestionEdit(
 	}
 
 	textRanges, blocks := suggestionRanges(units, deleteStart, deleteEnd)
+	if len(textRanges) == 0 && len(blocks) == 0 && inserted == "" {
+		return ErrSuggestionUnchanged
+	}
+
 	for _, textRange := range textRanges {
 		if err := text.Mark(
 			textRange[0],
@@ -203,22 +260,47 @@ func suggestionMark(suggestionID string) (automerge.Scalar, error) {
 func suggestionUnits(spans []automerge.Span) (string, []suggestionUnit, uint32) {
 	var visible strings.Builder
 
+	type openCell struct {
+		index int
+		path  []string
+	}
+
 	units := make([]suggestionUnit, 0)
 	engine := uint32(0)
 	wrote := false
+	cells := make([]openCell, 0)
+	previousOwner := -1
 
-	for _, span := range spans {
+	for index, span := range spans {
 		if span.Type == automerge.SpanTypeBlock {
+			parents := blockParents(span)
+			for len(cells) > 0 && !hasPathPrefix(parents, cells[len(cells)-1].path) {
+				cells = cells[:len(cells)-1]
+			}
+
+			if isTableCell(span) {
+				cells = append(cells, openCell{index: index, path: blockPath(span)})
+			}
+
+			owner := -1
+			if len(cells) > 0 {
+				owner = cells[len(cells)-1].index
+			}
+
 			if wrote {
 				splitID, _ := suggestionSplit(span)
+
 				visible.WriteByte('\n')
+
 				units = append(units, suggestionUnit{
-					engine: engine,
-					block:  true,
-					marked: splitID != "",
+					engine:   engine,
+					block:    true,
+					marked:   splitID != "",
+					joinable: !isTableStructure(span) && owner == previousOwner,
 				})
 			}
 
+			previousOwner = owner
 			engine++
 
 			continue
@@ -237,6 +319,7 @@ func suggestionUnits(spans []automerge.Span) (string, []suggestionUnit, uint32) 
 		}
 
 		visible.WriteString(span.Text)
+
 		wrote = true
 	}
 
@@ -273,6 +356,7 @@ func sharedUTF16Edges(before string, after string) (uint32, uint32) {
 	}
 
 	prefixWidth := utf16Len(string(oldChars[:prefix]))
+
 	suffixWidth := uint32(0)
 	if suffix > 0 {
 		suffixWidth = utf16Len(string(oldChars[len(oldChars)-suffix:]))
@@ -319,7 +403,9 @@ func suggestionRanges(units []suggestionUnit, from uint32, to uint32) ([][2]uint
 				open = false
 			}
 
-			blocks = append(blocks, unit.engine)
+			if unit.joinable {
+				blocks = append(blocks, unit.engine)
+			}
 
 			continue
 		}
@@ -350,6 +436,7 @@ func withDeletionSplits(spans []automerge.Span, blocks []uint32, suggestionID st
 	}
 
 	engine := uint32(0)
+
 	for index, span := range spans {
 		if span.Type == automerge.SpanTypeBlock {
 			if _, ok := wanted[engine]; ok {

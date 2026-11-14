@@ -404,6 +404,262 @@ func TestDocumentReview_AddsAnotherRedlineToTheSuggestion(t *testing.T) {
 	require.NotContains(t, content.Node.Content.Prosemirror, collaboration.SuggestionDeleteMark)
 }
 
+func TestDocumentReview_SuggestsTableStructure(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	documentID := factory.NewDocument(owner).
+		WithTitle(factory.SafeName("Review table suggestion")).
+		Create()
+
+	_, err := owner.Do(`
+		mutation($input: UpdateDocumentInput!) {
+			updateDocument(input: $input) { documentVersion { id } }
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"id": documentID,
+			"content": `{"type":"doc","content":[` +
+				`{"type":"paragraph","content":[{"type":"text","text":"Access rights"}]},` +
+				`{"type":"table","content":[` +
+				`{"type":"tableRow","content":[` +
+				`{"type":"tableHeader","content":[{"type":"paragraph","content":[{"type":"text","text":"Right"}]}]},` +
+				`{"type":"tableHeader","content":[{"type":"paragraph","content":[{"type":"text","text":"Access"}]}]}]},` +
+				`{"type":"tableRow","content":[` +
+				`{"type":"tableCell","content":[{"type":"paragraph","content":[{"type":"text","text":"Read"}]}]},` +
+				`{"type":"tableCell","content":[{"type":"paragraph","content":[{"type":"text","text":"Yes"}]}]}]}` +
+				`]}]}`,
+		},
+	})
+	require.NoError(t, err)
+
+	const tableChange = `
+		mutation($input: AddDocumentSuggestionTableChangeInput!) {
+			addDocumentSuggestionTableChange(input: $input) {
+				documentSuggestion { id status }
+			}
+		}
+	`
+
+	insertRow := startEmptySuggestion(t, owner, documentID)
+
+	var added struct {
+		AddDocumentSuggestionTableChange struct {
+			DocumentSuggestion struct {
+				ID     string `json:"id"`
+				Status string `json:"status"`
+			} `json:"documentSuggestion"`
+		} `json:"addDocumentSuggestionTableChange"`
+	}
+
+	err = owner.Execute(tableChange, map[string]any{
+		"input": map[string]any{
+			"suggestionId": insertRow,
+			"operation":    "INSERT_ROW",
+			"quote":        "Read",
+			"cells":        []string{"Write", "No"},
+		},
+	}, &added)
+	require.NoError(t, err, "owner should suggest a new row")
+	require.Equal(t, insertRow, added.AddDocumentSuggestionTableChange.DocumentSuggestion.ID)
+	require.Equal(t, "OPEN", added.AddDocumentSuggestionTableChange.DocumentSuggestion.Status)
+
+	require.Equal(
+		t,
+		[][]string{{"Right", "Access"}, {"Read", "Yes"}},
+		documentTableCells(t, owner, documentID),
+		"an open row suggestion must not reach the published content",
+	)
+
+	_, err = owner.Do(tableChange, map[string]any{
+		"input": map[string]any{
+			"suggestionId": insertRow,
+			"operation":    "DELETE_ROW",
+			"quote":        "Write",
+		},
+	})
+	testutil.RequireErrorCode(t, err, "INVALID", "a row redline must not swallow the suggested row")
+
+	_, err = owner.Do(tableChange, map[string]any{
+		"input": map[string]any{
+			"suggestionId": insertRow,
+			"operation":    "INSERT_COLUMN",
+			"quote":        "Access rights",
+		},
+	})
+	testutil.RequireErrorCode(t, err, "INVALID", "a column needs a quote inside the table")
+
+	decideSuggestion(t, owner, insertRow, true)
+	require.Equal(
+		t,
+		[][]string{{"Right", "Access"}, {"Read", "Yes"}, {"Write", "No"}},
+		documentTableCells(t, owner, documentID),
+	)
+
+	deleteColumn := startEmptySuggestion(t, owner, documentID)
+	err = owner.Execute(tableChange, map[string]any{
+		"input": map[string]any{
+			"suggestionId": deleteColumn,
+			"operation":    "DELETE_COLUMN",
+			"quote":        "Yes",
+		},
+	}, &added)
+	require.NoError(t, err, "owner should suggest removing a column")
+
+	decideSuggestion(t, owner, deleteColumn, false)
+	require.Equal(
+		t,
+		[][]string{{"Right", "Access"}, {"Read", "Yes"}, {"Write", "No"}},
+		documentTableCells(t, owner, documentID),
+		"rejecting the column redline keeps the column",
+	)
+
+	insertTable := startEmptySuggestion(t, owner, documentID)
+	err = owner.Execute(tableChange, map[string]any{
+		"input": map[string]any{
+			"suggestionId": insertTable,
+			"operation":    "INSERT_TABLE",
+			"quote":        "Access rights",
+			"before":       true,
+			"rows":         [][]string{{"Owner", "Team"}, {"Alice", "Security"}},
+			"headerRow":    true,
+		},
+	}, &added)
+	require.NoError(t, err, "owner should suggest a new table")
+
+	decideSuggestion(t, owner, insertTable, true)
+	require.Equal(
+		t,
+		[][]string{{"Owner", "Team"}, {"Alice", "Security"}},
+		documentTableCells(t, owner, documentID),
+		"the accepted table comes before the quoted paragraph",
+	)
+
+	admin := testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
+	foreign := startEmptySuggestion(t, owner, documentID)
+	_, err = admin.Do(tableChange, map[string]any{
+		"input": map[string]any{
+			"suggestionId": foreign,
+			"operation":    "DELETE_TABLE",
+			"quote":        "Owner",
+		},
+	})
+	testutil.RequireErrorCode(t, err, "INVALID", "only the author adds redlines to a suggestion")
+}
+
+func startEmptySuggestion(t *testing.T, client *testutil.Client, documentID string) string {
+	t.Helper()
+
+	var started struct {
+		StartDocumentSuggestion struct {
+			DocumentSuggestionEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"documentSuggestionEdge"`
+		} `json:"startDocumentSuggestion"`
+	}
+
+	err := client.Execute(`
+		mutation($input: StartDocumentSuggestionInput!) {
+			startDocumentSuggestion(input: $input) {
+				documentSuggestionEdge { node { id } }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{"documentId": documentID},
+	}, &started)
+	require.NoError(t, err)
+
+	suggestionID := started.StartDocumentSuggestion.DocumentSuggestionEdge.Node.ID
+	require.NotEmpty(t, suggestionID)
+
+	return suggestionID
+}
+
+func decideSuggestion(t *testing.T, client *testutil.Client, suggestionID string, accept bool) {
+	t.Helper()
+
+	mutation := `
+		mutation($input: RejectDocumentSuggestionInput!) {
+			rejectDocumentSuggestion(input: $input) { documentSuggestion { id } }
+		}
+	`
+	if accept {
+		mutation = `
+			mutation($input: AcceptDocumentSuggestionInput!) {
+				acceptDocumentSuggestion(input: $input) { documentSuggestion { id } }
+			}
+		`
+	}
+
+	err := client.Execute(mutation, map[string]any{
+		"input": map[string]any{"suggestionId": suggestionID},
+	}, &struct{}{})
+	require.NoError(t, err)
+}
+
+type documentContentNode struct {
+	Type    string                `json:"type"`
+	Text    string                `json:"text"`
+	Content []documentContentNode `json:"content"`
+}
+
+// documentTableCells returns the cell texts of the first table in the
+// document's published content.
+func documentTableCells(t *testing.T, client *testutil.Client, documentID string) [][]string {
+	t.Helper()
+
+	var content struct {
+		Node struct {
+			Content struct {
+				Prosemirror string `json:"prosemirror"`
+			} `json:"content"`
+		} `json:"node"`
+	}
+
+	err := client.Execute(`
+		query($id: ID!) {
+			node(id: $id) {
+				... on Document { content { prosemirror } }
+			}
+		}
+	`, map[string]any{"id": documentID}, &content)
+	require.NoError(t, err)
+
+	var root documentContentNode
+	require.NoError(t, json.Unmarshal([]byte(content.Node.Content.Prosemirror), &root))
+
+	for _, block := range root.Content {
+		if block.Type != "table" {
+			continue
+		}
+
+		rows := make([][]string, 0, len(block.Content))
+		for _, row := range block.Content {
+			cells := make([]string, 0, len(row.Content))
+			for _, cell := range row.Content {
+				cells = append(cells, contentText(cell))
+			}
+
+			rows = append(rows, cells)
+		}
+
+		return rows
+	}
+
+	return nil
+}
+
+func contentText(node documentContentNode) string {
+	text := node.Text
+	for _, child := range node.Content {
+		text += contentText(child)
+	}
+
+	return text
+}
+
 func paintSuggestionInsert(t *testing.T, documentID string, suggestionID string, text string) {
 	t.Helper()
 

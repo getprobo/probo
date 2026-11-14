@@ -54,7 +54,7 @@ export const description: INodeProperties[] = [
 		type: 'string',
 		typeOptions: { rows: 4 },
 		default: '',
-		description: 'Plain-text note attached to the redline.',
+		description: 'Plain-text note attached to the redline',
 		displayOptions: startOptions,
 	},
 	{
@@ -63,7 +63,7 @@ export const description: INodeProperties[] = [
 		type: 'number',
 		typeOptions: { minValue: 0 },
 		default: 0,
-		description: 'Zero-based occurrence of the quote.',
+		description: 'Zero-based occurrence of the quote',
 		displayOptions: startOptions,
 	},
 ];

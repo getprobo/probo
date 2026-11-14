@@ -72,6 +72,36 @@ enum DocumentSuggestionStatus
         )
 }
 
+enum DocumentSuggestionTableOperation
+    @goModel(
+        model: "go.probo.inc/probo/pkg/collaboration.TableSuggestionOperation"
+    ) {
+    INSERT_ROW
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/collaboration.TableSuggestionInsertRow"
+        )
+    DELETE_ROW
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/collaboration.TableSuggestionDeleteRow"
+        )
+    INSERT_COLUMN
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/collaboration.TableSuggestionInsertColumn"
+        )
+    DELETE_COLUMN
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/collaboration.TableSuggestionDeleteColumn"
+        )
+    INSERT_TABLE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/collaboration.TableSuggestionInsertTable"
+        )
+    DELETE_TABLE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/collaboration.TableSuggestionDeleteTable"
+        )
+}
+
 enum DocumentSuggestionOrderField
     @goModel(
         model: "go.probo.inc/probo/pkg/coredata.DocumentSuggestionOrderField"
@@ -216,6 +246,9 @@ extend type Mutation {
     addDocumentSuggestionChange(
         input: AddDocumentSuggestionChangeInput!
     ): AddDocumentSuggestionChangePayload!
+    addDocumentSuggestionTableChange(
+        input: AddDocumentSuggestionTableChangeInput!
+    ): AddDocumentSuggestionTableChangePayload!
     acceptDocumentSuggestion(
         input: AcceptDocumentSuggestionInput!
     ): AcceptDocumentSuggestionPayload!
@@ -278,6 +311,29 @@ input AddDocumentSuggestionChangeInput {
     quoteOccurrence: Int
 }
 
+input AddDocumentSuggestionTableChangeInput {
+    suggestionId: ID!
+    operation: DocumentSuggestionTableOperation!
+    """
+    Text inside a cell of the row, column, or table to change. For
+    INSERT_TABLE, text of the top-level block the new table goes beside.
+    """
+    quote: String!
+    "Zero-based occurrence of quote. Defaults to the first match."
+    quoteOccurrence: Int
+    "Insert before the quoted row, column, or block instead of after it."
+    before: Boolean
+    """
+    Text of the new row's cells left to right, or the new column's cells top
+    to bottom. Omit for empty cells.
+    """
+    cells: [String!]
+    "Rows of the new table for INSERT_TABLE, each with the same cell count."
+    rows: [[String!]!]
+    "Make the new table's first row a header row."
+    headerRow: Boolean
+}
+
 input AcceptDocumentSuggestionInput {
     suggestionId: ID!
 }
@@ -316,6 +372,10 @@ type StartDocumentSuggestionPayload {
 }
 
 type AddDocumentSuggestionChangePayload {
+    documentSuggestion: DocumentSuggestion!
+}
+
+type AddDocumentSuggestionTableChangePayload {
     documentSuggestion: DocumentSuggestion!
 }
 
