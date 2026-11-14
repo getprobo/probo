@@ -151,17 +151,20 @@ func insertProcessingEmailFixture(
 	)
 	t.Cleanup(
 		func() {
-			_ = pgClient.WithConn(
-				context.Background(),
-				func(ctx context.Context, conn pg.Querier) error {
-					_, err := conn.Exec(
-						ctx,
-						"DELETE FROM emails WHERE id = $1",
-						email.ID,
-					)
+			assert.NoError(
+				t,
+				pgClient.WithConn(
+					context.Background(),
+					func(ctx context.Context, conn pg.Querier) error {
+						_, err := conn.Exec(
+							ctx,
+							"DELETE FROM emails WHERE id = $1",
+							email.ID,
+						)
 
-					return err
-				},
+						return err
+					},
+				),
 			)
 		},
 	)
