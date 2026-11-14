@@ -314,7 +314,7 @@ function blockAt(doc: ProseMirrorNode, pos: number): BlockLocation | null {
   const $pos = doc.resolve(Math.max(1, Math.min(pos, doc.content.size)));
   for (let depth = $pos.depth; depth > 0; depth -= 1) {
     const node = $pos.node(depth);
-    const parent = depth > 0 ? $pos.node(depth - 1) : null;
+    const parent = $pos.node(depth - 1);
     const index = $pos.index(depth - 1);
     if (!persistsAsBlock(node, parent, index)) continue;
     const type = automergeBlockType(node, parent);
