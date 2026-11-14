@@ -319,7 +319,24 @@ func TestApplyBlock_SetBlockRefusedInsideOpenSuggestion(t *testing.T) {
 
 	spans, err := BodySpans(document)
 	require.NoError(t, err)
-	assert.True(t, HasOpenSuggestions(spans))
+
+	found := false
+	for _, span := range spans {
+		payload, ok := readBlockSuggestion(span)
+		if !ok {
+			continue
+		}
+
+		assert.NotEqual(t, "s-head", payload.ID)
+		if payload.ID != "s-other" {
+			continue
+		}
+
+		found = true
+		assert.Equal(t, blockTypeHeading, blockType(span))
+		assert.Equal(t, blockTypeParagraph, payload.Type)
+	}
+	assert.True(t, found)
 }
 
 func TestApplyBlock_MentionRefusedInsideBlockSuggestion(t *testing.T) {
