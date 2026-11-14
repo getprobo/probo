@@ -63,6 +63,12 @@ export const AutomergeTableStructureExtension = Extension.create({
             rendered: false,
             keepOnSplit: true,
           },
+          // Carries suggestion splits on rows, cells and embeds.
+          unknownAttrs: {
+            default: null,
+            rendered: false,
+            keepOnSplit: false,
+          },
         },
       },
     ];

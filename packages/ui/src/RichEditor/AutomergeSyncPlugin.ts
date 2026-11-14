@@ -90,7 +90,8 @@ export function createAutomergeSyncPlugin(
         }));
 
         const structuralLeaf = hasStructuralLeaf(view.state.doc)
-          || spansHaveStructuralLeaf(doc, path);
+          || spansHaveStructuralLeaf(doc, path)
+          || tableStructureChanged(patchInfo.before, doc, path);
         const transaction = structuralLeaf
           ? reconcileAutomergeDocument(adapter, path, doc, view.state)
           : patchesToTr({
@@ -264,6 +265,36 @@ function spansHaveStructuralLeaf(
     }
     return false;
   });
+}
+
+const tableStructureBlocks = new Set([
+  "table",
+  "table-row",
+  "table-cell",
+  "table-header",
+]);
+
+// Patches that add, remove or re-attribute rows, cells or tables (for example
+// a decided table suggestion) do not map onto ProseMirror steps, so they
+// reconcile.
+function tableStructureChanged(
+  before: Automerge.Doc<RichEditorAutomergeDocument>,
+  after: Automerge.Doc<RichEditorAutomergeDocument>,
+  path: Automerge.Prop[],
+): boolean {
+  const signature = (document: Automerge.Doc<RichEditorAutomergeDocument>) =>
+    Automerge.spans(document, path).flatMap((span) => {
+      if (span.type !== "block") return [];
+      const type = span.value.type;
+      const name = typeof type === "string"
+        ? type
+        : Automerge.isImmutableString(type) ? type.val : "";
+      if (!tableStructureBlocks.has(name)) return [];
+      const attrs = (span.value.attrs ?? {}) as Record<string, unknown>;
+      const sorted = Object.keys(attrs).sort().map(key => [key, attrs[key]]);
+      return [`${name}${JSON.stringify(sorted)}`];
+    }).join(",");
+  return signature(before) !== signature(after);
 }
 
 function hasStructuralLeaf(document: {
