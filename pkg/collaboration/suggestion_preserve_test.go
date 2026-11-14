@@ -88,8 +88,10 @@ func TestWritePreservingSuggestions_RefusesTheSuggestedParagraph(t *testing.T) {
 	require.NoError(t, ApplySuggestionEdit(document, "s-keep", "Keep", "Kept", 0))
 
 	replacement := `{"type":"doc","content":[` + paragraphJSON("Drop") + `,` + paragraphJSON("scope") + `]}`
+	original := bodySpans(t, document)
 	err := writePreservingSuggestions(document, replacement)
 	require.ErrorIs(t, err, ErrSuggestionOverlaps)
+	assert.True(t, spansEqual(original, bodySpans(t, document)))
 }
 
 func joinedSpanText(spans []automerge.Span) string {

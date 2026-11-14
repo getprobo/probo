@@ -165,7 +165,7 @@ func (s *Service) paintCommit(
 	if _, err := opened.Document.Commit(message, time.Now()); err != nil {
 		_ = opened.Document.Close()
 
-		return nil, automerge.ActorID{}, fmt.Errorf("cannot commit suggestion: %w", err)
+		return nil, automerge.ActorID{}, fmt.Errorf("cannot commit document change: %w", err)
 	}
 
 	return opened.Document, actorID, nil

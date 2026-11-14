@@ -126,6 +126,14 @@ export function collectSuggestionAnchors(doc: ProseMirrorNode) {
   doc.descendants((node) => {
     const block = readSuggestionBlock(node);
     if (block) ids.add(block.id);
+    const split = structuralSuggestionSplit(node);
+    if (
+      split
+      && (split.kind === "insertion" || split.kind === "deletion")
+      && leafTarget(node.type.name)
+    ) {
+      ids.add(split.id);
+    }
   });
 
   for (const id of ids) {

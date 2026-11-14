@@ -89,9 +89,138 @@ func ApplyDirectFormat(document *automerge.Document, change FormatSuggestion) er
 // ApplyDirectTable inserts or deletes the row, column, or table. Removed
 // blocks are dropped and new cells keep their text, with no suggestion marks.
 func ApplyDirectTable(document *automerge.Document, change TableSuggestion) error {
+	spans, err := BodySpans(document)
+	if err != nil {
+		return err
+	}
+
+	// The quote is only an anchor, but the row, column, or table built from
+	// it is what changes. A quote that already belongs to a suggestion would
+	// let this edit rewrite that redline.
+	if err := quoteCoveredBySuggestion(spans, change.Quote, change.Occurrence); err != nil {
+		return err
+	}
+
 	return applyThenAccept(document, func(id string) error {
 		return ApplyTableSuggestion(document, id, change)
 	})
+}
+
+// quoteCoveredBySuggestion reports whether quote, or a block that contains
+// it, already carries a suggestion. A missing quote is left for the painter,
+// which reports that error itself.
+func quoteCoveredBySuggestion(spans []automerge.Span, quote string, occurrence int) error {
+	if quote == "" || occurrence < 0 {
+		return nil
+	}
+
+	block, err := quoteBlock(spans, quote, occurrence)
+	if err != nil {
+		return nil
+	}
+
+	if blockOrAncestorSuggested(spans, block) || quoteTextSuggested(spans, quote, occurrence) {
+		return ErrSuggestionOverlaps
+	}
+
+	return nil
+}
+
+func blockOrAncestorSuggested(spans []automerge.Span, index int) bool {
+	if index < 0 || index >= len(spans) || spans[index].Type != automerge.SpanTypeBlock {
+		return false
+	}
+
+	if spanSuggested(spans[index]) {
+		return true
+	}
+
+	quotePath := blockPath(spans[index])
+
+	for length := len(quotePath) - 1; length >= 0; length-- {
+		for cursor := index - 1; cursor >= 0; cursor-- {
+			span := spans[cursor]
+			if span.Type != automerge.SpanTypeBlock || blockIsEmbed(span) {
+				continue
+			}
+
+			path := blockPath(span)
+			if len(path) != length || !hasPathPrefix(quotePath, path) {
+				continue
+			}
+
+			if spanSuggested(span) {
+				return true
+			}
+
+			break
+		}
+	}
+
+	return false
+}
+
+func spanSuggested(span automerge.Span) bool {
+	if id, _ := suggestionSplit(span); id != "" {
+		return true
+	}
+
+	_, suggested := readBlockSuggestion(span)
+
+	return suggested
+}
+
+func quoteTextSuggested(spans []automerge.Span, quote string, occurrence int) bool {
+	var visible strings.Builder
+
+	type segment struct {
+		start int
+		end   int
+		marks map[string]any
+	}
+
+	segments := make([]segment, 0)
+	wrote := false
+
+	for _, span := range spans {
+		if span.Type == automerge.SpanTypeBlock {
+			if wrote {
+				visible.WriteByte('\n')
+			}
+
+			continue
+		}
+
+		if span.Type != automerge.SpanTypeText || span.Text == "" {
+			continue
+		}
+
+		start := visible.Len()
+		visible.WriteString(span.Text)
+		segments = append(segments, segment{start: start, end: visible.Len(), marks: span.Marks})
+		wrote = true
+	}
+
+	index, err := findQuote(visible.String(), quote, occurrence)
+	if err != nil {
+		return false
+	}
+
+	quoteEnd := index + len(quote)
+
+	for _, current := range segments {
+		if current.end <= index || current.start >= quoteEnd {
+			continue
+		}
+
+		if markID(current.marks, SuggestionInsertMark) != "" ||
+			markID(current.marks, SuggestionDeleteMark) != "" ||
+			len(formatMarkIDs(current.marks)) > 0 {
+			return true
+		}
+	}
+
+	return false
 }
 
 // PaintDirectText applies a text edit on the live document and commits it.

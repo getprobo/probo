@@ -868,7 +868,7 @@ func TestDocumentReview_ChangeBesideOpenSuggestion(t *testing.T) {
 
 	text := documentPlainText(t, owner, documentID)
 	require.Contains(t, text, "Changed this one.")
-	require.Contains(t, text, "Keep")
+	require.Contains(t, text, "Keep this sentence.")
 
 	var overlap struct {
 		ChangeDocumentText struct {

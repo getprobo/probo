@@ -24,6 +24,7 @@ import { describe, expect, it } from "vitest";
 
 import { richEditorCollaborationExtensions } from "./RichEditor";
 import {
+  discardBlockSuggestions,
   headingCommand,
   listCommand,
   paragraphCommand,
@@ -97,6 +98,19 @@ describe("suggestCommand", () => {
     expect(applied.doc.childCount).toBe(1);
     expect(applied.doc.firstChild?.type.name).toBe("bulletList");
     expect(applied.doc.firstChild?.childCount).toBe(2);
+  });
+
+  it("restores the paragraph when a one-item list suggestion is discarded", () => {
+    const state = paragraphState("Hello");
+    const suggested = suggestCommand(state, "sug-6", listCommand("bulletList"));
+    expect(suggested).not.toBeNull();
+    const withList = state.apply(suggested!);
+    const tr = withList.tr;
+    discardBlockSuggestions(tr, "sug-6");
+    const restored = withList.apply(tr);
+    expect(restored.doc.childCount).toBe(1);
+    expect(restored.doc.firstChild?.type.name).toBe("paragraph");
+    expect(restored.doc.textContent).toBe("Hello");
   });
 
   it("records every paragraph a selection turns into headings", () => {

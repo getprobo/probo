@@ -467,7 +467,11 @@ function restoreBlock(tr: Transaction, pos: number, previous: SuggestionBlockMar
     }
     const content = node.firstChild?.isTextblock ? node.firstChild.content : node.content;
     const restored = paragraph.create(null, content);
-    const listPos = $pos.before($pos.depth - 1);
+    if ($pos.depth < 1) {
+      clearBlockMark(tr, pos);
+      return;
+    }
+    const listPos = $pos.before($pos.depth);
     tr.replaceWith(listPos, listPos + list.nodeSize, restored);
     return;
   }
