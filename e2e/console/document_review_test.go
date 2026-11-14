@@ -918,8 +918,7 @@ func TestDocumentReview_ChangeBesideOpenSuggestion(t *testing.T) {
 			"quote":        "Changed this one.",
 		},
 	}, &heading)
-	require.NoError(t, err)
-	require.Equal(t, suggestionID, heading.ChangeDocumentBlock.DocumentSuggestion.ID)
+	require.ErrorContains(t, err, "overlaps an existing suggestion")
 }
 
 func documentPlainText(t *testing.T, client *testutil.Client, documentID string) string {
