@@ -970,13 +970,7 @@ func (r *mutationResolver) PublishFindingList(ctx context.Context, input types.P
 		input.Minor,
 	)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-			return nil, gqlx.Conflict(ctx, err)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot publish finding list", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, r.generatedPublishError(ctx, "cannot publish finding list", err)
 	}
 
 	return &types.PublishFindingListPayload{
