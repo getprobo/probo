@@ -157,15 +157,6 @@ func (s *Service) ApplyEdits(
 
 	defer func() { _ = opened.Document.Close() }()
 
-	spans, err := BodySpans(opened.Document)
-	if err != nil {
-		return nil, err
-	}
-
-	if HasOpenSuggestions(spans) {
-		return nil, ErrOpenSuggestions
-	}
-
 	hasHeads, err := opened.Document.HasHeads(req.BaseHeads)
 	if err != nil {
 		return nil, fmt.Errorf("cannot verify collaboration base heads: %w", err)
@@ -233,7 +224,7 @@ func (s *Service) ApplyEdits(
 		return nil, err
 	}
 
-	if err := writeSpans(opened.Document, sanitized, false); err != nil {
+	if err := writePreservingSuggestions(opened.Document, sanitized); err != nil {
 		return nil, err
 	}
 

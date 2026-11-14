@@ -188,18 +188,11 @@ func (s *Service) PutContent(
 		return err
 	}
 
-	if !fresh {
-		spans, err := BodySpans(automergeDocument)
-		if err != nil {
+	if fresh {
+		if err := writeSpans(automergeDocument, content, true); err != nil {
 			return err
 		}
-
-		if HasOpenSuggestions(spans) {
-			return ErrOpenSuggestions
-		}
-	}
-
-	if err := writeSpans(automergeDocument, content, fresh); err != nil {
+	} else if err := writePreservingSuggestions(automergeDocument, content); err != nil {
 		return err
 	}
 

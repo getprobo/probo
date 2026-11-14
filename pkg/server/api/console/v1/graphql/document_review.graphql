@@ -296,6 +296,32 @@ extend type Mutation {
     addDocumentSuggestionFormatChange(
         input: AddDocumentSuggestionFormatChangeInput!
     ): AddDocumentSuggestionFormatChangePayload!
+    """
+    Replace quoted text. APPLY writes it. SUGGEST stores it on an open suggestion.
+    An open suggestion elsewhere in the document does not block APPLY.
+    """
+    changeDocumentText(
+        input: ChangeDocumentTextInput!
+    ): ChangeDocumentPayload!
+    """
+    Add or remove bold, italic, underline, strikethrough, code, or a link.
+    """
+    changeDocumentFormat(
+        input: ChangeDocumentFormatInput!
+    ): ChangeDocumentPayload!
+    """
+    Insert or delete a table row, column, or table.
+    """
+    changeDocumentTable(
+        input: ChangeDocumentTableInput!
+    ): ChangeDocumentPayload!
+    """
+    Change a heading, list, quote, code block, divider, image, file, or mention.
+    Do not send ProseMirror for these changes.
+    """
+    changeDocumentBlock(
+        input: ChangeDocumentBlockInput!
+    ): ChangeDocumentPayload!
     acceptDocumentSuggestion(
         input: AcceptDocumentSuggestionInput!
     ): AcceptDocumentSuggestionPayload!
@@ -401,6 +427,123 @@ input RejectDocumentSuggestionInput {
     suggestionId: ID!
 }
 
+enum DocumentChangeMode
+    @goModel(model: "go.probo.inc/probo/pkg/probo.DocumentChangeMode") {
+    APPLY
+        @goEnum(value: "go.probo.inc/probo/pkg/probo.DocumentChangeModeApply")
+    SUGGEST
+        @goEnum(value: "go.probo.inc/probo/pkg/probo.DocumentChangeModeSuggest")
+}
+
+enum DocumentBlockOperation
+    @goModel(model: "go.probo.inc/probo/pkg/collaboration.BlockOperation") {
+    SET_BLOCK
+        @goEnum(value: "go.probo.inc/probo/pkg/collaboration.BlockSet")
+    INSERT_BLOCK
+        @goEnum(value: "go.probo.inc/probo/pkg/collaboration.BlockInsert")
+    DELETE_BLOCK
+        @goEnum(value: "go.probo.inc/probo/pkg/collaboration.BlockDelete")
+    INSERT_LIST_ITEM
+        @goEnum(value: "go.probo.inc/probo/pkg/collaboration.BlockInsertItem")
+    DELETE_LIST_ITEM
+        @goEnum(value: "go.probo.inc/probo/pkg/collaboration.BlockDeleteItem")
+    NEST_LIST_ITEM
+        @goEnum(value: "go.probo.inc/probo/pkg/collaboration.BlockNest")
+    UNNEST_LIST_ITEM
+        @goEnum(value: "go.probo.inc/probo/pkg/collaboration.BlockUnnest")
+    SET_TASK
+        @goEnum(value: "go.probo.inc/probo/pkg/collaboration.BlockSetTask")
+    INSERT_DIVIDER
+        @goEnum(value: "go.probo.inc/probo/pkg/collaboration.BlockInsertDivider")
+    INSERT_IMAGE
+        @goEnum(value: "go.probo.inc/probo/pkg/collaboration.BlockInsertImage")
+    INSERT_FILE
+        @goEnum(value: "go.probo.inc/probo/pkg/collaboration.BlockInsertFile")
+    INSERT_MENTION
+        @goEnum(value: "go.probo.inc/probo/pkg/collaboration.BlockInsertMention")
+    DELETE_MENTION
+        @goEnum(value: "go.probo.inc/probo/pkg/collaboration.BlockDeleteMention")
+}
+
+enum DocumentBlockKind
+    @goModel(model: "go.probo.inc/probo/pkg/collaboration.BlockKind") {
+    PARAGRAPH
+        @goEnum(value: "go.probo.inc/probo/pkg/collaboration.BlockKindParagraph")
+    HEADING
+        @goEnum(value: "go.probo.inc/probo/pkg/collaboration.BlockKindHeading")
+    BLOCKQUOTE
+        @goEnum(value: "go.probo.inc/probo/pkg/collaboration.BlockKindBlockquote")
+    BULLET_LIST
+        @goEnum(value: "go.probo.inc/probo/pkg/collaboration.BlockKindBulletList")
+    ORDERED_LIST
+        @goEnum(value: "go.probo.inc/probo/pkg/collaboration.BlockKindOrderedList")
+    TASK_LIST
+        @goEnum(value: "go.probo.inc/probo/pkg/collaboration.BlockKindTaskList")
+    CODE_BLOCK
+        @goEnum(value: "go.probo.inc/probo/pkg/collaboration.BlockKindCodeBlock")
+}
+
+input ChangeDocumentTextInput {
+    mode: DocumentChangeMode!
+    "Required when mode is APPLY."
+    documentId: ID
+    "Required when mode is SUGGEST."
+    suggestionId: ID
+    quote: String!
+    replacement: String!
+    quoteOccurrence: Int
+}
+
+input ChangeDocumentFormatInput {
+    mode: DocumentChangeMode!
+    documentId: ID
+    suggestionId: ID
+    mark: DocumentSuggestionFormatMark!
+    action: DocumentSuggestionFormatAction!
+    quote: String!
+    quoteOccurrence: Int
+    href: String
+}
+
+input ChangeDocumentTableInput {
+    mode: DocumentChangeMode!
+    documentId: ID
+    suggestionId: ID
+    operation: DocumentSuggestionTableOperation!
+    quote: String!
+    quoteOccurrence: Int
+    before: Boolean
+    cells: [String!]
+    rows: [[String!]!]
+    headerRow: Boolean
+}
+
+input ChangeDocumentBlockInput {
+    mode: DocumentChangeMode!
+    documentId: ID
+    suggestionId: ID
+    operation: DocumentBlockOperation!
+    "Text that locates the block. Empty inserts into an empty document."
+    quote: String
+    quoteOccurrence: Int
+    "Insert before the quote, or delete the neighboring textless block on that side."
+    before: Boolean
+    block: DocumentBlockKind
+    "Heading level from 1 to 6."
+    level: Int
+    "Code block language. mermaid draws a diagram."
+    language: String
+    text: String
+    items: [String!]
+    checked: Boolean
+    fileId: ID
+    src: String
+    alt: String
+    "Image width as a percentage from 1 to 100."
+    width: Int
+    profileId: ID
+}
+
 type CreateDocumentCommentThreadPayload {
     documentCommentThreadEdge: DocumentCommentThreadEdge!
 }
@@ -448,4 +591,9 @@ type AcceptDocumentSuggestionPayload {
 
 type RejectDocumentSuggestionPayload {
     documentSuggestion: DocumentSuggestion!
+}
+
+type ChangeDocumentPayload {
+    document: Document!
+    documentSuggestion: DocumentSuggestion
 }

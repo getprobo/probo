@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"go.gearno.de/x/ref"
+	"go.probo.inc/probo/pkg/collaboration"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
@@ -499,6 +500,192 @@ func (r *mutationResolver) AddDocumentSuggestionFormatChange(ctx context.Context
 	return &types.AddDocumentSuggestionFormatChangePayload{
 		DocumentSuggestion: types.NewDocumentSuggestion(suggestion),
 	}, nil
+}
+
+// ChangeDocumentText is the resolver for the changeDocumentText field.
+func (r *mutationResolver) ChangeDocumentText(ctx context.Context, input types.ChangeDocumentTextInput) (*types.ChangeDocumentPayload, error) {
+	scope, err := r.authorizeDocumentChange(ctx, input.Mode, input.DocumentID, input.SuggestionID)
+	if err != nil {
+		return nil, err
+	}
+
+	occurrence := 0
+	if input.QuoteOccurrence != nil {
+		occurrence = *input.QuoteOccurrence
+	}
+
+	result, err := r.probo.Documents.ChangeText(
+		ctx,
+		scope,
+		probo.ChangeDocumentTextRequest{
+			Mode:         input.Mode,
+			DocumentID:   derefGID(input.DocumentID),
+			SuggestionID: derefGID(input.SuggestionID),
+			IdentityID:   authn.IdentityFromContext(ctx).ID,
+			Quote:        input.Quote,
+			Replacement:  input.Replacement,
+			Occurrence:   occurrence,
+		},
+	)
+	if err != nil {
+		return nil, r.documentReviewError(ctx, "cannot change document text", err)
+	}
+
+	return changeDocumentPayload(result), nil
+}
+
+// ChangeDocumentFormat is the resolver for the changeDocumentFormat field.
+func (r *mutationResolver) ChangeDocumentFormat(ctx context.Context, input types.ChangeDocumentFormatInput) (*types.ChangeDocumentPayload, error) {
+	scope, err := r.authorizeDocumentChange(ctx, input.Mode, input.DocumentID, input.SuggestionID)
+	if err != nil {
+		return nil, err
+	}
+
+	occurrence := 0
+	if input.QuoteOccurrence != nil {
+		occurrence = *input.QuoteOccurrence
+	}
+
+	href := ""
+	if input.Href != nil {
+		href = *input.Href
+	}
+
+	result, err := r.probo.Documents.ChangeFormat(
+		ctx,
+		scope,
+		probo.ChangeDocumentFormatRequest{
+			Mode:         input.Mode,
+			DocumentID:   derefGID(input.DocumentID),
+			SuggestionID: derefGID(input.SuggestionID),
+			IdentityID:   authn.IdentityFromContext(ctx).ID,
+			Mark:         input.Mark,
+			Action:       input.Action,
+			Quote:        input.Quote,
+			Occurrence:   occurrence,
+			Href:         href,
+		},
+	)
+	if err != nil {
+		return nil, r.documentReviewError(ctx, "cannot change document format", err)
+	}
+
+	return changeDocumentPayload(result), nil
+}
+
+// ChangeDocumentTable is the resolver for the changeDocumentTable field.
+func (r *mutationResolver) ChangeDocumentTable(ctx context.Context, input types.ChangeDocumentTableInput) (*types.ChangeDocumentPayload, error) {
+	scope, err := r.authorizeDocumentChange(ctx, input.Mode, input.DocumentID, input.SuggestionID)
+	if err != nil {
+		return nil, err
+	}
+
+	occurrence := 0
+	if input.QuoteOccurrence != nil {
+		occurrence = *input.QuoteOccurrence
+	}
+
+	result, err := r.probo.Documents.ChangeTable(
+		ctx,
+		scope,
+		probo.ChangeDocumentTableRequest{
+			Mode:         input.Mode,
+			DocumentID:   derefGID(input.DocumentID),
+			SuggestionID: derefGID(input.SuggestionID),
+			IdentityID:   authn.IdentityFromContext(ctx).ID,
+			Operation:    input.Operation,
+			Quote:        input.Quote,
+			Occurrence:   occurrence,
+			Before:       input.Before != nil && *input.Before,
+			Cells:        input.Cells,
+			Rows:         input.Rows,
+			HeaderRow:    input.HeaderRow != nil && *input.HeaderRow,
+		},
+	)
+	if err != nil {
+		return nil, r.documentReviewError(ctx, "cannot change document table", err)
+	}
+
+	return changeDocumentPayload(result), nil
+}
+
+// ChangeDocumentBlock is the resolver for the changeDocumentBlock field.
+func (r *mutationResolver) ChangeDocumentBlock(ctx context.Context, input types.ChangeDocumentBlockInput) (*types.ChangeDocumentPayload, error) {
+	scope, err := r.authorizeDocumentChange(ctx, input.Mode, input.DocumentID, input.SuggestionID)
+	if err != nil {
+		return nil, err
+	}
+
+	occurrence := 0
+	if input.QuoteOccurrence != nil {
+		occurrence = *input.QuoteOccurrence
+	}
+
+	quote := ""
+	if input.Quote != nil {
+		quote = *input.Quote
+	}
+
+	text := ""
+	if input.Text != nil {
+		text = *input.Text
+	}
+
+	language := ""
+	if input.Language != nil {
+		language = *input.Language
+	}
+
+	src := ""
+	if input.Src != nil {
+		src = *input.Src
+	}
+
+	alt := ""
+	if input.Alt != nil {
+		alt = *input.Alt
+	}
+
+	level := 0
+	if input.Level != nil {
+		level = *input.Level
+	}
+
+	var kind collaboration.BlockKind
+	if input.Block != nil {
+		kind = *input.Block
+	}
+
+	result, err := r.probo.Documents.ChangeBlock(
+		ctx,
+		scope,
+		probo.ChangeDocumentBlockRequest{
+			Mode:         input.Mode,
+			DocumentID:   derefGID(input.DocumentID),
+			SuggestionID: derefGID(input.SuggestionID),
+			IdentityID:   authn.IdentityFromContext(ctx).ID,
+			Operation:    input.Operation,
+			Quote:        quote,
+			Occurrence:   occurrence,
+			Before:       input.Before,
+			Block:        kind,
+			Level:        level,
+			Language:     language,
+			Text:         text,
+			Items:        input.Items,
+			Checked:      input.Checked,
+			FileID:       derefGID(input.FileID),
+			Src:          src,
+			Alt:          alt,
+			Width:        input.Width,
+			ProfileID:    derefGID(input.ProfileID),
+		},
+	)
+	if err != nil {
+		return nil, r.documentReviewError(ctx, "cannot change document block", err)
+	}
+
+	return changeDocumentPayload(result), nil
 }
 
 // AcceptDocumentSuggestion is the resolver for the acceptDocumentSuggestion field.
