@@ -97,6 +97,7 @@ func TestApplySuggestionEdit_MatchesEditorReplacement(t *testing.T) {
 			t.Parallel()
 
 			document := suggestionDocument(t, `{"type":"doc","content":[`+paragraphJSON(tc.text)+`]}`)
+
 			err := ApplySuggestionEdit(document, suggestionEditID, tc.text, tc.replacement, 0)
 			if tc.want == nil {
 				require.ErrorIs(t, err, ErrSuggestionUnchanged)
@@ -221,6 +222,7 @@ func TestApplySuggestionEdit_MarksAParagraphBreakInsideTheQuote(t *testing.T) {
 	require.NoError(t, err)
 
 	splits := 0
+
 	for _, span := range spans {
 		id, kind := suggestionSplit(span)
 		if id == "" {
@@ -228,6 +230,7 @@ func TestApplySuggestionEdit_MarksAParagraphBreakInsideTheQuote(t *testing.T) {
 		}
 
 		splits++
+
 		assert.Equal(t, suggestionEditID, id)
 		assert.Equal(t, suggestionSplitDeletion, kind)
 	}
@@ -267,6 +270,7 @@ func TestApplySuggestionEdit_DoesNotRewriteUnchangedTableCells(t *testing.T) {
 	}
 
 	require.NoError(t, WriteBodySpans(document, spans))
+
 	_, err = document.Commit("browser table", time.Now())
 	if err != nil && !errors.Is(err, automerge.ErrNoOperations) {
 		require.NoError(t, err)

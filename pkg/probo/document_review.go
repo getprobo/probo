@@ -1177,6 +1177,7 @@ func (s *DocumentService) openSuggestionForChange(
 	identityID gid.GID,
 ) (*coredata.DocumentSuggestion, gid.GID, error) {
 	suggestion := &coredata.DocumentSuggestion{}
+
 	var profileID gid.GID
 
 	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {

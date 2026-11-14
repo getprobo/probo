@@ -221,6 +221,7 @@ func QuoteCursors(
 	}
 
 	visible, offsets := visibleText(spans)
+
 	index, err := findQuote(visible, quote, occurrence)
 	if err != nil {
 		return nil, nil, err
@@ -952,9 +953,6 @@ type visibleOffset struct {
 	absolute uint32
 }
 
-// visibleText joins block text with a newline so a quote spanning paragraphs
-// resolves. The separator is visible-only; it maps to the block boundary's
-// absolute position, which absoluteUTF16 clamps to.
 // findQuote returns the byte index of the occurrence-th match. The loop
 // counts down so occurrence == MaxInt cannot overflow into a negative range.
 func findQuote(visible string, quote string, occurrence int) (int, error) {
@@ -963,7 +961,6 @@ func findQuote(visible string, quote string, occurrence int) (int, error) {
 	}
 
 	searchFrom := 0
-	index := -1
 	remaining := occurrence
 
 	for {
@@ -972,7 +969,7 @@ func findQuote(visible string, quote string, occurrence int) (int, error) {
 			return 0, ErrQuoteNotFound
 		}
 
-		index = searchFrom + found
+		index := searchFrom + found
 		if remaining == 0 {
 			return index, nil
 		}
@@ -987,6 +984,9 @@ func findQuote(visible string, quote string, occurrence int) (int, error) {
 	}
 }
 
+// visibleText joins block text with a newline so a quote spanning paragraphs
+// resolves. The separator is visible-only; it maps to the block boundary's
+// absolute position, which absoluteUTF16 clamps to.
 func visibleText(spans []automerge.Span) (string, []visibleOffset) {
 	var visible strings.Builder
 

@@ -161,6 +161,7 @@ func ApplySuggestionEdit(
 	}
 
 	visible, units, end := suggestionUnits(spans)
+
 	start, quoteEnd, err := quoteRange(visible, quote, occurrence)
 	if err != nil {
 		return err
@@ -173,6 +174,7 @@ func ApplySuggestionEdit(
 
 	deleteStart := start + prefix
 	deleteEnd := quoteEnd - suffix
+
 	inserted := edgeTrimmed(replacement, prefix, suffix)
 	if deleteStart == deleteEnd && inserted == "" {
 		return ErrSuggestionUnchanged
@@ -287,7 +289,9 @@ func suggestionUnits(spans []automerge.Span) (string, []suggestionUnit, uint32) 
 
 			if wrote {
 				splitID, _ := suggestionSplit(span)
+
 				visible.WriteByte('\n')
+
 				units = append(units, suggestionUnit{
 					engine:   engine,
 					block:    true,
@@ -315,6 +319,7 @@ func suggestionUnits(spans []automerge.Span) (string, []suggestionUnit, uint32) 
 		}
 
 		visible.WriteString(span.Text)
+
 		wrote = true
 	}
 
@@ -351,6 +356,7 @@ func sharedUTF16Edges(before string, after string) (uint32, uint32) {
 	}
 
 	prefixWidth := utf16Len(string(oldChars[:prefix]))
+
 	suffixWidth := uint32(0)
 	if suffix > 0 {
 		suffixWidth = utf16Len(string(oldChars[len(oldChars)-suffix:]))
@@ -430,6 +436,7 @@ func withDeletionSplits(spans []automerge.Span, blocks []uint32, suggestionID st
 	}
 
 	engine := uint32(0)
+
 	for index, span := range spans {
 		if span.Type == automerge.SpanTypeBlock {
 			if _, ok := wanted[engine]; ok {

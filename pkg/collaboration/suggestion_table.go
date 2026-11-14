@@ -190,6 +190,7 @@ func insertRow(
 	types := layout.newRowCellTypes(spans, at)
 
 	inserted := []automerge.Span{insertionBlock(blockTypeTableRow, blockPath(spans[layout.index]), nil, suggestionID)}
+
 	for column := range width {
 		text := ""
 		if len(change.Cells) > 0 {
@@ -325,6 +326,7 @@ func deleteColumn(
 	}
 
 	next := spans
+
 	for _, row := range layout.rows {
 		cell := row.cells[cellIndex]
 
@@ -356,6 +358,7 @@ func insertTable(
 	}
 
 	root := topLevelBlock(spans, anchor)
+
 	position := subtreeEnd(spans, root)
 	if change.Before {
 		position = root
@@ -401,6 +404,7 @@ func quoteBlock(spans []automerge.Span, quote string, occurrence int) (int, erro
 	for index, span := range spans {
 		if span.Type == automerge.SpanTypeBlock {
 			block = index
+
 			if wrote {
 				visible.WriteByte('\n')
 			}
@@ -577,6 +581,7 @@ func (t tableLayout) newRowCellTypes(spans []automerge.Span, at int) []string {
 	}
 
 	plain := false
+
 	if t.rowIsHeader(spans, reference) {
 		if at == 0 || at == len(t.rows) {
 			plain = true
@@ -607,6 +612,7 @@ func (t tableLayout) newColumnCellTypes(spans []automerge.Span, at int) []string
 	}
 
 	plain := false
+
 	if t.columnIsHeader(spans, reference) {
 		if at == 0 || at == width {
 			plain = true
@@ -629,9 +635,11 @@ func (t tableLayout) newColumnCellTypes(spans []automerge.Span, at int) []string
 // Further lines become paragraphs inside the cell, as the editor stores them.
 func insertedCell(cellType string, rowPath []string, text string, suggestionID string) []automerge.Span {
 	attrs := map[string]any{"colspan": 1, "rowspan": 1}
+
 	cellPath := append(append([]string(nil), rowPath...), cellType)
 
 	spans := []automerge.Span{insertionBlock(cellType, rowPath, attrs, suggestionID)}
+
 	for index, line := range strings.Split(text, "\n") {
 		if index > 0 {
 			spans = append(spans, insertionBlock(blockTypeParagraph, cellPath, nil, suggestionID))
