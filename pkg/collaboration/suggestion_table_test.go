@@ -630,6 +630,7 @@ func nodeText(node tableTestNode) string {
 
 func spanTexts(spans []automerge.Span) []string {
 	texts := make([]string, 0)
+
 	for _, span := range spans {
 		if span.Type == automerge.SpanTypeText {
 			texts = append(texts, span.Text)
