@@ -85,6 +85,7 @@ export function useDocumentReviewSuggestionSession({
   const [startedSuggestions, setStartedSuggestions] = useState<StartedSuggestion[]>([]);
   const ownedSuggestionIds = useRef(new Set<string>());
   const controllerRef = useRef(suggesting.current);
+  const lastBlockedToast = useRef(0);
 
   useEffect(() => {
     controllerRef.current = suggesting.current;
@@ -161,6 +162,17 @@ export function useDocumentReviewSuggestionSession({
     };
     controllerRef.current.onBurstFinished = () => {
       controllerRef.current.suggestionId = null;
+    };
+    controllerRef.current.onBlocked = () => {
+      // A resize drag is blocked once per frame; one toast is enough.
+      const now = Date.now();
+      if (now - lastBlockedToast.current < 3_000) return;
+      lastBlockedToast.current = now;
+      toast.add({
+        title: t("documentDescriptionPage.errors.title"),
+        description: t("documentDescriptionPage.review.suggestionUntracked"),
+        type: "error",
+      });
     };
   }, [
     activeSuggestionId,
