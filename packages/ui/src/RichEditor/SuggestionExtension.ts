@@ -1109,9 +1109,11 @@ function markLineDeletion(tr: Transaction, pos: number, id: string) {
   });
 }
 
-// A local id is replaced once the server answers, or dropped when it fails.
-// Work that finishes later, like an upload, follows this to the live id.
+// An upload can finish after the server has renamed or dropped its local id.
+// Only ids an upload is still waiting on are kept, and they are dropped once
+// that upload settles.
 const settledSuggestionIds = new Map<string, string | null>();
+const retainedSuggestionIds = new Map<string, number>();
 
 export function settledSuggestionId(id: string): string | null {
   let current: string | null = id;
@@ -1123,6 +1125,61 @@ export function settledSuggestionId(id: string): string | null {
   return current;
 }
 
+export function retainSuggestionId(id: string, count = 1) {
+  if (count <= 0) return;
+  retainedSuggestionIds.set(id, (retainedSuggestionIds.get(id) ?? 0) + count);
+}
+
+export function releaseSuggestionId(id: string) {
+  const next = (retainedSuggestionIds.get(id) ?? 0) - 1;
+  if (next > 0) {
+    retainedSuggestionIds.set(id, next);
+    return;
+  }
+  retainedSuggestionIds.delete(id);
+  pruneSettledSuggestions();
+}
+
+function noteSettlement(fromId: string, toId: string | null) {
+  if (!settlementNeeded(fromId)) return;
+  settledSuggestionIds.set(fromId, toId);
+}
+
+function settlementNeeded(fromId: string): boolean {
+  for (const id of retainedSuggestionIds.keys()) {
+    if (chainReaches(id, fromId)) return true;
+  }
+  return false;
+}
+
+function chainReaches(start: string, target: string): boolean {
+  let current: string | null = start;
+  const seen = new Set<string>();
+  while (current !== null && !seen.has(current)) {
+    if (current === target) return true;
+    seen.add(current);
+    if (!settledSuggestionIds.has(current)) return false;
+    current = settledSuggestionIds.get(current) ?? null;
+  }
+  return false;
+}
+
+function pruneSettledSuggestions() {
+  const keep = new Set<string>();
+  for (const id of retainedSuggestionIds.keys()) {
+    let current: string | null = id;
+    const seen = new Set<string>();
+    while (current !== null && settledSuggestionIds.has(current) && !seen.has(current)) {
+      seen.add(current);
+      keep.add(current);
+      current = settledSuggestionIds.get(current) ?? null;
+    }
+  }
+  for (const key of settledSuggestionIds.keys()) {
+    if (!keep.has(key)) settledSuggestionIds.delete(key);
+  }
+}
+
 export function reassignSuggestionId(
   editor: {
     isDestroyed?: boolean;
@@ -1132,7 +1189,7 @@ export function reassignSuggestionId(
   fromId: string,
   toId: string,
 ) {
-  settledSuggestionIds.set(fromId, toId);
+  noteSettlement(fromId, toId);
   if (!editorViewReady(editor)) return;
   const ranges: Array<{ from: number; to: number; marks: readonly ProseMirrorMark[] }> = [];
   const blocks: number[] = [];
@@ -1180,7 +1237,7 @@ export function discardSuggestionId(
   },
   id: string,
 ) {
-  settledSuggestionIds.set(id, null);
+  noteSettlement(id, null);
   if (!editorViewReady(editor)) return;
   const rewrites: Array<{ from: number; to: number; marks: readonly ProseMirrorMark[] }> = [];
   const removals: Array<{ from: number; to: number }> = [];

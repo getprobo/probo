@@ -23,7 +23,12 @@ import type { EditorView } from "@tiptap/pm/view";
 
 import { type AttachmentKind, attachmentKind, maxAttachmentSize, prepareAttachment } from "./attachments";
 import { insertionSplitAttrs } from "./suggestionBlock";
-import { settledSuggestionId, suggestingChangeId } from "./SuggestionExtension";
+import {
+  releaseSuggestionId,
+  retainSuggestionId,
+  settledSuggestionId,
+  suggestingChangeId,
+} from "./SuggestionExtension";
 import { suggestionStructureMeta } from "./suggestionStructure";
 
 export type AttachmentUploadError = {
@@ -81,6 +86,7 @@ export async function uploadAttachments(
   const inserted = view.state.tr.insert(insertAt, Fragment.fromArray(placeholders));
   if (suggestionId) inserted.setMeta(suggestionStructureMeta, true);
   view.dispatch(inserted);
+  if (suggestionId) retainSuggestionId(suggestionId, accepted.length);
 
   await Promise.all(accepted.map(async (item) => {
     try {
@@ -99,6 +105,8 @@ export async function uploadAttachments(
     } catch {
       onError({ fileName: item.file.name, reason: "failed" });
       removeUpload(view, item.id);
+    } finally {
+      if (suggestionId) releaseSuggestionId(suggestionId);
     }
   }));
 }
