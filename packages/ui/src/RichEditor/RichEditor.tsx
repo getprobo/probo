@@ -55,6 +55,7 @@ import { MentionExtension } from "./MentionExtension";
 import { PlaceholderExtension } from "./PlaceholderExtension";
 import { SlashCommandExtension } from "./SlashCommandExtension";
 import { SuggestionDelete, SuggestionInsert } from "./SuggestionExtension";
+import { suggestionFormatExtensions } from "./suggestionStyle";
 import { TaskItemFocusExtension } from "./TaskItemFocusExtension";
 
 export type { RichEditorProps };
@@ -73,6 +74,7 @@ const coreExtensions = [
   LinkExtension,
   SuggestionInsert,
   SuggestionDelete,
+  ...suggestionFormatExtensions,
   SlashCommandExtension,
   MentionExtension,
   BlockquoteExtension,

@@ -74,6 +74,32 @@ func (s *Service) PaintSuggestion(
 	)
 }
 
+// PaintFormatSuggestion writes a style redline on the live document and
+// commits it. Like PaintSuggestion, the caller persists and closes the
+// returned document.
+func (s *Service) PaintFormatSuggestion(
+	ctx context.Context,
+	scope coredata.Scoper,
+	documentID gid.GID,
+	organizationID gid.GID,
+	identityID gid.GID,
+	profileID *gid.GID,
+	suggestionID string,
+	change FormatSuggestion,
+) (*automerge.Document, automerge.ActorID, error) {
+	return s.paint(
+		ctx,
+		scope,
+		documentID,
+		organizationID,
+		identityID,
+		profileID,
+		func(document *automerge.Document) error {
+			return ApplySuggestionFormat(document, suggestionID, change)
+		},
+	)
+}
+
 // PaintTableSuggestion writes a structural table redline on the live
 // document and commits it. Like PaintSuggestion, the caller persists and
 // closes the returned document.

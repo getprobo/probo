@@ -42,6 +42,7 @@ func NewCmdSuggestion(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(newStartCmd(f))
 	cmd.AddCommand(newAddCmd(f))
 	cmd.AddCommand(newTableCmd(f))
+	cmd.AddCommand(newFormatCmd(f))
 	cmd.AddCommand(newAcceptCmd(f))
 	cmd.AddCommand(newRejectCmd(f))
 
@@ -522,6 +523,103 @@ func newTableCmd(f *cmdutil.Factory) *cobra.Command {
 	return cmd
 }
 
+var formatMarks = []string{"BOLD", "ITALIC", "UNDERLINE", "STRIKE", "CODE", "LINK"}
+
+var formatActions = []string{"ADD", "REMOVE"}
+
+func newFormatCmd(f *cmdutil.Factory) *cobra.Command {
+	var (
+		flagOutput     *string
+		flagMark       string
+		flagAction     string
+		flagQuote      string
+		flagOccurrence int
+		flagHref       string
+	)
+
+	cmd := &cobra.Command{
+		Use:   "format <suggestion-id>",
+		Short: "Suggest bold, italic, or another style",
+		Example: `  # Suggest bold on the word "scope"
+  prb document suggestion format <id> --mark BOLD --action ADD --quote scope
+
+  # Suggest a link
+  prb document suggestion format <id> --mark LINK --action ADD --quote scope --href https://example.com`,
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := cmdutil.ValidateEnum("mark", flagMark, formatMarks); err != nil {
+				return err
+			}
+
+			if err := cmdutil.ValidateEnum("action", flagAction, formatActions); err != nil {
+				return err
+			}
+
+			if strings.TrimSpace(flagQuote) == "" {
+				return fmt.Errorf("quote is required")
+			}
+
+			if flagMark == "LINK" && flagAction == "ADD" && strings.TrimSpace(flagHref) == "" {
+				return fmt.Errorf("--href is required when suggesting a link")
+			}
+
+			if flagHref != "" && flagMark != "LINK" {
+				return fmt.Errorf("--href only applies to LINK")
+			}
+
+			input := map[string]any{
+				"suggestionId": args[0],
+				"mark":         flagMark,
+				"action":       flagAction,
+				"quote":        flagQuote,
+			}
+			if flagOccurrence != 0 {
+				input["quoteOccurrence"] = flagOccurrence
+			}
+
+			if flagHref != "" {
+				input["href"] = flagHref
+			}
+
+			return runMutation(
+				f,
+				flagOutput,
+				formatMutation,
+				map[string]any{"input": input},
+				func(data json.RawMessage) (string, error) {
+					var resp struct {
+						AddDocumentSuggestionFormatChange struct {
+							DocumentSuggestion struct {
+								ID string `json:"id"`
+							} `json:"documentSuggestion"`
+						} `json:"addDocumentSuggestionFormatChange"`
+					}
+					if err := json.Unmarshal(data, &resp); err != nil {
+						return "", fmt.Errorf("cannot parse response: %w", err)
+					}
+
+					return fmt.Sprintf(
+						"Added a format redline to suggestion %s",
+						resp.AddDocumentSuggestionFormatChange.DocumentSuggestion.ID,
+					), nil
+				},
+			)
+		},
+	}
+
+	flagOutput = cmdutil.AddOutputFlag(cmd)
+	cmd.Flags().StringVar(&flagMark, "mark", "", "Style to suggest: "+strings.Join(formatMarks, ", "))
+	cmd.Flags().StringVar(&flagAction, "action", "", "ADD or REMOVE")
+	cmd.Flags().StringVar(&flagQuote, "quote", "", "Text to format")
+	cmd.Flags().IntVar(&flagOccurrence, "occurrence", 0, "Zero-based occurrence of the quote")
+	cmd.Flags().StringVar(&flagHref, "href", "", "Link address when suggesting a link")
+
+	_ = cmd.MarkFlagRequired("mark")
+	_ = cmd.MarkFlagRequired("action")
+
+	return cmd
+}
+
 func newAcceptCmd(f *cmdutil.Factory) *cobra.Command {
 	return newDecisionCmd(f, "accept", "Accept a suggestion", acceptMutation, "acceptDocumentSuggestion", "Accepted")
 }
@@ -661,6 +759,14 @@ mutation AddDocumentSuggestionChange($input: AddDocumentSuggestionChangeInput!) 
 const tableMutation = `
 mutation AddDocumentSuggestionTableChange($input: AddDocumentSuggestionTableChangeInput!) {
   addDocumentSuggestionTableChange(input: $input) {
+    documentSuggestion { id status }
+  }
+}
+`
+
+const formatMutation = `
+mutation AddDocumentSuggestionFormatChange($input: AddDocumentSuggestionFormatChangeInput!) {
+  addDocumentSuggestionFormatChange(input: $input) {
     documentSuggestion { id status }
   }
 }

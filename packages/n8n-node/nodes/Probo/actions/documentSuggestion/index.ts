@@ -21,6 +21,7 @@
 import type { INodeProperties } from 'n8n-workflow';
 import * as acceptOp from './accept.operation';
 import * as addOp from './add.operation';
+import * as addFormatOp from './addFormat.operation';
 import * as addTableOp from './addTable.operation';
 import * as getOp from './get.operation';
 import * as getAllOp from './getAll.operation';
@@ -38,6 +39,7 @@ export const description: INodeProperties[] = [
 		options: [
 			{ name: 'Accept', value: 'accept', description: 'Accept a redline', action: 'Accept a document suggestion' },
 			{ name: 'Add Change', value: 'add', description: 'Add a redline to an open suggestion', action: 'Add a document suggestion change' },
+			{ name: 'Add Format Change', value: 'addFormat', description: 'Suggest bold, italic, or another style on an open suggestion', action: 'Add a document suggestion format change' },
 			{ name: 'Add Table Change', value: 'addTable', description: 'Add a table row, column, or table redline to an open suggestion', action: 'Add a document suggestion table change' },
 			{ name: 'Get', value: 'get', description: 'Get a suggestion', action: 'Get a document suggestion' },
 			{ name: 'Get Many', value: 'getAll', description: 'List suggestions on a document', action: 'List document suggestions' },
@@ -49,6 +51,7 @@ export const description: INodeProperties[] = [
 	},
 	...acceptOp.description,
 	...addOp.description,
+	...addFormatOp.description,
 	...addTableOp.description,
 	...getOp.description,
 	...getAllOp.description,
@@ -60,6 +63,7 @@ export const description: INodeProperties[] = [
 export {
 	acceptOp as accept,
 	addOp as add,
+	addFormatOp as addFormat,
 	addTableOp as addTable,
 	getOp as get,
 	getAllOp as getAll,

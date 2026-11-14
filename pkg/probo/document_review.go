@@ -120,7 +120,31 @@ type (
 		Rows         [][]string
 		HeaderRow    bool
 	}
+
+	AddDocumentSuggestionFormatChangeRequest struct {
+		SuggestionID gid.GID
+		IdentityID   gid.GID
+		Mark         collaboration.FormatSuggestionMark
+		Action       collaboration.FormatSuggestionAction
+		Quote        string
+		Occurrence   int
+		Href         string
+	}
 )
+
+var documentFormatMarks = []collaboration.FormatSuggestionMark{
+	collaboration.FormatSuggestionBold,
+	collaboration.FormatSuggestionItalic,
+	collaboration.FormatSuggestionUnderline,
+	collaboration.FormatSuggestionStrike,
+	collaboration.FormatSuggestionCode,
+	collaboration.FormatSuggestionLink,
+}
+
+var documentFormatActions = []collaboration.FormatSuggestionAction{
+	collaboration.FormatSuggestionAdd,
+	collaboration.FormatSuggestionRemove,
+}
 
 var documentTableOperations = []collaboration.TableSuggestionOperation{
 	collaboration.TableSuggestionInsertRow,
@@ -1087,6 +1111,60 @@ func (s *DocumentService) AddSuggestionChange(
 		req.Quote,
 		req.Replacement,
 		req.Occurrence,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() { _ = painted.Close() }()
+
+	if err := s.persistSuggestionChange(ctx, scope, suggestion, req.IdentityID, profileID, painted, actorID); err != nil {
+		return nil, err
+	}
+
+	return suggestion, nil
+}
+
+// AddSuggestionFormatChange suggests bold, italic, or another style on quoted
+// text. Accepting keeps the style and rejecting restores the text.
+func (s *DocumentService) AddSuggestionFormatChange(
+	ctx context.Context,
+	scope coredata.Scoper,
+	req AddDocumentSuggestionFormatChangeRequest,
+) (*coredata.DocumentSuggestion, error) {
+	v := validator.New()
+	v.Check(req.SuggestionID, "suggestion_id", validator.Required(), validator.GID(coredata.DocumentSuggestionEntityType))
+	v.Check(req.IdentityID, "identity_id", validator.Required(), validator.GID(coredata.IdentityEntityType))
+	v.Check(req.Mark, "mark", validator.Required(), validator.OneOfSlice(documentFormatMarks))
+	v.Check(req.Action, "action", validator.Required(), validator.OneOfSlice(documentFormatActions))
+	v.Check(req.Quote, "quote", validator.Required(), validator.MaxLen(documentQuoteMaxLength))
+	v.Check(req.Occurrence, "quote_occurrence", validator.Min(0))
+	v.Check(req.Href, "href", validator.MaxLen(documentQuoteMaxLength))
+
+	if err := v.Error(); err != nil {
+		return nil, err
+	}
+
+	suggestion, profileID, err := s.openSuggestionForChange(ctx, scope, req.SuggestionID, req.IdentityID)
+	if err != nil {
+		return nil, err
+	}
+
+	painted, actorID, err := s.collaboration.PaintFormatSuggestion(
+		ctx,
+		scope,
+		suggestion.DocumentID,
+		suggestion.OrganizationID,
+		req.IdentityID,
+		&profileID,
+		suggestion.ID.String(),
+		collaboration.FormatSuggestion{
+			Mark:       req.Mark,
+			Action:     req.Action,
+			Quote:      req.Quote,
+			Occurrence: req.Occurrence,
+			Href:       req.Href,
+		},
 	)
 	if err != nil {
 		return nil, err
