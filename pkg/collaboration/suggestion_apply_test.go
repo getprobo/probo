@@ -291,6 +291,37 @@ func childParents(t *testing.T, document *automerge.Document) []string {
 	return nil
 }
 
+func TestApplyBlock_SetBlockRefusedInsideOpenSuggestion(t *testing.T) {
+	t.Parallel()
+
+	document := suggestionDocument(t, `{"type":"doc","content":[`+paragraphJSON("Keep this. Change this.")+`,`+paragraphJSON("Other")+`]}`)
+	require.NoError(t, ApplySuggestionEdit(document, "s-keep", "Keep this.", "Kept this.", 0))
+
+	original := bodySpans(t, document)
+
+	err := ApplyBlock(document, BlockChange{
+		Operation:    BlockSet,
+		Quote:        "Change this.",
+		Block:        BlockKindHeading,
+		Level:        2,
+		SuggestionID: "s-head",
+	})
+	require.ErrorIs(t, err, ErrSuggestionOverlaps)
+	assert.True(t, spansEqual(original, bodySpans(t, document)))
+
+	require.NoError(t, ApplyBlock(document, BlockChange{
+		Operation:    BlockSet,
+		Quote:        "Other",
+		Block:        BlockKindHeading,
+		Level:        2,
+		SuggestionID: "s-other",
+	}))
+
+	spans, err := BodySpans(document)
+	require.NoError(t, err)
+	assert.True(t, HasOpenSuggestions(spans))
+}
+
 func TestApplyBlock_MentionRefusedInsideBlockSuggestion(t *testing.T) {
 	t.Parallel()
 
