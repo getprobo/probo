@@ -158,6 +158,9 @@ export type RichEditorProps = ComponentProps<"div"> & {
   // editors turn this off.
   page?: boolean;
   formatting?: boolean;
+  // While suggesting, formatting is off but table rows and columns can still
+  // be inserted or deleted as tracked changes.
+  suggestingMenus?: boolean;
   suspendContentChanges?: boolean;
   // Review cards rendered inside the scrollport so they move with the page.
   margin?: ReactNode;
@@ -203,6 +206,7 @@ export function BaseRichEditor(props: BaseRichEditorProps) {
     autoFocus = false,
     page = true,
     formatting = true,
+    suggestingMenus = false,
     suspendContentChanges = false,
     margin,
     extensions,
@@ -418,7 +422,9 @@ export function BaseRichEditor(props: BaseRichEditorProps) {
     }
   }, [editor, mentionSource]);
 
-  useEffect(() => {
+  // Menus that mount with the same render read editor.isEditable in their own
+  // effects, which run before this component's passive effects.
+  useLayoutEffect(() => {
     if (!editor) {
       return;
     }
@@ -471,6 +477,12 @@ export function BaseRichEditor(props: BaseRichEditorProps) {
             <MentionMenu editor={editor} />
           </>
         )}
+      {!disabled && !formatting && suggestingMenus && blockMenu && (
+        <>
+          <TableColumnMenu editor={editor} />
+          <TableRowMenu editor={editor} />
+        </>
+      )}
 
       <EditorContent className="flex min-h-0 flex-1 flex-col" editor={editor} />
       {margin}
