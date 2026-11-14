@@ -759,7 +759,7 @@ func previousSibling(spans []automerge.Span, index int) int {
 	parents := blockParents(spans[index])
 	previous := -1
 
-	for cursor := 0; cursor < index; cursor++ {
+	for cursor := range index {
 		span := spans[cursor]
 		if span.Type != automerge.SpanTypeBlock || !equalPath(blockParents(span), parents) {
 			continue
