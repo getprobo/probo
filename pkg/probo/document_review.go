@@ -146,6 +146,22 @@ var documentFormatActions = []collaboration.FormatSuggestionAction{
 	collaboration.FormatSuggestionRemove,
 }
 
+var documentBlockOperations = []collaboration.BlockOperation{
+	collaboration.BlockSet,
+	collaboration.BlockInsert,
+	collaboration.BlockDelete,
+	collaboration.BlockInsertItem,
+	collaboration.BlockDeleteItem,
+	collaboration.BlockNest,
+	collaboration.BlockUnnest,
+	collaboration.BlockSetTask,
+	collaboration.BlockInsertDivider,
+	collaboration.BlockInsertImage,
+	collaboration.BlockInsertFile,
+	collaboration.BlockInsertMention,
+	collaboration.BlockDeleteMention,
+}
+
 var documentTableOperations = []collaboration.TableSuggestionOperation{
 	collaboration.TableSuggestionInsertRow,
 	collaboration.TableSuggestionDeleteRow,

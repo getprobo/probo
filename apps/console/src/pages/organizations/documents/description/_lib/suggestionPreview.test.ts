@@ -76,6 +76,46 @@ describe("suggestion preview", () => {
     expect(collectSuggestionAnchors(doc).get(id)?.inserted).toBe("\n");
   });
 
+  it("describes a heading change without repeating its text", () => {
+    const headingSchema = new Schema({
+      nodes: {
+        doc: { content: "block+" },
+        paragraph: {
+          content: "text*",
+          group: "block",
+          attrs: { unknownAttrs: { default: null } },
+        },
+        heading: {
+          content: "text*",
+          group: "block",
+          attrs: {
+            level: { default: 1 },
+            unknownAttrs: { default: null },
+          },
+        },
+        text: { group: "inline" },
+      },
+    });
+    const doc = headingSchema.node("doc", null, [
+      headingSchema.node("heading", {
+        level: 2,
+        unknownAttrs: {
+          suggestionBlock: JSON.stringify({
+            id,
+            type: "paragraph",
+            parents: [],
+            attrs: {},
+          }),
+        },
+      }, [headingSchema.text("Scope")]),
+    ]);
+
+    const preview = collectSuggestionAnchors(doc).get(id);
+    expect(preview?.structure).toEqual({ action: "format", target: "heading", text: "2" });
+    expect(preview?.inserted).toBe("");
+    expect(preview?.parts).toEqual([]);
+  });
+
   it("keeps the letters between two deletions", () => {
     const deleted = schema.marks.suggestionDelete.create({ id });
     const doc = schema.node("doc", null, [

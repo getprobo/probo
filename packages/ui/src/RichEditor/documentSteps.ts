@@ -109,12 +109,13 @@ export function reassignSuggestionBlocks(
     if (span.type === "block") {
       const block = span.value;
       const attrs = blockAttrs(block);
-      if (attrs?.[suggestionSplitAttr] === fromId) {
+      const nextAttrs = reassignedBlockAttrs(attrs, fromId, toId);
+      if (nextAttrs) {
         updates.push({
           index,
           block: {
             ...block,
-            attrs: { ...attrs, [suggestionSplitAttr]: toId },
+            attrs: nextAttrs,
           },
         });
       }
@@ -491,6 +492,36 @@ function recordValue(value: unknown): Record<string, Automerge.MaterializeValue>
 
 function nodeUnknownAttrs(node: { attrs: { unknownAttrs?: unknown } }): unknown {
   return node.attrs.unknownAttrs;
+}
+
+function reassignedBlockAttrs(
+  attrs: { [key: string]: Automerge.MaterializeValue } | null,
+  fromId: string,
+  toId: string,
+): { [key: string]: Automerge.MaterializeValue } | null {
+  if (!attrs) return null;
+  let changed = false;
+  const next = { ...attrs };
+  if (next[suggestionSplitAttr] === fromId) {
+    next[suggestionSplitAttr] = toId;
+    changed = true;
+  }
+  const block = next.suggestionBlock;
+  if (typeof block === "string" && block.includes(fromId)) {
+    try {
+      const parsed: unknown = JSON.parse(block);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        const record = parsed as { id?: unknown };
+        if (record.id === fromId) {
+          next.suggestionBlock = JSON.stringify({ ...record, id: toId });
+          changed = true;
+        }
+      }
+    } catch {
+      // A block mark that is not JSON stays as it was written.
+    }
+  }
+  return changed ? next : null;
 }
 
 function blockAttrs(
