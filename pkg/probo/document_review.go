@@ -1115,6 +1115,7 @@ func (s *DocumentService) AddSuggestionTableChange(
 	v.Check(req.Operation, "operation", validator.Required(), validator.OneOfSlice(documentTableOperations))
 	v.Check(req.Quote, "quote", validator.Required(), validator.MaxLen(documentQuoteMaxLength))
 	v.Check(req.Occurrence, "quote_occurrence", validator.Min(0))
+
 	cellLimit := documentTableMaxColumns
 	if req.Operation == collaboration.TableSuggestionInsertColumn {
 		cellLimit = documentTableMaxRows
