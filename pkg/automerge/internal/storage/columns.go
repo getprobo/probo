@@ -281,10 +281,15 @@ func settleCharge[T any](values []optional[T], budget *decodeBudget) []optional[
 		return values
 	}
 
-	if surplus > len(values)/16 {
+	// The copy and the old array coexist, so the copy is charged first. When it
+	// does not fit, keep the slice and only drop the surplus from the charge.
+	if surplus > len(values)/16 &&
+		chargeDecoded[optional[T]](budget, uint64(len(values))) == nil {
 		exact := make([]optional[T], len(values))
 		copy(exact, values)
-		values = exact
+		releaseDecoded[optional[T]](budget, uint64(cap(values)))
+
+		return exact
 	}
 
 	releaseDecoded[optional[T]](budget, uint64(surplus))

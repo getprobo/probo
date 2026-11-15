@@ -127,20 +127,53 @@ func TestDecodeRLE_ShortRunsChargeCapacity(t *testing.T) {
 func TestDecodeRLE_SmallSurplusIsReleased(t *testing.T) {
 	t.Parallel()
 
-	// One literal run of 100 values grows once; the size class rounds it up by
-	// less than a sixteenth, so the slice is kept and only the charge shrinks.
-	data := appendLEB(nil, -100)
-	for range 100 {
+	// One literal run grows once and the size class rounds it up by less than a
+	// sixteenth, so the slice is kept and only the charge shrinks.
+	const count = 1000
+
+	data := appendLEB(nil, -count)
+	for range count {
 		data = appendULEB(data, 7)
 	}
 
 	budget := &decodeBudget{}
 	values, err := decodeULEBColumnWithBudget(data, budget)
 	require.NoError(t, err)
-	require.Len(t, values, 100)
+	require.Len(t, values, count)
+	require.Greater(t, cap(values), len(values))
+	require.LessOrEqual(t, cap(values)-len(values), len(values)/16)
 
 	itemSize := uint64(unsafe.Sizeof(optional[uint64]{}))
 	assert.Equal(t, uint64(len(values))*itemSize, budget.used)
+}
+
+func TestSettleCharge_KeepsSliceWhenCopyDoesNotFit(t *testing.T) {
+	t.Parallel()
+
+	itemSize := uint64(unsafe.Sizeof(optional[uint64]{}))
+	values := make([]optional[uint64], 10, 64)
+	budget := &decodeBudget{
+		used: maxDecodedMemoryBytes - itemSize*5,
+	}
+	start := budget.used
+
+	settled := settleCharge(values, budget)
+
+	assert.Equal(t, 64, cap(settled))
+	assert.Equal(t, start-54*itemSize, budget.used)
+}
+
+func TestSettleCharge_ChargesCopyBeforeReleasingOld(t *testing.T) {
+	t.Parallel()
+
+	itemSize := uint64(unsafe.Sizeof(optional[uint64]{}))
+	values := make([]optional[uint64], 10, 64)
+	budget := &decodeBudget{used: 64 * itemSize}
+
+	settled := settleCharge(values, budget)
+
+	assert.Equal(t, 10, cap(settled))
+	assert.Equal(t, 10*itemSize, budget.used)
 }
 
 func TestGrowCharged_CoversStringHeaderSlack(t *testing.T) {
