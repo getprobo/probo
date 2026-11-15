@@ -233,8 +233,11 @@ function nextMarks(
   }
 
   if (format?.id === id && format.action === "remove") {
-    next = [...next, restoredMark(state, style.name, format.href)];
-    return finishCode(state, marks, next, style, id, ownInsert);
+    const sameLink = style.name !== "link" || linkHref == null || linkHref === format.href;
+    if (sameLink) {
+      next = [...next, restoredMark(state, style.name, format.href)];
+      return finishCode(state, marks, next, style, id, ownInsert);
+    }
   }
 
   const created = style.name === "link"

@@ -171,6 +171,13 @@ describe("format suggestions", () => {
     expect(marks.find(mark => mark.type.name === "suggestionFormatLink")).toBeUndefined();
   });
 
+  it("blocks a javascript link without adding the mark", () => {
+    const editor = open(paragraph("Hello"), 1, 6);
+    expect(applySuggestingLink(editor.view, editor.current, "javascript:alert(1)")).toBe(true);
+    expect(editor.current.blocked).toBe(true);
+    expect(markNames(marksOn(editor.state.doc, "Hello"))).not.toContain("link");
+  });
+
   it("suggests code by removing the other styles", () => {
     const editor = open(paragraph("Hello", [schema.marks.bold.create()]), 1, 6);
     expect(applySuggestingStyle(editor.view, editor.current, "code")).toBe(true);

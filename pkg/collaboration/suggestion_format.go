@@ -225,6 +225,12 @@ func planFormat(
 		return nil, false, ErrSuggestionOverlaps
 	}
 
+	for _, id := range formatMarkIDs(marks) {
+		if id != suggestionID {
+			return nil, false, ErrSuggestionOverlaps
+		}
+	}
+
 	ownInsert := insertID == suggestionID
 
 	if action == FormatSuggestionAdd {

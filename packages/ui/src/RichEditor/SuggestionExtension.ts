@@ -431,9 +431,21 @@ export function applySuggestingLink(
   controller: SuggestingController,
   href: string | null,
 ): boolean {
+  if (href !== null && !suggestedLinkAllowed(href)) {
+    controller.onBlocked?.();
+    return true;
+  }
   return applyFormatChange(view, controller, (state, id, from, to) =>
     suggestLink(state, id, from, to, href),
   );
+}
+
+function suggestedLinkAllowed(href: string): boolean {
+  const trimmed = href.trim();
+  if (trimmed === "") return false;
+  const scheme = /^[a-z][a-z0-9+.-]*:/i.exec(trimmed)?.[0].toLowerCase();
+  if (!scheme) return true;
+  return scheme === "http:" || scheme === "https:" || scheme === "mailto:";
 }
 
 function applyFormatChange(
@@ -482,7 +494,9 @@ function applySuggestingKey(
     const key = event.key.toLowerCase();
     const style = suggestingStyleKey(key, event.shiftKey);
     if (style && !event.altKey) {
-      if (view.state.selection.empty) return false;
+      // A collapsed cursor has no range to redline. Swallow the shortcut so
+      // the default handler does not store an untracked mark.
+      if (view.state.selection.empty) return true;
       return applySuggestingStyle(view, controller, style);
     }
     if (key === "k" && !event.shiftKey && !event.altKey) {

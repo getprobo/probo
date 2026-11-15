@@ -167,6 +167,20 @@ func TestApplySuggestionFormat_RefusesAnExistingRedline(t *testing.T) {
 	})
 	require.ErrorIs(t, err, ErrSuggestionOverlaps)
 
+	styled := suggestionDocument(t, docWith("Hello"))
+	require.NoError(t, ApplySuggestionFormat(styled, formatSuggestionID, FormatSuggestion{
+		Mark:   FormatSuggestionBold,
+		Action: FormatSuggestionAdd,
+		Quote:  "Hello",
+	}))
+
+	err = ApplySuggestionFormat(styled, "other", FormatSuggestion{
+		Mark:   FormatSuggestionItalic,
+		Action: FormatSuggestionAdd,
+		Quote:  "Hello",
+	})
+	require.ErrorIs(t, err, ErrSuggestionOverlaps)
+
 	require.NoError(t, ApplySuggestionFormat(document, formatSuggestionID, FormatSuggestion{
 		Mark:   FormatSuggestionBold,
 		Action: FormatSuggestionAdd,
