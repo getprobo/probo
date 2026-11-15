@@ -221,6 +221,7 @@ func QuoteCursors(
 	}
 
 	visible, offsets := visibleText(spans)
+
 	index, err := findQuote(visible, quote, occurrence)
 	if err != nil {
 		return nil, nil, err
@@ -933,7 +934,6 @@ func findQuote(visible string, quote string, occurrence int) (int, error) {
 	}
 
 	searchFrom := 0
-	index := -1
 	remaining := occurrence
 
 	for {
@@ -942,7 +942,7 @@ func findQuote(visible string, quote string, occurrence int) (int, error) {
 			return 0, ErrQuoteNotFound
 		}
 
-		index = searchFrom + found
+		index := searchFrom + found
 		if remaining == 0 {
 			return index, nil
 		}

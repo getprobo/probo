@@ -44,6 +44,7 @@ func newSpansDocument(t *testing.T, spans []automerge.SpanInput) (*automerge.Doc
 	text, err := document.CreateText("body")
 	require.NoError(t, err)
 	require.NoError(t, text.UpdateSpans(spans, automerge.UpdateSpansConfig{}))
+
 	_, err = document.CommitNow("seed")
 	require.NoError(t, err)
 
@@ -111,6 +112,7 @@ func TestUpdateSpans_NullBlockAttributeEqualsOmittedAttribute(t *testing.T) {
 			automerge.UpdateSpansConfig{},
 		),
 	)
+
 	_, err = document.CommitNow("edit")
 	require.NoError(t, err)
 
@@ -162,6 +164,7 @@ func TestUpdateSpans_NestedNullAttributeIsNotDropped(t *testing.T) {
 		},
 		automerge.UpdateSpansConfig{},
 	))
+
 	_, err = document.CommitNow("edit")
 	require.NoError(t, err)
 
@@ -203,6 +206,7 @@ func TestDiff_IndexesStayInUTF16UnitsAfterMixedInsertRun(t *testing.T) {
 			automerge.UpdateSpansConfig{},
 		),
 	)
+
 	_, err = document.CommitNow("edit")
 	require.NoError(t, err)
 
