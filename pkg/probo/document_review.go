@@ -1243,7 +1243,7 @@ func (s *DocumentService) persistSuggestionChange(
 		return fmt.Errorf("cannot persist suggestion: %w", err)
 	}
 
-	err = s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		if err := suggestion.LoadByIDForUpdate(ctx, tx, scope, suggestion.ID); err != nil {
 			return fmt.Errorf("cannot reload document suggestion: %w", err)
 		}
@@ -1266,7 +1266,7 @@ func (s *DocumentService) persistSuggestionChange(
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	s.notifyReview(ctx, suggestion.DocumentID)
