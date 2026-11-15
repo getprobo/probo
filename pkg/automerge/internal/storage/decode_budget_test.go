@@ -44,6 +44,7 @@ func TestDecode_ReleasesColumnScratch(t *testing.T) {
 	}
 
 	document.Heads = []opset.ChangeHash{*document.Changes[0].Hash}
+
 	document.OperationOrder = make([]opset.OpID, len(operations))
 	for index := range operations {
 		document.OperationOrder[index] = operations[index].ID
@@ -61,6 +62,7 @@ func TestGrowCharged_ChargesShortRunCapacity(t *testing.T) {
 	t.Parallel()
 
 	var values []optional[uint64]
+
 	budget := &decodeBudget{}
 	elemSize := int(unsafe.Sizeof(optional[uint64]{}))
 
@@ -180,6 +182,7 @@ func TestGrowCharged_CoversStringHeaderSlack(t *testing.T) {
 	t.Parallel()
 
 	var values []optional[string]
+
 	budget := &decodeBudget{}
 	elemSize := int(unsafe.Sizeof(optional[string]{}))
 

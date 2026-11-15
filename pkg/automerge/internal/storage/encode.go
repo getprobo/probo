@@ -81,6 +81,7 @@ func EncodeChange(change *opset.Change) ([]byte, error) {
 	_, _ = hasher.Write(body)
 
 	var hash opset.ChangeHash
+
 	_ = hasher.Sum(hash[:0])
 	change.Hash = new(hash)
 
@@ -510,6 +511,7 @@ func reconstructionScratch(change *opset.Change) (uint64, error) {
 	}
 
 	operations := len(change.Operations)
+
 	perOperation := 6*uint64(unsafe.Sizeof(optional[uint64]{})) +
 		uint64(unsafe.Sizeof(optional[int64]{})) +
 		2*uint64(unsafe.Sizeof(optional[string]{})) +
@@ -539,6 +541,7 @@ func reconstructionScratch(change *opset.Change) (uint64, error) {
 	// Those slices can still be on the heap when EncodeChange allocates.
 	sizing := uint64(operations)*uint64(unsafe.Sizeof(optional[int64]{})) +
 		predecessors*predWidth
+
 	scratch := fixed + predecessors*predWidth*2 + encoded*6 + sizing
 	if scratch < fixed {
 		return 0, fmt.Errorf("change reconstruction scratch overflows uint64")
@@ -554,6 +557,7 @@ func encodedBodySize(change *opset.Change) (uint64, error) {
 	}
 
 	var total uint64
+
 	add := func(extra int) error {
 		if extra < 0 {
 			return fmt.Errorf("change encoding size overflows uint64")
@@ -811,6 +815,7 @@ func encodedColumnSizes(
 	add(115, predCounters)
 
 	var hasExpand bool
+
 	for i := range change.Operations {
 		if change.Operations[i].MarkExpand != nil && *change.Operations[i].MarkExpand {
 			hasExpand = true
@@ -859,6 +864,7 @@ func encodedColumnSizes(
 
 func valueColumnSize(change *opset.Change) (uint64, uint64, error) {
 	n := len(change.Operations)
+
 	metadata, err := rleSize(
 		n,
 		func(i int) optional[uint64] {
@@ -876,6 +882,7 @@ func valueColumnSize(change *opset.Change) (uint64, uint64, error) {
 	}
 
 	var valueLen uint64
+
 	for i := range change.Operations {
 		_, dataLen, err := scalarMeta(change.Operations[i].Value)
 		if err != nil {
@@ -946,6 +953,7 @@ func predecessorColumnSizes(
 	actors := make([]optional[uint64], count)
 	counters := make([]optional[int64], count)
 	index := 0
+
 	for i := range change.Operations {
 		for _, predecessor := range change.Operations[i].Predecessors {
 			actors[index] = some(indexes[predecessor.Actor])
@@ -966,7 +974,9 @@ func predecessorColumnSizes(
 	}
 
 	var previous int64
+
 	deltas := make([]optional[int64], count)
+
 	for i, counter := range counters {
 		if !counter.valid {
 			continue
@@ -996,7 +1006,9 @@ func deltaRLESize(n int, at func(int) optional[int64]) (uint64, error) {
 	}
 
 	deltas := make([]optional[int64], n)
+
 	var previous int64
+
 	for i := range n {
 		value := at(i)
 		if !value.valid {
@@ -1026,6 +1038,7 @@ func rleSize[T comparable](
 	}
 
 	var total uint64
+
 	add := func(extra int) error {
 		if extra < 0 || uint64(extra) > math.MaxUint64-total {
 			return fmt.Errorf("run length column overflows uint64")
@@ -1080,6 +1093,7 @@ func rleSize[T comparable](
 		for end < n && at(end).valid {
 			if end+1 < n {
 				left := at(end)
+
 				right := at(end + 1)
 				if left.valid && right.valid && left.value == right.value {
 					break
@@ -1125,6 +1139,7 @@ func booleanColumnSize(n int, at func(int) bool) (uint64, error) {
 		current bool
 		count   uint64
 	)
+
 	add := func(extra int) error {
 		if extra < 0 || uint64(extra) > math.MaxUint64-total {
 			return fmt.Errorf("boolean column overflows uint64")
@@ -1159,6 +1174,7 @@ func booleanColumnSize(n int, at func(int) bool) (uint64, error) {
 
 func lebSize(value int64) int {
 	size := 0
+
 	for {
 		current := byte(value & 0x7f)
 		value >>= 7

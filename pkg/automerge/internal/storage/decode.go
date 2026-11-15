@@ -742,6 +742,7 @@ func reconstructSnapshotChanges(
 			// Encoder buffers die with EncodeChange. Keep the framed bytes and
 			// the hash, which stay on the change.
 			releaseToMark(budget, scratch)
+
 			if err := chargeDecodedBytes(budget, uint64(cap(change.Raw))); err != nil {
 				return fmt.Errorf("cannot retain snapshot change %d: %w", i, err)
 			}
@@ -955,6 +956,7 @@ func decodeDocumentChanges(
 	}
 
 	extrasRetained := false
+
 	for i := range changes {
 		if changes[i].Extra != nil {
 			extrasRetained = true
@@ -996,6 +998,7 @@ func releaseDocumentChangeColumns(
 	}
 
 	releaseDecoded[[]byte](budget, uint64(count))
+
 	if hasExtras {
 		releaseDecoded[optional[uint64]](budget, uint64(count))
 	}
@@ -1206,6 +1209,7 @@ func decodeOperations(
 	)
 	if idCounterData := optionalColumn(columns, 35); idCounterData != nil {
 		idCountersColumn = true
+
 		idCounters, err = decodeDeltaColumnWithBudget(idCounterData, budget)
 		if err != nil {
 			return nil, nil, fmt.Errorf("cannot decode operation counters: %w", err)
@@ -1216,6 +1220,7 @@ func decodeOperations(
 		}
 	} else if implicitIDs != nil {
 		idCountersImplicit = true
+
 		if err := chargeDecoded[optional[uint64]](budget, uint64(count)); err != nil {
 			return nil, nil, err
 		}
@@ -1502,6 +1507,7 @@ func releaseOperationColumns(
 	}
 
 	releaseDecoded[[]opset.OpID](budget, uint64(count))
+
 	if flags.groups {
 		releaseDecoded[optional[uint64]](budget, uint64(count))
 	}
@@ -1544,6 +1550,7 @@ func releaseDeltaColumn(budget *decodeBudget, count int) {
 
 func releaseSignedDeltaColumn(budget *decodeBudget, count int, present bool) {
 	releaseDecoded[optional[int64]](budget, uint64(count))
+
 	if !present {
 		return
 	}

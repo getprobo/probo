@@ -807,6 +807,7 @@ func assignOperations(
 	}
 
 	releaseToMark(budget, mark)
+
 	if err := chargeDecoded[opset.Operation](budget, uint64(len(operations))); err != nil {
 		return err
 	}

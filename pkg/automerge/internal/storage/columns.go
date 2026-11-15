@@ -314,6 +314,7 @@ func appendRepeated[T any](
 	if err != nil {
 		return err
 	}
+
 	for range count {
 		grown = append(grown, value)
 	}
@@ -450,6 +451,7 @@ func roundedAllocBytes(payload int) (int, error) {
 	// PtrSize * PtrBits, the size at which Go starts adding a malloc header.
 	minHeader := int(unsafe.Sizeof(uintptr(0))) * int(unsafe.Sizeof(uintptr(0))) * 8
 	req := payload
+
 	header := 0
 	if payload > minHeader {
 		header = mallocHeader
