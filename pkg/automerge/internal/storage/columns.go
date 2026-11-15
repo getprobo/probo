@@ -252,13 +252,10 @@ func decodeRLE[T any](
 				return nil, err
 			}
 
-			// Grow once for the whole literal run, so the slice cap matches the
-			// number of values rather than doubling as each one is appended.
-			if err := chargeDecoded[optional[T]](budget, count); err != nil {
+			values, err = growCharged(values, count, budget)
+			if err != nil {
 				return nil, err
 			}
-
-			values = slices.Grow(values, int(count))
 
 			for range count {
 				value, err := decodeValue(r)
@@ -284,13 +281,13 @@ func appendRepeated[T any](
 		return err
 	}
 
-	// Grow once for the whole run. A long run (an entire column of the same
-	// value, common for text where every operation shares an object and action)
-	// otherwise reallocated the slice repeatedly as it doubled.
-	if err := chargeDecoded[optional[T]](budget, count); err != nil {
+	// One growth for the whole run. Growing element by element would reallocate
+	// a long run (every text operation sharing an object and action) as the
+	// slice doubled.
+	grown, err := growCharged(*values, count, budget)
+	if err != nil {
 		return err
 	}
-	grown := slices.Grow(*values, int(count))
 	for range count {
 		grown = append(grown, value)
 	}
@@ -298,6 +295,183 @@ func appendRepeated[T any](
 	*values = grown
 
 	return nil
+}
+
+const (
+	// Go's small-object cutoff and heap page. Large slice growth rounds the
+	// allocation up to the next page; the bound includes one extra page so a
+	// malloc header cannot land past it.
+	smallAllocMax = 32 << 10
+	heapPageSize  = 8 << 10
+)
+
+// growCharged reserves the capacity slices.Grow will allocate before growing.
+// Repeated short runs double (then grow by about a quarter), so charging only
+// the values added by this run under-counts the backing array. Surplus in the
+// bound is released once the actual cap is known.
+func growCharged[T any](
+	values []optional[T],
+	count uint64,
+	budget *decodeBudget,
+) ([]optional[T], error) {
+	if count > uint64(math.MaxInt) {
+		return nil, fmt.Errorf("decoded column exceeds %d items", maxDecodedItems)
+	}
+
+	additional := int(count)
+	if additional <= cap(values)-len(values) {
+		return values, nil
+	}
+
+	elemSize := int(unsafe.Sizeof(optional[T]{}))
+	if elemSize == 0 {
+		return slices.Grow(values, additional), nil
+	}
+
+	bound, err := sliceCapacityBound(cap(values), len(values), additional, elemSize)
+	if err != nil {
+		return nil, err
+	}
+
+	if bound < cap(values) {
+		return nil, fmt.Errorf("decoded slice capacity overflows")
+	}
+
+	if err := chargeDecoded[optional[T]](budget, uint64(bound-cap(values))); err != nil {
+		return nil, err
+	}
+
+	grown := slices.Grow(values, additional)
+	switch {
+	case cap(grown) > bound:
+		if err := chargeDecoded[optional[T]](budget, uint64(cap(grown)-bound)); err != nil {
+			return nil, err
+		}
+	case cap(grown) < bound:
+		releaseDecoded[optional[T]](budget, uint64(bound-cap(grown)))
+	}
+
+	return grown, nil
+}
+
+// sliceCapacityBound estimates the cap slices.Grow returns. nextSliceCap
+// matches runtime.nextslicecap; large results are then rounded up to a heap
+// page, plus one page of slack.
+func sliceCapacityBound(oldCap int, length int, additional int, elemSize int) (int, error) {
+	spare := oldCap - length
+	if additional <= spare {
+		return oldCap, nil
+	}
+
+	extra := additional - spare
+	if oldCap > math.MaxInt-extra {
+		return 0, fmt.Errorf("decoded slice capacity overflows")
+	}
+
+	newLen := oldCap + extra
+	newCap := nextSliceCap(newLen, oldCap)
+
+	if elemSize <= 0 || newCap > math.MaxInt/elemSize {
+		return 0, fmt.Errorf("decoded slice capacity overflows")
+	}
+
+	rounded, err := roundedAllocBytes(newCap * elemSize)
+	if err != nil {
+		return 0, err
+	}
+
+	elems := rounded / elemSize
+	if elems < newCap {
+		return newCap, nil
+	}
+
+	return elems, nil
+}
+
+// sizeClassSizes are the classes Go uses for allocations up to 32KiB.
+var sizeClassSizes = [...]int{
+	8, 16, 24, 32, 48, 64, 80, 96, 112, 128, 144, 160, 176, 192,
+	208, 224, 240, 256, 288, 320, 352, 384, 416, 448, 480, 512,
+	576, 640, 704, 768, 896, 1024, 1152, 1280, 1408, 1536, 1792,
+	2048, 2304, 2688, 3072, 3200, 3456, 4096, 4864, 5376, 6144,
+	6528, 6784, 6912, 8192, 9472, 9728, 10240, 10880, 12288,
+	13568, 14336, 16384, 18432, 19072, 20480, 21760, 24576, 27264,
+	28672, 32768,
+}
+
+// roundedAllocBytes bounds the block size for a payload of the given size.
+// Pointer values add a malloc header once they pass the header threshold, which
+// can move the block into the next size class. The header is assumed for every
+// payload so a noscan value only overestimates, and large blocks include one
+// extra page.
+func roundedAllocBytes(payload int) (int, error) {
+	const mallocHeader = 8
+
+	if payload <= 0 {
+		return 0, nil
+	}
+
+	if payload > smallAllocMax-mallocHeader {
+		if payload > math.MaxInt-(heapPageSize-1)-heapPageSize {
+			return 0, fmt.Errorf("decoded slice capacity overflows")
+		}
+
+		aligned := (payload + heapPageSize - 1) &^ (heapPageSize - 1)
+
+		return aligned + heapPageSize, nil
+	}
+
+	// PtrSize * PtrBits, the size at which Go starts adding a malloc header.
+	minHeader := int(unsafe.Sizeof(uintptr(0))) * int(unsafe.Sizeof(uintptr(0))) * 8
+	req := payload
+	header := 0
+	if payload > minHeader {
+		header = mallocHeader
+		req += header
+	}
+
+	class := roundSizeClass(req)
+	if class < header {
+		return payload, nil
+	}
+
+	return class - header, nil
+}
+
+func roundSizeClass(size int) int {
+	index, _ := slices.BinarySearch(sizeClassSizes[:], size)
+	if index >= len(sizeClassSizes) {
+		return sizeClassSizes[len(sizeClassSizes)-1]
+	}
+
+	return sizeClassSizes[index]
+}
+
+// nextSliceCap matches runtime.nextslicecap: a request longer than twice the
+// current cap is taken as-is, smaller slices double until 256 elements, and
+// larger slices grow by about a quarter.
+func nextSliceCap(newLen int, oldCap int) int {
+	if uint(newLen) > uint(oldCap)+uint(oldCap) {
+		return newLen
+	}
+
+	const threshold = 256
+	if oldCap < threshold {
+		return oldCap + oldCap
+	}
+
+	newCap := oldCap
+	for {
+		step := (newCap + 3*threshold) >> 2
+		if step <= 0 || newCap > math.MaxInt-step {
+			return newLen
+		}
+
+		newCap += step
+		if newCap >= newLen {
+			return newCap
+		}
+	}
 }
 
 func chargeDecoded[T any](budget *decodeBudget, count uint64) error {
