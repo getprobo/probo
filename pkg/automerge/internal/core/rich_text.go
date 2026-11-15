@@ -24,6 +24,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"sort"
 	"strings"
 
@@ -343,9 +344,7 @@ func blockForComparison(value any) any {
 	}
 
 	compared := make(map[string]any, len(block))
-	for key, entry := range block {
-		compared[key] = entry
-	}
+	maps.Copy(compared, block)
 
 	compared["attrs"] = cleaned
 
