@@ -268,7 +268,28 @@ func decodeRLE[T any](
 		}
 	}
 
-	return values, nil
+	return settleCharge(values, budget), nil
+}
+
+// settleCharge leaves a finished RLE column charged for exactly len(values),
+// the amount every release site gives back. A large surplus is compacted so the
+// memory it held is really freed; a small one (under a sixteenth of the column)
+// is dropped from the budget instead of paying for another copy.
+func settleCharge[T any](values []optional[T], budget *decodeBudget) []optional[T] {
+	surplus := cap(values) - len(values)
+	if surplus == 0 {
+		return values
+	}
+
+	if surplus > len(values)/16 {
+		exact := make([]optional[T], len(values))
+		copy(exact, values)
+		values = exact
+	}
+
+	releaseDecoded[optional[T]](budget, uint64(surplus))
+
+	return values
 }
 
 func appendRepeated[T any](

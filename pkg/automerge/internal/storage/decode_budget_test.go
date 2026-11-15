@@ -114,11 +114,33 @@ func TestDecodeRLE_ShortRunsChargeCapacity(t *testing.T) {
 	budget := &decodeBudget{}
 	values, err := decodeULEBColumnWithBudget(data, budget)
 	require.NoError(t, err)
-	require.Greater(t, cap(values), len(values))
+	require.Len(t, values, 40)
 
 	itemSize := uint64(unsafe.Sizeof(optional[uint64]{}))
-	assert.Equal(t, uint64(cap(values))*itemSize, budget.used)
-	assert.Greater(t, budget.used, uint64(len(values))*itemSize)
+	assert.Equal(t, uint64(len(values))*itemSize, budget.used)
+	assert.Equal(t, len(values), cap(values))
+
+	releaseDecoded[optional[uint64]](budget, uint64(len(values)))
+	assert.Zero(t, budget.used)
+}
+
+func TestDecodeRLE_SmallSurplusIsReleased(t *testing.T) {
+	t.Parallel()
+
+	// One literal run of 100 values grows once; the size class rounds it up by
+	// less than a sixteenth, so the slice is kept and only the charge shrinks.
+	data := appendLEB(nil, -100)
+	for range 100 {
+		data = appendULEB(data, 7)
+	}
+
+	budget := &decodeBudget{}
+	values, err := decodeULEBColumnWithBudget(data, budget)
+	require.NoError(t, err)
+	require.Len(t, values, 100)
+
+	itemSize := uint64(unsafe.Sizeof(optional[uint64]{}))
+	assert.Equal(t, uint64(len(values))*itemSize, budget.used)
 }
 
 func TestGrowCharged_CoversStringHeaderSlack(t *testing.T) {
