@@ -702,7 +702,7 @@ func TestDecodeColumns_SharesMemoryBudget(t *testing.T) {
 	t.Parallel()
 
 	itemSize := uint64(unsafe.Sizeof(optional[uint64]{}))
-	budget := &decodeBudget{used: maxDecodedMemoryBytes - itemSize*2}
+	budget := &decodeBudget{used: maxDecodedMemoryBytes - itemSize}
 
 	_, err := decodeULEBColumnWithBudget([]byte{1, 1}, budget)
 	require.NoError(t, err)
@@ -773,7 +773,7 @@ func TestDecodeOptionalColumns_ChargeAbsentDefaults(t *testing.T) {
 func TestDecodeStringColumn_ChargesPayloadCopy(t *testing.T) {
 	t.Parallel()
 
-	headerSize := uint64(unsafe.Sizeof(optional[string]{})) * 2
+	headerSize := uint64(unsafe.Sizeof(optional[string]{}))
 	budget := &decodeBudget{
 		used: maxDecodedMemoryBytes - headerSize - 2,
 	}

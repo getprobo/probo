@@ -493,6 +493,8 @@ func restoreChangeOperations(
 	operations []opset.Operation,
 	budget *decodeBudget,
 ) ([]opset.Operation, error) {
+	mark := budgetMark(budget)
+
 	if err := chargeDecodedMap[opset.OpID, struct{}](
 		budget,
 		uint64(len(operations)),
@@ -558,6 +560,10 @@ func restoreChangeOperations(
 	}
 
 	if deleteCount == 0 {
+		if err := retainRestoredOperations(budget, mark, successorCount, 0, 0); err != nil {
+			return nil, err
+		}
+
 		return operations, nil
 	}
 
@@ -610,7 +616,41 @@ func restoreChangeOperations(
 		},
 	)
 
+	if err := retainRestoredOperations(
+		budget,
+		mark,
+		successorCount,
+		uint64(len(operations)+deleteCount),
+		uint64(deleteCount),
+	); err != nil {
+		return nil, err
+	}
+
 	return result, nil
+}
+
+func retainRestoredOperations(
+	budget *decodeBudget,
+	mark uint64,
+	successorCount uint64,
+	operations uint64,
+	identifiers uint64,
+) error {
+	releaseToMark(budget, mark)
+
+	if err := chargeDecodedSliceGrowth[opset.OpID](budget, successorCount); err != nil {
+		return err
+	}
+
+	if operations == 0 {
+		return nil
+	}
+
+	if err := chargeDecoded[opset.Operation](budget, operations); err != nil {
+		return err
+	}
+
+	return chargeDecoded[opset.OpID](budget, identifiers)
 }
 
 // supersededKey names the location an operation occupies, which is what an
@@ -690,12 +730,24 @@ func reconstructSnapshotChanges(
 			recorded := change.Hash
 			change.Hash = nil
 
+			scratch := budgetMark(budget)
 			if err := reserveChangeReconstruction(change, budget); err != nil {
 				return fmt.Errorf("cannot reserve snapshot change %d: %w", i, err)
 			}
 
 			if _, err := EncodeChange(change); err != nil {
 				return fmt.Errorf("cannot rebuild snapshot change %d: %w", i, err)
+			}
+
+			// Encoder buffers die with EncodeChange. Keep the framed bytes and
+			// the hash, which stay on the change.
+			releaseToMark(budget, scratch)
+			if err := chargeDecodedBytes(budget, uint64(cap(change.Raw))); err != nil {
+				return fmt.Errorf("cannot retain snapshot change %d: %w", i, err)
+			}
+
+			if err := chargeDecoded[opset.ChangeHash](budget, 1); err != nil {
+				return fmt.Errorf("cannot retain snapshot change %d hash: %w", i, err)
 			}
 
 			// A recorded hash only exists for frontier changes. Disagreeing with it
@@ -720,111 +772,18 @@ func reconstructSnapshotChanges(
 		}
 	}
 
+	releaseDecoded[bool](budget, uint64(len(changes)))
+
 	return nil
 }
 
 func reserveChangeReconstruction(change *opset.Change, budget *decodeBudget) error {
-	if err := chargeDecoded[[1024]byte](
-		budget,
-		uint64(len(change.Operations)+1),
-	); err != nil {
+	scratch, err := reconstructionScratch(change)
+	if err != nil {
 		return err
 	}
 
-	if err := chargeDecoded[[128]byte](
-		budget,
-		uint64(len(change.Dependencies)),
-	); err != nil {
-		return err
-	}
-
-	if err := chargeDecodedPayload(budget, len(change.Actor), 2); err != nil {
-		return err
-	}
-
-	if err := chargeDecodedPayload(budget, len(change.Message), 4); err != nil {
-		return err
-	}
-
-	if err := chargeDecodedPayload(budget, len(change.ExtraBytes), 4); err != nil {
-		return err
-	}
-
-	for i := range change.Operations {
-		operation := &change.Operations[i]
-		if err := chargeDecodedPayload(budget, len(operation.ID.Actor), 2); err != nil {
-			return err
-		}
-
-		if !operation.Object.IsRoot {
-			if err := chargeDecodedPayload(
-				budget,
-				len(operation.Object.OpID.Actor),
-				2,
-			); err != nil {
-				return err
-			}
-		}
-
-		if operation.Key.Property != nil {
-			if err := chargeDecodedPayload(budget, len(*operation.Key.Property), 4); err != nil {
-				return err
-			}
-		}
-
-		if operation.Key.Element != nil {
-			if err := chargeDecodedPayload(
-				budget,
-				len(operation.Key.Element.Actor),
-				2,
-			); err != nil {
-				return err
-			}
-		}
-
-		for _, predecessor := range operation.Predecessors {
-			if err := chargeDecoded[[128]byte](budget, 1); err != nil {
-				return err
-			}
-
-			if err := chargeDecodedPayload(budget, len(predecessor.Actor), 2); err != nil {
-				return err
-			}
-		}
-
-		if operation.Value != nil {
-			var length int
-
-			switch operation.Value.Type {
-			case opset.ScalarString:
-				length = len(operation.Value.String)
-			case opset.ScalarBytes:
-				length = len(operation.Value.Bytes)
-			default:
-				length = len(operation.Value.Raw)
-			}
-
-			if err := chargeDecodedPayload(budget, length, 4); err != nil {
-				return err
-			}
-		}
-
-		if operation.MarkName != nil {
-			if err := chargeDecodedPayload(budget, len(*operation.MarkName), 4); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
-
-func chargeDecodedPayload(budget *decodeBudget, length int, copies uint64) error {
-	if uint64(length) > math.MaxUint64/copies {
-		return fmt.Errorf("decoded payload size overflows uint64")
-	}
-
-	return chargeDecodedBytes(budget, uint64(length)*copies)
+	return chargeDecodedBytes(budget, scratch)
 }
 
 func dependenciesResolved(change *opset.Change, resolved []bool) bool {
@@ -888,6 +847,10 @@ func decodeDocumentChanges(
 			)
 		}
 	}
+
+	_, hasTimes := columns[35]
+	_, hasMessages := columns[53]
+	_, hasExtras := columns[86]
 
 	times, err := decodeOptionalSignedDelta(columns, 35, "time", count, budget)
 	if err != nil {
@@ -991,7 +954,55 @@ func decodeDocumentChanges(
 		return nil, nil, err
 	}
 
+	extrasRetained := false
+	for i := range changes {
+		if changes[i].Extra != nil {
+			extrasRetained = true
+			break
+		}
+	}
+
+	releaseDocumentChangeColumns(
+		budget,
+		count,
+		dependencyCount,
+		hasTimes,
+		hasMessages,
+		hasExtras,
+		extrasRetained,
+	)
+
 	return changes, unknown, nil
+}
+
+func releaseDocumentChangeColumns(
+	budget *decodeBudget,
+	count int,
+	dependencyCount int,
+	hasTimes bool,
+	hasMessages bool,
+	hasExtras bool,
+	extrasRetained bool,
+) {
+	releaseDecoded[optional[uint64]](budget, uint64(count))
+	releaseDeltaColumn(budget, count)
+	releaseDeltaColumn(budget, count)
+	releaseSignedDeltaColumn(budget, count, hasTimes)
+	releaseStringHeaders(budget, count)
+	releaseDecoded[optional[uint64]](budget, uint64(count))
+
+	if dependencyCount > 0 {
+		releaseDeltaColumn(budget, dependencyCount)
+	}
+
+	releaseDecoded[[]byte](budget, uint64(count))
+	if hasExtras {
+		releaseDecoded[optional[uint64]](budget, uint64(count))
+	}
+
+	if !extrasRetained {
+		releaseDecoded[optional[opset.Scalar]](budget, uint64(count))
+	}
 }
 
 func decodeChangeChunk(
@@ -1188,8 +1199,13 @@ func decodeOperations(
 		return nil, nil, fmt.Errorf("required column 33 is missing")
 	}
 
-	var idCounters []optional[uint64]
+	var (
+		idCounters         []optional[uint64]
+		idCountersColumn   bool
+		idCountersImplicit bool
+	)
 	if idCounterData := optionalColumn(columns, 35); idCounterData != nil {
+		idCountersColumn = true
 		idCounters, err = decodeDeltaColumnWithBudget(idCounterData, budget)
 		if err != nil {
 			return nil, nil, fmt.Errorf("cannot decode operation counters: %w", err)
@@ -1199,6 +1215,7 @@ func decodeOperations(
 			return nil, nil, err
 		}
 	} else if implicitIDs != nil {
+		idCountersImplicit = true
 		if err := chargeDecoded[optional[uint64]](budget, uint64(count)); err != nil {
 			return nil, nil, err
 		}
@@ -1217,6 +1234,9 @@ func decodeOperations(
 	} else {
 		return nil, nil, fmt.Errorf("required column 35 is missing")
 	}
+
+	_, hasKeyCounters := columns[19]
+	_, hasValues := columns[86]
 
 	objectActors, err := decodeOptionalULEB(columns, 1, "object actor", count, budget)
 	if err != nil {
@@ -1262,6 +1282,13 @@ func decodeOperations(
 		return nil, nil, fmt.Errorf("cannot decode values: %w", err)
 	}
 
+	groupSpecification := uint32(128)
+	if changeChunk {
+		groupSpecification = 112
+	}
+
+	_, hasGroups := columns[groupSpecification]
+
 	var related [][]opset.OpID
 	if changeChunk {
 		related, err = decodeGroupedOpIDs(
@@ -1290,6 +1317,8 @@ func decodeOperations(
 	if err != nil {
 		return nil, nil, err
 	}
+
+	_, hasMarkExpand := columns[148]
 
 	markExpand, err := decodeOptionalBooleans(columns, 148, count, budget)
 	if err != nil {
@@ -1387,7 +1416,145 @@ func decodeOperations(
 		return nil, nil, err
 	}
 
+	releaseOperationColumns(
+		budget,
+		operations,
+		count,
+		operationColumnFlags{
+			idCountersColumn:   idCountersColumn,
+			idCountersImplicit: idCountersImplicit,
+			keyCounters:        hasKeyCounters,
+			values:             hasValues,
+			groups:             hasGroups,
+			markExpand:         hasMarkExpand,
+		},
+	)
+
 	return operations, unknown, nil
+}
+
+type operationColumnFlags struct {
+	idCountersColumn   bool
+	idCountersImplicit bool
+	keyCounters        bool
+	values             bool
+	groups             bool
+	markExpand         bool
+}
+
+// releaseOperationColumns drops charges for column slices that decodeOperations
+// discards after copying their values onto operations. Payload bytes and any
+// slice still referenced by an operation stay charged.
+func releaseOperationColumns(
+	budget *decodeBudget,
+	operations []opset.Operation,
+	count int,
+	flags operationColumnFlags,
+) {
+	// Action column, then the operation-id actor column. The actor column is
+	// either stored or synthesized, and both charge one value per operation.
+	releaseDecoded[optional[uint64]](budget, uint64(count))
+	releaseDecoded[optional[uint64]](budget, uint64(count))
+
+	if flags.idCountersColumn {
+		releaseDeltaColumn(budget, count)
+	}
+
+	if flags.idCountersImplicit {
+		releaseDecoded[optional[uint64]](budget, uint64(count))
+	}
+
+	releaseOptionalULEB(budget, count)
+	releaseOptionalULEB(budget, count)
+	releaseOptionalULEB(budget, count)
+	releaseOptionalDelta(budget, count, flags.keyCounters)
+	releaseStringHeaders(budget, count)
+	// Encoded and synthesized insert columns both charge one bool per operation.
+	releaseDecoded[bool](budget, uint64(count))
+
+	var (
+		related    int
+		keepValues bool
+		keepMarks  bool
+		keepNames  bool
+	)
+	for i := range operations {
+		related += len(operations[i].Predecessors) + len(operations[i].Successors)
+		if operations[i].Value != nil {
+			keepValues = true
+		}
+
+		if operations[i].MarkExpand != nil {
+			keepMarks = true
+		}
+
+		if operations[i].MarkName != nil {
+			keepNames = true
+		}
+	}
+
+	if flags.values {
+		releaseDecoded[optional[uint64]](budget, uint64(count))
+	}
+
+	if !keepValues {
+		releaseDecoded[optional[opset.Scalar]](budget, uint64(count))
+	}
+
+	releaseDecoded[[]opset.OpID](budget, uint64(count))
+	if flags.groups {
+		releaseDecoded[optional[uint64]](budget, uint64(count))
+	}
+
+	if related > 0 {
+		releaseDecoded[optional[uint64]](budget, uint64(related))
+		releaseDeltaColumn(budget, related)
+	}
+
+	if flags.markExpand {
+		releaseDecoded[bool](budget, uint64(count))
+	}
+
+	if !keepMarks {
+		releaseDecoded[optional[bool]](budget, uint64(count))
+	}
+
+	if !keepNames {
+		releaseStringHeaders(budget, count)
+	}
+}
+
+func releaseOptionalULEB(budget *decodeBudget, count int) {
+	releaseDecoded[optional[uint64]](budget, uint64(count))
+}
+
+func releaseOptionalDelta(budget *decodeBudget, count int, present bool) {
+	if present {
+		releaseDeltaColumn(budget, count)
+		return
+	}
+
+	releaseDecoded[optional[uint64]](budget, uint64(count))
+}
+
+func releaseDeltaColumn(budget *decodeBudget, count int) {
+	releaseDecoded[optional[int64]](budget, uint64(count))
+	releaseDecoded[optional[uint64]](budget, uint64(count))
+}
+
+func releaseSignedDeltaColumn(budget *decodeBudget, count int, present bool) {
+	releaseDecoded[optional[int64]](budget, uint64(count))
+	if !present {
+		return
+	}
+
+	// The signed values are expanded into a second slice after the deltas.
+	releaseDecoded[optional[int64]](budget, uint64(count))
+}
+
+func releaseStringHeaders(budget *decodeBudget, count int) {
+	// String bytes stay charged. Only the header column is discarded.
+	releaseDecoded[optional[string]](budget, uint64(count))
 }
 
 func validateSnapshotOperationCounters(index int, operation opset.Operation) error {

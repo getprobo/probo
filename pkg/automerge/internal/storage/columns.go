@@ -252,7 +252,9 @@ func decodeRLE[T any](
 				return nil, err
 			}
 
-			if err := chargeDecodedSliceGrowth[optional[T]](budget, count); err != nil {
+			// Grow once for the whole literal run, so the slice cap matches the
+			// number of values rather than doubling as each one is appended.
+			if err := chargeDecoded[optional[T]](budget, count); err != nil {
 				return nil, err
 			}
 
@@ -282,13 +284,12 @@ func appendRepeated[T any](
 		return err
 	}
 
-	if err := chargeDecodedSliceGrowth[optional[T]](budget, count); err != nil {
-		return err
-	}
-
 	// Grow once for the whole run. A long run (an entire column of the same
 	// value, common for text where every operation shares an object and action)
 	// otherwise reallocated the slice repeatedly as it doubled.
+	if err := chargeDecoded[optional[T]](budget, count); err != nil {
+		return err
+	}
 	grown := slices.Grow(*values, int(count))
 	for range count {
 		grown = append(grown, value)
@@ -355,6 +356,47 @@ func releaseDecodedBytes(budget *decodeBudget, bytes uint64) {
 	}
 
 	budget.used -= bytes
+}
+
+func budgetMark(budget *decodeBudget) uint64 {
+	if budget == nil {
+		return 0
+	}
+
+	return budget.used
+}
+
+func releaseToMark(budget *decodeBudget, mark uint64) {
+	if budget == nil {
+		return
+	}
+
+	if budget.used < mark {
+		panic("decoded memory budget underflow")
+	}
+
+	budget.used = mark
+}
+
+func releaseDecoded[T any](budget *decodeBudget, count uint64) {
+	if budget == nil || count == 0 {
+		return
+	}
+
+	size := uint64(unsafe.Sizeof(*new(T)))
+	if size != 0 && count > math.MaxUint64/size {
+		panic("decoded memory budget underflow")
+	}
+
+	releaseDecodedBytes(budget, size*count)
+}
+
+func releaseDecodedSliceGrowth[T any](budget *decodeBudget, count uint64) {
+	if count > math.MaxUint64/2 {
+		panic("decoded memory budget underflow")
+	}
+
+	releaseDecoded[T](budget, count*2)
 }
 
 func chargeDecodedMap[K comparable, V any](budget *decodeBudget, count uint64) error {

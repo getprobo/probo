@@ -577,6 +577,8 @@ func assignOperations(
 	operations []opset.Operation,
 	budget *decodeBudget,
 ) error {
+	mark := budgetMark(budget)
+
 	const (
 		visiting uint8 = 1
 		visited  uint8 = 2
@@ -804,6 +806,11 @@ func assignOperations(
 		}
 	}
 
+	releaseToMark(budget, mark)
+	if err := chargeDecoded[opset.Operation](budget, uint64(len(operations))); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -1023,6 +1030,8 @@ func validateSnapshotGraph(
 	heads []uint64,
 	budget *decodeBudget,
 ) error {
+	mark := budgetMark(budget)
+
 	if err := chargeDecoded[bool](budget, uint64(len(changes))); err != nil {
 		return err
 	}
@@ -1088,7 +1097,13 @@ func validateSnapshotGraph(
 		return fmt.Errorf("head indexes do not match graph frontier")
 	}
 
-	return validateActorSequences(changes, budget)
+	if err := validateActorSequences(changes, budget); err != nil {
+		return err
+	}
+
+	releaseToMark(budget, mark)
+
+	return nil
 }
 
 func detectIndexCycle(changes []opset.Change, budget *decodeBudget) error {
