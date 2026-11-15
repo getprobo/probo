@@ -301,8 +301,9 @@
     "actions": { "review": "Review" }
   },
   "documentDescriptionPage": {
+    "loading": "Loading document...",
     "messages": { "successTitle": "Success", "saved": "Content saved" },
-    "errors": { "title": "Error", "save": "Content not saved" },
+    "errors": { "title": "Error", "save": "Content not saved", "open": "Document could not be opened" },
     "history": {
       "open": "History",
       "title": "Version history",

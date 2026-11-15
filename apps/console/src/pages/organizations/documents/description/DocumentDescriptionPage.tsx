@@ -24,10 +24,7 @@ import {
 } from "@probo/collaboration";
 import { formatError } from "@probo/helpers";
 import { Button, IconClock } from "@probo/ui";
-import {
-  CollaborativeRichEditor,
-  supportsRichEditorCollaboration,
-} from "@probo/ui/src/RichEditor/CollaborativeRichEditor";
+import { CollaborativeRichEditor } from "@probo/ui/src/RichEditor/CollaborativeRichEditor";
 import { type CommentAnchor } from "@probo/ui/src/RichEditor/commentAnchors";
 import { type SuggestingController } from "@probo/ui/src/RichEditor/SuggestionExtension";
 import useToast from "@probo/ui/src/v2/Toaster/useToast";
@@ -82,9 +79,6 @@ export const documentDescriptionPageQuery = graphql`
         id
         status
         writeMode
-        content {
-          prosemirror
-        }
         canUpdate: permission(action: "core:document:update")
         canComment: permission(action: "core:document:comment")
         canSuggest: permission(action: "core:document:suggest")
@@ -125,7 +119,7 @@ export function DocumentDescriptionPage(props: {
   }
 
   const snapshot = version ?? null;
-  const contentSource = snapshot?.content.prosemirror ?? document.content.prosemirror;
+  const viewingVersion = snapshot != null;
   const editorIdentity = snapshot?.id ?? document.id;
 
   const [updateContent] = useMutation<DocumentDescriptionPage_updateContentMutation>(
@@ -185,10 +179,8 @@ export function DocumentDescriptionPage(props: {
     && document.canUpdate
     && document.status !== "ARCHIVED"
     && document.writeMode !== "GENERATED";
-  const canReview = isEditable && (document.canUpdate || document.canComment);
-  const content = contentSource;
-  const collaborationSupported = canReview
-    && supportsRichEditorCollaboration(content);
+  const canReview = isEditable
+    && (document.canUpdate || document.canComment || document.canSuggest);
   const [mode, setMode] = useState<DocumentReviewMode>("viewing");
   const [editor, setEditor] = useState<Editor | null>(null);
   const [reviewToolbarHost, setReviewToolbarHost] = useState<HTMLDivElement | null>(null);
@@ -220,7 +212,7 @@ export function DocumentDescriptionPage(props: {
   const addToast = toast.add;
 
   useEffect(() => {
-    if (!collaborationSupported) return;
+    if (viewingVersion) return;
 
     const attempt = ++connectionAttempt.current;
     let activeHandle: RepoCollaborationHandle | undefined;
@@ -251,7 +243,7 @@ export function DocumentDescriptionPage(props: {
           title: t("documentDescriptionPage.errors.title"),
           description: error instanceof Error
             ? error.message
-            : t("documentDescriptionPage.errors.save"),
+            : t("documentDescriptionPage.errors.open"),
           type: "error",
         });
       });
@@ -263,12 +255,9 @@ export function DocumentDescriptionPage(props: {
         current?.attempt === attempt ? undefined : current,
       );
     };
-  }, [collaborationSupported, document.id, t, addToast]);
+  }, [viewingVersion, document.id, t, addToast]);
 
-  const collaborationConnecting = collaborationSupported
-    && (collaboration?.versionID !== document.id
-      || (!collaboration?.handle && !collaboration?.failed));
-  const collaborationHandle = collaborationSupported
+  const collaborationHandle = !viewingVersion
     && collaboration?.versionID === document.id
     && !collaboration.failed
     ? collaboration.handle
@@ -339,8 +328,7 @@ export function DocumentDescriptionPage(props: {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [historyQueryRef, loadHistoryQuery]
     = useQueryLoader<DocumentHistoryPanelQuery>(documentHistoryPanelQuery);
-  const historyAvailable = document.canViewHistory
-    && supportsRichEditorCollaboration(content);
+  const historyAvailable = document.canViewHistory;
 
   if (historyOpen) {
     return (
@@ -376,7 +364,7 @@ export function DocumentDescriptionPage(props: {
     <div className="flex flex-1 min-h-0 flex-col">
       {(historyAvailable || collaborationHandle) && (
         <div className="flex items-center justify-end gap-3 px-4 pb-2">
-          {collaborationHandle && (canEdit || document.canComment || document.canSuggest) && (
+          {collaborationHandle && canReview && (
             <DocumentReviewModeMenu
               mode={mode}
               canEdit={canEdit}
@@ -403,82 +391,85 @@ export function DocumentDescriptionPage(props: {
         </div>
       )}
       <div ref={reviewLayoutRef} className="flex min-h-0 flex-1" data-review-layout="">
-        {collaborationHandle
+        {snapshot
           ? (
-              <>
-                <CollaborativeRichEditor
-                  key={editorIdentity}
-                  className="flex-1"
-                  collaborationHandle={collaborationHandle}
-                  margin={editor
-                    ? (
-                        <Suspense fallback={null}>
-                          <DocumentReviewMargin
-                            activeSuggestionId={activeSuggestionId}
-                            activeThreadId={activeThreadId}
-                            canComment={document.canComment}
-                            canUpdate={document.canUpdate}
-                            collaborationHandle={collaborationHandle}
-                            documentId={documentId}
-                            editor={editor}
-                            onActiveSuggestion={setActiveSuggestionId}
-                            onActiveThread={setActiveThreadId}
-                            onThreads={setReviewThreads}
-                            onOwnReview={() => {
-                              ignoreOwnReview.current = true;
-                            }}
-                            onOwnReviewFailed={() => {
-                              ignoreOwnReview.current = false;
-                            }}
-                            reviewVersion={reviewVersion}
-                            suggesting={suggestingRef}
-                            toolbarHost={reviewToolbarHost}
-                            marginHost={reviewMarginHost}
-                          />
-                        </Suspense>
-                      )
-                    : null}
-                  commentAnchorController={anchorController}
-                  commentAnchors={commentAnchors}
-                  content={content}
-                  data-theme="document"
-                  disabled={collaborationConnecting || mode === "viewing" || (!canEdit && mode !== "suggesting")}
-                  formatting={canEdit && mode === "editing"}
-                  suggestingMenus={mode === "suggesting"}
-                  onChangeContent={handleContentChange}
-                  onEditor={setEditor}
-                  onUploadFile={onUploadFile}
-                  onUploadingChange={(uploading) => {
-                    uploadingRef.current = uploading;
-                    if (uploading) {
-                      handleUpdate.cancel();
-                    }
-                  }}
-                  suggesting={suggestingRef}
-                />
-                <aside
-                  ref={setReviewMarginHost}
-                  className="relative ml-4 hidden w-68 shrink-0 bg-sand-2 lg:block"
-                  data-review-margin=""
-                />
-              </>
-            )
-          : (
               <RichEditor
                 key={editorIdentity}
                 className="flex-1"
-                content={content}
+                content={snapshot.content.prosemirror}
                 data-theme="document"
-                disabled={!canEdit || collaborationConnecting}
-                onChangeContent={handleContentChange}
-                onUploadingChange={(uploading) => {
-                  uploadingRef.current = uploading;
-                  if (uploading) {
-                    handleUpdate.cancel();
-                  }
-                }}
+                disabled
               />
-            )}
+            )
+          : collaborationHandle
+            ? (
+                <>
+                  <CollaborativeRichEditor
+                    key={editorIdentity}
+                    className="flex-1"
+                    collaborationHandle={collaborationHandle}
+                    margin={canReview && editor
+                      ? (
+                          <Suspense fallback={null}>
+                            <DocumentReviewMargin
+                              activeSuggestionId={activeSuggestionId}
+                              activeThreadId={activeThreadId}
+                              canComment={document.canComment}
+                              canUpdate={document.canUpdate}
+                              collaborationHandle={collaborationHandle}
+                              documentId={documentId}
+                              editor={editor}
+                              onActiveSuggestion={setActiveSuggestionId}
+                              onActiveThread={setActiveThreadId}
+                              onThreads={setReviewThreads}
+                              onOwnReview={() => {
+                                ignoreOwnReview.current = true;
+                              }}
+                              onOwnReviewFailed={() => {
+                                ignoreOwnReview.current = false;
+                              }}
+                              reviewVersion={reviewVersion}
+                              suggesting={suggestingRef}
+                              toolbarHost={reviewToolbarHost}
+                              marginHost={reviewMarginHost}
+                            />
+                          </Suspense>
+                        )
+                      : null}
+                    commentAnchorController={anchorController}
+                    commentAnchors={commentAnchors}
+                    content=""
+                    data-theme="document"
+                    disabled={mode === "viewing" || (!canEdit && mode !== "suggesting")}
+                    formatting={canEdit && mode === "editing"}
+                    suggestingMenus={mode === "suggesting"}
+                    onChangeContent={handleContentChange}
+                    onEditor={setEditor}
+                    onUploadFile={onUploadFile}
+                    onUploadingChange={(uploading) => {
+                      uploadingRef.current = uploading;
+                      if (uploading) {
+                        handleUpdate.cancel();
+                      }
+                    }}
+                    suggesting={suggestingRef}
+                  />
+                  {canReview && (
+                    <aside
+                      ref={setReviewMarginHost}
+                      className="relative ml-4 hidden w-68 shrink-0 bg-sand-2 lg:block"
+                      data-review-margin=""
+                    />
+                  )}
+                </>
+              )
+            : (
+                <div className="flex-1 px-8 py-6 text-sm text-txt-secondary">
+                  {collaboration?.failed
+                    ? t("documentDescriptionPage.errors.open")
+                    : t("documentDescriptionPage.loading")}
+                </div>
+              )}
       </div>
     </div>
   );

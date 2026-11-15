@@ -509,13 +509,15 @@
     }
   },
   "documentDescriptionPage": {
+    "loading": "Document laden...",
     "messages": {
       "successTitle": "Succes",
       "saved": "Inhoud opgeslagen"
     },
     "errors": {
       "title": "Fout",
-      "save": "Inhoud niet opgeslagen"
+      "save": "Inhoud niet opgeslagen",
+      "open": "Document kon niet worden geopend"
     },
     "history": {
       "open": "Geschiedenis",

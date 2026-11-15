@@ -510,13 +510,15 @@
     }
   },
   "documentDescriptionPage": {
+    "loading": "Chargement du document...",
     "messages": {
       "successTitle": "Succès",
       "saved": "Contenu enregistré"
     },
     "errors": {
       "title": "Erreur",
-      "save": "Contenu non enregistré"
+      "save": "Contenu non enregistré",
+      "open": "Impossible d'ouvrir le document"
     },
     "history": {
       "open": "Historique",
