@@ -634,6 +634,7 @@ func TestDocumentReview_SuggestsFormatting(t *testing.T) {
 	sentence := textNode(publishedNode, "sentence")
 	require.NotNil(t, sentence)
 	require.NotContains(t, markTypes(sentence), "italic")
+
 	keep := textNode(publishedNode, "Keep")
 	require.NotNil(t, keep)
 	require.Contains(t, markTypes(keep), "bold")
