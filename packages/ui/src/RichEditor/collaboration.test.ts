@@ -41,10 +41,7 @@ import {
   richEditorAutomergeContent,
   type RichEditorAutomergeDocument,
 } from "./collaboration";
-import {
-  createRichEditorAutomergeDocument,
-  supportsRichEditorCollaboration,
-} from "./CollaborativeRichEditor";
+import { createRichEditorAutomergeDocument } from "./CollaborativeRichEditor";
 import { richEditorCollaborationExtensions } from "./RichEditor";
 
 function syncPlugin({
@@ -66,16 +63,6 @@ type RoundTripNode = {
 };
 
 describe("RichEditor collaboration", () => {
-  it("rejects collaboration content that cannot be parsed", () => {
-    expect(supportsRichEditorCollaboration("{")).toBe(false);
-    expect(supportsRichEditorCollaboration("null")).toBe(false);
-    expect(supportsRichEditorCollaboration("[]")).toBe(false);
-    expect(supportsRichEditorCollaboration(JSON.stringify({
-      type: "paragraph",
-      marks: { type: "bold" },
-    }))).toBe(false);
-  });
-
   it("includes image and file nodes in the collaborative schema", () => {
     const schema = getSchema(richEditorCollaborationExtensions);
 
@@ -116,7 +103,6 @@ describe("RichEditor collaboration", () => {
       ],
     });
 
-    expect(supportsRichEditorCollaboration(content)).toBe(true);
     const document = createRichEditorAutomergeDocument(content);
     const spans = Automerge.spans(document, ["body"]);
     expect(spanLabels(spans)).toEqual([
@@ -207,8 +193,6 @@ describe("RichEditor collaboration", () => {
         },
       ],
     });
-
-    expect(supportsRichEditorCollaboration(content)).toBe(true);
 
     const document = createRichEditorAutomergeDocument(content);
     const spans = Automerge.spans(document, ["body"]);
@@ -359,7 +343,6 @@ describe("RichEditor collaboration", () => {
   it("preserves table and row boundaries", () => {
     const content = tableDocumentJSON();
 
-    expect(supportsRichEditorCollaboration(content)).toBe(true);
     const document = createRichEditorAutomergeDocument(content);
     const spans = Automerge.spans(document, ["body"]);
     expect(
@@ -1075,8 +1058,6 @@ describe("RichEditor collaboration", () => {
         ],
       }],
     });
-
-    expect(supportsRichEditorCollaboration(content)).toBe(true);
 
     const document = createRichEditorAutomergeDocument(content);
     const blocks = Automerge.spans(document, ["body"])

@@ -25,7 +25,6 @@ import {
   createRichEditorAutomergeDocument as createAutomergeDocument,
   createRichEditorCollaborationExtension,
   richEditorAutomergeContent,
-  supportsRichEditorCollaboration,
 } from "./collaboration";
 import {
   type CommentAnchor,
@@ -43,8 +42,6 @@ import {
   createSuggestingExtension,
   type SuggestingController,
 } from "./SuggestionExtension";
-
-export { supportsRichEditorCollaboration };
 
 export function createRichEditorAutomergeDocument(content: string) {
   return createAutomergeDocument(content, richEditorCollaborationExtensions);
