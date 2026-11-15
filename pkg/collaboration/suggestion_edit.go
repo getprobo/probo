@@ -127,7 +127,10 @@ func ApplySuggestionEdit(
 		return ErrSuggestionUnchanged
 	}
 
-	if suggestionRangeMarked(units, deleteStart, deleteEnd) {
+	// Shared edges stay unmarked, but the quote itself must not sit on a
+	// redline. An append such as "opening" to "opening!" would otherwise
+	// pass when only the inserted edge is checked.
+	if suggestionRangeMarked(units, start, quoteEnd) || suggestionRangeMarked(units, deleteStart, deleteEnd) {
 		return ErrSuggestionOverlaps
 	}
 

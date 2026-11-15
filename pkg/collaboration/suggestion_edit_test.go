@@ -162,6 +162,9 @@ func TestApplySuggestionEdit_AddsAnotherRedlineToTheSameSuggestion(t *testing.T)
 	err := ApplySuggestionEdit(document, suggestionEditID, "opening", "initial", 0)
 	require.ErrorIs(t, err, ErrSuggestionOverlaps)
 
+	err = ApplySuggestionEdit(document, suggestionEditID, "opening", "opening!", 0)
+	require.ErrorIs(t, err, ErrSuggestionOverlaps)
+
 	changed, err := ApplySuggestionDecision(document, suggestionEditID, true)
 	require.NoError(t, err)
 	require.True(t, changed)
