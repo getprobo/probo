@@ -925,9 +925,6 @@ type visibleOffset struct {
 	absolute uint32
 }
 
-// visibleText joins block text with a newline so a quote spanning paragraphs
-// resolves. The separator is visible-only; it maps to the block boundary's
-// absolute position, which absoluteUTF16 clamps to.
 // findQuote returns the byte index of the occurrence-th match. The loop
 // counts down so occurrence == MaxInt cannot overflow into a negative range.
 func findQuote(visible string, quote string, occurrence int) (int, error) {
@@ -960,6 +957,9 @@ func findQuote(visible string, quote string, occurrence int) (int, error) {
 	}
 }
 
+// visibleText joins block text with a newline so a quote spanning paragraphs
+// resolves. The separator is visible-only; it maps to the block boundary's
+// absolute position, which absoluteUTF16 clamps to.
 func visibleText(spans []automerge.Span) (string, []visibleOffset) {
 	var visible strings.Builder
 
