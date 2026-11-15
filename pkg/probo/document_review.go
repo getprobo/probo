@@ -1114,6 +1114,32 @@ func (s *DocumentService) AddSuggestionChange(
 		return nil, fmt.Errorf("cannot persist suggestion: %w", err)
 	}
 
+	err = s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		if err := suggestion.LoadByIDForUpdate(ctx, tx, scope, suggestion.ID); err != nil {
+			return fmt.Errorf("cannot reload document suggestion: %w", err)
+		}
+
+		if suggestion.Status == coredata.DocumentSuggestionStatusOpen {
+			return nil
+		}
+
+		// A decision can commit while this redline is being painted. Apply
+		// that decision again so the body matches the closed suggestion.
+		if err := s.applySuggestionDecision(
+			ctx,
+			scope,
+			suggestion,
+			suggestion.Status == coredata.DocumentSuggestionStatusAccepted,
+		); err != nil && !errors.Is(err, collaboration.ErrSuggestionNotInDocument) {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	s.notifyReview(ctx, suggestion.DocumentID)
 
 	return suggestion, nil
