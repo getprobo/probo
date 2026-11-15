@@ -579,6 +579,13 @@ func ServeRepoCollaboration(
 	syncState *automerge.SyncState,
 	config RepoConfig,
 ) error {
+	// Viewers apply nothing, including changes outside the body.
+	if !config.CanUpdate && !config.CanComment {
+		if err := syncState.SetReadOnly(true); err != nil {
+			return fmt.Errorf("cannot mark collaboration peer read-only: %w", err)
+		}
+	}
+
 	conn, err := collabpkg.NewHandshakenServerConn(
 		config.Session,
 		collabpkg.DeriveDocumentID(config.DocumentID.String()),
@@ -684,7 +691,7 @@ func ServeRepoCollaboration(
 				continue
 			}
 
-			if config.RecordActors != nil {
+			if config.RecordActors != nil && (config.CanUpdate || config.CanComment) {
 				recordActorsFromFrame(
 					ctx,
 					message.Data,
@@ -814,25 +821,6 @@ func applyRepoFrame(
 			beforeSpans,
 			fmt.Errorf("cannot read collaboration spans: %w", spanErr),
 		)
-	}
-
-	if !config.CanComment {
-		if collaboration.ViewChangeAllowed(beforeSpans, afterSpans) {
-			return reply, fanout, nil
-		}
-
-		if err := restoreCommentOnlyDocument(lease, beforeSpans); err != nil {
-			return nil, nil, err
-		}
-
-		restored, syncErr := conn.SyncChanged()
-		if syncErr != nil {
-			return nil, nil, fmt.Errorf("cannot sync restored collaboration spans: %w", syncErr)
-		}
-
-		reply = append(reply, restored...)
-
-		return reply, fanout, nil
 	}
 
 	openSuggestionIDs := map[string]bool{}
