@@ -117,6 +117,14 @@ describe("tracked table rows", () => {
     });
   });
 
+  it("does not keep a table alive with only a suggested row", () => {
+    let state = stateFor(permissions);
+    state = state.apply(suggestInsertRow(state, "other", { tableStart: tableStart(state), rowIndex: 1 }, false)!);
+    state = state.apply(suggestDeleteRow(state, id, { tableStart: tableStart(state), rowIndex: 1 })!);
+    expect(suggestDeleteRow(state, "suggestion-2", { tableStart: tableStart(state), rowIndex: 0 }))
+      .toBeNull();
+  });
+
   it("refuses to delete the last row left", () => {
     let state = stateFor(permissions);
     state = state.apply(suggestDeleteRow(state, id, { tableStart: tableStart(state), rowIndex: 1 })!);

@@ -181,6 +181,11 @@ func insertRow(
 		return nil, ErrTableCellCount
 	}
 
+	if structuralSplitBlocks(spans, layout.index, suggestionID) ||
+		structuralSplitBlocks(spans, layout.rows[rowIndex].index, suggestionID) {
+		return nil, ErrSuggestionOverlaps
+	}
+
 	at := rowIndex + 1
 	if change.Before {
 		at = rowIndex
@@ -225,7 +230,7 @@ func deleteRow(
 			continue
 		}
 
-		if _, kind := suggestionSplit(spans[row.index]); kind != suggestionSplitDeletion {
+		if !splitIsPending(spans[row.index]) {
 			remaining++
 		}
 	}
@@ -256,6 +261,16 @@ func insertColumn(
 
 	if len(change.Cells) > 0 && len(change.Cells) != len(layout.rows) {
 		return nil, ErrTableCellCount
+	}
+
+	if structuralSplitBlocks(spans, layout.index, suggestionID) {
+		return nil, ErrSuggestionOverlaps
+	}
+
+	for _, row := range layout.rows {
+		if structuralSplitBlocks(spans, row.index, suggestionID) {
+			return nil, ErrSuggestionOverlaps
+		}
 	}
 
 	at := cellIndex + 1
@@ -316,7 +331,7 @@ func deleteColumn(
 			continue
 		}
 
-		if !layout.columnDeleted(spans, column) {
+		if !layout.columnPending(spans, column) {
 			remaining++
 		}
 	}
@@ -538,14 +553,36 @@ func (t tableLayout) hasMergedCells(spans []automerge.Span) bool {
 	return false
 }
 
-func (t tableLayout) columnDeleted(spans []automerge.Span, column int) bool {
+func (t tableLayout) columnPending(spans []automerge.Span, column int) bool {
 	for _, row := range t.rows {
-		if _, kind := suggestionSplit(spans[row.cells[column].index]); kind != suggestionSplitDeletion {
+		if !splitIsPending(spans[row.cells[column].index]) {
 			return false
 		}
 	}
 
 	return true
+}
+
+func splitIsPending(span automerge.Span) bool {
+	_, kind := suggestionSplit(span)
+
+	return kind == suggestionSplitDeletion || kind == suggestionSplitInsertion
+}
+
+// structuralSplitBlocks reports that index already carries another
+// suggestion, or a deletion from this one. An insertion nested there is
+// discarded when that suggestion is decided.
+func structuralSplitBlocks(spans []automerge.Span, index int, suggestionID string) bool {
+	id, kind := suggestionSplit(spans[index])
+	if id == "" {
+		return false
+	}
+
+	if id != suggestionID {
+		return true
+	}
+
+	return kind == suggestionSplitDeletion
 }
 
 func (t tableLayout) rowIsHeader(spans []automerge.Span, rowIndex int) bool {

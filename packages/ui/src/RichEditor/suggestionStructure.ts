@@ -118,7 +118,7 @@ export function suggestDeleteRow(
 
   let remaining = 0;
   table.forEach((row, _offset, index) => {
-    if (index !== target.rowIndex && structuralSuggestionSplit(row)?.kind !== "deletion") {
+    if (index !== target.rowIndex && !splitIsPending(row)) {
       remaining += 1;
     }
   });
@@ -177,7 +177,7 @@ export function suggestDeleteColumn(
 
   let remaining = 0;
   for (let column = 0; column < map.width; column += 1) {
-    if (column !== target.columnIndex && !columnDeleted(table, map, column)) remaining += 1;
+    if (column !== target.columnIndex && !columnPending(table, map, column)) remaining += 1;
   }
   if (remaining === 0) return null;
 
@@ -327,13 +327,16 @@ function columnIsHeader(table: ProseMirrorNode, map: TableMap, column: number): 
   return true;
 }
 
-function columnDeleted(table: ProseMirrorNode, map: TableMap, column: number): boolean {
+function columnPending(table: ProseMirrorNode, map: TableMap, column: number): boolean {
   for (let row = 0; row < map.height; row += 1) {
-    if (structuralSuggestionSplit(cellAt(table, map, row, column))?.kind !== "deletion") {
-      return false;
-    }
+    if (!splitIsPending(cellAt(table, map, row, column))) return false;
   }
   return true;
+}
+
+function splitIsPending(node: ProseMirrorNode): boolean {
+  const kind = structuralSuggestionSplit(node)?.kind;
+  return kind === "deletion" || kind === "insertion";
 }
 
 // newRowCellTypes follows prosemirror-tables addRow, like the server's table

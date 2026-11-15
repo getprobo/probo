@@ -181,6 +181,27 @@ func TestApplyTableSuggestion_DeleteColumn(t *testing.T) {
 	assert.True(t, spansEqual(original, bodySpans(t, rejected)))
 }
 
+func TestApplyTableSuggestion_InsertTableOutsideAList(t *testing.T) {
+	t.Parallel()
+
+	document := suggestionDocument(t, `{"type":"doc","content":[{"type":"bulletList","content":[{"type":"listItem","content":[`+paragraphJSON("Item")+`]}]}]}`)
+
+	require.NoError(t, ApplyTableSuggestion(document, tableSuggestionID, TableSuggestion{
+		Operation: TableSuggestionInsertTable,
+		Quote:     "Item",
+		Rows:      [][]string{{"Right", "Access"}},
+	}))
+
+	spans := bodySpans(t, document)
+	for _, span := range spans {
+		if blockType(span) != blockTypeTable {
+			continue
+		}
+
+		assert.Empty(t, blockParents(span))
+	}
+}
+
 func TestApplyTableSuggestion_InsertTable(t *testing.T) {
 	t.Parallel()
 
@@ -374,6 +395,45 @@ func TestApplyTableSuggestion_RefusesToSwallowAnotherSuggestion(t *testing.T) {
 	require.ErrorIs(
 		t,
 		ApplyTableSuggestion(document, tableSuggestionID, TableSuggestion{Operation: TableSuggestionDeleteColumn, Quote: "Right"}),
+		ErrSuggestionOverlaps,
+	)
+}
+
+func TestApplyTableSuggestion_InsertionDoesNotKeepTheLastRow(t *testing.T) {
+	t.Parallel()
+
+	document := suggestionDocument(t, tableDocumentJSON())
+
+	require.NoError(t, ApplyTableSuggestion(
+		document,
+		"added",
+		TableSuggestion{Operation: TableSuggestionInsertRow, Quote: "Read", Cells: []string{"Write", "No"}},
+	))
+	require.NoError(t, ApplyTableSuggestion(
+		document,
+		tableSuggestionID,
+		TableSuggestion{Operation: TableSuggestionDeleteRow, Quote: "Read"},
+	))
+	require.ErrorIs(
+		t,
+		ApplyTableSuggestion(document, "second", TableSuggestion{Operation: TableSuggestionDeleteRow, Quote: "Right"}),
+		ErrTableLastRow,
+	)
+}
+
+func TestApplyTableSuggestion_RefusesAnInsertionInsideADeletedTable(t *testing.T) {
+	t.Parallel()
+
+	document := suggestionDocument(t, tableDocumentJSON())
+
+	require.NoError(t, ApplyTableSuggestion(
+		document,
+		"gone",
+		TableSuggestion{Operation: TableSuggestionDeleteTable, Quote: "Read"},
+	))
+	require.ErrorIs(
+		t,
+		ApplyTableSuggestion(document, tableSuggestionID, TableSuggestion{Operation: TableSuggestionInsertRow, Quote: "Read"}),
 		ErrSuggestionOverlaps,
 	)
 }
