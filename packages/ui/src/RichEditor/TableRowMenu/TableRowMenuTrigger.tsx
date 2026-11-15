@@ -11,6 +11,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { DRAG_THRESHOLD } from "../_lib/constants";
 import { EditorFloatingPortal } from "../_lib/EditorFloatingPortal";
 import type { DropdownMenu } from "../_lib/useTableDropdownMenu";
+import { isSuggesting } from "../SuggestionExtension";
 
 import { getRowRect, type HoveredRow, moveRow } from "./TableRowMenu";
 import { tableRowMenuVariants } from "./variants";
@@ -301,7 +302,7 @@ export function TableRowMenuTrigger({
         try {
           const targetGap = computeTargetGap(ev.clientY, tableStart);
 
-          if (targetGap !== fromRow && targetGap !== fromRow + 1) {
+          if (!isSuggesting(editor) && targetGap !== fromRow && targetGap !== fromRow + 1) {
             const toRow
               = fromRow < targetGap ? targetGap - 1 : targetGap;
             moveRow(editor, tableStart, fromRow, toRow);
@@ -353,7 +354,13 @@ export function TableRowMenuTrigger({
           }}
           data-row-handle
           data-rich-editor-floating=""
+          aria-label="Row actions"
           onMouseDown={onHandleMouseDown}
+          onKeyDown={(event) => {
+            if (event.key !== "Enter" && event.key !== " ") return;
+            event.preventDefault();
+            setMenuOpen(prev => !prev);
+          }}
           type="button"
           style={{
             ...handleStyles,
