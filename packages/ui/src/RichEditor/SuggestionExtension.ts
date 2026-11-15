@@ -431,7 +431,9 @@ export function applySuggestingLink(
   controller: SuggestingController,
   href: string | null,
 ): boolean {
-  if (href !== null && !suggestedLinkAllowed(href)) {
+  // Only suggesting mode owns this refusal. A direct edit falls through so
+  // the bubble menu can apply the link the way it did before suggestions.
+  if (controller.enabled && href !== null && !suggestedLinkAllowed(href)) {
     controller.onBlocked?.();
     return true;
   }

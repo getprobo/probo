@@ -178,6 +178,15 @@ describe("format suggestions", () => {
     expect(markNames(marksOn(editor.state.doc, "Hello"))).not.toContain("link");
   });
 
+  it("leaves an unsafe link to the direct editor when suggesting is off", () => {
+    const current = controller();
+    current.enabled = false;
+    const editor = open(paragraph("Hello"), 1, 6, current);
+    expect(applySuggestingLink(editor.view, editor.current, "javascript:alert(1)")).toBe(false);
+    expect(editor.current.blocked).toBe(false);
+    expect(markNames(marksOn(editor.state.doc, "Hello"))).not.toContain("link");
+  });
+
   it("suggests code by removing the other styles", () => {
     const editor = open(paragraph("Hello", [schema.marks.bold.create()]), 1, 6);
     expect(applySuggestingStyle(editor.view, editor.current, "code")).toBe(true);
