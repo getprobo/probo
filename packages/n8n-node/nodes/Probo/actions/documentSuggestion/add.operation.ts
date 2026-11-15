@@ -53,9 +53,9 @@ export const description: INodeProperties[] = [
 		displayName: 'Quote Occurrence',
 		name: 'quoteOccurrence',
 		type: 'number',
-		typeOptions: { minValue: 0 },
+		typeOptions: { minValue: 0, numberPrecision: 0 },
 		default: 0,
-		description: 'Zero-based occurrence of the quote.',
+		description: 'Zero-based occurrence of the quote',
 		displayOptions: addOptions,
 	},
 ];
@@ -67,6 +67,9 @@ export async function execute(this: IExecuteFunctions, itemIndex: number): Promi
 	const quoteOccurrence = this.getNodeParameter('quoteOccurrence', itemIndex, 0) as number;
 	if (quote === '') {
 		throw new NodeOperationError(this.getNode(), 'Quote is required');
+	}
+	if (!Number.isInteger(quoteOccurrence)) {
+		throw new NodeOperationError(this.getNode(), 'Quote Occurrence must be a whole number');
 	}
 	const query = `
 		mutation AddDocumentSuggestionChange($input: AddDocumentSuggestionChangeInput!) {
