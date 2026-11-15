@@ -81,6 +81,8 @@ func newRepoTestServer(
 	return newRepoTestServerWithConfig(t, hub, scope, documentID, RepoConfig{
 		Shutdown:         context.Background(),
 		PublishEphemeral: publishEphemeral,
+		CanUpdate:        true,
+		CanComment:       true,
 	})
 }
 
@@ -572,6 +574,8 @@ func TestServeRepoCollaboration_StampsSelectionDisplayName(t *testing.T) {
 			Shutdown:    context.Background(),
 			DisplayName: "Ada Lovelace",
 			IdentityID:  "idnt_ada",
+			CanUpdate:   true,
+			CanComment:  true,
 		},
 	)
 

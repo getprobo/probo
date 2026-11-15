@@ -120,6 +120,11 @@ func HasOpenSuggestions(spans []automerge.Span) bool {
 	return false
 }
 
+// ViewChangeAllowed reports whether a read-only peer left the body unchanged.
+func ViewChangeAllowed(before []automerge.Span, after []automerge.Span) bool {
+	return spansEqual(before, after)
+}
+
 // CommentChangeAllowed reports whether a comment-only peer's sync is a
 // suggestion. The accepted document must stay the same, existing redlines may
 // grow but must not shrink, existing split markers must survive, and every

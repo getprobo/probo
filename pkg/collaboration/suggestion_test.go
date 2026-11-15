@@ -69,6 +69,33 @@ func TestProjectAcceptedSpans_DropsInsertionsAndKeepsDeletions(t *testing.T) {
 	assert.False(t, HasOpenSuggestions(projected))
 }
 
+func TestViewChangeAllowed_RejectsAnyBodyChange(t *testing.T) {
+	t.Parallel()
+
+	before := []automerge.Span{
+		{Type: automerge.SpanTypeText, Text: "Hello"},
+	}
+	same := []automerge.Span{
+		{Type: automerge.SpanTypeText, Text: "Hello"},
+	}
+	edited := []automerge.Span{
+		{Type: automerge.SpanTypeText, Text: "Hello!"},
+	}
+	marked := []automerge.Span{
+		{
+			Type: automerge.SpanTypeText,
+			Text: "Hello",
+			Marks: map[string]any{
+				SuggestionInsertMark: `{"id":"s1"}`,
+			},
+		},
+	}
+
+	assert.True(t, ViewChangeAllowed(before, same))
+	assert.False(t, ViewChangeAllowed(before, edited))
+	assert.False(t, ViewChangeAllowed(before, marked))
+}
+
 func TestCommentChangeAllowed_AcceptsSuggestionShapedEdits(t *testing.T) {
 	t.Parallel()
 

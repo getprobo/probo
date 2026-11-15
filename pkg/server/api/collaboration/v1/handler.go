@@ -111,6 +111,8 @@ type (
 		Incoming        <-chan Incoming
 		OpenSuggestions func(ctx context.Context, ids []string) (map[string]bool, error)
 		CanUpdate       bool
+		// CanComment is suggestion access. Both flags false is read-only.
+		CanComment bool
 	}
 )
 
@@ -123,7 +125,7 @@ func (h *Handler) HandleRepo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	scope, document, canUpdate, err := h.authorize(r.Context(), documentID)
+	scope, document, canUpdate, canComment, err := h.authorize(r.Context(), documentID)
 	if err != nil {
 		h.renderAuthorizationError(w, err)
 		return
@@ -224,6 +226,7 @@ func (h *Handler) HandleRepo(w http.ResponseWriter, r *http.Request) {
 		AvatarURL:    avatarURL,
 		Incoming:     incoming,
 		CanUpdate:    canUpdate,
+		CanComment:   canComment,
 		PublishEphemeral: func(ctx context.Context, frame []byte) error {
 			return h.Probo.Collaboration.NotifyEphemeral(
 				ctx,
@@ -252,7 +255,7 @@ func (h *Handler) HandleRepo(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if !canUpdate {
+	if !canUpdate && canComment {
 		config.OpenSuggestions = func(ctx context.Context, ids []string) (map[string]bool, error) {
 			return h.Probo.Documents.LoadOpenSuggestionIDs(ctx, scope, documentID, ids)
 		}
@@ -266,7 +269,7 @@ func (h *Handler) HandleRepo(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) authorize(
 	ctx context.Context,
 	documentID gid.GID,
-) (*coredata.Scope, *coredata.Document, bool, error) {
+) (*coredata.Scope, *coredata.Document, bool, bool, error) {
 	identity := authn.IdentityFromContext(ctx)
 	session := authn.SessionFromContext(ctx)
 
@@ -274,7 +277,7 @@ func (h *Handler) authorize(
 
 	document, err := h.Probo.Documents.LoadDocument(ctx, scope, documentID)
 	if err != nil {
-		return nil, nil, false, fmt.Errorf("cannot load document: %w", err)
+		return nil, nil, false, false, fmt.Errorf("cannot load document: %w", err)
 	}
 
 	params := iam.AuthorizeParams{
@@ -289,21 +292,32 @@ func (h *Handler) authorize(
 
 	authScope, err := h.IAM.Authorizer.Authorize(ctx, params)
 	if err == nil {
-		return authScope, document, true, nil
+		return authScope, document, true, true, nil
 	}
 
 	if !insufficientAuthorization(err) {
-		return nil, nil, false, fmt.Errorf("cannot authorize document update: %w", err)
+		return nil, nil, false, false, fmt.Errorf("cannot authorize document update: %w", err)
 	}
 
 	params.Action = probo.ActionDocumentComment
 
 	authScope, err = h.IAM.Authorizer.Authorize(ctx, params)
-	if err != nil {
-		return nil, nil, false, fmt.Errorf("cannot authorize document collaboration: %w", err)
+	if err == nil {
+		return authScope, document, false, true, nil
 	}
 
-	return authScope, document, false, nil
+	if !insufficientAuthorization(err) {
+		return nil, nil, false, false, fmt.Errorf("cannot authorize document comment: %w", err)
+	}
+
+	params.Action = probo.ActionDocumentGet
+
+	authScope, err = h.IAM.Authorizer.Authorize(ctx, params)
+	if err != nil {
+		return nil, nil, false, false, fmt.Errorf("cannot authorize document read: %w", err)
+	}
+
+	return authScope, document, false, false, nil
 }
 
 func insufficientAuthorization(err error) bool {
@@ -800,6 +814,25 @@ func applyRepoFrame(
 			beforeSpans,
 			fmt.Errorf("cannot read collaboration spans: %w", spanErr),
 		)
+	}
+
+	if !config.CanComment {
+		if collaboration.ViewChangeAllowed(beforeSpans, afterSpans) {
+			return reply, fanout, nil
+		}
+
+		if err := restoreCommentOnlyDocument(lease, beforeSpans); err != nil {
+			return nil, nil, err
+		}
+
+		restored, syncErr := conn.SyncChanged()
+		if syncErr != nil {
+			return nil, nil, fmt.Errorf("cannot sync restored collaboration spans: %w", syncErr)
+		}
+
+		reply = append(reply, restored...)
+
+		return reply, fanout, nil
 	}
 
 	openSuggestionIDs := map[string]bool{}
