@@ -755,6 +755,7 @@ func TestServeRepoCollaboration_ReadOnlyPeerCannotChangeDocument(t *testing.T) {
 	conn.SetReadLimit(1 << 20)
 
 	frames := make(chan []byte, 8)
+
 	go func() {
 		for {
 			_, data, readErr := conn.Read(ctx)
@@ -805,6 +806,7 @@ func TestServeRepoCollaboration_ReadOnlyPeerCannotChangeDocument(t *testing.T) {
 	write(join)
 
 	deadline := time.Now().Add(10 * time.Second)
+
 	for {
 		body, bodyErr := clientDocument.Text("body")
 		if bodyErr == nil {
