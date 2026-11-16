@@ -4,6 +4,18 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.271.0] - 2026-11-16
+
+### Added
+
+- Document Suggestion `Start` takes a quote, a replacement, a comment,
+  and a quote occurrence to start with a redline
+- Document Suggestion `Add Change`, `Add Table Change`, and
+  `Add Format Change` operations add redlines to an open suggestion
+- Document Suggestion `Change Text`, `Change Format`, `Change Table`,
+  and `Change Block` operations apply a change to a document, or
+  suggest it on an open suggestion
+
 ## [0.270.0] - 2026-11-13
 
 ### Added
