@@ -4,6 +4,55 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.347.0] - 2026-11-16
+
+### Added
+
+- Suggesting mode tracks table structure. Reviewers can suggest
+  inserting or deleting a row, a column, or a whole table, and the
+  margin card names the change. Row redlines are refused on tables
+  with merged cells, and any other structural edit made while
+  suggesting is dropped with a message instead of saved untracked
+- Suggesting mode tracks character styles the way Google Docs does:
+  bold, italic, underline, strikethrough, code, and links. Readers
+  see the previous formatting until the suggestion is accepted, and
+  rejecting it restores that formatting
+- Suggesting mode tracks block changes: headings, lists, quotes, code
+  blocks, dividers, images, files, mentions, and list nesting.
+  Accepting keeps the new block and rejecting restores the old one
+- Suggestion cards describe the change (`Add: "…"`, `Delete: "…"`,
+  `Format: bold`, `Add row: with text "…"`) instead of a character
+  diff
+- `startDocumentSuggestion` takes a quote, a replacement, a comment,
+  and a quote occurrence, and paints the redline the way the editor
+  does, marking only the changed text.
+  `addDocumentSuggestionChange`, `suggestDocumentTable`, and
+  `addDocumentSuggestionFormatChange` add more redlines to an open
+  suggestion. All are on GraphQL and MCP
+- Text, style, table, and block changes share one operation with an
+  `APPLY` or `SUGGEST` mode, on GraphQL and on MCP as
+  `changeDocumentText`, `changeDocumentFormat`, `changeDocumentTable`,
+  and `changeDocumentBlock`, so agents no longer send ProseMirror
+- Employees can attach files to tasks assigned to them and to
+  comments in the employee portal, with drag and drop and paste.
+  Assigned employees can edit the task description
+- A Probo Console link at the bottom of the employee portal takes
+  console users back to the console
+
+### Changed
+
+- Documents stay editable while a suggestion is open. An edit that
+  misses the suggestion is applied and one that lands on it is
+  refused. Publishing and restoring history still wait until every
+  suggestion is resolved
+
+### Fixed
+
+- MCP `updateDocument` no longer rewrites blocks that differ only by
+  null attributes, which marked untouched text as changed
+- Document history highlights land on the edited text after several
+  edits in a row
+
 ## [0.346.0] - 2026-11-13
 
 ### Added

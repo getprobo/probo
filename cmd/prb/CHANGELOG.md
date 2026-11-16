@@ -4,6 +4,20 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.269.0] - 2026-11-16
+
+### Added
+
+- `prb document suggestion start --quote --replacement --comment
+  --occurrence` starts a suggestion with its first redline
+- `prb document suggestion add`, `table`, and `format` add a text,
+  table row, column, or table, or character style redline to an open
+  suggestion
+- `prb document change text`, `format`, `table`, and `block` edit a
+  document with `--mode APPLY`, or store the same change on an open
+  suggestion with `--mode SUGGEST`. `block` covers headings, lists,
+  quotes, code blocks, dividers, images, files, and mentions
+
 ## [0.268.0] - 2026-11-13
 
 ### Added
