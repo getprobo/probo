@@ -185,8 +185,10 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			_, _ = fmt.Fprintf(out, "%s\n", label.Render(fmt.Sprintf("Daily (%d days):", flagDays)))
+
 			for _, day := range v.DailyPageLoads {
 				total := 0
+
 				parts := make([]string, 0, len(day.PageLoads))
 				for _, load := range day.PageLoads {
 					total += load.Count

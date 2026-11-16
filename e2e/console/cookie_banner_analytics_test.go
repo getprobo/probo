@@ -92,9 +92,11 @@ func TestCookieBanner_DailyPageLoads(t *testing.T) {
 			[]browserFamilyCount{{Family: "FIREFOX", Count: 4}},
 			result.Node.DailyPageLoads[0].PageLoads,
 		)
+
 		for _, entry := range result.Node.DailyPageLoads[1:6] {
 			assert.Empty(t, entry.PageLoads)
 		}
+
 		assert.Equal(
 			t,
 			[]browserFamilyCount{{Family: "CHROME", Count: 3}},

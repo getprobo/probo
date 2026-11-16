@@ -61,6 +61,7 @@ func NewDailyPageLoadsPtrs(series []DailyPageLoads) []*DailyPageLoads {
 // and days with no rows keep an empty family list.
 func dailyPageLoadsSeries(rows []coredata.DailyPageLoad, since time.Time, days int) []DailyPageLoads {
 	rowsByDay := map[time.Time][]coredata.DailyPageLoad{}
+
 	for _, row := range rows {
 		day := utcDay(row.Day)
 		rowsByDay[day] = append(rowsByDay[day], row)
