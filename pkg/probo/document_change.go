@@ -400,11 +400,7 @@ func (s *DocumentService) commitDocumentChange(
 		); err != nil {
 			return nil, err
 		}
-
-		return &DocumentChangeResult{Document: prepared.Document, Suggestion: prepared.Suggestion}, nil
-	}
-
-	if err := s.finishDirectEdit(
+	} else if err := s.finishDirectEdit(
 		ctx,
 		scope,
 		prepared.Document,
@@ -416,7 +412,15 @@ func (s *DocumentService) commitDocumentChange(
 		return nil, err
 	}
 
-	return &DocumentChangeResult{Document: prepared.Document}, nil
+	// Persist writes content and updated_at on its own transaction, after the
+	// row read above. A decision that lands during the paint can write the
+	// row again, so the response is loaded once both writes have committed.
+	document, err := s.persistedReviewDocument(ctx, scope, prepared.Document.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &DocumentChangeResult{Document: document, Suggestion: prepared.Suggestion}, nil
 }
 
 func (s *DocumentService) paintTextChange(
@@ -641,6 +645,29 @@ func (s *DocumentService) finishDirectEdit(
 	s.notifyReview(ctx, document.ID)
 
 	return nil
+}
+
+// persistedReviewDocument loads the document after its live content has been
+// written. The row read before the paint still has the previous content.
+func (s *DocumentService) persistedReviewDocument(
+	ctx context.Context,
+	scope coredata.Scoper,
+	documentID gid.GID,
+) (*coredata.Document, error) {
+	document := &coredata.Document{}
+
+	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		if err := document.LoadByID(ctx, conn, scope, documentID); err != nil {
+			return fmt.Errorf("cannot load document: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return document, nil
 }
 
 func validateChangeMode(mode DocumentChangeMode, documentID gid.GID, suggestionID gid.GID) error {
