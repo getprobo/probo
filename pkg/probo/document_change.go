@@ -126,14 +126,28 @@ func (s *DocumentService) ChangeText(
 		return nil, err
 	}
 
-	prepared, err := s.prepareDocumentChange(ctx, scope, req.Mode, req.DocumentID, req.SuggestionID, req.IdentityID, nil)
+	prepared, err := s.prepareDocumentChange(
+		ctx,
+		scope,
+		req.Mode,
+		req.DocumentID,
+		req.SuggestionID,
+		req.IdentityID,
+		nil,
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	return s.commitDocumentChange(ctx, scope, prepared, req.IdentityID, func(suggestionID string) (*automerge.Document, automerge.ActorID, error) {
-		return s.paintTextChange(ctx, scope, prepared, req, suggestionID)
-	})
+	return s.commitDocumentChange(
+		ctx,
+		scope,
+		prepared,
+		req.IdentityID,
+		func(suggestionID string) (*automerge.Document, automerge.ActorID, error) {
+			return s.paintTextChange(ctx, scope, prepared, req, suggestionID)
+		},
+	)
 }
 
 // ChangeFormat sets or clears a style, or stores that change as a suggestion.
@@ -166,14 +180,28 @@ func (s *DocumentService) ChangeFormat(
 		Href:       req.Href,
 	}
 
-	prepared, err := s.prepareDocumentChange(ctx, scope, req.Mode, req.DocumentID, req.SuggestionID, req.IdentityID, nil)
+	prepared, err := s.prepareDocumentChange(
+		ctx,
+		scope,
+		req.Mode,
+		req.DocumentID,
+		req.SuggestionID,
+		req.IdentityID,
+		nil,
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	return s.commitDocumentChange(ctx, scope, prepared, req.IdentityID, func(suggestionID string) (*automerge.Document, automerge.ActorID, error) {
-		return s.paintFormatChange(ctx, scope, prepared, req.IdentityID, suggestionID, format)
-	})
+	return s.commitDocumentChange(
+		ctx,
+		scope,
+		prepared,
+		req.IdentityID,
+		func(suggestionID string) (*automerge.Document, automerge.ActorID, error) {
+			return s.paintFormatChange(ctx, scope, prepared, req.IdentityID, suggestionID, format)
+		},
+	)
 }
 
 // ChangeTable edits a table, or stores that edit as a suggestion.
@@ -198,16 +226,28 @@ func (s *DocumentService) ChangeTable(
 	}
 
 	v.Check(req.Cells, "cells", validator.MaxItems(cellLimit))
-	v.CheckEach(req.Cells, "cells", func(index int, item any) {
-		v.Check(item, fmt.Sprintf("cells[%d]", index), validator.MaxLen(documentQuoteMaxLength))
-	})
+	v.CheckEach(
+		req.Cells,
+		"cells",
+		func(index int, item any) {
+			v.Check(item, fmt.Sprintf("cells[%d]", index), validator.MaxLen(documentQuoteMaxLength))
+		},
+	)
 	v.Check(req.Rows, "rows", validator.MaxItems(documentTableMaxRows))
-	v.CheckEach(req.Rows, "rows", func(index int, item any) {
-		v.Check(item, fmt.Sprintf("rows[%d]", index), validator.MaxItems(documentTableMaxColumns))
-		v.CheckEach(item, fmt.Sprintf("rows[%d]", index), func(cell int, value any) {
-			v.Check(value, fmt.Sprintf("rows[%d][%d]", index, cell), validator.MaxLen(documentQuoteMaxLength))
-		})
-	})
+	v.CheckEach(
+		req.Rows,
+		"rows",
+		func(index int, item any) {
+			v.Check(item, fmt.Sprintf("rows[%d]", index), validator.MaxItems(documentTableMaxColumns))
+			v.CheckEach(
+				item,
+				fmt.Sprintf("rows[%d]", index),
+				func(cell int, value any) {
+					v.Check(value, fmt.Sprintf("rows[%d][%d]", index, cell), validator.MaxLen(documentQuoteMaxLength))
+				},
+			)
+		},
+	)
 
 	if err := v.Error(); err != nil {
 		return nil, err
@@ -223,14 +263,28 @@ func (s *DocumentService) ChangeTable(
 		HeaderRow:  req.HeaderRow,
 	}
 
-	prepared, err := s.prepareDocumentChange(ctx, scope, req.Mode, req.DocumentID, req.SuggestionID, req.IdentityID, nil)
+	prepared, err := s.prepareDocumentChange(
+		ctx,
+		scope,
+		req.Mode,
+		req.DocumentID,
+		req.SuggestionID,
+		req.IdentityID,
+		nil,
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	return s.commitDocumentChange(ctx, scope, prepared, req.IdentityID, func(suggestionID string) (*automerge.Document, automerge.ActorID, error) {
-		return s.paintTableChange(ctx, scope, prepared, req.IdentityID, suggestionID, table)
-	})
+	return s.commitDocumentChange(
+		ctx,
+		scope,
+		prepared,
+		req.IdentityID,
+		func(suggestionID string) (*automerge.Document, automerge.ActorID, error) {
+			return s.paintTableChange(ctx, scope, prepared, req.IdentityID, suggestionID, table)
+		},
+	)
 }
 
 // ChangeBlock edits a heading, list, image, or other block, or stores that
@@ -251,9 +305,13 @@ func (s *DocumentService) ChangeBlock(
 	v.Check(req.Text, "text", validator.MaxLen(documentQuoteMaxLength))
 	v.Check(req.Occurrence, "quote_occurrence", validator.Min(0))
 	v.Check(req.Items, "items", validator.MaxItems(documentTableMaxRows))
-	v.CheckEach(req.Items, "items", func(index int, item any) {
-		v.Check(item, fmt.Sprintf("items[%d]", index), validator.MaxLen(documentQuoteMaxLength))
-	})
+	v.CheckEach(
+		req.Items,
+		"items",
+		func(index int, item any) {
+			v.Check(item, fmt.Sprintf("items[%d]", index), validator.MaxLen(documentQuoteMaxLength))
+		},
+	)
 
 	if err := v.Error(); err != nil {
 		return nil, err
@@ -268,8 +326,8 @@ func (s *DocumentService) ChangeBlock(
 		req.DocumentID,
 		req.SuggestionID,
 		req.IdentityID,
-		func(ctx context.Context, conn pg.Querier, document *coredata.Document) error {
-			resolved, err := resolveBlockChange(ctx, conn, scope, document, req)
+		func(ctx context.Context, conn pg.Querier) error {
+			resolved, err := resolveBlockChange(ctx, conn, scope, req)
 			if err != nil {
 				return err
 			}
@@ -283,11 +341,17 @@ func (s *DocumentService) ChangeBlock(
 		return nil, err
 	}
 
-	return s.commitDocumentChange(ctx, scope, prepared, req.IdentityID, func(suggestionID string) (*automerge.Document, automerge.ActorID, error) {
-		block.SuggestionID = suggestionID
+	return s.commitDocumentChange(
+		ctx,
+		scope,
+		prepared,
+		req.IdentityID,
+		func(suggestionID string) (*automerge.Document, automerge.ActorID, error) {
+			block.SuggestionID = suggestionID
 
-		return s.paintBlockChange(ctx, scope, prepared, req.IdentityID, suggestionID, block)
-	})
+			return s.paintBlockChange(ctx, scope, prepared, req.IdentityID, suggestionID, block)
+		},
+	)
 }
 
 // documentChange is the document and author resolved for one edit. Suggestion
@@ -308,60 +372,63 @@ func (s *DocumentService) prepareDocumentChange(
 	documentID gid.GID,
 	suggestionID gid.GID,
 	identityID gid.GID,
-	attach func(ctx context.Context, conn pg.Querier, document *coredata.Document) error,
+	attach func(ctx context.Context, conn pg.Querier) error,
 ) (*documentChange, error) {
 	prepared := &documentChange{}
 
-	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		switch mode {
-		case DocumentChangeModeSuggest:
-			suggestion := &coredata.DocumentSuggestion{}
-			if err := suggestion.LoadByIDForUpdate(ctx, tx, scope, suggestionID); err != nil {
-				return fmt.Errorf("cannot load document suggestion: %w", err)
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			switch mode {
+			case DocumentChangeModeSuggest:
+				suggestion := &coredata.DocumentSuggestion{}
+				if err := suggestion.LoadByIDForUpdate(ctx, tx, scope, suggestionID); err != nil {
+					return fmt.Errorf("cannot load document suggestion: %w", err)
+				}
+
+				if suggestion.Status != coredata.DocumentSuggestionStatusOpen {
+					return ErrDocumentSuggestionClosed
+				}
+
+				document, err := s.editableReviewDocument(ctx, tx, scope, suggestion.DocumentID)
+				if err != nil {
+					return err
+				}
+
+				profile, err := s.reviewProfile(ctx, tx, scope, suggestion.OrganizationID, identityID)
+				if err != nil {
+					return err
+				}
+
+				if profile.ID != suggestion.AuthorProfileID {
+					return ErrNotDocumentSuggestionAuthor
+				}
+
+				prepared.Document = document
+				prepared.ProfileID = profile.ID
+				prepared.Suggestion = suggestion
+			default:
+				document, err := s.editableReviewDocument(ctx, tx, scope, documentID)
+				if err != nil {
+					return err
+				}
+
+				profile, err := s.reviewProfile(ctx, tx, scope, document.OrganizationID, identityID)
+				if err != nil {
+					return err
+				}
+
+				prepared.Document = document
+				prepared.ProfileID = profile.ID
 			}
 
-			if suggestion.Status != coredata.DocumentSuggestionStatusOpen {
-				return ErrDocumentSuggestionClosed
+			if attach == nil {
+				return nil
 			}
 
-			document, err := s.editableReviewDocument(ctx, tx, scope, suggestion.DocumentID)
-			if err != nil {
-				return err
-			}
-
-			profile, err := s.reviewProfile(ctx, tx, scope, suggestion.OrganizationID, identityID)
-			if err != nil {
-				return err
-			}
-
-			if profile.ID != suggestion.AuthorProfileID {
-				return ErrNotDocumentSuggestionAuthor
-			}
-
-			prepared.Document = document
-			prepared.ProfileID = profile.ID
-			prepared.Suggestion = suggestion
-		default:
-			document, err := s.editableReviewDocument(ctx, tx, scope, documentID)
-			if err != nil {
-				return err
-			}
-
-			profile, err := s.reviewProfile(ctx, tx, scope, document.OrganizationID, identityID)
-			if err != nil {
-				return err
-			}
-
-			prepared.Document = document
-			prepared.ProfileID = profile.ID
-		}
-
-		if attach == nil {
-			return nil
-		}
-
-		return attach(ctx, tx, prepared.Document)
-	})
+			return attach(ctx, tx)
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -565,7 +632,6 @@ func resolveBlockChange(
 	ctx context.Context,
 	conn pg.Querier,
 	scope coredata.Scoper,
-	document *coredata.Document,
 	req ChangeDocumentBlockRequest,
 ) (collaboration.BlockChange, error) {
 	change := collaboration.BlockChange{
@@ -590,10 +656,6 @@ func resolveBlockChange(
 			return collaboration.BlockChange{}, err
 		}
 
-		if file.OrganizationID != document.OrganizationID {
-			return collaboration.BlockChange{}, coredata.ErrResourceNotFound
-		}
-
 		change.FileID = file.ID.String()
 		change.FileName = file.FileName
 		change.MimeType = file.MimeType
@@ -606,7 +668,7 @@ func resolveBlockChange(
 			return collaboration.BlockChange{}, err
 		}
 
-		if profile.OrganizationID != document.OrganizationID || strings.TrimSpace(profile.FullName) == "" {
+		if strings.TrimSpace(profile.FullName) == "" {
 			return collaboration.BlockChange{}, coredata.ErrResourceNotFound
 		}
 
@@ -656,13 +718,16 @@ func (s *DocumentService) persistedReviewDocument(
 ) (*coredata.Document, error) {
 	document := &coredata.Document{}
 
-	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		if err := document.LoadByID(ctx, conn, scope, documentID); err != nil {
-			return fmt.Errorf("cannot load document: %w", err)
-		}
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := document.LoadByID(ctx, conn, scope, documentID); err != nil {
+				return fmt.Errorf("cannot load document: %w", err)
+			}
 
-		return nil
-	})
+			return nil
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -672,10 +737,17 @@ func (s *DocumentService) persistedReviewDocument(
 
 func validateChangeMode(mode DocumentChangeMode, documentID gid.GID, suggestionID gid.GID) error {
 	v := validator.New()
-	v.Check(mode, "mode", validator.Required(), validator.OneOfSlice([]DocumentChangeMode{
-		DocumentChangeModeApply,
-		DocumentChangeModeSuggest,
-	}))
+	v.Check(
+		mode,
+		"mode",
+		validator.Required(),
+		validator.OneOfSlice(
+			[]DocumentChangeMode{
+				DocumentChangeModeApply,
+				DocumentChangeModeSuggest,
+			},
+		),
+	)
 
 	if mode == DocumentChangeModeApply {
 		v.Check(documentID, "document_id", validator.Required(), validator.GID(coredata.DocumentEntityType))

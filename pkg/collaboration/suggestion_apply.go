@@ -56,21 +56,24 @@ func ApplyDirectText(
 ) error {
 	split := false
 
-	err := applyThenAccept(document, func(id string) error {
-		if err := ApplySuggestionEdit(document, id, quote, replacement, occurrence); err != nil {
+	err := applyThenAccept(
+		document,
+		func(id string) error {
+			if err := ApplySuggestionEdit(document, id, quote, replacement, occurrence); err != nil {
+				return err
+			}
+
+			if !strings.Contains(replacement, "\n") || strings.Contains(quote, "\n") {
+				return nil
+			}
+
+			var err error
+
+			split, err = splitHardBreaks(document, id)
+
 			return err
-		}
-
-		if !strings.Contains(replacement, "\n") || strings.Contains(quote, "\n") {
-			return nil
-		}
-
-		var err error
-
-		split, err = splitHardBreaks(document, id)
-
-		return err
-	})
+		},
+	)
 
 	// An edit that only adds a line break leaves no marked text to accept.
 	if split && errors.Is(err, ErrSuggestionUnchanged) {
@@ -82,9 +85,12 @@ func ApplyDirectText(
 
 // ApplyDirectFormat sets or clears a style mark and leaves no suggestion mark.
 func ApplyDirectFormat(document *automerge.Document, change FormatSuggestion) error {
-	return applyThenAccept(document, func(id string) error {
-		return ApplySuggestionFormat(document, id, change)
-	})
+	return applyThenAccept(
+		document,
+		func(id string) error {
+			return ApplySuggestionFormat(document, id, change)
+		},
+	)
 }
 
 // ApplyDirectTable inserts or deletes the row, column, or table. Removed
@@ -102,9 +108,12 @@ func ApplyDirectTable(document *automerge.Document, change TableSuggestion) erro
 		return err
 	}
 
-	return applyThenAccept(document, func(id string) error {
-		return ApplyTableSuggestion(document, id, change)
-	})
+	return applyThenAccept(
+		document,
+		func(id string) error {
+			return ApplyTableSuggestion(document, id, change)
+		},
+	)
 }
 
 // quoteCoveredBySuggestion reports whether quote, or a block that contains
