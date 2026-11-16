@@ -428,6 +428,7 @@ func TestCookieBanner_SourcePromotionWindow(t *testing.T) {
 
 	earlier := time.Now().UTC().Add(-time.Hour).Truncate(time.Microsecond)
 	later := time.Now().UTC().Truncate(time.Microsecond)
+
 	var writtenAt time.Time
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
