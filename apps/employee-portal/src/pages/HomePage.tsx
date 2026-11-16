@@ -128,7 +128,7 @@ export function HomePage({ queryRef }: HomePageProps) {
     : t("homePage.welcome", { name: firstName });
 
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-8 pt-8 pb-32">
+    <main className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-8 pt-8">
       <div className="flex flex-col gap-4">
         <Text size={2} weight="medium" color="neutral">
           {t("homePage.breadcrumb")}
