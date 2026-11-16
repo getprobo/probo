@@ -181,9 +181,11 @@ func TestTrackerPattern_DailyHits(t *testing.T) {
 			[]browserFamilyCount{{Family: "FIREFOX", Count: 4}},
 			result.Node.DailyHits[0].Hits,
 		)
+
 		for _, entry := range result.Node.DailyHits[1:6] {
 			assert.Empty(t, entry.Hits)
 		}
+
 		assert.Equal(
 			t,
 			[]browserFamilyCount{{Family: "CHROME", Count: 3}},

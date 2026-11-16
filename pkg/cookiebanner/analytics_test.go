@@ -636,6 +636,7 @@ func TestGetPageLoads_IsolatesTenants(t *testing.T) {
 
 	series, err := svc.GetDailyHits(ctx, other.scope, []gid.GID{ga.ID}, DefaultAnalyticsDays)
 	require.NoError(t, err)
+
 	for _, day := range series[ga.ID] {
 		assert.Empty(t, day.Hits)
 	}
@@ -706,6 +707,7 @@ func patternHits(
 	require.NoError(t, err)
 
 	totals := map[coredata.BrowserFamily]int{}
+
 	for _, day := range series[tp.ID] {
 		for _, hit := range day.Hits {
 			totals[hit.Family] += hit.Count
