@@ -34,6 +34,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
+	"go.probo.inc/probo/pkg/notification"
 	syncerrors "go.probo.inc/probo/pkg/task/sync/errors"
 	"go.probo.inc/probo/pkg/task/sync/internal"
 	"go.probo.inc/probo/pkg/task/sync/job"
@@ -374,25 +375,37 @@ func (s *Service) LinkToLinear(
 		return nil, fmt.Errorf("cannot finish Linear link: %w", err)
 	}
 
-	if err := s.syncLinkedComments(ctx, scope, account.client, link); err != nil {
-		restoreErr := s.restoreLinkedTask(ctx, scope, previous, linked, identityID)
+	importedCommentIDs, createdCommentIDs, err := s.syncLinkedComments(ctx, scope, account.client, link)
+	if err != nil {
+		return nil, s.failLinearLink(
+			ctx,
+			scope,
+			account.client,
+			previous,
+			linked,
+			identityID,
+			attachmentID,
+			taskID,
+			issue.ID,
+			fmt.Errorf("cannot sync Linear comments: %w", err),
+		)
+	}
 
-		if deleteErr := account.client.DeleteAttachment(ctx, attachmentID); deleteErr != nil && s.logger != nil {
-			s.logger.WarnCtx(
-				ctx,
-				"cannot delete Linear attachment after failed comment sync",
-				log.String("task_id", taskID.String()),
-				log.Error(deleteErr),
-			)
-		}
+	if err := s.resolveClosedLinearLink(ctx, scope, linked); err != nil {
+		s.rollbackLinkedComments(ctx, scope, account.client, importedCommentIDs, createdCommentIDs)
 
-		s.deletePendingLinearLink(ctx, scope, taskID, issue.ID)
-
-		if restoreErr != nil {
-			return nil, fmt.Errorf("cannot restore task after failed Linear comment sync: %w", restoreErr)
-		}
-
-		return nil, fmt.Errorf("cannot sync Linear comments: %w", err)
+		return nil, s.failLinearLink(
+			ctx,
+			scope,
+			account.client,
+			previous,
+			linked,
+			identityID,
+			attachmentID,
+			taskID,
+			issue.ID,
+			fmt.Errorf("cannot resolve linked task notifications: %w", err),
+		)
 	}
 
 	if err := s.notifyLinkedMentions(ctx, scope, previous, linked, identityID); err != nil && s.logger != nil {
@@ -405,6 +418,38 @@ func (s *Service) LinkToLinear(
 	}
 
 	return link, nil
+}
+
+func (s *Service) failLinearLink(
+	ctx context.Context,
+	scope coredata.Scoper,
+	client *linear.Client,
+	previous *coredata.Task,
+	linked *coredata.Task,
+	identityID *gid.GID,
+	attachmentID string,
+	taskID gid.GID,
+	issueID string,
+	cause error,
+) error {
+	restoreErr := s.restoreLinkedTask(ctx, scope, previous, linked, identityID)
+
+	if deleteErr := client.DeleteAttachment(ctx, attachmentID); deleteErr != nil && s.logger != nil {
+		s.logger.WarnCtx(
+			ctx,
+			"cannot delete Linear attachment after failed link",
+			log.String("task_id", taskID.String()),
+			log.Error(deleteErr),
+		)
+	}
+
+	s.deletePendingLinearLink(ctx, scope, taskID, issueID)
+
+	if restoreErr != nil {
+		return fmt.Errorf("cannot restore task after failed Linear link: %w", restoreErr)
+	}
+
+	return cause
 }
 
 func linearPublishPendingExternalID(taskID gid.GID) string {
@@ -827,6 +872,10 @@ func (s *Service) restoreLinkedTask(
 			oldTask := *current
 
 			if !current.UpdatedAt.Truncate(time.Microsecond).Equal(linked.UpdatedAt.Truncate(time.Microsecond)) {
+				if err := resolveClosedTaskNotifications(ctx, tx, scope, current); err != nil {
+					return fmt.Errorf("cannot resolve notifications for a concurrently updated task: %w", err)
+				}
+
 				return nil
 			}
 
@@ -882,9 +931,62 @@ func (s *Service) restoreLinkedTask(
 				return fmt.Errorf("cannot emit task updated webhook: %w", err)
 			}
 
+			if err := resolveClosedTaskNotifications(ctx, tx, scope, current); err != nil {
+				return fmt.Errorf("cannot resolve restored task notifications: %w", err)
+			}
+
 			return nil
 		},
 	)
+}
+
+func (s *Service) resolveClosedLinearLink(
+	ctx context.Context,
+	scope coredata.Scoper,
+	linked *coredata.Task,
+) error {
+	if linked == nil || s.pg == nil {
+		return nil
+	}
+
+	return s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			current := &coredata.Task{}
+			if err := current.LoadByIDForUpdate(ctx, tx, scope, linked.ID); err != nil {
+				return fmt.Errorf("cannot load task %q: %w", linked.ID, err)
+			}
+
+			if err := resolveClosedTaskNotifications(ctx, tx, scope, current); err != nil {
+				return fmt.Errorf("cannot resolve closed linked task notifications: %w", err)
+			}
+
+			return nil
+		},
+	)
+}
+
+func resolveClosedTaskNotifications(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	task *coredata.Task,
+) error {
+	if task == nil || !task.State.IsClosed() {
+		return nil
+	}
+
+	if err := notification.ResolveLinkedTaskNotifications(
+		ctx,
+		tx,
+		scope,
+		task.OrganizationID,
+		task.ID,
+	); err != nil {
+		return fmt.Errorf("cannot resolve linked task notifications: %w", err)
+	}
+
+	return nil
 }
 
 func applyLinearIssueFields(

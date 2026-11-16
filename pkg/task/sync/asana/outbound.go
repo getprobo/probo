@@ -123,7 +123,7 @@ func (h *outboundHandler) processAsanaUpdate(
 		return fmt.Errorf("cannot render Asana description: %w", err)
 	}
 
-	completed := CompletedForState(task.State)
+	completed := task.State.IsClosed()
 	assigneeGID, assigneeOK := h.svc.asanaAssigneeGID(ctx, scope, account, task.AssignedToID)
 
 	update := client.TaskUpdate{

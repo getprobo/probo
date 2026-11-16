@@ -35,6 +35,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/notification"
 	client "go.probo.inc/probo/pkg/task/sync/asana/client"
 	syncerrors "go.probo.inc/probo/pkg/task/sync/errors"
 	"go.probo.inc/probo/pkg/task/sync/internal"
@@ -602,7 +603,7 @@ func (s *Service) createAsanaTask(
 		Name:       task.Name,
 		HTMLNotes:  htmlNotes,
 		ProjectGID: projectGID,
-		Completed:  CompletedForState(task.State),
+		Completed:  task.State.IsClosed(),
 		DueOn:      internal.DeadlineToDate(task.Deadline),
 	}
 
@@ -814,6 +815,18 @@ func (s *Service) applyRemoteTask(
 		nil,
 	); err != nil {
 		return fmt.Errorf("cannot notify synced mentions: %w", err)
+	}
+
+	if task.State.IsClosed() {
+		if err := notification.ResolveLinkedTaskNotifications(
+			ctx,
+			tx,
+			scope,
+			task.OrganizationID,
+			task.ID,
+		); err != nil {
+			return fmt.Errorf("cannot resolve closed task notifications: %w", err)
+		}
 	}
 
 	return nil

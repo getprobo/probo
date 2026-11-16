@@ -55,6 +55,15 @@ func TaskStates() []TaskState {
 	}
 }
 
+func (v TaskState) IsClosed() bool {
+	switch v {
+	case TaskStateDone, TaskStateCanceled, TaskStateDuplicate:
+		return true
+	default:
+		return false
+	}
+}
+
 func (v TaskState) IsValid() bool {
 	switch v {
 	case

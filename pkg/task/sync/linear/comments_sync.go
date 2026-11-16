@@ -127,15 +127,15 @@ func (s *Service) syncLinkedComments(
 	scope coredata.Scoper,
 	client *linear.Client,
 	link *coredata.TaskExternalLink,
-) error {
+) ([]gid.GID, []string, error) {
 	remote, err := client.ListIssueComments(ctx, link.ExternalID)
 	if err != nil {
-		return fmt.Errorf("cannot list Linear comments: %w", err)
+		return nil, nil, fmt.Errorf("cannot list Linear comments: %w", err)
 	}
 
 	mappedExternal, err := internal.CommentLinksByExternalID(ctx, s.pg, scope, link.TaskID)
 	if err != nil {
-		return fmt.Errorf("cannot load comment links: %w", err)
+		return nil, nil, fmt.Errorf("cannot load comment links: %w", err)
 	}
 
 	var importedIDs []gid.GID
@@ -149,7 +149,7 @@ func (s *Service) syncLinkedComments(
 		if err != nil {
 			s.rollbackLinkedComments(ctx, scope, client, importedIDs, nil)
 
-			return fmt.Errorf("cannot import Linear comment: %w", err)
+			return nil, nil, fmt.Errorf("cannot import Linear comment: %w", err)
 		}
 
 		if importedID != gid.Nil {
@@ -161,10 +161,10 @@ func (s *Service) syncLinkedComments(
 	if err != nil {
 		s.rollbackLinkedComments(ctx, scope, client, importedIDs, createdIDs)
 
-		return fmt.Errorf("cannot copy task comments: %w", err)
+		return nil, nil, fmt.Errorf("cannot copy task comments: %w", err)
 	}
 
-	return nil
+	return importedIDs, createdIDs, nil
 }
 
 func (s *Service) importLinearComment(

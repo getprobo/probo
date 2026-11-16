@@ -722,6 +722,12 @@ func (s *Service) Update(
 				}
 			}
 
+			if task.State.IsClosed() {
+				if err := resolveLinkedTaskNotifications(ctx, conn, scope, task); err != nil {
+					return fmt.Errorf("cannot resolve linked task notifications: %w", err)
+				}
+			}
+
 			if internalControlsReplaced {
 				if err := InsertInternalControlActivities(
 					ctx,
@@ -804,6 +810,10 @@ func (s *Service) Delete(
 
 			if err := emitTaskDeleted(ctx, conn, scope, task); err != nil {
 				return fmt.Errorf("cannot emit task deleted webhook: %w", err)
+			}
+
+			if err := resolveDeletedTaskNotifications(ctx, conn, scope, task); err != nil {
+				return fmt.Errorf("cannot resolve deleted task notifications: %w", err)
 			}
 
 			if err := task.Delete(ctx, conn, scope); err != nil {
@@ -1048,6 +1058,36 @@ func resolveViewerTaskNotifications(
 	return nil
 }
 
+func resolveLinkedTaskNotifications(
+	ctx context.Context,
+	conn pg.Tx,
+	scope coredata.Scoper,
+	task *coredata.Task,
+) error {
+	return notification.ResolveLinkedTaskNotifications(
+		ctx,
+		conn,
+		scope,
+		task.OrganizationID,
+		task.ID,
+	)
+}
+
+func resolveDeletedTaskNotifications(
+	ctx context.Context,
+	conn pg.Tx,
+	scope coredata.Scoper,
+	task *coredata.Task,
+) error {
+	return notification.ResolveDeletedTaskNotifications(
+		ctx,
+		conn,
+		scope,
+		task.OrganizationID,
+		task.ID,
+	)
+}
+
 func notifyTaskAssignment(
 	ctx context.Context,
 	conn pg.Tx,
@@ -1070,6 +1110,12 @@ func notifyTaskAssignment(
 		actorID,
 	); err != nil {
 		return fmt.Errorf("cannot insert task assignment notification: %w", err)
+	}
+
+	if task.State.IsClosed() {
+		if err := resolveLinkedTaskNotifications(ctx, conn, scope, task); err != nil {
+			return fmt.Errorf("cannot resolve linked task notifications: %w", err)
+		}
 	}
 
 	return nil
@@ -1104,6 +1150,12 @@ func notifyNewMentions(
 		actorID,
 	); err != nil {
 		return fmt.Errorf("cannot insert task mention notifications: %w", err)
+	}
+
+	if task.State.IsClosed() {
+		if err := resolveLinkedTaskNotifications(ctx, conn, scope, task); err != nil {
+			return fmt.Errorf("cannot resolve linked task notifications: %w", err)
+		}
 	}
 
 	return nil

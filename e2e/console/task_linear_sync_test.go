@@ -29,6 +29,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
 	"testing"
 	"time"
 
@@ -515,6 +516,39 @@ func TestTaskLinearSync_AssigneeNotification(t *testing.T) {
 
 		assert.Equal(t, 0, taskAssignedNotificationCount(t, employee, taskID))
 	})
+
+	t.Run("closed state resolves the assignment", func(t *testing.T) {
+		t.Parallel()
+
+		owner, employee, taskID, externalID := seedAssignedLinearTask(t)
+		status := postAssigneeWebhookWithState(t, externalID, "Inbound closed", owner.GetEmail(), employee.GetEmail(), "completed", time.Hour)
+		require.Equal(t, http.StatusOK, status)
+
+		require.Eventually(t, func() bool {
+			return slices.Equal(taskNotificationStatuses(t, employee, taskID, "TASK_ASSIGNED"), []string{"RESOLVED"})
+		}, 30*time.Second, 200*time.Millisecond)
+	})
+
+	t.Run("assignment on an already closed task is resolved", func(t *testing.T) {
+		t.Parallel()
+
+		owner, employee, taskID, externalID := seedAssignedLinearTask(t)
+		next := testutil.NewClientInOrg(t, testutil.RoleEmployee, owner)
+
+		status := postAssigneeWebhookWithState(t, externalID, "Inbound closed", owner.GetEmail(), employee.GetEmail(), "completed", time.Hour)
+		require.Equal(t, http.StatusOK, status)
+
+		require.Eventually(t, func() bool {
+			return slices.Equal(taskNotificationStatuses(t, employee, taskID, "TASK_ASSIGNED"), []string{"RESOLVED"})
+		}, 30*time.Second, 200*time.Millisecond)
+
+		status = postAssigneeWebhookWithState(t, externalID, "Inbound closed again", owner.GetEmail(), next.GetEmail(), "completed", 2*time.Hour)
+		require.Equal(t, http.StatusOK, status)
+
+		require.Eventually(t, func() bool {
+			return slices.Equal(taskNotificationStatuses(t, next, taskID, "TASK_ASSIGNED"), []string{"RESOLVED"})
+		}, 30*time.Second, 200*time.Millisecond)
+	})
 }
 
 func seedAssignedLinearTask(t *testing.T) (owner *testutil.Client, employee *testutil.Client, taskID string, externalID string) {
@@ -534,6 +568,16 @@ func seedAssignedLinearTask(t *testing.T) (owner *testutil.Client, employee *tes
 func postAssigneeWebhook(t *testing.T, externalID, title, actorEmail, assigneeEmail string, updatedAfter time.Duration) int {
 	t.Helper()
 
+	return postAssigneeWebhookWithState(t, externalID, title, actorEmail, assigneeEmail, "started", updatedAfter)
+}
+
+func postAssigneeWebhookWithState(
+	t *testing.T,
+	externalID, title, actorEmail, assigneeEmail, stateType string,
+	updatedAfter time.Duration,
+) int {
+	t.Helper()
+
 	return postLinearWebhook(t, factory.SafeName("delivery"), map[string]any{
 		"action":           "update",
 		"type":             "Issue",
@@ -551,7 +595,7 @@ func postAssigneeWebhook(t *testing.T, externalID, title, actorEmail, assigneeEm
 			"priority":    1,
 			"updatedAt":   time.Now().Add(updatedAfter).Format(time.RFC3339),
 			"url":         "https://linear.app/eng/issue/ENG-99",
-			"state":       map[string]any{"type": "started"},
+			"state":       map[string]any{"type": stateType},
 			"assignee": map[string]any{
 				"id":    "linear-assignee",
 				"email": assigneeEmail,
