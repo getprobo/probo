@@ -126,53 +126,14 @@ func (s *DocumentService) ChangeText(
 		return nil, err
 	}
 
-	if req.Mode == DocumentChangeModeSuggest {
-		suggestion, err := s.AddSuggestionChange(ctx, scope, AddDocumentSuggestionChangeRequest{
-			SuggestionID: req.SuggestionID,
-			IdentityID:   req.IdentityID,
-			Quote:        req.Quote,
-			Replacement:  req.Replacement,
-			Occurrence:   req.Occurrence,
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		document, err := s.loadReviewDocument(ctx, scope, suggestion.DocumentID)
-		if err != nil {
-			return nil, err
-		}
-
-		return &DocumentChangeResult{Document: document, Suggestion: suggestion}, nil
-	}
-
-	document, profileID, err := s.editableChangeDocument(ctx, scope, req.DocumentID, req.IdentityID)
+	prepared, err := s.prepareDocumentChange(ctx, scope, req.Mode, req.DocumentID, req.SuggestionID, req.IdentityID, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	painted, actorID, err := s.collaboration.PaintDirectText(
-		ctx,
-		scope,
-		document.ID,
-		document.OrganizationID,
-		req.IdentityID,
-		&profileID,
-		req.Quote,
-		req.Replacement,
-		req.Occurrence,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	defer func() { _ = painted.Close() }()
-
-	if err := s.finishDirectEdit(ctx, scope, document, req.IdentityID, profileID, painted, actorID); err != nil {
-		return nil, err
-	}
-
-	return &DocumentChangeResult{Document: document}, nil
+	return s.commitDocumentChange(ctx, scope, prepared, req.IdentityID, func(suggestionID string) (*automerge.Document, automerge.ActorID, error) {
+		return s.paintTextChange(ctx, scope, prepared, req, suggestionID)
+	})
 }
 
 // ChangeFormat sets or clears a style, or stores that change as a suggestion.
@@ -197,7 +158,7 @@ func (s *DocumentService) ChangeFormat(
 		return nil, err
 	}
 
-	change := collaboration.FormatSuggestion{
+	format := collaboration.FormatSuggestion{
 		Mark:       req.Mark,
 		Action:     req.Action,
 		Quote:      req.Quote,
@@ -205,53 +166,14 @@ func (s *DocumentService) ChangeFormat(
 		Href:       req.Href,
 	}
 
-	if req.Mode == DocumentChangeModeSuggest {
-		suggestion, err := s.AddSuggestionFormatChange(ctx, scope, AddDocumentSuggestionFormatChangeRequest{
-			SuggestionID: req.SuggestionID,
-			IdentityID:   req.IdentityID,
-			Mark:         req.Mark,
-			Action:       req.Action,
-			Quote:        req.Quote,
-			Occurrence:   req.Occurrence,
-			Href:         req.Href,
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		document, err := s.loadReviewDocument(ctx, scope, suggestion.DocumentID)
-		if err != nil {
-			return nil, err
-		}
-
-		return &DocumentChangeResult{Document: document, Suggestion: suggestion}, nil
-	}
-
-	document, profileID, err := s.editableChangeDocument(ctx, scope, req.DocumentID, req.IdentityID)
+	prepared, err := s.prepareDocumentChange(ctx, scope, req.Mode, req.DocumentID, req.SuggestionID, req.IdentityID, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	painted, actorID, err := s.collaboration.PaintDirectFormat(
-		ctx,
-		scope,
-		document.ID,
-		document.OrganizationID,
-		req.IdentityID,
-		&profileID,
-		change,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	defer func() { _ = painted.Close() }()
-
-	if err := s.finishDirectEdit(ctx, scope, document, req.IdentityID, profileID, painted, actorID); err != nil {
-		return nil, err
-	}
-
-	return &DocumentChangeResult{Document: document}, nil
+	return s.commitDocumentChange(ctx, scope, prepared, req.IdentityID, func(suggestionID string) (*automerge.Document, automerge.ActorID, error) {
+		return s.paintFormatChange(ctx, scope, prepared, req.IdentityID, suggestionID, format)
+	})
 }
 
 // ChangeTable edits a table, or stores that edit as a suggestion.
@@ -269,7 +191,13 @@ func (s *DocumentService) ChangeTable(
 	v.Check(req.Operation, "operation", validator.Required(), validator.OneOfSlice(documentTableOperations))
 	v.Check(req.Quote, "quote", validator.Required(), validator.MaxLen(documentQuoteMaxLength))
 	v.Check(req.Occurrence, "quote_occurrence", validator.Min(0))
-	v.Check(req.Cells, "cells", validator.MaxItems(documentTableMaxRows))
+
+	cellLimit := documentTableMaxColumns
+	if req.Operation == collaboration.TableSuggestionInsertColumn {
+		cellLimit = documentTableMaxRows
+	}
+
+	v.Check(req.Cells, "cells", validator.MaxItems(cellLimit))
 	v.CheckEach(req.Cells, "cells", func(index int, item any) {
 		v.Check(item, fmt.Sprintf("cells[%d]", index), validator.MaxLen(documentQuoteMaxLength))
 	})
@@ -285,63 +213,24 @@ func (s *DocumentService) ChangeTable(
 		return nil, err
 	}
 
-	if req.Mode == DocumentChangeModeSuggest {
-		suggestion, err := s.AddSuggestionTableChange(ctx, scope, AddDocumentSuggestionTableChangeRequest{
-			SuggestionID: req.SuggestionID,
-			IdentityID:   req.IdentityID,
-			Operation:    req.Operation,
-			Quote:        req.Quote,
-			Occurrence:   req.Occurrence,
-			Before:       req.Before,
-			Cells:        req.Cells,
-			Rows:         req.Rows,
-			HeaderRow:    req.HeaderRow,
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		document, err := s.loadReviewDocument(ctx, scope, suggestion.DocumentID)
-		if err != nil {
-			return nil, err
-		}
-
-		return &DocumentChangeResult{Document: document, Suggestion: suggestion}, nil
+	table := collaboration.TableSuggestion{
+		Operation:  req.Operation,
+		Quote:      req.Quote,
+		Occurrence: req.Occurrence,
+		Before:     req.Before,
+		Cells:      req.Cells,
+		Rows:       req.Rows,
+		HeaderRow:  req.HeaderRow,
 	}
 
-	document, profileID, err := s.editableChangeDocument(ctx, scope, req.DocumentID, req.IdentityID)
+	prepared, err := s.prepareDocumentChange(ctx, scope, req.Mode, req.DocumentID, req.SuggestionID, req.IdentityID, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	painted, actorID, err := s.collaboration.PaintDirectTable(
-		ctx,
-		scope,
-		document.ID,
-		document.OrganizationID,
-		req.IdentityID,
-		&profileID,
-		collaboration.TableSuggestion{
-			Operation:  req.Operation,
-			Quote:      req.Quote,
-			Occurrence: req.Occurrence,
-			Before:     req.Before,
-			Cells:      req.Cells,
-			Rows:       req.Rows,
-			HeaderRow:  req.HeaderRow,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	defer func() { _ = painted.Close() }()
-
-	if err := s.finishDirectEdit(ctx, scope, document, req.IdentityID, profileID, painted, actorID); err != nil {
-		return nil, err
-	}
-
-	return &DocumentChangeResult{Document: document}, nil
+	return s.commitDocumentChange(ctx, scope, prepared, req.IdentityID, func(suggestionID string) (*automerge.Document, automerge.ActorID, error) {
+		return s.paintTableChange(ctx, scope, prepared, req.IdentityID, suggestionID, table)
+	})
 }
 
 // ChangeBlock edits a heading, list, image, or other block, or stores that
@@ -370,116 +259,330 @@ func (s *DocumentService) ChangeBlock(
 		return nil, err
 	}
 
-	var (
-		document *coredata.Document
-		profile  gid.GID
-		err      error
-	)
+	var block collaboration.BlockChange
 
-	if req.Mode == DocumentChangeModeSuggest {
-		suggestion, authorID, err := s.openSuggestionForChange(ctx, scope, req.SuggestionID, req.IdentityID)
-		if err != nil {
-			return nil, err
-		}
-
-		document, err = s.loadReviewDocument(ctx, scope, suggestion.DocumentID)
-		if err != nil {
-			return nil, err
-		}
-
-		profile = authorID
-		req.DocumentID = document.ID
-
-		change, err := s.blockChange(ctx, scope, document, req, suggestion.ID.String())
-		if err != nil {
-			return nil, err
-		}
-
-		painted, actorID, err := s.collaboration.PaintBlockSuggestion(
-			ctx,
-			scope,
-			document.ID,
-			document.OrganizationID,
-			req.IdentityID,
-			&profile,
-			change,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		defer func() { _ = painted.Close() }()
-
-		if err := s.persistSuggestionChange(ctx, scope, suggestion, req.IdentityID, profile, painted, actorID); err != nil {
-			return nil, err
-		}
-
-		return &DocumentChangeResult{Document: document, Suggestion: suggestion}, nil
-	}
-
-	document, profile, err = s.editableChangeDocument(ctx, scope, req.DocumentID, req.IdentityID)
-	if err != nil {
-		return nil, err
-	}
-
-	change, err := s.blockChange(ctx, scope, document, req, "")
-	if err != nil {
-		return nil, err
-	}
-
-	painted, actorID, err := s.collaboration.PaintDirectBlock(
+	prepared, err := s.prepareDocumentChange(
 		ctx,
 		scope,
-		document.ID,
-		document.OrganizationID,
+		req.Mode,
+		req.DocumentID,
+		req.SuggestionID,
 		req.IdentityID,
-		&profile,
-		change,
+		func(ctx context.Context, conn pg.Querier, document *coredata.Document) error {
+			resolved, err := resolveBlockChange(ctx, conn, scope, document, req)
+			if err != nil {
+				return err
+			}
+
+			block = resolved
+
+			return nil
+		},
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.commitDocumentChange(ctx, scope, prepared, req.IdentityID, func(suggestionID string) (*automerge.Document, automerge.ActorID, error) {
+		block.SuggestionID = suggestionID
+
+		return s.paintBlockChange(ctx, scope, prepared, req.IdentityID, suggestionID, block)
+	})
+}
+
+// documentChange is the document and author resolved for one edit. Suggestion
+// is set when the edit is stored as a redline instead of applied.
+type documentChange struct {
+	Document   *coredata.Document
+	ProfileID  gid.GID
+	Suggestion *coredata.DocumentSuggestion
+}
+
+// prepareDocumentChange loads the document, the caller's profile, and any
+// extra rows the edit needs on one transaction. A suggestion edit also loads
+// the open suggestion and checks that the caller wrote it.
+func (s *DocumentService) prepareDocumentChange(
+	ctx context.Context,
+	scope coredata.Scoper,
+	mode DocumentChangeMode,
+	documentID gid.GID,
+	suggestionID gid.GID,
+	identityID gid.GID,
+	attach func(ctx context.Context, conn pg.Querier, document *coredata.Document) error,
+) (*documentChange, error) {
+	prepared := &documentChange{}
+
+	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		switch mode {
+		case DocumentChangeModeSuggest:
+			suggestion := &coredata.DocumentSuggestion{}
+			if err := suggestion.LoadByIDForUpdate(ctx, tx, scope, suggestionID); err != nil {
+				return fmt.Errorf("cannot load document suggestion: %w", err)
+			}
+
+			if suggestion.Status != coredata.DocumentSuggestionStatusOpen {
+				return ErrDocumentSuggestionClosed
+			}
+
+			document, err := s.editableReviewDocument(ctx, tx, scope, suggestion.DocumentID)
+			if err != nil {
+				return err
+			}
+
+			profile, err := s.reviewProfile(ctx, tx, scope, suggestion.OrganizationID, identityID)
+			if err != nil {
+				return err
+			}
+
+			if profile.ID != suggestion.AuthorProfileID {
+				return ErrNotDocumentSuggestionAuthor
+			}
+
+			prepared.Document = document
+			prepared.ProfileID = profile.ID
+			prepared.Suggestion = suggestion
+		default:
+			document, err := s.editableReviewDocument(ctx, tx, scope, documentID)
+			if err != nil {
+				return err
+			}
+
+			profile, err := s.reviewProfile(ctx, tx, scope, document.OrganizationID, identityID)
+			if err != nil {
+				return err
+			}
+
+			prepared.Document = document
+			prepared.ProfileID = profile.ID
+		}
+
+		if attach == nil {
+			return nil
+		}
+
+		return attach(ctx, tx, prepared.Document)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return prepared, nil
+}
+
+func (s *DocumentService) commitDocumentChange(
+	ctx context.Context,
+	scope coredata.Scoper,
+	prepared *documentChange,
+	identityID gid.GID,
+	paint func(suggestionID string) (*automerge.Document, automerge.ActorID, error),
+) (*DocumentChangeResult, error) {
+	suggestionID := ""
+	if prepared.Suggestion != nil {
+		suggestionID = prepared.Suggestion.ID.String()
+	}
+
+	painted, actorID, err := paint(suggestionID)
 	if err != nil {
 		return nil, err
 	}
 
 	defer func() { _ = painted.Close() }()
 
-	if err := s.finishDirectEdit(ctx, scope, document, req.IdentityID, profile, painted, actorID); err != nil {
+	if prepared.Suggestion != nil {
+		if err := s.persistSuggestionChange(
+			ctx,
+			scope,
+			prepared.Suggestion,
+			identityID,
+			prepared.ProfileID,
+			painted,
+			actorID,
+		); err != nil {
+			return nil, err
+		}
+
+		return &DocumentChangeResult{Document: prepared.Document, Suggestion: prepared.Suggestion}, nil
+	}
+
+	if err := s.finishDirectEdit(
+		ctx,
+		scope,
+		prepared.Document,
+		identityID,
+		prepared.ProfileID,
+		painted,
+		actorID,
+	); err != nil {
 		return nil, err
 	}
 
-	return &DocumentChangeResult{Document: document}, nil
+	return &DocumentChangeResult{Document: prepared.Document}, nil
 }
 
-func (s *DocumentService) blockChange(
+func (s *DocumentService) paintTextChange(
 	ctx context.Context,
+	scope coredata.Scoper,
+	prepared *documentChange,
+	req ChangeDocumentTextRequest,
+	suggestionID string,
+) (*automerge.Document, automerge.ActorID, error) {
+	profileID := prepared.ProfileID
+
+	if suggestionID != "" {
+		return s.collaboration.PaintSuggestion(
+			ctx,
+			scope,
+			prepared.Document.ID,
+			prepared.Document.OrganizationID,
+			req.IdentityID,
+			&profileID,
+			suggestionID,
+			req.Quote,
+			req.Replacement,
+			req.Occurrence,
+		)
+	}
+
+	return s.collaboration.PaintDirectText(
+		ctx,
+		scope,
+		prepared.Document.ID,
+		prepared.Document.OrganizationID,
+		req.IdentityID,
+		&profileID,
+		req.Quote,
+		req.Replacement,
+		req.Occurrence,
+	)
+}
+
+func (s *DocumentService) paintFormatChange(
+	ctx context.Context,
+	scope coredata.Scoper,
+	prepared *documentChange,
+	identityID gid.GID,
+	suggestionID string,
+	format collaboration.FormatSuggestion,
+) (*automerge.Document, automerge.ActorID, error) {
+	profileID := prepared.ProfileID
+
+	if suggestionID != "" {
+		return s.collaboration.PaintFormatSuggestion(
+			ctx,
+			scope,
+			prepared.Document.ID,
+			prepared.Document.OrganizationID,
+			identityID,
+			&profileID,
+			suggestionID,
+			format,
+		)
+	}
+
+	return s.collaboration.PaintDirectFormat(
+		ctx,
+		scope,
+		prepared.Document.ID,
+		prepared.Document.OrganizationID,
+		identityID,
+		&profileID,
+		format,
+	)
+}
+
+func (s *DocumentService) paintTableChange(
+	ctx context.Context,
+	scope coredata.Scoper,
+	prepared *documentChange,
+	identityID gid.GID,
+	suggestionID string,
+	table collaboration.TableSuggestion,
+) (*automerge.Document, automerge.ActorID, error) {
+	profileID := prepared.ProfileID
+
+	if suggestionID != "" {
+		return s.collaboration.PaintTableSuggestion(
+			ctx,
+			scope,
+			prepared.Document.ID,
+			prepared.Document.OrganizationID,
+			identityID,
+			&profileID,
+			suggestionID,
+			table,
+		)
+	}
+
+	return s.collaboration.PaintDirectTable(
+		ctx,
+		scope,
+		prepared.Document.ID,
+		prepared.Document.OrganizationID,
+		identityID,
+		&profileID,
+		table,
+	)
+}
+
+func (s *DocumentService) paintBlockChange(
+	ctx context.Context,
+	scope coredata.Scoper,
+	prepared *documentChange,
+	identityID gid.GID,
+	suggestionID string,
+	block collaboration.BlockChange,
+) (*automerge.Document, automerge.ActorID, error) {
+	profileID := prepared.ProfileID
+
+	if suggestionID != "" {
+		return s.collaboration.PaintBlockSuggestion(
+			ctx,
+			scope,
+			prepared.Document.ID,
+			prepared.Document.OrganizationID,
+			identityID,
+			&profileID,
+			block,
+		)
+	}
+
+	return s.collaboration.PaintDirectBlock(
+		ctx,
+		scope,
+		prepared.Document.ID,
+		prepared.Document.OrganizationID,
+		identityID,
+		&profileID,
+		block,
+	)
+}
+
+func resolveBlockChange(
+	ctx context.Context,
+	conn pg.Querier,
 	scope coredata.Scoper,
 	document *coredata.Document,
 	req ChangeDocumentBlockRequest,
-	suggestionID string,
 ) (collaboration.BlockChange, error) {
 	change := collaboration.BlockChange{
-		Operation:    req.Operation,
-		Quote:        req.Quote,
-		Occurrence:   req.Occurrence,
-		Before:       req.Before,
-		Block:        req.Block,
-		Level:        req.Level,
-		Language:     req.Language,
-		Text:         req.Text,
-		Items:        req.Items,
-		Checked:      req.Checked,
-		Src:          req.Src,
-		Alt:          req.Alt,
-		Width:        req.Width,
-		SuggestionID: suggestionID,
+		Operation:  req.Operation,
+		Quote:      req.Quote,
+		Occurrence: req.Occurrence,
+		Before:     req.Before,
+		Block:      req.Block,
+		Level:      req.Level,
+		Language:   req.Language,
+		Text:       req.Text,
+		Items:      req.Items,
+		Checked:    req.Checked,
+		Src:        req.Src,
+		Alt:        req.Alt,
+		Width:      req.Width,
 	}
 
 	if req.FileID != gid.Nil {
 		file := &coredata.File{}
-
-		err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-			return file.LoadActiveByID(ctx, conn, scope, req.FileID)
-		})
-		if err != nil {
+		if err := file.LoadActiveByID(ctx, conn, scope, req.FileID); err != nil {
 			return collaboration.BlockChange{}, err
 		}
 
@@ -495,11 +598,7 @@ func (s *DocumentService) blockChange(
 
 	if req.ProfileID != gid.Nil {
 		profile := &coredata.MembershipProfile{}
-
-		err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-			return profile.LoadByID(ctx, conn, scope, req.ProfileID)
-		})
-		if err != nil {
+		if err := profile.LoadByID(ctx, conn, scope, req.ProfileID); err != nil {
 			return collaboration.BlockChange{}, err
 		}
 
@@ -512,40 +611,6 @@ func (s *DocumentService) blockChange(
 	}
 
 	return change, nil
-}
-
-func (s *DocumentService) editableChangeDocument(
-	ctx context.Context,
-	scope coredata.Scoper,
-	documentID gid.GID,
-	identityID gid.GID,
-) (*coredata.Document, gid.GID, error) {
-	var (
-		document  *coredata.Document
-		profileID gid.GID
-	)
-
-	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		loaded, err := s.editableReviewDocument(ctx, tx, scope, documentID)
-		if err != nil {
-			return err
-		}
-
-		profile, err := s.reviewProfile(ctx, tx, scope, loaded.OrganizationID, identityID)
-		if err != nil {
-			return err
-		}
-
-		document = loaded
-		profileID = profile.ID
-
-		return nil
-	})
-	if err != nil {
-		return nil, gid.GID{}, err
-	}
-
-	return document, profileID, nil
 }
 
 func (s *DocumentService) finishDirectEdit(
@@ -576,27 +641,6 @@ func (s *DocumentService) finishDirectEdit(
 	s.notifyReview(ctx, document.ID)
 
 	return nil
-}
-
-func (s *DocumentService) loadReviewDocument(
-	ctx context.Context,
-	scope coredata.Scoper,
-	documentID gid.GID,
-) (*coredata.Document, error) {
-	document := &coredata.Document{}
-
-	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		if err := document.LoadByID(ctx, conn, scope, documentID); err != nil {
-			return fmt.Errorf("cannot load document: %w", err)
-		}
-
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return document, nil
 }
 
 func validateChangeMode(mode DocumentChangeMode, documentID gid.GID, suggestionID gid.GID) error {
