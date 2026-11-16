@@ -326,8 +326,8 @@ func (s *DocumentService) ChangeBlock(
 		req.DocumentID,
 		req.SuggestionID,
 		req.IdentityID,
-		func(ctx context.Context, conn pg.Querier) error {
-			resolved, err := resolveBlockChange(ctx, conn, scope, req)
+		func(ctx context.Context, conn pg.Querier, document *coredata.Document) error {
+			resolved, err := resolveBlockChange(ctx, conn, scope, document, req)
 			if err != nil {
 				return err
 			}
@@ -372,7 +372,7 @@ func (s *DocumentService) prepareDocumentChange(
 	documentID gid.GID,
 	suggestionID gid.GID,
 	identityID gid.GID,
-	attach func(ctx context.Context, conn pg.Querier) error,
+	attach func(ctx context.Context, conn pg.Querier, document *coredata.Document) error,
 ) (*documentChange, error) {
 	prepared := &documentChange{}
 
@@ -426,7 +426,7 @@ func (s *DocumentService) prepareDocumentChange(
 				return nil
 			}
 
-			return attach(ctx, tx)
+			return attach(ctx, tx, prepared.Document)
 		},
 	)
 	if err != nil {
@@ -632,6 +632,7 @@ func resolveBlockChange(
 	ctx context.Context,
 	conn pg.Querier,
 	scope coredata.Scoper,
+	document *coredata.Document,
 	req ChangeDocumentBlockRequest,
 ) (collaboration.BlockChange, error) {
 	change := collaboration.BlockChange{
@@ -656,6 +657,10 @@ func resolveBlockChange(
 			return collaboration.BlockChange{}, err
 		}
 
+		if file.OrganizationID != document.OrganizationID {
+			return collaboration.BlockChange{}, coredata.ErrResourceNotFound
+		}
+
 		change.FileID = file.ID.String()
 		change.FileName = file.FileName
 		change.MimeType = file.MimeType
@@ -668,7 +673,7 @@ func resolveBlockChange(
 			return collaboration.BlockChange{}, err
 		}
 
-		if strings.TrimSpace(profile.FullName) == "" {
+		if profile.OrganizationID != document.OrganizationID || strings.TrimSpace(profile.FullName) == "" {
 			return collaboration.BlockChange{}, coredata.ErrResourceNotFound
 		}
 
