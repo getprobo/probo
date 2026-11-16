@@ -44,6 +44,7 @@ export function FileNodeView({ node }: ReactNodeViewProps) {
         target="_blank"
         rel="noopener noreferrer"
         contentEditable={false}
+        spellCheck={false}
       >
         <PaperclipIcon size={16} weight="bold" />
         <span className="rich-file-name">{fileName}</span>

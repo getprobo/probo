@@ -10,6 +10,13 @@
     "settings": "Notification settings",
     "markAllRead": "Mark all as read"
   },
+  "size": {
+    "B": "B",
+    "KB": "KB",
+    "MB": "MB",
+    "GB": "GB",
+    "TB": "TB"
+  },
   "ui": {
     "richEditor": {
       "file": "File",

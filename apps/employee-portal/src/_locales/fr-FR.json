@@ -11,6 +11,13 @@
     "settings": "Paramètres de notification",
     "markAllRead": "Tout marquer comme lu"
   },
+  "size": {
+    "B": "o",
+    "KB": "Ko",
+    "MB": "Mo",
+    "GB": "Go",
+    "TB": "To"
+  },
   "ui": {
     "richEditor": {
       "file": "Fichier",
