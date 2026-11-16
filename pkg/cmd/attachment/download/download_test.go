@@ -83,6 +83,23 @@ func TestDownloadCommand_WritesFileFromDescriptionLink(t *testing.T) {
 	t.Parallel()
 
 	fileID := gid.New(gid.NewTenantID(), coredata.FileEntityType).String()
+	assertDownloadedFile(t, fileID)
+}
+
+func TestDownloadCommand_WritesDashPrefixedFileID(t *testing.T) {
+	t.Parallel()
+
+	// The id from the failing run. pflag reads the leading "-m" as a shorthand.
+	const fileID = "-moh-17gAAEAGQAAAaHl6p43StpYd7PR"
+
+	_, err := gid.ParseGID(fileID)
+	require.NoError(t, err)
+
+	assertDownloadedFile(t, fileID)
+}
+
+func assertDownloadedFile(t *testing.T, fileID string) {
+	t.Helper()
 
 	storage := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Empty(t, r.Header.Get("Authorization"))
@@ -117,7 +134,8 @@ func TestDownloadCommand_WritesFileFromDescriptionLink(t *testing.T) {
 
 	dest := filepath.Join(t.TempDir(), "saved.pdf")
 	cmd := NewCmdDownload(factory)
-	cmd.SetArgs([]string{fileID, dest})
+	// Base64url ids can start with '-'. End flag parsing before the id.
+	cmd.SetArgs([]string{"--", fileID, dest})
 
 	require.NoError(t, cmd.Execute())
 	assert.Contains(t, out.String(), "Downloaded "+dest)

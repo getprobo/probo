@@ -47,10 +47,16 @@ func TestAcceptDashPrefixedIDs(t *testing.T) {
 	require.False(t, strings.HasPrefix(plain, "-"))
 	require.True(t, strings.HasPrefix(long, "--"))
 
-	// The id from the failing e2e run. It starts with the shorthand '-u'.
-	const reported = "-uF05HEMAGsAAQAAAaGMWaDZxr42mOTc"
+	// Ids from failing runs. Each starts with a shorthand ('-u', '-m').
+	const (
+		reported         = "-uF05HEMAGsAAQAAAaGMWaDZxr42mOTc"
+		reportedDownload = "-moh-17gAAEAGQAAAaHl6p43StpYd7PR"
+	)
 
 	_, err := gid.ParseGID(reported)
+	require.NoError(t, err)
+
+	_, err = gid.ParseGID(reportedDownload)
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -67,6 +73,16 @@ func TestAcceptDashPrefixedIDs(t *testing.T) {
 			name: "reported e2e id",
 			args: []string{"framework", "view", reported, "--json"},
 			want: []string{"framework", "view", "--json", "--", reported},
+		},
+		{
+			name: "reported file download id",
+			args: []string{"file", "download", reportedDownload, "--json"},
+			want: []string{"file", "download", "--json", "--", reportedDownload},
+		},
+		{
+			name: "file download stdout sentinel",
+			args: []string{"file", "download", dash, "-"},
+			want: []string{"file", "download", "--", dash, "-"},
 		},
 		{
 			name: "id that looks like a long flag",
@@ -159,6 +175,14 @@ func TestDashPrefixedIDReachesRun(t *testing.T) {
 		{
 			name: "device view",
 			args: []string{"device", "view", dash, "--json"},
+		},
+		{
+			name: "file download",
+			args: []string{"file", "download", "-moh-17gAAEAGQAAAaHl6p43StpYd7PR"},
+		},
+		{
+			name: "file download to stdout",
+			args: []string{"file", "download", dash, "-"},
 		},
 		{
 			name: "list organization flag",
