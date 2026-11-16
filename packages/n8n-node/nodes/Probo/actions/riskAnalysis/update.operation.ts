@@ -20,6 +20,7 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
+import { parseScoreLevels, scoreLevelsSelection } from './scoreLevels';
 
 export const description: INodeProperties[] = [
 	{
@@ -80,6 +81,13 @@ export const description: INodeProperties[] = [
 				default: '',
 				description: 'Start of the analysis period',
 			},
+			{
+				displayName: 'Score Levels',
+				name: 'scoreLevels',
+				type: 'json',
+				default: '',
+				description: 'Replacement score-to-level mapping. Omit to leave the current mapping unchanged. Each item has level and minScore.',
+			},
 		],
 	},
 ];
@@ -94,6 +102,7 @@ export async function execute(
 		description?: string;
 		periodStart?: string;
 		periodEnd?: string;
+		scoreLevels?: unknown;
 	};
 
 	const query = `
@@ -111,6 +120,7 @@ export async function execute(
 						rows
 						cols
 					}
+					${scoreLevelsSelection}
 					createdAt
 					updatedAt
 				}
@@ -124,6 +134,9 @@ export async function execute(
 		input.description = additionalFields.description === ''
 			? null
 			: additionalFields.description;
+	}
+	if (additionalFields.scoreLevels != null && additionalFields.scoreLevels !== '') {
+		input.scoreLevels = parseScoreLevels(additionalFields.scoreLevels);
 	}
 	if (additionalFields.periodStart || additionalFields.periodEnd) {
 		input.period = {

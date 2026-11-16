@@ -43,6 +43,7 @@ import { isRichEditorContentEmpty } from "#/pages/organizations/_lib/richEditorC
 import { riskAnalysisDescriptionField } from "../variants";
 
 import { formatMatrixSize } from "./matrixSize";
+import { formatScoreLevelSummary } from "./scoreLevels";
 
 export const forkRiskAnalysisDialogFragment = graphql`
   fragment ForkRiskAnalysisDialog_riskAnalysis on RiskAnalysis {
@@ -52,6 +53,10 @@ export const forkRiskAnalysisDialogFragment = graphql`
     matrixSize {
       rows
       cols
+    }
+    scoreLevels {
+      level
+      minScore
     }
   }
 `;
@@ -183,6 +188,19 @@ export function ForkRiskAnalysisDialog({
             value={formatMatrixSize(
               riskAnalysis.matrixSize.rows,
               riskAnalysis.matrixSize.cols,
+            )}
+          />
+          <Field
+            disabled
+            label={t("scoreLevels.field")}
+            type="text"
+            value={formatScoreLevelSummary(
+              riskAnalysis.scoreLevels.map(level => ({
+                level: level.level,
+                minScore: level.minScore,
+              })),
+              riskAnalysis.matrixSize.rows * riskAnalysis.matrixSize.cols,
+              level => t(`ui.risk.severity.${level.toLowerCase()}`),
             )}
           />
           <Field

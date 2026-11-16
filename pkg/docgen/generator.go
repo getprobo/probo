@@ -296,6 +296,8 @@ type (
 		Period           string
 		Description      string
 		Matrix           RiskAnalysisMatrix
+		MaxScore         int
+		ScoreBands       string
 		TotalPlans       int
 		Rows             []RiskAnalysisRow
 		Diagrams         []RiskAnalysisDiagram

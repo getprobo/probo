@@ -138,6 +138,10 @@ export const riskAnalysisPlansSectionFragment = graphql`
       rows
       cols
     }
+    scoreLevels {
+      level
+      minScore
+    }
     ...RiskAnalysisMatrices_analysis @arguments(asOf: $asOf)
     ...LinkedRiskListItem_analysis
     ...RiskAnalysisPlansSection_plans @arguments(filter: $filter, asOf: $asOf, orderBy: $orderBy)
@@ -333,6 +337,10 @@ function RiskAnalysisPlansTable({
   }
 
   const matrixSize = { rows: analysis.matrixSize.rows, cols: analysis.matrixSize.cols };
+  const scoreLevels = analysis.scoreLevels.map(level => ({
+    level: level.level,
+    minScore: level.minScore,
+  }));
   const plans = plansData.treatmentPlans?.edges.map(edge => edge.node) ?? [];
   const connectionId = plansData.treatmentPlans?.__id ?? "";
 
@@ -404,6 +412,7 @@ function RiskAnalysisPlansTable({
                         treatmentPlanKey={row.plan}
                         connectionId={connectionId}
                         matrixSize={matrixSize}
+                        scoreLevels={scoreLevels}
                         readOnly={hasAsOf}
                         onChanged={reload}
                       />

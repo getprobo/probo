@@ -46,6 +46,10 @@ func TestRiskAnalysis_RBAC(t *testing.T) {
 				"organizationId": viewer.GetOrganizationID().String(),
 				"name":           "test",
 				"matrixSize":     map[string]any{"rows": 5, "cols": 5},
+				"scoreLevels": []map[string]any{
+					{"level": "LOW", "minScore": 1},
+					{"level": "HIGH", "minScore": 10},
+				},
 			},
 		})
 		testutil.RequireForbiddenError(t, err, "viewer cannot create risk analysis")

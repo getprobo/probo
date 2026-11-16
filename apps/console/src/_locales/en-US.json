@@ -2720,6 +2720,17 @@
     "placeholders": { "sourceNode": "Select source node", "targetNode": "Select target node", "name": "e.g. User → API" },
     "actions": { "add": "Add" }
   },
+  "scoreLevels": {
+    "field": "Levels",
+    "minimum": "Minimum",
+    "minScore": "{{level}} minimum score",
+    "validation": {
+      "atLeastTwo": "Include at least two levels",
+      "startAtOne": "The first included level must start at 1",
+      "increasing": "Each level must start above the previous one",
+      "withinMatrix": "Each minimum score must be between 1 and the matrix maximum"
+    }
+  },
   "createRiskAnalysisDialog": {
     "title": "New Risk Analysis",
     "breadcrumb": { "riskAnalyses": "Risk Analyses" },

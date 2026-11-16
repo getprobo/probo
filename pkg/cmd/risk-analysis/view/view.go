@@ -23,6 +23,7 @@ package view
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/charmbracelet/lipgloss"
@@ -46,6 +47,10 @@ query RiskAnalysisView($id: ID!, $asOf: Datetime) {
       matrixSize {
         rows
         cols
+      }
+      scoreLevels {
+        level
+        minScore
       }
       matrixCells(asOf: $asOf) {
         type
@@ -74,6 +79,10 @@ type viewResponse struct {
 			Rows int `json:"rows"`
 			Cols int `json:"cols"`
 		} `json:"matrixSize"`
+		ScoreLevels []struct {
+			Level    string `json:"level"`
+			MinScore int    `json:"minScore"`
+		} `json:"scoreLevels"`
 		MatrixCells []struct {
 			Type       string `json:"type"`
 			Likelihood int    `json:"likelihood"`
@@ -188,6 +197,7 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			_, _ = fmt.Fprintf(out, "%s%d×%d\n", label.Render("Matrix size:"), r.MatrixSize.Rows, r.MatrixSize.Cols)
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Score levels:"), formatScoreLevels(r.ScoreLevels))
 
 			if len(r.MatrixCells) > 0 {
 				_, _ = fmt.Fprintf(out, "%s%d occupied cells\n", label.Render("Matrix cells:"), len(r.MatrixCells))
@@ -221,4 +231,16 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 	)
 
 	return cmd
+}
+
+func formatScoreLevels(levels []struct {
+	Level    string `json:"level"`
+	MinScore int    `json:"minScore"`
+}) string {
+	parts := make([]string, len(levels))
+	for i, level := range levels {
+		parts[i] = fmt.Sprintf("%s=%d", level.Level, level.MinScore)
+	}
+
+	return strings.Join(parts, ",")
 }

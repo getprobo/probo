@@ -671,6 +671,32 @@ components:
             - 5
           description: Number of impact columns (must equal rows; one of 3, 4, or 5)
 
+    RiskScoreLevel:
+      type: string
+      enum:
+        - LOW
+        - MEDIUM
+        - HIGH
+        - CRITICAL
+      description: Risk score level. Order is LOW, MEDIUM, HIGH, CRITICAL. Levels may be omitted.
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.RiskScoreLevel
+
+    RiskScoreLevelMapping:
+      type: object
+      required:
+        - level
+        - min_score
+      description: >
+        Lowest score that maps to a level. Scores continue up to the next
+        level's minimum, or through the maximum matrix score for the last level.
+      properties:
+        level:
+          $ref: "#/components/schemas/RiskScoreLevel"
+        min_score:
+          type: integer
+          minimum: 1
+          description: Lowest score that maps to this level. The first level must start at 1.
+
     ListOrganizationsInput:
       type: object
       properties:
@@ -17780,6 +17806,7 @@ components:
         - organization_id
         - name
         - matrix_size
+        - score_levels
         - created_at
         - updated_at
       properties:
@@ -17800,6 +17827,14 @@ components:
         matrix_size:
           $ref: "#/components/schemas/MatrixSize"
           description: Likelihood/impact matrix size (3×3, 4×4, or 5×5)
+        score_levels:
+          type: array
+          minItems: 2
+          items:
+            $ref: "#/components/schemas/RiskScoreLevelMapping"
+          description: >
+            Score-to-level mapping. At least two of LOW, MEDIUM, HIGH, and
+            CRITICAL, in that order. Colors are not stored.
         matrix_cells:
           type: array
           items:
@@ -18062,6 +18097,14 @@ components:
         matrix_size:
           $ref: "#/components/schemas/MatrixSize"
           description: Likelihood/impact matrix size (3×3, 4×4, or 5×5)
+        score_levels:
+          type: array
+          minItems: 2
+          items:
+            $ref: "#/components/schemas/RiskScoreLevelMapping"
+          description: >
+            Score-to-level mapping. At least two of LOW, MEDIUM, HIGH, and
+            CRITICAL, in that order. The first level's min_score must be 1.
 
     AddRiskAnalysisOutput:
       type: object
@@ -18089,6 +18132,14 @@ components:
         period:
           $ref: "#/components/schemas/Period"
           description: Analysis period
+        score_levels:
+          type: array
+          minItems: 2
+          items:
+            $ref: "#/components/schemas/RiskScoreLevelMapping"
+          description: >
+            Score-to-level mapping. At least two of LOW, MEDIUM, HIGH, and
+            CRITICAL, in that order. Omit to leave the current mapping unchanged.
 
     UpdateRiskAnalysisOutput:
       type: object

@@ -18,7 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { getRiskImpacts, getRiskLikelihoods, getRiskScoreLevel, groupBy } from "@probo/helpers";
+import {
+  getRiskImpacts,
+  getRiskLikelihoods,
+  getRiskScoreLevel,
+  groupBy,
+  type RiskScoreLevel,
+  type RiskScoreLevelMapping,
+} from "@probo/helpers";
 import { clsx } from "clsx";
 import { Fragment, useMemo } from "react";
 import { useTranslation } from "react-i18next";
@@ -48,6 +55,7 @@ type Props = {
   risks?: ReadonlyArray<Risk>;
   cellCounts?: ReadonlyArray<RisksChartCellCount>;
   matrixSize?: { rows: number; cols: number };
+  scoreLevels?: ReadonlyArray<RiskScoreLevelMapping> | null;
   variant?: "default" | "bare";
   selectedCell?: { likelihood: number; impact: number } | null;
   onCellSelect?: (cell: { likelihood: number; impact: number }) => void;
@@ -66,6 +74,20 @@ type Risk = {
 
 const cellKey = (impact: number, likelihood: number) =>
   `${impact}-${likelihood}`;
+
+const levelIndex: Record<RiskScoreLevel, 0 | 1 | 2 | 3> = {
+  LOW: 0,
+  MEDIUM: 1,
+  HIGH: 2,
+  CRITICAL: 3,
+};
+
+const defaultLegendLevels: ReadonlyArray<RiskScoreLevelMapping> = [
+  { level: "LOW", minScore: 1 },
+  { level: "MEDIUM", minScore: 5 },
+  { level: "HIGH", minScore: 10 },
+  { level: "CRITICAL", minScore: 15 },
+];
 
 function inMatrix(score: number, max: number): boolean {
   return Number.isInteger(score) && score >= 1 && score <= max;
@@ -109,6 +131,7 @@ export function RisksChart({
   risks,
   cellCounts,
   matrixSize,
+  scoreLevels,
   variant = "default",
   selectedCell,
   onCellSelect,
@@ -118,12 +141,9 @@ export function RisksChart({
   const impactMax = matrixSize?.cols ?? 5;
   const bare = variant === "bare";
 
-  const legend = [
-    t("ui.risk.severity.low"),
-    t("ui.risk.severity.medium"),
-    t("ui.risk.severity.high"),
-    t("ui.risk.severity.critical"),
-  ];
+  const legendLevels = scoreLevels != null && scoreLevels.length > 0
+    ? scoreLevels
+    : defaultLegendLevels;
 
   const impacts = getRiskImpacts(t, impactMax).reverse();
   const likelihoods = getRiskLikelihoods(t, likelihoodMax);
@@ -191,6 +211,7 @@ export function RisksChart({
                   impact={impact.value}
                   likelihood={likelihood.value}
                   matrixSize={{ rows: likelihoodMax, cols: impactMax }}
+                  scoreLevels={scoreLevels}
                   organizationId={organizationId}
                   selected={
                     selectedCell?.likelihood === likelihood.value
@@ -254,18 +275,18 @@ export function RisksChart({
           {chartTitle(type, t)}
         </h2>
         <div className="flex gap-3">
-          {legend.map((label, i) => (
+          {legendLevels.map(entry => (
             <div
-              key={label}
+              key={entry.level}
               className="flex items-center gap-1 text-xs"
             >
               <div
                 className={clsx(
                   "size-[10px] rounded-xs",
-                  levelColors[i].color,
+                  levelColors[levelIndex[entry.level]].color,
                 )}
               />
-              <span>{label}</span>
+              <span>{t(`ui.risk.severity.${entry.level.toLowerCase()}`)}</span>
             </div>
           ))}
         </div>
@@ -289,6 +310,7 @@ function RisksChartCell({
   impact,
   likelihood,
   matrixSize,
+  scoreLevels,
   organizationId,
   selected = false,
   onSelect,
@@ -298,12 +320,13 @@ function RisksChartCell({
   impact: number;
   likelihood: number;
   matrixSize: { rows: number; cols: number };
+  scoreLevels?: ReadonlyArray<RiskScoreLevelMapping> | null;
   organizationId: string;
   selected?: boolean;
   onSelect?: () => void;
 }) {
   const { t } = useTranslation();
-  const level = getRiskScoreLevel(impact * likelihood, matrixSize);
+  const level = getRiskScoreLevel(impact * likelihood, matrixSize, scoreLevels);
   const baseClass
     = "flex items-center justify-center aspect-square rounded-xl text-txt-invert text-sm font-semibold";
   const selectedClass = selected

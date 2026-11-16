@@ -122,6 +122,26 @@ enum RiskAnalysisThreatOrderField
         )
 }
 
+enum RiskScoreLevel
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.RiskScoreLevel") {
+    LOW
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskScoreLevelLow"
+        )
+    MEDIUM
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskScoreLevelMedium"
+        )
+    HIGH
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskScoreLevelHigh"
+        )
+    CRITICAL
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskScoreLevelCritical"
+        )
+}
+
 enum RiskAnalysisScenarioOrderField
     @goModel(
         model: "go.probo.inc/probo/pkg/coredata.RiskAnalysisScenarioOrderField"
@@ -206,12 +226,29 @@ type RiskAnalysisMatrixCell
     count: Int!
 }
 
+type RiskScoreLevelMapping
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.RiskScoreLevelMapping"
+    ) {
+    level: RiskScoreLevel!
+    minScore: Int!
+}
+
+input RiskScoreLevelMappingInput
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.RiskScoreLevelMapping"
+    ) {
+    level: RiskScoreLevel!
+    minScore: Int!
+}
+
 type RiskAnalysis implements Node {
     id: ID!
     name: String!
     description: String
     period: Period
     matrixSize: MatrixSize!
+    scoreLevels: [RiskScoreLevelMapping!]!
     document: Document @goField(forceResolver: true)
     organization: Organization @goField(forceResolver: true)
 
@@ -570,6 +607,7 @@ input CreateRiskAnalysisInput {
     description: String
     period: PeriodInput
     matrixSize: MatrixSizeInput!
+    scoreLevels: [RiskScoreLevelMappingInput!]
 }
 
 input UpdateRiskAnalysisInput {
@@ -577,6 +615,7 @@ input UpdateRiskAnalysisInput {
     name: String
     description: String @goField(omittable: true)
     period: PeriodInput
+    scoreLevels: [RiskScoreLevelMappingInput!]
 }
 
 input DeleteRiskAnalysisInput {

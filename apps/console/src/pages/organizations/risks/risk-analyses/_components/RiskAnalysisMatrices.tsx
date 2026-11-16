@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { getRiskImpacts, getRiskLikelihoods } from "@probo/helpers";
+import { getRiskImpacts, getRiskLikelihoods, type RiskScoreLevel } from "@probo/helpers";
 import { Card, IconClock, Input, levelColors, RisksChart } from "@probo/ui";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
@@ -34,6 +34,8 @@ import {
 } from "../_lib/matrixCell";
 import { useMatrixCellFilter } from "../_lib/useMatrixCellFilter";
 
+import { scoreLevelRanges } from "./scoreLevels";
+
 export const riskAnalysisMatricesFragment = graphql`
   fragment RiskAnalysisMatrices_analysis on RiskAnalysis
   @argumentDefinitions(
@@ -43,6 +45,10 @@ export const riskAnalysisMatricesFragment = graphql`
     matrixSize {
       rows
       cols
+    }
+    scoreLevels {
+      level
+      minScore
     }
     matrixCells(asOf: $asOf) {
       type
@@ -122,12 +128,16 @@ export function RiskAnalysisMatrices({
         label: item.label,
       }))
       .join(" · ");
-  const severities = [
-    t("ui.risk.severity.low"),
-    t("ui.risk.severity.medium"),
-    t("ui.risk.severity.high"),
-    t("ui.risk.severity.critical"),
-  ];
+  const scoreLevels = analysis.scoreLevels.map(level => ({
+    level: level.level,
+    minScore: level.minScore,
+  }));
+  const levelIndex: Record<RiskScoreLevel, 0 | 1 | 2 | 3> = {
+    LOW: 0,
+    MEDIUM: 1,
+    HIGH: 2,
+    CRITICAL: 3,
+  };
 
   return (
     <Card padded className="space-y-6 overflow-visible">
@@ -156,6 +166,7 @@ export function RiskAnalysisMatrices({
           type="inherent"
           cellCounts={cellCountsForType(cells, "inherent")}
           matrixSize={matrixSize}
+          scoreLevels={scoreLevels}
           variant="bare"
           selectedCell={selectedChartCell(cell, "inherent")}
           onCellSelect={next => toggleCell({ type: "inherent", ...next })}
@@ -165,6 +176,7 @@ export function RiskAnalysisMatrices({
           type="net"
           cellCounts={cellCountsForType(cells, "net")}
           matrixSize={matrixSize}
+          scoreLevels={scoreLevels}
           variant="bare"
           selectedCell={selectedChartCell(cell, "net")}
           onCellSelect={next => toggleCell({ type: "net", ...next })}
@@ -174,6 +186,7 @@ export function RiskAnalysisMatrices({
           type="residual"
           cellCounts={cellCountsForType(cells, "residual")}
           matrixSize={matrixSize}
+          scoreLevels={scoreLevels}
           variant="bare"
           selectedCell={selectedChartCell(cell, "residual")}
           onCellSelect={next => toggleCell({ type: "residual", ...next })}
@@ -193,10 +206,12 @@ export function RiskAnalysisMatrices({
           </div>
         </div>
         <div className="flex gap-3">
-          {severities.map((label, index) => (
-            <div key={label} className="flex items-center gap-1 text-xs text-txt-secondary">
-              <div className={`size-[10px] rounded-xs ${levelColors[index].color}`} />
-              <span>{label}</span>
+          {scoreLevelRanges(scoreLevels, matrixSize.rows * matrixSize.cols).map(entry => (
+            <div key={entry.level} className="flex items-center gap-1 text-xs text-txt-secondary">
+              <div className={`size-[10px] rounded-xs ${levelColors[levelIndex[entry.level]].color}`} />
+              <span>
+                {`${t(`ui.risk.severity.${entry.level.toLowerCase()}`)} (${entry.range})`}
+              </span>
             </div>
           ))}
         </div>

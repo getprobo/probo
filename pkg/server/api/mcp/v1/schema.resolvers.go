@@ -7164,12 +7164,19 @@ func (r *Resolver) AddRiskAnalysisTool(ctx context.Context, req *mcp.CallToolReq
 		return nil, types.AddRiskAnalysisOutput{}, fmt.Errorf("cannot convert description: %w", err)
 	}
 
+	var scoreLevels *coredata.ScoreLevels
+
+	if converted := types.ScoreLevelsFromInput(input.ScoreLevels); converted != nil {
+		scoreLevels = &converted
+	}
+
 	ra, err := r.riskManagement.Create(ctx, scope, riskmanagement.CreateRiskAnalysisRequest{
 		OrganizationID: input.OrganizationID,
 		Name:           input.Name,
 		Description:    description,
 		Period:         period,
 		MatrixSize:     matrixSize,
+		ScoreLevels:    scoreLevels,
 	})
 	if err != nil {
 		return nil, types.AddRiskAnalysisOutput{}, fmt.Errorf("failed to create risk analysis: %w", err)
@@ -7199,11 +7206,19 @@ func (r *Resolver) UpdateRiskAnalysisTool(ctx context.Context, req *mcp.CallTool
 		return nil, types.UpdateRiskAnalysisOutput{}, fmt.Errorf("cannot convert description: %w", err)
 	}
 
+	var scoreLevels *coredata.ScoreLevels
+
+	if input.ScoreLevels != nil {
+		converted := types.ScoreLevelsFromInput(input.ScoreLevels)
+		scoreLevels = &converted
+	}
+
 	ra, err := r.riskManagement.Update(ctx, scope, riskmanagement.UpdateRiskAnalysisRequest{
 		ID:          input.ID,
 		Name:        input.Name,
 		Description: description,
 		Period:      period,
+		ScoreLevels: scoreLevels,
 	})
 	if err != nil {
 		return nil, types.UpdateRiskAnalysisOutput{}, fmt.Errorf("failed to update risk analysis: %w", err)

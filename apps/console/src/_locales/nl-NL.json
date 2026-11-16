@@ -4841,6 +4841,17 @@
       "add": "Toevoegen"
     }
   },
+  "scoreLevels": {
+    "field": "Niveaus",
+    "minimum": "Minimum",
+    "minScore": "Minimumscore voor {{level}}",
+    "validation": {
+      "atLeastTwo": "Neem minstens twee niveaus op",
+      "startAtOne": "Het eerste opgenomen niveau moet bij 1 beginnen",
+      "increasing": "Elk niveau moet boven het vorige beginnen",
+      "withinMatrix": "Elke minimumscore moet tussen 1 en het matrixmaximum liggen"
+    }
+  },
   "createRiskAnalysisDialog": {
     "title": "Nieuwe risicobeoordeling",
     "breadcrumb": {

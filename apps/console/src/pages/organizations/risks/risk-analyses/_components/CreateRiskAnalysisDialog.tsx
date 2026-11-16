@@ -31,8 +31,8 @@ import {
   Option,
   useDialogRef,
 } from "@probo/ui";
-import { useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { useEffect, useState } from "react";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
 
@@ -50,6 +50,14 @@ import {
   type RiskAnalysisMatrixSizeOption,
   riskAnalysisMatrixSizeOptions,
 } from "./matrixSize";
+import {
+  draftScoreLevels,
+  type ScoreLevelDraft,
+  scoreLevelDraftError,
+  type ScoreLevelError,
+  scoreLevelsFromDraft,
+} from "./scoreLevels";
+import { ScoreLevelsField } from "./ScoreLevelsField";
 
 const createMutation = graphql`
   mutation CreateRiskAnalysisDialogCreateMutation(
@@ -73,7 +81,15 @@ type FormData = {
   periodStart: string;
   periodEnd: string;
   matrixSize: RiskAnalysisMatrixSizeOption;
+  scoreLevels: ScoreLevelDraft[];
 };
+
+function scoreLevelErrorMessage(
+  error: ScoreLevelError,
+  t: (key: string) => string,
+) {
+  return t(`scoreLevels.validation.${error}`);
+}
 
 export function CreateRiskAnalysisDialog(props: {
   connectionId: string;
@@ -84,15 +100,27 @@ export function CreateRiskAnalysisDialog(props: {
   const [createRiskAnalysis, isCreating] = useMutation<CreateRiskAnalysisDialogCreateMutation>(createMutation);
   const [editorKey, setEditorKey] = useState(0);
   const [uploading, setUploading] = useState(false);
-  const { register, handleSubmit, reset, control, formState } = useForm<FormData>({
+  const [scoreLevelsCustomized, setScoreLevelsCustomized] = useState(false);
+  const { register, handleSubmit, reset, control, formState, setValue } = useForm<FormData>({
     defaultValues: {
       name: "",
       description: "",
       periodStart: "",
       periodEnd: "",
       matrixSize: "5x5",
+      scoreLevels: draftScoreLevels(5, 5),
     },
   });
+  const matrixSize = useWatch({ control, name: "matrixSize" });
+
+  useEffect(() => {
+    if (scoreLevelsCustomized) {
+      return;
+    }
+
+    const size = matrixSizeFromOption(matrixSize);
+    setValue("scoreLevels", draftScoreLevels(size.rows, size.cols));
+  }, [matrixSize, scoreLevelsCustomized, setValue]);
 
   const onSubmit = async (data: FormData) => {
     if (uploading) {
@@ -113,11 +141,13 @@ export function CreateRiskAnalysisDialog(props: {
             description: isRichEditorContentEmpty(data.description) ? null : data.description,
             period,
             matrixSize: matrixSizeFromOption(data.matrixSize),
+            scoreLevels: scoreLevelsFromDraft(data.scoreLevels),
           },
           connections: [props.connectionId],
         },
       });
       reset();
+      setScoreLevelsCustomized(false);
       setEditorKey(key => key + 1);
       dialogRef.current?.close();
     } catch {
@@ -180,6 +210,33 @@ export function CreateRiskAnalysisDialog(props: {
               </Option>
             ))}
           </ControlledField>
+          <Controller
+            control={control}
+            name="scoreLevels"
+            rules={{
+              validate: (value) => {
+                const size = matrixSizeFromOption(matrixSize);
+                const error = scoreLevelDraftError(value, size.rows * size.cols);
+                return error == null || scoreLevelErrorMessage(error, t);
+              },
+            }}
+            render={({ field }) => {
+              const size = matrixSizeFromOption(matrixSize);
+              return (
+                <ScoreLevelsField
+                  id="create-score-levels"
+                  label={t("scoreLevels.field")}
+                  value={field.value}
+                  maxScore={size.rows * size.cols}
+                  error={formState.errors.scoreLevels?.message}
+                  onChange={(value) => {
+                    setScoreLevelsCustomized(true);
+                    field.onChange(value);
+                  }}
+                />
+              );
+            }}
+          />
           <Field
             label={t("createRiskAnalysisDialog.fields.periodStart")}
             error={formState.errors.periodStart?.message}

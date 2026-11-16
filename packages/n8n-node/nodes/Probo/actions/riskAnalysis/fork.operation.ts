@@ -20,6 +20,7 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
+import { scoreLevelsSelection } from './scoreLevels';
 
 export const description: INodeProperties[] = [
 	{
@@ -119,6 +120,7 @@ export async function execute(
 							rows
 							cols
 						}
+						${scoreLevelsSelection}
 						createdAt
 						updatedAt
 					}

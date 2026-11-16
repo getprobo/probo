@@ -4856,6 +4856,17 @@
       "add": "Ajouter"
     }
   },
+  "scoreLevels": {
+    "field": "Niveaux",
+    "minimum": "Minimum",
+    "minScore": "Score minimum pour {{level}}",
+    "validation": {
+      "atLeastTwo": "Incluez au moins deux niveaux",
+      "startAtOne": "Le premier niveau inclus doit commencer à 1",
+      "increasing": "Chaque niveau doit commencer au-dessus du précédent",
+      "withinMatrix": "Chaque score minimum doit être compris entre 1 et le maximum de la matrice"
+    }
+  },
   "createRiskAnalysisDialog": {
     "title": "Nouvelle analyse des risques",
     "breadcrumb": {

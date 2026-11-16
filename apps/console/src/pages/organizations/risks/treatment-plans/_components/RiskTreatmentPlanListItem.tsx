@@ -61,6 +61,10 @@ export const riskTreatmentPlanListItemFragment = graphql`
         rows
         cols
       }
+      scoreLevels {
+        level
+        minScore
+      }
     }
     canUpdate: permission(action: "risk-management:treatment-plan:update")
     canDelete: permission(action: "risk-management:treatment-plan:delete")
@@ -153,6 +157,10 @@ export function RiskTreatmentPlanListItem({
             residualLikelihood={treatmentPlan.residualLikelihood}
             residualImpact={treatmentPlan.residualImpact}
             matrixSize={matrixSize ?? { rows: 5, cols: 5 }}
+            scoreLevels={treatmentPlan.riskAnalysis.scoreLevels.map(level => ({
+              level: level.level,
+              minScore: level.minScore,
+            }))}
           />
         </Td>
         <Td noLink width={50} className="text-end">

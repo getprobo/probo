@@ -30,9 +30,13 @@ export {
   getTreatment,
   getRiskImpacts,
   getRiskLikelihoods,
+  defaultScoreLevels,
   getRiskScoreLevel,
   getSeverity,
+  riskScoreLevelOrder,
   type RiskMatrixSize,
+  type RiskScoreLevel,
+  type RiskScoreLevelMapping,
 } from "./risk";
 export {
   withViewTransition,

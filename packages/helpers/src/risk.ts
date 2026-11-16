@@ -97,6 +97,22 @@ export type RiskMatrixSize = {
     cols: number;
 };
 
+export const riskScoreLevelOrder = ["LOW", "MEDIUM", "HIGH", "CRITICAL"] as const;
+
+export type RiskScoreLevel = (typeof riskScoreLevelOrder)[number];
+
+export type RiskScoreLevelMapping = {
+    level: RiskScoreLevel;
+    minScore: number;
+};
+
+const LEVEL_INDEX: Record<RiskScoreLevel, 0 | 1 | 2 | 3> = {
+    LOW: 0,
+    MEDIUM: 1,
+    HIGH: 2,
+    CRITICAL: 3,
+};
+
 const DEFAULT_MATRIX_SIZE: RiskMatrixSize = { rows: 5, cols: 5 };
 
 // 5×5 bands: low < 5, medium < 10, high < 15, else critical.
@@ -104,10 +120,36 @@ const MEDIUM_RATIO = 5 / 25;
 const HIGH_RATIO = 10 / 25;
 const CRITICAL_RATIO = 15 / 25;
 
+export function defaultScoreLevels(rows: number, cols: number): RiskScoreLevelMapping[] {
+    const max = rows * cols;
+    const threshold = (numerator: number) => Math.ceil((max * numerator) / 25);
+
+    return [
+        { level: "LOW", minScore: 1 },
+        { level: "MEDIUM", minScore: threshold(5) },
+        { level: "HIGH", minScore: threshold(10) },
+        { level: "CRITICAL", minScore: threshold(15) },
+    ];
+}
+
 export function getRiskScoreLevel(
     score: number,
     matrixSize: RiskMatrixSize = DEFAULT_MATRIX_SIZE,
+    scoreLevels?: ReadonlyArray<RiskScoreLevelMapping> | null,
 ): 0 | 1 | 2 | 3 {
+    if (scoreLevels != null && scoreLevels.length > 0) {
+        let chosen = scoreLevels[0].level;
+        let bestMin = -1;
+        for (const entry of scoreLevels) {
+            if (entry.minScore <= score && entry.minScore >= bestMin) {
+                bestMin = entry.minScore;
+                chosen = entry.level;
+            }
+        }
+
+        return LEVEL_INDEX[chosen];
+    }
+
     const max = matrixSize.rows * matrixSize.cols;
     if (score >= max * CRITICAL_RATIO) {
         return 3;
@@ -159,6 +201,13 @@ export function getSeverity(
     t: Translator,
     score: number,
     matrixSize: RiskMatrixSize = DEFAULT_MATRIX_SIZE,
+    scoreLevels?: ReadonlyArray<RiskScoreLevelMapping> | null,
 ) {
+    if (scoreLevels != null && scoreLevels.length > 0) {
+        return getRiskSeverities(t, matrixSize)[
+            3 - getRiskScoreLevel(score, matrixSize, scoreLevels)
+        ];
+    }
+
     return getRiskSeverities(t, matrixSize).find((s) => score >= s.min);
 }

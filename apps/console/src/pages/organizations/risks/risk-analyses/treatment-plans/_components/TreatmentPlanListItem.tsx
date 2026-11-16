@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import type { RiskScoreLevelMapping } from "@probo/helpers";
 import {
   ActionDropdown,
   DropdownItem,
@@ -95,6 +96,7 @@ interface TreatmentPlanListItemProps {
   treatmentPlanKey: TreatmentPlanListItem_treatmentPlan$key;
   connectionId: string;
   matrixSize: MatrixSize;
+  scoreLevels?: ReadonlyArray<RiskScoreLevelMapping> | null;
   readOnly?: boolean;
   onChanged?: () => void;
 }
@@ -103,6 +105,7 @@ export function TreatmentPlanListItem({
   treatmentPlanKey,
   connectionId,
   matrixSize,
+  scoreLevels,
   readOnly = false,
   onChanged,
 }: TreatmentPlanListItemProps) {
@@ -198,6 +201,7 @@ export function TreatmentPlanListItem({
             residualLikelihood={residualLikelihood}
             residualImpact={residualImpact}
             matrixSize={matrixSize}
+            scoreLevels={scoreLevels}
           />
         </Td>
         <Td className="w-px whitespace-nowrap pr-6">

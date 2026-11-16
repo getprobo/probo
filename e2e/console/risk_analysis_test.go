@@ -47,6 +47,10 @@ func TestRiskAnalysis_Create(t *testing.T) {
 							Rows int `json:"rows"`
 							Cols int `json:"cols"`
 						} `json:"matrixSize"`
+						ScoreLevels []struct {
+							Level    string `json:"level"`
+							MinScore int    `json:"minScore"`
+						} `json:"scoreLevels"`
 					} `json:"node"`
 				} `json:"riskAnalysisEdge"`
 			} `json:"createRiskAnalysis"`
@@ -55,7 +59,7 @@ func TestRiskAnalysis_Create(t *testing.T) {
 		err := owner.Execute(`
 			mutation($input: CreateRiskAnalysisInput!) {
 				createRiskAnalysis(input: $input) {
-					riskAnalysisEdge { node { id name matrixSize { rows cols } } }
+					riskAnalysisEdge { node { id name matrixSize { rows cols } scoreLevels { level minScore } } }
 				}
 			}
 		`, map[string]any{
@@ -63,6 +67,12 @@ func TestRiskAnalysis_Create(t *testing.T) {
 				"organizationId": owner.GetOrganizationID().String(),
 				"name":           "Platform Threat Model",
 				"matrixSize":     map[string]any{"rows": 5, "cols": 5},
+				"scoreLevels": []map[string]any{
+					{"level": "LOW", "minScore": 1},
+					{"level": "MEDIUM", "minScore": 5},
+					{"level": "HIGH", "minScore": 10},
+					{"level": "CRITICAL", "minScore": 15},
+				},
 			},
 		}, &result)
 
@@ -71,6 +81,124 @@ func TestRiskAnalysis_Create(t *testing.T) {
 		assert.Equal(t, "Platform Threat Model", result.CreateRiskAnalysis.RiskAnalysisEdge.Node.Name)
 		assert.Equal(t, 5, result.CreateRiskAnalysis.RiskAnalysisEdge.Node.MatrixSize.Rows)
 		assert.Equal(t, 5, result.CreateRiskAnalysis.RiskAnalysisEdge.Node.MatrixSize.Cols)
+		levels := result.CreateRiskAnalysis.RiskAnalysisEdge.Node.ScoreLevels
+		require.Len(t, levels, 4)
+		assert.Equal(t, "LOW", levels[0].Level)
+		assert.Equal(t, 1, levels[0].MinScore)
+		assert.Equal(t, "MEDIUM", levels[1].Level)
+		assert.Equal(t, 5, levels[1].MinScore)
+		assert.Equal(t, "HIGH", levels[2].Level)
+		assert.Equal(t, 10, levels[2].MinScore)
+		assert.Equal(t, "CRITICAL", levels[3].Level)
+		assert.Equal(t, 15, levels[3].MinScore)
+	})
+}
+
+func TestRiskAnalysis_ScoreLevels(t *testing.T) {
+	t.Parallel()
+
+	t.Run("rejects a single level", func(t *testing.T) {
+		t.Parallel()
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+
+		_, err := owner.Do(`
+			mutation($input: CreateRiskAnalysisInput!) {
+				createRiskAnalysis(input: $input) { riskAnalysisEdge { node { id } } }
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"organizationId": owner.GetOrganizationID().String(),
+				"name":           "One level",
+				"matrixSize":     map[string]any{"rows": 5, "cols": 5},
+				"scoreLevels": []map[string]any{
+					{"level": "LOW", "minScore": 1},
+				},
+			},
+		})
+		require.Error(t, err)
+	})
+
+	t.Run("uses the ratio bands when score levels are omitted", func(t *testing.T) {
+		t.Parallel()
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+
+		var result struct {
+			CreateRiskAnalysis struct {
+				RiskAnalysisEdge struct {
+					Node struct {
+						ScoreLevels []struct {
+							Level    string `json:"level"`
+							MinScore int    `json:"minScore"`
+						} `json:"scoreLevels"`
+					} `json:"node"`
+				} `json:"riskAnalysisEdge"`
+			} `json:"createRiskAnalysis"`
+		}
+
+		err := owner.Execute(`
+			mutation($input: CreateRiskAnalysisInput!) {
+				createRiskAnalysis(input: $input) {
+					riskAnalysisEdge { node { scoreLevels { level minScore } } }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"organizationId": owner.GetOrganizationID().String(),
+				"name":           "Default bands",
+				"matrixSize":     map[string]any{"rows": 3, "cols": 3},
+			},
+		}, &result)
+
+		require.NoError(t, err)
+
+		levels := result.CreateRiskAnalysis.RiskAnalysisEdge.Node.ScoreLevels
+		require.Len(t, levels, 4)
+		assert.Equal(t, "LOW", levels[0].Level)
+		assert.Equal(t, 1, levels[0].MinScore)
+		assert.Equal(t, "MEDIUM", levels[1].Level)
+		assert.Equal(t, 2, levels[1].MinScore)
+		assert.Equal(t, "HIGH", levels[2].Level)
+		assert.Equal(t, 4, levels[2].MinScore)
+		assert.Equal(t, "CRITICAL", levels[3].Level)
+		assert.Equal(t, 6, levels[3].MinScore)
+	})
+
+	t.Run("can omit critical", func(t *testing.T) {
+		t.Parallel()
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+		raID := factory.CreateRiskAnalysis(owner)
+
+		var result struct {
+			UpdateRiskAnalysis struct {
+				RiskAnalysis struct {
+					ScoreLevels []struct {
+						Level    string `json:"level"`
+						MinScore int    `json:"minScore"`
+					} `json:"scoreLevels"`
+				} `json:"riskAnalysis"`
+			} `json:"updateRiskAnalysis"`
+		}
+
+		err := owner.Execute(`
+			mutation($input: UpdateRiskAnalysisInput!) {
+				updateRiskAnalysis(input: $input) {
+					riskAnalysis { scoreLevels { level minScore } }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"id": raID,
+				"scoreLevels": []map[string]any{
+					{"level": "LOW", "minScore": 1},
+					{"level": "MEDIUM", "minScore": 6},
+					{"level": "HIGH", "minScore": 13},
+				},
+			},
+		}, &result)
+		require.NoError(t, err)
+		require.Len(t, result.UpdateRiskAnalysis.RiskAnalysis.ScoreLevels, 3)
+		assert.Equal(t, "HIGH", result.UpdateRiskAnalysis.RiskAnalysis.ScoreLevels[2].Level)
+		assert.Equal(t, 13, result.UpdateRiskAnalysis.RiskAnalysis.ScoreLevels[2].MinScore)
 	})
 }
 

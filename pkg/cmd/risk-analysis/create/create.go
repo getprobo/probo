@@ -28,6 +28,8 @@ import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/riskmanagement"
 )
 
 const createMutation = `
@@ -45,6 +47,10 @@ mutation RiskAnalysisCreate($input: CreateRiskAnalysisInput!) {
         matrixSize {
           rows
           cols
+        }
+        scoreLevels {
+          level
+          minScore
         }
         createdAt
         updatedAt
@@ -85,6 +91,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		flagPeriodEnd   string
 		flagMatrixRows  int
 		flagMatrixCols  int
+		flagScoreLevels string
 	)
 
 	cmd := &cobra.Command{
@@ -200,9 +207,31 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("--matrix-rows and --matrix-cols must match")
 			}
 
+			if f.IOStreams.IsInteractive() && !cmd.Flags().Changed("score-levels") {
+				flagScoreLevels = riskmanagement.DefaultScoreLevels(flagMatrixRows, flagMatrixCols).Spec()
+
+				err := huh.NewInput().
+					Title("Score levels").
+					Description("Comma-separated LEVEL=minimum, for example LOW=1,HIGH=10").
+					Value(&flagScoreLevels).
+					Run()
+				if err != nil {
+					return err
+				}
+			}
+
 			input["matrixSize"] = map[string]any{
 				"rows": flagMatrixRows,
 				"cols": flagMatrixCols,
+			}
+
+			if flagScoreLevels != "" {
+				levels, err := coredata.ParseScoreLevels(flagScoreLevels)
+				if err != nil {
+					return fmt.Errorf("invalid --score-levels: %w", err)
+				}
+
+				input["scoreLevels"] = graphqlScoreLevels(levels)
 			}
 
 			data, err := client.Do(
@@ -237,6 +266,19 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagPeriodEnd, "period-end", "", "Period end date (e.g. 2026-12-31)")
 	cmd.Flags().IntVar(&flagMatrixRows, "matrix-rows", 5, "Matrix rows (3, 4, or 5; default 5)")
 	cmd.Flags().IntVar(&flagMatrixCols, "matrix-cols", 5, "Matrix cols (3, 4, or 5; default 5, must match --matrix-rows)")
+	cmd.Flags().StringVar(&flagScoreLevels, "score-levels", "", "Score levels as LEVEL=minimum, for example LOW=1,MEDIUM=5,HIGH=10,CRITICAL=15. Defaults to the current bands for the matrix size")
 
 	return cmd
+}
+
+func graphqlScoreLevels(levels coredata.ScoreLevels) []map[string]any {
+	items := make([]map[string]any, len(levels))
+	for i, level := range levels {
+		items[i] = map[string]any{
+			"level":    string(level.Level),
+			"minScore": level.MinScore,
+		}
+	}
+
+	return items
 }

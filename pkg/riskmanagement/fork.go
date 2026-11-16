@@ -63,6 +63,7 @@ func (s *Service) Fork(
 				Description:    description,
 				MatrixRows:     source.MatrixRows,
 				MatrixCols:     source.MatrixCols,
+				ScoreLevels:    source.ScoreLevels,
 				CreatedAt:      now,
 				UpdatedAt:      now,
 			}

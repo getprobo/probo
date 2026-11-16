@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import type { RiskScoreLevelMapping } from "@probo/helpers";
 import { SeverityBadge } from "@probo/ui";
 
 import type { MatrixSize } from "../../_components/matrixSize";
@@ -28,14 +29,21 @@ interface TreatmentPlanScoreTagsProps {
   residualLikelihood: number;
   residualImpact: number;
   matrixSize: MatrixSize;
+  scoreLevels?: ReadonlyArray<RiskScoreLevelMapping> | null;
 }
 
-function scoreTag(likelihood: number, impact: number, matrixSize: MatrixSize) {
+function scoreTag(
+  likelihood: number,
+  impact: number,
+  matrixSize: MatrixSize,
+  scoreLevels?: ReadonlyArray<RiskScoreLevelMapping> | null,
+) {
   return (
     <SeverityBadge
       score={likelihood * impact}
       label={`${likelihood} × ${impact}`}
       matrixSize={matrixSize}
+      scoreLevels={scoreLevels}
     />
   );
 }
@@ -46,11 +54,12 @@ export function TreatmentPlanScoreTags({
   residualLikelihood,
   residualImpact,
   matrixSize,
+  scoreLevels,
 }: TreatmentPlanScoreTagsProps) {
   return (
     <div className="flex items-center gap-1.5">
-      {scoreTag(inherentLikelihood, inherentImpact, matrixSize)}
-      {scoreTag(residualLikelihood, residualImpact, matrixSize)}
+      {scoreTag(inherentLikelihood, inherentImpact, matrixSize, scoreLevels)}
+      {scoreTag(residualLikelihood, residualImpact, matrixSize, scoreLevels)}
     </div>
   );
 }

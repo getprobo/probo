@@ -65,6 +65,7 @@ type (
 		Description    *string
 		Period         *Period
 		MatrixSize     *MatrixSize
+		ScoreLevels    *coredata.ScoreLevels
 	}
 
 	UpdateRiskAnalysisRequest struct {
@@ -72,6 +73,7 @@ type (
 		Name        *string
 		Description **string
 		Period      *Period
+		ScoreLevels *coredata.ScoreLevels
 	}
 
 	CreateRiskAnalysisDiagramRequest struct {
@@ -192,6 +194,8 @@ func optionalDocumentJSON(s *string) (*string, error) {
 }
 
 func (r *CreateRiskAnalysisRequest) Validate() error {
+	r.applyDefaultScoreLevels()
+
 	v := validator.New()
 	v.Check(r.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
 	v.Check(r.Name, "name", validator.Required(), validator.SafeTextNoNewLine(TitleMaxLength))
@@ -204,6 +208,7 @@ func (r *CreateRiskAnalysisRequest) Validate() error {
 	)
 	v.Check(r.MatrixSize, "matrix_size", validator.Required())
 	validateMatrixSize(v, r.MatrixSize)
+	validateScoreLevels(v, r.scoreLevelsForValidation(), matrixMaxScore(r.MatrixSize))
 
 	if r.Period != nil {
 		validatePeriodRange(v, r.Period.Start, r.Period.End)
@@ -226,6 +231,10 @@ func (r *UpdateRiskAnalysisRequest) Validate() error {
 
 	if r.Period != nil {
 		validatePeriodRange(v, r.Period.Start, r.Period.End)
+	}
+
+	if r.ScoreLevels != nil {
+		validateScoreLevels(v, *r.ScoreLevels, 0)
 	}
 
 	return v.Error()
@@ -266,6 +275,19 @@ func validatePeriodRange(v *validator.Validator, periodStart, periodEnd *time.Ti
 				}
 			},
 		)
+	}
+}
+
+func matrixMaxScore(size *MatrixSize) int {
+	if size == nil || size.Rows != size.Cols {
+		return 0
+	}
+
+	switch size.Rows {
+	case 3, 4, 5:
+		return size.Rows * size.Cols
+	default:
+		return 0
 	}
 }
 
@@ -452,6 +474,10 @@ func (s *Service) Create(ctx context.Context, scope coredata.Scoper, req CreateR
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
+	if req.ScoreLevels == nil {
+		return nil, fmt.Errorf("invalid request: missing score levels")
+	}
+
 	description, err := optionalDocumentJSON(req.Description)
 	if err != nil {
 		return nil, fmt.Errorf("cannot sanitize description: %w", err)
@@ -465,6 +491,7 @@ func (s *Service) Create(ctx context.Context, scope coredata.Scoper, req CreateR
 		Description:    description,
 		MatrixRows:     req.MatrixSize.Rows,
 		MatrixCols:     req.MatrixSize.Cols,
+		ScoreLevels:    *req.ScoreLevels,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}
@@ -543,8 +570,16 @@ func (s *Service) Update(ctx context.Context, scope coredata.Scoper, req UpdateR
 				ra.PeriodEnd = req.Period.End
 			}
 
+			if req.ScoreLevels != nil {
+				ra.ScoreLevels = *req.ScoreLevels
+			}
+
 			v := validator.New()
 			validatePeriodRange(v, ra.PeriodStart, ra.PeriodEnd)
+
+			if req.ScoreLevels != nil {
+				validateScoreLevels(v, ra.ScoreLevels, ra.MatrixRows*ra.MatrixCols)
+			}
 
 			if err := v.Error(); err != nil {
 				return fmt.Errorf("invalid request: %w", err)
