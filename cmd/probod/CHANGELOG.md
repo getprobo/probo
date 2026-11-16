@@ -4,6 +4,15 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.347.1] - 2026-11-16
+
+### Fixed
+
+- Concurrent cookie banner reports from the same site no longer
+  block each other while recording trackers
+- The Probo Console link at the bottom of the employee portal
+  loads its data from the right API
+
 ## [0.347.0] - 2026-11-16
 
 ### Added
