@@ -280,25 +280,29 @@ func (s *Service) ingestScanPage(
 		}
 	}
 
-	keys := make([]trackerResourceKey, 0, len(page.Resources))
+	resources := make([]coredata.TrackerResource, 0, len(page.Resources))
 	for i := range page.Resources {
 		item := page.Resources[i]
-		keys = append(keys, trackerResourceKey{
-			resourceType: item.Type,
-			origin:       item.Origin,
-			path:         item.Path,
-		})
+		resources = append(
+			resources,
+			newTrackerResource(
+				scope,
+				banner,
+				uncategorised.ID,
+				now,
+				item.Type,
+				item.Origin,
+				item.Path,
+				&scanID,
+			),
+		)
 	}
 
 	resourceInserted, err := s.upsertTrackerResources(
 		ctx,
 		tx,
 		scope,
-		banner,
-		uncategorised.ID,
-		now,
-		keys,
-		&scanID,
+		resources,
 	)
 	if err != nil {
 		return 0, err

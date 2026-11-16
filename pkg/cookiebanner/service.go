@@ -3338,25 +3338,27 @@ func (s *Service) ReportDetectedTrackers(
 				}
 			}
 
-			keys := make([]trackerResourceKey, 0, len(req.Resources))
+			resources := make([]coredata.TrackerResource, 0, len(req.Resources))
 			for _, dr := range req.Resources {
-				key, err := trackerResourceKeyFromItem(dr)
+				resource, err := trackerResourceFromItem(
+					scope,
+					&banner,
+					uncategorised.ID,
+					now,
+					dr,
+				)
 				if err != nil {
 					return err
 				}
 
-				keys = append(keys, key)
+				resources = append(resources, resource)
 			}
 
 			resourceInserted, err := s.upsertTrackerResources(
 				ctx,
 				tx,
 				scope,
-				&banner,
-				uncategorised.ID,
-				now,
-				keys,
-				nil,
+				resources,
 			)
 			if err != nil {
 				return err
@@ -3669,95 +3671,33 @@ func int4OrNil(v *int) *int {
 	return v
 }
 
-// trackerResourceKey is one tracker resource row. Reports lock these rows,
-// so every writer must take them in the same order.
-type trackerResourceKey struct {
-	resourceType coredata.TrackerResourceType
-	origin       string
-	path         string
-}
-
-func trackerResourceKeyFromItem(item DetectedResourceItem) (trackerResourceKey, error) {
-	parsed, err := url.Parse(item.URL.String())
-	if err != nil {
-		return trackerResourceKey{}, fmt.Errorf("cannot parse resource URL: %w", err)
-	}
-
-	return trackerResourceKey{
-		resourceType: item.ResourceType,
-		origin:       parsed.Scheme + "://" + parsed.Host,
-		path:         parsed.Path,
-	}, nil
-}
-
-// orderTrackerResourceKeys returns keys in lock order. An empty path is
-// "/", the value stored on the row, so two reports of one resource cannot
-// take its lock in opposite orders.
-func orderTrackerResourceKeys(keys []trackerResourceKey) []trackerResourceKey {
-	ordered := slices.Clone(keys)
-	for i := range ordered {
-		if ordered[i].path == "" {
-			ordered[i].path = "/"
-		}
-	}
-
-	slices.SortFunc(ordered, func(a, b trackerResourceKey) int {
-		return cmp.Or(
-			cmp.Compare(a.resourceType, b.resourceType),
-			cmp.Compare(a.origin, b.origin),
-			cmp.Compare(a.path, b.path),
-		)
-	})
-
-	return slices.CompactFunc(ordered, func(a, b trackerResourceKey) bool {
-		return a == b
-	})
-}
-
-// upsertTrackerResources writes the keys in lock order. A nil scanID leaves
-// an existing row's scan stamp untouched, which is what SDK reports need.
-func (s *Service) upsertTrackerResources(
-	ctx context.Context,
-	tx pg.Tx,
+func trackerResourceFromItem(
 	scope coredata.Scoper,
 	banner *coredata.CookieBanner,
 	uncategorisedID gid.GID,
 	now time.Time,
-	keys []trackerResourceKey,
-	scanID *gid.GID,
-) (int, error) {
-	inserted := 0
-
-	for _, key := range orderTrackerResourceKeys(keys) {
-		wasInserted, err := s.upsertTrackerResource(
-			ctx,
-			tx,
-			scope,
-			banner,
-			uncategorisedID,
-			now,
-			key.resourceType,
-			key.origin,
-			key.path,
-			scanID,
-		)
-		if err != nil {
-			return 0, err
-		}
-
-		if wasInserted {
-			inserted++
-		}
+	item DetectedResourceItem,
+) (coredata.TrackerResource, error) {
+	parsed, err := url.Parse(item.URL.String())
+	if err != nil {
+		return coredata.TrackerResource{}, fmt.Errorf("cannot parse resource URL: %w", err)
 	}
 
-	return inserted, nil
+	origin := url.URL{Scheme: parsed.Scheme, Host: parsed.Host}
+
+	return newTrackerResource(
+		scope,
+		banner,
+		uncategorisedID,
+		now,
+		item.ResourceType,
+		origin.String(),
+		parsed.Path,
+		nil,
+	), nil
 }
 
-// upsertTrackerResource writes one tracker resource. A nil scanID leaves an
-// existing row's scan stamp untouched, which is what SDK reports need.
-func (s *Service) upsertTrackerResource(
-	ctx context.Context,
-	tx pg.Tx,
+func newTrackerResource(
 	scope coredata.Scoper,
 	banner *coredata.CookieBanner,
 	uncategorisedID gid.GID,
@@ -3766,7 +3706,7 @@ func (s *Service) upsertTrackerResource(
 	origin string,
 	path string,
 	scanID *gid.GID,
-) (bool, error) {
+) coredata.TrackerResource {
 	if path == "" {
 		path = "/"
 	}
@@ -3776,7 +3716,7 @@ func (s *Service) upsertTrackerResource(
 		host = parsed.Host
 	}
 
-	resource := &coredata.TrackerResource{
+	return coredata.TrackerResource{
 		ID:                 gid.New(scope.GetTenantID(), coredata.TrackerResourceEntityType),
 		OrganizationID:     banner.OrganizationID,
 		CookieBannerID:     banner.ID,
@@ -3790,7 +3730,68 @@ func (s *Service) upsertTrackerResource(
 		CreatedAt:          now,
 		UpdatedAt:          now,
 	}
+}
 
+// orderTrackerResources returns resources in lock order. An empty path is
+// "/", the value stored on the row, so two reports of one resource cannot
+// take its lock in opposite orders.
+func orderTrackerResources(resources []coredata.TrackerResource) []coredata.TrackerResource {
+	ordered := slices.Clone(resources)
+	for i := range ordered {
+		if ordered[i].Path == "" {
+			ordered[i].Path = "/"
+		}
+	}
+
+	slices.SortFunc(ordered, func(a, b coredata.TrackerResource) int {
+		return cmp.Or(
+			cmp.Compare(a.ResourceType, b.ResourceType),
+			cmp.Compare(a.Origin, b.Origin),
+			cmp.Compare(a.Path, b.Path),
+		)
+	})
+
+	return slices.CompactFunc(ordered, sameTrackerResourceLock)
+}
+
+func sameTrackerResourceLock(a, b coredata.TrackerResource) bool {
+	return a.ResourceType == b.ResourceType && a.Origin == b.Origin && a.Path == b.Path
+}
+
+// upsertTrackerResources writes the resources in lock order. A nil
+// scan ID on a resource leaves an existing row's scan stamp untouched,
+// which is what SDK reports need.
+func (s *Service) upsertTrackerResources(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	resources []coredata.TrackerResource,
+) (int, error) {
+	inserted := 0
+	ordered := orderTrackerResources(resources)
+
+	for i := range ordered {
+		wasInserted, err := s.upsertTrackerResource(ctx, tx, scope, &ordered[i])
+		if err != nil {
+			return 0, err
+		}
+
+		if wasInserted {
+			inserted++
+		}
+	}
+
+	return inserted, nil
+}
+
+// upsertTrackerResource writes one tracker resource. A nil scan ID leaves
+// an existing row's scan stamp untouched, which is what SDK reports need.
+func (s *Service) upsertTrackerResource(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	resource *coredata.TrackerResource,
+) (bool, error) {
 	inserted, err := resource.Upsert(ctx, tx, scope)
 	if err != nil {
 		return false, fmt.Errorf("cannot upsert tracker resource: %w", err)
