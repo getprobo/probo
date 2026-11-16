@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import { GridRows, type GridScale } from "@visx/grid";
+import type { ScaleInput } from "@visx/scale";
 
 import { chart } from "./variants";
 
@@ -26,12 +27,14 @@ export interface ChartGridRowsProps<Scale extends GridScale> {
   scale: Scale;
   width: number;
   numTicks?: number;
+  tickValues?: ScaleInput<Scale>[];
 }
 
 export function ChartGridRows<Scale extends GridScale>({
   scale,
   width,
   numTicks = 4,
+  tickValues,
 }: ChartGridRowsProps<Scale>) {
   const { grid } = chart();
 
@@ -40,6 +43,7 @@ export function ChartGridRows<Scale extends GridScale>({
       scale={scale}
       width={width}
       numTicks={numTicks}
+      tickValues={tickValues}
       stroke="currentColor"
       className={grid()}
     />

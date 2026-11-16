@@ -18,18 +18,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { ChartBarIcon } from "@phosphor-icons/react";
+import { ChartLineIcon } from "@phosphor-icons/react";
 import { ChartBandAxis } from "@probo/ui/src/v2/Chart/ChartBandAxis";
 import { ChartFrame, type ChartMargin } from "@probo/ui/src/v2/Chart/ChartFrame";
 import { ChartGridRows } from "@probo/ui/src/v2/Chart/ChartGridRows";
 import { ChartLegend, ChartLegendItem } from "@probo/ui/src/v2/Chart/ChartLegend";
-import { ChartStackedBars } from "@probo/ui/src/v2/Chart/ChartStackedBars";
+import { ChartLines } from "@probo/ui/src/v2/Chart/ChartLines";
 import { ChartTooltip } from "@probo/ui/src/v2/Chart/ChartTooltip";
 import { ChartValueAxis } from "@probo/ui/src/v2/Chart/ChartValueAxis";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { localPoint } from "@visx/event";
-import { scaleBand, scaleLinear } from "@visx/scale";
+import { scaleLog, scalePoint } from "@visx/scale";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
@@ -40,11 +40,11 @@ import { familyLabel } from "../../_lib/familyLabel";
 import { cookieBannerOverview } from "../variants";
 
 const families = [
-  { key: "CHROME", fill: "fill-indigo-9", swatch: "bg-indigo-9" },
-  { key: "SAFARI", fill: "fill-sky-9", swatch: "bg-sky-9" },
-  { key: "EDGE", fill: "fill-green-9", swatch: "bg-green-9" },
-  { key: "FIREFOX", fill: "fill-amber-9", swatch: "bg-amber-9" },
-  { key: "OTHER", fill: "fill-sand-8", swatch: "bg-sand-8" },
+  { key: "CHROME", stroke: "stroke-indigo-9", point: "fill-indigo-9", swatch: "bg-indigo-9" },
+  { key: "SAFARI", stroke: "stroke-sky-9", point: "fill-sky-9", swatch: "bg-sky-9" },
+  { key: "EDGE", stroke: "stroke-green-9", point: "fill-green-9", swatch: "bg-green-9" },
+  { key: "FIREFOX", stroke: "stroke-amber-9", point: "fill-amber-9", swatch: "bg-amber-9" },
+  { key: "OTHER", stroke: "stroke-sand-8", point: "fill-sand-8", swatch: "bg-sand-8" },
 ] as const;
 
 type Family = (typeof families)[number]["key"];
@@ -97,6 +97,19 @@ function dayTotal(row: DayRow, keys: readonly Family[]) {
   return keys.reduce((sum, key) => sum + row[key], 0);
 }
 
+function logTop(max: number) {
+  return max <= 1 ? 10 : max;
+}
+
+function powersOfTen(top: number) {
+  const ticks: number[] = [];
+  for (let tick = 1; tick <= top; tick *= 10) {
+    ticks.push(tick);
+  }
+
+  return ticks;
+}
+
 export function PageLoadsChart({ cookieBannerKey }: PageLoadsChartProps) {
   const { t, i18n } = useTranslation("organizations/cookie-banners");
   const banner = useFragment(pageLoadsChartFragment, cookieBannerKey);
@@ -147,15 +160,16 @@ export function PageLoadsChart({ cookieBannerKey }: PageLoadsChartProps) {
   const keys = families
     .filter(family => totals[family.key] > 0)
     .map(family => family.key);
-  const fill = Object.fromEntries(families.map(family => [family.key, family.fill]));
+  const stroke = Object.fromEntries(families.map(family => [family.key, family.stroke]));
+  const point = Object.fromEntries(families.map(family => [family.key, family.point]));
   const max = keys.length === 0
     ? 0
-    : Math.max(...rows.map(row => dayTotal(row, keys)));
+    : Math.max(...rows.flatMap(row => keys.map(key => row[key])));
 
   if (max === 0) {
     return (
       <div className={empty()}>
-        <ChartBarIcon size={32} className={emptyIcon()} />
+        <ChartLineIcon size={32} className={emptyIcon()} />
         <Heading level={3} size={3} weight="medium" highContrast>
           {t("overview.chart.empty.title")}
         </Heading>
@@ -166,8 +180,9 @@ export function PageLoadsChart({ cookieBannerKey }: PageLoadsChartProps) {
     );
   }
 
+  const top = logTop(max);
   const axisFormat = new Intl.NumberFormat(i18n.language, {
-    notation: max >= 1000 ? "compact" : "standard",
+    notation: top >= 1000 ? "compact" : "standard",
     maximumFractionDigits: 1,
   });
 
@@ -197,28 +212,35 @@ export function PageLoadsChart({ cookieBannerKey }: PageLoadsChartProps) {
             aria-label={t("overview.chart.title")}
           >
             {({ width, height }) => {
-              const xScale = scaleBand({
+              const xScale = scalePoint({
                 domain: rows.map(row => row.label),
                 range: [0, width],
-                padding: rows.length > 14 ? 0.2 : 0.35,
+                padding: 0.5,
               });
-              const yScale = scaleLinear({
-                domain: [0, max],
+              const yScale = scaleLog({
+                domain: [1, top],
                 range: [height, 0],
-                nice: true,
+                base: 10,
+                clamp: true,
               });
 
               return (
                 <>
-                  <ChartGridRows scale={yScale} width={width} />
-                  <ChartStackedBars
+                  <ChartGridRows
+                    scale={yScale}
+                    width={width}
+                    tickValues={powersOfTen(top)}
+                  />
+                  <ChartLines
                     data={rows}
                     keys={keys}
                     x={row => row.label}
+                    y={(row, key) => row[key]}
                     xScale={xScale}
                     yScale={yScale}
                     height={height}
-                    fill={fill}
+                    stroke={stroke}
+                    point={point}
                     onHover={(column, event) => {
                       if (column == null) {
                         tooltip.hide();
@@ -241,6 +263,7 @@ export function PageLoadsChart({ cookieBannerKey }: PageLoadsChartProps) {
                   />
                   <ChartValueAxis
                     scale={yScale}
+                    tickValues={powersOfTen(top)}
                     tickFormat={value => axisFormat.format(Number(value))}
                   />
                 </>

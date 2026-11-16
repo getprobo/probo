@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import { AxisLeft, type AxisScale, type TickFormatter } from "@visx/axis";
+import type { ScaleInput } from "@visx/scale";
 
 import { chart } from "./variants";
 
@@ -26,12 +27,15 @@ export interface ChartValueAxisProps<Scale extends AxisScale> {
   scale: Scale;
   numTicks?: number;
   tickFormat?: TickFormatter<number>;
+  // Domain values that receive a label. Omit to let the scale choose.
+  tickValues?: ScaleInput<Scale>[];
 }
 
 export function ChartValueAxis<Scale extends AxisScale>({
   scale,
   numTicks = 4,
   tickFormat,
+  tickValues,
 }: ChartValueAxisProps<Scale>) {
   const { tick, line } = chart();
 
@@ -40,6 +44,7 @@ export function ChartValueAxis<Scale extends AxisScale>({
       scale={scale}
       numTicks={numTicks}
       tickFormat={tickFormat}
+      tickValues={tickValues}
       tickLength={4}
       stroke="currentColor"
       tickStroke="currentColor"

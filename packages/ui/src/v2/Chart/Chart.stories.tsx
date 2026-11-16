@@ -20,12 +20,13 @@
 
 import type { Meta, StoryObj } from "@storybook/react";
 import { localPoint } from "@visx/event";
-import { scaleBand, scaleLinear } from "@visx/scale";
+import { scaleBand, scaleLinear, scaleLog, scalePoint } from "@visx/scale";
 
 import { ChartBandAxis } from "./ChartBandAxis";
 import { ChartFrame, type ChartMargin } from "./ChartFrame";
 import { ChartGridRows } from "./ChartGridRows";
 import { ChartLegend, ChartLegendItem } from "./ChartLegend";
+import { ChartLines } from "./ChartLines";
 import { ChartSkeleton } from "./ChartSkeleton";
 import { ChartStackedBars } from "./ChartStackedBars";
 import { ChartTooltip } from "./ChartTooltip";
@@ -44,7 +45,7 @@ type StoryDatum = {
 const data: StoryDatum[] = [
   { x: "Mon", chrome: 18, safari: 6, firefox: 3 },
   { x: "Tue", chrome: 22, safari: 8, firefox: 4 },
-  { x: "Wed", chrome: 16, safari: 5, firefox: 7 },
+  { x: "Wed", chrome: 16, safari: 5, firefox: 0 },
   { x: "Thu", chrome: 28, safari: 9, firefox: 4 },
   { x: "Fri", chrome: 24, safari: 7, firefox: 6 },
   { x: "Sat", chrome: 12, safari: 4, firefox: 2 },
@@ -52,6 +53,18 @@ const data: StoryDatum[] = [
 ];
 
 const fill = {
+  chrome: "fill-indigo-9",
+  safari: "fill-sky-9",
+  firefox: "fill-amber-9",
+};
+
+const stroke = {
+  chrome: "stroke-indigo-9",
+  safari: "stroke-sky-9",
+  firefox: "stroke-amber-9",
+};
+
+const point = {
   chrome: "fill-indigo-9",
   safari: "fill-sky-9",
   firefox: "fill-amber-9",
@@ -147,8 +160,98 @@ export default {
 
 type Story = StoryObj<typeof ChartFrame>;
 
+function logTicks(top: number) {
+  const ticks: number[] = [];
+  for (let tick = 1; tick <= top; tick *= 10) {
+    ticks.push(tick);
+  }
+
+  return ticks;
+}
+
+function LinesChart() {
+  const max = Math.max(...data.flatMap(datum => keys.map(key => datum[key])));
+  const top = max <= 1 ? 10 : max;
+
+  return (
+    <div className="flex w-[36rem] flex-col gap-4">
+      <ChartTooltip<StoryDatum>
+        content={datum => (
+          <div className="flex flex-col gap-0.5">
+            <span>{datum.x}</span>
+            <span>{total(datum)}</span>
+          </div>
+        )}
+      >
+        {tooltip => (
+          <ChartFrame height={240} margin={margin} aria-label="Page loads by day">
+            {({ width, height }) => {
+              const xScale = scalePoint({
+                domain: data.map(datum => datum.x),
+                range: [0, width],
+                padding: 0.5,
+              });
+              const yScale = scaleLog({
+                domain: [1, top],
+                range: [height, 0],
+                base: 10,
+                clamp: true,
+              });
+
+              return (
+                <>
+                  <ChartGridRows scale={yScale} width={width} tickValues={logTicks(top)} />
+                  <ChartLines
+                    data={data}
+                    keys={[...keys]}
+                    x={datum => datum.x}
+                    y={(datum, key) => datum[key]}
+                    xScale={xScale}
+                    yScale={yScale}
+                    height={height}
+                    stroke={stroke}
+                    point={point}
+                    onHover={(column, event) => {
+                      if (column == null) {
+                        tooltip.hide();
+                        return;
+                      }
+                      const point = localPoint(event);
+                      tooltip.show({
+                        data: column.datum,
+                        left: point?.x ?? 0,
+                        top: point?.y ?? 0,
+                      });
+                    }}
+                  />
+                  <ChartBandAxis scale={xScale} top={height} />
+                  <ChartValueAxis scale={yScale} tickValues={logTicks(top)} />
+                </>
+              );
+            }}
+          </ChartFrame>
+        )}
+      </ChartTooltip>
+      <ChartLegend>
+        {keys.map(key => (
+          <ChartLegendItem
+            key={key}
+            swatchClassName={swatch[key]}
+            label={key}
+            value={data.reduce((sum, datum) => sum + datum[key], 0)}
+          />
+        ))}
+      </ChartLegend>
+    </div>
+  );
+}
+
 export const StackedBars: Story = {
   render: () => <StackedBarsChart />,
+};
+
+export const Lines: Story = {
+  render: () => <LinesChart />,
 };
 
 export const Skeleton: Story = {

@@ -9,7 +9,7 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 - Cookie banners expose `dailyPageLoads` on the console GraphQL API and
   `daily_page_loads` on MCP `getCookieBanner`: one entry per UTC day,
   oldest first, for the requested window. The console cookie banner
-  overview shows those days as a stacked bar chart
+  overview shows those days as a line chart
 
 ### Changed
 
