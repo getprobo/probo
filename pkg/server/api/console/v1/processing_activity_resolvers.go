@@ -135,7 +135,13 @@ func (r *mutationResolver) PublishProcessingActivityList(ctx context.Context, in
 		input.Minor,
 	)
 	if err != nil {
-		return nil, r.generatedPublishError(ctx, "cannot publish processing activity list", err)
+		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+			return nil, gqlx.Conflict(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot publish processing activity list", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.PublishProcessingActivityListPayload{

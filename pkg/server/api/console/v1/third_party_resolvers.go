@@ -639,7 +639,13 @@ func (r *mutationResolver) PublishThirdPartyList(ctx context.Context, input type
 		input.Minor,
 	)
 	if err != nil {
-		return nil, r.generatedPublishError(ctx, "cannot publish thirdParty list", err)
+		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+			return nil, gqlx.Conflict(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot publish thirdParty list", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.PublishThirdPartyListPayload{

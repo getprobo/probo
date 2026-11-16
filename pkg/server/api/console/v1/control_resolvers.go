@@ -795,7 +795,13 @@ func (r *mutationResolver) PublishStatementOfApplicability(ctx context.Context, 
 		input.Minor,
 	)
 	if err != nil {
-		return nil, r.generatedPublishError(ctx, "cannot publish statement of applicability", err)
+		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+			return nil, gqlx.Conflict(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot publish statement of applicability", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.PublishStatementOfApplicabilityPayload{
