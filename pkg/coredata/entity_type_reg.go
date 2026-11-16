@@ -179,6 +179,9 @@ const (
 	CMPDomainSurfaceEntityType                       uint16 = 147
 	TagEntityType                                    uint16 = 148
 	TagAssignmentEntityType                          uint16 = 149 // internal cursor key, not a Node
+	AssetSourceEntityType                            uint16 = 150
+	InventoryAssetEntityType                         uint16 = 151
+	AssetSyncEntityType                              uint16 = 152
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -453,6 +456,12 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &CMPDomainSurface{ID: id}, true
 	case TagEntityType:
 		return &Tag{ID: id}, true
+	case AssetSourceEntityType:
+		return &AssetSource{ID: id}, true
+	case InventoryAssetEntityType:
+		return &InventoryAsset{ID: id}, true
+	case AssetSyncEntityType:
+		return &AssetSync{ID: id}, true
 	default:
 		return nil, false
 	}

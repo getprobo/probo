@@ -29,6 +29,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/validator"
 )
@@ -335,6 +336,10 @@ func (s *Service) EnableAccounts(
 
 				if _, err := account.Upsert(ctx, tx, scope); err != nil {
 					return err
+				}
+
+				if err := itam.NoteConnectorAccount(ctx, tx, scope, cnnctr.Provider, account); err != nil {
+					return fmt.Errorf("cannot note asset source: %w", err)
 				}
 
 				enabled = append(enabled, account)
