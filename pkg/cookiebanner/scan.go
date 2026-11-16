@@ -280,29 +280,31 @@ func (s *Service) ingestScanPage(
 		}
 	}
 
+	keys := make([]trackerResourceKey, 0, len(page.Resources))
 	for i := range page.Resources {
 		item := page.Resources[i]
-
-		wasInserted, err := s.upsertTrackerResource(
-			ctx,
-			tx,
-			scope,
-			banner,
-			uncategorised.ID,
-			now,
-			item.Type,
-			item.Origin,
-			item.Path,
-			&scanID,
-		)
-		if err != nil {
-			return 0, err
-		}
-
-		if wasInserted {
-			inserted++
-		}
+		keys = append(keys, trackerResourceKey{
+			resourceType: item.Type,
+			origin:       item.Origin,
+			path:         item.Path,
+		})
 	}
+
+	resourceInserted, err := s.upsertTrackerResources(
+		ctx,
+		tx,
+		scope,
+		banner,
+		uncategorised.ID,
+		now,
+		keys,
+		&scanID,
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	inserted += resourceInserted
 
 	if inserted > 0 {
 		if err := banner.SetPatternAnalysisRequested(ctx, tx); err != nil {

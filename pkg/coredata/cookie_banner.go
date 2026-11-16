@@ -957,9 +957,11 @@ WHERE id = @id
 // SetSourcePromotionRequested asks the banner source-promotion worker to
 // compare this banner's recent cookie detections with its siblings.
 // requested_at stays at the earliest report still waiting, so a later
-// report does not hide rows written by an earlier one. A request that is
-// already waiting keeps its attempt budget. A new request, including one
-// after the budget was exhausted, starts the budget over.
+// report does not hide rows written by an earlier one. A report that is
+// not earlier writes nothing, so concurrent reports do not queue on the
+// row. A request that is already waiting keeps its attempt budget. A new
+// request, including one after the budget was exhausted, starts the
+// budget over.
 func (b *CookieBanner) SetSourcePromotionRequested(
 	ctx context.Context,
 	tx pg.Tx,
@@ -976,9 +978,13 @@ SET
 		WHEN source_promotion_requested_at IS NULL THEN NULL
 		ELSE source_promotion_attempted_at
 	END,
-	source_promotion_requested_at = LEAST(COALESCE(source_promotion_requested_at, @now), @now),
-	updated_at = NOW()
-WHERE id = @id
+	source_promotion_requested_at = LEAST(COALESCE(source_promotion_requested_at, @now), @now)
+WHERE
+	id = @id
+	AND (
+		source_promotion_requested_at IS NULL
+		OR source_promotion_requested_at > @now
+	)
 `
 
 	args := pgx.StrictNamedArgs{
@@ -986,13 +992,9 @@ WHERE id = @id
 		"now": now,
 	}
 
-	result, err := tx.Exec(ctx, q, args)
+	_, err := tx.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot request cookie banner source promotion: %w", err)
-	}
-
-	if result.RowsAffected() == 0 {
-		return ErrResourceNotFound
 	}
 
 	return nil
