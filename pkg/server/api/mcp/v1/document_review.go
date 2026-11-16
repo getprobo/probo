@@ -24,6 +24,7 @@ import (
 	"context"
 	"errors"
 
+	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/collaboration"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -134,7 +135,7 @@ func (r *Resolver) authorizeDocumentChange(
 		action = probo.ActionDocumentSuggest
 	}
 
-	if derefGID(target) == gid.Nil {
+	if ref.UnrefOrZero(target) == gid.Nil {
 		v := validator.New()
 		v.Check(nil, field, validator.Required())
 
@@ -142,30 +143,6 @@ func (r *Resolver) authorizeDocumentChange(
 	}
 
 	return r.Authorize(ctx, *target, action)
-}
-
-func derefGID(id *gid.GID) gid.GID {
-	if id == nil {
-		return gid.Nil
-	}
-
-	return *id
-}
-
-func derefString(value *string) string {
-	if value == nil {
-		return ""
-	}
-
-	return *value
-}
-
-func derefInt(value *int) int {
-	if value == nil {
-		return 0
-	}
-
-	return *value
 }
 
 func changeDocumentParts(result *probo.DocumentChangeResult) (*types.Document, *types.DocumentSuggestion) {

@@ -14,6 +14,7 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"go.gearno.de/kit/log"
+	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/accessreview"
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
 	cloudazure "go.probo.inc/probo/pkg/cloud/azure"
@@ -12354,12 +12355,12 @@ func (r *Resolver) ChangeDocumentTextTool(ctx context.Context, req *mcp.CallTool
 		scope,
 		probo.ChangeDocumentTextRequest{
 			Mode:         input.Mode,
-			DocumentID:   derefGID(input.DocumentID),
-			SuggestionID: derefGID(input.SuggestionID),
+			DocumentID:   ref.UnrefOrZero(input.DocumentID),
+			SuggestionID: ref.UnrefOrZero(input.SuggestionID),
 			IdentityID:   authn.IdentityFromContext(ctx).ID,
 			Quote:        input.Quote,
 			Replacement:  input.Replacement,
-			Occurrence:   derefInt(input.QuoteOccurrence),
+			Occurrence:   ref.UnrefOrZero(input.QuoteOccurrence),
 		},
 	)
 	if err != nil {
@@ -12382,14 +12383,14 @@ func (r *Resolver) ChangeDocumentFormatTool(ctx context.Context, req *mcp.CallTo
 		scope,
 		probo.ChangeDocumentFormatRequest{
 			Mode:         input.Mode,
-			DocumentID:   derefGID(input.DocumentID),
-			SuggestionID: derefGID(input.SuggestionID),
+			DocumentID:   ref.UnrefOrZero(input.DocumentID),
+			SuggestionID: ref.UnrefOrZero(input.SuggestionID),
 			IdentityID:   authn.IdentityFromContext(ctx).ID,
 			Mark:         input.Mark,
 			Action:       input.Action,
 			Quote:        input.Quote,
-			Occurrence:   derefInt(input.QuoteOccurrence),
-			Href:         derefString(input.Href),
+			Occurrence:   ref.UnrefOrZero(input.QuoteOccurrence),
+			Href:         ref.UnrefOrZero(input.Href),
 		},
 	)
 	if err != nil {
@@ -12412,16 +12413,16 @@ func (r *Resolver) ChangeDocumentTableTool(ctx context.Context, req *mcp.CallToo
 		scope,
 		probo.ChangeDocumentTableRequest{
 			Mode:         input.Mode,
-			DocumentID:   derefGID(input.DocumentID),
-			SuggestionID: derefGID(input.SuggestionID),
+			DocumentID:   ref.UnrefOrZero(input.DocumentID),
+			SuggestionID: ref.UnrefOrZero(input.SuggestionID),
 			IdentityID:   authn.IdentityFromContext(ctx).ID,
 			Operation:    input.Operation,
 			Quote:        input.Quote,
-			Occurrence:   derefInt(input.QuoteOccurrence),
-			Before:       input.Before != nil && *input.Before,
+			Occurrence:   ref.UnrefOrZero(input.QuoteOccurrence),
+			Before:       ref.UnrefOrZero(input.Before),
 			Cells:        input.Cells,
 			Rows:         input.Rows,
-			HeaderRow:    input.HeaderRow != nil && *input.HeaderRow,
+			HeaderRow:    ref.UnrefOrZero(input.HeaderRow),
 		},
 	)
 	if err != nil {
@@ -12439,34 +12440,29 @@ func (r *Resolver) ChangeDocumentBlockTool(ctx context.Context, req *mcp.CallToo
 		return nil, types.ChangeDocumentBlockOutput{}, err
 	}
 
-	var kind collaboration.BlockKind
-	if input.Block != nil {
-		kind = *input.Block
-	}
-
 	result, err := r.proboSvc.Documents.ChangeBlock(
 		ctx,
 		scope,
 		probo.ChangeDocumentBlockRequest{
 			Mode:         input.Mode,
-			DocumentID:   derefGID(input.DocumentID),
-			SuggestionID: derefGID(input.SuggestionID),
+			DocumentID:   ref.UnrefOrZero(input.DocumentID),
+			SuggestionID: ref.UnrefOrZero(input.SuggestionID),
 			IdentityID:   authn.IdentityFromContext(ctx).ID,
 			Operation:    input.Operation,
-			Quote:        derefString(input.Quote),
-			Occurrence:   derefInt(input.QuoteOccurrence),
+			Quote:        ref.UnrefOrZero(input.Quote),
+			Occurrence:   ref.UnrefOrZero(input.QuoteOccurrence),
 			Before:       input.Before,
-			Block:        kind,
-			Level:        derefInt(input.Level),
-			Language:     derefString(input.Language),
-			Text:         derefString(input.Text),
+			Block:        ref.UnrefOrZero(input.Block),
+			Level:        ref.UnrefOrZero(input.Level),
+			Language:     ref.UnrefOrZero(input.Language),
+			Text:         ref.UnrefOrZero(input.Text),
 			Items:        input.Items,
 			Checked:      input.Checked,
-			FileID:       derefGID(input.FileID),
-			Src:          derefString(input.Src),
-			Alt:          derefString(input.Alt),
+			FileID:       ref.UnrefOrZero(input.FileID),
+			Src:          ref.UnrefOrZero(input.Src),
+			Alt:          ref.UnrefOrZero(input.Alt),
 			Width:        input.Width,
-			ProfileID:    derefGID(input.ProfileID),
+			ProfileID:    ref.UnrefOrZero(input.ProfileID),
 		},
 	)
 	if err != nil {

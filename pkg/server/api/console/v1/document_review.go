@@ -26,6 +26,7 @@ import (
 
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
+	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/collaboration"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -205,7 +206,7 @@ func (r *Resolver) authorizeDocumentChange(
 		action = probo.ActionDocumentSuggest
 	}
 
-	if derefGID(target) == gid.Nil {
+	if ref.UnrefOrZero(target) == gid.Nil {
 		v := validator.New()
 		v.Check(nil, field, validator.Required())
 
@@ -213,14 +214,6 @@ func (r *Resolver) authorizeDocumentChange(
 	}
 
 	return r.authorize(ctx, *target, action)
-}
-
-func derefGID(id *gid.GID) gid.GID {
-	if id == nil {
-		return gid.Nil
-	}
-
-	return *id
 }
 
 func changeDocumentPayload(result *probo.DocumentChangeResult) *types.ChangeDocumentPayload {
