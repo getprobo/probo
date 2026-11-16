@@ -151,7 +151,6 @@ export class CookieBannerClient {
     for (const integration of this.integrations) {
       integration.setDefaults(config.categories);
     }
-    this.reportQueue?.reportPageView();
     this.scanExistingCookies();
     this.startResourceDetector(config);
 
@@ -173,6 +172,7 @@ export class CookieBannerClient {
         this.activate(cookieData);
         getConsent()._setReady(cookieData, true);
         getTCFRuntime()?.onConfig(config, cookie.tc);
+        this.reportQueue?.reportPageView();
         void flush(this.bannerId);
         return;
       }
@@ -186,6 +186,7 @@ export class CookieBannerClient {
           if (err instanceof NotFoundError) {
             return null;
           }
+          this.reportQueue?.reportPageView();
           throw err;
         },
       );
@@ -232,6 +233,7 @@ export class CookieBannerClient {
       getConsent()._setReady(defaults, false);
     }
 
+    this.reportQueue?.reportPageView();
     void flush(this.bannerId);
   }
 

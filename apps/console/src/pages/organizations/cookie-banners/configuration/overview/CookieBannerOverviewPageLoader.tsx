@@ -60,7 +60,7 @@ export default function CookieBannerOverviewPageLoader() {
     throw new Error("Missing cookieBannerId parameter");
   }
 
-  if (!queryRef) {
+  if (queryRef == null || queryRef.variables.cookieBannerId !== cookieBannerId) {
     return <CookieBannerOverviewPageSkeleton />;
   }
 

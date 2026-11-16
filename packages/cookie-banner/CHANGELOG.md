@@ -6,10 +6,12 @@ All notable changes to the `@probo/cookie-banner` SDK will be documented in this
 
 ### Changed
 
-- Every page reports a page view, and cookies already listed on the
-  banner are always reported, so analytics are measured on every visit
-  instead of only while a sample is open. The banner config no longer
-  carries `sample_active`
+- **Breaking**: every page reports a page view, and cookies already
+  listed on the banner are always reported, so analytics are measured
+  on every visit instead of only while a sample is open. The banner
+  config no longer carries `sample_active`. Older clients treat a
+  missing `sample_active` as false and stop sending page views, so
+  upgrade this SDK together with probod
 
 ## [0.22.0] - 2026-10-22
 

@@ -45,8 +45,8 @@ export function ChartLegendItem({
   return (
     <li className={legendItem()}>
       <span className={swatch({ className: swatchClassName })} />
-      {label}
-      {value}
+      <span>{label}</span>
+      <span>{value}</span>
     </li>
   );
 }

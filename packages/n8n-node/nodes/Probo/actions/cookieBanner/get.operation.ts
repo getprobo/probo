@@ -46,6 +46,7 @@ export const description: INodeProperties[] = [
 		typeOptions: {
 			minValue: 1,
 			maxValue: 90,
+			numberPrecision: 0,
 		},
 		default: 7,
 		description: 'Number of UTC days of page loads to return, today included',

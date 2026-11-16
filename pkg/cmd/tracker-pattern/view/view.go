@@ -101,6 +101,10 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
+			if flagDays < 1 || flagDays > 90 {
+				return fmt.Errorf("--days must be between 1 and 90")
+			}
+
 			cfg, err := f.Config()
 			if err != nil {
 				return err

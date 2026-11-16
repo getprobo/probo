@@ -43,7 +43,9 @@ type DailyPageLoad struct {
 }
 
 // RecordDailyPageLoad adds count to the bucket of day, which must be a UTC
-// midnight. A banner deleted since the count was buffered is skipped.
+// midnight. The banner row is locked FOR KEY SHARE so a concurrent delete
+// either wins first, in which case the count is skipped, or waits and then
+// cascades the inserted bucket.
 func RecordDailyPageLoad(
 	ctx context.Context,
 	tx pg.Tx,
@@ -62,6 +64,12 @@ func RecordDailyPageLoad(
 	now := time.Now()
 
 	q := `
+WITH banner AS (
+	SELECT id
+	FROM cookie_banners
+	WHERE id = @cookie_banner_id
+	FOR KEY SHARE
+)
 INSERT INTO cookie_banner_daily_page_loads (
 	cookie_banner_id,
 	day,
@@ -74,7 +82,7 @@ INSERT INTO cookie_banner_daily_page_loads (
 	updated_at
 )
 SELECT
-	@cookie_banner_id,
+	banner.id,
 	@day::date,
 	@browser_family,
 	@presentation,
@@ -83,11 +91,7 @@ SELECT
 	@count,
 	@now,
 	@now
-WHERE EXISTS (
-	SELECT 1
-	FROM cookie_banners
-	WHERE id = @cookie_banner_id
-)
+FROM banner
 ON CONFLICT (
 	cookie_banner_id,
 	day,

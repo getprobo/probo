@@ -20,15 +20,18 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 - **Breaking**: the console GraphQL API returns `dailyPageLoads` on
   cookie banners and `hits`, `allowedHits`, and `deniedHits` on tracker
   patterns. `dailyPageLoads` takes `days` (7 by default, at most 90)
-  and replaces `latestSample` and `samples`. The tracker
-  pattern fields take the same `days` argument and replace
-  `sampleHits`. MCP `getCookieBanner` returns `daily_page_loads` and
+  and replaces `latestSample` and `samples`. `hits`,
+  `allowedHits`, and `deniedHits` replace `sampleHits`,
+  `allowedSampleHits`, and `deniedSampleHits`. MCP
+  `getCookieBanner` returns `daily_page_loads` and
   `getTrackerPattern` returns `hits`, `allowed_hits`, and
   `denied_hits`, with the same `days` input, instead of
-  `latest_sample` and the `sample_hits` fields
+  `latest_sample`, `sample_hits`, `allowed_sample_hits`, and
+  `denied_sample_hits`
 - **Breaking**: the public banner config no longer sends
   `sample_active`. Sites on `@probo/cookie-banner` 0.22.0 or older
-  report no page loads or hits until they upgrade
+  report no page loads until they upgrade, so hit rates stay
+  incomplete
 
 ### Removed
 

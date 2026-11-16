@@ -16359,6 +16359,8 @@ components:
           description: Cookie banner ID
         days:
           type: integer
+          minimum: 1
+          maximum: 90
           description: Number of UTC days of page loads to return, today included. Defaults to 7; at most 90.
 
     GetCookieBannerOutput:
@@ -16848,6 +16850,8 @@ components:
           $ref: "#/components/schemas/GID"
         days:
           type: integer
+          minimum: 1
+          maximum: 90
           description: Number of UTC days of hits to return, today included. Defaults to 7; at most 90.
 
     GetTrackerPatternOutput:

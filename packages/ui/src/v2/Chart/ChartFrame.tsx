@@ -60,8 +60,8 @@ export function ChartFrame({
             <svg
               width={width}
               height={height}
-              className={svg()}
               {...svgProps}
+              className={svg({ className: svgProps.className })}
             >
               <Group left={margin.left} top={margin.top}>
                 {children({ width: innerWidth, height: innerHeight })}

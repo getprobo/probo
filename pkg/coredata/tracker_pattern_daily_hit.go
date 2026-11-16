@@ -43,7 +43,9 @@ type DailyPatternHit struct {
 }
 
 // RecordDailyPatternHit adds count to the bucket of day, which must be a
-// UTC midnight. A pattern deleted since the count was buffered is skipped.
+// UTC midnight. The pattern row is locked FOR KEY SHARE so a concurrent
+// delete either wins first, in which case the count is skipped, or waits
+// and then cascades the inserted bucket.
 func RecordDailyPatternHit(
 	ctx context.Context,
 	tx pg.Tx,
@@ -64,6 +66,12 @@ func RecordDailyPatternHit(
 	now := time.Now()
 
 	q := `
+WITH pattern AS (
+	SELECT id
+	FROM tracker_patterns
+	WHERE id = @tracker_pattern_id
+	FOR KEY SHARE
+)
 INSERT INTO tracker_pattern_daily_hits (
 	tracker_pattern_id,
 	day,
@@ -78,7 +86,7 @@ INSERT INTO tracker_pattern_daily_hits (
 	updated_at
 )
 SELECT
-	@tracker_pattern_id,
+	pattern.id,
 	@day::date,
 	@browser_family,
 	@presentation,
@@ -89,11 +97,7 @@ SELECT
 	@count,
 	@now,
 	@now
-WHERE EXISTS (
-	SELECT 1
-	FROM tracker_patterns
-	WHERE id = @tracker_pattern_id
-)
+FROM pattern
 ON CONFLICT (
 	tracker_pattern_id,
 	day,
