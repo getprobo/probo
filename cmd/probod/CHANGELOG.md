@@ -4,6 +4,16 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.347.2] - 2026-11-16
+
+### Fixed
+
+- The employee home no longer leaves a large gap under the
+  dashboard cards, so the Probo Console link stays on screen
+- File and image attachments in the employee portal use the
+  same layout as the console, including a readable file size,
+  and file names are not underlined as misspellings
+
 ## [0.347.1] - 2026-11-16
 
 ### Fixed
