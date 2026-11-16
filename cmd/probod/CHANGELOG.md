@@ -13,6 +13,8 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ### Changed
 
+- Viewers can read tracker patterns and tracker resources, including
+  their hit counts
 - Cookie banners count page loads and tracker hits on every page view,
   by UTC day, instead of in a start/stop sample window. The console
   shows the last 7 days, and daily counts are kept for 90 days. Past
