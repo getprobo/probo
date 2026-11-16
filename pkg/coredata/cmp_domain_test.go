@@ -428,6 +428,7 @@ func TestCookieBanner_SourcePromotionWindow(t *testing.T) {
 
 	earlier := time.Now().UTC().Add(-time.Hour).Truncate(time.Microsecond)
 	later := time.Now().UTC().Truncate(time.Microsecond)
+	var writtenAt time.Time
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		before := coredata.CookieBanner{}
@@ -450,7 +451,7 @@ func TestCookieBanner_SourcePromotionWindow(t *testing.T) {
 		require.NotNil(t, opened.SourcePromotionRequestedAt)
 		assert.True(t, opened.SourcePromotionRequestedAt.Equal(later))
 		assert.Equal(t, 0, opened.SourcePromotionAttempts)
-		assert.True(t, opened.UpdatedAt.Equal(before.UpdatedAt))
+		assert.True(t, opened.UpdatedAt.After(before.UpdatedAt))
 
 		if err := banner.SetSourcePromotionRequested(ctx, tx, earlier); err != nil {
 			return err
@@ -464,7 +465,15 @@ func TestCookieBanner_SourcePromotionWindow(t *testing.T) {
 		require.NotNil(t, lowered.SourcePromotionRequestedAt)
 		assert.True(t, lowered.SourcePromotionRequestedAt.Equal(earlier))
 		assert.Equal(t, 0, lowered.SourcePromotionAttempts)
+		assert.True(t, lowered.UpdatedAt.Equal(opened.UpdatedAt))
 
+		writtenAt = lowered.UpdatedAt
+
+		return nil
+	}))
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		banner := coredata.CookieBanner{ID: bannerID}
 		if err := banner.SetSourcePromotionRequested(ctx, tx, later); err != nil {
 			return err
 		}
@@ -477,7 +486,7 @@ func TestCookieBanner_SourcePromotionWindow(t *testing.T) {
 		require.NotNil(t, unchanged.SourcePromotionRequestedAt)
 		assert.True(t, unchanged.SourcePromotionRequestedAt.Equal(earlier))
 		assert.Equal(t, 0, unchanged.SourcePromotionAttempts)
-		assert.True(t, unchanged.UpdatedAt.Equal(before.UpdatedAt))
+		assert.True(t, unchanged.UpdatedAt.Equal(writtenAt))
 
 		return nil
 	}))
