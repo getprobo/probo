@@ -79,7 +79,7 @@ func TestSecurity_ReadGap_AssetOwner(t *testing.T) {
 
 	assetID := createResult.CreateAsset.AssetEdge.Node.ID
 
-	injectCrossTenantFK(t, "assets", "owner_profile_id", assetID, org2ProfileID)
+	injectCrossTenantFK(t, "assets_registry", "owner_profile_id", assetID, org2ProfileID)
 
 	var readResult struct {
 		Node struct {

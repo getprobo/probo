@@ -69,7 +69,7 @@ func (a *Asset) AuthorizationAttributes(
 	conn pg.Querier,
 	resourceIDs []gid.GID,
 ) (policy.AttributesByID, error) {
-	q := `SELECT id, organization_id FROM assets WHERE id = ANY(@resource_ids::text[])`
+	q := `SELECT id, organization_id FROM assets_registry WHERE id = ANY(@resource_ids::text[])`
 
 	args := pgx.StrictNamedArgs{
 		"resource_ids": resourceIDs,
@@ -121,7 +121,7 @@ SELECT
 	created_at,
 	updated_at
 FROM
-	assets
+	assets_registry
 WHERE
 	%s
 	AND id = @asset_id
@@ -169,7 +169,7 @@ SELECT
 	created_at,
 	updated_at
 FROM
-	assets
+	assets_registry
 WHERE
 	%s
 	AND owner_profile_id = @owner_profile_id
@@ -210,7 +210,7 @@ func (a *Assets) CountByOrganizationID(
 SELECT
 	COUNT(id)
 FROM
-	assets
+	assets_registry
 WHERE
 	%s
 	AND organization_id = @organization_id
@@ -250,7 +250,7 @@ SELECT
 	created_at,
 	updated_at
 FROM
-	assets
+	assets_registry
 WHERE
 	%s
 	AND organization_id = @organization_id
@@ -284,7 +284,7 @@ func (a *Asset) Insert(
 	scope Scoper,
 ) error {
 	q := `
-INSERT INTO assets (
+INSERT INTO assets_registry (
 	id,
 	tenant_id,
 	name,
@@ -336,7 +336,7 @@ func (a *Asset) Update(
 	scope Scoper,
 ) error {
 	q := `
-UPDATE assets
+UPDATE assets_registry
 SET
 	name = @name,
 	owner_profile_id = @owner_profile_id,
@@ -393,7 +393,7 @@ func (a *Asset) Delete(
 	scope Scoper,
 ) error {
 	q := `
-DELETE FROM assets
+DELETE FROM assets_registry
 WHERE
 	%s
 	AND id = @id
@@ -426,7 +426,7 @@ func (a *Assets) CountByIDs(
 SELECT
 	COUNT(id)
 FROM
-	assets
+	assets_registry
 WHERE
 	%s
 	AND id = ANY(@asset_ids)
@@ -470,7 +470,7 @@ SELECT
 	created_at,
 	updated_at
 FROM
-	assets
+	assets_registry
 WHERE
 	%s
 	AND id = ANY(@asset_ids)
@@ -524,7 +524,7 @@ SELECT
 	created_at,
 	updated_at
 FROM
-	assets
+	assets_registry
 WHERE
 	%s
 	AND id = ANY(@asset_ids)
@@ -667,7 +667,7 @@ func (c *Assets) DeleteByOrganizationID(
 	organizationID gid.GID,
 ) error {
 	q := `
-DELETE FROM assets
+DELETE FROM assets_registry
 WHERE
 	%s
 	AND organization_id = @organization_id
