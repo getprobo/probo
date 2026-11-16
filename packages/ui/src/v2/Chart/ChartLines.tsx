@@ -42,6 +42,8 @@ export interface ChartLinesProps<
   height: number;
   stroke: Partial<Record<Key, string>>;
   point: Partial<Record<Key, string>>;
+  // When set, every other series and its points fade.
+  emphasized?: Key | null;
   onHover?: (
     column: ChartColumnHover<Datum> | null,
     event: MouseEvent<SVGRectElement>,
@@ -84,10 +86,19 @@ export function ChartLines<
   height,
   stroke,
   point,
+  emphasized = null,
   onHover,
 }: ChartLinesProps<Datum, Key, XScale, YScale>) {
-  const { series, point: pointClass } = chart();
+  const { series, point: pointClass, dimmed } = chart();
   const [hovered, setHovered] = useState<number | null>(null);
+
+  function markClass(key: Key, color: string | undefined) {
+    if (emphasized != null && key !== emphasized) {
+      return dimmed({ className: color });
+    }
+
+    return color;
+  }
 
   return (
     <g>
@@ -100,7 +111,7 @@ export function ChartLines<
           y={datum => position(yScale, y(datum, key))}
           stroke="currentColor"
           strokeWidth={2}
-          className={series({ className: stroke[key] })}
+          className={series({ className: markClass(key, stroke[key]) })}
         />
       ))}
       {data.map((datum, index) => keys.map((key) => {
@@ -115,7 +126,7 @@ export function ChartLines<
             cx={position(xScale, x(datum))}
             cy={position(yScale, value)}
             r={index === hovered ? hoveredPointRadius : pointRadius}
-            className={pointClass({ className: point[key] })}
+            className={pointClass({ className: markClass(key, point[key]) })}
           />
         );
       }))}

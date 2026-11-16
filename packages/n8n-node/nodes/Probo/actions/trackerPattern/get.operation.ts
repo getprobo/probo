@@ -77,9 +77,7 @@ export async function execute(
 					excluded
 					commonTrackerPatternId
 					attribution
-					hits(days: $days) { family count }
-					allowedHits(days: $days) { family count }
-					deniedHits(days: $days) { family count }
+					dailyHits(days: $days) { day hits { family count } }
 					createdAt
 					updatedAt
 				}

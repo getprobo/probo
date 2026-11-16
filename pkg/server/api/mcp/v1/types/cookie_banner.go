@@ -87,6 +87,21 @@ func NewDailyPageLoads(series []cookiebanner.DailyPageLoads) []*DailyPageLoads {
 	return out
 }
 
+func NewDailyHits(series []cookiebanner.DailyHits) []*DailyHits {
+	out := make([]*DailyHits, 0, len(series))
+	for _, day := range series {
+		out = append(
+			out,
+			&DailyHits{
+				Day:  day.Day,
+				Hits: NewBrowserFamilyCounts(day.Hits),
+			},
+		)
+	}
+
+	return out
+}
+
 func NewCookieBannerScan(scan *coredata.CookieBannerScan) *CookieBannerScan {
 	return &CookieBannerScan{
 		ID:             scan.ID,

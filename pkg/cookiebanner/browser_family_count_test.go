@@ -99,24 +99,15 @@ func TestDailyPageLoadsSeries_FillsTheWindowOldestFirst(t *testing.T) {
 	}, series)
 }
 
-func TestSplitPatternHits_SplitsGranted(t *testing.T) {
+func TestHitsByFamily_SumsFamilies(t *testing.T) {
 	t.Parallel()
-
-	total, allowed, denied := SplitPatternHits([]coredata.DailyPatternHit{
-		{BrowserFamily: coredata.BrowserFamilyChrome, CategoryGranted: true, Count: 3},
-		{BrowserFamily: coredata.BrowserFamilyChrome, CategoryGranted: false, Count: 1},
-		{BrowserFamily: coredata.BrowserFamilySafari, CategoryGranted: false, Count: 2},
-	})
 
 	assert.Equal(t, []BrowserFamilyCount{
 		{Family: coredata.BrowserFamilyChrome, Count: 4},
 		{Family: coredata.BrowserFamilySafari, Count: 2},
-	}, total)
-	assert.Equal(t, []BrowserFamilyCount{
-		{Family: coredata.BrowserFamilyChrome, Count: 3},
-	}, allowed)
-	assert.Equal(t, []BrowserFamilyCount{
-		{Family: coredata.BrowserFamilyChrome, Count: 1},
-		{Family: coredata.BrowserFamilySafari, Count: 2},
-	}, denied)
+	}, HitsByFamily([]coredata.DailyPatternHit{
+		{BrowserFamily: coredata.BrowserFamilyChrome, CategoryGranted: true, Count: 3},
+		{BrowserFamily: coredata.BrowserFamilyChrome, CategoryGranted: false, Count: 1},
+		{BrowserFamily: coredata.BrowserFamilySafari, CategoryGranted: false, Count: 2},
+	}))
 }

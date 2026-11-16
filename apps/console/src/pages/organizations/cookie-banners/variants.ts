@@ -222,20 +222,6 @@ export const trackerMaxAgeField = tv({
   },
 });
 
-export const familyHitRates = tv({
-  slots: {
-    root: "flex flex-wrap gap-3",
-    card: "flex min-w-72 flex-col items-stretch gap-3",
-    family: "flex items-center gap-3",
-    logo: "shrink-0 text-sand-11",
-    rates: "flex flex-col gap-2",
-    rate: "flex items-baseline justify-between gap-4",
-    rateLead: "flex items-baseline gap-1.5",
-    value: "font-mono",
-    fraction: "shrink-0",
-  },
-});
-
 export const trackerPatternPropertiesSection = tv({
   slots: {
     root: "flex flex-col gap-6",

@@ -113,9 +113,7 @@ func TestCookieBanner_RBAC(t *testing.T) {
 				}
 				pattern: node(id: $patternId) {
 					... on TrackerPattern {
-						hits { family count }
-						allowedHits { family count }
-						deniedHits { family count }
+						dailyHits { day hits { family count } }
 					}
 				}
 			}

@@ -31,12 +31,44 @@ export const chart = tv({
     line: "stroke-sand-6",
     grid: "[&_line]:stroke-sand-4",
     tooltip: [tooltipPopup(), "pointer-events-none absolute z-2"],
-    legend: "m-0 flex list-none flex-wrap items-center gap-x-4 gap-y-2 p-0",
-    legendItem: "flex items-center gap-1.5 text-2 text-sand-11",
+    legend: "m-0 flex list-none p-0",
+    legendItem: "flex gap-2 text-2 text-sand-11",
     bar: "pointer-events-none",
     series: "pointer-events-none fill-none",
     point: "pointer-events-none",
-    swatch: "size-2 shrink-0 rounded-1",
+    swatch: "shrink-0 rounded-full",
     skeleton: "h-60 animate-pulse rounded-3 bg-sand-3",
+    dimmed: "opacity-25",
+  },
+  variants: {
+    orientation: {
+      horizontal: {
+        legend: "flex-wrap items-center gap-x-4 gap-y-2",
+      },
+      vertical: {
+        legend: "flex-col items-stretch gap-2",
+      },
+    },
+    swatchSize: {
+      sm: {
+        swatch: "size-2",
+      },
+      md: {
+        swatch: "size-4",
+      },
+    },
+    itemAlign: {
+      center: {
+        legendItem: "items-center",
+      },
+      stretch: {
+        legendItem: "items-stretch",
+      },
+    },
+  },
+  defaultVariants: {
+    orientation: "horizontal",
+    swatchSize: "sm",
+    itemAlign: "center",
   },
 });

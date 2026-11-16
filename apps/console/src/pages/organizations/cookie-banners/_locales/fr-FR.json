@@ -359,10 +359,11 @@
     }
   },
   "trackerHits": {
-    "empty": "Aucun signalement ces 7 derniers jours.",
-    "hitRate": "Taux de détection global",
-    "expectedHitRate": "Taux de détection valide",
-    "driftRate": "Taux de dérive"
+    "chart": "Signalements",
+    "empty": {
+      "title": "Aucun signalement",
+      "description": "Les signalements des 30 derniers jours apparaîtront ici."
+    }
   },
   "trackerDiscovery": {
     "families": {

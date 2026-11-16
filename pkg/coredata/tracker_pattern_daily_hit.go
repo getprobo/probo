@@ -35,6 +35,7 @@ import (
 // report omitted them.
 type DailyPatternHit struct {
 	TrackerPatternID gid.GID                  `db:"tracker_pattern_id"`
+	Day              time.Time                `db:"day"`
 	BrowserFamily    BrowserFamily            `db:"browser_family"`
 	Presentation     CookieBannerPresentation `db:"presentation"`
 	ConsentAction    CookieConsentAction      `db:"consent_action"`
@@ -201,8 +202,8 @@ SET
 	return nil
 }
 
-// LoadDailyPatternHitsByTrackerPatternIDs sums hits per pattern and
-// dimension over the days from since, a UTC midnight, onward.
+// LoadDailyPatternHitsByTrackerPatternIDs returns hits per pattern, day
+// and dimension over the days from since, a UTC midnight, onward.
 func LoadDailyPatternHitsByTrackerPatternIDs(
 	ctx context.Context,
 	conn pg.Querier,
@@ -217,6 +218,7 @@ func LoadDailyPatternHitsByTrackerPatternIDs(
 	q := `
 SELECT
 	tracker_pattern_id,
+	day,
 	browser_family,
 	presentation,
 	consent_action,
@@ -229,6 +231,7 @@ WHERE
 	AND day >= @since::date
 GROUP BY
 	tracker_pattern_id,
+	day,
 	browser_family,
 	presentation,
 	consent_action,

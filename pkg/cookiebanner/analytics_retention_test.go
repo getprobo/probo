@@ -148,7 +148,5 @@ func storedPatternHits(
 		return nil
 	}))
 
-	total, _, _ := SplitPatternHits(rows)
-
-	return total
+	return HitsByFamily(rows)
 }

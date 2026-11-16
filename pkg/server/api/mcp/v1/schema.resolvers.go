@@ -6385,14 +6385,12 @@ func (r *Resolver) GetTrackerPatternTool(ctx context.Context, req *mcp.CallToolR
 		return nil, types.GetTrackerPatternOutput{}, fmt.Errorf("cannot load tracker pattern attribution: %w", err)
 	}
 
-	splits, err := r.cookieBanner.GetHitSplits(ctx, scope, input.ID, analyticsDays(input.Days))
+	dailyHits, err := r.cookieBanner.GetDailyHits(ctx, scope, []gid.GID{input.ID}, analyticsDays(input.Days))
 	if err != nil {
-		return nil, types.GetTrackerPatternOutput{}, mcpx.MapError(ctx, r.logger, "cannot get tracker pattern hits", err)
+		return nil, types.GetTrackerPatternOutput{}, mcpx.MapError(ctx, r.logger, "cannot get tracker pattern daily hits", err)
 	}
 
-	mapped.Hits = types.NewBrowserFamilyCounts(splits.Total)
-	mapped.AllowedHits = types.NewBrowserFamilyCounts(splits.Allowed)
-	mapped.DeniedHits = types.NewBrowserFamilyCounts(splits.Denied)
+	mapped.DailyHits = types.NewDailyHits(dailyHits[input.ID])
 
 	return nil, types.GetTrackerPatternOutput{TrackerPattern: mapped}, nil
 }

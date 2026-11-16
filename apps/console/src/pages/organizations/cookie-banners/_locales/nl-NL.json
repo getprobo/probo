@@ -359,10 +359,11 @@
     }
   },
   "trackerHits": {
-    "empty": "Geen hits in de laatste 7 dagen.",
-    "hitRate": "Globale hitrate",
-    "expectedHitRate": "Geldige hitrate",
-    "driftRate": "Afwijkingspercentage"
+    "chart": "Hits",
+    "empty": {
+      "title": "Nog geen hits",
+      "description": "Hits van de afgelopen 30 dagen verschijnen hier."
+    }
   },
   "trackerDiscovery": {
     "families": {

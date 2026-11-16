@@ -17,9 +17,9 @@ All notable changes to the `prb` CLI will be documented in this file.
 - **Breaking**: `cookie-banner view` shows page loads for each UTC day
   in the requested window instead of the latest sample. The JSON
   output has `dailyPageLoads` instead of `latestSample`
-- **Breaking**: `tracker-pattern view` shows hits for the requested
-  number of UTC days instead of sample hits. The JSON output has
-  `hits` instead of `sampleHits`
+- **Breaking**: `tracker-pattern view` shows hits for each UTC day in
+  the requested window instead of sample hits. The JSON output has
+  `dailyHits` instead of `sampleHits`
 
 ### Removed
 

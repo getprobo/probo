@@ -15656,6 +15656,22 @@ components:
             $ref: "#/components/schemas/BrowserFamilyCount"
           description: Page loads by browser family on this day. Families with zero page loads are omitted.
 
+    DailyHits:
+      type: object
+      required:
+        - day
+        - hits
+      properties:
+        day:
+          type: string
+          format: date-time
+          description: UTC midnight that starts this day
+        hits:
+          type: array
+          items:
+            $ref: "#/components/schemas/BrowserFamilyCount"
+          description: Hits by browser family on this day. Families with zero hits are omitted.
+
     CookieBannerScanState:
       type: string
       enum: [PENDING, RUNNING, PAUSED, COMPLETED, FAILED]
@@ -16082,21 +16098,11 @@ components:
         excluded:
           type: boolean
           description: Whether this pattern is excluded from the consent banner
-        hits:
+        daily_hits:
           type: array
           items:
-            $ref: "#/components/schemas/BrowserFamilyCount"
-          description: Detections of this pattern by browser family over the requested UTC days, today included. Families with zero hits are omitted. Only set by getTrackerPattern.
-        allowed_hits:
-          type: array
-          items:
-            $ref: "#/components/schemas/BrowserFamilyCount"
-          description: Hits whose category was allowed to fire, by browser family.
-        denied_hits:
-          type: array
-          items:
-            $ref: "#/components/schemas/BrowserFamilyCount"
-          description: Hits whose category was not allowed to fire, by browser family.
+            $ref: "#/components/schemas/DailyHits"
+          description: Hits by browser family for each requested UTC day, today included and oldest first. Days with no hits are included with an empty list. Only set by getTrackerPattern.
         common_tracker_pattern_id:
           anyOf:
             - $ref: "#/components/schemas/GID"

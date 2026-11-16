@@ -1927,34 +1927,9 @@ func (r *trackerPatternResolver) DetectedCount(ctx context.Context, obj *types.T
 	return count, nil
 }
 
-// Hits is the resolver for the hits field.
-func (r *trackerPatternResolver) Hits(ctx context.Context, obj *types.TrackerPattern, days *int) ([]*cookiebanner.BrowserFamilyCount, error) {
-	splits, err := r.loadHitSplits(ctx, obj, days)
-	if err != nil {
-		return nil, err
-	}
-
-	return cookiebanner.NewBrowserFamilyCountPtrs(splits.Total), nil
-}
-
-// AllowedHits is the resolver for the allowedHits field.
-func (r *trackerPatternResolver) AllowedHits(ctx context.Context, obj *types.TrackerPattern, days *int) ([]*cookiebanner.BrowserFamilyCount, error) {
-	splits, err := r.loadHitSplits(ctx, obj, days)
-	if err != nil {
-		return nil, err
-	}
-
-	return cookiebanner.NewBrowserFamilyCountPtrs(splits.Allowed), nil
-}
-
-// DeniedHits is the resolver for the deniedHits field.
-func (r *trackerPatternResolver) DeniedHits(ctx context.Context, obj *types.TrackerPattern, days *int) ([]*cookiebanner.BrowserFamilyCount, error) {
-	splits, err := r.loadHitSplits(ctx, obj, days)
-	if err != nil {
-		return nil, err
-	}
-
-	return cookiebanner.NewBrowserFamilyCountPtrs(splits.Denied), nil
+// DailyHits is the resolver for the dailyHits field.
+func (r *trackerPatternResolver) DailyHits(ctx context.Context, obj *types.TrackerPattern, days *int) ([]*cookiebanner.DailyHits, error) {
+	return r.loadDailyHits(ctx, obj, days)
 }
 
 // CommonThirdParty is the resolver for the commonThirdParty field.

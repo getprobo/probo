@@ -36,19 +36,6 @@ const (
 	MaxAnalyticsDays     = 90
 )
 
-type (
-	HitSplitQuery struct {
-		PatternID gid.GID
-		Days      int
-	}
-
-	HitSplits struct {
-		Total   []BrowserFamilyCount
-		Allowed []BrowserFamilyCount
-		Denied  []BrowserFamilyCount
-	}
-)
-
 // utcDay returns the UTC midnight that starts the day of t. Analytics are
 // bucketed by UTC day because organizations have no timezone.
 func utcDay(t time.Time) time.Time {
@@ -185,87 +172,59 @@ func (s *Service) GetDailyPageLoads(
 	return result, nil
 }
 
-func (s *Service) GetHitSplits(
+func (s *Service) GetDailyHits(
 	ctx context.Context,
 	scope coredata.Scoper,
-	trackerPatternID gid.GID,
+	trackerPatternIDs []gid.GID,
 	days int,
-) (HitSplits, error) {
-	query := HitSplitQuery{
-		PatternID: trackerPatternID,
-		Days:      days,
+) (map[gid.GID][]DailyHits, error) {
+	if err := ValidateAnalyticsDays(days); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
-	splits, err := s.GetHitSplitsForPatterns(ctx, scope, []HitSplitQuery{query})
-	if err != nil {
-		return HitSplits{}, err
+	since := analyticsSince(s.now(), days)
+
+	result := make(map[gid.GID][]DailyHits, len(trackerPatternIDs))
+	for _, trackerPatternID := range trackerPatternIDs {
+		result[trackerPatternID] = dailyHitsSeries(nil, since, days)
 	}
 
-	return splits[query], nil
-}
-
-func (s *Service) GetHitSplitsForPatterns(
-	ctx context.Context,
-	scope coredata.Scoper,
-	queries []HitSplitQuery,
-) (map[HitSplitQuery]HitSplits, error) {
-	result := make(map[HitSplitQuery]HitSplits, len(queries))
-	patternIDsByDays := make(map[int][]gid.GID)
-
-	for _, query := range queries {
-		if err := ValidateAnalyticsDays(query.Days); err != nil {
-			return nil, fmt.Errorf("invalid request: %w", err)
-		}
-
-		if _, seen := result[query]; seen {
-			continue
-		}
-
-		result[query] = HitSplits{}
-		patternIDsByDays[query.Days] = append(patternIDsByDays[query.Days], query.PatternID)
-	}
-
-	if len(patternIDsByDays) == 0 {
+	if len(trackerPatternIDs) == 0 {
 		return result, nil
 	}
 
-	now := s.now()
+	var rows []coredata.DailyPatternHit
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			for days, patternIDs := range patternIDsByDays {
-				hits, err := coredata.LoadDailyPatternHitsByTrackerPatternIDs(
-					ctx,
-					conn,
-					scope,
-					patternIDs,
-					analyticsSince(now, days),
-				)
-				if err != nil {
-					return err
-				}
-
-				hitsByPattern := make(map[gid.GID][]coredata.DailyPatternHit, len(patternIDs))
-				for _, hit := range hits {
-					hitsByPattern[hit.TrackerPatternID] = append(hitsByPattern[hit.TrackerPatternID], hit)
-				}
-
-				for patternID, patternHits := range hitsByPattern {
-					total, allowed, denied := SplitPatternHits(patternHits)
-					result[HitSplitQuery{PatternID: patternID, Days: days}] = HitSplits{
-						Total:   total,
-						Allowed: allowed,
-						Denied:  denied,
-					}
-				}
+			loaded, err := coredata.LoadDailyPatternHitsByTrackerPatternIDs(
+				ctx,
+				conn,
+				scope,
+				trackerPatternIDs,
+				since,
+			)
+			if err != nil {
+				return err
 			}
+
+			rows = loaded
 
 			return nil
 		},
 	)
 	if err != nil {
 		return nil, err
+	}
+
+	rowsByPattern := make(map[gid.GID][]coredata.DailyPatternHit, len(trackerPatternIDs))
+	for _, row := range rows {
+		rowsByPattern[row.TrackerPatternID] = append(rowsByPattern[row.TrackerPatternID], row)
+	}
+
+	for trackerPatternID, patternRows := range rowsByPattern {
+		result[trackerPatternID] = dailyHitsSeries(patternRows, since, days)
 	}
 
 	return result, nil

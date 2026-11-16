@@ -359,10 +359,11 @@
     }
   },
   "trackerHits": {
-    "empty": "No hits in the last 7 days.",
-    "hitRate": "Global hit rate",
-    "expectedHitRate": "Valid hit rate",
-    "driftRate": "Drift hit rate"
+    "chart": "Hits",
+    "empty": {
+      "title": "No hits yet",
+      "description": "Hits from the last 30 days will appear here."
+    }
   },
   "trackerDiscovery": {
     "families": {

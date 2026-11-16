@@ -30,6 +30,7 @@ import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { localPoint } from "@visx/event";
 import { scaleLog, scalePoint } from "@visx/scale";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
@@ -51,7 +52,7 @@ type Family = (typeof families)[number]["key"];
 
 const familyKeys = new Set<string>(families.map(family => family.key));
 
-const margin: ChartMargin = { top: 12, right: 4, bottom: 28, left: 44 };
+const margin: ChartMargin = { top: 12, right: 4, bottom: 16, left: 44 };
 
 const pageLoadsChartFragment = graphql`
   fragment PageLoadsChart_cookieBanner on CookieBanner {
@@ -119,7 +120,14 @@ export function PageLoadsChart({ cookieBannerKey }: PageLoadsChartProps) {
     emptyIcon,
     tooltipBody,
     tooltipRow,
-    legendLabel,
+    legendCopy,
+    legendMark,
+    legendSwatch,
+    legendLogo,
+    legendTotal,
+    legendItem,
+    legendColumn,
+    chartPane,
   } = cookieBannerOverview();
 
   const dayFormat = new Intl.DateTimeFormat(i18n.language, {
@@ -134,6 +142,7 @@ export function PageLoadsChart({ cookieBannerKey }: PageLoadsChartProps) {
     day: "numeric",
   });
   const countFormat = new Intl.NumberFormat(i18n.language);
+  const [emphasized, setEmphasized] = useState<Family | null>(null);
 
   const rows: DayRow[] = banner.dailyPageLoads.map((entry) => {
     const counts = emptyCounts();
@@ -188,113 +197,120 @@ export function PageLoadsChart({ cookieBannerKey }: PageLoadsChartProps) {
 
   return (
     <div className={plot()}>
-      <ChartTooltip<DayRow>
-        content={row => (
-          <div className={tooltipBody()}>
-            <span>{row.tooltipLabel}</span>
-            {keys.map(key => (
-              <span key={key} className={tooltipRow()}>
-                <span>{familyLabel(key, t)}</span>
-                <span>{countFormat.format(row[key])}</span>
-              </span>
-            ))}
-            <span className={tooltipRow()}>
-              <span>{t("overview.chart.total")}</span>
-              <span>{countFormat.format(dayTotal(row, keys))}</span>
-            </span>
-          </div>
-        )}
-      >
-        {tooltip => (
-          <ChartFrame
-            height={240}
-            margin={margin}
-            aria-label={t("overview.chart.title")}
-          >
-            {({ width, height }) => {
-              const xScale = scalePoint({
-                domain: rows.map(row => row.label),
-                range: [0, width],
-                padding: 0.5,
-              });
-              const yScale = scaleLog({
-                domain: [1, top],
-                range: [height, 0],
-                base: 10,
-                clamp: true,
-              });
-
-              return (
-                <>
-                  <ChartGridRows
-                    scale={yScale}
-                    width={width}
-                    tickValues={powersOfTen(top)}
-                  />
-                  <ChartLines
-                    data={rows}
-                    keys={keys}
-                    x={row => row.label}
-                    y={(row, key) => row[key]}
-                    xScale={xScale}
-                    yScale={yScale}
-                    height={height}
-                    stroke={stroke}
-                    point={point}
-                    onHover={(column, event) => {
-                      if (column == null) {
-                        tooltip.hide();
-                        return;
-                      }
-                      const point = localPoint(event);
-                      tooltip.show({
-                        data: column.datum,
-                        left: point?.x ?? 0,
-                        top: point?.y ?? 0,
-                      });
-                    }}
-                  />
-                  <ChartBandAxis
-                    scale={xScale}
-                    top={height}
-                    tickValues={rows.flatMap((row, index) => (
-                      index % 5 === 0 || index === rows.length - 1 ? [row.label] : []
-                    ))}
-                  />
-                  <ChartValueAxis
-                    scale={yScale}
-                    tickValues={powersOfTen(top)}
-                    tickFormat={value => axisFormat.format(Number(value))}
-                  />
-                </>
-              );
-            }}
-          </ChartFrame>
-        )}
-      </ChartTooltip>
-      <ChartLegend>
+      <ChartLegend orientation="vertical" className={legendColumn()}>
         {families.filter(family => totals[family.key] > 0).map(family => (
           <ChartLegendItem
             key={family.key}
-            swatchClassName={family.swatch}
-            label={(
-              <span className={legendLabel()}>
-                <FamilyLogo
-                  family={family.key}
-                  size={16}
-                  className={emptyIcon()}
-                />
-                <Text size={2}>{familyLabel(family.key, t)}</Text>
+            className={legendItem()}
+            onMouseEnter={() => setEmphasized(family.key)}
+            onMouseLeave={() => setEmphasized(null)}
+            itemAlign="center"
+            mark={(
+              <span className={legendMark()}>
+                <span className={legendSwatch({ className: family.swatch })} />
+                <FamilyLogo family={family.key} size={16} className={legendLogo()} />
               </span>
             )}
-            value={(
-              <Text size={2} weight="medium" highContrast>
-                {countFormat.format(totals[family.key])}
-              </Text>
+            label={(
+              <span className={legendCopy()}>
+                <Text size={1}>{familyLabel(family.key, t)}</Text>
+                <Text size={1} weight="bold" highContrast className={legendTotal()}>
+                  {countFormat.format(totals[family.key])}
+                </Text>
+              </span>
             )}
           />
         ))}
       </ChartLegend>
+      <div className={chartPane()}>
+        <ChartTooltip<DayRow>
+          content={row => (
+            <div className={tooltipBody()}>
+              <span>{row.tooltipLabel}</span>
+              {keys.map(key => (
+                <span key={key} className={tooltipRow()}>
+                  <span>{familyLabel(key, t)}</span>
+                  <span>{countFormat.format(row[key])}</span>
+                </span>
+              ))}
+              <span className={tooltipRow()}>
+                <span>{t("overview.chart.total")}</span>
+                <span>{countFormat.format(dayTotal(row, keys))}</span>
+              </span>
+            </div>
+          )}
+        >
+          {tooltip => (
+            <ChartFrame
+              height={240}
+              margin={margin}
+              aria-label={t("overview.chart.title")}
+            >
+              {({ width, height }) => {
+                const xScale = scalePoint({
+                  domain: rows.map(row => row.label),
+                  range: [0, width],
+                  padding: 0.5,
+                });
+                const yScale = scaleLog({
+                  domain: [1, top],
+                  range: [height, 0],
+                  base: 10,
+                  clamp: true,
+                });
+
+                return (
+                  <>
+                    <ChartGridRows
+                      scale={yScale}
+                      width={width}
+                      tickValues={powersOfTen(top)}
+                    />
+                    <ChartLines
+                      data={rows}
+                      keys={keys}
+                      x={row => row.label}
+                      y={(row, key) => row[key]}
+                      xScale={xScale}
+                      yScale={yScale}
+                      height={height}
+                      stroke={stroke}
+                      point={point}
+                      emphasized={emphasized}
+                      onHover={(column, event) => {
+                        if (column == null) {
+                          tooltip.hide();
+                          return;
+                        }
+                        const point = localPoint(event);
+                        tooltip.show({
+                          data: column.datum,
+                          left: point?.x ?? 0,
+                          top: point?.y ?? 0,
+                        });
+                      }}
+                    />
+                    <ChartBandAxis
+                      scale={xScale}
+                      top={height}
+                      tickLength={4}
+                      tickValues={rows.map(row => row.label)}
+                      tickFormat={(value, index, values) => (
+                        index % 5 === 0 || index === values.length - 1 ? String(value) : ""
+                      )}
+                    />
+                    <ChartValueAxis
+                      scale={yScale}
+                      tickValues={powersOfTen(top)}
+                      tickFormat={value => axisFormat.format(Number(value))}
+                    />
+                  </>
+                );
+              }}
+            </ChartFrame>
+          )}
+        </ChartTooltip>
+      </div>
     </div>
   );
 }

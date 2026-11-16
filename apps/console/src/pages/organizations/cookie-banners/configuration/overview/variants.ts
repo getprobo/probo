@@ -23,11 +23,18 @@ import { tv } from "tailwind-variants/lite";
 export const cookieBannerOverview = tv({
   slots: {
     card: "flex flex-col gap-4",
-    plot: "flex flex-col gap-4",
+    plot: "flex items-start gap-6",
+    chartPane: "min-h-60 min-w-0 flex-1",
+    legendColumn: "shrink-0",
     empty: "flex flex-col items-center gap-2 py-8 text-center",
     emptyIcon: "text-sand-11",
     tooltipBody: "flex flex-col gap-1",
     tooltipRow: "flex items-center justify-between gap-4",
-    legendLabel: "flex items-center gap-1.5",
+    legendCopy: "flex min-w-0 flex-col",
+    legendMark: "flex items-center gap-1",
+    legendSwatch: "size-2 shrink-0 rounded-full",
+    legendLogo: "shrink-0",
+    legendTotal: "font-mono",
+    legendItem: "cursor-pointer",
   },
 });

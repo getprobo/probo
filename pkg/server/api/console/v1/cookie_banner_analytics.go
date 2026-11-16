@@ -85,35 +85,35 @@ func (r *cookieBannerResolver) loadDailyPageLoads(
 	return cookiebanner.NewDailyPageLoadsPtrs(series), nil
 }
 
-func (r *trackerPatternResolver) loadHitSplits(
+func (r *trackerPatternResolver) loadDailyHits(
 	ctx context.Context,
 	obj *types.TrackerPattern,
 	days *int,
-) (cookiebanner.HitSplits, error) {
+) ([]*cookiebanner.DailyHits, error) {
 	if _, err := r.authorize(ctx, obj.ID, probo.ActionTrackerPatternGet); err != nil {
-		return cookiebanner.HitSplits{}, err
+		return nil, err
 	}
 
 	window, err := analyticsDays(ctx, days)
 	if err != nil {
-		return cookiebanner.HitSplits{}, err
+		return nil, err
 	}
 
-	key := dataloader.HitSplitsKey{
+	key := dataloader.DailyHitsKey{
 		PatternID: obj.ID,
 		Days:      window,
 	}
 
-	splits, err := dataloader.FromContext(ctx).HitSplits.Load(ctx, key)
+	series, err := dataloader.FromContext(ctx).DailyHits.Load(ctx, key)
 	if err != nil {
 		if errors.Is(err, dataloadgen.ErrNotFound) {
-			return cookiebanner.HitSplits{}, nil
+			return []*cookiebanner.DailyHits{}, nil
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get tracker pattern hits", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot get tracker pattern daily hits", log.Error(err))
 
-		return cookiebanner.HitSplits{}, gqlx.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
-	return splits, nil
+	return cookiebanner.NewDailyHitsPtrs(series), nil
 }

@@ -125,7 +125,7 @@ func TestCookieBanner_DailyPageLoads(t *testing.T) {
 	})
 }
 
-func TestTrackerPattern_Hits(t *testing.T) {
+func TestTrackerPattern_DailyHits(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
@@ -134,44 +134,28 @@ func TestTrackerPattern_Hits(t *testing.T) {
 		query($id: ID!, $days: Int) {
 			node(id: $id) {
 				... on TrackerPattern {
-					hits(days: $days) {
-						family
-						count
-					}
-					allowedHits(days: $days) {
-						family
-						count
-					}
-					deniedHits(days: $days) {
-						family
-						count
+					dailyHits(days: $days) {
+						day
+						hits {
+							family
+							count
+						}
 					}
 				}
 			}
 		}
 	`
 
-	type hitsResult struct {
+	type dailyHitsResult struct {
 		Node struct {
-			Hits        []browserFamilyCount `json:"hits"`
-			AllowedHits []browserFamilyCount `json:"allowedHits"`
-			DeniedHits  []browserFamilyCount `json:"deniedHits"`
+			DailyHits []struct {
+				Day  string               `json:"day"`
+				Hits []browserFamilyCount `json:"hits"`
+			} `json:"dailyHits"`
 		} `json:"node"`
 	}
 
-	t.Run("empty for a new pattern", func(t *testing.T) {
-		t.Parallel()
-
-		patternID := createAnalyticsTrackerPattern(owner)
-
-		var result hitsResult
-		require.NoError(t, owner.Execute(query, map[string]any{"id": patternID}, &result))
-		assert.Empty(t, result.Node.Hits)
-		assert.Empty(t, result.Node.AllowedHits)
-		assert.Empty(t, result.Node.DeniedHits)
-	})
-
-	t.Run("splits the last seven days by consent", func(t *testing.T) {
+	t.Run("returns one entry per day oldest first", func(t *testing.T) {
 		t.Parallel()
 
 		patternID := createAnalyticsTrackerPattern(owner)
@@ -179,33 +163,41 @@ func TestTrackerPattern_Hits(t *testing.T) {
 
 		seedDailyPatternHit(t, patternID, today, "CHROME", true, 2)
 		seedDailyPatternHit(t, patternID, today, "CHROME", false, 1)
-		seedDailyPatternHit(t, patternID, today.AddDate(0, 0, -7), "FIREFOX", true, 5)
+		seedDailyPatternHit(t, patternID, today.AddDate(0, 0, -6), "FIREFOX", true, 4)
+		seedDailyPatternHit(t, patternID, today.AddDate(0, 0, -7), "SAFARI", true, 5)
 
-		var lastWeek hitsResult
-		require.NoError(t, owner.Execute(query, map[string]any{"id": patternID}, &lastWeek))
-		assert.Equal(t, []browserFamilyCount{{Family: "CHROME", Count: 3}}, lastWeek.Node.Hits)
-		assert.Equal(t, []browserFamilyCount{{Family: "CHROME", Count: 2}}, lastWeek.Node.AllowedHits)
-		assert.Equal(t, []browserFamilyCount{{Family: "CHROME", Count: 1}}, lastWeek.Node.DeniedHits)
+		var result dailyHitsResult
+		require.NoError(t, owner.Execute(query, map[string]any{"id": patternID}, &result))
+		require.Len(t, result.Node.DailyHits, 7)
 
-		var lastEightDays hitsResult
-		require.NoError(t, owner.Execute(query, map[string]any{"id": patternID, "days": 8}, &lastEightDays))
+		for i, entry := range result.Node.DailyHits {
+			day, err := time.Parse(time.RFC3339Nano, entry.Day)
+			require.NoError(t, err)
+			assert.True(t, day.Equal(today.AddDate(0, 0, i-6)), "entry %d", i)
+		}
+
 		assert.Equal(
 			t,
-			[]browserFamilyCount{
-				{Family: "CHROME", Count: 3},
-				{Family: "FIREFOX", Count: 5},
-			},
-			lastEightDays.Node.Hits,
+			[]browserFamilyCount{{Family: "FIREFOX", Count: 4}},
+			result.Node.DailyHits[0].Hits,
 		)
+		for _, entry := range result.Node.DailyHits[1:6] {
+			assert.Empty(t, entry.Hits)
+		}
 		assert.Equal(
 			t,
-			[]browserFamilyCount{
-				{Family: "CHROME", Count: 2},
-				{Family: "FIREFOX", Count: 5},
-			},
-			lastEightDays.Node.AllowedHits,
+			[]browserFamilyCount{{Family: "CHROME", Count: 3}},
+			result.Node.DailyHits[6].Hits,
 		)
-		assert.Equal(t, []browserFamilyCount{{Family: "CHROME", Count: 1}}, lastEightDays.Node.DeniedHits)
+
+		var wider dailyHitsResult
+		require.NoError(t, owner.Execute(query, map[string]any{"id": patternID, "days": 8}, &wider))
+		require.Len(t, wider.Node.DailyHits, 8)
+		assert.Equal(
+			t,
+			[]browserFamilyCount{{Family: "SAFARI", Count: 5}},
+			wider.Node.DailyHits[0].Hits,
+		)
 	})
 
 	t.Run("rejects days out of range", func(t *testing.T) {
@@ -214,7 +206,7 @@ func TestTrackerPattern_Hits(t *testing.T) {
 		patternID := createAnalyticsTrackerPattern(owner)
 
 		for _, days := range []int{0, 91} {
-			err := owner.Execute(query, map[string]any{"id": patternID, "days": days}, &hitsResult{})
+			err := owner.Execute(query, map[string]any{"id": patternID, "days": days}, &dailyHitsResult{})
 			testutil.RequireErrorCode(t, err, "INVALID", "days=%d must be rejected", days)
 		}
 	})

@@ -7,9 +7,10 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 ### Added
 
 - Cookie banners expose `dailyPageLoads` on the console GraphQL API and
-  `daily_page_loads` on MCP `getCookieBanner`: one entry per UTC day,
-  oldest first, for the requested window. The console cookie banner
-  overview shows those days as a line chart
+  `daily_page_loads` on MCP `getCookieBanner`. Tracker patterns expose
+  `dailyHits` and `daily_hits` on `getTrackerPattern`. Each is one
+  entry per UTC day, oldest first. The console shows both as a line
+  chart
 
 ### Changed
 
@@ -20,16 +21,13 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
   shows the last 7 days, and daily counts are kept for 90 days. Past
   sample counts are not carried over
 - **Breaking**: the console GraphQL API returns `dailyPageLoads` on
-  cookie banners and `hits`, `allowedHits`, and `deniedHits` on tracker
-  patterns. `dailyPageLoads` takes `days` (7 by default, at most 90)
-  and replaces `latestSample` and `samples`. `hits`,
-  `allowedHits`, and `deniedHits` replace `sampleHits`,
-  `allowedSampleHits`, and `deniedSampleHits`. MCP
-  `getCookieBanner` returns `daily_page_loads` and
-  `getTrackerPattern` returns `hits`, `allowed_hits`, and
-  `denied_hits`, with the same `days` input, instead of
-  `latest_sample`, `sample_hits`, `allowed_sample_hits`, and
-  `denied_sample_hits`
+  cookie banners and `dailyHits` on tracker patterns. Both take
+  `days` (7 by default, at most 90) and replace `latestSample`,
+  `samples`, `sampleHits`, `allowedSampleHits`, and
+  `deniedSampleHits`. MCP `getCookieBanner` returns
+  `daily_page_loads` and `getTrackerPattern` returns `daily_hits`,
+  with the same `days` input, instead of `latest_sample`,
+  `sample_hits`, `allowed_sample_hits`, and `denied_sample_hits`
 - **Breaking**: the public banner config no longer sends
   `sample_active`. Sites on `@probo/cookie-banner` 0.22.0 or older
   report no page loads until they upgrade, so hit rates stay

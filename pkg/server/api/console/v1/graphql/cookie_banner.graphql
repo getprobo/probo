@@ -226,6 +226,14 @@ type DailyPageLoads
     pageLoads: [BrowserFamilyCount!]!
 }
 
+type DailyHits
+    @goModel(
+        model: "go.probo.inc/probo/pkg/cookiebanner.DailyHits"
+    ) {
+    day: Datetime!
+    hits: [BrowserFamilyCount!]!
+}
+
 enum CookieBannerScanState
     @goModel(model: "go.probo.inc/probo/pkg/coredata.CookieBannerScanState") {
     PENDING
@@ -611,16 +619,11 @@ type TrackerPattern implements Node
     excluded: Boolean!
     detectedCount: Int! @goField(forceResolver: true)
     """
-    Detections of this pattern per browser family over the last `days`
-    UTC days, today included. Defaults to 7 days; at most 90.
-    allowedHits and deniedHits split them by whether the visitor had
-    granted the pattern's category.
+    Detections of this pattern per browser family for each of the last
+    `days` UTC days, today included and oldest first. Days with no hits
+    are included with an empty list. Defaults to 7 days; at most 90.
     """
-    hits(days: Int): [BrowserFamilyCount!]! @goField(forceResolver: true)
-    allowedHits(days: Int): [BrowserFamilyCount!]!
-        @goField(forceResolver: true)
-    deniedHits(days: Int): [BrowserFamilyCount!]!
-        @goField(forceResolver: true)
+    dailyHits(days: Int): [DailyHits!]! @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
 

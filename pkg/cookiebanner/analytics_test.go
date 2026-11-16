@@ -77,7 +77,7 @@ func TestReportDetectedTrackers_CountsIntoTodayBucket(t *testing.T) {
 	assert.Equal(
 		t,
 		[]BrowserFamilyCount{{Family: coredata.BrowserFamilyChrome, Count: 1}},
-		patternHits(t, ctx, client, svc, fx, "_ga", 1).Total,
+		patternHits(t, ctx, client, svc, fx, "_ga", 1),
 	)
 }
 
@@ -118,7 +118,7 @@ func TestReportDetectedTrackers_CountsPatternOncePerReport(t *testing.T) {
 	assert.Equal(
 		t,
 		[]BrowserFamilyCount{{Family: coredata.BrowserFamilyChrome, Count: 1}},
-		patternHits(t, ctx, client, svc, fx, "_ga", DefaultAnalyticsDays).Total,
+		patternHits(t, ctx, client, svc, fx, "_ga", DefaultAnalyticsDays),
 	)
 }
 
@@ -145,7 +145,7 @@ func TestReportDetectedTrackers_HitWithoutPageLoadStillCounts(t *testing.T) {
 	assert.Equal(
 		t,
 		[]BrowserFamilyCount{{Family: coredata.BrowserFamilyChrome, Count: 1}},
-		patternHits(t, ctx, client, svc, fx, "_ga", DefaultAnalyticsDays).Total,
+		patternHits(t, ctx, client, svc, fx, "_ga", DefaultAnalyticsDays),
 	)
 }
 
@@ -194,7 +194,7 @@ func TestReportDetectedTrackers_SkipsNoopRepeatUpsert(t *testing.T) {
 	assert.Equal(
 		t,
 		[]BrowserFamilyCount{{Family: coredata.BrowserFamilyChrome, Count: 2}},
-		patternHits(t, ctx, client, svc, fx, "_ga", DefaultAnalyticsDays).Total,
+		patternHits(t, ctx, client, svc, fx, "_ga", DefaultAnalyticsDays),
 	)
 }
 
@@ -496,7 +496,7 @@ func TestPublishCookieBannerVersion_KeepsDailyCounts(t *testing.T) {
 	assert.Equal(
 		t,
 		[]BrowserFamilyCount{{Family: coredata.BrowserFamilyChrome, Count: 2}},
-		patternHits(t, ctx, client, svc, fx, "_ga", DefaultAnalyticsDays).Total,
+		patternHits(t, ctx, client, svc, fx, "_ga", DefaultAnalyticsDays),
 	)
 }
 
@@ -539,12 +539,12 @@ func TestAddDailyPatternHits_SumsEveryDay(t *testing.T) {
 	assert.Equal(
 		t,
 		[]BrowserFamilyCount{{Family: coredata.BrowserFamilyChrome, Count: 2}},
-		patternHits(t, ctx, client, svc, fx, "_gid", 1).Total,
+		patternHits(t, ctx, client, svc, fx, "_gid", 1),
 	)
 	assert.Equal(
 		t,
 		[]BrowserFamilyCount{{Family: coredata.BrowserFamilyChrome, Count: 3}},
-		patternHits(t, ctx, client, svc, fx, "_gid", 2).Total,
+		patternHits(t, ctx, client, svc, fx, "_gid", 2),
 	)
 }
 
@@ -603,7 +603,7 @@ func TestGetPageLoads_WindowEndsToday(t *testing.T) {
 			{Family: coredata.BrowserFamilyFirefox, Count: 1},
 			{Family: coredata.BrowserFamilySafari, Count: 1},
 		},
-		patternHits(t, ctx, client, svc, fx, "_ga", 7).Total,
+		patternHits(t, ctx, client, svc, fx, "_ga", 7),
 	)
 }
 
@@ -634,9 +634,11 @@ func TestGetPageLoads_IsolatesTenants(t *testing.T) {
 
 	ga := loadPattern(t, ctx, client, fx, "_ga")
 
-	splits, err := svc.GetHitSplits(ctx, other.scope, ga.ID, DefaultAnalyticsDays)
+	series, err := svc.GetDailyHits(ctx, other.scope, []gid.GID{ga.ID}, DefaultAnalyticsDays)
 	require.NoError(t, err)
-	assert.Empty(t, splits.Total)
+	for _, day := range series[ga.ID] {
+		assert.Empty(t, day.Hits)
+	}
 }
 
 func TestGetPageLoads_RejectsDaysOutOfRange(t *testing.T) {
@@ -657,7 +659,7 @@ func TestGetPageLoads_RejectsDaysOutOfRange(t *testing.T) {
 		_, err = svc.GetDailyPageLoads(ctx, fx.scope, []gid.GID{fx.banner.ID}, days)
 		assert.ErrorAs(t, err, &validationErrs)
 
-		_, err = svc.GetHitSplits(ctx, fx.scope, patternID, days)
+		_, err = svc.GetDailyHits(ctx, fx.scope, []gid.GID{patternID}, days)
 		assert.ErrorAs(t, err, &validationErrs)
 	}
 
@@ -695,15 +697,22 @@ func patternHits(
 	fx workerFixture,
 	pattern string,
 	days int,
-) HitSplits {
+) []BrowserFamilyCount {
 	t.Helper()
 
 	tp := loadPattern(t, ctx, client, fx, pattern)
 
-	splits, err := svc.GetHitSplits(ctx, fx.scope, tp.ID, days)
+	series, err := svc.GetDailyHits(ctx, fx.scope, []gid.GID{tp.ID}, days)
 	require.NoError(t, err)
 
-	return splits
+	totals := map[coredata.BrowserFamily]int{}
+	for _, day := range series[tp.ID] {
+		for _, hit := range day.Hits {
+			totals[hit.Family] += hit.Count
+		}
+	}
+
+	return countsByFamily(totals)
 }
 
 func grantedPageLoads(

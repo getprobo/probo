@@ -23,6 +23,8 @@ package view
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
+	"time"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
@@ -49,9 +51,12 @@ query TrackerPatternView($id: ID!, $days: Int) {
       excluded
       commonTrackerPatternId
       attribution
-      hits(days: $days) {
-        family
-        count
+      dailyHits(days: $days) {
+        day
+        hits {
+          family
+          count
+        }
       }
       createdAt
       updatedAt
@@ -77,10 +82,13 @@ type viewResponse struct {
 		Excluded               bool    `json:"excluded"`
 		CommonTrackerPatternID *string `json:"commonTrackerPatternId"`
 		Attribution            *string `json:"attribution"`
-		Hits                   []struct {
-			Family string `json:"family"`
-			Count  int    `json:"count"`
-		} `json:"hits"`
+		DailyHits              []struct {
+			Day  string `json:"day"`
+			Hits []struct {
+				Family string `json:"family"`
+				Count  int    `json:"count"`
+			} `json:"hits"`
+		} `json:"dailyHits"`
 		CreatedAt string `json:"createdAt"`
 		UpdatedAt string `json:"updatedAt"`
 	} `json:"node"`
@@ -186,14 +194,21 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Attribution:"), *v.Attribution)
 			}
 
-			hitsLabel := label.Render(fmt.Sprintf("Hits (%d days):", flagDays))
-			if len(v.Hits) == 0 {
-				_, _ = fmt.Fprintf(out, "%s%s\n", hitsLabel, "none")
-			} else {
-				_, _ = fmt.Fprintf(out, "%s\n", hitsLabel)
-				for _, hit := range v.Hits {
-					_, _ = fmt.Fprintf(out, "%s%s %d\n", label.Render(""), hit.Family, hit.Count)
+			_, _ = fmt.Fprintf(out, "%s\n", label.Render(fmt.Sprintf("Daily (%d days):", flagDays)))
+			for _, day := range v.DailyHits {
+				total := 0
+				parts := make([]string, 0, len(day.Hits))
+				for _, hit := range day.Hits {
+					total += hit.Count
+					parts = append(parts, fmt.Sprintf("%s %d", hit.Family, hit.Count))
 				}
+
+				detail := "none"
+				if total > 0 {
+					detail = fmt.Sprintf("%d  %s", total, strings.Join(parts, ", "))
+				}
+
+				_, _ = fmt.Fprintf(out, "%s%s  %s\n", label.Render(""), formatUTCDay(day.Day), detail)
 			}
 
 			_, _ = fmt.Fprintln(out)
@@ -208,4 +223,16 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd
+}
+
+func formatUTCDay(raw string) string {
+	parsed, err := time.Parse(time.RFC3339Nano, raw)
+	if err != nil {
+		parsed, err = time.Parse(time.RFC3339, raw)
+		if err != nil {
+			return raw
+		}
+	}
+
+	return parsed.UTC().Format(time.DateOnly)
 }

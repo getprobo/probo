@@ -56,6 +56,42 @@ func NewDailyPageLoadsPtrs(series []DailyPageLoads) []*DailyPageLoads {
 	return out
 }
 
+// DailyHits is one UTC day of tracker hits. Hits is empty when the day
+// has none, so a series can stay dense without the caller filling gaps.
+type DailyHits struct {
+	Day  time.Time
+	Hits []BrowserFamilyCount
+}
+
+func NewDailyHitsPtrs(series []DailyHits) []*DailyHits {
+	out := make([]*DailyHits, len(series))
+	for i := range series {
+		out[i] = &series[i]
+	}
+
+	return out
+}
+
+func dailyHitsSeries(rows []coredata.DailyPatternHit, since time.Time, days int) []DailyHits {
+	rowsByDay := map[time.Time][]coredata.DailyPatternHit{}
+
+	for _, row := range rows {
+		day := utcDay(row.Day)
+		rowsByDay[day] = append(rowsByDay[day], row)
+	}
+
+	series := make([]DailyHits, days)
+	for i := range days {
+		day := since.AddDate(0, 0, i)
+		series[i] = DailyHits{
+			Day:  day,
+			Hits: HitsByFamily(rowsByDay[day]),
+		}
+	}
+
+	return series
+}
+
 // dailyPageLoadsSeries returns exactly days entries, oldest first, starting
 // at since. since must be a UTC midnight. Rows on other days are dropped,
 // and days with no rows keep an empty family list.
@@ -89,21 +125,14 @@ func PageLoadsByFamily(rows []coredata.DailyPageLoad) []BrowserFamilyCount {
 	return countsByFamily(totals)
 }
 
-func SplitPatternHits(rows []coredata.DailyPatternHit) (total, allowed, denied []BrowserFamilyCount) {
+func HitsByFamily(rows []coredata.DailyPatternHit) []BrowserFamilyCount {
 	totals := map[coredata.BrowserFamily]int{}
-	alloweds := map[coredata.BrowserFamily]int{}
-	denieds := map[coredata.BrowserFamily]int{}
 
 	for _, row := range rows {
 		totals[row.BrowserFamily] += row.Count
-		if row.CategoryGranted {
-			alloweds[row.BrowserFamily] += row.Count
-		} else {
-			denieds[row.BrowserFamily] += row.Count
-		}
 	}
 
-	return countsByFamily(totals), countsByFamily(alloweds), countsByFamily(denieds)
+	return countsByFamily(totals)
 }
 
 func countsByFamily(sums map[coredata.BrowserFamily]int) []BrowserFamilyCount {

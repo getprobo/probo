@@ -19,34 +19,50 @@
 // SOFTWARE.
 
 import type { ComponentProps, ReactNode } from "react";
+import type { VariantProps } from "tailwind-variants/lite";
 
 import { chart } from "./variants";
 
-export function ChartLegend(props: ComponentProps<"ul">) {
-  const { className, ...rest } = props;
-  const { legend } = chart();
+type ChartLegendProps = ComponentProps<"ul"> & Pick<VariantProps<typeof chart>, "orientation">;
+
+export function ChartLegend({ orientation, className, ...rest }: ChartLegendProps) {
+  const { legend } = chart({ orientation });
 
   return <ul className={legend({ className })} {...rest} />;
 }
 
-export interface ChartLegendItemProps {
-  swatchClassName: string;
+export interface ChartLegendItemProps extends Pick<ComponentProps<"li">, "onMouseEnter" | "onMouseLeave" | "className"> {
+  swatchClassName?: string;
+  swatchSize?: "sm" | "md";
+  itemAlign?: "center" | "stretch";
+  // Replaces the color swatch. Used when the mark is a logo on a circle.
+  mark?: ReactNode;
   label: ReactNode;
-  value: ReactNode;
+  value?: ReactNode;
 }
 
 export function ChartLegendItem({
   swatchClassName,
+  swatchSize,
+  itemAlign,
+  mark,
   label,
   value,
+  className,
+  onMouseEnter,
+  onMouseLeave,
 }: ChartLegendItemProps) {
-  const { legendItem, swatch } = chart();
+  const { legendItem, swatch } = chart({ swatchSize, itemAlign });
 
   return (
-    <li className={legendItem()}>
-      <span className={swatch({ className: swatchClassName })} />
+    <li
+      className={legendItem({ className })}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
+      {mark ?? <span className={swatch({ className: swatchClassName })} />}
       <span>{label}</span>
-      <span>{value}</span>
+      {value != null && <span>{value}</span>}
     </li>
   );
 }

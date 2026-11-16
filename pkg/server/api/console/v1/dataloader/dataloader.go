@@ -111,7 +111,7 @@ type (
 		Days           int
 	}
 
-	HitSplitsKey struct {
+	DailyHitsKey struct {
 		PatternID gid.GID
 		Days      int
 	}
@@ -136,7 +136,7 @@ type (
 		CookieBanner                               *dataloadgen.Loader[gid.GID, *coredata.CookieBanner]
 		CookieCategory                             *dataloadgen.Loader[gid.GID, *coredata.CookieCategory]
 		DailyPageLoads                             *dataloadgen.Loader[PageLoadsKey, []cookiebanner.DailyPageLoads]
-		HitSplits                                  *dataloadgen.Loader[HitSplitsKey, cookiebanner.HitSplits]
+		DailyHits                                  *dataloadgen.Loader[DailyHitsKey, []cookiebanner.DailyHits]
 		TrackerPatternObservers                    *dataloadgen.Loader[gid.GID, []coredata.DetectedTrackerObserver]
 		CommonTrackerPattern                       *dataloadgen.Loader[gid.GID, *coredata.CommonTrackerPattern]
 		CommonThirdParty                           *dataloadgen.Loader[gid.GID, *coredata.CommonThirdParty]
@@ -228,7 +228,7 @@ func (f *batchFetcher) newLoaders() *Loaders {
 		CookieBanner:                             dataloadgen.NewMappedLoader(f.fetchCookieBanners),
 		CookieCategory:                           dataloadgen.NewMappedLoader(f.fetchCookieCategories),
 		DailyPageLoads:                           dataloadgen.NewMappedLoader(f.fetchDailyPageLoads),
-		HitSplits:                                dataloadgen.NewMappedLoader(f.fetchHitSplits),
+		DailyHits:                                dataloadgen.NewMappedLoader(f.fetchDailyHits),
 		TrackerPatternObservers:                  dataloadgen.NewMappedLoader(f.fetchTrackerPatternObservers),
 		CommonTrackerPattern:                     dataloadgen.NewMappedLoader(f.fetchCommonTrackerPatterns),
 		CommonThirdParty:                         dataloadgen.NewMappedLoader(f.fetchCommonThirdParties),
@@ -1164,38 +1164,36 @@ func (f *batchFetcher) fetchDailyPageLoads(
 	return result, nil
 }
 
-func (f *batchFetcher) fetchHitSplits(
+func (f *batchFetcher) fetchDailyHits(
 	ctx context.Context,
-	keys []HitSplitsKey,
-) (map[HitSplitsKey]cookiebanner.HitSplits, error) {
-	result := make(map[HitSplitsKey]cookiebanner.HitSplits, len(keys))
-	queriesByTenant := make(map[gid.TenantID][]cookiebanner.HitSplitQuery)
-
-	for _, key := range keys {
-		queriesByTenant[key.PatternID.TenantID()] = append(
-			queriesByTenant[key.PatternID.TenantID()],
-			cookiebanner.HitSplitQuery{
-				PatternID: key.PatternID,
-				Days:      key.Days,
-			},
-		)
+	keys []DailyHitsKey,
+) (map[DailyHitsKey][]cookiebanner.DailyHits, error) {
+	type batchKey struct {
+		tenantID gid.TenantID
+		days     int
 	}
 
-	for tenantID, queries := range queriesByTenant {
-		splits, err := f.cookieBanner.GetHitSplitsForPatterns(
+	result := make(map[DailyHitsKey][]cookiebanner.DailyHits, len(keys))
+	idsByBatch := make(map[batchKey][]gid.GID)
+
+	for _, key := range keys {
+		batch := batchKey{tenantID: key.PatternID.TenantID(), days: key.Days}
+		idsByBatch[batch] = append(idsByBatch[batch], key.PatternID)
+	}
+
+	for batch, patternIDs := range idsByBatch {
+		series, err := f.cookieBanner.GetDailyHits(
 			ctx,
-			scopeFromContext(ctx, tenantID),
-			queries,
+			scopeFromContext(ctx, batch.tenantID),
+			patternIDs,
+			batch.days,
 		)
 		if err != nil {
-			return nil, fmt.Errorf("cannot batch load tracker pattern hits: %w", err)
+			return nil, fmt.Errorf("cannot batch load daily hits: %w", err)
 		}
 
-		for query, split := range splits {
-			result[HitSplitsKey{
-				PatternID: query.PatternID,
-				Days:      query.Days,
-			}] = split
+		for patternID, days := range series {
+			result[DailyHitsKey{PatternID: patternID, Days: batch.days}] = days
 		}
 	}
 

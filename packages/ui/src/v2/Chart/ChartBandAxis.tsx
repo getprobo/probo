@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { AxisBottom, type AxisScale } from "@visx/axis";
+import { AxisBottom, type AxisScale, type TickFormatter } from "@visx/axis";
 import type { ScaleInput } from "@visx/scale";
 
 import { chart } from "./variants";
@@ -28,12 +28,16 @@ export interface ChartBandAxisProps<Scale extends AxisScale> {
   top: number;
   // Domain values that receive a label. Omit to label every band.
   tickValues?: ScaleInput<Scale>[];
+  tickLength?: number;
+  tickFormat?: TickFormatter<ScaleInput<Scale>>;
 }
 
 export function ChartBandAxis<Scale extends AxisScale>({
   scale,
   top,
   tickValues,
+  tickLength = 0,
+  tickFormat,
 }: ChartBandAxisProps<Scale>) {
   const { tick, line } = chart();
 
@@ -42,10 +46,12 @@ export function ChartBandAxis<Scale extends AxisScale>({
       scale={scale}
       top={top}
       tickValues={tickValues}
-      tickLength={0}
+      tickLength={tickLength}
+      tickFormat={tickFormat}
       stroke="currentColor"
       tickStroke="currentColor"
       axisLineClassName={line()}
+      tickLineProps={{ className: line() }}
       tickClassName={tick()}
       tickLabelProps={{ className: tick(), fill: "currentColor" }}
     />
