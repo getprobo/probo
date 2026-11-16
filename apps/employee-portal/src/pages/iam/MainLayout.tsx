@@ -108,12 +108,12 @@ function MainLayoutChrome({
       {queueActive
         ? <QueueTopBar />
         : <TopBar organizationKey={organizationKey} />}
-      <RelayProvider>
-        <div className="flex min-h-0 flex-1 flex-col overflow-auto overscroll-y-contain">
+      <div className="flex min-h-0 flex-1 flex-col overflow-auto overscroll-y-contain">
+        <RelayProvider>
           <Outlet />
-          {!queueActive && <ConsoleFooter organizationKey={organizationKey} />}
-        </div>
-      </RelayProvider>
+        </RelayProvider>
+        {!queueActive && <ConsoleFooter organizationKey={organizationKey} />}
+      </div>
     </div>
   );
 }
