@@ -177,6 +177,9 @@ const (
 	DocumentCommentEntityType                        uint16 = 145
 	CMPDomainEntityType                              uint16 = 146
 	CMPDomainSurfaceEntityType                       uint16 = 147
+	AssetSourceEntityType                            uint16 = 148
+	InventoryAssetEntityType                         uint16 = 149
+	AssetSyncEntityType                              uint16 = 150
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -449,6 +452,12 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &CMPDomain{ID: id}, true
 	case CMPDomainSurfaceEntityType:
 		return &CMPDomainSurface{ID: id}, true
+	case AssetSourceEntityType:
+		return &AssetSource{ID: id}, true
+	case InventoryAssetEntityType:
+		return &InventoryAsset{ID: id}, true
+	case AssetSyncEntityType:
+		return &AssetSync{ID: id}, true
 	default:
 		return nil, false
 	}

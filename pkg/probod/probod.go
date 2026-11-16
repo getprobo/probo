@@ -62,6 +62,7 @@ import (
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connectorclient"
 	"go.probo.inc/probo/pkg/connectorprotocol"
 	"go.probo.inc/probo/pkg/connectorprotocol/provider"
 	"go.probo.inc/probo/pkg/cookiebanner"
@@ -1608,6 +1609,30 @@ func (impl *Implm) Run(
 		},
 	)
 
+	assetSyncWorker := itam.NewAssetSyncWorker(
+		pgClient,
+		connectorclient.New(
+			encryptionKey,
+			identityFederationIssuer,
+			providerRegistry,
+			defaultConnectorRegistry,
+		),
+		l.Named("asset-sync"),
+		worker.WithInterval(30*time.Second),
+		worker.WithMaxConcurrency(20),
+		worker.WithRegisterer(r),
+		worker.WithTracerProvider(tp),
+	)
+	assetSyncWorkerCtx, stopAssetSyncWorker := context.WithCancel(context.Background())
+
+	wg.Go(
+		func() {
+			if err := assetSyncWorker.Run(assetSyncWorkerCtx); err != nil {
+				cancel(fmt.Errorf("asset sync worker crashed: %w", err))
+			}
+		},
+	)
+
 	iamServiceCtx, stopIAMService := context.WithCancel(context.Background())
 
 	wg.Go(
@@ -1924,6 +1949,7 @@ func (impl *Implm) Run(
 	stopDocumentApprovalQuorumPDFWorker()
 	stopNotificationEmailWorker()
 	stopExportJobExporter()
+	stopAssetSyncWorker()
 	stopAccessReviewWorker()
 	stopConnectorsService()
 	stopIAMService()
