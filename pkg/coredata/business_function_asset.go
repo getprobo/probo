@@ -34,7 +34,7 @@ import (
 type (
 	BusinessFunctionAsset struct {
 		BusinessFunctionID gid.GID   `db:"business_function_id"`
-		AssetID            gid.GID   `db:"asset_id"`
+		AssetID            gid.GID   `db:"registry_asset_id"`
 		OrganizationID     gid.GID   `db:"organization_id"`
 		CreatedAt          time.Time `db:"created_at"`
 	}
@@ -53,20 +53,20 @@ func (bfa BusinessFunctionAssets) Merge(
 	q := `
 WITH asset_ids AS (
 	SELECT DISTINCT
-		unnest(@asset_ids::text[]) AS asset_id,
+		unnest(@asset_ids::text[]) AS registry_asset_id,
 		@tenant_id AS tenant_id,
 		@business_function_id AS business_function_id,
 		@organization_id AS organization_id,
 		@created_at::timestamptz AS created_at
 )
-MERGE INTO business_function_assets AS tgt
+MERGE INTO business_function_registry_assets AS tgt
 USING asset_ids AS src
 ON tgt.tenant_id = src.tenant_id
 	AND tgt.business_function_id = src.business_function_id
-	AND tgt.asset_id = src.asset_id
+	AND tgt.registry_asset_id = src.registry_asset_id
 WHEN NOT MATCHED
-	THEN INSERT (tenant_id, business_function_id, asset_id, organization_id, created_at)
-		VALUES (src.tenant_id, src.business_function_id, src.asset_id, src.organization_id, src.created_at)
+	THEN INSERT (tenant_id, business_function_id, registry_asset_id, organization_id, created_at)
+		VALUES (src.tenant_id, src.business_function_id, src.registry_asset_id, src.organization_id, src.created_at)
 	WHEN NOT MATCHED BY SOURCE
 		AND tgt.tenant_id = @tenant_id AND tgt.business_function_id = @business_function_id
 		THEN DELETE
@@ -98,13 +98,13 @@ func (bfa BusinessFunctionAssets) Insert(
 ) error {
 	q := `
 WITH asset_ids AS (
-	SELECT DISTINCT unnest(@asset_ids::text[]) AS asset_id
+	SELECT DISTINCT unnest(@asset_ids::text[]) AS registry_asset_id
 )
-INSERT INTO business_function_assets (tenant_id, business_function_id, asset_id, organization_id, created_at)
+INSERT INTO business_function_registry_assets (tenant_id, business_function_id, registry_asset_id, organization_id, created_at)
 SELECT
 	@tenant_id AS tenant_id,
 	@business_function_id AS business_function_id,
-	asset_id,
+	registry_asset_id,
 	@organization_id AS organization_id,
 	@created_at AS created_at
 FROM asset_ids
@@ -134,9 +134,9 @@ func (bfa *BusinessFunctionAssets) LoadAssetIDsByBusinessFunctionID(
 ) ([]gid.GID, error) {
 	q := `
 SELECT
-	asset_id
+	registry_asset_id
 FROM
-	business_function_assets
+	business_function_registry_assets
 WHERE
 	%s
 	AND business_function_id = @business_function_id
@@ -174,9 +174,9 @@ func (bfa *BusinessFunctionAssets) LoadAssetIDsByBusinessFunctionIDs(
 	q := `
 SELECT
 	business_function_id,
-	asset_id
+	registry_asset_id
 FROM
-	business_function_assets
+	business_function_registry_assets
 WHERE
 	%s
 	AND business_function_id = ANY(@business_function_ids)

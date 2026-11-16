@@ -1247,9 +1247,9 @@ WITH vend AS (
 	FROM
 		third_parties v
 	INNER JOIN
-		asset_third_parties av ON v.id = av.third_party_id
+		registry_asset_third_parties av ON v.id = av.third_party_id
 	WHERE
-		av.asset_id = @asset_id
+		av.registry_asset_id = @registry_asset_id
 )
 SELECT
 	COUNT(id)
@@ -1259,7 +1259,7 @@ WHERE %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"asset_id": assetID}
+	args := pgx.StrictNamedArgs{"registry_asset_id": assetID}
 	maps.Copy(args, scope.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
@@ -1317,9 +1317,9 @@ WITH vend AS (
 	FROM
 		third_parties v
 	INNER JOIN
-		asset_third_parties av ON v.id = av.third_party_id
+		registry_asset_third_parties av ON v.id = av.third_party_id
 	WHERE
-		av.asset_id = @asset_id
+		av.registry_asset_id = @registry_asset_id
 )
 SELECT
 	id,
@@ -1358,7 +1358,7 @@ WHERE %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"asset_id": assetID}
+	args := pgx.StrictNamedArgs{"registry_asset_id": assetID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 

@@ -45,7 +45,7 @@ type (
 		Amount          int       `db:"amount"`
 		OwnerID         gid.GID   `db:"owner_profile_id"`
 		OrganizationID  gid.GID   `db:"organization_id"`
-		AssetType       AssetType `db:"asset_type"`
+		AssetType       AssetType `db:"registry_asset_type"`
 		DataTypesStored string    `db:"data_types_stored"`
 		CreatedAt       time.Time `db:"created_at"`
 		UpdatedAt       time.Time `db:"updated_at"`
@@ -77,7 +77,7 @@ func (a *Asset) AuthorizationAttributes(
 	conn pg.Querier,
 	resourceIDs []gid.GID,
 ) (policy.AttributesByID, error) {
-	q := `SELECT id, organization_id FROM assets WHERE id = ANY(@resource_ids::text[])`
+	q := `SELECT id, organization_id FROM assets_registry WHERE id = ANY(@resource_ids::text[])`
 
 	args := pgx.StrictNamedArgs{
 		"resource_ids": resourceIDs,
@@ -124,12 +124,12 @@ SELECT
 	organization_id,
 	owner_profile_id,
 	amount,
-	asset_type,
+	registry_asset_type,
 	data_types_stored,
 	created_at,
 	updated_at
 FROM
-	assets
+	assets_registry
 WHERE
 	%s
 	AND id = @asset_id
@@ -172,12 +172,12 @@ SELECT
 	organization_id,
 	owner_profile_id,
 	amount,
-	asset_type,
+	registry_asset_type,
 	data_types_stored,
 	created_at,
 	updated_at
 FROM
-	assets
+	assets_registry
 WHERE
 	%s
 	AND owner_profile_id = @owner_profile_id
@@ -218,7 +218,7 @@ func (a *Assets) CountByOrganizationID(
 SELECT
 	COUNT(id)
 FROM
-	assets
+	assets_registry
 WHERE
 	%s
 	AND organization_id = @organization_id
@@ -253,12 +253,12 @@ SELECT
 	organization_id,
 	owner_profile_id,
 	amount,
-	asset_type,
+	registry_asset_type,
 	data_types_stored,
 	created_at,
 	updated_at
 FROM
-	assets
+	assets_registry
 WHERE
 	%s
 	AND organization_id = @organization_id
@@ -292,14 +292,14 @@ func (a *Asset) Insert(
 	scope Scoper,
 ) error {
 	q := `
-INSERT INTO assets (
+INSERT INTO assets_registry (
 	id,
 	tenant_id,
 	name,
 	organization_id,
 	owner_profile_id,
 	amount,
-	asset_type,
+	registry_asset_type,
 	data_types_stored,
 	created_at,
 	updated_at
@@ -310,7 +310,7 @@ INSERT INTO assets (
 	@organization_id,
 	@owner_profile_id,
 	@amount,
-	@asset_type,
+	@registry_asset_type,
 	@data_types_stored,
 	@created_at,
 	@updated_at
@@ -318,16 +318,16 @@ INSERT INTO assets (
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":                a.ID,
-		"tenant_id":         scope.GetTenantID(),
-		"organization_id":   a.OrganizationID,
-		"name":              a.Name,
-		"owner_profile_id":  a.OwnerID,
-		"amount":            a.Amount,
-		"asset_type":        a.AssetType,
-		"data_types_stored": a.DataTypesStored,
-		"created_at":        a.CreatedAt,
-		"updated_at":        a.UpdatedAt,
+		"id":                  a.ID,
+		"tenant_id":           scope.GetTenantID(),
+		"organization_id":     a.OrganizationID,
+		"name":                a.Name,
+		"owner_profile_id":    a.OwnerID,
+		"amount":              a.Amount,
+		"registry_asset_type": a.AssetType,
+		"data_types_stored":   a.DataTypesStored,
+		"created_at":          a.CreatedAt,
+		"updated_at":          a.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -344,12 +344,12 @@ func (a *Asset) Update(
 	scope Scoper,
 ) error {
 	q := `
-UPDATE assets
+UPDATE assets_registry
 SET
 	name = @name,
 	owner_profile_id = @owner_profile_id,
 	amount = @amount,
-	asset_type = @asset_type,
+	registry_asset_type = @registry_asset_type,
 	data_types_stored = @data_types_stored,
 	updated_at = @updated_at
 WHERE
@@ -361,7 +361,7 @@ RETURNING
 	organization_id,
 	owner_profile_id,
 	amount,
-	asset_type,
+	registry_asset_type,
 	data_types_stored,
 	created_at,
 	updated_at
@@ -370,13 +370,13 @@ RETURNING
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"id":                a.ID,
-		"name":              a.Name,
-		"owner_profile_id":  a.OwnerID,
-		"amount":            a.Amount,
-		"asset_type":        a.AssetType,
-		"data_types_stored": a.DataTypesStored,
-		"updated_at":        time.Now(),
+		"id":                  a.ID,
+		"name":                a.Name,
+		"owner_profile_id":    a.OwnerID,
+		"amount":              a.Amount,
+		"registry_asset_type": a.AssetType,
+		"data_types_stored":   a.DataTypesStored,
+		"updated_at":          time.Now(),
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -401,7 +401,7 @@ func (a *Asset) Delete(
 	scope Scoper,
 ) error {
 	q := `
-DELETE FROM assets
+DELETE FROM assets_registry
 WHERE
 	%s
 	AND id = @id
@@ -434,7 +434,7 @@ func (a *Assets) CountByIDs(
 SELECT
 	COUNT(id)
 FROM
-	assets
+	assets_registry
 WHERE
 	%s
 	AND id = ANY(@asset_ids)
@@ -473,12 +473,12 @@ SELECT
 	organization_id,
 	owner_profile_id,
 	amount,
-	asset_type,
+	registry_asset_type,
 	data_types_stored,
 	created_at,
 	updated_at
 FROM
-	assets
+	assets_registry
 WHERE
 	%s
 	AND id = ANY(@asset_ids)
@@ -527,12 +527,12 @@ SELECT
 	organization_id,
 	owner_profile_id,
 	amount,
-	asset_type,
+	registry_asset_type,
 	data_types_stored,
 	created_at,
 	updated_at
 FROM
-	assets
+	assets_registry
 WHERE
 	%s
 	AND id = ANY(@asset_ids)
@@ -675,7 +675,7 @@ func (c *Assets) DeleteByOrganizationID(
 	organizationID gid.GID,
 ) error {
 	q := `
-DELETE FROM assets
+DELETE FROM assets_registry
 WHERE
 	%s
 	AND organization_id = @organization_id

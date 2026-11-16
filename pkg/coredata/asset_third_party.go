@@ -32,7 +32,7 @@ import (
 
 type (
 	AssetThirdParty struct {
-		AssetID      gid.GID      `db:"asset_id"`
+		AssetID      gid.GID      `db:"registry_asset_id"`
 		ThirdPartyID gid.GID      `db:"third_party_id"`
 		TenantID     gid.TenantID `db:"tenant_id"`
 		CreatedAt    time.Time    `db:"created_at"`
@@ -54,29 +54,29 @@ WITH third_party_ids AS (
 	SELECT
 		unnest(@third_party_ids::text[]) AS third_party_id,
 		@tenant_id AS tenant_id,
-		@asset_id AS asset_id,
+		@registry_asset_id AS registry_asset_id,
 		@organization_id AS organization_id,
 		@created_at::timestamptz AS created_at
 )
-MERGE INTO asset_third_parties AS tgt
+MERGE INTO registry_asset_third_parties AS tgt
 USING third_party_ids AS src
 ON tgt.tenant_id = src.tenant_id
-	AND tgt.asset_id = src.asset_id
+	AND tgt.registry_asset_id = src.registry_asset_id
 	AND tgt.third_party_id = src.third_party_id
 WHEN NOT MATCHED
-	THEN INSERT (tenant_id, asset_id, third_party_id, organization_id, created_at)
-		VALUES (src.tenant_id, src.asset_id, src.third_party_id, src.organization_id, src.created_at)
+	THEN INSERT (tenant_id, registry_asset_id, third_party_id, organization_id, created_at)
+		VALUES (src.tenant_id, src.registry_asset_id, src.third_party_id, src.organization_id, src.created_at)
 	WHEN NOT MATCHED BY SOURCE
-		AND tgt.tenant_id = @tenant_id AND tgt.asset_id = @asset_id
+		AND tgt.tenant_id = @tenant_id AND tgt.registry_asset_id = @registry_asset_id
 		THEN DELETE
 	`
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":       scope.GetTenantID(),
-		"asset_id":        assetID,
-		"organization_id": organizationID,
-		"created_at":      time.Now(),
-		"third_party_ids": thirdPartyIDs,
+		"tenant_id":         scope.GetTenantID(),
+		"registry_asset_id": assetID,
+		"organization_id":   organizationID,
+		"created_at":        time.Now(),
+		"third_party_ids":   thirdPartyIDs,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -99,10 +99,10 @@ func (av AssetThirdParties) Insert(
 WITH third_party_ids AS (
 	SELECT unnest(@third_party_ids::text[]) AS third_party_id
 )
-INSERT INTO asset_third_parties (tenant_id, asset_id, third_party_id, organization_id, created_at)
+INSERT INTO registry_asset_third_parties (tenant_id, registry_asset_id, third_party_id, organization_id, created_at)
 SELECT
 	@tenant_id AS tenant_id,
-	@asset_id AS asset_id,
+	@registry_asset_id AS registry_asset_id,
 	third_party_id,
 	@organization_id AS organization_id,
 	@created_at AS created_at
@@ -110,11 +110,11 @@ FROM third_party_ids
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":       scope.GetTenantID(),
-		"asset_id":        assetID,
-		"organization_id": organizationID,
-		"created_at":      time.Now(),
-		"third_party_ids": thirdPartyIDs,
+		"tenant_id":         scope.GetTenantID(),
+		"registry_asset_id": assetID,
+		"organization_id":   organizationID,
+		"created_at":        time.Now(),
+		"third_party_ids":   thirdPartyIDs,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
