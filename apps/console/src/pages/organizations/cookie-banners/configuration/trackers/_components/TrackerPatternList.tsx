@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { InfoIcon } from "@phosphor-icons/react";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { Pagination } from "@probo/ui/src/v2/Pagination/Pagination";
 import { Table } from "@probo/ui/src/v2/Table/Table";
@@ -25,6 +26,9 @@ import { TableBody } from "@probo/ui/src/v2/Table/TableBody";
 import { TableColumnHeaderCell } from "@probo/ui/src/v2/Table/TableColumnHeaderCell";
 import { TableHeader } from "@probo/ui/src/v2/Table/TableHeader";
 import { TableRow } from "@probo/ui/src/v2/Table/TableRow";
+import { Tooltip } from "@probo/ui/src/v2/Tooltip/Tooltip";
+import { TooltipPopup } from "@probo/ui/src/v2/Tooltip/TooltipPopup";
+import { TooltipTrigger } from "@probo/ui/src/v2/Tooltip/TooltipTrigger";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useEffect, useRef, useTransition } from "react";
 import { useTranslation } from "react-i18next";
@@ -218,8 +222,26 @@ export function TrackerPatternList({ cookieBannerKey }: TrackerPatternListProps)
                       <TableColumnHeaderCell width="10rem">
                         {t("trackersPage.columns.category")}
                       </TableColumnHeaderCell>
-                      <TableColumnHeaderCell width="7rem" className={optional()}>
-                        {t("trackersPage.columns.maxAge")}
+                      <TableColumnHeaderCell width="8rem" justify="end">
+                        <span className="inline-flex items-center justify-end gap-1">
+                          {t("trackersPage.columns.hits")}
+                          <Tooltip>
+                            <TooltipTrigger
+                              render={(
+                                <button
+                                  type="button"
+                                  aria-label={t("trackersPage.columns.hitsHint")}
+                                  className="inline-flex border-0 bg-transparent p-0 text-inherit"
+                                />
+                              )}
+                            >
+                              <InfoIcon size={14} />
+                            </TooltipTrigger>
+                            <TooltipPopup>
+                              {t("trackersPage.columns.hitsHint")}
+                            </TooltipPopup>
+                          </Tooltip>
+                        </span>
                       </TableColumnHeaderCell>
                       <TableColumnHeaderCell width="3rem" />
                     </TableRow>
