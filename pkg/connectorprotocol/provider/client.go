@@ -26,6 +26,7 @@ import (
 	"net/http"
 	"time"
 
+	"go.gearno.de/kit/httpclient"
 	"go.probo.inc/probo/pkg/cloud"
 	"go.probo.inc/probo/pkg/connectorprotocol"
 	"go.probo.inc/probo/pkg/coredata"
@@ -77,10 +78,11 @@ func oauthClient(
 	connectorRegistry *connectorprotocol.Registry,
 	conn *connectorprotocol.OAuth2Connection,
 	prvdr coredata.ConnectorProvider,
+	opts ...httpclient.Option,
 ) (*http.Client, error) {
 	refreshCfg := connectorRegistry.GetOAuth2RefreshConfig(string(prvdr))
 	if refreshCfg != nil {
-		return conn.RefreshableClient(ctx, *refreshCfg)
+		return conn.RefreshableClient(ctx, *refreshCfg, opts...)
 	}
 
 	return conn.Client(ctx)
@@ -90,11 +92,15 @@ func oauthClient(
 // connections it refreshes the token. For API-key connections it overlays a
 // Probo-held key onto a copy when the provider is managed, so the loaded row
 // is never mutated.
+//
+// opts apply only to the OAuth refresh dial. With no options, that dial keeps
+// SSRF protection.
 func HTTPClient(
 	ctx context.Context,
 	connectorRegistry *connectorprotocol.Registry,
 	registries *Registry,
 	dbConnector *coredata.Connector,
+	opts ...httpclient.Option,
 ) (*http.Client, error) {
 	prvdr := dbConnector.Provider
 
@@ -112,7 +118,7 @@ func HTTPClient(
 			return nil, fmt.Errorf("cannot align %s client credentials: %w", prvdr, err)
 		}
 
-		return oauthClient(ctx, connectorRegistry, oauth2Conn, prvdr)
+		return oauthClient(ctx, connectorRegistry, oauth2Conn, prvdr, opts...)
 	}
 
 	apiKeyConn, ok := conn.(*connectorprotocol.APIKeyConnection)

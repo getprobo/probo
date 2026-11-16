@@ -1159,8 +1159,8 @@ func (r *thirdPartyConnectionResolver) TotalCount(ctx context.Context, obj *type
 		}
 
 		return count, nil
-	case *assetResolver:
-		count, err := r.probo.ThirdParties.CountForAssetID(ctx, scope, obj.ParentID)
+	case *registryAssetResolver:
+		count, err := r.probo.ThirdParties.CountForRegistryAssetID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count thirdParties", log.Error(err))
 			return 0, gqlx.Internal(ctx)

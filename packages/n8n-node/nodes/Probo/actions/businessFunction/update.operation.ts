@@ -90,8 +90,8 @@ export const description: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Asset IDs',
-				name: 'assetIds',
+				displayName: 'RegistryAsset IDs',
+				name: 'registryAssetIds',
 				type: 'string',
 				default: '',
 				description: 'Comma-separated asset IDs',
@@ -164,7 +164,7 @@ export async function execute(
 		impactTolerance?: string;
 		notes?: string;
 		ownerId?: string;
-		assetIds?: string;
+		registryAssetIds?: string;
 		thirdPartyIds?: string;
 	};
 
@@ -223,13 +223,13 @@ export async function execute(
 		input.ownerId = ownerId === '' ? null : ownerId;
 	}
 
-	if (additionalFields.assetIds) {
-		const assetIds = additionalFields.assetIds
+	if (additionalFields.registryAssetIds) {
+		const registryAssetIds = additionalFields.registryAssetIds
 			.split(',')
-			.map((assetId) => assetId.trim())
+			.map((registryAssetId) => registryAssetId.trim())
 			.filter(Boolean);
-		if (assetIds.length > 0) {
-			input.assetIds = assetIds;
+		if (registryAssetIds.length > 0) {
+			input.registryAssetIds = registryAssetIds;
 		}
 	}
 

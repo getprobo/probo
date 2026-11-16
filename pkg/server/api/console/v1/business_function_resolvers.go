@@ -75,20 +75,20 @@ func (r *businessFunctionResolver) Owner(ctx context.Context, obj *types.Busines
 	return types.NewProfile(owner), nil
 }
 
-// Assets is the resolver for the assets field.
-func (r *businessFunctionResolver) Assets(ctx context.Context, obj *types.BusinessFunction, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AssetOrderBy) (*types.AssetConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionAssetList)
+// RegistryAssets is the resolver for the assets field.
+func (r *businessFunctionResolver) RegistryAssets(ctx context.Context, obj *types.BusinessFunction, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RegistryAssetOrderBy) (*types.RegistryAssetConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionRegistryAssetList)
 	if err != nil {
 		return nil, err
 	}
 
-	pageOrderBy := page.OrderBy[coredata.AssetOrderField]{
-		Field:     coredata.AssetOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.RegistryAssetOrderField]{
+		Field:     coredata.RegistryAssetOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.AssetOrderField]{
+		pageOrderBy = page.OrderBy[coredata.RegistryAssetOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -96,13 +96,13 @@ func (r *businessFunctionResolver) Assets(ctx context.Context, obj *types.Busine
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	pageResult, err := r.probo.BusinessFunctions.ListAssets(ctx, scope, obj.ID, cursor)
+	pageResult, err := r.probo.BusinessFunctions.ListRegistryAssets(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list business function assets", log.Error(err))
 		return nil, gqlx.Internal(ctx)
 	}
 
-	return types.NewAssetConnection(pageResult, r, obj.ID), nil
+	return types.NewRegistryAssetConnection(pageResult, r, obj.ID), nil
 }
 
 // ThirdParties is the resolver for the thirdParties field.
@@ -180,7 +180,7 @@ func (r *mutationResolver) CreateBusinessFunction(ctx context.Context, input typ
 		ImpactTolerance: input.ImpactTolerance,
 		Notes:           input.Notes,
 		OwnerID:         input.OwnerID,
-		AssetIDs:        input.AssetIds,
+		AssetIDs:        input.RegistryAssetIds,
 		ThirdPartyIDs:   input.ThirdPartyIds,
 	}
 
@@ -223,8 +223,8 @@ func (r *mutationResolver) UpdateBusinessFunction(ctx context.Context, input typ
 		OwnerID:         gqlx.UnwrapOmittable(input.OwnerID),
 	}
 
-	if input.AssetIds != nil {
-		req.AssetIDs = &input.AssetIds
+	if input.RegistryAssetIds != nil {
+		req.AssetIDs = &input.RegistryAssetIds
 	}
 
 	if input.ThirdPartyIds != nil {

@@ -33,7 +33,7 @@ export const navPermissionsFragment = graphql`
     canListMembers: permission(action: "iam:membership:list")
     canListThirdParties: permission(action: "core:thirdParty:list")
     canListDocuments: permission(action: "core:document:list")
-    canListAssets: permission(action: "core:asset:list")
+    canListRegistryAssets: permission(action: "core:registry-asset:list")
     canListDevices: permission(action: "itam:device:list")
     canListData: permission(action: "core:datum:list")
     canListAudits: permission(action: "core:audit:list")

@@ -22,7 +22,7 @@ only.
 | `evidence` | Evidence |
 | `audit` | Audits |
 | `finding` | Findings |
-| `asset` | Assets |
+| `registry-asset` | Registry assets |
 | `datum` | Data |
 | `third-party` | Vendors |
 | `processing-activity` | Processing activities |

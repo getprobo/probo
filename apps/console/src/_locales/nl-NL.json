@@ -1842,8 +1842,8 @@
       "v1:agent": "Agents beheren",
       "v1:ai-system:read": "AI-systemen bekijken",
       "v1:ai-system": "AI-systemen beheren",
-      "v1:asset:read": "Assets bekijken",
-      "v1:asset": "Assets beheren",
+      "v1:registry-asset:read": "Registeractiva bekijken",
+      "v1:registry-asset": "Registeractiva beheren",
       "v1:audit:read": "Audits bekijken",
       "v1:audit": "Audits beheren",
       "v1:business-function:read": "Bedrijfsfuncties bekijken",
@@ -2374,7 +2374,7 @@
     "thirdPartyRisks": "Risicobeoordelingen",
     "thirdPartyInternalControls": "Interne controles",
     "documents": "Documenten",
-    "assets": "Assets",
+    "registryAssets": "Registeractiva",
     "devices": "Apparaten",
     "data": "Gegevens",
     "audits": "Audits",
@@ -3270,8 +3270,8 @@
     }
   },
   "assetsPage": {
-    "title": "Assets",
-    "description": "Beheer de assets van uw organisatie en hun classificaties.",
+    "title": "Registeractiva",
+    "description": "Beheer de registeractiva van uw organisatie en hun classificaties.",
     "actions": {
       "document": "Document",
       "publish": "Publiceren",

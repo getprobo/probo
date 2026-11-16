@@ -22,7 +22,7 @@ import type { IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n
 import * as aiSystem from './aiSystem';
 import * as accessReview from './accessReview';
 import * as accessReviewSource from './accessReviewSource';
-import * as asset from './asset';
+import * as registryAsset from './registryAsset';
 import * as audit from './audit';
 import * as auditLog from './auditLog';
 import * as businessFunction from './businessFunction';
@@ -82,7 +82,7 @@ export const resources: Record<string, ResourceModule> = {
 	aiSystem: aiSystem as ResourceModule,
 	accessReview: accessReview as ResourceModule,
 	accessReviewSource: accessReviewSource as ResourceModule,
-	asset: asset as ResourceModule,
+	registryAsset: registryAsset as ResourceModule,
 	audit: audit as ResourceModule,
 	auditLog: auditLog as ResourceModule,
 	businessFunction: businessFunction as ResourceModule,

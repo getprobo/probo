@@ -124,10 +124,10 @@ func TestCLI_ResourceLifecycles(t *testing.T) {
 		nil,
 	)
 	session.roundTrip(
-		"asset",
+		"registry-asset",
 		[]string{
 			"--name", name + "-asset",
-			"--asset-type", "VIRTUAL",
+			"--registry-asset-type", "VIRTUAL",
 			"--amount", "1",
 			"--owner", session.profileID,
 			"--data-types-stored", "Customer records",

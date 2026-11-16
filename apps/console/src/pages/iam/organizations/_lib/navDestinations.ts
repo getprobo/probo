@@ -148,11 +148,11 @@ const NAV_DESTINATIONS = [
     isVisible: permissions => permissions.canListData,
   },
   {
-    id: "assets",
+    id: "registry-assets",
     group: "registries",
-    labelKey: "nav.assets",
-    path: "assets",
-    isVisible: permissions => permissions.canListAssets,
+    labelKey: "nav.registryAssets",
+    path: "registry-assets",
+    isVisible: permissions => permissions.canListRegistryAssets,
   },
   {
     id: "business-functions",

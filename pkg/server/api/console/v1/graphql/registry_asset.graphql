@@ -1,0 +1,257 @@
+enum RegistryAssetType @goModel(model: "go.probo.inc/probo/pkg/coredata.RegistryAssetType") {
+    PHYSICAL @goEnum(value: "go.probo.inc/probo/pkg/coredata.RegistryAssetTypePhysical")
+    VIRTUAL @goEnum(value: "go.probo.inc/probo/pkg/coredata.RegistryAssetTypeVirtual")
+}
+
+enum RegistryAssetOrderField
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.RegistryAssetOrderField") {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RegistryAssetOrderFieldCreatedAt"
+        )
+    AMOUNT
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.RegistryAssetOrderFieldAmount")
+    NAME
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.RegistryAssetOrderFieldName")
+}
+
+enum DatumOrderField
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.DatumOrderField") {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DatumOrderFieldCreatedAt"
+        )
+    NAME @goEnum(value: "go.probo.inc/probo/pkg/coredata.DatumOrderFieldName")
+    DATA_CLASSIFICATION
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DatumOrderFieldDataClassification"
+        )
+}
+
+enum DataClassification
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.DataClassification") {
+    PUBLIC
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DataClassificationPublic"
+        )
+    INTERNAL
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DataClassificationInternal"
+        )
+    CONFIDENTIAL
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DataClassificationConfidential"
+        )
+    SECRET
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DataClassificationSecret"
+        )
+}
+
+input RegistryAssetOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RegistryAssetOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: RegistryAssetOrderField!
+}
+
+input DatumOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DatumOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: DatumOrderField!
+}
+
+type RegistryAsset implements Node & Taggable {
+    tags(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TagOrder
+    ): TagConnection! @goField(forceResolver: true)
+
+    id: ID!
+    name: String!
+    amount: Int!
+    owner: Profile! @goField(forceResolver: true)
+    thirdParties(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ThirdPartyOrder
+    ): ThirdPartyConnection! @goField(forceResolver: true)
+    registryAssetType: RegistryAssetType!
+    dataTypesStored: String!
+    organization: Organization! @goField(forceResolver: true)
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type Datum implements Node & Taggable
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.Datum"
+    ) {
+    tags(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TagOrder
+    ): TagConnection! @goField(forceResolver: true)
+
+    id: ID!
+    name: String!
+    dataClassification: DataClassification!
+    owner: Profile! @goField(forceResolver: true)
+    thirdParties(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ThirdPartyOrder
+    ): ThirdPartyConnection! @goField(forceResolver: true)
+    organization: Organization! @goField(forceResolver: true)
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type RegistryAssetConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RegistryAssetConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [RegistryAssetEdge!]!
+    pageInfo: PageInfo!
+}
+
+type RegistryAssetEdge {
+    cursor: CursorKey!
+    node: RegistryAsset!
+}
+
+type DatumConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DatumConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [DatumEdge!]!
+    pageInfo: PageInfo!
+}
+
+type DatumEdge {
+    cursor: CursorKey!
+    node: Datum!
+}
+
+extend type Mutation {
+    createRegistryAsset(input: CreateRegistryAssetInput!): CreateRegistryAssetPayload!
+    updateRegistryAsset(input: UpdateRegistryAssetInput!): UpdateRegistryAssetPayload!
+    deleteRegistryAsset(input: DeleteRegistryAssetInput!): DeleteRegistryAssetPayload!
+    createDatum(input: CreateDatumInput!): CreateDatumPayload!
+    updateDatum(input: UpdateDatumInput!): UpdateDatumPayload!
+    deleteDatum(input: DeleteDatumInput!): DeleteDatumPayload!
+    publishDataList(
+        input: PublishDataListInput!
+    ): PublishDataListPayload!
+    publishRegistryAssetList(
+        input: PublishRegistryAssetListInput!
+    ): PublishRegistryAssetListPayload!
+}
+
+input CreateRegistryAssetInput {
+    organizationId: ID!
+    name: String!
+    amount: Int!
+    ownerId: ID!
+    registryAssetType: RegistryAssetType!
+    dataTypesStored: String!
+    thirdPartyIds: [ID!]
+}
+
+input UpdateRegistryAssetInput {
+    id: ID!
+    name: String
+    amount: Int
+    ownerId: ID
+    registryAssetType: RegistryAssetType
+    dataTypesStored: String
+    thirdPartyIds: [ID!]
+}
+
+input DeleteRegistryAssetInput {
+    registryAssetId: ID!
+}
+
+input CreateDatumInput {
+    organizationId: ID!
+    name: String!
+    dataClassification: DataClassification!
+    ownerId: ID!
+    thirdPartyIds: [ID!]
+}
+
+input UpdateDatumInput {
+    id: ID!
+    name: String
+    dataClassification: DataClassification
+    ownerId: ID
+    thirdPartyIds: [ID!]
+}
+
+input DeleteDatumInput {
+    datumId: ID!
+}
+
+type CreateRegistryAssetPayload {
+    registryAssetEdge: RegistryAssetEdge!
+}
+
+type UpdateRegistryAssetPayload {
+    registryAsset: RegistryAsset!
+}
+
+type DeleteRegistryAssetPayload {
+    deletedRegistryAssetId: ID!
+}
+
+type CreateDatumPayload {
+    datumEdge: DatumEdge!
+}
+
+type UpdateDatumPayload {
+    datum: Datum!
+}
+
+type DeleteDatumPayload {
+    deletedDatumId: ID!
+}
+
+input PublishDataListInput {
+    organizationId: ID!
+    approverIds: [ID!]
+    minor: Boolean!
+}
+
+type PublishDataListPayload {
+    documentEdge: DocumentEdge!
+    documentVersionEdge: DocumentVersionEdge!
+}
+
+input PublishRegistryAssetListInput {
+    organizationId: ID!
+    approverIds: [ID!]
+    minor: Boolean!
+}
+
+type PublishRegistryAssetListPayload {
+    documentEdge: DocumentEdge!
+    documentVersionEdge: DocumentVersionEdge!
+}

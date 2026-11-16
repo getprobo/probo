@@ -26,7 +26,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
-// CustomStringType simulates coredata.AssetType
+// CustomStringType simulates coredata.RegistryAssetType
 type CustomStringType string
 
 func (c CustomStringType) String() string {
@@ -106,7 +106,7 @@ func TestOptional_WithCustomTypePointer(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			v := New()
-			v.Check(tt.value, "asset_type", OneOfSlice([]string{"VALID", "ANOTHER"}))
+			v.Check(tt.value, "registry_asset_type", OneOfSlice([]string{"VALID", "ANOTHER"}))
 
 			if tt.expectError {
 				if v.Error() == nil {

@@ -39,7 +39,7 @@ import { useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
 
 import type { CreateBusinessFunctionDialogMutation } from "#/__generated__/core/CreateBusinessFunctionDialogMutation.graphql";
-import { AssetsMultiSelectField } from "#/components/form/AssetsMultiSelectField";
+import { RegistryAssetsMultiSelectField } from "#/components/form/RegistryAssetsMultiSelectField";
 import { PeopleSelectField } from "#/components/form/PeopleSelectField";
 import { ThirdPartiesMultiSelectField } from "#/components/form/ThirdPartiesMultiSelectField";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
@@ -90,7 +90,7 @@ export function CreateBusinessFunctionDialog({
     impactTolerance: z.string().optional(),
     notes: z.string().optional(),
     ownerId: z.string().nullable().optional(),
-    assetIds: z.array(z.string()).optional(),
+    registryAssetIds: z.array(z.string()).optional(),
     thirdPartyIds: z.array(z.string()).optional(),
   });
 
@@ -121,7 +121,7 @@ export function CreateBusinessFunctionDialog({
       impactTolerance: "",
       notes: "",
       ownerId: null,
-      assetIds: [],
+      registryAssetIds: [],
       thirdPartyIds: [],
     },
   });
@@ -139,7 +139,7 @@ export function CreateBusinessFunctionDialog({
           impactTolerance: formData.impactTolerance || undefined,
           notes: formData.notes || undefined,
           ownerId: formData.ownerId || undefined,
-          assetIds: formData.assetIds,
+          registryAssetIds: formData.registryAssetIds,
           thirdPartyIds: formData.thirdPartyIds,
         },
         connections: connectionIds ?? [],
@@ -275,10 +275,10 @@ export function CreateBusinessFunctionDialog({
             optional
           />
 
-          <AssetsMultiSelectField
+          <RegistryAssetsMultiSelectField
             organizationId={organizationId}
             control={control}
-            name="assetIds"
+            name="registryAssetIds"
             label={t("createBusinessFunctionDialog.fields.assets")}
           />
 

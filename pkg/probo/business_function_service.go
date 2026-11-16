@@ -81,9 +81,9 @@ func (r *CreateBusinessFunctionRequest) Validate() error {
 	v.Check(r.OwnerID, "owner_id", validator.GID(coredata.MembershipProfileEntityType))
 	v.CheckEach(
 		r.AssetIDs,
-		"asset_ids",
+		"registry_asset_ids",
 		func(index int, item any) {
-			v.Check(item, fmt.Sprintf("asset_ids[%d]", index), validator.Required(), validator.GID(coredata.AssetEntityType))
+			v.Check(item, fmt.Sprintf("registry_asset_ids[%d]", index), validator.Required(), validator.GID(coredata.RegistryAssetEntityType))
 		},
 	)
 	v.CheckEach(
@@ -111,9 +111,9 @@ func (r *UpdateBusinessFunctionRequest) Validate() error {
 	v.Check(r.OwnerID, "owner_id", validator.GID(coredata.MembershipProfileEntityType))
 	v.CheckEach(
 		r.AssetIDs,
-		"asset_ids",
+		"registry_asset_ids",
 		func(index int, item any) {
-			v.Check(item, fmt.Sprintf("asset_ids[%d]", index), validator.GID(coredata.AssetEntityType))
+			v.Check(item, fmt.Sprintf("registry_asset_ids[%d]", index), validator.GID(coredata.RegistryAssetEntityType))
 		},
 	)
 	v.CheckEach(
@@ -218,7 +218,7 @@ func (s *BusinessFunctionService) Create(
 			}
 
 			if len(req.AssetIDs) > 0 {
-				assets := &coredata.Assets{}
+				assets := &coredata.RegistryAssets{}
 				if err := assets.LoadByIDs(ctx, conn, scope, req.AssetIDs); err != nil {
 					return fmt.Errorf("cannot load assets: %w", err)
 				}
@@ -345,7 +345,7 @@ func (s *BusinessFunctionService) Update(
 
 			if req.AssetIDs != nil {
 				if len(*req.AssetIDs) > 0 {
-					assets := &coredata.Assets{}
+					assets := &coredata.RegistryAssets{}
 					if err := assets.LoadByIDs(ctx, conn, scope, *req.AssetIDs); err != nil {
 						return fmt.Errorf("cannot load assets: %w", err)
 					}
@@ -492,13 +492,13 @@ func (s BusinessFunctionService) CountForOrganizationID(
 	return count, nil
 }
 
-func (s BusinessFunctionService) ListAssets(
+func (s BusinessFunctionService) ListRegistryAssets(
 	ctx context.Context,
 	scope coredata.Scoper,
 	businessFunctionID gid.GID,
-	cursor *page.Cursor[coredata.AssetOrderField],
-) (*page.Page[*coredata.Asset, coredata.AssetOrderField], error) {
-	var assets coredata.Assets
+	cursor *page.Cursor[coredata.RegistryAssetOrderField],
+) (*page.Page[*coredata.RegistryAsset, coredata.RegistryAssetOrderField], error) {
+	var assets coredata.RegistryAssets
 
 	err := s.svc.pg.WithConn(
 		ctx,
@@ -541,7 +541,7 @@ func (s BusinessFunctionService) CountAssets(
 				return fmt.Errorf("cannot load business function asset ids: %w", err)
 			}
 
-			assets := coredata.Assets{}
+			assets := coredata.RegistryAssets{}
 
 			count, err = assets.CountByIDs(ctx, conn, scope, assetIDs)
 			if err != nil {

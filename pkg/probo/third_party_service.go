@@ -850,7 +850,7 @@ func (s ThirdPartyService) ImportFromCommon(
 	return thirdParty, created, nil
 }
 
-func (s ThirdPartyService) CountForAssetID(
+func (s ThirdPartyService) CountForRegistryAssetID(
 	ctx context.Context, scope coredata.Scoper,
 	assetID gid.GID,
 ) (int, error) {
@@ -861,7 +861,7 @@ func (s ThirdPartyService) CountForAssetID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			thirdParties := coredata.ThirdParties{}
 
-			count, err = thirdParties.CountByAssetID(ctx, conn, scope, assetID)
+			count, err = thirdParties.CountByRegistryAssetID(ctx, conn, scope, assetID)
 			if err != nil {
 				return fmt.Errorf("cannot count thirdParties: %w", err)
 			}
@@ -876,7 +876,7 @@ func (s ThirdPartyService) CountForAssetID(
 	return count, nil
 }
 
-func (s ThirdPartyService) ListForAssetID(
+func (s ThirdPartyService) ListForRegistryAssetID(
 	ctx context.Context, scope coredata.Scoper,
 	assetID gid.GID,
 	cursor *page.Cursor[coredata.ThirdPartyOrderField],
@@ -886,7 +886,7 @@ func (s ThirdPartyService) ListForAssetID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return thirdParties.LoadByAssetID(ctx, conn, scope, assetID, cursor)
+			return thirdParties.LoadByRegistryAssetID(ctx, conn, scope, assetID, cursor)
 		},
 	)
 	if err != nil {

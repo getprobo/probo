@@ -667,21 +667,21 @@ func (r *Resolver) UpdateFrameworkTool(ctx context.Context, req *mcp.CallToolReq
 	}, nil
 }
 
-func (r *Resolver) ListAssetsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListAssetsInput) (*mcp.CallToolResult, types.ListAssetsOutput, error) {
-	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionAssetList)
+func (r *Resolver) ListRegistryAssetsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListRegistryAssetsInput) (*mcp.CallToolResult, types.ListRegistryAssetsOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionRegistryAssetList)
 	if err != nil {
-		return nil, types.ListAssetsOutput{}, err
+		return nil, types.ListRegistryAssetsOutput{}, err
 	}
 
 	prb := r.proboSvc
 
-	pageOrderBy := page.OrderBy[coredata.AssetOrderField]{
-		Field:     coredata.AssetOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.RegistryAssetOrderField]{
+		Field:     coredata.RegistryAssetOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 
 	if input.OrderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.AssetOrderField]{
+		pageOrderBy = page.OrderBy[coredata.RegistryAssetOrderField]{
 			Field:     input.OrderBy.Field,
 			Direction: input.OrderBy.Direction,
 		}
@@ -689,87 +689,87 @@ func (r *Resolver) ListAssetsTool(ctx context.Context, req *mcp.CallToolRequest,
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	page, err := prb.Assets.ListForOrganizationID(ctx, scope, input.OrganizationID, cursor)
+	page, err := prb.RegistryAssets.ListForOrganizationID(ctx, scope, input.OrganizationID, cursor)
 	if err != nil {
 		panic(fmt.Errorf("cannot list organization assets: %w", err))
 	}
 
-	return nil, types.NewListAssetsOutput(page), nil
+	return nil, types.NewListRegistryAssetsOutput(page), nil
 }
 
-func (r *Resolver) GetAssetTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetAssetInput) (*mcp.CallToolResult, types.GetAssetOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionAssetGet)
+func (r *Resolver) GetRegistryAssetTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetRegistryAssetInput) (*mcp.CallToolResult, types.GetRegistryAssetOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionRegistryAssetGet)
 	if err != nil {
-		return nil, types.GetAssetOutput{}, err
+		return nil, types.GetRegistryAssetOutput{}, err
 	}
 
 	prb := r.proboSvc
 
-	asset, err := prb.Assets.Get(ctx, scope, input.ID)
+	asset, err := prb.RegistryAssets.Get(ctx, scope, input.ID)
 	if err != nil {
-		return nil, types.GetAssetOutput{}, fmt.Errorf("failed to get asset: %w", err)
+		return nil, types.GetRegistryAssetOutput{}, fmt.Errorf("failed to get asset: %w", err)
 	}
 
-	return nil, types.GetAssetOutput{
-		Asset: types.NewAsset(asset),
+	return nil, types.GetRegistryAssetOutput{
+		RegistryAsset: types.NewRegistryAsset(asset),
 	}, nil
 }
 
-func (r *Resolver) AddAssetTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddAssetInput) (*mcp.CallToolResult, types.AddAssetOutput, error) {
-	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionAssetCreate)
+func (r *Resolver) AddRegistryAssetTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddRegistryAssetInput) (*mcp.CallToolResult, types.AddRegistryAssetOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionRegistryAssetCreate)
 	if err != nil {
-		return nil, types.AddAssetOutput{}, err
+		return nil, types.AddRegistryAssetOutput{}, err
 	}
 
 	svc := r.proboSvc
 
-	asset, err := svc.Assets.Create(
+	asset, err := svc.RegistryAssets.Create(
 		ctx, scope,
-		probo.CreateAssetRequest{
-			OrganizationID:  input.OrganizationID,
-			Name:            input.Name,
-			Amount:          input.Amount,
-			OwnerID:         input.OwnerID,
-			AssetType:       input.AssetType,
-			DataTypesStored: input.DataTypesStored,
-			ThirdPartyIDs:   input.ThirdPartyIds,
+		probo.CreateRegistryAssetRequest{
+			OrganizationID:    input.OrganizationID,
+			Name:              input.Name,
+			Amount:            input.Amount,
+			OwnerID:           input.OwnerID,
+			RegistryAssetType: input.RegistryAssetType,
+			DataTypesStored:   input.DataTypesStored,
+			ThirdPartyIDs:     input.ThirdPartyIds,
 		},
 	)
 	if err != nil {
-		return nil, types.AddAssetOutput{}, fmt.Errorf("failed to create asset: %w", err)
+		return nil, types.AddRegistryAssetOutput{}, fmt.Errorf("failed to create asset: %w", err)
 	}
 
-	return nil, types.AddAssetOutput{
-		Asset: types.NewAsset(asset),
+	return nil, types.AddRegistryAssetOutput{
+		RegistryAsset: types.NewRegistryAsset(asset),
 	}, nil
 }
 
-func (r *Resolver) UpdateAssetTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateAssetInput) (*mcp.CallToolResult, types.UpdateAssetOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionAssetUpdate)
+func (r *Resolver) UpdateRegistryAssetTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateRegistryAssetInput) (*mcp.CallToolResult, types.UpdateRegistryAssetOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionRegistryAssetUpdate)
 	if err != nil {
-		return nil, types.UpdateAssetOutput{}, err
+		return nil, types.UpdateRegistryAssetOutput{}, err
 	}
 
 	svc := r.proboSvc
 
-	asset, err := svc.Assets.Update(
+	asset, err := svc.RegistryAssets.Update(
 		ctx, scope,
-		probo.UpdateAssetRequest{
-			ID:              input.ID,
-			Name:            input.Name,
-			Amount:          input.Amount,
-			OwnerID:         input.OwnerID,
-			AssetType:       input.AssetType,
-			DataTypesStored: input.DataTypesStored,
-			ThirdPartyIDs:   input.ThirdPartyIds,
+		probo.UpdateRegistryAssetRequest{
+			ID:                input.ID,
+			Name:              input.Name,
+			Amount:            input.Amount,
+			OwnerID:           input.OwnerID,
+			RegistryAssetType: input.RegistryAssetType,
+			DataTypesStored:   input.DataTypesStored,
+			ThirdPartyIDs:     input.ThirdPartyIds,
 		},
 	)
 	if err != nil {
-		return nil, types.UpdateAssetOutput{}, fmt.Errorf("failed to update asset: %w", err)
+		return nil, types.UpdateRegistryAssetOutput{}, fmt.Errorf("failed to update asset: %w", err)
 	}
 
-	return nil, types.UpdateAssetOutput{
-		Asset: types.NewAsset(asset),
+	return nil, types.UpdateRegistryAssetOutput{
+		RegistryAsset: types.NewRegistryAsset(asset),
 	}, nil
 }
 
@@ -4950,15 +4950,15 @@ func (r *Resolver) PublishDataListTool(ctx context.Context, req *mcp.CallToolReq
 	}, nil
 }
 
-func (r *Resolver) PublishAssetListTool(ctx context.Context, req *mcp.CallToolRequest, input *types.PublishAssetListInput) (*mcp.CallToolResult, types.PublishAssetListOutput, error) {
-	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionAssetPublish)
+func (r *Resolver) PublishRegistryAssetListTool(ctx context.Context, req *mcp.CallToolRequest, input *types.PublishRegistryAssetListInput) (*mcp.CallToolResult, types.PublishRegistryAssetListOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionRegistryAssetPublish)
 	if err != nil {
-		return nil, types.PublishAssetListOutput{}, err
+		return nil, types.PublishRegistryAssetListOutput{}, err
 	}
 
 	svc := r.proboSvc
 
-	document, documentVersion, err := svc.GeneratedDocuments.PublishAssetList(
+	document, documentVersion, err := svc.GeneratedDocuments.PublishRegistryAssetList(
 		ctx,
 		scope,
 		input.OrganizationID,
@@ -4966,10 +4966,10 @@ func (r *Resolver) PublishAssetListTool(ctx context.Context, req *mcp.CallToolRe
 		input.Minor,
 	)
 	if err != nil {
-		return nil, types.PublishAssetListOutput{}, fmt.Errorf("cannot publish asset list: %w", err)
+		return nil, types.PublishRegistryAssetListOutput{}, fmt.Errorf("cannot publish asset list: %w", err)
 	}
 
-	return nil, types.PublishAssetListOutput{
+	return nil, types.PublishRegistryAssetListOutput{
 		DocumentID:        document.ID,
 		DocumentVersionID: documentVersion.ID,
 	}, nil
@@ -5211,21 +5211,21 @@ func (r *Resolver) DeleteThirdPartyServiceTool(ctx context.Context, req *mcp.Cal
 		DeletedThirdPartyServiceID: input.ID,
 	}, nil
 }
-func (r *Resolver) DeleteAssetTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteAssetInput) (*mcp.CallToolResult, types.DeleteAssetOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionAssetDelete)
+func (r *Resolver) DeleteRegistryAssetTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteRegistryAssetInput) (*mcp.CallToolResult, types.DeleteRegistryAssetOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionRegistryAssetDelete)
 	if err != nil {
-		return nil, types.DeleteAssetOutput{}, err
+		return nil, types.DeleteRegistryAssetOutput{}, err
 	}
 
 	svc := r.proboSvc
 
-	err = svc.Assets.Delete(ctx, scope, input.ID)
+	err = svc.RegistryAssets.Delete(ctx, scope, input.ID)
 	if err != nil {
-		return nil, types.DeleteAssetOutput{}, fmt.Errorf("failed to delete asset: %w", err)
+		return nil, types.DeleteRegistryAssetOutput{}, fmt.Errorf("failed to delete asset: %w", err)
 	}
 
-	return nil, types.DeleteAssetOutput{
-		DeletedAssetID: input.ID,
+	return nil, types.DeleteRegistryAssetOutput{
+		DeletedRegistryAssetID: input.ID,
 	}, nil
 }
 func (r *Resolver) DeleteDatumTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteDatumInput) (*mcp.CallToolResult, types.DeleteDatumOutput, error) {
@@ -9400,7 +9400,7 @@ func (r *Resolver) AddBusinessFunctionTool(ctx context.Context, req *mcp.CallToo
 			ImpactTolerance: input.ImpactTolerance,
 			Notes:           input.Notes,
 			OwnerID:         input.OwnerID,
-			AssetIDs:        input.AssetIds,
+			AssetIDs:        input.RegistryAssetIds,
 			ThirdPartyIDs:   input.ThirdPartyIds,
 		},
 	)
@@ -9433,8 +9433,8 @@ func (r *Resolver) UpdateBusinessFunctionTool(ctx context.Context, req *mcp.Call
 		OwnerID:         UnwrapOmittable(input.OwnerID),
 	}
 
-	if input.AssetIds != nil {
-		updateReq.AssetIDs = &input.AssetIds
+	if input.RegistryAssetIds != nil {
+		updateReq.AssetIDs = &input.RegistryAssetIds
 	}
 
 	if input.ThirdPartyIds != nil {

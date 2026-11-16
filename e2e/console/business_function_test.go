@@ -184,7 +184,7 @@ func TestBusinessFunction_CreateWithAssetAndThirdPartyLinks(t *testing.T) {
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	profileID := factory.CreateUser(owner)
-	assetID := createAssetForBusinessFunction(t, owner, profileID)
+	assetID := createRegistryAssetForBusinessFunction(t, owner, profileID)
 	thirdPartyID := factory.CreateThirdParty(owner, factory.Attrs{"name": factory.SafeName("Vendor")})
 
 	const query = `
@@ -193,7 +193,7 @@ func TestBusinessFunction_CreateWithAssetAndThirdPartyLinks(t *testing.T) {
 				businessFunctionEdge {
 					node {
 						id
-						assets(first: 10) {
+						registryAssets(first: 10) {
 							edges { node { id } }
 							totalCount
 						}
@@ -211,8 +211,8 @@ func TestBusinessFunction_CreateWithAssetAndThirdPartyLinks(t *testing.T) {
 		CreateBusinessFunction struct {
 			BusinessFunctionEdge struct {
 				Node struct {
-					ID     string `json:"id"`
-					Assets struct {
+					ID             string `json:"id"`
+					RegistryAssets struct {
 						Edges []struct {
 							Node struct {
 								ID string `json:"id"`
@@ -235,24 +235,24 @@ func TestBusinessFunction_CreateWithAssetAndThirdPartyLinks(t *testing.T) {
 
 	err := owner.Execute(query, map[string]any{
 		"input": map[string]any{
-			"organizationId": owner.GetOrganizationID().String(),
-			"name":           factory.SafeName("Linked Function"),
-			"classification": "CRITICAL",
-			"mtdMinutes":     60,
-			"rtoMinutes":     30,
-			"rpoMinutes":     15,
-			"ownerId":        profileID,
-			"assetIds":       []string{assetID},
-			"thirdPartyIds":  []string{thirdPartyID},
+			"organizationId":   owner.GetOrganizationID().String(),
+			"name":             factory.SafeName("Linked Function"),
+			"classification":   "CRITICAL",
+			"mtdMinutes":       60,
+			"rtoMinutes":       30,
+			"rpoMinutes":       15,
+			"ownerId":          profileID,
+			"registryAssetIds": []string{assetID},
+			"thirdPartyIds":    []string{thirdPartyID},
 		},
 	}, &result)
 	require.NoError(t, err)
 
 	node := result.CreateBusinessFunction.BusinessFunctionEdge.Node
 	assert.NotEmpty(t, node.ID)
-	assert.Equal(t, 1, node.Assets.TotalCount)
-	require.Len(t, node.Assets.Edges, 1)
-	assert.Equal(t, assetID, node.Assets.Edges[0].Node.ID)
+	assert.Equal(t, 1, node.RegistryAssets.TotalCount)
+	require.Len(t, node.RegistryAssets.Edges, 1)
+	assert.Equal(t, assetID, node.RegistryAssets.Edges[0].Node.ID)
 	assert.Equal(t, 1, node.ThirdParties.TotalCount)
 	require.Len(t, node.ThirdParties.Edges, 1)
 	assert.Equal(t, thirdPartyID, node.ThirdParties.Edges[0].Node.ID)
@@ -1200,7 +1200,7 @@ func TestBusinessFunction_TenantIsolation(t *testing.T) {
 
 	org1ProfileID := factory.CreateUser(org1Owner)
 	org2ProfileID := factory.CreateUser(org2Owner)
-	org2AssetID := createAssetForBusinessFunction(t, org2Owner, org2ProfileID)
+	org2AssetID := createRegistryAssetForBusinessFunction(t, org2Owner, org2ProfileID)
 	org2ThirdPartyID := factory.CreateThirdParty(org2Owner, factory.Attrs{"name": "Org2 Vendor"})
 
 	businessFunctionID := createBusinessFunction(t, org1Owner, map[string]any{
@@ -1308,17 +1308,17 @@ func TestBusinessFunction_TenantIsolation(t *testing.T) {
 				createQuery,
 				map[string]any{
 					"input": map[string]any{
-						"organizationId": org1Owner.GetOrganizationID().String(),
-						"name":           "Cross-tenant Asset Link",
-						"classification": "CRITICAL",
-						"mtdMinutes":     60,
-						"rtoMinutes":     30,
-						"rpoMinutes":     15,
-						"assetIds":       []string{org2AssetID},
+						"organizationId":   org1Owner.GetOrganizationID().String(),
+						"name":             "Cross-tenant RegistryAsset Link",
+						"classification":   "CRITICAL",
+						"mtdMinutes":       60,
+						"rtoMinutes":       30,
+						"rpoMinutes":       15,
+						"registryAssetIds": []string{org2AssetID},
 					},
 				},
 			)
-			require.Error(t, err, "must not accept assetIds belonging to another organization")
+			require.Error(t, err, "must not accept registryAssetIds belonging to another organization")
 		},
 	)
 
@@ -1377,7 +1377,7 @@ func TestBusinessFunction_TenantIsolation(t *testing.T) {
 				t,
 				org1Owner,
 				map[string]any{
-					"name":           "Update Asset Isolation",
+					"name":           "Update RegistryAsset Isolation",
 					"classification": "STANDARD",
 					"mtdMinutes":     60,
 					"rtoMinutes":     30,
@@ -1397,12 +1397,12 @@ func TestBusinessFunction_TenantIsolation(t *testing.T) {
 				query,
 				map[string]any{
 					"input": map[string]any{
-						"id":       bfID,
-						"assetIds": []string{org2AssetID},
+						"id":               bfID,
+						"registryAssetIds": []string{org2AssetID},
 					},
 				},
 			)
-			require.Error(t, err, "must not accept assetIds belonging to another organization")
+			require.Error(t, err, "must not accept registryAssetIds belonging to another organization")
 		},
 	)
 }
@@ -1433,8 +1433,8 @@ func createBusinessFunction(t *testing.T, client *testutil.Client, attrs map[str
 		input["ownerId"] = ownerID
 	}
 
-	if assetIDs, ok := attrs["assetIds"]; ok {
-		input["assetIds"] = assetIDs
+	if assetIDs, ok := attrs["registryAssetIds"]; ok {
+		input["registryAssetIds"] = assetIDs
 	}
 
 	if thirdPartyIDs, ok := attrs["thirdPartyIds"]; ok {
@@ -1457,38 +1457,38 @@ func createBusinessFunction(t *testing.T, client *testutil.Client, attrs map[str
 	return result.CreateBusinessFunction.BusinessFunctionEdge.Node.ID
 }
 
-func createAssetForBusinessFunction(t *testing.T, client *testutil.Client, ownerID string) string {
+func createRegistryAssetForBusinessFunction(t *testing.T, client *testutil.Client, ownerID string) string {
 	t.Helper()
 
 	const query = `
-		mutation($input: CreateAssetInput!) {
-			createAsset(input: $input) {
-				assetEdge { node { id } }
+		mutation($input: CreateRegistryAssetInput!) {
+			createRegistryAsset(input: $input) {
+				registryAssetEdge { node { id } }
 			}
 		}
 	`
 
 	var result struct {
-		CreateAsset struct {
-			AssetEdge struct {
+		CreateRegistryAsset struct {
+			RegistryAssetEdge struct {
 				Node struct {
 					ID string `json:"id"`
 				} `json:"node"`
-			} `json:"assetEdge"`
-		} `json:"createAsset"`
+			} `json:"registryAssetEdge"`
+		} `json:"createRegistryAsset"`
 	}
 
 	err := client.Execute(query, map[string]any{
 		"input": map[string]any{
-			"organizationId":  client.GetOrganizationID().String(),
-			"name":            factory.SafeName("Asset"),
-			"amount":          1,
-			"ownerId":         ownerID,
-			"assetType":       "VIRTUAL",
-			"dataTypesStored": "Operational data",
+			"organizationId":    client.GetOrganizationID().String(),
+			"name":              factory.SafeName("RegistryAsset"),
+			"amount":            1,
+			"ownerId":           ownerID,
+			"registryAssetType": "VIRTUAL",
+			"dataTypesStored":   "Operational data",
 		},
 	}, &result)
 	require.NoError(t, err)
 
-	return result.CreateAsset.AssetEdge.Node.ID
+	return result.CreateRegistryAsset.RegistryAssetEdge.Node.ID
 }

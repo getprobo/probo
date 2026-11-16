@@ -34,7 +34,7 @@ Use the same shape across DB, services, GraphQL, and console pickers.
 
 ### Resources that follow this pattern
 
-- Assets, data (datum), risks, obligations, findings
+- RegistryAssets, data (datum), risks, obligations, findings
 - Devices (ITAM) — aligned with compliance resources as of the devices table
   introduction
 

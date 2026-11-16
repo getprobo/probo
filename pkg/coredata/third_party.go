@@ -1234,7 +1234,7 @@ func (v ThirdParty) ExpireNonExpiredRiskAssessments(
 	return nil
 }
 
-func (v *ThirdParties) CountByAssetID(
+func (v *ThirdParties) CountByRegistryAssetID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
@@ -1274,7 +1274,7 @@ WHERE %s
 	return count, nil
 }
 
-func (v *ThirdParties) LoadByAssetID(
+func (v *ThirdParties) LoadByRegistryAssetID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,

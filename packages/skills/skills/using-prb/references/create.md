@@ -11,7 +11,7 @@ default saved by `prb auth login --org`.
 | `control create` | `--framework`, `--section-title`, `--name`, `--description` |
 | `task create` | `--name`, `--priority` |
 | `document create` | `--title`, `--document-type`, `--classification` |
-| `asset create` | `--name`, `--asset-type`, `--amount`, `--owner`, `--data-types-stored` |
+| `registry-asset create` | `--name`, `--registry-asset-type`, `--amount`, `--owner`, `--data-types-stored` |
 | `datum create` | `--name`, `--data-classification`, `--owner` |
 | `risk create` | `--name`, `--category` |
 | `processing-activity create` | `--name`, `--role`, `--lawful-basis`, `--special-or-criminal-data`, `--data-protection-impact-assessment`, `--transfer-impact-assessment` |

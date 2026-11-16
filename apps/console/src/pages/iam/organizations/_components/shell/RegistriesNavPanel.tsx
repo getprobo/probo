@@ -35,7 +35,7 @@ const registriesNavPanelQuery = graphql`
       __typename
       ... on Organization {
         canListData: permission(action: "core:datum:list")
-        canListAssets: permission(action: "core:asset:list")
+        canListRegistryAssets: permission(action: "core:registry-asset:list")
         canListBusinessFunctions: permission(action: "core:business-function:list")
         canListAiSystems: permission(action: "core:ai-system:list")
         canListObligations: permission(action: "core:obligation:list")
@@ -73,10 +73,10 @@ function RegistriesNavPanelInner({ queryRef, group }: RegistriesNavPanelInnerPro
           to={navHref(organizationId, group, "data")}
         />
       )}
-      {organization.canListAssets && (
+      {organization.canListRegistryAssets && (
         <NavPanelItem
-          label={t("nav.assets")}
-          to={navHref(organizationId, group, "assets")}
+          label={t("nav.registryAssets")}
+          to={navHref(organizationId, group, "registry-assets")}
         />
       )}
       {organization.canListBusinessFunctions && (

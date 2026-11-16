@@ -77,7 +77,7 @@ func NewMCPClient(t require.TestingT, owner *Client) *MCPClient {
 		"v1:access-review",
 		"v1:agent",
 		"v1:ai-system",
-		"v1:asset",
+		"v1:registry-asset",
 		"v1:audit",
 		"v1:business-function",
 		"v1:compliance-page",

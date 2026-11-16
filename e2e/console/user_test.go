@@ -549,10 +549,10 @@ func TestUser_RemoveUser_ProfileInUse(t *testing.T) {
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	profileID := factory.CreateUser(owner)
 
-	const createAssetMutation = `
-		mutation($input: CreateAssetInput!) {
-			createAsset(input: $input) {
-				assetEdge {
+	const createRegistryAssetMutation = `
+		mutation($input: CreateRegistryAssetInput!) {
+			createRegistryAsset(input: $input) {
+				registryAssetEdge {
 					node {
 						id
 					}
@@ -561,28 +561,28 @@ func TestUser_RemoveUser_ProfileInUse(t *testing.T) {
 		}
 	`
 
-	var createAssetResult struct {
-		CreateAsset struct {
-			AssetEdge struct {
+	var createRegistryAssetResult struct {
+		CreateRegistryAsset struct {
+			RegistryAssetEdge struct {
 				Node struct {
 					ID string `json:"id"`
 				} `json:"node"`
-			} `json:"assetEdge"`
-		} `json:"createAsset"`
+			} `json:"registryAssetEdge"`
+		} `json:"createRegistryAsset"`
 	}
 
-	err := owner.Execute(createAssetMutation, map[string]any{
+	err := owner.Execute(createRegistryAssetMutation, map[string]any{
 		"input": map[string]any{
-			"organizationId":  owner.GetOrganizationID().String(),
-			"name":            "Production Database Server",
-			"amount":          1,
-			"ownerId":         profileID,
-			"assetType":       "VIRTUAL",
-			"dataTypesStored": "Customer PII",
+			"organizationId":    owner.GetOrganizationID().String(),
+			"name":              "Production Database Server",
+			"amount":            1,
+			"ownerId":           profileID,
+			"registryAssetType": "VIRTUAL",
+			"dataTypesStored":   "Customer PII",
 		},
-	}, &createAssetResult)
+	}, &createRegistryAssetResult)
 	require.NoError(t, err)
-	require.NotEmpty(t, createAssetResult.CreateAsset.AssetEdge.Node.ID)
+	require.NotEmpty(t, createRegistryAssetResult.CreateRegistryAsset.RegistryAssetEdge.Node.ID)
 
 	const removeUserMutation = `
 		mutation($input: RemoveUserInput!) {

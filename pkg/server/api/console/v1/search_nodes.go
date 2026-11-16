@@ -78,14 +78,14 @@ func (r *queryResolver) loadSearchNodeGroup(
 			r.probo.AiSystems.GetByIDs,
 			types.NewAiSystem,
 		)
-	case coredata.AssetEntityType:
+	case coredata.RegistryAssetEntityType:
 		return loadSearchGroup(
 			ctx,
 			r.logger,
 			scope,
 			ids,
-			r.probo.Assets.GetByIDs,
-			types.NewAsset,
+			r.probo.RegistryAssets.GetByIDs,
+			types.NewRegistryAsset,
 		)
 	case coredata.AuditEntityType:
 		return loadSearchGroup(

@@ -37,7 +37,7 @@ import (
 // searchableActions is the permission Query.node uses to load each indexed type.
 var searchableActions = map[uint16]iam.Action{
 	coredata.AiSystemEntityType:                       probo.ActionAiSystemList,
-	coredata.AssetEntityType:                          probo.ActionAssetList,
+	coredata.RegistryAssetEntityType:                  probo.ActionRegistryAssetList,
 	coredata.AuditEntityType:                          probo.ActionAuditList,
 	coredata.BusinessFunctionEntityType:               probo.ActionBusinessFunctionList,
 	coredata.ControlEntityType:                        probo.ActionControlList,

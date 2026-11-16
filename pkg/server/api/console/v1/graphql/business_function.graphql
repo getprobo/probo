@@ -82,13 +82,13 @@ type BusinessFunction implements Node & Taggable {
     impactTolerance: String
     notes: String
     owner: Profile @goField(forceResolver: true)
-    assets(
+    registryAssets(
         first: Int
         after: CursorKey
         last: Int
         before: CursorKey
-        orderBy: AssetOrder
-    ): AssetConnection! @goField(forceResolver: true)
+        orderBy: RegistryAssetOrder
+    ): RegistryAssetConnection! @goField(forceResolver: true)
     thirdParties(
         first: Int
         after: CursorKey
@@ -152,7 +152,7 @@ input CreateBusinessFunctionInput {
     impactTolerance: String
     notes: String
     ownerId: ID
-    assetIds: [ID!]
+    registryAssetIds: [ID!]
     thirdPartyIds: [ID!]
 }
 
@@ -166,7 +166,7 @@ input UpdateBusinessFunctionInput {
     impactTolerance: String @goField(omittable: true)
     notes: String @goField(omittable: true)
     ownerId: ID @goField(omittable: true)
-    assetIds: [ID!]
+    registryAssetIds: [ID!]
     thirdPartyIds: [ID!]
 }
 

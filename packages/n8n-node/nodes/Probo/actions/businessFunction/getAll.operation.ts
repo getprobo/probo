@@ -107,7 +107,7 @@ export const description: INodeProperties[] = [
 				description: 'Whether to include owner details in the response',
 			},
 			{
-				displayName: 'Include Assets',
+				displayName: 'Include RegistryAssets',
 				name: 'includeAssets',
 				type: 'boolean',
 				default: false,
@@ -149,7 +149,7 @@ export async function execute(
 		: '';
 
 	const assetsFragment = options.includeAssets
-		? `assets(first: 100) {
+		? `registryAssets(first: 100) {
 			edges {
 				node {
 					id

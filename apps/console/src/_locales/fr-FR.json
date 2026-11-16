@@ -1843,8 +1843,8 @@
       "v1:agent": "Gérer les agents",
       "v1:ai-system:read": "Consulter les systèmes d'IA",
       "v1:ai-system": "Gérer les systèmes d'IA",
-      "v1:asset:read": "Consulter les actifs",
-      "v1:asset": "Gérer les actifs",
+      "v1:registry-asset:read": "Consulter les actifs du registre",
+      "v1:registry-asset": "Gérer les actifs du registre",
       "v1:audit:read": "Consulter les audits",
       "v1:audit": "Gérer les audits",
       "v1:business-function:read": "Consulter les fonctions métier",
@@ -2375,7 +2375,7 @@
     "thirdPartyRisks": "Évaluations des risques",
     "thirdPartyInternalControls": "Contrôles internes",
     "documents": "Documents",
-    "assets": "Actifs",
+    "registryAssets": "Actifs du registre",
     "devices": "Appareils",
     "data": "Données",
     "audits": "Audits",
@@ -3271,8 +3271,8 @@
     }
   },
   "assetsPage": {
-    "title": "Actifs",
-    "description": "Gérez les actifs de votre organisation et leurs classifications.",
+    "title": "Actifs du registre",
+    "description": "Gérez les actifs du registre de votre organisation et leurs classifications.",
     "actions": {
       "document": "Document",
       "publish": "Publier",

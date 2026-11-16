@@ -648,7 +648,7 @@ func BuildDataListDocument(data docgen.DataListData) (string, error) {
 	return omitEmptyText(buf.String())
 }
 
-func (s *GeneratedDocumentService) PublishAssetList(
+func (s *GeneratedDocumentService) PublishRegistryAssetList(
 	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 	approverIDs []gid.GID,
@@ -667,19 +667,19 @@ func (s *GeneratedDocumentService) PublishAssetList(
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			documentData, err := s.buildAssetListDocumentData(ctx, scope, tx, organization)
+			documentData, err := s.buildRegistryAssetListDocumentData(ctx, scope, tx, organization)
 			if err != nil {
 				return fmt.Errorf("cannot build document data: %w", err)
 			}
 
-			prosemirrorJSON, err := BuildAssetListDocument(documentData)
+			prosemirrorJSON, err := BuildRegistryAssetListDocument(documentData)
 			if err != nil {
 				return fmt.Errorf("cannot build prosemirror document: %w", err)
 			}
 
 			now := time.Now()
 
-			asset := coredata.Asset{}
+			asset := coredata.RegistryAsset{}
 
 			assetDocumentID, err := asset.GetGeneratedDocumentID(ctx, tx, organizationID)
 			if err != nil {
@@ -733,7 +733,7 @@ func (s *GeneratedDocumentService) PublishAssetList(
 				ID:             documentVersionID,
 				OrganizationID: organizationID,
 				DocumentID:     document.ID,
-				Title:          "Assets",
+				Title:          "Registry assets",
 				Content:        prosemirrorJSON,
 				Classification: coredata.DocumentClassificationConfidential,
 				DocumentType:   coredata.DocumentTypeRegister,
@@ -762,14 +762,14 @@ func (s *GeneratedDocumentService) PublishAssetList(
 	return document, documentVersion, nil
 }
 
-func (s *GeneratedDocumentService) GetAssetListDocumentID(
+func (s *GeneratedDocumentService) GetRegistryAssetListDocumentID(
 	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 ) (*gid.GID, error) {
 	var assetDocumentID *gid.GID
 
 	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		asset := coredata.Asset{}
+		asset := coredata.RegistryAsset{}
 
 		var err error
 
@@ -784,19 +784,19 @@ func (s *GeneratedDocumentService) GetAssetListDocumentID(
 	return assetDocumentID, nil
 }
 
-func (s *GeneratedDocumentService) buildAssetListDocumentData(
+func (s *GeneratedDocumentService) buildRegistryAssetListDocumentData(
 	ctx context.Context, scope coredata.Scoper,
 	conn pg.Querier,
 	organization *coredata.Organization,
 ) (docgen.AssetListData, error) {
 	assets, err := page.LoadAll(
 		ctx,
-		page.OrderBy[coredata.AssetOrderField]{
-			Field:     coredata.AssetOrderFieldName,
+		page.OrderBy[coredata.RegistryAssetOrderField]{
+			Field:     coredata.RegistryAssetOrderFieldName,
 			Direction: page.OrderDirectionAsc,
 		},
-		func(ctx context.Context, cursor *page.Cursor[coredata.AssetOrderField]) ([]*coredata.Asset, error) {
-			var batch coredata.Assets
+		func(ctx context.Context, cursor *page.Cursor[coredata.RegistryAssetOrderField]) ([]*coredata.RegistryAsset, error) {
+			var batch coredata.RegistryAssets
 			if err := batch.LoadByOrganizationID(ctx, conn, scope, organization.ID, cursor); err != nil {
 				return nil, fmt.Errorf("cannot load assets: %w", err)
 			}
@@ -810,7 +810,7 @@ func (s *GeneratedDocumentService) buildAssetListDocumentData(
 
 	if len(assets) == 0 {
 		return docgen.AssetListData{
-			Title:            "Assets",
+			Title:            "Registry assets",
 			OrganizationName: organization.Name,
 			CreatedAt:        time.Now(),
 			TotalAssets:      0,
@@ -852,7 +852,7 @@ func (s *GeneratedDocumentService) buildAssetListDocumentData(
 			},
 			func(ctx context.Context, cursor *page.Cursor[coredata.ThirdPartyOrderField]) ([]*coredata.ThirdParty, error) {
 				var batch coredata.ThirdParties
-				if err := batch.LoadByAssetID(ctx, conn, scope, a.ID, cursor); err != nil {
+				if err := batch.LoadByRegistryAssetID(ctx, conn, scope, a.ID, cursor); err != nil {
 					return nil, fmt.Errorf("cannot load thirdParties for asset %s: %w", a.ID, err)
 				}
 
@@ -874,17 +874,17 @@ func (s *GeneratedDocumentService) buildAssetListDocumentData(
 		}
 
 		rows = append(rows, docgen.AssetListRow{
-			Name:            a.Name,
-			AssetType:       formatAssetType(a.AssetType),
-			Amount:          a.Amount,
-			DataTypesStored: stringOrNotSpecified(a.DataTypesStored),
-			Owner:           ownerName,
-			ThirdParties:    thirdPartyStr,
+			Name:              a.Name,
+			RegistryAssetType: formatRegistryAssetType(a.RegistryAssetType),
+			Amount:            a.Amount,
+			DataTypesStored:   stringOrNotSpecified(a.DataTypesStored),
+			Owner:             ownerName,
+			ThirdParties:      thirdPartyStr,
 		})
 	}
 
 	return docgen.AssetListData{
-		Title:            "Assets",
+		Title:            "Registry assets",
 		OrganizationName: organization.Name,
 		CreatedAt:        time.Now(),
 		TotalAssets:      len(assets),
@@ -892,11 +892,11 @@ func (s *GeneratedDocumentService) buildAssetListDocumentData(
 	}, nil
 }
 
-func formatAssetType(t coredata.AssetType) string {
+func formatRegistryAssetType(t coredata.RegistryAssetType) string {
 	switch t {
-	case coredata.AssetTypePhysical:
+	case coredata.RegistryAssetTypePhysical:
 		return "Physical"
-	case coredata.AssetTypeVirtual:
+	case coredata.RegistryAssetTypeVirtual:
 		return "Virtual"
 	default:
 		return stringOrNotSpecified(string(t))
@@ -916,10 +916,10 @@ var assetListTemplate = template.Must(
 			},
 			"printf": fmt.Sprintf,
 		}).
-		ParseFS(Templates, "templates/asset_list.json.tmpl"),
+		ParseFS(Templates, "templates/registry_asset_list.json.tmpl"),
 )
 
-func BuildAssetListDocument(data docgen.AssetListData) (string, error) {
+func BuildRegistryAssetListDocument(data docgen.AssetListData) (string, error) {
 	var buf bytes.Buffer
 	if err := assetListTemplate.Execute(&buf, data); err != nil {
 		return "", fmt.Errorf("cannot execute asset list template: %w", err)
@@ -1569,7 +1569,7 @@ func (s *GeneratedDocumentService) buildBusinessFunctionListDocumentData(
 			assetIDs = append(assetIDs, assetID)
 		}
 
-		var assets coredata.Assets
+		var assets coredata.RegistryAssets
 		if err := assets.LoadByIDs(ctx, conn, scope, assetIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 			return docgen.BusinessFunctionListData{}, fmt.Errorf("cannot load assets: %w", err)
 		}
@@ -1676,7 +1676,7 @@ func (s *GeneratedDocumentService) buildBusinessFunctionListDocumentData(
 				ImpactTolerance: sanitizeTrackerCell(impactTolerance),
 				Notes:           sanitizeTrackerCell(notes),
 				Owner:           sanitizeTrackerCell(ownerName),
-				Assets:          sanitizeTrackerCell(assetsStr),
+				RegistryAssets:  sanitizeTrackerCell(assetsStr),
 				ThirdParties:    sanitizeTrackerCell(thirdPartiesStr),
 			},
 		)

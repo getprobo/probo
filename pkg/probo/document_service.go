@@ -1638,7 +1638,7 @@ func (s *DocumentService) clearDocumentReferences(
 		return err
 	}
 
-	asset := coredata.Asset{}
+	asset := coredata.RegistryAsset{}
 	if err := asset.ClearGeneratedDocumentID(ctx, tx, documentIDs); err != nil {
 		return err
 	}

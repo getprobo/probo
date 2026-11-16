@@ -46,7 +46,7 @@ import { useNavigate } from "react-router";
 import type { BusinessFunctionDetailsPageDeleteMutation } from "#/__generated__/core/BusinessFunctionDetailsPageDeleteMutation.graphql";
 import type { BusinessFunctionDetailsPageQuery } from "#/__generated__/core/BusinessFunctionDetailsPageQuery.graphql";
 import type { BusinessFunctionDetailsPageUpdateMutation } from "#/__generated__/core/BusinessFunctionDetailsPageUpdateMutation.graphql";
-import { AssetsMultiSelectField } from "#/components/form/AssetsMultiSelectField";
+import { RegistryAssetsMultiSelectField } from "#/components/form/RegistryAssetsMultiSelectField";
 import { PeopleSelectField } from "#/components/form/PeopleSelectField";
 import { ThirdPartiesMultiSelectField } from "#/components/form/ThirdPartiesMultiSelectField";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
@@ -81,7 +81,7 @@ export const businessFunctionDetailsPageQuery = graphql`
         owner {
           id
         }
-        assets(first: 100) {
+        registryAssets(first: 100) {
           edges {
             node {
               id
@@ -129,7 +129,7 @@ const updateBusinessFunctionMutation = graphql`
           id
           fullName
         }
-        assets(first: 100) {
+        registryAssets(first: 100) {
           edges {
             node {
               id
@@ -196,7 +196,7 @@ export function BusinessFunctionDetailsPage({
     impactTolerance: z.string().optional(),
     notes: z.string().optional(),
     ownerId: z.string().nullable().optional(),
-    assetIds: z.array(z.string()).optional(),
+    registryAssetIds: z.array(z.string()).optional(),
     thirdPartyIds: z.array(z.string()).optional(),
   });
   const organizationId = useOrganizationId();
@@ -227,13 +227,13 @@ export function BusinessFunctionDetailsPage({
     ),
   );
 
-  const assets = businessFunction.assets?.edges.map(edge => edge.node) ?? [];
-  const assetIds = assets.map(asset => asset.id);
+  const assets = businessFunction.registryAssets?.edges.map(edge => edge.node) ?? [];
+  const registryAssetIds = assets.map(asset => asset.id);
   const thirdParties = businessFunction.thirdParties?.edges.map(edge => edge.node) ?? [];
   const thirdPartyIds = thirdParties.map(thirdParty => thirdParty.id);
   const canEdit = businessFunction.canUpdate ?? false;
   const dependenciesTruncated
-    = Boolean(businessFunction.assets?.pageInfo.hasNextPage)
+    = Boolean(businessFunction.registryAssets?.pageInfo.hasNextPage)
       || Boolean(businessFunction.thirdParties?.pageInfo.hasNextPage);
   const canEditDependencies = canEdit && !dependenciesTruncated;
 
@@ -278,7 +278,7 @@ export function BusinessFunctionDetailsPage({
         impactTolerance: businessFunction.impactTolerance || "",
         notes: businessFunction.notes || "",
         ownerId: businessFunction.owner?.id ?? null,
-        assetIds,
+        registryAssetIds,
         thirdPartyIds,
       },
     });
@@ -300,8 +300,8 @@ export function BusinessFunctionDetailsPage({
           ownerId: formData.ownerId || null,
           // Only send dependency IDs when edited so a capped (first: 100) load
           // cannot wipe relationships beyond the form's initial selection.
-          ...(canEditDependencies && formState.dirtyFields.assetIds
-            ? { assetIds: formData.assetIds }
+          ...(canEditDependencies && formState.dirtyFields.registryAssetIds
+            ? { registryAssetIds: formData.registryAssetIds }
             : {}),
           ...(canEditDependencies && formState.dirtyFields.thirdPartyIds
             ? { thirdPartyIds: formData.thirdPartyIds }
@@ -466,10 +466,10 @@ export function BusinessFunctionDetailsPage({
               </p>
             )}
 
-            <AssetsMultiSelectField
+            <RegistryAssetsMultiSelectField
               organizationId={organizationId}
               control={control}
-              name="assetIds"
+              name="registryAssetIds"
               label={t("businessFunctionDetailsPage.fields.assets")}
               selectedAssets={assets}
               disabled={!canEditDependencies}

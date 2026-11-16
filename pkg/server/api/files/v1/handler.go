@@ -49,7 +49,7 @@ type Handler struct {
 	fileSvc *filemanager.Service
 	probo   *probo.Service
 	iamSvc  *iam.Service
-	assets  *brand.Assets
+	assets  *brand.RegistryAssets
 	baseURL *baseurl.BaseURL
 }
 

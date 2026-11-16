@@ -47,37 +47,37 @@ func TestSecurity_ReadGap_AssetOwner(t *testing.T) {
 	org2Owner := testutil.NewClient(t, testutil.RoleOwner)
 
 	org1ProfileID := factory.CreateUser(org1Owner)
-	org2ProfileID := factory.CreateUser(org2Owner, factory.Attrs{"fullName": "Org2 Secret Asset Owner (read-gap probe)"})
+	org2ProfileID := factory.CreateUser(org2Owner, factory.Attrs{"fullName": "Org2 Secret RegistryAsset Owner (read-gap probe)"})
 
 	var createResult struct {
-		CreateAsset struct {
-			AssetEdge struct {
+		CreateRegistryAsset struct {
+			RegistryAssetEdge struct {
 				Node struct {
 					ID string `json:"id"`
 				} `json:"node"`
-			} `json:"assetEdge"`
-		} `json:"createAsset"`
+			} `json:"registryAssetEdge"`
+		} `json:"createRegistryAsset"`
 	}
 
 	err := org1Owner.Execute(`
-		mutation($input: CreateAssetInput!) {
-			createAsset(input: $input) {
-				assetEdge { node { id } }
+		mutation($input: CreateRegistryAssetInput!) {
+			createRegistryAsset(input: $input) {
+				registryAssetEdge { node { id } }
 			}
 		}
 	`, map[string]any{
 		"input": map[string]any{
-			"organizationId":  org1Owner.GetOrganizationID().String(),
-			"name":            "Org1 Asset for read-gap probe",
-			"amount":          1,
-			"ownerId":         org1ProfileID,
-			"assetType":       "VIRTUAL",
-			"dataTypesStored": "Test data",
+			"organizationId":    org1Owner.GetOrganizationID().String(),
+			"name":              "Org1 RegistryAsset for read-gap probe",
+			"amount":            1,
+			"ownerId":           org1ProfileID,
+			"registryAssetType": "VIRTUAL",
+			"dataTypesStored":   "Test data",
 		},
 	}, &createResult)
 	require.NoError(t, err)
 
-	assetID := createResult.CreateAsset.AssetEdge.Node.ID
+	assetID := createResult.CreateRegistryAsset.RegistryAssetEdge.Node.ID
 
 	injectCrossTenantFK(t, "assets_registry", "owner_profile_id", assetID, org2ProfileID)
 
@@ -93,7 +93,7 @@ func TestSecurity_ReadGap_AssetOwner(t *testing.T) {
 	err = org1Owner.Execute(`
 		query($id: ID!) {
 			node(id: $id) {
-				... on Asset {
+				... on RegistryAsset {
 					owner { id fullName }
 				}
 			}

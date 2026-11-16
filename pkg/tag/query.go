@@ -39,7 +39,7 @@ type ParsedQuery struct {
 // Names are the GraphQL type in kebab case.
 var entityTypeByName = map[string]uint16{
 	"ai-system":                         coredata.AiSystemEntityType,
-	"asset":                             coredata.AssetEntityType,
+	"registry-asset":                    coredata.RegistryAssetEntityType,
 	"audit":                             coredata.AuditEntityType,
 	"business-function":                 coredata.BusinessFunctionEntityType,
 	"control":                           coredata.ControlEntityType,

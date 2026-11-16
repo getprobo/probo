@@ -24,15 +24,15 @@ import (
 	"testing"
 )
 
-// AssetType simulates coredata.AssetType
-type AssetType string
+// RegistryAssetType simulates coredata.RegistryAssetType
+type RegistryAssetType string
 
 const (
-	AssetTypePhysical AssetType = "PHYSICAL"
-	AssetTypeVirtual  AssetType = "VIRTUAL"
+	RegistryAssetTypePhysical RegistryAssetType = "PHYSICAL"
+	RegistryAssetTypeVirtual  RegistryAssetType = "VIRTUAL"
 )
 
-func (at AssetType) String() string {
+func (at RegistryAssetType) String() string {
 	return string(at)
 }
 
@@ -45,25 +45,25 @@ func TestOneOf_CustomStringType(t *testing.T) {
 	}{
 		{
 			name:        "valid custom type - physical",
-			value:       AssetTypePhysical,
+			value:       RegistryAssetTypePhysical,
 			allowed:     []string{"PHYSICAL", "VIRTUAL"},
 			expectError: false,
 		},
 		{
 			name:        "valid custom type - virtual",
-			value:       AssetTypeVirtual,
+			value:       RegistryAssetTypeVirtual,
 			allowed:     []string{"PHYSICAL", "VIRTUAL"},
 			expectError: false,
 		},
 		{
 			name:        "invalid custom type",
-			value:       AssetType("INVALID"),
+			value:       RegistryAssetType("INVALID"),
 			allowed:     []string{"PHYSICAL", "VIRTUAL"},
 			expectError: true,
 		},
 		{
 			name:        "custom type not in allowed list",
-			value:       AssetTypePhysical,
+			value:       RegistryAssetTypePhysical,
 			allowed:     []string{"VIRTUAL"},
 			expectError: true,
 		},
@@ -72,7 +72,7 @@ func TestOneOf_CustomStringType(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			v := New()
-			v.Check(tt.value, "asset_type", OneOfSlice(tt.allowed))
+			v.Check(tt.value, "registry_asset_type", OneOfSlice(tt.allowed))
 
 			if tt.expectError {
 				if v.Error() == nil {

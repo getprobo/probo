@@ -144,8 +144,8 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				}
 			}
 
-			if cmd.Flags().Changed("asset") {
-				input["assetIds"] = flagAssetIDs
+			if cmd.Flags().Changed("registry-asset") {
+				input["registryAssetIds"] = flagAssetIDs
 			}
 
 			if cmd.Flags().Changed("third-party") {
@@ -188,7 +188,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagImpactTolerance, "impact-tolerance", "", "Impact tolerance")
 	cmd.Flags().StringVar(&flagNotes, "notes", "", "Notes")
 	cmd.Flags().StringVar(&flagOwner, "owner", "", "Owner profile ID")
-	cmd.Flags().StringArrayVar(&flagAssetIDs, "asset", nil, "Asset ID (can be repeated)")
+	cmd.Flags().StringArrayVar(&flagAssetIDs, "registry-asset", nil, "Registry asset ID (can be repeated)")
 	cmd.Flags().StringArrayVar(&flagThirdPartyIDs, "third-party", nil, "Third party ID (can be repeated)")
 
 	return cmd

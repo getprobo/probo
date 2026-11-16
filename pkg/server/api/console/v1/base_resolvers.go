@@ -369,15 +369,15 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 			return types.NewDocumentVersionApprovalQuorum(quorum), nil
 		}
-	case coredata.AssetEntityType:
-		action = probo.ActionAssetList
+	case coredata.RegistryAssetEntityType:
+		action = probo.ActionRegistryAssetList
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
-			asset, err := r.probo.Assets.Get(ctx, scope, id)
+			asset, err := r.probo.RegistryAssets.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
 
-			return types.NewAsset(asset), nil
+			return types.NewRegistryAsset(asset), nil
 		}
 	case coredata.DatumEntityType:
 		action = probo.ActionDatumList

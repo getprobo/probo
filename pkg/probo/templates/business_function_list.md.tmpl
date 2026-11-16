@@ -9,9 +9,9 @@ impact tolerance levels. Values are derived from the Business Impact Analysis
 
 # 2. Business Function List
 
-| Reference | Function | Classification | MTD | RTO | RPO | Impact Tolerance | Notes | Owner | Assets | Third Parties |
+| Reference | Function | Classification | MTD | RTO | RPO | Impact Tolerance | Notes | Owner | Registry assets | Third Parties |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-{{ range .Rows }}| {{ .ReferenceID }} | {{ .Name }} | {{ .Classification }} | {{ .MTD }} | {{ .RTO }} | {{ .RPO }} | {{ .ImpactTolerance }} | {{ .Notes }} | {{ .Owner }} | {{ .Assets }} | {{ .ThirdParties }} |
+{{ range .Rows }}| {{ .ReferenceID }} | {{ .Name }} | {{ .Classification }} | {{ .MTD }} | {{ .RTO }} | {{ .RPO }} | {{ .ImpactTolerance }} | {{ .Notes }} | {{ .Owner }} | {{ .RegistryAssets }} | {{ .ThirdParties }} |
 {{ end }}
 ---
 

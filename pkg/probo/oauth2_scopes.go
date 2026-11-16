@@ -29,8 +29,8 @@ const (
 	ScopeV1AiSystemRead coredata.OAuth2Scope = "v1:ai-system:read"
 	ScopeV1AiSystem     coredata.OAuth2Scope = "v1:ai-system"
 
-	ScopeV1AssetRead coredata.OAuth2Scope = "v1:asset:read"
-	ScopeV1Asset     coredata.OAuth2Scope = "v1:asset"
+	ScopeV1RegistryAssetRead coredata.OAuth2Scope = "v1:registry-asset:read"
+	ScopeV1RegistryAsset     coredata.OAuth2Scope = "v1:registry-asset"
 
 	ScopeV1AuditRead coredata.OAuth2Scope = "v1:audit:read"
 	ScopeV1Audit     coredata.OAuth2Scope = "v1:audit"
@@ -90,17 +90,17 @@ var OAuth2ScopeMappings = map[coredata.OAuth2Scope][]string{
 		ActionAiSystemDelete,
 		ActionAiSystemPublish,
 	},
-	ScopeV1AssetRead: {
-		ActionAssetGet,
-		ActionAssetList,
+	ScopeV1RegistryAssetRead: {
+		ActionRegistryAssetGet,
+		ActionRegistryAssetList,
 	},
-	ScopeV1Asset: {
-		ActionAssetGet,
-		ActionAssetList,
-		ActionAssetCreate,
-		ActionAssetUpdate,
-		ActionAssetDelete,
-		ActionAssetPublish,
+	ScopeV1RegistryAsset: {
+		ActionRegistryAssetGet,
+		ActionRegistryAssetList,
+		ActionRegistryAssetCreate,
+		ActionRegistryAssetUpdate,
+		ActionRegistryAssetDelete,
+		ActionRegistryAssetPublish,
 	},
 	ScopeV1AuditRead: {
 		ActionAuditGet,

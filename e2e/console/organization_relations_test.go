@@ -29,7 +29,7 @@ import (
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
-// Organization list-document resolvers (assetListDocument, dataListDocument,
+// Organization list-document resolvers (registryAssetListDocument, dataListDocument,
 // findingsDocument, processingActivitiesDocument, risksDocument,
 // thirdPartiesDocument, and similar) require publish-* mutations and are not
 // covered here.
@@ -276,34 +276,34 @@ func createOrganizationRelationAsset(
 	t.Helper()
 
 	var result struct {
-		CreateAsset struct {
-			AssetEdge struct {
+		CreateRegistryAsset struct {
+			RegistryAssetEdge struct {
 				Node struct {
 					ID string `json:"id"`
 				} `json:"node"`
-			} `json:"assetEdge"`
-		} `json:"createAsset"`
+			} `json:"registryAssetEdge"`
+		} `json:"createRegistryAsset"`
 	}
 
 	err := owner.Execute(`
-		mutation($input: CreateAssetInput!) {
-			createAsset(input: $input) {
-				assetEdge { node { id } }
+		mutation($input: CreateRegistryAssetInput!) {
+			createRegistryAsset(input: $input) {
+				registryAssetEdge { node { id } }
 			}
 		}
 	`, map[string]any{
 		"input": map[string]any{
-			"organizationId":  owner.GetOrganizationID().String(),
-			"name":            name,
-			"amount":          1,
-			"ownerId":         ownerProfileID,
-			"assetType":       "VIRTUAL",
-			"dataTypesStored": "Organization relations fixture",
+			"organizationId":    owner.GetOrganizationID().String(),
+			"name":              name,
+			"amount":            1,
+			"ownerId":           ownerProfileID,
+			"registryAssetType": "VIRTUAL",
+			"dataTypesStored":   "Organization relations fixture",
 		},
 	}, &result)
 	require.NoError(t, err)
 
-	return result.CreateAsset.AssetEdge.Node.ID
+	return result.CreateRegistryAsset.RegistryAssetEdge.Node.ID
 }
 
 func createOrganizationRelationFinding(
@@ -757,7 +757,7 @@ func orgRelationsAssetsDataDocuments(
 ) {
 	var result struct {
 		Node struct {
-			Assets struct {
+			RegistryAssets struct {
 				TotalCount int `json:"totalCount"`
 				Edges      []struct {
 					Node struct {
@@ -788,7 +788,7 @@ func orgRelationsAssetsDataDocuments(
 		query($id: ID!) {
 			node(id: $id) {
 				... on Organization {
-					assets(first: 50) {
+					registryAssets(first: 50) {
 						totalCount
 						edges { node { id } }
 					}
@@ -806,8 +806,8 @@ func orgRelationsAssetsDataDocuments(
 	`, map[string]any{"id": g.orgID}, &result)
 	require.NoError(t, err)
 
-	assert.GreaterOrEqual(t, result.Node.Assets.TotalCount, 1)
-	assert.True(t, collectRelationNodeIDs(result.Node.Assets.Edges)[g.assetID])
+	assert.GreaterOrEqual(t, result.Node.RegistryAssets.TotalCount, 1)
+	assert.True(t, collectRelationNodeIDs(result.Node.RegistryAssets.Edges)[g.assetID])
 	assert.GreaterOrEqual(t, result.Node.Data.TotalCount, 1)
 	assert.True(t, collectRelationNodeIDs(result.Node.Data.Edges)[g.datumID])
 	assert.GreaterOrEqual(t, result.Node.Documents.TotalCount, 1)
@@ -825,7 +825,7 @@ func orgRelationsAssetsDataDocuments(
 		id    string
 		graph string
 	}{
-		{id: g.assetID, graph: "Asset"},
+		{id: g.assetID, graph: "RegistryAsset"},
 		{id: g.datumID, graph: "Datum"},
 		{id: g.documentID, graph: "Document"},
 	} {

@@ -1282,8 +1282,8 @@
       "v1:agent": "Manage agents",
       "v1:ai-system:read": "Read AI systems",
       "v1:ai-system": "Manage AI systems",
-      "v1:asset:read": "Read assets",
-      "v1:asset": "Manage assets",
+      "v1:registry-asset:read": "Read registry assets",
+      "v1:registry-asset": "Manage registry assets",
       "v1:audit:read": "Read audits",
       "v1:audit": "Manage audits",
       "v1:business-function:read": "Read business functions",
@@ -1585,7 +1585,7 @@
     "thirdPartyRisks": "Risk assessments",
     "thirdPartyInternalControls": "Internal controls",
     "documents": "Documents",
-    "assets": "Assets",
+    "registryAssets": "Registry assets",
     "devices": "Devices",
     "data": "Data",
     "audits": "Audits",
@@ -2069,8 +2069,8 @@
     "actions": { "delete": "Delete", "update": "Update", "updating": "Updating..." }
   },
   "assetsPage": {
-    "title": "Assets",
-    "description": "Manage your organization's assets and their classifications.",
+    "title": "Registry assets",
+    "description": "Manage your organization's registry assets and their classifications.",
     "actions": { "document": "Document", "publish": "Publish", "addAsset": "Add asset" }
   },
   "assetsMultiSelectField": {

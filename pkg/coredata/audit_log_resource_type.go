@@ -53,8 +53,8 @@ func ResourceTypeName(entityType uint16) string {
 		return "DocumentVersion"
 	case DocumentVersionSignatureEntityType:
 		return "DocumentVersionSignature"
-	case AssetEntityType:
-		return "Asset"
+	case RegistryAssetEntityType:
+		return "RegistryAsset"
 	case DatumEntityType:
 		return "Datum"
 	case AuditEntityType:

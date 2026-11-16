@@ -3371,34 +3371,34 @@ components:
           $ref: "#/components/schemas/GID"
           description: Deleted framework ID
 
-    AssetType:
+    RegistryAssetType:
       type: string
       enum:
         - PHYSICAL
         - VIRTUAL
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AssetType
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.RegistryAssetType
 
-    AssetOrderField:
+    RegistryAssetOrderField:
       type: string
       enum:
         - CREATED_AT
         - AMOUNT
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AssetOrderField
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.RegistryAssetOrderField
 
-    AssetOrderBy:
+    RegistryAssetOrderBy:
       type: object
       required:
         - field
         - direction
       properties:
         field:
-          $ref: "#/components/schemas/AssetOrderField"
-          description: Asset order field
+          $ref: "#/components/schemas/RegistryAssetOrderField"
+          description: RegistryAsset order field
         direction:
           $ref: "#/components/schemas/OrderDirection"
-          description: Asset order direction
+          description: RegistryAsset order direction
 
-    Asset:
+    RegistryAsset:
       type: object
       required:
         - id
@@ -3406,29 +3406,29 @@ components:
         - name
         - amount
         - owner_id
-        - asset_type
+        - registry_asset_type
         - data_types_stored
         - created_at
         - updated_at
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Asset ID
+          description: RegistryAsset ID
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
         name:
           type: string
-          description: Asset name
+          description: RegistryAsset name
         amount:
           type: integer
-          description: Asset amount
+          description: RegistryAsset amount
         owner_id:
           $ref: "#/components/schemas/GID"
           description: Owner ID
-        asset_type:
-          $ref: "#/components/schemas/AssetType"
-          description: Asset type
+        registry_asset_type:
+          $ref: "#/components/schemas/RegistryAssetType"
+          description: RegistryAsset type
         data_types_stored:
           type: string
           description: Data types stored
@@ -3441,7 +3441,7 @@ components:
           format: date-time
           description: Update timestamp
 
-    ListAssetsInput:
+    ListRegistryAssetsInput:
       type: object
       required:
         - organization_id
@@ -3450,8 +3450,8 @@ components:
           $ref: "#/components/schemas/GID"
           description: Organization ID
         order_by:
-          $ref: "#/components/schemas/AssetOrderBy"
-          description: Asset order by
+          $ref: "#/components/schemas/RegistryAssetOrderBy"
+          description: RegistryAsset order by
         size:
           type: integer
           description: Page size
@@ -3459,44 +3459,44 @@ components:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
 
-    ListAssetsOutput:
+    ListRegistryAssetsOutput:
       type: object
       required:
-        - assets
+        - registry_assets
       properties:
         next_cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Next cursor
-        assets:
+        registry_assets:
           type: array
           items:
-            $ref: "#/components/schemas/Asset"
+            $ref: "#/components/schemas/RegistryAsset"
 
-    GetAssetInput:
+    GetRegistryAssetInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Asset ID
+          description: RegistryAsset ID
 
-    GetAssetOutput:
+    GetRegistryAssetOutput:
       type: object
       required:
-        - asset
+        - registry_asset
       properties:
-        asset:
-          $ref: "#/components/schemas/Asset"
+        registry_asset:
+          $ref: "#/components/schemas/RegistryAsset"
 
-    AddAssetInput:
+    AddRegistryAssetInput:
       type: object
       required:
         - organization_id
         - name
         - amount
         - owner_id
-        - asset_type
+        - registry_asset_type
         - data_types_stored
       properties:
         organization_id:
@@ -3504,16 +3504,16 @@ components:
           description: Organization ID
         name:
           type: string
-          description: Asset name
+          description: RegistryAsset name
         amount:
           type: integer
-          description: Asset amount
+          description: RegistryAsset amount
         owner_id:
           $ref: "#/components/schemas/GID"
           description: Owner ID
-        asset_type:
-          $ref: "#/components/schemas/AssetType"
-          description: Asset type
+        registry_asset_type:
+          $ref: "#/components/schemas/RegistryAssetType"
+          description: RegistryAsset type
         data_types_stored:
           type: string
           description: Data types stored
@@ -3523,37 +3523,37 @@ components:
             $ref: "#/components/schemas/GID"
           description: ThirdParty IDs
 
-    AddAssetOutput:
+    AddRegistryAssetOutput:
       type: object
       required:
-        - asset
+        - registry_asset
       properties:
-        asset:
-          $ref: "#/components/schemas/Asset"
+        registry_asset:
+          $ref: "#/components/schemas/RegistryAsset"
 
-    UpdateAssetInput:
+    UpdateRegistryAssetInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Asset ID
+          description: RegistryAsset ID
         name:
           type: string
-          description: Asset name
+          description: RegistryAsset name
         amount:
           type: integer
-          description: Asset amount
+          description: RegistryAsset amount
         owner_id:
           anyOf:
             - type: string
               $ref: "#/components/schemas/GID"
             - type: "null"
           description: Owner ID
-        asset_type:
-          $ref: "#/components/schemas/AssetType"
-          description: Asset type
+        registry_asset_type:
+          $ref: "#/components/schemas/RegistryAssetType"
+          description: RegistryAsset type
         data_types_stored:
           type: string
           description: Data types stored
@@ -3563,29 +3563,29 @@ components:
             $ref: "#/components/schemas/GID"
           description: ThirdParty IDs
 
-    UpdateAssetOutput:
+    UpdateRegistryAssetOutput:
       type: object
       required:
-        - asset
+        - registry_asset
       properties:
-        asset:
-          $ref: "#/components/schemas/Asset"
+        registry_asset:
+          $ref: "#/components/schemas/RegistryAsset"
 
-    DeleteAssetInput:
+    DeleteRegistryAssetInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Asset ID
+          description: RegistryAsset ID
 
-    DeleteAssetOutput:
+    DeleteRegistryAssetOutput:
       type: object
       required:
-        - deleted_asset_id
+        - deleted_registry_asset_id
       properties:
-        deleted_asset_id:
+        deleted_registry_asset_id:
           $ref: "#/components/schemas/GID"
           description: Deleted asset ID
 
@@ -5250,11 +5250,11 @@ components:
         owner_id:
           $ref: "#/components/schemas/GID"
           description: Owner profile ID
-        asset_ids:
+        registry_asset_ids:
           type: array
           items:
             $ref: "#/components/schemas/GID"
-          description: Asset IDs
+          description: RegistryAsset IDs
         third_party_ids:
           type: array
           items:
@@ -5307,11 +5307,11 @@ components:
             - type: "null"
           description: Owner profile ID
           go.probo.inc/mcpgen/omittable: true
-        asset_ids:
+        registry_asset_ids:
           type: array
           items:
             $ref: "#/components/schemas/GID"
-          description: Asset IDs
+          description: RegistryAsset IDs
         third_party_ids:
           type: array
           items:
@@ -11337,7 +11337,7 @@ components:
           $ref: "#/components/schemas/GID"
           description: Created document version ID
 
-    PublishAssetListInput:
+    PublishRegistryAssetListInput:
       type: object
       required:
         - organization_id
@@ -11355,7 +11355,7 @@ components:
           type: boolean
           description: When true, publish as a minor version (currentMajor.currentMinor+1) and ignore approver_ids; the document must already have a published major version. When false, publish as a new major version; if approver_ids are provided, an approval is requested instead.
 
-    PublishAssetListOutput:
+    PublishRegistryAssetListOutput:
       type: object
       required:
         - document_id
@@ -20359,8 +20359,8 @@ tools:
       $ref: "#/components/schemas/DeleteFrameworkInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteFrameworkOutput"
-  - name: listAssets
-    title: List Assets
+  - name: listRegistryAssets
+    title: List registry assets
     description: List all assets for the organization
     hints:
       readonly: true
@@ -20368,11 +20368,11 @@ tools:
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/ListAssetsInput"
+      $ref: "#/components/schemas/ListRegistryAssetsInput"
     outputSchema:
-      $ref: "#/components/schemas/ListAssetsOutput"
-  - name: getAsset
-    title: Get Asset
+      $ref: "#/components/schemas/ListRegistryAssetsOutput"
+  - name: getRegistryAsset
+    title: Get registry asset
     description: Get an asset by ID
     hints:
       readonly: true
@@ -20380,11 +20380,11 @@ tools:
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/GetAssetInput"
+      $ref: "#/components/schemas/GetRegistryAssetInput"
     outputSchema:
-      $ref: "#/components/schemas/GetAssetOutput"
-  - name: addAsset
-    title: Add Asset
+      $ref: "#/components/schemas/GetRegistryAssetOutput"
+  - name: addRegistryAsset
+    title: Add registry asset
     description: Add a new asset to the organization
     hints:
       readonly: false
@@ -20392,11 +20392,11 @@ tools:
       idempotent: false
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/AddAssetInput"
+      $ref: "#/components/schemas/AddRegistryAssetInput"
     outputSchema:
-      $ref: "#/components/schemas/AddAssetOutput"
-  - name: updateAsset
-    title: Update Asset
+      $ref: "#/components/schemas/AddRegistryAssetOutput"
+  - name: updateRegistryAsset
+    title: Update registry asset
     description: Update an existing asset
     hints:
       readonly: false
@@ -20404,11 +20404,11 @@ tools:
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/UpdateAssetInput"
+      $ref: "#/components/schemas/UpdateRegistryAssetInput"
     outputSchema:
-      $ref: "#/components/schemas/UpdateAssetOutput"
-  - name: deleteAsset
-    title: Delete Asset
+      $ref: "#/components/schemas/UpdateRegistryAssetOutput"
+  - name: deleteRegistryAsset
+    title: Delete registry asset
     description: Delete an asset
     hints:
       readonly: false
@@ -20416,9 +20416,9 @@ tools:
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/DeleteAssetInput"
+      $ref: "#/components/schemas/DeleteRegistryAssetInput"
     outputSchema:
-      $ref: "#/components/schemas/DeleteAssetOutput"
+      $ref: "#/components/schemas/DeleteRegistryAssetOutput"
   - name: listDevices
     title: List Devices
     description: "include_postures defaults to false. When it is false, postures_included is false and latest_postures is empty. List ITAM devices for an organization. Use createDevice to issue a PENDING device and a one-shot enrollment token for the agent installer. Device states: PENDING (enrollment token issued, agent has never checked in), ACTIVE (agent heartbeating), REVOKED (enrollment revoked). Use last_seen_at as the staleness signal. When include_postures is true, latest_postures holds the newest result per check_key and is empty for PENDING devices. Pass query to search by the owner's name; each word is a prefix match and every word must match. Pass states, platforms, or agent_versions to keep devices that match any value in that list; omit a list to leave that dimension unconstrained. Page with size and cursor; when next_cursor is present, pass it as cursor on the next call."
@@ -22231,8 +22231,8 @@ tools:
       $ref: "#/components/schemas/PublishDataListInput"
     outputSchema:
       $ref: "#/components/schemas/PublishDataListOutput"
-  - name: publishAssetList
-    title: Publish Asset List
+  - name: publishRegistryAssetList
+    title: Publish registry asset list
     description: Publish the asset list for an organization as a document. If a document already exists, a new version is created.
     hints:
       readonly: false
@@ -22240,9 +22240,9 @@ tools:
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/PublishAssetListInput"
+      $ref: "#/components/schemas/PublishRegistryAssetListInput"
     outputSchema:
-      $ref: "#/components/schemas/PublishAssetListOutput"
+      $ref: "#/components/schemas/PublishRegistryAssetListOutput"
   - name: publishFindingList
     title: Publish Finding List
     description: Publish the finding register for an organization as a document. If a document already exists, a new version is created.

@@ -32,7 +32,7 @@ import "go.probo.inc/probo/pkg/coredata"
 // DeleteSearchResource from the service that writes the row.
 var TaggableEntityTypes = []uint16{
 	coredata.AiSystemEntityType,
-	coredata.AssetEntityType,
+	coredata.RegistryAssetEntityType,
 	coredata.AuditEntityType,
 	coredata.BusinessFunctionEntityType,
 	coredata.ControlEntityType,

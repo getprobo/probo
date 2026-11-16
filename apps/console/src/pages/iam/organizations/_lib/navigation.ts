@@ -47,7 +47,7 @@ export type NavPermission
     | "canListMembers"
     | "canListThirdParties"
     | "canListDocuments"
-    | "canListAssets"
+    | "canListRegistryAssets"
     | "canListDevices"
     | "canListData"
     | "canListAudits"

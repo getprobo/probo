@@ -39,7 +39,7 @@ import {
 } from './actions/connector/loadConnectorProviderOptions';
 import {
 	searchAccessReviewCampaigns,
-	searchAssets,
+	searchRegistryAssets,
 	searchAudits,
 	searchCompliancePortals,
 	searchControls,
@@ -133,9 +133,9 @@ export class Probo implements INodeType {
 						description: 'Manage AI systems',
 					},
 					{
-						name: 'Asset',
-						value: 'asset',
-						description: 'Manage assets',
+						name: 'Registry Asset',
+						value: 'registryAsset',
+						description: 'Manage registry assets',
 					},
 					{
 						name: 'Attachment',
@@ -391,7 +391,7 @@ export class Probo implements INodeType {
 		},
 		listSearch: {
 			searchAccessReviewCampaigns,
-			searchAssets,
+			searchRegistryAssets,
 			searchAudits,
 			searchCompliancePortals,
 			searchControls,

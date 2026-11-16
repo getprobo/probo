@@ -120,8 +120,8 @@ export const description: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Asset IDs',
-				name: 'assetIds',
+				displayName: 'RegistryAsset IDs',
+				name: 'registryAssetIds',
 				type: 'string',
 				default: '',
 				description: 'Comma-separated asset IDs',
@@ -169,7 +169,7 @@ export async function execute(
 		impactTolerance?: string;
 		notes?: string;
 		ownerId?: string;
-		assetIds?: string;
+		registryAssetIds?: string;
 		thirdPartyIds?: string;
 	};
 
@@ -216,8 +216,8 @@ export async function execute(
 		input.ownerId = this.getNodeParameter('additionalFields.ownerId', itemIndex, '', { extractValue: true }) as string;
 	}
 
-	if (additionalFields.assetIds) {
-		input.assetIds = additionalFields.assetIds
+	if (additionalFields.registryAssetIds) {
+		input.registryAssetIds = additionalFields.registryAssetIds
 			.split(',')
 			.map((id) => id.trim())
 			.filter(Boolean);

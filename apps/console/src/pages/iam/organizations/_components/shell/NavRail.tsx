@@ -97,7 +97,7 @@ function isItamVisible(permissions: NavPermissions): boolean {
 
 function isRegistriesVisible(permissions: NavPermissions): boolean {
   return permissions.canListData
-    || permissions.canListAssets
+    || permissions.canListRegistryAssets
     || permissions.canListBusinessFunctions
     || permissions.canListAiSystems
     || permissions.canListObligations;
@@ -223,8 +223,8 @@ function registriesHref(organizationId: string, permissions: NavPermissions): st
   if (permissions.canListData) {
     return groupHref(organizationId, "registries", "data");
   }
-  if (permissions.canListAssets) {
-    return groupHref(organizationId, "registries", "assets");
+  if (permissions.canListRegistryAssets) {
+    return groupHref(organizationId, "registries", "registry-assets");
   }
   if (permissions.canListBusinessFunctions) {
     return groupHref(organizationId, "registries", "business-functions");

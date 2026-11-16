@@ -59,7 +59,7 @@ const businessFunctionListItemFragment = graphql`
       id
       fullName
     }
-    assets(first: 50) {
+    registryAssets(first: 50) {
       edges {
         node {
           id
@@ -150,7 +150,7 @@ export function BusinessFunctionListItem({
 
   const detailsUrl
     = `/organizations/${organizationId}/registries/business-functions/${businessFunction.id}`;
-  const assets = businessFunction.assets?.edges.map(edge => edge.node) ?? [];
+  const assets = businessFunction.registryAssets?.edges.map(edge => edge.node) ?? [];
   const thirdParties = businessFunction.thirdParties?.edges.map(edge => edge.node) ?? [];
 
   return (

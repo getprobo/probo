@@ -244,7 +244,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if len(flagAssetIDs) > 0 {
-				input["assetIds"] = flagAssetIDs
+				input["registryAssetIds"] = flagAssetIDs
 			}
 
 			if len(flagThirdPartyIDs) > 0 {
@@ -286,7 +286,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagImpactTolerance, "impact-tolerance", "", "Impact tolerance")
 	cmd.Flags().StringVar(&flagNotes, "notes", "", "Notes")
 	cmd.Flags().StringVar(&flagOwner, "owner", "", "Owner profile ID")
-	cmd.Flags().StringArrayVar(&flagAssetIDs, "asset", nil, "Asset ID (can be repeated)")
+	cmd.Flags().StringArrayVar(&flagAssetIDs, "registry-asset", nil, "Registry asset ID (can be repeated)")
 	cmd.Flags().StringArrayVar(&flagThirdPartyIDs, "third-party", nil, "Third party ID (can be repeated)")
 
 	return cmd

@@ -102,7 +102,7 @@ type (
 		ThirdPartyDataPrivacyAgreements       *ThirdPartyDataPrivacyAgreementService
 		ThirdPartyServices                    *ThirdPartyServiceService
 		Connectors                            *connector.Service
-		Assets                                *AssetService
+		RegistryAssets                        *RegistryAssetService
 		Data                                  *DatumService
 		Audits                                *AuditService
 		WebhookSubscriptions                  *WebhookSubscriptionService
@@ -210,7 +210,7 @@ func NewService(
 	svc.ThirdPartyDataPrivacyAgreements = &ThirdPartyDataPrivacyAgreementService{svc: svc}
 	svc.ThirdPartyServices = &ThirdPartyServiceService{svc: svc}
 	svc.Connectors = connectorsService
-	svc.Assets = &AssetService{svc: svc}
+	svc.RegistryAssets = &RegistryAssetService{svc: svc}
 	svc.Data = &DatumService{svc: svc}
 	svc.Audits = &AuditService{svc: svc}
 	svc.WebhookSubscriptions = &WebhookSubscriptionService{svc: svc}

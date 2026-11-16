@@ -107,19 +107,19 @@ func TestBuildDocuments_ProduceParseableProseMirror(t *testing.T) {
 		{
 			name: "asset list",
 			build: func() (string, error) {
-				return probo.BuildAssetListDocument(
+				return probo.BuildRegistryAssetListDocument(
 					docgen.AssetListData{
 						Title:            hostileText,
 						OrganizationName: hostileText,
 						TotalAssets:      1,
 						Rows: []docgen.AssetListRow{
 							{
-								Name:            hostileText,
-								AssetType:       hostileText,
-								Amount:          1,
-								DataTypesStored: hostileText,
-								Owner:           hostileText,
-								ThirdParties:    hostileText,
+								Name:              hostileText,
+								RegistryAssetType: hostileText,
+								Amount:            1,
+								DataTypesStored:   hostileText,
+								Owner:             hostileText,
+								ThirdParties:      hostileText,
 							},
 						},
 					},
@@ -481,7 +481,7 @@ func TestBuildDocuments_EmptyDataProducesParseableProseMirror(t *testing.T) {
 			return probo.BuildDataListDocument(docgen.DataListData{})
 		}},
 		{"asset list", func() (string, error) {
-			return probo.BuildAssetListDocument(docgen.AssetListData{})
+			return probo.BuildRegistryAssetListDocument(docgen.AssetListData{})
 		}},
 		{"statement of applicability", func() (string, error) {
 			return probo.BuildStatementOfApplicabilityDocument(docgen.StatementOfApplicabilityData{})

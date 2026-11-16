@@ -1079,7 +1079,7 @@ func deleteOrganizationDependencies(
 		return fmt.Errorf("cannot delete third party administrators: %w", err)
 	}
 
-	if err := new(coredata.Assets).DeleteByOrganizationID(ctx, tx, scope, organizationID); err != nil {
+	if err := new(coredata.RegistryAssets).DeleteByOrganizationID(ctx, tx, scope, organizationID); err != nil {
 		return fmt.Errorf("cannot delete assets: %w", err)
 	}
 

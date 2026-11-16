@@ -50,7 +50,7 @@ import { integrationRoutes } from "./pages/organizations/settings/integrations/r
 import { taskRoutes } from "./pages/organizations/tasks/routes";
 import { thirdPartyRoutes } from "./pages/organizations/third-parties/routes";
 import { CurrentUser } from "./providers/CurrentUser";
-import { assetRoutes } from "./routes/assetRoutes";
+import { registryAssetRoutes } from "./routes/registryAssetRoutes";
 import { auditRoutes } from "./routes/auditRoutes";
 import { contextRoutes } from "./routes/contextRoutes";
 import { dataRoutes } from "./routes/dataRoutes";
@@ -272,7 +272,7 @@ const routes = [
                 path: "assets",
                 loader: () => {
                   // eslint-disable-next-line
-                  throw redirect("../registries/assets");
+                  throw redirect("../registries/registry-assets");
                 },
                 Component: Fragment,
               },
@@ -280,7 +280,7 @@ const routes = [
                 path: "assets/:assetId",
                 loader: ({ params }) => {
                   // eslint-disable-next-line
-                  throw redirect(`../registries/assets/${params.assetId}`);
+                  throw redirect(`../registries/registry-assets/${params.assetId}`);
                 },
                 Component: Fragment,
               },
@@ -295,7 +295,7 @@ const routes = [
             path: "registries",
             children: [
               ...dataRoutes,
-              ...assetRoutes,
+              ...registryAssetRoutes,
               ...businessFunctionRoutes,
               ...aiSystemRoutes,
               ...obligationRoutes,

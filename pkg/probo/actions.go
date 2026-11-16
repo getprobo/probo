@@ -184,13 +184,13 @@ const (
 	ActionRiskObligationMappingDelete      = "risk-management:risk:delete-obligation-mapping"
 	ActionRiskPublish                      = "risk-management:risk:publish"
 
-	// Asset actions
-	ActionAssetGet     = "core:asset:get"
-	ActionAssetList    = "core:asset:list"
-	ActionAssetCreate  = "core:asset:create"
-	ActionAssetUpdate  = "core:asset:update"
-	ActionAssetDelete  = "core:asset:delete"
-	ActionAssetPublish = "core:asset:publish"
+	// RegistryAsset actions
+	ActionRegistryAssetGet     = "core:registry-asset:get"
+	ActionRegistryAssetList    = "core:registry-asset:list"
+	ActionRegistryAssetCreate  = "core:registry-asset:create"
+	ActionRegistryAssetUpdate  = "core:registry-asset:update"
+	ActionRegistryAssetDelete  = "core:registry-asset:delete"
+	ActionRegistryAssetPublish = "core:registry-asset:publish"
 
 	// Datum actions
 	ActionDatumGet     = "core:datum:get"

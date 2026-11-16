@@ -11,16 +11,16 @@ Every entity uses `gid.GID` for its ID, `db` tags for pgx mapping, and `CreatedA
 
 ```go
 type (
-	Asset struct {
+	RegistryAsset struct {
 		ID             gid.GID   `db:"id"`
 		Name           string    `db:"name"`
 		OrganizationID gid.GID   `db:"organization_id"`
-		AssetType      AssetType `db:"asset_type"`
+		RegistryAssetType      RegistryAssetType `db:"registry_asset_type"`
 		CreatedAt      time.Time `db:"created_at"`
 		UpdatedAt      time.Time `db:"updated_at"`
 	}
 
-	Assets []*Asset
+	RegistryAssets []*RegistryAsset
 )
 ```
 
@@ -115,7 +115,7 @@ This ensures the compiler catches renamed or removed enum values instead of sile
 
 The method name signals whether the result set is bounded:
 
-- **`LoadBy*` with a `cursor` param** — paginated list tied to a GraphQL connection; the cursor provides the limit and ordering. Example: `Assets.LoadByOrganizationID(ctx, conn, scope, orgID, cursor)`. This is the primary list shape; prefer it.
+- **`LoadBy*` with a `cursor` param** — paginated list tied to a GraphQL connection; the cursor provides the limit and ordering. Example: `RegistryAssets.LoadByOrganizationID(ctx, conn, scope, orgID, cursor)`. This is the primary list shape; prefer it.
 - **`Load` / `LoadBy*` with a `limit int` param** — filtered list with an explicit, hard-capped limit (e.g. `... LIMIT 20`), used when the caller controls a small bounded result count. Example: `CommonThirdPartyDomains.Load(ctx, conn, 1, filter)`.
 - **`LoadAllBy*` / `LoadAll`** — legacy unbounded loaders. **Do not add new ones.** They run one query with no ceiling, so a table that is small in dev can blow up memory and query time in production. The few that remain are deliberate exceptions: tiny per-parent sets, `[]gid.GID` / map projections, or hard-`LIMIT` search helpers.
 
@@ -227,7 +227,7 @@ Use `conn.Query` + `pgx.Collect*` only for `SELECT` and `INSERT … RETURNING` s
 ```go
 // Single row (SELECT / INSERT … RETURNING)
 rows, err := conn.Query(ctx, q, args)
-asset, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Asset])
+asset, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[RegistryAsset])
 if errors.Is(err, pgx.ErrNoRows) {
     return ErrResourceNotFound
 }
@@ -235,7 +235,7 @@ if errors.Is(err, pgx.ErrNoRows) {
 
 // Multiple rows (SELECT)
 rows, err := conn.Query(ctx, q, args)
-assets, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Asset])
+assets, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[RegistryAsset])
 *a = assets
 
 // Update — no RETURNING, check RowsAffected

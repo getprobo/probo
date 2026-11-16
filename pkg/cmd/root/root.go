@@ -25,7 +25,6 @@ import (
 	accessreview "go.probo.inc/probo/pkg/cmd/access-review"
 	"go.probo.inc/probo/pkg/cmd/aisystem"
 	cmdapi "go.probo.inc/probo/pkg/cmd/api"
-	"go.probo.inc/probo/pkg/cmd/asset"
 	"go.probo.inc/probo/pkg/cmd/attachment"
 	"go.probo.inc/probo/pkg/cmd/audit"
 	"go.probo.inc/probo/pkg/cmd/auditlog"
@@ -54,6 +53,7 @@ import (
 	"go.probo.inc/probo/pkg/cmd/obligation"
 	"go.probo.inc/probo/pkg/cmd/org"
 	processingactivity "go.probo.inc/probo/pkg/cmd/processing-activity"
+	registryasset "go.probo.inc/probo/pkg/cmd/registry-asset"
 	resourcealias "go.probo.inc/probo/pkg/cmd/resource-alias"
 	rightsrequest "go.probo.inc/probo/pkg/cmd/rights-request"
 	"go.probo.inc/probo/pkg/cmd/risk"
@@ -108,7 +108,7 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(accessreview.NewCmdAccessReview(f))
 	cmd.AddCommand(aisystem.NewCmdAiSystem(f))
 	cmd.AddCommand(cmdapi.NewCmdAPI(f))
-	cmd.AddCommand(asset.NewCmdAsset(f))
+	cmd.AddCommand(registryasset.NewCmdRegistryAsset(f))
 	cmd.AddCommand(attachment.NewCmdAttachment(f))
 	cmd.AddCommand(audit.NewCmdAudit(f))
 	cmd.AddCommand(auditlog.NewCmdAuditLog(f))

@@ -77,7 +77,7 @@ export {
   getControlMaturityLevelLabel,
   type ControlMaturityLevel,
 } from "./controls";
-export { getAssetTypeVariant } from "./assets";
+export { getRegistryAssetTypeVariant } from "./registryAssets";
 export {
   getAuditStateLabel,
   getAuditStateVariant,

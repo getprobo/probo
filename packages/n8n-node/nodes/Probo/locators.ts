@@ -211,11 +211,11 @@ export function internalControlLocator(options: LocatorOptions = {}): INodePrope
 export function assetLocator(options: LocatorOptions = {}): INodeProperties {
 	return recordLocator(
 		{
-			displayName: 'Asset',
-			name: 'assetId',
-			searchListMethod: 'searchAssets',
+			displayName: 'RegistryAsset',
+			name: 'registryAssetId',
+			searchListMethod: 'searchRegistryAssets',
 			placeholder: 'Select an asset...',
-			idPlaceholder: 'Asset ID',
+			idPlaceholder: 'RegistryAsset ID',
 			idError: 'Enter an asset ID',
 			description: 'The asset to use. Search the list, or enter an ID.',
 		},
@@ -836,8 +836,8 @@ export const searchInternalControls = organizationSearch({
 	label: (node) => namedResult(node, ['name', 'code']),
 });
 
-export const searchAssets = organizationSearch({
-	connection: 'assets',
+export const searchRegistryAssets = organizationSearch({
+	connection: 'registryAssets',
 	fields: 'name',
 	label: (node) => namedResult(node, ['name']),
 });

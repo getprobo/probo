@@ -238,14 +238,14 @@ func (r *organizationResolver) AccessReviewCampaigns(ctx context.Context, obj *t
 	return types.NewAccessReviewCampaignConnection(p, r, obj.ID), nil
 }
 
-// AssetListDocument is the resolver for the assetListDocument field.
-func (r *organizationResolver) AssetListDocument(ctx context.Context, obj *types.Organization) (*types.Document, error) {
+// RegistryAssetListDocument is the resolver for the registryAssetListDocument field.
+func (r *organizationResolver) RegistryAssetListDocument(ctx context.Context, obj *types.Organization) (*types.Document, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet)
 	if err != nil {
 		return nil, err
 	}
 
-	assetDocumentID, err := r.probo.GeneratedDocuments.GetAssetListDocumentID(ctx, scope, obj.ID)
+	assetDocumentID, err := r.probo.GeneratedDocuments.GetRegistryAssetListDocumentID(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get asset list document ID", log.Error(err))
 		return nil, gqlx.Internal(ctx)
@@ -263,20 +263,20 @@ func (r *organizationResolver) AssetListDocument(ctx context.Context, obj *types
 	return types.NewDocument(doc), nil
 }
 
-// Assets is the resolver for the assets field.
-func (r *organizationResolver) Assets(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AssetOrderBy) (*types.AssetConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionAssetList)
+// RegistryAssets is the resolver for the assets field.
+func (r *organizationResolver) RegistryAssets(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RegistryAssetOrderBy) (*types.RegistryAssetConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionRegistryAssetList)
 	if err != nil {
 		return nil, err
 	}
 
-	pageOrderBy := page.OrderBy[coredata.AssetOrderField]{
-		Field:     coredata.AssetOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.RegistryAssetOrderField]{
+		Field:     coredata.RegistryAssetOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.AssetOrderField]{
+		pageOrderBy = page.OrderBy[coredata.RegistryAssetOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -284,13 +284,13 @@ func (r *organizationResolver) Assets(ctx context.Context, obj *types.Organizati
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := r.probo.Assets.ListForOrganizationID(ctx, scope, obj.ID, cursor)
+	page, err := r.probo.RegistryAssets.ListForOrganizationID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list organization assets", log.Error(err))
 		return nil, gqlx.Internal(ctx)
 	}
 
-	return types.NewAssetConnection(page, r, obj.ID), nil
+	return types.NewRegistryAssetConnection(page, r, obj.ID), nil
 }
 
 // DataListDocument is the resolver for the dataListDocument field.

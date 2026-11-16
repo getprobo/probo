@@ -266,12 +266,12 @@ type (
 	}
 
 	AssetListRow struct {
-		Name            string
-		AssetType       string
-		Amount          int
-		DataTypesStored string
-		Owner           string
-		ThirdParties    string
+		Name              string
+		RegistryAssetType string
+		Amount            int
+		DataTypesStored   string
+		Owner             string
+		ThirdParties      string
 	}
 
 	RiskListData struct {
@@ -409,7 +409,7 @@ type (
 		ImpactTolerance string
 		Notes           string
 		Owner           string
-		Assets          string
+		RegistryAssets  string
 		ThirdParties    string
 	}
 
