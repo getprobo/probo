@@ -155,6 +155,19 @@ func TestTrackerPattern_DailyHits(t *testing.T) {
 		} `json:"node"`
 	}
 
+	t.Run("returns empty days when the pattern has no hits", func(t *testing.T) {
+		t.Parallel()
+
+		patternID := createAnalyticsTrackerPattern(owner)
+
+		var result dailyHitsResult
+		require.NoError(t, owner.Execute(query, map[string]any{"id": patternID}, &result))
+		require.Len(t, result.Node.DailyHits, 7)
+		for _, entry := range result.Node.DailyHits {
+			assert.Empty(t, entry.Hits)
+		}
+	})
+
 	t.Run("returns one entry per day oldest first", func(t *testing.T) {
 		t.Parallel()
 

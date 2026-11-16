@@ -126,7 +126,7 @@ export class CookieBannerClient {
     let config: BannerConfig;
     try {
       config = resolveConfig(await fetchJSON<BannerConfig>(configUrl));
-    } catch (err) {
+    } catch {
       // Discovery mode: no published banner config, but detectors still run
       // so admins can inventory trackers. Grant GCM so GTM-managed tags can
       // fire; otherwise bootstrap's deny-all would hide them from discovery.
@@ -135,9 +135,7 @@ export class CookieBannerClient {
       }
       this.startResourceDetector();
       this.scanExistingCookies();
-      if (err instanceof NotFoundError) {
-        this.reportQueue?.reportPageView();
-      }
+      this.reportQueue?.reportPageView();
       if (this.observer) {
         this.observer.disconnect();
       }

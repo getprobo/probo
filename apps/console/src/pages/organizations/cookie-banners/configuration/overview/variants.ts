@@ -23,7 +23,7 @@ import { tv } from "tailwind-variants/lite";
 export const cookieBannerOverview = tv({
   slots: {
     card: "flex flex-col gap-4",
-    plot: "flex items-start gap-6",
+    plot: "flex flex-col items-start gap-6 sm:flex-row",
     chartPane: "min-h-60 min-w-0 flex-1",
     legendColumn: "shrink-0",
     empty: "flex flex-col items-center gap-2 py-8 text-center",

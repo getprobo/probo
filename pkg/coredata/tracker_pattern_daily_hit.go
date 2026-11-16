@@ -44,9 +44,9 @@ type DailyPatternHit struct {
 }
 
 // RecordDailyPatternHit adds count to the bucket of day, which must be a
-// UTC midnight. The pattern row is locked FOR KEY SHARE so a concurrent
-// delete either wins first, in which case the count is skipped, or waits
-// and then cascades the inserted bucket.
+// UTC midnight. The banner row is locked FOR KEY SHARE before the pattern
+// row, matching a banner delete that holds the banner and then cascades to
+// the pattern. A concurrent delete that wins first skips the count.
 func RecordDailyPatternHit(
 	ctx context.Context,
 	tx pg.Tx,
@@ -67,10 +67,17 @@ func RecordDailyPatternHit(
 	now := time.Now()
 
 	q := `
-WITH pattern AS (
+WITH banner AS (
 	SELECT id
+	FROM cookie_banners
+	WHERE id = @cookie_banner_id
+	FOR KEY SHARE
+),
+pattern AS (
+	SELECT tracker_patterns.id
 	FROM tracker_patterns
-	WHERE id = @tracker_pattern_id
+	WHERE tracker_patterns.id = @tracker_pattern_id
+		AND EXISTS (SELECT 1 FROM banner)
 	FOR KEY SHARE
 )
 INSERT INTO tracker_pattern_daily_hits (
@@ -94,11 +101,12 @@ SELECT
 	@consent_action,
 	@category_granted,
 	@tenant_id,
-	@cookie_banner_id,
+	banner.id,
 	@count,
 	@now,
 	@now
 FROM pattern
+CROSS JOIN banner
 ON CONFLICT (
 	tracker_pattern_id,
 	day,

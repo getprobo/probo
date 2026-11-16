@@ -24,7 +24,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
@@ -204,7 +203,7 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 					detail = fmt.Sprintf("%d  %s", total, strings.Join(parts, ", "))
 				}
 
-				_, _ = fmt.Fprintf(out, "%s%s  %s\n", label.Render(""), formatUTCDay(day.Day), detail)
+				_, _ = fmt.Fprintf(out, "%s%s  %s\n", label.Render(""), cmdutil.FormatUTCDay(day.Day), detail)
 			}
 
 			_, _ = fmt.Fprintln(out)
@@ -219,16 +218,4 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd
-}
-
-func formatUTCDay(raw string) string {
-	parsed, err := time.Parse(time.RFC3339Nano, raw)
-	if err != nil {
-		parsed, err = time.Parse(time.RFC3339, raw)
-		if err != nil {
-			return raw
-		}
-	}
-
-	return parsed.UTC().Format(time.DateOnly)
 }
