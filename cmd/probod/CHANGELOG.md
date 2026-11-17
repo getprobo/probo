@@ -4,6 +4,22 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.351.1] - 2026-11-17
+
+### Fixed
+
+- Collaborative documents open quickly again with several tabs or
+  peers connected. Rooms now catch up on edits from other instances
+  once for all peers, reading only new changes and outside the
+  document lock, instead of each connection rebuilding the document
+  while holding it. Opening a document used to take 25 seconds or
+  never finish
+- Applying a remote edit made deep in a long document is no longer
+  quadratic. A 50k-character document that took 98 seconds to catch
+  up now takes under a second
+- The console editor no longer reports a `script-src` CSP violation on
+  every load
+
 ## [0.351.0] - 2026-11-17
 
 This is a security release. Upgrade as soon as possible.
