@@ -126,6 +126,9 @@ type markSweep struct {
 	// active flags the marks in covering, so marks that end together leave
 	// it in one pass instead of one shift of the set each.
 	active []bool
+	// started is reused to hold the marks that start at one step while they
+	// are merged into covering.
+	started []int
 }
 
 func newMarkSweep(marks []richTextMark) *markSweep {
@@ -153,7 +156,10 @@ func newMarkSweep(marks []richTextMark) *markSweep {
 // advance moves the walk to index, which must not decrease between calls, and
 // reports whether the covering set changed since the previous call.
 func (w *markSweep) advance(index int) bool {
-	added, removed := false, false
+	var (
+		added   int
+		removed bool
+	)
 
 	for w.nextStart < len(w.starts) &&
 		w.marks[w.starts[w.nextStart]].start <= index {
@@ -167,7 +173,7 @@ func (w *markSweep) advance(index int) bool {
 
 		w.active[rank] = true
 		w.covering = append(w.covering, rank)
-		added = true
+		added++
 	}
 
 	for w.nextEnd < len(w.ends) &&
@@ -183,18 +189,42 @@ func (w *markSweep) advance(index int) bool {
 	}
 
 	// The set is brought up to date once per step, however many marks start
-	// or end at it.
+	// or end at it. Marks that ended leave in one pass. Marks that started
+	// were appended behind the ordered set: they are ordered among
+	// themselves and merged into it from the back, which moves each mark at
+	// most once and compares nothing that is already in place.
+	//
+	// A mark that starts at this step ends after it, so none of the appended
+	// marks is among the ones removed.
 	if removed {
 		w.covering = slices.DeleteFunc(w.covering, func(rank int) bool {
 			return !w.active[rank]
 		})
 	}
 
-	if added {
-		slices.Sort(w.covering)
+	if added > 0 {
+		merged := len(w.covering) - added
+		started := append(w.started[:0], w.covering[merged:]...)
+		w.started = started
+
+		slices.Sort(started)
+
+		for write := len(w.covering) - 1; len(started) > 0; write-- {
+			last := started[len(started)-1]
+
+			if merged > 0 && w.covering[merged-1] > last {
+				merged--
+				w.covering[write] = w.covering[merged]
+
+				continue
+			}
+
+			w.covering[write] = last
+			started = started[:len(started)-1]
+		}
 	}
 
-	return added || removed
+	return added > 0 || removed
 }
 
 type richTextMark struct {
