@@ -33,6 +33,11 @@ import (
 const (
 	linuxPwqualityConfPath  = "/etc/security/pwquality.conf"
 	linuxPwqualityDropinDir = "/etc/security/pwquality.conf.d"
+	linuxPAMDir             = "/etc/pam.d"
+
+	// linuxPAMIncludeDepth matches the point at which a PAM include cycle
+	// is no longer a readable stack.
+	linuxPAMIncludeDepth = 16
 
 	// linuxPasswordMinLen is the shortest minimum that still counts as a policy.
 	linuxPasswordMinLen = 8
@@ -96,6 +101,8 @@ func linuxPasswordPolicy(ctx context.Context) Result {
 	}
 
 	pamBodies := make([]string, 0, len(linuxPAMPasswordPaths))
+	pamFiles := map[string]string{}
+
 	for _, path := range linuxPAMPasswordPaths {
 		body, present, readErr := readOptionalFile(path)
 		if readErr != nil {
@@ -112,6 +119,11 @@ func linuxPasswordPolicy(ctx context.Context) Result {
 		}
 
 		pamBodies = append(pamBodies, body)
+		pamFiles[filepath.Base(path)] = body
+	}
+
+	if readErr := readPAMIncludes(pamFiles); readErr != nil {
+		return unknown(map[string]any{"error": readErr.Error()})
 	}
 
 	loginDefs, _, err := readOptionalFile("/etc/login.defs")
@@ -119,7 +131,52 @@ func linuxPasswordPolicy(ctx context.Context) Result {
 		return unknown(map[string]any{"error": err.Error()})
 	}
 
-	return linuxPasswordPolicyFromSources(conf, dropins, pamBodies, loginDefs)
+	return linuxPasswordPolicyFromSources(conf, dropins, pamBodies, pamFiles, loginDefs)
+}
+
+// readPAMIncludes loads files named by include and substack lines. A name
+// that is not a single pam.d entry is left unresolved.
+func readPAMIncludes(files map[string]string) error {
+	seen := map[string]bool{}
+
+	for range linuxPAMIncludeDepth {
+		var names []string
+
+		for _, body := range files {
+			names = append(names, pamIncludeNames(body)...)
+		}
+
+		loaded := false
+
+		for _, name := range names {
+			if !pamConfigName(name) || seen[name] {
+				continue
+			}
+
+			seen[name] = true
+			if _, ok := files[name]; ok {
+				continue
+			}
+
+			body, present, err := readOptionalFile(filepath.Join(linuxPAMDir, name))
+			if err != nil {
+				return fmt.Errorf("cannot read pam include: %w", err)
+			}
+
+			if !present {
+				continue
+			}
+
+			files[name] = body
+			loaded = true
+		}
+
+		if !loaded {
+			return nil
+		}
+	}
+
+	return nil
 }
 
 func readOptionalFile(path string) (string, bool, error) {
@@ -171,10 +228,12 @@ func readPwqualityDropins(dir string) ([]linuxPwqualityDropin, error) {
 
 // linuxPasswordPolicyFromSources uses the weakest password-change path.
 // login.defs applies only when the stack loads neither quality module.
+// Include and substack lines use pamIncludes, keyed by the pam.d basename.
 func linuxPasswordPolicyFromSources(
 	conf string,
 	dropins []linuxPwqualityDropin,
 	pamBodies []string,
+	pamIncludes map[string]string,
 	loginDefs string,
 ) Result {
 	confValue, confSource, confKnown, confInvalid := mergedPwqualityMinLen(conf, dropins)
@@ -186,7 +245,18 @@ func linuxPasswordPolicyFromSources(
 
 	readings := make([]linuxPasswordReading, 0, len(pamBodies))
 	for _, body := range pamBodies {
-		modules := pamPasswordQualityModules(body)
+		modules, resolved := pamPasswordQualityModules(body, pamIncludes)
+		if !resolved {
+			ev := map[string]any{
+				"note": "password stack could not be resolved",
+			}
+			if maxDays != "" {
+				ev["pass_max_days"] = maxDays
+			}
+
+			return unknown(ev)
+		}
+
 		if len(modules) == 0 {
 			readings = append(readings, loginDefsPasswordReading(loginDefs, false))
 			continue
@@ -449,11 +519,51 @@ func pwqualityMinLen(body string) (int, bool, bool) {
 	return value, found, false
 }
 
-func pamPasswordQualityModules(body string) []pamQualityModule {
+func pamPasswordQualityModules(
+	body string,
+	includes map[string]string,
+) ([]pamQualityModule, bool) {
+	return pamPasswordModules(body, includes, map[string]bool{}, 0)
+}
+
+func pamPasswordModules(
+	body string,
+	includes map[string]string,
+	stack map[string]bool,
+	depth int,
+) ([]pamQualityModule, bool) {
+	if depth > linuxPAMIncludeDepth {
+		return nil, false
+	}
+
 	var modules []pamQualityModule
 
 	body = strings.ReplaceAll(body, "\\\n", " ")
 	for line := range strings.SplitSeq(body, "\n") {
+		name, included := pamIncludeName(line)
+		if included {
+			if !pamConfigName(name) || stack[name] {
+				return nil, false
+			}
+
+			nested, ok := includes[name]
+			if !ok {
+				return nil, false
+			}
+
+			stack[name] = true
+			found, ok := pamPasswordModules(nested, includes, stack, depth+1)
+			delete(stack, name)
+
+			if !ok {
+				return nil, false
+			}
+
+			modules = append(modules, found...)
+
+			continue
+		}
+
 		module, ok := pamPasswordQualityModule(line)
 		if !ok {
 			continue
@@ -462,7 +572,64 @@ func pamPasswordQualityModules(body string) []pamQualityModule {
 		modules = append(modules, module)
 	}
 
-	return modules
+	return modules, true
+}
+
+func pamIncludeNames(body string) []string {
+	body = strings.ReplaceAll(body, "\\\n", " ")
+
+	var names []string
+
+	for line := range strings.SplitSeq(body, "\n") {
+		name, ok := pamIncludeName(line)
+		if !ok {
+			continue
+		}
+
+		names = append(names, name)
+	}
+
+	return names
+}
+
+// pamIncludeName matches @include, and password include or substack.
+func pamIncludeName(line string) (string, bool) {
+	if hash := strings.IndexByte(line, '#'); hash >= 0 {
+		line = line[:hash]
+	}
+
+	line = strings.TrimSpace(line)
+	if line == "" {
+		return "", false
+	}
+
+	if strings.HasPrefix(strings.ToLower(line), "@include") {
+		fields := strings.Fields(line)
+		if len(fields) == 2 && strings.EqualFold(fields[0], "@include") {
+			return filepath.Base(fields[1]), true
+		}
+
+		return "", false
+	}
+
+	tokens := pamTokens(line)
+	if len(tokens) < 3 {
+		return "", false
+	}
+
+	if !strings.EqualFold(strings.TrimPrefix(tokens[0], "-"), "password") {
+		return "", false
+	}
+
+	if !strings.EqualFold(tokens[1], "include") && !strings.EqualFold(tokens[1], "substack") {
+		return "", false
+	}
+
+	return filepath.Base(tokens[2]), true
+}
+
+func pamConfigName(name string) bool {
+	return name != "" && name != "." && name != ".." && !strings.Contains(name, "/")
 }
 
 // pamPasswordQualityModule returns a quality module only when its control

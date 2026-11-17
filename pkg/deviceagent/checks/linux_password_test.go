@@ -39,6 +39,7 @@ func TestLinuxPasswordPolicyFromSources(t *testing.T) {
 		conf      string
 		dropins   []linuxPwqualityDropin
 		pam       []string
+		includes  map[string]string
 		loginDefs string
 		want      Status
 		source    string
@@ -258,16 +259,82 @@ func TestLinuxPasswordPolicyFromSources(t *testing.T) {
 			known:  true,
 		},
 		{
-			name: "auth line and include do not set the length",
+			name: "auth line does not set the length",
 			pam: []string{
 				"auth required pam_pwquality.so minlen=4\n" +
-					"password include common-password\n" +
 					"password requisite pam_pwquality.so minlen=14\n",
 			},
 			want:   StatusPass,
 			source: linuxPasswordSourcePAM,
 			length: 14,
 			known:  true,
+		},
+		{
+			name: "include uses the included stack",
+			pam:  []string{"password include system-auth\n"},
+			includes: map[string]string{
+				"system-auth": "password requisite pam_pwquality.so retry=3\n",
+			},
+			conf:      "minlen = 14\n",
+			loginDefs: "PASS_MIN_LEN 0\n",
+			want:      StatusPass,
+			source:    linuxPasswordSourcePwqualityConf,
+			length:    14,
+			known:     true,
+		},
+		{
+			name: "absolute include path uses the pam.d basename",
+			pam:  []string{"password include /etc/pam.d/system-auth\n"},
+			includes: map[string]string{
+				"system-auth": "password requisite pam_pwquality.so minlen=12\n",
+			},
+			loginDefs: "PASS_MIN_LEN 0\n",
+			want:      StatusPass,
+			source:    linuxPasswordSourcePAM,
+			length:    12,
+			known:     true,
+		},
+		{
+			name: "at-include uses the included stack",
+			pam:  []string{"@include common-password\n"},
+			includes: map[string]string{
+				"common-password": "password requisite pam_pwquality.so minlen=12\n",
+			},
+			want:   StatusPass,
+			source: linuxPasswordSourcePAM,
+			length: 12,
+			known:  true,
+		},
+		{
+			name: "substack uses the included stack",
+			pam:  []string{"password substack system-auth\n"},
+			includes: map[string]string{
+				"system-auth": "password requisite pam_cracklib.so minlen=10\n",
+			},
+			loginDefs: "PASS_MIN_LEN 0\n",
+			want:      StatusPass,
+			source:    linuxPasswordSourcePAM,
+			length:    10,
+			known:     true,
+		},
+		{
+			name:      "missing include is unknown",
+			pam:       []string{"password include system-auth\n"},
+			loginDefs: "PASS_MIN_LEN 14\n",
+			want:      StatusUnknown,
+			known:     false,
+			detail:    "note",
+		},
+		{
+			name: "include cycle is unknown",
+			pam:  []string{"password include system-auth\n"},
+			includes: map[string]string{
+				"system-auth":   "password include password-auth\n",
+				"password-auth": "password include system-auth\n",
+			},
+			want:   StatusUnknown,
+			known:  false,
+			detail: "note",
 		},
 		{
 			name: "commented module falls back to login.defs",
@@ -412,7 +479,13 @@ func TestLinuxPasswordPolicyFromSources(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got := linuxPasswordPolicyFromSources(tt.conf, tt.dropins, tt.pam, tt.loginDefs)
+			got := linuxPasswordPolicyFromSources(
+				tt.conf,
+				tt.dropins,
+				tt.pam,
+				tt.includes,
+				tt.loginDefs,
+			)
 			assert.Equal(t, tt.want, got.Status)
 
 			if !tt.known {
@@ -437,6 +510,7 @@ func TestLinuxPasswordPolicyFromSources_KeepsMaxDays(t *testing.T) {
 
 	got := linuxPasswordPolicyFromSources(
 		"",
+		nil,
 		nil,
 		nil,
 		"PASS_MIN_LEN 8\nPASS_MAX_DAYS 90\n",
