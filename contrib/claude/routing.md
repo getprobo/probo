@@ -158,6 +158,29 @@ Also update:
 
 Do not put a record-scoped path (a chosen banner, third party, or portal) in `NAV_DESTINATIONS`. Those URLs need an id the Cmd+K list does not have. A detail page of a single record (one risk, one document, one audit) does not get a nav entry either. The list page already links to it.
 
+## Detail shell
+
+A detail page that should use the width of the navigation panel opts out of that panel. The rail stays. Set `handle: detailLayout` on that page's own route, imported from [`apps/console/src/pages/iam/organizations/_lib/shellLayout.ts`](../../apps/console/src/pages/iam/organizations/_lib/shellLayout.ts). `OrganizationLayout` reads the handle from `useMatches()` and skips `NavPanel` when any matched route sets `layout: "detail"`.
+
+Put the handle on the detail route itself, not on a parent that also wraps pages which should keep the panel. The documents list and the existing document tabs stay on the default shell; only `documents/:documentId` index sets the handle.
+
+The page's back link targets the list route. That list does not set the handle, so the panel returns with the navigation. This is not a nav-catalog change.
+
+```tsx
+import { detailLayout } from "#/pages/iam/organizations/_lib/shellLayout";
+
+{
+  path: "documents/:documentId",
+  children: [
+    {
+      index: true,
+      handle: detailLayout,
+      Component: lazy(() => import("./DocumentDetailsPageLoader")),
+    },
+  ],
+}
+```
+
 ## Route params
 
 Read params with `useParams` **inside the component that needs them** — do not drill them as props from a parent that only read the URL to pass them down (see [`react-components.md`](react-components.md#props-are-for-configuration-and-composition-not-data)). Params are always `string | undefined`; narrow before use.

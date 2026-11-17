@@ -35,6 +35,7 @@ import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment, useMutation } from "react-relay";
+import { useLocation } from "react-router";
 import { ConnectionHandler, type DataID, graphql } from "relay-runtime";
 
 import type { DocumentListItem_archiveMutation } from "#/__generated__/core/DocumentListItem_archiveMutation.graphql";
@@ -152,6 +153,7 @@ export function DocumentListItem(props: {
   } = props;
 
   const organizationId = useOrganizationId();
+  const location = useLocation();
   const { t, i18n } = useTranslation();
   const toast = useToast();
   const [archiveDocument, isArchiving] = useMutation<DocumentListItem_archiveMutation>(archiveDocumentMutation);
@@ -271,7 +273,7 @@ export function DocumentListItem(props: {
   return (
     <>
       <Tr
-        to={`/organizations/${organizationId}/governance/documents/${document.id}`}
+        to={`/organizations/${organizationId}/governance/documents/${document.id}${location.search}`}
       >
         <Td noLink className="w-18">
           <Checkbox checked={checked} onChange={onCheck} />

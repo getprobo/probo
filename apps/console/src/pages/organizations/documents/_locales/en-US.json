@@ -1,0 +1,12 @@
+{
+  "details": {
+    "back": "Documents",
+    "notFound": "Document not found",
+    "fields": {
+      "title": "Title"
+    },
+    "errors": {
+      "update": "Could not update the document"
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "details": {
+    "back": "Documenten",
+    "notFound": "Document niet gevonden",
+    "fields": {
+      "title": "Titel"
+    },
+    "errors": {
+      "update": "Document bijwerken mislukt"
+    }
+  }
+}

@@ -22,6 +22,7 @@ import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
 import { navPanel, navRail, organizationLayout } from "./_components/shell/variants";
 import { NAV_GROUPS } from "./_lib/navigation";
+import { useDetailLayout } from "./_lib/shellLayout";
 
 // Widths track the English labels of the widest product (Governance).
 // See .cursor/rules/skeleton-width-sync.mdc.
@@ -36,7 +37,8 @@ const PANEL_ITEMS = [
 ] as const;
 
 export function OrganizationLayoutSkeleton() {
-  const layoutSlots = organizationLayout();
+  const detail = useDetailLayout();
+  const layoutSlots = organizationLayout({ detail });
   const railSlots = navRail({ expandable: false });
   const panelSlots = navPanel();
 
@@ -61,14 +63,16 @@ export function OrganizationLayoutSkeleton() {
           </div>
         </div>
 
-        <div className={panelSlots.panel()}>
-          <TextSkeleton size={1} className={`w-20 ${panelSlots.title()}`} />
-          <div className={panelSlots.list()}>
-            {PANEL_ITEMS.map(item => (
-              <TextSkeleton key={item.key} size={2} className={`my-1.5 ${item.width}`} />
-            ))}
+        {!detail && (
+          <div className={panelSlots.panel()}>
+            <TextSkeleton size={1} className={`w-20 ${panelSlots.title()}`} />
+            <div className={panelSlots.list()}>
+              {PANEL_ITEMS.map(item => (
+                <TextSkeleton key={item.key} size={2} className={`my-1.5 ${item.width}`} />
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         <div className={layoutSlots.content()}>
           <div className={layoutSlots.contentInner()} />
