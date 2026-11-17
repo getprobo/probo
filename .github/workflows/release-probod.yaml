@@ -11,6 +11,7 @@ permissions:
 jobs:
   build-apps:
     name: "build-apps"
+    if: github.repository == 'getprobo/probo'
     runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
     permissions:
       contents: "read"
@@ -48,6 +49,7 @@ jobs:
 
   build-binary:
     name: "binary (${{ matrix.goos }}/${{ matrix.goarch }})"
+    if: success() && github.repository == 'getprobo/probo'
     needs: [build-apps]
     runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
     permissions:
@@ -141,6 +143,7 @@ jobs:
 
   build-docker:
     name: "docker (${{ matrix.arch }})"
+    if: success() && github.repository == 'getprobo/probo'
     needs: [build-binary]
     runs-on: "runs-on=${{ github.run_id }}/runner=${{ matrix.runner }}/extras=s3-cache"
     permissions:
@@ -198,6 +201,7 @@ jobs:
 
   docker-manifest:
     name: "docker-manifest"
+    if: success() && github.repository == 'getprobo/probo'
     needs: [build-docker]
     runs-on: "runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/extras=s3-cache"
     permissions:
@@ -268,6 +272,7 @@ jobs:
 
   github-release:
     name: "github-release"
+    if: success() && github.repository == 'getprobo/probo'
     needs: [build-binary, docker-manifest]
     runs-on: "runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/extras=s3-cache"
     permissions:
