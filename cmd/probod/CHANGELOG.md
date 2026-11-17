@@ -4,6 +4,21 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.350.0] - 2026-11-17
+
+### Changed
+
+- Risk analysis exports name each score's severity, such as "1 — Low",
+  instead of only the numeric range
+- Opening documents with long edit histories uses less memory and loads
+  faster
+
+### Fixed
+
+- The console footer no longer pushes the welcome page link below the
+  fold on short windows, and employee portal pages no longer reserve
+  extra space at the bottom
+
 ## [0.349.0] - 2026-11-17
 
 ### Added
