@@ -538,7 +538,9 @@ jobs:
     name: "test-e2e"
     if: needs.changes.outputs.e2e == 'true'
     needs: [changes, build]
-    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+    # ubuntu24-full already fills most of the default 30GB root. The
+    # compose stack needs the rest of the disk while the tests run.
+    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache/volume=80gb"
     permissions:
       contents: "read"
     steps:
@@ -588,21 +590,14 @@ jobs:
         run: |
           go install filippo.io/mkcert@latest
           sudo mkcert -install 2>&1 | grep -v 'no Firefox and/or Chrome/Chromium security databases found' || true
-      - name: "Cache Docker images"
-        id: docker-cache
-        uses: "runs-on/cache@v5.0.7"
-        with:
-          path: /tmp/docker-images
-          key: "docker-images-${{ env.USE_HARBOR_MIRROR }}-${{ hashFiles('compose.yaml', 'compose.github-action.yaml') }}"
-      - name: "Load cached Docker images"
-        if: steps.docker-cache.outputs.cache-hit == 'true'
-        run: "docker load -i /tmp/docker-images/images.tar"
-      - name: "Pull and save Docker images"
-        if: steps.docker-cache.outputs.cache-hit != 'true'
-        run: |
-          docker compose pull
-          mkdir -p /tmp/docker-images
-          docker save $(docker compose config --images) -o /tmp/docker-images/images.tar
+      - name: "Pull Docker images"
+        # Do not docker-save this set for runs-on/cache. save writes a
+        # second full copy to /tmp/docker-images/.docker_temp_* and fills
+        # the root volume before that cache can upload anything. The
+        # GitHub Actions cache page stays empty either way: runs-on
+        # stores cache objects in S3, not in GitHub's cache service.
+        # Harbor already fronts Docker Hub, and a pull finishes in seconds.
+        run: "docker compose pull"
       - name: "Start stack"
         run: "make stack-up"
       - run: "make stack-ps"
