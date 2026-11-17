@@ -81,10 +81,12 @@ func TestTextSpans_ManyBlocks(t *testing.T) {
 	require.NoError(t, err)
 
 	var blocks, texts int
+
 	for _, span := range spans {
 		switch span.Type {
 		case automerge.SpanTypeBlock:
 			blocks++
+
 			assert.Equal(t, "paragraph", span.Block["type"])
 		case automerge.SpanTypeText:
 			texts++

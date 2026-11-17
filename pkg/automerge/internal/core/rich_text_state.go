@@ -31,6 +31,7 @@ func (s *State) RichTextSpans(object opset.OpID) ([]RichSpan, error) {
 	values := s.sequenceValues(object)
 	marks := s.richTextMarks(object)
 	spans := make([]RichSpan, 0)
+
 	var blockFields objectProperties
 
 	for i, value := range values {
