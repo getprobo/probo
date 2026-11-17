@@ -18,7 +18,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { ComboboxPaged } from "@probo/ui/src/v2/Combobox/ComboboxPaged";
+import { MagnifyingGlassIcon, PlusIcon } from "@phosphor-icons/react";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
+import { DropdownItem } from "@probo/ui/src/v2/Dropdown/DropdownItem";
+import { DropdownPopup } from "@probo/ui/src/v2/Dropdown/DropdownPopup";
+import { DropdownTrigger } from "@probo/ui/src/v2/Dropdown/DropdownTrigger";
+import { TextField } from "@probo/ui/src/v2/form/TextField";
+import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
+import { Text } from "@probo/ui/src/v2/typography/Text";
+import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
 
@@ -27,6 +37,7 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useComboboxPage } from "#/pages/organizations/tasks/_lib/useComboboxPage";
 
 const pageSize = 20;
+const skeletonWidths = ["w-28", "w-36", "w-24"] as const;
 
 export interface DocumentControlOption {
   id: string;
@@ -84,8 +95,10 @@ export function DocumentControlCombobox({
 }: DocumentControlComboboxProps) {
   const { t } = useTranslation("organizations/documents");
   const organizationId = useOrganizationId();
+  const [open, setOpen] = useState(false);
   const page = useComboboxPage<DocumentControlComboboxQuery, DocumentControlOption>({
     query: documentControlPageQuery,
+    enabled: open,
     variables: (after, query) => ({
       organizationId,
       first: pageSize,
@@ -107,29 +120,93 @@ export function DocumentControlCombobox({
     },
     reloadKey: organizationId,
   });
-  const placeholder = t("details.controls.add");
   const items = page.items.filter(item => !excludeIds.has(item.id));
 
   return (
-    <ComboboxPaged
-      items={items}
-      loading={page.loading}
-      failed={page.failed}
-      query={page.query}
-      onQueryChange={page.onQueryChange}
-      hasNext={page.hasNext}
-      onLoadMore={page.onLoadMore}
-      selectedId={null}
-      selectedLabel={placeholder}
-      ariaLabel={t("details.controls.title")}
-      placeholder={placeholder}
-      emptyLabel={t("details.controls.empty")}
-      errorLabel={t("details.controls.loadError")}
-      loadMoreLabel={t("details.controls.loadMore")}
-      disabled={disabled}
-      onSelect={onSelect}
-      itemId={item => item.id}
-      itemLabel={controlLabel}
-    />
+    <Dropdown
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (next) {
+          page.onQueryChange("");
+        }
+      }}
+    >
+      <DropdownTrigger
+        disabled={disabled}
+        render={(
+          <IconButton
+            size={1}
+            variant="ghost"
+            color="neutral"
+            disabled={disabled}
+            aria-label={t("details.controls.add")}
+          />
+        )}
+      >
+        <PlusIcon />
+      </DropdownTrigger>
+      <DropdownPopup align="end">
+        <div className="flex w-64 flex-col gap-1">
+          <div
+            className="px-1 pb-1"
+            onKeyDown={(event) => {
+              event.stopPropagation();
+            }}
+          >
+            <TextField
+              size={2}
+              icon={<MagnifyingGlassIcon />}
+              value={page.query}
+              disabled={disabled}
+              onValueChange={page.onQueryChange}
+              placeholder={t("details.controls.add")}
+              aria-label={t("details.controls.title")}
+            />
+          </div>
+          <div className="flex max-h-64 flex-col gap-1 overflow-y-auto">
+            {items.map(item => (
+              <DropdownItem
+                key={item.id}
+                disabled={disabled}
+                onClick={() => {
+                  onSelect(item);
+                }}
+              >
+                {controlLabel(item)}
+              </DropdownItem>
+            ))}
+            {page.loading && items.length === 0 && skeletonWidths.map(width => (
+              <div key={width} className="flex h-8 items-center px-3" aria-hidden>
+                <TextSkeleton size={2} className={width} />
+              </div>
+            ))}
+            {!page.loading && page.failed && (
+              <Text size={2} color="faint" className="px-3 py-1.5">
+                {t("details.controls.loadError")}
+              </Text>
+            )}
+            {!page.loading && !page.failed && items.length === 0 && (
+              <Text size={2} color="faint" className="px-3 py-1.5">
+                {t("details.controls.empty")}
+              </Text>
+            )}
+            {page.hasNext && (
+              <Button
+                variant="ghost"
+                color="neutral"
+                size={2}
+                className="w-full"
+                loading={page.loading}
+                disabled={disabled}
+                onClick={page.onLoadMore}
+              >
+                {t("details.controls.loadMore")}
+              </Button>
+            )}
+          </div>
+        </div>
+      </DropdownPopup>
+    </Dropdown>
   );
 }

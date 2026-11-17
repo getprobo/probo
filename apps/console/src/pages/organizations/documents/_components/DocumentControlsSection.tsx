@@ -18,15 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { XIcon } from "@phosphor-icons/react";
+import { MagnifyingGlassIcon, XIcon } from "@phosphor-icons/react";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { CardSkeleton } from "@probo/ui/src/v2/Card/CardSkeleton";
+import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { Link } from "@probo/ui/src/v2/Link/Link";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { Suspense } from "react";
+import { Suspense, useEffect, useRef, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useLazyLoadQuery, usePaginationFragment } from "react-relay";
 
@@ -44,6 +45,7 @@ import { documentControls } from "../variants";
 import { DocumentControlCombobox } from "./DocumentControlCombobox";
 
 const documentControlsPageSize = 50;
+const documentControlsSearchDelayMs = 300;
 
 const documentControlsSectionFragment = graphql`
   fragment DocumentControlsSection_document on Document {
@@ -72,10 +74,11 @@ const documentControlsListFragment = graphql`
   @argumentDefinitions(
     first: { type: "Int", defaultValue: 50 }
     after: { type: "CursorKey" }
+    filter: { type: "ControlFilter", defaultValue: null }
   ) {
     id
-    controls(first: $first, after: $after)
-      @connection(key: "DocumentControlsSection_controls") {
+    controls(first: $first, after: $after, filter: $filter)
+      @connection(key: "DocumentControlsSection_controls", filters: ["filter"]) {
       __id
       edges {
         node {
@@ -177,10 +180,14 @@ function DocumentControlsList({
     loadNext,
     hasNext,
     isLoadingNext,
+    refetch,
   } = usePaginationFragment<
     DocumentControlsSectionListRefetchQuery,
     DocumentControlsSectionList_document$key
   >(documentControlsListFragment, documentKey);
+  const [query, setQuery] = useState("");
+  const [isPending, startTransition] = useTransition();
+  const committedQuery = useRef("");
   const [attachControl, isAttaching] = useMutation<DocumentControlsSection_attachMutation>(
     attachControlMutation,
     { errorToast: t("details.errors.update") },
@@ -191,17 +198,66 @@ function DocumentControlsList({
   );
   const isUpdating = isAttaching || isDetaching;
   const linksIncomplete = hasNext || isLoadingNext;
-  const { root, names, name, control } = documentControls();
+  const { root, title, names, name, control } = documentControls({ pending: isPending });
   const controls = document.controls.edges.map(edge => edge.node);
+  const filtering = query.trim() !== "";
+
+  useEffect(() => {
+    const handle = setTimeout(() => {
+      const next = query.trim();
+      if (next === committedQuery.current) {
+        return;
+      }
+      committedQuery.current = next;
+      startTransition(() => {
+        refetch({
+          first: documentControlsPageSize,
+          filter: next === "" ? null : { query: next },
+        }, { fetchPolicy: "network-only" });
+      });
+    }, documentControlsSearchDelayMs);
+    return () => {
+      clearTimeout(handle);
+    };
+  }, [query, refetch]);
   const linkedIds = new Set(controls.map(item => item.id));
 
   return (
     <Card variant="soft" size={2}>
       <div className={root()}>
-        <Heading level={2} size={2} weight="medium">
-          {t("details.controls.title")}
-        </Heading>
-        <div className={names()}>
+        <div className={title()}>
+          <Heading level={2} size={2} weight="medium">
+            {t("details.controls.title")}
+          </Heading>
+          {canLink && (
+            <DocumentControlCombobox
+              excludeIds={linkedIds}
+              disabled={isUpdating || linksIncomplete}
+              onSelect={(item) => {
+                void attachControl({
+                  variables: {
+                    input: {
+                      controlId: item.id,
+                      documentId: document.id,
+                    },
+                    connections: [document.controls.__id],
+                  },
+                }).catch(() => {
+                  // Error toast is already shown by useMutation.
+                });
+              }}
+            />
+          )}
+        </div>
+        <TextField
+          size={1}
+          icon={<MagnifyingGlassIcon />}
+          value={query}
+          onValueChange={setQuery}
+          placeholder={t("details.controls.search")}
+          aria-label={t("details.controls.search")}
+        />
+        <div className={names()} aria-busy={isPending}>
           {controls.length > 0
             ? controls.map(item => (
                 <div key={item.id} className={name()}>
@@ -243,7 +299,9 @@ function DocumentControlsList({
                 </div>
               ))
             : (
-                <Text size={1} color="faint">{t("details.controls.none")}</Text>
+                <Text size={1} color="faint">
+                  {filtering ? t("details.controls.empty") : t("details.controls.none")}
+                </Text>
               )}
           {hasNext && (
             <Button
@@ -256,25 +314,6 @@ function DocumentControlsList({
             >
               {t("details.controls.loadMore")}
             </Button>
-          )}
-          {canLink && (
-            <DocumentControlCombobox
-              excludeIds={linkedIds}
-              disabled={isUpdating || linksIncomplete}
-              onSelect={(item) => {
-                void attachControl({
-                  variables: {
-                    input: {
-                      controlId: item.id,
-                      documentId: document.id,
-                    },
-                    connections: [document.controls.__id],
-                  },
-                }).catch(() => {
-                  // Error toast is already shown by useMutation.
-                });
-              }}
-            />
           )}
         </div>
       </div>
