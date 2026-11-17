@@ -233,9 +233,13 @@ func (s *Service) PutContent(
 	now := time.Now()
 	doc.Snapshot = snapshot
 	doc.Heads = encodeHeads(heads)
+	// The change log offset stays monotonic across the replacement: a live
+	// room still positioned in the old log must not mistake its offset for a
+	// row of the new one. The bump past the deleted rows puts the new
+	// snapshot, which holds a change no row carries, after every old offset.
 	doc.Revision++
-	doc.SnapshotRevision = doc.Revision
-	doc.ChangeRevision = doc.Revision
+	doc.ChangeRevision++
+	doc.SnapshotRevision = doc.ChangeRevision
 	doc.UpdatedAt = now
 
 	if err := doc.Update(ctx, tx, scope); err != nil {
