@@ -37,7 +37,7 @@ type encodedColumn struct {
 }
 
 func EncodeChange(change *opset.Change) ([]byte, error) {
-	if len(change.Actor) == 0 {
+	if change.Actor.Len() == 0 {
 		return nil, fmt.Errorf("change actor cannot be empty")
 	}
 
@@ -93,7 +93,7 @@ func changeActorTable(
 ) ([]opset.ActorID, map[opset.ActorID]uint64, error) {
 	actorSet := make(map[opset.ActorID]struct{})
 	add := func(actor opset.ActorID) {
-		if actor != "" && actor != change.Actor {
+		if !actor.IsZero() && actor != change.Actor {
 			actorSet[actor] = struct{}{}
 		}
 	}

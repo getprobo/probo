@@ -114,11 +114,11 @@ func BenchmarkHexaneOperationColumns_LocalizedEdit(b *testing.B) {
 
 func testHexaneActors() []opset.ActorID {
 	return []opset.ActorID{
-		opset.ActorID("\x00"),
-		opset.ActorID("actor-a"),
-		opset.ActorID("\xff\x10"),
-		opset.ActorID("longer-actor-index"),
-		opset.ActorID("\x01\x02\x03"),
+		opset.MakeActorID("\x00"),
+		opset.MakeActorID("actor-a"),
+		opset.MakeActorID("\xff\x10"),
+		opset.MakeActorID("longer-actor-index"),
+		opset.MakeActorID("\x01\x02\x03"),
 	}
 }
 

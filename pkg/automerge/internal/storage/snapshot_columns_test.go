@@ -184,7 +184,7 @@ func TestSnapshotColumns_BatchedOperationSplicesMatchPreparedEncoder(t *testing.
 	for index := 900; index >= 0; index -= 100 {
 		inserted := next[index]
 		inserted.ID = opset.OpID{
-			Actor:   opset.ActorID("batch"),
+			Actor:   opset.MakeActorID("batch"),
 			Counter: uint64(10_000 + index),
 		}
 		inserted.Successors = nil

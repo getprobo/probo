@@ -34,8 +34,8 @@ import (
 func TestCompareObjectCreationIDsOrdersConcurrencyActorsTransitively(t *testing.T) {
 	t.Parallel()
 
-	base := opset.ActorID(string([]byte{0xff}))
-	unrelated := opset.ActorID(string([]byte{0x20}))
+	base := opset.MakeActorID(string([]byte{0xff}))
+	unrelated := opset.MakeActorID(string([]byte{0x20}))
 	identifiers := []opset.OpID{
 		{Actor: base, Counter: 1},
 		{Actor: base.WithConcurrency(1), Counter: 1},

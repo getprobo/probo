@@ -467,7 +467,7 @@ func documentActorTable(changes []*opset.Change, operations []opset.Operation) [
 	seen := make(map[opset.ActorID]struct{})
 
 	add := func(actor opset.ActorID) {
-		if actor != "" {
+		if !actor.IsZero() {
 			seen[actor] = struct{}{}
 		}
 	}

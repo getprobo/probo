@@ -102,7 +102,7 @@ func objectIDString(object opset.ObjectID) string {
 	return fmt.Sprintf(
 		"%d@%s",
 		object.OpID.Counter,
-		hex.EncodeToString([]byte(object.OpID.Actor)),
+		object.OpID.Actor.String(),
 	)
 }
 
@@ -1483,7 +1483,7 @@ func parseObjectID(identifier string) (opset.ObjectID, bool) {
 	return opset.ObjectID{
 		OpID: opset.OpID{
 			Counter: counter,
-			Actor:   opset.ActorID(raw),
+			Actor:   opset.MakeActorID(string(raw)),
 		},
 	}, true
 }

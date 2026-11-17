@@ -828,7 +828,7 @@ func directActorTable(
 	}
 
 	add := func(actor opset.ActorID) {
-		if actor != "" {
+		if !actor.IsZero() {
 			seen[actor] = struct{}{}
 		}
 	}

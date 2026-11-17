@@ -51,7 +51,7 @@ func ActorsFromSyncMessage(message []byte) ([][]byte, error) {
 		}
 
 		for _, decoded := range document.Changes {
-			key := string(decoded.Actor)
+			key := decoded.Actor.Raw()
 			if _, ok := seen[key]; ok {
 				continue
 			}

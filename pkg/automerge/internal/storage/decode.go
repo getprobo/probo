@@ -817,7 +817,7 @@ func reserveChangeReconstruction(change *opset.Change, budget *decodeBudget) err
 		return err
 	}
 
-	if err := chargeDecodedPayload(budget, len(change.Actor), 2); err != nil {
+	if err := chargeDecodedPayload(budget, change.Actor.Len(), 2); err != nil {
 		return err
 	}
 
@@ -831,14 +831,14 @@ func reserveChangeReconstruction(change *opset.Change, budget *decodeBudget) err
 
 	for i := range change.Operations {
 		operation := &change.Operations[i]
-		if err := chargeDecodedPayload(budget, len(operation.ID.Actor), 2); err != nil {
+		if err := chargeDecodedPayload(budget, operation.ID.Actor.Len(), 2); err != nil {
 			return err
 		}
 
 		if !operation.Object.IsRoot {
 			if err := chargeDecodedPayload(
 				budget,
-				len(operation.Object.OpID.Actor),
+				operation.Object.OpID.Actor.Len(),
 				2,
 			); err != nil {
 				return err
@@ -854,7 +854,7 @@ func reserveChangeReconstruction(change *opset.Change, budget *decodeBudget) err
 		if operation.Key.Element != nil {
 			if err := chargeDecodedPayload(
 				budget,
-				len(operation.Key.Element.Actor),
+				operation.Key.Element.Actor.Len(),
 				2,
 			); err != nil {
 				return err
@@ -866,7 +866,7 @@ func reserveChangeReconstruction(change *opset.Change, budget *decodeBudget) err
 				return err
 			}
 
-			if err := chargeDecodedPayload(budget, len(predecessor.Actor), 2); err != nil {
+			if err := chargeDecodedPayload(budget, predecessor.Actor.Len(), 2); err != nil {
 				return err
 			}
 		}

@@ -66,7 +66,7 @@ func decodeActorArray(
 
 		if sorted &&
 			len(actors) > 0 &&
-			string(actors[len(actors)-1]) >= string(actor) {
+			actors[len(actors)-1].Compare(actor) >= 0 {
 			return nil, fmt.Errorf("actor IDs are not strictly sorted at index %d", i)
 		}
 
@@ -1343,9 +1343,9 @@ func mergeActors(
 		result,
 		func(left, right opset.ActorID) int {
 			switch {
-			case string(left) < string(right):
+			case left.Raw() < right.Raw():
 				return -1
-			case string(left) > string(right):
+			case left.Raw() > right.Raw():
 				return 1
 			default:
 				return 0

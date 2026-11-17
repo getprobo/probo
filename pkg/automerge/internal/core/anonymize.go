@@ -177,7 +177,7 @@ func newAnonymization(changes []*opset.Change) (*anonymization, error) {
 			copy(replacement[:8], prefix[:])
 			binary.BigEndian.PutUint64(replacement[8:], uint64(rank))
 
-			mapped[actor] = opset.ActorID(string(replacement[:]))
+			mapped[actor] = opset.MakeActorID(string(replacement[:]))
 			if _, exists := slices.BinarySearchFunc(
 				actors,
 				mapped[actor],
@@ -202,7 +202,7 @@ func newAnonymization(changes []*opset.Change) (*anonymization, error) {
 func collectActors(changes []*opset.Change) []opset.ActorID {
 	set := make(map[opset.ActorID]struct{})
 	add := func(actor opset.ActorID) {
-		if actor != "" {
+		if !actor.IsZero() {
 			set[actor] = struct{}{}
 		}
 	}

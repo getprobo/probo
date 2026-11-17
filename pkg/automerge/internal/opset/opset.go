@@ -29,11 +29,21 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math"
+	"strings"
+	"unique"
 )
 
 type (
 	// ActorID is an immutable, arbitrary-length Automerge actor identifier.
-	ActorID string
+	//
+	// It holds an interned handle to the actor bytes rather than the bytes
+	// themselves, so an identifier is one machine word, two identifiers are
+	// equal when their handles are, and hashing one never reads the actor
+	// bytes. Operation identifiers are map keys throughout the engine, which
+	// makes that the hot path. The zero value is the empty actor.
+	ActorID struct {
+		handle unique.Handle[string]
+	}
 
 	// ChangeHash identifies a change by the SHA-256 digest of its change chunk.
 	ChangeHash [32]byte
@@ -170,15 +180,44 @@ const (
 // NewActorID validates and copies an actor ID.
 func NewActorID(value []byte) (ActorID, error) {
 	if len(value) == 0 {
-		return "", fmt.Errorf("actor ID cannot be empty")
+		return ActorID{}, fmt.Errorf("actor ID cannot be empty")
 	}
 
-	return ActorID(string(value)), nil
+	return MakeActorID(string(value)), nil
+}
+
+// MakeActorID returns the actor ID holding the given raw bytes. Unlike
+// NewActorID it accepts the empty actor, which is the zero value.
+func MakeActorID(raw string) ActorID {
+	if raw == "" {
+		return ActorID{}
+	}
+
+	return ActorID{handle: unique.Make(raw)}
+}
+
+// Raw returns the actor ID bytes as an immutable string.
+func (a ActorID) Raw() string {
+	if a == (ActorID{}) {
+		return ""
+	}
+
+	return a.handle.Value()
+}
+
+// IsZero reports whether the actor ID is the empty actor.
+func (a ActorID) IsZero() bool {
+	return a == ActorID{}
+}
+
+// Len returns the number of bytes in the actor ID.
+func (a ActorID) Len() int {
+	return len(a.Raw())
 }
 
 // Bytes returns a copy of the actor ID bytes.
 func (a ActorID) Bytes() []byte {
-	return []byte(string(a))
+	return []byte(a.Raw())
 }
 
 // String returns the lowercase hexadecimal actor ID.
@@ -188,7 +227,11 @@ func (a ActorID) String() string {
 
 // Compare returns -1, 0, or 1 using Automerge's bytewise actor ordering.
 func (a ActorID) Compare(other ActorID) int {
-	return bytes.Compare(a.Bytes(), other.Bytes())
+	if a == other {
+		return 0
+	}
+
+	return strings.Compare(a.Raw(), other.Raw())
 }
 
 // concurrencyMagicBytes prefixes actor IDs derived for isolated writes so they
@@ -203,12 +246,14 @@ func (a ActorID) WithConcurrency(level uint64) ActorID {
 		return a
 	}
 
-	bytes := make([]byte, 0, 4+16+len(a))
+	raw := a.Raw()
+
+	bytes := make([]byte, 0, 4+16+len(raw))
 	bytes = append(bytes, concurrencyMagicBytes[:]...)
 	bytes = appendULEB(bytes, level)
-	bytes = append(bytes, a.Bytes()...)
+	bytes = append(bytes, raw...)
 
-	return ActorID(string(bytes))
+	return MakeActorID(string(bytes))
 }
 
 // Concurrency returns the base actor and synthetic isolation level. Ordinary
@@ -237,7 +282,7 @@ func (a ActorID) Concurrency() (ActorID, uint64) {
 				return a, 0
 			}
 
-			return ActorID(string(data[index+1:])), level
+			return MakeActorID(string(data[index+1:])), level
 		}
 
 		shift += 7
