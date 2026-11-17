@@ -552,6 +552,8 @@ func directDivergedSequenceInsertion(
 		index = anchorRow + 1
 	}
 
+	walk := newSequenceBranchWalk(first)
+
 	for index < span.end {
 		runtimeMetrics.directPlanningRows.Add(1)
 
@@ -561,7 +563,7 @@ func directDivergedSequenceInsertion(
 			continue
 		}
 
-		root, descendant := directSequenceBranchRoot(state, candidate, first)
+		root, descendant := walk.branch(candidate)
 		if !descendant || root.Compare(first.ID) < 0 {
 			break
 		}
@@ -588,33 +590,56 @@ func directDivergedSequenceInsertion(
 	}, true
 }
 
-func directSequenceBranchRoot(
-	state *State,
-	candidate opset.Operation,
-	incoming opset.Operation,
-) (opset.OpID, bool) {
-	root := candidate
-	for {
-		if incoming.Key.IsHead {
-			if root.Key.IsHead {
-				return root.ID, true
-			}
-		} else if root.Key.Element != nil &&
-			*root.Key.Element == *incoming.Key.Element {
-			return root.ID, true
-		}
+// sequenceBranchWalk finds, for the insertions that follow an incoming
+// insertion's anchor in document order, the branch of the anchor each one
+// belongs to. A branch is a direct child of the anchor together with its
+// descendants.
+//
+// RGA keeps every subtree contiguous right after its root, so a row belongs to
+// the anchor's subtree exactly when its parent is the anchor or a row already
+// walked. Remembering the branch of every walked row resolves each row from its
+// parent alone. Following each row's parent chain back to the anchor instead
+// costs the depth of the text for every row, which made applying a remote
+// change to a long text quadratic.
+type sequenceBranchWalk struct {
+	incoming opset.Operation
+	branches map[opset.OpID]opset.OpID
+}
 
-		if root.Key.Element == nil {
+func newSequenceBranchWalk(incoming opset.Operation) *sequenceBranchWalk {
+	return &sequenceBranchWalk{incoming: incoming}
+}
+
+// branch returns the ID of the anchor's direct child that candidate descends
+// from, and false once candidate lies outside the anchor's subtree. Candidates
+// must be passed in document order, starting with the row after the anchor.
+func (w *sequenceBranchWalk) branch(candidate opset.Operation) (opset.OpID, bool) {
+	var branch opset.OpID
+
+	switch {
+	case w.incoming.Key.IsHead && candidate.Key.IsHead:
+		branch = candidate.ID
+	case candidate.Key.Element == nil:
+		return opset.OpID{}, false
+	case !w.incoming.Key.IsHead &&
+		*candidate.Key.Element == *w.incoming.Key.Element:
+		branch = candidate.ID
+	default:
+		parent, ok := w.branches[*candidate.Key.Element]
+		if !ok {
 			return opset.OpID{}, false
 		}
 
-		parent, ok := state.operation(*root.Key.Element)
-		if !ok || !parent.Insert || parent.Object != incoming.Object {
-			return opset.OpID{}, false
-		}
-
-		root = parent
+		branch = parent
 	}
+
+	if w.branches == nil {
+		w.branches = make(map[opset.OpID]opset.OpID)
+	}
+
+	w.branches[candidate.ID] = branch
+
+	return branch, true
 }
 
 func coalesceDirectInsertions(

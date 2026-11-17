@@ -990,13 +990,15 @@ func (i *sequenceIndex) insertionPosition(operation opset.Operation, local bool)
 	// Remote siblings sort by descending operation ID, with each sibling's
 	// descendants immediately following it. Walk only the branches rooted at
 	// this anchor until the incoming branch's ordered position is reached.
+	walk := newSequenceBranchWalk(operation)
+
 	i.eachRaw(position, func(entry sequenceIndexEntry) bool {
 		candidate, exists := i.state.operation(entry.insertion)
 		if !exists {
 			return true
 		}
 
-		root, descendant := directSequenceBranchRoot(i.state, candidate, operation)
+		root, descendant := walk.branch(candidate)
 		if !descendant || root.Compare(operation.ID) < 0 {
 			return false
 		}
