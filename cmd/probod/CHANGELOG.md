@@ -4,6 +4,24 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.348.0] - 2026-11-17
+
+### Changed
+
+- Members with read-only access to a document now open it live
+  and see other people's edits as they happen. Changes sent
+  from a read-only session are always rejected
+- Opening a live document no longer rebuilds its content on the
+  server; the text loads from the live connection, and only a
+  pinned version is fetched separately
+
+### Fixed
+
+- Assignment notifications are resolved when a task is finished,
+  canceled, marked duplicate, or deleted, so they no longer count
+  as unread. Existing notifications on closed tasks are resolved
+  by a migration. Mentions on a closed task stay pending
+
 ## [0.347.2] - 2026-11-16
 
 ### Fixed
