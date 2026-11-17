@@ -17,7 +17,7 @@ permissions:
 jobs:
   changes:
     name: "changes"
-    runs-on: "runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/extras=s3-cache"
+    runs-on: "runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/volume=40gb/extras=s3-cache"
     permissions:
       contents: "read"
     outputs:
@@ -55,7 +55,7 @@ jobs:
     name: "build-apps"
     if: github.event_name == 'push' && needs.changes.outputs.snapshot == 'true'
     needs: [changes]
-    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/volume=40gb/extras=s3-cache"
     permissions:
       contents: "read"
     steps:
@@ -95,7 +95,7 @@ jobs:
     name: "probod binary (${{ matrix.goos }}/${{ matrix.goarch }})"
     if: github.event_name == 'push'
     needs: [build-apps]
-    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/volume=40gb/extras=s3-cache"
     permissions:
       contents: "read"
     strategy:
@@ -150,7 +150,7 @@ jobs:
     name: "docker (${{ matrix.arch }})"
     if: github.event_name == 'push'
     needs: [build-snapshot-binary]
-    runs-on: "runs-on=${{ github.run_id }}/runner=${{ matrix.runner }}/extras=s3-cache"
+    runs-on: "runs-on=${{ github.run_id }}/runner=${{ matrix.runner }}/volume=40gb/extras=s3-cache"
     permissions:
       contents: "read"
       security-events: "write"
@@ -194,7 +194,7 @@ jobs:
     name: "snapshot-scan"
     if: github.event_name == 'push'
     needs: [build-snapshot-binary]
-    runs-on: "runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/extras=s3-cache"
+    runs-on: "runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/volume=40gb/extras=s3-cache"
     permissions:
       contents: "read"
     steps:
@@ -219,7 +219,7 @@ jobs:
     name: "build-probod"
     if: needs.changes.outputs.e2e == 'true'
     needs: [changes]
-    runs-on: "runs-on=${{ github.run_id }}/runner=8cpu-linux-x64/extras=s3-cache"
+    runs-on: "runs-on=${{ github.run_id }}/runner=8cpu-linux-x64/volume=40gb/extras=s3-cache"
     permissions:
       contents: "read"
     steps:
@@ -269,7 +269,7 @@ jobs:
     name: "build-probo-agent"
     if: needs.changes.outputs.agent == 'true'
     needs: [changes]
-    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/volume=40gb/extras=s3-cache"
     permissions:
       contents: "read"
     steps:
@@ -291,7 +291,7 @@ jobs:
     name: "lint-go"
     if: needs.changes.outputs.go == 'true'
     needs: [changes]
-    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/volume=40gb/extras=s3-cache"
     permissions:
       contents: "read"
       pull-requests: "write"
@@ -351,7 +351,7 @@ jobs:
     name: "lint-js"
     if: needs.changes.outputs.javascript == 'true'
     needs: [changes]
-    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/volume=40gb/extras=s3-cache"
     permissions:
       contents: "read"
       pull-requests: "write"
@@ -384,7 +384,7 @@ jobs:
     name: "test-js"
     if: needs.changes.outputs.javascript == 'true'
     needs: [changes]
-    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/volume=40gb/extras=s3-cache"
     permissions:
       contents: "read"
     steps:
@@ -402,7 +402,7 @@ jobs:
     name: "lint-swift"
     if: needs.changes.outputs.swift == 'true'
     needs: [changes]
-    runs-on: "runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/extras=s3-cache"
+    runs-on: "runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/volume=40gb/extras=s3-cache"
     permissions:
       contents: "read"
       pull-requests: "write"
@@ -443,7 +443,7 @@ jobs:
     name: "lint-shell"
     if: needs.changes.outputs.shell == 'true'
     needs: [changes]
-    runs-on: "runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/extras=s3-cache"
+    runs-on: "runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/volume=40gb/extras=s3-cache"
     permissions:
       contents: "read"
     steps:
@@ -474,7 +474,7 @@ jobs:
     name: "test"
     if: needs.changes.outputs.go == 'true'
     needs: [changes]
-    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/volume=40gb/extras=s3-cache"
     permissions:
       contents: "read"
     steps:
@@ -538,7 +538,7 @@ jobs:
     name: "test-e2e"
     if: needs.changes.outputs.e2e == 'true'
     needs: [changes, build]
-    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/volume=40gb/extras=s3-cache"
     permissions:
       contents: "read"
     steps:
