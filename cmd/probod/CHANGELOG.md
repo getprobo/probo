@@ -4,6 +4,19 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.349.0] - 2026-11-17
+
+### Added
+
+- Risk analyses store their own score levels, each with a minimum
+  score, so a policy can define Medium or omit Critical. The matrix,
+  score colors, and published document follow those levels, and the
+  legend shows each level's range, such as Low (1-12). The console
+  edits the levels in a grid, and GraphQL, MCP, the CLI, and n8n
+  accept and return them. When no levels are given, the default
+  bands for the matrix size are used, and existing analyses are
+  filled with those bands
+
 ## [0.348.0] - 2026-11-17
 
 ### Changed
