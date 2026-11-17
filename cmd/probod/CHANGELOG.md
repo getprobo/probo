@@ -4,6 +4,22 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.351.0] - 2026-11-17
+
+This is a security release. Upgrade as soon as possible.
+
+### Security fixes
+
+- A private OAuth client can only be authorized, through the device
+  flow or consent approval, by active members of its organization
+- Manual access tokens last at most 180 days. The create form offers
+  30, 90, and 180 days
+- Recovering an account by email revokes its OAuth tokens, refresh
+  tokens, authorization codes, and device codes. Changing a password
+  while signed in is unchanged
+- The console checks the destination it returns to after sign-in, and
+  replaces one that does not stay on the same origin
+
 ### Added
 
 - Cookie banners expose `dailyPageLoads` on the console GraphQL API and
@@ -32,6 +48,9 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
   `sample_active`. Sites on `@probo/cookie-banner` 0.22.0 or older
   report no page loads until they upgrade, so hit rates stay
   incomplete
+- **Breaking**: dynamic client registration accepts only private
+  clients, and existing dynamically registered clients are updated to
+  match. CLI and CIMD clients are unchanged
 
 ### Removed
 
