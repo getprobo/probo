@@ -4,6 +4,8 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.271.0] - 2026-11-17
+
 ### Added
 
 - `cookie-banner view` prints page loads for each UTC day in the
