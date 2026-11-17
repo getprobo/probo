@@ -69,8 +69,12 @@ type columnarState struct {
 }
 
 type operationRowIndex struct {
-	parent      *operationRowIndex
-	rows        map[opset.OpID]int
+	parent *operationRowIndex
+	rows   map[opset.OpID]int
+	// decoded stands in for rows at the root of an index over a snapshot
+	// whose changes each fill their counter range: a row is then found by
+	// counter instead of through one map entry per operation.
+	decoded     *storage.OperationRowLookup
 	spliceStart int
 	spliceEnd   int
 	spliceDelta int
@@ -150,7 +154,6 @@ func newColumnarState(document *opset.Document) (*columnarState, error) {
 			changeRows:       make(map[opset.ChangeHash]int, len(document.Changes)),
 			heads:            document.Heads,
 			operations:       operations,
-			operationRows:    newOperationRowIndex(len(decoded.Operations)),
 			changeColumns:    document.ChangeColumns,
 			operationColumns: document.OperationColumns,
 			snapshot:         decoded.Snapshot,
@@ -162,18 +165,25 @@ func newColumnarState(document *opset.Document) (*columnarState, error) {
 			}
 		}
 
-		for i := range columns.operations {
-			identifier := columns.operations[i].ID
-			if _, exists := columns.operationRows.rows[identifier]; exists {
-				return nil, fmt.Errorf("duplicate snapshot operation ID %v", identifier)
-			}
-
-			columns.operationRows.rows[identifier] = i
-		}
-
 		if columns.decodedChanges != nil {
+			// The index was only built because no two operations share an
+			// identifier.
+			columns.operationRows = &operationRowIndex{
+				decoded: columns.decodedChanges.RowLookup(columns.changes),
+			}
 			columns.adoptDecodedDeletes()
 		} else {
+			columns.operationRows = newOperationRowIndex(len(columns.operations))
+
+			for i := range columns.operations {
+				identifier := columns.operations[i].ID
+				if _, exists := columns.operationRows.rows[identifier]; exists {
+					return nil, fmt.Errorf("duplicate snapshot operation ID %v", identifier)
+				}
+
+				columns.operationRows.rows[identifier] = i
+			}
+
 			columns.rebuildNonCanonicalOperations()
 		}
 

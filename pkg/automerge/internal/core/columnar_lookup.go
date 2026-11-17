@@ -31,6 +31,10 @@ func (i *operationRowIndex) lookup(identifier opset.OpID) (int, bool) {
 		return 0, false
 	}
 
+	if i.decoded != nil {
+		return i.decoded.Row(identifier)
+	}
+
 	if row, ok := i.rows[identifier]; ok {
 		return row, true
 	}

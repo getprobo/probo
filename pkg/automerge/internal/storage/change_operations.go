@@ -21,6 +21,7 @@
 package storage
 
 import (
+	"cmp"
 	"iter"
 	"math"
 	"slices"
@@ -53,6 +54,22 @@ type (
 	changeOperationSpan struct {
 		start uint32
 		count uint32
+	}
+
+	// OperationRowLookup finds the row of an operation in the snapshot an
+	// index was built from. It keeps the index's keys and not its rows, so
+	// holding it does not keep a decoded operation table alive.
+	OperationRowLookup struct {
+		keys   []uint64
+		ranges map[opset.ActorID][]operationCounterRange
+	}
+
+	// operationCounterRange is the counter range one change wrote and where
+	// its keys start.
+	operationCounterRange struct {
+		start uint64
+		end   uint64
+		first uint32
 	}
 
 	// actorNumbers numbers the actors of one document. Consecutive lookups
@@ -111,6 +128,70 @@ func (x *ChangeOperationIndex) ChangeDeletes(change int) iter.Seq[opset.Operatio
 			}
 		}
 	}
+}
+
+// RowLookup returns a lookup from operation identifier to row. Every change
+// fills its counter range, so an operation is found by its actor's range and
+// its offset in it, without one map entry per operation.
+func (x *ChangeOperationIndex) RowLookup(changes []opset.Change) *OperationRowLookup {
+	lookup := &OperationRowLookup{
+		keys:   x.keys,
+		ranges: make(map[opset.ActorID][]operationCounterRange),
+	}
+
+	for i := range changes {
+		span := x.spans[i]
+		if span.count == 0 {
+			continue
+		}
+
+		actor := changes[i].Actor
+		lookup.ranges[actor] = append(
+			lookup.ranges[actor],
+			operationCounterRange{
+				start: changes[i].StartOp,
+				end:   changes[i].MaxOp,
+				first: span.start,
+			},
+		)
+	}
+
+	for _, ranges := range lookup.ranges {
+		slices.SortFunc(
+			ranges,
+			func(left, right operationCounterRange) int {
+				return cmp.Compare(left.start, right.start)
+			},
+		)
+	}
+
+	return lookup
+}
+
+// Row returns the row of the operation with the given identifier. It reports
+// false for an identifier the snapshot holds no row for, which includes its
+// deletes.
+func (l *OperationRowLookup) Row(identifier opset.OpID) (int, bool) {
+	ranges := l.ranges[identifier.Actor]
+
+	position := sort.Search(
+		len(ranges),
+		func(i int) bool {
+			return ranges[i].end >= identifier.Counter
+		},
+	)
+	if position == len(ranges) || ranges[position].start > identifier.Counter {
+		return 0, false
+	}
+
+	found := ranges[position]
+
+	place := uint32(l.keys[uint64(found.first)+identifier.Counter-found.start])
+	if place&changeOperationDelete != 0 {
+		return 0, false
+	}
+
+	return int(place), true
 }
 
 // Len returns the number of operations the change at the given index wrote.

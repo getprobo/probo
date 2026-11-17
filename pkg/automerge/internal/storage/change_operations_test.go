@@ -441,6 +441,29 @@ func TestIndexChangeOperations_MatchesGeneralPath(t *testing.T) {
 
 			assert.Equal(t, wantDeletes, gotDeletes, "change %d", i)
 		}
+
+		lookup := index.RowLookup(gotChanges)
+
+		for row := range gotRows {
+			found, ok := lookup.Row(gotRows[row].ID)
+			require.True(t, ok, "row %d", row)
+			assert.Equal(t, row, found)
+		}
+
+		// A delete has no row, and neither has an identifier nobody wrote.
+		for _, operation := range index.Deletes() {
+			_, ok := lookup.Row(operation.ID)
+			assert.False(t, ok, "delete %v", operation.ID)
+		}
+
+		for _, identifier := range []opset.OpID{
+			{Actor: actors[0], Counter: 0},
+			{Actor: actors[0], Counter: 1 << 20},
+			{Actor: opset.MakeActorID("\x09stranger"), Counter: 1},
+		} {
+			_, ok := lookup.Row(identifier)
+			assert.False(t, ok, "identifier %v", identifier)
+		}
 	}
 }
 
