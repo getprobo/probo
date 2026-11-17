@@ -57,9 +57,9 @@ func TestOperationRowIndex_StaysBoundedAcrossCommits(t *testing.T) {
 		require.NoError(t, engine.SpliceText(text, 0, 0, "e"))
 		_, err = engine.Commit("typing", time.Time{})
 		require.NoError(t, err)
-	}
 
-	requireRowsMatchOperations(t, engine)
+		requireRowsMatchOperations(t, engine)
+	}
 }
 
 func TestOperationRowIndex_StaysBoundedAcrossApplies(t *testing.T) {
@@ -101,7 +101,7 @@ func TestOperationRowIndex_StaysBoundedAcrossApplies(t *testing.T) {
 
 	for _, change := range changes {
 		require.NoError(t, server.ApplyChanges([][]byte{change}))
-	}
 
-	requireRowsMatchOperations(t, server)
+		requireRowsMatchOperations(t, server)
+	}
 }
