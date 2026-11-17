@@ -22,16 +22,33 @@ import { tv } from "tailwind-variants/lite";
 
 export const documentDetailsPage = tv({
   slots: {
-    root: "flex flex-col gap-6",
-    body: "grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_280px]",
+    root: [
+      "grid grid-cols-1 items-start gap-6",
+      "lg:h-full lg:min-h-0 lg:items-stretch lg:overflow-hidden lg:grid-cols-[1fr_calc(280px+0.5rem)]",
+    ],
     main: "flex min-w-0 flex-col gap-6",
-    side: "flex min-w-0 flex-col gap-4",
+    side: "relative min-w-0 lg:min-h-0",
+    viewport: [
+      "w-full overscroll-y-contain outline-none lg:h-full",
+      "mask-no-repeat",
+      "mask-[linear-gradient(to_bottom,transparent,black_min(16px,var(--scroll-area-overflow-y-start)),black_calc(100%-min(16px,var(--scroll-area-overflow-y-end,16px))),transparent)]",
+    ],
+    cards: "flex w-full !min-w-0 flex-col gap-4 pr-2 [&>*]:shrink-0",
+    scrollbar: [
+      "flex w-1 flex-col items-center py-1",
+      "pointer-events-none opacity-0 transition-opacity",
+      "data-hovering:pointer-events-auto data-hovering:opacity-100",
+      "data-scrolling:pointer-events-auto data-scrolling:opacity-100 data-scrolling:duration-0",
+    ],
+    thumb: "w-1 rounded-full bg-sand-a8",
   },
 });
 
 export const documentProperties = tv({
   slots: {
     root: "flex w-full flex-col items-stretch gap-3",
+    field: "flex flex-col gap-1",
+    value: "px-1.5",
   },
 });
 

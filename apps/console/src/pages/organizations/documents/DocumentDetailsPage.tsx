@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { ScrollArea } from "@base-ui/react/scroll-area";
 import { CaretLeftIcon } from "@phosphor-icons/react";
 import { usePageTitle } from "@probo/hooks";
 import { Link } from "@probo/ui/src/v2/Link/Link";
@@ -80,7 +81,7 @@ export function DocumentDetailsPage({ queryRef }: DocumentDetailsPageProps) {
     documentDetailsPageFragment,
     documentKey,
   );
-  const { root, body, main, side } = documentDetailsPage();
+  const { root, main, side, viewport, cards, scrollbar, thumb } = documentDetailsPage();
   usePageTitle(document?.title ?? "");
 
   if (document == null || document.organization.id !== organizationId) {
@@ -89,30 +90,35 @@ export function DocumentDetailsPage({ queryRef }: DocumentDetailsPageProps) {
 
   return (
     <div className={root()}>
-      <Link
-        to={{
-          pathname: `/organizations/${organizationId}/governance/documents`,
-          search: location.search,
-        }}
-        size={2}
-        color="neutral"
-        underline={false}
-        iconStart={<CaretLeftIcon />}
-        className="self-start"
-      >
-        {t("details.back")}
-      </Link>
-      <div className={body()}>
-        <div className={main()}>
-          <DocumentTitleField documentKey={document} />
-        </div>
-        <div className={side()}>
-          <DocumentPropertiesSection documentKey={document} />
-          <DocumentApprovalsSection documentKey={document} />
-          <DocumentSignatoriesSection documentKey={document} />
-          <DocumentControlsSection documentKey={document} />
-        </div>
+      <div className={main()}>
+        <Link
+          to={{
+            pathname: `/organizations/${organizationId}/governance/documents`,
+            search: location.search,
+          }}
+          size={2}
+          color="neutral"
+          underline={false}
+          iconStart={<CaretLeftIcon />}
+          className="self-start"
+        >
+          {t("details.back")}
+        </Link>
+        <DocumentTitleField documentKey={document} />
       </div>
+      <ScrollArea.Root className={side()}>
+        <ScrollArea.Viewport className={viewport()}>
+          <ScrollArea.Content className={cards()}>
+            <DocumentPropertiesSection documentKey={document} />
+            <DocumentApprovalsSection documentKey={document} />
+            <DocumentSignatoriesSection documentKey={document} />
+            <DocumentControlsSection documentKey={document} />
+          </ScrollArea.Content>
+        </ScrollArea.Viewport>
+        <ScrollArea.Scrollbar className={scrollbar()} orientation="vertical">
+          <ScrollArea.Thumb className={thumb()} />
+        </ScrollArea.Scrollbar>
+      </ScrollArea.Root>
     </div>
   );
 }
