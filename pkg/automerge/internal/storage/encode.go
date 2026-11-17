@@ -24,7 +24,9 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
+	"iter"
 	"math"
+	"slices"
 	"sort"
 	"unicode/utf8"
 
@@ -36,7 +38,19 @@ type encodedColumn struct {
 	data          []byte
 }
 
+// EncodeChange encodes a change chunk from the operations the change holds,
+// and records the resulting hash and bytes on the change.
 func EncodeChange(change *opset.Change) ([]byte, error) {
+	return encodeChange(change, slices.All(change.Operations))
+}
+
+// encodeChange encodes a change chunk whose operations come from a sequence,
+// which is read twice. It lets a caller that stores operations elsewhere
+// encode a change without first assembling them into one slice.
+func encodeChange(
+	change *opset.Change,
+	operations iter.Seq2[int, opset.Operation],
+) ([]byte, error) {
 	if change.Actor.Len() == 0 {
 		return nil, fmt.Errorf("change actor cannot be empty")
 	}
@@ -45,12 +59,12 @@ func EncodeChange(change *opset.Change) ([]byte, error) {
 		return nil, fmt.Errorf("change sequence and start operation must be positive")
 	}
 
-	actors, actorIndexes, err := changeActorTable(change)
+	actors, actorIndexes, err := changeActorTable(change, operations)
 	if err != nil {
 		return nil, err
 	}
 
-	columns, err := encodeOperationColumns(change, actorIndexes)
+	columns, err := encodeOperationColumns(operations, actorIndexes)
 	if err != nil {
 		return nil, err
 	}
@@ -90,15 +104,26 @@ func EncodeChange(change *opset.Change) ([]byte, error) {
 
 func changeActorTable(
 	change *opset.Change,
+	operations iter.Seq2[int, opset.Operation],
 ) ([]opset.ActorID, map[opset.ActorID]uint64, error) {
 	actorSet := make(map[opset.ActorID]struct{})
+
+	// Nearly every reference names the actor the previous one did, so the
+	// set is only consulted when the actor changes.
+	previous := change.Actor
 	add := func(actor opset.ActorID) {
+		if actor == previous {
+			return
+		}
+
+		previous = actor
+
 		if !actor.IsZero() && actor != change.Actor {
 			actorSet[actor] = struct{}{}
 		}
 	}
 
-	for i, operation := range change.Operations {
+	for i, operation := range operations {
 		expectedID := opset.OpID{
 			Actor:   change.Actor,
 			Counter: change.StartOp + uint64(i),
@@ -145,113 +170,165 @@ func changeActorTable(
 	return actors, indexes, nil
 }
 
-func encodeOperationColumns(
-	change *opset.Change,
+// changeColumnWriter encodes the operation columns of a change chunk. Each
+// column is written as its operations arrive, so encoding costs the encoded
+// size and not one table entry per operation and column.
+type changeColumnWriter struct {
+	actorIndexes map[opset.ActorID]uint64
+
+	// Consecutive references nearly always name the same actor, so its index
+	// is remembered instead of looked up again.
+	cachedActor opset.ActorID
+	cachedIndex uint64
+	cached      bool
+
+	objActors     rleWriter[uint64]
+	objCounters   rleWriter[uint64]
+	keyActors     rleWriter[uint64]
+	keyCounters   deltaWriter
+	keyStrings    rleWriter[string]
+	inserts       booleanWriter
+	actions       rleWriter[uint64]
+	valueMetadata rleWriter[uint64]
+	valueData     []byte
+	predGroups    rleWriter[uint64]
+	predActors    rleWriter[uint64]
+	predCounters  deltaWriter
+	markExpands   booleanWriter
+	markNames     rleWriter[string]
+	hasMarkExpand bool
+}
+
+func newChangeColumnWriter(
 	actorIndexes map[opset.ActorID]uint64,
-) ([]encodedColumn, error) {
-	count := len(change.Operations)
-	objActors := make([]optional[uint64], count)
-	objCounters := make([]optional[uint64], count)
-	keyActors := make([]optional[uint64], count)
-	keyCounters := make([]optional[int64], count)
-	keyStrings := make([]optional[string], count)
-	inserts := make([]bool, count)
-	actions := make([]optional[uint64], count)
-	valueMetadata := make([]optional[uint64], count)
-	predGroups := make([]optional[uint64], count)
-	markExpands := make([]bool, count)
-	markNames := make([]optional[string], count)
+) *changeColumnWriter {
+	return &changeColumnWriter{
+		actorIndexes:  actorIndexes,
+		objActors:     newRLEWriter(appendULEB),
+		objCounters:   newRLEWriter(appendULEB),
+		keyActors:     newRLEWriter(appendULEB),
+		keyCounters:   newDeltaWriter(),
+		keyStrings:    newStringWriter(),
+		actions:       newRLEWriter(appendULEB),
+		valueMetadata: newRLEWriter(appendULEB),
+		predGroups:    newRLEWriter(appendULEB),
+		predActors:    newRLEWriter(appendULEB),
+		predCounters:  newDeltaWriter(),
+		markNames:     newStringWriter(),
+	}
+}
 
-	var (
-		valueData     []byte
-		predActors    []optional[uint64]
-		predCounters  []optional[int64]
-		hasMarkExpand bool
-	)
-
-	for i, operation := range change.Operations {
-		if !operation.Object.IsRoot {
-			actorIndex, ok := actorIndexes[operation.Object.OpID.Actor]
-			if !ok {
-				return nil, fmt.Errorf("operation %d object actor is unknown", i)
-			}
-
-			objActors[i] = some(actorIndex)
-			objCounters[i] = some(operation.Object.OpID.Counter)
-		}
-
-		switch {
-		case operation.Key.Property != nil:
-			keyStrings[i] = some(*operation.Key.Property)
-		case operation.Key.IsHead:
-			keyCounters[i] = some(int64(0))
-		case operation.Key.Element != nil:
-			actorIndex, ok := actorIndexes[operation.Key.Element.Actor]
-			if !ok {
-				return nil, fmt.Errorf("operation %d key actor is unknown", i)
-			}
-
-			keyActors[i] = some(actorIndex)
-			keyCounters[i] = some(int64(operation.Key.Element.Counter))
-		default:
-			return nil, fmt.Errorf("operation %d has no key", i)
-		}
-
-		inserts[i] = operation.Insert
-		actions[i] = some(uint64(operation.Action))
-
-		meta, data, err := encodeScalar(operation.Value)
-		if err != nil {
-			return nil, fmt.Errorf("cannot encode operation %d value: %w", i, err)
-		}
-
-		valueMetadata[i] = meta
-
-		valueData = append(valueData, data...)
-
-		predGroups[i] = some(uint64(len(operation.Predecessors)))
-		for _, predecessor := range operation.Predecessors {
-			actorIndex, ok := actorIndexes[predecessor.Actor]
-			if !ok {
-				return nil, fmt.Errorf("operation %d predecessor actor is unknown", i)
-			}
-
-			predActors = append(predActors, some(actorIndex))
-			predCounters = append(predCounters, some(int64(predecessor.Counter)))
-		}
-
-		// An all-false expand column carries no information and is left out, so a
-		// mark that expands in neither direction encodes without one.
-		if operation.MarkExpand != nil && *operation.MarkExpand {
-			markExpands[i] = true
-			hasMarkExpand = true
-		}
-
-		if operation.MarkName != nil {
-			markNames[i] = some(*operation.MarkName)
-		}
+func (w *changeColumnWriter) actorIndex(actor opset.ActorID) (uint64, bool) {
+	if w.cached && actor == w.cachedActor {
+		return w.cachedIndex, true
 	}
 
+	index, ok := w.actorIndexes[actor]
+	if ok {
+		w.cachedActor, w.cachedIndex, w.cached = actor, index, true
+	}
+
+	return index, ok
+}
+
+// append writes the operation at position i of the change.
+func (w *changeColumnWriter) append(i int, operation *opset.Operation) error {
+	if operation.Object.IsRoot {
+		w.objActors.appendNull()
+		w.objCounters.appendNull()
+	} else {
+		index, ok := w.actorIndex(operation.Object.OpID.Actor)
+		if !ok {
+			return fmt.Errorf("operation %d object actor is unknown", i)
+		}
+
+		w.objActors.append(index)
+		w.objCounters.append(operation.Object.OpID.Counter)
+	}
+
+	switch {
+	case operation.Key.Property != nil:
+		w.keyActors.appendNull()
+		w.keyCounters.appendNull()
+		w.keyStrings.append(*operation.Key.Property)
+	case operation.Key.IsHead:
+		w.keyActors.appendNull()
+		w.keyCounters.append(0)
+		w.keyStrings.appendNull()
+	case operation.Key.Element != nil:
+		index, ok := w.actorIndex(operation.Key.Element.Actor)
+		if !ok {
+			return fmt.Errorf("operation %d key actor is unknown", i)
+		}
+
+		w.keyActors.append(index)
+		w.keyCounters.append(int64(operation.Key.Element.Counter))
+		w.keyStrings.appendNull()
+	default:
+		return fmt.Errorf("operation %d has no key", i)
+	}
+
+	w.inserts.append(operation.Insert)
+	w.actions.append(uint64(operation.Action))
+
+	valueData, meta, err := appendScalar(w.valueData, operation.Value)
+	if err != nil {
+		return fmt.Errorf("cannot encode operation %d value: %w", i, err)
+	}
+
+	w.valueData = valueData
+	w.valueMetadata.appendOptional(meta)
+
+	w.predGroups.append(uint64(len(operation.Predecessors)))
+
+	for _, predecessor := range operation.Predecessors {
+		index, ok := w.actorIndex(predecessor.Actor)
+		if !ok {
+			return fmt.Errorf("operation %d predecessor actor is unknown", i)
+		}
+
+		w.predActors.append(index)
+		w.predCounters.append(int64(predecessor.Counter))
+	}
+
+	// An all-false expand column carries no information and is left out, so a
+	// mark that expands in neither direction encodes without one.
+	expands := operation.MarkExpand != nil && *operation.MarkExpand
+	w.hasMarkExpand = w.hasMarkExpand || expands
+	w.markExpands.append(expands)
+
+	if operation.MarkName != nil {
+		w.markNames.append(*operation.MarkName)
+	} else {
+		w.markNames.appendNull()
+	}
+
+	return nil
+}
+
+// columns returns the non-empty encoded columns. The writer must not be used
+// afterwards.
+func (w *changeColumnWriter) columns() []encodedColumn {
 	var markExpandData []byte
-	if hasMarkExpand {
-		markExpandData = encodeBooleans(markExpands)
+	if w.hasMarkExpand {
+		markExpandData = w.markExpands.finish()
 	}
 
 	columns := []encodedColumn{
-		{specification: 1, data: encodeRLE(objActors, appendULEB)},
-		{specification: 2, data: encodeRLE(objCounters, appendULEB)},
-		{specification: 17, data: encodeRLE(keyActors, appendULEB)},
-		{specification: 19, data: encodeDelta(keyCounters)},
-		{specification: 21, data: encodeStrings(keyStrings)},
-		{specification: 52, data: encodeBooleans(inserts)},
-		{specification: 66, data: encodeRLE(actions, appendULEB)},
-		{specification: 86, data: encodeRLE(valueMetadata, appendULEB)},
-		{specification: 87, data: valueData},
-		{specification: 112, data: encodeRLE(predGroups, appendULEB)},
-		{specification: 113, data: encodeRLE(predActors, appendULEB)},
-		{specification: 115, data: encodeDelta(predCounters)},
+		{specification: 1, data: w.objActors.finish()},
+		{specification: 2, data: w.objCounters.finish()},
+		{specification: 17, data: w.keyActors.finish()},
+		{specification: 19, data: w.keyCounters.finish()},
+		{specification: 21, data: w.keyStrings.finish()},
+		{specification: 52, data: w.inserts.finish()},
+		{specification: 66, data: w.actions.finish()},
+		{specification: 86, data: w.valueMetadata.finish()},
+		{specification: 87, data: w.valueData},
+		{specification: 112, data: w.predGroups.finish()},
+		{specification: 113, data: w.predActors.finish()},
+		{specification: 115, data: w.predCounters.finish()},
 		{specification: 148, data: markExpandData},
-		{specification: 165, data: encodeStrings(markNames)},
+		{specification: 165, data: w.markNames.finish()},
 	}
 
 	filtered := columns[:0]
@@ -261,23 +338,49 @@ func encodeOperationColumns(
 		}
 	}
 
-	return filtered, nil
+	return filtered
+}
+
+func encodeOperationColumns(
+	operations iter.Seq2[int, opset.Operation],
+	actorIndexes map[opset.ActorID]uint64,
+) ([]encodedColumn, error) {
+	writer := newChangeColumnWriter(actorIndexes)
+
+	for i, operation := range operations {
+		if err := writer.append(i, &operation); err != nil {
+			return nil, err
+		}
+	}
+
+	return writer.columns(), nil
 }
 
 func encodeScalar(value *opset.Scalar) (optional[uint64], []byte, error) {
+	data, meta, err := appendScalar(nil, value)
+
+	return meta, data, err
+}
+
+// appendScalar appends a value's payload to data and returns its metadata,
+// which packs the payload length with the scalar type.
+func appendScalar(
+	data []byte,
+	value *opset.Scalar,
+) ([]byte, optional[uint64], error) {
 	if value == nil {
-		return some(uint64(opset.ScalarNull)), nil, nil
+		return data, some(uint64(opset.ScalarNull)), nil
 	}
 
 	if value.Type > 0x0f {
-		return optional[uint64]{}, nil, fmt.Errorf("scalar type %d exceeds 0x0f", value.Type)
+		return data, optional[uint64]{}, fmt.Errorf("scalar type %d exceeds 0x0f", value.Type)
 	}
 
 	if value.Type == opset.ScalarString && !utf8.ValidString(value.String) {
-		return optional[uint64]{}, nil, fmt.Errorf("string scalar is not valid UTF-8")
+		return data, optional[uint64]{}, fmt.Errorf("string scalar is not valid UTF-8")
 	}
 
-	var data []byte
+	start := len(data)
 
 	switch value.Type {
 	case opset.ScalarNull:
@@ -287,20 +390,18 @@ func encodeScalar(value *opset.Scalar) (optional[uint64], []byte, error) {
 	case opset.ScalarInt, opset.ScalarCounter, opset.ScalarTimestamp:
 		data = appendLEB(data, value.Int)
 	case opset.ScalarFloat64:
-		var encoded [8]byte
-		binary.LittleEndian.PutUint64(encoded[:], math.Float64bits(value.Float))
-		data = encoded[:]
+		data = binary.LittleEndian.AppendUint64(data, math.Float64bits(value.Float))
 	case opset.ScalarString:
-		data = []byte(value.String)
+		data = append(data, value.String...)
 	case opset.ScalarBytes:
-		data = append([]byte(nil), value.Bytes...)
+		data = append(data, value.Bytes...)
 	default:
-		data = append([]byte(nil), value.Raw...)
+		data = append(data, value.Raw...)
 	}
 
-	meta := uint64(len(data))<<4 | uint64(value.Type)
+	meta := uint64(len(data)-start)<<4 | uint64(value.Type)
 
-	return some(meta), data, nil
+	return data, some(meta), nil
 }
 
 func appendColumns(data []byte, columns []encodedColumn) []byte {
