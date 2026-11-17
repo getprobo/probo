@@ -26,6 +26,7 @@ import (
 	"time"
 
 	"go.gearno.de/kit/pg"
+	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
@@ -149,6 +150,17 @@ func (s *RightsRequestService) Create(
 				return fmt.Errorf("cannot insert rights request: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				request.ID,
+				request.OrganizationID,
+				ref.UnrefOrZero(request.DataSubject),
+				request.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			if err := webhook.InsertData(
 				ctx,
 				conn,
@@ -223,6 +235,17 @@ func (s *RightsRequestService) Update(
 				return fmt.Errorf("cannot update rights request: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				request.ID,
+				request.OrganizationID,
+				ref.UnrefOrZero(request.DataSubject),
+				request.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			if err := webhook.InsertUpdateData(
 				ctx,
 				conn,
@@ -266,6 +289,10 @@ func (s *RightsRequestService) Delete(
 				webhooktypes.NewRightsRequest(request),
 			); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
+			}
+
+			if err := coredata.DeleteSearchResource(ctx, conn, request.ID); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
 			}
 
 			if err := request.Delete(ctx, conn, scope); err != nil {

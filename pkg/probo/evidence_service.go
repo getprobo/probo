@@ -149,6 +149,17 @@ func (s EvidenceService) UploadInternalControlEvidence(
 				return fmt.Errorf("cannot insert evidence: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				evidence.ID,
+				evidence.OrganizationID,
+				evidence.ReferenceID,
+				evidence.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -288,6 +299,10 @@ func (s *EvidenceService) Delete(
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			if err := coredata.DeleteSearchResource(ctx, tx, evidence.ID); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			err := evidence.Delete(ctx, tx, scope)
 			if err != nil {
 				return fmt.Errorf("cannot delete evidence: %w", err)

@@ -309,3 +309,36 @@ WHERE
 
 	return err
 }
+
+func (ts *RiskAnalysisThreats) LoadIDsByProcessID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	processID gid.GID,
+) ([]gid.GID, error) {
+	q := `
+SELECT
+	id
+FROM
+	risk_analysis_threats
+WHERE
+	%s
+	AND process_id = @process_id
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"process_id": processID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query risk threat ids: %w", err)
+	}
+
+	ids, err := pgx.CollectRows(rows, pgx.RowTo[gid.GID])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect risk threat ids: %w", err)
+	}
+
+	return ids, nil
+}

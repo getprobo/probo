@@ -711,7 +711,10 @@ func (v ThirdParty) Delete(
 	scope Scoper,
 ) error {
 	q := `
-DELETE FROM third_parties WHERE %s AND id = @third_party_id
+DELETE FROM third_parties
+WHERE
+	%s
+	AND id = @third_party_id
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -722,6 +725,39 @@ DELETE FROM third_parties WHERE %s AND id = @third_party_id
 	_, err := conn.Exec(ctx, q, args)
 
 	return err
+}
+
+func (v *ThirdParties) LoadIDsByParentThirdPartyID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	parentThirdPartyID gid.GID,
+) ([]gid.GID, error) {
+	q := `
+SELECT
+	id
+FROM
+	third_parties
+WHERE
+	%s
+	AND parent_third_party_id = @parent_third_party_id
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"parent_third_party_id": parentThirdPartyID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query child third party ids: %w", err)
+	}
+
+	ids, err := pgx.CollectRows(rows, pgx.RowTo[gid.GID])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect child third party ids: %w", err)
+	}
+
+	return ids, nil
 }
 
 // CountByCompliancePortalID counts the third parties published on the given

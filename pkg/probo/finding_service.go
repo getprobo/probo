@@ -199,6 +199,17 @@ func (s *FindingService) Create(
 				return fmt.Errorf("cannot insert finding: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				finding.ID,
+				finding.OrganizationID,
+				finding.ReferenceID,
+				finding.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -296,6 +307,17 @@ func (s *FindingService) Update(
 				return fmt.Errorf("cannot update finding: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				finding.ID,
+				finding.OrganizationID,
+				finding.ReferenceID,
+				finding.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -315,6 +337,10 @@ func (s FindingService) Delete(
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			if err := coredata.DeleteSearchResource(ctx, tx, finding.ID); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			err := finding.Delete(ctx, tx, scope)
 			if err != nil {
 				return fmt.Errorf("cannot delete finding: %w", err)

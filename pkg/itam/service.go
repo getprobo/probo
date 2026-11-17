@@ -233,6 +233,17 @@ func (s *Service) CreateDevice(
 				return fmt.Errorf("cannot insert device: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				device.ID,
+				device.OrganizationID,
+				device.SearchTitle(),
+				device.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			if err := token.Insert(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot insert device enrollment token: %w", err)
 			}
@@ -304,6 +315,17 @@ func (s *Service) EnrollDevice(
 
 			if err := device.Insert(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot insert device: %w", err)
+			}
+
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				device.ID,
+				device.OrganizationID,
+				device.SearchTitle(),
+				device.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
 			}
 
 			if err := token.Insert(ctx, conn, scope); err != nil {
@@ -710,6 +732,10 @@ func (s *Service) DeleteDevices(
 					return fmt.Errorf("cannot soft delete device: %w", err)
 				}
 
+				if err := coredata.DeleteSearchResource(ctx, conn, device.ID); err != nil {
+					return fmt.Errorf("cannot delete search resource: %w", err)
+				}
+
 				var token coredata.DeviceEnrollmentToken
 				if err := token.DeleteByDeviceID(ctx, conn, scope, device.ID); err != nil {
 					return fmt.Errorf("cannot delete device enrollment tokens: %w", err)
@@ -1075,6 +1101,17 @@ func (s *Service) RecordHeartbeat(
 				return ErrDeviceRevoked
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				device.ID,
+				device.OrganizationID,
+				device.SearchTitle(),
+				device.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -1113,6 +1150,10 @@ func (s *Service) discardPendingHardwareConflict(
 				}
 
 				return fmt.Errorf("cannot discard conflicting device: %w", err)
+			}
+
+			if err := coredata.DeleteSearchResource(ctx, conn, device.ID); err != nil {
+				return fmt.Errorf("cannot delete search resource: %w", err)
 			}
 
 			return nil

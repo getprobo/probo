@@ -813,7 +813,10 @@ func (r *Risk) Delete(
 	riskID gid.GID,
 ) error {
 	q := `
-DELETE FROM risks WHERE %s AND id = @id
+DELETE FROM risks
+WHERE
+	%s
+	AND id = @id
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 

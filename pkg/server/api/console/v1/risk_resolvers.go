@@ -257,6 +257,11 @@ func (r *mutationResolver) PublishRiskList(ctx context.Context, input types.Publ
 	}, nil
 }
 
+// Tags is the resolver for the tags field.
+func (r *riskResolver) Tags(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TagOrderBy) (*types.TagConnection, error) {
+	return r.tagsForResourceID(ctx, obj.ID, first, after, last, before, orderBy)
+}
+
 // Owner is the resolver for the owner field.
 func (r *riskResolver) Owner(ctx context.Context, obj *types.Risk) (*types.Profile, error) {
 	if obj.Owner == nil {

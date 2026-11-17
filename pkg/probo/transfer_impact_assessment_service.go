@@ -211,6 +211,17 @@ func (s *TransferImpactAssessmentService) Create(
 				return fmt.Errorf("cannot insert transfer impact assessment: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				tia.ID,
+				tia.OrganizationID,
+				processingActivity.Name,
+				tia.SearchText(processingActivity.Name),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -264,6 +275,22 @@ func (s *TransferImpactAssessmentService) Update(
 				return fmt.Errorf("cannot update transfer impact assessment: %w", err)
 			}
 
+			processingActivity := &coredata.ProcessingActivity{}
+			if err := processingActivity.LoadByID(ctx, conn, scope, tia.ProcessingActivityID); err != nil {
+				return fmt.Errorf("cannot load processing activity: %w", err)
+			}
+
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				tia.ID,
+				tia.OrganizationID,
+				processingActivity.Name,
+				tia.SearchText(processingActivity.Name),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -284,6 +311,10 @@ func (s *TransferImpactAssessmentService) Delete(
 			tia := &coredata.TransferImpactAssessment{}
 			if err := tia.LoadByID(ctx, conn, scope, tiaID); err != nil {
 				return fmt.Errorf("cannot load transfer impact assessment: %w", err)
+			}
+
+			if err := coredata.DeleteSearchResource(ctx, conn, tia.ID); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
 			}
 
 			if err := tia.Delete(ctx, conn, scope); err != nil {

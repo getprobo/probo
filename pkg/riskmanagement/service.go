@@ -508,6 +508,17 @@ func (s *Service) Create(ctx context.Context, scope coredata.Scoper, req CreateR
 				return fmt.Errorf("cannot insert risk assessment: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				tx,
+				ra.ID,
+				ra.OrganizationID,
+				ra.Name,
+				ra.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -590,6 +601,17 @@ func (s *Service) Update(ctx context.Context, scope coredata.Scoper, req UpdateR
 				return fmt.Errorf("cannot update risk assessment: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				tx,
+				ra.ID,
+				ra.OrganizationID,
+				ra.Name,
+				ra.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -604,6 +626,10 @@ func (s *Service) Delete(ctx context.Context, scope coredata.Scoper, id gid.GID)
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			if err := clearRiskAnalysisSearch(ctx, tx, scope, id); err != nil {
+				return err
+			}
+
 			ra := &coredata.RiskAnalysis{}
 			if err := ra.Delete(ctx, tx, scope, id); err != nil {
 				return fmt.Errorf("cannot delete risk assessment: %w", err)
@@ -693,6 +719,17 @@ func (s *Service) CreateDiagram(ctx context.Context, scope coredata.Scoper, req 
 				return fmt.Errorf("cannot insert risk analysis diagram: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				tx,
+				raDiagram.ID,
+				raDiagram.OrganizationID,
+				raDiagram.Name,
+				raDiagram.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -746,6 +783,17 @@ func (s *Service) UpdateDiagram(ctx context.Context, scope coredata.Scoper, req 
 				return fmt.Errorf("cannot update risk analysis diagram: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				tx,
+				raDiagram.ID,
+				raDiagram.OrganizationID,
+				raDiagram.Name,
+				raDiagram.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -760,6 +808,10 @@ func (s *Service) DeleteDiagram(ctx context.Context, scope coredata.Scoper, id g
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			if err := clearRiskAnalysisDiagramSearch(ctx, tx, scope, id); err != nil {
+				return err
+			}
+
 			raDiagram := &coredata.RiskAnalysisDiagram{}
 			if err := raDiagram.Delete(ctx, tx, scope, id); err != nil {
 				return fmt.Errorf("cannot delete risk analysis diagram: %w", err)
@@ -1026,6 +1078,17 @@ func (s *Service) CreateBoundary(ctx context.Context, scope coredata.Scoper, req
 				return fmt.Errorf("cannot insert risk assessment boundary: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				tx,
+				boundary.ID,
+				boundary.OrganizationID,
+				boundary.Name,
+				boundary.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -1093,6 +1156,17 @@ func (s *Service) UpdateBoundary(ctx context.Context, scope coredata.Scoper, req
 				return fmt.Errorf("cannot update risk assessment boundary: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				tx,
+				boundary.ID,
+				boundary.OrganizationID,
+				boundary.Name,
+				boundary.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -1107,6 +1181,10 @@ func (s *Service) DeleteBoundary(ctx context.Context, scope coredata.Scoper, id 
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			if err := coredata.DeleteSearchResource(ctx, tx, id); err != nil {
+				return fmt.Errorf("cannot delete search resource: %w", err)
+			}
+
 			boundary := &coredata.RiskAnalysisBoundary{}
 			if err := boundary.Delete(ctx, tx, scope, id); err != nil {
 				return fmt.Errorf("cannot delete risk assessment boundary: %w", err)
@@ -1203,6 +1281,17 @@ func (s *Service) CreateProcess(ctx context.Context, scope coredata.Scoper, req 
 				return fmt.Errorf("cannot insert risk assessment process: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				tx,
+				process.ID,
+				process.OrganizationID,
+				process.Name,
+				process.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -1272,6 +1361,17 @@ func (s *Service) UpdateProcess(ctx context.Context, scope coredata.Scoper, req 
 				return fmt.Errorf("cannot update risk assessment process: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				tx,
+				process.ID,
+				process.OrganizationID,
+				process.Name,
+				process.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -1286,6 +1386,10 @@ func (s *Service) DeleteProcess(ctx context.Context, scope coredata.Scoper, id g
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			if err := clearRiskAnalysisProcessSearch(ctx, tx, scope, id); err != nil {
+				return err
+			}
+
 			process := &coredata.RiskAnalysisProcess{}
 			if err := process.Delete(ctx, tx, scope, id); err != nil {
 				return fmt.Errorf("cannot delete risk assessment process: %w", err)
@@ -1378,6 +1482,17 @@ func (s *Service) CreateThreat(ctx context.Context, scope coredata.Scoper, req C
 				return fmt.Errorf("cannot insert risk threat: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				tx,
+				threat.ID,
+				threat.OrganizationID,
+				threat.Name,
+				threat.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -1443,6 +1558,17 @@ func (s *Service) UpdateThreat(ctx context.Context, scope coredata.Scoper, req U
 				return fmt.Errorf("cannot update risk threat: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				tx,
+				threat.ID,
+				threat.OrganizationID,
+				threat.Name,
+				threat.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -1457,6 +1583,10 @@ func (s *Service) DeleteThreat(ctx context.Context, scope coredata.Scoper, id gi
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			if err := coredata.DeleteSearchResource(ctx, tx, id); err != nil {
+				return fmt.Errorf("cannot delete search resource: %w", err)
+			}
+
 			threat := &coredata.RiskAnalysisThreat{}
 			if err := threat.Delete(ctx, tx, scope, id); err != nil {
 				return fmt.Errorf("cannot delete risk threat: %w", err)
@@ -1543,6 +1673,17 @@ func (s *Service) CreateScenario(ctx context.Context, scope coredata.Scoper, req
 				return fmt.Errorf("cannot insert risk scenario: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				tx,
+				scenario.ID,
+				scenario.OrganizationID,
+				scenario.Name,
+				scenario.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -1600,6 +1741,17 @@ func (s *Service) UpdateScenario(ctx context.Context, scope coredata.Scoper, req
 				return fmt.Errorf("cannot update risk scenario: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				tx,
+				scenario.ID,
+				scenario.OrganizationID,
+				scenario.Name,
+				scenario.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -1614,6 +1766,10 @@ func (s *Service) DeleteScenario(ctx context.Context, scope coredata.Scoper, id 
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			if err := coredata.DeleteSearchResource(ctx, tx, id); err != nil {
+				return fmt.Errorf("cannot delete search resource: %w", err)
+			}
+
 			scenario := &coredata.RiskAnalysisScenario{}
 			if err := scenario.Delete(ctx, tx, scope, id); err != nil {
 				return fmt.Errorf("cannot delete risk scenario: %w", err)
@@ -2291,6 +2447,129 @@ func (s *Service) assertProcessInDiagram(
 			Code:    validator.ErrorCodeCustom,
 			Message: "process does not belong to this diagram",
 		}}
+	}
+
+	return nil
+}
+
+func deleteSearchResources(
+	ctx context.Context,
+	conn pg.Querier,
+	ids []gid.GID,
+) error {
+	for _, id := range ids {
+		if err := coredata.DeleteSearchResource(ctx, conn, id); err != nil {
+			return fmt.Errorf("cannot delete search resource: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func clearRiskAnalysisProcessSearch(
+	ctx context.Context,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	processID gid.GID,
+) error {
+	var threats coredata.RiskAnalysisThreats
+
+	threatIDs, err := threats.LoadIDsByProcessID(ctx, conn, scope, processID)
+	if err != nil {
+		return fmt.Errorf("cannot list risk assessment process threats: %w", err)
+	}
+
+	if err := deleteSearchResources(ctx, conn, threatIDs); err != nil {
+		return err
+	}
+
+	if err := coredata.DeleteSearchResource(ctx, conn, processID); err != nil {
+		return fmt.Errorf("cannot delete search resource: %w", err)
+	}
+
+	return nil
+}
+
+func clearRiskAnalysisDiagramSearch(
+	ctx context.Context,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	diagramID gid.GID,
+) error {
+	var boundaries coredata.RiskAnalysisBoundaries
+
+	boundaryIDs, err := boundaries.LoadIDsByRiskAnalysisDiagramID(ctx, conn, scope, diagramID)
+	if err != nil {
+		return fmt.Errorf("cannot list risk analysis diagram boundaries: %w", err)
+	}
+
+	if err := deleteSearchResources(ctx, conn, boundaryIDs); err != nil {
+		return err
+	}
+
+	var processes coredata.RiskAnalysisProcesses
+
+	processIDs, err := processes.LoadIDsByRiskAnalysisDiagramID(ctx, conn, scope, diagramID)
+	if err != nil {
+		return fmt.Errorf("cannot list risk analysis diagram processes: %w", err)
+	}
+
+	for _, processID := range processIDs {
+		if err := clearRiskAnalysisProcessSearch(ctx, conn, scope, processID); err != nil {
+			return err
+		}
+	}
+
+	var scenarios coredata.RiskAnalysisScenarios
+
+	scenarioIDs, err := scenarios.LoadIDsByRiskAnalysisDiagramID(ctx, conn, scope, diagramID)
+	if err != nil {
+		return fmt.Errorf("cannot list risk analysis diagram scenarios: %w", err)
+	}
+
+	if err := deleteSearchResources(ctx, conn, scenarioIDs); err != nil {
+		return err
+	}
+
+	if err := coredata.DeleteSearchResource(ctx, conn, diagramID); err != nil {
+		return fmt.Errorf("cannot delete search resource: %w", err)
+	}
+
+	return nil
+}
+
+func clearRiskAnalysisSearch(
+	ctx context.Context,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	riskAnalysisID gid.GID,
+) error {
+	var diagrams coredata.RiskAnalysisDiagrams
+
+	diagramIDs, err := diagrams.LoadIDsByRiskAnalysisID(ctx, conn, scope, riskAnalysisID)
+	if err != nil {
+		return fmt.Errorf("cannot list risk analysis diagrams: %w", err)
+	}
+
+	for _, diagramID := range diagramIDs {
+		if err := clearRiskAnalysisDiagramSearch(ctx, conn, scope, diagramID); err != nil {
+			return err
+		}
+	}
+
+	var plans coredata.TreatmentPlans
+
+	planIDs, err := plans.LoadIDsByRiskAnalysisID(ctx, conn, scope, riskAnalysisID)
+	if err != nil {
+		return fmt.Errorf("cannot list risk analysis treatment plans: %w", err)
+	}
+
+	if err := deleteSearchResources(ctx, conn, planIDs); err != nil {
+		return err
+	}
+
+	if err := coredata.DeleteSearchResource(ctx, conn, riskAnalysisID); err != nil {
+		return fmt.Errorf("cannot delete search resource: %w", err)
 	}
 
 	return nil

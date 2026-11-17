@@ -465,6 +465,17 @@ func (s FrameworkService) Create(
 			return fmt.Errorf("cannot insert framework: %w", err)
 		}
 
+		if err := coredata.UpsertSearchResource(
+			ctx,
+			conn,
+			framework.ID,
+			framework.OrganizationID,
+			framework.Name,
+			framework.SearchText(),
+		); err != nil {
+			return fmt.Errorf("cannot sync search: %w", err)
+		}
+
 		return nil
 	})
 	if err != nil {
@@ -598,7 +609,22 @@ func (s FrameworkService) Update(
 			framework.Description = *req.Description
 		}
 
-		return framework.Update(ctx, conn, scope)
+		if err := framework.Update(ctx, conn, scope); err != nil {
+			return err
+		}
+
+		if err := coredata.UpsertSearchResource(
+			ctx,
+			conn,
+			framework.ID,
+			framework.OrganizationID,
+			framework.Name,
+			framework.SearchText(),
+		); err != nil {
+			return fmt.Errorf("cannot sync search: %w", err)
+		}
+
+		return nil
 	})
 	if err != nil {
 		return nil, err
@@ -614,6 +640,10 @@ func (s FrameworkService) Delete(
 	framework := &coredata.Framework{}
 
 	return s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		if err := coredata.DeleteSearchResource(ctx, tx, frameworkID); err != nil {
+			return fmt.Errorf("cannot sync search: %w", err)
+		}
+
 		return framework.Delete(ctx, tx, scope, frameworkID)
 	})
 }
@@ -698,6 +728,17 @@ func (s FrameworkService) Import(
 			return fmt.Errorf("cannot insert framework: %w", err)
 		}
 
+		if err := coredata.UpsertSearchResource(
+			ctx,
+			tx,
+			framework.ID,
+			framework.OrganizationID,
+			framework.Name,
+			framework.SearchText(),
+		); err != nil {
+			return fmt.Errorf("cannot sync search: %w", err)
+		}
+
 		for _, control := range req.Framework.Controls {
 			controlID := gid.New(organization.ID.TenantID(), coredata.ControlEntityType)
 
@@ -739,6 +780,17 @@ func (s FrameworkService) Import(
 
 			if err := control.Insert(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot insert control: %w", err)
+			}
+
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				tx,
+				control.ID,
+				control.OrganizationID,
+				control.Name,
+				control.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
 			}
 		}
 

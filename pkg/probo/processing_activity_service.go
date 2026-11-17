@@ -22,6 +22,7 @@ package probo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -212,6 +213,17 @@ func (s *ProcessingActivityService) Create(
 				return fmt.Errorf("cannot insert processing activity: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				processingActivity.ID,
+				processingActivity.OrganizationID,
+				processingActivity.Name,
+				processingActivity.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			if len(req.ThirdPartyIDs) > 0 {
 				thirdParties := &coredata.ThirdParties{}
 				if err := thirdParties.LoadByIDs(ctx, conn, scope, req.ThirdPartyIDs); err != nil {
@@ -336,6 +348,17 @@ func (s *ProcessingActivityService) Update(
 				return fmt.Errorf("cannot update processing activity: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				processingActivity.ID,
+				processingActivity.OrganizationID,
+				processingActivity.Name,
+				processingActivity.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			if req.ThirdPartyIDs != nil {
 				if len(*req.ThirdPartyIDs) > 0 {
 					thirdParties := &coredata.ThirdParties{}
@@ -368,6 +391,10 @@ func (s ProcessingActivityService) Delete(
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			if err := clearProcessingActivitySearch(ctx, tx, scope, processingActivityID); err != nil {
+				return err
+			}
+
 			err := processingActivity.Delete(ctx, tx, scope)
 			if err != nil {
 				return fmt.Errorf("cannot delete processing activity: %w", err)
@@ -427,4 +454,41 @@ func (s ProcessingActivityService) CountForOrganizationID(
 	}
 
 	return count, nil
+}
+
+func clearProcessingActivitySearch(
+	ctx context.Context,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	processingActivityID gid.GID,
+) error {
+	dpia := &coredata.DataProtectionImpactAssessment{}
+	err := dpia.LoadByProcessingActivityID(ctx, conn, scope, processingActivityID)
+	if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
+		return fmt.Errorf("cannot load data protection impact assessment: %w", err)
+	}
+
+	if err == nil {
+		if err := coredata.DeleteSearchResource(ctx, conn, dpia.ID); err != nil {
+			return fmt.Errorf("cannot delete search resource: %w", err)
+		}
+	}
+
+	tia := &coredata.TransferImpactAssessment{}
+	err = tia.LoadByProcessingActivityID(ctx, conn, scope, processingActivityID)
+	if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
+		return fmt.Errorf("cannot load transfer impact assessment: %w", err)
+	}
+
+	if err == nil {
+		if err := coredata.DeleteSearchResource(ctx, conn, tia.ID); err != nil {
+			return fmt.Errorf("cannot delete search resource: %w", err)
+		}
+	}
+
+	if err := coredata.DeleteSearchResource(ctx, conn, processingActivityID); err != nil {
+		return fmt.Errorf("cannot delete search resource: %w", err)
+	}
+
+	return nil
 }

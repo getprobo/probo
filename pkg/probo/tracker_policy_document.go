@@ -203,6 +203,17 @@ func (s *GeneratedDocumentService) PublishTrackerPolicy(
 					return fmt.Errorf("cannot insert document: %w", err)
 				}
 
+				if err := coredata.UpsertSearchResource(
+					ctx,
+					tx,
+					document.ID,
+					document.OrganizationID,
+					document.Title,
+					document.SearchText(),
+				); err != nil {
+					return fmt.Errorf("cannot sync search: %w", err)
+				}
+
 				banner.PolicyDocumentID = &documentID
 				banner.UpdatedAt = now
 

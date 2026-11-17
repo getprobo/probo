@@ -31,14 +31,26 @@ import { DialogBody } from "@probo/ui/src/v2/Dialog/DialogBody";
 import { DialogPopup } from "@probo/ui/src/v2/Dialog/DialogPopup";
 import { DialogTitle } from "@probo/ui/src/v2/Dialog/DialogTitle";
 import { shortcutAria } from "@probo/ui/src/v2/shortcutAria";
-import { useMemo } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+} from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, useFragment } from "react-relay";
+import {
+  fetchQuery,
+  graphql,
+  useFragment,
+} from "react-relay";
 import { useNavigate } from "react-router";
 
+import type { navSpotlightSearchQuery as NavSpotlightSearchQuery } from "#/__generated__/core/navSpotlightSearchQuery.graphql";
 import type { navPermissions_organization$key } from "#/__generated__/iam/navPermissions_organization.graphql";
 import type { NavSpotlight_organization$key } from "#/__generated__/iam/NavSpotlight_organization.graphql";
 import { SearchShortcutHint } from "#/components/SearchShortcutHint/SearchShortcutHint";
+import { navSpotlightSearchQuery } from "#/components/spotlight/navSpotlightSearchQuery";
+import { coreEnvironment } from "#/environments";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { visibleNavDestinations } from "#/pages/iam/organizations/_lib/navDestinations";
 import {
@@ -46,6 +58,7 @@ import {
   navHref,
 } from "#/pages/iam/organizations/_lib/navigation";
 import { navPermissionsFragment } from "#/pages/iam/organizations/_lib/navPermissions";
+import { resourceHref } from "#/pages/iam/organizations/_lib/resourceHref";
 
 import { navSpotlight } from "./variants";
 
@@ -55,18 +68,23 @@ const navSpotlightFragment = graphql`
   }
 `;
 
-interface SpotlightDestination {
+type SpotlightItem = {
   id: string;
+  kind: "page" | "resource";
   label: string;
   groupLabel: string;
   to: string;
-}
+};
 
 export interface NavSpotlightProps {
   organizationKey: NavSpotlight_organization$key;
   slackbotAvailable: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+}
+
+function hasQualifier(input: string): boolean {
+  return /(?:^|\s)(?:tag|type):/.test(input);
 }
 
 export function NavSpotlight({
@@ -84,13 +102,17 @@ export function NavSpotlight({
     organization,
   );
   const slots = navSpotlight();
+  const [input, setInput] = useState("");
+  const [resources, setResources] = useState<SpotlightItem[]>([]);
+  const [, startTransition] = useTransition();
 
   const destinations = useMemo(() => {
     return visibleNavDestinations(permissions, slackbotAvailable).map(
       (destination) => {
         const group = navGroupByKey(destination.group);
         return {
-          id: destination.id,
+          id: `page:${destination.id}`,
+          kind: "page" as const,
           label: t(destination.labelKey),
           groupLabel: t(`nav.groups.${destination.group}`),
           to: navHref(organizationId, group, destination.path),
@@ -104,15 +126,85 @@ export function NavSpotlight({
     t,
   ]);
 
+  useEffect(() => {
+    if (!open) {
+      setInput("");
+      setResources([]);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    const trimmed = input.trim();
+    if (!open || trimmed === "") {
+      setResources([]);
+      return;
+    }
+
+    const handle = window.setTimeout(() => {
+      startTransition(() => {
+        fetchQuery<NavSpotlightSearchQuery>(
+          coreEnvironment,
+          navSpotlightSearchQuery,
+          {
+            organizationId,
+            query: trimmed,
+          },
+        ).subscribe({
+          next: (data) => {
+            const items: SpotlightItem[] = [];
+            for (const edge of data.search.edges) {
+              const typename = edge.node.__typename;
+              if (typename == null || typename === "%other") {
+                continue;
+              }
+              const to = resourceHref(organizationId, typename, edge.node.id);
+              if (to == null) {
+                continue;
+              }
+              items.push({
+                id: `resource:${edge.node.id}`,
+                kind: "resource",
+                label: edge.title,
+                groupLabel: t(`nav.spotlight.types.${typename}`, {
+                  defaultValue: typename,
+                }),
+                to,
+              });
+            }
+            setResources(items);
+          },
+          error: () => {
+            setResources([]);
+          },
+        });
+      });
+    }, 200);
+
+    return () => {
+      window.clearTimeout(handle);
+    };
+  }, [input, open, organizationId, t]);
+
+  const showPages = !hasQualifier(input);
+  const items = useMemo(() => {
+    if (input.trim() === "") {
+      return destinations;
+    }
+    if (showPages) {
+      return [...resources, ...destinations];
+    }
+    return resources;
+  }, [destinations, input, resources, showPages]);
+
   useHotkeys("mod+k", () => {
     onOpenChange(!open);
   }, { preventDefault: true });
 
-  function onValueChange(destination: SpotlightDestination | null) {
-    if (destination == null) {
+  function onValueChange(item: SpotlightItem | null) {
+    if (item == null) {
       return;
     }
-    void navigate(destination.to);
+    void navigate(item.to);
     onOpenChange(false);
   }
 
@@ -121,11 +213,20 @@ export function NavSpotlight({
       <DialogPopup placement="top" lockScroll>
         <DialogTitle className={slots.title()}>{t("nav.spotlight.title")}</DialogTitle>
         <DialogBody>
-          <Combobox<SpotlightDestination>
-            items={destinations}
+          <Combobox<SpotlightItem>
+            items={items}
             value={null}
             onValueChange={onValueChange}
-            itemToStringLabel={destination => `${destination.label} ${destination.groupLabel}`}
+            inputValue={input}
+            onInputValueChange={setInput}
+            itemToStringLabel={item => `${item.label} ${item.groupLabel}`}
+            filter={(item, query) => {
+              if (item.kind === "resource") {
+                return true;
+              }
+              const haystack = `${item.label} ${item.groupLabel}`.toLowerCase();
+              return haystack.includes(query.trim().toLowerCase());
+            }}
             inline
             open={open}
             onOpenChange={onOpenChange}
@@ -144,12 +245,12 @@ export function NavSpotlight({
               </span>
             </ComboboxInputGroup>
             <ComboboxEmpty>{t("nav.spotlight.empty")}</ComboboxEmpty>
-            <ComboboxList<SpotlightDestination> className={slots.list()}>
-              {destination => (
-                <ComboboxItem key={destination.id} value={destination}>
+            <ComboboxList<SpotlightItem> className={slots.list()}>
+              {item => (
+                <ComboboxItem key={item.id} value={item}>
                   <span className={slots.row()}>
-                    <span>{destination.label}</span>
-                    <span className={slots.group()}>{destination.groupLabel}</span>
+                    <span>{item.label}</span>
+                    <span className={slots.group()}>{item.groupLabel}</span>
                   </span>
                 </ComboboxItem>
               )}

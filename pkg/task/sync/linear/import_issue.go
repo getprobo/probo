@@ -195,6 +195,17 @@ func (s *Service) importLinearIssueForConnector(
 		return fmt.Errorf("cannot insert imported task: %w", err)
 	}
 
+	if err := coredata.UpsertSearchResource(
+		ctx,
+		tx,
+		task.ID,
+		task.OrganizationID,
+		task.Name,
+		task.SearchText(),
+	); err != nil {
+		return fmt.Errorf("cannot sync search: %w", err)
+	}
+
 	destination, err := json.Marshal(coredata.TaskExternalLinkDestination{
 		TeamID:               data.Team.ID,
 		LinearOrganizationID: envelope.OrganizationID,

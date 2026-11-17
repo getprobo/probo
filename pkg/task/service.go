@@ -266,6 +266,17 @@ func (s *Service) Create(
 				return fmt.Errorf("cannot insert task: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				task.ID,
+				task.OrganizationID,
+				task.Name,
+				task.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			if err := replaceTaskInternalControls(ctx, conn, scope, task, req.InternalControlIDs); err != nil {
 				return fmt.Errorf("cannot replace task internal controls: %w", err)
 			}
@@ -423,6 +434,17 @@ func (s *Service) Assign(
 				return fmt.Errorf("cannot assign task %q to %q: %w", taskID, assignedToID, err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				task.ID,
+				task.OrganizationID,
+				task.Name,
+				task.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			actorID, err := ResolveActivityActorID(
 				ctx,
 				conn,
@@ -509,6 +531,17 @@ func (s *Service) Unassign(
 
 			if err := task.Update(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot unassign task %q: %w", taskID, err)
+			}
+
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				task.ID,
+				task.OrganizationID,
+				task.Name,
+				task.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
 			}
 
 			actorID, err := ResolveActivityActorID(
@@ -680,6 +713,17 @@ func (s *Service) Update(
 				return fmt.Errorf("cannot update task: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				task.ID,
+				task.OrganizationID,
+				task.Name,
+				task.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			if targetRank != nil {
 				task.Rank = *targetRank
 				if err := task.UpdateRank(ctx, conn, scope); err != nil {
@@ -814,6 +858,10 @@ func (s *Service) Delete(
 
 			if err := resolveDeletedTaskNotifications(ctx, conn, scope, task); err != nil {
 				return fmt.Errorf("cannot resolve deleted task notifications: %w", err)
+			}
+
+			if err := coredata.DeleteSearchResource(ctx, conn, task.ID); err != nil {
+				return fmt.Errorf("cannot delete search resource: %w", err)
 			}
 
 			if err := task.Delete(ctx, conn, scope); err != nil {

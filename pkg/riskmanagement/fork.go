@@ -77,6 +77,17 @@ func (s *Service) Fork(
 				return fmt.Errorf("cannot insert forked risk analysis: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				tx,
+				forked.ID,
+				forked.OrganizationID,
+				forked.Name,
+				forked.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			idMap := make(map[gid.GID]gid.GID)
 			if err := copyDiagrams(ctx, tx, scope, source.ID, forked, now, idMap); err != nil {
 				return fmt.Errorf("cannot copy diagrams: %w", err)
@@ -167,6 +178,17 @@ func copyDiagram(
 		return nil, fmt.Errorf("cannot insert diagram: %w", err)
 	}
 
+	if err := coredata.UpsertSearchResource(
+		ctx,
+		tx,
+		copied.ID,
+		copied.OrganizationID,
+		copied.Name,
+		copied.SearchText(),
+	); err != nil {
+		return nil, fmt.Errorf("cannot sync search: %w", err)
+	}
+
 	if err := copyBoundaries(ctx, tx, scope, source.ID, copied, now, idMap); err != nil {
 		return nil, fmt.Errorf("cannot copy boundaries: %w", err)
 	}
@@ -244,6 +266,17 @@ func copyBoundaries(
 
 		if err := copied.Insert(ctx, tx, scope); err != nil {
 			return fmt.Errorf("cannot insert boundary: %w", err)
+		}
+
+		if err := coredata.UpsertSearchResource(
+			ctx,
+			tx,
+			copied.ID,
+			copied.OrganizationID,
+			copied.Name,
+			copied.SearchText(),
+		); err != nil {
+			return fmt.Errorf("cannot sync search: %w", err)
 		}
 	}
 
@@ -359,6 +392,17 @@ func copyProcesses(
 		if err := copied.Insert(ctx, tx, scope); err != nil {
 			return fmt.Errorf("cannot insert process: %w", err)
 		}
+
+		if err := coredata.UpsertSearchResource(
+			ctx,
+			tx,
+			copied.ID,
+			copied.OrganizationID,
+			copied.Name,
+			copied.SearchText(),
+		); err != nil {
+			return fmt.Errorf("cannot sync search: %w", err)
+		}
 	}
 
 	return nil
@@ -413,6 +457,17 @@ func copyThreats(
 		if err := copied.Insert(ctx, tx, scope); err != nil {
 			return fmt.Errorf("cannot insert threat: %w", err)
 		}
+
+		if err := coredata.UpsertSearchResource(
+			ctx,
+			tx,
+			copied.ID,
+			copied.OrganizationID,
+			copied.Name,
+			copied.SearchText(),
+		); err != nil {
+			return fmt.Errorf("cannot sync search: %w", err)
+		}
 	}
 
 	return nil
@@ -462,6 +517,17 @@ func copyScenarios(
 
 		if err := copied.Insert(ctx, tx, scope); err != nil {
 			return nil, fmt.Errorf("cannot insert scenario: %w", err)
+		}
+
+		if err := coredata.UpsertSearchResource(
+			ctx,
+			tx,
+			copied.ID,
+			copied.OrganizationID,
+			copied.Name,
+			copied.SearchText(),
+		); err != nil {
+			return nil, fmt.Errorf("cannot sync search: %w", err)
 		}
 	}
 
@@ -578,6 +644,7 @@ func copyTreatmentPlans(
 
 	sourcePlanIDs := make([]gid.GID, 0, len(plans))
 	copiedPlans := make(map[gid.GID]*coredata.TreatmentPlan, len(plans))
+	riskNames := make(map[gid.GID]string)
 
 	for _, source := range plans {
 		copied := &coredata.TreatmentPlan{
@@ -601,6 +668,28 @@ func copyTreatmentPlans(
 
 		if err := copied.Insert(ctx, tx, scope); err != nil {
 			return fmt.Errorf("cannot insert treatment plan: %w", err)
+		}
+
+		riskName, ok := riskNames[copied.RiskID]
+		if !ok {
+			risk := &coredata.Risk{}
+			if err := risk.LoadByID(ctx, tx, scope, copied.RiskID); err != nil {
+				return fmt.Errorf("cannot load risk: %w", err)
+			}
+
+			riskName = risk.Name
+			riskNames[copied.RiskID] = riskName
+		}
+
+		if err := coredata.UpsertSearchResource(
+			ctx,
+			tx,
+			copied.ID,
+			copied.OrganizationID,
+			riskName,
+			copied.SearchText(riskName),
+		); err != nil {
+			return fmt.Errorf("cannot sync search: %w", err)
 		}
 	}
 

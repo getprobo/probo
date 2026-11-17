@@ -92,7 +92,15 @@ input ControlFilter {
     query: String
 }
 
-type Control implements Node {
+type Control implements Node & Taggable {
+    tags(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TagOrder
+    ): TagConnection! @goField(forceResolver: true)
+
     id: ID!
     organization: Organization @goField(forceResolver: true)
     sectionTitle: String!
@@ -161,7 +169,15 @@ type ControlEdge {
     node: Control!
 }
 
-type StatementOfApplicability implements Node {
+type StatementOfApplicability implements Node & Taggable {
+    tags(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TagOrder
+    ): TagConnection! @goField(forceResolver: true)
+
     id: ID!
     name: String!
     document: Document @goField(forceResolver: true)

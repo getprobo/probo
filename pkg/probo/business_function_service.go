@@ -221,6 +221,17 @@ func (s *BusinessFunctionService) Create(
 				return fmt.Errorf("cannot insert business function: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				businessFunction.ID,
+				businessFunction.OrganizationID,
+				businessFunction.Name,
+				businessFunction.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			if len(req.AssetIDs) > 0 {
 				businessFunctionAssets := coredata.BusinessFunctionAssets{}
 				if err := businessFunctionAssets.Insert(ctx, conn, scope, businessFunction.ID, req.OrganizationID, req.AssetIDs); err != nil {
@@ -352,6 +363,17 @@ func (s *BusinessFunctionService) Update(
 				return fmt.Errorf("cannot update business function: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				businessFunction.ID,
+				businessFunction.OrganizationID,
+				businessFunction.Name,
+				businessFunction.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -372,6 +394,10 @@ func (s BusinessFunctionService) Delete(
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			if err := coredata.DeleteSearchResource(ctx, tx, businessFunction.ID); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			err := businessFunction.Delete(ctx, tx, scope)
 			if err != nil {
 				return fmt.Errorf("cannot delete business function: %w", err)

@@ -923,6 +923,11 @@ func (r *mutationResolver) PublishRiskAnalysis(ctx context.Context, input types.
 	}, nil
 }
 
+// Tags is the resolver for the tags field.
+func (r *riskAnalysisResolver) Tags(ctx context.Context, obj *types.RiskAnalysis, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TagOrderBy) (*types.TagConnection, error) {
+	return r.tagsForResourceID(ctx, obj.ID, first, after, last, before, orderBy)
+}
+
 // Document is the resolver for the document field.
 func (r *riskAnalysisResolver) Document(ctx context.Context, obj *types.RiskAnalysis) (*types.Document, error) {
 	if obj.Document == nil {
@@ -1131,6 +1136,11 @@ func (r *riskAnalysisResolver) Permission(ctx context.Context, obj *types.RiskAn
 	return r.Resolver.Permission(ctx, obj, action)
 }
 
+// Tags is the resolver for the tags field.
+func (r *riskAnalysisBoundaryResolver) Tags(ctx context.Context, obj *types.RiskAnalysisBoundary, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TagOrderBy) (*types.TagConnection, error) {
+	return r.tagsForResourceID(ctx, obj.ID, first, after, last, before, orderBy)
+}
+
 // TotalCount is the resolver for the totalCount field.
 func (r *riskAnalysisBoundaryConnectionResolver) TotalCount(ctx context.Context, obj *types.RiskAnalysisBoundaryConnection) (*int, error) {
 	scope, err := r.authorize(ctx, obj.ParentID, riskmanagement.ActionRiskAnalysisBoundaryList)
@@ -1161,6 +1171,11 @@ func (r *riskAnalysisConnectionResolver) TotalCount(ctx context.Context, obj *ty
 	}
 
 	return &count, nil
+}
+
+// Tags is the resolver for the tags field.
+func (r *riskAnalysisDiagramResolver) Tags(ctx context.Context, obj *types.RiskAnalysisDiagram, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TagOrderBy) (*types.TagConnection, error) {
+	return r.tagsForResourceID(ctx, obj.ID, first, after, last, before, orderBy)
 }
 
 // Nodes is the resolver for the nodes field.
@@ -1341,6 +1356,11 @@ func (r *riskAnalysisNodeConnectionResolver) TotalCount(ctx context.Context, obj
 	return &count, nil
 }
 
+// Tags is the resolver for the tags field.
+func (r *riskAnalysisProcessResolver) Tags(ctx context.Context, obj *types.RiskAnalysisProcess, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TagOrderBy) (*types.TagConnection, error) {
+	return r.tagsForResourceID(ctx, obj.ID, first, after, last, before, orderBy)
+}
+
 // TotalCount is the resolver for the totalCount field.
 func (r *riskAnalysisProcessConnectionResolver) TotalCount(ctx context.Context, obj *types.RiskAnalysisProcessConnection) (*int, error) {
 	scope, err := r.authorize(ctx, obj.ParentID, riskmanagement.ActionRiskAnalysisProcessList)
@@ -1355,6 +1375,11 @@ func (r *riskAnalysisProcessConnectionResolver) TotalCount(ctx context.Context, 
 	}
 
 	return &count, nil
+}
+
+// Tags is the resolver for the tags field.
+func (r *riskAnalysisScenarioResolver) Tags(ctx context.Context, obj *types.RiskAnalysisScenario, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TagOrderBy) (*types.TagConnection, error) {
+	return r.tagsForResourceID(ctx, obj.ID, first, after, last, before, orderBy)
 }
 
 // Diagram is the resolver for the diagram field.
@@ -1460,6 +1485,11 @@ func (r *riskAnalysisScenarioConnectionResolver) TotalCount(ctx context.Context,
 	}
 }
 
+// Tags is the resolver for the tags field.
+func (r *riskAnalysisThreatResolver) Tags(ctx context.Context, obj *types.RiskAnalysisThreat, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TagOrderBy) (*types.TagConnection, error) {
+	return r.tagsForResourceID(ctx, obj.ID, first, after, last, before, orderBy)
+}
+
 // TotalCount is the resolver for the totalCount field.
 func (r *riskAnalysisThreatConnectionResolver) TotalCount(ctx context.Context, obj *types.RiskAnalysisThreatConnection) (*int, error) {
 	scope, err := r.authorize(ctx, obj.ParentID, riskmanagement.ActionRiskAnalysisThreatList)
@@ -1490,6 +1520,11 @@ func (r *riskAnalysisThreatConnectionResolver) TotalCount(ctx context.Context, o
 // RiskAnalysis returns schema.RiskAnalysisResolver implementation.
 func (r *Resolver) RiskAnalysis() schema.RiskAnalysisResolver { return &riskAnalysisResolver{r} }
 
+// RiskAnalysisBoundary returns schema.RiskAnalysisBoundaryResolver implementation.
+func (r *Resolver) RiskAnalysisBoundary() schema.RiskAnalysisBoundaryResolver {
+	return &riskAnalysisBoundaryResolver{r}
+}
+
 // RiskAnalysisBoundaryConnection returns schema.RiskAnalysisBoundaryConnectionResolver implementation.
 func (r *Resolver) RiskAnalysisBoundaryConnection() schema.RiskAnalysisBoundaryConnectionResolver {
 	return &riskAnalysisBoundaryConnectionResolver{r}
@@ -1515,6 +1550,11 @@ func (r *Resolver) RiskAnalysisNodeConnection() schema.RiskAnalysisNodeConnectio
 	return &riskAnalysisNodeConnectionResolver{r}
 }
 
+// RiskAnalysisProcess returns schema.RiskAnalysisProcessResolver implementation.
+func (r *Resolver) RiskAnalysisProcess() schema.RiskAnalysisProcessResolver {
+	return &riskAnalysisProcessResolver{r}
+}
+
 // RiskAnalysisProcessConnection returns schema.RiskAnalysisProcessConnectionResolver implementation.
 func (r *Resolver) RiskAnalysisProcessConnection() schema.RiskAnalysisProcessConnectionResolver {
 	return &riskAnalysisProcessConnectionResolver{r}
@@ -1530,6 +1570,11 @@ func (r *Resolver) RiskAnalysisScenarioConnection() schema.RiskAnalysisScenarioC
 	return &riskAnalysisScenarioConnectionResolver{r}
 }
 
+// RiskAnalysisThreat returns schema.RiskAnalysisThreatResolver implementation.
+func (r *Resolver) RiskAnalysisThreat() schema.RiskAnalysisThreatResolver {
+	return &riskAnalysisThreatResolver{r}
+}
+
 // RiskAnalysisThreatConnection returns schema.RiskAnalysisThreatConnectionResolver implementation.
 func (r *Resolver) RiskAnalysisThreatConnection() schema.RiskAnalysisThreatConnectionResolver {
 	return &riskAnalysisThreatConnectionResolver{r}
@@ -1537,13 +1582,16 @@ func (r *Resolver) RiskAnalysisThreatConnection() schema.RiskAnalysisThreatConne
 
 type (
 	riskAnalysisResolver                   struct{ *Resolver }
+	riskAnalysisBoundaryResolver           struct{ *Resolver }
 	riskAnalysisBoundaryConnectionResolver struct{ *Resolver }
 	riskAnalysisConnectionResolver         struct{ *Resolver }
 	riskAnalysisDiagramResolver            struct{ *Resolver }
 	riskAnalysisDiagramConnectionResolver  struct{ *Resolver }
 	riskAnalysisNodeConnectionResolver     struct{ *Resolver }
+	riskAnalysisProcessResolver            struct{ *Resolver }
 	riskAnalysisProcessConnectionResolver  struct{ *Resolver }
 	riskAnalysisScenarioResolver           struct{ *Resolver }
 	riskAnalysisScenarioConnectionResolver struct{ *Resolver }
+	riskAnalysisThreatResolver             struct{ *Resolver }
 	riskAnalysisThreatConnectionResolver   struct{ *Resolver }
 )

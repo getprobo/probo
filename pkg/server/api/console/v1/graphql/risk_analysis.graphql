@@ -242,7 +242,15 @@ input RiskScoreLevelMappingInput
     minScore: Int!
 }
 
-type RiskAnalysis implements Node {
+type RiskAnalysis implements Node & Taggable {
+    tags(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TagOrder
+    ): TagConnection! @goField(forceResolver: true)
+
     id: ID!
     name: String!
     description: String
@@ -287,7 +295,15 @@ type RiskAnalysis implements Node {
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
-type RiskAnalysisDiagram implements Node {
+type RiskAnalysisDiagram implements Node & Taggable {
+    tags(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TagOrder
+    ): TagConnection! @goField(forceResolver: true)
+
     id: ID!
     riskAnalysisId: ID!
     name: String!
@@ -348,7 +364,15 @@ type RiskAnalysisNode implements Node {
     updatedAt: Datetime!
 }
 
-type RiskAnalysisBoundary implements Node {
+type RiskAnalysisBoundary implements Node & Taggable {
+    tags(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TagOrder
+    ): TagConnection! @goField(forceResolver: true)
+
     id: ID!
     riskAnalysisDiagramId: ID!
     parentBoundaryId: ID
@@ -357,7 +381,15 @@ type RiskAnalysisBoundary implements Node {
     updatedAt: Datetime!
 }
 
-type RiskAnalysisProcess implements Node {
+type RiskAnalysisProcess implements Node & Taggable {
+    tags(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TagOrder
+    ): TagConnection! @goField(forceResolver: true)
+
     id: ID!
     riskAnalysisDiagramId: ID!
     sourceNodeId: ID!
@@ -367,7 +399,15 @@ type RiskAnalysisProcess implements Node {
     updatedAt: Datetime!
 }
 
-type RiskAnalysisThreat implements Node {
+type RiskAnalysisThreat implements Node & Taggable {
+    tags(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TagOrder
+    ): TagConnection! @goField(forceResolver: true)
+
     id: ID!
     riskAnalysisDiagramId: ID!
     processId: ID!
@@ -377,7 +417,15 @@ type RiskAnalysisThreat implements Node {
     updatedAt: Datetime!
 }
 
-type RiskAnalysisScenario implements Node {
+type RiskAnalysisScenario implements Node & Taggable {
+    tags(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TagOrder
+    ): TagConnection! @goField(forceResolver: true)
+
     id: ID!
     riskAnalysisDiagramId: ID!
     diagram: RiskAnalysisDiagram @goField(forceResolver: true)

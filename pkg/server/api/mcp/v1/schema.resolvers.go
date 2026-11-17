@@ -41,6 +41,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/mcp/mcpx"
 	"go.probo.inc/probo/pkg/server/api/mcp/v1/types"
+	"go.probo.inc/probo/pkg/tag"
 	"go.probo.inc/probo/pkg/task"
 	asanasvc "go.probo.inc/probo/pkg/task/sync/asana"
 	syncerrors "go.probo.inc/probo/pkg/task/sync/errors"
@@ -12388,4 +12389,190 @@ func (r *Resolver) ChangeDocumentBlockTool(ctx context.Context, req *mcp.CallToo
 
 func (r *Resolver) SubmitFeedbackTool(ctx context.Context, _ *mcp.CallToolRequest, input *types.SubmitFeedbackInput) (*mcp.CallToolResult, types.SubmitFeedbackOutput, error) {
 	return r.submitFeedback(ctx, input)
+}
+
+func (r *Resolver) CreateTagTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateTagInput) (*mcp.CallToolResult, types.CreateTagOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, tag.ActionCreate)
+	if err != nil {
+		return nil, types.CreateTagOutput{}, err
+	}
+
+	created, err := r.tag.Create(
+		ctx,
+		scope,
+		tag.CreateTagRequest{
+			OrganizationID: input.OrganizationID,
+			Name:           input.Name,
+			Color:          input.Color,
+		},
+	)
+	if err != nil {
+		return nil, types.CreateTagOutput{}, fmt.Errorf("cannot create tag: %w", err)
+	}
+
+	return nil, types.CreateTagOutput{
+		Tag: types.NewTag(created),
+	}, nil
+}
+
+func (r *Resolver) UpdateTagTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateTagInput) (*mcp.CallToolResult, types.UpdateTagOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, tag.ActionUpdate)
+	if err != nil {
+		return nil, types.UpdateTagOutput{}, err
+	}
+
+	updated, err := r.tag.Update(
+		ctx,
+		scope,
+		tag.UpdateTagRequest{
+			ID:    input.ID,
+			Name:  input.Name,
+			Color: UnwrapOmittable(input.Color),
+		},
+	)
+	if err != nil {
+		return nil, types.UpdateTagOutput{}, fmt.Errorf("cannot update tag: %w", err)
+	}
+
+	return nil, types.UpdateTagOutput{
+		Tag: types.NewTag(updated),
+	}, nil
+}
+
+func (r *Resolver) DeleteTagTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteTagInput) (*mcp.CallToolResult, types.DeleteTagOutput, error) {
+	scope, err := r.Authorize(ctx, input.TagID, tag.ActionDelete)
+	if err != nil {
+		return nil, types.DeleteTagOutput{}, err
+	}
+
+	if err := r.tag.Delete(ctx, scope, input.TagID); err != nil {
+		return nil, types.DeleteTagOutput{}, fmt.Errorf("cannot delete tag: %w", err)
+	}
+
+	return nil, types.DeleteTagOutput{
+		DeletedTagID: input.TagID,
+	}, nil
+}
+
+func (r *Resolver) AttachTagTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AttachTagInput) (*mcp.CallToolResult, types.AttachTagOutput, error) {
+	scope, err := r.Authorize(ctx, input.ResourceID, tag.ActionAssignmentAttach)
+	if err != nil {
+		return nil, types.AttachTagOutput{}, err
+	}
+
+	result, err := r.tag.Attach(
+		ctx,
+		scope,
+		tag.AttachRequest{
+			ResourceID: input.ResourceID,
+			TagID:      input.TagID,
+		},
+	)
+	if err != nil {
+		return nil, types.AttachTagOutput{}, fmt.Errorf("cannot attach tag: %w", err)
+	}
+
+	return nil, types.AttachTagOutput{
+		Tag:             types.NewTag(result.Tag),
+		TagAssignmentID: result.Assignment.ID,
+	}, nil
+}
+
+func (r *Resolver) DetachTagTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DetachTagInput) (*mcp.CallToolResult, types.DetachTagOutput, error) {
+	scope, err := r.Authorize(ctx, input.ResourceID, tag.ActionAssignmentDetach)
+	if err != nil {
+		return nil, types.DetachTagOutput{}, err
+	}
+
+	result, err := r.tag.Detach(
+		ctx,
+		scope,
+		tag.DetachRequest{
+			ResourceID: input.ResourceID,
+			TagID:      input.TagID,
+		},
+	)
+	if err != nil {
+		return nil, types.DetachTagOutput{}, fmt.Errorf("cannot detach tag: %w", err)
+	}
+
+	return nil, types.DetachTagOutput{
+		Tag:                    types.NewTag(result.Tag),
+		DeletedTagAssignmentID: result.DeletedAssignmentID,
+	}, nil
+}
+
+func (r *Resolver) ListTagsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListTagsInput) (*mcp.CallToolResult, types.ListTagsOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, tag.ActionList)
+	if err != nil {
+		return nil, types.ListTagsOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.TagOrderField]{
+		Field:     coredata.TagOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	pageResult, err := r.tag.ListForOrganizationID(ctx, scope, input.OrganizationID, cursor)
+	if err != nil {
+		return nil, types.ListTagsOutput{}, fmt.Errorf("cannot list tags: %w", err)
+	}
+
+	return nil, types.NewListTagsOutput(pageResult), nil
+}
+
+func (r *Resolver) ListTagsForResourceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListTagsForResourceInput) (*mcp.CallToolResult, types.ListTagsForResourceOutput, error) {
+	scope, err := r.Authorize(ctx, input.ResourceID, tag.ActionAssignmentGet)
+	if err != nil {
+		return nil, types.ListTagsForResourceOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.TagOrderField]{
+		Field:     coredata.TagOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	pageResult, err := r.tag.ListForResourceID(ctx, scope, input.ResourceID, cursor)
+	if err != nil {
+		return nil, types.ListTagsForResourceOutput{}, fmt.Errorf("cannot list tags for resource: %w", err)
+	}
+
+	return nil, types.NewListTagsForResourceOutput(pageResult), nil
+}
+
+func (r *Resolver) SearchTool(ctx context.Context, req *mcp.CallToolRequest, input *types.SearchInput) (*mcp.CallToolResult, types.SearchOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, tag.ActionAssignmentGet)
+	if err != nil {
+		return nil, types.SearchOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.SearchResultOrderField]{
+		Field:     coredata.SearchResultOrderFieldID,
+		Direction: page.OrderDirectionAsc,
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	pageResult, err := r.tag.Search(
+		ctx,
+		scope,
+		tag.SearchRequest{
+			OrganizationID: input.OrganizationID,
+			Query:          input.Query,
+		},
+		cursor,
+	)
+	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, types.SearchOutput{}, validationErrors
+		}
+
+		return nil, types.SearchOutput{}, fmt.Errorf("cannot search tagged resources: %w", err)
+	}
+
+	return nil, types.NewSearchOutput(pageResult), nil
 }

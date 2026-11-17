@@ -517,6 +517,11 @@ func (r *mutationResolver) UpdateAsanaProjectMapping(ctx context.Context, input 
 	return &types.UpdateAsanaProjectMappingPayload{Setup: asanaSetupNode(setup, mapping)}, nil
 }
 
+// Tags is the resolver for the tags field.
+func (r *taskResolver) Tags(ctx context.Context, obj *types.Task, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TagOrderBy) (*types.TagConnection, error) {
+	return r.tagsForResourceID(ctx, obj.ID, first, after, last, before, orderBy)
+}
+
 // AssignedTo is the resolver for the assignedTo field.
 func (r *taskResolver) AssignedTo(ctx context.Context, obj *types.Task) (*types.Profile, error) {
 	if obj.AssignedTo == nil {

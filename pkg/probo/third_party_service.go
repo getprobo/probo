@@ -480,6 +480,17 @@ func (s ThirdPartyService) Update(
 				return fmt.Errorf("cannot update thirdParty: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				thirdParty.ID,
+				thirdParty.OrganizationID,
+				thirdParty.Name,
+				thirdParty.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			administratorIDs, err := loadThirdPartyAdministratorIDs(ctx, conn, scope, thirdParty.ID)
 			if err != nil {
 				return err
@@ -583,6 +594,10 @@ func (s ThirdPartyService) Delete(
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
+			if err := clearThirdPartySearch(ctx, conn, scope, thirdParty.ID); err != nil {
+				return err
+			}
+
 			return thirdParty.Delete(ctx, conn, scope)
 		},
 	)
@@ -661,6 +676,17 @@ func (s ThirdPartyService) Create(
 
 			if err := thirdParty.Insert(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot insert thirdParty: %w", err)
+			}
+
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				thirdParty.ID,
+				thirdParty.OrganizationID,
+				thirdParty.Name,
+				thirdParty.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
 			}
 
 			if len(req.AdministratorIDs) > 0 {
@@ -781,6 +807,17 @@ func (s ThirdPartyService) ImportFromCommon(
 
 				if err := thirdParty.Insert(ctx, conn, scope); err != nil {
 					return fmt.Errorf("cannot insert third party: %w", err)
+				}
+
+				if err := coredata.UpsertSearchResource(
+					ctx,
+					conn,
+					thirdParty.ID,
+					thirdParty.OrganizationID,
+					thirdParty.Name,
+					thirdParty.SearchText(),
+				); err != nil {
+					return fmt.Errorf("cannot sync search: %w", err)
 				}
 
 				created = true
@@ -1115,4 +1152,30 @@ func loadThirdPartyAdministratorIDs(
 	}
 
 	return ids, nil
+}
+
+func clearThirdPartySearch(
+	ctx context.Context,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	thirdPartyID gid.GID,
+) error {
+	var children coredata.ThirdParties
+
+	childIDs, err := children.LoadIDsByParentThirdPartyID(ctx, conn, scope, thirdPartyID)
+	if err != nil {
+		return fmt.Errorf("cannot list child third parties: %w", err)
+	}
+
+	for _, childID := range childIDs {
+		if err := clearThirdPartySearch(ctx, conn, scope, childID); err != nil {
+			return err
+		}
+	}
+
+	if err := coredata.DeleteSearchResource(ctx, conn, thirdPartyID); err != nil {
+		return fmt.Errorf("cannot delete search resource: %w", err)
+	}
+
+	return nil
 }

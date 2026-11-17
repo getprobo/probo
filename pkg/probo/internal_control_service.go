@@ -540,6 +540,17 @@ func (s InternalControlService) Import(
 					return fmt.Errorf("cannot upsert internalControl: %w", err)
 				}
 
+				if err := coredata.UpsertSearchResource(
+					ctx,
+					tx,
+					internalControl.ID,
+					internalControl.OrganizationID,
+					internalControl.Name,
+					internalControl.SearchText(),
+				); err != nil {
+					return fmt.Errorf("cannot sync search: %w", err)
+				}
+
 				eventType := coredata.InternalControlEventTypeCreated
 				if originalID != internalControl.ID {
 					eventType = coredata.InternalControlEventTypeUpdated
@@ -596,6 +607,17 @@ func (s InternalControlService) Import(
 							return fmt.Errorf("cannot insert task: %w", err)
 						}
 
+						if err := coredata.UpsertSearchResource(
+							ctx,
+							tx,
+							task.ID,
+							task.OrganizationID,
+							task.Name,
+							task.SearchText(),
+						); err != nil {
+							return fmt.Errorf("cannot sync search: %w", err)
+						}
+
 						link := coredata.InternalControlTask{
 							InternalControlID: internalControl.ID,
 							TaskID:            task.ID,
@@ -627,6 +649,17 @@ func (s InternalControlService) Import(
 							return fmt.Errorf("cannot update imported task: %w", err)
 						}
 
+						if err := coredata.UpsertSearchResource(
+							ctx,
+							tx,
+							existingTask.ID,
+							existingTask.OrganizationID,
+							existingTask.Name,
+							existingTask.SearchText(),
+						); err != nil {
+							return fmt.Errorf("cannot sync search: %w", err)
+						}
+
 						if err := taskpkg.InsertUpdateActivities(
 							ctx,
 							tx,
@@ -649,6 +682,7 @@ func (s InternalControlService) Import(
 						evidence := &coredata.Evidence{
 							State:             coredata.EvidenceStateRequested,
 							ID:                evidenceID,
+							OrganizationID:    organization.ID,
 							TaskID:            &task.ID,
 							ReferenceID:       req.InternalControls[i].Tasks[j].RequestedEvidences[k].ReferenceID,
 							Type:              req.InternalControls[i].Tasks[j].RequestedEvidences[k].Type,
@@ -660,6 +694,17 @@ func (s InternalControlService) Import(
 
 						if err := evidence.Upsert(ctx, tx, scope); err != nil {
 							return fmt.Errorf("cannot upsert evidence: %w", err)
+						}
+
+						if err := coredata.UpsertSearchResource(
+							ctx,
+							tx,
+							evidence.ID,
+							evidence.OrganizationID,
+							evidence.ReferenceID,
+							evidence.SearchText(),
+						); err != nil {
+							return fmt.Errorf("cannot sync search: %w", err)
 						}
 					}
 				}
@@ -766,6 +811,17 @@ func (s InternalControlService) Update(
 				return fmt.Errorf("cannot update internalControl: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				internalControl.ID,
+				internalControl.OrganizationID,
+				internalControl.Name,
+				internalControl.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			if internalControl.Name != previousName || internalControl.State != previousState || internalControl.Category != previousCategory {
 				if err := insertInternalControlEvent(
 					ctx,
@@ -868,6 +924,17 @@ func (s InternalControlService) Create(
 				return fmt.Errorf("cannot insert internalControl: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				internalControl.ID,
+				internalControl.OrganizationID,
+				internalControl.Name,
+				internalControl.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			if err := insertInternalControlEvent(
 				ctx,
 				conn,
@@ -913,6 +980,10 @@ func (s InternalControlService) Delete(
 			now,
 		); err != nil {
 			return fmt.Errorf("cannot record internal control event: %w", err)
+		}
+
+		if err := coredata.DeleteSearchResource(ctx, conn, internalControl.ID); err != nil {
+			return fmt.Errorf("cannot sync search: %w", err)
 		}
 
 		if err := internalControl.Delete(ctx, conn, scope, internalControlID); err != nil {

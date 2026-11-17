@@ -138,7 +138,15 @@ input ProcessingActivityOrder
     field: ProcessingActivityOrderField!
 }
 
-type ProcessingActivity implements Node {
+type ProcessingActivity implements Node & Taggable {
+    tags(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TagOrder
+    ): TagConnection! @goField(forceResolver: true)
+
     id: ID!
     organization: Organization! @goField(forceResolver: true)
     name: String!

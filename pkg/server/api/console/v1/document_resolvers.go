@@ -35,6 +35,11 @@ import (
 	"go.probo.inc/probo/pkg/validator"
 )
 
+// Tags is the resolver for the tags field.
+func (r *documentResolver) Tags(ctx context.Context, obj *types.Document, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TagOrderBy) (*types.TagConnection, error) {
+	return r.tagsForResourceID(ctx, obj.ID, first, after, last, before, orderBy)
+}
+
 // Content is the resolver for the content field.
 func (r *documentResolver) Content(ctx context.Context, obj *types.Document) (*types.DocumentContent, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet)

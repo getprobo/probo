@@ -2301,9 +2301,29 @@
     "switchToDarkMode": "Overschakelen naar donkere modus",
     "switchToLightMode": "Overschakelen naar lichte modus",
     "spotlight": {
-      "title": "Ga naar",
-      "placeholder": "Ga naar…",
-      "empty": "Geen overeenkomende pagina's"
+      "title": "Zoeken",
+      "placeholder": "Zoek pagina’s en resources…",
+      "empty": "Geen resultaten",
+      "types": {
+        "AiSystem": "AI-systeem",
+        "Asset": "Asset",
+        "Audit": "Audit",
+        "BusinessFunction": "Bedrijfsfunctie",
+        "Datum": "Gegeven",
+        "Device": "Apparaat",
+        "Document": "Document",
+        "Finding": "Bevinding",
+        "Framework": "Framework",
+        "InternalControl": "Interne controle",
+        "Obligation": "Verplichting",
+        "ProcessingActivity": "Verwerkingsactiviteit",
+        "RightsRequest": "Rechtenverzoek",
+        "Risk": "Risico",
+        "RiskAnalysis": "Risicoanalyse",
+        "StatementOfApplicability": "Verklaring van toepasselijkheid",
+        "Task": "Taak",
+        "ThirdParty": "Derde partij"
+      }
     },
     "groups": {
       "governance": "Governance",

@@ -52,7 +52,15 @@ input TransferImpactAssessmentOrder
     field: TransferImpactAssessmentOrderField!
 }
 
-type DataProtectionImpactAssessment implements Node {
+type DataProtectionImpactAssessment implements Node & Taggable {
+    tags(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TagOrder
+    ): TagConnection! @goField(forceResolver: true)
+
     id: ID!
     processingActivity: ProcessingActivity! @goField(forceResolver: true)
     organization: Organization! @goField(forceResolver: true)
@@ -67,7 +75,15 @@ type DataProtectionImpactAssessment implements Node {
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
-type TransferImpactAssessment implements Node {
+type TransferImpactAssessment implements Node & Taggable {
+    tags(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TagOrder
+    ): TagConnection! @goField(forceResolver: true)
+
     id: ID!
     processingActivity: ProcessingActivity! @goField(forceResolver: true)
     organization: Organization! @goField(forceResolver: true)

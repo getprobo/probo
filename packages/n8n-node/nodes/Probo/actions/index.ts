@@ -49,6 +49,7 @@ import * as organizationContext from './organizationContext';
 import * as processingActivity from './processingActivity';
 import * as rightsRequest from './rightsRequest';
 import * as resourceAlias from './resourceAlias';
+import * as tag from './tag';
 import * as riskAnalysis from './riskAnalysis';
 import * as user from './user';
 import * as risk from './risk';
@@ -110,6 +111,7 @@ export const resources: Record<string, ResourceModule> = {
 	processingActivity: processingActivity as ResourceModule,
 	rightsRequest: rightsRequest as ResourceModule,
 	resourceAlias: resourceAlias as ResourceModule,
+	tag: tag as ResourceModule,
 	riskAnalysis: riskAnalysis as ResourceModule,
 	user: user as ResourceModule,
 	risk: risk as ResourceModule,

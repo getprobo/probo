@@ -212,6 +212,17 @@ func (s DatumService) Update(
 			return fmt.Errorf("cannot update data: %w", err)
 		}
 
+		if err := coredata.UpsertSearchResource(
+			ctx,
+			conn,
+			datum.ID,
+			datum.OrganizationID,
+			datum.Name,
+			datum.SearchText(),
+		); err != nil {
+			return fmt.Errorf("cannot sync search: %w", err)
+		}
+
 		if req.ThirdPartyIDs != nil {
 			if len(req.ThirdPartyIDs) > 0 {
 				thirdParties := &coredata.ThirdParties{}
@@ -268,6 +279,17 @@ func (s DatumService) Create(
 				return fmt.Errorf("cannot insert datum: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				datum.ID,
+				datum.OrganizationID,
+				datum.Name,
+				datum.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			if len(req.ThirdPartyIDs) > 0 {
 				thirdParties := &coredata.ThirdParties{}
 				if err := thirdParties.LoadByIDs(ctx, conn, scope, req.ThirdPartyIDs); err != nil {
@@ -298,6 +320,10 @@ func (s DatumService) Delete(
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			if err := coredata.DeleteSearchResource(ctx, tx, datum.ID); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			return datum.Delete(ctx, tx, scope)
 		},
 	)

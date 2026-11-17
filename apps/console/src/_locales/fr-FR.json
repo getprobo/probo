@@ -2302,9 +2302,29 @@
     "switchToDarkMode": "Passer en mode sombre",
     "switchToLightMode": "Passer en mode clair",
     "spotlight": {
-      "title": "Aller à",
-      "placeholder": "Aller à…",
-      "empty": "Aucune page correspondante"
+      "title": "Rechercher",
+      "placeholder": "Rechercher pages et ressources…",
+      "empty": "Aucun résultat",
+      "types": {
+        "AiSystem": "Système d’IA",
+        "Asset": "Actif",
+        "Audit": "Audit",
+        "BusinessFunction": "Fonction métier",
+        "Datum": "Donnée",
+        "Device": "Appareil",
+        "Document": "Document",
+        "Finding": "Constat",
+        "Framework": "Référentiel",
+        "InternalControl": "Contrôle interne",
+        "Obligation": "Obligation",
+        "ProcessingActivity": "Activité de traitement",
+        "RightsRequest": "Demande de droits",
+        "Risk": "Risque",
+        "RiskAnalysis": "Analyse de risques",
+        "StatementOfApplicability": "Déclaration d’applicabilité",
+        "Task": "Tâche",
+        "ThirdParty": "Tiers"
+      }
     },
     "groups": {
       "governance": "Gouvernance",

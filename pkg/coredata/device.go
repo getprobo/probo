@@ -1077,21 +1077,34 @@ func (d *Device) DeleteOrphans(
 	now time.Time,
 ) (int64, error) {
 	q := `
-DELETE FROM devices d
-WHERE
-    d.state IN (@pending_state, @revoked_state)
-    AND d.api_key_hash IS NULL
-    AND NOT EXISTS (
-        SELECT 1
-        FROM device_postures p
-        WHERE p.device_id = d.id
-    )
-    AND NOT EXISTS (
-        SELECT 1
-        FROM device_enrollment_tokens t
-        WHERE t.device_id = d.id
-          AND t.expires_at >= @now
-    )
+WITH doomed AS (
+    SELECT d.id
+    FROM devices d
+    WHERE
+        d.state IN (@pending_state, @revoked_state)
+        AND d.api_key_hash IS NULL
+        AND NOT EXISTS (
+            SELECT 1
+            FROM device_postures p
+            WHERE p.device_id = d.id
+        )
+        AND NOT EXISTS (
+            SELECT 1
+            FROM device_enrollment_tokens t
+            WHERE t.device_id = d.id
+              AND t.expires_at >= @now
+        )
+),
+deleted_index AS (
+    DELETE FROM search_resources
+    WHERE resource_id IN (SELECT id FROM doomed)
+),
+deleted_tags AS (
+    DELETE FROM tag_assignments
+    WHERE resource_id IN (SELECT id FROM doomed)
+)
+DELETE FROM devices
+WHERE id IN (SELECT id FROM doomed)
 `
 
 	args := pgx.StrictNamedArgs{

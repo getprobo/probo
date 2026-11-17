@@ -232,6 +232,17 @@ func (s *AiSystemService) Create(
 				return fmt.Errorf("cannot insert ai system: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				aiSystem.ID,
+				aiSystem.OrganizationID,
+				aiSystem.Name,
+				aiSystem.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -350,6 +361,17 @@ func (s *AiSystemService) Update(
 				return fmt.Errorf("cannot update ai system: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				aiSystem.ID,
+				aiSystem.OrganizationID,
+				aiSystem.Name,
+				aiSystem.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -370,6 +392,10 @@ func (s AiSystemService) Delete(
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			if err := coredata.DeleteSearchResource(ctx, tx, aiSystem.ID); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			err := aiSystem.Delete(ctx, tx, scope)
 			if err != nil {
 				return fmt.Errorf("cannot delete ai system: %w", err)

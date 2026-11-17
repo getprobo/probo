@@ -25,7 +25,15 @@ input EvidenceOrder
     field: EvidenceOrderField!
 }
 
-type Evidence implements Node {
+type Evidence implements Node & Taggable {
+    tags(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TagOrder
+    ): TagConnection! @goField(forceResolver: true)
+
     id: ID!
     size: Int!
     state: EvidenceState!

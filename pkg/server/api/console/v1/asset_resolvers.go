@@ -22,6 +22,11 @@ import (
 	"go.probo.inc/probo/pkg/validator"
 )
 
+// Tags is the resolver for the tags field.
+func (r *assetResolver) Tags(ctx context.Context, obj *types.Asset, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TagOrderBy) (*types.TagConnection, error) {
+	return r.tagsForResourceID(ctx, obj.ID, first, after, last, before, orderBy)
+}
+
 // Owner is the resolver for the owner field.
 func (r *assetResolver) Owner(ctx context.Context, obj *types.Asset) (*types.Profile, error) {
 	if _, err := r.authorize(ctx, obj.Owner.ID, iam.ActionMembershipProfileGet); err != nil {
@@ -135,6 +140,11 @@ func (r *assetConnectionResolver) TotalCount(ctx context.Context, obj *types.Ass
 	r.logger.ErrorCtx(ctx, "unsupported resolver")
 
 	return 0, gqlx.Internal(ctx)
+}
+
+// Tags is the resolver for the tags field.
+func (r *datumResolver) Tags(ctx context.Context, obj *types.Datum, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TagOrderBy) (*types.TagConnection, error) {
+	return r.tagsForResourceID(ctx, obj.ID, first, after, last, before, orderBy)
 }
 
 // Owner is the resolver for the owner field.

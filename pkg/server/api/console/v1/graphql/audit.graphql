@@ -158,7 +158,15 @@ input FindingFilter {
     query: String
 }
 
-type Audit implements Node {
+type Audit implements Node & Taggable {
+    tags(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TagOrder
+    ): TagConnection! @goField(forceResolver: true)
+
     id: ID!
     name: String
     firm: String
@@ -205,7 +213,15 @@ type Audit implements Node {
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
-type Finding implements Node {
+type Finding implements Node & Taggable {
+    tags(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TagOrder
+    ): TagConnection! @goField(forceResolver: true)
+
     id: ID!
     organization: Organization @goField(forceResolver: true)
     kind: FindingKind!

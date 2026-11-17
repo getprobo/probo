@@ -25,6 +25,11 @@ import (
 	"go.probo.inc/probo/pkg/validator"
 )
 
+// Tags is the resolver for the tags field.
+func (r *deviceResolver) Tags(ctx context.Context, obj *types.Device, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TagOrderBy) (*types.TagConnection, error) {
+	return r.tagsForResourceID(ctx, obj.ID, first, after, last, before, orderBy)
+}
+
 // Owner is the resolver for the owner field.
 func (r *deviceResolver) Owner(ctx context.Context, obj *types.Device) (*types.Profile, error) {
 	if obj.Owner == nil {

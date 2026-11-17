@@ -47,6 +47,14 @@ interface Node {
 type Query {
     node(id: ID!): Node!
     viewer: Viewer!
+    search(
+        organizationId: ID!
+        query: String!
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+    ): SearchResultConnection!
     commonThirdParties(name: String!): [CommonThirdParty!]!
     commonGVLVendors(
         first: Int

@@ -1513,9 +1513,29 @@
     "switchToDarkMode": "Switch to dark mode",
     "switchToLightMode": "Switch to light mode",
     "spotlight": {
-      "title": "Go to",
-      "placeholder": "Go to…",
-      "empty": "No matching pages"
+      "title": "Search",
+      "placeholder": "Search pages and resources…",
+      "empty": "No matches",
+      "types": {
+        "AiSystem": "AI system",
+        "Asset": "Asset",
+        "Audit": "Audit",
+        "BusinessFunction": "Business function",
+        "Datum": "Data",
+        "Device": "Device",
+        "Document": "Document",
+        "Finding": "Finding",
+        "Framework": "Framework",
+        "InternalControl": "Internal control",
+        "Obligation": "Obligation",
+        "ProcessingActivity": "Processing activity",
+        "RightsRequest": "Rights request",
+        "Risk": "Risk",
+        "RiskAnalysis": "Risk analysis",
+        "StatementOfApplicability": "Statement of applicability",
+        "Task": "Task",
+        "ThirdParty": "Third party"
+      }
     },
     "groups": {
       "governance": "Governance",

@@ -25,6 +25,11 @@ import (
 	"go.probo.inc/probo/pkg/validator"
 )
 
+// Tags is the resolver for the tags field.
+func (r *auditResolver) Tags(ctx context.Context, obj *types.Audit, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TagOrderBy) (*types.TagConnection, error) {
+	return r.tagsForResourceID(ctx, obj.ID, first, after, last, before, orderBy)
+}
+
 // Organization is the resolver for the organization field.
 func (r *auditResolver) Organization(ctx context.Context, obj *types.Audit) (*types.Organization, error) {
 	if _, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
@@ -300,6 +305,11 @@ func (r *auditConnectionResolver) TotalCount(ctx context.Context, obj *types.Aud
 		r.logger.ErrorCtx(ctx, "unsupported resolver", log.Any("resolver", obj.Resolver))
 		return 0, gqlx.Internal(ctx)
 	}
+}
+
+// Tags is the resolver for the tags field.
+func (r *findingResolver) Tags(ctx context.Context, obj *types.Finding, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TagOrderBy) (*types.TagConnection, error) {
+	return r.tagsForResourceID(ctx, obj.ID, first, after, last, before, orderBy)
 }
 
 // Organization is the resolver for the organization field.

@@ -328,3 +328,36 @@ WHERE
 
 	return err
 }
+
+func (ss *RiskAnalysisDiagrams) LoadIDsByRiskAnalysisID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	riskAnalysisID gid.GID,
+) ([]gid.GID, error) {
+	q := `
+SELECT
+	id
+FROM
+	risk_analysis_diagrams
+WHERE
+	%s
+	AND risk_analysis_id = @risk_analysis_id
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"risk_analysis_id": riskAnalysisID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query risk analysis diagram ids: %w", err)
+	}
+
+	ids, err := pgx.CollectRows(rows, pgx.RowTo[gid.GID])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect risk analysis diagram ids: %w", err)
+	}
+
+	return ids, nil
+}

@@ -66,6 +66,17 @@ func repeatLockedRecurringTask(
 		return nil, fmt.Errorf("cannot clear recurrence on task %q: %w", source.ID, err)
 	}
 
+	if err := coredata.UpsertSearchResource(
+		ctx,
+		conn,
+		source.ID,
+		source.OrganizationID,
+		source.Name,
+		source.SearchText(),
+	); err != nil {
+		return nil, fmt.Errorf("cannot sync search: %w", err)
+	}
+
 	if err := InsertCreatedActivity(ctx, conn, scope, next, nil, now); err != nil {
 		return nil, fmt.Errorf("cannot record next task created event: %w", err)
 	}
@@ -126,6 +137,17 @@ func insertNextRecurringTask(
 
 	if err := next.Insert(ctx, conn, scope); err != nil {
 		return nil, fmt.Errorf("cannot insert next recurring task: %w", err)
+	}
+
+	if err := coredata.UpsertSearchResource(
+		ctx,
+		conn,
+		next.ID,
+		next.OrganizationID,
+		next.Name,
+		next.SearchText(),
+	); err != nil {
+		return nil, fmt.Errorf("cannot sync search: %w", err)
 	}
 
 	if err := (coredata.InternalControlTask{}).CopyFromTask(ctx, conn, scope, source.ID, next.ID, next.ReferenceID, now); err != nil {

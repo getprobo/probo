@@ -88,6 +88,11 @@ func (r *applicabilityStatementConnectionResolver) TotalCount(ctx context.Contex
 	return 0, gqlx.Internal(ctx)
 }
 
+// Tags is the resolver for the tags field.
+func (r *controlResolver) Tags(ctx context.Context, obj *types.Control, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TagOrderBy) (*types.TagConnection, error) {
+	return r.tagsForResourceID(ctx, obj.ID, first, after, last, before, orderBy)
+}
+
 // Organization is the resolver for the organization field.
 func (r *controlResolver) Organization(ctx context.Context, obj *types.Control) (*types.Organization, error) {
 	if _, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
@@ -808,6 +813,11 @@ func (r *mutationResolver) PublishStatementOfApplicability(ctx context.Context, 
 		DocumentEdge:        types.NewDocumentEdge(document, coredata.DocumentOrderFieldCreatedAt),
 		DocumentVersionEdge: types.NewDocumentVersionEdge(documentVersion, coredata.DocumentVersionOrderFieldCreatedAt),
 	}, nil
+}
+
+// Tags is the resolver for the tags field.
+func (r *statementOfApplicabilityResolver) Tags(ctx context.Context, obj *types.StatementOfApplicability, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TagOrderBy) (*types.TagConnection, error) {
+	return r.tagsForResourceID(ctx, obj.ID, first, after, last, before, orderBy)
 }
 
 // Document is the resolver for the document field.

@@ -182,6 +182,11 @@ func (r *mutationResolver) DeleteTreatmentPlanInternalControlMapping(ctx context
 	}, nil
 }
 
+// Tags is the resolver for the tags field.
+func (r *treatmentPlanResolver) Tags(ctx context.Context, obj *types.TreatmentPlan, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TagOrderBy) (*types.TagConnection, error) {
+	return r.tagsForResourceID(ctx, obj.ID, first, after, last, before, orderBy)
+}
+
 // NetLikelihood is the resolver for the netLikelihood field.
 func (r *treatmentPlanResolver) NetLikelihood(ctx context.Context, obj *types.TreatmentPlan) (int, error) {
 	likelihood, _, _, err := r.treatmentPlanNetScores(ctx, obj)

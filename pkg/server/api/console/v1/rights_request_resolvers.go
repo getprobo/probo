@@ -12,6 +12,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
@@ -102,6 +103,11 @@ func (r *mutationResolver) DeleteRightsRequest(ctx context.Context, input types.
 	return &types.DeleteRightsRequestPayload{
 		DeletedRightsRequestID: input.RightsRequestID,
 	}, nil
+}
+
+// Tags is the resolver for the tags field.
+func (r *rightsRequestResolver) Tags(ctx context.Context, obj *types.RightsRequest, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TagOrderBy) (*types.TagConnection, error) {
+	return r.tagsForResourceID(ctx, obj.ID, first, after, last, before, orderBy)
 }
 
 // Organization is the resolver for the organization field.

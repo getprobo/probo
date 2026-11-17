@@ -92,6 +92,7 @@ func NewMCPClient(t require.TestingT, owner *Client) *MCPClient {
 		"v1:privacy",
 		"v1:resource-alias",
 		"v1:risk",
+		"v1:tag",
 		"v1:task",
 		"v1:third-party",
 		"v1:webhook",

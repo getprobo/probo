@@ -225,6 +225,17 @@ func (s *Service) ApplyInboundIssue(
 				return fmt.Errorf("cannot update task from Linear: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				tx,
+				task.ID,
+				task.OrganizationID,
+				task.Name,
+				task.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			actorID, err := inboundActivityActorID(ctx, tx, scope, link.OrganizationID, envelope.Actor)
 			if err != nil {
 				return fmt.Errorf("cannot resolve Linear activity actor: %w", err)
