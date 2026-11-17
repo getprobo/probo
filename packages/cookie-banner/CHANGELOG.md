@@ -4,6 +4,8 @@ All notable changes to the `@probo/cookie-banner` SDK will be documented in this
 
 ## Unreleased
 
+## [0.23.0] - 2026-11-17
+
 ### Changed
 
 - **Breaking**: every page reports a page view, and cookies already
