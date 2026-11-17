@@ -24,6 +24,32 @@
       "empty": "Aucun contrôle trouvé",
       "loadError": "Impossible de charger les contrôles"
     },
+    "approvals": {
+      "title": "Approbateurs",
+      "add": "Ajouter un approbateur",
+      "remove": "Retirer {{name}}",
+      "none": "Aucun",
+      "states": {
+        "PENDING": "En attente",
+        "APPROVED": "Approuvé",
+        "REJECTED": "Rejeté",
+        "VOIDED": "Annulé"
+      }
+    },
+    "signatories": {
+      "title": "Signataires",
+      "add": "Demander une signature",
+      "remove": "Annuler {{name}}",
+      "search": "Rechercher une personne",
+      "empty": "Aucune personne trouvée",
+      "loadMore": "Charger plus",
+      "loadError": "Impossible de charger les personnes",
+      "none": "Aucun",
+      "states": {
+        "REQUESTED": "Demandée",
+        "SIGNED": "Signée"
+      }
+    },
     "errors": {
       "update": "Échec de la mise à jour du document"
     }

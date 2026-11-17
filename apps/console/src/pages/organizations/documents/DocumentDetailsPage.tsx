@@ -30,6 +30,8 @@ import type { DocumentDetailsPageQuery } from "#/__generated__/core/DocumentDeta
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { NotFoundError } from "#/lib/relay/errors";
 
+import { DocumentApprovalsSection } from "./_components/DocumentApprovalsSection";
+import { DocumentSignatoriesSection } from "./_components/DocumentSignatoriesSection";
 import { DocumentControlsSection } from "./_components/DocumentControlsSection";
 import { DocumentPropertiesSection } from "./_components/DocumentPropertiesSection";
 import { DocumentTitleField } from "./_components/DocumentTitleField";
@@ -45,6 +47,8 @@ export const documentDetailsPageFragment = graphql`
     ...DocumentTitleField_document
     ...DocumentPropertiesSection_document
     ...DocumentControlsSection_document
+    ...DocumentApprovalsSection_document
+    ...DocumentSignatoriesSection_document
   }
 `;
 
@@ -104,6 +108,8 @@ export function DocumentDetailsPage({ queryRef }: DocumentDetailsPageProps) {
         </div>
         <div className={side()}>
           <DocumentPropertiesSection documentKey={document} />
+          <DocumentApprovalsSection documentKey={document} />
+          <DocumentSignatoriesSection documentKey={document} />
           <DocumentControlsSection documentKey={document} />
         </div>
       </div>

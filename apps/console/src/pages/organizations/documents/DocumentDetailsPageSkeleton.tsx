@@ -37,6 +37,8 @@ export function DocumentDetailsPageSkeleton() {
         <div className={side()}>
           <CardSkeleton size={5} />
           <CardSkeleton size={4} />
+          <CardSkeleton size={4} />
+          <CardSkeleton size={4} />
         </div>
       </div>
     </div>

@@ -18,21 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { UserPlusIcon, XIcon } from "@phosphor-icons/react";
 import {
   documentClassifications,
   documentTypes,
   getDocumentClassificationLabel,
   getDocumentTypeLabel,
 } from "@probo/helpers";
-import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
-import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Card } from "@probo/ui/src/v2/Card/Card";
-import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
-import { DropdownPopup } from "@probo/ui/src/v2/Dropdown/DropdownPopup";
-import { DropdownTrigger } from "@probo/ui/src/v2/Dropdown/DropdownTrigger";
 import { Field } from "@probo/ui/src/v2/form/Field";
-import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { Select } from "@probo/ui/src/v2/Select/Select";
 import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
 import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
@@ -44,7 +37,6 @@ import { graphql, useFragment } from "react-relay";
 
 import type { DocumentPropertiesSection_document$key } from "#/__generated__/core/DocumentPropertiesSection_document.graphql";
 import type { useUpdateDocumentMutation$variables } from "#/__generated__/core/useUpdateDocumentMutation.graphql";
-import { PeopleMenu } from "#/components/people/PeopleMenu";
 
 import { useUpdateDocument } from "../_lib/useUpdateDocument";
 import { documentProperties } from "../variants";
@@ -64,14 +56,6 @@ const documentPropertiesSectionFragment = graphql`
         }
       }
     }
-    defaultApprovers {
-      id
-      fullName
-      emailAddress
-      avatar {
-        downloadUrl
-      }
-    }
   }
 `;
 
@@ -84,12 +68,10 @@ export function DocumentPropertiesSection({ documentKey }: DocumentPropertiesSec
   const { t } = useTranslation("organizations/documents");
   const { t: tApp } = useTranslation();
   const [updateDocument, isUpdating] = useUpdateDocument();
-  const { root, approvers, approver, identity, avatar, name } = documentProperties();
+  const { root } = documentProperties();
   const pending = document.pendingApproval.edges[0]?.node != null;
   const locked = !document.canUpdate || document.status === "ARCHIVED" || pending;
   const canEditFields = !locked && document.writeMode !== "GENERATED";
-  const canEditApprovers = !locked;
-  const approverIds = document.defaultApprovers.map(person => person.id);
 
   function save(input: Omit<useUpdateDocumentMutation$variables["input"], "id">) {
     void updateDocument({
@@ -175,78 +157,6 @@ export function DocumentPropertiesSection({ documentKey }: DocumentPropertiesSec
                   {getDocumentClassificationLabel(tApp, document.classification) ?? document.classification}
                 </Text>
               )}
-        </Field>
-        <Field label={t("details.properties.approvers")}>
-          <div className={approvers()}>
-            {document.defaultApprovers.length > 0
-              ? document.defaultApprovers.map(person => (
-                  <div key={person.id} className={approver()}>
-                    <div className={identity()}>
-                      <Avatar
-                        size={1}
-                        className={avatar()}
-                        name={person.fullName}
-                        email={person.emailAddress}
-                        src={person.avatar?.downloadUrl}
-                      />
-                      <Text size={1} weight="medium" color="neutral" className={name()} title={person.fullName}>
-                        {person.fullName}
-                      </Text>
-                    </div>
-                    {canEditApprovers && (
-                      <IconButton
-                        size={1}
-                        variant="ghost"
-                        color="neutral"
-                        disabled={isUpdating}
-                        className="shrink-0"
-                        aria-label={t("details.properties.removeApprover", { name: person.fullName })}
-                        onClick={() => {
-                          save({
-                            defaultApproverIds: approverIds.filter(id => id !== person.id),
-                          });
-                        }}
-                      >
-                        <XIcon />
-                      </IconButton>
-                    )}
-                  </div>
-                ))
-              : (
-                  <Text size={2}>{t("details.properties.none")}</Text>
-                )}
-            {canEditApprovers && (
-              <Dropdown>
-                <DropdownTrigger
-                  disabled={isUpdating}
-                  render={(
-                    <Button
-                      variant="ghost"
-                      color="neutral"
-                      size={1}
-                      className="self-start"
-                      iconStart={<UserPlusIcon />}
-                    >
-                      {t("details.properties.addApprover")}
-                    </Button>
-                  )}
-                />
-              <DropdownPopup size={1}>
-                <PeopleMenu
-                  value={null}
-                  emptyValue={null}
-                  disabled={isUpdating}
-                  onValueChange={(approverId) => {
-                    if (approverId == null || approverIds.includes(approverId)) {
-                      return;
-                    }
-                    save({ defaultApproverIds: [...approverIds, approverId] });
-                  }}
-                />
-              </DropdownPopup>
-              </Dropdown>
-            )}
-          </div>
         </Field>
       </div>
     </Card>

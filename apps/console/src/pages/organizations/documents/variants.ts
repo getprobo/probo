@@ -32,11 +32,32 @@ export const documentDetailsPage = tv({
 export const documentProperties = tv({
   slots: {
     root: "flex w-full flex-col items-stretch gap-3",
-    approvers: "flex w-full flex-col items-stretch gap-1",
-    approver: "flex h-6 min-w-0 items-center gap-1 px-2",
-    identity: "flex min-w-0 flex-1 items-center gap-1",
-    avatar: "!size-4",
+  },
+});
+
+export const documentApprovals = tv({
+  slots: {
+    root: "flex w-full flex-col items-stretch gap-3",
+    title: "flex min-w-0 items-center justify-between gap-2",
+    titleLead: "flex min-w-0 items-center gap-2",
+    titleIcon: "size-4 shrink-0 text-sand-a9",
+    rows: "flex w-full flex-col items-stretch gap-2",
+    row: "flex min-w-0 items-center justify-between gap-2",
     name: "min-w-0 flex-1 truncate",
+    trailing: "flex shrink-0 items-center gap-1",
+  },
+});
+
+export const documentSignatories = tv({
+  slots: {
+    root: "flex w-full flex-col items-stretch gap-3",
+    title: "flex min-w-0 items-center justify-between gap-2",
+    titleLead: "flex min-w-0 items-center gap-2",
+    titleIcon: "size-4 shrink-0 text-sand-a9",
+    rows: "flex w-full flex-col items-stretch gap-2",
+    row: "flex min-w-0 items-center justify-between gap-2",
+    name: "min-w-0 flex-1 truncate",
+    trailing: "flex shrink-0 items-center gap-1",
   },
 });
 
