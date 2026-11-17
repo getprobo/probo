@@ -474,7 +474,9 @@ jobs:
     name: "test"
     if: needs.changes.outputs.go == 'true'
     needs: [changes]
-    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+    # A cold race+cover compile fills the default 30GB root when the Go
+    # cache misses. This run reached 98% and died writing GOCACHE.
+    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache/volume=80gb"
     permissions:
       contents: "read"
     steps:
