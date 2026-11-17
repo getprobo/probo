@@ -4,6 +4,16 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.272.0] - 2026-11-17
+
+### Added
+
+- Risk Analysis `Create` takes a Score Levels mapping of level and
+  minimum score for the selected matrix size. It is prefilled with the
+  default bands, and `Update` replaces the mapping when it is set
+- Risk Analysis `Get`, `Get Many`, and `Fork` return the Score Levels
+  of each analysis
+
 ## [0.271.0] - 2026-11-16
 
 ### Added
