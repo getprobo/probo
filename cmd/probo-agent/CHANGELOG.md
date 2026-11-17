@@ -5,6 +5,14 @@ documented in this file.
 
 ## Unreleased
 
+### Fixed
+
+- The Linux password policy check reads the minimum length PAM
+  enforces. It uses pam_pwquality or pam_cracklib, including
+  pwquality.conf and its drop-ins, and falls back to login.defs only
+  when those stacks set no length. A minimum below 8 fails, and an
+  unreadable policy is reported as unknown.
+
 ## [0.9.0] - 2026-11-09
 
 ### Added

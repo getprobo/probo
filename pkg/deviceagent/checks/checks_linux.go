@@ -903,19 +903,6 @@ func linuxAutoUpdate(ctx context.Context) Result {
 	)
 }
 
-func linuxPasswordPolicy(ctx context.Context) Result {
-	data, err := os.ReadFile("/etc/login.defs")
-	if err != nil {
-		return unknown(map[string]any{"error": err.Error()})
-	}
-
-	body := string(data)
-	minLen := loginDefsLookup(body, "PASS_MIN_LEN")
-	maxDays := loginDefsLookup(body, "PASS_MAX_DAYS")
-
-	return linuxPasswordPolicyFromDefs(minLen, maxDays)
-}
-
 func linuxRemoteLogin(ctx context.Context) Result {
 	if !CommandExists("systemctl") {
 		return unknown(map[string]any{"note": "systemctl unavailable"})

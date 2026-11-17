@@ -717,6 +717,25 @@ func TestParseDevicePostureValue_PasswordPolicy(t *testing.T) {
 				wantKind: coredata.DevicePostureValueKindUnknown,
 			},
 			{
+				name:     "linux pwquality minimum length",
+				checkKey: "PASSWORD_POLICY",
+				evidence: map[string]any{
+					"source":             "pwquality.conf",
+					"pass_min_len":       "14",
+					"pass_min_len_value": float64(14),
+				},
+				wantKind:   coredata.DevicePostureValueKindMinPasswordLength,
+				wantNumber: new(14),
+			},
+			{
+				name:     "linux password policy with no readable minimum",
+				checkKey: "PASSWORD_POLICY",
+				evidence: map[string]any{
+					"note": "password minimum length could not be determined",
+				},
+				wantKind: coredata.DevicePostureValueKindUnknown,
+			},
+			{
 				name:       "windows min password length zero",
 				checkKey:   "PASSWORD_POLICY",
 				evidence:   map[string]any{"min_password_length": float64(0)},
