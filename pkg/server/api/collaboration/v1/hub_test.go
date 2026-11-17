@@ -48,6 +48,28 @@ type fakeDocuments struct {
 	persistGate    chan struct{}
 	attemptsMu     sync.Mutex
 	attemptTimes   []time.Time
+	fetches        atomic.Int64
+	fetchStarted   chan struct{}
+	fetchGate      chan struct{}
+}
+
+func (f *fakeDocuments) FetchChanges(
+	ctx context.Context,
+	_ coredata.Scoper,
+	_ gid.GID,
+	_ collaboration.Position,
+) (*collaboration.RefreshDelta, error) {
+	if f.fetches.Add(1) == 1 && f.fetchGate != nil {
+		close(f.fetchStarted)
+
+		select {
+		case <-f.fetchGate:
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		}
+	}
+
+	return nil, nil
 }
 
 func (f *fakeDocuments) attemptedAt() []time.Time {
@@ -109,9 +131,10 @@ func TestRoom_NotifiesOtherPeers(t *testing.T) {
 			Document: document,
 			Revision: 1,
 		},
-		peers: make(map[uint64]RoomPeer),
+		peers:   make(map[uint64]RoomPeer),
+		refresh: make(chan struct{}, 1),
 	}
-	room.revision.Store(1)
+	room.position = collaboration.Position{Revision: 1}
 	hub := &Hub{
 		rooms: map[gid.GID]*Room{
 			documentID: room,
@@ -123,10 +146,7 @@ func TestRoom_NotifiesOtherPeers(t *testing.T) {
 	second := hub.addPeerLocked(documentID, room, "second")
 	hub.mu.Unlock()
 
-	first.SetRevision(2)
 	first.NotifyPeers()
-
-	assert.Equal(t, int64(2), second.Revision())
 
 	select {
 	case <-second.WakeCh:
@@ -140,17 +160,22 @@ func TestRoom_NotifiesOtherPeers(t *testing.T) {
 	default:
 	}
 
+	// An external change asks the room to refresh once for every peer. The
+	// peers are woken only by the refresh, once it moved the document, and a
+	// second notification coalesces with the pending one.
 	hub.notifyExternal(documentID.String())
+	hub.notifyExternal(documentID.String())
+
+	assert.Len(t, room.refresh, 1)
 
 	for _, wakeChannel := range []<-chan Wake{
 		first.WakeCh,
 		second.WakeCh,
 	} {
 		select {
-		case wake := <-wakeChannel:
-			assert.True(t, wake.Refresh)
+		case <-wakeChannel:
+			require.Fail(t, "external notification must not wake peers directly")
 		default:
-			require.Fail(t, "external notification did not wake peer")
 		}
 	}
 
@@ -158,6 +183,68 @@ func TestRoom_NotifiesOtherPeers(t *testing.T) {
 	assert.Contains(t, hub.rooms, documentID)
 	second.Close()
 	assert.NotContains(t, hub.rooms, documentID)
+}
+
+func TestRoom_RefreshesWithoutHoldingDocumentLock(t *testing.T) {
+	t.Parallel()
+
+	tenantID := gid.NewTenantID()
+	documentID := gid.New(tenantID, coredata.DocumentEntityType)
+	document, err := automerge.New(automerge.ActorID{9})
+	require.NoError(t, err)
+
+	documents := &fakeDocuments{
+		opened: &collaboration.DocumentCollaboration{
+			Document: document,
+			Revision: 1,
+		},
+		fetchStarted: make(chan struct{}),
+		fetchGate:    make(chan struct{}),
+	}
+	room := &Room{
+		collaboration: documents.opened,
+		documents:     documents,
+		scope:         coredata.NewScope(tenantID, gid.Nil),
+		documentID:    documentID,
+		peers:         make(map[uint64]RoomPeer),
+		dirty:         make(chan struct{}, 1),
+		refresh:       make(chan struct{}, 1),
+		stop:          make(chan struct{}),
+		done:          make(chan struct{}),
+	}
+
+	room.position = collaboration.Position{Revision: 1}
+	go room.run()
+
+	room.refresh <- struct{}{}
+
+	select {
+	case <-documents.fetchStarted:
+	case <-time.After(time.Second):
+		require.Fail(t, "room did not refresh")
+	}
+
+	// The canonical read is still blocked. A joining peer's request takes the
+	// document lock, and must not wait behind that read.
+	locked := make(chan struct{})
+	lease := &RoomLease{room: room}
+
+	go func() {
+		lease.LockDocument()
+		lease.UnlockDocument()
+		close(locked)
+	}()
+
+	select {
+	case <-locked:
+	case <-time.After(time.Second):
+		require.Fail(t, "refresh held the document lock while reading")
+	}
+
+	close(documents.fetchGate)
+	close(room.stop)
+	<-room.done
+	require.NoError(t, document.Close())
 }
 
 func TestRoom_ReplaysPresenceOnJoin(t *testing.T) {
@@ -176,7 +263,7 @@ func TestRoom_ReplaysPresenceOnJoin(t *testing.T) {
 		peers:    make(map[uint64]RoomPeer),
 		presence: make(map[string]presenceEntry),
 	}
-	room.revision.Store(1)
+	room.position = collaboration.Position{Revision: 1}
 	hub := &Hub{
 		rooms: map[gid.GID]*Room{
 			documentID: room,
@@ -269,7 +356,7 @@ func TestRoom_DepartureDropsCachedPresence(t *testing.T) {
 		peers:    make(map[uint64]RoomPeer),
 		presence: make(map[string]presenceEntry),
 	}
-	room.revision.Store(1)
+	room.position = collaboration.Position{Revision: 1}
 	hub := &Hub{
 		rooms: map[gid.GID]*Room{
 			documentID: room,
@@ -355,7 +442,7 @@ func TestRoom_BroadcastsEphemeralToOtherPeers(t *testing.T) {
 		},
 		peers: make(map[uint64]RoomPeer),
 	}
-	room.revision.Store(1)
+	room.position = collaboration.Position{Revision: 1}
 	hub := &Hub{
 		rooms: map[gid.GID]*Room{
 			documentID: room,
@@ -401,7 +488,7 @@ func TestHub_DeliversExternalEphemeral(t *testing.T) {
 		collaboration: &collaboration.DocumentCollaboration{Document: document, Revision: 1},
 		peers:         make(map[uint64]RoomPeer),
 	}
-	room.revision.Store(1)
+	room.position = collaboration.Position{Revision: 1}
 	hub := &Hub{
 		rooms:      map[gid.GID]*Room{documentID: room},
 		instanceID: "local-instance",
@@ -461,7 +548,7 @@ func TestRoom_DropsEphemeralWhenBufferFull(t *testing.T) {
 		collaboration: &collaboration.DocumentCollaboration{Document: document, Revision: 1},
 		peers:         make(map[uint64]RoomPeer),
 	}
-	room.revision.Store(1)
+	room.position = collaboration.Position{Revision: 1}
 	hub := &Hub{
 		rooms: map[gid.GID]*Room{documentID: room},
 	}
@@ -506,7 +593,7 @@ func TestRoom_DebouncesPersistence(t *testing.T) {
 		done:          make(chan struct{}),
 	}
 
-	room.revision.Store(1)
+	room.position = collaboration.Position{Revision: 1}
 	go room.run()
 
 	lease := &RoomLease{room: room}
@@ -517,7 +604,7 @@ func TestRoom_DebouncesPersistence(t *testing.T) {
 	require.Eventually(
 		t,
 		func() bool {
-			return room.revision.Load() == 2
+			return documents.persisted.Load() == 1
 		},
 		time.Second,
 		5*time.Millisecond,
@@ -555,7 +642,7 @@ func TestRoom_RetriesPersistAfterError(t *testing.T) {
 		done:          make(chan struct{}),
 	}
 
-	room.revision.Store(1)
+	room.position = collaboration.Position{Revision: 1}
 	go room.run()
 
 	lease := &RoomLease{room: room}
@@ -566,7 +653,7 @@ func TestRoom_RetriesPersistAfterError(t *testing.T) {
 	require.Eventually(
 		t,
 		func() bool {
-			return room.revision.Load() == 2
+			return documents.persisted.Load() == 1
 		},
 		time.Second,
 		5*time.Millisecond,
@@ -606,7 +693,7 @@ func TestRoom_BacksOffPersistRetries(t *testing.T) {
 		done:          make(chan struct{}),
 	}
 
-	room.revision.Store(1)
+	room.position = collaboration.Position{Revision: 1}
 
 	go room.run()
 
@@ -677,7 +764,7 @@ func TestRoom_PersistsDirtyOnCloseAfterError(t *testing.T) {
 		done:          make(chan struct{}),
 	}
 
-	room.revision.Store(1)
+	room.position = collaboration.Position{Revision: 1}
 	go room.run()
 
 	var releaseGate sync.Once
@@ -748,6 +835,15 @@ func (d *cancelProbeDocuments) Persist(
 	*automerge.Document,
 ) (int64, error) {
 	return 1, nil
+}
+
+func (d *cancelProbeDocuments) FetchChanges(
+	context.Context,
+	coredata.Scoper,
+	gid.GID,
+	collaboration.Position,
+) (*collaboration.RefreshDelta, error) {
+	return nil, nil
 }
 
 func TestAcquire_OpenFollowsCallerContext(t *testing.T) {

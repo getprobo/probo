@@ -69,6 +69,15 @@ func (f *fakeDocumentCollaborationDocuments) Persist(
 	return revision, nil
 }
 
+func (f *fakeDocumentCollaborationDocuments) FetchChanges(
+	context.Context,
+	coredata.Scoper,
+	gid.GID,
+	collaboration.Position,
+) (*collaboration.RefreshDelta, error) {
+	return nil, nil
+}
+
 func newRepoTestServer(
 	t *testing.T,
 	hub *Hub,

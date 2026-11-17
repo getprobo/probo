@@ -364,41 +364,165 @@ func (s *Service) logCompactionFailure(
 	)
 }
 
-func (s *Service) Refresh(
+// ErrRefreshIncomplete reports that applying a refresh delta left the live
+// document short of the canonical heads, because the change log no longer
+// holds a change the live document lacks. Fetching again from the zero
+// Position rebuilds from the snapshot and closes the gap.
+var ErrRefreshIncomplete = errors.New(
+	"collaboration refresh did not reach the canonical heads",
+)
+
+// RefreshDelta is what the canonical document gained after a known Position.
+// It is fetched without touching the live document, so the caller holds its
+// document lock only while applying it. Close releases it.
+type RefreshDelta struct {
+	// Position is the canonical position the live document reaches once the
+	// delta is applied.
+	Position Position
+
+	heads   []automerge.Hash
+	changes []automerge.Change
+	// canonical is set instead of changes when the change log no longer
+	// covers the known position, after compaction or on a first fetch.
+	canonical *automerge.Document
+}
+
+// FetchChanges reads what the canonical document gained after known, and
+// returns nil when it did not move. When the change log still holds every row
+// after known, only those rows are read. Otherwise the canonical document is
+// rebuilt from its snapshot here, outside any document lock, so applying the
+// delta stays a merge.
+func (s *Service) FetchChanges(
 	ctx context.Context,
 	scope coredata.Scoper,
 	documentID gid.GID,
-	document *automerge.Document,
-	knownRevision int64,
-) (int64, bool, error) {
-	doc, changes, err := s.readConsistentCollaboration(ctx, scope, documentID)
+	known Position,
+) (*RefreshDelta, error) {
+	doc, changes, incremental, err := s.readCanonicalSince(ctx, scope, documentID, known)
 	if err != nil {
-		return 0, false, err
+		return nil, err
 	}
 
-	if doc.Revision == knownRevision {
-		return knownRevision, false, nil
+	position := Position{
+		Revision:       doc.Revision,
+		ChangeRevision: doc.ChangeRevision,
 	}
 
-	if err := mergeCanonical(ctx, doc, changes, document); err != nil {
-		return 0, false, err
+	if known.Revision != 0 && position.Revision == known.Revision {
+		return nil, nil
 	}
 
-	return doc.Revision, true, nil
+	heads, err := decodeHeads(doc.Heads)
+	if err != nil {
+		return nil, fmt.Errorf("cannot decode canonical collaboration heads: %w", err)
+	}
+
+	if incremental {
+		return &RefreshDelta{
+			Position: position,
+			heads:    heads,
+			changes:  changes,
+		}, nil
+	}
+
+	canonical, err := loadAutomergeDocument(ctx, doc.Snapshot)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load refreshed collaboration document: %w", err)
+	}
+
+	if len(changes) > 0 {
+		if err := canonical.ApplyChanges(changes); err != nil {
+			_ = canonical.Close()
+
+			return nil, fmt.Errorf("cannot apply refreshed collaboration changes: %w", err)
+		}
+	}
+
+	return &RefreshDelta{
+		Position:  position,
+		heads:     heads,
+		canonical: canonical,
+	}, nil
 }
 
-// catchUp merges the canonical document into a live document. It takes no
-// row lock: the canonical state is read consistently and rebuilt outside any
-// transaction.
+// Apply brings document up to the delta's canonical position and reports
+// whether its heads moved. Changes the document already holds are skipped, so
+// a delta that overlaps the document's own persisted edits is cheap and
+// reports no movement.
+func (d *RefreshDelta) Apply(document *automerge.Document) (bool, error) {
+	before, err := document.Heads()
+	if err != nil {
+		return false, fmt.Errorf("cannot read local collaboration heads: %w", err)
+	}
+
+	if d.canonical != nil {
+		if _, err := document.Merge(d.canonical); err != nil {
+			return false, fmt.Errorf("cannot merge refreshed collaboration document: %w", err)
+		}
+	} else if len(d.changes) > 0 {
+		if err := document.ApplyChanges(d.changes); err != nil {
+			return false, fmt.Errorf("cannot apply refreshed collaboration changes: %w", err)
+		}
+	}
+
+	covered, err := document.HasHeads(d.heads)
+	if err != nil {
+		return false, fmt.Errorf("cannot inspect local collaboration heads: %w", err)
+	}
+
+	if !covered {
+		return false, ErrRefreshIncomplete
+	}
+
+	after, err := document.Heads()
+	if err != nil {
+		return false, fmt.Errorf("cannot read local collaboration heads: %w", err)
+	}
+
+	return !slices.Equal(before, after), nil
+}
+
+// Close releases the canonical document a fallback delta holds.
+func (d *RefreshDelta) Close() {
+	if d != nil && d.canonical != nil {
+		_ = d.canonical.Close()
+	}
+}
+
+// catchUp brings a live document up to the canonical document. It takes no
+// row lock: the canonical state is read consistently outside any transaction.
+// The live document usually holds the snapshot already, so applying the
+// change log is enough. Only when the change log no longer covers it, after a
+// compaction it missed, is the canonical document rebuilt and merged.
 func (s *Service) catchUp(
 	ctx context.Context,
 	scope coredata.Scoper,
 	documentID gid.GID,
 	document *automerge.Document,
 ) error {
-	doc, changes, err := s.readConsistentCollaboration(ctx, scope, documentID)
+	doc, changes, _, err := s.readCanonicalSince(ctx, scope, documentID, Position{})
 	if err != nil {
 		return err
+	}
+
+	heads, err := decodeHeads(doc.Heads)
+	if err != nil {
+		return fmt.Errorf("cannot decode canonical collaboration heads: %w", err)
+	}
+
+	if len(changes) > 0 {
+		if err := document.ApplyChanges(changes); err != nil {
+			return fmt.Errorf("cannot apply canonical collaboration changes: %w", err)
+		}
+	}
+
+	covered, err := document.HasHeads(heads)
+	if err != nil {
+		return fmt.Errorf("cannot inspect local collaboration heads: %w", err)
+	}
+
+	if covered {
+		return nil
 	}
 
 	return mergeCanonical(ctx, doc, changes, document)
@@ -654,14 +778,31 @@ func (s *Service) readConsistentCollaboration(
 	scope coredata.Scoper,
 	documentID gid.GID,
 ) (*coredata.CollaborationDocument, []automerge.Change, error) {
+	doc, changes, _, err := s.readCanonicalSince(ctx, scope, documentID, Position{})
+
+	return doc, changes, err
+}
+
+// readCanonicalSince reads the canonical row and the change log rows after
+// known, consistently. It reports incremental when known still lies within the
+// change log, so the rows read are exactly the ones after known. Otherwise, or
+// for the zero Position, it reads every row after the snapshot. When the
+// canonical revision still equals known's, no rows are read.
+func (s *Service) readCanonicalSince(
+	ctx context.Context,
+	scope coredata.Scoper,
+	documentID gid.GID,
+	known Position,
+) (*coredata.CollaborationDocument, []automerge.Change, bool, error) {
 	const attempts = 2
 
 	var lastErr error
 
 	for range attempts {
 		var (
-			doc     coredata.CollaborationDocument
-			changes []automerge.Change
+			doc         coredata.CollaborationDocument
+			changes     []automerge.Change
+			incremental bool
 		)
 
 		err := s.pg.WithTx(
@@ -671,12 +812,27 @@ func (s *Service) readConsistentCollaboration(
 					return err
 				}
 
+				if known.Revision != 0 && doc.Revision == known.Revision {
+					incremental = true
+
+					return nil
+				}
+
+				from := doc.SnapshotRevision
+
+				if known.Revision != 0 &&
+					known.ChangeRevision >= doc.SnapshotRevision &&
+					known.ChangeRevision <= doc.ChangeRevision {
+					from = known.ChangeRevision
+					incremental = true
+				}
+
 				loaded, err := s.collectChanges(
 					ctx,
 					tx,
 					scope,
 					documentID,
-					doc.SnapshotRevision,
+					from,
 					doc.ChangeRevision,
 				)
 				if err != nil {
@@ -700,7 +856,7 @@ func (s *Service) readConsistentCollaboration(
 			},
 		)
 		if err == nil {
-			return &doc, changes, nil
+			return &doc, changes, incremental, nil
 		}
 
 		if errors.Is(err, errCollaborationViewMoved) {
@@ -709,8 +865,8 @@ func (s *Service) readConsistentCollaboration(
 			continue
 		}
 
-		return nil, nil, err
+		return nil, nil, false, err
 	}
 
-	return nil, nil, fmt.Errorf("cannot read consistent collaboration state: %w", lastErr)
+	return nil, nil, false, fmt.Errorf("cannot read consistent collaboration state: %w", lastErr)
 }

@@ -366,8 +366,9 @@ func (s *Service) openWithActor(
 	}
 
 	return &DocumentCollaboration{
-		Document: document,
-		Revision: opened.Revision,
+		Document:       document,
+		Revision:       opened.Revision,
+		ChangeRevision: opened.ChangeRevision,
 	}, nil
 }
 

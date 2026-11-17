@@ -182,6 +182,145 @@ func TestMergeCanonical_CatchesUpLiveDocument(t *testing.T) {
 	assert.Contains(t, content, "Beta")
 }
 
+// newRefreshTestDelta returns a delta carrying the changes canonical gained
+// over live, the incremental delta a room fetches after another instance
+// persisted.
+func newRefreshTestDelta(
+	t *testing.T,
+	canonical *automerge.Document,
+	live *automerge.Document,
+) *RefreshDelta {
+	t.Helper()
+
+	liveHeads, err := live.Heads()
+	require.NoError(t, err)
+
+	changes, err := canonical.ChangesSince(liveHeads)
+	require.NoError(t, err)
+
+	heads, err := canonical.Heads()
+	require.NoError(t, err)
+
+	return &RefreshDelta{heads: heads, changes: changes}
+}
+
+func TestRefreshDelta_Apply(t *testing.T) {
+	t.Parallel()
+
+	t.Run(
+		"applies the changes persisted elsewhere",
+		func(t *testing.T) {
+			t.Parallel()
+
+			canonical, live := newPersistTestDocuments(t)
+			commitPersistTestContent(t, canonical, persistTestEdit)
+
+			delta := newRefreshTestDelta(t, canonical, live)
+			require.Len(t, delta.changes, 1)
+
+			changed, err := delta.Apply(live)
+			require.NoError(t, err)
+			assert.True(t, changed)
+
+			content, err := materialize(context.Background(), live)
+			require.NoError(t, err)
+			assert.Contains(t, content, "Beta")
+		},
+	)
+
+	t.Run(
+		"keeps the live document's own edits",
+		func(t *testing.T) {
+			t.Parallel()
+
+			canonical, live := newPersistTestDocuments(t)
+			commitPersistTestContent(t, canonical, persistTestEdit)
+			delta := newRefreshTestDelta(t, canonical, live)
+
+			require.NoError(t, live.PutString("note", "local edit"))
+			_, err := live.Commit("Local edit", time.Now())
+			require.NoError(t, err)
+
+			changed, err := delta.Apply(live)
+			require.NoError(t, err)
+			assert.True(t, changed)
+
+			note, err := live.String("note")
+			require.NoError(t, err)
+			assert.Equal(t, "local edit", note)
+		},
+	)
+
+	t.Run(
+		"moves nothing for changes the document holds",
+		func(t *testing.T) {
+			t.Parallel()
+
+			canonical, live := newPersistTestDocuments(t)
+			commitPersistTestContent(t, canonical, persistTestEdit)
+			delta := newRefreshTestDelta(t, canonical, live)
+
+			// The room persisted these changes itself, so its next refresh
+			// reads them back.
+			require.NoError(t, live.ApplyChanges(delta.changes))
+
+			changed, err := delta.Apply(live)
+			require.NoError(t, err)
+			assert.False(t, changed)
+		},
+	)
+
+	t.Run(
+		"reports a change the change log no longer holds",
+		func(t *testing.T) {
+			t.Parallel()
+
+			canonical, live := newPersistTestDocuments(t)
+			commitPersistTestContent(t, canonical, persistTestEdit)
+			commitPersistTestContent(t, canonical, persistTestLast)
+			delta := newRefreshTestDelta(t, canonical, live)
+			require.Len(t, delta.changes, 2)
+
+			// Compaction dropped the first change from the log.
+			delta.changes = delta.changes[1:]
+
+			_, err := delta.Apply(live)
+			assert.ErrorIs(t, err, ErrRefreshIncomplete)
+		},
+	)
+
+	t.Run(
+		"merges a rebuilt canonical document",
+		func(t *testing.T) {
+			t.Parallel()
+
+			canonical, live := newPersistTestDocuments(t)
+			commitPersistTestContent(t, canonical, persistTestEdit)
+			commitPersistTestContent(t, canonical, persistTestLast)
+
+			snapshot, err := canonical.Save()
+			require.NoError(t, err)
+
+			rebuilt, err := loadAutomergeDocument(context.Background(), snapshot)
+			require.NoError(t, err)
+
+			heads, err := canonical.Heads()
+			require.NoError(t, err)
+
+			delta := &RefreshDelta{heads: heads, canonical: rebuilt}
+			defer delta.Close()
+
+			changed, err := delta.Apply(live)
+			require.NoError(t, err)
+			assert.True(t, changed)
+
+			content, err := materialize(context.Background(), live)
+			require.NoError(t, err)
+			assert.Contains(t, content, "Gamma")
+		},
+	)
+}
+
 func TestMaterializeAtHeads_PinsOlderHeads(t *testing.T) {
 	t.Parallel()
 
