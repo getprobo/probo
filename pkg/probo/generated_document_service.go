@@ -4101,30 +4101,13 @@ func riskImpactLabel(v int) string {
 	}
 }
 
-func riskScoreRange(score int, levels coredata.ScoreLevels, maxScore int) string {
-	if maxScore < 1 {
-		maxScore = 1
-	}
-
-	idx := -1
-
-	for i, level := range levels {
-		if level.MinScore <= score {
-			idx = i
-		}
-	}
-
-	if idx < 0 {
+func riskScoreLevelLabel(score int, levels coredata.ScoreLevels) string {
+	level := levels.LevelFor(score)
+	if level == "" {
 		return ""
 	}
 
-	upper := maxScore
-
-	if idx+1 < len(levels) {
-		upper = levels[idx+1].MinScore - 1
-	}
-
-	return formatScoreBand(levels[idx].MinScore, upper)
+	return scoreLevelName(level)
 }
 
 func formatScoreBands(levels coredata.ScoreLevels, maxScore int) string {
@@ -4564,10 +4547,10 @@ func (s *GeneratedDocumentService) buildRiskAnalysisDocumentData(
 			Owner:              sanitizeTrackerCell(lookupProfileName(profileMap, &ownerID)),
 			InherentLikelihood: sanitizeTrackerCell(formatScoreCell(&inherentLikelihood, riskLikelihoodLabel(inherentLikelihood))),
 			InherentImpact:     sanitizeTrackerCell(formatScoreCell(&inherentImpact, riskImpactLabel(inherentImpact))),
-			InherentRiskScore:  sanitizeTrackerCell(formatScoreCell(&inherentRiskScore, riskScoreRange(inherentRiskScore, riskAnalysis.ScoreLevels, maxScore))),
+			InherentRiskScore:  sanitizeTrackerCell(formatScoreCell(&inherentRiskScore, riskScoreLevelLabel(inherentRiskScore, riskAnalysis.ScoreLevels))),
 			ResidualLikelihood: sanitizeTrackerCell(formatScoreCell(&residualLikelihood, riskLikelihoodLabel(residualLikelihood))),
 			ResidualImpact:     sanitizeTrackerCell(formatScoreCell(&residualImpact, riskImpactLabel(residualImpact))),
-			ResidualRiskScore:  sanitizeTrackerCell(formatScoreCell(&residualRiskScore, riskScoreRange(residualRiskScore, riskAnalysis.ScoreLevels, maxScore))),
+			ResidualRiskScore:  sanitizeTrackerCell(formatScoreCell(&residualRiskScore, riskScoreLevelLabel(residualRiskScore, riskAnalysis.ScoreLevels))),
 			InternalControls:   internalControlsByPlan[tp.ID],
 		})
 	}

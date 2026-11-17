@@ -44,7 +44,7 @@ func TestFormatScoreBands_OmitsCritical(t *testing.T) {
 	assert.NotContains(t, bands, "Critical")
 }
 
-func TestRiskScoreRange_UsesConfiguredMapping(t *testing.T) {
+func TestRiskScoreLevelLabel_UsesConfiguredMapping(t *testing.T) {
 	t.Parallel()
 
 	levels := coredata.ScoreLevels{
@@ -53,18 +53,36 @@ func TestRiskScoreRange_UsesConfiguredMapping(t *testing.T) {
 		{Level: coredata.RiskScoreLevelHigh, MinScore: 13},
 	}
 
-	assert.Equal(t, "1-5", riskScoreRange(1, levels, 25))
-	assert.Equal(t, "1-5", riskScoreRange(5, levels, 25))
-	assert.Equal(t, "6-12", riskScoreRange(12, levels, 25))
-	assert.Equal(t, "13-25", riskScoreRange(25, levels, 25))
+	score := 1
+	assert.Equal(t, "Low", riskScoreLevelLabel(score, levels))
+	assert.Equal(t, "1 — Low", formatScoreCell(&score, riskScoreLevelLabel(score, levels)))
+	assert.Equal(t, "Low", riskScoreLevelLabel(5, levels))
+	assert.Equal(t, "Medium", riskScoreLevelLabel(12, levels))
+	assert.Equal(t, "High", riskScoreLevelLabel(25, levels))
 }
 
-func TestRiskScoreRange_DefaultMatrix(t *testing.T) {
+func TestRiskScoreLevelLabel_DefaultMatrix(t *testing.T) {
 	t.Parallel()
 
 	levels := riskmanagement.DefaultScoreLevels(5, 5)
 
-	assert.Equal(t, "5-9", riskScoreRange(9, levels, 25))
-	assert.Equal(t, "10-14", riskScoreRange(10, levels, 25))
-	assert.Equal(t, "15-25", riskScoreRange(25, levels, 25))
+	assert.Equal(t, "Low", riskScoreLevelLabel(1, levels))
+	assert.Equal(t, "Medium", riskScoreLevelLabel(9, levels))
+	assert.Equal(t, "High", riskScoreLevelLabel(10, levels))
+	assert.Equal(t, "Critical", riskScoreLevelLabel(25, levels))
+}
+
+func TestRiskScoreLevelLabel_UsesHighestMatchingMinimum(t *testing.T) {
+	t.Parallel()
+
+	// High sits between two lower bands, so only the highest eligible minimum selects it.
+	levels := coredata.ScoreLevels{
+		{Level: coredata.RiskScoreLevelLow, MinScore: 1},
+		{Level: coredata.RiskScoreLevelHigh, MinScore: 13},
+		{Level: coredata.RiskScoreLevelMedium, MinScore: 6},
+	}
+
+	assert.Equal(t, "High", riskScoreLevelLabel(13, levels))
+	assert.Equal(t, "Medium", riskScoreLevelLabel(7, levels))
+	assert.Equal(t, "", riskScoreLevelLabel(1, nil))
 }
