@@ -290,6 +290,25 @@ func TestRefreshDelta_Apply(t *testing.T) {
 	)
 
 	t.Run(
+		"reports the movement of an incomplete delta",
+		func(t *testing.T) {
+			t.Parallel()
+
+			canonical, live := newPersistTestDocuments(t)
+			commitPersistTestContent(t, canonical, persistTestEdit)
+			delta := newRefreshTestDelta(t, canonical, live)
+
+			// The canonical heads hold a change the delta does not carry, so
+			// the delta merges its own changes and still falls short.
+			delta.heads = append(delta.heads, automerge.Hash{0xff})
+
+			changed, err := delta.Apply(live)
+			assert.ErrorIs(t, err, ErrRefreshIncomplete)
+			assert.True(t, changed)
+		},
+	)
+
+	t.Run(
 		"merges a rebuilt canonical document",
 		func(t *testing.T) {
 			t.Parallel()

@@ -24,7 +24,6 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -639,20 +638,17 @@ func (r *Room) refreshOnce() {
 	changed, err := delta.Apply(r.collaboration.Document)
 	r.docMu.Unlock()
 
-	if errors.Is(err, collaboration.ErrRefreshIncomplete) {
-		// The change log no longer holds a change the room lacks. The zero
-		// position makes the next refresh rebuild from the snapshot.
-		r.position = collaboration.Position{}
-
-		return
-	}
-
 	if err != nil {
-		return
+		// The change log no longer holds a change the room lacks, or the
+		// delta could not be applied. The zero position makes the next
+		// refresh rebuild from the snapshot instead of retrying this delta.
+		r.position = collaboration.Position{}
+	} else {
+		r.position = delta.Position
 	}
 
-	r.position = delta.Position
-
+	// A delta that fails to cover the canonical heads can still have merged
+	// changes into the document, which peers must receive.
 	if !changed {
 		return
 	}

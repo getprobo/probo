@@ -387,6 +387,20 @@ type RefreshDelta struct {
 	canonical *automerge.Document
 }
 
+// NewRefreshDelta returns a delta that applies changes and expects the live
+// document to reach heads, the canonical heads at position.
+func NewRefreshDelta(
+	position Position,
+	heads []automerge.Hash,
+	changes []automerge.Change,
+) *RefreshDelta {
+	return &RefreshDelta{
+		Position: position,
+		heads:    heads,
+		changes:  changes,
+	}
+}
+
 // FetchChanges reads what the canonical document gained after known, and
 // returns nil when it did not move. When the change log still holds every row
 // after known, only those rows are read. Otherwise the canonical document is
@@ -418,11 +432,7 @@ func (s *Service) FetchChanges(
 	}
 
 	if incremental {
-		return &RefreshDelta{
-			Position: position,
-			heads:    heads,
-			changes:  changes,
-		}, nil
+		return NewRefreshDelta(position, heads, changes), nil
 	}
 
 	canonical, err := loadAutomergeDocument(ctx, doc.Snapshot)
@@ -446,9 +456,9 @@ func (s *Service) FetchChanges(
 }
 
 // Apply brings document up to the delta's canonical position and reports
-// whether its heads moved. Changes the document already holds are skipped, so
-// a delta that overlaps the document's own persisted edits is cheap and
-// reports no movement.
+// whether its heads moved, also when it returns ErrRefreshIncomplete. Changes
+// the document already holds are skipped, so a delta that overlaps the
+// document's own persisted edits is cheap and reports no movement.
 func (d *RefreshDelta) Apply(document *automerge.Document) (bool, error) {
 	before, err := document.Heads()
 	if err != nil {
@@ -465,21 +475,25 @@ func (d *RefreshDelta) Apply(document *automerge.Document) (bool, error) {
 		}
 	}
 
-	covered, err := document.HasHeads(d.heads)
-	if err != nil {
-		return false, fmt.Errorf("cannot inspect local collaboration heads: %w", err)
-	}
-
-	if !covered {
-		return false, ErrRefreshIncomplete
-	}
-
 	after, err := document.Heads()
 	if err != nil {
 		return false, fmt.Errorf("cannot read local collaboration heads: %w", err)
 	}
 
-	return !slices.Equal(before, after), nil
+	changed := !slices.Equal(before, after)
+
+	covered, err := document.HasHeads(d.heads)
+	if err != nil {
+		return changed, fmt.Errorf("cannot inspect local collaboration heads: %w", err)
+	}
+
+	// The document can move even when the delta leaves it short of the
+	// canonical heads, so the movement is reported alongside the error.
+	if !covered {
+		return changed, ErrRefreshIncomplete
+	}
+
+	return changed, nil
 }
 
 // Close releases the canonical document a fallback delta holds.

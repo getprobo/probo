@@ -51,6 +51,7 @@ type fakeDocuments struct {
 	fetches        atomic.Int64
 	fetchStarted   chan struct{}
 	fetchGate      chan struct{}
+	delta          *collaboration.RefreshDelta
 }
 
 func (f *fakeDocuments) FetchChanges(
@@ -69,7 +70,7 @@ func (f *fakeDocuments) FetchChanges(
 		}
 	}
 
-	return nil, nil
+	return f.delta, nil
 }
 
 func (f *fakeDocuments) attemptedAt() []time.Time {
@@ -183,6 +184,81 @@ func TestRoom_NotifiesOtherPeers(t *testing.T) {
 	assert.Contains(t, hub.rooms, documentID)
 	second.Close()
 	assert.NotContains(t, hub.rooms, documentID)
+}
+
+func TestRoom_RefreshWakesPeersWhenDocumentMoves(t *testing.T) {
+	t.Parallel()
+
+	tenantID := gid.NewTenantID()
+	documentID := gid.New(tenantID, coredata.DocumentEntityType)
+	document, err := automerge.New(automerge.ActorID{3})
+	require.NoError(t, err)
+
+	defer func() { _ = document.Close() }()
+
+	// Another writer persisted a change the room document lacks.
+	writer, err := document.Fork(automerge.ActorID{4})
+	require.NoError(t, err)
+
+	defer func() { _ = writer.Close() }()
+
+	require.NoError(
+		t,
+		writer.Root().PutScalar(
+			"title",
+			automerge.Scalar{Type: automerge.ScalarTypeString, String: "external"},
+		),
+	)
+	_, err = writer.Commit("external edit", time.Now())
+	require.NoError(t, err)
+
+	heads, err := writer.Heads()
+	require.NoError(t, err)
+
+	changes, err := writer.ChangesSince(nil)
+	require.NoError(t, err)
+
+	position := collaboration.Position{Revision: 2, ChangeRevision: 2}
+	documents := &fakeDocuments{
+		delta: collaboration.NewRefreshDelta(position, heads, changes),
+	}
+	room := &Room{
+		collaboration: &collaboration.DocumentCollaboration{
+			Document: document,
+			Revision: 1,
+		},
+		documents:  documents,
+		scope:      coredata.NewScope(tenantID, gid.Nil),
+		documentID: documentID,
+		peers:      make(map[uint64]RoomPeer),
+		refresh:    make(chan struct{}, 1),
+	}
+	room.position = collaboration.Position{Revision: 1, ChangeRevision: 1}
+	hub := &Hub{
+		rooms: map[gid.GID]*Room{
+			documentID: room,
+		},
+	}
+
+	hub.mu.Lock()
+	first := hub.addPeerLocked(documentID, room, "first")
+	second := hub.addPeerLocked(documentID, room, "second")
+	hub.mu.Unlock()
+
+	room.refreshOnce()
+
+	assert.Equal(t, position, room.position)
+
+	for name, wakeChannel := range map[string]<-chan Wake{
+		"first":  first.WakeCh,
+		"second": second.WakeCh,
+	} {
+		select {
+		case <-wakeChannel:
+		default:
+			assert.Failf(t, "peer was not woken", "peer %s", name)
+		}
+	}
 }
 
 func TestRoom_RefreshesWithoutHoldingDocumentLock(t *testing.T) {
