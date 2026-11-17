@@ -371,13 +371,19 @@ func (b *Engine) currentBlockGraphemes(object opset.ObjectID) []blockOrGrapheme 
 		run.Reset()
 	}
 
+	var blockFields objectProperties
+
 	for _, value := range b.state.sequenceValues(object.OpID) {
 		operation := value.Operation
 
 		if operation.Action == opset.ActionMakeMap {
 			flush()
 
-			attributes, err := b.state.mapValue(operation.ID, make(map[opset.OpID]struct{}))
+			if blockFields == nil {
+				blockFields = b.state.objectProperties()
+			}
+
+			attributes, err := b.state.mapValue(operation.ID, make(map[opset.OpID]struct{}), blockFields)
 			if err != nil || attributes == nil {
 				attributes = map[string]any{}
 			}

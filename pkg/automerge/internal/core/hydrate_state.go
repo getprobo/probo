@@ -37,6 +37,33 @@ type hydratedValueWire struct {
 	Text   string                       `json:"text,omitempty"`
 }
 
+// objectProperties groups the live map-property operations of every object
+// so that materializing many objects costs one pass over the operations.
+type objectProperties map[opset.ObjectID]map[string][]opset.Operation
+
+func (s *State) objectProperties() objectProperties {
+	index := make(objectProperties)
+
+	s.eachOperation(func(operation opset.Operation) bool {
+		if operation.Key.Property == nil || s.isSuperseded(operation.ID) {
+			return true
+		}
+
+		fields, ok := index[operation.Object]
+		if !ok {
+			fields = make(map[string][]opset.Operation)
+			index[operation.Object] = fields
+		}
+
+		property := *operation.Key.Property
+		fields[property] = append(fields[property], operation)
+
+		return true
+	})
+
+	return index
+}
+
 // Hydrate returns the current root value as a recursively typed value.
 func (b *Engine) Hydrate() ([]byte, error) {
 	return hydrateState(b.state)
@@ -62,6 +89,7 @@ func hydrateState(state *State) ([]byte, error) {
 	value, err := state.hydratedMapValue(
 		opset.RootObject(),
 		make(map[opset.OpID]struct{}),
+		state.objectProperties(),
 	)
 	if err != nil {
 		return nil, err
@@ -78,6 +106,7 @@ func hydrateState(state *State) ([]byte, error) {
 func (s *State) hydratedMapValue(
 	object opset.ObjectID,
 	visited map[opset.OpID]struct{},
+	index objectProperties,
 ) (hydratedValueWire, error) {
 	if !object.IsRoot {
 		if _, ok := visited[object.OpID]; ok {
@@ -88,20 +117,7 @@ func (s *State) hydratedMapValue(
 		defer delete(visited, object.OpID)
 	}
 
-	properties := make(map[string][]opset.Operation)
-
-	s.eachOperation(func(operation opset.Operation) bool {
-		if operation.Object != object ||
-			operation.Key.Property == nil ||
-			s.isSuperseded(operation.ID) {
-			return true
-		}
-
-		property := *operation.Key.Property
-		properties[property] = append(properties[property], operation)
-
-		return true
-	})
+	properties := index[object]
 
 	result := hydratedValueWire{
 		Type: "map",
@@ -116,7 +132,7 @@ func (s *State) hydratedMapValue(
 			},
 		)
 
-		value, err := s.hydratedOperationValue(operations[0], visited)
+		value, err := s.hydratedOperationValue(operations[0], visited, index)
 		if err != nil {
 			return hydratedValueWire{}, err
 		}
@@ -130,6 +146,7 @@ func (s *State) hydratedMapValue(
 func (s *State) hydratedListValue(
 	object opset.OpID,
 	visited map[opset.OpID]struct{},
+	index objectProperties,
 ) (hydratedValueWire, error) {
 	if _, ok := visited[object]; ok {
 		return hydratedValueWire{}, fmt.Errorf("object cycle detected")
@@ -138,16 +155,16 @@ func (s *State) hydratedListValue(
 	visited[object] = struct{}{}
 	defer delete(visited, object)
 
-	index := s.sequenceIndex(object)
+	sequence := s.sequenceIndex(object)
 	result := hydratedValueWire{
 		Type: "list",
-		List: make([]hydratedValueWire, 0, index.visibleCount),
+		List: make([]hydratedValueWire, 0, sequence.visibleCount),
 	}
 
 	var hydrateErr error
 
-	index.eachValue(func(element sequenceValue) bool {
-		value, err := s.hydratedOperationValue(element.Operation, visited)
+	sequence.eachValue(func(element sequenceValue) bool {
+		value, err := s.hydratedOperationValue(element.Operation, visited, index)
 		if err != nil {
 			hydrateErr = err
 
@@ -169,15 +186,17 @@ func (s *State) hydratedListValue(
 func (s *State) hydratedOperationValue(
 	operation opset.Operation,
 	visited map[opset.OpID]struct{},
+	index objectProperties,
 ) (hydratedValueWire, error) {
 	switch operation.Action {
 	case opset.ActionMakeMap, opset.ActionMakeTable:
 		return s.hydratedMapValue(
 			opset.ObjectID{OpID: operation.ID},
 			visited,
+			index,
 		)
 	case opset.ActionMakeList:
-		return s.hydratedListValue(operation.ID, visited)
+		return s.hydratedListValue(operation.ID, visited, index)
 	case opset.ActionMakeText:
 		return hydratedValueWire{
 			Type: "text",
@@ -211,6 +230,7 @@ func (s *State) hydratedOperationValue(
 func (s *State) mapValue(
 	object opset.OpID,
 	visited map[opset.OpID]struct{},
+	index objectProperties,
 ) (map[string]any, error) {
 	if _, ok := visited[object]; ok {
 		return nil, fmt.Errorf("object cycle detected")
@@ -219,21 +239,7 @@ func (s *State) mapValue(
 	visited[object] = struct{}{}
 	defer delete(visited, object)
 
-	properties := make(map[string][]opset.Operation)
-
-	s.eachOperation(func(operation opset.Operation) bool {
-		if operation.Object.IsRoot ||
-			operation.Object.OpID != object ||
-			operation.Key.Property == nil ||
-			s.isSuperseded(operation.ID) {
-			return true
-		}
-
-		property := *operation.Key.Property
-		properties[property] = append(properties[property], operation)
-
-		return true
-	})
+	properties := index[opset.ObjectID{OpID: object}]
 
 	result := make(map[string]any, len(properties))
 	for property, operations := range properties {
@@ -247,14 +253,14 @@ func (s *State) mapValue(
 		operation := operations[0]
 		switch operation.Action {
 		case opset.ActionMakeMap:
-			value, err := s.mapValue(operation.ID, visited)
+			value, err := s.mapValue(operation.ID, visited, index)
 			if err != nil {
 				return nil, err
 			}
 
 			result[property] = value
 		case opset.ActionMakeList:
-			value, err := s.listValue(operation.ID, visited)
+			value, err := s.listValue(operation.ID, visited, index)
 			if err != nil {
 				return nil, err
 			}
@@ -273,6 +279,7 @@ func (s *State) mapValue(
 func (s *State) listValue(
 	object opset.OpID,
 	visited map[opset.OpID]struct{},
+	index objectProperties,
 ) ([]any, error) {
 	if _, ok := visited[object]; ok {
 		return nil, fmt.Errorf("object cycle detected")
@@ -281,16 +288,16 @@ func (s *State) listValue(
 	visited[object] = struct{}{}
 	defer delete(visited, object)
 
-	index := s.sequenceIndex(object)
-	result := make([]any, 0, index.visibleCount)
+	sequence := s.sequenceIndex(object)
+	result := make([]any, 0, sequence.visibleCount)
 
 	var hydrateErr error
 
-	index.eachValue(func(value sequenceValue) bool {
+	sequence.eachValue(func(value sequenceValue) bool {
 		element := value.Operation
 		switch element.Action {
 		case opset.ActionMakeMap:
-			value, err := s.mapValue(element.ID, visited)
+			value, err := s.mapValue(element.ID, visited, index)
 			if err != nil {
 				hydrateErr = err
 
@@ -299,7 +306,7 @@ func (s *State) listValue(
 
 			result = append(result, value)
 		case opset.ActionMakeList:
-			value, err := s.listValue(element.ID, visited)
+			value, err := s.listValue(element.ID, visited, index)
 			if err != nil {
 				hydrateErr = err
 

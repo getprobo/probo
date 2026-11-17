@@ -31,12 +31,17 @@ func (s *State) RichTextSpans(object opset.OpID) ([]RichSpan, error) {
 	values := s.sequenceValues(object)
 	marks := s.richTextMarks(object)
 	spans := make([]RichSpan, 0)
+	var blockFields objectProperties
 
 	for i, value := range values {
 		operation := value.Operation
 		switch operation.Action {
 		case opset.ActionMakeMap:
-			value, err := s.mapValue(operation.ID, make(map[opset.OpID]struct{}))
+			if blockFields == nil {
+				blockFields = s.objectProperties()
+			}
+
+			value, err := s.mapValue(operation.ID, make(map[opset.OpID]struct{}), blockFields)
 			if err != nil {
 				return nil, fmt.Errorf("cannot hydrate block %v: %w", operation.ID, err)
 			}
