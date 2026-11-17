@@ -72,6 +72,7 @@ import (
 	mcp_v1 "go.probo.inc/probo/pkg/server/api/mcp/v1"
 	slack_v1 "go.probo.inc/probo/pkg/server/api/slack/v1"
 	"go.probo.inc/probo/pkg/server/gqlx"
+	"go.probo.inc/probo/pkg/server/gqlx/directives/ratelimit"
 	"go.probo.inc/probo/pkg/slack"
 	"go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/thirdparty"
@@ -122,6 +123,8 @@ type (
 		ProviderRegistry  *provider.Registry
 		CustomDomainCname string
 		GraphQLLimits     gqlx.Limits
+		RateLimitDefault  ratelimit.Budget
+		RateLimits        map[string]ratelimit.Budget
 		Logger            *log.Logger
 
 		// IdentityFederationIssuer is nil when identity federation is disabled.
@@ -413,6 +416,8 @@ func NewServer(cfg Config) (*Server, error) {
 				cfg.Visitor.IsVerifiedRedirectHost,
 			),
 			cfg.GraphQLLimits,
+			cfg.RateLimitDefault,
+			cfg.RateLimits,
 			cfg.SlackbotInstallations != nil,
 		),
 		agentHandler: agent_v1.NewMux(

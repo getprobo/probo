@@ -35,6 +35,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
 	"go.probo.inc/probo/pkg/server/gqlx"
 	"go.probo.inc/probo/pkg/server/gqlx/directives/authentication"
+	"go.probo.inc/probo/pkg/server/gqlx/directives/ratelimit"
 	"go.probo.inc/probo/pkg/server/gqlx/directives/session"
 )
 
@@ -47,8 +48,12 @@ func NewGraphQLHandler(
 	baseURL *baseurl.BaseURL,
 	cookieConfig securecookie.Config,
 	limits gqlx.Limits,
+	rateLimitDefault ratelimit.Budget,
+	rateLimits map[string]ratelimit.Budget,
 	slackbotAvailable bool,
 ) http.Handler {
+	rateLimit := ratelimit.New(rateLimitDefault, rateLimits).Directive
+
 	config := schema.Config{
 		Resolvers: &Resolver{
 			authorize:         authz.NewAuthorizeFunc(svc, logger),
@@ -65,6 +70,7 @@ func NewGraphQLHandler(
 		},
 		Directives: schema.DirectiveRoot{
 			Authentication: authentication.Directive,
+			RateLimit:      rateLimit,
 			SessionOnly:    session.Directive,
 		},
 	}
@@ -72,5 +78,8 @@ func NewGraphQLHandler(
 	es := schema.NewExecutableSchema(config)
 	gqlh := gqlx.NewHandler(es, logger, limits)
 
-	return gqlh
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := ratelimit.WithReport(r.Context())
+		gqlh.ServeHTTP(w, r.WithContext(ctx))
+	})
 }

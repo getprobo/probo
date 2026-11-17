@@ -64,6 +64,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/connect/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlx"
+	"go.probo.inc/probo/pkg/server/gqlx/directives/ratelimit"
 )
 
 type (
@@ -93,6 +94,8 @@ func NewMux(
 	baseURL *baseurl.BaseURL,
 	allowedRedirectHost saferedirect.AllowedHostFunc,
 	graphqlLimits gqlx.Limits,
+	rateLimitDefault ratelimit.Budget,
+	rateLimits map[string]ratelimit.Budget,
 	slackbotAvailable bool,
 ) *chi.Mux {
 	r := chi.NewMux()
@@ -109,6 +112,8 @@ func NewMux(
 		baseURL,
 		cookieConfig,
 		graphqlLimits,
+		rateLimitDefault,
+		rateLimits,
 		slackbotAvailable,
 	)
 	samlHandler := NewSAMLHandler(svc, cookieConfig, baseURL, logger)

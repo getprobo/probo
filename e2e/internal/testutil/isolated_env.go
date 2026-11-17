@@ -54,6 +54,8 @@ type (
 
 	IsolatedEnvOptions struct {
 		DisableSignup bool
+		// UseBuiltInRateLimit keeps the built-in 10/60 budget on this process.
+		UseBuiltInRateLimit bool
 	}
 
 	lockedBuffer struct {
@@ -124,12 +126,13 @@ func StartIsolatedEnv(t testing.TB, opts IsolatedEnvOptions) *IsolatedEnv {
 
 	configPath, err := generateConfig(
 		configOptions{
-			DisableSignup:  opts.DisableSignup,
-			APIAddr:        apiAddr,
-			BaseURL:        baseURL,
-			MetricsAddr:    "localhost:" + metricsPort.port,
-			TrustHTTPAddr:  ":" + trustHTTPPort.port,
-			TrustHTTPSAddr: ":" + trustHTTPSPort.port,
+			DisableSignup:       opts.DisableSignup,
+			UseBuiltInRateLimit: opts.UseBuiltInRateLimit,
+			APIAddr:             apiAddr,
+			BaseURL:             baseURL,
+			MetricsAddr:         "localhost:" + metricsPort.port,
+			TrustHTTPAddr:       ":" + trustHTTPPort.port,
+			TrustHTTPSAddr:      ":" + trustHTTPSPort.port,
 		},
 	)
 	require.NoError(t, err, "cannot generate isolated env config")

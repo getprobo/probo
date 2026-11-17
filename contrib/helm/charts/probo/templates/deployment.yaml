@@ -99,6 +99,10 @@ spec:
               value: {{ .Values.probo.graphql.queryCacheSize | quote }}
             - name: PROBOD_API_GRAPHQL_DISABLE_SUGGESTION
               value: {{ .Values.probo.graphql.disableSuggestion | quote }}
+            {{- if .Values.probo.graphql.rateLimit }}
+            - name: PROBOD_API_GRAPHQL_RATE_LIMIT
+              value: {{ .Values.probo.graphql.rateLimit | toJson | quote }}
+            {{- end }}
             # PostgreSQL Database
             - name: PROBOD_PG_ADDR
               value: {{ printf "%s:%v" (include "probo.postgresql.host" .) (include "probo.postgresql.port" .) | quote }}

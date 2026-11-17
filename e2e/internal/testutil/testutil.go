@@ -25,6 +25,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"os"
 	"os/exec"
@@ -54,12 +55,15 @@ type TestEnv struct {
 // configOptions tunes the generated probod config. Zero values keep the
 // default shared e2e suite settings.
 type configOptions struct {
-	DisableSignup  bool
-	APIAddr        string
-	BaseURL        string
-	MetricsAddr    string
-	TrustHTTPAddr  string
-	TrustHTTPSAddr string
+	DisableSignup bool
+	// UseBuiltInRateLimit keeps the built-in 10/60 budget. The shared suite
+	// raises the global default because every test comes from one client address.
+	UseBuiltInRateLimit bool
+	APIAddr             string
+	BaseURL             string
+	MetricsAddr         string
+	TrustHTTPAddr       string
+	TrustHTTPSAddr      string
 }
 
 type switchableWriter struct {
@@ -425,6 +429,19 @@ func generateConfig(opts configOptions) (string, error) {
 		"PROBOD_CUSTOM_DOMAINS_CNAME_TARGET": "custom.test.getprobo.com",
 		"PROBOD_ACME_DIRECTORY":              "https://localhost:9000/acme/acme/directory",
 		"PROBOD_ACME_EMAIL":                  "admin@test.getprobo.com",
+	}
+
+	// Parallel tests share one client address, so the built-in window would
+	// reject ordinary sign-ups. The limit is the largest integer the YAML
+	// config can store: a bigger value is rounded past MaxInt and rejected.
+	// The window is the largest second count that fits in a time.Duration.
+	// A caller opts into 10/60 instead.
+	if !opts.UseBuiltInRateLimit {
+		env["PROBOD_API_GRAPHQL_RATE_LIMIT"] = fmt.Sprintf(
+			`{"default":{"limit":%d,"window":%d}}`,
+			1<<53-1,
+			math.MaxInt64/int64(time.Second),
+		)
 	}
 
 	builder := bootstrap.NewBuilder(bootstrap.NewResolver(func(key string) string {

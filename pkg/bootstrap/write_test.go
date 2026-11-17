@@ -22,9 +22,11 @@ package bootstrap
 
 import (
 	"encoding/json"
+	"math"
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -421,6 +423,22 @@ func TestWriteConfig_JSON(t *testing.T) {
 
 	assert.Equal(t, cfg.Unit.Metrics.Addr, loaded.Unit.Metrics.Addr)
 	assert.Equal(t, cfg.Probod.BaseURL, loaded.Probod.BaseURL)
+}
+
+func TestWriteConfig_RateLimitBudgetRoundTrips(t *testing.T) {
+	cfg := probodconfig.GraphQLRateLimitConfig{
+		Default: probodconfig.GraphQLRateLimitBudget{
+			Limit:  1<<53 - 1,
+			Window: int(math.MaxInt64 / int64(time.Second)),
+		},
+	}
+
+	data, err := yaml.Marshal(cfg)
+	require.NoError(t, err)
+
+	var loaded probodconfig.GraphQLRateLimitConfig
+	require.NoError(t, yaml.Unmarshal(data, &loaded))
+	assert.Equal(t, cfg, loaded)
 }
 
 func TestWriteConfig_UnsupportedFormat(t *testing.T) {

@@ -263,6 +263,7 @@ var safeGraphQLErrorCodes = map[string]struct{}{
 	"MEMBERSHIP_REQUIRED":       {},
 	"NDA_SIGNATURE_REQUIRED":    {},
 	"NOT_FOUND":                 {},
+	"RATE_LIMITED":              {},
 	"TOKEN_ALREADY_USED":        {},
 	"TOKEN_EXPIRED":             {},
 	"UNAUTHENTICATED":           {},

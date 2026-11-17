@@ -97,6 +97,7 @@ import (
 	"go.probo.inc/probo/pkg/server"
 	complianceportal_v1 "go.probo.inc/probo/pkg/server/api/complianceportal/v1"
 	"go.probo.inc/probo/pkg/server/gqlx"
+	"go.probo.inc/probo/pkg/server/gqlx/directives/ratelimit"
 	"go.probo.inc/probo/pkg/server/trustedproxy"
 	"go.probo.inc/probo/pkg/slack"
 	"go.probo.inc/probo/pkg/task"
@@ -1087,6 +1088,8 @@ func (impl *Implm) Run(
 				QueryCacheSize:    impl.cfg.Api.GraphQL.QueryCacheSize,
 				DisableSuggestion: impl.cfg.Api.GraphQL.DisableSuggestion,
 			},
+			RateLimitDefault:         rateLimitBudget(impl.cfg.Api.GraphQL.RateLimit.Default),
+			RateLimits:               rateLimitBudgets(impl.cfg.Api.GraphQL.RateLimit.Budgets),
 			CustomDomainCname:        impl.cfg.CustomDomains.CnameTarget,
 			TokenSecret:              impl.cfg.Auth.Cookie.Secret,
 			InstallStateKey:          installStateKey,
@@ -2482,4 +2485,27 @@ func authSecureCookieConfig(c CookieConfig, maxAgeSeconds int) (securecookie.Con
 		HTTPOnly: true,
 		SameSite: sameSite,
 	}, nil
+}
+
+func rateLimitBudget(configured GraphQLRateLimitBudget) ratelimit.Budget {
+	return ratelimit.Budget{
+		Limit:  configured.Limit,
+		Window: configured.Window,
+	}
+}
+
+func rateLimitBudgets(configured map[string]GraphQLRateLimitBudget) map[string]ratelimit.Budget {
+	if len(configured) == 0 {
+		return nil
+	}
+
+	budgets := make(map[string]ratelimit.Budget, len(configured))
+	for name, budget := range configured {
+		budgets[name] = ratelimit.Budget{
+			Limit:  budget.Limit,
+			Window: budget.Window,
+		}
+	}
+
+	return budgets
 }

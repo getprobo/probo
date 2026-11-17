@@ -105,6 +105,35 @@ func requiredEnv() map[string]string {
 	}
 }
 
+func TestBuilder_Build_InvalidRateLimit(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		raw  string
+	}{
+		{name: "invalid JSON", raw: `{`},
+		{name: "enabled", raw: `{"enabled":false}`},
+		{name: "limit only", raw: `{"signUp":{"limit":4}}`},
+		{name: "window only", raw: `{"signUp":{"window":15}}`},
+		{name: "default limit only", raw: `{"default":{"limit":4}}`},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			env := requiredEnv()
+			env["PROBOD_API_GRAPHQL_RATE_LIMIT"] = tt.raw
+
+			b := NewBuilder(NewResolver(mockEnv(env)))
+			_, err := b.Build()
+			require.Error(t, err)
+			assert.ErrorContains(t, err, "PROBOD_API_GRAPHQL_RATE_LIMIT")
+		})
+	}
+}
+
 func TestBuilder_Build_MissingRequiredEnvVars(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -337,6 +366,7 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Equal(t, 2000, cfg.Probod.Api.GraphQL.ComplexityLimit)
 	assert.Equal(t, 1000, cfg.Probod.Api.GraphQL.QueryCacheSize)
 	assert.True(t, cfg.Probod.Api.GraphQL.DisableSuggestion)
+	assert.True(t, cfg.Probod.Api.GraphQL.RateLimit.IsZero())
 
 	// PG config
 	assert.Empty(t, cfg.Probod.Pg.Addr)
@@ -509,6 +539,7 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["PROBOD_API_GRAPHQL_COMPLEXITY_LIMIT"] = "5000"
 	env["PROBOD_API_GRAPHQL_QUERY_CACHE_SIZE"] = "2000"
 	env["PROBOD_API_GRAPHQL_DISABLE_SUGGESTION"] = "false"
+	env["PROBOD_API_GRAPHQL_RATE_LIMIT"] = `{"default":{"limit":20,"window":60},"signUp":{"limit":4,"window":15}}`
 	// PG
 	env["PROBOD_PG_ADDR"] = "postgres.example.com:5432"
 	env["PROBOD_PG_USERNAME"] = "probo"
@@ -667,6 +698,10 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.Equal(t, 5000, cfg.Probod.Api.GraphQL.ComplexityLimit)
 	assert.Equal(t, 2000, cfg.Probod.Api.GraphQL.QueryCacheSize)
 	assert.False(t, cfg.Probod.Api.GraphQL.DisableSuggestion)
+	assert.Equal(t, probodconfig.GraphQLRateLimitBudget{Limit: 20, Window: 60}, cfg.Probod.Api.GraphQL.RateLimit.Default)
+	assert.Equal(t, map[string]probodconfig.GraphQLRateLimitBudget{
+		"signUp": {Limit: 4, Window: 15},
+	}, cfg.Probod.Api.GraphQL.RateLimit.Budgets)
 	// PG
 	assert.Equal(t, "postgres.example.com:5432", cfg.Probod.Pg.Addr)
 	assert.Equal(t, "probo", cfg.Probod.Pg.Username)
