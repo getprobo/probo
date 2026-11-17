@@ -24,6 +24,32 @@
       "empty": "Geen controls gevonden",
       "loadError": "Controls laden mislukt"
     },
+    "approvals": {
+      "title": "Goedkeurders",
+      "add": "Goedkeurder toevoegen",
+      "remove": "{{name}} verwijderen",
+      "none": "Geen",
+      "states": {
+        "PENDING": "In afwachting",
+        "APPROVED": "Goedgekeurd",
+        "REJECTED": "Afgewezen",
+        "VOIDED": "Ongeldig"
+      }
+    },
+    "signatories": {
+      "title": "Ondertekenaars",
+      "add": "Handtekening vragen",
+      "remove": "{{name}} annuleren",
+      "search": "Personen zoeken",
+      "empty": "Geen personen gevonden",
+      "loadMore": "Meer laden",
+      "loadError": "Personen laden mislukt",
+      "none": "Geen",
+      "states": {
+        "REQUESTED": "Aangevraagd",
+        "SIGNED": "Ondertekend"
+      }
+    },
     "errors": {
       "update": "Document bijwerken mislukt"
     }

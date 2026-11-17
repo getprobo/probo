@@ -24,6 +24,32 @@
       "empty": "No controls found",
       "loadError": "Could not load controls"
     },
+    "approvals": {
+      "title": "Approvers",
+      "add": "Add approver",
+      "remove": "Remove {{name}}",
+      "none": "None",
+      "states": {
+        "PENDING": "Pending",
+        "APPROVED": "Approved",
+        "REJECTED": "Rejected",
+        "VOIDED": "Voided"
+      }
+    },
+    "signatories": {
+      "title": "Signatories",
+      "add": "Request signature",
+      "remove": "Cancel {{name}}",
+      "search": "Search people",
+      "empty": "No people found",
+      "loadMore": "Load more",
+      "loadError": "Could not load people",
+      "none": "None",
+      "states": {
+        "REQUESTED": "Requested",
+        "SIGNED": "Signed"
+      }
+    },
     "errors": {
       "update": "Could not update the document"
     }
