@@ -168,7 +168,9 @@ func NewEngine() (*Engine, error) {
 }
 
 func LoadEngine(data []byte) (*Engine, error) {
-	document, err := storage.Decode(data)
+	// Every state built below validates mark order while it indexes the
+	// document's sequences, so the decoder is asked not to order them first.
+	document, err := storage.DecodeDeferringMarkOrder(data)
 	if err != nil {
 		// A document may retain orphan changes (changes whose dependencies are
 		// not present) that were preserved across a save. Strict decoding

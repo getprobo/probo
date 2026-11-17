@@ -919,10 +919,11 @@ func assignChangeStartOps(
 }
 
 // validateSnapshotMarkOrder checks that, in every object carrying marks, each
-// mark end follows its begin in RGA order. Insertions are linked by their row
+// mark end follows its begin in RGA order. With rootOnly it checks the root
+// object alone, for a caller that validates sequence objects itself. Insertions are linked by their row
 // in the decoded operation table, so walking an object copies no operation and
 // allocates nothing per element.
-func validateSnapshotMarkOrder(operations []opset.Operation) error {
+func validateSnapshotMarkOrder(operations []opset.Operation, rootOnly bool) error {
 	const none = int32(-1)
 
 	if len(operations) > math.MaxInt32 {
@@ -937,6 +938,10 @@ func validateSnapshotMarkOrder(operations []opset.Operation) error {
 	for i := range operations {
 		operation := &operations[i]
 		if operation.Action != opset.ActionMark {
+			continue
+		}
+
+		if rootOnly && !operation.Object.IsRoot {
 			continue
 		}
 

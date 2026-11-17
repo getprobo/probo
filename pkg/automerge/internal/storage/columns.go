@@ -357,6 +357,16 @@ func releaseDecodedBytes(budget *decodeBudget, bytes uint64) {
 	budget.used -= bytes
 }
 
+// budgetUsed reads a budget's running total so a caller can later release
+// exactly what a scratch phase charged.
+func budgetUsed(budget *decodeBudget) uint64 {
+	if budget == nil {
+		return 0
+	}
+
+	return budget.used
+}
+
 func chargeDecodedMap[K comparable, V any](budget *decodeBudget, count uint64) error {
 	type entry struct {
 		key   K

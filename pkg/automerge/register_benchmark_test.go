@@ -233,7 +233,7 @@ func benchmarkRegisterHistory(tb testing.TB) []byte {
 }
 
 func BenchmarkLoadRegister(b *testing.B) {
-	for _, entries := range []int{10, 40} {
+	for _, entries := range []int{10, 40, registerLoadEntries} {
 		b.Run(
 			fmt.Sprintf("entries=%d", entries),
 			func(b *testing.B) {
@@ -274,7 +274,7 @@ func BenchmarkLoadHistory(b *testing.B) {
 }
 
 func BenchmarkSpansRegister(b *testing.B) {
-	for _, entries := range []int{10, 40} {
+	for _, entries := range []int{10, 40, registerLoadEntries} {
 		b.Run(
 			fmt.Sprintf("entries=%d", entries),
 			func(b *testing.B) {

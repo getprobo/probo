@@ -49,20 +49,28 @@ type implicitOperationIDs struct {
 // Decode parses all chunks in data and validates the resulting dependency
 // graph. It accepts document, change, and compressed change chunks.
 func Decode(data []byte) (*opset.Document, error) {
-	return decode(data, true, true)
+	return decode(data, true, markOrderChecked)
 }
 
 // DecodeRescue performs strict structural and history validation while allowing
 // the explicit rescue path to bypass mark ordering.
 func DecodeRescue(data []byte) (*opset.Document, error) {
-	return decode(data, true, false)
+	return decode(data, true, markOrderUnchecked)
+}
+
+// DecodeDeferringMarkOrder validates like Decode but leaves the mark order of
+// sequence objects to a caller that checks it while building its own sequence
+// index, so a load does not order every marked text twice. Marks recorded
+// against the root object have no sequence index and are still checked here.
+func DecodeDeferringMarkOrder(data []byte) (*opset.Document, error) {
+	return decode(data, true, markOrderRootOnly)
 }
 
 // DecodePartial parses chunks whose causal dependencies may already exist in
 // another document. Column and operation ownership validation still happens
 // while whole-history frontier validation is deferred to the caller.
 func DecodePartial(data []byte) (*opset.Document, error) {
-	return decode(data, false, false)
+	return decode(data, false, markOrderUnchecked)
 }
 
 // DecodeIncremental parses the complete chunk prefix and ignores an incomplete
@@ -100,10 +108,20 @@ func DecodeIncremental(data []byte) (*opset.Document, int, error) {
 	return document, consumed, err
 }
 
+// markOrderMode selects how much of a document chunk's mark order is validated
+// while decoding.
+type markOrderMode uint8
+
+const (
+	markOrderUnchecked markOrderMode = iota
+	markOrderRootOnly
+	markOrderChecked
+)
+
 func decode(
 	data []byte,
 	validateHistory bool,
-	validateMarks bool,
+	validateMarks markOrderMode,
 ) (*opset.Document, error) {
 	if len(data) == 0 {
 		return nil, fmt.Errorf("automerge file is empty")
@@ -307,7 +325,7 @@ func decodeDocumentChunk(
 	document *opset.Document,
 	data []byte,
 	budget *decodeBudget,
-	validateMarks bool,
+	validateMarks markOrderMode,
 ) error {
 	r := &reader{data: data}
 
@@ -372,8 +390,11 @@ func decodeDocumentChunk(
 		return fmt.Errorf("cannot restore change operations: %w", err)
 	}
 
-	if validateMarks {
-		if err := validateSnapshotMarkOrder(operations); err != nil {
+	if validateMarks != markOrderUnchecked {
+		if err := validateSnapshotMarkOrder(
+			operations,
+			validateMarks == markOrderRootOnly,
+		); err != nil {
 			return err
 		}
 	}
@@ -652,10 +673,6 @@ func reconstructSnapshotChanges(
 	changes []opset.Change,
 	budget *decodeBudget,
 ) error {
-	if err := chargeDecoded[bool](budget, uint64(len(changes))); err != nil {
-		return err
-	}
-
 	var dependencyCount uint64
 	for i := range changes {
 		if dependencyCount > math.MaxUint64-uint64(len(changes[i].DependencyIndexes)) {
@@ -669,55 +686,106 @@ func reconstructSnapshotChanges(
 		return err
 	}
 
-	resolved := make([]bool, len(changes))
-	remaining := len(changes)
+	// Each change is rebuilt once, as soon as its last dependency has been.
+	// The tables below list, per change, the changes waiting on it, so the
+	// order is found in one pass however the snapshot happens to store them.
+	if err := chargeDecoded[int](
+		budget,
+		3*uint64(len(changes))+1,
+	); err != nil {
+		return err
+	}
 
-	for remaining > 0 {
-		progressed := false
+	if err := chargeDecoded[int](budget, dependencyCount); err != nil {
+		return err
+	}
 
-		for i := range changes {
-			change := &changes[i]
+	offsets := make([]int, len(changes)+1)
 
-			if resolved[i] || !dependenciesResolved(change, resolved) {
-				continue
+	for i := range changes {
+		for _, index := range changes[i].DependencyIndexes {
+			if index >= uint64(len(changes)) {
+				return fmt.Errorf("change %d dependency %d is out of bounds", i, index)
 			}
 
-			change.Dependencies = make([]opset.ChangeHash, 0, len(change.DependencyIndexes))
-			for _, index := range change.DependencyIndexes {
-				change.Dependencies = append(change.Dependencies, *changes[index].Hash)
-			}
+			offsets[index+1]++
+		}
+	}
 
-			recorded := change.Hash
-			change.Hash = nil
+	for i := range changes {
+		offsets[i+1] += offsets[i]
+	}
 
-			if err := reserveChangeReconstruction(change, budget); err != nil {
-				return fmt.Errorf("cannot reserve snapshot change %d: %w", i, err)
-			}
+	dependents := make([]int, dependencyCount)
+	filled := make([]int, len(changes))
+	pending := make([]int, len(changes))
+	ready := make([]int, 0, len(changes))
 
-			if _, err := EncodeChange(change); err != nil {
-				return fmt.Errorf("cannot rebuild snapshot change %d: %w", i, err)
-			}
-
-			// A recorded hash only exists for frontier changes. Disagreeing with it
-			// means the rebuilt bytes are not the ones the writer hashed, so the
-			// whole graph would be keyed by identifiers no peer shares.
-			if recorded != nil && *recorded != *change.Hash {
-				return fmt.Errorf(
-					"snapshot change %d rebuilds to hash %s but the document records %s",
-					i,
-					change.Hash,
-					recorded,
-				)
-			}
-
-			resolved[i] = true
-			remaining--
-			progressed = true
+	for i := range changes {
+		pending[i] = len(changes[i].DependencyIndexes)
+		if pending[i] == 0 {
+			ready = append(ready, i)
 		}
 
-		if !progressed {
-			return fmt.Errorf("snapshot dependency graph cannot be ordered")
+		for _, index := range changes[i].DependencyIndexes {
+			dependents[offsets[index]+filled[index]] = i
+			filled[index]++
 		}
+	}
+
+	for next := 0; next < len(ready); next++ {
+		i := ready[next]
+		change := &changes[i]
+
+		change.Dependencies = make([]opset.ChangeHash, 0, len(change.DependencyIndexes))
+		for _, index := range change.DependencyIndexes {
+			change.Dependencies = append(change.Dependencies, *changes[index].Hash)
+		}
+
+		recorded := change.Hash
+		change.Hash = nil
+
+		// The reservation bounds the encoder's working memory, which is gone
+		// once the change is rebuilt. Only the rebuilt bytes stay charged, so
+		// a long history is not billed for every change's scratch at once.
+		reservedFrom := budgetUsed(budget)
+
+		if err := reserveChangeReconstruction(change, budget); err != nil {
+			return fmt.Errorf("cannot reserve snapshot change %d: %w", i, err)
+		}
+
+		if _, err := EncodeChange(change); err != nil {
+			return fmt.Errorf("cannot rebuild snapshot change %d: %w", i, err)
+		}
+
+		releaseDecodedBytes(budget, budgetUsed(budget)-reservedFrom)
+
+		if err := chargeDecodedBytes(budget, uint64(len(change.Raw))); err != nil {
+			return fmt.Errorf("cannot retain snapshot change %d: %w", i, err)
+		}
+
+		// A recorded hash only exists for frontier changes. Disagreeing with it
+		// means the rebuilt bytes are not the ones the writer hashed, so the
+		// whole graph would be keyed by identifiers no peer shares.
+		if recorded != nil && *recorded != *change.Hash {
+			return fmt.Errorf(
+				"snapshot change %d rebuilds to hash %s but the document records %s",
+				i,
+				change.Hash,
+				recorded,
+			)
+		}
+
+		for _, dependent := range dependents[offsets[i]:offsets[i+1]] {
+			pending[dependent]--
+			if pending[dependent] == 0 {
+				ready = append(ready, dependent)
+			}
+		}
+	}
+
+	if len(ready) != len(changes) {
+		return fmt.Errorf("snapshot dependency graph cannot be ordered")
 	}
 
 	return nil
@@ -825,16 +893,6 @@ func chargeDecodedPayload(budget *decodeBudget, length int, copies uint64) error
 	}
 
 	return chargeDecodedBytes(budget, uint64(length)*copies)
-}
-
-func dependenciesResolved(change *opset.Change, resolved []bool) bool {
-	for _, index := range change.DependencyIndexes {
-		if !resolved[index] {
-			return false
-		}
-	}
-
-	return true
 }
 
 func decodeDocumentChanges(
@@ -1155,6 +1213,11 @@ func decodeOperations(
 		return nil, nil, err
 	}
 
+	// The identifier, object and key columns decoded next are only read while
+	// operations are assembled below, so their charge is handed back once the
+	// operations exist.
+	scratchFrom := budgetUsed(budget)
+
 	actions, err := decodeULEBColumnWithBudget(actionData, budget)
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot decode actions: %w", err)
@@ -1237,6 +1300,8 @@ func decodeOperations(
 	if err != nil {
 		return nil, nil, err
 	}
+
+	scratch := budgetUsed(budget) - scratchFrom
 
 	keyStrings, err := decodeOptionalStrings(columns, 21, "key string", count, budget)
 	if err != nil {
@@ -1386,6 +1451,8 @@ func decodeOperations(
 	if err != nil {
 		return nil, nil, err
 	}
+
+	releaseDecodedBytes(budget, scratch)
 
 	return operations, unknown, nil
 }
