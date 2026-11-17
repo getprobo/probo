@@ -4,6 +4,8 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.273.0] - 2026-11-17
+
 ### Added
 
 - Cookie Banner `Get` returns `dailyPageLoads`, one entry per UTC day
