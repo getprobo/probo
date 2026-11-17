@@ -25,7 +25,6 @@ import {
   getDocumentTypeLabel,
 } from "@probo/helpers";
 import { Card } from "@probo/ui/src/v2/Card/Card";
-import { Field } from "@probo/ui/src/v2/form/Field";
 import { Select } from "@probo/ui/src/v2/Select/Select";
 import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
 import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
@@ -68,7 +67,7 @@ export function DocumentPropertiesSection({ documentKey }: DocumentPropertiesSec
   const { t } = useTranslation("organizations/documents");
   const { t: tApp } = useTranslation();
   const [updateDocument, isUpdating] = useUpdateDocument();
-  const { root } = documentProperties();
+  const { root, field, value } = documentProperties();
   const pending = document.pendingApproval.edges[0]?.node != null;
   const locked = !document.canUpdate || document.status === "ARCHIVED" || pending;
   const canEditFields = !locked && document.writeMode !== "GENERATED";
@@ -92,7 +91,10 @@ export function DocumentPropertiesSection({ documentKey }: DocumentPropertiesSec
         <Heading level={2} size={2} weight="medium">
           {t("details.properties.title")}
         </Heading>
-        <Field label={t("details.properties.type")}>
+        <div className={field()}>
+          <Text size={1} weight="medium">
+            {t("details.properties.type")}
+          </Text>
           {canEditFields
             ? (
                 <Select
@@ -120,12 +122,15 @@ export function DocumentPropertiesSection({ documentKey }: DocumentPropertiesSec
                 </Select>
               )
             : (
-                <Text size={2}>
+                <Text size={1} highContrast className={value()}>
                   {getDocumentTypeLabel(tApp, document.documentType) ?? document.documentType}
                 </Text>
               )}
-        </Field>
-        <Field label={t("details.properties.classification")}>
+        </div>
+        <div className={field()}>
+          <Text size={1} weight="medium">
+            {t("details.properties.classification")}
+          </Text>
           {canEditFields
             ? (
                 <Select
@@ -153,11 +158,11 @@ export function DocumentPropertiesSection({ documentKey }: DocumentPropertiesSec
                 </Select>
               )
             : (
-                <Text size={2}>
+                <Text size={1} highContrast className={value()}>
                   {getDocumentClassificationLabel(tApp, document.classification) ?? document.classification}
                 </Text>
               )}
-        </Field>
+        </div>
       </div>
     </Card>
   );

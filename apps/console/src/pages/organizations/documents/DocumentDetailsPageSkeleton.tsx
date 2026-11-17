@@ -25,21 +25,19 @@ import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 import { documentDetailsPage } from "./variants";
 
 export function DocumentDetailsPageSkeleton() {
-  const { root, body, main, side } = documentDetailsPage();
+  const { root, main, cards } = documentDetailsPage();
 
   return (
     <div className={root()}>
-      <TextSkeleton size={2} className="w-24" />
-      <div className={body()}>
-        <div className={main()}>
-          <HeadingSkeleton size={6} className="w-64" />
-        </div>
-        <div className={side()}>
-          <CardSkeleton size={5} />
-          <CardSkeleton size={4} />
-          <CardSkeleton size={4} />
-          <CardSkeleton size={4} />
-        </div>
+      <div className={main()}>
+        <TextSkeleton size={2} className="w-24" />
+        <HeadingSkeleton size={6} className="w-64" />
+      </div>
+      <div className={cards()}>
+        <CardSkeleton size={5} />
+        <CardSkeleton size={4} />
+        <CardSkeleton size={4} />
+        <CardSkeleton size={4} />
       </div>
     </div>
   );
