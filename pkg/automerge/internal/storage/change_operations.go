@@ -471,6 +471,7 @@ func (x *ChangeOperationIndex) restorePredecessors(
 			if !ok {
 				number = int32(len(deleted))
 				deleteIndex[successor] = number
+
 				deleted = append(deleted, nil)
 			}
 

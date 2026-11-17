@@ -498,6 +498,7 @@ func decodeDocumentChunk(
 		canonicalOperationColumns,
 		operationColumnSpecifications,
 	)
+
 	if index != nil {
 		for i := range changes {
 			changes[i].OperationsDeferred = true
@@ -1292,6 +1293,7 @@ func decodeOperations(
 	actions := runCursor[uint64]{runs: actionRuns}
 
 	var idActors runCursor[uint64]
+
 	if idActorData := optionalColumn(columns, 33); idActorData != nil {
 		runs, total, err := decodeULEBRuns(idActorData, budget)
 		if err != nil {
@@ -1316,6 +1318,7 @@ func decodeOperations(
 	}
 
 	var nextIDCounter func() optional[uint64]
+
 	if idCounterData := optionalColumn(columns, 35); idCounterData != nil {
 		runs, total, err := decodeDeltaRuns(idCounterData, budget)
 		if err != nil {
