@@ -28,6 +28,7 @@
       "title": "Goedkeurders",
       "add": "Goedkeurder toevoegen",
       "remove": "{{name}} verwijderen",
+      "loadMore": "Meer laden",
       "none": "Geen",
       "states": {
         "PENDING": "In afwachting",

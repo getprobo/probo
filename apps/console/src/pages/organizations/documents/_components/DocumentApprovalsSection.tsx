@@ -20,6 +20,7 @@
 
 import { PlusIcon, StampIcon, XIcon } from "@phosphor-icons/react";
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
+import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
 import { DropdownPopup } from "@probo/ui/src/v2/Dropdown/DropdownPopup";
@@ -27,15 +28,20 @@ import { DropdownTrigger } from "@probo/ui/src/v2/Dropdown/DropdownTrigger";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, useFragment } from "react-relay";
+import { graphql, useFragment, usePaginationFragment } from "react-relay";
 
-import type { DocumentApprovalsSection_document$data } from "#/__generated__/core/DocumentApprovalsSection_document.graphql";
 import type { DocumentApprovalsSection_document$key } from "#/__generated__/core/DocumentApprovalsSection_document.graphql";
+import type { DocumentApprovalsSectionDecisions_quorum$data } from "#/__generated__/core/DocumentApprovalsSectionDecisions_quorum.graphql";
+import type { DocumentApprovalsSectionDecisions_quorum$key } from "#/__generated__/core/DocumentApprovalsSectionDecisions_quorum.graphql";
+import type { DocumentApprovalsSectionDecisionsRefetchQuery } from "#/__generated__/core/DocumentApprovalsSectionDecisionsRefetchQuery.graphql";
 import { PeopleMenu } from "#/components/people/PeopleMenu";
 
 import { useUpdateDocument } from "../_lib/useUpdateDocument";
 import { documentApprovals } from "../variants";
+
+const documentApprovalsPageSize = 10;
 
 const documentApprovalsSectionFragment = graphql`
   fragment DocumentApprovalsSection_document on Document {
@@ -53,18 +59,7 @@ const documentApprovalsSectionFragment = graphql`
             edges {
               node {
                 status
-                decisions(first: 100, orderBy: { field: CREATED_AT, direction: ASC }) {
-                  edges {
-                    node {
-                      id
-                      state
-                      approver {
-                        id
-                        fullName
-                      }
-                    }
-                  }
-                }
+                ...DocumentApprovalsSectionDecisions_quorum
               }
             }
           }
@@ -74,15 +69,35 @@ const documentApprovalsSectionFragment = graphql`
   }
 `;
 
-type DecisionState = DocumentApprovalsSection_document$data[
-  "pendingApproval"
-]["edges"][number]["node"]["approvalQuorums"]["edges"][number]["node"]["decisions"]["edges"][number]["node"]["state"];
+const documentApprovalsDecisionsFragment = graphql`
+  fragment DocumentApprovalsSectionDecisions_quorum on DocumentVersionApprovalQuorum
+  @refetchable(queryName: "DocumentApprovalsSectionDecisionsRefetchQuery")
+  @argumentDefinitions(
+    first: { type: "Int", defaultValue: 10 }
+    after: { type: "CursorKey" }
+  ) {
+    decisions(
+      first: $first
+      after: $after
+      orderBy: { field: CREATED_AT, direction: ASC }
+    ) @connection(key: "DocumentApprovalsSection_decisions") {
+      edges {
+        node {
+          id
+          state
+          approver {
+            id
+            fullName
+          }
+        }
+      }
+    }
+  }
+`;
 
-interface ApprovalRow {
-  id: string;
-  name: string;
-  state: DecisionState | null;
-}
+type DecisionState = DocumentApprovalsSectionDecisions_quorum$data[
+  "decisions"
+]["edges"][number]["node"]["state"];
 
 interface DocumentApprovalsSectionProps {
   documentKey: DocumentApprovalsSection_document$key;
@@ -105,35 +120,23 @@ export function DocumentApprovalsSection({ documentKey }: DocumentApprovalsSecti
   const document = useFragment(documentApprovalsSectionFragment, documentKey);
   const { t } = useTranslation("organizations/documents");
   const [updateDocument, isUpdating] = useUpdateDocument();
-  const { root, title, titleLead, titleIcon, rows, row, name, trailing } = documentApprovals();
+  const [visibleCount, setVisibleCount] = useState(documentApprovalsPageSize);
+  const { root, title, titleLead, titleIcon, rows, row, name } = documentApprovals();
   const quorum = document.pendingApproval.edges[0]?.node.approvalQuorums.edges[0]?.node ?? null;
   const pending = quorum?.status === "PENDING";
   const canEdit = document.canUpdate && document.status !== "ARCHIVED" && !pending;
-  const decisions = quorum?.decisions.edges.map(edge => edge.node) ?? [];
   const savedApprovers = document.defaultApprovers;
   const approverIds = savedApprovers.map(person => person.id);
-  const people: ApprovalRow[] = pending
-    ? decisions.map(decision => ({
-        id: decision.id,
-        name: decision.approver.fullName,
-        state: decision.state,
-      }))
-    : savedApprovers.map(person => ({
-        id: person.id,
-        name: person.fullName,
-        state: null,
-      }));
+  const shownApprovers = savedApprovers.slice(0, visibleCount);
 
   function save(defaultApproverIds: string[]) {
-    void updateDocument({
+    return updateDocument({
       variables: {
         input: {
           id: document.id,
           defaultApproverIds,
         },
       },
-    }).catch(() => {
-      // Error toast is already shown by useMutation.
     });
   }
 
@@ -172,7 +175,11 @@ export function DocumentApprovalsSection({ documentKey }: DocumentApprovalsSecti
                     if (approverId == null || approverIds.includes(approverId)) {
                       return;
                     }
-                    save([...approverIds, approverId]);
+                    void save([...approverIds, approverId]).then(() => {
+                      setVisibleCount(approverIds.length + 1);
+                    }).catch(() => {
+                      // Error toast is already shown by useMutation.
+                    });
                   }}
                 />
               </DropdownPopup>
@@ -180,40 +187,106 @@ export function DocumentApprovalsSection({ documentKey }: DocumentApprovalsSecti
           )}
         </div>
         <div className={rows()}>
-          {people.length > 0
-            ? people.map(person => (
-                <div key={person.id} className={row()}>
-                  <Text size={2} className={name()} title={person.name}>
-                    {person.name}
-                  </Text>
-                  <div className={trailing()}>
-                    {person.state != null && (
-                      <Badge size={1} variant="soft" color={stateColor(person.state)}>
-                        {t(`details.approvals.states.${person.state}`)}
-                      </Badge>
-                    )}
-                    {canEdit && (
-                      <IconButton
-                        size={1}
+          {pending && quorum != null
+            ? <DocumentApprovalDecisions quorumKey={quorum} />
+            : shownApprovers.length > 0
+              ? (
+                  <>
+                    {shownApprovers.map(person => (
+                      <div key={person.id} className={row()}>
+                        <Text size={2} className={name()} title={person.fullName}>
+                          {person.fullName}
+                        </Text>
+                        {canEdit && (
+                          <IconButton
+                            size={1}
+                            variant="ghost"
+                            color="neutral"
+                            disabled={isUpdating}
+                            aria-label={t("details.approvals.remove", { name: person.fullName })}
+                            onClick={() => {
+                              void save(approverIds.filter(id => id !== person.id)).catch(() => {
+                                // Error toast is already shown by useMutation.
+                              });
+                            }}
+                          >
+                            <XIcon />
+                          </IconButton>
+                        )}
+                      </div>
+                    ))}
+                    {savedApprovers.length > shownApprovers.length && (
+                      <Button
                         variant="ghost"
                         color="neutral"
-                        disabled={isUpdating}
-                        aria-label={t("details.approvals.remove", { name: person.name })}
+                        size={1}
+                        className="self-start"
                         onClick={() => {
-                          save(approverIds.filter(id => id !== person.id));
+                          setVisibleCount(count => count + documentApprovalsPageSize);
                         }}
                       >
-                        <XIcon />
-                      </IconButton>
+                        {t("details.approvals.loadMore")}
+                      </Button>
                     )}
-                  </div>
-                </div>
-              ))
-            : (
-                <Text size={1} color="faint">{t("details.approvals.none")}</Text>
-              )}
+                  </>
+                )
+              : (
+                  <Text size={1} color="faint">{t("details.approvals.none")}</Text>
+                )}
         </div>
       </div>
     </Card>
+  );
+}
+
+function DocumentApprovalDecisions({
+  quorumKey,
+}: {
+  quorumKey: DocumentApprovalsSectionDecisions_quorum$key;
+}) {
+  const { t } = useTranslation("organizations/documents");
+  const {
+    data: quorum,
+    loadNext,
+    hasNext,
+    isLoadingNext,
+  } = usePaginationFragment<
+    DocumentApprovalsSectionDecisionsRefetchQuery,
+    DocumentApprovalsSectionDecisions_quorum$key
+  >(documentApprovalsDecisionsFragment, quorumKey);
+  const { row, name, trailing } = documentApprovals();
+  const decisions = quorum.decisions.edges.map(edge => edge.node);
+
+  return (
+    <>
+      {decisions.length > 0
+        ? decisions.map(decision => (
+            <div key={decision.id} className={row()}>
+              <Text size={2} className={name()} title={decision.approver.fullName}>
+                {decision.approver.fullName}
+              </Text>
+              <div className={trailing()}>
+                <Badge size={1} variant="soft" color={stateColor(decision.state)}>
+                  {t(`details.approvals.states.${decision.state}`)}
+                </Badge>
+              </div>
+            </div>
+          ))
+        : (
+            <Text size={1} color="faint">{t("details.approvals.none")}</Text>
+          )}
+      {hasNext && (
+        <Button
+          variant="ghost"
+          color="neutral"
+          size={1}
+          className="self-start"
+          loading={isLoadingNext}
+          onClick={() => loadNext(documentApprovalsPageSize)}
+        >
+          {t("details.approvals.loadMore")}
+        </Button>
+      )}
+    </>
   );
 }

@@ -28,17 +28,17 @@ import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, usePaginationFragment } from "react-relay";
 
+import type { DocumentSignatoriesSection_cancelMutation } from "#/__generated__/core/DocumentSignatoriesSection_cancelMutation.graphql";
 import type { DocumentSignatoriesSection_document$key } from "#/__generated__/core/DocumentSignatoriesSection_document.graphql";
 import type { DocumentSignatoriesSectionList_version$key } from "#/__generated__/core/DocumentSignatoriesSectionList_version.graphql";
 import type { DocumentSignatoriesSectionListRefetchQuery } from "#/__generated__/core/DocumentSignatoriesSectionListRefetchQuery.graphql";
-import type { DocumentSignatoriesSection_cancelMutation } from "#/__generated__/core/DocumentSignatoriesSection_cancelMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
 
 import { documentSignatories } from "../variants";
 
 import { DocumentSignatoryMenu } from "./DocumentSignatoryMenu";
 
-const documentSignatoriesPageSize = 20;
+const documentSignatoriesPageSize = 10;
 
 const documentSignatoriesSectionFragment = graphql`
   fragment DocumentSignatoriesSection_document on Document {
@@ -60,7 +60,7 @@ const documentSignatoriesListFragment = graphql`
   fragment DocumentSignatoriesSectionList_version on DocumentVersion
   @refetchable(queryName: "DocumentSignatoriesSectionListRefetchQuery")
   @argumentDefinitions(
-    first: { type: "Int", defaultValue: 20 }
+    first: { type: "Int", defaultValue: 10 }
     after: { type: "CursorKey" }
   ) {
     id

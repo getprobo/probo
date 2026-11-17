@@ -28,6 +28,7 @@
       "title": "Approvers",
       "add": "Add approver",
       "remove": "Remove {{name}}",
+      "loadMore": "Load more",
       "none": "None",
       "states": {
         "PENDING": "Pending",

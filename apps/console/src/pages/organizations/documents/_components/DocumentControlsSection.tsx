@@ -31,12 +31,12 @@ import { Suspense, useEffect, useRef, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useLazyLoadQuery, usePaginationFragment } from "react-relay";
 
+import type { DocumentControlsSection_attachMutation } from "#/__generated__/core/DocumentControlsSection_attachMutation.graphql";
+import type { DocumentControlsSection_detachMutation } from "#/__generated__/core/DocumentControlsSection_detachMutation.graphql";
 import type { DocumentControlsSection_document$key } from "#/__generated__/core/DocumentControlsSection_document.graphql";
 import type { DocumentControlsSectionList_document$key } from "#/__generated__/core/DocumentControlsSectionList_document.graphql";
 import type { DocumentControlsSectionListQuery } from "#/__generated__/core/DocumentControlsSectionListQuery.graphql";
 import type { DocumentControlsSectionListRefetchQuery } from "#/__generated__/core/DocumentControlsSectionListRefetchQuery.graphql";
-import type { DocumentControlsSection_attachMutation } from "#/__generated__/core/DocumentControlsSection_attachMutation.graphql";
-import type { DocumentControlsSection_detachMutation } from "#/__generated__/core/DocumentControlsSection_detachMutation.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 
@@ -44,7 +44,7 @@ import { documentControls } from "../variants";
 
 import { DocumentControlCombobox } from "./DocumentControlCombobox";
 
-const documentControlsPageSize = 50;
+const documentControlsPageSize = 10;
 const documentControlsSearchDelayMs = 300;
 
 const documentControlsSectionFragment = graphql`
@@ -72,7 +72,7 @@ const documentControlsListFragment = graphql`
   fragment DocumentControlsSectionList_document on Document
   @refetchable(queryName: "DocumentControlsSectionListRefetchQuery")
   @argumentDefinitions(
-    first: { type: "Int", defaultValue: 50 }
+    first: { type: "Int", defaultValue: 10 }
     after: { type: "CursorKey" }
     filter: { type: "ControlFilter", defaultValue: null }
   ) {
