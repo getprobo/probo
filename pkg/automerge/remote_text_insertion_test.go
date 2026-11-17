@@ -39,16 +39,24 @@ type remoteTextRun struct {
 	remoteValue string
 }
 
-// applyRemoteTextRun returns the local writer's text after it applies the
-// remote change. Typing the base text in one splice anchors every character on
-// the previous one, so the text is a single insertion chain as deep as it is
-// long. Placing each character of a remote run deep in that chain used to walk
-// the chain back to the head for the row after it.
-func applyRemoteTextRun(
+// remoteTextFixture is a local writer about to apply a remote writer's
+// concurrent change.
+type remoteTextFixture struct {
+	local     *automerge.Document
+	localBody *automerge.Text
+	changes   []byte
+}
+
+// newRemoteTextFixture builds the local writer and the remote change for run.
+// Typing the base text in one splice anchors every character on the previous
+// one, so the text is a single insertion chain as deep as it is long. Placing
+// each character of a remote run deep in that chain used to walk the chain
+// back to the head for the row after it. The caller closes the local writer.
+func newRemoteTextFixture(
 	tb testing.TB,
 	engine rustParityEngine,
 	run remoteTextRun,
-) string {
+) remoteTextFixture {
 	tb.Helper()
 
 	base, err := engine.open(actor(0x51))
@@ -68,8 +76,6 @@ func applyRemoteTextRun(
 
 	local, err := engine.load(saved, actor(0x52))
 	require.NoError(tb, err)
-
-	defer func() { _ = local.Close() }()
 
 	remote, err := engine.load(saved, actor(0x53))
 	require.NoError(tb, err)
@@ -111,10 +117,30 @@ func applyRemoteTextRun(
 	changes, err := remote.SaveIncremental()
 	require.NoError(tb, err)
 
-	_, err = local.LoadIncremental(changes)
+	return remoteTextFixture{
+		local:     local,
+		localBody: localBody,
+		changes:   changes,
+	}
+}
+
+// applyRemoteTextRun returns the local writer's text after it applies the
+// remote change.
+func applyRemoteTextRun(
+	tb testing.TB,
+	engine rustParityEngine,
+	run remoteTextRun,
+) string {
+	tb.Helper()
+
+	fixture := newRemoteTextFixture(tb, engine, run)
+
+	defer func() { _ = fixture.local.Close() }()
+
+	_, err := fixture.local.LoadIncremental(fixture.changes)
 	require.NoError(tb, err)
 
-	value, err := localBody.String()
+	value, err := fixture.localBody.String()
 	require.NoError(tb, err)
 
 	return value
@@ -199,8 +225,21 @@ func BenchmarkApplyChangesRemoteRunIntoLongText(b *testing.B) {
 	}
 
 	b.ReportAllocs()
+	b.StopTimer()
 
-	for b.Loop() {
-		applyRemoteTextRun(b, engine, run)
+	for range b.N {
+		fixture := newRemoteTextFixture(b, engine, run)
+
+		b.StartTimer()
+
+		if _, err := fixture.local.LoadIncremental(fixture.changes); err != nil {
+			b.Fatal(err)
+		}
+
+		b.StopTimer()
+
+		if err := fixture.local.Close(); err != nil {
+			b.Fatal(err)
+		}
 	}
 }
