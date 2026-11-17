@@ -4,6 +4,14 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.270.1] - 2026-11-17
+
+### Fixed
+
+- CLI release builds again. `prb risk-analysis create` still uses the
+  same default score bands, without pulling in the email templates
+  that stopped the 0.270.0 build
+
 ## [0.270.0] - 2026-11-17
 
 ### Added
