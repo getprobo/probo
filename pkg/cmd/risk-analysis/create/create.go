@@ -29,7 +29,7 @@ import (
 	"go.probo.inc/probo/pkg/cli/api"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/riskmanagement"
+	"go.probo.inc/probo/pkg/riskmanagement/scorelevel"
 )
 
 const createMutation = `
@@ -208,7 +208,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if f.IOStreams.IsInteractive() && !cmd.Flags().Changed("score-levels") {
-				flagScoreLevels = riskmanagement.DefaultScoreLevels(flagMatrixRows, flagMatrixCols).Spec()
+				flagScoreLevels = scorelevel.DefaultScoreLevels(flagMatrixRows, flagMatrixCols).Spec()
 
 				err := huh.NewInput().
 					Title("Score levels").

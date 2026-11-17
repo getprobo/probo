@@ -24,27 +24,14 @@ import (
 	"fmt"
 
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/riskmanagement/scorelevel"
 	"go.probo.inc/probo/pkg/validator"
 )
 
 // DefaultScoreLevels is the historical ratio mapping: low below 5/25 of the
 // maximum score, medium below 10/25, high below 15/25, and critical after that.
 func DefaultScoreLevels(rows, cols int) coredata.ScoreLevels {
-	maxScore := rows * cols
-	if maxScore <= 0 {
-		maxScore = 25
-	}
-
-	return coredata.ScoreLevels{
-		{Level: coredata.RiskScoreLevelLow, MinScore: 1},
-		{Level: coredata.RiskScoreLevelMedium, MinScore: ceilRatio(maxScore, 5)},
-		{Level: coredata.RiskScoreLevelHigh, MinScore: ceilRatio(maxScore, 10)},
-		{Level: coredata.RiskScoreLevelCritical, MinScore: ceilRatio(maxScore, 15)},
-	}
-}
-
-func ceilRatio(maxScore, numerator int) int {
-	return (maxScore*numerator + 24) / 25
+	return scorelevel.DefaultScoreLevels(rows, cols)
 }
 
 func (r *CreateRiskAnalysisRequest) applyDefaultScoreLevels() {

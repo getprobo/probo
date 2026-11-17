@@ -30,31 +30,6 @@ import (
 	"go.probo.inc/probo/pkg/validator"
 )
 
-func TestDefaultScoreLevels(t *testing.T) {
-	t.Parallel()
-
-	assert.Equal(t, coredata.ScoreLevels{
-		{Level: coredata.RiskScoreLevelLow, MinScore: 1},
-		{Level: coredata.RiskScoreLevelMedium, MinScore: 5},
-		{Level: coredata.RiskScoreLevelHigh, MinScore: 10},
-		{Level: coredata.RiskScoreLevelCritical, MinScore: 15},
-	}, DefaultScoreLevels(5, 5))
-
-	assert.Equal(t, coredata.ScoreLevels{
-		{Level: coredata.RiskScoreLevelLow, MinScore: 1},
-		{Level: coredata.RiskScoreLevelMedium, MinScore: 2},
-		{Level: coredata.RiskScoreLevelHigh, MinScore: 4},
-		{Level: coredata.RiskScoreLevelCritical, MinScore: 6},
-	}, DefaultScoreLevels(3, 3))
-
-	assert.Equal(t, coredata.ScoreLevels{
-		{Level: coredata.RiskScoreLevelLow, MinScore: 1},
-		{Level: coredata.RiskScoreLevelMedium, MinScore: 4},
-		{Level: coredata.RiskScoreLevelHigh, MinScore: 7},
-		{Level: coredata.RiskScoreLevelCritical, MinScore: 10},
-	}, DefaultScoreLevels(4, 4))
-}
-
 func TestCreateRiskAnalysisRequest_Validate_AppliesDefault(t *testing.T) {
 	t.Parallel()
 
