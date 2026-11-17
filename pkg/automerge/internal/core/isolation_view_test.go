@@ -94,8 +94,8 @@ func TestIsolationView_MatchesReplayAcrossLoadedSnapshot(t *testing.T) {
 	heads := []opset.ChangeHash{opset.ChangeHash(first)}
 	replayed, ok := loaded.state.at(heads)
 	require.True(t, ok)
-	filtered, filteredColumns, ok := newIsolationView(loaded.columns, heads)
-	require.True(t, ok)
+	filtered, filteredColumns, err := newIsolationView(loaded.columns, heads)
+	require.NoError(t, err)
 	require.Same(t, filteredColumns, filtered.columns)
 	assert.Empty(t, filtered.operations)
 

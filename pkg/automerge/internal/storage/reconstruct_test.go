@@ -144,7 +144,7 @@ func TestReconstructSnapshotChanges(t *testing.T) {
 			const dependencies = 3
 
 			want := uint64(dependencies) * uint64(unsafe.Sizeof(opset.ChangeHash{}))
-			want += uint64(3*len(changes)+1+dependencies) * uint64(unsafe.Sizeof(int(0)))
+			want += uint64(4*len(changes)+1+dependencies) * uint64(unsafe.Sizeof(int(0)))
 
 			for i := range changes {
 				want += uint64(len(changes[i].Raw))

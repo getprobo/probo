@@ -986,6 +986,10 @@ func (b *columnMutationBatch) apply(columns *columnarState) (*columnarState, err
 	next.nonCanonicalOperations = columns.nonCanonicalOperations
 	clonedNonCanonicalOperations := false
 
+	// ownedObjects names the objects whose non-canonical list this batch has
+	// already copied, and may therefore append to in place.
+	var ownedObjects map[opset.ObjectID]struct{}
+
 	for _, change := range b.appendedChanges {
 		for _, operation := range change.Operations {
 			if _, canonical := rows.lookup(operation.ID); canonical {
@@ -1009,10 +1013,22 @@ func (b *columnMutationBatch) apply(columns *columnarState) (*columnarState, err
 			}
 
 			if _, exists := next.nonCanonicalOperations[operation.ID]; !exists {
-				// Clip so the append copies instead of writing into a backing
-				// array the previous columns still read.
+				identifiers := next.nonCanonicalObjects[operation.Object]
+
+				// The previous columns still read the list they hold, so it
+				// is copied before the first append of the batch. Later
+				// appends to the same object extend that copy.
+				if _, owned := ownedObjects[operation.Object]; !owned {
+					if ownedObjects == nil {
+						ownedObjects = make(map[opset.ObjectID]struct{})
+					}
+
+					ownedObjects[operation.Object] = struct{}{}
+					identifiers = slices.Clone(identifiers)
+				}
+
 				next.nonCanonicalObjects[operation.Object] = append(
-					slices.Clip(next.nonCanonicalObjects[operation.Object]),
+					identifiers,
 					operation.ID,
 				)
 			}

@@ -733,7 +733,7 @@ func reconstructSnapshotChanges(
 	// order is found in one pass however the snapshot happens to store them.
 	if err := chargeDecoded[int](
 		budget,
-		3*uint64(len(changes))+1,
+		4*uint64(len(changes))+1,
 	); err != nil {
 		return err
 	}
@@ -1371,6 +1371,10 @@ func decodeOperations(
 		return nil, nil, err
 	}
 
+	// The two boolean columns are likewise only read while the operations
+	// are assembled.
+	insertsFrom := budgetUsed(budget)
+
 	var inserts []bool
 	if insertData := optionalColumn(columns, 52); insertData != nil {
 		inserts, err = decodeBooleanColumnWithBudget(insertData, count, budget)
@@ -1384,6 +1388,8 @@ func decodeOperations(
 
 		inserts = make([]bool, count)
 	}
+
+	scratch += budgetUsed(budget) - insertsFrom
 
 	values, err := decodeOptionalScalars(columns, 86, 87, count, budget)
 	if err != nil {
@@ -1419,6 +1425,8 @@ func decodeOperations(
 		return nil, nil, err
 	}
 
+	markExpandFrom := budgetUsed(budget)
+
 	// A nil slice means the column is absent and no operation carries the flag.
 	var markExpand []bool
 	if markExpandData := optionalColumn(columns, 148); markExpandData != nil {
@@ -1427,6 +1435,8 @@ func decodeOperations(
 			return nil, nil, fmt.Errorf("cannot decode mark expand: %w", err)
 		}
 	}
+
+	scratch += budgetUsed(budget) - markExpandFrom
 
 	markNames, err := optionalStringRuns(columns, 165, "mark name", count, budget)
 	if err != nil {

@@ -428,3 +428,202 @@ func TestState_ApplyChangeRejectsChangeWithoutItsOperations(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, NewState().ApplyChange(withOperations))
 }
+
+func TestLoadEngine_MergesLikeAnUnsavedEngine(t *testing.T) {
+	t.Parallel()
+
+	source, _ := concurrentHistory(t, 19)
+
+	saved, err := source.Save(true, true)
+	require.NoError(t, err)
+
+	loaded, err := LoadEngine(saved)
+	require.NoError(t, err)
+
+	// A peer that shares the history writes on, and both engines merge what
+	// it saved: once as a whole snapshot, once as the changes alone.
+	peer, err := source.Fork([]byte("\x40peer-actor"))
+	require.NoError(t, err)
+
+	body, _, err := peer.GetObject(0, "body")
+	require.NoError(t, err)
+	require.NoError(t, peer.SpliceText(body, 0, 2, "merged "))
+	require.NoError(t, peer.PutString(0, "title", "from the peer"))
+
+	_, err = peer.Commit("peer", time.Unix(900, 0))
+	require.NoError(t, err)
+
+	snapshot, err := peer.Save(true, true)
+	require.NoError(t, err)
+
+	for name, engine := range map[string]*Engine{"source": source, "loaded": loaded} {
+		_, err := engine.Merge(snapshot)
+		require.NoError(t, err, name)
+	}
+
+	wantSaved, err := source.Save(true, true)
+	require.NoError(t, err)
+
+	gotSaved, err := loaded.Save(true, true)
+	require.NoError(t, err)
+	assert.Equal(t, wantSaved, gotSaved)
+
+	// The other direction: an empty engine merges what the loaded one saves,
+	// which makes the loaded engine hand over every change it holds.
+	empty, err := NewEngine()
+	require.NoError(t, err)
+
+	_, err = empty.Merge(gotSaved)
+	require.NoError(t, err)
+
+	emptySaved, err := empty.Save(true, true)
+	require.NoError(t, err)
+	assert.Equal(t, gotSaved, emptySaved)
+
+	// Handing the changes over one by one reads each loaded change's bytes,
+	// which must be the ones an engine that never saved would send.
+	wantBatch, err := source.PrepareMerge(nil)
+	require.NoError(t, err)
+
+	gotBatch, err := loaded.PrepareMerge(nil)
+	require.NoError(t, err)
+	assert.Equal(t, wantBatch.changes, gotBatch.changes)
+
+	fresh, err := NewEngine()
+	require.NoError(t, err)
+
+	_, err = fresh.ApplyMerge(gotBatch)
+	require.NoError(t, err)
+
+	wantHeads, err := loaded.Heads()
+	require.NoError(t, err)
+
+	gotHeads, err := fresh.Heads()
+	require.NoError(t, err)
+	assert.Equal(t, wantHeads, gotHeads)
+
+	loadedBody, _, err := loaded.GetObject(0, "body")
+	require.NoError(t, err)
+
+	freshBody, _, err := fresh.GetObject(0, "body")
+	require.NoError(t, err)
+
+	wantText, err := loaded.Text(loadedBody)
+	require.NoError(t, err)
+
+	gotText, err := fresh.Text(freshBody)
+	require.NoError(t, err)
+	assert.Equal(t, wantText, gotText)
+}
+
+func TestEncodeChange_RejectsChangeWithoutItsOperations(t *testing.T) {
+	t.Parallel()
+
+	source, _ := concurrentHistory(t, 23)
+
+	saved, err := source.Save(true, true)
+	require.NoError(t, err)
+
+	loaded, err := LoadEngine(saved)
+	require.NoError(t, err)
+
+	changes, ok := loaded.state.allChanges()
+	require.True(t, ok)
+	require.NotEmpty(t, changes)
+
+	for i, change := range changes {
+		require.True(t, change.OperationsDeferred, "change %d", i)
+
+		// Encoded as it stands, the change would come out empty under a hash
+		// no peer knows.
+		clone := *change
+
+		_, err := storage.EncodeChange(&clone)
+		require.ErrorContains(t, err, "change operations are not loaded", "change %d", i)
+
+		// With its operations collected it encodes to the bytes it was
+		// loaded from.
+		withOperations, err := loaded.state.withOperations(change)
+		require.NoError(t, err)
+
+		clone = *withOperations
+
+		raw, err := storage.EncodeChange(&clone)
+		require.NoError(t, err)
+		assert.Equal(t, change.Raw, raw, "change %d", i)
+		assert.Equal(t, *change.Hash, *clone.Hash, "change %d", i)
+	}
+}
+
+func TestColumnMutationBatch_LeavesSharedDeleteListsUntouched(t *testing.T) {
+	t.Parallel()
+
+	engine, err := NewEngine()
+	require.NoError(t, err)
+	require.NoError(t, engine.SetActor([]byte("delete-lists")))
+
+	body, err := engine.PutText(0, "body")
+	require.NoError(t, err)
+	require.NoError(t, engine.SpliceText(body, 0, 0, "abcdefghijklmnopqrstuvwxyz"))
+
+	_, err = engine.Commit("seed", time.Unix(1, 0))
+	require.NoError(t, err)
+
+	require.NoError(t, engine.SpliceText(body, 0, 3, ""))
+
+	_, err = engine.Commit("first deletes", time.Unix(2, 0))
+	require.NoError(t, err)
+
+	// The fork reads the same committed columns as the engine it came from.
+	fork, err := engine.Fork([]byte("delete-lists-fork"))
+	require.NoError(t, err)
+
+	object, err := engine.textObject(body)
+	require.NoError(t, err)
+
+	before := slices.Clone(fork.columns.nonCanonicalObjects[object])
+	require.Len(t, before, 3)
+
+	// One commit that deletes many elements of one object appends to that
+	// object's list repeatedly.
+	require.NoError(t, engine.SpliceText(body, 0, 12, ""))
+
+	_, err = engine.Commit("more deletes", time.Unix(3, 0))
+	require.NoError(t, err)
+
+	assert.Equal(t, before, fork.columns.nonCanonicalObjects[object])
+
+	// The fork then deletes on its own. Had the engine appended into the
+	// list both started from, the fork would now overwrite the engine's
+	// entries.
+	forkBody, _, err := fork.GetObject(0, "body")
+	require.NoError(t, err)
+	require.NoError(t, fork.SpliceText(forkBody, 20, 3, ""))
+
+	_, err = fork.Commit("fork deletes", time.Unix(4, 0))
+	require.NoError(t, err)
+
+	for name, columns := range map[string]*columnarState{
+		"engine": engine.columns,
+		"fork":   fork.columns,
+	} {
+		identifiers := columns.nonCanonicalObjects[object]
+		assert.Equal(t, before, identifiers[:3], name)
+
+		for _, identifier := range identifiers {
+			_, ok := columns.nonCanonicalOperations[identifier]
+			assert.True(t, ok, "%s delete %v", name, identifier)
+		}
+	}
+
+	assert.Len(t, engine.columns.nonCanonicalObjects[object], 15)
+	assert.Len(t, fork.columns.nonCanonicalObjects[object], 6)
+
+	text, err := fork.Text(forkBody)
+	require.NoError(t, err)
+	assert.Equal(t, "defghijklmnopqrstuvw", text)
+
+	text, err = engine.Text(body)
+	require.NoError(t, err)
+	assert.Equal(t, "pqrstuvwxyz", text)
+}

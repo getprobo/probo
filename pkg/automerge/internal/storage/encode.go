@@ -41,6 +41,12 @@ type encodedColumn struct {
 // EncodeChange encodes a change chunk from the operations the change holds,
 // and records the resulting hash and bytes on the change.
 func EncodeChange(change *opset.Change) ([]byte, error) {
+	// Encoding such a change as it stands would produce a change that wrote
+	// nothing, under a different hash.
+	if change.OperationsDeferred {
+		return nil, fmt.Errorf("change operations are not loaded")
+	}
+
 	return encodeChange(change, slices.All(change.Operations))
 }
 

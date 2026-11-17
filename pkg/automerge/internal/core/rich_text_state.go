@@ -123,6 +123,9 @@ type markSweep struct {
 	nextStart int
 	nextEnd   int
 	covering  []int
+	// active flags the marks in covering, so marks that end together leave
+	// it in one pass instead of one shift of the set each.
+	active []bool
 }
 
 func newMarkSweep(marks []richTextMark) *markSweep {
@@ -130,6 +133,7 @@ func newMarkSweep(marks []richTextMark) *markSweep {
 		marks:  marks,
 		starts: make([]int, len(marks)),
 		ends:   make([]int, len(marks)),
+		active: make([]bool, len(marks)),
 	}
 	for rank := range marks {
 		sweep.starts[rank] = rank
@@ -149,7 +153,7 @@ func newMarkSweep(marks []richTextMark) *markSweep {
 // advance moves the walk to index, which must not decrease between calls, and
 // reports whether the covering set changed since the previous call.
 func (w *markSweep) advance(index int) bool {
-	changed := false
+	added, removed := false, false
 
 	for w.nextStart < len(w.starts) &&
 		w.marks[w.starts[w.nextStart]].start <= index {
@@ -161,9 +165,9 @@ func (w *markSweep) advance(index int) bool {
 			continue
 		}
 
-		position, _ := slices.BinarySearch(w.covering, rank)
-		w.covering = slices.Insert(w.covering, position, rank)
-		changed = true
+		w.active[rank] = true
+		w.covering = append(w.covering, rank)
+		added = true
 	}
 
 	for w.nextEnd < len(w.ends) &&
@@ -172,13 +176,25 @@ func (w *markSweep) advance(index int) bool {
 
 		w.nextEnd++
 
-		if position, ok := slices.BinarySearch(w.covering, rank); ok {
-			w.covering = slices.Delete(w.covering, position, position+1)
-			changed = true
+		if w.active[rank] {
+			w.active[rank] = false
+			removed = true
 		}
 	}
 
-	return changed
+	// The set is brought up to date once per step, however many marks start
+	// or end at it.
+	if removed {
+		w.covering = slices.DeleteFunc(w.covering, func(rank int) bool {
+			return !w.active[rank]
+		})
+	}
+
+	if added {
+		slices.Sort(w.covering)
+	}
+
+	return added || removed
 }
 
 type richTextMark struct {

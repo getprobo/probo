@@ -85,9 +85,9 @@ func (b *Engine) Isolate(heads [][32]byte) error {
 		return err
 	}
 
-	pinned, pinnedColumns, ok := newIsolationView(b.columns, nativeHeads)
-	if !ok {
-		return fmt.Errorf("isolation heads are unknown")
+	pinned, pinnedColumns, err := newIsolationView(b.columns, nativeHeads)
+	if err != nil {
+		return err
 	}
 
 	baseActor := b.baseActor

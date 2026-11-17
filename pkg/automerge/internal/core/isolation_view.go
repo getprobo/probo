@@ -20,7 +20,11 @@
 
 package core
 
-import "go.probo.inc/probo/pkg/automerge/internal/opset"
+import (
+	"fmt"
+
+	"go.probo.inc/probo/pkg/automerge/internal/opset"
+)
 
 // stateFromSharedColumns builds fork-local query indexes without cloning the
 // immutable canonical change graph.
@@ -34,9 +38,9 @@ func stateFromSharedColumns(columns *columnarState) (*State, error) {
 func newIsolationView(
 	columns *columnarState,
 	heads []opset.ChangeHash,
-) (*State, *columnarState, bool) {
+) (*State, *columnarState, error) {
 	if columns == nil || columns.snapshot == nil || columns.columnsDirty {
-		return nil, nil, false
+		return nil, nil, fmt.Errorf("cannot isolate before the document columns are published")
 	}
 
 	visited := make(map[opset.ChangeHash]struct{})
@@ -66,7 +70,7 @@ func newIsolationView(
 
 	for _, head := range heads {
 		if !visit(head) {
-			return nil, nil, false
+			return nil, nil, fmt.Errorf("isolation heads are unknown")
 		}
 	}
 
@@ -76,7 +80,7 @@ func newIsolationView(
 	for i := range columns.changes {
 		change := &columns.changes[i]
 		if change.Hash == nil {
-			return nil, nil, false
+			return nil, nil, fmt.Errorf("cannot isolate: change %d has no hash", i)
 		}
 
 		if _, selected := visited[*change.Hash]; !selected {
@@ -87,7 +91,10 @@ func newIsolationView(
 		if source.OperationsDeferred {
 			operations, ok := columns.changeOperations(change)
 			if !ok {
-				return nil, nil, false
+				return nil, nil, fmt.Errorf(
+					"cannot isolate: cannot locate the operations of change %s",
+					change.Hash,
+				)
 			}
 
 			source.Operations = operations
@@ -133,13 +140,13 @@ func newIsolationView(
 		},
 	)
 	if err != nil {
-		return nil, nil, false
+		return nil, nil, fmt.Errorf("cannot build isolated view: %w", err)
 	}
 
 	view, err := stateFromCanonicalColumns(pinnedColumns)
 	if err != nil {
-		return nil, nil, false
+		return nil, nil, fmt.Errorf("cannot build isolated view: %w", err)
 	}
 
-	return view, pinnedColumns, true
+	return view, pinnedColumns, nil
 }

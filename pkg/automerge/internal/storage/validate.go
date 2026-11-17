@@ -935,9 +935,11 @@ func assignChangeStartOps(
 
 // validateSnapshotMarkOrder checks that, in every object carrying marks, each
 // mark end follows its begin in RGA order. With rootOnly it checks the root
-// object alone, for a caller that validates sequence objects itself. Insertions are linked by their row
-// in the decoded operation table, so walking an object copies no operation and
-// allocates nothing per element.
+// object alone, for a caller that validates sequence objects itself.
+// Insertions are linked by their row in the decoded operation table, so
+// walking an object copies no operation. The only per-element memory is one
+// entry in the map from identifier to row, kept for the insertions of objects
+// that carry marks.
 func validateSnapshotMarkOrder(operations []opset.Operation, rootOnly bool) error {
 	const none = int32(-1)
 
