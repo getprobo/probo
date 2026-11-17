@@ -16,6 +16,7 @@
     },
     "controls": {
       "title": "Controls",
+      "search": "Search linked controls",
       "none": "None",
       "add": "Link a control",
       "remove": "Remove {{name}}",

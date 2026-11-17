@@ -43,9 +43,19 @@ export const documentProperties = tv({
 export const documentControls = tv({
   slots: {
     root: "flex w-full flex-col items-stretch gap-3",
+    title: "flex min-w-0 items-center justify-between gap-2",
     names: "flex w-full flex-col items-stretch gap-2",
     name: "flex min-w-0 items-center justify-between gap-2",
     control: "min-w-0 flex-1 truncate !block",
+  },
+  variants: {
+    pending: {
+      true: { names: "opacity-60" },
+      false: {},
+    },
+  },
+  defaultVariants: {
+    pending: false,
   },
 });
 

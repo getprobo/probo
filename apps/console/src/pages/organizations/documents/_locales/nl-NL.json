@@ -16,6 +16,7 @@
     },
     "controls": {
       "title": "Controls",
+      "search": "Gekoppelde controls zoeken",
       "none": "Geen",
       "add": "Control koppelen",
       "remove": "{{name}} verwijderen",

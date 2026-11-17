@@ -16,6 +16,7 @@
     },
     "controls": {
       "title": "Contrôles",
+      "search": "Rechercher les contrôles liés",
       "none": "Aucun",
       "add": "Lier un contrôle",
       "remove": "Retirer {{name}}",
