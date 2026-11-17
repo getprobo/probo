@@ -39,6 +39,7 @@ func TestResetStaleProcessingEmails_RequeuesOrFails(t *testing.T) {
 
 	tests := []struct {
 		name          string
+		status        coredata.EmailStatus
 		attemptCount  int
 		startedAgo    time.Duration
 		wantStatus    coredata.EmailStatus
@@ -47,6 +48,7 @@ func TestResetStaleProcessingEmails_RequeuesOrFails(t *testing.T) {
 	}{
 		{
 			name:          "requeues while attempts remain",
+			status:        coredata.EmailStatusProcessing,
 			attemptCount:  3,
 			startedAgo:    time.Hour,
 			wantStatus:    coredata.EmailStatusPending,
@@ -54,6 +56,7 @@ func TestResetStaleProcessingEmails_RequeuesOrFails(t *testing.T) {
 		},
 		{
 			name:          "requeues on the last remaining attempt",
+			status:        coredata.EmailStatusProcessing,
 			attemptCount:  9,
 			startedAgo:    time.Hour,
 			wantStatus:    coredata.EmailStatusPending,
@@ -61,6 +64,7 @@ func TestResetStaleProcessingEmails_RequeuesOrFails(t *testing.T) {
 		},
 		{
 			name:          "fails after attempts are exhausted",
+			status:        coredata.EmailStatusProcessing,
 			attemptCount:  10,
 			startedAgo:    time.Hour,
 			wantStatus:    coredata.EmailStatusFailed,
@@ -68,10 +72,24 @@ func TestResetStaleProcessingEmails_RequeuesOrFails(t *testing.T) {
 		},
 		{
 			name:         "leaves a fresh lease alone",
+			status:       coredata.EmailStatusProcessing,
 			attemptCount: 10,
 			startedAgo:   0,
 			wantStatus:   coredata.EmailStatusProcessing,
 			wantStarted:  true,
+		},
+		{
+			name:          "fails a pending email whose attempts are exhausted",
+			status:        coredata.EmailStatusPending,
+			attemptCount:  10,
+			wantStatus:    coredata.EmailStatusFailed,
+			wantLastError: true,
+		},
+		{
+			name:         "leaves a pending email with attempts remaining alone",
+			status:       coredata.EmailStatusPending,
+			attemptCount: 9,
+			wantStatus:   coredata.EmailStatusPending,
 		},
 	}
 
@@ -83,9 +101,10 @@ func TestResetStaleProcessingEmails_RequeuesOrFails(t *testing.T) {
 
 				pgClient := test.PGClient(t)
 				startedAt := time.Now().Add(-tt.startedAgo)
-				email := insertProcessingEmailFixture(
+				email := insertEmailRecoveryFixture(
 					t,
 					pgClient,
+					tt.status,
 					tt.attemptCount,
 					startedAt,
 				)
@@ -114,9 +133,10 @@ func TestResetStaleProcessingEmails_RequeuesOrFails(t *testing.T) {
 	}
 }
 
-func insertProcessingEmailFixture(
+func insertEmailRecoveryFixture(
 	t *testing.T,
 	pgClient *pg.Client,
+	status coredata.EmailStatus,
 	attemptCount int,
 	startedAt time.Time,
 ) *coredata.Email {
@@ -140,10 +160,13 @@ func insertProcessingEmailFixture(
 					return err
 				}
 
-				email.Status = coredata.EmailStatusProcessing
-				email.ProcessingStartedAt = &startedAt
+				email.Status = status
 				email.AttemptCount = attemptCount
 				email.LastAttemptedAt = &startedAt
+
+				if status == coredata.EmailStatusProcessing {
+					email.ProcessingStartedAt = &startedAt
+				}
 
 				return email.Update(ctx, tx)
 			},

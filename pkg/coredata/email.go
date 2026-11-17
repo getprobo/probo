@@ -334,8 +334,9 @@ SET
     processing_started_at = NULL,
     last_error = @last_error,
     updated_at = NOW()
-WHERE status = @processing_status
-    AND processing_started_at < NOW() - @stale_after::interval
+WHERE (status = @processing_status
+    AND processing_started_at < NOW() - @stale_after::interval)
+    OR (status = @pending_status AND attempt_count >= max_attempts)
 `
 
 	_, err := conn.Exec(
