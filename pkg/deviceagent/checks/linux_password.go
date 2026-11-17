@@ -40,6 +40,9 @@ const (
 	// Defaults from pam_pwquality(8) and pam_cracklib(8) when minlen is unset.
 	linuxPwqualityDefaultMinLen = 8
 	linuxCracklibDefaultMinLen  = 9
+
+	// libpwquality raises any lower minlen to PWQ_BASE_MIN_LENGTH.
+	linuxPwqualityBaseMinLen = 6
 )
 
 const (
@@ -306,19 +309,25 @@ func (m pamQualityModule) reading(
 	confKnown bool,
 	confInvalid bool,
 ) (linuxPasswordReading, bool) {
-	if m.invalid || (m.hasMinLen && m.minLen < 0) {
+	cracklib := m.name == "pam_cracklib.so"
+	if m.invalid || (cracklib && m.hasMinLen && m.minLen < 0) {
 		return linuxPasswordReading{}, false
 	}
 
 	if m.hasMinLen {
+		value := m.minLen
+		if !cracklib {
+			value = max(value, linuxPwqualityBaseMinLen)
+		}
+
 		return linuxPasswordReading{
-			value:  m.minLen,
+			value:  value,
 			source: linuxPasswordSourcePAM,
 			known:  true,
 		}, true
 	}
 
-	if m.name == "pam_cracklib.so" {
+	if cracklib {
 		return linuxPasswordReading{
 			value:  linuxCracklibDefaultMinLen,
 			source: linuxPasswordSourceCracklib,
@@ -332,7 +341,7 @@ func (m pamQualityModule) reading(
 
 	if confKnown {
 		return linuxPasswordReading{
-			value:  confValue,
+			value:  max(confValue, linuxPwqualityBaseMinLen),
 			source: confSource,
 			known:  true,
 		}, true
@@ -345,26 +354,29 @@ func (m pamQualityModule) reading(
 	}, true
 }
 
+// libpwquality reads the drop-ins first and pwquality.conf last, so the
+// main file wins.
 func mergedPwqualityMinLen(
 	conf string,
 	dropins []linuxPwqualityDropin,
 ) (int, string, bool, bool) {
-	parts := []linuxPwqualityDropin{{
-		Name: linuxPasswordSourcePwqualityConf,
-		Body: conf,
-	}}
-
 	ordered := slices.Clone(dropins)
 	slices.SortFunc(ordered, func(a, b linuxPwqualityDropin) int {
 		return strings.Compare(a.Name, b.Name)
 	})
 
+	parts := make([]linuxPwqualityDropin, 0, len(ordered)+1)
 	for _, dropin := range ordered {
 		parts = append(parts, linuxPwqualityDropin{
 			Name: linuxPasswordSourcePwqualityDir,
 			Body: dropin.Body,
 		})
 	}
+
+	parts = append(parts, linuxPwqualityDropin{
+		Name: linuxPasswordSourcePwqualityConf,
+		Body: conf,
+	})
 
 	var (
 		value   int
@@ -413,12 +425,12 @@ func pwqualityMinLen(body string) (int, bool, bool) {
 		}
 
 		key, raw, ok := strings.Cut(line, "=")
-		if !ok || strings.TrimSpace(key) != "minlen" {
+		if !ok || !strings.EqualFold(strings.TrimSpace(key), "minlen") {
 			continue
 		}
 
 		parsed, err := strconv.Atoi(strings.TrimSpace(raw))
-		if err != nil || parsed < 0 {
+		if err != nil {
 			found = true
 			invalid = true
 
@@ -440,6 +452,7 @@ func pwqualityMinLen(body string) (int, bool, bool) {
 func pamPasswordQualityModules(body string) []pamQualityModule {
 	var modules []pamQualityModule
 
+	body = strings.ReplaceAll(body, "\\\n", " ")
 	for line := range strings.SplitSeq(body, "\n") {
 		module, ok := pamPasswordQualityModule(line)
 		if !ok {
@@ -452,22 +465,23 @@ func pamPasswordQualityModules(body string) []pamQualityModule {
 	return modules
 }
 
+// pamPasswordQualityModule returns a quality module only when its control
+// rejects the password on failure; optional and sufficient lines enforce nothing.
 func pamPasswordQualityModule(line string) (pamQualityModule, bool) {
-	line = strings.TrimSpace(line)
-	if line == "" || strings.HasPrefix(line, "#") {
-		return pamQualityModule{}, false
+	if hash := strings.IndexByte(line, '#'); hash >= 0 {
+		line = line[:hash]
 	}
 
-	tokens := pamTokens(line)
+	tokens := pamTokens(strings.TrimSpace(line))
 	if len(tokens) < 3 {
 		return pamQualityModule{}, false
 	}
 
-	if strings.TrimPrefix(tokens[0], "-") != "password" {
+	if !strings.EqualFold(strings.TrimPrefix(tokens[0], "-"), "password") {
 		return pamQualityModule{}, false
 	}
 
-	if tokens[1] == "include" || tokens[1] == "substack" {
+	if !pamControlRejectsFailure(tokens[1]) {
 		return pamQualityModule{}, false
 	}
 
@@ -486,6 +500,41 @@ func pamPasswordQualityModule(line string) (pamQualityModule, bool) {
 	}, true
 }
 
+// pamControlRejectsFailure mirrors libpam: bracket values left unset
+// default to bad, and quality modules fail with authtok_err.
+func pamControlRejectsFailure(control string) bool {
+	switch strings.ToLower(control) {
+	case "required", "requisite":
+		return true
+	}
+
+	if !strings.HasPrefix(control, "[") {
+		return false
+	}
+
+	actions := map[string]string{}
+
+	for pair := range strings.FieldsSeq(strings.Trim(control, "[]")) {
+		key, value, ok := strings.Cut(pair, "=")
+		if !ok {
+			continue
+		}
+
+		actions[strings.ToLower(key)] = strings.ToLower(value)
+	}
+
+	action, ok := actions["authtok_err"]
+	if !ok {
+		action, ok = actions["default"]
+	}
+
+	if !ok {
+		return true
+	}
+
+	return action == "bad" || action == "die"
+}
+
 func pamModuleBase(token string) string {
 	token = strings.TrimPrefix(token, "-")
 	if slash := strings.LastIndex(token, "/"); slash >= 0 {
@@ -502,14 +551,14 @@ func pamMinLenArg(args []string) (int, bool, bool) {
 
 	for _, arg := range args {
 		key, raw, ok := strings.Cut(arg, "=")
-		if !ok || strings.TrimSpace(key) != "minlen" {
+		if !ok || !strings.EqualFold(strings.TrimSpace(key), "minlen") {
 			continue
 		}
 
 		found = true
 
 		parsed, err := strconv.Atoi(strings.TrimSpace(raw))
-		if err != nil || parsed < 0 {
+		if err != nil {
 			invalid = true
 			continue
 		}
