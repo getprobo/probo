@@ -1,0 +1,12 @@
+{
+  "details": {
+    "back": "Documents",
+    "notFound": "Document introuvable",
+    "fields": {
+      "title": "Titre"
+    },
+    "errors": {
+      "update": "Échec de la mise à jour du document"
+    }
+  }
+}

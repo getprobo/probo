@@ -19,19 +19,55 @@
 // SOFTWARE.
 
 import { lazy } from "@probo/react-lazy";
-import {
-  type AppRoute,
-} from "@probo/routes";
+import { type AppRoute } from "@probo/routes";
 import { Fragment } from "react";
 import { type LoaderFunctionArgs, redirect } from "react-router";
 
 import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
+import { detailLayout } from "#/pages/iam/organizations/_lib/shellLayout";
 
-const documentTabs = (prefix: string) => {
-  return [
+import { DocumentDetailsPageSkeleton } from "./DocumentDetailsPageSkeleton";
+
+function documentTabs(prefix: string, includeIndexRedirect = true): AppRoute[] {
+  const tabs: AppRoute[] = [
     {
-      path: `${prefix}`,
+      path: `${prefix}description`,
+      Fallback: LinkCardSkeleton,
+      Component: lazy(
+        () =>
+          import("./description/DocumentDescriptionPageLoader"),
+      ),
+    },
+    {
+      path: `${prefix}controls`,
+      Fallback: LinkCardSkeleton,
+      Component: lazy(
+        () =>
+          import("./controls/DocumentControlsPageLoader"),
+      ),
+    },
+    {
+      path: `${prefix}approvals`,
+      Fallback: LinkCardSkeleton,
+      Component: lazy(
+        () =>
+          import("./approvals/DocumentApprovalsPageLoader"),
+      ),
+    },
+    {
+      path: `${prefix}signatures`,
+      Fallback: LinkCardSkeleton,
+      Component: lazy(
+        () =>
+          import("./signatures/DocumentSignaturesPageLoader"),
+      ),
+    },
+  ];
+
+  if (includeIndexRedirect) {
+    tabs.unshift({
+      path: prefix,
       loader: ({
         params: { organizationId, documentId, versionId },
       }: LoaderFunctionArgs) => {
@@ -43,55 +79,35 @@ const documentTabs = (prefix: string) => {
         throw redirect(redirectPath);
       },
       Component: Fragment,
-    },
-    {
-      path: `${prefix}description`,
-      Fallback: LinkCardSkeleton,
-      Component: lazy(
-        () =>
-          import("#/pages/organizations/documents/description/DocumentDescriptionPageLoader"),
-      ),
-    },
-    {
-      path: `${prefix}controls`,
-      Fallback: LinkCardSkeleton,
-      Component: lazy(
-        () =>
-          import("#/pages/organizations/documents/controls/DocumentControlsPageLoader"),
-      ),
-    },
-    {
-      path: `${prefix}approvals`,
-      Fallback: LinkCardSkeleton,
-      Component: lazy(
-        () =>
-          import("#/pages/organizations/documents/approvals/DocumentApprovalsPageLoader"),
-      ),
-    },
-    {
-      path: `${prefix}signatures`,
-      Fallback: LinkCardSkeleton,
-      Component: lazy(
-        () =>
-          import("#/pages/organizations/documents/signatures/DocumentSignaturesPageLoader"),
-      ),
-    },
-  ];
-};
+    });
+  }
+
+  return tabs;
+}
 
 export const documentsRoutes = [
   {
     path: "documents",
     Fallback: PageSkeleton,
-    Component: lazy(() => import("#/pages/organizations/documents/DocumentsPageLoader")),
+    Component: lazy(() => import("./DocumentsPageLoader")),
   },
   {
     path: "documents/:documentId",
-    Fallback: PageSkeleton,
-    Component: lazy(() => import("#/pages/organizations/documents/DocumentLayoutLoader")),
     children: [
-      ...documentTabs(""),
-      ...documentTabs("versions/:versionId/"),
+      {
+        index: true,
+        handle: detailLayout,
+        Fallback: DocumentDetailsPageSkeleton,
+        Component: lazy(() => import("./DocumentDetailsPageLoader")),
+      },
+      {
+        Fallback: PageSkeleton,
+        Component: lazy(() => import("./DocumentLayoutLoader")),
+        children: [
+          ...documentTabs("", false),
+          ...documentTabs("versions/:versionId/"),
+        ],
+      },
     ],
   },
 ] satisfies AppRoute[];
