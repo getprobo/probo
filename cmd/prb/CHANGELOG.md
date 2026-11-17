@@ -4,6 +4,16 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.270.0] - 2026-11-17
+
+### Added
+
+- `prb risk-analysis create --score-levels` and
+  `prb risk-analysis update --score-levels` set each level's minimum
+  score, as `LOW=1,MEDIUM=5,HIGH=10`. Omitting the flag on create
+  uses the default bands for the matrix size. `list` and `view`
+  print the levels, and `fork` returns them
+
 ## [0.269.0] - 2026-11-16
 
 ### Added
