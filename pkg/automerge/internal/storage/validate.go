@@ -780,12 +780,14 @@ func assignOperations(
 	}
 
 	for i := range changes {
-		slices.SortFunc(
-			changes[i].Operations,
-			func(left, right opset.Operation) int {
-				return left.ID.Compare(right.ID)
-			},
-		)
+		if !orderChangeOperations(&changes[i]) {
+			slices.SortFunc(
+				changes[i].Operations,
+				func(left, right opset.Operation) int {
+					return left.ID.Compare(right.ID)
+				},
+			)
+		}
 
 		expected := uint64(0)
 		if changes[i].MaxOp >= changes[i].StartOp {
@@ -805,6 +807,51 @@ func assignOperations(
 	}
 
 	return nil
+}
+
+// orderChangeOperations sorts a change's operations by counter when they fill
+// the change's counter range exactly, which is every well-formed change. Each
+// operation then has one slot, so it is placed directly instead of compared.
+// It reports false for any other shape, and the caller falls back to a
+// comparison sort.
+func orderChangeOperations(change *opset.Change) bool {
+	operations := change.Operations
+	if len(operations) == 0 ||
+		change.MaxOp < change.StartOp ||
+		change.MaxOp-change.StartOp != uint64(len(operations)-1) {
+		return false
+	}
+
+	for i := range operations {
+		identifier := operations[i].ID
+		if identifier.Actor != change.Actor ||
+			identifier.Counter < change.StartOp ||
+			identifier.Counter > change.MaxOp {
+			return false
+		}
+	}
+
+	// Follow each displacement cycle, so every operation moves at most once
+	// and no second table is allocated.
+	for i := range operations {
+		for {
+			slot := int(operations[i].ID.Counter - change.StartOp)
+			if slot == i {
+				break
+			}
+
+			if operations[slot].ID.Counter == operations[i].ID.Counter {
+				// Two operations claim one counter. Leave the rest to the
+				// comparison sort; the count check rejects nothing here, so
+				// later validation reports the duplicate.
+				return false
+			}
+
+			operations[i], operations[slot] = operations[slot], operations[i]
+		}
+	}
+
+	return true
 }
 
 // assignChangeStartOps sets each change's StartOp to the first counter that
@@ -871,110 +918,136 @@ func assignChangeStartOps(
 	return nil
 }
 
-type (
-	snapshotMarkGroup struct {
-		head     []opset.Operation
-		children map[opset.OpID][]opset.Operation
-	}
-
-	snapshotMarkFrame struct {
-		rows  []opset.Operation
-		index int
-	}
-)
-
+// validateSnapshotMarkOrder checks that, in every object carrying marks, each
+// mark end follows its begin in RGA order. Insertions are linked by their row
+// in the decoded operation table, so walking an object copies no operation and
+// allocates nothing per element.
 func validateSnapshotMarkOrder(operations []opset.Operation) error {
-	byID := make(map[opset.OpID]opset.Operation, len(operations))
-	marked := make(map[opset.ObjectID]struct{})
-	groups := make(map[opset.ObjectID]*snapshotMarkGroup)
+	const none = int32(-1)
 
-	for _, operation := range operations {
-		byID[operation.ID] = operation
-		if operation.Action == opset.ActionMark {
-			marked[operation.Object] = struct{}{}
+	if len(operations) > math.MaxInt32 {
+		return fmt.Errorf("snapshot holds %d operations, more than can be ordered", len(operations))
+	}
+
+	// heads maps each marked object to the first row of its head-anchored
+	// insertions.
+	heads := make(map[opset.ObjectID]int32)
+	begins := make(map[opset.OpID]opset.ObjectID)
+
+	for i := range operations {
+		operation := &operations[i]
+		if operation.Action != opset.ActionMark {
+			continue
 		}
 
+		heads[operation.Object] = none
+
+		if operation.MarkName != nil {
+			begins[operation.ID] = operation.Object
+		}
+	}
+
+	// Only objects that carry marks have an order to validate, so the
+	// insertion tree is built for those alone.
+	if len(heads) == 0 {
+		return nil
+	}
+
+	rows := make(map[opset.OpID]int32)
+
+	for i := range operations {
+		operation := &operations[i]
 		if !operation.Insert {
 			continue
 		}
 
-		group, ok := groups[operation.Object]
+		if _, ok := heads[operation.Object]; ok {
+			rows[operation.ID] = int32(i)
+		}
+	}
+
+	firstChild := make([]int32, len(operations))
+	nextSibling := make([]int32, len(operations))
+
+	for i := range operations {
+		firstChild[i] = none
+		nextSibling[i] = none
+	}
+
+	for i := range operations {
+		operation := &operations[i]
+		if !operation.Insert {
+			continue
+		}
+
+		head, ok := heads[operation.Object]
 		if !ok {
-			group = &snapshotMarkGroup{
-				children: make(map[opset.OpID][]opset.Operation),
-			}
-			groups[operation.Object] = group
+			continue
 		}
 
 		switch {
 		case operation.Key.IsHead:
-			group.head = append(group.head, operation)
+			nextSibling[i] = head
+			heads[operation.Object] = int32(i)
 		case operation.Key.Element != nil:
-			element := *operation.Key.Element
-			group.children[element] = append(group.children[element], operation)
+			// An insertion anchored on an element the object does not hold is
+			// unreachable from the head and has no place in the order.
+			parent, ok := rows[*operation.Key.Element]
+			if !ok || operations[parent].Object != operation.Object {
+				continue
+			}
+
+			nextSibling[i] = firstChild[parent]
+			firstChild[parent] = int32(i)
 		}
 	}
 
-	for object := range marked {
-		group := groups[object]
-		if group == nil {
-			continue
+	var (
+		stack    []int32
+		siblings []int32
+	)
+
+	// pushSiblings stacks a sibling list so the highest operation ID is taken
+	// first, which is the RGA order among insertions sharing an anchor.
+	pushSiblings := func(first int32) {
+		siblings = siblings[:0]
+		for row := first; row != none; row = nextSibling[row] {
+			siblings = append(siblings, row)
 		}
 
-		if err := validateSnapshotMarkGroup(byID, group); err != nil {
-			return err
+		if len(siblings) > 1 {
+			slices.SortFunc(siblings, func(left, right int32) int {
+				return operations[left].ID.Compare(operations[right].ID)
+			})
 		}
+
+		stack = append(stack, siblings...)
 	}
 
-	return nil
-}
+	for _, head := range heads {
+		seen := make(map[opset.OpID]struct{})
 
-func validateSnapshotMarkGroup(
-	byID map[opset.OpID]opset.Operation,
-	group *snapshotMarkGroup,
-) error {
-	seen := make(map[opset.OpID]struct{})
-	visited := make(map[opset.OpID]struct{})
+		pushSiblings(head)
 
-	slices.SortFunc(group.head, compareSnapshotOperationIDDescending)
-	stack := []snapshotMarkFrame{{rows: group.head}}
+		for len(stack) > 0 {
+			row := stack[len(stack)-1]
+			stack = stack[:len(stack)-1]
 
-	for len(stack) > 0 {
-		current := len(stack) - 1
-		if stack[current].index >= len(stack[current].rows) {
-			stack = stack[:current]
+			if err := validateSnapshotMarkSeen(begins, seen, &operations[row]); err != nil {
+				return err
+			}
 
-			continue
+			pushSiblings(firstChild[row])
 		}
-
-		operation := stack[current].rows[stack[current].index]
-		stack[current].index++
-
-		if _, ok := visited[operation.ID]; ok {
-			continue
-		}
-
-		visited[operation.ID] = struct{}{}
-		if err := validateSnapshotMarkSeen(byID, seen, operation); err != nil {
-			return err
-		}
-
-		children := group.children[operation.ID]
-		if len(children) == 0 {
-			continue
-		}
-
-		slices.SortFunc(children, compareSnapshotOperationIDDescending)
-		stack = append(stack, snapshotMarkFrame{rows: children})
 	}
 
 	return nil
 }
 
 func validateSnapshotMarkSeen(
-	byID map[opset.OpID]opset.Operation,
+	begins map[opset.OpID]opset.ObjectID,
 	seen map[opset.OpID]struct{},
-	operation opset.Operation,
+	operation *opset.Operation,
 ) error {
 	if operation.Action != opset.ActionMark {
 		return nil
@@ -995,11 +1068,9 @@ func validateSnapshotMarkSeen(
 		Counter: operation.ID.Counter - 1,
 	}
 
-	begin, ok := byID[beginID]
-	if !ok ||
-		begin.Action != opset.ActionMark ||
-		begin.MarkName == nil ||
-		begin.Object != operation.Object {
+	// An end only has an order to respect when the operation before it is a
+	// mark begin on the same object.
+	if object, ok := begins[beginID]; !ok || object != operation.Object {
 		return nil
 	}
 
@@ -1012,10 +1083,6 @@ func validateSnapshotMarkSeen(
 		operation.ID,
 		beginID,
 	)
-}
-
-func compareSnapshotOperationIDDescending(left, right opset.Operation) int {
-	return right.ID.Compare(left.ID)
 }
 
 func validateSnapshotGraph(
