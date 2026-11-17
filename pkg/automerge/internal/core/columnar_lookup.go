@@ -94,6 +94,7 @@ func (s *State) attachCanonical(columns *columnarState) {
 
 	s.columns = columns
 	clear(s.operations)
+	clear(s.overlayObjects)
 	clear(s.changes)
 	clear(s.heads)
 	clear(s.removedHeads)
@@ -144,6 +145,73 @@ func (s *State) eachOperation(yield func(opset.Operation) bool) {
 			}
 		}
 	}
+}
+
+// eachObjectOperation yields every operation addressing object, the same set
+// eachOperation yields filtered by object. Staged rows are read through the
+// overlay's per-object index and committed rows through the per-object column
+// span and non-canonical index, so the cost follows the object's own size
+// instead of the document's.
+func (s *State) eachObjectOperation(
+	object opset.ObjectID,
+	yield func(opset.Operation) bool,
+) {
+	for _, identifier := range s.overlayObjects[object] {
+		if !yield(s.operations[identifier]) {
+			return
+		}
+	}
+
+	if s.columns == nil {
+		return
+	}
+
+	if span, ok := s.columns.objectSpans[object]; ok {
+		for _, operation := range s.columns.operations[span.start:span.end] {
+			if operation.Object != object {
+				continue
+			}
+
+			if _, overlaid := s.operations[operation.ID]; overlaid {
+				continue
+			}
+
+			if !yield(operation) {
+				return
+			}
+		}
+	}
+
+	for _, identifier := range s.columns.nonCanonicalObjects[object] {
+		if _, overlaid := s.operations[identifier]; overlaid {
+			continue
+		}
+
+		operation, ok := s.columns.nonCanonicalOperations[identifier]
+		if !ok {
+			continue
+		}
+
+		if !yield(operation) {
+			return
+		}
+	}
+}
+
+// objectOperationBound returns an upper bound on the operations
+// eachObjectOperation yields for object, for sizing a table before the walk.
+func (s *State) objectOperationBound(object opset.ObjectID) int {
+	bound := len(s.overlayObjects[object])
+
+	if s.columns != nil {
+		if span, ok := s.columns.objectSpans[object]; ok {
+			bound += span.end - span.start
+		}
+
+		bound += len(s.columns.nonCanonicalObjects[object])
+	}
+
+	return bound
 }
 
 func (s *State) change(hash opset.ChangeHash) (*opset.Change, bool) {

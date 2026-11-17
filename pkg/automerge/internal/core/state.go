@@ -41,6 +41,10 @@ type (
 		changes       map[opset.ChangeHash]*opset.Change
 		actorSequence map[opset.ActorID]uint64
 		operations    map[opset.OpID]opset.Operation
+		// overlayObjects groups the overlay's operation IDs by the object they
+		// address. An open transaction can stage a whole document, and reading
+		// one object must not walk everything staged for the others.
+		overlayObjects map[opset.ObjectID][]opset.OpID
 		// operationIDs is a semantic membership/indexing cache spanning columns
 		// and the overlay. It is not operation storage.
 		operationIDs map[opset.OpID]struct{}
@@ -100,6 +104,7 @@ func NewState() *State {
 		changes:                  make(map[opset.ChangeHash]*opset.Change),
 		actorSequence:            make(map[opset.ActorID]uint64),
 		operations:               make(map[opset.OpID]opset.Operation),
+		overlayObjects:           make(map[opset.ObjectID][]opset.OpID),
 		operationIDs:             make(map[opset.OpID]struct{}),
 		superseded:               make(map[opset.OpID]struct{}),
 		heads:                    make(map[opset.ChangeHash]struct{}),
@@ -159,7 +164,7 @@ func newStateFromDocument(
 				return nil, fmt.Errorf("duplicate snapshot operation ID %v", operation.ID)
 			}
 
-			state.operations[operation.ID] = operation
+			state.stageOperation(operation)
 			state.operationIDs[operation.ID] = struct{}{}
 			state.observeLoadedSequenceOperation(operation)
 			state.indexMapKeyOperation(operation)
@@ -256,20 +261,31 @@ func (s *State) validateMarkOrder() error {
 	for object := range objects {
 		seen := make(map[opset.OpID]struct{})
 
-		for _, id := range s.insertOrder(object) {
+		var orderErr error
+
+		// The sequence index carries the same RGA order as insertOrder and is
+		// what the first read or edit of the object builds anyway, so walking
+		// it here validates without materializing a second copy of the order.
+		s.sequenceIndex(object).eachRaw(0, func(entry sequenceIndexEntry) bool {
+			if !entry.mark {
+				return true
+			}
+
+			id := entry.insertion
+
 			operation, ok := s.operation(id)
 			if !ok || operation.Action != opset.ActionMark {
-				continue
+				return true
 			}
 
 			if operation.MarkName != nil {
 				seen[id] = struct{}{}
 
-				continue
+				return true
 			}
 
 			if id.Counter == 0 {
-				continue
+				return true
 			}
 
 			beginID := opset.OpID{Actor: id.Actor, Counter: id.Counter - 1}
@@ -279,12 +295,20 @@ func (s *State) validateMarkOrder() error {
 				begin.Action != opset.ActionMark ||
 				begin.MarkName == nil ||
 				begin.Object != operation.Object {
-				continue
+				return true
 			}
 
 			if _, ok := seen[beginID]; !ok {
-				return fmt.Errorf("invalid mark operation order: end %v precedes begin %v", id, beginID)
+				orderErr = fmt.Errorf("invalid mark operation order: end %v precedes begin %v", id, beginID)
+
+				return false
 			}
+
+			return true
+		})
+
+		if orderErr != nil {
+			return orderErr
 		}
 	}
 
@@ -326,7 +350,7 @@ func (s *State) ApplyChange(change *opset.Change) error {
 	}
 
 	for _, operation := range change.Operations {
-		s.operations[operation.ID] = operation
+		s.stageOperation(operation)
 
 		s.operationIDs[operation.ID] = struct{}{}
 		if !operation.Object.IsRoot {
@@ -459,9 +483,8 @@ func (s *State) visibleMapObjectOperation(
 		found  bool
 	)
 
-	s.eachOperation(func(operation opset.Operation) bool {
-		if operation.Object != object ||
-			operation.Key.Property == nil ||
+	s.eachObjectOperation(object, func(operation opset.Operation) bool {
+		if operation.Key.Property == nil ||
 			*operation.Key.Property != property ||
 			operation.Action != action ||
 			s.isSuperseded(operation.ID) {
@@ -641,9 +664,8 @@ func (s *State) mapLength(object opset.ObjectID) uint64 {
 func (s *State) mapKeys(object opset.ObjectID) []string {
 	properties := make(map[string]struct{})
 
-	s.eachOperation(func(operation opset.Operation) bool {
-		if operation.Object == object &&
-			operation.Key.Property != nil &&
+	s.eachObjectOperation(object, func(operation opset.Operation) bool {
+		if operation.Key.Property != nil &&
 			operation.Action != opset.ActionDelete &&
 			!s.isSuperseded(operation.ID) {
 			properties[*operation.Key.Property] = struct{}{}
@@ -719,7 +741,7 @@ func (s *State) applyPending(operations []opset.Operation) error {
 			return fmt.Errorf("duplicate pending operation ID %v", operation.ID)
 		}
 
-		s.operations[operation.ID] = operation
+		s.stageOperation(operation)
 
 		s.operationIDs[operation.ID] = struct{}{}
 		if !operation.Object.IsRoot {
@@ -768,7 +790,7 @@ func (s *State) undoPending(operations []opset.Operation) {
 			}
 		}
 
-		delete(s.operations, operation.ID)
+		s.unstageOperation(operation)
 		delete(s.operationIDs, operation.ID)
 		s.removeMapKeyOperation(operation)
 		s.removeSequenceElementOperation(operation)
@@ -780,6 +802,42 @@ func (s *State) undoPending(operations []opset.Operation) {
 			s.invalidateObjectCaches(opset.ObjectID{OpID: operation.ID})
 		}
 	}
+}
+
+// stageOperation adds an operation to the overlay. Callers have already
+// rejected an identifier the overlay holds.
+func (s *State) stageOperation(operation opset.Operation) {
+	s.operations[operation.ID] = operation
+	s.overlayObjects[operation.Object] = append(
+		s.overlayObjects[operation.Object],
+		operation.ID,
+	)
+}
+
+// unstageOperation removes an operation from the overlay. Rollback removes the
+// newest operation first, so the search runs from the end of the object's list.
+func (s *State) unstageOperation(operation opset.Operation) {
+	delete(s.operations, operation.ID)
+
+	identifiers := s.overlayObjects[operation.Object]
+
+	for i, identifier := range slices.Backward(identifiers) {
+		if identifier != operation.ID {
+			continue
+		}
+
+		identifiers = append(identifiers[:i], identifiers[i+1:]...)
+
+		break
+	}
+
+	if len(identifiers) == 0 {
+		delete(s.overlayObjects, operation.Object)
+
+		return
+	}
+
+	s.overlayObjects[operation.Object] = identifiers
 }
 
 func (s *State) removeMapKeyOperation(operation opset.Operation) {

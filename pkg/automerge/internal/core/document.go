@@ -113,9 +113,8 @@ func (s *State) documentObjects() []opset.ObjectID {
 func (s *State) mapObjectOrder(object opset.ObjectID) []opset.OpID {
 	byProperty := make(map[string][]opset.OpID)
 
-	s.eachOperation(func(operation opset.Operation) bool {
-		if operation.Object != object ||
-			operation.Key.Property == nil ||
+	s.eachObjectOperation(object, func(operation opset.Operation) bool {
+		if operation.Key.Property == nil ||
 			operation.Action == opset.ActionDelete {
 			return true
 		}
@@ -156,9 +155,8 @@ func (s *State) sequenceObjectOrder(object opset.ObjectID) []opset.OpID {
 	// overwrite, follow the element they target.
 	byElement := make(map[opset.OpID][]opset.OpID)
 
-	s.eachOperation(func(operation opset.Operation) bool {
-		if operation.Object != object ||
-			operation.Insert ||
+	s.eachObjectOperation(object, func(operation opset.Operation) bool {
+		if operation.Insert ||
 			operation.Key.Element == nil ||
 			operation.Action == opset.ActionDelete {
 			return true

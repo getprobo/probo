@@ -104,16 +104,23 @@ func newColumnMutationBatch(
 		)
 	}
 
-	touched := make(map[opset.ObjectID]struct{})
+	// incoming groups the rows each touched object gains. Grouping once keeps
+	// a commit that touches many objects from rescanning every change per object.
+	incoming := make(map[opset.ObjectID][]opset.OpID)
 
 	for _, change := range changes {
 		for _, operation := range change.Operations {
-			touched[operation.Object] = struct{}{}
+			identifiers := incoming[operation.Object]
+			if operation.Action != opset.ActionDelete {
+				identifiers = append(identifiers, operation.ID)
+			}
+
+			incoming[operation.Object] = identifiers
 		}
 	}
 
-	objects := make([]opset.ObjectID, 0, len(touched))
-	for object := range touched {
+	objects := make([]opset.ObjectID, 0, len(incoming))
+	for object := range incoming {
 		objects = append(objects, object)
 	}
 
@@ -191,7 +198,7 @@ func newColumnMutationBatch(
 			state,
 			object,
 			current,
-			changes,
+			incoming[object],
 		)
 		if !ok {
 			return nil, fmt.Errorf("cannot order directly mutated object %v", object)
@@ -618,25 +625,41 @@ func coalesceDirectInsertions(
 	}
 
 	coalesced := make([]storage.SnapshotOperationSplice, 0, len(splices))
-	for _, splice := range splices {
-		last := len(coalesced) - 1
-		if last >= 0 &&
-			coalesced[last].Index == splice.Index &&
-			coalesced[last].DeleteCount == 0 &&
-			splice.DeleteCount == 0 {
-			operations := make(
-				[]opset.Operation,
-				0,
-				len(splice.Operations)+len(coalesced[last].Operations),
-			)
-			operations = append(operations, splice.Operations...)
-			operations = append(operations, coalesced[last].Operations...)
-			coalesced[last].Operations = operations
 
-			continue
+	for start := 0; start < len(splices); {
+		// A run is an insertion followed by further insertions at the same
+		// row. Each later insertion lands ahead of the earlier ones, so the
+		// merged rows are the run's operations in reverse splice order.
+		end := start + 1
+		if splices[start].DeleteCount == 0 {
+			for end < len(splices) &&
+				splices[end].Index == splices[start].Index &&
+				splices[end].DeleteCount == 0 {
+				end++
+			}
 		}
 
-		coalesced = append(coalesced, splice)
+		merged := splices[start]
+
+		if end-start > 1 {
+			total := 0
+			for _, splice := range splices[start:end] {
+				total += len(splice.Operations)
+			}
+
+			// Sizing the run once keeps a seed that inserts thousands of
+			// objects at one row from re-copying the rows gathered so far for
+			// every object.
+			operations := make([]opset.Operation, 0, total)
+			for _, splice := range slices.Backward(splices[start:end]) {
+				operations = append(operations, splice.Operations...)
+			}
+
+			merged.Operations = operations
+		}
+
+		coalesced = append(coalesced, merged)
+		start = end
 	}
 
 	return coalesced
@@ -689,7 +712,7 @@ func directObjectReplacement(
 	state *State,
 	object opset.ObjectID,
 	current []opset.Operation,
-	changes []*opset.Change,
+	incoming []opset.OpID,
 ) ([]opset.Operation, bool) {
 	mapObject := object.IsRoot
 	if !mapObject {
@@ -725,12 +748,8 @@ func directObjectReplacement(
 		identifiers[operation.ID] = struct{}{}
 	}
 
-	for _, change := range changes {
-		for _, operation := range change.Operations {
-			if operation.Object == object && operation.Action != opset.ActionDelete {
-				identifiers[operation.ID] = struct{}{}
-			}
-		}
+	for _, identifier := range incoming {
+		identifiers[identifier] = struct{}{}
 	}
 
 	replacement := make([]opset.Operation, 0, len(identifiers))
@@ -980,7 +999,22 @@ func (b *columnMutationBatch) apply(columns *columnarState) (*columnarState, err
 				)
 				maps.Copy(next.nonCanonicalOperations, columns.nonCanonicalOperations)
 
+				next.nonCanonicalObjects = make(
+					map[opset.ObjectID][]opset.OpID,
+					len(columns.nonCanonicalObjects)+1,
+				)
+				maps.Copy(next.nonCanonicalObjects, columns.nonCanonicalObjects)
+
 				clonedNonCanonicalOperations = true
+			}
+
+			if _, exists := next.nonCanonicalOperations[operation.ID]; !exists {
+				// Clip so the append copies instead of writing into a backing
+				// array the previous columns still read.
+				next.nonCanonicalObjects[operation.Object] = append(
+					slices.Clip(next.nonCanonicalObjects[operation.Object]),
+					operation.ID,
+				)
 			}
 
 			next.nonCanonicalOperations[operation.ID] = cloneOperation(operation)

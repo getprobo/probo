@@ -148,12 +148,10 @@ func (s *State) insertOrder(object opset.OpID) []opset.OpID {
 
 	var head []opset.Operation
 
-	s.eachOperation(func(operation opset.Operation) bool {
+	s.eachObjectOperation(opset.ObjectID{OpID: object}, func(operation opset.Operation) bool {
 		// Mark begin and end operations occupy positions in the sequence so
 		// insertions can anchor relative to them; element views filter them out.
-		if operation.Object.IsRoot ||
-			operation.Object.OpID != object ||
-			!operation.Insert {
+		if !operation.Insert {
 			return true
 		}
 

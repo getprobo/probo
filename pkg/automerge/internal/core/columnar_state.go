@@ -44,8 +44,12 @@ type columnarState struct {
 	// operation lookup authority in columnarState without duplicating ordinary
 	// canonical rows.
 	nonCanonicalOperations map[opset.OpID]opset.Operation
-	objectSpans            map[opset.ObjectID]wireObjectSpan
-	objectOrder            []opset.ObjectID
+	// nonCanonicalObjects groups nonCanonicalOperations by the object they
+	// address, so an object-scoped read visits only that object's rows. It is
+	// replaced, never mutated in place, because columns are shared across forks.
+	nonCanonicalObjects map[opset.ObjectID][]opset.OpID
+	objectSpans         map[opset.ObjectID]wireObjectSpan
+	objectOrder         []opset.ObjectID
 
 	changeColumns    []opset.RawColumn
 	operationColumns []opset.RawColumn
@@ -617,6 +621,7 @@ func (c *columnarState) reconcile(state *State) error {
 
 func (c *columnarState) rebuildNonCanonicalOperations() {
 	operations := make(map[opset.OpID]opset.Operation)
+	objects := make(map[opset.ObjectID][]opset.OpID)
 
 	for i := range c.changes {
 		for _, operation := range c.changes[i].Operations {
@@ -627,11 +632,19 @@ func (c *columnarState) rebuildNonCanonicalOperations() {
 				continue
 			}
 
+			if _, exists := operations[operation.ID]; !exists {
+				objects[operation.Object] = append(
+					objects[operation.Object],
+					operation.ID,
+				)
+			}
+
 			operations[operation.ID] = cloneOperation(operation)
 		}
 	}
 
 	c.nonCanonicalOperations = operations
+	c.nonCanonicalObjects = objects
 }
 
 func (c *columnarState) rebuildWireObjectSpans() {

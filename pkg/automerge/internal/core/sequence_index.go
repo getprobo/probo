@@ -22,6 +22,7 @@ package core
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 
 	"go.probo.inc/probo/pkg/automerge/internal/opset"
@@ -92,73 +93,124 @@ func (i *sequenceIndex) totalUTF16Width() uint64 {
 // document-wide winner map. Replacement candidates are already grouped by
 // element in sequenceElementIndex, so winner selection is local to each entry.
 func (s *State) buildSequenceIndex(object opset.OpID) *sequenceIndex {
-	children := make(map[opset.OpID][]opset.OpID)
+	// Insertions are held as rows of one table and linked by row number, so a
+	// long run of text costs a table entry per element instead of a child
+	// slice, a visited entry, and a second operation lookup each.
+	type node struct {
+		entry       sequenceIndexEntry
+		anchor      opset.OpID
+		firstChild  int32
+		nextSibling int32
+		head        bool
+	}
 
-	var head []opset.OpID
+	const none = int32(-1)
 
-	s.eachOperation(func(operation opset.Operation) bool {
-		if operation.Object.IsRoot ||
-			operation.Object.OpID != object ||
-			!operation.Insert {
+	nodes := make([]node, 0, s.objectOperationBound(opset.ObjectID{OpID: object}))
+
+	s.eachObjectOperation(opset.ObjectID{OpID: object}, func(operation opset.Operation) bool {
+		if !operation.Insert {
 			return true
 		}
 
-		if operation.Key.IsHead {
-			head = append(head, operation.ID)
-		} else if operation.Key.Element != nil {
-			children[*operation.Key.Element] = append(
-				children[*operation.Key.Element],
-				operation.ID,
-			)
+		if !operation.Key.IsHead && operation.Key.Element == nil {
+			return true
 		}
+
+		next := node{
+			entry:       s.newSequenceIndexEntry(operation),
+			firstChild:  none,
+			nextSibling: none,
+			head:        operation.Key.IsHead,
+		}
+		if !next.head {
+			next.anchor = *operation.Key.Element
+		}
+
+		nodes = append(nodes, next)
 
 		return true
 	})
 
-	ordered := make([]opset.OpID, 0)
-	visited := make(map[opset.OpID]struct{})
-
-	var appendBranch func([]opset.OpID)
-
-	appendBranch = func(identifiers []opset.OpID) {
-		sort.Slice(identifiers, func(i, j int) bool {
-			return identifiers[i].Compare(identifiers[j]) > 0
-		})
-
-		for _, identifier := range identifiers {
-			if _, ok := visited[identifier]; ok {
-				continue
-			}
-
-			visited[identifier] = struct{}{}
-			ordered = append(ordered, identifier)
-			appendBranch(children[identifier])
-		}
+	rows := make(map[opset.OpID]int32, len(nodes))
+	for row := range nodes {
+		rows[nodes[row].entry.insertion] = int32(row)
 	}
-	appendBranch(head)
+
+	head := none
+
+	for row := range nodes {
+		current := &nodes[row]
+		if current.head {
+			current.nextSibling = head
+			head = int32(row)
+
+			continue
+		}
+
+		// An insertion anchored on an element this object does not hold is
+		// unreachable from the head and stays out of the order.
+		parent, ok := rows[current.anchor]
+		if !ok {
+			continue
+		}
+
+		current.nextSibling = nodes[parent].firstChild
+		nodes[parent].firstChild = int32(row)
+	}
 
 	index := &sequenceIndex{
 		state:     s,
-		positions: make(map[opset.OpID]sequenceIndexPosition, len(ordered)),
+		positions: make(map[opset.OpID]sequenceIndexPosition, len(nodes)),
 	}
-	for start := 0; start < len(ordered); start += sequenceIndexChunkTarget {
-		end := min(start+sequenceIndexChunkTarget, len(ordered))
-		entries := make([]sequenceIndexEntry, 0, end-start)
+	entries := make([]sequenceIndexEntry, 0, min(len(nodes), sequenceIndexChunkTarget))
 
-		for _, identifier := range ordered[start:end] {
-			operation, ok := s.operation(identifier)
-			if !ok {
-				continue
-			}
-
-			entries = append(
-				entries,
-				s.newSequenceIndexEntry(operation),
-			)
+	flush := func() {
+		if len(entries) == 0 {
+			return
 		}
 
 		index.appendChunk(newSequenceIndexChunk(entries))
+		entries = make([]sequenceIndexEntry, 0, sequenceIndexChunkTarget)
 	}
+
+	var (
+		stack    []int32
+		siblings []int32
+	)
+
+	// pushSiblings stacks a sibling list so the highest operation ID is taken
+	// first, which is the RGA order among insertions sharing an anchor.
+	pushSiblings := func(first int32) {
+		siblings = siblings[:0]
+		for row := first; row != none; row = nodes[row].nextSibling {
+			siblings = append(siblings, row)
+		}
+
+		if len(siblings) > 1 {
+			slices.SortFunc(siblings, func(left, right int32) int {
+				return nodes[left].entry.insertion.Compare(nodes[right].entry.insertion)
+			})
+		}
+
+		stack = append(stack, siblings...)
+	}
+
+	pushSiblings(head)
+
+	for len(stack) > 0 {
+		row := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+
+		entries = append(entries, nodes[row].entry)
+		if len(entries) == sequenceIndexChunkTarget {
+			flush()
+		}
+
+		pushSiblings(nodes[row].firstChild)
+	}
+
+	flush()
 
 	return index
 }

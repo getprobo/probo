@@ -90,9 +90,8 @@ func (s *State) hydratedMapValue(
 
 	properties := make(map[string][]opset.Operation)
 
-	s.eachOperation(func(operation opset.Operation) bool {
-		if operation.Object != object ||
-			operation.Key.Property == nil ||
+	s.eachObjectOperation(object, func(operation opset.Operation) bool {
+		if operation.Key.Property == nil ||
 			s.isSuperseded(operation.ID) {
 			return true
 		}
@@ -221,10 +220,8 @@ func (s *State) mapValue(
 
 	properties := make(map[string][]opset.Operation)
 
-	s.eachOperation(func(operation opset.Operation) bool {
-		if operation.Object.IsRoot ||
-			operation.Object.OpID != object ||
-			operation.Key.Property == nil ||
+	s.eachObjectOperation(opset.ObjectID{OpID: object}, func(operation opset.Operation) bool {
+		if operation.Key.Property == nil ||
 			s.isSuperseded(operation.ID) {
 			return true
 		}

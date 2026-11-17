@@ -827,9 +827,8 @@ func markCoveredBySplice(mark markPatchOut, patches []patchOut) bool {
 func diffMarkPatches(source, target *State, object opset.ObjectID) ([]markPatchOut, error) {
 	begins := make([]opset.Operation, 0)
 
-	target.eachOperation(func(operation opset.Operation) bool {
+	target.eachObjectOperation(object, func(operation opset.Operation) bool {
 		if operation.Action != opset.ActionMark ||
-			operation.Object != object ||
 			operation.MarkName == nil {
 			return true
 		}
