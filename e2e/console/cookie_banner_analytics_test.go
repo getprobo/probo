@@ -163,6 +163,7 @@ func TestTrackerPattern_DailyHits(t *testing.T) {
 		var result dailyHitsResult
 		require.NoError(t, owner.Execute(query, map[string]any{"id": patternID}, &result))
 		require.Len(t, result.Node.DailyHits, 7)
+
 		for _, entry := range result.Node.DailyHits {
 			assert.Empty(t, entry.Hits)
 		}
