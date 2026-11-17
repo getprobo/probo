@@ -22,6 +22,11 @@ services:
 
   tempo:
     image: "artifact.probo.inc/dockerhub/grafana/tempo@sha256:a6616c9d224770c883a67b50e4941e99c5df81b076ef05f516bb7cce5a96cec0"
+    # The runner's collector already binds host port 4318. e2e exports
+    # traces to localhost:14317, which this stack does not publish, so
+    # the host OTLP ports are unused here.
+    ports: !override
+      - "3200:3200"
 
   mailpit:
     image: "artifact.probo.inc/dockerhub/axllent/mailpit@sha256:0b5c5f7ffd3c93474baa7fd3869c1462e5a3d03256ed0933dfc0e7d81d794036"
