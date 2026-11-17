@@ -28,6 +28,7 @@
       "title": "Approbateurs",
       "add": "Ajouter un approbateur",
       "remove": "Retirer {{name}}",
+      "loadMore": "Charger plus",
       "none": "Aucun",
       "states": {
         "PENDING": "En attente",
