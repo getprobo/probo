@@ -474,7 +474,9 @@ jobs:
     name: "test"
     if: needs.changes.outputs.go == 'true'
     needs: [changes]
-    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+    # The race build fills the default root volume (jobs die at 99% with
+    # "no space left on device" while compiling).
+    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/volume=120gb/extras=s3-cache"
     permissions:
       contents: "read"
     steps:
@@ -538,7 +540,9 @@ jobs:
     name: "test-e2e"
     if: needs.changes.outputs.e2e == 'true'
     needs: [changes, build]
-    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+    # Saving the Chrome, Postgres, and Grafana images fills the default
+    # root volume on a cache miss.
+    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/volume=120gb/extras=s3-cache"
     permissions:
       contents: "read"
     steps:
