@@ -385,6 +385,13 @@ export default defineConfig(({ mode, command }) => {
           find: "mermaid",
           replacement: require.resolve("mermaid/dist/mermaid.esm.min.mjs"),
         },
+        // cbor-x (via @automerge/automerge-repo) probes `new Function('')` at
+        // load time, which CSP reports as a script-src violation. The
+        // no-eval build never touches Function.
+        {
+          find: /^cbor-x$/,
+          replacement: require.resolve("cbor-x/index-no-eval"),
+        },
         ...pdfjsAliases(import.meta.url),
       ],
     },
