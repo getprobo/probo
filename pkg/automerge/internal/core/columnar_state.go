@@ -112,7 +112,7 @@ func (c *columnarState) clone() *columnarState {
 }
 
 func (c *columnarState) prepareMutationCapacity() {
-	if c == nil || c.shared || cap(c.operations)-len(c.operations) >= 64 {
+	if c == nil || c.shared || cap(c.operations)-len(c.operations) >= storage.DocumentOperationSpareCapacity {
 		return
 	}
 
@@ -124,12 +124,18 @@ func (c *columnarState) prepareMutationCapacity() {
 func newColumnarState(document *opset.Document) (*columnarState, error) {
 	if decoded, ok := document.Canonical.(*storage.DecodedDocument); ok &&
 		decoded.Snapshot != nil {
-		operations := make(
-			[]opset.Operation,
-			len(decoded.Operations),
-			len(decoded.Operations)+64,
-		)
-		copy(operations, decoded.Operations)
+		// The decoded rows are adopted rather than copied: a decoded document
+		// backs exactly one columnar state, and nothing else reads its rows.
+		// Rows decoded without spare capacity are copied to gain it.
+		operations := decoded.Operations
+		if cap(operations)-len(operations) < storage.DocumentOperationSpareCapacity {
+			operations = make(
+				[]opset.Operation,
+				len(decoded.Operations),
+				len(decoded.Operations)+storage.DocumentOperationSpareCapacity,
+			)
+			copy(operations, decoded.Operations)
+		}
 
 		columns := &columnarState{
 			actors:           document.Actors,

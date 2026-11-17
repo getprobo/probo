@@ -796,18 +796,22 @@ func decodeScalarsInternal(
 	budget *decodeBudget,
 	retainRaw bool,
 ) ([]optional[opset.Scalar], [][]byte, error) {
-	metadata, err := decodeULEBColumnWithBudget(metaData, budget)
+	// Metadata is read run by run: a text's characters share one metadata
+	// value, so expanding the column would cost an entry per character.
+	metadataRuns, metadataTotal, err := decodeULEBRuns(metaData, budget)
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot decode value metadata: %w", err)
 	}
 
-	if len(metadata) != expected {
+	if metadataTotal != uint64(expected) {
 		return nil, nil, fmt.Errorf(
 			"value metadata has %d items, expected %d",
-			len(metadata),
+			metadataTotal,
 			expected,
 		)
 	}
+
+	metadata := runCursor[uint64]{runs: metadataRuns}
 
 	raw := &reader{data: rawData}
 
@@ -828,7 +832,8 @@ func decodeScalarsInternal(
 		rawValues = make([][]byte, expected)
 	}
 
-	for i, item := range metadata {
+	for i := range values {
+		item := metadata.next()
 		if !item.valid {
 			continue
 		}

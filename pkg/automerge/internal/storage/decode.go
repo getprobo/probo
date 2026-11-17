@@ -34,6 +34,11 @@ import (
 
 var magic = [4]byte{0x85, 0x6f, 0x4a, 0x83}
 
+// DocumentOperationSpareCapacity is the room left after a decoded document
+// chunk's operation rows, so the owner can append to them without first
+// copying the table.
+const DocumentOperationSpareCapacity = 64
+
 type decodedChunk struct {
 	kind    opset.ChunkType
 	content []byte
@@ -791,8 +796,14 @@ func reconstructSnapshotChanges(
 	return nil
 }
 
+// reserveChangeReconstruction charges an upper bound on what EncodeChange
+// allocates to rebuild a change. The fixed part per operation covers the
+// encoder's column tables and every copy of the encoded row; a change built to
+// defeat run-length encoding (random objects, keys and actions on every row)
+// allocates under 480 bytes per operation in total, payloads aside. Payloads
+// and predecessors are charged on top, per copy the encoder makes.
 func reserveChangeReconstruction(change *opset.Change, budget *decodeBudget) error {
-	if err := chargeDecoded[[1024]byte](
+	if err := chargeDecoded[[512]byte](
 		budget,
 		uint64(len(change.Operations)+1),
 	); err != nil {
@@ -1218,92 +1229,94 @@ func decodeOperations(
 	// operations exist.
 	scratchFrom := budgetUsed(budget)
 
-	actions, err := decodeULEBColumnWithBudget(actionData, budget)
+	actionRuns, actionTotal, err := decodeULEBRuns(actionData, budget)
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot decode actions: %w", err)
 	}
 
-	count := len(actions)
-	if err := requireItems("action", actions, count, false); err != nil {
+	count := int(actionTotal)
+	if err := requireRunItems("action", actionRuns, actionTotal, count, false); err != nil {
 		return nil, nil, err
 	}
 
-	var idActors []optional[uint64]
+	actions := runCursor[uint64]{runs: actionRuns}
+
+	var idActors runCursor[uint64]
 	if idActorData := optionalColumn(columns, 33); idActorData != nil {
-		idActors, err = decodeULEBColumnWithBudget(idActorData, budget)
+		runs, total, err := decodeULEBRuns(idActorData, budget)
 		if err != nil {
 			return nil, nil, fmt.Errorf("cannot decode operation actors: %w", err)
 		}
 
-		if err := requireItems("operation actor", idActors, count, false); err != nil {
-			return nil, nil, err
-		}
-	} else if implicitIDs != nil {
-		if err := chargeDecoded[optional[uint64]](budget, uint64(count)); err != nil {
+		if err := requireRunItems("operation actor", runs, total, count, false); err != nil {
 			return nil, nil, err
 		}
 
-		idActors = make([]optional[uint64], count)
-		for i := range idActors {
-			idActors[i] = optional[uint64]{value: implicitIDs.actorIndex, valid: true}
+		idActors.runs = runs
+	} else if implicitIDs != nil {
+		if count > 0 {
+			idActors.runs = []rleRun[uint64]{{
+				value: implicitIDs.actorIndex,
+				count: uint64(count),
+				valid: true,
+			}}
 		}
 	} else {
 		return nil, nil, fmt.Errorf("required column 33 is missing")
 	}
 
-	var idCounters []optional[uint64]
+	var nextIDCounter func() optional[uint64]
 	if idCounterData := optionalColumn(columns, 35); idCounterData != nil {
-		idCounters, err = decodeDeltaColumnWithBudget(idCounterData, budget)
+		runs, total, err := decodeDeltaRuns(idCounterData, budget)
 		if err != nil {
 			return nil, nil, fmt.Errorf("cannot decode operation counters: %w", err)
 		}
 
-		if err := requireItems("operation counter", idCounters, count, false); err != nil {
+		if err := requireRunItems("operation counter", runs, total, count, false); err != nil {
 			return nil, nil, err
 		}
+
+		idCounters := &deltaCursor{deltas: runCursor[int64]{runs: runs}}
+		nextIDCounter = idCounters.next
 	} else if implicitIDs != nil {
-		if err := chargeDecoded[optional[uint64]](budget, uint64(count)); err != nil {
-			return nil, nil, err
+		if count > 0 && implicitIDs.startOp > math.MaxUint64-uint64(count-1) {
+			return nil, nil, fmt.Errorf("implicit operation counter overflows uint64")
 		}
 
-		idCounters = make([]optional[uint64], count)
-		for i := range idCounters {
-			if implicitIDs.startOp > math.MaxUint64-uint64(i) {
-				return nil, nil, fmt.Errorf("implicit operation counter overflows uint64")
-			}
+		counter := implicitIDs.startOp
+		nextIDCounter = func() optional[uint64] {
+			item := optional[uint64]{value: counter, valid: true}
+			counter++
 
-			idCounters[i] = optional[uint64]{
-				value: implicitIDs.startOp + uint64(i),
-				valid: true,
-			}
+			return item
 		}
 	} else {
 		return nil, nil, fmt.Errorf("required column 35 is missing")
 	}
 
-	objectActors, err := decodeOptionalULEB(columns, 1, "object actor", count, budget)
+	objectActors, err := optionalULEBRuns(columns, 1, "object actor", count, budget)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	objectCounters, err := decodeOptionalULEB(columns, 2, "object counter", count, budget)
+	objectCounters, err := optionalULEBRuns(columns, 2, "object counter", count, budget)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	keyActors, err := decodeOptionalULEB(columns, 17, "key actor", count, budget)
+	keyActors, err := optionalULEBRuns(columns, 17, "key actor", count, budget)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	keyCounters, err := decodeOptionalDelta(columns, 19, "key counter", count, budget)
+	keyCounters, err := optionalDeltaRuns(columns, 19, "key counter", count, budget)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	scratch := budgetUsed(budget) - scratchFrom
 
-	keyStrings, err := decodeOptionalStrings(columns, 21, "key string", count, budget)
+	keyStrings, err := optionalStringRuns(columns, 21, "key string", count, budget)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -1356,12 +1369,16 @@ func decodeOperations(
 		return nil, nil, err
 	}
 
-	markExpand, err := decodeOptionalBooleans(columns, 148, count, budget)
-	if err != nil {
-		return nil, nil, fmt.Errorf("cannot decode mark expand: %w", err)
+	// A nil slice means the column is absent and no operation carries the flag.
+	var markExpand []bool
+	if markExpandData := optionalColumn(columns, 148); markExpandData != nil {
+		markExpand, err = decodeBooleanColumnWithBudget(markExpandData, count, budget)
+		if err != nil {
+			return nil, nil, fmt.Errorf("cannot decode mark expand: %w", err)
+		}
 	}
 
-	markNames, err := decodeOptionalStrings(columns, 165, "mark name", count, budget)
+	markNames, err := optionalStringRuns(columns, 165, "mark name", count, budget)
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot decode mark name: %w", err)
 	}
@@ -1379,22 +1396,39 @@ func decodeOperations(
 		return nil, nil, err
 	}
 
-	operations := make([]opset.Operation, count)
+	// A document chunk's rows become the engine's operation table, which
+	// appends in place, so they are allocated with its spare capacity up front
+	// instead of being copied to gain it.
+	spare := 0
+	if !changeChunk {
+		spare = DocumentOperationSpareCapacity
+
+		if err := chargeDecoded[opset.Operation](budget, uint64(spare)); err != nil {
+			return nil, nil, err
+		}
+	}
+
+	operations := make([]opset.Operation, count, count+spare)
 	for i := range operations {
-		id, err := opIDFromIndexes(idActors[i], idCounters[i], actors)
+		// Every column advances once per operation, whatever the operation
+		// turns out to need from it.
+		action := actions.next()
+		markName := markNames.next()
+
+		id, err := opIDFromIndexes(idActors.next(), nextIDCounter(), actors)
 		if err != nil {
 			return nil, nil, fmt.Errorf("operation %d ID: %w", i, err)
 		}
 
-		object, err := objectIDFromIndexes(objectActors[i], objectCounters[i], actors)
+		object, err := objectIDFromIndexes(objectActors.next(), objectCounters.next(), actors)
 		if err != nil {
 			return nil, nil, fmt.Errorf("operation %d object: %w", i, err)
 		}
 
 		key, err := keyFromColumns(
-			keyActors[i],
-			keyCounters[i],
-			keyStrings[i],
+			keyActors.next(),
+			keyCounters.next(),
+			keyStrings.next(),
 			actors,
 			inserts[i],
 		)
@@ -1403,7 +1437,7 @@ func decodeOperations(
 				"operation %d key (insert=%t, action=%d): %w",
 				i,
 				inserts[i],
-				actions[i].value,
+				action.value,
 				err,
 			)
 		}
@@ -1413,7 +1447,7 @@ func decodeOperations(
 			Object: object,
 			Key:    key,
 			Insert: inserts[i],
-			Action: opset.Action(actions[i].value),
+			Action: opset.Action(action.value),
 		}
 		if values[i].valid {
 			operations[i].Value = &values[i].value
@@ -1432,12 +1466,14 @@ func decodeOperations(
 		// cannot be null. A document chunk shares one column across every change,
 		// so keeping the flag on ordinary operations would make a change that never
 		// carried an expand column re-encode with one and hash differently.
-		if markExpand[i].valid && operations[i].Action == opset.ActionMark {
-			operations[i].MarkExpand = &markExpand[i].value
+		if markExpand != nil && operations[i].Action == opset.ActionMark {
+			expand := markExpand[i]
+			operations[i].MarkExpand = &expand
 		}
 
-		if markNames[i].valid {
-			operations[i].MarkName = &markNames[i].value
+		if markName.valid {
+			name := markName.value
+			operations[i].MarkName = &name
 		}
 
 		if !changeChunk {
