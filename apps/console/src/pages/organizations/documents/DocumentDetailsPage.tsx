@@ -30,6 +30,8 @@ import type { DocumentDetailsPageQuery } from "#/__generated__/core/DocumentDeta
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { NotFoundError } from "#/lib/relay/errors";
 
+import { DocumentControlsSection } from "./_components/DocumentControlsSection";
+import { DocumentPropertiesSection } from "./_components/DocumentPropertiesSection";
 import { DocumentTitleField } from "./_components/DocumentTitleField";
 import { documentDetailsPage } from "./variants";
 
@@ -41,6 +43,8 @@ export const documentDetailsPageFragment = graphql`
       id
     }
     ...DocumentTitleField_document
+    ...DocumentPropertiesSection_document
+    ...DocumentControlsSection_document
   }
 `;
 
@@ -72,7 +76,7 @@ export function DocumentDetailsPage({ queryRef }: DocumentDetailsPageProps) {
     documentDetailsPageFragment,
     documentKey,
   );
-  const { root } = documentDetailsPage();
+  const { root, body, main, side } = documentDetailsPage();
   usePageTitle(document?.title ?? "");
 
   if (document == null || document.organization.id !== organizationId) {
@@ -94,7 +98,15 @@ export function DocumentDetailsPage({ queryRef }: DocumentDetailsPageProps) {
       >
         {t("details.back")}
       </Link>
-      <DocumentTitleField documentKey={document} />
+      <div className={body()}>
+        <div className={main()}>
+          <DocumentTitleField documentKey={document} />
+        </div>
+        <div className={side()}>
+          <DocumentPropertiesSection documentKey={document} />
+          <DocumentControlsSection documentKey={document} />
+        </div>
+      </div>
     </div>
   );
 }

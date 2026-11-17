@@ -18,18 +18,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { CardSkeleton } from "@probo/ui/src/v2/Card/CardSkeleton";
 import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
 import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
 import { documentDetailsPage } from "./variants";
 
 export function DocumentDetailsPageSkeleton() {
-  const { root } = documentDetailsPage();
+  const { root, body, main, side } = documentDetailsPage();
 
   return (
     <div className={root()}>
       <TextSkeleton size={2} className="w-24" />
-      <HeadingSkeleton size={6} className="w-64" />
+      <div className={body()}>
+        <div className={main()}>
+          <HeadingSkeleton size={6} className="w-64" />
+        </div>
+        <div className={side()}>
+          <CardSkeleton size={5} />
+          <CardSkeleton size={4} />
+        </div>
+      </div>
     </div>
   );
 }

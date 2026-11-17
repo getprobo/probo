@@ -5,6 +5,24 @@
     "fields": {
       "title": "Title"
     },
+    "properties": {
+      "title": "Properties",
+      "type": "Type",
+      "classification": "Classification",
+      "approvers": "Approvers",
+      "none": "None",
+      "addApprover": "Add approver",
+      "removeApprover": "Remove {{name}}"
+    },
+    "controls": {
+      "title": "Controls",
+      "none": "None",
+      "add": "Link a control",
+      "remove": "Remove {{name}}",
+      "loadMore": "Load more",
+      "empty": "No controls found",
+      "loadError": "Could not load controls"
+    },
     "errors": {
       "update": "Could not update the document"
     }

@@ -21,11 +21,11 @@
 import { useTranslation } from "react-i18next";
 import { graphql } from "relay-runtime";
 
-import type { useUpdateDocumentTitleMutation } from "#/__generated__/core/useUpdateDocumentTitleMutation.graphql";
+import type { useUpdateDocumentMutation } from "#/__generated__/core/useUpdateDocumentMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
 
-const updateDocumentTitleMutation = graphql`
-  mutation useUpdateDocumentTitleMutation($input: UpdateDocumentInput!) {
+const updateDocumentMutation = graphql`
+  mutation useUpdateDocumentMutation($input: UpdateDocumentInput!) {
     updateDocument(input: $input) {
       document {
         ...DocumentDetailsPage_document
@@ -34,9 +34,9 @@ const updateDocumentTitleMutation = graphql`
   }
 `;
 
-export function useUpdateDocumentTitle() {
+export function useUpdateDocument() {
   const { t } = useTranslation("organizations/documents");
-  return useMutation<useUpdateDocumentTitleMutation>(updateDocumentTitleMutation, {
+  return useMutation<useUpdateDocumentMutation>(updateDocumentMutation, {
     errorToast: t("details.errors.update"),
   });
 }

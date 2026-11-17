@@ -5,6 +5,24 @@
     "fields": {
       "title": "Titel"
     },
+    "properties": {
+      "title": "Eigenschappen",
+      "type": "Type",
+      "classification": "Classificatie",
+      "approvers": "Goedkeurders",
+      "none": "Geen",
+      "addApprover": "Goedkeurder toevoegen",
+      "removeApprover": "{{name}} verwijderen"
+    },
+    "controls": {
+      "title": "Controls",
+      "none": "Geen",
+      "add": "Control koppelen",
+      "remove": "{{name}} verwijderen",
+      "loadMore": "Meer laden",
+      "empty": "Geen controls gevonden",
+      "loadError": "Controls laden mislukt"
+    },
     "errors": {
       "update": "Document bijwerken mislukt"
     }
