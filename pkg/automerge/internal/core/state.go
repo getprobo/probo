@@ -320,6 +320,10 @@ func (s *State) ApplyChange(change *opset.Change) error {
 		return fmt.Errorf("change hash is required")
 	}
 
+	if change.OperationsDeferred {
+		return fmt.Errorf("change operations are not loaded")
+	}
+
 	if err := validateChangeSnapshotDomain(change); err != nil {
 		return err
 	}
@@ -1181,7 +1185,12 @@ func (s *State) at(heads []opset.ChangeHash) (*State, bool) {
 			}
 		}
 
-		clone := *change
+		loaded, err := s.withOperations(change)
+		if err != nil {
+			return false
+		}
+
+		clone := *loaded
 
 		clone.Hash = new(hash)
 		if err := target.ApplyChange(&clone); err != nil {

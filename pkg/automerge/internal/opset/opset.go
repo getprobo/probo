@@ -114,9 +114,14 @@ type (
 		Dependencies      []ChangeHash
 		DependencyIndexes []uint64
 		Operations        []Operation
-		Extra             *Scalar
-		ExtraBytes        []byte
-		Raw               []byte
+		// OperationsDeferred reports that a decoder left Operations empty
+		// because the document's snapshot rows already hold every operation
+		// once. Whoever owns those rows collects a change's operations from
+		// them when they are needed.
+		OperationsDeferred bool
+		Extra              *Scalar
+		ExtraBytes         []byte
+		Raw                []byte
 	}
 
 	// ChunkType identifies an Automerge storage chunk.

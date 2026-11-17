@@ -83,7 +83,18 @@ func newIsolationView(
 			continue
 		}
 
-		cloned := cloneChange(*change)
+		source := *change
+		if source.OperationsDeferred {
+			operations, ok := columns.changeOperations(change)
+			if !ok {
+				return nil, nil, false
+			}
+
+			source.Operations = operations
+			source.OperationsDeferred = false
+		}
+
+		cloned := cloneChange(source)
 		for j := range cloned.Operations {
 			operationIDs[cloned.Operations[j].ID] = struct{}{}
 		}

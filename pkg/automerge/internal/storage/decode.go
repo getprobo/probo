@@ -24,6 +24,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"fmt"
+	"iter"
 	"maps"
 	"math"
 	"slices"
@@ -54,28 +55,35 @@ type implicitOperationIDs struct {
 // Decode parses all chunks in data and validates the resulting dependency
 // graph. It accepts document, change, and compressed change chunks.
 func Decode(data []byte) (*opset.Document, error) {
-	return decode(data, true, markOrderChecked)
+	return decode(data, true, markOrderChecked, false)
 }
 
 // DecodeRescue performs strict structural and history validation while allowing
 // the explicit rescue path to bypass mark ordering.
 func DecodeRescue(data []byte) (*opset.Document, error) {
-	return decode(data, true, markOrderUnchecked)
+	return decode(data, true, markOrderUnchecked, false)
 }
 
-// DecodeDeferringMarkOrder validates like Decode but leaves the mark order of
-// sequence objects to a caller that checks it while building its own sequence
-// index, so a load does not order every marked text twice. Marks recorded
-// against the root object have no sequence index and are still checked here.
-func DecodeDeferringMarkOrder(data []byte) (*opset.Document, error) {
-	return decode(data, true, markOrderRootOnly)
+// DecodeForEngine validates like Decode but leaves two things to an engine
+// that derives them for itself.
+//
+// The mark order of sequence objects is left to a caller that checks it while
+// building its own sequence index, so a load does not order every marked text
+// twice. Marks recorded against the root object have no sequence index and
+// are still checked here.
+//
+// When the data is a single document chunk, its changes are returned without
+// their operations. The snapshot's rows already hold every operation once;
+// DecodedDocument.ChangeOperations locates the ones each change wrote.
+func DecodeForEngine(data []byte) (*opset.Document, error) {
+	return decode(data, true, markOrderRootOnly, true)
 }
 
 // DecodePartial parses chunks whose causal dependencies may already exist in
 // another document. Column and operation ownership validation still happens
 // while whole-history frontier validation is deferred to the caller.
 func DecodePartial(data []byte) (*opset.Document, error) {
-	return decode(data, false, markOrderUnchecked)
+	return decode(data, false, markOrderUnchecked, false)
 }
 
 // DecodeIncremental parses the complete chunk prefix and ignores an incomplete
@@ -127,6 +135,7 @@ func decode(
 	data []byte,
 	validateHistory bool,
 	validateMarks markOrderMode,
+	deferOperations bool,
 ) (*opset.Document, error) {
 	if len(data) == 0 {
 		return nil, fmt.Errorf("automerge file is empty")
@@ -155,11 +164,14 @@ func decode(
 				return nil, fmt.Errorf("only the first chunk may be a document chunk")
 			}
 
+			// A change chunk after the snapshot sends the whole stream down the
+			// replay path, which reads every change's operations.
 			if err := decodeDocumentChunk(
 				document,
 				chunk.content,
 				budget,
 				validateMarks,
+				deferOperations && r.remaining() == 0,
 			); err != nil {
 				return nil, fmt.Errorf("cannot decode document chunk: %w", err)
 			}
@@ -331,6 +343,7 @@ func decodeDocumentChunk(
 	data []byte,
 	budget *decodeBudget,
 	validateMarks markOrderMode,
+	deferOperations bool,
 ) error {
 	r := &reader{data: data}
 
@@ -383,18 +396,32 @@ func decodeDocumentChunk(
 		return fmt.Errorf("cannot decode operations: %w", err)
 	}
 
-	operationOrder := make([]opset.OpID, len(operations))
-	for i := range operations {
-		operationOrder[i] = operations[i].ID
-	}
-
 	canonicalOperations := operations
 
-	operations, err = restoreChangeOperations(operations, budget)
-	if err != nil {
-		return fmt.Errorf("cannot restore change operations: %w", err)
+	// Every writer produces a snapshot whose changes can be told apart by
+	// counter range alone, which needs no second copy of the operations. Any
+	// other snapshot takes the general path below.
+	var index *ChangeOperationIndex
+	if deferOperations {
+		index, _ = indexChangeOperations(changes, actors, operations, budget)
 	}
 
+	var operationOrder []opset.OpID
+
+	if index == nil {
+		operationOrder = make([]opset.OpID, len(operations))
+		for i := range operations {
+			operationOrder[i] = operations[i].ID
+		}
+
+		operations, err = restoreChangeOperations(operations, budget)
+		if err != nil {
+			return fmt.Errorf("cannot restore change operations: %w", err)
+		}
+	}
+
+	// A delete is neither a mark nor an insertion, so the rows alone carry
+	// the order whether or not the deletes follow them.
 	if validateMarks != markOrderUnchecked {
 		if err := validateSnapshotMarkOrder(
 			operations,
@@ -404,8 +431,10 @@ func decodeDocumentChunk(
 		}
 	}
 
-	if err := assignOperations(changes, operations, budget); err != nil {
-		return fmt.Errorf("cannot assign operations: %w", err)
+	if index == nil {
+		if err := assignOperations(changes, operations, budget); err != nil {
+			return fmt.Errorf("cannot assign operations: %w", err)
+		}
 	}
 
 	if err := chargeDecoded[uint64](budget, uint64(len(heads))); err != nil {
@@ -440,7 +469,7 @@ func decodeDocumentChunk(
 		return err
 	}
 
-	if err := reconstructSnapshotChanges(changes, budget); err != nil {
+	if err := reconstructSnapshotChanges(changes, index, budget); err != nil {
 		return err
 	}
 
@@ -469,9 +498,16 @@ func decodeDocumentChunk(
 		canonicalOperationColumns,
 		operationColumnSpecifications,
 	)
+	if index != nil {
+		for i := range changes {
+			changes[i].OperationsDeferred = true
+		}
+	}
+
 	document.Canonical = &DecodedDocument{
-		Snapshot:   snapshot,
-		Operations: canonicalOperations,
+		Snapshot:         snapshot,
+		Operations:       canonicalOperations,
+		ChangeOperations: index,
 	}
 
 	unknownCount := len(unknownChanges) + len(unknownOperations)
@@ -676,6 +712,7 @@ func operationByID(operations []opset.Operation, identifier opset.OpID) *opset.O
 // computed over.
 func reconstructSnapshotChanges(
 	changes []opset.Change,
+	index *ChangeOperationIndex,
 	budget *decodeBudget,
 ) error {
 	var dependencyCount uint64
@@ -755,11 +792,18 @@ func reconstructSnapshotChanges(
 		// a long history is not billed for every change's scratch at once.
 		reservedFrom := budgetUsed(budget)
 
-		if err := reserveChangeReconstruction(change, budget); err != nil {
+		// A change that does not hold its operations reads them from the
+		// snapshot's rows.
+		operations, count := slices.All(change.Operations), len(change.Operations)
+		if index != nil {
+			operations, count = index.Operations(i), index.Len(i)
+		}
+
+		if err := reserveChangeReconstruction(change, operations, count, budget); err != nil {
 			return fmt.Errorf("cannot reserve snapshot change %d: %w", i, err)
 		}
 
-		if _, err := EncodeChange(change); err != nil {
+		if _, err := encodeChange(change, operations); err != nil {
 			return fmt.Errorf("cannot rebuild snapshot change %d: %w", i, err)
 		}
 
@@ -796,17 +840,24 @@ func reconstructSnapshotChanges(
 	return nil
 }
 
-// reserveChangeReconstruction charges an upper bound on what EncodeChange
-// allocates to rebuild a change. The fixed part per operation covers the
-// encoder's column tables and every copy of the encoded row; a change built to
-// defeat run-length encoding (random objects, keys and actions on every row)
-// allocates under 480 bytes per operation in total, payloads aside. Payloads
-// and predecessors are charged on top, per copy the encoder makes.
-func reserveChangeReconstruction(change *opset.Change, budget *decodeBudget) error {
-	if err := chargeDecoded[[512]byte](
-		budget,
-		uint64(len(change.Operations)+1),
-	); err != nil {
+// reserveChangeReconstruction charges an upper bound on what encoding a
+// change allocates. The encoder writes each column as its operations arrive,
+// so its memory follows the encoded size: a change built to defeat run-length
+// encoding (random objects, keys and actions on every row) allocates under
+// 220 bytes per operation in total, payloads aside, on top of about 5 KB that
+// does not depend on the change's size. Payloads and predecessors are charged
+// separately, per copy the encoder makes.
+func reserveChangeReconstruction(
+	change *opset.Change,
+	operations iter.Seq2[int, opset.Operation],
+	count int,
+	budget *decodeBudget,
+) error {
+	if err := chargeDecoded[[8192]byte](budget, 1); err != nil {
+		return err
+	}
+
+	if err := chargeDecoded[[256]byte](budget, uint64(count)); err != nil {
 		return err
 	}
 
@@ -829,8 +880,7 @@ func reserveChangeReconstruction(change *opset.Change, budget *decodeBudget) err
 		return err
 	}
 
-	for i := range change.Operations {
-		operation := &change.Operations[i]
+	for _, operation := range operations {
 		if err := chargeDecodedPayload(budget, operation.ID.Actor.Len(), 2); err != nil {
 			return err
 		}

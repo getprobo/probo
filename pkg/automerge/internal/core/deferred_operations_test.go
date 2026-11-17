@@ -1,0 +1,420 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+package core
+
+import (
+	"fmt"
+	"math/rand/v2"
+	"slices"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/automerge/internal/opset"
+	"go.probo.inc/probo/pkg/automerge/internal/storage"
+)
+
+// concurrentHistory builds a document two actors edited concurrently: text
+// inserted and deleted, marks, a counter, and map keys written and removed.
+// It returns the engine, which has never been saved, and the heads recorded
+// after each merge.
+func concurrentHistory(t *testing.T, seed uint64) (*Engine, [][][32]byte) {
+	t.Helper()
+
+	random := rand.New(rand.NewPCG(seed, 101))
+
+	first, err := NewEngine()
+	require.NoError(t, err)
+	require.NoError(t, first.SetActor([]byte("\x20first-actor")))
+
+	_, err = first.PutText(0, "body")
+	require.NoError(t, err)
+
+	counter, err := encodeScalarWire(opset.Scalar{Type: opset.ScalarCounter, Int: 1})
+	require.NoError(t, err)
+	require.NoError(t, first.PutScalar(0, "count", counter))
+	require.NoError(t, first.PutString(0, "title", "start"))
+
+	_, err = first.Commit("seed", time.Unix(1, 0))
+	require.NoError(t, err)
+
+	// The second actor sorts before the first, so actor order and the order
+	// the actors joined in disagree.
+	second, err := first.Fork([]byte("\x10second-actor"))
+	require.NoError(t, err)
+
+	bold, err := encodeScalarWire(opset.Scalar{Type: opset.ScalarTrue})
+	require.NoError(t, err)
+
+	clock := int64(1)
+
+	edit := func(engine *Engine) {
+		body, _, err := engine.GetObject(0, "body")
+		require.NoError(t, err)
+
+		text, err := engine.Text(body)
+		require.NoError(t, err)
+
+		length := len(text)
+
+		switch choice := random.IntN(7); {
+		case choice < 2 || length < 4:
+			require.NoError(
+				t,
+				engine.SpliceText(
+					body,
+					uint32(random.IntN(length+1)),
+					0,
+					[]string{"a", "bc", "def "}[random.IntN(3)],
+				),
+			)
+		case choice == 2:
+			require.NoError(
+				t,
+				engine.SpliceText(body, uint32(random.IntN(length-2)), 2, ""),
+			)
+		case choice == 3:
+			start := uint32(random.IntN(length - 2))
+			require.NoError(t, engine.MarkText(body, start, start+2, "bold", bold, "after"))
+		case choice == 4:
+			require.NoError(t, engine.Increment(0, "count", int64(1+random.IntN(3))))
+		case choice == 5:
+			require.NoError(
+				t,
+				engine.PutString(0, "title", fmt.Sprintf("title %d", random.IntN(100))),
+			)
+		default:
+			key := fmt.Sprintf("scratch-%d", random.IntN(3))
+
+			require.NoError(t, engine.PutString(0, key, "temporary"))
+			require.NoError(t, engine.DeleteMap(0, key))
+		}
+
+		clock++
+
+		_, err = engine.Commit("edit", time.Unix(clock, 0))
+		require.NoError(t, err)
+	}
+
+	var checkpoints [][][32]byte
+
+	for range 5 {
+		for range 1 + random.IntN(4) {
+			edit(first)
+		}
+
+		for range 1 + random.IntN(4) {
+			edit(second)
+		}
+
+		saved, err := second.Save(true, false)
+		require.NoError(t, err)
+
+		_, err = first.Merge(saved)
+		require.NoError(t, err)
+
+		heads, err := first.Heads()
+		require.NoError(t, err)
+
+		checkpoints = append(checkpoints, heads)
+	}
+
+	return first, checkpoints
+}
+
+// withoutSuccessors drops what an operation's row gains after it is written,
+// leaving what its change recorded.
+func withoutSuccessors(operations []opset.Operation) []opset.Operation {
+	stripped := slices.Clone(operations)
+	for i := range stripped {
+		stripped[i].Successors = nil
+	}
+
+	return stripped
+}
+
+func TestLoadEngine_KeepsEachOperationOnce(t *testing.T) {
+	t.Parallel()
+
+	source, _ := concurrentHistory(t, 7)
+
+	saved, err := source.Save(true, true)
+	require.NoError(t, err)
+
+	decoded, err := storage.Decode(saved)
+	require.NoError(t, err)
+
+	loaded, err := LoadEngine(saved)
+	require.NoError(t, err)
+
+	require.Nil(t, loaded.columns.decodedChanges)
+	require.Len(t, loaded.columns.changes, len(decoded.Changes))
+	require.NotEmpty(t, loaded.columns.nonCanonicalOperations)
+
+	assertOperations := func(t *testing.T, sameSuccessors bool) {
+		t.Helper()
+
+		for i := range decoded.Changes {
+			want := &decoded.Changes[i]
+
+			change, ok := loaded.state.change(*want.Hash)
+			require.True(t, ok, "change %d", i)
+
+			// The change itself holds nothing: its operations are the
+			// snapshot's rows.
+			assert.True(t, change.OperationsDeferred, "change %d", i)
+			assert.Empty(t, change.Operations, "change %d", i)
+
+			got, err := loaded.state.withOperations(change)
+			require.NoError(t, err)
+
+			assert.False(t, got.OperationsDeferred, "change %d", i)
+			assert.Equal(t, want.Raw, got.Raw, "change %d", i)
+
+			switch {
+			case len(want.Operations) == 0:
+				assert.Empty(t, got.Operations, "change %d", i)
+			case sameSuccessors:
+				assert.Equal(t, want.Operations, got.Operations, "change %d", i)
+			default:
+				assert.Equal(
+					t,
+					withoutSuccessors(want.Operations),
+					withoutSuccessors(got.Operations),
+					"change %d",
+					i,
+				)
+			}
+		}
+	}
+
+	t.Run(
+		"as loaded",
+		func(t *testing.T) {
+			assertOperations(t, true)
+		},
+	)
+
+	// Later edits supersede loaded operations and move their rows. A loaded
+	// change still names the same operations, however its rows have moved.
+	body, _, err := loaded.GetObject(0, "body")
+	require.NoError(t, err)
+
+	for i := range 6 {
+		require.NoError(t, loaded.SpliceText(body, uint32(i), 1, "xy"))
+		require.NoError(t, loaded.PutString(0, "title", fmt.Sprintf("later %d", i)))
+		require.NoError(t, loaded.DeleteMap(0, "title"))
+
+		_, err = loaded.Commit("later", time.Unix(int64(100+i), 0))
+		require.NoError(t, err)
+	}
+
+	t.Run(
+		"after further edits",
+		func(t *testing.T) {
+			assertOperations(t, false)
+		},
+	)
+
+	t.Run(
+		"rebuilding the omitted operations keeps every delete",
+		func(t *testing.T) {
+			rebuilt := loaded.columns.clone()
+			rebuilt.rebuildNonCanonicalOperations()
+
+			assert.Equal(
+				t,
+				loaded.columns.nonCanonicalOperations,
+				rebuilt.nonCanonicalOperations,
+			)
+			assert.Equal(
+				t,
+				loaded.columns.nonCanonicalObjects,
+				rebuilt.nonCanonicalObjects,
+			)
+		},
+	)
+}
+
+func TestLoadEngine_ReadsHistoryLikeAnUnsavedEngine(t *testing.T) {
+	t.Parallel()
+
+	for _, seed := range []uint64{11, 12, 13} {
+		t.Run(
+			fmt.Sprintf("seed %d", seed),
+			func(t *testing.T) {
+				t.Parallel()
+
+				// source holds every change's operations in the change;
+				// loaded holds them once, in the snapshot's rows.
+				source, checkpoints := concurrentHistory(t, seed)
+
+				saved, err := source.Save(true, true)
+				require.NoError(t, err)
+
+				loaded, err := LoadEngine(saved)
+				require.NoError(t, err)
+
+				sourceBody, _, err := source.GetObject(0, "body")
+				require.NoError(t, err)
+
+				loadedBody, _, err := loaded.GetObject(0, "body")
+				require.NoError(t, err)
+
+				for i, heads := range checkpoints {
+					want, err := source.TextAt(sourceBody, heads)
+					require.NoError(t, err)
+
+					got, err := loaded.TextAt(loadedBody, heads)
+					require.NoError(t, err)
+					assert.Equal(t, want, got, "text at checkpoint %d", i)
+
+					wantSpans, err := source.TextSpansAt(sourceBody, heads)
+					require.NoError(t, err)
+
+					gotSpans, err := loaded.TextSpansAt(loadedBody, heads)
+					require.NoError(t, err)
+					assert.JSONEq(t, string(wantSpans), string(gotSpans), "spans at checkpoint %d", i)
+
+					if i == 0 {
+						continue
+					}
+
+					wantDiff, err := source.Diff(checkpoints[i-1], heads)
+					require.NoError(t, err)
+
+					gotDiff, err := loaded.Diff(checkpoints[i-1], heads)
+					require.NoError(t, err)
+					assert.JSONEq(t, string(wantDiff), string(gotDiff), "diff to checkpoint %d", i)
+				}
+
+				// An isolated view replays the pinned changes into columns of
+				// its own, and a write made there lands on top of them.
+				pinned := checkpoints[1]
+
+				for name, engine := range map[string]*Engine{"source": source, "loaded": loaded} {
+					isolated, err := engine.Fork([]byte("\x30isolated-actor"))
+					require.NoError(t, err, name)
+					require.NoError(t, isolated.Isolate(pinned), name)
+
+					body, _, err := isolated.GetObject(0, "body")
+					require.NoError(t, err, name)
+
+					text, err := isolated.Text(body)
+					require.NoError(t, err, name)
+
+					want, err := source.TextAt(sourceBody, pinned)
+					require.NoError(t, err, name)
+					assert.Equal(t, want, text, name)
+
+					require.NoError(t, isolated.SpliceText(body, 0, 0, "isolated "), name)
+
+					_, err = isolated.Commit("isolated", time.Unix(500, 0))
+					require.NoError(t, err, name)
+
+					text, err = isolated.Text(body)
+					require.NoError(t, err, name)
+					assert.Equal(t, "isolated "+want, text, name)
+				}
+
+				anonymizedSource, err := source.Anonymize()
+				require.NoError(t, err)
+
+				anonymizedLoaded, err := loaded.Anonymize()
+				require.NoError(t, err)
+
+				wantHistory, err := anonymizedSource.ChangeHistory()
+				require.NoError(t, err)
+
+				gotHistory, err := anonymizedLoaded.ChangeHistory()
+				require.NoError(t, err)
+				assert.Len(t, gotHistory, len(wantHistory))
+
+				// Anonymizing replaces every name and value, so the two results
+				// are compared by shape.
+				wantKeys, err := anonymizedSource.Keys(0)
+				require.NoError(t, err)
+
+				gotKeys, err := anonymizedLoaded.Keys(0)
+				require.NoError(t, err)
+				assert.Len(t, gotKeys, len(wantKeys))
+				assert.Equal(
+					t,
+					anonymizedSource.state.operationCount(),
+					anonymizedLoaded.state.operationCount(),
+				)
+
+				// The same edits made by the same actor on both engines must
+				// produce the same document, byte for byte.
+				for name, engine := range map[string]*Engine{"source": source, "loaded": loaded} {
+					require.NoError(t, engine.SetActor([]byte("\x25later-actor")), name)
+
+					body, _, err := engine.GetObject(0, "body")
+					require.NoError(t, err, name)
+
+					for i := range 4 {
+						require.NoError(t, engine.SpliceText(body, uint32(i), 1, "zz"), name)
+						require.NoError(t, engine.Increment(0, "count", 2), name)
+						require.NoError(t, engine.PutString(0, "scratch-0", "again"), name)
+						require.NoError(t, engine.DeleteMap(0, "scratch-0"), name)
+
+						_, err = engine.Commit("later", time.Unix(int64(600+i), 0))
+						require.NoError(t, err, name)
+					}
+				}
+
+				wantSaved, err := source.Save(true, true)
+				require.NoError(t, err)
+
+				gotSaved, err := loaded.Save(true, true)
+				require.NoError(t, err)
+				assert.Equal(t, wantSaved, gotSaved)
+			},
+		)
+	}
+}
+
+func TestState_ApplyChangeRejectsChangeWithoutItsOperations(t *testing.T) {
+	t.Parallel()
+
+	source, _ := concurrentHistory(t, 17)
+
+	saved, err := source.Save(true, true)
+	require.NoError(t, err)
+
+	loaded, err := LoadEngine(saved)
+	require.NoError(t, err)
+
+	changes, ok := loaded.state.allChanges()
+	require.True(t, ok)
+	require.NotEmpty(t, changes)
+	require.True(t, changes[0].OperationsDeferred)
+
+	// Applying such a change as it stands would record a change that wrote
+	// nothing, so it is refused rather than silently emptied.
+	err = NewState().ApplyChange(changes[0])
+	require.ErrorContains(t, err, "change operations are not loaded")
+
+	withOperations, err := loaded.state.withOperations(changes[0])
+	require.NoError(t, err)
+	require.NoError(t, NewState().ApplyChange(withOperations))
+}

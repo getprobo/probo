@@ -72,6 +72,15 @@ func (b *Engine) Anonymize() (*Engine, error) {
 
 	changes = append([]*opset.Change(nil), changes...)
 
+	for i, change := range changes {
+		loaded, err := state.withOperations(change)
+		if err != nil {
+			return nil, fmt.Errorf("cannot read native change %d: %w", i, err)
+		}
+
+		changes[i] = loaded
+	}
+
 	if len(b.pending) > 0 {
 		sequence := b.state.sequenceForActor(b.actor) + 1
 		changes = append(

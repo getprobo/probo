@@ -69,7 +69,23 @@ func encodeChange(
 		return nil, err
 	}
 
-	var body []byte
+	// The body is sized up front so that appending the columns to it does not
+	// reallocate it along the way.
+	size := len(change.Dependencies)*len(opset.ChangeHash{}) +
+		change.Actor.Len() +
+		len(change.Message) +
+		len(change.ExtraBytes) +
+		16*(len(actors)+len(columns)+4)
+
+	for _, actor := range actors {
+		size += actor.Len()
+	}
+
+	for _, column := range columns {
+		size += len(column.data)
+	}
+
+	body := make([]byte, 0, size)
 
 	body = appendHashesNative(body, change.Dependencies)
 	body = appendLengthPrefixedNative(body, change.Actor.Bytes())
@@ -86,18 +102,24 @@ func encodeChange(
 	body = appendColumns(body, columns)
 	body = append(body, change.ExtraBytes...)
 
-	hashInput := []byte{byte(opset.ChunkChange)}
-	hashInput = appendULEB(hashInput, uint64(len(body)))
-	hashInput = append(hashInput, body...)
-	hash := opset.ChangeHash(sha256.Sum256(hashInput))
+	// A change's hash covers its chunk type, body length and body.
+	header := appendULEB([]byte{byte(opset.ChunkChange)}, uint64(len(body)))
+
+	digest := sha256.New()
+	digest.Write(header)
+	digest.Write(body)
+
+	var hash opset.ChangeHash
+
+	digest.Sum(hash[:0])
 	change.Hash = new(hash)
 
-	raw := []byte{0x85, 0x6f, 0x4a, 0x83}
+	raw := make([]byte, 0, len(magic)+4+len(header)+len(body))
+	raw = append(raw, magic[:]...)
 	raw = append(raw, hash[:4]...)
-	raw = append(raw, byte(opset.ChunkChange))
-	raw = appendULEB(raw, uint64(len(body)))
+	raw = append(raw, header...)
 	raw = append(raw, body...)
-	change.Raw = append([]byte(nil), raw...)
+	change.Raw = slices.Clone(raw)
 
 	return raw, nil
 }

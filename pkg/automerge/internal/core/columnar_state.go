@@ -22,7 +22,9 @@ package core
 
 import (
 	"fmt"
+	"iter"
 	"reflect"
+	"slices"
 	"sort"
 
 	"go.probo.inc/probo/pkg/automerge/internal/opset"
@@ -50,6 +52,11 @@ type columnarState struct {
 	nonCanonicalObjects map[opset.ObjectID][]opset.OpID
 	objectSpans         map[opset.ObjectID]wireObjectSpan
 	objectOrder         []opset.ObjectID
+	// decodedChanges locates each change's operations among the rows of a
+	// snapshot that was decoded without copying them into its changes. It
+	// describes the rows as decoded, so it is dropped once the load that
+	// reads it has built its state.
+	decodedChanges *storage.ChangeOperationIndex
 
 	changeColumns    []opset.RawColumn
 	operationColumns []opset.RawColumn
@@ -147,6 +154,7 @@ func newColumnarState(document *opset.Document) (*columnarState, error) {
 			changeColumns:    document.ChangeColumns,
 			operationColumns: document.OperationColumns,
 			snapshot:         decoded.Snapshot,
+			decodedChanges:   decoded.ChangeOperations,
 		}
 		for i := range columns.changes {
 			if columns.changes[i].Hash != nil {
@@ -163,7 +171,12 @@ func newColumnarState(document *opset.Document) (*columnarState, error) {
 			columns.operationRows.rows[identifier] = i
 		}
 
-		columns.rebuildNonCanonicalOperations()
+		if columns.decodedChanges != nil {
+			columns.adoptDecodedDeletes()
+		} else {
+			columns.rebuildNonCanonicalOperations()
+		}
+
 		columns.rebuildWireObjectSpans()
 
 		return columns, nil
@@ -256,7 +269,7 @@ func stateFromCanonicalColumns(columns *columnarState) (*State, error) {
 
 	operationCount := 0
 	for i := range columns.changes {
-		operationCount += len(columns.changes[i].Operations)
+		operationCount += columns.changeOperationCount(i)
 	}
 
 	state.operationIDs = make(map[opset.OpID]struct{}, operationCount)
@@ -271,7 +284,12 @@ func stateFromCanonicalColumns(columns *columnarState) (*State, error) {
 			state.indexActorChange(change.Actor, change.Sequence, *change.Hash)
 		}
 
-		for _, changeOperation := range change.Operations {
+		operations, stored, err := columns.committedChangeOperations(i)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, changeOperation := range operations {
 			if _, exists := state.operationIDs[changeOperation.ID]; exists {
 				return nil, fmt.Errorf(
 					"duplicate snapshot operation ID %v",
@@ -279,16 +297,21 @@ func stateFromCanonicalColumns(columns *columnarState) (*State, error) {
 				)
 			}
 
+			// An operation read from the columns is already the stored one.
+			// A change's own copy stands for the stored operation, and
+			// contributes the predecessors it names.
 			operation := changeOperation
-			if canonical, ok := columns.operation(operation.ID); ok {
-				predecessors := operation.Predecessors
+			if !stored {
+				canonical, ok := columns.operation(operation.ID)
+				if !ok {
+					return nil, fmt.Errorf(
+						"committed operation %v is absent from columns",
+						operation.ID,
+					)
+				}
+
+				canonical.Predecessors = operation.Predecessors
 				operation = canonical
-				operation.Predecessors = predecessors
-			} else {
-				return nil, fmt.Errorf(
-					"committed operation %v is absent from columns",
-					operation.ID,
-				)
 			}
 
 			state.operationIDs[operation.ID] = struct{}{}
@@ -309,14 +332,25 @@ func stateFromCanonicalColumns(columns *columnarState) (*State, error) {
 	}
 
 	for i := range columns.changes {
-		for _, changed := range columns.changes[i].Operations {
-			operation, ok := state.operation(changed.ID)
-			if !ok {
-				if changed.Action != opset.ActionDelete {
-					continue
-				}
+		operations, stored, err := columns.committedChangeOperations(i)
+		if err != nil {
+			return nil, err
+		}
 
-				operation = changed
+		for _, changed := range operations {
+			operation := changed
+
+			if !stored {
+				var ok bool
+
+				operation, ok = state.operation(changed.ID)
+				if !ok {
+					if changed.Action != opset.ActionDelete {
+						continue
+					}
+
+					operation = changed
+				}
 			}
 
 			state.supersedePredecessors(operation)
@@ -342,6 +376,9 @@ func stateFromCanonicalColumns(columns *columnarState) (*State, error) {
 	}
 
 	state.finalizeSequenceTails(order)
+
+	// The state is built, and the rows are about to start changing.
+	columns.decodedChanges = nil
 
 	return state, nil
 }
@@ -630,11 +667,34 @@ func (c *columnarState) rebuildNonCanonicalOperations() {
 	objects := make(map[opset.ObjectID][]opset.OpID)
 
 	for i := range c.changes {
-		for _, operation := range c.changes[i].Operations {
-			if row, ok := c.operationRows.lookup(operation.ID); ok &&
-				row >= 0 &&
-				row < len(c.operations) &&
-				c.operations[row].ID == operation.ID {
+		change := &c.changes[i]
+
+		// A change that does not hold its operations has every one of them
+		// either at a row or among the operations indexed here before.
+		if change.OperationsDeferred {
+			for counter := change.StartOp; counter <= change.MaxOp; counter++ {
+				identifier := opset.OpID{Actor: change.Actor, Counter: counter}
+				if c.hasOperationRow(identifier) {
+					continue
+				}
+
+				operation, ok := c.nonCanonicalOperations[identifier]
+				if !ok {
+					continue
+				}
+
+				objects[operation.Object] = append(
+					objects[operation.Object],
+					identifier,
+				)
+				operations[identifier] = cloneOperation(operation)
+			}
+
+			continue
+		}
+
+		for _, operation := range change.Operations {
+			if c.hasOperationRow(operation.ID) {
 				continue
 			}
 
@@ -651,6 +711,113 @@ func (c *columnarState) rebuildNonCanonicalOperations() {
 
 	c.nonCanonicalOperations = operations
 	c.nonCanonicalObjects = objects
+}
+
+// hasOperationRow reports whether the wire operation table holds a row for
+// the identifier.
+func (c *columnarState) hasOperationRow(identifier opset.OpID) bool {
+	row, ok := c.operationRows.lookup(identifier)
+
+	return ok &&
+		row >= 0 &&
+		row < len(c.operations) &&
+		c.operations[row].ID == identifier
+}
+
+// adoptDecodedDeletes indexes the deletes a decoded snapshot implies, in the
+// order its changes wrote them. A snapshot stores no row for a delete, so
+// they are the only committed operations the wire table omits.
+func (c *columnarState) adoptDecodedDeletes() {
+	deletes := c.decodedChanges.Deletes()
+	operations := make(map[opset.OpID]opset.Operation, len(deletes))
+	objects := make(map[opset.ObjectID][]opset.OpID)
+
+	if len(deletes) > 0 {
+		for i := range c.changes {
+			for operation := range c.decodedChanges.ChangeDeletes(i) {
+				objects[operation.Object] = append(
+					objects[operation.Object],
+					operation.ID,
+				)
+				operations[operation.ID] = operation
+			}
+		}
+	}
+
+	c.nonCanonicalOperations = operations
+	c.nonCanonicalObjects = objects
+}
+
+// changeOperationCount returns the number of operations the committed change
+// at the given row wrote.
+func (c *columnarState) changeOperationCount(row int) int {
+	change := &c.changes[row]
+	if !change.OperationsDeferred {
+		return len(change.Operations)
+	}
+
+	if change.MaxOp < change.StartOp {
+		return 0
+	}
+
+	return int(change.MaxOp - change.StartOp + 1)
+}
+
+// committedChangeOperations returns the operations of the committed change at
+// the given row, in counter order. It also reports whether they are the
+// stored operations themselves, read from the columns, rather than the
+// change's own copies of them.
+func (c *columnarState) committedChangeOperations(
+	row int,
+) (iter.Seq2[int, opset.Operation], bool, error) {
+	change := &c.changes[row]
+	if !change.OperationsDeferred {
+		return slices.All(change.Operations), false, nil
+	}
+
+	if c.decodedChanges != nil {
+		return c.decodedChanges.Operations(row), true, nil
+	}
+
+	operations, ok := c.changeOperations(change)
+	if !ok {
+		return nil, false, fmt.Errorf(
+			"cannot locate the operations of change %d",
+			row,
+		)
+	}
+
+	return slices.All(operations), true, nil
+}
+
+// changeOperations collects the operations of a committed change that does
+// not hold them. The change's identifiers are its actor paired with each
+// counter of its range, and every one of them names a stored operation.
+func (c *columnarState) changeOperations(
+	change *opset.Change,
+) ([]opset.Operation, bool) {
+	if c == nil {
+		return nil, false
+	}
+
+	if change.MaxOp < change.StartOp {
+		return nil, true
+	}
+
+	operations := make([]opset.Operation, 0, change.MaxOp-change.StartOp+1)
+
+	for counter := change.StartOp; counter <= change.MaxOp; counter++ {
+		operation, ok := c.operation(
+			opset.OpID{Actor: change.Actor, Counter: counter},
+		)
+		if !ok {
+			return nil, false
+		}
+
+		operations = append(operations, operation)
+	}
+
+	return operations, true
 }
 
 func (c *columnarState) rebuildWireObjectSpans() {

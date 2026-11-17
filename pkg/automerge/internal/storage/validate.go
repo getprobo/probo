@@ -572,11 +572,13 @@ func collectUnknown(
 	return result, nil
 }
 
-func assignOperations(
+// changeDependencyMaximums returns, for every change, the highest operation
+// counter among the changes it transitively depends on. It rejects a
+// dependency index outside the table and a dependency cycle.
+func changeDependencyMaximums(
 	changes []opset.Change,
-	operations []opset.Operation,
 	budget *decodeBudget,
-) error {
+) ([]uint64, error) {
 	const (
 		visiting uint8 = 1
 		visited  uint8 = 2
@@ -589,15 +591,15 @@ func assignOperations(
 	}
 
 	if err := chargeDecoded[uint8](budget, uint64(len(changes))); err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := chargeDecoded[traversalFrame](budget, uint64(len(changes))); err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := chargeDecoded[uint64](budget, uint64(len(changes))); err != nil {
-		return err
+		return nil, err
 	}
 
 	states := make([]uint8, len(changes))
@@ -621,7 +623,7 @@ func assignOperations(
 				frame.nextDependency++
 
 				if dependency >= uint64(len(changes)) {
-					return fmt.Errorf(
+					return nil, fmt.Errorf(
 						"change %d dependency %d is out of bounds",
 						frame.index,
 						dependency,
@@ -631,7 +633,7 @@ func assignOperations(
 				dependencyIndex := int(dependency)
 				switch states[dependencyIndex] {
 				case visiting:
-					return fmt.Errorf(
+					return nil, fmt.Errorf(
 						"snapshot dependency cycle includes change %d",
 						dependency,
 					)
@@ -649,7 +651,7 @@ func assignOperations(
 			}
 
 			if frame.dependencyMax == math.MaxUint64 {
-				return fmt.Errorf("change %d start operation overflows uint64", frame.index)
+				return nil, fmt.Errorf("change %d start operation overflows uint64", frame.index)
 			}
 
 			// StartOp is the first operation this change actually contains.
@@ -666,6 +668,19 @@ func assignOperations(
 				parent.dependencyMax = max(parent.dependencyMax, completedMax)
 			}
 		}
+	}
+
+	return dependencyMax, nil
+}
+
+func assignOperations(
+	changes []opset.Change,
+	operations []opset.Operation,
+	budget *decodeBudget,
+) error {
+	dependencyMax, err := changeDependencyMaximums(changes, budget)
+	if err != nil {
+		return err
 	}
 
 	if err := assignChangeStartOps(changes, operations, dependencyMax, budget); err != nil {

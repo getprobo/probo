@@ -20,7 +20,11 @@
 
 package core
 
-import "go.probo.inc/probo/pkg/automerge/internal/opset"
+import (
+	"fmt"
+
+	"go.probo.inc/probo/pkg/automerge/internal/opset"
+)
 
 func (i *operationRowIndex) lookup(identifier opset.OpID) (int, bool) {
 	if i == nil {
@@ -224,6 +228,32 @@ func (s *State) change(hash opset.ChangeHash) (*opset.Change, bool) {
 	}
 
 	return nil, false
+}
+
+// withOperations returns the change with its operations in place. A change
+// loaded from a snapshot does not hold them, because the snapshot's rows
+// already store every operation once; they are collected from the rows. The
+// result must not be modified: it is the change itself whenever the change
+// holds its operations.
+func (s *State) withOperations(change *opset.Change) (*opset.Change, error) {
+	if !change.OperationsDeferred {
+		return change, nil
+	}
+
+	operations, ok := s.columns.changeOperations(change)
+	if !ok {
+		return nil, fmt.Errorf(
+			"cannot locate the operations of change %d of actor %s",
+			change.Sequence,
+			change.Actor,
+		)
+	}
+
+	loaded := *change
+	loaded.Operations = operations
+	loaded.OperationsDeferred = false
+
+	return &loaded, nil
 }
 
 func (s *State) eachChange(yield func(opset.ChangeHash, *opset.Change) bool) {

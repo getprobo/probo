@@ -75,11 +75,11 @@ func TestReconstructSnapshotChanges(t *testing.T) {
 			t.Parallel()
 
 			forward := reconstructionChain(t, []int{0, 1, 2, 3})
-			require.NoError(t, reconstructSnapshotChanges(forward, &decodeBudget{}))
+			require.NoError(t, reconstructSnapshotChanges(forward, nil, &decodeBudget{}))
 
 			for _, position := range [][]int{{3, 2, 1, 0}, {2, 0, 3, 1}} {
 				shuffled := reconstructionChain(t, position)
-				require.NoError(t, reconstructSnapshotChanges(shuffled, &decodeBudget{}))
+				require.NoError(t, reconstructSnapshotChanges(shuffled, nil, &decodeBudget{}))
 
 				for link, row := range position {
 					require.NotNil(t, shuffled[row].Hash)
@@ -98,7 +98,7 @@ func TestReconstructSnapshotChanges(t *testing.T) {
 			changes := reconstructionChain(t, []int{0, 1})
 			changes[1].Hash = &opset.ChangeHash{1}
 
-			err := reconstructSnapshotChanges(changes, &decodeBudget{})
+			err := reconstructSnapshotChanges(changes, nil, &decodeBudget{})
 			require.Error(t, err)
 			assert.ErrorContains(t, err, "rebuilds to hash")
 		},
@@ -112,7 +112,7 @@ func TestReconstructSnapshotChanges(t *testing.T) {
 			changes := reconstructionChain(t, []int{0, 1})
 			changes[0].DependencyIndexes = []uint64{1}
 
-			err := reconstructSnapshotChanges(changes, &decodeBudget{})
+			err := reconstructSnapshotChanges(changes, nil, &decodeBudget{})
 			require.Error(t, err)
 			assert.ErrorContains(t, err, "cannot be ordered")
 		},
@@ -126,7 +126,7 @@ func TestReconstructSnapshotChanges(t *testing.T) {
 			changes := reconstructionChain(t, []int{0, 1})
 			changes[1].DependencyIndexes = []uint64{9}
 
-			err := reconstructSnapshotChanges(changes, &decodeBudget{})
+			err := reconstructSnapshotChanges(changes, nil, &decodeBudget{})
 			require.Error(t, err)
 			assert.ErrorContains(t, err, "out of bounds")
 		},
@@ -139,7 +139,7 @@ func TestReconstructSnapshotChanges(t *testing.T) {
 
 			changes := reconstructionChain(t, []int{0, 1, 2, 3})
 			budget := &decodeBudget{}
-			require.NoError(t, reconstructSnapshotChanges(changes, budget))
+			require.NoError(t, reconstructSnapshotChanges(changes, nil, budget))
 
 			const dependencies = 3
 
@@ -150,8 +150,8 @@ func TestReconstructSnapshotChanges(t *testing.T) {
 				want += uint64(len(changes[i].Raw))
 			}
 
-			// The encoder reservation is a kilobyte per operation; none of it
-			// may outlive the change it was taken for.
+			// The encoder reservation is several kilobytes per change; none
+			// of it may outlive the change it was taken for.
 			assert.Equal(t, want, budget.used)
 		},
 	)
