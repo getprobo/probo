@@ -87,7 +87,8 @@ services:
     ports:
       - "3200:3200"
       - "4317:4317"
-      - "4318:4318"
+      # RunsOn v3 binds 127.0.0.1:4318. CI sets TEMPO_OTLP_HTTP_PORT.
+      - "${TEMPO_OTLP_HTTP_PORT:-4318}:4318"
     volumes:
       - "./compose/tempo/tempo.yaml:/etc/tempo.yaml:ro"
       - "tempo-data:/var/tempo:rw"
