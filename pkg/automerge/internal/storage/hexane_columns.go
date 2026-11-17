@@ -759,11 +759,27 @@ func (c *hexaneOperationColumns) Splice(
 func (c *hexaneOperationColumns) BatchSplice(
 	splices []hexaneOperationSplice,
 ) error {
+	// Two splices can name the same row when one only inserts there and the
+	// other replaces rows starting there: a commit that appends to the end of
+	// one object and rewrites the first row of the next. The insertion comes
+	// first, since its rows land before the ones being replaced. Ordered the
+	// other way round the pair would read as an overlap.
 	sorted := append([]hexaneOperationSplice(nil), splices...)
 	slices.SortStableFunc(
 		sorted,
 		func(left, right hexaneOperationSplice) int {
-			return left.index - right.index
+			if left.index != right.index {
+				return left.index - right.index
+			}
+
+			switch {
+			case left.deleteCount == 0 && right.deleteCount > 0:
+				return -1
+			case left.deleteCount > 0 && right.deleteCount == 0:
+				return 1
+			default:
+				return 0
+			}
 		},
 	)
 

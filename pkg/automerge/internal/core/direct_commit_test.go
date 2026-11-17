@@ -255,3 +255,65 @@ func TestDirectCommit_IsolationPreservesHiddenCanonicalRows(t *testing.T) {
 	assert.ElementsMatch(t, []string{"isolated", "text", "value"}, keys)
 	requireColumnarStateEquivalent(t, engine)
 }
+
+// TestCommit_AppendsToOneObjectAndRewritesTheStartOfTheNext covers a commit
+// whose two row edits meet at one index: a root key written and deleted in
+// the same commit adds a row at the end of the root's rows, and a text edit
+// at position zero replaces the first row of the text that follows them.
+func TestCommit_AppendsToOneObjectAndRewritesTheStartOfTheNext(t *testing.T) {
+	t.Parallel()
+
+	engine, err := NewEngine()
+	require.NoError(t, err)
+	require.NoError(t, engine.SetActor([]byte("meeting-splices")))
+
+	body, err := engine.PutText(0, "body")
+	require.NoError(t, err)
+
+	want := "hello world, some text"
+	require.NoError(t, engine.SpliceText(body, 0, 0, want))
+	require.NoError(t, engine.PutString(0, "title", "start"))
+
+	_, err = engine.Commit("seed", time.Unix(1, 0))
+	require.NoError(t, err)
+
+	for i := range 24 {
+		position := i % 6
+
+		require.NoError(t, engine.SpliceText(body, uint32(position), 1, "xy"))
+		require.NoError(t, engine.PutString(0, "title", "temporary"))
+		require.NoError(t, engine.DeleteMap(0, "title"))
+
+		_, err = engine.Commit("edit", time.Unix(int64(2+i), 0))
+		require.NoError(t, err, "commit %d", i)
+
+		want = want[:position] + "xy" + want[position+1:]
+
+		text, err := engine.Text(body)
+		require.NoError(t, err)
+		require.Equal(t, want, text, "commit %d", i)
+
+		// What the columns hold must be a document any engine reads back
+		// to the same content, and writes back to the same bytes.
+		saved, err := engine.Save(true, true)
+		require.NoError(t, err)
+
+		loaded, err := LoadEngine(saved)
+		require.NoError(t, err, "commit %d", i)
+
+		loadedBody, _, err := loaded.GetObject(0, "body")
+		require.NoError(t, err)
+
+		text, err = loaded.Text(loadedBody)
+		require.NoError(t, err)
+		require.Equal(t, want, text, "commit %d", i)
+
+		keys, err := loaded.Keys(0)
+		require.NoError(t, err)
+		require.Equal(t, []string{"body"}, keys, "commit %d", i)
+
+		resaved, err := loaded.Save(true, true)
+		require.NoError(t, err)
+		require.Equal(t, saved, resaved, "commit %d", i)
+	}
+}
