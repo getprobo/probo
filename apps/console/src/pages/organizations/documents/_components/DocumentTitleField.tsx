@@ -26,7 +26,7 @@ import { graphql, useFragment } from "react-relay";
 import type { DocumentTitleField_document$key } from "#/__generated__/core/DocumentTitleField_document.graphql";
 
 import { clampDocumentTitle } from "../_lib/documentTitle";
-import { useUpdateDocumentTitle } from "../_lib/useUpdateDocumentTitle";
+import { useUpdateDocument } from "../_lib/useUpdateDocument";
 import { documentTitleField } from "../variants";
 
 const documentTitleSaveDelayMs = 1000;
@@ -55,7 +55,7 @@ interface DocumentTitleFieldProps {
 export function DocumentTitleField({ documentKey }: DocumentTitleFieldProps) {
   const document = useFragment(documentTitleFieldFragment, documentKey);
   const { t } = useTranslation("organizations/documents");
-  const [updateDocumentTitle] = useUpdateDocumentTitle();
+  const [updateDocument] = useUpdateDocument();
   const [draft, setDraft] = useState(document.title);
   const savedRef = useRef(document.title);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -87,7 +87,7 @@ export function DocumentTitleField({ documentKey }: DocumentTitleFieldProps) {
       return;
     }
 
-    void updateDocumentTitle({
+    void updateDocument({
       variables: {
         input: {
           id: document.id,

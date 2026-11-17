@@ -5,6 +5,24 @@
     "fields": {
       "title": "Titre"
     },
+    "properties": {
+      "title": "Propriétés",
+      "type": "Type",
+      "classification": "Classification",
+      "approvers": "Approbateurs",
+      "none": "Aucun",
+      "addApprover": "Ajouter un approbateur",
+      "removeApprover": "Retirer {{name}}"
+    },
+    "controls": {
+      "title": "Contrôles",
+      "none": "Aucun",
+      "add": "Lier un contrôle",
+      "remove": "Retirer {{name}}",
+      "loadMore": "Charger plus",
+      "empty": "Aucun contrôle trouvé",
+      "loadError": "Impossible de charger les contrôles"
+    },
     "errors": {
       "update": "Échec de la mise à jour du document"
     }

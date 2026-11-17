@@ -23,6 +23,29 @@ import { tv } from "tailwind-variants/lite";
 export const documentDetailsPage = tv({
   slots: {
     root: "flex flex-col gap-6",
+    body: "grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_280px]",
+    main: "flex min-w-0 flex-col gap-6",
+    side: "flex min-w-0 flex-col gap-4",
+  },
+});
+
+export const documentProperties = tv({
+  slots: {
+    root: "flex w-full flex-col items-stretch gap-3",
+    approvers: "flex w-full flex-col items-stretch gap-1",
+    approver: "flex h-6 min-w-0 items-center gap-1 px-2",
+    identity: "flex min-w-0 flex-1 items-center gap-1",
+    avatar: "!size-4",
+    name: "min-w-0 flex-1 truncate",
+  },
+});
+
+export const documentControls = tv({
+  slots: {
+    root: "flex w-full flex-col items-stretch gap-3",
+    names: "flex w-full flex-col items-stretch gap-2",
+    name: "flex min-w-0 items-center justify-between gap-2",
+    control: "min-w-0 flex-1 truncate !block",
   },
 });
 
