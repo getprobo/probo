@@ -216,6 +216,8 @@ func TestLoadEngine_KeepsEachOperationOnce(t *testing.T) {
 
 	// Later edits supersede loaded operations and move their rows. A loaded
 	// change still names the same operations, however its rows have moved.
+	// There are enough commits for the row index to be flattened on the way,
+	// which replaces the lookup the load built.
 	body, _, err := loaded.GetObject(0, "body")
 	require.NoError(t, err)
 
@@ -228,9 +230,17 @@ func TestLoadEngine_KeepsEachOperationOnce(t *testing.T) {
 		require.NoError(t, err)
 	}
 
+	for i := range maxOperationRowIndexDepth {
+		require.NoError(t, loaded.SpliceText(body, 0, 0, "z"))
+
+		_, err = loaded.Commit("more", time.Unix(int64(200+i), 0))
+		require.NoError(t, err)
+	}
+
 	t.Run(
 		"after further edits",
 		func(t *testing.T) {
+			require.Nil(t, loaded.columns.operationRows.decoded)
 			assertOperations(t, false)
 		},
 	)

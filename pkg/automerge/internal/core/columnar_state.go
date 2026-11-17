@@ -68,6 +68,11 @@ type columnarState struct {
 	snapshotReplacements uint64
 }
 
+// maxOperationRowIndexDepth bounds the layers lookup walks. Each commit or
+// apply stacks a layer on the parent chain, so older operations would
+// otherwise be found after an ever-growing walk.
+const maxOperationRowIndexDepth = 32
+
 type operationRowIndex struct {
 	parent *operationRowIndex
 	rows   map[opset.OpID]int
@@ -75,6 +80,7 @@ type operationRowIndex struct {
 	// whose changes each fill their counter range: a row is then found by
 	// counter instead of through one map entry per operation.
 	decoded     *storage.OperationRowLookup
+	depth       int
 	spliceStart int
 	spliceEnd   int
 	spliceDelta int
@@ -83,6 +89,33 @@ type operationRowIndex struct {
 
 func newOperationRowIndex(capacity int) *operationRowIndex {
 	return &operationRowIndex{rows: make(map[opset.OpID]int, capacity)}
+}
+
+func newOperationRowIndexFor(operations []opset.Operation) *operationRowIndex {
+	index := newOperationRowIndex(len(operations))
+	for row, operation := range operations {
+		index.rows[operation.ID] = row
+	}
+
+	return index
+}
+
+func (i *operationRowIndex) chainDepth() int {
+	if i == nil {
+		return 0
+	}
+
+	return i.depth
+}
+
+// compacted returns i, or a flat index of operations once the layer chain is
+// deeper than maxOperationRowIndexDepth. operations must be the slice i maps.
+func (i *operationRowIndex) compacted(operations []opset.Operation) *operationRowIndex {
+	if i.chainDepth() <= maxOperationRowIndexDepth {
+		return i
+	}
+
+	return newOperationRowIndexFor(operations)
 }
 
 func (i *operationRowIndex) with(
@@ -94,7 +127,7 @@ func (i *operationRowIndex) with(
 		rows[operation.ID] = offset + index
 	}
 
-	return &operationRowIndex{parent: i, rows: rows}
+	return &operationRowIndex{parent: i, rows: rows, depth: i.chainDepth() + 1}
 }
 
 func (i *operationRowIndex) withSplice(
@@ -110,6 +143,7 @@ func (i *operationRowIndex) withSplice(
 	return &operationRowIndex{
 		parent:      i,
 		rows:        rows,
+		depth:       i.chainDepth() + 1,
 		spliceStart: index,
 		spliceEnd:   index + deleteCount,
 		spliceDelta: len(operations) - deleteCount,
@@ -661,7 +695,7 @@ func (c *columnarState) reconcile(state *State) error {
 
 	c.heads = append([]opset.ChangeHash(nil), heads...)
 	c.operations = operations
-	c.operationRows = operationRows
+	c.operationRows = operationRows.compacted(operations)
 	c.rebuildNonCanonicalOperations()
 	c.rebuildWireObjectSpans()
 	c.columnsDirty = false
@@ -915,7 +949,7 @@ func (c *columnarState) appendSequenceOperations(
 	}
 
 	operations = append(operations, added...)
-	rows := c.operationRows.with(added, len(c.operations))
+	rows := c.operationRows.with(added, len(c.operations)).compacted(operations)
 
 	return operations, rows, true, nil
 }

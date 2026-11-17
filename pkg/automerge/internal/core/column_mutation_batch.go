@@ -982,7 +982,7 @@ func (b *columnMutationBatch) apply(columns *columnarState) (*columnarState, err
 
 	next.heads = append([]opset.ChangeHash(nil), b.heads...)
 	next.operations = operations
-	next.operationRows = rows
+	next.operationRows = rows.compacted(operations)
 	next.nonCanonicalOperations = columns.nonCanonicalOperations
 	clonedNonCanonicalOperations := false
 
