@@ -24,7 +24,7 @@ import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
 export function DocumentListPageSkeleton() {
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-8 pt-8 pb-32">
+    <main className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-8 pt-8">
       <div className="flex flex-col gap-4">
         <TextSkeleton size={2} className="w-56" />
         <HeadingSkeleton size={7} className="w-48" />

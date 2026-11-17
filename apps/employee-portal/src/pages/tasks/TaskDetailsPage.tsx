@@ -130,7 +130,7 @@ function TaskDetailsBody({ task }: { task: TaskDetailsPage_task$data }) {
   }, [task.id]);
 
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-col px-8 pt-8 pb-32">
+    <main className="mx-auto flex w-full max-w-5xl flex-col px-8 pt-8">
       <TaskDetails
         back={(
           <Link

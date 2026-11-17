@@ -31,7 +31,7 @@ import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteCont
 import { useTopBarWide } from "./TopBar/useTopBarWide";
 
 const consoleFooter = tv({
-  base: "mx-auto mt-auto flex w-full justify-end px-8 py-8",
+  base: "mx-auto mt-auto flex w-full justify-end px-8 pt-4 pb-6",
   variants: {
     wide: {
       true: "max-w-full",

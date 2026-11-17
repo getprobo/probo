@@ -22,7 +22,7 @@ import { tv } from "tailwind-variants/lite";
 
 export const registerDevicePage = tv({
   slots: {
-    main: "mx-auto flex w-full max-w-5xl flex-col gap-10 px-8 pt-8 pb-32",
+    main: "mx-auto flex w-full max-w-5xl flex-col gap-10 px-8 pt-8",
     body: "grid grid-cols-1 gap-4 md:grid-cols-[15.25rem_minmax(0,1fr)]",
     stepper: "flex w-full list-none flex-col gap-2",
     stage: "min-w-0",
@@ -94,7 +94,7 @@ export const downloadList = tv({
 
 export const devicesPage = tv({
   slots: {
-    main: "mx-auto flex w-full max-w-5xl flex-col gap-10 px-8 pt-8 pb-32",
+    main: "mx-auto flex w-full max-w-5xl flex-col gap-10 px-8 pt-8",
   },
 });
 
@@ -169,7 +169,7 @@ export const deviceListItem = tv({
 
 export const addManuallyPage = tv({
   slots: {
-    main: "mx-auto flex w-full max-w-5xl flex-col gap-10 px-8 pt-8 pb-32",
+    main: "mx-auto flex w-full max-w-5xl flex-col gap-10 px-8 pt-8",
     creating: "flex items-center gap-2",
     errorActions: "flex items-center gap-3",
   },

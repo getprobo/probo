@@ -22,7 +22,7 @@ import { tv } from "tailwind-variants/lite";
 
 export const bindingsPage = tv({
   slots: {
-    main: "mx-auto flex w-full max-w-5xl flex-col gap-10 px-8 pt-8 pb-32",
+    main: "mx-auto flex w-full max-w-5xl flex-col gap-10 px-8 pt-8",
   },
 });
 
