@@ -1070,6 +1070,8 @@ FROM
 WHERE
 	%s
 	AND framework_id = @framework_id
+ORDER BY
+	id
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())

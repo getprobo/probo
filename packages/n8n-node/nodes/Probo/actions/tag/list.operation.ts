@@ -113,10 +113,7 @@ export async function execute(
 		);
 		const probeData = probe?.data as IDataObject | undefined;
 		const probeNode = probeData?.node as IDataObject | undefined;
-		if (!probeNode) {
-			throw new NodeOperationError(this.getNode(), 'Resource not found', { itemIndex });
-		}
-		if (!('tags' in probeNode)) {
+		if (!probeNode || !('tags' in probeNode)) {
 			throw new NodeOperationError(this.getNode(), 'Resource is not taggable', { itemIndex });
 		}
 

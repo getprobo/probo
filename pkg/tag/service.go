@@ -266,6 +266,11 @@ func (s *Service) Update(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
+			// The row lock blocks concurrent attaches until the vectors are refreshed.
+			if err := coredata.LockID(ctx, conn, scope, "tags", req.ID); err != nil {
+				return fmt.Errorf("cannot lock tag: %w", err)
+			}
+
 			if err := tag.LoadByID(ctx, conn, scope, req.ID); err != nil {
 				return fmt.Errorf("cannot load tag: %w", err)
 			}
@@ -322,6 +327,11 @@ func (s *Service) Delete(
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
+			// The row lock blocks concurrent attaches until the vectors are refreshed.
+			if err := coredata.LockID(ctx, conn, scope, "tags", tagID); err != nil {
+				return fmt.Errorf("cannot lock tag: %w", err)
+			}
+
 			tag := &coredata.Tag{}
 			if err := tag.LoadByID(ctx, conn, scope, tagID); err != nil {
 				return fmt.Errorf("cannot load tag: %w", err)

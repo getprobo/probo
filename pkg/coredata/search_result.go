@@ -159,7 +159,7 @@ FROM (
 	SELECT
 		resource_id AS id,
 		title,
-		ts_rank(
+		COALESCE(ts_rank(
 			search_vector,
 			(
 				SELECT to_tsquery(
@@ -173,7 +173,7 @@ FROM (
 					)
 				) AS lex(lexeme, positions)
 			)
-		)::float8 AS rank
+		), 0)::float8 AS rank
 	FROM
 		search_resources
 	WHERE

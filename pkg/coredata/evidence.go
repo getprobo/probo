@@ -176,7 +176,10 @@ RETURNING id;
 		err = conn.QueryRow(
 			ctx,
 			`SELECT id FROM evidences WHERE task_id = @task_id AND reference_id = @reference_id`,
-			args,
+			pgx.StrictNamedArgs{
+				"task_id":      e.TaskID,
+				"reference_id": e.ReferenceID,
+			},
 		).Scan(&id)
 	}
 

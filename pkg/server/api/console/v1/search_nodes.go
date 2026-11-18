@@ -22,11 +22,8 @@ package console_v1
 
 import (
 	"context"
-	"fmt"
 	"maps"
 
-	"github.com/99designs/gqlgen/graphql"
-	"github.com/vektah/gqlparser/v2/ast"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
@@ -36,151 +33,10 @@ import (
 	"go.probo.inc/probo/pkg/task"
 )
 
+// searchNodes loads every search hit through an authorized loader. The
+// search index is organization-wide, so each resource must still pass its
+// own get permission before its node is returned.
 func (r *queryResolver) searchNodes(
-	ctx context.Context,
-	results []*coredata.SearchResult,
-) ([]types.Taggable, error) {
-	if searchRequestsIdentityOnly(ctx) {
-		nodes, ok := searchIdentityNodes(results)
-		if ok {
-			return nodes, nil
-		}
-	}
-
-	return r.loadSearchNodes(ctx, results)
-}
-
-func searchRequestsIdentityOnly(ctx context.Context) bool {
-	fieldContext := graphql.GetFieldContext(ctx)
-	if fieldContext == nil {
-		return false
-	}
-
-	for _, selection := range fieldContext.Field.Selections {
-		selected, ok := selection.(*ast.Field)
-		if !ok || selected.Name != "edges" {
-			continue
-		}
-
-		return edgeSelectionIsIdentity(selected.SelectionSet)
-	}
-
-	return true
-}
-
-func edgeSelectionIsIdentity(selections ast.SelectionSet) bool {
-	for _, selection := range selections {
-		switch selected := selection.(type) {
-		case *ast.Field:
-			if selected.Name == "node" {
-				return nodeSelectionIsIdentity(selected.SelectionSet)
-			}
-
-			if selected.Name != "cursor" && selected.Name != "title" && selected.Name != "__typename" {
-				return false
-			}
-		default:
-			return false
-		}
-	}
-
-	return true
-}
-
-func nodeSelectionIsIdentity(selections ast.SelectionSet) bool {
-	for _, selection := range selections {
-		selected, ok := selection.(*ast.Field)
-		if !ok {
-			return false
-		}
-
-		if selected.Name != "id" && selected.Name != "__typename" {
-			return false
-		}
-	}
-
-	return true
-}
-
-func searchIdentityNodes(results []*coredata.SearchResult) ([]types.Taggable, bool) {
-	nodes := make([]types.Taggable, len(results))
-
-	for i, result := range results {
-		node, ok := searchIdentityNode(result.ID)
-		if !ok {
-			return nil, false
-		}
-
-		nodes[i] = node
-	}
-
-	return nodes, true
-}
-
-func searchIdentityNode(id gid.GID) (types.Taggable, bool) {
-	switch id.EntityType() {
-	case coredata.AiSystemEntityType:
-		return &types.AiSystem{ID: id}, true
-	case coredata.AssetEntityType:
-		return &types.Asset{ID: id}, true
-	case coredata.AuditEntityType:
-		return &types.Audit{ID: id}, true
-	case coredata.BusinessFunctionEntityType:
-		return &types.BusinessFunction{ID: id}, true
-	case coredata.ControlEntityType:
-		return &types.Control{ID: id}, true
-	case coredata.DataProtectionImpactAssessmentEntityType:
-		return &types.DataProtectionImpactAssessment{ID: id}, true
-	case coredata.DatumEntityType:
-		return &types.Datum{ID: id}, true
-	case coredata.DeviceEntityType:
-		return &types.Device{ID: id}, true
-	case coredata.DocumentEntityType:
-		return &types.Document{ID: id}, true
-	case coredata.EvidenceEntityType:
-		return &types.Evidence{ID: id}, true
-	case coredata.FindingEntityType:
-		return &types.Finding{ID: id}, true
-	case coredata.FrameworkEntityType:
-		return &types.Framework{ID: id}, true
-	case coredata.InternalControlEntityType:
-		return &types.InternalControl{ID: id}, true
-	case coredata.ObligationEntityType:
-		return &types.Obligation{ID: id}, true
-	case coredata.ProcessingActivityEntityType:
-		return &types.ProcessingActivity{ID: id}, true
-	case coredata.RightsRequestEntityType:
-		return &types.RightsRequest{ID: id}, true
-	case coredata.RiskEntityType:
-		return &types.Risk{ID: id}, true
-	case coredata.RiskAnalysisEntityType:
-		return &types.RiskAnalysis{ID: id}, true
-	case coredata.RiskAnalysisBoundaryEntityType:
-		return &types.RiskAnalysisBoundary{ID: id}, true
-	case coredata.RiskAnalysisDiagramEntityType:
-		return &types.RiskAnalysisDiagram{ID: id}, true
-	case coredata.RiskAnalysisProcessEntityType:
-		return &types.RiskAnalysisProcess{ID: id}, true
-	case coredata.RiskAnalysisScenarioEntityType:
-		return &types.RiskAnalysisScenario{ID: id}, true
-	case coredata.RiskAnalysisThreatEntityType:
-		return &types.RiskAnalysisThreat{ID: id}, true
-	case coredata.StatementOfApplicabilityEntityType:
-		return &types.StatementOfApplicability{ID: id}, true
-	case coredata.TaskEntityType:
-		return &types.Task{ID: id}, true
-	case coredata.ThirdPartyEntityType:
-		return &types.ThirdParty{ID: id}, true
-	case coredata.TransferImpactAssessmentEntityType:
-		return &types.TransferImpactAssessment{ID: id}, true
-	case coredata.TreatmentPlanEntityType:
-		return &types.TreatmentPlan{ID: id}, true
-	default:
-		return nil, false
-	}
-}
-
-func (r *queryResolver) loadSearchNodes(
 	ctx context.Context,
 	results []*coredata.SearchResult,
 ) ([]types.Taggable, error) {
@@ -206,7 +62,7 @@ func (r *queryResolver) loadSearchNodes(
 	for i, result := range results {
 		node, ok := loaded[result.ID]
 		if !ok {
-			return nil, gqlx.NotFound(ctx, fmt.Errorf("node %q not found", result.ID))
+			return nil, gqlx.NotFoundf(ctx, "resource not found")
 		}
 
 		nodes[i] = node
@@ -339,7 +195,7 @@ func loadSearchGroup[T any](
 
 	for _, id := range ids {
 		if _, ok := nodes[id]; !ok {
-			return nil, gqlx.NotFound(ctx, fmt.Errorf("node %q not found", id))
+			return nil, gqlx.NotFoundf(ctx, "resource not found")
 		}
 	}
 

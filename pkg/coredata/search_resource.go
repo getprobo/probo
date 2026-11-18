@@ -21,10 +21,12 @@
 package coredata
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"maps"
+	"slices"
 	"strings"
 
 	"github.com/jackc/pgx/v5"
@@ -156,7 +158,13 @@ func DeleteSearchResources(
 		return nil
 	}
 
-	for _, id := range ids {
+	// Concurrent bulk deletes must take advisory locks in the same order.
+	sorted := slices.Clone(ids)
+	slices.SortFunc(sorted, func(a, b gid.GID) int {
+		return bytes.Compare(a[:], b[:])
+	})
+
+	for _, id := range sorted {
 		if err := LockSearchResource(ctx, conn, id); err != nil {
 			return err
 		}
@@ -285,7 +293,7 @@ func LockID(
 	id gid.GID,
 ) error {
 	switch table {
-	case "risks", "third_parties", "evidences", "business_functions":
+	case "risks", "third_parties", "evidences", "business_functions", "tags":
 	default:
 		return fmt.Errorf("cannot lock table %s", table)
 	}
