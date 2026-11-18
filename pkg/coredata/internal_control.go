@@ -88,8 +88,8 @@ func (m InternalControl) CursorKey(orderBy InternalControlOrderField) page.Curso
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (m InternalControl) SearchText() string {
-	return joinSearch(m.Name, ref.UnrefOrZero(m.Code), ref.UnrefOrZero(m.OperatingEvent), ref.UnrefOrZero(m.Description))
+func (m InternalControl) SearchText() []string {
+	return []string{m.Name, ref.UnrefOrZero(m.Code), ref.UnrefOrZero(m.OperatingEvent), ref.UnrefOrZero(m.Description)}
 }
 
 func internalControlNextDueValue(evidenceDue *time.Time, testDue *time.Time) *time.Time {

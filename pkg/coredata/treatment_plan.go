@@ -74,10 +74,6 @@ func (tp *TreatmentPlan) CursorKey(orderBy TreatmentPlanOrderField) page.CursorK
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (tp TreatmentPlan) SearchText(riskName string) string {
-	return joinSearch(riskName, tp.Treatment.String())
-}
-
 func (tp *TreatmentPlan) AuthorizationAttributes(
 	ctx context.Context,
 	conn pg.Querier,
@@ -1543,72 +1539,6 @@ DELETE FROM treatment_plans WHERE %s AND id = @id
 	}
 
 	return nil
-}
-
-func (tps *TreatmentPlans) LoadIDsByRiskID(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	riskID gid.GID,
-) ([]gid.GID, error) {
-	q := `
-SELECT
-	id
-FROM
-	treatment_plans
-WHERE
-	%s
-	AND risk_id = @risk_id
-`
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{"risk_id": riskID}
-	maps.Copy(args, scope.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return nil, fmt.Errorf("cannot query treatment plan ids: %w", err)
-	}
-
-	ids, err := pgx.CollectRows(rows, pgx.RowTo[gid.GID])
-	if err != nil {
-		return nil, fmt.Errorf("cannot collect treatment plan ids: %w", err)
-	}
-
-	return ids, nil
-}
-
-func (tps *TreatmentPlans) LoadIDsByRiskAnalysisID(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	riskAnalysisID gid.GID,
-) ([]gid.GID, error) {
-	q := `
-SELECT
-	id
-FROM
-	treatment_plans
-WHERE
-	%s
-	AND risk_analysis_id = @risk_analysis_id
-`
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{"risk_analysis_id": riskAnalysisID}
-	maps.Copy(args, scope.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return nil, fmt.Errorf("cannot query treatment plan ids: %w", err)
-	}
-
-	ids, err := pgx.CollectRows(rows, pgx.RowTo[gid.GID])
-	if err != nil {
-		return nil, fmt.Errorf("cannot collect treatment plan ids: %w", err)
-	}
-
-	return ids, nil
 }
 
 func (c *TreatmentPlans) DeleteByOrganizationID(

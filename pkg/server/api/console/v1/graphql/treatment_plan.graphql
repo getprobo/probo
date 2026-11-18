@@ -86,15 +86,7 @@ type TreatmentPlanProgress
     total: Int!
 }
 
-type TreatmentPlan implements Node & Taggable {
-    tags(
-        first: Int
-        after: CursorKey
-        last: Int
-        before: CursorKey
-        orderBy: TagOrder
-    ): TagConnection! @goField(forceResolver: true)
-
+type TreatmentPlan implements Node {
     id: ID!
     treatment: RiskTreatment!
     inherentLikelihood: Int!

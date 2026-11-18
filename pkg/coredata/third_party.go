@@ -202,8 +202,8 @@ func (v ThirdParty) CursorKey(orderBy ThirdPartyOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (v ThirdParty) SearchText() string {
-	return joinSearch(v.Name, ref.UnrefOrZero(v.Description), ref.UnrefOrZero(v.LegalName))
+func (v ThirdParty) SearchText() []string {
+	return []string{v.Name, ref.UnrefOrZero(v.Description), ref.UnrefOrZero(v.LegalName)}
 }
 
 func (v *ThirdParty) AuthorizationAttributes(

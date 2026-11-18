@@ -85,15 +85,16 @@ func (f *Finding) CursorKey(field FindingOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", field))
 }
 
-func (f Finding) SearchText() string {
-	return joinSearch(
+func (f Finding) SearchText() []string {
+	return []string{
+		f.Title,
 		f.ReferenceID,
 		ref.UnrefOrZero(f.Description),
 		ref.UnrefOrZero(f.Source),
 		ref.UnrefOrZero(f.RootCause),
 		ref.UnrefOrZero(f.CorrectiveAction),
 		ref.UnrefOrZero(f.EffectivenessCheck),
-	)
+	}
 }
 
 func (f *Finding) AuthorizationAttributes(

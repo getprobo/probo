@@ -45,11 +45,6 @@ export const navSpotlightSearchQuery = graphql`
               id
             }
           }
-          ... on TreatmentPlan {
-            riskAnalysis {
-              id
-            }
-          }
         }
       }
     }

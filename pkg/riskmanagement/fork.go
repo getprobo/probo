@@ -589,7 +589,6 @@ func copyTreatmentPlans(
 
 	sourcePlanIDs := make([]gid.GID, 0, len(plans))
 	copiedPlans := make(map[gid.GID]*coredata.TreatmentPlan, len(plans))
-	riskNames := make(map[gid.GID]string)
 
 	for _, source := range plans {
 		copied := &coredata.TreatmentPlan{
@@ -613,28 +612,6 @@ func copyTreatmentPlans(
 
 		if err := copied.Insert(ctx, tx, scope); err != nil {
 			return fmt.Errorf("cannot insert treatment plan: %w", err)
-		}
-
-		riskName, ok := riskNames[copied.RiskID]
-		if !ok {
-			risk := &coredata.Risk{}
-			if err := risk.LoadByID(ctx, tx, scope, copied.RiskID); err != nil {
-				return fmt.Errorf("cannot load risk: %w", err)
-			}
-
-			riskName = risk.Name
-			riskNames[copied.RiskID] = riskName
-		}
-
-		if err := coredata.UpsertSearchResource(
-			ctx,
-			tx,
-			copied.ID,
-			copied.OrganizationID,
-			riskName,
-			copied.SearchText(riskName),
-		); err != nil {
-			return fmt.Errorf("cannot sync search: %w", err)
 		}
 	}
 

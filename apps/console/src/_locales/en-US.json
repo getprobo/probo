@@ -1539,8 +1539,7 @@
         "StatementOfApplicability": "Statement of applicability",
         "Task": "Task",
         "ThirdParty": "Third party",
-        "TransferImpactAssessment": "TIA",
-        "TreatmentPlan": "Treatment plan"
+        "TransferImpactAssessment": "TIA"
       }
     },
     "groups": {

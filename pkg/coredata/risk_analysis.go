@@ -70,8 +70,8 @@ func (ra *RiskAnalysis) CursorKey(orderBy RiskAnalysisOrderField) page.CursorKey
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (ra RiskAnalysis) SearchText() string {
-	return joinSearch(ra.Name, ref.UnrefOrZero(ra.Description))
+func (ra RiskAnalysis) SearchText() []string {
+	return []string{ra.Name, ref.UnrefOrZero(ra.Description)}
 }
 
 func (ra *RiskAnalysis) AuthorizationAttributes(

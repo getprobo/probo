@@ -60,7 +60,6 @@ var entityTypeByName = map[string]uint16{
 	"task":                              coredata.TaskEntityType,
 	"third-party":                       coredata.ThirdPartyEntityType,
 	"transfer-impact-assessment":        coredata.TransferImpactAssessmentEntityType,
-	"treatment-plan":                    coredata.TreatmentPlanEntityType,
 }
 
 // ParseQuery reads a search query. Bare words are required text prefixes.

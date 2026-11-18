@@ -188,8 +188,8 @@ func (p *ProcessingActivity) CursorKey(field ProcessingActivityOrderField) page.
 	panic(fmt.Sprintf("unsupported order by: %s", field))
 }
 
-func (p ProcessingActivity) SearchText() string {
-	return joinSearch(
+func (p ProcessingActivity) SearchText() []string {
+	return []string{
 		p.Name,
 		ref.UnrefOrZero(p.Purpose),
 		ref.UnrefOrZero(p.DataSubjectCategory),
@@ -198,7 +198,7 @@ func (p ProcessingActivity) SearchText() string {
 		ref.UnrefOrZero(p.Location),
 		ref.UnrefOrZero(p.RetentionPeriod),
 		ref.UnrefOrZero(p.SecurityMeasures),
-	)
+	}
 }
 
 func (p *ProcessingActivity) AuthorizationAttributes(

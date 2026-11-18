@@ -2322,18 +2322,6 @@ func (s *Service) assertProcessInDiagram(
 	return nil
 }
 
-func deleteSearchResources(
-	ctx context.Context,
-	conn pg.Querier,
-	ids []gid.GID,
-) error {
-	if err := coredata.DeleteSearchResources(ctx, conn, ids); err != nil {
-		return fmt.Errorf("cannot delete search resource: %w", err)
-	}
-
-	return nil
-}
-
 func clearRiskAnalysisSearch(
 	ctx context.Context,
 	conn pg.Querier,
@@ -2343,17 +2331,6 @@ func clearRiskAnalysisSearch(
 	// The row lock blocks child inserts, which take a key-share lock on the
 	// parent through their foreign key, until this deletion commits.
 	if err := coredata.LockID(ctx, conn, scope, "risk_analyses", riskAnalysisID); err != nil {
-		return err
-	}
-
-	var plans coredata.TreatmentPlans
-
-	planIDs, err := plans.LoadIDsByRiskAnalysisID(ctx, conn, scope, riskAnalysisID)
-	if err != nil {
-		return fmt.Errorf("cannot list risk analysis treatment plans: %w", err)
-	}
-
-	if err := deleteSearchResources(ctx, conn, planIDs); err != nil {
 		return err
 	}
 

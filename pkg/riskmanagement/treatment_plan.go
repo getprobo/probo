@@ -294,17 +294,6 @@ func (s *Service) CreateTreatmentPlan(
 				return fmt.Errorf("cannot insert treatment plan: %w", err)
 			}
 
-			if err := coredata.UpsertSearchResource(
-				ctx,
-				tx,
-				tp.ID,
-				tp.OrganizationID,
-				risk.Name,
-				tp.SearchText(risk.Name),
-			); err != nil {
-				return fmt.Errorf("cannot sync search: %w", err)
-			}
-
 			if err := insertTreatmentPlanEvent(
 				ctx,
 				tx,
@@ -455,22 +444,6 @@ func (s *Service) UpdateTreatmentPlan(
 				return fmt.Errorf("cannot persist treatment plan: %w", err)
 			}
 
-			risk := &coredata.Risk{}
-			if err := risk.LoadByID(ctx, tx, scope, tp.RiskID); err != nil {
-				return fmt.Errorf("cannot load risk: %w", err)
-			}
-
-			if err := coredata.UpsertSearchResource(
-				ctx,
-				tx,
-				tp.ID,
-				tp.OrganizationID,
-				risk.Name,
-				tp.SearchText(risk.Name),
-			); err != nil {
-				return fmt.Errorf("cannot sync search: %w", err)
-			}
-
 			internalControlIDs, err := loadTreatmentPlanInternalControlIDs(ctx, tx, scope, tp.ID)
 			if err != nil {
 				return fmt.Errorf("cannot load treatment plan internal control ids: %w", err)
@@ -526,10 +499,6 @@ func (s *Service) DeleteTreatmentPlan(ctx context.Context, scope coredata.Scoper
 				time.Now(),
 			); err != nil {
 				return fmt.Errorf("cannot record treatment plan deleted event: %w", err)
-			}
-
-			if err := coredata.DeleteSearchResource(ctx, tx, tp.ID); err != nil {
-				return fmt.Errorf("cannot delete search resource: %w", err)
 			}
 
 			if err := tp.Delete(ctx, tx, scope, id); err != nil {

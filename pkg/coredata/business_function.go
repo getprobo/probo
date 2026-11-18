@@ -81,8 +81,8 @@ func (bf *BusinessFunction) CursorKey(field BusinessFunctionOrderField) page.Cur
 	panic(fmt.Sprintf("unsupported order by: %s", field))
 }
 
-func (bf BusinessFunction) SearchText() string {
-	return joinSearch(bf.Name, bf.ReferenceID, ref.UnrefOrZero(bf.ImpactTolerance), ref.UnrefOrZero(bf.Notes))
+func (bf BusinessFunction) SearchText() []string {
+	return []string{bf.Name, bf.ReferenceID, ref.UnrefOrZero(bf.ImpactTolerance), ref.UnrefOrZero(bf.Notes)}
 }
 
 func (bf *BusinessFunction) AuthorizationAttributes(

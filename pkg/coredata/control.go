@@ -69,8 +69,8 @@ func (c Control) CursorKey(orderBy ControlOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (c Control) SearchText() string {
-	return joinSearch(c.SectionTitle, c.Name, ref.UnrefOrZero(c.Description))
+func (c Control) SearchText() []string {
+	return []string{c.SectionTitle, c.Name, ref.UnrefOrZero(c.Description)}
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.

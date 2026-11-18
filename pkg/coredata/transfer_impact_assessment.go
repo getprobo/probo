@@ -170,15 +170,15 @@ func (tia *TransferImpactAssessment) CursorKey(field TransferImpactAssessmentOrd
 	panic(fmt.Sprintf("unsupported order by: %s", field))
 }
 
-func (t TransferImpactAssessment) SearchText(activityName string) string {
-	return joinSearch(
+func (t TransferImpactAssessment) SearchText(activityName string) []string {
+	return []string{
 		activityName,
 		ref.UnrefOrZero(t.DataSubjects),
 		ref.UnrefOrZero(t.LegalMechanism),
 		ref.UnrefOrZero(t.Transfer),
 		ref.UnrefOrZero(t.LocalLawRisk),
 		ref.UnrefOrZero(t.SupplementaryMeasures),
-	)
+	}
 }
 
 func (tia *TransferImpactAssessment) AuthorizationAttributes(

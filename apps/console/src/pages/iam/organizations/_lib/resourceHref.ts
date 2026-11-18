@@ -43,10 +43,6 @@ export function resourceHref(
       return parentId
         ? `${base}/privacy/processing-activities/${parentId}#tia`
         : null;
-    case "TreatmentPlan":
-      return parentId
-        ? `${base}/risk-management/risk-analyses/${parentId}/treatment-plans`
-        : null;
     case "AiSystem":
       return `${base}/registries/ai-systems/${id}`;
     case "Asset":

@@ -67,8 +67,8 @@ func (a *Asset) CursorKey(field AssetOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", field))
 }
 
-func (a Asset) SearchText() string {
-	return joinSearch(a.Name, a.DataTypesStored)
+func (a Asset) SearchText() []string {
+	return []string{a.Name, a.DataTypesStored}
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.

@@ -80,8 +80,8 @@ func (d Document) ReadOnly() bool {
 	return d.ArchivedAt != nil || d.WriteMode == DocumentWriteModeGenerated
 }
 
-func (p Document) SearchText() string {
-	return p.Title
+func (p Document) SearchText() []string {
+	return []string{p.Title}
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.

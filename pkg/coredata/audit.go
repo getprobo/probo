@@ -77,8 +77,8 @@ func (a *Audit) CursorKey(field AuditOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", field))
 }
 
-func (a Audit) SearchText() string {
-	return joinSearch(ref.UnrefOrZero(a.Name), ref.UnrefOrZero(a.Firm))
+func (a Audit) SearchText() []string {
+	return []string{ref.UnrefOrZero(a.Name), ref.UnrefOrZero(a.Firm)}
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.

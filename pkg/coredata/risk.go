@@ -199,8 +199,8 @@ func (r *Risk) CursorKey(orderBy RiskOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (r Risk) SearchText() string {
-	return joinSearch(r.ReferenceID, r.Name)
+func (r Risk) SearchText() []string {
+	return []string{r.ReferenceID, r.Name}
 }
 
 func (r *Risk) AuthorizationAttributes(

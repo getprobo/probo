@@ -63,8 +63,8 @@ func (s StatementOfApplicability) CursorKey(orderBy StatementOfApplicabilityOrde
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (s StatementOfApplicability) SearchText() string {
-	return s.Name
+func (s StatementOfApplicability) SearchText() []string {
+	return []string{s.Name}
 }
 
 func (s *StatementOfApplicability) AuthorizationAttributes(

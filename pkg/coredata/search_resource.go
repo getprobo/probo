@@ -42,7 +42,7 @@ func UpsertSearchResource(
 	id gid.GID,
 	organizationID gid.GID,
 	title string,
-	body string,
+	body []string,
 ) error {
 	q := `
 INSERT INTO search_resources (
@@ -75,7 +75,7 @@ ON CONFLICT (resource_id) DO UPDATE SET
 		"tenant_id":       id.TenantID(),
 		"organization_id": organizationID,
 		"title":           title,
-		"body":            body,
+		"body":            joinSearch(body...),
 	}
 
 	if _, err := conn.Exec(ctx, q, args); err != nil {
@@ -251,39 +251,6 @@ WHERE sr.resource_id = ANY(@resource_ids::text[])
 	return nil
 }
 
-// ReindexTreatmentPlansForRisk rewrites plan search rows after the risk is renamed.
-func ReindexTreatmentPlansForRisk(
-	ctx context.Context,
-	conn pg.Querier,
-	riskID gid.GID,
-	riskName string,
-) error {
-	q := `
-UPDATE search_resources AS sr
-SET
-	title = COALESCE(NULLIF(BTRIM(@risk_name), ''), sr.resource_id),
-	body_vector = to_tsvector(
-		'simple',
-		translate(COALESCE(@risk_name, '') || ' ' || tp.treatment::text || ' ' || sr.resource_id, '-+', '  ')
-	)
-FROM treatment_plans AS tp
-WHERE
-	tp.risk_id = @risk_id
-	AND sr.resource_id = tp.id
-`
-
-	args := pgx.StrictNamedArgs{
-		"risk_id":   riskID,
-		"risk_name": riskName,
-	}
-
-	if _, err := conn.Exec(ctx, q, args); err != nil {
-		return fmt.Errorf("cannot reindex treatment plans: %w", err)
-	}
-
-	return nil
-}
-
 // LockID locks one scoped row until the transaction ends.
 func LockID(
 	ctx context.Context,
@@ -321,7 +288,7 @@ func LockID(
 }
 
 type Searchable interface {
-	SearchText() string
+	SearchText() []string
 }
 
 func joinSearch(parts ...string) string {

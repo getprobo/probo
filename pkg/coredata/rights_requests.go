@@ -73,13 +73,13 @@ func (rr *RightsRequest) CursorKey(field RightsRequestOrderField) page.CursorKey
 	panic(fmt.Sprintf("unsupported order by: %s", field))
 }
 
-func (rr RightsRequest) SearchText() string {
-	return joinSearch(
+func (rr RightsRequest) SearchText() []string {
+	return []string{
 		ref.UnrefOrZero(rr.DataSubject),
 		ref.UnrefOrZero(rr.Contact),
 		ref.UnrefOrZero(rr.Details),
 		ref.UnrefOrZero(rr.ActionTaken),
-	)
+	}
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.

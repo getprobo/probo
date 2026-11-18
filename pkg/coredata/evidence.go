@@ -70,8 +70,8 @@ func (e Evidence) CursorKey(orderBy EvidenceOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (e Evidence) SearchText() string {
-	return joinSearch(e.ReferenceID, ref.UnrefOrZero(e.Description), e.URL)
+func (e Evidence) SearchText() []string {
+	return []string{e.ReferenceID, ref.UnrefOrZero(e.Description), e.URL}
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.

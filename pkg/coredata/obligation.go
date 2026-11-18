@@ -75,14 +75,14 @@ func (o *Obligation) CursorKey(field ObligationOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", field))
 }
 
-func (o Obligation) SearchText() string {
-	return joinSearch(
+func (o Obligation) SearchText() []string {
+	return []string{
 		ref.UnrefOrZero(o.Requirement),
 		ref.UnrefOrZero(o.Area),
 		ref.UnrefOrZero(o.Source),
 		ref.UnrefOrZero(o.Regulator),
 		ref.UnrefOrZero(o.ActionsToBeImplemented),
-	)
+	}
 }
 
 func (o *Obligation) AuthorizationAttributes(

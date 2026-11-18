@@ -80,8 +80,8 @@ func (s *AiSystem) CursorKey(field AiSystemOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", field))
 }
 
-func (s AiSystem) SearchText() string {
-	return joinSearch(
+func (s AiSystem) SearchText() []string {
+	return []string{
 		s.Name,
 		ref.UnrefOrZero(s.Version),
 		ref.UnrefOrZero(s.Source),
@@ -92,7 +92,7 @@ func (s AiSystem) SearchText() string {
 		ref.UnrefOrZero(s.KeyStakeholders),
 		ref.UnrefOrZero(s.DataSourcesAndType),
 		ref.UnrefOrZero(s.Notes),
-	)
+	}
 }
 
 func (s *AiSystem) AuthorizationAttributes(

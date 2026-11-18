@@ -74,8 +74,8 @@ func (t Task) CursorKey(orderBy TaskOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (t Task) SearchText() string {
-	return joinSearch(t.Name, t.ReferenceID, t.Content)
+func (t Task) SearchText() []string {
+	return []string{t.Name, t.ReferenceID, t.Content}
 }
 
 func (t *Task) AuthorizationAttributes(

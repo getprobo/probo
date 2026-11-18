@@ -107,13 +107,13 @@ func (d Device) SearchTitle() string {
 	return ""
 }
 
-func (d Device) SearchText() string {
+func (d Device) SearchText() []string {
 	platform := ""
 	if d.Platform != nil {
 		platform = d.Platform.String()
 	}
 
-	return joinSearch(
+	return []string{
 		ref.UnrefOrZero(d.Hostname),
 		ref.UnrefOrZero(d.SerialNumber),
 		ref.UnrefOrZero(d.HardwareUUID),
@@ -121,7 +121,7 @@ func (d Device) SearchText() string {
 		ref.UnrefOrZero(d.AgentVersion),
 		platform,
 		string(d.Labels),
-	)
+	}
 }
 
 func (d *Device) AuthorizationAttributes(

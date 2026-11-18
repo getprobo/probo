@@ -170,14 +170,14 @@ func (dpia *DataProtectionImpactAssessment) CursorKey(field DataProtectionImpact
 	panic(fmt.Sprintf("unsupported order by: %s", field))
 }
 
-func (d DataProtectionImpactAssessment) SearchText(activityName string) string {
-	return joinSearch(
+func (d DataProtectionImpactAssessment) SearchText(activityName string) []string {
+	return []string{
 		activityName,
 		ref.UnrefOrZero(d.Description),
 		ref.UnrefOrZero(d.NecessityAndProportionality),
 		ref.UnrefOrZero(d.PotentialRisk),
 		ref.UnrefOrZero(d.Mitigations),
-	)
+	}
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.

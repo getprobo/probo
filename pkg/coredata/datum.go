@@ -65,8 +65,8 @@ func (d *Datum) CursorKey(field DatumOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", field))
 }
 
-func (d Datum) SearchText() string {
-	return d.Name
+func (d Datum) SearchText() []string {
+	return []string{d.Name}
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.

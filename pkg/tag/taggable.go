@@ -53,5 +53,4 @@ var TaggableEntityTypes = []uint16{
 	coredata.TaskEntityType,
 	coredata.ThirdPartyEntityType,
 	coredata.TransferImpactAssessmentEntityType,
-	coredata.TreatmentPlanEntityType,
 }

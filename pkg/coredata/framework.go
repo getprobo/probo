@@ -65,8 +65,8 @@ func (f *Framework) CursorKey(orderBy FrameworkOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (f Framework) SearchText() string {
-	return joinSearch(f.Name, ref.UnrefOrZero(f.Description))
+func (f Framework) SearchText() []string {
+	return []string{f.Name, ref.UnrefOrZero(f.Description)}
 }
 
 func (f *Framework) AuthorizationAttributes(
