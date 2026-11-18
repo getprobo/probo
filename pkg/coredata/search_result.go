@@ -24,6 +24,8 @@ import (
 	"context"
 	"fmt"
 	"maps"
+	"strings"
+	"unicode"
 
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
@@ -52,29 +54,23 @@ func (s SearchResult) CursorKey(orderBy SearchResultOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
+// hasSearchTerms reports whether query contains a letter or digit. A query
+// made only of separators tokenizes to nothing and matches every row.
+func hasSearchTerms(query string) bool {
+	return strings.IndexFunc(
+		query,
+		func(r rune) bool {
+			return unicode.IsLetter(r) || unicode.IsNumber(r)
+		},
+	) >= 0
+}
+
 func searchResourceFilterSQL() string {
 	return `
 (
 	CASE
 		WHEN cardinality(@entity_types::integer[]) = 0 THEN TRUE
 		ELSE entity_type = ANY(@entity_types::integer[])
-	END
-	AND
-	CASE
-		WHEN to_tsvector('simple', translate(COALESCE(@query::text, ''), '-+', '  ')) <> ''::tsvector THEN
-			search_vector @@ (
-				SELECT to_tsquery(
-					'simple',
-					string_agg(quote_literal(lexeme) || ':*', ' & ')
-				)
-				FROM unnest(
-					to_tsvector(
-						'simple',
-						translate(COALESCE(@query::text, ''), '-+', '  ')
-					)
-				) AS lex(lexeme, positions)
-			)
-		ELSE TRUE
 	END
 	AND
 	CASE
@@ -148,8 +144,10 @@ func (rs *SearchResults) LoadByOrganizationIDAndSelectors(
 	args := searchResultArgs(organizationID, selectors, entityTypes, query)
 	maps.Copy(args, scope.SQLArguments())
 
+	// The text match stays a bare search_vector @@ predicate. Wrapping it in
+	// CASE or OR keeps it out of the generic plan's index condition.
 	var q string
-	if query != "" {
+	if hasSearchTerms(query) {
 		q = `
 SELECT
 	id,
@@ -169,7 +167,7 @@ FROM (
 				FROM unnest(
 					to_tsvector(
 						'simple',
-						translate(COALESCE(@query::text, ''), '-+', '  ')
+						translate(@query::text, '-+', '  ')
 					)
 				) AS lex(lexeme, positions)
 			)
@@ -180,18 +178,22 @@ FROM (
 		%s
 		AND organization_id = @organization_id
 		AND %s
+		AND search_vector @@ (
+			SELECT to_tsquery(
+				'simple',
+				string_agg(quote_literal(lexeme) || ':*', ' & ')
+			)
+			FROM unnest(
+				to_tsvector(
+					'simple',
+					translate(@query::text, '-+', '  ')
+				)
+			) AS lex(lexeme, positions)
+		)
 ) matched
 WHERE
 	%s
 `
-		q = fmt.Sprintf(
-			q,
-			scope.SQLFragment(),
-			searchResourceFilterSQL(),
-			cursor.SQLFragment(),
-		)
-
-		maps.Copy(args, cursor.SQLArguments())
 	} else {
 		q = `
 SELECT
@@ -213,15 +215,16 @@ FROM (
 WHERE
 	%s
 `
-		q = fmt.Sprintf(
-			q,
-			scope.SQLFragment(),
-			searchResourceFilterSQL(),
-			cursor.SQLFragment(),
-		)
-
-		maps.Copy(args, cursor.SQLArguments())
 	}
+
+	q = fmt.Sprintf(
+		q,
+		scope.SQLFragment(),
+		searchResourceFilterSQL(),
+		cursor.SQLFragment(),
+	)
+
+	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -251,7 +254,32 @@ func (rs *SearchResults) CountByOrganizationIDAndSelectors(
 		return 0, nil
 	}
 
-	q := `
+	var q string
+	if hasSearchTerms(query) {
+		q = `
+SELECT
+	COUNT(*)
+FROM
+	search_resources
+WHERE
+	%s
+	AND organization_id = @organization_id
+	AND %s
+	AND search_vector @@ (
+		SELECT to_tsquery(
+			'simple',
+			string_agg(quote_literal(lexeme) || ':*', ' & ')
+		)
+		FROM unnest(
+			to_tsvector(
+				'simple',
+				translate(@query::text, '-+', '  ')
+			)
+		) AS lex(lexeme, positions)
+	)
+`
+	} else {
+		q = `
 SELECT
 	COUNT(*)
 FROM
@@ -261,6 +289,7 @@ WHERE
 	AND organization_id = @organization_id
 	AND %s
 `
+	}
 
 	q = fmt.Sprintf(q, scope.SQLFragment(), searchResourceFilterSQL())
 

@@ -59,7 +59,7 @@ INSERT INTO search_resources (
 	@organization_id,
 	extract_entity_type(parse_gid(@resource_id)),
 	COALESCE(NULLIF(BTRIM(@title), ''), @resource_id),
-	to_tsvector('simple', translate(COALESCE(@body, ''), '-+', '  ')),
+	to_tsvector('simple', translate(COALESCE(@body, '') || ' ' || @resource_id, '-+', '  ')),
 	''::tsvector
 )
 ON CONFLICT (resource_id) DO UPDATE SET
@@ -264,7 +264,7 @@ SET
 	title = COALESCE(NULLIF(BTRIM(@risk_name), ''), sr.resource_id),
 	body_vector = to_tsvector(
 		'simple',
-		translate(COALESCE(@risk_name, '') || ' ' || tp.treatment::text, '-+', '  ')
+		translate(COALESCE(@risk_name, '') || ' ' || tp.treatment::text || ' ' || sr.resource_id, '-+', '  ')
 	)
 FROM treatment_plans AS tp
 WHERE
