@@ -20,7 +20,7 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
-import { proboApiRequestAllItems } from '../../GenericFunctions';
+import { proboApiRequest, proboApiRequestAllItems } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
@@ -97,6 +97,29 @@ export async function execute(
 	}
 
 	if (resourceId) {
+		const probe = await proboApiRequest.call(
+			this,
+			`query ProbeTaggable($resourceId: ID!) {
+				node(id: $resourceId) {
+					__typename
+					... on Taggable {
+						tags(first: 1) {
+							pageInfo { hasNextPage }
+						}
+					}
+				}
+			}`,
+			{ resourceId },
+		);
+		const probeData = probe?.data as IDataObject | undefined;
+		const probeNode = probeData?.node as IDataObject | undefined;
+		if (!probeNode) {
+			throw new NodeOperationError(this.getNode(), 'Resource not found', { itemIndex });
+		}
+		if (!('tags' in probeNode)) {
+			throw new NodeOperationError(this.getNode(), 'Resource is not taggable', { itemIndex });
+		}
+
 		const query = `
 			query ListTagsForResource($resourceId: ID!, $first: Int, $after: CursorKey) {
 				node(id: $resourceId) {

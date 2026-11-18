@@ -2303,7 +2303,7 @@
     "switchToLightMode": "Passer en mode clair",
     "spotlight": {
       "title": "Rechercher",
-      "placeholder": "Rechercher pages et ressources…",
+      "placeholder": "Rechercher des pages et des ressources…",
       "empty": "Aucun résultat",
       "types": {
         "AiSystem": "Système d’IA",

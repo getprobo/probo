@@ -105,7 +105,7 @@ func (e *Evidence) AuthorizationAttributes(
 	return attrsByID, nil
 }
 
-func (e Evidence) Upsert(
+func (e *Evidence) Upsert(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
@@ -148,7 +148,8 @@ ON CONFLICT (task_id, reference_id) DO UPDATE SET
 	description = @description,
 	type = @type,
 	updated_at = @updated_at
-WHERE evidences.state = 'REQUESTED';
+WHERE evidences.state = 'REQUESTED'
+RETURNING id;
 `
 
 	args := pgx.StrictNamedArgs{
@@ -167,9 +168,25 @@ WHERE evidences.state = 'REQUESTED';
 		"description_status":                e.DescriptionStatus,
 		"description_processing_started_at": e.DescriptionProcessingStartedAt,
 	}
-	_, err := conn.Exec(ctx, q, args)
 
-	return err
+	var id gid.GID
+
+	err := conn.QueryRow(ctx, q, args).Scan(&id)
+	if errors.Is(err, pgx.ErrNoRows) {
+		err = conn.QueryRow(
+			ctx,
+			`SELECT id FROM evidences WHERE task_id = @task_id AND reference_id = @reference_id`,
+			args,
+		).Scan(&id)
+	}
+
+	if err != nil {
+		return fmt.Errorf("cannot upsert evidence: %w", err)
+	}
+
+	e.ID = id
+
+	return nil
 }
 
 func (e Evidence) Insert(
@@ -504,9 +521,16 @@ WHERE
 	}
 	maps.Copy(args, scope.SQLArguments())
 
-	_, err := conn.Exec(ctx, q, args)
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return err
+	}
 
-	return err
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
+	}
+
+	return nil
 }
 
 func (e Evidence) Delete(
@@ -527,9 +551,13 @@ WHERE
 	args := pgx.StrictNamedArgs{"evidence_id": e.ID}
 	maps.Copy(args, scope.SQLArguments())
 
-	_, err := conn.Exec(ctx, q, args)
+	result, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot delete evidence: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
 	}
 
 	return nil

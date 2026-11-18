@@ -394,13 +394,16 @@ func (s BusinessFunctionService) Delete(
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := coredata.DeleteSearchResource(ctx, tx, businessFunction.ID); err != nil {
-				return fmt.Errorf("cannot sync search: %w", err)
+			if err := coredata.LockID(ctx, tx, scope, "business_functions", businessFunction.ID); err != nil {
+				return err
 			}
 
-			err := businessFunction.Delete(ctx, tx, scope)
-			if err != nil {
+			if err := businessFunction.Delete(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot delete business function: %w", err)
+			}
+
+			if err := coredata.DeleteSearchResource(ctx, tx, businessFunction.ID); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
 			}
 
 			return nil

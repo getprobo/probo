@@ -870,20 +870,9 @@ func (r *queryResolver) Search(ctx context.Context, organizationID gid.GID, quer
 		return nil, gqlx.Internal(ctx)
 	}
 
-	nodes := make([]types.Taggable, len(pageResult.Data))
-
-	for i, result := range pageResult.Data {
-		node, err := r.Node(ctx, result.ID)
-		if err != nil {
-			return nil, err
-		}
-
-		taggable, ok := node.(types.Taggable)
-		if !ok {
-			return nil, gqlx.Internal(ctx)
-		}
-
-		nodes[i] = taggable
+	nodes, err := r.searchNodes(ctx, pageResult.Data)
+	if err != nil {
+		return nil, err
 	}
 
 	return types.NewSearchResultConnection(pageResult, organizationID, query, nodes), nil

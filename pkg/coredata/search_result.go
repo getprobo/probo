@@ -35,6 +35,7 @@ type (
 	SearchResult struct {
 		ID    gid.GID `db:"id"`
 		Title string  `db:"title"`
+		Rank  float64 `db:"rank"`
 	}
 
 	SearchResults []*SearchResult
@@ -44,6 +45,8 @@ func (s SearchResult) CursorKey(orderBy SearchResultOrderField) page.CursorKey {
 	switch orderBy {
 	case SearchResultOrderFieldID:
 		return page.NewCursorKey(s.ID, s.ID.String())
+	case SearchResultOrderFieldRank:
+		return page.NewCursorKey(s.ID, s.Rank)
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
@@ -150,49 +153,27 @@ func (rs *SearchResults) LoadByOrganizationIDAndSelectors(
 		q = `
 SELECT
 	id,
-	title
+	title,
+	rank
 FROM (
 	SELECT
 		resource_id AS id,
 		title,
-		search_vector
-	FROM
-		search_resources
-	WHERE
-		%s
-		AND organization_id = @organization_id
-		AND %s
-) matched
-ORDER BY
-	ts_rank(
-		search_vector,
-		(
-			SELECT to_tsquery(
-				'simple',
-				string_agg(quote_literal(lexeme) || ':*', ' & ')
-			)
-			FROM unnest(
-				to_tsvector(
+		ts_rank(
+			search_vector,
+			(
+				SELECT to_tsquery(
 					'simple',
-					translate(COALESCE(@query::text, ''), '-+', '  ')
+					string_agg(quote_literal(lexeme) || ':*', ' & ')
 				)
-			) AS lex(lexeme, positions)
-		)
-	) DESC,
-	id ASC
-LIMIT @cursor_limit
-`
-		q = fmt.Sprintf(q, scope.SQLFragment(), searchResourceFilterSQL())
-		maps.Copy(args, cursor.SQLArguments())
-	} else {
-		q = `
-SELECT
-	id,
-	title
-FROM (
-	SELECT
-		resource_id AS id,
-		title
+				FROM unnest(
+					to_tsvector(
+						'simple',
+						translate(COALESCE(@query::text, ''), '-+', '  ')
+					)
+				) AS lex(lexeme, positions)
+			)
+		)::float8 AS rank
 	FROM
 		search_resources
 	WHERE
@@ -209,6 +190,36 @@ WHERE
 			searchResourceFilterSQL(),
 			cursor.SQLFragment(),
 		)
+
+		maps.Copy(args, cursor.SQLArguments())
+	} else {
+		q = `
+SELECT
+	id,
+	title,
+	rank
+FROM (
+	SELECT
+		resource_id AS id,
+		title,
+		0::float8 AS rank
+	FROM
+		search_resources
+	WHERE
+		%s
+		AND organization_id = @organization_id
+		AND %s
+) matched
+WHERE
+	%s
+`
+		q = fmt.Sprintf(
+			q,
+			scope.SQLFragment(),
+			searchResourceFilterSQL(),
+			cursor.SQLFragment(),
+		)
+
 		maps.Copy(args, cursor.SQLArguments())
 	}
 

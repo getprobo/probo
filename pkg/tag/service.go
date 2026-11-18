@@ -263,12 +263,14 @@ func (s *Service) Update(
 
 	tag := &coredata.Tag{}
 
-	err := s.pg.WithConn(
+	err := s.pg.WithTx(
 		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			if err := tag.LoadByID(ctx, conn, scope, req.ID); err != nil {
 				return fmt.Errorf("cannot load tag: %w", err)
 			}
+
+			nameChanged := req.Name != nil && *req.Name != tag.Name
 
 			if req.Name != nil {
 				tag.Name = *req.Name
@@ -289,6 +291,19 @@ func (s *Service) Update(
 				return fmt.Errorf("cannot update tag: %w", err)
 			}
 
+			if !nameChanged {
+				return nil
+			}
+
+			resourceIDs, err := coredata.LoadResourceIDsByTagID(ctx, conn, scope, tag.ID)
+			if err != nil {
+				return err
+			}
+
+			if err := coredata.RefreshSearchTagVectors(ctx, conn, resourceIDs); err != nil {
+				return fmt.Errorf("cannot refresh search tag vectors: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -304,16 +319,25 @@ func (s *Service) Delete(
 	scope coredata.Scoper,
 	tagID gid.GID,
 ) error {
-	return s.pg.WithConn(
+	return s.pg.WithTx(
 		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
+		func(ctx context.Context, conn pg.Tx) error {
 			tag := &coredata.Tag{}
 			if err := tag.LoadByID(ctx, conn, scope, tagID); err != nil {
 				return fmt.Errorf("cannot load tag: %w", err)
 			}
 
+			resourceIDs, err := coredata.LoadResourceIDsByTagID(ctx, conn, scope, tag.ID)
+			if err != nil {
+				return err
+			}
+
 			if err := tag.Delete(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot delete tag: %w", err)
+			}
+
+			if err := coredata.RefreshSearchTagVectors(ctx, conn, resourceIDs); err != nil {
+				return fmt.Errorf("cannot refresh search tag vectors: %w", err)
 			}
 
 			return nil
@@ -344,9 +368,22 @@ func (s *Service) Attach(
 
 			result.Tag = tag
 
+			if err := coredata.LockSearchResource(ctx, tx, req.ResourceID); err != nil {
+				return err
+			}
+
+			indexed, err := coredata.SearchResourceExists(ctx, tx, req.ResourceID)
+			if err != nil {
+				return err
+			}
+
+			if !indexed {
+				return fmt.Errorf("cannot attach tag to %s: %w", req.ResourceID, coredata.ErrResourceNotFound)
+			}
+
 			existing := &coredata.TagAssignment{}
 
-			err := existing.LoadByResourceIDAndTagID(ctx, tx, scope, req.ResourceID, tag.ID)
+			err = existing.LoadByResourceIDAndTagID(ctx, tx, scope, req.ResourceID, tag.ID)
 			switch {
 			case err == nil:
 				result.Assignment = existing
@@ -534,6 +571,18 @@ func (s *Service) Search(
 	parsed, err := req.parse()
 	if err != nil {
 		return nil, err
+	}
+
+	if parsed.Text != "" {
+		cursor = &page.Cursor[coredata.SearchResultOrderField]{
+			Size:     cursor.Size,
+			Position: cursor.Position,
+			Key:      cursor.Key,
+			OrderBy: page.OrderBy[coredata.SearchResultOrderField]{
+				Field:     coredata.SearchResultOrderFieldRank,
+				Direction: page.OrderDirectionDesc,
+			},
+		}
 	}
 
 	var results coredata.SearchResults

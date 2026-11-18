@@ -1055,3 +1055,37 @@ WHERE %s
 
 	return count, nil
 }
+
+func (c *Controls) LoadIDsByFrameworkID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	frameworkID gid.GID,
+) ([]gid.GID, error) {
+	q := `
+SELECT
+	id
+FROM
+	controls
+WHERE
+	%s
+	AND framework_id = @framework_id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"framework_id": frameworkID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query control ids: %w", err)
+	}
+
+	ids, err := pgx.CollectRows(rows, pgx.RowTo[gid.GID])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect control ids: %w", err)
+	}
+
+	return ids, nil
+}

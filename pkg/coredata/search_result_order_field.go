@@ -32,7 +32,8 @@ type (
 )
 
 const (
-	SearchResultOrderFieldID SearchResultOrderField = "ID"
+	SearchResultOrderFieldID   SearchResultOrderField = "ID"
+	SearchResultOrderFieldRank SearchResultOrderField = "RANK"
 )
 
 var (
@@ -45,12 +46,13 @@ var (
 func SearchResultOrderFields() []SearchResultOrderField {
 	return []SearchResultOrderField{
 		SearchResultOrderFieldID,
+		SearchResultOrderFieldRank,
 	}
 }
 
 func (v SearchResultOrderField) IsValid() bool {
 	switch v {
-	case SearchResultOrderFieldID:
+	case SearchResultOrderFieldID, SearchResultOrderFieldRank:
 		return true
 	}
 
@@ -80,6 +82,8 @@ func (p SearchResultOrderField) Column() string {
 	switch p {
 	case SearchResultOrderFieldID:
 		return "id"
+	case SearchResultOrderFieldRank:
+		return "rank"
 	}
 
 	return string(p)

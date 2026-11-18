@@ -545,6 +545,12 @@ func (s RiskService) Update(
 				return fmt.Errorf("cannot sync search: %w", err)
 			}
 
+			if req.Name != nil {
+				if err := coredata.ReindexTreatmentPlansForRisk(ctx, conn, risk.ID, risk.Name); err != nil {
+					return err
+				}
+			}
+
 			return nil
 		},
 	)
@@ -604,10 +610,8 @@ func deleteSearchResources(
 	conn pg.Querier,
 	ids []gid.GID,
 ) error {
-	for _, id := range ids {
-		if err := coredata.DeleteSearchResource(ctx, conn, id); err != nil {
-			return fmt.Errorf("cannot delete search resource: %w", err)
-		}
+	if err := coredata.DeleteSearchResources(ctx, conn, ids); err != nil {
+		return fmt.Errorf("cannot delete search resource: %w", err)
 	}
 
 	return nil
@@ -619,6 +623,10 @@ func clearRiskSearch(
 	scope coredata.Scoper,
 	riskID gid.GID,
 ) error {
+	if err := coredata.LockID(ctx, conn, scope, "risks", riskID); err != nil {
+		return err
+	}
+
 	var plans coredata.TreatmentPlans
 
 	planIDs, err := plans.LoadIDsByRiskID(ctx, conn, scope, riskID)

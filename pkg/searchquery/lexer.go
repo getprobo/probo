@@ -102,6 +102,7 @@ func (l *Lexer) scanString(start int) Token {
 			return Token{Kind: String, Literal: b.String(), Pos: start}
 		default:
 			b.WriteByte(ch)
+
 			l.pos++
 		}
 	}

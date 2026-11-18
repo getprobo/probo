@@ -348,3 +348,37 @@ ORDER BY
 
 	return nil
 }
+
+func LoadResourceIDsByTagID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	tagID gid.GID,
+) ([]gid.GID, error) {
+	q := `
+SELECT
+	resource_id
+FROM
+	tag_assignments
+WHERE
+	%s
+	AND tag_id = @tag_id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"tag_id": tagID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query tag assignment resources: %w", err)
+	}
+
+	ids, err := pgx.CollectRows(rows, pgx.RowTo[gid.GID])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect tag assignment resources: %w", err)
+	}
+
+	return ids, nil
+}

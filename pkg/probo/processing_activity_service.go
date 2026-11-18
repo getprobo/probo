@@ -463,6 +463,7 @@ func clearProcessingActivitySearch(
 	processingActivityID gid.GID,
 ) error {
 	dpia := &coredata.DataProtectionImpactAssessment{}
+
 	err := dpia.LoadByProcessingActivityID(ctx, conn, scope, processingActivityID)
 	if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 		return fmt.Errorf("cannot load data protection impact assessment: %w", err)
@@ -475,6 +476,7 @@ func clearProcessingActivitySearch(
 	}
 
 	tia := &coredata.TransferImpactAssessment{}
+
 	err = tia.LoadByProcessingActivityID(ctx, conn, scope, processingActivityID)
 	if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 		return fmt.Errorf("cannot load transfer impact assessment: %w", err)

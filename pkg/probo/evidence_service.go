@@ -299,13 +299,16 @@ func (s *EvidenceService) Delete(
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := coredata.DeleteSearchResource(ctx, tx, evidence.ID); err != nil {
-				return fmt.Errorf("cannot sync search: %w", err)
+			if err := coredata.LockID(ctx, tx, scope, "evidences", evidence.ID); err != nil {
+				return err
 			}
 
-			err := evidence.Delete(ctx, tx, scope)
-			if err != nil {
+			if err := evidence.Delete(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot delete evidence: %w", err)
+			}
+
+			if err := coredata.DeleteSearchResource(ctx, tx, evidence.ID); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
 			}
 
 			return nil

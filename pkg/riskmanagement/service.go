@@ -2457,10 +2457,8 @@ func deleteSearchResources(
 	conn pg.Querier,
 	ids []gid.GID,
 ) error {
-	for _, id := range ids {
-		if err := coredata.DeleteSearchResource(ctx, conn, id); err != nil {
-			return fmt.Errorf("cannot delete search resource: %w", err)
-		}
+	if err := coredata.DeleteSearchResources(ctx, conn, ids); err != nil {
+		return fmt.Errorf("cannot delete search resource: %w", err)
 	}
 
 	return nil

@@ -22,6 +22,7 @@ package search
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
@@ -97,7 +98,7 @@ a quoted value with a backslash.`,
 				return err
 			}
 
-			query := args[0]
+			query := strings.TrimSpace(args[0])
 			if query == "" {
 				return fmt.Errorf("query is required")
 			}

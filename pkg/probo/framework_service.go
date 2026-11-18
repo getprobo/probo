@@ -640,6 +640,17 @@ func (s FrameworkService) Delete(
 	framework := &coredata.Framework{}
 
 	return s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		var controls coredata.Controls
+
+		controlIDs, err := controls.LoadIDsByFrameworkID(ctx, tx, scope, frameworkID)
+		if err != nil {
+			return fmt.Errorf("cannot list framework controls: %w", err)
+		}
+
+		if err := coredata.DeleteSearchResources(ctx, tx, controlIDs); err != nil {
+			return fmt.Errorf("cannot sync search: %w", err)
+		}
+
 		if err := coredata.DeleteSearchResource(ctx, tx, frameworkID); err != nil {
 			return fmt.Errorf("cannot sync search: %w", err)
 		}

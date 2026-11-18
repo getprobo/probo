@@ -126,23 +126,25 @@ export function NavSpotlight({
     t,
   ]);
 
-  useEffect(() => {
-    if (!open) {
+  function handleOpenChange(next: boolean) {
+    if (!next) {
       setInput("");
       setResources([]);
     }
-  }, [open]);
+    onOpenChange(next);
+  }
 
   useEffect(() => {
     const trimmed = input.trim();
     if (!open || trimmed === "") {
-      setResources([]);
       return;
     }
 
+    let active = true;
+    let subscription: { unsubscribe: () => void } | undefined;
     const handle = window.setTimeout(() => {
       startTransition(() => {
-        fetchQuery<NavSpotlightSearchQuery>(
+        subscription = fetchQuery<NavSpotlightSearchQuery>(
           coreEnvironment,
           navSpotlightSearchQuery,
           {
@@ -151,6 +153,9 @@ export function NavSpotlight({
           },
         ).subscribe({
           next: (data) => {
+            if (!active) {
+              return;
+            }
             const items: SpotlightItem[] = [];
             for (const edge of data.search.edges) {
               const typename = edge.node.__typename;
@@ -181,23 +186,25 @@ export function NavSpotlight({
     }, 200);
 
     return () => {
+      active = false;
       window.clearTimeout(handle);
+      subscription?.unsubscribe();
     };
   }, [input, open, organizationId, t]);
 
   const showPages = !hasQualifier(input);
   const items = useMemo(() => {
-    if (input.trim() === "") {
+    if (!open || input.trim() === "") {
       return destinations;
     }
     if (showPages) {
       return [...resources, ...destinations];
     }
     return resources;
-  }, [destinations, input, resources, showPages]);
+  }, [destinations, input, open, resources, showPages]);
 
   useHotkeys("mod+k", () => {
-    onOpenChange(!open);
+    handleOpenChange(!open);
   }, { preventDefault: true });
 
   function onValueChange(item: SpotlightItem | null) {
@@ -205,11 +212,11 @@ export function NavSpotlight({
       return;
     }
     void navigate(item.to);
-    onOpenChange(false);
+    handleOpenChange(false);
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogPopup placement="top" lockScroll>
         <DialogTitle className={slots.title()}>{t("nav.spotlight.title")}</DialogTitle>
         <DialogBody>
@@ -229,7 +236,7 @@ export function NavSpotlight({
             }}
             inline
             open={open}
-            onOpenChange={onOpenChange}
+            onOpenChange={handleOpenChange}
             autoHighlight
           >
             <ComboboxInputGroup className={slots.field()}>

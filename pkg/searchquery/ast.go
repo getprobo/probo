@@ -20,28 +20,30 @@
 
 package searchquery
 
-type Clause interface {
-	clause()
-}
+type (
+	Clause interface {
+		clause()
+	}
 
-type Query struct {
-	Clauses []Clause
-}
+	Query struct {
+		Clauses []Clause
+	}
 
-type TagClause struct {
-	Name string
-}
+	TagClause struct {
+		Name string
+	}
+
+	TypeClause struct {
+		Name string
+	}
+
+	TextClause struct {
+		Value string
+	}
+)
 
 func (TagClause) clause() {}
 
-type TypeClause struct {
-	Name string
-}
-
 func (TypeClause) clause() {}
-
-type TextClause struct {
-	Value string
-}
 
 func (TextClause) clause() {}

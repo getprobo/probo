@@ -1101,6 +1101,10 @@ func (s *Service) RecordHeartbeat(
 				return ErrDeviceRevoked
 			}
 
+			if err := device.LoadByID(ctx, conn, scope, device.ID); err != nil {
+				return fmt.Errorf("cannot reload device: %w", err)
+			}
+
 			if err := coredata.UpsertSearchResource(
 				ctx,
 				conn,

@@ -22,7 +22,9 @@ package coredata
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"maps"
 	"strings"
 
 	"github.com/jackc/pgx/v5"
@@ -81,6 +83,43 @@ ON CONFLICT (resource_id) DO UPDATE SET
 	return nil
 }
 
+// LockSearchResource serializes tag attachment with index cleanup for one resource.
+func LockSearchResource(
+	ctx context.Context,
+	conn pg.Querier,
+	id gid.GID,
+) error {
+	q := `SELECT pg_advisory_xact_lock(hashtext('search-resource:' || @resource_id::text))`
+
+	if _, err := conn.Exec(ctx, q, pgx.StrictNamedArgs{"resource_id": id}); err != nil {
+		return fmt.Errorf("cannot lock search resource: %w", err)
+	}
+
+	return nil
+}
+
+// SearchResourceExists reports whether the live index still has this resource.
+func SearchResourceExists(
+	ctx context.Context,
+	conn pg.Querier,
+	id gid.GID,
+) (bool, error) {
+	q := `SELECT 1 FROM search_resources WHERE resource_id = @resource_id`
+
+	var one int
+
+	err := conn.QueryRow(ctx, q, pgx.StrictNamedArgs{"resource_id": id}).Scan(&one)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, nil
+		}
+
+		return false, fmt.Errorf("cannot check search resource: %w", err)
+	}
+
+	return true, nil
+}
+
 // DeleteSearchResource removes the index row and the resource's tag assignments.
 func DeleteSearchResource(
 	ctx context.Context,
@@ -96,8 +135,44 @@ DELETE FROM tag_assignments
 WHERE resource_id = @resource_id
 `
 
+	if err := LockSearchResource(ctx, conn, id); err != nil {
+		return err
+	}
+
 	if _, err := conn.Exec(ctx, q, pgx.StrictNamedArgs{"resource_id": id}); err != nil {
 		return fmt.Errorf("cannot delete search resource: %w", err)
+	}
+
+	return nil
+}
+
+// DeleteSearchResources removes index rows and tag assignments for many resources.
+func DeleteSearchResources(
+	ctx context.Context,
+	conn pg.Querier,
+	ids []gid.GID,
+) error {
+	if len(ids) == 0 {
+		return nil
+	}
+
+	for _, id := range ids {
+		if err := LockSearchResource(ctx, conn, id); err != nil {
+			return err
+		}
+	}
+
+	q := `
+WITH deleted_index AS (
+	DELETE FROM search_resources
+	WHERE resource_id = ANY(@resource_ids::text[])
+)
+DELETE FROM tag_assignments
+WHERE resource_id = ANY(@resource_ids::text[])
+`
+
+	if _, err := conn.Exec(ctx, q, pgx.StrictNamedArgs{"resource_ids": ids}); err != nil {
+		return fmt.Errorf("cannot delete search resources: %w", err)
 	}
 
 	return nil
@@ -129,6 +204,108 @@ WHERE resource_id = @resource_id
 
 	if _, err := conn.Exec(ctx, q, pgx.StrictNamedArgs{"resource_id": resourceID}); err != nil {
 		return fmt.Errorf("cannot refresh search tag vector: %w", err)
+	}
+
+	return nil
+}
+
+// RefreshSearchTagVectors recomputes tag_vector for each indexed resource.
+func RefreshSearchTagVectors(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) error {
+	if len(resourceIDs) == 0 {
+		return nil
+	}
+
+	q := `
+UPDATE search_resources AS sr
+SET tag_vector = COALESCE(
+	(
+		SELECT to_tsvector(
+			'simple',
+			translate(string_agg(t.name, ' '), '-+', '  ')
+		)
+		FROM tag_assignments ta
+		INNER JOIN tags t ON t.id = ta.tag_id
+		WHERE ta.resource_id = sr.resource_id
+	),
+	''::tsvector
+)
+WHERE sr.resource_id = ANY(@resource_ids::text[])
+`
+
+	if _, err := conn.Exec(ctx, q, pgx.StrictNamedArgs{"resource_ids": resourceIDs}); err != nil {
+		return fmt.Errorf("cannot refresh search tag vectors: %w", err)
+	}
+
+	return nil
+}
+
+// ReindexTreatmentPlansForRisk rewrites plan search rows after the risk is renamed.
+func ReindexTreatmentPlansForRisk(
+	ctx context.Context,
+	conn pg.Querier,
+	riskID gid.GID,
+	riskName string,
+) error {
+	q := `
+UPDATE search_resources AS sr
+SET
+	title = COALESCE(NULLIF(BTRIM(@risk_name), ''), sr.resource_id),
+	body_vector = to_tsvector(
+		'simple',
+		translate(COALESCE(@risk_name, '') || ' ' || tp.treatment::text, '-+', '  ')
+	)
+FROM treatment_plans AS tp
+WHERE
+	tp.risk_id = @risk_id
+	AND sr.resource_id = tp.id
+`
+
+	args := pgx.StrictNamedArgs{
+		"risk_id":   riskID,
+		"risk_name": riskName,
+	}
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot reindex treatment plans: %w", err)
+	}
+
+	return nil
+}
+
+// LockID locks one scoped row until the transaction ends.
+func LockID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	table string,
+	id gid.GID,
+) error {
+	switch table {
+	case "risks", "third_parties", "evidences", "business_functions":
+	default:
+		return fmt.Errorf("cannot lock table %s", table)
+	}
+
+	q := fmt.Sprintf(
+		`SELECT id FROM %s WHERE %s AND id = @id FOR UPDATE`,
+		table,
+		scope.SQLFragment(),
+	)
+
+	args := pgx.StrictNamedArgs{"id": id}
+	maps.Copy(args, scope.SQLArguments())
+
+	var locked gid.GID
+	if err := conn.QueryRow(ctx, q, args).Scan(&locked); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot lock %s: %w", table, err)
 	}
 
 	return nil

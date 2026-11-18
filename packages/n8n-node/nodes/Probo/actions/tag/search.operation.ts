@@ -20,6 +20,7 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
 import { proboApiRequestAllItems } from '../../GenericFunctions';
+import { executionItems } from '../../output';
 
 export const description: INodeProperties[] = [
 	{
@@ -87,7 +88,7 @@ export const description: INodeProperties[] = [
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
-): Promise<INodeExecutionData> {
+): Promise<INodeExecutionData[]> {
 	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
 	const searchQuery = this.getNodeParameter('query', itemIndex) as string;
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
@@ -131,10 +132,11 @@ export async function execute(
 		},
 		returnAll,
 		limit,
+		(edge) => ({
+			...edge.node,
+			title: edge.title,
+		}),
 	);
 
-	return {
-		json: { resources },
-		pairedItem: { item: itemIndex },
-	};
+	return executionItems(resources, itemIndex);
 }

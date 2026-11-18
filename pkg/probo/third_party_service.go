@@ -646,6 +646,10 @@ func (s ThirdPartyService) Create(
 			thirdParty.OrganizationID = organization.ID
 
 			if req.ParentThirdPartyID != nil {
+				if err := coredata.LockID(ctx, conn, scope, "third_parties", *req.ParentThirdPartyID); err != nil {
+					return fmt.Errorf("cannot lock parent third party: %w", err)
+				}
+
 				parent := &coredata.ThirdParty{}
 				if err := parent.LoadByID(ctx, conn, scope, *req.ParentThirdPartyID); err != nil {
 					return fmt.Errorf("cannot load parent third party: %w", err)
@@ -1160,6 +1164,10 @@ func clearThirdPartySearch(
 	scope coredata.Scoper,
 	thirdPartyID gid.GID,
 ) error {
+	if err := coredata.LockID(ctx, conn, scope, "third_parties", thirdPartyID); err != nil {
+		return err
+	}
+
 	var children coredata.ThirdParties
 
 	childIDs, err := children.LoadIDsByParentThirdPartyID(ctx, conn, scope, thirdPartyID)
