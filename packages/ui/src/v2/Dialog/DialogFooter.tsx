@@ -20,13 +20,13 @@
 
 import type { ComponentProps } from "react";
 
-import { dialog } from "./variants";
+import { useDialogSlots } from "./context";
 
 // Footer region for dialog actions, right-aligned with the dialog's horizontal
 // padding.
 export function DialogFooter(props: ComponentProps<"div">) {
   const { className, ...rest } = props;
-  const { footer } = dialog();
+  const { footer } = useDialogSlots();
 
   return <div className={footer({ className })} {...rest} />;
 }

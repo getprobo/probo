@@ -21,7 +21,7 @@
 import { Dialog as BaseDialog } from "@base-ui/react/dialog";
 import type { ComponentProps } from "react";
 
-import { dialog } from "./variants";
+import { useDialogSlots } from "./context";
 
 // Accessible dialog title (wires `aria-labelledby` via Base UI).
 export type DialogTitleProps = Omit<ComponentProps<typeof BaseDialog.Title>, "className"> & {
@@ -30,7 +30,7 @@ export type DialogTitleProps = Omit<ComponentProps<typeof BaseDialog.Title>, "cl
 
 export function DialogTitle(props: DialogTitleProps) {
   const { className, ...rest } = props;
-  const { title } = dialog();
+  const { title } = useDialogSlots();
 
   return <BaseDialog.Title className={title({ className })} {...rest} />;
 }

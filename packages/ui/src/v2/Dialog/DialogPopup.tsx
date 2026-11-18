@@ -24,6 +24,7 @@ import { useState } from "react";
 
 import { OverlayPortalRootContext } from "../../lib/overlayPortalRoot";
 
+import { DialogSlotsProvider } from "./context";
 import { dialog } from "./variants";
 
 export type DialogPopupProps
@@ -49,7 +50,7 @@ export function DialogPopup(props: DialogPopupProps) {
     appearance = "default",
     ...popupProps
   } = props;
-  const { backdrop, popup, overlayRoot: overlayRootSlot } = dialog({
+  const slots = dialog({
     lockScroll,
     placement,
     appearance,
@@ -58,13 +59,15 @@ export function DialogPopup(props: DialogPopupProps) {
 
   return (
     <BaseDialog.Portal>
-      <OverlayPortalRootContext.Provider value={overlayRoot}>
-        <BaseDialog.Backdrop className={backdrop()} />
-        <BaseDialog.Popup className={popup({ className })} {...popupProps}>
-          {children}
-        </BaseDialog.Popup>
-        <div ref={setOverlayRoot} className={overlayRootSlot()} data-dialog-overlay-root="" />
-      </OverlayPortalRootContext.Provider>
+      <DialogSlotsProvider value={slots}>
+        <OverlayPortalRootContext.Provider value={overlayRoot}>
+          <BaseDialog.Backdrop className={slots.backdrop()} />
+          <BaseDialog.Popup className={slots.popup({ className })} {...popupProps}>
+            {children}
+          </BaseDialog.Popup>
+          <div ref={setOverlayRoot} className={slots.overlayRoot()} data-dialog-overlay-root="" />
+        </OverlayPortalRootContext.Provider>
+      </DialogSlotsProvider>
     </BaseDialog.Portal>
   );
 }

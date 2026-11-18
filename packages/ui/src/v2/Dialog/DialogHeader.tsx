@@ -20,13 +20,13 @@
 
 import type { ComponentProps } from "react";
 
-import { dialog } from "./variants";
+import { useDialogSlots } from "./context";
 
 // Header region grouping the title and description with the dialog's horizontal
 // padding.
 export function DialogHeader(props: ComponentProps<"div">) {
   const { className, ...rest } = props;
-  const { header } = dialog();
+  const { header } = useDialogSlots();
 
   return <div className={header({ className })} {...rest} />;
 }

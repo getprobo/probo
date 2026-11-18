@@ -32,7 +32,7 @@ export type ComboboxInputGroupProps
 
 // Bordered wrapping surface for chips and the search input. Height grows
 // with chips; do not pin it to a single TextField row. `plain` drops the
-// border and focus ring for command-palette chrome.
+// border for command-palette chrome and keeps an inset focus outline.
 export function ComboboxInputGroup(props: ComboboxInputGroupProps) {
   const { className, appearance = "default", ...rest } = props;
 
