@@ -2309,6 +2309,8 @@
         "Asset": "Asset",
         "Audit": "Audit",
         "BusinessFunction": "Bedrijfsfunctie",
+        "Control": "Control",
+        "DataProtectionImpactAssessment": "DPIA",
         "Datum": "Gegeven",
         "Device": "Apparaat",
         "Document": "Document",
@@ -2322,7 +2324,9 @@
         "RiskAnalysis": "Risicoanalyse",
         "StatementOfApplicability": "Verklaring van toepasselijkheid",
         "Task": "Taak",
-        "ThirdParty": "Derde partij"
+        "ThirdParty": "Derde partij",
+        "TransferImpactAssessment": "TIA",
+        "TreatmentPlan": "Behandelplan"
       }
     },
     "groups": {

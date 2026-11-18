@@ -2470,6 +2470,10 @@ func clearRiskAnalysisProcessSearch(
 	scope coredata.Scoper,
 	processID gid.GID,
 ) error {
+	if err := coredata.LockID(ctx, conn, scope, "risk_analysis_processes", processID); err != nil {
+		return err
+	}
+
 	var threats coredata.RiskAnalysisThreats
 
 	threatIDs, err := threats.LoadIDsByProcessID(ctx, conn, scope, processID)
@@ -2494,6 +2498,10 @@ func clearRiskAnalysisDiagramSearch(
 	scope coredata.Scoper,
 	diagramID gid.GID,
 ) error {
+	if err := coredata.LockID(ctx, conn, scope, "risk_analysis_diagrams", diagramID); err != nil {
+		return err
+	}
+
 	var boundaries coredata.RiskAnalysisBoundaries
 
 	boundaryIDs, err := boundaries.LoadIDsByRiskAnalysisDiagramID(ctx, conn, scope, diagramID)
@@ -2542,6 +2550,12 @@ func clearRiskAnalysisSearch(
 	scope coredata.Scoper,
 	riskAnalysisID gid.GID,
 ) error {
+	// The row lock blocks child inserts, which take a key-share lock on the
+	// parent through their foreign key, until this deletion commits.
+	if err := coredata.LockID(ctx, conn, scope, "risk_analyses", riskAnalysisID); err != nil {
+		return err
+	}
+
 	var diagrams coredata.RiskAnalysisDiagrams
 
 	diagramIDs, err := diagrams.LoadIDsByRiskAnalysisID(ctx, conn, scope, riskAnalysisID)

@@ -464,6 +464,11 @@ func (s *Service) Detach(
 
 			result.Tag = tag
 
+			// Same lock order as DeleteSearchResource: resource lock, then assignments.
+			if err := coredata.LockSearchResource(ctx, tx, req.ResourceID); err != nil {
+				return err
+			}
+
 			assignment := &coredata.TagAssignment{}
 
 			err := assignment.DeleteByResourceIDAndTagID(ctx, tx, scope, req.ResourceID, req.TagID)

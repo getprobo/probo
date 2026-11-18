@@ -1521,6 +1521,8 @@
         "Asset": "Asset",
         "Audit": "Audit",
         "BusinessFunction": "Business function",
+        "Control": "Control",
+        "DataProtectionImpactAssessment": "DPIA",
         "Datum": "Data",
         "Device": "Device",
         "Document": "Document",
@@ -1534,7 +1536,9 @@
         "RiskAnalysis": "Risk analysis",
         "StatementOfApplicability": "Statement of applicability",
         "Task": "Task",
-        "ThirdParty": "Third party"
+        "ThirdParty": "Third party",
+        "TransferImpactAssessment": "TIA",
+        "TreatmentPlan": "Treatment plan"
       }
     },
     "groups": {

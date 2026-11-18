@@ -434,17 +434,6 @@ func (s *Service) Assign(
 				return fmt.Errorf("cannot assign task %q to %q: %w", taskID, assignedToID, err)
 			}
 
-			if err := coredata.UpsertSearchResource(
-				ctx,
-				conn,
-				task.ID,
-				task.OrganizationID,
-				task.Name,
-				task.SearchText(),
-			); err != nil {
-				return fmt.Errorf("cannot sync search: %w", err)
-			}
-
 			actorID, err := ResolveActivityActorID(
 				ctx,
 				conn,
@@ -531,17 +520,6 @@ func (s *Service) Unassign(
 
 			if err := task.Update(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot unassign task %q: %w", taskID, err)
-			}
-
-			if err := coredata.UpsertSearchResource(
-				ctx,
-				conn,
-				task.ID,
-				task.OrganizationID,
-				task.Name,
-				task.SearchText(),
-			); err != nil {
-				return fmt.Errorf("cannot sync search: %w", err)
 			}
 
 			actorID, err := ResolveActivityActorID(
@@ -713,15 +691,17 @@ func (s *Service) Update(
 				return fmt.Errorf("cannot update task: %w", err)
 			}
 
-			if err := coredata.UpsertSearchResource(
-				ctx,
-				conn,
-				task.ID,
-				task.OrganizationID,
-				task.Name,
-				task.SearchText(),
-			); err != nil {
-				return fmt.Errorf("cannot sync search: %w", err)
+			if req.Name != nil || req.Content != nil {
+				if err := coredata.UpsertSearchResource(
+					ctx,
+					conn,
+					task.ID,
+					task.OrganizationID,
+					task.Name,
+					task.SearchText(),
+				); err != nil {
+					return fmt.Errorf("cannot sync search: %w", err)
+				}
 			}
 
 			if targetRank != nil {
@@ -860,7 +840,12 @@ func (s *Service) Delete(
 				return fmt.Errorf("cannot resolve deleted task notifications: %w", err)
 			}
 
-			if err := coredata.DeleteSearchResource(ctx, conn, task.ID); err != nil {
+			evidenceIDs, err := coredata.LoadEvidenceIDsByTaskID(ctx, conn, scope, task.ID)
+			if err != nil {
+				return fmt.Errorf("cannot list task evidences: %w", err)
+			}
+
+			if err := coredata.DeleteSearchResources(ctx, conn, append(evidenceIDs, task.ID)); err != nil {
 				return fmt.Errorf("cannot delete search resource: %w", err)
 			}
 

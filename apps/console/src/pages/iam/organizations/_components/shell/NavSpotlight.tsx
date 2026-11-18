@@ -87,6 +87,23 @@ function hasQualifier(input: string): boolean {
   return /(?:^|\s)(?:tag|type):/.test(input);
 }
 
+type SearchHitNode
+  = NavSpotlightSearchQuery["response"]["search"]["edges"][number]["node"];
+
+function searchHitParentId(node: SearchHitNode): string | undefined {
+  switch (node.__typename) {
+    case "Control":
+      return node.framework?.id;
+    case "DataProtectionImpactAssessment":
+    case "TransferImpactAssessment":
+      return node.processingActivity?.id;
+    case "TreatmentPlan":
+      return node.riskAnalysis?.id;
+    default:
+      return undefined;
+  }
+}
+
 export function NavSpotlight({
   organizationKey,
   slackbotAvailable,
@@ -162,7 +179,12 @@ export function NavSpotlight({
               if (typename == null || typename === "%other") {
                 continue;
               }
-              const to = resourceHref(organizationId, typename, edge.node.id);
+              const to = resourceHref(
+                organizationId,
+                typename,
+                edge.node.id,
+                searchHitParentId(edge.node),
+              );
               if (to == null) {
                 continue;
               }

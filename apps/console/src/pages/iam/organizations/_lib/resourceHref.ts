@@ -18,15 +18,35 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-/** Detail URL for a GraphQL typename, or null when the console has no page. */
+/**
+ * Detail URL for a GraphQL typename, or null when the console has no page.
+ * Types whose page lives under a parent resource need `parentId`.
+ */
 export function resourceHref(
   organizationId: string,
   typename: string,
   id: string,
+  parentId?: string,
 ): string | null {
   const base = `/organizations/${organizationId}`;
 
   switch (typename) {
+    case "Control":
+      return parentId
+        ? `${base}/governance/frameworks/${parentId}/controls/${id}`
+        : null;
+    case "DataProtectionImpactAssessment":
+      return parentId
+        ? `${base}/privacy/processing-activities/${parentId}#dpia`
+        : null;
+    case "TransferImpactAssessment":
+      return parentId
+        ? `${base}/privacy/processing-activities/${parentId}#tia`
+        : null;
+    case "TreatmentPlan":
+      return parentId
+        ? `${base}/risk-management/risk-analyses/${parentId}/treatment-plans`
+        : null;
     case "AiSystem":
       return `${base}/registries/ai-systems/${id}`;
     case "Asset":

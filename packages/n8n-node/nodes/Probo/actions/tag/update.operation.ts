@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { NodeOperationError } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
@@ -85,6 +86,14 @@ export async function execute(
 	const name = this.getNodeParameter('name', itemIndex, '') as string;
 	const color = this.getNodeParameter('color', itemIndex, '') as string;
 	const clearColor = this.getNodeParameter('clearColor', itemIndex, false) as boolean;
+
+	if (!name && !color && !clearColor) {
+		throw new NodeOperationError(
+			this.getNode(),
+			'Provide a name, a color, or Clear Color to update the tag',
+			{ itemIndex },
+		);
+	}
 
 	const query = `
 		mutation UpdateTag($input: UpdateTagInput!) {

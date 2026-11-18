@@ -350,6 +350,53 @@ WHERE
 	return count, nil
 }
 
+func LoadEvidenceIDsByInternalControlID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	internalControlID gid.GID,
+) ([]gid.GID, error) {
+	return loadEvidenceIDs(ctx, conn, scope, "internal_control_id", internalControlID)
+}
+
+func LoadEvidenceIDsByTaskID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	taskID gid.GID,
+) ([]gid.GID, error) {
+	return loadEvidenceIDs(ctx, conn, scope, "task_id", taskID)
+}
+
+func loadEvidenceIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	column string,
+	parentID gid.GID,
+) ([]gid.GID, error) {
+	q := fmt.Sprintf(
+		`SELECT id FROM evidences WHERE %s AND %s = @parent_id ORDER BY id`,
+		scope.SQLFragment(),
+		column,
+	)
+
+	args := pgx.StrictNamedArgs{"parent_id": parentID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query evidence ids: %w", err)
+	}
+
+	ids, err := pgx.CollectRows(rows, pgx.RowTo[gid.GID])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect evidence ids: %w", err)
+	}
+
+	return ids, nil
+}
+
 func (e *Evidences) LoadByInternalControlID(
 	ctx context.Context,
 	conn pg.Querier,

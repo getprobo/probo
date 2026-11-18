@@ -524,6 +524,94 @@ func TestTag_AttachAndDetach(t *testing.T) {
 	assert.Empty(t, resourceTags(t, owner, documentID))
 }
 
+func TestTag_AssignmentsPaginate(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	tagID := createTag(t, owner, "Paginated")
+
+	documentIDs := map[string]struct{}{}
+
+	for _, title := range []string{"Page Doc A", "Page Doc B", "Page Doc C"} {
+		documentID := factory.NewDocument(owner).WithTitle(title).Create()
+		attachTag(t, owner, documentID, tagID)
+
+		documentIDs[documentID] = struct{}{}
+	}
+
+	const query = `
+		query($id: ID!, $first: Int!, $after: CursorKey) {
+			node(id: $id) {
+				... on Tag {
+					assignments(first: $first, after: $after) {
+						edges {
+							node {
+								resource {
+									id
+								}
+							}
+						}
+						pageInfo {
+							hasNextPage
+							endCursor
+						}
+						totalCount
+					}
+				}
+			}
+		}
+	`
+
+	type assignmentsPage struct {
+		Node struct {
+			Assignments struct {
+				Edges []struct {
+					Node struct {
+						Resource struct {
+							ID string `json:"id"`
+						} `json:"resource"`
+					} `json:"node"`
+				} `json:"edges"`
+				PageInfo struct {
+					HasNextPage bool    `json:"hasNextPage"`
+					EndCursor   *string `json:"endCursor"`
+				} `json:"pageInfo"`
+				TotalCount int `json:"totalCount"`
+			} `json:"assignments"`
+		} `json:"node"`
+	}
+
+	var firstPage assignmentsPage
+
+	err := owner.Execute(query, map[string]any{"id": tagID, "first": 2}, &firstPage)
+	require.NoError(t, err)
+	assert.Equal(t, 3, firstPage.Node.Assignments.TotalCount)
+	require.Len(t, firstPage.Node.Assignments.Edges, 2)
+	require.True(t, firstPage.Node.Assignments.PageInfo.HasNextPage)
+	require.NotNil(t, firstPage.Node.Assignments.PageInfo.EndCursor)
+
+	var secondPage assignmentsPage
+
+	err = owner.Execute(query, map[string]any{
+		"id":    tagID,
+		"first": 2,
+		"after": *firstPage.Node.Assignments.PageInfo.EndCursor,
+	}, &secondPage)
+	require.NoError(t, err)
+	require.Len(t, secondPage.Node.Assignments.Edges, 1)
+	assert.False(t, secondPage.Node.Assignments.PageInfo.HasNextPage)
+
+	seen := map[string]struct{}{}
+
+	for _, page := range []assignmentsPage{firstPage, secondPage} {
+		for _, edge := range page.Node.Assignments.Edges {
+			seen[edge.Node.Resource.ID] = struct{}{}
+		}
+	}
+
+	assert.Equal(t, documentIDs, seen, "both pages together return every assignment exactly once")
+}
+
 func TestTag_AttachKeepsManyTags(t *testing.T) {
 	t.Parallel()
 
@@ -693,55 +781,69 @@ func TestTag_TenantIsolation(t *testing.T) {
 	tag2ID := createTag(t, owner2, "Production")
 	attachTag(t, owner1, document1ID, tag1ID)
 
-	t.Run("other org cannot read the tag", func(t *testing.T) {
-		var nodeResult struct {
-			Node *struct {
-				ID string `json:"id"`
-			} `json:"node"`
-		}
+	// The group returns only once its parallel subtests finish, so the
+	// final assertions observe every cross-org attempt.
+	t.Run("cross-org access", func(t *testing.T) {
+		t.Run("other org cannot read the tag", func(t *testing.T) {
+			t.Parallel()
 
-		err := owner2.Execute(tagNodeQuery, map[string]any{"id": tag1ID}, &nodeResult)
-		testutil.AssertNodeNotAccessible(t, err, nodeResult.Node == nil, "Tag")
-	})
+			var nodeResult struct {
+				Node *struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			}
 
-	t.Run("other org cannot list tags of a resource", func(t *testing.T) {
-		var result resourceTagsResult
-
-		err := owner2.Execute(resourceTagsQuery, map[string]any{"resourceId": document1ID}, &result)
-		testutil.AssertNodeNotAccessible(t, err, result.Node == nil, "Document")
-	})
-
-	t.Run("other org cannot change the tag", func(t *testing.T) {
-		_, err := owner2.Do(updateTagMutation, map[string]any{
-			"input": map[string]any{"id": tag1ID, "name": "Hijacked"},
+			err := owner2.Execute(tagNodeQuery, map[string]any{"id": tag1ID}, &nodeResult)
+			testutil.AssertNodeNotAccessible(t, err, nodeResult.Node == nil, "Tag")
 		})
-		require.Error(t, err)
 
-		_, err = owner2.Do(deleteTagMutation, map[string]any{
-			"input": map[string]any{"tagId": tag1ID},
+		t.Run("other org cannot list tags of a resource", func(t *testing.T) {
+			t.Parallel()
+
+			var result resourceTagsResult
+
+			err := owner2.Execute(resourceTagsQuery, map[string]any{"resourceId": document1ID}, &result)
+			testutil.AssertNodeNotAccessible(t, err, result.Node == nil, "Document")
 		})
-		require.Error(t, err)
-	})
 
-	t.Run("cannot attach a tag from another org", func(t *testing.T) {
-		_, err := owner2.Do(attachTagMutation, map[string]any{
-			"input": map[string]any{"resourceId": document2ID, "tagId": tag1ID},
+		t.Run("other org cannot change the tag", func(t *testing.T) {
+			t.Parallel()
+
+			_, err := owner2.Do(updateTagMutation, map[string]any{
+				"input": map[string]any{"id": tag1ID, "name": "Hijacked"},
+			})
+			require.Error(t, err)
+
+			_, err = owner2.Do(deleteTagMutation, map[string]any{
+				"input": map[string]any{"tagId": tag1ID},
+			})
+			require.Error(t, err)
 		})
-		require.Error(t, err)
 
-		assert.Empty(t, resourceTags(t, owner2, document2ID))
-	})
+		t.Run("cannot attach a tag from another org", func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("cannot tag a resource of another org", func(t *testing.T) {
-		_, err := owner2.Do(attachTagMutation, map[string]any{
-			"input": map[string]any{"resourceId": document1ID, "tagId": tag2ID},
+			_, err := owner2.Do(attachTagMutation, map[string]any{
+				"input": map[string]any{"resourceId": document2ID, "tagId": tag1ID},
+			})
+			require.Error(t, err)
+
+			assert.Empty(t, resourceTags(t, owner2, document2ID))
 		})
-		require.Error(t, err)
 
-		_, err = owner2.Do(detachTagMutation, map[string]any{
-			"input": map[string]any{"resourceId": document1ID, "tagId": tag1ID},
+		t.Run("cannot tag a resource of another org", func(t *testing.T) {
+			t.Parallel()
+
+			_, err := owner2.Do(attachTagMutation, map[string]any{
+				"input": map[string]any{"resourceId": document1ID, "tagId": tag2ID},
+			})
+			require.Error(t, err)
+
+			_, err = owner2.Do(detachTagMutation, map[string]any{
+				"input": map[string]any{"resourceId": document1ID, "tagId": tag1ID},
+			})
+			require.Error(t, err)
 		})
-		require.Error(t, err)
 	})
 
 	tags := resourceTags(t, owner1, document1ID)

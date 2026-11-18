@@ -2310,6 +2310,8 @@
         "Asset": "Actif",
         "Audit": "Audit",
         "BusinessFunction": "Fonction métier",
+        "Control": "Contrôle",
+        "DataProtectionImpactAssessment": "AIPD",
         "Datum": "Donnée",
         "Device": "Appareil",
         "Document": "Document",
@@ -2323,7 +2325,9 @@
         "RiskAnalysis": "Analyse de risques",
         "StatementOfApplicability": "Déclaration d’applicabilité",
         "Task": "Tâche",
-        "ThirdParty": "Tiers"
+        "ThirdParty": "Tiers",
+        "TransferImpactAssessment": "AIT",
+        "TreatmentPlan": "Plan de traitement"
       }
     },
     "groups": {

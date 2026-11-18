@@ -49,12 +49,7 @@ func TagAssignmentOrderFields() []TagAssignmentOrderField {
 }
 
 func (v TagAssignmentOrderField) IsValid() bool {
-	switch v {
-	case TagAssignmentOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, TagAssignmentOrderFields())
 }
 
 func (v TagAssignmentOrderField) String() string {
@@ -66,14 +61,7 @@ func (v TagAssignmentOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *TagAssignmentOrderField) UnmarshalText(text []byte) error {
-	val := TagAssignmentOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid TagAssignmentOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, TagAssignmentOrderFields())
 }
 
 func (p TagAssignmentOrderField) Column() string {

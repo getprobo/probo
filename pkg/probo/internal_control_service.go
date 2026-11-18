@@ -982,7 +982,12 @@ func (s InternalControlService) Delete(
 			return fmt.Errorf("cannot record internal control event: %w", err)
 		}
 
-		if err := coredata.DeleteSearchResource(ctx, conn, internalControl.ID); err != nil {
+		evidenceIDs, err := coredata.LoadEvidenceIDsByInternalControlID(ctx, conn, scope, internalControl.ID)
+		if err != nil {
+			return fmt.Errorf("cannot list internal control evidences: %w", err)
+		}
+
+		if err := coredata.DeleteSearchResources(ctx, conn, append(evidenceIDs, internalControl.ID)); err != nil {
 			return fmt.Errorf("cannot sync search: %w", err)
 		}
 

@@ -139,17 +139,6 @@ func (s *GeneratedDocumentService) PublishStatementOfApplicability(
 					if err := soa.Update(ctx, tx, scope); err != nil {
 						return fmt.Errorf("cannot clear document reference: %w", err)
 					}
-
-					if err := coredata.UpsertSearchResource(
-						ctx,
-						tx,
-						soa.ID,
-						soa.OrganizationID,
-						soa.Name,
-						soa.SearchText(),
-					); err != nil {
-						return fmt.Errorf("cannot sync search: %w", err)
-					}
 				}
 			}
 
@@ -169,33 +158,11 @@ func (s *GeneratedDocumentService) PublishStatementOfApplicability(
 					return fmt.Errorf("cannot insert document: %w", err)
 				}
 
-				if err := coredata.UpsertSearchResource(
-					ctx,
-					tx,
-					document.ID,
-					document.OrganizationID,
-					document.Title,
-					document.SearchText(),
-				); err != nil {
-					return fmt.Errorf("cannot sync search: %w", err)
-				}
-
 				soa.DocumentID = &documentID
 
 				soa.UpdatedAt = now
 				if err := soa.Update(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot update document reference: %w", err)
-				}
-
-				if err := coredata.UpsertSearchResource(
-					ctx,
-					tx,
-					soa.ID,
-					soa.OrganizationID,
-					soa.Name,
-					soa.SearchText(),
-				); err != nil {
-					return fmt.Errorf("cannot sync search: %w", err)
 				}
 			} else {
 				document = existingDoc
@@ -471,17 +438,6 @@ func (s *GeneratedDocumentService) PublishDataList(
 
 				if err := document.Insert(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot insert document: %w", err)
-				}
-
-				if err := coredata.UpsertSearchResource(
-					ctx,
-					tx,
-					document.ID,
-					document.OrganizationID,
-					document.Title,
-					document.SearchText(),
-				); err != nil {
-					return fmt.Errorf("cannot sync search: %w", err)
 				}
 
 				if err := datum.UpsertGeneratedDocumentID(ctx, tx, organizationID, scope.GetTenantID(), documentID); err != nil {
@@ -763,17 +719,6 @@ func (s *GeneratedDocumentService) PublishAssetList(
 
 				if err := document.Insert(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot insert document: %w", err)
-				}
-
-				if err := coredata.UpsertSearchResource(
-					ctx,
-					tx,
-					document.ID,
-					document.OrganizationID,
-					document.Title,
-					document.SearchText(),
-				); err != nil {
-					return fmt.Errorf("cannot sync search: %w", err)
 				}
 
 				if err := asset.UpsertGeneratedDocumentID(ctx, tx, organizationID, scope.GetTenantID(), documentID); err != nil {
@@ -1078,17 +1023,6 @@ func (s *GeneratedDocumentService) PublishFindingList(
 
 				if err := document.Insert(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot insert document: %w", err)
-				}
-
-				if err := coredata.UpsertSearchResource(
-					ctx,
-					tx,
-					document.ID,
-					document.OrganizationID,
-					document.Title,
-					document.SearchText(),
-				); err != nil {
-					return fmt.Errorf("cannot sync search: %w", err)
 				}
 
 				if err := finding.UpsertGeneratedDocumentID(ctx, tx, organizationID, scope.GetTenantID(), documentID); err != nil {
@@ -1471,17 +1405,6 @@ func (s *GeneratedDocumentService) PublishBusinessFunctionList(
 
 				if err := document.Insert(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot insert document: %w", err)
-				}
-
-				if err := coredata.UpsertSearchResource(
-					ctx,
-					tx,
-					document.ID,
-					document.OrganizationID,
-					document.Title,
-					document.SearchText(),
-				); err != nil {
-					return fmt.Errorf("cannot sync search: %w", err)
 				}
 
 				if err := businessFunction.UpsertGeneratedDocumentID(ctx, tx, organizationID, scope.GetTenantID(), documentID); err != nil {
@@ -1897,17 +1820,6 @@ func (s *GeneratedDocumentService) PublishAiSystemList(
 					return fmt.Errorf("cannot insert document: %w", err)
 				}
 
-				if err := coredata.UpsertSearchResource(
-					ctx,
-					tx,
-					document.ID,
-					document.OrganizationID,
-					document.Title,
-					document.SearchText(),
-				); err != nil {
-					return fmt.Errorf("cannot sync search: %w", err)
-				}
-
 				if err := aiSystem.UpsertGeneratedDocumentID(ctx, tx, organizationID, scope.GetTenantID(), documentID); err != nil {
 					return fmt.Errorf("cannot upsert generated documents: %w", err)
 				}
@@ -2217,17 +2129,6 @@ func (s *GeneratedDocumentService) PublishObligationList(
 					return fmt.Errorf("cannot insert document: %w", err)
 				}
 
-				if err := coredata.UpsertSearchResource(
-					ctx,
-					tx,
-					document.ID,
-					document.OrganizationID,
-					document.Title,
-					document.SearchText(),
-				); err != nil {
-					return fmt.Errorf("cannot sync search: %w", err)
-				}
-
 				if err := obligation.UpsertGeneratedDocumentID(ctx, tx, organizationID, scope.GetTenantID(), documentID); err != nil {
 					return fmt.Errorf("cannot upsert generated documents: %w", err)
 				}
@@ -2529,17 +2430,6 @@ func (s *GeneratedDocumentService) PublishProcessingActivityList(
 
 				if err := document.Insert(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot insert document: %w", err)
-				}
-
-				if err := coredata.UpsertSearchResource(
-					ctx,
-					tx,
-					document.ID,
-					document.OrganizationID,
-					document.Title,
-					document.SearchText(),
-				); err != nil {
-					return fmt.Errorf("cannot sync search: %w", err)
 				}
 
 				if err := processingActivity.UpsertGeneratedDocumentID(ctx, tx, organizationID, scope.GetTenantID(), documentID); err != nil {
@@ -2946,17 +2836,6 @@ func (s *GeneratedDocumentService) PublishDataProtectionImpactAssessmentList(
 					return fmt.Errorf("cannot insert document: %w", err)
 				}
 
-				if err := coredata.UpsertSearchResource(
-					ctx,
-					tx,
-					document.ID,
-					document.OrganizationID,
-					document.Title,
-					document.SearchText(),
-				); err != nil {
-					return fmt.Errorf("cannot sync search: %w", err)
-				}
-
 				if err := dpia.UpsertGeneratedDocumentID(ctx, tx, organizationID, scope.GetTenantID(), documentID); err != nil {
 					return fmt.Errorf("cannot upsert generated documents: %w", err)
 				}
@@ -3196,17 +3075,6 @@ func (s *GeneratedDocumentService) PublishTransferImpactAssessmentList(
 
 				if err := document.Insert(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot insert document: %w", err)
-				}
-
-				if err := coredata.UpsertSearchResource(
-					ctx,
-					tx,
-					document.ID,
-					document.OrganizationID,
-					document.Title,
-					document.SearchText(),
-				); err != nil {
-					return fmt.Errorf("cannot sync search: %w", err)
 				}
 
 				if err := tia.UpsertGeneratedDocumentID(ctx, tx, organizationID, scope.GetTenantID(), documentID); err != nil {
@@ -3464,17 +3332,6 @@ func (s *GeneratedDocumentService) PublishThirdPartyList(
 
 				if err := document.Insert(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot insert document: %w", err)
-				}
-
-				if err := coredata.UpsertSearchResource(
-					ctx,
-					tx,
-					document.ID,
-					document.OrganizationID,
-					document.Title,
-					document.SearchText(),
-				); err != nil {
-					return fmt.Errorf("cannot sync search: %w", err)
 				}
 
 				if err := thirdParty.UpsertGeneratedDocumentID(ctx, tx, organizationID, scope.GetTenantID(), documentID); err != nil {
@@ -4087,17 +3944,6 @@ func (s *GeneratedDocumentService) PublishRiskList(
 					return fmt.Errorf("cannot insert document: %w", err)
 				}
 
-				if err := coredata.UpsertSearchResource(
-					ctx,
-					tx,
-					document.ID,
-					document.OrganizationID,
-					document.Title,
-					document.SearchText(),
-				); err != nil {
-					return fmt.Errorf("cannot sync search: %w", err)
-				}
-
 				if err := risk.UpsertGeneratedDocumentID(ctx, tx, organizationID, scope.GetTenantID(), documentID); err != nil {
 					return fmt.Errorf("cannot upsert generated documents: %w", err)
 				}
@@ -4488,17 +4334,6 @@ func (s *GeneratedDocumentService) PublishRiskAnalysis(
 					if err := riskAnalysis.Update(ctx, tx, scope); err != nil {
 						return fmt.Errorf("cannot clear document reference: %w", err)
 					}
-
-					if err := coredata.UpsertSearchResource(
-						ctx,
-						tx,
-						riskAnalysis.ID,
-						riskAnalysis.OrganizationID,
-						riskAnalysis.Name,
-						riskAnalysis.SearchText(),
-					); err != nil {
-						return fmt.Errorf("cannot sync search: %w", err)
-					}
 				}
 			}
 
@@ -4518,33 +4353,11 @@ func (s *GeneratedDocumentService) PublishRiskAnalysis(
 					return fmt.Errorf("cannot insert document: %w", err)
 				}
 
-				if err := coredata.UpsertSearchResource(
-					ctx,
-					tx,
-					document.ID,
-					document.OrganizationID,
-					document.Title,
-					document.SearchText(),
-				); err != nil {
-					return fmt.Errorf("cannot sync search: %w", err)
-				}
-
 				riskAnalysis.DocumentID = &documentID
 
 				riskAnalysis.UpdatedAt = now
 				if err := riskAnalysis.Update(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot update document reference: %w", err)
-				}
-
-				if err := coredata.UpsertSearchResource(
-					ctx,
-					tx,
-					riskAnalysis.ID,
-					riskAnalysis.OrganizationID,
-					riskAnalysis.Name,
-					riskAnalysis.SearchText(),
-				); err != nil {
-					return fmt.Errorf("cannot sync search: %w", err)
 				}
 			} else {
 				document = existingDoc

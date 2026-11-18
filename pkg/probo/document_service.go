@@ -1515,10 +1515,8 @@ func (s *DocumentService) BulkSoftDelete(
 				return err
 			}
 
-			for _, documentID := range documentIDs {
-				if err := coredata.DeleteSearchResource(ctx, tx, documentID); err != nil {
-					return fmt.Errorf("cannot delete search resource: %w", err)
-				}
+			if err := coredata.DeleteSearchResources(ctx, tx, documentIDs); err != nil {
+				return fmt.Errorf("cannot delete search resource: %w", err)
 			}
 
 			return nil

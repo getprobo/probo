@@ -30,6 +30,26 @@ export const navSpotlightSearchQuery = graphql`
         node {
           id
           __typename
+          ... on Control {
+            framework {
+              id
+            }
+          }
+          ... on DataProtectionImpactAssessment {
+            processingActivity {
+              id
+            }
+          }
+          ... on TransferImpactAssessment {
+            processingActivity {
+              id
+            }
+          }
+          ... on TreatmentPlan {
+            riskAnalysis {
+              id
+            }
+          }
         }
       }
     }

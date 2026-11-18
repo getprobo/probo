@@ -95,7 +95,13 @@ func (l *Lexer) scanString(start int) Token {
 				return Token{Kind: Illegal, Literal: "unterminated quote", Pos: start}
 			}
 
-			b.WriteByte(l.input[l.pos+1])
+			escaped := l.input[l.pos+1]
+			if escaped != '\\' && escaped != '"' {
+				return Token{Kind: Illegal, Literal: "invalid escape sequence", Pos: l.pos}
+			}
+
+			b.WriteByte(escaped)
+
 			l.pos += 2
 		case '"':
 			l.pos++

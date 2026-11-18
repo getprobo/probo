@@ -87,6 +87,21 @@ func TestLexer_Next(t *testing.T) {
 	)
 
 	t.Run(
+		"unknown escape",
+		func(t *testing.T) {
+			t.Parallel()
+
+			lexer := searchquery.NewLexer(`tag:"a\q"`)
+			got := collectTokens(lexer)
+
+			require.Len(t, got, 3)
+			assert.Equal(t, searchquery.Illegal, got[2].Kind)
+			assert.Equal(t, "invalid escape sequence", got[2].Literal)
+			assert.Equal(t, 6, got[2].Pos)
+		},
+	)
+
+	t.Run(
 		"whitespace including newlines",
 		func(t *testing.T) {
 			t.Parallel()

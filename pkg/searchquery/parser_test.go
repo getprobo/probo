@@ -188,6 +188,7 @@ func TestParse_Errors(t *testing.T) {
 		{name: "key equals value syntax", raw: "tag:env=Production", message: "unexpected token", pos: 7},
 		{name: "unterminated tag name", raw: `tag:"open`, message: "unterminated quote", pos: 4},
 		{name: "trailing backslash in name", raw: "tag:\"a\\", message: "unterminated quote", pos: 4},
+		{name: "unknown escape in name", raw: `tag:"a\q"`, message: "invalid escape sequence", pos: 6},
 		{name: "unterminated quote after a clause", raw: `tag:Production "open`, message: "unterminated quote", pos: 15},
 		{name: "missing type name", raw: "type:", message: "type name is required", pos: 5},
 		{name: "empty type name", raw: `type:""`, message: "type name is required", pos: 7},
