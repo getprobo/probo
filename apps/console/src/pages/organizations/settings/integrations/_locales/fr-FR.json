@@ -220,6 +220,11 @@
     "delete": {
       "title": "Déconnecter l'intégration",
       "description": "La déconnexion supprime l'identifiant que Probo détient pour {{name}}. Tout ce qui l'utilise encore doit d'abord être supprimé.",
+      "descriptionWithSources": "La déconnexion supprime l'identifiant que Probo détient pour {{name}}. Tout autre élément qui l'utilise encore doit d'abord être supprimé.",
+      "sources_one": "Cette source de revue d'accès l'utilise et sera aussi supprimée. Les campagnes passées gardent leurs résultats.",
+      "sources_other": "Ces {{count}} sources de revue d'accès l'utilisent et seront aussi supprimées. Les campagnes passées gardent leurs résultats.",
+      "sourcesError": "Impossible d'afficher les sources de revue d'accès qui seront supprimées.",
+      "retry": "Réessayer",
       "confirm": "Déconnecter"
     },
     "messages": {

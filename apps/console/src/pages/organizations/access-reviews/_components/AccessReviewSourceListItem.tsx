@@ -49,10 +49,10 @@ import type { InlineOrgSelectQuery } from "#/__generated__/core/InlineOrgSelectQ
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 import { ConnectionStatusPending } from "#/pages/organizations/_components/ConnectionStatusPending";
+import { accessReviewSourceLabel } from "#/pages/organizations/_lib/sourceLabel";
 import { buildConnectorInitiateURL } from "#/pages/organizations/settings/integrations/_lib/connectorInitiate";
 
 import { connectionIssue } from "../_lib/connectionIssue";
-import { accessReviewSourceLabel } from "../_lib/sourceLabel";
 import { sourceListItem } from "../sources/_components/variants";
 
 import { AccessReviewSourceDeleteDialog } from "./AccessReviewSourceDeleteDialog";

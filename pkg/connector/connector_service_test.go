@@ -232,6 +232,47 @@ func loadConnectorAccountsForDelete(
 	return accounts
 }
 
+func insertSourceForDelete(
+	t *testing.T,
+	client *pg.Client,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+	accountID gid.GID,
+) gid.GID {
+	t.Helper()
+
+	now := time.Now().UTC()
+	source := &coredata.AccessReviewSource{
+		ID:                 gid.New(scope.GetTenantID(), coredata.AccessReviewSourceEntityType),
+		OrganizationID:     organizationID,
+		ConnectorAccountID: &accountID,
+		Name:               "Production",
+		CreatedAt:          now,
+		UpdatedAt:          now,
+	}
+
+	require.NoError(t, client.WithTx(t.Context(), func(ctx context.Context, tx pg.Tx) error {
+		_, err := source.Insert(ctx, tx, scope)
+
+		return err
+	}))
+
+	return source.ID
+}
+
+func loadSourceForDelete(
+	t *testing.T,
+	client *pg.Client,
+	scope coredata.Scoper,
+	sourceID gid.GID,
+) error {
+	t.Helper()
+
+	return client.WithConn(t.Context(), func(ctx context.Context, conn pg.Querier) error {
+		return (&coredata.AccessReviewSource{}).LoadByID(ctx, conn, scope, sourceID)
+	})
+}
+
 func TestConnectorService_Delete(t *testing.T) {
 	t.Parallel()
 
@@ -244,11 +285,36 @@ func TestConnectorService_Delete(t *testing.T) {
 		cnnctr := newConnectorForDelete(t, client, scope, organizationID)
 		require.Len(t, loadConnectorAccountsForDelete(t, client, scope, cnnctr.ID), 1)
 
-		require.NoError(t, service.Delete(t.Context(), scope, cnnctr.ID))
+		require.NoError(t, service.Delete(t.Context(), scope, cnnctr.ID, nil))
 
 		_, err := service.Get(t.Context(), scope, cnnctr.ID)
 		assert.ErrorIs(t, err, coredata.ErrResourceNotFound)
 		assert.Empty(t, loadConnectorAccountsForDelete(t, client, scope, cnnctr.ID))
+	})
+
+	t.Run("the listed access review sources are deleted with it", func(t *testing.T) {
+		t.Parallel()
+
+		client := test.PGClient(t)
+		scope, organizationID := seedConnectorDeleteOrg(t, client)
+		service := Service{pg: client}
+		cnnctr := newConnectorForDelete(t, client, scope, organizationID)
+		account := loadStandaloneAccountForDelete(t, client, scope, cnnctr.ID)
+		otherConnector := newConnectorForDelete(t, client, scope, organizationID)
+		otherAccount := loadStandaloneAccountForDelete(t, client, scope, otherConnector.ID)
+		sourceID := insertSourceForDelete(t, client, scope, organizationID, account.ID)
+		otherSourceID := insertSourceForDelete(t, client, scope, organizationID, otherAccount.ID)
+
+		require.NoError(t, service.Delete(t.Context(), scope, cnnctr.ID, []gid.GID{sourceID, otherSourceID}))
+
+		_, err := service.Get(t.Context(), scope, cnnctr.ID)
+		assert.ErrorIs(t, err, coredata.ErrResourceNotFound)
+		assert.ErrorIs(t, loadSourceForDelete(t, client, scope, sourceID), coredata.ErrResourceNotFound)
+		assert.NoError(
+			t,
+			loadSourceForDelete(t, client, scope, otherSourceID),
+			"a source reading another connector must survive",
+		)
 	})
 
 	t.Run("an access review source refuses the delete by name", func(t *testing.T) {
@@ -259,24 +325,9 @@ func TestConnectorService_Delete(t *testing.T) {
 		service := Service{pg: client}
 		cnnctr := newConnectorForDelete(t, client, scope, organizationID)
 		account := loadStandaloneAccountForDelete(t, client, scope, cnnctr.ID)
+		insertSourceForDelete(t, client, scope, organizationID, account.ID)
 
-		now := time.Now().UTC()
-		source := &coredata.AccessReviewSource{
-			ID:                 gid.New(scope.GetTenantID(), coredata.AccessReviewSourceEntityType),
-			OrganizationID:     organizationID,
-			ConnectorAccountID: &account.ID,
-			Name:               "Production",
-			CreatedAt:          now,
-			UpdatedAt:          now,
-		}
-
-		require.NoError(t, client.WithTx(t.Context(), func(ctx context.Context, tx pg.Tx) error {
-			_, err := source.Insert(ctx, tx, scope)
-
-			return err
-		}))
-
-		err := service.Delete(t.Context(), scope, cnnctr.ID)
+		err := service.Delete(t.Context(), scope, cnnctr.ID, nil)
 		require.Error(t, err)
 		assert.ErrorIs(t, err, coredata.ErrResourceInUse)
 		assert.ErrorContains(t, err, "access review source")
@@ -286,13 +337,15 @@ func TestConnectorService_Delete(t *testing.T) {
 		assert.Len(t, loadConnectorAccountsForDelete(t, client, scope, cnnctr.ID), 1)
 	})
 
-	t.Run("a SCIM bridge refuses the delete by name", func(t *testing.T) {
+	t.Run("a SCIM bridge refuses the delete by name and keeps the listed sources", func(t *testing.T) {
 		t.Parallel()
 
 		client := test.PGClient(t)
 		scope, organizationID := seedConnectorDeleteOrg(t, client)
 		service := Service{pg: client}
 		cnnctr := newConnectorForDelete(t, client, scope, organizationID)
+		account := loadStandaloneAccountForDelete(t, client, scope, cnnctr.ID)
+		sourceID := insertSourceForDelete(t, client, scope, organizationID, account.ID)
 
 		now := time.Now().UTC()
 
@@ -324,7 +377,7 @@ func TestConnectorService_Delete(t *testing.T) {
 			return bridge.Insert(ctx, tx, scope)
 		}))
 
-		err := service.Delete(t.Context(), scope, cnnctr.ID)
+		err := service.Delete(t.Context(), scope, cnnctr.ID, []gid.GID{sourceID})
 		require.Error(t, err)
 		assert.ErrorIs(t, err, coredata.ErrResourceInUse)
 		assert.ErrorContains(t, err, "SCIM configuration")
@@ -332,6 +385,12 @@ func TestConnectorService_Delete(t *testing.T) {
 		_, err = service.Get(t.Context(), scope, cnnctr.ID)
 		assert.NoError(t, err)
 		assert.Len(t, loadConnectorAccountsForDelete(t, client, scope, cnnctr.ID), 1)
+
+		assert.NoError(
+			t,
+			loadSourceForDelete(t, client, scope, sourceID),
+			"the refused delete must roll back the source delete",
+		)
 	})
 }
 

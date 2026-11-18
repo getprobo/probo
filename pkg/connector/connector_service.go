@@ -469,13 +469,21 @@ func (s *Service) Get(
 	return connector, nil
 }
 
+// Delete deletes the connector together with the access review sources in
+// sourceIDs. Any other source still reading it refuses the delete.
 func (s *Service) Delete(
 	ctx context.Context, scope coredata.Scoper,
 	connectorID gid.GID,
+	sourceIDs []gid.GID,
 ) error {
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			sources := &coredata.AccessReviewSources{}
+			if err := sources.DeleteByIDsAndConnectorID(ctx, tx, scope, sourceIDs, connectorID); err != nil {
+				return fmt.Errorf("cannot delete access review sources for connector: %w", err)
+			}
+
 			if err := refuseReferencedConnector(ctx, tx, scope, connectorID); err != nil {
 				return err
 			}

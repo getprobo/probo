@@ -54,14 +54,17 @@ func handleConnectorComplete(
 		query := r.URL.Query()
 
 		if oauthErr := query.Get("error"); oauthErr != "" {
-			handleConnectorCallbackError(
+			provider := redirectConnectorCallbackError(
 				w,
 				r,
-				logger,
 				baseURL,
 				connectorRegistry,
 				safeRedirect,
-				query,
+				oauthErr,
+			)
+			logger.WarnCtx(r.Context(), "connector callback returned error",
+				log.String("provider", provider),
+				log.String("error", oauthErr),
 			)
 
 			return
@@ -73,8 +76,18 @@ func handleConnectorComplete(
 				return
 			}
 
-			logger.ErrorCtx(r.Context(), "cannot complete connector", log.Error(err))
-			httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
+			provider := redirectConnectorCallbackError(
+				w,
+				r,
+				baseURL,
+				connectorRegistry,
+				safeRedirect,
+				connectorCompleteFailedMessage,
+			)
+			logger.ErrorCtx(r.Context(), "cannot complete connector",
+				log.String("provider", provider),
+				log.Error(err),
+			)
 
 			return
 		}
@@ -115,14 +128,17 @@ func handleConnectorGitHubAppComplete(
 	return func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		if callbackErr := query.Get("error"); callbackErr != "" {
-			handleConnectorCallbackError(
+			provider := redirectConnectorCallbackError(
 				w,
 				r,
-				logger,
 				baseURL,
 				connectorRegistry,
 				safeRedirect,
-				query,
+				callbackErr,
+			)
+			logger.WarnCtx(r.Context(), "connector callback returned error",
+				log.String("provider", provider),
+				log.String("error", callbackErr),
 			)
 
 			return
@@ -134,8 +150,15 @@ func handleConnectorGitHubAppComplete(
 				return
 			}
 
+			redirectConnectorCallbackError(
+				w,
+				r,
+				baseURL,
+				connectorRegistry,
+				safeRedirect,
+				connectorCompleteFailedMessage,
+			)
 			logger.ErrorCtx(r.Context(), "cannot complete github app connector", log.Error(err))
-			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("cannot complete GitHub App installation"))
 
 			return
 		}
@@ -349,9 +372,15 @@ func continueRedirectURL(
 	return parsedURL
 }
 
-// connectorInstallCheckFailedMessage is shown when an install check fails
-// for a reason other than a rejection the provider explains.
-const connectorInstallCheckFailedMessage = "Cannot verify the connection, please try again."
+const (
+	// connectorInstallCheckFailedMessage is shown when an install check fails
+	// for a reason other than a rejection the provider explains.
+	connectorInstallCheckFailedMessage = "Cannot verify the connection, please try again."
+
+	// connectorCompleteFailedMessage is shown when the callback cannot be
+	// completed, for example when the provider refuses the code exchange.
+	connectorCompleteFailedMessage = "Cannot complete the connection, please try again."
+)
 
 func finishConnectorCompletion(
 	w http.ResponseWriter,
@@ -501,23 +530,22 @@ func redirectToGitHubAppInstall(
 	return true
 }
 
-func handleConnectorCallbackError(
+// redirectConnectorCallbackError sends the browser back to the continue URL
+// the state names, carrying message, and returns the state's provider.
+func redirectConnectorCallbackError(
 	w http.ResponseWriter,
 	r *http.Request,
-	logger *log.Logger,
 	baseURL *baseurl.BaseURL,
 	connectorRegistry *connectorprotocol.Registry,
 	safeRedirect *saferedirect.SafeRedirect,
-	query url.Values,
-) {
-	oauthErr := query.Get("error")
-
+	message string,
+) string {
 	provider := "unknown"
 	redirectURL := baseURL.String()
 
-	if stateToken := query.Get("state"); stateToken != "" {
+	if stateToken := r.URL.Query().Get("state"); stateToken != "" {
 		if connectorprotocol.IsGitHubAppState(stateToken) {
-			if state, err := connectorRegistry.ValidateGitHubAppState(stateToken); err == nil {
+			if state, err := connectorRegistry.ValidateGitHubAppStateAllowExpired(stateToken); err == nil {
 				provider = connectorprotocol.GitHubProvider
 
 				if state.ContinueURL != "" {
@@ -535,17 +563,18 @@ func handleConnectorCallbackError(
 		}
 	}
 
-	logger.WarnCtx(r.Context(), "connector callback returned error",
-		log.String("provider", provider),
-		log.String("error", oauthErr),
-	)
+	parsedURL, err := url.Parse(redirectURL)
+	if err != nil {
+		parsedURL, _ = url.Parse(baseURL.String())
+	}
 
-	parsedURL, _ := url.Parse(redirectURL)
 	q := parsedURL.Query()
-	q.Set("error", oauthErr)
+	q.Set("error", message)
 	parsedURL.RawQuery = q.Encode()
 
 	safeRedirect.Redirect(w, r, parsedURL.String(), "/", http.StatusSeeOther)
+
+	return provider
 }
 
 // vercelCallbackTeamID returns the team identifier from Vercel's OAuth

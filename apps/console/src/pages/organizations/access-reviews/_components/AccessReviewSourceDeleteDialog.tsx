@@ -34,7 +34,7 @@ import { graphql, useFragment } from "react-relay";
 import type { AccessReviewSourceDeleteDialog_source$key } from "#/__generated__/core/AccessReviewSourceDeleteDialog_source.graphql";
 import type { AccessReviewSourceDeleteDialogMutation } from "#/__generated__/core/AccessReviewSourceDeleteDialogMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
-import { accessReviewSourceLabel } from "#/pages/organizations/access-reviews/_lib/sourceLabel";
+import { accessReviewSourceLabel } from "#/pages/organizations/_lib/sourceLabel";
 
 const accessReviewSourceDeleteDialogFragment = graphql`
   fragment AccessReviewSourceDeleteDialog_source on AccessReviewSource {

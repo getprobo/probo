@@ -20,9 +20,8 @@
 
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 
+import { accessReviewSourceLabel } from "#/pages/organizations/_lib/sourceLabel";
 import { ConnectorProviderName } from "#/pages/organizations/settings/integrations/_components/ConnectorProviderName";
-
-import { accessReviewSourceLabel } from "../_lib/sourceLabel";
 
 interface AccessReviewSourceOptionLabelProps {
   name: string;

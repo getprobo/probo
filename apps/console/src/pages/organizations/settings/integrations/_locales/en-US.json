@@ -220,6 +220,11 @@
     "delete": {
       "title": "Disconnect integration",
       "description": "Disconnecting removes the credential Probo holds for {{name}}. Anything still using it has to be removed first.",
+      "descriptionWithSources": "Disconnecting removes the credential Probo holds for {{name}}. Anything else still using it has to be removed first.",
+      "sources_one": "This access review source uses it and is removed too. Past campaigns keep their results.",
+      "sources_other": "These {{count}} access review sources use it and are removed too. Past campaigns keep their results.",
+      "sourcesError": "Cannot list the access review sources that will be removed.",
+      "retry": "Retry",
       "confirm": "Disconnect"
     },
     "messages": {

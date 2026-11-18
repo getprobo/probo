@@ -453,6 +453,11 @@ type Connector implements Node {
     """
     documentationUrl: String @goField(forceResolver: true)
     """
+    accessReviewSources are the sources reading this credential. Deleting the
+    connector deletes them too.
+    """
+    accessReviewSources: [AccessReviewSource!]! @goField(forceResolver: true)
+    """
     initialAccountExternalId is the account this credential is. Null when an
     organization install has no account yet. That account cannot be disabled.
     """
@@ -837,6 +842,7 @@ type UpdateAPIKeyConnectorPayload {
 
 type DeleteConnectorPayload {
     deletedConnectorId: ID!
+    deletedAccessReviewSourceIds: [ID!]!
 }
 
 input DeleteSlackConnectionInput {
