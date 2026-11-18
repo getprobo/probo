@@ -1516,6 +1516,8 @@
       "title": "Search",
       "placeholder": "Search pages and resources…",
       "empty": "No matches",
+      "open": "Open",
+      "close": "Close",
       "types": {
         "AiSystem": "AI system",
         "Asset": "Asset",

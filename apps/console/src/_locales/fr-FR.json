@@ -2305,6 +2305,8 @@
       "title": "Rechercher",
       "placeholder": "Rechercher des pages et des ressources…",
       "empty": "Aucun résultat",
+      "open": "Ouvrir",
+      "close": "Fermer",
       "types": {
         "AiSystem": "Système d’IA",
         "Asset": "Actif",

@@ -18,16 +18,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CompassIcon } from "@phosphor-icons/react";
+import {
+  ArrowElbowDownLeftIcon,
+  type Icon,
+  MagnifyingGlassIcon,
+} from "@phosphor-icons/react";
 import { useHotkeys } from "@probo/hotkeys";
 import { Combobox } from "@probo/ui/src/v2/Combobox/Combobox";
+import { ComboboxCollection } from "@probo/ui/src/v2/Combobox/ComboboxCollection";
 import { ComboboxEmpty } from "@probo/ui/src/v2/Combobox/ComboboxEmpty";
+import { ComboboxGroup } from "@probo/ui/src/v2/Combobox/ComboboxGroup";
+import { ComboboxGroupLabel } from "@probo/ui/src/v2/Combobox/ComboboxGroupLabel";
 import { ComboboxInput } from "@probo/ui/src/v2/Combobox/ComboboxInput";
 import { ComboboxInputGroup } from "@probo/ui/src/v2/Combobox/ComboboxInputGroup";
 import { ComboboxItem } from "@probo/ui/src/v2/Combobox/ComboboxItem";
 import { ComboboxList } from "@probo/ui/src/v2/Combobox/ComboboxList";
 import { Dialog } from "@probo/ui/src/v2/Dialog/Dialog";
-import { DialogBody } from "@probo/ui/src/v2/Dialog/DialogBody";
 import { DialogPopup } from "@probo/ui/src/v2/Dialog/DialogPopup";
 import { DialogTitle } from "@probo/ui/src/v2/Dialog/DialogTitle";
 import { shortcutAria } from "@probo/ui/src/v2/shortcutAria";
@@ -48,7 +54,6 @@ import { useNavigate } from "react-router";
 import type { navSpotlightSearchQuery as NavSpotlightSearchQuery } from "#/__generated__/core/navSpotlightSearchQuery.graphql";
 import type { navPermissions_organization$key } from "#/__generated__/iam/navPermissions_organization.graphql";
 import type { NavSpotlight_organization$key } from "#/__generated__/iam/NavSpotlight_organization.graphql";
-import { SearchShortcutHint } from "#/components/SearchShortcutHint/SearchShortcutHint";
 import { navSpotlightSearchQuery } from "#/components/spotlight/navSpotlightSearchQuery";
 import { coreEnvironment } from "#/environments";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
@@ -72,8 +77,15 @@ type SpotlightItem = {
   id: string;
   kind: "page" | "resource";
   label: string;
+  groupKey: string;
   groupLabel: string;
+  icon: Icon;
   to: string;
+};
+
+type SpotlightGroup = {
+  value: string;
+  items: SpotlightItem[];
 };
 
 export interface NavSpotlightProps {
@@ -104,6 +116,23 @@ function searchHitParentId(node: SearchHitNode): string | undefined {
   }
 }
 
+function groupSpotlightItems(items: SpotlightItem[]): SpotlightGroup[] {
+  const groups: SpotlightGroup[] = [];
+  const indexByKey = new Map<string, number>();
+
+  for (const item of items) {
+    const existing = indexByKey.get(item.groupKey);
+    if (existing == null) {
+      indexByKey.set(item.groupKey, groups.length);
+      groups.push({ value: item.groupLabel, items: [item] });
+      continue;
+    }
+    groups[existing].items.push(item);
+  }
+
+  return groups;
+}
+
 export function NavSpotlight({
   organizationKey,
   slackbotAvailable,
@@ -131,7 +160,9 @@ export function NavSpotlight({
           id: `page:${destination.id}`,
           kind: "page" as const,
           label: t(destination.labelKey),
+          groupKey: `page:${destination.group}`,
           groupLabel: t(`nav.groups.${destination.group}`),
+          icon: group.icon,
           to: navHref(organizationId, group, destination.path),
         };
       },
@@ -192,9 +223,11 @@ export function NavSpotlight({
                 id: `resource:${edge.node.id}`,
                 kind: "resource",
                 label: edge.title,
+                groupKey: `resource:${typename}`,
                 groupLabel: t(`nav.spotlight.types.${typename}`, {
                   defaultValue: typename,
                 }),
+                icon: MagnifyingGlassIcon,
                 to,
               });
             }
@@ -215,14 +248,17 @@ export function NavSpotlight({
   }, [input, open, organizationId, t]);
 
   const showPages = !hasQualifier(input);
-  const items = useMemo(() => {
-    if (!open || input.trim() === "") {
-      return destinations;
+  const groups = useMemo(() => {
+    if (!open) {
+      return [];
+    }
+    if (input.trim() === "") {
+      return groupSpotlightItems(destinations);
     }
     if (showPages) {
-      return [...resources, ...destinations];
+      return groupSpotlightItems([...destinations, ...resources]);
     }
-    return resources;
+    return groupSpotlightItems(resources);
   }, [destinations, input, open, resources, showPages]);
 
   useHotkeys("mod+k", () => {
@@ -239,53 +275,73 @@ export function NavSpotlight({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogPopup placement="top" lockScroll>
+      <DialogPopup appearance="palette" placement="top" lockScroll>
         <DialogTitle className={slots.title()}>{t("nav.spotlight.title")}</DialogTitle>
-        <DialogBody>
-          <Combobox<SpotlightItem>
-            items={items}
-            value={null}
-            onValueChange={onValueChange}
-            inputValue={input}
-            onInputValueChange={setInput}
-            itemToStringLabel={item => `${item.label} ${item.groupLabel}`}
-            filter={(item, query) => {
-              if (item.kind === "resource") {
-                return true;
-              }
-              const haystack = `${item.label} ${item.groupLabel}`.toLowerCase();
-              return haystack.includes(query.trim().toLowerCase());
-            }}
-            inline
-            open={open}
-            onOpenChange={handleOpenChange}
-            autoHighlight
-          >
-            <ComboboxInputGroup className={slots.field()}>
-              <span className={slots.icon()}>
-                <CompassIcon />
-              </span>
-              <ComboboxInput
-                placeholder={t("nav.spotlight.placeholder")}
-                aria-keyshortcuts={shortcutAria("K")}
-              />
-              <span className={slots.hint()}>
-                <SearchShortcutHint shortcut="K" />
-              </span>
-            </ComboboxInputGroup>
-            <ComboboxEmpty>{t("nav.spotlight.empty")}</ComboboxEmpty>
-            <ComboboxList<SpotlightItem> className={slots.list()}>
-              {item => (
-                <ComboboxItem key={item.id} value={item}>
-                  <span className={slots.row()}>
-                    <span>{item.label}</span>
-                    <span className={slots.group()}>{item.groupLabel}</span>
-                  </span>
-                </ComboboxItem>
-              )}
-            </ComboboxList>
-          </Combobox>
-        </DialogBody>
+        <Combobox<SpotlightItem>
+          items={groups}
+          value={null}
+          onValueChange={onValueChange}
+          inputValue={input}
+          onInputValueChange={setInput}
+          itemToStringLabel={item => `${item.label} ${item.groupLabel}`}
+          filter={(item, query) => {
+            if (item.kind === "resource") {
+              return true;
+            }
+            const haystack = `${item.label} ${item.groupLabel}`.toLowerCase();
+            return haystack.includes(query.trim().toLowerCase());
+          }}
+          inline
+          open={open}
+          onOpenChange={handleOpenChange}
+          autoHighlight
+        >
+          <ComboboxInputGroup appearance="plain" className={slots.field()}>
+            <ComboboxInput
+              placeholder={t("nav.spotlight.placeholder")}
+              aria-keyshortcuts={shortcutAria("K")}
+            />
+          </ComboboxInputGroup>
+          <ComboboxEmpty>{t("nav.spotlight.empty")}</ComboboxEmpty>
+          <ComboboxList<SpotlightGroup> className={slots.list()}>
+            {group => (
+              <ComboboxGroup
+                key={group.value}
+                items={group.items}
+                className={slots.group()}
+              >
+                <ComboboxGroupLabel>{group.value}</ComboboxGroupLabel>
+                <ComboboxCollection<SpotlightItem>>
+                  {(item) => {
+                    const ItemIcon = item.icon;
+                    return (
+                      <ComboboxItem key={item.id} value={item} indicator={false}>
+                        <span className={slots.row()}>
+                          <span className={slots.rowIcon()}>
+                            <ItemIcon />
+                          </span>
+                          <span>{item.label}</span>
+                        </span>
+                      </ComboboxItem>
+                    );
+                  }}
+                </ComboboxCollection>
+              </ComboboxGroup>
+            )}
+          </ComboboxList>
+        </Combobox>
+        <div className={slots.footer()}>
+          <span className={slots.footerAction()}>
+            <span className={slots.keycap()}>
+              <ArrowElbowDownLeftIcon className="size-2.5" />
+            </span>
+            {t("nav.spotlight.open")}
+          </span>
+          <span className={slots.footerAction()}>
+            <span className={slots.keycap()}>Esc</span>
+            {t("nav.spotlight.close")}
+          </span>
+        </div>
       </DialogPopup>
     </Dialog>
   );

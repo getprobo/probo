@@ -25,12 +25,21 @@ import { comboboxInputGroup } from "./variants";
 
 export type ComboboxInputGroupProps
   = & Omit<ComponentProps<typeof BaseCombobox.InputGroup>, "className">
-    & { className?: string };
+    & {
+      className?: string;
+      appearance?: "default" | "plain";
+    };
 
 // Bordered wrapping surface for chips and the search input. Height grows
-// with chips; do not pin it to a single TextField row.
+// with chips; do not pin it to a single TextField row. `plain` drops the
+// border and focus ring for command-palette chrome.
 export function ComboboxInputGroup(props: ComboboxInputGroupProps) {
-  const { className, ...rest } = props;
+  const { className, appearance = "default", ...rest } = props;
 
-  return <BaseCombobox.InputGroup className={comboboxInputGroup({ className })} {...rest} />;
+  return (
+    <BaseCombobox.InputGroup
+      className={comboboxInputGroup({ appearance, className })}
+      {...rest}
+    />
+  );
 }

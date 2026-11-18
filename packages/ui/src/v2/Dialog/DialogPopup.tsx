@@ -34,13 +34,26 @@ export type DialogPopupProps
       lockScroll?: boolean;
       // `center` is the modal default. `top` pins the panel near the top of the viewport.
       placement?: "center" | "top";
+      // `palette` is the command-menu chrome (blurred wash, flush panel).
+      appearance?: "default" | "palette";
     };
 
 // Portal + dimmed backdrop + styled popup frame. Children compose the
 // header / body / footer regions.
 export function DialogPopup(props: DialogPopupProps) {
-  const { className, children, lockScroll = false, placement = "center", ...popupProps } = props;
-  const { backdrop, popup, overlayRoot: overlayRootSlot } = dialog({ lockScroll, placement });
+  const {
+    className,
+    children,
+    lockScroll = false,
+    placement = "center",
+    appearance = "default",
+    ...popupProps
+  } = props;
+  const { backdrop, popup, overlayRoot: overlayRootSlot } = dialog({
+    lockScroll,
+    placement,
+    appearance,
+  });
   const [overlayRoot, setOverlayRoot] = useState<HTMLElement | null>(null);
 
   return (
