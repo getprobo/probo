@@ -75,7 +75,7 @@ ON CONFLICT (resource_id) DO UPDATE SET
 		"tenant_id":       id.TenantID(),
 		"organization_id": organizationID,
 		"title":           title,
-		"body":            joinSearch(body...),
+		"body":            strings.Join(body, " "),
 	}
 
 	if _, err := conn.Exec(ctx, q, args); err != nil {
@@ -289,8 +289,4 @@ func LockID(
 
 type Searchable interface {
 	SearchText() []string
-}
-
-func joinSearch(parts ...string) string {
-	return strings.Join(parts, " ")
 }
