@@ -51,6 +51,26 @@
     "signOut": "Uitloggen",
     "signOutFailed": "Uitloggen mislukt"
   },
+  "editAvatar": {
+    "title": "Profielfoto",
+    "description": "Upload een openbare foto.",
+    "messages": {
+      "updated": "Profielfoto bijgewerkt.",
+      "removed": "Profielfoto verwijderd."
+    },
+    "errors": {
+      "update": "Profielfoto bijwerken mislukt",
+      "remove": "Profielfoto verwijderen mislukt",
+      "invalidFile": "Gebruik een JPEG of PNG van maximaal 5 MB."
+    },
+    "actions": {
+      "upload": "Foto uploaden",
+      "replace": "Foto vervangen",
+      "remove": "Foto verwijderen",
+      "close": "Sluiten",
+      "change": "Profielfoto wijzigen"
+    }
+  },
   "organizationsPage": {
     "title": "Uw organisaties",
     "searchPlaceholder": "Organisaties zoeken",

@@ -51,6 +51,26 @@
     "signOut": "Cerrar sesión",
     "signOutFailed": "No se pudo cerrar la sesión"
   },
+  "editAvatar": {
+    "title": "Foto de perfil",
+    "description": "Suba una foto pública.",
+    "messages": {
+      "updated": "Foto de perfil actualizada.",
+      "removed": "Foto de perfil eliminada."
+    },
+    "errors": {
+      "update": "No se pudo actualizar la foto de perfil",
+      "remove": "No se pudo eliminar la foto de perfil",
+      "invalidFile": "Use un JPEG o PNG de 5 MB o menos."
+    },
+    "actions": {
+      "upload": "Subir foto",
+      "replace": "Reemplazar foto",
+      "remove": "Eliminar foto",
+      "close": "Cerrar",
+      "change": "Cambiar la foto de perfil"
+    }
+  },
   "organizationsPage": {
     "title": "Sus organizaciones",
     "searchPlaceholder": "Buscar organizaciones",

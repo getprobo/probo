@@ -205,16 +205,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 // Viewer is the resolver for the viewer field.
 func (r *queryResolver) Viewer(ctx context.Context) (*types.Identity, error) {
-	identity := authn.IdentityFromContext(ctx)
-
-	return &types.Identity{
-		ID:            identity.ID,
-		Email:         identity.EmailAddress,
-		EmailVerified: identity.EmailAddressVerified,
-		FullName:      identity.FullName,
-		CreatedAt:     identity.CreatedAt,
-		UpdatedAt:     identity.UpdatedAt,
-	}, nil
+	return types.NewIdentity(authn.IdentityFromContext(ctx)), nil
 }
 
 // SsoLoginURL is the resolver for the ssoLoginURL field.
