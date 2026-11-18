@@ -712,7 +712,24 @@ func TestCookieBanner_PublishVersion(t *testing.T) {
 		t.Parallel()
 		owner := testutil.NewClient(t, testutil.RoleOwner)
 
-		bannerID := factory.CreateCookieBanner(owner)
+		bannerID := factory.CreateCookieBanner(owner, factory.Attrs{
+			"consentExpiryDays": 365,
+		})
+
+		const updateQuery = `
+			mutation UpdateCookieBanner($input: UpdateCookieBannerInput!) {
+				updateCookieBanner(input: $input) { cookieBanner { id } }
+			}
+		`
+
+		var updateResult struct{}
+		err := owner.Execute(updateQuery, map[string]any{
+			"input": map[string]any{
+				"cookieBannerId":    bannerID,
+				"consentExpiryDays": 90,
+			},
+		}, &updateResult)
+		require.NoError(t, err)
 
 		const publishQuery = `
 			mutation PublishCookieBannerVersion($input: PublishCookieBannerVersionInput!) {
@@ -742,12 +759,12 @@ func TestCookieBanner_PublishVersion(t *testing.T) {
 			} `json:"publishCookieBannerVersion"`
 		}
 
-		err := owner.Execute(publishQuery, map[string]any{
+		err = owner.Execute(publishQuery, map[string]any{
 			"input": map[string]any{"cookieBannerId": bannerID},
 		}, &publishResult)
 
 		require.NoError(t, err)
-		assert.Equal(t, 1, publishResult.PublishCookieBannerVersion.CookieBannerVersion.Version)
+		assert.Equal(t, 2, publishResult.PublishCookieBannerVersion.CookieBannerVersion.Version)
 		assert.Equal(t, "PUBLISHED", publishResult.PublishCookieBannerVersion.CookieBannerVersion.State)
 		assert.Equal(t, bannerID, publishResult.PublishCookieBannerVersion.CookieBanner.ID)
 	})
@@ -785,7 +802,7 @@ func TestCookieBanner_PublishVersion(t *testing.T) {
 		err := owner.Execute(query, map[string]any{"id": bannerID}, &result)
 		require.NoError(t, err)
 		require.NotNil(t, result.Node.LatestVersion)
-		assert.Equal(t, "DRAFT", result.Node.LatestVersion.State)
+		assert.Equal(t, "PUBLISHED", result.Node.LatestVersion.State)
 		assert.Equal(t, 1, result.Node.LatestVersion.Version)
 	})
 }

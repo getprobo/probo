@@ -339,12 +339,12 @@
       "published": "Cette version est publiée et en ligne.",
       "unpublished": "Cette bannière n’a pas encore été publiée."
     },
-    "messages": { "copiedTitle": "Copié", "activated": "Bannière activée", "deactivated": "Bannière désactivée", "published": "Version publiée", "idCopied": "ID de la bannière copié dans le presse-papiers", "deleted": "Bannière de cookies supprimée avec succès" },
-    "errors": { "title": "Erreur", "activate": "Échec de l’activation", "deactivate": "Échec de la désactivation", "publish": "Échec de la publication", "delete": "Échec de la suppression de la bannière de cookies", "copy": "Échec de la copie de l’ID de la bannière" },
+    "messages": { "copiedTitle": "Copié", "activated": "Bannière activée", "deactivated": "Bannière désactivée", "published": "Version publiée", "policyRequested": "La politique de cookies va être mise à jour.", "idCopied": "ID de la bannière copié dans le presse-papiers", "deleted": "Bannière de cookies supprimée avec succès" },
+    "errors": { "title": "Erreur", "activate": "Échec de l’activation", "deactivate": "Échec de la désactivation", "publish": "Échec de la publication", "regeneratePolicy": "Échec de la mise à jour de la politique de cookies", "delete": "Échec de la suppression de la bannière de cookies", "copy": "Échec de la copie de l’ID de la bannière" },
     "deleteConfirmation": "Cette action supprimera définitivement la bannière de cookies \"{{name}}\". Elle est irréversible.",
-    "dialogs": { "deleteTitle": "Supprimer la bannière de cookies" },
+    "dialogs": { "deleteTitle": "Supprimer la bannière de cookies", "publishPolicyTitle": "Publier les modifications", "publishPolicyDescription": "La publication met cette version en ligne pour les visiteurs. Mettre à jour la politique de cookies à partir des traceurs de cette version ?" },
     "status": { "active": "Active", "inactive": "Inactive" },
-    "actions": { "publish": "Publier les modifications", "activate": "Activer", "deactivate": "Désactiver", "delete": "Supprimer", "cancel": "Annuler", "copyId": "Copier l’ID de la bannière" }
+    "actions": { "publish": "Publier les modifications", "publishOnly": "Publier seulement", "publishAndUpdatePolicy": "Publier et mettre à jour la politique", "activate": "Activer", "deactivate": "Désactiver", "delete": "Supprimer", "cancel": "Annuler", "copyId": "Copier l’ID de la bannière" }
   },
   "overview": {
     "title": "Vue d'ensemble",

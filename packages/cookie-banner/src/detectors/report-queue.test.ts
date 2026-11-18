@@ -61,6 +61,21 @@ describe("ReportQueue", () => {
     expect(body.cookies.every((cookie) => cookie.discovery_hit === true)).toBe(true);
   });
 
+  it("drops queued reports without sending them", () => {
+    const sendBeacon = vi.fn((_url: string, _data?: BodyInit | null) => true);
+    vi.stubGlobal("navigator", { sendBeacon });
+    const fetch = vi.fn();
+    vi.stubGlobal("fetch", fetch);
+
+    const queue = new ReportQueue(new URL("https://api.example.com/banner/report"));
+    queue.reportPageView();
+    queue.reportCookie({ name: "sid", max_age_seconds: null, source: "pre-existing" });
+    queue.discard();
+
+    expect(sendBeacon).not.toHaveBeenCalled();
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
   it("stops retrying a page view after NotFoundError", async () => {
     vi.useFakeTimers();
 

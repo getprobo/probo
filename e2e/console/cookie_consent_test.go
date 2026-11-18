@@ -475,12 +475,29 @@ func TestCookieConsent_PublicValidationAndSecurity(t *testing.T) {
 
 			owner := testutil.NewClient(t, testutil.RoleOwner)
 			origin := factory.SafeOrigin()
-			bannerID := factory.CreateCookieBanner(owner, factory.Attrs{"origin": origin})
-			// Banner ships with a draft only; never published.
+			bannerID := factory.CreateCookieBanner(owner, factory.Attrs{
+				"origin":            origin,
+				"consentExpiryDays": 365,
+			})
+
+			const updateQuery = `
+				mutation UpdateCookieBanner($input: UpdateCookieBannerInput!) {
+					updateCookieBanner(input: $input) { cookieBanner { id } }
+				}
+			`
+			require.NoError(t, owner.Execute(updateQuery, map[string]any{
+				"input": map[string]any{
+					"cookieBannerId":    bannerID,
+					"consentExpiryDays": 90,
+				},
+			}, new(struct{})))
+
+			draft := latestVersion(t, owner, bannerID)
+			require.Equal(t, "DRAFT", draft.State)
 
 			body, err := json.Marshal(postConsentRequest{
 				VisitorID:   uniqueCookieBannerVisitorID(),
-				Version:     1,
+				Version:     draft.Version,
 				Action:      "ACCEPT_ALL",
 				ConsentData: json.RawMessage(`{"necessary":true}`),
 			})

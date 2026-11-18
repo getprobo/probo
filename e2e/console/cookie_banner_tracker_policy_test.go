@@ -45,8 +45,6 @@ func TestRegenerateCookieBannerTrackerPolicy(t *testing.T) {
 		owner := testutil.NewClient(t, testutil.RoleOwner)
 
 		bannerID := factory.CreateCookieBanner(owner)
-		published := publishBanner(t, owner, bannerID)
-		require.Equal(t, "PUBLISHED", published.State)
 
 		var result struct {
 			RegenerateCookieBannerTrackerPolicy struct {
@@ -61,19 +59,5 @@ func TestRegenerateCookieBannerTrackerPolicy(t *testing.T) {
 		}, &result)
 		require.NoError(t, err)
 		assert.Equal(t, bannerID, result.RegenerateCookieBannerTrackerPolicy.CookieBanner.ID)
-	})
-
-	t.Run("conflicts when the banner has no published version", func(t *testing.T) {
-		t.Parallel()
-		owner := testutil.NewClient(t, testutil.RoleOwner)
-
-		bannerID := factory.CreateCookieBanner(owner)
-
-		var result struct{}
-
-		err := owner.Execute(regeneratePolicyMutation, map[string]any{
-			"input": map[string]any{"cookieBannerId": bannerID},
-		}, &result)
-		require.Error(t, err, "regenerating without a published version should fail")
 	})
 }

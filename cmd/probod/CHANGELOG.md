@@ -303,6 +303,11 @@ This is a security release. Upgrade as soon as possible.
 
 ### Changed
 
+- Creating a cookie banner publishes version 1 and does not generate
+  a cookie policy. Publishing a version no longer generates one
+  either. `regenerateCookieBannerTrackerPolicy` requests the
+  document. Banners that were never published stay unpublished, and
+  their config endpoint still returns 404
 - Viewers can read tracker patterns and tracker resources, including
   their hit counts
 - Cookie banners count page loads and tracker hits on every page view,

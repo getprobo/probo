@@ -23,11 +23,6 @@ import { describe, expect, it } from "vitest";
 import { shouldStartResourceDetector } from "./resource-detector";
 
 describe("shouldStartResourceDetector", () => {
-  it("starts in discovery mode when config is absent", () => {
-    expect(shouldStartResourceDetector()).toBe(true);
-    expect(shouldStartResourceDetector(undefined)).toBe(true);
-  });
-
   it("starts when resource reporting is enabled", () => {
     expect(shouldStartResourceDetector({ resource_reporting_enabled: true })).toBe(true);
   });

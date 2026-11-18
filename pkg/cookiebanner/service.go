@@ -895,8 +895,16 @@ func (s *Service) CreateCookieBanner(
 				}
 			}
 
-			if _, err := s.ensureDraftVersionForBanner(ctx, tx, scope, banner.ID); err != nil {
+			version, err := s.ensureDraftVersionForBanner(ctx, tx, scope, banner.ID)
+			if err != nil {
 				return fmt.Errorf("cannot ensure draft version: %w", err)
+			}
+
+			version.State = coredata.CookieBannerVersionStatePublished
+			version.UpdatedAt = time.Now()
+
+			if err := version.Update(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot publish initial version: %w", err)
 			}
 
 			return nil
@@ -1462,11 +1470,6 @@ func (s *Service) PublishCookieBannerVersion(
 
 			if err := version.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot publish version: %w", err)
-			}
-
-			banner := coredata.CookieBanner{ID: bannerID}
-			if err := banner.SetPolicyGenerationRequested(ctx, tx); err != nil {
-				return fmt.Errorf("cannot request tracker policy generation: %w", err)
 			}
 
 			return nil
