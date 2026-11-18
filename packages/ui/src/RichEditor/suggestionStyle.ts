@@ -115,23 +115,54 @@ export function marksForSuggestionText(marks: readonly ProseMirrorMark[]): Prose
 
 export function suggestStyleToggle(
   state: EditorState,
-  id: string,
+  fallbackId: string | null,
   styleName: SuggestionStyleName,
   from: number,
   to: number,
+  owns: (id: string) => boolean,
 ): Transaction | null {
-  return suggestStyle(state, id, styleName, from, to, null);
+  return suggestStyle(state, fallbackId, styleName, from, to, null, owns);
 }
 
 // suggestLink sets or clears a link. A null href removes it.
 export function suggestLink(
   state: EditorState,
-  id: string,
+  fallbackId: string | null,
   from: number,
   to: number,
   href: string | null,
+  owns: (id: string) => boolean,
 ): Transaction | null {
-  return suggestStyle(state, id, "link", from, to, href);
+  return suggestStyle(state, fallbackId, "link", from, to, href, owns);
+}
+
+// styleFormatIds lists the suggestions already stored for this style inside
+// the selection. The caller claims any it does not know yet before editing.
+export function styleFormatIds(state: EditorState, styleName: SuggestionStyleName): string[] {
+  const style = styleByName.get(styleName);
+  const { from, to, empty } = state.selection;
+  if (!style || empty || from >= to) return [];
+  const ids = new Set<string>();
+  for (const slice of textSlices(state.doc, from, to)) {
+    const format = formatOf(slice.marks, style.format);
+    if (format) ids.add(format.id);
+  }
+  return [...ids];
+}
+
+// styleToggleNeedsFallback reports a slice with no suggestion for this style.
+// Only that text needs the open burst or a new suggestion id.
+export function styleToggleNeedsFallback(
+  state: EditorState,
+  styleName: SuggestionStyleName,
+  owns: (id: string) => boolean,
+): boolean {
+  const style = styleByName.get(styleName);
+  const { from, to, empty } = state.selection;
+  if (!style || empty || from >= to) return false;
+  return textSlices(state.doc, from, to).some(slice =>
+    planStyleSlice(slice.marks, style, owns).action === "fresh",
+  );
 }
 
 export function revertFormatSuggestion(tr: Transaction, id: string) {
@@ -155,39 +186,59 @@ export function reassignFormatMarks(marks: readonly ProseMirrorMark[], fromId: s
   });
 }
 
+type SlicePlan =
+  | { action: "edit"; id: string }
+  | { action: "fresh" }
+  | { action: "skip" };
+
+// planStyleSlice chooses the suggestion a slice keeps. An existing mark for
+// this style stays on its own id. Text with none of this style is fresh, and
+// a suggestion the caller does not own is left untouched.
+function planStyleSlice(
+  marks: readonly ProseMirrorMark[],
+  style: (typeof suggestionStyles)[number],
+  owns: (id: string) => boolean,
+): SlicePlan {
+  const inserted = suggestionId(marks, suggestionInsertName);
+  const deleted = suggestionId(marks, suggestionDeleteName);
+  if ((inserted && !owns(inserted)) || (deleted && !owns(deleted))) return { action: "skip" };
+  const format = formatOf(marks, style.format);
+  if (format) {
+    if (!owns(format.id)) return { action: "skip" };
+    return { action: "edit", id: format.id };
+  }
+  if (inserted) return { action: "edit", id: inserted };
+  if (deleted) return { action: "edit", id: deleted };
+  return { action: "fresh" };
+}
+
 function suggestStyle(
   state: EditorState,
-  id: string,
+  fallbackId: string | null,
   styleName: SuggestionStyleName,
   from: number,
   to: number,
   linkHref: string | null,
+  owns: (id: string) => boolean,
 ): Transaction | null {
   const style = styleByName.get(styleName);
   const markType = state.schema.marks[styleName];
   if (!style || !markType || from >= to) return null;
 
   const slices = textSlices(state.doc, from, to);
-  if (slices.length === 0 || slices.some(slice => foreignSuggestion(slice.marks, style.format, id))) {
-    return null;
-  }
-  if (styleName === "code" && slices.some(slice => foreignFormat(slice.marks, id))) {
-    return null;
-  }
-
-  const editable = slices.filter(slice => suggestionId(slice.marks, suggestionDeleteName) !== id);
-  if (editable.length === 0) return null;
-
-  const removing = styleName === "link"
-    ? linkHref === null
-    : editable.some(slice => effectivelyHas(slice.marks, style));
-  if (styleName === "link" && linkHref !== null && editable.every(slice => linkHrefOf(slice.marks) === linkHref)) {
-    return null;
-  }
+  if (slices.length === 0) return null;
 
   const tr = state.tr;
   let changed = false;
-  for (const slice of editable.slice().reverse()) {
+  for (const slice of slices.slice().reverse()) {
+    const plan = planStyleSlice(slice.marks, style, owns);
+    const id = plan.action === "edit" ? plan.id : plan.action === "fresh" ? fallbackId : null;
+    if (!id) continue;
+    if (suggestionId(slice.marks, suggestionDeleteName) === id) continue;
+    if (styleName === "code" && foreignFormat(slice.marks, id)) continue;
+    const removing = styleName === "link"
+      ? linkHref === null
+      : effectivelyHas(slice.marks, style);
     const next = nextMarks(state, slice.marks, style, id, removing, linkHref);
     if (!next || sameMarks(slice.marks, next)) continue;
     rewriteSlice(tr, slice, next);
@@ -328,12 +379,39 @@ function foreignFormat(marks: readonly ProseMirrorMark[], id: string): boolean {
   return marks.some(mark => isFormatMark(mark) && typeof mark.attrs.id === "string" && mark.attrs.id !== "" && mark.attrs.id !== id);
 }
 
-function foreignSuggestion(marks: readonly ProseMirrorMark[], formatName: string, id: string): boolean {
-  const insert = suggestionId(marks, suggestionInsertName);
-  const deleted = suggestionId(marks, suggestionDeleteName);
-  if ((insert && insert !== id) || (deleted && deleted !== id)) return true;
-  const format = formatOf(marks, formatName);
-  return format != null && format.id !== id;
+// sharedStyleSuggestionId is the suggestion already stored on this style inside
+// the selection, when every marked slice carries the same id.
+export function sharedStyleSuggestionId(
+  state: EditorState,
+  styleName: SuggestionStyleName,
+): string | null {
+  const style = styleByName.get(styleName);
+  const { from, to, empty } = state.selection;
+  if (!style || empty || from >= to) return null;
+
+  let shared: string | null = null;
+  for (const slice of textSlices(state.doc, from, to)) {
+    const format = formatOf(slice.marks, style.format);
+    if (!format) continue;
+    if (shared == null) {
+      shared = format.id;
+      continue;
+    }
+    if (shared !== format.id) return null;
+  }
+  return shared;
+}
+
+// ownedStyleSuggestionId reuses that suggestion after a click away, but only
+// when the caller already knows the id is theirs.
+export function ownedStyleSuggestionId(
+  state: EditorState,
+  styleName: SuggestionStyleName,
+  owns: (id: string) => boolean,
+): string | null {
+  const shared = sharedStyleSuggestionId(state, styleName);
+  if (shared == null || !owns(shared)) return null;
+  return shared;
 }
 
 function formatOf(marks: readonly ProseMirrorMark[], formatName: string) {

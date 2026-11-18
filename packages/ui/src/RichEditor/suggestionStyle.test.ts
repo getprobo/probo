@@ -128,6 +128,209 @@ describe("format suggestions", () => {
     );
   });
 
+  it("clears an owned underline suggestion after the burst id is dropped", () => {
+    const editor = open(paragraph("Hello"), 1, 6);
+    editor.current.ownsSuggestion = id => id === suggestionId;
+    expect(applySuggestingStyle(editor.view, editor.current, "underline")).toBe(true);
+
+    editor.current.suggestionId = null;
+    let started = false;
+    editor.current.onStartSuggesting = () => {
+      started = true;
+      return Promise.resolve(null);
+    };
+    editor.select(1, 6);
+    editor.current.blocked = false;
+    expect(applySuggestingStyle(editor.view, editor.current, "underline")).toBe(true);
+
+    expect(started).toBe(false);
+    expect(editor.current.blocked).toBe(false);
+    expect(editor.current.suggestionId).toBeNull();
+    const marks = marksOn(editor.state.doc, "Hello");
+    expect(markNames(marks)).not.toContain("underline");
+    expect(markNames(marks)).not.toContain("suggestionFormatUnderline");
+  });
+
+  it("refuses to retoggle a style suggestion the controller does not own", () => {
+    const foreign = "someone-else";
+    const current = controller();
+    current.suggestionId = null;
+    current.ownsSuggestion = () => false;
+    current.onStartSuggesting = () => {
+      current.suggestionId = "new-suggestion";
+      return Promise.resolve(current.suggestionId);
+    };
+    const editor = open(paragraph("Hello", [
+      schema.marks.underline.create(),
+      schema.marks.suggestionFormatUnderline.create({ id: foreign, action: "add" }),
+    ]), 1, 6, current);
+
+    expect(applySuggestingStyle(editor.view, editor.current, "underline")).toBe(true);
+    expect(editor.current.blocked).toBe(true);
+    const marks = marksOn(editor.state.doc, "Hello");
+    expect(markNames(marks)).toEqual(expect.arrayContaining(["underline", "suggestionFormatUnderline"]));
+    expect(marks.find(mark => mark.type.name === "suggestionFormatUnderline")?.attrs.id).toBe(foreign);
+  });
+
+  it("claims an owned underline suggestion before clearing it", async () => {
+    const owned = new Set<string>();
+    const current = controller();
+    current.suggestionId = null;
+    current.ownsSuggestion = id => owned.has(id);
+    let started = false;
+    let claims = 0;
+    current.onStartSuggesting = () => {
+      started = true;
+      return Promise.resolve(null);
+    };
+    current.claimSuggestion = (id) => {
+      claims += 1;
+      return Promise.resolve().then(() => {
+        owned.add(id);
+        return true;
+      });
+    };
+    const editor = open(paragraph("Hello", [
+      schema.marks.underline.create(),
+      schema.marks.suggestionFormatUnderline.create({ id: suggestionId, action: "add" }),
+    ]), 1, 6, current);
+
+    expect(applySuggestingStyle(editor.view, editor.current, "underline")).toBe(true);
+    expect(applySuggestingStyle(editor.view, editor.current, "underline")).toBe(true);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(claims).toBe(1);
+    expect(started).toBe(false);
+    expect(editor.current.blocked).toBe(false);
+    expect(editor.current.suggestionId).toBeNull();
+    const marks = marksOn(editor.state.doc, "Hello");
+    expect(markNames(marks)).not.toContain("underline");
+    expect(markNames(marks)).not.toContain("suggestionFormatUnderline");
+  });
+
+  it("blocks a claimed suggestion that belongs to someone else", async () => {
+    const current = controller();
+    current.suggestionId = null;
+    current.ownsSuggestion = () => false;
+    let started = false;
+    current.onStartSuggesting = () => {
+      started = true;
+      return Promise.resolve(null);
+    };
+    current.claimSuggestion = () => Promise.resolve(false);
+    const editor = open(paragraph("Hello", [
+      schema.marks.underline.create(),
+      schema.marks.suggestionFormatUnderline.create({ id: "someone-else", action: "add" }),
+    ]), 1, 6, current);
+
+    expect(applySuggestingStyle(editor.view, editor.current, "underline")).toBe(true);
+    await Promise.resolve();
+
+    expect(started).toBe(false);
+    expect(editor.current.blocked).toBe(true);
+    const marks = marksOn(editor.state.doc, "Hello");
+    expect(markNames(marks)).toEqual(expect.arrayContaining(["underline", "suggestionFormatUnderline"]));
+  });
+
+  it("clears a loaded bold suggestion while another burst is open", () => {
+    const loaded = "loaded-bold";
+    const burst = "underline-burst";
+    const current = controller();
+    current.suggestionId = burst;
+    current.ownsSuggestion = id => id === loaded || id === burst;
+    let started = false;
+    current.onStartSuggesting = () => {
+      started = true;
+      return Promise.resolve(null);
+    };
+    const editor = open(paragraph("Hello", [
+      schema.marks.bold.create(),
+      schema.marks.suggestionFormatBold.create({ id: loaded, action: "add" }),
+    ]), 1, 6, current);
+
+    expect(applySuggestingStyle(editor.view, editor.current, "bold")).toBe(true);
+
+    expect(started).toBe(false);
+    expect(editor.current.blocked).toBe(false);
+    const marks = marksOn(editor.state.doc, "Hello");
+    expect(markNames(marks)).not.toContain("bold");
+    expect(markNames(marks)).not.toContain("suggestionFormatBold");
+  });
+
+  it("clears two owned bold suggestions in one selection", () => {
+    const first = "bold-a";
+    const second = "bold-b";
+    const current = controller();
+    current.suggestionId = null;
+    current.ownsSuggestion = id => id === first || id === second;
+    const suggestedBold = (id: string) => [
+      schema.marks.bold.create(),
+      schema.marks.suggestionFormatBold.create({ id, action: "add" }),
+    ];
+    const doc = schema.node("doc", null, [
+      schema.node("paragraph", null, [
+        schema.text("Hello", suggestedBold(first)),
+        schema.text("World", suggestedBold(second)),
+      ]),
+    ]);
+    const editor = open(doc, 1, 11, current);
+
+    expect(applySuggestingStyle(editor.view, editor.current, "bold")).toBe(true);
+
+    expect(editor.current.blocked).toBe(false);
+    expect(markNames(marksOn(editor.state.doc, "Hello"))).not.toContain("bold");
+    expect(markNames(marksOn(editor.state.doc, "World"))).not.toContain("bold");
+  });
+
+  it("shortens an owned bold suggestion to the text outside the selection", () => {
+    const loaded = "loaded-bold";
+    const current = controller();
+    current.suggestionId = null;
+    current.ownsSuggestion = id => id === loaded;
+    const editor = open(paragraph("HelloWorld", [
+      schema.marks.bold.create(),
+      schema.marks.suggestionFormatBold.create({ id: loaded, action: "add" }),
+    ]), 6, 11, current);
+
+    expect(applySuggestingStyle(editor.view, editor.current, "bold")).toBe(true);
+
+    expect(editor.current.blocked).toBe(false);
+    const kept = marksOn(editor.state.doc, "Hello");
+    expect(markNames(kept)).toContain("bold");
+    expect(kept.find(mark => mark.type.name === "suggestionFormatBold")?.attrs.id).toBe(loaded);
+    expect(markNames(marksOn(editor.state.doc, "World"))).not.toContain("bold");
+  });
+
+  it("underlines text without removing the bold suggestion under it", () => {
+    const loaded = "loaded-bold";
+    const current = controller();
+    current.suggestionId = null;
+    current.ownsSuggestion = id => id === loaded;
+    current.onStartSuggesting = () => {
+      current.suggestionId = "underline-burst";
+      return Promise.resolve(current.suggestionId);
+    };
+    const editor = open(paragraph("Hello", [
+      schema.marks.bold.create(),
+      schema.marks.suggestionFormatBold.create({ id: loaded, action: "add" }),
+    ]), 1, 6, current);
+
+    expect(applySuggestingStyle(editor.view, editor.current, "underline")).toBe(true);
+
+    expect(editor.current.blocked).toBe(false);
+    const marks = marksOn(editor.state.doc, "Hello");
+    expect(markNames(marks)).toEqual(expect.arrayContaining([
+      "bold",
+      "suggestionFormatBold",
+      "underline",
+      "suggestionFormatUnderline",
+    ]));
+    expect(marks.find(mark => mark.type.name === "suggestionFormatBold")?.attrs.id).toBe(loaded);
+    expect(marks.find(mark => mark.type.name === "suggestionFormatUnderline")?.attrs.id)
+      .toBe("underline-burst");
+  });
+
   it("styles text inserted by the same suggestion without a format mark", () => {
     const inserted = schema.marks[suggestionInsertName].create({ id: suggestionId });
     const editor = open(paragraph("i", [inserted]), 1, 2);

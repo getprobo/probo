@@ -63,7 +63,9 @@ import {
   marksForSuggestionText,
   reassignFormatMarks,
   revertFormatSuggestion,
+  styleFormatIds,
   styleMarkStep,
+  styleToggleNeedsFallback,
   type SuggestionStyleName,
   suggestLink,
   suggestStyleToggle,
@@ -94,6 +96,11 @@ export type SuggestingController = {
   request: Promise<string | null> | null;
   onStartSuggesting: () => Promise<string | null>;
   ownsSuggestion?: (id: string) => boolean;
+  // claimSuggestion reports whether an existing suggestion id belongs to the
+  // current user. The editor asks once, when a toggle finds an id it does not
+  // know yet, and remembers the answer on the controller's owner set.
+  claimSuggestion?: (id: string) => Promise<boolean>;
+  claimingSuggestionId?: string | null;
   onSuggestionDone: () => void;
   onOpenSuggestion: (id: string) => void;
   // Called when an edit cannot be tracked as a suggestion and was dropped.
@@ -457,8 +464,8 @@ export function applySuggestingStyle(
   controller: SuggestingController,
   style: SuggestionStyleName,
 ): boolean {
-  return applyFormatChange(view, controller, (state, id, from, to) =>
-    suggestStyleToggle(state, id, style, from, to),
+  return applyFormatChange(view, controller, style, (state, id, from, to, owns) =>
+    suggestStyleToggle(state, id, style, from, to, owns),
   );
 }
 
@@ -474,8 +481,8 @@ export function applySuggestingLink(
     controller.onBlocked?.();
     return true;
   }
-  return applyFormatChange(view, controller, (state, id, from, to) =>
-    suggestLink(state, id, from, to, href),
+  return applyFormatChange(view, controller, "link", (state, id, from, to, owns) =>
+    suggestLink(state, id, from, to, href, owns),
   );
 }
 
@@ -490,20 +497,50 @@ function suggestedLinkAllowed(href: string): boolean {
 function applyFormatChange(
   view: EditorView,
   controller: SuggestingController,
-  change: (state: EditorState, id: string, from: number, to: number) => Transaction | null,
+  style: SuggestionStyleName,
+  change: (
+    state: EditorState,
+    id: string | null,
+    from: number,
+    to: number,
+    owns: (id: string) => boolean,
+  ) => Transaction | null,
 ): boolean {
   if (!controller.enabled || view.state.selection.empty) return false;
-  let id = suggestionIdForInput(view.state, controller);
-  if (!id) {
-    void controller.onStartSuggesting();
-    id = controller.suggestionId;
-  }
-  if (!id) {
-    controller.onBlocked?.();
+  // The open burst counts as owned so a toggle can undo the suggestion that
+  // is still being typed. Loaded suggestions are owned only after a claim.
+  const owns = (candidate: string) =>
+    controller.ownsSuggestion?.(candidate) === true || candidate === controller.suggestionId;
+  const unknown = styleFormatIds(view.state, style).filter(id => !owns(id));
+  if (unknown.length > 0 && controller.claimSuggestion) {
+    const key = unknown.slice().sort().join("\n");
+    if (controller.claimingSuggestionId === key) return true;
+    const { from, to } = view.state.selection;
+    controller.claimingSuggestionId = key;
+    void Promise.all(unknown.map(id => controller.claimSuggestion!(id))).then(() => {
+      if (controller.claimingSuggestionId === key) {
+        controller.claimingSuggestionId = null;
+      }
+      if (viewIsDestroyed(view)) return;
+      const selection = view.state.selection;
+      if (selection.from !== from || selection.to !== to) return;
+      applyFormatChange(view, controller, style, change);
+    });
     return true;
   }
+
+  // A new id is only for text that has no suggestion of this style. Slices
+  // that already carry one keep that id, so a later toggle cannot collide.
+  let fallback: string | null = null;
+  if (styleToggleNeedsFallback(view.state, style, owns)) {
+    fallback = suggestionIdForInput(view.state, controller);
+    if (!fallback) {
+      void controller.onStartSuggesting();
+      fallback = controller.suggestionId;
+    }
+  }
   const { from, to } = view.state.selection;
-  const tr = change(view.state, id, from, to);
+  const tr = change(view.state, fallback, from, to, owns);
   if (!tr) {
     controller.onBlocked?.();
     return true;
@@ -511,6 +548,10 @@ function applyFormatChange(
   tr.setMeta(suggestingPluginKey, { input: true });
   view.dispatch(tr.scrollIntoView());
   return true;
+}
+
+function viewIsDestroyed(view: EditorView): boolean {
+  return (view as { isDestroyed?: boolean }).isDestroyed === true;
 }
 
 function linkHrefInSelection(state: EditorState): string {

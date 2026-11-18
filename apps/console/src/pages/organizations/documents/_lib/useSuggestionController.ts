@@ -26,13 +26,16 @@ import {
 } from "@probo/ui/src/RichEditor/SuggestionExtension";
 import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import type { Editor } from "@tiptap/core";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useContext, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql } from "relay-runtime";
+import { useRelayEnvironment } from "react-relay";
+import { fetchQuery, graphql } from "relay-runtime";
 import { useDebounceCallback } from "usehooks-ts";
 
 import type { useSuggestionControllerMutation } from "#/__generated__/core/useSuggestionControllerMutation.graphql";
+import type { useSuggestionControllerQuery } from "#/__generated__/core/useSuggestionControllerQuery.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
+import { CurrentUser } from "#/providers/CurrentUser";
 
 import type { DocumentMode } from "./useDocumentModes";
 
@@ -51,9 +54,22 @@ const startSuggestionMutation = graphql`
   }
 `;
 
+const suggestionAuthorQuery = graphql`
+  query useSuggestionControllerQuery($id: ID!) {
+    node(id: $id) {
+      __typename
+      ... on DocumentSuggestion {
+        author { id }
+      }
+    }
+  }
+`;
+
 export function useSuggestionController(documentId: string, mode: DocumentMode) {
   const { t } = useTranslation("organizations/documents");
   const toast = useToast();
+  const environment = useRelayEnvironment();
+  const profileId = useContext(CurrentUser).profile?.id;
   const [startSuggestion] = useMutation<useSuggestionControllerMutation>(
     startSuggestionMutation,
     { errorToast: false },
@@ -69,6 +85,10 @@ export function useSuggestionController(documentId: string, mode: DocumentMode) 
   });
   const editorRef = useRef<Editor | null>(null);
   const ownedIds = useRef(new Set<string>());
+  const deniedIds = useRef(new Set<string>());
+  const claims = useRef(new Map<string, Promise<boolean>>());
+  const profileIdRef = useRef(profileId);
+  profileIdRef.current = profileId;
   const showBlockedToast = useCallback(() => {
     toast.add({
       title: t("details.editor.suggestionFailed"),
@@ -92,6 +112,35 @@ export function useSuggestionController(documentId: string, mode: DocumentMode) 
   useEffect(() => {
     const current = controller.current;
     current.ownsSuggestion = id => ownedIds.current.has(id);
+    current.claimSuggestion = (id) => {
+      if (ownedIds.current.has(id)) return Promise.resolve(true);
+      if (deniedIds.current.has(id)) return Promise.resolve(false);
+      const existing = claims.current.get(id);
+      if (existing) return existing;
+
+      const request = fetchQuery<useSuggestionControllerQuery>(
+        environment,
+        suggestionAuthorQuery,
+        { id },
+        { fetchPolicy: "network-only" },
+      ).toPromise().then((data) => {
+        const profile = profileIdRef.current;
+        if (!profile) return false;
+        const authorId = data?.node?.__typename === "DocumentSuggestion"
+          ? data.node.author.id
+          : null;
+        if (authorId === profile) {
+          ownedIds.current.add(id);
+          return true;
+        }
+        deniedIds.current.add(id);
+        return false;
+      }).catch(() => false).finally(() => {
+        claims.current.delete(id);
+      });
+      claims.current.set(id, request);
+      return request;
+    };
     current.onSuggestionDone = () => {
       current.suggestionId = null;
     };
@@ -164,7 +213,7 @@ export function useSuggestionController(documentId: string, mode: DocumentMode) 
       current.request = request;
       return request;
     };
-  }, [documentId, notifyBlocked, startSuggestion, t, toast]);
+  }, [documentId, environment, notifyBlocked, startSuggestion, t, toast]);
 
   const setEditor = useCallback((editor: Editor | null) => {
     editorRef.current = editor;
