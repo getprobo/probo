@@ -186,17 +186,28 @@ export class ReportQueue {
   stop(): void {
     if (this.stopped) return;
     this.stopped = true;
+    this.clearSchedule();
 
+    if (this.pending.size > 0 || this.pageViewPending) {
+      this.flushSync();
+    }
+  }
+
+  discard(): void {
+    if (this.stopped) return;
+    this.stopped = true;
+    this.clearSchedule();
+    this.pending.clear();
+    this.pageViewPending = false;
+  }
+
+  private clearSchedule(): void {
     if (this.timer) {
       clearTimeout(this.timer);
       this.timer = null;
     }
 
     this.detachLifecycleListeners();
-
-    if (this.pending.size > 0 || this.pageViewPending) {
-      this.flushSync();
-    }
   }
 
   private enqueue(key: string, item: QueuedItem): void {

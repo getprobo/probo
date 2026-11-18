@@ -47,12 +47,10 @@ export function resolveResourceReportingEnabled(config: BannerConfig): boolean {
   return true;
 }
 
-// shouldStartResourceDetector is true in discovery mode (no config) and when
-// the resolved banner config enables resource reporting.
 export function shouldStartResourceDetector(
-  config?: Pick<BannerConfig, "resource_reporting_enabled">,
+  config: Pick<BannerConfig, "resource_reporting_enabled">,
 ): boolean {
-  return config == null || config.resource_reporting_enabled;
+  return config.resource_reporting_enabled;
 }
 
 // Map browser-reported PerformanceResourceTiming.initiatorType to the

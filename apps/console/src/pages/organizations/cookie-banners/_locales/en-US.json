@@ -339,12 +339,12 @@
       "published": "This version is published and live.",
       "unpublished": "This banner has not been published yet."
     },
-    "messages": { "copiedTitle": "Copied", "activated": "Banner activated", "deactivated": "Banner deactivated", "published": "Version published", "idCopied": "Banner ID copied to clipboard", "deleted": "Cookie banner deleted successfully" },
-    "errors": { "title": "Error", "activate": "Failed to activate", "deactivate": "Failed to deactivate", "publish": "Failed to publish", "delete": "Failed to delete cookie banner", "copy": "Failed to copy banner ID" },
+    "messages": { "copiedTitle": "Copied", "activated": "Banner activated", "deactivated": "Banner deactivated", "published": "Version published", "policyRequested": "The cookie policy will be updated.", "idCopied": "Banner ID copied to clipboard", "deleted": "Cookie banner deleted successfully" },
+    "errors": { "title": "Error", "activate": "Failed to activate", "deactivate": "Failed to deactivate", "publish": "Failed to publish", "regeneratePolicy": "Failed to update the cookie policy", "delete": "Failed to delete cookie banner", "copy": "Failed to copy banner ID" },
     "deleteConfirmation": "This will permanently delete the cookie banner \"{{name}}\". This action cannot be undone.",
-    "dialogs": { "deleteTitle": "Delete cookie banner" },
+    "dialogs": { "deleteTitle": "Delete cookie banner", "publishPolicyTitle": "Publish changes", "publishPolicyDescription": "Publishing makes this version live for visitors. Update the cookie policy from the trackers in this version?" },
     "status": { "active": "Active", "inactive": "Inactive" },
-    "actions": { "publish": "Publish changes", "activate": "Activate", "deactivate": "Deactivate", "delete": "Delete", "cancel": "Cancel", "copyId": "Copy banner ID" }
+    "actions": { "publish": "Publish changes", "publishOnly": "Publish only", "publishAndUpdatePolicy": "Publish and update policy", "activate": "Activate", "deactivate": "Deactivate", "delete": "Delete", "cancel": "Cancel", "copyId": "Copy banner ID" }
   },
   "overview": {
     "title": "Overview",

@@ -38,10 +38,10 @@ type trackerPolicyHandler struct {
 }
 
 // NewTrackerPolicyWorker returns a worker that regenerates a banner's cookie
-// and tracking technologies policy document whenever a banner version is
-// published. Publishing sets policy_generation_requested_at on the banner; this
-// worker claims those banners, clears the flag, and rebuilds the policy from
-// the latest published snapshot.
+// and tracking technologies policy document when generation is requested.
+// A request sets policy_generation_requested_at on the banner; this worker
+// claims those banners, clears the flag, and rebuilds the policy from the
+// latest published snapshot.
 func NewTrackerPolicyWorker(
 	generatedDocuments *GeneratedDocumentService,
 	pgClient *pg.Client,

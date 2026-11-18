@@ -50,8 +50,7 @@ export function enableNamedLoggers(): void {
   }
 
   // Replay through setItem after the StorageDetector wrap is live.
-  // Do not wait for probo-ready: discovery never fires that event
-  // (`CookieBannerClient.loaded` is false without a published config).
+  // probo-ready fires only after config loads, which is too late.
   // Catch per key so one quota failure does not skip the rest.
   for (const key of keys) {
     try {
