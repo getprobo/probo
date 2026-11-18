@@ -30,9 +30,14 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
+	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
+)
+
+var (
+	_ Searchable = (*Framework)(nil)
 )
 
 type (
@@ -58,6 +63,10 @@ func (f *Framework) CursorKey(orderBy FrameworkOrderField) page.CursorKey {
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
+}
+
+func (f Framework) SearchText() string {
+	return joinSearch(f.Name, ref.UnrefOrZero(f.Description))
 }
 
 func (f *Framework) AuthorizationAttributes(

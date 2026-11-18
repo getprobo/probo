@@ -320,14 +320,10 @@ func LockID(
 	return nil
 }
 
-func joinSearch(parts ...string) string {
-	return strings.Join(parts, " ")
+type Searchable interface {
+	SearchText() string
 }
 
-func derefSearch(value *string) string {
-	if value == nil {
-		return ""
-	}
-
-	return *value
+func joinSearch(parts ...string) string {
+	return strings.Join(parts, " ")
 }

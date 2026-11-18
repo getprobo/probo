@@ -26,17 +26,23 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
+	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
 )
 
 var emptyJSONObject = json.RawMessage(`{}`)
+
+var (
+	_ Searchable = (*Device)(nil)
+)
 
 type (
 	Device struct {
@@ -87,6 +93,35 @@ func (d *Device) CursorKey(orderBy DeviceOrderField) page.CursorKey {
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
+}
+
+func (d Device) SearchTitle() string {
+	for _, part := range []*string{d.Hostname, d.SerialNumber, d.HardwareUUID} {
+		if part == nil || strings.TrimSpace(*part) == "" {
+			continue
+		}
+
+		return *part
+	}
+
+	return ""
+}
+
+func (d Device) SearchText() string {
+	platform := ""
+	if d.Platform != nil {
+		platform = d.Platform.String()
+	}
+
+	return joinSearch(
+		ref.UnrefOrZero(d.Hostname),
+		ref.UnrefOrZero(d.SerialNumber),
+		ref.UnrefOrZero(d.HardwareUUID),
+		ref.UnrefOrZero(d.OSVersion),
+		ref.UnrefOrZero(d.AgentVersion),
+		platform,
+		string(d.Labels),
+	)
 }
 
 func (d *Device) AuthorizationAttributes(

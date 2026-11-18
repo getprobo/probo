@@ -35,6 +35,10 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
+var (
+	_ Searchable = (*StatementOfApplicability)(nil)
+)
+
 type (
 	StatementOfApplicability struct {
 		ID             gid.GID   `db:"id"`
@@ -57,6 +61,10 @@ func (s StatementOfApplicability) CursorKey(orderBy StatementOfApplicabilityOrde
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
+}
+
+func (s StatementOfApplicability) SearchText() string {
+	return s.Name
 }
 
 func (s *StatementOfApplicability) AuthorizationAttributes(

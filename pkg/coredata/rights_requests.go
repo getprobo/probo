@@ -29,9 +29,14 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
+	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
+)
+
+var (
+	_ Searchable = (*RightsRequest)(nil)
 )
 
 type (
@@ -66,6 +71,15 @@ func (rr *RightsRequest) CursorKey(field RightsRequestOrderField) page.CursorKey
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", field))
+}
+
+func (rr RightsRequest) SearchText() string {
+	return joinSearch(
+		ref.UnrefOrZero(rr.DataSubject),
+		ref.UnrefOrZero(rr.Contact),
+		ref.UnrefOrZero(rr.Details),
+		ref.UnrefOrZero(rr.ActionTaken),
+	)
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.

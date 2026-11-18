@@ -29,9 +29,14 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
+	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
+)
+
+var (
+	_ Searchable = (*Finding)(nil)
 )
 
 type (
@@ -78,6 +83,17 @@ func (f *Finding) CursorKey(field FindingOrderField) page.CursorKey {
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", field))
+}
+
+func (f Finding) SearchText() string {
+	return joinSearch(
+		f.ReferenceID,
+		ref.UnrefOrZero(f.Description),
+		ref.UnrefOrZero(f.Source),
+		ref.UnrefOrZero(f.RootCause),
+		ref.UnrefOrZero(f.CorrectiveAction),
+		ref.UnrefOrZero(f.EffectivenessCheck),
+	)
 }
 
 func (f *Finding) AuthorizationAttributes(

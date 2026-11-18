@@ -29,6 +29,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
+	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
@@ -147,6 +148,10 @@ WHERE
 	return nil
 }
 
+var (
+	_ Searchable = (*ThirdParty)(nil)
+)
+
 type (
 	ThirdParty struct {
 		ID                            gid.GID                  `db:"id"`
@@ -195,6 +200,10 @@ func (v ThirdParty) CursorKey(orderBy ThirdPartyOrderField) page.CursorKey {
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
+}
+
+func (v ThirdParty) SearchText() string {
+	return joinSearch(v.Name, ref.UnrefOrZero(v.Description), ref.UnrefOrZero(v.LegalName))
 }
 
 func (v *ThirdParty) AuthorizationAttributes(

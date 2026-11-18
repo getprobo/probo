@@ -29,6 +29,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
+	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
@@ -142,6 +143,10 @@ WHERE
 	return nil
 }
 
+var (
+	_ Searchable = (*ProcessingActivity)(nil)
+)
+
 type (
 	ProcessingActivity struct {
 		ID                                   gid.GID                                          `db:"id"`
@@ -181,6 +186,19 @@ func (p *ProcessingActivity) CursorKey(field ProcessingActivityOrderField) page.
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", field))
+}
+
+func (p ProcessingActivity) SearchText() string {
+	return joinSearch(
+		p.Name,
+		ref.UnrefOrZero(p.Purpose),
+		ref.UnrefOrZero(p.DataSubjectCategory),
+		ref.UnrefOrZero(p.PersonalDataCategory),
+		ref.UnrefOrZero(p.Recipients),
+		ref.UnrefOrZero(p.Location),
+		ref.UnrefOrZero(p.RetentionPeriod),
+		ref.UnrefOrZero(p.SecurityMeasures),
+	)
 }
 
 func (p *ProcessingActivity) AuthorizationAttributes(

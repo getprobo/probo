@@ -35,6 +35,10 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
+var (
+	_ Searchable = (*Document)(nil)
+)
+
 type (
 	Document struct {
 		ID                    gid.GID                    `db:"id"`
@@ -74,6 +78,10 @@ func (p Document) CursorKey(orderBy DocumentOrderField) page.CursorKey {
 // ReadOnly reports whether collaborators must not change the document.
 func (d Document) ReadOnly() bool {
 	return d.ArchivedAt != nil || d.WriteMode == DocumentWriteModeGenerated
+}
+
+func (p Document) SearchText() string {
+	return p.Title
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.

@@ -29,9 +29,14 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
+	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
+)
+
+var (
+	_ Searchable = (*Obligation)(nil)
 )
 
 type (
@@ -68,6 +73,16 @@ func (o *Obligation) CursorKey(field ObligationOrderField) page.CursorKey {
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", field))
+}
+
+func (o Obligation) SearchText() string {
+	return joinSearch(
+		ref.UnrefOrZero(o.Requirement),
+		ref.UnrefOrZero(o.Area),
+		ref.UnrefOrZero(o.Source),
+		ref.UnrefOrZero(o.Regulator),
+		ref.UnrefOrZero(o.ActionsToBeImplemented),
+	)
 }
 
 func (o *Obligation) AuthorizationAttributes(

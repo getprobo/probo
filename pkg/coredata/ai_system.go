@@ -29,9 +29,14 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
+	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
+)
+
+var (
+	_ Searchable = (*AiSystem)(nil)
 )
 
 type (
@@ -73,6 +78,21 @@ func (s *AiSystem) CursorKey(field AiSystemOrderField) page.CursorKey {
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", field))
+}
+
+func (s AiSystem) SearchText() string {
+	return joinSearch(
+		s.Name,
+		ref.UnrefOrZero(s.Version),
+		ref.UnrefOrZero(s.Source),
+		ref.UnrefOrZero(s.Purpose),
+		ref.UnrefOrZero(s.IntendedUseCases),
+		ref.UnrefOrZero(s.AutonomyLevel),
+		ref.UnrefOrZero(s.HumanOversightMechanism),
+		ref.UnrefOrZero(s.KeyStakeholders),
+		ref.UnrefOrZero(s.DataSourcesAndType),
+		ref.UnrefOrZero(s.Notes),
+	)
 }
 
 func (s *AiSystem) AuthorizationAttributes(

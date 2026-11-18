@@ -30,6 +30,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
+	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
@@ -167,6 +168,16 @@ func (dpia *DataProtectionImpactAssessment) CursorKey(field DataProtectionImpact
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", field))
+}
+
+func (d DataProtectionImpactAssessment) SearchText(activityName string) string {
+	return joinSearch(
+		activityName,
+		ref.UnrefOrZero(d.Description),
+		ref.UnrefOrZero(d.NecessityAndProportionality),
+		ref.UnrefOrZero(d.PotentialRisk),
+		ref.UnrefOrZero(d.Mitigations),
+	)
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.

@@ -74,6 +74,10 @@ func (tp *TreatmentPlan) CursorKey(orderBy TreatmentPlanOrderField) page.CursorK
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
+func (tp TreatmentPlan) SearchText(riskName string) string {
+	return joinSearch(riskName, tp.Treatment.String())
+}
+
 func (tp *TreatmentPlan) AuthorizationAttributes(
 	ctx context.Context,
 	conn pg.Querier,

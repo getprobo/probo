@@ -30,9 +30,14 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
+	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
+)
+
+var (
+	_ Searchable = (*BusinessFunction)(nil)
 )
 
 type (
@@ -74,6 +79,10 @@ func (bf *BusinessFunction) CursorKey(field BusinessFunctionOrderField) page.Cur
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", field))
+}
+
+func (bf BusinessFunction) SearchText() string {
+	return joinSearch(bf.Name, bf.ReferenceID, ref.UnrefOrZero(bf.ImpactTolerance), ref.UnrefOrZero(bf.Notes))
 }
 
 func (bf *BusinessFunction) AuthorizationAttributes(

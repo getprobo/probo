@@ -30,9 +30,14 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
+	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
+)
+
+var (
+	_ Searchable = (*Evidence)(nil)
 )
 
 type (
@@ -63,6 +68,10 @@ func (e Evidence) CursorKey(orderBy EvidenceOrderField) page.CursorKey {
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
+}
+
+func (e Evidence) SearchText() string {
+	return joinSearch(e.ReferenceID, ref.UnrefOrZero(e.Description), e.URL)
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.

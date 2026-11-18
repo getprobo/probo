@@ -143,6 +143,10 @@ WHERE
 	return nil
 }
 
+var (
+	_ Searchable = (*Risk)(nil)
+)
+
 type (
 	Risk struct {
 		ID                 gid.GID        `db:"id"`
@@ -193,6 +197,10 @@ func (r *Risk) CursorKey(orderBy RiskOrderField) page.CursorKey {
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
+}
+
+func (r Risk) SearchText() string {
+	return joinSearch(r.ReferenceID, r.Name)
 }
 
 func (r *Risk) AuthorizationAttributes(

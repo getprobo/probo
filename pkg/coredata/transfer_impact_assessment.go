@@ -30,6 +30,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
+	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
@@ -167,6 +168,17 @@ func (tia *TransferImpactAssessment) CursorKey(field TransferImpactAssessmentOrd
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", field))
+}
+
+func (t TransferImpactAssessment) SearchText(activityName string) string {
+	return joinSearch(
+		activityName,
+		ref.UnrefOrZero(t.DataSubjects),
+		ref.UnrefOrZero(t.LegalMechanism),
+		ref.UnrefOrZero(t.Transfer),
+		ref.UnrefOrZero(t.LocalLawRisk),
+		ref.UnrefOrZero(t.SupplementaryMeasures),
+	)
 }
 
 func (tia *TransferImpactAssessment) AuthorizationAttributes(

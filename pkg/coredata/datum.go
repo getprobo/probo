@@ -34,6 +34,10 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
+var (
+	_ Searchable = (*Datum)(nil)
+)
+
 type (
 	Datum struct {
 		ID                 gid.GID            `db:"id"`
@@ -59,6 +63,10 @@ func (d *Datum) CursorKey(field DatumOrderField) page.CursorKey {
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", field))
+}
+
+func (d Datum) SearchText() string {
+	return d.Name
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
