@@ -441,8 +441,6 @@ export function DocumentDescriptionPage(props: {
                     content=""
                     data-theme="document"
                     disabled={mode === "viewing" || (!canEdit && mode !== "suggesting")}
-                    formatting={canEdit && mode === "editing"}
-                    suggestingMenus={mode === "suggesting"}
                     onChangeContent={handleContentChange}
                     onEditor={setEditor}
                     onUploadFile={onUploadFile}
