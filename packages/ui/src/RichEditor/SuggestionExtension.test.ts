@@ -68,8 +68,8 @@ describe("suggesting input", () => {
       suggestionId: suggestionId,
       pending: null,
       request: null,
-      onNeedId: () => Promise.resolve(suggestionId),
-      onBurstFinished: () => {
+      onStartSuggesting: () => Promise.resolve(suggestionId),
+      onSuggestionDone: () => {
         finished = true;
       },
       onOpenSuggestion: () => {},
@@ -132,8 +132,8 @@ describe("suggesting input", () => {
       suggestionId: suggestionId,
       pending: null,
       request: null,
-      onNeedId: () => Promise.resolve(suggestionId),
-      onBurstFinished: () => {
+      onStartSuggesting: () => Promise.resolve(suggestionId),
+      onSuggestionDone: () => {
         finished = true;
       },
       onOpenSuggestion: () => {},
@@ -168,12 +168,12 @@ describe("suggesting input", () => {
       pending: null,
       request: null,
       ownsSuggestion: id => id === suggestionId,
-      onNeedId: () => {
+      onStartSuggesting: () => {
         needed = true;
         controller.suggestionId = "other";
         return Promise.resolve("other");
       },
-      onBurstFinished: () => {},
+      onSuggestionDone: () => {},
       onOpenSuggestion: () => {},
     };
     const plugins = suggestingPlugins(controller);
@@ -219,12 +219,12 @@ describe("suggesting input", () => {
       pending: null,
       request: null,
       ownsSuggestion: () => false,
-      onNeedId: () => {
+      onStartSuggesting: () => {
         needed = true;
         controller.suggestionId = "other";
         return Promise.resolve("other");
       },
-      onBurstFinished: () => {},
+      onSuggestionDone: () => {},
       onOpenSuggestion: () => {},
     };
     const plugins = suggestingPlugins(controller);
@@ -266,8 +266,8 @@ describe("suggesting input", () => {
       suggestionId: suggestionId,
       pending: null,
       request: null,
-      onNeedId: () => Promise.resolve(suggestionId),
-      onBurstFinished: () => {
+      onStartSuggesting: () => Promise.resolve(suggestionId),
+      onSuggestionDone: () => {
         finished = true;
       },
       onOpenSuggestion: () => {},
@@ -323,8 +323,8 @@ describe("suggesting input", () => {
       suggestionId: suggestionId,
       pending: null,
       request: null,
-      onNeedId: () => Promise.resolve(suggestionId),
-      onBurstFinished: () => {},
+      onStartSuggesting: () => Promise.resolve(suggestionId),
+      onSuggestionDone: () => {},
       onOpenSuggestion: () => {},
     };
     const plugins = suggestingPlugins(controller);
@@ -403,8 +403,8 @@ describe("suggesting input", () => {
       suggestionId: suggestionId,
       pending: null,
       request: null,
-      onNeedId: () => Promise.resolve(suggestionId),
-      onBurstFinished: () => {},
+      onStartSuggesting: () => Promise.resolve(suggestionId),
+      onSuggestionDone: () => {},
       onOpenSuggestion: () => {},
     };
     const plugins = suggestingPlugins(controller);

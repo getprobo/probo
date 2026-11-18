@@ -106,7 +106,7 @@ export function useDocumentReviewSuggestionSession({
   }, [loadedSuggestions, profileId, startedSuggestions]);
 
   useEffect(() => {
-    controllerRef.current.onNeedId = () => {
+    controllerRef.current.onStartSuggesting = () => {
       const controller = controllerRef.current;
       if (controller.suggestionId) return Promise.resolve(controller.suggestionId);
 
@@ -160,7 +160,7 @@ export function useDocumentReviewSuggestionSession({
       controller.request = request;
       return request;
     };
-    controllerRef.current.onBurstFinished = () => {
+    controllerRef.current.onSuggestionDone = () => {
       controllerRef.current.suggestionId = null;
     };
     controllerRef.current.onBlocked = () => {

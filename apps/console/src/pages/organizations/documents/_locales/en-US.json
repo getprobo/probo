@@ -51,6 +51,18 @@
         "SIGNED": "Signed"
       }
     },
+    "mode": {
+      "label": "Mode",
+      "viewing": "Viewing",
+      "editing": "Editing",
+      "suggesting": "Suggesting"
+    },
+    "editor": {
+      "loading": "Loading the document",
+      "openError": "Could not open the document",
+      "suggestionFailed": "Could not start the suggestion",
+      "suggestionUntracked": "That change could not be tracked as a suggestion"
+    },
     "errors": {
       "update": "Could not update the document"
     }

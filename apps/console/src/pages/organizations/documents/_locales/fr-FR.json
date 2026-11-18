@@ -51,6 +51,18 @@
         "SIGNED": "Signée"
       }
     },
+    "mode": {
+      "label": "Mode",
+      "viewing": "Lecture",
+      "editing": "Édition",
+      "suggesting": "Suggestion"
+    },
+    "editor": {
+      "loading": "Chargement du document",
+      "openError": "Impossible d'ouvrir le document",
+      "suggestionFailed": "Impossible de démarrer la suggestion",
+      "suggestionUntracked": "Cette modification n'a pas pu être suivie comme suggestion"
+    },
     "errors": {
       "update": "Échec de la mise à jour du document"
     }

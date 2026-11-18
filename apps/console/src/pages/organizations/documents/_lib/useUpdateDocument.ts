@@ -28,7 +28,8 @@ const updateDocumentMutation = graphql`
   mutation useUpdateDocumentMutation($input: UpdateDocumentInput!) {
     updateDocument(input: $input) {
       document {
-        ...DocumentDetailsPage_document
+        title
+        ...DocumentDetails_document
       }
     }
   }

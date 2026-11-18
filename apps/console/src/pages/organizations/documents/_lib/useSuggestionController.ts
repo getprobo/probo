@@ -1,0 +1,174 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+import { formatError } from "@probo/helpers";
+import {
+  discardSuggestionId,
+  reassignSuggestionId,
+  type SuggestingController,
+} from "@probo/ui/src/RichEditor/SuggestionExtension";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
+import type { Editor } from "@tiptap/core";
+import { useCallback, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
+import { graphql } from "relay-runtime";
+import { useDebounceCallback } from "usehooks-ts";
+
+import type { useSuggestionControllerMutation } from "#/__generated__/core/useSuggestionControllerMutation.graphql";
+import { useMutation } from "#/lib/relay/useMutation";
+
+import type { DocumentMode } from "./useDocumentModes";
+
+const blockedToastIntervalMs = 3_000;
+const blockedToastOptions = { leading: true, trailing: false };
+
+const startSuggestionMutation = graphql`
+  mutation useSuggestionControllerMutation($input: StartDocumentSuggestionInput!) {
+    startDocumentSuggestion(input: $input) {
+      documentSuggestionEdge {
+        node {
+          id
+        }
+      }
+    }
+  }
+`;
+
+export function useSuggestionController(documentId: string, mode: DocumentMode) {
+  const { t } = useTranslation("organizations/documents");
+  const toast = useToast();
+  const [startSuggestion] = useMutation<useSuggestionControllerMutation>(
+    startSuggestionMutation,
+    { errorToast: false },
+  );
+  const controller = useRef<SuggestingController>({
+    enabled: false,
+    suggestionId: null,
+    pending: null,
+    request: null,
+    onStartSuggesting: () => Promise.resolve(null),
+    onSuggestionDone: () => {},
+    onOpenSuggestion: () => {},
+  });
+  const editorRef = useRef<Editor | null>(null);
+  const ownedIds = useRef(new Set<string>());
+  const showBlockedToast = useCallback(() => {
+    toast.add({
+      title: t("details.editor.suggestionFailed"),
+      description: t("details.editor.suggestionUntracked"),
+      type: "error",
+    });
+  }, [t, toast]);
+  const notifyBlocked = useDebounceCallback(
+    showBlockedToast,
+    blockedToastIntervalMs,
+    blockedToastOptions,
+  );
+
+  useEffect(() => {
+    controller.current.enabled = mode === "suggesting";
+    if (mode !== "suggesting") {
+      controller.current.suggestionId = null;
+    }
+  }, [mode]);
+
+  useEffect(() => {
+    const current = controller.current;
+    current.ownsSuggestion = id => ownedIds.current.has(id);
+    current.onSuggestionDone = () => {
+      current.suggestionId = null;
+    };
+    current.onOpenSuggestion = () => {};
+    current.onBlocked = notifyBlocked;
+    current.onStartSuggesting = () => {
+      if (current.suggestionId) {
+        return Promise.resolve(current.suggestionId);
+      }
+
+      const localId = `local:${crypto.randomUUID()}`;
+      current.suggestionId = localId;
+      ownedIds.current.add(localId);
+
+      const request = new Promise<string | null>((resolve) => {
+        void startSuggestion({
+          variables: { input: { documentId } },
+          onCompleted: (response, errors) => {
+            if (current.request === request) {
+              current.request = null;
+            }
+            const editor = editorRef.current;
+            if (errors?.length) {
+              if (current.suggestionId === localId) {
+                current.suggestionId = null;
+              }
+              ownedIds.current.delete(localId);
+              if (editor) {
+                discardSuggestionId(editor, localId);
+              }
+              toast.add({
+                title: t("details.editor.suggestionFailed"),
+                description: formatError(t("details.editor.suggestionFailed"), errors),
+                type: "error",
+              });
+              resolve(null);
+              return;
+            }
+            const id = response.startDocumentSuggestion.documentSuggestionEdge.node.id;
+            ownedIds.current.add(id);
+            if (editor) {
+              reassignSuggestionId(editor, localId, id);
+            }
+            if (current.suggestionId === localId) {
+              current.suggestionId = id;
+            }
+            resolve(id);
+          },
+          onError: (error) => {
+            if (current.request === request) {
+              current.request = null;
+            }
+            if (current.suggestionId === localId) {
+              current.suggestionId = null;
+            }
+            ownedIds.current.delete(localId);
+            const editor = editorRef.current;
+            if (editor) {
+              discardSuggestionId(editor, localId);
+            }
+            toast.add({
+              title: t("details.editor.suggestionFailed"),
+              description: error.message,
+              type: "error",
+            });
+            resolve(null);
+          },
+        });
+      });
+      current.request = request;
+      return request;
+    };
+  }, [documentId, notifyBlocked, startSuggestion, t, toast]);
+
+  const setEditor = useCallback((editor: Editor | null) => {
+    editorRef.current = editor;
+  }, []);
+
+  return { controller, setEditor };
+}

@@ -22,16 +22,20 @@ import { CardSkeleton } from "@probo/ui/src/v2/Card/CardSkeleton";
 import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
 import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
-import { documentDetailsPage } from "./variants";
+import { documentDetailsPage, documentEditor } from "./variants";
 
 export function DocumentDetailsPageSkeleton() {
-  const { root, main, cards } = documentDetailsPage();
+  const { root, main, titleRow, cards } = documentDetailsPage();
+  const { frame } = documentEditor();
 
   return (
     <div className={root()}>
       <div className={main()}>
         <TextSkeleton size={2} className="w-24" />
-        <HeadingSkeleton size={6} className="w-64" />
+        <div className={titleRow()}>
+          <HeadingSkeleton size={6} className="w-64" />
+        </div>
+        <div className={frame()} />
       </div>
       <div className={cards()}>
         <CardSkeleton size={5} />

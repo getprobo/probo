@@ -1,0 +1,37 @@
+---
+description: Use totalCount with first 0 when a connection is only a count or an existence check
+globs: "**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# Count a connection with `totalCount`
+
+When a selection only needs how many items a connection has, or whether it has
+any, use `first: 0` and `totalCount`. Do not request `first: 1` and inspect
+`edges[0].node`.
+
+`first: 1` resolves a node and stores a partial record that a later, fuller
+selection of the same id can disagree with. `totalCount` is the count the
+connection already computes, and `first: 0` returns no edges.
+
+```graphql
+# Good
+pendingApproval: versions(first: 0, filter: { statuses: [PENDING_APPROVAL] }) {
+  totalCount
+}
+```
+
+```graphql
+# Bad
+pendingApproval: versions(first: 1, filter: { statuses: [PENDING_APPROVAL] }) {
+  edges { node { id } }
+}
+```
+
+Request a real page only when the component renders fields of the node.
+
+If another selection of the same field on that parent uses different
+arguments, alias the count. Relay rejects two selections of one field with
+different arguments.
+
+See [`contrib/claude/relay.md`](../../contrib/claude/relay.md#connection-counts).

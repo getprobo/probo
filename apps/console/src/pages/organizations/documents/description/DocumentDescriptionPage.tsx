@@ -201,8 +201,8 @@ export function DocumentDescriptionPage(props: {
     suggestionId: null,
     pending: null,
     request: null,
-    onNeedId: () => Promise.resolve(null),
-    onBurstFinished: () => {},
+    onStartSuggesting: () => Promise.resolve(null),
+    onSuggestionDone: () => {},
     onOpenSuggestion: () => {},
   });
   const anchorController = useRef({ onOpenThread: (_id: string) => {} });
