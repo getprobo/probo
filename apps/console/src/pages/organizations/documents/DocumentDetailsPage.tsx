@@ -18,47 +18,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { ScrollArea } from "@base-ui/react/scroll-area";
-import { CaretLeftIcon } from "@phosphor-icons/react";
 import { usePageTitle } from "@probo/hooks";
-import { Link } from "@probo/ui/src/v2/Link/Link";
 import { useTranslation } from "react-i18next";
-import { graphql, type PreloadedQuery, useFragment, usePreloadedQuery } from "react-relay";
+import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { useLocation } from "react-router";
 
-import type { DocumentDetailsPage_document$key } from "#/__generated__/core/DocumentDetailsPage_document.graphql";
 import type { DocumentDetailsPageQuery } from "#/__generated__/core/DocumentDetailsPageQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { NotFoundError } from "#/lib/relay/errors";
 
-import { DocumentApprovalsSection } from "./_components/DocumentApprovalsSection";
-import { DocumentSignatoriesSection } from "./_components/DocumentSignatoriesSection";
-import { DocumentControlsSection } from "./_components/DocumentControlsSection";
-import { DocumentPropertiesSection } from "./_components/DocumentPropertiesSection";
-import { DocumentTitleField } from "./_components/DocumentTitleField";
-import { documentDetailsPage } from "./variants";
-
-export const documentDetailsPageFragment = graphql`
-  fragment DocumentDetailsPage_document on Document {
-    id
-    title
-    organization {
-      id
-    }
-    ...DocumentTitleField_document
-    ...DocumentPropertiesSection_document
-    ...DocumentControlsSection_document
-    ...DocumentApprovalsSection_document
-    ...DocumentSignatoriesSection_document
-  }
-`;
+import { DocumentDetails } from "./_components/DocumentDetails";
 
 export const documentDetailsPageQuery = graphql`
   query DocumentDetailsPageQuery($documentId: ID!) {
     node(id: $documentId) @required(action: THROW) {
       __typename
       ... on Document {
-        ...DocumentDetailsPage_document
+        title
+        organization {
+          id
+        }
+        ...DocumentDetails_document
       }
     }
   }
@@ -76,12 +56,7 @@ export function DocumentDetailsPage({ queryRef }: DocumentDetailsPageProps) {
   const { t } = useTranslation("organizations/documents");
   const organizationId = useOrganizationId();
   const location = useLocation();
-  const documentKey = data.node.__typename === "Document" ? data.node : null;
-  const document = useFragment<DocumentDetailsPage_document$key>(
-    documentDetailsPageFragment,
-    documentKey,
-  );
-  const { root, main, side, viewport, cards, scrollbar, thumb } = documentDetailsPage();
+  const document = data.node.__typename === "Document" ? data.node : null;
   usePageTitle(document?.title ?? "");
 
   if (document == null || document.organization.id !== organizationId) {
@@ -89,36 +64,10 @@ export function DocumentDetailsPage({ queryRef }: DocumentDetailsPageProps) {
   }
 
   return (
-    <div className={root()}>
-      <div className={main()}>
-        <Link
-          to={{
-            pathname: `/organizations/${organizationId}/governance/documents`,
-            search: location.search,
-          }}
-          size={2}
-          color="neutral"
-          underline={false}
-          iconStart={<CaretLeftIcon />}
-          className="self-start"
-        >
-          {t("details.back")}
-        </Link>
-        <DocumentTitleField documentKey={document} />
-      </div>
-      <ScrollArea.Root className={side()}>
-        <ScrollArea.Viewport className={viewport()}>
-          <ScrollArea.Content className={cards()}>
-            <DocumentPropertiesSection documentKey={document} />
-            <DocumentApprovalsSection documentKey={document} />
-            <DocumentSignatoriesSection documentKey={document} />
-            <DocumentControlsSection documentKey={document} />
-          </ScrollArea.Content>
-        </ScrollArea.Viewport>
-        <ScrollArea.Scrollbar className={scrollbar()} orientation="vertical">
-          <ScrollArea.Thumb className={thumb()} />
-        </ScrollArea.Scrollbar>
-      </ScrollArea.Root>
-    </div>
+    <DocumentDetails
+      documentKey={document}
+      organizationId={organizationId}
+      search={location.search}
+    />
   );
 }

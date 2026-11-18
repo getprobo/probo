@@ -54,8 +54,8 @@ function controller(): SuggestingController & { blocked: boolean } {
     pending: null,
     request: null,
     blocked: false,
-    onNeedId: () => Promise.resolve(suggestionId),
-    onBurstFinished: () => {},
+    onStartSuggesting: () => Promise.resolve(suggestionId),
+    onSuggestionDone: () => {},
     onOpenSuggestion: () => {},
     onBlocked: () => {
       value.blocked = true;

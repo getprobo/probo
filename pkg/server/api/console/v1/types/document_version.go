@@ -44,6 +44,7 @@ func NewDocumentVersionConnection(
 	page *page.Page[*coredata.DocumentVersion, coredata.DocumentVersionOrderField],
 	parentType any,
 	parentID gid.GID,
+	filters *coredata.DocumentVersionFilter,
 ) *DocumentVersionConnection {
 	edges := make([]*DocumentVersionEdge, len(page.Data))
 	for i, documentVersion := range page.Data {
@@ -56,6 +57,7 @@ func NewDocumentVersionConnection(
 
 		Resolver: parentType,
 		ParentID: parentID,
+		Filters:  filters,
 	}
 }
 

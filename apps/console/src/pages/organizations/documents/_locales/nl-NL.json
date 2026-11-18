@@ -51,6 +51,18 @@
         "SIGNED": "Ondertekend"
       }
     },
+    "mode": {
+      "label": "Modus",
+      "viewing": "Bekijken",
+      "editing": "Bewerken",
+      "suggesting": "Voorstellen"
+    },
+    "editor": {
+      "loading": "Document laden",
+      "openError": "Document openen mislukt",
+      "suggestionFailed": "Suggestie starten mislukt",
+      "suggestionUntracked": "Deze wijziging kon niet als suggestie worden bijgehouden"
+    },
     "errors": {
       "update": "Document bijwerken mislukt"
     }

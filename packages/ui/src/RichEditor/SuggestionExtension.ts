@@ -92,9 +92,9 @@ export type SuggestingController = {
   suggestionId: string | null;
   pending: PendingSuggestionInput | null;
   request: Promise<string | null> | null;
-  onNeedId: () => Promise<string | null>;
+  onStartSuggesting: () => Promise<string | null>;
   ownsSuggestion?: (id: string) => boolean;
-  onBurstFinished: () => void;
+  onSuggestionDone: () => void;
   onOpenSuggestion: (id: string) => void;
   // Called when an edit cannot be tracked as a suggestion and was dropped.
   onBlocked?: () => void;
@@ -244,7 +244,7 @@ export function createSuggestingExtension(
             const stillOnSuggestion = currentId != null
               && adjacentSuggestionId(newState) === currentId;
             if (moved && !stillOnSuggestion) {
-              controller.current.onBurstFinished();
+              controller.current.onSuggestionDone();
             }
             return null;
           },
@@ -272,12 +272,12 @@ export function suggestingChangeId(state: EditorState, fresh: boolean): string |
   const controller = suggestingPluginKey.getState(state);
   if (!controller?.enabled) return null;
   if (fresh) {
-    controller.onBurstFinished();
+    controller.onSuggestionDone();
     controller.suggestionId = null;
   }
   let id = fresh ? null : suggestionIdForInput(state, controller);
   if (!id) {
-    void controller.onNeedId();
+    void controller.onStartSuggesting();
     id = controller.suggestionId;
   }
   return id;
@@ -303,13 +303,13 @@ export function applySuggestingStructure(
   // merge that card with the words typed just before it.
   let id: string | null = null;
   if (options?.fresh) {
-    current.onBurstFinished();
+    current.onSuggestionDone();
     current.suggestionId = null;
   } else {
     id = suggestionIdForInput(editor.state, current);
   }
   if (!id) {
-    void current.onNeedId();
+    void current.onStartSuggesting();
     id = current.suggestionId;
   }
   if (!id || !editorViewReady(editor)) {
@@ -495,7 +495,7 @@ function applyFormatChange(
   if (!controller.enabled || view.state.selection.empty) return false;
   let id = suggestionIdForInput(view.state, controller);
   if (!id) {
-    void controller.onNeedId();
+    void controller.onStartSuggesting();
     id = controller.suggestionId;
   }
   if (!id) {
@@ -532,9 +532,9 @@ function applySuggestingStructureFromView(
     controller.onBlocked?.();
     return true;
   }
-  controller.onBurstFinished();
+  controller.onSuggestionDone();
   controller.suggestionId = null;
-  void controller.onNeedId();
+  void controller.onStartSuggesting();
   const id = controller.suggestionId;
   if (!id) {
     controller.onBlocked?.();
@@ -602,7 +602,7 @@ function applySuggestingKey(
   const { state } = view;
   let id = suggestionIdForInput(state, controller);
   if (!id) {
-    void controller.onNeedId();
+    void controller.onStartSuggesting();
     id = controller.suggestionId;
   }
   if (!id) return true;
@@ -660,7 +660,7 @@ function applySuggestingLineBreak(
 
   let id = suggestionIdForInput(view.state, controller);
   if (!id) {
-    void controller.onNeedId();
+    void controller.onStartSuggesting();
     id = controller.suggestionId;
   }
   if (!id) return true;
@@ -708,7 +708,7 @@ function deleteBesideDeletedLine(
 ): boolean {
   let id = suggestionIdForInput(view.state, controller);
   if (!id) {
-    void controller.onNeedId();
+    void controller.onStartSuggesting();
     id = controller.suggestionId;
   }
   if (!id) return true;
@@ -828,7 +828,7 @@ function applySuggestingEnter(
 
   let id = suggestionIdForInput(state, controller);
   if (!id) {
-    void controller.onNeedId();
+    void controller.onStartSuggesting();
     id = controller.suggestionId;
   }
   if (!id) return true;
@@ -890,7 +890,7 @@ function applySuggestingText(
       view.dispatch(tr.scrollIntoView());
       return true;
     }
-    const pendingRequest = controller.onNeedId();
+    const pendingRequest = controller.onStartSuggesting();
     id = controller.suggestionId;
     if (!id) {
       queuePendingText(controller, view, from, to, text);
