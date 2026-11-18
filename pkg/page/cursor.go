@@ -72,9 +72,11 @@ func (c *Cursor[T]) SQLFragment() string {
 	// NULLs sort after every real value. A reverse page flips that with the scan.
 	nullsLast := c.Position != Tail
 
+	tieBreak := c.tieBreakColumn()
+
 	where := "TRUE"
 	if c.Key != nil {
-		where = cursorWhere(field, value, direction, nullsLast, c.Key.Value == nil)
+		where = cursorWhere(field, value, tieBreak, direction, nullsLast, c.Key.Value == nil)
 	}
 
 	nulls := " NULLS FIRST"
@@ -82,9 +84,23 @@ func (c *Cursor[T]) SQLFragment() string {
 		nulls = " NULLS LAST"
 	}
 
-	orderBy := field + " " + direction + nulls + ", id " + direction
+	orderBy := field + " " + direction + nulls + ", " + tieBreak + " " + direction
 
 	return where + " ORDER BY " + orderBy + " LIMIT @cursor_limit"
+}
+
+func (c *Cursor[T]) tieBreakColumn() string {
+	column := "id"
+
+	if breaker, ok := any(c.OrderBy.Field).(TieBreaker); ok {
+		column = breaker.TieBreakColumn()
+	}
+
+	if !sqlIdent(column) {
+		panic("invalid cursor tie-break column: " + column)
+	}
+
+	return column
 }
 
 func (c *Cursor[T]) SQLArguments() pgx.NamedArgs {
@@ -164,13 +180,13 @@ func (c *Cursor[T]) sqlDirection() string {
 	}
 }
 
-func cursorWhere(field string, value string, direction string, nullsLast bool, valueNull bool) string {
+func cursorWhere(field string, value string, tieBreak string, direction string, nullsLast bool, valueNull bool) string {
 	cmp := ">="
-	idExclude := "id < @cursor_id"
+	idExclude := tieBreak + " < @cursor_id"
 
 	if direction == "DESC" {
 		cmp = "<="
-		idExclude = "id > @cursor_id"
+		idExclude = tieBreak + " > @cursor_id"
 	}
 
 	matched := "(" + field + " " + cmp + " " + value + ") AND NOT (" + field + " = " + value + " AND " + idExclude + ")"

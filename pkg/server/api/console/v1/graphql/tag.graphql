@@ -75,15 +75,6 @@ input TagAssignmentOrder
     field: TagAssignmentOrderField!
 }
 
-type TagAssignment
-    @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TagAssignment"
-    ) {
-    id: ID!
-    resource: Node @goField(forceResolver: true)
-    createdAt: Datetime!
-}
-
 type TagAssignmentConnection
     @goModel(
         model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TagAssignmentConnection"
@@ -93,9 +84,13 @@ type TagAssignmentConnection
     totalCount: Int! @goField(forceResolver: true)
 }
 
-type TagAssignmentEdge {
+type TagAssignmentEdge
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TagAssignmentEdge"
+    ) {
     cursor: CursorKey!
-    node: TagAssignment!
+    createdAt: Datetime!
+    node: Node @goField(forceResolver: true)
 }
 
 type TagConnection
@@ -211,5 +206,5 @@ type AttachTagPayload {
 
 type DetachTagPayload {
     tag: Tag!
-    deletedTagAssignmentId: ID
+    detached: Boolean!
 }

@@ -51,12 +51,11 @@ type (
 		ParentID gid.GID
 	}
 
-	// ResourceID is the tagged resource. GraphQL exposes it as resource, which
-	// resolves that GID through Query.node.
-	TagAssignment struct {
-		ID         gid.GID
-		ResourceID gid.GID
+	// ResourceID is the tagged resource. GraphQL exposes it as node.
+	TagAssignmentEdge struct {
+		Cursor     page.CursorKey
 		CreatedAt  time.Time
+		ResourceID gid.GID
 	}
 )
 
@@ -125,15 +124,8 @@ func NewTagAssignmentEdge(
 	orderBy coredata.TagAssignmentOrderField,
 ) *TagAssignmentEdge {
 	return &TagAssignmentEdge{
-		Cursor: assignment.CursorKey(orderBy),
-		Node:   NewTagAssignment(assignment),
-	}
-}
-
-func NewTagAssignment(assignment *coredata.TagAssignment) *TagAssignment {
-	return &TagAssignment{
-		ID:         assignment.ID,
-		ResourceID: assignment.ResourceID,
+		Cursor:     assignment.CursorKey(orderBy),
 		CreatedAt:  assignment.CreatedAt,
+		ResourceID: assignment.ResourceID,
 	}
 }

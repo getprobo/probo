@@ -12473,8 +12473,7 @@ func (r *Resolver) AttachTagTool(ctx context.Context, req *mcp.CallToolRequest, 
 	}
 
 	return nil, types.AttachTagOutput{
-		Tag:             types.NewTag(result.Tag),
-		TagAssignmentID: result.Assignment.ID,
+		Tag: types.NewTag(result.Tag),
 	}, nil
 }
 
@@ -12497,8 +12496,8 @@ func (r *Resolver) DetachTagTool(ctx context.Context, req *mcp.CallToolRequest, 
 	}
 
 	return nil, types.DetachTagOutput{
-		Tag:                    types.NewTag(result.Tag),
-		DeletedTagAssignmentID: result.DeletedAssignmentID,
+		Tag:      types.NewTag(result.Tag),
+		Detached: result.Detached,
 	}, nil
 }
 

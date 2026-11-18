@@ -78,8 +78,7 @@ func TestMCP_Tag(t *testing.T) {
 	assert.Nil(t, updateOut.Tag.Color, "null color clears it")
 
 	type attachOut struct {
-		Tag             mcpTag `json:"tag"`
-		TagAssignmentID string `json:"tag_assignment_id"`
+		Tag mcpTag `json:"tag"`
 	}
 
 	var attachProduction attachOut
@@ -89,7 +88,6 @@ func TestMCP_Tag(t *testing.T) {
 		"tag_id":      production.ID,
 	}, &attachProduction)
 	assert.Equal(t, production.ID, attachProduction.Tag.ID)
-	assert.NotEmpty(t, attachProduction.TagAssignmentID)
 
 	var attachStaging attachOut
 
@@ -98,7 +96,6 @@ func TestMCP_Tag(t *testing.T) {
 		"tag_id":      staging.ID,
 	}, &attachStaging)
 	assert.Equal(t, staging.ID, attachStaging.Tag.ID)
-	assert.NotEmpty(t, attachStaging.TagAssignmentID)
 
 	var forResourceOut struct {
 		Tags []mcpTag `json:"tags"`
@@ -147,8 +144,8 @@ func TestMCP_Tag(t *testing.T) {
 	assert.Equal(t, 2, found, "both tags are in the catalog")
 
 	type detachOut struct {
-		Tag                    mcpTag  `json:"tag"`
-		DeletedTagAssignmentID *string `json:"deleted_tag_assignment_id"`
+		Tag      mcpTag `json:"tag"`
+		Detached bool   `json:"detached"`
 	}
 
 	var detached detachOut
@@ -157,8 +154,8 @@ func TestMCP_Tag(t *testing.T) {
 		"resource_id": documentID,
 		"tag_id":      staging.ID,
 	}, &detached)
-	require.NotNil(t, detached.DeletedTagAssignmentID)
-	assert.Equal(t, attachStaging.TagAssignmentID, *detached.DeletedTagAssignmentID)
+	assert.True(t, detached.Detached)
+	assert.Equal(t, staging.ID, detached.Tag.ID)
 
 	var detachedAgain detachOut
 
@@ -166,7 +163,7 @@ func TestMCP_Tag(t *testing.T) {
 		"resource_id": documentID,
 		"tag_id":      staging.ID,
 	}, &detachedAgain)
-	assert.Nil(t, detachedAgain.DeletedTagAssignmentID)
+	assert.False(t, detachedAgain.Detached)
 
 	var deletedProduction struct {
 		DeletedTagID string `json:"deleted_tag_id"`

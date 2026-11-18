@@ -68,9 +68,9 @@ export async function execute(
 					color
 				}
 				tagAssignmentEdge {
+					createdAt
 					node {
 						id
-						createdAt
 					}
 				}
 			}

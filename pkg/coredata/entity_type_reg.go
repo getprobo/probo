@@ -178,7 +178,7 @@ const (
 	CMPDomainEntityType                              uint16 = 146
 	CMPDomainSurfaceEntityType                       uint16 = 147
 	TagEntityType                                    uint16 = 148
-	TagAssignmentEntityType                          uint16 = 149
+	_                                                uint16 = 149 // TagAssignmentEntityType - removed
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -453,8 +453,6 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &CMPDomainSurface{ID: id}, true
 	case TagEntityType:
 		return &Tag{ID: id}, true
-	case TagAssignmentEntityType:
-		return &TagAssignment{ID: id}, true
 	default:
 		return nil, false
 	}

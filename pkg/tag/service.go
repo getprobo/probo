@@ -73,8 +73,8 @@ type (
 
 	DetachResult struct {
 		Tag *coredata.Tag
-		// DeletedAssignmentID is nil when the tag was not attached.
-		DeletedAssignmentID *gid.GID
+		// Detached is false when the tag was not attached.
+		Detached bool
 	}
 )
 
@@ -404,7 +404,6 @@ func (s *Service) Attach(
 			}
 
 			assignment := &coredata.TagAssignment{
-				ID:             gid.New(scope.GetTenantID(), coredata.TagAssignmentEntityType),
 				OrganizationID: tag.OrganizationID,
 				ResourceID:     req.ResourceID,
 				TagID:          tag.ID,
@@ -442,7 +441,7 @@ func (s *Service) Attach(
 }
 
 // Detach removes the tag from the resource. Detaching a tag that is not
-// attached succeeds and reports no deleted assignment.
+// attached succeeds and reports Detached false.
 func (s *Service) Detach(
 	ctx context.Context,
 	scope coredata.Scoper,
@@ -474,7 +473,7 @@ func (s *Service) Detach(
 			err := assignment.DeleteByResourceIDAndTagID(ctx, tx, scope, req.ResourceID, req.TagID)
 			switch {
 			case err == nil:
-				result.DeletedAssignmentID = &assignment.ID
+				result.Detached = true
 
 				if err := coredata.RefreshSearchTagVector(ctx, tx, req.ResourceID); err != nil {
 					return fmt.Errorf("cannot refresh search tag vector: %w", err)

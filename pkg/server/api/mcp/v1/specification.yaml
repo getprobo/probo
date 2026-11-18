@@ -15449,13 +15449,9 @@ components:
       type: object
       required:
         - tag
-        - tag_assignment_id
       properties:
         tag:
           $ref: "#/components/schemas/Tag"
-        tag_assignment_id:
-          $ref: "#/components/schemas/GID"
-          description: Assignment of the tag to the resource
 
     DetachTagInput:
       type: object
@@ -15474,14 +15470,13 @@ components:
       type: object
       required:
         - tag
+        - detached
       properties:
         tag:
           $ref: "#/components/schemas/Tag"
-        deleted_tag_assignment_id:
-          anyOf:
-            - $ref: "#/components/schemas/GID"
-            - type: "null"
-          description: Removed assignment, or null when the tag was not attached
+        detached:
+          type: boolean
+          description: True when the tag was removed from the resource. False when it was not attached.
 
     ListTagsInput:
       type: object

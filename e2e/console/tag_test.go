@@ -65,7 +65,7 @@ const (
 				tag {
 					id
 				}
-				deletedTagAssignmentId
+				detached
 			}
 		}
 	`
@@ -179,7 +179,7 @@ type (
 			Tag struct {
 				ID string `json:"id"`
 			} `json:"tag"`
-			DeletedTagAssignmentID *string `json:"deletedTagAssignmentId"`
+			Detached bool `json:"detached"`
 		} `json:"detachTag"`
 	}
 
@@ -452,14 +452,14 @@ func TestTag_AttachAndDetach(t *testing.T) {
 
 	first := attachTag(t, owner, documentID, tagID)
 	assert.Equal(t, tagID, first.AttachTag.Tag.ID)
-	assert.NotEmpty(t, first.AttachTag.TagAssignmentEdge.Node.ID)
+	assert.Equal(t, documentID, first.AttachTag.TagAssignmentEdge.Node.ID)
 
 	second := attachTag(t, owner, documentID, tagID)
 	assert.Equal(
 		t,
-		first.AttachTag.TagAssignmentEdge.Node.ID,
+		documentID,
 		second.AttachTag.TagAssignmentEdge.Node.ID,
-		"attaching the same tag again returns the existing assignment",
+		"attaching the same tag again returns the resource",
 	)
 
 	forResource := resourceTags(t, owner, documentID)
@@ -473,12 +473,10 @@ func TestTag_AttachAndDetach(t *testing.T) {
 					id
 					assignments(first: 50) {
 						edges {
+							createdAt
 							node {
 								id
-								resource {
-									id
-									__typename
-								}
+								__typename
 							}
 						}
 						totalCount
@@ -493,12 +491,10 @@ func TestTag_AttachAndDetach(t *testing.T) {
 			ID          string `json:"id"`
 			Assignments struct {
 				Edges []struct {
-					Node struct {
+					CreatedAt string `json:"createdAt"`
+					Node      *struct {
 						ID       string `json:"id"`
-						Resource *struct {
-							ID       string `json:"id"`
-							Typename string `json:"__typename"`
-						} `json:"resource"`
+						Typename string `json:"__typename"`
 					} `json:"node"`
 				} `json:"edges"`
 				TotalCount int `json:"totalCount"`
@@ -510,16 +506,16 @@ func TestTag_AttachAndDetach(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 1, nodeResult.Node.Assignments.TotalCount)
 	require.Len(t, nodeResult.Node.Assignments.Edges, 1)
-	require.NotNil(t, nodeResult.Node.Assignments.Edges[0].Node.Resource)
-	assert.Equal(t, documentID, nodeResult.Node.Assignments.Edges[0].Node.Resource.ID)
-	assert.Equal(t, "Document", nodeResult.Node.Assignments.Edges[0].Node.Resource.Typename)
+	require.NotNil(t, nodeResult.Node.Assignments.Edges[0].Node)
+	assert.NotEmpty(t, nodeResult.Node.Assignments.Edges[0].CreatedAt)
+	assert.Equal(t, documentID, nodeResult.Node.Assignments.Edges[0].Node.ID)
+	assert.Equal(t, "Document", nodeResult.Node.Assignments.Edges[0].Node.Typename)
 
 	detached := detachTag(t, owner, documentID, tagID)
-	require.NotNil(t, detached.DetachTag.DeletedTagAssignmentID)
-	assert.Equal(t, first.AttachTag.TagAssignmentEdge.Node.ID, *detached.DetachTag.DeletedTagAssignmentID)
+	assert.True(t, detached.DetachTag.Detached)
 
 	again := detachTag(t, owner, documentID, tagID)
-	assert.Nil(t, again.DetachTag.DeletedTagAssignmentID, "detaching a tag that is not attached is a no-op")
+	assert.False(t, again.DetachTag.Detached, "detaching a tag that is not attached is a no-op")
 
 	assert.Empty(t, resourceTags(t, owner, documentID))
 }
@@ -546,9 +542,7 @@ func TestTag_AssignmentsPaginate(t *testing.T) {
 					assignments(first: $first, after: $after) {
 						edges {
 							node {
-								resource {
-									id
-								}
+								id
 							}
 						}
 						pageInfo {
@@ -567,9 +561,7 @@ func TestTag_AssignmentsPaginate(t *testing.T) {
 			Assignments struct {
 				Edges []struct {
 					Node struct {
-						Resource struct {
-							ID string `json:"id"`
-						} `json:"resource"`
+						ID string `json:"id"`
 					} `json:"node"`
 				} `json:"edges"`
 				PageInfo struct {
@@ -605,7 +597,7 @@ func TestTag_AssignmentsPaginate(t *testing.T) {
 
 	for _, page := range []assignmentsPage{firstPage, secondPage} {
 		for _, edge := range page.Node.Assignments.Edges {
-			seen[edge.Node.Resource.ID] = struct{}{}
+			seen[edge.Node.ID] = struct{}{}
 		}
 	}
 
@@ -760,7 +752,7 @@ func TestTag_RBAC(t *testing.T) {
 		assert.Equal(t, tagID, attached.AttachTag.Tag.ID)
 
 		detached := detachTag(t, admin, documentID, tagID)
-		require.NotNil(t, detached.DetachTag.DeletedTagAssignmentID)
+		assert.True(t, detached.DetachTag.Detached)
 
 		_, err := admin.Do(deleteTagMutation, map[string]any{
 			"input": map[string]any{"tagId": tagID},

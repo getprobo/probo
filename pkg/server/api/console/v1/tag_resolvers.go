@@ -188,8 +188,8 @@ func (r *mutationResolver) DetachTag(ctx context.Context, input types.DetachTagI
 	}
 
 	return &types.DetachTagPayload{
-		Tag:                    types.NewTag(result.Tag),
-		DeletedTagAssignmentID: result.DeletedAssignmentID,
+		Tag:      types.NewTag(result.Tag),
+		Detached: result.Detached,
 	}, nil
 }
 
@@ -305,22 +305,6 @@ func (r *tagResolver) Permission(ctx context.Context, obj *types.Tag, action str
 	return r.Resolver.Permission(ctx, obj, action)
 }
 
-// Resource is the resolver for the resource field.
-func (r *tagAssignmentResolver) Resource(ctx context.Context, obj *types.TagAssignment) (types.Node, error) {
-	node, err := (&queryResolver{r.Resolver}).Node(ctx, obj.ResourceID)
-	if err != nil {
-		// Assignments outlive deleted resources until those deletions clean
-		// them up, so a missing resource is expected rather than an error.
-		if gqlx.IsNotFound(err) {
-			return nil, nil
-		}
-
-		return nil, err
-	}
-
-	return node, nil
-}
-
 // TotalCount is the resolver for the totalCount field.
 func (r *tagAssignmentConnectionResolver) TotalCount(ctx context.Context, obj *types.TagAssignmentConnection) (int, error) {
 	scope, err := r.authorize(ctx, obj.ParentID, tag.ActionAssignmentGet)
@@ -342,6 +326,22 @@ func (r *tagAssignmentConnectionResolver) TotalCount(ctx context.Context, obj *t
 	r.logger.ErrorCtx(ctx, "unsupported resolver for tag assignment connection", log.String("resolver", fmt.Sprintf("%T", obj.Resolver)))
 
 	return 0, gqlx.Internal(ctx)
+}
+
+// Node is the resolver for the node field.
+func (r *tagAssignmentEdgeResolver) Node(ctx context.Context, obj *types.TagAssignmentEdge) (types.Node, error) {
+	node, err := (&queryResolver{r.Resolver}).Node(ctx, obj.ResourceID)
+	if err != nil {
+		// Assignments outlive deleted resources until those deletions clean
+		// them up, so a missing resource is expected rather than an error.
+		if gqlx.IsNotFound(err) {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
+	return node, nil
 }
 
 // TotalCount is the resolver for the totalCount field.
@@ -388,12 +388,14 @@ func (r *Resolver) SearchResultConnection() schema.SearchResultConnectionResolve
 // Tag returns schema.TagResolver implementation.
 func (r *Resolver) Tag() schema.TagResolver { return &tagResolver{r} }
 
-// TagAssignment returns schema.TagAssignmentResolver implementation.
-func (r *Resolver) TagAssignment() schema.TagAssignmentResolver { return &tagAssignmentResolver{r} }
-
 // TagAssignmentConnection returns schema.TagAssignmentConnectionResolver implementation.
 func (r *Resolver) TagAssignmentConnection() schema.TagAssignmentConnectionResolver {
 	return &tagAssignmentConnectionResolver{r}
+}
+
+// TagAssignmentEdge returns schema.TagAssignmentEdgeResolver implementation.
+func (r *Resolver) TagAssignmentEdge() schema.TagAssignmentEdgeResolver {
+	return &tagAssignmentEdgeResolver{r}
 }
 
 // TagConnection returns schema.TagConnectionResolver implementation.
@@ -402,7 +404,7 @@ func (r *Resolver) TagConnection() schema.TagConnectionResolver { return &tagCon
 type (
 	searchResultConnectionResolver  struct{ *Resolver }
 	tagResolver                     struct{ *Resolver }
-	tagAssignmentResolver           struct{ *Resolver }
 	tagAssignmentConnectionResolver struct{ *Resolver }
+	tagAssignmentEdgeResolver       struct{ *Resolver }
 	tagConnectionResolver           struct{ *Resolver }
 )

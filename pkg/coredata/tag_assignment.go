@@ -36,7 +36,6 @@ import (
 
 type (
 	TagAssignment struct {
-		ID             gid.GID   `db:"id"`
 		OrganizationID gid.GID   `db:"organization_id"`
 		ResourceID     gid.GID   `db:"resource_id"`
 		TagID          gid.GID   `db:"tag_id"`
@@ -49,7 +48,7 @@ type (
 func (a TagAssignment) CursorKey(orderBy TagAssignmentOrderField) page.CursorKey {
 	switch orderBy {
 	case TagAssignmentOrderFieldCreatedAt:
-		return page.NewCursorKey(a.ID, a.CreatedAt)
+		return page.NewCursorKey(a.ResourceID, a.CreatedAt)
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
@@ -64,7 +63,6 @@ func (a *TagAssignment) LoadByResourceIDAndTagID(
 ) error {
 	q := `
 SELECT
-	id,
 	organization_id,
 	resource_id,
 	tag_id,
@@ -113,7 +111,6 @@ func (a *TagAssignment) Insert(
 	q := `
 INSERT INTO tag_assignments (
 	tenant_id,
-	id,
 	organization_id,
 	resource_id,
 	tag_id,
@@ -121,7 +118,6 @@ INSERT INTO tag_assignments (
 )
 VALUES (
 	@tenant_id,
-	@id,
 	@organization_id,
 	@resource_id,
 	@tag_id,
@@ -131,7 +127,6 @@ VALUES (
 
 	args := pgx.StrictNamedArgs{
 		"tenant_id":       scope.GetTenantID(),
-		"id":              a.ID,
 		"organization_id": a.OrganizationID,
 		"resource_id":     a.ResourceID,
 		"tag_id":          a.TagID,
@@ -141,37 +136,12 @@ VALUES (
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
-			if pgErr.Code == "23505" && pgErr.ConstraintName == "tag_assignments_resource_id_tag_id_key" {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "tag_assignments_pkey" {
 				return ErrResourceAlreadyExists
 			}
 		}
 
 		return fmt.Errorf("cannot insert tag assignment: %w", err)
-	}
-
-	return nil
-}
-
-func (a *TagAssignment) Delete(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-) error {
-	q := `
-DELETE FROM tag_assignments
-WHERE
-	%s
-	AND id = @id
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{"id": a.ID}
-	maps.Copy(args, scope.SQLArguments())
-
-	_, err := conn.Exec(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot delete tag assignment: %w", err)
 	}
 
 	return nil
@@ -193,7 +163,6 @@ WHERE
 	AND resource_id = @resource_id
 	AND tag_id = @tag_id
 RETURNING
-	id,
 	organization_id,
 	resource_id,
 	tag_id,
@@ -236,7 +205,6 @@ func (as *TagAssignments) LoadByTagID(
 ) error {
 	q := `
 SELECT
-	id,
 	organization_id,
 	resource_id,
 	tag_id,
@@ -315,7 +283,6 @@ func (as *TagAssignments) LoadByResourceIDs(
 
 	q := `
 SELECT
-	id,
 	organization_id,
 	resource_id,
 	tag_id,

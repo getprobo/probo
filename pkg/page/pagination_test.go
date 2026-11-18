@@ -337,6 +337,33 @@ func TestPage_ForwardAndBack(t *testing.T) {
 	assert.Equal(t, []string{"a", "b", "c", "d", "e"}, seen)
 }
 
+type tieBreakOrderField string
+
+func (f tieBreakOrderField) Column() string         { return string(f) }
+func (f tieBreakOrderField) String() string         { return string(f) }
+func (f tieBreakOrderField) TieBreakColumn() string { return "resource_id" }
+
+func TestCursor_TieBreakColumn(t *testing.T) {
+	t.Parallel()
+
+	standard := NewCursor(2, nil, Head, OrderBy[testOrderField]{
+		Field:     "name",
+		Direction: OrderDirectionAsc,
+	})
+	assert.Contains(t, standard.SQLFragment(), ", id ")
+
+	key := NewCursorKey(gid.Nil, "2026-01-01T00:00:00Z")
+	custom := NewCursor(2, &key, Head, OrderBy[tieBreakOrderField]{
+		Field:     "created_at",
+		Direction: OrderDirectionAsc,
+	})
+
+	fragment := custom.SQLFragment()
+	assert.Contains(t, fragment, "resource_id < @cursor_id")
+	assert.Contains(t, fragment, ", resource_id ")
+	assert.NotContains(t, fragment, ", id ")
+}
+
 func TestPage_FirstAndLastOnEmptyPage(t *testing.T) {
 	t.Parallel()
 

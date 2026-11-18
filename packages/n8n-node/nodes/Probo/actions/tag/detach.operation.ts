@@ -66,7 +66,7 @@ export async function execute(
 					id
 					name
 				}
-				deletedTagAssignmentId
+				detached
 			}
 		}
 	`;
