@@ -87,8 +87,6 @@ export function useSuggestionController(documentId: string, mode: DocumentMode) 
   const ownedIds = useRef(new Set<string>());
   const deniedIds = useRef(new Set<string>());
   const claims = useRef(new Map<string, Promise<boolean>>());
-  const profileIdRef = useRef(profileId);
-  profileIdRef.current = profileId;
   const showBlockedToast = useCallback(() => {
     toast.add({
       title: t("details.editor.suggestionFailed"),
@@ -124,12 +122,11 @@ export function useSuggestionController(documentId: string, mode: DocumentMode) 
         { id },
         { fetchPolicy: "network-only" },
       ).toPromise().then((data) => {
-        const profile = profileIdRef.current;
-        if (!profile) return false;
+        if (!profileId) return false;
         const authorId = data?.node?.__typename === "DocumentSuggestion"
           ? data.node.author.id
           : null;
-        if (authorId === profile) {
+        if (authorId === profileId) {
           ownedIds.current.add(id);
           return true;
         }
@@ -213,7 +210,7 @@ export function useSuggestionController(documentId: string, mode: DocumentMode) 
       current.request = request;
       return request;
     };
-  }, [documentId, environment, notifyBlocked, startSuggestion, t, toast]);
+  }, [documentId, environment, notifyBlocked, profileId, startSuggestion, t, toast]);
 
   const setEditor = useCallback((editor: Editor | null) => {
     editorRef.current = editor;
