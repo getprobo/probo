@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"unicode/utf8"
 )
 
 // MinLen validates that a string has at least the specified minimum length.
@@ -64,6 +65,32 @@ func MaxLen(maxLength int) ValidatorFunc {
 		}
 
 		if len(str) > maxLength {
+			return newValidationError(
+				ErrorCodeTooLong,
+				fmt.Sprintf("must be at most %d characters", maxLength),
+			)
+		}
+
+		return nil
+	}
+}
+
+// MaxRunes validates that a string does not exceed the specified number of
+// Unicode code points. JSON Schema maxLength counts code points, while MaxLen
+// counts bytes.
+func MaxRunes(maxLength int) ValidatorFunc {
+	return func(value any) *ValidationError {
+		actualValue, isNil := dereferenceValue(value)
+		if isNil {
+			return nil
+		}
+
+		str, ok := actualValue.(string)
+		if !ok {
+			return newValidationError(ErrorCodeInvalidFormat, "value must be a string")
+		}
+
+		if utf8.RuneCountInString(str) > maxLength {
 			return newValidationError(
 				ErrorCodeTooLong,
 				fmt.Sprintf("must be at most %d characters", maxLength),

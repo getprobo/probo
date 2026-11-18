@@ -384,6 +384,9 @@ probo:
     weekday: 1
     hour: 16
 
+  # MCP submit_feedback. The tool is hidden when this is empty.
+  feedbackUrl: ""
+
   # Outbound webhook delivery
   webhook:
     senderInterval: 5

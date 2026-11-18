@@ -21,6 +21,7 @@
 package validator
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -68,6 +69,33 @@ func TestMaxLen(t *testing.T) {
 			err := MaxLen(tt.maxLen)(tt.value)
 			if (err != nil) != tt.wantError {
 				t.Errorf("MaxLen() error = %v, wantError %v", err, tt.wantError)
+			}
+		})
+	}
+}
+
+func TestMaxRunes(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		value     any
+		maxLen    int
+		wantError bool
+	}{
+		{name: "counts code points", value: strings.Repeat("é", 3), maxLen: 3},
+		{name: "rejects one more code point", value: strings.Repeat("é", 4), maxLen: 3, wantError: true},
+		{name: "nil pointer", value: (*string)(nil), maxLen: 1},
+		{name: "non-string", value: 123, maxLen: 3, wantError: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			err := MaxRunes(tt.maxLen)(tt.value)
+			if (err != nil) != tt.wantError {
+				t.Errorf("MaxRunes() error = %v, wantError %v", err, tt.wantError)
 			}
 		})
 	}

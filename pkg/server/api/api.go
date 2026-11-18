@@ -130,6 +130,7 @@ type (
 		GCPConnectorInstall      cloudgcp.ConnectorInstallConfig
 		AzureConnectorInstall    cloudazure.ConnectorInstallConfig
 		LinearWebhookSecret      string
+		MCPFeedbackURL           string
 	}
 
 	MCPConfig struct {
@@ -379,6 +380,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.CustomDomainCname,
 			cfg.SlackbotInstallations,
 			cfg.BotDeliveryDestinations,
+			mcp_v1.NewFeedbackConfig(cfg.MCPFeedbackURL),
 		),
 		slackHandler: slack_v1.NewMux(
 			cfg.Logger.Named("slack.v1"),

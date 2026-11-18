@@ -393,6 +393,7 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Equal(t, 60, cfg.Probod.Notifications.Mailer.MailerInterval)
 	assert.Equal(t, 60, cfg.Probod.Notifications.Slack.SenderInterval)
 	assert.Empty(t, cfg.Probod.Notifications.Slack.SigningSecret)
+	assert.Empty(t, cfg.Probod.Notifications.FeedbackURL)
 	assert.Equal(t, 5, cfg.Probod.Notifications.Webhook.SenderInterval)
 	assert.Equal(t, 15, cfg.Probod.Notifications.Webhook.RequestTimeout)
 	assert.Equal(t, 86400, cfg.Probod.Notifications.Webhook.CacheTTL)
@@ -554,6 +555,7 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["PROBOD_WEBHOOK_RETRY_MAX"] = "7200"
 	env["PROBOD_WEBHOOK_MAX_CONCURRENCY"] = "8"
 	env["PROBOD_CONNECTOR_SLACK_SIGNING_SECRET"] = "slack-signing-secret"
+	env["PROBOD_FEEDBACK_URL"] = "https://example.com/feedback"
 	env["PROBOD_NOTIFICATION_EMAIL_INTERVAL"] = "120"
 	env["PROBOD_TASK_RECURRENCE_INTERVAL"] = "600"
 	env["PROBOD_NOTIFICATION_EMAIL_DEBOUNCE_DELAY"] = "60"
@@ -704,6 +706,7 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.True(t, cfg.Probod.AWS.UsePathStyle)
 	// Notifications
 	assert.Equal(t, "slack-signing-secret", cfg.Probod.Notifications.Slack.SigningSecret)
+	assert.Equal(t, "https://example.com/feedback", cfg.Probod.Notifications.FeedbackURL)
 	assert.Equal(t, 10, cfg.Probod.Notifications.Webhook.SenderInterval)
 	assert.Equal(t, 20, cfg.Probod.Notifications.Webhook.RequestTimeout)
 	assert.Equal(t, 3600, cfg.Probod.Notifications.Webhook.CacheTTL)

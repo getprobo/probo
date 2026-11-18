@@ -12385,3 +12385,7 @@ func (r *Resolver) ChangeDocumentBlockTool(ctx context.Context, req *mcp.CallToo
 
 	return nil, types.ChangeDocumentBlockOutput{Document: document, Suggestion: suggestion}, nil
 }
+
+func (r *Resolver) SubmitFeedbackTool(ctx context.Context, _ *mcp.CallToolRequest, input *types.SubmitFeedbackInput) (*mcp.CallToolResult, types.SubmitFeedbackOutput, error) {
+	return r.submitFeedback(ctx, input)
+}

@@ -4,6 +4,12 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Added
+
+- MCP `submit_feedback` posts a webhook-shaped body, including the
+  caller's name and email, to `PROBOD_FEEDBACK_URL`. There is no
+  signature. The tool is hidden when that URL is unset
+
 ## [0.351.1] - 2026-11-17
 
 ### Fixed

@@ -1104,6 +1104,7 @@ func (impl *Implm) Run(
 				TerraformModuleSource: impl.cfg.IdentityFederation.AzureTerraformModuleSource,
 			},
 			LinearWebhookSecret: impl.cfg.GetLinearWebhookSecret(),
+			MCPFeedbackURL:      impl.cfg.Notifications.FeedbackURL,
 		},
 	)
 	if err != nil {

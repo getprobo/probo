@@ -128,6 +128,7 @@ type Config struct {
 	GCPConnectorInstall      cloudgcp.ConnectorInstallConfig
 	AzureConnectorInstall    cloudazure.ConnectorInstallConfig
 	LinearWebhookSecret      string
+	MCPFeedbackURL           string
 }
 
 type Server struct {
@@ -194,6 +195,7 @@ func NewServer(cfg Config) (*Server, error) {
 		GCPConnectorInstall:      cfg.GCPConnectorInstall,
 		AzureConnectorInstall:    cfg.AzureConnectorInstall,
 		LinearWebhookSecret:      cfg.LinearWebhookSecret,
+		MCPFeedbackURL:           cfg.MCPFeedbackURL,
 	}
 
 	apiServer, err := api.NewServer(apiCfg)

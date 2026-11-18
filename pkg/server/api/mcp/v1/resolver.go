@@ -29,6 +29,8 @@ import (
 	"fmt"
 	"strings"
 
+	"net/http"
+
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/baseurl"
@@ -98,6 +100,8 @@ type Resolver struct {
 	customDomainCname     string
 	slackbotInstallations *slackchannel.InstallationService
 	slackDestinations     SlackDestinations
+	feedback              FeedbackConfig
+	feedbackClient        *http.Client
 }
 
 func markdownToProseMirrorJSON(markdown string) (string, error) {

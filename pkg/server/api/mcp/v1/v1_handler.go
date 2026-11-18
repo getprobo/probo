@@ -80,6 +80,7 @@ func NewMux(
 	customDomainCname string,
 	slackbotInstallations *slackchannel.InstallationService,
 	slackDestinations SlackDestinations,
+	feedback FeedbackConfig,
 ) *chi.Mux {
 	logger = logger.Named("mcp.v1")
 
@@ -109,6 +110,8 @@ func NewMux(
 		customDomainCname:     customDomainCname,
 		slackbotInstallations: slackbotInstallations,
 		slackDestinations:     slackDestinations,
+		feedback:              feedback,
+		feedbackClient:        feedback.client(logger),
 	}
 
 	// Tools are registered once for this process, so clients should not
@@ -124,6 +127,8 @@ func NewMux(
 			},
 		}),
 	)
+
+	configureFeedbackTool(mcpServer, feedback)
 
 	mcpServer.AddReceivingMiddleware(mcpx.LoggingMiddleware(logger))
 	mcpServer.AddReceivingMiddleware(mcpx.ListToolsCacheMiddleware(5 * time.Minute))

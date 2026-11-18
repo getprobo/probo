@@ -314,6 +314,9 @@ probo:
   #   confidenceThreshold: 0.7
   #   maxAttempts: 3
 
+  # MCP submit_feedback. Leave empty to hide the tool.
+  feedbackUrl: ""
+
   # Slackbot assistant used by Probo's production deployment. Set enabled to
   # false to deploy without Slack features. Events API URL:
   # https://<baseUrl>/slack/v1/events

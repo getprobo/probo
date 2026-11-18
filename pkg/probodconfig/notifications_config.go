@@ -26,6 +26,9 @@ type NotificationsConfig struct {
 	Webhook WebhookConfig            `json:"webhook"`
 	Email   EmailNotificationConfig  `json:"email"`
 	Weekly  WeeklyNotificationConfig `json:"weekly"`
+	// FeedbackURL receives MCP submit_feedback posts. The tool stays hidden
+	// when this is empty.
+	FeedbackURL string `json:"feedback-url,omitempty"`
 }
 
 type WebhookConfig struct {

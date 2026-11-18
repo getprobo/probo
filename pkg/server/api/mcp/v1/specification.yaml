@@ -19421,6 +19421,25 @@ components:
           format: int64
           description: File size in bytes
 
+    SubmitFeedbackInput:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          maxLength: 3000
+          description: Feedback for the Probo team. Describe the issue and include a proposed fix when you have one.
+
+    SubmitFeedbackOutput:
+      type: object
+      required:
+        - submitted
+      properties:
+        submitted:
+          type: boolean
+          description: True when the feedback was delivered
+
 tools:
   - name: listOrganizations
     title: List Organizations
@@ -24553,3 +24572,15 @@ tools:
       $ref: "#/components/schemas/UploadFileInput"
     outputSchema:
       $ref: "#/components/schemas/UploadFileOutput"
+  - name: submit_feedback
+    title: Submit Feedback
+    description: Send product feedback when a tool is missing, wrong, or confusing. The caller's name and email are included. Include the issue and a proposed fix when you have one.
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: true
+    inputSchema:
+      $ref: "#/components/schemas/SubmitFeedbackInput"
+    outputSchema:
+      $ref: "#/components/schemas/SubmitFeedbackOutput"

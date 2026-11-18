@@ -273,6 +273,7 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 					DebounceDelay:    b.resolver.getEnvIntOrDefault("PROBOD_NOTIFICATION_EMAIL_DEBOUNCE_DELAY", 900),
 					ReminderInterval: b.resolver.getEnvIntOrDefault("PROBOD_NOTIFICATION_EMAIL_REMINDER_INTERVAL", 86400),
 				},
+				FeedbackURL: b.resolver.getEnv("PROBOD_FEEDBACK_URL"),
 				Weekly: probodconfig.WeeklyNotificationConfig{
 					Weekday: b.resolver.getEnvIntOrDefault("PROBOD_NOTIFICATION_WEEKLY_WEEKDAY", 1),
 					Hour:    b.resolver.getEnvIntOrDefault("PROBOD_NOTIFICATION_WEEKLY_HOUR", 16),
