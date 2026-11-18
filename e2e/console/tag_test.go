@@ -943,20 +943,16 @@ func TestTag_Search(t *testing.T) {
 	assert.Empty(t, afterDeleteTitle.Search.Edges)
 
 	analysisID := factory.CreateRiskAnalysis(owner, factory.Attrs{"name": "Cascade Analysis UniqueParent"})
-	diagramID := factory.CreateRiskAnalysisDiagram(owner, analysisID, factory.Attrs{
+	factory.CreateRiskAnalysisDiagram(owner, analysisID, factory.Attrs{
 		"name": "Cascade Diagram UniqueChild",
 	})
-	cascadeTagID := createTag(t, owner, "SearchCascadeChild")
-	attachTag(t, owner, diagramID, cascadeTagID)
 
 	byChild := searchResources(t, owner, orgID, "UniqueChild")
-	require.Len(t, byChild.Search.Edges, 1)
-	assert.Equal(t, diagramID, byChild.Search.Edges[0].Node.ID)
-	assert.Equal(t, "RiskAnalysisDiagram", byChild.Search.Edges[0].Node.Typename)
+	assert.Empty(t, byChild.Search.Edges)
 
-	byCascadeTag := searchResources(t, owner, orgID, "tag:SearchCascadeChild")
-	require.Len(t, byCascadeTag.Search.Edges, 1)
-	assert.Equal(t, diagramID, byCascadeTag.Search.Edges[0].Node.ID)
+	byParent := searchResources(t, owner, orgID, "UniqueParent")
+	require.Len(t, byParent.Search.Edges, 1)
+	assert.Equal(t, analysisID, byParent.Search.Edges[0].Node.ID)
 
 	_, err = owner.Do(`
 		mutation($input: DeleteRiskAnalysisInput!) {
@@ -965,10 +961,6 @@ func TestTag_Search(t *testing.T) {
 	`, map[string]any{"input": map[string]any{"riskAnalysisId": analysisID}})
 	require.NoError(t, err)
 
-	afterCascade := searchResources(t, owner, orgID, "tag:SearchCascadeChild")
-	assert.Empty(t, afterCascade.Search.Edges)
-	assert.Equal(t, 0, afterCascade.Search.TotalCount)
-
-	afterCascadeTitle := searchResources(t, owner, orgID, "UniqueChild")
-	assert.Empty(t, afterCascadeTitle.Search.Edges)
+	afterDeleteParent := searchResources(t, owner, orgID, "UniqueParent")
+	assert.Empty(t, afterDeleteParent.Search.Edges)
 }

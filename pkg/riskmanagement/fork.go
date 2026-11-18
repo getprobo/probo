@@ -178,17 +178,6 @@ func copyDiagram(
 		return nil, fmt.Errorf("cannot insert diagram: %w", err)
 	}
 
-	if err := coredata.UpsertSearchResource(
-		ctx,
-		tx,
-		copied.ID,
-		copied.OrganizationID,
-		copied.Name,
-		copied.SearchText(),
-	); err != nil {
-		return nil, fmt.Errorf("cannot sync search: %w", err)
-	}
-
 	if err := copyBoundaries(ctx, tx, scope, source.ID, copied, now, idMap); err != nil {
 		return nil, fmt.Errorf("cannot copy boundaries: %w", err)
 	}
@@ -266,17 +255,6 @@ func copyBoundaries(
 
 		if err := copied.Insert(ctx, tx, scope); err != nil {
 			return fmt.Errorf("cannot insert boundary: %w", err)
-		}
-
-		if err := coredata.UpsertSearchResource(
-			ctx,
-			tx,
-			copied.ID,
-			copied.OrganizationID,
-			copied.Name,
-			copied.SearchText(),
-		); err != nil {
-			return fmt.Errorf("cannot sync search: %w", err)
 		}
 	}
 
@@ -392,17 +370,6 @@ func copyProcesses(
 		if err := copied.Insert(ctx, tx, scope); err != nil {
 			return fmt.Errorf("cannot insert process: %w", err)
 		}
-
-		if err := coredata.UpsertSearchResource(
-			ctx,
-			tx,
-			copied.ID,
-			copied.OrganizationID,
-			copied.Name,
-			copied.SearchText(),
-		); err != nil {
-			return fmt.Errorf("cannot sync search: %w", err)
-		}
 	}
 
 	return nil
@@ -457,17 +424,6 @@ func copyThreats(
 		if err := copied.Insert(ctx, tx, scope); err != nil {
 			return fmt.Errorf("cannot insert threat: %w", err)
 		}
-
-		if err := coredata.UpsertSearchResource(
-			ctx,
-			tx,
-			copied.ID,
-			copied.OrganizationID,
-			copied.Name,
-			copied.SearchText(),
-		); err != nil {
-			return fmt.Errorf("cannot sync search: %w", err)
-		}
 	}
 
 	return nil
@@ -517,17 +473,6 @@ func copyScenarios(
 
 		if err := copied.Insert(ctx, tx, scope); err != nil {
 			return nil, fmt.Errorf("cannot insert scenario: %w", err)
-		}
-
-		if err := coredata.UpsertSearchResource(
-			ctx,
-			tx,
-			copied.ID,
-			copied.OrganizationID,
-			copied.Name,
-			copied.SearchText(),
-		); err != nil {
-			return nil, fmt.Errorf("cannot sync search: %w", err)
 		}
 	}
 

@@ -155,26 +155,6 @@ func (ra RiskAnalysis) SearchText() string {
 	return joinSearch(ra.Name, derefSearch(ra.Description))
 }
 
-func (b RiskAnalysisBoundary) SearchText() string {
-	return b.Name
-}
-
-func (s RiskAnalysisDiagram) SearchText() string {
-	return s.Name
-}
-
-func (p RiskAnalysisProcess) SearchText() string {
-	return p.Name
-}
-
-func (s RiskAnalysisScenario) SearchText() string {
-	return joinSearch(s.Name, derefSearch(s.Description))
-}
-
-func (t RiskAnalysisThreat) SearchText() string {
-	return joinSearch(t.Name, t.Category)
-}
-
 func (s StatementOfApplicability) SearchText() string {
 	return s.Name
 }

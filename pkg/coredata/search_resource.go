@@ -294,7 +294,7 @@ func LockID(
 ) error {
 	switch table {
 	case "risks", "third_parties", "evidences", "business_functions", "tags",
-		"risk_analyses", "risk_analysis_diagrams", "risk_analysis_processes":
+		"risk_analyses":
 	default:
 		return fmt.Errorf("cannot lock table %s", table)
 	}
