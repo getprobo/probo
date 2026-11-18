@@ -23,13 +23,23 @@ import { tv } from "tailwind-variants/lite";
 export const documentDetailsPage = tv({
   slots: {
     root: [
-      "grid grid-cols-1 items-start gap-6",
-      "lg:h-full lg:min-h-0 lg:items-stretch lg:overflow-hidden lg:grid-cols-[1fr_calc(280px+0.5rem)]",
+      "grid grid-cols-1 items-start",
+      "transition-[grid-template-columns,column-gap,row-gap] duration-150 ease-out",
+      "lg:h-full lg:min-h-0 lg:items-stretch lg:overflow-hidden",
     ],
-    main: "flex min-w-0 flex-col gap-6 lg:min-h-0",
+    main: "flex min-w-0 flex-col gap-4 lg:min-h-0",
+    backRow: "flex items-center justify-between gap-3",
     titleRow: "grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3",
     title: "min-w-0 flex-1",
-    side: "relative min-w-0 lg:min-h-0",
+    // Below lg the cards sit under the document, so the row track collapses.
+    // At lg the page grid collapses the column instead.
+    sideFrame: [
+      "grid min-w-0 overflow-hidden",
+      "transition-[grid-template-rows] duration-150 ease-out",
+      "lg:h-full lg:min-h-0",
+    ],
+    sideClip: "min-h-0 min-w-0 overflow-hidden lg:h-full lg:min-h-0",
+    side: "relative min-w-0 lg:h-full lg:min-h-0",
     viewport: [
       "w-full overscroll-y-contain outline-none lg:h-full",
       "mask-no-repeat",
@@ -43,6 +53,21 @@ export const documentDetailsPage = tv({
       "data-scrolling:pointer-events-auto data-scrolling:opacity-100 data-scrolling:duration-0",
     ],
     thumb: "w-1 rounded-full bg-sand-a8",
+  },
+  variants: {
+    cards: {
+      true: {
+        root: "gap-6 lg:grid-cols-[1fr_calc(280px+0.5rem)]",
+        sideFrame: "max-lg:grid-rows-[1fr]",
+      },
+      false: {
+        root: "gap-y-0 lg:grid-cols-[1fr_0px] lg:gap-x-0",
+        sideFrame: "max-lg:grid-rows-[0fr]",
+      },
+    },
+  },
+  defaultVariants: {
+    cards: true,
   },
 });
 

@@ -1,6 +1,10 @@
 {
   "details": {
     "back": "Documenten",
+    "cards": {
+      "show": "Details tonen",
+      "hide": "Details verbergen"
+    },
     "notFound": "Document niet gevonden",
     "fields": {
       "title": "Titel"

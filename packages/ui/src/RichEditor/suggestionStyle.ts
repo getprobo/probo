@@ -186,10 +186,10 @@ export function reassignFormatMarks(marks: readonly ProseMirrorMark[], fromId: s
   });
 }
 
-type SlicePlan =
-  | { action: "edit"; id: string }
-  | { action: "fresh" }
-  | { action: "skip" };
+type SlicePlan
+  = | { action: "edit"; id: string }
+    | { action: "fresh" }
+    | { action: "skip" };
 
 // planStyleSlice chooses the suggestion a slice keeps. An existing mark for
 // this style stays on its own id. Text with none of this style is fresh, and

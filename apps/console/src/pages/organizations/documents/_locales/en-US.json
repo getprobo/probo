@@ -1,6 +1,10 @@
 {
   "details": {
     "back": "Documents",
+    "cards": {
+      "show": "Show details",
+      "hide": "Hide details"
+    },
     "notFound": "Document not found",
     "fields": {
       "title": "Title"
