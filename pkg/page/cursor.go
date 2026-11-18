@@ -72,7 +72,7 @@ func (c *Cursor[T]) SQLFragment() string {
 	// NULLs sort after every real value. A reverse page flips that with the scan.
 	nullsLast := c.Position != Tail
 
-	tieBreak := c.tieBreakColumn()
+	tieBreak := "id"
 
 	where := "TRUE"
 	if c.Key != nil {
@@ -87,20 +87,6 @@ func (c *Cursor[T]) SQLFragment() string {
 	orderBy := field + " " + direction + nulls + ", " + tieBreak + " " + direction
 
 	return where + " ORDER BY " + orderBy + " LIMIT @cursor_limit"
-}
-
-func (c *Cursor[T]) tieBreakColumn() string {
-	column := "id"
-
-	if breaker, ok := any(c.OrderBy.Field).(TieBreaker); ok {
-		column = breaker.TieBreakColumn()
-	}
-
-	if !sqlIdent(column) {
-		panic("invalid cursor tie-break column: " + column)
-	}
-
-	return column
 }
 
 func (c *Cursor[T]) SQLArguments() pgx.NamedArgs {

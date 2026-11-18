@@ -29,10 +29,4 @@ type (
 		Column() string
 		fmt.Stringer
 	}
-
-	// TieBreaker sets the unique column that orders rows sharing a sort value.
-	// Without it, the cursor uses id.
-	TieBreaker interface {
-		TieBreakColumn() string
-	}
 )

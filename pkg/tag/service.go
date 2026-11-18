@@ -404,6 +404,7 @@ func (s *Service) Attach(
 			}
 
 			assignment := &coredata.TagAssignment{
+				ID:             gid.New(scope.GetTenantID(), coredata.TagAssignmentEntityType),
 				OrganizationID: tag.OrganizationID,
 				ResourceID:     req.ResourceID,
 				TagID:          tag.ID,

@@ -36,6 +36,7 @@ import (
 
 type (
 	TagAssignment struct {
+		ID             gid.GID   `db:"id"`
 		OrganizationID gid.GID   `db:"organization_id"`
 		ResourceID     gid.GID   `db:"resource_id"`
 		TagID          gid.GID   `db:"tag_id"`
@@ -48,7 +49,7 @@ type (
 func (a TagAssignment) CursorKey(orderBy TagAssignmentOrderField) page.CursorKey {
 	switch orderBy {
 	case TagAssignmentOrderFieldCreatedAt:
-		return page.NewCursorKey(a.ResourceID, a.CreatedAt)
+		return page.NewCursorKey(a.ID, a.CreatedAt)
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
@@ -63,6 +64,7 @@ func (a *TagAssignment) LoadByResourceIDAndTagID(
 ) error {
 	q := `
 SELECT
+	id,
 	organization_id,
 	resource_id,
 	tag_id,
@@ -110,6 +112,7 @@ func (a *TagAssignment) Insert(
 ) error {
 	q := `
 INSERT INTO tag_assignments (
+	id,
 	tenant_id,
 	organization_id,
 	resource_id,
@@ -117,6 +120,7 @@ INSERT INTO tag_assignments (
 	created_at
 )
 VALUES (
+	@id,
 	@tenant_id,
 	@organization_id,
 	@resource_id,
@@ -126,6 +130,7 @@ VALUES (
 `
 
 	args := pgx.StrictNamedArgs{
+		"id":              a.ID,
 		"tenant_id":       scope.GetTenantID(),
 		"organization_id": a.OrganizationID,
 		"resource_id":     a.ResourceID,
@@ -136,7 +141,7 @@ VALUES (
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
-			if pgErr.Code == "23505" && pgErr.ConstraintName == "tag_assignments_pkey" {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "tag_assignments_resource_id_tag_id_key" {
 				return ErrResourceAlreadyExists
 			}
 		}
@@ -147,8 +152,8 @@ VALUES (
 	return nil
 }
 
-// DeleteByResourceIDAndTagID removes the assignment and loads the deleted row
-// into a. It returns ErrResourceNotFound when the tag was not attached.
+// DeleteByResourceIDAndTagID removes the assignment. It returns
+// ErrResourceNotFound when the tag was not attached.
 func (a *TagAssignment) DeleteByResourceIDAndTagID(
 	ctx context.Context,
 	conn pg.Querier,
@@ -162,11 +167,6 @@ WHERE
 	%s
 	AND resource_id = @resource_id
 	AND tag_id = @tag_id
-RETURNING
-	organization_id,
-	resource_id,
-	tag_id,
-	created_at
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -177,21 +177,14 @@ RETURNING
 	}
 	maps.Copy(args, scope.SQLArguments())
 
-	rows, err := conn.Query(ctx, q, args)
+	result, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot delete tag assignment: %w", err)
 	}
 
-	assignment, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TagAssignment])
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return ErrResourceNotFound
-		}
-
-		return fmt.Errorf("cannot collect deleted tag assignment: %w", err)
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
 	}
-
-	*a = assignment
 
 	return nil
 }
@@ -205,6 +198,7 @@ func (as *TagAssignments) LoadByTagID(
 ) error {
 	q := `
 SELECT
+	id,
 	organization_id,
 	resource_id,
 	tag_id,
@@ -283,6 +277,7 @@ func (as *TagAssignments) LoadByResourceIDs(
 
 	q := `
 SELECT
+	id,
 	organization_id,
 	resource_id,
 	tag_id,

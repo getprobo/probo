@@ -37,7 +37,6 @@ const (
 
 var (
 	_ page.OrderField          = TagAssignmentOrderField("")
-	_ page.TieBreaker          = TagAssignmentOrderField("")
 	_ fmt.Stringer             = TagAssignmentOrderField("")
 	_ encoding.TextMarshaler   = TagAssignmentOrderField("")
 	_ encoding.TextUnmarshaler = (*TagAssignmentOrderField)(nil)
@@ -72,8 +71,4 @@ func (p TagAssignmentOrderField) Column() string {
 	}
 
 	return string(p)
-}
-
-func (p TagAssignmentOrderField) TieBreakColumn() string {
-	return "resource_id"
 }

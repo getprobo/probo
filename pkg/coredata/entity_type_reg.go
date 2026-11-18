@@ -178,7 +178,7 @@ const (
 	CMPDomainEntityType                              uint16 = 146
 	CMPDomainSurfaceEntityType                       uint16 = 147
 	TagEntityType                                    uint16 = 148
-	_                                                uint16 = 149 // TagAssignmentEntityType - removed
+	TagAssignmentEntityType                          uint16 = 149 // internal cursor key, not a Node
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
