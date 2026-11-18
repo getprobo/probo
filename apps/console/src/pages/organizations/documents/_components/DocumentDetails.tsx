@@ -19,8 +19,10 @@
 // SOFTWARE.
 
 import { ScrollArea } from "@base-ui/react/scroll-area";
-import { CaretLeftIcon } from "@phosphor-icons/react";
+import { CaretLeftIcon, SidebarSimpleIcon } from "@phosphor-icons/react";
+import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { Link } from "@probo/ui/src/v2/Link/Link";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
@@ -63,24 +65,38 @@ export function DocumentDetails({
   const document = useFragment(documentDetailsFragment, documentKey);
   const { t } = useTranslation("organizations/documents");
   const { mode, selectMode, modes } = useDocumentModes(document);
-  const { root, main, titleRow, title, side, viewport, cards, scrollbar, thumb } = documentDetailsPage();
+  const [cardsOpen, setCardsOpen] = useState(true);
+  const {
+    root, main, backRow, titleRow, title, sideFrame, sideClip, side, viewport, cards, scrollbar, thumb,
+  } = documentDetailsPage({ cards: cardsOpen });
 
   return (
     <div className={root()}>
       <div className={main()}>
-        <Link
-          to={{
-            pathname: `/organizations/${organizationId}/governance/documents`,
-            search,
-          }}
-          size={2}
-          color="neutral"
-          underline={false}
-          iconStart={<CaretLeftIcon />}
-          className="self-start"
-        >
-          {t("details.back")}
-        </Link>
+        <div className={backRow()}>
+          <Link
+            to={{
+              pathname: `/organizations/${organizationId}/governance/documents`,
+              search,
+            }}
+            size={2}
+            color="neutral"
+            underline={false}
+            iconStart={<CaretLeftIcon />}
+          >
+            {t("details.back")}
+          </Link>
+          <IconButton
+            size={1}
+            variant="ghost"
+            color="neutral"
+            aria-expanded={cardsOpen}
+            aria-label={t(cardsOpen ? "details.cards.hide" : "details.cards.show")}
+            onClick={() => setCardsOpen(open => !open)}
+          >
+            <SidebarSimpleIcon className="size-5! -scale-x-100" />
+          </IconButton>
+        </div>
         <div className={titleRow()}>
           <div className={title()}>
             <DocumentTitleField documentKey={document} />
@@ -93,19 +109,23 @@ export function DocumentDetails({
         </div>
         <DocumentEditor documentKey={document} mode={mode} />
       </div>
-      <ScrollArea.Root className={side()}>
-        <ScrollArea.Viewport className={viewport()}>
-          <ScrollArea.Content className={cards()}>
-            <DocumentPropertiesSection documentKey={document} />
-            <DocumentApprovalsSection documentKey={document} />
-            <DocumentSignatoriesSection documentKey={document} />
-            <DocumentControlsSection documentKey={document} />
-          </ScrollArea.Content>
-        </ScrollArea.Viewport>
-        <ScrollArea.Scrollbar className={scrollbar()} orientation="vertical">
-          <ScrollArea.Thumb className={thumb()} />
-        </ScrollArea.Scrollbar>
-      </ScrollArea.Root>
+      <div className={sideFrame()} inert={cardsOpen ? undefined : true}>
+        <div className={sideClip()}>
+          <ScrollArea.Root className={side()}>
+            <ScrollArea.Viewport className={viewport()}>
+              <ScrollArea.Content className={cards()}>
+                <DocumentPropertiesSection documentKey={document} />
+                <DocumentApprovalsSection documentKey={document} />
+                <DocumentSignatoriesSection documentKey={document} />
+                <DocumentControlsSection documentKey={document} />
+              </ScrollArea.Content>
+            </ScrollArea.Viewport>
+            <ScrollArea.Scrollbar className={scrollbar()} orientation="vertical">
+              <ScrollArea.Thumb className={thumb()} />
+            </ScrollArea.Scrollbar>
+          </ScrollArea.Root>
+        </div>
+      </div>
     </div>
   );
 }
