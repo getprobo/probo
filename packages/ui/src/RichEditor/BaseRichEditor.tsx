@@ -157,10 +157,6 @@ export type RichEditorProps = ComponentProps<"div"> & {
   // Document page chrome (gutter, paper background, page padding). Comment
   // editors turn this off.
   page?: boolean;
-  formatting?: boolean;
-  // While suggesting, formatting is off but table rows and columns can still
-  // be inserted or deleted as tracked changes.
-  suggestingMenus?: boolean;
   suspendContentChanges?: boolean;
   // Review cards rendered inside the scrollport so they move with the page.
   margin?: ReactNode;
@@ -205,8 +201,6 @@ export function BaseRichEditor(props: BaseRichEditorProps) {
     onEditor,
     autoFocus = false,
     page = true,
-    formatting = true,
-    suggestingMenus = false,
     suspendContentChanges = false,
     margin,
     extensions,
@@ -455,32 +449,25 @@ export function BaseRichEditor(props: BaseRichEditorProps) {
         reclaimSwallowedEditorFocus(editor, event);
       }}
     >
-      {!disabled && formatting
-        && (
-          <>
-            <BubbleMenu editor={editor} />
-            {blockMenu && (
-              <>
-                <BlockMenu
-                  editor={editor}
-                  compact={compact}
-                  handles={controls}
-                  onPickFiles={canUpload ? openFilePicker : undefined}
-                />
-                {controls && <OptionsMenu editor={editor} compact={compact} />}
-                <TableSelectionOverlay editor={editor} />
-                <TableCellMenu editor={editor} />
-                <TableColumnMenu editor={editor} />
-                <TableRowMenu editor={editor} />
-              </>
-            )}
-            <MentionMenu editor={editor} />
-          </>
-        )}
-      {!disabled && !formatting && suggestingMenus && blockMenu && (
+      {!disabled && (
         <>
-          <TableColumnMenu editor={editor} />
-          <TableRowMenu editor={editor} />
+          <BubbleMenu editor={editor} />
+          {blockMenu && (
+            <>
+              <BlockMenu
+                editor={editor}
+                compact={compact}
+                handles={controls}
+                onPickFiles={canUpload ? openFilePicker : undefined}
+              />
+              {controls && <OptionsMenu editor={editor} compact={compact} />}
+              <TableSelectionOverlay editor={editor} />
+              <TableCellMenu editor={editor} />
+              <TableColumnMenu editor={editor} />
+              <TableRowMenu editor={editor} />
+            </>
+          )}
+          <MentionMenu editor={editor} />
         </>
       )}
 

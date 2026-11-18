@@ -72,8 +72,6 @@ export function DocumentEditor({ documentKey, mode }: DocumentEditorProps) {
                       content=""
                       page={false}
                       disabled={mode === "viewing"}
-                      formatting={mode === "editing"}
-                      suggestingMenus={mode === "suggesting"}
                       suggesting={controller}
                       onEditor={setEditor}
                       onUploadFile={onUploadFile}
