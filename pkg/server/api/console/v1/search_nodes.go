@@ -23,6 +23,7 @@ package console_v1
 import (
 	"context"
 	"fmt"
+	"maps"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -198,9 +199,7 @@ func (r *queryResolver) loadSearchNodes(
 			return nil, err
 		}
 
-		for id, node := range nodes {
-			loaded[id] = node
-		}
+		maps.Copy(loaded, nodes)
 	}
 
 	nodes := make([]types.Taggable, len(results))
