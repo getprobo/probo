@@ -1,0 +1,109 @@
+-- Copyright (c) 2026 Probo Inc <hello@probo.com>.
+--
+-- Permission is hereby granted, free of charge, to any person obtaining a copy
+-- of this software and associated documentation files (the "Software"), to deal
+-- in the Software without restriction, including without limitation the rights
+-- to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+-- copies of the Software, and to permit persons to whom the Software is
+-- furnished to do so, subject to the following conditions:
+--
+-- The above copyright notice and this permission notice shall be included in
+-- all copies or substantial portions of the Software.
+--
+-- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+-- IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+-- FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+-- AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+-- LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+-- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+-- SOFTWARE.
+
+-- Measures are internal controls. Rename the tables, columns, enum types,
+-- and stored values. Security and supplementary measures stay as they are.
+
+ALTER TABLE measures RENAME TO internal_controls;
+ALTER TABLE measures_documents RENAME TO internal_controls_documents;
+ALTER TABLE measures_third_parties RENAME TO internal_controls_third_parties;
+ALTER TABLE treatment_plans_measures RENAME TO treatment_plans_internal_controls;
+ALTER TABLE controls_measures RENAME TO controls_internal_controls;
+ALTER TABLE risks_measures RENAME TO risks_internal_controls;
+ALTER TABLE measure_events RENAME TO internal_control_events;
+
+ALTER TABLE internal_controls_documents RENAME COLUMN measure_id TO internal_control_id;
+ALTER TABLE internal_controls_third_parties RENAME COLUMN measure_id TO internal_control_id;
+ALTER TABLE treatment_plans_internal_controls RENAME COLUMN measure_id TO internal_control_id;
+ALTER TABLE controls_internal_controls RENAME COLUMN measure_id TO internal_control_id;
+ALTER TABLE risks_internal_controls RENAME COLUMN measure_id TO internal_control_id;
+ALTER TABLE internal_control_events RENAME COLUMN measure_id TO internal_control_id;
+ALTER TABLE internal_control_events RENAME COLUMN measure_created_at TO internal_control_created_at;
+ALTER TABLE evidences RENAME COLUMN measure_id TO internal_control_id;
+ALTER TABLE tasks RENAME COLUMN measure_id TO internal_control_id;
+ALTER TABLE treatment_plan_events RENAME COLUMN measure_ids TO internal_control_ids;
+
+ALTER TYPE measure_event_type RENAME TO internal_control_event_type;
+ALTER TYPE task_activity_field RENAME VALUE 'MEASURE' TO 'INTERNAL_CONTROL';
+ALTER TYPE treatment_plan_event_type RENAME VALUE 'MEASURE_LINKED' TO 'INTERNAL_CONTROL_LINKED';
+ALTER TYPE treatment_plan_event_type RENAME VALUE 'MEASURE_UNLINKED' TO 'INTERNAL_CONTROL_UNLINKED';
+
+ALTER TABLE evidences RENAME CONSTRAINT evidences_measure_id_fkey TO evidences_internal_control_id_fkey;
+ALTER TABLE evidences RENAME CONSTRAINT evidences_measure_id_not_null TO evidences_internal_control_id_not_null;
+
+ALTER TABLE internal_controls RENAME CONSTRAINT measures_implementation_status_not_null TO internal_controls_implementation_status_not_null;
+ALTER TABLE internal_controls RENAME CONSTRAINT measures_operating_frequency_shape_check TO internal_controls_operating_frequency_shape_check;
+ALTER TABLE internal_controls RENAME CONSTRAINT measures_organization_id_code_key TO internal_controls_organization_id_code_key;
+ALTER TABLE internal_controls RENAME CONSTRAINT measures_owner_profile_id_fkey TO internal_controls_owner_profile_id_fkey;
+ALTER TABLE internal_controls RENAME CONSTRAINT measures_owner_reviewer_distinct_check TO internal_controls_owner_reviewer_distinct_check;
+ALTER TABLE internal_controls RENAME CONSTRAINT measures_reviewer_profile_id_fkey TO internal_controls_reviewer_profile_id_fkey;
+ALTER TABLE internal_controls RENAME CONSTRAINT mitigations_org_ref_unique TO internal_controls_organization_id_reference_id_key;
+
+ALTER TABLE controls_internal_controls RENAME CONSTRAINT controls_measures_organization_id_not_null TO controls_internal_controls_organization_id_not_null;
+ALTER TABLE controls_internal_controls RENAME CONSTRAINT controls_mitigations_pkey TO controls_internal_controls_pkey;
+ALTER TABLE controls_internal_controls RENAME CONSTRAINT fk_controls_mitigations_mitigation_id TO controls_internal_controls_internal_control_id_fkey;
+
+ALTER TABLE risks_internal_controls RENAME CONSTRAINT risks_measures_organization_id_not_null TO risks_internal_controls_organization_id_not_null;
+ALTER TABLE risks_internal_controls RENAME CONSTRAINT risks_mitigations_pkey TO risks_internal_controls_pkey;
+ALTER TABLE risks_internal_controls DROP CONSTRAINT risks_mesures_mesure_id_fkey;
+ALTER TABLE risks_internal_controls RENAME CONSTRAINT risks_mitigations_mitigation_id_fkey TO risks_internal_controls_internal_control_id_fkey;
+
+ALTER TABLE internal_controls_documents RENAME CONSTRAINT measures_documents_created_at_not_null TO internal_controls_documents_created_at_not_null;
+ALTER TABLE internal_controls_documents RENAME CONSTRAINT measures_documents_document_id_fkey TO internal_controls_documents_document_id_fkey;
+ALTER TABLE internal_controls_documents RENAME CONSTRAINT measures_documents_document_id_not_null TO internal_controls_documents_document_id_not_null;
+ALTER TABLE internal_controls_documents RENAME CONSTRAINT measures_documents_measure_id_fkey TO internal_controls_documents_internal_control_id_fkey;
+ALTER TABLE internal_controls_documents RENAME CONSTRAINT measures_documents_measure_id_not_null TO internal_controls_documents_internal_control_id_not_null;
+ALTER TABLE internal_controls_documents RENAME CONSTRAINT measures_documents_organization_id_not_null TO internal_controls_documents_organization_id_not_null;
+ALTER TABLE internal_controls_documents RENAME CONSTRAINT measures_documents_pkey TO internal_controls_documents_pkey;
+ALTER TABLE internal_controls_documents RENAME CONSTRAINT measures_documents_tenant_id_not_null TO internal_controls_documents_tenant_id_not_null;
+
+ALTER TABLE internal_controls_third_parties RENAME CONSTRAINT measures_third_parties_created_at_not_null TO internal_controls_third_parties_created_at_not_null;
+ALTER TABLE internal_controls_third_parties RENAME CONSTRAINT measures_third_parties_measure_id_fkey TO internal_controls_third_parties_internal_control_id_fkey;
+ALTER TABLE internal_controls_third_parties RENAME CONSTRAINT measures_third_parties_measure_id_not_null TO internal_controls_third_parties_internal_control_id_not_null;
+ALTER TABLE internal_controls_third_parties RENAME CONSTRAINT measures_third_parties_organization_id_not_null TO internal_controls_third_parties_organization_id_not_null;
+ALTER TABLE internal_controls_third_parties RENAME CONSTRAINT measures_third_parties_pkey TO internal_controls_third_parties_pkey;
+ALTER TABLE internal_controls_third_parties RENAME CONSTRAINT measures_third_parties_tenant_id_not_null TO internal_controls_third_parties_tenant_id_not_null;
+ALTER TABLE internal_controls_third_parties RENAME CONSTRAINT measures_third_parties_third_party_id_fkey TO internal_controls_third_parties_third_party_id_fkey;
+ALTER TABLE internal_controls_third_parties RENAME CONSTRAINT measures_third_parties_third_party_id_not_null TO internal_controls_third_parties_third_party_id_not_null;
+
+ALTER TABLE treatment_plans_internal_controls RENAME CONSTRAINT treatment_plans_measures_created_at_not_null TO treatment_plans_internal_controls_created_at_not_null;
+ALTER TABLE treatment_plans_internal_controls RENAME CONSTRAINT treatment_plans_measures_measure_id_fkey TO treatment_plans_internal_controls_internal_control_id_fkey;
+ALTER TABLE treatment_plans_internal_controls RENAME CONSTRAINT treatment_plans_measures_measure_id_not_null TO treatment_plans_internal_controls_internal_control_id_not_null;
+ALTER TABLE treatment_plans_internal_controls RENAME CONSTRAINT treatment_plans_measures_organization_id_fkey TO treatment_plans_internal_controls_organization_id_fkey;
+ALTER TABLE treatment_plans_internal_controls RENAME CONSTRAINT treatment_plans_measures_organization_id_not_null TO treatment_plans_internal_controls_organization_id_not_null;
+ALTER TABLE treatment_plans_internal_controls RENAME CONSTRAINT treatment_plans_measures_pkey TO treatment_plans_internal_controls_pkey;
+ALTER TABLE treatment_plans_internal_controls RENAME CONSTRAINT treatment_plans_measures_tenant_id_not_null TO treatment_plans_internal_controls_tenant_id_not_null;
+ALTER TABLE treatment_plans_internal_controls RENAME CONSTRAINT treatment_plans_measures_treatment_plan_id_fkey TO treatment_plans_internal_controls_treatment_plan_id_fkey;
+ALTER TABLE treatment_plans_internal_controls RENAME CONSTRAINT treatment_plans_measures_treatment_plan_id_not_null TO treatment_plans_internal_controls_treatment_plan_id_not_null;
+
+ALTER TABLE treatment_plan_events RENAME CONSTRAINT treatment_plan_events_measure_ids_not_null TO treatment_plan_events_internal_control_ids_not_null;
+
+ALTER TABLE internal_control_events RENAME CONSTRAINT measure_events_category_not_null TO internal_control_events_category_not_null;
+ALTER TABLE internal_control_events RENAME CONSTRAINT measure_events_created_at_not_null TO internal_control_events_created_at_not_null;
+ALTER TABLE internal_control_events RENAME CONSTRAINT measure_events_event_type_not_null TO internal_control_events_event_type_not_null;
+ALTER TABLE internal_control_events RENAME CONSTRAINT measure_events_measure_created_at_not_null TO internal_control_events_internal_control_created_at_not_null;
+ALTER TABLE internal_control_events RENAME CONSTRAINT measure_events_measure_id_not_null TO internal_control_events_internal_control_id_not_null;
+ALTER TABLE internal_control_events RENAME CONSTRAINT measure_events_name_not_null TO internal_control_events_name_not_null;
+ALTER TABLE internal_control_events RENAME CONSTRAINT measure_events_organization_id_fkey TO internal_control_events_organization_id_fkey;
+ALTER TABLE internal_control_events RENAME CONSTRAINT measure_events_organization_id_not_null TO internal_control_events_organization_id_not_null;
+ALTER TABLE internal_control_events RENAME CONSTRAINT measure_events_state_not_null TO internal_control_events_state_not_null;
+ALTER TABLE internal_control_events RENAME CONSTRAINT measure_events_tenant_id_not_null TO internal_control_events_tenant_id_not_null;
+
+ALTER INDEX measures_search_idx RENAME TO internal_controls_search_idx;

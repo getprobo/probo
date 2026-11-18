@@ -1,0 +1,134 @@
+-- Copyright (c) 2026 Probo Inc <hello@probo.com>.
+--
+-- Permission is hereby granted, free of charge, to any person obtaining a copy
+-- of this software and associated documentation files (the "Software"), to deal
+-- in the Software without restriction, including without limitation the rights
+-- to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+-- copies of the Software, and to permit persons to whom the Software is
+-- furnished to do so, subject to the following conditions:
+--
+-- The above copyright notice and this permission notice shall be included in
+-- all copies or substantial portions of the Software.
+--
+-- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+-- IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+-- FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+-- AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+-- LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+-- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+-- SOFTWARE.
+
+-- Measures become internal controls: a stable code, how the control works,
+-- separate run / evidence / test cadences, derived due dates, and two people
+-- (owner and reviewer) so duties stay separated.
+
+ALTER TABLE measures
+    ADD COLUMN code TEXT,
+    ADD COLUMN control_type internal_control_type,
+    ADD COLUMN nature internal_control_nature,
+    ADD COLUMN operating_mode internal_control_operating_mode,
+    ADD COLUMN operating_frequency INTERVAL,
+    ADD COLUMN operating_event TEXT,
+    ADD COLUMN evidence_cadence INTERVAL,
+    ADD COLUMN testing_cadence INTERVAL,
+    ADD COLUMN next_evidence_due TIMESTAMP WITH TIME ZONE,
+    ADD COLUMN next_test_due TIMESTAMP WITH TIME ZONE,
+    ADD COLUMN implementation_status internal_control_implementation_status,
+    ADD COLUMN owner_profile_id TEXT,
+    ADD COLUMN reviewer_profile_id TEXT;
+
+UPDATE measures
+SET implementation_status = (
+    CASE state
+        WHEN 'IN_PROGRESS' THEN 'IN_PROGRESS'
+        WHEN 'IMPLEMENTED' THEN 'IMPLEMENTED'
+        WHEN 'NOT_IMPLEMENTED' THEN 'NOT_IMPLEMENTED'
+        ELSE 'NOT_IMPLEMENTED'
+    END
+)::internal_control_implementation_status;
+
+ALTER TABLE measures
+    ALTER COLUMN implementation_status SET DEFAULT 'NOT_IMPLEMENTED';
+
+ALTER TABLE measures
+    ALTER COLUMN implementation_status SET NOT NULL;
+
+ALTER TABLE measures
+    ALTER COLUMN implementation_status DROP DEFAULT;
+
+ALTER TABLE measures
+    ADD CONSTRAINT measures_operating_frequency_shape_check
+        CHECK (
+            (
+                operating_mode IS NULL
+                AND operating_frequency IS NULL
+                AND operating_event IS NULL
+            )
+            OR (
+                operating_mode IS NOT NULL
+                AND operating_mode = 'CONTINUOUS'
+                AND operating_frequency IS NULL
+                AND operating_event IS NULL
+            )
+            OR (
+                operating_mode IS NOT NULL
+                AND operating_mode = 'EVENT'
+                AND operating_frequency IS NULL
+            )
+            OR (
+                operating_mode IS NOT NULL
+                AND operating_mode = 'PERIODIC'
+                AND operating_frequency IS NOT NULL
+                AND operating_event IS NULL
+            )
+        ),
+    ADD CONSTRAINT measures_owner_reviewer_distinct_check
+        CHECK (
+            owner_profile_id IS NULL
+            OR reviewer_profile_id IS NULL
+            OR owner_profile_id <> reviewer_profile_id
+        ),
+    ADD CONSTRAINT measures_owner_profile_id_fkey
+        FOREIGN KEY (owner_profile_id)
+        REFERENCES iam_membership_profiles(id)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+    ADD CONSTRAINT measures_reviewer_profile_id_fkey
+        FOREIGN KEY (reviewer_profile_id)
+        REFERENCES iam_membership_profiles(id)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+    ADD CONSTRAINT measures_organization_id_code_key
+        UNIQUE (organization_id, code);
+
+-- Rebuild the existing search document so a control code is findable.
+ALTER TABLE measures DROP COLUMN search_vector;
+
+ALTER TABLE measures ADD COLUMN search_vector tsvector
+GENERATED ALWAYS AS (
+    to_tsvector(
+        'simple',
+        COALESCE(name, '') || ' ' || COALESCE(code, '') || ' ' || COALESCE(operating_event, '')
+    )
+) STORED;
+
+CREATE INDEX measures_search_idx ON measures USING gin(search_vector);
+
+-- As-of snapshots keep the operational status. Legacy rows only stored
+-- state, which cannot tell an operating control from an implemented one.
+-- The column stays nullable: probod deploys blue/green, so pods running the
+-- previous release keep inserting events without this column until the
+-- rollout finishes. NULL means "derive the status from state". NOT NULL
+-- belongs in a later migration, after every event writer sends the column.
+ALTER TABLE measure_events
+    ADD COLUMN implementation_status internal_control_implementation_status;
+
+UPDATE measure_events
+SET implementation_status = (
+    CASE state
+        WHEN 'IN_PROGRESS' THEN 'IN_PROGRESS'
+        WHEN 'IMPLEMENTED' THEN 'IMPLEMENTED'
+        ELSE 'NOT_IMPLEMENTED'
+    END
+)::internal_control_implementation_status
+WHERE implementation_status IS NULL;
