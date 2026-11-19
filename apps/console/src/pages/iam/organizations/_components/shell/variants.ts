@@ -25,12 +25,19 @@ export const organizationLayout = tv({
     root: "flex h-dvh flex-col bg-sand-2",
     body: "flex min-h-0 flex-1",
     content: "min-w-0 flex-1 overflow-y-auto transition-[padding] duration-300",
-    contentInner: "mx-auto w-full max-w-300 px-8 py-12",
+    contentInner: "w-full px-8",
   },
   variants: {
     hasDrawer: {
       true: { content: "pr-105" },
     },
+    detail: {
+      true: { contentInner: "h-full py-6" },
+      false: { contentInner: "mx-auto max-w-300 py-12" },
+    },
+  },
+  defaultVariants: {
+    detail: false,
   },
 });
 

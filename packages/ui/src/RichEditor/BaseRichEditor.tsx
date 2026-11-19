@@ -22,6 +22,7 @@ import { PaperclipIcon } from "@phosphor-icons/react";
 import { type Extensions } from "@tiptap/core";
 import { type Content, Editor, EditorContent, type JSONContent, useEditor } from "@tiptap/react";
 import { type ComponentProps, type MouseEvent as ReactMouseEvent, type ReactNode, useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { tv } from "tailwind-variants";
 
@@ -43,6 +44,7 @@ import { TableCellMenu } from "./TableCellMenu/TableCellMenu";
 import { TableColumnMenu } from "./TableColumnMenu/TableColumnMenu";
 import { TableRowMenu } from "./TableRowMenu/TableRowMenu";
 import { TableSelectionOverlay } from "./TableSelectionOverlay";
+import { RichEditorToolbar } from "./Toolbar/RichEditorToolbar";
 import {
   type AttachmentUploadError,
   type UploadAttachment,
@@ -157,13 +159,13 @@ export type RichEditorProps = ComponentProps<"div"> & {
   // Document page chrome (gutter, paper background, page padding). Comment
   // editors turn this off.
   page?: boolean;
-  formatting?: boolean;
-  // While suggesting, formatting is off but table rows and columns can still
-  // be inserted or deleted as tracked changes.
-  suggestingMenus?: boolean;
   suspendContentChanges?: boolean;
   // Review cards rendered inside the scrollport so they move with the page.
   margin?: ReactNode;
+  // Portals a fixed toolbar into this element. It replaces the selection
+  // bubble, the plus handle, and the handle's turn-into menu. The drag
+  // handle, slash menu, and table menus stay.
+  toolbarContainer?: HTMLElement | null;
 };
 
 type BaseRichEditorProps = RichEditorProps & {
@@ -205,10 +207,9 @@ export function BaseRichEditor(props: BaseRichEditorProps) {
     onEditor,
     autoFocus = false,
     page = true,
-    formatting = true,
-    suggestingMenus = false,
     suspendContentChanges = false,
     margin,
+    toolbarContainer,
     extensions,
     blockMenu,
     ...divProps
@@ -442,6 +443,7 @@ export function BaseRichEditor(props: BaseRichEditorProps) {
   const { onMouseDown, ...editorDomProps } = divProps;
   const showAttachment = attachments && onUploadFile != null;
   const showToolbar = showAttachment || toolbar != null;
+  const fixedToolbar = toolbarContainer != null;
   const { bar, attach } = attachmentToolbar();
 
   return (
@@ -455,39 +457,40 @@ export function BaseRichEditor(props: BaseRichEditorProps) {
         reclaimSwallowedEditorFocus(editor, event);
       }}
     >
-      {!disabled && formatting
-        && (
-          <>
-            <BubbleMenu editor={editor} />
-            {blockMenu && (
-              <>
-                <BlockMenu
-                  editor={editor}
-                  compact={compact}
-                  handles={controls}
-                  onPickFiles={canUpload ? openFilePicker : undefined}
-                />
-                {controls && <OptionsMenu editor={editor} compact={compact} />}
-                <TableSelectionOverlay editor={editor} />
-                <TableCellMenu editor={editor} />
-                <TableColumnMenu editor={editor} />
-                <TableRowMenu editor={editor} />
-              </>
-            )}
-            <MentionMenu editor={editor} />
-          </>
-        )}
-      {!disabled && !formatting && suggestingMenus && blockMenu && (
+      {toolbarContainer != null && createPortal(
+        <RichEditorToolbar
+          editor={editor}
+          disabled={disabled}
+          onPickFiles={canUpload ? openFilePicker : undefined}
+        />,
+        toolbarContainer,
+      )}
+      {!disabled && (
         <>
-          <TableColumnMenu editor={editor} />
-          <TableRowMenu editor={editor} />
+          {!fixedToolbar && <BubbleMenu editor={editor} />}
+          {blockMenu && (
+            <>
+              <BlockMenu
+                editor={editor}
+                compact={compact}
+                handles={controls && !fixedToolbar}
+                onPickFiles={canUpload ? openFilePicker : undefined}
+              />
+              {controls && <OptionsMenu editor={editor} compact={compact} menu={!fixedToolbar} />}
+              <TableSelectionOverlay editor={editor} />
+              <TableCellMenu editor={editor} />
+              <TableColumnMenu editor={editor} />
+              <TableRowMenu editor={editor} />
+            </>
+          )}
+          <MentionMenu editor={editor} />
         </>
       )}
 
       <EditorContent className="flex min-h-0 flex-1 flex-col" editor={editor} />
       {margin}
       {showToolbar && (
-        <div className={bar()}>
+        <div className={bar()} data-rich-editor-toolbar="">
           {showAttachment && (
             <button
               type="button"

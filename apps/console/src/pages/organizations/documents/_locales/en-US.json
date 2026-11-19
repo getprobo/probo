@@ -1,0 +1,227 @@
+{
+  "details": {
+    "back": "Documents",
+    "actions": {
+      "cancel": "Cancel",
+      "menu": "More actions",
+      "unarchive": "Unarchive",
+      "publish": {
+        "button": "Publish",
+        "title": "Publish a new version",
+        "description": "Describe what changed. A major version can ask approvers to sign off before it is published.",
+        "changelog": "Changelog",
+        "changelogPlaceholder": "What changed in this version?",
+        "approvers": "Approvers",
+        "approversDescription": "A major version waits for these people to approve it. Minor versions publish right away.",
+        "removeApprover": "Remove {{name}}",
+        "addApprover": "Add approver",
+        "minor": "Publish minor version",
+        "major": "Publish major version",
+        "requestApproval": "Request approval"
+      },
+      "download": {
+        "item": "Download PDF",
+        "title": "Download PDF",
+        "description": "Export published version {{version}} as a PDF.",
+        "signatures": "Include signatures",
+        "signaturesDescription": "Add the signatures collected for this version.",
+        "watermark": "Add a watermark",
+        "watermarkDescription": "Stamp every page so the copy can be traced back.",
+        "watermarkText": "Watermark text",
+        "watermarkPlaceholder": "Your email address",
+        "submit": "Download"
+      },
+      "archive": {
+        "item": "Archive",
+        "title": "Archive this document?",
+        "description": "\"{{title}}\" becomes read-only and moves to the archived documents. You can unarchive it later.",
+        "confirm": "Archive"
+      },
+      "delete": {
+        "item": "Delete",
+        "title": "Delete \"{{title}}\"?",
+        "description": "The document, its versions, and its signatures are deleted for good. This cannot be undone.",
+        "confirm": "Delete"
+      },
+      "messages": {
+        "published": "Version published",
+        "approvalRequested": "Approval requested",
+        "archived": "Document archived",
+        "unarchived": "Document unarchived",
+        "deleted": "Document deleted"
+      },
+      "errors": {
+        "publish": "Could not publish the document",
+        "archive": "Could not archive the document",
+        "unarchive": "Could not unarchive the document",
+        "delete": "Could not delete the document",
+        "download": "Could not generate the PDF"
+      }
+    },
+    "presence": {
+      "label": "People in this document",
+      "anonymous": "Collaborator",
+      "inactive": "{{name}} (idle)",
+      "overflow": "{{count}} more people"
+    },
+    "cards": {
+      "show": "Show details",
+      "hide": "Hide details"
+    },
+    "notFound": "Document not found",
+    "fields": {
+      "title": "Title"
+    },
+    "properties": {
+      "title": "Properties",
+      "type": "Type",
+      "classification": "Classification",
+      "approvers": "Approvers",
+      "none": "None",
+      "addApprover": "Add approver",
+      "removeApprover": "Remove {{name}}"
+    },
+    "controls": {
+      "title": "Controls",
+      "search": "Search linked controls",
+      "none": "None",
+      "add": "Link a control",
+      "remove": "Remove {{name}}",
+      "loadMore": "Load more",
+      "empty": "No controls found",
+      "loadError": "Could not load controls"
+    },
+    "approvals": {
+      "title": "Approvers",
+      "add": "Add approver",
+      "remove": "Remove {{name}}",
+      "loadMore": "Load more",
+      "none": "None",
+      "states": {
+        "PENDING": "Pending",
+        "APPROVED": "Approved",
+        "REJECTED": "Rejected",
+        "VOIDED": "Voided"
+      }
+    },
+    "signatories": {
+      "title": "Signatories",
+      "add": "Request signature",
+      "remove": "Cancel {{name}}",
+      "search": "Search people",
+      "empty": "No people found",
+      "loadMore": "Load more",
+      "loadError": "Could not load people",
+      "none": "None",
+      "states": {
+        "REQUESTED": "Requested",
+        "SIGNED": "Signed"
+      }
+    },
+    "mode": {
+      "label": "Mode",
+      "viewing": "Viewing",
+      "editing": "Editing",
+      "suggesting": "Suggesting"
+    },
+    "editor": {
+      "loading": "Loading the document",
+      "openError": "Could not open the document",
+      "suggestionFailed": "Could not start the suggestion",
+      "suggestionUntracked": "That change could not be tracked as a suggestion"
+    },
+    "review": {
+      "openComment": "Show comment by {{name}}",
+      "openSuggestion": "Show suggestion by {{name}}",
+      "replies_one": "{{count}} reply",
+      "replies_other": "{{count}} replies",
+      "justNow": "just now",
+      "contentError": "Could not show this comment",
+      "resolve": "Resolve",
+      "accept": "Accept suggestion",
+      "reject": "Reject suggestion",
+      "more": "More actions",
+      "edit": "Edit",
+      "delete": "Delete",
+      "cancel": "Cancel",
+      "save": "Save",
+      "reply": "Reply",
+      "replyPlaceholder": "Reply…",
+      "send": "Send",
+      "showMoreReplies": "Show more replies",
+      "contentRequired": "Write a comment first",
+      "contentTooLong": "Comments are limited to {{max}} characters",
+      "deleteDialog": {
+        "title": "Delete comment",
+        "description": "This comment is deleted for everyone. Deleting the last comment also removes the thread.",
+        "confirm": "Delete"
+      },
+      "errors": {
+        "resolve": "Could not resolve the thread",
+        "accept": "Could not accept the suggestion",
+        "reject": "Could not reject the suggestion",
+        "reply": "Could not send the reply",
+        "update": "Could not update the comment",
+        "delete": "Could not delete the comment"
+      },
+      "changes": {
+        "formatLine": "<label>Format:</label> {{value}}",
+        "formatValues": {
+          "bold": "bold",
+          "italic": "italic",
+          "underline": "underline",
+          "strike": "strikethrough",
+          "code": "code",
+          "link": "link"
+        },
+        "formatRemovedValues": {
+          "bold": "not bold",
+          "italic": "not italic",
+          "underline": "no underline",
+          "strike": "no strikethrough",
+          "code": "not code",
+          "link": "no link"
+        },
+        "linkLine": "<label>Link:</label> {{value}}",
+        "linkRemoved": "removed",
+        "blocks": {
+          "paragraph": "Paragraph",
+          "heading": "Heading {{level}}",
+          "quote": "Quote",
+          "code": "Code block",
+          "bulletList": "Bulleted list",
+          "orderedList": "Numbered list",
+          "taskList": "Task list",
+          "other": "Block"
+        },
+        "blockChanged": "{{before}} → {{after}}",
+        "indentChanged": "Indentation changed",
+        "nodeAdded": {
+          "table": "Table added",
+          "row": "Row added",
+          "column": "Column added",
+          "image": "Image added",
+          "divider": "Divider added",
+          "file": "File added",
+          "line": "Line added",
+          "other": "Structure added"
+        },
+        "nodeRemoved": {
+          "table": "Table removed",
+          "row": "Row removed",
+          "column": "Column removed",
+          "image": "Image removed",
+          "divider": "Divider removed",
+          "file": "File removed",
+          "line": "Line removed",
+          "other": "Structure removed"
+        },
+        "moreChanges_one": "+{{count}} more change",
+        "moreChanges_other": "+{{count}} more changes"
+      }
+    },
+    "errors": {
+      "update": "Could not update the document"
+    }
+  }
+}

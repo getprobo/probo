@@ -29,7 +29,7 @@ import { CardLink } from "./CardLink";
 import { CardSkeleton } from "./CardSkeleton";
 
 const sizes = [1, 2, 3, 4, 5] as const;
-const variants = ["surface", "classic", "ghost"] as const;
+const variants = ["surface", "classic", "soft", "gold", "ghost"] as const;
 
 function Sample() {
   return (

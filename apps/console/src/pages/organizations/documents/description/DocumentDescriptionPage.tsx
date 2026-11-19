@@ -201,8 +201,8 @@ export function DocumentDescriptionPage(props: {
     suggestionId: null,
     pending: null,
     request: null,
-    onNeedId: () => Promise.resolve(null),
-    onBurstFinished: () => {},
+    onStartSuggesting: () => Promise.resolve(null),
+    onSuggestionDone: () => {},
     onOpenSuggestion: () => {},
   });
   const anchorController = useRef({ onOpenThread: (_id: string) => {} });
@@ -441,8 +441,6 @@ export function DocumentDescriptionPage(props: {
                     content=""
                     data-theme="document"
                     disabled={mode === "viewing" || (!canEdit && mode !== "suggesting")}
-                    formatting={canEdit && mode === "editing"}
-                    suggestingMenus={mode === "suggesting"}
                     onChangeContent={handleContentChange}
                     onEditor={setEditor}
                     onUploadFile={onUploadFile}

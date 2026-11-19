@@ -1,0 +1,227 @@
+{
+  "details": {
+    "back": "Documenten",
+    "actions": {
+      "cancel": "Annuleren",
+      "menu": "Meer acties",
+      "unarchive": "Dearchiveren",
+      "publish": {
+        "button": "Publiceren",
+        "title": "Een nieuwe versie publiceren",
+        "description": "Beschrijf wat er is gewijzigd. Een hoofdversie kan goedkeuring vragen voordat ze wordt gepubliceerd.",
+        "changelog": "Wijzigingslog",
+        "changelogPlaceholder": "Wat is er in deze versie gewijzigd?",
+        "approvers": "Goedkeurders",
+        "approversDescription": "Een hoofdversie wacht op de goedkeuring van deze personen. Subversies worden meteen gepubliceerd.",
+        "removeApprover": "{{name}} verwijderen",
+        "addApprover": "Goedkeurder toevoegen",
+        "minor": "Subversie publiceren",
+        "major": "Hoofdversie publiceren",
+        "requestApproval": "Goedkeuring aanvragen"
+      },
+      "download": {
+        "item": "PDF downloaden",
+        "title": "PDF downloaden",
+        "description": "Gepubliceerde versie {{version}} als PDF exporteren.",
+        "signatures": "Handtekeningen toevoegen",
+        "signaturesDescription": "Voeg de handtekeningen toe die voor deze versie zijn verzameld.",
+        "watermark": "Watermerk toevoegen",
+        "watermarkDescription": "Markeer elke pagina zodat de kopie te herleiden is.",
+        "watermarkText": "Watermerktekst",
+        "watermarkPlaceholder": "Je e-mailadres",
+        "submit": "Downloaden"
+      },
+      "archive": {
+        "item": "Archiveren",
+        "title": "Dit document archiveren?",
+        "description": "\"{{title}}\" wordt alleen-lezen en gaat naar de gearchiveerde documenten. Je kunt het later dearchiveren.",
+        "confirm": "Archiveren"
+      },
+      "delete": {
+        "item": "Verwijderen",
+        "title": "\"{{title}}\" verwijderen?",
+        "description": "Het document, de versies en de handtekeningen worden definitief verwijderd. Dit kan niet ongedaan worden gemaakt.",
+        "confirm": "Verwijderen"
+      },
+      "messages": {
+        "published": "Versie gepubliceerd",
+        "approvalRequested": "Goedkeuring aangevraagd",
+        "archived": "Document gearchiveerd",
+        "unarchived": "Document gedearchiveerd",
+        "deleted": "Document verwijderd"
+      },
+      "errors": {
+        "publish": "Het document kon niet worden gepubliceerd",
+        "archive": "Het document kon niet worden gearchiveerd",
+        "unarchive": "Het document kon niet worden gedearchiveerd",
+        "delete": "Het document kon niet worden verwijderd",
+        "download": "De PDF kon niet worden gegenereerd"
+      }
+    },
+    "presence": {
+      "label": "Mensen in dit document",
+      "anonymous": "Medewerker",
+      "inactive": "{{name}} (inactief)",
+      "overflow": "Nog {{count}} personen"
+    },
+    "cards": {
+      "show": "Details tonen",
+      "hide": "Details verbergen"
+    },
+    "notFound": "Document niet gevonden",
+    "fields": {
+      "title": "Titel"
+    },
+    "properties": {
+      "title": "Eigenschappen",
+      "type": "Type",
+      "classification": "Classificatie",
+      "approvers": "Goedkeurders",
+      "none": "Geen",
+      "addApprover": "Goedkeurder toevoegen",
+      "removeApprover": "{{name}} verwijderen"
+    },
+    "controls": {
+      "title": "Controls",
+      "search": "Gekoppelde controls zoeken",
+      "none": "Geen",
+      "add": "Control koppelen",
+      "remove": "{{name}} verwijderen",
+      "loadMore": "Meer laden",
+      "empty": "Geen controls gevonden",
+      "loadError": "Controls laden mislukt"
+    },
+    "approvals": {
+      "title": "Goedkeurders",
+      "add": "Goedkeurder toevoegen",
+      "remove": "{{name}} verwijderen",
+      "loadMore": "Meer laden",
+      "none": "Geen",
+      "states": {
+        "PENDING": "In afwachting",
+        "APPROVED": "Goedgekeurd",
+        "REJECTED": "Afgewezen",
+        "VOIDED": "Ongeldig"
+      }
+    },
+    "signatories": {
+      "title": "Ondertekenaars",
+      "add": "Handtekening vragen",
+      "remove": "{{name}} annuleren",
+      "search": "Personen zoeken",
+      "empty": "Geen personen gevonden",
+      "loadMore": "Meer laden",
+      "loadError": "Personen laden mislukt",
+      "none": "Geen",
+      "states": {
+        "REQUESTED": "Aangevraagd",
+        "SIGNED": "Ondertekend"
+      }
+    },
+    "mode": {
+      "label": "Modus",
+      "viewing": "Bekijken",
+      "editing": "Bewerken",
+      "suggesting": "Voorstellen"
+    },
+    "editor": {
+      "loading": "Document laden",
+      "openError": "Document openen mislukt",
+      "suggestionFailed": "Suggestie starten mislukt",
+      "suggestionUntracked": "Deze wijziging kon niet als suggestie worden bijgehouden"
+    },
+    "review": {
+      "openComment": "Opmerking van {{name}} tonen",
+      "openSuggestion": "Suggestie van {{name}} tonen",
+      "replies_one": "{{count}} reactie",
+      "replies_other": "{{count}} reacties",
+      "justNow": "zojuist",
+      "contentError": "Deze opmerking kan niet worden weergegeven",
+      "resolve": "Oplossen",
+      "accept": "Suggestie accepteren",
+      "reject": "Suggestie afwijzen",
+      "more": "Meer acties",
+      "edit": "Bewerken",
+      "delete": "Verwijderen",
+      "cancel": "Annuleren",
+      "save": "Opslaan",
+      "reply": "Reageren",
+      "replyPlaceholder": "Reageren…",
+      "send": "Versturen",
+      "showMoreReplies": "Meer reacties tonen",
+      "contentRequired": "Schrijf eerst een opmerking",
+      "contentTooLong": "Opmerkingen zijn beperkt tot {{max}} tekens",
+      "deleteDialog": {
+        "title": "Opmerking verwijderen",
+        "description": "Deze opmerking wordt voor iedereen verwijderd. Als je de laatste opmerking verwijdert, verdwijnt ook de discussie.",
+        "confirm": "Verwijderen"
+      },
+      "errors": {
+        "resolve": "De discussie kon niet worden opgelost",
+        "accept": "De suggestie kon niet worden geaccepteerd",
+        "reject": "De suggestie kon niet worden afgewezen",
+        "reply": "De reactie kon niet worden verstuurd",
+        "update": "De opmerking kon niet worden bijgewerkt",
+        "delete": "De opmerking kon niet worden verwijderd"
+      },
+      "changes": {
+        "formatLine": "<label>Opmaak:</label> {{value}}",
+        "formatValues": {
+          "bold": "vet",
+          "italic": "cursief",
+          "underline": "onderstreept",
+          "strike": "doorgehaald",
+          "code": "code",
+          "link": "link"
+        },
+        "formatRemovedValues": {
+          "bold": "niet vet",
+          "italic": "niet cursief",
+          "underline": "niet onderstreept",
+          "strike": "niet doorgehaald",
+          "code": "geen code",
+          "link": "geen link"
+        },
+        "linkLine": "<label>Link:</label> {{value}}",
+        "linkRemoved": "verwijderd",
+        "blocks": {
+          "paragraph": "Alinea",
+          "heading": "Kop {{level}}",
+          "quote": "Citaat",
+          "code": "Codeblok",
+          "bulletList": "Lijst met opsommingstekens",
+          "orderedList": "Genummerde lijst",
+          "taskList": "Takenlijst",
+          "other": "Blok"
+        },
+        "blockChanged": "{{before}} → {{after}}",
+        "indentChanged": "Inspringing gewijzigd",
+        "nodeAdded": {
+          "table": "Tabel toegevoegd",
+          "row": "Rij toegevoegd",
+          "column": "Kolom toegevoegd",
+          "image": "Afbeelding toegevoegd",
+          "divider": "Scheidingslijn toegevoegd",
+          "file": "Bestand toegevoegd",
+          "line": "Regel toegevoegd",
+          "other": "Structuur toegevoegd"
+        },
+        "nodeRemoved": {
+          "table": "Tabel verwijderd",
+          "row": "Rij verwijderd",
+          "column": "Kolom verwijderd",
+          "image": "Afbeelding verwijderd",
+          "divider": "Scheidingslijn verwijderd",
+          "file": "Bestand verwijderd",
+          "line": "Regel verwijderd",
+          "other": "Structuur verwijderd"
+        },
+        "moreChanges_one": "+{{count}} andere wijziging",
+        "moreChanges_other": "+{{count}} andere wijzigingen"
+      }
+    },
+    "errors": {
+      "update": "Document bijwerken mislukt"
+    }
+  }
+}

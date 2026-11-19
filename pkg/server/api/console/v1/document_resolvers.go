@@ -226,7 +226,7 @@ func (r *documentResolver) Versions(ctx context.Context, obj *types.Document, fi
 		return nil, gqlx.Internal(ctx)
 	}
 
-	return types.NewDocumentVersionConnection(page, r, obj.ID), nil
+	return types.NewDocumentVersionConnection(page, r, obj.ID, versionFilter), nil
 }
 
 // CommentThreads is the resolver for the commentThreads field.

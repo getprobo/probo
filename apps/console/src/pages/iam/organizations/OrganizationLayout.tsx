@@ -32,6 +32,7 @@ import { NavPanel } from "./_components/shell/NavPanel";
 import { NavRail } from "./_components/shell/NavRail";
 import { NavSpotlight } from "./_components/shell/NavSpotlight";
 import { organizationLayout } from "./_components/shell/variants";
+import { useDetailLayout } from "./_lib/shellLayout";
 import { OrganizationLayoutSkeleton } from "./OrganizationLayoutSkeleton";
 
 export const organizationLayoutQuery = graphql`
@@ -78,6 +79,7 @@ export function OrganizationLayout({ queryRef }: OrganizationLayoutProps) {
   );
   const [hasDrawer, setDrawer] = useState(false);
   const [spotlightOpen, setSpotlightOpen] = useState(false);
+  const detail = useDetailLayout();
   const drawerContext = useMemo(() => ({ setDrawer }), []);
 
   if (queryRef.variables.organizationId !== routeOrganizationId) {
@@ -88,7 +90,7 @@ export function OrganizationLayout({ queryRef }: OrganizationLayoutProps) {
     throw new Error("invalid type for organization node");
   }
 
-  const slots = organizationLayout({ hasDrawer });
+  const slots = organizationLayout({ hasDrawer, detail });
 
   return (
     <LayoutContext value={drawerContext}>
@@ -105,10 +107,12 @@ export function OrganizationLayout({ queryRef }: OrganizationLayoutProps) {
             slackbotAvailable={slackbotAvailable}
             onOpenSpotlight={() => setSpotlightOpen(true)}
           />
-          <NavPanel
-            organizationKey={organization}
-            slackbotAvailable={slackbotAvailable}
-          />
+          {!detail && (
+            <NavPanel
+              organizationKey={organization}
+              slackbotAvailable={slackbotAvailable}
+            />
+          )}
           <main className={slots.content()}>
             <div className={slots.contentInner()}>
               <CoreRelayProvider>

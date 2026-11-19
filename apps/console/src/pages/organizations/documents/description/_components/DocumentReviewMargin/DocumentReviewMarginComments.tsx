@@ -150,7 +150,6 @@ export function DocumentReviewMarginComments({
                 <CommentEditor
                   controls={false}
                   disabled
-                  formatting={false}
                   className="text-2 [&_.tiptap>p:first-child]:mt-0 [&_.tiptap>p:last-child]:mb-0"
                   content={node.content}
                 />

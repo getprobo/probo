@@ -163,6 +163,12 @@ export function commentHighlightRanges(
   return ranges;
 }
 
+// The active thread's text gets a stronger fill and an outline drawn as an
+// inset ring, which takes no space, so nothing reflows. Each wrapped line gets
+// its own closed box. An empty block gets an outline.
+const activeTextClass = "bg-amber-6 shadow-[inset_0_0_0_1px_var(--amber-9)] box-decoration-clone";
+const activeBlockClass = "bg-amber-6 outline-2 outline-offset-2 outline-amber-9";
+
 function decorationsForAnchors(
   handle: DocHandle<RichEditorAutomergeDocument>,
   doc: import("@tiptap/pm/model").Node,
@@ -173,12 +179,13 @@ function decorationsForAnchors(
   for (const anchor of anchors) {
     const range = commentAnchorRange(handle, doc, anchor);
     if (!range) continue;
-    const attrs = {
-      "data-comment-thread": anchor.id,
-      "class": anchor.active ? "bg-amber-5" : "bg-amber-4",
-    };
     for (const highlight of commentHighlightRanges(doc, range.from, range.to)) {
-      const spec = { ...attrs };
+      const spec = {
+        "data-comment-thread": anchor.id,
+        "class": anchor.active
+          ? highlight.block ? activeBlockClass : activeTextClass
+          : "bg-amber-4",
+      };
       decorations.push(highlight.block
         ? Decoration.node(highlight.from, highlight.to, spec)
         : Decoration.inline(highlight.from, highlight.to, spec));

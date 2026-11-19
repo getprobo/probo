@@ -1,0 +1,227 @@
+{
+  "details": {
+    "back": "Documents",
+    "actions": {
+      "cancel": "Annuler",
+      "menu": "Plus d'actions",
+      "unarchive": "Désarchiver",
+      "publish": {
+        "button": "Publier",
+        "title": "Publier une nouvelle version",
+        "description": "Décrivez ce qui a changé. Une version majeure peut demander une approbation avant d'être publiée.",
+        "changelog": "Journal des modifications",
+        "changelogPlaceholder": "Qu'est-ce qui a changé dans cette version ?",
+        "approvers": "Approbateurs",
+        "approversDescription": "Une version majeure attend l'approbation de ces personnes. Les versions mineures sont publiées immédiatement.",
+        "removeApprover": "Retirer {{name}}",
+        "addApprover": "Ajouter un approbateur",
+        "minor": "Publier une version mineure",
+        "major": "Publier une version majeure",
+        "requestApproval": "Demander l'approbation"
+      },
+      "download": {
+        "item": "Télécharger le PDF",
+        "title": "Télécharger le PDF",
+        "description": "Exporter la version publiée {{version}} en PDF.",
+        "signatures": "Inclure les signatures",
+        "signaturesDescription": "Ajouter les signatures recueillies pour cette version.",
+        "watermark": "Ajouter un filigrane",
+        "watermarkDescription": "Marquer chaque page pour pouvoir retracer la copie.",
+        "watermarkText": "Texte du filigrane",
+        "watermarkPlaceholder": "Votre adresse e-mail",
+        "submit": "Télécharger"
+      },
+      "archive": {
+        "item": "Archiver",
+        "title": "Archiver ce document ?",
+        "description": "« {{title}} » passe en lecture seule et rejoint les documents archivés. Vous pourrez le désarchiver plus tard.",
+        "confirm": "Archiver"
+      },
+      "delete": {
+        "item": "Supprimer",
+        "title": "Supprimer « {{title}} » ?",
+        "description": "Le document, ses versions et ses signatures sont supprimés définitivement. Cette action est irréversible.",
+        "confirm": "Supprimer"
+      },
+      "messages": {
+        "published": "Version publiée",
+        "approvalRequested": "Approbation demandée",
+        "archived": "Document archivé",
+        "unarchived": "Document désarchivé",
+        "deleted": "Document supprimé"
+      },
+      "errors": {
+        "publish": "Impossible de publier le document",
+        "archive": "Impossible d'archiver le document",
+        "unarchive": "Impossible de désarchiver le document",
+        "delete": "Impossible de supprimer le document",
+        "download": "Impossible de générer le PDF"
+      }
+    },
+    "presence": {
+      "label": "Personnes dans ce document",
+      "anonymous": "Collaborateur",
+      "inactive": "{{name}} (inactif)",
+      "overflow": "{{count}} autres personnes"
+    },
+    "cards": {
+      "show": "Afficher les détails",
+      "hide": "Masquer les détails"
+    },
+    "notFound": "Document introuvable",
+    "fields": {
+      "title": "Titre"
+    },
+    "properties": {
+      "title": "Propriétés",
+      "type": "Type",
+      "classification": "Classification",
+      "approvers": "Approbateurs",
+      "none": "Aucun",
+      "addApprover": "Ajouter un approbateur",
+      "removeApprover": "Retirer {{name}}"
+    },
+    "controls": {
+      "title": "Contrôles",
+      "search": "Rechercher les contrôles liés",
+      "none": "Aucun",
+      "add": "Lier un contrôle",
+      "remove": "Retirer {{name}}",
+      "loadMore": "Charger plus",
+      "empty": "Aucun contrôle trouvé",
+      "loadError": "Impossible de charger les contrôles"
+    },
+    "approvals": {
+      "title": "Approbateurs",
+      "add": "Ajouter un approbateur",
+      "remove": "Retirer {{name}}",
+      "loadMore": "Charger plus",
+      "none": "Aucun",
+      "states": {
+        "PENDING": "En attente",
+        "APPROVED": "Approuvé",
+        "REJECTED": "Rejeté",
+        "VOIDED": "Annulé"
+      }
+    },
+    "signatories": {
+      "title": "Signataires",
+      "add": "Demander une signature",
+      "remove": "Annuler {{name}}",
+      "search": "Rechercher une personne",
+      "empty": "Aucune personne trouvée",
+      "loadMore": "Charger plus",
+      "loadError": "Impossible de charger les personnes",
+      "none": "Aucun",
+      "states": {
+        "REQUESTED": "Demandée",
+        "SIGNED": "Signée"
+      }
+    },
+    "mode": {
+      "label": "Mode",
+      "viewing": "Lecture",
+      "editing": "Édition",
+      "suggesting": "Suggestion"
+    },
+    "editor": {
+      "loading": "Chargement du document",
+      "openError": "Impossible d'ouvrir le document",
+      "suggestionFailed": "Impossible de démarrer la suggestion",
+      "suggestionUntracked": "Cette modification n'a pas pu être suivie comme suggestion"
+    },
+    "review": {
+      "openComment": "Afficher le commentaire de {{name}}",
+      "openSuggestion": "Afficher la suggestion de {{name}}",
+      "replies_one": "{{count}} réponse",
+      "replies_other": "{{count}} réponses",
+      "justNow": "à l'instant",
+      "contentError": "Impossible d'afficher ce commentaire",
+      "resolve": "Résoudre",
+      "accept": "Accepter la suggestion",
+      "reject": "Refuser la suggestion",
+      "more": "Plus d'actions",
+      "edit": "Modifier",
+      "delete": "Supprimer",
+      "cancel": "Annuler",
+      "save": "Enregistrer",
+      "reply": "Répondre",
+      "replyPlaceholder": "Répondre…",
+      "send": "Envoyer",
+      "showMoreReplies": "Afficher plus de réponses",
+      "contentRequired": "Écrivez d'abord un commentaire",
+      "contentTooLong": "Les commentaires sont limités à {{max}} caractères",
+      "deleteDialog": {
+        "title": "Supprimer le commentaire",
+        "description": "Ce commentaire est supprimé pour tout le monde. Supprimer le dernier commentaire supprime aussi le fil.",
+        "confirm": "Supprimer"
+      },
+      "errors": {
+        "resolve": "Impossible de résoudre le fil",
+        "accept": "Impossible d'accepter la suggestion",
+        "reject": "Impossible de refuser la suggestion",
+        "reply": "Impossible d'envoyer la réponse",
+        "update": "Impossible de modifier le commentaire",
+        "delete": "Impossible de supprimer le commentaire"
+      },
+      "changes": {
+        "formatLine": "<label>Format :</label> {{value}}",
+        "formatValues": {
+          "bold": "gras",
+          "italic": "italique",
+          "underline": "souligné",
+          "strike": "barré",
+          "code": "code",
+          "link": "lien"
+        },
+        "formatRemovedValues": {
+          "bold": "sans gras",
+          "italic": "sans italique",
+          "underline": "sans soulignement",
+          "strike": "sans barré",
+          "code": "sans code",
+          "link": "sans lien"
+        },
+        "linkLine": "<label>Lien :</label> {{value}}",
+        "linkRemoved": "retiré",
+        "blocks": {
+          "paragraph": "Paragraphe",
+          "heading": "Titre {{level}}",
+          "quote": "Citation",
+          "code": "Bloc de code",
+          "bulletList": "Liste à puces",
+          "orderedList": "Liste numérotée",
+          "taskList": "Liste de tâches",
+          "other": "Bloc"
+        },
+        "blockChanged": "{{before}} → {{after}}",
+        "indentChanged": "Retrait modifié",
+        "nodeAdded": {
+          "table": "Tableau ajouté",
+          "row": "Ligne ajoutée",
+          "column": "Colonne ajoutée",
+          "image": "Image ajoutée",
+          "divider": "Séparateur ajouté",
+          "file": "Fichier ajouté",
+          "line": "Retour à la ligne ajouté",
+          "other": "Structure ajoutée"
+        },
+        "nodeRemoved": {
+          "table": "Tableau retiré",
+          "row": "Ligne retirée",
+          "column": "Colonne retirée",
+          "image": "Image retirée",
+          "divider": "Séparateur retiré",
+          "file": "Fichier retiré",
+          "line": "Retour à la ligne retiré",
+          "other": "Structure retirée"
+        },
+        "moreChanges_one": "+{{count}} autre modification",
+        "moreChanges_other": "+{{count}} autres modifications"
+      }
+    },
+    "errors": {
+      "update": "Échec de la mise à jour du document"
+    }
+  }
+}

@@ -1655,7 +1655,42 @@
       "attachFiles": "Joindre des fichiers",
       "mentionMembers": "Mentionner un membre",
       "mentionLoading": "Recherche…",
-      "mentionNoResults": "Aucun membre trouvé"
+      "mentionNoResults": "Aucun membre trouvé",
+      "toolbar": {
+        "label": "Mise en forme",
+        "blockType": "Style",
+        "blocks": {
+          "paragraph": "Texte",
+          "heading1": "Titre 1",
+          "heading2": "Titre 2",
+          "heading3": "Titre 3",
+          "heading4": "Titre 4",
+          "bulletList": "Liste à puces",
+          "orderedList": "Liste numérotée",
+          "taskList": "Liste de tâches",
+          "codeBlock": "Bloc de code",
+          "blockquote": "Citation"
+        },
+        "styles": {
+          "bold": "Gras",
+          "italic": "Italique",
+          "underline": "Souligné",
+          "strike": "Barré",
+          "code": "Code"
+        },
+        "link": "Lien",
+        "linkUrl": "Adresse du lien",
+        "openLink": "Ouvrir le lien dans un nouvel onglet",
+        "removeLink": "Supprimer le lien",
+        "insert": "Insérer",
+        "inserts": {
+          "mermaid": "Diagramme Mermaid",
+          "divider": "Séparateur",
+          "table": "Tableau",
+          "image": "Image",
+          "file": "Fichier"
+        }
+      }
     },
     "documentClassification": {
       "public": "Public",

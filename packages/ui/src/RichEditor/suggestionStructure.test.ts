@@ -289,7 +289,7 @@ describe("suggesting safety net", () => {
     const editor = editorFor(permissions);
     editor.controller.suggestionId = null;
     let requested = 0;
-    editor.controller.onNeedId = () => {
+    editor.controller.onStartSuggesting = () => {
       requested += 1;
       return Promise.resolve(null);
     };
@@ -608,11 +608,11 @@ function controllerFor(onBlocked?: () => void): SuggestingController {
     suggestionId: null,
     pending: null,
     request: null,
-    onNeedId: () => {
+    onStartSuggesting: () => {
       controller.suggestionId = "local:1";
       return Promise.resolve("local:1");
     },
-    onBurstFinished: () => {},
+    onSuggestionDone: () => {},
     onOpenSuggestion: () => {},
     onBlocked,
   };

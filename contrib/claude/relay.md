@@ -381,6 +381,44 @@ useEffect(() => {
 See [`state-management.md`](state-management.md#filtering-a-list) for the full
 list-filtering pattern (pure URL-state hook + single-owner debounced search).
 
+## Connection counts
+
+When the UI only needs to know how many items a connection has, or whether it
+has any, select `totalCount` with `first: 0`. Do not fetch `first: 1` and then
+read `edges[0].node` just to throw that node away.
+
+`first: 1` runs the node resolver and writes a partial record into the store.
+A later selection of the same node can disagree with that partial record.
+`totalCount` is the count the connection already computes, and `first: 0`
+returns no edges.
+
+```graphql
+# Good — existence check, no node
+pendingApproval: versions(first: 0, filter: { statuses: [PENDING_APPROVAL] }) {
+  totalCount
+}
+```
+
+```graphql
+# Bad — loads a version only to test that one exists
+pendingApproval: versions(first: 1, filter: { statuses: [PENDING_APPROVAL] }) {
+  edges { node { id } }
+}
+```
+
+Fetch `first: 1` (or a real page) only when the component renders fields of
+that node.
+
+Relay requires every selection of the same field on one parent to use the
+same arguments. If another fragment already selects that connection with
+`first: 1`, alias the count:
+
+```graphql
+pendingApprovalCount: versions(first: 0, filter: { statuses: [PENDING_APPROVAL] }) {
+  totalCount
+}
+```
+
 ## Pagination
 
 Use `usePaginationFragment` for cursor-based Relay pagination:

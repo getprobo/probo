@@ -63,8 +63,11 @@ import {
   marksForSuggestionText,
   reassignFormatMarks,
   revertFormatSuggestion,
+  styleFormatIds,
   styleMarkStep,
+  styleToggleNeedsFallback,
   type SuggestionStyleName,
+  suggestionStyles,
   suggestLink,
   suggestStyleToggle,
 } from "./suggestionStyle";
@@ -92,9 +95,14 @@ export type SuggestingController = {
   suggestionId: string | null;
   pending: PendingSuggestionInput | null;
   request: Promise<string | null> | null;
-  onNeedId: () => Promise<string | null>;
+  onStartSuggesting: () => Promise<string | null>;
   ownsSuggestion?: (id: string) => boolean;
-  onBurstFinished: () => void;
+  // claimSuggestion reports whether an existing suggestion id belongs to the
+  // current user. The editor asks once, when a toggle finds an id it does not
+  // know yet, and remembers the answer on the controller's owner set.
+  claimSuggestion?: (id: string) => Promise<boolean>;
+  claimingSuggestionId?: string | null;
+  onSuggestionDone: () => void;
   onOpenSuggestion: (id: string) => void;
   // Called when an edit cannot be tracked as a suggestion and was dropped.
   onBlocked?: () => void;
@@ -223,8 +231,8 @@ export function createSuggestingExtension(
             handleKeyDown(view, event) {
               return applySuggestingKey(view, controller.current, event);
             },
-            handleClick(view, pos) {
-              const id = suggestionIdAt(view, pos);
+            handleClick(view, pos, event) {
+              const id = suggestionIdFromTarget(event.target) ?? suggestionIdAt(view, pos);
               if (!id) return false;
               controller.current.onOpenSuggestion(id);
               return false;
@@ -244,7 +252,7 @@ export function createSuggestingExtension(
             const stillOnSuggestion = currentId != null
               && adjacentSuggestionId(newState) === currentId;
             if (moved && !stillOnSuggestion) {
-              controller.current.onBurstFinished();
+              controller.current.onSuggestionDone();
             }
             return null;
           },
@@ -272,12 +280,12 @@ export function suggestingChangeId(state: EditorState, fresh: boolean): string |
   const controller = suggestingPluginKey.getState(state);
   if (!controller?.enabled) return null;
   if (fresh) {
-    controller.onBurstFinished();
+    controller.onSuggestionDone();
     controller.suggestionId = null;
   }
   let id = fresh ? null : suggestionIdForInput(state, controller);
   if (!id) {
-    void controller.onNeedId();
+    void controller.onStartSuggesting();
     id = controller.suggestionId;
   }
   return id;
@@ -303,13 +311,13 @@ export function applySuggestingStructure(
   // merge that card with the words typed just before it.
   let id: string | null = null;
   if (options?.fresh) {
-    current.onBurstFinished();
+    current.onSuggestionDone();
     current.suggestionId = null;
   } else {
     id = suggestionIdForInput(editor.state, current);
   }
   if (!id) {
-    void current.onNeedId();
+    void current.onStartSuggesting();
     id = current.suggestionId;
   }
   if (!id || !editorViewReady(editor)) {
@@ -389,6 +397,21 @@ function suggestionFocusPlugin() {
   });
 }
 
+// The focused suggestion's text gets a stronger fill and an outline drawn as
+// an inset ring, which takes no space, so nothing reflows. A bottom line would
+// read as a suggested underline. Each wrapped line gets its own closed box.
+// Whole blocks get an outline. The block fills are important because
+// rich-editor.css sits outside the cascade layers and sets the resting fill.
+const focusedText = {
+  insert: "bg-green-4 shadow-[inset_0_0_0_1px_var(--green-9)] box-decoration-clone",
+  remove: "bg-red-4 shadow-[inset_0_0_0_1px_var(--red-9)] box-decoration-clone",
+  format: "bg-indigo-4 shadow-[inset_0_0_0_1px_var(--indigo-9)] box-decoration-clone",
+};
+const focusedBlock = {
+  insert: "bg-green-3! outline-2 outline-offset-2 outline-green-9",
+  remove: "bg-red-3! outline-2 outline-offset-2 outline-red-9",
+};
+
 function suggestionFocusDecorations(doc: ProseMirrorNode, id: string) {
   const decorations: Decoration[] = [];
   doc.descendants((node, pos) => {
@@ -399,7 +422,7 @@ function suggestionFocusDecorations(doc: ProseMirrorNode, id: string) {
         const base = structural.kind === "insertion"
           ? "suggestion-inserted-block"
           : "suggestion-deleted-block";
-        const highlight = structural.kind === "insertion" ? "bg-green-3" : "bg-red-3";
+        const highlight = structural.kind === "insertion" ? focusedBlock.insert : focusedBlock.remove;
         decorations.push(Decoration.node(pos, pos + node.nodeSize, {
           "class": focused ? `${base} ${highlight}` : base,
           "data-suggestion-block": structural.id,
@@ -411,18 +434,18 @@ function suggestionFocusDecorations(doc: ProseMirrorNode, id: string) {
     if (split?.kind === "deletion") {
       const focused = id !== "" && split.id === id;
       decorations.push(Decoration.node(pos, pos + node.nodeSize, {
-        class: focused ? "suggestion-deleted-line bg-red-3" : "suggestion-deleted-line",
+        class: focused ? `suggestion-deleted-line ${focusedBlock.remove}` : "suggestion-deleted-line",
       }));
     }
     if (!node.isText || id === "") return;
     for (const mark of node.marks) {
       if (mark.attrs.id !== id) continue;
       const focused = mark.type.name === suggestionInsertName
-        ? "bg-green-3"
+        ? focusedText.insert
         : mark.type.name === suggestionDeleteName
-          ? "bg-red-3"
+          ? focusedText.remove
           : isFormatMark(mark)
-            ? mark.attrs.action === "remove" ? "bg-red-3" : "bg-green-3"
+            ? focusedText.format
             : null;
       if (!focused) continue;
       decorations.push(Decoration.inline(pos, pos + node.nodeSize, { class: focused }));
@@ -457,8 +480,8 @@ export function applySuggestingStyle(
   controller: SuggestingController,
   style: SuggestionStyleName,
 ): boolean {
-  return applyFormatChange(view, controller, (state, id, from, to) =>
-    suggestStyleToggle(state, id, style, from, to),
+  return applyFormatChange(view, controller, style, (state, id, from, to, owns) =>
+    suggestStyleToggle(state, id, style, from, to, owns),
   );
 }
 
@@ -474,8 +497,8 @@ export function applySuggestingLink(
     controller.onBlocked?.();
     return true;
   }
-  return applyFormatChange(view, controller, (state, id, from, to) =>
-    suggestLink(state, id, from, to, href),
+  return applyFormatChange(view, controller, "link", (state, id, from, to, owns) =>
+    suggestLink(state, id, from, to, href, owns),
   );
 }
 
@@ -490,20 +513,50 @@ function suggestedLinkAllowed(href: string): boolean {
 function applyFormatChange(
   view: EditorView,
   controller: SuggestingController,
-  change: (state: EditorState, id: string, from: number, to: number) => Transaction | null,
+  style: SuggestionStyleName,
+  change: (
+    state: EditorState,
+    id: string | null,
+    from: number,
+    to: number,
+    owns: (id: string) => boolean,
+  ) => Transaction | null,
 ): boolean {
   if (!controller.enabled || view.state.selection.empty) return false;
-  let id = suggestionIdForInput(view.state, controller);
-  if (!id) {
-    void controller.onNeedId();
-    id = controller.suggestionId;
-  }
-  if (!id) {
-    controller.onBlocked?.();
+  // The open burst counts as owned so a toggle can undo the suggestion that
+  // is still being typed. Loaded suggestions are owned only after a claim.
+  const owns = (candidate: string) =>
+    controller.ownsSuggestion?.(candidate) === true || candidate === controller.suggestionId;
+  const unknown = styleFormatIds(view.state, style).filter(id => !owns(id));
+  if (unknown.length > 0 && controller.claimSuggestion) {
+    const key = unknown.slice().sort().join("\n");
+    if (controller.claimingSuggestionId === key) return true;
+    const { from, to } = view.state.selection;
+    controller.claimingSuggestionId = key;
+    void Promise.all(unknown.map(id => controller.claimSuggestion!(id))).then(() => {
+      if (controller.claimingSuggestionId === key) {
+        controller.claimingSuggestionId = null;
+      }
+      if (viewIsDestroyed(view)) return;
+      const selection = view.state.selection;
+      if (selection.from !== from || selection.to !== to) return;
+      applyFormatChange(view, controller, style, change);
+    });
     return true;
   }
+
+  // A new id is only for text that has no suggestion of this style. Slices
+  // that already carry one keep that id, so a later toggle cannot collide.
+  let fallback: string | null = null;
+  if (styleToggleNeedsFallback(view.state, style, owns)) {
+    fallback = suggestionIdForInput(view.state, controller);
+    if (!fallback) {
+      void controller.onStartSuggesting();
+      fallback = controller.suggestionId;
+    }
+  }
   const { from, to } = view.state.selection;
-  const tr = change(view.state, id, from, to);
+  const tr = change(view.state, fallback, from, to, owns);
   if (!tr) {
     controller.onBlocked?.();
     return true;
@@ -511,6 +564,10 @@ function applyFormatChange(
   tr.setMeta(suggestingPluginKey, { input: true });
   view.dispatch(tr.scrollIntoView());
   return true;
+}
+
+function viewIsDestroyed(view: EditorView): boolean {
+  return (view as { isDestroyed?: boolean }).isDestroyed === true;
 }
 
 function linkHrefInSelection(state: EditorState): string {
@@ -532,9 +589,9 @@ function applySuggestingStructureFromView(
     controller.onBlocked?.();
     return true;
   }
-  controller.onBurstFinished();
+  controller.onSuggestionDone();
   controller.suggestionId = null;
-  void controller.onNeedId();
+  void controller.onStartSuggesting();
   const id = controller.suggestionId;
   if (!id) {
     controller.onBlocked?.();
@@ -602,7 +659,7 @@ function applySuggestingKey(
   const { state } = view;
   let id = suggestionIdForInput(state, controller);
   if (!id) {
-    void controller.onNeedId();
+    void controller.onStartSuggesting();
     id = controller.suggestionId;
   }
   if (!id) return true;
@@ -660,7 +717,7 @@ function applySuggestingLineBreak(
 
   let id = suggestionIdForInput(view.state, controller);
   if (!id) {
-    void controller.onNeedId();
+    void controller.onStartSuggesting();
     id = controller.suggestionId;
   }
   if (!id) return true;
@@ -708,7 +765,7 @@ function deleteBesideDeletedLine(
 ): boolean {
   let id = suggestionIdForInput(view.state, controller);
   if (!id) {
-    void controller.onNeedId();
+    void controller.onStartSuggesting();
     id = controller.suggestionId;
   }
   if (!id) return true;
@@ -828,7 +885,7 @@ function applySuggestingEnter(
 
   let id = suggestionIdForInput(state, controller);
   if (!id) {
-    void controller.onNeedId();
+    void controller.onStartSuggesting();
     id = controller.suggestionId;
   }
   if (!id) return true;
@@ -890,7 +947,7 @@ function applySuggestingText(
       view.dispatch(tr.scrollIntoView());
       return true;
     }
-    const pendingRequest = controller.onNeedId();
+    const pendingRequest = controller.onStartSuggesting();
     id = controller.suggestionId;
     if (!id) {
       queuePendingText(controller, view, from, to, text);
@@ -1382,15 +1439,42 @@ function hasDeletion(marks: readonly ProseMirrorMark[]): boolean {
   return marks.some(mark => mark.type.name === suggestionDeleteName);
 }
 
+const suggestionTargetAttributes = [
+  "data-suggestion-insert",
+  "data-suggestion-delete",
+  ...suggestionStyles.map(style => `data-suggestion-format-${style.name}`),
+];
+const suggestionTargetSelector = suggestionTargetAttributes
+  .map(attribute => `[${attribute}]`)
+  .join(",");
+
+// The clicked element names its suggestion exactly, even for a single letter
+// where the click position falls on either side of it.
+function suggestionIdFromTarget(target: EventTarget | null): string | null {
+  if (!target || !("closest" in target)) return null;
+  const element = (target as Element).closest(suggestionTargetSelector);
+  if (!element) return null;
+  for (const attribute of suggestionTargetAttributes) {
+    const id = element.getAttribute(attribute);
+    if (id) return id;
+  }
+  return null;
+}
+
+// Suggestion marks are not inclusive, so a position at either edge of a run
+// reports no mark. The characters on each side still carry it.
 function suggestionIdAt(view: EditorView, pos: number): string | null {
-  const marks = view.state.doc.resolve(pos).marks();
-  const mark = marks.find(item =>
-    item.type.name === suggestionInsertName
-    || item.type.name === suggestionDeleteName
-    || isFormatMark(item),
-  );
-  const id = mark ? markAttr(mark, "id") : null;
-  return typeof id === "string" && id !== "" ? id : null;
+  const $pos = view.state.doc.resolve(pos);
+  for (const marks of [$pos.marks(), $pos.nodeAfter?.marks, $pos.nodeBefore?.marks]) {
+    const mark = marks?.find(item =>
+      item.type.name === suggestionInsertName
+      || item.type.name === suggestionDeleteName
+      || isFormatMark(item),
+    );
+    const id = mark ? markAttr(mark, "id") : null;
+    if (typeof id === "string" && id !== "") return id;
+  }
+  return null;
 }
 
 function transactionMeta<Key>(
