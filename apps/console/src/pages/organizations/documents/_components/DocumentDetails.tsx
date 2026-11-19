@@ -34,7 +34,7 @@ import { documentDetailsPage } from "../variants";
 
 import { DocumentApprovalsSection } from "./DocumentApprovalsSection";
 import { DocumentControlsSection } from "./DocumentControlsSection";
-import { DocumentEditor } from "./DocumentEditor";
+import { DocumentEditor } from "./DocumentEditor/DocumentEditor";
 import { DocumentModeSelect } from "./DocumentModeSelect";
 import { DocumentPropertiesSection } from "./DocumentPropertiesSection";
 import { DocumentSignatoriesSection } from "./DocumentSignatoriesSection";
