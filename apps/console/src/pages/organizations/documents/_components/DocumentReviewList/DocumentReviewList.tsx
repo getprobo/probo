@@ -45,7 +45,7 @@ interface DocumentReviewListProps {
   editor: Editor | null;
   collaborationHandle: RepoCollaborationHandle;
   activeKey: string | null;
-  onActiveChange: (key: string) => void;
+  onActiveChange: (key: string | null) => void;
 }
 
 // The column never blocks the document. While its query loads or after it

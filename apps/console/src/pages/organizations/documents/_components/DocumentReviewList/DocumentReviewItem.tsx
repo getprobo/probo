@@ -47,7 +47,7 @@ export function DocumentReviewItem({
     <Card
       variant={active ? "soft" : "gold"}
       padding={1}
-      interactive
+      interactive={!active}
       className={root()}
       data-active={active || undefined}
     >

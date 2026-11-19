@@ -92,9 +92,10 @@ export function DocumentEditor({
     }),
     [document.orientation],
   );
+  const showReview = mode !== "viewing";
   const {
     toolbar, toolbarControls, toolbarEnd, frame, viewport, content, pages, stack, paper, review, scrollbar, thumb,
-  } = documentEditor();
+  } = documentEditor({ review: showReview });
   usePreventSuggestionTextDrop(paperRef, mode);
 
   const onEditor = useCallback((next: Editor | null) => {
@@ -154,17 +155,19 @@ export function DocumentEditor({
                 </div>
               </div>
             </div>
-            <div className={review()}>
-              {handle != null && (
-                <DocumentReviewList
-                  queryRef={reviewQueryRef}
-                  editor={editor}
-                  collaborationHandle={handle}
-                  activeKey={activeKey}
-                  onActiveChange={setActiveKey}
-                />
-              )}
-            </div>
+            {showReview && (
+              <div className={review()}>
+                {handle != null && (
+                  <DocumentReviewList
+                    queryRef={reviewQueryRef}
+                    editor={editor}
+                    collaborationHandle={handle}
+                    activeKey={activeKey}
+                    onActiveChange={setActiveKey}
+                  />
+                )}
+              </div>
+            )}
           </ScrollArea.Content>
         </ScrollArea.Viewport>
         <ScrollArea.Scrollbar className={scrollbar()} orientation="vertical">

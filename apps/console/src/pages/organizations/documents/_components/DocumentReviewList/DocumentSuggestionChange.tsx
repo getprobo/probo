@@ -38,12 +38,12 @@ export function DocumentSuggestionChange({ change }: DocumentSuggestionChangePro
     return (
       <div className={root()}>
         {change.deleted !== "" && (
-          <Text size={2} color="red" className={deleted()}>
+          <Text size={1} color="red" className={deleted()}>
             {change.deleted}
           </Text>
         )}
         {change.inserted !== "" && (
-          <Text size={2} color="green" className={text()}>
+          <Text size={1} color="green" className={text()}>
             {change.inserted}
           </Text>
         )}
