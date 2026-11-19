@@ -407,6 +407,16 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 			return types.NewAiSystem(aiSystem), nil
 		}
+	case coredata.CorrectiveActionPlanEntityType:
+		action = probo.ActionCorrectiveActionPlanGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			plan, err := r.probo.CorrectiveActionPlans.Get(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewCorrectiveActionPlan(plan), nil
+		}
 	case coredata.FindingEntityType:
 		action = probo.ActionFindingList
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {

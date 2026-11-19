@@ -107,6 +107,7 @@ type (
 		Audits                                *AuditService
 		WebhookSubscriptions                  *WebhookSubscriptionService
 		Findings                              *FindingService
+		CorrectiveActionPlans                 *CorrectiveActionPlanService
 		Obligations                           *ObligationService
 		BusinessFunctions                     *BusinessFunctionService
 		AiSystems                             *AiSystemService
@@ -215,6 +216,7 @@ func NewService(
 	svc.Audits = &AuditService{svc: svc}
 	svc.WebhookSubscriptions = &WebhookSubscriptionService{svc: svc}
 	svc.Findings = &FindingService{svc: svc}
+	svc.CorrectiveActionPlans = &CorrectiveActionPlanService{svc: svc}
 	svc.Obligations = &ObligationService{svc: svc}
 	svc.BusinessFunctions = &BusinessFunctionService{svc: svc}
 	svc.AiSystems = &AiSystemService{svc: svc}

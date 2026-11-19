@@ -224,9 +224,16 @@ const (
 	ActionFindingDelete             = "core:finding:delete"
 	ActionFindingAuditMappingCreate = "core:finding:create-audit-mapping"
 	ActionFindingAuditMappingDelete = "core:finding:delete-audit-mapping"
-	ActionFindingTaskMappingCreate  = "core:finding:create-task-mapping"
-	ActionFindingTaskMappingDelete  = "core:finding:delete-task-mapping"
 	ActionFindingPublish            = "core:finding:publish"
+
+	// CorrectiveActionPlan actions
+	ActionCorrectiveActionPlanGet                          = "core:corrective-action-plan:get"
+	ActionCorrectiveActionPlanList                         = "core:corrective-action-plan:list"
+	ActionCorrectiveActionPlanCreate                       = "core:corrective-action-plan:create"
+	ActionCorrectiveActionPlanUpdate                       = "core:corrective-action-plan:update"
+	ActionCorrectiveActionPlanDelete                       = "core:corrective-action-plan:delete"
+	ActionCorrectiveActionPlanInternalControlMappingCreate = "core:corrective-action-plan:create-internal-control-mapping"
+	ActionCorrectiveActionPlanInternalControlMappingDelete = "core:corrective-action-plan:delete-internal-control-mapping"
 
 	// Obligation actions
 	ActionObligationGet     = "core:obligation:get"

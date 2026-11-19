@@ -615,10 +615,19 @@ WITH f AS (
 		fi.search_vector
 	FROM
 		findings fi
-	INNER JOIN
-		findings_tasks ft ON fi.id = ft.finding_id
 	WHERE
-		ft.task_id = @task_id
+		fi.id IN (
+			SELECT
+				cap.finding_id
+			FROM
+				corrective_action_plans cap
+			INNER JOIN
+				corrective_action_plans_internal_controls capic ON capic.corrective_action_plan_id = cap.id
+			INNER JOIN
+				internal_controls_tasks ict ON ict.internal_control_id = capic.internal_control_id
+			WHERE
+				ict.task_id = @task_id
+		)
 )
 SELECT
 	id,
@@ -686,10 +695,19 @@ WITH f AS (
 		fi.search_vector
 	FROM
 		findings fi
-	INNER JOIN
-		findings_tasks ft ON fi.id = ft.finding_id
 	WHERE
-		ft.task_id = @task_id
+		fi.id IN (
+			SELECT
+				cap.finding_id
+			FROM
+				corrective_action_plans cap
+			INNER JOIN
+				corrective_action_plans_internal_controls capic ON capic.corrective_action_plan_id = cap.id
+			INNER JOIN
+				internal_controls_tasks ict ON ict.internal_control_id = capic.internal_control_id
+			WHERE
+				ict.task_id = @task_id
+		)
 )
 SELECT
 	COUNT(id)

@@ -34,10 +34,10 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { NotFoundError } from "#/lib/relay/errors";
 
 import { FindingAuditsSection } from "./_components/FindingAuditsSection";
+import { FindingCorrectiveActionPlansSection } from "./_components/FindingCorrectiveActionPlansSection";
 import { FindingDeleteDialog } from "./_components/FindingList/FindingDeleteDialog";
 import { FindingNarrativeSection } from "./_components/FindingNarrativeSection";
 import { FindingPropertiesSection } from "./_components/FindingPropertiesSection";
-import { FindingTasksSection } from "./_components/FindingTasksSection";
 import { FindingTitleField } from "./_components/FindingTitleField";
 import { findingsPage } from "./_components/variants";
 import { useUpdateFinding } from "./_lib/useUpdateFinding";
@@ -54,7 +54,7 @@ export const findingDetailsPageFragment = graphql`
     }
     ...FindingPropertiesSection_finding
     ...FindingNarrativeSection_finding
-    ...FindingTasksSection_finding
+    ...FindingCorrectiveActionPlansSection_finding
     ...FindingAuditsSection_finding
   }
 `;
@@ -134,7 +134,7 @@ export function FindingDetailsPage({ queryRef }: FindingDetailsPageProps) {
         properties={(
           <div className={side()}>
             <FindingPropertiesSection findingKey={finding} />
-            <FindingTasksSection findingKey={finding} />
+            <FindingCorrectiveActionPlansSection findingKey={finding} />
             <FindingAuditsSection findingKey={finding} />
           </div>
         )}

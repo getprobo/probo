@@ -805,6 +805,14 @@ func (r *taskConnectionResolver) TotalCount(ctx context.Context, obj *types.Task
 		}
 
 		return count, nil
+	case *correctiveActionPlanResolver:
+		count, err := r.task.CountForCorrectiveActionPlanID(ctx, scope, obj.ParentID, obj.Filter)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot count tasks", log.Error(err))
+			return 0, gqlx.Internal(ctx)
+		}
+
+		return count, nil
 	case *internalControlResolver:
 		count, err := r.task.CountForInternalControlID(ctx, scope, obj.ParentID, obj.Filter)
 		if err != nil {

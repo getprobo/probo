@@ -229,6 +229,13 @@ type Finding implements Node {
     priority: FindingPriority!
     risk: Risk @goField(forceResolver: true)
     effectivenessCheck: String
+    correctiveActionPlans(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: CorrectiveActionPlanOrder
+    ): CorrectiveActionPlanConnection! @goField(forceResolver: true)
     tasks(
         first: Int
         after: CursorKey
@@ -292,12 +299,6 @@ extend type Mutation {
     deleteFindingAuditMapping(
         input: DeleteFindingAuditMappingInput!
     ): DeleteFindingAuditMappingPayload
-    createFindingTaskMapping(
-        input: CreateFindingTaskMappingInput!
-    ): CreateFindingTaskMappingPayload!
-    deleteFindingTaskMapping(
-        input: DeleteFindingTaskMappingInput!
-    ): DeleteFindingTaskMappingPayload!
     createAuditFrameworkMapping(
         input: CreateAuditFrameworkMappingInput!
     ): CreateAuditFrameworkMappingPayload
@@ -399,26 +400,6 @@ input CreateFindingAuditMappingInput {
 input DeleteFindingAuditMappingInput {
     findingId: ID!
     auditId: ID!
-}
-
-input CreateFindingTaskMappingInput {
-    findingId: ID!
-    taskId: ID!
-}
-
-type CreateFindingTaskMappingPayload {
-    findingEdge: FindingEdge!
-    taskEdge: TaskEdge!
-}
-
-input DeleteFindingTaskMappingInput {
-    findingId: ID!
-    taskId: ID!
-}
-
-type DeleteFindingTaskMappingPayload {
-    deletedFindingId: ID!
-    deletedTaskId: ID!
 }
 
 type CreateAuditPayload {

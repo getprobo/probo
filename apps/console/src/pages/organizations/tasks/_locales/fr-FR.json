@@ -8,10 +8,8 @@
     "searchInternalControls": "Rechercher des contrôles internes",
     "noInternalControls": "Aucun contrôle interne",
     "findings": "Constats",
+    "findingsHint": "Les constats sont liés à cette tâche via les plans d'actions correctives liés à ses contrôles internes.",
     "noFindings": "Aucun constat lié",
-    "searchFindings": "Rechercher des constats",
-    "noFindingsFound": "Aucun constat trouvé",
-    "findingsLoadError": "Impossible de charger les constats",
     "internalControlsLoadError": "Impossible de charger les contrôles internes",
     "noDescription": "Aucune description",
     "unassigned": "Non assigné",
@@ -69,7 +67,6 @@
       "loadMoreInternalControls": "Charger plus",
       "loadMoreFindings": "Charger plus",
       "removeInternalControl": "Retirer",
-      "unlinkFinding": "Dissocier le constat",
       "cancel": "Annuler",
       "retry": "Réessayer"
     },
@@ -116,9 +113,7 @@
     "errors": {
       "delete": "Échec de la suppression de la tâche",
       "update": "Échec de la mise à jour de la tâche",
-      "content": "Impossible d'afficher cette description",
-      "linkFinding": "Échec de la liaison du constat",
-      "unlinkFinding": "Échec de la dissociation du constat"
+      "content": "Impossible d'afficher cette description"
     },
     "comments": {
       "title": "Commentaires",

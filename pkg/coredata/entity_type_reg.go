@@ -177,6 +177,7 @@ const (
 	DocumentCommentEntityType                        uint16 = 145
 	CMPDomainEntityType                              uint16 = 146
 	CMPDomainSurfaceEntityType                       uint16 = 147
+	CorrectiveActionPlanEntityType                   uint16 = 148
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -235,6 +236,8 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &ThirdPartyDataPrivacyAgreement{ID: id}, true
 	case FindingEntityType:
 		return &Finding{ID: id}, true
+	case CorrectiveActionPlanEntityType:
+		return &CorrectiveActionPlan{ID: id}, true
 	case ObligationEntityType:
 		return &Obligation{ID: id}, true
 	case ThirdPartyServiceEntityType:

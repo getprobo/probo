@@ -3066,6 +3066,15 @@ func (r *Resolver) LinkInternalControlTool(ctx context.Context, req *mcp.CallToo
 		if _, _, err := r.riskManagement.CreateInternalControlMapping(ctx, scope, input.ResourceID, input.InternalControlID); err != nil {
 			return nil, types.LinkInternalControlOutput{}, mapTreatmentPlanError(ctx, r.logger, "link internal control on", err)
 		}
+	case coredata.CorrectiveActionPlanEntityType:
+		scope, err := r.Authorize(ctx, input.ResourceID, probo.ActionCorrectiveActionPlanInternalControlMappingCreate)
+		if err != nil {
+			return nil, types.LinkInternalControlOutput{}, err
+		}
+
+		if _, _, err := svc.CorrectiveActionPlans.CreateInternalControlMapping(ctx, scope, input.ResourceID, input.InternalControlID); err != nil {
+			return nil, types.LinkInternalControlOutput{}, mcpx.MapError(ctx, r.logger, "cannot link internal control to corrective action plan", err)
+		}
 	default:
 		return nil, types.LinkInternalControlOutput{}, fmt.Errorf("unsupported resource type for internal control linking: entity type %d", input.ResourceID.EntityType())
 	}
@@ -3121,6 +3130,15 @@ func (r *Resolver) UnlinkInternalControlTool(ctx context.Context, req *mcp.CallT
 
 		if _, _, err := r.riskManagement.DeleteInternalControlMapping(ctx, scope, input.ResourceID, input.InternalControlID); err != nil {
 			return nil, types.UnlinkInternalControlOutput{}, mapTreatmentPlanError(ctx, r.logger, "unlink internal control from", err)
+		}
+	case coredata.CorrectiveActionPlanEntityType:
+		scope, err := r.Authorize(ctx, input.ResourceID, probo.ActionCorrectiveActionPlanInternalControlMappingDelete)
+		if err != nil {
+			return nil, types.UnlinkInternalControlOutput{}, err
+		}
+
+		if _, _, err := svc.CorrectiveActionPlans.DeleteInternalControlMapping(ctx, scope, input.ResourceID, input.InternalControlID); err != nil {
+			return nil, types.UnlinkInternalControlOutput{}, mcpx.MapError(ctx, r.logger, "cannot unlink internal control from corrective action plan", err)
 		}
 	default:
 		return nil, types.UnlinkInternalControlOutput{}, fmt.Errorf("unsupported resource type for internal control unlinking: entity type %d", input.ResourceID.EntityType())
@@ -11550,45 +11568,6 @@ func (r *Resolver) ListScanTrackerResourcesTool(ctx context.Context, req *mcp.Ca
 	return nil, types.NewListScanTrackerResourcesOutput(page.NewPage(resources, cursor)), nil
 }
 
-func (r *Resolver) LinkFindingTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkFindingTaskInput) (*mcp.CallToolResult, types.LinkFindingTaskOutput, error) {
-	scope, err := r.Authorize(ctx, input.FindingID, probo.ActionFindingTaskMappingCreate)
-	if err != nil {
-		return nil, types.LinkFindingTaskOutput{}, err
-	}
-
-	finding, linkedTask, err := r.proboSvc.Findings.CreateTaskMapping(ctx, scope, input.FindingID, input.TaskID)
-	if err != nil {
-		return nil, types.LinkFindingTaskOutput{}, fmt.Errorf("cannot link finding to task: %w", err)
-	}
-
-	result, err := r.taskWithExternalLink(ctx, scope, linkedTask)
-	if err != nil {
-		return nil, types.LinkFindingTaskOutput{}, err
-	}
-
-	return nil, types.LinkFindingTaskOutput{
-		Finding: types.NewFinding(finding),
-		Task:    result,
-	}, nil
-}
-
-func (r *Resolver) UnlinkFindingTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkFindingTaskInput) (*mcp.CallToolResult, types.UnlinkFindingTaskOutput, error) {
-	scope, err := r.Authorize(ctx, input.FindingID, probo.ActionFindingTaskMappingDelete)
-	if err != nil {
-		return nil, types.UnlinkFindingTaskOutput{}, err
-	}
-
-	finding, linkedTask, err := r.proboSvc.Findings.DeleteTaskMapping(ctx, scope, input.FindingID, input.TaskID)
-	if err != nil {
-		return nil, types.UnlinkFindingTaskOutput{}, fmt.Errorf("cannot unlink finding from task: %w", err)
-	}
-
-	return nil, types.UnlinkFindingTaskOutput{
-		DeletedFindingID: finding.ID,
-		DeletedTaskID:    linkedTask.ID,
-	}, nil
-}
-
 func (r *Resolver) ListFindingTasksTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListFindingTasksInput) (*mcp.CallToolResult, types.ListFindingTasksOutput, error) {
 	scope, err := r.Authorize(ctx, input.FindingID, task.ActionTaskList)
 	if err != nil {
@@ -12388,4 +12367,182 @@ func (r *Resolver) ChangeDocumentBlockTool(ctx context.Context, req *mcp.CallToo
 
 func (r *Resolver) SubmitFeedbackTool(ctx context.Context, _ *mcp.CallToolRequest, input *types.SubmitFeedbackInput) (*mcp.CallToolResult, types.SubmitFeedbackOutput, error) {
 	return r.submitFeedback(ctx, input)
+}
+
+func (r *Resolver) ListFindingCorrectiveActionPlansTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListFindingCorrectiveActionPlansInput) (*mcp.CallToolResult, types.ListFindingCorrectiveActionPlansOutput, error) {
+	scope, err := r.Authorize(ctx, input.FindingID, probo.ActionCorrectiveActionPlanList)
+	if err != nil {
+		return nil, types.ListFindingCorrectiveActionPlansOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.CorrectiveActionPlanOrderField]{
+		Field:     coredata.CorrectiveActionPlanOrderFieldCreatedAt,
+		Direction: page.OrderDirectionAsc,
+	}
+
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.CorrectiveActionPlanOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	planPage, err := r.proboSvc.CorrectiveActionPlans.ListForFindingID(ctx, scope, input.FindingID, cursor)
+	if err != nil {
+		return nil, types.ListFindingCorrectiveActionPlansOutput{}, mcpx.MapError(ctx, r.logger, "cannot list finding corrective action plans", err)
+	}
+
+	return nil, types.NewListFindingCorrectiveActionPlansOutput(planPage), nil
+}
+
+func (r *Resolver) GetCorrectiveActionPlanTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetCorrectiveActionPlanInput) (*mcp.CallToolResult, types.GetCorrectiveActionPlanOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionCorrectiveActionPlanGet)
+	if err != nil {
+		return nil, types.GetCorrectiveActionPlanOutput{}, err
+	}
+
+	plan, err := r.proboSvc.CorrectiveActionPlans.Get(ctx, scope, input.ID)
+	if err != nil {
+		return nil, types.GetCorrectiveActionPlanOutput{}, mcpx.MapError(ctx, r.logger, "cannot get corrective action plan", err)
+	}
+
+	return nil, types.GetCorrectiveActionPlanOutput{CorrectiveActionPlan: types.NewCorrectiveActionPlan(plan)}, nil
+}
+
+func (r *Resolver) AddCorrectiveActionPlanTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddCorrectiveActionPlanInput) (*mcp.CallToolResult, types.AddCorrectiveActionPlanOutput, error) {
+	scope, err := r.Authorize(ctx, input.FindingID, probo.ActionCorrectiveActionPlanCreate)
+	if err != nil {
+		return nil, types.AddCorrectiveActionPlanOutput{}, err
+	}
+
+	plan, err := r.proboSvc.CorrectiveActionPlans.Create(
+		ctx,
+		scope,
+		&probo.CreateCorrectiveActionPlanRequest{
+			FindingID:   input.FindingID,
+			Title:       input.Title,
+			Description: input.Description,
+			OwnerID:     input.OwnerID,
+			DueDate:     input.DueDate,
+		},
+	)
+	if err != nil {
+		return nil, types.AddCorrectiveActionPlanOutput{}, mcpx.MapError(ctx, r.logger, "cannot create corrective action plan", err)
+	}
+
+	return nil, types.AddCorrectiveActionPlanOutput{CorrectiveActionPlan: types.NewCorrectiveActionPlan(plan)}, nil
+}
+
+func (r *Resolver) UpdateCorrectiveActionPlanTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateCorrectiveActionPlanInput) (*mcp.CallToolResult, types.UpdateCorrectiveActionPlanOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionCorrectiveActionPlanUpdate)
+	if err != nil {
+		return nil, types.UpdateCorrectiveActionPlanOutput{}, err
+	}
+
+	plan, err := r.proboSvc.CorrectiveActionPlans.Update(
+		ctx,
+		scope,
+		&probo.UpdateCorrectiveActionPlanRequest{
+			ID:          input.ID,
+			Title:       input.Title,
+			Description: UnwrapOmittable(input.Description),
+			OwnerID:     UnwrapOmittable(input.OwnerID),
+			DueDate:     UnwrapOmittable(input.DueDate),
+		},
+	)
+	if err != nil {
+		return nil, types.UpdateCorrectiveActionPlanOutput{}, mcpx.MapError(ctx, r.logger, "cannot update corrective action plan", err)
+	}
+
+	return nil, types.UpdateCorrectiveActionPlanOutput{CorrectiveActionPlan: types.NewCorrectiveActionPlan(plan)}, nil
+}
+
+func (r *Resolver) DeleteCorrectiveActionPlanTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteCorrectiveActionPlanInput) (*mcp.CallToolResult, types.DeleteCorrectiveActionPlanOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionCorrectiveActionPlanDelete)
+	if err != nil {
+		return nil, types.DeleteCorrectiveActionPlanOutput{}, err
+	}
+
+	if err := r.proboSvc.CorrectiveActionPlans.Delete(ctx, scope, input.ID); err != nil {
+		return nil, types.DeleteCorrectiveActionPlanOutput{}, mcpx.MapError(ctx, r.logger, "cannot delete corrective action plan", err)
+	}
+
+	return nil, types.DeleteCorrectiveActionPlanOutput{DeletedCorrectiveActionPlanID: input.ID}, nil
+}
+
+func (r *Resolver) ListCorrectiveActionPlanInternalControlsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListCorrectiveActionPlanInternalControlsInput) (*mcp.CallToolResult, types.ListCorrectiveActionPlanInternalControlsOutput, error) {
+	scope, err := r.Authorize(ctx, input.CorrectiveActionPlanID, probo.ActionCorrectiveActionPlanGet)
+	if err != nil {
+		return nil, types.ListCorrectiveActionPlanInternalControlsOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.InternalControlOrderField]{
+		Field:     coredata.InternalControlOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.InternalControlOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	internalControlPage, err := r.proboSvc.InternalControls.ListForCorrectiveActionPlanID(
+		ctx,
+		scope,
+		input.CorrectiveActionPlanID,
+		cursor,
+		coredata.NewInternalControlFilter(nil, nil, nil, nil, nil, nil, nil),
+	)
+	if err != nil {
+		return nil, types.ListCorrectiveActionPlanInternalControlsOutput{}, mcpx.MapError(ctx, r.logger, "cannot list corrective action plan internal controls", err)
+	}
+
+	return nil, types.NewListCorrectiveActionPlanInternalControlsOutput(internalControlPage), nil
+}
+
+func (r *Resolver) ListCorrectiveActionPlanTasksTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListCorrectiveActionPlanTasksInput) (*mcp.CallToolResult, types.ListCorrectiveActionPlanTasksOutput, error) {
+	scope, err := r.Authorize(ctx, input.CorrectiveActionPlanID, task.ActionTaskList)
+	if err != nil {
+		return nil, types.ListCorrectiveActionPlanTasksOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.TaskOrderField]{
+		Field:     coredata.TaskOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.TaskOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+	taskFilter := coredata.NewTaskFilter(nil, nil, nil, nil, nil, nil, nil, nil)
+
+	taskPage, err := r.task.ListForCorrectiveActionPlanID(ctx, scope, input.CorrectiveActionPlanID, cursor, taskFilter)
+	if err != nil {
+		return nil, types.ListCorrectiveActionPlanTasksOutput{}, mcpx.MapError(ctx, r.logger, "cannot list corrective action plan tasks", err)
+	}
+
+	links, err := r.taskExternalLinksByTasks(ctx, scope, taskPage.Data)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load task external links", log.Error(err))
+		return nil, types.ListCorrectiveActionPlanTasksOutput{}, fmt.Errorf("internal error")
+	}
+
+	internalControlIDs, err := r.internalControlIDsByTasks(ctx, scope, taskPage.Data)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load task internal controls", log.Error(err))
+		return nil, types.ListCorrectiveActionPlanTasksOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, types.NewListCorrectiveActionPlanTasksOutput(taskPage, links, internalControlIDs), nil
 }

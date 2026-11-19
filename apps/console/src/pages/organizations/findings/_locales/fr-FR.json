@@ -96,16 +96,25 @@
       "dueDate": "Définir la date d’échéance",
       "risk": "Définir le risque accepté"
     },
-    "tasks": {
-      "title": "Tâches",
-      "empty": "Aucune tâche liée",
-      "search": "Lier une tâche",
-      "emptySearch": "Aucune tâche trouvée",
-      "loadError": "Impossible de charger les tâches",
+    "plans": {
+      "title": "Plans d'actions correctives",
+      "hint": "Liez des contrôles internes à un plan. Ses tâches sont celles de ces contrôles.",
+      "empty": "Aucun plan d'actions correctives",
+      "newTitle": "Titre du nouveau plan",
+      "add": "Ajouter",
+      "delete": "Supprimer le plan",
+      "due": "Échéance {{date}}",
+      "internalControls": "Contrôles internes",
+      "noInternalControls": "Aucun contrôle interne lié",
+      "unlinkInternalControl": "Délier le contrôle interne",
+      "tasks_one": "{{count}} tâche",
+      "tasks_other": "{{count}} tâches",
+      "noTasks": "Aucune tâche sur les contrôles internes liés",
       "loadMore": "Charger plus",
-      "unlink": "Dissocier la tâche",
-      "linkError": "Échec de la liaison de la tâche",
-      "unlinkError": "Échec de la dissociation de la tâche"
+      "createError": "Impossible de créer le plan d'actions correctives",
+      "deleteError": "Impossible de supprimer le plan d'actions correctives",
+      "linkError": "Impossible de lier le contrôle interne",
+      "unlinkError": "Impossible de délier le contrôle interne"
     },
     "audits": {
       "title": "Audits liés",
