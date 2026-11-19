@@ -60,11 +60,11 @@ func assertDraftEditable(
 		return gid.GID{}, fmt.Errorf("cannot load document: %w", err)
 	}
 
-	if document.ArchivedAt != nil {
-		return gid.GID{}, &ErrDocumentArchived{}
-	}
+	if document.ReadOnly() {
+		if document.ArchivedAt != nil {
+			return gid.GID{}, &ErrDocumentArchived{}
+		}
 
-	if document.WriteMode == coredata.DocumentWriteModeGenerated {
 		return gid.GID{}, &ErrDocumentVersionGenerated{}
 	}
 

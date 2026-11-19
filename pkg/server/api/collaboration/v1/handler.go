@@ -102,6 +102,26 @@ type (
 	}
 )
 
+// collaborationAccess is the write access for this socket. Viewing is the
+// default. A generated or archived document stays in that mode.
+func collaborationAccess(
+	mode string,
+	document *coredata.Document,
+	canUpdate bool,
+	canComment bool,
+) (bool, bool) {
+	switch mode {
+	case "editing", "suggesting":
+		if document.ReadOnly() {
+			return false, false
+		}
+
+		return canUpdate, canComment
+	default:
+		return false, false
+	}
+}
+
 func (h *Handler) HandleRepo(w http.ResponseWriter, r *http.Request) {
 	documentIDString := chi.URLParam(r, "documentID")
 
@@ -116,6 +136,13 @@ func (h *Handler) HandleRepo(w http.ResponseWriter, r *http.Request) {
 		h.renderAuthorizationError(w, err)
 		return
 	}
+
+	canUpdate, canComment = collaborationAccess(
+		r.URL.Query().Get("mode"),
+		document,
+		canUpdate,
+		canComment,
+	)
 
 	identity := authn.IdentityFromContext(r.Context())
 	displayName, identityID, avatarURL, profileID := collaborationPresenceIdentity(
@@ -564,8 +591,9 @@ func ServeRepoCollaboration(
 	syncState *automerge.SyncState,
 	config RepoConfig,
 ) error {
-	// Viewers apply nothing, including changes outside the body.
-	if !config.CanUpdate && !config.CanComment {
+	// Viewers apply nothing, including changes outside the body, and do not persist.
+	readOnly := !config.CanUpdate && !config.CanComment
+	if readOnly {
 		if err := syncState.SetReadOnly(true); err != nil {
 			return fmt.Errorf("cannot mark collaboration peer read-only: %w", err)
 		}
@@ -676,6 +704,10 @@ func ServeRepoCollaboration(
 
 			lease.NotifyPeers()
 
+			if readOnly {
+				continue
+			}
+
 			if err := lease.PersistError(); err != nil {
 				return fmt.Errorf("cannot persist repo collaboration: %w", err)
 			}
@@ -688,8 +720,10 @@ func ServeRepoCollaboration(
 		case <-lease.WakeCh:
 			// The room document changed, through another peer here or a
 			// refresh the room ran for changes persisted elsewhere.
-			if err := lease.PersistError(); err != nil {
-				return fmt.Errorf("cannot persist repo collaboration: %w", err)
+			if !readOnly {
+				if err := lease.PersistError(); err != nil {
+					return fmt.Errorf("cannot persist repo collaboration: %w", err)
+				}
 			}
 
 			frames, err := conn.SyncChanged()

@@ -71,6 +71,11 @@ func (p Document) CursorKey(orderBy DocumentOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
+// ReadOnly reports whether collaborators must not change the document.
+func (d Document) ReadOnly() bool {
+	return d.ArchivedAt != nil || d.WriteMode == DocumentWriteModeGenerated
+}
+
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
 func (d *Document) AuthorizationAttributes(
 	ctx context.Context,
