@@ -43,6 +43,7 @@ import (
 	"go.probo.inc/probo/pkg/crypto/hash"
 	"go.probo.inc/probo/pkg/crypto/rand"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/identityname"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/webhook"
@@ -362,6 +363,10 @@ func (s *Service) CreateUser(
 
 		if err := webhook.InsertUpdateData(ctx, tx, scope, config.OrganizationID, eventType, webhooktypes.NewUser(profile, membership), previousUser); err != nil {
 			return fmt.Errorf("cannot insert webhook event: %w", err)
+		}
+
+		if err := identityname.CopyFromUniqueProfile(ctx, tx, profile.IdentityID, profile.FullName); err != nil {
+			return fmt.Errorf("cannot sync identity full name: %w", err)
 		}
 
 		return nil
@@ -829,6 +834,12 @@ func (s *Service) updateUser(
 
 			if err := webhook.InsertUpdateData(ctx, tx, scope, config.OrganizationID, coredata.WebhookEventTypeUserUpdated, webhooktypes.NewUser(profile, membership), previousUser); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
+			}
+
+			if attrs.FullName != "" {
+				if err := identityname.CopyFromUniqueProfile(ctx, tx, profile.IdentityID, profile.FullName); err != nil {
+					return fmt.Errorf("cannot sync identity full name: %w", err)
+				}
 			}
 
 			return nil

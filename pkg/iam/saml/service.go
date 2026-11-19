@@ -39,6 +39,7 @@ import (
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/identityname"
 )
 
 type (
@@ -285,7 +286,6 @@ func (s *Service) HandleAssertion(
 				return fmt.Errorf("cannot load identity: %w", err)
 			} else {
 				identity.EmailAddress = email
-				identity.FullName = fullname
 
 				if !hasSAMLSubject(identity) {
 					identity.SAMLSubject = &samlSubject
@@ -379,6 +379,10 @@ func (s *Service) HandleAssertion(
 				err = profile.Update(ctx, tx, scope)
 				if err != nil {
 					return fmt.Errorf("cannot update profile: %w", err)
+				}
+
+				if err := identityname.CopyFromUniqueProfile(ctx, tx, profile.IdentityID, profile.FullName); err != nil {
+					return fmt.Errorf("cannot sync identity full name: %w", err)
 				}
 
 				if role != nil {
