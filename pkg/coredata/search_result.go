@@ -116,36 +116,24 @@ func searchResultArgs(
 		typed[i] = int32(entityType)
 	}
 
-	return pgx.StrictNamedArgs{
+	// Tag-only SQL omits @query. StrictNamedArgs rejects an argument the
+	// query text does not reference.
+	args := pgx.StrictNamedArgs{
 		"organization_id": organizationID,
 		"selector_names":  names,
 		"selector_count":  len(selectors),
 		"entity_types":    typed,
-		"query":           query,
 	}
+	if hasSearchTerms(query) {
+		args["query"] = query
+	}
+
+	return args
 }
 
-func (rs *SearchResults) LoadByOrganizationIDAndSelectors(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	organizationID gid.GID,
-	selectors []TagSelector,
-	entityTypes []uint16,
-	query string,
-	cursor *page.Cursor[SearchResultOrderField],
-) error {
-	if len(selectors) == 0 && query == "" {
-		*rs = nil
-
-		return nil
-	}
-
-	args := searchResultArgs(organizationID, selectors, entityTypes, query)
-	maps.Copy(args, scope.SQLArguments())
-
-	// The text match stays a bare search_vector @@ predicate. Wrapping it in
-	// CASE or OR keeps it out of the generic plan's index condition.
+// The text match stays a bare search_vector @@ predicate. Wrapping it in
+// CASE or OR keeps it out of the generic plan's index condition.
+func searchResultsSelectSQL(query string, scopeSQL string, cursorSQL string) string {
 	var q string
 	if hasSearchTerms(query) {
 		q = `
@@ -217,43 +205,10 @@ WHERE
 `
 	}
 
-	q = fmt.Sprintf(
-		q,
-		scope.SQLFragment(),
-		searchResourceFilterSQL(),
-		cursor.SQLFragment(),
-	)
-
-	maps.Copy(args, cursor.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query search results: %w", err)
-	}
-
-	results, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[SearchResult])
-	if err != nil {
-		return fmt.Errorf("cannot collect search results: %w", err)
-	}
-
-	*rs = results
-
-	return nil
+	return fmt.Sprintf(q, scopeSQL, searchResourceFilterSQL(), cursorSQL)
 }
 
-func (rs *SearchResults) CountByOrganizationIDAndSelectors(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	organizationID gid.GID,
-	selectors []TagSelector,
-	entityTypes []uint16,
-	query string,
-) (int, error) {
-	if len(selectors) == 0 && query == "" {
-		return 0, nil
-	}
-
+func searchResultsCountSQL(query string, scopeSQL string) string {
 	var q string
 	if hasSearchTerms(query) {
 		q = `
@@ -291,7 +246,61 @@ WHERE
 `
 	}
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), searchResourceFilterSQL())
+	return fmt.Sprintf(q, scopeSQL, searchResourceFilterSQL())
+}
+
+func (rs *SearchResults) LoadByOrganizationIDAndSelectors(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	organizationID gid.GID,
+	selectors []TagSelector,
+	entityTypes []uint16,
+	query string,
+	cursor *page.Cursor[SearchResultOrderField],
+) error {
+	if len(selectors) == 0 && query == "" {
+		*rs = nil
+
+		return nil
+	}
+
+	args := searchResultArgs(organizationID, selectors, entityTypes, query)
+	maps.Copy(args, scope.SQLArguments())
+
+	q := searchResultsSelectSQL(query, scope.SQLFragment(), cursor.SQLFragment())
+
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query search results: %w", err)
+	}
+
+	results, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[SearchResult])
+	if err != nil {
+		return fmt.Errorf("cannot collect search results: %w", err)
+	}
+
+	*rs = results
+
+	return nil
+}
+
+func (rs *SearchResults) CountByOrganizationIDAndSelectors(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	organizationID gid.GID,
+	selectors []TagSelector,
+	entityTypes []uint16,
+	query string,
+) (int, error) {
+	if len(selectors) == 0 && query == "" {
+		return 0, nil
+	}
+
+	q := searchResultsCountSQL(query, scope.SQLFragment())
 
 	args := searchResultArgs(organizationID, selectors, entityTypes, query)
 	maps.Copy(args, scope.SQLArguments())
