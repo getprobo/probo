@@ -205,6 +205,7 @@ func createCorrectiveActionPlan(t *testing.T, c *testutil.Client, findingID stri
 	if input == nil {
 		input = map[string]any{}
 	}
+
 	input["findingId"] = findingID
 	if _, ok := input["title"]; !ok {
 		input["title"] = factory.SafeName("Plan")
@@ -333,6 +334,7 @@ func TestCorrectiveActionPlan_UpdateAndDelete(t *testing.T) {
 	assert.Nil(t, got.Description)
 	assert.Nil(t, got.Owner)
 	assert.Nil(t, got.DueDate)
+
 	origCreatedAt, err := time.Parse(time.RFC3339Nano, plan.CreatedAt)
 	require.NoError(t, err)
 	gotCreatedAt, err := time.Parse(time.RFC3339Nano, got.CreatedAt)
