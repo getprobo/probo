@@ -1,6 +1,12 @@
 {
   "details": {
     "back": "Documents",
+    "presence": {
+      "label": "Personnes dans ce document",
+      "anonymous": "Collaborateur",
+      "inactive": "{{name}} (inactif)",
+      "overflow": "{{count}} autres personnes"
+    },
     "cards": {
       "show": "Afficher les détails",
       "hide": "Masquer les détails"

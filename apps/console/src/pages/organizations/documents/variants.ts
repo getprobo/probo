@@ -77,9 +77,10 @@ export const documentEditor = tv({
     // the controls slot.
     toolbar: "flex min-h-10 w-full shrink-0 items-center gap-1 rounded-1 border border-sand-6 bg-sand-1 p-1",
     toolbarControls: "flex min-w-0 flex-1",
-    // The select trigger is full width by default, so the box sizes it to
-    // its content and leaves the rest of the row to the controls.
-    toolbarEnd: "shrink-0",
+    toolbarEnd: "flex shrink-0 items-center gap-2",
+    // The select trigger is full width by default, so its own box sizes it to
+    // its content instead of the whole end group.
+    toolbarMode: "shrink-0",
     // The frame only scrolls. The pages and the review column sit side by
     // side inside it so the cards move with the text.
     frame: "@container relative min-h-80 overflow-hidden lg:min-h-0 lg:flex-1",
@@ -134,9 +135,44 @@ export const documentEditor = tv({
         content: "justify-center",
       },
     },
+    // Collaborators' carets and selections only show while editing or
+    // suggesting. Hiding them in CSS keeps the editor from being rebuilt, and
+    // the rules are important because rich-editor.css sits outside the
+    // cascade layers.
+    presence: {
+      true: {},
+      false: {
+        paper: "[&_.presence-cursor]:hidden! [&_.presence-selection]:bg-transparent!",
+      },
+    },
   },
   defaultVariants: {
     review: true,
+    presence: true,
+  },
+});
+
+export const documentPresence = tv({
+  slots: {
+    stack: "flex items-center -space-x-1",
+    // The sand padding keeps each avatar apart from the one it overlaps and
+    // from its presence ring. The ring is an inline box-shadow, so focus uses
+    // an outline.
+    avatarTrigger: [
+      "flex rounded-full bg-sand-1 p-0.5 outline-none",
+      "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sand-8",
+    ],
+    overflow: [
+      "inline-flex size-7 items-center justify-center rounded-full",
+      "bg-sand-3 text-1 font-medium text-sand-11 ring-2 ring-sand-1",
+    ],
+    separator: "my-1.5",
+  },
+  variants: {
+    active: {
+      true: {},
+      false: { avatarTrigger: "opacity-50 grayscale" },
+    },
   },
 });
 

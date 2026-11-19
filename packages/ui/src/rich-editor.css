@@ -285,4 +285,69 @@
     .suggestion-deleted-block {
         @apply bg-red-2 text-red-11 line-through;
     }
+
+    .presence-selection {
+        background-color: var(--presence-highlight);
+    }
+
+    .presence-cursor {
+        position: relative;
+        margin-left: -1px;
+        border-left: 2px solid var(--presence-color);
+        pointer-events: none;
+    }
+
+    /* A narrow hit area: hovering the caret shows the name without blocking
+       text selection around it. */
+    .presence-cursor::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: -4px;
+        width: 8px;
+        pointer-events: auto;
+    }
+
+    /* The name shows for a moment after the caret moves (each move rebuilds
+       the caret and replays the animation), then only on hover. Sizes are
+       divided by --page-scale, set where the document is zoomed to fit, so
+       the flag keeps its screen size. */
+    .presence-cursor-flag {
+        position: absolute;
+        bottom: 100%;
+        left: -2px;
+        padding: calc(2px / var(--page-scale, 1)) calc(6px / var(--page-scale, 1));
+        border-radius: calc(4px / var(--page-scale, 1));
+        background-color: var(--presence-color);
+        color: #fff;
+        font-size: calc(12px / var(--page-scale, 1));
+        font-weight: 500;
+        line-height: 1.4;
+        white-space: nowrap;
+        pointer-events: none;
+        animation: presence-flag-flash 3s ease-out forwards;
+    }
+
+    .presence-cursor:hover .presence-cursor-flag {
+        animation: none;
+        opacity: 1;
+    }
+}
+
+@keyframes presence-flag-flash {
+    0%,
+    83% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tiptap .presence-cursor-flag {
+        animation-timing-function: step-end;
+    }
 }

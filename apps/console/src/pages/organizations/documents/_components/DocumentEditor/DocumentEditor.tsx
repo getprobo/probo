@@ -47,6 +47,7 @@ import { DocumentModeSelect } from "../DocumentModeSelect";
 import { DocumentReviewList } from "../DocumentReviewList/DocumentReviewList";
 
 import { DocumentEditorPages } from "./DocumentEditorPages";
+import { DocumentPresenceAvatars } from "./DocumentPresenceAvatars";
 
 const documentEditorFragment = graphql`
   fragment DocumentEditor_document on Document {
@@ -92,10 +93,11 @@ export function DocumentEditor({
     }),
     [document.orientation],
   );
-  const showReview = mode !== "viewing";
+  const collaborating = mode !== "viewing";
   const {
-    toolbar, toolbarControls, toolbarEnd, frame, viewport, content, pages, stack, paper, review, scrollbar, thumb,
-  } = documentEditor({ review: showReview });
+    toolbar, toolbarControls, toolbarEnd, toolbarMode,
+    frame, viewport, content, pages, stack, paper, review, scrollbar, thumb,
+  } = documentEditor({ review: collaborating, presence: collaborating });
   usePreventSuggestionTextDrop(paperRef, mode);
 
   const onEditor = useCallback((next: Editor | null) => {
@@ -108,7 +110,12 @@ export function DocumentEditor({
       <div className={toolbar()}>
         <div ref={setToolbarEl} className={toolbarControls()} />
         <div className={toolbarEnd()}>
-          <DocumentModeSelect mode={mode} modes={modes} onModeChange={onModeChange} />
+          {collaborating && handle != null && (
+            <DocumentPresenceAvatars collaborationHandle={handle} />
+          )}
+          <div className={toolbarMode()}>
+            <DocumentModeSelect mode={mode} modes={modes} onModeChange={onModeChange} />
+          </div>
         </div>
       </div>
       <ScrollArea.Root className={frame()}>
@@ -155,7 +162,7 @@ export function DocumentEditor({
                 </div>
               </div>
             </div>
-            {showReview && (
+            {collaborating && (
               <div className={review()}>
                 {handle != null && (
                   <DocumentReviewList
