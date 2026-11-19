@@ -853,24 +853,17 @@ func TestServeRepoCollaboration_ReadOnlyPeerCannotChangeDocument(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, outgoing)
 
-	drain := true
-	for drain {
-		select {
-		case <-persistedCh:
-		default:
-			drain = false
-		}
-	}
-
 	for _, frame := range outgoing {
 		write(frame)
 	}
 
 	select {
 	case <-persistedCh:
-	case <-time.After(5 * time.Second):
-		require.Fail(t, "server did not handle the rejected edit")
+		require.Fail(t, "viewing sync persisted")
+	case <-time.After(time.Second):
 	}
+
+	assert.Equal(t, int64(0), documents.persisted.Load())
 
 	serverText, err := serverDocument.Text("body")
 	require.NoError(t, err)
@@ -882,4 +875,55 @@ func TestServeRepoCollaboration_ReadOnlyPeerCannotChangeDocument(t *testing.T) {
 	_, err = serverDocument.String("note")
 	assert.Error(t, err)
 	assert.Equal(t, int32(0), recorded.Load())
+}
+
+func TestServeRepoCollaboration_EditingSyncPersists(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	tenantID := gid.NewTenantID()
+	documentID := gid.New(tenantID, coredata.DocumentEntityType)
+
+	serverDocument, err := automerge.New(automerge.ActorID{205})
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = serverDocument.Close() })
+
+	text, err := serverDocument.CreateText("body")
+	require.NoError(t, err)
+	require.NoError(t, text.Splice(0, 0, "kept"))
+
+	_, err = serverDocument.Commit("seed", time.Unix(1786147200, 0).UTC())
+	require.NoError(t, err)
+
+	persistedCh := make(chan struct{}, 4)
+	documents := &fakeDocumentCollaborationDocuments{
+		opened: &collaboration.DocumentCollaboration{
+			Document: serverDocument,
+			Revision: 1,
+		},
+		persistedCh: persistedCh,
+	}
+	hub := NewHub(documents, nil)
+	server := newRepoTestServer(
+		t,
+		hub,
+		coredata.NewScope(tenantID, gid.Nil),
+		documentID,
+		nil,
+	)
+
+	wsURL := "ws" + strings.TrimPrefix(server.URL, "http")
+	repoDocumentID := collabpkg.DeriveDocumentID(documentID.String())
+	client := dialRepoClient(t, ctx, wsURL, "editor", repoDocumentID)
+	client.waitForBody(t, ctx, "kept")
+
+	select {
+	case <-persistedCh:
+	case <-time.After(5 * time.Second):
+		require.Fail(t, "editing sync did not persist")
+	}
+
+	assert.GreaterOrEqual(t, documents.persisted.Load(), int64(1))
 }

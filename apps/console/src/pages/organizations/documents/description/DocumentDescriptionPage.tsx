@@ -217,7 +217,7 @@ export function DocumentDescriptionPage(props: {
     const attempt = ++connectionAttempt.current;
     let activeHandle: RepoCollaborationHandle | undefined;
 
-    connectRepoDocument(document.id)
+    connectRepoDocument(document.id, mode)
       .then((handle) => {
         if (attempt !== connectionAttempt.current) {
           handle.close();
@@ -255,7 +255,7 @@ export function DocumentDescriptionPage(props: {
         current?.attempt === attempt ? undefined : current,
       );
     };
-  }, [viewingVersion, document.id, t, addToast]);
+  }, [viewingVersion, document.id, mode, t, addToast]);
 
   const collaborationHandle = !viewingVersion
     && collaboration?.versionID === document.id

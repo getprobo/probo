@@ -22,6 +22,7 @@ export {
   connectRepoDocument,
   presenceTimeToLiveMs,
   type RepoCollaborationHandle,
+  type RepoCollaborationMode,
 } from "./connectRepoDocument";
 export {
   groupPresencesByIdentity,
