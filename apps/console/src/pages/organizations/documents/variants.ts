@@ -73,8 +73,8 @@ export const documentDetailsPage = tv({
 
 export const documentEditor = tv({
   slots: {
-    // The frame only scrolls. The sheet and the review column sit side by side
-    // inside it so the cards move with the text.
+    // The frame only scrolls. The pages and the review column sit side by
+    // side inside it so the cards move with the text.
     frame: "@container relative min-h-80 overflow-hidden lg:min-h-0 lg:flex-1",
     viewport: [
       "w-full overscroll-y-contain outline-none lg:h-full",
@@ -83,9 +83,24 @@ export const documentEditor = tv({
     ],
     // The review column only fits once the frame is wide enough to keep a
     // readable line length beside it.
-    content: "grid min-h-full grid-cols-1 gap-4 @4xl:grid-cols-[minmax(0,1fr)_18rem]",
-    sheet: "min-h-80 min-w-0 rounded-4 border border-sand-a3 bg-sand-1 lg:min-h-0",
-    paper: "py-12 pr-8 pl-14",
+    // The pages track is capped at the unscaled page width, so the pages sit
+    // on the left and still shrink to fit. The review column grows into the
+    // remaining space up to its cap.
+    content: [
+      "grid min-h-full justify-start gap-x-10 gap-y-4 grid-cols-[minmax(0,var(--page-width))]",
+      "@4xl:grid-cols-[minmax(0,var(--page-width))_minmax(18rem,28rem)]",
+    ],
+    // Measured for the fit zoom, so it carries no horizontal padding.
+    pages: "min-w-0 pb-6",
+    stack: "relative",
+    page: "pointer-events-none absolute inset-x-0 border border-sand-6 bg-sand-1",
+    // The Mermaid sizes are important because rich-editor.css sits outside
+    // the cascade layers. They apply on this page only.
+    paper: [
+      "relative",
+      "[&_.mermaid-preview]:p-3! [&_.mermaid-preview]:min-h-16!",
+      "[&_.mermaid-preview_svg]:max-h-80! [&_.mermaid-preview_svg]:w-auto!",
+    ],
     review: "hidden min-w-0 pr-2 @4xl:block",
     scrollbar: [
       "flex w-1 flex-col items-center py-1",

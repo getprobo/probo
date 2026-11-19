@@ -23,7 +23,7 @@ import { CollaborativeRichEditor } from "@probo/ui/src/RichEditor/CollaborativeR
 import type { CommentAnchorController } from "@probo/ui/src/RichEditor/commentAnchors";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import type { Editor } from "@tiptap/core";
-import { useCallback, useRef, useState } from "react";
+import { type CSSProperties, useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, useFragment } from "react-relay";
 
@@ -31,17 +31,26 @@ import type { DocumentEditor_document$key } from "#/__generated__/core/DocumentE
 import type { DocumentReviewListQuery } from "#/__generated__/core/DocumentReviewListQuery.graphql";
 import { useUploadRichTextFile } from "#/pages/organizations/_lib/useUploadRichTextFile";
 
-import { useDocumentCollaboration } from "../_lib/useDocumentCollaboration";
-import type { DocumentMode } from "../_lib/useDocumentModes";
-import { usePreventSuggestionTextDrop } from "../_lib/usePreventSuggestionTextDrop";
-import { useSuggestionController } from "../_lib/useSuggestionController";
-import { documentEditor } from "../variants";
+import {
+  documentPageLayout,
+  documentPageMargin,
+  documentPagesHeight,
+  documentPageSize,
+} from "../../_lib/documentPageLayout";
+import { useDocumentCollaboration } from "../../_lib/useDocumentCollaboration";
+import type { DocumentMode } from "../../_lib/useDocumentModes";
+import { usePageScale } from "../../_lib/usePageScale";
+import { usePreventSuggestionTextDrop } from "../../_lib/usePreventSuggestionTextDrop";
+import { useSuggestionController } from "../../_lib/useSuggestionController";
+import { documentEditor } from "../../variants";
+import { DocumentReviewList } from "../DocumentReviewList/DocumentReviewList";
 
-import { DocumentReviewList } from "./DocumentReviewList/DocumentReviewList";
+import { DocumentEditorPages } from "./DocumentEditorPages";
 
 const documentEditorFragment = graphql`
   fragment DocumentEditor_document on Document {
     id
+    orientation
   }
 `;
 
@@ -56,6 +65,7 @@ export function DocumentEditor({ documentKey, reviewQueryRef, mode }: DocumentEd
   const { t } = useTranslation("organizations/documents");
   const [activeKey, setActiveKey] = useState<string | null>(null);
   const [editor, setEditorInstance] = useState<Editor | null>(null);
+  const [pageCount, setPageCount] = useState(1);
   const { handle, failed } = useDocumentCollaboration(document.id);
   const { controller, setEditor } = useSuggestionController(document.id, mode, setActiveKey);
   const commentAnchorController: CommentAnchorController = useRef({
@@ -63,7 +73,16 @@ export function DocumentEditor({ documentKey, reviewQueryRef, mode }: DocumentEd
   });
   const onUploadFile = useUploadRichTextFile();
   const paperRef = useRef<HTMLDivElement>(null);
-  const { frame, viewport, content, sheet, paper, review, scrollbar, thumb } = documentEditor();
+  const pageSize = documentPageSize(document.orientation);
+  const { ref: pagesRef, scale } = usePageScale(pageSize.width);
+  const pagination = useMemo(
+    () => ({
+      layout: documentPageLayout(documentPageSize(document.orientation)),
+      onPages: setPageCount,
+    }),
+    [document.orientation],
+  );
+  const { frame, viewport, content, pages, stack, paper, review, scrollbar, thumb } = documentEditor();
   usePreventSuggestionTextDrop(paperRef, mode);
 
   const onEditor = useCallback((next: Editor | null) => {
@@ -74,27 +93,42 @@ export function DocumentEditor({ documentKey, reviewQueryRef, mode }: DocumentEd
   return (
     <ScrollArea.Root className={frame()}>
       <ScrollArea.Viewport className={viewport()}>
-        <ScrollArea.Content className={content()}>
-          <div className={sheet()}>
-            <div ref={paperRef} className={paper()} data-theme="document">
-              {failed
-                ? <Text size={2} color="faint">{t("details.editor.openError")}</Text>
-                : handle == null
-                  ? <Text size={2} color="faint">{t("details.editor.loading")}</Text>
-                  : (
-                      <CollaborativeRichEditor
-                        key={document.id}
-                        className="w-full"
-                        collaborationHandle={handle}
-                        content=""
-                        page={false}
-                        disabled={mode === "viewing"}
-                        suggesting={controller}
-                        commentAnchorController={commentAnchorController}
-                        onEditor={onEditor}
-                        onUploadFile={onUploadFile}
-                      />
-                    )}
+        <ScrollArea.Content
+          className={content()}
+          style={{ "--page-width": `${pageSize.width}px` } as CSSProperties}
+        >
+          <div ref={pagesRef} className={pages()}>
+            <div className={stack()} style={{ width: pageSize.width, zoom: scale }}>
+              <DocumentEditorPages count={pageCount} size={pageSize} />
+              <div
+                ref={paperRef}
+                className={paper()}
+                data-theme="document"
+                style={{
+                  padding: documentPageMargin,
+                  minHeight: documentPagesHeight(pageSize, pageCount),
+                }}
+              >
+                {failed
+                  ? <Text size={2} color="faint">{t("details.editor.openError")}</Text>
+                  : handle == null
+                    ? <Text size={2} color="faint">{t("details.editor.loading")}</Text>
+                    : (
+                        <CollaborativeRichEditor
+                          key={document.id}
+                          className="w-full"
+                          collaborationHandle={handle}
+                          content=""
+                          page={false}
+                          disabled={mode === "viewing"}
+                          suggesting={controller}
+                          commentAnchorController={commentAnchorController}
+                          pagination={pagination}
+                          onEditor={onEditor}
+                          onUploadFile={onUploadFile}
+                        />
+                      )}
+              </div>
             </div>
           </div>
           <div className={review()}>

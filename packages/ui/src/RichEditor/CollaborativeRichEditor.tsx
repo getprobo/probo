@@ -33,6 +33,7 @@ import {
   refreshCommentAnchors,
 } from "./commentAnchors";
 import { createRichEditorHistoryExtension } from "./historyDecorations";
+import { createPaginationExtension, type PaginationOptions } from "./pagination";
 import {
   createRichEditorPresenceExtension,
   type RichEditorCollaborationHandle,
@@ -55,6 +56,9 @@ type CollaborativeRichEditorProps = Omit<
   suggesting?: MutableRefObject<SuggestingController>;
   commentAnchors?: CommentAnchor[];
   commentAnchorController?: CommentAnchorController;
+  // Lays the document out on pages. Must be memoized: a new object rebuilds
+  // the editor.
+  pagination?: PaginationOptions;
 };
 
 export function CollaborativeRichEditor({
@@ -63,6 +67,7 @@ export function CollaborativeRichEditor({
   suggesting,
   commentAnchors,
   commentAnchorController,
+  pagination,
   onEditor,
   ...props
 }: CollaborativeRichEditorProps) {
@@ -83,12 +88,15 @@ export function CollaborativeRichEditor({
     if (commentAnchorController) {
       base.push(createCommentAnchorExtension(collaborationHandle, commentAnchorController));
     }
+    if (pagination) {
+      base.push(createPaginationExtension(pagination));
+    }
     if (!historyHighlights?.length) {
       return base;
     }
 
     return [...base, createRichEditorHistoryExtension(historyHighlights)];
-  }, [collaborationHandle, commentAnchorController, historyHighlights, suggesting]);
+  }, [collaborationHandle, commentAnchorController, historyHighlights, pagination, suggesting]);
 
   useEffect(() => {
     if (!editorRef.current || !commentAnchors) return;
