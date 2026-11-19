@@ -4,6 +4,20 @@ All notable changes to the Probo Helm chart will be documented in this file.
 
 ## Unreleased
 
+## [0.33.0] - 2026-11-19
+
+### Added
+
+- `probo.feedbackUrl` sets `PROBOD_FEEDBACK_URL` from a Secret. Empty
+  hides the MCP `submit_feedback` tool
+- `probo.graphql.rateLimit` sets `PROBOD_API_GRAPHQL_RATE_LIMIT`, which
+  overrides the default or per-mutation limit and window for the
+  Connect `@rateLimit` directive
+
+### Changed
+
+- Default `appVersion` is now `0.352.0`
+
 ## [0.32.0] - 2026-11-04
 
 ### Added
