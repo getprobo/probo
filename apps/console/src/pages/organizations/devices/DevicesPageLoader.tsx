@@ -46,6 +46,7 @@ export default function DevicesPageLoader() {
       query: current.ownerQuery,
       hasPostureWarning: current.hasPostureWarning,
       states: current.states.length === 0 ? null : current.states,
+      sources: current.sources.length === 0 ? null : current.sources,
       platforms: current.platforms.length === 0 ? null : current.platforms,
       agentVersions: current.agentVersions.length === 0 ? null : current.agentVersions,
     }, { fetchPolicy: "store-and-network" });

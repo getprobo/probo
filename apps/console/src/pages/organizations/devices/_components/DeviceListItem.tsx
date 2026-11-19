@@ -20,6 +20,7 @@
 
 import { ChecksIcon, DotsThreeIcon, PlugsIcon, QuestionIcon, TrashIcon, UserIcon, WarningIcon, XIcon } from "@phosphor-icons/react";
 import { dateTimeFormat } from "@probo/i18n";
+import { ThirdPartyLogo } from "@probo/ui";
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { Checkbox } from "@probo/ui/src/v2/Checkbox/Checkbox";
 import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
@@ -45,6 +46,7 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 import {
   displayValue,
   isDeviceDeletable,
+  mdmProviderLabel,
   ownerLabel,
   platformLabel,
   postureStatusOutcome,
@@ -61,9 +63,11 @@ const deviceListItemFragment = graphql`
   fragment DeviceListItem_device on Device {
     id
     state
+    source
     platform
     osVersion
     agentVersion
+    mdmProvider
     lastSeenAt
     owner {
       id
@@ -174,7 +178,24 @@ export function DeviceListItem({
         </TableCell>
         <TableCell>{platform}</TableCell>
         <TableCell>{displayValue(device.osVersion, pendingLabel)}</TableCell>
-        <TableCell>{displayValue(device.agentVersion, pendingLabel)}</TableCell>
+        <TableCell>
+          {device.agentVersion
+            ? device.agentVersion
+            : device.source === "MDM"
+              ? (
+                  <Badge
+                    size={1}
+                    variant="soft"
+                    color="neutral"
+                    iconStart={device.mdmProvider
+                      ? <ThirdPartyLogo thirdParty={device.mdmProvider} className="size-3" />
+                      : undefined}
+                  >
+                    {mdmProviderLabel(device.mdmProvider) ?? t("devices.values.noAgent")}
+                  </Badge>
+                )
+              : pendingLabel}
+        </TableCell>
         <TableCell>
           {device.lastSeenAt
             ? dateTimeFormat(i18n.language, device.lastSeenAt)

@@ -555,6 +555,10 @@ func (s *Service) Create(
 				return fmt.Errorf("cannot create connector: %w", err)
 			}
 
+			if err := s.scheduleDeviceSync(ctx, tx, scope, newConnector); err != nil {
+				return err
+			}
+
 			return s.recordInitialAccount(ctx, tx, scope, newConnector)
 		},
 	)
@@ -647,7 +651,7 @@ func (s *Service) UpdateAPIKey(
 				return fmt.Errorf("cannot update connector api key: %w", err)
 			}
 
-			return nil
+			return s.scheduleDeviceSync(ctx, tx, scope, cnnctr)
 		},
 	)
 	if err != nil {
@@ -722,7 +726,7 @@ func (s *Service) Reconnect(
 				return fmt.Errorf("cannot reset connector account name sync: %w", err)
 			}
 
-			return nil
+			return s.scheduleDeviceSync(ctx, conn, scope, cnnctr)
 		},
 	)
 	if err != nil {
@@ -987,4 +991,40 @@ func preserveConnectionFields(newConn, oldConn connectorprotocol.Connection) {
 			}
 		}
 	}
+}
+
+// scheduleDeviceSync makes the devices of a connector whose provider syncs
+// them sync on the device-sync worker's next poll. It runs in the transaction
+// that saves the connector, so a saved connector always has a sync, and a
+// replaced credential always resets the retry budget and supersedes a sync
+// still running with the old one.
+func (s *Service) scheduleDeviceSync(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	cnnctr *coredata.Connector,
+) error {
+	if s.providerRegistry == nil {
+		return nil
+	}
+
+	reg, ok := s.providerRegistry.Get(cnnctr.Provider)
+	if !ok || !reg.SyncsDevices() {
+		return nil
+	}
+
+	now := time.Now()
+	sync := &coredata.DeviceSync{
+		ConnectorID:    cnnctr.ID,
+		OrganizationID: cnnctr.OrganizationID,
+		NextSyncAt:     now,
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
+
+	if err := sync.Schedule(ctx, tx, scope); err != nil {
+		return fmt.Errorf("cannot schedule device sync: %w", err)
+	}
+
+	return nil
 }

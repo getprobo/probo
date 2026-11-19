@@ -24,6 +24,8 @@ import { useSearchParams } from "react-router";
 import {
   type DevicePlatformName,
   devicePlatforms,
+  type DeviceSourceName,
+  deviceSources,
 } from "./deviceDisplay";
 
 const deviceStates = ["PENDING", "ACTIVE", "REVOKED"] as const;
@@ -43,6 +45,10 @@ export function devicesListOwnerQuery(query: string): string | null {
 
 function isDeviceStateFilter(value: string): value is DeviceStateFilter {
   return (deviceStates as readonly string[]).includes(value);
+}
+
+function isDeviceSourceName(value: string): value is DeviceSourceName {
+  return (deviceSources as readonly string[]).includes(value);
 }
 
 function isDevicePlatformName(value: string): value is DevicePlatformName {
@@ -75,6 +81,10 @@ export function useDevicesListFilters() {
   const view: DeviceListView = searchParams.get("view") === "warnings" ? "warnings" : "all";
   const states = useMemo(
     () => selectedValues(searchParams.getAll("state"), isDeviceStateFilter),
+    [searchParams],
+  );
+  const sources = useMemo(
+    () => selectedValues(searchParams.getAll("source"), isDeviceSourceName),
     [searchParams],
   );
   const platforms = useMemo(
@@ -129,6 +139,10 @@ export function useDevicesListFilters() {
     setListParam("state", values);
   }, [setListParam]);
 
+  const setSources = useCallback((values: readonly DeviceSourceName[]) => {
+    setListParam("source", values);
+  }, [setListParam]);
+
   const setPlatforms = useCallback((values: readonly DevicePlatformName[]) => {
     setListParam("platform", values);
   }, [setListParam]);
@@ -143,11 +157,13 @@ export function useDevicesListFilters() {
     view,
     hasPostureWarning: view === "warnings" ? true : null,
     states,
+    sources,
     platforms,
     agentVersions,
     setQuery,
     setView,
     setStates,
+    setSources,
     setPlatforms,
     setAgentVersions,
   };

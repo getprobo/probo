@@ -36,6 +36,8 @@ type mcpDevice struct {
 	ID               string  `json:"id"`
 	OrganizationID   string  `json:"organization_id"`
 	State            string  `json:"state"`
+	Source           string  `json:"source"`
+	MdmProvider      *string `json:"mdm_provider"`
 	OwnerID          *string `json:"owner_id"`
 	PosturesIncluded bool    `json:"postures_included"`
 	LatestPostures   []struct {
@@ -87,6 +89,8 @@ func TestMCP_Device_Lifecycle(t *testing.T) {
 	}, &getResult)
 	assert.Equal(t, deviceID, getResult.Device.ID)
 	assert.Equal(t, "PENDING", getResult.Device.State)
+	assert.Equal(t, "AGENT", getResult.Device.Source)
+	assert.Nil(t, getResult.Device.MdmProvider)
 	assert.False(t, getResult.Device.PosturesIncluded)
 	assert.NotNil(t, getResult.Device.LatestPostures)
 	assert.Empty(t, getResult.Device.LatestPostures)
@@ -114,6 +118,25 @@ func TestMCP_Device_Lifecycle(t *testing.T) {
 	}
 
 	assert.True(t, found, "created device should appear in listDevices")
+
+	// Filter by source: an enrolled device comes from the agent, never an MDM.
+	var agentResult struct {
+		Devices []mcpDevice `json:"devices"`
+	}
+	mc.CallToolInto("listDevices", map[string]any{
+		"organization_id": orgID,
+		"sources":         []string{"AGENT"},
+	}, &agentResult)
+	assert.Contains(t, mcpDeviceIDs(agentResult.Devices), deviceID)
+
+	var mdmResult struct {
+		Devices []mcpDevice `json:"devices"`
+	}
+	mc.CallToolInto("listDevices", map[string]any{
+		"organization_id": orgID,
+		"sources":         []string{"MDM"},
+	}, &mdmResult)
+	assert.NotContains(t, mcpDeviceIDs(mdmResult.Devices), deviceID)
 
 	// Set owner
 	var setOwnerResult struct {
@@ -412,4 +435,13 @@ func TestMCP_Device_RevokeAndDeleteMany(t *testing.T) {
 		"device_ids": []string{firstID, secondID},
 	}, &deleteResult)
 	assert.Equal(t, []string{firstID, secondID}, deleteResult.DeletedDeviceIDs)
+}
+
+func mcpDeviceIDs(devices []mcpDevice) []string {
+	ids := make([]string, len(devices))
+	for i, d := range devices {
+		ids[i] = d.ID
+	}
+
+	return ids
 }

@@ -298,6 +298,14 @@ type (
 		ConsoleID string `json:"console_id"`
 	}
 
+	// IruConnectorSettings holds the host of the customer's Iru (formerly
+	// Kandji) API, the "API URL" Iru shows under Settings > Access, such as
+	// acme.api.kandji.io. Iru gives every tenant its own host and region, so
+	// the host is the whole of what identifies the tenant.
+	IruConnectorSettings struct {
+		APIHost string `json:"api_host"`
+	}
+
 	// AWSConnectorSettings names the IAM role Probo assumes. Every field is
 	// public knowledge — the account owns the trust, and the connection
 	// itself holds no credential — so unlike the connection blob these stay

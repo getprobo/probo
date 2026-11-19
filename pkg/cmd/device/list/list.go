@@ -42,10 +42,13 @@ query DeviceList($id: ID!, $first: Int, $after: CursorKey, $orderBy: DeviceOrder
           node {
             id
             state
+            source
             hostname
             platform
             osVersion
             agentVersion
+            model
+            mdmProvider
             serialNumber
             lastSeenAt
             enrolledAt
@@ -75,10 +78,13 @@ query DeviceListWithPostures($id: ID!, $first: Int, $after: CursorKey, $orderBy:
           node {
             id
             state
+            source
             hostname
             platform
             osVersion
             agentVersion
+            model
+            mdmProvider
             serialNumber
             lastSeenAt
             enrolledAt
@@ -114,10 +120,13 @@ query DeviceListWithPostures($id: ID!, $first: Int, $after: CursorKey, $orderBy:
 type device struct {
 	ID           string  `json:"id"`
 	State        string  `json:"state"`
+	Source       string  `json:"source"`
 	Hostname     *string `json:"hostname"`
 	Platform     *string `json:"platform"`
 	OsVersion    *string `json:"osVersion"`
 	AgentVersion *string `json:"agentVersion"`
+	Model        *string `json:"model"`
+	MdmProvider  *string `json:"mdmProvider"`
 	SerialNumber *string `json:"serialNumber"`
 	LastSeenAt   *string `json:"lastSeenAt"`
 	EnrolledAt   *string `json:"enrolledAt"`
@@ -136,6 +145,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		flagOrderDir        string
 		flagQuery           string
 		flagState           []string
+		flagSource          []string
 		flagPlatform        []string
 		flagAgentVersion    []string
 		flagPostureWarnings bool
@@ -161,6 +171,9 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
   # List active macOS devices
   prb device ls --state ACTIVE --platform DARWIN
+
+  # List devices synced from an MDM such as Iru
+  prb device ls --source MDM
 
   # List active and pending devices
   prb device ls --state ACTIVE --state PENDING`,
@@ -208,12 +221,26 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				filter["states"] = flagState
 			}
 
+			if len(flagSource) > 0 {
+				for _, source := range flagSource {
+					if err := cmdutil.ValidateEnum(
+						"source",
+						source,
+						[]string{"AGENT", "MDM"},
+					); err != nil {
+						return err
+					}
+				}
+
+				filter["sources"] = flagSource
+			}
+
 			if len(flagPlatform) > 0 {
 				for _, platform := range flagPlatform {
 					if err := cmdutil.ValidateEnum(
 						"platform",
 						platform,
-						[]string{"DARWIN", "LINUX", "FREEBSD", "WINDOWS"},
+						[]string{"DARWIN", "LINUX", "FREEBSD", "WINDOWS", "IOS", "IPADOS", "TVOS", "ANDROID"},
 					); err != nil {
 						return err
 					}
@@ -266,7 +293,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			headers := []string{"ID", "STATE", "HOSTNAME", "PLATFORM"}
+			headers := []string{"ID", "STATE", "SOURCE", "HOSTNAME", "PLATFORM"}
 			if flagPostures {
 				headers = append(headers, "POSTURES")
 			}
@@ -285,6 +312,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 						row := []string{
 							d.ID,
 							d.State,
+							d.Source,
 							ref.UnrefOrZero(d.Hostname),
 							ref.UnrefOrZero(d.Platform),
 						}
@@ -304,7 +332,8 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmdutil.AddAfterFlag(cmd, &flagAfter)
 	cmd.Flags().StringVar(&flagQuery, "query", "", "Search devices by owner name")
 	cmd.Flags().StringSliceVar(&flagState, "state", nil, "Filter by state; repeat or comma-separate for multiple (PENDING, ACTIVE, REVOKED)")
-	cmd.Flags().StringSliceVar(&flagPlatform, "platform", nil, "Filter by platform; repeat or comma-separate for multiple (DARWIN, LINUX, FREEBSD, WINDOWS)")
+	cmd.Flags().StringSliceVar(&flagSource, "source", nil, "Filter by source; repeat or comma-separate for multiple (AGENT, MDM)")
+	cmd.Flags().StringSliceVar(&flagPlatform, "platform", nil, "Filter by platform; repeat or comma-separate for multiple (DARWIN, LINUX, FREEBSD, WINDOWS, IOS, IPADOS, TVOS, ANDROID)")
 	cmd.Flags().StringSliceVar(&flagAgentVersion, "agent-version", nil, "Filter by agent version; repeat or comma-separate for multiple")
 	cmd.Flags().BoolVar(
 		&flagPostureWarnings,

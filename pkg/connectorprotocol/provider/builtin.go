@@ -100,6 +100,7 @@ func NewBuiltinRegistryWith(opts ...Option) (*Registry, error) {
 		hubspotRegistration(),
 		incidentioRegistration(),
 		intercomRegistration(),
+		iruRegistration(),
 		langfuseRegistration(),
 		linearRegistration(),
 		linearSyncRegistration(),

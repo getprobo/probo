@@ -107,10 +107,15 @@ export async function execute(
 				... on Device {
 					id
 					state
+					source
 					hostname
 					platform
 					osVersion
 					agentVersion
+					model
+					mdmProvider
+					mdmDeviceId
+					mdmLastCheckInAt
 					serialNumber
 					hardwareUuid
 					enrolledAt

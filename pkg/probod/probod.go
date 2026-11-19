@@ -1629,6 +1629,24 @@ func (impl *Implm) Run(
 		},
 	)
 
+	itamDeviceSync := itam.NewDeviceSyncWorker(
+		pgClient,
+		itamService,
+		encryptionKey,
+		defaultConnectorRegistry,
+		providerRegistry,
+		l.Named("itam"),
+	)
+	itamDeviceSyncCtx, stopITAMDeviceSync := context.WithCancel(context.Background())
+
+	wg.Go(
+		func() {
+			if err := itamDeviceSync.Run(itamDeviceSyncCtx); err != nil {
+				cancel(fmt.Errorf("itam device sync worker crashed: %w", err))
+			}
+		},
+	)
+
 	esignServiceCtx, stopESignService := context.WithCancel(context.Background())
 
 	wg.Go(
@@ -1928,6 +1946,7 @@ func (impl *Implm) Run(
 	stopConnectorsService()
 	stopIAMService()
 	stopITAMGC()
+	stopITAMDeviceSync()
 	stopMailer()
 	stopSlackSender()
 	stopAgentExecutionWorker()

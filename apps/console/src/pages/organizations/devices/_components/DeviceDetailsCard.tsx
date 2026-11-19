@@ -30,18 +30,28 @@ import { graphql } from "relay-runtime";
 import type { DeviceDetailsCard_deviceFragment$key } from "#/__generated__/core/DeviceDetailsCard_deviceFragment.graphql";
 import { TonedCard } from "#/components/TonedCard/TonedCard";
 
-import { displayValue, stateColor } from "../_lib/deviceDisplay";
+import {
+  displayValue,
+  mdmProviderLabel,
+  platformLabel,
+  sourceLabel,
+  stateColor,
+} from "../_lib/deviceDisplay";
 
 import { deviceCardFields } from "./variants";
 
 const deviceFragment = graphql`
   fragment DeviceDetailsCard_deviceFragment on Device {
     state
+    source
     hardwareUuid
     serialNumber
     platform
     osVersion
     agentVersion
+    model
+    mdmProvider
+    mdmLastCheckInAt
     enrolledAt
     lastSeenAt
     owner {
@@ -76,6 +86,10 @@ export function DeviceDetailsCard(props: {
           <Badge variant="soft" color={tone}>{device.state}</Badge>
         </div>
         <div className={property()}>
+          <Text size={1} color="faint">{t("devices.fields.source")}</Text>
+          <Text size={2}>{sourceLabel(t, device.source) ?? device.source}</Text>
+        </div>
+        <div className={property()}>
           <Text size={1} color="faint">{t("devices.fields.owner")}</Text>
           <Text size={2}>{device.owner?.fullName ?? t("devices.values.unassigned")}</Text>
         </div>
@@ -89,7 +103,9 @@ export function DeviceDetailsCard(props: {
         </div>
         <div className={property()}>
           <Text size={1} color="faint">{t("devices.fields.platform")}</Text>
-          <Text size={2}>{displayValue(device.platform, pendingLabel)}</Text>
+          <Text size={2}>
+            {platformLabel(t, device.platform) ?? displayValue(device.platform, pendingLabel)}
+          </Text>
         </div>
         <div className={property()}>
           <Text size={1} color="faint">{t("devices.fields.osVersion")}</Text>
@@ -97,8 +113,34 @@ export function DeviceDetailsCard(props: {
         </div>
         <div className={property()}>
           <Text size={1} color="faint">{t("devices.fields.agentVersion")}</Text>
-          <Text size={2}>{displayValue(device.agentVersion, pendingLabel)}</Text>
+          <Text size={2}>
+            {device.source === "MDM"
+              ? t("devices.values.noAgent")
+              : displayValue(device.agentVersion, pendingLabel)}
+          </Text>
         </div>
+        {device.model && (
+          <div className={property()}>
+            <Text size={1} color="faint">{t("devices.fields.model")}</Text>
+            <Text size={2}>{device.model}</Text>
+          </div>
+        )}
+        {device.mdmProvider && (
+          <>
+            <div className={property()}>
+              <Text size={1} color="faint">{t("devices.fields.mdm")}</Text>
+              <Text size={2}>{mdmProviderLabel(device.mdmProvider)}</Text>
+            </div>
+            <div className={property()}>
+              <Text size={1} color="faint">{t("devices.fields.mdmLastCheckIn")}</Text>
+              <Text size={2}>
+                {device.mdmLastCheckInAt
+                  ? dateTimeFormat(i18n.language, device.mdmLastCheckInAt)
+                  : t("devices.values.never")}
+              </Text>
+            </div>
+          </>
+        )}
         <div className={property()}>
           <Text size={1} color="faint">{t("devices.fields.enrolledAt")}</Text>
           <Text size={2}>
