@@ -2989,7 +2989,7 @@ components:
           description: Internal control ID
         resource_id:
           $ref: "#/components/schemas/GID"
-          description: ID of the resource to link (control, risk, document, third party, or treatment plan)
+          description: ID of the resource to link (control, risk, document, third party, treatment plan, or corrective action plan)
 
     LinkInternalControlOutput:
       type: object
@@ -3005,7 +3005,7 @@ components:
           description: Internal control ID
         resource_id:
           $ref: "#/components/schemas/GID"
-          description: ID of the resource to unlink (control, risk, document, third party, or treatment plan)
+          description: ID of the resource to unlink (control, risk, document, third party, treatment plan, or corrective action plan)
 
     UnlinkInternalControlOutput:
       type: object
@@ -4654,56 +4654,6 @@ components:
           items:
             $ref: "#/components/schemas/Audit"
 
-    LinkFindingTaskInput:
-      type: object
-      required:
-        - finding_id
-        - task_id
-      properties:
-        finding_id:
-          $ref: "#/components/schemas/GID"
-          description: Finding ID
-        task_id:
-          $ref: "#/components/schemas/GID"
-          description: Task ID
-
-    LinkFindingTaskOutput:
-      type: object
-      required:
-        - finding
-        - task
-      properties:
-        finding:
-          $ref: "#/components/schemas/Finding"
-        task:
-          $ref: "#/components/schemas/Task"
-
-    UnlinkFindingTaskInput:
-      type: object
-      required:
-        - finding_id
-        - task_id
-      properties:
-        finding_id:
-          $ref: "#/components/schemas/GID"
-          description: Finding ID
-        task_id:
-          $ref: "#/components/schemas/GID"
-          description: Task ID
-
-    UnlinkFindingTaskOutput:
-      type: object
-      required:
-        - deleted_finding_id
-        - deleted_task_id
-      properties:
-        deleted_finding_id:
-          $ref: "#/components/schemas/GID"
-          description: Deleted finding ID
-        deleted_task_id:
-          $ref: "#/components/schemas/GID"
-          description: Deleted task ID
-
     ListFindingTasksInput:
       type: object
       required:
@@ -4723,6 +4673,270 @@ components:
           description: Task order by
 
     ListFindingTasksOutput:
+      type: object
+      required:
+        - tasks
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/Task"
+
+    CorrectiveActionPlanOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+        - DUE_DATE
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.CorrectiveActionPlanOrderField
+
+    CorrectiveActionPlanOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/CorrectiveActionPlanOrderField"
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+
+    CorrectiveActionPlan:
+      type: object
+      required:
+        - id
+        - organization_id
+        - finding_id
+        - title
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Corrective action plan ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        finding_id:
+          $ref: "#/components/schemas/GID"
+          description: Finding ID
+        title:
+          type: string
+          description: Title
+        description:
+          type:
+            - string
+            - "null"
+          description: Description
+        owner_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Owner profile ID
+        due_date:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Due date
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+
+    ListFindingCorrectiveActionPlansInput:
+      type: object
+      required:
+        - finding_id
+      properties:
+        finding_id:
+          $ref: "#/components/schemas/GID"
+          description: Finding ID
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+        size:
+          type: integer
+          description: Page size
+        order_by:
+          $ref: "#/components/schemas/CorrectiveActionPlanOrderBy"
+          description: Corrective action plan order by
+
+    ListFindingCorrectiveActionPlansOutput:
+      type: object
+      required:
+        - corrective_action_plans
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        corrective_action_plans:
+          type: array
+          items:
+            $ref: "#/components/schemas/CorrectiveActionPlan"
+
+    GetCorrectiveActionPlanInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Corrective action plan ID
+
+    GetCorrectiveActionPlanOutput:
+      type: object
+      required:
+        - corrective_action_plan
+      properties:
+        corrective_action_plan:
+          $ref: "#/components/schemas/CorrectiveActionPlan"
+
+    AddCorrectiveActionPlanInput:
+      type: object
+      required:
+        - finding_id
+        - title
+      properties:
+        finding_id:
+          $ref: "#/components/schemas/GID"
+          description: Finding ID
+        title:
+          type: string
+          description: Title
+        description:
+          type: string
+          description: Description
+        owner_id:
+          $ref: "#/components/schemas/GID"
+          description: Owner profile ID
+        due_date:
+          type: string
+          format: date-time
+          description: Due date
+
+    AddCorrectiveActionPlanOutput:
+      type: object
+      required:
+        - corrective_action_plan
+      properties:
+        corrective_action_plan:
+          $ref: "#/components/schemas/CorrectiveActionPlan"
+
+    UpdateCorrectiveActionPlanInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Corrective action plan ID
+        title:
+          type: string
+          description: Title
+        description:
+          type:
+            - string
+            - "null"
+          description: Description
+          go.probo.inc/mcpgen/omittable: true
+        owner_id:
+          anyOf:
+            - type: string
+              $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Owner profile ID
+          go.probo.inc/mcpgen/omittable: true
+        due_date:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Due date
+          go.probo.inc/mcpgen/omittable: true
+
+    UpdateCorrectiveActionPlanOutput:
+      type: object
+      required:
+        - corrective_action_plan
+      properties:
+        corrective_action_plan:
+          $ref: "#/components/schemas/CorrectiveActionPlan"
+
+    DeleteCorrectiveActionPlanInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Corrective action plan ID
+
+    DeleteCorrectiveActionPlanOutput:
+      type: object
+      required:
+        - deleted_corrective_action_plan_id
+      properties:
+        deleted_corrective_action_plan_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted corrective action plan ID
+
+    ListCorrectiveActionPlanInternalControlsInput:
+      type: object
+      required:
+        - corrective_action_plan_id
+      properties:
+        corrective_action_plan_id:
+          $ref: "#/components/schemas/GID"
+          description: Corrective action plan ID
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+        size:
+          type: integer
+          description: Page size
+        order_by:
+          $ref: "#/components/schemas/InternalControlOrderBy"
+          description: Internal control order by
+
+    ListCorrectiveActionPlanInternalControlsOutput:
+      type: object
+      required:
+        - internal_controls
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        internal_controls:
+          type: array
+          items:
+            $ref: "#/components/schemas/InternalControl"
+
+    ListCorrectiveActionPlanTasksInput:
+      type: object
+      required:
+        - corrective_action_plan_id
+      properties:
+        corrective_action_plan_id:
+          $ref: "#/components/schemas/GID"
+          description: Corrective action plan ID
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+        size:
+          type: integer
+          description: Page size
+        order_by:
+          $ref: "#/components/schemas/TaskOrderBy"
+          description: Task order by
+
+    ListCorrectiveActionPlanTasksOutput:
       type: object
       required:
         - tasks
@@ -19935,7 +20149,7 @@ tools:
       $ref: "#/components/schemas/DeleteEvidenceOutput"
   - name: linkInternalControl
     title: Link Internal control
-    description: Link an internal control to a resource (control, risk, document, third party, or treatment plan). The resource type is determined from the resource_id GID.
+    description: Link an internal control to a resource (control, risk, document, third party, treatment plan, or corrective action plan). The resource type is determined from the resource_id GID.
     hints:
       readonly: false
       destructive: false
@@ -19947,7 +20161,7 @@ tools:
       $ref: "#/components/schemas/LinkInternalControlOutput"
   - name: unlinkInternalControl
     title: Unlink Internal control
-    description: Unlink an internal control from a resource (control, risk, document, third party, or treatment plan). The resource type is determined from the resource_id GID.
+    description: Unlink an internal control from a resource (control, risk, document, third party, treatment plan, or corrective action plan). The resource type is determined from the resource_id GID.
     hints:
       readonly: false
       destructive: true
@@ -20329,33 +20543,9 @@ tools:
       $ref: "#/components/schemas/ListFindingAuditsInput"
     outputSchema:
       $ref: "#/components/schemas/ListFindingAuditsOutput"
-  - name: linkFindingTask
-    title: Link Finding Task
-    description: Link a task to a finding
-    hints:
-      readonly: false
-      destructive: false
-      idempotent: true
-      openWorld: false
-    inputSchema:
-      $ref: "#/components/schemas/LinkFindingTaskInput"
-    outputSchema:
-      $ref: "#/components/schemas/LinkFindingTaskOutput"
-  - name: unlinkFindingTask
-    title: Unlink Finding Task
-    description: Unlink a task from a finding
-    hints:
-      readonly: false
-      destructive: true
-      idempotent: true
-      openWorld: false
-    inputSchema:
-      $ref: "#/components/schemas/UnlinkFindingTaskInput"
-    outputSchema:
-      $ref: "#/components/schemas/UnlinkFindingTaskOutput"
   - name: listFindingTasks
     title: List Finding Tasks
-    description: List tasks linked to a finding
+    description: List tasks of the internal controls linked to the finding's corrective action plans
     hints:
       readonly: true
       destructive: false
@@ -20365,6 +20555,90 @@ tools:
       $ref: "#/components/schemas/ListFindingTasksInput"
     outputSchema:
       $ref: "#/components/schemas/ListFindingTasksOutput"
+  - name: listFindingCorrectiveActionPlans
+    title: List Finding Corrective Action Plans
+    description: List corrective action plans of a finding
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListFindingCorrectiveActionPlansInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListFindingCorrectiveActionPlansOutput"
+  - name: getCorrectiveActionPlan
+    title: Get Corrective Action Plan
+    description: Get a corrective action plan by ID
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/GetCorrectiveActionPlanInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetCorrectiveActionPlanOutput"
+  - name: addCorrectiveActionPlan
+    title: Add Corrective Action Plan
+    description: Create a corrective action plan for a finding. Link internal controls with linkInternalControl; the plan's tasks are the tasks of those internal controls.
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/AddCorrectiveActionPlanInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddCorrectiveActionPlanOutput"
+  - name: updateCorrectiveActionPlan
+    title: Update Corrective Action Plan
+    description: Update an existing corrective action plan
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateCorrectiveActionPlanInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateCorrectiveActionPlanOutput"
+  - name: deleteCorrectiveActionPlan
+    title: Delete Corrective Action Plan
+    description: Delete a corrective action plan
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/DeleteCorrectiveActionPlanInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteCorrectiveActionPlanOutput"
+  - name: listCorrectiveActionPlanInternalControls
+    title: List Corrective Action Plan Internal Controls
+    description: List internal controls linked to a corrective action plan
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListCorrectiveActionPlanInternalControlsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListCorrectiveActionPlanInternalControlsOutput"
+  - name: listCorrectiveActionPlanTasks
+    title: List Corrective Action Plan Tasks
+    description: List tasks of the internal controls linked to a corrective action plan
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListCorrectiveActionPlanTasksInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListCorrectiveActionPlanTasksOutput"
   - name: listObligations
     title: List Obligations
     description: List all obligations for the organization

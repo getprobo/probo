@@ -319,6 +319,36 @@ func (r *internalControlResolver) TreatmentPlans(ctx context.Context, obj *types
 	return types.NewTreatmentPlanConnection(page, r, obj.ID, planFilter), nil
 }
 
+// CorrectiveActionPlans is the resolver for the correctiveActionPlans field.
+func (r *internalControlResolver) CorrectiveActionPlans(ctx context.Context, obj *types.InternalControl, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.CorrectiveActionPlanOrderBy) (*types.CorrectiveActionPlanConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionCorrectiveActionPlanList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.CorrectiveActionPlanOrderField]{
+		Field:     coredata.CorrectiveActionPlanOrderFieldCreatedAt,
+		Direction: page.OrderDirectionAsc,
+	}
+
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.CorrectiveActionPlanOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	p, err := r.probo.CorrectiveActionPlans.ListForInternalControlID(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list internal control corrective action plans", log.Error(err))
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return types.NewCorrectiveActionPlanConnection(p, r, obj.ID), nil
+}
+
 // Permission is the resolver for the permission field.
 func (r *internalControlResolver) Permission(ctx context.Context, obj *types.InternalControl, action string) (bool, error) {
 	if obj.AsOf != nil {

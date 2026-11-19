@@ -278,6 +278,66 @@ func (s InternalControlService) ListForTreatmentPlanID(
 	return page.NewPage(internalControls, cursor), nil
 }
 
+func (s InternalControlService) CountForCorrectiveActionPlanID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	correctiveActionPlanID gid.GID,
+	filter *coredata.InternalControlFilter,
+) (int, error) {
+	var count int
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) (err error) {
+			internalControls := &coredata.InternalControls{}
+
+			count, err = internalControls.CountByCorrectiveActionPlanID(ctx, conn, scope, correctiveActionPlanID, filter)
+			if err != nil {
+				return fmt.Errorf("cannot count internalControls: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (s InternalControlService) ListForCorrectiveActionPlanID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	correctiveActionPlanID gid.GID,
+	cursor *page.Cursor[coredata.InternalControlOrderField],
+	filter *coredata.InternalControlFilter,
+) (*page.Page[*coredata.InternalControl, coredata.InternalControlOrderField], error) {
+	var internalControls coredata.InternalControls
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			plan := &coredata.CorrectiveActionPlan{}
+			if err := plan.LoadByID(ctx, conn, scope, correctiveActionPlanID); err != nil {
+				return fmt.Errorf("cannot load corrective action plan: %w", err)
+			}
+
+			err := internalControls.LoadByCorrectiveActionPlanID(ctx, conn, scope, plan.ID, cursor, filter)
+			if err != nil {
+				return fmt.Errorf("cannot load internalControls: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(internalControls, cursor), nil
+}
+
 func (s InternalControlService) CountForControlID(
 	ctx context.Context, scope coredata.Scoper,
 	controlID gid.GID,

@@ -962,6 +962,63 @@ func (s *Service) ListForFindingID(
 	return page.NewPage(tasks, cursor), nil
 }
 
+func (s *Service) CountForCorrectiveActionPlanID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	correctiveActionPlanID gid.GID,
+	filter *coredata.TaskFilter,
+) (int, error) {
+	var count int
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) (err error) {
+			tasks := coredata.Tasks{}
+
+			count, err = tasks.CountByCorrectiveActionPlanID(ctx, conn, scope, correctiveActionPlanID, filter)
+			if err != nil {
+				return fmt.Errorf("cannot count corrective action plan tasks: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (s *Service) ListForCorrectiveActionPlanID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	correctiveActionPlanID gid.GID,
+	cursor *page.Cursor[coredata.TaskOrderField],
+	filter *coredata.TaskFilter,
+) (*page.Page[*coredata.Task, coredata.TaskOrderField], error) {
+	var tasks coredata.Tasks
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return tasks.LoadByCorrectiveActionPlanID(
+				ctx,
+				conn,
+				scope,
+				correctiveActionPlanID,
+				cursor,
+				filter,
+			)
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(tasks, cursor), nil
+}
+
 func (s *Service) ListForInternalControlID(
 	ctx context.Context, scope coredata.Scoper,
 	internalControlID gid.GID,

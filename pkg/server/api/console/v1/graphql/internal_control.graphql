@@ -216,6 +216,14 @@ type InternalControl implements Node {
         asOf: Datetime
     ): TreatmentPlanConnection! @goField(forceResolver: true)
 
+    correctiveActionPlans(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: CorrectiveActionPlanOrder
+    ): CorrectiveActionPlanConnection! @goField(forceResolver: true)
+
     createdAt: Datetime!
     updatedAt: Datetime!
 
