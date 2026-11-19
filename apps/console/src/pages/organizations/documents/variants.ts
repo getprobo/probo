@@ -29,6 +29,7 @@ export const documentDetailsPage = tv({
     ],
     main: "flex min-w-0 flex-col gap-4 lg:min-h-0",
     backRow: "flex items-center justify-between gap-3",
+    backActions: "flex items-center gap-2",
     title: "min-w-0",
     // Below lg the cards sit under the document, so the row track collapses.
     // At lg the page grid collapses the column instead.
@@ -149,6 +150,34 @@ export const documentEditor = tv({
   defaultVariants: {
     review: true,
     presence: true,
+  },
+});
+
+export const documentHeaderActions = tv({
+  slots: {
+    root: "flex shrink-0 items-center gap-2",
+  },
+});
+
+export const documentPublishForm = tv({
+  slots: {
+    // The popup lays out its header, body, and footer as direct children.
+    form: "contents",
+    body: "flex flex-col gap-4",
+    approversSection: "flex flex-col gap-2",
+    approverRows: "flex flex-col gap-1",
+    approverRow: "flex min-w-0 items-center justify-between gap-2",
+    approverName: "min-w-0 truncate",
+    addApprover: "self-start",
+  },
+});
+
+export const documentPdfExportForm = tv({
+  slots: {
+    form: "contents",
+    body: "flex flex-col gap-4",
+    option: "flex items-start gap-3",
+    optionText: "flex min-w-0 flex-col gap-0.5",
   },
 });
 

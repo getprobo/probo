@@ -1,6 +1,63 @@
 {
   "details": {
     "back": "Documenten",
+    "actions": {
+      "cancel": "Annuleren",
+      "menu": "Meer acties",
+      "unarchive": "Dearchiveren",
+      "publish": {
+        "button": "Publiceren",
+        "title": "Een nieuwe versie publiceren",
+        "description": "Beschrijf wat er is gewijzigd. Een hoofdversie kan goedkeuring vragen voordat ze wordt gepubliceerd.",
+        "changelog": "Wijzigingslog",
+        "changelogPlaceholder": "Wat is er in deze versie gewijzigd?",
+        "approvers": "Goedkeurders",
+        "approversDescription": "Een hoofdversie wacht op de goedkeuring van deze personen. Subversies worden meteen gepubliceerd.",
+        "removeApprover": "{{name}} verwijderen",
+        "addApprover": "Goedkeurder toevoegen",
+        "minor": "Subversie publiceren",
+        "major": "Hoofdversie publiceren",
+        "requestApproval": "Goedkeuring aanvragen"
+      },
+      "download": {
+        "item": "PDF downloaden",
+        "title": "PDF downloaden",
+        "description": "Gepubliceerde versie {{version}} als PDF exporteren.",
+        "signatures": "Handtekeningen toevoegen",
+        "signaturesDescription": "Voeg de handtekeningen toe die voor deze versie zijn verzameld.",
+        "watermark": "Watermerk toevoegen",
+        "watermarkDescription": "Markeer elke pagina zodat de kopie te herleiden is.",
+        "watermarkText": "Watermerktekst",
+        "watermarkPlaceholder": "Je e-mailadres",
+        "submit": "Downloaden"
+      },
+      "archive": {
+        "item": "Archiveren",
+        "title": "Dit document archiveren?",
+        "description": "\"{{title}}\" wordt alleen-lezen en gaat naar de gearchiveerde documenten. Je kunt het later dearchiveren.",
+        "confirm": "Archiveren"
+      },
+      "delete": {
+        "item": "Verwijderen",
+        "title": "\"{{title}}\" verwijderen?",
+        "description": "Het document, de versies en de handtekeningen worden definitief verwijderd. Dit kan niet ongedaan worden gemaakt.",
+        "confirm": "Verwijderen"
+      },
+      "messages": {
+        "published": "Versie gepubliceerd",
+        "approvalRequested": "Goedkeuring aangevraagd",
+        "archived": "Document gearchiveerd",
+        "unarchived": "Document gedearchiveerd",
+        "deleted": "Document verwijderd"
+      },
+      "errors": {
+        "publish": "Het document kon niet worden gepubliceerd",
+        "archive": "Het document kon niet worden gearchiveerd",
+        "unarchive": "Het document kon niet worden gedearchiveerd",
+        "delete": "Het document kon niet worden verwijderd",
+        "download": "De PDF kon niet worden gegenereerd"
+      }
+    },
     "presence": {
       "label": "Mensen in dit document",
       "anonymous": "Medewerker",

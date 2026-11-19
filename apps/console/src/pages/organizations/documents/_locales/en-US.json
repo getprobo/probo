@@ -1,6 +1,63 @@
 {
   "details": {
     "back": "Documents",
+    "actions": {
+      "cancel": "Cancel",
+      "menu": "More actions",
+      "unarchive": "Unarchive",
+      "publish": {
+        "button": "Publish",
+        "title": "Publish a new version",
+        "description": "Describe what changed. A major version can ask approvers to sign off before it is published.",
+        "changelog": "Changelog",
+        "changelogPlaceholder": "What changed in this version?",
+        "approvers": "Approvers",
+        "approversDescription": "A major version waits for these people to approve it. Minor versions publish right away.",
+        "removeApprover": "Remove {{name}}",
+        "addApprover": "Add approver",
+        "minor": "Publish minor version",
+        "major": "Publish major version",
+        "requestApproval": "Request approval"
+      },
+      "download": {
+        "item": "Download PDF",
+        "title": "Download PDF",
+        "description": "Export published version {{version}} as a PDF.",
+        "signatures": "Include signatures",
+        "signaturesDescription": "Add the signatures collected for this version.",
+        "watermark": "Add a watermark",
+        "watermarkDescription": "Stamp every page so the copy can be traced back.",
+        "watermarkText": "Watermark text",
+        "watermarkPlaceholder": "Your email address",
+        "submit": "Download"
+      },
+      "archive": {
+        "item": "Archive",
+        "title": "Archive this document?",
+        "description": "\"{{title}}\" becomes read-only and moves to the archived documents. You can unarchive it later.",
+        "confirm": "Archive"
+      },
+      "delete": {
+        "item": "Delete",
+        "title": "Delete \"{{title}}\"?",
+        "description": "The document, its versions, and its signatures are deleted for good. This cannot be undone.",
+        "confirm": "Delete"
+      },
+      "messages": {
+        "published": "Version published",
+        "approvalRequested": "Approval requested",
+        "archived": "Document archived",
+        "unarchived": "Document unarchived",
+        "deleted": "Document deleted"
+      },
+      "errors": {
+        "publish": "Could not publish the document",
+        "archive": "Could not archive the document",
+        "unarchive": "Could not unarchive the document",
+        "delete": "Could not delete the document",
+        "download": "Could not generate the PDF"
+      }
+    },
     "presence": {
       "label": "People in this document",
       "anonymous": "Collaborator",
