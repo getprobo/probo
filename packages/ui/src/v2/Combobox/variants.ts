@@ -35,12 +35,9 @@ export const comboboxInputGroup = tv({
         "transition-colors",
         "focus-within:ring-2 focus-within:ring-sand-8 focus-within:ring-offset-1 focus-within:ring-offset-sand-1",
       ],
-      // Borderless row for command palettes. The inset outline is the focus
-      // indicator: the input itself clears the native outline.
-      plain: [
-        "rounded-none border-0 bg-transparent px-4 py-3",
-        "focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-sand-8",
-      ],
+      // Borderless row for command palettes. The caret is the focus
+      // indicator: an inset outline fights the dialog's rounded frame.
+      plain: "rounded-none border-0 bg-transparent px-4 py-3",
     },
   },
   defaultVariants: {

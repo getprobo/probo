@@ -35,7 +35,7 @@ export const dialog = tv({
       "fixed left-1/2 z-5 -translate-x-1/2",
       "flex w-[calc(100vw-2rem)] max-w-150 flex-col",
       "max-h-[calc(100vh-2rem)] overflow-x-clip",
-      "rounded-5 border border-sand-6 bg-sand-1 shadow-6 outline-none",
+      "rounded-5 bg-sand-1 shadow-6 outline-none",
       "transition-all duration-150",
       "data-starting-style:scale-95 data-starting-style:opacity-0",
       "data-ending-style:scale-95 data-ending-style:opacity-0",
@@ -62,8 +62,10 @@ export const dialog = tv({
     appearance: {
       default: {
         backdrop: "bg-sand-12/40",
-        popup: "gap-4 py-6",
+        popup: "gap-4 border border-sand-6 py-6",
       },
+      // No solid border: shadow-6 already draws the hairline, and a sand-6
+      // stroke around the focused palette reads as a second focus ring.
       palette: {
         backdrop: "bg-sand-12/20 backdrop-blur-sm",
         popup: "gap-0 overflow-hidden py-0",
