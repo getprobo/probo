@@ -306,9 +306,20 @@ func TestCookieBanner_Corsless(t *testing.T) {
 				),
 			)
 
-			// Publishing queues a policy labeled with the origin. Wait until
-			// that version commits before enabling corsless, so the in-flight
-			// render cannot finish later and become the latest version.
+			// Publishing no longer queues a policy. Request one labeled with
+			// the origin, and wait until that version commits before enabling
+			// corsless, so the in-flight render cannot finish later and
+			// become the latest version.
+			require.NoError(
+				t,
+				fixture.Owner.Execute(
+					regeneratePolicyMutation,
+					map[string]any{
+						"input": map[string]any{"cookieBannerId": fixture.BannerID},
+					},
+					new(struct{}),
+				),
+			)
 			originVersion := waitForTrackerPolicyVersion(
 				t,
 				fixture.Owner,

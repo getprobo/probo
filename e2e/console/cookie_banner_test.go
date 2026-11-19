@@ -723,6 +723,7 @@ func TestCookieBanner_PublishVersion(t *testing.T) {
 		`
 
 		var updateResult struct{}
+
 		err := owner.Execute(updateQuery, map[string]any{
 			"input": map[string]any{
 				"cookieBannerId":    bannerID,

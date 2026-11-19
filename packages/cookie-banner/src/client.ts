@@ -482,7 +482,7 @@ export class CookieBannerClient {
 
   private discardDetectors(): void {
     this.haltDetectors();
-    this.reportQueue?.discard();
+    this.reportQueue?.discardTrackers();
     this.reportQueue = null;
   }
 

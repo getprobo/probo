@@ -61,19 +61,29 @@ describe("ReportQueue", () => {
     expect(body.cookies.every((cookie) => cookie.discovery_hit === true)).toBe(true);
   });
 
-  it("drops queued reports without sending them", () => {
+  it("drops tracker reports and sends the page view", async () => {
     const sendBeacon = vi.fn((_url: string, _data?: BodyInit | null) => true);
     vi.stubGlobal("navigator", { sendBeacon });
     const fetch = vi.fn();
     vi.stubGlobal("fetch", fetch);
 
     const queue = new ReportQueue(new URL("https://api.example.com/banner/report"));
-    queue.reportPageView();
     queue.reportCookie({ name: "sid", max_age_seconds: null, source: "pre-existing" });
-    queue.discard();
+    queue.discardTrackers();
 
-    expect(sendBeacon).not.toHaveBeenCalled();
     expect(fetch).not.toHaveBeenCalled();
+    expect(sendBeacon).toHaveBeenCalledOnce();
+    const sentData: unknown = sendBeacon.mock.calls[0]?.[1];
+    expect(sentData).toBeInstanceOf(Blob);
+    if (!(sentData instanceof Blob)) {
+      throw new Error("expected sendBeacon to receive a Blob");
+    }
+    const body = JSON.parse(await sentData.text()) as {
+      page_view?: boolean;
+      cookies?: unknown[];
+    };
+    expect(body.page_view).toBe(true);
+    expect(body.cookies).toBeUndefined();
   });
 
   it("stops retrying a page view after NotFoundError", async () => {
