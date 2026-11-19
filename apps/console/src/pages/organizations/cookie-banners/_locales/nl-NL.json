@@ -344,7 +344,7 @@
     "deleteConfirmation": "Hiermee wordt de cookiebanner \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
     "dialogs": { "deleteTitle": "Cookiebanner verwijderen", "publishPolicyTitle": "Wijzigingen publiceren", "publishPolicyDescription": "Publiceren maakt deze versie live voor bezoekers. Het cookiebeleid bijwerken op basis van de trackers in deze versie?" },
     "status": { "active": "Actief", "inactive": "Inactief" },
-    "actions": { "publish": "Wijzigingen publiceren", "publishOnly": "Alleen publiceren", "publishAndUpdatePolicy": "Publiceren en beleid bijwerken", "activate": "Activeren", "deactivate": "Deactiveren", "delete": "Verwijderen", "cancel": "Annuleren", "copyId": "Banner-ID kopiëren" }
+    "actions": { "publish": "Wijzigingen publiceren", "publishOnly": "Alleen publiceren", "publishAndUpdatePolicy": "Publiceren en beleid bijwerken", "updatePolicy": "Cookiebeleid bijwerken", "activate": "Activeren", "deactivate": "Deactiveren", "delete": "Verwijderen", "cancel": "Annuleren", "copyId": "Banner-ID kopiëren" }
   },
   "overview": {
     "title": "Overzicht",

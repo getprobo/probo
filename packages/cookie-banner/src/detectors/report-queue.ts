@@ -193,12 +193,17 @@ export class ReportQueue {
     }
   }
 
-  discard(): void {
+  // Drops queued tracker observations and sends the page view. A failed
+  // config load must not inventory trackers, but the visit still counts.
+  discardTrackers(): void {
     if (this.stopped) return;
-    this.stopped = true;
     this.clearSchedule();
     this.pending.clear();
-    this.pageViewPending = false;
+    if (!this.pageViewSent) {
+      this.pageViewPending = true;
+    }
+    this.flushSync();
+    this.stopped = true;
   }
 
   private clearSchedule(): void {

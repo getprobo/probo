@@ -50,7 +50,7 @@ export function enableNamedLoggers(): void {
   }
 
   // Replay through setItem after the StorageDetector wrap is live.
-  // probo-ready fires only after config loads, which is too late.
+  // A failed config load never fires probo-ready, so do not wait for it.
   // Catch per key so one quota failure does not skip the rest.
   for (const key of keys) {
     try {

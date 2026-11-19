@@ -344,7 +344,7 @@
     "deleteConfirmation": "Cette action supprimera définitivement la bannière de cookies \"{{name}}\". Elle est irréversible.",
     "dialogs": { "deleteTitle": "Supprimer la bannière de cookies", "publishPolicyTitle": "Publier les modifications", "publishPolicyDescription": "La publication met cette version en ligne pour les visiteurs. Mettre à jour la politique de cookies à partir des traceurs de cette version ?" },
     "status": { "active": "Active", "inactive": "Inactive" },
-    "actions": { "publish": "Publier les modifications", "publishOnly": "Publier seulement", "publishAndUpdatePolicy": "Publier et mettre à jour la politique", "activate": "Activer", "deactivate": "Désactiver", "delete": "Supprimer", "cancel": "Annuler", "copyId": "Copier l’ID de la bannière" }
+    "actions": { "publish": "Publier les modifications", "publishOnly": "Publier seulement", "publishAndUpdatePolicy": "Publier et mettre à jour la politique", "updatePolicy": "Mettre à jour la politique de cookies", "activate": "Activer", "deactivate": "Désactiver", "delete": "Supprimer", "cancel": "Annuler", "copyId": "Copier l’ID de la bannière" }
   },
   "overview": {
     "title": "Vue d'ensemble",

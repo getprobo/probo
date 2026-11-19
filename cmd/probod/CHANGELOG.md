@@ -14,11 +14,13 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ### Changed
 
-- Creating a cookie banner publishes version 1 and does not generate
-  a cookie policy. Publishing a version no longer generates one
-  either. `regenerateCookieBannerTrackerPolicy` requests the
-  document. Banners that were never published stay unpublished, and
-  their config endpoint still returns 404
+- **Breaking**: creating a cookie banner publishes version 1 and
+  does not generate a cookie policy. Publishing a version no longer
+  generates one either. `regenerateCookieBannerTrackerPolicy`
+  requests the document. Banners that were never published stay
+  unpublished, so their config endpoint still returns 404. Sites on
+  the new SDK stop discovering and reporting trackers for those
+  banners. Page views are still counted
 - Viewers can read tracker patterns and tracker resources, including
   their hit counts
 - Cookie banners count page loads and tracker hits on every page view,

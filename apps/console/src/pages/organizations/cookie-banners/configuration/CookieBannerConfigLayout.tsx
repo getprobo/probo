@@ -33,9 +33,11 @@ import { graphql } from "relay-runtime";
 
 import type { CookieBannerConfigLayout_cookieBanner$key } from "#/__generated__/core/CookieBannerConfigLayout_cookieBanner.graphql";
 import type { CookieBannerConfigLayoutQuery } from "#/__generated__/core/CookieBannerConfigLayoutQuery.graphql";
+import type { CookieBannerConfigLayoutUpdatePolicyMutation } from "#/__generated__/core/CookieBannerConfigLayoutUpdatePolicyMutation.graphql";
 import { TonedCard } from "#/components/TonedCard/TonedCard";
 import type { TonedCardTone } from "#/components/TonedCard/variants";
 import { NotFoundError } from "#/lib/relay/errors";
+import { useMutation } from "#/lib/relay/useMutation";
 
 import { cookieBannerConfigLayout } from "../variants";
 
@@ -59,6 +61,19 @@ export const cookieBannerConfigLayoutQuery = graphql`
     node(id: $cookieBannerId) {
       __typename
       ... on CookieBanner {
+        ...CookieBannerConfigLayout_cookieBanner
+      }
+    }
+  }
+`;
+
+const updatePolicyMutation = graphql`
+  mutation CookieBannerConfigLayoutUpdatePolicyMutation(
+    $input: RegenerateCookieBannerTrackerPolicyInput!
+  ) {
+    regenerateCookieBannerTrackerPolicy(input: $input) {
+      cookieBanner {
+        id
         ...CookieBannerConfigLayout_cookieBanner
       }
     }
@@ -93,6 +108,13 @@ export function CookieBannerConfigLayout({
     data.node.__typename === "CookieBanner" ? data.node : null,
   );
   const [publishOpen, setPublishOpen] = useState(false);
+  const [updatePolicy, isUpdatingPolicy] = useMutation<CookieBannerConfigLayoutUpdatePolicyMutation>(
+    updatePolicyMutation,
+    {
+      successMessage: t("configLayout.messages.policyRequested"),
+      errorToast: t("configLayout.errors.regeneratePolicy"),
+    },
+  );
   if (banner == null) {
     throw new NotFoundError("Cookie banner not found");
   }
@@ -200,7 +222,25 @@ export function CookieBannerConfigLayout({
                 {t("configLayout.actions.publish")}
               </Button>
             )
-          : null}
+          : version != null
+            ? (
+                <Button
+                  size={2}
+                  variant="soft"
+                  color="neutral"
+                  loading={isUpdatingPolicy}
+                  onClick={() => {
+                    void updatePolicy({
+                      variables: { input: { cookieBannerId: banner.id } },
+                    }).catch(() => {
+                      // Error toast is already shown by useMutation.
+                    });
+                  }}
+                >
+                  {t("configLayout.actions.updatePolicy")}
+                </Button>
+              )
+            : null}
       >
         <div className={body()}>
           <Text size={2} color="neutral">{message}</Text>
