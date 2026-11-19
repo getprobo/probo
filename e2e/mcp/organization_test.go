@@ -25,8 +25,34 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/e2e/internal/factory"
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
+
+type listedOrganization struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+func organizationsByID(organizations []listedOrganization) map[string]string {
+	namesByID := make(map[string]string, len(organizations))
+
+	for _, organization := range organizations {
+		namesByID[organization.ID] = organization.Name
+	}
+
+	return namesByID
+}
+
+func organizationNames(namesByID map[string]string) []string {
+	names := make([]string, 0, len(namesByID))
+
+	for _, name := range namesByID {
+		names = append(names, name)
+	}
+
+	return names
+}
 
 func TestMCP_ListOrganizations(t *testing.T) {
 	t.Parallel()
@@ -95,4 +121,102 @@ func TestMCP_ListOrganizations_LegalName(t *testing.T) {
 	assert.NotEmpty(t, gotName)
 	require.NotNil(t, gotLegalName)
 	assert.Equal(t, legalName, *gotLegalName)
+}
+
+func TestMCP_ListOrganizations_ExcludesDeactivatedMembership(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	member := testutil.NewClient(t, testutil.RoleOwner)
+	ownerOrgID := owner.GetOrganizationID().String()
+	memberOrgID := member.GetOrganizationID().String()
+
+	profileID := factory.CreateUser(owner, factory.Attrs{
+		"emailAddress": member.GetEmail(),
+	})
+	factory.InviteUser(owner, profileID)
+
+	var accepted struct {
+		AcceptInvitation struct {
+			Profile struct {
+				ID    string `json:"id"`
+				State string `json:"state"`
+			} `json:"profile"`
+		} `json:"acceptInvitation"`
+	}
+
+	err := member.ExecuteConnect(
+		`
+			mutation($input: AcceptInvitationInput!) {
+				acceptInvitation(input: $input) {
+					profile { id state }
+				}
+			}
+		`,
+		map[string]any{
+			"input": map[string]any{
+				"organizationId": ownerOrgID,
+			},
+		},
+		&accepted,
+	)
+	require.NoError(t, err)
+	require.Equal(t, profileID, accepted.AcceptInvitation.Profile.ID)
+	require.Equal(t, "ACTIVE", accepted.AcceptInvitation.Profile.State)
+
+	var before struct {
+		Organizations []listedOrganization `json:"organizations"`
+	}
+	testutil.NewMCPClient(t, member).CallToolInto("listOrganizations", map[string]any{}, &before)
+
+	beforeByID := organizationsByID(before.Organizations)
+	require.Contains(t, beforeByID, ownerOrgID)
+	require.Contains(t, beforeByID, memberOrgID)
+
+	deactivatedName := beforeByID[ownerOrgID]
+	require.NotEmpty(t, deactivatedName)
+
+	var deactivated struct {
+		DeactivateUser struct {
+			Success bool `json:"success"`
+		} `json:"deactivateUser"`
+	}
+
+	err = owner.ExecuteConnect(
+		`
+			mutation($input: DeactivateUserInput!) {
+				deactivateUser(input: $input) {
+					success
+				}
+			}
+		`,
+		map[string]any{
+			"input": map[string]any{
+				"organizationId": ownerOrgID,
+				"profileId":      profileID,
+			},
+		},
+		&deactivated,
+	)
+	require.NoError(t, err)
+	require.True(t, deactivated.DeactivateUser.Success)
+
+	token := member.CreateOAuth2AccessToken(
+		"e2e-mcp-deactivated-membership",
+		[]string{"v1:iam"},
+	)
+
+	var after struct {
+		Organizations []listedOrganization `json:"organizations"`
+	}
+	testutil.NewMCPClientWithAccessToken(t, member, token).CallToolInto(
+		"listOrganizations",
+		map[string]any{},
+		&after,
+	)
+
+	afterByID := organizationsByID(after.Organizations)
+	assert.NotContains(t, afterByID, ownerOrgID)
+	assert.NotContains(t, organizationNames(afterByID), deactivatedName)
+	assert.Contains(t, afterByID, memberOrgID)
 }
