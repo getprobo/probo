@@ -147,7 +147,7 @@ func TestLoggingMiddleware_RuntimePanicLogIncludesToolName(t *testing.T) {
 	require.ErrorIs(t, err, mcpx.ErrInternal)
 
 	var panicEntry map[string]any
-	for _, line := range bytes.Split(bytes.TrimSpace(output.Bytes()), []byte("\n")) {
+	for line := range bytes.SplitSeq(bytes.TrimSpace(output.Bytes()), []byte("\n")) {
 		if len(line) == 0 {
 			continue
 		}
