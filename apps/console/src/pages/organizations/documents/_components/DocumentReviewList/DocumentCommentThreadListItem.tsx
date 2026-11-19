@@ -73,7 +73,7 @@ export function DocumentCommentThreadListItem({
     <DocumentReviewItem
       authorKey={first.author}
       createdAt={first.createdAt}
-      label={t("details.review.openComment")}
+      kind="comment"
       active={active}
       onActivate={onActivate}
     >

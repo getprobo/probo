@@ -28,6 +28,7 @@ import type { SuggestionAnchor } from "../../_lib/reviewAnchors";
 import { documentSuggestionListItem } from "../../variants";
 
 import { DocumentReviewItem } from "./DocumentReviewItem";
+import { DocumentSuggestionChange } from "./DocumentSuggestionChange";
 
 const documentSuggestionListItemFragment = graphql`
   fragment DocumentSuggestionListItem_suggestion on DocumentSuggestion {
@@ -53,35 +54,26 @@ export function DocumentSuggestionListItem({
 }: DocumentSuggestionListItemProps) {
   const suggestion = useFragment(documentSuggestionListItemFragment, suggestionKey);
   const { t } = useTranslation("organizations/documents");
-  const { changes, text, deleted } = documentSuggestionListItem();
+  const { changes } = documentSuggestionListItem();
+  const hidden = anchor.changeCount - anchor.changes.length;
 
   return (
     <DocumentReviewItem
       authorKey={suggestion.author}
       createdAt={suggestion.createdAt}
-      label={t("details.review.openSuggestion")}
+      kind="suggestion"
       active={active}
       onActivate={onActivate}
     >
       <div className={changes()}>
-        {anchor.deleted !== "" && (
-          <Text size={2} color="red" className={deleted()}>
-            {anchor.deleted}
-          </Text>
-        )}
-        {anchor.inserted !== "" && (
-          <Text size={2} color="green" className={text()}>
-            {anchor.inserted}
-          </Text>
-        )}
-        {anchor.formatting && (
+        {anchor.changes.map((change, index) => (
+          // The list is rebuilt from the document on every change and has
+          // no stable identity beyond its order.
+          <DocumentSuggestionChange key={index} change={change} />
+        ))}
+        {hidden > 0 && (
           <Text size={1} color="faint">
-            {t("details.review.formatting")}
-          </Text>
-        )}
-        {anchor.structure && (
-          <Text size={1} color="faint">
-            {t("details.review.structure")}
+            {t("details.review.changes.moreChanges", { count: hidden })}
           </Text>
         )}
       </div>

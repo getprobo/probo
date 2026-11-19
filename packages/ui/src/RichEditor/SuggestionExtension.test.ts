@@ -600,6 +600,44 @@ function documentSnapshot(doc: { toJSON(): unknown }): unknown {
   return doc.toJSON();
 }
 
+describe("suggestion click", () => {
+  it("opens a single-letter suggestion from either side of the letter", () => {
+    const opened: string[] = [];
+    const controller: SuggestingController = {
+      enabled: false,
+      suggestionId: null,
+      pending: null,
+      request: null,
+      onStartSuggesting: () => Promise.resolve(null),
+      onSuggestionDone: () => {},
+      onOpenSuggestion: (id) => {
+        opened.push(id);
+      },
+    };
+    const suggesting = suggestingPlugins(controller)[0];
+    if (!suggesting?.props.handleClick) {
+      throw new Error("expected a suggesting click handler");
+    }
+    const state = EditorState.create({
+      schema,
+      doc: schema.node("doc", null, [
+        schema.node("paragraph", null, [
+          schema.text("a"),
+          schema.text("x", [schema.marks[suggestionInsertName].create({ id: suggestionId })]),
+          schema.text("b"),
+        ]),
+      ]),
+    });
+    const view = { state } as EditorView;
+    const click = { target: null } as unknown as MouseEvent;
+
+    suggesting.props.handleClick.call(suggesting, view, 2, click);
+    suggesting.props.handleClick.call(suggesting, view, 3, click);
+
+    expect(opened).toEqual([suggestionId, suggestionId]);
+  });
+});
+
 function editorState(text: ProseMirrorNode): EditorState {
   return EditorState.create({
     schema,

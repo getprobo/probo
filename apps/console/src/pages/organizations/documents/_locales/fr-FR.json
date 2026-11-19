@@ -68,14 +68,67 @@
       "suggestionUntracked": "Cette modification n'a pas pu être suivie comme suggestion"
     },
     "review": {
-      "openComment": "Afficher le commentaire",
-      "openSuggestion": "Afficher la suggestion",
+      "openComment": "Afficher le commentaire de {{name}}",
+      "openSuggestion": "Afficher la suggestion de {{name}}",
       "replies_one": "{{count}} réponse",
       "replies_other": "{{count}} réponses",
       "justNow": "à l'instant",
       "contentError": "Impossible d'afficher ce commentaire",
-      "formatting": "Modification de mise en forme",
-      "structure": "Modification de structure"
+      "changes": {
+        "formatAdded": {
+          "bold": "Gras ajouté",
+          "italic": "Italique ajouté",
+          "underline": "Soulignement ajouté",
+          "strike": "Barré ajouté",
+          "code": "Code ajouté",
+          "link": "Lien ajouté"
+        },
+        "formatRemoved": {
+          "bold": "Gras retiré",
+          "italic": "Italique retiré",
+          "underline": "Soulignement retiré",
+          "strike": "Barré retiré",
+          "code": "Code retiré",
+          "link": "Lien retiré"
+        },
+        "linkAdded": "Lien ajouté : {{href}}",
+        "linkChanged": "Lien remplacé par {{href}}",
+        "linkRemoved": "Lien retiré",
+        "blocks": {
+          "paragraph": "Paragraphe",
+          "heading": "Titre {{level}}",
+          "quote": "Citation",
+          "code": "Bloc de code",
+          "bulletList": "Liste à puces",
+          "orderedList": "Liste numérotée",
+          "taskList": "Liste de tâches",
+          "other": "Bloc"
+        },
+        "blockChanged": "{{before}} → {{after}}",
+        "indentChanged": "Retrait modifié",
+        "nodeAdded": {
+          "table": "Tableau ajouté",
+          "row": "Ligne ajoutée",
+          "column": "Colonne ajoutée",
+          "image": "Image ajoutée",
+          "divider": "Séparateur ajouté",
+          "file": "Fichier ajouté",
+          "line": "Retour à la ligne ajouté",
+          "other": "Structure ajoutée"
+        },
+        "nodeRemoved": {
+          "table": "Tableau retiré",
+          "row": "Ligne retirée",
+          "column": "Colonne retirée",
+          "image": "Image retirée",
+          "divider": "Séparateur retiré",
+          "file": "Fichier retiré",
+          "line": "Retour à la ligne retiré",
+          "other": "Structure retirée"
+        },
+        "moreChanges_one": "+{{count}} autre modification",
+        "moreChanges_other": "+{{count}} autres modifications"
+      }
     },
     "errors": {
       "update": "Échec de la mise à jour du document"

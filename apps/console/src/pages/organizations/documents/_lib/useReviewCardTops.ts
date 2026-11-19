@@ -64,10 +64,12 @@ export function useReviewCardTops(
       return;
     }
     let frame = 0;
+    let disposed = false;
 
     const measure = () => {
       frame = 0;
-      if (editor.isDestroyed) return;
+      // Before the editor is in the page, every anchor measures as zero.
+      if (editor.isDestroyed || !editorDom(editor)?.isConnected) return;
       const { anchors, activeKey } = inputs.current;
       const origin = column.getBoundingClientRect().top;
       const sizes: ReviewCardSize[] = [];
@@ -89,15 +91,23 @@ export function useReviewCardTops(
       if (frame === 0) frame = window.requestAnimationFrame(measure);
     };
 
+    // The text can reflow without the column changing size: the editor fills
+    // in after mount, and the web font swaps in late.
     const observer = new ResizeObserver(schedule);
     observer.observe(column);
     if (column.parentElement) observer.observe(column.parentElement);
+    const dom = editorDom(editor);
+    if (dom) observer.observe(dom);
     for (const node of cardNodes.current.values()) observer.observe(node);
     observerRef.current = observer;
     scheduleRef.current = schedule;
     schedule();
+    void document.fonts.ready.then(() => {
+      if (!disposed) schedule();
+    });
 
     return () => {
+      disposed = true;
       if (frame !== 0) window.cancelAnimationFrame(frame);
       observer.disconnect();
       observerRef.current = null;
@@ -124,6 +134,14 @@ export function useReviewCardTops(
     tops: layout.tops,
     height: layout.height,
   };
+}
+
+function editorDom(editor: Editor): HTMLElement | null {
+  try {
+    return editor.view.dom;
+  } catch {
+    return null;
+  }
 }
 
 function anchorTop(editor: Editor, pos: number, origin: number): number | null {
