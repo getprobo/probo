@@ -35,6 +35,7 @@ type OIDCState struct {
 	ID             string       `db:"id"`
 	Provider       OIDCProvider `db:"provider"`
 	Nonce          string       `db:"nonce"`
+	BrowserNonce   string       `db:"browser_nonce"`
 	CodeVerifier   string       `db:"code_verifier"`
 	ContinueURL    string       `db:"continue_url"`
 	OrganizationID *gid.GID     `db:"organization_id"`
@@ -44,14 +45,15 @@ type OIDCState struct {
 
 func (s *OIDCState) Insert(ctx context.Context, conn pg.Tx) error {
 	query := `
-INSERT INTO iam_oidc_states (id, provider, nonce, code_verifier, continue_url, organization_id, created_at, expires_at)
-VALUES (@id, @provider, @nonce, @code_verifier, @continue_url, @organization_id, @created_at, @expires_at)
+INSERT INTO iam_oidc_states (id, provider, nonce, browser_nonce, code_verifier, continue_url, organization_id, created_at, expires_at)
+VALUES (@id, @provider, @nonce, @browser_nonce, @code_verifier, @continue_url, @organization_id, @created_at, @expires_at)
 `
 
 	args := pgx.StrictNamedArgs{
 		"id":              s.ID,
 		"provider":        s.Provider,
 		"nonce":           s.Nonce,
+		"browser_nonce":   s.BrowserNonce,
 		"code_verifier":   s.CodeVerifier,
 		"continue_url":    s.ContinueURL,
 		"organization_id": s.OrganizationID,
@@ -69,7 +71,7 @@ VALUES (@id, @provider, @nonce, @code_verifier, @continue_url, @organization_id,
 
 func (s *OIDCState) LoadByID(ctx context.Context, conn pg.Querier, id string) error {
 	query := `
-SELECT id, provider, nonce, code_verifier, continue_url, organization_id, created_at, expires_at
+SELECT id, provider, nonce, browser_nonce, code_verifier, continue_url, organization_id, created_at, expires_at
 FROM iam_oidc_states
 WHERE id = @id
 LIMIT 1
@@ -96,7 +98,7 @@ LIMIT 1
 
 func (s *OIDCState) LoadByIDForUpdate(ctx context.Context, conn pg.Tx, id string) error {
 	query := `
-SELECT id, provider, nonce, code_verifier, continue_url, organization_id, created_at, expires_at
+SELECT id, provider, nonce, browser_nonce, code_verifier, continue_url, organization_id, created_at, expires_at
 FROM iam_oidc_states
 WHERE id = @id
 FOR UPDATE

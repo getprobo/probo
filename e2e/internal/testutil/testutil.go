@@ -64,6 +64,7 @@ type configOptions struct {
 	MetricsAddr         string
 	TrustHTTPAddr       string
 	TrustHTTPSAddr      string
+	EnableOIDC          bool
 }
 
 type switchableWriter struct {
@@ -442,6 +443,13 @@ func generateConfig(opts configOptions) (string, error) {
 			1<<53-1,
 			math.MaxInt64/int64(time.Second),
 		)
+	}
+
+	if opts.EnableOIDC {
+		env["PROBOD_AUTH_GOOGLE_CLIENT_ID"] = "e2e-google-client-id"
+		env["PROBOD_AUTH_GOOGLE_CLIENT_SECRET"] = "e2e-google-client-secret"
+		env["PROBOD_AUTH_MICROSOFT_CLIENT_ID"] = "e2e-microsoft-client-id"
+		env["PROBOD_AUTH_MICROSOFT_CLIENT_SECRET"] = "e2e-microsoft-client-secret"
 	}
 
 	builder := bootstrap.NewBuilder(bootstrap.NewResolver(func(key string) string {

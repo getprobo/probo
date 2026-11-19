@@ -56,6 +56,8 @@ type (
 		DisableSignup bool
 		// UseBuiltInRateLimit keeps the built-in 10/60 budget on this process.
 		UseBuiltInRateLimit bool
+		// EnableOIDC turns on Google and Microsoft login with dummy client credentials.
+		EnableOIDC bool
 	}
 
 	lockedBuffer struct {
@@ -128,6 +130,7 @@ func StartIsolatedEnv(t testing.TB, opts IsolatedEnvOptions) *IsolatedEnv {
 		configOptions{
 			DisableSignup:       opts.DisableSignup,
 			UseBuiltInRateLimit: opts.UseBuiltInRateLimit,
+			EnableOIDC:          opts.EnableOIDC,
 			APIAddr:             apiAddr,
 			BaseURL:             baseURL,
 			MetricsAddr:         "localhost:" + metricsPort.port,

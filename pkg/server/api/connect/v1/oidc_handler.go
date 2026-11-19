@@ -38,11 +38,17 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authn"
 )
 
+const (
+	oidcLoginCookieName = "OIDC_LOGIN"
+	oidcLoginCookiePath = "/api/connect/v1/oidc"
+)
+
 type OIDCHandler struct {
 	iam           *iam.Service
 	sessionCookie *authn.Cookie
 	logger        *log.Logger
 	safeRedirect  *saferedirect.SafeRedirect
+	cookieSecure  bool
 }
 
 func NewOIDCHandler(
@@ -56,6 +62,7 @@ func NewOIDCHandler(
 		sessionCookie: authn.NewCookie(&cookieConfig),
 		logger:        logger,
 		safeRedirect:  saferedirect.New(allowedHost),
+		cookieSecure:  cookieConfig.Secure,
 	}
 }
 
@@ -75,13 +82,9 @@ func (h *OIDCHandler) continueURLFromCallbackState(
 	ctx context.Context,
 	provider coredata.OIDCProvider,
 	stateParam string,
-) string {
-	continueURL, err := h.iam.OIDCService.ContinueURLFromCallbackState(ctx, provider, stateParam)
-	if err != nil {
-		return ""
-	}
-
-	return continueURL
+	browserNonce string,
+) (string, error) {
+	return h.iam.OIDCService.ContinueURLFromCallbackState(ctx, provider, stateParam, browserNonce)
 }
 
 func (h *OIDCHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
@@ -112,7 +115,7 @@ func (h *OIDCHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		organizationID = &parsedOrganizationID
 	}
 
-	authURL, err := h.iam.OIDCService.InitiateLogin(ctx, provider, continueURL, organizationID)
+	authURL, browserNonce, err := h.iam.OIDCService.InitiateLogin(ctx, provider, continueURL, organizationID)
 	if err != nil {
 		h.logger.ErrorCtx(ctx, "cannot initiate OIDC login", log.Error(err))
 		httpserver.RenderError(w, http.StatusInternalServerError, errors.New("internal server error"))
@@ -120,6 +123,7 @@ func (h *OIDCHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	h.setOIDCLoginCookie(w, browserNonce)
 	http.Redirect(w, r, authURL, http.StatusFound)
 }
 
@@ -132,6 +136,8 @@ func (h *OIDCHandler) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	browserNonce := oidcLoginNonce(r)
+
 	errParam := r.URL.Query().Get("error")
 	if errParam != "" {
 		h.logger.ErrorCtx(
@@ -140,7 +146,12 @@ func (h *OIDCHandler) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 			log.String("error", errParam),
 			log.String("error_description", r.URL.Query().Get("error_description")),
 		)
-		continueURL := h.continueURLFromCallbackState(ctx, provider, r.URL.Query().Get("state"))
+
+		continueURL, stateErr := h.continueURLFromCallbackState(ctx, provider, r.URL.Query().Get("state"), browserNonce)
+		if h.rejectUnboundOIDCLogin(w, stateErr) {
+			return
+		}
+
 		h.redirectAuthError(w, r, authErrorAuthenticationFailed, continueURL)
 
 		return
@@ -151,8 +162,14 @@ func (h *OIDCHandler) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 
 	if stateParam == "" || code == "" {
 		continueURL := ""
+
 		if stateParam != "" {
-			continueURL = h.continueURLFromCallbackState(ctx, provider, stateParam)
+			var stateErr error
+
+			continueURL, stateErr = h.continueURLFromCallbackState(ctx, provider, stateParam, browserNonce)
+			if h.rejectUnboundOIDCLogin(w, stateErr) {
+				return
+			}
 		}
 
 		h.redirectAuthError(w, r, authErrorInvalidState, continueURL)
@@ -160,7 +177,17 @@ func (h *OIDCHandler) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	identity, continueURL, organizationID, err := h.iam.OIDCService.HandleCallback(ctx, provider, stateParam, code)
+	identity, continueURL, organizationID, err := h.iam.OIDCService.HandleCallback(
+		ctx,
+		provider,
+		stateParam,
+		code,
+		browserNonce,
+	)
+	if h.rejectUnboundOIDCLogin(w, err) {
+		return
+	}
+
 	if err != nil {
 		if _, ok := errors.AsType[*oidc.ErrPersonalAccountNotAllowed](err); ok {
 			h.redirectAuthError(w, r, authErrorPersonalAccountNotAllowed, continueURL)
@@ -252,6 +279,69 @@ func (h *OIDCHandler) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 
 	redirectURL := h.safeRedirect.GetSafeRedirectURL(ctx, continueURL, defaultRedirect)
 	http.Redirect(w, r, redirectURL, http.StatusFound)
+}
+
+func (h *OIDCHandler) rejectUnboundOIDCLogin(w http.ResponseWriter, err error) bool {
+	h.clearOIDCLoginCookieIfConsumed(w, err)
+
+	if _, ok := errors.AsType[*oidc.ErrBrowserBinding](err); ok {
+		httpserver.RenderError(w, http.StatusBadRequest, errors.New("invalid oidc login"))
+
+		return true
+	}
+
+	return false
+}
+
+func (h *OIDCHandler) clearOIDCLoginCookieIfConsumed(w http.ResponseWriter, err error) {
+	if _, ok := errors.AsType[*oidc.ErrBrowserBinding](err); ok {
+		return
+	}
+
+	if _, ok := errors.AsType[*oidc.ErrInvalidState](err); ok {
+		return
+	}
+
+	h.clearOIDCLoginCookie(w)
+}
+
+func (h *OIDCHandler) setOIDCLoginCookie(w http.ResponseWriter, nonce string) {
+	http.SetCookie(
+		w,
+		&http.Cookie{
+			Name:     oidcLoginCookieName,
+			Value:    nonce,
+			Path:     oidcLoginCookiePath,
+			MaxAge:   int(oidc.LoginAttemptTTL.Seconds()),
+			Secure:   h.cookieSecure,
+			HttpOnly: true,
+			SameSite: http.SameSiteLaxMode,
+		},
+	)
+}
+
+func (h *OIDCHandler) clearOIDCLoginCookie(w http.ResponseWriter) {
+	http.SetCookie(
+		w,
+		&http.Cookie{
+			Name:     oidcLoginCookieName,
+			Value:    "",
+			Path:     oidcLoginCookiePath,
+			MaxAge:   -1,
+			Secure:   h.cookieSecure,
+			HttpOnly: true,
+			SameSite: http.SameSiteLaxMode,
+		},
+	)
+}
+
+func oidcLoginNonce(r *http.Request) string {
+	cookie, err := r.Cookie(oidcLoginCookieName)
+	if err != nil {
+		return ""
+	}
+
+	return cookie.Value
 }
 
 func parseOIDCProvider(s string) (coredata.OIDCProvider, error) {
