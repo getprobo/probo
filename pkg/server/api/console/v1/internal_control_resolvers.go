@@ -402,6 +402,14 @@ func (r *internalControlConnectionResolver) TotalCount(ctx context.Context, obj 
 		}
 
 		return count, nil
+	case *correctiveActionPlanResolver:
+		count, err := r.probo.InternalControls.CountForCorrectiveActionPlanID(ctx, scope, obj.ParentID, obj.Filters)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot count internal controls", log.Error(err))
+			return 0, gqlx.Internal(ctx)
+		}
+
+		return count, nil
 	case *treatmentPlanResolver:
 		count, err := r.probo.InternalControls.CountForTreatmentPlanID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
