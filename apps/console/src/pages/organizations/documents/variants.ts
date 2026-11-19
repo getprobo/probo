@@ -84,11 +84,13 @@ export const documentEditor = tv({
     // The review column only fits once the frame is wide enough to keep a
     // readable line length beside it.
     // The pages track is capped at the unscaled page width, so the pages sit
-    // on the left and still shrink to fit. The review column grows into the
-    // remaining space up to its cap.
+    // on the left. Its minimum keeps the full page width as long as the
+    // review column can stay at its minimum, so the review column shrinks
+    // from its cap first and the pages only scale down after it.
     content: [
-      "grid min-h-full justify-start gap-x-10 gap-y-4 grid-cols-[minmax(0,var(--page-width))]",
-      "@4xl:grid-cols-[minmax(0,var(--page-width))_minmax(18rem,28rem)]",
+      "grid min-h-full justify-start gap-x-(--review-gap) gap-y-4 grid-cols-[minmax(0,var(--page-width))]",
+      "[--review-gap:1.5rem] [--review-min:18rem]",
+      "@4xl:grid-cols-[minmax(min(var(--page-width),calc(100%_-_var(--review-min)_-_var(--review-gap))),var(--page-width))_minmax(var(--review-min),28rem)]",
     ],
     // Measured for the fit zoom, so it carries no horizontal padding.
     pages: "min-w-0 pb-6",
