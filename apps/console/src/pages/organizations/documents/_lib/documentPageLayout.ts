@@ -27,7 +27,7 @@ const a4ShortSide = 794;
 const a4LongSide = 1123;
 
 export const documentPageMargin = Math.round(2.5 * pixelsPerCentimeter);
-export const documentPageGap = 24;
+export const documentPageGap = 12;
 
 export type DocumentPageSize = {
   width: number;
