@@ -83,6 +83,21 @@ func TestSetBearerChallenge(t *testing.T) {
 	)
 }
 
+func TestBearerChallengeWithMetadataURL(t *testing.T) {
+	t.Parallel()
+
+	got := BearerChallengeWithMetadataURL(
+		"https://example.com/.well-known/oauth-protected-resource/api/mcp/v1",
+		BearerErrInvalidToken,
+	)
+
+	assert.Equal(
+		t,
+		`Bearer error="invalid_token", resource_metadata="https://example.com/.well-known/oauth-protected-resource/api/mcp/v1"`,
+		got,
+	)
+}
+
 func TestIsAttempt(t *testing.T) {
 	t.Parallel()
 

@@ -32,6 +32,15 @@ import (
 )
 
 func NewIdentityPresenceMiddleware(baseURL *baseurl.BaseURL) func(next http.Handler) http.Handler {
+	return NewIdentityPresenceMiddlewareWithMetadataURL(
+		bearertoken.ProtectedResourceMetadataURL(baseURL),
+	)
+}
+
+// NewIdentityPresenceMiddlewareWithMetadataURL is NewIdentityPresenceMiddleware
+// for a protected resource that publishes its own RFC 9728 metadata document
+// at metadataURL, which the 401 challenge advertises.
+func NewIdentityPresenceMiddlewareWithMetadataURL(metadataURL string) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
@@ -39,11 +48,12 @@ func NewIdentityPresenceMiddleware(baseURL *baseurl.BaseURL) func(next http.Hand
 				identity := IdentityFromContext(ctx)
 
 				if identity == nil {
+					errorCode := ""
 					if bearertoken.IsAttempt(r.Header.Get("Authorization")) {
-						bearertoken.SetBearerInvalidToken(w, baseURL)
-					} else {
-						bearertoken.SetBearerUnauthenticated(w, baseURL)
+						errorCode = bearertoken.BearerErrInvalidToken
 					}
+
+					bearertoken.SetBearerChallengeWithMetadataURL(w, metadataURL, errorCode)
 
 					httpserver.RenderJSON(
 						w,
