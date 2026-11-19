@@ -30,6 +30,7 @@ import * as control from './control';
 import * as cookieBanner from './cookieBanner';
 import * as cookieCategory from './cookieCategory';
 import * as cookieConsentRecord from './cookieConsentRecord';
+import * as correctiveActionPlan from './correctiveActionPlan';
 import * as trackerPattern from './trackerPattern';
 import * as datum from './datum';
 import * as device from './device';
@@ -91,6 +92,7 @@ export const resources: Record<string, ResourceModule> = {
 	cookieBanner: cookieBanner as ResourceModule,
 	cookieCategory: cookieCategory as ResourceModule,
 	cookieConsentRecord: cookieConsentRecord as ResourceModule,
+	correctiveActionPlan: correctiveActionPlan as ResourceModule,
 	trackerPattern: trackerPattern as ResourceModule,
 	datum: datum as ResourceModule,
 	device: device as ResourceModule,

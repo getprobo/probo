@@ -25,10 +25,8 @@ import * as deleteOp from './delete.operation';
 import * as getOp from './get.operation';
 import * as getAllOp from './getAll.operation';
 import * as linkAuditOp from './linkAudit.operation';
-import * as linkTaskOp from './linkTask.operation';
 import * as publishOp from './publish.operation';
 import * as unlinkAuditOp from './unlinkAudit.operation';
-import * as unlinkTaskOp from './unlinkTask.operation';
 
 export const description: INodeProperties[] = [
 	{
@@ -73,12 +71,6 @@ export const description: INodeProperties[] = [
 				action: 'Link an audit to a finding',
 			},
 			{
-				name: 'Link Task',
-				value: 'linkTask',
-				description: 'Link a task to a finding',
-				action: 'Link a task to a finding',
-			},
-			{
 				name: 'Publish',
 				value: 'publish',
 				description: 'Publish the finding list as a document',
@@ -89,12 +81,6 @@ export const description: INodeProperties[] = [
 				value: 'unlinkAudit',
 				description: 'Unlink an audit from a finding',
 				action: 'Unlink an audit from a finding',
-			},
-			{
-				name: 'Unlink Task',
-				value: 'unlinkTask',
-				description: 'Unlink a task from a finding',
-				action: 'Unlink a task from a finding',
 			},
 			{
 				name: 'Update',
@@ -111,10 +97,8 @@ export const description: INodeProperties[] = [
 	...getOp.description,
 	...getAllOp.description,
 	...linkAuditOp.description,
-	...linkTaskOp.description,
 	...publishOp.description,
 	...unlinkAuditOp.description,
-	...unlinkTaskOp.description,
 ];
 
 export {
@@ -124,8 +108,6 @@ export {
 	getOp as get,
 	getAllOp as getAll,
 	linkAuditOp as linkAudit,
-	linkTaskOp as linkTask,
 	publishOp as publish,
 	unlinkAuditOp as unlinkAudit,
-	unlinkTaskOp as unlinkTask,
 };

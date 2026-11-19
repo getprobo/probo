@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,32 +20,32 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
-import { organizationLocator, taskLocator } from '../../locators';
+import { organizationLocator, internalControlLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
 	organizationLocator({
-		resource: ['finding'],
-		operation: ['unlinkTask'],
+		resource: ['correctiveActionPlan'],
+		operation: ['linkInternalControl'],
 		required: false,
 		description: 'Organization to search in. Leave this empty when entering an ID.',
 	}),
 	{
-		displayName: 'Finding ID',
-		name: 'findingId',
+		displayName: 'Corrective Action Plan ID',
+		name: 'correctiveActionPlanId',
 		type: 'string',
 		displayOptions: {
 			show: {
-				resource: ['finding'],
-				operation: ['unlinkTask'],
+				resource: ['correctiveActionPlan'],
+				operation: ['linkInternalControl'],
 			},
 		},
 		default: '',
-		description: 'The ID of the finding',
+		description: 'The ID of the corrective action plan',
 		required: true,
 	},
-	taskLocator({
-		resource: ['finding'],
-		operation: ['unlinkTask'],
+	internalControlLocator({
+		resource: ['correctiveActionPlan'],
+		operation: ['linkInternalControl'],
 	}),
 ];
 
@@ -53,19 +53,31 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const findingId = this.getNodeParameter('findingId', itemIndex) as string;
-	const taskId = this.getNodeParameter('taskId', itemIndex, '', { extractValue: true }) as string;
+	const correctiveActionPlanId = this.getNodeParameter('correctiveActionPlanId', itemIndex) as string;
+	const internalControlId = this.getNodeParameter('internalControlId', itemIndex, '', {
+		extractValue: true,
+	}) as string;
 
 	const query = `
-		mutation DeleteFindingTaskMapping($input: DeleteFindingTaskMappingInput!) {
-			deleteFindingTaskMapping(input: $input) {
-				deletedFindingId
-				deletedTaskId
+		mutation CreateCorrectiveActionPlanInternalControlMapping($input: CreateCorrectiveActionPlanInternalControlMappingInput!) {
+			createCorrectiveActionPlanInternalControlMapping(input: $input) {
+				correctiveActionPlanEdge {
+					node {
+						id
+					}
+				}
+				internalControlEdge {
+					node {
+						id
+					}
+				}
 			}
 		}
 	`;
 
-	const responseData = await proboApiRequest.call(this, query, { input: { findingId, taskId } });
+	const responseData = await proboApiRequest.call(this, query, {
+		input: { correctiveActionPlanId, internalControlId },
+	});
 
 	return {
 		json: responseData,

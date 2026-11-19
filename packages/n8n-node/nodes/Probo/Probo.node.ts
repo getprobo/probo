@@ -188,6 +188,11 @@ export class Probo implements INodeType {
 						description: 'View cookie consent records',
 					},
 					{
+						name: 'Corrective Action Plan',
+						value: 'correctiveActionPlan',
+						description: 'Manage corrective action plans of findings',
+					},
+					{
 						name: 'Data',
 						value: 'datum',
 						description: 'Manage data',
