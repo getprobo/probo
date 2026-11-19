@@ -145,13 +145,16 @@ func TestBridge_Run_SyncsPhotoWhenETagChanges(t *testing.T) {
 		switch {
 		case r.Method == http.MethodGet && r.URL.Path == "/Users":
 			mu.Lock()
+
 			resources := []any{}
 			if stored != nil {
 				resources = []any{stored}
 			}
+
 			mu.Unlock()
 
 			w.Header().Set("Content-Type", "application/scim+json")
+
 			if err := json.NewEncoder(w).Encode(map[string]any{
 				"schemas":      []string{"urn:ietf:params:scim:api:messages:2.0:ListResponse"},
 				"totalResults": len(resources),
@@ -181,6 +184,7 @@ func TestBridge_Run_SyncsPhotoWhenETagChanges(t *testing.T) {
 
 			mu.Lock()
 			stored = created
+
 			requests = append(requests, string(body))
 			mu.Unlock()
 

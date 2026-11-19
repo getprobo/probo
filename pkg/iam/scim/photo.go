@@ -275,6 +275,7 @@ func (s *Service) preparePhoto(ctx context.Context, uri *string, etag *string, s
 	}
 
 	value := strings.TrimSpace(*uri)
+
 	if etagValue != "" && etagValue == stored {
 		return &scimPhoto{ETag: etagValue}, ""
 	}
@@ -331,6 +332,7 @@ func decodePhotoDataURI(value string) ([]byte, string) {
 
 		return r
 	}, after)
+
 	if !strings.Contains(strings.ToLower(meta), ";base64") {
 		return nil, "unsupported image"
 	}
@@ -419,6 +421,7 @@ func (s *Service) syncProfilePhoto(
 	}
 
 	hasAvatar := false
+
 	if photo != nil {
 		identity := &coredata.Identity{}
 		if err := identity.LoadByID(ctx, tx, profile.IdentityID); err != nil {
@@ -488,6 +491,7 @@ func (s *Service) stageProfilePhoto(
 	}
 
 	profile := &coredata.MembershipProfile{IdentityID: identityID}
+
 	normalized, err := imageutil.Downscale(bytes.NewReader(photo.Body), avatarMaxEdge)
 	if err != nil {
 		s.warnPhoto(ctx, profile, "unsupported image")
@@ -498,6 +502,7 @@ func (s *Service) stageProfilePhoto(
 	now := time.Now()
 	fileID := gid.New(gid.NilTenant, coredata.FileEntityType)
 	fileName := "avatar.jpg"
+
 	if normalized.ContentType == imageutil.ContentTypePNG {
 		fileName = "avatar.png"
 	}
@@ -563,6 +568,7 @@ func (s *Service) attachProfilePhoto(
 	}
 
 	identity.AvatarFileID = &avatarFile.ID
+
 	identity.UpdatedAt = time.Now()
 	if err := identity.Update(ctx, tx); err != nil {
 		return false, fmt.Errorf("cannot update identity avatar: %w", err)

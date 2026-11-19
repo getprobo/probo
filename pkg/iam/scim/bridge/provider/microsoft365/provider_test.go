@@ -43,6 +43,7 @@ func TestProvider_ListUsers_DoesNotRequestPhotos(t *testing.T) {
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		mu.Lock()
+
 		paths = append(paths, r.URL.Path)
 		mu.Unlock()
 
@@ -72,6 +73,7 @@ func TestProvider_ListUsers_DoesNotRequestPhotos(t *testing.T) {
 	assert.Empty(t, users[0].PhotoETag)
 	assert.False(t, users[0].PhotoETagKnown)
 	mu.Lock()
+
 	recorded := append([]string(nil), paths...)
 	mu.Unlock()
 

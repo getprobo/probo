@@ -215,6 +215,7 @@ func (s *Bridge) loadPhoto(ctx context.Context, user *scimclient.User, previousE
 
 	user.Photo = photo.Body
 	user.PhotoMIME = photo.MIME
+
 	if photo.ETag != "" {
 		user.PhotoETag = photo.ETag
 	}

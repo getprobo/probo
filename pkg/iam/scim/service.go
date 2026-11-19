@@ -609,6 +609,7 @@ func (s *Service) updateUser(
 ) (*coredata.MembershipProfile, string, error) {
 	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
 	now := time.Now()
+
 	var (
 		photo      *scimPhoto
 		staged     *coredata.File

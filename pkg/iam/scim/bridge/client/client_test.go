@@ -163,6 +163,7 @@ func TestClient_CreateUser_SendsPhotoWhenPresent(t *testing.T) {
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var err error
+
 		body, err = io.ReadAll(r.Body)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
