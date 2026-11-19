@@ -4562,28 +4562,12 @@
     "columns": {
       "referenceId": "Referentie-ID",
       "name": "Risiconaam",
-      "category": "Categorie",
-      "treatment": "Behandeling",
-      "initialRisk": "Initieel risico",
-      "residualRisk": "Restrisico",
-      "owner": "Eigenaar"
+      "category": "Categorie"
     }
   },
   "riskOverviewPage": {
-    "emptyScores": "Scores worden ingesteld op een behandelplan in een risicoanalyse.",
     "fields": {
-      "owner": "Eigenaar",
-      "treatment": "Behandeling",
-      "initialRiskScore": "Initiële score",
-      "residualRiskScore": "Restscore",
       "note": "Opmerking"
-    },
-    "treatments": {
-      "mitigated": "Beperken",
-      "accepted": "Accepteren",
-      "transferred": "Overdragen",
-      "avoided": "Vermijden",
-      "unknown": "Onbekend"
     }
   },
   "formRiskDialog": {

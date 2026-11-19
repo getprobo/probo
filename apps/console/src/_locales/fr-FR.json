@@ -4577,28 +4577,12 @@
     "columns": {
       "referenceId": "ID de référence",
       "name": "Nom du risque",
-      "category": "Catégorie",
-      "treatment": "Traitement",
-      "initialRisk": "Risque initial",
-      "residualRisk": "Risque résiduel",
-      "owner": "Propriétaire"
+      "category": "Catégorie"
     }
   },
   "riskOverviewPage": {
-    "emptyScores": "Les scores sont définis sur un plan de traitement dans une analyse de risques.",
     "fields": {
-      "owner": "Propriétaire",
-      "treatment": "Traitement",
-      "initialRiskScore": "Score initial",
-      "residualRiskScore": "Score résiduel",
       "note": "Note"
-    },
-    "treatments": {
-      "mitigated": "Atténuer",
-      "accepted": "Accepter",
-      "transferred": "Transférer",
-      "avoided": "Éviter",
-      "unknown": "Inconnu"
     }
   },
   "formRiskDialog": {

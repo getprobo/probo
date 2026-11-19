@@ -4,6 +4,12 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+### Removed
+
+- **Breaking**: Risk `Get` and `Get Many` no longer return treatment,
+  likelihood, impact, or scores. `Get Many` can no longer order by
+  treatment or score. Those fields live on treatment plans
+
 ## [0.273.0] - 2026-11-17
 
 ### Added

@@ -4,6 +4,13 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Removed
+
+- **Breaking**: Catalog risks no longer store treatment, likelihood,
+  impact, scores, or owner. Those fields live on treatment plans.
+  GraphQL `Risk` and MCP risk responses drop them, and risk lists can
+  no longer be ordered by treatment, score, or owner
+
 ### Fixed
 
 - Built with Go 1.27.4 (up from 1.27.3) to pick up the standard-library

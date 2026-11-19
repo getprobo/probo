@@ -4,6 +4,13 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+### Removed
+
+- **Breaking**: `risk list` and `risk view` no longer show treatment
+  or scores. `risk list --order-by` no longer accepts `TREATMENT`,
+  `INHERENT_RISK_SCORE`, or `RESIDUAL_RISK_SCORE`. Those fields live
+  on treatment plans
+
 ## [0.271.0] - 2026-11-17
 
 ### Added

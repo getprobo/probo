@@ -2612,12 +2612,10 @@
   "risksPage": {
     "description": "Risks are potential threats to your organization. Manage them by identifying, assessing, and implementing mitigation measures.",
     "actions": { "document": "Document", "publish": "Publish", "newRisk": "New Risk" },
-    "columns": { "referenceId": "Reference ID", "name": "Risk name", "category": "Category", "treatment": "Treatment", "initialRisk": "Initial Risk", "residualRisk": "Residual Risk", "owner": "Owner" }
+    "columns": { "referenceId": "Reference ID", "name": "Risk name", "category": "Category" }
   },
   "riskOverviewPage": {
-    "emptyScores": "Scores are set on a treatment plan in a risk analysis.",
-    "fields": { "owner": "Owner", "treatment": "Treatment", "initialRiskScore": "Initial score", "residualRiskScore": "Residual score", "note": "Note" },
-    "treatments": { "mitigated": "Mitigate", "accepted": "Accept", "transferred": "Transfer", "avoided": "Avoid", "unknown": "Unknown" }
+    "fields": { "note": "Note" }
   },
   "formRiskDialog": {
     "breadcrumb": { "risks": "Risks", "edit": "Edit Risk", "new": "New Risk" },

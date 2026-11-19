@@ -265,40 +265,6 @@ func TestSecurity_ReadGap_ObligationOwner(t *testing.T) {
 	testutil.AssertNodeNotAccessible(t, err, readResult.Node.Owner == nil, "cross-tenant profile PII via obligation.owner")
 }
 
-func TestSecurity_ReadGap_RiskOwner(t *testing.T) {
-	t.Parallel()
-
-	org1Owner := testutil.NewClient(t, testutil.RoleOwner)
-	org2Owner := testutil.NewClient(t, testutil.RoleOwner)
-
-	org2ProfileID := factory.CreateUser(org2Owner, factory.Attrs{"fullName": "Org2 Secret Risk Owner (read-gap probe)"})
-
-	riskID := factory.CreateRisk(org1Owner, factory.Attrs{"name": "Org1 Risk for read-gap probe"})
-
-	injectCrossTenantFK(t, "risks", "owner_profile_id", riskID, org2ProfileID)
-
-	var readResult struct {
-		Node struct {
-			Owner *struct {
-				ID       string `json:"id"`
-				FullName string `json:"fullName"`
-			} `json:"owner"`
-		} `json:"node"`
-	}
-
-	err := org1Owner.Execute(`
-		query($id: ID!) {
-			node(id: $id) {
-				... on Risk {
-					owner { id fullName }
-				}
-			}
-		}
-	`, map[string]any{"id": riskID}, &readResult)
-
-	testutil.AssertNodeNotAccessible(t, err, readResult.Node.Owner == nil, "cross-tenant profile PII via risk.owner")
-}
-
 func TestSecurity_ReadGap_TaskAssignedTo(t *testing.T) {
 	t.Parallel()
 
