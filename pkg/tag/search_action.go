@@ -108,6 +108,7 @@ func ListableEntityTypes(
 	}
 
 	allowed := make(map[iam.Action]struct{}, len(actions))
+
 	for i, decision := range decisions {
 		if decision == nil {
 			allowed[actions[i]] = struct{}{}
