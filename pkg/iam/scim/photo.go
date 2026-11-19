@@ -318,19 +318,19 @@ func (s *Service) preparePhoto(ctx context.Context, uri *string, etag *string, s
 }
 
 func decodePhotoDataURI(value string) ([]byte, string) {
-	comma := strings.Index(value, ",")
-	if comma < 0 {
+	before, after, ok := strings.Cut(value, ",")
+	if !ok {
 		return nil, "unsupported image"
 	}
 
-	meta := value[:comma]
+	meta := before
 	payload := strings.Map(func(r rune) rune {
 		if r == '\n' || r == '\r' || r == ' ' || r == '\t' {
 			return -1
 		}
 
 		return r
-	}, value[comma+1:])
+	}, after)
 	if !strings.Contains(strings.ToLower(meta), ";base64") {
 		return nil, "unsupported image"
 	}
