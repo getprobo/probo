@@ -22,6 +22,7 @@ only.
 | `evidence` | Evidence |
 | `audit` | Audits |
 | `finding` | Findings |
+| `corrective-action-plan` | Corrective action plans of findings |
 | `asset` | Assets |
 | `datum` | Data |
 | `third-party` | Vendors |

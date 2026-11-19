@@ -42,6 +42,7 @@ import (
 	"go.probo.inc/probo/pkg/cmd/control"
 	cookiebanner "go.probo.inc/probo/pkg/cmd/cookie-banner"
 	cookiecategory "go.probo.inc/probo/pkg/cmd/cookie-category"
+	correctiveactionplan "go.probo.inc/probo/pkg/cmd/corrective-action-plan"
 	"go.probo.inc/probo/pkg/cmd/datum"
 	"go.probo.inc/probo/pkg/cmd/device"
 	"go.probo.inc/probo/pkg/cmd/document"
@@ -123,6 +124,7 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(cookiecategory.NewCmdCookieCategory(f))
 	cmd.AddCommand(trackerpattern.NewCmdTrackerPattern(f))
 	cmd.AddCommand(trackerresource.NewCmdTrackerResource(f))
+	cmd.AddCommand(correctiveactionplan.NewCmdCorrectiveActionPlan(f))
 	cmd.AddCommand(datum.NewCmdDatum(f))
 	cmd.AddCommand(device.NewCmdDevice(f))
 	cmd.AddCommand(document.NewCmdDocument(f))
