@@ -99,7 +99,13 @@
     "placeholder": "Leave a comment",
     "submit": "Add comment",
     "showMore": "Show more",
-    "authorFallback": "Someone"
+    "authorFallback": "Someone",
+    "unsaved": {
+      "title": "Leave without adding this comment?",
+      "description": "This comment hasn't been added yet. Leaving this page discards it.",
+      "stay": "Stay",
+      "leave": "Leave"
+    }
   },
   "activity": {
     "title": "Activity",

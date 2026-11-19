@@ -29,6 +29,8 @@ import {
   taskCommentForm,
   taskCommentsSection,
   TASKS_NAMESPACE,
+  UnsavedTaskCommentGuard,
+  unsavedTaskCommentIsPending,
 } from "@probo/tasks";
 import { isRichEditorContentEmpty, richEditorContentTextLength } from "@probo/ui/src/RichEditor/richEditorContent";
 import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
@@ -517,6 +519,7 @@ export function TaskDetailsCommentForm({ taskId }: { taskId: string }) {
   const [editorKey, setEditorKey] = useState(0);
   const [error, setError] = useState<string>();
   const { root, editor } = taskCommentForm();
+  const pending = unsavedTaskCommentIsPending(content, uploading);
 
   function handleSubmit() {
     if (uploading || isCreating) {
@@ -550,6 +553,7 @@ export function TaskDetailsCommentForm({ taskId }: { taskId: string }) {
 
   return (
     <Card variant="soft" size={2}>
+      <UnsavedTaskCommentGuard pending={pending} />
       <Form className={root()} onFormSubmit={handleSubmit}>
         <Field error={error}>
           <RichEditor

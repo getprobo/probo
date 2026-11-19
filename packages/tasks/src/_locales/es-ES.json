@@ -99,7 +99,13 @@
     "placeholder": "Dejar un comentario",
     "submit": "Añadir comentario",
     "showMore": "Mostrar más",
-    "authorFallback": "Alguien"
+    "authorFallback": "Alguien",
+    "unsaved": {
+      "title": "¿Salir sin añadir este comentario?",
+      "description": "Este comentario todavía no se ha añadido. Salir de esta página lo descarta.",
+      "stay": "Quedarme",
+      "leave": "Salir"
+    }
   },
   "activity": {
     "title": "Actividad",
