@@ -26,16 +26,9 @@ import {
   type TaskState,
   taskStates,
 } from "@probo/tasks";
-import { use, useCallback, useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router";
 
-import { useOrganizationId } from "#/hooks/useOrganizationId";
-import { CurrentUser } from "#/providers/CurrentUser";
-
-import {
-  taskListFilterPreferenceFromParams,
-  writeTaskListFilterPreference,
-} from "./taskListFilterPreference";
 import { unassignedAssignee } from "./taskPath";
 
 export interface TasksCardFilterInput {
@@ -88,9 +81,6 @@ export function taskMatchesFilter(
 }
 
 export function useTasksCardFilters() {
-  const organizationId = useOrganizationId();
-  const { profile } = use(CurrentUser);
-  const profileId = profile?.id ?? "";
   const [searchParams, setSearchParams] = useSearchParams();
   const query = searchParams.get("q") ?? "";
   const state = taskStateFromParam(searchParams.get("status"));
@@ -127,38 +117,29 @@ export function useTasksCardFilters() {
     }, { replace: true });
   }, [setSearchParams]);
 
-  const commitFilters = useCallback((update: (params: URLSearchParams) => void) => {
+  const setState = useCallback((value: TaskState | null) => {
     setSearchParams((previous) => {
       const next = new URLSearchParams(previous);
-      update(next);
-      writeTaskListFilterPreference(
-        organizationId,
-        profileId,
-        taskListFilterPreferenceFromParams(next),
-      );
+      if (value == null) {
+        next.delete("status");
+      } else {
+        next.set("status", value.toLowerCase().replace("_", "-"));
+      }
       return next;
     }, { replace: true });
-  }, [organizationId, profileId, setSearchParams]);
-
-  const setState = useCallback((value: TaskState | null) => {
-    commitFilters((params) => {
-      if (value == null) {
-        params.delete("status");
-      } else {
-        params.set("status", value.toLowerCase().replace("_", "-"));
-      }
-    });
-  }, [commitFilters]);
+  }, [setSearchParams]);
 
   const setAssignedToId = useCallback((value: string | null) => {
-    commitFilters((params) => {
+    setSearchParams((previous) => {
+      const next = new URLSearchParams(previous);
       if (value == null || value === "") {
-        params.delete("assignee");
+        next.delete("assignee");
       } else {
-        params.set("assignee", value);
+        next.set("assignee", value);
       }
-    });
-  }, [commitFilters]);
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
 
   const setInternalControlId = useCallback((value: string | null) => {
     setSearchParams((previous) => {
@@ -173,14 +154,16 @@ export function useTasksCardFilters() {
   }, [setSearchParams]);
 
   const setDue = useCallback((value: TaskDueFilter | null) => {
-    commitFilters((params) => {
+    setSearchParams((previous) => {
+      const next = new URLSearchParams(previous);
       if (value == null) {
-        params.delete("due");
+        next.delete("due");
       } else {
-        params.set("due", value);
+        next.set("due", value);
       }
-    });
-  }, [commitFilters]);
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
 
   return {
     query,

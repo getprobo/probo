@@ -27,13 +27,7 @@ import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { CurrentUser } from "#/providers/CurrentUser";
 
-import {
-  readTaskListFilterPreference,
-  restoredTaskListFilters,
-  taskListFilterPreferenceFromParams,
-  taskListFilterPreferenceInParams,
-  writeTaskListFilterPreference,
-} from "./_lib/taskListFilterPreference";
+import { myTasksSearchParams } from "./_lib/myTasksFilter";
 import {
   pickTaskListIncludeFlags,
   taskListIncludeFlags,
@@ -61,22 +55,11 @@ function TasksPageQueryLoader({ organizationId }: TasksPageQueryLoaderProps) {
   const { profile } = use(CurrentUser);
   const profileId = profile?.id ?? "";
   const [searchParams, setSearchParams] = useSearchParams();
-  const filtersInUrl = taskListFilterPreferenceInParams(searchParams);
-  const restored = filtersInUrl
-    ? null
-    : restoredTaskListFilters(
-        searchParams,
-        readTaskListFilterPreference(organizationId, profileId),
-        profileId,
-      );
-  const restoredSearch = restored?.params.toString() ?? null;
-  const nextSearch = restoredSearch == null || restoredSearch === searchParams.toString()
-    ? null
-    : restoredSearch;
-  // Copy saved filters into a bare URL before the first query, so the list
-  // does not load unfiltered and then replace itself.
-  const filtersReady = nextSearch == null;
-  const appliedSearch = useRef<string | null>(null);
+  const myTasksSearch = myTasksSearchParams(searchParams, profileId)?.toString() ?? null;
+  // Wait until a bare URL has the current user on it, so the first query
+  // is already My tasks. A URL that already has filters is left alone.
+  const filtersReady = myTasksSearch == null;
+  const appliedMyTasks = useRef(false);
   const { graphqlFilter } = useTasksCardFilters();
   const includeFlags = useMemo(
     () => taskListIncludeFlags(graphqlFilter.state),
@@ -90,19 +73,12 @@ function TasksPageQueryLoader({ organizationId }: TasksPageQueryLoaderProps) {
   }, []);
 
   useEffect(() => {
-    if (nextSearch == null || appliedSearch.current === nextSearch) {
+    if (myTasksSearch == null || appliedMyTasks.current) {
       return;
     }
-    appliedSearch.current = nextSearch;
-    if (readTaskListFilterPreference(organizationId, profileId) == null) {
-      writeTaskListFilterPreference(
-        organizationId,
-        profileId,
-        taskListFilterPreferenceFromParams(new URLSearchParams(nextSearch)),
-      );
-    }
-    setSearchParams(new URLSearchParams(nextSearch), { replace: true });
-  }, [nextSearch, organizationId, profileId, setSearchParams]);
+    appliedMyTasks.current = true;
+    setSearchParams(new URLSearchParams(myTasksSearch), { replace: true });
+  }, [myTasksSearch, setSearchParams]);
 
   useEffect(() => {
     if (!filtersReady || pageReady) {
