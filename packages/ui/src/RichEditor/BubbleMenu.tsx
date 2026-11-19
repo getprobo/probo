@@ -10,14 +10,9 @@ import { tv } from "tailwind-variants/lite";
 
 import { OverlayPortalRootContext } from "../lib/overlayPortalRoot";
 
+import { applyLink, toggleStyle } from "./_lib/formatting";
 import { linkEditorPluginKey, openLink } from "./LinkExtension";
 import { MenuButton } from "./MenuButton";
-import {
-  applySuggestingLink,
-  applySuggestingStyle,
-  suggestingControllerFrom,
-} from "./SuggestionExtension";
-import type { SuggestionStyleName } from "./suggestionStyle";
 
 const bubbleMenuVariants = tv({
   slots: {
@@ -99,9 +94,7 @@ export function BubbleMenu(props: BubbleMenuProps) {
   function submitLink() {
     const next = linkUrl.trim();
     if (next && next !== (state.linkHref ?? "")) {
-      if (!suggestLink(next)) {
-        editor.chain().focus().setLink({ href: next }).run();
-      }
+      applyLink(editor, next);
     } else if (!editor.isDestroyed) {
       editor.commands.focus();
     }
@@ -110,23 +103,9 @@ export function BubbleMenu(props: BubbleMenuProps) {
   }
 
   function removeLink() {
-    if (!suggestLink(null)) {
-      editor.chain().focus().unsetLink().run();
-    }
+    applyLink(editor, null);
     setShowLinkInput(false);
     setLinkUrl("");
-  }
-
-  function suggestLink(href: string | null): boolean {
-    const controller = suggestingControllerFrom(editor);
-    if (!controller || editor.isDestroyed) return false;
-    return applySuggestingLink(editor.view, controller, href);
-  }
-
-  function suggestStyle(style: SuggestionStyleName, apply: () => void) {
-    const controller = suggestingControllerFrom(editor);
-    if (controller && !editor.isDestroyed && applySuggestingStyle(editor.view, controller, style)) return;
-    apply();
   }
 
   function handleKeyDown(e: KeyboardEvent<HTMLInputElement>) {
@@ -172,33 +151,33 @@ export function BubbleMenu(props: BubbleMenuProps) {
       <div className={toolbar()}>
         <MenuButton
           active={state.isBold}
-          onClick={() => suggestStyle("bold", () => editor.chain().focus().toggleBold().run())}
+          onClick={() => toggleStyle(editor, "bold")}
         >
           <TextBIcon size={16} weight="bold" />
         </MenuButton>
         <MenuButton
           active={state.isItalic}
-          onClick={() => suggestStyle("italic", () => editor.chain().focus().toggleItalic().run())}
+          onClick={() => toggleStyle(editor, "italic")}
         >
           <TextItalicIcon size={16} weight="bold" />
         </MenuButton>
         {editor.schema.marks.underline != null && (
           <MenuButton
             active={state.isUnderline}
-            onClick={() => suggestStyle("underline", () => editor.chain().focus().toggleUnderline().run())}
+            onClick={() => toggleStyle(editor, "underline")}
           >
             <TextUnderlineIcon size={16} weight="bold" />
           </MenuButton>
         )}
         <MenuButton
           active={state.isStrike}
-          onClick={() => suggestStyle("strike", () => editor.chain().focus().toggleStrike().run())}
+          onClick={() => toggleStyle(editor, "strike")}
         >
           <TextStrikethroughIcon size={16} weight="bold" />
         </MenuButton>
         <MenuButton
           active={state.isCode}
-          onClick={() => suggestStyle("code", () => editor.chain().focus().toggleCode().run())}
+          onClick={() => toggleStyle(editor, "code")}
         >
           <CodeIcon size={16} weight="bold" />
         </MenuButton>

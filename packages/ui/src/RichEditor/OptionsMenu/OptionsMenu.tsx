@@ -33,9 +33,11 @@ export type OptionsMenuFloating = {
 type OptionsMenuProps = {
   editor: Editor;
   compact?: boolean;
+  // When false, the handle only drags blocks. A fixed toolbar owns turn-into.
+  menu?: boolean;
 };
 
-export function OptionsMenu({ editor, compact = false }: OptionsMenuProps) {
+export function OptionsMenu({ editor, compact = false, menu = true }: OptionsMenuProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [triggerEl, setTriggerEl] = useState<Element | null>(null);
   const [dropdownEl, setDropdownEl] = useState<HTMLElement | null>(null);
@@ -56,7 +58,7 @@ export function OptionsMenu({ editor, compact = false }: OptionsMenuProps) {
     whileElementsMounted: autoUpdate,
   });
 
-  const click = useClick(menuRootContext);
+  const click = useClick(menuRootContext, { enabled: menu });
   const dismiss = useDismiss(menuRootContext);
   const { getReferenceProps, getFloatingProps } = useInteractions([click, dismiss]);
 
@@ -75,7 +77,7 @@ export function OptionsMenu({ editor, compact = false }: OptionsMenuProps) {
         menuRefs={menuRefs}
         getReferenceProps={getReferenceProps}
       />
-      {menuOpen && (
+      {menu && menuOpen && (
         <OptionsMenuContent
           editor={editor}
           hoveredBlock={hoveredBlock}
