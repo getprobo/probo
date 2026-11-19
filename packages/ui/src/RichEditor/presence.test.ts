@@ -95,4 +95,32 @@ describe("presence decorations", () => {
     expect(caret).toBeDefined();
     expect((caret.type as { side: number }).side).toBe(-1);
   });
+
+  it("keys the caret by position so only a move rebuilds it", () => {
+    const doc = schema.node("doc", null, [
+      schema.node("paragraph", null, [schema.text("hello")]),
+    ]);
+    const keyOf = (overrides: Partial<RichEditorPresence>) => {
+      const [caret] = decorationsForPresences(doc, [presence(overrides)]).find();
+      return (caret.spec as { key: string }).key;
+    };
+
+    expect(keyOf({ headPosition: 2, anchorPosition: 2 }))
+      .toBe(keyOf({ headPosition: 2, anchorPosition: 2 }));
+    expect(keyOf({ headPosition: 2, anchorPosition: 2 }))
+      .not.toBe(keyOf({ headPosition: 3, anchorPosition: 3 }));
+  });
+
+  it("marks a selection with the presence-selection class", () => {
+    const doc = schema.node("doc", null, [
+      schema.node("paragraph", null, [schema.text("hello")]),
+    ]);
+
+    const selection = decorationsForPresences(doc, [
+      presence({ anchorPosition: 1, headPosition: 4 }),
+    ]).find().find(decoration => decoration.from !== decoration.to);
+
+    const attrs = (selection as unknown as { type: { attrs: { class: string } } }).type.attrs;
+    expect(attrs.class).toBe("presence-selection");
+  });
 });

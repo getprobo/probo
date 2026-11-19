@@ -1,6 +1,12 @@
 {
   "details": {
     "back": "Documenten",
+    "presence": {
+      "label": "Mensen in dit document",
+      "anonymous": "Medewerker",
+      "inactive": "{{name}} (inactief)",
+      "overflow": "Nog {{count}} personen"
+    },
     "cards": {
       "show": "Details tonen",
       "hide": "Details verbergen"

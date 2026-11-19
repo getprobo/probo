@@ -98,9 +98,8 @@ export function decorationsForPresences(
     const head = clamp(presence.headPosition, 0, documentSize);
     const from = Math.min(anchor, head);
     const to = Math.max(anchor, head);
-    // Color follows the tab (connection), so two tabs of one person keep
-    // distinct carets while the flag still shows their shared display name.
-    const color = presenceColor(presence.connectionID);
+    // One color per person, so every tab's caret matches their avatar ring.
+    const seed = presence.identityID || presence.connectionID;
 
     if (from !== to) {
       decorations.push(
@@ -108,7 +107,8 @@ export function decorationsForPresences(
           from,
           to,
           {
-            style: `background-color: ${presenceHighlightColor(presence.connectionID)}`,
+            class: "presence-selection",
+            style: `--presence-highlight: ${presenceHighlightColor(seed)}`,
           },
         ),
       );
@@ -119,36 +119,23 @@ export function decorationsForPresences(
         () => {
           const cursor = document.createElement("span");
           const label = presence.displayName?.trim() || "Collaborator";
+          cursor.className = "presence-cursor";
           cursor.setAttribute("aria-label", `${label} cursor`);
-          cursor.setAttribute("title", label);
-          cursor.style.borderLeft = `2px solid ${color}`;
-          cursor.style.height = "1.2em";
-          cursor.style.marginLeft = "-1px";
-          cursor.style.position = "relative";
-          cursor.style.pointerEvents = "none";
+          cursor.style.setProperty("--presence-color", presenceColor(seed));
 
           if (presence.displayName?.trim()) {
             const flag = document.createElement("span");
+            flag.className = "presence-cursor-flag";
             flag.textContent = presence.displayName.trim();
-            flag.style.position = "absolute";
-            flag.style.top = "-1.35em";
-            flag.style.left = "-1px";
-            flag.style.padding = "0 4px";
-            flag.style.borderRadius = "3px";
-            flag.style.backgroundColor = color;
-            flag.style.color = "#fff";
-            flag.style.fontSize = "10px";
-            flag.style.fontWeight = "600";
-            flag.style.lineHeight = "1.4";
-            flag.style.whiteSpace = "nowrap";
-            flag.style.pointerEvents = "none";
             cursor.appendChild(flag);
           }
 
           return cursor;
         },
         {
-          key: presence.connectionID,
+          // The caret is rebuilt only when it moves, which replays the name
+          // flag's flash. A heartbeat in place keeps the same DOM.
+          key: `${presence.connectionID}:${anchor}:${head}`,
           // Negative side keeps the caret before text inserted at this position,
           // matching the Automerge cursor's move: "before".
           side: -1,

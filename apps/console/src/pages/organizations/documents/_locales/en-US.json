@@ -1,6 +1,12 @@
 {
   "details": {
     "back": "Documents",
+    "presence": {
+      "label": "People in this document",
+      "anonymous": "Collaborator",
+      "inactive": "{{name}} (idle)",
+      "overflow": "{{count}} more people"
+    },
     "cards": {
       "show": "Show details",
       "hide": "Hide details"
