@@ -80,6 +80,7 @@ func (r *BridgeRunner) executeSync(
 		idp,
 		scimClient,
 		bridge.WithExcludedUserNames(scimBridge.ExcludedUserNames),
+		bridge.WithLogger(logger),
 	)
 
 	created, updated, deleted, deactivated, skipped, syncErr := syncer.Run(ctx)

@@ -21,7 +21,11 @@
 package scimclient_test
 
 import (
+	"context"
 	"encoding/json"
+	"io"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -59,6 +63,9 @@ func TestUser_UnmarshalJSON(t *testing.T) {
 					"manager": {
 						"value": "jane@example.com"
 					}
+				},
+				"urn:ietf:params:scim:schemas:extension:probo:2.0:User": {
+					"photoETag": "etag-1"
 				}
 			}`)
 
@@ -83,6 +90,7 @@ func TestUser_UnmarshalJSON(t *testing.T) {
 			assert.Equal(t, "Acme Corp", user.EnterpriseOrganization)
 			assert.Equal(t, "Platform", user.Division)
 			assert.Equal(t, "jane@example.com", user.ManagerValue)
+			assert.Equal(t, "etag-1", user.PhotoETag)
 		},
 	)
 
@@ -127,7 +135,8 @@ func TestUser_UnmarshalJSON(t *testing.T) {
 			data := []byte(`{
 				"id": "user-min",
 				"userName": "bob@example.com",
-				"active": true
+				"active": true,
+				"photoETag": "not-a-core-attribute"
 			}`)
 
 			var user scimclient.User
@@ -142,6 +151,58 @@ func TestUser_UnmarshalJSON(t *testing.T) {
 			assert.Equal(t, "", user.GivenName)
 			assert.Equal(t, "", user.FamilyName)
 			assert.Equal(t, "", user.Title)
+			assert.Empty(t, user.PhotoETag)
 		},
 	)
+}
+
+func TestClient_CreateUser_SendsPhotoWhenPresent(t *testing.T) {
+	t.Parallel()
+
+	var body []byte
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var err error
+
+		body, err = io.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+
+			return
+		}
+
+		w.WriteHeader(http.StatusCreated)
+	}))
+	t.Cleanup(server.Close)
+
+	client := scimclient.NewClient(server.Client(), server.URL, "token")
+	err := client.CreateUser(context.Background(), &scimclient.User{
+		UserName:  "ada@example.com",
+		PhotoETag: "etag-1",
+		Photo:     []byte("face"),
+		PhotoMIME: "image/png",
+	})
+
+	require.NoError(t, err)
+
+	var payload map[string]any
+	require.NoError(t, json.Unmarshal(body, &payload))
+	assert.NotContains(t, payload, "photoETag")
+
+	schemas, ok := payload["schemas"].([]any)
+	require.True(t, ok)
+	assert.Contains(t, schemas, scimclient.PhotoExtensionURN)
+
+	extension, ok := payload[scimclient.PhotoExtensionURN].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, "etag-1", extension["photoETag"])
+
+	photos, ok := payload["photos"].([]any)
+	require.True(t, ok)
+	require.Len(t, photos, 1)
+
+	photo, ok := photos[0].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, "data:image/png;base64,ZmFjZQ==", photo["value"])
+	assert.Equal(t, true, photo["primary"])
 }

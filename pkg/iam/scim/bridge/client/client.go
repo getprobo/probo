@@ -23,6 +23,7 @@ package scimclient
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -55,6 +56,14 @@ type (
 		UserType               string `json:"-"`
 		ManagerValue           string `json:"-"`
 		PreferredLanguage      string `json:"-"`
+		PhotoETag              string `json:"-"`
+		// PhotoETagKnown reports that PhotoETag was read from the directory.
+		// An empty PhotoETag is a removed picture only when this is true.
+		// A false value means the version was not read, and the bridge keeps
+		// the stored picture.
+		PhotoETagKnown bool   `json:"-"`
+		Photo          []byte `json:"-"`
+		PhotoMIME      string `json:"-"`
 	}
 
 	Users []User
@@ -196,10 +205,15 @@ func (c *Client) UpdateUser(ctx context.Context, userID string, user *User) erro
 	return nil
 }
 
+// PhotoExtensionURN carries photoETag. RFC 7643 does not define that
+// attribute on the core User, so it travels in the Probo extension.
+const PhotoExtensionURN = "urn:ietf:params:scim:schemas:extension:probo:2.0:User"
+
 func buildUserPayload(user *User) map[string]any {
 	schemas := []string{
 		"urn:ietf:params:scim:schemas:core:2.0:User",
 		"urn:ietf:params:scim:schemas:extension:enterprise:2.0:User",
+		PhotoExtensionURN,
 	}
 
 	enterprise := map[string]any{
@@ -233,9 +247,30 @@ func buildUserPayload(user *User) map[string]any {
 			},
 		},
 		"urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": enterprise,
+		PhotoExtensionURN: map[string]any{
+			"photoETag": user.PhotoETag,
+		},
+	}
+
+	if len(user.Photo) > 0 {
+		payload["photos"] = []map[string]any{
+			{
+				"value":   photoDataURI(user.PhotoMIME, user.Photo),
+				"type":    "photo",
+				"primary": true,
+			},
+		}
 	}
 
 	return payload
+}
+
+func photoDataURI(mime string, body []byte) string {
+	if mime != "image/png" {
+		mime = "image/jpeg"
+	}
+
+	return "data:" + mime + ";base64," + base64.StdEncoding.EncodeToString(body)
 }
 
 func (c *Client) DeactivateUser(ctx context.Context, userID string) error {
@@ -335,6 +370,21 @@ func (u *User) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
+	var photo struct {
+		PhotoETag string `json:"photoETag"`
+	}
+
+	var envelope map[string]json.RawMessage
+	if err := json.Unmarshal(data, &envelope); err != nil {
+		return err
+	}
+
+	if extension, ok := envelope[PhotoExtensionURN]; ok {
+		if err := json.Unmarshal(extension, &photo); err != nil {
+			return err
+		}
+	}
+
 	u.ID = raw.ID
 	u.UserName = raw.UserName
 	u.DisplayName = raw.DisplayName
@@ -343,6 +393,7 @@ func (u *User) UnmarshalJSON(data []byte) error {
 	u.ExternalID = raw.ExternalID
 	u.UserType = raw.UserType
 	u.PreferredLanguage = raw.PreferredLanguage
+	u.PhotoETag = photo.PhotoETag
 	u.GivenName = raw.Name.GivenName
 	u.FamilyName = raw.Name.FamilyName
 	u.EmployeeNumber = raw.Enterprise.EmployeeNumber

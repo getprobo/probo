@@ -24,22 +24,32 @@ package googleworkspace
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 
 	scimclient "go.probo.inc/probo/pkg/iam/scim/bridge/client"
 	"go.probo.inc/probo/pkg/iam/scim/bridge/provider"
 	admin "google.golang.org/api/admin/directory/v1"
+	"google.golang.org/api/googleapi"
 	"google.golang.org/api/option"
 )
 
-var _ provider.Provider = (*Provider)(nil)
+var (
+	_ provider.Provider    = (*Provider)(nil)
+	_ provider.PhotoSource = (*Provider)(nil)
+)
 
 type Provider struct {
 	httpClient        *http.Client
 	excludedUserNames []string
+
+	mu    sync.Mutex
+	admin *admin.Service
 }
 
 func New(httpClient *http.Client, excludedUserNames []string) *Provider {
@@ -65,9 +75,9 @@ func (p *Provider) isExcluded(email string) bool {
 }
 
 func (p *Provider) ListUsers(ctx context.Context) (scimclient.Users, error) {
-	adminService, err := admin.NewService(ctx, option.WithHTTPClient(p.httpClient))
+	adminService, err := p.directory(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create admin service: %w", err)
+		return nil, err
 	}
 
 	var allUsers scimclient.Users
@@ -94,14 +104,7 @@ func (p *Provider) ListUsers(ctx context.Context) (scimclient.Users, error) {
 				continue
 			}
 
-			user := scimclient.User{
-				UserName:    u.PrimaryEmail,
-				DisplayName: u.Name.FullName,
-				GivenName:   u.Name.GivenName,
-				FamilyName:  u.Name.FamilyName,
-				Active:      !u.Suspended && !u.Archived,
-				ExternalID:  u.Id,
-			}
+			user := scimUserFromDirectory(u)
 
 			p.extractOrganizationFields(u.Organizations, &user)
 			p.extractEmployeeNumber(u.ExternalIds, &user)
@@ -118,6 +121,98 @@ func (p *Provider) ListUsers(ctx context.Context) (scimclient.Users, error) {
 	}
 
 	return allUsers, nil
+}
+
+func scimUserFromDirectory(u *admin.User) scimclient.User {
+	return scimclient.User{
+		UserName:       u.PrimaryEmail,
+		DisplayName:    u.Name.FullName,
+		GivenName:      u.Name.GivenName,
+		FamilyName:     u.Name.FamilyName,
+		Active:         !u.Suspended && !u.Archived,
+		ExternalID:     u.Id,
+		PhotoETag:      u.ThumbnailPhotoEtag,
+		PhotoETagKnown: true,
+	}
+}
+
+func (p *Provider) directory(ctx context.Context) (*admin.Service, error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	if p.admin != nil {
+		return p.admin, nil
+	}
+
+	service, err := admin.NewService(ctx, option.WithHTTPClient(p.httpClient))
+	if err != nil {
+		return nil, fmt.Errorf("cannot create admin service: %w", err)
+	}
+
+	p.admin = service
+
+	return service, nil
+}
+
+func (p *Provider) UserPhoto(ctx context.Context, user scimclient.User) (provider.Photo, error) {
+	key := user.ExternalID
+	if key == "" {
+		key = user.UserName
+	}
+
+	if key == "" {
+		return provider.Photo{}, nil
+	}
+
+	adminService, err := p.directory(ctx)
+	if err != nil {
+		return provider.Photo{}, err
+	}
+
+	photo, err := adminService.Users.Photos.Get(key).Context(ctx).Do()
+	if err != nil {
+		if apiErr, ok := errors.AsType[*googleapi.Error](err); ok && apiErr.Code == http.StatusNotFound {
+			return provider.Photo{Absent: true}, nil
+		}
+
+		return provider.Photo{}, fmt.Errorf("cannot get directory photo: %w", err)
+	}
+
+	if photo == nil || photo.PhotoData == "" {
+		return provider.Photo{Absent: true}, nil
+	}
+
+	body, err := decodeGooglePhoto(photo.PhotoData)
+	if err != nil {
+		return provider.Photo{}, fmt.Errorf("cannot decode directory photo: %w", err)
+	}
+
+	return provider.Photo{
+		ETag: user.PhotoETag,
+		Body: body,
+		MIME: googlePhotoMIME(photo.MimeType),
+	}, nil
+}
+
+func decodeGooglePhoto(data string) ([]byte, error) {
+	encoded := strings.TrimSpace(data)
+	encoded = strings.NewReplacer("-", "+", "_", "/", "*", "=", ".", "=").Replace(encoded)
+
+	body, err := base64.StdEncoding.DecodeString(encoded)
+	if err != nil {
+		return nil, fmt.Errorf("cannot decode photo data: %w", err)
+	}
+
+	return body, nil
+}
+
+func googlePhotoMIME(raw string) string {
+	switch strings.ToUpper(strings.TrimSpace(raw)) {
+	case "PNG", "IMAGE/PNG":
+		return "image/png"
+	default:
+		return "image/jpeg"
+	}
 }
 
 func (p *Provider) extractOrganizationFields(raw any, user *scimclient.User) {
