@@ -474,7 +474,7 @@ export function BaseRichEditor(props: BaseRichEditorProps) {
       <EditorContent className="flex min-h-0 flex-1 flex-col" editor={editor} />
       {margin}
       {showToolbar && (
-        <div className={bar()}>
+        <div className={bar()} data-rich-editor-toolbar="">
           {showAttachment && (
             <button
               type="button"

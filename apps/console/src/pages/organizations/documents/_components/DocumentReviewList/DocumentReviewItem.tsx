@@ -18,84 +18,42 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { relativeDateFormat } from "@probo/i18n";
-import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
 import { Card } from "@probo/ui/src/v2/Card/Card";
-import { CardButton } from "@probo/ui/src/v2/Card/CardButton";
-import { Text } from "@probo/ui/src/v2/typography/Text";
 import type { ReactNode } from "react";
-import { useTranslation } from "react-i18next";
-import { graphql, useFragment } from "react-relay";
-
-import type { DocumentReviewItem_author$key } from "#/__generated__/core/DocumentReviewItem_author.graphql";
 
 import { documentReviewItem } from "../../variants";
 
-const documentReviewItemAuthorFragment = graphql`
-  fragment DocumentReviewItem_author on Profile {
-    fullName
-    emailAddress
-    avatar {
-      downloadUrl
-    }
-  }
-`;
+import { DocumentReviewItemContext } from "./documentReviewItemContext";
 
 interface DocumentReviewItemProps {
-  authorKey: DocumentReviewItem_author$key;
   kind: "comment" | "suggestion";
-  createdAt: string;
   active: boolean;
   children: ReactNode;
   onActivate: () => void;
 }
 
+// The primary author row renders the CardButton around the author name; see
+// DocumentReviewAuthor.
 export function DocumentReviewItem({
-  authorKey,
   kind,
-  createdAt,
   active,
   children,
   onActivate,
 }: DocumentReviewItemProps) {
-  const author = useFragment(documentReviewItemAuthorFragment, authorKey);
-  const { i18n, t } = useTranslation("organizations/documents");
-  const createdLabel = relativeDateFormat(i18n.language, createdAt)
-    || t("details.review.justNow");
-  const label = kind === "comment"
-    ? t("details.review.openComment", { name: author.fullName })
-    : t("details.review.openSuggestion", { name: author.fullName });
-  const { root, row, body, header, name, time } = documentReviewItem({ active });
+  const { root, body } = documentReviewItem();
+  const context = { kind, active, onActivate };
 
   return (
-    <Card variant="soft" padding={1} interactive className={root()}>
-      <div className={row()}>
-        <Avatar
-          name={author.fullName}
-          email={author.emailAddress}
-          src={author.avatar?.downloadUrl}
-          size={1}
-          radius="full"
-        />
-        <div className={body()}>
-          <div className={header()}>
-            <CardButton
-              aria-label={label}
-              aria-pressed={active}
-              className={name()}
-              onClick={onActivate}
-            >
-              <Text size={1} weight="medium">
-                {author.fullName}
-              </Text>
-            </CardButton>
-            <Text size={1} color="faint" className={time()}>
-              {createdLabel}
-            </Text>
-          </div>
-          {children}
-        </div>
-      </div>
+    <Card
+      variant={active ? "soft" : "gold"}
+      padding={1}
+      interactive
+      className={root()}
+      data-active={active || undefined}
+    >
+      <DocumentReviewItemContext value={context}>
+        <div className={body()}>{children}</div>
+      </DocumentReviewItemContext>
     </Card>
   );
 }

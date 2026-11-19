@@ -74,26 +74,53 @@
       "replies_other": "{{count}} replies",
       "justNow": "just now",
       "contentError": "Could not show this comment",
+      "resolve": "Resolve",
+      "accept": "Accept suggestion",
+      "reject": "Reject suggestion",
+      "more": "More actions",
+      "edit": "Edit",
+      "delete": "Delete",
+      "cancel": "Cancel",
+      "save": "Save",
+      "reply": "Reply",
+      "replyPlaceholder": "Reply…",
+      "send": "Send",
+      "showMoreReplies": "Show more replies",
+      "contentRequired": "Write a comment first",
+      "contentTooLong": "Comments are limited to {{max}} characters",
+      "deleteDialog": {
+        "title": "Delete comment",
+        "description": "This comment is deleted for everyone. Deleting the last comment also removes the thread.",
+        "confirm": "Delete"
+      },
+      "errors": {
+        "resolve": "Could not resolve the thread",
+        "accept": "Could not accept the suggestion",
+        "reject": "Could not reject the suggestion",
+        "reply": "Could not send the reply",
+        "update": "Could not update the comment",
+        "delete": "Could not delete the comment"
+      },
       "changes": {
-        "formatAdded": {
-          "bold": "Bold added",
-          "italic": "Italic added",
-          "underline": "Underline added",
-          "strike": "Strikethrough added",
-          "code": "Code added",
-          "link": "Link added"
+        "formatLine": "<label>Format:</label> {{value}}",
+        "formatValues": {
+          "bold": "bold",
+          "italic": "italic",
+          "underline": "underline",
+          "strike": "strikethrough",
+          "code": "code",
+          "link": "link"
         },
-        "formatRemoved": {
-          "bold": "Bold removed",
-          "italic": "Italic removed",
-          "underline": "Underline removed",
-          "strike": "Strikethrough removed",
-          "code": "Code removed",
-          "link": "Link removed"
+        "formatRemovedValues": {
+          "bold": "not bold",
+          "italic": "not italic",
+          "underline": "no underline",
+          "strike": "no strikethrough",
+          "code": "not code",
+          "link": "no link"
         },
-        "linkAdded": "Link added: {{href}}",
-        "linkChanged": "Link changed to {{href}}",
-        "linkRemoved": "Link removed",
+        "linkLine": "<label>Link:</label> {{value}}",
+        "linkRemoved": "removed",
         "blocks": {
           "paragraph": "Paragraph",
           "heading": "Heading {{level}}",

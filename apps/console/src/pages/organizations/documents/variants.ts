@@ -166,35 +166,72 @@ export const documentReviewList = tv({
   },
 });
 
+// Interactive pieces inside a review card sit at `relative z-1`, above the
+// card's stretched button.
 export const documentReviewItem = tv({
   slots: {
-    root: "",
-    row: "flex min-w-0 items-start gap-3",
-    body: "flex min-w-0 flex-1 flex-col gap-1",
-    header: "flex min-w-0 items-baseline gap-2",
-    name: "truncate text-left",
-    time: "shrink-0 whitespace-nowrap",
-  },
-  variants: {
-    active: {
-      true: { root: "border-sand-8! shadow-2" },
-      false: {},
-    },
-  },
-  defaultVariants: {
-    active: false,
+    root: "group/review",
+    body: "flex min-w-0 flex-col gap-3",
   },
 });
 
-export const documentCommentThreadListItem = tv({
+export const documentReviewAuthor = tv({
   slots: {
+    root: "flex min-w-0 items-center gap-2",
+    identity: "flex min-w-0 flex-1 flex-col items-start",
+    name: "max-w-full truncate text-left",
+    time: "truncate",
+    trailing: [
+      "relative z-1 flex shrink-0 items-center gap-0.5",
+      "opacity-0 transition-opacity",
+      "group-hover/review:opacity-100 group-focus-within/review:opacity-100",
+      "group-data-active/review:opacity-100",
+      // The menu popup is portaled out of the card, so hover and focus leave
+      // it while the menu is open.
+      "has-data-popup-open:opacity-100",
+    ],
+  },
+});
+
+export const documentReviewComment = tv({
+  slots: {
+    root: "flex min-w-0 flex-col gap-1",
     // The read-only editor is positioned, so it would sit above the card's
     // stretched button. Clicks fall through to the card except on links.
+    // rich-editor.css sizes paragraphs outside any cascade layer, so it beats
+    // every utility unless the size is important.
     content: [
-      "pointer-events-none text-2",
+      "pointer-events-none [&_.tiptap_p]:text-1!",
       "[&_.tiptap>p:first-child]:mt-0 [&_.tiptap>p:last-child]:mb-0",
       "[&_a]:pointer-events-auto [&_a]:relative [&_a]:z-1",
     ],
+    editor: [
+      "relative z-1 cursor-text rounded-3 border border-sand-a4 bg-sand-1 px-2 py-1.5",
+      "[&_.tiptap_p]:text-1!",
+      "[&_.tiptap>p:first-child]:mt-0 [&_.tiptap>p:last-child]:mb-0",
+    ],
+    save: "relative z-1 flex justify-end gap-2",
+  },
+});
+
+export const documentReviewThread = tv({
+  slots: {
+    root: "flex min-w-0 flex-col gap-3",
+    more: "relative z-1 self-start",
+  },
+});
+
+export const documentReviewReplyForm = tv({
+  slots: {
+    root: [
+      "relative z-1 flex cursor-text flex-col gap-2",
+      "rounded-3 border border-sand-a3 bg-sand-1 p-2",
+    ],
+    editor: [
+      "min-h-8 [&_.tiptap_p]:text-1! [&_[data-rich-editor-toolbar]]:mt-0",
+      "[&_.tiptap>p:first-child]:mt-0 [&_.tiptap>p:last-child]:mb-0",
+    ],
+    send: "ml-auto",
   },
 });
 
@@ -210,6 +247,7 @@ export const documentSuggestionChange = tv({
     text: "line-clamp-4 block break-words whitespace-pre-line",
     deleted: "line-clamp-4 block break-words whitespace-pre-line line-through",
     label: "block truncate",
+    prefix: "font-bold",
   },
 });
 

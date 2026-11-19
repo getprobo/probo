@@ -74,26 +74,53 @@
       "replies_other": "{{count}} réponses",
       "justNow": "à l'instant",
       "contentError": "Impossible d'afficher ce commentaire",
+      "resolve": "Résoudre",
+      "accept": "Accepter la suggestion",
+      "reject": "Refuser la suggestion",
+      "more": "Plus d'actions",
+      "edit": "Modifier",
+      "delete": "Supprimer",
+      "cancel": "Annuler",
+      "save": "Enregistrer",
+      "reply": "Répondre",
+      "replyPlaceholder": "Répondre…",
+      "send": "Envoyer",
+      "showMoreReplies": "Afficher plus de réponses",
+      "contentRequired": "Écrivez d'abord un commentaire",
+      "contentTooLong": "Les commentaires sont limités à {{max}} caractères",
+      "deleteDialog": {
+        "title": "Supprimer le commentaire",
+        "description": "Ce commentaire est supprimé pour tout le monde. Supprimer le dernier commentaire supprime aussi le fil.",
+        "confirm": "Supprimer"
+      },
+      "errors": {
+        "resolve": "Impossible de résoudre le fil",
+        "accept": "Impossible d'accepter la suggestion",
+        "reject": "Impossible de refuser la suggestion",
+        "reply": "Impossible d'envoyer la réponse",
+        "update": "Impossible de modifier le commentaire",
+        "delete": "Impossible de supprimer le commentaire"
+      },
       "changes": {
-        "formatAdded": {
-          "bold": "Gras ajouté",
-          "italic": "Italique ajouté",
-          "underline": "Soulignement ajouté",
-          "strike": "Barré ajouté",
-          "code": "Code ajouté",
-          "link": "Lien ajouté"
+        "formatLine": "<label>Format :</label> {{value}}",
+        "formatValues": {
+          "bold": "gras",
+          "italic": "italique",
+          "underline": "souligné",
+          "strike": "barré",
+          "code": "code",
+          "link": "lien"
         },
-        "formatRemoved": {
-          "bold": "Gras retiré",
-          "italic": "Italique retiré",
-          "underline": "Soulignement retiré",
-          "strike": "Barré retiré",
-          "code": "Code retiré",
-          "link": "Lien retiré"
+        "formatRemovedValues": {
+          "bold": "sans gras",
+          "italic": "sans italique",
+          "underline": "sans soulignement",
+          "strike": "sans barré",
+          "code": "sans code",
+          "link": "sans lien"
         },
-        "linkAdded": "Lien ajouté : {{href}}",
-        "linkChanged": "Lien remplacé par {{href}}",
-        "linkRemoved": "Lien retiré",
+        "linkLine": "<label>Lien :</label> {{value}}",
+        "linkRemoved": "retiré",
         "blocks": {
           "paragraph": "Paragraphe",
           "heading": "Titre {{level}}",
