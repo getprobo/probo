@@ -96,16 +96,25 @@
       "dueDate": "Vervaldatum instellen",
       "risk": "Geaccepteerd risico instellen"
     },
-    "tasks": {
-      "title": "Taken",
-      "empty": "Geen gekoppelde taken",
-      "search": "Een taak koppelen",
-      "emptySearch": "Geen taken gevonden",
-      "loadError": "Taken laden mislukt",
+    "plans": {
+      "title": "Correctieve actieplannen",
+      "hint": "Koppel interne beheersmaatregelen aan een plan. De taken van het plan zijn de taken van die maatregelen.",
+      "empty": "Geen correctieve actieplannen",
+      "newTitle": "Titel van nieuw plan",
+      "add": "Toevoegen",
+      "delete": "Plan verwijderen",
+      "due": "Vervalt {{date}}",
+      "internalControls": "Interne beheersmaatregelen",
+      "noInternalControls": "Geen interne beheersmaatregelen gekoppeld",
+      "unlinkInternalControl": "Interne beheersmaatregel ontkoppelen",
+      "tasks_one": "{{count}} taak",
+      "tasks_other": "{{count}} taken",
+      "noTasks": "Geen taken op de gekoppelde interne beheersmaatregelen",
       "loadMore": "Meer laden",
-      "unlink": "Taak ontkoppelen",
-      "linkError": "Taak koppelen mislukt",
-      "unlinkError": "Taak ontkoppelen mislukt"
+      "createError": "Correctief actieplan aanmaken mislukt",
+      "deleteError": "Correctief actieplan verwijderen mislukt",
+      "linkError": "Interne beheersmaatregel koppelen mislukt",
+      "unlinkError": "Interne beheersmaatregel ontkoppelen mislukt"
     },
     "audits": {
       "title": "Gekoppelde audits",

@@ -76,6 +76,18 @@ export const findingsPage = tv({
   },
 });
 
+export const correctiveActionPlans = tv({
+  slots: {
+    plans: "flex flex-col gap-3",
+    plan: "flex flex-col gap-2 rounded-3 border border-sand-a4 p-3",
+    header: "flex items-start justify-between gap-2",
+    meta: "min-w-0",
+    description: "whitespace-pre-line text-sand-11",
+    group: "flex flex-col gap-1.5",
+    createForm: "flex items-center gap-2",
+  },
+});
+
 export const auditFilterSelect = tv({
   slots: {
     loadMore: "w-full",

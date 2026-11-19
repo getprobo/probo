@@ -96,16 +96,25 @@
       "dueDate": "Set due date",
       "risk": "Set accepted risk"
     },
-    "tasks": {
-      "title": "Tasks",
-      "empty": "No tasks linked",
-      "search": "Link a task",
-      "emptySearch": "No tasks found",
-      "loadError": "Could not load tasks",
+    "plans": {
+      "title": "Corrective action plans",
+      "hint": "Link internal controls to a plan. Its tasks are the tasks of those controls.",
+      "empty": "No corrective action plans",
+      "newTitle": "New plan title",
+      "add": "Add",
+      "delete": "Delete plan",
+      "due": "Due {{date}}",
+      "internalControls": "Internal controls",
+      "noInternalControls": "No internal controls linked",
+      "unlinkInternalControl": "Unlink internal control",
+      "tasks_one": "{{count}} task",
+      "tasks_other": "{{count}} tasks",
+      "noTasks": "No tasks on the linked internal controls",
       "loadMore": "Load more",
-      "unlink": "Unlink task",
-      "linkError": "Failed to link task",
-      "unlinkError": "Failed to unlink task"
+      "createError": "Failed to create corrective action plan",
+      "deleteError": "Failed to delete corrective action plan",
+      "linkError": "Failed to link internal control",
+      "unlinkError": "Failed to unlink internal control"
     },
     "audits": {
       "title": "Linked audits",
