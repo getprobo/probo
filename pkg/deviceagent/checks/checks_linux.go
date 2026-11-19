@@ -1019,19 +1019,3 @@ func kvLookup(body, key string) string {
 
 	return ""
 }
-
-func loginDefsLookup(body, key string) string {
-	for line := range strings.SplitSeq(body, "\n") {
-		line = strings.TrimSpace(line)
-		if line == "" || strings.HasPrefix(line, "#") {
-			continue
-		}
-
-		fields := strings.Fields(line)
-		if len(fields) >= 2 && fields[0] == key {
-			return fields[1]
-		}
-	}
-
-	return ""
-}

@@ -309,6 +309,22 @@ func linuxPasswordPolicyResult(reading linuxPasswordReading, maxDays string) Res
 	}
 }
 
+func loginDefsLookup(body, key string) string {
+	for line := range strings.SplitSeq(body, "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+
+		fields := strings.Fields(line)
+		if len(fields) >= 2 && fields[0] == key {
+			return fields[1]
+		}
+	}
+
+	return ""
+}
+
 func loginDefsPasswordReading(body string, absentIsUnknown bool) linuxPasswordReading {
 	raw := loginDefsLookup(body, "PASS_MIN_LEN")
 	if raw == "" {
