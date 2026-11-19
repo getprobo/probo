@@ -48,6 +48,9 @@ export const card = tv({
       classic: "border border-sand-6 bg-sand-2 shadow-2",
       // Soft surface: translucent neutral border on the app background.
       soft: "border border-sand-a3 bg-sand-1",
+      // Gold tinted surface for content that asks for attention, such as an
+      // open review comment.
+      gold: "border border-gold-5 bg-gold-3",
       ghost: "",
     },
     // Hover/active affordance for clickable cards, and the containing block
@@ -59,6 +62,7 @@ export const card = tv({
   },
   compoundVariants: [
     { variant: ["surface", "classic", "soft"], interactive: true, class: "hover:bg-sand-3 active:bg-sand-4" },
+    { variant: "gold", interactive: true, class: "hover:border-gold-6 hover:bg-gold-4 active:bg-gold-5" },
     { variant: "ghost", interactive: true, class: "hover:bg-sand-3 active:bg-sand-4" },
   ],
   defaultVariants: {

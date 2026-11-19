@@ -20,7 +20,8 @@
 
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import type { TFunction } from "i18next";
-import { useTranslation } from "react-i18next";
+import type { ReactNode } from "react";
+import { Trans, useTranslation } from "react-i18next";
 
 import type { BlockLabel, SuggestionChange } from "../../_lib/reviewAnchors";
 import { documentSuggestionChange } from "../../variants";
@@ -31,7 +32,7 @@ interface DocumentSuggestionChangeProps {
 
 export function DocumentSuggestionChange({ change }: DocumentSuggestionChangeProps) {
   const { t } = useTranslation("organizations/documents");
-  const { root, text, deleted, label } = documentSuggestionChange();
+  const { root, text, deleted, label, prefix } = documentSuggestionChange();
 
   if (change.kind === "text") {
     return (
@@ -51,41 +52,68 @@ export function DocumentSuggestionChange({ change }: DocumentSuggestionChangePro
   }
 
   return (
-    <Text size={1} color="faint" className={label()}>
-      {changeLabel(change, t)}
+    <Text size={1} color="neutral" highContrast className={label()}>
+      {change.kind === "format"
+        ? formatLabel(change, t, prefix())
+        : changeLabel(change, t)}
     </Text>
   );
 }
 
+// A format line reads "Format: bold", with the kind of change in bold, so
+// several format changes scan as a list.
+function formatLabel(
+  change: Extract<SuggestionChange, { kind: "format" }>,
+  t: TFunction<"organizations/documents">,
+  prefixClassName: string,
+): ReactNode {
+  const components = { label: <span className={prefixClassName} /> };
+
+  if (change.style === "link" && (change.action === "remove" || change.href != null)) {
+    return (
+      <Trans
+        ns="organizations/documents"
+        i18nKey="details.review.changes.linkLine"
+        values={{
+          value: change.action === "remove"
+            ? t("details.review.changes.linkRemoved")
+            : change.href,
+        }}
+        components={components}
+      />
+    );
+  }
+
+  return (
+    <Trans
+      ns="organizations/documents"
+      i18nKey="details.review.changes.formatLine"
+      values={{
+        value: change.action === "add"
+          ? t(`details.review.changes.formatValues.${change.style}`)
+          : t(`details.review.changes.formatRemovedValues.${change.style}`),
+      }}
+      components={components}
+    />
+  );
+}
+
 function changeLabel(
-  change: Exclude<SuggestionChange, { kind: "text" }>,
+  change: Extract<SuggestionChange, { kind: "block" | "node" }>,
   t: TFunction<"organizations/documents">,
 ): string {
-  switch (change.kind) {
-    case "format":
-      if (change.style === "link") {
-        if (change.action === "remove") return t("details.review.changes.linkRemoved");
-        if (change.href == null) return t("details.review.changes.formatAdded.link");
-        return change.previousHref != null && change.previousHref !== change.href
-          ? t("details.review.changes.linkChanged", { href: change.href })
-          : t("details.review.changes.linkAdded", { href: change.href });
-      }
-      return change.action === "add"
-        ? t(`details.review.changes.formatAdded.${change.style}`)
-        : t(`details.review.changes.formatRemoved.${change.style}`);
-    case "block":
-      if (sameBlock(change.before, change.after)) {
-        return t("details.review.changes.indentChanged");
-      }
-      return t("details.review.changes.blockChanged", {
-        before: blockName(change.before, t),
-        after: blockName(change.after, t),
-      });
-    case "node":
-      return change.action === "insert"
-        ? t(`details.review.changes.nodeAdded.${change.node}`)
-        : t(`details.review.changes.nodeRemoved.${change.node}`);
+  if (change.kind === "block") {
+    if (sameBlock(change.before, change.after)) {
+      return t("details.review.changes.indentChanged");
+    }
+    return t("details.review.changes.blockChanged", {
+      before: blockName(change.before, t),
+      after: blockName(change.after, t),
+    });
   }
+  return change.action === "insert"
+    ? t(`details.review.changes.nodeAdded.${change.node}`)
+    : t(`details.review.changes.nodeRemoved.${change.node}`);
 }
 
 function blockName(block: BlockLabel, t: TFunction<"organizations/documents">): string {

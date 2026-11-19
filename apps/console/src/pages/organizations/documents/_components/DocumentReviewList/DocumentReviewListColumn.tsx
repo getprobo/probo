@@ -46,12 +46,15 @@ const documentReviewListColumnThreadsFragment = graphql`
     first: { type: "Int", defaultValue: 50 }
     after: { type: "CursorKey", defaultValue: null }
   ) {
+    id
+    canComment: permission(action: "core:document:comment")
     commentThreads(
       first: $first
       after: $after
       filter: { resolved: false }
       orderBy: { field: CREATED_AT, direction: ASC }
     ) @connection(key: "DocumentReviewListColumn_commentThreads", filters: ["filter", "orderBy"]) {
+      __id
       edges {
         node {
           id
@@ -59,6 +62,7 @@ const documentReviewListColumnThreadsFragment = graphql`
           anchorEnd
           suggestionId
           ...DocumentCommentThreadListItem_thread
+          ...DocumentSuggestionListItem_thread
         }
       }
     }
@@ -81,6 +85,7 @@ const documentReviewListColumnSuggestionsFragment = graphql`
       edges {
         node {
           id
+          status
           ...DocumentSuggestionListItem_suggestion
         }
       }
@@ -124,18 +129,29 @@ export function DocumentReviewListColumn({
     pageSize: reviewPageSize,
   });
 
+  const reviewDocument = threadsPage.data;
+  const threadsConnectionId = reviewDocument.commentThreads.__id;
   const suggestionEdges = suggestionsPage.data.suggestions.edges;
-  const threadEdges = threadsPage.data.commentThreads.edges;
+  const threadEdges = reviewDocument.commentThreads.edges;
+  // An accepted or rejected suggestion stays in the connection until the next
+  // fetch, so its status keeps it off the column.
   const suggestions = useMemo(
-    () => suggestionEdges.map(edge => edge.node),
+    () => suggestionEdges.map(edge => edge.node).filter(node => node.status === "OPEN"),
     [suggestionEdges],
   );
   // A comment on an open suggestion belongs to that suggestion, not its own card.
-  const threads = useMemo(() => {
+  const { threads, suggestionThreads } = useMemo(() => {
     const suggestionIds = new Set(suggestions.map(suggestion => suggestion.id));
-    return threadEdges
-      .map(edge => edge.node)
-      .filter(thread => thread.suggestionId == null || !suggestionIds.has(thread.suggestionId));
+    const standalone: Array<(typeof threadEdges)[number]["node"]> = [];
+    const bySuggestion = new Map<string, (typeof threadEdges)[number]["node"]>();
+    for (const { node } of threadEdges) {
+      if (node.suggestionId != null && suggestionIds.has(node.suggestionId)) {
+        if (!bySuggestion.has(node.suggestionId)) bySuggestion.set(node.suggestionId, node);
+      } else {
+        standalone.push(node);
+      }
+    }
+    return { threads: standalone, suggestionThreads: bySuggestion };
   }, [suggestions, threadEdges]);
   const threadSources = useMemo(
     () => threads.map(({ id, anchorStart, anchorEnd }) => ({ id, anchorStart, anchorEnd })),
@@ -178,6 +194,7 @@ export function DocumentReviewListColumn({
           >
             <DocumentCommentThreadListItem
               threadKey={thread}
+              threadsConnectionId={threadsConnectionId}
               active={activeKey === thread.id}
               onActivate={() => onActiveChange(thread.id)}
             />
@@ -196,7 +213,11 @@ export function DocumentReviewListColumn({
           >
             <DocumentSuggestionListItem
               suggestionKey={suggestion}
+              threadKey={suggestionThreads.get(suggestion.id) ?? null}
               anchor={anchor}
+              documentId={reviewDocument.id}
+              canComment={reviewDocument.canComment}
+              threadsConnectionId={threadsConnectionId}
               active={activeKey === suggestion.id}
               onActivate={() => onActiveChange(suggestion.id)}
             />

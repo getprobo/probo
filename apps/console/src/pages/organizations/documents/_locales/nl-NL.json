@@ -74,26 +74,53 @@
       "replies_other": "{{count}} reacties",
       "justNow": "zojuist",
       "contentError": "Deze opmerking kan niet worden weergegeven",
+      "resolve": "Oplossen",
+      "accept": "Suggestie accepteren",
+      "reject": "Suggestie afwijzen",
+      "more": "Meer acties",
+      "edit": "Bewerken",
+      "delete": "Verwijderen",
+      "cancel": "Annuleren",
+      "save": "Opslaan",
+      "reply": "Reageren",
+      "replyPlaceholder": "Reageren…",
+      "send": "Versturen",
+      "showMoreReplies": "Meer reacties tonen",
+      "contentRequired": "Schrijf eerst een opmerking",
+      "contentTooLong": "Opmerkingen zijn beperkt tot {{max}} tekens",
+      "deleteDialog": {
+        "title": "Opmerking verwijderen",
+        "description": "Deze opmerking wordt voor iedereen verwijderd. Als je de laatste opmerking verwijdert, verdwijnt ook de discussie.",
+        "confirm": "Verwijderen"
+      },
+      "errors": {
+        "resolve": "De discussie kon niet worden opgelost",
+        "accept": "De suggestie kon niet worden geaccepteerd",
+        "reject": "De suggestie kon niet worden afgewezen",
+        "reply": "De reactie kon niet worden verstuurd",
+        "update": "De opmerking kon niet worden bijgewerkt",
+        "delete": "De opmerking kon niet worden verwijderd"
+      },
       "changes": {
-        "formatAdded": {
-          "bold": "Vet toegevoegd",
-          "italic": "Cursief toegevoegd",
-          "underline": "Onderstreping toegevoegd",
-          "strike": "Doorhaling toegevoegd",
-          "code": "Code toegevoegd",
-          "link": "Link toegevoegd"
+        "formatLine": "<label>Opmaak:</label> {{value}}",
+        "formatValues": {
+          "bold": "vet",
+          "italic": "cursief",
+          "underline": "onderstreept",
+          "strike": "doorgehaald",
+          "code": "code",
+          "link": "link"
         },
-        "formatRemoved": {
-          "bold": "Vet verwijderd",
-          "italic": "Cursief verwijderd",
-          "underline": "Onderstreping verwijderd",
-          "strike": "Doorhaling verwijderd",
-          "code": "Code verwijderd",
-          "link": "Link verwijderd"
+        "formatRemovedValues": {
+          "bold": "niet vet",
+          "italic": "niet cursief",
+          "underline": "niet onderstreept",
+          "strike": "niet doorgehaald",
+          "code": "geen code",
+          "link": "geen link"
         },
-        "linkAdded": "Link toegevoegd: {{href}}",
-        "linkChanged": "Link gewijzigd naar {{href}}",
-        "linkRemoved": "Link verwijderd",
+        "linkLine": "<label>Link:</label> {{value}}",
+        "linkRemoved": "verwijderd",
         "blocks": {
           "paragraph": "Alinea",
           "heading": "Kop {{level}}",
