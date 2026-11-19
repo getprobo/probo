@@ -31,6 +31,12 @@ const (
 	CloudFrontDistributionKind          = "aws.cloudfront.distribution"
 	CloudFrontDistributionSchemaVersion = 1
 
+	EC2InstanceKind          = "aws.ec2.instance"
+	EC2InstanceSchemaVersion = 1
+
+	RDSDBInstanceKind          = "aws.rds.db_instance"
+	RDSDBInstanceSchemaVersion = 1
+
 	// CloudFront's control plane answers in us-east-1.
 	cloudFrontRegion = "us-east-1"
 
@@ -48,6 +54,32 @@ type (
 		Status             string `json:"status"`
 		PriceClass         string `json:"price_class"`
 		DefaultCertificate bool   `json:"default_certificate"`
+	}
+
+	// EC2InstanceConfiguration is schema version 1. encoding/json ignores
+	// unknown fields and zero-fills missing ones.
+	EC2InstanceConfiguration struct {
+		InstanceType          string   `json:"instance_type"`
+		State                 string   `json:"state"`
+		VpcID                 string   `json:"vpc_id"`
+		SubnetID              string   `json:"subnet_id"`
+		PublicIP              string   `json:"public_ip"`
+		ImageID               string   `json:"image_id"`
+		IAMInstanceProfileARN string   `json:"iam_instance_profile_arn"`
+		SecurityGroupIDs      []string `json:"security_group_ids"`
+	}
+
+	// RDSDBInstanceConfiguration is schema version 1. encoding/json ignores
+	// unknown fields and zero-fills missing ones.
+	RDSDBInstanceConfiguration struct {
+		Engine             string `json:"engine"`
+		EngineVersion      string `json:"engine_version"`
+		Class              string `json:"class"`
+		Status             string `json:"status"`
+		PubliclyAccessible bool   `json:"publicly_accessible"`
+		StorageEncrypted   bool   `json:"storage_encrypted"`
+		MultiAZ            bool   `json:"multi_az"`
+		EndpointHost       string `json:"endpoint_host"`
 	}
 
 	AssetObservation struct {

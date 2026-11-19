@@ -30,7 +30,7 @@ import (
 	aws "go.probo.inc/probo/pkg/cloud/aws"
 )
 
-var errAssetPageLimit = errors.New("cannot list CloudFront distributions: page limit reached")
+var errAssetPageLimit = errors.New("cannot list assets: page limit reached")
 
 func ListCloudFrontDistributions(
 	ctx context.Context,

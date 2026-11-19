@@ -22,13 +22,18 @@ package itam
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"time"
 
+	awssdk "github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cloudfront/types"
+	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	rdstypes "github.com/aws/aws-sdk-go-v2/service/rds/types"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
+	aws "go.probo.inc/probo/pkg/cloud/aws"
 	"go.probo.inc/probo/pkg/connectorclient"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -45,6 +50,34 @@ func NewAssetSyncHandlerForTest(
 	}
 
 	return h
+}
+
+func NewAssetSyncHandlerWithListersForTest(
+	pgClient *pg.Client,
+	clients *connectorclient.Client,
+	listers map[string]AssetLister,
+) *assetSyncHandler {
+	handler := NewAssetSyncHandlerForTest(
+		pgClient,
+		clients,
+		func(context.Context, *aws.Session) ([]AssetObservation, error) {
+			return nil, nil
+		},
+	)
+	SetAssetKindListersForTest(handler, listers)
+
+	return handler
+}
+
+func SetAssetKindListersForTest(h *assetSyncHandler, listers map[string]AssetLister) {
+	for i := range h.kinds {
+		list, ok := listers[h.kinds[i].key]
+		if !ok {
+			continue
+		}
+
+		h.kinds[i].list = list
+	}
 }
 
 func SetAssetSyncSourceForTest(h *assetSyncHandler, id gid.GID) {
@@ -168,6 +201,127 @@ func MapCloudFrontForTest() (AssetObservation, error) {
 
 func MapCloudFrontMissingARNForTest() error {
 	_, err := mapCloudFrontDistribution(types.DistributionSummary{})
+
+	return err
+}
+
+func ListByRegionSecondErrorForTest() (int, []int, error) {
+	calls := 0
+
+	items, err := listByRegion(
+		context.Background(),
+		[]string{"us-east-1", "eu-west-1"},
+		func(context.Context, string) ([]int, error) {
+			calls++
+			if calls == 2 {
+				return []int{2}, errors.New("denied")
+			}
+
+			return []int{1}, nil
+		},
+	)
+	if items == nil {
+		return calls, nil, err
+	}
+
+	flat := make([]int, 0)
+	for _, page := range items {
+		flat = append(flat, page.items...)
+	}
+
+	return calls, flat, err
+}
+
+func MapEC2ForTest() (AssetObservation, error) {
+	session := aws.NewSessionFromConfig("123456789012", "aws", awssdk.Config{})
+	instanceID := "i-abc"
+	name := "web"
+	imageID := "ami-1"
+	vpcID := "vpc-1"
+	subnetID := "subnet-1"
+	publicIP := "203.0.113.10"
+	profileARN := "arn:aws:iam::123456789012:instance-profile/web"
+	groupID := "sg-1"
+	emptyGroup := ""
+	tagKey := "Name"
+
+	return mapEC2Instance(session, "us-east-1", ec2types.Instance{
+		InstanceId:      &instanceID,
+		InstanceType:    ec2types.InstanceType("t3.micro"),
+		ImageId:         &imageID,
+		VpcId:           &vpcID,
+		SubnetId:        &subnetID,
+		PublicIpAddress: &publicIP,
+		State: &ec2types.InstanceState{
+			Name: ec2types.InstanceStateName("running"),
+		},
+		IamInstanceProfile: &ec2types.IamInstanceProfile{Arn: &profileARN},
+		SecurityGroups: []ec2types.GroupIdentifier{
+			{GroupId: &groupID},
+			{GroupId: &emptyGroup},
+		},
+		Tags: []ec2types.Tag{{Key: &tagKey, Value: &name}},
+	})
+}
+
+func MapEC2MissingOptionalFieldsForTest() (AssetObservation, error) {
+	session := aws.NewSessionFromConfig("123456789012", "aws", awssdk.Config{})
+	instanceID := "i-bare"
+
+	return mapEC2Instance(session, "eu-west-1", ec2types.Instance{InstanceId: &instanceID})
+}
+
+func MapEC2MissingInstanceIDForTest() error {
+	session := aws.NewSessionFromConfig("123456789012", "aws", awssdk.Config{})
+	_, err := mapEC2Instance(session, "us-east-1", ec2types.Instance{})
+
+	return err
+}
+
+func MapRDSForTest() (AssetObservation, error) {
+	arn := "arn:aws:rds:us-east-1:123456789012:db:app"
+	identifier := "app"
+	engine := "postgres"
+	version := "16.3"
+	class := "db.t3.micro"
+	status := "available"
+	host := "app.example.us-east-1.rds.amazonaws.com"
+	yes := true
+
+	return mapRDSDBInstance("us-east-1", rdstypes.DBInstance{
+		DBInstanceArn:        &arn,
+		DBInstanceIdentifier: &identifier,
+		Engine:               &engine,
+		EngineVersion:        &version,
+		DBInstanceClass:      &class,
+		DBInstanceStatus:     &status,
+		PubliclyAccessible:   &yes,
+		StorageEncrypted:     &yes,
+		MultiAZ:              &yes,
+		Endpoint:             &rdstypes.Endpoint{Address: &host},
+	})
+}
+
+func MapRDSMissingOptionalFieldsForTest() (AssetObservation, error) {
+	arn := "arn:aws:rds:eu-west-1:123456789012:db:bare"
+	identifier := "bare"
+
+	return mapRDSDBInstance("eu-west-1", rdstypes.DBInstance{
+		DBInstanceArn:        &arn,
+		DBInstanceIdentifier: &identifier,
+	})
+}
+
+func MapRDSMissingARNForTest() error {
+	identifier := "app"
+	_, err := mapRDSDBInstance("us-east-1", rdstypes.DBInstance{DBInstanceIdentifier: &identifier})
+
+	return err
+}
+
+func MapRDSMissingIdentifierForTest() error {
+	arn := "arn:aws:rds:us-east-1:123456789012:db:app"
+	_, err := mapRDSDBInstance("us-east-1", rdstypes.DBInstance{DBInstanceArn: &arn})
 
 	return err
 }

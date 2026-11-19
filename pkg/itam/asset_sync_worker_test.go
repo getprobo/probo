@@ -50,6 +50,9 @@ import (
 const (
 	distributionA = "arn:aws:cloudfront::123456789012:distribution/AAAAAAAAAAAAAA"
 	distributionB = "arn:aws:cloudfront::123456789012:distribution/BBBBBBBBBBBBBB"
+	instanceEast  = "arn:aws:ec2:us-east-1:123456789012:instance/i-east"
+	instanceWest  = "arn:aws:ec2:eu-west-1:123456789012:instance/i-west"
+	databaseApp   = "arn:aws:rds:us-east-1:123456789012:db:app"
 )
 
 func TestAssetSync_TwoAccountsProduceTwoSources(t *testing.T) {
@@ -169,7 +172,11 @@ func TestAssetSync_MissingDistributionKeepsLastSeen(t *testing.T) {
 	assert.True(t, seen.LastSeenAt.After(kept.LastSeenAt))
 	assert.Equal(
 		t,
-		[]string{itam.CloudFrontDistributionKind},
+		[]string{
+			itam.CloudFrontDistributionKind,
+			itam.EC2InstanceKind,
+			itam.RDSDBInstanceKind,
+		},
 		reloadSync(t, pgClient, seeded.scope, finished.ID).CompletedKinds,
 	)
 }
@@ -271,8 +278,231 @@ func TestAssetSync_StaleCapWaitsADay(t *testing.T) {
 	require.ErrorIs(t, err, worker.ErrNoTask)
 }
 
+func TestAssetSync_TwoRegionsStoreBothInstances(t *testing.T) {
+	t.Parallel()
+
+	pgClient, seeded := seedAWSAccount(t, "222222222222")
+	noteAccount(t, pgClient, seeded.scope, seeded.account)
+	source := loadSource(t, pgClient, seeded.scope, seeded.account)
+
+	handler := itam.NewAssetSyncHandlerWithListersForTest(
+		pgClient,
+		testOpener(t),
+		map[string]itam.AssetLister{
+			itam.CloudFrontDistributionKind: emptyList,
+			itam.EC2InstanceKind: func(context.Context, *aws.Session) ([]itam.AssetObservation, error) {
+				return []itam.AssetObservation{
+					instance(instanceEast, "east", "us-east-1"),
+					instance(instanceWest, "west", "eu-west-1"),
+				}, nil
+			},
+			itam.RDSDBInstanceKind: emptyList,
+		},
+	)
+	_, err := itam.SyncSourceForTest(handler, t.Context(), source.ID)
+	require.NoError(t, err)
+
+	east := loadKindAsset(t, pgClient, seeded.scope, source.ID, itam.EC2InstanceKind, instanceEast)
+	west := loadKindAsset(t, pgClient, seeded.scope, source.ID, itam.EC2InstanceKind, instanceWest)
+
+	require.NotNil(t, east.Region)
+	require.NotNil(t, west.Region)
+	assert.Equal(t, "us-east-1", *east.Region)
+	assert.Equal(t, "eu-west-1", *west.Region)
+	assert.Equal(t, "east", east.Name)
+	assert.Equal(t, "west", west.Name)
+}
+
+func TestAssetSync_FailedRegionLeavesEC2LastSeen(t *testing.T) {
+	t.Parallel()
+
+	pgClient, seeded := seedAWSAccount(t, "222222222222")
+	noteAccount(t, pgClient, seeded.scope, seeded.account)
+	source := loadSource(t, pgClient, seeded.scope, seeded.account)
+
+	var ec2Err error
+	handler := itam.NewAssetSyncHandlerWithListersForTest(
+		pgClient,
+		testOpener(t),
+		map[string]itam.AssetLister{
+			itam.CloudFrontDistributionKind: func(context.Context, *aws.Session) ([]itam.AssetObservation, error) {
+				return []itam.AssetObservation{distribution(distributionA, "one.example.net")}, nil
+			},
+			itam.EC2InstanceKind: func(context.Context, *aws.Session) ([]itam.AssetObservation, error) {
+				if ec2Err != nil {
+					return nil, ec2Err
+				}
+
+				return []itam.AssetObservation{
+					instance(instanceEast, "east", "us-east-1"),
+					instance(instanceWest, "west", "eu-west-1"),
+				}, nil
+			},
+			itam.RDSDBInstanceKind: emptyList,
+		},
+	)
+	_, err := itam.SyncSourceForTest(handler, t.Context(), source.ID)
+	require.NoError(t, err)
+
+	eastBefore := loadKindAsset(t, pgClient, seeded.scope, source.ID, itam.EC2InstanceKind, instanceEast)
+	westBefore := loadKindAsset(t, pgClient, seeded.scope, source.ID, itam.EC2InstanceKind, instanceWest)
+	time.Sleep(2 * time.Millisecond)
+
+	ec2Err = errors.New("ec2 region secret")
+	makeDue(t, pgClient, seeded.scope, source)
+	failed, err := itam.SyncSourceForTest(handler, t.Context(), source.ID)
+	require.NoError(t, err)
+
+	eastAfter := loadKindAsset(t, pgClient, seeded.scope, source.ID, itam.EC2InstanceKind, instanceEast)
+	westAfter := loadKindAsset(t, pgClient, seeded.scope, source.ID, itam.EC2InstanceKind, instanceWest)
+	seen := loadInventoryAsset(t, pgClient, seeded.scope, source.ID, distributionA)
+	stored := reloadSync(t, pgClient, seeded.scope, failed.ID)
+
+	assert.True(t, eastAfter.LastSeenAt.Equal(eastBefore.LastSeenAt))
+	assert.True(t, westAfter.LastSeenAt.Equal(westBefore.LastSeenAt))
+	assert.True(t, seen.LastSeenAt.After(eastBefore.LastSeenAt))
+	assert.Equal(t, coredata.AssetSyncStatusFailed, stored.Status)
+	require.NotNil(t, stored.Error)
+	assert.Equal(t, itam.AssetSyncFailureMessageForTest(), *stored.Error)
+	assert.NotContains(t, *stored.Error, "secret")
+	assert.Equal(
+		t,
+		[]string{itam.CloudFrontDistributionKind, itam.RDSDBInstanceKind},
+		stored.CompletedKinds,
+	)
+}
+
+func TestAssetSync_RDSDenialStillAdvancesOtherKinds(t *testing.T) {
+	t.Parallel()
+
+	pgClient, seeded := seedAWSAccount(t, "222222222222")
+	noteAccount(t, pgClient, seeded.scope, seeded.account)
+	source := loadSource(t, pgClient, seeded.scope, seeded.account)
+
+	var rdsErr error
+	handler := itam.NewAssetSyncHandlerWithListersForTest(
+		pgClient,
+		testOpener(t),
+		map[string]itam.AssetLister{
+			itam.CloudFrontDistributionKind: func(context.Context, *aws.Session) ([]itam.AssetObservation, error) {
+				return []itam.AssetObservation{distribution(distributionA, "one.example.net")}, nil
+			},
+			itam.EC2InstanceKind: func(context.Context, *aws.Session) ([]itam.AssetObservation, error) {
+				return []itam.AssetObservation{instance(instanceEast, "east", "us-east-1")}, nil
+			},
+			itam.RDSDBInstanceKind: func(context.Context, *aws.Session) ([]itam.AssetObservation, error) {
+				if rdsErr != nil {
+					return nil, rdsErr
+				}
+
+				return []itam.AssetObservation{database(databaseApp, "app", "us-east-1")}, nil
+			},
+		},
+	)
+	_, err := itam.SyncSourceForTest(handler, t.Context(), source.ID)
+	require.NoError(t, err)
+
+	cloudFrontBefore := loadInventoryAsset(t, pgClient, seeded.scope, source.ID, distributionA)
+	instanceBefore := loadKindAsset(t, pgClient, seeded.scope, source.ID, itam.EC2InstanceKind, instanceEast)
+	databaseBefore := loadKindAsset(t, pgClient, seeded.scope, source.ID, itam.RDSDBInstanceKind, databaseApp)
+	time.Sleep(2 * time.Millisecond)
+
+	rdsErr = errors.New("rds denied secret")
+	makeDue(t, pgClient, seeded.scope, source)
+	failed, err := itam.SyncSourceForTest(handler, t.Context(), source.ID)
+	require.NoError(t, err)
+
+	cloudFrontAfter := loadInventoryAsset(t, pgClient, seeded.scope, source.ID, distributionA)
+	instanceAfter := loadKindAsset(t, pgClient, seeded.scope, source.ID, itam.EC2InstanceKind, instanceEast)
+	databaseAfter := loadKindAsset(t, pgClient, seeded.scope, source.ID, itam.RDSDBInstanceKind, databaseApp)
+	stored := reloadSync(t, pgClient, seeded.scope, failed.ID)
+
+	assert.True(t, cloudFrontAfter.LastSeenAt.After(cloudFrontBefore.LastSeenAt))
+	assert.True(t, instanceAfter.LastSeenAt.After(instanceBefore.LastSeenAt))
+	assert.True(t, databaseAfter.LastSeenAt.Equal(databaseBefore.LastSeenAt))
+	assert.Equal(t, coredata.AssetSyncStatusFailed, stored.Status)
+	require.NotNil(t, stored.Error)
+	assert.Equal(t, itam.AssetSyncFailureMessageForTest(), *stored.Error)
+	assert.NotContains(t, *stored.Error, "secret")
+	assert.Equal(
+		t,
+		[]string{itam.CloudFrontDistributionKind, itam.EC2InstanceKind},
+		stored.CompletedKinds,
+	)
+}
+
+func TestAssetSync_MissingInstanceKeepsLastSeen(t *testing.T) {
+	t.Parallel()
+
+	pgClient, seeded := seedAWSAccount(t, "222222222222")
+	noteAccount(t, pgClient, seeded.scope, seeded.account)
+	source := loadSource(t, pgClient, seeded.scope, seeded.account)
+
+	current := []itam.AssetObservation{
+		instance(instanceEast, "east", "us-east-1"),
+		instance(instanceWest, "west", "eu-west-1"),
+	}
+	handler := itam.NewAssetSyncHandlerWithListersForTest(
+		pgClient,
+		testOpener(t),
+		map[string]itam.AssetLister{
+			itam.CloudFrontDistributionKind: emptyList,
+			itam.EC2InstanceKind: func(context.Context, *aws.Session) ([]itam.AssetObservation, error) {
+				return current, nil
+			},
+			itam.RDSDBInstanceKind: emptyList,
+		},
+	)
+	_, err := itam.SyncSourceForTest(handler, t.Context(), source.ID)
+	require.NoError(t, err)
+
+	kept := loadKindAsset(t, pgClient, seeded.scope, source.ID, itam.EC2InstanceKind, instanceWest)
+	time.Sleep(2 * time.Millisecond)
+
+	current = current[:1]
+	makeDue(t, pgClient, seeded.scope, source)
+	finished, err := itam.SyncSourceForTest(handler, t.Context(), source.ID)
+	require.NoError(t, err)
+
+	still := loadKindAsset(t, pgClient, seeded.scope, source.ID, itam.EC2InstanceKind, instanceWest)
+	seen := loadKindAsset(t, pgClient, seeded.scope, source.ID, itam.EC2InstanceKind, instanceEast)
+	stored := reloadSync(t, pgClient, seeded.scope, finished.ID)
+
+	assert.True(t, still.LastSeenAt.Equal(kept.LastSeenAt))
+	assert.True(t, seen.LastSeenAt.After(kept.LastSeenAt))
+	assert.Equal(t, coredata.AssetSyncStatusSucceeded, stored.Status)
+	assert.Contains(t, stored.CompletedKinds, itam.EC2InstanceKind)
+}
+
 func emptyList(context.Context, *aws.Session) ([]itam.AssetObservation, error) {
 	return nil, nil
+}
+
+func instance(externalID string, name string, region string) itam.AssetObservation {
+	return itam.AssetObservation{
+		ExternalID: externalID,
+		Name:       name,
+		Region:     new(region),
+		Configuration: itam.EC2InstanceConfiguration{
+			InstanceType:     "t3.micro",
+			State:            "running",
+			SecurityGroupIDs: []string{},
+		},
+		SchemaVersion: itam.EC2InstanceSchemaVersion,
+	}
+}
+
+func database(externalID string, name string, region string) itam.AssetObservation {
+	return itam.AssetObservation{
+		ExternalID: externalID,
+		Name:       name,
+		Region:     new(region),
+		Configuration: itam.RDSDBInstanceConfiguration{
+			Engine: "postgres",
+			Status: "available",
+		},
+		SchemaVersion: itam.RDSDBInstanceSchemaVersion,
+	}
 }
 
 func distribution(externalID string, name string) itam.AssetObservation {
@@ -466,6 +696,26 @@ func loadInventoryAsset(
 ) *coredata.InventoryAsset {
 	t.Helper()
 
+	return loadKindAsset(
+		t,
+		pgClient,
+		scope,
+		sourceID,
+		itam.CloudFrontDistributionKind,
+		externalID,
+	)
+}
+
+func loadKindAsset(
+	t *testing.T,
+	pgClient *pg.Client,
+	scope coredata.Scoper,
+	sourceID gid.GID,
+	kind string,
+	externalID string,
+) *coredata.InventoryAsset {
+	t.Helper()
+
 	asset := &coredata.InventoryAsset{}
 	require.NoError(t, pgClient.WithConn(t.Context(), func(ctx context.Context, conn pg.Querier) error {
 		return asset.LoadBySourceKindExternalID(
@@ -473,7 +723,7 @@ func loadInventoryAsset(
 			conn,
 			scope,
 			sourceID,
-			itam.CloudFrontDistributionKind,
+			kind,
 			externalID,
 		)
 	}))
