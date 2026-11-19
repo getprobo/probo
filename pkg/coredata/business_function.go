@@ -177,6 +177,63 @@ LIMIT 1;
 	return nil
 }
 
+func (bfs *BusinessFunctions) LoadByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	businessFunctionIDs []gid.GID,
+) error {
+	if len(businessFunctionIDs) == 0 {
+		*bfs = nil
+		return nil
+	}
+
+	q := `
+SELECT
+	id,
+	organization_id,
+	reference_id,
+	name,
+	classification,
+	mtd_minutes,
+	rto_minutes,
+	rpo_minutes,
+	impact_tolerance,
+	notes,
+	owner_id,
+	created_at,
+	updated_at
+FROM
+	business_functions
+WHERE
+	%s
+	AND id = ANY(@business_function_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"business_function_ids": businessFunctionIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query business functions: %w", err)
+	}
+
+	items, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[BusinessFunction])
+	if err != nil {
+		return fmt.Errorf("cannot collect business functions: %w", err)
+	}
+
+	*bfs = items
+
+	if len(items) != len(gid.NewSet(businessFunctionIDs...)) {
+		return ErrResourceNotFound
+	}
+
+	return nil
+}
+
 func (bfs *BusinessFunctions) CountByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,

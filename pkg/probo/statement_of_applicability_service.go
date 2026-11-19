@@ -22,6 +22,7 @@ package probo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -146,6 +147,31 @@ func (s StatementOfApplicabilityService) Get(
 	}
 
 	return statementOfApplicability, nil
+}
+
+func (s StatementOfApplicabilityService) GetByIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	statementIDs ...gid.GID,
+) (coredata.StatementsOfApplicability, error) {
+	var statements coredata.StatementsOfApplicability
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := statements.LoadByIDs(ctx, conn, scope, statementIDs); err != nil &&
+				!errors.Is(err, coredata.ErrResourceNotFound) {
+				return fmt.Errorf("cannot load statements of applicability by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return statements, nil
 }
 
 func (s StatementOfApplicabilityService) Create(

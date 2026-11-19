@@ -152,6 +152,57 @@ LIMIT 1;
 	return nil
 }
 
+func (d *Data) LoadByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	dataIDs []gid.GID,
+) error {
+	if len(dataIDs) == 0 {
+		*d = nil
+		return nil
+	}
+
+	q := `
+SELECT
+	id,
+	name,
+	owner_profile_id,
+	organization_id,
+	data_classification,
+	created_at,
+	updated_at
+FROM
+	data
+WHERE
+	%s
+	AND id = ANY(@data_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"data_ids": dataIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query data: %w", err)
+	}
+
+	items, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Datum])
+	if err != nil {
+		return fmt.Errorf("cannot collect data: %w", err)
+	}
+
+	*d = items
+
+	if len(items) != len(gid.NewSet(dataIDs...)) {
+		return ErrResourceNotFound
+	}
+
+	return nil
+}
+
 func (d *Datum) LoadByOwnerID(
 	ctx context.Context,
 	conn pg.Querier,

@@ -22,6 +22,7 @@ package probo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -103,6 +104,31 @@ func (s DataProtectionImpactAssessmentService) Get(
 	}
 
 	return dpia, nil
+}
+
+func (s DataProtectionImpactAssessmentService) GetByIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	dpiaIDs ...gid.GID,
+) (coredata.DataProtectionImpactAssessments, error) {
+	var dpias coredata.DataProtectionImpactAssessments
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := dpias.LoadByIDs(ctx, conn, scope, dpiaIDs); err != nil &&
+				!errors.Is(err, coredata.ErrResourceNotFound) {
+				return fmt.Errorf("cannot load data protection impact assessments by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return dpias, nil
 }
 
 func (s DataProtectionImpactAssessmentService) GetByProcessingActivityID(

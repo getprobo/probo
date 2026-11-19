@@ -201,7 +201,7 @@ SELECT
     r.organization_id,
     extract_entity_type(parse_gid(r.id)),
     COALESCE(NULLIF(BTRIM(COALESCE(r.name, '')), ''), r.id),
-    to_tsvector('simple', translate(COALESCE(r.name, '') || ' ' || COALESCE(r.description, ''), '-+', '  ')),
+    to_tsvector('simple', translate(COALESCE(r.name, '') || ' ' || COALESCE(r.reference_id, '') || ' ' || COALESCE(r.description, ''), '-+', '  ')),
     ''::tsvector
 FROM frameworks r;
 
@@ -220,7 +220,7 @@ SELECT
     r.organization_id,
     extract_entity_type(parse_gid(r.id)),
     COALESCE(NULLIF(BTRIM(COALESCE(r.name, '')), ''), r.id),
-    to_tsvector('simple', translate(COALESCE(r.name, '') || ' ' || COALESCE(r.code, '') || ' ' || COALESCE(r.operating_event, '') || ' ' || COALESCE(r.description, ''), '-+', '  ')),
+    to_tsvector('simple', translate(COALESCE(r.name, '') || ' ' || COALESCE(r.reference_id, '') || ' ' || COALESCE(r.code, '') || ' ' || COALESCE(r.operating_event, '') || ' ' || COALESCE(r.description, ''), '-+', '  ')),
     ''::tsvector
 FROM internal_controls r;
 
@@ -583,32 +583,6 @@ SELECT
     ''::tsvector
 FROM processing_activity_transfer_impact_assessments r
 LEFT JOIN processing_activities pa ON pa.id = r.processing_activity_id;
-
-INSERT INTO search_resources (
-    resource_id,
-    tenant_id,
-    organization_id,
-    entity_type,
-    title,
-    body_vector,
-    tag_vector
-)
-SELECT
-    r.id,
-    r.tenant_id,
-    r.organization_id,
-    extract_entity_type(parse_gid(r.id)),
-    COALESCE(NULLIF(BTRIM(COALESCE(risk.name, '')), ''), r.id),
-    to_tsvector(
-        'simple',
-        translate(
-            COALESCE(risk.name, '') || ' ' || COALESCE(r.treatment::text, ''),
-            '-+', '  '
-        )
-    ),
-    ''::tsvector
-FROM treatment_plans r
-LEFT JOIN risks risk ON risk.id = r.risk_id;
 
 UPDATE search_resources sr
 SET tag_vector = COALESCE(tag_data.vector, ''::tsvector)

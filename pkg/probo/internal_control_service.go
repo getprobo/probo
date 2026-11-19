@@ -696,13 +696,19 @@ func (s InternalControlService) Import(
 							return fmt.Errorf("cannot upsert evidence: %w", err)
 						}
 
+						// A non-REQUESTED row is left unchanged, so index the persisted text.
+						persisted := &coredata.Evidence{}
+						if err := persisted.LoadByID(ctx, tx, scope, evidence.ID); err != nil {
+							return fmt.Errorf("cannot load evidence: %w", err)
+						}
+
 						if err := coredata.UpsertSearchResource(
 							ctx,
 							tx,
-							evidence.ID,
-							evidence.OrganizationID,
-							evidence.ReferenceID,
-							evidence.SearchText(),
+							persisted.ID,
+							persisted.OrganizationID,
+							persisted.ReferenceID,
+							persisted.SearchText(),
 						); err != nil {
 							return fmt.Errorf("cannot sync search: %w", err)
 						}

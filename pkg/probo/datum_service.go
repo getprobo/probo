@@ -22,6 +22,7 @@ package probo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -99,6 +100,31 @@ func (s DatumService) Get(
 	}
 
 	return datum, nil
+}
+
+func (s DatumService) GetByIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	dataIDs ...gid.GID,
+) (coredata.Data, error) {
+	var data coredata.Data
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := data.LoadByIDs(ctx, conn, scope, dataIDs); err != nil &&
+				!errors.Is(err, coredata.ErrResourceNotFound) {
+				return fmt.Errorf("cannot load data by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
 }
 
 func (s DatumService) GetByOwnerID(

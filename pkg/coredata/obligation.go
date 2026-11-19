@@ -174,6 +174,64 @@ LIMIT 1;
 	return nil
 }
 
+func (os *Obligations) LoadByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	obligationIDs []gid.GID,
+) error {
+	if len(obligationIDs) == 0 {
+		*os = nil
+		return nil
+	}
+
+	q := `
+SELECT
+	id,
+	organization_id,
+	area,
+	source,
+	requirement,
+	actions_to_be_implemented,
+	regulator,
+	owner_profile_id,
+	last_review_date,
+	due_date,
+	status,
+	type,
+	created_at,
+	updated_at
+FROM
+	obligations
+WHERE
+	%s
+	AND id = ANY(@obligation_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"obligation_ids": obligationIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query obligations: %w", err)
+	}
+
+	items, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Obligation])
+	if err != nil {
+		return fmt.Errorf("cannot collect obligations: %w", err)
+	}
+
+	*os = items
+
+	if len(items) != len(gid.NewSet(obligationIDs...)) {
+		return ErrResourceNotFound
+	}
+
+	return nil
+}
+
 func (os *Obligations) CountByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,

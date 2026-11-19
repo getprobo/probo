@@ -195,6 +195,71 @@ LIMIT 1;
 	return nil
 }
 
+func (ss *AiSystems) LoadByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	aiSystemIDs []gid.GID,
+) error {
+	if len(aiSystemIDs) == 0 {
+		*ss = nil
+		return nil
+	}
+
+	q := `
+SELECT
+	id,
+	organization_id,
+	name,
+	version,
+	company_roles,
+	status,
+	owner_id,
+	source,
+	purpose,
+	intended_use_cases,
+	autonomy_level,
+	human_oversight_mechanism,
+	risk_classification,
+	key_stakeholders,
+	data_sources_and_type,
+	deployment_date,
+	last_review_date,
+	next_review_date,
+	notes,
+	created_at,
+	updated_at
+FROM
+	ai_systems
+WHERE
+	%s
+	AND id = ANY(@ai_system_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"ai_system_ids": aiSystemIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query ai systems: %w", err)
+	}
+
+	items, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[AiSystem])
+	if err != nil {
+		return fmt.Errorf("cannot collect ai systems: %w", err)
+	}
+
+	*ss = items
+
+	if len(items) != len(gid.NewSet(aiSystemIDs...)) {
+		return ErrResourceNotFound
+	}
+
+	return nil
+}
+
 func (ss *AiSystems) CountByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,

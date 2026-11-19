@@ -445,6 +445,31 @@ func (s *Service) GetDevice(
 	return device, nil
 }
 
+func (s *Service) GetDevicesByIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	deviceIDs ...gid.GID,
+) (coredata.Devices, error) {
+	var devices coredata.Devices
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := devices.LoadByIDs(ctx, conn, scope, deviceIDs); err != nil &&
+				!errors.Is(err, coredata.ErrResourceNotFound) {
+				return fmt.Errorf("cannot load devices by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return devices, nil
+}
+
 func (s *Service) ListForOrganizationID(
 	ctx context.Context,
 	scope coredata.Scoper,

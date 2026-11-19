@@ -66,7 +66,7 @@ func (f *Framework) CursorKey(orderBy FrameworkOrderField) page.CursorKey {
 }
 
 func (f Framework) SearchText() []string {
-	return []string{f.Name, ref.UnrefOrZero(f.Description)}
+	return []string{f.Name, f.ReferenceID, ref.UnrefOrZero(f.Description)}
 }
 
 func (f *Framework) AuthorizationAttributes(

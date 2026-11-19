@@ -22,6 +22,7 @@ package probo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -122,6 +123,31 @@ func (s ObligationService) Get(
 	}
 
 	return obligation, nil
+}
+
+func (s ObligationService) GetByIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	obligationIDs ...gid.GID,
+) (coredata.Obligations, error) {
+	var obligations coredata.Obligations
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := obligations.LoadByIDs(ctx, conn, scope, obligationIDs); err != nil &&
+				!errors.Is(err, coredata.ErrResourceNotFound) {
+				return fmt.Errorf("cannot load obligations by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return obligations, nil
 }
 
 func (s *ObligationService) Create(

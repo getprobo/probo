@@ -22,6 +22,7 @@ package riskmanagement
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -547,6 +548,31 @@ func (s *Service) Get(ctx context.Context, scope coredata.Scoper, id gid.GID) (*
 	}
 
 	return ra, nil
+}
+
+func (s *Service) GetByIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	riskAnalysisIDs ...gid.GID,
+) (coredata.RiskAnalyses, error) {
+	var analyses coredata.RiskAnalyses
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := analyses.LoadByIDs(ctx, conn, scope, riskAnalysisIDs); err != nil &&
+				!errors.Is(err, coredata.ErrResourceNotFound) {
+				return fmt.Errorf("cannot load risk analyses by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return analyses, nil
 }
 
 func (s *Service) Update(ctx context.Context, scope coredata.Scoper, req UpdateRiskAnalysisRequest) (*coredata.RiskAnalysis, error) {

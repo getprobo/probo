@@ -351,6 +351,60 @@ LIMIT 1;
 	return nil
 }
 
+func (tias *TransferImpactAssessments) LoadByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	tiaIDs []gid.GID,
+) error {
+	if len(tiaIDs) == 0 {
+		*tias = nil
+		return nil
+	}
+
+	q := `
+SELECT
+	id,
+	organization_id,
+	processing_activity_id,
+	data_subjects,
+	legal_mechanism,
+	transfer,
+	local_law_risk,
+	supplementary_measures,
+	created_at,
+	updated_at
+FROM
+	processing_activity_transfer_impact_assessments
+WHERE
+	%s
+	AND id = ANY(@tia_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"tia_ids": tiaIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query transfer impact assessments: %w", err)
+	}
+
+	items, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[TransferImpactAssessment])
+	if err != nil {
+		return fmt.Errorf("cannot collect transfer impact assessments: %w", err)
+	}
+
+	*tias = items
+
+	if len(items) != len(gid.NewSet(tiaIDs...)) {
+		return ErrResourceNotFound
+	}
+
+	return nil
+}
+
 func (tia *TransferImpactAssessment) LoadByProcessingActivityID(
 	ctx context.Context,
 	conn pg.Querier,

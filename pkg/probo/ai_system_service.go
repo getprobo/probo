@@ -22,6 +22,7 @@ package probo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -170,6 +171,31 @@ func (s AiSystemService) Get(
 	}
 
 	return aiSystem, nil
+}
+
+func (s AiSystemService) GetByIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	aiSystemIDs ...gid.GID,
+) (coredata.AiSystems, error) {
+	var aiSystems coredata.AiSystems
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := aiSystems.LoadByIDs(ctx, conn, scope, aiSystemIDs); err != nil &&
+				!errors.Is(err, coredata.ErrResourceNotFound) {
+				return fmt.Errorf("cannot load ai systems by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return aiSystems, nil
 }
 
 func (s *AiSystemService) Create(

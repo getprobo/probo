@@ -351,6 +351,60 @@ LIMIT 1;
 	return nil
 }
 
+func (dpias *DataProtectionImpactAssessments) LoadByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	dpiaIDs []gid.GID,
+) error {
+	if len(dpiaIDs) == 0 {
+		*dpias = nil
+		return nil
+	}
+
+	q := `
+SELECT
+	id,
+	organization_id,
+	processing_activity_id,
+	description,
+	necessity_and_proportionality,
+	potential_risk,
+	mitigations,
+	residual_risk,
+	created_at,
+	updated_at
+FROM
+	processing_activity_data_protection_impact_assessments
+WHERE
+	%s
+	AND id = ANY(@dpia_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"dpia_ids": dpiaIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query data protection impact assessments: %w", err)
+	}
+
+	items, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[DataProtectionImpactAssessment])
+	if err != nil {
+		return fmt.Errorf("cannot collect data protection impact assessments: %w", err)
+	}
+
+	*dpias = items
+
+	if len(items) != len(gid.NewSet(dpiaIDs...)) {
+		return ErrResourceNotFound
+	}
+
+	return nil
+}
+
 func (dpia *DataProtectionImpactAssessment) LoadByProcessingActivityID(
 	ctx context.Context,
 	conn pg.Querier,

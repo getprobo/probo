@@ -22,6 +22,7 @@ package probo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -112,6 +113,31 @@ func (s RightsRequestService) Get(
 	}
 
 	return request, nil
+}
+
+func (s RightsRequestService) GetByIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	rightsRequestIDs ...gid.GID,
+) (coredata.RightsRequests, error) {
+	var rightsRequests coredata.RightsRequests
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := rightsRequests.LoadByIDs(ctx, conn, scope, rightsRequestIDs); err != nil &&
+				!errors.Is(err, coredata.ErrResourceNotFound) {
+				return fmt.Errorf("cannot load rights requests by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return rightsRequests, nil
 }
 
 func (s *RightsRequestService) Create(

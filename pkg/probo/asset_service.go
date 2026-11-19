@@ -22,6 +22,7 @@ package probo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -105,6 +106,31 @@ func (s AssetService) Get(
 	}
 
 	return asset, nil
+}
+
+func (s AssetService) GetByIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	assetIDs ...gid.GID,
+) (coredata.Assets, error) {
+	var assets coredata.Assets
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := assets.LoadByIDs(ctx, conn, scope, assetIDs); err != nil &&
+				!errors.Is(err, coredata.ErrResourceNotFound) {
+				return fmt.Errorf("cannot load assets by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return assets, nil
 }
 
 func (s AssetService) GetByOwnerID(

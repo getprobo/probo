@@ -21,11 +21,13 @@
 package coredata
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"maps"
+	"slices"
 	"strings"
 	"time"
 
@@ -263,6 +265,70 @@ LIMIT 1;
 	}
 
 	*d = device
+
+	return nil
+}
+
+func (ds *Devices) LoadByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	deviceIDs []gid.GID,
+) error {
+	if len(deviceIDs) == 0 {
+		*ds = nil
+		return nil
+	}
+
+	q := `
+SELECT
+	id,
+	tenant_id,
+	organization_id,
+	state,
+	hardware_uuid,
+	serial_number,
+	hostname,
+	platform,
+	os_version,
+	agent_version,
+	api_key_hash,
+	owner_profile_id,
+	labels,
+	enrolled_at,
+	last_seen_at,
+	revoked_at,
+	deleted_at,
+	created_at,
+	updated_at
+FROM
+	devices
+WHERE
+	%s
+	AND id = ANY(@device_ids)
+	AND deleted_at IS NULL
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"device_ids": deviceIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query devices: %w", err)
+	}
+
+	items, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Device])
+	if err != nil {
+		return fmt.Errorf("cannot collect devices: %w", err)
+	}
+
+	*ds = items
+
+	if len(items) != len(gid.NewSet(deviceIDs...)) {
+		return ErrResourceNotFound
+	}
 
 	return nil
 }
@@ -1111,12 +1177,35 @@ func (d *Device) DeleteOrphans(
 	conn pg.Tx,
 	now time.Time,
 ) (int64, error) {
+	doomed, err := loadOrphanDeviceIDs(ctx, conn, now)
+	if err != nil {
+		return 0, fmt.Errorf("cannot list orphan devices: %w", err)
+	}
+
+	if len(doomed) == 0 {
+		return 0, nil
+	}
+
+	// Tag attach locks this same key before inserting an assignment.
+	// Take it before the cleanup so that insert cannot land after the delete.
+	sorted := slices.Clone(doomed)
+	slices.SortFunc(sorted, func(a, b gid.GID) int {
+		return bytes.Compare(a[:], b[:])
+	})
+
+	for _, id := range sorted {
+		if err := LockSearchResource(ctx, conn, id); err != nil {
+			return 0, fmt.Errorf("cannot lock orphan device: %w", err)
+		}
+	}
+
 	q := `
 WITH doomed AS (
     SELECT d.id
     FROM devices d
     WHERE
-        d.state IN (@pending_state, @revoked_state)
+        d.id = ANY(@device_ids::text[])
+        AND d.state IN (@pending_state, @revoked_state)
         AND d.api_key_hash IS NULL
         AND NOT EXISTS (
             SELECT 1
@@ -1143,6 +1232,7 @@ WHERE id IN (SELECT id FROM doomed)
 `
 
 	args := pgx.StrictNamedArgs{
+		"device_ids":    doomed,
 		"pending_state": DeviceStatePending,
 		"revoked_state": DeviceStateRevoked,
 		"now":           now,
@@ -1154,6 +1244,51 @@ WHERE id IN (SELECT id FROM doomed)
 	}
 
 	return result.RowsAffected(), nil
+}
+
+func loadOrphanDeviceIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	now time.Time,
+) ([]gid.GID, error) {
+	q := `
+SELECT
+    d.id
+FROM
+    devices d
+WHERE
+    d.state IN (@pending_state, @revoked_state)
+    AND d.api_key_hash IS NULL
+    AND NOT EXISTS (
+        SELECT 1
+        FROM device_postures p
+        WHERE p.device_id = d.id
+    )
+    AND NOT EXISTS (
+        SELECT 1
+        FROM device_enrollment_tokens t
+        WHERE t.device_id = d.id
+          AND t.expires_at >= @now
+    )
+`
+
+	args := pgx.StrictNamedArgs{
+		"pending_state": DeviceStatePending,
+		"revoked_state": DeviceStateRevoked,
+		"now":           now,
+	}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query orphan devices: %w", err)
+	}
+
+	ids, err := pgx.CollectRows(rows, pgx.RowTo[gid.GID])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect orphan devices: %w", err)
+	}
+
+	return ids, nil
 }
 
 func (c *Devices) DeleteByOrganizationID(

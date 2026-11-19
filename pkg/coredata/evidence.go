@@ -326,6 +326,64 @@ LIMIT 1;
 	return nil
 }
 
+func (e *Evidences) LoadByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	evidenceIDs []gid.GID,
+) error {
+	if len(evidenceIDs) == 0 {
+		*e = nil
+		return nil
+	}
+
+	q := `
+SELECT
+	id,
+	organization_id,
+	task_id,
+	internal_control_id,
+	reference_id,
+	state,
+	type,
+	url,
+	evidence_file_id,
+	description,
+	description_status,
+	description_processing_started_at,
+	created_at,
+	updated_at
+FROM
+	evidences
+WHERE
+	%s
+	AND id = ANY(@evidence_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"evidence_ids": evidenceIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query evidences: %w", err)
+	}
+
+	items, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Evidence])
+	if err != nil {
+		return fmt.Errorf("cannot collect evidences: %w", err)
+	}
+
+	*e = items
+
+	if len(items) != len(gid.NewSet(evidenceIDs...)) {
+		return ErrResourceNotFound
+	}
+
+	return nil
+}
+
 func (e *Evidences) CountByInternalControlID(
 	ctx context.Context,
 	conn pg.Querier,

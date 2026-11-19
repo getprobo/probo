@@ -550,6 +550,40 @@ func (s *Service) CountForResourceID(
 type SearchRequest struct {
 	OrganizationID gid.GID
 	Query          string
+	// ListableEntityTypes is the set of entity types the caller may list.
+	// Search keeps the intersection with the query's type filter. An empty
+	// set matches nothing.
+	ListableEntityTypes []uint16
+}
+
+// entityTypesForSearch intersects the query's type filter with the types the
+// caller may list. An empty query filter means every listable type. An empty
+// listable set matches nothing, because the SQL filter treats an empty type
+// list as every type.
+func entityTypesForSearch(requested []uint16, listable []uint16) []uint16 {
+	if len(listable) == 0 {
+		return nil
+	}
+
+	if len(requested) == 0 {
+		return listable
+	}
+
+	allowed := make(map[uint16]struct{}, len(listable))
+	for _, entityType := range listable {
+		allowed[entityType] = struct{}{}
+	}
+
+	matched := make([]uint16, 0, len(requested))
+	for _, entityType := range requested {
+		if _, ok := allowed[entityType]; !ok {
+			continue
+		}
+
+		matched = append(matched, entityType)
+	}
+
+	return matched
 }
 
 func (req *SearchRequest) parse() (ParsedQuery, error) {
@@ -600,6 +634,13 @@ func (s *Service) Search(
 		}
 	}
 
+	entityTypes := entityTypesForSearch(parsed.EntityTypes, req.ListableEntityTypes)
+	if len(entityTypes) == 0 {
+		var results coredata.SearchResults
+
+		return page.NewPage(results, cursor), nil
+	}
+
 	var results coredata.SearchResults
 
 	err = s.pg.WithConn(
@@ -616,7 +657,7 @@ func (s *Service) Search(
 				scope,
 				organization.ID,
 				parsed.Tags,
-				parsed.EntityTypes,
+				entityTypes,
 				parsed.Text,
 				cursor,
 			); err != nil {
@@ -643,6 +684,11 @@ func (s *Service) CountSearch(
 		return 0, err
 	}
 
+	entityTypes := entityTypesForSearch(parsed.EntityTypes, req.ListableEntityTypes)
+	if len(entityTypes) == 0 {
+		return 0, nil
+	}
+
 	var count int
 
 	err = s.pg.WithConn(
@@ -663,7 +709,7 @@ func (s *Service) CountSearch(
 				scope,
 				organization.ID,
 				parsed.Tags,
-				parsed.EntityTypes,
+				entityTypes,
 				parsed.Text,
 			)
 			if err != nil {

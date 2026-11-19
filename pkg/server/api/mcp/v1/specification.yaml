@@ -23419,10 +23419,10 @@ tools:
       $ref: "#/components/schemas/DeleteTagOutput"
   - name: attachTag
     title: Attach Tag
-    description: Attach a tag to a resource, replacing any other value of the same key on that resource
+    description: Attach a tag to a resource. Attaching a tag that is already present returns the existing assignment and leaves every other tag on the resource in place.
     hints:
       readonly: false
-      destructive: true
+      destructive: false
       idempotent: true
       openWorld: false
     inputSchema:

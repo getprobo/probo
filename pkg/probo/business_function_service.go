@@ -22,6 +22,7 @@ package probo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -144,6 +145,31 @@ func (s BusinessFunctionService) Get(
 	}
 
 	return businessFunction, nil
+}
+
+func (s BusinessFunctionService) GetByIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	businessFunctionIDs ...gid.GID,
+) (coredata.BusinessFunctions, error) {
+	var businessFunctions coredata.BusinessFunctions
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := businessFunctions.LoadByIDs(ctx, conn, scope, businessFunctionIDs); err != nil &&
+				!errors.Is(err, coredata.ErrResourceNotFound) {
+				return fmt.Errorf("cannot load business functions by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return businessFunctions, nil
 }
 
 func (s *BusinessFunctionService) Create(

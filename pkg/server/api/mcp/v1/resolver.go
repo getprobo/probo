@@ -324,3 +324,26 @@ func (r *Resolver) documentWithHeads(
 		collaboration.EncodeAutomergeHashes(heads),
 	), nil
 }
+
+func (r *Resolver) listableSearchEntityTypes(ctx context.Context, organizationID gid.GID) ([]uint16, error) {
+	identity := authn.IdentityFromContext(ctx)
+	session := authn.SessionFromContext(ctx)
+
+	var sessionID *gid.GID
+	if session != nil {
+		sessionID = &session.ID
+	}
+
+	entityTypes, err := tag.ListableEntityTypes(ctx, r.iamSvc.Authorizer, identity.ID, sessionID, organizationID)
+	if err != nil {
+		if _, ok := errors.AsType[*iam.ErrAssumptionRequired](err); ok {
+			return nil, fmt.Errorf("assumption required")
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot list searchable entity types", log.Error(err))
+
+		return nil, fmt.Errorf("internal server error")
+	}
+
+	return entityTypes, nil
+}

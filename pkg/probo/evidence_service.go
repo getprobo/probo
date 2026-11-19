@@ -82,6 +82,31 @@ func (s EvidenceService) Get(
 	return evidence, nil
 }
 
+func (s EvidenceService) GetByIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	evidenceIDs ...gid.GID,
+) (coredata.Evidences, error) {
+	var evidences coredata.Evidences
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := evidences.LoadByIDs(ctx, conn, scope, evidenceIDs); err != nil &&
+				!errors.Is(err, coredata.ErrResourceNotFound) {
+				return fmt.Errorf("cannot load evidences by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return evidences, nil
+}
+
 func (s EvidenceService) UploadInternalControlEvidence(
 	ctx context.Context, scope coredata.Scoper,
 	req UploadInternalControlEvidenceRequest,

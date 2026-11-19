@@ -22,6 +22,7 @@ package probo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -103,6 +104,31 @@ func (s TransferImpactAssessmentService) Get(
 	}
 
 	return tia, nil
+}
+
+func (s TransferImpactAssessmentService) GetByIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	tiaIDs ...gid.GID,
+) (coredata.TransferImpactAssessments, error) {
+	var tias coredata.TransferImpactAssessments
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := tias.LoadByIDs(ctx, conn, scope, tiaIDs); err != nil &&
+				!errors.Is(err, coredata.ErrResourceNotFound) {
+				return fmt.Errorf("cannot load transfer impact assessments by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return tias, nil
 }
 
 func (s TransferImpactAssessmentService) GetByProcessingActivityID(

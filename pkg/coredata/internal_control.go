@@ -89,7 +89,13 @@ func (m InternalControl) CursorKey(orderBy InternalControlOrderField) page.Curso
 }
 
 func (m InternalControl) SearchText() []string {
-	return []string{m.Name, ref.UnrefOrZero(m.Code), ref.UnrefOrZero(m.OperatingEvent), ref.UnrefOrZero(m.Description)}
+	return []string{
+		m.Name,
+		m.ReferenceID,
+		ref.UnrefOrZero(m.Code),
+		ref.UnrefOrZero(m.OperatingEvent),
+		ref.UnrefOrZero(m.Description),
+	}
 }
 
 func internalControlNextDueValue(evidenceDue *time.Time, testDue *time.Time) *time.Time {

@@ -22,6 +22,7 @@ package probo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -133,6 +134,31 @@ func (s FindingService) Get(
 	}
 
 	return finding, nil
+}
+
+func (s FindingService) GetByIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	findingIDs ...gid.GID,
+) (coredata.Findings, error) {
+	var findings coredata.Findings
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := findings.LoadByIDs(ctx, conn, scope, findingIDs); err != nil &&
+				!errors.Is(err, coredata.ErrResourceNotFound) {
+				return fmt.Errorf("cannot load findings by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return findings, nil
 }
 
 func (s *FindingService) Create(

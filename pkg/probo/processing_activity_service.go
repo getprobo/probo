@@ -161,6 +161,31 @@ func (s ProcessingActivityService) Get(
 	return processingActivity, nil
 }
 
+func (s ProcessingActivityService) GetByIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	processingActivityIDs ...gid.GID,
+) (coredata.ProcessingActivities, error) {
+	var processingActivities coredata.ProcessingActivities
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := processingActivities.LoadByIDs(ctx, conn, scope, processingActivityIDs); err != nil &&
+				!errors.Is(err, coredata.ErrResourceNotFound) {
+				return fmt.Errorf("cannot load processing activities by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return processingActivities, nil
+}
+
 func (s *ProcessingActivityService) Create(
 	ctx context.Context, scope coredata.Scoper,
 	req *CreateProcessingActivityRequest,

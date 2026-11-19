@@ -836,6 +836,31 @@ func (r *queryResolver) Viewer(ctx context.Context) (*types.Viewer, error) {
 	return currentViewer(ctx), nil
 }
 
+// listableSearchEntityTypes returns the indexed types the caller may list in
+// the organization. Search passes that set into the index query.
+func (r *Resolver) listableSearchEntityTypes(ctx context.Context, organizationID gid.GID) ([]uint16, error) {
+	identity := authn.IdentityFromContext(ctx)
+	session := authn.SessionFromContext(ctx)
+
+	var sessionID *gid.GID
+	if session != nil {
+		sessionID = &session.ID
+	}
+
+	entityTypes, err := tag.ListableEntityTypes(ctx, r.iam.Authorizer, identity.ID, sessionID, organizationID)
+	if err != nil {
+		if _, ok := errors.AsType[*iam.ErrAssumptionRequired](err); ok {
+			return nil, gqlx.AssumptionRequired(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot list searchable entity types", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return entityTypes, nil
+}
+
 // Search is the resolver for the search field.
 func (r *queryResolver) Search(ctx context.Context, organizationID gid.GID, query string, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.SearchResultConnection, error) {
 	scope, err := r.authorize(ctx, organizationID, tag.ActionAssignmentGet)
@@ -843,9 +868,15 @@ func (r *queryResolver) Search(ctx context.Context, organizationID gid.GID, quer
 		return nil, err
 	}
 
+	entityTypes, err := r.listableSearchEntityTypes(ctx, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
 	req := tag.SearchRequest{
-		OrganizationID: organizationID,
-		Query:          query,
+		OrganizationID:      organizationID,
+		Query:               query,
+		ListableEntityTypes: entityTypes,
 	}
 
 	cursor := types.NewCursor(
@@ -870,7 +901,7 @@ func (r *queryResolver) Search(ctx context.Context, organizationID gid.GID, quer
 		return nil, gqlx.Internal(ctx)
 	}
 
-	nodes, err := r.searchNodes(ctx, pageResult.Data)
+	nodes, err := r.searchNodes(ctx, scope, pageResult.Data)
 	if err != nil {
 		return nil, err
 	}

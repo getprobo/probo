@@ -230,15 +230,25 @@ func (r *searchResultConnectionResolver) TotalCount(ctx context.Context, obj *ty
 		return 0, err
 	}
 
+	entityTypes, err := r.listableSearchEntityTypes(ctx, obj.OrganizationID)
+	if err != nil {
+		return 0, err
+	}
+
 	count, err := r.tag.CountSearch(
 		ctx,
 		scope,
 		tag.SearchRequest{
-			OrganizationID: obj.OrganizationID,
-			Query:          obj.Query,
+			OrganizationID:      obj.OrganizationID,
+			Query:               obj.Query,
+			ListableEntityTypes: entityTypes,
 		},
 	)
 	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return 0, gqlx.InvalidValidationErrors(ctx, validationErrors)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot count search results", log.Error(err))
 
 		return 0, gqlx.Internal(ctx)

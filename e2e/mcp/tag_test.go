@@ -174,6 +174,17 @@ func TestMCP_Tag(t *testing.T) {
 	}, &deletedProduction)
 	assert.Equal(t, production.ID, deletedProduction.DeletedTagID)
 
+	mc.CallToolInto("listTagsForResource", map[string]any{
+		"resource_id": documentID,
+	}, &forResourceOut)
+	assert.Empty(t, forResourceOut.Tags)
+
+	mc.CallToolInto("search", map[string]any{
+		"organization_id": orgID,
+		"query":           `tag:"MCP Production" type:document`,
+	}, &searchOut)
+	assert.NotContains(t, searchOut.Resources, documentID)
+
 	var deletedStaging struct {
 		DeletedTagID string `json:"deleted_tag_id"`
 	}

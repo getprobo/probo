@@ -190,6 +190,68 @@ LIMIT 1;
 	return nil
 }
 
+func (fs *Findings) LoadByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	findingIDs []gid.GID,
+) error {
+	if len(findingIDs) == 0 {
+		*fs = nil
+		return nil
+	}
+
+	q := `
+SELECT
+	id,
+	organization_id,
+	kind,
+	reference_id,
+	title,
+	description,
+	source,
+	identified_on,
+	root_cause,
+	corrective_action,
+	owner_id,
+	due_date,
+	status,
+	priority,
+	risk_id,
+	effectiveness_check,
+	created_at,
+	updated_at
+FROM
+	findings
+WHERE
+	%s
+	AND id = ANY(@finding_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"finding_ids": findingIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query findings: %w", err)
+	}
+
+	items, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Finding])
+	if err != nil {
+		return fmt.Errorf("cannot collect findings: %w", err)
+	}
+
+	*fs = items
+
+	if len(items) != len(gid.NewSet(findingIDs...)) {
+		return ErrResourceNotFound
+	}
+
+	return nil
+}
+
 func (fs *Findings) CountByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,

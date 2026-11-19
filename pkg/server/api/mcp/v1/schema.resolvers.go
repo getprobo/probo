@@ -12554,14 +12554,20 @@ func (r *Resolver) SearchTool(ctx context.Context, req *mcp.CallToolRequest, inp
 		Direction: page.OrderDirectionAsc,
 	}
 
+	entityTypes, err := r.listableSearchEntityTypes(ctx, input.OrganizationID)
+	if err != nil {
+		return nil, types.SearchOutput{}, err
+	}
+
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
 	pageResult, err := r.tag.Search(
 		ctx,
 		scope,
 		tag.SearchRequest{
-			OrganizationID: input.OrganizationID,
-			Query:          input.Query,
+			OrganizationID:      input.OrganizationID,
+			Query:               input.Query,
+			ListableEntityTypes: entityTypes,
 		},
 		cursor,
 	)
