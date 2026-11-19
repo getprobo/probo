@@ -24,9 +24,10 @@ import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { Link } from "@probo/ui/src/v2/Link/Link";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, useFragment } from "react-relay";
+import { graphql, type PreloadedQuery, useFragment } from "react-relay";
 
 import type { DocumentDetails_document$key } from "#/__generated__/core/DocumentDetails_document.graphql";
+import type { DocumentReviewListQuery } from "#/__generated__/core/DocumentReviewListQuery.graphql";
 
 import { useDocumentModes } from "../_lib/useDocumentModes";
 import { documentDetailsPage } from "../variants";
@@ -53,12 +54,14 @@ const documentDetailsFragment = graphql`
 
 interface DocumentDetailsProps {
   documentKey: DocumentDetails_document$key;
+  reviewQueryRef: PreloadedQuery<DocumentReviewListQuery> | null;
   organizationId: string;
   search: string;
 }
 
 export function DocumentDetails({
   documentKey,
+  reviewQueryRef,
   organizationId,
   search,
 }: DocumentDetailsProps) {
@@ -107,7 +110,11 @@ export function DocumentDetails({
             onModeChange={selectMode}
           />
         </div>
-        <DocumentEditor documentKey={document} mode={mode} />
+        <DocumentEditor
+          documentKey={document}
+          reviewQueryRef={reviewQueryRef}
+          mode={mode}
+        />
       </div>
       <div className={sideFrame()} inert={cardsOpen ? undefined : true}>
         <div className={sideClip()}>

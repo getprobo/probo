@@ -67,6 +67,16 @@
       "suggestionFailed": "Suggestie starten mislukt",
       "suggestionUntracked": "Deze wijziging kon niet als suggestie worden bijgehouden"
     },
+    "review": {
+      "openComment": "Opmerking tonen",
+      "openSuggestion": "Suggestie tonen",
+      "replies_one": "{{count}} reactie",
+      "replies_other": "{{count}} reacties",
+      "justNow": "zojuist",
+      "contentError": "Deze opmerking kan niet worden weergegeven",
+      "formatting": "Opmaakwijziging",
+      "structure": "Structuurwijziging"
+    },
     "errors": {
       "update": "Document bijwerken mislukt"
     }

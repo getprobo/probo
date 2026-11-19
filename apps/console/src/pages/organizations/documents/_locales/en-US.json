@@ -67,6 +67,16 @@
       "suggestionFailed": "Could not start the suggestion",
       "suggestionUntracked": "That change could not be tracked as a suggestion"
     },
+    "review": {
+      "openComment": "Show comment",
+      "openSuggestion": "Show suggestion",
+      "replies_one": "{{count}} reply",
+      "replies_other": "{{count}} replies",
+      "justNow": "just now",
+      "contentError": "Could not show this comment",
+      "formatting": "Formatting change",
+      "structure": "Structure change"
+    },
     "errors": {
       "update": "Could not update the document"
     }
