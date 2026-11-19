@@ -37,6 +37,8 @@ import (
 	"go.probo.inc/probo/pkg/iam/scim/bridge/provider"
 )
 
+var _ provider.Provider = (*Provider)(nil)
+
 // graphBaseURL is the Microsoft Graph v1.0 endpoint. The bridge uses raw
 // HTTP rather than the official SDK because the SDK pulls in a large
 // dependency tree for what is a small set of read-only calls.
@@ -60,11 +62,10 @@ const graphMaxPages = 1000
 // should not be provisioned into the connected organization.
 const graphMemberFilter = "userType eq 'Member'"
 
-var _ provider.Provider = (*Provider)(nil)
-
 type Provider struct {
 	httpClient        *http.Client
 	excludedUserNames []string
+	graphBaseURL      string
 }
 
 func New(httpClient *http.Client, excludedUserNames []string) *Provider {
@@ -90,10 +91,9 @@ func (p *Provider) isExcluded(email string) bool {
 }
 
 // graphUser is the subset of the Microsoft Graph user resource the
-// bridge consumes. Managers are intentionally not fetched here: the
-// /users endpoint does not return them and per-user lookups would
-// multiply the call volume by the directory size. Manager data can be
-// added later via /users/{id}/manager when needed.
+// bridge consumes. Managers and photos are not fetched here. The /users
+// endpoint does not return them, and a lookup per user would multiply
+// the call volume by the directory size. Graph also rejects $expand=photo.
 type graphUser struct {
 	ID                string `json:"id"`
 	UserPrincipalName string `json:"userPrincipalName"`
@@ -115,8 +115,16 @@ type graphUsersResponse struct {
 	NextLink string      `json:"@odata.nextLink"`
 }
 
+func (p *Provider) baseURL() string {
+	if p.graphBaseURL != "" {
+		return p.graphBaseURL
+	}
+
+	return graphBaseURL
+}
+
 func (p *Provider) ListUsers(ctx context.Context) (scimclient.Users, error) {
-	endpoint, err := buildListUsersURL()
+	endpoint, err := p.listUsersURL()
 	if err != nil {
 		return nil, fmt.Errorf("cannot build list users URL: %w", err)
 	}
@@ -168,10 +176,15 @@ func (p *Provider) ListUsers(ctx context.Context) (scimclient.Users, error) {
 	return nil, fmt.Errorf("microsoft 365: pagination limit of %d pages reached", graphMaxPages)
 }
 
-func buildListUsersURL() (string, error) {
-	u, err := url.Parse(graphBaseURL + "/users")
+func (p *Provider) listUsersURL() (string, error) {
+	joined, err := url.JoinPath(p.baseURL(), "users")
 	if err != nil {
-		return "", fmt.Errorf("cannot parse graph base URL: %w", err)
+		return "", fmt.Errorf("cannot join graph users URL: %w", err)
+	}
+
+	u, err := url.Parse(joined)
+	if err != nil {
+		return "", fmt.Errorf("cannot parse graph users URL: %w", err)
 	}
 
 	q := u.Query()

@@ -28,6 +28,7 @@ import (
 	"fmt"
 	"strings"
 
+	"go.gearno.de/kit/log"
 	scimclient "go.probo.inc/probo/pkg/iam/scim/bridge/client"
 	"go.probo.inc/probo/pkg/iam/scim/bridge/provider"
 )
@@ -37,6 +38,7 @@ type (
 		provider          provider.Provider
 		scimClient        *scimclient.Client
 		excludedUserNames []string
+		logger            *log.Logger
 	}
 
 	Option func(*Bridge)
@@ -45,6 +47,12 @@ type (
 func WithExcludedUserNames(excludedUserNames []string) Option {
 	return func(s *Bridge) {
 		s.excludedUserNames = excludedUserNames
+	}
+}
+
+func WithLogger(logger *log.Logger) Option {
+	return func(s *Bridge) {
+		s.logger = logger
 	}
 }
 
@@ -89,6 +97,8 @@ func (s *Bridge) Run(ctx context.Context) (created, updated, deleted, deactivate
 
 		existingSCIM, exists := scimUsersByEmail[email]
 		if !exists {
+			s.loadPhoto(ctx, &pu, "")
+
 			if err := s.scimClient.CreateUser(ctx, &pu); err != nil {
 				errs = append(errs, fmt.Errorf("cannot create user %q: %w", pu.ExternalID, err))
 				continue
@@ -96,6 +106,8 @@ func (s *Bridge) Run(ctx context.Context) (created, updated, deleted, deactivate
 
 			created++
 		} else {
+			s.loadPhoto(ctx, &pu, existingSCIM.PhotoETag)
+
 			needsUpdate := existingSCIM.Active != pu.Active ||
 				existingSCIM.DisplayName != pu.DisplayName ||
 				existingSCIM.Title != pu.Title ||
@@ -108,7 +120,8 @@ func (s *Bridge) Run(ctx context.Context) (created, updated, deleted, deactivate
 				existingSCIM.Division != pu.Division ||
 				existingSCIM.EmployeeNumber != pu.EmployeeNumber ||
 				existingSCIM.ManagerValue != pu.ManagerValue ||
-				existingSCIM.PreferredLanguage != pu.PreferredLanguage
+				existingSCIM.PreferredLanguage != pu.PreferredLanguage ||
+				existingSCIM.PhotoETag != pu.PhotoETag
 
 			if needsUpdate {
 				if err := s.scimClient.UpdateUser(ctx, existingSCIM.ID, &pu); err != nil {
@@ -152,6 +165,73 @@ func (s *Bridge) Run(ctx context.Context) (created, updated, deleted, deactivate
 	}
 
 	return created, updated, deleted, deactivated, skipped, errors.Join(errs...)
+}
+
+func (s *Bridge) loadPhoto(ctx context.Context, user *scimclient.User, previousETag string) {
+	if !user.PhotoETagKnown {
+		user.PhotoETag = previousETag
+
+		return
+	}
+
+	if user.PhotoETag == previousETag {
+		return
+	}
+
+	if user.PhotoETag == "" {
+		user.Photo = nil
+
+		return
+	}
+
+	source, ok := s.provider.(provider.PhotoSource)
+	if !ok {
+		user.PhotoETag = previousETag
+
+		return
+	}
+
+	photo, err := source.UserPhoto(ctx, *user)
+	if err != nil || (len(photo.Body) == 0 && !photo.Absent) {
+		reason := "empty photo"
+		if err != nil {
+			reason = "photo fetch failed"
+		}
+
+		s.warnSkippedPhoto(ctx, user, reason)
+
+		user.PhotoETag = previousETag
+		user.Photo = nil
+
+		return
+	}
+
+	if photo.Absent {
+		user.PhotoETag = ""
+		user.Photo = nil
+
+		return
+	}
+
+	user.Photo = photo.Body
+	user.PhotoMIME = photo.MIME
+	if photo.ETag != "" {
+		user.PhotoETag = photo.ETag
+	}
+}
+
+func (s *Bridge) warnSkippedPhoto(ctx context.Context, user *scimclient.User, reason string) {
+	if s.logger == nil || user == nil {
+		return
+	}
+
+	s.logger.WarnCtx(
+		ctx,
+		"skipping directory photo",
+		log.String("provider", s.provider.Name()),
+		log.String("external_id", user.ExternalID),
+		log.String("reason", reason),
+	)
 }
 
 func (s *Bridge) isExcluded(email string) bool {

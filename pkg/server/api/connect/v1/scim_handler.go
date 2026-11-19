@@ -151,6 +151,7 @@ func NewSCIMServer(h *SCIMHandler) http.Handler {
 			Schema:      scimservice.UserSchema(),
 			SchemaExtensions: []scim.SchemaExtension{
 				{Schema: scimservice.EnterpriseUserSchema()},
+				{Schema: scimservice.PhotoExtensionSchema()},
 			},
 			Handler: &scimResourceHandler{handler: h},
 		},
@@ -371,15 +372,24 @@ func redactSCIMValue(value any, redacted *bool) any {
 				continue
 			}
 
+			if scimPathTargetsPhoto(key) {
+				v[key] = redactSCIMPhotos(nested, redacted)
+
+				continue
+			}
+
 			v[key] = redactSCIMValue(nested, redacted)
 		}
 
-		// A PATCH operation carries its target in "path" and the credential in
-		// "value", so the attribute name never appears as a key.
-		if path, ok := v["path"].(string); ok && isSCIMPasswordAttribute(path) {
-			if _, ok := v["value"]; ok {
-				v["value"] = scimRedactedValue
-				*redacted = true
+		// A PATCH operation carries its target in "path" and the payload in
+		// "value", so the attribute name never appears as a key. Clients
+		// have sent those envelope keys in either case.
+		if path, ok := foldedString(v, "path"); ok && (isSCIMPasswordAttribute(path) || scimPathTargetsPhoto(path)) {
+			for key := range v {
+				if strings.EqualFold(key, "value") {
+					v[key] = scimRedactedValue
+					*redacted = true
+				}
 			}
 		}
 
@@ -393,6 +403,73 @@ func redactSCIMValue(value any, redacted *bool) any {
 	default:
 		return value
 	}
+}
+
+func redactSCIMPhotos(value any, redacted *bool) any {
+	items, ok := value.([]any)
+	if !ok {
+		*redacted = true
+
+		return scimRedactedValue
+	}
+
+	for i, item := range items {
+		photo, ok := item.(map[string]any)
+		if !ok {
+			items[i] = scimRedactedValue
+			*redacted = true
+
+			continue
+		}
+
+		for key := range photo {
+			if !strings.EqualFold(key, "value") {
+				continue
+			}
+
+			photo[key] = scimRedactedValue
+			*redacted = true
+		}
+
+		items[i] = photo
+	}
+
+	return items
+}
+
+// scimPathTargetsPhoto reports whether an attribute name or PATCH path
+// addresses the photos attribute. A SCIM path names its attribute before any
+// "[" filter, and a schema URN prefix ends at the last ":", so neither the
+// filter text nor the URN version (2.0) needs to be parsed.
+func scimPathTargetsPhoto(path string) bool {
+	attr := path
+	if i := strings.Index(attr, "["); i >= 0 {
+		attr = attr[:i]
+	}
+
+	if i := strings.LastIndex(attr, ":"); i >= 0 {
+		attr = attr[i+1:]
+	}
+
+	if i := strings.Index(attr, "."); i >= 0 {
+		attr = attr[:i]
+	}
+
+	return strings.EqualFold(strings.TrimSpace(attr), "photos")
+}
+
+func foldedString(object map[string]any, name string) (string, bool) {
+	for key, value := range object {
+		if !strings.EqualFold(key, name) {
+			continue
+		}
+
+		text, ok := value.(string)
+
+		return text, ok
+	}
+
+	return "", false
 }
 
 // isSCIMPasswordAttribute reports whether an attribute name or PATCH path

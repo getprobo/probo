@@ -214,6 +214,8 @@ func NewService(
 			Registerer:        cfg.Registerer,
 			EncryptionKey:     cfg.EncryptionKey,
 			ConnectorRegistry: cfg.ConnectorRegistry,
+			FileManager:       fm,
+			Bucket:            cfg.Bucket,
 			BridgeRunner: scim.BridgeRunnerConfig{
 				Interval:     cfg.SCIMBridgeSyncInterval,
 				PollInterval: cfg.SCIMBridgePollInterval,
