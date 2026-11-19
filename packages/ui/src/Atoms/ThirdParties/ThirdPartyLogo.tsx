@@ -29,6 +29,7 @@ import { AWS } from "./AWS";
 import { Azure } from "./Azure";
 import { BetterStack } from "./BetterStack";
 import { Bitbucket } from "./Bitbucket";
+import { Bitwarden } from "./Bitwarden";
 import { Brevo } from "./Brevo";
 import { Brex } from "./Brex";
 import { CalCom } from "./CalCom";
@@ -111,6 +112,7 @@ const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   AUTHENTIK: Authentik,
   BETTER_STACK: BetterStack,
   BITBUCKET: Bitbucket,
+  BITWARDEN: Bitwarden,
   BREVO: Brevo,
   BREX: Brex,
   CAL_COM: CalCom,

@@ -218,6 +218,22 @@ func TestBuildPostHogProbeURL(t *testing.T) {
 	assert.Equal(t, "https://us.posthog.com/api/organizations/@current/", probeURL)
 }
 
+func TestBuildBitwardenProbeURL(t *testing.T) {
+	t.Parallel()
+
+	conn := &coredata.Connector{Provider: coredata.ConnectorProviderBitwarden}
+	require.NoError(t, conn.SetSettings(&coredata.BitwardenConnectorSettings{Region: "EU"}))
+
+	probeURL, err := buildBitwardenProbeURL(conn, Endpoints{})
+	require.NoError(t, err)
+	assert.Equal(t, "https://api.bitwarden.eu/public/policies", probeURL)
+
+	require.NoError(t, conn.SetSettings(&coredata.BitwardenConnectorSettings{}))
+
+	_, err = buildBitwardenProbeURL(conn, Endpoints{})
+	assert.Error(t, err, "a connector without a region has no host to probe")
+}
+
 func TestBuildOnePasswordProbeURL(t *testing.T) {
 	t.Parallel()
 
