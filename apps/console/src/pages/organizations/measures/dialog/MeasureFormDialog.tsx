@@ -203,7 +203,7 @@ export default function MeasureFormDialog(props: Props) {
           </div>
         </DialogContent>
         <DialogFooter>
-          <Button type="submit">
+          <Button type="submit" disabled={formState.isSubmitting}>
             {measure ? t("measureFormDialog.actions.update") : t("measureFormDialog.actions.create")}
           </Button>
         </DialogFooter>
