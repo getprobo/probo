@@ -1141,7 +1141,42 @@
       "attachFiles": "Attach files",
       "mentionMembers": "Mention a member",
       "mentionLoading": "Searching…",
-      "mentionNoResults": "No members found"
+      "mentionNoResults": "No members found",
+      "toolbar": {
+        "label": "Formatting",
+        "blockType": "Style",
+        "blocks": {
+          "paragraph": "Text",
+          "heading1": "Heading 1",
+          "heading2": "Heading 2",
+          "heading3": "Heading 3",
+          "heading4": "Heading 4",
+          "bulletList": "Bullet list",
+          "orderedList": "Numbered list",
+          "taskList": "Task list",
+          "codeBlock": "Code block",
+          "blockquote": "Quote"
+        },
+        "styles": {
+          "bold": "Bold",
+          "italic": "Italic",
+          "underline": "Underline",
+          "strike": "Strikethrough",
+          "code": "Code"
+        },
+        "link": "Link",
+        "linkUrl": "Link address",
+        "openLink": "Open link in a new tab",
+        "removeLink": "Remove link",
+        "insert": "Insert",
+        "inserts": {
+          "mermaid": "Mermaid diagram",
+          "divider": "Divider",
+          "table": "Table",
+          "image": "Image",
+          "file": "File"
+        }
+      }
     },
     "documentClassification": {
       "public": "Public",

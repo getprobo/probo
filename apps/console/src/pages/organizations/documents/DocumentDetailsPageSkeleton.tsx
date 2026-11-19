@@ -25,16 +25,17 @@ import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 import { documentDetailsPage, documentEditor } from "./variants";
 
 export function DocumentDetailsPageSkeleton() {
-  const { root, main, titleRow, cards } = documentDetailsPage();
-  const { frame } = documentEditor();
+  const { root, main, title, cards } = documentDetailsPage();
+  const { toolbar, frame } = documentEditor();
 
   return (
     <div className={root()}>
       <div className={main()}>
         <TextSkeleton size={2} className="w-24" />
-        <div className={titleRow()}>
+        <div className={title()}>
           <HeadingSkeleton size={6} className="w-64" />
         </div>
+        <div className={toolbar()} />
         <div className={frame()} />
       </div>
       <div className={cards()}>

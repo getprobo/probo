@@ -43,6 +43,7 @@ import { usePageScale } from "../../_lib/usePageScale";
 import { usePreventSuggestionTextDrop } from "../../_lib/usePreventSuggestionTextDrop";
 import { useSuggestionController } from "../../_lib/useSuggestionController";
 import { documentEditor } from "../../variants";
+import { DocumentModeSelect } from "../DocumentModeSelect";
 import { DocumentReviewList } from "../DocumentReviewList/DocumentReviewList";
 
 import { DocumentEditorPages } from "./DocumentEditorPages";
@@ -58,14 +59,23 @@ interface DocumentEditorProps {
   documentKey: DocumentEditor_document$key;
   reviewQueryRef: PreloadedQuery<DocumentReviewListQuery> | null;
   mode: DocumentMode;
+  modes: readonly DocumentMode[];
+  onModeChange: (mode: DocumentMode) => void;
 }
 
-export function DocumentEditor({ documentKey, reviewQueryRef, mode }: DocumentEditorProps) {
+export function DocumentEditor({
+  documentKey,
+  reviewQueryRef,
+  mode,
+  modes,
+  onModeChange,
+}: DocumentEditorProps) {
   const document = useFragment(documentEditorFragment, documentKey);
   const { t } = useTranslation("organizations/documents");
   const [activeKey, setActiveKey] = useState<string | null>(null);
   const [editor, setEditorInstance] = useState<Editor | null>(null);
   const [pageCount, setPageCount] = useState(1);
+  const [toolbarEl, setToolbarEl] = useState<HTMLDivElement | null>(null);
   const { handle, failed } = useDocumentCollaboration(document.id);
   const { controller, setEditor } = useSuggestionController(document.id, mode, setActiveKey);
   const commentAnchorController: CommentAnchorController = useRef({
@@ -82,7 +92,9 @@ export function DocumentEditor({ documentKey, reviewQueryRef, mode }: DocumentEd
     }),
     [document.orientation],
   );
-  const { frame, viewport, content, pages, stack, paper, review, scrollbar, thumb } = documentEditor();
+  const {
+    toolbar, toolbarControls, toolbarEnd, frame, viewport, content, pages, stack, paper, review, scrollbar, thumb,
+  } = documentEditor();
   usePreventSuggestionTextDrop(paperRef, mode);
 
   const onEditor = useCallback((next: Editor | null) => {
@@ -91,62 +103,74 @@ export function DocumentEditor({ documentKey, reviewQueryRef, mode }: DocumentEd
   }, [setEditor]);
 
   return (
-    <ScrollArea.Root className={frame()}>
-      <ScrollArea.Viewport className={viewport()}>
-        <ScrollArea.Content
-          className={content()}
-          style={{ "--page-width": `${pageSize.width}px` } as CSSProperties}
-        >
-          <div ref={pagesRef} className={pages()}>
-            <div className={stack()} style={{ width: pageSize.width, zoom: scale }}>
-              <DocumentEditorPages count={pageCount} size={pageSize} />
+    <>
+      <div className={toolbar()}>
+        <div ref={setToolbarEl} className={toolbarControls()} />
+        <div className={toolbarEnd()}>
+          <DocumentModeSelect mode={mode} modes={modes} onModeChange={onModeChange} />
+        </div>
+      </div>
+      <ScrollArea.Root className={frame()}>
+        <ScrollArea.Viewport className={viewport()}>
+          <ScrollArea.Content
+            className={content()}
+            style={{ "--page-width": `${pageSize.width}px` } as CSSProperties}
+          >
+            <div ref={pagesRef} className={pages()}>
               <div
-                ref={paperRef}
-                className={paper()}
-                data-theme="document"
-                style={{
-                  padding: documentPageMargin,
-                  minHeight: documentPagesHeight(pageSize, pageCount),
-                }}
+                className={stack()}
+                style={{ "width": pageSize.width, "zoom": scale, "--page-scale": scale } as CSSProperties}
               >
-                {failed
-                  ? <Text size={2} color="faint">{t("details.editor.openError")}</Text>
-                  : handle == null
-                    ? <Text size={2} color="faint">{t("details.editor.loading")}</Text>
-                    : (
-                        <CollaborativeRichEditor
-                          key={document.id}
-                          className="w-full"
-                          collaborationHandle={handle}
-                          content=""
-                          page={false}
-                          disabled={mode === "viewing"}
-                          suggesting={controller}
-                          commentAnchorController={commentAnchorController}
-                          pagination={pagination}
-                          onEditor={onEditor}
-                          onUploadFile={onUploadFile}
-                        />
-                      )}
+                <DocumentEditorPages count={pageCount} size={pageSize} />
+                <div
+                  ref={paperRef}
+                  className={paper()}
+                  data-theme="document"
+                  style={{
+                    padding: documentPageMargin,
+                    minHeight: documentPagesHeight(pageSize, pageCount),
+                  }}
+                >
+                  {failed
+                    ? <Text size={2} color="faint">{t("details.editor.openError")}</Text>
+                    : handle == null
+                      ? <Text size={2} color="faint">{t("details.editor.loading")}</Text>
+                      : (
+                          <CollaborativeRichEditor
+                            key={document.id}
+                            className="w-full"
+                            collaborationHandle={handle}
+                            content=""
+                            page={false}
+                            disabled={mode === "viewing"}
+                            suggesting={controller}
+                            commentAnchorController={commentAnchorController}
+                            pagination={pagination}
+                            toolbarContainer={toolbarEl}
+                            onEditor={onEditor}
+                            onUploadFile={onUploadFile}
+                          />
+                        )}
+                </div>
               </div>
             </div>
-          </div>
-          <div className={review()}>
-            {handle != null && (
-              <DocumentReviewList
-                queryRef={reviewQueryRef}
-                editor={editor}
-                collaborationHandle={handle}
-                activeKey={activeKey}
-                onActiveChange={setActiveKey}
-              />
-            )}
-          </div>
-        </ScrollArea.Content>
-      </ScrollArea.Viewport>
-      <ScrollArea.Scrollbar className={scrollbar()} orientation="vertical">
-        <ScrollArea.Thumb className={thumb()} />
-      </ScrollArea.Scrollbar>
-    </ScrollArea.Root>
+            <div className={review()}>
+              {handle != null && (
+                <DocumentReviewList
+                  queryRef={reviewQueryRef}
+                  editor={editor}
+                  collaborationHandle={handle}
+                  activeKey={activeKey}
+                  onActiveChange={setActiveKey}
+                />
+              )}
+            </div>
+          </ScrollArea.Content>
+        </ScrollArea.Viewport>
+        <ScrollArea.Scrollbar className={scrollbar()} orientation="vertical">
+          <ScrollArea.Thumb className={thumb()} />
+        </ScrollArea.Scrollbar>
+      </ScrollArea.Root>
+    </>
   );
 }

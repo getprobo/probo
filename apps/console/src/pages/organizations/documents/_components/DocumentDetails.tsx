@@ -35,7 +35,6 @@ import { documentDetailsPage } from "../variants";
 import { DocumentApprovalsSection } from "./DocumentApprovalsSection";
 import { DocumentControlsSection } from "./DocumentControlsSection";
 import { DocumentEditor } from "./DocumentEditor/DocumentEditor";
-import { DocumentModeSelect } from "./DocumentModeSelect";
 import { DocumentPropertiesSection } from "./DocumentPropertiesSection";
 import { DocumentSignatoriesSection } from "./DocumentSignatoriesSection";
 import { DocumentTitleField } from "./DocumentTitleField";
@@ -70,7 +69,7 @@ export function DocumentDetails({
   const { mode, selectMode, modes } = useDocumentModes(document);
   const [cardsOpen, setCardsOpen] = useState(true);
   const {
-    root, main, backRow, titleRow, title, sideFrame, sideClip, side, viewport, cards, scrollbar, thumb,
+    root, main, backRow, title, sideFrame, sideClip, side, viewport, cards, scrollbar, thumb,
   } = documentDetailsPage({ cards: cardsOpen });
 
   return (
@@ -100,20 +99,15 @@ export function DocumentDetails({
             <SidebarSimpleIcon className="size-5! -scale-x-100" />
           </IconButton>
         </div>
-        <div className={titleRow()}>
-          <div className={title()}>
-            <DocumentTitleField documentKey={document} />
-          </div>
-          <DocumentModeSelect
-            mode={mode}
-            modes={modes}
-            onModeChange={selectMode}
-          />
+        <div className={title()}>
+          <DocumentTitleField documentKey={document} />
         </div>
         <DocumentEditor
           documentKey={document}
           reviewQueryRef={reviewQueryRef}
           mode={mode}
+          modes={modes}
+          onModeChange={selectMode}
         />
       </div>
       <div className={sideFrame()} inert={cardsOpen ? undefined : true}>

@@ -29,8 +29,7 @@ export const documentDetailsPage = tv({
     ],
     main: "flex min-w-0 flex-col gap-4 lg:min-h-0",
     backRow: "flex items-center justify-between gap-3",
-    titleRow: "grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3",
-    title: "min-w-0 flex-1",
+    title: "min-w-0",
     // Below lg the cards sit under the document, so the row track collapses.
     // At lg the page grid collapses the column instead.
     sideFrame: [
@@ -73,6 +72,14 @@ export const documentDetailsPage = tv({
 
 export const documentEditor = tv({
   slots: {
+    // The row shows while the editor loads, so the frame does not move and
+    // the mode select stays reachable. The editor portals its controls into
+    // the controls slot.
+    toolbar: "flex min-h-10 w-full shrink-0 items-center gap-1 rounded-1 border border-sand-6 bg-sand-1 p-1",
+    toolbarControls: "flex min-w-0 flex-1",
+    // The select trigger is full width by default, so the box sizes it to
+    // its content and leaves the rest of the row to the controls.
+    toolbarEnd: "shrink-0",
     // The frame only scrolls. The pages and the review column sit side by
     // side inside it so the cards move with the text.
     frame: "@container relative min-h-80 overflow-hidden lg:min-h-0 lg:flex-1",
@@ -95,7 +102,9 @@ export const documentEditor = tv({
     // Measured for the fit zoom, so it carries no horizontal padding.
     pages: "min-w-0 pb-6",
     stack: "relative",
-    page: "pointer-events-none absolute inset-x-0 border border-sand-6 bg-sand-1",
+    // The stack is zoomed to fit, so the border is divided by the zoom to stay
+    // one screen pixel, like the toolbar's.
+    page: "pointer-events-none absolute inset-x-0 border-[length:calc(1px/var(--page-scale,1))] border-sand-6 bg-sand-1",
     // The Mermaid sizes are important because rich-editor.css sits outside
     // the cascade layers. They apply on this page only.
     paper: [
