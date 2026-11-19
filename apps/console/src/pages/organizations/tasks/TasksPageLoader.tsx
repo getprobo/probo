@@ -18,13 +18,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQueryLoader } from "react-relay";
+import { useSearchParams } from "react-router";
 
 import type { TasksPageQuery } from "#/__generated__/core/TasksPageQuery.graphql";
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { CurrentUser } from "#/providers/CurrentUser";
 
+import {
+  readTaskListFilterPreference,
+  restoredTaskListFilters,
+  taskListFilterPreferenceFromParams,
+  taskListFilterPreferenceInParams,
+  writeTaskListFilterPreference,
+} from "./_lib/taskListFilterPreference";
 import {
   pickTaskListIncludeFlags,
   taskListIncludeFlags,
@@ -49,6 +58,25 @@ interface TasksPageQueryLoaderProps {
 }
 
 function TasksPageQueryLoader({ organizationId }: TasksPageQueryLoaderProps) {
+  const { profile } = use(CurrentUser);
+  const profileId = profile?.id ?? "";
+  const [searchParams, setSearchParams] = useSearchParams();
+  const filtersInUrl = taskListFilterPreferenceInParams(searchParams);
+  const restored = filtersInUrl
+    ? null
+    : restoredTaskListFilters(
+        searchParams,
+        readTaskListFilterPreference(organizationId, profileId),
+        profileId,
+      );
+  const restoredSearch = restored?.params.toString() ?? null;
+  const nextSearch = restoredSearch == null || restoredSearch === searchParams.toString()
+    ? null
+    : restoredSearch;
+  // Copy saved filters into a bare URL before the first query, so the list
+  // does not load unfiltered and then replace itself.
+  const filtersReady = nextSearch == null;
+  const appliedSearch = useRef<string | null>(null);
   const { graphqlFilter } = useTasksCardFilters();
   const includeFlags = useMemo(
     () => taskListIncludeFlags(graphqlFilter.state),
@@ -62,7 +90,22 @@ function TasksPageQueryLoader({ organizationId }: TasksPageQueryLoaderProps) {
   }, []);
 
   useEffect(() => {
-    if (pageReady) {
+    if (nextSearch == null || appliedSearch.current === nextSearch) {
+      return;
+    }
+    appliedSearch.current = nextSearch;
+    if (readTaskListFilterPreference(organizationId, profileId) == null) {
+      writeTaskListFilterPreference(
+        organizationId,
+        profileId,
+        taskListFilterPreferenceFromParams(new URLSearchParams(nextSearch)),
+      );
+    }
+    setSearchParams(new URLSearchParams(nextSearch), { replace: true });
+  }, [nextSearch, organizationId, profileId, setSearchParams]);
+
+  useEffect(() => {
+    if (!filtersReady || pageReady) {
       return;
     }
     loadQuery({
@@ -76,7 +119,7 @@ function TasksPageQueryLoader({ organizationId }: TasksPageQueryLoaderProps) {
       hasAssignee: graphqlFilter.hasAssignee,
       ...includeFlags,
     });
-  }, [graphqlFilter, includeFlags, loadQuery, organizationId, pageReady]);
+  }, [filtersReady, graphqlFilter, includeFlags, loadQuery, organizationId, pageReady]);
 
   const queryMatchesPendingFilter = queryRef != null
     && queryRef.variables.query === graphqlFilter.query
