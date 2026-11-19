@@ -25,7 +25,7 @@ import {
   NetworkError,
   NotFoundError,
   TimeoutError,
-} from "./errors";
+} from "./errors.js";
 
 const DEFAULT_TIMEOUT_MS = 5_000;
 const MAX_ATTEMPTS = 3;

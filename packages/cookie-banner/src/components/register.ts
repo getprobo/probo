@@ -18,21 +18,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { ProboBanner } from "./banner";
+import { ProboBanner } from "./banner.js";
 import {
   ProboAcceptButton,
   ProboAcknowledgeButton,
   ProboCustomizeButton,
   ProboRejectButton,
-} from "./buttons";
-import { ProboCategory } from "./category";
-import { ProboCategoryList } from "./category-list";
-import { ProboCategoryToggle } from "./category-toggle";
-import { ProboCookieBannerRoot } from "./cookie-banner-root";
-import { ProboCookie, ProboCookieList } from "./cookie-list";
-import { ProboPreferencePanel, ProboSaveButton } from "./preference-panel";
-import { ProboPrivacyChoices } from "./privacy-choices";
-import { ProboSettingsLink } from "./settings-link";
+} from "./buttons.js";
+import { ProboCategory } from "./category.js";
+import { ProboCategoryList } from "./category-list.js";
+import { ProboCategoryToggle } from "./category-toggle.js";
+import { ProboCookieBannerRoot } from "./cookie-banner-root.js";
+import { ProboCookie, ProboCookieList } from "./cookie-list.js";
+import { ProboPreferencePanel, ProboSaveButton } from "./preference-panel.js";
+import { ProboPrivacyChoices } from "./privacy-choices.js";
+import { ProboSettingsLink } from "./settings-link.js";
 
 const elements: [string, CustomElementConstructor][] = [
   ["probo-cookie-banner-root", ProboCookieBannerRoot],

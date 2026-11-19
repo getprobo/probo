@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { BannerTexts } from "./i18n";
+import type { BannerTexts } from "./i18n.js";
 
 export type TrackerType =
   | "COOKIE"

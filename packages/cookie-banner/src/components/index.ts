@@ -18,21 +18,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-export { ProboElement } from "./base";
-export type { ProboState, ProboRootElement, ConsentDraft } from "./base";
-export { ProboBanner } from "./banner";
+export { ProboElement } from "./base.js";
+export type { ProboState, ProboRootElement, ConsentDraft } from "./base.js";
+export { ProboBanner } from "./banner.js";
 export {
   ProboAcceptButton,
   ProboAcknowledgeButton,
   ProboCustomizeButton,
   ProboRejectButton,
-} from "./buttons";
-export { ProboCategory } from "./category";
-export { ProboCategoryList } from "./category-list";
-export { ProboCategoryToggle } from "./category-toggle";
-export { ProboCookieBannerRoot } from "./cookie-banner-root";
-export { ProboCookie, ProboCookieList } from "./cookie-list";
-export { ProboPreferencePanel, ProboSaveButton } from "./preference-panel";
-export { ProboPrivacyChoices } from "./privacy-choices";
-export { ProboSettingsLink } from "./settings-link";
-export { registerHeadlessComponents } from "./register";
+} from "./buttons.js";
+export { ProboCategory } from "./category.js";
+export { ProboCategoryList } from "./category-list.js";
+export { ProboCategoryToggle } from "./category-toggle.js";
+export { ProboCookieBannerRoot } from "./cookie-banner-root.js";
+export { ProboCookie, ProboCookieList } from "./cookie-list.js";
+export { ProboPreferencePanel, ProboSaveButton } from "./preference-panel.js";
+export { ProboPrivacyChoices } from "./privacy-choices.js";
+export { ProboSettingsLink } from "./settings-link.js";
+export { registerHeadlessComponents } from "./register.js";

@@ -18,11 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { Detector } from "./detector";
-import { isExtensionContext } from "./extension-context";
-import { getInitiatorURL } from "./initiator";
-import type { ReportQueue } from "./report-queue";
-import type { DetectedStorageEntry, StorageSource } from "./types";
+import type { Detector } from "./detector.js";
+import { isExtensionContext } from "./extension-context.js";
+import { getInitiatorURL } from "./initiator.js";
+import type { ReportQueue } from "./report-queue.js";
+import type { DetectedStorageEntry, StorageSource } from "./types.js";
 
 const OWN_KEY_PREFIX = "probo_consent:";
 

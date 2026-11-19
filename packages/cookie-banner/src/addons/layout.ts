@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { BannerConfig, BannerState } from "../types";
+import type { BannerConfig, BannerState } from "../types.js";
 
 export interface LayoutHost {
   readonly bannerConfig: BannerConfig;

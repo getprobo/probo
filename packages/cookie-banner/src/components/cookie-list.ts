@@ -18,12 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { CookieItem } from "../types";
-import { humanizeDuration } from "../cookie-utils";
-import { getCookieDetailLabels, getTrackerTypeLabel, interpolate } from "../i18n";
-import { ProboElement } from "./base";
-import type { ProboCategory } from "./category";
-import type { ProboCookieBannerRoot } from "./cookie-banner-root";
+import type { CookieItem } from "../types.js";
+import { humanizeDuration } from "../cookie-utils.js";
+import { getCookieDetailLabels, getTrackerTypeLabel, interpolate } from "../i18n.js";
+import { ProboElement } from "./base.js";
+import type { ProboCategory } from "./category.js";
+import type { ProboCookieBannerRoot } from "./cookie-banner-root.js";
 
 export class ProboCookieList extends ProboElement {
   private category: ProboCategory | null = null;

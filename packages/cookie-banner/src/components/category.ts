@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { CookieItem } from "../types";
-import { ProboElement } from "./base";
+import type { CookieItem } from "../types.js";
+import { ProboElement } from "./base.js";
 
 export class ProboCategory extends ProboElement {
 

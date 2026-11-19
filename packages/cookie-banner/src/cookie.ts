@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { ConsentAction } from "./types";
+import type { ConsentAction } from "./types.js";
 
 export const COOKIE_NAME = "probo_consent";
 const SECONDS_PER_DAY = 86400;

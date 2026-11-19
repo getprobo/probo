@@ -27,7 +27,7 @@ import {
   parseCssColor,
   type CtaComputedStyle,
   type NamedCtaStyle,
-} from "./cta-check";
+} from "./cta-check.js";
 
 const treatment = {
   fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',

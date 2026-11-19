@@ -21,7 +21,7 @@
 export {
   getLayoutRenderer,
   setLayoutRenderer,
-} from "./layout";
-export type { LayoutHost, LayoutRenderer } from "./layout";
-export { getTCFRuntime, setTCFRuntime } from "./tcf-runtime";
-export type { TCFChoices, TCFRuntime } from "./tcf-runtime";
+} from "./layout.js";
+export type { LayoutHost, LayoutRenderer } from "./layout.js";
+export { getTCFRuntime, setTCFRuntime } from "./tcf-runtime.js";
+export type { TCFChoices, TCFRuntime } from "./tcf-runtime.js";

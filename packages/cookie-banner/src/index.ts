@@ -23,15 +23,15 @@ export {
   getTCFRuntime,
   setLayoutRenderer,
   setTCFRuntime,
-} from "./addons";
-export type { LayoutHost, LayoutRenderer, TCFChoices, TCFRuntime } from "./addons";
-export { BRANDING, CLOSE_ICON } from "./html";
-export { resolveBannerText, resolveLayout } from "./layout";
-export { projectConsentFromTCF } from "./project-consent";
-export { interpolate } from "./i18n";
-export { registerCookieBanner } from "./themed-banner";
-export { bootCookieBanner } from "./themed-banner/boot";
-export { esc, floatingCard } from "./themed-banner/variants/shared";
+} from "./addons/index.js";
+export type { LayoutHost, LayoutRenderer, TCFChoices, TCFRuntime } from "./addons/index.js";
+export { BRANDING, CLOSE_ICON } from "./html.js";
+export { resolveBannerText, resolveLayout } from "./layout.js";
+export { projectConsentFromTCF } from "./project-consent.js";
+export { interpolate } from "./i18n.js";
+export { registerCookieBanner } from "./themed-banner/index.js";
+export { bootCookieBanner } from "./themed-banner/boot.js";
+export { esc, floatingCard } from "./themed-banner/variants/shared.js";
 export type {
   BannerConfig,
   BannerLayout,
@@ -49,4 +49,4 @@ export type {
   TCFGVL,
   TCFGVLVendor,
   VisitorConsent,
-} from "./types";
+} from "./types.js";

@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { BannerConfig, BannerLayout, BannerText, Presentation } from "./types";
+import type { BannerConfig, BannerLayout, BannerText, Presentation } from "./types.js";
 
 // Strict, GDPR-safe layout used only as a defensive fallback: a config without a
 // `layout` means the (self-hosted) Probo backend predates probod v0.246.0, the

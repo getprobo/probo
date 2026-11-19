@@ -20,8 +20,8 @@
 
 import { afterEach, describe, expect, it } from "vitest";
 
-import type { BannerConfig } from "../types";
-import { getLayoutRenderer, setLayoutRenderer } from "./layout";
+import type { BannerConfig } from "../types.js";
+import { getLayoutRenderer, setLayoutRenderer } from "./layout.js";
 
 const config = { tcf: {} } as unknown as BannerConfig;
 

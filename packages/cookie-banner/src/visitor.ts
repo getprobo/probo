@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { COOKIE_NAME } from "./cookie";
+import { COOKIE_NAME } from "./cookie.js";
 
 export function getVisitorId(bannerId: string): string | null {
   const key = `${COOKIE_NAME}:${bannerId}:vid`;

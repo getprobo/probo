@@ -25,7 +25,7 @@ import {
   cookieListItemDomain,
   parseCookieSetDomain,
   parseMaxAgeSeconds,
-} from "./cookie-utils";
+} from "./cookie-utils.js";
 
 describe("parseCookieSetDomain", () => {
   it("treats a missing Domain attribute as host-only", () => {

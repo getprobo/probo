@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CCPA_OPT_OUT_ICON, CCPA_PRIVACY_CHOICES_LABEL } from "../html";
-import { getGpcLabel } from "../i18n";
-import type { ProboCookieBannerRoot } from "./cookie-banner-root";
+import { CCPA_OPT_OUT_ICON, CCPA_PRIVACY_CHOICES_LABEL } from "../html.js";
+import { getGpcLabel } from "../i18n.js";
+import type { ProboCookieBannerRoot } from "./cookie-banner-root.js";
 
 const AUTO_ATTR = "data-probo-auto";
 

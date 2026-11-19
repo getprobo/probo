@@ -23,10 +23,10 @@ export {
   getTCFRuntime,
   setLayoutRenderer,
   setTCFRuntime,
-} from "../addons";
-export type { LayoutHost, LayoutRenderer, TCFChoices, TCFRuntime } from "../addons";
-export { registerHeadlessComponents } from "../components";
-export { resolveBannerText, resolveLayout } from "../layout";
+} from "../addons/index.js";
+export type { LayoutHost, LayoutRenderer, TCFChoices, TCFRuntime } from "../addons/index.js";
+export { registerHeadlessComponents } from "../components/index.js";
+export { resolveBannerText, resolveLayout } from "../layout.js";
 export type {
   BannerConfig,
   BannerLayout,
@@ -44,4 +44,4 @@ export type {
   TCFGVL,
   TCFGVLVendor,
   VisitorConsent,
-} from "../types";
+} from "../types.js";

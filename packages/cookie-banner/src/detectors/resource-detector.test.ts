@@ -20,7 +20,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { shouldStartResourceDetector } from "./resource-detector";
+import { shouldStartResourceDetector } from "./resource-detector.js";
 
 describe("shouldStartResourceDetector", () => {
   it("starts in discovery mode when config is absent", () => {
