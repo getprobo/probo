@@ -43,8 +43,8 @@ const documentReviewItemAuthorFragment = graphql`
 
 interface DocumentReviewItemProps {
   authorKey: DocumentReviewItem_author$key;
+  kind: "comment" | "suggestion";
   createdAt: string;
-  label: string;
   active: boolean;
   children: ReactNode;
   onActivate: () => void;
@@ -52,8 +52,8 @@ interface DocumentReviewItemProps {
 
 export function DocumentReviewItem({
   authorKey,
+  kind,
   createdAt,
-  label,
   active,
   children,
   onActivate,
@@ -62,11 +62,13 @@ export function DocumentReviewItem({
   const { i18n, t } = useTranslation("organizations/documents");
   const createdLabel = relativeDateFormat(i18n.language, createdAt)
     || t("details.review.justNow");
+  const label = kind === "comment"
+    ? t("details.review.openComment", { name: author.fullName })
+    : t("details.review.openSuggestion", { name: author.fullName });
   const { root, row, body, header, name, time } = documentReviewItem({ active });
 
   return (
     <Card variant="soft" padding={1} interactive className={root()}>
-      <CardButton aria-label={label} aria-pressed={active} onClick={onActivate} />
       <div className={row()}>
         <Avatar
           name={author.fullName}
@@ -77,9 +79,16 @@ export function DocumentReviewItem({
         />
         <div className={body()}>
           <div className={header()}>
-            <Text size={1} weight="medium" className={name()}>
-              {author.fullName}
-            </Text>
+            <CardButton
+              aria-label={label}
+              aria-pressed={active}
+              className={name()}
+              onClick={onActivate}
+            >
+              <Text size={1} weight="medium">
+                {author.fullName}
+              </Text>
+            </CardButton>
             <Text size={1} color="faint" className={time()}>
               {createdLabel}
             </Text>

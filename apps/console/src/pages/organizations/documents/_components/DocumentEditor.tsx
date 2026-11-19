@@ -63,7 +63,7 @@ export function DocumentEditor({ documentKey, reviewQueryRef, mode }: DocumentEd
   });
   const onUploadFile = useUploadRichTextFile();
   const paperRef = useRef<HTMLDivElement>(null);
-  const { frame, viewport, content, paper, review, scrollbar, thumb } = documentEditor();
+  const { frame, viewport, content, sheet, paper, review, scrollbar, thumb } = documentEditor();
   usePreventSuggestionTextDrop(paperRef, mode);
 
   const onEditor = useCallback((next: Editor | null) => {
@@ -75,25 +75,27 @@ export function DocumentEditor({ documentKey, reviewQueryRef, mode }: DocumentEd
     <ScrollArea.Root className={frame()}>
       <ScrollArea.Viewport className={viewport()}>
         <ScrollArea.Content className={content()}>
-          <div ref={paperRef} className={paper()} data-theme="document">
-            {failed
-              ? <Text size={2} color="faint">{t("details.editor.openError")}</Text>
-              : handle == null
-                ? <Text size={2} color="faint">{t("details.editor.loading")}</Text>
-                : (
-                    <CollaborativeRichEditor
-                      key={document.id}
-                      className="w-full"
-                      collaborationHandle={handle}
-                      content=""
-                      page={false}
-                      disabled={mode === "viewing"}
-                      suggesting={controller}
-                      commentAnchorController={commentAnchorController}
-                      onEditor={onEditor}
-                      onUploadFile={onUploadFile}
-                    />
-                  )}
+          <div className={sheet()}>
+            <div ref={paperRef} className={paper()} data-theme="document">
+              {failed
+                ? <Text size={2} color="faint">{t("details.editor.openError")}</Text>
+                : handle == null
+                  ? <Text size={2} color="faint">{t("details.editor.loading")}</Text>
+                  : (
+                      <CollaborativeRichEditor
+                        key={document.id}
+                        className="w-full"
+                        collaborationHandle={handle}
+                        content=""
+                        page={false}
+                        disabled={mode === "viewing"}
+                        suggesting={controller}
+                        commentAnchorController={commentAnchorController}
+                        onEditor={onEditor}
+                        onUploadFile={onUploadFile}
+                      />
+                    )}
+            </div>
           </div>
           <div className={review()}>
             {handle != null && (

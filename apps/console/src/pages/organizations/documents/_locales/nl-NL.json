@@ -68,14 +68,67 @@
       "suggestionUntracked": "Deze wijziging kon niet als suggestie worden bijgehouden"
     },
     "review": {
-      "openComment": "Opmerking tonen",
-      "openSuggestion": "Suggestie tonen",
+      "openComment": "Opmerking van {{name}} tonen",
+      "openSuggestion": "Suggestie van {{name}} tonen",
       "replies_one": "{{count}} reactie",
       "replies_other": "{{count}} reacties",
       "justNow": "zojuist",
       "contentError": "Deze opmerking kan niet worden weergegeven",
-      "formatting": "Opmaakwijziging",
-      "structure": "Structuurwijziging"
+      "changes": {
+        "formatAdded": {
+          "bold": "Vet toegevoegd",
+          "italic": "Cursief toegevoegd",
+          "underline": "Onderstreping toegevoegd",
+          "strike": "Doorhaling toegevoegd",
+          "code": "Code toegevoegd",
+          "link": "Link toegevoegd"
+        },
+        "formatRemoved": {
+          "bold": "Vet verwijderd",
+          "italic": "Cursief verwijderd",
+          "underline": "Onderstreping verwijderd",
+          "strike": "Doorhaling verwijderd",
+          "code": "Code verwijderd",
+          "link": "Link verwijderd"
+        },
+        "linkAdded": "Link toegevoegd: {{href}}",
+        "linkChanged": "Link gewijzigd naar {{href}}",
+        "linkRemoved": "Link verwijderd",
+        "blocks": {
+          "paragraph": "Alinea",
+          "heading": "Kop {{level}}",
+          "quote": "Citaat",
+          "code": "Codeblok",
+          "bulletList": "Lijst met opsommingstekens",
+          "orderedList": "Genummerde lijst",
+          "taskList": "Takenlijst",
+          "other": "Blok"
+        },
+        "blockChanged": "{{before}} → {{after}}",
+        "indentChanged": "Inspringing gewijzigd",
+        "nodeAdded": {
+          "table": "Tabel toegevoegd",
+          "row": "Rij toegevoegd",
+          "column": "Kolom toegevoegd",
+          "image": "Afbeelding toegevoegd",
+          "divider": "Scheidingslijn toegevoegd",
+          "file": "Bestand toegevoegd",
+          "line": "Regel toegevoegd",
+          "other": "Structuur toegevoegd"
+        },
+        "nodeRemoved": {
+          "table": "Tabel verwijderd",
+          "row": "Rij verwijderd",
+          "column": "Kolom verwijderd",
+          "image": "Afbeelding verwijderd",
+          "divider": "Scheidingslijn verwijderd",
+          "file": "Bestand verwijderd",
+          "line": "Regel verwijderd",
+          "other": "Structuur verwijderd"
+        },
+        "moreChanges_one": "+{{count}} andere wijziging",
+        "moreChanges_other": "+{{count}} andere wijzigingen"
+      }
     },
     "errors": {
       "update": "Document bijwerken mislukt"

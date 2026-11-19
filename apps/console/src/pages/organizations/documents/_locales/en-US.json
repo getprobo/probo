@@ -68,14 +68,67 @@
       "suggestionUntracked": "That change could not be tracked as a suggestion"
     },
     "review": {
-      "openComment": "Show comment",
-      "openSuggestion": "Show suggestion",
+      "openComment": "Show comment by {{name}}",
+      "openSuggestion": "Show suggestion by {{name}}",
       "replies_one": "{{count}} reply",
       "replies_other": "{{count}} replies",
       "justNow": "just now",
       "contentError": "Could not show this comment",
-      "formatting": "Formatting change",
-      "structure": "Structure change"
+      "changes": {
+        "formatAdded": {
+          "bold": "Bold added",
+          "italic": "Italic added",
+          "underline": "Underline added",
+          "strike": "Strikethrough added",
+          "code": "Code added",
+          "link": "Link added"
+        },
+        "formatRemoved": {
+          "bold": "Bold removed",
+          "italic": "Italic removed",
+          "underline": "Underline removed",
+          "strike": "Strikethrough removed",
+          "code": "Code removed",
+          "link": "Link removed"
+        },
+        "linkAdded": "Link added: {{href}}",
+        "linkChanged": "Link changed to {{href}}",
+        "linkRemoved": "Link removed",
+        "blocks": {
+          "paragraph": "Paragraph",
+          "heading": "Heading {{level}}",
+          "quote": "Quote",
+          "code": "Code block",
+          "bulletList": "Bulleted list",
+          "orderedList": "Numbered list",
+          "taskList": "Task list",
+          "other": "Block"
+        },
+        "blockChanged": "{{before}} → {{after}}",
+        "indentChanged": "Indentation changed",
+        "nodeAdded": {
+          "table": "Table added",
+          "row": "Row added",
+          "column": "Column added",
+          "image": "Image added",
+          "divider": "Divider added",
+          "file": "File added",
+          "line": "Line added",
+          "other": "Structure added"
+        },
+        "nodeRemoved": {
+          "table": "Table removed",
+          "row": "Row removed",
+          "column": "Column removed",
+          "image": "Image removed",
+          "divider": "Divider removed",
+          "file": "File removed",
+          "line": "Line removed",
+          "other": "Structure removed"
+        },
+        "moreChanges_one": "+{{count}} more change",
+        "moreChanges_other": "+{{count}} more changes"
+      }
     },
     "errors": {
       "update": "Could not update the document"

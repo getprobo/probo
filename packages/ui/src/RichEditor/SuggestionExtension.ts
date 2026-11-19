@@ -67,6 +67,7 @@ import {
   styleMarkStep,
   styleToggleNeedsFallback,
   type SuggestionStyleName,
+  suggestionStyles,
   suggestLink,
   suggestStyleToggle,
 } from "./suggestionStyle";
@@ -230,8 +231,8 @@ export function createSuggestingExtension(
             handleKeyDown(view, event) {
               return applySuggestingKey(view, controller.current, event);
             },
-            handleClick(view, pos) {
-              const id = suggestionIdAt(view, pos);
+            handleClick(view, pos, event) {
+              const id = suggestionIdFromTarget(event.target) ?? suggestionIdAt(view, pos);
               if (!id) return false;
               controller.current.onOpenSuggestion(id);
               return false;
@@ -1423,15 +1424,42 @@ function hasDeletion(marks: readonly ProseMirrorMark[]): boolean {
   return marks.some(mark => mark.type.name === suggestionDeleteName);
 }
 
+const suggestionTargetAttributes = [
+  "data-suggestion-insert",
+  "data-suggestion-delete",
+  ...suggestionStyles.map(style => `data-suggestion-format-${style.name}`),
+];
+const suggestionTargetSelector = suggestionTargetAttributes
+  .map(attribute => `[${attribute}]`)
+  .join(",");
+
+// The clicked element names its suggestion exactly, even for a single letter
+// where the click position falls on either side of it.
+function suggestionIdFromTarget(target: EventTarget | null): string | null {
+  if (!target || !("closest" in target)) return null;
+  const element = (target as Element).closest(suggestionTargetSelector);
+  if (!element) return null;
+  for (const attribute of suggestionTargetAttributes) {
+    const id = element.getAttribute(attribute);
+    if (id) return id;
+  }
+  return null;
+}
+
+// Suggestion marks are not inclusive, so a position at either edge of a run
+// reports no mark. The characters on each side still carry it.
 function suggestionIdAt(view: EditorView, pos: number): string | null {
-  const marks = view.state.doc.resolve(pos).marks();
-  const mark = marks.find(item =>
-    item.type.name === suggestionInsertName
-    || item.type.name === suggestionDeleteName
-    || isFormatMark(item),
-  );
-  const id = mark ? markAttr(mark, "id") : null;
-  return typeof id === "string" && id !== "" ? id : null;
+  const $pos = view.state.doc.resolve(pos);
+  for (const marks of [$pos.marks(), $pos.nodeAfter?.marks, $pos.nodeBefore?.marks]) {
+    const mark = marks?.find(item =>
+      item.type.name === suggestionInsertName
+      || item.type.name === suggestionDeleteName
+      || isFormatMark(item),
+    );
+    const id = mark ? markAttr(mark, "id") : null;
+    if (typeof id === "string" && id !== "") return id;
+  }
+  return null;
 }
 
 function transactionMeta<Key>(
