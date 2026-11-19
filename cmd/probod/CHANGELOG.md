@@ -4,11 +4,27 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.352.0] - 2026-11-19
+
 ### Added
 
 - MCP `submit_feedback` posts a webhook-shaped body, including the
   caller's name and email, to `PROBOD_FEEDBACK_URL`. There is no
   signature. The tool is hidden when that URL is unset
+- The employee portal top bar and the console and employee portal
+  organization pickers show the signed-in user's photo and open the
+  profile photo dialog, so the avatar can be replaced or removed
+  there. The connect viewer query returns the avatar file on the
+  identity. The invalid file message now says "5 MB or smaller"
+
+### Changed
+
+- Unauthenticated `signUp`, `signIn`, `forgotPassword`, and
+  `resendVerificationEmail` are rate-limited per IP and per field on
+  this process: 10 per minute for `signUp`, 30 for `signIn`, and 5
+  for the two mail mutations. Over the limit the field returns
+  `RATE_LIMITED` and the resolver does not run. Authentication runs
+  first, so a rejected caller does not spend that budget
 
 ## [0.351.1] - 2026-11-17
 
