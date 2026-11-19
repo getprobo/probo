@@ -445,7 +445,7 @@ export default function InternalControlFormDialog(props: Props) {
           </div>
         </DialogContent>
         <DialogFooter>
-          <Button type="submit">
+          <Button type="submit" disabled={formState.isSubmitting}>
             {internalControl ? t("internalControlFormDialog.actions.update") : t("internalControlFormDialog.actions.create")}
           </Button>
         </DialogFooter>
