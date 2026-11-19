@@ -29,6 +29,22 @@ import (
 	"go.gearno.de/kit/log"
 )
 
+type toolNameContextKey struct{}
+
+func contextWithToolName(ctx context.Context, name string) context.Context {
+	if name == "" {
+		return ctx
+	}
+
+	return context.WithValue(ctx, toolNameContextKey{}, name)
+}
+
+func toolNameFromContext(ctx context.Context) string {
+	name, _ := ctx.Value(toolNameContextKey{}).(string)
+
+	return name
+}
+
 func LoggingMiddleware(logger *log.Logger) func(mcp.MethodHandler) mcp.MethodHandler {
 	return func(next mcp.MethodHandler) mcp.MethodHandler {
 		return func(ctx context.Context, method string, req mcp.Request) (mcp.Result, error) {
@@ -39,7 +55,8 @@ func LoggingMiddleware(logger *log.Logger) func(mcp.MethodHandler) mcp.MethodHan
 				log.Bool("has_params", req.GetParams() != nil),
 			)
 
-			if ctr, ok := req.(*mcp.CallToolRequest); ok {
+			if ctr, ok := req.(*mcp.CallToolRequest); ok && ctr.Params != nil {
+				ctx = contextWithToolName(ctx, ctr.Params.Name)
 				logger.InfoCtx(
 					ctx,
 					fmt.Sprintf("calling %q tool", ctr.Params.Name),

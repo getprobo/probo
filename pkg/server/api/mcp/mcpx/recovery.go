@@ -22,6 +22,7 @@ package mcpx
 
 import (
 	"context"
+	"runtime"
 	"runtime/debug"
 
 	"go.gearno.de/kit/log"
@@ -30,10 +31,24 @@ import (
 
 // NewRecoverFunc returns a RecoverFunc for the generated MCP server that
 // classifies panics into safe client-facing errors and logs unknown errors.
+//
+// A nil-pointer panic implements error. Sending it through MapError logs the
+// message and drops the stack, so runtime panics are logged here with the
+// stack and the tool name stashed by LoggingMiddleware.
 func NewRecoverFunc(logger *log.Logger) mcpgenmcp.RecoverFunc {
 	return func(ctx context.Context, r any) error {
 		if r == nil {
-			logger.ErrorCtx(ctx, "nil panic in MCP tool handler")
+			logger.ErrorCtx(ctx, "nil panic in MCP tool handler", panicAttrs(ctx)...)
+			return ErrInternal
+		}
+
+		if err, ok := r.(runtime.Error); ok {
+			logger.ErrorCtx(
+				ctx,
+				"internal error in MCP tool handler",
+				append(panicAttrs(ctx), log.Error(err))...,
+			)
+
 			return ErrInternal
 		}
 
@@ -44,10 +59,21 @@ func NewRecoverFunc(logger *log.Logger) mcpgenmcp.RecoverFunc {
 		logger.ErrorCtx(
 			ctx,
 			"unexpected panic in MCP tool handler",
-			log.Any("panic", r),
-			log.String("stack", string(debug.Stack())),
+			append(panicAttrs(ctx), log.Any("panic", r))...,
 		)
 
 		return ErrInternal
 	}
+}
+
+func panicAttrs(ctx context.Context) []log.Attr {
+	attrs := []log.Attr{
+		log.String("stack", string(debug.Stack())),
+	}
+
+	if name := toolNameFromContext(ctx); name != "" {
+		attrs = append(attrs, log.String("tool_name", name))
+	}
+
+	return attrs
 }
