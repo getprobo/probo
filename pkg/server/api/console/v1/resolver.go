@@ -24,6 +24,7 @@ package console_v1
 
 import (
 	"context"
+	"errors"
 
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/log"
@@ -321,6 +322,29 @@ func (r *Resolver) Permission(ctx context.Context, obj types.Node, action string
 	_, err := r.authorize(ctx, obj.GetID(), action, authz.WithDryRun())
 
 	return err == nil, nil
+}
+
+func (r *Resolver) listableSearchEntityTypes(ctx context.Context, organizationID gid.GID) ([]uint16, error) {
+	identity := authn.IdentityFromContext(ctx)
+	session := authn.SessionFromContext(ctx)
+
+	var sessionID *gid.GID
+	if session != nil {
+		sessionID = &session.ID
+	}
+
+	entityTypes, err := tag.ListableEntityTypes(ctx, r.iam.Authorizer, identity.ID, sessionID, organizationID)
+	if err != nil {
+		if _, ok := errors.AsType[*iam.ErrAssumptionRequired](err); ok {
+			return nil, gqlx.AssumptionRequired(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot list searchable entity types", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return entityTypes, nil
 }
 
 func (r *Resolver) treatmentPlanNetScores(
