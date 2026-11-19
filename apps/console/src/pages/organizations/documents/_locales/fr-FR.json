@@ -1,6 +1,63 @@
 {
   "details": {
     "back": "Documents",
+    "actions": {
+      "cancel": "Annuler",
+      "menu": "Plus d'actions",
+      "unarchive": "Désarchiver",
+      "publish": {
+        "button": "Publier",
+        "title": "Publier une nouvelle version",
+        "description": "Décrivez ce qui a changé. Une version majeure peut demander une approbation avant d'être publiée.",
+        "changelog": "Journal des modifications",
+        "changelogPlaceholder": "Qu'est-ce qui a changé dans cette version ?",
+        "approvers": "Approbateurs",
+        "approversDescription": "Une version majeure attend l'approbation de ces personnes. Les versions mineures sont publiées immédiatement.",
+        "removeApprover": "Retirer {{name}}",
+        "addApprover": "Ajouter un approbateur",
+        "minor": "Publier une version mineure",
+        "major": "Publier une version majeure",
+        "requestApproval": "Demander l'approbation"
+      },
+      "download": {
+        "item": "Télécharger le PDF",
+        "title": "Télécharger le PDF",
+        "description": "Exporter la version publiée {{version}} en PDF.",
+        "signatures": "Inclure les signatures",
+        "signaturesDescription": "Ajouter les signatures recueillies pour cette version.",
+        "watermark": "Ajouter un filigrane",
+        "watermarkDescription": "Marquer chaque page pour pouvoir retracer la copie.",
+        "watermarkText": "Texte du filigrane",
+        "watermarkPlaceholder": "Votre adresse e-mail",
+        "submit": "Télécharger"
+      },
+      "archive": {
+        "item": "Archiver",
+        "title": "Archiver ce document ?",
+        "description": "« {{title}} » passe en lecture seule et rejoint les documents archivés. Vous pourrez le désarchiver plus tard.",
+        "confirm": "Archiver"
+      },
+      "delete": {
+        "item": "Supprimer",
+        "title": "Supprimer « {{title}} » ?",
+        "description": "Le document, ses versions et ses signatures sont supprimés définitivement. Cette action est irréversible.",
+        "confirm": "Supprimer"
+      },
+      "messages": {
+        "published": "Version publiée",
+        "approvalRequested": "Approbation demandée",
+        "archived": "Document archivé",
+        "unarchived": "Document désarchivé",
+        "deleted": "Document supprimé"
+      },
+      "errors": {
+        "publish": "Impossible de publier le document",
+        "archive": "Impossible d'archiver le document",
+        "unarchive": "Impossible de désarchiver le document",
+        "delete": "Impossible de supprimer le document",
+        "download": "Impossible de générer le PDF"
+      }
+    },
     "presence": {
       "label": "Personnes dans ce document",
       "anonymous": "Collaborateur",

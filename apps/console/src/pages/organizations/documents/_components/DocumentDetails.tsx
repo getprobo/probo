@@ -35,6 +35,7 @@ import { documentDetailsPage } from "../variants";
 import { DocumentApprovalsSection } from "./DocumentApprovalsSection";
 import { DocumentControlsSection } from "./DocumentControlsSection";
 import { DocumentEditor } from "./DocumentEditor/DocumentEditor";
+import { DocumentHeaderActions } from "./DocumentHeaderActions/DocumentHeaderActions";
 import { DocumentPropertiesSection } from "./DocumentPropertiesSection";
 import { DocumentSignatoriesSection } from "./DocumentSignatoriesSection";
 import { DocumentTitleField } from "./DocumentTitleField";
@@ -42,6 +43,7 @@ import { DocumentTitleField } from "./DocumentTitleField";
 const documentDetailsFragment = graphql`
   fragment DocumentDetails_document on Document {
     ...DocumentTitleField_document
+    ...DocumentHeaderActions_document
     ...DocumentEditor_document
     ...useDocumentModes_document
     ...DocumentPropertiesSection_document
@@ -69,7 +71,7 @@ export function DocumentDetails({
   const { mode, selectMode, modes } = useDocumentModes(document);
   const [cardsOpen, setCardsOpen] = useState(true);
   const {
-    root, main, backRow, title, sideFrame, sideClip, side, viewport, cards, scrollbar, thumb,
+    root, main, backRow, backActions, title, sideFrame, sideClip, side, viewport, cards, scrollbar, thumb,
   } = documentDetailsPage({ cards: cardsOpen });
 
   return (
@@ -88,16 +90,19 @@ export function DocumentDetails({
           >
             {t("details.back")}
           </Link>
-          <IconButton
-            size={1}
-            variant="ghost"
-            color="neutral"
-            aria-expanded={cardsOpen}
-            aria-label={t(cardsOpen ? "details.cards.hide" : "details.cards.show")}
-            onClick={() => setCardsOpen(open => !open)}
-          >
-            <SidebarSimpleIcon className="size-5! -scale-x-100" />
-          </IconButton>
+          <div className={backActions()}>
+            <DocumentHeaderActions documentKey={document} />
+            <IconButton
+              size={1}
+              variant="ghost"
+              color="neutral"
+              aria-expanded={cardsOpen}
+              aria-label={t(cardsOpen ? "details.cards.hide" : "details.cards.show")}
+              onClick={() => setCardsOpen(open => !open)}
+            >
+              <SidebarSimpleIcon className="size-5! -scale-x-100" />
+            </IconButton>
+          </div>
         </div>
         <div className={title()}>
           <DocumentTitleField documentKey={document} />
