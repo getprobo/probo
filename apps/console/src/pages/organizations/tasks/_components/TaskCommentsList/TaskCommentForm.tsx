@@ -26,6 +26,7 @@ import { Field } from "@probo/ui/src/v2/form/Field";
 import { shortcutAria } from "@probo/ui/src/v2/shortcutAria";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useParams } from "react-router";
 
 import { RichEditor } from "#/pages/organizations/_components/RichEditor";
 import {
@@ -36,14 +37,21 @@ import { useMentionMembers } from "#/pages/organizations/_lib/useMentionMembers"
 
 import { taskCommentMaxLength } from "../../_lib/taskCommentMaxLength";
 import { useCreateTaskComment } from "../../_lib/useCreateTaskComment";
+import { useTaskCommentDraft } from "../../_lib/useTaskCommentDraft";
 
 export function TaskCommentForm() {
+  const { taskId } = useParams<{ taskId: string }>();
+
+  // A new task id remounts the composer so its draft is read and flushed alone.
+  return <TaskCommentComposer key={taskId ?? ""} />;
+}
+
+function TaskCommentComposer() {
   const { t } = useTranslation("organizations/tasks");
   const [createTaskComment, isCreating] = useCreateTaskComment();
   const mentionSource = useMentionMembers();
-  const [content, setContent] = useState("");
+  const draft = useTaskCommentDraft();
   const [uploading, setUploading] = useState(false);
-  const [editorKey, setEditorKey] = useState(0);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const { root, editor } = taskCommentForm();
 
@@ -52,12 +60,12 @@ export function TaskCommentForm() {
       return;
     }
 
-    if (isRichEditorContentEmpty(content)) {
+    if (isRichEditorContentEmpty(draft.content)) {
       setErrors({ content: t("detailsPage.comments.errors.contentRequired") });
       return;
     }
 
-    if (richEditorContentTextLength(content) > taskCommentMaxLength) {
+    if (richEditorContentTextLength(draft.content) > taskCommentMaxLength) {
       setErrors({
         content: t("detailsPage.comments.errors.contentTooLong", {
           max: taskCommentMaxLength,
@@ -66,10 +74,9 @@ export function TaskCommentForm() {
       return;
     }
 
-    void createTaskComment(content).then(
+    void createTaskComment(draft.content).then(
       () => {
-        setContent("");
-        setEditorKey(key => key + 1);
+        draft.clear();
         setErrors({});
       },
       () => {
@@ -83,11 +90,11 @@ export function TaskCommentForm() {
       <Form className={root()} onFormSubmit={handleSubmit}>
         <Field error={errors.content}>
           <RichEditor
-            key={editorKey}
+            key={draft.editorKey}
             controls={false}
             attachments
             className={editor()}
-            content={content}
+            content={draft.content}
             disabled={isCreating}
             placeholder={t("detailsPage.comments.fields.leaveAComment")}
             aria-label={t("detailsPage.comments.fields.leaveAComment")}
@@ -110,7 +117,7 @@ export function TaskCommentForm() {
               </Button>
             )}
             onChangeContent={(next) => {
-              setContent(next);
+              draft.setContent(next);
               if (richEditorContentTextLength(next) > taskCommentMaxLength) {
                 setErrors({
                   content: t("detailsPage.comments.errors.contentTooLong", {
