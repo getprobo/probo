@@ -74,7 +74,7 @@ export const documentDetailsPage = tv({
 export const documentEditor = tv({
   slots: {
     frame: [
-      "relative min-h-80 overflow-hidden rounded-4 border border-sand-a3 bg-sand-1",
+      "@container relative min-h-80 overflow-hidden rounded-4 border border-sand-a3 bg-sand-1",
       "lg:min-h-0 lg:flex-1",
     ],
     viewport: [
@@ -82,7 +82,11 @@ export const documentEditor = tv({
       "mask-no-repeat",
       "mask-[linear-gradient(to_bottom,transparent,black_min(16px,var(--scroll-area-overflow-y-start)),black_calc(100%-min(16px,var(--scroll-area-overflow-y-end,16px))),transparent)]",
     ],
-    paper: "py-12 pr-8 pl-14",
+    // The review column only fits once the frame is wide enough to keep a
+    // readable line length beside it.
+    content: "grid grid-cols-1 @4xl:grid-cols-[minmax(0,1fr)_18rem]",
+    paper: "min-w-0 py-12 pr-8 pl-14",
+    review: "hidden py-12 pr-4 @4xl:block",
     scrollbar: [
       "flex w-1 flex-col items-center py-1",
       "pointer-events-none opacity-0 transition-opacity",
@@ -143,6 +147,56 @@ export const documentControls = tv({
   },
   defaultVariants: {
     pending: false,
+  },
+});
+
+export const documentReviewList = tv({
+  slots: {
+    column: "relative",
+    card: "absolute inset-x-0 transition-[top] duration-150 ease-out",
+  },
+  variants: {
+    placed: {
+      true: {},
+      false: { card: "invisible" },
+    },
+  },
+  defaultVariants: {
+    placed: false,
+  },
+});
+
+export const documentReviewItem = tv({
+  slots: {
+    root: "",
+    row: "flex min-w-0 items-start gap-3",
+    body: "flex min-w-0 flex-1 flex-col gap-1",
+    header: "flex min-w-0 items-baseline gap-2",
+    name: "truncate",
+    time: "shrink-0 whitespace-nowrap",
+  },
+  variants: {
+    active: {
+      true: { root: "border-sand-8! shadow-2" },
+      false: {},
+    },
+  },
+  defaultVariants: {
+    active: false,
+  },
+});
+
+export const documentCommentThreadListItem = tv({
+  slots: {
+    content: "text-2 [&_.tiptap>p:first-child]:mt-0 [&_.tiptap>p:last-child]:mb-0",
+  },
+});
+
+export const documentSuggestionListItem = tv({
+  slots: {
+    changes: "flex min-w-0 flex-col gap-1",
+    text: "line-clamp-4 block break-words whitespace-pre-line",
+    deleted: "line-clamp-4 block break-words whitespace-pre-line line-through",
   },
 });
 

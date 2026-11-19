@@ -23,7 +23,9 @@ import { useQueryLoader } from "react-relay";
 import { useParams } from "react-router";
 
 import type { DocumentDetailsPageQuery } from "#/__generated__/core/DocumentDetailsPageQuery.graphql";
+import type { DocumentReviewListQuery } from "#/__generated__/core/DocumentReviewListQuery.graphql";
 
+import { documentReviewListQuery } from "./_components/DocumentReviewList/DocumentReviewList";
 import { DocumentDetailsPage, documentDetailsPageQuery } from "./DocumentDetailsPage";
 import { DocumentDetailsPageSkeleton } from "./DocumentDetailsPageSkeleton";
 
@@ -31,12 +33,15 @@ export default function DocumentDetailsPageLoader() {
   const { documentId } = useParams<{ documentId: string }>();
   const [queryRef, loadQuery]
     = useQueryLoader<DocumentDetailsPageQuery>(documentDetailsPageQuery);
+  const [reviewQueryRef, loadReviewQuery]
+    = useQueryLoader<DocumentReviewListQuery>(documentReviewListQuery);
 
   useEffect(() => {
     if (documentId) {
       loadQuery({ documentId });
+      loadReviewQuery({ documentId });
     }
-  }, [loadQuery, documentId]);
+  }, [loadQuery, loadReviewQuery, documentId]);
 
   if (documentId == null) {
     throw new Error(":documentId missing in route params");
@@ -46,6 +51,10 @@ export default function DocumentDetailsPageLoader() {
     && queryRef.variables.documentId === documentId
     ? queryRef
     : null;
+  const currentReviewQueryRef = reviewQueryRef != null
+    && reviewQueryRef.variables.documentId === documentId
+    ? reviewQueryRef
+    : null;
 
   if (currentQueryRef == null) {
     return <DocumentDetailsPageSkeleton />;
@@ -53,7 +62,11 @@ export default function DocumentDetailsPageLoader() {
 
   return (
     <Suspense fallback={<DocumentDetailsPageSkeleton />}>
-      <DocumentDetailsPage key={documentId} queryRef={currentQueryRef} />
+      <DocumentDetailsPage
+        key={documentId}
+        queryRef={currentQueryRef}
+        reviewQueryRef={currentReviewQueryRef}
+      />
     </Suspense>
   );
 }

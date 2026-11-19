@@ -24,6 +24,7 @@ import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { useLocation } from "react-router";
 
 import type { DocumentDetailsPageQuery } from "#/__generated__/core/DocumentDetailsPageQuery.graphql";
+import type { DocumentReviewListQuery } from "#/__generated__/core/DocumentReviewListQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { NotFoundError } from "#/lib/relay/errors";
 
@@ -46,9 +47,10 @@ export const documentDetailsPageQuery = graphql`
 
 interface DocumentDetailsPageProps {
   queryRef: PreloadedQuery<DocumentDetailsPageQuery>;
+  reviewQueryRef: PreloadedQuery<DocumentReviewListQuery> | null;
 }
 
-export function DocumentDetailsPage({ queryRef }: DocumentDetailsPageProps) {
+export function DocumentDetailsPage({ queryRef, reviewQueryRef }: DocumentDetailsPageProps) {
   const data = usePreloadedQuery<DocumentDetailsPageQuery>(
     documentDetailsPageQuery,
     queryRef,
@@ -66,6 +68,7 @@ export function DocumentDetailsPage({ queryRef }: DocumentDetailsPageProps) {
   return (
     <DocumentDetails
       documentKey={document}
+      reviewQueryRef={reviewQueryRef}
       organizationId={organizationId}
       search={location.search}
     />

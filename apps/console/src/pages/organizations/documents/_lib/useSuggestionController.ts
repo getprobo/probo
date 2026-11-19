@@ -65,7 +65,11 @@ const suggestionAuthorQuery = graphql`
   }
 `;
 
-export function useSuggestionController(documentId: string, mode: DocumentMode) {
+export function useSuggestionController(
+  documentId: string,
+  mode: DocumentMode,
+  onOpenSuggestion: (id: string) => void,
+) {
   const { t } = useTranslation("organizations/documents");
   const toast = useToast();
   const environment = useRelayEnvironment();
@@ -141,7 +145,7 @@ export function useSuggestionController(documentId: string, mode: DocumentMode) 
     current.onSuggestionDone = () => {
       current.suggestionId = null;
     };
-    current.onOpenSuggestion = () => {};
+    current.onOpenSuggestion = onOpenSuggestion;
     current.onBlocked = notifyBlocked;
     current.onStartSuggesting = () => {
       if (current.suggestionId) {
@@ -210,7 +214,7 @@ export function useSuggestionController(documentId: string, mode: DocumentMode) 
       current.request = request;
       return request;
     };
-  }, [documentId, environment, notifyBlocked, profileId, startSuggestion, t, toast]);
+  }, [documentId, environment, notifyBlocked, onOpenSuggestion, profileId, startSuggestion, t, toast]);
 
   const setEditor = useCallback((editor: Editor | null) => {
     editorRef.current = editor;

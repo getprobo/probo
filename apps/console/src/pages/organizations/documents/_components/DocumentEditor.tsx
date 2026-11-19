@@ -20,12 +20,15 @@
 
 import { ScrollArea } from "@base-ui/react/scroll-area";
 import { CollaborativeRichEditor } from "@probo/ui/src/RichEditor/CollaborativeRichEditor";
+import type { CommentAnchorController } from "@probo/ui/src/RichEditor/commentAnchors";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useRef } from "react";
+import type { Editor } from "@tiptap/core";
+import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, useFragment } from "react-relay";
+import { graphql, type PreloadedQuery, useFragment } from "react-relay";
 
 import type { DocumentEditor_document$key } from "#/__generated__/core/DocumentEditor_document.graphql";
+import type { DocumentReviewListQuery } from "#/__generated__/core/DocumentReviewListQuery.graphql";
 import { useUploadRichTextFile } from "#/pages/organizations/_lib/useUploadRichTextFile";
 
 import { useDocumentCollaboration } from "../_lib/useDocumentCollaboration";
@@ -33,6 +36,8 @@ import type { DocumentMode } from "../_lib/useDocumentModes";
 import { usePreventSuggestionTextDrop } from "../_lib/usePreventSuggestionTextDrop";
 import { useSuggestionController } from "../_lib/useSuggestionController";
 import { documentEditor } from "../variants";
+
+import { DocumentReviewList } from "./DocumentReviewList/DocumentReviewList";
 
 const documentEditorFragment = graphql`
   fragment DocumentEditor_document on Document {
@@ -42,23 +47,34 @@ const documentEditorFragment = graphql`
 
 interface DocumentEditorProps {
   documentKey: DocumentEditor_document$key;
+  reviewQueryRef: PreloadedQuery<DocumentReviewListQuery> | null;
   mode: DocumentMode;
 }
 
-export function DocumentEditor({ documentKey, mode }: DocumentEditorProps) {
+export function DocumentEditor({ documentKey, reviewQueryRef, mode }: DocumentEditorProps) {
   const document = useFragment(documentEditorFragment, documentKey);
   const { t } = useTranslation("organizations/documents");
+  const [activeKey, setActiveKey] = useState<string | null>(null);
+  const [editor, setEditorInstance] = useState<Editor | null>(null);
   const { handle, failed } = useDocumentCollaboration(document.id);
-  const { controller, setEditor } = useSuggestionController(document.id, mode);
+  const { controller, setEditor } = useSuggestionController(document.id, mode, setActiveKey);
+  const commentAnchorController: CommentAnchorController = useRef({
+    onOpenThread: (id: string) => setActiveKey(id),
+  });
   const onUploadFile = useUploadRichTextFile();
   const paperRef = useRef<HTMLDivElement>(null);
-  const { frame, viewport, paper, scrollbar, thumb } = documentEditor();
+  const { frame, viewport, content, paper, review, scrollbar, thumb } = documentEditor();
   usePreventSuggestionTextDrop(paperRef, mode);
+
+  const onEditor = useCallback((next: Editor | null) => {
+    setEditor(next);
+    setEditorInstance(next);
+  }, [setEditor]);
 
   return (
     <ScrollArea.Root className={frame()}>
       <ScrollArea.Viewport className={viewport()}>
-        <ScrollArea.Content>
+        <ScrollArea.Content className={content()}>
           <div ref={paperRef} className={paper()} data-theme="document">
             {failed
               ? <Text size={2} color="faint">{t("details.editor.openError")}</Text>
@@ -73,10 +89,22 @@ export function DocumentEditor({ documentKey, mode }: DocumentEditorProps) {
                       page={false}
                       disabled={mode === "viewing"}
                       suggesting={controller}
-                      onEditor={setEditor}
+                      commentAnchorController={commentAnchorController}
+                      onEditor={onEditor}
                       onUploadFile={onUploadFile}
                     />
                   )}
+          </div>
+          <div className={review()}>
+            {handle != null && (
+              <DocumentReviewList
+                queryRef={reviewQueryRef}
+                editor={editor}
+                collaborationHandle={handle}
+                activeKey={activeKey}
+                onActiveChange={setActiveKey}
+              />
+            )}
           </div>
         </ScrollArea.Content>
       </ScrollArea.Viewport>
