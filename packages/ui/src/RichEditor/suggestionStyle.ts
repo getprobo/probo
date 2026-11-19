@@ -73,11 +73,12 @@ export const suggestionFormatExtensions = suggestionStyles.map(style => Mark.cre
   parseHTML() {
     return [{ tag: `span[data-suggestion-format-${style.name}]` }];
   },
+  // A format change neither adds nor deletes text, so it takes indigo rather
+  // than the green and red of inserted and deleted content.
   renderHTML({ HTMLAttributes }: { HTMLAttributes: Record<string, unknown> }) {
-    const action = readStringAttribute(HTMLAttributes, "action", "add");
     return ["span", mergeAttributes(HTMLAttributes, {
       [`data-suggestion-format-${style.name}`]: readStringAttribute(HTMLAttributes, "id", ""),
-      class: action === "remove" ? "text-red-11" : "text-green-11",
+      class: "text-indigo-11",
     }), 0];
   },
 }));

@@ -88,16 +88,12 @@ export const documentEditor = tv({
       "mask-no-repeat",
       "mask-[linear-gradient(to_bottom,transparent,black_min(16px,var(--scroll-area-overflow-y-start)),black_calc(100%-min(16px,var(--scroll-area-overflow-y-end,16px))),transparent)]",
     ],
-    // The review column only fits once the frame is wide enough to keep a
-    // readable line length beside it.
-    // The pages track is capped at the unscaled page width, so the pages sit
-    // on the left. Its minimum keeps the full page width as long as the
-    // review column can stay at its minimum, so the review column shrinks
-    // from its cap first and the pages only scale down after it.
+    // The pages track is capped at the unscaled page width and shrinks to
+    // fit. The review variant decides where it sits and whether a review
+    // column follows it.
     content: [
-      "grid min-h-full justify-start gap-x-(--review-gap) gap-y-4 grid-cols-[minmax(0,var(--page-width))]",
+      "grid min-h-full gap-x-(--review-gap) gap-y-4 grid-cols-[minmax(0,var(--page-width))]",
       "[--review-gap:1.5rem] [--review-min:18rem]",
-      "@4xl:grid-cols-[minmax(min(var(--page-width),calc(100%_-_var(--review-min)_-_var(--review-gap))),var(--page-width))_minmax(var(--review-min),28rem)]",
     ],
     // Measured for the fit zoom, so it carries no horizontal padding.
     pages: "min-w-0 pb-6",
@@ -120,6 +116,27 @@ export const documentEditor = tv({
       "data-scrolling:pointer-events-auto data-scrolling:opacity-100 data-scrolling:duration-0",
     ],
     thumb: "w-1 rounded-full bg-sand-a8",
+  },
+  variants: {
+    review: {
+      // The review column only fits once the frame is wide enough to keep a
+      // readable line length beside it. The pages track keeps the full page
+      // width as long as the review column can stay at its minimum, so the
+      // review column shrinks from its cap first and the pages only scale
+      // down after it.
+      true: {
+        content: [
+          "justify-start",
+          "@4xl:grid-cols-[minmax(min(var(--page-width),calc(100%_-_var(--review-min)_-_var(--review-gap))),var(--page-width))_minmax(var(--review-min),28rem)]",
+        ],
+      },
+      false: {
+        content: "justify-center",
+      },
+    },
+  },
+  defaultVariants: {
+    review: true,
   },
 });
 
@@ -196,7 +213,11 @@ export const documentReviewList = tv({
 // card's stretched button.
 export const documentReviewItem = tv({
   slots: {
-    root: "group/review",
+    // The active card drops the interactive hover, so it sets the containing
+    // block for the CardButton overlay itself.
+    // py-2 tightens the card's p-3 vertically; Tailwind emits padding-block
+    // after padding, so it wins without merging.
+    root: "group/review relative py-2",
     body: "flex min-w-0 flex-col gap-3",
   },
 });
@@ -206,9 +227,15 @@ export const documentReviewAuthor = tv({
     root: "flex min-w-0 items-center gap-2",
     identity: "flex min-w-0 flex-1 flex-col items-start",
     name: "max-w-full truncate text-left",
-    time: "truncate",
+    // The button would inherit the card's larger line height and grow the row
+    // past the name, which pulls the centered avatar off the text.
+    nameButton: "max-w-full text-left text-1",
+    // A line box as tall as the text pulls the time up under the name.
+    time: "truncate leading-3",
+    // The actions sit in the top-right corner, not centered on the two-line
+    // identity.
     trailing: [
-      "relative z-1 flex shrink-0 items-center gap-0.5",
+      "relative z-1 flex shrink-0 items-center gap-0.5 self-start",
       "opacity-0 transition-opacity",
       "group-hover/review:opacity-100 group-focus-within/review:opacity-100",
       "group-data-active/review:opacity-100",

@@ -61,7 +61,7 @@ export function DocumentReviewAuthor({
   const { i18n, t } = useTranslation("organizations/documents");
   const createdLabel = relativeDateFormat(i18n.language, createdAt)
     || t("details.review.justNow");
-  const { root, identity, name, time, trailing: trailingClass } = documentReviewAuthor();
+  const { root, identity, name, nameButton, time, trailing: trailingClass } = documentReviewAuthor();
   const nameText = (
     <Text size={1} weight="medium" className={name()}>
       {profile.fullName}
@@ -85,7 +85,7 @@ export function DocumentReviewAuthor({
                   ? t("details.review.openComment", { name: profile.fullName })
                   : t("details.review.openSuggestion", { name: profile.fullName })}
                 aria-pressed={item.active}
-                className={name()}
+                className={nameButton()}
                 onClick={item.onActivate}
               >
                 {nameText}

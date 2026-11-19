@@ -29,7 +29,7 @@ import type { Editor } from "@tiptap/core";
 import { useCallback, useContext, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useRelayEnvironment } from "react-relay";
-import { fetchQuery, graphql } from "relay-runtime";
+import { ConnectionHandler, fetchQuery, graphql } from "relay-runtime";
 import { useDebounceCallback } from "usehooks-ts";
 
 import type { useSuggestionControllerMutation } from "#/__generated__/core/useSuggestionControllerMutation.graphql";
@@ -42,12 +42,20 @@ import type { DocumentMode } from "./useDocumentModes";
 const blockedToastIntervalMs = 3_000;
 const blockedToastOptions = { leading: true, trailing: false };
 
+// The new edge carries every field the review column reads from a
+// suggestion, so its card appears without a refetch.
 const startSuggestionMutation = graphql`
-  mutation useSuggestionControllerMutation($input: StartDocumentSuggestionInput!) {
+  mutation useSuggestionControllerMutation(
+    $input: StartDocumentSuggestionInput!
+    $connections: [ID!]!
+  ) {
     startDocumentSuggestion(input: $input) {
-      documentSuggestionEdge {
+      documentSuggestionEdge @appendEdge(connections: $connections) {
+        cursor
         node {
           id
+          status
+          ...DocumentSuggestionListItem_suggestion
         }
       }
     }
@@ -64,6 +72,14 @@ const suggestionAuthorQuery = graphql`
     }
   }
 `;
+
+// Must match the arguments of the review column's suggestions connection.
+function openSuggestionsConnectionId(documentId: string) {
+  return ConnectionHandler.getConnectionID(documentId, "DocumentReviewListColumn_suggestions", {
+    filter: { status: "OPEN" },
+    orderBy: { field: "CREATED_AT", direction: "ASC" },
+  });
+}
 
 export function useSuggestionController(
   documentId: string,
@@ -158,7 +174,10 @@ export function useSuggestionController(
 
       const request = new Promise<string | null>((resolve) => {
         void startSuggestion({
-          variables: { input: { documentId } },
+          variables: {
+            input: { documentId },
+            connections: [openSuggestionsConnectionId(documentId)],
+          },
           onCompleted: (response, errors) => {
             if (current.request === request) {
               current.request = null;

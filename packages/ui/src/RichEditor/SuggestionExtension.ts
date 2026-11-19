@@ -397,6 +397,21 @@ function suggestionFocusPlugin() {
   });
 }
 
+// The focused suggestion's text gets a stronger fill and an outline drawn as
+// an inset ring, which takes no space, so nothing reflows. A bottom line would
+// read as a suggested underline. Each wrapped line gets its own closed box.
+// Whole blocks get an outline. The block fills are important because
+// rich-editor.css sits outside the cascade layers and sets the resting fill.
+const focusedText = {
+  insert: "bg-green-4 shadow-[inset_0_0_0_1px_var(--green-9)] box-decoration-clone",
+  remove: "bg-red-4 shadow-[inset_0_0_0_1px_var(--red-9)] box-decoration-clone",
+  format: "bg-indigo-4 shadow-[inset_0_0_0_1px_var(--indigo-9)] box-decoration-clone",
+};
+const focusedBlock = {
+  insert: "bg-green-3! outline-2 outline-offset-2 outline-green-9",
+  remove: "bg-red-3! outline-2 outline-offset-2 outline-red-9",
+};
+
 function suggestionFocusDecorations(doc: ProseMirrorNode, id: string) {
   const decorations: Decoration[] = [];
   doc.descendants((node, pos) => {
@@ -407,7 +422,7 @@ function suggestionFocusDecorations(doc: ProseMirrorNode, id: string) {
         const base = structural.kind === "insertion"
           ? "suggestion-inserted-block"
           : "suggestion-deleted-block";
-        const highlight = structural.kind === "insertion" ? "bg-green-3" : "bg-red-3";
+        const highlight = structural.kind === "insertion" ? focusedBlock.insert : focusedBlock.remove;
         decorations.push(Decoration.node(pos, pos + node.nodeSize, {
           "class": focused ? `${base} ${highlight}` : base,
           "data-suggestion-block": structural.id,
@@ -419,18 +434,18 @@ function suggestionFocusDecorations(doc: ProseMirrorNode, id: string) {
     if (split?.kind === "deletion") {
       const focused = id !== "" && split.id === id;
       decorations.push(Decoration.node(pos, pos + node.nodeSize, {
-        class: focused ? "suggestion-deleted-line bg-red-3" : "suggestion-deleted-line",
+        class: focused ? `suggestion-deleted-line ${focusedBlock.remove}` : "suggestion-deleted-line",
       }));
     }
     if (!node.isText || id === "") return;
     for (const mark of node.marks) {
       if (mark.attrs.id !== id) continue;
       const focused = mark.type.name === suggestionInsertName
-        ? "bg-green-3"
+        ? focusedText.insert
         : mark.type.name === suggestionDeleteName
-          ? "bg-red-3"
+          ? focusedText.remove
           : isFormatMark(mark)
-            ? mark.attrs.action === "remove" ? "bg-red-3" : "bg-green-3"
+            ? focusedText.format
             : null;
       if (!focused) continue;
       decorations.push(Decoration.inline(pos, pos + node.nodeSize, { class: focused }));

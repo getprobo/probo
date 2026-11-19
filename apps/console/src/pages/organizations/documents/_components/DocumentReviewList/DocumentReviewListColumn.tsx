@@ -29,6 +29,7 @@ import type { DocumentReviewListColumnSuggestionsPaginationQuery } from "#/__gen
 import type { DocumentReviewListColumnThreadsPaginationQuery } from "#/__generated__/core/DocumentReviewListColumnThreadsPaginationQuery.graphql";
 import { useLoadAllPages } from "#/lib/relay/useLoadAllPages";
 
+import { useDismissActiveReview } from "../../_lib/useDismissActiveReview";
 import { useReviewAnchors } from "../../_lib/useReviewAnchors";
 import { type ReviewCardAnchor, useReviewCardTops } from "../../_lib/useReviewCardTops";
 import { useReviewHighlights } from "../../_lib/useReviewHighlights";
@@ -98,7 +99,7 @@ interface DocumentReviewListColumnProps {
   editor: Editor | null;
   collaborationHandle: RepoCollaborationHandle;
   activeKey: string | null;
-  onActiveChange: (key: string) => void;
+  onActiveChange: (key: string | null) => void;
 }
 
 export function DocumentReviewListColumn({
@@ -177,6 +178,7 @@ export function DocumentReviewListColumn({
     : null;
   const activeThreadId = activeSuggestionId == null ? activeKey : null;
   useReviewHighlights(editor, threadSources, activeThreadId, activeSuggestionId);
+  const markPressInside = useDismissActiveReview(activeKey != null, () => onActiveChange(null));
 
   const { column, card } = documentReviewList();
 
@@ -191,6 +193,7 @@ export function DocumentReviewListColumn({
             data-review-card={thread.id}
             className={card({ placed: tops[thread.id] != null })}
             style={{ top: tops[thread.id] ?? 0 }}
+            onPointerDownCapture={markPressInside}
           >
             <DocumentCommentThreadListItem
               threadKey={thread}
@@ -210,6 +213,7 @@ export function DocumentReviewListColumn({
             data-review-card={suggestion.id}
             className={card({ placed: tops[suggestion.id] != null })}
             style={{ top: tops[suggestion.id] ?? 0 }}
+            onPointerDownCapture={markPressInside}
           >
             <DocumentSuggestionListItem
               suggestionKey={suggestion}
