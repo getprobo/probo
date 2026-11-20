@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { getConsent } from "../consent";
-import { registerCookieBanner } from "./index";
+import { getConsent } from "../consent.js";
+import { registerCookieBanner } from "./index.js";
 
 // IIFE-only: classic scripts expose document.currentScript. ES-module
 // callers must declare <probo-cookie-banner> after registerCookieBanner().

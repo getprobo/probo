@@ -18,17 +18,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { getLayoutRenderer } from "../addons";
-import { registerHeadlessComponents } from "../components";
-import type { ProboCookieBannerRoot } from "../components/cookie-banner-root";
-import { resolveLayout } from "../layout";
-import type { BannerConfig, Presentation } from "../types";
-import { scheduleFirstLayerCtaCheck } from "./cta-check";
-import { THEMED_STYLES } from "./styles";
-import { applyTexts, esc, ScrollLock } from "./variants/shared";
-import { renderNotice } from "./variants/notice";
-import { renderOptIn } from "./variants/optin";
-import { renderOptOut } from "./variants/optout";
+import { getLayoutRenderer } from "../addons/index.js";
+import { registerHeadlessComponents } from "../components/index.js";
+import type { ProboCookieBannerRoot } from "../components/cookie-banner-root.js";
+import { resolveLayout } from "../layout.js";
+import type { BannerConfig, Presentation } from "../types.js";
+import { scheduleFirstLayerCtaCheck } from "./cta-check.js";
+import { THEMED_STYLES } from "./styles.js";
+import { applyTexts, esc, ScrollLock } from "./variants/shared.js";
+import { renderNotice } from "./variants/notice.js";
+import { renderOptIn } from "./variants/optin.js";
+import { renderOptOut } from "./variants/optout.js";
 
 // ProboThemedBanner is a thin dispatcher: it owns the shadow root and the data
 // root, then mounts markup once the config is known. A registered layout

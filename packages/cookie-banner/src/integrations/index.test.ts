@@ -20,7 +20,7 @@
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { createDefaultIntegrations, resolveGcmEnabled } from "./index";
+import { createDefaultIntegrations, resolveGcmEnabled } from "./index.js";
 
 describe("createDefaultIntegrations", () => {
   it("includes Google Consent Mode by default", () => {

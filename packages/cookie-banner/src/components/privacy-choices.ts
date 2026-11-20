@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { ProboElement } from "./base";
-import type { ProboRootElement } from "./base";
-import type { ProboCookieBannerRoot } from "./cookie-banner-root";
+import { ProboElement } from "./base.js";
+import type { ProboRootElement } from "./base.js";
+import type { ProboCookieBannerRoot } from "./cookie-banner-root.js";
 
 const REQUIRED_CHILDREN = ["probo-reject-button"] as const;
 

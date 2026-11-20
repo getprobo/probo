@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { interpolate } from "./i18n";
-import type { TrackerType } from "./types";
+import { interpolate } from "./i18n.js";
+import type { TrackerType } from "./types.js";
 
 // Tracker types whose data persists until explicitly cleared. When such a
 // tracker has no max-age, its lifetime is "persistent" rather than "session"

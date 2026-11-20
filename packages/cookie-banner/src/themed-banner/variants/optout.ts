@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { BRANDING, CLOSE_ICON } from "../../html";
-import { floatingCard } from "./shared";
+import { BRANDING, CLOSE_ICON } from "../../html.js";
+import { floatingCard } from "./shared.js";
 
 // Opt-out (CCPA-style): trackers fire immediately; the visitor acknowledges or
 // opts out. Compact banner for first paint / non-CCPA reopen; Privacy Choices

@@ -18,10 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { ProboElement } from "./base";
-import type { ProboRootElement } from "./base";
-import type { ProboCategory } from "./category";
-import type { ProboCookieBannerRoot } from "./cookie-banner-root";
+import { ProboElement } from "./base.js";
+import type { ProboRootElement } from "./base.js";
+import type { ProboCategory } from "./category.js";
+import type { ProboCookieBannerRoot } from "./cookie-banner-root.js";
 
 export class ProboCategoryToggle extends ProboElement {
   private root: ProboRootElement | null = null;

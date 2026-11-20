@@ -18,15 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { NotFoundError } from "../errors";
-import { fetchJSON } from "../http";
+import { NotFoundError } from "../errors.js";
+import { fetchJSON } from "../http.js";
 import type {
   CookieSource,
   DetectedCookieEntry,
   DetectedResourceEntry,
   DetectedStorageEntry,
   StorageSource,
-} from "./types";
+} from "./types.js";
 
 const DEBOUNCE_MS = 2_000;
 

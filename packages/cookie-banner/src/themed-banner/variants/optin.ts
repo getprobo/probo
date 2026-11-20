@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { BRANDING, CLOSE_ICON } from "../../html";
-import { CATEGORY_LIST, floatingCard } from "./shared";
+import { BRANDING, CLOSE_ICON } from "../../html.js";
+import { CATEGORY_LIST, floatingCard } from "./shared.js";
 
 // Opt-in (GDPR-style): non-necessary trackers stay blocked until the visitor
 // consents. Offers accept / reject / customize and a full preference panel.

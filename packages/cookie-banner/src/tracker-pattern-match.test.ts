@@ -20,8 +20,8 @@
 
 import { describe, expect, it } from "vitest";
 
-import { selectTrackerCategory } from "./tracker-pattern-match";
-import type { Category, TrackerType } from "./types";
+import { selectTrackerCategory } from "./tracker-pattern-match.js";
+import type { Category, TrackerType } from "./types.js";
 
 function category(
   slug: string,

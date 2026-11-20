@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { TCFChoices } from "./addons/tcf-runtime";
-import type { Category } from "./types";
+import type { TCFChoices } from "./addons/tcf-runtime.js";
+import type { Category } from "./types.js";
 
 export function projectConsentFromTCF(
   categories: Category[],

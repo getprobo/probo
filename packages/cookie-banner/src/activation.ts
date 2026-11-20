@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { BannerTexts } from "./i18n";
-import { removeCookies } from "./cookie-utils";
-import { LOCK_ICON } from "./html";
+import type { BannerTexts } from "./i18n.js";
+import { removeCookies } from "./cookie-utils.js";
+import { LOCK_ICON } from "./html.js";
 
 const ATTR_CATEGORY = "data-cookie-consent";
 const ATTR_SRC = "data-src";

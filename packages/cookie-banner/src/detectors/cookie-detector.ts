@@ -25,12 +25,12 @@ import {
   parseCookieSetDomain,
   clampMaxAgeSeconds,
   parseMaxAgeSeconds,
-} from "../cookie-utils";
-import type { Detector } from "./detector";
-import { isExtensionContext } from "./extension-context";
-import { getInitiatorURL } from "./initiator";
-import type { ReportQueue } from "./report-queue";
-import type { DetectedCookieEntry } from "./types";
+} from "../cookie-utils.js";
+import type { Detector } from "./detector.js";
+import { isExtensionContext } from "./extension-context.js";
+import { getInitiatorURL } from "./initiator.js";
+import type { ReportQueue } from "./report-queue.js";
+import type { DetectedCookieEntry } from "./types.js";
 
 const COOKIE_HOOK_MARKER = Symbol("proboCookieHook");
 

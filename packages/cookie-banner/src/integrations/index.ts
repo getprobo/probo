@@ -18,12 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-export type { ConsentIntegration } from "./integration";
-export { GoogleConsentModeIntegration } from "./gcm";
+export type { ConsentIntegration } from "./integration.js";
+export { GoogleConsentModeIntegration } from "./gcm.js";
 
-import type { IntegrationConfig } from "../types";
-import type { ConsentIntegration } from "./integration";
-import { GoogleConsentModeIntegration } from "./gcm";
+import type { IntegrationConfig } from "../types.js";
+import type { ConsentIntegration } from "./integration.js";
+import { GoogleConsentModeIntegration } from "./gcm.js";
 
 export function createDefaultIntegrations(
   configs?: IntegrationConfig[],

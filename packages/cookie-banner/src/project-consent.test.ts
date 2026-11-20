@@ -20,8 +20,8 @@
 
 import { describe, expect, it } from "vitest";
 
-import { projectConsentFromTCF } from "./project-consent";
-import type { Category } from "./types";
+import { projectConsentFromTCF } from "./project-consent.js";
+import type { Category } from "./types.js";
 
 function category(partial: Partial<Category> & Pick<Category, "slug" | "kind">): Category {
   return {
