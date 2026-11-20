@@ -4,6 +4,35 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.355.0] - 2026-11-20
+
+### Added
+
+- The audit log records denied checks as well as allowed ones. Each
+  entry keeps its outcome, the denial reason, a snapshot of the actor's
+  email and name, the client IP, the user agent, and the request id
+  that also appears in the server logs
+- Audit log filters for action prefix, actor type, outcome, request id,
+  and a created-at range on the console and Connect GraphQL APIs and
+  the MCP `listAuditLogEntries` tool. Entries expose `outcome`,
+  `denialReason`, `actorEmail`, `actorName`, `originIp`, `userAgent`,
+  `requestId`, and `recordedAt`
+- The audit log CSV export includes the outcome, denial reason, actor
+  snapshot, client IP, user agent, and request id
+
+### Changed
+
+- The console audit log page is rebuilt on the v2 kit with cursor
+  pagination and filters kept in the URL. Dates are picked in a single
+  range control and read as local days, and actor, resource, and
+  request ids sit in a Filters popover. The detail dialog shows the
+  origin, request id, and denial reason
+
+### Fixed
+
+- A failed audit log insert was silently ignored. It now aborts the
+  authorization, and a refused batch still commits its denial rows
+
 ## [0.354.0] - 2026-11-20
 
 This is a security release. Upgrade as soon as possible.
