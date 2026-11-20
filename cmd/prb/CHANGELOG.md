@@ -4,6 +4,18 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.273.0] - 2026-11-20
+
+### Added
+
+- `audit-log list` filters by `--actor-type`, `--outcome`,
+  `--request-id`, and a `--from`/`--to` date range read in local time.
+  `--action` accepts a trailing `*` to match a prefix (`iam:*`). The
+  list shows the actor id beside the email
+- `audit-log view` shows the outcome, denial reason, actor snapshot,
+  client IP, user agent, and request id. It falls back to the actor
+  name when there is no email
+
 ## [0.272.0] - 2026-11-20
 
 ### Added
