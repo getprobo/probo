@@ -18,67 +18,46 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { downloadFile } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { dateFormat } from "@probo/i18n";
 import {
   Button,
   Card,
-  IconPencil,
+  IconChevronDown,
   IconPlusLarge,
-  IconTrashCan,
   PageHeader,
+  Spinner,
 } from "@probo/ui";
 import { useTranslation } from "react-i18next";
-import { graphql, type PreloadedQuery, useFragment, usePreloadedQuery } from "react-relay";
+import { graphql, type PreloadedQuery, usePaginationFragment, usePreloadedQuery } from "react-relay";
 
-import type { ThirdPartyAgreementsPageBusinessAssociateAgreementFragment$key } from "#/__generated__/core/ThirdPartyAgreementsPageBusinessAssociateAgreementFragment.graphql";
-import type { ThirdPartyAgreementsPageDataPrivacyAgreementFragment$key } from "#/__generated__/core/ThirdPartyAgreementsPageDataPrivacyAgreementFragment.graphql";
+import type { ThirdPartyAgreementsPageFragment$key } from "#/__generated__/core/ThirdPartyAgreementsPageFragment.graphql";
 import type { ThirdPartyAgreementsPageQuery } from "#/__generated__/core/ThirdPartyAgreementsPageQuery.graphql";
+import type { ThirdPartyAgreementsPageRefetchQuery } from "#/__generated__/core/ThirdPartyAgreementsPageRefetchQuery.graphql";
 
-import { DeleteBusinessAssociateAgreementDialog } from "../_components/DeleteBusinessAssociateAgreementDialog";
-import { DeleteDataPrivacyAgreementDialog } from "../_components/DeleteDataPrivacyAgreementDialog";
-import { EditBusinessAssociateAgreementDialog } from "../_components/EditBusinessAssociateAgreementDialog";
-import { EditDataPrivacyAgreementDialog } from "../_components/EditDataPrivacyAgreementDialog";
-import { UploadBusinessAssociateAgreementDialog } from "../_components/UploadBusinessAssociateAgreementDialog";
-import { UploadDataPrivacyAgreementDialog } from "../_components/UploadDataPrivacyAgreementDialog";
+import { ThirdPartyAgreementListItem } from "./_components/ThirdPartyAgreementListItem";
+import { UploadThirdPartyAgreementDialog } from "./_components/UploadThirdPartyAgreementDialog";
 
-const thirdPartyBusinessAssociateAgreementFragment = graphql`
-  fragment ThirdPartyAgreementsPageBusinessAssociateAgreementFragment on ThirdParty {
-    businessAssociateAgreement {
-      id
-      file {
-        fileName
-        downloadUrl
+const thirdPartyAgreementsFragment = graphql`
+  fragment ThirdPartyAgreementsPageFragment on ThirdParty
+  @refetchable(queryName: "ThirdPartyAgreementsPageRefetchQuery")
+  @argumentDefinitions(
+    first: { type: "Int", defaultValue: 50 }
+    after: { type: "CursorKey", defaultValue: null }
+    before: { type: "CursorKey", defaultValue: null }
+    last: { type: "Int", defaultValue: null }
+  ) {
+    id
+    name
+    canUpload: permission(action: "core:thirdParty-agreement:upload")
+    agreements(first: $first, after: $after, last: $last, before: $before)
+      @connection(key: "ThirdPartyAgreementsPage_agreements") {
+      __id
+      edges {
+        node {
+          id
+          ...ThirdPartyAgreementListItem_agreement
+        }
       }
-      validity {
-        start
-        end
-      }
-      canUpdate: permission(
-        action: "core:thirdParty-business-associate-agreement:update"
-      )
-      canDelete: permission(
-        action: "core:thirdParty-business-associate-agreement:delete"
-      )
-    }
-  }
-`;
-
-const thirdPartyDataPrivacyAgreementFragment = graphql`
-  fragment ThirdPartyAgreementsPageDataPrivacyAgreementFragment on ThirdParty {
-    dataPrivacyAgreement {
-      id
-      file {
-        fileName
-        downloadUrl
-      }
-      validity {
-        start
-        end
-      }
-      canUpdate: permission(action: "core:thirdParty-data-privacy-agreement:update")
-      canDelete: permission(action: "core:thirdParty-data-privacy-agreement:delete")
     }
   }
 `;
@@ -88,16 +67,7 @@ export const thirdPartyAgreementsPageQuery = graphql`
     node(id: $thirdPartyId) {
       __typename
       ... on ThirdParty {
-        id
-        name
-        canUploadBAA: permission(
-          action: "core:thirdParty-business-associate-agreement:upload"
-        )
-        canUploadDPA: permission(
-          action: "core:thirdParty-data-privacy-agreement:upload"
-        )
-        ...ThirdPartyAgreementsPageBusinessAssociateAgreementFragment
-        ...ThirdPartyAgreementsPageDataPrivacyAgreementFragment
+        ...ThirdPartyAgreementsPageFragment
       }
     }
   }
@@ -108,210 +78,67 @@ interface ThirdPartyAgreementsPageProps {
 }
 
 export function ThirdPartyAgreementsPage({ queryRef }: ThirdPartyAgreementsPageProps) {
-  const data = usePreloadedQuery<ThirdPartyAgreementsPageQuery>(
+  const { t } = useTranslation();
+  const queryData = usePreloadedQuery<ThirdPartyAgreementsPageQuery>(
     thirdPartyAgreementsPageQuery,
     queryRef,
   );
-  if (data.node?.__typename !== "ThirdParty") {
+  if (queryData.node?.__typename !== "ThirdParty") {
     throw new Error("Third party not found");
   }
-  const thirdParty = data.node;
-  const { t, i18n } = useTranslation();
 
-  const thirdPartyWithBAA
-    = useFragment<ThirdPartyAgreementsPageBusinessAssociateAgreementFragment$key>(
-      thirdPartyBusinessAssociateAgreementFragment,
-      thirdParty,
-    );
-  const businessAssociateAgreement = thirdPartyWithBAA.businessAssociateAgreement;
+  const { data, hasNext, isLoadingNext, loadNext } = usePaginationFragment<
+    ThirdPartyAgreementsPageRefetchQuery,
+    ThirdPartyAgreementsPageFragment$key
+  >(thirdPartyAgreementsFragment, queryData.node);
 
-  const thirdPartyWithDPA
-    = useFragment<ThirdPartyAgreementsPageDataPrivacyAgreementFragment$key>(
-      thirdPartyDataPrivacyAgreementFragment,
-      thirdParty,
-    );
-  const dataPrivacyAgreement = thirdPartyWithDPA.dataPrivacyAgreement;
+  const connectionId = data.agreements.__id;
+  const agreements = data.agreements.edges.map(edge => edge.node);
 
-  usePageTitle(t("thirdPartyAgreementsPage.pageTitle", { name: thirdParty.name }));
+  usePageTitle(t("thirdPartyAgreementsPage.pageTitle", { name: data.name }));
 
   return (
     <div className="space-y-6">
       <PageHeader
         title={t("thirdPartyAgreementsPage.title")}
         description={t("thirdPartyAgreementsPage.description")}
-      />
+      >
+        {data.canUpload && (
+          <UploadThirdPartyAgreementDialog
+            thirdPartyId={data.id}
+            connectionId={connectionId}
+          >
+            <Button icon={IconPlusLarge}>
+              {t("thirdPartyAgreementsPage.actions.add")}
+            </Button>
+          </UploadThirdPartyAgreementDialog>
+        )}
+      </PageHeader>
       <Card className="space-y-4" padded>
-        <div className="flex items-center justify-between p-4 border border-border-low rounded-lg">
-          <div className="flex-1">
-            <h3 className="font-medium text-txt-primary">
-              {t("thirdPartyAgreementsPage.agreements.businessAssociate")}
-            </h3>
-            <p className="text-sm text-txt-secondary mt-1">
-              {businessAssociateAgreement
-                ? businessAssociateAgreement.file.fileName
-                : t("thirdPartyAgreementsPage.agreements.noBusinessAssociate")}
-            </p>
-            {(businessAssociateAgreement?.validity?.start
-              || businessAssociateAgreement?.validity?.end) && (
-              <p className="text-xs text-txt-secondary mt-1">
-                {formatValidity(
-                  businessAssociateAgreement.validity?.start,
-                  businessAssociateAgreement.validity?.end,
-                  i18n.language,
-                  t,
-                )}
-              </p>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            {businessAssociateAgreement
-              ? (
-                  <>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      onClick={() =>
-                        downloadFile(
-                          businessAssociateAgreement.file.downloadUrl,
-                          businessAssociateAgreement.file.fileName,
-                        )}
-                    >
-                      {t("thirdPartyAgreementsPage.actions.downloadPdf")}
-                    </Button>
-                    {businessAssociateAgreement.canUpdate && (
-                      <EditBusinessAssociateAgreementDialog
-                        thirdPartyId={thirdParty.id}
-                        agreement={{
-                          validFrom: businessAssociateAgreement.validity?.start,
-                          validUntil: businessAssociateAgreement.validity?.end,
-                        }}
-                        onSuccess={() => window.location.reload()}
-                      >
-                        <Button variant="quaternary" icon={IconPencil} />
-                      </EditBusinessAssociateAgreementDialog>
-                    )}
-                    {businessAssociateAgreement.canDelete && (
-                      <DeleteBusinessAssociateAgreementDialog
-                        thirdPartyId={thirdParty.id}
-                        fileName={businessAssociateAgreement.file.fileName}
-                        onSuccess={() => window.location.reload()}
-                      >
-                        <Button variant="quaternary" icon={IconTrashCan} />
-                      </DeleteBusinessAssociateAgreementDialog>
-                    )}
-                  </>
-                )
-              : (
-                  thirdParty.canUploadBAA && (
-                    <UploadBusinessAssociateAgreementDialog
-                      thirdPartyId={thirdParty.id}
-                      onSuccess={() => window.location.reload()}
-                    >
-                      <Button variant="secondary" icon={IconPlusLarge}>
-                        {t("thirdPartyAgreementsPage.actions.upload")}
-                      </Button>
-                    </UploadBusinessAssociateAgreementDialog>
-                  )
-                )}
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between p-4 border border-border-low rounded-lg">
-          <div className="flex-1">
-            <h3 className="font-medium text-txt-primary">
-              {t("thirdPartyAgreementsPage.agreements.dataPrivacy")}
-            </h3>
-            <p className="text-sm text-txt-secondary mt-1">
-              {dataPrivacyAgreement
-                ? dataPrivacyAgreement.file.fileName
-                : t("thirdPartyAgreementsPage.agreements.noDataPrivacy")}
-            </p>
-            {(dataPrivacyAgreement?.validity?.start
-              || dataPrivacyAgreement?.validity?.end) && (
-              <p className="text-xs text-txt-secondary mt-1">
-                {formatValidity(
-                  dataPrivacyAgreement.validity?.start,
-                  dataPrivacyAgreement.validity?.end,
-                  i18n.language,
-                  t,
-                )}
-              </p>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            {dataPrivacyAgreement
-              ? (
-                  <>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      onClick={() =>
-                        downloadFile(
-                          dataPrivacyAgreement.file.downloadUrl,
-                          dataPrivacyAgreement.file.fileName,
-                        )}
-                    >
-                      {t("thirdPartyAgreementsPage.actions.downloadPdf")}
-                    </Button>
-                    {dataPrivacyAgreement.canUpdate && (
-                      <EditDataPrivacyAgreementDialog
-                        thirdPartyId={thirdParty.id}
-                        agreement={{
-                          validFrom: dataPrivacyAgreement.validity?.start,
-                          validUntil: dataPrivacyAgreement.validity?.end,
-                        }}
-                        onSuccess={() => window.location.reload()}
-                      >
-                        <Button variant="quaternary" icon={IconPencil} />
-                      </EditDataPrivacyAgreementDialog>
-                    )}
-                    {dataPrivacyAgreement.canDelete && (
-                      <DeleteDataPrivacyAgreementDialog
-                        thirdPartyId={thirdParty.id}
-                        fileName={dataPrivacyAgreement.file.fileName}
-                        onSuccess={() => window.location.reload()}
-                      >
-                        <Button variant="quaternary" icon={IconTrashCan} />
-                      </DeleteDataPrivacyAgreementDialog>
-                    )}
-                  </>
-                )
-              : (
-                  thirdParty.canUploadDPA && (
-                    <UploadDataPrivacyAgreementDialog
-                      thirdPartyId={thirdParty.id}
-                      onSuccess={() => window.location.reload()}
-                    >
-                      <Button variant="secondary" icon={IconPlusLarge}>
-                        {t("thirdPartyAgreementsPage.actions.upload")}
-                      </Button>
-                    </UploadDataPrivacyAgreementDialog>
-                  )
-                )}
-          </div>
-        </div>
+        {agreements.length === 0 && (
+          <p className="text-sm text-txt-secondary">
+            {t("thirdPartyAgreementsPage.empty")}
+          </p>
+        )}
+        {agreements.map(agreement => (
+          <ThirdPartyAgreementListItem
+            key={agreement.id}
+            agreementKey={agreement}
+            connectionId={connectionId}
+          />
+        ))}
+        {hasNext && (
+          <Button
+            variant="tertiary"
+            onClick={() => loadNext(50)}
+            className="mx-auto"
+            disabled={isLoadingNext}
+            icon={isLoadingNext ? Spinner : IconChevronDown}
+          >
+            {t("thirdPartyAgreementsPage.actions.showMore")}
+          </Button>
+        )}
       </Card>
     </div>
   );
-}
-
-function formatValidity(
-  validFrom: string | null | undefined,
-  validUntil: string | null | undefined,
-  language: string,
-  t: ReturnType<typeof useTranslation>["t"],
-) {
-  if (validFrom && validUntil) {
-    return t("thirdPartyAgreementsPage.agreements.validity.range", {
-      from: dateFormat(language, validFrom),
-      until: dateFormat(language, validUntil),
-    });
-  }
-  if (validFrom) {
-    return t("thirdPartyAgreementsPage.agreements.validity.from", { date: dateFormat(language, validFrom) });
-  }
-  if (validUntil) {
-    return t("thirdPartyAgreementsPage.agreements.validity.until", { date: dateFormat(language, validUntil) });
-  }
-  return "";
 }

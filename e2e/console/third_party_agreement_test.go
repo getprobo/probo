@@ -31,17 +31,9 @@ import (
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
-func TestThirdPartyBusinessAssociateAgreement_Lifecycle(t *testing.T) {
+func TestThirdPartyAgreement_Lifecycle(t *testing.T) {
 	t.Parallel()
-	runThirdPartyAgreementLifecycle(t, thirdPartyAgreementKindBAA)
-}
 
-func TestThirdPartyDataPrivacyAgreement_Lifecycle(t *testing.T) {
-	t.Parallel()
-	runThirdPartyAgreementLifecycle(t, thirdPartyAgreementKindDPA)
-}
-
-func runThirdPartyAgreementLifecycle(t *testing.T, kind thirdPartyAgreementKind) {
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	thirdPartyID := factory.NewThirdParty(owner).
 		WithName(factory.SafeName("Agreement lifecycle third party")).
@@ -52,7 +44,9 @@ func runThirdPartyAgreementLifecycle(t *testing.T, kind thirdPartyAgreementKind)
 		initialValidUntil = "2025-01-01T00:00:00Z"
 		updatedValidFrom  = "2024-06-01T00:00:00Z"
 		updatedValidUntil = "2026-06-01T00:00:00Z"
-		fileName          = "vendor-agreement.pdf"
+		msaName           = "Master service agreement"
+		annexName         = "DORA addendum"
+		updatedName       = "Master service agreement 2024"
 	)
 
 	expectedInitialValidFrom := requireParseRFC3339Time(t, initialValidFrom)
@@ -62,45 +56,58 @@ func runThirdPartyAgreementLifecycle(t *testing.T, kind thirdPartyAgreementKind)
 
 	beforeCreate := time.Now().Add(-time.Second)
 
-	uploaded := uploadThirdPartyAgreement(
+	msa := uploadThirdPartyAgreement(
 		t,
 		owner,
-		kind,
 		thirdPartyID,
+		msaName,
+		"MASTER_SERVICE",
 		initialValidFrom,
 		initialValidUntil,
-		fileName,
+		"msa.pdf",
+	)
+	annex := uploadThirdPartyAgreement(
+		t,
+		owner,
+		thirdPartyID,
+		annexName,
+		"ANNEX",
+		initialValidFrom,
+		initialValidUntil,
+		"dora-addendum.pdf",
 	)
 
-	assert.NotEmpty(t, uploaded.ID)
-	assert.Equal(t, thirdPartyID, uploaded.ThirdParty.ID)
-	assert.Equal(t, fileName, uploaded.File.FileName)
-	assert.NotEmpty(t, uploaded.File.ID)
-	require.NotNil(t, uploaded.ValidFrom())
-	require.NotNil(t, uploaded.ValidUntil())
-	assert.Equal(t, expectedInitialValidFrom, *uploaded.ValidFrom())
-	assert.Equal(t, expectedInitialValidUntil, *uploaded.ValidUntil())
-	assert.True(t, uploaded.CanUpdate)
-	assert.True(t, uploaded.CanDelete)
-	testutil.AssertTimestampsOnCreate(t, uploaded.CreatedAt, uploaded.UpdatedAt, beforeCreate)
+	assert.NotEmpty(t, msa.ID)
+	assert.NotEqual(t, msa.ID, annex.ID)
+	assert.Equal(t, thirdPartyID, msa.ThirdParty.ID)
+	assert.Equal(t, "MASTER_SERVICE", msa.Type)
+	assert.Equal(t, msaName, msa.Name)
+	assert.Equal(t, "msa.pdf", msa.File.FileName)
+	assert.Equal(t, "ANNEX", annex.Type)
+	require.NotNil(t, msa.ValidFrom())
+	require.NotNil(t, msa.ValidUntil())
+	assert.Equal(t, expectedInitialValidFrom, *msa.ValidFrom())
+	assert.Equal(t, expectedInitialValidUntil, *msa.ValidUntil())
+	assert.True(t, msa.CanUpdate)
+	assert.True(t, msa.CanDelete)
+	testutil.AssertTimestampsOnCreate(t, msa.CreatedAt, msa.UpdatedAt, beforeCreate)
 
-	queried := queryThirdPartyAgreementField(t, owner, kind, thirdPartyID)
-	require.NotNil(t, queried)
-	assert.Equal(t, uploaded.ID, queried.ID)
-	assert.Equal(t, thirdPartyID, queried.ThirdParty.ID)
-	assert.Equal(t, uploaded.File.ID, queried.File.ID)
-	assert.Equal(t, fileName, queried.File.FileName)
+	listed := listThirdPartyAgreements(t, owner, thirdPartyID)
+	require.Len(t, listed, 2)
+	assert.ElementsMatch(t, []string{msa.ID, annex.ID}, []string{listed[0].ID, listed[1].ID})
 
 	updated := updateThirdPartyAgreement(
 		t,
 		owner,
-		kind,
-		thirdPartyID,
+		msa.ID,
+		new(updatedName),
+		nil,
 		new(updatedValidFrom),
 		new(updatedValidUntil),
 	)
 
-	assert.Equal(t, uploaded.ID, updated.ID)
+	assert.Equal(t, msa.ID, updated.ID)
+	assert.Equal(t, updatedName, updated.Name)
 	require.NotNil(t, updated.ValidFrom())
 	require.NotNil(t, updated.ValidUntil())
 	assert.Equal(t, expectedUpdatedValidFrom, *updated.ValidFrom())
@@ -109,15 +116,17 @@ func runThirdPartyAgreementLifecycle(t *testing.T, kind thirdPartyAgreementKind)
 		t,
 		updated.CreatedAt,
 		updated.UpdatedAt,
-		uploaded.CreatedAt,
-		uploaded.UpdatedAt,
+		msa.CreatedAt,
+		msa.UpdatedAt,
 	)
 
-	deletedThirdPartyID := deleteThirdPartyAgreement(t, owner, kind, thirdPartyID)
-	assert.Equal(t, thirdPartyID, deletedThirdPartyID)
+	deletedID := deleteThirdPartyAgreement(t, owner, annex.ID)
+	assert.Equal(t, annex.ID, deletedID)
 
-	afterDelete := queryThirdPartyAgreementField(t, owner, kind, thirdPartyID)
-	assert.Nil(t, afterDelete)
+	remaining := listThirdPartyAgreements(t, owner, thirdPartyID)
+	require.Len(t, remaining, 1)
+	assert.Equal(t, msa.ID, remaining[0].ID)
+	assert.Equal(t, updatedName, remaining[0].Name)
 }
 
 func TestThirdPartyRiskAssessment_CreateAndList(t *testing.T) {
@@ -218,90 +227,61 @@ func TestThirdPartyAgreement_ValidDateOrdering(t *testing.T) {
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	tests := []struct {
-		name string
-		kind thirdPartyAgreementKind
-	}{
-		{
-			name: "business associate agreement rejects validUntil before validFrom on upload",
-			kind: thirdPartyAgreementKindBAA,
+	t.Run(
+		"upload rejects validUntil before validFrom",
+		func(t *testing.T) {
+			t.Parallel()
+
+			client := owner.ForTest(t)
+			thirdPartyID := factory.NewThirdParty(client).
+				WithName(factory.SafeName("Agreement upload validation")).
+				Create()
+
+			err := uploadThirdPartyAgreementExpectError(
+				t,
+				client,
+				thirdPartyID,
+				"Invalid dates",
+				"OTHER",
+				"2025-06-01T00:00:00Z",
+				"2024-01-01T00:00:00Z",
+				"invalid-dates.pdf",
+			)
+			testutil.RequireErrorCode(t, err, "INVALID")
 		},
-		{
-			name: "data privacy agreement rejects validUntil before validFrom on upload",
-			kind: thirdPartyAgreementKindDPA,
+	)
+
+	t.Run(
+		"update rejects validUntil before validFrom",
+		func(t *testing.T) {
+			t.Parallel()
+
+			client := owner.ForTest(t)
+			thirdPartyID := factory.NewThirdParty(client).
+				WithName(factory.SafeName("Agreement update validation")).
+				Create()
+
+			uploaded := uploadThirdPartyAgreement(
+				t,
+				client,
+				thirdPartyID,
+				"Valid agreement",
+				"TERMS",
+				"2024-01-01T00:00:00Z",
+				"2025-01-01T00:00:00Z",
+				"valid-agreement.pdf",
+			)
+
+			err := updateThirdPartyAgreementExpectError(
+				t,
+				client,
+				uploaded.ID,
+				nil,
+				nil,
+				new("2026-06-01T00:00:00Z"),
+				new("2024-01-01T00:00:00Z"),
+			)
+			testutil.RequireErrorCode(t, err, "INVALID")
 		},
-	}
-
-	for _, tt := range tests {
-		t.Run(
-			tt.name,
-			func(t *testing.T) {
-				t.Parallel()
-
-				client := owner.ForTest(t)
-				thirdPartyID := factory.NewThirdParty(client).
-					WithName(factory.SafeName("Agreement upload validation " + string(tt.kind))).
-					Create()
-
-				err := uploadThirdPartyAgreementExpectError(
-					t,
-					client,
-					tt.kind,
-					thirdPartyID,
-					"2025-06-01T00:00:00Z",
-					"2024-01-01T00:00:00Z",
-					"invalid-dates.pdf",
-				)
-				testutil.RequireErrorCode(t, err, "INVALID")
-			},
-		)
-	}
-
-	updateTests := []struct {
-		name string
-		kind thirdPartyAgreementKind
-	}{
-		{
-			name: "business associate agreement rejects validUntil before validFrom on update",
-			kind: thirdPartyAgreementKindBAA,
-		},
-		{
-			name: "data privacy agreement rejects validUntil before validFrom on update",
-			kind: thirdPartyAgreementKindDPA,
-		},
-	}
-
-	for _, tt := range updateTests {
-		t.Run(
-			tt.name,
-			func(t *testing.T) {
-				t.Parallel()
-
-				client := owner.ForTest(t)
-				thirdPartyID := factory.NewThirdParty(client).
-					WithName(factory.SafeName("Agreement update validation " + string(tt.kind))).
-					Create()
-
-				uploadThirdPartyAgreement(
-					t,
-					client,
-					tt.kind,
-					thirdPartyID,
-					"2024-01-01T00:00:00Z",
-					"2025-01-01T00:00:00Z",
-					"valid-agreement.pdf",
-				)
-
-				err := updateThirdPartyAgreementExpectError(
-					t,
-					client,
-					tt.kind,
-					thirdPartyID,
-					new("2026-06-01T00:00:00Z"),
-					new("2024-01-01T00:00:00Z"),
-				)
-				testutil.RequireErrorCode(t, err, "INVALID")
-			},
-		)
-	}
+	)
 }

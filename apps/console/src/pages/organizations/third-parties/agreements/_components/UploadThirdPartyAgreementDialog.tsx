@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -27,34 +27,33 @@ import {
   Dropzone,
   Field,
   Input,
+  Option,
+  Select,
   Spinner,
   useDialogRef,
 } from "@probo/ui";
 import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useState } from "react";
+import { Controller } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { graphql, useMutation } from "react-relay";
 
-import type { UploadDataPrivacyAgreementDialogMutation } from "#/__generated__/core/UploadDataPrivacyAgreementDialogMutation.graphql";
+import type { UploadThirdPartyAgreementDialogMutation } from "#/__generated__/core/UploadThirdPartyAgreementDialogMutation.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { z } from "#/lib/zod";
 
-const uploadDataPrivacyAgreementMutation = graphql`
-  mutation UploadDataPrivacyAgreementDialogMutation(
-    $input: UploadThirdPartyDataPrivacyAgreementInput!
+import { THIRD_PARTY_AGREEMENT_TYPES } from "./agreementTypes";
+
+const uploadAgreementMutation = graphql`
+  mutation UploadThirdPartyAgreementDialogMutation(
+    $input: UploadThirdPartyAgreementInput!
+    $connections: [ID!]!
   ) {
-    uploadThirdPartyDataPrivacyAgreement(input: $input) {
-      thirdPartyDataPrivacyAgreement {
-        id
-        file {
-          fileName
-          downloadUrl
+    uploadThirdPartyAgreement(input: $input) {
+      thirdPartyAgreementEdge @prependEdge(connections: $connections) {
+        node {
+          ...ThirdPartyAgreementListItem_agreement
         }
-        validity {
-          start
-          end
-        }
-        createdAt
       }
     }
   }
@@ -63,17 +62,18 @@ const uploadDataPrivacyAgreementMutation = graphql`
 type Props = {
   children: React.ReactNode;
   thirdPartyId: string;
-  onSuccess?: () => void;
+  connectionId: string;
 };
 
-export function UploadDataPrivacyAgreementDialog({
+export function UploadThirdPartyAgreementDialog({
   children,
   thirdPartyId,
-  onSuccess,
+  connectionId,
 }: Props) {
   const { t } = useTranslation();
   const schema = z.object({
-    fileName: z.string().min(1, t("uploadDataPrivacyAgreementDialog.validation.fileNameRequired")),
+    name: z.string().min(1, t("uploadThirdPartyAgreementDialog.validation.nameRequired")),
+    type: z.enum(THIRD_PARTY_AGREEMENT_TYPES),
     validFrom: z.string().optional(),
     validUntil: z.string().optional(),
   });
@@ -85,10 +85,12 @@ export function UploadDataPrivacyAgreementDialog({
     handleSubmit,
     formState: { errors },
     reset,
+    control,
     setValue,
   } = useFormWithSchema(schema, {
     defaultValues: {
-      fileName: "",
+      name: "",
+      type: "OTHER",
       validFrom: "",
       validUntil: "",
     },
@@ -96,15 +98,13 @@ export function UploadDataPrivacyAgreementDialog({
 
   const toast = useToast();
   const [uploadAgreement, isUploading]
-    = useMutation<UploadDataPrivacyAgreementDialogMutation>(
-      uploadDataPrivacyAgreementMutation,
-    );
+    = useMutation<UploadThirdPartyAgreementDialogMutation>(uploadAgreementMutation);
 
   const handleDrop = (files: File[]) => {
     if (files.length > 0) {
       const file = files[0];
       setUploadedFile(file);
-      setValue("fileName", file.name);
+      setValue("name", file.name.replace(/\.[^.]+$/, ""));
     }
   };
 
@@ -113,22 +113,19 @@ export function UploadDataPrivacyAgreementDialog({
       return;
     }
 
-    const formatDatetime = (dateString?: string) => {
-      if (!dateString) return null;
-      return `${dateString}T00:00:00Z`;
-    };
-
     uploadAgreement({
       variables: {
         input: {
           thirdPartyId,
-          fileName: data.fileName,
+          name: data.name,
+          type: data.type,
           validity: {
             start: formatDatetime(data.validFrom),
             end: formatDatetime(data.validUntil),
           },
           file: null,
         },
+        connections: [connectionId],
       },
       uploadables: {
         "input.file": uploadedFile,
@@ -136,9 +133,9 @@ export function UploadDataPrivacyAgreementDialog({
       onCompleted(_response, errors) {
         if (errors) {
           toast.add({
-            title: t("uploadDataPrivacyAgreementDialog.messages.error"),
+            title: t("uploadThirdPartyAgreementDialog.messages.error"),
             description: formatError(
-              t("uploadDataPrivacyAgreementDialog.errors.upload"),
+              t("uploadThirdPartyAgreementDialog.errors.upload"),
               errors,
             ),
             type: "error",
@@ -146,20 +143,19 @@ export function UploadDataPrivacyAgreementDialog({
           return;
         }
         toast.add({
-          title: t("uploadDataPrivacyAgreementDialog.messages.success"),
-          description: t("uploadDataPrivacyAgreementDialog.messages.uploaded"),
+          title: t("uploadThirdPartyAgreementDialog.messages.success"),
+          description: t("uploadThirdPartyAgreementDialog.messages.uploaded"),
           type: "success",
         });
         reset();
         setUploadedFile(null);
-        onSuccess?.();
         ref.current?.close();
       },
       onError(error) {
         toast.add({
-          title: t("uploadDataPrivacyAgreementDialog.messages.error"),
+          title: t("uploadThirdPartyAgreementDialog.messages.error"),
           description: formatError(
-            t("uploadDataPrivacyAgreementDialog.errors.upload"),
+            t("uploadThirdPartyAgreementDialog.errors.upload"),
             error,
           ),
           type: "error",
@@ -168,54 +164,82 @@ export function UploadDataPrivacyAgreementDialog({
     });
   };
 
-  const handleClose = () => {
-    reset();
-    setUploadedFile(null);
-  };
-
   return (
     <Dialog
-      title={t("uploadDataPrivacyAgreementDialog.title")}
+      title={t("uploadThirdPartyAgreementDialog.title")}
       ref={ref}
       trigger={children}
       className="max-w-lg"
-      onClose={handleClose}
+      onClose={() => {
+        reset();
+        setUploadedFile(null);
+      }}
     >
       <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded className="space-y-4">
           <Dropzone
-            description={t("uploadDataPrivacyAgreementDialog.fileHelp")}
+            description={t("uploadThirdPartyAgreementDialog.fileHelp")}
             isUploading={isUploading}
             onDrop={handleDrop}
             accept={{
               "application/pdf": [".pdf"],
+              "application/msword": [".doc"],
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
+              "application/vnd.oasis.opendocument.text": [".odt"],
+              "image/png": [".png"],
+              "image/jpeg": [".jpg", ".jpeg"],
             }}
-            maxSize={10}
+            maxSize={30}
           />
 
           {uploadedFile && (
             <div className="p-3 bg-tertiary-subtle rounded-lg">
               <p className="text-sm font-medium">
-                {t("uploadDataPrivacyAgreementDialog.selectedFile")}
+                {t("uploadThirdPartyAgreementDialog.selectedFile")}
               </p>
               <p className="text-sm text-txt-secondary">{uploadedFile.name}</p>
             </div>
           )}
 
           <Field
-            {...register("fileName")}
-            label={t("uploadDataPrivacyAgreementDialog.fields.fileName")}
+            {...register("name")}
+            label={t("uploadThirdPartyAgreementDialog.fields.name")}
             type="text"
             required
-            error={errors.fileName?.message}
-            placeholder={t("uploadDataPrivacyAgreementDialog.placeholders.fileName")}
+            error={errors.name?.message}
+            placeholder={t("uploadThirdPartyAgreementDialog.placeholders.name")}
+          />
+
+          <Controller
+            control={control}
+            name="type"
+            render={({ field }) => (
+              <Field
+                label={t("uploadThirdPartyAgreementDialog.fields.type")}
+                required
+                error={errors.type?.message}
+              >
+                <Select
+                  variant="editor"
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  className="w-full"
+                >
+                  {THIRD_PARTY_AGREEMENT_TYPES.map(type => (
+                    <Option key={type} value={type}>
+                      {t(`thirdPartyAgreementsPage.types.${type}`)}
+                    </Option>
+                  ))}
+                </Select>
+              </Field>
+            )}
           />
 
           <div className="grid grid-cols-2 gap-4">
-            <Field label={t("uploadDataPrivacyAgreementDialog.fields.validFrom")}>
+            <Field label={t("uploadThirdPartyAgreementDialog.fields.validFrom")}>
               <Input {...register("validFrom")} type="date" />
             </Field>
-            <Field label={t("uploadDataPrivacyAgreementDialog.fields.validUntil")}>
+            <Field label={t("uploadThirdPartyAgreementDialog.fields.validUntil")}>
               <Input {...register("validUntil")} type="date" />
             </Field>
           </div>
@@ -227,10 +251,18 @@ export function UploadDataPrivacyAgreementDialog({
             disabled={isUploading || !uploadedFile}
             icon={isUploading ? Spinner : undefined}
           >
-            {t("uploadDataPrivacyAgreementDialog.actions.upload")}
+            {t("uploadThirdPartyAgreementDialog.actions.upload")}
           </Button>
         </DialogFooter>
       </form>
     </Dialog>
   );
+}
+
+function formatDatetime(dateString?: string) {
+  if (!dateString) {
+    return null;
+  }
+
+  return `${dateString}T00:00:00Z`;
 }

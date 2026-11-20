@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,7 @@ package coredata
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"time"
@@ -34,37 +35,39 @@ import (
 )
 
 type (
-	ThirdPartyDataPrivacyAgreement struct {
-		ID             gid.GID    `db:"id"`
-		OrganizationID gid.GID    `db:"organization_id"`
-		ThirdPartyID   gid.GID    `db:"third_party_id"`
-		ValidFrom      *time.Time `db:"valid_from"`
-		ValidUntil     *time.Time `db:"valid_until"`
-		FileID         gid.GID    `db:"file_id"`
-		CreatedAt      time.Time  `db:"created_at"`
-		UpdatedAt      time.Time  `db:"updated_at"`
+	ThirdPartyAgreement struct {
+		ID             gid.GID                 `db:"id"`
+		OrganizationID gid.GID                 `db:"organization_id"`
+		ThirdPartyID   gid.GID                 `db:"third_party_id"`
+		Name           string                  `db:"name"`
+		Type           ThirdPartyAgreementType `db:"type"`
+		ValidFrom      *time.Time              `db:"valid_from"`
+		ValidUntil     *time.Time              `db:"valid_until"`
+		FileID         gid.GID                 `db:"file_id"`
+		CreatedAt      time.Time               `db:"created_at"`
+		UpdatedAt      time.Time               `db:"updated_at"`
 	}
 
-	ThirdPartyDataPrivacyAgreements []*ThirdPartyDataPrivacyAgreement
+	ThirdPartyAgreements []*ThirdPartyAgreement
 )
 
-func (v ThirdPartyDataPrivacyAgreement) CursorKey(orderBy ThirdPartyDataPrivacyAgreementOrderField) page.CursorKey {
+func (a ThirdPartyAgreement) CursorKey(orderBy ThirdPartyAgreementOrderField) page.CursorKey {
 	switch orderBy {
-	case ThirdPartyDataPrivacyAgreementOrderFieldValidFrom:
-		return page.NewCursorKey(v.ID, v.ValidFrom)
-	case ThirdPartyDataPrivacyAgreementOrderFieldCreatedAt:
-		return page.NewCursorKey(v.ID, v.CreatedAt)
+	case ThirdPartyAgreementOrderFieldName:
+		return page.NewCursorKey(a.ID, a.Name)
+	case ThirdPartyAgreementOrderFieldCreatedAt:
+		return page.NewCursorKey(a.ID, a.CreatedAt)
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (vdpa *ThirdPartyDataPrivacyAgreement) AuthorizationAttributes(
+func (a *ThirdPartyAgreement) AuthorizationAttributes(
 	ctx context.Context,
 	conn pg.Querier,
 	resourceIDs []gid.GID,
 ) (policy.AttributesByID, error) {
-	q := `SELECT id, organization_id FROM third_party_data_privacy_agreements WHERE id = ANY(@resource_ids::text[])`
+	q := `SELECT id, organization_id FROM third_party_agreements WHERE id = ANY(@resource_ids::text[])`
 
 	args := pgx.StrictNamedArgs{
 		"resource_ids": resourceIDs,
@@ -98,58 +101,62 @@ func (vdpa *ThirdPartyDataPrivacyAgreement) AuthorizationAttributes(
 	return attrsByID, nil
 }
 
-func (vdpa *ThirdPartyDataPrivacyAgreement) LoadByThirdPartyID(
+func (as *ThirdPartyAgreements) LoadForThirdPartyID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
 	thirdPartyID gid.GID,
+	cursor *page.Cursor[ThirdPartyAgreementOrderField],
 ) error {
 	q := `
 SELECT
 	id,
 	organization_id,
 	third_party_id,
+	name,
+	type,
 	valid_from,
 	valid_until,
 	file_id,
 	created_at,
 	updated_at
 FROM
-	third_party_data_privacy_agreements
+	third_party_agreements
 WHERE
 	%s
 	AND third_party_id = @third_party_id
-LIMIT 1;
+	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.NamedArgs{"third_party_id": thirdPartyID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query thirdParty data privacy agreement: %w", err)
+		return fmt.Errorf("cannot query third party agreements: %w", err)
 	}
 
-	thirdPartyDataPrivacyAgreement, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[ThirdPartyDataPrivacyAgreement])
+	agreements, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[ThirdPartyAgreement])
 	if err != nil {
-		return fmt.Errorf("cannot collect thirdParty data privacy agreement: %w", err)
+		return fmt.Errorf("cannot collect third party agreements: %w", err)
 	}
 
-	*vdpa = thirdPartyDataPrivacyAgreement
+	*as = agreements
 
 	return nil
 }
 
-func (vdpas *ThirdPartyDataPrivacyAgreements) LoadByThirdPartyIDs(
+func (as *ThirdPartyAgreements) LoadByThirdPartyIDs(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
 	thirdPartyIDs []gid.GID,
 ) error {
 	if len(thirdPartyIDs) == 0 {
-		*vdpas = ThirdPartyDataPrivacyAgreements{}
+		*as = ThirdPartyAgreements{}
 		return nil
 	}
 
@@ -158,16 +165,20 @@ SELECT
 	id,
 	organization_id,
 	third_party_id,
+	name,
+	type,
 	valid_from,
 	valid_until,
 	file_id,
 	created_at,
 	updated_at
 FROM
-	third_party_data_privacy_agreements
+	third_party_agreements
 WHERE
 	%s
 	AND third_party_id = ANY(@third_party_ids)
+ORDER BY
+	third_party_id, created_at DESC
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -182,75 +193,139 @@ WHERE
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query thirdParty data privacy agreements: %w", err)
+		return fmt.Errorf("cannot query third party agreements: %w", err)
 	}
 
-	agreements, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[ThirdPartyDataPrivacyAgreement])
+	agreements, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[ThirdPartyAgreement])
 	if err != nil {
-		return fmt.Errorf("cannot collect thirdParty data privacy agreements: %w", err)
+		return fmt.Errorf("cannot collect third party agreements: %w", err)
 	}
 
-	*vdpas = agreements
+	*as = agreements
 
 	return nil
 }
 
-func (vdpa *ThirdPartyDataPrivacyAgreement) LoadByID(
+func (a *ThirdPartyAgreement) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	thirdPartyDataPrivacyAgreementID gid.GID,
+	agreementID gid.GID,
 ) error {
 	q := `
 SELECT
 	id,
 	organization_id,
 	third_party_id,
+	name,
+	type,
 	valid_from,
 	valid_until,
 	file_id,
 	created_at,
 	updated_at
 FROM
-	third_party_data_privacy_agreements
+	third_party_agreements
 WHERE
 	%s
 	AND id = @id
-LIMIT 1;
+LIMIT 1
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.NamedArgs{"id": thirdPartyDataPrivacyAgreementID}
+	args := pgx.NamedArgs{"id": agreementID}
 	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query thirdParty data privacy agreement: %w", err)
+		return fmt.Errorf("cannot query third party agreement: %w", err)
 	}
 
-	thirdPartyDataPrivacyAgreement, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[ThirdPartyDataPrivacyAgreement])
+	agreement, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[ThirdPartyAgreement])
 	if err != nil {
-		return fmt.Errorf("cannot collect thirdParty data privacy agreement: %w", err)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect third party agreement: %w", err)
 	}
 
-	*vdpa = thirdPartyDataPrivacyAgreement
+	*a = agreement
 
 	return nil
 }
 
-func (vdpa *ThirdPartyDataPrivacyAgreement) Update(
+func (a *ThirdPartyAgreement) Insert(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+) error {
+	q := `
+INSERT INTO
+	third_party_agreements (
+		id,
+		organization_id,
+		tenant_id,
+		third_party_id,
+		name,
+		type,
+		valid_from,
+		valid_until,
+		file_id,
+		created_at,
+		updated_at
+	)
+VALUES (
+	@id,
+	@organization_id,
+	@tenant_id,
+	@third_party_id,
+	@name,
+	@type,
+	@valid_from,
+	@valid_until,
+	@file_id,
+	@created_at,
+	@updated_at
+)
+`
+
+	args := pgx.StrictNamedArgs{
+		"id":              a.ID,
+		"organization_id": a.OrganizationID,
+		"tenant_id":       scope.GetTenantID(),
+		"third_party_id":  a.ThirdPartyID,
+		"name":            a.Name,
+		"type":            a.Type,
+		"valid_from":      a.ValidFrom,
+		"valid_until":     a.ValidUntil,
+		"file_id":         a.FileID,
+		"created_at":      a.CreatedAt,
+		"updated_at":      a.UpdatedAt,
+	}
+
+	_, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot insert third party agreement: %w", err)
+	}
+
+	return nil
+}
+
+func (a *ThirdPartyAgreement) Update(
 	ctx context.Context,
 	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
 UPDATE
-	third_party_data_privacy_agreements
+	third_party_agreements
 SET
+	name = @name,
+	type = @type,
 	valid_from = @valid_from,
 	valid_until = @valid_until,
-	file_id = @file_id,
 	updated_at = @updated_at
 WHERE
 	%s
@@ -260,87 +335,35 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"id":          vdpa.ID,
-		"valid_from":  vdpa.ValidFrom,
-		"valid_until": vdpa.ValidUntil,
-		"file_id":     vdpa.FileID,
-		"updated_at":  vdpa.UpdatedAt,
+		"id":          a.ID,
+		"name":        a.Name,
+		"type":        a.Type,
+		"valid_from":  a.ValidFrom,
+		"valid_until": a.ValidUntil,
+		"updated_at":  a.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
-	_, err := conn.Exec(ctx, q, args)
+	result, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot update thirdParty data privacy agreement: %w", err)
+		return fmt.Errorf("cannot update third party agreement: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
 	}
 
 	return nil
 }
 
-func (vdpa *ThirdPartyDataPrivacyAgreement) Upsert(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-) error {
-	q := `
-INSERT INTO
-	third_party_data_privacy_agreements (
-		id,
-		tenant_id,
-		organization_id,
-		third_party_id,
-		valid_from,
-		valid_until,
-		file_id,
-		created_at,
-		updated_at
-	)
-VALUES (
-	@id,
-	@tenant_id,
-	@organization_id,
-	@third_party_id,
-	@valid_from,
-	@valid_until,
-	@file_id,
-	@created_at,
-	@updated_at
-)
-ON CONFLICT (organization_id, third_party_id) DO UPDATE SET
-	id = EXCLUDED.id,
-	valid_from = EXCLUDED.valid_from,
-	valid_until = EXCLUDED.valid_until,
-	file_id = EXCLUDED.file_id,
-	updated_at = EXCLUDED.updated_at
-`
-	args := pgx.StrictNamedArgs{
-		"id":              vdpa.ID,
-		"tenant_id":       scope.GetTenantID(),
-		"third_party_id":  vdpa.ThirdPartyID,
-		"organization_id": vdpa.OrganizationID,
-		"valid_from":      vdpa.ValidFrom,
-		"valid_until":     vdpa.ValidUntil,
-		"file_id":         vdpa.FileID,
-		"created_at":      vdpa.CreatedAt,
-		"updated_at":      vdpa.UpdatedAt,
-	}
-
-	_, err := conn.Exec(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot upsert thirdParty data privacy agreement: %w", err)
-	}
-
-	return nil
-}
-
-func (vdpa *ThirdPartyDataPrivacyAgreement) Delete(
+func (a *ThirdPartyAgreement) Delete(
 	ctx context.Context,
 	conn pg.Tx,
 	scope Scoper,
 ) error {
 	q := `
-DELETE
-FROM
-	third_party_data_privacy_agreements
+DELETE FROM
+	third_party_agreements
 WHERE
 	%s
 	AND id = @id
@@ -348,35 +371,13 @@ WHERE
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"id": vdpa.ID}
+	args := pgx.StrictNamedArgs{"id": a.ID}
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot delete third party agreement: %w", err)
+	}
 
-	return err
-}
-
-func (vdpa *ThirdPartyDataPrivacyAgreement) DeleteByThirdPartyID(
-	ctx context.Context,
-	conn pg.Tx,
-	scope Scoper,
-	thirdPartyID gid.GID,
-) error {
-	q := `
-DELETE
-FROM
-	third_party_data_privacy_agreements
-WHERE
-	%s
-	AND third_party_id = @third_party_id
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{"third_party_id": thirdPartyID}
-	maps.Copy(args, scope.SQLArguments())
-
-	_, err := conn.Exec(ctx, q, args)
-
-	return err
+	return nil
 }
