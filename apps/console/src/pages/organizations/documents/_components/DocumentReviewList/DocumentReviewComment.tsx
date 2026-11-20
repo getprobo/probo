@@ -36,6 +36,7 @@ import { useMentionMembers } from "#/pages/organizations/_lib/useMentionMembers"
 import { CurrentUser } from "#/providers/CurrentUser";
 
 import { documentCommentMaxLength } from "../../_lib/documentCommentMaxLength";
+import type { DocumentThreadConnections } from "../../_lib/documentThreadConnections";
 import { useUpdateDocumentComment } from "../../_lib/useUpdateDocumentComment";
 import { documentReviewComment } from "../../variants";
 
@@ -61,7 +62,7 @@ const documentReviewCommentFragment = graphql`
 interface DocumentReviewCommentProps {
   commentKey: DocumentReviewComment_comment$key;
   commentsConnectionId: string;
-  threadsConnectionId: string;
+  threadConnections: DocumentThreadConnections;
   primary?: boolean;
   actions?: ReactNode;
 }
@@ -69,7 +70,7 @@ interface DocumentReviewCommentProps {
 export function DocumentReviewComment({
   commentKey,
   commentsConnectionId,
-  threadsConnectionId,
+  threadConnections,
   primary = false,
   actions,
 }: DocumentReviewCommentProps) {
@@ -205,7 +206,7 @@ export function DocumentReviewComment({
         <DocumentReviewCommentDeleteDialog
           commentKey={comment}
           commentsConnectionId={commentsConnectionId}
-          threadsConnectionId={threadsConnectionId}
+          threadConnections={threadConnections}
           open={deleteOpen}
           onOpenChange={setDeleteOpen}
         />

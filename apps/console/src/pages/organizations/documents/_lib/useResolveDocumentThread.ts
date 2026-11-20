@@ -24,6 +24,8 @@ import { graphql } from "react-relay";
 import type { useResolveDocumentThreadMutation } from "#/__generated__/core/useResolveDocumentThreadMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
 
+import type { DocumentThreadConnections } from "./documentThreadConnections";
+
 const resolveDocumentThreadMutation = graphql`
   mutation useResolveDocumentThreadMutation(
     $input: ResolveDocumentCommentThreadInput!
@@ -33,6 +35,10 @@ const resolveDocumentThreadMutation = graphql`
       documentCommentThread {
         id @deleteEdge(connections: $connections)
         resolvedAt
+        resolvedBy {
+          id
+          fullName
+        }
       }
     }
   }
@@ -45,11 +51,13 @@ export function useResolveDocumentThread() {
     { errorToast: t("details.review.errors.resolve") },
   );
 
-  async function resolveDocumentThread(threadId: string, threadsConnectionId: string) {
+  // A resolved thread leaves the open threads but stays in the history, where
+  // its resolvedAt updates in place.
+  async function resolveDocumentThread(threadId: string, threadConnections: DocumentThreadConnections) {
     await commit({
       variables: {
         input: { threadId },
-        connections: [threadsConnectionId],
+        connections: [threadConnections.open],
       },
     });
   }

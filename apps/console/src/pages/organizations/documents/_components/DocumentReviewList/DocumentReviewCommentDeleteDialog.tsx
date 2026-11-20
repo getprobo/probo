@@ -32,6 +32,7 @@ import { graphql, useFragment } from "react-relay";
 
 import type { DocumentReviewCommentDeleteDialog_comment$key } from "#/__generated__/core/DocumentReviewCommentDeleteDialog_comment.graphql";
 
+import type { DocumentThreadConnections } from "../../_lib/documentThreadConnections";
 import { useDeleteDocumentComment } from "../../_lib/useDeleteDocumentComment";
 
 const documentReviewCommentDeleteDialogFragment = graphql`
@@ -43,7 +44,7 @@ const documentReviewCommentDeleteDialogFragment = graphql`
 interface DocumentReviewCommentDeleteDialogProps {
   commentKey: DocumentReviewCommentDeleteDialog_comment$key;
   commentsConnectionId: string;
-  threadsConnectionId: string;
+  threadConnections: DocumentThreadConnections;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -51,7 +52,7 @@ interface DocumentReviewCommentDeleteDialogProps {
 export function DocumentReviewCommentDeleteDialog({
   commentKey,
   commentsConnectionId,
-  threadsConnectionId,
+  threadConnections,
   open,
   onOpenChange,
 }: DocumentReviewCommentDeleteDialogProps) {
@@ -60,7 +61,7 @@ export function DocumentReviewCommentDeleteDialog({
   const [deleteDocumentComment, isDeleting] = useDeleteDocumentComment();
 
   function handleDelete() {
-    void deleteDocumentComment(comment.id, commentsConnectionId, threadsConnectionId).then(
+    void deleteDocumentComment(comment.id, commentsConnectionId, threadConnections).then(
       () => {
         onOpenChange(false);
       },

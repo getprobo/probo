@@ -75,7 +75,7 @@ const suggestionAuthorQuery = graphql`
 
 // Must match the arguments of the review column's suggestions connection.
 function openSuggestionsConnectionId(documentId: string) {
-  return ConnectionHandler.getConnectionID(documentId, "DocumentReviewListColumn_suggestions", {
+  return ConnectionHandler.getConnectionID(documentId, "DocumentReviewPanel_suggestions", {
     filter: { status: "OPEN" },
     orderBy: { field: "CREATED_AT", direction: "ASC" },
   });

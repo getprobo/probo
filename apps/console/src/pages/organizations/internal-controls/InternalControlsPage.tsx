@@ -291,7 +291,7 @@ export function InternalControlsPage({ queryRef }: InternalControlsPageProps) {
       <div className={results()}>
         <div className={views()}>
           <SegmentedControl
-            size={1}
+            size={2}
             value={filters.view}
             aria-label={t("list.views.label")}
             onValueChange={(value) => {

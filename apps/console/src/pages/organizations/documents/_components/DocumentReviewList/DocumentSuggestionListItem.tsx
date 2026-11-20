@@ -26,6 +26,7 @@ import { graphql, useFragment } from "react-relay";
 import type { DocumentSuggestionListItem_suggestion$key } from "#/__generated__/core/DocumentSuggestionListItem_suggestion.graphql";
 import type { DocumentSuggestionListItem_thread$key } from "#/__generated__/core/DocumentSuggestionListItem_thread.graphql";
 
+import type { DocumentThreadConnections } from "../../_lib/documentThreadConnections";
 import type { SuggestionAnchor } from "../../_lib/reviewAnchors";
 import { useAcceptDocumentSuggestion } from "../../_lib/useAcceptDocumentSuggestion";
 import { useCreateDocumentCommentThread } from "../../_lib/useCreateDocumentCommentThread";
@@ -63,7 +64,7 @@ interface DocumentSuggestionListItemProps {
   anchor: SuggestionAnchor;
   documentId: string;
   canComment: boolean;
-  threadsConnectionId: string;
+  threadConnections: DocumentThreadConnections;
   active: boolean;
   onActivate: () => void;
 }
@@ -74,7 +75,7 @@ export function DocumentSuggestionListItem({
   anchor,
   documentId,
   canComment,
-  threadsConnectionId,
+  threadConnections,
   active,
   onActivate,
 }: DocumentSuggestionListItemProps) {
@@ -149,7 +150,7 @@ export function DocumentSuggestionListItem({
         ? (
             <DocumentReviewThread
               threadKey={thread}
-              threadsConnectionId={threadsConnectionId}
+              threadConnections={threadConnections}
               expanded={active}
             />
           )
@@ -159,7 +160,7 @@ export function DocumentSuggestionListItem({
               documentId,
               suggestion.id,
               content,
-              threadsConnectionId,
+              threadConnections,
             )}
           />
         )}

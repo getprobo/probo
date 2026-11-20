@@ -54,7 +54,7 @@ export function SegmentedControl(props: SegmentedControlProps) {
     disabled,
     className,
     children,
-    size = 2,
+    size = 3,
     "aria-label": ariaLabel,
     "aria-labelledby": ariaLabelledby,
   } = props;

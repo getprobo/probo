@@ -418,7 +418,7 @@ export function DevicesPage({ queryRef }: DevicesPageProps) {
       <div className={results()}>
         <div className={views()}>
           <SegmentedControl
-            size={1}
+            size={2}
             value={view}
             aria-label={t("devices.views.ariaLabel")}
             onValueChange={(value) => {
