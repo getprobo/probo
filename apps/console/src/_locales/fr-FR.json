@@ -5838,7 +5838,7 @@
   },
   "uploadThirdPartyAgreementDialog": {
     "title": "Ajouter un accord",
-    "fileHelp": "PDF, Word, ODT, PNG ou JPEG jusqu’à 30 Mo",
+    "fileHelp": "Fichiers PDF jusqu’à 30 Mo",
     "selectedFile": "Fichier sélectionné :",
     "fields": {
       "type": "Type",

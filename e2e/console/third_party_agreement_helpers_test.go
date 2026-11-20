@@ -149,7 +149,7 @@ func uploadThirdPartyAgreement(
 		agreementType,
 		validFrom,
 		validUntil,
-		fileName,
+		thirdPartyAgreementUploadPDF(fileName),
 		thirdPartyAgreementNodeSelection,
 	)
 	require.NoError(t, err)
@@ -175,7 +175,29 @@ func uploadThirdPartyAgreementExpectError(
 		agreementType,
 		validFrom,
 		validUntil,
-		fileName,
+		thirdPartyAgreementUploadPDF(fileName),
+		"id",
+	)
+
+	return err
+}
+
+func uploadThirdPartyAgreementFileExpectError(
+	t *testing.T,
+	client *testutil.Client,
+	thirdPartyID string,
+	file testutil.UploadFile,
+) error {
+	t.Helper()
+
+	_, err := uploadThirdPartyAgreementResult(
+		t,
+		client,
+		thirdPartyID,
+		"OTHER",
+		"2024-01-01T00:00:00Z",
+		"2025-01-01T00:00:00Z",
+		file,
 		"id",
 	)
 
@@ -189,7 +211,7 @@ func uploadThirdPartyAgreementResult(
 	agreementType string,
 	validFrom string,
 	validUntil string,
-	fileName string,
+	file testutil.UploadFile,
 	nodeSelection string,
 ) (thirdPartyAgreementWireNode, error) {
 	t.Helper()
@@ -229,7 +251,7 @@ func uploadThirdPartyAgreementResult(
 			},
 		},
 		"input.file",
-		thirdPartyAgreementUploadPDF(fileName),
+		file,
 		&result,
 	)
 	if err != nil {

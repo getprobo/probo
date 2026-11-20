@@ -154,6 +154,10 @@ func (s ThirdPartyAgreementService) Upload(
 		&req.File,
 	)
 	if err != nil {
+		if validationErrors, ok := fileUploadValidationErrors(err); ok {
+			return nil, validationErrors
+		}
+
 		return nil, err
 	}
 

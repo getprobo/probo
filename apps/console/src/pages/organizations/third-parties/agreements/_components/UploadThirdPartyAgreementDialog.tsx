@@ -177,11 +177,6 @@ export function UploadThirdPartyAgreementDialog({
             onDrop={handleDrop}
             accept={{
               "application/pdf": [".pdf"],
-              "application/msword": [".doc"],
-              "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
-              "application/vnd.oasis.opendocument.text": [".odt"],
-              "image/png": [".png"],
-              "image/jpeg": [".jpg", ".jpeg"],
             }}
             maxSize={30}
           />

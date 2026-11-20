@@ -207,10 +207,7 @@ func NewService(
 	svc.ThirdPartyAgreements = &ThirdPartyAgreementService{
 		svc: svc,
 		fileValidator: filevalidation.NewValidator(
-			filevalidation.WithCategories(
-				filevalidation.CategoryDocument,
-				filevalidation.CategoryImage,
-			),
+			filevalidation.WithMimeTypes("application/pdf"),
 			filevalidation.WithMaxFileSize(30*1024*1024),
 		),
 	}

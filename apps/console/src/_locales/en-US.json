@@ -3167,7 +3167,7 @@
   },
   "uploadThirdPartyAgreementDialog": {
     "title": "Add agreement",
-    "fileHelp": "PDF, Word, ODT, PNG, or JPEG files up to 30MB",
+    "fileHelp": "PDF files up to 30MB",
     "selectedFile": "Selected file:",
     "fields": { "type": "Type", "validFrom": "Valid from", "validUntil": "Valid until" },
     "messages": { "success": "Success", "error": "Error", "uploaded": "Agreement added" },

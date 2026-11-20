@@ -275,3 +275,25 @@ func TestThirdPartyAgreement_ValidDateOrdering(t *testing.T) {
 		},
 	)
 }
+
+func TestThirdPartyAgreement_RejectsNonPDF(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	client := owner.ForTest(t)
+	thirdPartyID := factory.NewThirdParty(client).
+		WithName(factory.SafeName("Agreement non-PDF upload")).
+		Create()
+
+	err := uploadThirdPartyAgreementFileExpectError(
+		t,
+		client,
+		thirdPartyID,
+		testutil.UploadFile{
+			Filename:    "scan.png",
+			ContentType: "image/png",
+			Content:     []byte("\x89PNG\r\n\x1a\n"),
+		},
+	)
+	testutil.RequireErrorCode(t, err, "INVALID")
+}

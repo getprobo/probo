@@ -5823,7 +5823,7 @@
   },
   "uploadThirdPartyAgreementDialog": {
     "title": "Overeenkomst toevoegen",
-    "fileHelp": "PDF, Word, ODT, PNG of JPEG tot 30 MB",
+    "fileHelp": "PDF-bestanden tot 30 MB",
     "selectedFile": "Geselecteerd bestand:",
     "fields": {
       "type": "Type",
