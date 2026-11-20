@@ -957,7 +957,7 @@ func (a *Authorizer) buildAuditLogEntry(
 
 	if decision != nil {
 		outcome = coredata.AuditLogOutcomeDenied
-		reason := truncateAuditString(decision.Error(), 1024)
+		reason := limitBytes(decision.Error(), 1024)
 		denialReason = &reason
 	}
 
@@ -975,14 +975,14 @@ func (a *Authorizer) buildAuditLogEntry(
 		DenialReason:   denialReason,
 		Metadata:       []byte("{}"),
 		OriginIP:       ref.RefOrNil(request.IP),
-		UserAgent:      ref.RefOrNil(truncateAuditString(request.UserAgent, 512)),
-		RequestID:      ref.RefOrNil(truncateAuditString(request.RequestID, 128)),
+		UserAgent:      ref.RefOrNil(limitBytes(request.UserAgent, 512)),
+		RequestID:      ref.RefOrNil(limitBytes(request.RequestID, 128)),
 		CreatedAt:      now,
 		RecordedAt:     now,
 	}
 }
 
-func truncateAuditString(value string, limit int) string {
+func limitBytes(value string, limit int) string {
 	if len(value) <= limit {
 		return value
 	}
