@@ -4,6 +4,13 @@ All notable changes to the Probo Helm chart will be documented in this file.
 
 ## Unreleased
 
+### Added
+
+- `probo.auditLogRetention.interval` and `probo.auditLogRetention.retention`
+  set `PROBOD_AUDIT_LOG_RETENTION_INTERVAL` and
+  `PROBOD_AUDIT_LOG_RETENTION`, in seconds. Defaults stay one day and
+  90 days
+
 ## [0.33.0] - 2026-11-19
 
 ### Added

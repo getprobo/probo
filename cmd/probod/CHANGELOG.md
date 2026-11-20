@@ -27,6 +27,9 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 - MCP `addInternalControlLinkEvidence` uploads a `.uri` file
   containing an HTTP or HTTPS URL on an internal control, the same
   way as the console link form
+- Audit log entries older than 90 days are deleted once a day.
+  `PROBOD_AUDIT_LOG_RETENTION` and `PROBOD_AUDIT_LOG_RETENTION_INTERVAL`
+  override the window and the schedule, in seconds
 
 ### Changed
 

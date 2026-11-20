@@ -395,3 +395,43 @@ WHERE %s
 
 	return count, nil
 }
+
+// DeleteAuditLogEntriesBeforeBatch deletes up to batchSize entries with
+// created_at strictly before the cutoff.
+//
+// No ORDER BY created_at, id. There is no index leading with created_at,
+// so each ordered batch would sort every expired row. Any expired row is
+// eligible. SKIP LOCKED lets another replica take a different batch
+// instead of waiting.
+func DeleteAuditLogEntriesBeforeBatch(
+	ctx context.Context,
+	conn pg.Querier,
+	before time.Time,
+	batchSize int,
+) (int64, error) {
+	q := `
+WITH doomed AS (
+	SELECT id
+	FROM audit_log_entries
+	WHERE created_at < @before
+	LIMIT @limit
+	FOR UPDATE SKIP LOCKED
+)
+DELETE FROM audit_log_entries
+WHERE id IN (SELECT id FROM doomed)
+`
+
+	result, err := conn.Exec(
+		ctx,
+		q,
+		pgx.StrictNamedArgs{
+			"before": before,
+			"limit":  batchSize,
+		},
+	)
+	if err != nil {
+		return 0, fmt.Errorf("cannot delete audit log entries: %w", err)
+	}
+
+	return result.RowsAffected(), nil
+}
