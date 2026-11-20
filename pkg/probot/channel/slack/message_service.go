@@ -77,6 +77,12 @@ type (
 		legacy        LegacyMessageQueue
 		logger        *log.Logger
 	}
+
+	initialDeliveryState struct {
+		messageID gid.GID
+		ready     bool
+		pending   bool
+	}
 )
 
 var (
@@ -134,7 +140,11 @@ func (s *MessageService) updateOutbound(
 		},
 	)
 	if errors.Is(err, coredata.ErrResourceNotFound) {
-		return fmt.Errorf("cannot update bot message before the initial post is delivered")
+		if err := s.updateBeforeSubject(ctx, delivery); err != nil {
+			return fmt.Errorf("cannot update bot message without a thread subject: %w", err)
+		}
+
+		return nil
 	}
 
 	if err != nil {
@@ -151,6 +161,151 @@ func (s *MessageService) updateOutbound(
 		return fmt.Errorf("cannot load delivered bot message for update: %w", err)
 	}
 
+	if err := s.queueMessageUpdate(ctx, delivery, delivered.Message.ID); err != nil {
+		return fmt.Errorf("cannot queue bot message update: %w", err)
+	}
+
+	return nil
+}
+
+func (s *MessageService) updateBeforeSubject(
+	ctx context.Context,
+	delivery probot.OutboundDelivery,
+) error {
+	scope := coredata.NewScopeFromObjectID(delivery.OrganizationID)
+
+	var post coredata.BotMessage
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return post.LoadLatestBySubjectAndPurpose(
+				ctx,
+				conn,
+				scope,
+				delivery.OrganizationID,
+				delivery.SubjectNamespace,
+				delivery.SubjectKey,
+				coredata.BotMessagePurposePost,
+			)
+		},
+	)
+	if errors.Is(err, coredata.ErrResourceNotFound) || (err == nil && post.DeadLetteredAt != nil) {
+		return fmt.Errorf(
+			"cannot update bot message because the initial post is unavailable: %w",
+			probot.ErrInitialPostUnavailable,
+		)
+	}
+
+	if err != nil {
+		return fmt.Errorf("cannot load initial bot post: %w", err)
+	}
+
+	if post.ProcessedAt == nil {
+		return fmt.Errorf(
+			"cannot update bot message before the initial post is queued: %w",
+			probot.ErrInitialPostPending,
+		)
+	}
+
+	state, err := s.initialProviderDelivery(ctx, scope, post.ID)
+	if err != nil {
+		return fmt.Errorf("cannot load initial provider delivery: %w", err)
+	}
+
+	if state.ready {
+		if err := s.queueMessageUpdate(ctx, delivery, state.messageID); err != nil {
+			return fmt.Errorf("cannot queue update for delivered initial post: %w", err)
+		}
+
+		return nil
+	}
+
+	if state.pending {
+		return fmt.Errorf(
+			"cannot update bot message before the initial post is delivered: %w",
+			probot.ErrInitialPostPending,
+		)
+	}
+
+	return fmt.Errorf(
+		"cannot update bot message because the initial provider post failed: %w",
+		probot.ErrInitialPostUnavailable,
+	)
+}
+
+func (s *MessageService) initialProviderDelivery(
+	ctx context.Context,
+	scope coredata.Scoper,
+	postID gid.GID,
+) (initialDeliveryState, error) {
+	if s.modern != nil {
+		message, err := s.modern.GetBySourceEventID(ctx, scope, postID.String())
+		if err == nil {
+			return deliveryState(
+				message.ID,
+				message.SentAt,
+				message.ChannelID,
+				message.MessageTS,
+				message.Error,
+			), nil
+		}
+
+		if !errors.Is(err, coredata.ErrResourceNotFound) {
+			return initialDeliveryState{}, fmt.Errorf("cannot load initial Slack message: %w", err)
+		}
+	}
+
+	if s.legacy != nil {
+		message, err := s.legacy.GetBySourceEventID(ctx, scope, postID.String())
+		if err == nil {
+			return deliveryState(
+				message.ID,
+				message.SentAt,
+				message.ChannelID,
+				message.MessageTS,
+				message.Error,
+			), nil
+		}
+
+		if !errors.Is(err, coredata.ErrSlackMessageNotFound{}) {
+			return initialDeliveryState{}, fmt.Errorf(
+				"cannot load initial legacy Slack message: %w",
+				err,
+			)
+		}
+	}
+
+	return initialDeliveryState{}, nil
+}
+
+func deliveryState(
+	messageID gid.GID,
+	sentAt *time.Time,
+	channelID *string,
+	messageTS *string,
+	terminalErr *string,
+) initialDeliveryState {
+	if sentAt != nil &&
+		channelID != nil &&
+		*channelID != "" &&
+		messageTS != nil &&
+		*messageTS != "" {
+		return initialDeliveryState{messageID: messageID, ready: true}
+	}
+
+	if terminalErr != nil {
+		return initialDeliveryState{}
+	}
+
+	return initialDeliveryState{pending: true}
+}
+
+func (s *MessageService) queueMessageUpdate(
+	ctx context.Context,
+	delivery probot.OutboundDelivery,
+	messageID gid.GID,
+) error {
 	message := delivery.Result.Message
 
 	attributes := cloneNotificationData(message.Attributes)
@@ -166,7 +321,7 @@ func (s *MessageService) updateOutbound(
 
 	return s.UpdateMessage(
 		ctx,
-		delivered.Message.ID,
+		messageID,
 		message,
 		delivery.Result.Intent,
 	)

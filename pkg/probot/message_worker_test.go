@@ -27,6 +27,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.gearno.de/kit/log"
@@ -146,6 +147,86 @@ func TestMessageWorkerHandler_TransientFailureSchedulesRetry(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, message.ID, claimed.ID)
 	assert.Equal(t, 2, claimed.AttemptCount)
+}
+
+func TestMessageWorkerHandler_InitialPostPendingDoesNotConsumeAttempt(t *testing.T) {
+	t.Parallel()
+
+	fixture := newMessageWorkerFixture(t)
+	fixture.delivery.err = ErrInitialPostPending
+	message := fixture.enqueue(t, fixture.capability.Name(), fixture.capability.messageType)
+	require.NoError(
+		t,
+		fixture.pg.WithConn(
+			t.Context(),
+			func(ctx context.Context, conn pg.Querier) error {
+				_, err := conn.Exec(
+					ctx,
+					`UPDATE bot_messages SET attempt_count = 4 WHERE id = @id`,
+					pgx.StrictNamedArgs{"id": message.ID},
+				)
+
+				return err
+			},
+		),
+	)
+
+	now := time.Now().UTC()
+	handler := fixture.handler(now)
+	claimed, err := handler.Claim(t.Context())
+	require.NoError(t, err)
+	assert.Equal(t, 5, claimed.AttemptCount)
+	require.NoError(t, handler.Process(t.Context(), claimed))
+
+	waiting := fixture.load(t, message.ID)
+	assert.Equal(t, 4, waiting.AttemptCount)
+	assert.Nil(t, waiting.ProcessedAt)
+	assert.Nil(t, waiting.DeadLetteredAt)
+	require.NotNil(t, waiting.NextAttemptAt)
+	assert.WithinDuration(
+		t,
+		now.Add(handler.initialPostWait(claimed.CreatedAt, now)),
+		*waiting.NextAttemptAt,
+		time.Microsecond,
+	)
+
+	_, err = handler.Claim(t.Context())
+	require.ErrorIs(t, err, worker.ErrNoTask)
+}
+
+func TestMessageWorkerHandler_InitialPostUnavailableDeadLetters(t *testing.T) {
+	t.Parallel()
+
+	fixture := newMessageWorkerFixture(t)
+	fixture.delivery.err = ErrInitialPostUnavailable
+	message := fixture.enqueue(t, fixture.capability.Name(), fixture.capability.messageType)
+	now := time.Now().UTC()
+	handler := fixture.handler(now)
+
+	claimed, err := handler.Claim(t.Context())
+	require.NoError(t, err)
+	require.Error(t, handler.Process(t.Context(), claimed))
+
+	failed := fixture.load(t, message.ID)
+	assert.Nil(t, failed.ProcessedAt)
+	require.NotNil(t, failed.DeadLetteredAt)
+	assert.Nil(t, failed.NextAttemptAt)
+	assert.Equal(t, failed.MaxAttempts, failed.AttemptCount)
+}
+
+func TestInitialPostWait_BacksOffWithElapsedTime(t *testing.T) {
+	t.Parallel()
+
+	handler := &messageWorkerHandler{
+		retryBase: time.Second,
+		retryMax:  time.Minute,
+	}
+	now := time.Date(2026, 11, 12, 12, 0, 0, 0, time.UTC)
+
+	assert.Equal(t, time.Second, handler.initialPostWait(now, now))
+	assert.Equal(t, 2*time.Second, handler.initialPostWait(now.Add(-time.Second), now))
+	assert.Equal(t, 4*time.Second, handler.initialPostWait(now.Add(-3*time.Second), now))
+	assert.Equal(t, time.Minute, handler.initialPostWait(now.Add(-time.Hour), now))
 }
 
 func TestMessageWorkerHandler_UnknownCapabilityDeadLetters(t *testing.T) {
