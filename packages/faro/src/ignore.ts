@@ -18,8 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-// Outlook SafeLinks scans links in a headless browser and rejects a promise.
-// That rejection is not a visitor error.
+// Not visitor errors. Faro matches these against message, name, and stack.
+// Outlook SafeLinks rejects a promise while scanning links.
+// Wallet extensions throw when another extension already defined window.ethereum.
 export const ignoredErrorPatterns: RegExp[] = [
   /Object Not Found Matching Id:\d+, MethodName:\w+, ParamCount:\d+/,
+  /Cannot redefine property: ethereum/,
 ];
