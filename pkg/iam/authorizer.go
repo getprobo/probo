@@ -32,6 +32,7 @@ import (
 
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
+	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/oauth2"
@@ -965,28 +966,20 @@ func (a *Authorizer) buildAuditLogEntry(
 		OrganizationID: orgID,
 		ActorID:        params.Principal,
 		ActorType:      actorType,
-		ActorEmail:     optionalAuditString(actor.email),
-		ActorName:      optionalAuditString(actor.name),
+		ActorEmail:     ref.RefOrNil(actor.email),
+		ActorName:      ref.RefOrNil(actor.name),
 		Action:         params.Action,
 		ResourceType:   resourceTypeFromAction(params.Action),
 		ResourceID:     params.Resource,
 		Outcome:        outcome,
 		DenialReason:   denialReason,
 		Metadata:       []byte("{}"),
-		OriginIP:       optionalAuditString(request.IP),
-		UserAgent:      optionalAuditString(truncateAuditString(request.UserAgent, 512)),
-		RequestID:      optionalAuditString(truncateAuditString(request.RequestID, 128)),
+		OriginIP:       ref.RefOrNil(request.IP),
+		UserAgent:      ref.RefOrNil(truncateAuditString(request.UserAgent, 512)),
+		RequestID:      ref.RefOrNil(truncateAuditString(request.RequestID, 128)),
 		CreatedAt:      now,
 		RecordedAt:     now,
 	}
-}
-
-func optionalAuditString(value string) *string {
-	if value == "" {
-		return nil
-	}
-
-	return &value
 }
 
 func truncateAuditString(value string, limit int) string {
