@@ -35,8 +35,14 @@ const (
 func OAuth2ServerMetadata(
 	baseURL *baseurl.BaseURL,
 	registeredScopes []coredata.OAuth2Scope,
+	cimdSupported bool,
 ) *oauth2.ServerMetadata {
-	return oauth2.NewMetadata(uri.URI(baseURL.String()), oauth2Endpoints(baseURL), registeredScopes)
+	return oauth2.NewMetadata(
+		uri.URI(baseURL.String()),
+		oauth2Endpoints(baseURL),
+		registeredScopes,
+		cimdSupported,
+	)
 }
 
 func oauth2Endpoints(baseURL *baseurl.BaseURL) oauth2.Endpoints {

@@ -102,7 +102,8 @@ func TestOAuth2_Discovery(t *testing.T) {
 	assert.Contains(t, discovery.ClaimsSupported, "email")
 	assert.Contains(t, discovery.ClaimsSupported, "email_verified")
 	assert.Contains(t, discovery.ClaimsSupported, "name")
-	assert.True(t, discovery.ClientIDMetadataDocumentSupported)
+	// The e2e config sets no CIMD allowlist, so CIMD must not be advertised.
+	assert.False(t, discovery.ClientIDMetadataDocumentSupported)
 	assert.True(t, discovery.AuthorizationResponseIssuerSupported)
 	assert.Equal(t, []string{owner.BaseURL()}, discovery.ProtectedResources)
 }
