@@ -66,6 +66,7 @@ type (
 		AWS                AWSConfig                `json:"aws"`
 		Notifications      NotificationsConfig      `json:"notifications"`
 		TaskRecurrence     TaskRecurrenceConfig     `json:"task-recurrence"`
+		AuditLogRetention  AuditLogRetentionConfig  `json:"audit-log-retention"`
 		Connectors         []ConnectorConfig        `json:"connectors,omitempty"`
 		// ConnectorEndpoints repoints a provider at different hosts (a vendor
 		// sandbox on a staging deployment) keyed by provider name, e.g.

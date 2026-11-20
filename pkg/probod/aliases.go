@@ -70,6 +70,7 @@ type (
 	EmailNotificationConfig  = probodconfig.EmailNotificationConfig
 	WeeklyNotificationConfig = probodconfig.WeeklyNotificationConfig
 	TaskRecurrenceConfig     = probodconfig.TaskRecurrenceConfig
+	AuditLogRetentionConfig  = probodconfig.AuditLogRetentionConfig
 	OIDCProviderConfig       = probodconfig.OIDCProviderConfig
 	PgConfig                 = probodconfig.PgConfig
 	SAMLConfig               = probodconfig.SAMLConfig

@@ -313,6 +313,11 @@ spec:
             # Recurring tasks
             - name: PROBOD_TASK_RECURRENCE_INTERVAL
               value: {{ .Values.probo.taskRecurrence.interval | quote }}
+            # Audit log retention
+            - name: PROBOD_AUDIT_LOG_RETENTION_INTERVAL
+              value: {{ .Values.probo.auditLogRetention.interval | quote }}
+            - name: PROBOD_AUDIT_LOG_RETENTION
+              value: {{ .Values.probo.auditLogRetention.retention | quote }}
             # Weekly notification digest
             - name: PROBOD_NOTIFICATION_WEEKLY_WEEKDAY
               value: {{ .Values.probo.notificationWeekly.weekday | quote }}
