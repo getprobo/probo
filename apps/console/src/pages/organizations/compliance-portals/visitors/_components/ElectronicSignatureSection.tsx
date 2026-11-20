@@ -61,7 +61,7 @@ const fragment = graphql`
   fragment ElectronicSignatureSectionFragment on ElectronicSignature {
     status
     signedAt
-    file {
+    nda {
       downloadUrl
     }
     certificate {
@@ -123,7 +123,7 @@ export function ElectronicSignatureSection({
   const { root, copy, description, trigger, popup, event, timestamp }
     = electronicSignatureSection();
   const tone = ndaSignatureTone(signature.status);
-  const signedFileUrl = signature.signedAt != null ? signature.file.downloadUrl : "";
+  const signedFileUrl = signature.signedAt != null ? signature.nda.downloadUrl : "";
   const certificateUrl = signature.certificate?.downloadUrl ?? null;
   const descriptionCopy = signatureDescription(
     signature.status,
