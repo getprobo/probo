@@ -36,11 +36,18 @@ import (
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/bootstrap"
+	"go.probo.inc/probo/pkg/crypto/keys"
+	"go.probo.inc/probo/pkg/crypto/pem"
 )
 
 var (
 	testEnv   *TestEnv
 	setupOnce sync.Once
+
+	// Every probod started by this test binary shares one database and so one
+	// certificate queue. A row claimed by one process is polled by another,
+	// and the CA rejects an order requested by a different account with 401.
+	acmeAccountKey = sync.OnceValues(generateACMEAccountKey)
 )
 
 type TestEnv struct {
@@ -299,6 +306,11 @@ func generateConfig(opts configOptions) (string, error) {
 		return "", fmt.Errorf("generate oauth2 signing key: %w", err)
 	}
 
+	acmeKey, err := acmeAccountKey()
+	if err != nil {
+		return "", fmt.Errorf("generate acme account key: %w", err)
+	}
+
 	identityFederationSigningKey, err := bootstrap.GenerateOAuth2SigningKey()
 	if err != nil {
 		return "", fmt.Errorf("generate identity federation signing key: %w", err)
@@ -430,6 +442,7 @@ func generateConfig(opts configOptions) (string, error) {
 		"PROBOD_CUSTOM_DOMAINS_CNAME_TARGET": "custom.test.getprobo.com",
 		"PROBOD_ACME_DIRECTORY":              "https://localhost:9000/acme/acme/directory",
 		"PROBOD_ACME_EMAIL":                  "admin@test.getprobo.com",
+		"PROBOD_ACME_ACCOUNT_KEY":            acmeKey,
 	}
 
 	// Parallel tests share one client address, so the built-in window would
@@ -477,4 +490,18 @@ func generateConfig(opts configOptions) (string, error) {
 	}
 
 	return path, nil
+}
+
+func generateACMEAccountKey() (string, error) {
+	key, err := keys.Generate(keys.TypeEC256)
+	if err != nil {
+		return "", fmt.Errorf("cannot generate key: %w", err)
+	}
+
+	keyPEM, err := pem.EncodePrivateKey(key)
+	if err != nil {
+		return "", fmt.Errorf("cannot encode key: %w", err)
+	}
+
+	return string(keyPEM), nil
 }
