@@ -17,7 +17,13 @@
         "addApprover": "Add approver",
         "minor": "Publish minor version",
         "major": "Publish major version",
-        "requestApproval": "Request approval"
+        "requestApproval": "Request approval",
+        "openReview": {
+          "comments_one": "{{count}} comment is still open.",
+          "comments_other": "{{count}} comments are still open.",
+          "suggestions_one": "{{count}} suggestion is still open and will not be part of this version.",
+          "suggestions_other": "{{count}} suggestions are still open and will not be part of this version."
+        }
       },
       "download": {
         "item": "Download PDF",

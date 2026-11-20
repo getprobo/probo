@@ -17,7 +17,13 @@
         "addApprover": "Ajouter un approbateur",
         "minor": "Publier une version mineure",
         "major": "Publier une version majeure",
-        "requestApproval": "Demander l'approbation"
+        "requestApproval": "Demander l'approbation",
+        "openReview": {
+          "comments_one": "{{count}} commentaire est encore ouvert.",
+          "comments_other": "{{count}} commentaires sont encore ouverts.",
+          "suggestions_one": "{{count}} suggestion est encore ouverte et ne fera pas partie de cette version.",
+          "suggestions_other": "{{count}} suggestions sont encore ouvertes et ne feront pas partie de cette version."
+        }
       },
       "download": {
         "item": "Télécharger le PDF",

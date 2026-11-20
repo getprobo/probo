@@ -17,7 +17,13 @@
         "addApprover": "Goedkeurder toevoegen",
         "minor": "Subversie publiceren",
         "major": "Hoofdversie publiceren",
-        "requestApproval": "Goedkeuring aanvragen"
+        "requestApproval": "Goedkeuring aanvragen",
+        "openReview": {
+          "comments_one": "{{count}} opmerking staat nog open.",
+          "comments_other": "{{count}} opmerkingen staan nog open.",
+          "suggestions_one": "{{count}} suggestie staat nog open en maakt geen deel uit van deze versie.",
+          "suggestions_other": "{{count}} suggesties staan nog open en maken geen deel uit van deze versie."
+        }
       },
       "download": {
         "item": "PDF downloaden",

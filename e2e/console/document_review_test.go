@@ -79,32 +79,49 @@ func TestDocumentReview_PublishWithOpenReview(t *testing.T) {
 		publishMajorDocumentVersion(t, owner, commentDocumentID)
 	})
 
-	t.Run("open suggestion does not block publish", func(t *testing.T) {
+	t.Run("open suggestion is left out of the published version", func(t *testing.T) {
 		t.Parallel()
 
 		paintSuggestionInsert(t, documentID, "suggestion-open", "inserted")
 
-		versionID := publishMajorDocumentVersion(t, owner, documentID)
-
-		var version struct {
-			Node struct {
-				Content struct {
-					Prosemirror string `json:"prosemirror"`
-				} `json:"content"`
-			} `json:"node"`
+		var published struct {
+			PublishDocument struct {
+				DocumentVersion struct {
+					Status  string `json:"status"`
+					Content struct {
+						Prosemirror string `json:"prosemirror"`
+					} `json:"content"`
+				} `json:"documentVersion"`
+			} `json:"publishDocument"`
 		}
 
 		err := owner.Execute(`
-			query($id: ID!) {
-				node(id: $id) {
-					... on DocumentVersion { content { prosemirror } }
+			mutation($input: PublishDocumentInput!) {
+				publishDocument(input: $input) {
+					documentVersion { status content { prosemirror } }
 				}
 			}
-		`, map[string]any{"id": versionID}, &version)
+		`, map[string]any{
+			"input": map[string]any{
+				"minor":       false,
+				"documentId":  documentID,
+				"approverIds": []string{},
+				"changelog":   "Release with an open suggestion",
+			},
+		}, &published)
 		require.NoError(t, err)
-		require.Contains(t, version.Node.Content.Prosemirror, "Keep this sentence.")
-		require.NotContains(t, version.Node.Content.Prosemirror, "inserted")
-		require.NotContains(t, version.Node.Content.Prosemirror, collaboration.SuggestionInsertMark)
+
+		version := published.PublishDocument.DocumentVersion
+		require.Equal(t, "PUBLISHED", version.Status)
+		require.Contains(t, version.Content.Prosemirror, "Keep this sentence.")
+		require.NotContains(t, version.Content.Prosemirror, "inserted")
+		require.NotContains(t, version.Content.Prosemirror, collaboration.SuggestionInsertMark)
+
+		require.True(
+			t,
+			collaborationHasOpenSuggestions(t, documentID),
+			"publishing must leave the suggestion open in the live document",
+		)
 	})
 }
 
@@ -1002,4 +1019,34 @@ func paintSuggestionInsert(t *testing.T, documentID string, suggestionID string,
 		encodedHeads,
 	)
 	require.NoError(t, err)
+}
+
+func collaborationHasOpenSuggestions(t *testing.T, documentID string) bool {
+	t.Helper()
+
+	ctx := context.Background()
+	conn := dialTestPg(t, ctx)
+	t.Cleanup(func() { _ = conn.Close(ctx) })
+
+	var snapshot []byte
+
+	err := conn.QueryRow(
+		ctx,
+		`SELECT snapshot FROM collaboration_documents WHERE document_id = $1`,
+		documentID,
+	).Scan(&snapshot)
+	require.NoError(t, err)
+
+	actorID, err := automerge.NewActorID()
+	require.NoError(t, err)
+
+	document, err := automerge.Load(snapshot, actorID)
+	require.NoError(t, err)
+
+	defer func() { _ = document.Close() }()
+
+	spans, err := collaboration.BodySpans(document)
+	require.NoError(t, err)
+
+	return collaboration.HasOpenSuggestions(spans)
 }

@@ -35,13 +35,16 @@ import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { type FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, useFragment } from "react-relay";
+import { graphql, type PreloadedQuery, useFragment } from "react-relay";
 
 import type { DocumentPublishForm_document$key } from "#/__generated__/core/DocumentPublishForm_document.graphql";
+import type { DocumentPublishReviewCalloutQuery } from "#/__generated__/core/DocumentPublishReviewCalloutQuery.graphql";
 import { PeopleMenu } from "#/components/people/PeopleMenu";
 
 import { usePublishDocument } from "../../_lib/usePublishDocument";
 import { documentPublishForm } from "../../variants";
+
+import { DocumentPublishReviewCallout } from "./DocumentPublishReviewCallout";
 
 const documentPublishFormFragment = graphql`
   fragment DocumentPublishForm_document on Document {
@@ -57,12 +60,13 @@ type Approver = { id: string; fullName: string };
 
 interface DocumentPublishFormProps {
   documentKey: DocumentPublishForm_document$key;
+  reviewQueryRef: PreloadedQuery<DocumentPublishReviewCalloutQuery> | null;
   onDone: () => void;
 }
 
 // A minor version publishes right away. A major version asks the chosen
 // approvers first, or publishes right away when there are none.
-export function DocumentPublishForm({ documentKey, onDone }: DocumentPublishFormProps) {
+export function DocumentPublishForm({ documentKey, reviewQueryRef, onDone }: DocumentPublishFormProps) {
   const document = useFragment(documentPublishFormFragment, documentKey);
   const { t } = useTranslation("organizations/documents");
   const [publishDocument, isPublishing] = usePublishDocument();
@@ -113,6 +117,7 @@ export function DocumentPublishForm({ documentKey, onDone }: DocumentPublishForm
       </DialogHeader>
       <DialogBody>
         <div className={body()}>
+          <DocumentPublishReviewCallout queryRef={reviewQueryRef} />
           <Field label={t("details.actions.publish.changelog")} required>
             <Textarea
               name="changelog"

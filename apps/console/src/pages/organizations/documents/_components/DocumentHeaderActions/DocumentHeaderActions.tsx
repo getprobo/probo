@@ -24,17 +24,20 @@ import { Dialog } from "@probo/ui/src/v2/Dialog/Dialog";
 import { DialogPopup } from "@probo/ui/src/v2/Dialog/DialogPopup";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, useFragment } from "react-relay";
+import { graphql, useFragment, useQueryLoader } from "react-relay";
 
 import type { DocumentHeaderActions_document$key } from "#/__generated__/core/DocumentHeaderActions_document.graphql";
+import type { DocumentPublishReviewCalloutQuery } from "#/__generated__/core/DocumentPublishReviewCalloutQuery.graphql";
 
 import { documentHeaderActions } from "../../variants";
 
 import { DocumentActionsMenu } from "./DocumentActionsMenu";
 import { DocumentPublishForm } from "./DocumentPublishForm";
+import { documentPublishReviewCalloutQuery } from "./DocumentPublishReviewCallout";
 
 const documentHeaderActionsFragment = graphql`
   fragment DocumentHeaderActions_document on Document {
+    id
     status
     writeMode
     canPublish: permission(action: "core:document-version:publish")
@@ -57,6 +60,9 @@ export function DocumentHeaderActions({ documentKey }: DocumentHeaderActionsProp
   const document = useFragment(documentHeaderActionsFragment, documentKey);
   const { t } = useTranslation("organizations/documents");
   const [publishOpen, setPublishOpen] = useState(false);
+  const [reviewQueryRef, loadReview] = useQueryLoader<DocumentPublishReviewCalloutQuery>(
+    documentPublishReviewCalloutQuery,
+  );
   const { root } = documentHeaderActions();
   const canPublish = document.canPublish
     && document.pendingApprovalCount.totalCount === 0
@@ -73,13 +79,20 @@ export function DocumentHeaderActions({ documentKey }: DocumentHeaderActionsProp
             color="neutral"
             highContrast
             iconStart={<UploadSimpleIcon />}
-            onClick={() => setPublishOpen(true)}
+            onClick={() => {
+              loadReview({ documentId: document.id }, { fetchPolicy: "network-only" });
+              setPublishOpen(true);
+            }}
           >
             {t("details.actions.publish.button")}
           </Button>
           <Dialog open={publishOpen} onOpenChange={setPublishOpen}>
             <DialogPopup>
-              <DocumentPublishForm documentKey={document} onDone={() => setPublishOpen(false)} />
+              <DocumentPublishForm
+                documentKey={document}
+                reviewQueryRef={reviewQueryRef ?? null}
+                onDone={() => setPublishOpen(false)}
+              />
             </DialogPopup>
           </Dialog>
         </>

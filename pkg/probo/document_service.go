@@ -574,8 +574,8 @@ func (s *DocumentService) publish(
 	result := &PublishDocumentResult{}
 
 	// Lock the collaboration document for the whole publish so the snapshot
-	// materialization sees one revision; a concurrent persist blocks on the
-	// same row.
+	// materializes one revision; a concurrent persist blocks on the same row.
+	// Open suggestions do not block: the snapshot leaves them out.
 	collabDocument := &coredata.CollaborationDocument{}
 	if err := collabDocument.LoadByDocumentIDForUpdate(ctx, tx, scope, req.DocumentID); err != nil &&
 		!errors.Is(err, coredata.ErrResourceNotFound) {
