@@ -28,7 +28,6 @@ import (
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/validator"
@@ -137,9 +136,9 @@ func (uarr *UploadAuditReportRequest) Validate() error {
 		return err
 	}
 
-	fv := filevalidation.NewValidator(
-		filevalidation.WithCategories(filevalidation.CategoryDocument),
-		filevalidation.WithMaxFileSize(25*1024*1024),
+	fv := validator.NewFileValidator(
+		validator.WithFileCategories(validator.FileCategoryDocument),
+		validator.WithMaxFileSize(25*1024*1024),
 	)
 	if err := fv.Validate(uarr.File.Filename, uarr.File.ContentType, uarr.File.Size); err != nil {
 		return fmt.Errorf("invalid audit report file: %w", err)
@@ -643,9 +642,9 @@ func (s AuditService) UploadReport(
 		return nil, err
 	}
 
-	fv := filevalidation.NewValidator(
-		filevalidation.WithCategories(filevalidation.CategoryDocument),
-		filevalidation.WithMaxFileSize(25*1024*1024),
+	fv := validator.NewFileValidator(
+		validator.WithFileCategories(validator.FileCategoryDocument),
+		validator.WithMaxFileSize(25*1024*1024),
 	)
 
 	file, err := s.svc.Files.UploadAndSaveFile(

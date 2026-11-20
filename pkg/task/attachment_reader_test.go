@@ -27,8 +27,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 func TestNormalizeStoredAttachment_RejectsMismatchedType(t *testing.T) {
@@ -37,7 +37,7 @@ func TestNormalizeStoredAttachment_RejectsMismatchedType(t *testing.T) {
 	_, _, err := normalizeStoredAttachment("diagram.png", "application/pdf", 9)
 	require.Error(t, err)
 
-	var rejected *filevalidation.Error
+	var rejected *validator.FileError
 	require.ErrorAs(t, err, &rejected)
 }
 

@@ -36,12 +36,12 @@ import (
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/prosemirror"
 	"go.probo.inc/probo/pkg/richtext"
 	"go.probo.inc/probo/pkg/task/sync/job"
 	linear "go.probo.inc/probo/pkg/task/sync/linear/client"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 type importedFileMeta struct {
@@ -1059,7 +1059,7 @@ func permanentLinearAsset(err error) bool {
 }
 
 func permanentStoreError(err error) bool {
-	_, ok := errors.AsType[*filevalidation.Error](err)
+	_, ok := errors.AsType[*validator.FileError](err)
 
 	return ok
 }

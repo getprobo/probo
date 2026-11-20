@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-// Keep this list aligned with filevalidation.NewAttachmentValidator.
+// Keep this list aligned with validator.NewAttachmentValidator.
 const attachmentTypes: ReadonlyArray<{ mimeType: string; extensions: readonly string[] }> = [
 	{ mimeType: 'application/pdf', extensions: ['.pdf'] },
 	{ mimeType: 'application/msword', extensions: ['.doc'] },

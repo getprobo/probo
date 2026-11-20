@@ -29,7 +29,6 @@ import (
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/validator"
@@ -38,7 +37,7 @@ import (
 type (
 	EvidenceService struct {
 		svc           *Service
-		fileValidator *filevalidation.FileValidator
+		fileValidator *validator.FileValidator
 	}
 
 	UploadInternalControlEvidenceRequest struct {
@@ -161,7 +160,7 @@ func (s EvidenceService) UploadInternalControlEvidence(
 }
 
 func fileUploadValidationErrors(err error) (validator.ValidationErrors, bool) {
-	fileErr, ok := errors.AsType[*filevalidation.Error](err)
+	fileErr, ok := errors.AsType[*validator.FileError](err)
 	if !ok {
 		return nil, false
 	}

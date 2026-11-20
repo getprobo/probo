@@ -31,17 +31,16 @@ import (
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/prosemirror"
 	"go.probo.inc/probo/pkg/validator"
 )
 
-var attachmentValidator = filevalidation.NewAttachmentValidator()
+var attachmentValidator = validator.NewAttachmentValidator()
 
 // ContentTypeForAttachment returns the MIME type accepted for filename.
 func ContentTypeForAttachment(filename string) (string, bool) {
-	return filevalidation.ContentTypeForAttachment(filename)
+	return validator.ContentTypeForAttachment(filename)
 }
 
 // AttachmentMaxFileSize is the largest file UploadFile accepts.
@@ -185,7 +184,7 @@ func (s FileService) UploadFile(
 
 func (s FileService) UploadAndSaveFile(
 	ctx context.Context, scope coredata.Scoper,
-	fileValidator *filevalidation.FileValidator,
+	fileValidator *validator.FileValidator,
 	s3Metadata map[string]string,
 	req *FileUpload,
 ) (*coredata.File, error) {
@@ -194,7 +193,7 @@ func (s FileService) UploadAndSaveFile(
 		return nil, fmt.Errorf("cannot generate object key: %w", err)
 	}
 
-	mimeType := filevalidation.ResolveContentType(req.ContentType, req.Filename)
+	mimeType := validator.ResolveContentType(req.ContentType, req.Filename)
 
 	if err := fileValidator.Validate(req.Filename, mimeType, req.Size); err != nil {
 		return nil, fmt.Errorf("cannot validate file: %w", err)

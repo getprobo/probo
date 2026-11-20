@@ -29,7 +29,7 @@ import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
-	"go.probo.inc/probo/pkg/filevalidation"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 const uploadMutation = `
@@ -112,7 +112,7 @@ func NewCmdUpload(f *cmdutil.Factory) *cobra.Command {
 
 			fileName := filepath.Base(filePath)
 
-			if _, ok := filevalidation.ContentTypeForAttachment(fileName); !ok {
+			if _, ok := validator.ContentTypeForAttachment(fileName); !ok {
 				return fmt.Errorf("cannot upload file: %s has an unsupported type", fileName)
 			}
 

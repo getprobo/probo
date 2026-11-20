@@ -33,7 +33,6 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/imageutil"
 	"go.probo.inc/probo/pkg/mail"
@@ -86,9 +85,9 @@ const (
 )
 
 var (
-	avatarValidator = filevalidation.NewValidator(
-		filevalidation.WithMimeTypes(imageutil.ContentTypeJPEG, imageutil.ContentTypePNG),
-		filevalidation.WithMaxFileSize(maxAvatarFileSize),
+	avatarValidator = validator.NewFileValidator(
+		validator.WithFileMimeTypes(imageutil.ContentTypeJPEG, imageutil.ContentTypePNG),
+		validator.WithMaxFileSize(maxAvatarFileSize),
 	)
 
 	errAvatarTooLarge = errors.New("avatar file exceeds maximum size")

@@ -35,12 +35,12 @@ import (
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/filemanager"
-	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/llm"
 	"go.probo.inc/probo/pkg/mail"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 const (
@@ -168,15 +168,15 @@ func NewService(
 	svc.InternalControls = &InternalControlService{svc: svc}
 	svc.Evidences = &EvidenceService{
 		svc: svc,
-		fileValidator: filevalidation.NewValidator(
-			filevalidation.WithCategories(
-				filevalidation.CategoryDocument,
-				filevalidation.CategorySpreadsheet,
-				filevalidation.CategoryPresentation,
-				filevalidation.CategoryData,
-				filevalidation.CategoryText,
-				filevalidation.CategoryImage,
-				filevalidation.CategoryVideo,
+		fileValidator: validator.NewFileValidator(
+			validator.WithFileCategories(
+				validator.FileCategoryDocument,
+				validator.FileCategorySpreadsheet,
+				validator.FileCategoryPresentation,
+				validator.FileCategoryData,
+				validator.FileCategoryText,
+				validator.FileCategoryImage,
+				validator.FileCategoryVideo,
 			),
 		),
 	}
@@ -192,17 +192,17 @@ func NewService(
 	}
 	svc.Organizations = &OrganizationService{
 		svc: svc,
-		fileValidator: filevalidation.NewValidator(
-			filevalidation.WithCategories(filevalidation.CategoryImage),
+		fileValidator: validator.NewFileValidator(
+			validator.WithFileCategories(validator.FileCategoryImage),
 		),
 	}
 	svc.Controls = &ControlService{svc: svc}
 	svc.Risks = &RiskService{svc: svc}
 	svc.ThirdPartyComplianceReports = &ThirdPartyComplianceReportService{
 		svc: svc,
-		fileValidator: filevalidation.NewValidator(
-			filevalidation.WithCategories(filevalidation.CategoryDocument),
-			filevalidation.WithMaxFileSize(30*1024*1024), // 30MB
+		fileValidator: validator.NewFileValidator(
+			validator.WithFileCategories(validator.FileCategoryDocument),
+			validator.WithMaxFileSize(30*1024*1024), // 30MB
 		),
 	}
 	svc.ThirdPartyBusinessAssociateAgreements = &ThirdPartyBusinessAssociateAgreementService{svc: svc}

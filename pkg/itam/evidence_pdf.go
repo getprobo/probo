@@ -37,10 +37,10 @@ import (
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/filetemplate"
-	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 const (
@@ -66,8 +66,8 @@ var (
 		deviceEvidenceTemplateSource,
 	)
 
-	deviceEvidenceFileValidator = filevalidation.NewValidator(
-		filevalidation.WithCategories(filevalidation.CategoryDocument),
+	deviceEvidenceFileValidator = validator.NewFileValidator(
+		validator.WithFileCategories(validator.FileCategoryDocument),
 	)
 
 	deviceEvidenceCheckLabels = map[coredata.DevicePostureCheckKey]string{

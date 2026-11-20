@@ -27,7 +27,7 @@ import (
 	"go.probo.inc/probo/pkg/certmanager"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/filemanager"
-	"go.probo.inc/probo/pkg/filevalidation"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 const (
@@ -53,7 +53,7 @@ type (
 		logger        *log.Logger
 		bot           *bot.Service
 		esign         *esign.Service
-		fileValidator *filevalidation.FileValidator
+		fileValidator *validator.FileValidator
 	}
 
 	// FileUpload is an in-memory file supplied by a caller for upload.
@@ -96,16 +96,16 @@ func NewService(
 		logger:      logger,
 		bot:         botService,
 		esign:       esignService,
-		fileValidator: filevalidation.NewValidator(
-			filevalidation.WithCategories(
-				filevalidation.CategoryData,
-				filevalidation.CategoryDocument,
-				filevalidation.CategoryImage,
-				filevalidation.CategoryPresentation,
-				filevalidation.CategorySpreadsheet,
-				filevalidation.CategoryText,
+		fileValidator: validator.NewFileValidator(
+			validator.WithFileCategories(
+				validator.FileCategoryData,
+				validator.FileCategoryDocument,
+				validator.FileCategoryImage,
+				validator.FileCategoryPresentation,
+				validator.FileCategorySpreadsheet,
+				validator.FileCategoryText,
 			),
-			filevalidation.WithMaxFileSize(10*1024*1024), // 10MB
+			validator.WithMaxFileSize(10*1024*1024), // 10MB
 		),
 	}
 }

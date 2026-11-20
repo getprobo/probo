@@ -33,7 +33,6 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/scim"
 	"go.probo.inc/probo/pkg/mail"
@@ -167,9 +166,9 @@ const (
 )
 
 var (
-	organizationLogoValidator = filevalidation.NewValidator(
-		filevalidation.WithCategories(filevalidation.CategoryImage),
-		filevalidation.WithMaxFileSize(maxOrganizationLogoFileSize),
+	organizationLogoValidator = validator.NewFileValidator(
+		validator.WithFileCategories(validator.FileCategoryImage),
+		validator.WithMaxFileSize(maxOrganizationLogoFileSize),
 	)
 )
 
