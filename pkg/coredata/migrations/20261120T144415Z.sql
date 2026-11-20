@@ -46,19 +46,8 @@ CREATE TABLE third_party_agreements (
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
--- Mint a GID (base64url of: tenant 8B | entity type 2B | timestamp 8B | random 6B).
--- Entity type 150 is ThirdPartyAgreementEntityType.
-CREATE FUNCTION pg_temp.gen_gid(tenant_text text, entity_type int) RETURNS text AS $$
-    SELECT translate(
-        encode(
-            decode(rpad(translate(tenant_text, '-_', '+/'), 12, '='), 'base64')
-            || set_byte(set_byte('\x0000'::bytea, 0, (entity_type >> 8) & 255), 1, entity_type & 255)
-            || int8send((extract(epoch FROM clock_timestamp()) * 1000)::bigint)
-            || substring(uuid_send(gen_random_uuid()) FROM 1 FOR 6),
-            'base64'),
-        '+/', '-_')
-$$ LANGUAGE sql VOLATILE;
-
+-- generate_gid() is defined in 20250420T120000Z. Entity type 150 is
+-- ThirdPartyAgreementEntityType.
 INSERT INTO third_party_agreements (
     id,
     organization_id,
@@ -73,7 +62,7 @@ INSERT INTO third_party_agreements (
     updated_at
 )
 SELECT
-    pg_temp.gen_gid(tenant_id, 150),
+    generate_gid(decode_base64_unpadded(tenant_id), 150),
     organization_id,
     tenant_id,
     third_party_id,
@@ -101,7 +90,7 @@ INSERT INTO third_party_agreements (
     updated_at
 )
 SELECT
-    pg_temp.gen_gid(tenant_id, 150),
+    generate_gid(decode_base64_unpadded(tenant_id), 150),
     organization_id,
     tenant_id,
     third_party_id,
