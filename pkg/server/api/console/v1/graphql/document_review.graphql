@@ -232,8 +232,34 @@ type DocumentSuggestion implements Node {
     id: ID!
     document: Document! @goField(forceResolver: true)
     author: Profile! @goField(forceResolver: true)
+    """
+    A suggestion whose edits are all undone or reverted amounts to no change
+    and becomes REJECTED with no resolvedBy. It is OPEN again if its edits come
+    back.
+    """
     status: DocumentSuggestionStatus!
+    """
+    The comment thread created with the suggestion. It is resolved when the
+    suggestion is accepted or rejected.
+    """
+    thread: DocumentCommentThread! @goField(forceResolver: true)
+    """
+    Where the suggestion was once decided, as base64 Automerge cursors. They
+    cover the text kept by the decision, or point at the first character after
+    the suggestion when nothing is kept. Null while the suggestion is open:
+    its marks locate it.
+    """
+    anchorStart: String
+    anchorEnd: String
+    """
+    The text the suggestion covered when it was decided.
+    """
+    anchorQuote: String
     resolvedAt: Datetime
+    """
+    Who accepted or rejected the suggestion. Null when it was rejected
+    automatically because it amounted to no change.
+    """
     resolvedBy: Profile @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
@@ -267,9 +293,14 @@ extend type Mutation {
     deleteDocumentComment(
         input: DeleteDocumentCommentInput!
     ): DeleteDocumentCommentPayload!
+    """
+    Resolve a comment thread. A suggestion's thread is resolved by accepting
+    or rejecting the suggestion instead.
+    """
     resolveDocumentCommentThread(
         input: ResolveDocumentCommentThreadInput!
     ): ResolveDocumentCommentThreadPayload!
+    "Reopen a resolved comment thread. Suggestion threads cannot be reopened."
     reopenDocumentCommentThread(
         input: ReopenDocumentCommentThreadInput!
     ): ReopenDocumentCommentThreadPayload!
@@ -336,6 +367,10 @@ input CreateDocumentCommentThreadInput {
     quote: String
     anchorStart: String
     anchorEnd: String
+    """
+    Comment on an open suggestion. The comment is added to the suggestion's
+    thread and the anchor fields are ignored.
+    """
     suggestionId: ID
     quoteOccurrence: Int
 }

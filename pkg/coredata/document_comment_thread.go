@@ -199,11 +199,32 @@ func (t *DocumentCommentThread) collectByID(
 	return nil
 }
 
+// LoadOpenBySuggestionIDForUpdate locks the open thread a suggestion owns, so
+// a comment and a concurrent decision serialize on it.
+func (t *DocumentCommentThread) LoadOpenBySuggestionIDForUpdate(
+	ctx context.Context,
+	tx pg.Tx,
+	scope Scoper,
+	suggestionID gid.GID,
+) error {
+	return t.loadOpenBySuggestionID(ctx, tx, scope, suggestionID, "FOR UPDATE")
+}
+
 func (t *DocumentCommentThread) LoadOpenBySuggestionID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
 	suggestionID gid.GID,
+) error {
+	return t.loadOpenBySuggestionID(ctx, conn, scope, suggestionID, "")
+}
+
+func (t *DocumentCommentThread) loadOpenBySuggestionID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	suggestionID gid.GID,
+	lock string,
 ) error {
 	q := `
 SELECT
@@ -225,9 +246,10 @@ WHERE
     AND suggestion_id = @suggestion_id
     AND resolved_at IS NULL
 LIMIT 1
+%s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), lock)
 
 	args := pgx.StrictNamedArgs{"suggestion_id": suggestionID}
 	maps.Copy(args, scope.SQLArguments())
@@ -247,6 +269,166 @@ LIMIT 1
 	}
 
 	*t = thread
+
+	return nil
+}
+
+// LoadBySuggestionIDs loads the thread each suggestion owns. A suggestion
+// commented on before every suggestion owned a thread may have several; the
+// open one, else the latest, wins.
+func (t *DocumentCommentThreads) LoadBySuggestionIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	suggestionIDs []gid.GID,
+) error {
+	if len(suggestionIDs) == 0 {
+		*t = nil
+		return nil
+	}
+
+	q := `
+SELECT DISTINCT ON (suggestion_id)
+    id,
+    organization_id,
+    document_id,
+    suggestion_id,
+    anchor_start,
+    anchor_end,
+    anchor_quote,
+    resolved_at,
+    resolved_by_profile_id,
+    created_at,
+    updated_at
+FROM
+    document_comment_threads
+WHERE
+    %s
+    AND suggestion_id = ANY(@suggestion_ids)
+ORDER BY
+    suggestion_id,
+    resolved_at IS NULL DESC,
+    created_at DESC,
+    id DESC
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"suggestion_ids": suggestionIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query suggestion comment threads: %w", err)
+	}
+
+	threads, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[DocumentCommentThread])
+	if err != nil {
+		return fmt.Errorf("cannot collect suggestion comment threads: %w", err)
+	}
+
+	*t = threads
+
+	return nil
+}
+
+// ResolveSuggestionThreads resolves the open thread of each given suggestion
+// with no resolver, as when the suggestion is rejected automatically.
+func ResolveSuggestionThreads(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	suggestionIDs []gid.GID,
+	now time.Time,
+) error {
+	if len(suggestionIDs) == 0 {
+		return nil
+	}
+
+	q := `
+UPDATE
+    document_comment_threads
+SET
+    resolved_at = @now,
+    resolved_by_profile_id = NULL,
+    updated_at = @now
+WHERE
+    %s
+    AND suggestion_id = ANY(@suggestion_ids)
+    AND resolved_at IS NULL
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"suggestion_ids": suggestionIDs,
+		"now":            now,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot resolve suggestion comment threads: %w", err)
+	}
+
+	return nil
+}
+
+// ReopenSuggestionThreads reopens the latest thread of each given suggestion
+// that has no open one. A suggestion keeps at most one open thread.
+func ReopenSuggestionThreads(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	suggestionIDs []gid.GID,
+	now time.Time,
+) error {
+	if len(suggestionIDs) == 0 {
+		return nil
+	}
+
+	q := `
+UPDATE
+    document_comment_threads
+SET
+    resolved_at = NULL,
+    resolved_by_profile_id = NULL,
+    updated_at = @now
+WHERE
+    id IN (
+        SELECT DISTINCT ON (suggestion_id)
+            id
+        FROM
+            document_comment_threads
+        WHERE
+            %s
+            AND suggestion_id = ANY(@suggestion_ids)
+            AND NOT EXISTS (
+                SELECT
+                    1
+                FROM
+                    document_comment_threads open_thread
+                WHERE
+                    open_thread.suggestion_id = document_comment_threads.suggestion_id
+                    AND open_thread.resolved_at IS NULL
+            )
+        ORDER BY
+            suggestion_id,
+            created_at DESC,
+            id DESC
+    )
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"suggestion_ids": suggestionIDs,
+		"now":            now,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot reopen suggestion comment threads: %w", err)
+	}
 
 	return nil
 }

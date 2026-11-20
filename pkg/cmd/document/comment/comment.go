@@ -341,10 +341,12 @@ func newCreateCmd(f *cmdutil.Factory) *cobra.Command {
 						return "", fmt.Errorf("cannot parse response: %w", err)
 					}
 
-					return fmt.Sprintf(
-						"Created comment thread %s",
-						resp.CreateDocumentCommentThread.DocumentCommentThreadEdge.Node.ID,
-					), nil
+					threadID := resp.CreateDocumentCommentThread.DocumentCommentThreadEdge.Node.ID
+					if flagSuggestion != "" {
+						return fmt.Sprintf("Added comment to suggestion thread %s", threadID), nil
+					}
+
+					return fmt.Sprintf("Created comment thread %s", threadID), nil
 				},
 			)
 		},
@@ -353,7 +355,7 @@ func newCreateCmd(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagContent, "content", "", "Comment text")
 	cmd.Flags().StringVar(&flagQuote, "quote", "", "Document text to anchor")
 	cmd.Flags().IntVar(&flagOccurrence, "occurrence", 0, "Zero-based quote occurrence")
-	cmd.Flags().StringVar(&flagSuggestion, "suggestion", "", "Suggestion ID to comment on")
+	cmd.Flags().StringVar(&flagSuggestion, "suggestion", "", "Suggestion ID to comment on; the comment is added to the suggestion's thread")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd

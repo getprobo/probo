@@ -54,6 +54,7 @@ var (
 	ErrDocumentCommentThreadResolved = errors.New("comment thread is resolved")
 	ErrDocumentSuggestionClosed      = errors.New("document suggestion is not open")
 	ErrInvalidDocumentAnchor         = errors.New("document comment anchor is invalid")
+	ErrDocumentSuggestionThread      = errors.New("a suggestion thread is resolved by accepting or rejecting the suggestion")
 )
 
 type (
@@ -464,28 +465,10 @@ func (s *DocumentService) CreateCommentThread(
 	}
 
 	if req.SuggestionID != nil {
-		suggestion, err := s.GetSuggestion(ctx, scope, *req.SuggestionID)
-		if err != nil {
-			return nil, nil, err
-		}
+		return s.commentOnSuggestion(ctx, scope, req.DocumentID, *req.SuggestionID, req.IdentityID, comment)
+	}
 
-		if suggestion.DocumentID != req.DocumentID || suggestion.Status != coredata.DocumentSuggestionStatusOpen {
-			return nil, nil, fmt.Errorf("cannot load document suggestion: %w", coredata.ErrResourceNotFound)
-		}
-
-		start, end, quote, err := s.suggestionAnchor(ctx, scope, req.DocumentID, suggestion.ID.String())
-		if err != nil {
-			return nil, nil, err
-		}
-
-		thread.SuggestionID = &suggestion.ID
-		thread.AnchorStart = start
-
-		thread.AnchorEnd = end
-		if quote != "" {
-			thread.AnchorQuote = quote
-		}
-	} else if len(thread.AnchorStart) == 0 {
+	if len(thread.AnchorStart) == 0 {
 		if req.Quote == "" {
 			return nil, nil, ErrInvalidDocumentAnchor
 		}
@@ -512,19 +495,6 @@ func (s *DocumentService) CreateCommentThread(
 				return err
 			}
 
-			if req.SuggestionID != nil {
-				// Re-check the suggestion under FOR UPDATE so a concurrent decision
-				// cannot attach this thread to an already resolved suggestion.
-				suggestion := &coredata.DocumentSuggestion{}
-				if err := suggestion.LoadByIDForUpdate(ctx, tx, scope, *req.SuggestionID); err != nil {
-					return fmt.Errorf("cannot load document suggestion: %w", err)
-				}
-
-				if suggestion.DocumentID != document.ID || suggestion.Status != coredata.DocumentSuggestionStatusOpen {
-					return fmt.Errorf("cannot load document suggestion: %w", coredata.ErrResourceNotFound)
-				}
-			}
-
 			thread.OrganizationID = document.OrganizationID
 			thread.DocumentID = document.ID
 			comment.OrganizationID = document.OrganizationID
@@ -548,6 +518,81 @@ func (s *DocumentService) CreateCommentThread(
 	s.notifyReview(ctx, thread.DocumentID)
 
 	return thread, comment, nil
+}
+
+// commentOnSuggestion adds the comment to the thread the suggestion owns.
+// The suggestion's marks locate it, so the thread keeps no anchor.
+func (s *DocumentService) commentOnSuggestion(
+	ctx context.Context,
+	scope coredata.Scoper,
+	documentID gid.GID,
+	suggestionID gid.GID,
+	identityID gid.GID,
+	comment *coredata.DocumentComment,
+) (*coredata.DocumentCommentThread, *coredata.DocumentComment, error) {
+	thread := &coredata.DocumentCommentThread{}
+
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			document, err := s.editableReviewDocument(ctx, tx, scope, documentID)
+			if err != nil {
+				return err
+			}
+
+			profile, err := s.reviewProfile(ctx, tx, scope, document.OrganizationID, identityID)
+			if err != nil {
+				return err
+			}
+
+			// Lock the suggestion so a concurrent decision cannot resolve its
+			// thread while this comment lands.
+			suggestion := &coredata.DocumentSuggestion{}
+			if err := suggestion.LoadByIDForUpdate(ctx, tx, scope, suggestionID); err != nil {
+				return fmt.Errorf("cannot load document suggestion: %w", err)
+			}
+
+			if suggestion.DocumentID != document.ID || suggestion.Status != coredata.DocumentSuggestionStatusOpen {
+				return fmt.Errorf("cannot load document suggestion: %w", coredata.ErrResourceNotFound)
+			}
+
+			if err := thread.LoadOpenBySuggestionIDForUpdate(ctx, tx, scope, suggestion.ID); err != nil {
+				return fmt.Errorf("cannot load suggestion comment thread: %w", err)
+			}
+
+			comment.ThreadID = thread.ID
+			comment.OrganizationID = document.OrganizationID
+			comment.AuthorProfileID = profile.ID
+
+			if err := comment.Insert(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot insert document comment: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	s.notifyReview(ctx, documentID)
+
+	return thread, comment, nil
+}
+
+// newSuggestionThread builds the open thread a suggestion owns from creation.
+func newSuggestionThread(
+	scope coredata.Scoper,
+	suggestion *coredata.DocumentSuggestion,
+) *coredata.DocumentCommentThread {
+	return &coredata.DocumentCommentThread{
+		ID:             gid.New(scope.GetTenantID(), coredata.DocumentCommentThreadEntityType),
+		OrganizationID: suggestion.OrganizationID,
+		DocumentID:     suggestion.DocumentID,
+		SuggestionID:   &suggestion.ID,
+		CreatedAt:      suggestion.CreatedAt,
+		UpdatedAt:      suggestion.CreatedAt,
+	}
 }
 
 func (s *DocumentService) CreateComment(
@@ -727,7 +772,9 @@ func (s *DocumentService) DeleteComment(
 				return fmt.Errorf("cannot count document comments: %w", err)
 			}
 
-			if remaining == 0 {
+			// A suggestion's thread lives as long as the suggestion, with or
+			// without comments.
+			if remaining == 0 && thread.SuggestionID == nil {
 				if err := thread.Delete(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot delete document comment thread: %w", err)
 				}
@@ -771,6 +818,10 @@ func (s *DocumentService) SetCommentThreadResolved(
 				return fmt.Errorf("cannot load document comment thread: %w", err)
 			}
 
+			if thread.SuggestionID != nil {
+				return ErrDocumentSuggestionThread
+			}
+
 			if _, err := s.editableReviewDocument(ctx, tx, scope, thread.DocumentID); err != nil {
 				return err
 			}
@@ -806,6 +857,9 @@ func (s *DocumentService) SetCommentThreadResolved(
 	return thread, nil
 }
 
+// LoadOpenSuggestionIDs reports which of the given ids a comment-only peer may
+// put marks for. A suggestion rejected automatically counts as open: its
+// marks coming back, as on redo, reopen it.
 func (s *DocumentService) LoadOpenSuggestionIDs(
 	ctx context.Context,
 	scope coredata.Scoper,
@@ -835,8 +889,8 @@ func (s *DocumentService) LoadOpenSuggestionIDs(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := suggestions.LoadOpenByIDs(ctx, conn, scope, documentID, ids); err != nil {
-				return fmt.Errorf("cannot load open document suggestions: %w", err)
+			if err := suggestions.LoadMarkableByIDs(ctx, conn, scope, documentID, ids); err != nil {
+				return fmt.Errorf("cannot load markable document suggestions: %w", err)
 			}
 
 			return nil
@@ -935,6 +989,54 @@ func (s *DocumentService) GetSuggestion(
 	return suggestion, nil
 }
 
+func (s *DocumentService) LoadSuggestionsByIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	suggestionIDs []gid.GID,
+) (coredata.DocumentSuggestions, error) {
+	var suggestions coredata.DocumentSuggestions
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := suggestions.LoadByIDs(ctx, conn, scope, suggestionIDs); err != nil {
+				return fmt.Errorf("cannot load document suggestions: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return suggestions, nil
+}
+
+func (s *DocumentService) LoadCommentThreadsBySuggestionIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	suggestionIDs []gid.GID,
+) (coredata.DocumentCommentThreads, error) {
+	var threads coredata.DocumentCommentThreads
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := threads.LoadBySuggestionIDs(ctx, conn, scope, suggestionIDs); err != nil {
+				return fmt.Errorf("cannot load document comment threads: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return threads, nil
+}
+
 func (s *DocumentService) StartSuggestion(
 	ctx context.Context,
 	scope coredata.Scoper,
@@ -976,6 +1078,10 @@ func (s *DocumentService) StartSuggestion(
 
 			if err := suggestion.Insert(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot insert document suggestion: %w", err)
+			}
+
+			if err := newSuggestionThread(scope, suggestion).Insert(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot insert suggestion comment thread: %w", err)
 			}
 
 			return nil
@@ -1090,6 +1196,10 @@ func (s *DocumentService) SuggestChange(
 		func(ctx context.Context, tx pg.Tx) error {
 			if err := suggestion.Insert(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot insert document suggestion: %w", err)
+			}
+
+			if err := newSuggestionThread(scope, suggestion).Insert(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot insert suggestion comment thread: %w", err)
 			}
 
 			return nil
@@ -1521,6 +1631,19 @@ func (s *DocumentService) DecideSuggestion(
 			suggestion.ResolvedAt = &now
 			suggestion.ResolvedByProfileID = &profile.ID
 
+			// The marks locate a suggestion while it is open and go away with the
+			// decision, so keep where it was and what it covered.
+			start, end, quote, err := s.decisionAnchor(ctx, scope, suggestion.DocumentID, suggestion.ID.String(), req.Accept)
+			if err != nil && !errors.Is(err, collaboration.ErrSuggestionNotInDocument) {
+				return err
+			}
+
+			if err == nil {
+				suggestion.AnchorStart = start
+				suggestion.AnchorEnd = end
+				suggestion.AnchorQuote = &quote
+			}
+
 			suggestion.UpdatedAt = now
 			if err := suggestion.UpdateIfOpen(ctx, tx, scope); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
@@ -1648,11 +1771,12 @@ func (s *DocumentService) reviewProfile(
 	return profile, nil
 }
 
-func (s *DocumentService) suggestionAnchor(
+func (s *DocumentService) decisionAnchor(
 	ctx context.Context,
 	scope coredata.Scoper,
 	documentID gid.GID,
 	suggestionID string,
+	accept bool,
 ) ([]byte, []byte, string, error) {
 	opened, err := s.collaboration.Open(ctx, scope, documentID)
 	if err != nil {
@@ -1661,7 +1785,7 @@ func (s *DocumentService) suggestionAnchor(
 
 	defer func() { _ = opened.Document.Close() }()
 
-	start, end, quote, err := collaboration.SuggestionCursors(opened.Document, suggestionID)
+	start, end, quote, err := collaboration.DecidedSuggestionCursors(opened.Document, suggestionID, accept)
 	if err != nil {
 		return nil, nil, "", err
 	}

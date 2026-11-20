@@ -27,14 +27,15 @@ import type { DocumentCommentHistoryList_document$key } from "#/__generated__/co
 import type { DocumentCommentHistoryListPaginationQuery } from "#/__generated__/core/DocumentCommentHistoryListPaginationQuery.graphql";
 
 import type { DocumentThreadConnections } from "../../_lib/documentThreadConnections";
-import type { ThreadAnchorSource } from "../../_lib/reviewAnchors";
+import type { SuggestionAnchor } from "../../_lib/reviewAnchors";
+import { reviewHistoryKey, type ReviewHistoryTarget, reviewHistoryTarget } from "../../_lib/reviewHistoryTarget";
 import { documentCommentHistory } from "../../variants";
 
 import { DocumentCommentHistoryItem } from "./DocumentCommentHistoryItem";
 
 const historyPageSize = 20;
 
-// Every thread, open or resolved, including those on suggestions, newest
+// Every thread, open or resolved, including those of suggestions, newest
 // first. The order must match documentCommentHistoryOrder.
 const documentCommentHistoryListFragment = graphql`
   fragment DocumentCommentHistoryList_document on Document
@@ -51,8 +52,7 @@ const documentCommentHistoryListFragment = graphql`
       edges {
         node {
           id
-          anchorStart
-          anchorEnd
+          ...reviewHistoryTarget_thread
           ...DocumentCommentHistoryItem_thread
         }
       }
@@ -63,14 +63,17 @@ const documentCommentHistoryListFragment = graphql`
 interface DocumentCommentHistoryListProps {
   documentKey: DocumentCommentHistoryList_document$key;
   threadConnections: DocumentThreadConnections;
+  // Open suggestions that still have redlines in the text.
+  liveSuggestions: ReadonlyMap<string, SuggestionAnchor>;
   activeKey: string | null;
-  onActivate: (thread: ThreadAnchorSource) => void;
+  onActivate: (target: ReviewHistoryTarget) => void;
   onPressInside: () => void;
 }
 
 export function DocumentCommentHistoryList({
   documentKey,
   threadConnections,
+  liveSuggestions,
   activeKey,
   onActivate,
   onPressInside,
@@ -80,26 +83,26 @@ export function DocumentCommentHistoryList({
     DocumentCommentHistoryListPaginationQuery,
     DocumentCommentHistoryList_document$key
   >(documentCommentHistoryListFragment, documentKey);
-  const threads = data.commentThreads.edges.map(edge => edge.node);
+  const entries = data.commentThreads.edges.flatMap(({ node: thread }) => {
+    const target = reviewHistoryTarget(thread, liveSuggestions);
+    return target == null ? [] : [{ thread, target }];
+  });
   const { list, more } = documentCommentHistory();
 
-  if (threads.length === 0) {
+  if (entries.length === 0 && !hasNext) {
     return <Text size={1} color="faint">{t("details.review.history.empty")}</Text>;
   }
 
   return (
     <div className={list()}>
-      {threads.map(thread => (
+      {entries.map(({ thread, target }) => (
         <div key={thread.id} onPointerDownCapture={onPressInside}>
           <DocumentCommentHistoryItem
             threadKey={thread}
             threadConnections={threadConnections}
-            active={activeKey === thread.id}
-            onActivate={() => onActivate({
-              id: thread.id,
-              anchorStart: thread.anchorStart,
-              anchorEnd: thread.anchorEnd,
-            })}
+            liveAnchor={target.kind === "suggestion" ? liveSuggestions.get(target.id) : undefined}
+            active={activeKey === reviewHistoryKey(target)}
+            onActivate={() => onActivate(target)}
           />
         </div>
       ))}

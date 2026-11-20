@@ -166,7 +166,10 @@ func TestDocumentReview_RBAC(t *testing.T) {
 		StartDocumentSuggestion struct {
 			DocumentSuggestionEdge struct {
 				Node struct {
-					ID string `json:"id"`
+					ID     string `json:"id"`
+					Thread struct {
+						ID string `json:"id"`
+					} `json:"thread"`
 				} `json:"node"`
 			} `json:"documentSuggestionEdge"`
 		} `json:"startDocumentSuggestion"`
@@ -175,7 +178,7 @@ func TestDocumentReview_RBAC(t *testing.T) {
 	err = viewer.Execute(`
 		mutation($input: StartDocumentSuggestionInput!) {
 			startDocumentSuggestion(input: $input) {
-				documentSuggestionEdge { node { id } }
+				documentSuggestionEdge { node { id thread { id } } }
 			}
 		}
 	`, map[string]any{
@@ -213,7 +216,12 @@ func TestDocumentReview_RBAC(t *testing.T) {
 	require.NoError(t, err, "viewer should reply on a redline")
 
 	redlineThreadID := reply.CreateDocumentCommentThread.DocumentCommentThreadEdge.Node.ID
-	require.NotEmpty(t, redlineThreadID)
+	require.Equal(
+		t,
+		started.StartDocumentSuggestion.DocumentSuggestionEdge.Node.Thread.ID,
+		redlineThreadID,
+		"a reply on a redline goes to the suggestion's thread",
+	)
 
 	_, err = viewer.Do(`
 		mutation($input: AcceptDocumentSuggestionInput!) {

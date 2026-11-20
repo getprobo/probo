@@ -4,6 +4,18 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+### Added
+
+- Document Suggestion `Get`, `Get Many`, and `Start` return the
+  suggestion's comment thread as `thread` with its `id`
+- Document Suggestion `Get` returns `anchorQuote`, the text the
+  suggestion covered when it was accepted or rejected
+
+### Changed
+
+- Document Suggestion `Reply` adds the comment to the suggestion's
+  thread, which every suggestion now has from the start
+
 ## [0.271.0] - 2026-11-16
 
 ### Added

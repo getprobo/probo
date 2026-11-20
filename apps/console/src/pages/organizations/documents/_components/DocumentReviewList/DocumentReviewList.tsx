@@ -34,7 +34,6 @@ export const documentReviewListQuery = graphql`
       __typename
       ... on Document {
         ...DocumentReviewPanel_threads
-        ...DocumentReviewPanel_suggestions
       }
     }
   }

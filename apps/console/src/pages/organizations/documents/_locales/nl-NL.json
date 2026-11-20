@@ -157,9 +157,13 @@
       "history": {
         "empty": "Nog geen reacties",
         "loadMore": "Meer laden",
-        "onSuggestion": "Bij een suggestie:",
         "resolved": "Opgelost",
-        "resolvedBy": "Opgelost door {{name}}"
+        "resolvedBy": "Opgelost door {{name}}",
+        "status": {
+          "open": "Open",
+          "accepted": "Geaccepteerd",
+          "rejected": "Afgewezen"
+        }
       },
       "contentRequired": "Schrijf eerst een opmerking",
       "contentTooLong": "Opmerkingen zijn beperkt tot {{max}} tekens",

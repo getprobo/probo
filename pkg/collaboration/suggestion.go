@@ -382,6 +382,90 @@ func SuggestionCursors(
 	return startCursor, endCursor, SuggestionQuote(spans, suggestionID), nil
 }
 
+// DecidedSuggestionCursors returns cursors covering the text of a suggestion
+// that survives the decision, read before the decision applies. Accepting
+// keeps inserted and format-changed text; rejecting keeps deleted-marked and
+// format-changed text. When nothing survives, both cursors sit on the first
+// character after the suggestion, so the place it was in stays findable.
+func DecidedSuggestionCursors(
+	document *automerge.Document,
+	suggestionID string,
+	accept bool,
+) (start []byte, end []byte, quote string, err error) {
+	spans, err := BodySpans(document)
+	if err != nil {
+		return nil, nil, "", err
+	}
+
+	var (
+		found        bool
+		survives     bool
+		startUTF16   uint32
+		endUTF16     uint32
+		lastUTF16    uint32
+		absolute     uint32
+		keptMarkName = SuggestionDeleteMark
+	)
+
+	if accept {
+		keptMarkName = SuggestionInsertMark
+	}
+
+	for _, span := range spans {
+		width := spanUTF16Width(span)
+		splitID, splitKind := suggestionSplit(span)
+		isText := span.Type == automerge.SpanTypeText
+		kept := isText &&
+			(markID(span.Marks, keptMarkName) == suggestionID || formatMarkMatches(span.Marks, suggestionID))
+		matches := kept ||
+			(isText && (markID(span.Marks, SuggestionInsertMark) == suggestionID ||
+				markID(span.Marks, SuggestionDeleteMark) == suggestionID)) ||
+			(splitID == suggestionID && (splitKind == suggestionSplitDeletion || isTableStructure(span)))
+
+		if kept {
+			if !survives {
+				startUTF16 = absolute
+				survives = true
+			}
+
+			endUTF16 = absolute + width
+		}
+
+		if matches {
+			found = true
+			lastUTF16 = absolute + width
+		}
+
+		absolute += width
+	}
+
+	if !found {
+		return nil, nil, "", ErrSuggestionNotInDocument
+	}
+
+	if !survives {
+		startUTF16 = lastUTF16
+		endUTF16 = lastUTF16
+	}
+
+	text, err := document.Text("body")
+	if err != nil {
+		return nil, nil, "", fmt.Errorf("cannot get collaboration body: %w", err)
+	}
+
+	startCursor, err := textCursor(text, startUTF16)
+	if err != nil {
+		return nil, nil, "", fmt.Errorf("cannot create suggestion start cursor: %w", err)
+	}
+
+	endCursor, err := textCursor(text, endUTF16)
+	if err != nil {
+		return nil, nil, "", fmt.Errorf("cannot create suggestion end cursor: %w", err)
+	}
+
+	return startCursor, endCursor, SuggestionQuote(spans, suggestionID), nil
+}
+
 func (s *Service) EnsureNoOpenSuggestions(
 	ctx context.Context,
 	tx pg.Tx,
@@ -756,6 +840,24 @@ func suggestionSpanIDs(spans []automerge.Span) map[string]bool {
 		for _, id := range formatMarkIDs(span.Marks) {
 			ids[id] = true
 		}
+	}
+
+	return ids
+}
+
+// SuggestionIDs returns the suggestions that still have marks, split markers or
+// block changes in spans. Ids that are not suggestion GIDs, such as the local
+// ids an editor uses until the server assigns one, are left out.
+func SuggestionIDs(spans []automerge.Span) []gid.GID {
+	ids := make([]gid.GID, 0)
+
+	for raw := range suggestionSpanIDs(spans) {
+		id, err := gid.ParseGID(raw)
+		if err != nil || id.EntityType() != coredata.DocumentSuggestionEntityType {
+			continue
+		}
+
+		ids = append(ids, id)
 	}
 
 	return ids

@@ -152,6 +152,8 @@ type (
 		Audit                                      *dataloadgen.Loader[gid.GID, *coredata.Audit]
 		Authorize                                  *dataloadgen.Loader[AuthorizeKey, AuthorizeResult]
 		DocumentCommentsByThread                   *dataloadgen.Loader[gid.GID, []*coredata.DocumentComment]
+		DocumentSuggestion                         *dataloadgen.Loader[gid.GID, *coredata.DocumentSuggestion]
+		DocumentCommentThreadBySuggestion          *dataloadgen.Loader[gid.GID, *coredata.DocumentCommentThread]
 	}
 
 	batchFetcher struct {
@@ -246,7 +248,9 @@ func (f *batchFetcher) newLoaders() *Loaders {
 			f.fetchAuthorizes,
 			dataloadgen.WithoutCache(),
 		),
-		DocumentCommentsByThread: dataloadgen.NewMappedLoader(f.fetchDocumentCommentsByThread),
+		DocumentCommentsByThread:          dataloadgen.NewMappedLoader(f.fetchDocumentCommentsByThread),
+		DocumentSuggestion:                dataloadgen.NewMappedLoader(f.fetchDocumentSuggestions),
+		DocumentCommentThreadBySuggestion: dataloadgen.NewMappedLoader(f.fetchDocumentCommentThreadsBySuggestion),
 	}
 }
 
@@ -371,6 +375,54 @@ func (f *batchFetcher) fetchDocumentCommentsByThread(
 			}
 
 			result[comment.ThreadID] = append(result[comment.ThreadID], comment)
+		}
+	}
+
+	return result, nil
+}
+
+func (f *batchFetcher) fetchDocumentSuggestions(
+	ctx context.Context,
+	keys []gid.GID,
+) (map[gid.GID]*coredata.DocumentSuggestion, error) {
+	result := make(map[gid.GID]*coredata.DocumentSuggestion, len(keys))
+
+	for tenantID, suggestionIDs := range gidKeysByTenant(keys) {
+		suggestions, err := f.probo.Documents.LoadSuggestionsByIDs(
+			ctx,
+			scopeFromContext(ctx, tenantID),
+			suggestionIDs,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("cannot batch load document suggestions: %w", err)
+		}
+
+		for _, suggestion := range suggestions {
+			result[suggestion.ID] = suggestion
+		}
+	}
+
+	return result, nil
+}
+
+func (f *batchFetcher) fetchDocumentCommentThreadsBySuggestion(
+	ctx context.Context,
+	keys []gid.GID,
+) (map[gid.GID]*coredata.DocumentCommentThread, error) {
+	result := make(map[gid.GID]*coredata.DocumentCommentThread, len(keys))
+
+	for tenantID, suggestionIDs := range gidKeysByTenant(keys) {
+		threads, err := f.probo.Documents.LoadCommentThreadsBySuggestionIDs(
+			ctx,
+			scopeFromContext(ctx, tenantID),
+			suggestionIDs,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("cannot batch load document comment threads: %w", err)
+		}
+
+		for _, thread := range threads {
+			result[*thread.SuggestionID] = thread
 		}
 	}
 

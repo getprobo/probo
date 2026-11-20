@@ -24,12 +24,28 @@ import { graphql } from "react-relay";
 import type { useRejectDocumentSuggestionMutation } from "#/__generated__/core/useRejectDocumentSuggestionMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
 
+import type { DocumentThreadConnections } from "./documentThreadConnections";
+
 const rejectDocumentSuggestionMutation = graphql`
-  mutation useRejectDocumentSuggestionMutation($input: RejectDocumentSuggestionInput!) {
+  mutation useRejectDocumentSuggestionMutation(
+    $input: RejectDocumentSuggestionInput!
+    $connections: [ID!]!
+  ) {
     rejectDocumentSuggestion(input: $input) {
       documentSuggestion {
         id
         status
+        anchorStart
+        anchorEnd
+        anchorQuote
+        thread {
+          id @deleteEdge(connections: $connections)
+          resolvedAt
+          resolvedBy {
+            id
+            fullName
+          }
+        }
       }
     }
   }
@@ -42,8 +58,15 @@ export function useRejectDocumentSuggestion() {
     { errorToast: t("details.review.errors.reject") },
   );
 
-  async function rejectDocumentSuggestion(suggestionId: string) {
-    await commit({ variables: { input: { suggestionId } } });
+  // The decision resolves the suggestion's thread: it leaves the open threads
+  // and stays in the history.
+  async function rejectDocumentSuggestion(suggestionId: string, threadConnections: DocumentThreadConnections) {
+    await commit({
+      variables: {
+        input: { suggestionId },
+        connections: [threadConnections.open],
+      },
+    });
   }
 
   return [rejectDocumentSuggestion, isRejecting] as const;

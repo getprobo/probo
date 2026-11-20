@@ -157,9 +157,13 @@
       "history": {
         "empty": "Aucun commentaire pour l'instant",
         "loadMore": "Charger plus",
-        "onSuggestion": "Sur une suggestion :",
         "resolved": "Résolu",
-        "resolvedBy": "Résolu par {{name}}"
+        "resolvedBy": "Résolu par {{name}}",
+        "status": {
+          "open": "Ouverte",
+          "accepted": "Acceptée",
+          "rejected": "Rejetée"
+        }
       },
       "contentRequired": "Écrivez d'abord un commentaire",
       "contentTooLong": "Les commentaires sont limités à {{max}} caractères",

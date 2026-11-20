@@ -93,7 +93,7 @@ export async function execute(this: IExecuteFunctions, itemIndex: number): Promi
 	}
 	const query = `
 		mutation StartDocumentSuggestion($input: StartDocumentSuggestionInput!) {
-			startDocumentSuggestion(input: $input) { documentSuggestionEdge { node { id status } } }
+			startDocumentSuggestion(input: $input) { documentSuggestionEdge { node { id status thread { id } } } }
 		}
 	`;
 	const responseData = await proboApiRequest.call(this, query, { input });

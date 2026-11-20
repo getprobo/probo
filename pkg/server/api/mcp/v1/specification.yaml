@@ -9409,13 +9409,13 @@ components:
           description: Suggestion this thread comments on, when the thread is a redline discussion
         anchor_start:
           type: string
-          description: Base64 Automerge cursor for the start of the anchored range
+          description: Base64 Automerge cursor for the start of the anchored range. Empty on suggestion threads, as the suggestion's redlines locate them.
         anchor_end:
           type: string
-          description: Base64 Automerge cursor for the end of the anchored range
+          description: Base64 Automerge cursor for the end of the anchored range. Empty on suggestion threads.
         anchor_quote:
           type: string
-          description: Text quote captured when the thread was created
+          description: Text quote captured when the thread was created. Empty on suggestion threads.
         resolved_at:
           type:
             - string
@@ -9475,6 +9475,7 @@ components:
         - document_id
         - author_profile_id
         - status
+        - thread_id
         - created_at
         - updated_at
       properties:
@@ -9489,7 +9490,25 @@ components:
           description: Author profile ID
         status:
           $ref: "#/components/schemas/DocumentSuggestionStatus"
-          description: Suggestion status
+          description: Suggestion status. A suggestion whose edits are all undone or reverted amounts to no change and becomes REJECTED with no resolved_by_profile_id; it is OPEN again if its edits come back.
+        thread_id:
+          $ref: "#/components/schemas/GID"
+          description: Comment thread created with the suggestion. It is resolved when the suggestion is accepted or rejected.
+        anchor_start:
+          type:
+            - string
+            - "null"
+          description: Base64 Automerge cursor for the start of the text kept by the decision. Null while the suggestion is open, as its redlines locate it.
+        anchor_end:
+          type:
+            - string
+            - "null"
+          description: Base64 Automerge cursor for the end of the text kept by the decision. Equals anchor_start when the decision kept no text.
+        anchor_quote:
+          type:
+            - string
+            - "null"
+          description: Text the suggestion covered when it was accepted or rejected
         resolved_at:
           type:
             - string
@@ -9501,7 +9520,7 @@ components:
             - string
             - "null"
           go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/gid.GID
-          description: Profile that accepted or rejected the suggestion
+          description: Profile that accepted or rejected the suggestion. Null when it was rejected automatically because it amounted to no change.
         created_at:
           type: string
           format: date-time
@@ -9630,7 +9649,7 @@ components:
           description: Zero-based occurrence of the quote to anchor
         suggestion_id:
           $ref: "#/components/schemas/GID"
-          description: Open suggestion to comment on. The server anchors the thread to that redline.
+          description: Open suggestion to comment on. The comment is added to the suggestion's thread and quote is ignored.
 
     CreateDocumentCommentThreadOutput:
       type: object
@@ -21481,7 +21500,7 @@ tools:
       $ref: "#/components/schemas/GetDocumentCommentOutput"
   - name: createDocumentCommentThread
     title: Create Document Comment Thread
-    description: Start a comment thread from a quote, or reply on an open suggestion by passing suggestion_id.
+    description: Start a comment thread from a quote, or comment on an open suggestion by passing suggestion_id, which adds the comment to the suggestion's thread.
     hints:
       readonly: false
       destructive: false
@@ -21517,7 +21536,7 @@ tools:
       $ref: "#/components/schemas/UpdateDocumentCommentOutput"
   - name: deleteDocumentComment
     title: Delete Document Comment
-    description: Delete your own document comment. The thread is deleted when it has no comments left.
+    description: Delete your own document comment. The thread is deleted when it has no comments left, unless it belongs to a suggestion.
     hints:
       readonly: false
       destructive: true
@@ -21529,7 +21548,7 @@ tools:
       $ref: "#/components/schemas/DeleteDocumentCommentOutput"
   - name: resolveDocumentCommentThread
     title: Resolve Document Comment Thread
-    description: Resolve a document comment thread
+    description: Resolve a document comment thread. A suggestion's thread is resolved by accepting or rejecting the suggestion instead.
     hints:
       readonly: false
       destructive: false
@@ -21541,7 +21560,7 @@ tools:
       $ref: "#/components/schemas/ResolveDocumentCommentThreadOutput"
   - name: reopenDocumentCommentThread
     title: Reopen Document Comment Thread
-    description: Reopen a resolved document comment thread
+    description: Reopen a resolved document comment thread. Suggestion threads cannot be reopened.
     hints:
       readonly: false
       destructive: false

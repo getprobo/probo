@@ -64,12 +64,17 @@ func (s *Service) Persist(
 	document *automerge.Document,
 ) (int64, error) {
 	for range persistCatchUpAttempts {
-		revision, compactAt, persisted, err := s.appendLiveChanges(ctx, scope, documentID, document)
+		revision, compactAt, persisted, reviewChanged, err := s.appendLiveChanges(ctx, scope, documentID, document)
 		if err != nil {
 			return 0, err
 		}
 
 		if persisted {
+			if reviewChanged {
+				// Delivery is best effort and NotifyReview logs its failures.
+				_ = s.NotifyReview(ctx, documentID)
+			}
+
 			if compactAt != nil {
 				s.compact(ctx, scope, documentID, document, compactAt)
 			}
@@ -93,17 +98,19 @@ func (s *Service) Persist(
 // SQL and reads of the in-memory document. It reports false, and writes
 // nothing, when the canonical document holds changes the live one lacks. When
 // the change log is long enough to compact, it also returns the heads the
-// canonical document was left at.
+// canonical document was left at. The last result reports whether a
+// suggestion was rejected or reopened along the way.
 func (s *Service) appendLiveChanges(
 	ctx context.Context,
 	scope coredata.Scoper,
 	documentID gid.GID,
 	document *automerge.Document,
-) (int64, []automerge.Hash, bool, error) {
+) (int64, []automerge.Hash, bool, bool, error) {
 	var (
-		revision  int64
-		compactAt []automerge.Hash
-		persisted bool
+		revision      int64
+		compactAt     []automerge.Hash
+		persisted     bool
+		reviewChanged bool
 	)
 
 	err := s.pg.WithTx(
@@ -203,7 +210,12 @@ func (s *Service) appendLiveChanges(
 				return fmt.Errorf("cannot notify collaboration change: %w", err)
 			}
 
-			content, err := materializeAtHeads(document, heads)
+			spans, err := spansAtHeads(document, heads)
+			if err != nil {
+				return fmt.Errorf("cannot materialize collaboration: %w", err)
+			}
+
+			content, err := renderSpansAtHeads(spans)
 			if err != nil {
 				return fmt.Errorf("cannot materialize collaboration: %w", err)
 			}
@@ -217,16 +229,60 @@ func (s *Service) appendLiveChanges(
 				return err
 			}
 
+			reviewChanged, err = reconcileSuggestions(ctx, scope, tx, documentID, spans, now)
+			if err != nil {
+				return err
+			}
+
 			revision = doc.Revision
 
 			return nil
 		},
 	)
 	if err != nil {
-		return 0, nil, false, err
+		return 0, nil, false, false, err
 	}
 
-	return revision, compactAt, persisted, nil
+	return revision, compactAt, persisted, reviewChanged, nil
+}
+
+// reconcileSuggestions settles open suggestions against the persisted text: a
+// suggestion whose marks were persisted once and are all gone amounts to no
+// change and is rejected; one rejected that way whose marks are back is
+// reopened. It reports whether any suggestion changed status.
+func reconcileSuggestions(
+	ctx context.Context,
+	scope coredata.Scoper,
+	tx pg.Tx,
+	documentID gid.GID,
+	spans []automerge.Span,
+	now time.Time,
+) (bool, error) {
+	present := SuggestionIDs(spans)
+
+	if err := coredata.MarkDocumentSuggestionsSeen(ctx, tx, scope, documentID, present, now); err != nil {
+		return false, err
+	}
+
+	rejected, err := coredata.AutoRejectDocumentSuggestions(ctx, tx, scope, documentID, present, now)
+	if err != nil {
+		return false, err
+	}
+
+	if err := coredata.ResolveSuggestionThreads(ctx, tx, scope, rejected, now); err != nil {
+		return false, err
+	}
+
+	reopened, err := coredata.ReopenAutoRejectedDocumentSuggestions(ctx, tx, scope, documentID, present, now)
+	if err != nil {
+		return false, err
+	}
+
+	if err := coredata.ReopenSuggestionThreads(ctx, tx, scope, reopened, now); err != nil {
+		return false, err
+	}
+
+	return len(rejected) > 0 || len(reopened) > 0, nil
 }
 
 // readStableChanges returns the changes the live document has on top of

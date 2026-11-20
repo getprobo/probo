@@ -37,25 +37,38 @@ import type { useSuggestionControllerQuery } from "#/__generated__/core/useSugge
 import { useMutation } from "#/lib/relay/useMutation";
 import { CurrentUser } from "#/providers/CurrentUser";
 
+import { documentCommentHistoryConnectionId, documentOpenThreadsConnectionId } from "./documentThreadConnections";
 import type { DocumentMode } from "./useDocumentModes";
 
 const blockedToastIntervalMs = 3_000;
 const blockedToastOptions = { leading: true, trailing: false };
 
-// The new edge carries every field the review column reads from a
-// suggestion, so its card appears without a refetch.
+// The suggestion's thread carries every field the review column reads, so
+// its card appears without a refetch. It is appended to the open threads,
+// which run oldest first, and inserted at the top of the history, which runs
+// newest first.
 const startSuggestionMutation = graphql`
   mutation useSuggestionControllerMutation(
     $input: StartDocumentSuggestionInput!
     $connections: [ID!]!
   ) {
     startDocumentSuggestion(input: $input) {
-      documentSuggestionEdge @appendEdge(connections: $connections) {
-        cursor
+      documentSuggestionEdge {
         node {
           id
-          status
-          ...DocumentSuggestionListItem_suggestion
+          thread
+            @appendNode(connections: $connections, edgeTypeName: "DocumentCommentThreadEdge") {
+            id
+            anchorStart
+            anchorEnd
+            suggestion {
+              id
+              status
+            }
+            ...DocumentCommentThreadListItem_thread
+            ...DocumentSuggestionListItem_thread
+            ...DocumentCommentHistoryItem_thread
+          }
         }
       }
     }
@@ -72,14 +85,6 @@ const suggestionAuthorQuery = graphql`
     }
   }
 `;
-
-// Must match the arguments of the review column's suggestions connection.
-function openSuggestionsConnectionId(documentId: string) {
-  return ConnectionHandler.getConnectionID(documentId, "DocumentReviewPanel_suggestions", {
-    filter: { status: "OPEN" },
-    orderBy: { field: "CREATED_AT", direction: "ASC" },
-  });
-}
 
 export function useSuggestionController(
   documentId: string,
@@ -176,7 +181,18 @@ export function useSuggestionController(
         void startSuggestion({
           variables: {
             input: { documentId },
-            connections: [openSuggestionsConnectionId(documentId)],
+            connections: [documentOpenThreadsConnectionId(documentId)],
+          },
+          updater: (store) => {
+            const history = store.get(documentCommentHistoryConnectionId(documentId));
+            const thread = store
+              .getRootField("startDocumentSuggestion")
+              ?.getLinkedRecord("documentSuggestionEdge")
+              ?.getLinkedRecord("node")
+              ?.getLinkedRecord("thread");
+            if (history == null || thread == null) return;
+            const edge = ConnectionHandler.createEdge(store, history, thread, "DocumentCommentThreadEdge");
+            ConnectionHandler.insertEdgeBefore(history, edge);
           },
           onCompleted: (response, errors) => {
             if (current.request === request) {

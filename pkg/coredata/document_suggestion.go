@@ -48,6 +48,9 @@ type (
 		UpdatedAt           time.Time                `db:"updated_at"`
 		ResolvedAt          *time.Time               `db:"resolved_at"`
 		ResolvedByProfileID *gid.GID                 `db:"resolved_by_profile_id"`
+		AnchorStart         []byte                   `db:"anchor_start"`
+		AnchorEnd           []byte                   `db:"anchor_end"`
+		AnchorQuote         *string                  `db:"anchor_quote"`
 	}
 
 	DocumentSuggestions []*DocumentSuggestion
@@ -172,7 +175,10 @@ SELECT
     created_at,
     updated_at,
     resolved_at,
-    resolved_by_profile_id
+    resolved_by_profile_id,
+    anchor_start,
+    anchor_end,
+    anchor_quote
 FROM
     document_suggestions
 WHERE
@@ -202,7 +208,10 @@ SELECT
     created_at,
     updated_at,
     resolved_at,
-    resolved_by_profile_id
+    resolved_by_profile_id,
+    anchor_start,
+    anchor_end,
+    anchor_quote
 FROM
     document_suggestions
 WHERE
@@ -246,7 +255,9 @@ func (s *DocumentSuggestion) collectByID(
 	return nil
 }
 
-func (s *DocumentSuggestions) LoadOpenByIDs(
+// LoadMarkableByIDs loads the suggestions whose marks may be in the text: open
+// ones, and automatically rejected ones, which reopen when their marks return.
+func (s *DocumentSuggestions) LoadMarkableByIDs(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
@@ -268,13 +279,16 @@ SELECT
     created_at,
     updated_at,
     resolved_at,
-    resolved_by_profile_id
+    resolved_by_profile_id,
+    anchor_start,
+    anchor_end,
+    anchor_quote
 FROM
     document_suggestions
 WHERE
     %s
     AND document_id = @document_id
-    AND status = @open_status
+    AND (status = @open_status OR auto_rejected_at IS NOT NULL)
     AND id = ANY(@suggestion_ids)
 `
 
@@ -289,12 +303,64 @@ WHERE
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query open document suggestions: %w", err)
+		return fmt.Errorf("cannot query markable document suggestions: %w", err)
 	}
 
 	suggestions, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[DocumentSuggestion])
 	if err != nil {
-		return fmt.Errorf("cannot collect open document suggestions: %w", err)
+		return fmt.Errorf("cannot collect markable document suggestions: %w", err)
+	}
+
+	*s = suggestions
+
+	return nil
+}
+
+func (s *DocumentSuggestions) LoadByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	suggestionIDs []gid.GID,
+) error {
+	if len(suggestionIDs) == 0 {
+		*s = nil
+		return nil
+	}
+
+	q := `
+SELECT
+    id,
+    organization_id,
+    document_id,
+    author_profile_id,
+    status,
+    created_at,
+    updated_at,
+    resolved_at,
+    resolved_by_profile_id,
+    anchor_start,
+    anchor_end,
+    anchor_quote
+FROM
+    document_suggestions
+WHERE
+    %s
+    AND id = ANY(@suggestion_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"suggestion_ids": suggestionIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query document suggestions: %w", err)
+	}
+
+	suggestions, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[DocumentSuggestion])
+	if err != nil {
+		return fmt.Errorf("cannot collect document suggestions: %w", err)
 	}
 
 	*s = suggestions
@@ -324,7 +390,10 @@ SELECT
     created_at,
     updated_at,
     resolved_at,
-    resolved_by_profile_id
+    resolved_by_profile_id,
+    anchor_start,
+    anchor_end,
+    anchor_quote
 FROM
     document_suggestions
 WHERE
@@ -410,7 +479,10 @@ INSERT INTO
         created_at,
         updated_at,
         resolved_at,
-        resolved_by_profile_id
+        resolved_by_profile_id,
+        anchor_start,
+        anchor_end,
+        anchor_quote
     )
 VALUES (
     @tenant_id,
@@ -422,7 +494,10 @@ VALUES (
     @created_at,
     @updated_at,
     @resolved_at,
-    @resolved_by_profile_id
+    @resolved_by_profile_id,
+    @anchor_start,
+    @anchor_end,
+    @anchor_quote
 )
 `
 
@@ -437,6 +512,9 @@ VALUES (
 		"updated_at":             s.UpdatedAt,
 		"resolved_at":            s.ResolvedAt,
 		"resolved_by_profile_id": s.ResolvedByProfileID,
+		"anchor_start":           s.AnchorStart,
+		"anchor_end":             s.AnchorEnd,
+		"anchor_quote":           s.AnchorQuote,
 	}
 
 	if _, err := conn.Exec(ctx, q, args); err != nil {
@@ -477,7 +555,10 @@ SET
     status = @status,
     updated_at = @updated_at,
     resolved_at = @resolved_at,
-    resolved_by_profile_id = @resolved_by_profile_id
+    resolved_by_profile_id = @resolved_by_profile_id,
+    anchor_start = @anchor_start,
+    anchor_end = @anchor_end,
+    anchor_quote = @anchor_quote
 WHERE
     %s
     AND id = @suggestion_id
@@ -492,6 +573,9 @@ WHERE
 		"updated_at":             s.UpdatedAt,
 		"resolved_at":            s.ResolvedAt,
 		"resolved_by_profile_id": s.ResolvedByProfileID,
+		"anchor_start":           s.AnchorStart,
+		"anchor_end":             s.AnchorEnd,
+		"anchor_quote":           s.AnchorQuote,
 		"only_open":              onlyOpen,
 		"open_status":            DocumentSuggestionStatusOpen,
 	}
@@ -507,4 +591,196 @@ WHERE
 	}
 
 	return nil
+}
+
+// MarkDocumentSuggestionsSeen records that the marks of the given suggestions
+// reached the persisted text. Rows another transaction holds are skipped; a
+// later persist marks them.
+func MarkDocumentSuggestionsSeen(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	documentID gid.GID,
+	suggestionIDs []gid.GID,
+	now time.Time,
+) error {
+	if len(suggestionIDs) == 0 {
+		return nil
+	}
+
+	q := `
+UPDATE
+    document_suggestions
+SET
+    marked_at = @now
+WHERE
+    id IN (
+        SELECT
+            id
+        FROM
+            document_suggestions
+        WHERE
+            %s
+            AND document_id = @document_id
+            AND id = ANY(@suggestion_ids)
+            AND marked_at IS NULL
+        FOR UPDATE SKIP LOCKED
+    )
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"document_id":    documentID,
+		"suggestion_ids": suggestionIDs,
+		"now":            now,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot mark document suggestions seen: %w", err)
+	}
+
+	return nil
+}
+
+// AutoRejectDocumentSuggestions rejects the open suggestions of a document
+// whose marks were persisted once and are no longer among presentIDs: they
+// amount to no change. Rows another transaction holds, such as a suggestion
+// being decided, are skipped. It returns the rejected ids.
+func AutoRejectDocumentSuggestions(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	documentID gid.GID,
+	presentIDs []gid.GID,
+	now time.Time,
+) ([]gid.GID, error) {
+	if presentIDs == nil {
+		// A nil array is NULL in SQL, and NOT (id = ANY(NULL)) matches nothing.
+		presentIDs = []gid.GID{}
+	}
+
+	q := `
+UPDATE
+    document_suggestions
+SET
+    status = @rejected_status,
+    updated_at = @now,
+    resolved_at = @now,
+    resolved_by_profile_id = NULL,
+    auto_rejected_at = @now,
+    anchor_start = NULL,
+    anchor_end = NULL,
+    anchor_quote = ''
+WHERE
+    id IN (
+        SELECT
+            id
+        FROM
+            document_suggestions
+        WHERE
+            %s
+            AND document_id = @document_id
+            AND status = @open_status
+            AND marked_at IS NOT NULL
+            AND NOT (id = ANY(@present_ids))
+        FOR UPDATE SKIP LOCKED
+    )
+RETURNING
+    id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"document_id":     documentID,
+		"present_ids":     presentIDs,
+		"open_status":     DocumentSuggestionStatusOpen,
+		"rejected_status": DocumentSuggestionStatusRejected,
+		"now":             now,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot auto-reject document suggestions: %w", err)
+	}
+
+	ids, err := pgx.CollectRows(rows, pgx.RowTo[gid.GID])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect auto-rejected document suggestions: %w", err)
+	}
+
+	return ids, nil
+}
+
+// ReopenAutoRejectedDocumentSuggestions reopens the automatically rejected
+// suggestions whose marks are back among presentIDs, as after an undo is
+// redone. Suggestions a reviewer rejected stay rejected. It returns the
+// reopened ids.
+func ReopenAutoRejectedDocumentSuggestions(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	documentID gid.GID,
+	presentIDs []gid.GID,
+	now time.Time,
+) ([]gid.GID, error) {
+	if len(presentIDs) == 0 {
+		return nil, nil
+	}
+
+	q := `
+UPDATE
+    document_suggestions
+SET
+    status = @open_status,
+    updated_at = @now,
+    resolved_at = NULL,
+    resolved_by_profile_id = NULL,
+    auto_rejected_at = NULL,
+    anchor_start = NULL,
+    anchor_end = NULL,
+    anchor_quote = NULL
+WHERE
+    id IN (
+        SELECT
+            id
+        FROM
+            document_suggestions
+        WHERE
+            %s
+            AND document_id = @document_id
+            AND status = @rejected_status
+            AND auto_rejected_at IS NOT NULL
+            AND id = ANY(@present_ids)
+        FOR UPDATE SKIP LOCKED
+    )
+RETURNING
+    id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"document_id":     documentID,
+		"present_ids":     presentIDs,
+		"open_status":     DocumentSuggestionStatusOpen,
+		"rejected_status": DocumentSuggestionStatusRejected,
+		"now":             now,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot reopen document suggestions: %w", err)
+	}
+
+	ids, err := pgx.CollectRows(rows, pgx.RowTo[gid.GID])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect reopened document suggestions: %w", err)
+	}
+
+	return ids, nil
 }

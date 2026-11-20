@@ -136,6 +136,51 @@ func TestCommentChangeAllowed_RejectsUntrackedSuggestionID(t *testing.T) {
 	assert.Empty(t, NewSuggestionIDs(inserted, inserted))
 }
 
+func TestSuggestionIDs(t *testing.T) {
+	t.Parallel()
+
+	inserted := gid.New(gid.NilTenant, coredata.DocumentSuggestionEntityType)
+	deleted := gid.New(gid.NilTenant, coredata.DocumentSuggestionEntityType)
+	formatted := gid.New(gid.NilTenant, coredata.DocumentSuggestionEntityType)
+	split := gid.New(gid.NilTenant, coredata.DocumentSuggestionEntityType)
+	document := gid.New(gid.NilTenant, coredata.DocumentEntityType)
+
+	spans := []automerge.Span{
+		paragraphBlock(),
+		{
+			Type:  automerge.SpanTypeText,
+			Text:  "new",
+			Marks: map[string]any{SuggestionInsertMark: `{"id":"` + inserted.String() + `"}`},
+		},
+		{
+			Type:  automerge.SpanTypeText,
+			Text:  "old",
+			Marks: map[string]any{SuggestionDeleteMark: `{"id":"` + deleted.String() + `"}`},
+		},
+		{
+			Type:  automerge.SpanTypeText,
+			Text:  "bold",
+			Marks: map[string]any{"suggestion-format-strong": `{"id":"` + formatted.String() + `","action":"add"}`},
+		},
+		splitBlock(split.String(), suggestionSplitStructural),
+		{
+			Type:  automerge.SpanTypeText,
+			Text:  "pending",
+			Marks: map[string]any{SuggestionInsertMark: `{"id":"local:0b7e"}`},
+		},
+		{
+			Type:  automerge.SpanTypeText,
+			Text:  "wrong type",
+			Marks: map[string]any{SuggestionInsertMark: `{"id":"` + document.String() + `"}`},
+		},
+		{Type: automerge.SpanTypeText, Text: "plain"},
+	}
+
+	assert.ElementsMatch(t, []gid.GID{inserted, deleted, formatted, split}, SuggestionIDs(spans))
+	assert.Empty(t, SuggestionIDs([]automerge.Span{paragraphBlock()}))
+	assert.NotNil(t, SuggestionIDs(nil))
+}
+
 func TestCommentChangeAllowed_ParagraphSplit(t *testing.T) {
 	t.Parallel()
 

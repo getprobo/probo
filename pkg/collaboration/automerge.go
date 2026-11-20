@@ -118,16 +118,32 @@ func materializeAtHeads(
 	document *automerge.Document,
 	heads []automerge.Hash,
 ) (string, error) {
+	spans, err := spansAtHeads(document, heads)
+	if err != nil {
+		return "", err
+	}
+
+	return renderSpansAtHeads(spans)
+}
+
+func spansAtHeads(
+	document *automerge.Document,
+	heads []automerge.Hash,
+) ([]automerge.Span, error) {
 	text, err := document.Text("body")
 	if err != nil {
-		return "", fmt.Errorf("cannot get collaboration body at heads: %w", err)
+		return nil, fmt.Errorf("cannot get collaboration body at heads: %w", err)
 	}
 
 	spans, err := text.SpansAt(heads)
 	if err != nil {
-		return "", fmt.Errorf("cannot read collaboration spans at heads: %w", err)
+		return nil, fmt.Errorf("cannot read collaboration spans at heads: %w", err)
 	}
 
+	return spans, nil
+}
+
+func renderSpansAtHeads(spans []automerge.Span) (string, error) {
 	content, err := automergeprosemirror.Render(spans)
 	if err != nil {
 		return "", fmt.Errorf("cannot render collaboration spans at heads: %w", err)
