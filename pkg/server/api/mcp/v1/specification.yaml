@@ -2903,6 +2903,31 @@ components:
           items:
             $ref: "#/components/schemas/Evidence"
 
+    AddInternalControlLinkEvidenceInput:
+      type: object
+      required:
+        - internal_control_id
+        - url
+        - name
+      properties:
+        internal_control_id:
+          $ref: "#/components/schemas/GID"
+          description: Internal control that receives the link. Framework controls such as ACC-16 do not store evidence; list or link their internal controls first.
+        url:
+          type: string
+          description: HTTP or HTTPS address written into the .uri file
+        name:
+          type: string
+          description: File name without the .uri extension
+
+    AddInternalControlLinkEvidenceOutput:
+      type: object
+      required:
+        - evidence
+      properties:
+        evidence:
+          $ref: "#/components/schemas/Evidence"
+
     Evidence:
       type: object
       required:
@@ -20214,6 +20239,18 @@ tools:
       $ref: "#/components/schemas/ListInternalControlEvidencesInput"
     outputSchema:
       $ref: "#/components/schemas/ListInternalControlEvidencesOutput"
+  - name: addInternalControlLinkEvidence
+    title: Add Internal Control Link Evidence
+    description: Attach an HTTP or HTTPS link as evidence on an internal control by uploading a .uri file, the same way as the console. The file is named from the name and contains the URL. Evidence is not stored on a framework control. For a control such as ACC-16, list its internal controls and pass that internal control id.
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/AddInternalControlLinkEvidenceInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddInternalControlLinkEvidenceOutput"
   - name: deleteEvidence
     title: Delete Evidence
     description: Delete an evidence

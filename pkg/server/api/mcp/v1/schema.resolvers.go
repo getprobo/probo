@@ -12605,3 +12605,44 @@ func (r *Resolver) SearchTool(ctx context.Context, req *mcp.CallToolRequest, inp
 
 	return nil, types.NewSearchOutput(pageResult), nil
 }
+
+func (r *Resolver) AddInternalControlLinkEvidenceTool(ctx context.Context, _ *mcp.CallToolRequest, input *types.AddInternalControlLinkEvidenceInput) (*mcp.CallToolResult, types.AddInternalControlLinkEvidenceOutput, error) {
+	scope, err := r.Authorize(ctx, input.InternalControlID, probo.ActionInternalControlEvidenceUpload)
+	if err != nil {
+		return nil, types.AddInternalControlLinkEvidenceOutput{}, err
+	}
+
+	upload, err := internalControlLinkEvidenceUpload(input)
+	if err != nil {
+		return nil, types.AddInternalControlLinkEvidenceOutput{}, err
+	}
+
+	evidence, err := r.proboSvc.Evidences.UploadInternalControlEvidence(ctx, scope, upload)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, types.AddInternalControlLinkEvidenceOutput{}, fmt.Errorf("internal control not found")
+		}
+
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, types.AddInternalControlLinkEvidenceOutput{}, fmt.Errorf("%s", validationErrors.Error())
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot create internal control link evidence", log.Error(err))
+
+		return nil, types.AddInternalControlLinkEvidenceOutput{}, fmt.Errorf("internal error")
+	}
+
+	var file *types.File
+	if evidence.EvidenceFileId != nil {
+		file, err = r.loadFile(ctx, scope, *evidence.EvidenceFileId)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot load link evidence file", log.Error(err))
+
+			return nil, types.AddInternalControlLinkEvidenceOutput{}, fmt.Errorf("internal error")
+		}
+	}
+
+	return nil, types.AddInternalControlLinkEvidenceOutput{
+		Evidence: types.NewEvidence(evidence, file),
+	}, nil
+}

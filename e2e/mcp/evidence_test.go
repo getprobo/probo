@@ -31,6 +31,85 @@ import (
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
+func TestMCP_InternalControlEvidence_Link(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	mc := testutil.NewMCPClient(t, owner)
+	internalControlID := factory.NewInternalControl(owner).
+		WithName(factory.SafeName("MCP link evidence")).
+		WithCategory("EVIDENCE").
+		Create()
+
+	const linkURL = "https://example.com/gov-16"
+
+	var created struct {
+		Evidence struct {
+			ID   string `json:"id"`
+			Type string `json:"type"`
+			URL  string `json:"url"`
+			File *struct {
+				FileName    string `json:"file_name"`
+				MimeType    string `json:"mime_type"`
+				DownloadURL string `json:"download_url"`
+			} `json:"file"`
+		} `json:"evidence"`
+	}
+	mc.CallToolInto(
+		"addInternalControlLinkEvidence",
+		map[string]any{
+			"internal_control_id": internalControlID,
+			"url":                 linkURL,
+			"name":                "GOV-16 policy",
+		},
+		&created,
+	)
+	assert.Equal(t, "FILE", created.Evidence.Type)
+	require.NotNil(t, created.Evidence.File)
+	assert.Equal(t, "GOV-16 policy.uri", created.Evidence.File.FileName)
+	assert.Equal(t, "text/uri-list", created.Evidence.File.MimeType)
+	assert.Equal(t, created.Evidence.File.DownloadURL, created.Evidence.URL)
+
+	response, err := owner.HTTPClient().Get(created.Evidence.URL)
+	require.NoError(t, err)
+	body, err := io.ReadAll(response.Body)
+	require.NoError(t, response.Body.Close())
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+	assert.Equal(t, linkURL, string(body))
+
+	var listResult struct {
+		Evidences []struct {
+			ID   string `json:"id"`
+			Type string `json:"type"`
+			File *struct {
+				FileName string `json:"file_name"`
+			} `json:"file"`
+		} `json:"evidences"`
+	}
+	mc.CallToolInto(
+		"listInternalControlEvidences",
+		map[string]any{
+			"internal_control_id": internalControlID,
+		},
+		&listResult,
+	)
+	require.Len(t, listResult.Evidences, 1)
+	assert.Equal(t, created.Evidence.ID, listResult.Evidences[0].ID)
+	assert.Equal(t, "FILE", listResult.Evidences[0].Type)
+	require.NotNil(t, listResult.Evidences[0].File)
+	assert.Equal(t, "GOV-16 policy.uri", listResult.Evidences[0].File.FileName)
+
+	rejected := mc.CallToolExpectToolError(
+		"addInternalControlLinkEvidence",
+		map[string]any{
+			"internal_control_id": internalControlID,
+			"url":                 "javascript:alert(1)",
+		},
+	)
+	assert.NotEmpty(t, rejected)
+}
+
 func TestMCP_InternalControlEvidence_FileURL(t *testing.T) {
 	t.Parallel()
 

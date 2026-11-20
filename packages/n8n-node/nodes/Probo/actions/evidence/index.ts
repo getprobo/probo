@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import type { INodeProperties } from 'n8n-workflow';
+import * as createLinkOp from './createLink.operation';
 import * as deleteOp from './delete.operation';
 import * as getOp from './get.operation';
 import * as getAllOp from './getAll.operation';
@@ -36,6 +37,12 @@ export const description: INodeProperties[] = [
 			},
 		},
 		options: [
+			{
+				name: 'Create Link',
+				value: 'createLink',
+				description: 'Attach a link as evidence for an internal control',
+				action: 'Create link evidence',
+			},
 			{
 				name: 'Delete',
 				value: 'delete',
@@ -63,10 +70,17 @@ export const description: INodeProperties[] = [
 		],
 		default: 'getAll',
 	},
+	...createLinkOp.description,
 	...deleteOp.description,
 	...getOp.description,
 	...getAllOp.description,
 	...uploadOp.description,
 ];
 
-export { deleteOp as delete, getOp as get, getAllOp as getAll, uploadOp as upload };
+export {
+	createLinkOp as createLink,
+	deleteOp as delete,
+	getOp as get,
+	getAllOp as getAll,
+	uploadOp as upload,
+};

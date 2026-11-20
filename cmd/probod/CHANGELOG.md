@@ -4,6 +4,12 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Added
+
+- MCP `addInternalControlLinkEvidence` uploads a `.uri` file
+  containing an HTTP or HTTPS URL on an internal control, the same
+  way as the console link form
+
 ## [0.355.1] - 2026-11-20
 
 ### Fixed

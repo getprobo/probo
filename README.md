@@ -54,6 +54,7 @@ prb risk list
 # Create an internal control and link evidence
 prb internal-control create --name "MFA enforced on all production systems" --category "Security"
 prb evidence upload ./screenshot.png --internal-control <id>
+prb evidence link --url https://example.com/policy --name "Policy" --internal-control <id>
 
 # Manage vendor compliance
 prb thirdpartymgmt vendor list

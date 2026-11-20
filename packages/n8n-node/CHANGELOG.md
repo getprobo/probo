@@ -4,6 +4,11 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+### Added
+
+- Evidence Create Link uploads a `.uri` file containing an HTTP or
+  HTTPS URL, matching the console link form
+
 ## [0.274.0] - 2026-11-20
 
 ### Added

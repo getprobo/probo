@@ -4,6 +4,11 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+### Added
+
+- `evidence link` uploads a `<name>.uri` file containing an HTTP or
+  HTTPS URL, matching the console link form
+
 ## [0.273.0] - 2026-11-20
 
 ### Added

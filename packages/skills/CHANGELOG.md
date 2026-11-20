@@ -5,6 +5,11 @@ this file.
 
 ## Unreleased
 
+### Added
+
+- `using-prb` explains that `prb evidence link` uploads a `.uri` file
+  containing the URL, the same way as the console link form
+
 ## [0.6.1] - 2026-11-11
 
 ### Changed
