@@ -43,7 +43,6 @@ import { DocumentSuggestionChange } from "./DocumentSuggestionChange";
 const documentCommentHistoryItemFragment = graphql`
   fragment DocumentCommentHistoryItem_thread on DocumentCommentThread {
     id
-    anchorQuote
     resolvedAt
     resolvedBy {
       id
@@ -194,39 +193,40 @@ function CommentHistoryItem({
   const { t } = useTranslation("organizations/documents");
   const [resolveDocumentThread, isResolving] = useResolveDocumentThread();
   const resolved = thread.resolvedAt != null;
-  const { item, quote } = documentCommentHistory({ resolved });
+  const { item } = documentCommentHistory({ resolved });
 
-  const resolve = thread.canResolve && !resolved
+  const actions = resolved
     ? (
-        <DocumentReviewAction
-          label={t("details.review.resolve")}
-          color="green"
-          loading={isResolving}
-          onClick={() => {
-            void resolveDocumentThread(thread.id, threadConnections).catch(() => {
-              // The mutation already shows an error toast.
-            });
-          }}
-        >
-          <CheckIcon />
-        </DocumentReviewAction>
+        <Badge size={1} color="green">
+          {t("details.review.history.resolved")}
+        </Badge>
       )
-    : undefined;
+    : thread.canResolve
+      ? (
+          <DocumentReviewAction
+            label={t("details.review.resolve")}
+            color="green"
+            loading={isResolving}
+            onClick={() => {
+              void resolveDocumentThread(thread.id, threadConnections).catch(() => {
+                // The mutation already shows an error toast.
+              });
+            }}
+          >
+            <CheckIcon />
+          </DocumentReviewAction>
+        )
+      : undefined;
 
   return (
     <div className={item()}>
       <DocumentReviewItem kind="comment" active={active} onActivate={onActivate}>
-        {thread.anchorQuote !== "" && (
-          <Text size={1} color="faint" className={quote()}>
-            {thread.anchorQuote}
-          </Text>
-        )}
         <DocumentReviewThread
           threadKey={thread}
           threadConnections={threadConnections}
           expanded={active}
           titled
-          firstActions={resolve}
+          firstActions={actions}
           allowReply={!resolved}
         />
         {resolved && (
