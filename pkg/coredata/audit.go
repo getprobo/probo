@@ -190,7 +190,6 @@ SELECT
 	name,
 	firm,
 	organization_id,
-	framework_id,
 	report_file_id,
 	valid_from,
 	valid_until,

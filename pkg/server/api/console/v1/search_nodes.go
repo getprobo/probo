@@ -24,6 +24,7 @@ import (
 	"context"
 	"maps"
 
+	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
@@ -71,6 +72,7 @@ func (r *queryResolver) loadSearchNodeGroup(
 	case coredata.AiSystemEntityType:
 		return loadSearchGroup(
 			ctx,
+			r.logger,
 			scope,
 			ids,
 			r.probo.AiSystems.GetByIDs,
@@ -79,6 +81,7 @@ func (r *queryResolver) loadSearchNodeGroup(
 	case coredata.AssetEntityType:
 		return loadSearchGroup(
 			ctx,
+			r.logger,
 			scope,
 			ids,
 			r.probo.Assets.GetByIDs,
@@ -87,6 +90,7 @@ func (r *queryResolver) loadSearchNodeGroup(
 	case coredata.AuditEntityType:
 		return loadSearchGroup(
 			ctx,
+			r.logger,
 			scope,
 			ids,
 			r.probo.Audits.GetByIDs,
@@ -95,6 +99,7 @@ func (r *queryResolver) loadSearchNodeGroup(
 	case coredata.BusinessFunctionEntityType:
 		return loadSearchGroup(
 			ctx,
+			r.logger,
 			scope,
 			ids,
 			r.probo.BusinessFunctions.GetByIDs,
@@ -103,6 +108,7 @@ func (r *queryResolver) loadSearchNodeGroup(
 	case coredata.ControlEntityType:
 		return loadSearchGroup(
 			ctx,
+			r.logger,
 			scope,
 			ids,
 			r.probo.Controls.GetByIDs,
@@ -111,6 +117,7 @@ func (r *queryResolver) loadSearchNodeGroup(
 	case coredata.DataProtectionImpactAssessmentEntityType:
 		return loadSearchGroup(
 			ctx,
+			r.logger,
 			scope,
 			ids,
 			r.probo.DataProtectionImpactAssessments.GetByIDs,
@@ -119,6 +126,7 @@ func (r *queryResolver) loadSearchNodeGroup(
 	case coredata.DatumEntityType:
 		return loadSearchGroup(
 			ctx,
+			r.logger,
 			scope,
 			ids,
 			r.probo.Data.GetByIDs,
@@ -127,6 +135,7 @@ func (r *queryResolver) loadSearchNodeGroup(
 	case coredata.DeviceEntityType:
 		return loadSearchGroup(
 			ctx,
+			r.logger,
 			scope,
 			ids,
 			r.itam.GetDevicesByIDs,
@@ -135,6 +144,7 @@ func (r *queryResolver) loadSearchNodeGroup(
 	case coredata.DocumentEntityType:
 		return loadSearchGroup(
 			ctx,
+			r.logger,
 			scope,
 			ids,
 			r.probo.Documents.GetByIDs,
@@ -143,6 +153,7 @@ func (r *queryResolver) loadSearchNodeGroup(
 	case coredata.EvidenceEntityType:
 		return loadSearchGroup(
 			ctx,
+			r.logger,
 			scope,
 			ids,
 			r.probo.Evidences.GetByIDs,
@@ -151,6 +162,7 @@ func (r *queryResolver) loadSearchNodeGroup(
 	case coredata.FindingEntityType:
 		return loadSearchGroup(
 			ctx,
+			r.logger,
 			scope,
 			ids,
 			r.probo.Findings.GetByIDs,
@@ -159,6 +171,7 @@ func (r *queryResolver) loadSearchNodeGroup(
 	case coredata.FrameworkEntityType:
 		return loadSearchGroup(
 			ctx,
+			r.logger,
 			scope,
 			ids,
 			r.probo.Frameworks.GetByIDs,
@@ -167,6 +180,7 @@ func (r *queryResolver) loadSearchNodeGroup(
 	case coredata.InternalControlEntityType:
 		return loadSearchGroup(
 			ctx,
+			r.logger,
 			scope,
 			ids,
 			r.probo.InternalControls.GetByIDs,
@@ -175,6 +189,7 @@ func (r *queryResolver) loadSearchNodeGroup(
 	case coredata.ObligationEntityType:
 		return loadSearchGroup(
 			ctx,
+			r.logger,
 			scope,
 			ids,
 			r.probo.Obligations.GetByIDs,
@@ -183,6 +198,7 @@ func (r *queryResolver) loadSearchNodeGroup(
 	case coredata.ProcessingActivityEntityType:
 		return loadSearchGroup(
 			ctx,
+			r.logger,
 			scope,
 			ids,
 			r.probo.ProcessingActivities.GetByIDs,
@@ -191,6 +207,7 @@ func (r *queryResolver) loadSearchNodeGroup(
 	case coredata.RightsRequestEntityType:
 		return loadSearchGroup(
 			ctx,
+			r.logger,
 			scope,
 			ids,
 			r.probo.RightsRequests.GetByIDs,
@@ -199,6 +216,7 @@ func (r *queryResolver) loadSearchNodeGroup(
 	case coredata.RiskEntityType:
 		return loadSearchGroup(
 			ctx,
+			r.logger,
 			scope,
 			ids,
 			r.probo.Risks.GetByIDs,
@@ -207,6 +225,7 @@ func (r *queryResolver) loadSearchNodeGroup(
 	case coredata.RiskAnalysisEntityType:
 		return loadSearchGroup(
 			ctx,
+			r.logger,
 			scope,
 			ids,
 			r.riskManagement.GetByIDs,
@@ -215,6 +234,7 @@ func (r *queryResolver) loadSearchNodeGroup(
 	case coredata.StatementOfApplicabilityEntityType:
 		return loadSearchGroup(
 			ctx,
+			r.logger,
 			scope,
 			ids,
 			r.probo.StatementsOfApplicability.GetByIDs,
@@ -223,6 +243,7 @@ func (r *queryResolver) loadSearchNodeGroup(
 	case coredata.TaskEntityType:
 		return loadSearchGroup(
 			ctx,
+			r.logger,
 			scope,
 			ids,
 			r.task.GetByIDs,
@@ -231,6 +252,7 @@ func (r *queryResolver) loadSearchNodeGroup(
 	case coredata.ThirdPartyEntityType:
 		return loadSearchGroup(
 			ctx,
+			r.logger,
 			scope,
 			ids,
 			r.probo.ThirdParties.GetByIDs,
@@ -239,6 +261,7 @@ func (r *queryResolver) loadSearchNodeGroup(
 	case coredata.TransferImpactAssessmentEntityType:
 		return loadSearchGroup(
 			ctx,
+			r.logger,
 			scope,
 			ids,
 			r.probo.TransferImpactAssessments.GetByIDs,
@@ -251,6 +274,7 @@ func (r *queryResolver) loadSearchNodeGroup(
 
 func loadSearchGroup[T any, S ~[]*T, N types.Taggable](
 	ctx context.Context,
+	logger *log.Logger,
 	scope coredata.Scoper,
 	ids []gid.GID,
 	load func(context.Context, coredata.Scoper, ...gid.GID) (S, error),
@@ -258,7 +282,7 @@ func loadSearchGroup[T any, S ~[]*T, N types.Taggable](
 ) (map[gid.GID]types.Taggable, error) {
 	items, err := load(ctx, scope, ids...)
 	if err != nil {
-		return nil, err
+		return nil, gqlx.MapError(ctx, logger, "cannot load search nodes", err)
 	}
 
 	nodes := make(map[gid.GID]types.Taggable, len(items))
