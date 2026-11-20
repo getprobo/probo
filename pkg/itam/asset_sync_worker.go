@@ -54,6 +54,16 @@ var (
 			provider: coredata.ConnectorProviderAWS,
 			list:     ListCloudFrontDistributions,
 		},
+		{
+			key:      EC2InstanceKind,
+			provider: coredata.ConnectorProviderAWS,
+			list:     ListEC2Instances,
+		},
+		{
+			key:      RDSDBInstanceKind,
+			provider: coredata.ConnectorProviderAWS,
+			list:     ListRDSDBInstances,
+		},
 	}
 )
 
@@ -74,6 +84,11 @@ type (
 	}
 
 	kindListError struct {
+		kind string
+		err  error
+	}
+
+	kindFailure struct {
 		kind string
 		err  error
 	}
@@ -246,6 +261,7 @@ func (h *assetSyncHandler) syncSource(
 
 	pending := make([]pendingAsset, 0)
 	completed := make([]string, 0, len(h.kinds))
+	failures := make([]kindFailure, 0)
 
 	for _, item := range h.kinds {
 		if item.provider != source.Provider {
@@ -254,33 +270,73 @@ func (h *assetSyncHandler) syncSource(
 
 		observed, err := item.list(ctx, session)
 		if err != nil {
-			return &kindListError{kind: item.key, err: err}
+			failures = append(failures, kindFailure{kind: item.key, err: err})
+			continue
 		}
 
-		for _, observation := range observed {
-			raw, err := json.Marshal(observation.Configuration)
-			if err != nil {
-				return &kindListError{
-					kind: item.key,
-					err:  fmt.Errorf("cannot encode asset configuration: %w", err),
-				}
-			}
-
-			if len(raw) == 0 || string(raw) == "null" {
-				raw = []byte(`{}`)
-			}
-
-			pending = append(pending, pendingAsset{
-				kind:          item.key,
-				observation:   observation,
-				configuration: raw,
-			})
+		kindPending, err := pendingForKind(item.key, observed)
+		if err != nil {
+			failures = append(failures, kindFailure{kind: item.key, err: err})
+			continue
 		}
 
+		pending = append(pending, kindPending...)
 		completed = append(completed, item.key)
 	}
 
-	return h.store(ctx, source, sync, pending, completed)
+	return h.finish(ctx, source, sync, pending, completed, failures)
+}
+
+func pendingForKind(kind string, observed []AssetObservation) ([]pendingAsset, error) {
+	pending := make([]pendingAsset, 0, len(observed))
+
+	for _, observation := range observed {
+		raw, err := json.Marshal(observation.Configuration)
+		if err != nil {
+			return nil, fmt.Errorf("cannot encode asset configuration: %w", err)
+		}
+
+		if len(raw) == 0 || string(raw) == "null" {
+			raw = []byte(`{}`)
+		}
+
+		pending = append(pending, pendingAsset{
+			kind:          kind,
+			observation:   observation,
+			configuration: raw,
+		})
+	}
+
+	return pending, nil
+}
+
+func (h *assetSyncHandler) finish(
+	ctx context.Context,
+	source *coredata.AssetSource,
+	sync *coredata.AssetSync,
+	pending []pendingAsset,
+	completed []string,
+	failures []kindFailure,
+) error {
+	for _, failure := range failures {
+		h.logger.ErrorCtx(
+			ctx,
+			"cannot list assets",
+			log.String("assets_source_id", source.ID.String()),
+			log.String("kind", failure.kind),
+			log.Error(failure.err),
+		)
+	}
+
+	status := coredata.AssetSyncStatusSucceeded
+	var syncErr *string
+	if len(failures) > 0 {
+		status = coredata.AssetSyncStatusFailed
+		message := assetSyncFailureMessage
+		syncErr = &message
+	}
+
+	return h.store(ctx, source, sync, pending, completed, status, syncErr)
 }
 
 func (h *assetSyncHandler) store(
@@ -289,6 +345,8 @@ func (h *assetSyncHandler) store(
 	sync *coredata.AssetSync,
 	pending []pendingAsset,
 	completed []string,
+	status coredata.AssetSyncStatus,
+	syncErr *string,
 ) error {
 	return h.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		now := time.Now()
@@ -319,8 +377,8 @@ func (h *assetSyncHandler) store(
 			ctx,
 			tx,
 			scope,
-			coredata.AssetSyncStatusSucceeded,
-			nil,
+			status,
+			syncErr,
 			completed,
 			now,
 		)
