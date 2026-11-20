@@ -1330,7 +1330,7 @@ func (f *batchFetcher) fetchAuthorizes(
 	multiParams := iam.AuthorizeMultiParams{
 		Principal: identity.ID,
 		Items:     items,
-		Request:   authz.RequestMetadataFromHTTP(httpRequest(ctx)),
+		Request:   authz.RequestMetadataFromHTTP(gqlx.HTTPRequestFromContext(ctx)),
 	}
 	if session != nil {
 		multiParams.Session = &session.ID
@@ -1391,7 +1391,7 @@ func (f *batchFetcher) fetchAuthorizesIndividually(
 			params.Session = &session.ID
 		}
 
-		params.Request = authz.RequestMetadataFromHTTP(httpRequest(ctx))
+		params.Request = authz.RequestMetadataFromHTTP(gqlx.HTTPRequestFromContext(ctx))
 
 		scope, err := f.iam.Authorizer.Authorize(ctx, params)
 		if err != nil {
@@ -1417,12 +1417,6 @@ func EncodeAuthorizeKeyAttributes(attrs policy.Attributes) string {
 	b, _ := json.Marshal(attrs)
 
 	return string(b)
-}
-
-func httpRequest(ctx context.Context) *http.Request {
-	request, _ := gqlx.HTTPRequest(ctx)
-
-	return request
 }
 
 func decodeAuthorizeKeyAttributes(s string) (policy.Attributes, error) {

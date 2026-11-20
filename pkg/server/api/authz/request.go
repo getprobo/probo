@@ -42,10 +42,5 @@ func RequestMetadataFromHTTP(r *http.Request) iam.RequestMetadata {
 }
 
 func requestMetadataFromContext(ctx context.Context) iam.RequestMetadata {
-	request, ok := gqlx.HTTPRequest(ctx)
-	if !ok {
-		return iam.RequestMetadata{}
-	}
-
-	return RequestMetadataFromHTTP(request)
+	return RequestMetadataFromHTTP(gqlx.HTTPRequestFromContext(ctx))
 }

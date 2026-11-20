@@ -161,7 +161,7 @@ func (r *Resolver) Authorize(ctx context.Context, entityID gid.GID, action iam.A
 		Resource:           entityID,
 		Action:             action,
 		ResourceAttributes: make(map[string]string),
-		Request:            authz.RequestMetadataFromHTTP(httpRequest(ctx)),
+		Request:            authz.RequestMetadataFromHTTP(gqlx.HTTPRequestFromContext(ctx)),
 	}
 
 	for _, opt := range opts {
@@ -203,7 +203,7 @@ func (r *Resolver) AuthorizeBatch(ctx context.Context, entityIDs []gid.GID, acti
 			Principal: identity.ID,
 			Resources: entityIDs,
 			Action:    action,
-			Request:   authz.RequestMetadataFromHTTP(httpRequest(ctx)),
+			Request:   authz.RequestMetadataFromHTTP(gqlx.HTTPRequestFromContext(ctx)),
 		},
 	)
 	if err == nil {
@@ -326,12 +326,6 @@ func (r *Resolver) documentWithHeads(
 		document,
 		collaboration.EncodeAutomergeHashes(heads),
 	), nil
-}
-
-func httpRequest(ctx context.Context) *http.Request {
-	request, _ := gqlx.HTTPRequest(ctx)
-
-	return request
 }
 
 func (r *Resolver) listableSearchEntityTypes(ctx context.Context, organizationID gid.GID) ([]uint16, error) {
