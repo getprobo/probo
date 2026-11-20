@@ -40,16 +40,20 @@ export const segmentedControl = tv({
   variants: {
     size: {
       1: {
+        root: "flex flex-wrap gap-1",
+        item: "inline-flex items-center gap-1.5 rounded-2 px-2 py-1 text-left text-1 [&_svg]:size-3.5",
+      },
+      2: {
         root: "flex flex-wrap gap-2",
         item: "inline-flex items-center gap-2 rounded-2 px-3 py-1.5 text-left text-2 [&_svg]:size-4",
       },
-      2: {
+      3: {
         root: "grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-1",
         item: "rounded-3 px-4 py-3.5 text-center text-2",
       },
     },
   },
   defaultVariants: {
-    size: 2,
+    size: 3,
   },
 });

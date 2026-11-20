@@ -27,6 +27,7 @@ import { graphql, usePaginationFragment } from "react-relay";
 import type { DocumentReviewThread_thread$key } from "#/__generated__/core/DocumentReviewThread_thread.graphql";
 import type { DocumentReviewThreadCommentsPaginationQuery } from "#/__generated__/core/DocumentReviewThreadCommentsPaginationQuery.graphql";
 
+import type { DocumentThreadConnections } from "../../_lib/documentThreadConnections";
 import { useCreateDocumentComment } from "../../_lib/useCreateDocumentComment";
 import { documentReviewThread } from "../../variants";
 
@@ -63,20 +64,23 @@ const documentReviewThreadFragment = graphql`
 
 interface DocumentReviewThreadProps {
   threadKey: DocumentReviewThread_thread$key;
-  threadsConnectionId: string;
+  threadConnections: DocumentThreadConnections;
   expanded: boolean;
   // The first comment is the card's title. Off when the thread sits under a
   // suggestion, whose author row is the title instead.
   titled?: boolean;
   firstActions?: ReactNode;
+  // Off for a resolved thread, which takes no new replies.
+  allowReply?: boolean;
 }
 
 export function DocumentReviewThread({
   threadKey,
-  threadsConnectionId,
+  threadConnections,
   expanded,
   titled = false,
   firstActions,
+  allowReply = true,
 }: DocumentReviewThreadProps) {
   const { t } = useTranslation("organizations/documents");
   const { data: thread, hasNext, isLoadingNext, loadNext } = usePaginationFragment<
@@ -100,7 +104,7 @@ export function DocumentReviewThread({
           key={comment.id}
           commentKey={comment}
           commentsConnectionId={commentsConnectionId}
-          threadsConnectionId={threadsConnectionId}
+          threadConnections={threadConnections}
           primary={titled && index === 0}
           actions={index === 0 ? firstActions : undefined}
         />
@@ -122,7 +126,7 @@ export function DocumentReviewThread({
           {t("details.review.showMoreReplies")}
         </Button>
       )}
-      {expanded && thread.canReply && (
+      {expanded && allowReply && thread.canReply && (
         <DocumentReviewReplyForm
           onSubmit={content => createDocumentComment(thread.id, content, commentsConnectionId)}
         />

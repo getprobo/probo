@@ -149,6 +149,18 @@
       "replyPlaceholder": "Répondre…",
       "send": "Envoyer",
       "showMoreReplies": "Afficher plus de réponses",
+      "views": {
+        "label": "Vue des commentaires",
+        "open": "Ouverts",
+        "all": "Tous les commentaires"
+      },
+      "history": {
+        "empty": "Aucun commentaire pour l'instant",
+        "loadMore": "Charger plus",
+        "onSuggestion": "Sur une suggestion :",
+        "resolved": "Résolu",
+        "resolvedBy": "Résolu par {{name}}"
+      },
       "contentRequired": "Écrivez d'abord un commentaire",
       "contentTooLong": "Les commentaires sont limités à {{max}} caractères",
       "deleteDialog": {

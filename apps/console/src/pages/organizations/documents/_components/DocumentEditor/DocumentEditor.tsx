@@ -23,7 +23,7 @@ import { CollaborativeRichEditor } from "@probo/ui/src/RichEditor/CollaborativeR
 import type { CommentAnchorController } from "@probo/ui/src/RichEditor/commentAnchors";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import type { Editor } from "@tiptap/core";
-import { type CSSProperties, useCallback, useMemo, useRef, useState } from "react";
+import { type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, useFragment } from "react-relay";
 
@@ -39,6 +39,7 @@ import {
 } from "../../_lib/documentPageLayout";
 import { useDocumentCollaboration } from "../../_lib/useDocumentCollaboration";
 import type { DocumentMode } from "../../_lib/useDocumentModes";
+import { useElementHeight } from "../../_lib/useElementHeight";
 import { usePageScale } from "../../_lib/usePageScale";
 import { usePreventSuggestionTextDrop } from "../../_lib/usePreventSuggestionTextDrop";
 import { useSuggestionController } from "../../_lib/useSuggestionController";
@@ -84,8 +85,14 @@ export function DocumentEditor({
   });
   const onUploadFile = useUploadRichTextFile();
   const paperRef = useRef<HTMLDivElement>(null);
+  const frameRef = useRef<HTMLDivElement>(null);
+  const [reviewElement, setReviewElement] = useState<HTMLDivElement | null>(null);
+  const [switchContainer, setSwitchContainer] = useState<HTMLDivElement | null>(null);
+  const [switchBox, setSwitchBox] = useState<{ left: number; width: number } | null>(null);
   const pageSize = documentPageSize(document.orientation);
   const { ref: pagesRef, scale } = usePageScale(pageSize.width);
+  // Caps the review history, which scrolls on its own within the frame.
+  const { ref: viewportRef, height: viewportHeight } = useElementHeight();
   const pagination = useMemo(
     () => ({
       layout: documentPageLayout(documentPageSize(document.orientation)),
@@ -96,8 +103,35 @@ export function DocumentEditor({
   const collaborating = mode !== "viewing";
   const {
     toolbar, toolbarControls, toolbarEnd, toolbarMode,
-    frame, viewport, content, pages, stack, paper, review, scrollbar, thumb,
+    frame, viewport, content, pages, stack, paper, review,
+    reviewSwitch, reviewSwitchTarget, scrollbar, thumb,
   } = documentEditor({ review: collaborating, presence: collaborating });
+
+  // The switch sits on the frame, so it follows the review column's box
+  // instead of scrolling inside the faded viewport.
+  useEffect(() => {
+    const frameElement = frameRef.current;
+    if (reviewElement == null || frameElement == null) {
+      return;
+    }
+    const observer = new ResizeObserver(() => {
+      const frameRect = frameElement.getBoundingClientRect();
+      const rect = reviewElement.getBoundingClientRect();
+      const style = getComputedStyle(reviewElement);
+      const paddingLeft = Number.parseFloat(style.paddingLeft) || 0;
+      const paddingRight = Number.parseFloat(style.paddingRight) || 0;
+      const left = rect.left - frameRect.left + paddingLeft;
+      const width = Math.max(0, rect.width - paddingLeft - paddingRight);
+      setSwitchBox(current =>
+        current != null && current.left === left && current.width === width
+          ? current
+          : { left, width },
+      );
+    });
+    observer.observe(reviewElement);
+    observer.observe(frameElement);
+    return () => observer.disconnect();
+  }, [reviewElement]);
   usePreventSuggestionTextDrop(paperRef, mode);
 
   const onEditor = useCallback((next: Editor | null) => {
@@ -118,11 +152,14 @@ export function DocumentEditor({
           </div>
         </div>
       </div>
-      <ScrollArea.Root className={frame()}>
-        <ScrollArea.Viewport className={viewport()}>
+      <ScrollArea.Root ref={frameRef} className={frame()}>
+        <ScrollArea.Viewport ref={viewportRef} className={viewport()}>
           <ScrollArea.Content
             className={content()}
-            style={{ "--page-width": `${pageSize.width}px` } as CSSProperties}
+            style={{
+              "--page-width": `${pageSize.width}px`,
+              "--review-viewport-height": viewportHeight > 0 ? `${viewportHeight}px` : undefined,
+            } as CSSProperties}
           >
             <div ref={pagesRef} className={pages()}>
               <div
@@ -163,12 +200,13 @@ export function DocumentEditor({
               </div>
             </div>
             {collaborating && (
-              <div className={review()}>
+              <div ref={setReviewElement} className={review()}>
                 {handle != null && (
                   <DocumentReviewList
                     queryRef={reviewQueryRef}
                     editor={editor}
                     collaborationHandle={handle}
+                    switchContainer={switchContainer}
                     activeKey={activeKey}
                     onActiveChange={setActiveKey}
                   />
@@ -177,6 +215,14 @@ export function DocumentEditor({
             )}
           </ScrollArea.Content>
         </ScrollArea.Viewport>
+        {collaborating && switchBox != null && switchBox.width > 0 && (
+          <div
+            className={reviewSwitch()}
+            style={{ left: switchBox.left, width: switchBox.width }}
+          >
+            <div ref={setSwitchContainer} className={reviewSwitchTarget()} />
+          </div>
+        )}
         <ScrollArea.Scrollbar className={scrollbar()} orientation="vertical">
           <ScrollArea.Thumb className={thumb()} />
         </ScrollArea.Scrollbar>

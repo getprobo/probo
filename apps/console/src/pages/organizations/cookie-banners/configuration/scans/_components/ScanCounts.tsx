@@ -97,7 +97,7 @@ export function ScanCounts({ scanKey }: ScanCountsProps) {
     <div className="flex flex-col gap-4">
       <div className={views()}>
         <SegmentedControl
-          size={1}
+          size={2}
           value={tab}
           aria-label={t("scanPage.counts.ariaLabel")}
           onValueChange={(value) => {

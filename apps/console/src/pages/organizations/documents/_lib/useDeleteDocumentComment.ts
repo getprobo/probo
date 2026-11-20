@@ -24,6 +24,8 @@ import { graphql } from "react-relay";
 import type { useDeleteDocumentCommentMutation } from "#/__generated__/core/useDeleteDocumentCommentMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
 
+import type { DocumentThreadConnections } from "./documentThreadConnections";
+
 // Deleting the last comment also deletes its thread on the server, so the
 // thread edge leaves the review column in the same response.
 const deleteDocumentCommentMutation = graphql`
@@ -49,13 +51,13 @@ export function useDeleteDocumentComment() {
   async function deleteDocumentComment(
     commentId: string,
     commentsConnectionId: string,
-    threadsConnectionId: string,
+    threadConnections: DocumentThreadConnections,
   ) {
     await commit({
       variables: {
         input: { commentId },
         commentConnections: [commentsConnectionId],
-        threadConnections: [threadsConnectionId],
+        threadConnections: [threadConnections.open, threadConnections.history],
       },
     });
   }

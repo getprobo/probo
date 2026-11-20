@@ -20,9 +20,9 @@
 
 import { createContext, useContext } from "react";
 
-export type SegmentedControlSize = 1 | 2;
+export type SegmentedControlSize = 1 | 2 | 3;
 
-const SegmentedControlContext = createContext<SegmentedControlSize>(2);
+const SegmentedControlContext = createContext<SegmentedControlSize>(3);
 
 export const SegmentedControlProvider = SegmentedControlContext.Provider;
 

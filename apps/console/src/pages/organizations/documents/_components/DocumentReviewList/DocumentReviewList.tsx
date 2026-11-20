@@ -26,15 +26,15 @@ import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { DocumentReviewListQuery } from "#/__generated__/core/DocumentReviewListQuery.graphql";
 
-import { DocumentReviewListColumn } from "./DocumentReviewListColumn";
+import { DocumentReviewPanel } from "./DocumentReviewPanel";
 
 export const documentReviewListQuery = graphql`
   query DocumentReviewListQuery($documentId: ID!) {
     node(id: $documentId) {
       __typename
       ... on Document {
-        ...DocumentReviewListColumn_threads
-        ...DocumentReviewListColumn_suggestions
+        ...DocumentReviewPanel_threads
+        ...DocumentReviewPanel_suggestions
       }
     }
   }
@@ -44,6 +44,8 @@ interface DocumentReviewListProps {
   queryRef: PreloadedQuery<DocumentReviewListQuery> | null;
   editor: Editor | null;
   collaborationHandle: RepoCollaborationHandle;
+  // The view switch is portaled here so it sits outside the scroll viewport.
+  switchContainer: HTMLElement | null;
   activeKey: string | null;
   onActiveChange: (key: string | null) => void;
 }
@@ -76,5 +78,5 @@ function DocumentReviewListLoaded({
     return null;
   }
 
-  return <DocumentReviewListColumn documentKey={data.node} {...props} />;
+  return <DocumentReviewPanel documentKey={data.node} {...props} />;
 }

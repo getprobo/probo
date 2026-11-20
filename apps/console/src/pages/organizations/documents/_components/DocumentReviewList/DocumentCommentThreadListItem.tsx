@@ -24,6 +24,7 @@ import { graphql, useFragment } from "react-relay";
 
 import type { DocumentCommentThreadListItem_thread$key } from "#/__generated__/core/DocumentCommentThreadListItem_thread.graphql";
 
+import type { DocumentThreadConnections } from "../../_lib/documentThreadConnections";
 import { useResolveDocumentThread } from "../../_lib/useResolveDocumentThread";
 
 import { DocumentReviewAction } from "./DocumentReviewAction";
@@ -40,14 +41,14 @@ const documentCommentThreadListItemFragment = graphql`
 
 interface DocumentCommentThreadListItemProps {
   threadKey: DocumentCommentThreadListItem_thread$key;
-  threadsConnectionId: string;
+  threadConnections: DocumentThreadConnections;
   active: boolean;
   onActivate: () => void;
 }
 
 export function DocumentCommentThreadListItem({
   threadKey,
-  threadsConnectionId,
+  threadConnections,
   active,
   onActivate,
 }: DocumentCommentThreadListItemProps) {
@@ -62,7 +63,7 @@ export function DocumentCommentThreadListItem({
           color="green"
           loading={isResolving}
           onClick={() => {
-            void resolveDocumentThread(thread.id, threadsConnectionId).catch(() => {
+            void resolveDocumentThread(thread.id, threadConnections).catch(() => {
               // The mutation already shows an error toast.
             });
           }}
@@ -76,7 +77,7 @@ export function DocumentCommentThreadListItem({
     <DocumentReviewItem kind="comment" active={active} onActivate={onActivate}>
       <DocumentReviewThread
         threadKey={thread}
-        threadsConnectionId={threadsConnectionId}
+        threadConnections={threadConnections}
         expanded={active}
         titled
         firstActions={resolve}

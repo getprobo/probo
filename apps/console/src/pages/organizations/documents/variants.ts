@@ -111,6 +111,10 @@ export const documentEditor = tv({
       "[&_.mermaid-preview_svg]:max-h-80! [&_.mermaid-preview_svg]:w-auto!",
     ],
     review: "hidden min-w-0 pr-2 @4xl:block",
+    // The view switch is portaled here, over the review column and outside
+    // the viewport, so the viewport's fade never covers it.
+    reviewSwitch: "pointer-events-none absolute top-0 z-2 bg-sand-2",
+    reviewSwitchTarget: "pointer-events-auto",
     scrollbar: [
       "flex w-1 flex-col items-center py-1",
       "pointer-events-none opacity-0 transition-opacity",
@@ -255,6 +259,51 @@ export const documentControls = tv({
   },
   defaultVariants: {
     pending: false,
+  },
+});
+
+// The view switch is portaled onto the frame, and the panel pads itself by
+// the switch height so the column still starts below it.
+export const documentReviewPanel = tv({
+  slots: {
+    root: "",
+    bar: "flex shrink-0 pb-2",
+    body: "",
+  },
+  variants: {
+    view: {
+      open: {
+        root: "relative min-h-full",
+      },
+      // The history stays in view wherever the document is scrolled, and
+      // scrolls on its own within the frame's height.
+      all: {
+        root: "sticky top-0 flex max-h-(--review-viewport-height,100vh) flex-col",
+        body: "min-h-0 flex-1 overflow-y-auto pb-6",
+      },
+    },
+  },
+  defaultVariants: {
+    view: "open",
+  },
+});
+
+export const documentCommentHistory = tv({
+  slots: {
+    list: "flex flex-col gap-2",
+    more: "self-start",
+    item: "",
+    quote: "line-clamp-2 border-l-2 border-sand-6 pl-2",
+    quoteLabel: "mr-1 font-medium",
+  },
+  variants: {
+    resolved: {
+      true: { item: "opacity-70" },
+      false: {},
+    },
+  },
+  defaultVariants: {
+    resolved: false,
   },
 });
 

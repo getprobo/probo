@@ -20,12 +20,17 @@
 
 import { useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
+import { ConnectionHandler } from "relay-runtime";
 
 import type { useCreateDocumentCommentThreadMutation } from "#/__generated__/core/useCreateDocumentCommentThreadMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
 
+import type { DocumentThreadConnections } from "./documentThreadConnections";
+
 // The new edge carries every field the review column reads from a thread, so
-// it renders in place without a refetch.
+// it renders in place without a refetch. It is appended to the open threads,
+// which run oldest first, and inserted at the top of the history, which runs
+// newest first.
 const createDocumentCommentThreadMutation = graphql`
   mutation useCreateDocumentCommentThreadMutation(
     $input: CreateDocumentCommentThreadInput!
@@ -41,6 +46,7 @@ const createDocumentCommentThreadMutation = graphql`
           suggestionId
           ...DocumentCommentThreadListItem_thread
           ...DocumentSuggestionListItem_thread
+          ...DocumentCommentHistoryItem_thread
         }
       }
     }
@@ -58,12 +64,23 @@ export function useCreateDocumentCommentThread() {
     documentId: string,
     suggestionId: string,
     content: string,
-    threadsConnectionId: string,
+    threadConnections: DocumentThreadConnections,
   ) {
     await commit({
       variables: {
         input: { documentId, suggestionId, content },
-        connections: [threadsConnectionId],
+        connections: [threadConnections.open],
+      },
+      updater: (store) => {
+        const history = store.get(threadConnections.history);
+        const edge = store
+          .getRootField("createDocumentCommentThread")
+          ?.getLinkedRecord("documentCommentThreadEdge");
+        if (history == null || edge == null) return;
+        const historyEdge = ConnectionHandler.buildConnectionEdge(store, history, edge);
+        if (historyEdge != null) {
+          ConnectionHandler.insertEdgeBefore(history, historyEdge);
+        }
       },
     });
   }

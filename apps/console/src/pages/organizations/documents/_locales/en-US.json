@@ -149,6 +149,18 @@
       "replyPlaceholder": "Reply…",
       "send": "Send",
       "showMoreReplies": "Show more replies",
+      "views": {
+        "label": "Comments view",
+        "open": "Open",
+        "all": "All comments"
+      },
+      "history": {
+        "empty": "No comments yet",
+        "loadMore": "Load more",
+        "onSuggestion": "On a suggestion:",
+        "resolved": "Resolved",
+        "resolvedBy": "Resolved by {{name}}"
+      },
       "contentRequired": "Write a comment first",
       "contentTooLong": "Comments are limited to {{max}} characters",
       "deleteDialog": {

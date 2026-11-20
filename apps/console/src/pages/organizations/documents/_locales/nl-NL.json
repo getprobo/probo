@@ -149,6 +149,18 @@
       "replyPlaceholder": "Reageren…",
       "send": "Versturen",
       "showMoreReplies": "Meer reacties tonen",
+      "views": {
+        "label": "Weergave van reacties",
+        "open": "Open",
+        "all": "Alle reacties"
+      },
+      "history": {
+        "empty": "Nog geen reacties",
+        "loadMore": "Meer laden",
+        "onSuggestion": "Bij een suggestie:",
+        "resolved": "Opgelost",
+        "resolvedBy": "Opgelost door {{name}}"
+      },
       "contentRequired": "Schrijf eerst een opmerking",
       "contentTooLong": "Opmerkingen zijn beperkt tot {{max}} tekens",
       "deleteDialog": {

@@ -112,7 +112,7 @@ export function TrackersListFilters({ cookieBannerKey }: TrackersListFiltersProp
     <>
       <div className={views()}>
         <SegmentedControl
-          size={1}
+          size={2}
           value={view}
           aria-label={t("trackersPage.views.ariaLabel")}
           onValueChange={(value) => {
