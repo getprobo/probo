@@ -387,6 +387,10 @@ probo:
   # Recurring task worker. Interval is seconds between scans for due tasks.
   taskRecurrence:
     interval: 300
+  # Audit log retention. Durations are seconds.
+  auditLogRetention:
+    interval: 86400
+    retention: 7776000
 
   # Weekly notification digest. Weekday uses Go's time.Weekday: 0 is Sunday, 1 is Monday.
   # Hour is UTC. The digest becomes due at that hour and can be sent through the rest of the day.

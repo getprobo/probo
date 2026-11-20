@@ -4,6 +4,12 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Added
+
+- Audit log entries older than 90 days are deleted once a day.
+  `PROBOD_AUDIT_LOG_RETENTION` and `PROBOD_AUDIT_LOG_RETENTION_INTERVAL`
+  override the window and the schedule, in seconds
+
 ## [0.355.1] - 2026-11-20
 
 ### Fixed

@@ -223,6 +223,10 @@ func New() *Implm {
 			TaskRecurrence: TaskRecurrenceConfig{
 				Interval: 300, // 5 minutes
 			},
+			AuditLogRetention: AuditLogRetentionConfig{
+				Interval:  int(iam.DefaultAuditLogRetentionInterval / time.Second),
+				Retention: int(iam.DefaultAuditLogRetention / time.Second),
+			},
 			CustomDomains: CustomDomainsConfig{
 				RenewalInterval:   3600,
 				ProvisionInterval: 30,
@@ -1623,6 +1627,36 @@ func (impl *Implm) Run(
 		},
 	)
 
+	auditLogRetention := time.Duration(impl.cfg.AuditLogRetention.Retention) * time.Second
+	if auditLogRetention <= 0 {
+		auditLogRetention = iam.DefaultAuditLogRetention
+	}
+
+	auditLogRetentionInterval := time.Duration(impl.cfg.AuditLogRetention.Interval) * time.Second
+	if auditLogRetentionInterval <= 0 {
+		auditLogRetentionInterval = iam.DefaultAuditLogRetentionInterval
+	}
+
+	auditLogRetentionWorker := iam.NewAuditLogRetentionWorker(
+		pgClient,
+		l.Named("audit-log-retention-worker"),
+		auditLogRetention,
+		worker.WithInterval(auditLogRetentionInterval),
+		worker.WithRegisterer(r),
+		worker.WithTracerProvider(tp),
+	)
+	auditLogRetentionWorkerCtx, stopAuditLogRetentionWorker := context.WithCancel(
+		context.WithoutCancel(ctx),
+	)
+
+	wg.Go(
+		func() {
+			if err := auditLogRetentionWorker.Run(auditLogRetentionWorkerCtx); err != nil {
+				cancel(fmt.Errorf("audit log retention worker crashed: %w", err))
+			}
+		},
+	)
+
 	itamGC := itam.NewGarbageCollector(pgClient, l.Named("itam"))
 	itamGCCtx, stopITAMGC := context.WithCancel(context.Background())
 
@@ -1931,6 +1965,7 @@ func (impl *Implm) Run(
 	stopExportJobExporter()
 	stopAccessReviewWorker()
 	stopConnectorsService()
+	stopAuditLogRetentionWorker()
 	stopIAMService()
 	stopITAMGC()
 	stopMailer()

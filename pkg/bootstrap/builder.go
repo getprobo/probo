@@ -26,12 +26,14 @@ import (
 	"os"
 	"slices"
 	"strings"
+	"time"
 
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
 	cloudazure "go.probo.inc/probo/pkg/cloud/azure"
 	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
 	"go.probo.inc/probo/pkg/connectorprotocol"
 	"go.probo.inc/probo/pkg/connectorprotocol/provider"
+	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probodconfig"
 )
 
@@ -288,6 +290,16 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 			},
 			TaskRecurrence: probodconfig.TaskRecurrenceConfig{
 				Interval: b.resolver.getEnvIntOrDefault("PROBOD_TASK_RECURRENCE_INTERVAL", 300),
+			},
+			AuditLogRetention: probodconfig.AuditLogRetentionConfig{
+				Interval: b.resolver.getEnvIntOrDefault(
+					"PROBOD_AUDIT_LOG_RETENTION_INTERVAL",
+					int(iam.DefaultAuditLogRetentionInterval/time.Second),
+				),
+				Retention: b.resolver.getEnvIntOrDefault(
+					"PROBOD_AUDIT_LOG_RETENTION",
+					int(iam.DefaultAuditLogRetention/time.Second),
+				),
 			},
 			Agents: func() probodconfig.AgentsConfig {
 				defaultProvider := b.resolver.getEnvOrDefault("PROBOD_AGENT_DEFAULT_PROVIDER", "openai")
