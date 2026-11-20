@@ -4,10 +4,51 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.353.0] - 2026-11-20
+
+### Added
+
+- Tags are a name unique in the organization, with an optional color.
+  A resource can carry several. Attaching a tag that is already
+  present keeps the existing assignment. The console GraphQL API adds
+  `createTag`, `updateTag`, `deleteTag`, `attachTag`, and `detachTag`,
+  plus `Organization.tags` and `tags` on taggable resources. MCP adds
+  `createTag`, `updateTag`, `deleteTag`, `attachTag`, `detachTag`,
+  `listTags`, and `listTagsForResource`
+- `search` finds resources the caller is allowed to list, on the
+  console GraphQL API and as the MCP `search` tool. Bare words match
+  titles as prefixes, and a resource id matches in full or by prefix.
+  Every `tag:name` must match. `type:name` is optional and repeatable.
+  The console Ctrl+K spotlight lists those hits beside pages, grouped
+  by type, and opens them. A query that uses `tag:` or `type:` lists
+  resources only. Controls open on their framework, and DPIAs and TIAs
+  open on their processing activity
+- Leaving a task page in the console or employee portal asks the user
+  to stay when the comment composer has text, an attachment, or an
+  upload still in progress. Closing the tab uses the browser prompt.
+  Changing search on the same task does not ask, because the draft
+  stays mounted
+
+### Changed
+
+- The console Ctrl+K spotlight uses a command-palette layout: a light
+  backdrop blur, a borderless search field, section labels and icons,
+  and Enter and Esc hints in the footer. Closing it clears the query,
+  and a slow response cannot overwrite a newer one
+
 ### Fixed
 
 - Built with Go 1.27.4 (up from 1.27.3) to pick up the standard-library
   security fix in `net/http` (CVE-2026-97054)
+- The internal control create button stays disabled while the form is
+  saving, so a double click no longer creates two controls
+- Opening a document in view mode, or with no mode, syncs without
+  persisting. Editing and suggesting still persist. A generated or
+  archived document stays read-only in every mode. View mode used to
+  receive update permission, so a generated document closed the socket
+  and the browser reconnected every few seconds
+- The console people menu keeps the caret in the search field after
+  the list replaces the loading state
 
 ## [0.352.0] - 2026-11-19
 
