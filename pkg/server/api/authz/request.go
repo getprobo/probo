@@ -21,12 +21,10 @@
 package authz
 
 import (
-	"context"
 	"net/http"
 
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/server/api/clientip"
-	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 func RequestMetadataFromHTTP(r *http.Request) iam.RequestMetadata {
@@ -35,8 +33,4 @@ func RequestMetadataFromHTTP(r *http.Request) iam.RequestMetadata {
 		UserAgent: r.UserAgent(),
 		RequestID: r.Header.Get("X-Request-Id"),
 	}
-}
-
-func requestMetadataFromContext(ctx context.Context) iam.RequestMetadata {
-	return RequestMetadataFromHTTP(gqlx.HTTPRequestFromContext(ctx))
 }
