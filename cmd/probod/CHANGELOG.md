@@ -8,6 +8,9 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 - Built with Go 1.27.4 (up from 1.27.3) to pick up the standard-library
   security fix in `net/http` (CVE-2026-97054)
+- An MCP tool that panics with a nil pointer now logs the stack and
+  the tool name. Those panics implement `error`, so recovery logged
+  only the runtime message and the stack was dropped
 
 ## [0.352.0] - 2026-11-19
 
