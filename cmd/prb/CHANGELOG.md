@@ -4,6 +4,19 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.272.0] - 2026-11-20
+
+### Added
+
+- `tag` commands create, update, delete, attach, detach, and list
+  tags. Tag names are unique in an organization, and a resource can
+  carry several. `tag list` shows the tags in an organization or on
+  one resource
+- `search` finds resources across types with a query. Bare words match
+  titles as prefixes. `tag:name` requires a tag, and repeating it
+  requires every tag. `type:name` restricts results to a resource
+  type, and repeating it accepts several types
+
 ## [0.271.0] - 2026-11-17
 
 ### Added
