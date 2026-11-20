@@ -35,7 +35,7 @@ import (
 
 	"github.com/vektah/gqlparser/v2/ast"
 	"github.com/vektah/gqlparser/v2/parser"
-	"go.probo.inc/probo/pkg/filevalidation"
+	"go.probo.inc/probo/pkg/validator"
 	"go.probo.inc/probo/pkg/version"
 )
 
@@ -526,7 +526,7 @@ func filePartHeader(fieldname, filename string) (textproto.MIMEHeader, error) {
 
 	h := make(textproto.MIMEHeader)
 	h.Set("Content-Disposition", disposition)
-	h.Set("Content-Type", filevalidation.ResolveContentType("", filename))
+	h.Set("Content-Type", validator.ResolveContentType("", filename))
 
 	return h, nil
 }

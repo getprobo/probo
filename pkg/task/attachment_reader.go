@@ -33,10 +33,10 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/filemanager"
-	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/prosemirror"
 	"go.probo.inc/probo/pkg/task/sync/job"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 type attachmentReader struct {
@@ -177,12 +177,12 @@ func (r *attachmentReader) StoreAttachment(
 
 func normalizeStoredAttachment(name, contentType string, size int64) (string, string, error) {
 	name = pathBase(name)
-	media := filevalidation.ResolveContentType(contentType, name)
+	media := validator.ResolveContentType(contentType, name)
 
 	// A supported extension must agree with the downloaded media type.
 	// A PDF named diagram.png is rejected instead of stored as an image.
-	if _, ok := filevalidation.ContentTypeForAttachment(name); ok {
-		if err := filevalidation.NewAttachmentValidator().Validate(name, media, size); err != nil {
+	if _, ok := validator.ContentTypeForAttachment(name); ok {
+		if err := validator.NewAttachmentValidator().Validate(name, media, size); err != nil {
 			return "", "", err
 		}
 
@@ -192,7 +192,7 @@ func normalizeStoredAttachment(name, contentType string, size int64) (string, st
 	ext := extensionForContentType(media)
 
 	if ext == "" {
-		if err := filevalidation.NewAttachmentValidator().Validate("file", media, size); err != nil {
+		if err := validator.NewAttachmentValidator().Validate("file", media, size); err != nil {
 			return "", "", err
 		}
 
@@ -210,12 +210,12 @@ func normalizeStoredAttachment(name, contentType string, size int64) (string, st
 		name = trimFileName(name)
 	}
 
-	mimeType, ok := filevalidation.ContentTypeForAttachment(name)
+	mimeType, ok := validator.ContentTypeForAttachment(name)
 	if !ok {
 		return "", "", fmt.Errorf("cannot store attachment: content type %q is not allowed", media)
 	}
 
-	if err := filevalidation.NewAttachmentValidator().Validate(name, mimeType, size); err != nil {
+	if err := validator.NewAttachmentValidator().Validate(name, mimeType, size); err != nil {
 		return "", "", err
 	}
 
@@ -271,7 +271,7 @@ func trimAtRune(name string, limit int) string {
 }
 
 func extensionForContentType(contentType string) string {
-	for _, fileType := range filevalidation.FileTypes {
+	for _, fileType := range validator.FileTypes {
 		if fileType.MimeType == contentType && len(fileType.Extensions) > 0 {
 			return fileType.Extensions[0]
 		}

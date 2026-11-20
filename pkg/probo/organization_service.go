@@ -32,7 +32,6 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/filemanager"
-	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/validator"
 )
@@ -40,7 +39,7 @@ import (
 type (
 	OrganizationService struct {
 		svc           *Service
-		fileValidator *filevalidation.FileValidator
+		fileValidator *validator.FileValidator
 	}
 
 	UpdateOrganizationRequest struct {

@@ -31,7 +31,6 @@ import (
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/validator"
@@ -73,9 +72,9 @@ func (req *UpdateBrandRequest) Validate() error {
 		return err
 	}
 
-	fv := filevalidation.NewValidator(
-		filevalidation.WithCategories(filevalidation.CategoryImage),
-		filevalidation.WithMaxFileSize(maxBrandFileSize),
+	fv := validator.NewFileValidator(
+		validator.WithFileCategories(validator.FileCategoryImage),
+		validator.WithMaxFileSize(maxBrandFileSize),
 	)
 
 	if req.LogoFile != nil && *req.LogoFile != nil {
