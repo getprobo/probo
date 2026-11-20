@@ -147,6 +147,42 @@ enum ThirdPartyComplianceReportOrderField
         )
 }
 
+enum ThirdPartyAgreementType
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.ThirdPartyAgreementType") {
+    BUSINESS_ASSOCIATE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ThirdPartyAgreementTypeBusinessAssociate"
+        )
+    DATA_PRIVACY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ThirdPartyAgreementTypeDataPrivacy"
+        )
+    TERMS
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ThirdPartyAgreementTypeTerms")
+    MASTER_SERVICE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ThirdPartyAgreementTypeMasterService"
+        )
+    AMENDMENT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ThirdPartyAgreementTypeAmendment"
+        )
+    ANNEX
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ThirdPartyAgreementTypeAnnex")
+    OTHER
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ThirdPartyAgreementTypeOther")
+}
+
+enum ThirdPartyAgreementOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.ThirdPartyAgreementOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ThirdPartyAgreementOrderFieldCreatedAt"
+        )
+}
+
 enum ThirdPartyContactOrderField
     @goModel(model: "go.probo.inc/probo/pkg/coredata.ThirdPartyContactOrderField") {
     CREATED_AT
@@ -210,6 +246,14 @@ input ThirdPartyComplianceReportOrder
     field: ThirdPartyComplianceReportOrderField!
 }
 
+input ThirdPartyAgreementOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ThirdPartyAgreementOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: ThirdPartyAgreementOrderField!
+}
+
 input ThirdPartyContactOrder
     @goModel(
         model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ThirdPartyContactOrderBy"
@@ -258,10 +302,13 @@ type ThirdParty implements Node & Taggable {
         orderBy: ThirdPartyComplianceReportOrder
     ): ThirdPartyComplianceReportConnection! @goField(forceResolver: true)
 
-    businessAssociateAgreement: ThirdPartyBusinessAssociateAgreement
-        @goField(forceResolver: true)
-    dataPrivacyAgreement: ThirdPartyDataPrivacyAgreement
-        @goField(forceResolver: true)
+    agreements(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ThirdPartyAgreementOrder
+    ): ThirdPartyAgreementConnection! @goField(forceResolver: true)
 
     contacts(
         first: Int
@@ -346,9 +393,10 @@ type ThirdPartyComplianceReport implements Node {
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
-type ThirdPartyBusinessAssociateAgreement implements Node {
+type ThirdPartyAgreement implements Node {
     id: ID!
     thirdParty: ThirdParty! @goField(forceResolver: true)
+    type: ThirdPartyAgreementType!
     validity: Period
     file: File! @goField(forceResolver: true)
     createdAt: Datetime!
@@ -375,17 +423,6 @@ type ThirdPartyService implements Node {
     thirdParty: ThirdParty! @goField(forceResolver: true)
     name: String!
     description: String
-    createdAt: Datetime!
-    updatedAt: Datetime!
-
-    permission(action: String!): Boolean! @goField(forceResolver: true)
-}
-
-type ThirdPartyDataPrivacyAgreement implements Node {
-    id: ID!
-    thirdParty: ThirdParty! @goField(forceResolver: true)
-    validity: Period
-    file: File! @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
 
@@ -427,6 +464,16 @@ type ThirdPartyComplianceReportConnection {
 type ThirdPartyComplianceReportEdge {
     cursor: CursorKey!
     node: ThirdPartyComplianceReport!
+}
+
+type ThirdPartyAgreementConnection {
+    edges: [ThirdPartyAgreementEdge!]!
+    pageInfo: PageInfo!
+}
+
+type ThirdPartyAgreementEdge {
+    cursor: CursorKey!
+    node: ThirdPartyAgreement!
 }
 
 type ThirdPartyContactConnection {
@@ -490,24 +537,15 @@ extend type Mutation {
     deleteThirdPartyComplianceReport(
         input: DeleteThirdPartyComplianceReportInput!
     ): DeleteThirdPartyComplianceReportPayload!
-    uploadThirdPartyBusinessAssociateAgreement(
-        input: UploadThirdPartyBusinessAssociateAgreementInput!
-    ): UploadThirdPartyBusinessAssociateAgreementPayload!
-    updateThirdPartyBusinessAssociateAgreement(
-        input: UpdateThirdPartyBusinessAssociateAgreementInput!
-    ): UpdateThirdPartyBusinessAssociateAgreementPayload!
-    deleteThirdPartyBusinessAssociateAgreement(
-        input: DeleteThirdPartyBusinessAssociateAgreementInput!
-    ): DeleteThirdPartyBusinessAssociateAgreementPayload!
-    uploadThirdPartyDataPrivacyAgreement(
-        input: UploadThirdPartyDataPrivacyAgreementInput!
-    ): UploadThirdPartyDataPrivacyAgreementPayload!
-    updateThirdPartyDataPrivacyAgreement(
-        input: UpdateThirdPartyDataPrivacyAgreementInput!
-    ): UpdateThirdPartyDataPrivacyAgreementPayload!
-    deleteThirdPartyDataPrivacyAgreement(
-        input: DeleteThirdPartyDataPrivacyAgreementInput!
-    ): DeleteThirdPartyDataPrivacyAgreementPayload!
+    uploadThirdPartyAgreement(
+        input: UploadThirdPartyAgreementInput!
+    ): UploadThirdPartyAgreementPayload!
+    updateThirdPartyAgreement(
+        input: UpdateThirdPartyAgreementInput!
+    ): UpdateThirdPartyAgreementPayload!
+    deleteThirdPartyAgreement(
+        input: DeleteThirdPartyAgreementInput!
+    ): DeleteThirdPartyAgreementPayload!
     createThirdPartyRiskAssessment(
         input: CreateThirdPartyRiskAssessmentInput!
     ): CreateThirdPartyRiskAssessmentPayload!
@@ -629,36 +667,21 @@ input DeleteThirdPartyComplianceReportInput {
     reportId: ID!
 }
 
-input UploadThirdPartyBusinessAssociateAgreementInput {
+input UploadThirdPartyAgreementInput {
     thirdPartyId: ID!
+    type: ThirdPartyAgreementType!
     validity: PeriodInput
-    fileName: String!
     file: Upload!
 }
 
-input UpdateThirdPartyBusinessAssociateAgreementInput {
-    thirdPartyId: ID!
+input UpdateThirdPartyAgreementInput {
+    id: ID!
+    type: ThirdPartyAgreementType
     validity: PeriodInput
 }
 
-input DeleteThirdPartyBusinessAssociateAgreementInput {
-    thirdPartyId: ID!
-}
-
-input UploadThirdPartyDataPrivacyAgreementInput {
-    thirdPartyId: ID!
-    validity: PeriodInput
-    fileName: String!
-    file: Upload!
-}
-
-input UpdateThirdPartyDataPrivacyAgreementInput {
-    thirdPartyId: ID!
-    validity: PeriodInput
-}
-
-input DeleteThirdPartyDataPrivacyAgreementInput {
-    thirdPartyId: ID!
+input DeleteThirdPartyAgreementInput {
+    agreementId: ID!
 }
 
 input CreateThirdPartyRiskAssessmentInput {
@@ -729,28 +752,16 @@ type DeleteThirdPartyComplianceReportPayload {
     deletedThirdPartyComplianceReportId: ID!
 }
 
-type UploadThirdPartyBusinessAssociateAgreementPayload {
-    thirdPartyBusinessAssociateAgreement: ThirdPartyBusinessAssociateAgreement!
+type UploadThirdPartyAgreementPayload {
+    thirdPartyAgreementEdge: ThirdPartyAgreementEdge!
 }
 
-type UpdateThirdPartyBusinessAssociateAgreementPayload {
-    thirdPartyBusinessAssociateAgreement: ThirdPartyBusinessAssociateAgreement!
+type UpdateThirdPartyAgreementPayload {
+    thirdPartyAgreement: ThirdPartyAgreement!
 }
 
-type DeleteThirdPartyBusinessAssociateAgreementPayload {
-    deletedThirdPartyId: ID!
-}
-
-type UploadThirdPartyDataPrivacyAgreementPayload {
-    thirdPartyDataPrivacyAgreement: ThirdPartyDataPrivacyAgreement!
-}
-
-type UpdateThirdPartyDataPrivacyAgreementPayload {
-    thirdPartyDataPrivacyAgreement: ThirdPartyDataPrivacyAgreement!
-}
-
-type DeleteThirdPartyDataPrivacyAgreementPayload {
-    deletedThirdPartyId: ID!
+type DeleteThirdPartyAgreementPayload {
+    deletedThirdPartyAgreementId: ID!
 }
 
 type CreateThirdPartyRiskAssessmentPayload {

@@ -38,30 +38,19 @@ func TestThirdPartyAgreement_TenantIsolation(t *testing.T) {
 		WithName(factory.SafeName("Org1 third party agreements")).
 		Create()
 
-	uploadedBAA := uploadThirdPartyAgreement(
+	uploaded := uploadThirdPartyAgreement(
 		t,
 		org1Owner,
-		thirdPartyAgreementKindBAA,
 		org1ThirdPartyID,
+		"MASTER_SERVICE",
 		"2024-01-01T00:00:00Z",
 		"2025-01-01T00:00:00Z",
-		"org1-baa.pdf",
+		"org1-msa.pdf",
 	)
-
-	uploadedDPA := uploadThirdPartyAgreement(
-		t,
-		org1Owner,
-		thirdPartyAgreementKindDPA,
-		org1ThirdPartyID,
-		"2024-02-01T00:00:00Z",
-		"2025-02-01T00:00:00Z",
-		"org1-dpa.pdf",
-	)
-	require.NotEmpty(t, uploadedBAA.ID)
-	require.NotEmpty(t, uploadedDPA.ID)
+	require.NotEmpty(t, uploaded.ID)
 
 	t.Run(
-		"cannot upload business associate agreement for another organization's third party",
+		"cannot upload an agreement for another organization's third party",
 		func(t *testing.T) {
 			t.Parallel()
 
@@ -70,46 +59,22 @@ func TestThirdPartyAgreement_TenantIsolation(t *testing.T) {
 			err := uploadThirdPartyAgreementExpectError(
 				t,
 				org2,
-				thirdPartyAgreementKindBAA,
 				org1ThirdPartyID,
+				"ANNEX",
 				"2024-01-01T00:00:00Z",
 				"2025-01-01T00:00:00Z",
-				"cross-tenant-baa.pdf",
+				"cross-tenant.pdf",
 			)
 			testutil.RequireForbiddenError(
 				t,
 				err,
-				"must not upload business associate agreement for another organization's third party",
+				"must not upload an agreement for another organization's third party",
 			)
 		},
 	)
 
 	t.Run(
-		"cannot upload data privacy agreement for another organization's third party",
-		func(t *testing.T) {
-			t.Parallel()
-
-			org2 := org2Owner.ForTest(t)
-
-			err := uploadThirdPartyAgreementExpectError(
-				t,
-				org2,
-				thirdPartyAgreementKindDPA,
-				org1ThirdPartyID,
-				"2024-01-01T00:00:00Z",
-				"2025-01-01T00:00:00Z",
-				"cross-tenant-dpa.pdf",
-			)
-			testutil.RequireForbiddenError(
-				t,
-				err,
-				"must not upload data privacy agreement for another organization's third party",
-			)
-		},
-	)
-
-	t.Run(
-		"cannot update business associate agreement for another organization's third party",
+		"cannot update an agreement owned by another organization",
 		func(t *testing.T) {
 			t.Parallel()
 
@@ -117,31 +82,29 @@ func TestThirdPartyAgreement_TenantIsolation(t *testing.T) {
 
 			_, err := org2.Do(
 				`
-					mutation($input: UpdateThirdPartyBusinessAssociateAgreementInput!) {
-						updateThirdPartyBusinessAssociateAgreement(input: $input) {
-							thirdPartyBusinessAssociateAgreement { id }
+					mutation($input: UpdateThirdPartyAgreementInput!) {
+						updateThirdPartyAgreement(input: $input) {
+							thirdPartyAgreement { id }
 						}
 					}
 				`,
 				map[string]any{
 					"input": map[string]any{
-						"thirdPartyId": org1ThirdPartyID,
-						"validity": map[string]any{
-							"end": "2026-01-01T00:00:00Z",
-						},
+						"id":   uploaded.ID,
+						"type": "ANNEX",
 					},
 				},
 			)
 			testutil.RequireForbiddenError(
 				t,
 				err,
-				"must not update business associate agreement for another organization's third party",
+				"must not update an agreement owned by another organization",
 			)
 		},
 	)
 
 	t.Run(
-		"cannot update data privacy agreement for another organization's third party",
+		"cannot delete an agreement owned by another organization",
 		func(t *testing.T) {
 			t.Parallel()
 
@@ -149,83 +112,22 @@ func TestThirdPartyAgreement_TenantIsolation(t *testing.T) {
 
 			_, err := org2.Do(
 				`
-					mutation($input: UpdateThirdPartyDataPrivacyAgreementInput!) {
-						updateThirdPartyDataPrivacyAgreement(input: $input) {
-							thirdPartyDataPrivacyAgreement { id }
+					mutation($input: DeleteThirdPartyAgreementInput!) {
+						deleteThirdPartyAgreement(input: $input) {
+							deletedThirdPartyAgreementId
 						}
 					}
 				`,
 				map[string]any{
 					"input": map[string]any{
-						"thirdPartyId": org1ThirdPartyID,
-						"validity": map[string]any{
-							"end": "2026-02-01T00:00:00Z",
-						},
+						"agreementId": uploaded.ID,
 					},
 				},
 			)
 			testutil.RequireForbiddenError(
 				t,
 				err,
-				"must not update data privacy agreement for another organization's third party",
-			)
-		},
-	)
-
-	t.Run(
-		"cannot delete business associate agreement for another organization's third party",
-		func(t *testing.T) {
-			t.Parallel()
-
-			org2 := org2Owner.ForTest(t)
-
-			_, err := org2.Do(
-				`
-					mutation($input: DeleteThirdPartyBusinessAssociateAgreementInput!) {
-						deleteThirdPartyBusinessAssociateAgreement(input: $input) {
-							deletedThirdPartyId
-						}
-					}
-				`,
-				map[string]any{
-					"input": map[string]any{
-						"thirdPartyId": org1ThirdPartyID,
-					},
-				},
-			)
-			testutil.RequireForbiddenError(
-				t,
-				err,
-				"must not delete business associate agreement for another organization's third party",
-			)
-		},
-	)
-
-	t.Run(
-		"cannot delete data privacy agreement for another organization's third party",
-		func(t *testing.T) {
-			t.Parallel()
-
-			org2 := org2Owner.ForTest(t)
-
-			_, err := org2.Do(
-				`
-					mutation($input: DeleteThirdPartyDataPrivacyAgreementInput!) {
-						deleteThirdPartyDataPrivacyAgreement(input: $input) {
-							deletedThirdPartyId
-						}
-					}
-				`,
-				map[string]any{
-					"input": map[string]any{
-						"thirdPartyId": org1ThirdPartyID,
-					},
-				},
-			)
-			testutil.RequireForbiddenError(
-				t,
-				err,
-				"must not delete data privacy agreement for another organization's third party",
+				"must not delete an agreement owned by another organization",
 			)
 		},
 	)

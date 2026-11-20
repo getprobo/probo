@@ -35,7 +35,7 @@ func TestThirdPartyAgreement_RBAC(t *testing.T) {
 	org := testutil.NewOrganizationRoles(t)
 
 	t.Run(
-		"upload business associate agreement",
+		"upload agreement",
 		func(t *testing.T) {
 			t.Parallel()
 
@@ -45,15 +45,15 @@ func TestThirdPartyAgreement_RBAC(t *testing.T) {
 				forbidden bool
 			}{
 				{
-					name: "owner can upload business associate agreement",
+					name: "owner can upload an agreement",
 					role: testutil.RoleOwner,
 				},
 				{
-					name: "admin can upload business associate agreement",
+					name: "admin can upload an agreement",
 					role: testutil.RoleAdmin,
 				},
 				{
-					name:      "viewer cannot upload business associate agreement",
+					name:      "viewer cannot upload an agreement",
 					role:      testutil.RoleViewer,
 					forbidden: true,
 				},
@@ -67,7 +67,7 @@ func TestThirdPartyAgreement_RBAC(t *testing.T) {
 
 						owner := org.Client(t, testutil.RoleOwner)
 						thirdPartyID := factory.NewThirdParty(owner).
-							WithName(factory.SafeName("RBAC BAA upload " + string(tt.role))).
+							WithName(factory.SafeName("RBAC agreement upload " + string(tt.role))).
 							Create()
 
 						client := org.Client(t, tt.role)
@@ -76,16 +76,16 @@ func TestThirdPartyAgreement_RBAC(t *testing.T) {
 							err := uploadThirdPartyAgreementExpectError(
 								t,
 								client,
-								thirdPartyAgreementKindBAA,
 								thirdPartyID,
+								"MASTER_SERVICE",
 								"2024-01-01T00:00:00Z",
 								"2025-01-01T00:00:00Z",
-								"baa-rbac.pdf",
+								"agreement-rbac.pdf",
 							)
 							testutil.RequireForbiddenError(
 								t,
 								err,
-								"viewer must not upload business associate agreements",
+								"viewer must not upload third party agreements",
 							)
 
 							return
@@ -94,84 +94,11 @@ func TestThirdPartyAgreement_RBAC(t *testing.T) {
 						uploaded := uploadThirdPartyAgreement(
 							t,
 							client,
-							thirdPartyAgreementKindBAA,
 							thirdPartyID,
+							"MASTER_SERVICE",
 							"2024-01-01T00:00:00Z",
 							"2025-01-01T00:00:00Z",
-							"baa-rbac.pdf",
-						)
-						assert.NotEmpty(t, uploaded.ID)
-					},
-				)
-			}
-		},
-	)
-
-	t.Run(
-		"upload data privacy agreement",
-		func(t *testing.T) {
-			t.Parallel()
-
-			tests := []struct {
-				name      string
-				role      testutil.TestRole
-				forbidden bool
-			}{
-				{
-					name: "owner can upload data privacy agreement",
-					role: testutil.RoleOwner,
-				},
-				{
-					name: "admin can upload data privacy agreement",
-					role: testutil.RoleAdmin,
-				},
-				{
-					name:      "viewer cannot upload data privacy agreement",
-					role:      testutil.RoleViewer,
-					forbidden: true,
-				},
-			}
-
-			for _, tt := range tests {
-				t.Run(
-					tt.name,
-					func(t *testing.T) {
-						t.Parallel()
-
-						owner := org.Client(t, testutil.RoleOwner)
-						thirdPartyID := factory.NewThirdParty(owner).
-							WithName(factory.SafeName("RBAC DPA upload " + string(tt.role))).
-							Create()
-
-						client := org.Client(t, tt.role)
-
-						if tt.forbidden {
-							err := uploadThirdPartyAgreementExpectError(
-								t,
-								client,
-								thirdPartyAgreementKindDPA,
-								thirdPartyID,
-								"2024-01-01T00:00:00Z",
-								"2025-01-01T00:00:00Z",
-								"dpa-rbac.pdf",
-							)
-							testutil.RequireForbiddenError(
-								t,
-								err,
-								"viewer must not upload data privacy agreements",
-							)
-
-							return
-						}
-
-						uploaded := uploadThirdPartyAgreement(
-							t,
-							client,
-							thirdPartyAgreementKindDPA,
-							thirdPartyID,
-							"2024-01-01T00:00:00Z",
-							"2025-01-01T00:00:00Z",
-							"dpa-rbac.pdf",
+							"agreement-rbac.pdf",
 						)
 						assert.NotEmpty(t, uploaded.ID)
 					},
@@ -269,76 +196,59 @@ func TestThirdPartyAgreement_RBAC(t *testing.T) {
 	)
 
 	t.Run(
-		"viewer cannot update or delete existing agreements",
+		"viewer cannot update or delete an existing agreement",
 		func(t *testing.T) {
 			t.Parallel()
 
-			tests := []struct {
-				name string
-				kind thirdPartyAgreementKind
-			}{
-				{
-					name: "business associate agreement",
-					kind: thirdPartyAgreementKindBAA,
-				},
-				{
-					name: "data privacy agreement",
-					kind: thirdPartyAgreementKindDPA,
-				},
-			}
+			owner := org.Client(t, testutil.RoleOwner)
+			viewer := org.Client(t, testutil.RoleViewer)
+			thirdPartyID := factory.NewThirdParty(owner).
+				WithName(factory.SafeName("RBAC agreement mutate")).
+				Create()
 
-			for _, tt := range tests {
-				t.Run(
-					tt.name,
-					func(t *testing.T) {
-						t.Parallel()
+			uploaded := uploadThirdPartyAgreement(
+				t,
+				owner,
+				thirdPartyID,
+				"TERMS",
+				"2024-01-01T00:00:00Z",
+				"2025-01-01T00:00:00Z",
+				"rbac-existing.pdf",
+			)
 
-						owner := org.Client(t, testutil.RoleOwner)
-						viewer := org.Client(t, testutil.RoleViewer)
-						thirdPartyID := factory.NewThirdParty(owner).
-							WithName(factory.SafeName("RBAC agreement mutate " + string(tt.kind))).
-							Create()
+			updateErr := updateThirdPartyAgreementExpectError(
+				t,
+				viewer,
+				uploaded.ID,
+				new("ANNEX"),
+				new("2024-06-01T00:00:00Z"),
+				new("2027-01-01T00:00:00Z"),
+			)
+			testutil.RequireForbiddenError(
+				t,
+				updateErr,
+				"viewer must not update third party agreements",
+			)
 
-						uploadThirdPartyAgreement(
-							t,
-							owner,
-							tt.kind,
-							thirdPartyID,
-							"2024-01-01T00:00:00Z",
-							"2025-01-01T00:00:00Z",
-							"rbac-existing.pdf",
-						)
-
-						updateErr := updateThirdPartyAgreementExpectError(
-							t,
-							viewer,
-							tt.kind,
-							thirdPartyID,
-							new("2024-06-01T00:00:00Z"),
-							new("2027-01-01T00:00:00Z"),
-						)
-						testutil.RequireForbiddenError(
-							t,
-							updateErr,
-							"viewer must not update third party agreements",
-						)
-
-						_, deleteErr := viewer.Do(
-							thirdPartyAgreementDeleteMutation(tt.kind),
-							map[string]any{
-								"input": map[string]any{
-									"thirdPartyId": thirdPartyID,
-								},
-							},
-						)
-						testutil.RequireForbiddenError(
-							t,
-							deleteErr,
-							"viewer must not delete third party agreements",
-						)
+			_, deleteErr := viewer.Do(
+				`
+					mutation($input: DeleteThirdPartyAgreementInput!) {
+						deleteThirdPartyAgreement(input: $input) {
+							deletedThirdPartyAgreementId
+						}
+					}
+				`,
+				map[string]any{
+					"input": map[string]any{
+						"agreementId": uploaded.ID,
 					},
-				)
-			}
+				},
+			)
+			testutil.RequireForbiddenError(
+				t,
+				deleteErr,
+				"viewer must not delete third party agreements",
+			)
 		},
 	)
 }

@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,51 +18,54 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import type { IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
-import { thirdPartyLocator, organizationLocator } from '../../locators';
 
 export const description: INodeProperties[] = [
-	organizationLocator({
-		resource: ['thirdParty'],
-		operation: ['getBusinessAssociateAgreement'],
-		required: false,
-		description: 'Organization to search in. Leave this empty when entering an ID.',
-	}),
-	thirdPartyLocator({
-		resource: ['thirdParty'],
-		operation: ['getBusinessAssociateAgreement'],
-	}),
+	{
+		displayName: 'Agreement ID',
+		name: 'agreementId',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['thirdParty'],
+				operation: ['getAgreement'],
+			},
+		},
+		default: '',
+		required: true,
+		description: 'The ID of the third party agreement',
+	},
 ];
 
 export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const thirdPartyId = this.getNodeParameter('thirdPartyId', itemIndex, '', { extractValue: true }) as string;
+	const agreementId = this.getNodeParameter('agreementId', itemIndex) as string;
 
 	const query = `
-		query GetThirdPartyBusinessAssociateAgreement($thirdPartyId: ID!) {
-			node(id: $thirdPartyId) {
-				... on ThirdParty {
-					businessAssociateAgreement {
-						id
-						validity {
-							start
-							end
-						}
-						fileName
-						fileUrl
-						fileSize
-						createdAt
-						updatedAt
+		query GetThirdPartyAgreement($id: ID!) {
+			node(id: $id) {
+				... on ThirdPartyAgreement {
+					id
+					type
+					validity {
+						start
+						end
 					}
+					file {
+						fileName
+						downloadUrl
+					}
+					createdAt
+					updatedAt
 				}
 			}
 		}
 	`;
 
-	const responseData = await proboApiRequest.call(this, query, { thirdPartyId });
+	const responseData = await proboApiRequest.call(this, query, { id: agreementId });
 
 	return {
 		json: responseData,

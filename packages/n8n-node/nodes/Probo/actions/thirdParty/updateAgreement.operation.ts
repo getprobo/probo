@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,21 +18,48 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import type { IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
 import { proboApiRequest, toPeriod } from '../../GenericFunctions';
-import { thirdPartyLocator, organizationLocator } from '../../locators';
+
+const agreementTypes = [
+	{ name: 'Terms (CGV/CGU)', value: 'TERMS' },
+	{ name: 'Master Service Agreement', value: 'MASTER_SERVICE' },
+	{ name: 'Business Associate Agreement', value: 'BUSINESS_ASSOCIATE' },
+	{ name: 'Data Privacy Agreement', value: 'DATA_PRIVACY' },
+	{ name: 'Amendment', value: 'AMENDMENT' },
+	{ name: 'Annex', value: 'ANNEX' },
+	{ name: 'Other', value: 'OTHER' },
+];
 
 export const description: INodeProperties[] = [
-	organizationLocator({
-		resource: ['thirdParty'],
-		operation: ['updateDataPrivacyAgreement'],
-		required: false,
-		description: 'Organization to search in. Leave this empty when entering an ID.',
-	}),
-	thirdPartyLocator({
-		resource: ['thirdParty'],
-		operation: ['updateDataPrivacyAgreement'],
-	}),
+	{
+		displayName: 'Agreement ID',
+		name: 'agreementId',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['thirdParty'],
+				operation: ['updateAgreement'],
+			},
+		},
+		default: '',
+		required: true,
+		description: 'The ID of the third party agreement to update',
+	},
+	{
+		displayName: 'Type',
+		name: 'agreementType',
+		type: 'options',
+		displayOptions: {
+			show: {
+				resource: ['thirdParty'],
+				operation: ['updateAgreement'],
+			},
+		},
+		options: [{ name: 'Keep Current', value: '' }, ...agreementTypes],
+		default: '',
+		description: 'Kind of agreement. Keep current to leave it unchanged.',
+	},
 	{
 		displayName: 'Valid From',
 		name: 'validFrom',
@@ -40,11 +67,11 @@ export const description: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['thirdParty'],
-				operation: ['updateDataPrivacyAgreement'],
+				operation: ['updateAgreement'],
 			},
 		},
 		default: '',
-		description: 'The start date of the agreement validity (ISO 8601)',
+		description: 'Start of the validity period (ISO 8601). Leave empty to keep the current date.',
 	},
 	{
 		displayName: 'Valid Until',
@@ -53,11 +80,11 @@ export const description: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['thirdParty'],
-				operation: ['updateDataPrivacyAgreement'],
+				operation: ['updateAgreement'],
 			},
 		},
 		default: '',
-		description: 'The end date of the agreement validity (ISO 8601)',
+		description: 'End of the validity period (ISO 8601). Leave empty to keep the current date.',
 	},
 ];
 
@@ -65,15 +92,17 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const thirdPartyId = this.getNodeParameter('thirdPartyId', itemIndex, '', { extractValue: true }) as string;
+	const agreementId = this.getNodeParameter('agreementId', itemIndex) as string;
+	const agreementType = this.getNodeParameter('agreementType', itemIndex, '') as string;
 	const validFrom = this.getNodeParameter('validFrom', itemIndex, '') as string;
 	const validUntil = this.getNodeParameter('validUntil', itemIndex, '') as string;
 
 	const query = `
-		mutation UpdateThirdPartyDataPrivacyAgreement($input: UpdateThirdPartyDataPrivacyAgreementInput!) {
-			updateThirdPartyDataPrivacyAgreement(input: $input) {
-				thirdPartyDataPrivacyAgreement {
+		mutation UpdateThirdPartyAgreement($input: UpdateThirdPartyAgreementInput!) {
+			updateThirdPartyAgreement(input: $input) {
+				thirdPartyAgreement {
 					id
+					type
 					validity {
 						start
 						end
@@ -83,9 +112,14 @@ export async function execute(
 		}
 	`;
 
-	const input: Record<string, unknown> = { thirdPartyId };
+	const input: Record<string, unknown> = { id: agreementId };
+	if (agreementType) {
+		input.type = agreementType;
+	}
 	const validity = toPeriod(validFrom, validUntil);
-	if (validity) input.validity = validity;
+	if (validity) {
+		input.validity = validity;
+	}
 
 	const responseData = await proboApiRequest.call(this, query, { input });
 

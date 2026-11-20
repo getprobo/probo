@@ -23,6 +23,7 @@ package thirdpartymgmt
 import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
+	"go.probo.inc/probo/pkg/cmd/thirdpartymgmt/agreement"
 	"go.probo.inc/probo/pkg/cmd/thirdpartymgmt/create"
 	"go.probo.inc/probo/pkg/cmd/thirdpartymgmt/delete"
 	"go.probo.inc/probo/pkg/cmd/thirdpartymgmt/list"
@@ -39,6 +40,7 @@ func NewCmdThirdParty(f *cmdutil.Factory) *cobra.Command {
 		Aliases: []string{"tp"},
 	}
 
+	cmd.AddCommand(agreement.NewCmdAgreement(f))
 	cmd.AddCommand(list.NewCmdList(f))
 	cmd.AddCommand(create.NewCmdCreate(f))
 	cmd.AddCommand(view.NewCmdView(f))

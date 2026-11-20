@@ -309,6 +309,16 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 			return types.NewRiskAnalysisScenario(s), nil
 		}
+	case coredata.ThirdPartyAgreementEntityType:
+		action = probo.ActionThirdPartyAgreementGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			agreement, err := r.probo.ThirdPartyAgreements.Get(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewThirdPartyAgreement(agreement), nil
+		}
 	case coredata.ThirdPartyComplianceReportEntityType:
 		action = probo.ActionThirdPartyComplianceReportGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {

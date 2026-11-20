@@ -3158,46 +3158,21 @@
     "messages": { "success": "Success", "error": "Error", "created": "Third party created successfully" },
     "errors": { "create": "Failed to create third party" }
   },
-  "deleteBusinessAssociateAgreementDialog": {
-    "title": "Delete Business Associate Agreement",
-    "confirmation": "Are you sure you want to delete the Business Associate Agreement \"{{fileName}}\"?",
-    "cannotUndo": "This action cannot be undone.",
-    "messages": { "success": "Success", "error": "Error", "deleted": "Business Associate Agreement deleted successfully" },
-    "errors": { "delete": "Failed to delete Business Associate Agreement" },
-    "actions": { "delete": "Delete" }
-  },
-  "deleteDataPrivacyAgreementDialog": {
-    "title": "Delete Data Privacy Agreement",
-    "confirmation": "Are you sure you want to delete the Data Privacy Agreement \"{{fileName}}\"?",
-    "cannotUndo": "This action cannot be undone.",
-    "messages": { "success": "Success", "error": "Error", "deleted": "Data Privacy Agreement deleted successfully" },
-    "errors": { "delete": "Failed to delete Data Privacy Agreement" },
-    "actions": { "delete": "Delete" }
-  },
-  "editBusinessAssociateAgreementDialog": {
-    "title": "Edit Business Associate Agreement",
-    "fields": { "validFrom": "Valid from", "validUntil": "Valid until" },
-    "messages": { "success": "Success", "error": "Error", "updated": "Business Associate Agreement updated successfully" },
-    "errors": { "update": "Failed to update Business Associate Agreement" },
+  "editThirdPartyAgreementDialog": {
+    "title": "Edit agreement",
+    "fields": { "type": "Type", "validFrom": "Valid from", "validUntil": "Valid until" },
+    "messages": { "success": "Success", "error": "Error", "updated": "Agreement updated" },
+    "errors": { "update": "Failed to update agreement" },
     "actions": { "update": "Update" }
   },
-  "editDataPrivacyAgreementDialog": {
-    "title": "Edit Data Privacy Agreement",
-    "fields": { "validFrom": "Valid from", "validUntil": "Valid until" },
-    "messages": { "success": "Success", "error": "Error", "updated": "Data Privacy Agreement updated successfully" },
-    "errors": { "update": "Failed to update Data Privacy Agreement" },
-    "actions": { "update": "Update" }
-  },
-  "uploadBusinessAssociateAgreementDialog": {
-    "title": "Upload Business Associate Agreement",
-    "fileHelp": "Only PDF files up to 10MB are allowed",
+  "uploadThirdPartyAgreementDialog": {
+    "title": "Add agreement",
+    "fileHelp": "PDF files up to 30MB",
     "selectedFile": "Selected file:",
-    "fields": { "fileName": "File name", "validFrom": "Valid from", "validUntil": "Valid until" },
-    "placeholders": { "fileName": "Business Associate Agreement" },
-    "validation": { "fileNameRequired": "File name is required" },
-    "messages": { "success": "Success", "error": "Error", "uploaded": "Business Associate Agreement uploaded successfully" },
-    "errors": { "upload": "Failed to upload Business Associate Agreement" },
-    "actions": { "upload": "Upload" }
+    "fields": { "type": "Type", "validFrom": "Valid from", "validUntil": "Valid until" },
+    "messages": { "success": "Success", "error": "Error", "uploaded": "Agreement added" },
+    "errors": { "upload": "Failed to add agreement" },
+    "actions": { "upload": "Add" }
   },
   "uploadComplianceReportDialog": {
     "title": "Upload Compliance Report",
@@ -3209,16 +3184,28 @@
     "errors": { "upload": "Failed to upload compliance report" },
     "actions": { "upload": "Upload" }
   },
-  "uploadDataPrivacyAgreementDialog": {
-    "title": "Upload Data Privacy Agreement",
-    "fileHelp": "Only PDF files up to 10MB are allowed",
-    "selectedFile": "Selected file:",
-    "fields": { "fileName": "File name", "validFrom": "Valid from", "validUntil": "Valid until" },
-    "placeholders": { "fileName": "Data Privacy Agreement" },
-    "validation": { "fileNameRequired": "File name is required" },
-    "messages": { "success": "Success", "error": "Error", "uploaded": "Data Privacy Agreement uploaded successfully" },
-    "errors": { "upload": "Failed to upload Data Privacy Agreement" },
-    "actions": { "upload": "Upload" }
+  "thirdPartyAgreementListItem": {
+    "messages": { "error": "Error" },
+    "errors": { "delete": "Failed to delete agreement" },
+    "deleteConfirmation": "This will permanently delete this {{type}} ({{fileName}}). This action cannot be undone.",
+    "actions": { "preview": "Preview", "download": "Download" }
+  },
+  "thirdPartyAgreementPreviewDialog": {
+    "previewUnavailable": "Preview is not available for this file ({{mimeType}}).",
+    "actions": { "download": "Download" },
+    "csv": {
+      "column": "Column",
+      "empty": "This CSV file is empty.",
+      "error": "Unable to load the CSV preview.",
+      "retry": "Retry",
+      "truncated": "Showing the first 100 data rows."
+    },
+    "text": {
+      "empty": "This text file is empty.",
+      "error": "Unable to load the text preview.",
+      "retry": "Retry",
+      "truncated": "Showing the first 512 KB."
+    }
   },
   "vettingDialog": {
     "title": "Start Vetting",
@@ -3314,19 +3301,23 @@
   "thirdPartyAgreementsPage": {
     "pageTitle": "{{name}} - Agreements",
     "title": "Agreements",
-    "description": "Signed data-processing agreements with this third party.",
-    "agreements": {
-      "businessAssociate": "Business Associate Agreement",
-      "dataPrivacy": "Data Privacy Agreement",
-      "noBusinessAssociate": "No business associate agreement available",
-      "noDataPrivacy": "No data privacy agreement available",
-      "validity": {
-        "range": "Valid from {{from}} until {{until}}",
-        "from": "Valid from {{date}}",
-        "until": "Valid until {{date}}"
-      }
+    "description": "Contracts with this third party, such as terms, an MSA, amendments, and annexes.",
+    "empty": "No agreements yet.",
+    "types": {
+      "BUSINESS_ASSOCIATE": "Business associate agreement",
+      "DATA_PRIVACY": "Data privacy agreement",
+      "TERMS": "Terms (CGV/CGU)",
+      "MASTER_SERVICE": "Master service agreement",
+      "AMENDMENT": "Amendment",
+      "ANNEX": "Annex",
+      "OTHER": "Other"
     },
-    "actions": { "downloadPdf": "Download PDF", "upload": "Upload" }
+    "validity": {
+      "range": "Valid from {{from}} until {{until}}",
+      "from": "Valid from {{date}}",
+      "until": "Valid until {{date}}"
+    },
+    "actions": { "add": "Add agreement", "showMore": "Show more" }
   },
   "thirdPartyComplianceReportRow": {
     "messages": { "error": "Error" },

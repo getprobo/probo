@@ -131,6 +131,8 @@ func ResourceTypeName(entityType uint16) string {
 		return "TaskActivity"
 	case TaskSyncJobEntityType:
 		return "TaskSyncJob"
+	case ThirdPartyAgreementEntityType:
+		return "ThirdPartyAgreement"
 	default:
 		return "Unknown"
 	}
