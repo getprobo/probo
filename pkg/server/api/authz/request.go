@@ -29,23 +29,23 @@ import (
 	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
-func AuditRequestFromHTTP(r *http.Request) iam.AuditRequest {
+func RequestMetadataFromHTTP(r *http.Request) iam.RequestMetadata {
 	if r == nil {
-		return iam.AuditRequest{}
+		return iam.RequestMetadata{}
 	}
 
-	return iam.AuditRequest{
+	return iam.RequestMetadata{
 		IP:        clientip.Extract(r),
 		UserAgent: r.UserAgent(),
 		RequestID: r.Header.Get("X-Request-Id"),
 	}
 }
 
-func auditRequestFromContext(ctx context.Context) iam.AuditRequest {
+func requestMetadataFromContext(ctx context.Context) iam.RequestMetadata {
 	request, ok := gqlx.HTTPRequest(ctx)
 	if !ok {
-		return iam.AuditRequest{}
+		return iam.RequestMetadata{}
 	}
 
-	return AuditRequestFromHTTP(request)
+	return RequestMetadataFromHTTP(request)
 }

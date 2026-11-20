@@ -135,7 +135,7 @@ func (h *Handler) HandleRepo(w http.ResponseWriter, r *http.Request) {
 	scope, document, canUpdate, canComment, err := h.authorize(
 		r.Context(),
 		documentID,
-		authz.AuditRequestFromHTTP(r),
+		authz.RequestMetadataFromHTTP(r),
 	)
 	if err != nil {
 		h.renderAuthorizationError(w, err)
@@ -286,7 +286,7 @@ func (h *Handler) HandleRepo(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) authorize(
 	ctx context.Context,
 	documentID gid.GID,
-	request iam.AuditRequest,
+	request iam.RequestMetadata,
 ) (*coredata.Scope, *coredata.Document, bool, bool, error) {
 	identity := authn.IdentityFromContext(ctx)
 	session := authn.SessionFromContext(ctx)

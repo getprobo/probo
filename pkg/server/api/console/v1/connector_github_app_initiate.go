@@ -68,7 +68,7 @@ func handleConnectorGitHubAppInitiate(
 				Resource:  organizationID,
 				Session:   &session.ID,
 				Action:    probo.ActionConnectorInitiate,
-				Request:   authz.AuditRequestFromHTTP(r),
+				Request:   authz.RequestMetadataFromHTTP(r),
 			},
 		)
 		if err != nil {

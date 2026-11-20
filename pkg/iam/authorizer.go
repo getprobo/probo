@@ -59,7 +59,7 @@ type AuthorizeParams struct {
 	ResourceAttributes  policy.Attributes
 	DryRun              bool
 	SkipAssumptionCheck bool
-	Request             AuditRequest
+	Request             RequestMetadata
 }
 
 // AuthorizeBatchParams contains the parameters for a batch authorization request.
@@ -71,7 +71,7 @@ type AuthorizeBatchParams struct {
 	ResourceAttributes  policy.Attributes
 	DryRun              bool
 	SkipAssumptionCheck bool
-	Request             AuditRequest
+	Request             RequestMetadata
 }
 
 // MultiAuthorizeItem contains one authorization request in a multi-authorization batch.
@@ -90,7 +90,7 @@ type AuthorizeMultiParams struct {
 	Principal gid.GID
 	Session   *gid.GID
 	Items     []MultiAuthorizeItem
-	Request   AuditRequest
+	Request   RequestMetadata
 }
 
 // Authorizer evaluates authorization requests against registered policies.
@@ -921,7 +921,7 @@ func (a *Authorizer) buildAuditLogEntry(
 	resourceAttrs policy.Attributes,
 	decision error,
 	actor auditActor,
-	request AuditRequest,
+	request RequestMetadata,
 	now time.Time,
 ) *coredata.AuditLogEntry {
 	if params.DryRun {

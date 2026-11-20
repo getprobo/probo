@@ -100,7 +100,7 @@ func NewAuthorizeFunc(
 			params.Session = &session.ID
 		}
 
-		params.Request = auditRequestFromContext(ctx)
+		params.Request = requestMetadataFromContext(ctx)
 
 		for _, option := range options {
 			option(&params)
@@ -156,7 +156,7 @@ func NewBatchAuthorizeFunc(
 			params.Session = &session.ID
 		}
 
-		params.Request = auditRequestFromContext(ctx)
+		params.Request = requestMetadataFromContext(ctx)
 
 		for _, option := range options {
 			option(&params)

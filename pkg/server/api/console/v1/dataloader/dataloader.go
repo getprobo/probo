@@ -1330,7 +1330,7 @@ func (f *batchFetcher) fetchAuthorizes(
 	multiParams := iam.AuthorizeMultiParams{
 		Principal: identity.ID,
 		Items:     items,
-		Request:   authz.AuditRequestFromHTTP(httpRequest(ctx)),
+		Request:   authz.RequestMetadataFromHTTP(httpRequest(ctx)),
 	}
 	if session != nil {
 		multiParams.Session = &session.ID
@@ -1391,7 +1391,7 @@ func (f *batchFetcher) fetchAuthorizesIndividually(
 			params.Session = &session.ID
 		}
 
-		params.Request = authz.AuditRequestFromHTTP(httpRequest(ctx))
+		params.Request = authz.RequestMetadataFromHTTP(httpRequest(ctx))
 
 		scope, err := f.iam.Authorizer.Authorize(ctx, params)
 		if err != nil {

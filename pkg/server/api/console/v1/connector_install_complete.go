@@ -247,7 +247,7 @@ func handleConnectorInstallComplete(
 				Resource:  organizationID,
 				Session:   &session.ID,
 				Action:    probo.ActionConnectorInitiate,
-				Request:   authz.AuditRequestFromHTTP(r),
+				Request:   authz.RequestMetadataFromHTTP(r),
 			},
 		); err != nil {
 			// The authorizer's own error is logged and never rendered: this
@@ -356,7 +356,7 @@ func handleConnectorInstallComplete(
 				Resource:  organizationID,
 				Session:   &session.ID,
 				Action:    probo.ActionConnectorInitiate,
-				Request:   authz.AuditRequestFromHTTP(r),
+				Request:   authz.RequestMetadataFromHTTP(r),
 			},
 		); err != nil {
 			// A denial is final for this state; a storage failure is not, and

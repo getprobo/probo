@@ -20,10 +20,9 @@
 
 package iam
 
-// AuditRequest is the HTTP request an authorization decision came from.
-// Callers pass it on the authorize parameters, and the authorizer copies
-// it onto the audit row.
-type AuditRequest struct {
+// RequestMetadata describes the HTTP request an authorization decision came
+// from. Callers set it on the authorize parameters.
+type RequestMetadata struct {
 	IP        string
 	UserAgent string
 	RequestID string

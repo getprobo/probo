@@ -143,7 +143,7 @@ func (h *Handler) handleGetFile(w http.ResponseWriter, r *http.Request) {
 		Resource:           fileID,
 		Action:             probo.ActionFileGet,
 		ResourceAttributes: make(map[string]string),
-		Request:            authz.AuditRequestFromHTTP(r),
+		Request:            authz.RequestMetadataFromHTTP(r),
 	}
 	if session != nil {
 		params.Session = &session.ID

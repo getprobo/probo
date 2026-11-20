@@ -393,7 +393,7 @@ func TestAuthorizer_BuildAuditLogEntry(t *testing.T) {
 				tt.resourceAttrs,
 				tt.decision,
 				auditActor{},
-				AuditRequest{},
+				RequestMetadata{},
 				time.Now(),
 			)
 			if tt.wantNil {

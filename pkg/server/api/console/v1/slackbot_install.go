@@ -69,7 +69,7 @@ func handleSlackbotInstallInitiate(
 				Resource:  organizationID,
 				Session:   &session.ID,
 				Action:    probo.ActionConnectorInitiate,
-				Request:   authz.AuditRequestFromHTTP(r),
+				Request:   authz.RequestMetadataFromHTTP(r),
 			},
 		); err != nil {
 			httpserver.RenderError(w, http.StatusForbidden, err)

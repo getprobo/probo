@@ -30,7 +30,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authz"
 )
 
-func TestAuditRequestFromHTTP(t *testing.T) {
+func TestRequestMetadataFromHTTP(t *testing.T) {
 	t.Parallel()
 
 	req := httptest.NewRequest(http.MethodGet, "/console/v1/graphql", nil)
@@ -38,10 +38,10 @@ func TestAuditRequestFromHTTP(t *testing.T) {
 	req.Header.Set("User-Agent", "prb/1.0")
 	req.Header.Set("X-Request-Id", "018f6b2e-7c3a-7b2e-8f1a-9c0d1e2f3a4b")
 
-	got := authz.AuditRequestFromHTTP(req)
+	got := authz.RequestMetadataFromHTTP(req)
 
 	assert.Equal(t, "018f6b2e-7c3a-7b2e-8f1a-9c0d1e2f3a4b", got.RequestID)
 	assert.Equal(t, "prb/1.0", got.UserAgent)
 	assert.Equal(t, "203.0.113.9", got.IP)
-	assert.Equal(t, iam.AuditRequest{}, authz.AuditRequestFromHTTP(nil))
+	assert.Equal(t, iam.RequestMetadata{}, authz.RequestMetadataFromHTTP(nil))
 }

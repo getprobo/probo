@@ -100,7 +100,7 @@ func handleConnectorInstallInitiate(
 				Resource:  organizationID,
 				Session:   &session.ID,
 				Action:    probo.ActionConnectorInitiate,
-				Request:   authz.AuditRequestFromHTTP(r),
+				Request:   authz.RequestMetadataFromHTTP(r),
 			},
 		); err != nil {
 			status, rendered := installAuthorizationFailure(err)

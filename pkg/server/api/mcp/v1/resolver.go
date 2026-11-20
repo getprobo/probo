@@ -161,7 +161,7 @@ func (r *Resolver) Authorize(ctx context.Context, entityID gid.GID, action iam.A
 		Resource:           entityID,
 		Action:             action,
 		ResourceAttributes: make(map[string]string),
-		Request:            authz.AuditRequestFromHTTP(httpRequest(ctx)),
+		Request:            authz.RequestMetadataFromHTTP(httpRequest(ctx)),
 	}
 
 	for _, opt := range opts {
@@ -203,7 +203,7 @@ func (r *Resolver) AuthorizeBatch(ctx context.Context, entityIDs []gid.GID, acti
 			Principal: identity.ID,
 			Resources: entityIDs,
 			Action:    action,
-			Request:   authz.AuditRequestFromHTTP(httpRequest(ctx)),
+			Request:   authz.RequestMetadataFromHTTP(httpRequest(ctx)),
 		},
 	)
 	if err == nil {
