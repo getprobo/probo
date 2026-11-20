@@ -975,8 +975,8 @@ func (a *Authorizer) buildAuditLogEntry(
 		DenialReason:   denialReason,
 		Metadata:       []byte("{}"),
 		OriginIP:       ref.RefOrNil(request.IP),
-		UserAgent:      ref.RefOrNil(limitBytes(request.UserAgent, 512)),
-		RequestID:      ref.RefOrNil(limitBytes(request.RequestID, 128)),
+		UserAgent:      ref.RefOrNil(request.UserAgent),
+		RequestID:      ref.RefOrNil(request.RequestID),
 		CreatedAt:      now,
 		RecordedAt:     now,
 	}
