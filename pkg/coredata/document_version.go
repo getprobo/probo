@@ -50,6 +50,7 @@ type (
 		Status          DocumentVersionStatus      `db:"status"`
 		Orientation     DocumentVersionOrientation `db:"orientation"`
 		FileID          *gid.GID                   `db:"file_id"`
+		ContentSHA256   *string                    `db:"content_sha256"`
 		PdfAttemptCount int                        `db:"pdf_attempt_count"`
 		PublishedAt     *time.Time                 `db:"published_at"`
 		CreatedAt       time.Time                  `db:"created_at"`
@@ -122,6 +123,7 @@ SELECT
 	status,
 	orientation,
 	file_id,
+	content_sha256,
 	pdf_attempt_count,
 	published_at,
 	created_at,
@@ -179,6 +181,7 @@ SELECT
 	status,
 	orientation,
 	file_id,
+	content_sha256,
 	pdf_attempt_count,
 	published_at,
 	created_at,
@@ -244,6 +247,7 @@ SELECT
 	status,
 	orientation,
 	file_id,
+	content_sha256,
 	pdf_attempt_count,
 	published_at,
 	created_at,
@@ -303,6 +307,7 @@ INSERT INTO document_versions (
 	status,
 	orientation,
 	file_id,
+	content_sha256,
 	pdf_attempt_count,
 	published_at,
 	created_at,
@@ -323,6 +328,7 @@ VALUES (
 	@status,
 	@orientation,
 	@file_id,
+	@content_sha256,
 	@pdf_attempt_count,
 	@published_at,
 	@created_at,
@@ -344,6 +350,7 @@ VALUES (
 		"status":            dv.Status,
 		"orientation":       dv.Orientation,
 		"file_id":           dv.FileID,
+		"content_sha256":    dv.ContentSHA256,
 		"pdf_attempt_count": dv.PdfAttemptCount,
 		"published_at":      dv.PublishedAt,
 		"created_at":        dv.CreatedAt,
@@ -389,6 +396,7 @@ SELECT
 	status,
 	orientation,
 	file_id,
+	content_sha256,
 	pdf_attempt_count,
 	published_at,
 	created_at,
@@ -454,6 +462,7 @@ SELECT
 	status,
 	orientation,
 	file_id,
+	content_sha256,
 	pdf_attempt_count,
 	published_at,
 	created_at,
@@ -513,6 +522,7 @@ SELECT
 	status,
 	orientation,
 	file_id,
+	content_sha256,
 	pdf_attempt_count,
 	published_at,
 	created_at,
@@ -574,6 +584,7 @@ SELECT
 	status,
 	orientation,
 	file_id,
+	content_sha256,
 	pdf_attempt_count,
 	published_at,
 	created_at,
@@ -631,6 +642,7 @@ UPDATE document_versions SET
 	document_type = @document_type,
 	orientation = @orientation,
 	file_id = @file_id,
+	content_sha256 = @content_sha256,
 	pdf_attempt_count = @pdf_attempt_count,
 	updated_at = @updated_at
 WHERE %s
@@ -652,6 +664,7 @@ WHERE %s
 		"document_type":       dv.DocumentType,
 		"orientation":         dv.Orientation,
 		"file_id":             dv.FileID,
+		"content_sha256":      dv.ContentSHA256,
 		"pdf_attempt_count":   dv.PdfAttemptCount,
 		"updated_at":          dv.UpdatedAt,
 	}
@@ -711,6 +724,7 @@ SELECT
 	dv.status,
 	dv.orientation,
 	dv.file_id,
+	dv.content_sha256,
 	dv.pdf_attempt_count,
 	dv.published_at,
 	dv.created_at,

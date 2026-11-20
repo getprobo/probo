@@ -33,6 +33,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/agentexecution"
+	"go.probo.inc/probo/pkg/agreement"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/certmanager"
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
@@ -62,6 +63,7 @@ import (
 	"go.probo.inc/probo/pkg/saferedirect"
 	"go.probo.inc/probo/pkg/securecookie"
 	agent_v1 "go.probo.inc/probo/pkg/server/api/agent/v1"
+	agreements_v1 "go.probo.inc/probo/pkg/server/api/agreements/v1"
 	asana_v1 "go.probo.inc/probo/pkg/server/api/asana/v1"
 	collaboration_v1 "go.probo.inc/probo/pkg/server/api/collaboration/v1"
 	connect_v1 "go.probo.inc/probo/pkg/server/api/connect/v1"
@@ -109,6 +111,7 @@ type (
 		ProbotCapabilities      *probot.CapabilityRegistry
 		Mailman                 *mailman.Service
 		CookieBanner            *cookiebanner.Service
+		Agreement               *agreement.Service
 		EmployeePortal          *employeeportalmgmt.Service
 		Geoloc                  *geoloc.Service
 		ThirdParty              *thirdparty.Service
@@ -150,6 +153,7 @@ type (
 		consoleHandler       http.Handler
 		collaborationHandler http.Handler
 		cookieBannerHandler  http.Handler
+		agreementsHandler    http.Handler
 		filesHandler         http.Handler
 		mcpHandler           http.Handler
 		slackHandler         http.Handler
@@ -354,6 +358,10 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.CookieBanner,
 			cfg.Geoloc,
 		),
+		agreementsHandler: agreements_v1.NewMux(
+			cfg.Logger.Named("agreements.v1"),
+			cfg.Agreement,
+		),
 		filesHandler: files_v1.NewMux(
 			cfg.Logger.Named("files.v1"),
 			cfg.File,
@@ -464,6 +472,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// customer websites are not swallowed by the stricter AllowedOrigins
 	// list that applies to console/connect routes.
 	router.Mount("/cookie-banner/v1", http.StripPrefix("/cookie-banner/v1", s.cookieBannerHandler))
+
+	// Agreements data-plane API: authenticated with site secret key (sk_live_/sk_test_).
+	// Mounted outside the CORS group since customer backends call this directly.
+	router.Mount("/agreements/v1", http.StripPrefix("/agreements/v1", s.agreementsHandler))
 
 	// Agent API should never be called from a browser; mount it outside
 	// to avoid CORS headers being set on it.

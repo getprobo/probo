@@ -71,6 +71,8 @@ const (
 	WebhookEventTypeTaskCommentCreated WebhookEventType = "task-comment:created"
 	WebhookEventTypeTaskCommentUpdated WebhookEventType = "task-comment:updated"
 	WebhookEventTypeTaskCommentDeleted WebhookEventType = "task-comment:deleted"
+
+	WebhookEventTypeAgreementAccepted WebhookEventType = "agreement:accepted"
 )
 
 var (
@@ -117,7 +119,8 @@ func (v WebhookEventType) IsValid() bool {
 		WebhookEventTypeTaskDeleted,
 		WebhookEventTypeTaskCommentCreated,
 		WebhookEventTypeTaskCommentUpdated,
-		WebhookEventTypeTaskCommentDeleted:
+		WebhookEventTypeTaskCommentDeleted,
+		WebhookEventTypeAgreementAccepted:
 		return true
 	}
 

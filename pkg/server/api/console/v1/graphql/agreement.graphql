@@ -1,0 +1,165 @@
+enum AgreementSiteMode
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.AgreementSiteMode"
+    ) {
+    LIVE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AgreementSiteModeLive"
+        )
+    TEST
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AgreementSiteModeTest"
+        )
+}
+
+enum AgreementKind
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.AgreementKind"
+    ) {
+    TERMS_OF_SERVICE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AgreementKindTermsOfService"
+        )
+    ACCEPTABLE_USE_POLICY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AgreementKindAcceptableUsePolicy"
+        )
+    OTHER
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AgreementKindOther"
+        )
+}
+
+type AgreementSite implements Node {
+    id: ID!
+    name: String!
+    mode: AgreementSiteMode!
+    allowedOrigins: [String!]!
+    agreements: AgreementConnection! @goField(forceResolver: true)
+    createdAt: Datetime!
+    updatedAt: Datetime!
+}
+
+type AgreementSiteEdge {
+    cursor: CursorKey!
+    node: AgreementSite!
+}
+
+type AgreementSiteConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.AgreementSiteConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [AgreementSiteEdge!]!
+    pageInfo: PageInfo!
+}
+
+type Agreement implements Node {
+    id: ID!
+    kind: AgreementKind!
+    document: Document! @goField(forceResolver: true)
+    currentVersion: DocumentVersion @goField(forceResolver: true)
+    site: AgreementSite! @goField(forceResolver: true)
+    createdAt: Datetime!
+    updatedAt: Datetime!
+}
+
+type AgreementEdge {
+    cursor: CursorKey!
+    node: Agreement!
+}
+
+type AgreementConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.AgreementConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [AgreementEdge!]!
+    pageInfo: PageInfo!
+}
+
+type AgreementSubject implements Node {
+    id: ID!
+    externalUserId: String!
+    accountId: String
+    email: String!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+}
+
+type AgreementSubjectEdge {
+    cursor: CursorKey!
+    node: AgreementSubject!
+}
+
+type AgreementSubjectConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.AgreementSubjectConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [AgreementSubjectEdge!]!
+    pageInfo: PageInfo!
+}
+
+type AgreementAcceptance implements Node {
+    id: ID!
+    agreement: Agreement! @goField(forceResolver: true)
+    subject: AgreementSubject! @goField(forceResolver: true)
+    documentVersion: DocumentVersion! @goField(forceResolver: true)
+    contentSha256: String!
+    electronicSignature: ElectronicSignature! @goField(forceResolver: true)
+    ipAddress: String
+    acceptedAt: Datetime!
+    createdAt: Datetime!
+}
+
+type AgreementAcceptanceEdge {
+    cursor: CursorKey!
+    node: AgreementAcceptance!
+}
+
+type AgreementAcceptanceConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.AgreementAcceptanceConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [AgreementAcceptanceEdge!]!
+    pageInfo: PageInfo!
+}
+
+input CreateAgreementSiteInput {
+    organizationId: ID!
+    name: String!
+    mode: AgreementSiteMode!
+}
+
+type CreateAgreementSitePayload {
+    agreementSite: AgreementSite!
+    # secretKey is returned only on creation and never again.
+    secretKey: String!
+}
+
+input CreateAgreementInput {
+    siteId: ID!
+    kind: AgreementKind!
+    documentId: ID!
+}
+
+type CreateAgreementPayload {
+    agreement: Agreement!
+}
+
+input SetAgreementCurrentVersionInput {
+    agreementId: ID!
+    documentVersionId: ID!
+}
+
+type SetAgreementCurrentVersionPayload {
+    agreement: Agreement!
+}
+
+extend type Mutation {
+    createAgreementSite(input: CreateAgreementSiteInput!): CreateAgreementSitePayload!
+    createAgreement(input: CreateAgreementInput!): CreateAgreementPayload!
+    setAgreementCurrentVersion(input: SetAgreementCurrentVersionInput!): SetAgreementCurrentVersionPayload!
+}

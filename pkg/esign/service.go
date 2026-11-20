@@ -66,6 +66,7 @@ type (
 		SignerEmail    mail.Addr
 		ConsentText    string // optional; required when DocumentType == OTHER
 		EmailSubject   *EmailSubject
+		Flow           coredata.ElectronicSignatureFlow
 	}
 
 	AcceptSignatureRequest struct {
@@ -87,6 +88,10 @@ type (
 		SignerUA       string
 		ConsentText    string
 		EmailSubject   *EmailSubject
+		Flow           coredata.ElectronicSignatureFlow
+		// SignedAt overrides the acceptance timestamp; used to record the click time
+		// when the acceptance is bound asynchronously (e.g. deferred signup flow).
+		SignedAt *time.Time
 	}
 
 	RecordEventRequest struct {
@@ -200,6 +205,11 @@ func (s *Service) CreateSignature(
 		return nil, fmt.Errorf("consent text is required")
 	}
 
+	flow := req.Flow
+	if !flow.IsValid() {
+		flow = coredata.ElectronicSignatureFlowSignature
+	}
+
 	var emailSubject *string
 
 	if req.EmailSubject != nil {
@@ -215,22 +225,33 @@ func (s *Service) CreateSignature(
 
 	signatureID := gid.New(scope.GetTenantID(), coredata.ElectronicSignatureEntityType)
 
-	stampedFileID, err := s.createStampedDocument(ctx, conn, scope, req.OrganizationID, req.FileID, signatureID)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create stamped document: %w", err)
+	// CLICKWRAP: share the version PDF directly — no per-signature stamped copy.
+	// SIGNATURE: stamp the signature ID into a personal copy of the PDF.
+	fileID := req.FileID
+	sealVersion := 2
+
+	if flow == coredata.ElectronicSignatureFlowSignature {
+		stampedFileID, err := s.createStampedDocument(ctx, conn, scope, req.OrganizationID, req.FileID, signatureID)
+		if err != nil {
+			return nil, fmt.Errorf("cannot create stamped document: %w", err)
+		}
+
+		fileID = stampedFileID
+		sealVersion = 1
 	}
 
 	sig := &coredata.ElectronicSignature{
 		ID:             signatureID,
 		OrganizationID: req.OrganizationID,
 		Status:         coredata.ElectronicSignatureStatusPending,
+		Flow:           flow,
 		DocumentType:   req.DocumentType,
 		DocumentName:   req.DocumentName,
-		FileID:         stampedFileID,
+		FileID:         fileID,
 		SignerEmail:    req.SignerEmail.String(),
 		ConsentText:    consentText,
 		EmailSubject:   emailSubject,
-		SealVersion:    1,
+		SealVersion:    sealVersion,
 		AttemptCount:   0,
 		MaxAttempts:    10,
 		CreatedAt:      now,
@@ -264,6 +285,7 @@ func (s *Service) CreateAndAcceptSignature(
 			SignerEmail:    req.SignerEmail,
 			ConsentText:    req.ConsentText,
 			EmailSubject:   req.EmailSubject,
+			Flow:           req.Flow,
 		},
 	)
 	if err != nil {
@@ -271,6 +293,10 @@ func (s *Service) CreateAndAcceptSignature(
 	}
 
 	now := time.Now()
+	if req.SignedAt != nil {
+		now = *req.SignedAt
+	}
+
 	scope := coredata.NewScopeFromObjectID(req.OrganizationID)
 
 	sig.SignerFullName = &req.SignerFullName

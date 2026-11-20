@@ -179,6 +179,11 @@ const (
 	CMPDomainSurfaceEntityType                       uint16 = 147
 	TagEntityType                                    uint16 = 148
 	TagAssignmentEntityType                          uint16 = 149 // internal cursor key, not a Node
+
+	AgreementSiteEntityType       uint16 = 150
+	AgreementEntityType           uint16 = 151
+	AgreementSubjectEntityType    uint16 = 152
+	AgreementAcceptanceEntityType uint16 = 153
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -453,6 +458,14 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &CMPDomainSurface{ID: id}, true
 	case TagEntityType:
 		return &Tag{ID: id}, true
+	case AgreementSiteEntityType:
+		return &AgreementSite{ID: id}, true
+	case AgreementEntityType:
+		return &Agreement{ID: id}, true
+	case AgreementSubjectEntityType:
+		return &AgreementSubject{ID: id}, true
+	case AgreementAcceptanceEntityType:
+		return &AgreementAcceptance{ID: id}, true
 	default:
 		return nil, false
 	}

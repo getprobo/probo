@@ -40,6 +40,7 @@ type ElectronicSignature struct {
 	ID                             gid.GID                         `db:"id"`
 	OrganizationID                 gid.GID                         `db:"organization_id"`
 	Status                         ElectronicSignatureStatus       `db:"status"`
+	Flow                           ElectronicSignatureFlow         `db:"flow"`
 	DocumentType                   ElectronicSignatureDocumentType `db:"document_type"`
 	DocumentName                   *string                         `db:"document_name"`
 	FileID                         gid.GID                         `db:"file_id"`
@@ -50,6 +51,7 @@ type ElectronicSignature struct {
 	SignerIPAddress                *string                         `db:"signer_ip_address"`
 	SignerUserAgent                *string                         `db:"signer_user_agent"`
 	FileHash                       *string                         `db:"file_hash"`
+	ContextSHA256                  *string                         `db:"context_sha256"`
 	Seal                           *string                         `db:"seal"`
 	SealVersion                    int                             `db:"seal_version"`
 	TSAToken                       []byte                          `db:"tsa_token"`
@@ -128,12 +130,12 @@ func (es *ElectronicSignature) Insert(
 ) error {
 	q := `
 INSERT INTO electronic_signatures (
-	id, tenant_id, organization_id, status, document_type, document_name, file_id,
+	id, tenant_id, organization_id, status, flow, document_type, document_name, file_id,
 	signer_email, consent_text, email_subject, seal_version,
 	attempt_count, max_attempts,
 	created_at, updated_at
 ) VALUES (
-	@id, @tenant_id, @organization_id, @status, @document_type, @document_name, @file_id,
+	@id, @tenant_id, @organization_id, @status, @flow, @document_type, @document_name, @file_id,
 	@signer_email, @consent_text, @email_subject, @seal_version,
 	@attempt_count, @max_attempts,
 	@created_at, @updated_at
@@ -144,6 +146,7 @@ INSERT INTO electronic_signatures (
 		"tenant_id":       scope.GetTenantID(),
 		"organization_id": es.OrganizationID,
 		"status":          es.Status,
+		"flow":            es.Flow,
 		"document_type":   es.DocumentType,
 		"document_name":   es.DocumentName,
 		"file_id":         es.FileID,
@@ -177,6 +180,7 @@ UPDATE electronic_signatures SET
 	signer_ip_address = @signer_ip_address,
 	signer_user_agent = @signer_user_agent,
 	file_hash = @file_hash,
+	context_sha256 = @context_sha256,
 	seal = @seal,
 	seal_version = @seal_version,
 	tsa_token = @tsa_token,
@@ -202,6 +206,7 @@ WHERE
 		"signer_ip_address":                 es.SignerIPAddress,
 		"signer_user_agent":                 es.SignerUserAgent,
 		"file_hash":                         es.FileHash,
+		"context_sha256":                    es.ContextSHA256,
 		"seal":                              es.Seal,
 		"seal_version":                      es.SealVersion,
 		"tsa_token":                         es.TSAToken,
@@ -233,10 +238,10 @@ func (es *ElectronicSignature) LoadByID(
 ) error {
 	q := `
 SELECT
-	id, organization_id, status, document_type, document_name, file_id,
+	id, organization_id, status, flow, document_type, document_name, file_id,
 	signer_email, consent_text, email_subject, signer_full_name,
 	signer_ip_address,
-	signer_user_agent, file_hash, seal, seal_version, tsa_token, signed_at,
+	signer_user_agent, file_hash, context_sha256, seal, seal_version, tsa_token, signed_at,
 	certificate_file_id, certificate_processing_started_at,
 	attempt_count, max_attempts, last_attempted_at, last_error,
 	processing_started_at, created_at, updated_at
@@ -274,10 +279,10 @@ func (es *ElectronicSignature) LoadNextAcceptedForUpdateSkipLocked(
 ) error {
 	q := `
 SELECT
-	id, organization_id, status, document_type, document_name, file_id,
+	id, organization_id, status, flow, document_type, document_name, file_id,
 	signer_email, consent_text, email_subject, signer_full_name,
 	signer_ip_address,
-	signer_user_agent, file_hash, seal, seal_version, tsa_token, signed_at,
+	signer_user_agent, file_hash, context_sha256, seal, seal_version, tsa_token, signed_at,
 	certificate_file_id, certificate_processing_started_at,
 	attempt_count, max_attempts, last_attempted_at, last_error,
 	processing_started_at, created_at, updated_at
@@ -313,15 +318,16 @@ func (es *ElectronicSignature) LoadNextCompletedWithoutCertificateForUpdate(
 ) error {
 	q := `
 SELECT
-	id, organization_id, status, document_type, document_name, file_id,
+	id, organization_id, status, flow, document_type, document_name, file_id,
 	signer_email, consent_text, email_subject, signer_full_name,
 	signer_ip_address,
-	signer_user_agent, file_hash, seal, seal_version, tsa_token, signed_at,
+	signer_user_agent, file_hash, context_sha256, seal, seal_version, tsa_token, signed_at,
 	certificate_file_id, certificate_processing_started_at,
 	attempt_count, max_attempts, last_attempted_at, last_error,
 	processing_started_at, created_at, updated_at
 FROM electronic_signatures
 WHERE status = 'COMPLETED'
+	AND flow = 'SIGNATURE'
 	AND certificate_file_id IS NULL
 	AND certificate_processing_started_at IS NULL
 	AND attempt_count < max_attempts
@@ -373,6 +379,8 @@ func (es *ElectronicSignature) ComputeSeal(version int) (string, error) {
 	switch version {
 	case 1:
 		return es.computeSealV1()
+	case 2:
+		return es.computeSealV2()
 	default:
 		return "", fmt.Errorf("unsupported seal version %d", version)
 	}
@@ -415,6 +423,53 @@ func (es *ElectronicSignature) computeSealV1() (string, error) {
 
 		if strings.Contains(f, "\n") {
 			return "", fmt.Errorf("seal field %d must not contain newline", i)
+		}
+	}
+
+	input := strings.Join(fields, "\n")
+
+	return hash.SHA256HexString(input), nil
+}
+
+// computeSealV2 is used for CLICKWRAP flow. It extends v1 with the flow field
+// and context_sha256 (hash of JCS-canonicalized context: agreement key, version,
+// content hash, subject, presentation). signer_full_name may be empty in v2.
+func (es *ElectronicSignature) computeSealV2() (string, error) {
+	if es.SignedAt == nil {
+		return "", fmt.Errorf("signed_at must not be nil")
+	}
+
+	fields := []string{
+		es.ID.String(),
+		es.OrganizationID.String(),
+		es.Flow.String(),
+		es.DocumentType.String(),
+		es.FileID.String(),
+		ref.UnrefOrZero(es.FileHash),
+		ref.UnrefOrZero(es.SignerFullName),
+		strings.ToLower(es.SignerEmail),
+		ref.UnrefOrZero(es.SignerIPAddress),
+		ref.UnrefOrZero(es.SignerUserAgent),
+		es.ConsentText,
+		ref.UnrefOrZero(es.ContextSHA256),
+		es.SealSignedAt(),
+	}
+
+	for i, f := range fields {
+		if strings.Contains(f, "\n") {
+			return "", fmt.Errorf("seal field %d must not contain newline", i)
+		}
+	}
+
+	for i, f := range fields {
+		// In v2, indices 6 (signer_full_name) and 12 (context_sha256) may be empty.
+		// All other fields are required.
+		if i == 6 || i == 12 {
+			continue
+		}
+
+		if f == "" {
+			return "", fmt.Errorf("seal v2 field %d must not be empty", i)
 		}
 	}
 

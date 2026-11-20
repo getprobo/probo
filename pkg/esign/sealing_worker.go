@@ -42,7 +42,8 @@ var (
 )
 
 const (
-	currentSealVersion = 1
+	currentSealVersion   = 1
+	clickwrapSealVersion = 2
 )
 
 type (
@@ -156,38 +157,64 @@ func (h *sealingHandler) sealAndCommit(
 ) error {
 	var (
 		scope  = coredata.NewScopeFromObjectID(signature.ID)
-		file   coredata.File
 		events []coredata.ElectronicSignatureEvent
 	)
 
-	if err := h.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			if err := file.LoadByID(ctx, conn, scope, signature.FileID); err != nil {
-				return fmt.Errorf("cannot load file: %w", err)
-			}
+	var fileHash string
 
-			return nil
-		},
-	); err != nil {
-		return fmt.Errorf("%w: %w", ErrLoadFile, err)
+	if signature.Flow == coredata.ElectronicSignatureFlowClickwrap {
+		// For CLICKWRAP, the content_sha256 is precomputed on the document version
+		// at PDF generation time and stored on the acceptance record. We load the
+		// acceptance to retrieve it, avoiding an S3 round-trip per click.
+		var acceptance coredata.AgreementAcceptance
+		if err := h.pg.WithConn(
+			ctx,
+			func(ctx context.Context, conn pg.Querier) error {
+				return acceptance.LoadByElectronicSignatureID(ctx, conn, signature.ID)
+			},
+		); err != nil {
+			return fmt.Errorf("cannot load acceptance for clickwrap seal: %w", err)
+		}
+
+		fileHash = acceptance.ContentSHA256
+	} else {
+		var file coredata.File
+
+		if err := h.pg.WithConn(
+			ctx,
+			func(ctx context.Context, conn pg.Querier) error {
+				if err := file.LoadByID(ctx, conn, scope, signature.FileID); err != nil {
+					return fmt.Errorf("cannot load file: %w", err)
+				}
+
+				return nil
+			},
+		); err != nil {
+			return fmt.Errorf("%w: %w", ErrLoadFile, err)
+		}
+
+		pdfBytes, err := h.fileManager.GetFileBytes(ctx, &file)
+		if err != nil {
+			return fmt.Errorf("%w: %w", ErrDownloadPDF, err)
+		}
+
+		fileHash = hash.SHA256Hex(pdfBytes)
 	}
 
-	pdfBytes, err := h.fileManager.GetFileBytes(ctx, &file)
-	if err != nil {
-		return fmt.Errorf("%w: %w", ErrDownloadPDF, err)
-	}
-
-	fileHash := hash.SHA256Hex(pdfBytes)
 	signature.FileHash = &fileHash
 
-	seal, err := signature.ComputeSeal(currentSealVersion)
+	sealVersion := currentSealVersion
+	if signature.Flow == coredata.ElectronicSignatureFlowClickwrap {
+		sealVersion = clickwrapSealVersion
+	}
+
+	seal, err := signature.ComputeSeal(sealVersion)
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrComputeSeal, err)
 	}
 
 	signature.Seal = &seal
-	signature.SealVersion = currentSealVersion
+	signature.SealVersion = sealVersion
 	events = append(
 		events,
 		signature.NewEvent(
