@@ -37,6 +37,7 @@ import (
 	connectorprovider "go.probo.inc/probo/pkg/connectorprotocol/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/validator"
 )
@@ -696,8 +697,13 @@ func (s *Service) ConfigureAccessReviewSource(
 				return err
 			}
 
-			if _, err := coredata.SyncStandaloneAccount(ctx, conn, scope, dbConnector, externalID, name); err != nil {
+			account, err := coredata.SyncStandaloneAccount(ctx, conn, scope, dbConnector, externalID, name)
+			if err != nil {
 				return err
+			}
+
+			if err := itam.NoteConnectorAccount(ctx, conn, scope, dbConnector.Provider, account); err != nil {
+				return fmt.Errorf("cannot note asset source: %w", err)
 			}
 
 			// The selected org changed, so the resolvable instance name may
@@ -1340,8 +1346,13 @@ func (s *Service) applyOrganizationSlug(
 				return err
 			}
 
-			if _, err := coredata.SyncStandaloneAccount(ctx, conn, scope, dbConnector, externalID, name); err != nil {
+			account, err := coredata.SyncStandaloneAccount(ctx, conn, scope, dbConnector, externalID, name)
+			if err != nil {
 				return err
+			}
+
+			if err := itam.NoteConnectorAccount(ctx, conn, scope, dbConnector.Provider, account); err != nil {
+				return fmt.Errorf("cannot note asset source: %w", err)
 			}
 
 			return nil

@@ -38,6 +38,7 @@ import (
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/identityfederation"
+	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/validator"
 )
@@ -156,8 +157,13 @@ func (s *Service) recordInitialAccount(
 		return err
 	}
 
-	if _, err := coredata.UpsertInitialAccount(ctx, tx, scope, cnnctr, externalID, name); err != nil {
+	account, err := coredata.UpsertInitialAccount(ctx, tx, scope, cnnctr, externalID, name)
+	if err != nil {
 		return err
+	}
+
+	if err := itam.NoteConnectorAccount(ctx, tx, scope, cnnctr.Provider, account); err != nil {
+		return fmt.Errorf("cannot note asset source: %w", err)
 	}
 
 	return nil
@@ -761,8 +767,13 @@ func (s *Service) syncReconnectedAccount(
 		return nil
 	}
 
-	if _, err := coredata.SyncStandaloneAccount(ctx, tx, scope, cnnctr, externalID, name); err != nil {
+	account, err = coredata.SyncStandaloneAccount(ctx, tx, scope, cnnctr, externalID, name)
+	if err != nil {
 		return fmt.Errorf("cannot sync connector account: %w", err)
+	}
+
+	if err := itam.NoteConnectorAccount(ctx, tx, scope, cnnctr.Provider, account); err != nil {
+		return fmt.Errorf("cannot note asset source: %w", err)
 	}
 
 	return nil
