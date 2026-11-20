@@ -40,7 +40,6 @@ const (
 
 	thirdPartyAgreementNodeSelection = `
 		id
-		name
 		type
 		validity {
 			start
@@ -58,7 +57,6 @@ const (
 type (
 	thirdPartyAgreementWireNode struct {
 		ID         string      `json:"id"`
-		Name       string      `json:"name"`
 		Type       string      `json:"type"`
 		Validity   *periodWire `json:"validity"`
 		CreatedAt  time.Time   `json:"createdAt"`
@@ -137,7 +135,6 @@ func uploadThirdPartyAgreement(
 	t *testing.T,
 	client *testutil.Client,
 	thirdPartyID string,
-	name string,
 	agreementType string,
 	validFrom string,
 	validUntil string,
@@ -149,7 +146,6 @@ func uploadThirdPartyAgreement(
 		t,
 		client,
 		thirdPartyID,
-		name,
 		agreementType,
 		validFrom,
 		validUntil,
@@ -165,7 +161,6 @@ func uploadThirdPartyAgreementExpectError(
 	t *testing.T,
 	client *testutil.Client,
 	thirdPartyID string,
-	name string,
 	agreementType string,
 	validFrom string,
 	validUntil string,
@@ -177,7 +172,6 @@ func uploadThirdPartyAgreementExpectError(
 		t,
 		client,
 		thirdPartyID,
-		name,
 		agreementType,
 		validFrom,
 		validUntil,
@@ -192,7 +186,6 @@ func uploadThirdPartyAgreementResult(
 	t *testing.T,
 	client *testutil.Client,
 	thirdPartyID string,
-	name string,
 	agreementType string,
 	validFrom string,
 	validUntil string,
@@ -227,7 +220,6 @@ func uploadThirdPartyAgreementResult(
 		map[string]any{
 			"input": map[string]any{
 				"thirdPartyId": thirdPartyID,
-				"name":         name,
 				"type":         agreementType,
 				"validity": map[string]any{
 					"start": validFrom,
@@ -296,7 +288,6 @@ func updateThirdPartyAgreement(
 	t *testing.T,
 	client *testutil.Client,
 	agreementID string,
-	name *string,
 	agreementType *string,
 	validFrom *string,
 	validUntil *string,
@@ -307,7 +298,6 @@ func updateThirdPartyAgreement(
 		t,
 		client,
 		agreementID,
-		name,
 		agreementType,
 		validFrom,
 		validUntil,
@@ -322,7 +312,6 @@ func updateThirdPartyAgreementExpectError(
 	t *testing.T,
 	client *testutil.Client,
 	agreementID string,
-	name *string,
 	agreementType *string,
 	validFrom *string,
 	validUntil *string,
@@ -333,7 +322,6 @@ func updateThirdPartyAgreementExpectError(
 		t,
 		client,
 		agreementID,
-		name,
 		agreementType,
 		validFrom,
 		validUntil,
@@ -347,7 +335,6 @@ func updateThirdPartyAgreementResult(
 	t *testing.T,
 	client *testutil.Client,
 	agreementID string,
-	name *string,
 	agreementType *string,
 	validFrom *string,
 	validUntil *string,
@@ -368,9 +355,6 @@ func updateThirdPartyAgreementResult(
 
 	input := map[string]any{
 		"id": agreementID,
-	}
-	if name != nil {
-		input["name"] = *name
 	}
 	if agreementType != nil {
 		input["type"] = *agreementType

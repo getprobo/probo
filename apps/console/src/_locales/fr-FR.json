@@ -5820,13 +5820,9 @@
   "editThirdPartyAgreementDialog": {
     "title": "Modifier l’accord",
     "fields": {
-      "name": "Nom",
       "type": "Type",
       "validFrom": "Valide à partir de",
       "validUntil": "Valide jusqu’au"
-    },
-    "validation": {
-      "nameRequired": "Le nom est requis"
     },
     "messages": {
       "success": "Succès",
@@ -5845,16 +5841,9 @@
     "fileHelp": "PDF, Word, ODT, PNG ou JPEG jusqu’à 30 Mo",
     "selectedFile": "Fichier sélectionné :",
     "fields": {
-      "name": "Nom",
       "type": "Type",
       "validFrom": "Valide à partir de",
       "validUntil": "Valide jusqu’au"
-    },
-    "placeholders": {
-      "name": "Avenant DORA"
-    },
-    "validation": {
-      "nameRequired": "Le nom est requis"
     },
     "messages": {
       "success": "Succès",
@@ -5894,7 +5883,7 @@
   "thirdPartyAgreementListItem": {
     "messages": { "error": "Erreur" },
     "errors": { "delete": "Échec de la suppression de l’accord" },
-    "deleteConfirmation": "Cette action supprimera définitivement « {{name}} ». Cette action est irréversible.",
+    "deleteConfirmation": "Cette action supprimera définitivement cet accord {{type}} ({{fileName}}). Cette action est irréversible.",
     "actions": { "preview": "Aperçu", "download": "Télécharger" }
   },
   "thirdPartyAgreementPreviewDialog": {

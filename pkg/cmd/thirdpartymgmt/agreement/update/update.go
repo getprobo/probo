@@ -33,7 +33,6 @@ mutation ThirdPartyAgreementUpdate($input: UpdateThirdPartyAgreementInput!) {
   updateThirdPartyAgreement(input: $input) {
     thirdPartyAgreement {
       id
-      name
       type
     }
   }
@@ -42,7 +41,6 @@ mutation ThirdPartyAgreementUpdate($input: UpdateThirdPartyAgreementInput!) {
 
 func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagName       string
 		flagType       string
 		flagValidFrom  string
 		flagValidUntil string
@@ -53,11 +51,10 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 		Short: "Update a third-party agreement",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if !cmd.Flags().Changed("name") &&
-				!cmd.Flags().Changed("type") &&
+			if !cmd.Flags().Changed("type") &&
 				!cmd.Flags().Changed("valid-from") &&
 				!cmd.Flags().Changed("valid-until") {
-				return fmt.Errorf("nothing to update: set --name, --type, --valid-from, or --valid-until")
+				return fmt.Errorf("nothing to update: set --type, --valid-from, or --valid-until")
 			}
 
 			if cmd.Flags().Changed("type") {
@@ -81,9 +78,6 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 
 			input := map[string]any{
 				"id": args[0],
-			}
-			if cmd.Flags().Changed("name") {
-				input["name"] = flagName
 			}
 			if cmd.Flags().Changed("type") {
 				input["type"] = flagType
@@ -128,7 +122,6 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&flagName, "name", "", "Agreement name")
 	cmd.Flags().StringVar(&flagType, "type", "", "Agreement type (TERMS, MASTER_SERVICE, BUSINESS_ASSOCIATE, DATA_PRIVACY, AMENDMENT, ANNEX, OTHER)")
 	cmd.Flags().StringVar(&flagValidFrom, "valid-from", "", "Validity start (YYYY-MM-DD or RFC3339). Empty value clears it.")
 	cmd.Flags().StringVar(&flagValidUntil, "valid-until", "", "Validity end (YYYY-MM-DD or RFC3339). Empty value clears it.")

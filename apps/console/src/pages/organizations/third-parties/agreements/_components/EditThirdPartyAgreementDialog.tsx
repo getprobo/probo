@@ -46,7 +46,6 @@ import { THIRD_PARTY_AGREEMENT_TYPES } from "./agreementTypes";
 const agreementFragment = graphql`
   fragment EditThirdPartyAgreementDialog_agreement on ThirdPartyAgreement {
     id
-    name
     type
     validity {
       start
@@ -77,7 +76,6 @@ export function EditThirdPartyAgreementDialog({ children, agreementKey }: Props)
   const agreement = useFragment(agreementFragment, agreementKey);
   const ref = useDialogRef();
   const schema = z.object({
-    name: z.string().min(1, t("editThirdPartyAgreementDialog.validation.nameRequired")),
     type: z.enum(THIRD_PARTY_AGREEMENT_TYPES),
     validFrom: z.string().optional(),
     validUntil: z.string().optional(),
@@ -102,7 +100,6 @@ export function EditThirdPartyAgreementDialog({ children, agreementKey }: Props)
       variables: {
         input: {
           id: agreement.id,
-          name: data.name,
           type: data.type,
           validity: {
             start: formatDatetime(data.validFrom),
@@ -156,14 +153,6 @@ export function EditThirdPartyAgreementDialog({ children, agreementKey }: Props)
     >
       <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded className="space-y-4">
-          <Field
-            {...register("name")}
-            label={t("editThirdPartyAgreementDialog.fields.name")}
-            type="text"
-            required
-            error={errors.name?.message}
-          />
-
           <Controller
             control={control}
             name="type"
@@ -213,12 +202,10 @@ export function EditThirdPartyAgreementDialog({ children, agreementKey }: Props)
 }
 
 function formValues(agreement: {
-  name: string;
   type: (typeof THIRD_PARTY_AGREEMENT_TYPES)[number];
   validity: { start?: string | null; end?: string | null } | null | undefined;
 }) {
   return {
-    name: agreement.name,
     type: agreement.type,
     validFrom: dateInputValue(agreement.validity?.start),
     validUntil: dateInputValue(agreement.validity?.end),

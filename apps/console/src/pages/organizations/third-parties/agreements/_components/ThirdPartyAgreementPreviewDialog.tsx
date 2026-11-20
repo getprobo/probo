@@ -29,7 +29,7 @@ import { TextPreview } from "#/components/documents/TextPreview";
 
 const agreementFragment = graphql`
   fragment ThirdPartyAgreementPreviewDialog_agreement on ThirdPartyAgreement {
-    name
+    type
     file {
       fileName
       mimeType
@@ -119,7 +119,7 @@ export function ThirdPartyAgreementPreviewDialog({ agreementKey, onClose }: Prop
   return (
     <Dialog
       defaultOpen
-      title={agreement.name}
+      title={t(`thirdPartyAgreementsPage.types.${agreement.type}`)}
       onClose={onClose}
       className="max-w-4xl"
     >

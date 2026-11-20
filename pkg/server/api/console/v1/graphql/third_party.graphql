@@ -177,10 +177,6 @@ enum ThirdPartyAgreementOrderField
     @goModel(
         model: "go.probo.inc/probo/pkg/coredata.ThirdPartyAgreementOrderField"
     ) {
-    NAME
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.ThirdPartyAgreementOrderFieldName"
-        )
     CREATED_AT
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.ThirdPartyAgreementOrderFieldCreatedAt"
@@ -400,7 +396,6 @@ type ThirdPartyComplianceReport implements Node {
 type ThirdPartyAgreement implements Node {
     id: ID!
     thirdParty: ThirdParty! @goField(forceResolver: true)
-    name: String!
     type: ThirdPartyAgreementType!
     validity: Period
     file: File! @goField(forceResolver: true)
@@ -674,7 +669,6 @@ input DeleteThirdPartyComplianceReportInput {
 
 input UploadThirdPartyAgreementInput {
     thirdPartyId: ID!
-    name: String!
     type: ThirdPartyAgreementType!
     validity: PeriodInput
     file: Upload!
@@ -682,7 +676,6 @@ input UploadThirdPartyAgreementInput {
 
 input UpdateThirdPartyAgreementInput {
     id: ID!
-    name: String
     type: ThirdPartyAgreementType
     validity: PeriodInput
 }

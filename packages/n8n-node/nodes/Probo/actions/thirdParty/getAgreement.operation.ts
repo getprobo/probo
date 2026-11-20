@@ -49,7 +49,6 @@ export async function execute(
 			node(id: $id) {
 				... on ThirdPartyAgreement {
 					id
-					name
 					type
 					validity {
 						start

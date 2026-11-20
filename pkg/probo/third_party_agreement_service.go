@@ -41,14 +41,12 @@ type (
 
 	ThirdPartyAgreementCreateRequest struct {
 		File       FileUpload
-		Name       string
 		Type       coredata.ThirdPartyAgreementType
 		ValidFrom  *time.Time
 		ValidUntil *time.Time
 	}
 
 	ThirdPartyAgreementUpdateRequest struct {
-		Name       *string
 		Type       *coredata.ThirdPartyAgreementType
 		ValidFrom  **time.Time
 		ValidUntil **time.Time
@@ -58,7 +56,6 @@ type (
 func (r *ThirdPartyAgreementCreateRequest) Validate() error {
 	v := validator.New()
 
-	v.Check(r.Name, "name", validator.Required(), validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(r.Type, "type", validThirdPartyAgreementType())
 	v.Check(r.ValidUntil, "valid_until", validator.After(r.ValidFrom))
 
@@ -68,7 +65,6 @@ func (r *ThirdPartyAgreementCreateRequest) Validate() error {
 func (r *ThirdPartyAgreementUpdateRequest) Validate() error {
 	v := validator.New()
 
-	v.Check(r.Name, "name", validator.NotEmpty(), validator.SafeTextNoNewLine(TitleMaxLength))
 	if r.Type != nil {
 		v.Check(*r.Type, "type", validThirdPartyAgreementType())
 	}
@@ -166,7 +162,6 @@ func (s ThirdPartyAgreementService) Upload(
 		ID:             gid.New(scope.GetTenantID(), coredata.ThirdPartyAgreementEntityType),
 		OrganizationID: thirdParty.OrganizationID,
 		ThirdPartyID:   thirdPartyID,
-		Name:           req.Name,
 		Type:           req.Type,
 		ValidFrom:      req.ValidFrom,
 		ValidUntil:     req.ValidUntil,
@@ -205,10 +200,6 @@ func (s ThirdPartyAgreementService) Update(
 		func(ctx context.Context, tx pg.Tx) error {
 			if err := agreement.LoadByID(ctx, tx, scope, agreementID); err != nil {
 				return fmt.Errorf("cannot load third party agreement: %w", err)
-			}
-
-			if req.Name != nil {
-				agreement.Name = *req.Name
 			}
 
 			if req.Type != nil {

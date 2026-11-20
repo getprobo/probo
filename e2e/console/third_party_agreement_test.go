@@ -44,9 +44,6 @@ func TestThirdPartyAgreement_Lifecycle(t *testing.T) {
 		initialValidUntil = "2025-01-01T00:00:00Z"
 		updatedValidFrom  = "2024-06-01T00:00:00Z"
 		updatedValidUntil = "2026-06-01T00:00:00Z"
-		msaName           = "Master service agreement"
-		annexName         = "DORA addendum"
-		updatedName       = "Master service agreement 2024"
 	)
 
 	expectedInitialValidFrom := requireParseRFC3339Time(t, initialValidFrom)
@@ -60,7 +57,6 @@ func TestThirdPartyAgreement_Lifecycle(t *testing.T) {
 		t,
 		owner,
 		thirdPartyID,
-		msaName,
 		"MASTER_SERVICE",
 		initialValidFrom,
 		initialValidUntil,
@@ -70,7 +66,6 @@ func TestThirdPartyAgreement_Lifecycle(t *testing.T) {
 		t,
 		owner,
 		thirdPartyID,
-		annexName,
 		"ANNEX",
 		initialValidFrom,
 		initialValidUntil,
@@ -81,7 +76,6 @@ func TestThirdPartyAgreement_Lifecycle(t *testing.T) {
 	assert.NotEqual(t, msa.ID, annex.ID)
 	assert.Equal(t, thirdPartyID, msa.ThirdParty.ID)
 	assert.Equal(t, "MASTER_SERVICE", msa.Type)
-	assert.Equal(t, msaName, msa.Name)
 	assert.Equal(t, "msa.pdf", msa.File.FileName)
 	assert.Equal(t, "ANNEX", annex.Type)
 	require.NotNil(t, msa.ValidFrom())
@@ -100,14 +94,13 @@ func TestThirdPartyAgreement_Lifecycle(t *testing.T) {
 		t,
 		owner,
 		msa.ID,
-		new(updatedName),
 		nil,
 		new(updatedValidFrom),
 		new(updatedValidUntil),
 	)
 
 	assert.Equal(t, msa.ID, updated.ID)
-	assert.Equal(t, updatedName, updated.Name)
+	assert.Equal(t, "MASTER_SERVICE", updated.Type)
 	require.NotNil(t, updated.ValidFrom())
 	require.NotNil(t, updated.ValidUntil())
 	assert.Equal(t, expectedUpdatedValidFrom, *updated.ValidFrom())
@@ -126,7 +119,7 @@ func TestThirdPartyAgreement_Lifecycle(t *testing.T) {
 	remaining := listThirdPartyAgreements(t, owner, thirdPartyID)
 	require.Len(t, remaining, 1)
 	assert.Equal(t, msa.ID, remaining[0].ID)
-	assert.Equal(t, updatedName, remaining[0].Name)
+	assert.Equal(t, "MASTER_SERVICE", remaining[0].Type)
 }
 
 func TestThirdPartyRiskAssessment_CreateAndList(t *testing.T) {
@@ -241,7 +234,6 @@ func TestThirdPartyAgreement_ValidDateOrdering(t *testing.T) {
 				t,
 				client,
 				thirdPartyID,
-				"Invalid dates",
 				"OTHER",
 				"2025-06-01T00:00:00Z",
 				"2024-01-01T00:00:00Z",
@@ -265,7 +257,6 @@ func TestThirdPartyAgreement_ValidDateOrdering(t *testing.T) {
 				t,
 				client,
 				thirdPartyID,
-				"Valid agreement",
 				"TERMS",
 				"2024-01-01T00:00:00Z",
 				"2025-01-01T00:00:00Z",
@@ -276,7 +267,6 @@ func TestThirdPartyAgreement_ValidDateOrdering(t *testing.T) {
 				t,
 				client,
 				uploaded.ID,
-				nil,
 				nil,
 				new("2026-06-01T00:00:00Z"),
 				new("2024-01-01T00:00:00Z"),

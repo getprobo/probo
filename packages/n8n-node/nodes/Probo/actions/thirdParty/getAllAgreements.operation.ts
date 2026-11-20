@@ -81,7 +81,6 @@ export async function execute(
 						edges {
 							node {
 								id
-								name
 								type
 								validity {
 									start

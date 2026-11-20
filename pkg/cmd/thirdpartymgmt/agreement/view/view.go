@@ -34,7 +34,6 @@ query ThirdPartyAgreementView($id: ID!) {
     __typename
     ... on ThirdPartyAgreement {
       id
-      name
       type
       validity {
         start
@@ -59,7 +58,6 @@ type viewResponse struct {
 	Node *struct {
 		Typename   string  `json:"__typename"`
 		ID         string  `json:"id"`
-		Name       string  `json:"name"`
 		Type       string  `json:"type"`
 		Validity   *period `json:"validity"`
 		File       file    `json:"file"`
@@ -119,7 +117,6 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 
 			agreement := resp.Node
 			out := f.IOStreams.Out
-			_, _ = fmt.Fprintf(out, "%s\n", agreement.Name)
 			_, _ = fmt.Fprintf(out, "ID:           %s\n", agreement.ID)
 			_, _ = fmt.Fprintf(out, "Type:         %s\n", agreement.Type)
 			_, _ = fmt.Fprintf(out, "Third party:  %s (%s)\n", agreement.ThirdParty.Name, agreement.ThirdParty.ID)

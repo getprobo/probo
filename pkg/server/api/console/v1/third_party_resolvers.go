@@ -403,7 +403,6 @@ func (r *mutationResolver) UploadThirdPartyAgreement(ctx context.Context, input 
 				Content:     input.File.File,
 				ContentType: input.File.ContentType,
 			},
-			Name:       input.Name,
 			Type:       input.Type,
 			ValidFrom:  validFrom,
 			ValidUntil: validUntil,
@@ -432,7 +431,6 @@ func (r *mutationResolver) UpdateThirdPartyAgreement(ctx context.Context, input 
 		scope,
 		input.ID,
 		&probo.ThirdPartyAgreementUpdateRequest{
-			Name:       input.Name,
 			Type:       input.Type,
 			ValidFrom:  validFrom,
 			ValidUntil: validUntil,

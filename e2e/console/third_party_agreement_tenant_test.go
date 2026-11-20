@@ -42,7 +42,6 @@ func TestThirdPartyAgreement_TenantIsolation(t *testing.T) {
 		t,
 		org1Owner,
 		org1ThirdPartyID,
-		"Org1 master service agreement",
 		"MASTER_SERVICE",
 		"2024-01-01T00:00:00Z",
 		"2025-01-01T00:00:00Z",
@@ -61,7 +60,6 @@ func TestThirdPartyAgreement_TenantIsolation(t *testing.T) {
 				t,
 				org2,
 				org1ThirdPartyID,
-				"Cross tenant",
 				"ANNEX",
 				"2024-01-01T00:00:00Z",
 				"2025-01-01T00:00:00Z",
@@ -93,7 +91,7 @@ func TestThirdPartyAgreement_TenantIsolation(t *testing.T) {
 				map[string]any{
 					"input": map[string]any{
 						"id":   uploaded.ID,
-						"name": "Stolen name",
+						"type": "ANNEX",
 					},
 				},
 			)

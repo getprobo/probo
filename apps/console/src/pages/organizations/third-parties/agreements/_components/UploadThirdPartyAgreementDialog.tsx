@@ -72,7 +72,6 @@ export function UploadThirdPartyAgreementDialog({
 }: Props) {
   const { t } = useTranslation();
   const schema = z.object({
-    name: z.string().min(1, t("uploadThirdPartyAgreementDialog.validation.nameRequired")),
     type: z.enum(THIRD_PARTY_AGREEMENT_TYPES),
     validFrom: z.string().optional(),
     validUntil: z.string().optional(),
@@ -86,10 +85,8 @@ export function UploadThirdPartyAgreementDialog({
     formState: { errors },
     reset,
     control,
-    setValue,
   } = useFormWithSchema(schema, {
     defaultValues: {
-      name: "",
       type: "OTHER",
       validFrom: "",
       validUntil: "",
@@ -102,9 +99,7 @@ export function UploadThirdPartyAgreementDialog({
 
   const handleDrop = (files: File[]) => {
     if (files.length > 0) {
-      const file = files[0];
-      setUploadedFile(file);
-      setValue("name", file.name.replace(/\.[^.]+$/, ""));
+      setUploadedFile(files[0]);
     }
   };
 
@@ -117,7 +112,6 @@ export function UploadThirdPartyAgreementDialog({
       variables: {
         input: {
           thirdPartyId,
-          name: data.name,
           type: data.type,
           validity: {
             start: formatDatetime(data.validFrom),
@@ -200,15 +194,6 @@ export function UploadThirdPartyAgreementDialog({
               <p className="text-sm text-txt-secondary">{uploadedFile.name}</p>
             </div>
           )}
-
-          <Field
-            {...register("name")}
-            label={t("uploadThirdPartyAgreementDialog.fields.name")}
-            type="text"
-            required
-            error={errors.name?.message}
-            placeholder={t("uploadThirdPartyAgreementDialog.placeholders.name")}
-          />
 
           <Controller
             control={control}

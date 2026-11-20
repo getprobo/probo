@@ -39,7 +39,6 @@ type (
 		ID             gid.GID                 `db:"id"`
 		OrganizationID gid.GID                 `db:"organization_id"`
 		ThirdPartyID   gid.GID                 `db:"third_party_id"`
-		Name           string                  `db:"name"`
 		Type           ThirdPartyAgreementType `db:"type"`
 		ValidFrom      *time.Time              `db:"valid_from"`
 		ValidUntil     *time.Time              `db:"valid_until"`
@@ -53,8 +52,6 @@ type (
 
 func (a ThirdPartyAgreement) CursorKey(orderBy ThirdPartyAgreementOrderField) page.CursorKey {
 	switch orderBy {
-	case ThirdPartyAgreementOrderFieldName:
-		return page.NewCursorKey(a.ID, a.Name)
 	case ThirdPartyAgreementOrderFieldCreatedAt:
 		return page.NewCursorKey(a.ID, a.CreatedAt)
 	}
@@ -113,7 +110,6 @@ SELECT
 	id,
 	organization_id,
 	third_party_id,
-	name,
 	type,
 	valid_from,
 	valid_until,
@@ -165,7 +161,6 @@ SELECT
 	id,
 	organization_id,
 	third_party_id,
-	name,
 	type,
 	valid_from,
 	valid_until,
@@ -217,7 +212,6 @@ SELECT
 	id,
 	organization_id,
 	third_party_id,
-	name,
 	type,
 	valid_from,
 	valid_until,
@@ -268,7 +262,6 @@ INSERT INTO
 		organization_id,
 		tenant_id,
 		third_party_id,
-		name,
 		type,
 		valid_from,
 		valid_until,
@@ -281,7 +274,6 @@ VALUES (
 	@organization_id,
 	@tenant_id,
 	@third_party_id,
-	@name,
 	@type,
 	@valid_from,
 	@valid_until,
@@ -296,7 +288,6 @@ VALUES (
 		"organization_id": a.OrganizationID,
 		"tenant_id":       scope.GetTenantID(),
 		"third_party_id":  a.ThirdPartyID,
-		"name":            a.Name,
 		"type":            a.Type,
 		"valid_from":      a.ValidFrom,
 		"valid_until":     a.ValidUntil,
@@ -322,7 +313,6 @@ func (a *ThirdPartyAgreement) Update(
 UPDATE
 	third_party_agreements
 SET
-	name = @name,
 	type = @type,
 	valid_from = @valid_from,
 	valid_until = @valid_until,
@@ -336,7 +326,6 @@ WHERE
 
 	args := pgx.StrictNamedArgs{
 		"id":          a.ID,
-		"name":        a.Name,
 		"type":        a.Type,
 		"valid_from":  a.ValidFrom,
 		"valid_until": a.ValidUntil,

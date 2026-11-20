@@ -37,7 +37,6 @@ query ThirdPartyAgreementList($id: ID!, $first: Int, $after: CursorKey, $orderBy
         edges {
           node {
             id
-            name
             type
             createdAt
           }
@@ -54,7 +53,6 @@ query ThirdPartyAgreementList($id: ID!, $first: Int, $after: CursorKey, $orderBy
 
 type agreement struct {
 	ID        string `json:"id"`
-	Name      string `json:"name"`
 	Type      string `json:"type"`
 	CreatedAt string `json:"createdAt"`
 }
@@ -94,7 +92,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if flagOrderBy != "" {
-				if err := cmdutil.ValidateEnum("order-by", flagOrderBy, []string{"NAME", "CREATED_AT"}); err != nil {
+				if err := cmdutil.ValidateEnum("order-by", flagOrderBy, []string{"CREATED_AT"}); err != nil {
 					return err
 				}
 
@@ -125,11 +123,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					Empty:      "No agreements found.",
 					Noun:       "agreements",
 					NextCursor: nextCursor,
-					Headers:    []string{"ID", "NAME", "TYPE", "CREATED"},
+					Headers:    []string{"ID", "TYPE", "CREATED"},
 					Row: func(item agreement) ([]string, error) {
 						return []string{
 							item.ID,
-							item.Name,
 							item.Type,
 							cmdutil.FormatTime(item.CreatedAt),
 						}, nil
@@ -143,7 +140,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	_ = cmd.MarkFlagRequired("third-party")
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of agreements to list")
 	cmdutil.AddAfterFlag(cmd, &flagAfter)
-	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (NAME, CREATED_AT)")
+	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT)")
 	cmdutil.AddOrderDirectionFlag(cmd, &flagOrderDir, "DESC")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 

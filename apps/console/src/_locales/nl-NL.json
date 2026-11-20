@@ -5805,13 +5805,9 @@
   "editThirdPartyAgreementDialog": {
     "title": "Overeenkomst bewerken",
     "fields": {
-      "name": "Naam",
       "type": "Type",
       "validFrom": "Geldig vanaf",
       "validUntil": "Geldig tot"
-    },
-    "validation": {
-      "nameRequired": "Naam is verplicht"
     },
     "messages": {
       "success": "Succes",
@@ -5830,16 +5826,9 @@
     "fileHelp": "PDF, Word, ODT, PNG of JPEG tot 30 MB",
     "selectedFile": "Geselecteerd bestand:",
     "fields": {
-      "name": "Naam",
       "type": "Type",
       "validFrom": "Geldig vanaf",
       "validUntil": "Geldig tot"
-    },
-    "placeholders": {
-      "name": "DORA-addendum"
-    },
-    "validation": {
-      "nameRequired": "Naam is verplicht"
     },
     "messages": {
       "success": "Succes",
@@ -5879,7 +5868,7 @@
   "thirdPartyAgreementListItem": {
     "messages": { "error": "Fout" },
     "errors": { "delete": "Verwijderen van overeenkomst mislukt" },
-    "deleteConfirmation": "Hiermee wordt \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
+    "deleteConfirmation": "Hiermee wordt deze {{type}} ({{fileName}}) permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
     "actions": { "preview": "Voorbeeld", "download": "Downloaden" }
   },
   "thirdPartyAgreementPreviewDialog": {

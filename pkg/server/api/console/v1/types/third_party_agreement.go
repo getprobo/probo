@@ -57,7 +57,6 @@ func NewThirdPartyAgreement(agreement *coredata.ThirdPartyAgreement) *ThirdParty
 		ThirdParty: &ThirdParty{
 			ID: agreement.ThirdPartyID,
 		},
-		Name:      agreement.Name,
 		Type:      agreement.Type,
 		Validity:  NewPeriod(agreement.ValidFrom, agreement.ValidUntil),
 		File:      &File{ID: agreement.FileID},

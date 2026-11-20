@@ -30,7 +30,6 @@ import (
 type ThirdPartyAgreementOrderField string
 
 const (
-	ThirdPartyAgreementOrderFieldName      ThirdPartyAgreementOrderField = "NAME"
 	ThirdPartyAgreementOrderFieldCreatedAt ThirdPartyAgreementOrderField = "CREATED_AT"
 )
 
@@ -43,7 +42,6 @@ var (
 
 func ThirdPartyAgreementOrderFields() []ThirdPartyAgreementOrderField {
 	return []ThirdPartyAgreementOrderField{
-		ThirdPartyAgreementOrderFieldName,
 		ThirdPartyAgreementOrderFieldCreatedAt,
 	}
 }

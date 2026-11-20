@@ -41,7 +41,6 @@ import { ThirdPartyAgreementPreviewDialog } from "./ThirdPartyAgreementPreviewDi
 const agreementFragment = graphql`
   fragment ThirdPartyAgreementListItem_agreement on ThirdPartyAgreement {
     id
-    name
     type
     validity {
       start
@@ -124,7 +123,8 @@ export function ThirdPartyAgreementListItem({
         }),
       {
         message: t("thirdPartyAgreementListItem.deleteConfirmation", {
-          name: agreement.name,
+          type: t(`thirdPartyAgreementsPage.types.${agreement.type}`),
+          fileName: agreement.file.fileName,
         }),
       },
     );
@@ -140,12 +140,10 @@ export function ThirdPartyAgreementListItem({
   return (
     <div className="flex items-center justify-between gap-4 p-4 border border-border-low rounded-lg">
       <div className="flex-1 min-w-0">
-        <h3 className="font-medium text-txt-primary">{agreement.name}</h3>
-        <p className="text-sm text-txt-secondary mt-1">
+        <h3 className="font-medium text-txt-primary">
           {t(`thirdPartyAgreementsPage.types.${agreement.type}`)}
-          {" · "}
-          {agreement.file.fileName}
-        </p>
+        </h3>
+        <p className="text-sm text-txt-secondary mt-1">{agreement.file.fileName}</p>
         {validity && (
           <p className="text-xs text-txt-secondary mt-1">{validity}</p>
         )}

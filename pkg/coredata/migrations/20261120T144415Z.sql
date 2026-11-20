@@ -18,9 +18,10 @@
 -- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 -- SOFTWARE.
 
--- A third party can have any number of named agreements (MSA, CGV/CGU, BAA,
+-- A third party can have any number of agreements (MSA, CGV/CGU, BAA,
 -- DPA, amendments, annexes). The previous tables allowed one business
--- associate agreement and one data privacy agreement.
+-- associate agreement and one data privacy agreement. The type is the
+-- only label; the attached file keeps its own name.
 
 CREATE TYPE third_party_agreement_type AS ENUM (
     'BUSINESS_ASSOCIATE',
@@ -37,7 +38,6 @@ CREATE TABLE third_party_agreements (
     organization_id TEXT NOT NULL REFERENCES organizations (id) ON UPDATE CASCADE ON DELETE CASCADE,
     tenant_id TEXT NOT NULL,
     third_party_id TEXT NOT NULL REFERENCES third_parties (id) ON UPDATE CASCADE ON DELETE CASCADE,
-    name TEXT NOT NULL,
     type third_party_agreement_type NOT NULL,
     valid_from DATE,
     valid_until DATE,
@@ -53,7 +53,6 @@ INSERT INTO third_party_agreements (
     organization_id,
     tenant_id,
     third_party_id,
-    name,
     type,
     valid_from,
     valid_until,
@@ -66,7 +65,6 @@ SELECT
     organization_id,
     tenant_id,
     third_party_id,
-    'Business associate agreement',
     'BUSINESS_ASSOCIATE',
     valid_from,
     valid_until,
@@ -81,7 +79,6 @@ INSERT INTO third_party_agreements (
     organization_id,
     tenant_id,
     third_party_id,
-    name,
     type,
     valid_from,
     valid_until,
@@ -94,7 +91,6 @@ SELECT
     organization_id,
     tenant_id,
     third_party_id,
-    'Data privacy agreement',
     'DATA_PRIVACY',
     valid_from,
     valid_until,

@@ -37,7 +37,6 @@ mutation ThirdPartyAgreementUpload($input: UploadThirdPartyAgreementInput!) {
     thirdPartyAgreementEdge {
       node {
         id
-        name
         type
       }
     }
@@ -60,7 +59,6 @@ type uploadResponse struct {
 		ThirdPartyAgreementEdge struct {
 			Node struct {
 				ID   string `json:"id"`
-				Name string `json:"name"`
 				Type string `json:"type"`
 			} `json:"node"`
 		} `json:"thirdPartyAgreementEdge"`
@@ -70,7 +68,6 @@ type uploadResponse struct {
 func NewCmdUpload(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagThirdParty string
-		flagName       string
 		flagType       string
 		flagValidFrom  string
 		flagValidUntil string
@@ -79,10 +76,9 @@ func NewCmdUpload(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "upload <file>",
 		Short: "Upload a third-party agreement",
-		Example: `  # Upload a named MSA
+		Example: `  # Upload an MSA
   prb third-party agreement upload ./msa.pdf \
     --third-party <third-party-id> \
-    --name "Master service agreement" \
     --type MASTER_SERVICE`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -105,7 +101,6 @@ func NewCmdUpload(f *cmdutil.Factory) *cobra.Command {
 
 			input := map[string]any{
 				"thirdPartyId": flagThirdParty,
-				"name":         flagName,
 				"type":         flagType,
 				"file":         nil,
 			}
@@ -140,19 +135,17 @@ func NewCmdUpload(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			node := resp.UploadThirdPartyAgreement.ThirdPartyAgreementEdge.Node
-			_, _ = fmt.Fprintf(f.IOStreams.Out, "Uploaded agreement %s (%s)\n", node.ID, node.Name)
+			_, _ = fmt.Fprintf(f.IOStreams.Out, "Uploaded agreement %s (%s)\n", node.ID, node.Type)
 
 			return nil
 		},
 	}
 
 	cmd.Flags().StringVar(&flagThirdParty, "third-party", "", "Third party ID")
-	cmd.Flags().StringVar(&flagName, "name", "", "Agreement name")
 	cmd.Flags().StringVar(&flagType, "type", "", "Agreement type (TERMS, MASTER_SERVICE, BUSINESS_ASSOCIATE, DATA_PRIVACY, AMENDMENT, ANNEX, OTHER)")
 	cmd.Flags().StringVar(&flagValidFrom, "valid-from", "", "Validity start (YYYY-MM-DD or RFC3339)")
 	cmd.Flags().StringVar(&flagValidUntil, "valid-until", "", "Validity end (YYYY-MM-DD or RFC3339)")
 	_ = cmd.MarkFlagRequired("third-party")
-	_ = cmd.MarkFlagRequired("name")
 	_ = cmd.MarkFlagRequired("type")
 
 	return cmd

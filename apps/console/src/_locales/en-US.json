@@ -3160,8 +3160,7 @@
   },
   "editThirdPartyAgreementDialog": {
     "title": "Edit agreement",
-    "fields": { "name": "Name", "type": "Type", "validFrom": "Valid from", "validUntil": "Valid until" },
-    "validation": { "nameRequired": "Name is required" },
+    "fields": { "type": "Type", "validFrom": "Valid from", "validUntil": "Valid until" },
     "messages": { "success": "Success", "error": "Error", "updated": "Agreement updated" },
     "errors": { "update": "Failed to update agreement" },
     "actions": { "update": "Update" }
@@ -3170,9 +3169,7 @@
     "title": "Add agreement",
     "fileHelp": "PDF, Word, ODT, PNG, or JPEG files up to 30MB",
     "selectedFile": "Selected file:",
-    "fields": { "name": "Name", "type": "Type", "validFrom": "Valid from", "validUntil": "Valid until" },
-    "placeholders": { "name": "DORA addendum" },
-    "validation": { "nameRequired": "Name is required" },
+    "fields": { "type": "Type", "validFrom": "Valid from", "validUntil": "Valid until" },
     "messages": { "success": "Success", "error": "Error", "uploaded": "Agreement added" },
     "errors": { "upload": "Failed to add agreement" },
     "actions": { "upload": "Add" }
@@ -3190,7 +3187,7 @@
   "thirdPartyAgreementListItem": {
     "messages": { "error": "Error" },
     "errors": { "delete": "Failed to delete agreement" },
-    "deleteConfirmation": "This will permanently delete \"{{name}}\". This action cannot be undone.",
+    "deleteConfirmation": "This will permanently delete this {{type}} ({{fileName}}). This action cannot be undone.",
     "actions": { "preview": "Preview", "download": "Download" }
   },
   "thirdPartyAgreementPreviewDialog": {

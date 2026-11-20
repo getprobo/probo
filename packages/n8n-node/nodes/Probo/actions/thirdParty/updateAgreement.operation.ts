@@ -47,19 +47,6 @@ export const description: INodeProperties[] = [
 		description: 'The ID of the third party agreement to update',
 	},
 	{
-		displayName: 'Name',
-		name: 'name',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['thirdParty'],
-				operation: ['updateAgreement'],
-			},
-		},
-		default: '',
-		description: 'New name. Leave empty to keep the current name.',
-	},
-	{
 		displayName: 'Type',
 		name: 'agreementType',
 		type: 'options',
@@ -106,7 +93,6 @@ export async function execute(
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
 	const agreementId = this.getNodeParameter('agreementId', itemIndex) as string;
-	const name = this.getNodeParameter('name', itemIndex, '') as string;
 	const agreementType = this.getNodeParameter('agreementType', itemIndex, '') as string;
 	const validFrom = this.getNodeParameter('validFrom', itemIndex, '') as string;
 	const validUntil = this.getNodeParameter('validUntil', itemIndex, '') as string;
@@ -116,7 +102,6 @@ export async function execute(
 			updateThirdPartyAgreement(input: $input) {
 				thirdPartyAgreement {
 					id
-					name
 					type
 					validity {
 						start
@@ -128,9 +113,6 @@ export async function execute(
 	`;
 
 	const input: Record<string, unknown> = { id: agreementId };
-	if (name) {
-		input.name = name;
-	}
 	if (agreementType) {
 		input.type = agreementType;
 	}
