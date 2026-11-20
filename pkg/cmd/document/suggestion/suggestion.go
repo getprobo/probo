@@ -166,18 +166,22 @@ func newListCmd(f *cmdutil.Factory) *cobra.Command {
 
 type viewResponse struct {
 	Node *struct {
-		Typename   string `json:"__typename"`
-		ID         string `json:"id"`
-		Status     string `json:"status"`
-		CreatedAt  string `json:"createdAt"`
-		ResolvedAt string `json:"resolvedAt"`
-		Author     *struct {
+		Typename    string `json:"__typename"`
+		ID          string `json:"id"`
+		Status      string `json:"status"`
+		CreatedAt   string `json:"createdAt"`
+		ResolvedAt  string `json:"resolvedAt"`
+		AnchorQuote string `json:"anchorQuote"`
+		Author      *struct {
 			ID       string `json:"id"`
 			FullName string `json:"fullName"`
 		} `json:"author"`
 		Document *struct {
 			ID string `json:"id"`
 		} `json:"document"`
+		Thread *struct {
+			ID string `json:"id"`
+		} `json:"thread"`
 	} `json:"node"`
 }
 
@@ -235,10 +239,21 @@ func newViewCmd(f *cmdutil.Factory) *cobra.Command {
 				document = n.Document.ID
 			}
 
+			thread := ""
+			if n.Thread != nil {
+				thread = n.Thread.ID
+			}
+
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("ID:"), n.ID)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Status:"), n.Status)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Author:"), author)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Document:"), document)
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Thread:"), thread)
+
+			if n.AnchorQuote != "" {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Quote:"), n.AnchorQuote)
+			}
+
 			_, _ = fmt.Fprintln(out)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Created:"), cmdutil.FormatTime(n.CreatedAt))
 
@@ -733,8 +748,10 @@ query DocumentSuggestion($id: ID!) {
       status
       createdAt
       resolvedAt
+      anchorQuote
       author { id fullName }
       document { id }
+      thread { id }
     }
   }
 }

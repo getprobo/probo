@@ -85,16 +85,20 @@ func (r *Resolver) loadReviewDocument(ctx context.Context, documentID gid.GID) (
 
 	document, err := dataloader.FromContext(ctx).Document.Load(ctx, documentID)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlx.NotFound(ctx, err)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot load document review document", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, r.documentReviewLoadError(ctx, "cannot load document review document", err)
 	}
 
 	return types.NewDocument(document), nil
+}
+
+func (r *Resolver) documentReviewLoadError(ctx context.Context, message string, err error) error {
+	if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
+		return gqlx.NotFound(ctx, err)
+	}
+
+	r.logger.ErrorCtx(ctx, message, log.Error(err))
+
+	return gqlx.Internal(ctx)
 }
 
 func (r *mutationResolver) setDocumentCommentThreadResolved(
@@ -146,6 +150,7 @@ func (r *Resolver) documentReviewError(ctx context.Context, message string, err 
 		return gqlx.NotFound(ctx, err)
 	case errors.Is(err, coredata.ErrResourceAlreadyExists),
 		errors.Is(err, probo.ErrDocumentCommentThreadResolved),
+		errors.Is(err, probo.ErrDocumentSuggestionThread),
 		errors.Is(err, collaboration.ErrDocumentCollaborationNotFound):
 		return gqlx.Conflict(ctx, err)
 	case errors.Is(err, probo.ErrNotDocumentCommentAuthor),

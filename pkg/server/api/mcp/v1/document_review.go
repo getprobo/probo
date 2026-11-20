@@ -73,6 +73,8 @@ func (r *Resolver) documentReviewError(ctx context.Context, message string, err 
 		return probo.ErrDocumentSuggestionClosed
 	case errors.Is(err, probo.ErrDocumentCommentThreadResolved):
 		return probo.ErrDocumentCommentThreadResolved
+	case errors.Is(err, probo.ErrDocumentSuggestionThread):
+		return probo.ErrDocumentSuggestionThread
 	case errors.Is(err, probo.ErrInvalidDocumentAnchor):
 		return probo.ErrInvalidDocumentAnchor
 	case errors.Is(err, collaboration.ErrQuoteNotFound):
@@ -143,12 +145,57 @@ func (r *Resolver) authorizeDocumentChange(
 	return r.Authorize(ctx, *target, action)
 }
 
-func changeDocumentParts(result *probo.DocumentChangeResult) (*types.Document, *types.DocumentSuggestion) {
+func (r *Resolver) changeDocumentParts(
+	ctx context.Context,
+	scope coredata.Scoper,
+	result *probo.DocumentChangeResult,
+) (*types.Document, *types.DocumentSuggestion, error) {
 	document := types.NewDocument(result.Document)
 
 	if result.Suggestion == nil {
-		return document, nil
+		return document, nil, nil
 	}
 
-	return document, types.NewDocumentSuggestion(result.Suggestion)
+	suggestion, err := r.newDocumentSuggestion(ctx, scope, result.Suggestion)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return document, suggestion, nil
+}
+
+func (r *Resolver) newDocumentSuggestion(
+	ctx context.Context,
+	scope coredata.Scoper,
+	suggestion *coredata.DocumentSuggestion,
+) (*types.DocumentSuggestion, error) {
+	threadIDs, err := r.documentSuggestionThreadIDs(ctx, scope, []*coredata.DocumentSuggestion{suggestion})
+	if err != nil {
+		return nil, err
+	}
+
+	return types.NewDocumentSuggestion(suggestion, threadIDs[suggestion.ID]), nil
+}
+
+func (r *Resolver) documentSuggestionThreadIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	suggestions []*coredata.DocumentSuggestion,
+) (map[gid.GID]gid.GID, error) {
+	suggestionIDs := make([]gid.GID, len(suggestions))
+	for i, suggestion := range suggestions {
+		suggestionIDs[i] = suggestion.ID
+	}
+
+	threads, err := r.proboSvc.Documents.LoadCommentThreadsBySuggestionIDs(ctx, scope, suggestionIDs)
+	if err != nil {
+		return nil, r.documentReviewError(ctx, "cannot load document suggestion threads", err)
+	}
+
+	threadIDs := make(map[gid.GID]gid.GID, len(threads))
+	for _, thread := range threads {
+		threadIDs[*thread.SuggestionID] = thread.ID
+	}
+
+	return threadIDs, nil
 }

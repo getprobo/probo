@@ -24,12 +24,28 @@ import { graphql } from "react-relay";
 import type { useAcceptDocumentSuggestionMutation } from "#/__generated__/core/useAcceptDocumentSuggestionMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
 
+import type { DocumentThreadConnections } from "./documentThreadConnections";
+
 const acceptDocumentSuggestionMutation = graphql`
-  mutation useAcceptDocumentSuggestionMutation($input: AcceptDocumentSuggestionInput!) {
+  mutation useAcceptDocumentSuggestionMutation(
+    $input: AcceptDocumentSuggestionInput!
+    $connections: [ID!]!
+  ) {
     acceptDocumentSuggestion(input: $input) {
       documentSuggestion {
         id
         status
+        anchorStart
+        anchorEnd
+        anchorQuote
+        thread {
+          id @deleteEdge(connections: $connections)
+          resolvedAt
+          resolvedBy {
+            id
+            fullName
+          }
+        }
       }
     }
   }
@@ -42,8 +58,15 @@ export function useAcceptDocumentSuggestion() {
     { errorToast: t("details.review.errors.accept") },
   );
 
-  async function acceptDocumentSuggestion(suggestionId: string) {
-    await commit({ variables: { input: { suggestionId } } });
+  // The decision resolves the suggestion's thread: it leaves the open threads
+  // and stays in the history.
+  async function acceptDocumentSuggestion(suggestionId: string, threadConnections: DocumentThreadConnections) {
+    await commit({
+      variables: {
+        input: { suggestionId },
+        connections: [threadConnections.open],
+      },
+    });
   }
 
   return [acceptDocumentSuggestion, isAccepting] as const;

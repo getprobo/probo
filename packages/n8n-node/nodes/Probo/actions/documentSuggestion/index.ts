@@ -52,7 +52,7 @@ export const description: INodeProperties[] = [
 			{ name: 'Get', value: 'get', description: 'Get a suggestion', action: 'Get a document suggestion' },
 			{ name: 'Get Many', value: 'getAll', description: 'List suggestions on a document', action: 'List document suggestions' },
 			{ name: 'Reject', value: 'reject', description: 'Reject a redline', action: 'Reject a document suggestion' },
-			{ name: 'Reply', value: 'reply', description: 'Comment on a redline', action: 'Reply on a document suggestion' },
+			{ name: 'Reply', value: 'reply', description: "Comment on a redline in the suggestion's thread", action: 'Reply on a document suggestion' },
 			{ name: 'Start', value: 'start', description: 'Allocate a suggestion ID', action: 'Start a document suggestion' },
 		],
 		default: 'getAll',

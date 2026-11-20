@@ -118,6 +118,7 @@ export function commentAnchorRange(
   handle: DocHandle<RichEditorAutomergeDocument>,
   doc: import("@tiptap/pm/model").Node,
   anchor: Pick<CommentAnchor, "anchorStart" | "anchorEnd">,
+  { allowCollapsed = false }: { allowCollapsed?: boolean } = {},
 ) {
   const document = handle.doc();
   if (!document) return null;
@@ -134,7 +135,7 @@ export function commentAnchorRange(
   if (!resolved) return null;
   const from = Math.min(resolved.anchorPosition, resolved.headPosition);
   const to = Math.max(resolved.anchorPosition, resolved.headPosition);
-  if (from === to || from < 0 || to > doc.content.size) return null;
+  if ((from === to && !allowCollapsed) || from < 0 || to > doc.content.size) return null;
   return { from, to };
 }
 

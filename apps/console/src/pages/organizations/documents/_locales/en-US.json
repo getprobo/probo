@@ -157,9 +157,13 @@
       "history": {
         "empty": "No comments yet",
         "loadMore": "Load more",
-        "onSuggestion": "On a suggestion:",
         "resolved": "Resolved",
-        "resolvedBy": "Resolved by {{name}}"
+        "resolvedBy": "Resolved by {{name}}",
+        "status": {
+          "open": "Open",
+          "accepted": "Accepted",
+          "rejected": "Rejected"
+        }
       },
       "contentRequired": "Write a comment first",
       "contentTooLong": "Comments are limited to {{max}} characters",

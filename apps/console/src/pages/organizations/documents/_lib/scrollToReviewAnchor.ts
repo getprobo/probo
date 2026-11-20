@@ -24,19 +24,25 @@ import type { Editor } from "@tiptap/core";
 
 import type { ThreadAnchorSource } from "./reviewAnchors";
 
-// Brings a thread's text into the middle of the document frame. Nothing
-// happens when the text no longer exists.
+// Brings a thread's text into the middle of the document frame. A collapsed
+// anchor, left where a decided suggestion kept no text, scrolls to that
+// point. Nothing happens when the text no longer exists.
 export function scrollToReviewAnchor(
   editor: Editor,
   handle: RepoCollaborationHandle,
   anchor: Pick<ThreadAnchorSource, "anchorStart" | "anchorEnd">,
 ) {
   if (editor.isDestroyed) return;
-  const range = commentAnchorRange(handle, editor.state.doc, anchor);
+  const range = commentAnchorRange(handle, editor.state.doc, anchor, { allowCollapsed: true });
   if (range == null) return;
+  scrollToReviewPosition(editor, range.from);
+}
 
+// Brings a document position into the middle of the document frame.
+export function scrollToReviewPosition(editor: Editor, pos: number) {
+  if (editor.isDestroyed) return;
   try {
-    const { node } = editor.view.domAtPos(range.from);
+    const { node } = editor.view.domAtPos(pos);
     const element = node instanceof Element ? node : node.parentElement;
     element?.scrollIntoView({ block: "center", behavior: "smooth" });
   } catch {

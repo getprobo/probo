@@ -23,69 +23,60 @@ import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
-import type { DocumentSuggestionListItem_suggestion$key } from "#/__generated__/core/DocumentSuggestionListItem_suggestion.graphql";
 import type { DocumentSuggestionListItem_thread$key } from "#/__generated__/core/DocumentSuggestionListItem_thread.graphql";
 
 import type { DocumentThreadConnections } from "../../_lib/documentThreadConnections";
 import type { SuggestionAnchor } from "../../_lib/reviewAnchors";
 import { useAcceptDocumentSuggestion } from "../../_lib/useAcceptDocumentSuggestion";
-import { useCreateDocumentCommentThread } from "../../_lib/useCreateDocumentCommentThread";
 import { useRejectDocumentSuggestion } from "../../_lib/useRejectDocumentSuggestion";
 import { documentSuggestionListItem } from "../../variants";
 
 import { DocumentReviewAction } from "./DocumentReviewAction";
 import { DocumentReviewAuthor } from "./DocumentReviewAuthor";
 import { DocumentReviewItem } from "./DocumentReviewItem";
-import { DocumentReviewReplyForm } from "./DocumentReviewReplyForm";
 import { DocumentReviewThread } from "./DocumentReviewThread";
 import { DocumentSuggestionChange } from "./DocumentSuggestionChange";
 
 const documentSuggestionListItemFragment = graphql`
-  fragment DocumentSuggestionListItem_suggestion on DocumentSuggestion {
-    id
-    createdAt
-    canAccept: permission(action: "core:document:suggest-accept")
-    canReject: permission(action: "core:document:suggest-reject")
-    author {
-      ...DocumentReviewAuthor_profile
-    }
-  }
-`;
-
-const documentSuggestionListItemThreadFragment = graphql`
   fragment DocumentSuggestionListItem_thread on DocumentCommentThread {
+    suggestion {
+      id
+      createdAt
+      canAccept: permission(action: "core:document:suggest-accept")
+      canReject: permission(action: "core:document:suggest-reject")
+      author {
+        ...DocumentReviewAuthor_profile
+      }
+    }
     ...DocumentReviewThread_thread
   }
 `;
 
 interface DocumentSuggestionListItemProps {
-  suggestionKey: DocumentSuggestionListItem_suggestion$key;
-  threadKey: DocumentSuggestionListItem_thread$key | null;
+  threadKey: DocumentSuggestionListItem_thread$key;
   anchor: SuggestionAnchor;
-  documentId: string;
-  canComment: boolean;
   threadConnections: DocumentThreadConnections;
   active: boolean;
   onActivate: () => void;
 }
 
+// A suggestion's card: its changes read from the text, then its thread.
 export function DocumentSuggestionListItem({
-  suggestionKey,
   threadKey,
   anchor,
-  documentId,
-  canComment,
   threadConnections,
   active,
   onActivate,
 }: DocumentSuggestionListItemProps) {
-  const suggestion = useFragment(documentSuggestionListItemFragment, suggestionKey);
-  const thread = useFragment(documentSuggestionListItemThreadFragment, threadKey);
+  const thread = useFragment(documentSuggestionListItemFragment, threadKey);
   const { t } = useTranslation("organizations/documents");
   const [acceptDocumentSuggestion, isAccepting] = useAcceptDocumentSuggestion();
   const [rejectDocumentSuggestion, isRejecting] = useRejectDocumentSuggestion();
-  const [createSuggestionThread] = useCreateDocumentCommentThread();
   const { changes } = documentSuggestionListItem();
+  const suggestion = thread.suggestion;
+  if (suggestion == null) {
+    return null;
+  }
   const hidden = anchor.changeCount - anchor.changes.length;
   const deciding = isAccepting || isRejecting;
 
@@ -99,7 +90,7 @@ export function DocumentSuggestionListItem({
               loading={isAccepting}
               disabled={deciding}
               onClick={() => {
-                void acceptDocumentSuggestion(suggestion.id).catch(() => {
+                void acceptDocumentSuggestion(suggestion.id, threadConnections).catch(() => {
                   // The mutation already shows an error toast.
                 });
               }}
@@ -114,7 +105,7 @@ export function DocumentSuggestionListItem({
               loading={isRejecting}
               disabled={deciding}
               onClick={() => {
-                void rejectDocumentSuggestion(suggestion.id).catch(() => {
+                void rejectDocumentSuggestion(suggestion.id, threadConnections).catch(() => {
                   // The mutation already shows an error toast.
                 });
               }}
@@ -146,24 +137,11 @@ export function DocumentSuggestionListItem({
           </Text>
         )}
       </div>
-      {thread != null
-        ? (
-            <DocumentReviewThread
-              threadKey={thread}
-              threadConnections={threadConnections}
-              expanded={active}
-            />
-          )
-        : active && canComment && (
-          <DocumentReviewReplyForm
-            onSubmit={content => createSuggestionThread(
-              documentId,
-              suggestion.id,
-              content,
-              threadConnections,
-            )}
-          />
-        )}
+      <DocumentReviewThread
+        threadKey={thread}
+        threadConnections={threadConnections}
+        expanded={active}
+      />
     </DocumentReviewItem>
   );
 }

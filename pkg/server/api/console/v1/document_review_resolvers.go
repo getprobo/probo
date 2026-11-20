@@ -70,14 +70,13 @@ func (r *documentCommentThreadResolver) Suggestion(ctx context.Context, obj *typ
 		return nil, nil
 	}
 
-	scope, err := r.authorize(ctx, obj.Suggestion.ID, probo.ActionDocumentGet)
-	if err != nil {
+	if _, err := r.authorize(ctx, obj.Suggestion.ID, probo.ActionDocumentGet); err != nil {
 		return nil, err
 	}
 
-	suggestion, err := r.probo.Documents.GetSuggestion(ctx, scope, obj.Suggestion.ID)
+	suggestion, err := dataloader.FromContext(ctx).DocumentSuggestion.Load(ctx, obj.Suggestion.ID)
 	if err != nil {
-		return nil, r.documentReviewError(ctx, "cannot get document suggestion", err)
+		return nil, r.documentReviewLoadError(ctx, "cannot load document suggestion", err)
 	}
 
 	return types.NewDocumentSuggestion(suggestion), nil
@@ -178,6 +177,20 @@ func (r *documentSuggestionResolver) Document(ctx context.Context, obj *types.Do
 // Author is the resolver for the author field.
 func (r *documentSuggestionResolver) Author(ctx context.Context, obj *types.DocumentSuggestion) (*types.Profile, error) {
 	return r.loadReviewProfile(ctx, obj.Author.ID)
+}
+
+// Thread is the resolver for the thread field.
+func (r *documentSuggestionResolver) Thread(ctx context.Context, obj *types.DocumentSuggestion) (*types.DocumentCommentThread, error) {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet); err != nil {
+		return nil, err
+	}
+
+	thread, err := dataloader.FromContext(ctx).DocumentCommentThreadBySuggestion.Load(ctx, obj.ID)
+	if err != nil {
+		return nil, r.documentReviewLoadError(ctx, "cannot load document suggestion thread", err)
+	}
+
+	return types.NewDocumentCommentThread(thread), nil
 }
 
 // ResolvedBy is the resolver for the resolvedBy field.

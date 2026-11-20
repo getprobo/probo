@@ -54,17 +54,26 @@ func NewDocumentComment(comment *coredata.DocumentComment) *DocumentComment {
 	}
 }
 
-func NewDocumentSuggestion(suggestion *coredata.DocumentSuggestion) *DocumentSuggestion {
-	return &DocumentSuggestion{
+func NewDocumentSuggestion(suggestion *coredata.DocumentSuggestion, threadID gid.GID) *DocumentSuggestion {
+	node := &DocumentSuggestion{
 		ID:                  suggestion.ID,
 		DocumentID:          suggestion.DocumentID,
 		AuthorProfileID:     suggestion.AuthorProfileID,
 		Status:              suggestion.Status,
+		ThreadID:            threadID,
+		AnchorQuote:         suggestion.AnchorQuote,
 		ResolvedAt:          suggestion.ResolvedAt,
 		ResolvedByProfileID: gidString(suggestion.ResolvedByProfileID),
 		CreatedAt:           suggestion.CreatedAt,
 		UpdatedAt:           suggestion.UpdatedAt,
 	}
+
+	if suggestion.AnchorStart != nil {
+		node.AnchorStart = new(base64.StdEncoding.EncodeToString(suggestion.AnchorStart))
+		node.AnchorEnd = new(base64.StdEncoding.EncodeToString(suggestion.AnchorEnd))
+	}
+
+	return node
 }
 
 func NewListDocumentCommentThreadsOutput(
@@ -101,10 +110,11 @@ func NewListDocumentCommentsOutput(
 
 func NewListDocumentSuggestionsOutput(
 	suggestionPage *page.Page[*coredata.DocumentSuggestion, coredata.DocumentSuggestionOrderField],
+	threadIDs map[gid.GID]gid.GID,
 ) ListDocumentSuggestionsOutput {
 	suggestions := make([]*DocumentSuggestion, 0, len(suggestionPage.Data))
 	for _, suggestion := range suggestionPage.Data {
-		suggestions = append(suggestions, NewDocumentSuggestion(suggestion))
+		suggestions = append(suggestions, NewDocumentSuggestion(suggestion, threadIDs[suggestion.ID]))
 	}
 
 	return ListDocumentSuggestionsOutput{

@@ -188,13 +188,19 @@ func NewDocumentSuggestionEdge(
 
 func NewDocumentSuggestion(suggestion *coredata.DocumentSuggestion) *DocumentSuggestion {
 	node := &DocumentSuggestion{
-		ID:         suggestion.ID,
-		Document:   &Document{ID: suggestion.DocumentID},
-		Author:     &Profile{ID: suggestion.AuthorProfileID},
-		Status:     suggestion.Status,
-		ResolvedAt: suggestion.ResolvedAt,
-		CreatedAt:  suggestion.CreatedAt,
-		UpdatedAt:  suggestion.UpdatedAt,
+		ID:          suggestion.ID,
+		Document:    &Document{ID: suggestion.DocumentID},
+		Author:      &Profile{ID: suggestion.AuthorProfileID},
+		Status:      suggestion.Status,
+		AnchorQuote: suggestion.AnchorQuote,
+		ResolvedAt:  suggestion.ResolvedAt,
+		CreatedAt:   suggestion.CreatedAt,
+		UpdatedAt:   suggestion.UpdatedAt,
+	}
+
+	if suggestion.AnchorStart != nil {
+		node.AnchorStart = new(base64.StdEncoding.EncodeToString(suggestion.AnchorStart))
+		node.AnchorEnd = new(base64.StdEncoding.EncodeToString(suggestion.AnchorEnd))
 	}
 
 	if suggestion.ResolvedByProfileID != nil {

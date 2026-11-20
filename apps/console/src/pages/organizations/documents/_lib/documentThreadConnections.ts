@@ -28,6 +28,18 @@ export type DocumentThreadConnections = {
   history: string;
 };
 
+// Must match the arguments of the open threads connection in DocumentReviewPanel.
+export function documentOpenThreadsConnectionId(documentId: string) {
+  return ConnectionHandler.getConnectionID(
+    documentId,
+    "DocumentReviewPanel_commentThreads",
+    {
+      filter: { resolved: false },
+      orderBy: { field: "CREATED_AT", direction: "ASC" },
+    },
+  );
+}
+
 // Must match the arguments of the history connection in DocumentCommentHistoryList.
 export const documentCommentHistoryOrder = { field: "CREATED_AT", direction: "DESC" } as const;
 

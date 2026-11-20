@@ -76,7 +76,7 @@ export async function execute(this: IExecuteFunctions, itemIndex: number): Promi
 				__typename
 				... on Document {
 					suggestions(first: $first, after: $after, filter: $filter, orderBy: { field: CREATED_AT, direction: ASC }) {
-						edges { node { id status author { id fullName } createdAt } }
+						edges { node { id status author { id fullName } thread { id } createdAt } }
 						pageInfo { hasNextPage endCursor }
 					}
 				}

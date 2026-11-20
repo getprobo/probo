@@ -269,6 +269,14 @@ export const documentReviewPanel = tv({
     root: "",
     bar: "flex shrink-0 pb-2",
     body: "",
+    // The history shows no scrollbar beside the document's: the edge fade
+    // tells there is more above or below.
+    viewport: [
+      "h-full overscroll-y-contain outline-none",
+      "mask-no-repeat",
+      "mask-[linear-gradient(to_bottom,transparent,black_min(16px,var(--scroll-area-overflow-y-start)),black_calc(100%-min(16px,var(--scroll-area-overflow-y-end,16px))),transparent)]",
+    ],
+    content: "pb-6",
   },
   variants: {
     view: {
@@ -278,8 +286,8 @@ export const documentReviewPanel = tv({
       // The history stays in view wherever the document is scrolled, and
       // scrolls on its own within the frame's height.
       all: {
-        root: "sticky top-0 flex max-h-(--review-viewport-height,100vh) flex-col",
-        body: "min-h-0 flex-1 overflow-y-auto pb-6",
+        root: "sticky top-0 flex h-(--review-viewport-height,100vh) flex-col",
+        body: "relative min-h-0 flex-1 overflow-hidden",
       },
     },
   },
@@ -294,7 +302,6 @@ export const documentCommentHistory = tv({
     more: "self-start",
     item: "",
     quote: "line-clamp-2 border-l-2 border-sand-6 pl-2",
-    quoteLabel: "mr-1 font-medium",
   },
   variants: {
     resolved: {

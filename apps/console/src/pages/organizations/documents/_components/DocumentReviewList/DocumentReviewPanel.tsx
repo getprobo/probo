@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { ScrollArea } from "@base-ui/react/scroll-area";
 import type { RepoCollaborationHandle } from "@probo/collaboration";
 import type { Editor } from "@tiptap/core";
 import { useEffect, useMemo, useState } from "react";
@@ -25,15 +26,14 @@ import { createPortal } from "react-dom";
 import { graphql, usePaginationFragment, useQueryLoader } from "react-relay";
 
 import type { DocumentCommentHistoryQuery } from "#/__generated__/core/DocumentCommentHistoryQuery.graphql";
-import type { DocumentReviewPanel_suggestions$key } from "#/__generated__/core/DocumentReviewPanel_suggestions.graphql";
 import type { DocumentReviewPanel_threads$key } from "#/__generated__/core/DocumentReviewPanel_threads.graphql";
-import type { DocumentReviewPanelSuggestionsPaginationQuery } from "#/__generated__/core/DocumentReviewPanelSuggestionsPaginationQuery.graphql";
 import type { DocumentReviewPanelThreadsPaginationQuery } from "#/__generated__/core/DocumentReviewPanelThreadsPaginationQuery.graphql";
 import { useLoadAllPages } from "#/lib/relay/useLoadAllPages";
 
 import { documentCommentHistoryConnectionId, type DocumentThreadConnections } from "../../_lib/documentThreadConnections";
 import type { ThreadAnchorSource } from "../../_lib/reviewAnchors";
-import { scrollToReviewAnchor } from "../../_lib/scrollToReviewAnchor";
+import type { ReviewHistoryTarget } from "../../_lib/reviewHistoryTarget";
+import { scrollToReviewAnchor, scrollToReviewPosition } from "../../_lib/scrollToReviewAnchor";
 import { useDismissActiveReview } from "../../_lib/useDismissActiveReview";
 import { useReviewAnchors } from "../../_lib/useReviewAnchors";
 import type { ReviewCardAnchor } from "../../_lib/useReviewCardTops";
@@ -56,7 +56,7 @@ const documentReviewPanelThreadsFragment = graphql`
     after: { type: "CursorKey", defaultValue: null }
   ) {
     id
-    canComment: permission(action: "core:document:comment")
+    # Must match documentOpenThreadsConnectionId.
     commentThreads(
       first: $first
       after: $after
@@ -69,7 +69,10 @@ const documentReviewPanelThreadsFragment = graphql`
           id
           anchorStart
           anchorEnd
-          suggestionId
+          suggestion {
+            id
+            status
+          }
           ...DocumentCommentThreadListItem_thread
           ...DocumentSuggestionListItem_thread
         }
@@ -78,32 +81,8 @@ const documentReviewPanelThreadsFragment = graphql`
   }
 `;
 
-const documentReviewPanelSuggestionsFragment = graphql`
-  fragment DocumentReviewPanel_suggestions on Document
-  @refetchable(queryName: "DocumentReviewPanelSuggestionsPaginationQuery")
-  @argumentDefinitions(
-    first: { type: "Int", defaultValue: 50 }
-    after: { type: "CursorKey", defaultValue: null }
-  ) {
-    suggestions(
-      first: $first
-      after: $after
-      filter: { status: OPEN }
-      orderBy: { field: CREATED_AT, direction: ASC }
-    ) @connection(key: "DocumentReviewPanel_suggestions", filters: ["filter", "orderBy"]) {
-      edges {
-        node {
-          id
-          status
-          ...DocumentSuggestionListItem_suggestion
-        }
-      }
-    }
-  }
-`;
-
 interface DocumentReviewPanelProps {
-  documentKey: DocumentReviewPanel_threads$key & DocumentReviewPanel_suggestions$key;
+  documentKey: DocumentReviewPanel_threads$key;
   editor: Editor | null;
   collaborationHandle: RepoCollaborationHandle;
   switchContainer: HTMLElement | null;
@@ -126,20 +105,10 @@ export function DocumentReviewPanel({
     DocumentReviewPanelThreadsPaginationQuery,
     DocumentReviewPanel_threads$key
   >(documentReviewPanelThreadsFragment, documentKey);
-  const suggestionsPage = usePaginationFragment<
-    DocumentReviewPanelSuggestionsPaginationQuery,
-    DocumentReviewPanel_suggestions$key
-  >(documentReviewPanelSuggestionsFragment, documentKey);
   useLoadAllPages({
     hasNext: threadsPage.hasNext,
     isLoadingNext: threadsPage.isLoadingNext,
     loadNext: threadsPage.loadNext,
-    pageSize: reviewPageSize,
-  });
-  useLoadAllPages({
-    hasNext: suggestionsPage.hasNext,
-    isLoadingNext: suggestionsPage.isLoadingNext,
-    loadNext: suggestionsPage.loadNext,
     pageSize: reviewPageSize,
   });
   const [view, setView] = useState<DocumentReviewView>("open");
@@ -162,33 +131,40 @@ export function DocumentReviewPanel({
   const [historyAnchor, setHistoryAnchor] = useState<ThreadAnchorSource | null>(null);
 
   const reviewDocument = threadsPage.data;
+  const refetchThreads = threadsPage.refetch;
+  const historyLoaded = historyQueryRef != null;
+
+  // A review notice means threads or suggestions changed elsewhere: another
+  // reviewer, or the server rejecting a suggestion whose edits were undone.
+  useEffect(() => {
+    return collaborationHandle.onReview?.(() => {
+      refetchThreads({}, { fetchPolicy: "store-and-network" });
+      if (historyLoaded) {
+        loadHistory({ documentId: reviewDocument.id }, { fetchPolicy: "store-and-network" });
+      }
+    });
+  }, [collaborationHandle, historyLoaded, loadHistory, refetchThreads, reviewDocument.id]);
   const openConnectionId = reviewDocument.commentThreads.__id;
   const threadConnections = useMemo<DocumentThreadConnections>(
     () => ({ open: openConnectionId, history: documentCommentHistoryConnectionId(reviewDocument.id) }),
     [openConnectionId, reviewDocument.id],
   );
-  const suggestionEdges = suggestionsPage.data.suggestions.edges;
   const threadEdges = reviewDocument.commentThreads.edges;
-  // An accepted or rejected suggestion stays in the connection until the next
-  // fetch, so its status keeps it off the column.
-  const suggestions = useMemo(
-    () => suggestionEdges.map(edge => edge.node).filter(node => node.status === "OPEN"),
-    [suggestionEdges],
-  );
-  // A comment on an open suggestion belongs to that suggestion, not its own card.
+  // Comment cards are keyed by thread and suggestion cards by suggestion,
+  // which is the id the editor marks carry. A decided suggestion whose thread
+  // has not left the connection yet stays off the column.
   const { threads, suggestionThreads } = useMemo(() => {
-    const suggestionIds = new Set(suggestions.map(suggestion => suggestion.id));
-    const standalone: Array<(typeof threadEdges)[number]["node"]> = [];
+    const comments: Array<(typeof threadEdges)[number]["node"]> = [];
     const bySuggestion = new Map<string, (typeof threadEdges)[number]["node"]>();
     for (const { node } of threadEdges) {
-      if (node.suggestionId != null && suggestionIds.has(node.suggestionId)) {
-        if (!bySuggestion.has(node.suggestionId)) bySuggestion.set(node.suggestionId, node);
-      } else {
-        standalone.push(node);
+      if (node.suggestion == null) {
+        comments.push(node);
+      } else if (node.suggestion.status === "OPEN") {
+        bySuggestion.set(node.suggestion.id, node);
       }
     }
-    return { threads: standalone, suggestionThreads: bySuggestion };
-  }, [suggestions, threadEdges]);
+    return { threads: comments, suggestionThreads: bySuggestion };
+  }, [threadEdges]);
   const threadSources = useMemo(
     () => threads.map(({ id, anchorStart, anchorEnd }) => ({ id, anchorStart, anchorEnd })),
     [threads],
@@ -201,12 +177,12 @@ export function DocumentReviewPanel({
       const pos = anchors.threads.get(thread.id);
       if (pos != null) list.push({ key: thread.id, pos });
     }
-    for (const suggestion of suggestions) {
-      const anchor = anchors.suggestions.get(suggestion.id);
-      if (anchor) list.push({ key: suggestion.id, pos: anchor.from });
+    for (const suggestionId of suggestionThreads.keys()) {
+      const anchor = anchors.suggestions.get(suggestionId);
+      if (anchor) list.push({ key: suggestionId, pos: anchor.from });
     }
     return list;
-  }, [anchors, suggestions, threads]);
+  }, [anchors, suggestionThreads, threads]);
 
   // A thread picked in the history may be resolved or belong to a
   // suggestion, so it is not among the open threads drawn in the text. It
@@ -229,11 +205,7 @@ export function DocumentReviewPanel({
   const markPressInside = useDismissActiveReview(activeKey != null, () => onActiveChange(null));
 
   const threadById = useMemo(() => new Map(threads.map(thread => [thread.id, thread])), [threads]);
-  const suggestionById = useMemo(
-    () => new Map(suggestions.map(suggestion => [suggestion.id, suggestion])),
-    [suggestions],
-  );
-  const { root, bar, body } = documentReviewPanel({ view });
+  const { root, bar, body, viewport, content } = documentReviewPanel({ view });
 
   function selectView(next: DocumentReviewView) {
     setView(next);
@@ -243,11 +215,20 @@ export function DocumentReviewPanel({
     }
   }
 
-  function activateHistoryThread(thread: ThreadAnchorSource) {
-    setHistoryAnchor(thread);
-    onActiveChange(thread.id);
+  function activateHistoryEntry(target: ReviewHistoryTarget) {
+    if (target.kind === "suggestion") {
+      setHistoryAnchor(null);
+      onActiveChange(target.id);
+      const anchor = anchors.suggestions.get(target.id);
+      if (editor != null && anchor != null) {
+        scrollToReviewPosition(editor, anchor.from);
+      }
+      return;
+    }
+    setHistoryAnchor(target.anchor);
+    onActiveChange(target.anchor.id);
     if (editor != null) {
-      scrollToReviewAnchor(editor, collaborationHandle, thread);
+      scrollToReviewAnchor(editor, collaborationHandle, target.anchor);
     }
   }
 
@@ -263,18 +244,15 @@ export function DocumentReviewPanel({
         />
       );
     }
-    const suggestion = suggestionById.get(key);
+    const suggestionThread = suggestionThreads.get(key);
     const anchor = anchors.suggestions.get(key);
-    if (suggestion == null || anchor == null) {
+    if (suggestionThread == null || anchor == null) {
       return null;
     }
     return (
       <DocumentSuggestionListItem
-        suggestionKey={suggestion}
-        threadKey={suggestionThreads.get(key) ?? null}
+        threadKey={suggestionThread}
         anchor={anchor}
-        documentId={reviewDocument.id}
-        canComment={reviewDocument.canComment}
         threadConnections={threadConnections}
         active={activeKey === key}
         onActivate={() => onActiveChange(key)}
@@ -301,15 +279,20 @@ export function DocumentReviewPanel({
             />
           )
         : (
-            <div className={body()}>
-              <DocumentCommentHistory
-                queryRef={historyQueryRef}
-                threadConnections={threadConnections}
-                activeKey={activeKey}
-                onActivate={activateHistoryThread}
-                onPressInside={markPressInside}
-              />
-            </div>
+            <ScrollArea.Root className={body()}>
+              <ScrollArea.Viewport className={viewport()}>
+                <ScrollArea.Content className={content()}>
+                  <DocumentCommentHistory
+                    queryRef={historyQueryRef}
+                    threadConnections={threadConnections}
+                    liveSuggestions={anchors.suggestions}
+                    activeKey={activeKey}
+                    onActivate={activateHistoryEntry}
+                    onPressInside={markPressInside}
+                  />
+                </ScrollArea.Content>
+              </ScrollArea.Viewport>
+            </ScrollArea.Root>
           )}
     </div>
   );

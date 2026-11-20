@@ -11907,7 +11907,12 @@ func (r *Resolver) ListDocumentSuggestionsTool(ctx context.Context, req *mcp.Cal
 		return nil, types.ListDocumentSuggestionsOutput{}, r.documentReviewError(ctx, "cannot list document suggestions", err)
 	}
 
-	return nil, types.NewListDocumentSuggestionsOutput(suggestions), nil
+	threadIDs, err := r.documentSuggestionThreadIDs(ctx, scope, suggestions.Data)
+	if err != nil {
+		return nil, types.ListDocumentSuggestionsOutput{}, err
+	}
+
+	return nil, types.NewListDocumentSuggestionsOutput(suggestions, threadIDs), nil
 }
 
 func (r *Resolver) GetDocumentSuggestionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetDocumentSuggestionInput) (*mcp.CallToolResult, types.GetDocumentSuggestionOutput, error) {
@@ -11921,7 +11926,12 @@ func (r *Resolver) GetDocumentSuggestionTool(ctx context.Context, req *mcp.CallT
 		return nil, types.GetDocumentSuggestionOutput{}, r.documentReviewError(ctx, "cannot get document suggestion", err)
 	}
 
-	return nil, types.GetDocumentSuggestionOutput{Suggestion: types.NewDocumentSuggestion(suggestion)}, nil
+	node, err := r.newDocumentSuggestion(ctx, scope, suggestion)
+	if err != nil {
+		return nil, types.GetDocumentSuggestionOutput{}, err
+	}
+
+	return nil, types.GetDocumentSuggestionOutput{Suggestion: node}, nil
 }
 
 func (r *Resolver) StartDocumentSuggestionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.StartDocumentSuggestionInput) (*mcp.CallToolResult, types.StartDocumentSuggestionOutput, error) {
@@ -11969,7 +11979,12 @@ func (r *Resolver) StartDocumentSuggestionTool(ctx context.Context, req *mcp.Cal
 		return nil, types.StartDocumentSuggestionOutput{}, r.documentReviewError(ctx, "cannot start document suggestion", err)
 	}
 
-	return nil, types.StartDocumentSuggestionOutput{Suggestion: types.NewDocumentSuggestion(suggestion)}, nil
+	node, err := r.newDocumentSuggestion(ctx, scope, suggestion)
+	if err != nil {
+		return nil, types.StartDocumentSuggestionOutput{}, err
+	}
+
+	return nil, types.StartDocumentSuggestionOutput{Suggestion: node}, nil
 }
 
 func (r *Resolver) AcceptDocumentSuggestionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AcceptDocumentSuggestionInput) (*mcp.CallToolResult, types.AcceptDocumentSuggestionOutput, error) {
@@ -11993,7 +12008,12 @@ func (r *Resolver) AcceptDocumentSuggestionTool(ctx context.Context, req *mcp.Ca
 		return nil, types.AcceptDocumentSuggestionOutput{}, r.documentReviewError(ctx, "cannot accept document suggestion", err)
 	}
 
-	return nil, types.AcceptDocumentSuggestionOutput{Suggestion: types.NewDocumentSuggestion(suggestion)}, nil
+	node, err := r.newDocumentSuggestion(ctx, scope, suggestion)
+	if err != nil {
+		return nil, types.AcceptDocumentSuggestionOutput{}, err
+	}
+
+	return nil, types.AcceptDocumentSuggestionOutput{Suggestion: node}, nil
 }
 
 func (r *Resolver) RejectDocumentSuggestionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RejectDocumentSuggestionInput) (*mcp.CallToolResult, types.RejectDocumentSuggestionOutput, error) {
@@ -12017,7 +12037,12 @@ func (r *Resolver) RejectDocumentSuggestionTool(ctx context.Context, req *mcp.Ca
 		return nil, types.RejectDocumentSuggestionOutput{}, r.documentReviewError(ctx, "cannot reject document suggestion", err)
 	}
 
-	return nil, types.RejectDocumentSuggestionOutput{Suggestion: types.NewDocumentSuggestion(suggestion)}, nil
+	node, err := r.newDocumentSuggestion(ctx, scope, suggestion)
+	if err != nil {
+		return nil, types.RejectDocumentSuggestionOutput{}, err
+	}
+
+	return nil, types.RejectDocumentSuggestionOutput{Suggestion: node}, nil
 }
 
 func (r *Resolver) ListAsanaTeamsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListAsanaTeamsInput) (*mcp.CallToolResult, types.ListAsanaTeamsOutput, error) {
@@ -12298,7 +12323,10 @@ func (r *Resolver) ChangeDocumentTextTool(ctx context.Context, req *mcp.CallTool
 		return nil, types.ChangeDocumentTextOutput{}, r.documentReviewError(ctx, "cannot change document text", err)
 	}
 
-	document, suggestion := changeDocumentParts(result)
+	document, suggestion, err := r.changeDocumentParts(ctx, scope, result)
+	if err != nil {
+		return nil, types.ChangeDocumentTextOutput{}, err
+	}
 
 	return nil, types.ChangeDocumentTextOutput{Document: document, Suggestion: suggestion}, nil
 }
@@ -12328,7 +12356,10 @@ func (r *Resolver) ChangeDocumentFormatTool(ctx context.Context, req *mcp.CallTo
 		return nil, types.ChangeDocumentFormatOutput{}, r.documentReviewError(ctx, "cannot change document format", err)
 	}
 
-	document, suggestion := changeDocumentParts(result)
+	document, suggestion, err := r.changeDocumentParts(ctx, scope, result)
+	if err != nil {
+		return nil, types.ChangeDocumentFormatOutput{}, err
+	}
 
 	return nil, types.ChangeDocumentFormatOutput{Document: document, Suggestion: suggestion}, nil
 }
@@ -12360,7 +12391,10 @@ func (r *Resolver) ChangeDocumentTableTool(ctx context.Context, req *mcp.CallToo
 		return nil, types.ChangeDocumentTableOutput{}, r.documentReviewError(ctx, "cannot change document table", err)
 	}
 
-	document, suggestion := changeDocumentParts(result)
+	document, suggestion, err := r.changeDocumentParts(ctx, scope, result)
+	if err != nil {
+		return nil, types.ChangeDocumentTableOutput{}, err
+	}
 
 	return nil, types.ChangeDocumentTableOutput{Document: document, Suggestion: suggestion}, nil
 }
@@ -12400,7 +12434,10 @@ func (r *Resolver) ChangeDocumentBlockTool(ctx context.Context, req *mcp.CallToo
 		return nil, types.ChangeDocumentBlockOutput{}, r.documentReviewError(ctx, "cannot change document block", err)
 	}
 
-	document, suggestion := changeDocumentParts(result)
+	document, suggestion, err := r.changeDocumentParts(ctx, scope, result)
+	if err != nil {
+		return nil, types.ChangeDocumentBlockOutput{}, err
+	}
 
 	return nil, types.ChangeDocumentBlockOutput{Document: document, Suggestion: suggestion}, nil
 }

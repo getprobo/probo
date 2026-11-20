@@ -25,7 +25,8 @@ import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import type { DocumentCommentHistoryQuery } from "#/__generated__/core/DocumentCommentHistoryQuery.graphql";
 
 import type { DocumentThreadConnections } from "../../_lib/documentThreadConnections";
-import type { ThreadAnchorSource } from "../../_lib/reviewAnchors";
+import type { SuggestionAnchor } from "../../_lib/reviewAnchors";
+import type { ReviewHistoryTarget } from "../../_lib/reviewHistoryTarget";
 
 import { DocumentCommentHistoryList } from "./DocumentCommentHistoryList";
 
@@ -43,8 +44,9 @@ export const documentCommentHistoryQuery = graphql`
 interface DocumentCommentHistoryProps {
   queryRef: PreloadedQuery<DocumentCommentHistoryQuery> | null | undefined;
   threadConnections: DocumentThreadConnections;
+  liveSuggestions: ReadonlyMap<string, SuggestionAnchor>;
   activeKey: string | null;
-  onActivate: (thread: ThreadAnchorSource) => void;
+  onActivate: (target: ReviewHistoryTarget) => void;
   onPressInside: () => void;
 }
 
