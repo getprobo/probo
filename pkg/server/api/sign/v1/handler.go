@@ -285,6 +285,7 @@ func (h *Handler) handleGetDocumentContent(w http.ResponseWriter, r *http.Reques
 
 	err := h.pgClient.WithConn(r.Context(), func(ctx context.Context, conn pg.Querier) error {
 		var err error
+
 		auth, statusCode, errCode = h.resolveAuth(ctx, conn, r, signingConfigID)
 
 		return err
@@ -299,6 +300,7 @@ func (h *Handler) handleGetDocumentContent(w http.ResponseWriter, r *http.Reques
 	setCORSHeaders(w, r, auth.signingConfig)
 
 	var dv *coredata.DocumentVersion
+
 	err = h.pgClient.WithConn(r.Context(), func(ctx context.Context, conn pg.Querier) error {
 		scope := coredata.NewScopeFromObjectID(auth.signingConfig.DocumentID)
 
@@ -313,6 +315,7 @@ func (h *Handler) handleGetDocumentContent(w http.ResponseWriter, r *http.Reques
 			h.logAndRecordRejection(r, signingConfigID, http.StatusNotFound, codeDocumentNotPresentable, reqID)
 			renderError(w, http.StatusNotFound, codeDocumentNotPresentable,
 				"The document has no published PDF yet.", reqID)
+
 			return
 		}
 
@@ -729,6 +732,7 @@ func (h *Handler) handleBatchRecordAcceptances(w http.ResponseWriter, r *http.Re
 		if err != nil {
 			renderError(w, http.StatusBadRequest, codeBatchValidationFailed,
 				fmt.Sprintf("invalid signing_config_id: %s", item.SigningConfigID), reqID)
+
 			return
 		}
 
@@ -736,6 +740,7 @@ func (h *Handler) handleBatchRecordAcceptances(w http.ResponseWriter, r *http.Re
 		if err != nil {
 			renderError(w, http.StatusBadRequest, codeBatchValidationFailed,
 				fmt.Sprintf("invalid document_version_id: %s", item.DocumentVersionID), reqID)
+
 			return
 		}
 
@@ -760,6 +765,7 @@ func (h *Handler) handleBatchRecordAcceptances(w http.ResponseWriter, r *http.Re
 		if err != nil {
 			renderError(w, http.StatusBadRequest, codeBatchValidationFailed,
 				fmt.Sprintf("acceptance for config %s failed: %s", item.SigningConfigID, err.Error()), reqID)
+
 			return
 		}
 
@@ -805,6 +811,7 @@ func (h *Handler) handleRevokeAcceptance(w http.ResponseWriter, r *http.Request)
 	}
 
 	var body revokeRequest
+
 	_ = json.NewDecoder(r.Body).Decode(&body)
 
 	scope := coredata.NewScopeFromObjectID(acceptanceID)

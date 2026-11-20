@@ -395,9 +395,11 @@ func parseStrCursorKey(s *string) *page.CursorKey {
 	if s == nil {
 		return nil
 	}
+
 	ck, err := page.ParseCursorKey(*s)
 	if err != nil {
 		return nil
 	}
+
 	return &ck
 }

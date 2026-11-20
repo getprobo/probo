@@ -85,6 +85,7 @@ func NewClickwrapAcceptanceConnection(
 	for i, a := range p.Data {
 		edges[i] = NewClickwrapAcceptanceEdge(a, p.Cursor.OrderBy.Field)
 	}
+
 	return &ClickwrapAcceptanceConnection{
 		Edges:    edges,
 		PageInfo: NewPageInfo(p),
@@ -123,6 +124,7 @@ func NewClickwrapSubjectConnection(
 	for i, s := range p.Data {
 		edges[i] = NewClickwrapSubjectEdge(s, p.Cursor.OrderBy.Field)
 	}
+
 	return &ClickwrapSubjectConnection{
 		Edges:    edges,
 		PageInfo: NewPageInfo(p),

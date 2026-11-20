@@ -620,6 +620,7 @@ func isVersionPresentable(dv *coredata.DocumentVersion) bool {
 // the submitted text against this value case-sensitively.
 func buildConsentText(cfg *coredata.DocumentSigningConfig, dv *coredata.DocumentVersion) string {
 	kindLabel := "Terms of Service"
+
 	switch cfg.Kind {
 	case coredata.DocumentSigningConfigKindTermsOfService:
 		kindLabel = "Terms of Service"
@@ -648,8 +649,10 @@ func (s *Service) GetSubject(
 			if errors.Is(err, coredata.ErrResourceNotFound) {
 				return ErrSubjectNotFound
 			}
+
 			return fmt.Errorf("cannot load subject: %w", err)
 		}
+
 		return nil
 	})
 	if err != nil {
@@ -717,6 +720,7 @@ func (s *Service) GetIntegrationHealth(
 		if err := logs.LoadBySigningConfigID(ctx, conn, scope, configID, 10); err != nil {
 			return fmt.Errorf("cannot load rejected requests: %w", err)
 		}
+
 		health.LastRejectedRequests = logs
 
 		var latestAcceptance coredata.ClickwrapAcceptance
@@ -728,10 +732,12 @@ func (s *Service) GetIntegrationHealth(
 				Direction: page.OrderDirectionDesc,
 			},
 		)
+
 		var acceptances coredata.ClickwrapAcceptances
 		if err := acceptances.LoadBySigningConfigID(ctx, conn, scope, configID, cursor); err != nil {
 			return fmt.Errorf("cannot load last acceptance: %w", err)
 		}
+
 		if len(acceptances) > 0 {
 			latestAcceptance = *acceptances[0]
 			health.LastAcceptanceAt = &latestAcceptance.AcceptedAt
