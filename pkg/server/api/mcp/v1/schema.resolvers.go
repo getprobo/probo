@@ -12605,3 +12605,85 @@ func (r *Resolver) SearchTool(ctx context.Context, req *mcp.CallToolRequest, inp
 
 	return nil, types.NewSearchOutput(pageResult), nil
 }
+
+func (r *Resolver) ListThirdPartyAgreementsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListThirdPartyAgreementsInput) (*mcp.CallToolResult, types.ListThirdPartyAgreementsOutput, error) {
+	scope, err := r.Authorize(ctx, input.ThirdPartyID, probo.ActionThirdPartyAgreementList)
+	if err != nil {
+		return nil, types.ListThirdPartyAgreementsOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.ThirdPartyAgreementOrderField]{
+		Field:     coredata.ThirdPartyAgreementOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.ThirdPartyAgreementOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	agreements, err := r.proboSvc.ThirdPartyAgreements.ListForThirdPartyID(ctx, scope, input.ThirdPartyID, cursor)
+	if err != nil {
+		return nil, types.ListThirdPartyAgreementsOutput{}, fmt.Errorf("cannot list third party agreements: %w", err)
+	}
+
+	return nil, types.NewListThirdPartyAgreementsOutput(agreements), nil
+}
+
+func (r *Resolver) GetThirdPartyAgreementTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetThirdPartyAgreementInput) (*mcp.CallToolResult, types.GetThirdPartyAgreementOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionThirdPartyAgreementGet)
+	if err != nil {
+		return nil, types.GetThirdPartyAgreementOutput{}, err
+	}
+
+	agreement, err := r.proboSvc.ThirdPartyAgreements.Get(ctx, scope, input.ID)
+	if err != nil {
+		return nil, types.GetThirdPartyAgreementOutput{}, fmt.Errorf("cannot get third party agreement: %w", err)
+	}
+
+	return nil, types.GetThirdPartyAgreementOutput{
+		ThirdPartyAgreement: types.NewThirdPartyAgreement(agreement),
+	}, nil
+}
+
+func (r *Resolver) UpdateThirdPartyAgreementTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateThirdPartyAgreementInput) (*mcp.CallToolResult, types.UpdateThirdPartyAgreementOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionThirdPartyAgreementUpdate)
+	if err != nil {
+		return nil, types.UpdateThirdPartyAgreementOutput{}, err
+	}
+
+	update := &probo.ThirdPartyAgreementUpdateRequest{
+		Type: input.Type,
+	}
+	if input.Validity != nil {
+		update.ValidFrom = &input.Validity.Start
+		update.ValidUntil = &input.Validity.End
+	}
+
+	agreement, err := r.proboSvc.ThirdPartyAgreements.Update(ctx, scope, input.ID, update)
+	if err != nil {
+		return nil, types.UpdateThirdPartyAgreementOutput{}, fmt.Errorf("cannot update third party agreement: %w", err)
+	}
+
+	return nil, types.UpdateThirdPartyAgreementOutput{
+		ThirdPartyAgreement: types.NewThirdPartyAgreement(agreement),
+	}, nil
+}
+
+func (r *Resolver) DeleteThirdPartyAgreementTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteThirdPartyAgreementInput) (*mcp.CallToolResult, types.DeleteThirdPartyAgreementOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionThirdPartyAgreementDelete)
+	if err != nil {
+		return nil, types.DeleteThirdPartyAgreementOutput{}, err
+	}
+
+	if err := r.proboSvc.ThirdPartyAgreements.Delete(ctx, scope, input.ID); err != nil {
+		return nil, types.DeleteThirdPartyAgreementOutput{}, fmt.Errorf("cannot delete third party agreement: %w", err)
+	}
+
+	return nil, types.DeleteThirdPartyAgreementOutput{
+		DeletedThirdPartyAgreementID: input.ID,
+	}, nil
+}

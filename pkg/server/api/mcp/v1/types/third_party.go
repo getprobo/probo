@@ -244,3 +244,41 @@ func NewListThirdPartyServicesOutput(p *page.Page[*coredata.ThirdPartyService, c
 		ThirdPartyServices: services,
 	}
 }
+
+func NewThirdPartyAgreement(agreement *coredata.ThirdPartyAgreement) *ThirdPartyAgreement {
+	var validity *Period
+	if agreement.ValidFrom != nil || agreement.ValidUntil != nil {
+		validity = &Period{
+			Start: agreement.ValidFrom,
+			End:   agreement.ValidUntil,
+		}
+	}
+
+	return &ThirdPartyAgreement{
+		ID:           agreement.ID,
+		ThirdPartyID: agreement.ThirdPartyID,
+		Type:         agreement.Type,
+		Validity:     validity,
+		FileID:       agreement.FileID,
+		CreatedAt:    agreement.CreatedAt,
+		UpdatedAt:    agreement.UpdatedAt,
+	}
+}
+
+func NewListThirdPartyAgreementsOutput(p *page.Page[*coredata.ThirdPartyAgreement, coredata.ThirdPartyAgreementOrderField]) ListThirdPartyAgreementsOutput {
+	agreements := make([]*ThirdPartyAgreement, 0, len(p.Data))
+	for _, agreement := range p.Data {
+		agreements = append(agreements, NewThirdPartyAgreement(agreement))
+	}
+
+	var nextCursor *page.CursorKey
+	if len(p.Data) > 0 {
+		cursorKey := p.Data[len(p.Data)-1].CursorKey(p.Cursor.OrderBy.Field)
+		nextCursor = &cursorKey
+	}
+
+	return ListThirdPartyAgreementsOutput{
+		NextCursor:           nextCursor,
+		ThirdPartyAgreements: agreements,
+	}
+}

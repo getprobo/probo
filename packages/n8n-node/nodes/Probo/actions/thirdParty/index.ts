@@ -39,6 +39,7 @@ import * as getRiskAssessmentOp from './getRiskAssessment.operation';
 import * as getAllRiskAssessmentsOp from './getAllRiskAssessments.operation';
 import * as getAllComplianceReportsOp from './getAllComplianceReports.operation';
 import * as deleteComplianceReportOp from './deleteComplianceReport.operation';
+import * as uploadAgreementOp from './uploadAgreement.operation';
 import * as getAgreementOp from './getAgreement.operation';
 import * as getAllAgreementsOp from './getAllAgreements.operation';
 import * as updateAgreementOp from './updateAgreement.operation';
@@ -230,6 +231,12 @@ export const description: INodeProperties[] = [
 				action: 'Update a third party service',
 			},
 			{
+				name: 'Upload Agreement',
+				value: 'uploadAgreement',
+				description: 'Upload a PDF agreement for a third party',
+				action: 'Upload a third party agreement',
+			},
+			{
 				name: 'Vet',
 				value: 'vet',
 				description: 'Start AI-powered vetting of a third party from its website',
@@ -258,6 +265,7 @@ export const description: INodeProperties[] = [
 	...getAllRiskAssessmentsOp.description,
 	...getAllComplianceReportsOp.description,
 	...deleteComplianceReportOp.description,
+	...uploadAgreementOp.description,
 	...getAgreementOp.description,
 	...getAllAgreementsOp.description,
 	...updateAgreementOp.description,
@@ -290,6 +298,7 @@ export {
 	getAllRiskAssessmentsOp as getAllRiskAssessments,
 	getAllComplianceReportsOp as getAllComplianceReports,
 	deleteComplianceReportOp as deleteComplianceReport,
+	uploadAgreementOp as uploadAgreement,
 	getAgreementOp as getAgreement,
 	getAllAgreementsOp as getAllAgreements,
 	updateAgreementOp as updateAgreement,

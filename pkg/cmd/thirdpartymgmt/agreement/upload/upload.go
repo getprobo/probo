@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -75,7 +76,7 @@ func NewCmdUpload(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "upload <file>",
-		Short: "Upload a third-party agreement",
+		Short: "Upload a PDF third-party agreement",
 		Example: `  # Upload an MSA
   prb third-party agreement upload ./msa.pdf \
     --third-party <third-party-id> \
@@ -87,6 +88,9 @@ func NewCmdUpload(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			filePath := args[0]
+			if !strings.EqualFold(filepath.Ext(filePath), ".pdf") {
+				return fmt.Errorf("third party agreements accept PDF files only")
+			}
 
 			file, err := os.Open(filePath)
 			if err != nil {
