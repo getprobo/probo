@@ -23,23 +23,18 @@ package api
 import (
 	"net/http"
 
-	"go.gearno.de/crypto/uuid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/server/api/clientip"
 )
 
 func auditRequestMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		requestID := uuid.MustNewV7().String()
-
-		w.Header().Set("X-Request-Id", requestID)
-
 		ctx := iam.ContextWithAuditRequest(
 			r.Context(),
 			iam.AuditRequest{
 				IP:        clientip.Extract(r),
 				UserAgent: r.UserAgent(),
-				RequestID: requestID,
+				RequestID: r.Header.Get("X-Request-Id"),
 			},
 		)
 
