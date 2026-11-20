@@ -4,6 +4,18 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.274.0] - 2026-11-20
+
+### Added
+
+- Tag resource with Create, Update, Delete, Attach, Detach, and List
+  operations. Tag names are unique in an organization, and a resource
+  can carry several. List shows the tags in an organization or on one
+  resource
+- Tag resource with a Search operation that returns one item per hit,
+  with its title. Bare words match titles as prefixes. Every `tag:name`
+  must match, and `type:name` is optional and repeatable
+
 ## [0.273.0] - 2026-11-17
 
 ### Added
