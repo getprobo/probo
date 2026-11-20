@@ -334,6 +334,7 @@ func (s *Service) ComputeSubjectStatus(
 	}
 
 	var latestAcceptance coredata.ClickwrapAcceptance
+
 	err := latestAcceptance.LoadLatestBySubjectAndConfig(
 		ctx, conn, scope,
 		cfg.OrganizationID, cfg.ID, subject.ID,
@@ -719,6 +720,7 @@ func (s *Service) GetIntegrationHealth(
 		health.LastRejectedRequests = logs
 
 		var latestAcceptance coredata.ClickwrapAcceptance
+
 		cursor := page.NewCursor[coredata.ClickwrapAcceptanceOrderField](
 			1, nil, page.Head,
 			page.OrderBy[coredata.ClickwrapAcceptanceOrderField]{

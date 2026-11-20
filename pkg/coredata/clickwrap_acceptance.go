@@ -472,13 +472,13 @@ ORDER BY created_at ASC
 LIMIT 1
 FOR UPDATE SKIP LOCKED
 `
+
 	rows, err := conn.Query(ctx, q)
 	if err != nil {
 		return fmt.Errorf("cannot query pending seal clickwrap acceptances: %w", err)
 	}
 
 	acc, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[ClickwrapAcceptance])
-
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound

@@ -68,6 +68,7 @@ func (r *clickwrapAcceptanceResolver) Subject(ctx context.Context, obj *types.Cl
 		if errors.Is(err, sign.ErrSubjectNotFound) {
 			return nil, gqlx.NotFound(ctx, err)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot get clickwrap subject", log.Error(err))
 
 		return nil, gqlx.Internal(ctx)
@@ -256,6 +257,7 @@ func (r *mutationResolver) UpdateDocumentSigningConfig(ctx context.Context, inpu
 		if errors.Is(err, sign.ErrConfigNotFound) {
 			return nil, gqlx.NotFound(ctx, err)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot update signing config", log.Error(err))
 
 		return nil, gqlx.Internal(ctx)
@@ -278,6 +280,7 @@ func (r *mutationResolver) ActivateDocumentSigningConfig(ctx context.Context, id
 		if errors.Is(err, sign.ErrConfigNotFound) {
 			return nil, gqlx.NotFound(ctx, err)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot activate signing config", log.Error(err))
 
 		return nil, gqlx.Internal(ctx)
@@ -300,6 +303,7 @@ func (r *mutationResolver) ArchiveDocumentSigningConfig(ctx context.Context, id 
 		if errors.Is(err, sign.ErrConfigNotFound) {
 			return nil, gqlx.NotFound(ctx, err)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot archive signing config", log.Error(err))
 
 		return nil, gqlx.Internal(ctx)

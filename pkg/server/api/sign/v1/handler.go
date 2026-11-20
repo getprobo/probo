@@ -301,7 +301,9 @@ func (h *Handler) handleGetDocumentContent(w http.ResponseWriter, r *http.Reques
 	var dv *coredata.DocumentVersion
 	err = h.pgClient.WithConn(r.Context(), func(ctx context.Context, conn pg.Querier) error {
 		scope := coredata.NewScopeFromObjectID(auth.signingConfig.DocumentID)
+
 		var loadErr error
+
 		dv, loadErr = h.signSvc.GetCurrentPresentableVersion(ctx, conn, scope, auth.signingConfig)
 
 		return loadErr
@@ -379,6 +381,7 @@ func (h *Handler) handleGetSubjectStatus(w http.ResponseWriter, r *http.Request)
 	if err != nil || auth == nil {
 		h.logAndRecordRejection(r, signingConfigID, statusCode, errCode, reqID)
 		renderError(w, statusCode, errCode, errCode, reqID)
+
 		return
 	}
 
@@ -510,6 +513,7 @@ func (h *Handler) handleBatchSubjectStatus(w http.ResponseWriter, r *http.Reques
 						ExternalUserID: externalUserID,
 						Status:         string(sign.AcceptanceStatusRequired),
 					}
+
 					continue
 				}
 
@@ -603,12 +607,14 @@ func (h *Handler) handleRecordAcceptance(w http.ResponseWriter, r *http.Request)
 	if connErr != nil || auth == nil {
 		h.logAndRecordRejection(r, signingConfigIDStr, statusCode, errCode, reqID)
 		renderError(w, statusCode, errCode, errCode, reqID)
+
 		return
 	}
 
 	if !auth.isSecret {
 		h.logAndRecordRejection(r, signingConfigIDStr, http.StatusForbidden, codeInvalidKey, reqID)
 		renderError(w, http.StatusForbidden, codeInvalidKey, "Secret key required for recording acceptances.", reqID)
+
 		return
 	}
 
@@ -946,6 +952,7 @@ func setCORSHeaders(w http.ResponseWriter, r *http.Request, cfg *coredata.Docume
 
 func buildConsentText(cfg *coredata.DocumentSigningConfig, dv *coredata.DocumentVersion) string {
 	kindLabel := "Terms of Service"
+
 	switch cfg.Kind {
 	case coredata.DocumentSigningConfigKindTermsOfService:
 		kindLabel = "Terms of Service"
