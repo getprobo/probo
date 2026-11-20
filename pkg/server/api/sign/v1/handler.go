@@ -277,9 +277,11 @@ func (h *Handler) handleGetDocumentContent(w http.ResponseWriter, r *http.Reques
 
 	signingConfigID := chi.URLParam(r, "signingConfigID")
 
-	var auth *authResult
-	var statusCode int
-	var errCode string
+	var (
+		auth       *authResult
+		statusCode int
+		errCode    string
+	)
 
 	err := h.pgClient.WithConn(r.Context(), func(ctx context.Context, conn pg.Querier) error {
 		var err error
@@ -290,6 +292,7 @@ func (h *Handler) handleGetDocumentContent(w http.ResponseWriter, r *http.Reques
 	if err != nil || auth == nil {
 		h.logAndRecordRejection(r, signingConfigID, http.StatusUnauthorized, errCode, reqID)
 		renderError(w, statusCode, errCode, errCode, reqID)
+
 		return
 	}
 
@@ -318,6 +321,7 @@ func (h *Handler) handleGetDocumentContent(w http.ResponseWriter, r *http.Reques
 	}
 
 	pdfURL := ""
+
 	if dv.FileID != nil {
 		url, err := h.signSvc.GeneratePDFURL(r.Context(), *dv.FileID, time.Hour)
 		if err != nil {
@@ -361,9 +365,11 @@ func (h *Handler) handleGetSubjectStatus(w http.ResponseWriter, r *http.Request)
 	signingConfigID := chi.URLParam(r, "signingConfigID")
 	externalUserID := chi.URLParam(r, "externalUserID")
 
-	var auth *authResult
-	var statusCode int
-	var errCode string
+	var (
+		auth       *authResult
+		statusCode int
+		errCode    string
+	)
 
 	err := h.pgClient.WithConn(r.Context(), func(ctx context.Context, conn pg.Querier) error {
 		auth, statusCode, errCode = h.resolveAuth(ctx, conn, r, signingConfigID)
@@ -497,6 +503,7 @@ func (h *Handler) handleBatchSubjectStatus(w http.ResponseWriter, r *http.Reques
 			scope := coredata.NewScopeFromObjectID(cfg.OrganizationID)
 
 			var subject coredata.ClickwrapSubject
+
 			if err := subject.LoadByExternalUserID(ctx, conn, scope, cfg.OrganizationID, externalUserID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					statuses[cfgIDStr] = &subjectStatusResponse{
@@ -582,9 +589,11 @@ func (h *Handler) handleRecordAcceptance(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	var auth *authResult
-	var statusCode int
-	var errCode string
+	var (
+		auth       *authResult
+		statusCode int
+		errCode    string
+	)
 
 	connErr := h.pgClient.WithConn(r.Context(), func(ctx context.Context, conn pg.Querier) error {
 		auth, statusCode, errCode = h.resolveAuth(ctx, conn, r, signingConfigIDStr)
@@ -635,6 +644,7 @@ func (h *Handler) handleRecordAcceptance(w http.ResponseWriter, r *http.Request)
 	}
 
 	statusHTTP := http.StatusCreated
+
 	if !result.IsNew {
 		statusHTTP = http.StatusOK
 	}
@@ -872,6 +882,7 @@ func (h *Handler) logAndRecordRejection(
 		ctx := context.Background()
 		_ = h.pgClient.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 			var cfgID *gid.GID
+
 			if signingConfigIDStr != "" {
 				id, err := gid.ParseGID(signingConfigIDStr)
 				if err == nil {
@@ -880,7 +891,9 @@ func (h *Handler) logAndRecordRejection(
 			}
 
 			var orgID gid.GID
+
 			scope := coredata.NewScope(gid.TenantID{}, gid.Nil)
+
 			if cfgID != nil {
 				scope = coredata.NewScopeFromObjectID(*cfgID)
 				orgID = *cfgID

@@ -32,7 +32,9 @@ func (r *clickwrapAcceptanceResolver) SigningConfig(ctx context.Context, obj *ty
 		if errors.Is(err, sign.ErrConfigNotFound) {
 			return nil, gqlx.NotFound(ctx, err)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot get signing config", log.Error(err))
+
 		return nil, gqlx.Internal(ctx)
 	}
 
@@ -67,6 +69,7 @@ func (r *clickwrapAcceptanceResolver) Subject(ctx context.Context, obj *types.Cl
 			return nil, gqlx.NotFound(ctx, err)
 		}
 		r.logger.ErrorCtx(ctx, "cannot get clickwrap subject", log.Error(err))
+
 		return nil, gqlx.Internal(ctx)
 	}
 
@@ -111,6 +114,7 @@ func (r *clickwrapSubjectResolver) Acceptances(ctx context.Context, obj *types.C
 	conn, err := r.sign.ListAcceptancesForSubject(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list subject acceptances", log.Error(err))
+
 		return nil, gqlx.Internal(ctx)
 	}
 
@@ -155,6 +159,7 @@ func (r *documentSigningConfigResolver) Acceptances(ctx context.Context, obj *ty
 	conn, err := r.sign.ListAcceptancesForConfig(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list acceptances", log.Error(err))
+
 		return nil, gqlx.Internal(ctx)
 	}
 
@@ -170,6 +175,7 @@ func (r *documentSigningConfigResolver) IntegrationHealth(ctx context.Context, o
 	health, err := r.sign.GetIntegrationHealth(ctx, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get integration health", log.Error(err))
+
 		return nil, gqlx.Internal(ctx)
 	}
 
@@ -197,11 +203,13 @@ func (r *mutationResolver) CreateDocumentSigningConfig(ctx context.Context, inpu
 	}
 
 	mode := coredata.DocumentSigningConfigModeLive
+
 	if input.Mode != nil {
 		mode = *input.Mode
 	}
 
 	var origins []string
+
 	if input.AllowedOrigins != nil {
 		origins = input.AllowedOrigins
 	}
@@ -216,6 +224,7 @@ func (r *mutationResolver) CreateDocumentSigningConfig(ctx context.Context, inpu
 	})
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot create signing config", log.Error(err))
+
 		return nil, gqlx.Internal(ctx)
 	}
 
@@ -232,6 +241,7 @@ func (r *mutationResolver) UpdateDocumentSigningConfig(ctx context.Context, inpu
 	}
 
 	var allowedOrigins *[]string
+
 	if input.AllowedOrigins != nil {
 		allowedOrigins = &input.AllowedOrigins
 	}
@@ -247,6 +257,7 @@ func (r *mutationResolver) UpdateDocumentSigningConfig(ctx context.Context, inpu
 			return nil, gqlx.NotFound(ctx, err)
 		}
 		r.logger.ErrorCtx(ctx, "cannot update signing config", log.Error(err))
+
 		return nil, gqlx.Internal(ctx)
 	}
 
@@ -268,6 +279,7 @@ func (r *mutationResolver) ActivateDocumentSigningConfig(ctx context.Context, id
 			return nil, gqlx.NotFound(ctx, err)
 		}
 		r.logger.ErrorCtx(ctx, "cannot activate signing config", log.Error(err))
+
 		return nil, gqlx.Internal(ctx)
 	}
 
@@ -289,6 +301,7 @@ func (r *mutationResolver) ArchiveDocumentSigningConfig(ctx context.Context, id 
 			return nil, gqlx.NotFound(ctx, err)
 		}
 		r.logger.ErrorCtx(ctx, "cannot archive signing config", log.Error(err))
+
 		return nil, gqlx.Internal(ctx)
 	}
 
@@ -305,6 +318,7 @@ func (r *mutationResolver) RotateOrganizationSigningSecret(ctx context.Context, 
 	}
 
 	m := coredata.DocumentSigningConfigModeLive
+
 	if mode != nil {
 		m = *mode
 	}
@@ -312,6 +326,7 @@ func (r *mutationResolver) RotateOrganizationSigningSecret(ctx context.Context, 
 	plaintext, _, err := r.sign.RotateOrganizationSigningSecret(ctx, scope, organizationID, m)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot rotate signing secret", log.Error(err))
+
 		return nil, gqlx.Internal(ctx)
 	}
 
@@ -332,10 +347,13 @@ func (r *mutationResolver) RevokeClickwrapAcceptance(ctx context.Context, id gid
 		if errors.Is(err, sign.ErrAcceptanceNotFound) {
 			return nil, gqlx.NotFound(ctx, err)
 		}
+
 		if errors.Is(err, sign.ErrAlreadyRevoked) {
 			return nil, gqlx.Conflict(ctx, err)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot revoke acceptance", log.Error(err))
+
 		return nil, gqlx.Internal(ctx)
 	}
 

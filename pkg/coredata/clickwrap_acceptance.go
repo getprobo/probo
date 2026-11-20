@@ -478,6 +478,7 @@ FOR UPDATE SKIP LOCKED
 	}
 
 	acc, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[ClickwrapAcceptance])
+
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
