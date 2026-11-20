@@ -1,0 +1,78 @@
+{
+  "name": "@probo/sign",
+  "version": "0.1.0",
+  "description": "Probo signable documents JS SDK",
+  "type": "module",
+  "main": "dist/sign.mjs",
+  "module": "dist/sign.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/sign.mjs",
+      "default": "./dist/sign.iife.js"
+    },
+    "./ui": {
+      "types": "./dist/ui/index.d.ts",
+      "import": "./dist/ui.mjs"
+    },
+    "./react": {
+      "types": "./dist/react/index.d.ts",
+      "import": "./dist/react.mjs"
+    },
+    "./node": {
+      "types": "./dist/node/index.d.ts",
+      "import": "./dist/node.mjs"
+    }
+  },
+  "scripts": {
+    "build": "node build.mjs && tsc --emitDeclarationOnly && tsc --emitDeclarationOnly -p tsconfig.node.json",
+    "check": "tsc --noEmit && tsc --noEmit -p tsconfig.node.json",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "author": {
+    "name": "Probo Inc",
+    "email": "hello@probo.com"
+  },
+  "files": [
+    "dist",
+    "test-vectors.json"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "signable-documents",
+    "clickwrap",
+    "terms-of-service",
+    "consent",
+    "probo"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/getprobo/probo.git",
+    "directory": "packages/sign"
+  },
+  "bugs": {
+    "url": "https://github.com/getprobo/probo/issues"
+  },
+  "homepage": "https://github.com/getprobo/probo#README",
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^18.3.0",
+    "esbuild": "^0.28.2",
+    "react": "^18.3.0",
+    "typescript": "6.0.3",
+    "vitest": "^5.0.5"
+  }
+}
