@@ -26,7 +26,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/server/api/authz"
 )
 
@@ -43,5 +42,4 @@ func TestRequestMetadataFromHTTP(t *testing.T) {
 	assert.Equal(t, "018f6b2e-7c3a-7b2e-8f1a-9c0d1e2f3a4b", got.RequestID)
 	assert.Equal(t, "prb/1.0", got.UserAgent)
 	assert.Equal(t, "203.0.113.9", got.IP)
-	assert.Equal(t, iam.RequestMetadata{}, authz.RequestMetadataFromHTTP(nil))
 }

@@ -30,10 +30,6 @@ import (
 )
 
 func RequestMetadataFromHTTP(r *http.Request) iam.RequestMetadata {
-	if r == nil {
-		return iam.RequestMetadata{}
-	}
-
 	return iam.RequestMetadata{
 		IP:        clientip.Extract(r),
 		UserAgent: r.UserAgent(),
