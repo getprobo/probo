@@ -482,6 +482,11 @@ jobs:
         with:
           submodules: recursive
       - uses: "runs-on/action@v2.6.0"
+      - name: "Free disk space"
+        run: |
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet \
+            /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL
+          df -h /
       - uses: "$/.github/actions/setup"
       - name: "Configure Docker image source"
         run: |
