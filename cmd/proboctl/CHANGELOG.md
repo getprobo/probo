@@ -4,6 +4,11 @@ All notable changes to the `proboctl` CLI will be documented in this file.
 
 ## Unreleased
 
+### Added
+
+- `repair signature-bundles` stores the signed-file zip for signatures that
+  already have a certificate
+
 ## [0.13.0] - 2026-09-16
 
 ### Removed

@@ -32,6 +32,7 @@ func NewCmdRepair(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.AddCommand(newCmdThirdPartyRegisterNotes(f))
+	cmd.AddCommand(newCmdSignatureBundles(f))
 
 	return cmd
 }

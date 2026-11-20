@@ -49,9 +49,49 @@ type bundleFile struct {
 	Body []byte
 }
 
+// MissingBundleIDs lists completed signatures that have a certificate and no zip.
+func (s *Service) MissingBundleIDs(ctx context.Context) ([]gid.GID, error) {
+	var ids []gid.GID
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var err error
+
+			ids, err = coredata.LoadElectronicSignatureIDsMissingBundle(ctx, conn)
+			if err != nil {
+				return fmt.Errorf("cannot list signatures missing a bundle: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return ids, nil
+}
+
+// StoreBundle saves the zip for one signature. A signature that already has
+// one is left unchanged.
+func (s *Service) StoreBundle(ctx context.Context, signatureID gid.GID) error {
+	scope := coredata.NewScopeFromObjectID(signatureID)
+
+	file, err := s.EnsureBundle(ctx, scope, signatureID)
+	if err != nil {
+		return err
+	}
+
+	if file == nil {
+		return fmt.Errorf("signature %s has no certificate", signatureID)
+	}
+
+	return nil
+}
+
 // EnsureBundle returns the zip of the signed file and its certificate.
-// A signature that already has a certificate and no bundle gets one stored
-// on the first call.
+// When the certificate exists and the zip does not, it stores one.
 func (s *Service) EnsureBundle(
 	ctx context.Context,
 	scope coredata.Scoper,

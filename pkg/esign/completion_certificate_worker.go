@@ -232,8 +232,8 @@ func (h *completionCertificateHandler) generateAndCommit(
 			certificateFile,
 		)
 		if err != nil {
-			// The certificate and email should still go out. EnsureBundle will
-			// create the zip the first time the console asks for it.
+			// The certificate and email should still go out. The repair
+			// command stores a zip for any signature this step misses.
 			h.logger.ErrorCtx(ctx, "cannot upload signature bundle", log.Error(err))
 		} else {
 			bundleFile = &uploadedBundle
