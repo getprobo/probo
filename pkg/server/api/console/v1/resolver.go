@@ -49,6 +49,7 @@ import (
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/notification"
+	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/probot"
 	slackchannel "go.probo.inc/probo/pkg/probot/channel/slack"
@@ -386,4 +387,17 @@ func (r *Resolver) treatmentPlanNetScores(
 	)
 
 	return likelihood, impact, score, nil
+}
+
+// parseStrCursorKey converts an optional string cursor to a *page.CursorKey for
+// connections whose GraphQL schema uses String for the after/before arguments.
+func parseStrCursorKey(s *string) *page.CursorKey {
+	if s == nil {
+		return nil
+	}
+	ck, err := page.ParseCursorKey(*s)
+	if err != nil {
+		return nil
+	}
+	return &ck
 }
