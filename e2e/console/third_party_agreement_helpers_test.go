@@ -364,9 +364,11 @@ func updateThirdPartyAgreementResult(
 	if validFrom != nil {
 		period["start"] = *validFrom
 	}
+
 	if validUntil != nil {
 		period["end"] = *validUntil
 	}
+
 	if len(period) > 0 {
 		input["validity"] = period
 	}

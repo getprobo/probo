@@ -92,6 +92,7 @@ func NewCmdUpload(f *cmdutil.Factory) *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("cannot open file: %w", err)
 			}
+
 			defer func() { _ = file.Close() }()
 
 			client, _, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
@@ -104,6 +105,7 @@ func NewCmdUpload(f *cmdutil.Factory) *cobra.Command {
 				"type":         flagType,
 				"file":         nil,
 			}
+
 			validFrom, err := normalizeDatetime(flagValidFrom)
 			if err != nil {
 				return fmt.Errorf("invalid --valid-from: %w", err)
@@ -173,9 +175,11 @@ func validityPeriod(validFrom, validUntil string) map[string]any {
 	if validFrom != "" {
 		period["start"] = validFrom
 	}
+
 	if validUntil != "" {
 		period["end"] = validUntil
 	}
+
 	if len(period) == 0 {
 		return nil
 	}

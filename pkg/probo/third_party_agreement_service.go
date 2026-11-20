@@ -216,6 +216,7 @@ func (s ThirdPartyAgreementService) Update(
 
 			v := validator.New()
 			v.Check(agreement.ValidUntil, "valid_until", validator.After(agreement.ValidFrom))
+
 			if err := v.Error(); err != nil {
 				return err
 			}

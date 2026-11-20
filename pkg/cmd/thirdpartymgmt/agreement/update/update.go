@@ -84,6 +84,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			period := map[string]any{}
+
 			if cmd.Flags().Changed("valid-from") {
 				if flagValidFrom == "" {
 					period["start"] = nil
@@ -96,6 +97,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 					period["start"] = validFrom
 				}
 			}
+
 			if cmd.Flags().Changed("valid-until") {
 				if flagValidUntil == "" {
 					period["end"] = nil
@@ -108,6 +110,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 					period["end"] = validUntil
 				}
 			}
+
 			if len(period) > 0 {
 				input["validity"] = period
 			}

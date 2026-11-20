@@ -3516,6 +3516,7 @@ func (s *GeneratedDocumentService) buildThirdPartyListDocumentData(
 
 	baaByThirdParty := make(map[gid.GID]*coredata.ThirdPartyAgreement, len(allAgreements))
 	dpaByThirdParty := make(map[gid.GID]*coredata.ThirdPartyAgreement, len(allAgreements))
+
 	for _, agreement := range allAgreements {
 		switch agreement.Type {
 		case coredata.ThirdPartyAgreementTypeBusinessAssociate:
