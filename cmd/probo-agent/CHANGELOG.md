@@ -5,6 +5,8 @@ documented in this file.
 
 ## Unreleased
 
+## [0.9.1] - 2026-11-20
+
 ### Fixed
 
 - The Linux password policy check reads the minimum length PAM
