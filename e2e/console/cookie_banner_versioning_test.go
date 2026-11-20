@@ -163,7 +163,7 @@ func TestCookieBannerVersioning_NoOpUpdates(t *testing.T) {
 			"consentExpiryDays": 365,
 		})
 
-		published := publishBanner(t, owner, bannerID)
+		published := latestVersion(t, owner, bannerID)
 		require.Equal(t, "PUBLISHED", published.State)
 		baseline := published.Version
 
@@ -194,7 +194,7 @@ func TestCookieBannerVersioning_NoOpUpdates(t *testing.T) {
 		owner := owner.ForTest(t)
 
 		bannerID := factory.CreateCookieBanner(owner)
-		published := publishBanner(t, owner, bannerID)
+		published := latestVersion(t, owner, bannerID)
 		baseline := published.Version
 
 		const query = `
@@ -497,7 +497,7 @@ func TestCookieBannerVersioning_TranslationChangesNeverBump(t *testing.T) {
 
 		const customJSON = `{"banner_title":"Cookie Bar","button_accept_all":"Accept"}`
 		upsertTranslation(t, owner, bannerID, "it", customJSON)
-		published := publishBanner(t, owner, bannerID)
+		published := latestVersion(t, owner, bannerID)
 		baseline := published.Version
 
 		upsertTranslation(t, owner, bannerID, "it", customJSON)
@@ -514,7 +514,7 @@ func TestCookieBannerVersioning_TranslationChangesNeverBump(t *testing.T) {
 		bannerID := factory.CreateCookieBanner(owner)
 
 		upsertTranslation(t, owner, bannerID, "it", `{"banner_title":"Cookie Bar"}`)
-		published := publishBanner(t, owner, bannerID)
+		published := latestVersion(t, owner, bannerID)
 		baseline := published.Version
 
 		upsertTranslation(t, owner, bannerID, "it", `{"banner_title":"Barra dei Cookie"}`)
@@ -529,7 +529,7 @@ func TestCookieBannerVersioning_TranslationChangesNeverBump(t *testing.T) {
 		owner := owner.ForTest(t)
 
 		bannerID := factory.CreateCookieBanner(owner)
-		published := publishBanner(t, owner, bannerID)
+		published := latestVersion(t, owner, bannerID)
 		baseline := published.Version
 
 		upsertTranslation(t, owner, bannerID, "fr", `{"banner_title":"Bandeau cookies"}`)
@@ -576,7 +576,7 @@ func TestCookieBannerVersioning_DetectedCookiesNeverBump(t *testing.T) {
 		owner := owner.ForTest(t)
 
 		bannerID := factory.CreateCookieBanner(owner)
-		published := publishBanner(t, owner, bannerID)
+		published := latestVersion(t, owner, bannerID)
 		baseline := published.Version
 
 		reportDetectedCookies(t, owner, bannerID, "_unknown_cookie", "_another")
@@ -599,7 +599,7 @@ func TestCookieBannerVersioning_RealChangesStillBumpVersion(t *testing.T) {
 		bannerID := factory.CreateCookieBanner(owner, factory.Attrs{
 			"consentExpiryDays": 365,
 		})
-		published := publishBanner(t, owner, bannerID)
+		published := latestVersion(t, owner, bannerID)
 		baseline := published.Version
 
 		const query = `
@@ -666,8 +666,9 @@ func TestCookieBanner_ListVersions(t *testing.T) {
 		"cookiePolicyUrl": "https://example.com/cookies",
 	})
 
-	first := publishBanner(t, owner, bannerID)
+	first := latestVersion(t, owner, bannerID)
 	require.Equal(t, 1, first.Version)
+	require.Equal(t, "PUBLISHED", first.State)
 
 	const updateQuery = `
 		mutation UpdateCookieBanner($input: UpdateCookieBannerInput!) {

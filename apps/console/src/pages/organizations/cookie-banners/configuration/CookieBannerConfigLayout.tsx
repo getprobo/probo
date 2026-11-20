@@ -25,21 +25,23 @@ import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, useFragment, usePreloadedQuery } from "react-relay";
 import { Outlet } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { CookieBannerConfigLayout_cookieBanner$key } from "#/__generated__/core/CookieBannerConfigLayout_cookieBanner.graphql";
-import type { CookieBannerConfigLayoutPublishMutation } from "#/__generated__/core/CookieBannerConfigLayoutPublishMutation.graphql";
 import type { CookieBannerConfigLayoutQuery } from "#/__generated__/core/CookieBannerConfigLayoutQuery.graphql";
+import type { CookieBannerConfigLayoutUpdatePolicyMutation } from "#/__generated__/core/CookieBannerConfigLayoutUpdatePolicyMutation.graphql";
 import { TonedCard } from "#/components/TonedCard/TonedCard";
 import type { TonedCardTone } from "#/components/TonedCard/variants";
 import { NotFoundError } from "#/lib/relay/errors";
 import { useMutation } from "#/lib/relay/useMutation";
 
 import { cookieBannerConfigLayout } from "../variants";
+
+import { PublishCookieBannerDialog } from "./_components/PublishCookieBannerDialog";
 
 const cookieBannerFragment = graphql`
   fragment CookieBannerConfigLayout_cookieBanner on CookieBanner {
@@ -65,21 +67,14 @@ export const cookieBannerConfigLayoutQuery = graphql`
   }
 `;
 
-const publishMutation = graphql`
-  mutation CookieBannerConfigLayoutPublishMutation($input: PublishCookieBannerVersionInput!) {
-    publishCookieBannerVersion(input: $input) {
-      cookieBannerVersion {
-        id
-        version
-        state
-      }
+const updatePolicyMutation = graphql`
+  mutation CookieBannerConfigLayoutUpdatePolicyMutation(
+    $input: RegenerateCookieBannerTrackerPolicyInput!
+  ) {
+    regenerateCookieBannerTrackerPolicy(input: $input) {
       cookieBanner {
+        id
         ...CookieBannerConfigLayout_cookieBanner
-        publishedVersion {
-          id
-          gvlVendorCount
-          gvlVendorIds
-        }
       }
     }
   }
@@ -112,18 +107,19 @@ export function CookieBannerConfigLayout({
     cookieBannerFragment,
     data.node.__typename === "CookieBanner" ? data.node : null,
   );
+  const [publishOpen, setPublishOpen] = useState(false);
+  const [updatePolicy, isUpdatingPolicy] = useMutation<CookieBannerConfigLayoutUpdatePolicyMutation>(
+    updatePolicyMutation,
+    {
+      successMessage: t("configLayout.messages.policyRequested"),
+      errorToast: t("configLayout.errors.regeneratePolicy"),
+    },
+  );
   if (banner == null) {
     throw new NotFoundError("Cookie banner not found");
   }
   usePageTitle(banner.name);
 
-  const [publish, isPublishing] = useMutation<CookieBannerConfigLayoutPublishMutation>(
-    publishMutation,
-    {
-      successMessage: t("configLayout.messages.published"),
-      errorToast: t("configLayout.errors.publish"),
-    },
-  );
   const hasDraft = banner.latestVersion?.state === "DRAFT";
   const isDeactivated = banner.state !== "ACTIVE";
   const version = banner.latestVersion?.version;
@@ -219,24 +215,42 @@ export function CookieBannerConfigLayout({
                 variant="solid"
                 color="neutral"
                 highContrast
-                loading={isPublishing}
                 onClick={() => {
-                  void publish({
-                    variables: { input: { cookieBannerId: banner.id } },
-                  }).catch(() => {
-                    // Error toast is already shown by useMutation.
-                  });
+                  setPublishOpen(true);
                 }}
               >
                 {t("configLayout.actions.publish")}
               </Button>
             )
-          : null}
+          : version != null
+            ? (
+                <Button
+                  size={2}
+                  variant="soft"
+                  color="neutral"
+                  loading={isUpdatingPolicy}
+                  onClick={() => {
+                    void updatePolicy({
+                      variables: { input: { cookieBannerId: banner.id } },
+                    }).catch(() => {
+                      // Error toast is already shown by useMutation.
+                    });
+                  }}
+                >
+                  {t("configLayout.actions.updatePolicy")}
+                </Button>
+              )
+            : null}
       >
         <div className={body()}>
           <Text size={2} color="neutral">{message}</Text>
         </div>
       </TonedCard>
+      <PublishCookieBannerDialog
+        cookieBannerId={banner.id}
+        open={publishOpen}
+        onOpenChange={setPublishOpen}
+      />
       <Outlet />
     </div>
   );

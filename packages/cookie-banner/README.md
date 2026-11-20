@@ -138,7 +138,7 @@ If your site manages Consent Mode itself (for example through an existing GTM se
 </probo-cookie-banner-root>
 ```
 
-The attribute accepts `"true"`/`"false"`; any other value logs a warning and keeps the integration enabled. Programmatic use of `CookieBannerClient` takes the same switch as an option: `integrations: [{ name: "gcm", enabled: false }]`. Disabling covers all of it — the eager deny-all default, the discovery-mode grant-all, and per-consent updates.
+The attribute accepts `"true"`/`"false"`; any other value logs a warning and keeps the integration enabled. Programmatic use of `CookieBannerClient` takes the same switch as an option: `integrations: [{ name: "gcm", enabled: false }]`. Disabling covers all of it — the eager deny-all default and per-consent updates.
 
 ## Key Features
 

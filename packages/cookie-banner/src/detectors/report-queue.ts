@@ -186,17 +186,33 @@ export class ReportQueue {
   stop(): void {
     if (this.stopped) return;
     this.stopped = true;
+    this.clearSchedule();
 
+    if (this.pending.size > 0 || this.pageViewPending) {
+      this.flushSync();
+    }
+  }
+
+  // Drops queued tracker observations and sends the page view. A failed
+  // config load must not inventory trackers, but the visit still counts.
+  discardTrackers(): void {
+    if (this.stopped) return;
+    this.clearSchedule();
+    this.pending.clear();
+    if (!this.pageViewSent) {
+      this.pageViewPending = true;
+    }
+    this.flushSync();
+    this.stopped = true;
+  }
+
+  private clearSchedule(): void {
     if (this.timer) {
       clearTimeout(this.timer);
       this.timer = null;
     }
 
     this.detachLifecycleListeners();
-
-    if (this.pending.size > 0 || this.pageViewPending) {
-      this.flushSync();
-    }
   }
 
   private enqueue(key: string, item: QueuedItem): void {

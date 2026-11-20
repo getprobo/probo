@@ -177,12 +177,9 @@ func setupPublishedCookieBanner(t *testing.T) publishedCookieBannerFixture {
 		"en",
 		`{"banner_title":"Cookies","banner_description":"We use cookies. See our {{cookie_policy_link}}."}`,
 	)
-	published := publishBanner(
-		t,
-		owner,
-		bannerID,
-	)
+	published := latestVersion(t, owner, bannerID)
 	require.Equal(t, "PUBLISHED", published.State)
+	require.Equal(t, 1, published.Version)
 
 	return publishedCookieBannerFixture{
 		Owner:    owner,

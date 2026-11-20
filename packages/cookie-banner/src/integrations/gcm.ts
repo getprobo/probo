@@ -64,15 +64,6 @@ export class GoogleConsentModeIntegration implements ConsentIntegration {
     consentFn("consent", "default", defaults);
   }
 
-  grantAll(): void {
-    const consentFn = this.getConsentFn();
-    const update: Record<string, string> = {};
-    for (const type of GoogleConsentModeIntegration.ALL_TYPES) {
-      update[type] = "granted";
-    }
-    consentFn("consent", "update", update);
-  }
-
   setDefaults(categories: Category[]): void {
     if (!this.hasMapping(categories)) return;
 

@@ -340,7 +340,9 @@ func TestCookieBannerGVLVendor(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, []int{firstID}, beforePublish.Node.GvlVendorIds)
 		assert.Equal(t, 1, beforePublish.Node.GVLVendors.TotalCount)
-		assert.Nil(t, beforePublish.Node.PublishedVersion)
+		require.NotNil(t, beforePublish.Node.PublishedVersion)
+		assert.Empty(t, beforePublish.Node.PublishedVersion.GvlVendorIds)
+		assert.Equal(t, 0, beforePublish.Node.PublishedVersion.GvlVendorCount)
 
 		published := publishBanner(t, owner, bannerID)
 		assert.Equal(t, "PUBLISHED", published.State)

@@ -126,22 +126,9 @@ export class CookieBannerClient {
     let config: BannerConfig;
     try {
       config = resolveConfig(await fetchJSON<BannerConfig>(configUrl));
-    } catch {
-      // Discovery mode: no published banner config, but detectors still run
-      // so admins can inventory trackers. Grant GCM so GTM-managed tags can
-      // fire; otherwise bootstrap's deny-all would hide them from discovery.
-      for (const integration of this.integrations) {
-        integration.grantAll();
-      }
-      this.startResourceDetector();
-      this.scanExistingCookies();
-      this.reportQueue?.reportPageView();
-      if (this.observer) {
-        this.observer.disconnect();
-      }
-      this.observer = observeAndActivate({}, {});
-      getConsent()._setReady({}, false);
-      return;
+    } catch (err) {
+      this.discardDetectors();
+      throw err;
     }
     this.bannerConfig = config;
     this.syncReportGrant();
@@ -477,7 +464,7 @@ export class CookieBannerClient {
     }
   }
 
-  private startResourceDetector(config?: BannerConfig): void {
+  private startResourceDetector(config: BannerConfig): void {
     if (!this.reportQueue) return;
     if (!shouldStartResourceDetector(config)) return;
     if (this.detectors.some((d) => d instanceof ResourceDetector)) return;
@@ -488,14 +475,22 @@ export class CookieBannerClient {
   }
 
   private stopDetectors(): void {
+    this.haltDetectors();
+    this.reportQueue?.stop();
+    this.reportQueue = null;
+  }
+
+  private discardDetectors(): void {
+    this.haltDetectors();
+    this.reportQueue?.discardTrackers();
+    this.reportQueue = null;
+  }
+
+  private haltDetectors(): void {
     for (const d of this.detectors) {
       d.stop();
     }
     this.detectors = [];
-    if (this.reportQueue) {
-      this.reportQueue.stop();
-      this.reportQueue = null;
-    }
   }
 
   destroy(): void {
