@@ -48,3 +48,12 @@ func HTTPResponseWriterFromContext(ctx context.Context) http.ResponseWriter {
 func HTTPRequestFromContext(ctx context.Context) *http.Request {
 	return ctx.Value(httpRequestKey).(*http.Request)
 }
+
+func HTTPRequest(ctx context.Context) (*http.Request, bool) {
+	request, ok := ctx.Value(httpRequestKey).(*http.Request)
+	if !ok || request == nil {
+		return nil, false
+	}
+
+	return request, true
+}

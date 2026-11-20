@@ -18,26 +18,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package api
+package authz_test
 
 import (
 	"net/http"
+	"net/http/httptest"
+	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"go.probo.inc/probo/pkg/iam"
-	"go.probo.inc/probo/pkg/server/api/clientip"
+	"go.probo.inc/probo/pkg/server/api/authz"
 )
 
-func auditRequestMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := iam.ContextWithAuditRequest(
-			r.Context(),
-			iam.AuditRequest{
-				IP:        clientip.Extract(r),
-				UserAgent: r.UserAgent(),
-				RequestID: r.Header.Get("X-Request-Id"),
-			},
-		)
+func TestAuditRequestFromHTTP(t *testing.T) {
+	t.Parallel()
 
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
+	req := httptest.NewRequest(http.MethodGet, "/console/v1/graphql", nil)
+	req.RemoteAddr = "203.0.113.9:443"
+	req.Header.Set("User-Agent", "prb/1.0")
+	req.Header.Set("X-Request-Id", "018f6b2e-7c3a-7b2e-8f1a-9c0d1e2f3a4b")
+
+	got := authz.AuditRequestFromHTTP(req)
+
+	assert.Equal(t, "018f6b2e-7c3a-7b2e-8f1a-9c0d1e2f3a4b", got.RequestID)
+	assert.Equal(t, "prb/1.0", got.UserAgent)
+	assert.Equal(t, "203.0.113.9", got.IP)
+	assert.Equal(t, iam.AuditRequest{}, authz.AuditRequestFromHTTP(nil))
 }

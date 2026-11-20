@@ -456,7 +456,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Permissions-Policy", "microphone=(), camera=(), geolocation=()")
 
 	router := chi.NewRouter()
-	router.Use(auditRequestMiddleware)
 	router.MethodNotAllowed(methodNotAllowed)
 	router.NotFound(notFound)
 

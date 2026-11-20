@@ -39,6 +39,8 @@ import (
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/authn"
+	"go.probo.inc/probo/pkg/server/api/authz"
+	"go.probo.inc/probo/pkg/server/gqlx"
 	"go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/thirdparty"
 )
@@ -1328,6 +1330,7 @@ func (f *batchFetcher) fetchAuthorizes(
 	multiParams := iam.AuthorizeMultiParams{
 		Principal: identity.ID,
 		Items:     items,
+		Request:   authz.AuditRequestFromHTTP(httpRequest(ctx)),
 	}
 	if session != nil {
 		multiParams.Session = &session.ID
@@ -1388,6 +1391,8 @@ func (f *batchFetcher) fetchAuthorizesIndividually(
 			params.Session = &session.ID
 		}
 
+		params.Request = authz.AuditRequestFromHTTP(httpRequest(ctx))
+
 		scope, err := f.iam.Authorizer.Authorize(ctx, params)
 		if err != nil {
 			perKeyErrs[key] = err
@@ -1412,6 +1417,12 @@ func EncodeAuthorizeKeyAttributes(attrs policy.Attributes) string {
 	b, _ := json.Marshal(attrs)
 
 	return string(b)
+}
+
+func httpRequest(ctx context.Context) *http.Request {
+	request, _ := gqlx.HTTPRequest(ctx)
+
+	return request
 }
 
 func decodeAuthorizeKeyAttributes(s string) (policy.Attributes, error) {

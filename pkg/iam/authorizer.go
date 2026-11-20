@@ -58,6 +58,7 @@ type AuthorizeParams struct {
 	ResourceAttributes  policy.Attributes
 	DryRun              bool
 	SkipAssumptionCheck bool
+	Request             AuditRequest
 }
 
 // AuthorizeBatchParams contains the parameters for a batch authorization request.
@@ -69,6 +70,7 @@ type AuthorizeBatchParams struct {
 	ResourceAttributes  policy.Attributes
 	DryRun              bool
 	SkipAssumptionCheck bool
+	Request             AuditRequest
 }
 
 // MultiAuthorizeItem contains one authorization request in a multi-authorization batch.
@@ -87,6 +89,7 @@ type AuthorizeMultiParams struct {
 	Principal gid.GID
 	Session   *gid.GID
 	Items     []MultiAuthorizeItem
+	Request   AuditRequest
 }
 
 // Authorizer evaluates authorization requests against registered policies.
@@ -148,6 +151,7 @@ func (a *Authorizer) Authorize(ctx context.Context, params AuthorizeParams) (*co
 			ResourceAttributes:  params.ResourceAttributes,
 			DryRun:              params.DryRun,
 			SkipAssumptionCheck: params.SkipAssumptionCheck,
+			Request:             params.Request,
 		},
 	)
 }
@@ -202,6 +206,7 @@ func (a *Authorizer) AuthorizeBatch(ctx context.Context, params AuthorizeBatchPa
 					Principal: params.Principal,
 					Session:   params.Session,
 					Items:     items,
+					Request:   params.Request,
 				},
 				params.ResourceAttributes,
 			)
@@ -853,7 +858,6 @@ func (a *Authorizer) insertAuditEntries(
 	}
 
 	now := time.Now()
-	request, _ := AuditRequestFromContext(ctx)
 	entries := make(coredata.AuditLogEntries, 0, len(indexes))
 
 	for _, i := range indexes {
@@ -871,7 +875,7 @@ func (a *Authorizer) insertAuditEntries(
 			itemAttrs[i],
 			decisions[i],
 			actor,
-			request,
+			params.Request,
 			now,
 		)
 		if entry == nil {

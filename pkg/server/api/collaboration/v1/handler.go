@@ -41,6 +41,7 @@ import (
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/authn"
+	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/jsonx"
 )
 
@@ -131,7 +132,11 @@ func (h *Handler) HandleRepo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	scope, document, canUpdate, canComment, err := h.authorize(r.Context(), documentID)
+	scope, document, canUpdate, canComment, err := h.authorize(
+		r.Context(),
+		documentID,
+		authz.AuditRequestFromHTTP(r),
+	)
 	if err != nil {
 		h.renderAuthorizationError(w, err)
 		return
@@ -281,6 +286,7 @@ func (h *Handler) HandleRepo(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) authorize(
 	ctx context.Context,
 	documentID gid.GID,
+	request iam.AuditRequest,
 ) (*coredata.Scope, *coredata.Document, bool, bool, error) {
 	identity := authn.IdentityFromContext(ctx)
 	session := authn.SessionFromContext(ctx)
@@ -297,6 +303,7 @@ func (h *Handler) authorize(
 		Resource:           document.ID,
 		Action:             probo.ActionDocumentUpdate,
 		ResourceAttributes: make(map[string]string),
+		Request:            request,
 	}
 	if session != nil {
 		params.Session = &session.ID

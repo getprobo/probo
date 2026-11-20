@@ -18,41 +18,34 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package api
+package authz
 
 import (
+	"context"
 	"net/http"
-	"net/http/httptest"
-	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/server/api/clientip"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
-func TestAuditRequestMiddleware_CopiesKitRequest(t *testing.T) {
-	t.Parallel()
+func AuditRequestFromHTTP(r *http.Request) iam.AuditRequest {
+	if r == nil {
+		return iam.AuditRequest{}
+	}
 
-	var got iam.AuditRequest
+	return iam.AuditRequest{
+		IP:        clientip.Extract(r),
+		UserAgent: r.UserAgent(),
+		RequestID: r.Header.Get("X-Request-Id"),
+	}
+}
 
-	handler := auditRequestMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		request, ok := iam.AuditRequestFromContext(r.Context())
-		require.True(t, ok)
-		got = request
-		w.WriteHeader(http.StatusNoContent)
-	}))
+func auditRequestFromContext(ctx context.Context) iam.AuditRequest {
+	request, ok := gqlx.HTTPRequest(ctx)
+	if !ok {
+		return iam.AuditRequest{}
+	}
 
-	req := httptest.NewRequest(http.MethodGet, "/console/v1/graphql", nil)
-	req.RemoteAddr = "203.0.113.9:443"
-	req.Header.Set("User-Agent", "prb/1.0")
-	req.Header.Set("X-Request-Id", "018f6b2e-7c3a-7b2e-8f1a-9c0d1e2f3a4b")
-
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	assert.Equal(t, http.StatusNoContent, rec.Code)
-	assert.Empty(t, rec.Header().Get("X-Request-Id"))
-	assert.Equal(t, "018f6b2e-7c3a-7b2e-8f1a-9c0d1e2f3a4b", got.RequestID)
-	assert.Equal(t, "prb/1.0", got.UserAgent)
-	assert.Equal(t, "203.0.113.9", got.IP)
+	return AuditRequestFromHTTP(request)
 }

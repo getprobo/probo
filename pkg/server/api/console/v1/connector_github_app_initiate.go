@@ -33,6 +33,7 @@ import (
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/authn"
+	"go.probo.inc/probo/pkg/server/api/authz"
 )
 
 func handleConnectorGitHubAppInitiate(
@@ -67,6 +68,7 @@ func handleConnectorGitHubAppInitiate(
 				Resource:  organizationID,
 				Session:   &session.ID,
 				Action:    probo.ActionConnectorInitiate,
+				Request:   authz.AuditRequestFromHTTP(r),
 			},
 		)
 		if err != nil {

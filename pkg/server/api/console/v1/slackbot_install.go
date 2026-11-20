@@ -34,6 +34,7 @@ import (
 	slackchannel "go.probo.inc/probo/pkg/probot/channel/slack"
 	"go.probo.inc/probo/pkg/saferedirect"
 	"go.probo.inc/probo/pkg/server/api/authn"
+	"go.probo.inc/probo/pkg/server/api/authz"
 )
 
 func handleSlackbotInstallInitiate(
@@ -68,6 +69,7 @@ func handleSlackbotInstallInitiate(
 				Resource:  organizationID,
 				Session:   &session.ID,
 				Action:    probo.ActionConnectorInitiate,
+				Request:   authz.AuditRequestFromHTTP(r),
 			},
 		); err != nil {
 			httpserver.RenderError(w, http.StatusForbidden, err)

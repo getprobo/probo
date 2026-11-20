@@ -52,6 +52,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/mcp/mcpx"
 	"go.probo.inc/probo/pkg/server/api/mcp/v1/server"
+	"go.probo.inc/probo/pkg/server/gqlx"
 	"go.probo.inc/probo/pkg/tag"
 	"go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/thirdparty"
@@ -152,7 +153,11 @@ func NewMux(
 	r := chi.NewMux()
 	r.Use(authn.NewOAuth2AccessTokenMiddleware(iamSvc))
 	r.Use(authn.NewIdentityPresenceMiddleware(baseURL))
-	r.Handle("/", handler)
+	r.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		ctx := gqlx.WithHTTPContext(req.Context(), w, req)
+
+		handler.ServeHTTP(w, req.WithContext(ctx))
+	}))
 
 	logger.Info("MCP server initialized successfully")
 

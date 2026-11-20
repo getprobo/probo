@@ -34,6 +34,7 @@ import (
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/authn"
+	"go.probo.inc/probo/pkg/server/api/authz"
 )
 
 // handleConnectorInstallInitiate sends the customer to the vendor to install
@@ -99,6 +100,7 @@ func handleConnectorInstallInitiate(
 				Resource:  organizationID,
 				Session:   &session.ID,
 				Action:    probo.ActionConnectorInitiate,
+				Request:   authz.AuditRequestFromHTTP(r),
 			},
 		); err != nil {
 			status, rendered := installAuthorizationFailure(err)

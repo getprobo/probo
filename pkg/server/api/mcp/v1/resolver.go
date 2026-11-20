@@ -58,6 +58,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/mcp/v1/types"
+	"go.probo.inc/probo/pkg/server/gqlx"
 	"go.probo.inc/probo/pkg/tag"
 	"go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/thirdparty"
@@ -160,6 +161,7 @@ func (r *Resolver) Authorize(ctx context.Context, entityID gid.GID, action iam.A
 		Resource:           entityID,
 		Action:             action,
 		ResourceAttributes: make(map[string]string),
+		Request:            authz.AuditRequestFromHTTP(httpRequest(ctx)),
 	}
 
 	for _, opt := range opts {
@@ -201,6 +203,7 @@ func (r *Resolver) AuthorizeBatch(ctx context.Context, entityIDs []gid.GID, acti
 			Principal: identity.ID,
 			Resources: entityIDs,
 			Action:    action,
+			Request:   authz.AuditRequestFromHTTP(httpRequest(ctx)),
 		},
 	)
 	if err == nil {
@@ -323,6 +326,12 @@ func (r *Resolver) documentWithHeads(
 		document,
 		collaboration.EncodeAutomergeHashes(heads),
 	), nil
+}
+
+func httpRequest(ctx context.Context) *http.Request {
+	request, _ := gqlx.HTTPRequest(ctx)
+
+	return request
 }
 
 func (r *Resolver) listableSearchEntityTypes(ctx context.Context, organizationID gid.GID) ([]uint16, error) {

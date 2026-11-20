@@ -20,25 +20,11 @@
 
 package iam
 
-import "context"
-
-type (
-	// AuditRequest is the HTTP request an authorization decision came from.
-	// The authorizer copies it onto the audit row at insert time.
-	AuditRequest struct {
-		IP        string
-		UserAgent string
-		RequestID string
-	}
-
-	auditRequestCtxKey struct{}
-)
-
-func ContextWithAuditRequest(ctx context.Context, request AuditRequest) context.Context {
-	return context.WithValue(ctx, auditRequestCtxKey{}, request)
-}
-
-func AuditRequestFromContext(ctx context.Context) (AuditRequest, bool) {
-	request, ok := ctx.Value(auditRequestCtxKey{}).(AuditRequest)
-	return request, ok
+// AuditRequest is the HTTP request an authorization decision came from.
+// Callers pass it on the authorize parameters, and the authorizer copies
+// it onto the audit row.
+type AuditRequest struct {
+	IP        string
+	UserAgent string
+	RequestID string
 }
