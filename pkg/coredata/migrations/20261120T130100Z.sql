@@ -30,12 +30,14 @@ ALTER TABLE electronic_signatures
     ALTER COLUMN flow DROP DEFAULT;
 
 -- Drop the old full-table unique constraint (applies to all flows).
+-- IF EXISTS guards against databases where this constraint was already removed.
 ALTER TABLE electronic_signatures
-    DROP CONSTRAINT electronic_signatures_organization_id_signer_email_document_type_file_id_key;
+    DROP CONSTRAINT IF EXISTS electronic_signatures_organization_id_signer_email_document_type_file_id_key;
 
 -- Replace with a partial unique index scoped to SIGNATURE flow only.
 -- CLICKWRAP rows share the same file_id across subjects, so the old constraint
 -- would collide on the second acceptance of the same version.
+DROP INDEX IF EXISTS electronic_signatures_signature_unique_idx;
 CREATE UNIQUE INDEX electronic_signatures_signature_unique_idx
     ON electronic_signatures (organization_id, signer_email, document_type, file_id)
     WHERE flow = 'SIGNATURE';

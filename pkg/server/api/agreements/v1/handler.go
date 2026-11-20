@@ -245,7 +245,7 @@ func (h *Handler) handleGetSubjectStatus(w http.ResponseWriter, r *http.Request)
 	}
 
 	var agreementIDs []gid.GID
-	for _, rawID := range strings.Split(rawIDs, ",") {
+	for rawID := range strings.SplitSeq(rawIDs, ",") {
 		id, err := gid.ParseGID(strings.TrimSpace(rawID))
 		if err != nil {
 			jsonx.RenderBadRequest(w, fmt.Errorf("invalid agreement ID: %s", rawID))
