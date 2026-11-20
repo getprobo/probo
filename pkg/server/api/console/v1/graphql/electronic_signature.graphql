@@ -129,8 +129,8 @@ type ElectronicSignature implements Node {
     consentText: String!
     lastError: String
     signedAt: Datetime
+    file: File! @goField(forceResolver: true)
     certificate: File @goField(forceResolver: true)
-    bundle: File @goField(forceResolver: true)
     events: [ElectronicSignatureEvent!]! @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!

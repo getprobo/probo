@@ -14,6 +14,15 @@ import (
 	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
+// File is the resolver for the file field.
+func (r *electronicSignatureResolver) File(ctx context.Context, obj *types.ElectronicSignature) (*types.File, error) {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionElectronicSignatureGet); err != nil {
+		return nil, err
+	}
+
+	return r.loadFile(ctx, obj.File.ID)
+}
+
 // Certificate is the resolver for the certificate field.
 func (r *electronicSignatureResolver) Certificate(ctx context.Context, obj *types.ElectronicSignature) (*types.File, error) {
 	if _, err := r.authorize(ctx, obj.ID, probo.ActionElectronicSignatureGet); err != nil {
@@ -25,19 +34,6 @@ func (r *electronicSignatureResolver) Certificate(ctx context.Context, obj *type
 	}
 
 	return r.loadFile(ctx, obj.Certificate.ID)
-}
-
-// Bundle is the resolver for the bundle field.
-func (r *electronicSignatureResolver) Bundle(ctx context.Context, obj *types.ElectronicSignature) (*types.File, error) {
-	if _, err := r.authorize(ctx, obj.ID, probo.ActionElectronicSignatureGet); err != nil {
-		return nil, err
-	}
-
-	if obj.Bundle == nil {
-		return nil, nil
-	}
-
-	return r.loadFile(ctx, obj.Bundle.ID)
 }
 
 // Events is the resolver for the events field.

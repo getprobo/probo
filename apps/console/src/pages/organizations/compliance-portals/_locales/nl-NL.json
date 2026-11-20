@@ -152,7 +152,7 @@
   },
   "electronicSignature": {
     "title": "NDA",
-    "certificateTitle": "Ondertekend bestand en certificaat",
+    "certificateTitle": "Voltooiingscertificaat",
     "status": {
       "signed": "Elektronisch ondertekend",
       "processing": "Handtekening in behandeling",
@@ -166,7 +166,11 @@
       "failed": "Deze handtekening kon niet worden voltooid.",
       "completed": "Deze bezoeker heeft elektronisch ondertekend."
     },
-    "actions": { "download": "Ondertekend bestand en certificaat downloaden" },
+    "actions": {
+      "download": "Downloaden",
+      "signedFile": "Ondertekend bestand",
+      "certificate": "Voltooiingscertificaat"
+    },
     "activity": "Activiteit"
   },
   "eventTypeLabel": {

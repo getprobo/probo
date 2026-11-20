@@ -21,6 +21,10 @@
 import { DownloadSimpleIcon, InfoIcon, SignatureIcon } from "@phosphor-icons/react";
 import { safeOpenUrl } from "@probo/helpers";
 import { dateTimeFormat } from "@probo/i18n";
+import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
+import { DropdownItem } from "@probo/ui/src/v2/Dropdown/DropdownItem";
+import { DropdownPopup } from "@probo/ui/src/v2/Dropdown/DropdownPopup";
+import { DropdownTrigger } from "@probo/ui/src/v2/Dropdown/DropdownTrigger";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { Popover } from "@probo/ui/src/v2/Popover/Popover";
 import { PopoverPopup } from "@probo/ui/src/v2/Popover/PopoverPopup";
@@ -57,7 +61,10 @@ const fragment = graphql`
   fragment ElectronicSignatureSectionFragment on ElectronicSignature {
     status
     signedAt
-    bundle {
+    file {
+      downloadUrl
+    }
+    certificate {
       downloadUrl
     }
     events {
@@ -116,7 +123,8 @@ export function ElectronicSignatureSection({
   const { root, copy, description, trigger, popup, event, timestamp }
     = electronicSignatureSection();
   const tone = ndaSignatureTone(signature.status);
-  const bundleUrl = signature.bundle?.downloadUrl ?? null;
+  const signedFileUrl = signature.signedAt != null ? signature.file.downloadUrl : "";
+  const certificateUrl = signature.certificate?.downloadUrl ?? null;
   const descriptionCopy = signatureDescription(
     signature.status,
     signature.signedAt,
@@ -134,19 +142,46 @@ export function ElectronicSignatureSection({
             {t(signatureLeadKey(signature.status))}
           </Text>
         )}
-        control={bundleUrl != null
+        control={signedFileUrl !== "" || certificateUrl != null
           ? (
-              <IconButton
-                size={1}
-                variant="ghost"
-                color="neutral"
-                aria-label={t("electronicSignature.actions.download")}
-                onClick={() => {
-                  safeOpenUrl(bundleUrl);
-                }}
-              >
-                <DownloadSimpleIcon />
-              </IconButton>
+              <Dropdown>
+                <DropdownTrigger
+                  render={(
+                    <IconButton
+                      size={1}
+                      variant="ghost"
+                      color="neutral"
+                      aria-label={t("electronicSignature.actions.download")}
+                    >
+                      <DownloadSimpleIcon />
+                    </IconButton>
+                  )}
+                />
+                <DropdownPopup align="end" size={1}>
+                  {signedFileUrl !== ""
+                    ? (
+                        <DropdownItem
+                          onClick={() => {
+                            safeOpenUrl(signedFileUrl);
+                          }}
+                        >
+                          {t("electronicSignature.actions.signedFile")}
+                        </DropdownItem>
+                      )
+                    : null}
+                  {certificateUrl != null
+                    ? (
+                        <DropdownItem
+                          onClick={() => {
+                            safeOpenUrl(certificateUrl);
+                          }}
+                        >
+                          {t("electronicSignature.actions.certificate")}
+                        </DropdownItem>
+                      )
+                    : null}
+                </DropdownPopup>
+              </Dropdown>
             )
           : undefined}
       >
