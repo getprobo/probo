@@ -160,6 +160,98 @@ func applyLinearPriorityToDestination(
 	return encoded, nil
 }
 
+func syncedLinearState(destination json.RawMessage) (coredata.TaskState, error) {
+	dest, err := parseTaskExternalLinkDestination(destination)
+	if err != nil {
+		return "", err
+	}
+
+	state := coredata.TaskState(dest.SyncedState)
+	if !state.IsValid() {
+		return "", nil
+	}
+
+	return state, nil
+}
+
+func withSyncedLinearState(
+	destination json.RawMessage,
+	state coredata.TaskState,
+) (json.RawMessage, error) {
+	if !state.IsValid() {
+		return nil, fmt.Errorf("cannot record synced linear state: invalid state %q", state)
+	}
+
+	dest, err := parseTaskExternalLinkDestination(destination)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read synced linear state: %w", err)
+	}
+
+	if dest.SyncedState == state.String() {
+		return destination, nil
+	}
+
+	dest.SyncedState = state.String()
+
+	encoded, err := json.Marshal(dest)
+	if err != nil {
+		return nil, fmt.Errorf("cannot marshal destination: %w", err)
+	}
+
+	return encoded, nil
+}
+
+// outboundStateAction reports whether an issue update should write Linear's
+// status, and which Probo status to take from Linear instead.
+// Several Linear statuses share one Probo state, so a sync of another field
+// must leave a status Probo did not change. A newer Linear status is adopted.
+func outboundStateAction(
+	taskState coredata.TaskState,
+	synced coredata.TaskState,
+	remoteType string,
+	remoteAhead bool,
+) (bool, coredata.TaskState) {
+	if remoteType == "" {
+		if synced.IsValid() && taskState != synced {
+			return true, ""
+		}
+
+		return false, ""
+	}
+
+	remoteState := LinearTypeToTaskState(remoteType)
+
+	if synced.IsValid() && taskState != synced {
+		return true, ""
+	}
+
+	if remoteState == taskState {
+		return false, ""
+	}
+
+	if remoteAhead || !synced.IsValid() {
+		if !synced.IsValid() && !remoteAhead {
+			return true, ""
+		}
+
+		return false, remoteState
+	}
+
+	return false, ""
+}
+
+func linearStatusAhead(remote, stored *time.Time) bool {
+	if remote == nil {
+		return false
+	}
+
+	if stored == nil {
+		return true
+	}
+
+	return remote.After(*stored)
+}
+
 func clearLinearNoneFromDestination(destination json.RawMessage) (json.RawMessage, error) {
 	dest, err := parseTaskExternalLinkDestination(destination)
 	if err != nil {

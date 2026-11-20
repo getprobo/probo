@@ -209,6 +209,7 @@ func (s *Service) importLinearIssueForConnector(
 	destination, err := json.Marshal(coredata.TaskExternalLinkDestination{
 		TeamID:               data.Team.ID,
 		LinearOrganizationID: envelope.OrganizationID,
+		SyncedState:          state.String(),
 	})
 	if err != nil {
 		return fmt.Errorf("cannot marshal destination: %w", err)

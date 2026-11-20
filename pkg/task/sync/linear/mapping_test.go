@@ -465,3 +465,135 @@ func TestContentHash_AssigneeChanges(t *testing.T) {
 		ContentHash("title", "body", coredata.TaskStateTodo, coredata.TaskPriorityHigh, nil, &assignee),
 	)
 }
+
+func TestOutboundStateAction(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		task   coredata.TaskState
+		synced coredata.TaskState
+		remote string
+		ahead  bool
+		push   bool
+		adopt  coredata.TaskState
+	}{
+		{
+			name:   "linear done is kept when probo is unchanged",
+			task:   coredata.TaskStateInProgress,
+			synced: coredata.TaskStateInProgress,
+			remote: "completed",
+			ahead:  true,
+			adopt:  coredata.TaskStateDone,
+		},
+		{
+			name:   "in review stays when both sides are in progress",
+			task:   coredata.TaskStateInProgress,
+			synced: coredata.TaskStateInProgress,
+			remote: "started",
+			ahead:  true,
+		},
+		{
+			name:   "probo done is pushed",
+			task:   coredata.TaskStateDone,
+			synced: coredata.TaskStateInProgress,
+			remote: "started",
+			push:   true,
+		},
+		{
+			name:   "probo change wins when linear also moved",
+			task:   coredata.TaskStateDone,
+			synced: coredata.TaskStateInProgress,
+			remote: "canceled",
+			ahead:  true,
+			push:   true,
+		},
+		{
+			name:   "legacy link adopts a newer linear status",
+			task:   coredata.TaskStateInProgress,
+			remote: "completed",
+			ahead:  true,
+			adopt:  coredata.TaskStateDone,
+		},
+		{
+			name:   "legacy link pushes when linear is older",
+			task:   coredata.TaskStateDone,
+			remote: "started",
+			push:   true,
+		},
+		{
+			name:   "missing remote status does not reset linear",
+			task:   coredata.TaskStateInProgress,
+			synced: coredata.TaskStateInProgress,
+		},
+		{
+			name:   "missing remote status still pushes a probo change",
+			task:   coredata.TaskStateDone,
+			synced: coredata.TaskStateInProgress,
+			push:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			push, adopt := outboundStateAction(tt.task, tt.synced, tt.remote, tt.ahead)
+
+			assert.Equal(t, tt.push, push)
+			assert.Equal(t, tt.adopt, adopt)
+		})
+	}
+}
+
+func TestWithSyncedLinearState(t *testing.T) {
+	t.Parallel()
+
+	projectID := "project-1"
+	destination, err := json.Marshal(coredata.TaskExternalLinkDestination{
+		TeamID:               "team-1",
+		ProjectID:            &projectID,
+		LinearOrganizationID: "org-1",
+		PreserveLinearNone:   true,
+		LinearNoneSnapshot:   "none",
+	})
+	require.NoError(t, err)
+
+	encoded, err := withSyncedLinearState(destination, coredata.TaskStateInProgress)
+	require.NoError(t, err)
+
+	state, err := syncedLinearState(encoded)
+	require.NoError(t, err)
+	assert.Equal(t, coredata.TaskStateInProgress, state)
+
+	var dest coredata.TaskExternalLinkDestination
+	require.NoError(t, json.Unmarshal(encoded, &dest))
+	assert.Equal(t, "team-1", dest.TeamID)
+	require.NotNil(t, dest.ProjectID)
+	assert.Equal(t, projectID, *dest.ProjectID)
+	assert.Equal(t, "org-1", dest.LinearOrganizationID)
+	assert.True(t, dest.PreserveLinearNone)
+	assert.Equal(t, "none", dest.LinearNoneSnapshot)
+
+	unchanged, err := withSyncedLinearState(encoded, coredata.TaskStateInProgress)
+	require.NoError(t, err)
+	assert.Equal(t, encoded, unchanged)
+
+	empty, err := syncedLinearState(destination)
+	require.NoError(t, err)
+	assert.Empty(t, empty)
+}
+
+func TestLinearStatusAhead(t *testing.T) {
+	t.Parallel()
+
+	now := time.Date(2026, 11, 20, 10, 0, 0, 0, time.UTC)
+	earlier := now.Add(-time.Minute)
+	later := now.Add(time.Minute)
+
+	assert.False(t, linearStatusAhead(nil, &now))
+	assert.True(t, linearStatusAhead(&now, nil))
+	assert.False(t, linearStatusAhead(&now, &now))
+	assert.False(t, linearStatusAhead(&earlier, &now))
+	assert.True(t, linearStatusAhead(&later, &now))
+}

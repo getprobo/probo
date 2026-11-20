@@ -201,7 +201,17 @@ func (s *Service) ApplyInboundIssue(
 				task.AssignedToID,
 			)
 			if inboundContentUnchanged(hash, link.ContentHash, mentionsStructureChanged) {
-				return touchInboundLink(ctx, tx, scope, link, data, remoteUpdatedAt, hash, mapped.Priority)
+				return touchInboundLink(
+					ctx,
+					tx,
+					scope,
+					link,
+					data,
+					remoteUpdatedAt,
+					hash,
+					mapped.State,
+					mapped.Priority,
+				)
 			}
 
 			oldState := task.State
@@ -318,7 +328,17 @@ func (s *Service) ApplyInboundIssue(
 				return fmt.Errorf("cannot emit task updated webhook: %w", err)
 			}
 
-			return touchInboundLink(ctx, tx, scope, link, data, remoteUpdatedAt, hash, mapped.Priority)
+			return touchInboundLink(
+				ctx,
+				tx,
+				scope,
+				link,
+				data,
+				remoteUpdatedAt,
+				hash,
+				mapped.State,
+				mapped.Priority,
+			)
 		},
 	)
 	if err != nil {
@@ -605,6 +625,7 @@ func touchInboundLink(
 	data *linear.IssueWebhookData,
 	remoteUpdatedAt *time.Time,
 	hash string,
+	mappedState coredata.TaskState,
 	mappedPriority coredata.TaskPriority,
 ) error {
 	link.ContentHash = &hash
@@ -629,6 +650,15 @@ func touchInboundLink(
 		)
 		if err != nil {
 			return err
+		}
+
+		link.Destination = destination
+	}
+
+	if data.Has("state") && mappedState.IsValid() {
+		destination, err := withSyncedLinearState(link.Destination, mappedState)
+		if err != nil {
+			return fmt.Errorf("cannot record synced linear state: %w", err)
 		}
 
 		link.Destination = destination
@@ -678,6 +708,126 @@ func inboundEventIsStale(remoteUpdatedAt, stored *time.Time) bool {
 	}
 
 	return !remoteUpdatedAt.After(*stored)
+}
+
+func (s *Service) adoptRemoteTaskState(
+	ctx context.Context,
+	scope coredata.Scoper,
+	taskID gid.GID,
+	externalID string,
+	state coredata.TaskState,
+) (bool, error) {
+	if !state.IsValid() {
+		return false, fmt.Errorf("cannot adopt linear task state: invalid state %q", state)
+	}
+
+	if s == nil || s.pg == nil {
+		return false, fmt.Errorf("cannot adopt linear task state: database is not configured")
+	}
+
+	var changed bool
+
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			link := &coredata.TaskExternalLink{}
+			if err := link.LoadByTaskIDForUpdate(ctx, tx, scope, taskID); err != nil {
+				return fmt.Errorf("cannot lock task external link: %w", err)
+			}
+
+			if link.ExternalID != externalID {
+				return nil
+			}
+
+			task := &coredata.Task{}
+			if err := task.LoadByIDForUpdate(ctx, tx, scope, taskID); err != nil {
+				return fmt.Errorf("cannot load task %q: %w", taskID, err)
+			}
+
+			destination, err := withSyncedLinearState(link.Destination, state)
+			if err != nil {
+				return fmt.Errorf("cannot record synced linear state: %w", err)
+			}
+
+			link.Destination = destination
+
+			if task.State == state {
+				link.UpdatedAt = time.Now()
+
+				if err := link.Update(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot update task external link: %w", err)
+				}
+
+				return nil
+			}
+
+			oldTask := *task
+			now := time.Now()
+			task.State = state
+			task.UpdatedAt = now
+
+			if err := task.NextRankForStatePriority(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot get next rank: %w", err)
+			}
+
+			if err := task.Update(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot update task from Linear: %w", err)
+			}
+
+			if err := s.recordInboundActivities(ctx, tx, scope, &oldTask, task, nil, now); err != nil {
+				return fmt.Errorf("cannot record adopted task changes: %w", err)
+			}
+
+			if task.State.IsClosed() {
+				if err := notification.ResolveLinkedTaskNotifications(
+					ctx,
+					tx,
+					scope,
+					task.OrganizationID,
+					task.ID,
+				); err != nil {
+					return fmt.Errorf("cannot resolve closed task notifications: %w", err)
+				}
+			}
+
+			internalControlIDs, err := (coredata.InternalControlTask{}).LoadInternalControlIDsByTaskID(
+				ctx,
+				tx,
+				scope,
+				task.ID,
+			)
+			if err != nil {
+				return fmt.Errorf("cannot load task internal controls: %w", err)
+			}
+
+			if err := webhook.InsertTaskUpdated(
+				ctx,
+				tx,
+				scope,
+				&oldTask,
+				task,
+				internalControlIDs,
+				internalControlIDs,
+			); err != nil {
+				return fmt.Errorf("cannot emit task updated webhook: %w", err)
+			}
+
+			link.UpdatedAt = now
+
+			if err := link.Update(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot update task external link: %w", err)
+			}
+
+			changed = true
+
+			return nil
+		},
+	)
+	if err != nil {
+		return false, fmt.Errorf("cannot adopt linear task state: %w", err)
+	}
+
+	return changed, nil
 }
 
 func (s *Service) recordInboundActivities(

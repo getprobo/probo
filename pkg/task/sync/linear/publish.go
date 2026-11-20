@@ -117,6 +117,7 @@ func (s *Service) PublishToLinear(
 		coredata.TaskExternalLinkDestination{
 			TeamID:               teamID,
 			LinearOrganizationID: linearOrganizationID,
+			SyncedState:          task.State.String(),
 		},
 	)
 	if err != nil {
@@ -818,7 +819,14 @@ func (s *Service) finishLinearLink(
 			)
 			link.ContentHash = &hash
 
+			destination, err := withSyncedLinearState(link.Destination, current.State)
+			if err != nil {
+				return fmt.Errorf("cannot record synced linear state: %w", err)
+			}
+
+			link.Destination = destination
 			link.CreatedAt = existing.CreatedAt
+
 			if err := link.Update(ctx, tx, scope); err != nil {
 				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 					return syncerrors.ErrTaskAlreadyLinked

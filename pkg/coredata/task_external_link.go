@@ -60,6 +60,9 @@ type (
 		LinearOrganizationID string  `json:"linear_organization_id,omitempty"`
 		PreserveLinearNone   bool    `json:"preserve_linear_none,omitempty"`
 		LinearNoneSnapshot   string  `json:"linear_none_snapshot,omitempty"`
+		// SyncedState is the Probo status last known to match Linear.
+		// Empty on links saved before status sync recorded it.
+		SyncedState string `json:"synced_state,omitempty"`
 	}
 )
 
