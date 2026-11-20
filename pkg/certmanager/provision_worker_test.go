@@ -24,6 +24,7 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -188,4 +189,18 @@ func TestDecideProvisioningOutcome_RateLimitWithoutOrderStaysPending(t *testing.
 	require.Equal(t, coredata.CertificateStatusPending, outcome.status)
 	assert.Equal(t, 1, outcome.retryCount)
 	assert.False(t, outcome.clearACMEState)
+}
+
+func TestNextPollAttemptAt_StoresIntervalMinusLease(t *testing.T) {
+	t.Parallel()
+
+	now := time.Date(2026, 11, 10, 12, 0, 0, 0, time.UTC)
+
+	// Timestamp arithmetic only. Eligibility is the SQL predicate in
+	// LoadNextForPollOrderForUpdateSkipLocked.
+	assert.Equal(
+		t,
+		now.Add(provisioningPollInterval-provisioningPollLease),
+		nextPollAttemptAt(now),
+	)
 }
