@@ -987,10 +987,9 @@ func truncateAuditString(value string, limit int) string {
 		return value
 	}
 
-	cut := value[:limit]
-	for len(cut) > 0 && !utf8.ValidString(cut) {
-		cut = cut[:len(cut)-1]
+	for limit > 0 && !utf8.RuneStart(value[limit]) {
+		limit--
 	}
 
-	return cut
+	return value[:limit]
 }
