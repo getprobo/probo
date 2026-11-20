@@ -23,7 +23,6 @@ package esign
 import (
 	"archive/zip"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"path/filepath"
@@ -32,7 +31,6 @@ import (
 	"unicode"
 
 	"go.gearno.de/crypto/uuid"
-	"go.gearno.de/kit/pg"
 	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/filemanager"
@@ -49,199 +47,9 @@ type bundleFile struct {
 	Body []byte
 }
 
-// MissingBundleIDs lists completed signatures that have a certificate and no zip.
-func (s *Service) MissingBundleIDs(ctx context.Context) ([]gid.GID, error) {
-	var ids []gid.GID
-
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			var err error
-
-			ids, err = coredata.LoadElectronicSignatureIDsMissingBundle(ctx, conn)
-			if err != nil {
-				return fmt.Errorf("cannot list signatures missing a bundle: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return ids, nil
-}
-
-// StoreBundle saves the zip for one signature. A signature that already has
-// one is left unchanged.
-func (s *Service) StoreBundle(ctx context.Context, signatureID gid.GID) error {
-	scope := coredata.NewScopeFromObjectID(signatureID)
-
-	file, err := s.EnsureBundle(ctx, scope, signatureID)
-	if err != nil {
-		return err
-	}
-
-	if file == nil {
-		return fmt.Errorf("signature %s has no certificate", signatureID)
-	}
-
-	return nil
-}
-
-// EnsureBundle returns the zip of the signed file and its certificate.
-// When the certificate exists and the zip does not, it stores one.
-func (s *Service) EnsureBundle(
-	ctx context.Context,
-	scope coredata.Scoper,
-	signatureID gid.GID,
-) (*coredata.File, error) {
-	var signature coredata.ElectronicSignature
-
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			if err := signature.LoadByID(ctx, conn, scope, signatureID); err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return ErrElectronicSignatureNotFound
-				}
-
-				return fmt.Errorf("cannot load electronic signature: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	if signature.BundleFileID != nil {
-		return loadFile(ctx, s.pg, scope, *signature.BundleFileID)
-	}
-
-	if signature.CertificateFileID == nil {
-		return nil, nil
-	}
-
-	var (
-		signedFile      coredata.File
-		certificateFile coredata.File
-	)
-
-	err = s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			if err := signedFile.LoadByID(ctx, conn, scope, signature.FileID); err != nil {
-				return fmt.Errorf("cannot load signed file: %w", err)
-			}
-
-			if err := certificateFile.LoadByID(ctx, conn, scope, *signature.CertificateFileID); err != nil {
-				return fmt.Errorf("cannot load certificate file: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	uploaded, err := uploadSignatureBundle(
-		ctx,
-		s.fileManager,
-		s.bucket,
-		&signature,
-		&signedFile,
-		&certificateFile,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	var (
-		stored       coredata.File
-		keptUploaded bool
-	)
-
-	err = s.pg.WithTx(
-		ctx,
-		func(ctx context.Context, tx pg.Tx) error {
-			var locked coredata.ElectronicSignature
-
-			if err := locked.LoadByIDForUpdate(ctx, tx, scope, signatureID); err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return ErrElectronicSignatureNotFound
-				}
-
-				return fmt.Errorf("cannot lock electronic signature: %w", err)
-			}
-
-			if locked.BundleFileID != nil {
-				if err := stored.LoadByID(ctx, tx, scope, *locked.BundleFileID); err != nil {
-					return fmt.Errorf("cannot load signature bundle: %w", err)
-				}
-
-				return nil
-			}
-
-			if err := uploaded.Insert(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot insert signature bundle: %w", err)
-			}
-
-			locked.BundleFileID = &uploaded.ID
-			locked.UpdatedAt = time.Now()
-
-			if err := locked.Update(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot update signature bundle: %w", err)
-			}
-
-			stored = uploaded
-			keptUploaded = true
-
-			return nil
-		},
-	)
-	if err != nil {
-		_ = s.fileManager.DeleteFile(ctx, &uploaded)
-
-		return nil, err
-	}
-
-	if !keptUploaded {
-		_ = s.fileManager.DeleteFile(ctx, &uploaded)
-	}
-
-	return &stored, nil
-}
-
-func loadFile(
-	ctx context.Context,
-	pgClient *pg.Client,
-	scope coredata.Scoper,
-	fileID gid.GID,
-) (*coredata.File, error) {
-	var file coredata.File
-
-	err := pgClient.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			if err := file.LoadByID(ctx, conn, scope, fileID); err != nil {
-				return fmt.Errorf("cannot load signature bundle: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return &file, nil
-}
-
-func uploadSignatureBundle(
+// UploadSignatureBundle writes a private zip of the signed file and its
+// certificate. The caller inserts the returned file row.
+func UploadSignatureBundle(
 	ctx context.Context,
 	files *filemanager.Service,
 	bucket string,

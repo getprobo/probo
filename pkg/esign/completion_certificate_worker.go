@@ -223,7 +223,7 @@ func (h *completionCertificateHandler) generateAndCommit(
 	}
 
 	if signedFileLoaded {
-		uploadedBundle, err := uploadSignatureBundle(
+		uploadedBundle, err := UploadSignatureBundle(
 			ctx,
 			h.fileManager,
 			h.bucket,

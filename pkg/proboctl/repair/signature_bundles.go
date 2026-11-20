@@ -21,18 +21,22 @@
 package repair
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/spf13/cobra"
 	"go.gearno.de/kit/httpclient"
 	"go.gearno.de/kit/log"
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/awsconfig"
+	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/filemanager"
-	"go.probo.inc/probo/pkg/html2pdf"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/proboctl/cmdutil"
 )
 
@@ -79,17 +83,7 @@ func newCmdSignatureBundles(f *cmdutil.Factory) *cobra.Command {
 			return err
 		}
 
-		logger := log.NewLogger(log.WithOutput(f.IOStreams.ErrOut))
-		svc := esign.NewService(
-			pgClient,
-			nil,
-			html2pdf.NewConverter(""),
-			"",
-			flagBucket,
-			logger,
-		)
-
-		ids, err := svc.MissingBundleIDs(ctx)
+		ids, err := listSignatureIDsMissingBundle(ctx, pgClient)
 		if err != nil {
 			return err
 		}
@@ -130,24 +124,17 @@ func newCmdSignatureBundles(f *cmdutil.Factory) *cobra.Command {
 			return fmt.Errorf("set --bucket or PROBOD_AWS_BUCKET")
 		}
 
+		logger := log.NewLogger(log.WithOutput(f.IOStreams.ErrOut))
+
 		files, err := newFileManager(logger, region, accessKeyID, secretAccessKey, endpoint, usePathStyle)
 		if err != nil {
 			return err
 		}
 
-		svc = esign.NewService(
-			pgClient,
-			files,
-			html2pdf.NewConverter(""),
-			"",
-			bucket,
-			logger,
-		)
-
 		var failures int
 
 		for _, id := range ids {
-			if err := svc.StoreBundle(ctx, id); err != nil {
+			if err := storeSignatureBundle(ctx, pgClient, files, bucket, id); err != nil {
 				failures++
 				_, _ = fmt.Fprintf(f.IOStreams.ErrOut, "%s: %v\n", id.String(), err)
 
@@ -171,6 +158,165 @@ func newCmdSignatureBundles(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	return cmd
+}
+
+func listSignatureIDsMissingBundle(
+	ctx context.Context,
+	pgClient *pg.Client,
+) ([]gid.GID, error) {
+	var ids []gid.GID
+
+	err := pgClient.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			q := `
+SELECT id
+FROM electronic_signatures
+WHERE certificate_file_id IS NOT NULL
+	AND bundle_file_id IS NULL
+ORDER BY signed_at ASC NULLS LAST, id ASC
+`
+
+			rows, err := conn.Query(ctx, q)
+			if err != nil {
+				return fmt.Errorf("cannot query signatures missing a bundle: %w", err)
+			}
+
+			defer rows.Close()
+
+			for rows.Next() {
+				var id gid.GID
+				if err := rows.Scan(&id); err != nil {
+					return fmt.Errorf("cannot scan signature id: %w", err)
+				}
+
+				ids = append(ids, id)
+			}
+
+			if err := rows.Err(); err != nil {
+				return fmt.Errorf("cannot read signatures missing a bundle: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return ids, nil
+}
+
+func storeSignatureBundle(
+	ctx context.Context,
+	pgClient *pg.Client,
+	files *filemanager.Service,
+	bucket string,
+	signatureID gid.GID,
+) error {
+	scope := coredata.NewScopeFromObjectID(signatureID)
+
+	var signature coredata.ElectronicSignature
+
+	err := pgClient.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := signature.LoadByID(ctx, conn, scope, signatureID); err != nil {
+				return fmt.Errorf("cannot load electronic signature: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	if signature.BundleFileID != nil {
+		return nil
+	}
+
+	if signature.CertificateFileID == nil {
+		return fmt.Errorf("signature %s has no certificate", signatureID)
+	}
+
+	var (
+		signedFile      coredata.File
+		certificateFile coredata.File
+	)
+
+	err = pgClient.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := signedFile.LoadByID(ctx, conn, scope, signature.FileID); err != nil {
+				return fmt.Errorf("cannot load signed file: %w", err)
+			}
+
+			if err := certificateFile.LoadByID(ctx, conn, scope, *signature.CertificateFileID); err != nil {
+				return fmt.Errorf("cannot load certificate file: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	uploaded, err := esign.UploadSignatureBundle(
+		ctx,
+		files,
+		bucket,
+		&signature,
+		&signedFile,
+		&certificateFile,
+	)
+	if err != nil {
+		return err
+	}
+
+	keptUploaded := false
+
+	err = pgClient.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			var locked coredata.ElectronicSignature
+
+			if err := locked.LoadByIDForUpdate(ctx, tx, scope, signatureID); err != nil {
+				return fmt.Errorf("cannot lock electronic signature: %w", err)
+			}
+
+			if locked.BundleFileID != nil {
+				return nil
+			}
+
+			if err := uploaded.Insert(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot insert signature bundle: %w", err)
+			}
+
+			locked.BundleFileID = &uploaded.ID
+			locked.UpdatedAt = time.Now()
+
+			if err := locked.Update(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot update signature bundle: %w", err)
+			}
+
+			keptUploaded = true
+
+			return nil
+		},
+	)
+	if err != nil {
+		_ = files.DeleteFile(ctx, &uploaded)
+
+		return err
+	}
+
+	if !keptUploaded {
+		_ = files.DeleteFile(ctx, &uploaded)
+	}
+
+	return nil
 }
 
 func newFileManager(

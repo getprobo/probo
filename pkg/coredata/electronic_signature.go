@@ -471,45 +471,6 @@ func (es *ElectronicSignature) computeSealV1() (string, error) {
 	return hash.SHA256HexString(input), nil
 }
 
-// LoadElectronicSignatureIDsMissingBundle returns signatures that have a
-// certificate and no stored zip.
-func LoadElectronicSignatureIDsMissingBundle(
-	ctx context.Context,
-	conn pg.Querier,
-) ([]gid.GID, error) {
-	q := `
-SELECT id
-FROM electronic_signatures
-WHERE certificate_file_id IS NOT NULL
-	AND bundle_file_id IS NULL
-ORDER BY signed_at ASC NULLS LAST, id ASC
-`
-
-	rows, err := conn.Query(ctx, q)
-	if err != nil {
-		return nil, fmt.Errorf("cannot query signatures missing a bundle: %w", err)
-	}
-
-	defer rows.Close()
-
-	var ids []gid.GID
-
-	for rows.Next() {
-		var id gid.GID
-		if err := rows.Scan(&id); err != nil {
-			return nil, fmt.Errorf("cannot scan signature id: %w", err)
-		}
-
-		ids = append(ids, id)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("cannot read signatures missing a bundle: %w", err)
-	}
-
-	return ids, nil
-}
-
 func ResetStaleCertificateProcessing(
 	ctx context.Context,
 	conn pg.Querier,
