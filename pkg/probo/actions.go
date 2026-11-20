@@ -379,4 +379,24 @@ const (
 	// ElectronicSignature actions (tenant-scoped via the related document
 	// version signature / compliance portal access).
 	ActionElectronicSignatureGet = "core:electronic-signature:get"
+
+	// DocumentSigningConfig actions
+	ActionDocumentSigningConfigGet      = "core:document-signing-config:get"
+	ActionDocumentSigningConfigList     = "core:document-signing-config:list"
+	ActionDocumentSigningConfigCreate   = "core:document-signing-config:create"
+	ActionDocumentSigningConfigUpdate   = "core:document-signing-config:update"
+	ActionDocumentSigningConfigActivate = "core:document-signing-config:activate"
+	ActionDocumentSigningConfigArchive  = "core:document-signing-config:archive"
+
+	// ClickwrapAcceptance actions
+	ActionClickwrapAcceptanceGet    = "core:clickwrap-acceptance:get"
+	ActionClickwrapAcceptanceList   = "core:clickwrap-acceptance:list"
+	ActionClickwrapAcceptanceRevoke = "core:clickwrap-acceptance:revoke"
+
+	// ClickwrapSubject actions
+	ActionClickwrapSubjectGet  = "core:clickwrap-subject:get"
+	ActionClickwrapSubjectList = "core:clickwrap-subject:list"
+
+	// OrganizationSigningSecret actions
+	ActionOrganizationSigningSecretRotate = "core:organization-signing-secret:rotate"
 )

@@ -28,6 +28,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/apps/console"
 	employeeportalstatics "go.probo.inc/probo/apps/employee-portal"
 	"go.probo.inc/probo/pkg/accessreview"
@@ -67,6 +68,7 @@ import (
 	"go.probo.inc/probo/pkg/server/mailactions"
 	console_web "go.probo.inc/probo/pkg/server/web"
 	employeeportal_web "go.probo.inc/probo/pkg/server/web/employeeportal"
+	"go.probo.inc/probo/pkg/sign"
 	"go.probo.inc/probo/pkg/slack"
 	"go.probo.inc/probo/pkg/tag"
 	"go.probo.inc/probo/pkg/task"
@@ -107,6 +109,8 @@ type Config struct {
 	Mailman                 *mailman.Service
 	CookieBanner            *cookiebanner.Service
 	EmployeePortal          *employeeportalmgmt.Service
+	Sign                    *sign.Service
+	PG                      *pg.Client
 	Geoloc                  *geoloc.Service
 	ThirdParty              *thirdparty.Service
 	RiskManagement          *riskmanagement.Service
@@ -182,6 +186,8 @@ func NewServer(cfg Config) (*Server, error) {
 		Mailman:                  cfg.Mailman,
 		CookieBanner:             cfg.CookieBanner,
 		EmployeePortal:           cfg.EmployeePortal,
+		Sign:                     cfg.Sign,
+		PG:                       cfg.PG,
 		Geoloc:                   cfg.Geoloc,
 		ThirdParty:               cfg.ThirdParty,
 		RiskManagement:           cfg.RiskManagement,

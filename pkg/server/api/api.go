@@ -31,6 +31,7 @@ import (
 	"github.com/go-chi/cors"
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/agentexecution"
 	"go.probo.inc/probo/pkg/baseurl"
@@ -70,9 +71,11 @@ import (
 	files_v1 "go.probo.inc/probo/pkg/server/api/files/v1"
 	linear_v1 "go.probo.inc/probo/pkg/server/api/linear/v1"
 	mcp_v1 "go.probo.inc/probo/pkg/server/api/mcp/v1"
+	sign_v1 "go.probo.inc/probo/pkg/server/api/sign/v1"
 	slack_v1 "go.probo.inc/probo/pkg/server/api/slack/v1"
 	"go.probo.inc/probo/pkg/server/gqlx"
 	"go.probo.inc/probo/pkg/server/gqlx/directives/ratelimit"
+	"go.probo.inc/probo/pkg/sign"
 	"go.probo.inc/probo/pkg/slack"
 	"go.probo.inc/probo/pkg/tag"
 	"go.probo.inc/probo/pkg/task"
@@ -111,6 +114,8 @@ type (
 		CookieBanner            *cookiebanner.Service
 		EmployeePortal          *employeeportalmgmt.Service
 		Geoloc                  *geoloc.Service
+		Sign                    *sign.Service
+		PG                      *pg.Client
 		ThirdParty              *thirdparty.Service
 		RiskManagement          *riskmanagement.Service
 		ITAM                    *itam.Service
@@ -157,6 +162,7 @@ type (
 		asanaHandler         http.Handler
 		connectHandler       http.Handler
 		agentHandler         http.Handler
+		signHandler          http.Handler
 	}
 )
 
@@ -248,6 +254,11 @@ func NewServer(cfg Config) (*Server, error) {
 	// POST explicitly since it comes from customer origins.
 	csrf.AddInsecureBypassPattern("POST /cookie-banner/v1/{rest...}")
 
+	// The sign data plane is bearer-token authenticated by API keys; CSRF
+	// does not apply. It also accepts cross-origin POSTs from customer sites
+	// (browser SDK path), so bypass CSRF for all methods.
+	csrf.AddInsecureBypassPattern("POST /sign/v1/{rest...}")
+
 	// OAuth2 token, introspection, revocation, and device authorization
 	// endpoints receive cross-origin POSTs from external clients.
 	csrf.AddInsecureBypassPattern("POST /connect/v1/oauth2/token")
@@ -326,6 +337,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.Mailman,
 			cfg.CookieBanner,
 			cfg.EmployeePortal,
+			cfg.Sign,
 			cfg.Cookie,
 			cfg.InstallStateKey,
 			cfg.ConnectorRegistry,
@@ -354,6 +366,18 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.CookieBanner,
 			cfg.Geoloc,
 		),
+		signHandler: func() http.Handler {
+			if cfg.Sign == nil || cfg.PG == nil {
+				return http.NotFoundHandler()
+			}
+
+			return sign_v1.NewMux(
+				cfg.Logger.Named("sign.v1"),
+				cfg.Sign,
+				cfg.PG,
+				cfg.Geoloc,
+			)
+		}(),
 		filesHandler: files_v1.NewMux(
 			cfg.Logger.Named("files.v1"),
 			cfg.File,
@@ -464,6 +488,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// customer websites are not swallowed by the stricter AllowedOrigins
 	// list that applies to console/connect routes.
 	router.Mount("/cookie-banner/v1", http.StripPrefix("/cookie-banner/v1", s.cookieBannerHandler))
+
+	// Sign data plane has its own per-config CORS handling; bearer-token
+	// authenticated so CSRF does not apply.
+	router.Mount("/sign/v1", http.StripPrefix("/sign/v1", s.signHandler))
 
 	// Agent API should never be called from a browser; mount it outside
 	// to avoid CORS headers being set on it.
