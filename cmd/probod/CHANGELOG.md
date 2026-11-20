@@ -4,6 +4,42 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.354.0] - 2026-11-20
+
+This is a security release. Upgrade as soon as possible.
+
+### Added
+
+- The compliance portal visitor card offers the signed document beside
+  the certificate of completion, and the download menu opens either
+  file. The console GraphQL `ElectronicSignature` type adds `nda`, the
+  document the visitor signed
+
+### Security
+
+- Google and Microsoft sign-in binds the login state to the browser
+  that started it. Before, a state value was accepted from any browser,
+  so an attacker could finish their own login there and the victim's
+  session would belong to the attacker. The callback is now rejected
+  before the code exchange unless it matches a short-lived HttpOnly
+  cookie. Sign-ins started before the upgrade must be restarted
+- The MCP `listOrganizations` tool no longer returns organizations a
+  user was deactivated from. A former member could still read the
+  organization's id and name
+
+### Fixed
+
+- Linear sync no longer moves an issue back to In Progress when another
+  field changes. A status is sent to Linear only when it changed in
+  Probo, and a status changed in Linear and not in Probo is copied onto
+  the task
+- Pending ACME orders are polled again 30 seconds after a challenge
+  accept, a not-ready poll, or a finalize that leaves the order
+  processing, instead of after about four minutes, so custom domain
+  certificates are issued sooner
+- Global search no longer fails with a database error when audits match,
+  and search errors no longer expose SQL internals to clients
+
 ## [0.353.0] - 2026-11-20
 
 ### Added
