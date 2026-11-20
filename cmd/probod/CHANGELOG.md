@@ -4,6 +4,14 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.355.1] - 2026-11-20
+
+### Fixed
+
+- Servers on 0.354.0 or earlier no longer fail to write audit log
+  entries once the 0.355.0 migration has run, so rolling deploys and
+  rollbacks keep working
+
 ## [0.355.0] - 2026-11-20
 
 ### Added
