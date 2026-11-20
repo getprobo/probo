@@ -60,6 +60,45 @@ var (
 	migrateErr     error
 )
 
+// PGClientOptions returns connection options for PROBO_TEST_PG_URL, falling
+// back to the local compose Postgres. A URL without a host keeps the client's
+// default address.
+func PGClientOptions() ([]pg.Option, error) {
+	dsn := os.Getenv(pgURLEnvVar)
+	if dsn == "" {
+		dsn = defaultPGURL
+	}
+
+	u, err := url.Parse(dsn)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse %s: %w", pgURLEnvVar, err)
+	}
+
+	var opts []pg.Option
+
+	if u.Host != "" {
+		host := u.Host
+		if u.Port() == "" {
+			host = net.JoinHostPort(u.Hostname(), "5432")
+		}
+
+		opts = append(opts, pg.WithAddr(host))
+	}
+
+	if u.User != nil {
+		opts = append(opts, pg.WithUser(u.User.Username()))
+		if password, ok := u.User.Password(); ok {
+			opts = append(opts, pg.WithPassword(password))
+		}
+	}
+
+	if len(u.Path) > 1 {
+		opts = append(opts, pg.WithDatabase(u.Path[1:]))
+	}
+
+	return opts, nil
+}
+
 // PGClient returns a process-wide shared pg.Client connected to the test
 // database described by the PROBO_TEST_PG_URL environment variable (falling
 // back to a local compose Postgres), applying the agent_executions migrations on
@@ -72,38 +111,12 @@ func PGClient(t *testing.T) *pg.Client {
 
 	pgOnce.Do(
 		func() {
-			dsn := os.Getenv(pgURLEnvVar)
-			if dsn == "" {
-				dsn = defaultPGURL
-			}
-
-			u, err := url.Parse(dsn)
+			opts, err := PGClientOptions()
 			if err != nil {
-				pgInitErr = fmt.Errorf("cannot parse %s: %w", pgURLEnvVar, err)
+				pgInitErr = err
 				return
 			}
-
-			opts := []pg.Option{pg.WithPoolSize(25)}
-
-			if u.Host != "" {
-				host := u.Host
-				if u.Port() == "" {
-					host = net.JoinHostPort(u.Hostname(), "5432")
-				}
-
-				opts = append(opts, pg.WithAddr(host))
-			}
-
-			if u.User != nil {
-				opts = append(opts, pg.WithUser(u.User.Username()))
-				if password, ok := u.User.Password(); ok {
-					opts = append(opts, pg.WithPassword(password))
-				}
-			}
-
-			if len(u.Path) > 1 {
-				opts = append(opts, pg.WithDatabase(u.Path[1:]))
-			}
+			opts = append(opts, pg.WithPoolSize(25))
 
 			sharedPGClient, pgInitErr = pg.NewClient(opts...)
 			if pgInitErr != nil {
