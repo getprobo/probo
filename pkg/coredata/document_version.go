@@ -51,6 +51,8 @@ type (
 		Orientation     DocumentVersionOrientation `db:"orientation"`
 		FileID          *gid.GID                   `db:"file_id"`
 		PdfAttemptCount int                        `db:"pdf_attempt_count"`
+		ContentSha256   *string                    `db:"content_sha256"`
+		PresentableAt   *time.Time                 `db:"presentable_at"`
 		PublishedAt     *time.Time                 `db:"published_at"`
 		CreatedAt       time.Time                  `db:"created_at"`
 		UpdatedAt       time.Time                  `db:"updated_at"`
@@ -123,6 +125,8 @@ SELECT
 	orientation,
 	file_id,
 	pdf_attempt_count,
+	content_sha256,
+	presentable_at,
 	published_at,
 	created_at,
 	updated_at
@@ -180,6 +184,8 @@ SELECT
 	orientation,
 	file_id,
 	pdf_attempt_count,
+	content_sha256,
+	presentable_at,
 	published_at,
 	created_at,
 	updated_at
@@ -245,6 +251,8 @@ SELECT
 	orientation,
 	file_id,
 	pdf_attempt_count,
+	content_sha256,
+	presentable_at,
 	published_at,
 	created_at,
 	updated_at
@@ -304,6 +312,8 @@ INSERT INTO document_versions (
 	orientation,
 	file_id,
 	pdf_attempt_count,
+	content_sha256,
+	presentable_at,
 	published_at,
 	created_at,
 	updated_at
@@ -324,6 +334,8 @@ VALUES (
 	@orientation,
 	@file_id,
 	@pdf_attempt_count,
+	@content_sha256,
+	@presentable_at,
 	@published_at,
 	@created_at,
 	@updated_at
@@ -345,6 +357,8 @@ VALUES (
 		"orientation":       dv.Orientation,
 		"file_id":           dv.FileID,
 		"pdf_attempt_count": dv.PdfAttemptCount,
+		"content_sha256":    dv.ContentSha256,
+		"presentable_at":    dv.PresentableAt,
 		"published_at":      dv.PublishedAt,
 		"created_at":        dv.CreatedAt,
 		"updated_at":        dv.UpdatedAt,
@@ -390,6 +404,8 @@ SELECT
 	orientation,
 	file_id,
 	pdf_attempt_count,
+	content_sha256,
+	presentable_at,
 	published_at,
 	created_at,
 	updated_at
@@ -455,6 +471,8 @@ SELECT
 	orientation,
 	file_id,
 	pdf_attempt_count,
+	content_sha256,
+	presentable_at,
 	published_at,
 	created_at,
 	updated_at
@@ -514,6 +532,8 @@ SELECT
 	orientation,
 	file_id,
 	pdf_attempt_count,
+	content_sha256,
+	presentable_at,
 	published_at,
 	created_at,
 	updated_at
@@ -575,6 +595,8 @@ SELECT
 	orientation,
 	file_id,
 	pdf_attempt_count,
+	content_sha256,
+	presentable_at,
 	published_at,
 	created_at,
 	updated_at
@@ -632,6 +654,8 @@ UPDATE document_versions SET
 	orientation = @orientation,
 	file_id = @file_id,
 	pdf_attempt_count = @pdf_attempt_count,
+	content_sha256 = @content_sha256,
+	presentable_at = @presentable_at,
 	updated_at = @updated_at
 WHERE %s
 	AND id = @document_version_id
@@ -653,6 +677,8 @@ WHERE %s
 		"orientation":         dv.Orientation,
 		"file_id":             dv.FileID,
 		"pdf_attempt_count":   dv.PdfAttemptCount,
+		"content_sha256":      dv.ContentSha256,
+		"presentable_at":      dv.PresentableAt,
 		"updated_at":          dv.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
@@ -712,6 +738,8 @@ SELECT
 	dv.orientation,
 	dv.file_id,
 	dv.pdf_attempt_count,
+	dv.content_sha256,
+	dv.presentable_at,
 	dv.published_at,
 	dv.created_at,
 	dv.updated_at
@@ -809,4 +837,68 @@ WHERE
 	}
 
 	return count, nil
+}
+
+// LoadCurrentPresentable returns the most-recent PUBLISHED version for
+// documentID that has both file_id and content_sha256 set (i.e. is PRESENTABLE
+// per the signing spec). Returns ErrResourceNotFound when none exists.
+func (dv *DocumentVersion) LoadCurrentPresentable(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	documentID gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	document_id,
+	title,
+	major,
+	minor,
+	classification,
+	document_type,
+	content,
+	changelog,
+	status,
+	orientation,
+	file_id,
+	pdf_attempt_count,
+	content_sha256,
+	presentable_at,
+	published_at,
+	created_at,
+	updated_at
+FROM document_versions
+WHERE %s
+	AND document_id = @document_id
+	AND status = 'PUBLISHED'
+	AND file_id IS NOT NULL
+	AND content_sha256 IS NOT NULL
+	AND presentable_at IS NOT NULL
+ORDER BY major DESC, minor DESC
+LIMIT 1
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"document_id": documentID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query current presentable version: %w", err)
+	}
+
+	version, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[DocumentVersion])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect current presentable version: %w", err)
+	}
+
+	*dv = version
+
+	return nil
 }

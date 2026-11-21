@@ -52,6 +52,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/gqlx"
+	"go.probo.inc/probo/pkg/sign"
 	"go.probo.inc/probo/pkg/tag"
 	"go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/thirdparty"
@@ -70,6 +71,7 @@ func NewGraphQLHandler(
 	mailmanSvc *mailman.Service,
 	cookieBannerSvc *cookiebanner.Service,
 	employeePortalSvc *employeeportalmgmt.Service,
+	signSvc *sign.Service,
 	connectorRegistry *connectorprotocol.Registry,
 	providerRegistry *provider.Registry,
 	customDomainCname string,
@@ -107,6 +109,7 @@ func NewGraphQLHandler(
 			mailman:                 mailmanSvc,
 			cookieBanner:            cookieBannerSvc,
 			employeePortal:          employeePortalSvc,
+			sign:                    signSvc,
 			connectorRegistry:       connectorRegistry,
 			providerRegistry:        providerRegistry,
 			riskManagement:          riskManagementSvc,

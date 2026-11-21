@@ -130,12 +130,12 @@ func (es *ElectronicSignature) Insert(
 INSERT INTO electronic_signatures (
 	id, tenant_id, organization_id, status, document_type, document_name, file_id,
 	signer_email, consent_text, email_subject, seal_version,
-	attempt_count, max_attempts,
+	attempt_count, max_attempts, flow,
 	created_at, updated_at
 ) VALUES (
 	@id, @tenant_id, @organization_id, @status, @document_type, @document_name, @file_id,
 	@signer_email, @consent_text, @email_subject, @seal_version,
-	@attempt_count, @max_attempts,
+	@attempt_count, @max_attempts, 'ESIGN',
 	@created_at, @updated_at
 )
 `

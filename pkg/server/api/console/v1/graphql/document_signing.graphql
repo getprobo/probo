@@ -1,0 +1,197 @@
+enum DocumentSigningConfigState
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.DocumentSigningConfigState"
+    ) {
+    DRAFT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentSigningConfigStateDraft"
+        )
+    ACTIVE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentSigningConfigStateActive"
+        )
+    ARCHIVED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentSigningConfigStateArchived"
+        )
+}
+
+enum DocumentSigningConfigMode
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.DocumentSigningConfigMode"
+    ) {
+    LIVE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentSigningConfigModeLive"
+        )
+    TEST
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentSigningConfigModeTest"
+        )
+}
+
+enum DocumentSigningConfigKind
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.DocumentSigningConfigKind"
+    ) {
+    TERMS_OF_SERVICE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentSigningConfigKindTermsOfService"
+        )
+    ACCEPTABLE_USE_POLICY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentSigningConfigKindAcceptableUsePolicy"
+        )
+    OTHER
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentSigningConfigKindOther"
+        )
+}
+
+enum DocumentSigningReacceptancePolicy
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.DocumentSigningReacceptancePolicy"
+    ) {
+    ON_MAJOR
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentSigningReacceptancePolicyOnMajor"
+        )
+    ON_ANY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentSigningReacceptancePolicyOnAny"
+        )
+    NEVER
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentSigningReacceptancePolicyNever"
+        )
+}
+
+type DocumentSigningConfig implements Node {
+    id: ID!
+    document: Document! @goField(forceResolver: true)
+    publishableKey: String!
+    state: DocumentSigningConfigState!
+    mode: DocumentSigningConfigMode!
+    kind: DocumentSigningConfigKind!
+    reacceptancePolicy: DocumentSigningReacceptancePolicy!
+    allowedOrigins: [String!]!
+    acceptances(first: Int, after: String, last: Int, before: String): ClickwrapAcceptanceConnection! @goField(forceResolver: true)
+    integrationHealth: DocumentSigningIntegrationHealth! @goField(forceResolver: true)
+    createdAt: Datetime!
+    updatedAt: Datetime!
+}
+
+type DocumentSigningIntegrationHealth {
+    lastRejectedRequests: [DataPlaneRequestLogEntry!]!
+    lastAcceptanceAt: Datetime
+}
+
+type DataPlaneRequestLogEntry {
+    id: ID!
+    requestPath: String!
+    method: String!
+    statusCode: Int!
+    errorCode: String!
+    requestId: String!
+    occurredAt: Datetime!
+}
+
+type ClickwrapAcceptance implements Node {
+    id: ID!
+    signingConfig: DocumentSigningConfig! @goField(forceResolver: true)
+    documentVersion: DocumentVersion! @goField(forceResolver: true)
+    subject: ClickwrapSubject! @goField(forceResolver: true)
+    acceptedEmail: String!
+    acceptedFullName: String
+    consentText: String!
+    contentSha256: String!
+    ipAddress: String!
+    mode: DocumentSigningConfigMode!
+    sealed: Boolean!
+    revokedAt: Datetime
+    acceptedAt: Datetime!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+}
+
+type ClickwrapAcceptanceConnection {
+    edges: [ClickwrapAcceptanceEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int! @goField(forceResolver: true)
+}
+
+type ClickwrapAcceptanceEdge {
+    node: ClickwrapAcceptance!
+    cursor: String!
+}
+
+type ClickwrapSubject implements Node {
+    id: ID!
+    organization: Organization! @goField(forceResolver: true)
+    externalUserId: String!
+    email: String!
+    fullName: String
+    externalAccountId: String
+    acceptances(first: Int, after: String, last: Int, before: String): ClickwrapAcceptanceConnection! @goField(forceResolver: true)
+    updatedAt: Datetime!
+    createdAt: Datetime!
+}
+
+type ClickwrapSubjectConnection {
+    edges: [ClickwrapSubjectEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int! @goField(forceResolver: true)
+}
+
+type ClickwrapSubjectEdge {
+    node: ClickwrapSubject!
+    cursor: String!
+}
+
+input CreateDocumentSigningConfigInput {
+    documentId: ID!
+    kind: DocumentSigningConfigKind!
+    reacceptancePolicy: DocumentSigningReacceptancePolicy!
+    mode: DocumentSigningConfigMode
+    allowedOrigins: [String!]
+}
+
+input UpdateDocumentSigningConfigInput {
+    id: ID!
+    kind: DocumentSigningConfigKind
+    reacceptancePolicy: DocumentSigningReacceptancePolicy
+    allowedOrigins: [String!]
+}
+
+type CreateDocumentSigningConfigPayload {
+    documentSigningConfig: DocumentSigningConfig!
+}
+
+type UpdateDocumentSigningConfigPayload {
+    documentSigningConfig: DocumentSigningConfig!
+}
+
+type ActivateDocumentSigningConfigPayload {
+    documentSigningConfig: DocumentSigningConfig!
+}
+
+type ArchiveDocumentSigningConfigPayload {
+    documentSigningConfig: DocumentSigningConfig!
+}
+
+type RotateOrganizationSigningSecretPayload {
+    secretKeyPlaintext: String!
+}
+
+type RevokeClickwrapAcceptancePayload {
+    acceptance: ClickwrapAcceptance!
+}
+
+extend type Mutation {
+    createDocumentSigningConfig(input: CreateDocumentSigningConfigInput!): CreateDocumentSigningConfigPayload!
+    updateDocumentSigningConfig(input: UpdateDocumentSigningConfigInput!): UpdateDocumentSigningConfigPayload!
+    activateDocumentSigningConfig(id: ID!): ActivateDocumentSigningConfigPayload!
+    archiveDocumentSigningConfig(id: ID!): ArchiveDocumentSigningConfigPayload!
+    rotateOrganizationSigningSecret(organizationId: ID!, mode: DocumentSigningConfigMode): RotateOrganizationSigningSecretPayload!
+    revokeClickwrapAcceptance(id: ID!, reason: String): RevokeClickwrapAcceptancePayload!
+}

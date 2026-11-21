@@ -99,6 +99,7 @@ import (
 	"go.probo.inc/probo/pkg/server/gqlx"
 	"go.probo.inc/probo/pkg/server/gqlx/directives/ratelimit"
 	"go.probo.inc/probo/pkg/server/trustedproxy"
+	"go.probo.inc/probo/pkg/sign"
 	"go.probo.inc/probo/pkg/slack"
 	"go.probo.inc/probo/pkg/tag"
 	"go.probo.inc/probo/pkg/task"
@@ -823,6 +824,8 @@ func (impl *Implm) Run(
 		impl.cfg.AWS.Bucket,
 	)
 
+	signService := sign.NewService(pgClient, fileManagerService, l.Named("sign"))
+
 	connectorsService := connector.NewService(
 		pgClient,
 		encryptionKey,
@@ -1066,6 +1069,8 @@ func (impl *Implm) Run(
 			Mailman:                 mailmanService,
 			CookieBanner:            cookieBannerService,
 			EmployeePortal:          employeePortalService,
+			Sign:                    signService,
+			PG:                      pgClient,
 			Geoloc:                  geolocService,
 			ThirdParty:              thirdPartyService,
 			RiskManagement:          riskManagementService,

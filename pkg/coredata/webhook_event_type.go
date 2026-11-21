@@ -71,6 +71,10 @@ const (
 	WebhookEventTypeTaskCommentCreated WebhookEventType = "task-comment:created"
 	WebhookEventTypeTaskCommentUpdated WebhookEventType = "task-comment:updated"
 	WebhookEventTypeTaskCommentDeleted WebhookEventType = "task-comment:deleted"
+
+	WebhookEventTypeDocumentSigningAcceptanceCreated WebhookEventType = "document:signing-acceptance:created"
+	WebhookEventTypeDocumentSigningAcceptanceRevoked WebhookEventType = "document:signing-acceptance:revoked"
+	WebhookEventTypeDocumentReacceptanceRequired     WebhookEventType = "document:reacceptance-required"
 )
 
 var (
@@ -117,7 +121,10 @@ func (v WebhookEventType) IsValid() bool {
 		WebhookEventTypeTaskDeleted,
 		WebhookEventTypeTaskCommentCreated,
 		WebhookEventTypeTaskCommentUpdated,
-		WebhookEventTypeTaskCommentDeleted:
+		WebhookEventTypeTaskCommentDeleted,
+		WebhookEventTypeDocumentSigningAcceptanceCreated,
+		WebhookEventTypeDocumentSigningAcceptanceRevoked,
+		WebhookEventTypeDocumentReacceptanceRequired:
 		return true
 	}
 
