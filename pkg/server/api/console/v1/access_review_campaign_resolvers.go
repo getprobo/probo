@@ -116,6 +116,23 @@ func (r *accessReviewCampaignResolver) Statistics(ctx context.Context, obj *type
 	return types.NewAccessReviewStatistics(stats), nil
 }
 
+// PendingDecisionsBlockingClose is the resolver for the pendingDecisionsBlockingClose field.
+func (r *accessReviewCampaignResolver) PendingDecisionsBlockingClose(ctx context.Context, obj *types.AccessReviewCampaign) (int, error) {
+	scope, err := r.authorize(ctx, obj.ID, accessreview.ActionCampaignClose)
+	if err != nil {
+		return 0, err
+	}
+
+	count, err := r.accessReview.CountPendingEntriesBlockingClose(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot count pending decisions blocking close", log.Error(err))
+
+		return 0, gqlutils.Internal(ctx)
+	}
+
+	return count, nil
+}
+
 // Permission is the resolver for the permission field.
 func (r *accessReviewCampaignResolver) Permission(ctx context.Context, obj *types.AccessReviewCampaign, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)

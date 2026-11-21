@@ -27,10 +27,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/internal/test"
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
 )
 
@@ -122,7 +124,7 @@ func TestCloseCampaign_IgnoresPendingOnFailedSourceFetch(t *testing.T) {
 		return decidedOnSuccess.Upsert(ctx, tx, fx.scope)
 	}))
 
-	svc := accessreview.NewService(client, nil, nil, nil, nil)
+	svc := accessreview.NewService(client, cipher.EncryptionKey{}, nil, nil, log.New(nil))
 
 	campaign, err := svc.CloseCampaign(ctx, fx.scope, fx.campaignID)
 	require.NoError(t, err)

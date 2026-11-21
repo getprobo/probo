@@ -500,6 +500,56 @@ WHERE
 	return count, nil
 }
 
+// CountPendingBlockingCloseByCampaignID returns how many entries still need a
+// decision before the campaign can close. Pending rows on campaign sources whose
+// latest fetch attempt failed are excluded.
+func (entries *AccessReviewEntries) CountPendingBlockingCloseByCampaignID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	campaignID gid.GID,
+) (int, error) {
+	q := `
+SELECT COUNT(e.id)
+FROM access_review_entries e
+WHERE
+	%s
+	AND e.access_review_campaign_id = @campaign_id
+	AND e.decision = 'PENDING'
+	AND NOT EXISTS (
+		SELECT 1
+		FROM (
+			SELECT DISTINCT ON (f.access_review_campaign_source_id)
+				f.access_review_campaign_source_id,
+				f.status
+			FROM access_review_campaign_source_fetch_attempts f
+			WHERE
+				%s
+				AND f.access_review_campaign_source_id IN (
+					SELECT id
+					FROM access_review_campaign_sources
+					WHERE access_review_campaign_id = @campaign_id
+				)
+			ORDER BY f.access_review_campaign_source_id, f.attempt_number DESC
+		) latest
+		WHERE
+			latest.access_review_campaign_source_id = e.access_review_campaign_source_id
+			AND latest.status = 'FAILED'
+	);
+`
+	q = fmt.Sprintf(q, scope.SQLFragment(), scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"campaign_id": campaignID}
+	maps.Copy(args, scope.SQLArguments())
+
+	var count int
+	if err := conn.QueryRow(ctx, q, args).Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot count pending entries blocking close: %w", err)
+	}
+
+	return count, nil
+}
+
 func (entries *AccessReviewEntries) CountByCampaignIDAndSourceID(
 	ctx context.Context,
 	conn pg.Querier,

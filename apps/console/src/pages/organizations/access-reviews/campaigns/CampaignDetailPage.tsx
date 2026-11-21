@@ -65,7 +65,6 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { AccessEntryRolesCell } from "../_components/AccessEntryRolesCell";
 import {
-  countPendingEntriesBlockingClose,
   decisionBadgeVariant,
   fetchStatusBadgeVariant,
   flagBadgeVariant,
@@ -152,9 +151,7 @@ export const campaignDetailPageQuery = graphql`
         id
         name
         status
-        pendingEntries: entries(first: 0, filter: { decision: PENDING }) {
-          totalCount
-        }
+        pendingDecisionsBlockingClose
         canDelete: permission(action: "access-review:campaign:delete")
         sources {
           id
@@ -255,11 +252,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
   const [deleteCampaign, isDeleting]
     = useMutation<CampaignDetailPageDeleteMutation>(deleteCampaignMutation);
 
-  const pendingBlockingClose = countPendingEntriesBlockingClose(
-    campaign.pendingEntries.totalCount,
-    campaign.sources,
-  );
-  const canComplete = pendingBlockingClose === 0;
+  const canComplete = campaign.pendingDecisionsBlockingClose === 0;
 
   const handleStart = () => {
     startCampaign({

@@ -4,6 +4,10 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Fixed
+
+- Access review campaigns can be completed when one or more source fetches failed, after all reachable entries are decided
+
 ## [0.239.0] - 2026-07-29
 
 ### Added

@@ -365,6 +365,12 @@ type AccessReviewCampaign implements Node {
 
     statistics: AccessReviewStatistics! @goField(forceResolver: true)
 
+    """
+    Pending entry decisions that must be recorded before closeAccessReviewCampaign
+    succeeds. Does not include pending rows on sources whose latest fetch failed.
+    """
+    pendingDecisionsBlockingClose: Int! @goField(forceResolver: true)
+
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
