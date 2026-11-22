@@ -22,6 +22,7 @@ package probo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -146,6 +147,31 @@ func (s BusinessFunctionService) Get(
 	return businessFunction, nil
 }
 
+func (s BusinessFunctionService) GetByIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	businessFunctionIDs ...gid.GID,
+) (coredata.BusinessFunctions, error) {
+	var businessFunctions coredata.BusinessFunctions
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := businessFunctions.LoadByIDs(ctx, conn, scope, businessFunctionIDs); err != nil &&
+				!errors.Is(err, coredata.ErrResourceNotFound) {
+				return fmt.Errorf("cannot load business functions by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return businessFunctions, nil
+}
+
 func (s *BusinessFunctionService) Create(
 	ctx context.Context,
 	scope coredata.Scoper,
@@ -219,6 +245,17 @@ func (s *BusinessFunctionService) Create(
 
 			if err := businessFunction.Insert(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot insert business function: %w", err)
+			}
+
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				businessFunction.ID,
+				businessFunction.OrganizationID,
+				businessFunction.Name,
+				businessFunction.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
 			}
 
 			if len(req.AssetIDs) > 0 {
@@ -352,6 +389,17 @@ func (s *BusinessFunctionService) Update(
 				return fmt.Errorf("cannot update business function: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				businessFunction.ID,
+				businessFunction.OrganizationID,
+				businessFunction.Name,
+				businessFunction.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -372,9 +420,16 @@ func (s BusinessFunctionService) Delete(
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			err := businessFunction.Delete(ctx, tx, scope)
-			if err != nil {
+			if err := coredata.LockID(ctx, tx, scope, "business_functions", businessFunction.ID); err != nil {
+				return err
+			}
+
+			if err := businessFunction.Delete(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot delete business function: %w", err)
+			}
+
+			if err := coredata.DeleteSearchResource(ctx, tx, businessFunction.ID); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
 			}
 
 			return nil

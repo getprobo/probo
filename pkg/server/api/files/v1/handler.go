@@ -38,6 +38,7 @@ import (
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/authn"
+	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/jsonx"
 )
 
@@ -142,6 +143,7 @@ func (h *Handler) handleGetFile(w http.ResponseWriter, r *http.Request) {
 		Resource:           fileID,
 		Action:             probo.ActionFileGet,
 		ResourceAttributes: make(map[string]string),
+		Request:            authz.RequestMetadataFromHTTP(r),
 	}
 	if session != nil {
 		params.Session = &session.ID

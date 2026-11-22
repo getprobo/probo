@@ -195,7 +195,7 @@ func (s *Service) CountScans(
 
 // ingestScanPage writes one finished page and asks for pattern analysis
 // when something new was stored. It ignores ResourceReporting: that
-// capability only gates SDK reports. It does not record sample hits.
+// capability only gates SDK reports. It does not record pattern hits.
 func (s *Service) ingestScanPage(
 	ctx context.Context,
 	tx pg.Tx,
@@ -280,29 +280,35 @@ func (s *Service) ingestScanPage(
 		}
 	}
 
+	resources := make([]coredata.TrackerResource, 0, len(page.Resources))
 	for i := range page.Resources {
 		item := page.Resources[i]
-
-		wasInserted, err := s.upsertTrackerResource(
-			ctx,
-			tx,
-			scope,
-			banner,
-			uncategorised.ID,
-			now,
-			item.Type,
-			item.Origin,
-			item.Path,
-			&scanID,
+		resources = append(
+			resources,
+			newTrackerResource(
+				scope,
+				banner,
+				uncategorised.ID,
+				now,
+				item.Type,
+				item.Origin,
+				item.Path,
+				&scanID,
+			),
 		)
-		if err != nil {
-			return 0, err
-		}
-
-		if wasInserted {
-			inserted++
-		}
 	}
+
+	resourceInserted, err := s.upsertTrackerResources(
+		ctx,
+		tx,
+		scope,
+		resources,
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	inserted += resourceInserted
 
 	if inserted > 0 {
 		if err := banner.SetPatternAnalysisRequested(ctx, tx); err != nil {

@@ -51,7 +51,15 @@ input ObligationOrder
     field: ObligationOrderField!
 }
 
-type Obligation implements Node {
+type Obligation implements Node & Taggable {
+    tags(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TagOrder
+    ): TagConnection! @goField(forceResolver: true)
+
     id: ID!
     organization: Organization! @goField(forceResolver: true)
     area: String

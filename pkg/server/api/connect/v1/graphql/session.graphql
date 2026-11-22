@@ -5,8 +5,12 @@ enum ReauthenticationReason {
 }
 
 extend type Mutation {
-  signIn(input: SignInInput!): SignInPayload @authentication(required: OPTIONAL)
-  signUp(input: SignUpInput!): SignUpPayload @authentication(required: NONE)
+  signIn(input: SignInInput!): SignInPayload
+    @rateLimit
+    @authentication(required: OPTIONAL)
+  signUp(input: SignUpInput!): SignUpPayload
+    @rateLimit
+    @authentication(required: NONE)
   signOut: SignOutPayload @authentication(required: PRESENT) @sessionOnly
   activateAccountFromInvitation(
     input: ActivateAccountFromInvitationInput!
@@ -17,6 +21,7 @@ extend type Mutation {
     @authentication(required: PRESENT)
     @sessionOnly
   forgotPassword(input: ForgotPasswordInput!): ForgotPasswordPayload
+    @rateLimit
     @authentication(required: NONE)
   resetPassword(input: ResetPasswordInput!): ResetPasswordPayload
     @authentication(required: NONE)
@@ -24,7 +29,9 @@ extend type Mutation {
     @authentication(required: OPTIONAL)
   resendVerificationEmail(
     input: ResendVerificationEmailInput!
-  ): ResendVerificationEmailPayload @authentication(required: NONE)
+  ): ResendVerificationEmailPayload
+    @rateLimit
+    @authentication(required: NONE)
   changePassword(input: ChangePasswordInput!): ChangePasswordPayload
     @authentication(required: PRESENT) @sessionOnly
   changeEmail(input: ChangeEmailInput!): ChangeEmailPayload

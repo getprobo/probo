@@ -99,7 +99,13 @@
     "placeholder": "Laat een opmerking achter",
     "submit": "Opmerking toevoegen",
     "showMore": "Meer weergeven",
-    "authorFallback": "Iemand"
+    "authorFallback": "Iemand",
+    "unsaved": {
+      "title": "Weggaan zonder deze opmerking toe te voegen?",
+      "description": "Deze opmerking is nog niet toegevoegd. Deze pagina verlaten verwijdert de opmerking.",
+      "stay": "Blijven",
+      "leave": "Weggaan"
+    }
   },
   "activity": {
     "title": "Activiteit",

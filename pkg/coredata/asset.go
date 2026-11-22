@@ -34,6 +34,10 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
+var (
+	_ Searchable = (*Asset)(nil)
+)
+
 type (
 	Asset struct {
 		ID              gid.GID   `db:"id"`
@@ -61,6 +65,10 @@ func (a *Asset) CursorKey(field AssetOrderField) page.CursorKey {
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", field))
+}
+
+func (a Asset) SearchText() []string {
+	return []string{a.Name, a.DataTypesStored}
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.

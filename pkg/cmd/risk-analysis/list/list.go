@@ -49,6 +49,10 @@ query RiskAnalysisList($id: ID!, $first: Int, $after: CursorKey, $orderBy: RiskA
               rows
               cols
             }
+            scoreLevels {
+              level
+              minScore
+            }
             createdAt
             updatedAt
           }
@@ -75,6 +79,10 @@ type riskAnalysis struct {
 		Rows int `json:"rows"`
 		Cols int `json:"cols"`
 	} `json:"matrixSize"`
+	ScoreLevels []struct {
+		Level    string `json:"level"`
+		MinScore int    `json:"minScore"`
+	} `json:"scoreLevels"`
 	CreatedAt string `json:"createdAt"`
 	UpdatedAt string `json:"updatedAt"`
 }
@@ -154,7 +162,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					Empty:      "No risk analyses found.",
 					Noun:       "risk analyses",
 					NextCursor: nextCursor,
-					Headers:    []string{"ID", "NAME", "DESCRIPTION", "PERIOD START", "PERIOD END", "MATRIX SIZE", "CREATED AT"},
+					Headers:    []string{"ID", "NAME", "DESCRIPTION", "PERIOD START", "PERIOD END", "MATRIX SIZE", "SCORE LEVELS", "CREATED AT"},
 					Row: func(r riskAnalysis) ([]string, error) {
 						desc := ""
 
@@ -190,6 +198,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 							periodStart,
 							periodEnd,
 							fmt.Sprintf("%d×%d", r.MatrixSize.Rows, r.MatrixSize.Cols),
+							formatScoreLevels(r.ScoreLevels),
 							cmdutil.FormatTime(r.CreatedAt),
 						}, nil
 					},
@@ -206,4 +215,16 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd
+}
+
+func formatScoreLevels(levels []struct {
+	Level    string `json:"level"`
+	MinScore int    `json:"minScore"`
+}) string {
+	parts := make([]string, len(levels))
+	for i, level := range levels {
+		parts[i] = fmt.Sprintf("%s=%d", level.Level, level.MinScore)
+	}
+
+	return strings.Join(parts, ",")
 }

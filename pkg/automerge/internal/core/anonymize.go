@@ -72,6 +72,15 @@ func (b *Engine) Anonymize() (*Engine, error) {
 
 	changes = append([]*opset.Change(nil), changes...)
 
+	for i, change := range changes {
+		loaded, err := state.withOperations(change)
+		if err != nil {
+			return nil, fmt.Errorf("cannot read native change %d: %w", i, err)
+		}
+
+		changes[i] = loaded
+	}
+
 	if len(b.pending) > 0 {
 		sequence := b.state.sequenceForActor(b.actor) + 1
 		changes = append(
@@ -177,7 +186,7 @@ func newAnonymization(changes []*opset.Change) (*anonymization, error) {
 			copy(replacement[:8], prefix[:])
 			binary.BigEndian.PutUint64(replacement[8:], uint64(rank))
 
-			mapped[actor] = opset.ActorID(string(replacement[:]))
+			mapped[actor] = opset.MakeActorID(string(replacement[:]))
 			if _, exists := slices.BinarySearchFunc(
 				actors,
 				mapped[actor],
@@ -202,7 +211,7 @@ func newAnonymization(changes []*opset.Change) (*anonymization, error) {
 func collectActors(changes []*opset.Change) []opset.ActorID {
 	set := make(map[opset.ActorID]struct{})
 	add := func(actor opset.ActorID) {
-		if actor != "" {
+		if !actor.IsZero() {
 			set[actor] = struct{}{}
 		}
 	}

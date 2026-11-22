@@ -22,6 +22,7 @@ package probo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -135,6 +136,31 @@ func (s FindingService) Get(
 	return finding, nil
 }
 
+func (s FindingService) GetByIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	findingIDs ...gid.GID,
+) (coredata.Findings, error) {
+	var findings coredata.Findings
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := findings.LoadByIDs(ctx, conn, scope, findingIDs); err != nil &&
+				!errors.Is(err, coredata.ErrResourceNotFound) {
+				return fmt.Errorf("cannot load findings by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return findings, nil
+}
+
 func (s *FindingService) Create(
 	ctx context.Context, scope coredata.Scoper,
 	req *CreateFindingRequest,
@@ -197,6 +223,17 @@ func (s *FindingService) Create(
 
 			if err := finding.Insert(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot insert finding: %w", err)
+			}
+
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				finding.ID,
+				finding.OrganizationID,
+				finding.ReferenceID,
+				finding.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
 			}
 
 			return nil
@@ -296,6 +333,17 @@ func (s *FindingService) Update(
 				return fmt.Errorf("cannot update finding: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				finding.ID,
+				finding.OrganizationID,
+				finding.ReferenceID,
+				finding.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -315,6 +363,10 @@ func (s FindingService) Delete(
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			if err := coredata.DeleteSearchResource(ctx, tx, finding.ID); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			err := finding.Delete(ctx, tx, scope)
 			if err != nil {
 				return fmt.Errorf("cannot delete finding: %w", err)

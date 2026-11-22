@@ -35,6 +35,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/identityname"
 	"go.probo.inc/probo/pkg/iam/scim"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
@@ -800,6 +801,10 @@ func (s *OrganizationService) CreateOrganization(
 				return fmt.Errorf("cannot insert profile: %w", err)
 			}
 
+			if err := identityname.CopyFromUniqueProfile(ctx, tx, profile.IdentityID, profile.FullName); err != nil {
+				return fmt.Errorf("cannot sync identity full name: %w", err)
+			}
+
 			err = membership.Insert(ctx, tx, scope)
 			if err != nil {
 				return fmt.Errorf("cannot insert membership: %w", err)
@@ -1187,6 +1192,10 @@ func (s *OrganizationService) CreateUser(ctx context.Context, scope coredata.Sco
 				return fmt.Errorf("cannot insert profile: %w", err)
 			}
 
+			if err := identityname.CopyFromUniqueProfile(ctx, conn, profile.IdentityID, profile.FullName); err != nil {
+				return fmt.Errorf("cannot sync identity full name: %w", err)
+			}
+
 			membership := &coredata.Membership{
 				ID:             gid.New(req.OrganizationID.TenantID(), coredata.MembershipEntityType),
 				IdentityID:     identity.ID,
@@ -1260,6 +1269,12 @@ func (s *OrganizationService) UpdateUser(
 
 			if err := profile.Update(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot update profile: %w", err)
+			}
+
+			if previousProfile.FullName != profile.FullName {
+				if err := identityname.CopyFromUniqueProfile(ctx, conn, profile.IdentityID, profile.FullName); err != nil {
+					return fmt.Errorf("cannot sync identity full name: %w", err)
+				}
 			}
 
 			if profile.ContractEndDate != nil && profile.ContractEndDate.Before(now) {

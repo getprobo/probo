@@ -35,6 +35,10 @@ import (
 	"go.probo.inc/probo/pkg/timespan"
 )
 
+var (
+	_ Searchable = (*Task)(nil)
+)
+
 type (
 	Task struct {
 		ID             gid.GID            `db:"id"`
@@ -68,6 +72,10 @@ func (t Task) CursorKey(orderBy TaskOrderField) page.CursorKey {
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
+}
+
+func (t Task) SearchText() []string {
+	return []string{t.Name, t.ReferenceID, t.Content}
 }
 
 func (t *Task) AuthorizationAttributes(

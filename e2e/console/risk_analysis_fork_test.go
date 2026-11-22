@@ -40,6 +40,7 @@ const forkRiskAnalysisMutation = `
 					description
 					period { start end }
 					matrixSize { rows cols }
+					scoreLevels { level minScore }
 				}
 			}
 		}
@@ -61,6 +62,10 @@ type forkRiskAnalysisResult struct {
 					Rows int `json:"rows"`
 					Cols int `json:"cols"`
 				} `json:"matrixSize"`
+				ScoreLevels []struct {
+					Level    string `json:"level"`
+					MinScore int    `json:"minScore"`
+				} `json:"scoreLevels"`
 			} `json:"node"`
 		} `json:"riskAnalysisEdge"`
 	} `json:"forkRiskAnalysis"`
@@ -582,7 +587,7 @@ func TestRiskAnalysis_Fork(t *testing.T) {
 		)
 	})
 
-	t.Run("copies matrix size and uses supplied period", func(t *testing.T) {
+	t.Run("copies matrix size, custom score levels, and supplied period", func(t *testing.T) {
 		t.Parallel()
 		owner := testutil.NewClient(t, testutil.RoleOwner)
 
@@ -607,6 +612,12 @@ func TestRiskAnalysis_Fork(t *testing.T) {
 				"organizationId": owner.GetOrganizationID().String(),
 				"name":           "Source with period",
 				"matrixSize":     map[string]any{"rows": 3, "cols": 3},
+				"scoreLevels": []map[string]any{
+					{"level": "LOW", "minScore": 1},
+					{"level": "MEDIUM", "minScore": 3},
+					{"level": "HIGH", "minScore": 5},
+					{"level": "CRITICAL", "minScore": 8},
+				},
 				"period": map[string]any{
 					"start": "2025-01-01T00:00:00Z",
 					"end":   "2025-12-31T00:00:00Z",
@@ -638,6 +649,15 @@ func TestRiskAnalysis_Fork(t *testing.T) {
 		node := result.ForkRiskAnalysis.RiskAnalysisEdge.Node
 		assert.Equal(t, 3, node.MatrixSize.Rows)
 		assert.Equal(t, 3, node.MatrixSize.Cols)
+		require.Len(t, node.ScoreLevels, 4)
+		assert.Equal(t, "LOW", node.ScoreLevels[0].Level)
+		assert.Equal(t, 1, node.ScoreLevels[0].MinScore)
+		assert.Equal(t, "MEDIUM", node.ScoreLevels[1].Level)
+		assert.Equal(t, 3, node.ScoreLevels[1].MinScore)
+		assert.Equal(t, "HIGH", node.ScoreLevels[2].Level)
+		assert.Equal(t, 5, node.ScoreLevels[2].MinScore)
+		assert.Equal(t, "CRITICAL", node.ScoreLevels[3].Level)
+		assert.Equal(t, 8, node.ScoreLevels[3].MinScore)
 		require.NotNil(t, node.Period)
 		require.NotNil(t, node.Period.Start)
 		require.NotNil(t, node.Period.End)

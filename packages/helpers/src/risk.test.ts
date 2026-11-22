@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { describe, expect, it } from "vitest";
-import { getRiskScoreLevel } from "./risk";
+import { defaultScoreLevels, getRiskScoreLevel } from "./risk";
 
 describe("getRiskScoreLevel", () => {
     it("keeps the 5×5 bands when no matrix size is given", () => {
@@ -52,5 +52,41 @@ describe("getRiskScoreLevel", () => {
         expect(getRiskScoreLevel(9, matrixSize)).toBe(2);
         expect(getRiskScoreLevel(10, matrixSize)).toBe(3);
         expect(getRiskScoreLevel(16, matrixSize)).toBe(3);
+    });
+
+    it("uses a configured mapping and can omit critical", () => {
+        const matrixSize = { rows: 5, cols: 5 };
+        const scoreLevels = [
+            { level: "LOW" as const, minScore: 1 },
+            { level: "MEDIUM" as const, minScore: 6 },
+            { level: "HIGH" as const, minScore: 13 },
+        ];
+
+        expect(getRiskScoreLevel(5, matrixSize, scoreLevels)).toBe(0);
+        expect(getRiskScoreLevel(6, matrixSize, scoreLevels)).toBe(1);
+        expect(getRiskScoreLevel(12, matrixSize, scoreLevels)).toBe(1);
+        expect(getRiskScoreLevel(13, matrixSize, scoreLevels)).toBe(2);
+        expect(getRiskScoreLevel(25, matrixSize, scoreLevels)).toBe(2);
+    });
+
+    it("keeps the current ratio thresholds as the default mapping", () => {
+        expect(defaultScoreLevels(5, 5)).toEqual([
+            { level: "LOW", minScore: 1 },
+            { level: "MEDIUM", minScore: 5 },
+            { level: "HIGH", minScore: 10 },
+            { level: "CRITICAL", minScore: 15 },
+        ]);
+        expect(defaultScoreLevels(3, 3)).toEqual([
+            { level: "LOW", minScore: 1 },
+            { level: "MEDIUM", minScore: 2 },
+            { level: "HIGH", minScore: 4 },
+            { level: "CRITICAL", minScore: 6 },
+        ]);
+        expect(defaultScoreLevels(4, 4)).toEqual([
+            { level: "LOW", minScore: 1 },
+            { level: "MEDIUM", minScore: 4 },
+            { level: "HIGH", minScore: 7 },
+            { level: "CRITICAL", minScore: 10 },
+        ]);
     });
 });

@@ -26,6 +26,7 @@ import { PopoverPopup } from "../Popover/PopoverPopup";
 import { PopoverTrigger } from "../Popover/PopoverTrigger";
 
 import { DateMonthView } from "./DateMonthView";
+import { isNestedSelectDismiss } from "./datePopover";
 import { useDateInput } from "./useDateInput";
 import { dateField } from "./variants";
 
@@ -56,6 +57,7 @@ export interface DateFieldProps {
   "aria-invalid"?: boolean;
   "aria-describedby"?: string;
   "aria-required"?: boolean;
+  "aria-label"?: string;
   "onValueChange"?: (value: string) => void;
 }
 
@@ -79,6 +81,7 @@ export function DateField(props: DateFieldProps) {
     "aria-invalid": ariaInvalid,
     "aria-describedby": ariaDescribedBy,
     "aria-required": ariaRequired,
+    "aria-label": ariaLabel,
     onValueChange,
   } = props;
 
@@ -147,6 +150,7 @@ export function DateField(props: DateFieldProps) {
           aria-invalid={ariaInvalid}
           aria-describedby={ariaDescribedBy}
           aria-required={ariaRequired}
+          aria-label={ariaLabel}
           className={input()}
           onChange={dateInput.onChange}
           onBlur={dateInput.onBlur}
@@ -166,22 +170,4 @@ export function DateField(props: DateFieldProps) {
       </div>
     </div>
   );
-}
-
-function isNestedSelectDismiss(
-  eventDetails: Parameters<NonNullable<PopoverProps["onOpenChange"]>>[1],
-): boolean {
-  if (eventDetails.reason === "focus-out") {
-    const relatedTarget = eventDetails.event instanceof FocusEvent
-      ? eventDetails.event.relatedTarget
-      : null;
-    return relatedTarget instanceof Element
-      && relatedTarget.closest("[role='listbox'], [role='option']") != null;
-  }
-  if (eventDetails.reason !== "outside-press") {
-    return false;
-  }
-  const target = eventDetails.event.target;
-  return target instanceof Element
-    && target.closest("[role='listbox'], [role='option']") != null;
 }

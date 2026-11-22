@@ -30,10 +30,15 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
+	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/timespan"
+)
+
+var (
+	_ Searchable = (*InternalControl)(nil)
 )
 
 type (
@@ -81,6 +86,16 @@ func (m InternalControl) CursorKey(orderBy InternalControlOrderField) page.Curso
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
+}
+
+func (m InternalControl) SearchText() []string {
+	return []string{
+		m.Name,
+		m.ReferenceID,
+		ref.UnrefOrZero(m.Code),
+		ref.UnrefOrZero(m.OperatingEvent),
+		ref.UnrefOrZero(m.Description),
+	}
 }
 
 func internalControlNextDueValue(evidenceDue *time.Time, testDue *time.Time) *time.Time {

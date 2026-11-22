@@ -34,6 +34,7 @@ import (
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/authn"
+	"go.probo.inc/probo/pkg/server/api/authz"
 )
 
 var errInvalidReconnectConnector = errors.New("invalid reconnect connector")
@@ -79,6 +80,7 @@ func handleConnectorInitiate(
 			Resource:  organizationID,
 			Session:   &session.ID,
 			Action:    probo.ActionConnectorInitiate,
+			Request:   authz.RequestMetadataFromHTTP(r),
 		})
 		if err != nil {
 			httpserver.RenderError(w, http.StatusForbidden, err)

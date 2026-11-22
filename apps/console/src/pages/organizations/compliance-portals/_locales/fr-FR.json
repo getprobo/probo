@@ -190,7 +190,9 @@
       "completed": "Ce visiteur a signé électroniquement."
     },
     "actions": {
-      "download": "Télécharger"
+      "download": "Télécharger",
+      "signedFile": "Fichier signé",
+      "certificate": "Certificat d’achèvement"
     },
     "activity": "Activité"
   },

@@ -22,6 +22,7 @@ package probo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -148,6 +149,31 @@ func (s StatementOfApplicabilityService) Get(
 	return statementOfApplicability, nil
 }
 
+func (s StatementOfApplicabilityService) GetByIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	statementIDs ...gid.GID,
+) (coredata.StatementsOfApplicability, error) {
+	var statements coredata.StatementsOfApplicability
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := statements.LoadByIDs(ctx, conn, scope, statementIDs); err != nil &&
+				!errors.Is(err, coredata.ErrResourceNotFound) {
+				return fmt.Errorf("cannot load statements of applicability by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return statements, nil
+}
+
 func (s StatementOfApplicabilityService) Create(
 	ctx context.Context, scope coredata.Scoper,
 	req CreateStatementOfApplicabilityRequest,
@@ -183,6 +209,17 @@ func (s StatementOfApplicabilityService) Create(
 		func(ctx context.Context, conn pg.Tx) error {
 			if err := statementOfApplicability.Insert(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot insert statement_of_applicability: %w", err)
+			}
+
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				statementOfApplicability.ID,
+				statementOfApplicability.OrganizationID,
+				statementOfApplicability.Name,
+				statementOfApplicability.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
 			}
 
 			return nil
@@ -222,6 +259,17 @@ func (s StatementOfApplicabilityService) Update(
 				return fmt.Errorf("cannot update statement_of_applicability: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				statementOfApplicability.ID,
+				statementOfApplicability.OrganizationID,
+				statementOfApplicability.Name,
+				statementOfApplicability.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -243,6 +291,10 @@ func (s StatementOfApplicabilityService) Delete(
 		func(ctx context.Context, conn pg.Tx) error {
 			if err := statementOfApplicability.LoadByID(ctx, conn, scope, statementOfApplicabilityID); err != nil {
 				return fmt.Errorf("cannot load statement_of_applicability: %w", err)
+			}
+
+			if err := coredata.DeleteSearchResource(ctx, conn, statementOfApplicability.ID); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
 			}
 
 			if err := statementOfApplicability.Delete(ctx, conn, scope); err != nil {

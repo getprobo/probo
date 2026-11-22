@@ -26,19 +26,28 @@ import { comboboxItem } from "./variants";
 
 export type ComboboxItemProps
   = & Omit<ComponentProps<typeof BaseCombobox.Item>, "className">
-    & { className?: string };
+    & {
+      className?: string;
+      // When false, the trailing selected check is omitted (command palettes).
+      indicator?: boolean;
+    };
 
-// A single option. Shows a trailing check when selected.
+// A single option. Shows a trailing check when selected unless `indicator` is
+// false.
 export function ComboboxItem(props: ComboboxItemProps) {
-  const { className, children, ...rest } = props;
+  const { className, children, indicator: showIndicator = true, ...rest } = props;
   const { item, label, indicator } = comboboxItem();
 
   return (
     <BaseCombobox.Item className={item({ className })} {...rest}>
       <span className={label()}>{children}</span>
-      <BaseCombobox.ItemIndicator className={indicator()}>
-        <CheckIcon />
-      </BaseCombobox.ItemIndicator>
+      {showIndicator
+        ? (
+            <BaseCombobox.ItemIndicator className={indicator()}>
+              <CheckIcon />
+            </BaseCombobox.ItemIndicator>
+          )
+        : null}
     </BaseCombobox.Item>
   );
 }

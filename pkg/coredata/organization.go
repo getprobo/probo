@@ -205,11 +205,15 @@ func (o *Organizations) LoadByIdentityID(
 	q := `
 WITH identity_org AS (
 	SELECT
-		organization_id
+		m.organization_id
 	FROM
-		iam_memberships
+		iam_memberships m
+	INNER JOIN
+		iam_membership_profiles p ON p.identity_id = m.identity_id
+			AND p.organization_id = m.organization_id
 	WHERE
-		identity_id = @identity_id
+		m.identity_id = @identity_id
+		AND p.state = @state
 )
 SELECT
 	tenant_id,
@@ -231,7 +235,10 @@ WHERE
 
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"identity_id": identityID}
+	args := pgx.StrictNamedArgs{
+		"identity_id": identityID,
+		"state":       ProfileStateActive,
+	}
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)

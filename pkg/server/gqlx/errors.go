@@ -227,6 +227,16 @@ func TokenExpired(ctx context.Context, err error) *gqlerror.Error {
 	}
 }
 
+func RateLimited(ctx context.Context) *gqlerror.Error {
+	return &gqlerror.Error{
+		Message: "too many attempts, try again later",
+		Path:    graphql.GetPath(ctx),
+		Extensions: map[string]any{
+			"code": "RATE_LIMITED",
+		},
+	}
+}
+
 func TokenAlreadyUsed(ctx context.Context, err error) *gqlerror.Error {
 	return &gqlerror.Error{
 		Message:    err.Error(),

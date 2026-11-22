@@ -57,6 +57,8 @@ const (
 var (
 	ErrOpenSuggestions         = errors.New("document has open suggestions")
 	ErrSuggestionNotInDocument = errors.New("suggestion is not in the document")
+	ErrSuggestionUnchanged     = errors.New("suggestion does not change the quoted text")
+	ErrSuggestionOverlaps      = errors.New("quoted text overlaps an existing suggestion")
 	ErrQuoteNotFound           = errors.New("quoted text was not found in the document")
 )
 
@@ -78,6 +80,11 @@ func ProjectAcceptedSpans(spans []automerge.Span) []automerge.Span {
 
 		if span.Type == automerge.SpanTypeText {
 			span.Marks = withoutMark(span.Marks, SuggestionDeleteMark)
+			span.Marks = revertFormatMarks(span.Marks)
+		}
+
+		if span.Type == automerge.SpanTypeBlock {
+			span = restoreBlockSuggestion(span)
 		}
 
 		projected = append(projected, span)
@@ -93,11 +100,19 @@ func HasOpenSuggestions(spans []automerge.Span) bool {
 			return true
 		}
 
+		if payload, ok := readBlockSuggestion(span); ok && payload.ID != "" {
+			return true
+		}
+
 		if span.Type != automerge.SpanTypeText {
 			continue
 		}
 
 		if markID(span.Marks, SuggestionInsertMark) != "" || markID(span.Marks, SuggestionDeleteMark) != "" {
+			return true
+		}
+
+		if len(formatMarkIDs(span.Marks)) > 0 {
 			return true
 		}
 	}
@@ -194,6 +209,7 @@ func WriteBodySpans(document *automerge.Document, spans []automerge.Span) error 
 
 	config.PerMarkExpands[SuggestionInsertMark] = automerge.MarkExpandNone
 	config.PerMarkExpands[SuggestionDeleteMark] = automerge.MarkExpandNone
+	registerFormatExpand(config.PerMarkExpands)
 
 	if err := text.UpdateSpans(inputs, config); err != nil {
 		return fmt.Errorf("cannot write collaboration spans: %w", err)
@@ -219,17 +235,10 @@ func QuoteCursors(
 	}
 
 	visible, offsets := visibleText(spans)
-	index := -1
-	searchFrom := 0
 
-	for range occurrence + 1 {
-		found := strings.Index(visible[searchFrom:], quote)
-		if found < 0 {
-			return nil, nil, ErrQuoteNotFound
-		}
-
-		index = searchFrom + found
-		searchFrom = index + len(quote)
+	index, err := findQuote(visible, quote, occurrence)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	startUTF16 := utf16Len(visible[:index])
@@ -273,7 +282,7 @@ func SuggestionQuote(spans []automerge.Span, suggestionID string) string {
 	for _, span := range spans {
 		if span.Type == automerge.SpanTypeBlock {
 			id, kind := suggestionSplit(span)
-			if id == suggestionID && kind == suggestionSplitDeletion {
+			if id == suggestionID && kind == suggestionSplitDeletion && !isTableStructure(span) {
 				quote.WriteByte('\n')
 
 				wrote = true
@@ -294,7 +303,8 @@ func SuggestionQuote(spans []automerge.Span, suggestionID string) string {
 		}
 
 		if markID(span.Marks, SuggestionInsertMark) != suggestionID &&
-			markID(span.Marks, SuggestionDeleteMark) != suggestionID {
+			markID(span.Marks, SuggestionDeleteMark) != suggestionID &&
+			!formatMarkMatches(span.Marks, suggestionID) {
 			continue
 		}
 
@@ -334,8 +344,9 @@ func SuggestionCursors(
 		splitID, splitKind := suggestionSplit(span)
 		matches := (span.Type == automerge.SpanTypeText &&
 			(markID(span.Marks, SuggestionInsertMark) == suggestionID ||
-				markID(span.Marks, SuggestionDeleteMark) == suggestionID)) ||
-			(splitID == suggestionID && splitKind == suggestionSplitDeletion)
+				markID(span.Marks, SuggestionDeleteMark) == suggestionID ||
+				formatMarkMatches(span.Marks, suggestionID))) ||
+			(splitID == suggestionID && (splitKind == suggestionSplitDeletion || isTableStructure(span)))
 
 		if matches {
 			if !found {
@@ -450,11 +461,33 @@ func decideSuggestionSpans(
 	next := make([]automerge.Span, 0, len(spans))
 	changed := false
 
-	for _, span := range spans {
+	for index := 0; index < len(spans); index++ {
+		span := spans[index]
 		if span.Type != automerge.SpanTypeText {
+			if payload, ok := readBlockSuggestion(span); ok && payload.ID == suggestionID {
+				changed = true
+
+				if accept {
+					next = append(next, clearBlockSuggestion(span))
+				} else {
+					next = append(next, restoreBlockSuggestion(span))
+				}
+
+				continue
+			}
+
 			id, kind := suggestionSplit(span)
 			if id == suggestionID {
 				changed = true
+
+				// A table, row, or cell owns every block after it until the
+				// path leaves it. Removing only its marker would graft its
+				// children onto the previous sibling.
+				if isTableStructure(span) &&
+					((accept && kind == suggestionSplitDeletion) || (!accept && kind == suggestionSplitInsertion)) {
+					index = subtreeEnd(spans, index) - 1
+					continue
+				}
 
 				if accept && kind == suggestionSplitDeletion {
 					continue
@@ -499,6 +532,13 @@ func decideSuggestionSpans(
 			changed = true
 		}
 
+		var formatChanged bool
+
+		span.Marks, formatChanged = decideFormatMarks(span.Marks, suggestionID, accept)
+		if formatChanged {
+			changed = true
+		}
+
 		next = append(next, span)
 	}
 
@@ -512,15 +552,22 @@ func decideSuggestionSpans(
 func omitOpenSplits(spans []automerge.Span) []automerge.Span {
 	next := make([]automerge.Span, 0, len(spans))
 
-	for index, span := range spans {
+	for index := 0; index < len(spans); index++ {
+		span := spans[index]
+
 		id, kind := suggestionSplit(span)
 		if id == "" {
 			next = append(next, span)
 			continue
 		}
 
+		if kind == suggestionSplitInsertion && isTableStructure(span) {
+			index = subtreeEnd(spans, index) - 1
+			continue
+		}
+
 		if kind == suggestionSplitStructural ||
-			(kind == suggestionSplitInsertion && !blockHasFollowingText(spans, index)) {
+			(kind == suggestionSplitInsertion && (blockIsEmbed(span) || !blockHasFollowingText(spans, index))) {
 			continue
 		}
 
@@ -536,7 +583,7 @@ func dropEmptyInsertionBlocks(spans []automerge.Span, suggestionID string) []aut
 	for index, span := range spans {
 		id, kind := suggestionSplit(span)
 		if id == suggestionID && kind == suggestionSplitInsertion {
-			if !blockHasFollowingText(spans, index) {
+			if blockIsEmbed(span) || !blockHasFollowingText(spans, index) {
 				continue
 			}
 
@@ -620,12 +667,7 @@ func clearSuggestionSplit(span automerge.Span) automerge.Span {
 	delete(nextAttrs, suggestionSplitAttr)
 	delete(nextAttrs, suggestionSplitKindAttr)
 
-	if len(nextAttrs) == 0 {
-		delete(block, "attrs")
-	} else {
-		block["attrs"] = nextAttrs
-	}
-
+	block["attrs"] = nextAttrs
 	span.Block = block
 
 	return span
@@ -646,6 +688,8 @@ func normalizeSuggestionSpans(spans []automerge.Span) []automerge.Span {
 	normalized := make([]automerge.Span, 0, len(spans))
 
 	for _, span := range spans {
+		span = restoreBlockSuggestion(span)
+
 		id, kind := suggestionSplit(span)
 		if id != "" && kind != suggestionSplitDeletion {
 			continue
@@ -661,6 +705,7 @@ func normalizeSuggestionSpans(spans []automerge.Span) []automerge.Span {
 
 		if span.Type == automerge.SpanTypeText {
 			span.Marks = withoutMark(span.Marks, SuggestionDeleteMark)
+			span.Marks = revertFormatMarks(span.Marks)
 		}
 
 		normalized = appendMergingText(normalized, span)
@@ -692,6 +737,10 @@ func suggestionSpanIDs(spans []automerge.Span) map[string]bool {
 			ids[id] = true
 		}
 
+		if payload, ok := readBlockSuggestion(span); ok {
+			ids[payload.ID] = true
+		}
+
 		if span.Type != automerge.SpanTypeText {
 			continue
 		}
@@ -701,6 +750,10 @@ func suggestionSpanIDs(spans []automerge.Span) map[string]bool {
 		}
 
 		if id := markID(span.Marks, SuggestionDeleteMark); id != "" {
+			ids[id] = true
+		}
+
+		for _, id := range formatMarkIDs(span.Marks) {
 			ids[id] = true
 		}
 	}
@@ -816,12 +869,27 @@ func spansEqual(left []automerge.Span, right []automerge.Span) bool {
 			return false
 		}
 
-		if !jsonEqual(left[index].Block, right[index].Block) || !jsonEqual(left[index].Marks, right[index].Marks) {
+		if !jsonEqual(comparableBlock(left[index].Block), comparableBlock(right[index].Block)) ||
+			!jsonEqual(left[index].Marks, right[index].Marks) {
 			return false
 		}
 	}
 
 	return true
+}
+
+// comparableBlock treats a block without attrs and one with empty attrs as
+// the same block, since clearing a split leaves the empty map behind.
+func comparableBlock(block map[string]any) map[string]any {
+	attrs, ok := block["attrs"].(map[string]any)
+	if !ok || len(attrs) != 0 {
+		return block
+	}
+
+	next := copyMap(block)
+	delete(next, "attrs")
+
+	return next
 }
 
 func jsonEqual(left any, right any) bool {
@@ -929,6 +997,37 @@ func scalarFromAny(value any) (automerge.Scalar, error) {
 type visibleOffset struct {
 	visible  uint32
 	absolute uint32
+}
+
+// findQuote returns the byte index of the occurrence-th match. The loop
+// counts down so occurrence == MaxInt cannot overflow into a negative range.
+func findQuote(visible string, quote string, occurrence int) (int, error) {
+	if quote == "" || occurrence < 0 {
+		return 0, ErrQuoteNotFound
+	}
+
+	searchFrom := 0
+	remaining := occurrence
+
+	for {
+		found := strings.Index(visible[searchFrom:], quote)
+		if found < 0 {
+			return 0, ErrQuoteNotFound
+		}
+
+		index := searchFrom + found
+		if remaining == 0 {
+			return index, nil
+		}
+
+		next := index + len(quote)
+		if next <= searchFrom {
+			return 0, ErrQuoteNotFound
+		}
+
+		searchFrom = next
+		remaining--
+	}
 }
 
 // visibleText joins block text with a newline so a quote spanning paragraphs

@@ -775,7 +775,22 @@ func (s ControlService) Create(
 			control.FrameworkID = framework.ID
 			control.OrganizationID = framework.OrganizationID
 
-			return control.Insert(ctx, conn, scope)
+			if err := control.Insert(ctx, conn, scope); err != nil {
+				return err
+			}
+
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				control.ID,
+				control.OrganizationID,
+				control.Name,
+				control.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
+			return nil
 		},
 	)
 	if err != nil {
@@ -878,7 +893,22 @@ func (s ControlService) Update(
 
 			control.UpdatedAt = time.Now()
 
-			return control.Update(ctx, conn, scope)
+			if err := control.Update(ctx, conn, scope); err != nil {
+				return err
+			}
+
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				control.ID,
+				control.OrganizationID,
+				control.Name,
+				control.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
+			return nil
 		},
 	)
 	if err != nil {
@@ -897,6 +927,10 @@ func (s ControlService) Delete(
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			if err := coredata.DeleteSearchResource(ctx, tx, control.ID); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			return control.Delete(ctx, tx, scope)
 		},
 	)

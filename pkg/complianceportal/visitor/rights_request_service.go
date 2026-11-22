@@ -118,6 +118,22 @@ func (s *Service) CreateRightsRequest(
 				return fmt.Errorf("cannot insert rights request: %w", err)
 			}
 
+			title := ""
+			if request.DataSubject != nil {
+				title = *request.DataSubject
+			}
+
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				tx,
+				request.ID,
+				request.OrganizationID,
+				title,
+				request.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			if err := webhook.InsertData(
 				ctx,
 				tx,

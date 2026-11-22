@@ -1,0 +1,90 @@
+{
+  "auditLogPage": {
+    "title": "Auditlogboek",
+    "description": "Vastgelegde autorisatiebeslissingen voor deze werkruimte, inclusief leesacties.",
+    "empty": {
+      "title": "Nog geen auditlogitems",
+      "description": "Autorisatiecontroles verschijnen hier zodra ze zijn vastgelegd.",
+      "filteredTitle": "Geen overeenkomende items",
+      "filteredDescription": "Probeer een andere actie, uitkomst of datumbereik.",
+      "clear": "Filters wissen"
+    },
+    "columns": {
+      "when": "Wanneer",
+      "actor": "Actor",
+      "action": "Actie",
+      "target": "Doel",
+      "outcome": "Uitkomst"
+    },
+    "actions": {
+      "previous": "Vorige",
+      "next": "Volgende",
+      "openEntry": "Auditlogitem van {{when}} bekijken"
+    },
+    "actorTypes": {
+      "USER": "Gebruiker",
+      "API_KEY": "API-sleutel",
+      "SYSTEM": "Systeem"
+    },
+    "outcomes": {
+      "ALLOWED": "Toegestaan",
+      "DENIED": "Geweigerd"
+    },
+    "filters": {
+      "actorType": "Actortype",
+      "allActorTypes": "Alle actortypen",
+      "action": "Actie",
+      "actionPlaceholder": "iam:organization:get of iam:*",
+      "outcome": "Uitkomst",
+      "allOutcomes": "Alle uitkomsten",
+      "actorId": "Actor-ID",
+      "resourceType": "Resourcetype",
+      "resourceId": "Resource-ID",
+      "from": "Van",
+      "to": "Tot",
+      "dates": "Datumbereik",
+      "datesPlaceholder": "Alle datums",
+      "datesHint": "Kies een startdatum en daarna een einddatum.",
+      "clearDates": "Datums wissen",
+      "more": "Filters",
+      "moreCount_one": "Filters ({{count}})",
+      "moreCount_other": "Filters ({{count}})",
+      "requestId": "Verzoek-ID",
+      "range": "De startdatum ligt na de einddatum."
+    },
+    "entry": {
+      "title": "Auditlogitem",
+      "actor": "Actor",
+      "actorId": "Actor-ID",
+      "action": "Actie",
+      "target": "Doel",
+      "outcome": "Uitkomst",
+      "when": "Wanneer",
+      "recordedAt": "Vastgelegd",
+      "originIp": "Herkomst-IP",
+      "userAgent": "User-agent",
+      "requestId": "Verzoek-ID",
+      "denialReason": "Reden van weigering",
+      "close": "Sluiten"
+    },
+    "export": {
+      "title": "Auditlogboek exporteren",
+      "description": "Selecteer een datumbereik om auditlogboekvermeldingen te exporteren als CSV. U ontvangt een e-mail met een downloadlink.",
+      "fields": {
+        "from": "Van",
+        "to": "Tot",
+        "range": "Datumbereik"
+      },
+      "actions": {
+        "export": "Exporteren",
+        "cancel": "Annuleren"
+      },
+      "messages": {
+        "success": "Export gestart. U ontvangt een e-mail met een downloadlink zodra deze gereed is."
+      },
+      "errors": {
+        "request": "Aanvragen van auditlogboekexport mislukt"
+      }
+    }
+  }
+}

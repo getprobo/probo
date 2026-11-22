@@ -597,7 +597,7 @@ func scalarValuesEqual(left, right opset.Scalar) bool {
 func randomActorID() (opset.ActorID, error) {
 	var value [16]byte
 	if _, err := rand.Read(value[:]); err != nil {
-		return "", fmt.Errorf("cannot generate native actor ID: %w", err)
+		return opset.ActorID{}, fmt.Errorf("cannot generate native actor ID: %w", err)
 	}
 
 	return opset.NewActorID(value[:])

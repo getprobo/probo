@@ -20,11 +20,19 @@
 
 package core
 
-import "go.probo.inc/probo/pkg/automerge/internal/opset"
+import (
+	"fmt"
+
+	"go.probo.inc/probo/pkg/automerge/internal/opset"
+)
 
 func (i *operationRowIndex) lookup(identifier opset.OpID) (int, bool) {
 	if i == nil {
 		return 0, false
+	}
+
+	if i.decoded != nil {
+		return i.decoded.Row(identifier)
 	}
 
 	if row, ok := i.rows[identifier]; ok {
@@ -94,6 +102,7 @@ func (s *State) attachCanonical(columns *columnarState) {
 
 	s.columns = columns
 	clear(s.operations)
+	clear(s.overlayObjects)
 	clear(s.changes)
 	clear(s.heads)
 	clear(s.removedHeads)
@@ -146,6 +155,73 @@ func (s *State) eachOperation(yield func(opset.Operation) bool) {
 	}
 }
 
+// eachObjectOperation yields every operation addressing object, the same set
+// eachOperation yields filtered by object. Staged rows are read through the
+// overlay's per-object index and committed rows through the per-object column
+// span and non-canonical index, so the cost follows the object's own size
+// instead of the document's.
+func (s *State) eachObjectOperation(
+	object opset.ObjectID,
+	yield func(opset.Operation) bool,
+) {
+	for _, identifier := range s.overlayObjects[object] {
+		if !yield(s.operations[identifier]) {
+			return
+		}
+	}
+
+	if s.columns == nil {
+		return
+	}
+
+	if span, ok := s.columns.objectSpans[object]; ok {
+		for _, operation := range s.columns.operations[span.start:span.end] {
+			if operation.Object != object {
+				continue
+			}
+
+			if _, overlaid := s.operations[operation.ID]; overlaid {
+				continue
+			}
+
+			if !yield(operation) {
+				return
+			}
+		}
+	}
+
+	for _, identifier := range s.columns.nonCanonicalObjects[object] {
+		if _, overlaid := s.operations[identifier]; overlaid {
+			continue
+		}
+
+		operation, ok := s.columns.nonCanonicalOperations[identifier]
+		if !ok {
+			continue
+		}
+
+		if !yield(operation) {
+			return
+		}
+	}
+}
+
+// objectOperationBound returns an upper bound on the operations
+// eachObjectOperation yields for object, for sizing a table before the walk.
+func (s *State) objectOperationBound(object opset.ObjectID) int {
+	bound := len(s.overlayObjects[object])
+
+	if s.columns != nil {
+		if span, ok := s.columns.objectSpans[object]; ok {
+			bound += span.end - span.start
+		}
+
+		bound += len(s.columns.nonCanonicalObjects[object])
+	}
+
+	return bound
+}
+
 func (s *State) change(hash opset.ChangeHash) (*opset.Change, bool) {
 	if change, ok := s.changes[hash]; ok {
 		return change, true
@@ -156,6 +232,32 @@ func (s *State) change(hash opset.ChangeHash) (*opset.Change, bool) {
 	}
 
 	return nil, false
+}
+
+// withOperations returns the change with its operations in place. A change
+// loaded from a snapshot does not hold them, because the snapshot's rows
+// already store every operation once; they are collected from the rows. The
+// result must not be modified: it is the change itself whenever the change
+// holds its operations.
+func (s *State) withOperations(change *opset.Change) (*opset.Change, error) {
+	if !change.OperationsDeferred {
+		return change, nil
+	}
+
+	operations, ok := s.columns.changeOperations(change)
+	if !ok {
+		return nil, fmt.Errorf(
+			"cannot locate the operations of change %d of actor %s",
+			change.Sequence,
+			change.Actor,
+		)
+	}
+
+	loaded := *change
+	loaded.Operations = operations
+	loaded.OperationsDeferred = false
+
+	return &loaded, nil
 }
 
 func (s *State) eachChange(yield func(opset.ChangeHash, *opset.Change) bool) {

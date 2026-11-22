@@ -266,6 +266,17 @@ func (s *Service) Create(
 				return fmt.Errorf("cannot insert task: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				task.ID,
+				task.OrganizationID,
+				task.Name,
+				task.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			if err := replaceTaskInternalControls(ctx, conn, scope, task, req.InternalControlIDs); err != nil {
 				return fmt.Errorf("cannot replace task internal controls: %w", err)
 			}
@@ -680,6 +691,19 @@ func (s *Service) Update(
 				return fmt.Errorf("cannot update task: %w", err)
 			}
 
+			if req.Name != nil || req.Content != nil {
+				if err := coredata.UpsertSearchResource(
+					ctx,
+					conn,
+					task.ID,
+					task.OrganizationID,
+					task.Name,
+					task.SearchText(),
+				); err != nil {
+					return fmt.Errorf("cannot sync search: %w", err)
+				}
+			}
+
 			if targetRank != nil {
 				task.Rank = *targetRank
 				if err := task.UpdateRank(ctx, conn, scope); err != nil {
@@ -719,6 +743,12 @@ func (s *Service) Update(
 			if req.Content != nil {
 				if err := notifyNewMentions(ctx, conn, scope, task, oldTask.Content, task.Content, actorID); err != nil {
 					return fmt.Errorf("cannot notify new mentions: %w", err)
+				}
+			}
+
+			if task.State.IsClosed() {
+				if err := resolveLinkedTaskNotifications(ctx, conn, scope, task); err != nil {
+					return fmt.Errorf("cannot resolve linked task notifications: %w", err)
 				}
 			}
 
@@ -804,6 +834,19 @@ func (s *Service) Delete(
 
 			if err := emitTaskDeleted(ctx, conn, scope, task); err != nil {
 				return fmt.Errorf("cannot emit task deleted webhook: %w", err)
+			}
+
+			if err := resolveDeletedTaskNotifications(ctx, conn, scope, task); err != nil {
+				return fmt.Errorf("cannot resolve deleted task notifications: %w", err)
+			}
+
+			evidenceIDs, err := coredata.LoadEvidenceIDsByTaskID(ctx, conn, scope, task.ID)
+			if err != nil {
+				return fmt.Errorf("cannot list task evidences: %w", err)
+			}
+
+			if err := coredata.DeleteSearchResources(ctx, conn, append(evidenceIDs, task.ID)); err != nil {
+				return fmt.Errorf("cannot delete search resource: %w", err)
 			}
 
 			if err := task.Delete(ctx, conn, scope); err != nil {
@@ -1048,6 +1091,36 @@ func resolveViewerTaskNotifications(
 	return nil
 }
 
+func resolveLinkedTaskNotifications(
+	ctx context.Context,
+	conn pg.Tx,
+	scope coredata.Scoper,
+	task *coredata.Task,
+) error {
+	return notification.ResolveLinkedTaskNotifications(
+		ctx,
+		conn,
+		scope,
+		task.OrganizationID,
+		task.ID,
+	)
+}
+
+func resolveDeletedTaskNotifications(
+	ctx context.Context,
+	conn pg.Tx,
+	scope coredata.Scoper,
+	task *coredata.Task,
+) error {
+	return notification.ResolveDeletedTaskNotifications(
+		ctx,
+		conn,
+		scope,
+		task.OrganizationID,
+		task.ID,
+	)
+}
+
 func notifyTaskAssignment(
 	ctx context.Context,
 	conn pg.Tx,
@@ -1070,6 +1143,12 @@ func notifyTaskAssignment(
 		actorID,
 	); err != nil {
 		return fmt.Errorf("cannot insert task assignment notification: %w", err)
+	}
+
+	if task.State.IsClosed() {
+		if err := resolveLinkedTaskNotifications(ctx, conn, scope, task); err != nil {
+			return fmt.Errorf("cannot resolve linked task notifications: %w", err)
+		}
 	}
 
 	return nil
@@ -1104,6 +1183,12 @@ func notifyNewMentions(
 		actorID,
 	); err != nil {
 		return fmt.Errorf("cannot insert task mention notifications: %w", err)
+	}
+
+	if task.State.IsClosed() {
+		if err := resolveLinkedTaskNotifications(ctx, conn, scope, task); err != nil {
+			return fmt.Errorf("cannot resolve linked task notifications: %w", err)
+		}
 	}
 
 	return nil

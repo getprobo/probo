@@ -52,8 +52,20 @@ const (
 	// worker claim and process the same row concurrently.
 	provisioningPollLease = processTickTimeout + 30*time.Second
 
+	// provisioningPollInterval is the wait before polling an open order again
+	// once an attempt has finished. The claim lease only covers that in-flight
+	// Process; scheduleNextPoll moves the row onto this interval instead of
+	// leaving it ineligible for the rest of the lease.
+	provisioningPollInterval = 30 * time.Second
+
 	tracerName = "go.probo.inc/probo/pkg/certmanager"
 )
+
+// nextPollAttemptAt is the ssl_last_attempt_at that the poll-lease predicate
+// treats as eligible once provisioningPollInterval has elapsed.
+func nextPollAttemptAt(now time.Time) time.Time {
+	return now.Add(provisioningPollInterval - provisioningPollLease)
+}
 
 type (
 	provisionCore struct {
@@ -265,6 +277,12 @@ func (h *beginChallengeHandler) Process(ctx context.Context, certificate coredat
 		log.String("hostname", certificate.Hostname),
 		log.String("certificate_id", certificate.ID.String()),
 	)
+
+	if err := h.scheduleNextPoll(ctx, certificate.ID); err != nil {
+		h.recordSpanError(span, err, "")
+
+		return err
+	}
 
 	return nil
 }
@@ -493,6 +511,12 @@ func (h *pollOrderHandler) processPollOrder(
 			log.String("order_status", poll.Order.Status),
 		)
 
+		if err := h.scheduleNextPoll(ctx, certificate.ID); err != nil {
+			h.recordSpanError(span, err, "")
+
+			return err
+		}
+
 		return nil
 	case OrderPollStatusInvalid:
 		err := ErrOrderInvalid
@@ -584,6 +608,12 @@ func (h *pollOrderHandler) issueCertificate(
 				log.String("certificate_id", certificate.ID.String()),
 			)
 
+			if err := h.scheduleNextPoll(ctx, certificate.ID); err != nil {
+				h.recordSpanError(span, err, "")
+
+				return err
+			}
+
 			return nil
 		}
 
@@ -649,6 +679,41 @@ func (h *pollOrderHandler) issueCertificate(
 					log.String("hostname", row.Hostname),
 					log.Error(err),
 				)
+			}
+
+			return nil
+		},
+	)
+}
+
+// scheduleNextPoll releases the remainder of the claim lease so a finished
+// attempt is polled again after provisioningPollInterval. The row is left
+// untouched once it is no longer an open PROVISIONING order.
+func (h *provisionCore) scheduleNextPoll(ctx context.Context, certificateID gid.GID) error {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), persistFailureTimeout)
+	defer cancel()
+
+	return h.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			row := &coredata.Certificate{}
+			if err := row.LoadByIDForUpdate(ctx, tx, coredata.NewNoScope(), certificateID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return nil
+				}
+
+				return fmt.Errorf("cannot load certificate %q: %w", certificateID, err)
+			}
+
+			if row.Status != coredata.CertificateStatusProvisioning || row.HTTPOrderURL == nil {
+				return nil
+			}
+
+			attemptAt := nextPollAttemptAt(time.Now())
+			row.SSLLastAttemptAt = &attemptAt
+
+			if err := row.Update(ctx, tx, coredata.NewNoScope()); err != nil {
+				return fmt.Errorf("cannot schedule certificate poll: %w", err)
 			}
 
 			return nil

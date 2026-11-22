@@ -48,6 +48,16 @@ func (e ErrInvalidState) Error() string {
 	return "cannot validate OIDC state: invalid or expired"
 }
 
+type ErrBrowserBinding struct{}
+
+func NewBrowserBindingError() error {
+	return &ErrBrowserBinding{}
+}
+
+func (e ErrBrowserBinding) Error() string {
+	return "cannot validate OIDC state: browser binding mismatch"
+}
+
 type ErrCodeExchange struct {
 	Err error
 }

@@ -115,7 +115,7 @@ func TestColumnarAuthority_StandaloneStateUsesMapFallback(t *testing.T) {
 	property := "key"
 	operation := opset.Operation{
 		ID: opset.OpID{
-			Actor:   opset.ActorID("actor"),
+			Actor:   opset.MakeActorID("actor"),
 			Counter: 1,
 		},
 		Object: opset.RootObject(),

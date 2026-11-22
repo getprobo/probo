@@ -22,6 +22,7 @@ package riskmanagement
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -65,6 +66,7 @@ type (
 		Description    *string
 		Period         *Period
 		MatrixSize     *MatrixSize
+		ScoreLevels    *coredata.ScoreLevels
 	}
 
 	UpdateRiskAnalysisRequest struct {
@@ -72,6 +74,7 @@ type (
 		Name        *string
 		Description **string
 		Period      *Period
+		ScoreLevels *coredata.ScoreLevels
 	}
 
 	CreateRiskAnalysisDiagramRequest struct {
@@ -192,6 +195,8 @@ func optionalDocumentJSON(s *string) (*string, error) {
 }
 
 func (r *CreateRiskAnalysisRequest) Validate() error {
+	r.applyDefaultScoreLevels()
+
 	v := validator.New()
 	v.Check(r.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
 	v.Check(r.Name, "name", validator.Required(), validator.SafeTextNoNewLine(TitleMaxLength))
@@ -204,6 +209,7 @@ func (r *CreateRiskAnalysisRequest) Validate() error {
 	)
 	v.Check(r.MatrixSize, "matrix_size", validator.Required())
 	validateMatrixSize(v, r.MatrixSize)
+	validateScoreLevels(v, r.scoreLevelsForValidation(), matrixMaxScore(r.MatrixSize))
 
 	if r.Period != nil {
 		validatePeriodRange(v, r.Period.Start, r.Period.End)
@@ -226,6 +232,10 @@ func (r *UpdateRiskAnalysisRequest) Validate() error {
 
 	if r.Period != nil {
 		validatePeriodRange(v, r.Period.Start, r.Period.End)
+	}
+
+	if r.ScoreLevels != nil {
+		validateScoreLevels(v, *r.ScoreLevels, 0)
 	}
 
 	return v.Error()
@@ -266,6 +276,19 @@ func validatePeriodRange(v *validator.Validator, periodStart, periodEnd *time.Ti
 				}
 			},
 		)
+	}
+}
+
+func matrixMaxScore(size *MatrixSize) int {
+	if size == nil || size.Rows != size.Cols {
+		return 0
+	}
+
+	switch size.Rows {
+	case 3, 4, 5:
+		return size.Rows * size.Cols
+	default:
+		return 0
 	}
 }
 
@@ -452,6 +475,10 @@ func (s *Service) Create(ctx context.Context, scope coredata.Scoper, req CreateR
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
+	if req.ScoreLevels == nil {
+		return nil, fmt.Errorf("invalid request: missing score levels")
+	}
+
 	description, err := optionalDocumentJSON(req.Description)
 	if err != nil {
 		return nil, fmt.Errorf("cannot sanitize description: %w", err)
@@ -465,6 +492,7 @@ func (s *Service) Create(ctx context.Context, scope coredata.Scoper, req CreateR
 		Description:    description,
 		MatrixRows:     req.MatrixSize.Rows,
 		MatrixCols:     req.MatrixSize.Cols,
+		ScoreLevels:    *req.ScoreLevels,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}
@@ -479,6 +507,17 @@ func (s *Service) Create(ctx context.Context, scope coredata.Scoper, req CreateR
 		func(ctx context.Context, tx pg.Tx) error {
 			if err := ra.Insert(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot insert risk assessment: %w", err)
+			}
+
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				tx,
+				ra.ID,
+				ra.OrganizationID,
+				ra.Name,
+				ra.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
 			}
 
 			return nil
@@ -509,6 +548,31 @@ func (s *Service) Get(ctx context.Context, scope coredata.Scoper, id gid.GID) (*
 	}
 
 	return ra, nil
+}
+
+func (s *Service) GetByIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	riskAnalysisIDs ...gid.GID,
+) (coredata.RiskAnalyses, error) {
+	var analyses coredata.RiskAnalyses
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := analyses.LoadByIDs(ctx, conn, scope, riskAnalysisIDs); err != nil &&
+				!errors.Is(err, coredata.ErrResourceNotFound) {
+				return fmt.Errorf("cannot load risk analyses by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return analyses, nil
 }
 
 func (s *Service) Update(ctx context.Context, scope coredata.Scoper, req UpdateRiskAnalysisRequest) (*coredata.RiskAnalysis, error) {
@@ -543,8 +607,16 @@ func (s *Service) Update(ctx context.Context, scope coredata.Scoper, req UpdateR
 				ra.PeriodEnd = req.Period.End
 			}
 
+			if req.ScoreLevels != nil {
+				ra.ScoreLevels = *req.ScoreLevels
+			}
+
 			v := validator.New()
 			validatePeriodRange(v, ra.PeriodStart, ra.PeriodEnd)
+
+			if req.ScoreLevels != nil {
+				validateScoreLevels(v, ra.ScoreLevels, ra.MatrixRows*ra.MatrixCols)
+			}
 
 			if err := v.Error(); err != nil {
 				return fmt.Errorf("invalid request: %w", err)
@@ -553,6 +625,17 @@ func (s *Service) Update(ctx context.Context, scope coredata.Scoper, req UpdateR
 			ra.UpdatedAt = time.Now()
 			if err := ra.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update risk assessment: %w", err)
+			}
+
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				tx,
+				ra.ID,
+				ra.OrganizationID,
+				ra.Name,
+				ra.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
 			}
 
 			return nil
@@ -569,6 +652,10 @@ func (s *Service) Delete(ctx context.Context, scope coredata.Scoper, id gid.GID)
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			if err := clearRiskAnalysisSearch(ctx, tx, scope, id); err != nil {
+				return err
+			}
+
 			ra := &coredata.RiskAnalysis{}
 			if err := ra.Delete(ctx, tx, scope, id); err != nil {
 				return fmt.Errorf("cannot delete risk assessment: %w", err)
@@ -2256,6 +2343,25 @@ func (s *Service) assertProcessInDiagram(
 			Code:    validator.ErrorCodeCustom,
 			Message: "process does not belong to this diagram",
 		}}
+	}
+
+	return nil
+}
+
+func clearRiskAnalysisSearch(
+	ctx context.Context,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	riskAnalysisID gid.GID,
+) error {
+	// The row lock blocks child inserts, which take a key-share lock on the
+	// parent through their foreign key, until this deletion commits.
+	if err := coredata.LockID(ctx, conn, scope, "risk_analyses", riskAnalysisID); err != nil {
+		return err
+	}
+
+	if err := coredata.DeleteSearchResource(ctx, conn, riskAnalysisID); err != nil {
+		return fmt.Errorf("cannot delete search resource: %w", err)
 	}
 
 	return nil

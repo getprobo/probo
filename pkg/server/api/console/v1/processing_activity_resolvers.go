@@ -150,6 +150,11 @@ func (r *mutationResolver) PublishProcessingActivityList(ctx context.Context, in
 	}, nil
 }
 
+// Tags is the resolver for the tags field.
+func (r *processingActivityResolver) Tags(ctx context.Context, obj *types.ProcessingActivity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TagOrderBy) (*types.TagConnection, error) {
+	return r.tagsForResourceID(ctx, obj.ID, first, after, last, before, orderBy)
+}
+
 // Organization is the resolver for the organization field.
 func (r *processingActivityResolver) Organization(ctx context.Context, obj *types.ProcessingActivity) (*types.Organization, error) {
 	if _, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {

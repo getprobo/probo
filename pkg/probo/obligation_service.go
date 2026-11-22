@@ -22,10 +22,12 @@ package probo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	"go.gearno.de/kit/pg"
+	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
@@ -123,6 +125,31 @@ func (s ObligationService) Get(
 	return obligation, nil
 }
 
+func (s ObligationService) GetByIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	obligationIDs ...gid.GID,
+) (coredata.Obligations, error) {
+	var obligations coredata.Obligations
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := obligations.LoadByIDs(ctx, conn, scope, obligationIDs); err != nil &&
+				!errors.Is(err, coredata.ErrResourceNotFound) {
+				return fmt.Errorf("cannot load obligations by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return obligations, nil
+}
+
 func (s *ObligationService) Create(
 	ctx context.Context, scope coredata.Scoper,
 	req *CreateObligationRequest,
@@ -165,6 +192,17 @@ func (s *ObligationService) Create(
 
 			if err := obligation.Insert(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot insert obligation: %w", err)
+			}
+
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				obligation.ID,
+				obligation.OrganizationID,
+				ref.UnrefOrZero(obligation.Requirement),
+				obligation.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
 			}
 
 			if err := webhook.InsertData(ctx, conn, scope, req.OrganizationID, coredata.WebhookEventTypeObligationCreated, webhooktypes.NewObligation(obligation)); err != nil {
@@ -251,6 +289,17 @@ func (s *ObligationService) Update(
 				return fmt.Errorf("cannot update obligation: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				obligation.ID,
+				obligation.OrganizationID,
+				ref.UnrefOrZero(obligation.Requirement),
+				obligation.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			if err := webhook.InsertUpdateData(ctx, conn, scope, obligation.OrganizationID, coredata.WebhookEventTypeObligationUpdated, webhooktypes.NewObligation(obligation), previousObligation); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
@@ -279,6 +328,10 @@ func (s *ObligationService) Delete(
 
 			if err := webhook.InsertData(ctx, conn, scope, obligation.OrganizationID, coredata.WebhookEventTypeObligationDeleted, webhooktypes.NewObligation(obligation)); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
+			}
+
+			if err := coredata.DeleteSearchResource(ctx, conn, obligation.ID); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
 			}
 
 			if err := obligation.Delete(ctx, conn, scope); err != nil {

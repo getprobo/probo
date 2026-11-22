@@ -62,8 +62,9 @@ func (s *Service) Open(
 	}
 
 	return &DocumentCollaboration{
-		Document: automergeDocument,
-		Revision: doc.Revision,
+		Document:       automergeDocument,
+		Revision:       doc.Revision,
+		ChangeRevision: doc.ChangeRevision,
 	}, nil
 }
 

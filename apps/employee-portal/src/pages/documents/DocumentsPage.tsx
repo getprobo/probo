@@ -76,7 +76,7 @@ export function DocumentsPage({ queryRef }: DocumentsPageProps) {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-8 pt-8 pb-32">
+    <main className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-8 pt-8">
       <PageHeader
         homeLabel={tApp("homePage.breadcrumb")}
         currentLabel={t("breadcrumb")}

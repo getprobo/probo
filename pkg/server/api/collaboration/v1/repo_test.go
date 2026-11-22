@@ -69,6 +69,15 @@ func (f *fakeDocumentCollaborationDocuments) Persist(
 	return revision, nil
 }
 
+func (f *fakeDocumentCollaborationDocuments) FetchChanges(
+	context.Context,
+	coredata.Scoper,
+	gid.GID,
+	collaboration.Position,
+) (*collaboration.RefreshDelta, error) {
+	return nil, nil
+}
+
 func newRepoTestServer(
 	t *testing.T,
 	hub *Hub,
@@ -81,6 +90,8 @@ func newRepoTestServer(
 	return newRepoTestServerWithConfig(t, hub, scope, documentID, RepoConfig{
 		Shutdown:         context.Background(),
 		PublishEphemeral: publishEphemeral,
+		CanUpdate:        true,
+		CanComment:       true,
 	})
 }
 
@@ -572,6 +583,8 @@ func TestServeRepoCollaboration_StampsSelectionDisplayName(t *testing.T) {
 			Shutdown:    context.Background(),
 			DisplayName: "Ada Lovelace",
 			IdentityID:  "idnt_ada",
+			CanUpdate:   true,
+			CanComment:  true,
 		},
 	)
 
@@ -680,4 +693,237 @@ func TestServeRepoCollaboration_PublishesEphemeralCrossInstance(t *testing.T) {
 	case <-time.After(10 * time.Second):
 		require.Fail(t, "the loop did not publish the ephemeral across instances")
 	}
+}
+
+func TestServeRepoCollaboration_ReadOnlyPeerCannotChangeDocument(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	tenantID := gid.NewTenantID()
+	documentID := gid.New(tenantID, coredata.DocumentEntityType)
+
+	serverDocument, err := automerge.New(automerge.ActorID{204})
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = serverDocument.Close() })
+
+	text, err := serverDocument.CreateText("body")
+	require.NoError(t, err)
+	require.NoError(t, text.Splice(0, 0, "kept"))
+
+	_, err = serverDocument.Commit("seed", time.Unix(1786147200, 0).UTC())
+	require.NoError(t, err)
+
+	var recorded atomic.Int32
+
+	persistedCh := make(chan struct{}, 32)
+	documents := &fakeDocumentCollaborationDocuments{
+		opened:      &collaboration.DocumentCollaboration{Document: serverDocument, Revision: 1},
+		persistedCh: persistedCh,
+	}
+	hub := NewHub(documents, nil)
+	server := newRepoTestServerWithConfig(
+		t,
+		hub,
+		coredata.NewScope(tenantID, gid.Nil),
+		documentID,
+		RepoConfig{
+			Shutdown: context.Background(),
+			RecordActors: func(context.Context, [][]byte) error {
+				recorded.Add(1)
+
+				return nil
+			},
+		},
+	)
+
+	repoDocumentID := collabpkg.DeriveDocumentID(documentID.String())
+	clientDocument, err := automerge.New(actorFromByte(7))
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = clientDocument.Close() })
+
+	syncState, err := clientDocument.NewSyncState()
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = syncState.Close() })
+
+	driver, err := collabpkg.NewClientConn(
+		collabpkg.ClientConfig{
+			ClientPeerID: "reader",
+			DocumentID:   repoDocumentID,
+			StartsEmpty:  true,
+		},
+		syncState,
+	)
+	require.NoError(t, err)
+
+	wsURL := "ws" + strings.TrimPrefix(server.URL, "http")
+	conn, _, err := websocket.Dial(ctx, wsURL, nil)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = conn.CloseNow() })
+	conn.SetReadLimit(1 << 20)
+
+	frames := make(chan []byte, 8)
+
+	go func() {
+		for {
+			_, data, readErr := conn.Read(ctx)
+			if readErr != nil {
+				close(frames)
+				return
+			}
+
+			select {
+			case frames <- data:
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+
+	write := func(payload []byte) {
+		t.Helper()
+
+		writeCtx, writeCancel := context.WithTimeout(ctx, 5*time.Second)
+		defer writeCancel()
+
+		require.NoError(t, conn.Write(writeCtx, websocket.MessageBinary, payload))
+	}
+	nextFrame := func(timeout time.Duration) ([]byte, bool) {
+		t.Helper()
+
+		select {
+		case frame, ok := <-frames:
+			return frame, ok
+		case <-time.After(timeout):
+			return nil, false
+		}
+	}
+	exchange := func(frame []byte) {
+		t.Helper()
+
+		inbound, receiveErr := driver.Receive(frame)
+		require.NoError(t, receiveErr)
+
+		for _, outgoing := range inbound.Outgoing {
+			write(outgoing)
+		}
+	}
+
+	join, err := driver.Start()
+	require.NoError(t, err)
+	write(join)
+
+	deadline := time.Now().Add(10 * time.Second)
+
+	for {
+		body, bodyErr := clientDocument.Text("body")
+		if bodyErr == nil {
+			value, valueErr := body.String()
+			if valueErr == nil && value == "kept" {
+				break
+			}
+		}
+
+		require.True(t, time.Now().Before(deadline), "reader did not receive the document")
+
+		frame, ok := nextFrame(2 * time.Second)
+		require.True(t, ok)
+		exchange(frame)
+	}
+
+	for {
+		frame, ok := nextFrame(300 * time.Millisecond)
+		if !ok {
+			break
+		}
+
+		exchange(frame)
+	}
+
+	body, err := clientDocument.Text("body")
+	require.NoError(t, err)
+	require.NoError(t, body.Splice(4, 0, "!"))
+	require.NoError(t, clientDocument.PutString("note", "secret"))
+
+	_, err = clientDocument.Commit("tamper", time.Unix(1786147200, 0).UTC())
+	require.NoError(t, err)
+
+	outgoing, err := driver.SyncChanged()
+	require.NoError(t, err)
+	require.NotEmpty(t, outgoing)
+
+	for _, frame := range outgoing {
+		write(frame)
+	}
+
+	select {
+	case <-persistedCh:
+		require.Fail(t, "viewing sync persisted")
+	case <-time.After(time.Second):
+	}
+
+	assert.Equal(t, int64(0), documents.persisted.Load())
+
+	serverText, err := serverDocument.Text("body")
+	require.NoError(t, err)
+
+	serverBody, err := serverText.String()
+	require.NoError(t, err)
+	assert.Equal(t, "kept", serverBody)
+
+	_, err = serverDocument.String("note")
+	assert.Error(t, err)
+	assert.Equal(t, int32(0), recorded.Load())
+}
+
+func TestServeRepoCollaboration_EditingSyncPersists(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	tenantID := gid.NewTenantID()
+	documentID := gid.New(tenantID, coredata.DocumentEntityType)
+
+	serverDocument, err := automerge.New(automerge.ActorID{205})
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = serverDocument.Close() })
+
+	text, err := serverDocument.CreateText("body")
+	require.NoError(t, err)
+	require.NoError(t, text.Splice(0, 0, "kept"))
+
+	_, err = serverDocument.Commit("seed", time.Unix(1786147200, 0).UTC())
+	require.NoError(t, err)
+
+	persistedCh := make(chan struct{}, 4)
+	documents := &fakeDocumentCollaborationDocuments{
+		opened: &collaboration.DocumentCollaboration{
+			Document: serverDocument,
+			Revision: 1,
+		},
+		persistedCh: persistedCh,
+	}
+	hub := NewHub(documents, nil)
+	server := newRepoTestServer(
+		t,
+		hub,
+		coredata.NewScope(tenantID, gid.Nil),
+		documentID,
+		nil,
+	)
+
+	wsURL := "ws" + strings.TrimPrefix(server.URL, "http")
+	repoDocumentID := collabpkg.DeriveDocumentID(documentID.String())
+	client := dialRepoClient(t, ctx, wsURL, "editor", repoDocumentID)
+	client.waitForBody(t, ctx, "kept")
+
+	select {
+	case <-persistedCh:
+	case <-time.After(5 * time.Second):
+		require.Fail(t, "editing sync did not persist")
+	}
+
+	assert.GreaterOrEqual(t, documents.persisted.Load(), int64(1))
 }

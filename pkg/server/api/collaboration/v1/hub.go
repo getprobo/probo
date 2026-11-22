@@ -26,7 +26,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"go.probo.inc/probo/pkg/automerge"
@@ -38,9 +37,9 @@ import (
 )
 
 type (
-	Wake struct {
-		Refresh bool
-	}
+	// Wake tells a connection that the room document changed, so it sends
+	// its peer the sync frames that change produces.
+	Wake struct{}
 
 	RoomPeer struct {
 		connectionID string
@@ -68,6 +67,15 @@ type (
 			gid.GID,
 			*automerge.Document,
 		) (int64, error)
+		// FetchChanges reads what the canonical document gained after a
+		// known position, without touching the live document, and returns
+		// nil when it did not move.
+		FetchChanges(
+			context.Context,
+			coredata.Scoper,
+			gid.GID,
+			collaboration.Position,
+		) (*collaboration.RefreshDelta, error)
 	}
 
 	Hub struct {
@@ -84,15 +92,21 @@ type (
 		documents     Documents
 		scope         coredata.Scoper
 		documentID    gid.GID
-		revision      atomic.Int64
-		peers         map[uint64]RoomPeer
-		presence      map[string]presenceEntry
-		nextPeerID    uint64
-		dirty         chan struct{}
-		stop          chan struct{}
-		done          chan struct{}
-		persistErr    error
-		opening       chan struct{}
+		// position is how far the room document has caught up with the
+		// canonical document. Only the room goroutine reads or writes it
+		// once the room runs.
+		position collaboration.Position
+		// refresh asks the room goroutine to catch up with the canonical
+		// document now, instead of at its next poll.
+		refresh    chan struct{}
+		peers      map[uint64]RoomPeer
+		presence   map[string]presenceEntry
+		nextPeerID uint64
+		dirty      chan struct{}
+		stop       chan struct{}
+		done       chan struct{}
+		persistErr error
+		opening    chan struct{}
 	}
 
 	RoomLease struct {
@@ -115,6 +129,12 @@ const (
 	PersistRetryMax = 5 * time.Second
 	PresenceTTL     = 30 * time.Second
 	RoomOpenTimeout = 20 * time.Second
+	// RefreshInterval is how often a room polls for changes another server
+	// instance persisted, in case their notification was missed.
+	RefreshInterval = 500 * time.Millisecond
+	// RefreshTimeout bounds one room refresh, so a slow read cannot keep the
+	// room from persisting or catching up.
+	RefreshTimeout = 10 * time.Second
 )
 
 func NewConnectionID() (string, error) {
@@ -192,6 +212,7 @@ func (h *Hub) Acquire(
 			peers:      make(map[uint64]RoomPeer),
 			presence:   make(map[string]presenceEntry),
 			dirty:      make(chan struct{}, 1),
+			refresh:    make(chan struct{}, 1),
 			stop:       make(chan struct{}),
 			done:       make(chan struct{}),
 			opening:    make(chan struct{}),
@@ -212,7 +233,7 @@ func (h *Hub) Acquire(
 
 		h.mu.Lock()
 		room.collaboration = opened
-		room.revision.Store(opened.Revision)
+		room.position = opened.Position()
 
 		lease := h.addPeerLocked(documentID, room, connectionID)
 
@@ -280,14 +301,6 @@ func (l *RoomLease) LockDocument() {
 
 func (l *RoomLease) UnlockDocument() {
 	l.room.docMu.Unlock()
-}
-
-func (l *RoomLease) Revision() int64 {
-	return l.room.revision.Load()
-}
-
-func (l *RoomLease) SetRevision(revision int64) {
-	l.room.revision.Store(revision)
 }
 
 func (l *RoomLease) NotifyPeers() {
@@ -402,14 +415,11 @@ func (h *Hub) notifyExternal(payload string) {
 		return
 	}
 
-	room.mu.Lock()
-	defer room.mu.Unlock()
-
-	for _, peer := range room.peers {
-		select {
-		case peer.wake <- Wake{Refresh: true}:
-		default:
-		}
+	// The room catches up once for all its peers, then wakes those whose
+	// document changed. A pending request already covers this one.
+	select {
+	case room.refresh <- struct{}{}:
+	default:
 	}
 }
 
@@ -504,6 +514,9 @@ func (r *Room) run() {
 	dirty := false
 	failures := 0
 
+	poll := time.NewTicker(RefreshInterval)
+	defer poll.Stop()
+
 	for {
 		var timerChannel <-chan time.Time
 		if timer != nil {
@@ -511,6 +524,10 @@ func (r *Room) run() {
 		}
 
 		select {
+		case <-r.refresh:
+			r.refreshOnce()
+		case <-poll.C:
+			r.refreshOnce()
 		case <-r.dirty:
 			dirty = true
 
@@ -582,7 +599,10 @@ func (r *Room) persist() error {
 	)
 	defer cancel()
 
-	revision, err := r.documents.Persist(
+	// The room position is left alone: the next refresh reads the rows this
+	// persist appended, which the document already holds, so applying them
+	// moves nothing and wakes no peer.
+	_, err := r.documents.Persist(
 		ctx,
 		r.scope,
 		r.documentID,
@@ -593,11 +613,53 @@ func (r *Room) persist() error {
 	defer r.mu.Unlock()
 
 	r.persistErr = err
-	if err != nil {
-		return err
+
+	return err
+}
+
+// refreshOnce catches the room document up with changes other writers
+// persisted, once for all its peers. The canonical read runs without the
+// document lock, so a joining peer's request never waits behind it. The lock
+// covers only applying the delta, which reads no database and, for the rows
+// after the room's position, replays only those. A failed refresh is retried at
+// the next poll.
+func (r *Room) refreshOnce() {
+	ctx, cancel := context.WithTimeout(context.Background(), RefreshTimeout)
+	defer cancel()
+
+	delta, err := r.documents.FetchChanges(ctx, r.scope, r.documentID, r.position)
+	if err != nil || delta == nil {
+		return
 	}
 
-	r.revision.Store(revision)
+	defer delta.Close()
 
-	return nil
+	r.docMu.Lock()
+	changed, err := delta.Apply(r.collaboration.Document)
+	r.docMu.Unlock()
+
+	if err != nil {
+		// The change log no longer holds a change the room lacks, or the
+		// delta could not be applied. The zero position makes the next
+		// refresh rebuild from the snapshot instead of retrying this delta.
+		r.position = collaboration.Position{}
+	} else {
+		r.position = delta.Position
+	}
+
+	// A delta that fails to cover the canonical heads can still have merged
+	// changes into the document, which peers must receive.
+	if !changed {
+		return
+	}
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	for _, peer := range r.peers {
+		select {
+		case peer.wake <- Wake{}:
+		default:
+		}
+	}
 }

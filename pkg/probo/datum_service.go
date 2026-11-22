@@ -22,6 +22,7 @@ package probo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -99,6 +100,31 @@ func (s DatumService) Get(
 	}
 
 	return datum, nil
+}
+
+func (s DatumService) GetByIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	dataIDs ...gid.GID,
+) (coredata.Data, error) {
+	var data coredata.Data
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := data.LoadByIDs(ctx, conn, scope, dataIDs); err != nil &&
+				!errors.Is(err, coredata.ErrResourceNotFound) {
+				return fmt.Errorf("cannot load data by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
 }
 
 func (s DatumService) GetByOwnerID(
@@ -212,6 +238,17 @@ func (s DatumService) Update(
 			return fmt.Errorf("cannot update data: %w", err)
 		}
 
+		if err := coredata.UpsertSearchResource(
+			ctx,
+			conn,
+			datum.ID,
+			datum.OrganizationID,
+			datum.Name,
+			datum.SearchText(),
+		); err != nil {
+			return fmt.Errorf("cannot sync search: %w", err)
+		}
+
 		if req.ThirdPartyIDs != nil {
 			if len(req.ThirdPartyIDs) > 0 {
 				thirdParties := &coredata.ThirdParties{}
@@ -268,6 +305,17 @@ func (s DatumService) Create(
 				return fmt.Errorf("cannot insert datum: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				datum.ID,
+				datum.OrganizationID,
+				datum.Name,
+				datum.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			if len(req.ThirdPartyIDs) > 0 {
 				thirdParties := &coredata.ThirdParties{}
 				if err := thirdParties.LoadByIDs(ctx, conn, scope, req.ThirdPartyIDs); err != nil {
@@ -298,6 +346,10 @@ func (s DatumService) Delete(
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			if err := coredata.DeleteSearchResource(ctx, tx, datum.ID); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			return datum.Delete(ctx, tx, scope)
 		},
 	)

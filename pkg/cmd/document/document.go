@@ -24,6 +24,7 @@ import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 	"go.probo.inc/probo/pkg/cmd/document/archive"
+	"go.probo.inc/probo/pkg/cmd/document/change"
 	"go.probo.inc/probo/pkg/cmd/document/comment"
 	"go.probo.inc/probo/pkg/cmd/document/create"
 	"go.probo.inc/probo/pkg/cmd/document/delete"
@@ -69,6 +70,7 @@ func NewCmdDocument(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(viewapprovaldecision.NewCmdViewApprovalDecision(f))
 	cmd.AddCommand(comment.NewCmdComment(f))
 	cmd.AddCommand(suggestion.NewCmdSuggestion(f))
+	cmd.AddCommand(change.NewCmdChange(f))
 
 	return cmd
 }

@@ -29,9 +29,14 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
+	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
+)
+
+var (
+	_ Searchable = (*Audit)(nil)
 )
 
 type (
@@ -70,6 +75,10 @@ func (a *Audit) CursorKey(field AuditOrderField) page.CursorKey {
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", field))
+}
+
+func (a Audit) SearchText() []string {
+	return []string{ref.UnrefOrZero(a.Name), ref.UnrefOrZero(a.Firm)}
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
@@ -181,7 +190,6 @@ SELECT
 	name,
 	firm,
 	organization_id,
-	framework_id,
 	report_file_id,
 	valid_from,
 	valid_until,

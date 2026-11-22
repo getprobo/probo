@@ -41,6 +41,7 @@ import (
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/authn"
+	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/jsonx"
 )
 
@@ -60,7 +61,6 @@ const (
 )
 
 const (
-	RepoRefreshInterval    = 500 * time.Millisecond
 	DepartureNotifyTimeout = 2 * time.Second
 )
 
@@ -81,21 +81,8 @@ type (
 		Err         error
 	}
 
-	// RepoRefresher pulls changes another server instance persisted into
-	// the shared in-memory document.
-	RepoRefresher interface {
-		Refresh(
-			ctx context.Context,
-			scope coredata.Scoper,
-			documentID gid.GID,
-			document *automerge.Document,
-			knownRevision int64,
-		) (int64, bool, error)
-	}
-
 	RepoConfig struct {
 		ServerPeerID     string
-		Refresher        RepoRefresher
 		Scope            coredata.Scoper
 		DocumentID       gid.GID
 		Logger           *log.Logger
@@ -111,8 +98,30 @@ type (
 		Incoming        <-chan Incoming
 		OpenSuggestions func(ctx context.Context, ids []string) (map[string]bool, error)
 		CanUpdate       bool
+		// CanComment is suggestion access. Both flags false is read-only.
+		CanComment bool
 	}
 )
+
+// collaborationAccess is the write access for this socket. Viewing is the
+// default. A generated or archived document stays in that mode.
+func collaborationAccess(
+	mode string,
+	document *coredata.Document,
+	canUpdate bool,
+	canComment bool,
+) (bool, bool) {
+	switch mode {
+	case "editing", "suggesting":
+		if document.ReadOnly() {
+			return false, false
+		}
+
+		return canUpdate, canComment
+	default:
+		return false, false
+	}
+}
 
 func (h *Handler) HandleRepo(w http.ResponseWriter, r *http.Request) {
 	documentIDString := chi.URLParam(r, "documentID")
@@ -123,11 +132,22 @@ func (h *Handler) HandleRepo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	scope, document, canUpdate, err := h.authorize(r.Context(), documentID)
+	scope, document, canUpdate, canComment, err := h.authorize(
+		r.Context(),
+		documentID,
+		authz.RequestMetadataFromHTTP(r),
+	)
 	if err != nil {
 		h.renderAuthorizationError(w, err)
 		return
 	}
+
+	canUpdate, canComment = collaborationAccess(
+		r.URL.Query().Get("mode"),
+		document,
+		canUpdate,
+		canComment,
+	)
 
 	identity := authn.IdentityFromContext(r.Context())
 	displayName, identityID, avatarURL, profileID := collaborationPresenceIdentity(
@@ -214,7 +234,6 @@ func (h *Handler) HandleRepo(w http.ResponseWriter, r *http.Request) {
 	config := RepoConfig{
 		ServerPeerID: serverPeerID,
 		Session:      session,
-		Refresher:    h.Probo.Collaboration,
 		Scope:        scope,
 		DocumentID:   documentID,
 		Logger:       h.Logger,
@@ -224,6 +243,7 @@ func (h *Handler) HandleRepo(w http.ResponseWriter, r *http.Request) {
 		AvatarURL:    avatarURL,
 		Incoming:     incoming,
 		CanUpdate:    canUpdate,
+		CanComment:   canComment,
 		PublishEphemeral: func(ctx context.Context, frame []byte) error {
 			return h.Probo.Collaboration.NotifyEphemeral(
 				ctx,
@@ -252,7 +272,7 @@ func (h *Handler) HandleRepo(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if !canUpdate {
+	if !canUpdate && canComment {
 		config.OpenSuggestions = func(ctx context.Context, ids []string) (map[string]bool, error) {
 			return h.Probo.Documents.LoadOpenSuggestionIDs(ctx, scope, documentID, ids)
 		}
@@ -266,7 +286,8 @@ func (h *Handler) HandleRepo(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) authorize(
 	ctx context.Context,
 	documentID gid.GID,
-) (*coredata.Scope, *coredata.Document, bool, error) {
+	request iam.RequestMetadata,
+) (*coredata.Scope, *coredata.Document, bool, bool, error) {
 	identity := authn.IdentityFromContext(ctx)
 	session := authn.SessionFromContext(ctx)
 
@@ -274,7 +295,7 @@ func (h *Handler) authorize(
 
 	document, err := h.Probo.Documents.LoadDocument(ctx, scope, documentID)
 	if err != nil {
-		return nil, nil, false, fmt.Errorf("cannot load document: %w", err)
+		return nil, nil, false, false, fmt.Errorf("cannot load document: %w", err)
 	}
 
 	params := iam.AuthorizeParams{
@@ -282,6 +303,7 @@ func (h *Handler) authorize(
 		Resource:           document.ID,
 		Action:             probo.ActionDocumentUpdate,
 		ResourceAttributes: make(map[string]string),
+		Request:            request,
 	}
 	if session != nil {
 		params.Session = &session.ID
@@ -289,21 +311,32 @@ func (h *Handler) authorize(
 
 	authScope, err := h.IAM.Authorizer.Authorize(ctx, params)
 	if err == nil {
-		return authScope, document, true, nil
+		return authScope, document, true, true, nil
 	}
 
 	if !insufficientAuthorization(err) {
-		return nil, nil, false, fmt.Errorf("cannot authorize document update: %w", err)
+		return nil, nil, false, false, fmt.Errorf("cannot authorize document update: %w", err)
 	}
 
 	params.Action = probo.ActionDocumentComment
 
 	authScope, err = h.IAM.Authorizer.Authorize(ctx, params)
-	if err != nil {
-		return nil, nil, false, fmt.Errorf("cannot authorize document collaboration: %w", err)
+	if err == nil {
+		return authScope, document, false, true, nil
 	}
 
-	return authScope, document, false, nil
+	if !insufficientAuthorization(err) {
+		return nil, nil, false, false, fmt.Errorf("cannot authorize document comment: %w", err)
+	}
+
+	params.Action = probo.ActionDocumentGet
+
+	authScope, err = h.IAM.Authorizer.Authorize(ctx, params)
+	if err != nil {
+		return nil, nil, false, false, fmt.Errorf("cannot authorize document read: %w", err)
+	}
+
+	return authScope, document, false, false, nil
 }
 
 func insufficientAuthorization(err error) bool {
@@ -565,6 +598,14 @@ func ServeRepoCollaboration(
 	syncState *automerge.SyncState,
 	config RepoConfig,
 ) error {
+	// Viewers apply nothing, including changes outside the body, and do not persist.
+	readOnly := !config.CanUpdate && !config.CanComment
+	if readOnly {
+		if err := syncState.SetReadOnly(true); err != nil {
+			return fmt.Errorf("cannot mark collaboration peer read-only: %w", err)
+		}
+	}
+
 	conn, err := collabpkg.NewHandshakenServerConn(
 		config.Session,
 		collabpkg.DeriveDocumentID(config.DocumentID.String()),
@@ -587,17 +628,7 @@ func ServeRepoCollaboration(
 
 	defer announceCollaborationDeparture(ctx, conn, lease, config)
 
-	revision := lease.Revision()
 	initialSyncPending := true
-
-	var tick <-chan time.Time
-
-	if config.Refresher != nil {
-		ticker := time.NewTicker(RepoRefreshInterval)
-		defer ticker.Stop()
-
-		tick = ticker.C
-	}
 
 	for {
 		select {
@@ -670,7 +701,7 @@ func ServeRepoCollaboration(
 				continue
 			}
 
-			if config.RecordActors != nil {
+			if config.RecordActors != nil && (config.CanUpdate || config.CanComment) {
 				recordActorsFromFrame(
 					ctx,
 					message.Data,
@@ -679,6 +710,10 @@ func ServeRepoCollaboration(
 			}
 
 			lease.NotifyPeers()
+
+			if readOnly {
+				continue
+			}
 
 			if err := lease.PersistError(); err != nil {
 				return fmt.Errorf("cannot persist repo collaboration: %w", err)
@@ -689,51 +724,14 @@ func ServeRepoCollaboration(
 			if err := WriteMessage(ctx, connection, websocket.MessageBinary, frame); err != nil {
 				return err
 			}
-		case wake := <-lease.WakeCh:
-			if err := lease.PersistError(); err != nil {
-				return fmt.Errorf("cannot persist repo collaboration: %w", err)
-			}
-
-			if wake.Refresh && config.Refresher != nil {
-				var changed bool
-
-				revision, changed, err = refreshDocument(ctx, lease, config, revision)
-				if err != nil {
-					return fmt.Errorf("cannot refresh repo collaboration: %w", err)
-				}
-
-				lease.SetRevision(revision)
-
-				if !changed {
-					continue
+		case <-lease.WakeCh:
+			// The room document changed, through another peer here or a
+			// refresh the room ran for changes persisted elsewhere.
+			if !readOnly {
+				if err := lease.PersistError(); err != nil {
+					return fmt.Errorf("cannot persist repo collaboration: %w", err)
 				}
 			}
-
-			frames, err := conn.SyncChanged()
-			if err != nil {
-				return fmt.Errorf("cannot generate repo sync frames: %w", err)
-			}
-
-			if err := writeRepoFrames(ctx, connection, frames); err != nil {
-				return err
-			}
-		case <-tick:
-			if err := lease.PersistError(); err != nil {
-				return fmt.Errorf("cannot persist repo collaboration: %w", err)
-			}
-
-			var changed bool
-
-			revision, changed, err = refreshDocument(ctx, lease, config, revision)
-			if err != nil {
-				return fmt.Errorf("cannot refresh repo collaboration: %w", err)
-			}
-
-			if !changed {
-				continue
-			}
-
-			lease.SetRevision(revision)
 
 			frames, err := conn.SyncChanged()
 			if err != nil {
@@ -856,24 +854,6 @@ func restoreCommentOnlyDocument(lease *RoomLease, beforeSpans []automerge.Span) 
 	}
 
 	return nil
-}
-
-func refreshDocument(
-	ctx context.Context,
-	lease *RoomLease,
-	config RepoConfig,
-	revision int64,
-) (int64, bool, error) {
-	lease.LockDocument()
-	defer lease.UnlockDocument()
-
-	return config.Refresher.Refresh(
-		ctx,
-		config.Scope,
-		config.DocumentID,
-		lease.Collaboration().Document,
-		revision,
-	)
 }
 
 func repoReadResult(err error) error {

@@ -271,6 +271,14 @@ func TestInterceptOperation(t *testing.T) {
 					codes: "EMAIL_NOT_VERIFIED",
 				},
 				{
+					name: "rate limited",
+					errs: gqlerror.List{
+						&gqlerror.Error{Extensions: map[string]any{"code": "RATE_LIMITED"}},
+					},
+					level: "INFO",
+					codes: "RATE_LIMITED",
+				},
+				{
 					name: "complexity limit",
 					errs: gqlerror.List{
 						&gqlerror.Error{Extensions: map[string]any{"code": "COMPLEXITY_LIMIT_EXCEEDED"}},

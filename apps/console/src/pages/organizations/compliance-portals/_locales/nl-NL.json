@@ -166,7 +166,11 @@
       "failed": "Deze handtekening kon niet worden voltooid.",
       "completed": "Deze bezoeker heeft elektronisch ondertekend."
     },
-    "actions": { "download": "Downloaden" },
+    "actions": {
+      "download": "Downloaden",
+      "signedFile": "Ondertekend bestand",
+      "certificate": "Voltooiingscertificaat"
+    },
     "activity": "Activiteit"
   },
   "eventTypeLabel": {

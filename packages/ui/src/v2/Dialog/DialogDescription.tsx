@@ -21,7 +21,7 @@
 import { Dialog as BaseDialog } from "@base-ui/react/dialog";
 import type { ComponentProps } from "react";
 
-import { dialog } from "./variants";
+import { useDialogSlots } from "./context";
 
 // Accessible dialog description (wires `aria-describedby` via Base UI).
 export type DialogDescriptionProps = Omit<ComponentProps<typeof BaseDialog.Description>, "className"> & {
@@ -30,7 +30,7 @@ export type DialogDescriptionProps = Omit<ComponentProps<typeof BaseDialog.Descr
 
 export function DialogDescription(props: DialogDescriptionProps) {
   const { className, ...rest } = props;
-  const { description } = dialog();
+  const { description } = useDialogSlots();
 
   return <BaseDialog.Description className={description({ className })} {...rest} />;
 }

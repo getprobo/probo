@@ -277,7 +277,15 @@ input DocumentVersionApprovalDecisionOrder {
     direction: OrderDirection!
 }
 
-type Document implements Node {
+type Document implements Node & Taggable {
+    tags(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TagOrder
+    ): TagConnection! @goField(forceResolver: true)
+
     id: ID!
     title: String!
     classification: DocumentClassification!

@@ -72,7 +72,9 @@ import (
 	mcp_v1 "go.probo.inc/probo/pkg/server/api/mcp/v1"
 	slack_v1 "go.probo.inc/probo/pkg/server/api/slack/v1"
 	"go.probo.inc/probo/pkg/server/gqlx"
+	"go.probo.inc/probo/pkg/server/gqlx/directives/ratelimit"
 	"go.probo.inc/probo/pkg/slack"
+	"go.probo.inc/probo/pkg/tag"
 	"go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/thirdparty"
 )
@@ -88,6 +90,7 @@ type (
 		CollaborationEvents     *realtime.Events
 		ShutdownContext         context.Context
 		ResourceAlias           *resourcealias.Service
+		Tag                     *tag.Service
 		File                    *filemanager.Service
 		IAM                     *iam.Service
 		Visitor                 *visitor.Service
@@ -122,6 +125,8 @@ type (
 		ProviderRegistry  *provider.Registry
 		CustomDomainCname string
 		GraphQLLimits     gqlx.Limits
+		RateLimitDefault  ratelimit.Budget
+		RateLimits        map[string]ratelimit.Budget
 		Logger            *log.Logger
 
 		// IdentityFederationIssuer is nil when identity federation is disabled.
@@ -130,6 +135,7 @@ type (
 		GCPConnectorInstall      cloudgcp.ConnectorInstallConfig
 		AzureConnectorInstall    cloudazure.ConnectorInstallConfig
 		LinearWebhookSecret      string
+		MCPFeedbackURL           string
 	}
 
 	MCPConfig struct {
@@ -310,6 +316,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.Probo,
 			collabHandler,
 			cfg.ResourceAlias,
+			cfg.Tag,
 			cfg.IAM,
 			cfg.ESign,
 			cfg.Management,
@@ -361,6 +368,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.Management,
 			cfg.CertManager,
 			cfg.ResourceAlias,
+			cfg.Tag,
 			cfg.ThirdParty,
 			cfg.IAM,
 			cfg.AccessReview,
@@ -379,6 +387,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.CustomDomainCname,
 			cfg.SlackbotInstallations,
 			cfg.BotDeliveryDestinations,
+			mcp_v1.NewFeedbackConfig(cfg.MCPFeedbackURL),
 		),
 		slackHandler: slack_v1.NewMux(
 			cfg.Logger.Named("slack.v1"),
@@ -411,6 +420,8 @@ func NewServer(cfg Config) (*Server, error) {
 				cfg.Visitor.IsVerifiedRedirectHost,
 			),
 			cfg.GraphQLLimits,
+			cfg.RateLimitDefault,
+			cfg.RateLimits,
 			cfg.SlackbotInstallations != nil,
 		),
 		agentHandler: agent_v1.NewMux(

@@ -153,6 +153,7 @@ func (s *Service) persistOAuthState(
 		ID:           stateID,
 		Provider:     coredata.OIDCProviderCompliancePortal,
 		Nonce:        session.Nonce,
+		BrowserNonce: "",
 		CodeVerifier: session.CodeVerifier,
 		ContinueURL:  continueURL,
 		CreatedAt:    now,

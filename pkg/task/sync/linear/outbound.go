@@ -183,15 +183,48 @@ func (h *outboundHandler) processUpdate(
 	states []linear.WorkflowState,
 ) error {
 	sent := false
+	heldRemote := ""
 
 	for range maxOutboundRevisionAttempts {
-		task, destination, skip, err := h.loadOutboundUpdate(ctx, item, payload, scope, sent)
+		task, destination, remoteUpdatedAt, skip, err := h.loadOutboundUpdate(ctx, item, payload, scope, sent)
 		if err != nil {
 			return err
 		}
 
 		if skip {
 			return h.done(ctx, item)
+		}
+
+		remote, err := client.IssueStatus(ctx, payload.ExternalID)
+		if err != nil {
+			return fmt.Errorf("cannot load Linear issue status: %w", err)
+		}
+
+		synced, err := syncedLinearState(destination)
+		if err != nil {
+			return fmt.Errorf("cannot read synced linear state: %w", err)
+		}
+
+		remoteType := remote.StateType
+		if heldRemote != "" {
+			remoteType = heldRemote
+		}
+
+		pushState, adopt := outboundStateAction(
+			task.State,
+			synced,
+			remoteType,
+			linearStatusAhead(&remote.UpdatedAt, remoteUpdatedAt),
+		)
+		if adopt != "" && adopt != task.State {
+			changed, err := h.svc.adoptRemoteTaskState(ctx, scope, payload.TaskID, payload.ExternalID, adopt)
+			if err != nil {
+				return fmt.Errorf("cannot adopt the remote linear status: %w", err)
+			}
+
+			if changed {
+				task.State = adopt
+			}
 		}
 
 		_, sentHash, err := outboundTaskHash(task)
@@ -210,9 +243,15 @@ func (h *outboundHandler) processUpdate(
 			return fmt.Errorf("cannot convert task mentions: %w", err)
 		}
 
-		stateID, err := PickWorkflowStateID(states, task.State)
-		if err != nil {
-			return err
+		var stateID *string
+
+		if pushState {
+			id, err := PickWorkflowStateID(states, task.State)
+			if err != nil {
+				return err
+			}
+
+			stateID = &id
 		}
 
 		priority, err := outboundLinearPriority(task.Priority, destination)
@@ -232,7 +271,8 @@ func (h *outboundHandler) processUpdate(
 			task.Content,
 		)
 		// A failed attachment stays in the text. The issue update still sends
-		// the title, state, priority, and assignee, and the job retries the file.
+		// the title, priority, and assignee, and the status when Probo
+		// changed it. The job retries the file.
 		if embedErr != nil && !isPartialLinearEmbed(embedErr) {
 			return fmt.Errorf("cannot embed Linear files: %w", embedErr)
 		}
@@ -245,7 +285,7 @@ func (h *outboundHandler) processUpdate(
 			linear.IssueUpdateInput{
 				Title:       &task.Name,
 				Description: &description,
-				StateID:     &stateID,
+				StateID:     stateID,
 				Priority:    priority,
 				DueDate:     dueDate,
 				DueDateSet:  true,
@@ -261,6 +301,28 @@ func (h *outboundHandler) processUpdate(
 		}
 
 		sent = true
+
+		if !pushState && issue.StateType != "" {
+			responded := LinearTypeToTaskState(issue.StateType)
+			if responded != task.State {
+				changed, err := h.svc.adoptRemoteTaskState(
+					ctx,
+					scope,
+					payload.TaskID,
+					payload.ExternalID,
+					responded,
+				)
+				if err != nil {
+					return fmt.Errorf("cannot adopt linear status from the update: %w", err)
+				}
+
+				if changed {
+					heldRemote = issue.StateType
+
+					continue
+				}
+			}
+		}
 
 		stable, err := h.finishOutboundUpdate(
 			ctx,
@@ -288,11 +350,12 @@ func (h *outboundHandler) loadOutboundUpdate(
 	payload job.JobPayload,
 	scope coredata.Scoper,
 	sent bool,
-) (*coredata.Task, json.RawMessage, bool, error) {
+) (*coredata.Task, json.RawMessage, *time.Time, bool, error) {
 	var (
-		task        *coredata.Task
-		destination json.RawMessage
-		skip        bool
+		task            *coredata.Task
+		destination     json.RawMessage
+		remoteUpdatedAt *time.Time
+		skip            bool
 	)
 
 	err := h.pg.WithTx(
@@ -321,6 +384,7 @@ func (h *outboundHandler) loadOutboundUpdate(
 			}
 
 			destination = link.Destination
+			remoteUpdatedAt = link.RemoteUpdatedAt
 
 			if sent {
 				return nil
@@ -337,10 +401,10 @@ func (h *outboundHandler) loadOutboundUpdate(
 		},
 	)
 	if err != nil {
-		return nil, nil, false, err
+		return nil, nil, nil, false, err
 	}
 
-	return task, destination, skip, nil
+	return task, destination, remoteUpdatedAt, skip, nil
 }
 
 func (h *outboundHandler) finishOutboundUpdate(
@@ -401,6 +465,12 @@ func (h *outboundHandler) finishOutboundUpdate(
 				link.Destination = destination
 			}
 
+			destination, err := withSyncedLinearState(link.Destination, task.State)
+			if err != nil {
+				return fmt.Errorf("cannot record synced linear state: %w", err)
+			}
+
+			link.Destination = destination
 			link.UpdatedAt = time.Now()
 
 			if err := link.Update(ctx, tx, scope); err != nil {

@@ -22,6 +22,7 @@ import { CheckIcon, XIcon } from "@phosphor-icons/react";
 import type { MentionSource } from "@probo/ui";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import useToast from "@probo/ui/src/v2/Toaster/useToast";
+import type { TFunction } from "i18next";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
@@ -78,7 +79,7 @@ interface DocumentReviewMarginSuggestionProps {
   suggestionKey?: DocumentReviewMarginSuggestion_suggestion$key | null;
   localSuggestion?: LocalSuggestion | null;
   threadKey?: DocumentReviewMarginThread_thread$key | null;
-  preview: Pick<SuggestionPreview, "parts">;
+  preview: Pick<SuggestionPreview, "parts" | "structure" | "formats">;
   active: boolean;
   canUpdate: boolean;
   canComment: boolean;
@@ -214,22 +215,10 @@ export function DocumentReviewMarginSuggestion({
           </div>
         )}
       </div>
-      <p className="whitespace-pre-wrap text-2 text-sand-12">
-        {preview.parts.map((part, index) =>
-          part.kind === "deleted"
-            ? (
-                <span key={index} className="text-red-11 line-through">{part.text}</span>
-              )
-            : part.kind === "inserted"
-              ? (
-                  <span key={index} className="text-green-11">{part.text}</span>
-                )
-              : (
-                  <span key={index}>{part.text}</span>
-                ),
-        )}
-        {preview.parts.length === 0 && thread?.anchorQuote}
-      </p>
+      <SuggestionPreviewBody
+        preview={preview}
+        quote={thread?.anchorQuote}
+      />
       <DocumentReviewMarginComments
         thread={thread}
         active={active}
@@ -308,4 +297,162 @@ export function DocumentReviewMarginSuggestion({
       />
     </DocumentReviewMarginCard>
   );
+}
+
+function SuggestionPreviewBody(props: {
+  preview: Pick<SuggestionPreview, "parts" | "structure" | "formats">;
+  quote?: string | null;
+}) {
+  const { t } = useTranslation();
+  const { preview, quote } = props;
+  const adds = !preview.structure && preview.formats && preview.formats.adds.length > 0
+    ? preview.formats.adds
+    : null;
+  const removes = !preview.structure && preview.formats && preview.formats.removes.length > 0
+    ? preview.formats.removes
+    : null;
+  const fallback = preview.parts.length === 0 && !preview.formats ? quote : null;
+
+  return (
+    <div className="flex flex-col gap-1 text-2 text-sand-12">
+      {preview.structure && (
+        <p>{structureLabel(t, preview.structure)}</p>
+      )}
+      {adds && (
+        <p className="text-green-11">
+          {t("documentDescriptionPage.review.format", { styles: styleList(t, adds) })}
+        </p>
+      )}
+      {removes && (
+        <p className="text-red-11">
+          {t("documentDescriptionPage.review.formatRemove", { styles: styleList(t, removes) })}
+        </p>
+      )}
+      {!preview.structure && (
+        <SuggestionPreviewText parts={preview.parts} quote={fallback} />
+      )}
+    </div>
+  );
+}
+
+function SuggestionPreviewText(props: { parts: SuggestionPreview["parts"]; quote?: string | null }) {
+  const { t } = useTranslation();
+  const { parts, quote } = props;
+  const text = parts.map(part => part.text).join("").replace(/\s+/g, " ").trim();
+  if (parts.length > 0 && parts.every(part => part.kind === "inserted") && text !== "") {
+    return <p>{t("documentDescriptionPage.review.addText", { text })}</p>;
+  }
+  if (parts.length > 0 && parts.every(part => part.kind === "deleted") && text !== "") {
+    return <p>{t("documentDescriptionPage.review.deleteText", { text })}</p>;
+  }
+  if (parts.length === 0) {
+    return quote ? <p className="whitespace-pre-wrap">{quote}</p> : null;
+  }
+  return (
+    <p className="whitespace-pre-wrap">
+      {parts.map((part, index) =>
+        part.kind === "deleted"
+          ? (
+              <span key={index} className="text-red-11 line-through">{part.text}</span>
+            )
+          : part.kind === "inserted"
+            ? (
+                <span key={index} className="text-green-11">{part.text}</span>
+              )
+            : (
+                <span key={index}>{part.text}</span>
+              ),
+      )}
+    </p>
+  );
+}
+
+function structureLabel(t: TFunction, structure: NonNullable<SuggestionPreview["structure"]>): string {
+  if (structure.action === "format") return formatStructureLabel(t, structure);
+  const text = structure.text;
+  if (structure.target === "divider") {
+    return structure.action === "add"
+      ? t("documentDescriptionPage.review.addDivider")
+      : t("documentDescriptionPage.review.deleteDivider");
+  }
+  if (structure.target === "image") {
+    return structure.action === "add"
+      ? t("documentDescriptionPage.review.addImage")
+      : t("documentDescriptionPage.review.deleteImage");
+  }
+  if (structure.target === "file") {
+    if (structure.action === "add") {
+      return text === ""
+        ? t("documentDescriptionPage.review.addFile")
+        : t("documentDescriptionPage.review.addFileNamed", { name: text });
+    }
+    return text === ""
+      ? t("documentDescriptionPage.review.deleteFile")
+      : t("documentDescriptionPage.review.deleteFileNamed", { name: text });
+  }
+  if (structure.target === "mention") {
+    if (structure.action === "add") {
+      return text === ""
+        ? t("documentDescriptionPage.review.addMention")
+        : t("documentDescriptionPage.review.addMentionNamed", { name: text });
+    }
+    return text === ""
+      ? t("documentDescriptionPage.review.deleteMention")
+      : t("documentDescriptionPage.review.deleteMentionNamed", { name: text });
+  }
+  if (structure.action === "add" && structure.target === "row") {
+    return text === "" ? t("documentDescriptionPage.review.addRow") : t("documentDescriptionPage.review.addRowWithText", { text });
+  }
+  if (structure.action === "add" && structure.target === "column") {
+    return text === "" ? t("documentDescriptionPage.review.addColumn") : t("documentDescriptionPage.review.addColumnWithText", { text });
+  }
+  if (structure.action === "add") {
+    return text === "" ? t("documentDescriptionPage.review.addTable") : t("documentDescriptionPage.review.addTableWithText", { text });
+  }
+  if (structure.target === "row") {
+    return text === "" ? t("documentDescriptionPage.review.deleteRow") : t("documentDescriptionPage.review.deleteRowWithText", { text });
+  }
+  if (structure.target === "column") {
+    return text === "" ? t("documentDescriptionPage.review.deleteColumn") : t("documentDescriptionPage.review.deleteColumnWithText", { text });
+  }
+  return text === "" ? t("documentDescriptionPage.review.deleteTable") : t("documentDescriptionPage.review.deleteTableWithText", { text });
+}
+
+function formatStructureLabel(t: TFunction, structure: NonNullable<SuggestionPreview["structure"]>): string {
+  if (structure.target === "heading") {
+    return t("documentDescriptionPage.review.formatHeading", { level: structure.text });
+  }
+  if (structure.target === "paragraph") return t("documentDescriptionPage.review.formatParagraph");
+  if (structure.target === "quote") return t("documentDescriptionPage.review.formatQuote");
+  if (structure.target === "code") return t("documentDescriptionPage.review.formatCode");
+  if (structure.target === "task") {
+    return structure.text === "uncheck"
+      ? t("documentDescriptionPage.review.uncheckTask")
+      : t("documentDescriptionPage.review.checkTask");
+  }
+  if (structure.text === "remove") return t("documentDescriptionPage.review.listRemove");
+  if (structure.text === "nest") return t("documentDescriptionPage.review.listNest");
+  if (structure.text === "unnest") return t("documentDescriptionPage.review.listUnnest");
+  return t("documentDescriptionPage.review.listAdd");
+}
+
+function styleList(t: TFunction, styles: string[]): string {
+  return styles.map((style) => {
+    switch (style) {
+      case "bold":
+        return t("documentDescriptionPage.review.styleBold");
+      case "italic":
+        return t("documentDescriptionPage.review.styleItalic");
+      case "underline":
+        return t("documentDescriptionPage.review.styleUnderline");
+      case "strikethrough":
+        return t("documentDescriptionPage.review.styleStrike");
+      case "code":
+        return t("documentDescriptionPage.review.styleCode");
+      case "link":
+        return t("documentDescriptionPage.review.styleLink");
+      default:
+        return style;
+    }
+  }).join(", ");
 }

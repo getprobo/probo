@@ -5,6 +5,41 @@ in this file.
 
 ## Unreleased
 
+## [0.2.0] - 2026-11-17
+
+### Added
+
+- The IIFE bundles `@probo/cookie-banner` 0.22.0 (0.1.0 bundled 0.19.0)
+- While a sample is open, each page reports a page view, and cookies
+  already listed on the banner are still reported
+- A discovery hit includes `category_granted`, and the batch includes
+  `consent_action` when the visitor has one. The grant follows current
+  consent for the matching tracker. A `*` in the pattern is a glob: an
+  exact name wins, and otherwise the match with the longest fixed text
+  wins. Necessary categories are always granted, and an unmatched name
+  uses the banner's default for non-necessary trackers
+- Cookie detections report the cookie `Domain`, and a richer observation
+  replaces an earlier one without demoting its source
+
+### Changed
+
+- `document.cookie` and named storage writes (for example
+  `localStorage[key] = value`) are classified as `SCRIPT` instead of
+  `HTTP` or `PRE_EXISTING`. Hooks start before the config fetch, and the
+  leftover cookie scan waits for the config so inventoried cookies are
+  not re-queued on every page load
+
+### Fixed
+
+- Storage writes report the size of the value actually stored, instead of
+  failing on `null` or reporting `NaN` for numbers, and convert the key
+  only once
+- Extension cookies are no longer reported as site trackers
+- Tracker reports drop a cookie `Max-Age` that does not fit a 32-bit
+  integer instead of failing the whole batch
+- Android Edge is counted as Edge, not Chrome, and a 404 on page-view
+  recording no longer causes endless retries
+
 ## [0.1.0] - 2026-09-30
 
 ### Added

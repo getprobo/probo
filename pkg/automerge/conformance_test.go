@@ -368,7 +368,7 @@ func TestConformance_NativeParsesJavaScriptChange(t *testing.T) {
 	require.NotNil(t, operations[0].Key.Property)
 	assert.Equal(t, "title", *operations[0].Key.Property)
 	assert.Equal(t, uint64(1), operations[0].ID.Counter)
-	assert.Equal(t, opset.ActorID(string(actorID[:])), operations[0].ID.Actor)
+	assert.Equal(t, opset.MakeActorID(string(actorID[:])), operations[0].ID.Actor)
 	assert.Equal(t, opset.ActionSet, operations[1].Action)
 	assert.Equal(t, uint64(1), operations[1].Object.OpID.Counter)
 	assert.True(t, operations[1].Key.IsHead)

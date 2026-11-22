@@ -21,6 +21,7 @@
 package bootstrap
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"slices"
@@ -99,6 +100,11 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 		return nil, fmt.Errorf("cannot parse PROBOD_TRUST_CENTER_TLS_MODE: %w", err)
 	}
 
+	rateLimit, err := b.rateLimit()
+	if err != nil {
+		return nil, err
+	}
+
 	cfg := &probodconfig.FullConfig{
 		Unit: probodconfig.UnitConfig{
 			Metrics: probodconfig.MetricsConfig{
@@ -130,6 +136,7 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 					ComplexityLimit:   b.resolver.getEnvIntOrDefault("PROBOD_API_GRAPHQL_COMPLEXITY_LIMIT", 2000),
 					QueryCacheSize:    b.resolver.getEnvIntOrDefault("PROBOD_API_GRAPHQL_QUERY_CACHE_SIZE", 1000),
 					DisableSuggestion: b.resolver.getEnvBoolOrDefault("PROBOD_API_GRAPHQL_DISABLE_SUGGESTION", true),
+					RateLimit:         rateLimit,
 				},
 			},
 			Pg: probodconfig.PgConfig{
@@ -273,6 +280,7 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 					DebounceDelay:    b.resolver.getEnvIntOrDefault("PROBOD_NOTIFICATION_EMAIL_DEBOUNCE_DELAY", 900),
 					ReminderInterval: b.resolver.getEnvIntOrDefault("PROBOD_NOTIFICATION_EMAIL_REMINDER_INTERVAL", 86400),
 				},
+				FeedbackURL: b.resolver.getEnv("PROBOD_FEEDBACK_URL"),
 				Weekly: probodconfig.WeeklyNotificationConfig{
 					Weekday: b.resolver.getEnvIntOrDefault("PROBOD_NOTIFICATION_WEEKLY_WEEKDAY", 1),
 					Hour:    b.resolver.getEnvIntOrDefault("PROBOD_NOTIFICATION_WEEKLY_HOUR", 16),
@@ -1174,4 +1182,18 @@ func (b *Builder) checkConnectorEndpointEnvTypos(known map[string]bool) error {
 	}
 
 	return nil
+}
+
+func (b *Builder) rateLimit() (probodconfig.GraphQLRateLimitConfig, error) {
+	raw := b.resolver.getEnv("PROBOD_API_GRAPHQL_RATE_LIMIT")
+	if raw == "" {
+		return probodconfig.GraphQLRateLimitConfig{}, nil
+	}
+
+	var cfg probodconfig.GraphQLRateLimitConfig
+	if err := json.Unmarshal([]byte(raw), &cfg); err != nil {
+		return probodconfig.GraphQLRateLimitConfig{}, fmt.Errorf("cannot parse PROBOD_API_GRAPHQL_RATE_LIMIT: %w", err)
+	}
+
+	return cfg, nil
 }

@@ -712,40 +712,6 @@ func TestTrackerPattern_CommonTrackerPatternID(t *testing.T) {
 	})
 }
 
-func TestTrackerPattern_SampleHits(t *testing.T) {
-	t.Parallel()
-
-	owner := testutil.NewClient(t, testutil.RoleOwner)
-	bannerID := factory.CreateCookieBanner(owner)
-	categoryID := factory.CreateCookieCategory(owner, bannerID)
-	patternID := factory.CreateTrackerPattern(owner, categoryID)
-
-	const query = `
-		query($id: ID!) {
-			node(id: $id) {
-				... on TrackerPattern {
-					sampleHits {
-						family
-						count
-					}
-				}
-			}
-		}
-	`
-
-	var result struct {
-		Node struct {
-			SampleHits []struct {
-				Family string `json:"family"`
-				Count  int    `json:"count"`
-			} `json:"sampleHits"`
-		} `json:"node"`
-	}
-
-	require.NoError(t, owner.Execute(query, map[string]any{"id": patternID}, &result))
-	assert.Empty(t, result.Node.SampleHits)
-}
-
 func TestTrackerPattern_ObservedBy(t *testing.T) {
 	t.Parallel()
 

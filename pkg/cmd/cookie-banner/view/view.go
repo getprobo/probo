@@ -23,6 +23,7 @@ package view
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
@@ -31,7 +32,7 @@ import (
 )
 
 const viewQuery = `
-query CookieBannerView($id: ID!) {
+query CookieBannerView($id: ID!, $days: Int) {
   node(id: $id) {
     __typename
     ... on CookieBanner {
@@ -52,10 +53,8 @@ query CookieBannerView($id: ID!) {
       defaultLanguage
       publisherCountryCode
       tcfCmpId
-      latestSample {
-        id
-        createdAt
-        frozenAt
+      dailyPageLoads(days: $days) {
+        day
         pageLoads {
           family
           count
@@ -88,22 +87,23 @@ type viewResponse struct {
 		DefaultLanguage      string `json:"defaultLanguage"`
 		PublisherCountryCode string `json:"publisherCountryCode"`
 		TcfCmpId             int    `json:"tcfCmpId"`
-		LatestSample         *struct {
-			ID        string  `json:"id"`
-			CreatedAt string  `json:"createdAt"`
-			FrozenAt  *string `json:"frozenAt"`
+		DailyPageLoads       []struct {
+			Day       string `json:"day"`
 			PageLoads []struct {
 				Family string `json:"family"`
 				Count  int    `json:"count"`
 			} `json:"pageLoads"`
-		} `json:"latestSample"`
+		} `json:"dailyPageLoads"`
 		CreatedAt string `json:"createdAt"`
 		UpdatedAt string `json:"updatedAt"`
 	} `json:"node"`
 }
 
 func NewCmdView(f *cmdutil.Factory) *cobra.Command {
-	var flagOutput *string
+	var (
+		flagDays   int
+		flagOutput *string
+	)
 
 	cmd := &cobra.Command{
 		Use:   "view <id>",
@@ -112,6 +112,10 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
 				return err
+			}
+
+			if flagDays < 1 || flagDays > 90 {
+				return fmt.Errorf("--days must be between 1 and 90")
 			}
 
 			cfg, err := f.Config()
@@ -132,7 +136,13 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
-			data, err := client.Do(viewQuery, map[string]any{"id": args[0]})
+			data, err := client.Do(
+				viewQuery,
+				map[string]any{
+					"id":   args[0],
+					"days": flagDays,
+				},
+			)
 			if err != nil {
 				return err
 			}
@@ -177,26 +187,23 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Privacy Policy:"), *v.PrivacyPolicyUrl)
 			}
 
-			if v.LatestSample == nil {
-				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Latest Sample:"), "none")
-			} else {
-				sample := v.LatestSample
+			_, _ = fmt.Fprintf(out, "%s\n", label.Render(fmt.Sprintf("Daily (%d days):", flagDays)))
 
-				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Latest Sample:"), sample.ID)
-				if sample.FrozenAt != nil {
-					_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Sample Frozen:"), cmdutil.FormatTime(*sample.FrozenAt))
-				} else {
-					_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Sample Frozen:"), "no")
+			for _, day := range v.DailyPageLoads {
+				total := 0
+
+				parts := make([]string, 0, len(day.PageLoads))
+				for _, load := range day.PageLoads {
+					total += load.Count
+					parts = append(parts, fmt.Sprintf("%s %d", load.Family, load.Count))
 				}
 
-				if len(sample.PageLoads) == 0 {
-					_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Sample Loads:"), "none")
-				} else {
-					_, _ = fmt.Fprintf(out, "%s\n", label.Render("Sample Loads:"))
-					for _, load := range sample.PageLoads {
-						_, _ = fmt.Fprintf(out, "%s%s %d\n", label.Render(""), load.Family, load.Count)
-					}
+				detail := "none"
+				if total > 0 {
+					detail = fmt.Sprintf("%d  %s", total, strings.Join(parts, ", "))
 				}
+
+				_, _ = fmt.Fprintf(out, "%s%s  %s\n", label.Render(""), cmdutil.FormatUTCDay(day.Day), detail)
 			}
 
 			_, _ = fmt.Fprintln(out)
@@ -207,6 +214,7 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
+	cmd.Flags().IntVar(&flagDays, "days", 7, "Number of UTC days of page loads, today included (at most 90)")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd

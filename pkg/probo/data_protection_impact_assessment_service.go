@@ -22,6 +22,7 @@ package probo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -103,6 +104,31 @@ func (s DataProtectionImpactAssessmentService) Get(
 	}
 
 	return dpia, nil
+}
+
+func (s DataProtectionImpactAssessmentService) GetByIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	dpiaIDs ...gid.GID,
+) (coredata.DataProtectionImpactAssessments, error) {
+	var dpias coredata.DataProtectionImpactAssessments
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := dpias.LoadByIDs(ctx, conn, scope, dpiaIDs); err != nil &&
+				!errors.Is(err, coredata.ErrResourceNotFound) {
+				return fmt.Errorf("cannot load data protection impact assessments by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return dpias, nil
 }
 
 func (s DataProtectionImpactAssessmentService) GetByProcessingActivityID(
@@ -211,6 +237,17 @@ func (s *DataProtectionImpactAssessmentService) Create(
 				return fmt.Errorf("cannot insert data protection impact assessment: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				dpia.ID,
+				dpia.OrganizationID,
+				processingActivity.Name,
+				dpia.SearchText(processingActivity.Name),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -264,6 +301,22 @@ func (s *DataProtectionImpactAssessmentService) Update(
 				return fmt.Errorf("cannot update data protection impact assessment: %w", err)
 			}
 
+			processingActivity := &coredata.ProcessingActivity{}
+			if err := processingActivity.LoadByID(ctx, conn, scope, dpia.ProcessingActivityID); err != nil {
+				return fmt.Errorf("cannot load processing activity: %w", err)
+			}
+
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				dpia.ID,
+				dpia.OrganizationID,
+				processingActivity.Name,
+				dpia.SearchText(processingActivity.Name),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -284,6 +337,10 @@ func (s *DataProtectionImpactAssessmentService) Delete(
 			dpia := &coredata.DataProtectionImpactAssessment{}
 			if err := dpia.LoadByID(ctx, conn, scope, dpiaID); err != nil {
 				return fmt.Errorf("cannot load data protection impact assessment: %w", err)
+			}
+
+			if err := coredata.DeleteSearchResource(ctx, conn, dpia.ID); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
 			}
 
 			if err := dpia.Delete(ctx, conn, scope); err != nil {

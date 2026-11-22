@@ -152,6 +152,78 @@ export function toIsoDate(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
+export type DateDayTone = "day" | "selected" | "within" | "start" | "end" | "single";
+
+// Highlight for one day in a start/end span. `end` may be a hover preview.
+// ISO dates sort lexicographically, so an earlier second click swaps the ends.
+export function dateRangeTone(iso: string, start: string, end: string): DateDayTone {
+  if (start === "" && end === "") {
+    return "day";
+  }
+  if (end === "") {
+    return iso === start ? "single" : "day";
+  }
+  if (start === "") {
+    return iso === end ? "single" : "day";
+  }
+  const [lo, hi] = start <= end ? [start, end] : [end, start];
+  if (iso === lo && iso === hi) {
+    return "single";
+  }
+  if (iso === lo) {
+    return "start";
+  }
+  if (iso === hi) {
+    return "end";
+  }
+  if (iso > lo && iso < hi) {
+    return "within";
+  }
+  return "day";
+}
+
+export function orderedDateRange(from: string, to: string): { from: string; to: string } {
+  if (from !== "" && to !== "" && from > to) {
+    return { from: to, to: from };
+  }
+  return { from, to };
+}
+
+const RANGE_DASH = "–";
+
+function formatIsoDay(iso: string, locale: string | undefined, withYear: boolean): string {
+  const date = parseIsoDate(iso);
+  if (date == null) {
+    return "";
+  }
+  return new Intl.DateTimeFormat(locale, withYear
+    ? { day: "numeric", month: "short", year: "numeric" }
+    : { day: "numeric", month: "short" }).format(date);
+}
+
+// Empty when both ends are blank. A missing end keeps the dash so a
+// half-chosen span still reads as a range.
+export function formatDateRange(from: string, to: string, locale: string | undefined): string {
+  if (from !== "" && to !== "") {
+    const start = parseIsoDate(from);
+    const end = parseIsoDate(to);
+    if (start == null || end == null) {
+      return "";
+    }
+    const sameYear = start.getFullYear() === end.getFullYear();
+    return `${formatIsoDay(from, locale, !sameYear)} ${RANGE_DASH} ${formatIsoDay(to, locale, true)}`;
+  }
+  if (from !== "") {
+    const start = formatIsoDay(from, locale, true);
+    return start === "" ? "" : `${start} ${RANGE_DASH}`;
+  }
+  if (to !== "") {
+    const end = formatIsoDay(to, locale, true);
+    return end === "" ? "" : `${RANGE_DASH} ${end}`;
+  }
+  return "";
+}
+
 export function visibleFrom(value: string): YearMonth {
   const date = parseIsoDate(value) ?? new Date();
   return { year: date.getFullYear(), month: date.getMonth() };

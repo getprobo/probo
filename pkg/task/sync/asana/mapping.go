@@ -51,15 +51,6 @@ type (
 	}
 )
 
-func CompletedForState(state coredata.TaskState) bool {
-	switch state {
-	case coredata.TaskStateDone, coredata.TaskStateCanceled, coredata.TaskStateDuplicate:
-		return true
-	default:
-		return false
-	}
-}
-
 func InboundState(
 	sectionGID string,
 	completed bool,
@@ -81,7 +72,7 @@ func inboundStateFromSection(
 	mapping *AsanaProjectMapping,
 ) coredata.TaskState {
 	sameSection := OutboundSection(current, mapping) == sectionGID
-	if sameSection && CompletedForState(current) == completed {
+	if sameSection && current.IsClosed() == completed {
 		return current
 	}
 
@@ -96,14 +87,14 @@ func inboundStateFromSection(
 
 func asanaStateFromCompleted(completed bool, current coredata.TaskState) coredata.TaskState {
 	if completed {
-		if CompletedForState(current) {
+		if current.IsClosed() {
 			return current
 		}
 
 		return coredata.TaskStateDone
 	}
 
-	if CompletedForState(current) {
+	if current.IsClosed() {
 		return coredata.TaskStateTodo
 	}
 

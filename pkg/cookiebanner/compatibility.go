@@ -23,6 +23,8 @@ package cookiebanner
 import (
 	"strconv"
 	"strings"
+
+	"go.probo.inc/probo/pkg/coredata"
 )
 
 // This file isolates the SDK-version-based backward-compatibility logic for the
@@ -51,8 +53,8 @@ func applyBannerTextCompat(config *BannerConfig, sdkVersion string) {
 	// Remap-shim clients cannot render the notice presentation, so degrade it
 	// to opt-out: it matches the notice firing model (cookies fire immediately)
 	// and renders coherently with their fixed button set.
-	if presentation == PresentationNotice {
-		presentation = PresentationOptOut
+	if presentation == coredata.CookieBannerPresentationNotice {
+		presentation = coredata.CookieBannerPresentationOptOut
 	}
 
 	remapTextsForPresentation(config.Texts, presentation)
@@ -106,12 +108,12 @@ func supportsTextRemap(version string) bool {
 // It only handles the opt-out presentation: the notice presentation is
 // unrenderable by those clients and is degraded to opt-out by the caller before
 // this runs.
-func remapTextsForPresentation(texts map[string]string, presentation Presentation) {
+func remapTextsForPresentation(texts map[string]string, presentation coredata.CookieBannerPresentation) {
 	if texts == nil {
 		return
 	}
 
-	if presentation == PresentationOptOut {
+	if presentation == coredata.CookieBannerPresentationOptOut {
 		remapTextKey(texts, "banner_title_opt_out", "banner_title")
 		remapTextKey(texts, "banner_description_opt_out", "banner_description")
 		remapTextKey(texts, "button_acknowledge", "button_accept_all")

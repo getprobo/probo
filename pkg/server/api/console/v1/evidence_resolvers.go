@@ -12,6 +12,7 @@ import (
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
@@ -20,6 +21,11 @@ import (
 	"go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/validator"
 )
+
+// Tags is the resolver for the tags field.
+func (r *evidenceResolver) Tags(ctx context.Context, obj *types.Evidence, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TagOrderBy) (*types.TagConnection, error) {
+	return r.tagsForResourceID(ctx, obj.ID, first, after, last, before, orderBy)
+}
 
 // File is the resolver for the file field.
 func (r *evidenceResolver) File(ctx context.Context, obj *types.Evidence) (*types.File, error) {

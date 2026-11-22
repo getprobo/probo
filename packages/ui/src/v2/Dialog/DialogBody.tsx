@@ -20,13 +20,13 @@
 
 import type { ComponentProps } from "react";
 
-import { dialog } from "./variants";
+import { useDialogSlots } from "./context";
 
-// Content region between the header and footer, carrying the dialog's horizontal
-// padding.
+// Content region between the header and footer. Padding comes from the popup
+// appearance, so a palette dialog can be flush.
 export function DialogBody(props: ComponentProps<"div">) {
   const { className, ...rest } = props;
-  const { body } = dialog();
+  const { body } = useDialogSlots();
 
   return <div className={body({ className })} {...rest} />;
 }

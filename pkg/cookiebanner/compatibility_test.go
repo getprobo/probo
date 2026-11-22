@@ -24,6 +24,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"go.probo.inc/probo/pkg/coredata"
 )
 
 func TestRemapTextsForPresentation(t *testing.T) {
@@ -43,7 +44,7 @@ func TestRemapTextsForPresentation(t *testing.T) {
 		t.Parallel()
 
 		texts := baseTexts()
-		remapTextsForPresentation(texts, PresentationOptIn)
+		remapTextsForPresentation(texts, coredata.CookieBannerPresentationOptIn)
 
 		assert.Equal(t, "Accept All", texts["button_accept_all"])
 		assert.Equal(t, "Reject All", texts["button_reject_all"])
@@ -55,7 +56,7 @@ func TestRemapTextsForPresentation(t *testing.T) {
 
 		texts := baseTexts()
 		texts["button_opt_out"] = "Do Not Sell"
-		remapTextsForPresentation(texts, PresentationOptOut)
+		remapTextsForPresentation(texts, coredata.CookieBannerPresentationOptOut)
 
 		assert.Equal(t, "Do Not Sell", texts["button_reject_all"])
 		assert.Empty(t, texts["button_customize"])

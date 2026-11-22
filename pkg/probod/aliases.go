@@ -34,6 +34,7 @@ type (
 	APIConfig                          = probodconfig.APIConfig
 	CorsConfig                         = probodconfig.CorsConfig
 	GraphQLConfig                      = probodconfig.GraphQLConfig
+	GraphQLRateLimitBudget             = probodconfig.GraphQLRateLimitBudget
 	ProxyProtocolConfig                = probodconfig.ProxyProtocolConfig
 	AuthConfig                         = probodconfig.AuthConfig
 	IdentityFederationConfig           = probodconfig.IdentityFederationConfig

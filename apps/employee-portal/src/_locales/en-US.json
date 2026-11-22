@@ -10,11 +10,27 @@
     "settings": "Notification settings",
     "markAllRead": "Mark all as read"
   },
+  "size": {
+    "B": "B",
+    "KB": "KB",
+    "MB": "MB",
+    "GB": "GB",
+    "TB": "TB"
+  },
   "ui": {
     "richEditor": {
+      "file": "File",
+      "imageUnavailable": "Image unavailable",
+      "resizeImage": "Resize image",
       "enlargeImage": "Enlarge image",
       "enlargeImageNamed": "Enlarge {{name}}",
       "closeImage": "Close image",
+      "uploading": "Uploading {{fileName}}…",
+      "uploadFailed": "Upload failed",
+      "couldNotUpload": "Could not upload {{fileName}}",
+      "tooLarge": "{{fileName}} is too large",
+      "unsupported": "{{fileName}} is not a supported file",
+      "attachFiles": "Attach files",
       "mentionMembers": "Mention a member",
       "mentionLoading": "Searching…",
       "mentionNoResults": "No members found"
@@ -34,6 +50,26 @@
     "help": "Help",
     "signOut": "Sign out",
     "signOutFailed": "Cannot sign out"
+  },
+  "editAvatar": {
+    "title": "Profile photo",
+    "description": "Upload a public photo.",
+    "messages": {
+      "updated": "Profile photo updated.",
+      "removed": "Profile photo removed."
+    },
+    "errors": {
+      "update": "Failed to update profile photo",
+      "remove": "Failed to remove profile photo",
+      "invalidFile": "Use a JPEG or PNG 5 MB or smaller."
+    },
+    "actions": {
+      "upload": "Upload photo",
+      "replace": "Replace photo",
+      "remove": "Remove photo",
+      "close": "Close",
+      "change": "Change profile photo"
+    }
   },
   "organizationsPage": {
     "title": "Your organizations",

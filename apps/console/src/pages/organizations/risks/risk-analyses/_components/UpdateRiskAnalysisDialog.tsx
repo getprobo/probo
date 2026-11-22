@@ -42,6 +42,15 @@ import { isRichEditorContentEmpty } from "#/pages/organizations/_lib/richEditorC
 
 import { riskAnalysisDescriptionField } from "../variants";
 
+import {
+  draftFromScoreLevels,
+  type ScoreLevelDraft,
+  scoreLevelDraftError,
+  type ScoreLevelError,
+  scoreLevelsFromDraft,
+} from "./scoreLevels";
+import { ScoreLevelsField } from "./ScoreLevelsField";
+
 export const updateRiskAnalysisDialogFragment = graphql`
   fragment UpdateRiskAnalysisDialog_riskAnalysis on RiskAnalysis {
     id
@@ -50,6 +59,14 @@ export const updateRiskAnalysisDialogFragment = graphql`
     period {
       start
       end
+    }
+    matrixSize {
+      rows
+      cols
+    }
+    scoreLevels {
+      level
+      minScore
     }
   }
 `;
@@ -71,6 +88,10 @@ const updateMutation = graphql`
           rows
           cols
         }
+        scoreLevels {
+          level
+          minScore
+        }
         updatedAt
       }
     }
@@ -82,7 +103,15 @@ type FormData = {
   description: string;
   periodStart: string;
   periodEnd: string;
+  scoreLevels: ScoreLevelDraft[];
 };
+
+function scoreLevelErrorMessage(
+  error: ScoreLevelError,
+  t: (key: string) => string,
+) {
+  return t(`scoreLevels.validation.${error}`);
+}
 
 interface UpdateRiskAnalysisDialogProps {
   riskAnalysisKey: UpdateRiskAnalysisDialog_riskAnalysis$key;
@@ -103,8 +132,17 @@ export function UpdateRiskAnalysisDialog({
       description: riskAnalysis.description ?? "",
       periodStart: toDateInput(riskAnalysis.period?.start),
       periodEnd: toDateInput(riskAnalysis.period?.end),
+      scoreLevels: draftFromScoreLevels(
+        riskAnalysis.scoreLevels.map(level => ({
+          level: level.level,
+          minScore: level.minScore,
+        })),
+        riskAnalysis.matrixSize.rows,
+        riskAnalysis.matrixSize.cols,
+      ),
     },
   });
+  const maxScore = riskAnalysis.matrixSize.rows * riskAnalysis.matrixSize.cols;
 
   const onSubmit = async (data: FormData) => {
     if (uploading) {
@@ -122,6 +160,7 @@ export function UpdateRiskAnalysisDialog({
               start: formatDatetime(data.periodStart) ?? null,
               end: formatDatetime(data.periodEnd) ?? null,
             },
+            scoreLevels: scoreLevelsFromDraft(data.scoreLevels),
           },
         },
       });
@@ -170,6 +209,26 @@ export function UpdateRiskAnalysisDialog({
               )}
             />
           </Field>
+          <Controller
+            control={control}
+            name="scoreLevels"
+            rules={{
+              validate: (value) => {
+                const error = scoreLevelDraftError(value, maxScore);
+                return error == null || scoreLevelErrorMessage(error, t);
+              },
+            }}
+            render={({ field }) => (
+              <ScoreLevelsField
+                id="update-score-levels"
+                label={t("scoreLevels.field")}
+                value={field.value}
+                maxScore={maxScore}
+                error={formState.errors.scoreLevels?.message}
+                onChange={field.onChange}
+              />
+            )}
+          />
           <Field
             label={t("updateRiskAnalysisDialog.fields.periodStart")}
             error={formState.errors.periodStart?.message}

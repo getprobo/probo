@@ -24,6 +24,7 @@ import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 	"go.probo.inc/probo/pkg/cmd/evidence/delete"
+	"go.probo.inc/probo/pkg/cmd/evidence/link"
 	"go.probo.inc/probo/pkg/cmd/evidence/list"
 	"go.probo.inc/probo/pkg/cmd/evidence/upload"
 	"go.probo.inc/probo/pkg/cmd/evidence/view"
@@ -39,6 +40,7 @@ func NewCmdEvidence(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(view.NewCmdView(f))
 	cmd.AddCommand(delete.NewCmdDelete(f))
 	cmd.AddCommand(upload.NewCmdUpload(f))
+	cmd.AddCommand(link.NewCmdLink(f))
 
 	return cmd
 }

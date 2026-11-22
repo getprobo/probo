@@ -254,6 +254,12 @@ func TestRichTextFile_SaveAndDownload(t *testing.T) {
 				"name":           factory.SafeName("Rich text analysis"),
 				"description":    content,
 				"matrixSize":     map[string]any{"rows": 5, "cols": 5},
+				"scoreLevels": []map[string]any{
+					{"level": "LOW", "minScore": 1},
+					{"level": "MEDIUM", "minScore": 5},
+					{"level": "HIGH", "minScore": 10},
+					{"level": "CRITICAL", "minScore": 15},
+				},
 			},
 		}, &result)
 		if err != nil {

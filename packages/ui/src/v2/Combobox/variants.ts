@@ -25,11 +25,28 @@ import { tv } from "tailwind-variants/lite";
 
 export const comboboxInputGroup = tv({
   base: [
-    "flex min-h-8 w-full flex-wrap items-center gap-1.5 rounded-2 border border-sand-a5 bg-sand-1 px-2 py-1 text-2 text-sand-12",
-    "transition-colors",
-    "focus-within:ring-2 focus-within:ring-sand-8 focus-within:ring-offset-1 focus-within:ring-offset-sand-1",
+    "flex min-h-8 w-full flex-wrap items-center gap-1.5 text-2 text-sand-12",
     "data-disabled:pointer-events-none data-disabled:opacity-50",
   ],
+  variants: {
+    appearance: {
+      default: [
+        "rounded-2 border border-sand-a5 bg-sand-1 px-2 py-1",
+        "transition-colors",
+        "focus-within:ring-2 focus-within:ring-sand-8 focus-within:ring-offset-1 focus-within:ring-offset-sand-1",
+      ],
+      // Borderless row for command palettes. The caret is the focus
+      // indicator: an inset outline fights the dialog's rounded frame.
+      plain: "rounded-none border-0 bg-transparent px-4 py-3",
+    },
+  },
+  defaultVariants: {
+    appearance: "default",
+  },
+});
+
+export const comboboxGroupLabel = tv({
+  base: "px-3 pt-3 pb-1 text-1 font-medium text-sand-11",
 });
 
 export const comboboxChips = tv({

@@ -24,7 +24,7 @@ import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
 export function TaskDetailsPageSkeleton() {
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-8 pt-8 pb-32">
+    <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-8 pt-8">
       <TextSkeleton size={2} className="w-24" />
       <HeadingSkeleton size={6} className="w-2/3" />
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_280px]">

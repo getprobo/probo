@@ -529,6 +529,17 @@ func (s *Service) notifyLinkedMentions(
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			current := &coredata.Task{}
+
+			err := current.LoadByIDForUpdate(ctx, tx, scope, linked.ID)
+			if errors.Is(err, coredata.ErrResourceNotFound) {
+				return nil
+			}
+
+			if err != nil {
+				return fmt.Errorf("cannot load task %q: %w", linked.ID, err)
+			}
+
 			actorID, err := s.actorProfile(ctx, tx, scope, identityID, linked.OrganizationID)
 			if err != nil {
 				return fmt.Errorf("cannot resolve task activity actor: %w", err)

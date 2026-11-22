@@ -24,6 +24,7 @@ package console_v1
 
 import (
 	"context"
+	"errors"
 
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/log"
@@ -62,6 +63,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlx"
+	"go.probo.inc/probo/pkg/tag"
 	"go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/thirdparty"
 )
@@ -83,6 +85,7 @@ type (
 		batchAuthorize          authz.BatchAuthorizeFunc
 		probo                   *probo.Service
 		resourceAlias           *resourcealias.Service
+		tag                     *tag.Service
 		iam                     *iam.Service
 		esign                   *esign.Service
 		management              *management.Service
@@ -119,6 +122,7 @@ func NewMux(
 	proboSvc *probo.Service,
 	collaborationHandler *collaboration_v1.Handler,
 	resourceAliasSvc *resourcealias.Service,
+	tagSvc *tag.Service,
 	iamSvc *iam.Service,
 	esignSvc *esign.Service,
 	managementSvc *management.Service,
@@ -159,6 +163,7 @@ func NewMux(
 		iamSvc,
 		proboSvc,
 		resourceAliasSvc,
+		tagSvc,
 		esignSvc,
 		managementSvc,
 		certManagerSvc,
@@ -317,6 +322,29 @@ func (r *Resolver) Permission(ctx context.Context, obj types.Node, action string
 	_, err := r.authorize(ctx, obj.GetID(), action, authz.WithDryRun())
 
 	return err == nil, nil
+}
+
+func (r *Resolver) listableSearchEntityTypes(ctx context.Context, organizationID gid.GID) ([]uint16, error) {
+	identity := authn.IdentityFromContext(ctx)
+	session := authn.SessionFromContext(ctx)
+
+	var sessionID *gid.GID
+	if session != nil {
+		sessionID = &session.ID
+	}
+
+	entityTypes, err := tag.ListableEntityTypes(ctx, r.iam.Authorizer, identity.ID, sessionID, organizationID)
+	if err != nil {
+		if _, ok := errors.AsType[*iam.ErrAssumptionRequired](err); ok {
+			return nil, gqlx.AssumptionRequired(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot list searchable entity types", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return entityTypes, nil
 }
 
 func (r *Resolver) treatmentPlanNetScores(

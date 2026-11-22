@@ -29,6 +29,8 @@ import (
 	"fmt"
 	"strings"
 
+	"net/http"
+
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/baseurl"
@@ -56,6 +58,8 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/mcp/v1/types"
+	"go.probo.inc/probo/pkg/server/gqlx"
+	"go.probo.inc/probo/pkg/tag"
 	"go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/thirdparty"
 )
@@ -79,6 +83,7 @@ type Resolver struct {
 	management            *management.Service
 	certManager           *certmanager.Service
 	resourceAlias         *resourcealias.Service
+	tag                   *tag.Service
 	thirdPartySvc         *thirdparty.Service
 	iamSvc                *iam.Service
 	accessReview          *accessreview.Service
@@ -98,6 +103,8 @@ type Resolver struct {
 	customDomainCname     string
 	slackbotInstallations *slackchannel.InstallationService
 	slackDestinations     SlackDestinations
+	feedback              FeedbackConfig
+	feedbackClient        *http.Client
 }
 
 func markdownToProseMirrorJSON(markdown string) (string, error) {
@@ -154,6 +161,7 @@ func (r *Resolver) Authorize(ctx context.Context, entityID gid.GID, action iam.A
 		Resource:           entityID,
 		Action:             action,
 		ResourceAttributes: make(map[string]string),
+		Request:            authz.RequestMetadataFromHTTP(gqlx.HTTPRequestFromContext(ctx)),
 	}
 
 	for _, opt := range opts {
@@ -195,6 +203,7 @@ func (r *Resolver) AuthorizeBatch(ctx context.Context, entityIDs []gid.GID, acti
 			Principal: identity.ID,
 			Resources: entityIDs,
 			Action:    action,
+			Request:   authz.RequestMetadataFromHTTP(gqlx.HTTPRequestFromContext(ctx)),
 		},
 	)
 	if err == nil {
@@ -317,4 +326,27 @@ func (r *Resolver) documentWithHeads(
 		document,
 		collaboration.EncodeAutomergeHashes(heads),
 	), nil
+}
+
+func (r *Resolver) listableSearchEntityTypes(ctx context.Context, organizationID gid.GID) ([]uint16, error) {
+	identity := authn.IdentityFromContext(ctx)
+	session := authn.SessionFromContext(ctx)
+
+	var sessionID *gid.GID
+	if session != nil {
+		sessionID = &session.ID
+	}
+
+	entityTypes, err := tag.ListableEntityTypes(ctx, r.iamSvc.Authorizer, identity.ID, sessionID, organizationID)
+	if err != nil {
+		if _, ok := errors.AsType[*iam.ErrAssumptionRequired](err); ok {
+			return nil, fmt.Errorf("assumption required")
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot list searchable entity types", log.Error(err))
+
+		return nil, fmt.Errorf("internal server error")
+	}
+
+	return entityTypes, nil
 }

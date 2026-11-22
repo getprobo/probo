@@ -35,6 +35,10 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
+var (
+	_ Searchable = (*StatementOfApplicability)(nil)
+)
+
 type (
 	StatementOfApplicability struct {
 		ID             gid.GID   `db:"id"`
@@ -57,6 +61,10 @@ func (s StatementOfApplicability) CursorKey(orderBy StatementOfApplicabilityOrde
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
+}
+
+func (s StatementOfApplicability) SearchText() []string {
+	return []string{s.Name}
 }
 
 func (s *StatementOfApplicability) AuthorizationAttributes(
@@ -140,6 +148,56 @@ LIMIT 1;
 	}
 
 	*s = statementOfApplicability
+
+	return nil
+}
+
+func (s *StatementsOfApplicability) LoadByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	statementOfApplicabilityIDs []gid.GID,
+) error {
+	if len(statementOfApplicabilityIDs) == 0 {
+		*s = nil
+		return nil
+	}
+
+	q := `
+SELECT
+	id,
+	organization_id,
+	name,
+	document_id,
+	created_at,
+	updated_at
+FROM
+	statements_of_applicability
+WHERE
+	%s
+	AND id = ANY(@statement_of_applicability_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"statement_of_applicability_ids": statementOfApplicabilityIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query statements of applicability: %w", err)
+	}
+
+	items, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[StatementOfApplicability])
+	if err != nil {
+		return fmt.Errorf("cannot collect statements of applicability: %w", err)
+	}
+
+	*s = items
+
+	if len(items) != len(gid.NewSet(statementOfApplicabilityIDs...)) {
+		return ErrResourceNotFound
+	}
 
 	return nil
 }

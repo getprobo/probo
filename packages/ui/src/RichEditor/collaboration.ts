@@ -49,33 +49,6 @@ export type RichEditorAutomergeDocument = {
 
 const textPath: Automerge.Prop[] = ["body"];
 
-export function supportsRichEditorCollaboration(content: string): boolean {
-  if (!content) return true;
-
-  const { nodes, marks } = collaborationSupportedNames();
-
-  function supportsNode(value: unknown): boolean {
-    if (!value || typeof value !== "object") return false;
-
-    const node = value as {
-      type?: string;
-      marks?: Array<{ type?: string }>;
-      content?: unknown[];
-    };
-    if (!node.type || !nodes.has(node.type)) return false;
-    if (node.marks?.some(mark => !mark.type || !marks.has(mark.type))) {
-      return false;
-    }
-    return node.content?.every(supportsNode) ?? true;
-  }
-
-  try {
-    return supportsNode(JSON.parse(content));
-  } catch {
-    return false;
-  }
-}
-
 export function createRichEditorAutomergeDocument(
   content: string,
   extensions: Extensions,
@@ -307,26 +280,4 @@ function structuralBlockNames(): ReadonlySet<string> {
   structuralNames = names;
 
   return names;
-}
-
-let supportedNames: { nodes: Set<string>; marks: Set<string> } | null = null;
-
-function collaborationSupportedNames(): {
-  nodes: ReadonlySet<string>;
-  marks: ReadonlySet<string>;
-} {
-  if (supportedNames) return supportedNames;
-
-  const adapter = createSchemaAdapter(richEditorCollaborationExtensions);
-  const nodes = new Set<string>(["doc", "text"]);
-  for (const mapping of adapter.nodeMappings) {
-    nodes.add(mapping.content.name);
-    if (mapping.outer) nodes.add(mapping.outer.name);
-  }
-  const marks = new Set<string>(
-    adapter.markMappings.map(mapping => mapping.prosemirrorMark.name),
-  );
-  supportedNames = { nodes, marks };
-
-  return supportedNames;
 }

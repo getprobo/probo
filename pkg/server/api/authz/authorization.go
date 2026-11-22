@@ -100,6 +100,8 @@ func NewAuthorizeFunc(
 			params.Session = &session.ID
 		}
 
+		params.Request = RequestMetadataFromHTTP(gqlx.HTTPRequestFromContext(ctx))
+
 		for _, option := range options {
 			option(&params)
 		}
@@ -153,6 +155,8 @@ func NewBatchAuthorizeFunc(
 		if session != nil {
 			params.Session = &session.ID
 		}
+
+		params.Request = RequestMetadataFromHTTP(gqlx.HTTPRequestFromContext(ctx))
 
 		for _, option := range options {
 			option(&params)

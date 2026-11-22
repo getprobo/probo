@@ -77,6 +77,9 @@ export function applyDocumentSteps(
         // The new block marker is in place.
       } else if (applySuggestionSplitAttrs(adapter, document, path, spans, step, pmDoc)) {
         // A deleted line break is stored on the following block.
+      } else if (changesStructuralSplit(step, pmDoc)) {
+        // A row, cell or table redline: the full rewrite carries its split.
+        return false;
       } else if (isEditorAttributeStep(step, pmDoc)) {
         // isAmgBlock and suggestionSplit live on the editor node. The block
         // marker was already written by the split, so this step must not
@@ -106,12 +109,13 @@ export function reassignSuggestionBlocks(
     if (span.type === "block") {
       const block = span.value;
       const attrs = blockAttrs(block);
-      if (attrs?.[suggestionSplitAttr] === fromId) {
+      const nextAttrs = reassignedBlockAttrs(attrs, fromId, toId);
+      if (nextAttrs) {
         updates.push({
           index,
           block: {
             ...block,
-            attrs: { ...attrs, [suggestionSplitAttr]: toId },
+            attrs: nextAttrs,
           },
         });
       }
@@ -263,6 +267,20 @@ function applySuggestionSplitAttrs(
     attrs,
   });
   return true;
+}
+
+function changesStructuralSplit(
+  step: Transaction["steps"][number],
+  pmDoc: ProseMirrorNode,
+): boolean {
+  if (jsonStepType(step) !== "replaceAround") return false;
+  const from = (step as { from?: unknown }).from;
+  if (typeof from !== "number") return false;
+  const before = pmDoc.nodeAt(from);
+  if (!before || before.isText || before.isTextblock) return false;
+  const after = step.apply(pmDoc).doc?.nodeAt(from);
+  if (!after) return false;
+  return suggestionSplitValue(before) !== suggestionSplitValue(after);
 }
 
 function suggestionSplitValue(node: ProseMirrorNode): string {
@@ -474,6 +492,36 @@ function recordValue(value: unknown): Record<string, Automerge.MaterializeValue>
 
 function nodeUnknownAttrs(node: { attrs: { unknownAttrs?: unknown } }): unknown {
   return node.attrs.unknownAttrs;
+}
+
+function reassignedBlockAttrs(
+  attrs: { [key: string]: Automerge.MaterializeValue } | null,
+  fromId: string,
+  toId: string,
+): { [key: string]: Automerge.MaterializeValue } | null {
+  if (!attrs) return null;
+  let changed = false;
+  const next = { ...attrs };
+  if (next[suggestionSplitAttr] === fromId) {
+    next[suggestionSplitAttr] = toId;
+    changed = true;
+  }
+  const block = next.suggestionBlock;
+  if (typeof block === "string" && block.includes(fromId)) {
+    try {
+      const parsed: unknown = JSON.parse(block);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        const record = parsed as { id?: unknown };
+        if (record.id === fromId) {
+          next.suggestionBlock = JSON.stringify({ ...record, id: toId });
+          changed = true;
+        }
+      }
+    } catch {
+      // A block mark that is not JSON stays as it was written.
+    }
+  }
+  return changed ? next : null;
 }
 
 function blockAttrs(

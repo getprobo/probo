@@ -25,10 +25,12 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/automerge"
 	"go.probo.inc/probo/pkg/collaboration"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -40,13 +42,17 @@ import (
 const (
 	documentCommentMaxLength = 10000
 	documentQuoteMaxLength   = 2000
+	documentTableMaxRows     = 100
+	documentTableMaxColumns  = 20
 	documentAnchorMaxBytes   = 512
 	richTextMaxJSONBytes     = 64 << 10
 )
 
 var (
 	ErrNotDocumentCommentAuthor      = errors.New("only the comment author can change this comment")
+	ErrNotDocumentSuggestionAuthor   = errors.New("only the suggestion author can add to this suggestion")
 	ErrDocumentCommentThreadResolved = errors.New("comment thread is resolved")
+	ErrDocumentSuggestionClosed      = errors.New("document suggestion is not open")
 	ErrInvalidDocumentAnchor         = errors.New("document comment anchor is invalid")
 )
 
@@ -85,7 +91,85 @@ type (
 		IdentityID   gid.GID
 		Accept       bool
 	}
+
+	SuggestDocumentChangeRequest struct {
+		DocumentID  gid.GID
+		IdentityID  gid.GID
+		Quote       string
+		Replacement *string
+		Comment     string
+		Occurrence  int
+	}
+
+	AddDocumentSuggestionChangeRequest struct {
+		SuggestionID gid.GID
+		IdentityID   gid.GID
+		Quote        string
+		Replacement  string
+		Occurrence   int
+	}
+
+	AddDocumentSuggestionTableChangeRequest struct {
+		SuggestionID gid.GID
+		IdentityID   gid.GID
+		Operation    collaboration.TableSuggestionOperation
+		Quote        string
+		Occurrence   int
+		Before       bool
+		Cells        []string
+		Rows         [][]string
+		HeaderRow    bool
+	}
+
+	AddDocumentSuggestionFormatChangeRequest struct {
+		SuggestionID gid.GID
+		IdentityID   gid.GID
+		Mark         collaboration.FormatSuggestionMark
+		Action       collaboration.FormatSuggestionAction
+		Quote        string
+		Occurrence   int
+		Href         string
+	}
 )
+
+var documentFormatMarks = []collaboration.FormatSuggestionMark{
+	collaboration.FormatSuggestionBold,
+	collaboration.FormatSuggestionItalic,
+	collaboration.FormatSuggestionUnderline,
+	collaboration.FormatSuggestionStrike,
+	collaboration.FormatSuggestionCode,
+	collaboration.FormatSuggestionLink,
+}
+
+var documentFormatActions = []collaboration.FormatSuggestionAction{
+	collaboration.FormatSuggestionAdd,
+	collaboration.FormatSuggestionRemove,
+}
+
+var documentBlockOperations = []collaboration.BlockOperation{
+	collaboration.BlockSet,
+	collaboration.BlockInsert,
+	collaboration.BlockDelete,
+	collaboration.BlockInsertItem,
+	collaboration.BlockDeleteItem,
+	collaboration.BlockNest,
+	collaboration.BlockUnnest,
+	collaboration.BlockSetTask,
+	collaboration.BlockInsertDivider,
+	collaboration.BlockInsertImage,
+	collaboration.BlockInsertFile,
+	collaboration.BlockInsertMention,
+	collaboration.BlockDeleteMention,
+}
+
+var documentTableOperations = []collaboration.TableSuggestionOperation{
+	collaboration.TableSuggestionInsertRow,
+	collaboration.TableSuggestionDeleteRow,
+	collaboration.TableSuggestionInsertColumn,
+	collaboration.TableSuggestionDeleteColumn,
+	collaboration.TableSuggestionInsertTable,
+	collaboration.TableSuggestionDeleteTable,
+}
 
 func (req *CreateDocumentCommentThreadRequest) Validate() error {
 	v := validator.New()
@@ -159,13 +243,16 @@ func (s *DocumentService) ListCommentThreads(
 ) (*page.Page[*coredata.DocumentCommentThread, coredata.DocumentCommentThreadOrderField], error) {
 	var threads coredata.DocumentCommentThreads
 
-	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		if err := threads.LoadByDocumentID(ctx, conn, scope, documentID, cursor, filter); err != nil {
-			return fmt.Errorf("cannot load document comment threads: %w", err)
-		}
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := threads.LoadByDocumentID(ctx, conn, scope, documentID, cursor, filter); err != nil {
+				return fmt.Errorf("cannot load document comment threads: %w", err)
+			}
 
-		return nil
-	})
+			return nil
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -181,19 +268,22 @@ func (s *DocumentService) CountCommentThreads(
 ) (int, error) {
 	var count int
 
-	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		var (
-			threads coredata.DocumentCommentThreads
-			err     error
-		)
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var (
+				threads coredata.DocumentCommentThreads
+				err     error
+			)
 
-		count, err = threads.CountByDocumentID(ctx, conn, scope, documentID, filter)
-		if err != nil {
-			return fmt.Errorf("cannot count document comment threads: %w", err)
-		}
+			count, err = threads.CountByDocumentID(ctx, conn, scope, documentID, filter)
+			if err != nil {
+				return fmt.Errorf("cannot count document comment threads: %w", err)
+			}
 
-		return nil
-	})
+			return nil
+		},
+	)
 	if err != nil {
 		return 0, err
 	}
@@ -208,13 +298,16 @@ func (s *DocumentService) GetCommentThread(
 ) (*coredata.DocumentCommentThread, error) {
 	thread := &coredata.DocumentCommentThread{}
 
-	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		if err := thread.LoadByID(ctx, conn, scope, threadID); err != nil {
-			return fmt.Errorf("cannot load document comment thread: %w", err)
-		}
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := thread.LoadByID(ctx, conn, scope, threadID); err != nil {
+				return fmt.Errorf("cannot load document comment thread: %w", err)
+			}
 
-		return nil
-	})
+			return nil
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -230,13 +323,16 @@ func (s *DocumentService) ListComments(
 ) (*page.Page[*coredata.DocumentComment, coredata.DocumentCommentOrderField], error) {
 	var comments coredata.DocumentComments
 
-	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		if err := comments.LoadByThreadID(ctx, conn, scope, threadID, cursor); err != nil {
-			return fmt.Errorf("cannot load document comments: %w", err)
-		}
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := comments.LoadByThreadID(ctx, conn, scope, threadID, cursor); err != nil {
+				return fmt.Errorf("cannot load document comments: %w", err)
+			}
 
-		return nil
-	})
+			return nil
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -251,13 +347,16 @@ func (s *DocumentService) LoadCommentsByThreadIDs(
 ) (coredata.DocumentComments, error) {
 	var comments coredata.DocumentComments
 
-	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		if err := comments.LoadByThreadIDs(ctx, conn, scope, threadIDs); err != nil {
-			return fmt.Errorf("cannot load document comments: %w", err)
-		}
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := comments.LoadByThreadIDs(ctx, conn, scope, threadIDs); err != nil {
+				return fmt.Errorf("cannot load document comments: %w", err)
+			}
 
-		return nil
-	})
+			return nil
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -272,19 +371,22 @@ func (s *DocumentService) CountComments(
 ) (int, error) {
 	var count int
 
-	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		var (
-			comments coredata.DocumentComments
-			err      error
-		)
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var (
+				comments coredata.DocumentComments
+				err      error
+			)
 
-		count, err = comments.CountByThreadID(ctx, conn, scope, threadID)
-		if err != nil {
-			return fmt.Errorf("cannot count document comments: %w", err)
-		}
+			count, err = comments.CountByThreadID(ctx, conn, scope, threadID)
+			if err != nil {
+				return fmt.Errorf("cannot count document comments: %w", err)
+			}
 
-		return nil
-	})
+			return nil
+		},
+	)
 	if err != nil {
 		return 0, err
 	}
@@ -299,13 +401,16 @@ func (s *DocumentService) GetComment(
 ) (*coredata.DocumentComment, error) {
 	comment := &coredata.DocumentComment{}
 
-	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		if err := comment.LoadByID(ctx, conn, scope, commentID); err != nil {
-			return fmt.Errorf("cannot load document comment: %w", err)
-		}
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := comment.LoadByID(ctx, conn, scope, commentID); err != nil {
+				return fmt.Errorf("cannot load document comment: %w", err)
+			}
 
-		return nil
-	})
+			return nil
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -394,45 +499,48 @@ func (s *DocumentService) CreateCommentThread(
 		thread.AnchorEnd = end
 	}
 
-	err = s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		document, err := s.editableReviewDocument(ctx, tx, scope, req.DocumentID)
-		if err != nil {
-			return err
-		}
-
-		profile, err := s.reviewProfile(ctx, tx, scope, document.OrganizationID, req.IdentityID)
-		if err != nil {
-			return err
-		}
-
-		if req.SuggestionID != nil {
-			// Re-check the suggestion under FOR UPDATE so a concurrent decision
-			// cannot attach this thread to an already resolved suggestion.
-			suggestion := &coredata.DocumentSuggestion{}
-			if err := suggestion.LoadByIDForUpdate(ctx, tx, scope, *req.SuggestionID); err != nil {
-				return fmt.Errorf("cannot load document suggestion: %w", err)
+	err = s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			document, err := s.editableReviewDocument(ctx, tx, scope, req.DocumentID)
+			if err != nil {
+				return err
 			}
 
-			if suggestion.DocumentID != document.ID || suggestion.Status != coredata.DocumentSuggestionStatusOpen {
-				return fmt.Errorf("cannot load document suggestion: %w", coredata.ErrResourceNotFound)
+			profile, err := s.reviewProfile(ctx, tx, scope, document.OrganizationID, req.IdentityID)
+			if err != nil {
+				return err
 			}
-		}
 
-		thread.OrganizationID = document.OrganizationID
-		thread.DocumentID = document.ID
-		comment.OrganizationID = document.OrganizationID
-		comment.AuthorProfileID = profile.ID
+			if req.SuggestionID != nil {
+				// Re-check the suggestion under FOR UPDATE so a concurrent decision
+				// cannot attach this thread to an already resolved suggestion.
+				suggestion := &coredata.DocumentSuggestion{}
+				if err := suggestion.LoadByIDForUpdate(ctx, tx, scope, *req.SuggestionID); err != nil {
+					return fmt.Errorf("cannot load document suggestion: %w", err)
+				}
 
-		if err := thread.Insert(ctx, tx, scope); err != nil {
-			return fmt.Errorf("cannot insert document comment thread: %w", err)
-		}
+				if suggestion.DocumentID != document.ID || suggestion.Status != coredata.DocumentSuggestionStatusOpen {
+					return fmt.Errorf("cannot load document suggestion: %w", coredata.ErrResourceNotFound)
+				}
+			}
 
-		if err := comment.Insert(ctx, tx, scope); err != nil {
-			return fmt.Errorf("cannot insert document comment: %w", err)
-		}
+			thread.OrganizationID = document.OrganizationID
+			thread.DocumentID = document.ID
+			comment.OrganizationID = document.OrganizationID
+			comment.AuthorProfileID = profile.ID
 
-		return nil
-	})
+			if err := thread.Insert(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot insert document comment thread: %w", err)
+			}
+
+			if err := comment.Insert(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot insert document comment: %w", err)
+			}
+
+			return nil
+		},
+	)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -467,35 +575,38 @@ func (s *DocumentService) CreateComment(
 
 	var documentID gid.GID
 
-	err = s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		thread := &coredata.DocumentCommentThread{}
-		if err := thread.LoadByIDForUpdate(ctx, tx, scope, req.ThreadID); err != nil {
-			return fmt.Errorf("cannot load document comment thread: %w", err)
-		}
+	err = s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			thread := &coredata.DocumentCommentThread{}
+			if err := thread.LoadByIDForUpdate(ctx, tx, scope, req.ThreadID); err != nil {
+				return fmt.Errorf("cannot load document comment thread: %w", err)
+			}
 
-		if thread.ResolvedAt != nil {
-			return ErrDocumentCommentThreadResolved
-		}
+			if thread.ResolvedAt != nil {
+				return ErrDocumentCommentThreadResolved
+			}
 
-		if _, err := s.editableReviewDocument(ctx, tx, scope, thread.DocumentID); err != nil {
-			return err
-		}
+			if _, err := s.editableReviewDocument(ctx, tx, scope, thread.DocumentID); err != nil {
+				return err
+			}
 
-		profile, err := s.reviewProfile(ctx, tx, scope, thread.OrganizationID, req.IdentityID)
-		if err != nil {
-			return err
-		}
+			profile, err := s.reviewProfile(ctx, tx, scope, thread.OrganizationID, req.IdentityID)
+			if err != nil {
+				return err
+			}
 
-		comment.OrganizationID = thread.OrganizationID
-		comment.AuthorProfileID = profile.ID
-		documentID = thread.DocumentID
+			comment.OrganizationID = thread.OrganizationID
+			comment.AuthorProfileID = profile.ID
+			documentID = thread.DocumentID
 
-		if err := comment.Insert(ctx, tx, scope); err != nil {
-			return fmt.Errorf("cannot insert document comment: %w", err)
-		}
+			if err := comment.Insert(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot insert document comment: %w", err)
+			}
 
-		return nil
-	})
+			return nil
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -523,39 +634,42 @@ func (s *DocumentService) UpdateComment(
 
 	var documentID gid.GID
 
-	err = s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		if err := comment.LoadByID(ctx, tx, scope, req.CommentID); err != nil {
-			return fmt.Errorf("cannot load document comment: %w", err)
-		}
+	err = s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := comment.LoadByID(ctx, tx, scope, req.CommentID); err != nil {
+				return fmt.Errorf("cannot load document comment: %w", err)
+			}
 
-		thread := &coredata.DocumentCommentThread{}
-		if err := thread.LoadByID(ctx, tx, scope, comment.ThreadID); err != nil {
-			return fmt.Errorf("cannot load document comment thread: %w", err)
-		}
+			thread := &coredata.DocumentCommentThread{}
+			if err := thread.LoadByID(ctx, tx, scope, comment.ThreadID); err != nil {
+				return fmt.Errorf("cannot load document comment thread: %w", err)
+			}
 
-		if _, err := s.editableReviewDocument(ctx, tx, scope, thread.DocumentID); err != nil {
-			return err
-		}
+			if _, err := s.editableReviewDocument(ctx, tx, scope, thread.DocumentID); err != nil {
+				return err
+			}
 
-		profile, err := s.reviewProfile(ctx, tx, scope, comment.OrganizationID, req.IdentityID)
-		if err != nil {
-			return err
-		}
+			profile, err := s.reviewProfile(ctx, tx, scope, comment.OrganizationID, req.IdentityID)
+			if err != nil {
+				return err
+			}
 
-		if profile.ID != comment.AuthorProfileID {
-			return ErrNotDocumentCommentAuthor
-		}
+			if profile.ID != comment.AuthorProfileID {
+				return ErrNotDocumentCommentAuthor
+			}
 
-		comment.Content = content
-		comment.UpdatedAt = time.Now()
-		documentID = thread.DocumentID
+			comment.Content = content
+			comment.UpdatedAt = time.Now()
+			documentID = thread.DocumentID
 
-		if err := comment.Update(ctx, tx, scope); err != nil {
-			return fmt.Errorf("cannot update document comment: %w", err)
-		}
+			if err := comment.Update(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot update document comment: %w", err)
+			}
 
-		return nil
-	})
+			return nil
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -576,53 +690,56 @@ func (s *DocumentService) DeleteComment(
 		deletedThreadID *gid.GID
 	)
 
-	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		comment := &coredata.DocumentComment{}
-		if err := comment.LoadByID(ctx, tx, scope, commentID); err != nil {
-			return fmt.Errorf("cannot load document comment: %w", err)
-		}
-
-		thread := &coredata.DocumentCommentThread{}
-		if err := thread.LoadByID(ctx, tx, scope, comment.ThreadID); err != nil {
-			return fmt.Errorf("cannot load document comment thread: %w", err)
-		}
-
-		if _, err := s.editableReviewDocument(ctx, tx, scope, thread.DocumentID); err != nil {
-			return err
-		}
-
-		profile, err := s.reviewProfile(ctx, tx, scope, comment.OrganizationID, identityID)
-		if err != nil {
-			return err
-		}
-
-		if profile.ID != comment.AuthorProfileID {
-			return ErrNotDocumentCommentAuthor
-		}
-
-		if err := comment.Delete(ctx, tx, scope); err != nil {
-			return fmt.Errorf("cannot delete document comment: %w", err)
-		}
-
-		var comments coredata.DocumentComments
-
-		remaining, err := comments.CountByThreadID(ctx, tx, scope, thread.ID)
-		if err != nil {
-			return fmt.Errorf("cannot count document comments: %w", err)
-		}
-
-		if remaining == 0 {
-			if err := thread.Delete(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot delete document comment thread: %w", err)
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			comment := &coredata.DocumentComment{}
+			if err := comment.LoadByID(ctx, tx, scope, commentID); err != nil {
+				return fmt.Errorf("cannot load document comment: %w", err)
 			}
 
-			deletedThreadID = &thread.ID
-		}
+			thread := &coredata.DocumentCommentThread{}
+			if err := thread.LoadByID(ctx, tx, scope, comment.ThreadID); err != nil {
+				return fmt.Errorf("cannot load document comment thread: %w", err)
+			}
 
-		documentID = thread.DocumentID
+			if _, err := s.editableReviewDocument(ctx, tx, scope, thread.DocumentID); err != nil {
+				return err
+			}
 
-		return nil
-	})
+			profile, err := s.reviewProfile(ctx, tx, scope, comment.OrganizationID, identityID)
+			if err != nil {
+				return err
+			}
+
+			if profile.ID != comment.AuthorProfileID {
+				return ErrNotDocumentCommentAuthor
+			}
+
+			if err := comment.Delete(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot delete document comment: %w", err)
+			}
+
+			var comments coredata.DocumentComments
+
+			remaining, err := comments.CountByThreadID(ctx, tx, scope, thread.ID)
+			if err != nil {
+				return fmt.Errorf("cannot count document comments: %w", err)
+			}
+
+			if remaining == 0 {
+				if err := thread.Delete(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot delete document comment thread: %w", err)
+				}
+
+				deletedThreadID = &thread.ID
+			}
+
+			documentID = thread.DocumentID
+
+			return nil
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -647,36 +764,39 @@ func (s *DocumentService) SetCommentThreadResolved(
 
 	thread := &coredata.DocumentCommentThread{}
 
-	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		if err := thread.LoadByID(ctx, tx, scope, req.ThreadID); err != nil {
-			return fmt.Errorf("cannot load document comment thread: %w", err)
-		}
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := thread.LoadByID(ctx, tx, scope, req.ThreadID); err != nil {
+				return fmt.Errorf("cannot load document comment thread: %w", err)
+			}
 
-		if _, err := s.editableReviewDocument(ctx, tx, scope, thread.DocumentID); err != nil {
-			return err
-		}
+			if _, err := s.editableReviewDocument(ctx, tx, scope, thread.DocumentID); err != nil {
+				return err
+			}
 
-		profile, err := s.reviewProfile(ctx, tx, scope, thread.OrganizationID, req.IdentityID)
-		if err != nil {
-			return err
-		}
+			profile, err := s.reviewProfile(ctx, tx, scope, thread.OrganizationID, req.IdentityID)
+			if err != nil {
+				return err
+			}
 
-		now := time.Now()
-		if req.Resolved {
-			thread.ResolvedAt = &now
-			thread.ResolvedByProfileID = &profile.ID
-		} else {
-			thread.ResolvedAt = nil
-			thread.ResolvedByProfileID = nil
-		}
+			now := time.Now()
+			if req.Resolved {
+				thread.ResolvedAt = &now
+				thread.ResolvedByProfileID = &profile.ID
+			} else {
+				thread.ResolvedAt = nil
+				thread.ResolvedByProfileID = nil
+			}
 
-		thread.UpdatedAt = now
-		if err := thread.Update(ctx, tx, scope); err != nil {
-			return fmt.Errorf("cannot update document comment thread: %w", err)
-		}
+			thread.UpdatedAt = now
+			if err := thread.Update(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot update document comment thread: %w", err)
+			}
 
-		return nil
-	})
+			return nil
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -712,13 +832,16 @@ func (s *DocumentService) LoadOpenSuggestionIDs(
 
 	var suggestions coredata.DocumentSuggestions
 
-	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		if err := suggestions.LoadOpenByIDs(ctx, conn, scope, documentID, ids); err != nil {
-			return fmt.Errorf("cannot load open document suggestions: %w", err)
-		}
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := suggestions.LoadOpenByIDs(ctx, conn, scope, documentID, ids); err != nil {
+				return fmt.Errorf("cannot load open document suggestions: %w", err)
+			}
 
-		return nil
-	})
+			return nil
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -740,13 +863,16 @@ func (s *DocumentService) ListSuggestions(
 ) (*page.Page[*coredata.DocumentSuggestion, coredata.DocumentSuggestionOrderField], error) {
 	var suggestions coredata.DocumentSuggestions
 
-	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		if err := suggestions.LoadByDocumentID(ctx, conn, scope, documentID, cursor, filter); err != nil {
-			return fmt.Errorf("cannot load document suggestions: %w", err)
-		}
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := suggestions.LoadByDocumentID(ctx, conn, scope, documentID, cursor, filter); err != nil {
+				return fmt.Errorf("cannot load document suggestions: %w", err)
+			}
 
-		return nil
-	})
+			return nil
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -762,19 +888,22 @@ func (s *DocumentService) CountSuggestions(
 ) (int, error) {
 	var count int
 
-	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		var (
-			suggestions coredata.DocumentSuggestions
-			err         error
-		)
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var (
+				suggestions coredata.DocumentSuggestions
+				err         error
+			)
 
-		count, err = suggestions.CountByDocumentID(ctx, conn, scope, documentID, filter)
-		if err != nil {
-			return fmt.Errorf("cannot count document suggestions: %w", err)
-		}
+			count, err = suggestions.CountByDocumentID(ctx, conn, scope, documentID, filter)
+			if err != nil {
+				return fmt.Errorf("cannot count document suggestions: %w", err)
+			}
 
-		return nil
-	})
+			return nil
+		},
+	)
 	if err != nil {
 		return 0, err
 	}
@@ -789,13 +918,16 @@ func (s *DocumentService) GetSuggestion(
 ) (*coredata.DocumentSuggestion, error) {
 	suggestion := &coredata.DocumentSuggestion{}
 
-	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		if err := suggestion.LoadByID(ctx, conn, scope, suggestionID); err != nil {
-			return fmt.Errorf("cannot load document suggestion: %w", err)
-		}
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := suggestion.LoadByID(ctx, conn, scope, suggestionID); err != nil {
+				return fmt.Errorf("cannot load document suggestion: %w", err)
+			}
 
-		return nil
-	})
+			return nil
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -825,27 +957,30 @@ func (s *DocumentService) StartSuggestion(
 		UpdatedAt: now,
 	}
 
-	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		document, err := s.editableReviewDocument(ctx, tx, scope, documentID)
-		if err != nil {
-			return err
-		}
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			document, err := s.editableReviewDocument(ctx, tx, scope, documentID)
+			if err != nil {
+				return err
+			}
 
-		profile, err := s.reviewProfile(ctx, tx, scope, document.OrganizationID, identityID)
-		if err != nil {
-			return err
-		}
+			profile, err := s.reviewProfile(ctx, tx, scope, document.OrganizationID, identityID)
+			if err != nil {
+				return err
+			}
 
-		suggestion.OrganizationID = document.OrganizationID
-		suggestion.DocumentID = document.ID
-		suggestion.AuthorProfileID = profile.ID
+			suggestion.OrganizationID = document.OrganizationID
+			suggestion.DocumentID = document.ID
+			suggestion.AuthorProfileID = profile.ID
 
-		if err := suggestion.Insert(ctx, tx, scope); err != nil {
-			return fmt.Errorf("cannot insert document suggestion: %w", err)
-		}
+			if err := suggestion.Insert(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot insert document suggestion: %w", err)
+			}
 
-		return nil
-	})
+			return nil
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -853,6 +988,488 @@ func (s *DocumentService) StartSuggestion(
 	s.notifyReview(ctx, suggestion.DocumentID)
 
 	return suggestion, nil
+}
+
+// SuggestChange allocates a suggestion. When quote is set, it paints that
+// redline on the quoted text the way the editor does, and attaches comment
+// when one is given. Without a quote it only allocates an ID.
+func (s *DocumentService) SuggestChange(
+	ctx context.Context,
+	scope coredata.Scoper,
+	req SuggestDocumentChangeRequest,
+) (*coredata.DocumentSuggestion, error) {
+	if req.Quote == "" {
+		if req.Replacement != nil || strings.TrimSpace(req.Comment) != "" {
+			v := validator.New()
+			v.Check(req.Quote, "quote", validator.Required())
+
+			return nil, v.Error()
+		}
+
+		return s.StartSuggestion(ctx, scope, req.DocumentID, req.IdentityID)
+	}
+
+	if req.Replacement == nil {
+		v := validator.New()
+		v.Check(req.Replacement, "replacement", validator.Required())
+
+		return nil, v.Error()
+	}
+
+	v := validator.New()
+	v.Check(req.DocumentID, "document_id", validator.Required(), validator.GID(coredata.DocumentEntityType))
+	v.Check(req.IdentityID, "identity_id", validator.Required(), validator.GID(coredata.IdentityEntityType))
+	v.Check(req.Quote, "quote", validator.Required(), validator.MaxLen(documentQuoteMaxLength))
+	v.Check(*req.Replacement, "replacement", validator.MaxLen(documentQuoteMaxLength))
+	v.Check(req.Comment, "comment", validator.MaxLen(documentCommentMaxLength))
+	v.Check(req.Occurrence, "quote_occurrence", validator.Min(0))
+
+	if err := v.Error(); err != nil {
+		return nil, err
+	}
+
+	var (
+		organizationID gid.GID
+		profileID      gid.GID
+	)
+
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			document, err := s.editableReviewDocument(ctx, tx, scope, req.DocumentID)
+			if err != nil {
+				return err
+			}
+
+			profile, err := s.reviewProfile(ctx, tx, scope, document.OrganizationID, req.IdentityID)
+			if err != nil {
+				return err
+			}
+
+			organizationID = document.OrganizationID
+			profileID = profile.ID
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	now := time.Now()
+	suggestion := &coredata.DocumentSuggestion{
+		ID:              gid.New(scope.GetTenantID(), coredata.DocumentSuggestionEntityType),
+		OrganizationID:  organizationID,
+		DocumentID:      req.DocumentID,
+		AuthorProfileID: profileID,
+		Status:          coredata.DocumentSuggestionStatusOpen,
+		CreatedAt:       now,
+		UpdatedAt:       now,
+	}
+
+	painted, actorID, err := s.collaboration.PaintSuggestion(
+		ctx,
+		scope,
+		req.DocumentID,
+		organizationID,
+		req.IdentityID,
+		&profileID,
+		suggestion.ID.String(),
+		req.Quote,
+		*req.Replacement,
+		req.Occurrence,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() { _ = painted.Close() }()
+
+	err = s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := suggestion.Insert(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot insert document suggestion: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.collaboration.RecordActors(
+		ctx,
+		scope,
+		req.DocumentID,
+		organizationID,
+		req.IdentityID,
+		&profileID,
+		[][]byte{actorID[:]},
+	); err != nil {
+		s.abandonSuggestion(ctx, scope, suggestion.ID, req.IdentityID)
+
+		return nil, fmt.Errorf("cannot record suggestion actor: %w", err)
+	}
+
+	if _, err := s.collaboration.Persist(ctx, scope, req.DocumentID, painted); err != nil {
+		s.abandonSuggestion(ctx, scope, suggestion.ID, req.IdentityID)
+
+		return nil, fmt.Errorf("cannot persist suggestion: %w", err)
+	}
+
+	if strings.TrimSpace(req.Comment) != "" {
+		content, err := richtext.FromPlainText(req.Comment)
+		if err != nil {
+			s.abandonSuggestion(ctx, scope, suggestion.ID, req.IdentityID)
+
+			return nil, fmt.Errorf("cannot encode suggestion comment: %w", err)
+		}
+
+		if _, _, err := s.CreateCommentThread(
+			ctx,
+			scope,
+			CreateDocumentCommentThreadRequest{
+				DocumentID:   req.DocumentID,
+				IdentityID:   req.IdentityID,
+				Content:      content,
+				SuggestionID: &suggestion.ID,
+			},
+		); err != nil {
+			s.abandonSuggestion(ctx, scope, suggestion.ID, req.IdentityID)
+
+			return nil, err
+		}
+	}
+
+	s.notifyReview(ctx, suggestion.DocumentID)
+
+	return suggestion, nil
+}
+
+// AddSuggestionChange paints another redline onto an open suggestion. The
+// editor does the same thing while suggesting stays on: later keystrokes keep
+// the suggestion ID and mark a new range. The quote must not cover a redline
+// that is already there.
+func (s *DocumentService) AddSuggestionChange(
+	ctx context.Context,
+	scope coredata.Scoper,
+	req AddDocumentSuggestionChangeRequest,
+) (*coredata.DocumentSuggestion, error) {
+	v := validator.New()
+	v.Check(req.SuggestionID, "suggestion_id", validator.Required(), validator.GID(coredata.DocumentSuggestionEntityType))
+	v.Check(req.IdentityID, "identity_id", validator.Required(), validator.GID(coredata.IdentityEntityType))
+	v.Check(req.Quote, "quote", validator.Required(), validator.MaxLen(documentQuoteMaxLength))
+	v.Check(req.Replacement, "replacement", validator.MaxLen(documentQuoteMaxLength))
+	v.Check(req.Occurrence, "quote_occurrence", validator.Min(0))
+
+	if err := v.Error(); err != nil {
+		return nil, err
+	}
+
+	suggestion, profileID, err := s.openSuggestionForChange(ctx, scope, req.SuggestionID, req.IdentityID)
+	if err != nil {
+		return nil, err
+	}
+
+	painted, actorID, err := s.collaboration.PaintSuggestion(
+		ctx,
+		scope,
+		suggestion.DocumentID,
+		suggestion.OrganizationID,
+		req.IdentityID,
+		&profileID,
+		suggestion.ID.String(),
+		req.Quote,
+		req.Replacement,
+		req.Occurrence,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() { _ = painted.Close() }()
+
+	if err := s.persistSuggestionChange(ctx, scope, suggestion, req.IdentityID, profileID, painted, actorID); err != nil {
+		return nil, err
+	}
+
+	return suggestion, nil
+}
+
+// AddSuggestionFormatChange suggests bold, italic, or another style on quoted
+// text. Accepting keeps the style and rejecting restores the text.
+func (s *DocumentService) AddSuggestionFormatChange(
+	ctx context.Context,
+	scope coredata.Scoper,
+	req AddDocumentSuggestionFormatChangeRequest,
+) (*coredata.DocumentSuggestion, error) {
+	v := validator.New()
+	v.Check(req.SuggestionID, "suggestion_id", validator.Required(), validator.GID(coredata.DocumentSuggestionEntityType))
+	v.Check(req.IdentityID, "identity_id", validator.Required(), validator.GID(coredata.IdentityEntityType))
+	v.Check(req.Mark, "mark", validator.Required(), validator.OneOfSlice(documentFormatMarks))
+	v.Check(req.Action, "action", validator.Required(), validator.OneOfSlice(documentFormatActions))
+	v.Check(req.Quote, "quote", validator.Required(), validator.MaxLen(documentQuoteMaxLength))
+	v.Check(req.Occurrence, "quote_occurrence", validator.Min(0))
+	v.Check(req.Href, "href", validator.MaxLen(documentQuoteMaxLength))
+
+	if err := v.Error(); err != nil {
+		return nil, err
+	}
+
+	suggestion, profileID, err := s.openSuggestionForChange(ctx, scope, req.SuggestionID, req.IdentityID)
+	if err != nil {
+		return nil, err
+	}
+
+	painted, actorID, err := s.collaboration.PaintFormatSuggestion(
+		ctx,
+		scope,
+		suggestion.DocumentID,
+		suggestion.OrganizationID,
+		req.IdentityID,
+		&profileID,
+		suggestion.ID.String(),
+		collaboration.FormatSuggestion{
+			Mark:       req.Mark,
+			Action:     req.Action,
+			Quote:      req.Quote,
+			Occurrence: req.Occurrence,
+			Href:       req.Href,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() { _ = painted.Close() }()
+
+	if err := s.persistSuggestionChange(ctx, scope, suggestion, req.IdentityID, profileID, painted, actorID); err != nil {
+		return nil, err
+	}
+
+	return suggestion, nil
+}
+
+// AddSuggestionTableChange adds a structural table redline to an open
+// suggestion: a new or removed row, column, or table. Accepting the
+// suggestion applies it and rejecting it leaves the table as it was.
+func (s *DocumentService) AddSuggestionTableChange(
+	ctx context.Context,
+	scope coredata.Scoper,
+	req AddDocumentSuggestionTableChangeRequest,
+) (*coredata.DocumentSuggestion, error) {
+	v := validator.New()
+	v.Check(req.SuggestionID, "suggestion_id", validator.Required(), validator.GID(coredata.DocumentSuggestionEntityType))
+	v.Check(req.IdentityID, "identity_id", validator.Required(), validator.GID(coredata.IdentityEntityType))
+	v.Check(req.Operation, "operation", validator.Required(), validator.OneOfSlice(documentTableOperations))
+	v.Check(req.Quote, "quote", validator.Required(), validator.MaxLen(documentQuoteMaxLength))
+	v.Check(req.Occurrence, "quote_occurrence", validator.Min(0))
+
+	cellLimit := documentTableMaxColumns
+	if req.Operation == collaboration.TableSuggestionInsertColumn {
+		cellLimit = documentTableMaxRows
+	}
+
+	v.Check(req.Cells, "cells", validator.MaxItems(cellLimit))
+	v.CheckEach(
+		req.Cells,
+		"cells",
+		func(index int, item any) {
+			v.Check(item, fmt.Sprintf("cells[%d]", index), validator.MaxLen(documentQuoteMaxLength))
+		},
+	)
+	v.Check(req.Rows, "rows", validator.MaxItems(documentTableMaxRows))
+	v.CheckEach(
+		req.Rows,
+		"rows",
+		func(index int, item any) {
+			v.Check(item, fmt.Sprintf("rows[%d]", index), validator.MaxItems(documentTableMaxColumns))
+			v.CheckEach(
+				item,
+				fmt.Sprintf("rows[%d]", index),
+				func(cell int, value any) {
+					v.Check(value, fmt.Sprintf("rows[%d][%d]", index, cell), validator.MaxLen(documentQuoteMaxLength))
+				},
+			)
+		},
+	)
+
+	if err := v.Error(); err != nil {
+		return nil, err
+	}
+
+	suggestion, profileID, err := s.openSuggestionForChange(ctx, scope, req.SuggestionID, req.IdentityID)
+	if err != nil {
+		return nil, err
+	}
+
+	painted, actorID, err := s.collaboration.PaintTableSuggestion(
+		ctx,
+		scope,
+		suggestion.DocumentID,
+		suggestion.OrganizationID,
+		req.IdentityID,
+		&profileID,
+		suggestion.ID.String(),
+		collaboration.TableSuggestion{
+			Operation:  req.Operation,
+			Quote:      req.Quote,
+			Occurrence: req.Occurrence,
+			Before:     req.Before,
+			Cells:      req.Cells,
+			Rows:       req.Rows,
+			HeaderRow:  req.HeaderRow,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() { _ = painted.Close() }()
+
+	if err := s.persistSuggestionChange(ctx, scope, suggestion, req.IdentityID, profileID, painted, actorID); err != nil {
+		return nil, err
+	}
+
+	return suggestion, nil
+}
+
+// openSuggestionForChange loads an open suggestion the caller wrote. Only its
+// author may add redlines, matching the editor where the suggestion id lives
+// in the author's own controller.
+func (s *DocumentService) openSuggestionForChange(
+	ctx context.Context,
+	scope coredata.Scoper,
+	suggestionID gid.GID,
+	identityID gid.GID,
+) (*coredata.DocumentSuggestion, gid.GID, error) {
+	suggestion := &coredata.DocumentSuggestion{}
+
+	var profileID gid.GID
+
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := suggestion.LoadByIDForUpdate(ctx, tx, scope, suggestionID); err != nil {
+				return fmt.Errorf("cannot load document suggestion: %w", err)
+			}
+
+			if suggestion.Status != coredata.DocumentSuggestionStatusOpen {
+				return ErrDocumentSuggestionClosed
+			}
+
+			if _, err := s.editableReviewDocument(ctx, tx, scope, suggestion.DocumentID); err != nil {
+				return err
+			}
+
+			profile, err := s.reviewProfile(ctx, tx, scope, suggestion.OrganizationID, identityID)
+			if err != nil {
+				return err
+			}
+
+			if profile.ID != suggestion.AuthorProfileID {
+				return ErrNotDocumentSuggestionAuthor
+			}
+
+			profileID = profile.ID
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, gid.GID{}, err
+	}
+
+	return suggestion, profileID, nil
+}
+
+func (s *DocumentService) persistSuggestionChange(
+	ctx context.Context,
+	scope coredata.Scoper,
+	suggestion *coredata.DocumentSuggestion,
+	identityID gid.GID,
+	profileID gid.GID,
+	painted *automerge.Document,
+	actorID automerge.ActorID,
+) error {
+	if err := s.collaboration.RecordActors(
+		ctx,
+		scope,
+		suggestion.DocumentID,
+		suggestion.OrganizationID,
+		identityID,
+		&profileID,
+		[][]byte{actorID[:]},
+	); err != nil {
+		return fmt.Errorf("cannot record suggestion actor: %w", err)
+	}
+
+	if _, err := s.collaboration.Persist(ctx, scope, suggestion.DocumentID, painted); err != nil {
+		return fmt.Errorf("cannot persist suggestion: %w", err)
+	}
+
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := suggestion.LoadByIDForUpdate(ctx, tx, scope, suggestion.ID); err != nil {
+				return fmt.Errorf("cannot reload document suggestion: %w", err)
+			}
+
+			if suggestion.Status == coredata.DocumentSuggestionStatusOpen {
+				return nil
+			}
+
+			// A decision can commit while this redline is being painted. Apply
+			// that decision again so the body matches the closed suggestion.
+			if err := s.applySuggestionDecision(
+				ctx,
+				scope,
+				suggestion,
+				suggestion.Status == coredata.DocumentSuggestionStatusAccepted,
+			); err != nil && !errors.Is(err, collaboration.ErrSuggestionNotInDocument) {
+				return err
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	s.notifyReview(ctx, suggestion.DocumentID)
+
+	return nil
+}
+
+// abandonSuggestion rejects a suggestion whose body or comment did not finish.
+// Reject drops any marks already stored and closes the row, so a retry does
+// not leave an open redline behind the error.
+func (s *DocumentService) abandonSuggestion(
+	ctx context.Context,
+	scope coredata.Scoper,
+	suggestionID gid.GID,
+	identityID gid.GID,
+) {
+	_, err := s.DecideSuggestion(
+		ctx,
+		scope,
+		DecideDocumentSuggestionRequest{
+			SuggestionID: suggestionID,
+			IdentityID:   identityID,
+			Accept:       false,
+		},
+	)
+	if err != nil {
+		s.svc.logger.ErrorCtx(
+			ctx,
+			"cannot roll back document suggestion",
+			log.String("suggestion_id", suggestionID.String()),
+			log.Error(err),
+		)
+	}
 }
 
 func (s *DocumentService) DecideSuggestion(
@@ -870,78 +1487,81 @@ func (s *DocumentService) DecideSuggestion(
 
 	suggestion := &coredata.DocumentSuggestion{}
 
-	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		if err := suggestion.LoadByIDForUpdate(ctx, tx, scope, req.SuggestionID); err != nil {
-			return fmt.Errorf("cannot load document suggestion: %w", err)
-		}
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := suggestion.LoadByIDForUpdate(ctx, tx, scope, req.SuggestionID); err != nil {
+				return fmt.Errorf("cannot load document suggestion: %w", err)
+			}
 
-		profile, err := s.reviewProfile(ctx, tx, scope, suggestion.OrganizationID, req.IdentityID)
-		if err != nil {
-			return err
-		}
-
-		if suggestion.Status != coredata.DocumentSuggestionStatusOpen {
-			// Already decided: reconcile the body with the stored decision in
-			// case an earlier attempt committed metadata but not the body.
-			if err := s.applySuggestionDecision(ctx, scope, suggestion, suggestion.Status == coredata.DocumentSuggestionStatusAccepted); err != nil &&
-				!errors.Is(err, collaboration.ErrSuggestionNotInDocument) {
+			profile, err := s.reviewProfile(ctx, tx, scope, suggestion.OrganizationID, req.IdentityID)
+			if err != nil {
 				return err
 			}
 
-			return nil
-		}
-
-		now := time.Now()
-
-		if req.Accept {
-			suggestion.Status = coredata.DocumentSuggestionStatusAccepted
-		} else {
-			suggestion.Status = coredata.DocumentSuggestionStatusRejected
-		}
-
-		suggestion.ResolvedAt = &now
-		suggestion.ResolvedByProfileID = &profile.ID
-
-		suggestion.UpdatedAt = now
-		if err := suggestion.UpdateIfOpen(ctx, tx, scope); err != nil {
-			if errors.Is(err, coredata.ErrResourceNotFound) {
-				if err := suggestion.LoadByID(ctx, tx, scope, req.SuggestionID); err != nil {
-					return fmt.Errorf("cannot reload document suggestion: %w", err)
+			if suggestion.Status != coredata.DocumentSuggestionStatusOpen {
+				// Already decided: reconcile the body with the stored decision in
+				// case an earlier attempt committed metadata but not the body.
+				if err := s.applySuggestionDecision(ctx, scope, suggestion, suggestion.Status == coredata.DocumentSuggestionStatusAccepted); err != nil &&
+					!errors.Is(err, collaboration.ErrSuggestionNotInDocument) {
+					return err
 				}
 
 				return nil
 			}
 
-			return fmt.Errorf("cannot update document suggestion: %w", err)
-		}
+			now := time.Now()
 
-		thread := &coredata.DocumentCommentThread{}
-
-		err = thread.LoadOpenBySuggestionID(ctx, tx, scope, suggestion.ID)
-		if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
-			return fmt.Errorf("cannot load suggestion comment thread: %w", err)
-		}
-
-		if err == nil {
-			thread.ResolvedAt = &now
-			thread.ResolvedByProfileID = &profile.ID
-
-			thread.UpdatedAt = now
-			if err := thread.Update(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot resolve suggestion comment thread: %w", err)
+			if req.Accept {
+				suggestion.Status = coredata.DocumentSuggestionStatusAccepted
+			} else {
+				suggestion.Status = coredata.DocumentSuggestionStatusRejected
 			}
-		}
 
-		// Mutate the collaborative body last: authorization and metadata
-		// failures roll back the transaction before the body is touched. A
-		// body already matching the decision is tolerated for recovery.
-		if err := s.applySuggestionDecision(ctx, scope, suggestion, req.Accept); err != nil &&
-			!errors.Is(err, collaboration.ErrSuggestionNotInDocument) {
-			return err
-		}
+			suggestion.ResolvedAt = &now
+			suggestion.ResolvedByProfileID = &profile.ID
 
-		return nil
-	})
+			suggestion.UpdatedAt = now
+			if err := suggestion.UpdateIfOpen(ctx, tx, scope); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					if err := suggestion.LoadByID(ctx, tx, scope, req.SuggestionID); err != nil {
+						return fmt.Errorf("cannot reload document suggestion: %w", err)
+					}
+
+					return nil
+				}
+
+				return fmt.Errorf("cannot update document suggestion: %w", err)
+			}
+
+			thread := &coredata.DocumentCommentThread{}
+
+			err = thread.LoadOpenBySuggestionID(ctx, tx, scope, suggestion.ID)
+			if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
+				return fmt.Errorf("cannot load suggestion comment thread: %w", err)
+			}
+
+			if err == nil {
+				thread.ResolvedAt = &now
+				thread.ResolvedByProfileID = &profile.ID
+
+				thread.UpdatedAt = now
+				if err := thread.Update(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot resolve suggestion comment thread: %w", err)
+				}
+			}
+
+			// Mutate the collaborative body last: authorization and metadata
+			// failures roll back the transaction before the body is touched. A
+			// body already matching the decision is tolerated for recovery.
+			if err := s.applySuggestionDecision(ctx, scope, suggestion, req.Accept); err != nil &&
+				!errors.Is(err, collaboration.ErrSuggestionNotInDocument) {
+				return err
+			}
+
+			return nil
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

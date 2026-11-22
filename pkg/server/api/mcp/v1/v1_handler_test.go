@@ -55,6 +55,7 @@ func TestNewMux_UnauthenticatedChallenge(t *testing.T) {
 		nil,
 		nil,
 		nil,
+		nil,
 		baseurl.MustParse("https://probo.example.com"),
 		nil,
 		cloudaws.ConnectorInstallConfig{},
@@ -63,6 +64,7 @@ func TestNewMux_UnauthenticatedChallenge(t *testing.T) {
 		"",
 		nil,
 		nil,
+		mcp_v1.FeedbackConfig{},
 	)
 
 	req := httptest.NewRequest(

@@ -42,8 +42,28 @@ type (
 	DocumentCollaboration struct {
 		Document *automerge.Document
 		Revision int64
+		// ChangeRevision is the last change log row Document holds, so a
+		// later refresh reads only the rows after it.
+		ChangeRevision int64
+	}
+
+	// Position is how far a live document has caught up with the canonical
+	// document: the canonical revision it last saw and the last change log
+	// row it holds.
+	Position struct {
+		Revision       int64
+		ChangeRevision int64
 	}
 )
+
+// Position returns how far the opened document has caught up with the
+// canonical document.
+func (c *DocumentCollaboration) Position() Position {
+	return Position{
+		Revision:       c.Revision,
+		ChangeRevision: c.ChangeRevision,
+	}
+}
 
 func NewService(pgClient *pg.Client, logger *log.Logger) *Service {
 	return &Service{

@@ -205,6 +205,10 @@ func (s *Service) CreateTreatmentPlan(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			if err := coredata.LockID(ctx, tx, scope, "risks", req.RiskID); err != nil {
+				return fmt.Errorf("cannot lock risk: %w", err)
+			}
+
 			risk := &coredata.Risk{}
 			if err := risk.LoadByID(ctx, tx, scope, req.RiskID); err != nil {
 				return fmt.Errorf("cannot load risk: %w", err)

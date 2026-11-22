@@ -301,8 +301,9 @@
     "actions": { "review": "Review" }
   },
   "documentDescriptionPage": {
+    "loading": "Loading document...",
     "messages": { "successTitle": "Success", "saved": "Content saved" },
-    "errors": { "title": "Error", "save": "Content not saved" },
+    "errors": { "title": "Error", "save": "Content not saved", "open": "Document could not be opened" },
     "history": {
       "open": "History",
       "title": "Version history",
@@ -345,8 +346,53 @@
       "suggestionBy": "Suggestion by {{name}}",
       "commentFailed": "Could not add the comment",
       "suggestionFailed": "Could not start the suggestion",
+      "suggestionUntracked": "This change cannot be suggested. Switch to editing to make it.",
       "selectComment": "Select comment by {{name}}",
-      "selectSuggestion": "Select suggestion by {{name}}"
+      "selectSuggestion": "Select suggestion by {{name}}",
+      "addText": "Add: \"{{text}}\"",
+      "deleteText": "Delete: \"{{text}}\"",
+      "addRow": "Add row",
+      "addRowWithText": "Add row: with text \"{{text}}\"",
+      "addColumn": "Add column",
+      "addColumnWithText": "Add column: with text \"{{text}}\"",
+      "addTable": "Add table",
+      "addTableWithText": "Add table: with text \"{{text}}\"",
+      "deleteRow": "Delete row",
+      "deleteRowWithText": "Delete row: with text \"{{text}}\"",
+      "deleteColumn": "Delete column",
+      "deleteColumnWithText": "Delete column: with text \"{{text}}\"",
+      "deleteTable": "Delete table",
+      "deleteTableWithText": "Delete table: with text \"{{text}}\"",
+      "format": "Format: {{styles}}",
+      "formatRemove": "Format: remove {{styles}}",
+      "styleBold": "bold",
+      "styleItalic": "italic",
+      "styleUnderline": "underline",
+      "styleStrike": "strikethrough",
+      "styleCode": "code",
+      "styleLink": "link",
+      "formatHeading": "Format: Heading {{level}}",
+      "formatParagraph": "Format: normal text",
+      "formatQuote": "Format: quote",
+      "formatCode": "Format: code",
+      "listAdd": "Format list: add to list",
+      "listRemove": "Format list: remove from list",
+      "listNest": "Format list: nest",
+      "listUnnest": "Format list: unnest",
+      "checkTask": "Check task",
+      "uncheckTask": "Uncheck task",
+      "addDivider": "Add divider",
+      "deleteDivider": "Delete divider",
+      "addImage": "Add image",
+      "deleteImage": "Delete image",
+      "addFile": "Add file",
+      "addFileNamed": "Add file: \"{{name}}\"",
+      "deleteFile": "Delete file",
+      "deleteFileNamed": "Delete file: \"{{name}}\"",
+      "addMention": "Add mention",
+      "addMentionNamed": "Add mention: \"{{name}}\"",
+      "deleteMention": "Delete mention",
+      "deleteMentionNamed": "Delete mention: \"{{name}}\""
     }
   },
   "documentSignaturesPage": {
@@ -1418,7 +1464,7 @@
     "messages": { "created": "OAuth token created successfully." },
     "errors": { "create": "Failed to create OAuth token" },
     "fields": { "name": "Name", "expiration": "Expiration", "scopes": "Scopes" },
-    "expirations": { "month_one": "{{count}} month", "month_other": "{{count}} months", "year_one": "{{count}} year", "year_other": "{{count}} years" },
+    "expirations": { "day_one": "{{count}} day", "day_other": "{{count}} days" },
     "actions": { "create": "Create token", "selectAll": "Select all", "deselectAll": "Deselect all", "cancel": "Cancel" }
   },
   "oauthTokensPage": {
@@ -1467,9 +1513,34 @@
     "switchToDarkMode": "Switch to dark mode",
     "switchToLightMode": "Switch to light mode",
     "spotlight": {
-      "title": "Go to",
-      "placeholder": "Go to…",
-      "empty": "No matching pages"
+      "title": "Search",
+      "placeholder": "Search pages and resources…",
+      "empty": "No matches",
+      "open": "Open",
+      "close": "Close",
+      "types": {
+        "AiSystem": "AI system",
+        "Asset": "Asset",
+        "Audit": "Audit",
+        "BusinessFunction": "Business function",
+        "Control": "Control",
+        "DataProtectionImpactAssessment": "DPIA",
+        "Datum": "Data",
+        "Device": "Device",
+        "Document": "Document",
+        "Finding": "Finding",
+        "Framework": "Framework",
+        "InternalControl": "Internal control",
+        "Obligation": "Obligation",
+        "ProcessingActivity": "Processing activity",
+        "RightsRequest": "Rights request",
+        "Risk": "Risk",
+        "RiskAnalysis": "Risk analysis",
+        "StatementOfApplicability": "Statement of applicability",
+        "Task": "Task",
+        "ThirdParty": "Third party",
+        "TransferImpactAssessment": "TIA"
+      }
     },
     "groups": {
       "governance": "Governance",
@@ -1544,6 +1615,7 @@
     "compliancePortalsUpdates": "Updates",
     "compliancePortalsRightRequests": "Privacy Requests",
     "cookieBanners": "Cookie Banners",
+    "cookieBannersOverview": "Overview",
     "cookieBannersSettings": "Settings",
     "cookieBannersInstall": "Install",
     "cookieBannersTranslations": "Translations",
@@ -1635,25 +1707,7 @@
     "kinds": { "EMPLOYEE": "Employee", "CONTRACTOR": "Contractor", "SERVICE_ACCOUNT": "Service account" },
     "actions": { "create": "Create", "addEmail": "Add email", "removeEmail": "Remove email" }
   },
-  "auditLogPage": {
-    "title": "Audit Log",
-    "description": "A record of all actions performed in your organization. Entries are immutable and cannot be modified or deleted.",
-    "empty": "No audit log entries yet.",
-    "showing": "Showing {{shown}} of {{total}} entries",
-    "columns": { "date": "Date", "actor": "Actor", "action": "Action", "resource": "Resource" },
-    "actions": { "showMore": "Show more" },
-    "export": {
-      "title": "Export Audit Log",
-      "description": "Select a date range to export audit log entries as CSV. You will receive an email with a download link.",
-      "fields": { "from": "From", "to": "To" },
-      "actions": { "export": "Export", "exporting": "Exporting..." },
-      "messages": {
-        "successTitle": "Success",
-        "success": "Export started. You will receive an email with a download link when it is ready."
-      },
-      "errors": { "title": "Error", "request": "Failed to request audit log export" }
-    }
-  },
+
   "samlSsoPage": {
     "title": "SAML Single Sign-On",
     "description": "Set up SAML 2.0 single sign-on for each email domain.",
@@ -2673,6 +2727,17 @@
     "validation": { "required": "This field is required" },
     "placeholders": { "sourceNode": "Select source node", "targetNode": "Select target node", "name": "e.g. User → API" },
     "actions": { "add": "Add" }
+  },
+  "scoreLevels": {
+    "field": "Levels",
+    "minimum": "Minimum",
+    "minScore": "{{level}} minimum score",
+    "validation": {
+      "atLeastTwo": "Include at least two levels",
+      "startAtOne": "The first included level must start at 1",
+      "increasing": "Each level must start above the previous one",
+      "withinMatrix": "Each minimum score must be between 1 and the matrix maximum"
+    }
   },
   "createRiskAnalysisDialog": {
     "title": "New Risk Analysis",

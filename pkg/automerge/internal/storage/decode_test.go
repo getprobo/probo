@@ -1051,7 +1051,7 @@ func TestValidateSnapshotMarkOrder_BeginAndEnd(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			err := validateSnapshotMarkOrder(markBeginThenEnd(actor))
+			err := validateSnapshotMarkOrder(markBeginThenEnd(actor), false)
 			require.NoError(t, err)
 		},
 	)
@@ -1061,7 +1061,7 @@ func TestValidateSnapshotMarkOrder_BeginAndEnd(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			err := validateSnapshotMarkOrder(markEndBeforeBegin(actor))
+			err := validateSnapshotMarkOrder(markEndBeforeBegin(actor), false)
 			require.Error(t, err)
 			assert.ErrorContains(t, err, "invalid mark operation order")
 		},
@@ -1073,10 +1073,10 @@ func TestValidateSnapshotMarkOrder_BeginAndEnd(t *testing.T) {
 			t.Parallel()
 
 			operations := append(markBeginThenEnd(actor), markBeginThenEnd(other)...)
-			require.NoError(t, validateSnapshotMarkOrder(operations))
+			require.NoError(t, validateSnapshotMarkOrder(operations, false))
 
 			operations = append(markBeginThenEnd(actor), markEndBeforeBegin(other)...)
-			err := validateSnapshotMarkOrder(operations)
+			err := validateSnapshotMarkOrder(operations, false)
 			require.Error(t, err)
 			assert.ErrorContains(t, err, "invalid mark operation order")
 		},
@@ -1116,6 +1116,7 @@ func TestValidateSnapshotMarkOrder_BeginAndEnd(t *testing.T) {
 						Action: opset.ActionSet,
 					},
 				},
+				false,
 			)
 			require.NoError(t, err)
 		},
@@ -1147,7 +1148,7 @@ func TestValidateSnapshotMarkOrder_LongInsertionChain(t *testing.T) {
 			operations[depth-2] = begin
 			operations[depth-1] = end
 
-			require.NoError(t, validateSnapshotMarkOrder(operations))
+			require.NoError(t, validateSnapshotMarkOrder(operations, false))
 		},
 	)
 
@@ -1180,7 +1181,7 @@ func TestValidateSnapshotMarkOrder_LongInsertionChain(t *testing.T) {
 				},
 			)
 
-			err := validateSnapshotMarkOrder(operations)
+			err := validateSnapshotMarkOrder(operations, false)
 			require.Error(t, err)
 			assert.ErrorContains(t, err, "invalid mark operation order")
 		},

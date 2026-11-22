@@ -54,3 +54,69 @@ func Resolve(
 
 	return nil
 }
+
+// ResolveLinkedTaskNotifications marks every pending assignment notification
+// for the task resolved. Mention notifications stay pending.
+func ResolveLinkedTaskNotifications(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+	taskID gid.GID,
+) error {
+	return resolveTaskNotificationTypes(
+		ctx,
+		tx,
+		scope,
+		organizationID,
+		taskID,
+		[]coredata.NotificationType{
+			coredata.NotificationTypeTaskAssigned,
+		},
+	)
+}
+
+// ResolveDeletedTaskNotifications marks every pending assignment and mention
+// notification for a deleted task resolved.
+func ResolveDeletedTaskNotifications(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+	taskID gid.GID,
+) error {
+	return resolveTaskNotificationTypes(
+		ctx,
+		tx,
+		scope,
+		organizationID,
+		taskID,
+		[]coredata.NotificationType{
+			coredata.NotificationTypeTaskAssigned,
+			coredata.NotificationTypeTaskMentioned,
+		},
+	)
+}
+
+func resolveTaskNotificationTypes(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+	taskID gid.GID,
+	types []coredata.NotificationType,
+) error {
+	if err := (&coredata.Notifications{}).ResolvePendingBySubjectTypes(
+		ctx,
+		tx,
+		scope,
+		organizationID,
+		taskID,
+		types,
+		time.Now(),
+	); err != nil {
+		return fmt.Errorf("cannot resolve task notifications: %w", err)
+	}
+
+	return nil
+}

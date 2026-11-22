@@ -9,10 +9,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"go.gearno.de/kit/log"
+	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/accessreview"
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
 	cloudazure "go.probo.inc/probo/pkg/cloud/azure"
@@ -39,6 +41,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/mcp/mcpx"
 	"go.probo.inc/probo/pkg/server/api/mcp/v1/types"
+	"go.probo.inc/probo/pkg/tag"
 	"go.probo.inc/probo/pkg/task"
 	asanasvc "go.probo.inc/probo/pkg/task/sync/asana"
 	syncerrors "go.probo.inc/probo/pkg/task/sync/errors"
@@ -2582,6 +2585,7 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 				errors.Is(err, collaboration.ErrDocumentCollaborationStale),
 				errors.Is(err, collaboration.ErrDocumentCollaborationNotFound),
 				errors.Is(err, collaboration.ErrOpenSuggestions),
+				errors.Is(err, collaboration.ErrSuggestionOverlaps),
 				errors.Is(err, prosemirror.ErrFragmentEditAmbiguous):
 				return nil, types.UpdateDocumentOutput{}, fmt.Errorf("cannot update document: %w", err)
 			}
@@ -4543,8 +4547,16 @@ func (r *Resolver) ListAuditLogEntriesTool(ctx context.Context, req *mcp.CallToo
 			filter.WithAction(*input.Filter.Action)
 		}
 
+		if input.Filter.ActionPrefix != nil {
+			filter.WithActionPrefix(*input.Filter.ActionPrefix)
+		}
+
 		if input.Filter.ActorID != nil {
 			filter.WithActorID(*input.Filter.ActorID)
+		}
+
+		if input.Filter.ActorType != nil {
+			filter.WithActorType(coredata.AuditLogActorType(*input.Filter.ActorType))
 		}
 
 		if input.Filter.ResourceType != nil {
@@ -4553,6 +4565,22 @@ func (r *Resolver) ListAuditLogEntriesTool(ctx context.Context, req *mcp.CallToo
 
 		if input.Filter.ResourceID != nil {
 			filter.WithResourceID(*input.Filter.ResourceID)
+		}
+
+		if input.Filter.Outcome != nil {
+			filter.WithOutcome(coredata.AuditLogOutcome(*input.Filter.Outcome))
+		}
+
+		if input.Filter.RequestID != nil {
+			filter.WithRequestID(*input.Filter.RequestID)
+		}
+
+		if input.Filter.CreatedFrom != nil {
+			filter.WithCreatedAtGte(*input.Filter.CreatedFrom)
+		}
+
+		if input.Filter.CreatedTo != nil {
+			filter.WithCreatedAtLt(*input.Filter.CreatedTo)
 		}
 	}
 
@@ -6076,19 +6104,12 @@ func (r *Resolver) GetCookieBannerTool(ctx context.Context, req *mcp.CallToolReq
 
 	out := types.NewCookieBanner(banner, r.cookieBanner.TCFCmpID())
 
-	sample, err := r.cookieBanner.GetLatestCookieBannerSample(ctx, scope, input.ID)
-	if err != nil && !errors.Is(err, cookiebanner.ErrSampleNotFound) {
-		return nil, types.GetCookieBannerOutput{}, fmt.Errorf("cannot get latest cookie banner sample: %w", err)
+	dailyPageLoads, err := r.cookieBanner.GetDailyPageLoads(ctx, scope, []gid.GID{input.ID}, analyticsDays(input.Days))
+	if err != nil {
+		return nil, types.GetCookieBannerOutput{}, mcpx.MapError(ctx, r.logger, "cannot get cookie banner daily page loads", err)
 	}
 
-	if sample != nil {
-		latest, err := r.cookieBannerSampleWithLoads(ctx, scope, sample)
-		if err != nil {
-			return nil, types.GetCookieBannerOutput{}, err
-		}
-
-		out.LatestSample = latest
-	}
+	out.DailyPageLoads = types.NewDailyPageLoads(dailyPageLoads[input.ID])
 
 	if _, err := r.Authorize(ctx, input.ID, probo.ActionCookieBannerVersionList); err == nil {
 		published, err := r.cookieBanner.GetLatestPublishedCookieBannerVersion(ctx, scope, input.ID)
@@ -6389,110 +6410,14 @@ func (r *Resolver) GetTrackerPatternTool(ctx context.Context, req *mcp.CallToolR
 		return nil, types.GetTrackerPatternOutput{}, fmt.Errorf("cannot load tracker pattern attribution: %w", err)
 	}
 
-	splits, err := r.cookieBanner.GetSampleHitSplits(ctx, scope, input.ID, input.SampleID)
+	dailyHits, err := r.cookieBanner.GetDailyHits(ctx, scope, []gid.GID{input.ID}, analyticsDays(input.Days))
 	if err != nil {
-		return nil, types.GetTrackerPatternOutput{}, fmt.Errorf("cannot get sample hits: %w", err)
+		return nil, types.GetTrackerPatternOutput{}, mcpx.MapError(ctx, r.logger, "cannot get tracker pattern daily hits", err)
 	}
 
-	mapped.SampleHits = types.NewSampleFamilyCounts(splits.Total)
-	mapped.AllowedSampleHits = types.NewSampleFamilyCounts(splits.Allowed)
-	mapped.DeniedSampleHits = types.NewSampleFamilyCounts(splits.Denied)
+	mapped.DailyHits = types.NewDailyHits(dailyHits[input.ID])
 
 	return nil, types.GetTrackerPatternOutput{TrackerPattern: mapped}, nil
-}
-
-func (r *Resolver) ListCookieBannerSamplesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListCookieBannerSamplesInput) (*mcp.CallToolResult, types.ListCookieBannerSamplesOutput, error) {
-	scope, err := r.Authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerGet)
-	if err != nil {
-		return nil, types.ListCookieBannerSamplesOutput{}, err
-	}
-
-	cursor := types.NewCursor(input.Size, input.Cursor, page.OrderBy[coredata.CookieBannerSampleOrderField]{
-		Field:     coredata.CookieBannerSampleOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	})
-
-	samples, err := r.cookieBanner.ListCookieBannerSamples(ctx, scope, input.CookieBannerID, cursor)
-	if err != nil {
-		return nil, types.ListCookieBannerSamplesOutput{}, fmt.Errorf("cannot list cookie banner samples: %w", err)
-	}
-
-	output := types.NewListCookieBannerSamplesOutput(page.NewPage(samples, cursor))
-
-	sampleIDs := make([]gid.GID, len(samples))
-	for i, sample := range samples {
-		sampleIDs[i] = sample.ID
-	}
-
-	loadsBySample, err := r.cookieBanner.GetSamplePageLoadsByIDs(ctx, scope, sampleIDs)
-	if err != nil {
-		return nil, types.ListCookieBannerSamplesOutput{}, fmt.Errorf("cannot get cookie banner sample page loads: %w", err)
-	}
-
-	for i, sample := range samples {
-		withLoads := types.NewCookieBannerSample(sample)
-		withLoads.SetPageLoads(loadsBySample[sample.ID])
-		output.CookieBannerSamples[i] = withLoads
-	}
-
-	return nil, output, nil
-}
-
-func (r *Resolver) GetCookieBannerSampleTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetCookieBannerSampleInput) (*mcp.CallToolResult, types.GetCookieBannerSampleOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionCookieBannerGet)
-	if err != nil {
-		return nil, types.GetCookieBannerSampleOutput{}, err
-	}
-
-	sample, err := r.cookieBanner.GetCookieBannerSample(ctx, scope, input.ID)
-	if err != nil {
-		return nil, types.GetCookieBannerSampleOutput{}, fmt.Errorf("cannot get cookie banner sample: %w", err)
-	}
-
-	withLoads, err := r.cookieBannerSampleWithLoads(ctx, scope, sample)
-	if err != nil {
-		return nil, types.GetCookieBannerSampleOutput{}, err
-	}
-
-	return nil, types.GetCookieBannerSampleOutput{CookieBannerSample: withLoads}, nil
-}
-
-func (r *Resolver) StartCookieBannerSampleTool(ctx context.Context, req *mcp.CallToolRequest, input *types.StartCookieBannerSampleInput) (*mcp.CallToolResult, types.StartCookieBannerSampleOutput, error) {
-	scope, err := r.Authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerUpdate)
-	if err != nil {
-		return nil, types.StartCookieBannerSampleOutput{}, err
-	}
-
-	sample, err := r.cookieBanner.StartCookieBannerSample(ctx, scope, input.CookieBannerID)
-	if err != nil {
-		return nil, types.StartCookieBannerSampleOutput{}, fmt.Errorf("cannot start cookie banner sample: %w", err)
-	}
-
-	withLoads, err := r.cookieBannerSampleWithLoads(ctx, scope, sample)
-	if err != nil {
-		return nil, types.StartCookieBannerSampleOutput{}, err
-	}
-
-	return nil, types.StartCookieBannerSampleOutput{CookieBannerSample: withLoads}, nil
-}
-
-func (r *Resolver) StopCookieBannerSampleTool(ctx context.Context, req *mcp.CallToolRequest, input *types.StopCookieBannerSampleInput) (*mcp.CallToolResult, types.StopCookieBannerSampleOutput, error) {
-	scope, err := r.Authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerUpdate)
-	if err != nil {
-		return nil, types.StopCookieBannerSampleOutput{}, err
-	}
-
-	sample, err := r.cookieBanner.StopCookieBannerSample(ctx, scope, input.CookieBannerID)
-	if err != nil {
-		return nil, types.StopCookieBannerSampleOutput{}, fmt.Errorf("cannot stop cookie banner sample: %w", err)
-	}
-
-	withLoads, err := r.cookieBannerSampleWithLoads(ctx, scope, sample)
-	if err != nil {
-		return nil, types.StopCookieBannerSampleOutput{}, err
-	}
-
-	return nil, types.StopCookieBannerSampleOutput{CookieBannerSample: withLoads}, nil
 }
 
 func (r *Resolver) AddTrackerPatternTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddTrackerPatternInput) (*mcp.CallToolResult, types.AddTrackerPatternOutput, error) {
@@ -7161,12 +7086,19 @@ func (r *Resolver) AddRiskAnalysisTool(ctx context.Context, req *mcp.CallToolReq
 		return nil, types.AddRiskAnalysisOutput{}, fmt.Errorf("cannot convert description: %w", err)
 	}
 
+	var scoreLevels *coredata.ScoreLevels
+
+	if converted := types.ScoreLevelsFromInput(input.ScoreLevels); converted != nil {
+		scoreLevels = &converted
+	}
+
 	ra, err := r.riskManagement.Create(ctx, scope, riskmanagement.CreateRiskAnalysisRequest{
 		OrganizationID: input.OrganizationID,
 		Name:           input.Name,
 		Description:    description,
 		Period:         period,
 		MatrixSize:     matrixSize,
+		ScoreLevels:    scoreLevels,
 	})
 	if err != nil {
 		return nil, types.AddRiskAnalysisOutput{}, fmt.Errorf("failed to create risk analysis: %w", err)
@@ -7196,11 +7128,19 @@ func (r *Resolver) UpdateRiskAnalysisTool(ctx context.Context, req *mcp.CallTool
 		return nil, types.UpdateRiskAnalysisOutput{}, fmt.Errorf("cannot convert description: %w", err)
 	}
 
+	var scoreLevels *coredata.ScoreLevels
+
+	if input.ScoreLevels != nil {
+		converted := types.ScoreLevelsFromInput(input.ScoreLevels)
+		scoreLevels = &converted
+	}
+
 	ra, err := r.riskManagement.Update(ctx, scope, riskmanagement.UpdateRiskAnalysisRequest{
 		ID:          input.ID,
 		Name:        input.Name,
 		Description: description,
 		Period:      period,
+		ScoreLevels: scoreLevels,
 	})
 	if err != nil {
 		return nil, types.UpdateRiskAnalysisOutput{}, fmt.Errorf("failed to update risk analysis: %w", err)
@@ -11998,7 +11938,39 @@ func (r *Resolver) StartDocumentSuggestionTool(ctx context.Context, req *mcp.Cal
 
 	identity := authn.IdentityFromContext(ctx)
 
-	suggestion, err := r.proboSvc.Documents.StartSuggestion(ctx, scope, input.DocumentID, identity.ID)
+	quote := ""
+	if input.Quote != nil {
+		quote = *input.Quote
+	}
+
+	comment := ""
+	if input.Comment != nil {
+		comment = *input.Comment
+	}
+
+	occurrence := 0
+	if input.QuoteOccurrence != nil {
+		occurrence = *input.QuoteOccurrence
+	}
+
+	if strings.TrimSpace(comment) != "" {
+		if _, err := r.Authorize(ctx, input.DocumentID, probo.ActionDocumentComment); err != nil {
+			return nil, types.StartDocumentSuggestionOutput{}, err
+		}
+	}
+
+	suggestion, err := r.proboSvc.Documents.SuggestChange(
+		ctx,
+		scope,
+		probo.SuggestDocumentChangeRequest{
+			DocumentID:  input.DocumentID,
+			IdentityID:  identity.ID,
+			Quote:       quote,
+			Replacement: input.Replacement,
+			Comment:     comment,
+			Occurrence:  occurrence,
+		},
+	)
 	if err != nil {
 		return nil, types.StartDocumentSuggestionOutput{}, r.documentReviewError(ctx, "cannot start document suggestion", err)
 	}
@@ -12307,4 +12279,370 @@ func (r *Resolver) UpdateAsanaProjectMappingTool(ctx context.Context, req *mcp.C
 	}
 
 	return nil, types.UpdateAsanaProjectMappingOutput{Setup: mcpAsanaSetup(setup, mapping)}, nil
+}
+
+func (r *Resolver) ChangeDocumentTextTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ChangeDocumentTextInput) (*mcp.CallToolResult, types.ChangeDocumentTextOutput, error) {
+	scope, err := r.authorizeDocumentChange(ctx, input.Mode, input.DocumentID, input.SuggestionID)
+	if err != nil {
+		return nil, types.ChangeDocumentTextOutput{}, err
+	}
+
+	result, err := r.proboSvc.Documents.ChangeText(
+		ctx,
+		scope,
+		probo.ChangeDocumentTextRequest{
+			Mode:         input.Mode,
+			DocumentID:   ref.UnrefOrZero(input.DocumentID),
+			SuggestionID: ref.UnrefOrZero(input.SuggestionID),
+			IdentityID:   authn.IdentityFromContext(ctx).ID,
+			Quote:        input.Quote,
+			Replacement:  input.Replacement,
+			Occurrence:   ref.UnrefOrZero(input.QuoteOccurrence),
+		},
+	)
+	if err != nil {
+		return nil, types.ChangeDocumentTextOutput{}, r.documentReviewError(ctx, "cannot change document text", err)
+	}
+
+	document, suggestion := changeDocumentParts(result)
+
+	return nil, types.ChangeDocumentTextOutput{Document: document, Suggestion: suggestion}, nil
+}
+
+func (r *Resolver) ChangeDocumentFormatTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ChangeDocumentFormatInput) (*mcp.CallToolResult, types.ChangeDocumentFormatOutput, error) {
+	scope, err := r.authorizeDocumentChange(ctx, input.Mode, input.DocumentID, input.SuggestionID)
+	if err != nil {
+		return nil, types.ChangeDocumentFormatOutput{}, err
+	}
+
+	result, err := r.proboSvc.Documents.ChangeFormat(
+		ctx,
+		scope,
+		probo.ChangeDocumentFormatRequest{
+			Mode:         input.Mode,
+			DocumentID:   ref.UnrefOrZero(input.DocumentID),
+			SuggestionID: ref.UnrefOrZero(input.SuggestionID),
+			IdentityID:   authn.IdentityFromContext(ctx).ID,
+			Mark:         input.Mark,
+			Action:       input.Action,
+			Quote:        input.Quote,
+			Occurrence:   ref.UnrefOrZero(input.QuoteOccurrence),
+			Href:         ref.UnrefOrZero(input.Href),
+		},
+	)
+	if err != nil {
+		return nil, types.ChangeDocumentFormatOutput{}, r.documentReviewError(ctx, "cannot change document format", err)
+	}
+
+	document, suggestion := changeDocumentParts(result)
+
+	return nil, types.ChangeDocumentFormatOutput{Document: document, Suggestion: suggestion}, nil
+}
+
+func (r *Resolver) ChangeDocumentTableTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ChangeDocumentTableInput) (*mcp.CallToolResult, types.ChangeDocumentTableOutput, error) {
+	scope, err := r.authorizeDocumentChange(ctx, input.Mode, input.DocumentID, input.SuggestionID)
+	if err != nil {
+		return nil, types.ChangeDocumentTableOutput{}, err
+	}
+
+	result, err := r.proboSvc.Documents.ChangeTable(
+		ctx,
+		scope,
+		probo.ChangeDocumentTableRequest{
+			Mode:         input.Mode,
+			DocumentID:   ref.UnrefOrZero(input.DocumentID),
+			SuggestionID: ref.UnrefOrZero(input.SuggestionID),
+			IdentityID:   authn.IdentityFromContext(ctx).ID,
+			Operation:    input.Operation,
+			Quote:        input.Quote,
+			Occurrence:   ref.UnrefOrZero(input.QuoteOccurrence),
+			Before:       ref.UnrefOrZero(input.Before),
+			Cells:        input.Cells,
+			Rows:         input.Rows,
+			HeaderRow:    ref.UnrefOrZero(input.HeaderRow),
+		},
+	)
+	if err != nil {
+		return nil, types.ChangeDocumentTableOutput{}, r.documentReviewError(ctx, "cannot change document table", err)
+	}
+
+	document, suggestion := changeDocumentParts(result)
+
+	return nil, types.ChangeDocumentTableOutput{Document: document, Suggestion: suggestion}, nil
+}
+
+func (r *Resolver) ChangeDocumentBlockTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ChangeDocumentBlockInput) (*mcp.CallToolResult, types.ChangeDocumentBlockOutput, error) {
+	scope, err := r.authorizeDocumentChange(ctx, input.Mode, input.DocumentID, input.SuggestionID)
+	if err != nil {
+		return nil, types.ChangeDocumentBlockOutput{}, err
+	}
+
+	result, err := r.proboSvc.Documents.ChangeBlock(
+		ctx,
+		scope,
+		probo.ChangeDocumentBlockRequest{
+			Mode:         input.Mode,
+			DocumentID:   ref.UnrefOrZero(input.DocumentID),
+			SuggestionID: ref.UnrefOrZero(input.SuggestionID),
+			IdentityID:   authn.IdentityFromContext(ctx).ID,
+			Operation:    input.Operation,
+			Quote:        ref.UnrefOrZero(input.Quote),
+			Occurrence:   ref.UnrefOrZero(input.QuoteOccurrence),
+			Before:       input.Before,
+			Block:        ref.UnrefOrZero(input.Block),
+			Level:        ref.UnrefOrZero(input.Level),
+			Language:     ref.UnrefOrZero(input.Language),
+			Text:         ref.UnrefOrZero(input.Text),
+			Items:        input.Items,
+			Checked:      input.Checked,
+			FileID:       ref.UnrefOrZero(input.FileID),
+			Src:          ref.UnrefOrZero(input.Src),
+			Alt:          ref.UnrefOrZero(input.Alt),
+			Width:        input.Width,
+			ProfileID:    ref.UnrefOrZero(input.ProfileID),
+		},
+	)
+	if err != nil {
+		return nil, types.ChangeDocumentBlockOutput{}, r.documentReviewError(ctx, "cannot change document block", err)
+	}
+
+	document, suggestion := changeDocumentParts(result)
+
+	return nil, types.ChangeDocumentBlockOutput{Document: document, Suggestion: suggestion}, nil
+}
+
+func (r *Resolver) SubmitFeedbackTool(ctx context.Context, _ *mcp.CallToolRequest, input *types.SubmitFeedbackInput) (*mcp.CallToolResult, types.SubmitFeedbackOutput, error) {
+	return r.submitFeedback(ctx, input)
+}
+
+func (r *Resolver) CreateTagTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateTagInput) (*mcp.CallToolResult, types.CreateTagOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, tag.ActionCreate)
+	if err != nil {
+		return nil, types.CreateTagOutput{}, err
+	}
+
+	created, err := r.tag.Create(
+		ctx,
+		scope,
+		tag.CreateTagRequest{
+			OrganizationID: input.OrganizationID,
+			Name:           input.Name,
+			Color:          input.Color,
+		},
+	)
+	if err != nil {
+		return nil, types.CreateTagOutput{}, fmt.Errorf("cannot create tag: %w", err)
+	}
+
+	return nil, types.CreateTagOutput{
+		Tag: types.NewTag(created),
+	}, nil
+}
+
+func (r *Resolver) UpdateTagTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateTagInput) (*mcp.CallToolResult, types.UpdateTagOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, tag.ActionUpdate)
+	if err != nil {
+		return nil, types.UpdateTagOutput{}, err
+	}
+
+	updated, err := r.tag.Update(
+		ctx,
+		scope,
+		tag.UpdateTagRequest{
+			ID:    input.ID,
+			Name:  input.Name,
+			Color: UnwrapOmittable(input.Color),
+		},
+	)
+	if err != nil {
+		return nil, types.UpdateTagOutput{}, fmt.Errorf("cannot update tag: %w", err)
+	}
+
+	return nil, types.UpdateTagOutput{
+		Tag: types.NewTag(updated),
+	}, nil
+}
+
+func (r *Resolver) DeleteTagTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteTagInput) (*mcp.CallToolResult, types.DeleteTagOutput, error) {
+	scope, err := r.Authorize(ctx, input.TagID, tag.ActionDelete)
+	if err != nil {
+		return nil, types.DeleteTagOutput{}, err
+	}
+
+	if err := r.tag.Delete(ctx, scope, input.TagID); err != nil {
+		return nil, types.DeleteTagOutput{}, fmt.Errorf("cannot delete tag: %w", err)
+	}
+
+	return nil, types.DeleteTagOutput{
+		DeletedTagID: input.TagID,
+	}, nil
+}
+
+func (r *Resolver) AttachTagTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AttachTagInput) (*mcp.CallToolResult, types.AttachTagOutput, error) {
+	scope, err := r.Authorize(ctx, input.ResourceID, tag.ActionAssignmentAttach)
+	if err != nil {
+		return nil, types.AttachTagOutput{}, err
+	}
+
+	result, err := r.tag.Attach(
+		ctx,
+		scope,
+		tag.AttachRequest{
+			ResourceID: input.ResourceID,
+			TagID:      input.TagID,
+		},
+	)
+	if err != nil {
+		return nil, types.AttachTagOutput{}, fmt.Errorf("cannot attach tag: %w", err)
+	}
+
+	return nil, types.AttachTagOutput{
+		Tag: types.NewTag(result.Tag),
+	}, nil
+}
+
+func (r *Resolver) DetachTagTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DetachTagInput) (*mcp.CallToolResult, types.DetachTagOutput, error) {
+	scope, err := r.Authorize(ctx, input.ResourceID, tag.ActionAssignmentDetach)
+	if err != nil {
+		return nil, types.DetachTagOutput{}, err
+	}
+
+	result, err := r.tag.Detach(
+		ctx,
+		scope,
+		tag.DetachRequest{
+			ResourceID: input.ResourceID,
+			TagID:      input.TagID,
+		},
+	)
+	if err != nil {
+		return nil, types.DetachTagOutput{}, fmt.Errorf("cannot detach tag: %w", err)
+	}
+
+	return nil, types.DetachTagOutput{
+		Tag:      types.NewTag(result.Tag),
+		Detached: result.Detached,
+	}, nil
+}
+
+func (r *Resolver) ListTagsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListTagsInput) (*mcp.CallToolResult, types.ListTagsOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, tag.ActionList)
+	if err != nil {
+		return nil, types.ListTagsOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.TagOrderField]{
+		Field:     coredata.TagOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	pageResult, err := r.tag.ListForOrganizationID(ctx, scope, input.OrganizationID, cursor)
+	if err != nil {
+		return nil, types.ListTagsOutput{}, fmt.Errorf("cannot list tags: %w", err)
+	}
+
+	return nil, types.NewListTagsOutput(pageResult), nil
+}
+
+func (r *Resolver) ListTagsForResourceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListTagsForResourceInput) (*mcp.CallToolResult, types.ListTagsForResourceOutput, error) {
+	scope, err := r.Authorize(ctx, input.ResourceID, tag.ActionAssignmentGet)
+	if err != nil {
+		return nil, types.ListTagsForResourceOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.TagOrderField]{
+		Field:     coredata.TagOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	pageResult, err := r.tag.ListForResourceID(ctx, scope, input.ResourceID, cursor)
+	if err != nil {
+		return nil, types.ListTagsForResourceOutput{}, fmt.Errorf("cannot list tags for resource: %w", err)
+	}
+
+	return nil, types.NewListTagsForResourceOutput(pageResult), nil
+}
+
+func (r *Resolver) SearchTool(ctx context.Context, req *mcp.CallToolRequest, input *types.SearchInput) (*mcp.CallToolResult, types.SearchOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, tag.ActionAssignmentGet)
+	if err != nil {
+		return nil, types.SearchOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.SearchResultOrderField]{
+		Field:     coredata.SearchResultOrderFieldID,
+		Direction: page.OrderDirectionAsc,
+	}
+
+	entityTypes, err := r.listableSearchEntityTypes(ctx, input.OrganizationID)
+	if err != nil {
+		return nil, types.SearchOutput{}, err
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	pageResult, err := r.tag.Search(
+		ctx,
+		scope,
+		tag.SearchRequest{
+			OrganizationID:      input.OrganizationID,
+			Query:               input.Query,
+			ListableEntityTypes: entityTypes,
+		},
+		cursor,
+	)
+	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, types.SearchOutput{}, validationErrors
+		}
+
+		return nil, types.SearchOutput{}, fmt.Errorf("cannot search tagged resources: %w", err)
+	}
+
+	return nil, types.NewSearchOutput(pageResult), nil
+}
+
+func (r *Resolver) AddInternalControlLinkEvidenceTool(ctx context.Context, _ *mcp.CallToolRequest, input *types.AddInternalControlLinkEvidenceInput) (*mcp.CallToolResult, types.AddInternalControlLinkEvidenceOutput, error) {
+	scope, err := r.Authorize(ctx, input.InternalControlID, probo.ActionInternalControlEvidenceUpload)
+	if err != nil {
+		return nil, types.AddInternalControlLinkEvidenceOutput{}, err
+	}
+
+	upload, err := internalControlLinkEvidenceUpload(input)
+	if err != nil {
+		return nil, types.AddInternalControlLinkEvidenceOutput{}, err
+	}
+
+	evidence, err := r.proboSvc.Evidences.UploadInternalControlEvidence(ctx, scope, upload)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, types.AddInternalControlLinkEvidenceOutput{}, fmt.Errorf("internal control not found")
+		}
+
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, types.AddInternalControlLinkEvidenceOutput{}, fmt.Errorf("%s", validationErrors.Error())
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot create internal control link evidence", log.Error(err))
+
+		return nil, types.AddInternalControlLinkEvidenceOutput{}, fmt.Errorf("internal error")
+	}
+
+	var file *types.File
+	if evidence.EvidenceFileId != nil {
+		file, err = r.loadFile(ctx, scope, *evidence.EvidenceFileId)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot load link evidence file", log.Error(err))
+
+			return nil, types.AddInternalControlLinkEvidenceOutput{}, fmt.Errorf("internal error")
+		}
+	}
+
+	return nil, types.AddInternalControlLinkEvidenceOutput{
+		Evidence: types.NewEvidence(evidence, file),
+	}, nil
 }

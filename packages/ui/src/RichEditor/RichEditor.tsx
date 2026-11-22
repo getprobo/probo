@@ -55,6 +55,7 @@ import { MentionExtension } from "./MentionExtension";
 import { PlaceholderExtension } from "./PlaceholderExtension";
 import { SlashCommandExtension } from "./SlashCommandExtension";
 import { SuggestionDelete, SuggestionInsert } from "./SuggestionExtension";
+import { suggestionFormatExtensions } from "./suggestionStyle";
 import { TaskItemFocusExtension } from "./TaskItemFocusExtension";
 
 export type { RichEditorProps };
@@ -73,6 +74,7 @@ const coreExtensions = [
   LinkExtension,
   SuggestionInsert,
   SuggestionDelete,
+  ...suggestionFormatExtensions,
   SlashCommandExtension,
   MentionExtension,
   BlockquoteExtension,
@@ -115,6 +117,12 @@ export const richEditorCollaborationExtensions = [
   AutomergeTableStructureExtension,
 ];
 
+// Comments have no underline mark, and ProseMirror rejects an excludes list
+// that names a mark missing from the schema.
+const CommentCodeExtension = CodeExtension.extend({
+  excludes: "bold italic strike link",
+});
+
 export const richEditorCommentExtensions = [
   Document,
   ParagraphExtension,
@@ -122,7 +130,7 @@ export const richEditorCommentExtensions = [
   BoldExtension,
   ItalicExtension,
   StrikeExtension,
-  CodeExtension,
+  CommentCodeExtension,
   LinkExtension,
   BlockquoteExtension,
   BulletList,

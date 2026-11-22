@@ -4,6 +4,338 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Added
+
+- MCP `addInternalControlLinkEvidence` uploads a `.uri` file
+  containing an HTTP or HTTPS URL on an internal control, the same
+  way as the console link form
+
+## [0.355.1] - 2026-11-20
+
+### Fixed
+
+- Servers on 0.354.0 or earlier no longer fail to write audit log
+  entries once the 0.355.0 migration has run, so rolling deploys and
+  rollbacks keep working
+
+## [0.355.0] - 2026-11-20
+
+### Added
+
+- The audit log records denied checks as well as allowed ones. Each
+  entry keeps its outcome, the denial reason, a snapshot of the actor's
+  email and name, the client IP, the user agent, and the request id
+  that also appears in the server logs
+- Audit log filters for action prefix, actor type, outcome, request id,
+  and a created-at range on the console and Connect GraphQL APIs and
+  the MCP `listAuditLogEntries` tool. Entries expose `outcome`,
+  `denialReason`, `actorEmail`, `actorName`, `originIp`, `userAgent`,
+  `requestId`, and `recordedAt`
+- The audit log CSV export includes the outcome, denial reason, actor
+  snapshot, client IP, user agent, and request id
+
+### Changed
+
+- The console audit log page is rebuilt on the v2 kit with cursor
+  pagination and filters kept in the URL. Dates are picked in a single
+  range control and read as local days, and actor, resource, and
+  request ids sit in a Filters popover. The detail dialog shows the
+  origin, request id, and denial reason
+
+### Fixed
+
+- A failed audit log insert was silently ignored. It now aborts the
+  authorization, and a refused batch still commits its denial rows
+
+## [0.354.0] - 2026-11-20
+
+This is a security release. Upgrade as soon as possible.
+
+### Added
+
+- The compliance portal visitor card offers the signed document beside
+  the certificate of completion, and the download menu opens either
+  file. The console GraphQL `ElectronicSignature` type adds `nda`, the
+  document the visitor signed
+
+### Security
+
+- Google and Microsoft sign-in binds the login state to the browser
+  that started it. Before, a state value was accepted from any browser,
+  so an attacker could finish their own login there and the victim's
+  session would belong to the attacker. The callback is now rejected
+  before the code exchange unless it matches a short-lived HttpOnly
+  cookie. Sign-ins started before the upgrade must be restarted
+- The MCP `listOrganizations` tool no longer returns organizations a
+  user was deactivated from. A former member could still read the
+  organization's id and name
+
+### Fixed
+
+- Linear sync no longer moves an issue back to In Progress when another
+  field changes. A status is sent to Linear only when it changed in
+  Probo, and a status changed in Linear and not in Probo is copied onto
+  the task
+- Pending ACME orders are polled again 30 seconds after a challenge
+  accept, a not-ready poll, or a finalize that leaves the order
+  processing, instead of after about four minutes, so custom domain
+  certificates are issued sooner
+- Global search no longer fails with a database error when audits match,
+  and search errors no longer expose SQL internals to clients
+
+## [0.353.0] - 2026-11-20
+
+### Added
+
+- Tags are a name unique in the organization, with an optional color.
+  A resource can carry several. Attaching a tag that is already
+  present keeps the existing assignment. The console GraphQL API adds
+  `createTag`, `updateTag`, `deleteTag`, `attachTag`, and `detachTag`,
+  plus `Organization.tags` and `tags` on taggable resources. MCP adds
+  `createTag`, `updateTag`, `deleteTag`, `attachTag`, `detachTag`,
+  `listTags`, and `listTagsForResource`
+- `search` finds resources the caller is allowed to list, on the
+  console GraphQL API and as the MCP `search` tool. Bare words match
+  titles as prefixes, and a resource id matches in full or by prefix.
+  Every `tag:name` must match. `type:name` is optional and repeatable.
+  The console Ctrl+K spotlight lists those hits beside pages, grouped
+  by type, and opens them. A query that uses `tag:` or `type:` lists
+  resources only. Controls open on their framework, and DPIAs and TIAs
+  open on their processing activity
+- Leaving a task page in the console or employee portal asks the user
+  to stay when the comment composer has text, an attachment, or an
+  upload still in progress. Closing the tab uses the browser prompt.
+  Changing search on the same task does not ask, because the draft
+  stays mounted
+
+### Changed
+
+- The console Ctrl+K spotlight uses a command-palette layout: a light
+  backdrop blur, a borderless search field, section labels and icons,
+  and Enter and Esc hints in the footer. Closing it clears the query,
+  and a slow response cannot overwrite a newer one
+
+### Fixed
+
+- Built with Go 1.27.4 (up from 1.27.3) to pick up the standard-library
+  security fix in `net/http` (CVE-2026-97054)
+- The internal control create button stays disabled while the form is
+  saving, so a double click no longer creates two controls
+- Opening a document in view mode, or with no mode, syncs without
+  persisting. Editing and suggesting still persist. A generated or
+  archived document stays read-only in every mode. View mode used to
+  receive update permission, so a generated document closed the socket
+  and the browser reconnected every few seconds
+- The console people menu keeps the caret in the search field after
+  the list replaces the loading state
+
+## [0.352.0] - 2026-11-19
+
+### Added
+
+- MCP `submit_feedback` posts a webhook-shaped body, including the
+  caller's name and email, to `PROBOD_FEEDBACK_URL`. There is no
+  signature. The tool is hidden when that URL is unset
+- The employee portal top bar and the console and employee portal
+  organization pickers show the signed-in user's photo and open the
+  profile photo dialog, so the avatar can be replaced or removed
+  there. The connect viewer query returns the avatar file on the
+  identity. The invalid file message now says "5 MB or smaller"
+
+### Changed
+
+- Unauthenticated `signUp`, `signIn`, `forgotPassword`, and
+  `resendVerificationEmail` are rate-limited per IP and per field on
+  this process: 10 per minute for `signUp`, 30 for `signIn`, and 5
+  for the two mail mutations. Over the limit the field returns
+  `RATE_LIMITED` and the resolver does not run. Authentication runs
+  first, so a rejected caller does not spend that budget
+
+## [0.351.1] - 2026-11-17
+
+### Fixed
+
+- Collaborative documents open quickly again with several tabs or
+  peers connected. Rooms now catch up on edits from other instances
+  once for all peers, reading only new changes and outside the
+  document lock, instead of each connection rebuilding the document
+  while holding it. Opening a document used to take 25 seconds or
+  never finish
+- Applying a remote edit made deep in a long document is no longer
+  quadratic. A 50k-character document that took 98 seconds to catch
+  up now takes under a second
+- The console editor no longer reports a `script-src` CSP violation on
+  every load
+
+## [0.351.0] - 2026-11-17
+
+This is a security release. Upgrade as soon as possible.
+
+### Security fixes
+
+- A private OAuth client can only be authorized, through the device
+  flow or consent approval, by active members of its organization
+- Manual access tokens last at most 180 days. The create form offers
+  30, 90, and 180 days
+- Recovering an account by email revokes its OAuth tokens, refresh
+  tokens, authorization codes, and device codes. Changing a password
+  while signed in is unchanged
+- The console checks the destination it returns to after sign-in, and
+  replaces one that does not stay on the same origin
+
+### Added
+
+- Cookie banners expose `dailyPageLoads` on the console GraphQL API and
+  `daily_page_loads` on MCP `getCookieBanner`. Tracker patterns expose
+  `dailyHits` and `daily_hits` on `getTrackerPattern`. Each is one
+  entry per UTC day, oldest first. The console shows both as a line
+  chart
+
+### Changed
+
+- Viewers can read tracker patterns and tracker resources, including
+  their hit counts
+- Cookie banners count page loads and tracker hits on every page view,
+  by UTC day, instead of in a start/stop sample window. The console
+  shows the last 7 days, and daily counts are kept for 90 days. Past
+  sample counts are not carried over
+- **Breaking**: the console GraphQL API returns `dailyPageLoads` on
+  cookie banners and `dailyHits` on tracker patterns. Both take
+  `days` (7 by default, at most 90) and replace `latestSample`,
+  `samples`, `sampleHits`, `allowedSampleHits`, and
+  `deniedSampleHits`. MCP `getCookieBanner` returns
+  `daily_page_loads` and `getTrackerPattern` returns `daily_hits`,
+  with the same `days` input, instead of `latest_sample`,
+  `sample_hits`, `allowed_sample_hits`, and `denied_sample_hits`
+- **Breaking**: the public banner config no longer sends
+  `sample_active`. Sites on `@probo/cookie-banner` 0.22.0 or older
+  report no page loads until they upgrade, so hit rates stay
+  incomplete
+- **Breaking**: dynamic client registration accepts only private
+  clients, and existing dynamically registered clients are updated to
+  match. CLI and CIMD clients are unchanged
+
+### Removed
+
+- **Breaking**: the `startCookieBannerSample` and
+  `stopCookieBannerSample` GraphQL mutations, and the
+  `listCookieBannerSamples`, `getCookieBannerSample`,
+  `startCookieBannerSample`, and `stopCookieBannerSample` MCP tools
+
+## [0.350.0] - 2026-11-17
+
+### Changed
+
+- Risk analysis exports name each score's severity, such as "1 — Low",
+  instead of only the numeric range
+- Opening documents with long edit histories uses less memory and loads
+  faster
+
+### Fixed
+
+- The console footer no longer pushes the welcome page link below the
+  fold on short windows, and employee portal pages no longer reserve
+  extra space at the bottom
+
+## [0.349.0] - 2026-11-17
+
+### Added
+
+- Risk analyses store their own score levels, each with a minimum
+  score, so a policy can define Medium or omit Critical. The matrix,
+  score colors, and published document follow those levels, and the
+  legend shows each level's range, such as Low (1-12). The console
+  edits the levels in a grid, and GraphQL, MCP, the CLI, and n8n
+  accept and return them. When no levels are given, the default
+  bands for the matrix size are used, and existing analyses are
+  filled with those bands
+
+## [0.348.0] - 2026-11-17
+
+### Changed
+
+- Members with read-only access to a document now open it live
+  and see other people's edits as they happen. Changes sent
+  from a read-only session are always rejected
+- Opening a live document no longer rebuilds its content on the
+  server; the text loads from the live connection, and only a
+  pinned version is fetched separately
+
+### Fixed
+
+- Assignment notifications are resolved when a task is finished,
+  canceled, marked duplicate, or deleted, so they no longer count
+  as unread. Existing notifications on closed tasks are resolved
+  by a migration. Mentions on a closed task stay pending
+
+## [0.347.2] - 2026-11-16
+
+### Fixed
+
+- The employee home no longer leaves a large gap under the
+  dashboard cards, so the Probo Console link stays on screen
+- File and image attachments in the employee portal use the
+  same layout as the console, including a readable file size,
+  and file names are not underlined as misspellings
+
+## [0.347.1] - 2026-11-16
+
+### Fixed
+
+- Concurrent cookie banner reports from the same site no longer
+  block each other while recording trackers
+- The Probo Console link at the bottom of the employee portal
+  loads its data from the right API
+
+## [0.347.0] - 2026-11-16
+
+### Added
+
+- Suggesting mode tracks table structure. Reviewers can suggest
+  inserting or deleting a row, a column, or a whole table, and the
+  margin card names the change. Row redlines are refused on tables
+  with merged cells, and any other structural edit made while
+  suggesting is dropped with a message instead of saved untracked
+- Suggesting mode tracks character styles the way Google Docs does:
+  bold, italic, underline, strikethrough, code, and links. Readers
+  see the previous formatting until the suggestion is accepted, and
+  rejecting it restores that formatting
+- Suggesting mode tracks block changes: headings, lists, quotes, code
+  blocks, dividers, images, files, mentions, and list nesting.
+  Accepting keeps the new block and rejecting restores the old one
+- Suggestion cards describe the change (`Add: "…"`, `Delete: "…"`,
+  `Format: bold`, `Add row: with text "…"`) instead of a character
+  diff
+- `startDocumentSuggestion` takes a quote, a replacement, a comment,
+  and a quote occurrence, and paints the redline the way the editor
+  does, marking only the changed text.
+  `addDocumentSuggestionChange`, `suggestDocumentTable`, and
+  `addDocumentSuggestionFormatChange` add more redlines to an open
+  suggestion. All are on GraphQL and MCP
+- Text, style, table, and block changes share one operation with an
+  `APPLY` or `SUGGEST` mode, on GraphQL and on MCP as
+  `changeDocumentText`, `changeDocumentFormat`, `changeDocumentTable`,
+  and `changeDocumentBlock`, so agents no longer send ProseMirror
+- Employees can attach files to tasks assigned to them and to
+  comments in the employee portal, with drag and drop and paste.
+  Assigned employees can edit the task description
+- A Probo Console link at the bottom of the employee portal takes
+  console users back to the console
+
+### Changed
+
+- Documents stay editable while a suggestion is open. An edit that
+  misses the suggestion is applied and one that lands on it is
+  refused. Publishing and restoring history still wait until every
+  suggestion is resolved
+
+### Fixed
+
+- MCP `updateDocument` no longer rewrites blocks that differ only by
+  null attributes, which marked untouched text as changed
+- Document history highlights land on the edited text after several
+  edits in a row
+
 ## [0.346.0] - 2026-11-13
 
 ### Added

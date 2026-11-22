@@ -30,24 +30,30 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
+	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
 )
 
+var (
+	_ Searchable = (*RiskAnalysis)(nil)
+)
+
 type (
 	RiskAnalysis struct {
-		ID             gid.GID    `db:"id"`
-		OrganizationID gid.GID    `db:"organization_id"`
-		Name           string     `db:"name"`
-		Description    *string    `db:"description"`
-		PeriodStart    *time.Time `db:"period_start"`
-		PeriodEnd      *time.Time `db:"period_end"`
-		MatrixRows     int        `db:"matrix_rows"`
-		MatrixCols     int        `db:"matrix_cols"`
-		DocumentID     *gid.GID   `db:"document_id"`
-		CreatedAt      time.Time  `db:"created_at"`
-		UpdatedAt      time.Time  `db:"updated_at"`
+		ID             gid.GID     `db:"id"`
+		OrganizationID gid.GID     `db:"organization_id"`
+		Name           string      `db:"name"`
+		Description    *string     `db:"description"`
+		PeriodStart    *time.Time  `db:"period_start"`
+		PeriodEnd      *time.Time  `db:"period_end"`
+		MatrixRows     int         `db:"matrix_rows"`
+		MatrixCols     int         `db:"matrix_cols"`
+		ScoreLevels    ScoreLevels `db:"score_levels"`
+		DocumentID     *gid.GID    `db:"document_id"`
+		CreatedAt      time.Time   `db:"created_at"`
+		UpdatedAt      time.Time   `db:"updated_at"`
 	}
 
 	RiskAnalyses []*RiskAnalysis
@@ -62,6 +68,10 @@ func (ra *RiskAnalysis) CursorKey(orderBy RiskAnalysisOrderField) page.CursorKey
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
+}
+
+func (ra RiskAnalysis) SearchText() []string {
+	return []string{ra.Name, ref.UnrefOrZero(ra.Description)}
 }
 
 func (ra *RiskAnalysis) AuthorizationAttributes(
@@ -145,6 +155,7 @@ SELECT
 	period_end,
 	matrix_rows,
 	matrix_cols,
+	score_levels,
 	document_id,
 	created_at,
 	updated_at
@@ -190,6 +201,7 @@ SELECT
 	period_end,
 	matrix_rows,
 	matrix_cols,
+	score_levels,
 	document_id,
 	created_at,
 	updated_at
@@ -238,6 +250,7 @@ SELECT
 	period_end,
 	matrix_rows,
 	matrix_cols,
+	score_levels,
 	document_id,
 	created_at,
 	updated_at
@@ -285,6 +298,7 @@ INSERT INTO risk_analyses (
 	period_end,
 	matrix_rows,
 	matrix_cols,
+	score_levels,
 	document_id,
 	created_at,
 	updated_at
@@ -299,6 +313,7 @@ VALUES (
 	@period_end,
 	@matrix_rows,
 	@matrix_cols,
+	@score_levels,
 	@document_id,
 	@created_at,
 	@updated_at
@@ -315,6 +330,7 @@ VALUES (
 		"period_end":      ra.PeriodEnd,
 		"matrix_rows":     ra.MatrixRows,
 		"matrix_cols":     ra.MatrixCols,
+		"score_levels":    ra.ScoreLevels,
 		"document_id":     ra.DocumentID,
 		"created_at":      ra.CreatedAt,
 		"updated_at":      ra.UpdatedAt,
@@ -348,6 +364,7 @@ SET
 	period_end = @period_end,
 	matrix_rows = @matrix_rows,
 	matrix_cols = @matrix_cols,
+	score_levels = @score_levels,
 	document_id = @document_id,
 	updated_at = @updated_at
 WHERE %s
@@ -363,6 +380,7 @@ WHERE %s
 		"period_end":   ra.PeriodEnd,
 		"matrix_rows":  ra.MatrixRows,
 		"matrix_cols":  ra.MatrixCols,
+		"score_levels": ra.ScoreLevels,
 		"document_id":  ra.DocumentID,
 		"updated_at":   ra.UpdatedAt,
 	}
@@ -393,7 +411,10 @@ func (ra *RiskAnalysis) Delete(
 	id gid.GID,
 ) error {
 	q := `
-DELETE FROM risk_analyses WHERE %s AND id = @id
+DELETE FROM risk_analyses
+WHERE
+	%s
+	AND id = @id
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 

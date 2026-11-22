@@ -34,7 +34,7 @@ permissions:
 jobs:
   test:
     name: "test"
-    runs-on: "runs-on=${{ github.run_id }}/runner=16cpu-linux-x64/extras=s3-cache/spot=true"
+    runs-on: "runs-on=${{ github.run_id }}/runner=16cpu-linux-x64/volume=40gb/extras=s3-cache/spot=true"
     timeout-minutes: 90
     permissions:
       contents: "read"

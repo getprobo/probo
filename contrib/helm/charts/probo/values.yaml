@@ -292,6 +292,16 @@ probo:
     queryCacheSize: 1000
     # Disable field suggestions on invalid queries.
     disableSuggestion: true
+    # Connect @rateLimit uses 10 requests per 60 seconds. Override the
+    # global default or one mutation by its name. Set both limit and
+    # window (seconds):
+    # rateLimit:
+    #   default:
+    #     limit: 10
+    #     window: 60
+    #   signUp:
+    #     limit: 4
+    #     window: 30
 
   # Show Probo branding
   branding: true
@@ -383,6 +393,9 @@ probo:
   notificationWeekly:
     weekday: 1
     hour: 16
+
+  # MCP submit_feedback. The tool is hidden when this is empty.
+  feedbackUrl: ""
 
   # Outbound webhook delivery
   webhook:

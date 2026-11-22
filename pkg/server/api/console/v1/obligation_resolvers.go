@@ -13,6 +13,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
@@ -140,6 +141,11 @@ func (r *mutationResolver) PublishObligationList(ctx context.Context, input type
 		DocumentEdge:        types.NewDocumentEdge(document, coredata.DocumentOrderFieldCreatedAt),
 		DocumentVersionEdge: types.NewDocumentVersionEdge(documentVersion, coredata.DocumentVersionOrderFieldCreatedAt),
 	}, nil
+}
+
+// Tags is the resolver for the tags field.
+func (r *obligationResolver) Tags(ctx context.Context, obj *types.Obligation, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TagOrderBy) (*types.TagConnection, error) {
+	return r.tagsForResourceID(ctx, obj.ID, first, after, last, before, orderBy)
 }
 
 // Organization is the resolver for the organization field.

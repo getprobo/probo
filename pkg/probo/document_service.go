@@ -764,6 +764,17 @@ func (s *DocumentService) Create(
 				return fmt.Errorf("cannot insert document: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				document.ID,
+				document.OrganizationID,
+				document.Title,
+				document.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			if err := s.collaboration.PutContent(
 				ctx,
 				conn,
@@ -1462,7 +1473,15 @@ func (s *DocumentService) SoftDelete(
 				return err
 			}
 
-			return document.SoftDelete(ctx, tx, scope)
+			if err := document.SoftDelete(ctx, tx, scope); err != nil {
+				return err
+			}
+
+			if err := coredata.DeleteSearchResource(ctx, tx, documentID); err != nil {
+				return fmt.Errorf("cannot delete search resource: %w", err)
+			}
+
+			return nil
 		},
 	)
 }
@@ -1492,7 +1511,15 @@ func (s *DocumentService) BulkSoftDelete(
 				return err
 			}
 
-			return documents.BulkSoftDelete(ctx, tx, scope)
+			if err := documents.BulkSoftDelete(ctx, tx, scope); err != nil {
+				return err
+			}
+
+			if err := coredata.DeleteSearchResources(ctx, tx, documentIDs); err != nil {
+				return fmt.Errorf("cannot delete search resource: %w", err)
+			}
+
+			return nil
 		},
 	)
 }
@@ -2216,6 +2243,17 @@ func (s *DocumentService) Update(
 				if err := document.Update(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot update document: %w", err)
 				}
+
+				if err := coredata.UpsertSearchResource(
+					ctx,
+					tx,
+					document.ID,
+					document.OrganizationID,
+					document.Title,
+					document.SearchText(),
+				); err != nil {
+					return fmt.Errorf("cannot sync search: %w", err)
+				}
 			}
 
 			if err := s.emitDocumentEvent(ctx, scope, tx, req.DocumentID, coredata.WebhookEventTypeDocumentUpdated, nil, nil, nil, webhooktypes.NewDocument(&previousDocument)); err != nil {
@@ -2310,6 +2348,17 @@ func (s *DocumentService) Archive(
 				return fmt.Errorf("cannot archive document: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				tx,
+				document.ID,
+				document.OrganizationID,
+				document.Title,
+				document.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			if err := s.emitDocumentEvent(ctx, scope, tx, documentID, coredata.WebhookEventTypeDocumentArchived, nil, nil, nil, nil); err != nil {
 				return fmt.Errorf("cannot emit document archived webhook: %w", err)
 			}
@@ -2352,6 +2401,17 @@ func (s *DocumentService) Unarchive(
 
 			if err := document.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot unarchive document: %w", err)
+			}
+
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				tx,
+				document.ID,
+				document.OrganizationID,
+				document.Title,
+				document.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
 			}
 
 			if err := s.emitDocumentEvent(ctx, scope, tx, documentID, coredata.WebhookEventTypeDocumentUnarchived, nil, nil, nil, nil); err != nil {
@@ -3302,6 +3362,17 @@ func (s *DocumentService) insertSnapshot(
 		if err := document.Update(ctx, tx, scope); err != nil {
 			return nil, fmt.Errorf("cannot advance published version: %w", err)
 		}
+
+		if err := coredata.UpsertSearchResource(
+			ctx,
+			tx,
+			document.ID,
+			document.OrganizationID,
+			document.Title,
+			document.SearchText(),
+		); err != nil {
+			return nil, fmt.Errorf("cannot sync search: %w", err)
+		}
 	}
 
 	if err := version.Insert(ctx, tx, scope); err != nil {
@@ -3331,6 +3402,17 @@ func (s *DocumentService) finalizePublish(
 
 	if err := document.Update(ctx, tx, scope); err != nil {
 		return fmt.Errorf("cannot update document: %w", err)
+	}
+
+	if err := coredata.UpsertSearchResource(
+		ctx,
+		tx,
+		document.ID,
+		document.OrganizationID,
+		document.Title,
+		document.SearchText(),
+	); err != nil {
+		return fmt.Errorf("cannot sync search: %w", err)
 	}
 
 	if err := documentVersion.Update(ctx, tx, scope); err != nil {

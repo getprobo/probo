@@ -25,6 +25,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/docgen"
 	"go.probo.inc/probo/pkg/probo"
@@ -537,4 +538,21 @@ func TestBuildDocuments_EmptyDataProducesParseableProseMirror(t *testing.T) {
 			},
 		)
 	}
+}
+
+func TestBuildRiskAnalysisDocument_UsesConfiguredBands(t *testing.T) {
+	t.Parallel()
+
+	content, err := probo.BuildRiskAnalysisDocument(
+		docgen.RiskAnalysisData{
+			Title:      "Policy bands",
+			MaxScore:   25,
+			ScoreBands: "Low (1-4), Medium (5-12), High (13-25)",
+			Matrix:     riskAnalysisMatrixFixture(5),
+		},
+	)
+	require.NoError(t, err)
+	assert.Contains(t, content, "Severity bands: Low (1-4), Medium (5-12), High (13-25)")
+	assert.Contains(t, content, "range 1–25")
+	assert.NotContains(t, content, "Critical")
 }

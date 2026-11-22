@@ -20,6 +20,11 @@
 
 package probodconfig
 
+import (
+	"encoding/json"
+	"fmt"
+)
+
 type CorsConfig struct {
 	AllowedOrigins []string `json:"allowed-origins,omitzero,omitempty"`
 }
@@ -36,11 +41,98 @@ func (c ProxyProtocolConfig) IsZero() bool {
 	return len(c.TrustedProxies) == 0
 }
 
+type GraphQLRateLimitBudget struct {
+	Limit  int `json:"limit,omitempty"`
+	Window int `json:"window,omitempty"`
+}
+
+type GraphQLRateLimitConfig struct {
+	Default GraphQLRateLimitBudget            `json:"-"`
+	Budgets map[string]GraphQLRateLimitBudget `json:"-"`
+}
+
+func (c GraphQLRateLimitConfig) IsZero() bool {
+	return c.Default == (GraphQLRateLimitBudget{}) && len(c.Budgets) == 0
+}
+
+func (c GraphQLRateLimitConfig) MarshalJSON() ([]byte, error) {
+	out := make(map[string]any, len(c.Budgets)+1)
+	if c.Default != (GraphQLRateLimitBudget{}) {
+		out["default"] = c.Default
+	}
+
+	for name, budget := range c.Budgets {
+		out[name] = budget
+	}
+
+	return json.Marshal(out)
+}
+
+func (c *GraphQLRateLimitConfig) UnmarshalJSON(data []byte) error {
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return fmt.Errorf("cannot parse rate limit: %w", err)
+	}
+
+	if _, ok := raw["enabled"]; ok {
+		return fmt.Errorf("rate limit %q is unknown", "enabled")
+	}
+
+	if value, ok := raw["default"]; ok {
+		budget, err := parseRateLimitBudget("default", value)
+		if err != nil {
+			return err
+		}
+
+		c.Default = budget
+
+		delete(raw, "default")
+	}
+
+	if len(raw) == 0 {
+		return nil
+	}
+
+	c.Budgets = make(map[string]GraphQLRateLimitBudget, len(raw))
+	for name, value := range raw {
+		budget, err := parseRateLimitBudget(name, value)
+		if err != nil {
+			return err
+		}
+
+		if budget == (GraphQLRateLimitBudget{}) {
+			continue
+		}
+
+		c.Budgets[name] = budget
+	}
+
+	return nil
+}
+
+func parseRateLimitBudget(name string, value json.RawMessage) (GraphQLRateLimitBudget, error) {
+	var budget GraphQLRateLimitBudget
+	if err := json.Unmarshal(value, &budget); err != nil {
+		return GraphQLRateLimitBudget{}, fmt.Errorf("cannot parse rate limit %q: %w", name, err)
+	}
+
+	if budget.Limit == 0 && budget.Window == 0 {
+		return GraphQLRateLimitBudget{}, nil
+	}
+
+	if budget.Limit < 1 || budget.Window < 1 {
+		return GraphQLRateLimitBudget{}, fmt.Errorf("rate limit %q requires limit and window of at least 1", name)
+	}
+
+	return budget, nil
+}
+
 type GraphQLConfig struct {
-	ParserTokenLimit  int  `json:"parser-token-limit"`
-	ComplexityLimit   int  `json:"complexity-limit"`
-	QueryCacheSize    int  `json:"query-cache-size"`
-	DisableSuggestion bool `json:"disable-suggestion"`
+	ParserTokenLimit  int                    `json:"parser-token-limit"`
+	ComplexityLimit   int                    `json:"complexity-limit"`
+	QueryCacheSize    int                    `json:"query-cache-size"`
+	DisableSuggestion bool                   `json:"disable-suggestion"`
+	RateLimit         GraphQLRateLimitConfig `json:"rate-limit,omitzero"`
 }
 
 type APIConfig struct {

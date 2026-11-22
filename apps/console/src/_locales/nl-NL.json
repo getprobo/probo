@@ -509,13 +509,15 @@
     }
   },
   "documentDescriptionPage": {
+    "loading": "Document laden...",
     "messages": {
       "successTitle": "Succes",
       "saved": "Inhoud opgeslagen"
     },
     "errors": {
       "title": "Fout",
-      "save": "Inhoud niet opgeslagen"
+      "save": "Inhoud niet opgeslagen",
+      "open": "Document kon niet worden geopend"
     },
     "history": {
       "open": "Geschiedenis",
@@ -559,8 +561,53 @@
       "suggestionBy": "Voorstel van {{name}}",
       "commentFailed": "De opmerking kon niet worden toegevoegd",
       "suggestionFailed": "Het voorstel kon niet worden gestart",
+      "suggestionUntracked": "Deze wijziging kan niet worden voorgesteld. Schakel over naar bewerken om ze te maken.",
       "selectComment": "Opmerking van {{name}} selecteren",
-      "selectSuggestion": "Voorstel van {{name}} selecteren"
+      "selectSuggestion": "Voorstel van {{name}} selecteren",
+      "addText": "Toevoegen: \"{{text}}\"",
+      "deleteText": "Verwijderen: \"{{text}}\"",
+      "addRow": "Rij toevoegen",
+      "addRowWithText": "Rij toevoegen: met tekst \"{{text}}\"",
+      "addColumn": "Kolom toevoegen",
+      "addColumnWithText": "Kolom toevoegen: met tekst \"{{text}}\"",
+      "addTable": "Tabel toevoegen",
+      "addTableWithText": "Tabel toevoegen: met tekst \"{{text}}\"",
+      "deleteRow": "Rij verwijderen",
+      "deleteRowWithText": "Rij verwijderen: met tekst \"{{text}}\"",
+      "deleteColumn": "Kolom verwijderen",
+      "deleteColumnWithText": "Kolom verwijderen: met tekst \"{{text}}\"",
+      "deleteTable": "Tabel verwijderen",
+      "deleteTableWithText": "Tabel verwijderen: met tekst \"{{text}}\"",
+      "format": "Opmaak: {{styles}}",
+      "formatRemove": "Opmaak: {{styles}} verwijderen",
+      "styleBold": "vet",
+      "styleItalic": "cursief",
+      "styleUnderline": "onderstreept",
+      "styleStrike": "doorgehaald",
+      "styleCode": "code",
+      "styleLink": "link",
+      "formatHeading": "Opmaak: kop {{level}}",
+      "formatParagraph": "Opmaak: normale tekst",
+      "formatQuote": "Opmaak: citaat",
+      "formatCode": "Opmaak: code",
+      "listAdd": "Lijstopmaak: aan de lijst toevoegen",
+      "listRemove": "Lijstopmaak: uit de lijst verwijderen",
+      "listNest": "Lijstopmaak: inspringen",
+      "listUnnest": "Lijstopmaak: inspringing verkleinen",
+      "checkTask": "Taak afvinken",
+      "uncheckTask": "Taak uitvinken",
+      "addDivider": "Scheidingslijn toevoegen",
+      "deleteDivider": "Scheidingslijn verwijderen",
+      "addImage": "Afbeelding toevoegen",
+      "deleteImage": "Afbeelding verwijderen",
+      "addFile": "Bestand toevoegen",
+      "addFileNamed": "Bestand toevoegen: \"{{name}}\"",
+      "deleteFile": "Bestand verwijderen",
+      "deleteFileNamed": "Bestand verwijderen: \"{{name}}\"",
+      "addMention": "Vermelding toevoegen",
+      "addMentionNamed": "Vermelding toevoegen: \"{{name}}\"",
+      "deleteMention": "Vermelding verwijderen",
+      "deleteMentionNamed": "Vermelding verwijderen: \"{{name}}\""
     }
   },
   "documentSignaturesPage": {
@@ -2151,10 +2198,8 @@
       "scopes": "Scopes"
     },
     "expirations": {
-      "month_one": "{{count}} maand",
-      "month_other": "{{count}} maanden",
-      "year_one": "{{count}} jaar",
-      "year_other": "{{count}} jaren"
+      "day_one": "{{count}} dag",
+      "day_other": "{{count}} dagen"
     },
     "actions": {
       "create": "Token aanmaken",
@@ -2256,9 +2301,34 @@
     "switchToDarkMode": "Overschakelen naar donkere modus",
     "switchToLightMode": "Overschakelen naar lichte modus",
     "spotlight": {
-      "title": "Ga naar",
-      "placeholder": "Ga naar…",
-      "empty": "Geen overeenkomende pagina's"
+      "title": "Zoeken",
+      "placeholder": "Zoek pagina’s en resources…",
+      "empty": "Geen resultaten",
+      "open": "Openen",
+      "close": "Sluiten",
+      "types": {
+        "AiSystem": "AI-systeem",
+        "Asset": "Asset",
+        "Audit": "Audit",
+        "BusinessFunction": "Bedrijfsfunctie",
+        "Control": "Control",
+        "DataProtectionImpactAssessment": "DPIA",
+        "Datum": "Gegeven",
+        "Device": "Apparaat",
+        "Document": "Document",
+        "Finding": "Bevinding",
+        "Framework": "Framework",
+        "InternalControl": "Interne controle",
+        "Obligation": "Verplichting",
+        "ProcessingActivity": "Verwerkingsactiviteit",
+        "RightsRequest": "Rechtenverzoek",
+        "Risk": "Risico",
+        "RiskAnalysis": "Risicoanalyse",
+        "StatementOfApplicability": "Verklaring van toepasselijkheid",
+        "Task": "Taak",
+        "ThirdParty": "Derde partij",
+        "TransferImpactAssessment": "TIA"
+      }
     },
     "groups": {
       "governance": "Governance",
@@ -2334,6 +2404,7 @@
     "compliancePortalsUpdates": "Updates",
     "compliancePortalsRightRequests": "Privacyverzoeken",
     "cookieBanners": "Cookiebanners",
+    "cookieBannersOverview": "Overzicht",
     "cookieBannersSettings": "Instellingen",
     "cookieBannersInstall": "Installeren",
     "cookieBannersTranslations": "Vertalingen",
@@ -2499,25 +2570,7 @@
       "removeEmail": "E-mail verwijderen"
     }
   },
-  "auditLogPage": {
-    "title": "Auditlogboek",
-    "description": "Een overzicht van alle acties die in uw organisatie zijn uitgevoerd. Items zijn onveranderlijk en kunnen niet worden bewerkt of verwijderd.",
-    "empty": "Nog geen auditlogitems.",
-    "showing": "{{shown}} van {{total}} items weergegeven",
-    "columns": { "date": "Datum", "actor": "Actor", "action": "Actie", "resource": "Resource" },
-    "actions": { "showMore": "Meer tonen" },
-    "export": {
-      "title": "Auditlogboek exporteren",
-      "description": "Selecteer een datumbereik om auditlogboekvermeldingen te exporteren als CSV. U ontvangt een e-mail met een downloadlink.",
-      "fields": { "from": "Van", "to": "Tot" },
-      "actions": { "export": "Exporteren", "exporting": "Bezig met exporteren..." },
-      "messages": {
-        "successTitle": "Succes",
-        "success": "Export gestart. U ontvangt een e-mail met een downloadlink zodra deze gereed is."
-      },
-      "errors": { "title": "Fout", "request": "Aanvragen van auditlogboekexport mislukt" }
-    }
-  },
+
   "samlSsoPage": {
     "title": "SAML Single Sign-On",
     "description": "Stel SAML 2.0 single sign-on in voor elk e-maildomein.",
@@ -4792,6 +4845,17 @@
     },
     "actions": {
       "add": "Toevoegen"
+    }
+  },
+  "scoreLevels": {
+    "field": "Niveaus",
+    "minimum": "Minimum",
+    "minScore": "Minimumscore voor {{level}}",
+    "validation": {
+      "atLeastTwo": "Neem minstens twee niveaus op",
+      "startAtOne": "Het eerste opgenomen niveau moet bij 1 beginnen",
+      "increasing": "Elk niveau moet boven het vorige beginnen",
+      "withinMatrix": "Elke minimumscore moet tussen 1 en het matrixmaximum liggen"
     }
   },
   "createRiskAnalysisDialog": {

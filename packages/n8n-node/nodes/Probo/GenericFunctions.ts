@@ -158,7 +158,9 @@ async function proboGraphqlRequestAllItems(
 	getConnection: (response: IDataObject) => IDataObject | undefined,
 	returnAll: boolean = true,
 	limit: number = 0,
+	mapEdge?: (edge: { node: IDataObject; title?: string }) => IDataObject,
 ): Promise<IDataObject[]> {
+	const toItem = mapEdge ?? ((edge: { node: IDataObject; title?: string }) => edge.node);
 	const items: IDataObject[] = [];
 	let hasNextPage = true;
 	let cursor: string | null = null;
@@ -183,8 +185,8 @@ async function proboGraphqlRequestAllItems(
 		const connection = getConnection(responseData);
 
 		if (connection?.edges) {
-			const edges = connection.edges as Array<{ node: IDataObject }>;
-			items.push(...edges.map((edge) => edge.node));
+			const edges = connection.edges as Array<{ node: IDataObject; title?: string }>;
+			items.push(...edges.map(toItem));
 		}
 
 		if (connection?.pageInfo) {
@@ -210,6 +212,7 @@ export async function proboApiRequestAllItems(
 	getConnection: (response: IDataObject) => IDataObject | undefined,
 	returnAll: boolean = true,
 	limit: number = 0,
+	mapEdge?: (edge: { node: IDataObject; title?: string }) => IDataObject,
 ): Promise<IDataObject[]> {
 	return proboGraphqlRequestAllItems.call(
 		this,
@@ -219,6 +222,7 @@ export async function proboApiRequestAllItems(
 		getConnection,
 		returnAll,
 		limit,
+		mapEdge,
 	);
 }
 

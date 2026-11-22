@@ -53,6 +53,8 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/mcp/mcpx"
 	"go.probo.inc/probo/pkg/server/api/mcp/v1/server"
+	"go.probo.inc/probo/pkg/server/gqlx"
+	"go.probo.inc/probo/pkg/tag"
 	"go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/thirdparty"
 )
@@ -63,6 +65,7 @@ func NewMux(
 	managementSvc *management.Service,
 	certManagerSvc *certmanager.Service,
 	resourceAliasSvc *resourcealias.Service,
+	tagSvc *tag.Service,
 	thirdPartySvc *thirdparty.Service,
 	iamSvc *iam.Service,
 	accessReviewSvc *accessreview.Service,
@@ -81,6 +84,7 @@ func NewMux(
 	customDomainCname string,
 	slackbotInstallations *slackchannel.InstallationService,
 	slackDestinations SlackDestinations,
+	feedback FeedbackConfig,
 ) *chi.Mux {
 	logger = logger.Named("mcp.v1")
 
@@ -91,6 +95,7 @@ func NewMux(
 		management:            managementSvc,
 		certManager:           certManagerSvc,
 		resourceAlias:         resourceAliasSvc,
+		tag:                   tagSvc,
 		thirdPartySvc:         thirdPartySvc,
 		iamSvc:                iamSvc,
 		accessReview:          accessReviewSvc,
@@ -110,6 +115,8 @@ func NewMux(
 		customDomainCname:     customDomainCname,
 		slackbotInstallations: slackbotInstallations,
 		slackDestinations:     slackDestinations,
+		feedback:              feedback,
+		feedbackClient:        feedback.client(logger),
 	}
 
 	// Tools are registered once for this process, so clients should not
@@ -125,6 +132,8 @@ func NewMux(
 			},
 		}),
 	)
+
+	configureFeedbackTool(mcpServer, feedback)
 
 	mcpServer.AddReceivingMiddleware(mcpx.LoggingMiddleware(logger))
 	mcpServer.AddReceivingMiddleware(mcpx.ListToolsCacheMiddleware(5 * time.Minute))
@@ -149,7 +158,11 @@ func NewMux(
 			baseURL.WithPath(oauth2.MCPProtectedResourceMetadataPath).MustString(),
 		),
 	)
-	r.Handle("/", handler)
+	r.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		ctx := gqlx.WithHTTPContext(req.Context(), w, req)
+
+		handler.ServeHTTP(w, req.WithContext(ctx))
+	}))
 
 	logger.Info("MCP server initialized successfully")
 

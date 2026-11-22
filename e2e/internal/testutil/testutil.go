@@ -25,6 +25,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"os"
 	"os/exec"
@@ -35,11 +36,18 @@ import (
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/bootstrap"
+	"go.probo.inc/probo/pkg/crypto/keys"
+	"go.probo.inc/probo/pkg/crypto/pem"
 )
 
 var (
 	testEnv   *TestEnv
 	setupOnce sync.Once
+
+	// Every probod started by this test binary shares one database and so one
+	// certificate queue. A row claimed by one process is polled by another,
+	// and the CA rejects an order requested by a different account with 401.
+	acmeAccountKey = sync.OnceValues(generateACMEAccountKey)
 )
 
 type TestEnv struct {
@@ -54,12 +62,16 @@ type TestEnv struct {
 // configOptions tunes the generated probod config. Zero values keep the
 // default shared e2e suite settings.
 type configOptions struct {
-	DisableSignup  bool
-	APIAddr        string
-	BaseURL        string
-	MetricsAddr    string
-	TrustHTTPAddr  string
-	TrustHTTPSAddr string
+	DisableSignup bool
+	// UseBuiltInRateLimit keeps the built-in 10/60 budget. The shared suite
+	// raises the global default because every test comes from one client address.
+	UseBuiltInRateLimit bool
+	APIAddr             string
+	BaseURL             string
+	MetricsAddr         string
+	TrustHTTPAddr       string
+	TrustHTTPSAddr      string
+	EnableOIDC          bool
 }
 
 type switchableWriter struct {
@@ -294,6 +306,11 @@ func generateConfig(opts configOptions) (string, error) {
 		return "", fmt.Errorf("generate oauth2 signing key: %w", err)
 	}
 
+	acmeKey, err := acmeAccountKey()
+	if err != nil {
+		return "", fmt.Errorf("generate acme account key: %w", err)
+	}
+
 	identityFederationSigningKey, err := bootstrap.GenerateOAuth2SigningKey()
 	if err != nil {
 		return "", fmt.Errorf("generate identity federation signing key: %w", err)
@@ -425,6 +442,27 @@ func generateConfig(opts configOptions) (string, error) {
 		"PROBOD_CUSTOM_DOMAINS_CNAME_TARGET": "custom.test.getprobo.com",
 		"PROBOD_ACME_DIRECTORY":              "https://localhost:9000/acme/acme/directory",
 		"PROBOD_ACME_EMAIL":                  "admin@test.getprobo.com",
+		"PROBOD_ACME_ACCOUNT_KEY":            acmeKey,
+	}
+
+	// Parallel tests share one client address, so the built-in window would
+	// reject ordinary sign-ups. The limit is the largest integer the YAML
+	// config can store: a bigger value is rounded past MaxInt and rejected.
+	// The window is the largest second count that fits in a time.Duration.
+	// A caller opts into 10/60 instead.
+	if !opts.UseBuiltInRateLimit {
+		env["PROBOD_API_GRAPHQL_RATE_LIMIT"] = fmt.Sprintf(
+			`{"default":{"limit":%d,"window":%d}}`,
+			1<<53-1,
+			math.MaxInt64/int64(time.Second),
+		)
+	}
+
+	if opts.EnableOIDC {
+		env["PROBOD_AUTH_GOOGLE_CLIENT_ID"] = "e2e-google-client-id"
+		env["PROBOD_AUTH_GOOGLE_CLIENT_SECRET"] = "e2e-google-client-secret"
+		env["PROBOD_AUTH_MICROSOFT_CLIENT_ID"] = "e2e-microsoft-client-id"
+		env["PROBOD_AUTH_MICROSOFT_CLIENT_SECRET"] = "e2e-microsoft-client-secret"
 	}
 
 	builder := bootstrap.NewBuilder(bootstrap.NewResolver(func(key string) string {
@@ -452,4 +490,18 @@ func generateConfig(opts configOptions) (string, error) {
 	}
 
 	return path, nil
+}
+
+func generateACMEAccountKey() (string, error) {
+	key, err := keys.Generate(keys.TypeEC256)
+	if err != nil {
+		return "", fmt.Errorf("cannot generate key: %w", err)
+	}
+
+	keyPEM, err := pem.EncodePrivateKey(key)
+	if err != nil {
+		return "", fmt.Errorf("cannot encode key: %w", err)
+	}
+
+	return string(keyPEM), nil
 }

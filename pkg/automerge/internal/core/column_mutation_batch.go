@@ -104,16 +104,23 @@ func newColumnMutationBatch(
 		)
 	}
 
-	touched := make(map[opset.ObjectID]struct{})
+	// incoming groups the rows each touched object gains. Grouping once keeps
+	// a commit that touches many objects from rescanning every change per object.
+	incoming := make(map[opset.ObjectID][]opset.OpID)
 
 	for _, change := range changes {
 		for _, operation := range change.Operations {
-			touched[operation.Object] = struct{}{}
+			identifiers := incoming[operation.Object]
+			if operation.Action != opset.ActionDelete {
+				identifiers = append(identifiers, operation.ID)
+			}
+
+			incoming[operation.Object] = identifiers
 		}
 	}
 
-	objects := make([]opset.ObjectID, 0, len(touched))
-	for object := range touched {
+	objects := make([]opset.ObjectID, 0, len(incoming))
+	for object := range incoming {
 		objects = append(objects, object)
 	}
 
@@ -191,7 +198,7 @@ func newColumnMutationBatch(
 			state,
 			object,
 			current,
-			changes,
+			incoming[object],
 		)
 		if !ok {
 			return nil, fmt.Errorf("cannot order directly mutated object %v", object)
@@ -545,6 +552,8 @@ func directDivergedSequenceInsertion(
 		index = anchorRow + 1
 	}
 
+	walk := newSequenceBranchWalk(first)
+
 	for index < span.end {
 		runtimeMetrics.directPlanningRows.Add(1)
 
@@ -554,7 +563,7 @@ func directDivergedSequenceInsertion(
 			continue
 		}
 
-		root, descendant := directSequenceBranchRoot(state, candidate, first)
+		root, descendant := walk.branch(candidate)
 		if !descendant || root.Compare(first.ID) < 0 {
 			break
 		}
@@ -581,33 +590,56 @@ func directDivergedSequenceInsertion(
 	}, true
 }
 
-func directSequenceBranchRoot(
-	state *State,
-	candidate opset.Operation,
-	incoming opset.Operation,
-) (opset.OpID, bool) {
-	root := candidate
-	for {
-		if incoming.Key.IsHead {
-			if root.Key.IsHead {
-				return root.ID, true
-			}
-		} else if root.Key.Element != nil &&
-			*root.Key.Element == *incoming.Key.Element {
-			return root.ID, true
-		}
+// sequenceBranchWalk finds, for the insertions that follow an incoming
+// insertion's anchor in document order, the branch of the anchor each one
+// belongs to. A branch is a direct child of the anchor together with its
+// descendants.
+//
+// RGA keeps every subtree contiguous right after its root, so a row belongs to
+// the anchor's subtree exactly when its parent is the anchor or a row already
+// walked. Remembering the branch of every walked row resolves each row from its
+// parent alone. Following each row's parent chain back to the anchor instead
+// costs the depth of the text for every row, which made applying a remote
+// change to a long text quadratic.
+type sequenceBranchWalk struct {
+	incoming opset.Operation
+	branches map[opset.OpID]opset.OpID
+}
 
-		if root.Key.Element == nil {
+func newSequenceBranchWalk(incoming opset.Operation) *sequenceBranchWalk {
+	return &sequenceBranchWalk{incoming: incoming}
+}
+
+// branch returns the ID of the anchor's direct child that candidate descends
+// from, and false once candidate lies outside the anchor's subtree. Candidates
+// must be passed in document order, starting with the row after the anchor.
+func (w *sequenceBranchWalk) branch(candidate opset.Operation) (opset.OpID, bool) {
+	var branch opset.OpID
+
+	switch {
+	case w.incoming.Key.IsHead && candidate.Key.IsHead:
+		branch = candidate.ID
+	case candidate.Key.Element == nil:
+		return opset.OpID{}, false
+	case !w.incoming.Key.IsHead &&
+		*candidate.Key.Element == *w.incoming.Key.Element:
+		branch = candidate.ID
+	default:
+		parent, ok := w.branches[*candidate.Key.Element]
+		if !ok {
 			return opset.OpID{}, false
 		}
 
-		parent, ok := state.operation(*root.Key.Element)
-		if !ok || !parent.Insert || parent.Object != incoming.Object {
-			return opset.OpID{}, false
-		}
-
-		root = parent
+		branch = parent
 	}
+
+	if w.branches == nil {
+		w.branches = make(map[opset.OpID]opset.OpID)
+	}
+
+	w.branches[candidate.ID] = branch
+
+	return branch, true
 }
 
 func coalesceDirectInsertions(
@@ -618,25 +650,41 @@ func coalesceDirectInsertions(
 	}
 
 	coalesced := make([]storage.SnapshotOperationSplice, 0, len(splices))
-	for _, splice := range splices {
-		last := len(coalesced) - 1
-		if last >= 0 &&
-			coalesced[last].Index == splice.Index &&
-			coalesced[last].DeleteCount == 0 &&
-			splice.DeleteCount == 0 {
-			operations := make(
-				[]opset.Operation,
-				0,
-				len(splice.Operations)+len(coalesced[last].Operations),
-			)
-			operations = append(operations, splice.Operations...)
-			operations = append(operations, coalesced[last].Operations...)
-			coalesced[last].Operations = operations
 
-			continue
+	for start := 0; start < len(splices); {
+		// A run is an insertion followed by further insertions at the same
+		// row. Each later insertion lands ahead of the earlier ones, so the
+		// merged rows are the run's operations in reverse splice order.
+		end := start + 1
+		if splices[start].DeleteCount == 0 {
+			for end < len(splices) &&
+				splices[end].Index == splices[start].Index &&
+				splices[end].DeleteCount == 0 {
+				end++
+			}
 		}
 
-		coalesced = append(coalesced, splice)
+		merged := splices[start]
+
+		if end-start > 1 {
+			total := 0
+			for _, splice := range splices[start:end] {
+				total += len(splice.Operations)
+			}
+
+			// Sizing the run once keeps a seed that inserts thousands of
+			// objects at one row from re-copying the rows gathered so far for
+			// every object.
+			operations := make([]opset.Operation, 0, total)
+			for _, splice := range slices.Backward(splices[start:end]) {
+				operations = append(operations, splice.Operations...)
+			}
+
+			merged.Operations = operations
+		}
+
+		coalesced = append(coalesced, merged)
+		start = end
 	}
 
 	return coalesced
@@ -689,7 +737,7 @@ func directObjectReplacement(
 	state *State,
 	object opset.ObjectID,
 	current []opset.Operation,
-	changes []*opset.Change,
+	incoming []opset.OpID,
 ) ([]opset.Operation, bool) {
 	mapObject := object.IsRoot
 	if !mapObject {
@@ -725,12 +773,8 @@ func directObjectReplacement(
 		identifiers[operation.ID] = struct{}{}
 	}
 
-	for _, change := range changes {
-		for _, operation := range change.Operations {
-			if operation.Object == object && operation.Action != opset.ActionDelete {
-				identifiers[operation.ID] = struct{}{}
-			}
-		}
+	for _, identifier := range incoming {
+		identifiers[identifier] = struct{}{}
 	}
 
 	replacement := make([]opset.Operation, 0, len(identifiers))
@@ -809,7 +853,7 @@ func directActorTable(
 	}
 
 	add := func(actor opset.ActorID) {
-		if actor != "" {
+		if !actor.IsZero() {
 			seen[actor] = struct{}{}
 		}
 	}
@@ -963,9 +1007,13 @@ func (b *columnMutationBatch) apply(columns *columnarState) (*columnarState, err
 
 	next.heads = append([]opset.ChangeHash(nil), b.heads...)
 	next.operations = operations
-	next.operationRows = rows
+	next.operationRows = rows.compacted(operations)
 	next.nonCanonicalOperations = columns.nonCanonicalOperations
 	clonedNonCanonicalOperations := false
+
+	// ownedObjects names the objects whose non-canonical list this batch has
+	// already copied, and may therefore append to in place.
+	var ownedObjects map[opset.ObjectID]struct{}
 
 	for _, change := range b.appendedChanges {
 		for _, operation := range change.Operations {
@@ -980,7 +1028,34 @@ func (b *columnMutationBatch) apply(columns *columnarState) (*columnarState, err
 				)
 				maps.Copy(next.nonCanonicalOperations, columns.nonCanonicalOperations)
 
+				next.nonCanonicalObjects = make(
+					map[opset.ObjectID][]opset.OpID,
+					len(columns.nonCanonicalObjects)+1,
+				)
+				maps.Copy(next.nonCanonicalObjects, columns.nonCanonicalObjects)
+
 				clonedNonCanonicalOperations = true
+			}
+
+			if _, exists := next.nonCanonicalOperations[operation.ID]; !exists {
+				identifiers := next.nonCanonicalObjects[operation.Object]
+
+				// The previous columns still read the list they hold, so it
+				// is copied before the first append of the batch. Later
+				// appends to the same object extend that copy.
+				if _, owned := ownedObjects[operation.Object]; !owned {
+					if ownedObjects == nil {
+						ownedObjects = make(map[opset.ObjectID]struct{})
+					}
+
+					ownedObjects[operation.Object] = struct{}{}
+					identifiers = slices.Clone(identifiers)
+				}
+
+				next.nonCanonicalObjects[operation.Object] = append(
+					identifiers,
+					operation.ID,
+				)
 			}
 
 			next.nonCanonicalOperations[operation.ID] = cloneOperation(operation)

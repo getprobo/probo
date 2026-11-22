@@ -102,8 +102,19 @@ func objectIDString(object opset.ObjectID) string {
 	return fmt.Sprintf(
 		"%d@%s",
 		object.OpID.Counter,
-		hex.EncodeToString([]byte(object.OpID.Actor)),
+		object.OpID.Actor.String(),
 	)
+}
+
+// ObjectID returns the patch identifier of the object behind handle, the value
+// reported as Obj on patches that target it.
+func (b *Engine) ObjectID(handle uint32) (string, error) {
+	object, err := b.object(handle)
+	if err != nil {
+		return "", err
+	}
+
+	return objectIDString(object), nil
 }
 
 func patchValueForOperation(state *State, operation opset.Operation) (patchValueOut, error) {
@@ -816,9 +827,8 @@ func markCoveredBySplice(mark markPatchOut, patches []patchOut) bool {
 func diffMarkPatches(source, target *State, object opset.ObjectID) ([]markPatchOut, error) {
 	begins := make([]opset.Operation, 0)
 
-	target.eachOperation(func(operation opset.Operation) bool {
+	target.eachObjectOperation(object, func(operation opset.Operation) bool {
 		if operation.Action != opset.ActionMark ||
-			operation.Object != object ||
 			operation.MarkName == nil {
 			return true
 		}
@@ -1345,7 +1355,7 @@ func diffSequencePatches(
 					Conflict: len(target.visibleSequenceElementOperations(targetValues[j].Element)) > 1,
 				},
 			)
-			position++
+			position += width(targetValues[j])
 			j++
 		}
 
@@ -1473,7 +1483,7 @@ func parseObjectID(identifier string) (opset.ObjectID, bool) {
 	return opset.ObjectID{
 		OpID: opset.OpID{
 			Counter: counter,
-			Actor:   opset.ActorID(raw),
+			Actor:   opset.MakeActorID(string(raw)),
 		},
 	}, true
 }

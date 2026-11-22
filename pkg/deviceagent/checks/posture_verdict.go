@@ -21,7 +21,6 @@
 package checks
 
 import (
-	"strconv"
 	"strings"
 )
 
@@ -34,26 +33,18 @@ func darwinScreenLockModeStatus(mode string) Status {
 	return StatusPass
 }
 
-// A non-negative length is a reading. Only a missing PASS_MIN_LEN is a failure.
-func linuxPasswordPolicyFromDefs(minLen, maxDays string) Result {
-	ev := map[string]any{
-		"pass_min_len":  minLen,
-		"pass_max_days": maxDays,
-	}
-	if minLen == "" {
-		ev["parse_error"] = "PASS_MIN_LEN not set"
-		return fail(ev)
+// A minimum of linuxPasswordMinLen or more is a policy. Shorter settings
+// and an explicit zero are failures. An unread length stays unknown.
+func linuxPasswordPolicyVerdict(length int, known bool) Status {
+	if !known || length < 0 {
+		return StatusUnknown
 	}
 
-	minLenValue, err := strconv.Atoi(minLen)
-	if err != nil || minLenValue < 0 {
-		ev["parse_error"] = "invalid PASS_MIN_LEN value"
-		return unknown(ev)
+	if length < linuxPasswordMinLen {
+		return StatusFail
 	}
 
-	ev["pass_min_len_value"] = minLenValue
-
-	return pass(ev)
+	return StatusPass
 }
 
 func linuxRemoteLoginStatus(state string) Status {

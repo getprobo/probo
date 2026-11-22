@@ -29,9 +29,14 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
+	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
+)
+
+var (
+	_ Searchable = (*RightsRequest)(nil)
 )
 
 type (
@@ -66,6 +71,15 @@ func (rr *RightsRequest) CursorKey(field RightsRequestOrderField) page.CursorKey
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", field))
+}
+
+func (rr RightsRequest) SearchText() []string {
+	return []string{
+		ref.UnrefOrZero(rr.DataSubject),
+		ref.UnrefOrZero(rr.Contact),
+		ref.UnrefOrZero(rr.Details),
+		ref.UnrefOrZero(rr.ActionTaken),
+	}
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
@@ -156,6 +170,62 @@ LIMIT 1;
 	}
 
 	*rr = request
+
+	return nil
+}
+
+func (rrs *RightsRequests) LoadByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	rightsRequestIDs []gid.GID,
+) error {
+	if len(rightsRequestIDs) == 0 {
+		*rrs = nil
+		return nil
+	}
+
+	q := `
+SELECT
+	id,
+	organization_id,
+	compliance_portal_id,
+	request_type,
+	request_state,
+	data_subject,
+	contact,
+	details,
+	deadline,
+	action_taken,
+	created_at,
+	updated_at
+FROM
+	rights_requests
+WHERE
+	%s
+	AND id = ANY(@rights_request_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"rights_request_ids": rightsRequestIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query rights requests: %w", err)
+	}
+
+	items, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[RightsRequest])
+	if err != nil {
+		return fmt.Errorf("cannot collect rights requests: %w", err)
+	}
+
+	*rrs = items
+
+	if len(items) != len(gid.NewSet(rightsRequestIDs...)) {
+		return ErrResourceNotFound
+	}
 
 	return nil
 }

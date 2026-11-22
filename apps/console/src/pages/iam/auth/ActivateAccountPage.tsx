@@ -32,7 +32,7 @@ import { useNavigate, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { ActivateAccountPageMutation$data, ActivateAccountPageMutation } from "#/__generated__/iam/ActivateAccountPageMutation.graphql";
-import { useSafeContinueUrl } from "#/hooks/useSafeContinueUrl";
+import { useSafeContinueURL } from "#/hooks/useSafeContinueURL";
 
 const activateAccountMutation = graphql`
   mutation ActivateAccountPageMutation(
@@ -50,7 +50,7 @@ export default function ActivateAccountPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const submittedRef = useRef(false);
-  const safeContinueUrl = useSafeContinueUrl();
+  const safeContinueUrl = useSafeContinueURL();
   const token = searchParams.get("token")?.trim() ?? "";
 
   usePageTitle(t("activateAccountPage.pageTitle"));

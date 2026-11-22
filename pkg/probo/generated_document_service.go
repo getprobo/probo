@@ -4101,22 +4101,44 @@ func riskImpactLabel(v int) string {
 	}
 }
 
-func riskSeverityLabel(score int) string {
-	return riskSeverityLabelForSize(score, 5, 5)
-}
-
-func riskSeverityLabelForSize(score, rows, cols int) string {
-	max := rows * cols
-	if max <= 0 {
-		max = 25
+func riskScoreLevelLabel(score int, levels coredata.ScoreLevels) string {
+	level := levels.LevelFor(score)
+	if level == "" {
+		return ""
 	}
 
-	switch {
-	case score*25 >= max*15:
+	return scoreLevelName(level)
+}
+
+func formatScoreBands(levels coredata.ScoreLevels, maxScore int) string {
+	if maxScore < 1 {
+		maxScore = 1
+	}
+
+	parts := make([]string, 0, len(levels))
+	for i, level := range levels {
+		upper := maxScore
+		if i+1 < len(levels) {
+			upper = levels[i+1].MinScore - 1
+		}
+
+		parts = append(parts, fmt.Sprintf("%s (%s)", scoreLevelName(level.Level), formatScoreBand(level.MinScore, upper)))
+	}
+
+	return strings.Join(parts, ", ")
+}
+
+func formatScoreBand(minScore, maxScore int) string {
+	return fmt.Sprintf("%d-%d", minScore, maxScore)
+}
+
+func scoreLevelName(level coredata.RiskScoreLevel) string {
+	switch level {
+	case coredata.RiskScoreLevelCritical:
 		return "Critical"
-	case score*25 >= max*10:
+	case coredata.RiskScoreLevelHigh:
 		return "High"
-	case score*25 >= max*5:
+	case coredata.RiskScoreLevelMedium:
 		return "Medium"
 	default:
 		return "Low"
@@ -4427,6 +4449,8 @@ func (s *GeneratedDocumentService) buildRiskAnalysisDocumentData(
 	}
 
 	matrix := buildRiskAnalysisMatrix(riskAnalysis.MatrixRows, riskAnalysis.MatrixCols, matrixCells)
+	maxScore := riskAnalysis.MatrixRows * riskAnalysis.MatrixCols
+	scoreBands := formatScoreBands(riskAnalysis.ScoreLevels, maxScore)
 
 	if len(treatmentPlans) == 0 {
 		return docgen.RiskAnalysisData{
@@ -4436,6 +4460,8 @@ func (s *GeneratedDocumentService) buildRiskAnalysisDocumentData(
 			Period:           sanitizeTrackerCell(formatRiskAnalysisPeriod(riskAnalysis.PeriodStart, riskAnalysis.PeriodEnd)),
 			Description:      description,
 			Matrix:           matrix,
+			MaxScore:         maxScore,
+			ScoreBands:       scoreBands,
 			TotalPlans:       0,
 			Diagrams:         diagrams,
 		}, nil
@@ -4521,10 +4547,10 @@ func (s *GeneratedDocumentService) buildRiskAnalysisDocumentData(
 			Owner:              sanitizeTrackerCell(lookupProfileName(profileMap, &ownerID)),
 			InherentLikelihood: sanitizeTrackerCell(formatScoreCell(&inherentLikelihood, riskLikelihoodLabel(inherentLikelihood))),
 			InherentImpact:     sanitizeTrackerCell(formatScoreCell(&inherentImpact, riskImpactLabel(inherentImpact))),
-			InherentRiskScore:  sanitizeTrackerCell(formatScoreCell(&inherentRiskScore, riskSeverityLabelForSize(inherentRiskScore, riskAnalysis.MatrixRows, riskAnalysis.MatrixCols))),
+			InherentRiskScore:  sanitizeTrackerCell(formatScoreCell(&inherentRiskScore, riskScoreLevelLabel(inherentRiskScore, riskAnalysis.ScoreLevels))),
 			ResidualLikelihood: sanitizeTrackerCell(formatScoreCell(&residualLikelihood, riskLikelihoodLabel(residualLikelihood))),
 			ResidualImpact:     sanitizeTrackerCell(formatScoreCell(&residualImpact, riskImpactLabel(residualImpact))),
-			ResidualRiskScore:  sanitizeTrackerCell(formatScoreCell(&residualRiskScore, riskSeverityLabelForSize(residualRiskScore, riskAnalysis.MatrixRows, riskAnalysis.MatrixCols))),
+			ResidualRiskScore:  sanitizeTrackerCell(formatScoreCell(&residualRiskScore, riskScoreLevelLabel(residualRiskScore, riskAnalysis.ScoreLevels))),
 			InternalControls:   internalControlsByPlan[tp.ID],
 		})
 	}
@@ -4536,6 +4562,8 @@ func (s *GeneratedDocumentService) buildRiskAnalysisDocumentData(
 		Period:           sanitizeTrackerCell(formatRiskAnalysisPeriod(riskAnalysis.PeriodStart, riskAnalysis.PeriodEnd)),
 		Description:      description,
 		Matrix:           matrix,
+		MaxScore:         maxScore,
+		ScoreBands:       scoreBands,
 		TotalPlans:       len(treatmentPlans),
 		Rows:             rows,
 		Diagrams:         diagrams,
@@ -4965,6 +4993,12 @@ func (s *GeneratedDocumentService) publishOrRequestApproval(
 	document.Content = content
 	document.UpdatedAt = now
 
+	// Generating a version replaces the live document. An open suggestion
+	// has to be resolved first, the same rule as publishing an authored one.
+	if err := s.svc.Documents.collaboration.EnsureNoOpenSuggestions(ctx, tx, scope, document.ID); err != nil {
+		return err
+	}
+
 	if err := s.svc.Documents.collaboration.PutContent(
 		ctx,
 		tx,
@@ -4977,6 +5011,17 @@ func (s *GeneratedDocumentService) publishOrRequestApproval(
 
 	if err := document.Update(ctx, tx, scope); err != nil {
 		return fmt.Errorf("cannot update live document: %w", err)
+	}
+
+	if err := coredata.UpsertSearchResource(
+		ctx,
+		tx,
+		document.ID,
+		document.OrganizationID,
+		document.Title,
+		document.SearchText(),
+	); err != nil {
+		return fmt.Errorf("cannot sync search: %w", err)
 	}
 
 	if err := document.UpdateContent(ctx, tx, scope); err != nil {

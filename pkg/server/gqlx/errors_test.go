@@ -100,3 +100,14 @@ func TestMapError(t *testing.T) {
 		assert.Equal(t, "An internal server error occurred. Please try again later.", gqlErr.Message)
 	})
 }
+
+func TestIsNotFound(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	assert.True(t, gqlx.IsNotFound(gqlx.NotFoundf(ctx, "resource not found")))
+	assert.True(t, gqlx.IsNotFound(fmt.Errorf("wrapped: %w", gqlx.NotFoundf(ctx, "resource not found"))))
+	assert.False(t, gqlx.IsNotFound(gqlx.Forbiddenf(ctx, "forbidden")))
+	assert.False(t, gqlx.IsNotFound(errors.New("plain error")))
+}

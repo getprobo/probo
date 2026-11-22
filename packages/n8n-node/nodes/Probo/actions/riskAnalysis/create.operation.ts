@@ -22,6 +22,7 @@ import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n
 import { organizationLocator } from '../../locators';
 import { proboApiRequest } from '../../GenericFunctions';
 import { parseRiskAnalysisMatrixSize, riskAnalysisMatrixSizeOptions } from './matrixSize';
+import { resolveCreateScoreLevels, scoreLevelsProperty, scoreLevelsSelection } from './scoreLevels';
 
 export const description: INodeProperties[] = [
 	organizationLocator({
@@ -58,6 +59,9 @@ export const description: INodeProperties[] = [
 		description: 'Likelihood/impact matrix size (3×3, 4×4, or 5×5)',
 		required: true,
 	},
+	scoreLevelsProperty('3x3', 3, 3),
+	scoreLevelsProperty('4x4', 4, 4),
+	scoreLevelsProperty('5x5', 5, 5),
 	{
 		displayName: 'Additional Fields',
 		name: 'additionalFields',
@@ -106,6 +110,8 @@ export async function execute(
 	const organizationId = this.getNodeParameter('organizationId', itemIndex, '', { extractValue: true }) as string;
 	const name = this.getNodeParameter('name', itemIndex) as string;
 	const matrixSize = this.getNodeParameter('matrixSize', itemIndex) as string;
+	const scoreLevels = this.getNodeParameter('scoreLevels', itemIndex) as unknown;
+	const matrix = parseRiskAnalysisMatrixSize(matrixSize);
 	const additionalFields = this.getNodeParameter('additionalFields', itemIndex, {}) as {
 		description?: string;
 		periodStart?: string;
@@ -128,6 +134,7 @@ export async function execute(
 							rows
 							cols
 						}
+						${scoreLevelsSelection}
 						createdAt
 						updatedAt
 					}
@@ -139,7 +146,8 @@ export async function execute(
 	const input: Record<string, unknown> = {
 		organizationId,
 		name,
-		matrixSize: parseRiskAnalysisMatrixSize(matrixSize),
+		matrixSize: matrix,
+		scoreLevels: resolveCreateScoreLevels(scoreLevels, matrix.rows, matrix.cols),
 	};
 	if (additionalFields.description) input.description = additionalFields.description;
 	if (additionalFields.periodStart || additionalFields.periodEnd) {

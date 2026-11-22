@@ -32,3 +32,17 @@ func FormatTime(raw string) string {
 
 	return t.Local().Format("Jan 02, 2006 15:04 MST")
 }
+
+// FormatUTCDay parses an RFC3339 timestamp and returns its UTC calendar
+// day. If parsing fails it returns the raw string.
+func FormatUTCDay(raw string) string {
+	parsed, err := time.Parse(time.RFC3339Nano, raw)
+	if err != nil {
+		parsed, err = time.Parse(time.RFC3339, raw)
+		if err != nil {
+			return raw
+		}
+	}
+
+	return parsed.UTC().Format(time.DateOnly)
+}

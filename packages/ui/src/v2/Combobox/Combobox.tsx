@@ -25,12 +25,21 @@ import { ComboboxInputNodeProvider } from "./context";
 
 // Root of the combobox (over Base UI). Controlled the same way as Base UI's
 // Combobox: `value` / `onValueChange`, `multiple`, `items`. Generic over the
-// option value type.
-export type ComboboxProps<Value, Multiple extends boolean | undefined = false>
-  = BaseCombobox.Root.Props<Value, Multiple>;
+// option value type. `Item` is the leaf row the filter receives (defaults to
+// `Value`); grouped lists still pass groups through `items`.
+export type ComboboxProps<
+  Value,
+  Multiple extends boolean | undefined = false,
+  Item = Value,
+>
+  = BaseCombobox.Root.Props<Value, Multiple, Item>;
 
-export function Combobox<Value, Multiple extends boolean | undefined = false>(
-  props: ComboboxProps<Value, Multiple>,
+export function Combobox<
+  Value,
+  Multiple extends boolean | undefined = false,
+  Item = Value,
+>(
+  props: ComboboxProps<Value, Multiple, Item>,
 ) {
   const [inputNode, setInputNode] = useState<HTMLInputElement | null>(null);
 

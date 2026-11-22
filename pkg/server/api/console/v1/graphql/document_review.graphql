@@ -72,6 +72,80 @@ enum DocumentSuggestionStatus
         )
 }
 
+enum DocumentSuggestionTableOperation
+    @goModel(
+        model: "go.probo.inc/probo/pkg/collaboration.TableSuggestionOperation"
+    ) {
+    INSERT_ROW
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/collaboration.TableSuggestionInsertRow"
+        )
+    DELETE_ROW
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/collaboration.TableSuggestionDeleteRow"
+        )
+    INSERT_COLUMN
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/collaboration.TableSuggestionInsertColumn"
+        )
+    DELETE_COLUMN
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/collaboration.TableSuggestionDeleteColumn"
+        )
+    INSERT_TABLE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/collaboration.TableSuggestionInsertTable"
+        )
+    DELETE_TABLE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/collaboration.TableSuggestionDeleteTable"
+        )
+}
+
+enum DocumentSuggestionFormatMark
+    @goModel(
+        model: "go.probo.inc/probo/pkg/collaboration.FormatSuggestionMark"
+    ) {
+    BOLD
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/collaboration.FormatSuggestionBold"
+        )
+    ITALIC
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/collaboration.FormatSuggestionItalic"
+        )
+    UNDERLINE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/collaboration.FormatSuggestionUnderline"
+        )
+    STRIKE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/collaboration.FormatSuggestionStrike"
+        )
+    CODE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/collaboration.FormatSuggestionCode"
+        )
+    LINK
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/collaboration.FormatSuggestionLink"
+        )
+}
+
+enum DocumentSuggestionFormatAction
+    @goModel(
+        model: "go.probo.inc/probo/pkg/collaboration.FormatSuggestionAction"
+    ) {
+    ADD
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/collaboration.FormatSuggestionAdd"
+        )
+    REMOVE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/collaboration.FormatSuggestionRemove"
+        )
+}
+
 enum DocumentSuggestionOrderField
     @goModel(
         model: "go.probo.inc/probo/pkg/coredata.DocumentSuggestionOrderField"
@@ -199,9 +273,55 @@ extend type Mutation {
     reopenDocumentCommentThread(
         input: ReopenDocumentCommentThreadInput!
     ): ReopenDocumentCommentThreadPayload!
+    """
+    Allocate a redline ID. Pass quote and replacement to mark that text in the
+    document: the quote is a deletion, the replacement is an insertion, and the
+    rest of the document is left unchanged. Pass comment to attach a plain-text
+    note. Without quote, only an ID is allocated.
+    """
     startDocumentSuggestion(
         input: StartDocumentSuggestionInput!
     ): StartDocumentSuggestionPayload!
+    """
+    Add another redline to an open suggestion. The quote is a deletion and the
+    replacement is an insertion under the same suggestion. The quote must not
+    overlap a redline that is already in the document.
+    """
+    addDocumentSuggestionChange(
+        input: AddDocumentSuggestionChangeInput!
+    ): AddDocumentSuggestionChangePayload!
+    addDocumentSuggestionTableChange(
+        input: AddDocumentSuggestionTableChangeInput!
+    ): AddDocumentSuggestionTableChangePayload!
+    addDocumentSuggestionFormatChange(
+        input: AddDocumentSuggestionFormatChangeInput!
+    ): AddDocumentSuggestionFormatChangePayload!
+    """
+    Replace quoted text. APPLY writes it. SUGGEST stores it on an open suggestion.
+    An open suggestion elsewhere in the document does not block APPLY.
+    """
+    changeDocumentText(
+        input: ChangeDocumentTextInput!
+    ): ChangeDocumentPayload!
+    """
+    Add or remove bold, italic, underline, strikethrough, code, or a link.
+    """
+    changeDocumentFormat(
+        input: ChangeDocumentFormatInput!
+    ): ChangeDocumentPayload!
+    """
+    Insert or delete a table row, column, or table.
+    """
+    changeDocumentTable(
+        input: ChangeDocumentTableInput!
+    ): ChangeDocumentPayload!
+    """
+    Change a heading, list, quote, code block, divider, image, file, or mention.
+    Do not send ProseMirror for these changes.
+    """
+    changeDocumentBlock(
+        input: ChangeDocumentBlockInput!
+    ): ChangeDocumentPayload!
     acceptDocumentSuggestion(
         input: AcceptDocumentSuggestionInput!
     ): AcceptDocumentSuggestionPayload!
@@ -244,6 +364,59 @@ input ReopenDocumentCommentThreadInput {
 
 input StartDocumentSuggestionInput {
     documentId: ID!
+    "Text to replace. The match is the editor selection."
+    quote: String
+    "Suggested text. Empty deletes the quote. Required when quote is set."
+    replacement: String
+    "Plain-text note attached to the redline."
+    comment: String
+    "Zero-based occurrence of quote. Defaults to the first match."
+    quoteOccurrence: Int
+}
+
+input AddDocumentSuggestionChangeInput {
+    suggestionId: ID!
+    "Text to replace. The match is the editor selection."
+    quote: String!
+    "Suggested text. Empty deletes the quote."
+    replacement: String!
+    "Zero-based occurrence of quote. Defaults to the first match."
+    quoteOccurrence: Int
+}
+
+input AddDocumentSuggestionTableChangeInput {
+    suggestionId: ID!
+    operation: DocumentSuggestionTableOperation!
+    """
+    Text inside a cell of the row, column, or table to change. For
+    INSERT_TABLE, text of the top-level block the new table goes beside.
+    """
+    quote: String!
+    "Zero-based occurrence of quote. Defaults to the first match."
+    quoteOccurrence: Int
+    "Insert before the quoted row, column, or block instead of after it."
+    before: Boolean
+    """
+    Text of the new row's cells left to right, or the new column's cells top
+    to bottom. Omit for empty cells.
+    """
+    cells: [String!]
+    "Rows of the new table for INSERT_TABLE, each with the same cell count."
+    rows: [[String!]!]
+    "Make the new table's first row a header row."
+    headerRow: Boolean
+}
+
+input AddDocumentSuggestionFormatChangeInput {
+    suggestionId: ID!
+    mark: DocumentSuggestionFormatMark!
+    action: DocumentSuggestionFormatAction!
+    "Text to format. The match is the editor selection."
+    quote: String!
+    "Zero-based occurrence of quote. Defaults to the first match."
+    quoteOccurrence: Int
+    "Link address when mark is LINK and action is ADD."
+    href: String
 }
 
 input AcceptDocumentSuggestionInput {
@@ -252,6 +425,123 @@ input AcceptDocumentSuggestionInput {
 
 input RejectDocumentSuggestionInput {
     suggestionId: ID!
+}
+
+enum DocumentChangeMode
+    @goModel(model: "go.probo.inc/probo/pkg/probo.DocumentChangeMode") {
+    APPLY
+        @goEnum(value: "go.probo.inc/probo/pkg/probo.DocumentChangeModeApply")
+    SUGGEST
+        @goEnum(value: "go.probo.inc/probo/pkg/probo.DocumentChangeModeSuggest")
+}
+
+enum DocumentBlockOperation
+    @goModel(model: "go.probo.inc/probo/pkg/collaboration.BlockOperation") {
+    SET_BLOCK
+        @goEnum(value: "go.probo.inc/probo/pkg/collaboration.BlockSet")
+    INSERT_BLOCK
+        @goEnum(value: "go.probo.inc/probo/pkg/collaboration.BlockInsert")
+    DELETE_BLOCK
+        @goEnum(value: "go.probo.inc/probo/pkg/collaboration.BlockDelete")
+    INSERT_LIST_ITEM
+        @goEnum(value: "go.probo.inc/probo/pkg/collaboration.BlockInsertItem")
+    DELETE_LIST_ITEM
+        @goEnum(value: "go.probo.inc/probo/pkg/collaboration.BlockDeleteItem")
+    NEST_LIST_ITEM
+        @goEnum(value: "go.probo.inc/probo/pkg/collaboration.BlockNest")
+    UNNEST_LIST_ITEM
+        @goEnum(value: "go.probo.inc/probo/pkg/collaboration.BlockUnnest")
+    SET_TASK
+        @goEnum(value: "go.probo.inc/probo/pkg/collaboration.BlockSetTask")
+    INSERT_DIVIDER
+        @goEnum(value: "go.probo.inc/probo/pkg/collaboration.BlockInsertDivider")
+    INSERT_IMAGE
+        @goEnum(value: "go.probo.inc/probo/pkg/collaboration.BlockInsertImage")
+    INSERT_FILE
+        @goEnum(value: "go.probo.inc/probo/pkg/collaboration.BlockInsertFile")
+    INSERT_MENTION
+        @goEnum(value: "go.probo.inc/probo/pkg/collaboration.BlockInsertMention")
+    DELETE_MENTION
+        @goEnum(value: "go.probo.inc/probo/pkg/collaboration.BlockDeleteMention")
+}
+
+enum DocumentBlockKind
+    @goModel(model: "go.probo.inc/probo/pkg/collaboration.BlockKind") {
+    PARAGRAPH
+        @goEnum(value: "go.probo.inc/probo/pkg/collaboration.BlockKindParagraph")
+    HEADING
+        @goEnum(value: "go.probo.inc/probo/pkg/collaboration.BlockKindHeading")
+    BLOCKQUOTE
+        @goEnum(value: "go.probo.inc/probo/pkg/collaboration.BlockKindBlockquote")
+    BULLET_LIST
+        @goEnum(value: "go.probo.inc/probo/pkg/collaboration.BlockKindBulletList")
+    ORDERED_LIST
+        @goEnum(value: "go.probo.inc/probo/pkg/collaboration.BlockKindOrderedList")
+    TASK_LIST
+        @goEnum(value: "go.probo.inc/probo/pkg/collaboration.BlockKindTaskList")
+    CODE_BLOCK
+        @goEnum(value: "go.probo.inc/probo/pkg/collaboration.BlockKindCodeBlock")
+}
+
+input ChangeDocumentTextInput {
+    mode: DocumentChangeMode!
+    "Required when mode is APPLY."
+    documentId: ID
+    "Required when mode is SUGGEST."
+    suggestionId: ID
+    quote: String!
+    replacement: String!
+    quoteOccurrence: Int
+}
+
+input ChangeDocumentFormatInput {
+    mode: DocumentChangeMode!
+    documentId: ID
+    suggestionId: ID
+    mark: DocumentSuggestionFormatMark!
+    action: DocumentSuggestionFormatAction!
+    quote: String!
+    quoteOccurrence: Int
+    href: String
+}
+
+input ChangeDocumentTableInput {
+    mode: DocumentChangeMode!
+    documentId: ID
+    suggestionId: ID
+    operation: DocumentSuggestionTableOperation!
+    quote: String!
+    quoteOccurrence: Int
+    before: Boolean
+    cells: [String!]
+    rows: [[String!]!]
+    headerRow: Boolean
+}
+
+input ChangeDocumentBlockInput {
+    mode: DocumentChangeMode!
+    documentId: ID
+    suggestionId: ID
+    operation: DocumentBlockOperation!
+    "Text that locates the block. Empty inserts into an empty document."
+    quote: String
+    quoteOccurrence: Int
+    "Insert before the quote, or delete the neighboring textless block on that side."
+    before: Boolean
+    block: DocumentBlockKind
+    "Heading level from 1 to 6."
+    level: Int
+    "Code block language. mermaid draws a diagram."
+    language: String
+    text: String
+    items: [String!]
+    checked: Boolean
+    fileId: ID
+    src: String
+    alt: String
+    "Image width as a percentage from 1 to 100."
+    width: Int
+    profileId: ID
 }
 
 type CreateDocumentCommentThreadPayload {
@@ -283,10 +573,27 @@ type StartDocumentSuggestionPayload {
     documentSuggestionEdge: DocumentSuggestionEdge!
 }
 
+type AddDocumentSuggestionChangePayload {
+    documentSuggestion: DocumentSuggestion!
+}
+
+type AddDocumentSuggestionTableChangePayload {
+    documentSuggestion: DocumentSuggestion!
+}
+
+type AddDocumentSuggestionFormatChangePayload {
+    documentSuggestion: DocumentSuggestion!
+}
+
 type AcceptDocumentSuggestionPayload {
     documentSuggestion: DocumentSuggestion!
 }
 
 type RejectDocumentSuggestionPayload {
     documentSuggestion: DocumentSuggestion!
+}
+
+type ChangeDocumentPayload {
+    document: Document!
+    documentSuggestion: DocumentSuggestion
 }

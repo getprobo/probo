@@ -1,6 +1,7 @@
 schema:
   - "graphql/*.graphql"
   - "../../../gqlx/directives/authentication/schema.graphql"
+  - "../../../gqlx/directives/ratelimit/schema.graphql"
   - "../../../gqlx/directives/session/schema.graphql"
 
 exec:
@@ -24,6 +25,8 @@ directives:
   mustBeAuthorized:
     skip_runtime: false
   authentication:
+    skip_runtime: false
+  rateLimit:
     skip_runtime: false
   sessionOnly:
     skip_runtime: false

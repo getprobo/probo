@@ -16,6 +16,8 @@ import { type Editor } from "@tiptap/react";
 import { EditorFloatingPortal } from "../_lib/EditorFloatingPortal";
 import type { DropdownMenu } from "../_lib/useTableDropdownMenu";
 import { MenuButton } from "../MenuButton";
+import { applySuggestingStructure, isSuggesting } from "../SuggestionExtension";
+import { suggestDeleteRow, suggestInsertRow } from "../suggestionStructure";
 
 import { type HoveredRow } from "./TableRowMenu";
 import { tableRowMenuVariants } from "./variants";
@@ -45,6 +47,12 @@ export function TableRowMenuContent({
 }: TableRowMenuContentProps) {
   const currentRow = hoveredRow;
   const isFirstRow = currentRow.rowIndex === 0;
+  // Only insert and delete can be tracked as a suggestion.
+  const suggesting = isSuggesting(editor);
+  const rowTarget = {
+    tableStart: currentRow.tableStart,
+    rowIndex: currentRow.rowIndex,
+  };
 
   const isHeaderRow = (): boolean => {
     if (currentRow.rowIndex !== 0) return false;
@@ -92,6 +100,13 @@ export function TableRowMenuContent({
 
   const handleDeleteRow = () => {
     const { rowIndex, tableStart } = currentRow;
+    if (applySuggestingStructure(editor, (state, id) =>
+      suggestDeleteRow(state, id, rowTarget),
+    )) {
+      setMenuOpen(false);
+      setHoveredRow(null);
+      return;
+    }
 
     try {
       const table = editor.state.doc.nodeAt(tableStart - 1);
@@ -148,6 +163,12 @@ export function TableRowMenuContent({
 
   const handleInsertAbove = () => {
     const { rowIndex, tableStart } = currentRow;
+    if (applySuggestingStructure(editor, (state, id) =>
+      suggestInsertRow(state, id, rowTarget, true),
+    )) {
+      setMenuOpen(false);
+      return;
+    }
 
     try {
       const table = editor.state.doc.nodeAt(tableStart - 1);
@@ -174,6 +195,12 @@ export function TableRowMenuContent({
 
   const handleInsertBelow = () => {
     const { rowIndex, tableStart } = currentRow;
+    if (applySuggestingStructure(editor, (state, id) =>
+      suggestInsertRow(state, id, rowTarget, false),
+    )) {
+      setMenuOpen(false);
+      return;
+    }
 
     try {
       const table = editor.state.doc.nodeAt(tableStart - 1);
@@ -242,7 +269,7 @@ export function TableRowMenuContent({
         onMouseDown={e => e.preventDefault()}
         className={menu()}
       >
-        {isFirstRow && (
+        {isFirstRow && !suggesting && (
           <MenuButton active={isHeaderRow()} onClick={handleToggleHeaderRow}>
             <CrownSimpleIcon size={16} weight="bold" />
             Header row
@@ -256,14 +283,18 @@ export function TableRowMenuContent({
           <PlusIcon size={16} weight="bold" />
           Insert row below
         </MenuButton>
-        <MenuButton onClick={handleDuplicateRow}>
-          <CopyIcon size={16} weight="bold" />
-          Duplicate row
-        </MenuButton>
-        <MenuButton onClick={handleClearContents}>
-          <BroomIcon size={16} weight="bold" />
-          Clear contents
-        </MenuButton>
+        {!suggesting && (
+          <>
+            <MenuButton onClick={handleDuplicateRow}>
+              <CopyIcon size={16} weight="bold" />
+              Duplicate row
+            </MenuButton>
+            <MenuButton onClick={handleClearContents}>
+              <BroomIcon size={16} weight="bold" />
+              Clear contents
+            </MenuButton>
+          </>
+        )}
         <MenuButton onClick={handleDeleteRow}>
           <TrashIcon size={16} weight="bold" />
           Delete row

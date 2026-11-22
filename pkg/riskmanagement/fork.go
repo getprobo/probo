@@ -63,6 +63,7 @@ func (s *Service) Fork(
 				Description:    description,
 				MatrixRows:     source.MatrixRows,
 				MatrixCols:     source.MatrixCols,
+				ScoreLevels:    source.ScoreLevels,
 				CreatedAt:      now,
 				UpdatedAt:      now,
 			}
@@ -74,6 +75,17 @@ func (s *Service) Fork(
 
 			if err := forked.Insert(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot insert forked risk analysis: %w", err)
+			}
+
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				tx,
+				forked.ID,
+				forked.OrganizationID,
+				forked.Name,
+				forked.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
 			}
 
 			idMap := make(map[gid.GID]gid.GID)

@@ -28,6 +28,7 @@ import (
 	cryptorand "crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
+	"crypto/subtle"
 	"encoding/asn1"
 	"encoding/base64"
 	"encoding/json"
@@ -204,6 +205,9 @@ const (
 	microsoftJWKSURL          = "https://login.microsoftonline.com/common/discovery/v2.0/keys"
 	microsoftConsumerTenantID = "9188040d-6c67-4c5b-b112-36a304b66dad"
 	jwksCacheTTL              = 1 * time.Hour
+
+	// LoginAttemptTTL is how long a pending OIDC login can be finished.
+	LoginAttemptTTL = 10 * time.Minute
 )
 
 func NewService(
@@ -323,25 +327,30 @@ func (s *Service) InitiateLogin(
 	provider coredata.OIDCProvider,
 	continueURL string,
 	organizationID *gid.GID,
-) (string, error) {
+) (string, string, error) {
 	info, ok := s.providers[provider]
 	if !ok {
-		return "", NewProviderNotEnabledError(provider)
+		return "", "", NewProviderNotEnabledError(provider)
 	}
 
 	state, err := generateRandomString(32)
 	if err != nil {
-		return "", fmt.Errorf("cannot generate state: %w", err)
+		return "", "", fmt.Errorf("cannot generate state: %w", err)
 	}
 
 	nonce, err := generateRandomString(32)
 	if err != nil {
-		return "", fmt.Errorf("cannot generate nonce: %w", err)
+		return "", "", fmt.Errorf("cannot generate nonce: %w", err)
+	}
+
+	browserNonce, err := generateRandomString(32)
+	if err != nil {
+		return "", "", fmt.Errorf("cannot generate browser nonce: %w", err)
 	}
 
 	codeVerifier, err := generateRandomString(64)
 	if err != nil {
-		return "", fmt.Errorf("cannot generate code verifier: %w", err)
+		return "", "", fmt.Errorf("cannot generate code verifier: %w", err)
 	}
 
 	now := time.Now()
@@ -349,11 +358,12 @@ func (s *Service) InitiateLogin(
 		ID:             state,
 		Provider:       provider,
 		Nonce:          nonce,
+		BrowserNonce:   browserNonce,
 		CodeVerifier:   codeVerifier,
 		ContinueURL:    continueURL,
 		OrganizationID: organizationID,
 		CreatedAt:      now,
-		ExpiresAt:      now.Add(10 * time.Minute),
+		ExpiresAt:      now.Add(LoginAttemptTTL),
 	}
 
 	err = s.pg.WithTx(
@@ -367,7 +377,7 @@ func (s *Service) InitiateLogin(
 		},
 	)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	codeChallenge := computeCodeChallenge(codeVerifier)
@@ -379,51 +389,21 @@ func (s *Service) InitiateLogin(
 		oauth2.SetAuthURLParam("code_challenge_method", "S256"),
 	)
 
-	return authURL, nil
+	return authURL, browserNonce, nil
 }
 
-// ContinueURLFromCallbackState loads and removes a pending login state and returns
-// its continue URL. Used when the IdP callback fails before an authorization code
-// is exchanged (user denied consent, cancelled login, etc.).
+// ContinueURLFromCallbackState loads and removes a pending login when browserNonce
+// matches that attempt, and returns its continue URL. Used when the IdP callback
+// fails before an authorization code is exchanged.
 func (s *Service) ContinueURLFromCallbackState(
 	ctx context.Context,
 	provider coredata.OIDCProvider,
 	stateParam string,
+	browserNonce string,
 ) (string, error) {
-	if stateParam == "" {
-		return "", NewInvalidStateError()
-	}
-
-	var oidcState coredata.OIDCState
-
-	err := s.pg.WithTx(
-		ctx,
-		func(ctx context.Context, tx pg.Tx) error {
-			if err := oidcState.LoadByIDForUpdate(ctx, tx, stateParam); err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return NewInvalidStateError()
-				}
-
-				return fmt.Errorf("cannot load oidc state: %w", err)
-			}
-
-			if err := oidcState.Delete(ctx, tx); err != nil {
-				return fmt.Errorf("cannot delete oidc state: %w", err)
-			}
-
-			return nil
-		},
-	)
+	oidcState, err := s.consumeOIDCState(ctx, provider, stateParam, browserNonce)
 	if err != nil {
 		return "", err
-	}
-
-	if time.Now().After(oidcState.ExpiresAt) {
-		return "", NewInvalidStateError()
-	}
-
-	if oidcState.Provider != provider {
-		return "", NewInvalidStateError()
 	}
 
 	return oidcState.ContinueURL, nil
@@ -434,42 +414,16 @@ func (s *Service) HandleCallback(
 	provider coredata.OIDCProvider,
 	stateParam string,
 	code string,
+	browserNonce string,
 ) (*coredata.Identity, string, *gid.GID, error) {
 	info, ok := s.providers[provider]
 	if !ok {
 		return nil, "", nil, NewProviderNotEnabledError(provider)
 	}
 
-	var oidcState coredata.OIDCState
-
-	err := s.pg.WithTx(
-		ctx,
-		func(ctx context.Context, tx pg.Tx) error {
-			if err := oidcState.LoadByIDForUpdate(ctx, tx, stateParam); err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return NewInvalidStateError()
-				}
-
-				return fmt.Errorf("cannot load oidc state: %w", err)
-			}
-
-			if err := oidcState.Delete(ctx, tx); err != nil {
-				return fmt.Errorf("cannot delete oidc state: %w", err)
-			}
-
-			return nil
-		},
-	)
+	oidcState, err := s.consumeOIDCState(ctx, provider, stateParam, browserNonce)
 	if err != nil {
-		return nil, "", nil, err
-	}
-
-	if time.Now().After(oidcState.ExpiresAt) {
-		return nil, oidcState.ContinueURL, nil, NewInvalidStateError()
-	}
-
-	if oidcState.Provider != provider {
-		return nil, oidcState.ContinueURL, nil, NewInvalidStateError()
+		return nil, oidcState.ContinueURL, nil, err
 	}
 
 	token, err := info.oauth2Config.Exchange(
@@ -795,6 +749,64 @@ func verifySignature(alg string, key crypto.PublicKey, signedContent []byte, sig
 	default:
 		return fmt.Errorf("cannot verify signature: unsupported algorithm %s", alg)
 	}
+}
+
+// A browser-nonce mismatch leaves the row in place.
+func (s *Service) consumeOIDCState(
+	ctx context.Context,
+	provider coredata.OIDCProvider,
+	stateParam string,
+	browserNonce string,
+) (coredata.OIDCState, error) {
+	if stateParam == "" {
+		return coredata.OIDCState{}, NewInvalidStateError()
+	}
+
+	var oidcState coredata.OIDCState
+
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := oidcState.LoadByIDForUpdate(ctx, tx, stateParam); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return NewInvalidStateError()
+				}
+
+				return fmt.Errorf("cannot load oidc state: %w", err)
+			}
+
+			if !browserNonceMatches(oidcState.BrowserNonce, browserNonce) {
+				return NewBrowserBindingError()
+			}
+
+			if err := oidcState.Delete(ctx, tx); err != nil {
+				return fmt.Errorf("cannot delete oidc state: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return oidcState, err
+	}
+
+	if time.Now().After(oidcState.ExpiresAt) {
+		return oidcState, NewInvalidStateError()
+	}
+
+	if oidcState.Provider != provider {
+		return oidcState, NewInvalidStateError()
+	}
+
+	return oidcState, nil
+}
+
+func browserNonceMatches(stored, provided string) bool {
+	if stored == "" || provided == "" || len(stored) != len(provided) {
+		return false
+	}
+
+	return subtle.ConstantTimeCompare([]byte(stored), []byte(provided)) == 1
 }
 
 func computeCodeChallenge(codeVerifier string) string {

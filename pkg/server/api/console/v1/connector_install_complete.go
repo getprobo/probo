@@ -40,6 +40,7 @@ import (
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/saferedirect"
 	"go.probo.inc/probo/pkg/server/api/authn"
+	"go.probo.inc/probo/pkg/server/api/authz"
 )
 
 // The install callback is reachable without credentials, and
@@ -246,6 +247,7 @@ func handleConnectorInstallComplete(
 				Resource:  organizationID,
 				Session:   &session.ID,
 				Action:    probo.ActionConnectorInitiate,
+				Request:   authz.RequestMetadataFromHTTP(r),
 			},
 		); err != nil {
 			// The authorizer's own error is logged and never rendered: this
@@ -354,6 +356,7 @@ func handleConnectorInstallComplete(
 				Resource:  organizationID,
 				Session:   &session.ID,
 				Action:    probo.ActionConnectorInitiate,
+				Request:   authz.RequestMetadataFromHTTP(r),
 			},
 		); err != nil {
 			// A denial is final for this state; a storage failure is not, and

@@ -20,6 +20,13 @@
 
 import type { INodeProperties } from 'n8n-workflow';
 import * as acceptOp from './accept.operation';
+import * as addOp from './add.operation';
+import * as addFormatOp from './addFormat.operation';
+import * as addTableOp from './addTable.operation';
+import * as changeBlockOp from './changeBlock.operation';
+import * as changeFormatOp from './changeFormat.operation';
+import * as changeTableOp from './changeTable.operation';
+import * as changeTextOp from './changeText.operation';
 import * as getOp from './get.operation';
 import * as getAllOp from './getAll.operation';
 import * as rejectOp from './reject.operation';
@@ -35,6 +42,13 @@ export const description: INodeProperties[] = [
 		displayOptions: { show: { resource: ['documentSuggestion'] } },
 		options: [
 			{ name: 'Accept', value: 'accept', description: 'Accept a redline', action: 'Accept a document suggestion' },
+			{ name: 'Add Change', value: 'add', description: 'Add a redline to an open suggestion', action: 'Add a document suggestion change' },
+			{ name: 'Add Format Change', value: 'addFormat', description: 'Suggest bold, italic, or another style on an open suggestion', action: 'Add a document suggestion format change' },
+			{ name: 'Add Table Change', value: 'addTable', description: 'Add a table row, column, or table redline to an open suggestion', action: 'Add a document suggestion table change' },
+			{ name: 'Change Block', value: 'changeBlock', description: 'Apply or suggest a heading, list, quote, code block, divider, image, file, or mention', action: 'Change a document block' },
+			{ name: 'Change Format', value: 'changeFormat', description: 'Apply or suggest bold, italic, or another style', action: 'Change document formatting' },
+			{ name: 'Change Table', value: 'changeTable', description: 'Apply or suggest a table row, column, or table', action: 'Change a document table' },
+			{ name: 'Change Text', value: 'changeText', description: 'Apply or suggest a text replacement', action: 'Change document text' },
 			{ name: 'Get', value: 'get', description: 'Get a suggestion', action: 'Get a document suggestion' },
 			{ name: 'Get Many', value: 'getAll', description: 'List suggestions on a document', action: 'List document suggestions' },
 			{ name: 'Reject', value: 'reject', description: 'Reject a redline', action: 'Reject a document suggestion' },
@@ -44,6 +58,13 @@ export const description: INodeProperties[] = [
 		default: 'getAll',
 	},
 	...acceptOp.description,
+	...addOp.description,
+	...changeBlockOp.description,
+	...changeFormatOp.description,
+	...changeTableOp.description,
+	...changeTextOp.description,
+	...addFormatOp.description,
+	...addTableOp.description,
 	...getOp.description,
 	...getAllOp.description,
 	...rejectOp.description,
@@ -53,6 +74,13 @@ export const description: INodeProperties[] = [
 
 export {
 	acceptOp as accept,
+	addOp as add,
+	changeBlockOp as changeBlock,
+	changeFormatOp as changeFormat,
+	changeTableOp as changeTable,
+	changeTextOp as changeText,
+	addFormatOp as addFormat,
+	addTableOp as addTable,
 	getOp as get,
 	getAllOp as getAll,
 	rejectOp as reject,

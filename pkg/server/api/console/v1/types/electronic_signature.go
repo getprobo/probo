@@ -36,6 +36,8 @@ func NewElectronicSignature(es *coredata.ElectronicSignature) *ElectronicSignatu
 		UpdatedAt:    es.UpdatedAt,
 	}
 
+	signature.Nda = &File{ID: es.FileID}
+
 	if es.CertificateFileID != nil {
 		signature.Certificate = &File{ID: *es.CertificateFileID}
 	}

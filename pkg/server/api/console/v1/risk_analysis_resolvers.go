@@ -40,6 +40,12 @@ func (r *mutationResolver) CreateRiskAnalysis(ctx context.Context, input types.C
 		}
 	}
 
+	var scoreLevels *coredata.ScoreLevels
+
+	if converted := types.ScoreLevelsFromInput(input.ScoreLevels); converted != nil {
+		scoreLevels = &converted
+	}
+
 	ra, err := r.riskManagement.Create(
 		ctx,
 		scope,
@@ -49,6 +55,7 @@ func (r *mutationResolver) CreateRiskAnalysis(ctx context.Context, input types.C
 			Description:    input.Description,
 			Period:         period,
 			MatrixSize:     input.MatrixSize,
+			ScoreLevels:    scoreLevels,
 		},
 	)
 	if err != nil {
@@ -87,6 +94,13 @@ func (r *mutationResolver) UpdateRiskAnalysis(ctx context.Context, input types.U
 		}
 	}
 
+	var scoreLevels *coredata.ScoreLevels
+
+	if input.ScoreLevels != nil {
+		converted := types.ScoreLevelsFromInput(input.ScoreLevels)
+		scoreLevels = &converted
+	}
+
 	ra, err := r.riskManagement.Update(
 		ctx,
 		scope,
@@ -95,6 +109,7 @@ func (r *mutationResolver) UpdateRiskAnalysis(ctx context.Context, input types.U
 			Name:        input.Name,
 			Description: gqlx.UnwrapOmittable(input.Description),
 			Period:      period,
+			ScoreLevels: scoreLevels,
 		},
 	)
 	if err != nil {
@@ -906,6 +921,11 @@ func (r *mutationResolver) PublishRiskAnalysis(ctx context.Context, input types.
 		DocumentEdge:        types.NewDocumentEdge(document, coredata.DocumentOrderFieldCreatedAt),
 		DocumentVersionEdge: types.NewDocumentVersionEdge(documentVersion, coredata.DocumentVersionOrderFieldCreatedAt),
 	}, nil
+}
+
+// Tags is the resolver for the tags field.
+func (r *riskAnalysisResolver) Tags(ctx context.Context, obj *types.RiskAnalysis, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TagOrderBy) (*types.TagConnection, error) {
+	return r.tagsForResourceID(ctx, obj.ID, first, after, last, before, orderBy)
 }
 
 // Document is the resolver for the document field.

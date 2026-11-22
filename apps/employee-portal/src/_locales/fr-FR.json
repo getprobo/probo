@@ -11,11 +11,27 @@
     "settings": "Paramètres de notification",
     "markAllRead": "Tout marquer comme lu"
   },
+  "size": {
+    "B": "o",
+    "KB": "Ko",
+    "MB": "Mo",
+    "GB": "Go",
+    "TB": "To"
+  },
   "ui": {
     "richEditor": {
+      "file": "Fichier",
+      "imageUnavailable": "Image indisponible",
+      "resizeImage": "Redimensionner l'image",
       "enlargeImage": "Agrandir l'image",
       "enlargeImageNamed": "Agrandir {{name}}",
       "closeImage": "Fermer l'image",
+      "uploading": "Envoi de {{fileName}}…",
+      "uploadFailed": "Échec de l’envoi",
+      "couldNotUpload": "Impossible d’envoyer {{fileName}}",
+      "tooLarge": "{{fileName}} est trop volumineux",
+      "unsupported": "{{fileName}} n’est pas un fichier pris en charge",
+      "attachFiles": "Joindre des fichiers",
       "mentionMembers": "Mentionner un membre",
       "mentionLoading": "Recherche…",
       "mentionNoResults": "Aucun membre trouvé"
@@ -35,6 +51,26 @@
     "help": "Aide",
     "signOut": "Se déconnecter",
     "signOutFailed": "Impossible de se déconnecter"
+  },
+  "editAvatar": {
+    "title": "Photo de profil",
+    "description": "Ajoutez une photo publique.",
+    "messages": {
+      "updated": "Photo de profil mise à jour.",
+      "removed": "Photo de profil supprimée."
+    },
+    "errors": {
+      "update": "Échec de la mise à jour de la photo de profil",
+      "remove": "Échec de la suppression de la photo de profil",
+      "invalidFile": "Utilisez un JPEG ou un PNG de 5 Mo maximum."
+    },
+    "actions": {
+      "upload": "Téléverser une photo",
+      "replace": "Remplacer la photo",
+      "remove": "Supprimer la photo",
+      "close": "Fermer",
+      "change": "Changer la photo de profil"
+    }
   },
   "organizationsPage": {
     "title": "Vos organisations",

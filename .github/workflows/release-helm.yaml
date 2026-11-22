@@ -11,7 +11,8 @@ permissions:
 jobs:
   publish-helm:
     name: "publish-helm"
-    runs-on: "runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/extras=s3-cache"
+    if: github.repository == 'getprobo/probo'
+    runs-on: "runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/volume=40gb/extras=s3-cache"
     permissions:
       contents: "read"
     steps:
@@ -50,8 +51,9 @@ jobs:
 
   github-release:
     name: "github-release"
+    if: success() && github.repository == 'getprobo/probo'
     needs: [publish-helm]
-    runs-on: "runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/extras=s3-cache"
+    runs-on: "runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/volume=40gb/extras=s3-cache"
     permissions:
       contents: "write"
     steps:

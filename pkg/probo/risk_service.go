@@ -423,7 +423,22 @@ func (s RiskService) Create(
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			return risk.Insert(ctx, tx, scope)
+			if err := risk.Insert(ctx, tx, scope); err != nil {
+				return err
+			}
+
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				tx,
+				risk.ID,
+				risk.OrganizationID,
+				risk.Name,
+				risk.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
+			return nil
 		},
 	)
 	if err != nil {
@@ -519,6 +534,17 @@ func (s RiskService) Update(
 				return fmt.Errorf("cannot update risk: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				risk.ID,
+				risk.OrganizationID,
+				risk.Name,
+				risk.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -564,7 +590,28 @@ func (s RiskService) Delete(
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			if err := clearRiskSearch(ctx, tx, scope, riskID); err != nil {
+				return err
+			}
+
 			return risk.Delete(ctx, tx, scope, riskID)
 		},
 	)
+}
+
+func clearRiskSearch(
+	ctx context.Context,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	riskID gid.GID,
+) error {
+	if err := coredata.LockID(ctx, conn, scope, "risks", riskID); err != nil {
+		return err
+	}
+
+	if err := coredata.DeleteSearchResource(ctx, conn, riskID); err != nil {
+		return fmt.Errorf("cannot delete search resource: %w", err)
+	}
+
+	return nil
 }

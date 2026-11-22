@@ -97,8 +97,10 @@ import (
 	"go.probo.inc/probo/pkg/server"
 	complianceportal_v1 "go.probo.inc/probo/pkg/server/api/complianceportal/v1"
 	"go.probo.inc/probo/pkg/server/gqlx"
+	"go.probo.inc/probo/pkg/server/gqlx/directives/ratelimit"
 	"go.probo.inc/probo/pkg/server/trustedproxy"
 	"go.probo.inc/probo/pkg/slack"
+	"go.probo.inc/probo/pkg/tag"
 	"go.probo.inc/probo/pkg/task"
 	tasksync "go.probo.inc/probo/pkg/task/sync"
 	asanasvc "go.probo.inc/probo/pkg/task/sync/asana"
@@ -650,6 +652,7 @@ func (impl *Implm) Run(
 		Register(agentexecution.OAuth2ScopeMappings).
 		Register(accessreview.OAuth2ScopeMappings).
 		Register(resourcealias.OAuth2ScopeMappings).
+		Register(tag.OAuth2ScopeMappings).
 		Register(itam.OAuth2ScopeMappings).
 		Register(riskmanagement.OAuth2ScopeMappings).
 		Register(task.OAuth2ScopeMappings)
@@ -777,6 +780,7 @@ func (impl *Implm) Run(
 	)
 
 	resourceAliasService := resourcealias.NewService(pgClient)
+	tagService := tag.NewService(pgClient)
 	botService := bot.NewService(
 		bot.ServiceConfig{
 			Disabled: !impl.cfg.Slackbot.Enabled,
@@ -902,6 +906,7 @@ func (impl *Implm) Run(
 	iamService.Authorizer.RegisterPolicySet(agentexecution.PolicySet())
 	iamService.Authorizer.RegisterPolicySet(accessreview.PolicySet())
 	iamService.Authorizer.RegisterPolicySet(resourcealias.PolicySet())
+	iamService.Authorizer.RegisterPolicySet(tag.PolicySet())
 	iamService.Authorizer.RegisterPolicySet(management.PolicySet())
 	iamService.Authorizer.RegisterPolicySet(employeeportalmgmt.PolicySet())
 	iamService.Authorizer.RegisterPolicySet(riskmanagement.PolicySet())
@@ -1049,6 +1054,7 @@ func (impl *Implm) Run(
 			CollaborationEvents:     collaborationEvents,
 			ShutdownContext:         apiServerCtx,
 			ResourceAlias:           resourceAliasService,
+			Tag:                     tagService,
 			File:                    fileManagerService,
 			IAM:                     iamService,
 			Visitor:                 visitorService,
@@ -1087,6 +1093,8 @@ func (impl *Implm) Run(
 				QueryCacheSize:    impl.cfg.Api.GraphQL.QueryCacheSize,
 				DisableSuggestion: impl.cfg.Api.GraphQL.DisableSuggestion,
 			},
+			RateLimitDefault:         rateLimitBudget(impl.cfg.Api.GraphQL.RateLimit.Default),
+			RateLimits:               rateLimitBudgets(impl.cfg.Api.GraphQL.RateLimit.Budgets),
 			CustomDomainCname:        impl.cfg.CustomDomains.CnameTarget,
 			TokenSecret:              impl.cfg.Auth.Cookie.Secret,
 			InstallStateKey:          installStateKey,
@@ -1104,6 +1112,7 @@ func (impl *Implm) Run(
 				TerraformModuleSource: impl.cfg.IdentityFederation.AzureTerraformModuleSource,
 			},
 			LinearWebhookSecret: impl.cfg.GetLinearWebhookSecret(),
+			MCPFeedbackURL:      impl.cfg.Notifications.FeedbackURL,
 		},
 	)
 	if err != nil {
@@ -1672,6 +1681,24 @@ func (impl *Implm) Run(
 		},
 	)
 
+	cookieBannerAnalyticsRetentionWorker := cookiebanner.NewAnalyticsRetentionWorker(
+		pgClient,
+		l.Named("cookie-banner-analytics-retention-worker"),
+		worker.WithRegisterer(r),
+		worker.WithTracerProvider(tp),
+	)
+	cookieBannerAnalyticsRetentionWorkerCtx, stopCookieBannerAnalyticsRetentionWorker := context.WithCancel(
+		context.WithoutCancel(ctx),
+	)
+
+	wg.Go(
+		func() {
+			if err := cookieBannerAnalyticsRetentionWorker.Run(cookieBannerAnalyticsRetentionWorkerCtx); err != nil {
+				cancel(fmt.Errorf("cookie banner analytics retention worker crashed: %w", err))
+			}
+		},
+	)
+
 	stopCookieBannerScanWorker := func() {}
 
 	if impl.cfg.ChromeDPAddr != "" {
@@ -1696,14 +1723,14 @@ func (impl *Implm) Run(
 		)
 	}
 
-	sampleCountFlusherCtx, stopSampleCountFlusher := context.WithCancel(context.Background())
-	sampleCountFlusherDone := make(chan struct{})
+	analyticsFlusherCtx, stopAnalyticsFlusher := context.WithCancel(context.Background())
+	analyticsFlusherDone := make(chan struct{})
 
 	go func() {
-		defer close(sampleCountFlusherDone)
+		defer close(analyticsFlusherDone)
 
-		if err := cookieBannerService.RunSampleCountFlusher(sampleCountFlusherCtx, l); err != nil {
-			cancel(fmt.Errorf("sample count flusher crashed: %w", err))
+		if err := cookieBannerService.RunAnalyticsFlusher(analyticsFlusherCtx, l); err != nil {
+			cancel(fmt.Errorf("analytics flusher crashed: %w", err))
 		}
 	}()
 
@@ -1884,6 +1911,7 @@ func (impl *Implm) Run(
 	stopCertManagerService()
 	stopTrackerPatternAnalysisWorker()
 	stopBannerSourcePromotionWorker()
+	stopCookieBannerAnalyticsRetentionWorker()
 	stopCookieBannerScanWorker()
 	stopTrackerPolicyWorker()
 	stopTrackerMappingWorker()
@@ -1917,8 +1945,8 @@ func (impl *Implm) Run(
 
 	wg.Wait()
 
-	stopSampleCountFlusher()
-	<-sampleCountFlusherDone
+	stopAnalyticsFlusher()
+	<-analyticsFlusherDone
 
 	pgClient.Close()
 
@@ -2462,4 +2490,27 @@ func authSecureCookieConfig(c CookieConfig, maxAgeSeconds int) (securecookie.Con
 		HTTPOnly: true,
 		SameSite: sameSite,
 	}, nil
+}
+
+func rateLimitBudget(configured GraphQLRateLimitBudget) ratelimit.Budget {
+	return ratelimit.Budget{
+		Limit:  configured.Limit,
+		Window: configured.Window,
+	}
+}
+
+func rateLimitBudgets(configured map[string]GraphQLRateLimitBudget) map[string]ratelimit.Budget {
+	if len(configured) == 0 {
+		return nil
+	}
+
+	budgets := make(map[string]ratelimit.Budget, len(configured))
+	for name, budget := range configured {
+		budgets[name] = ratelimit.Budget{
+			Limit:  budget.Limit,
+			Window: budget.Window,
+		}
+	}
+
+	return budgets
 }

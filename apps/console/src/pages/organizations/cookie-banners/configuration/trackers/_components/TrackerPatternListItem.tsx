@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { DotsThreeVerticalIcon, EyeIcon, EyeSlashIcon, InfoIcon, TrashIcon } from "@phosphor-icons/react";
-import { humanizeSeconds } from "@probo/i18n";
 import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
 import { DropdownItem } from "@probo/ui/src/v2/Dropdown/DropdownItem";
 import { DropdownPopup } from "@probo/ui/src/v2/Dropdown/DropdownPopup";
@@ -49,7 +48,6 @@ import { useMutation } from "#/lib/relay/useMutation";
 import { cookieBannerPath } from "../../../_lib/cookieBannerPaths";
 import { trackerPatternListItem } from "../../../variants";
 import { MoveToCategorySelect } from "../../_components/MoveToCategorySelect";
-import { persistentTrackerTypes } from "../../_lib/persistentTrackerTypes";
 import { trackerTypeBadges } from "../_lib/trackerBadges";
 
 import { DeleteTrackerPatternDialog } from "./DeleteTrackerPatternDialog";
@@ -69,7 +67,11 @@ const trackerPatternFragment = graphql`
     }
     description
     ...TrackerSourceBadge_trackerPattern
-    maxAgeSeconds
+    dailyHits(days: 30) {
+      hits {
+        count
+      }
+    }
     excluded
     cookieCategory {
       id
@@ -146,13 +148,13 @@ export function TrackerPatternListItem({
   onMoved,
   onRemoved,
 }: TrackerPatternListItemProps) {
-  const { t } = useTranslation("organizations/cookie-banners");
+  const { t, i18n } = useTranslation("organizations/cookie-banners");
   const organizationId = useOrganizationId();
   const location = useLocation();
   const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
   const pattern = useFragment(trackerPatternFragment, patternKey);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const { name, heading, link, title, type, info, detail, date, actions, optional }
+  const { name, heading, link, title, type, info, detail, actions, optional }
     = trackerPatternListItem({
       excluded: pattern.excluded,
     });
@@ -213,15 +215,11 @@ export function TrackerPatternListItem({
 
   const typeBadge = trackerTypeBadges[pattern.trackerType];
   const detailPath = `${cookieBannerPath(organizationId, cookieBannerId)}/trackers/${pattern.id}`;
-  const durationSeconds = pattern.maxAgeSeconds == null || pattern.maxAgeSeconds <= 0
-    ? null
-    : pattern.maxAgeSeconds;
-  const sessionOrPersistent = persistentTrackerTypes.has(pattern.trackerType)
-    ? t("trackerPatternRow.duration.persistent")
-    : t("trackerPatternRow.duration.session");
-  const duration = durationSeconds == null
-    ? sessionOrPersistent
-    : humanizeSeconds(durationSeconds, t);
+  const hits = pattern.dailyHits.reduce(
+    (sum, day) => sum + day.hits.reduce((daySum, hit) => daySum + hit.count, 0),
+    0,
+  );
+  const hitsLabel = new Intl.NumberFormat(i18n.language).format(hits);
 
   return (
     <>
@@ -313,8 +311,10 @@ export function TrackerPatternListItem({
                 </Text>
               </TableCell>
             )}
-        <TableCell className={optional()}>
-          <Text size={2} className={date()}>{duration}</Text>
+        <TableCell justify="end">
+          <Text size={2} weight="bold" highContrast className="font-mono">
+            {hitsLabel}
+          </Text>
         </TableCell>
         <TableCell interactive={pattern.canUpdate || pattern.canDelete ? true : undefined} justify="end">
           {(pattern.canUpdate || pattern.canDelete) && (

@@ -493,6 +493,7 @@ mutation TaskSyncLinearIssueUpdate($id: String!, $input: IssueUpdateInput!) {
       url
       title
       updatedAt
+      state { type }
     }
   }
 }
@@ -1061,6 +1062,44 @@ func issuePage(nodes []linearIssue, info pageInfo) (IssuePage, error) {
 		EndCursor:   info.EndCursor,
 		HasNextPage: info.HasNextPage && info.EndCursor != "",
 	}, nil
+}
+
+func (c *Client) IssueStatus(ctx context.Context, issueID string) (*Issue, error) {
+	const request = `
+query TaskSyncLinearIssueStatus($id: String!) {
+  issue(id: $id) {
+    id
+    updatedAt
+    archivedAt
+    state { type }
+  }
+}
+`
+
+	var resp struct {
+		Data struct {
+			Issue *struct {
+				linearIssue
+				ArchivedAt *string `json:"archivedAt"`
+			} `json:"issue"`
+		} `json:"data"`
+		Errors []graphqlError `json:"errors"`
+	}
+
+	if err := c.do(ctx, request, map[string]any{"id": issueID}, &resp); err != nil {
+		return nil, fmt.Errorf("cannot query Linear issue status: %w", err)
+	}
+
+	if resp.Data.Issue == nil || resp.Data.Issue.ID == "" || resp.Data.Issue.ArchivedAt != nil {
+		return nil, ErrIssueNotFound
+	}
+
+	issue, err := resp.Data.Issue.toIssue()
+	if err != nil {
+		return nil, fmt.Errorf("cannot read Linear issue status: %w", err)
+	}
+
+	return issue, nil
 }
 
 func (c *Client) GetIssue(ctx context.Context, issueID string) (*Issue, error) {

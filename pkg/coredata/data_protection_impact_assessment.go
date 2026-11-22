@@ -30,6 +30,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
+	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
@@ -167,6 +168,16 @@ func (dpia *DataProtectionImpactAssessment) CursorKey(field DataProtectionImpact
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", field))
+}
+
+func (d DataProtectionImpactAssessment) SearchText(activityName string) []string {
+	return []string{
+		activityName,
+		ref.UnrefOrZero(d.Description),
+		ref.UnrefOrZero(d.NecessityAndProportionality),
+		ref.UnrefOrZero(d.PotentialRisk),
+		ref.UnrefOrZero(d.Mitigations),
+	}
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
@@ -336,6 +347,60 @@ LIMIT 1;
 	}
 
 	*dpia = result
+
+	return nil
+}
+
+func (dpias *DataProtectionImpactAssessments) LoadByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	dpiaIDs []gid.GID,
+) error {
+	if len(dpiaIDs) == 0 {
+		*dpias = nil
+		return nil
+	}
+
+	q := `
+SELECT
+	id,
+	organization_id,
+	processing_activity_id,
+	description,
+	necessity_and_proportionality,
+	potential_risk,
+	mitigations,
+	residual_risk,
+	created_at,
+	updated_at
+FROM
+	processing_activity_data_protection_impact_assessments
+WHERE
+	%s
+	AND id = ANY(@dpia_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"dpia_ids": dpiaIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query data protection impact assessments: %w", err)
+	}
+
+	items, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[DataProtectionImpactAssessment])
+	if err != nil {
+		return fmt.Errorf("cannot collect data protection impact assessments: %w", err)
+	}
+
+	*dpias = items
+
+	if len(items) != len(gid.NewSet(dpiaIDs...)) {
+		return ErrResourceNotFound
+	}
 
 	return nil
 }

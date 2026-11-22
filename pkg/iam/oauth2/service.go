@@ -54,6 +54,11 @@ const (
 	tokenTypeBearer           = "Bearer"
 	oauthGrantAccessTokenName = "OAuth grant"
 
+	// CreateManualAccessToken only. Grant-flow tokens use accessTokenDuration.
+	manualAccessTokenMaxLifetime = 180 * 24 * time.Hour
+	// A client clock a few minutes fast can still request the maximum.
+	manualAccessTokenExpirySkew = 5 * time.Minute
+
 	// userCodeAlphabet excludes ambiguous characters: 0/O, 1/I/L.
 	userCodeAlphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
 )
@@ -613,8 +618,22 @@ func (s *Service) RefreshToken(
 	if err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := previousRefreshToken.Revoke(ctx, tx, now); err != nil {
+			// Password reset locks the identity row, then revokes refresh tokens.
+			// Take that lock first so its revoke starts after this transaction
+			// commits and sees any pair inserted below.
+			if err := identity.LoadByIDForUpdate(ctx, tx, previousRefreshToken.IdentityID); err != nil {
+				return fmt.Errorf("cannot lock identity: %w", err)
+			}
+
+			// Revoke updates a row only while revoked_at is null. Zero rows
+			// means password reset or another refresh already revoked it.
+			revoked, err := previousRefreshToken.Revoke(ctx, tx, now)
+			if err != nil {
 				return fmt.Errorf("cannot revoke previous refresh token: %w", err)
+			}
+
+			if revoked == 0 {
+				return fmt.Errorf("refresh token already revoked")
 			}
 
 			// Attempt to delete the previous (legacy) access token.
@@ -994,6 +1013,10 @@ func (s *Service) AuthorizeDevice(
 				return fmt.Errorf("cannot load oauth2 client: %w", err)
 			}
 
+			if err := s.requirePrivateClientMembership(ctx, tx, &client, identityID); err != nil {
+				return err
+			}
+
 			// RFC 6819 §5.2.3.2 / §5.2.4.1: public clients must always
 			// require explicit user consent since they cannot be strongly
 			// authenticated.
@@ -1051,37 +1074,35 @@ func (s *Service) RegisterClient(
 	ctx context.Context,
 	req *RegisterClientRequest,
 ) (gid.GID, string, error) {
+	// Public skips the organization check, so dynamic registration cannot set it.
+	if req.Visibility != coredata.OAuth2ClientVisibilityPrivate {
+		return gid.Nil,
+			"",
+			NewError(
+				ErrInvalidRequest,
+				WithDescription("dynamically registered clients must be private"),
+			)
+	}
+
 	for _, u := range req.RedirectURIs {
 		parsed, _ := url.Parse(u.String())
 
-		switch req.Visibility {
-		case coredata.OAuth2ClientVisibilityPublic:
-			if parsed.Scheme != "https" {
+		if parsed.Scheme == "http" {
+			if !netx.IsLoopback(parsed.Hostname()) {
 				return gid.Nil,
 					"",
 					NewError(
 						ErrInvalidRequest,
-						WithDescription("public clients require https redirect_uris"),
+						WithDescription("http redirect_uris are only allowed for localhost"),
 					)
 			}
-		case coredata.OAuth2ClientVisibilityPrivate:
-			if parsed.Scheme == "http" {
-				if !netx.IsLoopback(parsed.Hostname()) {
-					return gid.Nil,
-						"",
-						NewError(
-							ErrInvalidRequest,
-							WithDescription("http redirect_uris are only allowed for localhost"),
-						)
-				}
-			} else if parsed.Scheme != "https" {
-				return gid.Nil,
-					"",
-					NewError(
-						ErrInvalidRequest,
-						WithDescription(fmt.Sprintf("unsupported redirect_uri scheme: %s", parsed.Scheme)),
-					)
-			}
+		} else if parsed.Scheme != "https" {
+			return gid.Nil,
+				"",
+				NewError(
+					ErrInvalidRequest,
+					WithDescription(fmt.Sprintf("unsupported redirect_uri scheme: %s", parsed.Scheme)),
+				)
 		}
 	}
 
@@ -1379,7 +1400,7 @@ func (s *Service) RevokeToken(
 
 				if err == nil {
 					now := time.Now()
-					if err := refreshToken.Revoke(ctx, tx, now); err != nil {
+					if _, err := refreshToken.Revoke(ctx, tx, now); err != nil {
 						return fmt.Errorf("cannot revoke refresh token: %w", err)
 					}
 
@@ -1433,7 +1454,7 @@ func (s *Service) RevokeToken(
 
 			if err == nil {
 				now := time.Now()
-				if err := refreshToken.Revoke(ctx, tx, now); err != nil {
+				if _, err := refreshToken.Revoke(ctx, tx, now); err != nil {
 					return fmt.Errorf("cannot revoke refresh token: %w", err)
 				}
 
@@ -1448,6 +1469,40 @@ func (s *Service) RevokeToken(
 			return nil
 		},
 	)
+}
+
+// requirePrivateClientMembership limits a private client to active members of
+// its organization. Public clients, such as the CLI and CIMD clients, have no
+// organization and stay reachable by any signed-in user.
+func (s *Service) requirePrivateClientMembership(
+	ctx context.Context,
+	conn pg.Querier,
+	client *coredata.OAuth2Client,
+	identityID gid.GID,
+) error {
+	if client.Visibility != coredata.OAuth2ClientVisibilityPrivate {
+		return nil
+	}
+
+	if client.OrganizationID == nil {
+		return fmt.Errorf("cannot authorize: private client has no organization")
+	}
+
+	var membership coredata.Membership
+	if err := membership.LoadActiveByIdentityIDAndOrganizationID(
+		ctx,
+		conn,
+		identityID,
+		*client.OrganizationID,
+	); err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return ErrUnauthorizedMember
+		}
+
+		return fmt.Errorf("cannot check membership: %w", err)
+	}
+
+	return nil
 }
 
 func (s *Service) Authorize(
@@ -1478,24 +1533,8 @@ func (s *Service) Authorize(
 				return err
 			}
 
-			if client.Visibility == coredata.OAuth2ClientVisibilityPrivate {
-				if client.OrganizationID == nil {
-					return fmt.Errorf("cannot authorize: private client has no organization")
-				}
-
-				var membership coredata.Membership
-				if err := membership.LoadActiveByIdentityIDAndOrganizationID(
-					ctx,
-					tx,
-					req.IdentityID,
-					*client.OrganizationID,
-				); err != nil {
-					if errors.Is(err, coredata.ErrResourceNotFound) {
-						return ErrUnauthorizedMember
-					}
-
-					return fmt.Errorf("cannot check membership: %w", err)
-				}
+			if err := s.requirePrivateClientMembership(ctx, tx, client, req.IdentityID); err != nil {
+				return err
 			}
 
 			if req.ResponseType != coredata.OAuth2ResponseTypeCode {
@@ -1706,6 +1745,10 @@ func (s *Service) ApproveConsent(
 			var client coredata.OAuth2Client
 			if err := client.LoadByID(ctx, tx, coredata.NewNoScope(), consent.ClientID); err != nil {
 				return fmt.Errorf("cannot load client: %w", err)
+			}
+
+			if err := s.requirePrivateClientMembership(ctx, tx, &client, req.IdentityID); err != nil {
+				return err
 			}
 
 			isDeviceFlow := consent.DeviceCodeID != nil
@@ -2148,6 +2191,18 @@ func (s *Service) CreateManualAccessToken(
 	now := time.Now()
 	if !req.ExpiresAt.After(now) {
 		return "", nil, NewError(ErrInvalidRequest, WithDescription("expires_at must be in the future"))
+	}
+
+	maxExpiresAt := now.Add(manualAccessTokenMaxLifetime + manualAccessTokenExpirySkew)
+	if req.ExpiresAt.After(maxExpiresAt) {
+		days := int(manualAccessTokenMaxLifetime / (24 * time.Hour))
+
+		return "", nil, NewError(
+			ErrInvalidRequest,
+			WithDescription(
+				fmt.Sprintf("expires_at must not be more than %d days in the future", days),
+			),
+		)
 	}
 
 	if len(req.Scopes) == 0 {

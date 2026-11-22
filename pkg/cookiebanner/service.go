@@ -21,6 +21,7 @@
 package cookiebanner
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
@@ -50,6 +51,7 @@ type Service struct {
 	pg               *pg.Client
 	showBranding     bool
 	tcfCmpID         int
+	now              func() time.Time
 	pageLoadCounts   sync.Map
 	patternHitCounts sync.Map
 	// afterPatternLookup runs after FindMatchingPattern in
@@ -64,6 +66,7 @@ func NewService(pgClient *pg.Client, showBranding bool, tcfCmpID int) *Service {
 		pg:           pgClient,
 		showBranding: showBranding,
 		tcfCmpID:     normalizeTCFCmpID(tcfCmpID),
+		now:          time.Now,
 	}
 }
 
@@ -158,7 +161,7 @@ type (
 		InitiatorURL    *string
 		CookieDomain    *string
 		HostOnly        *bool
-		SampleHit       bool
+		Hit             bool
 		CategoryGranted *bool
 	}
 
@@ -172,7 +175,7 @@ type (
 		ValueSize       *int
 		Source          *coredata.CookieSource
 		InitiatorURL    *string
-		SampleHit       bool
+		Hit             bool
 		CategoryGranted *bool
 	}
 
@@ -188,7 +191,7 @@ type (
 		PageView      bool
 		ConsentAction *coredata.CookieConsentAction
 		Family        coredata.BrowserFamily
-		Presentation  Presentation
+		Presentation  coredata.CookieBannerPresentation
 	}
 
 	CreateTrackerPatternRequest struct {
@@ -257,7 +260,6 @@ type (
 		Layout                   Layout                                         `json:"layout"`
 		ShowBranding             bool                                           `json:"show_branding"`
 		ResourceReportingEnabled bool                                           `json:"resource_reporting_enabled"`
-		SampleActive             bool                                           `json:"sample_active,omitempty"`
 		TCF                      *BannerTCF                                     `json:"tcf,omitempty"`
 		Categories               []coredata.CookieBannerVersionSnapshotCategory `json:"categories"`
 		Texts                    map[string]string                              `json:"texts"`
@@ -959,458 +961,6 @@ func (s *Service) GetCookieBannersByIDs(
 	return banners, nil
 }
 
-func (s *Service) GetCookieBannerSample(
-	ctx context.Context,
-	scope coredata.Scoper,
-	sampleID gid.GID,
-) (*coredata.CookieBannerSample, error) {
-	var sample coredata.CookieBannerSample
-
-	err := s.pg.WithTx(
-		ctx,
-		func(ctx context.Context, tx pg.Tx) error {
-			if err := sample.LoadByID(ctx, tx, scope, sampleID); err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return ErrSampleNotFound
-				}
-
-				return fmt.Errorf("cannot load cookie banner sample: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return &sample, nil
-}
-
-func (s *Service) GetLatestCookieBannerSample(
-	ctx context.Context,
-	scope coredata.Scoper,
-	cookieBannerID gid.GID,
-) (*coredata.CookieBannerSample, error) {
-	var sample coredata.CookieBannerSample
-
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			if err := sample.LoadLatestByCookieBannerID(ctx, conn, scope, cookieBannerID); err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return ErrSampleNotFound
-				}
-
-				return fmt.Errorf("cannot load latest cookie banner sample: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return &sample, nil
-}
-
-func (s *Service) ListCookieBannerSamples(
-	ctx context.Context,
-	scope coredata.Scoper,
-	cookieBannerID gid.GID,
-	cursor *page.Cursor[coredata.CookieBannerSampleOrderField],
-) (coredata.CookieBannerSamples, error) {
-	var samples coredata.CookieBannerSamples
-
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			if err := samples.LoadByCookieBannerID(ctx, conn, scope, cookieBannerID, cursor); err != nil {
-				return fmt.Errorf("cannot list cookie banner samples: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return samples, nil
-}
-
-func (s *Service) CountCookieBannerSamples(
-	ctx context.Context,
-	scope coredata.Scoper,
-	cookieBannerID gid.GID,
-) (int, error) {
-	var count int
-
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			var samples coredata.CookieBannerSamples
-
-			n, err := samples.CountByCookieBannerID(ctx, conn, scope, cookieBannerID)
-			if err != nil {
-				return err
-			}
-
-			count = n
-
-			return nil
-		},
-	)
-	if err != nil {
-		return 0, err
-	}
-
-	return count, nil
-}
-
-func (s *Service) StartCookieBannerSample(
-	ctx context.Context,
-	scope coredata.Scoper,
-	cookieBannerID gid.GID,
-) (*coredata.CookieBannerSample, error) {
-	_ = s.FlushSampleCounts(ctx)
-
-	var sample coredata.CookieBannerSample
-
-	err := s.pg.WithTx(
-		ctx,
-		func(ctx context.Context, tx pg.Tx) error {
-			var banner coredata.CookieBanner
-			if err := banner.LoadByID(ctx, tx, scope, cookieBannerID); err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return ErrBannerNotFound
-				}
-
-				return fmt.Errorf("cannot load cookie banner: %w", err)
-			}
-
-			if err := coredata.FreezeOpenCookieBannerSample(ctx, tx, scope, cookieBannerID); err != nil {
-				return err
-			}
-
-			now := time.Now()
-
-			sample = coredata.CookieBannerSample{
-				ID:             gid.New(scope.GetTenantID(), coredata.CookieBannerSampleEntityType),
-				OrganizationID: banner.OrganizationID,
-				CookieBannerID: cookieBannerID,
-				CreatedAt:      now,
-				UpdatedAt:      now,
-			}
-			if err := sample.Insert(ctx, tx, scope); err != nil {
-				return err
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return &sample, nil
-}
-
-func (s *Service) StopCookieBannerSample(
-	ctx context.Context,
-	scope coredata.Scoper,
-	cookieBannerID gid.GID,
-) (*coredata.CookieBannerSample, error) {
-	_ = s.FlushSampleCounts(ctx)
-
-	var sample coredata.CookieBannerSample
-
-	err := s.pg.WithTx(
-		ctx,
-		func(ctx context.Context, tx pg.Tx) error {
-			if err := sample.LoadOpenByCookieBannerID(ctx, tx, scope, cookieBannerID); err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return ErrSampleNotFound
-				}
-
-				return fmt.Errorf("cannot load open cookie banner sample: %w", err)
-			}
-
-			if err := coredata.FreezeCookieBannerSample(ctx, tx, scope, sample.ID); err != nil {
-				return err
-			}
-
-			if err := sample.LoadByID(ctx, tx, scope, sample.ID); err != nil {
-				return fmt.Errorf("cannot load stopped cookie banner sample: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return &sample, nil
-}
-
-func (s *Service) GetSamplePageLoadsByIDs(
-	ctx context.Context,
-	scope coredata.Scoper,
-	sampleIDs []gid.GID,
-) (map[gid.GID][]SampleFamilyCount, error) {
-	result := make(map[gid.GID][]SampleFamilyCount, len(sampleIDs))
-	for _, sampleID := range sampleIDs {
-		result[sampleID] = []SampleFamilyCount{}
-	}
-
-	if len(sampleIDs) == 0 {
-		return result, nil
-	}
-
-	var rows []coredata.SamplePageLoadBySample
-
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			loaded, err := coredata.LoadSamplePageLoadsBySampleIDs(ctx, conn, scope, sampleIDs)
-			if err != nil {
-				return err
-			}
-
-			rows = loaded
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	grouped := make(map[gid.GID][]coredata.SamplePageLoad, len(sampleIDs))
-	for _, row := range rows {
-		grouped[row.SampleID] = append(grouped[row.SampleID], coredata.SamplePageLoad{
-			BrowserFamily: row.BrowserFamily,
-			Presentation:  row.Presentation,
-			ConsentAction: row.ConsentAction,
-			Count:         row.Count,
-		})
-	}
-
-	for sampleID, familyRows := range grouped {
-		result[sampleID] = PageLoadsByFamily(familyRows)
-	}
-
-	return result, nil
-}
-
-type SampleHitSplits struct {
-	Total   []SampleFamilyCount
-	Allowed []SampleFamilyCount
-	Denied  []SampleFamilyCount
-}
-
-type SampleHitSplitQuery struct {
-	PatternID gid.GID
-	SampleID  gid.GID
-	Latest    bool
-}
-
-func (s *Service) GetSampleHitSplits(
-	ctx context.Context,
-	scope coredata.Scoper,
-	trackerPatternID gid.GID,
-	sampleID *gid.GID,
-) (SampleHitSplits, error) {
-	query := SampleHitSplitQuery{
-		PatternID: trackerPatternID,
-		Latest:    sampleID == nil,
-	}
-	if sampleID != nil {
-		query.SampleID = *sampleID
-	}
-
-	splits, err := s.GetSampleHitSplitsForPatterns(ctx, scope, []SampleHitSplitQuery{query})
-	if err != nil {
-		return SampleHitSplits{}, err
-	}
-
-	return splits[query], nil
-}
-
-func (s *Service) GetSampleHitSplitsForPatterns(
-	ctx context.Context,
-	scope coredata.Scoper,
-	queries []SampleHitSplitQuery,
-) (map[SampleHitSplitQuery]SampleHitSplits, error) {
-	result := make(map[SampleHitSplitQuery]SampleHitSplits, len(queries))
-	if len(queries) == 0 {
-		return result, nil
-	}
-
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			patternIDs := make([]gid.GID, 0, len(queries))
-
-			seenPatterns := make(map[gid.GID]struct{}, len(queries))
-			for _, query := range queries {
-				if _, seen := seenPatterns[query.PatternID]; seen {
-					continue
-				}
-
-				seenPatterns[query.PatternID] = struct{}{}
-				patternIDs = append(patternIDs, query.PatternID)
-			}
-
-			patterns, err := coredata.LoadTrackerPatternBannerRefs(ctx, conn, scope, patternIDs)
-			if err != nil {
-				return err
-			}
-
-			bannerByPattern := make(map[gid.GID]gid.GID, len(patterns))
-			for _, pattern := range patterns {
-				bannerByPattern[pattern.ID] = pattern.CookieBannerID
-			}
-
-			if len(bannerByPattern) != len(patternIDs) {
-				return ErrTrackerPatternNotFound
-			}
-
-			explicitSampleIDs := make([]gid.GID, 0)
-			seenSamples := make(map[gid.GID]struct{})
-			latestBannerIDs := make([]gid.GID, 0)
-			seenBanners := make(map[gid.GID]struct{})
-
-			for _, query := range queries {
-				if query.Latest {
-					bannerID := bannerByPattern[query.PatternID]
-					if _, seen := seenBanners[bannerID]; seen {
-						continue
-					}
-
-					seenBanners[bannerID] = struct{}{}
-					latestBannerIDs = append(latestBannerIDs, bannerID)
-
-					continue
-				}
-
-				if _, seen := seenSamples[query.SampleID]; seen {
-					continue
-				}
-
-				seenSamples[query.SampleID] = struct{}{}
-				explicitSampleIDs = append(explicitSampleIDs, query.SampleID)
-			}
-
-			sampleRefs, err := coredata.LoadCookieBannerSampleRefsByIDs(ctx, conn, scope, explicitSampleIDs)
-			if err != nil {
-				return err
-			}
-
-			bannerBySample := make(map[gid.GID]gid.GID, len(sampleRefs))
-			for _, sample := range sampleRefs {
-				bannerBySample[sample.ID] = sample.CookieBannerID
-			}
-
-			latestRefs, err := coredata.LoadLatestCookieBannerSampleRefsByBannerIDs(ctx, conn, scope, latestBannerIDs)
-			if err != nil {
-				return err
-			}
-
-			latestSampleByBanner := make(map[gid.GID]gid.GID, len(latestRefs))
-			for _, sample := range latestRefs {
-				latestSampleByBanner[sample.CookieBannerID] = sample.ID
-			}
-
-			type hitPair struct {
-				sampleID  gid.GID
-				patternID gid.GID
-			}
-
-			sampleForQuery := make(map[SampleHitSplitQuery]gid.GID, len(queries))
-			pairSeen := make(map[hitPair]struct{})
-			sampleIDs := make([]gid.GID, 0)
-			hitPatternIDs := make([]gid.GID, 0)
-
-			for _, query := range queries {
-				var sampleID gid.GID
-
-				if query.Latest {
-					sampleID = latestSampleByBanner[bannerByPattern[query.PatternID]]
-				} else {
-					bannerID, ok := bannerBySample[query.SampleID]
-					if !ok || bannerID != bannerByPattern[query.PatternID] {
-						return ErrSampleNotFound
-					}
-
-					sampleID = query.SampleID
-				}
-
-				if sampleID == (gid.GID{}) {
-					result[query] = SampleHitSplits{}
-
-					continue
-				}
-
-				sampleForQuery[query] = sampleID
-
-				pair := hitPair{sampleID: sampleID, patternID: query.PatternID}
-				if _, seen := pairSeen[pair]; seen {
-					continue
-				}
-
-				pairSeen[pair] = struct{}{}
-
-				sampleIDs = append(sampleIDs, sampleID)
-				hitPatternIDs = append(hitPatternIDs, query.PatternID)
-			}
-
-			hits, err := coredata.LoadSamplePatternHitsForPatterns(ctx, conn, scope, sampleIDs, hitPatternIDs)
-			if err != nil {
-				return err
-			}
-
-			rowsByPair := make(map[hitPair][]coredata.SamplePatternHit)
-
-			for _, hit := range hits {
-				pair := hitPair{sampleID: hit.SampleID, patternID: hit.TrackerPatternID}
-				if _, wanted := pairSeen[pair]; !wanted {
-					continue
-				}
-
-				rowsByPair[pair] = append(rowsByPair[pair], coredata.SamplePatternHit{
-					BrowserFamily:   hit.BrowserFamily,
-					Presentation:    hit.Presentation,
-					ConsentAction:   hit.ConsentAction,
-					CategoryGranted: hit.CategoryGranted,
-					Count:           hit.Count,
-				})
-			}
-
-			for query, sampleID := range sampleForQuery {
-				total, allowed, denied := SplitPatternHits(rowsByPair[hitPair{
-					sampleID:  sampleID,
-					patternID: query.PatternID,
-				}])
-				result[query] = SampleHitSplits{
-					Total:   total,
-					Allowed: allowed,
-					Denied:  denied,
-				}
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
-}
-
 func (s *Service) ListCommonGVLVendors(
 	ctx context.Context,
 	cursor *page.Cursor[coredata.CommonGVLVendorOrderField],
@@ -1890,10 +1440,6 @@ func (s *Service) PublishCookieBannerVersion(
 	scope coredata.Scoper,
 	bannerID gid.GID,
 ) (*coredata.CookieBannerVersion, error) {
-	// Best-effort: a leftover write for another banner must not
-	// block this publish. Freeze still closes this banner's window.
-	_ = s.FlushSampleCounts(ctx)
-
 	var version coredata.CookieBannerVersion
 
 	err := s.pg.WithTx(
@@ -1916,39 +1462,6 @@ func (s *Service) PublishCookieBannerVersion(
 
 			if err := version.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot publish version: %w", err)
-			}
-
-			if err := coredata.FreezeOpenCookieBannerSample(ctx, tx, scope, bannerID); err != nil {
-				return fmt.Errorf("cannot freeze cookie banner sample: %w", err)
-			}
-
-			var samples coredata.CookieBannerSamples
-
-			count, err := samples.CountByCookieBannerID(ctx, tx, scope, bannerID)
-			if err != nil {
-				return err
-			}
-
-			if count == 0 {
-				var banner coredata.CookieBanner
-				if err := banner.LoadByID(ctx, tx, scope, bannerID); err != nil {
-					return fmt.Errorf("cannot load cookie banner: %w", err)
-				}
-
-				now := time.Now()
-				frozenAt := now
-
-				empty := coredata.CookieBannerSample{
-					ID:             gid.New(scope.GetTenantID(), coredata.CookieBannerSampleEntityType),
-					OrganizationID: banner.OrganizationID,
-					CookieBannerID: bannerID,
-					FrozenAt:       &frozenAt,
-					CreatedAt:      now,
-					UpdatedAt:      now,
-				}
-				if err := empty.Insert(ctx, tx, scope); err != nil {
-					return err
-				}
 			}
 
 			banner := coredata.CookieBanner{ID: bannerID}
@@ -2760,15 +2273,6 @@ func (s *Service) GetActiveBannerConfig(
 			forceOptIn = banner.ForceOptIn
 			config = buildBannerConfig(&banner, &version, &snapshot, resolved, lang)
 
-			var open coredata.CookieBannerSample
-			if err := open.LoadOpenByCookieBannerID(ctx, conn, scope, banner.ID); err != nil {
-				if !errors.Is(err, coredata.ErrResourceNotFound) {
-					return fmt.Errorf("cannot load open cookie banner sample: %w", err)
-				}
-			} else {
-				config.SampleActive = true
-			}
-
 			if banner.Capabilities.TCF && tcfServesGVL(regulation) {
 				if err := s.attachTCFVendors(ctx, conn, config, snapshot.IABVendorIDs, banner.PublisherCountryCode); err != nil {
 					return err
@@ -3263,7 +2767,7 @@ func (s *Service) ReportDetectedTrackers(
 			}
 
 			if banner.ForceOptIn {
-				req.Presentation = PresentationOptIn
+				req.Presentation = coredata.CookieBannerPresentationOptIn
 			}
 
 			var uncategorised coredata.CookieCategory
@@ -3292,7 +2796,7 @@ func (s *Service) ReportDetectedTrackers(
 						InitiatorURL:  dc.InitiatorURL,
 						CookieDomain:  dc.CookieDomain,
 						HostOnly:      dc.HostOnly,
-						SampleHit:     dc.SampleHit,
+						Hit:           dc.Hit,
 						Granted:       categoryGrantedForHit(req.Presentation, req.ConsentAction, dc.CategoryGranted),
 					},
 					&inserted,
@@ -3322,7 +2826,7 @@ func (s *Service) ReportDetectedTrackers(
 						Source:       ds.Source,
 						ObservedBy:   coredata.DetectedTrackerObserverSDK,
 						InitiatorURL: ds.InitiatorURL,
-						SampleHit:    ds.SampleHit,
+						Hit:          ds.Hit,
 						Granted:      categoryGrantedForHit(req.Presentation, req.ConsentAction, ds.CategoryGranted),
 					},
 					&inserted,
@@ -3337,10 +2841,9 @@ func (s *Service) ReportDetectedTrackers(
 				}
 			}
 
+			resources := make([]coredata.TrackerResource, 0, len(req.Resources))
 			for _, dr := range req.Resources {
-				wasInserted, err := s.reportDetectedResource(
-					ctx,
-					tx,
+				resource, err := trackerResourceFromItem(
 					scope,
 					&banner,
 					uncategorised.ID,
@@ -3351,10 +2854,20 @@ func (s *Service) ReportDetectedTrackers(
 					return err
 				}
 
-				if wasInserted {
-					inserted++
-				}
+				resources = append(resources, resource)
 			}
+
+			resourceInserted, err := s.upsertTrackerResources(
+				ctx,
+				tx,
+				scope,
+				resources,
+			)
+			if err != nil {
+				return err
+			}
+
+			inserted += resourceInserted
 
 			if inserted > 0 {
 				if err := banner.SetPatternAnalysisRequested(ctx, tx); err != nil {
@@ -3375,7 +2888,7 @@ func (s *Service) ReportDetectedTrackers(
 		return err
 	}
 
-	s.recordSampleIncrements(
+	s.recordAnalytics(
 		bannerID,
 		req.Family,
 		req.Presentation,
@@ -3403,7 +2916,7 @@ type detectedTrackerInfo struct {
 	Partitioned   *bool
 	SetByURL      *string
 	ScanID        *gid.GID
-	SampleHit     bool
+	Hit           bool
 	Granted       bool
 }
 
@@ -3432,7 +2945,7 @@ func (s *Service) reportDetectedTracker(
 		return false, err
 	}
 
-	if info.SampleHit && patternID != nil {
+	if info.Hit && patternID != nil {
 		if _, seen := countedHits[*patternID]; !seen {
 			countedHits[*patternID] = info.Granted
 		}
@@ -3442,7 +2955,7 @@ func (s *Service) reportDetectedTracker(
 }
 
 // persistDetectedTracker writes the pattern and the detected row on tx.
-// The pattern id is nil when the identifier is skipped. Sample hits are
+// The pattern id is nil when the identifier is skipped. Pattern hits are
 // recorded by the caller, after this returns.
 func (s *Service) persistDetectedTracker(
 	ctx context.Context,
@@ -3661,41 +3174,33 @@ func int4OrNil(v *int) *int {
 	return v
 }
 
-func (s *Service) reportDetectedResource(
-	ctx context.Context,
-	tx pg.Tx,
+func trackerResourceFromItem(
 	scope coredata.Scoper,
 	banner *coredata.CookieBanner,
 	uncategorisedID gid.GID,
 	now time.Time,
 	item DetectedResourceItem,
-) (bool, error) {
-	u, err := url.Parse(item.URL.String())
+) (coredata.TrackerResource, error) {
+	parsed, err := url.Parse(item.URL.String())
 	if err != nil {
-		return false, fmt.Errorf("cannot parse resource URL: %w", err)
+		return coredata.TrackerResource{}, fmt.Errorf("cannot parse resource URL: %w", err)
 	}
 
-	origin := u.Scheme + "://" + u.Host
+	origin := url.URL{Scheme: parsed.Scheme, Host: parsed.Host}
 
-	return s.upsertTrackerResource(
-		ctx,
-		tx,
+	return newTrackerResource(
 		scope,
 		banner,
 		uncategorisedID,
 		now,
 		item.ResourceType,
-		origin,
-		u.Path,
+		origin.String(),
+		parsed.Path,
 		nil,
-	)
+	), nil
 }
 
-// upsertTrackerResource writes one tracker resource. A nil scanID leaves an
-// existing row's scan stamp untouched, which is what SDK reports need.
-func (s *Service) upsertTrackerResource(
-	ctx context.Context,
-	tx pg.Tx,
+func newTrackerResource(
 	scope coredata.Scoper,
 	banner *coredata.CookieBanner,
 	uncategorisedID gid.GID,
@@ -3704,7 +3209,7 @@ func (s *Service) upsertTrackerResource(
 	origin string,
 	path string,
 	scanID *gid.GID,
-) (bool, error) {
+) coredata.TrackerResource {
 	if path == "" {
 		path = "/"
 	}
@@ -3714,7 +3219,7 @@ func (s *Service) upsertTrackerResource(
 		host = parsed.Host
 	}
 
-	resource := &coredata.TrackerResource{
+	return coredata.TrackerResource{
 		ID:                 gid.New(scope.GetTenantID(), coredata.TrackerResourceEntityType),
 		OrganizationID:     banner.OrganizationID,
 		CookieBannerID:     banner.ID,
@@ -3728,7 +3233,68 @@ func (s *Service) upsertTrackerResource(
 		CreatedAt:          now,
 		UpdatedAt:          now,
 	}
+}
 
+// orderTrackerResources returns resources in lock order. An empty path is
+// "/", the value stored on the row, so two reports of one resource cannot
+// take its lock in opposite orders.
+func orderTrackerResources(resources []coredata.TrackerResource) []coredata.TrackerResource {
+	ordered := slices.Clone(resources)
+	for i := range ordered {
+		if ordered[i].Path == "" {
+			ordered[i].Path = "/"
+		}
+	}
+
+	slices.SortFunc(ordered, func(a, b coredata.TrackerResource) int {
+		return cmp.Or(
+			cmp.Compare(a.ResourceType, b.ResourceType),
+			cmp.Compare(a.Origin, b.Origin),
+			cmp.Compare(a.Path, b.Path),
+		)
+	})
+
+	return slices.CompactFunc(ordered, sameTrackerResourceLock)
+}
+
+func sameTrackerResourceLock(a, b coredata.TrackerResource) bool {
+	return a.ResourceType == b.ResourceType && a.Origin == b.Origin && a.Path == b.Path
+}
+
+// upsertTrackerResources writes the resources in lock order. A nil
+// scan ID on a resource leaves an existing row's scan stamp untouched,
+// which is what SDK reports need.
+func (s *Service) upsertTrackerResources(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	resources []coredata.TrackerResource,
+) (int, error) {
+	inserted := 0
+	ordered := orderTrackerResources(resources)
+
+	for i := range ordered {
+		wasInserted, err := s.upsertTrackerResource(ctx, tx, scope, &ordered[i])
+		if err != nil {
+			return 0, err
+		}
+
+		if wasInserted {
+			inserted++
+		}
+	}
+
+	return inserted, nil
+}
+
+// upsertTrackerResource writes one tracker resource. A nil scan ID leaves
+// an existing row's scan stamp untouched, which is what SDK reports need.
+func (s *Service) upsertTrackerResource(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	resource *coredata.TrackerResource,
+) (bool, error) {
 	inserted, err := resource.Upsert(ctx, tx, scope)
 	if err != nil {
 		return false, fmt.Errorf("cannot upsert tracker resource: %w", err)

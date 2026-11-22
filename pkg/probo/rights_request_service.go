@@ -22,10 +22,12 @@ package probo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	"go.gearno.de/kit/pg"
+	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
@@ -113,6 +115,31 @@ func (s RightsRequestService) Get(
 	return request, nil
 }
 
+func (s RightsRequestService) GetByIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	rightsRequestIDs ...gid.GID,
+) (coredata.RightsRequests, error) {
+	var rightsRequests coredata.RightsRequests
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := rightsRequests.LoadByIDs(ctx, conn, scope, rightsRequestIDs); err != nil &&
+				!errors.Is(err, coredata.ErrResourceNotFound) {
+				return fmt.Errorf("cannot load rights requests by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return rightsRequests, nil
+}
+
 func (s *RightsRequestService) Create(
 	ctx context.Context, scope coredata.Scoper,
 	req *CreateRightsRequestRequest,
@@ -147,6 +174,17 @@ func (s *RightsRequestService) Create(
 
 			if err := request.Insert(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot insert rights request: %w", err)
+			}
+
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				request.ID,
+				request.OrganizationID,
+				ref.UnrefOrZero(request.DataSubject),
+				request.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
 			}
 
 			if err := webhook.InsertData(
@@ -223,6 +261,17 @@ func (s *RightsRequestService) Update(
 				return fmt.Errorf("cannot update rights request: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				request.ID,
+				request.OrganizationID,
+				ref.UnrefOrZero(request.DataSubject),
+				request.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			if err := webhook.InsertUpdateData(
 				ctx,
 				conn,
@@ -266,6 +315,10 @@ func (s *RightsRequestService) Delete(
 				webhooktypes.NewRightsRequest(request),
 			); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
+			}
+
+			if err := coredata.DeleteSearchResource(ctx, conn, request.ID); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
 			}
 
 			if err := request.Delete(ctx, conn, scope); err != nil {

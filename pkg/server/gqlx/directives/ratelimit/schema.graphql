@@ -1,0 +1,21 @@
+# rateLimit directive for GraphQL APIs
+# Include this schema in your gqlgen configuration to bound how often one
+# client IP may resolve a field.
+#
+# The budget is the server configuration entry named by the field name, or
+# the global default when that entry is missing. Each resolution
+# takes one token, including each alias of the field in one request. The
+# bucket holds limit tokens for one client IP and field, and refills at
+# limit tokens per window seconds.
+#
+# gqlgen calls the last directive first. List @rateLimit before
+# @authentication so an authentication rejection is not counted.
+#
+# Usage in your schema.graphql:
+#   type Mutation {
+#     signUp(input: SignUpInput!): SignUpPayload
+#       @rateLimit
+#       @authentication(required: NONE)
+#   }
+
+directive @rateLimit on FIELD_DEFINITION

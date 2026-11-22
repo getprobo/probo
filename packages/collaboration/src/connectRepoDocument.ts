@@ -127,12 +127,15 @@ type DocumentProgressWithHandle<T> = DocumentProgress<T> & {
   handle?: DocHandle<T>;
 };
 
+export type RepoCollaborationMode = "viewing" | "editing" | "suggesting";
+
 // connectRepoDocument connects to the automerge-repo collaboration endpoint for a
 // document, finds the (server-seeded) document, and returns a handle the
 // editor can drive. Presence rides repo ephemeral messages carrying stable
 // cursors, so remote carets stay anchored while other people type.
 export async function connectRepoDocument(
   documentId: string,
+  mode: RepoCollaborationMode = "viewing",
 ): Promise<RepoCollaborationHandle> {
   const endpoint = new URL(window.location.origin);
   endpoint.protocol = endpoint.protocol === "https:" ? "wss:" : "ws:";
@@ -144,6 +147,7 @@ export async function connectRepoDocument(
     encodeURIComponent(documentId),
     "collaboration",
   ].join("/");
+  endpoint.searchParams.set("mode", mode);
 
   const network = new RepoWebSocketAdapter(endpoint.toString());
   const repo = new Repo({ network: [network] });

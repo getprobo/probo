@@ -97,6 +97,8 @@ var ViewerPolicy = policy.NewPolicy(
 		ActionCookieCategoryGet, ActionCookieCategoryList,
 		ActionCookieGet, ActionCookieList,
 		ActionCookieConsentRecordList,
+		ActionTrackerPatternGet, ActionTrackerPatternList,
+		ActionTrackerResourceGet, ActionTrackerResourceList,
 	).WithSID("entity-read-access").When(organizationCondition),
 
 	policy.Allow(ActionOrganizationContextGet).WithSID("organization-context-read").When(organizationCondition),

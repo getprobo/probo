@@ -342,6 +342,24 @@ function PeopleMenuSearch({
   onValueChange?: (value: string) => void;
 }) {
   const { t } = useTranslation();
+  const fieldRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const field = fieldRef.current;
+    if (field == null || field.disabled) {
+      return;
+    }
+    // Replacing the loading field moves focus to the last tabbable control.
+    field.focus();
+    const frame = requestAnimationFrame(() => {
+      if (field.isConnected && !field.disabled) {
+        field.focus();
+      }
+    });
+    return () => {
+      cancelAnimationFrame(frame);
+    };
+  }, []);
 
   return (
     <div
@@ -351,6 +369,8 @@ function PeopleMenuSearch({
       }}
     >
       <TextField
+        ref={fieldRef}
+        autoFocus
         size={size}
         icon={<MagnifyingGlassIcon />}
         value={value}

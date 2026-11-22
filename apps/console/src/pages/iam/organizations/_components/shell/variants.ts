@@ -143,13 +143,25 @@ export const navPanel = tv({
 export const navSpotlight = tv({
   slots: {
     title: "sr-only",
-    field: "group",
-    // The hint stays mounted. Unmounting it on the first keystroke re-renders
-    // the inline combobox and Base UI clears the query.
-    hint: "hidden shrink-0 group-has-[input:placeholder-shown]:inline-flex",
-    icon: "flex size-4 shrink-0 items-center justify-center text-sand-a9 [&_svg]:size-4",
-    list: "mt-3 flex max-h-80 flex-col gap-0.5 overflow-y-auto",
-    row: "flex w-full items-center justify-between gap-3",
-    group: "shrink-0 text-sand-11",
+    field: "border-b border-sand-a3",
+    list: [
+      "flex max-h-80 flex-col overflow-y-auto px-2 pb-2",
+      // Hide the app-wide 7px scrollbar; the list still scrolls with the wheel
+      // and arrow keys.
+      "[scrollbar-width:none]",
+      "[&::-webkit-scrollbar]:hidden",
+    ],
+    group: "flex flex-col",
+    row: "flex min-w-0 items-center gap-2.5",
+    rowIcon: "flex size-4 shrink-0 items-center justify-center text-sand-11 [&_svg]:size-4",
+    footer: [
+      "flex items-center gap-4 border-t border-sand-a3 px-4 py-2",
+      "text-1 text-sand-11",
+    ],
+    footerAction: "inline-flex items-center gap-1.5",
+    keycap: [
+      "inline-flex h-4 min-w-4 items-center justify-center rounded-1",
+      "border border-sand-6 bg-sand-2 px-1 font-medium text-sand-12",
+    ],
   },
 });

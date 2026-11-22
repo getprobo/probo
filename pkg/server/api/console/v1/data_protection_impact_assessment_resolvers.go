@@ -12,6 +12,7 @@ import (
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
@@ -19,6 +20,11 @@ import (
 	"go.probo.inc/probo/pkg/server/gqlx"
 	"go.probo.inc/probo/pkg/validator"
 )
+
+// Tags is the resolver for the tags field.
+func (r *dataProtectionImpactAssessmentResolver) Tags(ctx context.Context, obj *types.DataProtectionImpactAssessment, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TagOrderBy) (*types.TagConnection, error) {
+	return r.tagsForResourceID(ctx, obj.ID, first, after, last, before, orderBy)
+}
 
 // ProcessingActivity is the resolver for the processingActivity field.
 func (r *dataProtectionImpactAssessmentResolver) ProcessingActivity(ctx context.Context, obj *types.DataProtectionImpactAssessment) (*types.ProcessingActivity, error) {
@@ -325,6 +331,11 @@ func (r *mutationResolver) PublishTransferImpactAssessmentList(ctx context.Conte
 		DocumentEdge:        types.NewDocumentEdge(document, coredata.DocumentOrderFieldCreatedAt),
 		DocumentVersionEdge: types.NewDocumentVersionEdge(documentVersion, coredata.DocumentVersionOrderFieldCreatedAt),
 	}, nil
+}
+
+// Tags is the resolver for the tags field.
+func (r *transferImpactAssessmentResolver) Tags(ctx context.Context, obj *types.TransferImpactAssessment, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TagOrderBy) (*types.TagConnection, error) {
+	return r.tagsForResourceID(ctx, obj.ID, first, after, last, before, orderBy)
 }
 
 // ProcessingActivity is the resolver for the processingActivity field.

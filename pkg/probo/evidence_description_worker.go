@@ -96,6 +96,17 @@ func (h *evidenceDescriptionHandler) Claim(ctx context.Context) (coredata.Eviden
 				return fmt.Errorf("cannot update evidence: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				tx,
+				evidence.ID,
+				evidence.OrganizationID,
+				evidence.ReferenceID,
+				evidence.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			return nil
 		},
 	); err != nil {
@@ -188,6 +199,17 @@ func (h *evidenceDescriptionHandler) describeAndCommit(
 				return fmt.Errorf("cannot update evidence: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				tx,
+				evidence.ID,
+				evidence.OrganizationID,
+				evidence.ReferenceID,
+				evidence.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -208,6 +230,17 @@ func (h *evidenceDescriptionHandler) failEvidence(
 			evidence.UpdatedAt = time.Now()
 			if err := evidence.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update evidence: %w", err)
+			}
+
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				tx,
+				evidence.ID,
+				evidence.OrganizationID,
+				evidence.ReferenceID,
+				evidence.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
 			}
 
 			return nil

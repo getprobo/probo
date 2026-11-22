@@ -29,9 +29,14 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
+	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
+)
+
+var (
+	_ Searchable = (*Finding)(nil)
 )
 
 type (
@@ -78,6 +83,18 @@ func (f *Finding) CursorKey(field FindingOrderField) page.CursorKey {
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", field))
+}
+
+func (f Finding) SearchText() []string {
+	return []string{
+		f.Title,
+		f.ReferenceID,
+		ref.UnrefOrZero(f.Description),
+		ref.UnrefOrZero(f.Source),
+		ref.UnrefOrZero(f.RootCause),
+		ref.UnrefOrZero(f.CorrectiveAction),
+		ref.UnrefOrZero(f.EffectivenessCheck),
+	}
 }
 
 func (f *Finding) AuthorizationAttributes(
@@ -169,6 +186,68 @@ LIMIT 1;
 	}
 
 	*f = finding
+
+	return nil
+}
+
+func (fs *Findings) LoadByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	findingIDs []gid.GID,
+) error {
+	if len(findingIDs) == 0 {
+		*fs = nil
+		return nil
+	}
+
+	q := `
+SELECT
+	id,
+	organization_id,
+	kind,
+	reference_id,
+	title,
+	description,
+	source,
+	identified_on,
+	root_cause,
+	corrective_action,
+	owner_id,
+	due_date,
+	status,
+	priority,
+	risk_id,
+	effectiveness_check,
+	created_at,
+	updated_at
+FROM
+	findings
+WHERE
+	%s
+	AND id = ANY(@finding_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"finding_ids": findingIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query findings: %w", err)
+	}
+
+	items, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Finding])
+	if err != nil {
+		return fmt.Errorf("cannot collect findings: %w", err)
+	}
+
+	*fs = items
+
+	if len(items) != len(gid.NewSet(findingIDs...)) {
+		return ErrResourceNotFound
+	}
 
 	return nil
 }

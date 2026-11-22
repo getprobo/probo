@@ -29,6 +29,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -847,11 +848,14 @@ func TestClient_UpdateIssueClearsDueDate(t *testing.T) {
 	require.NoError(t, handlerErr)
 	require.NoError(t, err)
 	assert.Contains(t, query, "TaskSyncLinearIssueUpdate")
+	assert.Contains(t, query, "state { type }")
 
 	input, ok := captured["input"].(map[string]any)
 	require.True(t, ok)
 	assert.Contains(t, input, "dueDate")
 	assert.Nil(t, input["dueDate"])
+	_, hasState := input["stateId"]
+	assert.False(t, hasState)
 }
 
 func TestClient_DoIncludesGraphQLErrorMessage(t *testing.T) {
@@ -1286,4 +1290,49 @@ func TestIssueNumber(t *testing.T) {
 
 	_, ok = issueNumber("Fix login")
 	assert.False(t, ok)
+}
+
+func TestClient_IssueStatus(t *testing.T) {
+	t.Parallel()
+
+	var (
+		handlerErr error
+		query      string
+	)
+
+	server := newLinearGraphQLServer(
+		t,
+		func(w http.ResponseWriter, r *http.Request) {
+			req, ok := serveDecodedGraphQL(w, r, &handlerErr)
+			if !ok {
+				return
+			}
+
+			query = req.Query
+
+			writeJSON(
+				w,
+				map[string]any{
+					"data": map[string]any{
+						"issue": map[string]any{
+							"id":         "issue-1",
+							"updatedAt":  "2026-11-20T10:00:00Z",
+							"archivedAt": nil,
+							"state":      map[string]any{"type": "completed"},
+						},
+					},
+				},
+			)
+		},
+	)
+
+	client := NewClient(server.Client(), server.URL)
+	issue, err := client.IssueStatus(context.Background(), "issue-1")
+
+	require.NoError(t, handlerErr)
+	require.NoError(t, err)
+	assert.Contains(t, query, "TaskSyncLinearIssueStatus")
+	assert.Equal(t, "issue-1", issue.ID)
+	assert.Equal(t, "completed", issue.StateType)
+	assert.True(t, issue.UpdatedAt.Equal(time.Date(2026, 11, 20, 10, 0, 0, 0, time.UTC)))
 }

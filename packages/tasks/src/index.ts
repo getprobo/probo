@@ -31,6 +31,11 @@ export { registerTasksCatalogs, TASKS_NAMESPACE } from "./i18n";
 export { isOverdueTask } from "./isOverdueTask";
 export { TaskDetails, type TaskDetailsProps } from "./TaskDetails";
 export { TaskEngagement, type TaskEngagementProps } from "./TaskEngagement";
+export { UnsavedTaskCommentGuard } from "./UnsavedTaskCommentGuard";
+export {
+  shouldBlockUnsavedTaskComment,
+  unsavedTaskCommentIsPending,
+} from "./unsavedTaskComment";
 export {
   flattenTaskListItems,
   type TaskListFlatItem,

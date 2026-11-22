@@ -22,6 +22,7 @@ package probo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -172,6 +173,31 @@ func (s AiSystemService) Get(
 	return aiSystem, nil
 }
 
+func (s AiSystemService) GetByIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	aiSystemIDs ...gid.GID,
+) (coredata.AiSystems, error) {
+	var aiSystems coredata.AiSystems
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := aiSystems.LoadByIDs(ctx, conn, scope, aiSystemIDs); err != nil &&
+				!errors.Is(err, coredata.ErrResourceNotFound) {
+				return fmt.Errorf("cannot load ai systems by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return aiSystems, nil
+}
+
 func (s *AiSystemService) Create(
 	ctx context.Context,
 	scope coredata.Scoper,
@@ -230,6 +256,17 @@ func (s *AiSystemService) Create(
 
 			if err := aiSystem.Insert(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot insert ai system: %w", err)
+			}
+
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				aiSystem.ID,
+				aiSystem.OrganizationID,
+				aiSystem.Name,
+				aiSystem.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
 			}
 
 			return nil
@@ -350,6 +387,17 @@ func (s *AiSystemService) Update(
 				return fmt.Errorf("cannot update ai system: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				aiSystem.ID,
+				aiSystem.OrganizationID,
+				aiSystem.Name,
+				aiSystem.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -370,6 +418,10 @@ func (s AiSystemService) Delete(
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			if err := coredata.DeleteSearchResource(ctx, tx, aiSystem.ID); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			err := aiSystem.Delete(ctx, tx, scope)
 			if err != nil {
 				return fmt.Errorf("cannot delete ai system: %w", err)

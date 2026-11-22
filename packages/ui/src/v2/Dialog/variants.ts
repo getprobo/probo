@@ -27,15 +27,15 @@ import { tv } from "tailwind-variants/lite";
 export const dialog = tv({
   slots: {
     backdrop: [
-      "fixed inset-0 z-4 bg-sand-12/40",
+      "fixed inset-0 z-4",
       "transition-opacity duration-150",
       "data-starting-style:opacity-0 data-ending-style:opacity-0",
     ],
     popup: [
       "fixed left-1/2 z-5 -translate-x-1/2",
-      "flex w-[calc(100vw-2rem)] max-w-150 flex-col gap-4",
+      "flex w-[calc(100vw-2rem)] max-w-150 flex-col",
       "max-h-[calc(100vh-2rem)] overflow-x-clip",
-      "rounded-5 border border-sand-6 bg-sand-1 py-6 shadow-6 outline-none",
+      "rounded-5 bg-sand-1 shadow-6 outline-none",
       "transition-all duration-150",
       "data-starting-style:scale-95 data-starting-style:opacity-0",
       "data-ending-style:scale-95 data-ending-style:opacity-0",
@@ -58,10 +58,25 @@ export const dialog = tv({
       center: { popup: "top-1/2 -translate-y-1/2" },
       top: { popup: "top-24" },
     },
+    // Command-palette chrome: light blurred wash, flush panel (no outer padding).
+    appearance: {
+      default: {
+        backdrop: "bg-sand-12/40",
+        popup: "gap-4 border border-sand-6 py-6",
+      },
+      // No solid border: shadow-6 already draws the hairline, and a sand-6
+      // stroke around the focused palette reads as a second focus ring.
+      palette: {
+        backdrop: "bg-sand-12/20 backdrop-blur-sm",
+        popup: "gap-0 overflow-hidden py-0",
+        body: "px-0",
+      },
+    },
   },
   defaultVariants: {
     lockScroll: false,
     placement: "center",
+    appearance: "default",
   },
 });
 

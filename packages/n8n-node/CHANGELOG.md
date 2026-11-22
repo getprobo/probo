@@ -4,6 +4,72 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+### Added
+
+- Evidence Create Link uploads a `.uri` file containing an HTTP or
+  HTTPS URL, matching the console link form
+
+## [0.274.0] - 2026-11-20
+
+### Added
+
+- Tag resource with Create, Update, Delete, Attach, Detach, and List
+  operations. Tag names are unique in an organization, and a resource
+  can carry several. List shows the tags in an organization or on one
+  resource
+- Tag resource with a Search operation that returns one item per hit,
+  with its title. Bare words match titles as prefixes. Every `tag:name`
+  must match, and `type:name` is optional and repeatable
+
+## [0.273.0] - 2026-11-17
+
+### Added
+
+- Cookie Banner `Get` returns `dailyPageLoads`, one entry per UTC day
+  in the requested window, oldest first
+- Cookie Banner `Get` and Tracker Pattern `Get` take a `Days` field:
+  how many UTC days to count, today included. The default is 7 and
+  the maximum is 90
+- Tracker Pattern `Get` returns `dailyHits`, one entry per UTC day
+  in the requested window, oldest first
+
+### Changed
+
+- **Breaking**: Cookie Banner `Get` returns `dailyPageLoads` instead of
+  `latestSample`. Saved workflows that read `latestSample` must read
+  `dailyPageLoads`
+- **Breaking**: Tracker Pattern `Get` returns `dailyHits` instead of
+  `sampleHits`. Saved workflows that read `sampleHits` must read
+  `dailyHits`
+
+### Removed
+
+- **Breaking**: Cookie Banner `Start Sample`, `Stop Sample`, and
+  `Get Samples`. Page views are always counted, by UTC day. Saved
+  workflows that use these operations must remove them
+
+## [0.272.0] - 2026-11-17
+
+### Added
+
+- Risk Analysis `Create` takes a Score Levels mapping of level and
+  minimum score for the selected matrix size. It is prefilled with the
+  default bands, and `Update` replaces the mapping when it is set
+- Risk Analysis `Get`, `Get Many`, and `Fork` return the Score Levels
+  of each analysis
+
+## [0.271.0] - 2026-11-16
+
+### Added
+
+- Document Suggestion `Start` takes a quote, a replacement, a comment,
+  and a quote occurrence to start with a redline
+- Document Suggestion `Add Change`, `Add Table Change`, and
+  `Add Format Change` operations add redlines to an open suggestion
+- Document Suggestion `Change Text`, `Change Format`, `Change Table`,
+  and `Change Block` operations apply a change to a document, or
+  suggest it on an open suggestion
+
 ## [0.270.0] - 2026-11-13
 
 ### Added

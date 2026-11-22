@@ -29,6 +29,7 @@ import (
 )
 
 type Datum struct {
+	Tags               *TagConnection              `json:"tags"`
 	ID                 gid.GID                     `json:"id"`
 	OrganizationID     gid.GID                     `json:"-"`
 	Name               string                      `json:"name"`
@@ -40,8 +41,10 @@ type Datum struct {
 	UpdatedAt          time.Time                   `json:"updatedAt"`
 }
 
-func (Datum) IsNode()          {}
-func (d Datum) GetID() gid.GID { return d.ID }
+func (Datum) IsNode()                   {}
+func (Datum) IsTaggable()               {}
+func (d Datum) GetID() gid.GID          { return d.ID }
+func (d Datum) GetTags() *TagConnection { return d.Tags }
 
 type (
 	DatumOrderBy OrderBy[coredata.DatumOrderField]

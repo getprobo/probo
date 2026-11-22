@@ -37,6 +37,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/e2e/internal/testutil"
 	"go.probo.inc/probo/internal/test"
+	"go.probo.inc/probo/pkg/riskmanagement"
 )
 
 func SafeName(prefix string) string {
@@ -1789,13 +1790,17 @@ func CreateRiskAnalysis(c *testutil.Client, attrs ...Attrs) string {
 		}
 	`
 
+	rows := a.getInt("matrixRows", 5)
+	cols := a.getInt("matrixCols", 5)
+
 	input := map[string]any{
 		"organizationId": c.GetOrganizationID().String(),
 		"name":           a.getString("name", SafeName("Risk Analysis")),
 		"matrixSize": map[string]any{
-			"rows": a.getInt("matrixRows", 5),
-			"cols": a.getInt("matrixCols", 5),
+			"rows": rows,
+			"cols": cols,
 		},
+		"scoreLevels": defaultScoreLevelsInput(rows, cols),
 	}
 	if desc := a.getStringPtr("description"); desc != nil {
 		input["description"] = ProseMirrorPlainText(*desc)
@@ -1815,6 +1820,21 @@ func CreateRiskAnalysis(c *testutil.Client, attrs ...Attrs) string {
 	require.NoError(c.T, err, "createRiskAnalysis mutation failed")
 
 	return result.CreateRiskAnalysis.RiskAnalysisEdge.Node.ID
+}
+
+func defaultScoreLevelsInput(rows, cols int) []map[string]any {
+	levels := riskmanagement.DefaultScoreLevels(rows, cols)
+
+	items := make([]map[string]any, len(levels))
+
+	for i, level := range levels {
+		items[i] = map[string]any{
+			"level":    string(level.Level),
+			"minScore": level.MinScore,
+		}
+	}
+
+	return items
 }
 
 func CreateTreatmentPlan(c *testutil.Client, riskID, riskAnalysisID string, attrs ...Attrs) string {

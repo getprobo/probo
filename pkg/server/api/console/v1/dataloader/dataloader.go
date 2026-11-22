@@ -39,6 +39,8 @@ import (
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/authn"
+	"go.probo.inc/probo/pkg/server/api/authz"
+	"go.probo.inc/probo/pkg/server/gqlx"
 	"go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/thirdparty"
 )
@@ -106,10 +108,14 @@ type (
 		CompliancePortalFileID   gid.GID
 	}
 
-	SampleHitSplitKey struct {
+	PageLoadsKey struct {
+		CookieBannerID gid.GID
+		Days           int
+	}
+
+	DailyHitsKey struct {
 		PatternID gid.GID
-		SampleID  gid.GID
-		Latest    bool
+		Days      int
 	}
 
 	Loaders struct {
@@ -131,8 +137,8 @@ type (
 		File                                       *dataloadgen.Loader[gid.GID, *coredata.File]
 		CookieBanner                               *dataloadgen.Loader[gid.GID, *coredata.CookieBanner]
 		CookieCategory                             *dataloadgen.Loader[gid.GID, *coredata.CookieCategory]
-		SamplePageLoads                            *dataloadgen.Loader[gid.GID, []cookiebanner.SampleFamilyCount]
-		SampleHitSplits                            *dataloadgen.Loader[SampleHitSplitKey, cookiebanner.SampleHitSplits]
+		DailyPageLoads                             *dataloadgen.Loader[PageLoadsKey, []cookiebanner.DailyPageLoads]
+		DailyHits                                  *dataloadgen.Loader[DailyHitsKey, []cookiebanner.DailyHits]
 		TrackerPatternObservers                    *dataloadgen.Loader[gid.GID, []coredata.DetectedTrackerObserver]
 		CommonTrackerPattern                       *dataloadgen.Loader[gid.GID, *coredata.CommonTrackerPattern]
 		CommonThirdParty                           *dataloadgen.Loader[gid.GID, *coredata.CommonThirdParty]
@@ -223,8 +229,8 @@ func (f *batchFetcher) newLoaders() *Loaders {
 		File:                                     dataloadgen.NewMappedLoader(f.fetchFiles),
 		CookieBanner:                             dataloadgen.NewMappedLoader(f.fetchCookieBanners),
 		CookieCategory:                           dataloadgen.NewMappedLoader(f.fetchCookieCategories),
-		SamplePageLoads:                          dataloadgen.NewMappedLoader(f.fetchSamplePageLoads),
-		SampleHitSplits:                          dataloadgen.NewMappedLoader(f.fetchSampleHitSplits),
+		DailyPageLoads:                           dataloadgen.NewMappedLoader(f.fetchDailyPageLoads),
+		DailyHits:                                dataloadgen.NewMappedLoader(f.fetchDailyHits),
 		TrackerPatternObservers:                  dataloadgen.NewMappedLoader(f.fetchTrackerPatternObservers),
 		CommonTrackerPattern:                     dataloadgen.NewMappedLoader(f.fetchCommonTrackerPatterns),
 		CommonThirdParty:                         dataloadgen.NewMappedLoader(f.fetchCommonThirdParties),
@@ -1124,63 +1130,72 @@ func (f *batchFetcher) fetchCookieBanners(ctx context.Context, keys []gid.GID) (
 	return result, nil
 }
 
-func (f *batchFetcher) fetchSamplePageLoads(
+func (f *batchFetcher) fetchDailyPageLoads(
 	ctx context.Context,
-	keys []gid.GID,
-) (map[gid.GID][]cookiebanner.SampleFamilyCount, error) {
-	result := make(map[gid.GID][]cookiebanner.SampleFamilyCount, len(keys))
-	idsByTenant := make(map[gid.TenantID][]gid.GID)
-
-	for _, sampleID := range keys {
-		idsByTenant[sampleID.TenantID()] = append(idsByTenant[sampleID.TenantID()], sampleID)
+	keys []PageLoadsKey,
+) (map[PageLoadsKey][]cookiebanner.DailyPageLoads, error) {
+	type batchKey struct {
+		tenantID gid.TenantID
+		days     int
 	}
 
-	for tenantID, sampleIDs := range idsByTenant {
-		loads, err := f.cookieBanner.GetSamplePageLoadsByIDs(ctx, scopeFromContext(ctx, tenantID), sampleIDs)
+	result := make(map[PageLoadsKey][]cookiebanner.DailyPageLoads, len(keys))
+	idsByBatch := make(map[batchKey][]gid.GID)
+
+	for _, key := range keys {
+		batch := batchKey{tenantID: key.CookieBannerID.TenantID(), days: key.Days}
+		idsByBatch[batch] = append(idsByBatch[batch], key.CookieBannerID)
+	}
+
+	for batch, cookieBannerIDs := range idsByBatch {
+		loads, err := f.cookieBanner.GetDailyPageLoads(
+			ctx,
+			scopeFromContext(ctx, batch.tenantID),
+			cookieBannerIDs,
+			batch.days,
+		)
 		if err != nil {
-			return nil, fmt.Errorf("cannot batch load sample page loads: %w", err)
+			return nil, fmt.Errorf("cannot batch load daily page loads: %w", err)
 		}
 
-		maps.Copy(result, loads)
+		for cookieBannerID, series := range loads {
+			result[PageLoadsKey{CookieBannerID: cookieBannerID, Days: batch.days}] = series
+		}
 	}
 
 	return result, nil
 }
 
-func (f *batchFetcher) fetchSampleHitSplits(
+func (f *batchFetcher) fetchDailyHits(
 	ctx context.Context,
-	keys []SampleHitSplitKey,
-) (map[SampleHitSplitKey]cookiebanner.SampleHitSplits, error) {
-	result := make(map[SampleHitSplitKey]cookiebanner.SampleHitSplits, len(keys))
-	queriesByTenant := make(map[gid.TenantID][]cookiebanner.SampleHitSplitQuery)
-
-	for _, key := range keys {
-		queriesByTenant[key.PatternID.TenantID()] = append(
-			queriesByTenant[key.PatternID.TenantID()],
-			cookiebanner.SampleHitSplitQuery{
-				PatternID: key.PatternID,
-				SampleID:  key.SampleID,
-				Latest:    key.Latest,
-			},
-		)
+	keys []DailyHitsKey,
+) (map[DailyHitsKey][]cookiebanner.DailyHits, error) {
+	type batchKey struct {
+		tenantID gid.TenantID
+		days     int
 	}
 
-	for tenantID, queries := range queriesByTenant {
-		splits, err := f.cookieBanner.GetSampleHitSplitsForPatterns(
+	result := make(map[DailyHitsKey][]cookiebanner.DailyHits, len(keys))
+	idsByBatch := make(map[batchKey][]gid.GID)
+
+	for _, key := range keys {
+		batch := batchKey{tenantID: key.PatternID.TenantID(), days: key.Days}
+		idsByBatch[batch] = append(idsByBatch[batch], key.PatternID)
+	}
+
+	for batch, patternIDs := range idsByBatch {
+		series, err := f.cookieBanner.GetDailyHits(
 			ctx,
-			scopeFromContext(ctx, tenantID),
-			queries,
+			scopeFromContext(ctx, batch.tenantID),
+			patternIDs,
+			batch.days,
 		)
 		if err != nil {
-			return nil, fmt.Errorf("cannot load tracker pattern sample hits: %w", err)
+			return nil, fmt.Errorf("cannot batch load daily hits: %w", err)
 		}
 
-		for query, split := range splits {
-			result[SampleHitSplitKey{
-				PatternID: query.PatternID,
-				SampleID:  query.SampleID,
-				Latest:    query.Latest,
-			}] = split
+		for patternID, days := range series {
+			result[DailyHitsKey{PatternID: patternID, Days: batch.days}] = days
 		}
 	}
 
@@ -1315,6 +1330,7 @@ func (f *batchFetcher) fetchAuthorizes(
 	multiParams := iam.AuthorizeMultiParams{
 		Principal: identity.ID,
 		Items:     items,
+		Request:   authz.RequestMetadataFromHTTP(gqlx.HTTPRequestFromContext(ctx)),
 	}
 	if session != nil {
 		multiParams.Session = &session.ID
@@ -1374,6 +1390,8 @@ func (f *batchFetcher) fetchAuthorizesIndividually(
 		if session != nil {
 			params.Session = &session.ID
 		}
+
+		params.Request = authz.RequestMetadataFromHTTP(gqlx.HTTPRequestFromContext(ctx))
 
 		scope, err := f.iam.Authorizer.Authorize(ctx, params)
 		if err != nil {

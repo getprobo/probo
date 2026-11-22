@@ -13,6 +13,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
@@ -20,6 +21,11 @@ import (
 	"go.probo.inc/probo/pkg/server/gqlx"
 	"go.probo.inc/probo/pkg/validator"
 )
+
+// Tags is the resolver for the tags field.
+func (r *aiSystemResolver) Tags(ctx context.Context, obj *types.AiSystem, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TagOrderBy) (*types.TagConnection, error) {
+	return r.tagsForResourceID(ctx, obj.ID, first, after, last, before, orderBy)
+}
 
 // Organization is the resolver for the organization field.
 func (r *aiSystemResolver) Organization(ctx context.Context, obj *types.AiSystem) (*types.Organization, error) {

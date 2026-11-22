@@ -99,7 +99,13 @@
     "placeholder": "Laisser un commentaire",
     "submit": "Ajouter un commentaire",
     "showMore": "Afficher plus",
-    "authorFallback": "Quelqu'un"
+    "authorFallback": "Quelqu'un",
+    "unsaved": {
+      "title": "Quitter sans ajouter ce commentaire ?",
+      "description": "Ce commentaire n'a pas encore été ajouté. Quitter cette page l'efface.",
+      "stay": "Rester",
+      "leave": "Quitter"
+    }
   },
   "activity": {
     "title": "Activité",

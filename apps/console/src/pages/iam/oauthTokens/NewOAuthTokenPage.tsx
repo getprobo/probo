@@ -77,32 +77,23 @@ const createMutation = graphql`
   }
 `;
 
+const expirationDays = {
+  "30days": 30,
+  "90days": 90,
+  "180days": 180,
+} as const;
+
 const createSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  expiresIn: z.enum(["1month", "3months", "6months", "1year"]),
+  expiresIn: z.enum(["30days", "90days", "180days"]),
   scopes: z.array(z.string()).min(1, "Select at least one scope"),
 });
 
 type CreateFormData = z.infer<typeof createSchema>;
 
 function computeExpiresAt(expiresIn: CreateFormData["expiresIn"]) {
-  const now = new Date();
-  const expiresAt = new Date(now);
-  switch (expiresIn) {
-    case "1month":
-      expiresAt.setMonth(now.getMonth() + 1);
-      break;
-    case "3months":
-      expiresAt.setMonth(now.getMonth() + 3);
-      break;
-    case "6months":
-      expiresAt.setMonth(now.getMonth() + 6);
-      break;
-    case "1year":
-      expiresAt.setFullYear(now.getFullYear() + 1);
-      break;
-  }
-  return expiresAt;
+  const days = expirationDays[expiresIn];
+  return new Date(Date.now() + days * 24 * 60 * 60 * 1000);
 }
 
 export function NewOAuthTokenPage() {
@@ -126,7 +117,7 @@ export function NewOAuthTokenPage() {
     = useFormWithSchema(createSchema, {
       defaultValues: {
         name: new Date().toISOString().split("T")[0],
-        expiresIn: "1year",
+        expiresIn: "180days",
         scopes: [] as string[],
       },
     });
@@ -238,10 +229,9 @@ export function NewOAuthTokenPage() {
                     value={field.value}
                     onValueChange={field.onChange}
                   >
-                    <Option value="1month">{t("newOAuthTokenPage.expirations.month", { count: 1 })}</Option>
-                    <Option value="3months">{t("newOAuthTokenPage.expirations.month", { count: 3 })}</Option>
-                    <Option value="6months">{t("newOAuthTokenPage.expirations.month", { count: 6 })}</Option>
-                    <Option value="1year">{t("newOAuthTokenPage.expirations.year", { count: 1 })}</Option>
+                    <Option value="30days">{t("newOAuthTokenPage.expirations.day", { count: 30 })}</Option>
+                    <Option value="90days">{t("newOAuthTokenPage.expirations.day", { count: 90 })}</Option>
+                    <Option value="180days">{t("newOAuthTokenPage.expirations.day", { count: 180 })}</Option>
                   </Select>
                 )}
               />

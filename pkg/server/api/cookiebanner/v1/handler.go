@@ -593,7 +593,7 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 				InitiatorURL:    sanitizeInitiatorURL(c.InitiatorURL),
 				CookieDomain:    cookieDomain,
 				HostOnly:        hostOnly,
-				SampleHit:       c.DiscoveryHit || c.SampleHit,
+				Hit:             c.DiscoveryHit || c.SampleHit,
 				CategoryGranted: c.CategoryGranted,
 			},
 		)
@@ -652,7 +652,7 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 				ValueSize:       sanitizeInt4(s.ValueSize),
 				Source:          &source,
 				InitiatorURL:    sanitizeInitiatorURL(s.InitiatorURL),
-				SampleHit:       s.DiscoveryHit || s.SampleHit,
+				Hit:             s.DiscoveryHit || s.SampleHit,
 				CategoryGranted: s.CategoryGranted,
 			},
 		)

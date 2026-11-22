@@ -168,7 +168,7 @@ const (
 	ConnectorAccountEntityType                       uint16 = 136
 	EmployeePortalEntityType                         uint16 = 137
 	NotificationEntityType                           uint16 = 138
-	CookieBannerSampleEntityType                     uint16 = 139
+	_                                                uint16 = 139 // CookieBannerSampleEntityType - removed
 	DocumentCollaborationSessionEntityType           uint16 = 140
 	CookieBannerScanEntityType                       uint16 = 141
 	EmployeePortalDocumentEntityType                 uint16 = 142
@@ -177,6 +177,8 @@ const (
 	DocumentCommentEntityType                        uint16 = 145
 	CMPDomainEntityType                              uint16 = 146
 	CMPDomainSurfaceEntityType                       uint16 = 147
+	TagEntityType                                    uint16 = 148
+	TagAssignmentEntityType                          uint16 = 149 // internal cursor key, not a Node
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -435,8 +437,6 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &EmployeePortal{ID: id}, true
 	case NotificationEntityType:
 		return &Notification{ID: id}, true
-	case CookieBannerSampleEntityType:
-		return &CookieBannerSample{ID: id}, true
 	case CookieBannerScanEntityType:
 		return &CookieBannerScan{ID: id}, true
 	case EmployeePortalDocumentEntityType:
@@ -451,6 +451,8 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &CMPDomain{ID: id}, true
 	case CMPDomainSurfaceEntityType:
 		return &CMPDomainSurface{ID: id}, true
+	case TagEntityType:
+		return &Tag{ID: id}, true
 	default:
 		return nil, false
 	}

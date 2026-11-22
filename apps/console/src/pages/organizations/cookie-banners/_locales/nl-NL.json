@@ -126,7 +126,7 @@
     "filters": { "search": "Zoeken op naam of beschrijving...", "allThirdParties": "Alle derde partijen", "allCategories": "Alle categorieën", "allObservers": "Alle waarnemers", "source": "Bron", "type": "Type", "category": "Categorie", "thirdParty": "Derde partij", "observedBy": "Gezien door", "selectedCount": "{{count}} geselecteerd" },
     "types": { "all": "Alle typen", "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Cache-opslag" },
     "sources": { "all": "Alle bronnen", "script": "Script", "preExisting": "Vooraf bestaand", "http": "HTTP", "extension": "Extensie" },
-    "columns": { "name": "Naam", "attribution": "Attributie", "source": "Bron", "seenBy": "Gezien door", "category": "Categorie", "maxAge": "Maximale leeftijd" },
+    "columns": { "name": "Naam", "attribution": "Attributie", "source": "Bron", "seenBy": "Gezien door", "category": "Categorie", "hits": "Hits", "hitsHint": "Hits in de afgelopen 30 dagen" },
     "sort": { "name": "Sorteren op naam", "source": "Sorteren op bron" },
     "actions": { "previous": "Vorige", "next": "Volgende", "new": "Nieuwe tracker" },
     "views": { "categorised": "Gecategoriseerd", "uncategorised": "Niet gecategoriseerd", "sdk": "Van bezoekers", "scan": "Van de scan", "all": "Alle trackers", "ariaLabel": "Trackerlijstweergave" },
@@ -335,27 +335,35 @@
       "version": "v{{version}}",
       "deactivated": "Deze banner is gedeactiveerd en wordt niet getoond aan bezoekers.",
       "deactivatedDraft": "Deze banner is gedeactiveerd en wordt niet getoond aan bezoekers. Deze versie heeft ongepubliceerde wijzigingen.",
-      "samplingUnpublished": "Verkeer en tracker-hitrates meten op alle weergaven en op weergaven waar een tracker zou moeten afgaan. Publiceren stopt dit. Deze wijzigingen zijn nog niet live.",
-      "sampling": "Verkeer en tracker-hitrates meten op alle weergaven en op weergaven waar een tracker zou moeten afgaan.",
       "draft": "Deze versie heeft ongepubliceerde wijzigingen.",
-      "published": "Deze versie is gepubliceerd en live. Start een meting om te zien hoe vaak trackers voorkomen.",
+      "published": "Deze versie is gepubliceerd en live.",
       "unpublished": "Deze banner is nog niet gepubliceerd."
     },
-    "messages": { "copiedTitle": "Gekopieerd", "activated": "Banner geactiveerd", "deactivated": "Banner gedeactiveerd", "published": "Versie gepubliceerd", "sampleStarted": "Meting gestart", "sampleStopped": "Meting gestopt", "idCopied": "Banner-ID gekopieerd naar klembord", "deleted": "Cookiebanner succesvol verwijderd" },
-    "errors": { "title": "Fout", "activate": "Activeren mislukt", "deactivate": "Deactiveren mislukt", "publish": "Publiceren mislukt", "startSample": "Meting starten mislukt", "stopSample": "Meting stoppen mislukt", "delete": "Cookiebanner verwijderen mislukt", "copy": "Banner-ID kopiëren mislukt" },
+    "messages": { "copiedTitle": "Gekopieerd", "activated": "Banner geactiveerd", "deactivated": "Banner gedeactiveerd", "published": "Versie gepubliceerd", "idCopied": "Banner-ID gekopieerd naar klembord", "deleted": "Cookiebanner succesvol verwijderd" },
+    "errors": { "title": "Fout", "activate": "Activeren mislukt", "deactivate": "Deactiveren mislukt", "publish": "Publiceren mislukt", "delete": "Cookiebanner verwijderen mislukt", "copy": "Banner-ID kopiëren mislukt" },
     "deleteConfirmation": "Hiermee wordt de cookiebanner \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
     "dialogs": { "deleteTitle": "Cookiebanner verwijderen" },
     "status": { "active": "Actief", "inactive": "Inactief" },
-    "actions": { "publish": "Wijzigingen publiceren", "startSample": "Meting starten", "stopSample": "Meting stoppen", "activate": "Activeren", "deactivate": "Deactiveren", "delete": "Verwijderen", "cancel": "Annuleren", "copyId": "Banner-ID kopiëren" },
-    "sample": { "pageLoads": "Paginaladingen", "empty": "Nog geen" }
+    "actions": { "publish": "Wijzigingen publiceren", "activate": "Activeren", "deactivate": "Deactiveren", "delete": "Verwijderen", "cancel": "Annuleren", "copyId": "Banner-ID kopiëren" }
   },
-  "trackerSample": {
-    "empty": "Nog geen hits.",
-    "hits": "hits",
-    "loads": "paginaladingen",
-    "hitRate": "Globale hitrate",
-    "expectedHitRate": "Geldige hitrate",
-    "driftRate": "Afwijkingspercentage"
+  "overview": {
+    "title": "Overzicht",
+    "description": "Paginaladingen van de laatste 30 dagen.",
+    "chart": {
+      "title": "Paginaladingen",
+      "total": "Totaal",
+      "empty": {
+        "title": "Nog geen paginaladingen",
+        "description": "Bezoeken van de afgelopen 30 dagen verschijnen hier."
+      }
+    }
+  },
+  "trackerHits": {
+    "chart": "Hits",
+    "empty": {
+      "title": "Nog geen hits",
+      "description": "Hits van de afgelopen 30 dagen verschijnen hier."
+    }
   },
   "trackerDiscovery": {
     "families": {

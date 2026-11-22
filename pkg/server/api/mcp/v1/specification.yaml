@@ -671,6 +671,32 @@ components:
             - 5
           description: Number of impact columns (must equal rows; one of 3, 4, or 5)
 
+    RiskScoreLevel:
+      type: string
+      enum:
+        - LOW
+        - MEDIUM
+        - HIGH
+        - CRITICAL
+      description: Risk score level. Order is LOW, MEDIUM, HIGH, CRITICAL. Levels may be omitted.
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.RiskScoreLevel
+
+    RiskScoreLevelMapping:
+      type: object
+      required:
+        - level
+        - min_score
+      description: >
+        Lowest score that maps to a level. Scores continue up to the next
+        level's minimum, or through the maximum matrix score for the last level.
+      properties:
+        level:
+          $ref: "#/components/schemas/RiskScoreLevel"
+        min_score:
+          type: integer
+          minimum: 1
+          description: Lowest score that maps to this level. The first level must start at 1.
+
     ListOrganizationsInput:
       type: object
       properties:
@@ -2876,6 +2902,31 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Evidence"
+
+    AddInternalControlLinkEvidenceInput:
+      type: object
+      required:
+        - internal_control_id
+        - url
+        - name
+      properties:
+        internal_control_id:
+          $ref: "#/components/schemas/GID"
+          description: Internal control that receives the link. Framework controls such as ACC-16 do not store evidence; list or link their internal controls first.
+        url:
+          type: string
+          description: HTTP or HTTPS address written into the .uri file
+        name:
+          type: string
+          description: File name without the .uri extension
+
+    AddInternalControlLinkEvidenceOutput:
+      type: object
+      required:
+        - evidence
+      properties:
+        evidence:
+          $ref: "#/components/schemas/Evidence"
 
     Evidence:
       type: object
@@ -9279,6 +9330,72 @@ components:
         - CREATED_AT
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DocumentSuggestionOrderField
 
+    DocumentChangeMode:
+      type: string
+      enum:
+        - APPLY
+        - SUGGEST
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/probo.DocumentChangeMode
+
+    DocumentBlockOperation:
+      type: string
+      enum:
+        - SET_BLOCK
+        - INSERT_BLOCK
+        - DELETE_BLOCK
+        - INSERT_LIST_ITEM
+        - DELETE_LIST_ITEM
+        - NEST_LIST_ITEM
+        - UNNEST_LIST_ITEM
+        - SET_TASK
+        - INSERT_DIVIDER
+        - INSERT_IMAGE
+        - INSERT_FILE
+        - INSERT_MENTION
+        - DELETE_MENTION
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/collaboration.BlockOperation
+
+    DocumentBlockKind:
+      type: string
+      enum:
+        - PARAGRAPH
+        - HEADING
+        - BLOCKQUOTE
+        - BULLET_LIST
+        - ORDERED_LIST
+        - TASK_LIST
+        - CODE_BLOCK
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/collaboration.BlockKind
+
+    DocumentSuggestionFormatMark:
+      type: string
+      enum:
+        - BOLD
+        - ITALIC
+        - UNDERLINE
+        - STRIKE
+        - CODE
+        - LINK
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/collaboration.FormatSuggestionMark
+
+    DocumentSuggestionFormatAction:
+      type: string
+      enum:
+        - ADD
+        - REMOVE
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/collaboration.FormatSuggestionAction
+
+    DocumentSuggestionTableOperation:
+      type: string
+      enum:
+        - INSERT_ROW
+        - DELETE_ROW
+        - INSERT_COLUMN
+        - DELETE_COLUMN
+        - INSERT_TABLE
+        - DELETE_TABLE
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/collaboration.TableSuggestionOperation
+
     DocumentSuggestionOrderBy:
       type: object
       required:
@@ -9710,6 +9827,35 @@ components:
         document_id:
           $ref: "#/components/schemas/GID"
           description: Document ID
+        quote:
+          type: string
+          description: Text to replace. The match is the editor selection. Without it, only an ID is allocated.
+        replacement:
+          type: string
+          description: Suggested text. Empty deletes the quote. Required when quote is set.
+        comment:
+          type: string
+          description: Plain-text note attached to the redline.
+        quote_occurrence:
+          type: integer
+          minimum: 0
+          description: Zero-based occurrence of quote. Defaults to the first match.
+      oneOf:
+        - not:
+            anyOf:
+              - required:
+                  - quote
+              - required:
+                  - replacement
+              - required:
+                  - comment
+              - required:
+                  - quote_occurrence
+          description: Allocate an ID only.
+        - required:
+            - quote
+            - replacement
+          description: Mark quote as a deletion and insert replacement.
 
     StartDocumentSuggestionOutput:
       type: object
@@ -9718,6 +9864,195 @@ components:
       properties:
         suggestion:
           $ref: "#/components/schemas/DocumentSuggestion"
+
+    ChangeDocumentOutput:
+      type: object
+      required:
+        - document
+      properties:
+        document:
+          $ref: "#/components/schemas/Document"
+        suggestion:
+          $ref: "#/components/schemas/DocumentSuggestion"
+          description: Set when mode is SUGGEST.
+
+    ChangeDocumentTextInput:
+      type: object
+      required:
+        - mode
+        - quote
+        - replacement
+      properties:
+        mode:
+          $ref: "#/components/schemas/DocumentChangeMode"
+          description: APPLY writes the text. SUGGEST stores it on an open suggestion.
+        document_id:
+          $ref: "#/components/schemas/GID"
+          description: Document ID. Required when mode is APPLY.
+        suggestion_id:
+          $ref: "#/components/schemas/GID"
+          description: Open suggestion ID. Required when mode is SUGGEST.
+        quote:
+          type: string
+          description: Text to replace. The match must not overlap an existing suggestion.
+        replacement:
+          type: string
+          description: New text. Empty deletes the quote. A newline inside the quote becomes a line break.
+        quote_occurrence:
+          type: integer
+          minimum: 0
+          description: Zero-based occurrence of quote. Defaults to the first match.
+
+    ChangeDocumentFormatInput:
+      type: object
+      required:
+        - mode
+        - mark
+        - action
+        - quote
+      properties:
+        mode:
+          $ref: "#/components/schemas/DocumentChangeMode"
+          description: APPLY writes the style. SUGGEST stores it on an open suggestion.
+        document_id:
+          $ref: "#/components/schemas/GID"
+          description: Document ID. Required when mode is APPLY.
+        suggestion_id:
+          $ref: "#/components/schemas/GID"
+          description: Open suggestion ID. Required when mode is SUGGEST.
+        mark:
+          $ref: "#/components/schemas/DocumentSuggestionFormatMark"
+          description: Style to add or remove
+        action:
+          $ref: "#/components/schemas/DocumentSuggestionFormatAction"
+          description: Add the style or remove it
+        quote:
+          type: string
+          description: Text to format. The match must not overlap another suggestion.
+        quote_occurrence:
+          type: integer
+          minimum: 0
+          description: Zero-based occurrence of quote. Defaults to the first match.
+        href:
+          type: string
+          description: Link address when mark is LINK and action is ADD.
+
+    ChangeDocumentTableInput:
+      type: object
+      required:
+        - mode
+        - operation
+        - quote
+      properties:
+        mode:
+          $ref: "#/components/schemas/DocumentChangeMode"
+          description: APPLY writes the table. SUGGEST stores it on an open suggestion.
+        document_id:
+          $ref: "#/components/schemas/GID"
+          description: Document ID. Required when mode is APPLY.
+        suggestion_id:
+          $ref: "#/components/schemas/GID"
+          description: Open suggestion ID. Required when mode is SUGGEST.
+        operation:
+          $ref: "#/components/schemas/DocumentSuggestionTableOperation"
+          description: Structural table change
+        quote:
+          type: string
+          description: Text inside a cell of the row, column, or table to change. For INSERT_TABLE, text of the top-level block the new table goes beside.
+        quote_occurrence:
+          type: integer
+          minimum: 0
+          description: Zero-based occurrence of quote. Defaults to the first match.
+        before:
+          type: boolean
+          description: Insert before the quoted row, column, or block instead of after it.
+        cells:
+          type: array
+          maxItems: 100
+          items:
+            type: string
+          description: Text of the new row's cells left to right (INSERT_ROW), or the new column's cells top to bottom (INSERT_COLUMN). Omit for empty cells. A newline starts a new paragraph in the cell.
+        rows:
+          type: array
+          maxItems: 100
+          items:
+            type: array
+            maxItems: 20
+            items:
+              type: string
+          description: Rows of the new table for INSERT_TABLE, each with the same cell count.
+        header_row:
+          type: boolean
+          description: Make the new table's first row a header row (INSERT_TABLE).
+
+    ChangeDocumentBlockInput:
+      type: object
+      required:
+        - mode
+        - operation
+      properties:
+        mode:
+          $ref: "#/components/schemas/DocumentChangeMode"
+          description: APPLY writes the block. SUGGEST stores it as its own card.
+        document_id:
+          $ref: "#/components/schemas/GID"
+          description: Document ID. Required when mode is APPLY.
+        suggestion_id:
+          $ref: "#/components/schemas/GID"
+          description: Open suggestion ID. Required when mode is SUGGEST. Use a different suggestion from any text card.
+        operation:
+          $ref: "#/components/schemas/DocumentBlockOperation"
+          description: Block change to apply
+        quote:
+          type: string
+          description: Text that locates the block. Empty inserts into an empty document.
+        quote_occurrence:
+          type: integer
+          minimum: 0
+          description: Zero-based occurrence of quote. Defaults to the first match.
+        before:
+          type: boolean
+          description: Insert before the quote, or delete the neighboring textless block on that side.
+        block:
+          $ref: "#/components/schemas/DocumentBlockKind"
+          description: Block kind for SET_BLOCK, INSERT_BLOCK, and INSERT_LIST_ITEM.
+        level:
+          type: integer
+          minimum: 1
+          maximum: 6
+          description: Heading level from 1 to 6.
+        language:
+          type: string
+          description: Code block language. mermaid draws a diagram.
+        text:
+          type: string
+          description: Text of the new block or list item.
+        items:
+          type: array
+          maxItems: 100
+          items:
+            type: string
+          description: List item texts when inserting a list.
+        checked:
+          type: boolean
+          description: Checked state for SET_TASK.
+        file_id:
+          $ref: "#/components/schemas/GID"
+          description: File already uploaded in this organization, for INSERT_IMAGE or INSERT_FILE.
+        src:
+          type: string
+          description: Image address when no file_id is set. Only http and https are accepted.
+        alt:
+          type: string
+          description: Image alternative text.
+        width:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Image width as a percentage from 1 to 100.
+        profile_id:
+          $ref: "#/components/schemas/GID"
+          description: Membership profile to mention. The server fills the label.
 
     AcceptDocumentSuggestionInput:
       type: object
@@ -12966,15 +13301,41 @@ components:
             action:
               type: string
               description: Filter by action (e.g. "core:thirdParty:create")
+            action_prefix:
+              type: string
+              description: Filter by action prefix (e.g. "iam:membership")
             actor_id:
               $ref: "#/components/schemas/GID"
               description: Filter by actor ID
+            actor_type:
+              type: string
+              enum: [USER, API_KEY, SYSTEM]
+              go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AuditLogActorType
+              description: Filter by actor type
             resource_type:
               type: string
               description: Filter by resource type (e.g. "ThirdParty")
             resource_id:
               $ref: "#/components/schemas/GID"
               description: Filter by resource ID
+            outcome:
+              type: string
+              enum: [ALLOWED, DENIED]
+              go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AuditLogOutcome
+              description: Filter by outcome
+            request_id:
+              type: string
+              description: Filter by request ID
+            created_from:
+              type: string
+              format: date-time
+              go.probo.inc/mcpgen/type: time.Time
+              description: Include entries at or after this time
+            created_to:
+              type: string
+              format: date-time
+              go.probo.inc/mcpgen/type: time.Time
+              description: Include entries before this time
 
     ListAuditLogEntriesOutput:
       type: object
@@ -13059,7 +13420,9 @@ components:
         - action
         - resource_type
         - resource_id
+        - outcome
         - created_at
+        - recorded_at
       properties:
         id:
           $ref: "#/components/schemas/GID"
@@ -13075,6 +13438,12 @@ components:
           enum: [USER, API_KEY, SYSTEM]
           go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AuditLogActorType
           description: Type of actor
+        actor_email:
+          type: string
+          description: Email copied onto the row when it was written
+        actor_name:
+          type: string
+          description: Name copied onto the row when it was written
         action:
           type: string
           description: Action performed (e.g. "core:thirdParty:create")
@@ -13084,14 +13453,36 @@ components:
         resource_id:
           $ref: "#/components/schemas/GID"
           description: ID of the affected resource
+        outcome:
+          type: string
+          enum: [ALLOWED, DENIED]
+          go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AuditLogOutcome
+          description: Whether the action was allowed or denied
+        denial_reason:
+          type: string
+          description: Why the action was denied
         metadata:
           type: object
           description: Additional metadata about the action
+        origin_ip:
+          type: string
+          description: Client IP copied when the row was written
+        user_agent:
+          type: string
+          description: User agent copied when the row was written
+        request_id:
+          type: string
+          description: Request that produced the row
         created_at:
           type: string
           format: date-time
           go.probo.inc/mcpgen/type: time.Time
           description: When the action was performed
+        recorded_at:
+          type: string
+          format: date-time
+          go.probo.inc/mcpgen/type: time.Time
+          description: When the row was written
 
     RightsRequestType:
       type: string
@@ -15026,6 +15417,243 @@ components:
           $ref: "#/components/schemas/GID"
           description: Resource ID whose alias was removed
 
+    Tag:
+      type: object
+      required:
+        - id
+        - organization_id
+        - name
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Tag ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        name:
+          type: string
+          description: Tag name; unique within the organization
+        color:
+          type:
+            - string
+            - "null"
+          description: Optional hex color (#RGB or #RRGGBB)
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateTagInput:
+      type: object
+      required:
+        - organization_id
+        - name
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        name:
+          type: string
+          description: Tag name; unique within the organization
+        color:
+          type: string
+          description: Optional hex color (#RGB or #RRGGBB)
+
+    CreateTagOutput:
+      type: object
+      required:
+        - tag
+      properties:
+        tag:
+          $ref: "#/components/schemas/Tag"
+
+    UpdateTagInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Tag ID
+        name:
+          type: string
+          description: Tag name; unique within the organization
+        color:
+          type: ["string", "null"]
+          description: Hex color (#RGB or #RRGGBB); null clears it
+          go.probo.inc/mcpgen/omittable: true
+
+    UpdateTagOutput:
+      type: object
+      required:
+        - tag
+      properties:
+        tag:
+          $ref: "#/components/schemas/Tag"
+
+    DeleteTagInput:
+      type: object
+      required:
+        - tag_id
+      properties:
+        tag_id:
+          $ref: "#/components/schemas/GID"
+          description: Tag ID to delete
+
+    DeleteTagOutput:
+      type: object
+      required:
+        - deleted_tag_id
+      properties:
+        deleted_tag_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted tag ID
+
+    AttachTagInput:
+      type: object
+      required:
+        - resource_id
+        - tag_id
+      properties:
+        resource_id:
+          $ref: "#/components/schemas/GID"
+          description: ID of the resource to tag
+        tag_id:
+          $ref: "#/components/schemas/GID"
+          description: Tag ID
+
+    AttachTagOutput:
+      type: object
+      required:
+        - tag
+      properties:
+        tag:
+          $ref: "#/components/schemas/Tag"
+
+    DetachTagInput:
+      type: object
+      required:
+        - resource_id
+        - tag_id
+      properties:
+        resource_id:
+          $ref: "#/components/schemas/GID"
+          description: ID of the resource to untag
+        tag_id:
+          $ref: "#/components/schemas/GID"
+          description: Tag ID
+
+    DetachTagOutput:
+      type: object
+      required:
+        - tag
+        - detached
+      properties:
+        tag:
+          $ref: "#/components/schemas/Tag"
+        detached:
+          type: boolean
+          description: True when the tag was removed from the resource. False when it was not attached.
+
+    ListTagsInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListTagsOutput:
+      type: object
+      required:
+        - tags
+      properties:
+        tags:
+          type: array
+          items:
+            $ref: "#/components/schemas/Tag"
+        next_cursor:
+          anyOf:
+            - $ref: "#/components/schemas/CursorKey"
+            - type: "null"
+          description: Next page cursor
+
+    ListTagsForResourceInput:
+      type: object
+      required:
+        - resource_id
+      properties:
+        resource_id:
+          $ref: "#/components/schemas/GID"
+          description: Resource ID
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListTagsForResourceOutput:
+      type: object
+      required:
+        - tags
+      properties:
+        tags:
+          type: array
+          items:
+            $ref: "#/components/schemas/Tag"
+        next_cursor:
+          anyOf:
+            - $ref: "#/components/schemas/CursorKey"
+            - type: "null"
+          description: Next page cursor
+
+    SearchInput:
+      type: object
+      required:
+        - organization_id
+        - query
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        query:
+          type: string
+          description: Search query. Bare words match titles as prefixes. Every tag:name must match. type:name is optional and repeatable.
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    SearchOutput:
+      type: object
+      required:
+        - resources
+      properties:
+        resources:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Resource IDs matching the query
+        next_cursor:
+          anyOf:
+            - $ref: "#/components/schemas/CursorKey"
+            - type: "null"
+          description: Next page cursor
+
     ListCompliancePortalFilesInput:
       type: object
       required:
@@ -15324,41 +15952,43 @@ components:
         published_version:
           $ref: "#/components/schemas/CookieBannerVersion"
           description: Latest published cookie banner version, if any
-        latest_sample:
-          anyOf:
-            - $ref: "#/components/schemas/CookieBannerSample"
-            - type: "null"
-          description: Most recent cookie banner sample window, if any
+        daily_page_loads:
+          type: array
+          items:
+            $ref: "#/components/schemas/DailyPageLoads"
+          description: Page loads by browser family for each requested UTC day, today included and oldest first. Days with no loads are included with an empty list. Only set by getCookieBanner.
 
-    CookieBannerSample:
+    DailyPageLoads:
       type: object
       required:
-        - id
-        - cookie_banner_id
+        - day
         - page_loads
-        - created_at
       properties:
-        id:
-          $ref: "#/components/schemas/GID"
-          description: Cookie banner sample ID
-        cookie_banner_id:
-          $ref: "#/components/schemas/GID"
-          description: Cookie banner ID
+        day:
+          type: string
+          format: date-time
+          description: UTC midnight that starts this day
         page_loads:
           type: array
           items:
-            $ref: "#/components/schemas/SampleFamilyCount"
-          description: Page loads by browser family. Families with zero page loads are omitted.
-        frozen_at:
-          type:
-            - string
-            - "null"
-          format: date-time
-          description: When this sample stopped counting. Null while the window is open.
-        created_at:
+            $ref: "#/components/schemas/BrowserFamilyCount"
+          description: Page loads by browser family on this day. Families with zero page loads are omitted.
+
+    DailyHits:
+      type: object
+      required:
+        - day
+        - hits
+      properties:
+        day:
           type: string
           format: date-time
-          description: When this sample started
+          description: UTC midnight that starts this day
+        hits:
+          type: array
+          items:
+            $ref: "#/components/schemas/BrowserFamilyCount"
+          description: Hits by browser family on this day. Families with zero hits are omitted.
 
     CookieBannerScanState:
       type: string
@@ -15478,9 +16108,9 @@ components:
       type: string
       enum: [CHROME, EDGE, FIREFOX, SAFARI, OTHER]
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.BrowserFamily
-      description: Coarse browser family used for sample counting
+      description: Coarse browser family used for analytics counts
 
-    SampleFamilyCount:
+    BrowserFamilyCount:
       type: object
       required:
         - family
@@ -15491,7 +16121,7 @@ components:
           description: Browser family
         count:
           type: integer
-          description: Page loads or first-sighting hits for this family
+          description: Page loads or hits for this family
 
     CommonGVLVendorMembership:
       type: string
@@ -15786,21 +16416,11 @@ components:
         excluded:
           type: boolean
           description: Whether this pattern is excluded from the consent banner
-        sample_hits:
+        daily_hits:
           type: array
           items:
-            $ref: "#/components/schemas/SampleFamilyCount"
-          description: Sample first-sighting hits by browser family for the selected or latest sample. Families with zero hits are omitted.
-        allowed_sample_hits:
-          type: array
-          items:
-            $ref: "#/components/schemas/SampleFamilyCount"
-          description: Sample hits whose category was allowed to fire, by browser family.
-        denied_sample_hits:
-          type: array
-          items:
-            $ref: "#/components/schemas/SampleFamilyCount"
-          description: Sample hits whose category was not allowed to fire, by browser family.
+            $ref: "#/components/schemas/DailyHits"
+          description: Hits by browser family for each requested UTC day, today included and oldest first. Days with no hits are included with an empty list. Only set by getTrackerPattern.
         common_tracker_pattern_id:
           anyOf:
             - $ref: "#/components/schemas/GID"
@@ -16061,6 +16681,11 @@ components:
         id:
           $ref: "#/components/schemas/GID"
           description: Cookie banner ID
+        days:
+          type: integer
+          minimum: 1
+          maximum: 90
+          description: Number of UTC days of page loads to return, today included. Defaults to 7; at most 90.
 
     GetCookieBannerOutput:
       type: object
@@ -16069,82 +16694,6 @@ components:
       properties:
         cookie_banner:
           $ref: "#/components/schemas/CookieBanner"
-
-    ListCookieBannerSamplesInput:
-      type: object
-      required:
-        - cookie_banner_id
-      properties:
-        cookie_banner_id:
-          $ref: "#/components/schemas/GID"
-          description: Cookie banner ID
-        size:
-          type: integer
-        cursor:
-          $ref: "#/components/schemas/CursorKey"
-
-    ListCookieBannerSamplesOutput:
-      type: object
-      required:
-        - cookie_banner_samples
-      properties:
-        next_cursor:
-          $ref: "#/components/schemas/CursorKey"
-        cookie_banner_samples:
-          type: array
-          items:
-            $ref: "#/components/schemas/CookieBannerSample"
-
-    GetCookieBannerSampleInput:
-      type: object
-      required:
-        - id
-      properties:
-        id:
-          $ref: "#/components/schemas/GID"
-          description: Cookie banner sample ID
-
-    GetCookieBannerSampleOutput:
-      type: object
-      required:
-        - cookie_banner_sample
-      properties:
-        cookie_banner_sample:
-          $ref: "#/components/schemas/CookieBannerSample"
-
-    StartCookieBannerSampleInput:
-      type: object
-      required:
-        - cookie_banner_id
-      properties:
-        cookie_banner_id:
-          $ref: "#/components/schemas/GID"
-          description: Cookie banner ID
-
-    StartCookieBannerSampleOutput:
-      type: object
-      required:
-        - cookie_banner_sample
-      properties:
-        cookie_banner_sample:
-          $ref: "#/components/schemas/CookieBannerSample"
-
-    StopCookieBannerSampleInput:
-      type: object
-      required:
-        - cookie_banner_id
-      properties:
-        cookie_banner_id:
-          $ref: "#/components/schemas/GID"
-          description: Cookie banner ID
-
-    StopCookieBannerSampleOutput:
-      type: object
-      required:
-        - cookie_banner_sample
-      properties:
-        cookie_banner_sample:
-          $ref: "#/components/schemas/CookieBannerSample"
 
     ListCookieBannerScansInput:
       type: object
@@ -16623,9 +17172,11 @@ components:
       properties:
         id:
           $ref: "#/components/schemas/GID"
-        sample_id:
-          $ref: "#/components/schemas/GID"
-          description: Cookie banner sample to read hits from. Defaults to the latest sample.
+        days:
+          type: integer
+          minimum: 1
+          maximum: 90
+          description: Number of UTC days of hits to return, today included. Defaults to 7; at most 90.
 
     GetTrackerPatternOutput:
       type: object
@@ -17496,6 +18047,7 @@ components:
         - organization_id
         - name
         - matrix_size
+        - score_levels
         - created_at
         - updated_at
       properties:
@@ -17516,6 +18068,14 @@ components:
         matrix_size:
           $ref: "#/components/schemas/MatrixSize"
           description: Likelihood/impact matrix size (3×3, 4×4, or 5×5)
+        score_levels:
+          type: array
+          minItems: 2
+          items:
+            $ref: "#/components/schemas/RiskScoreLevelMapping"
+          description: >
+            Score-to-level mapping. At least two of LOW, MEDIUM, HIGH, and
+            CRITICAL, in that order. Colors are not stored.
         matrix_cells:
           type: array
           items:
@@ -17778,6 +18338,14 @@ components:
         matrix_size:
           $ref: "#/components/schemas/MatrixSize"
           description: Likelihood/impact matrix size (3×3, 4×4, or 5×5)
+        score_levels:
+          type: array
+          minItems: 2
+          items:
+            $ref: "#/components/schemas/RiskScoreLevelMapping"
+          description: >
+            Score-to-level mapping. At least two of LOW, MEDIUM, HIGH, and
+            CRITICAL, in that order. The first level's min_score must be 1.
 
     AddRiskAnalysisOutput:
       type: object
@@ -17805,6 +18373,14 @@ components:
         period:
           $ref: "#/components/schemas/Period"
           description: Analysis period
+        score_levels:
+          type: array
+          minItems: 2
+          items:
+            $ref: "#/components/schemas/RiskScoreLevelMapping"
+          description: >
+            Score-to-level mapping. At least two of LOW, MEDIUM, HIGH, and
+            CRITICAL, in that order. Omit to leave the current mapping unchanged.
 
     UpdateRiskAnalysisOutput:
       type: object
@@ -19163,6 +19739,25 @@ components:
           format: int64
           description: File size in bytes
 
+    SubmitFeedbackInput:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          maxLength: 3000
+          description: Feedback for the Probo team. Describe the issue and include a proposed fix when you have one.
+
+    SubmitFeedbackOutput:
+      type: object
+      required:
+        - submitted
+      properties:
+        submitted:
+          type: boolean
+          description: True when the feedback was delivered
+
 tools:
   - name: listOrganizations
     title: List Organizations
@@ -19644,6 +20239,18 @@ tools:
       $ref: "#/components/schemas/ListInternalControlEvidencesInput"
     outputSchema:
       $ref: "#/components/schemas/ListInternalControlEvidencesOutput"
+  - name: addInternalControlLinkEvidence
+    title: Add Internal Control Link Evidence
+    description: Attach an HTTP or HTTPS link as evidence on an internal control by uploading a .uri file, the same way as the console. The file is named from the name and contains the URL. Evidence is not stored on a framework control. For a control such as ACC-16, list its internal controls and pass that internal control id.
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/AddInternalControlLinkEvidenceInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddInternalControlLinkEvidenceOutput"
   - name: deleteEvidence
     title: Delete Evidence
     description: Delete an evidence
@@ -21242,7 +21849,7 @@ tools:
       $ref: "#/components/schemas/GetDocumentSuggestionOutput"
   - name: startDocumentSuggestion
     title: Start Document Suggestion
-    description: Allocate an ID for a new redline. Paint that ID on suggestion marks in the collaborative document.
+    description: "Start a redline. Pass quote and replacement to mark that text in the document the way the editor does: the quote becomes a deletion, the replacement an insertion, and the rest of the document stays unchanged. Pass comment to attach a plain-text note. Without quote, only an ID is allocated. Do not paint suggestion marks with updateDocument."
     hints:
       readonly: false
       destructive: false
@@ -21252,6 +21859,54 @@ tools:
       $ref: "#/components/schemas/StartDocumentSuggestionInput"
     outputSchema:
       $ref: "#/components/schemas/StartDocumentSuggestionOutput"
+  - name: changeDocumentText
+    title: Change Document Text
+    description: "Replace quoted text. mode APPLY writes it. mode SUGGEST stores it on an open suggestion started with startDocumentSuggestion: the quote becomes a deletion and the replacement an insertion. An open suggestion elsewhere does not block APPLY. A range that already holds a suggestion is refused. Do not send ProseMirror through updateDocument for this change."
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ChangeDocumentTextInput"
+    outputSchema:
+      $ref: "#/components/schemas/ChangeDocumentOutput"
+  - name: changeDocumentFormat
+    title: Change Document Format
+    description: "Add or remove bold, italic, underline, strikethrough, code, or a link on quoted text. mode APPLY writes the style. mode SUGGEST stores it on an open suggestion: accepting keeps the style and rejecting restores the text. Suggesting code also removes the other styles on that text. Do not paint formatting marks with updateDocument."
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ChangeDocumentFormatInput"
+    outputSchema:
+      $ref: "#/components/schemas/ChangeDocumentOutput"
+  - name: changeDocumentTable
+    title: Change Document Table
+    description: "Insert or delete a table row, column, or table. mode APPLY writes the table. mode SUGGEST stores the change on an open suggestion: accepting applies it and rejecting leaves the table as it was. Tables with merged cells only accept INSERT_TABLE and DELETE_TABLE. Do not edit tables with updateDocument."
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ChangeDocumentTableInput"
+    outputSchema:
+      $ref: "#/components/schemas/ChangeDocumentOutput"
+  - name: changeDocumentBlock
+    title: Change Document Block
+    description: "Change a heading, list, quote, code block, divider, image, file, or mention. mode APPLY writes the block. mode SUGGEST stores it on an open suggestion as its own card, separate from any text card. Upload a file first, then pass file_id. Do not send ProseMirror through updateDocument for these changes."
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ChangeDocumentBlockInput"
+    outputSchema:
+      $ref: "#/components/schemas/ChangeDocumentOutput"
   - name: acceptDocumentSuggestion
     title: Accept Document Suggestion
     description: Keep suggested insertions, drop suggested deletions, and resolve the suggestion thread
@@ -21290,7 +21945,7 @@ tools:
       $ref: "#/components/schemas/AddDocumentOutput"
   - name: updateDocument
     title: Update Document
-    description: Update an existing document
+    description: "Update a document's title, classification, and other fields. Change text, formatting, tables, and blocks with changeDocumentText, changeDocumentFormat, changeDocumentTable, and changeDocumentBlock instead of sending ProseMirror here."
     hints:
       readonly: false
       destructive: false
@@ -22819,6 +23474,102 @@ tools:
       $ref: "#/components/schemas/RemoveResourceAliasInput"
     outputSchema:
       $ref: "#/components/schemas/RemoveResourceAliasOutput"
+  - name: createTag
+    title: Create Tag
+    description: Create an organization tag
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/CreateTagInput"
+    outputSchema:
+      $ref: "#/components/schemas/CreateTagOutput"
+  - name: updateTag
+    title: Update Tag
+    description: Update an organization tag
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateTagInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateTagOutput"
+  - name: deleteTag
+    title: Delete Tag
+    description: Delete an organization tag and its assignments
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/DeleteTagInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteTagOutput"
+  - name: attachTag
+    title: Attach Tag
+    description: Attach a tag to a resource. Attaching a tag that is already present returns the existing assignment and leaves every other tag on the resource in place.
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/AttachTagInput"
+    outputSchema:
+      $ref: "#/components/schemas/AttachTagOutput"
+  - name: detachTag
+    title: Detach Tag
+    description: Detach a tag from a resource
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/DetachTagInput"
+    outputSchema:
+      $ref: "#/components/schemas/DetachTagOutput"
+  - name: listTags
+    title: List Tags
+    description: List organization tags
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListTagsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListTagsOutput"
+  - name: listTagsForResource
+    title: List Tags For Resource
+    description: List tags attached to a resource
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListTagsForResourceInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListTagsForResourceOutput"
+  - name: search
+    title: Search
+    description: Search resources with a query string. Bare words match titles as prefixes. Every tag:name must match. type:name is optional.
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/SearchInput"
+    outputSchema:
+      $ref: "#/components/schemas/SearchOutput"
   - name: listCompliancePortalFiles
     title: List Compliance Portal Files
     description: List all files for the compliance portal
@@ -22929,7 +23680,7 @@ tools:
       $ref: "#/components/schemas/ListCookieBannersOutput"
   - name: getCookieBanner
     title: Get Cookie Banner
-    description: Get a cookie banner by ID
+    description: Get a cookie banner by ID, with its page loads over the last days (7 by default)
     hints:
       readonly: true
       destructive: false
@@ -22939,54 +23690,6 @@ tools:
       $ref: "#/components/schemas/GetCookieBannerInput"
     outputSchema:
       $ref: "#/components/schemas/GetCookieBannerOutput"
-  - name: listCookieBannerSamples
-    title: List Cookie Banner Samples
-    description: List sample windows for a cookie banner
-    hints:
-      readonly: true
-      destructive: false
-      idempotent: true
-      openWorld: false
-    inputSchema:
-      $ref: "#/components/schemas/ListCookieBannerSamplesInput"
-    outputSchema:
-      $ref: "#/components/schemas/ListCookieBannerSamplesOutput"
-  - name: getCookieBannerSample
-    title: Get Cookie Banner Sample
-    description: Get a cookie banner sample by ID
-    hints:
-      readonly: true
-      destructive: false
-      idempotent: true
-      openWorld: false
-    inputSchema:
-      $ref: "#/components/schemas/GetCookieBannerSampleInput"
-    outputSchema:
-      $ref: "#/components/schemas/GetCookieBannerSampleOutput"
-  - name: startCookieBannerSample
-    title: Start Cookie Banner Sample
-    description: Start a new open sample window for a cookie banner
-    hints:
-      readonly: false
-      destructive: false
-      idempotent: false
-      openWorld: false
-    inputSchema:
-      $ref: "#/components/schemas/StartCookieBannerSampleInput"
-    outputSchema:
-      $ref: "#/components/schemas/StartCookieBannerSampleOutput"
-  - name: stopCookieBannerSample
-    title: Stop Cookie Banner Sample
-    description: Freeze the open sample window for a cookie banner
-    hints:
-      readonly: false
-      destructive: false
-      idempotent: true
-      openWorld: false
-    inputSchema:
-      $ref: "#/components/schemas/StopCookieBannerSampleInput"
-    outputSchema:
-      $ref: "#/components/schemas/StopCookieBannerSampleOutput"
   - name: listCookieBannerScans
     title: List Cookie Banner Scans
     description: List scans for a cookie banner, newest first unless a direction is given
@@ -23193,7 +23896,7 @@ tools:
       $ref: "#/components/schemas/ListTrackerPatternsOutput"
   - name: getTrackerPattern
     title: Get Tracker Pattern
-    description: Get a tracker pattern by ID
+    description: Get a tracker pattern by ID, with its hits over the last days (7 by default)
     hints:
       readonly: true
       destructive: false
@@ -24295,3 +24998,15 @@ tools:
       $ref: "#/components/schemas/UploadFileInput"
     outputSchema:
       $ref: "#/components/schemas/UploadFileOutput"
+  - name: submit_feedback
+    title: Submit Feedback
+    description: Send product feedback when a tool is missing, wrong, or confusing. The caller's name and email are included. Include the issue and a proposed fix when you have one.
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: true
+    inputSchema:
+      $ref: "#/components/schemas/SubmitFeedbackInput"
+    outputSchema:
+      $ref: "#/components/schemas/SubmitFeedbackOutput"

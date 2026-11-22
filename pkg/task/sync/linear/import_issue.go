@@ -32,6 +32,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/notification"
 	"go.probo.inc/probo/pkg/task/sync/internal"
 	linear "go.probo.inc/probo/pkg/task/sync/linear/client"
 )
@@ -194,9 +195,21 @@ func (s *Service) importLinearIssueForConnector(
 		return fmt.Errorf("cannot insert imported task: %w", err)
 	}
 
+	if err := coredata.UpsertSearchResource(
+		ctx,
+		tx,
+		task.ID,
+		task.OrganizationID,
+		task.Name,
+		task.SearchText(),
+	); err != nil {
+		return fmt.Errorf("cannot sync search: %w", err)
+	}
+
 	destination, err := json.Marshal(coredata.TaskExternalLinkDestination{
 		TeamID:               data.Team.ID,
 		LinearOrganizationID: envelope.OrganizationID,
+		SyncedState:          state.String(),
 	})
 	if err != nil {
 		return fmt.Errorf("cannot marshal destination: %w", err)
@@ -269,6 +282,18 @@ func (s *Service) importLinearIssueForConnector(
 		actorID,
 	); err != nil {
 		return fmt.Errorf("cannot notify synced mentions: %w", err)
+	}
+
+	if task.State.IsClosed() {
+		if err := notification.ResolveLinkedTaskNotifications(
+			ctx,
+			tx,
+			scope,
+			task.OrganizationID,
+			task.ID,
+		); err != nil {
+			return fmt.Errorf("cannot resolve imported task notifications: %w", err)
+		}
 	}
 
 	if s.recordImportedTask == nil {

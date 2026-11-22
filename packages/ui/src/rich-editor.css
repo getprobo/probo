@@ -277,4 +277,12 @@
         content: "¶";
         @apply mr-0.5 text-red-11 line-through;
     }
+
+    .suggestion-inserted-block {
+        @apply bg-green-2;
+    }
+
+    .suggestion-deleted-block {
+        @apply bg-red-2 text-red-11 line-through;
+    }
 }

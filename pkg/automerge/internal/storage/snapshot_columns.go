@@ -35,6 +35,9 @@ type (
 	DecodedDocument struct {
 		Snapshot   *SnapshotColumns
 		Operations []opset.Operation
+		// ChangeOperations is set when the document's changes were decoded
+		// without their operations. It locates them among Operations.
+		ChangeOperations *ChangeOperationIndex
 	}
 
 	// SnapshotSplice describes one atomic update to both snapshot tables.

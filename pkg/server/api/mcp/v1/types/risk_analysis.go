@@ -40,9 +40,42 @@ func NewRiskAnalysis(ra *coredata.RiskAnalysis) *RiskAnalysis {
 		Description:    description,
 		Period:         NewPeriod(ra.PeriodStart, ra.PeriodEnd),
 		MatrixSize:     NewMatrixSize(ra.MatrixRows, ra.MatrixCols),
+		ScoreLevels:    newScoreLevels(ra.ScoreLevels),
 		CreatedAt:      ra.CreatedAt,
 		UpdatedAt:      ra.UpdatedAt,
 	}
+}
+
+func newScoreLevels(levels coredata.ScoreLevels) []*RiskScoreLevelMapping {
+	items := make([]*RiskScoreLevelMapping, len(levels))
+	for i, level := range levels {
+		items[i] = &RiskScoreLevelMapping{
+			Level:    level.Level,
+			MinScore: level.MinScore,
+		}
+	}
+
+	return items
+}
+
+func ScoreLevelsFromInput(items []*RiskScoreLevelMapping) coredata.ScoreLevels {
+	if items == nil {
+		return nil
+	}
+
+	levels := make(coredata.ScoreLevels, 0, len(items))
+	for _, item := range items {
+		if item == nil {
+			continue
+		}
+
+		levels = append(levels, coredata.RiskScoreLevelMapping{
+			Level:    item.Level,
+			MinScore: item.MinScore,
+		})
+	}
+
+	return levels
 }
 
 func NewRiskAnalysisMatrixCells(

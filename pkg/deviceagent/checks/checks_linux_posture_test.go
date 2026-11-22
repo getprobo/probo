@@ -26,27 +26,28 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestLinuxPasswordPolicyFromDefs(t *testing.T) {
+func TestLinuxPasswordPolicyVerdict(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name   string
-		minLen string
-		want   Status
+		name  string
+		len   int
+		known bool
+		want  Status
 	}{
-		{name: "short length is a reading", minLen: "4", want: StatusPass},
-		{name: "long length is a reading", minLen: "12", want: StatusPass},
-		{name: "zero length is a reading", minLen: "0", want: StatusPass},
-		{name: "unset length fails", minLen: "", want: StatusFail},
-		{name: "unreadable length is unknown", minLen: "nope", want: StatusUnknown},
-		{name: "negative length is unknown", minLen: "-1", want: StatusUnknown},
+		{name: "threshold length passes", len: 8, known: true, want: StatusPass},
+		{name: "long length passes", len: 14, known: true, want: StatusPass},
+		{name: "short length fails", len: 7, known: true, want: StatusFail},
+		{name: "zero length fails", len: 0, known: true, want: StatusFail},
+		{name: "negative length is unknown", len: -1, known: true, want: StatusUnknown},
+		{name: "unread length is unknown", known: false, want: StatusUnknown},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			assert.Equal(t, tt.want, linuxPasswordPolicyFromDefs(tt.minLen, "90").Status)
+			assert.Equal(t, tt.want, linuxPasswordPolicyVerdict(tt.len, tt.known))
 		})
 	}
 }

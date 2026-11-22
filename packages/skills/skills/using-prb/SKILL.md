@@ -92,6 +92,15 @@ campaign.
 `connector connect --organization` is a boolean. The Probo organization id
 on that command is `--org`.
 
+## Evidence
+
+Evidence belongs to an internal control, not to a framework control.
+`prb evidence upload <file> --internal-control <id>` attaches a file.
+`prb evidence link --internal-control <id> --url <https-url> --name <name>`
+uploads a `<name>.uri` file containing that URL, the same way as the
+console link form. For a framework control such as ACC-16, list the
+internal controls linked to that control and pass one of those ids.
+
 ## Change a record
 
 1. Pass the organization as `--org` or `--organization`. Controls are the

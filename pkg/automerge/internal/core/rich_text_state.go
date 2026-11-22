@@ -22,20 +22,42 @@ package core
 
 import (
 	"fmt"
-	"go.probo.inc/probo/pkg/automerge/internal/opset"
 	"reflect"
+	"slices"
 	"sort"
+	"strings"
+
+	"go.probo.inc/probo/pkg/automerge/internal/opset"
 )
 
 func (s *State) RichTextSpans(object opset.OpID) ([]RichSpan, error) {
 	values := s.sequenceValues(object)
-	marks := s.richTextMarks(object)
+	sweep := newMarkSweep(s.richTextMarks(object))
 	spans := make([]RichSpan, 0)
+
+	var (
+		activeMarks map[string]any
+		text        strings.Builder
+		textOpen    bool
+	)
+
+	// flushText stores the accumulated run on the open text span. Building the
+	// run once avoids re-copying the span for every element appended to it.
+	flushText := func() {
+		if textOpen {
+			spans[len(spans)-1].Value = text.String()
+			text.Reset()
+
+			textOpen = false
+		}
+	}
 
 	for i, value := range values {
 		operation := value.Operation
 		switch operation.Action {
 		case opset.ActionMakeMap:
+			flushText()
+
 			value, err := s.mapValue(operation.ID, make(map[opset.OpID]struct{}))
 			if err != nil {
 				return nil, fmt.Errorf("cannot hydrate block %v: %w", operation.ID, err)
@@ -47,41 +69,162 @@ func (s *State) RichTextSpans(object opset.OpID) ([]RichSpan, error) {
 				continue
 			}
 
-			activeMarks := make(map[string]any)
+			// The active set only differs from the previous element's when a
+			// mark starts or ends in between, so it is rebuilt on those
+			// boundaries alone. Spans sharing a set share the map, which is
+			// read-only once built.
+			if sweep.advance(i) {
+				next := make(map[string]any)
 
-			for _, mark := range marks {
-				if i >= mark.start && i < mark.end {
+				for _, rank := range sweep.covering {
+					mark := sweep.marks[rank]
 					if mark.value == nil {
-						delete(activeMarks, mark.name)
+						delete(next, mark.name)
 					} else {
-						activeMarks[mark.name] = mark.value
+						next[mark.name] = mark.value
 					}
 				}
+
+				if len(next) == 0 {
+					next = nil
+				}
+
+				if !reflect.DeepEqual(activeMarks, next) {
+					flushText()
+				}
+
+				activeMarks = next
 			}
 
-			if len(activeMarks) == 0 {
-				activeMarks = nil
+			if !textOpen {
+				spans = append(spans, RichSpan{Type: "text", Marks: activeMarks})
+				textOpen = true
 			}
 
-			if len(spans) > 0 &&
-				spans[len(spans)-1].Type == "text" &&
-				reflect.DeepEqual(spans[len(spans)-1].Marks, activeMarks) {
-				spans[len(spans)-1].Value = spans[len(spans)-1].Value.(string) +
-					operation.Value.String
-			} else {
-				spans = append(
-					spans,
-					RichSpan{
-						Type:  "text",
-						Value: operation.Value.String,
-						Marks: activeMarks,
-					},
-				)
-			}
+			text.WriteString(operation.Value.String)
 		}
 	}
 
+	flushText()
+
 	return spans, nil
+}
+
+// markSweep reports the marks covering each element index of a left-to-right
+// walk. Marks enter and leave the covering set at their boundaries, so a walk
+// costs the number of elements plus the number of marks rather than their
+// product.
+type markSweep struct {
+	// marks is in precedence order; covering holds indexes into it, ascending,
+	// so replaying covering in order applies later marks over earlier ones.
+	marks     []richTextMark
+	starts    []int
+	ends      []int
+	nextStart int
+	nextEnd   int
+	covering  []int
+	// active flags the marks in covering, so marks that end together leave
+	// it in one pass instead of one shift of the set each.
+	active []bool
+	// started is reused to hold the marks that start at one step while they
+	// are merged into covering.
+	started []int
+}
+
+func newMarkSweep(marks []richTextMark) *markSweep {
+	sweep := &markSweep{
+		marks:  marks,
+		starts: make([]int, len(marks)),
+		ends:   make([]int, len(marks)),
+		active: make([]bool, len(marks)),
+	}
+	for rank := range marks {
+		sweep.starts[rank] = rank
+		sweep.ends[rank] = rank
+	}
+
+	slices.SortStableFunc(sweep.starts, func(left, right int) int {
+		return marks[left].start - marks[right].start
+	})
+	slices.SortStableFunc(sweep.ends, func(left, right int) int {
+		return marks[left].end - marks[right].end
+	})
+
+	return sweep
+}
+
+// advance moves the walk to index, which must not decrease between calls, and
+// reports whether the covering set changed since the previous call.
+func (w *markSweep) advance(index int) bool {
+	var (
+		added   int
+		removed bool
+	)
+
+	for w.nextStart < len(w.starts) &&
+		w.marks[w.starts[w.nextStart]].start <= index {
+		rank := w.starts[w.nextStart]
+
+		w.nextStart++
+
+		if w.marks[rank].end <= index {
+			continue
+		}
+
+		w.active[rank] = true
+		w.covering = append(w.covering, rank)
+		added++
+	}
+
+	for w.nextEnd < len(w.ends) &&
+		w.marks[w.ends[w.nextEnd]].end <= index {
+		rank := w.ends[w.nextEnd]
+
+		w.nextEnd++
+
+		if w.active[rank] {
+			w.active[rank] = false
+			removed = true
+		}
+	}
+
+	// The set is brought up to date once per step, however many marks start
+	// or end at it. Marks that ended leave in one pass. Marks that started
+	// were appended behind the ordered set: they are ordered among
+	// themselves and merged into it from the back, which moves each mark at
+	// most once and compares nothing that is already in place.
+	//
+	// A mark that starts at this step ends after it, so none of the appended
+	// marks is among the ones removed.
+	if removed {
+		w.covering = slices.DeleteFunc(w.covering, func(rank int) bool {
+			return !w.active[rank]
+		})
+	}
+
+	if added > 0 {
+		merged := len(w.covering) - added
+		started := append(w.started[:0], w.covering[merged:]...)
+		w.started = started
+
+		slices.Sort(started)
+
+		for write := len(w.covering) - 1; len(started) > 0; write-- {
+			last := started[len(started)-1]
+
+			if merged > 0 && w.covering[merged-1] > last {
+				merged--
+				w.covering[write] = w.covering[merged]
+
+				continue
+			}
+
+			w.covering[write] = last
+			started = started[:len(started)-1]
+		}
+	}
+
+	return added > 0 || removed
 }
 
 type richTextMark struct {
@@ -339,7 +482,7 @@ func danglingBeginStart(anchor opset.Key, elementIndex map[opset.OpID]int, fallb
 // value are excluded.
 func (s *State) Marks(object opset.OpID) []MarkRange {
 	values := s.sequenceValues(object)
-	marks := s.richTextMarks(object)
+	sweep := newMarkSweep(s.richTextMarks(object))
 
 	type openMark struct {
 		start uint32
@@ -365,31 +508,32 @@ func (s *State) Marks(object opset.OpID) []MarkRange {
 	}
 
 	for index, value := range values {
-		active := make(map[string]*opset.Scalar)
+		// The open ranges already mirror the active set, so they only need
+		// reconciling when a mark starts or ends at this element.
+		if sweep.advance(index) {
+			active := make(map[string]*opset.Scalar)
 
-		for _, mark := range marks {
-			if index < mark.start || index >= mark.end {
-				continue
+			for _, rank := range sweep.covering {
+				mark := sweep.marks[rank]
+				if mark.scalar == nil || mark.scalar.Type == opset.ScalarNull {
+					delete(active, mark.name)
+				} else {
+					active[mark.name] = mark.scalar
+				}
 			}
 
-			if mark.scalar == nil || mark.scalar.Type == opset.ScalarNull {
-				delete(active, mark.name)
-			} else {
-				active[mark.name] = mark.scalar
+			for name, mark := range open {
+				value, ok := active[name]
+				if !ok || !scalarValuesEqual(*value, *mark.value) {
+					closeMark(name, mark, position)
+					delete(open, name)
+				}
 			}
-		}
 
-		for name, mark := range open {
-			value, ok := active[name]
-			if !ok || !scalarValuesEqual(*value, *mark.value) {
-				closeMark(name, mark, position)
-				delete(open, name)
-			}
-		}
-
-		for name, value := range active {
-			if _, ok := open[name]; !ok {
-				open[name] = openMark{start: position, value: value}
+			for name, value := range active {
+				if _, ok := open[name]; !ok {
+					open[name] = openMark{start: position, value: value}
+				}
 			}
 		}
 

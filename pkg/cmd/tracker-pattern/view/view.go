@@ -23,6 +23,7 @@ package view
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
@@ -31,7 +32,7 @@ import (
 )
 
 const viewQuery = `
-query TrackerPatternView($id: ID!) {
+query TrackerPatternView($id: ID!, $days: Int) {
   node(id: $id) {
     __typename
     ... on TrackerPattern {
@@ -49,9 +50,12 @@ query TrackerPatternView($id: ID!) {
       excluded
       commonTrackerPatternId
       attribution
-      sampleHits {
-        family
-        count
+      dailyHits(days: $days) {
+        day
+        hits {
+          family
+          count
+        }
       }
       createdAt
       updatedAt
@@ -77,17 +81,23 @@ type viewResponse struct {
 		Excluded               bool    `json:"excluded"`
 		CommonTrackerPatternID *string `json:"commonTrackerPatternId"`
 		Attribution            *string `json:"attribution"`
-		SampleHits             []struct {
-			Family string `json:"family"`
-			Count  int    `json:"count"`
-		} `json:"sampleHits"`
+		DailyHits              []struct {
+			Day  string `json:"day"`
+			Hits []struct {
+				Family string `json:"family"`
+				Count  int    `json:"count"`
+			} `json:"hits"`
+		} `json:"dailyHits"`
 		CreatedAt string `json:"createdAt"`
 		UpdatedAt string `json:"updatedAt"`
 	} `json:"node"`
 }
 
 func NewCmdView(f *cmdutil.Factory) *cobra.Command {
-	var flagOutput *string
+	var (
+		flagDays   int
+		flagOutput *string
+	)
 
 	cmd := &cobra.Command{
 		Use:   "view <id>",
@@ -96,6 +106,10 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
 				return err
+			}
+
+			if flagDays < 1 || flagDays > 90 {
+				return fmt.Errorf("--days must be between 1 and 90")
 			}
 
 			cfg, err := f.Config()
@@ -116,7 +130,13 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
-			data, err := client.Do(viewQuery, map[string]any{"id": args[0]})
+			data, err := client.Do(
+				viewQuery,
+				map[string]any{
+					"id":   args[0],
+					"days": flagDays,
+				},
+			)
 			if err != nil {
 				return err
 			}
@@ -173,13 +193,23 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Attribution:"), *v.Attribution)
 			}
 
-			if len(v.SampleHits) == 0 {
-				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Sample Hits:"), "none")
-			} else {
-				_, _ = fmt.Fprintf(out, "%s\n", label.Render("Sample Hits:"))
-				for _, hit := range v.SampleHits {
-					_, _ = fmt.Fprintf(out, "%s%s %d\n", label.Render(""), hit.Family, hit.Count)
+			_, _ = fmt.Fprintf(out, "%s\n", label.Render(fmt.Sprintf("Daily (%d days):", flagDays)))
+
+			for _, day := range v.DailyHits {
+				total := 0
+
+				parts := make([]string, 0, len(day.Hits))
+				for _, hit := range day.Hits {
+					total += hit.Count
+					parts = append(parts, fmt.Sprintf("%s %d", hit.Family, hit.Count))
 				}
+
+				detail := "none"
+				if total > 0 {
+					detail = fmt.Sprintf("%d  %s", total, strings.Join(parts, ", "))
+				}
+
+				_, _ = fmt.Fprintf(out, "%s%s  %s\n", label.Render(""), cmdutil.FormatUTCDay(day.Day), detail)
 			}
 
 			_, _ = fmt.Fprintln(out)
@@ -190,6 +220,7 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
+	cmd.Flags().IntVar(&flagDays, "days", 7, "Number of UTC days of hits, today included (at most 90)")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd

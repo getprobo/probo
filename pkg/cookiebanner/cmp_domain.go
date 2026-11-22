@@ -185,6 +185,7 @@ func (s *Service) recordDiscoveredSurfaces(
 	scope := coredata.NewScopeFromObjectID(banner.ID)
 	now := time.Now()
 	seen := map[string]struct{}{}
+	recorded := make([]string, 0, len(origins))
 
 	for _, raw := range origins {
 		if len(seen) >= scanner.MaxSiblingOrigins {
@@ -201,7 +202,14 @@ func (s *Service) recordDiscoveredSurfaces(
 		}
 
 		seen[origin] = struct{}{}
+		recorded = append(recorded, origin)
+	}
 
+	// Sibling scans share these rows. Upsert the capped set in one order
+	// so two scans cannot deadlock on cmp_domain_surfaces.
+	slices.Sort(recorded)
+
+	for _, origin := range recorded {
 		surface := &coredata.CMPDomainSurface{
 			ID:                         gid.New(banner.ID.TenantID(), coredata.CMPDomainSurfaceEntityType),
 			OrganizationID:             banner.OrganizationID,

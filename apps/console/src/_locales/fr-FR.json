@@ -510,13 +510,15 @@
     }
   },
   "documentDescriptionPage": {
+    "loading": "Chargement du document...",
     "messages": {
       "successTitle": "Succès",
       "saved": "Contenu enregistré"
     },
     "errors": {
       "title": "Erreur",
-      "save": "Contenu non enregistré"
+      "save": "Contenu non enregistré",
+      "open": "Impossible d'ouvrir le document"
     },
     "history": {
       "open": "Historique",
@@ -560,8 +562,53 @@
       "suggestionBy": "Suggestion de {{name}}",
       "commentFailed": "Impossible d'ajouter le commentaire",
       "suggestionFailed": "Impossible de démarrer la suggestion",
+      "suggestionUntracked": "Cette modification ne peut pas être suggérée. Passez en mode édition pour la faire.",
       "selectComment": "Sélectionner le commentaire de {{name}}",
-      "selectSuggestion": "Sélectionner la suggestion de {{name}}"
+      "selectSuggestion": "Sélectionner la suggestion de {{name}}",
+      "addText": "Ajouter : « {{text}} »",
+      "deleteText": "Supprimer : « {{text}} »",
+      "addRow": "Ajouter une ligne",
+      "addRowWithText": "Ajouter une ligne : avec le texte « {{text}} »",
+      "addColumn": "Ajouter une colonne",
+      "addColumnWithText": "Ajouter une colonne : avec le texte « {{text}} »",
+      "addTable": "Ajouter un tableau",
+      "addTableWithText": "Ajouter un tableau : avec le texte « {{text}} »",
+      "deleteRow": "Supprimer une ligne",
+      "deleteRowWithText": "Supprimer une ligne : avec le texte « {{text}} »",
+      "deleteColumn": "Supprimer une colonne",
+      "deleteColumnWithText": "Supprimer une colonne : avec le texte « {{text}} »",
+      "deleteTable": "Supprimer un tableau",
+      "deleteTableWithText": "Supprimer un tableau : avec le texte « {{text}} »",
+      "format": "Format : {{styles}}",
+      "formatRemove": "Format : retirer {{styles}}",
+      "styleBold": "gras",
+      "styleItalic": "italique",
+      "styleUnderline": "souligné",
+      "styleStrike": "barré",
+      "styleCode": "code",
+      "styleLink": "lien",
+      "formatHeading": "Format : Titre {{level}}",
+      "formatParagraph": "Format : texte normal",
+      "formatQuote": "Format : citation",
+      "formatCode": "Format : code",
+      "listAdd": "Format de liste : ajouter à la liste",
+      "listRemove": "Format de liste : retirer de la liste",
+      "listNest": "Format de liste : imbriquer",
+      "listUnnest": "Format de liste : désimbriquer",
+      "checkTask": "Cocher la tâche",
+      "uncheckTask": "Décocher la tâche",
+      "addDivider": "Ajouter un séparateur",
+      "deleteDivider": "Supprimer le séparateur",
+      "addImage": "Ajouter une image",
+      "deleteImage": "Supprimer l'image",
+      "addFile": "Ajouter un fichier",
+      "addFileNamed": "Ajouter un fichier : « {{name}} »",
+      "deleteFile": "Supprimer le fichier",
+      "deleteFileNamed": "Supprimer le fichier : « {{name}} »",
+      "addMention": "Ajouter une mention",
+      "addMentionNamed": "Ajouter une mention : « {{name}} »",
+      "deleteMention": "Supprimer la mention",
+      "deleteMentionNamed": "Supprimer la mention : « {{name}} »"
     }
   },
   "documentSignaturesPage": {
@@ -2152,10 +2199,8 @@
       "scopes": "Portées"
     },
     "expirations": {
-      "month_one": "{{count}} mois",
-      "month_other": "{{count}} mois",
-      "year_one": "{{count}} an",
-      "year_other": "{{count}} ans"
+      "day_one": "{{count}} jour",
+      "day_other": "{{count}} jours"
     },
     "actions": {
       "create": "Créer le jeton",
@@ -2257,9 +2302,34 @@
     "switchToDarkMode": "Passer en mode sombre",
     "switchToLightMode": "Passer en mode clair",
     "spotlight": {
-      "title": "Aller à",
-      "placeholder": "Aller à…",
-      "empty": "Aucune page correspondante"
+      "title": "Rechercher",
+      "placeholder": "Rechercher des pages et des ressources…",
+      "empty": "Aucun résultat",
+      "open": "Ouvrir",
+      "close": "Fermer",
+      "types": {
+        "AiSystem": "Système d’IA",
+        "Asset": "Actif",
+        "Audit": "Audit",
+        "BusinessFunction": "Fonction métier",
+        "Control": "Contrôle",
+        "DataProtectionImpactAssessment": "AIPD",
+        "Datum": "Donnée",
+        "Device": "Appareil",
+        "Document": "Document",
+        "Finding": "Constat",
+        "Framework": "Référentiel",
+        "InternalControl": "Contrôle interne",
+        "Obligation": "Obligation",
+        "ProcessingActivity": "Activité de traitement",
+        "RightsRequest": "Demande de droits",
+        "Risk": "Risque",
+        "RiskAnalysis": "Analyse de risques",
+        "StatementOfApplicability": "Déclaration d’applicabilité",
+        "Task": "Tâche",
+        "ThirdParty": "Tiers",
+        "TransferImpactAssessment": "AIT"
+      }
     },
     "groups": {
       "governance": "Gouvernance",
@@ -2335,6 +2405,7 @@
     "compliancePortalsUpdates": "Mises à jour",
     "compliancePortalsRightRequests": "Demandes de confidentialité",
     "cookieBanners": "Bannières de cookies",
+    "cookieBannersOverview": "Vue d'ensemble",
     "cookieBannersSettings": "Paramètres",
     "cookieBannersInstall": "Installer",
     "cookieBannersTranslations": "Traductions",
@@ -2500,25 +2571,7 @@
       "removeEmail": "Supprimer l’e-mail"
     }
   },
-  "auditLogPage": {
-    "title": "Journal d’audit",
-    "description": "Un enregistrement de toutes les actions effectuées au sein de votre organisation. Les entrées sont immuables et ne peuvent pas être modifiées ou supprimées.",
-    "empty": "Aucune entrée dans le journal d’audit pour le moment.",
-    "showing": "Affichage de {{shown}} sur {{total}} entrées",
-    "columns": { "date": "Date", "actor": "Acteur", "action": "Action", "resource": "Ressource" },
-    "actions": { "showMore": "Afficher plus" },
-    "export": {
-      "title": "Exporter le journal d'audit",
-      "description": "Sélectionnez une plage de dates pour exporter les entrées du journal d'audit au format CSV. Vous recevrez un e-mail avec un lien de téléchargement.",
-      "fields": { "from": "Du", "to": "Au" },
-      "actions": { "export": "Exporter", "exporting": "Exportation..." },
-      "messages": {
-        "successTitle": "Succès",
-        "success": "L'export a démarré. Vous recevrez un e-mail avec un lien de téléchargement lorsqu'il sera prêt."
-      },
-      "errors": { "title": "Erreur", "request": "Échec de la demande d'export du journal d'audit" }
-    }
-  },
+
   "samlSsoPage": {
     "title": "Authentification unique SAML",
     "description": "Configurez l’authentification unique SAML 2.0 pour chaque domaine de messagerie.",
@@ -4807,6 +4860,17 @@
     },
     "actions": {
       "add": "Ajouter"
+    }
+  },
+  "scoreLevels": {
+    "field": "Niveaux",
+    "minimum": "Minimum",
+    "minScore": "Score minimum pour {{level}}",
+    "validation": {
+      "atLeastTwo": "Incluez au moins deux niveaux",
+      "startAtOne": "Le premier niveau inclus doit commencer à 1",
+      "increasing": "Chaque niveau doit commencer au-dessus du précédent",
+      "withinMatrix": "Chaque score minimum doit être compris entre 1 et le maximum de la matrice"
     }
   },
   "createRiskAnalysisDialog": {

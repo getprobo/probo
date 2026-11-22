@@ -63,11 +63,13 @@ import (
 	"go.probo.inc/probo/pkg/server/api"
 	connect_v1 "go.probo.inc/probo/pkg/server/api/connect/v1"
 	"go.probo.inc/probo/pkg/server/gqlx"
+	"go.probo.inc/probo/pkg/server/gqlx/directives/ratelimit"
 	server_identityfederation "go.probo.inc/probo/pkg/server/identityfederation"
 	"go.probo.inc/probo/pkg/server/mailactions"
 	console_web "go.probo.inc/probo/pkg/server/web"
 	employeeportal_web "go.probo.inc/probo/pkg/server/web/employeeportal"
 	"go.probo.inc/probo/pkg/slack"
+	"go.probo.inc/probo/pkg/tag"
 	"go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/thirdparty"
 	"go.probo.inc/probo/pkg/uri"
@@ -86,6 +88,7 @@ type Config struct {
 	CollaborationEvents     *realtime.Events
 	ShutdownContext         context.Context
 	ResourceAlias           *resourcealias.Service
+	Tag                     *tag.Service
 	File                    *filemanager.Service
 	IAM                     *iam.Service
 	Visitor                 *visitor.Service
@@ -120,6 +123,8 @@ type Config struct {
 	ProviderRegistry  *provider.Registry
 	CustomDomainCname string
 	GraphQLLimits     gqlx.Limits
+	RateLimitDefault  ratelimit.Budget
+	RateLimits        map[string]ratelimit.Budget
 	Logger            *log.Logger
 
 	// IdentityFederationIssuer serves the outbound OIDC documents. It is nil when the
@@ -129,6 +134,7 @@ type Config struct {
 	GCPConnectorInstall      cloudgcp.ConnectorInstallConfig
 	AzureConnectorInstall    cloudazure.ConnectorInstallConfig
 	LinearWebhookSecret      string
+	MCPFeedbackURL           string
 }
 
 type Server struct {
@@ -157,6 +163,7 @@ func NewServer(cfg Config) (*Server, error) {
 		CollaborationEvents:      cfg.CollaborationEvents,
 		ShutdownContext:          cfg.ShutdownContext,
 		ResourceAlias:            cfg.ResourceAlias,
+		Tag:                      cfg.Tag,
 		File:                     cfg.File,
 		IAM:                      cfg.IAM,
 		Visitor:                  cfg.Visitor,
@@ -189,12 +196,15 @@ func NewServer(cfg Config) (*Server, error) {
 		ProviderRegistry:         cfg.ProviderRegistry,
 		CustomDomainCname:        cfg.CustomDomainCname,
 		GraphQLLimits:            cfg.GraphQLLimits,
+		RateLimitDefault:         cfg.RateLimitDefault,
+		RateLimits:               cfg.RateLimits,
 		Logger:                   cfg.Logger.Named("api"),
 		IdentityFederationIssuer: cfg.IdentityFederationIssuer,
 		AWSConnectorInstall:      cfg.AWSConnectorInstall,
 		GCPConnectorInstall:      cfg.GCPConnectorInstall,
 		AzureConnectorInstall:    cfg.AzureConnectorInstall,
 		LinearWebhookSecret:      cfg.LinearWebhookSecret,
+		MCPFeedbackURL:           cfg.MCPFeedbackURL,
 	}
 
 	apiServer, err := api.NewServer(apiCfg)

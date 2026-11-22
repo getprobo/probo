@@ -525,7 +525,12 @@ func (b *Engine) mergeDocumentSnapshot(
 			)
 		}
 
-		if err := state.ApplyChange(change); err != nil {
+		loaded, err := b.state.withOperations(change)
+		if err != nil {
+			return fmt.Errorf("cannot read local change for snapshot merge: %w", err)
+		}
+
+		if err := state.ApplyChange(loaded); err != nil {
 			return fmt.Errorf("cannot apply local change to merged snapshot: %w", err)
 		}
 

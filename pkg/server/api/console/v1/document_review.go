@@ -26,6 +26,7 @@ import (
 
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
+	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/collaboration"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -149,10 +150,27 @@ func (r *Resolver) documentReviewError(ctx context.Context, message string, err 
 		errors.Is(err, collaboration.ErrDocumentCollaborationNotFound):
 		return gqlx.Conflict(ctx, err)
 	case errors.Is(err, probo.ErrNotDocumentCommentAuthor),
+		errors.Is(err, probo.ErrNotDocumentSuggestionAuthor),
 		errors.Is(err, probo.ErrInvalidDocumentAnchor),
 		errors.Is(err, collaboration.ErrQuoteNotFound),
-		errors.Is(err, collaboration.ErrSuggestionNotInDocument):
+		errors.Is(err, collaboration.ErrSuggestionUnchanged),
+		errors.Is(err, collaboration.ErrSuggestionOverlaps),
+		errors.Is(err, collaboration.ErrSuggestionNotInDocument),
+		errors.Is(err, collaboration.ErrQuoteNotInTable),
+		errors.Is(err, collaboration.ErrTableHasMergedCells),
+		errors.Is(err, collaboration.ErrTableCellCount),
+		errors.Is(err, collaboration.ErrTableShape),
+		errors.Is(err, collaboration.ErrTableLastRow),
+		errors.Is(err, collaboration.ErrTableLastColumn),
+		errors.Is(err, collaboration.ErrTableOperation),
+		errors.Is(err, collaboration.ErrSuggestionFormat),
+		errors.Is(err, collaboration.ErrSuggestionHref),
+		errors.Is(err, collaboration.ErrBlockOperation),
+		errors.Is(err, collaboration.ErrBlockTarget),
+		errors.Is(err, collaboration.ErrLastListItem):
 		return gqlx.Invalid(ctx, err)
+	case errors.Is(err, probo.ErrDocumentSuggestionClosed):
+		return gqlx.Conflict(ctx, err)
 	}
 
 	if errArchived, ok := errors.AsType[*collaboration.ErrDocumentArchived](err); ok {
@@ -170,4 +188,42 @@ func (r *Resolver) documentReviewError(ctx context.Context, message string, err 
 	r.logger.ErrorCtx(ctx, message, log.Error(err))
 
 	return gqlx.Internal(ctx)
+}
+
+func (r *Resolver) authorizeDocumentChange(
+	ctx context.Context,
+	mode probo.DocumentChangeMode,
+	documentID *gid.GID,
+	suggestionID *gid.GID,
+) (*coredata.Scope, error) {
+	target := documentID
+	field := "document_id"
+	action := probo.ActionDocumentUpdate
+
+	if mode == probo.DocumentChangeModeSuggest {
+		target = suggestionID
+		field = "suggestion_id"
+		action = probo.ActionDocumentSuggest
+	}
+
+	if ref.UnrefOrZero(target) == gid.Nil {
+		v := validator.New()
+		v.Check(nil, field, validator.Required())
+
+		return nil, r.documentReviewError(ctx, "cannot change document", v.Error())
+	}
+
+	return r.authorize(ctx, *target, action)
+}
+
+func changeDocumentPayload(result *probo.DocumentChangeResult) *types.ChangeDocumentPayload {
+	payload := &types.ChangeDocumentPayload{
+		Document: types.NewDocument(result.Document),
+	}
+
+	if result.Suggestion != nil {
+		payload.DocumentSuggestion = types.NewDocumentSuggestion(result.Suggestion)
+	}
+
+	return payload
 }

@@ -47,6 +47,10 @@ mutation RiskAnalysisFork($input: ForkRiskAnalysisInput!) {
           rows
           cols
         }
+        scoreLevels {
+          level
+          minScore
+        }
         createdAt
         updatedAt
       }

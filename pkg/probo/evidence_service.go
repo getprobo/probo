@@ -82,6 +82,31 @@ func (s EvidenceService) Get(
 	return evidence, nil
 }
 
+func (s EvidenceService) GetByIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	evidenceIDs ...gid.GID,
+) (coredata.Evidences, error) {
+	var evidences coredata.Evidences
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := evidences.LoadByIDs(ctx, conn, scope, evidenceIDs); err != nil &&
+				!errors.Is(err, coredata.ErrResourceNotFound) {
+				return fmt.Errorf("cannot load evidences by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return evidences, nil
+}
+
 func (s EvidenceService) UploadInternalControlEvidence(
 	ctx context.Context, scope coredata.Scoper,
 	req UploadInternalControlEvidenceRequest,
@@ -147,6 +172,17 @@ func (s EvidenceService) UploadInternalControlEvidence(
 
 			if err := evidence.Insert(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot insert evidence: %w", err)
+			}
+
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				evidence.ID,
+				evidence.OrganizationID,
+				evidence.ReferenceID,
+				evidence.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
 			}
 
 			return nil
@@ -288,9 +324,16 @@ func (s *EvidenceService) Delete(
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			err := evidence.Delete(ctx, tx, scope)
-			if err != nil {
+			if err := coredata.LockID(ctx, tx, scope, "evidences", evidence.ID); err != nil {
+				return err
+			}
+
+			if err := evidence.Delete(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot delete evidence: %w", err)
+			}
+
+			if err := coredata.DeleteSearchResource(ctx, tx, evidence.ID); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
 			}
 
 			return nil

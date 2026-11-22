@@ -22,6 +22,7 @@ package probo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -105,6 +106,31 @@ func (s AssetService) Get(
 	}
 
 	return asset, nil
+}
+
+func (s AssetService) GetByIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	assetIDs ...gid.GID,
+) (coredata.Assets, error) {
+	var assets coredata.Assets
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := assets.LoadByIDs(ctx, conn, scope, assetIDs); err != nil &&
+				!errors.Is(err, coredata.ErrResourceNotFound) {
+				return fmt.Errorf("cannot load assets by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return assets, nil
 }
 
 func (s AssetService) GetByOwnerID(
@@ -225,6 +251,17 @@ func (s AssetService) Update(
 			return fmt.Errorf("cannot update asset: %w", err)
 		}
 
+		if err := coredata.UpsertSearchResource(
+			ctx,
+			conn,
+			asset.ID,
+			asset.OrganizationID,
+			asset.Name,
+			asset.SearchText(),
+		); err != nil {
+			return fmt.Errorf("cannot sync search: %w", err)
+		}
+
 		if req.ThirdPartyIDs != nil {
 			if len(req.ThirdPartyIDs) > 0 {
 				thirdParties := &coredata.ThirdParties{}
@@ -281,6 +318,17 @@ func (s AssetService) Create(
 			return fmt.Errorf("cannot insert asset: %w", err)
 		}
 
+		if err := coredata.UpsertSearchResource(
+			ctx,
+			conn,
+			asset.ID,
+			asset.OrganizationID,
+			asset.Name,
+			asset.SearchText(),
+		); err != nil {
+			return fmt.Errorf("cannot sync search: %w", err)
+		}
+
 		if len(req.ThirdPartyIDs) > 0 {
 			thirdParties := &coredata.ThirdParties{}
 			if err := thirdParties.LoadByIDs(ctx, conn, scope, req.ThirdPartyIDs); err != nil {
@@ -310,6 +358,10 @@ func (s AssetService) Delete(
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			if err := coredata.DeleteSearchResource(ctx, tx, asset.ID); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			return asset.Delete(ctx, tx, scope)
 		},
 	)

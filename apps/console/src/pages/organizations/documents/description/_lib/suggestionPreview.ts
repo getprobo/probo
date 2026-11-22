@@ -19,9 +19,17 @@
 // SOFTWARE.
 
 import {
+  automergeBlockType,
+  isListBlock,
+  readSuggestionBlock,
+  suggestionBlockParents,
+} from "@probo/ui/src/RichEditor/suggestionBlock";
+import {
   suggestionDeleteName,
   suggestionInsertName,
 } from "@probo/ui/src/RichEditor/SuggestionExtension";
+import { structuralSuggestionSplit } from "@probo/ui/src/RichEditor/suggestionStructure";
+import { suggestionStyles } from "@probo/ui/src/RichEditor/suggestionStyle";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 
 export type SuggestionPreviewPart = {
@@ -29,23 +37,46 @@ export type SuggestionPreviewPart = {
   text: string;
 };
 
+export type SuggestionStructurePreview = {
+  action: "add" | "remove" | "format";
+  target: "row" | "column" | "table" | "heading" | "paragraph" | "list" | "quote" | "code" | "task" | "divider" | "image" | "file" | "mention";
+  text: string;
+};
+
+export type SuggestionFormatPreview = {
+  adds: string[];
+  removes: string[];
+};
+
 export type SuggestionPreview = {
   from: number;
   inserted: string;
   deleted: string;
   parts: SuggestionPreviewPart[];
+  structure: SuggestionStructurePreview | null;
+  formats: SuggestionFormatPreview | null;
+};
+
+type PieceFormat = {
+  id: string;
+  action: "add" | "remove";
+  style: string;
 };
 
 type Piece = {
+  pos: number;
   text: string;
   insertIds: string[];
   deleteIds: string[];
+  formats: PieceFormat[];
 };
 
 type BlockChunk = {
   pos: number;
   splitId: string | null;
   splitKind: string | null;
+  // The split belongs to an enclosing row, cell or table, not to a line break.
+  inherited: boolean;
   pieces: Piece[];
 };
 
@@ -57,10 +88,13 @@ export function collectSuggestionAnchors(doc: ProseMirrorNode) {
 
   doc.descendants((node, pos) => {
     if (node.isTextblock) {
+      const ownId = suggestionSplitId(node);
+      const enclosing = ownId ? null : enclosingSplit(doc, pos);
       chunks.push({
         pos,
-        splitId: suggestionSplitId(node),
-        splitKind: suggestionSplitKind(node),
+        splitId: ownId ?? enclosing?.id ?? null,
+        splitKind: ownId ? suggestionSplitKind(node) : enclosing?.kind ?? null,
+        inherited: enclosing != null,
         pieces: [],
       });
       return;
@@ -68,9 +102,11 @@ export function collectSuggestionAnchors(doc: ProseMirrorNode) {
     const chunk = chunks[chunks.length - 1];
     if (!chunk || !node.isText || !node.text) return;
     chunk.pieces.push({
+      pos,
       text: node.text,
       insertIds: markIds(node, suggestionInsertName),
       deleteIds: markIds(node, suggestionDeleteName),
+      formats: formatMarks(node),
     });
   });
 
@@ -83,19 +119,39 @@ export function collectSuggestionAnchors(doc: ProseMirrorNode) {
     for (const piece of block.pieces) {
       for (const id of piece.insertIds) ids.add(id);
       for (const id of piece.deleteIds) ids.add(id);
+      for (const format of piece.formats) ids.add(format.id);
     }
   }
 
+  doc.descendants((node) => {
+    const block = readSuggestionBlock(node);
+    if (block) ids.add(block.id);
+    const split = structuralSuggestionSplit(node);
+    if (
+      split
+      && (split.kind === "insertion" || split.kind === "deletion")
+      && leafTarget(node.type.name)
+    ) {
+      ids.add(split.id);
+    }
+  });
+
   for (const id of ids) {
-    const parts = previewParts(chunks, id);
-    if (parts.length === 0) continue;
-    const from = chunks.find(block => blockInvolves(block, id))?.pos;
+    const structure = structureFor(doc, id);
+    const formats = formatsFor(chunks, id);
+    const parts = structure ? [] : previewParts(chunks, id);
+    if (parts.length === 0 && !structure && !formats) continue;
+    const from = structure?.from
+      ?? formatPosition(chunks, id)
+      ?? chunks.find(block => blockInvolves(block, id))?.pos;
     if (from == null) continue;
     previews.set(id, {
       from,
-      inserted: parts.filter(part => part.kind === "inserted").map(part => part.text).join(""),
-      deleted: parts.filter(part => part.kind === "deleted").map(part => part.text).join(""),
+      inserted: structure ? "" : parts.filter(part => part.kind === "inserted").map(part => part.text).join(""),
+      deleted: structure ? "" : parts.filter(part => part.kind === "deleted").map(part => part.text).join(""),
       parts,
+      structure: structure ? { action: structure.action, target: structure.target, text: structure.text } : null,
+      formats,
     });
   }
   return previews;
@@ -127,7 +183,7 @@ function previewParts(blocks: BlockChunk[], id: string): SuggestionPreviewPart[]
     const block = blocks[index];
     if (index > first) {
       pushPart(parts, lineKind(block, id), "\n");
-    } else if (block.splitId === id && block.splitKind === "deletion") {
+    } else if (block.splitId === id && block.splitKind === "deletion" && !block.inherited) {
       pushPart(parts, "deleted", "\n");
     }
     for (const piece of block.pieces) {
@@ -170,6 +226,201 @@ function pushPart(
   parts.push({ kind, text });
 }
 
+const styleOrder = ["bold", "italic", "underline", "strikethrough", "code", "link"];
+const styleByFormat = new Map<string, string>(suggestionStyles.map(style => [style.format, style.label]));
+
+function formatMarks(node: ProseMirrorNode): PieceFormat[] {
+  const formats: PieceFormat[] = [];
+  for (const mark of node.marks) {
+    const style = styleByFormat.get(mark.type.name);
+    if (!style || typeof mark.attrs.id !== "string" || mark.attrs.id === "") continue;
+    formats.push({
+      id: mark.attrs.id,
+      action: mark.attrs.action === "remove" ? "remove" : "add",
+      style,
+    });
+  }
+  return formats;
+}
+
+function formatsFor(blocks: BlockChunk[], id: string): SuggestionFormatPreview | null {
+  const adds = new Set<string>();
+  const removes = new Set<string>();
+  for (const block of blocks) {
+    for (const piece of block.pieces) {
+      for (const format of piece.formats) {
+        if (format.id !== id) continue;
+        if (format.action === "remove") removes.add(format.style);
+        else adds.add(format.style);
+      }
+    }
+  }
+  if (adds.size === 0 && removes.size === 0) return null;
+  return {
+    adds: styleOrder.filter(style => adds.has(style)),
+    removes: styleOrder.filter(style => removes.has(style)),
+  };
+}
+
+function formatPosition(blocks: BlockChunk[], id: string): number | null {
+  for (const block of blocks) {
+    for (const piece of block.pieces) {
+      if (piece.formats.some(format => format.id === id)) return piece.pos;
+    }
+  }
+  return null;
+}
+
+// structureFor describes a suggested table, row, or column. The outermost
+// block wins, so an added table is not also reported as its rows.
+function structureFor(
+  doc: ProseMirrorNode,
+  id: string,
+): (SuggestionStructurePreview & { from: number }) | null {
+  const blockChange = blockSuggestionFor(doc, id);
+  if (blockChange) return blockChange;
+
+  const leaf = leafSuggestionFor(doc, id);
+  if (leaf) return leaf;
+
+  const hits: Array<{ pos: number; rank: number; kind: "insertion" | "deletion"; node: ProseMirrorNode }> = [];
+  doc.descendants((node, pos) => {
+    const split = structuralSuggestionSplit(node);
+    if (!split || split.id !== id || split.kind === "structural") return;
+    const rank = structureRank(node.type.name);
+    if (rank == null || (split.kind !== "insertion" && split.kind !== "deletion")) return;
+    hits.push({ pos, rank, kind: split.kind, node });
+  });
+  if (hits.length === 0) return null;
+  const rank = Math.min(...hits.map(hit => hit.rank));
+  const chosen = hits.filter(hit => hit.rank === rank);
+  const kind = chosen[0]?.kind;
+  if (!kind) return null;
+  const texts: string[] = [];
+  for (const hit of chosen) {
+    hit.node.descendants((child) => {
+      if (child.isText && child.text) texts.push(child.text);
+    });
+  }
+  return {
+    action: kind === "deletion" ? "remove" : "add",
+    target: rank === 0 ? "table" : rank === 1 ? "row" : "column",
+    text: texts.join(" ").replace(/\s+/g, " ").trim(),
+    from: Math.min(...chosen.map(hit => hit.pos)),
+  };
+}
+
+function blockSuggestionFor(
+  doc: ProseMirrorNode,
+  id: string,
+): (SuggestionStructurePreview & { from: number }) | null {
+  const hits: Array<{ pos: number; node: ProseMirrorNode; parent: ProseMirrorNode | null }> = [];
+  doc.descendants((node, pos, parent) => {
+    if (hits.length > 0) return false;
+    const mark = readSuggestionBlock(node);
+    if (mark?.id !== id) return;
+    hits.push({ pos, node, parent });
+    return false;
+  });
+  const found = hits[0];
+  if (!found) return null;
+  const mark = readSuggestionBlock(found.node);
+  const live = automergeBlockType(found.node, found.parent);
+  if (!mark || !live) return null;
+  return {
+    ...blockCard(live, found.node, mark, suggestionBlockParents(doc, found.pos)),
+    from: found.pos,
+  };
+}
+
+function blockCard(
+  live: string,
+  node: ProseMirrorNode,
+  previous: { type: string; parents: string[]; attrs: Record<string, unknown> },
+  liveParents: string[],
+): SuggestionStructurePreview {
+  if (live === "heading") {
+    const level = typeof node.attrs.level === "number" ? node.attrs.level : 1;
+    return { action: "format", target: "heading", text: String(level) };
+  }
+  if (live === "blockquote") return { action: "format", target: "quote", text: "" };
+  if (live === "code-block") return { action: "format", target: "code", text: "" };
+  if (isListBlock(live) && !isListBlock(previous.type)) {
+    return { action: "format", target: "list", text: "add" };
+  }
+  if (!isListBlock(live) && isListBlock(previous.type)) {
+    return { action: "format", target: "list", text: "remove" };
+  }
+  if (isListBlock(live) && isListBlock(previous.type)) {
+    if (previous.parents.length < liveParents.length) {
+      return { action: "format", target: "list", text: "nest" };
+    }
+    if (previous.parents.length > liveParents.length) {
+      return { action: "format", target: "list", text: "unnest" };
+    }
+  }
+  if (live === "task-list-item" && node.attrs.checked === true && previous.attrs.checked !== true) {
+    return { action: "format", target: "task", text: "check" };
+  }
+  if (live === "task-list-item" && node.attrs.checked !== true && previous.attrs.checked === true) {
+    return { action: "format", target: "task", text: "uncheck" };
+  }
+  if (isListBlock(live)) return { action: "format", target: "list", text: "add" };
+  return { action: "format", target: "paragraph", text: "" };
+}
+
+function leafSuggestionFor(
+  doc: ProseMirrorNode,
+  id: string,
+): (SuggestionStructurePreview & { from: number }) | null {
+  let found: (SuggestionStructurePreview & { from: number }) | null = null;
+  doc.descendants((node, pos) => {
+    if (found) return false;
+    const split = structuralSuggestionSplit(node);
+    if (!split || split.id !== id || (split.kind !== "insertion" && split.kind !== "deletion")) return;
+    const target = leafTarget(node.type.name);
+    if (!target) return;
+    const text = leafText(node);
+    found = {
+      action: split.kind === "deletion" ? "remove" : "add",
+      target,
+      text,
+      from: pos,
+    };
+    return false;
+  });
+  return found;
+}
+
+function leafTarget(name: string): SuggestionStructurePreview["target"] | null {
+  switch (name) {
+    case "horizontalRule":
+      return "divider";
+    case "image":
+      return "image";
+    case "file":
+      return "file";
+    case "mention":
+      return "mention";
+    default:
+      return null;
+  }
+}
+
+function leafText(node: ProseMirrorNode): string {
+  if (typeof node.attrs.fileName === "string" && node.attrs.fileName !== "") return node.attrs.fileName;
+  if (typeof node.attrs.label === "string" && node.attrs.label !== "") return node.attrs.label;
+  if (typeof node.attrs.alt === "string" && node.attrs.alt !== "") return node.attrs.alt;
+  return "";
+}
+
+function structureRank(name: string): number | null {
+  if (name === "table") return 0;
+  if (name === "tableRow") return 1;
+  if (name === "tableCell" || name === "tableHeader") return 2;
+  return null;
+}
+
 function markIds(node: ProseMirrorNode, name: string): string[] {
   const ids: string[] = [];
   for (const mark of node.marks) {
@@ -177,6 +428,23 @@ function markIds(node: ProseMirrorNode, name: string): string[] {
     if (typeof mark.attrs.id === "string" && mark.attrs.id !== "") ids.push(mark.attrs.id);
   }
   return ids;
+}
+
+// enclosingSplit finds the insertion or deletion split of the nearest row,
+// cell or table around a textblock. Their first paragraph has no split of its
+// own because it is stored inside the enclosing block.
+function enclosingSplit(
+  doc: ProseMirrorNode,
+  pos: number,
+): { id: string; kind: string } | null {
+  const $pos = doc.resolve(pos);
+  for (let depth = $pos.depth; depth > 0; depth -= 1) {
+    const node = $pos.node(depth);
+    const id = suggestionSplitId(node);
+    const kind = suggestionSplitKind(node);
+    if (id && (kind === "insertion" || kind === "deletion")) return { id, kind };
+  }
+  return null;
 }
 
 function suggestionSplitId(node: ProseMirrorNode): string | null {

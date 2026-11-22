@@ -21,6 +21,7 @@
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
 import { organizationLocator } from '../../locators';
 import { proboApiRequestAllItems, executionItems } from '../../GenericFunctions';
+import { scoreLevelsSelection } from './scoreLevels';
 
 export const description: INodeProperties[] = [
 	organizationLocator({
@@ -85,6 +86,7 @@ export async function execute(
 									rows
 									cols
 								}
+								${scoreLevelsSelection}
 								createdAt
 								updatedAt
 							}

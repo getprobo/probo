@@ -10,11 +10,27 @@
     "settings": "Meldingsinstellingen",
     "markAllRead": "Alles als gelezen markeren"
   },
+  "size": {
+    "B": "B",
+    "KB": "KB",
+    "MB": "MB",
+    "GB": "GB",
+    "TB": "TB"
+  },
   "ui": {
     "richEditor": {
+      "file": "Bestand",
+      "imageUnavailable": "Afbeelding niet beschikbaar",
+      "resizeImage": "Afbeelding vergroten of verkleinen",
       "enlargeImage": "Afbeelding vergroten",
       "enlargeImageNamed": "{{name}} vergroten",
       "closeImage": "Afbeelding sluiten",
+      "uploading": "{{fileName}} uploaden…",
+      "uploadFailed": "Uploaden mislukt",
+      "couldNotUpload": "Kan {{fileName}} niet uploaden",
+      "tooLarge": "{{fileName}} is te groot",
+      "unsupported": "{{fileName}} is geen ondersteund bestand",
+      "attachFiles": "Bestanden bijvoegen",
       "mentionMembers": "Een lid vermelden",
       "mentionLoading": "Zoeken…",
       "mentionNoResults": "Geen leden gevonden"
@@ -34,6 +50,26 @@
     "help": "Help",
     "signOut": "Uitloggen",
     "signOutFailed": "Uitloggen mislukt"
+  },
+  "editAvatar": {
+    "title": "Profielfoto",
+    "description": "Upload een openbare foto.",
+    "messages": {
+      "updated": "Profielfoto bijgewerkt.",
+      "removed": "Profielfoto verwijderd."
+    },
+    "errors": {
+      "update": "Profielfoto bijwerken mislukt",
+      "remove": "Profielfoto verwijderen mislukt",
+      "invalidFile": "Gebruik een JPEG of PNG van maximaal 5 MB."
+    },
+    "actions": {
+      "upload": "Foto uploaden",
+      "replace": "Foto vervangen",
+      "remove": "Foto verwijderen",
+      "close": "Sluiten",
+      "change": "Profielfoto wijzigen"
+    }
   },
   "organizationsPage": {
     "title": "Uw organisaties",

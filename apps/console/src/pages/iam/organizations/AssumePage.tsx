@@ -30,7 +30,7 @@ import { graphql } from "relay-runtime";
 import type { AssumePageMutation } from "#/__generated__/iam/AssumePageMutation.graphql";
 import type { AssumePageQuery } from "#/__generated__/iam/AssumePageQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
-import { useSafeContinueUrl } from "#/hooks/useSafeContinueUrl";
+import { useSafeContinueURL } from "#/hooks/useSafeContinueURL";
 
 const assumeMutation = graphql`
   mutation AssumePageMutation(
@@ -69,7 +69,7 @@ export function AssumePage(props: { queryRef: PreloadedQuery<AssumePageQuery> })
   const [searchParams] = useSearchParams();
   const { t } = useTranslation();
 
-  const safeContinueUrl = useSafeContinueUrl(`/organizations/${organizationId}`);
+  const safeContinueUrl = useSafeContinueURL(`/organizations/${organizationId}`);
 
   const { viewer } = usePreloadedQuery<AssumePageQuery>(assumePageQuery, queryRef);
   const [assumeOrganizationSession] = useMutation<AssumePageMutation>(assumeMutation);

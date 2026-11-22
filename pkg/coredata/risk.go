@@ -143,6 +143,10 @@ WHERE
 	return nil
 }
 
+var (
+	_ Searchable = (*Risk)(nil)
+)
+
 type (
 	Risk struct {
 		ID                 gid.GID        `db:"id"`
@@ -193,6 +197,10 @@ func (r *Risk) CursorKey(orderBy RiskOrderField) page.CursorKey {
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
+}
+
+func (r Risk) SearchText() []string {
+	return []string{r.ReferenceID, r.Name}
 }
 
 func (r *Risk) AuthorizationAttributes(
@@ -813,7 +821,10 @@ func (r *Risk) Delete(
 	riskID gid.GID,
 ) error {
 	q := `
-DELETE FROM risks WHERE %s AND id = @id
+DELETE FROM risks
+WHERE
+	%s
+	AND id = @id
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 

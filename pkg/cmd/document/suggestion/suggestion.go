@@ -23,6 +23,7 @@ package suggestion
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
@@ -39,6 +40,9 @@ func NewCmdSuggestion(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(newListCmd(f))
 	cmd.AddCommand(newViewCmd(f))
 	cmd.AddCommand(newStartCmd(f))
+	cmd.AddCommand(newAddCmd(f))
+	cmd.AddCommand(newTableCmd(f))
+	cmd.AddCommand(newFormatCmd(f))
 	cmd.AddCommand(newAcceptCmd(f))
 	cmd.AddCommand(newRejectCmd(f))
 
@@ -252,19 +256,46 @@ func newViewCmd(f *cmdutil.Factory) *cobra.Command {
 }
 
 func newStartCmd(f *cmdutil.Factory) *cobra.Command {
-	var flagOutput *string
+	var (
+		flagOutput      *string
+		flagQuote       string
+		flagReplacement string
+		flagComment     string
+		flagOccurrence  int
+	)
 
 	cmd := &cobra.Command{
 		Use:   "start <document-id>",
-		Short: "Allocate a suggestion ID",
+		Short: "Start a redline, or allocate an ID",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if strings.TrimSpace(flagQuote) == "" &&
+				(cmd.Flags().Changed("replacement") ||
+					cmd.Flags().Changed("occurrence") ||
+					cmd.Flags().Changed("comment")) {
+				return fmt.Errorf("quote is required with --replacement, --occurrence, or --comment")
+			}
+
+			input := map[string]any{"documentId": args[0]}
+			if strings.TrimSpace(flagQuote) != "" {
+				input["quote"] = flagQuote
+				input["replacement"] = flagReplacement
+			}
+
+			if strings.TrimSpace(flagComment) != "" {
+				input["comment"] = flagComment
+			}
+
+			if flagOccurrence != 0 {
+				input["quoteOccurrence"] = flagOccurrence
+			}
+
 			return runMutation(
 				f,
 				flagOutput,
 				startMutation,
 				map[string]any{
-					"input": map[string]any{"documentId": args[0]},
+					"input": input,
 				},
 				func(data json.RawMessage) (string, error) {
 					var resp struct {
@@ -290,6 +321,301 @@ func newStartCmd(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	flagOutput = cmdutil.AddOutputFlag(cmd)
+	cmd.Flags().StringVar(&flagQuote, "quote", "", "Text to replace")
+	cmd.Flags().StringVar(&flagReplacement, "replacement", "", "Suggested text; empty deletes the quote")
+	cmd.Flags().StringVar(&flagComment, "comment", "", "Plain-text note on the redline")
+	cmd.Flags().IntVar(&flagOccurrence, "occurrence", 0, "Zero-based occurrence of the quote")
+
+	return cmd
+}
+
+func newAddCmd(f *cmdutil.Factory) *cobra.Command {
+	var (
+		flagOutput      *string
+		flagQuote       string
+		flagReplacement string
+		flagOccurrence  int
+	)
+
+	cmd := &cobra.Command{
+		Use:   "add <suggestion-id>",
+		Short: "Add a redline to a suggestion",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if strings.TrimSpace(flagQuote) == "" {
+				return fmt.Errorf("quote is required")
+			}
+
+			if !cmd.Flags().Changed("replacement") {
+				return fmt.Errorf("replacement is required; pass an empty value to delete the quote")
+			}
+
+			input := map[string]any{
+				"suggestionId": args[0],
+				"quote":        flagQuote,
+				"replacement":  flagReplacement,
+			}
+			if flagOccurrence != 0 {
+				input["quoteOccurrence"] = flagOccurrence
+			}
+
+			return runMutation(
+				f,
+				flagOutput,
+				addMutation,
+				map[string]any{"input": input},
+				func(data json.RawMessage) (string, error) {
+					var resp struct {
+						AddDocumentSuggestionChange struct {
+							DocumentSuggestion struct {
+								ID string `json:"id"`
+							} `json:"documentSuggestion"`
+						} `json:"addDocumentSuggestionChange"`
+					}
+					if err := json.Unmarshal(data, &resp); err != nil {
+						return "", fmt.Errorf("cannot parse response: %w", err)
+					}
+
+					return fmt.Sprintf(
+						"Added a redline to suggestion %s",
+						resp.AddDocumentSuggestionChange.DocumentSuggestion.ID,
+					), nil
+				},
+			)
+		},
+	}
+
+	flagOutput = cmdutil.AddOutputFlag(cmd)
+	cmd.Flags().StringVar(&flagQuote, "quote", "", "Text to replace")
+	cmd.Flags().StringVar(&flagReplacement, "replacement", "", "Suggested text; empty deletes the quote")
+	cmd.Flags().IntVar(&flagOccurrence, "occurrence", 0, "Zero-based occurrence of the quote")
+
+	return cmd
+}
+
+var tableOperations = []string{
+	"INSERT_ROW",
+	"DELETE_ROW",
+	"INSERT_COLUMN",
+	"DELETE_COLUMN",
+	"INSERT_TABLE",
+	"DELETE_TABLE",
+}
+
+func newTableCmd(f *cmdutil.Factory) *cobra.Command {
+	var (
+		flagOutput     *string
+		flagOperation  string
+		flagQuote      string
+		flagOccurrence int
+		flagBefore     bool
+		flagCells      []string
+		flagRows       []string
+		flagHeaderRow  bool
+	)
+
+	cmd := &cobra.Command{
+		Use:   "table <suggestion-id>",
+		Short: "Add a table row, column, or table redline to a suggestion",
+		Example: `  # Suggest a new row after the row holding "Read"
+  prb document suggestion table <id> --operation INSERT_ROW --quote Read --cell Write --cell No
+
+  # Suggest removing the column holding "Access"
+  prb document suggestion table <id> --operation DELETE_COLUMN --quote Access
+
+  # Suggest a new table after the paragraph holding "Scope"
+  prb document suggestion table <id> --operation INSERT_TABLE --quote Scope \
+    --header-row --row "Right|Access" --row "Read|Yes"`,
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := cmdutil.ValidateEnum("operation", flagOperation, tableOperations); err != nil {
+				return err
+			}
+
+			if strings.TrimSpace(flagQuote) == "" {
+				return fmt.Errorf("quote is required")
+			}
+
+			insertsCells := flagOperation == "INSERT_ROW" || flagOperation == "INSERT_COLUMN"
+			if len(flagCells) > 0 && !insertsCells {
+				return fmt.Errorf("--cell only applies to INSERT_ROW and INSERT_COLUMN")
+			}
+
+			if (len(flagRows) > 0 || flagHeaderRow) && flagOperation != "INSERT_TABLE" {
+				return fmt.Errorf("--row and --header-row only apply to INSERT_TABLE")
+			}
+
+			if flagOperation == "INSERT_TABLE" && len(flagRows) == 0 {
+				return fmt.Errorf("--row is required with INSERT_TABLE")
+			}
+
+			if flagBefore && !insertsCells && flagOperation != "INSERT_TABLE" {
+				return fmt.Errorf("--before only applies to insert operations")
+			}
+
+			input := map[string]any{
+				"suggestionId": args[0],
+				"operation":    flagOperation,
+				"quote":        flagQuote,
+			}
+			if flagOccurrence != 0 {
+				input["quoteOccurrence"] = flagOccurrence
+			}
+
+			if flagBefore {
+				input["before"] = true
+			}
+
+			if len(flagCells) > 0 {
+				input["cells"] = flagCells
+			}
+
+			if len(flagRows) > 0 {
+				rows := make([][]string, 0, len(flagRows))
+				for _, row := range flagRows {
+					rows = append(rows, strings.Split(row, "|"))
+				}
+
+				input["rows"] = rows
+			}
+
+			if flagHeaderRow {
+				input["headerRow"] = true
+			}
+
+			return runMutation(
+				f,
+				flagOutput,
+				tableMutation,
+				map[string]any{"input": input},
+				func(data json.RawMessage) (string, error) {
+					var resp struct {
+						AddDocumentSuggestionTableChange struct {
+							DocumentSuggestion struct {
+								ID string `json:"id"`
+							} `json:"documentSuggestion"`
+						} `json:"addDocumentSuggestionTableChange"`
+					}
+					if err := json.Unmarshal(data, &resp); err != nil {
+						return "", fmt.Errorf("cannot parse response: %w", err)
+					}
+
+					return fmt.Sprintf(
+						"Added a table redline to suggestion %s",
+						resp.AddDocumentSuggestionTableChange.DocumentSuggestion.ID,
+					), nil
+				},
+			)
+		},
+	}
+
+	flagOutput = cmdutil.AddOutputFlag(cmd)
+	cmd.Flags().StringVar(&flagOperation, "operation", "", "Change to suggest: "+strings.Join(tableOperations, ", "))
+	cmd.Flags().StringVar(&flagQuote, "quote", "", "Text in a cell of the target row, column, or table (or the block a new table goes beside)")
+	cmd.Flags().IntVar(&flagOccurrence, "occurrence", 0, "Zero-based occurrence of the quote")
+	cmd.Flags().BoolVar(&flagBefore, "before", false, "Insert before the quoted row, column, or block")
+	cmd.Flags().StringArrayVar(&flagCells, "cell", nil, "Cell text of the new row or column (can be repeated)")
+	cmd.Flags().StringArrayVar(&flagRows, "row", nil, "Row of the new table, cells separated by | (can be repeated)")
+	cmd.Flags().BoolVar(&flagHeaderRow, "header-row", false, "Make the new table's first row a header row")
+
+	_ = cmd.MarkFlagRequired("operation")
+
+	return cmd
+}
+
+var formatMarks = []string{"BOLD", "ITALIC", "UNDERLINE", "STRIKE", "CODE", "LINK"}
+
+var formatActions = []string{"ADD", "REMOVE"}
+
+func newFormatCmd(f *cmdutil.Factory) *cobra.Command {
+	var (
+		flagOutput     *string
+		flagMark       string
+		flagAction     string
+		flagQuote      string
+		flagOccurrence int
+		flagHref       string
+	)
+
+	cmd := &cobra.Command{
+		Use:   "format <suggestion-id>",
+		Short: "Suggest bold, italic, or another style",
+		Example: `  # Suggest bold on the word "scope"
+  prb document suggestion format <id> --mark BOLD --action ADD --quote scope
+
+  # Suggest a link
+  prb document suggestion format <id> --mark LINK --action ADD --quote scope --href https://example.com`,
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := cmdutil.ValidateEnum("mark", flagMark, formatMarks); err != nil {
+				return err
+			}
+
+			if err := cmdutil.ValidateEnum("action", flagAction, formatActions); err != nil {
+				return err
+			}
+
+			if strings.TrimSpace(flagQuote) == "" {
+				return fmt.Errorf("quote is required")
+			}
+
+			if flagMark == "LINK" && flagAction == "ADD" && strings.TrimSpace(flagHref) == "" {
+				return fmt.Errorf("--href is required when suggesting a link")
+			}
+
+			if flagHref != "" && flagMark != "LINK" {
+				return fmt.Errorf("--href only applies to LINK")
+			}
+
+			input := map[string]any{
+				"suggestionId": args[0],
+				"mark":         flagMark,
+				"action":       flagAction,
+				"quote":        flagQuote,
+			}
+			if flagOccurrence != 0 {
+				input["quoteOccurrence"] = flagOccurrence
+			}
+
+			if flagHref != "" {
+				input["href"] = flagHref
+			}
+
+			return runMutation(
+				f,
+				flagOutput,
+				formatMutation,
+				map[string]any{"input": input},
+				func(data json.RawMessage) (string, error) {
+					var resp struct {
+						AddDocumentSuggestionFormatChange struct {
+							DocumentSuggestion struct {
+								ID string `json:"id"`
+							} `json:"documentSuggestion"`
+						} `json:"addDocumentSuggestionFormatChange"`
+					}
+					if err := json.Unmarshal(data, &resp); err != nil {
+						return "", fmt.Errorf("cannot parse response: %w", err)
+					}
+
+					return fmt.Sprintf(
+						"Added a format redline to suggestion %s",
+						resp.AddDocumentSuggestionFormatChange.DocumentSuggestion.ID,
+					), nil
+				},
+			)
+		},
+	}
+
+	flagOutput = cmdutil.AddOutputFlag(cmd)
+	cmd.Flags().StringVar(&flagMark, "mark", "", "Style to suggest: "+strings.Join(formatMarks, ", "))
+	cmd.Flags().StringVar(&flagAction, "action", "", "ADD or REMOVE")
+	cmd.Flags().StringVar(&flagQuote, "quote", "", "Text to format")
+	cmd.Flags().IntVar(&flagOccurrence, "occurrence", 0, "Zero-based occurrence of the quote")
+	cmd.Flags().StringVar(&flagHref, "href", "", "Link address when suggesting a link")
+
+	_ = cmd.MarkFlagRequired("mark")
+	_ = cmd.MarkFlagRequired("action")
 
 	return cmd
 }
@@ -418,6 +744,30 @@ const startMutation = `
 mutation StartDocumentSuggestion($input: StartDocumentSuggestionInput!) {
   startDocumentSuggestion(input: $input) {
     documentSuggestionEdge { node { id status } }
+  }
+}
+`
+
+const addMutation = `
+mutation AddDocumentSuggestionChange($input: AddDocumentSuggestionChangeInput!) {
+  addDocumentSuggestionChange(input: $input) {
+    documentSuggestion { id status }
+  }
+}
+`
+
+const tableMutation = `
+mutation AddDocumentSuggestionTableChange($input: AddDocumentSuggestionTableChangeInput!) {
+  addDocumentSuggestionTableChange(input: $input) {
+    documentSuggestion { id status }
+  }
+}
+`
+
+const formatMutation = `
+mutation AddDocumentSuggestionFormatChange($input: AddDocumentSuggestionFormatChangeInput!) {
+  addDocumentSuggestionFormatChange(input: $input) {
+    documentSuggestion { id status }
   }
 }
 `

@@ -14,6 +14,15 @@ import (
 	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
+// Nda is the resolver for the nda field.
+func (r *electronicSignatureResolver) Nda(ctx context.Context, obj *types.ElectronicSignature) (*types.File, error) {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionElectronicSignatureGet); err != nil {
+		return nil, err
+	}
+
+	return r.loadFile(ctx, obj.Nda.ID)
+}
+
 // Certificate is the resolver for the certificate field.
 func (r *electronicSignatureResolver) Certificate(ctx context.Context, obj *types.ElectronicSignature) (*types.File, error) {
 	if _, err := r.authorize(ctx, obj.ID, probo.ActionElectronicSignatureGet); err != nil {

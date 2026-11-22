@@ -4,12 +4,21 @@
 
 import { CheckSquareIcon, CodeBlockIcon, ListBulletsIcon, ListNumbersIcon, QuotesIcon, TextHFourIcon, TextHOneIcon, TextHThreeIcon, TextHTwoIcon, TextTIcon } from "@phosphor-icons/react";
 import { Fragment, type Node as PmNode } from "@tiptap/pm/model";
-import { TextSelection } from "@tiptap/pm/state";
+import { type Command, TextSelection } from "@tiptap/pm/state";
 import { type Editor } from "@tiptap/react";
 
 import { EditorFloatingPortal } from "../_lib/EditorFloatingPortal";
 import { getBlockNode, isBlockNodeType } from "../_lib/getBlockNode";
 import { MenuButton } from "../MenuButton";
+import {
+  codeCommand,
+  headingCommand,
+  listCommand,
+  paragraphCommand,
+  suggestTurnInto,
+  wrapCommand,
+} from "../suggestionBlock";
+import { applySuggestingStructure, isSuggesting } from "../SuggestionExtension";
 
 import type { OptionsMenuFloating } from "./OptionsMenu";
 import { optionsMenuVariants } from "./variants";
@@ -91,6 +100,7 @@ export function OptionsMenuContent({
   const handleAction = (
     applyCommand: (chain: ReturnType<typeof editor.chain>) => ReturnType<typeof editor.chain>,
     targetKind: TargetKind,
+    command: Command,
   ) => {
     if (!hoveredBlock) {
       setMenuOpen(false);
@@ -98,6 +108,16 @@ export function OptionsMenuContent({
     }
     const data = getBlockNode(editor, hoveredBlock);
     if (!data) {
+      setMenuOpen(false);
+      return;
+    }
+
+    if (isSuggesting(editor)) {
+      applySuggestingStructure(
+        editor,
+        (state, id) => suggestTurnInto(state, id, data.pos, data.node, command, targetKind),
+        { fresh: true },
+      );
       setMenuOpen(false);
       return;
     }
@@ -204,70 +224,70 @@ export function OptionsMenuContent({
         <div className="p-1 font-semibold text-sm">Turn into</div>
         <MenuButton
           active={hoveredBlock != null && isBlockNodeType(editor, hoveredBlock, "paragraph")}
-          onClick={() => handleAction(chain => chain.setParagraph(), "textblock")}
+          onClick={() => handleAction(chain => chain.setParagraph(), "textblock", paragraphCommand())}
         >
           <TextTIcon size={16} weight="bold" />
           Text
         </MenuButton>
         <MenuButton
           active={hoveredBlock != null && isBlockNodeType(editor, hoveredBlock, "heading", { level: 1 })}
-          onClick={() => handleAction(chain => chain.toggleHeading({ level: 1 }), "textblock")}
+          onClick={() => handleAction(chain => chain.toggleHeading({ level: 1 }), "textblock", headingCommand(1))}
         >
           <TextHOneIcon size={16} weight="bold" />
           Heading 1
         </MenuButton>
         <MenuButton
           active={hoveredBlock != null && isBlockNodeType(editor, hoveredBlock, "heading", { level: 2 })}
-          onClick={() => handleAction(chain => chain.toggleHeading({ level: 2 }), "textblock")}
+          onClick={() => handleAction(chain => chain.toggleHeading({ level: 2 }), "textblock", headingCommand(2))}
         >
           <TextHTwoIcon size={16} weight="bold" />
           Heading 2
         </MenuButton>
         <MenuButton
           active={hoveredBlock != null && isBlockNodeType(editor, hoveredBlock, "heading", { level: 3 })}
-          onClick={() => handleAction(chain => chain.toggleHeading({ level: 3 }), "textblock")}
+          onClick={() => handleAction(chain => chain.toggleHeading({ level: 3 }), "textblock", headingCommand(3))}
         >
           <TextHThreeIcon size={16} weight="bold" />
           Heading 3
         </MenuButton>
         <MenuButton
           active={hoveredBlock != null && isBlockNodeType(editor, hoveredBlock, "heading", { level: 4 })}
-          onClick={() => handleAction(chain => chain.toggleHeading({ level: 4 }), "textblock")}
+          onClick={() => handleAction(chain => chain.toggleHeading({ level: 4 }), "textblock", headingCommand(4))}
         >
           <TextHFourIcon size={16} weight="bold" />
           Heading 4
         </MenuButton>
         <MenuButton
           active={hoveredBlock != null && isBlockNodeType(editor, hoveredBlock, "bulletList")}
-          onClick={() => handleAction(chain => chain.toggleBulletList(), "wrapper")}
+          onClick={() => handleAction(chain => chain.toggleBulletList(), "wrapper", listCommand("bulletList"))}
         >
           <ListBulletsIcon size={16} weight="bold" />
           Bullet List
         </MenuButton>
         <MenuButton
           active={hoveredBlock != null && isBlockNodeType(editor, hoveredBlock, "orderedList")}
-          onClick={() => handleAction(chain => chain.toggleOrderedList(), "wrapper")}
+          onClick={() => handleAction(chain => chain.toggleOrderedList(), "wrapper", listCommand("orderedList"))}
         >
           <ListNumbersIcon size={16} weight="bold" />
           Ordered List
         </MenuButton>
         <MenuButton
           active={hoveredBlock != null && isBlockNodeType(editor, hoveredBlock, "taskList")}
-          onClick={() => handleAction(chain => chain.toggleTaskList(), "wrapper")}
+          onClick={() => handleAction(chain => chain.toggleTaskList(), "wrapper", listCommand("taskList"))}
         >
           <CheckSquareIcon size={16} weight="bold" />
           Task List
         </MenuButton>
         <MenuButton
           active={hoveredBlock != null && isBlockNodeType(editor, hoveredBlock, "codeBlock")}
-          onClick={() => handleAction(chain => chain.toggleCodeBlock(), "textblock")}
+          onClick={() => handleAction(chain => chain.toggleCodeBlock(), "textblock", codeCommand())}
         >
           <CodeBlockIcon size={16} weight="bold" />
           Code Block
         </MenuButton>
         <MenuButton
           active={hoveredBlock != null && isBlockNodeType(editor, hoveredBlock, "blockquote")}
-          onClick={() => handleAction(chain => chain.toggleBlockquote(), "wrapper")}
+          onClick={() => handleAction(chain => chain.toggleBlockquote(), "wrapper", wrapCommand("blockquote"))}
         >
           <QuotesIcon size={16} weight="bold" />
           Blockquote

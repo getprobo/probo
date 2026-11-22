@@ -180,3 +180,88 @@ func TestOAuth2AccessToken_CreateListUseRevoke(t *testing.T) {
 	require.Equal(t, "UNAUTHENTICATED", deniedResp.Errors[0].Code())
 	assert.Empty(t, deniedResp.DataString())
 }
+
+func TestOAuth2AccessToken_RejectsExcessiveExpiry(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	const createMutation = `
+		mutation CreateOAuth2AccessToken($input: CreateOAuth2AccessTokenInput!) {
+			createOAuth2AccessToken(input: $input) {
+				token
+			}
+		}
+	`
+
+	const listQuery = `
+		query ListOAuth2AccessTokens {
+			viewer {
+				oauth2AccessTokens(first: 20) {
+					edges {
+						node {
+							name
+						}
+					}
+				}
+			}
+		}
+	`
+
+	cases := []struct {
+		name      string
+		expiresAt time.Time
+	}{
+		{
+			name:      "century-token",
+			expiresAt: time.Now().Add(100 * 365 * 24 * time.Hour),
+		},
+		{
+			name:      "past-180-days",
+			expiresAt: time.Now().Add(181 * 24 * time.Hour),
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(
+			tc.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				resp, err := owner.DoConnect(createMutation, map[string]any{
+					"input": map[string]any{
+						"name":      tc.name,
+						"expiresAt": tc.expiresAt.UTC().Format(time.RFC3339),
+						"scopes":    []string{"v1:org:read"},
+					},
+				})
+				testutil.RequireErrorCode(t, err, "INVALID", "expiry past 180 days must be rejected")
+
+				var gqlErrors testutil.GraphQLErrors
+				require.ErrorAs(t, err, &gqlErrors)
+				assert.Contains(t, gqlErrors[0].Message, "180 days")
+				require.NotNil(t, resp)
+
+				listResp, err := owner.DoConnect(listQuery, map[string]any{})
+				require.NoError(t, err)
+
+				var listData struct {
+					Viewer struct {
+						OAuth2AccessTokens struct {
+							Edges []struct {
+								Node struct {
+									Name string `json:"name"`
+								} `json:"node"`
+							} `json:"edges"`
+						} `json:"oauth2AccessTokens"`
+					} `json:"viewer"`
+				}
+				require.NoError(t, json.Unmarshal(listResp.Data, &listData))
+
+				for _, edge := range listData.Viewer.OAuth2AccessTokens.Edges {
+					assert.NotEqual(t, tc.name, edge.Node.Name)
+				}
+			},
+		)
+	}
+}

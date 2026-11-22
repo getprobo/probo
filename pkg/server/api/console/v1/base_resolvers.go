@@ -35,7 +35,9 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlx"
+	"go.probo.inc/probo/pkg/tag"
 	"go.probo.inc/probo/pkg/task"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 // Node is the resolver for the node field.
@@ -797,19 +799,15 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 			return types.NewCookieBannerScan(scan), nil
 		}
-	case coredata.CookieBannerSampleEntityType:
-		action = probo.ActionCookieBannerGet
+	case coredata.TagEntityType:
+		action = tag.ActionGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
-			sample, err := r.cookieBanner.GetCookieBannerSample(ctx, scope, id)
+			tag, err := r.tag.Get(ctx, scope, id)
 			if err != nil {
-				if errors.Is(err, cookiebanner.ErrSampleNotFound) {
-					return nil, coredata.ErrResourceNotFound
-				}
-
 				return nil, err
 			}
 
-			return types.NewCookieBannerSample(sample), nil
+			return types.NewTag(tag), nil
 		}
 	default:
 	}
@@ -836,6 +834,54 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 // Viewer is the resolver for the viewer field.
 func (r *queryResolver) Viewer(ctx context.Context) (*types.Viewer, error) {
 	return currentViewer(ctx), nil
+}
+
+// Search is the resolver for the search field.
+func (r *queryResolver) Search(ctx context.Context, organizationID gid.GID, query string, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.SearchResultConnection, error) {
+	scope, err := r.authorize(ctx, organizationID, tag.ActionAssignmentGet)
+	if err != nil {
+		return nil, err
+	}
+
+	entityTypes, err := r.listableSearchEntityTypes(ctx, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	req := tag.SearchRequest{
+		OrganizationID:      organizationID,
+		Query:               query,
+		ListableEntityTypes: entityTypes,
+	}
+
+	cursor := types.NewCursor(
+		first,
+		after,
+		last,
+		before,
+		page.OrderBy[coredata.SearchResultOrderField]{
+			Field:     coredata.SearchResultOrderFieldID,
+			Direction: page.OrderDirectionAsc,
+		},
+	)
+
+	pageResult, err := r.tag.Search(ctx, scope, req, cursor)
+	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot search tagged resources", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	nodes, err := r.searchNodes(ctx, scope, pageResult.Data)
+	if err != nil {
+		return nil, err
+	}
+
+	return types.NewSearchResultConnection(pageResult, organizationID, query, nodes), nil
 }
 
 // CommonThirdParties is the resolver for the commonThirdParties field.

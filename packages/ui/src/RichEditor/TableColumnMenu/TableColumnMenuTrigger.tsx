@@ -11,6 +11,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { DRAG_THRESHOLD } from "../_lib/constants";
 import { EditorFloatingPortal } from "../_lib/EditorFloatingPortal";
 import type { DropdownMenu } from "../_lib/useTableDropdownMenu";
+import { isSuggesting } from "../SuggestionExtension";
 
 import { getColumnRect, type HoveredColumn, moveColumn } from "./TableColumnMenu";
 import { tableColumnMenuVariants } from "./variants";
@@ -301,7 +302,7 @@ export function TableColumnMenuTrigger({
         try {
           const targetGap = computeTargetGap(ev.clientX, tableStart);
 
-          if (targetGap !== fromCol && targetGap !== fromCol + 1) {
+          if (!isSuggesting(editor) && targetGap !== fromCol && targetGap !== fromCol + 1) {
             const toCol
               = fromCol < targetGap ? targetGap - 1 : targetGap;
             moveColumn(editor, tableStart, fromCol, toCol);
@@ -353,7 +354,13 @@ export function TableColumnMenuTrigger({
           }}
           data-column-handle
           data-rich-editor-floating=""
+          aria-label="Column actions"
           onMouseDown={onHandleMouseDown}
+          onKeyDown={(event) => {
+            if (event.key !== "Enter" && event.key !== " ") return;
+            event.preventDefault();
+            setMenuOpen(prev => !prev);
+          }}
           type="button"
           style={{
             ...handleStyles,

@@ -21,6 +21,7 @@
 package validator
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 
@@ -78,6 +79,30 @@ func NoDuplicates() ValidatorFunc {
 			}
 
 			seen[elem] = struct{}{}
+		}
+
+		return nil
+	}
+}
+
+// MaxItems validates that a slice holds at most maxItems elements.
+func MaxItems(maxItems int) ValidatorFunc {
+	return func(value any) *ValidationError {
+		actualValue, isNil := dereferenceValue(value)
+		if isNil {
+			return nil
+		}
+
+		rv := reflect.ValueOf(actualValue)
+		if rv.Kind() != reflect.Slice {
+			return newValidationError(ErrorCodeInvalidFormat, "value must be a slice")
+		}
+
+		if rv.Len() > maxItems {
+			return newValidationError(
+				ErrorCodeTooLong,
+				fmt.Sprintf("must have at most %d items", maxItems),
+			)
 		}
 
 		return nil

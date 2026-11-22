@@ -499,6 +499,20 @@ func TestCLI_FilesAndContext(t *testing.T) {
 	assert.Contains(t, session.must("evidence", "list", "--internal-control", controlID, "--json"), evidenceID)
 	assert.Contains(t, session.must("evidence", "view", evidenceID, "--json"), evidenceID)
 
+	linkID := session.mustID(
+		"evidence", "link",
+		"--internal-control", controlID,
+		"--url", "https://example.com/acc-16",
+		"--name", "ACC-16 policy",
+	)
+	linkView := session.must("evidence", "view", linkID, "--json")
+	assert.Contains(t, linkView, linkID)
+	assert.Contains(t, linkView, "FILE")
+	assert.Contains(t, linkView, "ACC-16 policy.uri")
+	assert.Contains(t, session.must("evidence", "list", "--internal-control", controlID, "--json"), linkID)
+	session.must("evidence", "delete", linkID, "--yes")
+	assert.NotContains(t, session.must("evidence", "list", "--internal-control", controlID, "--json"), linkID)
+
 	_, stderr, err = session.run("evidence", "delete", evidenceID)
 	require.Error(t, err)
 	assert.Contains(t, stderr, "confirmation required")

@@ -48,6 +48,11 @@ export function CookieBannerNavItems({ cookieBannerId, tcf }: CookieBannerNavIte
   return (
     <>
       <NavPanelItem
+        label={t("nav.cookieBannersOverview")}
+        to={cookieBannerPath(organizationId, cookieBannerId)}
+        exact
+      />
+      <NavPanelItem
         label={t("nav.cookieBannersSettings")}
         to={cookieBannerSettingsPath(organizationId, cookieBannerId)}
       />

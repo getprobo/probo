@@ -23,6 +23,7 @@ package console_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/e2e/internal/factory"
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
@@ -94,41 +95,32 @@ func TestCookieBanner_RBAC(t *testing.T) {
 		testutil.RequireForbiddenError(t, err, "viewer should not be able to delete cookie banner")
 	})
 
-	t.Run("viewer cannot start sample", func(t *testing.T) {
+	t.Run("viewer can read analytics", func(t *testing.T) {
 		t.Parallel()
 		owner := testutil.NewClient(t, testutil.RoleOwner)
 		viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
 
 		bannerID := factory.CreateCookieBanner(owner)
+		categoryID := factory.CreateCookieCategory(owner, bannerID)
+		patternID := factory.CreateTrackerPattern(owner, categoryID)
 
 		_, err := viewer.Do(`
-			mutation StartCookieBannerSample($input: StartCookieBannerSampleInput!) {
-				startCookieBannerSample(input: $input) {
-					cookieBannerSample { id }
+			query($bannerId: ID!, $patternId: ID!) {
+				banner: node(id: $bannerId) {
+					... on CookieBanner {
+						dailyPageLoads { day pageLoads { family count } }
+					}
+				}
+				pattern: node(id: $patternId) {
+					... on TrackerPattern {
+						dailyHits { day hits { family count } }
+					}
 				}
 			}
 		`, map[string]any{
-			"input": map[string]any{"cookieBannerId": bannerID},
+			"bannerId":  bannerID,
+			"patternId": patternID,
 		})
-		testutil.RequireForbiddenError(t, err, "viewer should not be able to start cookie banner sample")
-	})
-
-	t.Run("viewer cannot stop sample", func(t *testing.T) {
-		t.Parallel()
-		owner := testutil.NewClient(t, testutil.RoleOwner)
-		viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
-
-		bannerID := factory.CreateCookieBanner(owner)
-
-		_, err := viewer.Do(`
-			mutation StopCookieBannerSample($input: StopCookieBannerSampleInput!) {
-				stopCookieBannerSample(input: $input) {
-					cookieBannerSample { id }
-				}
-			}
-		`, map[string]any{
-			"input": map[string]any{"cookieBannerId": bannerID},
-		})
-		testutil.RequireForbiddenError(t, err, "viewer should not be able to stop cookie banner sample")
+		require.NoError(t, err, "viewer should be able to read cookie banner analytics")
 	})
 }

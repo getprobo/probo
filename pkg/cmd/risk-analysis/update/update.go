@@ -27,6 +27,7 @@ import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
+	"go.probo.inc/probo/pkg/coredata"
 )
 
 const updateMutation = `
@@ -43,6 +44,10 @@ mutation RiskAnalysisUpdate($input: UpdateRiskAnalysisInput!) {
       matrixSize {
         rows
         cols
+      }
+      scoreLevels {
+        level
+        minScore
       }
       createdAt
       updatedAt
@@ -77,6 +82,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 		flagDescription string
 		flagPeriodStart string
 		flagPeriodEnd   string
+		flagScoreLevels string
 	)
 
 	cmd := &cobra.Command{
@@ -121,6 +127,15 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 
 					input["description"] = description
 				}
+			}
+
+			if cmd.Flags().Changed("score-levels") {
+				levels, err := coredata.ParseScoreLevels(flagScoreLevels)
+				if err != nil {
+					return fmt.Errorf("invalid --score-levels: %w", err)
+				}
+
+				input["scoreLevels"] = graphqlScoreLevels(levels)
 			}
 
 			if cmd.Flags().Changed("period-start") || cmd.Flags().Changed("period-end") {
@@ -169,6 +184,19 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagDescription, "description", "", "Risk analysis description as markdown or ProseMirror JSON. Images and links to /api/files/v1/{id} are kept")
 	cmd.Flags().StringVar(&flagPeriodStart, "period-start", "", "Period start date (e.g. 2026-01-01)")
 	cmd.Flags().StringVar(&flagPeriodEnd, "period-end", "", "Period end date (e.g. 2026-12-31)")
+	cmd.Flags().StringVar(&flagScoreLevels, "score-levels", "", "Score levels as LEVEL=minimum, for example LOW=1,MEDIUM=6,HIGH=13")
 
 	return cmd
+}
+
+func graphqlScoreLevels(levels coredata.ScoreLevels) []map[string]any {
+	items := make([]map[string]any, len(levels))
+	for i, level := range levels {
+		items[i] = map[string]any{
+			"level":    string(level.Level),
+			"minScore": level.MinScore,
+		}
+	}
+
+	return items
 }

@@ -18,10 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useSafeContinueUrl } from "./useSafeContinueUrl";
+import { useSafeContinueURL } from "./useSafeContinueURL";
 
 export function usePostAuthRedirectUrl(): string {
-  const safeContinueUrl = useSafeContinueUrl();
+  const safeContinueUrl = useSafeContinueURL();
 
   return safeContinueUrl.href;
 }

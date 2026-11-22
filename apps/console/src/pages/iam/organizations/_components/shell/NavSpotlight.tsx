@@ -18,27 +18,44 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CompassIcon } from "@phosphor-icons/react";
+import {
+  ArrowElbowDownLeftIcon,
+  type Icon,
+  MagnifyingGlassIcon,
+} from "@phosphor-icons/react";
 import { useHotkeys } from "@probo/hotkeys";
 import { Combobox } from "@probo/ui/src/v2/Combobox/Combobox";
+import { ComboboxCollection } from "@probo/ui/src/v2/Combobox/ComboboxCollection";
 import { ComboboxEmpty } from "@probo/ui/src/v2/Combobox/ComboboxEmpty";
+import { ComboboxGroup } from "@probo/ui/src/v2/Combobox/ComboboxGroup";
+import { ComboboxGroupLabel } from "@probo/ui/src/v2/Combobox/ComboboxGroupLabel";
 import { ComboboxInput } from "@probo/ui/src/v2/Combobox/ComboboxInput";
 import { ComboboxInputGroup } from "@probo/ui/src/v2/Combobox/ComboboxInputGroup";
 import { ComboboxItem } from "@probo/ui/src/v2/Combobox/ComboboxItem";
 import { ComboboxList } from "@probo/ui/src/v2/Combobox/ComboboxList";
 import { Dialog } from "@probo/ui/src/v2/Dialog/Dialog";
-import { DialogBody } from "@probo/ui/src/v2/Dialog/DialogBody";
 import { DialogPopup } from "@probo/ui/src/v2/Dialog/DialogPopup";
 import { DialogTitle } from "@probo/ui/src/v2/Dialog/DialogTitle";
 import { shortcutAria } from "@probo/ui/src/v2/shortcutAria";
-import { useMemo } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+} from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, useFragment } from "react-relay";
+import {
+  fetchQuery,
+  graphql,
+  useFragment,
+} from "react-relay";
 import { useNavigate } from "react-router";
 
+import type { navSpotlightSearchQuery as NavSpotlightSearchQuery } from "#/__generated__/core/navSpotlightSearchQuery.graphql";
 import type { navPermissions_organization$key } from "#/__generated__/iam/navPermissions_organization.graphql";
 import type { NavSpotlight_organization$key } from "#/__generated__/iam/NavSpotlight_organization.graphql";
-import { SearchShortcutHint } from "#/components/SearchShortcutHint/SearchShortcutHint";
+import { navSpotlightSearchQuery } from "#/components/spotlight/navSpotlightSearchQuery";
+import { coreEnvironment } from "#/environments";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { visibleNavDestinations } from "#/pages/iam/organizations/_lib/navDestinations";
 import {
@@ -46,6 +63,7 @@ import {
   navHref,
 } from "#/pages/iam/organizations/_lib/navigation";
 import { navPermissionsFragment } from "#/pages/iam/organizations/_lib/navPermissions";
+import { resourceHref } from "#/pages/iam/organizations/_lib/resourceHref";
 
 import { navSpotlight } from "./variants";
 
@@ -55,18 +73,62 @@ const navSpotlightFragment = graphql`
   }
 `;
 
-interface SpotlightDestination {
+type SpotlightItem = {
   id: string;
+  kind: "page" | "resource";
   label: string;
+  groupKey: string;
   groupLabel: string;
+  icon: Icon;
   to: string;
-}
+};
+
+type SpotlightGroup = {
+  value: string;
+  items: SpotlightItem[];
+};
 
 export interface NavSpotlightProps {
   organizationKey: NavSpotlight_organization$key;
   slackbotAvailable: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+}
+
+function hasQualifier(input: string): boolean {
+  return /(?:^|\s)(?:tag|type):/.test(input);
+}
+
+type SearchHitNode
+  = NavSpotlightSearchQuery["response"]["search"]["edges"][number]["node"];
+
+function searchHitParentId(node: SearchHitNode): string | undefined {
+  switch (node.__typename) {
+    case "Control":
+      return node.framework?.id;
+    case "DataProtectionImpactAssessment":
+    case "TransferImpactAssessment":
+      return node.processingActivity?.id;
+    default:
+      return undefined;
+  }
+}
+
+function groupSpotlightItems(items: SpotlightItem[]): SpotlightGroup[] {
+  const groups: SpotlightGroup[] = [];
+  const indexByKey = new Map<string, number>();
+
+  for (const item of items) {
+    const existing = indexByKey.get(item.groupKey);
+    if (existing == null) {
+      indexByKey.set(item.groupKey, groups.length);
+      groups.push({ value: item.groupLabel, items: [item] });
+      continue;
+    }
+    groups[existing].items.push(item);
+  }
+
+  return groups;
 }
 
 export function NavSpotlight({
@@ -84,15 +146,21 @@ export function NavSpotlight({
     organization,
   );
   const slots = navSpotlight();
+  const [input, setInput] = useState("");
+  const [resources, setResources] = useState<SpotlightItem[]>([]);
+  const [, startTransition] = useTransition();
 
   const destinations = useMemo(() => {
     return visibleNavDestinations(permissions, slackbotAvailable).map(
       (destination) => {
         const group = navGroupByKey(destination.group);
         return {
-          id: destination.id,
+          id: `page:${destination.id}`,
+          kind: "page" as const,
           label: t(destination.labelKey),
+          groupKey: `page:${destination.group}`,
           groupLabel: t(`nav.groups.${destination.group}`),
+          icon: group.icon,
           to: navHref(organizationId, group, destination.path),
         };
       },
@@ -104,58 +172,174 @@ export function NavSpotlight({
     t,
   ]);
 
-  useHotkeys("mod+k", () => {
-    onOpenChange(!open);
-  }, { preventDefault: true });
+  function handleOpenChange(next: boolean) {
+    if (!next) {
+      setInput("");
+      setResources([]);
+    }
+    onOpenChange(next);
+  }
 
-  function onValueChange(destination: SpotlightDestination | null) {
-    if (destination == null) {
+  useEffect(() => {
+    const trimmed = input.trim();
+    if (!open || trimmed === "") {
       return;
     }
-    void navigate(destination.to);
-    onOpenChange(false);
+
+    let active = true;
+    let subscription: { unsubscribe: () => void } | undefined;
+    const handle = window.setTimeout(() => {
+      startTransition(() => {
+        subscription = fetchQuery<NavSpotlightSearchQuery>(
+          coreEnvironment,
+          navSpotlightSearchQuery,
+          {
+            organizationId,
+            query: trimmed,
+          },
+        ).subscribe({
+          next: (data) => {
+            if (!active) {
+              return;
+            }
+            const items: SpotlightItem[] = [];
+            for (const edge of data.search.edges) {
+              const typename = edge.node.__typename;
+              if (typename == null || typename === "%other") {
+                continue;
+              }
+              const to = resourceHref(
+                organizationId,
+                typename,
+                edge.node.id,
+                searchHitParentId(edge.node),
+              );
+              if (to == null) {
+                continue;
+              }
+              items.push({
+                id: `resource:${edge.node.id}`,
+                kind: "resource",
+                label: edge.title,
+                groupKey: `resource:${typename}`,
+                groupLabel: t(`nav.spotlight.types.${typename}`, {
+                  defaultValue: typename,
+                }),
+                icon: MagnifyingGlassIcon,
+                to,
+              });
+            }
+            setResources(items);
+          },
+          error: () => {
+            setResources([]);
+          },
+        });
+      });
+    }, 200);
+
+    return () => {
+      active = false;
+      window.clearTimeout(handle);
+      subscription?.unsubscribe();
+    };
+  }, [input, open, organizationId, t]);
+
+  const showPages = !hasQualifier(input);
+  const groups = useMemo(() => {
+    if (!open) {
+      return [];
+    }
+    if (input.trim() === "") {
+      return groupSpotlightItems(destinations);
+    }
+    if (showPages) {
+      return groupSpotlightItems([...destinations, ...resources]);
+    }
+    return groupSpotlightItems(resources);
+  }, [destinations, input, open, resources, showPages]);
+
+  useHotkeys("mod+k", () => {
+    handleOpenChange(!open);
+  }, { preventDefault: true });
+
+  function onValueChange(item: SpotlightItem | null) {
+    if (item == null) {
+      return;
+    }
+    void navigate(item.to);
+    handleOpenChange(false);
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogPopup placement="top" lockScroll>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogPopup appearance="palette" placement="top" lockScroll>
         <DialogTitle className={slots.title()}>{t("nav.spotlight.title")}</DialogTitle>
-        <DialogBody>
-          <Combobox<SpotlightDestination>
-            items={destinations}
-            value={null}
-            onValueChange={onValueChange}
-            itemToStringLabel={destination => `${destination.label} ${destination.groupLabel}`}
-            inline
-            open={open}
-            onOpenChange={onOpenChange}
-            autoHighlight
-          >
-            <ComboboxInputGroup className={slots.field()}>
-              <span className={slots.icon()}>
-                <CompassIcon />
-              </span>
-              <ComboboxInput
-                placeholder={t("nav.spotlight.placeholder")}
-                aria-keyshortcuts={shortcutAria("K")}
-              />
-              <span className={slots.hint()}>
-                <SearchShortcutHint shortcut="K" />
-              </span>
-            </ComboboxInputGroup>
-            <ComboboxEmpty>{t("nav.spotlight.empty")}</ComboboxEmpty>
-            <ComboboxList<SpotlightDestination> className={slots.list()}>
-              {destination => (
-                <ComboboxItem key={destination.id} value={destination}>
-                  <span className={slots.row()}>
-                    <span>{destination.label}</span>
-                    <span className={slots.group()}>{destination.groupLabel}</span>
-                  </span>
-                </ComboboxItem>
-              )}
-            </ComboboxList>
-          </Combobox>
-        </DialogBody>
+        <Combobox<SpotlightItem>
+          items={groups}
+          value={null}
+          onValueChange={onValueChange}
+          inputValue={input}
+          onInputValueChange={setInput}
+          itemToStringLabel={item => `${item.label} ${item.groupLabel}`}
+          filter={(item, query) => {
+            if (item.kind === "resource") {
+              return true;
+            }
+            const haystack = `${item.label} ${item.groupLabel}`.toLowerCase();
+            return haystack.includes(query.trim().toLowerCase());
+          }}
+          inline
+          open={open}
+          onOpenChange={handleOpenChange}
+          autoHighlight
+        >
+          <ComboboxInputGroup appearance="plain" className={slots.field()}>
+            <ComboboxInput
+              placeholder={t("nav.spotlight.placeholder")}
+              aria-keyshortcuts={shortcutAria("K")}
+            />
+          </ComboboxInputGroup>
+          <ComboboxEmpty>{t("nav.spotlight.empty")}</ComboboxEmpty>
+          <ComboboxList<SpotlightGroup> className={slots.list()}>
+            {group => (
+              <ComboboxGroup
+                key={group.value}
+                items={group.items}
+                className={slots.group()}
+              >
+                <ComboboxGroupLabel>{group.value}</ComboboxGroupLabel>
+                <ComboboxCollection<SpotlightItem>>
+                  {(item) => {
+                    const ItemIcon = item.icon;
+                    return (
+                      <ComboboxItem key={item.id} value={item} indicator={false}>
+                        <span className={slots.row()}>
+                          <span className={slots.rowIcon()}>
+                            <ItemIcon />
+                          </span>
+                          <span>{item.label}</span>
+                        </span>
+                      </ComboboxItem>
+                    );
+                  }}
+                </ComboboxCollection>
+              </ComboboxGroup>
+            )}
+          </ComboboxList>
+        </Combobox>
+        <div className={slots.footer()}>
+          <span className={slots.footerAction()}>
+            <span className={slots.keycap()}>
+              <ArrowElbowDownLeftIcon className="size-2.5" />
+            </span>
+            {t("nav.spotlight.open")}
+          </span>
+          <span className={slots.footerAction()}>
+            <span className={slots.keycap()}>Esc</span>
+            {t("nav.spotlight.close")}
+          </span>
+        </div>
       </DialogPopup>
     </Dialog>
   );

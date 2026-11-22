@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { Form } from "@base-ui/react/form";
-import { taskCommentForm } from "@probo/tasks";
+import { taskCommentForm, UnsavedTaskCommentGuard, unsavedTaskCommentIsPending } from "@probo/tasks";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { Field } from "@probo/ui/src/v2/form/Field";
@@ -46,6 +46,7 @@ export function TaskCommentForm() {
   const [editorKey, setEditorKey] = useState(0);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const { root, editor } = taskCommentForm();
+  const pending = unsavedTaskCommentIsPending(content, uploading);
 
   function handleSubmit() {
     if (uploading || isCreating) {
@@ -80,6 +81,7 @@ export function TaskCommentForm() {
 
   return (
     <Card variant="soft" size={2}>
+      <UnsavedTaskCommentGuard pending={pending} />
       <Form className={root()} onFormSubmit={handleSubmit}>
         <Field error={errors.content}>
           <RichEditor

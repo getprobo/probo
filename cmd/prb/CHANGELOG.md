@@ -4,6 +4,92 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+### Added
+
+- `evidence link` uploads a `<name>.uri` file containing an HTTP or
+  HTTPS URL, matching the console link form
+
+## [0.273.0] - 2026-11-20
+
+### Added
+
+- `audit-log list` filters by `--actor-type`, `--outcome`,
+  `--request-id`, and a `--from`/`--to` date range read in local time.
+  `--action` accepts a trailing `*` to match a prefix (`iam:*`). The
+  list shows the actor id beside the email
+- `audit-log view` shows the outcome, denial reason, actor snapshot,
+  client IP, user agent, and request id. It falls back to the actor
+  name when there is no email
+
+## [0.272.0] - 2026-11-20
+
+### Added
+
+- `tag` commands create, update, delete, attach, detach, and list
+  tags. Tag names are unique in an organization, and a resource can
+  carry several. `tag list` shows the tags in an organization or on
+  one resource
+- `search` finds resources across types with a query. Bare words match
+  titles as prefixes. `tag:name` requires a tag, and repeating it
+  requires every tag. `type:name` restricts results to a resource
+  type, and repeating it accepts several types
+
+## [0.271.0] - 2026-11-17
+
+### Added
+
+- `cookie-banner view` prints page loads for each UTC day in the
+  requested window, oldest first
+- `cookie-banner view --days` and `tracker-pattern view --days` set
+  how many UTC days to count, today included. The default is 7 and the
+  maximum is 90
+
+### Changed
+
+- **Breaking**: `cookie-banner view` shows page loads for each UTC day
+  in the requested window instead of the latest sample. The JSON
+  output has `dailyPageLoads` instead of `latestSample`
+- **Breaking**: `tracker-pattern view` shows hits for each UTC day in
+  the requested window instead of sample hits. The JSON output has
+  `dailyHits` instead of `sampleHits`
+
+### Removed
+
+- **Breaking**: `cookie-banner start-sample`, `stop-sample`, and
+  `list-samples`. Page views are always counted, by UTC day
+
+## [0.270.1] - 2026-11-17
+
+### Fixed
+
+- CLI release builds again. `prb risk-analysis create` still uses the
+  same default score bands, without pulling in the email templates
+  that stopped the 0.270.0 build
+
+## [0.270.0] - 2026-11-17
+
+### Added
+
+- `prb risk-analysis create --score-levels` and
+  `prb risk-analysis update --score-levels` set each level's minimum
+  score, as `LOW=1,MEDIUM=5,HIGH=10`. Omitting the flag on create
+  uses the default bands for the matrix size. `list` and `view`
+  print the levels, and `fork` returns them
+
+## [0.269.0] - 2026-11-16
+
+### Added
+
+- `prb document suggestion start --quote --replacement --comment
+  --occurrence` starts a suggestion with its first redline
+- `prb document suggestion add`, `table`, and `format` add a text,
+  table row, column, or table, or character style redline to an open
+  suggestion
+- `prb document change text`, `format`, `table`, and `block` edit a
+  document with `--mode APPLY`, or store the same change on an open
+  suggestion with `--mode SUGGEST`. `block` covers headings, lists,
+  quotes, code blocks, dividers, images, files, and mentions
+
 ## [0.268.0] - 2026-11-13
 
 ### Added
@@ -24,6 +110,7 @@ All notable changes to the `prb` CLI will be documented in this file.
   `prb task update-asana-settings` updates the organization's settings
 - `prb task create --asana-project` publishes the new task to an Asana
   project, and `--no-asana-project` skips the default project
+
 
 ## [0.266.0] - 2026-11-12
 

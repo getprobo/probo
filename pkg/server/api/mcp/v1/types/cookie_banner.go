@@ -57,26 +57,12 @@ func NewCookieBanner(b *coredata.CookieBanner, tcfCmpID int) *CookieBanner {
 	}
 }
 
-func NewCookieBannerSample(s *coredata.CookieBannerSample) *CookieBannerSample {
-	return &CookieBannerSample{
-		ID:             s.ID,
-		CookieBannerID: s.CookieBannerID,
-		PageLoads:      []*SampleFamilyCount{},
-		FrozenAt:       s.FrozenAt,
-		CreatedAt:      s.CreatedAt,
-	}
-}
-
-func (s *CookieBannerSample) SetPageLoads(loads []cookiebanner.SampleFamilyCount) {
-	s.PageLoads = NewSampleFamilyCounts(loads)
-}
-
-func NewSampleFamilyCounts(counts []cookiebanner.SampleFamilyCount) []*SampleFamilyCount {
-	out := make([]*SampleFamilyCount, 0, len(counts))
+func NewBrowserFamilyCounts(counts []cookiebanner.BrowserFamilyCount) []*BrowserFamilyCount {
+	out := make([]*BrowserFamilyCount, 0, len(counts))
 	for _, count := range counts {
 		out = append(
 			out,
-			&SampleFamilyCount{
+			&BrowserFamilyCount{
 				Family: count.Family,
 				Count:  count.Count,
 			},
@@ -86,25 +72,34 @@ func NewSampleFamilyCounts(counts []cookiebanner.SampleFamilyCount) []*SampleFam
 	return out
 }
 
-func NewListCookieBannerSamplesOutput(
-	p *page.Page[*coredata.CookieBannerSample, coredata.CookieBannerSampleOrderField],
-) ListCookieBannerSamplesOutput {
-	samples := make([]*CookieBannerSample, 0, len(p.Data))
-	for _, sample := range p.Data {
-		samples = append(samples, NewCookieBannerSample(sample))
+func NewDailyPageLoads(series []cookiebanner.DailyPageLoads) []*DailyPageLoads {
+	out := make([]*DailyPageLoads, 0, len(series))
+	for _, day := range series {
+		out = append(
+			out,
+			&DailyPageLoads{
+				Day:       day.Day,
+				PageLoads: NewBrowserFamilyCounts(day.PageLoads),
+			},
+		)
 	}
 
-	var nextCursor *page.CursorKey
+	return out
+}
 
-	if len(p.Data) > 0 {
-		cursorKey := p.Data[len(p.Data)-1].CursorKey(p.Cursor.OrderBy.Field)
-		nextCursor = &cursorKey
+func NewDailyHits(series []cookiebanner.DailyHits) []*DailyHits {
+	out := make([]*DailyHits, 0, len(series))
+	for _, day := range series {
+		out = append(
+			out,
+			&DailyHits{
+				Day:  day.Day,
+				Hits: NewBrowserFamilyCounts(day.Hits),
+			},
+		)
 	}
 
-	return ListCookieBannerSamplesOutput{
-		NextCursor:          nextCursor,
-		CookieBannerSamples: samples,
-	}
+	return out
 }
 
 func NewCookieBannerScan(scan *coredata.CookieBannerScan) *CookieBannerScan {

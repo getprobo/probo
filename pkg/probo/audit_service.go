@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"go.gearno.de/kit/pg"
+	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
@@ -276,6 +277,17 @@ func (s *AuditService) Create(
 
 			if err := audit.Insert(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot insert audit: %w", err)
+			}
+
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				audit.ID,
+				audit.OrganizationID,
+				ref.UnrefOrZero(audit.Name),
+				audit.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
 			}
 
 			for _, frameworkID := range req.FrameworkIDs {
@@ -536,6 +548,17 @@ func (s *AuditService) Update(
 				return fmt.Errorf("cannot update audit: %w", err)
 			}
 
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				audit.ID,
+				audit.OrganizationID,
+				ref.UnrefOrZero(audit.Name),
+				audit.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -555,6 +578,10 @@ func (s AuditService) Delete(
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			if err := coredata.DeleteSearchResource(ctx, tx, audit.ID); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
 			err := audit.Delete(ctx, tx, scope)
 			if err != nil {
 				return fmt.Errorf("cannot delete audit: %w", err)
@@ -673,7 +700,22 @@ func (s AuditService) UploadReport(
 			audit.ReportFileID = &file.ID
 			audit.UpdatedAt = time.Now()
 
-			return audit.Update(ctx, conn, scope)
+			if err := audit.Update(ctx, conn, scope); err != nil {
+				return err
+			}
+
+			if err := coredata.UpsertSearchResource(
+				ctx,
+				conn,
+				audit.ID,
+				audit.OrganizationID,
+				ref.UnrefOrZero(audit.Name),
+				audit.SearchText(),
+			); err != nil {
+				return fmt.Errorf("cannot sync search: %w", err)
+			}
+
+			return nil
 		},
 	)
 	if err != nil {
@@ -730,6 +772,17 @@ func (s AuditService) DeleteReport(
 
 				if err := audit.Update(ctx, conn, scope); err != nil {
 					return fmt.Errorf("cannot update audit: %w", err)
+				}
+
+				if err := coredata.UpsertSearchResource(
+					ctx,
+					conn,
+					audit.ID,
+					audit.OrganizationID,
+					ref.UnrefOrZero(audit.Name),
+					audit.SearchText(),
+				); err != nil {
+					return fmt.Errorf("cannot sync search: %w", err)
 				}
 			}
 
