@@ -894,7 +894,7 @@ func (r *mutationResolver) ExportDocumentPDF(ctx context.Context, input types.Ex
 
 	identity := authn.IdentityFromContext(ctx)
 	if identity == nil {
-		return nil, gqlx.Unauthenticated(ctx, errors.New("unauthenticated"))
+		return nil, gqlx.Unauthenticatedf(ctx, "unauthenticated")
 	}
 
 	if err := r.requireCompletedNDA(ctx); err != nil {
@@ -912,7 +912,15 @@ func (r *mutationResolver) ExportDocumentPDF(ctx context.Context, input types.Ex
 			return nil, gqlx.Forbidden(ctx, err)
 		}
 
-		return nil, nil
+		if errors.Is(err, visitor.ErrMembershipNotFound) ||
+			errors.Is(err, visitor.ErrUserNotFound) ||
+			errors.Is(err, visitor.ErrDocumentAccessNotFound) {
+			return nil, gqlx.Forbiddenf(ctx, "access denied: no permission to access this document")
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get document access", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if documentAccess.Status != coredata.CompliancePortalDocumentAccessStatusGranted {
@@ -979,7 +987,15 @@ func (r *mutationResolver) ExportReportPDF(ctx context.Context, input types.Expo
 			return nil, gqlx.Forbidden(ctx, err)
 		}
 
-		return nil, nil
+		if errors.Is(err, visitor.ErrMembershipNotFound) ||
+			errors.Is(err, visitor.ErrUserNotFound) ||
+			errors.Is(err, visitor.ErrDocumentAccessNotFound) {
+			return nil, gqlx.Forbiddenf(ctx, "access denied: no permission to access this report")
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get report access", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if reportAccess.Status != coredata.CompliancePortalDocumentAccessStatusGranted {
@@ -1045,7 +1061,15 @@ func (r *mutationResolver) ExportCompliancePortalFile(ctx context.Context, input
 			return nil, gqlx.Forbidden(ctx, err)
 		}
 
-		return nil, nil
+		if errors.Is(err, visitor.ErrMembershipNotFound) ||
+			errors.Is(err, visitor.ErrUserNotFound) ||
+			errors.Is(err, visitor.ErrDocumentAccessNotFound) {
+			return nil, gqlx.Forbiddenf(ctx, "access denied: no permission to access this file")
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get file access", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if fileAccess.Status != coredata.CompliancePortalDocumentAccessStatusGranted {
