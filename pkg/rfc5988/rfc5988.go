@@ -39,7 +39,7 @@ func Parse(header string) []Link {
 
 	var links []Link
 
-	for part := range strings.SplitSeq(header, ",") {
+	for _, part := range splitOutside(header, ',') {
 		part = strings.TrimSpace(part)
 		if part == "" {
 			continue
@@ -57,8 +57,7 @@ func Parse(header string) []Link {
 			Params: make(map[string]string),
 		}
 
-		rest := part[end+1:]
-		for segment := range strings.SplitSeq(rest, ";") {
+		for _, segment := range splitOutside(part[end+1:], ';') {
 			segment = strings.TrimSpace(segment)
 			if segment == "" {
 				continue
@@ -69,17 +68,76 @@ func Parse(header string) []Link {
 				continue
 			}
 
-			key = strings.TrimSpace(key)
-			value = strings.TrimSpace(value)
-			value = strings.Trim(value, `"`)
-
-			link.Params[key] = value
+			link.Params[strings.TrimSpace(key)] = unquote(strings.TrimSpace(value))
 		}
 
 		links = append(links, link)
 	}
 
 	return links
+}
+
+// splitOutside splits s at every sep that is not inside an angle-bracketed
+// URI or a quoted string. Quoted strings may contain backslash escapes.
+func splitOutside(s string, sep byte) []string {
+	var (
+		parts   []string
+		start   int
+		inAngle bool
+		inQuote bool
+	)
+
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+
+		switch {
+		case inQuote:
+			switch c {
+			case '\\':
+				i++
+			case '"':
+				inQuote = false
+			}
+		case inAngle:
+			if c == '>' {
+				inAngle = false
+			}
+		case c == '"':
+			inQuote = true
+		case c == '<':
+			inAngle = true
+		case c == sep:
+			parts = append(parts, s[start:i])
+			start = i + 1
+		}
+	}
+
+	return append(parts, s[start:])
+}
+
+// unquote strips the surrounding quotes of a quoted-string and resolves its
+// backslash escapes. Values that are not quoted are returned unchanged.
+func unquote(value string) string {
+	if len(value) < 2 || value[0] != '"' || value[len(value)-1] != '"' {
+		return strings.Trim(value, `"`)
+	}
+
+	value = value[1 : len(value)-1]
+	if !strings.Contains(value, `\`) {
+		return value
+	}
+
+	var b strings.Builder
+
+	for i := 0; i < len(value); i++ {
+		if value[i] == '\\' && i+1 < len(value) {
+			i++
+		}
+
+		b.WriteByte(value[i])
+	}
+
+	return b.String()
 }
 
 // FindByRel returns the URL of the first Link entry whose "rel" parameter
