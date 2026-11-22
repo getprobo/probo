@@ -212,3 +212,21 @@ func TestFindByRel_EmbeddedDelimiters(t *testing.T) {
 		assert.Equal(t, "https://api.example.com/items?page=2", rfc5988.FindByRel(header, "next"))
 	})
 }
+
+func TestParse_UnterminatedDelimiters(t *testing.T) {
+	t.Parallel()
+
+	t.Run("unterminated quote in first entry", func(t *testing.T) {
+		t.Parallel()
+
+		header := `<https://api.example.com/a>; title="broken; rel="prev", <https://api.example.com/b>; rel="next"`
+		assert.Equal(t, "https://api.example.com/b", rfc5988.FindByRel(header, "next"))
+	})
+
+	t.Run("unterminated angle bracket in first entry", func(t *testing.T) {
+		t.Parallel()
+
+		header := `<https://api.example.com/a; rel="prev", <https://api.example.com/b>; rel="next"`
+		assert.Equal(t, "https://api.example.com/b", rfc5988.FindByRel(header, "next"))
+	})
+}

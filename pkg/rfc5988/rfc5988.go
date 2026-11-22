@@ -78,7 +78,10 @@ func Parse(header string) []Link {
 }
 
 // splitOutside splits s at every sep that is not inside an angle-bracketed
-// URI or a quoted string. Quoted strings may contain backslash escapes.
+// URI or a quoted string. Quoted strings may contain backslash escapes. If a
+// quote or angle bracket is never closed, s is split at every sep instead so
+// one malformed entry does not swallow the entries after it. A "<" inside an
+// angle-bracketed URI counts as unclosed too, since URIs cannot contain it.
 func splitOutside(s string, sep byte) []string {
 	var (
 		parts   []string
@@ -99,7 +102,10 @@ func splitOutside(s string, sep byte) []string {
 				inQuote = false
 			}
 		case inAngle:
-			if c == '>' {
+			switch c {
+			case '<':
+				return strings.Split(s, string(sep))
+			case '>':
 				inAngle = false
 			}
 		case c == '"':
@@ -110,6 +116,10 @@ func splitOutside(s string, sep byte) []string {
 			parts = append(parts, s[start:i])
 			start = i + 1
 		}
+	}
+
+	if inAngle || inQuote {
+		return strings.Split(s, string(sep))
 	}
 
 	return append(parts, s[start:])
