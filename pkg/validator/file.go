@@ -100,7 +100,7 @@ var FileTypes = []FileType{
 	{MimeType: "video/webm", Extensions: []string{".webm"}, Category: FileCategoryVideo},
 }
 
-// Error is a file rejected by Validate. Callers should report it to the
+// FileError is a file rejected by Validate. Callers should report it to the
 // client; it is not an internal failure. Code is the validation cause.
 type FileError struct {
 	message string
