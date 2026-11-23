@@ -5,6 +5,8 @@ this file.
 
 ## Unreleased
 
+## [0.7.0] - 2026-11-23
+
 ### Added
 
 - `using-prb` explains that `prb evidence link` uploads a `.uri` file
