@@ -5,6 +5,22 @@ documented in this file.
 
 ## Unreleased
 
+## [0.10.0-rc.1] - 2026-11-23
+
+### Added
+
+- Windows malware protection recognizes SentinelOne, Bitdefender,
+  CrowdStrike, and Webroot in addition to Defender. A running
+  protection service is the reading, and a product that is present but
+  stopped fails instead of falling through, so a stopped agent no
+  longer passes while Defender sits in passive mode.
+
+### Changed
+
+- Windows hosts patched by NinjaOne no longer fail the automatic
+  updates check. A running NinjaRMMAgent counts as updates on, since
+  NinjaOne turns Windows Update off and patches the machine itself.
+
 ## [0.9.1] - 2026-11-20
 
 ### Fixed
