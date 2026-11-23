@@ -20,6 +20,7 @@
 
 import { CaretDownIcon, PlusIcon } from "@phosphor-icons/react";
 import type { Editor } from "@tiptap/react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "../../v2/Button/Button";
@@ -27,7 +28,13 @@ import { Dropdown } from "../../v2/Dropdown/Dropdown";
 import { DropdownItem } from "../../v2/Dropdown/DropdownItem";
 import { DropdownPopup } from "../../v2/Dropdown/DropdownPopup";
 import { DropdownTrigger } from "../../v2/Dropdown/DropdownTrigger";
-import { insertItems, isPickerItem, runBlockItem } from "../BlockMenu/blockItems";
+import {
+  type InsertItem,
+  insertItems,
+  insertMermaidFromToolbar,
+  isPickerItem,
+  runBlockItem,
+} from "../BlockMenu/blockItems";
 
 import { refocusEditor } from "./refocusEditor";
 import { richEditorToolbar } from "./variants";
@@ -43,6 +50,29 @@ export function RichEditorToolbarInsert({ editor, disabled, onPickFiles }: RichE
   const { t } = useTranslation();
   const items = onPickFiles ? insertItems : insertItems.filter(item => !isPickerItem(item));
   const { triggerLabel, triggerCaret } = richEditorToolbar();
+  // Until the text is clicked, the selection sits at the start of the
+  // document. Inserting there would change the first block.
+  const [hadCaret, setHadCaret] = useState(editor.isFocused);
+
+  useEffect(() => {
+    if (hadCaret) return;
+    const onFocus = () => setHadCaret(true);
+    editor.on("focus", onFocus);
+    return () => {
+      editor.off("focus", onFocus);
+    };
+  }, [editor, hadCaret]);
+
+  function insert(item: InsertItem) {
+    if (!hadCaret && !editor.isDestroyed) {
+      editor.commands.focus("end");
+    }
+    if (item.id === "mermaid") {
+      insertMermaidFromToolbar(editor);
+    } else {
+      runBlockItem(editor, item, onPickFiles);
+    }
+  }
 
   return (
     <Dropdown>
@@ -72,7 +102,7 @@ export function RichEditorToolbarInsert({ editor, disabled, onPickFiles }: RichE
             key={item.id}
             color="neutral"
             iconStart={<item.icon weight="bold" />}
-            onClick={() => runBlockItem(editor, item, onPickFiles)}
+            onClick={() => insert(item)}
           >
             {t(`ui.richEditor.toolbar.inserts.${item.id}`)}
           </DropdownItem>

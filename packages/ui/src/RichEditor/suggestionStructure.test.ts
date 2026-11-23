@@ -45,6 +45,7 @@ import {
   suggestDeleteColumn,
   suggestDeleteRow,
   suggestDeleteTable,
+  suggestInsertCodeBlock,
   suggestInsertColumn,
   suggestInsertRow,
   suggestInsertTable,
@@ -205,6 +206,21 @@ describe("tracked tables", () => {
       expect(structuralSuggestionSplit(node)).toEqual({ id, kind: "insertion" });
       return true;
     });
+  });
+
+  it("inserts an empty diagram after the current block", () => {
+    const state = stateFor({ type: "doc", content: [paragraphJSON("Scope"), paragraphJSON("Next")] }, 2);
+    const next = state.apply(suggestInsertCodeBlock(state, id, "mermaid")!);
+
+    expect(next.doc.childCount).toBe(3);
+    expect(next.doc.child(0).textContent).toBe("Scope");
+    const diagram = next.doc.child(1);
+    expect(diagram.type.name).toBe("codeBlock");
+    expect(diagram.attrs.language).toBe("mermaid");
+    expect(diagram.textContent).toBe("");
+    expect(structuralSuggestionSplit(diagram)).toEqual({ id, kind: "insertion" });
+    expect(next.doc.child(2).textContent).toBe("Next");
+    expect(next.selection.$from.parent).toBe(diagram);
   });
 
   it("redlines a whole table", () => {

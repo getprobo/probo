@@ -222,6 +222,24 @@ export function suggestInsertTable(
   return tracked(tr);
 }
 
+// suggestInsertCodeBlock adds an empty code block after the current top-level
+// block, with the caret inside it.
+export function suggestInsertCodeBlock(
+  state: EditorState,
+  id: string,
+  language: string,
+): Transaction | null {
+  const codeType = state.schema.nodes.codeBlock;
+  if (!codeType) return null;
+  const block = codeType.create({ language, ...insertedAttrs(id) });
+
+  const { $from } = state.selection;
+  const position = $from.depth === 0 ? $from.pos : $from.after(1);
+  const tr = state.tr.insert(position, block);
+  tr.setSelection(TextSelection.near(tr.doc.resolve(position + 1)));
+  return tracked(tr);
+}
+
 export function suggestDeleteTable(
   state: EditorState,
   id: string,

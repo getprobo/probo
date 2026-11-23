@@ -49,7 +49,7 @@ import {
   wrapCommand,
 } from "../suggestionBlock";
 import { applySuggestingStructure } from "../SuggestionExtension";
-import { suggestInsertTable } from "../suggestionStructure";
+import { suggestInsertCodeBlock, suggestInsertTable } from "../suggestionStructure";
 
 type ChainCommands = ReturnType<Editor["chain"]>;
 
@@ -126,5 +126,35 @@ export function runBlockItem(
     }
   } catch {
     // Block may no longer be in the document
+  }
+}
+
+// The toolbar inserts a new diagram, unlike the block menus, which turn their
+// block into one. Only an empty line is turned into the diagram.
+export function insertMermaidFromToolbar(editor: Editor) {
+  const { $from } = editor.state.selection;
+  const block = $from.parent;
+  if (block.type.name === "paragraph" && block.content.size === 0) {
+    runBlockItem(editor, insertItems.find(item => item.id === "mermaid")!);
+    return;
+  }
+
+  try {
+    if (applySuggestingStructure(
+      editor,
+      (state, id) => suggestInsertCodeBlock(state, id, "mermaid"),
+      { fresh: true },
+    )) {
+      return;
+    }
+    const position = $from.depth === 0 ? $from.pos : $from.after(1);
+    editor
+      .chain()
+      .focus()
+      .insertContentAt(position, { type: "codeBlock", attrs: { language: "mermaid" } })
+      .setTextSelection(position + 1)
+      .run();
+  } catch {
+    // The selection may no longer be in the document
   }
 }
