@@ -25,10 +25,13 @@ import { Text } from "@probo/ui/src/v2/typography/Text";
 import type { Editor } from "@tiptap/core";
 import { type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, type PreloadedQuery, useFragment } from "react-relay";
+import { graphql, type PreloadedQuery, useFragment, useQueryLoader } from "react-relay";
 
 import type { DocumentEditor_document$key } from "#/__generated__/core/DocumentEditor_document.graphql";
 import type { DocumentReviewListQuery } from "#/__generated__/core/DocumentReviewListQuery.graphql";
+import type { DocumentVersionContentQuery } from "#/__generated__/core/DocumentVersionContentQuery.graphql";
+import type { DocumentVersionListQuery } from "#/__generated__/core/DocumentVersionListQuery.graphql";
+import type { DocumentViewContentQuery } from "#/__generated__/core/DocumentViewContentQuery.graphql";
 import { useUploadRichTextFile } from "#/pages/organizations/_lib/useUploadRichTextFile";
 
 import {
@@ -44,11 +47,15 @@ import { usePageScale } from "../../_lib/usePageScale";
 import { usePreventSuggestionTextDrop } from "../../_lib/usePreventSuggestionTextDrop";
 import { useSuggestionController } from "../../_lib/useSuggestionController";
 import { documentEditor } from "../../variants";
-import { DocumentModeSelect } from "../DocumentModeSelect";
 import { DocumentReviewList } from "../DocumentReviewList/DocumentReviewList";
+import { DocumentVersionContent } from "../DocumentVersionList/DocumentVersionContent";
+import { DocumentVersionList, documentVersionListQuery } from "../DocumentVersionList/DocumentVersionList";
 
 import { DocumentEditorPages } from "./DocumentEditorPages";
-import { DocumentPresenceAvatars } from "./DocumentPresenceAvatars";
+import { DocumentEditorToolbar } from "./DocumentEditorToolbar";
+import { DocumentViewContent, documentViewContentQuery } from "./DocumentViewContent";
+
+const viewRefetchDelayMs = 1_000;
 
 const documentEditorFragment = graphql`
   fragment DocumentEditor_document on Document {
@@ -60,6 +67,10 @@ const documentEditorFragment = graphql`
 interface DocumentEditorProps {
   documentKey: DocumentEditor_document$key;
   reviewQueryRef: PreloadedQuery<DocumentReviewListQuery> | null;
+  // Set while a previous version replaces the live document, in viewing only.
+  versionId: string | null;
+  versionQueryRef: PreloadedQuery<DocumentVersionContentQuery> | null;
+  onVersionChange: (versionId: string | null) => void;
   mode: DocumentMode;
   modes: readonly DocumentMode[];
   onModeChange: (mode: DocumentMode) => void;
@@ -68,6 +79,9 @@ interface DocumentEditorProps {
 export function DocumentEditor({
   documentKey,
   reviewQueryRef,
+  versionId,
+  versionQueryRef,
+  onVersionChange,
   mode,
   modes,
   onModeChange,
@@ -89,7 +103,48 @@ export function DocumentEditor({
   const [reviewElement, setReviewElement] = useState<HTMLDivElement | null>(null);
   const [switchContainer, setSwitchContainer] = useState<HTMLDivElement | null>(null);
   const [switchBox, setSwitchBox] = useState<{ left: number; width: number } | null>(null);
-  const pageSize = documentPageSize(document.orientation);
+  const [versionsOpen, setVersionsOpen] = useState(versionId != null);
+  const [versionListQueryRef, loadVersionList]
+    = useQueryLoader<DocumentVersionListQuery>(documentVersionListQuery);
+  const [versionOrientation, setVersionOrientation] = useState<string | null>(null);
+  const viewing = mode === "viewing";
+  const showingVersion = viewing && versionQueryRef != null;
+  const showVersions = versionsOpen;
+  const versionListLoaded = versionListQueryRef != null;
+  useEffect(() => {
+    if (showVersions && !versionListLoaded) {
+      loadVersionList({ documentId: document.id }, { fetchPolicy: "store-and-network" });
+    }
+  }, [document.id, loadVersionList, showVersions, versionListLoaded]);
+  const [viewQueryRef, loadView, disposeView]
+    = useQueryLoader<DocumentViewContentQuery>(documentViewContentQuery);
+  const viewingLive = viewing && !showingVersion;
+  // The server persists a change after peers receive it, so the refetch
+  // trails the last change instead of following each one.
+  useEffect(() => {
+    if (!viewingLive) {
+      disposeView();
+      return;
+    }
+    const load = () => loadView({ documentId: document.id }, { fetchPolicy: "store-and-network" });
+    load();
+    if (handle == null) {
+      return;
+    }
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const onChange = () => {
+      clearTimeout(timer);
+      timer = setTimeout(load, viewRefetchDelayMs);
+    };
+    handle.on("change", onChange);
+    return () => {
+      clearTimeout(timer);
+      handle.off("change", onChange);
+    };
+  }, [disposeView, document.id, handle, loadView, viewingLive]);
+  const pageSize = documentPageSize(
+    showingVersion && versionOrientation != null ? versionOrientation : document.orientation,
+  );
   const { ref: pagesRef, scale } = usePageScale(pageSize.width);
   // Caps the review history, which scrolls on its own within the frame.
   const { ref: viewportRef, height: viewportHeight } = useElementHeight();
@@ -100,12 +155,12 @@ export function DocumentEditor({
     }),
     [document.orientation],
   );
-  const collaborating = mode !== "viewing";
+  const collaborating = !viewing;
+  const showReview = collaborating && !showVersions;
   const {
-    toolbar, toolbarControls, toolbarEnd, toolbarMode,
     frame, viewport, content, pages, stack, paper, review,
     reviewSwitch, reviewSwitchTarget, scrollbar, thumb,
-  } = documentEditor({ review: collaborating, presence: collaborating });
+  } = documentEditor({ review: collaborating || showVersions });
 
   // The switch sits on the frame, so it follows the review column's box
   // instead of scrolling inside the faded viewport.
@@ -139,19 +194,31 @@ export function DocumentEditor({
     setEditorInstance(next);
   }, [setEditor]);
 
+  const onVersionMissing = useCallback(() => onVersionChange(null), [onVersionChange]);
+
+  const showLatest = useCallback(() => onVersionChange(null), [onVersionChange]);
+
+  // Past versions only show while viewing.
+  function selectVersion(next: string | null) {
+    if (next != null && !viewing) {
+      onModeChange("viewing");
+    }
+    onVersionChange(next);
+  }
+
   return (
     <>
-      <div className={toolbar()}>
-        <div ref={setToolbarEl} className={toolbarControls()} />
-        <div className={toolbarEnd()}>
-          {collaborating && handle != null && (
-            <DocumentPresenceAvatars collaborationHandle={handle} />
-          )}
-          <div className={toolbarMode()}>
-            <DocumentModeSelect mode={mode} modes={modes} onModeChange={onModeChange} />
-          </div>
-        </div>
-      </div>
+      <DocumentEditorToolbar
+        mode={mode}
+        modes={modes}
+        onModeChange={onModeChange}
+        collaborationHandle={handle}
+        onControlsElement={setToolbarEl}
+        versionsOpen={showVersions}
+        onVersionsOpenChange={setVersionsOpen}
+        versionQueryRef={viewing ? versionQueryRef : null}
+        onShowLatest={showLatest}
+      />
       <ScrollArea.Root ref={frameRef} className={frame()}>
         <ScrollArea.Viewport ref={viewportRef} className={viewport()}>
           <ScrollArea.Content
@@ -176,30 +243,43 @@ export function DocumentEditor({
                     minHeight: documentPagesHeight(pageSize, pageCount),
                   }}
                 >
-                  {failed
-                    ? <Text size={2} color="faint">{t("details.editor.openError")}</Text>
-                    : handle == null
-                      ? <Text size={2} color="faint">{t("details.editor.loading")}</Text>
-                      : (
-                          <CollaborativeRichEditor
-                            key={document.id}
-                            className="w-full"
-                            collaborationHandle={handle}
-                            content=""
-                            page={false}
-                            disabled={mode === "viewing"}
-                            suggesting={controller}
-                            commentAnchorController={commentAnchorController}
-                            pagination={pagination}
-                            toolbarContainer={toolbarEl}
-                            onEditor={onEditor}
-                            onUploadFile={onUploadFile}
-                          />
-                        )}
+                  {showingVersion
+                    ? (
+                        <DocumentVersionContent
+                          queryRef={versionQueryRef}
+                          documentId={document.id}
+                          onPages={setPageCount}
+                          onOrientation={setVersionOrientation}
+                          onMissing={onVersionMissing}
+                        />
+                      )
+                    : viewing
+                      ? viewQueryRef != null && (
+                        <DocumentViewContent queryRef={viewQueryRef} onPages={setPageCount} />
+                      )
+                      : failed
+                        ? <Text size={2} color="faint">{t("details.editor.openError")}</Text>
+                        : handle == null
+                          ? <Text size={2} color="faint">{t("details.editor.loading")}</Text>
+                          : (
+                              <CollaborativeRichEditor
+                                key={document.id}
+                                className="w-full"
+                                collaborationHandle={handle}
+                                content=""
+                                page={false}
+                                suggesting={controller}
+                                commentAnchorController={commentAnchorController}
+                                pagination={pagination}
+                                toolbarContainer={toolbarEl}
+                                onEditor={onEditor}
+                                onUploadFile={onUploadFile}
+                              />
+                            )}
                 </div>
               </div>
             </div>
-            {collaborating && (
+            {showReview && (
               <div ref={setReviewElement} className={review()}>
                 {handle != null && (
                   <DocumentReviewList
@@ -213,9 +293,18 @@ export function DocumentEditor({
                 )}
               </div>
             )}
+            {showVersions && (
+              <div className={review()}>
+                <DocumentVersionList
+                  queryRef={versionListQueryRef}
+                  activeVersionId={viewing ? versionId : null}
+                  onSelect={selectVersion}
+                />
+              </div>
+            )}
           </ScrollArea.Content>
         </ScrollArea.Viewport>
-        {collaborating && switchBox != null && switchBox.width > 0 && (
+        {showReview && switchBox != null && switchBox.width > 0 && (
           <div
             className={reviewSwitch()}
             style={{ left: switchBox.left, width: switchBox.width }}

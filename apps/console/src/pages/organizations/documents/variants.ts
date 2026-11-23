@@ -78,10 +78,13 @@ export const documentEditor = tv({
     // the controls slot.
     toolbar: "flex min-h-10 w-full shrink-0 items-center gap-1 rounded-1 border border-sand-6 bg-sand-1 p-1",
     toolbarControls: "flex min-w-0 flex-1",
+    // Viewing has no controls, so the label takes their room and centers.
+    toolbarLabel: "flex min-w-0 flex-1 items-center justify-center gap-2 px-2",
     toolbarEnd: "flex shrink-0 items-center gap-2",
     // The select trigger is full width by default, so its own box sizes it to
     // its content instead of the whole end group.
     toolbarMode: "shrink-0",
+    toolbarSeparator: "my-1",
     // The frame only scrolls. The pages and the review column sit side by
     // side inside it so the cards move with the text.
     frame: "@container relative min-h-80 overflow-hidden lg:min-h-0 lg:flex-1",
@@ -140,20 +143,9 @@ export const documentEditor = tv({
         content: "justify-center",
       },
     },
-    // Collaborators' carets and selections only show while editing or
-    // suggesting. Hiding them in CSS keeps the editor from being rebuilt, and
-    // the rules are important because rich-editor.css sits outside the
-    // cascade layers.
-    presence: {
-      true: {},
-      false: {
-        paper: "[&_.presence-cursor]:hidden! [&_.presence-selection]:bg-transparent!",
-      },
-    },
   },
   defaultVariants: {
     review: true,
-    presence: true,
   },
 });
 
@@ -293,6 +285,46 @@ export const documentReviewPanel = tv({
   },
   defaultVariants: {
     view: "open",
+  },
+});
+
+// The versions take the review column while viewing. Like the comment
+// history, they stay in view wherever the document is scrolled and scroll on
+// their own within the frame's height, with no scrollbar beside the
+// document's.
+export const documentVersionList = tv({
+  slots: {
+    root: "sticky top-0 flex h-(--review-viewport-height,100vh) flex-col",
+    heading: "shrink-0 pb-2",
+    body: "relative min-h-0 flex-1 overflow-hidden",
+    viewport: [
+      "h-full overscroll-y-contain outline-none",
+      "mask-no-repeat",
+      "mask-[linear-gradient(to_bottom,transparent,black_min(16px,var(--scroll-area-overflow-y-start)),black_calc(100%-min(16px,var(--scroll-area-overflow-y-end,16px))),transparent)]",
+    ],
+    content: "flex flex-col gap-1 pb-6",
+    more: "self-start",
+  },
+});
+
+export const documentVersionListItem = tv({
+  slots: {
+    root: [
+      "flex w-full cursor-pointer flex-col items-start gap-1 rounded-2 px-3 py-2 text-left",
+      "outline-none transition-colors hover:bg-sand-3",
+      "focus-visible:ring-2 focus-visible:ring-sand-8",
+    ],
+    header: "flex w-full min-w-0 items-center gap-2",
+    changelog: "line-clamp-2",
+  },
+  variants: {
+    active: {
+      true: { root: "bg-sand-4 hover:bg-sand-4" },
+      false: {},
+    },
+  },
+  defaultVariants: {
+    active: false,
   },
 });
 

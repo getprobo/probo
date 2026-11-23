@@ -28,8 +28,10 @@ import { graphql, type PreloadedQuery, useFragment } from "react-relay";
 
 import type { DocumentDetails_document$key } from "#/__generated__/core/DocumentDetails_document.graphql";
 import type { DocumentReviewListQuery } from "#/__generated__/core/DocumentReviewListQuery.graphql";
+import type { DocumentVersionContentQuery } from "#/__generated__/core/DocumentVersionContentQuery.graphql";
 
-import { useDocumentModes } from "../_lib/useDocumentModes";
+import { type DocumentMode, useDocumentModes } from "../_lib/useDocumentModes";
+import { useDocumentVersionParam } from "../_lib/useDocumentVersionParam";
 import { documentDetailsPage } from "../variants";
 
 import { DocumentApprovalsSection } from "./DocumentApprovalsSection";
@@ -56,6 +58,7 @@ const documentDetailsFragment = graphql`
 interface DocumentDetailsProps {
   documentKey: DocumentDetails_document$key;
   reviewQueryRef: PreloadedQuery<DocumentReviewListQuery> | null;
+  versionQueryRef: PreloadedQuery<DocumentVersionContentQuery> | null;
   organizationId: string;
   search: string;
 }
@@ -63,12 +66,22 @@ interface DocumentDetailsProps {
 export function DocumentDetails({
   documentKey,
   reviewQueryRef,
+  versionQueryRef,
   organizationId,
   search,
 }: DocumentDetailsProps) {
   const document = useFragment(documentDetailsFragment, documentKey);
   const { t } = useTranslation("organizations/documents");
   const { mode, selectMode, modes } = useDocumentModes(document);
+  const { versionId, selectVersion } = useDocumentVersionParam();
+
+  // Edits always apply to the live document.
+  function changeMode(next: DocumentMode) {
+    if (next !== "viewing" && versionId != null) {
+      selectVersion(null);
+    }
+    selectMode(next);
+  }
   const [cardsOpen, setCardsOpen] = useState(true);
   const {
     root, main, backRow, backActions, title, sideFrame, sideClip, side, viewport, cards, scrollbar, thumb,
@@ -110,9 +123,12 @@ export function DocumentDetails({
         <DocumentEditor
           documentKey={document}
           reviewQueryRef={reviewQueryRef}
+          versionId={versionId}
+          versionQueryRef={versionQueryRef}
+          onVersionChange={selectVersion}
           mode={mode}
           modes={modes}
-          onModeChange={selectMode}
+          onModeChange={changeMode}
         />
       </div>
       <div className={sideFrame()} inert={cardsOpen ? undefined : true}>

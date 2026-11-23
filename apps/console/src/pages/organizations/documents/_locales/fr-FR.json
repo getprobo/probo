@@ -136,6 +136,22 @@
       "suggestionFailed": "Impossible de démarrer la suggestion",
       "suggestionUntracked": "Cette modification n'a pas pu être suivie comme suggestion"
     },
+    "versions": {
+      "trigger": "Versions",
+      "title": "Versions",
+      "current": "Version actuelle",
+      "version": "Version <number>{{version}}</number>",
+      "viewingCurrent": "Version actuelle affichée",
+      "viewingVersion": "Version <number>{{version}}</number> du {{date}} affichée",
+      "showLatest": "Voir la dernière",
+      "loadMore": "Charger plus",
+      "openError": "Impossible d'ouvrir cette version",
+      "status": {
+        "pendingApproval": "En attente d'approbation",
+        "rejected": "Rejetée",
+        "voided": "Annulée"
+      }
+    },
     "review": {
       "openComment": "Afficher le commentaire de {{name}}",
       "openSuggestion": "Afficher la suggestion de {{name}}",

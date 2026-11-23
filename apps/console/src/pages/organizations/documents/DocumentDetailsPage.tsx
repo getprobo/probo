@@ -25,10 +25,12 @@ import { useLocation } from "react-router";
 
 import type { DocumentDetailsPageQuery } from "#/__generated__/core/DocumentDetailsPageQuery.graphql";
 import type { DocumentReviewListQuery } from "#/__generated__/core/DocumentReviewListQuery.graphql";
+import type { DocumentVersionContentQuery } from "#/__generated__/core/DocumentVersionContentQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { NotFoundError } from "#/lib/relay/errors";
 
 import { DocumentDetails } from "./_components/DocumentDetails";
+import { documentListSearch } from "./_lib/useDocumentVersionParam";
 
 export const documentDetailsPageQuery = graphql`
   query DocumentDetailsPageQuery($documentId: ID!) {
@@ -48,9 +50,10 @@ export const documentDetailsPageQuery = graphql`
 interface DocumentDetailsPageProps {
   queryRef: PreloadedQuery<DocumentDetailsPageQuery>;
   reviewQueryRef: PreloadedQuery<DocumentReviewListQuery> | null;
+  versionQueryRef: PreloadedQuery<DocumentVersionContentQuery> | null;
 }
 
-export function DocumentDetailsPage({ queryRef, reviewQueryRef }: DocumentDetailsPageProps) {
+export function DocumentDetailsPage({ queryRef, reviewQueryRef, versionQueryRef }: DocumentDetailsPageProps) {
   const data = usePreloadedQuery<DocumentDetailsPageQuery>(
     documentDetailsPageQuery,
     queryRef,
@@ -69,8 +72,9 @@ export function DocumentDetailsPage({ queryRef, reviewQueryRef }: DocumentDetail
     <DocumentDetails
       documentKey={document}
       reviewQueryRef={reviewQueryRef}
+      versionQueryRef={versionQueryRef}
       organizationId={organizationId}
-      search={location.search}
+      search={documentListSearch(location.search)}
     />
   );
 }

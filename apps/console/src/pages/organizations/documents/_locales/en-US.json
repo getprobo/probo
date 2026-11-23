@@ -136,6 +136,22 @@
       "suggestionFailed": "Could not start the suggestion",
       "suggestionUntracked": "That change could not be tracked as a suggestion"
     },
+    "versions": {
+      "trigger": "Versions",
+      "title": "Versions",
+      "current": "Current version",
+      "version": "Version <number>{{version}}</number>",
+      "viewingCurrent": "Viewing current version",
+      "viewingVersion": "Viewing version <number>{{version}}</number> from {{date}}",
+      "showLatest": "Show latest",
+      "loadMore": "Load more",
+      "openError": "Could not open this version",
+      "status": {
+        "pendingApproval": "Pending approval",
+        "rejected": "Rejected",
+        "voided": "Voided"
+      }
+    },
     "review": {
       "openComment": "Show comment by {{name}}",
       "openSuggestion": "Show suggestion by {{name}}",

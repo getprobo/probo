@@ -136,6 +136,22 @@
       "suggestionFailed": "Suggestie starten mislukt",
       "suggestionUntracked": "Deze wijziging kon niet als suggestie worden bijgehouden"
     },
+    "versions": {
+      "trigger": "Versies",
+      "title": "Versies",
+      "current": "Huidige versie",
+      "version": "Versie <number>{{version}}</number>",
+      "viewingCurrent": "Huidige versie wordt bekeken",
+      "viewingVersion": "Versie <number>{{version}}</number> van {{date}} wordt bekeken",
+      "showLatest": "Nieuwste tonen",
+      "loadMore": "Meer laden",
+      "openError": "Deze versie openen mislukt",
+      "status": {
+        "pendingApproval": "In afwachting van goedkeuring",
+        "rejected": "Afgewezen",
+        "voided": "Ingetrokken"
+      }
+    },
     "review": {
       "openComment": "Opmerking van {{name}} tonen",
       "openSuggestion": "Suggestie van {{name}} tonen",
