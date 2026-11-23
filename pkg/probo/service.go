@@ -74,50 +74,49 @@ type (
 	}
 
 	Service struct {
-		pg                                    *pg.Client
-		s3                                    *s3.Client
-		bucket                                string
-		encryptionKey                         cipher.EncryptionKey
-		baseURL                               string
-		llmClient                             *llm.Client
-		llmConfig                             LLMConfig
-		html2pdfConverter                     *html2pdf.Converter
-		fileManager                           *filemanager.Service
-		logger                                *log.Logger
-		esign                                 *esign.Service
-		connectorRegistry                     *connectorprotocol.Registry
-		Collaboration                         *collaboration.Service
-		Frameworks                            *FrameworkService
-		InternalControls                      *InternalControlService
-		Evidences                             *EvidenceService
-		Organizations                         *OrganizationService
-		ThirdParties                          *ThirdPartyService
-		Documents                             *DocumentService
-		DocumentApprovals                     *DocumentApprovalService
-		Controls                              *ControlService
-		Risks                                 *RiskService
-		ThirdPartyComplianceReports           *ThirdPartyComplianceReportService
-		ThirdPartyBusinessAssociateAgreements *ThirdPartyBusinessAssociateAgreementService
-		ThirdPartyContacts                    *ThirdPartyContactService
-		ThirdPartyDataPrivacyAgreements       *ThirdPartyDataPrivacyAgreementService
-		ThirdPartyServices                    *ThirdPartyServiceService
-		Connectors                            *connector.Service
-		Assets                                *AssetService
-		Data                                  *DatumService
-		Audits                                *AuditService
-		WebhookSubscriptions                  *WebhookSubscriptionService
-		Findings                              *FindingService
-		Obligations                           *ObligationService
-		BusinessFunctions                     *BusinessFunctionService
-		AiSystems                             *AiSystemService
-		RightsRequests                        *RightsRequestService
-		ProcessingActivities                  *ProcessingActivityService
-		DataProtectionImpactAssessments       *DataProtectionImpactAssessmentService
-		TransferImpactAssessments             *TransferImpactAssessmentService
-		StatementsOfApplicability             *StatementOfApplicabilityService
-		GeneratedDocuments                    *GeneratedDocumentService
-		Files                                 *FileService
-		LogExports                            ExportService
+		pg                              *pg.Client
+		s3                              *s3.Client
+		bucket                          string
+		encryptionKey                   cipher.EncryptionKey
+		baseURL                         string
+		llmClient                       *llm.Client
+		llmConfig                       LLMConfig
+		html2pdfConverter               *html2pdf.Converter
+		fileManager                     *filemanager.Service
+		logger                          *log.Logger
+		esign                           *esign.Service
+		connectorRegistry               *connectorprotocol.Registry
+		Collaboration                   *collaboration.Service
+		Frameworks                      *FrameworkService
+		InternalControls                *InternalControlService
+		Evidences                       *EvidenceService
+		Organizations                   *OrganizationService
+		ThirdParties                    *ThirdPartyService
+		Documents                       *DocumentService
+		DocumentApprovals               *DocumentApprovalService
+		Controls                        *ControlService
+		Risks                           *RiskService
+		ThirdPartyComplianceReports     *ThirdPartyComplianceReportService
+		ThirdPartyAgreements            *ThirdPartyAgreementService
+		ThirdPartyContacts              *ThirdPartyContactService
+		ThirdPartyServices              *ThirdPartyServiceService
+		Connectors                      *connector.Service
+		Assets                          *AssetService
+		Data                            *DatumService
+		Audits                          *AuditService
+		WebhookSubscriptions            *WebhookSubscriptionService
+		Findings                        *FindingService
+		Obligations                     *ObligationService
+		BusinessFunctions               *BusinessFunctionService
+		AiSystems                       *AiSystemService
+		RightsRequests                  *RightsRequestService
+		ProcessingActivities            *ProcessingActivityService
+		DataProtectionImpactAssessments *DataProtectionImpactAssessmentService
+		TransferImpactAssessments       *TransferImpactAssessmentService
+		StatementsOfApplicability       *StatementOfApplicabilityService
+		GeneratedDocuments              *GeneratedDocumentService
+		Files                           *FileService
+		LogExports                      ExportService
 	}
 )
 
@@ -205,9 +204,14 @@ func NewService(
 			filevalidation.WithMaxFileSize(30*1024*1024), // 30MB
 		),
 	}
-	svc.ThirdPartyBusinessAssociateAgreements = &ThirdPartyBusinessAssociateAgreementService{svc: svc}
+	svc.ThirdPartyAgreements = &ThirdPartyAgreementService{
+		svc: svc,
+		fileValidator: filevalidation.NewValidator(
+			filevalidation.WithMimeTypes("application/pdf"),
+			filevalidation.WithMaxFileSize(ThirdPartyAgreementMaxFileSize),
+		),
+	}
 	svc.ThirdPartyContacts = &ThirdPartyContactService{svc: svc}
-	svc.ThirdPartyDataPrivacyAgreements = &ThirdPartyDataPrivacyAgreementService{svc: svc}
 	svc.ThirdPartyServices = &ThirdPartyServiceService{svc: svc}
 	svc.Connectors = connectorsService
 	svc.Assets = &AssetService{svc: svc}

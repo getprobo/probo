@@ -71,6 +71,35 @@ components:
           $ref: "#/components/schemas/OrderDirection"
           description: ThirdParty service order direction
 
+    ThirdPartyAgreementType:
+      type: string
+      enum:
+        - BUSINESS_ASSOCIATE
+        - DATA_PRIVACY
+        - MASTER_SERVICE
+        - OTHER
+        - TERMS
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ThirdPartyAgreementType
+
+    ThirdPartyAgreementOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ThirdPartyAgreementOrderField
+
+    ThirdPartyAgreementOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/ThirdPartyAgreementOrderField"
+          description: Third party agreement order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Third party agreement order direction
+
     ThirdPartyRiskAssessmentOrderField:
       type: string
       enum:
@@ -1573,6 +1602,172 @@ components:
         deleted_third_party_service_id:
           $ref: "#/components/schemas/GID"
           description: Deleted thirdParty service ID
+
+    ThirdPartyAgreement:
+      type: object
+      required:
+        - id
+        - third_party_id
+        - title
+        - type
+        - file_id
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Third party agreement ID
+        third_party_id:
+          $ref: "#/components/schemas/GID"
+          description: Third party ID
+        title:
+          type: string
+          description: Agreement title
+        type:
+          $ref: "#/components/schemas/ThirdPartyAgreementType"
+          description: Kind of agreement
+        validity:
+          $ref: "#/components/schemas/Period"
+          description: Optional validity period
+        file_id:
+          $ref: "#/components/schemas/GID"
+          description: Attached file ID. New uploads are PDF files.
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    UploadThirdPartyAgreementInput:
+      type: object
+      required:
+        - third_party_id
+        - title
+        - type
+        - file_name
+        - content_base64
+      properties:
+        third_party_id:
+          $ref: "#/components/schemas/GID"
+          description: Third party ID
+        title:
+          type: string
+          description: Agreement title, for example the agreement type or the contract name
+        type:
+          $ref: "#/components/schemas/ThirdPartyAgreementType"
+          description: Kind of agreement
+        validity:
+          $ref: "#/components/schemas/Period"
+          description: Optional validity period
+        file_name:
+          type: string
+          description: PDF file name, ending in .pdf
+        content_base64:
+          type: string
+          description: PDF bytes encoded as base64, up to 30MB
+
+    UploadThirdPartyAgreementOutput:
+      type: object
+      required:
+        - third_party_agreement
+      properties:
+        third_party_agreement:
+          $ref: "#/components/schemas/ThirdPartyAgreement"
+
+    ListThirdPartyAgreementsInput:
+      type: object
+      required:
+        - third_party_id
+      properties:
+        third_party_id:
+          $ref: "#/components/schemas/GID"
+          description: Third party ID
+        order_by:
+          $ref: "#/components/schemas/ThirdPartyAgreementOrderBy"
+          description: Agreement order
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListThirdPartyAgreementsOutput:
+      type: object
+      required:
+        - third_party_agreements
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        third_party_agreements:
+          type: array
+          items:
+            $ref: "#/components/schemas/ThirdPartyAgreement"
+
+    GetThirdPartyAgreementInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Third party agreement ID
+
+    GetThirdPartyAgreementOutput:
+      type: object
+      required:
+        - third_party_agreement
+      properties:
+        third_party_agreement:
+          $ref: "#/components/schemas/ThirdPartyAgreement"
+
+    UpdateThirdPartyAgreementInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Third party agreement ID
+        title:
+          type: string
+          description: Agreement title. Omit to leave it unchanged.
+        type:
+          $ref: "#/components/schemas/ThirdPartyAgreementType"
+          description: Kind of agreement. Omit to leave it unchanged.
+        validity:
+          $ref: "#/components/schemas/Period"
+          description: Validity period. Omit to leave the current dates unchanged. A null start or end clears that date.
+
+    UpdateThirdPartyAgreementOutput:
+      type: object
+      required:
+        - third_party_agreement
+      properties:
+        third_party_agreement:
+          $ref: "#/components/schemas/ThirdPartyAgreement"
+
+    DeleteThirdPartyAgreementInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Third party agreement ID
+
+    DeleteThirdPartyAgreementOutput:
+      type: object
+      required:
+        - deleted_third_party_agreement_id
+      properties:
+        deleted_third_party_agreement_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted third party agreement ID
 
     VetThirdPartyInput:
       type: object
@@ -20192,6 +20387,66 @@ tools:
       $ref: "#/components/schemas/DeleteThirdPartyServiceInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteThirdPartyServiceOutput"
+  - name: uploadThirdPartyAgreement
+    title: Upload Third Party Agreement
+    description: Attach an agreement to a third party by uploading a PDF file. Send the file bytes as base64 in content_base64. Only PDF files up to 30MB are accepted.
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/UploadThirdPartyAgreementInput"
+    outputSchema:
+      $ref: "#/components/schemas/UploadThirdPartyAgreementOutput"
+  - name: listThirdPartyAgreements
+    title: List Third Party Agreements
+    description: List agreements attached to a third party. New uploads are PDF files.
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListThirdPartyAgreementsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListThirdPartyAgreementsOutput"
+  - name: getThirdPartyAgreement
+    title: Get Third Party Agreement
+    description: Get one third party agreement
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/GetThirdPartyAgreementInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetThirdPartyAgreementOutput"
+  - name: updateThirdPartyAgreement
+    title: Update Third Party Agreement
+    description: Update the type or validity dates of a third party agreement. The attached file is not replaced here.
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateThirdPartyAgreementInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateThirdPartyAgreementOutput"
+  - name: deleteThirdPartyAgreement
+    title: Delete Third Party Agreement
+    description: Delete a third party agreement
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/DeleteThirdPartyAgreementInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteThirdPartyAgreementOutput"
   - name: vetThirdParty
     title: Vet Third Party
     description: Start AI-powered vetting of a third party by crawling its website. Returns immediately; vetting runs in the background.

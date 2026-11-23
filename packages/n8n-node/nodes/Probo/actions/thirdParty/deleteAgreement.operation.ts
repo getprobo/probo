@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,21 +18,44 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package types
+import type { IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
+import { proboApiRequest } from '../../GenericFunctions';
 
-import (
-	"go.probo.inc/probo/pkg/coredata"
-)
-
-func NewThirdPartyDataPrivacyAgreement(v *coredata.ThirdPartyDataPrivacyAgreement) *ThirdPartyDataPrivacyAgreement {
-	return &ThirdPartyDataPrivacyAgreement{
-		ID: v.ID,
-		ThirdParty: &ThirdParty{
-			ID: v.ThirdPartyID,
+export const description: INodeProperties[] = [
+	{
+		displayName: 'Agreement ID',
+		name: 'agreementId',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['thirdParty'],
+				operation: ['deleteAgreement'],
+			},
 		},
-		Validity:  NewPeriod(v.ValidFrom, v.ValidUntil),
-		File:      &File{ID: v.FileID},
-		CreatedAt: v.CreatedAt,
-		UpdatedAt: v.UpdatedAt,
-	}
+		default: '',
+		required: true,
+		description: 'The ID of the third party agreement to delete',
+	},
+];
+
+export async function execute(
+	this: IExecuteFunctions,
+	itemIndex: number,
+): Promise<INodeExecutionData> {
+	const agreementId = this.getNodeParameter('agreementId', itemIndex) as string;
+
+	const query = `
+		mutation DeleteThirdPartyAgreement($input: DeleteThirdPartyAgreementInput!) {
+			deleteThirdPartyAgreement(input: $input) {
+				deletedThirdPartyAgreementId
+			}
+		}
+	`;
+
+	const responseData = await proboApiRequest.call(this, query, { input: { agreementId } });
+
+	return {
+		json: responseData,
+		pairedItem: { item: itemIndex },
+	};
 }

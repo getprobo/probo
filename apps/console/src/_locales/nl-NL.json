@@ -5507,99 +5507,53 @@
       "create": "Aanmaken van derde partij mislukt"
     }
   },
-  "deleteBusinessAssociateAgreementDialog": {
-    "title": "Business Associate Agreement verwijderen",
-    "confirmation": "Weet u zeker dat u de Business Associate Agreement \"{{fileName}}\" wilt verwijderen?",
-    "cannotUndo": "Deze actie kan niet ongedaan worden gemaakt.",
-    "messages": {
-      "success": "Succes",
-      "error": "Fout",
-      "deleted": "Business Associate Agreement succesvol verwijderd"
-    },
-    "errors": {
-      "delete": "Verwijderen van Business Associate Agreement mislukt"
-    },
-    "actions": {
-      "delete": "Verwijderen"
-    }
-  },
-  "deleteDataPrivacyAgreementDialog": {
-    "title": "Data Privacy Agreement verwijderen",
-    "confirmation": "Weet u zeker dat u de Data Privacy Agreement \"{{fileName}}\" wilt verwijderen?",
-    "cannotUndo": "Deze actie kan niet ongedaan worden gemaakt.",
-    "messages": {
-      "success": "Succes",
-      "error": "Fout",
-      "deleted": "Data Privacy Agreement succesvol verwijderd"
-    },
-    "errors": {
-      "delete": "Verwijderen van Data Privacy Agreement mislukt"
-    },
-    "actions": {
-      "delete": "Verwijderen"
-    }
-  },
-  "editBusinessAssociateAgreementDialog": {
-    "title": "Business Associate Agreement bewerken",
+  "editThirdPartyAgreementDialog": {
+    "title": "Overeenkomst bewerken",
     "fields": {
+      "title": "Titel",
+      "type": "Type",
       "validFrom": "Geldig vanaf",
       "validUntil": "Geldig tot"
-    },
-    "messages": {
-      "success": "Succes",
-      "error": "Fout",
-      "updated": "Business Associate Agreement succesvol bijgewerkt"
-    },
-    "errors": {
-      "update": "Bijwerken van Business Associate Agreement mislukt"
-    },
-    "actions": {
-      "update": "Bijwerken"
-    }
-  },
-  "editDataPrivacyAgreementDialog": {
-    "title": "Data Privacy Agreement bewerken",
-    "fields": {
-      "validFrom": "Geldig vanaf",
-      "validUntil": "Geldig tot"
-    },
-    "messages": {
-      "success": "Succes",
-      "error": "Fout",
-      "updated": "Data Privacy Agreement succesvol bijgewerkt"
-    },
-    "errors": {
-      "update": "Bijwerken van Data Privacy Agreement mislukt"
-    },
-    "actions": {
-      "update": "Bijwerken"
-    }
-  },
-  "uploadBusinessAssociateAgreementDialog": {
-    "title": "Business Associate Agreement uploaden",
-    "fileHelp": "Alleen PDF-bestanden tot 10 MB zijn toegestaan",
-    "selectedFile": "Geselecteerd bestand:",
-    "fields": {
-      "fileName": "Bestandsnaam",
-      "validFrom": "Geldig vanaf",
-      "validUntil": "Geldig tot"
-    },
-    "placeholders": {
-      "fileName": "Business Associate Agreement"
     },
     "validation": {
-      "fileNameRequired": "Bestandsnaam is verplicht"
+      "titleRequired": "Titel is verplicht"
     },
     "messages": {
       "success": "Succes",
       "error": "Fout",
-      "uploaded": "Business Associate Agreement succesvol geüpload"
+      "updated": "Overeenkomst bijgewerkt"
     },
     "errors": {
-      "upload": "Uploaden van Business Associate Agreement mislukt"
+      "update": "Bijwerken van overeenkomst mislukt"
     },
     "actions": {
-      "upload": "Uploaden"
+      "update": "Bijwerken"
+    }
+  },
+  "uploadThirdPartyAgreementDialog": {
+    "title": "Overeenkomst toevoegen",
+    "fileHelp": "PDF-bestanden tot 30 MB",
+    "selectedFile": "Geselecteerd bestand:",
+    "fields": {
+      "title": "Titel",
+      "type": "Type",
+      "validFrom": "Geldig vanaf",
+      "validUntil": "Geldig tot"
+    },
+    "validation": {
+      "titleRequired": "Titel is verplicht"
+    },
+    "messages": {
+      "success": "Succes",
+      "error": "Fout",
+      "uploaded": "Overeenkomst toegevoegd"
+    },
+    "errors": {
+      "upload": "Toevoegen van overeenkomst mislukt"
+    },
+    "actions": {
+      "upload": "Toevoegen",
+      "preview": "Voorbeeld"
     }
   },
   "uploadComplianceReportDialog": {
@@ -5625,31 +5579,27 @@
       "upload": "Uploaden"
     }
   },
-  "uploadDataPrivacyAgreementDialog": {
-    "title": "Data Privacy Agreement uploaden",
-    "fileHelp": "Alleen PDF-bestanden tot 10 MB zijn toegestaan",
-    "selectedFile": "Geselecteerd bestand:",
-    "fields": {
-      "fileName": "Bestandsnaam",
-      "validFrom": "Geldig vanaf",
-      "validUntil": "Geldig tot"
+  "thirdPartyAgreementListItem": {
+    "messages": { "error": "Fout" },
+    "errors": { "delete": "Verwijderen van overeenkomst mislukt" },
+    "deleteConfirmation": "Hiermee wordt \"{{title}}\" ({{fileName}}) permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
+    "actions": { "preview": "Voorbeeld", "download": "Downloaden" }
+  },
+  "thirdPartyAgreementPreviewDialog": {
+    "previewUnavailable": "Voorbeeld niet beschikbaar voor dit bestand: {{mimeType}}",
+    "actions": { "download": "Bestand downloaden" },
+    "csv": {
+      "column": "Kolom",
+      "empty": "Dit CSV-bestand is leeg.",
+      "error": "CSV-voorbeeld laden mislukt.",
+      "retry": "Opnieuw",
+      "truncated": "De eerste 100 rijen worden getoond."
     },
-    "placeholders": {
-      "fileName": "Data Privacy Agreement"
-    },
-    "validation": {
-      "fileNameRequired": "Bestandsnaam is verplicht"
-    },
-    "messages": {
-      "success": "Succes",
-      "error": "Fout",
-      "uploaded": "Data Privacy Agreement succesvol geüpload"
-    },
-    "errors": {
-      "upload": "Uploaden van Data Privacy Agreement mislukt"
-    },
-    "actions": {
-      "upload": "Uploaden"
+    "text": {
+      "empty": "Dit tekstbestand is leeg.",
+      "error": "Tekstvoorbeeld laden mislukt.",
+      "retry": "Opnieuw",
+      "truncated": "De eerste 512 KB worden getoond."
     }
   },
   "vettingDialog": {
@@ -5761,19 +5711,23 @@
   "thirdPartyAgreementsPage": {
     "pageTitle": "{{name}} - Overeenkomsten",
     "title": "Overeenkomsten",
-    "description": "Ondertekende gegevensverwerkingsovereenkomsten met deze derde partij.",
-    "agreements": {
-      "businessAssociate": "Business Associate Agreement",
-      "dataPrivacy": "Data Privacy Agreement",
-      "noBusinessAssociate": "Geen Business Associate Agreement beschikbaar",
-      "noDataPrivacy": "Geen Data Privacy Agreement beschikbaar",
-      "validity": {
-        "range": "Geldig vanaf {{from}} tot {{until}}",
-        "from": "Geldig vanaf {{date}}",
-        "until": "Geldig tot {{date}}"
-      }
+    "description": "Contracten met deze derde partij, zoals voorwaarden, een MSA, wijzigingen en bijlagen.",
+    "empty": "Nog geen overeenkomsten.",
+    "types": {
+      "AMENDMENT": "Wijziging",
+      "ANNEX": "Bijlage",
+      "BUSINESS_ASSOCIATE": "Business associate agreement",
+      "DATA_PRIVACY": "Privacyovereenkomst",
+      "MASTER_SERVICE": "Master service agreement",
+      "OTHER": "Overig",
+      "TERMS": "Voorwaarden (CGV/CGU)"
     },
-    "actions": { "downloadPdf": "PDF downloaden", "upload": "Uploaden" }
+    "validity": {
+      "range": "Geldig vanaf {{from}} tot {{until}}",
+      "from": "Geldig vanaf {{date}}",
+      "until": "Geldig tot {{date}}"
+    },
+    "actions": { "add": "Overeenkomst toevoegen", "showMore": "Meer tonen" }
   },
   "thirdPartyComplianceReportRow": {
     "messages": {

@@ -45,7 +45,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
 const btnClass
   = "size-8 grid place-items-center hover:bg-secondary-hover cursor-pointer rounded-sm disabled:opacity-30 transition-all";
 
-export function PDFPreview({ src, name }: { src: string; name?: string }) {
+export function PDFPreview({ src, file, name }: { src: string; file?: Blob; name?: string }) {
   const [numPages, setNumPages] = useState(0);
   const [scale, setScale] = useState(1.0);
   const [currentPage, setCurrentPage] = useState(1);
@@ -153,7 +153,7 @@ export function PDFPreview({ src, name }: { src: string; name?: string }) {
         ref={wrapperRef}
       >
         <Document
-          file={src}
+          file={file ?? src}
           key={src + "document"}
           onLoadSuccess={onDocumentLoadSuccess}
           className="flex flex-col gap-4 py-10"

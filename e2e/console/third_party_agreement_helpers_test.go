@@ -32,20 +32,34 @@ import (
 const thirdPartyAgreementTestPDF = "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF"
 
 const (
-	actionThirdPartyBusinessAssociateAgreementUpdate = "core:thirdParty-business-associate-agreement:update"
-	actionThirdPartyBusinessAssociateAgreementDelete = "core:thirdParty-business-associate-agreement:delete"
-	actionThirdPartyDataPrivacyAgreementUpdate       = "core:thirdParty-data-privacy-agreement:update"
-	actionThirdPartyDataPrivacyAgreementDelete       = "core:thirdParty-data-privacy-agreement:delete"
-	actionThirdPartyRiskAssessmentList               = "core:thirdParty-risk-assessment:list"
+	actionThirdPartyAgreementUpdate    = "core:thirdParty-agreement:update"
+	actionThirdPartyAgreementDelete    = "core:thirdParty-agreement:delete"
+	actionThirdPartyRiskAssessmentList = "core:thirdParty-risk-assessment:list"
 
 	thirdPartyRiskAssessmentExpiresAt2030 = "2030-12-31T00:00:00Z"
+
+	thirdPartyAgreementNodeSelection = `
+		id
+		title
+		type
+		validity {
+			start
+			end
+		}
+		createdAt
+		updatedAt
+		thirdParty { id }
+		file { id fileName }
+		canUpdate: permission(action: "UPDATE")
+		canDelete: permission(action: "DELETE")
+	`
 )
 
 type (
-	thirdPartyAgreementKind string
-
 	thirdPartyAgreementWireNode struct {
 		ID         string      `json:"id"`
+		Title      string      `json:"title"`
+		Type       string      `json:"type"`
 		Validity   *periodWire `json:"validity"`
 		CreatedAt  time.Time   `json:"createdAt"`
 		UpdatedAt  time.Time   `json:"updatedAt"`
@@ -80,11 +94,6 @@ type (
 	}
 )
 
-const (
-	thirdPartyAgreementKindBAA thirdPartyAgreementKind = "baa"
-	thirdPartyAgreementKindDPA thirdPartyAgreementKind = "dpa"
-)
-
 func requireParseRFC3339Time(t *testing.T, value string) time.Time {
 	t.Helper()
 
@@ -110,7 +119,272 @@ func (n thirdPartyAgreementWireNode) ValidUntil() *time.Time {
 	return n.Validity.End
 }
 
-func thirdPartyAgreementPeriodInput(validFrom, validUntil *string) map[string]any {
+func thirdPartyAgreementUploadPDF(fileName string) testutil.UploadFile {
+	return testutil.UploadFile{
+		Filename:    fileName,
+		ContentType: "application/pdf",
+		Content:     []byte(thirdPartyAgreementTestPDF),
+	}
+}
+
+func thirdPartyAgreementSelection(selection string) string {
+	query := strings.ReplaceAll(selection, "UPDATE", actionThirdPartyAgreementUpdate)
+
+	return strings.ReplaceAll(query, "DELETE", actionThirdPartyAgreementDelete)
+}
+
+func uploadThirdPartyAgreement(
+	t *testing.T,
+	client *testutil.Client,
+	thirdPartyID string,
+	agreementType string,
+	validFrom string,
+	validUntil string,
+	fileName string,
+) thirdPartyAgreementWireNode {
+	t.Helper()
+
+	node, err := uploadThirdPartyAgreementResult(
+		t,
+		client,
+		thirdPartyID,
+		agreementType,
+		validFrom,
+		validUntil,
+		thirdPartyAgreementUploadPDF(fileName),
+		thirdPartyAgreementNodeSelection,
+	)
+	require.NoError(t, err)
+
+	return node
+}
+
+func uploadThirdPartyAgreementExpectError(
+	t *testing.T,
+	client *testutil.Client,
+	thirdPartyID string,
+	agreementType string,
+	validFrom string,
+	validUntil string,
+	fileName string,
+) error {
+	t.Helper()
+
+	_, err := uploadThirdPartyAgreementResult(
+		t,
+		client,
+		thirdPartyID,
+		agreementType,
+		validFrom,
+		validUntil,
+		thirdPartyAgreementUploadPDF(fileName),
+		"id",
+	)
+
+	return err
+}
+
+func uploadThirdPartyAgreementFileExpectError(
+	t *testing.T,
+	client *testutil.Client,
+	thirdPartyID string,
+	file testutil.UploadFile,
+) error {
+	t.Helper()
+
+	_, err := uploadThirdPartyAgreementResult(
+		t,
+		client,
+		thirdPartyID,
+		"OTHER",
+		"2024-01-01T00:00:00Z",
+		"2025-01-01T00:00:00Z",
+		file,
+		"id",
+	)
+
+	return err
+}
+
+func uploadThirdPartyAgreementResult(
+	t *testing.T,
+	client *testutil.Client,
+	thirdPartyID string,
+	agreementType string,
+	validFrom string,
+	validUntil string,
+	file testutil.UploadFile,
+	nodeSelection string,
+) (thirdPartyAgreementWireNode, error) {
+	t.Helper()
+
+	mutation := `
+		mutation UploadThirdPartyAgreement($input: UploadThirdPartyAgreementInput!) {
+			uploadThirdPartyAgreement(input: $input) {
+				thirdPartyAgreementEdge {
+					node {
+						SELECTION
+					}
+				}
+			}
+		}
+	`
+	mutation = strings.ReplaceAll(mutation, "SELECTION", thirdPartyAgreementSelection(nodeSelection))
+
+	var result struct {
+		UploadThirdPartyAgreement struct {
+			ThirdPartyAgreementEdge struct {
+				Node thirdPartyAgreementWireNode `json:"node"`
+			} `json:"thirdPartyAgreementEdge"`
+		} `json:"uploadThirdPartyAgreement"`
+	}
+
+	err := client.ExecuteWithFile(
+		mutation,
+		map[string]any{
+			"input": map[string]any{
+				"thirdPartyId": thirdPartyID,
+				"title":        strings.TrimSuffix(file.Filename, ".pdf"),
+				"type":         agreementType,
+				"validity": map[string]any{
+					"start": validFrom,
+					"end":   validUntil,
+				},
+				"file": nil,
+			},
+		},
+		"input.file",
+		file,
+		&result,
+	)
+	if err != nil {
+		return thirdPartyAgreementWireNode{}, err
+	}
+
+	return result.UploadThirdPartyAgreement.ThirdPartyAgreementEdge.Node, nil
+}
+
+func listThirdPartyAgreements(
+	t *testing.T,
+	client *testutil.Client,
+	thirdPartyID string,
+) []thirdPartyAgreementWireNode {
+	t.Helper()
+
+	query := `
+		query($id: ID!) {
+			node(id: $id) {
+				... on ThirdParty {
+					agreements(first: 20) {
+						edges {
+							node {
+								SELECTION
+							}
+						}
+					}
+				}
+			}
+		}
+	`
+	query = strings.ReplaceAll(query, "SELECTION", thirdPartyAgreementSelection(thirdPartyAgreementNodeSelection))
+
+	var result struct {
+		Node struct {
+			Agreements struct {
+				Edges []struct {
+					Node thirdPartyAgreementWireNode `json:"node"`
+				} `json:"edges"`
+			} `json:"agreements"`
+		} `json:"node"`
+	}
+
+	err := client.Execute(query, map[string]any{"id": thirdPartyID}, &result)
+	require.NoError(t, err)
+
+	agreements := make([]thirdPartyAgreementWireNode, 0, len(result.Node.Agreements.Edges))
+	for _, edge := range result.Node.Agreements.Edges {
+		agreements = append(agreements, edge.Node)
+	}
+
+	return agreements
+}
+
+func updateThirdPartyAgreement(
+	t *testing.T,
+	client *testutil.Client,
+	agreementID string,
+	agreementType *string,
+	validFrom *string,
+	validUntil *string,
+) thirdPartyAgreementWireNode {
+	t.Helper()
+
+	node, err := updateThirdPartyAgreementResult(
+		t,
+		client,
+		agreementID,
+		agreementType,
+		validFrom,
+		validUntil,
+		thirdPartyAgreementNodeSelection,
+	)
+	require.NoError(t, err)
+
+	return node
+}
+
+func updateThirdPartyAgreementExpectError(
+	t *testing.T,
+	client *testutil.Client,
+	agreementID string,
+	agreementType *string,
+	validFrom *string,
+	validUntil *string,
+) error {
+	t.Helper()
+
+	_, err := updateThirdPartyAgreementResult(
+		t,
+		client,
+		agreementID,
+		agreementType,
+		validFrom,
+		validUntil,
+		"id",
+	)
+
+	return err
+}
+
+func updateThirdPartyAgreementResult(
+	t *testing.T,
+	client *testutil.Client,
+	agreementID string,
+	agreementType *string,
+	validFrom *string,
+	validUntil *string,
+	nodeSelection string,
+) (thirdPartyAgreementWireNode, error) {
+	t.Helper()
+
+	mutation := `
+		mutation UpdateThirdPartyAgreement($input: UpdateThirdPartyAgreementInput!) {
+			updateThirdPartyAgreement(input: $input) {
+				thirdPartyAgreement {
+					SELECTION
+				}
+			}
+		}
+	`
+	mutation = strings.ReplaceAll(mutation, "SELECTION", thirdPartyAgreementSelection(nodeSelection))
+
+	input := map[string]any{
+		"id": agreementID,
+	}
+	if agreementType != nil {
+		input["type"] = *agreementType
+	}
+
 	period := map[string]any{}
 	if validFrom != nil {
 		period["start"] = *validFrom
@@ -120,226 +394,57 @@ func thirdPartyAgreementPeriodInput(validFrom, validUntil *string) map[string]an
 		period["end"] = *validUntil
 	}
 
-	if len(period) == 0 {
-		return nil
-	}
-
-	return period
-}
-
-func thirdPartyAgreementUploadPDF(fileName string) testutil.UploadFile {
-	return testutil.UploadFile{
-		Filename:    fileName,
-		ContentType: "application/pdf",
-		Content:     []byte(thirdPartyAgreementTestPDF),
-	}
-}
-
-func uploadThirdPartyAgreement(
-	t *testing.T,
-	client *testutil.Client,
-	kind thirdPartyAgreementKind,
-	thirdPartyID string,
-	validFrom string,
-	validUntil string,
-	fileName string,
-) thirdPartyAgreementWireNode {
-	t.Helper()
-
-	updateAction, deleteAction := thirdPartyAgreementPermissionActions(kind)
-
-	const nodeSelection = `
-		id
-		validity {
-			start
-			end
-		}
-		createdAt
-		updatedAt
-		thirdParty { id }
-		file { id fileName }
-		canUpdate: permission(action: "UPDATE")
-		canDelete: permission(action: "DELETE")
-	`
-
-	mutation := thirdPartyAgreementUploadMutation(kind, nodeSelection)
-	mutation = strings.ReplaceAll(mutation, "UPDATE", updateAction)
-	mutation = strings.ReplaceAll(mutation, "DELETE", deleteAction)
-
-	var result thirdPartyAgreementUploadResult
-
-	err := client.ExecuteWithFile(
-		mutation,
-		map[string]any{
-			"input": map[string]any{
-				"thirdPartyId": thirdPartyID,
-				"fileName":     fileName,
-				"validity": map[string]any{
-					"start": validFrom,
-					"end":   validUntil,
-				},
-				"file": nil,
-			},
-		},
-		"input.file",
-		thirdPartyAgreementUploadPDF(fileName),
-		result.ptrForKind(kind),
-	)
-	require.NoError(t, err)
-
-	return result.node(kind)
-}
-
-func queryThirdPartyAgreementField(
-	t *testing.T,
-	client *testutil.Client,
-	kind thirdPartyAgreementKind,
-	thirdPartyID string,
-) *thirdPartyAgreementWireNode {
-	t.Helper()
-
-	fieldName := thirdPartyAgreementThirdPartyField(kind)
-	updateAction, deleteAction := thirdPartyAgreementPermissionActions(kind)
-
-	query := `
-		query($id: ID!) {
-			node(id: $id) {
-				... on ThirdParty {
-					id
-					FIELD {
-						id
-						validity {
-							start
-							end
-						}
-						createdAt
-						updatedAt
-						thirdParty { id }
-						file { id fileName }
-						canUpdate: permission(action: "UPDATE")
-						canDelete: permission(action: "DELETE")
-					}
-				}
-			}
-		}
-	`
-	query = strings.ReplaceAll(query, "FIELD", fieldName)
-	query = strings.ReplaceAll(query, "UPDATE", updateAction)
-	query = strings.ReplaceAll(query, "DELETE", deleteAction)
-
-	var result thirdPartyAgreementOnThirdPartyQueryResult
-
-	err := client.Execute(query, map[string]any{"id": thirdPartyID}, result.ptrForKind(kind))
-	require.NoError(t, err)
-
-	return result.node(kind)
-}
-
-func updateThirdPartyAgreement(
-	t *testing.T,
-	client *testutil.Client,
-	kind thirdPartyAgreementKind,
-	thirdPartyID string,
-	validFrom *string,
-	validUntil *string,
-) thirdPartyAgreementWireNode {
-	t.Helper()
-
-	updateAction, deleteAction := thirdPartyAgreementPermissionActions(kind)
-
-	const nodeSelection = `
-		id
-		validity {
-			start
-			end
-		}
-		createdAt
-		updatedAt
-		thirdParty { id }
-		file { id fileName }
-		canUpdate: permission(action: "UPDATE")
-		canDelete: permission(action: "DELETE")
-	`
-
-	mutation := thirdPartyAgreementUpdateMutation(kind, nodeSelection)
-	mutation = strings.ReplaceAll(mutation, "UPDATE", updateAction)
-	mutation = strings.ReplaceAll(mutation, "DELETE", deleteAction)
-
-	input := map[string]any{
-		"thirdPartyId": thirdPartyID,
-	}
-	if period := thirdPartyAgreementPeriodInput(validFrom, validUntil); period != nil {
+	if len(period) > 0 {
 		input["validity"] = period
 	}
 
-	var result thirdPartyAgreementUpdateResult
-
-	err := client.Execute(
-		mutation,
-		map[string]any{"input": input},
-		result.ptrForKind(kind),
-	)
-	require.NoError(t, err)
-
-	return result.node(kind)
-}
-
-func updateThirdPartyAgreementExpectError(
-	t *testing.T,
-	client *testutil.Client,
-	kind thirdPartyAgreementKind,
-	thirdPartyID string,
-	validFrom *string,
-	validUntil *string,
-) error {
-	t.Helper()
-
-	updateAction, deleteAction := thirdPartyAgreementPermissionActions(kind)
-
-	const nodeSelection = `id`
-
-	mutation := thirdPartyAgreementUpdateMutation(kind, nodeSelection)
-	mutation = strings.ReplaceAll(mutation, "UPDATE", updateAction)
-	mutation = strings.ReplaceAll(mutation, "DELETE", deleteAction)
-
-	input := map[string]any{
-		"thirdPartyId": thirdPartyID,
-	}
-	if period := thirdPartyAgreementPeriodInput(validFrom, validUntil); period != nil {
-		input["validity"] = period
+	var result struct {
+		UpdateThirdPartyAgreement struct {
+			ThirdPartyAgreement thirdPartyAgreementWireNode `json:"thirdPartyAgreement"`
+		} `json:"updateThirdPartyAgreement"`
 	}
 
-	var result thirdPartyAgreementUpdateResult
+	err := client.Execute(mutation, map[string]any{"input": input}, &result)
+	if err != nil {
+		return thirdPartyAgreementWireNode{}, err
+	}
 
-	return client.Execute(
-		mutation,
-		map[string]any{"input": input},
-		result.ptrForKind(kind),
-	)
+	return result.UpdateThirdPartyAgreement.ThirdPartyAgreement, nil
 }
 
 func deleteThirdPartyAgreement(
 	t *testing.T,
 	client *testutil.Client,
-	kind thirdPartyAgreementKind,
-	thirdPartyID string,
+	agreementID string,
 ) string {
 	t.Helper()
 
-	var result thirdPartyAgreementDeleteResult
+	const mutation = `
+		mutation DeleteThirdPartyAgreement($input: DeleteThirdPartyAgreementInput!) {
+			deleteThirdPartyAgreement(input: $input) {
+				deletedThirdPartyAgreementId
+			}
+		}
+	`
+
+	var result struct {
+		DeleteThirdPartyAgreement struct {
+			DeletedThirdPartyAgreementID string `json:"deletedThirdPartyAgreementId"`
+		} `json:"deleteThirdPartyAgreement"`
+	}
 
 	err := client.Execute(
-		thirdPartyAgreementDeleteMutation(kind),
+		mutation,
 		map[string]any{
 			"input": map[string]any{
-				"thirdPartyId": thirdPartyID,
+				"agreementId": agreementID,
 			},
 		},
-		result.ptrForKind(kind),
+		&result,
 	)
 	require.NoError(t, err)
 
-	return result.deletedThirdPartyID(kind)
+	return result.DeleteThirdPartyAgreement.DeletedThirdPartyAgreementID
 }
 
 func createThirdPartyRiskAssessment(
@@ -399,283 +504,37 @@ func createThirdPartyRiskAssessment(
 	return result.CreateThirdPartyRiskAssessment.ThirdPartyRiskAssessmentEdge.Node
 }
 
-func uploadThirdPartyAgreementExpectError(
-	t *testing.T,
+func updateThirdPartyAgreementTitle(
 	client *testutil.Client,
-	kind thirdPartyAgreementKind,
-	thirdPartyID string,
-	validFrom string,
-	validUntil string,
-	fileName string,
-) error {
-	t.Helper()
+	agreementID string,
+	title string,
+) (thirdPartyAgreementWireNode, error) {
+	const mutation = `
+		mutation UpdateThirdPartyAgreement($input: UpdateThirdPartyAgreementInput!) {
+			updateThirdPartyAgreement(input: $input) {
+				thirdPartyAgreement {
+					id
+					title
+					type
+				}
+			}
+		}
+	`
 
-	updateAction, deleteAction := thirdPartyAgreementPermissionActions(kind)
+	var result struct {
+		UpdateThirdPartyAgreement struct {
+			ThirdPartyAgreement thirdPartyAgreementWireNode `json:"thirdPartyAgreement"`
+		} `json:"updateThirdPartyAgreement"`
+	}
 
-	const nodeSelection = `id`
-
-	mutation := thirdPartyAgreementUploadMutation(kind, nodeSelection)
-	mutation = strings.ReplaceAll(mutation, "UPDATE", updateAction)
-	mutation = strings.ReplaceAll(mutation, "DELETE", deleteAction)
-
-	var result thirdPartyAgreementUploadResult
-
-	return client.ExecuteWithFile(
+	err := client.Execute(
 		mutation,
-		map[string]any{
-			"input": map[string]any{
-				"thirdPartyId": thirdPartyID,
-				"fileName":     fileName,
-				"validity": map[string]any{
-					"start": validFrom,
-					"end":   validUntil,
-				},
-				"file": nil,
-			},
-		},
-		"input.file",
-		thirdPartyAgreementUploadPDF(fileName),
-		result.ptrForKind(kind),
+		map[string]any{"input": map[string]any{"id": agreementID, "title": title}},
+		&result,
 	)
-}
+	if err != nil {
+		return thirdPartyAgreementWireNode{}, err
+	}
 
-type thirdPartyAgreementUploadResult struct {
-	baa struct {
-		UploadThirdPartyBusinessAssociateAgreement struct {
-			ThirdPartyBusinessAssociateAgreement thirdPartyAgreementWireNode `json:"thirdPartyBusinessAssociateAgreement"`
-		} `json:"uploadThirdPartyBusinessAssociateAgreement"`
-	}
-	dpa struct {
-		UploadThirdPartyDataPrivacyAgreement struct {
-			ThirdPartyDataPrivacyAgreement thirdPartyAgreementWireNode `json:"thirdPartyDataPrivacyAgreement"`
-		} `json:"uploadThirdPartyDataPrivacyAgreement"`
-	}
-}
-
-func (r *thirdPartyAgreementUploadResult) ptrForKind(kind thirdPartyAgreementKind) any {
-	switch kind {
-	case thirdPartyAgreementKindBAA:
-		return &r.baa
-	case thirdPartyAgreementKindDPA:
-		return &r.dpa
-	default:
-		panic("unknown agreement kind")
-	}
-}
-
-func (r *thirdPartyAgreementUploadResult) node(kind thirdPartyAgreementKind) thirdPartyAgreementWireNode {
-	switch kind {
-	case thirdPartyAgreementKindBAA:
-		return r.baa.UploadThirdPartyBusinessAssociateAgreement.ThirdPartyBusinessAssociateAgreement
-	case thirdPartyAgreementKindDPA:
-		return r.dpa.UploadThirdPartyDataPrivacyAgreement.ThirdPartyDataPrivacyAgreement
-	default:
-		panic("unknown agreement kind")
-	}
-}
-
-type thirdPartyAgreementUpdateResult struct {
-	baa struct {
-		UpdateThirdPartyBusinessAssociateAgreement struct {
-			ThirdPartyBusinessAssociateAgreement thirdPartyAgreementWireNode `json:"thirdPartyBusinessAssociateAgreement"`
-		} `json:"updateThirdPartyBusinessAssociateAgreement"`
-	}
-	dpa struct {
-		UpdateThirdPartyDataPrivacyAgreement struct {
-			ThirdPartyDataPrivacyAgreement thirdPartyAgreementWireNode `json:"thirdPartyDataPrivacyAgreement"`
-		} `json:"updateThirdPartyDataPrivacyAgreement"`
-	}
-}
-
-func (r *thirdPartyAgreementUpdateResult) ptrForKind(kind thirdPartyAgreementKind) any {
-	switch kind {
-	case thirdPartyAgreementKindBAA:
-		return &r.baa
-	case thirdPartyAgreementKindDPA:
-		return &r.dpa
-	default:
-		panic("unknown agreement kind")
-	}
-}
-
-func (r *thirdPartyAgreementUpdateResult) node(kind thirdPartyAgreementKind) thirdPartyAgreementWireNode {
-	switch kind {
-	case thirdPartyAgreementKindBAA:
-		return r.baa.UpdateThirdPartyBusinessAssociateAgreement.ThirdPartyBusinessAssociateAgreement
-	case thirdPartyAgreementKindDPA:
-		return r.dpa.UpdateThirdPartyDataPrivacyAgreement.ThirdPartyDataPrivacyAgreement
-	default:
-		panic("unknown agreement kind")
-	}
-}
-
-type thirdPartyAgreementDeleteResult struct {
-	baa struct {
-		DeleteThirdPartyBusinessAssociateAgreement struct {
-			DeletedThirdPartyID string `json:"deletedThirdPartyId"`
-		} `json:"deleteThirdPartyBusinessAssociateAgreement"`
-	}
-	dpa struct {
-		DeleteThirdPartyDataPrivacyAgreement struct {
-			DeletedThirdPartyID string `json:"deletedThirdPartyId"`
-		} `json:"deleteThirdPartyDataPrivacyAgreement"`
-	}
-}
-
-func (r *thirdPartyAgreementDeleteResult) ptrForKind(kind thirdPartyAgreementKind) any {
-	switch kind {
-	case thirdPartyAgreementKindBAA:
-		return &r.baa
-	case thirdPartyAgreementKindDPA:
-		return &r.dpa
-	default:
-		panic("unknown agreement kind")
-	}
-}
-
-func (r *thirdPartyAgreementDeleteResult) deletedThirdPartyID(kind thirdPartyAgreementKind) string {
-	switch kind {
-	case thirdPartyAgreementKindBAA:
-		return r.baa.DeleteThirdPartyBusinessAssociateAgreement.DeletedThirdPartyID
-	case thirdPartyAgreementKindDPA:
-		return r.dpa.DeleteThirdPartyDataPrivacyAgreement.DeletedThirdPartyID
-	default:
-		panic("unknown agreement kind")
-	}
-}
-
-type thirdPartyAgreementOnThirdPartyQueryResult struct {
-	baa struct {
-		Node struct {
-			ID                         string                       `json:"id"`
-			BusinessAssociateAgreement *thirdPartyAgreementWireNode `json:"businessAssociateAgreement"`
-		} `json:"node"`
-	}
-	dpa struct {
-		Node struct {
-			ID                   string                       `json:"id"`
-			DataPrivacyAgreement *thirdPartyAgreementWireNode `json:"dataPrivacyAgreement"`
-		} `json:"node"`
-	}
-}
-
-func (r *thirdPartyAgreementOnThirdPartyQueryResult) ptrForKind(kind thirdPartyAgreementKind) any {
-	switch kind {
-	case thirdPartyAgreementKindBAA:
-		return &r.baa
-	case thirdPartyAgreementKindDPA:
-		return &r.dpa
-	default:
-		panic("unknown agreement kind")
-	}
-}
-
-func (r *thirdPartyAgreementOnThirdPartyQueryResult) node(kind thirdPartyAgreementKind) *thirdPartyAgreementWireNode {
-	switch kind {
-	case thirdPartyAgreementKindBAA:
-		return r.baa.Node.BusinessAssociateAgreement
-	case thirdPartyAgreementKindDPA:
-		return r.dpa.Node.DataPrivacyAgreement
-	default:
-		panic("unknown agreement kind")
-	}
-}
-
-func thirdPartyAgreementUploadMutation(kind thirdPartyAgreementKind, nodeSelection string) string {
-	switch kind {
-	case thirdPartyAgreementKindBAA:
-		return `
-			mutation($input: UploadThirdPartyBusinessAssociateAgreementInput!) {
-				uploadThirdPartyBusinessAssociateAgreement(input: $input) {
-					thirdPartyBusinessAssociateAgreement {
-						` + nodeSelection + `
-					}
-				}
-			}
-		`
-	case thirdPartyAgreementKindDPA:
-		return `
-			mutation($input: UploadThirdPartyDataPrivacyAgreementInput!) {
-				uploadThirdPartyDataPrivacyAgreement(input: $input) {
-					thirdPartyDataPrivacyAgreement {
-						` + nodeSelection + `
-					}
-				}
-			}
-		`
-	default:
-		panic("unknown agreement kind")
-	}
-}
-
-func thirdPartyAgreementUpdateMutation(kind thirdPartyAgreementKind, nodeSelection string) string {
-	switch kind {
-	case thirdPartyAgreementKindBAA:
-		return `
-			mutation($input: UpdateThirdPartyBusinessAssociateAgreementInput!) {
-				updateThirdPartyBusinessAssociateAgreement(input: $input) {
-					thirdPartyBusinessAssociateAgreement {
-						` + nodeSelection + `
-					}
-				}
-			}
-		`
-	case thirdPartyAgreementKindDPA:
-		return `
-			mutation($input: UpdateThirdPartyDataPrivacyAgreementInput!) {
-				updateThirdPartyDataPrivacyAgreement(input: $input) {
-					thirdPartyDataPrivacyAgreement {
-						` + nodeSelection + `
-					}
-				}
-			}
-		`
-	default:
-		panic("unknown agreement kind")
-	}
-}
-
-func thirdPartyAgreementDeleteMutation(kind thirdPartyAgreementKind) string {
-	switch kind {
-	case thirdPartyAgreementKindBAA:
-		return `
-			mutation($input: DeleteThirdPartyBusinessAssociateAgreementInput!) {
-				deleteThirdPartyBusinessAssociateAgreement(input: $input) {
-					deletedThirdPartyId
-				}
-			}
-		`
-	case thirdPartyAgreementKindDPA:
-		return `
-			mutation($input: DeleteThirdPartyDataPrivacyAgreementInput!) {
-				deleteThirdPartyDataPrivacyAgreement(input: $input) {
-					deletedThirdPartyId
-				}
-			}
-		`
-	default:
-		panic("unknown agreement kind")
-	}
-}
-
-func thirdPartyAgreementThirdPartyField(kind thirdPartyAgreementKind) string {
-	switch kind {
-	case thirdPartyAgreementKindBAA:
-		return "businessAssociateAgreement"
-	case thirdPartyAgreementKindDPA:
-		return "dataPrivacyAgreement"
-	default:
-		panic("unknown agreement kind")
-	}
-}
-
-func thirdPartyAgreementPermissionActions(kind thirdPartyAgreementKind) (updateAction, deleteAction string) {
-	switch kind {
-	case thirdPartyAgreementKindBAA:
-		return actionThirdPartyBusinessAssociateAgreementUpdate, actionThirdPartyBusinessAssociateAgreementDelete
-	case thirdPartyAgreementKindDPA:
-		return actionThirdPartyDataPrivacyAgreementUpdate, actionThirdPartyDataPrivacyAgreementDelete
-	default:
-		panic("unknown agreement kind")
-	}
+	return result.UpdateThirdPartyAgreement.ThirdPartyAgreement, nil
 }

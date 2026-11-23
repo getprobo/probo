@@ -9,7 +9,6 @@ import (
 	"context"
 	"errors"
 
-	pgx "github.com/jackc/pgx/v5"
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/complianceportal/management"
@@ -384,169 +383,83 @@ func (r *mutationResolver) DeleteThirdPartyComplianceReport(ctx context.Context,
 	}, nil
 }
 
-// UploadThirdPartyBusinessAssociateAgreement is the resolver for the uploadThirdPartyBusinessAssociateAgreement field.
-func (r *mutationResolver) UploadThirdPartyBusinessAssociateAgreement(ctx context.Context, input types.UploadThirdPartyBusinessAssociateAgreementInput) (*types.UploadThirdPartyBusinessAssociateAgreementPayload, error) {
-	scope, err := r.authorize(ctx, input.ThirdPartyID, probo.ActionThirdPartyBusinessAssociateAgreementUpload)
+// UploadThirdPartyAgreement is the resolver for the uploadThirdPartyAgreement field.
+func (r *mutationResolver) UploadThirdPartyAgreement(ctx context.Context, input types.UploadThirdPartyAgreementInput) (*types.UploadThirdPartyAgreementPayload, error) {
+	scope, err := r.authorize(ctx, input.ThirdPartyID, probo.ActionThirdPartyAgreementUpload)
 	if err != nil {
 		return nil, err
 	}
 
 	validFrom, validUntil := types.PeriodInputDates(input.Validity)
 
-	thirdPartyBusinessAssociateAgreement, _, err := r.probo.ThirdPartyBusinessAssociateAgreements.Upload(
-		ctx, scope,
+	agreement, err := r.probo.ThirdPartyAgreements.Upload(
+		ctx,
+		scope,
 		input.ThirdPartyID,
-		&probo.ThirdPartyBusinessAssociateAgreementCreateRequest{
-			File:       input.File.File,
+		&probo.ThirdPartyAgreementCreateRequest{
+			File: probo.FileUpload{
+				Filename:    input.File.Filename,
+				Size:        input.File.Size,
+				Content:     input.File.File,
+				ContentType: input.File.ContentType,
+			},
+			Title:      input.Title,
+			Type:       input.Type,
 			ValidFrom:  validFrom,
 			ValidUntil: validUntil,
-			FileName:   input.FileName,
 		},
 	)
 	if err != nil {
-		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot upload thirdParty business associate agreement", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.MapError(ctx, r.logger, "cannot upload third party agreement", err)
 	}
 
-	return &types.UploadThirdPartyBusinessAssociateAgreementPayload{
-		ThirdPartyBusinessAssociateAgreement: types.NewThirdPartyBusinessAssociateAgreement(thirdPartyBusinessAssociateAgreement),
+	return &types.UploadThirdPartyAgreementPayload{
+		ThirdPartyAgreementEdge: types.NewThirdPartyAgreementEdge(agreement, coredata.ThirdPartyAgreementOrderFieldCreatedAt),
 	}, nil
 }
 
-// UpdateThirdPartyBusinessAssociateAgreement is the resolver for the updateThirdPartyBusinessAssociateAgreement field.
-func (r *mutationResolver) UpdateThirdPartyBusinessAssociateAgreement(ctx context.Context, input types.UpdateThirdPartyBusinessAssociateAgreementInput) (*types.UpdateThirdPartyBusinessAssociateAgreementPayload, error) {
-	scope, err := r.authorize(ctx, input.ThirdPartyID, probo.ActionThirdPartyBusinessAssociateAgreementUpdate)
+// UpdateThirdPartyAgreement is the resolver for the updateThirdPartyAgreement field.
+func (r *mutationResolver) UpdateThirdPartyAgreement(ctx context.Context, input types.UpdateThirdPartyAgreementInput) (*types.UpdateThirdPartyAgreementPayload, error) {
+	scope, err := r.authorize(ctx, input.ID, probo.ActionThirdPartyAgreementUpdate)
 	if err != nil {
 		return nil, err
 	}
 
 	validFrom, validUntil := types.PeriodInputOmittableDates(input.Validity)
 
-	thirdPartyBusinessAssociateAgreement, _, err := r.probo.ThirdPartyBusinessAssociateAgreements.Update(
-		ctx, scope,
-		input.ThirdPartyID,
-		&probo.ThirdPartyBusinessAssociateAgreementUpdateRequest{
+	agreement, err := r.probo.ThirdPartyAgreements.Update(
+		ctx,
+		scope,
+		input.ID,
+		&probo.ThirdPartyAgreementUpdateRequest{
+			Title:      input.Title,
+			Type:       input.Type,
 			ValidFrom:  validFrom,
 			ValidUntil: validUntil,
 		},
 	)
 	if err != nil {
-		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot update thirdParty business associate agreement", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.MapError(ctx, r.logger, "cannot update third party agreement", err)
 	}
 
-	return &types.UpdateThirdPartyBusinessAssociateAgreementPayload{
-		ThirdPartyBusinessAssociateAgreement: types.NewThirdPartyBusinessAssociateAgreement(thirdPartyBusinessAssociateAgreement),
+	return &types.UpdateThirdPartyAgreementPayload{
+		ThirdPartyAgreement: types.NewThirdPartyAgreement(agreement),
 	}, nil
 }
 
-// DeleteThirdPartyBusinessAssociateAgreement is the resolver for the deleteThirdPartyBusinessAssociateAgreement field.
-func (r *mutationResolver) DeleteThirdPartyBusinessAssociateAgreement(ctx context.Context, input types.DeleteThirdPartyBusinessAssociateAgreementInput) (*types.DeleteThirdPartyBusinessAssociateAgreementPayload, error) {
-	scope, err := r.authorize(ctx, input.ThirdPartyID, probo.ActionThirdPartyBusinessAssociateAgreementDelete)
+// DeleteThirdPartyAgreement is the resolver for the deleteThirdPartyAgreement field.
+func (r *mutationResolver) DeleteThirdPartyAgreement(ctx context.Context, input types.DeleteThirdPartyAgreementInput) (*types.DeleteThirdPartyAgreementPayload, error) {
+	scope, err := r.authorize(ctx, input.AgreementID, probo.ActionThirdPartyAgreementDelete)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := r.probo.ThirdPartyBusinessAssociateAgreements.DeleteByThirdPartyID(ctx, scope, input.ThirdPartyID); err != nil {
-		r.logger.ErrorCtx(ctx, "cannot delete thirdParty business associate agreement", log.Error(err))
-		return nil, gqlx.Internal(ctx)
+	if err := r.probo.ThirdPartyAgreements.Delete(ctx, scope, input.AgreementID); err != nil {
+		return nil, gqlx.MapError(ctx, r.logger, "cannot delete third party agreement", err)
 	}
 
-	return &types.DeleteThirdPartyBusinessAssociateAgreementPayload{
-		DeletedThirdPartyID: input.ThirdPartyID,
-	}, nil
-}
-
-// UploadThirdPartyDataPrivacyAgreement is the resolver for the uploadThirdPartyDataPrivacyAgreement field.
-func (r *mutationResolver) UploadThirdPartyDataPrivacyAgreement(ctx context.Context, input types.UploadThirdPartyDataPrivacyAgreementInput) (*types.UploadThirdPartyDataPrivacyAgreementPayload, error) {
-	scope, err := r.authorize(ctx, input.ThirdPartyID, probo.ActionThirdPartyDataPrivacyAgreementUpload)
-	if err != nil {
-		return nil, err
-	}
-
-	validFrom, validUntil := types.PeriodInputDates(input.Validity)
-
-	thirdPartyDataPrivacyAgreement, _, err := r.probo.ThirdPartyDataPrivacyAgreements.Upload(
-		ctx, scope,
-		input.ThirdPartyID,
-		&probo.ThirdPartyDataPrivacyAgreementCreateRequest{
-			File:       input.File.File,
-			ValidFrom:  validFrom,
-			ValidUntil: validUntil,
-			FileName:   input.FileName,
-		},
-	)
-	if err != nil {
-		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot upload thirdParty data privacy agreement", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
-	}
-
-	return &types.UploadThirdPartyDataPrivacyAgreementPayload{
-		ThirdPartyDataPrivacyAgreement: types.NewThirdPartyDataPrivacyAgreement(thirdPartyDataPrivacyAgreement),
-	}, nil
-}
-
-// UpdateThirdPartyDataPrivacyAgreement is the resolver for the updateThirdPartyDataPrivacyAgreement field.
-func (r *mutationResolver) UpdateThirdPartyDataPrivacyAgreement(ctx context.Context, input types.UpdateThirdPartyDataPrivacyAgreementInput) (*types.UpdateThirdPartyDataPrivacyAgreementPayload, error) {
-	scope, err := r.authorize(ctx, input.ThirdPartyID, probo.ActionThirdPartyDataPrivacyAgreementUpdate)
-	if err != nil {
-		return nil, err
-	}
-
-	validFrom, validUntil := types.PeriodInputOmittableDates(input.Validity)
-
-	thirdPartyDataPrivacyAgreement, _, err := r.probo.ThirdPartyDataPrivacyAgreements.Update(
-		ctx, scope,
-		input.ThirdPartyID,
-		&probo.ThirdPartyDataPrivacyAgreementUpdateRequest{
-			ValidFrom:  validFrom,
-			ValidUntil: validUntil,
-		},
-	)
-	if err != nil {
-		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot update thirdParty data privacy agreement", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
-	}
-
-	return &types.UpdateThirdPartyDataPrivacyAgreementPayload{
-		ThirdPartyDataPrivacyAgreement: types.NewThirdPartyDataPrivacyAgreement(thirdPartyDataPrivacyAgreement),
-	}, nil
-}
-
-// DeleteThirdPartyDataPrivacyAgreement is the resolver for the deleteThirdPartyDataPrivacyAgreement field.
-func (r *mutationResolver) DeleteThirdPartyDataPrivacyAgreement(ctx context.Context, input types.DeleteThirdPartyDataPrivacyAgreementInput) (*types.DeleteThirdPartyDataPrivacyAgreementPayload, error) {
-	scope, err := r.authorize(ctx, input.ThirdPartyID, probo.ActionThirdPartyDataPrivacyAgreementDelete)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := r.probo.ThirdPartyDataPrivacyAgreements.DeleteByThirdPartyID(ctx, scope, input.ThirdPartyID); err != nil {
-		r.logger.ErrorCtx(ctx, "cannot delete thirdParty data privacy agreement", log.Error(err))
-		return nil, gqlx.Internal(ctx)
-	}
-
-	return &types.DeleteThirdPartyDataPrivacyAgreementPayload{
-		DeletedThirdPartyID: input.ThirdPartyID,
+	return &types.DeleteThirdPartyAgreementPayload{
+		DeletedThirdPartyAgreementID: input.AgreementID,
 	}, nil
 }
 
@@ -739,46 +652,35 @@ func (r *thirdPartyResolver) ComplianceReports(ctx context.Context, obj *types.T
 	return types.NewThirdPartyComplianceReportConnection(page), nil
 }
 
-// BusinessAssociateAgreement is the resolver for the businessAssociateAgreement field.
-func (r *thirdPartyResolver) BusinessAssociateAgreement(ctx context.Context, obj *types.ThirdParty) (*types.ThirdPartyBusinessAssociateAgreement, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyBusinessAssociateAgreementGet)
+// Agreements is the resolver for the agreements field.
+func (r *thirdPartyResolver) Agreements(ctx context.Context, obj *types.ThirdParty, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ThirdPartyAgreementOrderBy) (*types.ThirdPartyAgreementConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyAgreementList)
 	if err != nil {
 		return nil, err
 	}
 
-	thirdPartyBusinessAssociateAgreement, _, err := r.probo.ThirdPartyBusinessAssociateAgreements.GetByThirdPartyID(ctx, scope, obj.ID)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, nil
-		}
+	pageOrderBy := page.OrderBy[coredata.ThirdPartyAgreementOrderField]{
+		Field:     coredata.ThirdPartyAgreementOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
 
-		r.logger.ErrorCtx(ctx, "cannot get thirdParty business associate agreement", log.Error(err))
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.ThirdPartyAgreementOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	agreements, err := r.probo.ThirdPartyAgreements.ListForThirdPartyID(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list third party agreements", log.Error(err))
 
 		return nil, gqlx.Internal(ctx)
 	}
 
-	return types.NewThirdPartyBusinessAssociateAgreement(thirdPartyBusinessAssociateAgreement), nil
-}
-
-// DataPrivacyAgreement is the resolver for the dataPrivacyAgreement field.
-func (r *thirdPartyResolver) DataPrivacyAgreement(ctx context.Context, obj *types.ThirdParty) (*types.ThirdPartyDataPrivacyAgreement, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyDataPrivacyAgreementGet)
-	if err != nil {
-		return nil, err
-	}
-
-	thirdPartyDataPrivacyAgreement, _, err := r.probo.ThirdPartyDataPrivacyAgreements.GetByThirdPartyID(ctx, scope, obj.ID)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, nil
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot get thirdParty data privacy agreement", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
-	}
-
-	return types.NewThirdPartyDataPrivacyAgreement(thirdPartyDataPrivacyAgreement), nil
+	return types.NewThirdPartyAgreementConnection(agreements), nil
 }
 
 // Contacts is the resolver for the contacts field.
@@ -1052,7 +954,7 @@ func (r *thirdPartyResolver) Permission(ctx context.Context, obj *types.ThirdPar
 }
 
 // ThirdParty is the resolver for the thirdParty field.
-func (r *thirdPartyBusinessAssociateAgreementResolver) ThirdParty(ctx context.Context, obj *types.ThirdPartyBusinessAssociateAgreement) (*types.ThirdParty, error) {
+func (r *thirdPartyAgreementResolver) ThirdParty(ctx context.Context, obj *types.ThirdPartyAgreement) (*types.ThirdParty, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyGet)
 	if err != nil {
 		return nil, err
@@ -1060,20 +962,14 @@ func (r *thirdPartyBusinessAssociateAgreementResolver) ThirdParty(ctx context.Co
 
 	thirdParty, err := r.probo.ThirdParties.Get(ctx, scope, obj.ThirdParty.ID)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlx.NotFound(ctx, err)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot get thirdParty", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, gqlx.MapError(ctx, r.logger, "cannot get third party", err)
 	}
 
 	return types.NewThirdParty(thirdParty), nil
 }
 
 // File is the resolver for the file field.
-func (r *thirdPartyBusinessAssociateAgreementResolver) File(ctx context.Context, obj *types.ThirdPartyBusinessAssociateAgreement) (*types.File, error) {
+func (r *thirdPartyAgreementResolver) File(ctx context.Context, obj *types.ThirdPartyAgreement) (*types.File, error) {
 	if _, err := r.authorize(ctx, obj.ID, probo.ActionFileGet); err != nil {
 		return nil, err
 	}
@@ -1082,7 +978,7 @@ func (r *thirdPartyBusinessAssociateAgreementResolver) File(ctx context.Context,
 }
 
 // Permission is the resolver for the permission field.
-func (r *thirdPartyBusinessAssociateAgreementResolver) Permission(ctx context.Context, obj *types.ThirdPartyBusinessAssociateAgreement, action string) (bool, error) {
+func (r *thirdPartyAgreementResolver) Permission(ctx context.Context, obj *types.ThirdPartyAgreement, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
 }
 
@@ -1244,41 +1140,6 @@ func (r *thirdPartyContactResolver) Permission(ctx context.Context, obj *types.T
 }
 
 // ThirdParty is the resolver for the thirdParty field.
-func (r *thirdPartyDataPrivacyAgreementResolver) ThirdParty(ctx context.Context, obj *types.ThirdPartyDataPrivacyAgreement) (*types.ThirdParty, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyGet)
-	if err != nil {
-		return nil, err
-	}
-
-	thirdParty, err := r.probo.ThirdParties.Get(ctx, scope, obj.ThirdParty.ID)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlx.NotFound(ctx, err)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot get thirdParty", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
-	}
-
-	return types.NewThirdParty(thirdParty), nil
-}
-
-// File is the resolver for the file field.
-func (r *thirdPartyDataPrivacyAgreementResolver) File(ctx context.Context, obj *types.ThirdPartyDataPrivacyAgreement) (*types.File, error) {
-	if _, err := r.authorize(ctx, obj.ID, probo.ActionFileGet); err != nil {
-		return nil, err
-	}
-
-	return r.loadFile(ctx, obj.File.ID)
-}
-
-// Permission is the resolver for the permission field.
-func (r *thirdPartyDataPrivacyAgreementResolver) Permission(ctx context.Context, obj *types.ThirdPartyDataPrivacyAgreement, action string) (bool, error) {
-	return r.Resolver.Permission(ctx, obj, action)
-}
-
-// ThirdParty is the resolver for the thirdParty field.
 func (r *thirdPartyRiskAssessmentResolver) ThirdParty(ctx context.Context, obj *types.ThirdPartyRiskAssessment) (*types.ThirdParty, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyGet)
 	if err != nil {
@@ -1334,9 +1195,9 @@ func (r *thirdPartyServiceResolver) Permission(ctx context.Context, obj *types.T
 // ThirdParty returns schema.ThirdPartyResolver implementation.
 func (r *Resolver) ThirdParty() schema.ThirdPartyResolver { return &thirdPartyResolver{r} }
 
-// ThirdPartyBusinessAssociateAgreement returns schema.ThirdPartyBusinessAssociateAgreementResolver implementation.
-func (r *Resolver) ThirdPartyBusinessAssociateAgreement() schema.ThirdPartyBusinessAssociateAgreementResolver {
-	return &thirdPartyBusinessAssociateAgreementResolver{r}
+// ThirdPartyAgreement returns schema.ThirdPartyAgreementResolver implementation.
+func (r *Resolver) ThirdPartyAgreement() schema.ThirdPartyAgreementResolver {
+	return &thirdPartyAgreementResolver{r}
 }
 
 // ThirdPartyComplianceReport returns schema.ThirdPartyComplianceReportResolver implementation.
@@ -1354,11 +1215,6 @@ func (r *Resolver) ThirdPartyContact() schema.ThirdPartyContactResolver {
 	return &thirdPartyContactResolver{r}
 }
 
-// ThirdPartyDataPrivacyAgreement returns schema.ThirdPartyDataPrivacyAgreementResolver implementation.
-func (r *Resolver) ThirdPartyDataPrivacyAgreement() schema.ThirdPartyDataPrivacyAgreementResolver {
-	return &thirdPartyDataPrivacyAgreementResolver{r}
-}
-
 // ThirdPartyRiskAssessment returns schema.ThirdPartyRiskAssessmentResolver implementation.
 func (r *Resolver) ThirdPartyRiskAssessment() schema.ThirdPartyRiskAssessmentResolver {
 	return &thirdPartyRiskAssessmentResolver{r}
@@ -1370,12 +1226,11 @@ func (r *Resolver) ThirdPartyService() schema.ThirdPartyServiceResolver {
 }
 
 type (
-	thirdPartyResolver                           struct{ *Resolver }
-	thirdPartyBusinessAssociateAgreementResolver struct{ *Resolver }
-	thirdPartyComplianceReportResolver           struct{ *Resolver }
-	thirdPartyConnectionResolver                 struct{ *Resolver }
-	thirdPartyContactResolver                    struct{ *Resolver }
-	thirdPartyDataPrivacyAgreementResolver       struct{ *Resolver }
-	thirdPartyRiskAssessmentResolver             struct{ *Resolver }
-	thirdPartyServiceResolver                    struct{ *Resolver }
+	thirdPartyResolver                 struct{ *Resolver }
+	thirdPartyAgreementResolver        struct{ *Resolver }
+	thirdPartyComplianceReportResolver struct{ *Resolver }
+	thirdPartyConnectionResolver       struct{ *Resolver }
+	thirdPartyContactResolver          struct{ *Resolver }
+	thirdPartyRiskAssessmentResolver   struct{ *Resolver }
+	thirdPartyServiceResolver          struct{ *Resolver }
 )

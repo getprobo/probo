@@ -39,12 +39,11 @@ import * as getRiskAssessmentOp from './getRiskAssessment.operation';
 import * as getAllRiskAssessmentsOp from './getAllRiskAssessments.operation';
 import * as getAllComplianceReportsOp from './getAllComplianceReports.operation';
 import * as deleteComplianceReportOp from './deleteComplianceReport.operation';
-import * as getBusinessAssociateAgreementOp from './getBusinessAssociateAgreement.operation';
-import * as deleteBusinessAssociateAgreementOp from './deleteBusinessAssociateAgreement.operation';
-import * as updateBusinessAssociateAgreementOp from './updateBusinessAssociateAgreement.operation';
-import * as getDataPrivacyAgreementOp from './getDataPrivacyAgreement.operation';
-import * as deleteDataPrivacyAgreementOp from './deleteDataPrivacyAgreement.operation';
-import * as updateDataPrivacyAgreementOp from './updateDataPrivacyAgreement.operation';
+import * as uploadAgreementOp from './uploadAgreement.operation';
+import * as getAgreementOp from './getAgreement.operation';
+import * as getAllAgreementsOp from './getAllAgreements.operation';
+import * as updateAgreementOp from './updateAgreement.operation';
+import * as deleteAgreementOp from './deleteAgreement.operation';
 import * as linkThirdPartyOp from './linkThirdParty.operation';
 import * as unlinkThirdPartyOp from './unlinkThirdParty.operation';
 import * as listChildThirdPartiesOp from './listChildThirdParties.operation';
@@ -94,10 +93,10 @@ export const description: INodeProperties[] = [
 				action: 'Delete a third party',
 			},
 			{
-				name: 'Delete Business Associate Agreement',
-				value: 'deleteBusinessAssociateAgreement',
-				description: 'Delete a third party business associate agreement',
-				action: 'Delete a third party business associate agreement',
+				name: 'Delete Agreement',
+				value: 'deleteAgreement',
+				description: 'Delete a third party agreement',
+				action: 'Delete a third party agreement',
 			},
 			{
 				name: 'Delete Compliance Report',
@@ -112,12 +111,6 @@ export const description: INodeProperties[] = [
 				action: 'Delete a third party contact',
 			},
 			{
-				name: 'Delete Data Privacy Agreement',
-				value: 'deleteDataPrivacyAgreement',
-				description: 'Delete a third party data privacy agreement',
-				action: 'Delete a third party data privacy agreement',
-			},
-			{
 				name: 'Delete Service',
 				value: 'deleteService',
 				description: 'Delete a third party service',
@@ -130,10 +123,10 @@ export const description: INodeProperties[] = [
 				action: 'Get a third party',
 			},
 			{
-				name: 'Get Business Associate Agreement',
-				value: 'getBusinessAssociateAgreement',
-				description: 'Get a third party business associate agreement',
-				action: 'Get a third party business associate agreement',
+				name: 'Get Agreement',
+				value: 'getAgreement',
+				description: 'Get a third party agreement',
+				action: 'Get a third party agreement',
 			},
 			{
 				name: 'Get Contact',
@@ -142,16 +135,16 @@ export const description: INodeProperties[] = [
 				action: 'Get a third party contact',
 			},
 			{
-				name: 'Get Data Privacy Agreement',
-				value: 'getDataPrivacyAgreement',
-				description: 'Get a third party data privacy agreement',
-				action: 'Get a third party data privacy agreement',
-			},
-			{
 				name: 'Get Many',
 				value: 'getAll',
 				description: 'Get many third parties',
 				action: 'Get many third parties',
+			},
+			{
+				name: 'Get Many Agreements',
+				value: 'getAllAgreements',
+				description: 'Get many third party agreements',
+				action: 'Get many third party agreements',
 			},
 			{
 				name: 'Get Many Child Third Parties',
@@ -220,10 +213,10 @@ export const description: INodeProperties[] = [
 				action: 'Update a third party',
 			},
 			{
-				name: 'Update Business Associate Agreement',
-				value: 'updateBusinessAssociateAgreement',
-				description: 'Update a third party business associate agreement validity',
-				action: 'Update a third party business associate agreement',
+				name: 'Update Agreement',
+				value: 'updateAgreement',
+				description: 'Update a third party agreement',
+				action: 'Update a third party agreement',
 			},
 			{
 				name: 'Update Contact',
@@ -232,16 +225,16 @@ export const description: INodeProperties[] = [
 				action: 'Update a third party contact',
 			},
 			{
-				name: 'Update Data Privacy Agreement',
-				value: 'updateDataPrivacyAgreement',
-				description: 'Update a third party data privacy agreement validity',
-				action: 'Update a third party data privacy agreement',
-			},
-			{
 				name: 'Update Service',
 				value: 'updateService',
 				description: 'Update an existing third party service',
 				action: 'Update a third party service',
+			},
+			{
+				name: 'Upload Agreement',
+				value: 'uploadAgreement',
+				description: 'Upload a PDF agreement for a third party',
+				action: 'Upload a third party agreement',
 			},
 			{
 				name: 'Vet',
@@ -272,12 +265,11 @@ export const description: INodeProperties[] = [
 	...getAllRiskAssessmentsOp.description,
 	...getAllComplianceReportsOp.description,
 	...deleteComplianceReportOp.description,
-	...getBusinessAssociateAgreementOp.description,
-	...deleteBusinessAssociateAgreementOp.description,
-	...updateBusinessAssociateAgreementOp.description,
-	...getDataPrivacyAgreementOp.description,
-	...deleteDataPrivacyAgreementOp.description,
-	...updateDataPrivacyAgreementOp.description,
+	...uploadAgreementOp.description,
+	...getAgreementOp.description,
+	...getAllAgreementsOp.description,
+	...updateAgreementOp.description,
+	...deleteAgreementOp.description,
 	...linkThirdPartyOp.description,
 	...unlinkThirdPartyOp.description,
 	...listChildThirdPartiesOp.description,
@@ -306,12 +298,11 @@ export {
 	getAllRiskAssessmentsOp as getAllRiskAssessments,
 	getAllComplianceReportsOp as getAllComplianceReports,
 	deleteComplianceReportOp as deleteComplianceReport,
-	getBusinessAssociateAgreementOp as getBusinessAssociateAgreement,
-	deleteBusinessAssociateAgreementOp as deleteBusinessAssociateAgreement,
-	updateBusinessAssociateAgreementOp as updateBusinessAssociateAgreement,
-	getDataPrivacyAgreementOp as getDataPrivacyAgreement,
-	deleteDataPrivacyAgreementOp as deleteDataPrivacyAgreement,
-	updateDataPrivacyAgreementOp as updateDataPrivacyAgreement,
+	uploadAgreementOp as uploadAgreement,
+	getAgreementOp as getAgreement,
+	getAllAgreementsOp as getAllAgreements,
+	updateAgreementOp as updateAgreement,
+	deleteAgreementOp as deleteAgreement,
 	linkThirdPartyOp as linkThirdParty,
 	unlinkThirdPartyOp as unlinkThirdParty,
 	listChildThirdPartiesOp as listChildThirdParties,

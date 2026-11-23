@@ -3509,24 +3509,25 @@ func (s *GeneratedDocumentService) buildThirdPartyListDocumentData(
 		reportsByThirdParty[r.ThirdPartyID] = append(reportsByThirdParty[r.ThirdPartyID], r)
 	}
 
-	var allBAAs coredata.ThirdPartyBusinessAssociateAgreements
-	if err := allBAAs.LoadByThirdPartyIDs(ctx, conn, scope, thirdPartyIDs); err != nil {
-		return docgen.ThirdPartyListData{}, fmt.Errorf("cannot load thirdParty business associate agreements: %w", err)
+	var allAgreements coredata.ThirdPartyAgreements
+	if err := allAgreements.LoadByThirdPartyIDs(ctx, conn, scope, thirdPartyIDs); err != nil {
+		return docgen.ThirdPartyListData{}, fmt.Errorf("cannot load third party agreements: %w", err)
 	}
 
-	baaByThirdParty := make(map[gid.GID]*coredata.ThirdPartyBusinessAssociateAgreement, len(allBAAs))
-	for _, b := range allBAAs {
-		baaByThirdParty[b.ThirdPartyID] = b
-	}
+	baaByThirdParty := make(map[gid.GID]*coredata.ThirdPartyAgreement, len(allAgreements))
+	dpaByThirdParty := make(map[gid.GID]*coredata.ThirdPartyAgreement, len(allAgreements))
 
-	var allDPAs coredata.ThirdPartyDataPrivacyAgreements
-	if err := allDPAs.LoadByThirdPartyIDs(ctx, conn, scope, thirdPartyIDs); err != nil {
-		return docgen.ThirdPartyListData{}, fmt.Errorf("cannot load thirdParty data privacy agreements: %w", err)
-	}
-
-	dpaByThirdParty := make(map[gid.GID]*coredata.ThirdPartyDataPrivacyAgreement, len(allDPAs))
-	for _, d := range allDPAs {
-		dpaByThirdParty[d.ThirdPartyID] = d
+	for _, agreement := range allAgreements {
+		switch agreement.Type {
+		case coredata.ThirdPartyAgreementTypeBusinessAssociate:
+			if _, exists := baaByThirdParty[agreement.ThirdPartyID]; !exists {
+				baaByThirdParty[agreement.ThirdPartyID] = agreement
+			}
+		case coredata.ThirdPartyAgreementTypeDataPrivacy:
+			if _, exists := dpaByThirdParty[agreement.ThirdPartyID]; !exists {
+				dpaByThirdParty[agreement.ThirdPartyID] = agreement
+			}
+		}
 	}
 
 	rows := make([]docgen.ThirdPartyListRow, 0, len(thirdParties))

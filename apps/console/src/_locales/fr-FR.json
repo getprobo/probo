@@ -5522,99 +5522,53 @@
       "create": "Échec de la création du tiers"
     }
   },
-  "deleteBusinessAssociateAgreementDialog": {
-    "title": "Supprimer l’accord de partenaire commercial",
-    "confirmation": "Voulez-vous vraiment supprimer l’accord de partenaire commercial « {{fileName}} » ?",
-    "cannotUndo": "Cette action est irréversible.",
-    "messages": {
-      "success": "Succès",
-      "error": "Erreur",
-      "deleted": "Accord de partenaire commercial supprimé avec succès"
-    },
-    "errors": {
-      "delete": "Échec de la suppression de l’accord de partenaire commercial"
-    },
-    "actions": {
-      "delete": "Supprimer"
-    }
-  },
-  "deleteDataPrivacyAgreementDialog": {
-    "title": "Supprimer l’accord de confidentialité des données",
-    "confirmation": "Voulez-vous vraiment supprimer l’accord de confidentialité des données « {{fileName}} » ?",
-    "cannotUndo": "Cette action est irréversible.",
-    "messages": {
-      "success": "Succès",
-      "error": "Erreur",
-      "deleted": "Accord de confidentialité des données supprimé avec succès"
-    },
-    "errors": {
-      "delete": "Échec de la suppression de l’accord de confidentialité des données"
-    },
-    "actions": {
-      "delete": "Supprimer"
-    }
-  },
-  "editBusinessAssociateAgreementDialog": {
-    "title": "Modifier l’accord de partenaire commercial",
+  "editThirdPartyAgreementDialog": {
+    "title": "Modifier l’accord",
     "fields": {
+      "title": "Titre",
+      "type": "Type",
       "validFrom": "Valide à partir de",
       "validUntil": "Valide jusqu’au"
-    },
-    "messages": {
-      "success": "Succès",
-      "error": "Erreur",
-      "updated": "Accord de partenaire commercial mis à jour avec succès"
-    },
-    "errors": {
-      "update": "Échec de la mise à jour de l’accord de partenaire commercial"
-    },
-    "actions": {
-      "update": "Mettre à jour"
-    }
-  },
-  "editDataPrivacyAgreementDialog": {
-    "title": "Modifier l’accord de confidentialité des données",
-    "fields": {
-      "validFrom": "Valide à partir de",
-      "validUntil": "Valide jusqu’au"
-    },
-    "messages": {
-      "success": "Succès",
-      "error": "Erreur",
-      "updated": "Accord de confidentialité des données mis à jour avec succès"
-    },
-    "errors": {
-      "update": "Échec de la mise à jour de l’accord de confidentialité des données"
-    },
-    "actions": {
-      "update": "Mettre à jour"
-    }
-  },
-  "uploadBusinessAssociateAgreementDialog": {
-    "title": "Téléverser l’accord de partenariat commercial",
-    "fileHelp": "Seuls les fichiers PDF jusqu’à 10 Mo sont autorisés",
-    "selectedFile": "Fichier sélectionné :",
-    "fields": {
-      "fileName": "Nom du fichier",
-      "validFrom": "Valide à partir de",
-      "validUntil": "Valide jusqu’au"
-    },
-    "placeholders": {
-      "fileName": "Accord de partenariat commercial"
     },
     "validation": {
-      "fileNameRequired": "Le nom du fichier est requis"
+      "titleRequired": "Le titre est requis"
     },
     "messages": {
       "success": "Succès",
       "error": "Erreur",
-      "uploaded": "Accord de partenariat commercial téléversé avec succès"
+      "updated": "Accord mis à jour"
     },
     "errors": {
-      "upload": "Échec du téléversement de l’accord de partenariat commercial"
+      "update": "Échec de la mise à jour de l’accord"
     },
     "actions": {
-      "upload": "Téléverser"
+      "update": "Mettre à jour"
+    }
+  },
+  "uploadThirdPartyAgreementDialog": {
+    "title": "Ajouter un accord",
+    "fileHelp": "Fichiers PDF jusqu’à 30 Mo",
+    "selectedFile": "Fichier sélectionné :",
+    "fields": {
+      "title": "Titre",
+      "type": "Type",
+      "validFrom": "Valide à partir de",
+      "validUntil": "Valide jusqu’au"
+    },
+    "validation": {
+      "titleRequired": "Le titre est requis"
+    },
+    "messages": {
+      "success": "Succès",
+      "error": "Erreur",
+      "uploaded": "Accord ajouté"
+    },
+    "errors": {
+      "upload": "Échec de l’ajout de l’accord"
+    },
+    "actions": {
+      "upload": "Ajouter",
+      "preview": "Aperçu"
     }
   },
   "uploadComplianceReportDialog": {
@@ -5640,31 +5594,27 @@
       "upload": "Téléverser"
     }
   },
-  "uploadDataPrivacyAgreementDialog": {
-    "title": "Téléverser l’accord de confidentialité des données",
-    "fileHelp": "Seuls les fichiers PDF jusqu’à 10 Mo sont autorisés",
-    "selectedFile": "Fichier sélectionné :",
-    "fields": {
-      "fileName": "Nom du fichier",
-      "validFrom": "Valide à partir de",
-      "validUntil": "Valide jusqu’au"
+  "thirdPartyAgreementListItem": {
+    "messages": { "error": "Erreur" },
+    "errors": { "delete": "Échec de la suppression de l’accord" },
+    "deleteConfirmation": "Cette action supprimera définitivement cet accord « {{title}} » ({{fileName}}). Cette action est irréversible.",
+    "actions": { "preview": "Aperçu", "download": "Télécharger" }
+  },
+  "thirdPartyAgreementPreviewDialog": {
+    "previewUnavailable": "Aperçu indisponible pour ce fichier : {{mimeType}}",
+    "actions": { "download": "Télécharger le fichier" },
+    "csv": {
+      "column": "Colonne",
+      "empty": "Ce fichier CSV est vide.",
+      "error": "Impossible de charger l’aperçu CSV.",
+      "retry": "Réessayer",
+      "truncated": "Affichage des 100 premières lignes."
     },
-    "placeholders": {
-      "fileName": "Accord de confidentialité des données"
-    },
-    "validation": {
-      "fileNameRequired": "Le nom du fichier est requis"
-    },
-    "messages": {
-      "success": "Succès",
-      "error": "Erreur",
-      "uploaded": "Accord de confidentialité des données téléversé avec succès"
-    },
-    "errors": {
-      "upload": "Échec du téléversement de l’accord de confidentialité des données"
-    },
-    "actions": {
-      "upload": "Téléverser"
+    "text": {
+      "empty": "Ce fichier texte est vide.",
+      "error": "Impossible de charger l’aperçu du texte.",
+      "retry": "Réessayer",
+      "truncated": "Affichage des 512 premiers Ko."
     }
   },
   "vettingDialog": {
@@ -5773,19 +5723,23 @@
   "thirdPartyAgreementsPage": {
     "pageTitle": "{{name}} - Accords",
     "title": "Accords",
-    "description": "Accords de traitement des données signés avec ce tiers.",
-    "agreements": {
-      "businessAssociate": "Accord de partenaire commercial",
-      "dataPrivacy": "Accord de confidentialité des données",
-      "noBusinessAssociate": "Aucun accord de partenaire commercial disponible",
-      "noDataPrivacy": "Aucun accord de confidentialité des données disponible",
-      "validity": {
-        "range": "Valable du {{from}} au {{until}}",
-        "from": "Valable à partir du {{date}}",
-        "until": "Valable jusqu’au {{date}}"
-      }
+    "description": "Contrats avec ce tiers : conditions générales, MSA, avenants et annexes.",
+    "empty": "Aucun accord pour le moment.",
+    "types": {
+      "AMENDMENT": "Avenant",
+      "ANNEX": "Annexe",
+      "BUSINESS_ASSOCIATE": "Accord de partenaire commercial",
+      "DATA_PRIVACY": "Accord de confidentialité des données",
+      "MASTER_SERVICE": "Contrat cadre (MSA)",
+      "OTHER": "Autre",
+      "TERMS": "Conditions générales (CGV/CGU)"
     },
-    "actions": { "downloadPdf": "Télécharger le PDF", "upload": "Téléverser" }
+    "validity": {
+      "range": "Valable du {{from}} au {{until}}",
+      "from": "Valable à partir du {{date}}",
+      "until": "Valable jusqu’au {{date}}"
+    },
+    "actions": { "add": "Ajouter un accord", "showMore": "Afficher plus" }
   },
   "thirdPartyComplianceReportRow": {
     "messages": {

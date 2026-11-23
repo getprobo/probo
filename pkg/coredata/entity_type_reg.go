@@ -179,6 +179,7 @@ const (
 	CMPDomainSurfaceEntityType                       uint16 = 147
 	TagEntityType                                    uint16 = 148
 	TagAssignmentEntityType                          uint16 = 149 // internal cursor key, not a Node
+	ThirdPartyAgreementEntityType                    uint16 = 150
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -227,14 +228,10 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &CompliancePortal{ID: id}, true
 	case CompliancePortalAccessEntityType:
 		return &CompliancePortalAccess{ID: id}, true
-	case ThirdPartyBusinessAssociateAgreementEntityType:
-		return &ThirdPartyBusinessAssociateAgreement{ID: id}, true
 	case FileEntityType:
 		return &File{ID: id}, true
 	case ThirdPartyContactEntityType:
 		return &ThirdPartyContact{ID: id}, true
-	case ThirdPartyDataPrivacyAgreementEntityType:
-		return &ThirdPartyDataPrivacyAgreement{ID: id}, true
 	case FindingEntityType:
 		return &Finding{ID: id}, true
 	case ObligationEntityType:
@@ -453,6 +450,8 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &CMPDomainSurface{ID: id}, true
 	case TagEntityType:
 		return &Tag{ID: id}, true
+	case ThirdPartyAgreementEntityType:
+		return &ThirdPartyAgreement{ID: id}, true
 	default:
 		return nil, false
 	}

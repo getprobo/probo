@@ -66,17 +66,12 @@ const (
 	ActionThirdPartyComplianceReportUpload = "core:thirdParty-compliance-report:upload"
 	ActionThirdPartyComplianceReportDelete = "core:thirdParty-compliance-report:delete"
 
-	// ThirdPartyBusinessAssociateAgreement actions
-	ActionThirdPartyBusinessAssociateAgreementGet    = "core:thirdParty-business-associate-agreement:get"
-	ActionThirdPartyBusinessAssociateAgreementUpload = "core:thirdParty-business-associate-agreement:upload"
-	ActionThirdPartyBusinessAssociateAgreementUpdate = "core:thirdParty-business-associate-agreement:update"
-	ActionThirdPartyBusinessAssociateAgreementDelete = "core:thirdParty-business-associate-agreement:delete"
-
-	// ThirdPartyDataPrivacyAgreement actions
-	ActionThirdPartyDataPrivacyAgreementGet    = "core:thirdParty-data-privacy-agreement:get"
-	ActionThirdPartyDataPrivacyAgreementUpload = "core:thirdParty-data-privacy-agreement:upload"
-	ActionThirdPartyDataPrivacyAgreementUpdate = "core:thirdParty-data-privacy-agreement:update"
-	ActionThirdPartyDataPrivacyAgreementDelete = "core:thirdParty-data-privacy-agreement:delete"
+	// ThirdPartyAgreement actions
+	ActionThirdPartyAgreementGet    = "core:thirdParty-agreement:get"
+	ActionThirdPartyAgreementList   = "core:thirdParty-agreement:list"
+	ActionThirdPartyAgreementUpload = "core:thirdParty-agreement:upload"
+	ActionThirdPartyAgreementUpdate = "core:thirdParty-agreement:update"
+	ActionThirdPartyAgreementDelete = "core:thirdParty-agreement:delete"
 
 	// ThirdPartyRiskAssessment actions
 	ActionThirdPartyRiskAssessmentCreate = "core:thirdParty-risk-assessment:create"
