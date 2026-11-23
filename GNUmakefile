@@ -419,6 +419,9 @@ $(CFG_DEV_ACME_ACCOUNT_KEY):
 	@$(MKDIR) $(@D)
 	$(OPENSSL) ecparam -name prime256v1 -genkey -noout -out $@
 
+# Connect @rateLimit is 10 requests per 60 seconds when unset. The dev budget
+# is the largest limit YAML stores exactly (2^53-1) and the largest window, in
+# seconds, that fits in a time.Duration.
 cfg/dev.yaml: bin/probod-bootstrap $(CFG_DEV_OAUTH2_KEY) $(CFG_DEV_IDENTITY_FEDERATION_KEY) $(CFG_DEV_ACME_ACCOUNT_KEY) compose/step-ca/certs/root_ca.crt $(wildcard $(DEV_ENV))
 	@$(MKDIR) $(@D)
 	set -a; \
@@ -434,6 +437,7 @@ cfg/dev.yaml: bin/probod-bootstrap $(CFG_DEV_OAUTH2_KEY) $(CFG_DEV_IDENTITY_FEDE
 	PROBOD_IDENTITY_FEDERATION_ENABLED=true; \
 	PROBOD_IDENTITY_FEDERATION_SIGNING_KEY="$$($(CAT) $(CFG_DEV_IDENTITY_FEDERATION_KEY))"; \
 	PROBOD_API_CORS_ALLOWED_ORIGINS="http://localhost:8080,http://localhost:5173,http://localhost:5174,http://localhost:5175"; \
+	PROBOD_API_GRAPHQL_RATE_LIMIT='{"default":{"limit":9007199254740991,"window":9223372036}}'; \
 	PROBOD_PG_ADDR=localhost:5432; \
 	PROBOD_PG_USERNAME=postgres; \
 	PROBOD_PG_PASSWORD=postgres; \

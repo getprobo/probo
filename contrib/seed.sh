@@ -180,7 +180,7 @@ resp=$(gql_connect '
 check_error "$resp" "assumeOrganizationSession"
 echo "  Assumed organization session"
 
-EXPIRES_AT=$(date -u -v+1y +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null \
+EXPIRES_AT=$(date -u -v+90d +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null \
   || date -u -d "+1 year" +"%Y-%m-%dT%H:%M:%SZ")
 vars=$(jo input="$(
   jo \
