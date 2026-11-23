@@ -158,6 +158,11 @@
     },
     "organization": "Organisation",
     "organizationPlaceholder": "Sélectionner une organisation",
+    "organizationsEmpty": {
+      "title": "{{provider}} n’a renvoyé aucune organisation",
+      "description": "L’organisation n’a peut-être pas encore approuvé l’accès de Probo, ou le compte connecté est un compte personnel et non une organisation.",
+      "remediation": "Vérifier l’accès de Probo"
+    },
     "comingSoon": "Bientôt disponible",
     "actions": {
       "add": "Ajouter un connecteur",

@@ -61,6 +61,8 @@ export const connectorCard = tv({
     metaRow: "flex flex-wrap items-center justify-between gap-2",
     tags: "flex flex-wrap items-center gap-2",
     organizationSelect: "w-44 shrink-0",
+    organizationsEmpty: "pointer-events-auto relative z-1",
+    organizationsEmptyCopy: "flex flex-col gap-1",
   },
 });
 

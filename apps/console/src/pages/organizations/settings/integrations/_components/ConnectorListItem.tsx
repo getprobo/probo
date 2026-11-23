@@ -35,7 +35,7 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 import {
   connectionIssueKeys,
   connectionSignalFrom,
-  connectionTone,
+  presentationTone,
   presentConnection,
 } from "#/pages/organizations/_lib/connectorStatus";
 
@@ -47,6 +47,7 @@ import { ConnectorConnectionBadge } from "./ConnectorConnectionBadge";
 import { ConnectorDeleteDialog } from "./ConnectorDeleteDialog";
 import { ConnectorNameHeading } from "./ConnectorNameHeading";
 import { ConnectorOrganizationSelect } from "./ConnectorOrganizationSelect";
+import { ConnectorOrganizationsEmpty } from "./ConnectorOrganizationsEmpty";
 import { ConnectorProbeError } from "./ConnectorProbeError";
 import { ConnectorTypeMark } from "./ConnectorTypeMark";
 
@@ -74,6 +75,7 @@ const connectorListItemFragment = graphql`
     ...ConnectorTypeMark_connector
     ...ConnectorProbeError_connector
     ...ConnectorOrganizationSelect_connector
+    ...ConnectorOrganizationsEmpty_connector
     ...ConnectorDeleteDialog_connector
     ...ConnectorAPIKeyDialog_connector
   }
@@ -104,7 +106,7 @@ export function ConnectorListItem({
   });
   const solo = signal == null ? null : presentConnection(signal);
   const connectionIssues = connectionIssueKeys(solo == null ? [] : [solo]);
-  const tone = solo == null ? "sand" : connectionTone(solo.status);
+  const tone = solo == null ? "sand" : presentationTone(solo);
   const showAPIKey = connector.canUpdate && connector.canReplaceAPIKey;
   const menu = (showAPIKey || connector.canDelete)
     ? (
@@ -166,11 +168,16 @@ export function ConnectorListItem({
             {t("listPage.accountCount", { count: connector.accounts.totalCount })}
           </Badge>
         </div>
-        <div className={metaRow()}>
-          <div className="pointer-events-auto relative z-1 ml-auto">
-            <ConnectorOrganizationSelect connectorKey={connector} />
+        {connector.providerOrganizations.status === "AVAILABLE" && (
+          <div className={metaRow()}>
+            <div className="pointer-events-auto relative z-1 ml-auto">
+              <ConnectorOrganizationSelect connectorKey={connector} />
+            </div>
           </div>
-        </div>
+        )}
+        {connector.providerOrganizations.status === "EMPTY" && (
+          <ConnectorOrganizationsEmpty connectorKey={connector} />
+        )}
         {solo?.issue === "reconnect" && (
           <div className="pointer-events-auto relative z-1">
             <ButtonAnchor

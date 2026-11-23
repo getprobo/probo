@@ -38,6 +38,8 @@ export interface ConnectionSignal {
 export interface ConnectionPresentation {
   status: ConnectorConnectionStatus;
   issue: ConnectionIssueKey | null;
+  // The credential is valid, but the provider returned no organization.
+  warning: boolean;
 }
 
 // A linked record can arrive before the probe. Absent is not a failure.
@@ -59,21 +61,25 @@ export function connectionSignalFrom(connector: {
 
 export function presentConnection(signal: ConnectionSignal): ConnectionPresentation {
   if (signal.status === "NOT_AUTHORIZED") {
-    return { status: signal.status, issue: "notAuthorized" };
+    return { status: signal.status, issue: "notAuthorized", warning: false };
   }
 
   if (
     signal.status === "CONNECTED"
     && signal.organizationsStatus !== "UNAVAILABLE"
   ) {
-    return { status: "CONNECTED", issue: null };
+    return {
+      status: "CONNECTED",
+      issue: null,
+      warning: signal.organizationsStatus === "EMPTY",
+    };
   }
 
   // An unreadable organization list fails the connector, even when the probe says connected.
   if (signal.status === "CONNECTED") {
     return signal.canReconnect
-      ? { status: "RECONNECT_REQUIRED", issue: "reconnect" }
-      : { status: "DISCONNECTED", issue: "credentials" };
+      ? { status: "RECONNECT_REQUIRED", issue: "reconnect", warning: false }
+      : { status: "DISCONNECTED", issue: "credentials", warning: false };
   }
 
   return {
@@ -81,6 +87,7 @@ export function presentConnection(signal: ConnectionSignal): ConnectionPresentat
     issue: signal.status === "RECONNECT_REQUIRED" || signal.canReconnect
       ? "reconnect"
       : "credentials",
+    warning: false,
   };
 }
 
@@ -103,10 +110,22 @@ export function aggregateConnectionTone(
 ): ConnectionTone {
   const [first] = presented;
   if (first != null && presented.every(item => item.status === first.status)) {
+    if (presented.some(item => item.warning)) {
+      return "amber";
+    }
+
     return connectionTone(first.status);
   }
 
   return "amber";
+}
+
+export function presentationTone(presented: ConnectionPresentation): ConnectionTone {
+  if (presented.warning) {
+    return "amber";
+  }
+
+  return connectionTone(presented.status);
 }
 
 export function connectionTone(status: ConnectorConnectionStatus): ConnectionTone {

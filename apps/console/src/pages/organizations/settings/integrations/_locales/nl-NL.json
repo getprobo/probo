@@ -158,6 +158,11 @@
     },
     "organization": "Organisatie",
     "organizationPlaceholder": "Selecteer een organisatie",
+    "organizationsEmpty": {
+      "title": "{{provider}} heeft geen organisaties geretourneerd",
+      "description": "De organisatie heeft de toegang van Probo mogelijk nog niet goedgekeurd, of het gekoppelde account is een persoonlijk account in plaats van een organisatie.",
+      "remediation": "Bekijk de toegang van Probo"
+    },
     "comingSoon": "Binnenkort beschikbaar",
     "actions": {
       "add": "Connector toevoegen",

@@ -158,6 +158,11 @@
     },
     "organization": "Organization",
     "organizationPlaceholder": "Select an organization",
+    "organizationsEmpty": {
+      "title": "{{provider}} returned no organizations",
+      "description": "The organization may not have approved Probo's access yet, or the connected account may be a personal account rather than an organization.",
+      "remediation": "Review Probo's access"
+    },
     "comingSoon": "Coming soon",
     "actions": {
       "add": "Add connector",

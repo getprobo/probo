@@ -78,7 +78,10 @@ export function ConnectorOrganizationSelect({
   const { organizationSelect } = connectorCard();
   const organizations = connector.providerOrganizations;
 
-  if (organizations == null || organizations.status === "NOT_APPLICABLE") {
+  if (
+    organizations == null
+    || organizations.status !== "AVAILABLE"
+  ) {
     return null;
   }
 
@@ -114,7 +117,7 @@ export function ConnectorOrganizationSelect({
     <div className={organizationSelect()}>
       <Select
         value={connector.selectedOrganization}
-        disabled={!connector.canCreate || isUpdating || organizations.status !== "AVAILABLE"}
+        disabled={!connector.canCreate || isUpdating}
         onValueChange={handleChange}
       >
         <SelectTrigger size={1} aria-label={t("listPage.organization")}>

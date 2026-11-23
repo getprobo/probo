@@ -24,7 +24,7 @@ import { useTranslation } from "react-i18next";
 import {
   type ConnectionPresentation,
   type ConnectionTone,
-  connectionTone,
+  presentationTone,
 } from "#/pages/organizations/_lib/connectorStatus";
 
 interface ConnectorConnectionBadgeProps {
@@ -63,7 +63,7 @@ export function ConnectorConnectionBadge({
     return (
       <Badge
         variant="soft"
-        color={connectionTone(solo.status)}
+        color={presentationTone(solo)}
         size={1}
       >
         {t(`detailsPage.status.${solo.status}`)}

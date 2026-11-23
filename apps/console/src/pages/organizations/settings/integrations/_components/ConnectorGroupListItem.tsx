@@ -42,7 +42,7 @@ import {
   aggregateConnectionTone,
   connectionIssueKeys,
   connectionSignalFrom,
-  connectionTone,
+  presentationTone,
   presentConnection,
 } from "#/pages/organizations/_lib/connectorStatus";
 import { useConnectorStatuses } from "#/pages/organizations/_lib/useConnectorStatuses";
@@ -167,7 +167,7 @@ function ConnectorGroupListItemCard({
   const solo = single == null ? null : presented[0] ?? null;
   const tone = single == null
     ? (presented.length === 0 ? "sand" : aggregateConnectionTone(presented))
-    : (solo == null ? "sand" : connectionTone(solo.status));
+    : (solo == null ? "sand" : presentationTone(solo));
   const connectedCount = presented.filter(item => item.status === "CONNECTED").length;
   const accountTotal = connectors.reduce(
     (sum, connector) => sum + connector.accounts.totalCount,
