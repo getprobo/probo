@@ -171,6 +171,8 @@
       "save": "Enregistrer",
       "reply": "Répondre",
       "replyPlaceholder": "Répondre…",
+      "comment": "Commenter",
+      "commentPlaceholder": "Ajouter un commentaire…",
       "send": "Envoyer",
       "showMoreReplies": "Afficher plus de réponses",
       "views": {
@@ -201,6 +203,7 @@
         "accept": "Impossible d'accepter la suggestion",
         "reject": "Impossible de refuser la suggestion",
         "reply": "Impossible d'envoyer la réponse",
+        "comment": "Impossible d'ajouter le commentaire",
         "update": "Impossible de modifier le commentaire",
         "delete": "Impossible de supprimer le commentaire"
       },

@@ -349,16 +349,23 @@ export const documentCommentHistory = tv({
 export const documentReviewList = tv({
   slots: {
     column: "relative",
-    card: "absolute inset-x-0 transition-[top] duration-150 ease-out",
+    card: "absolute inset-x-0",
   },
   variants: {
     placed: {
       true: {},
       false: { card: "invisible" },
     },
+    // Only a card already shown at a position animates, so a new card
+    // appears in place instead of sliding down from the top.
+    settled: {
+      true: { card: "transition-[top] duration-150 ease-out" },
+      false: {},
+    },
   },
   defaultVariants: {
     placed: false,
+    settled: false,
   },
 });
 
@@ -437,7 +444,7 @@ export const documentReviewReplyForm = tv({
       "min-h-8 [&_.tiptap_p]:text-1! [&_[data-rich-editor-toolbar]]:mt-0",
       "[&_.tiptap>p:first-child]:mt-0 [&_.tiptap>p:last-child]:mb-0",
     ],
-    send: "ml-auto",
+    actions: "ml-auto flex items-center gap-1",
   },
 });
 

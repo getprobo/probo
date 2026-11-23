@@ -37,16 +37,27 @@ import { documentReviewReplyForm } from "../../variants";
 
 interface DocumentReviewReplyFormProps {
   onSubmit: (content: string) => Promise<void>;
+  placeholder?: string;
+  label?: string;
+  autoFocus?: boolean;
+  // Adds a cancel button; Escape cancels too.
+  onCancel?: () => void;
 }
 
-export function DocumentReviewReplyForm({ onSubmit }: DocumentReviewReplyFormProps) {
+export function DocumentReviewReplyForm({
+  onSubmit,
+  placeholder,
+  label,
+  autoFocus = false,
+  onCancel,
+}: DocumentReviewReplyFormProps) {
   const { t } = useTranslation("organizations/documents");
   const mentionSource = useMentionMembers();
   const [content, setContent] = useState("");
   const [editorKey, setEditorKey] = useState(0);
   const [error, setError] = useState<string>();
   const [submitting, setSubmitting] = useState(false);
-  const { root, editor, send } = documentReviewReplyForm();
+  const { root, editor, actions } = documentReviewReplyForm();
 
   function handleSubmit() {
     if (submitting) {
@@ -77,7 +88,16 @@ export function DocumentReviewReplyForm({ onSubmit }: DocumentReviewReplyFormPro
   }
 
   return (
-    <Form className={root()} onFormSubmit={handleSubmit}>
+    <Form
+      className={root()}
+      onFormSubmit={handleSubmit}
+      onKeyDown={(event) => {
+        if (onCancel != null && event.key === "Escape" && !event.defaultPrevented) {
+          event.preventDefault();
+          onCancel();
+        }
+      }}
+    >
       <Field error={error}>
         <CommentEditor
           key={editorKey}
@@ -85,23 +105,36 @@ export function DocumentReviewReplyForm({ onSubmit }: DocumentReviewReplyFormPro
           content={content}
           controls={false}
           disabled={submitting}
+          autoFocus={autoFocus}
           mentionSource={mentionSource}
-          placeholder={t("details.review.replyPlaceholder")}
-          aria-label={t("details.review.reply")}
+          placeholder={placeholder ?? t("details.review.replyPlaceholder")}
+          aria-label={label ?? t("details.review.reply")}
           onModEnter={handleSubmit}
           toolbar={(
-            <Button
-              type="submit"
-              size={1}
-              variant="solid"
-              color="neutral"
-              highContrast
-              className={send()}
-              loading={submitting}
-              aria-keyshortcuts={submitting ? undefined : shortcutAria("Enter")}
-            >
-              {t("details.review.send")}
-            </Button>
+            <div className={actions()}>
+              {onCancel != null && (
+                <Button
+                  size={1}
+                  variant="ghost"
+                  color="neutral"
+                  disabled={submitting}
+                  onClick={onCancel}
+                >
+                  {t("details.review.cancel")}
+                </Button>
+              )}
+              <Button
+                type="submit"
+                size={1}
+                variant="solid"
+                color="neutral"
+                highContrast
+                loading={submitting}
+                aria-keyshortcuts={submitting ? undefined : shortcutAria("Enter")}
+              >
+                {t("details.review.send")}
+              </Button>
+            </div>
           )}
           onChangeContent={(next) => {
             setContent(next);

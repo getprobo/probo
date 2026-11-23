@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import type { Editor } from "@tiptap/core";
-import type { ReactNode } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 
 import { type ReviewCardAnchor, useReviewCardTops } from "../../_lib/useReviewCardTops";
 import { documentReviewList } from "../../variants";
@@ -43,6 +43,15 @@ export function DocumentReviewListColumn({
   onPressInside,
 }: DocumentReviewListColumnProps) {
   const { columnRef, bindCard, tops, height } = useReviewCardTops(editor, anchors, activeKey);
+  const [settled, setSettled] = useState<ReadonlySet<string>>(() => new Set());
+  // A frame later, once a card's first placement has been styled without a
+  // transition. Sooner, the browser would animate it from top 0.
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      setSettled(new Set(Object.keys(tops)));
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [tops]);
   const { column, card } = documentReviewList();
 
   return (
@@ -52,7 +61,7 @@ export function DocumentReviewListColumn({
           key={key}
           ref={bindCard}
           data-review-card={key}
-          className={card({ placed: tops[key] != null })}
+          className={card({ placed: tops[key] != null, settled: settled.has(key) })}
           style={{ top: tops[key] ?? 0 }}
           onPointerDownCapture={onPressInside}
         >

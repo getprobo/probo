@@ -171,6 +171,8 @@
       "save": "Opslaan",
       "reply": "Reageren",
       "replyPlaceholder": "Reageren…",
+      "comment": "Opmerking",
+      "commentPlaceholder": "Opmerking toevoegen…",
       "send": "Versturen",
       "showMoreReplies": "Meer reacties tonen",
       "views": {
@@ -201,6 +203,7 @@
         "accept": "De suggestie kon niet worden geaccepteerd",
         "reject": "De suggestie kon niet worden afgewezen",
         "reply": "De reactie kon niet worden verstuurd",
+        "comment": "De opmerking kon niet worden toegevoegd",
         "update": "De opmerking kon niet worden bijgewerkt",
         "delete": "De opmerking kon niet worden verwijderd"
       },

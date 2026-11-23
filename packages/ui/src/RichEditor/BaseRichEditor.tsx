@@ -31,6 +31,7 @@ import useToast from "../v2/Toaster/useToast";
 import { anyAttachmentAccept, fileAccept, imageAccept } from "./attachments";
 import { BlockMenu } from "./BlockMenu/BlockMenu";
 import { BubbleMenu } from "./BubbleMenu";
+import { BubbleMenuFormatting } from "./BubbleMenuFormatting";
 import { getMentionStorage, type MentionSource } from "./MentionExtension";
 import { MentionMenu } from "./MentionMenu/MentionMenu";
 import { OptionsMenu } from "./OptionsMenu/OptionsMenu";
@@ -157,10 +158,12 @@ export type RichEditorProps = ComponentProps<"div"> & {
   suspendContentChanges?: boolean;
   // Review cards rendered inside the scrollport so they move with the page.
   margin?: ReactNode;
-  // Portals a fixed toolbar into this element. It replaces the selection
-  // bubble, the plus handle, and the handle's turn-into menu. The drag
-  // handle, slash menu, and table menus stay.
+  // Portals a fixed toolbar into this element. It replaces the formatting
+  // items of the selection bubble, the plus handle, and the handle's
+  // turn-into menu. The drag handle, slash menu, and table menus stay.
   toolbarContainer?: HTMLElement | null;
+  // Items of the selection bubble, in place of the formatting items.
+  bubbleMenu?: (editor: Editor) => ReactNode;
 };
 
 type BaseRichEditorProps = RichEditorProps & {
@@ -204,6 +207,7 @@ export function BaseRichEditor(props: BaseRichEditorProps) {
     suspendContentChanges = false,
     margin,
     toolbarContainer,
+    bubbleMenu,
     extensions,
     blockMenu,
     ...divProps
@@ -425,6 +429,9 @@ export function BaseRichEditor(props: BaseRichEditorProps) {
   const showAttachment = attachments && onUploadFile != null;
   const showToolbar = showAttachment || toolbar != null;
   const fixedToolbar = toolbarContainer != null;
+  const bubbleItems = bubbleMenu
+    ? bubbleMenu(editor)
+    : !fixedToolbar && <BubbleMenuFormatting editor={editor} />;
   const { bar, attach } = attachmentToolbar();
 
   return (
@@ -448,7 +455,7 @@ export function BaseRichEditor(props: BaseRichEditorProps) {
       )}
       {!disabled && (
         <>
-          {!fixedToolbar && <BubbleMenu editor={editor} />}
+          {bubbleItems && <BubbleMenu editor={editor}>{bubbleItems}</BubbleMenu>}
           {blockMenu && (
             <>
               <BlockMenu

@@ -52,28 +52,53 @@ interface DocumentReviewAuthorProps {
 
 export function DocumentReviewAuthor({
   profileKey,
+  ...props
+}: DocumentReviewAuthorProps) {
+  const profile = useFragment(documentReviewAuthorFragment, profileKey);
+
+  return (
+    <DocumentReviewAuthorView
+      fullName={profile.fullName}
+      emailAddress={profile.emailAddress}
+      avatarUrl={profile.avatar?.downloadUrl ?? null}
+      {...props}
+    />
+  );
+}
+
+interface DocumentReviewAuthorViewProps {
+  fullName: string;
+  emailAddress: string;
+  avatarUrl: string | null;
+  // Without it, the time line is left out.
+  createdAt?: string;
+  primary?: boolean;
+  trailing?: ReactNode;
+}
+
+export function DocumentReviewAuthorView({
+  fullName,
+  emailAddress,
+  avatarUrl,
   createdAt,
   primary = false,
   trailing,
-}: DocumentReviewAuthorProps) {
-  const profile = useFragment(documentReviewAuthorFragment, profileKey);
+}: DocumentReviewAuthorViewProps) {
   const item = useContext(DocumentReviewItemContext);
   const { i18n, t } = useTranslation("organizations/documents");
-  const createdLabel = relativeDateFormat(i18n.language, createdAt)
-    || t("details.review.justNow");
   const { root, identity, name, nameButton, time, trailing: trailingClass } = documentReviewAuthor();
   const nameText = (
     <Text size={1} weight="medium" className={name()}>
-      {profile.fullName}
+      {fullName}
     </Text>
   );
 
   return (
     <div className={root()}>
       <Avatar
-        name={profile.fullName}
-        email={profile.emailAddress}
-        src={profile.avatar?.downloadUrl}
+        name={fullName}
+        email={emailAddress}
+        src={avatarUrl ?? undefined}
         size={1}
         radius="full"
       />
@@ -82,8 +107,8 @@ export function DocumentReviewAuthor({
           ? (
               <CardButton
                 aria-label={item.kind === "comment"
-                  ? t("details.review.openComment", { name: profile.fullName })
-                  : t("details.review.openSuggestion", { name: profile.fullName })}
+                  ? t("details.review.openComment", { name: fullName })
+                  : t("details.review.openSuggestion", { name: fullName })}
                 aria-pressed={item.active}
                 className={nameButton()}
                 onClick={item.onActivate}
@@ -92,9 +117,11 @@ export function DocumentReviewAuthor({
               </CardButton>
             )
           : nameText}
-        <Text size={1} color="faint" className={time()}>
-          {createdLabel}
-        </Text>
+        {createdAt != null && (
+          <Text size={1} color="faint" className={time()}>
+            {relativeDateFormat(i18n.language, createdAt) || t("details.review.justNow")}
+          </Text>
+        )}
       </div>
       {trailing != null && <div className={trailingClass()}>{trailing}</div>}
     </div>

@@ -171,6 +171,8 @@
       "save": "Save",
       "reply": "Reply",
       "replyPlaceholder": "Reply…",
+      "comment": "Comment",
+      "commentPlaceholder": "Add a comment…",
       "send": "Send",
       "showMoreReplies": "Show more replies",
       "views": {
@@ -201,6 +203,7 @@
         "accept": "Could not accept the suggestion",
         "reject": "Could not reject the suggestion",
         "reply": "Could not send the reply",
+        "comment": "Could not add the comment",
         "update": "Could not update the comment",
         "delete": "Could not delete the comment"
       },

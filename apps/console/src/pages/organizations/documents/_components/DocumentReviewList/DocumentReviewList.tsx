@@ -26,6 +26,8 @@ import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { DocumentReviewListQuery } from "#/__generated__/core/DocumentReviewListQuery.graphql";
 
+import type { DocumentCommentDraft } from "../../_lib/documentCommentDraft";
+
 import { DocumentReviewPanel } from "./DocumentReviewPanel";
 
 export const documentReviewListQuery = graphql`
@@ -47,6 +49,8 @@ interface DocumentReviewListProps {
   switchContainer: HTMLElement | null;
   activeKey: string | null;
   onActiveChange: (key: string | null) => void;
+  commentDraft: DocumentCommentDraft | null;
+  onCommentDraftChange: (draft: DocumentCommentDraft | null) => void;
 }
 
 // The column never blocks the document. While its query loads or after it

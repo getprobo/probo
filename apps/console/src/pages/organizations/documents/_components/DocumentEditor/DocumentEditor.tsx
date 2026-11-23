@@ -34,6 +34,7 @@ import type { DocumentVersionListQuery } from "#/__generated__/core/DocumentVers
 import type { DocumentViewContentQuery } from "#/__generated__/core/DocumentViewContentQuery.graphql";
 import { useUploadRichTextFile } from "#/pages/organizations/_lib/useUploadRichTextFile";
 
+import type { DocumentCommentDraft } from "../../_lib/documentCommentDraft";
 import {
   documentPageLayout,
   documentPageMargin,
@@ -51,6 +52,7 @@ import { DocumentReviewList } from "../DocumentReviewList/DocumentReviewList";
 import { DocumentVersionContent } from "../DocumentVersionList/DocumentVersionContent";
 import { DocumentVersionList, documentVersionListQuery } from "../DocumentVersionList/DocumentVersionList";
 
+import { DocumentCommentBubbleItem } from "./DocumentCommentBubbleItem";
 import { DocumentEditorPages } from "./DocumentEditorPages";
 import { DocumentEditorToolbar } from "./DocumentEditorToolbar";
 import { DocumentViewContent, documentViewContentQuery } from "./DocumentViewContent";
@@ -61,6 +63,7 @@ const documentEditorFragment = graphql`
   fragment DocumentEditor_document on Document {
     id
     orientation
+    canComment: permission(action: "core:document:comment")
   }
 `;
 
@@ -89,13 +92,30 @@ export function DocumentEditor({
   const document = useFragment(documentEditorFragment, documentKey);
   const { t } = useTranslation("organizations/documents");
   const [activeKey, setActiveKey] = useState<string | null>(null);
+  const [commentDraft, setCommentDraft] = useState<DocumentCommentDraft | null>(null);
+  const [draftMode, setDraftMode] = useState(mode);
+  if (draftMode !== mode) {
+    setDraftMode(mode);
+    setCommentDraft(null);
+  }
+  // Opening another card drops the comment being written.
+  const activate = useCallback((key: string | null) => {
+    setActiveKey(key);
+    if (key != null) {
+      setCommentDraft(null);
+    }
+  }, []);
+  const startCommentDraft = useCallback((draft: DocumentCommentDraft) => {
+    setActiveKey(null);
+    setCommentDraft(draft);
+  }, []);
   const [editor, setEditorInstance] = useState<Editor | null>(null);
   const [pageCount, setPageCount] = useState(1);
   const [toolbarEl, setToolbarEl] = useState<HTMLDivElement | null>(null);
   const { handle, failed } = useDocumentCollaboration(document.id);
-  const { controller, setEditor } = useSuggestionController(document.id, mode, setActiveKey);
+  const { controller, setEditor } = useSuggestionController(document.id, mode, activate);
   const commentAnchorController: CommentAnchorController = useRef({
-    onOpenThread: (id: string) => setActiveKey(id),
+    onOpenThread: (id: string) => activate(id),
   });
   const onUploadFile = useUploadRichTextFile();
   const paperRef = useRef<HTMLDivElement>(null);
@@ -194,6 +214,18 @@ export function DocumentEditor({
     setEditorInstance(next);
   }, [setEditor]);
 
+  const canComment = document.canComment;
+  const bubbleMenu = useCallback(
+    (current: Editor) => handle != null && canComment && (
+      <DocumentCommentBubbleItem
+        editor={current}
+        collaborationHandle={handle}
+        onComment={startCommentDraft}
+      />
+    ),
+    [canComment, handle, startCommentDraft],
+  );
+
   const onVersionMissing = useCallback(() => onVersionChange(null), [onVersionChange]);
 
   const showLatest = useCallback(() => onVersionChange(null), [onVersionChange]);
@@ -272,6 +304,7 @@ export function DocumentEditor({
                                 commentAnchorController={commentAnchorController}
                                 pagination={pagination}
                                 toolbarContainer={toolbarEl}
+                                bubbleMenu={bubbleMenu}
                                 onEditor={onEditor}
                                 onUploadFile={onUploadFile}
                               />
@@ -288,7 +321,9 @@ export function DocumentEditor({
                     collaborationHandle={handle}
                     switchContainer={switchContainer}
                     activeKey={activeKey}
-                    onActiveChange={setActiveKey}
+                    onActiveChange={activate}
+                    commentDraft={commentDraft}
+                    onCommentDraftChange={setCommentDraft}
                   />
                 )}
               </div>

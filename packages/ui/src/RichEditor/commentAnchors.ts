@@ -38,6 +38,11 @@ export type CommentAnchor = {
 
 const commentAnchorPluginKey = new PluginKey<DecorationSet>("document-comment-anchors");
 
+export function encodeDocumentAnchor(value: string): string {
+  const bytes = new TextEncoder().encode(value);
+  return btoa(Array.from(bytes, byte => String.fromCharCode(byte)).join(""));
+}
+
 export function decodeDocumentAnchor(value: string): string | null {
   try {
     const binary = atob(value);

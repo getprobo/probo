@@ -21,7 +21,7 @@
 import { Schema } from "@tiptap/pm/model";
 import { describe, expect, it } from "vitest";
 
-import { commentHighlightRanges } from "./commentAnchors";
+import { commentHighlightRanges, decodeDocumentAnchor, encodeDocumentAnchor } from "./commentAnchors";
 
 const schema = new Schema({
   nodes: {
@@ -44,5 +44,18 @@ describe("comment highlights", () => {
       { from: 1, to: 6, block: false },
       { from: 8, to: 13, block: false },
     ]);
+  });
+});
+
+describe("document anchors", () => {
+  it("round-trips a cursor through base64", () => {
+    const cursor = "3@a1b2c3d4";
+    expect(encodeDocumentAnchor(cursor)).toBe(btoa(cursor));
+    expect(decodeDocumentAnchor(encodeDocumentAnchor(cursor))).toBe(cursor);
+  });
+
+  it("round-trips non-ASCII text", () => {
+    const value = "été ✓ 文档";
+    expect(decodeDocumentAnchor(encodeDocumentAnchor(value))).toBe(value);
   });
 });

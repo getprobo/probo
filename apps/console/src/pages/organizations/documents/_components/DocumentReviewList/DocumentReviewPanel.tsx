@@ -30,6 +30,7 @@ import type { DocumentReviewPanel_threads$key } from "#/__generated__/core/Docum
 import type { DocumentReviewPanelThreadsPaginationQuery } from "#/__generated__/core/DocumentReviewPanelThreadsPaginationQuery.graphql";
 import { useLoadAllPages } from "#/lib/relay/useLoadAllPages";
 
+import { type DocumentCommentDraft, documentCommentDraftKey } from "../../_lib/documentCommentDraft";
 import { documentCommentHistoryConnectionId, type DocumentThreadConnections } from "../../_lib/documentThreadConnections";
 import type { ThreadAnchorSource } from "../../_lib/reviewAnchors";
 import type { ReviewHistoryTarget } from "../../_lib/reviewHistoryTarget";
@@ -40,6 +41,7 @@ import type { ReviewCardAnchor } from "../../_lib/useReviewCardTops";
 import { useReviewHighlights } from "../../_lib/useReviewHighlights";
 import { documentReviewPanel } from "../../variants";
 
+import { DocumentCommentDraftCard } from "./DocumentCommentDraftCard";
 import { DocumentCommentHistory, documentCommentHistoryQuery } from "./DocumentCommentHistory";
 import { DocumentCommentThreadListItem } from "./DocumentCommentThreadListItem";
 import { DocumentReviewListColumn } from "./DocumentReviewListColumn";
@@ -88,6 +90,8 @@ interface DocumentReviewPanelProps {
   switchContainer: HTMLElement | null;
   activeKey: string | null;
   onActiveChange: (key: string | null) => void;
+  commentDraft: DocumentCommentDraft | null;
+  onCommentDraftChange: (draft: DocumentCommentDraft | null) => void;
 }
 
 // Owns what both views share: the open threads and suggestions, where they
@@ -100,6 +104,8 @@ export function DocumentReviewPanel({
   switchContainer,
   activeKey,
   onActiveChange,
+  commentDraft,
+  onCommentDraftChange,
 }: DocumentReviewPanelProps) {
   const threadsPage = usePaginationFragment<
     DocumentReviewPanelThreadsPaginationQuery,
@@ -181,13 +187,20 @@ export function DocumentReviewPanel({
       const anchor = anchors.suggestions.get(suggestionId);
       if (anchor) list.push({ key: suggestionId, pos: anchor.from });
     }
+    if (commentDraft != null) {
+      list.push({ key: documentCommentDraftKey, pos: commentDraft.pos });
+    }
     return list;
-  }, [anchors, suggestionThreads, threads]);
+  }, [anchors, commentDraft, suggestionThreads, threads]);
 
   // A thread picked in the history may be resolved or belong to a
   // suggestion, so it is not among the open threads drawn in the text. It
   // joins them while it is active so its text still lights up.
   const highlightSources = useMemo(() => {
+    if (commentDraft != null) {
+      const { anchorStart, anchorEnd } = commentDraft;
+      return [...threadSources, { id: documentCommentDraftKey, anchorStart, anchorEnd }];
+    }
     if (
       historyAnchor == null
       || historyAnchor.id !== activeKey
@@ -196,11 +209,12 @@ export function DocumentReviewPanel({
       return threadSources;
     }
     return [...threadSources, historyAnchor];
-  }, [activeKey, historyAnchor, threadSources]);
+  }, [activeKey, commentDraft, historyAnchor, threadSources]);
+  const layoutActiveKey = commentDraft != null ? documentCommentDraftKey : activeKey;
   const activeSuggestionId = activeKey != null && anchors.suggestions.has(activeKey)
     ? activeKey
     : null;
-  const activeThreadId = activeSuggestionId == null ? activeKey : null;
+  const activeThreadId = activeSuggestionId == null ? layoutActiveKey : null;
   useReviewHighlights(editor, highlightSources, activeThreadId, activeSuggestionId);
   const markPressInside = useDismissActiveReview(activeKey != null, () => onActiveChange(null));
 
@@ -210,6 +224,7 @@ export function DocumentReviewPanel({
   function selectView(next: DocumentReviewView) {
     setView(next);
     onActiveChange(null);
+    onCommentDraftChange(null);
     if (next === "all" && historyQueryRef == null) {
       loadHistory({ documentId: reviewDocument.id }, { fetchPolicy: "store-and-network" });
     }
@@ -233,6 +248,21 @@ export function DocumentReviewPanel({
   }
 
   function renderCard(key: string) {
+    if (key === documentCommentDraftKey && commentDraft != null) {
+      return (
+        <DocumentCommentDraftCard
+          documentId={reviewDocument.id}
+          draft={commentDraft}
+          threadConnections={threadConnections}
+          onDone={(threadId) => {
+            onCommentDraftChange(null);
+            if (threadId != null) {
+              onActiveChange(threadId);
+            }
+          }}
+        />
+      );
+    }
     const thread = threadById.get(key);
     if (thread != null) {
       return (
@@ -273,7 +303,7 @@ export function DocumentReviewPanel({
             <DocumentReviewListColumn
               editor={editor}
               anchors={cardAnchors}
-              activeKey={activeKey}
+              activeKey={layoutActiveKey}
               renderCard={renderCard}
               onPressInside={markPressInside}
             />
