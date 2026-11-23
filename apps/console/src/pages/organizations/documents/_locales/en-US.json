@@ -1,6 +1,7 @@
 {
   "details": {
     "back": "Documents",
+    "generated": "This document is generated, so it is only available in view mode.",
     "actions": {
       "cancel": "Cancel",
       "menu": "More actions",

@@ -1,6 +1,7 @@
 {
   "details": {
     "back": "Documents",
+    "generated": "Ce document est généré, il n'est donc disponible qu'en mode lecture.",
     "actions": {
       "cancel": "Annuler",
       "menu": "Plus d'actions",

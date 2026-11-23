@@ -1,6 +1,7 @@
 {
   "details": {
     "back": "Documenten",
+    "generated": "Dit document is gegenereerd en is daarom alleen in weergavemodus beschikbaar.",
     "actions": {
       "cancel": "Annuleren",
       "menu": "Meer acties",

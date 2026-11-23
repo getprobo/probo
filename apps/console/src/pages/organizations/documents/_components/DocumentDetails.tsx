@@ -20,6 +20,7 @@
 
 import { ScrollArea } from "@base-ui/react/scroll-area";
 import { CaretLeftIcon, SidebarSimpleIcon } from "@phosphor-icons/react";
+import { Callout } from "@probo/ui/src/v2/Callout/Callout";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { Link } from "@probo/ui/src/v2/Link/Link";
 import { useState } from "react";
@@ -44,6 +45,7 @@ import { DocumentTitleField } from "./DocumentTitleField";
 
 const documentDetailsFragment = graphql`
   fragment DocumentDetails_document on Document {
+    writeMode
     ...DocumentTitleField_document
     ...DocumentHeaderActions_document
     ...DocumentEditor_document
@@ -120,6 +122,11 @@ export function DocumentDetails({
         <div className={title()}>
           <DocumentTitleField documentKey={document} />
         </div>
+        {document.writeMode === "GENERATED" && (
+          <Callout color="sky" variant="soft">
+            {t("details.generated")}
+          </Callout>
+        )}
         <DocumentEditor
           documentKey={document}
           reviewQueryRef={reviewQueryRef}
