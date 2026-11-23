@@ -31,11 +31,9 @@ import (
 	"unicode/utf16"
 
 	"go.gearno.de/kit/log"
-	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/automerge"
 	collabpkg "go.probo.inc/probo/pkg/automerge/collaboration"
 	automergeprosemirror "go.probo.inc/probo/pkg/automerge/prosemirror"
-	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 )
 
@@ -55,7 +53,6 @@ const (
 )
 
 var (
-	ErrOpenSuggestions         = errors.New("document has open suggestions")
 	ErrSuggestionNotInDocument = errors.New("suggestion is not in the document")
 	ErrSuggestionUnchanged     = errors.New("suggestion does not change the quoted text")
 	ErrSuggestionOverlaps      = errors.New("quoted text overlaps an existing suggestion")
@@ -380,77 +377,6 @@ func SuggestionCursors(
 	}
 
 	return startCursor, endCursor, SuggestionQuote(spans, suggestionID), nil
-}
-
-func (s *Service) EnsureNoOpenSuggestions(
-	ctx context.Context,
-	tx pg.Tx,
-	scope coredata.Scoper,
-	documentID gid.GID,
-) error {
-	openStatus := coredata.DocumentSuggestionStatusOpen
-
-	var suggestions coredata.DocumentSuggestions
-
-	openCount, err := suggestions.CountByDocumentID(
-		ctx,
-		tx,
-		scope,
-		documentID,
-		coredata.NewDocumentSuggestionFilter(&openStatus),
-	)
-	if err != nil {
-		return fmt.Errorf("cannot count open document suggestions: %w", err)
-	}
-
-	if openCount > 0 {
-		return ErrOpenSuggestions
-	}
-
-	doc := &coredata.CollaborationDocument{}
-	if err := doc.LoadByDocumentID(ctx, tx, scope, documentID); err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil
-		}
-
-		return fmt.Errorf("cannot load collaboration document: %w", err)
-	}
-
-	changes, err := s.collectChanges(
-		ctx,
-		tx,
-		scope,
-		documentID,
-		doc.SnapshotRevision,
-		doc.ChangeRevision,
-	)
-	if err != nil {
-		return err
-	}
-
-	document, err := loadAutomergeDocument(ctx, doc.Snapshot)
-	if err != nil {
-		return fmt.Errorf("cannot open collaboration snapshot: %w", err)
-	}
-
-	defer func() { _ = document.Close() }()
-
-	if len(changes) > 0 {
-		if err := document.ApplyChanges(changes); err != nil {
-			return fmt.Errorf("cannot apply collaboration changes: %w", err)
-		}
-	}
-
-	spans, err := BodySpans(document)
-	if err != nil {
-		return err
-	}
-
-	if HasOpenSuggestions(spans) {
-		return ErrOpenSuggestions
-	}
-
-	return nil
 }
 
 func decideSuggestionSpans(

@@ -83,8 +83,6 @@ func (r *Resolver) documentReviewError(ctx context.Context, message string, err 
 		return collaboration.ErrSuggestionOverlaps
 	case errors.Is(err, collaboration.ErrSuggestionNotInDocument):
 		return collaboration.ErrSuggestionNotInDocument
-	case errors.Is(err, collaboration.ErrOpenSuggestions):
-		return collaboration.ErrOpenSuggestions
 	case errors.Is(err, collaboration.ErrDocumentCollaborationNotFound):
 		return collaboration.ErrDocumentCollaborationNotFound
 	}

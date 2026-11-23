@@ -33,7 +33,7 @@ import (
 	"go.probo.inc/probo/pkg/collaboration"
 )
 
-func TestDocumentReview_PublishBlockedByOpenSuggestion(t *testing.T) {
+func TestDocumentReview_PublishWithOpenReview(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
@@ -79,29 +79,14 @@ func TestDocumentReview_PublishBlockedByOpenSuggestion(t *testing.T) {
 		publishMajorDocumentVersion(t, owner, commentDocumentID)
 	})
 
-	t.Run("open suggestion mark blocks publish", func(t *testing.T) {
+	t.Run("open suggestion does not block publish", func(t *testing.T) {
 		t.Parallel()
 
 		paintSuggestionInsert(t, documentID, "suggestion-open", "inserted")
 
-		_, err := owner.Do(`
-			mutation($input: PublishDocumentInput!) {
-				publishDocument(input: $input) {
-					documentVersion { id }
-				}
-			}
-		`, map[string]any{
-			"input": map[string]any{
-				"minor":       false,
-				"documentId":  documentID,
-				"approverIds": []string{},
-				"changelog":   "Blocked release",
-			},
-		})
-		testutil.RequireConflictError(t, err, "publish should fail while a suggestion is open")
-		require.ErrorContains(t, err, "resolve open suggestions before publishing")
+		versionID := publishMajorDocumentVersion(t, owner, documentID)
 
-		var content struct {
+		var version struct {
 			Node struct {
 				Content struct {
 					Prosemirror string `json:"prosemirror"`
@@ -109,16 +94,17 @@ func TestDocumentReview_PublishBlockedByOpenSuggestion(t *testing.T) {
 			} `json:"node"`
 		}
 
-		err = owner.Execute(`
+		err := owner.Execute(`
 			query($id: ID!) {
 				node(id: $id) {
-					... on Document { content { prosemirror } }
+					... on DocumentVersion { content { prosemirror } }
 				}
 			}
-		`, map[string]any{"id": documentID}, &content)
+		`, map[string]any{"id": versionID}, &version)
 		require.NoError(t, err)
-		require.NotContains(t, content.Node.Content.Prosemirror, "inserted")
-		require.NotContains(t, content.Node.Content.Prosemirror, collaboration.SuggestionInsertMark)
+		require.Contains(t, version.Node.Content.Prosemirror, "Keep this sentence.")
+		require.NotContains(t, version.Node.Content.Prosemirror, "inserted")
+		require.NotContains(t, version.Node.Content.Prosemirror, collaboration.SuggestionInsertMark)
 	})
 }
 

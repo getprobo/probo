@@ -1410,10 +1410,6 @@ func (r *mutationResolver) PublishDocument(ctx context.Context, input types.Publ
 			return nil, gqlx.Conflict(ctx, errArchived)
 		}
 
-		if errors.Is(err, collaboration.ErrOpenSuggestions) {
-			return nil, gqlx.Conflictf(ctx, "resolve open suggestions before publishing")
-		}
-
 		if errPending, ok := errors.AsType[*probo.ErrDocumentVersionPendingApproval](err); ok {
 			return nil, gqlx.Conflict(ctx, errPending)
 		}
@@ -2067,8 +2063,6 @@ func (r *mutationResolver) RestoreDocumentHistory(ctx context.Context, input typ
 			return nil, gqlx.NotFound(ctx, err)
 		case errors.Is(err, collaboration.ErrDocumentCollaborationNotFound):
 			return nil, gqlx.Conflict(ctx, err)
-		case errors.Is(err, collaboration.ErrOpenSuggestions):
-			return nil, gqlx.Conflictf(ctx, "resolve open suggestions before restoring")
 		}
 
 		if errArchived, ok := errors.AsType[*collaboration.ErrDocumentArchived](err); ok {

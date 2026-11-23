@@ -286,15 +286,6 @@ func (s *Service) RestoreHistory(
 
 	defer func() { _ = opened.Document.Close() }()
 
-	spans, err := BodySpans(opened.Document)
-	if err != nil {
-		return 0, err
-	}
-
-	if HasOpenSuggestions(spans) {
-		return 0, ErrOpenSuggestions
-	}
-
 	hasHeads, err := opened.Document.HasHeads(heads)
 	if err != nil {
 		return 0, fmt.Errorf("cannot verify collaboration history restore heads: %w", err)

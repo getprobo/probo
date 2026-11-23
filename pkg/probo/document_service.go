@@ -573,9 +573,9 @@ func (s *DocumentService) publish(
 
 	result := &PublishDocumentResult{}
 
-	// Lock the collaboration document for the whole publish so the
-	// no-open-suggestions check and the snapshot materialization see one
-	// revision; a concurrent suggestion persist blocks on the same row.
+	// Lock the collaboration document for the whole publish so the snapshot
+	// materialization sees one revision; a concurrent persist blocks on the
+	// same row.
 	collabDocument := &coredata.CollaborationDocument{}
 	if err := collabDocument.LoadByDocumentIDForUpdate(ctx, tx, scope, req.DocumentID); err != nil &&
 		!errors.Is(err, coredata.ErrResourceNotFound) {
@@ -583,10 +583,6 @@ func (s *DocumentService) publish(
 	}
 
 	if err := s.ensureNoPendingApproval(ctx, scope, tx, req.DocumentID); err != nil {
-		return nil, err
-	}
-
-	if err := s.collaboration.EnsureNoOpenSuggestions(ctx, tx, scope, req.DocumentID); err != nil {
 		return nil, err
 	}
 
