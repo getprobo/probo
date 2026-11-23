@@ -21,7 +21,7 @@
 import { createPaginationExtension } from "@probo/ui/src/RichEditor/pagination";
 import { RichEditor, richEditorExtensions } from "@probo/ui/src/RichEditor/RichEditor";
 import type { Editor } from "@tiptap/core";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { documentPageLayout, documentPageSize } from "../../_lib/documentPageLayout";
 
@@ -37,8 +37,11 @@ interface DocumentReadOnlyContentProps {
 // content replaces the shown one in place, so a refetch neither remounts the
 // editor nor moves the scroll.
 export function DocumentReadOnlyContent({ content, orientation, onPages }: DocumentReadOnlyContentProps) {
-  const [editor, setEditor] = useState<Editor | null>(null);
   const [initialContent] = useState(content);
+  const contentRef = useRef(content);
+  // TipTap reports its editor asynchronously, possibly before this component
+  // mounts, so the editor is held in a ref rather than in state.
+  const editorRef = useRef<Editor | null>(null);
   const extensions = useMemo(
     () => [
       ...richEditorExtensions,
@@ -50,19 +53,20 @@ export function DocumentReadOnlyContent({ content, orientation, onPages }: Docum
     [onPages, orientation],
   );
 
+  // A rebuilt editor starts from the initial content, so it catches up too.
+  const onEditor = useCallback((next: Editor | null) => {
+    editorRef.current = next;
+    if (next != null) {
+      showContent(next, contentRef.current);
+    }
+  }, []);
+
   useEffect(() => {
-    if (editor == null || editor.isDestroyed) {
-      return;
+    contentRef.current = content;
+    if (editorRef.current != null) {
+      showContent(editorRef.current, content);
     }
-    if (JSON.stringify(editor.getJSON()) === content) {
-      return;
-    }
-    try {
-      editor.commands.setContent(JSON.parse(content) as object, { emitUpdate: false });
-    } catch {
-      // Malformed content keeps the last good one on screen.
-    }
-  }, [content, editor]);
+  }, [content]);
 
   return (
     <RichEditor
@@ -71,7 +75,18 @@ export function DocumentReadOnlyContent({ content, orientation, onPages }: Docum
       page={false}
       disabled
       editorExtensions={extensions}
-      onEditor={setEditor}
+      onEditor={onEditor}
     />
   );
+}
+
+function showContent(editor: Editor, content: string) {
+  if (editor.isDestroyed || JSON.stringify(editor.getJSON()) === content) {
+    return;
+  }
+  try {
+    editor.commands.setContent(JSON.parse(content) as object, { emitUpdate: false });
+  } catch {
+    // Malformed content keeps the last good one on screen.
+  }
 }
