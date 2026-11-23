@@ -21,7 +21,6 @@
 package types
 
 import (
-	"encoding/hex"
 	"time"
 
 	"go.probo.inc/probo/pkg/collaboration"
@@ -36,10 +35,8 @@ type (
 		ID            gid.GID   `json:"id"`
 		DocumentID    gid.GID   `json:"-"`
 		Heads         []string  `json:"heads"`
-		PreviousHeads []string  `json:"previousHeads"`
-		ActorID       string    `json:"actorID"`
+		PreviousHeads []string  `json:"-"`
 		AuthorName    *string   `json:"authorName"`
-		ProfileID     *gid.GID  `json:"-"`
 		StartedAt     time.Time `json:"startedAt"`
 		EndedAt       time.Time `json:"endedAt"`
 		ChangeCount   int       `json:"changeCount"`
@@ -80,9 +77,7 @@ func NewDocumentRevision(
 		DocumentID:    session.DocumentID,
 		Heads:         collaboration.EncodeAutomergeHashes(session.Heads),
 		PreviousHeads: collaboration.EncodeAutomergeHashes(session.PreviousHeads),
-		ActorID:       hex.EncodeToString(session.ActorID),
 		AuthorName:    authorName,
-		ProfileID:     session.ProfileID,
 		StartedAt:     session.StartedAt,
 		EndedAt:       session.EndedAt,
 		ChangeCount:   session.ChangeCount,

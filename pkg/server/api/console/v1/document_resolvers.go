@@ -486,30 +486,6 @@ func (r *documentContentResolver) Markdown(ctx context.Context, obj *types.Docum
 	return md, nil
 }
 
-// Author is the resolver for the author field.
-func (r *documentRevisionResolver) Author(ctx context.Context, obj *types.DocumentRevision) (*types.Profile, error) {
-	if obj.ProfileID == nil {
-		return nil, nil
-	}
-
-	if _, err := r.authorize(ctx, *obj.ProfileID, iam.ActionMembershipProfileGet); err != nil {
-		return nil, err
-	}
-
-	profile, err := r.iam.OrganizationService.GetProfile(ctx, *obj.ProfileID)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, nil
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot load history author", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
-	}
-
-	return types.NewProfile(profile), nil
-}
-
 // Snapshot is the resolver for the snapshot field.
 func (r *documentRevisionResolver) Snapshot(ctx context.Context, obj *types.DocumentRevision) (*types.DocumentHistorySnapshot, error) {
 	scope, err := r.authorize(ctx, obj.DocumentID, probo.ActionDocumentRevisionGet)
@@ -572,41 +548,6 @@ func (r *documentVersionResolver) Document(ctx context.Context, obj *types.Docum
 	}
 
 	return types.NewDocument(document), nil
-}
-
-// Approvers is the resolver for the approvers field.
-func (r *documentVersionResolver) Approvers(ctx context.Context, obj *types.DocumentVersion, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProfileOrderBy) (*types.ProfileConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileList)
-	if err != nil {
-		return nil, err
-	}
-
-	if gqlx.OnlyTotalCountSelected(ctx) {
-		return &types.ProfileConnection{
-			Resolver: r,
-			ParentID: obj.ID,
-		}, nil
-	}
-
-	pageOrderBy := page.OrderBy[coredata.MembershipProfileOrderField]{
-		Field:     coredata.MembershipProfileOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-
-	if orderBy != nil {
-		pageOrderBy.Field = coredata.MembershipProfileOrderField(orderBy.Field)
-		pageOrderBy.Direction = page.OrderDirection(orderBy.Direction)
-	}
-
-	c := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	p, err := r.probo.Documents.ListVersionApprovers(ctx, scope, obj.ID, c)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list document version approvers", log.Error(err))
-		return nil, gqlx.Internal(ctx)
-	}
-
-	return types.NewProfileConnection(p, r, obj.ID, nil), nil
 }
 
 // Signatures is the resolver for the signatures field.
@@ -691,24 +632,6 @@ func (r *documentVersionResolver) ApprovalQuorums(ctx context.Context, obj *type
 	return types.NewDocumentVersionApprovalQuorumConnection(p, r, obj.ID), nil
 }
 
-// Signed is the resolver for the signed field.
-func (r *documentVersionResolver) Signed(ctx context.Context, obj *types.DocumentVersion) (bool, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentVersionGet)
-	if err != nil {
-		return false, err
-	}
-
-	identity := authn.IdentityFromContext(ctx)
-
-	signed, err := r.probo.Documents.IsVersionSignedByUserEmail(ctx, scope, obj.ID, identity.EmailAddress)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot check if document version is signed", log.Error(err))
-		return false, gqlx.Internal(ctx)
-	}
-
-	return signed, nil
-}
-
 // Permission is the resolver for the permission field.
 func (r *documentVersionResolver) Permission(ctx context.Context, obj *types.DocumentVersion, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
@@ -785,11 +708,6 @@ func (r *documentVersionApprovalDecisionResolver) Approver(ctx context.Context, 
 	}
 
 	return types.NewProfile(profile), nil
-}
-
-// ConsentText is the resolver for the consentText field.
-func (r *documentVersionApprovalDecisionResolver) ConsentText(ctx context.Context, obj *types.DocumentVersionApprovalDecision) (string, error) {
-	return probo.DocumentApprovalConsentText, nil
 }
 
 // Permission is the resolver for the permission field.
@@ -896,11 +814,6 @@ func (r *documentVersionApprovalQuorumResolver) Decisions(ctx context.Context, o
 	}
 
 	return types.NewDocumentVersionApprovalDecisionConnection(p, r, obj.ID, approvalFilter), nil
-}
-
-// Permission is the resolver for the permission field.
-func (r *documentVersionApprovalQuorumResolver) Permission(ctx context.Context, obj *types.DocumentVersionApprovalQuorum, action string) (bool, error) {
-	return r.Resolver.Permission(ctx, obj, action)
 }
 
 // TotalCount is the resolver for the totalCount field.

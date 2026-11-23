@@ -19,8 +19,10 @@
 // SOFTWARE.
 
 import { PlusIcon, StampIcon, XIcon } from "@phosphor-icons/react";
+import { catchResultValue } from "@probo/helpers";
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { Button } from "@probo/ui/src/v2/Button/Button";
+import { ButtonAnchor } from "@probo/ui/src/v2/Button/ButtonAnchor";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
 import { DropdownPopup } from "@probo/ui/src/v2/Dropdown/DropdownPopup";
@@ -33,10 +35,13 @@ import { useTranslation } from "react-i18next";
 import { graphql, useFragment, usePaginationFragment } from "react-relay";
 
 import type { DocumentApprovalsSection_document$key } from "#/__generated__/core/DocumentApprovalsSection_document.graphql";
-import type { DocumentApprovalsSectionDecisions_quorum$data } from "#/__generated__/core/DocumentApprovalsSectionDecisions_quorum.graphql";
-import type { DocumentApprovalsSectionDecisions_quorum$key } from "#/__generated__/core/DocumentApprovalsSectionDecisions_quorum.graphql";
+import type {
+  DocumentApprovalsSectionDecisions_quorum$data,
+  DocumentApprovalsSectionDecisions_quorum$key,
+} from "#/__generated__/core/DocumentApprovalsSectionDecisions_quorum.graphql";
 import type { DocumentApprovalsSectionDecisionsRefetchQuery } from "#/__generated__/core/DocumentApprovalsSectionDecisionsRefetchQuery.graphql";
 import { PeopleMenu } from "#/components/people/PeopleMenu";
+import { employeePortalHref } from "#/lib/employeePortalHref";
 
 import { useUpdateDocument } from "../_lib/useUpdateDocument";
 import { documentApprovals } from "../variants";
@@ -51,6 +56,18 @@ const documentApprovalsSectionFragment = graphql`
     defaultApprovers {
       id
       fullName
+    }
+    organization {
+      employeePortals(
+        first: 1
+        orderBy: { field: CREATED_AT, direction: ASC }
+      ) @catch(to: RESULT) {
+        edges {
+          node {
+            id
+          }
+        }
+      }
     }
     pendingApproval: versions(first: 1, filter: { statuses: [PENDING_APPROVAL] }) {
       edges {
@@ -85,6 +102,8 @@ const documentApprovalsDecisionsFragment = graphql`
         node {
           id
           state
+          canApprove: permission(action: "core:document-version:approve")
+          canReject: permission(action: "core:document-version:reject")
           approver {
             id
             fullName
@@ -125,6 +144,13 @@ export function DocumentApprovalsSection({ documentKey }: DocumentApprovalsSecti
   const quorum = document.pendingApproval.edges[0]?.node.approvalQuorums.edges[0]?.node ?? null;
   const pending = quorum?.status === "PENDING";
   const canEdit = document.canUpdate && document.status !== "ARCHIVED" && !pending;
+  const employeePortalId = catchResultValue(
+    document.organization.employeePortals,
+    "cannot list employee portals",
+  )?.edges[0]?.node.id ?? null;
+  const reviewHref = employeePortalId == null
+    ? null
+    : employeePortalHref(employeePortalId, "approvals", document.id);
   const savedApprovers = document.defaultApprovers;
   const approverIds = savedApprovers.map(person => person.id);
   const shownApprovers = savedApprovers.slice(0, visibleCount);
@@ -188,7 +214,7 @@ export function DocumentApprovalsSection({ documentKey }: DocumentApprovalsSecti
         </div>
         <div className={rows()}>
           {pending && quorum != null
-            ? <DocumentApprovalDecisions quorumKey={quorum} />
+            ? <DocumentApprovalDecisions quorumKey={quorum} reviewHref={reviewHref} />
             : shownApprovers.length > 0
               ? (
                   <>
@@ -241,8 +267,12 @@ export function DocumentApprovalsSection({ documentKey }: DocumentApprovalsSecti
 
 function DocumentApprovalDecisions({
   quorumKey,
+  reviewHref,
 }: {
   quorumKey: DocumentApprovalsSectionDecisions_quorum$key;
+  // The viewer approves or rejects in the employee portal; null when the
+  // organization has none.
+  reviewHref: string | null;
 }) {
   const { t } = useTranslation("organizations/documents");
   const {
@@ -266,6 +296,20 @@ function DocumentApprovalDecisions({
                 {decision.approver.fullName}
               </Text>
               <div className={trailing()}>
+                {decision.state === "PENDING"
+                  && (decision.canApprove || decision.canReject)
+                  && reviewHref != null && (
+                  <ButtonAnchor
+                    size={1}
+                    variant="soft"
+                    color="neutral"
+                    href={reviewHref}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {t("details.approvals.review")}
+                  </ButtonAnchor>
+                )}
                 <Badge size={1} variant="soft" color={stateColor(decision.state)}>
                   {t(`details.approvals.states.${decision.state}`)}
                 </Badge>

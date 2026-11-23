@@ -32,7 +32,6 @@ import {
   createCommentAnchorExtension,
   refreshCommentAnchors,
 } from "./commentAnchors";
-import { createRichEditorHistoryExtension } from "./historyDecorations";
 import { createPaginationExtension, type PaginationOptions } from "./pagination";
 import {
   createRichEditorPresenceExtension,
@@ -63,7 +62,6 @@ type CollaborativeRichEditorProps = Omit<
 
 export function CollaborativeRichEditor({
   collaborationHandle,
-  historyHighlights,
   suggesting,
   commentAnchors,
   commentAnchorController,
@@ -91,12 +89,9 @@ export function CollaborativeRichEditor({
     if (pagination) {
       base.push(createPaginationExtension(pagination));
     }
-    if (!historyHighlights?.length) {
-      return base;
-    }
 
-    return [...base, createRichEditorHistoryExtension(historyHighlights)];
-  }, [collaborationHandle, commentAnchorController, historyHighlights, pagination, suggesting]);
+    return base;
+  }, [collaborationHandle, commentAnchorController, pagination, suggesting]);
 
   useEffect(() => {
     if (!editorRef.current || !commentAnchors) return;
@@ -127,7 +122,6 @@ export function CollaborativeRichEditor({
     <RichEditor
       {...props}
       editorExtensions={editorExtensions}
-      historyHighlights={undefined}
       initialContent={initialContent}
       onEditor={handleEditor}
       onPresence={onPresence}

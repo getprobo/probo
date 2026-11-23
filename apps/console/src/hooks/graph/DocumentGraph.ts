@@ -26,8 +26,6 @@ import type { DocumentGraphDeleteMutation } from "#/__generated__/core/DocumentG
 
 import { useMutationWithToasts } from "../useMutationWithToasts";
 
-export const DocumentsConnectionKey = "DocumentsListQuery_documents";
-
 const deleteDocumentMutation = graphql`
   mutation DocumentGraphDeleteMutation(
     $input: DeleteDocumentInput!

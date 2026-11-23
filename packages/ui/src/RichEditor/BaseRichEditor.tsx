@@ -21,7 +21,7 @@
 import { PaperclipIcon } from "@phosphor-icons/react";
 import { type Extensions } from "@tiptap/core";
 import { type Content, Editor, EditorContent, type JSONContent, useEditor } from "@tiptap/react";
-import { type ComponentProps, type MouseEvent as ReactMouseEvent, type ReactNode, useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { type ComponentProps, type MouseEvent as ReactMouseEvent, type ReactNode, useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { tv } from "tailwind-variants";
@@ -31,10 +31,6 @@ import useToast from "../v2/Toaster/useToast";
 import { anyAttachmentAccept, fileAccept, imageAccept } from "./attachments";
 import { BlockMenu } from "./BlockMenu/BlockMenu";
 import { BubbleMenu } from "./BubbleMenu";
-import {
-  createRichEditorHistoryExtension,
-  type RichEditorHistoryHighlight,
-} from "./historyDecorations";
 import { getMentionStorage, type MentionSource } from "./MentionExtension";
 import { MentionMenu } from "./MentionMenu/MentionMenu";
 import { OptionsMenu } from "./OptionsMenu/OptionsMenu";
@@ -148,7 +144,6 @@ export type RichEditorProps = ComponentProps<"div"> & {
   onUploadingChange?: (uploading: boolean) => void;
   onUploadFile?: UploadAttachment;
   mentionSource?: MentionSource;
-  historyHighlights?: RichEditorHistoryHighlight[];
   editorExtensions?: Extensions;
   initialContent?: Content;
   onPresence?: (anchor: number, head: number) => void;
@@ -200,7 +195,6 @@ export function BaseRichEditor(props: BaseRichEditorProps) {
     onUploadingChange,
     onUploadFile,
     mentionSource,
-    historyHighlights,
     editorExtensions: editorExtensionOverride,
     initialContent: initialContentOverride,
     onPresence,
@@ -295,20 +289,7 @@ export function BaseRichEditor(props: BaseRichEditorProps) {
     [suspendContentChanges],
   );
 
-  const editorExtensions = useMemo(
-    () => {
-      if (editorExtensionOverride) {
-        return editorExtensionOverride;
-      }
-
-      if (!historyHighlights?.length) {
-        return extensions;
-      }
-
-      return [...extensions, createRichEditorHistoryExtension(historyHighlights)];
-    },
-    [editorExtensionOverride, extensions, historyHighlights],
-  );
+  const editorExtensions = editorExtensionOverride ?? extensions;
   const initialContent = initialContentOverride ?? parseContent(content);
 
   const editor = useEditor({

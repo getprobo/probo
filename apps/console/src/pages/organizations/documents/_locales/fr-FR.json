@@ -103,6 +103,7 @@
       "remove": "Retirer {{name}}",
       "loadMore": "Charger plus",
       "none": "Aucun",
+      "review": "Examiner",
       "states": {
         "PENDING": "En attente",
         "APPROVED": "Approuvé",

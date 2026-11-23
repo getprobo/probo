@@ -103,6 +103,7 @@
       "remove": "Remove {{name}}",
       "loadMore": "Load more",
       "none": "None",
+      "review": "Review",
       "states": {
         "PENDING": "Pending",
         "APPROVED": "Approved",

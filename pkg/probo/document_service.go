@@ -407,56 +407,6 @@ func (s *DocumentService) GetByIDs(
 	return documents, nil
 }
 
-func (s *DocumentService) ListVersionApprovers(
-	ctx context.Context, scope coredata.Scoper,
-	documentVersionID gid.GID,
-	cursor *page.Cursor[coredata.MembershipProfileOrderField],
-) (*page.Page[*coredata.MembershipProfile, coredata.MembershipProfileOrderField], error) {
-	var profiles coredata.MembershipProfiles
-
-	err := s.svc.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			if err := profiles.LoadByDocumentVersionID(ctx, conn, scope, documentVersionID, cursor); err != nil {
-				return fmt.Errorf("cannot load document version approvers: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return page.NewPage(profiles, cursor), nil
-}
-
-func (s *DocumentService) CountVersionApprovers(
-	ctx context.Context, scope coredata.Scoper,
-	documentVersionID gid.GID,
-) (int, error) {
-	var count int
-
-	err := s.svc.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) (err error) {
-			profiles := coredata.MembershipProfiles{}
-
-			count, err = profiles.CountByDocumentVersionID(ctx, conn, scope, documentVersionID)
-			if err != nil {
-				return fmt.Errorf("cannot count document version approvers: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return 0, err
-	}
-
-	return count, nil
-}
-
 func (s *DocumentService) GetWithFilter(
 	ctx context.Context, scope coredata.Scoper,
 	documentID gid.GID,

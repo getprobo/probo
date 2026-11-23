@@ -29,7 +29,6 @@ import * as unarchiveOp from './unarchive.operation';
 import * as getVersionOp from './getVersion.operation';
 import * as getLatestPublishedVersionIdOp from './getLatestPublishedVersionId.operation';
 import * as getAllVersionsOp from './getAllVersions.operation';
-import * as updateVersionOp from './updateVersion.operation';
 import * as publishOp from './publish.operation';
 import * as voidApprovalOp from './voidApproval.operation';
 import * as getSignatureOp from './getSignature.operation';
@@ -182,12 +181,6 @@ export const description: INodeProperties[] = [
 				action: 'Update a document',
 			},
 			{
-				name: 'Update Version',
-				value: 'updateVersion',
-				description: 'Update a draft document version',
-				action: 'Update a document version',
-			},
-			{
 				name: 'Void Approval',
 				value: 'voidApproval',
 				description: 'Void a pending approval request',
@@ -206,7 +199,6 @@ export const description: INodeProperties[] = [
 	...getVersionOp.description,
 	...getLatestPublishedVersionIdOp.description,
 	...getAllVersionsOp.description,
-	...updateVersionOp.description,
 	...publishOp.description,
 	...voidApprovalOp.description,
 	...getSignatureOp.description,
@@ -232,7 +224,6 @@ export {
 	getVersionOp as getVersion,
 	getLatestPublishedVersionIdOp as getLatestPublishedVersionId,
 	getAllVersionsOp as getAllVersions,
-	updateVersionOp as updateVersion,
 	publishOp as publish,
 	voidApprovalOp as voidApproval,
 	getSignatureOp as getSignature,

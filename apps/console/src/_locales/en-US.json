@@ -109,23 +109,6 @@
       "published": "Data list published successfully."
     }
   },
-  "documentLayout": {
-    "actions": { "publish": "Publish" },
-    "status": {
-      "generated": "Generated",
-      "published": "Published",
-      "pendingApproval": "Pending approval",
-      "draft": "Draft",
-      "rejected": "Rejected",
-      "voided": "Voided"
-    },
-    "tabs": {
-      "description": "Description",
-      "controls": "Controls",
-      "approvals": "Approvals",
-      "signatures": "Signatures"
-    }
-  },
   "documentsPage": {
     "pageTitle": "Documents",
     "title": "Documents",
@@ -163,62 +146,6 @@
     "irreversible": "This action cannot be undone.",
     "actions": { "delete": "Delete" }
   },
-  "documentActions": {
-    "messages": {
-      "successTitle": "Success",
-      "archived": "Document archived successfully.",
-      "unarchived": "Document unarchived successfully."
-    },
-    "errors": {
-      "title": "Error",
-      "archive": "Failed to archive document",
-      "unarchive": "Failed to unarchive document",
-      "generatePdf": "Failed to generate PDF"
-    },
-    "confirmations": {
-      "archive": "This will archive the document \"{{title}}\". It will no longer be editable."
-    },
-    "actions": {
-      "downloadPdf": "Download PDF",
-      "archive": "Archive",
-      "archiveDocument": "Archive document",
-      "unarchiveDocument": "Unarchive document",
-      "deleteDocument": "Delete document"
-    }
-  },
-  "documentDetails": {
-    "fields": {
-      "type": "Type",
-      "classification": "Classification",
-      "approvers": "Approvers",
-      "approversPlaceholder": "Add approvers...",
-      "version": "Version",
-      "lastModified": "Last modified",
-      "publishedDate": "Published date",
-      "archivedOn": "Archived on"
-    },
-    "documentTypes": {
-      "other": "Other",
-      "governance": "Governance",
-      "policy": "Policy",
-      "procedure": "Procedure",
-      "plan": "Plan",
-      "register": "Register",
-      "record": "Record",
-      "report": "Report",
-      "template": "Template",
-      "statement_of_applicability": "Statement of applicability"
-    },
-    "classifications": { "public": "Public", "internal": "Internal", "confidential": "Confidential", "secret": "Secret" },
-    "messages": {
-      "successTitle": "Success",
-      "typeUpdated": "Document type updated successfully",
-      "classificationUpdated": "Document classification updated successfully",
-      "approversUpdated": "Approvers updated successfully"
-    },
-    "errors": { "title": "Error", "updateType": "Failed to update document type", "updateClassification": "Failed to update document classification", "updateApprovers": "Failed to update approvers" },
-    "none": "None"
-  },
   "documentList": {
     "filters": { "searchPlaceholder": "Search documents by title...", "allSources": "All sources", "allTypes": "All types", "allClassifications": "All classifications" },
     "writeModes": { "authored": "Authored", "generated": "Generated" },
@@ -252,23 +179,6 @@
     "confirmations": { "archive": "This will archive the document \"{{title}}\". It will no longer be editable." },
     "actions": { "archive": "Archive", "unarchive": "Unarchive", "delete": "Delete" }
   },
-  "documentTitleForm": {
-    "validation": { "titleRequired": "Title is required" },
-    "errors": { "title": "Error", "update": "Failed to update document" }
-  },
-  "documentVersionsDropdown": { "title": "Version history" },
-  "documentVersionsDropdownItem": {
-    "status": { "pendingApproval": "Pending approval", "rejected": "Rejected", "voided": "Voided" }
-  },
-  "publishDialog": {
-    "title": "Publish document",
-    "validation": { "changelogRequired": "Changelog is required" },
-    "messages": { "successTitle": "Success", "approvalRequested": "Approval requested successfully.", "published": "Document published successfully." },
-    "errors": { "title": "Error", "publish": "Failed to publish document" },
-    "fields": { "changelog": "Changelog", "changelogPlaceholder": "Describe what changed in this version...", "approvers": "Approvers", "approversPlaceholder": "Add approvers..." },
-    "approversDescription": "Approvers will receive an email and the document will be published as a major version once all have approved. Remove all approvers to publish directly as major.",
-    "actions": { "publishMinor": "Publish as minor", "requestApproval": "Request approval", "publishMajor": "Publish as major" }
-  },
   "publishDocumentsDialog": {
     "title": "Publish documents",
     "validation": { "changelogRequired": "Changelog is required" },
@@ -283,134 +193,6 @@
     "messages": { "created_one": "{{count}} signature request created", "created_other": "{{count}} signature requests created" },
     "errors": { "create": "Failed to create signature requests" },
     "actions": { "request": "Request signatures", "showMore": "Show {{count}} more" }
-  },
-  "documentApprovalsPage": {
-    "empty": "No approval request for this document.",
-    "previousRequests": "Previous approval requests",
-    "status": { "approved": "Approved", "rejected": "Rejected", "voided": "Voided", "pending": "Pending" }
-  },
-  "documentApprovalList": {
-    "confirmation": { "void": "This will void the current approval request and return the version to draft. This action cannot be undone." },
-    "status": { "pending": "Pending", "approved": "Approved", "rejected": "Rejected", "voided": "Voided" },
-    "actions": { "void": "Void approval", "cancel": "Cancel" },
-    "empty": "No approval decisions yet."
-  },
-  "documentApprovalListItem": {
-    "dates": { "requested": "Requested on {{date}}", "approved": "Approved on {{date}}", "rejected": "Rejected on {{date}}" },
-    "status": { "approved": "Approved", "rejected": "Rejected", "pending": "Pending", "voided": "Voided" },
-    "actions": { "review": "Review" }
-  },
-  "documentDescriptionPage": {
-    "loading": "Loading document...",
-    "messages": { "successTitle": "Success", "saved": "Content saved" },
-    "errors": { "title": "Error", "save": "Content not saved", "open": "Document could not be opened" },
-    "history": {
-      "open": "History",
-      "title": "Version history",
-      "close": "Close",
-      "restore": "Restore this version",
-      "empty": "No edits yet",
-      "loading": "Loading history...",
-      "loadMore": "Load more",
-      "unknownAuthor": "Unknown",
-      "restoreFailed": "Could not restore this version",
-      "today": "Today",
-      "yesterday": "Yesterday"
-    },
-    "presence": {
-      "label": "People editing this document",
-      "anonymous": "Collaborator",
-      "inactive": "{{name}} (inactive)",
-      "overflow": "{{count}} more people"
-    },
-    "review": {
-      "viewing": "Viewing",
-      "editing": "Editing",
-      "suggesting": "Suggesting",
-      "comment": "Comment",
-      "reply": "Reply",
-      "resolve": "Resolve",
-      "reopen": "Reopen",
-      "accept": "Accept",
-      "reject": "Reject",
-      "edit": "Edit",
-      "delete": "Delete",
-      "save": "Save",
-      "showResolved": "Show resolved",
-      "cancel": "Cancel",
-      "history": "Comments",
-      "resolvedEmpty": "No resolved comments",
-      "detached": "Detached from the text",
-      "commentPlaceholder": "Add a comment",
-      "replyPlaceholder": "Reply",
-      "suggestionBy": "Suggestion by {{name}}",
-      "commentFailed": "Could not add the comment",
-      "suggestionFailed": "Could not start the suggestion",
-      "suggestionUntracked": "This change cannot be suggested. Switch to editing to make it.",
-      "selectComment": "Select comment by {{name}}",
-      "selectSuggestion": "Select suggestion by {{name}}",
-      "addText": "Add: \"{{text}}\"",
-      "deleteText": "Delete: \"{{text}}\"",
-      "addRow": "Add row",
-      "addRowWithText": "Add row: with text \"{{text}}\"",
-      "addColumn": "Add column",
-      "addColumnWithText": "Add column: with text \"{{text}}\"",
-      "addTable": "Add table",
-      "addTableWithText": "Add table: with text \"{{text}}\"",
-      "deleteRow": "Delete row",
-      "deleteRowWithText": "Delete row: with text \"{{text}}\"",
-      "deleteColumn": "Delete column",
-      "deleteColumnWithText": "Delete column: with text \"{{text}}\"",
-      "deleteTable": "Delete table",
-      "deleteTableWithText": "Delete table: with text \"{{text}}\"",
-      "format": "Format: {{styles}}",
-      "formatRemove": "Format: remove {{styles}}",
-      "styleBold": "bold",
-      "styleItalic": "italic",
-      "styleUnderline": "underline",
-      "styleStrike": "strikethrough",
-      "styleCode": "code",
-      "styleLink": "link",
-      "formatHeading": "Format: Heading {{level}}",
-      "formatParagraph": "Format: normal text",
-      "formatQuote": "Format: quote",
-      "formatCode": "Format: code",
-      "listAdd": "Format list: add to list",
-      "listRemove": "Format list: remove from list",
-      "listNest": "Format list: nest",
-      "listUnnest": "Format list: unnest",
-      "checkTask": "Check task",
-      "uncheckTask": "Uncheck task",
-      "addDivider": "Add divider",
-      "deleteDivider": "Delete divider",
-      "addImage": "Add image",
-      "deleteImage": "Delete image",
-      "addFile": "Add file",
-      "addFileNamed": "Add file: \"{{name}}\"",
-      "deleteFile": "Delete file",
-      "deleteFileNamed": "Delete file: \"{{name}}\"",
-      "addMention": "Add mention",
-      "addMentionNamed": "Add mention: \"{{name}}\"",
-      "deleteMention": "Delete mention",
-      "deleteMentionNamed": "Delete mention: \"{{name}}\""
-    }
-  },
-  "documentSignaturesPage": {
-    "empty": "This document has not been published.",
-    "filter": { "label": "Filter by state:" },
-    "states": { "requested": "Requested", "signed": "Signed" }
-  },
-  "documentSignatureListItem": {
-    "dates": { "signed": "Signed on {{date}}", "requested": "Requested on {{date}}" },
-    "messages": { "cancelled": "Request cancelled successfully" },
-    "errors": { "cancel": "Failed to cancel signature request" },
-    "status": { "signed": "Signed" },
-    "actions": { "cancel": "Cancel request" }
-  },
-  "documentSignaturePlaceholder": {
-    "messages": { "sent": "Signature request sent successfully" },
-    "errors": { "send": "Failed to send signature request" },
-    "actions": { "request": "Request signature" }
   },
   "findingDetails": {
     "kinds": { "minor_nonconformity": "Minor nonconformity", "major_nonconformity": "Major nonconformity", "observation": "Observation", "exception": "Exception" },
@@ -616,23 +398,6 @@
       "close": "Close",
       "link": "Link",
       "unlink": "Unlink"
-    }
-  },
-  "pdfDownloadDialog": {
-    "title": "Download PDF Options",
-    "includeSignatures": {
-      "label": "Include signatures",
-      "description": "Show signature information and approval details in the PDF"
-    },
-    "watermark": {
-      "label": "Add watermark",
-      "description": "Add a watermark with the document classification, custom text, and a timestamp",
-      "textLabel": "Watermark text",
-      "textPlaceholder": "Enter watermark text"
-    },
-    "actions": {
-      "download": "Download PDF",
-      "downloading": "Downloading..."
     }
   },
   "controlMaturityLevelOptions": {

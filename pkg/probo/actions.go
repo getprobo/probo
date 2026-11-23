@@ -143,17 +143,16 @@ const (
 	ActionDocumentSuggestReject = "core:document:suggest-reject"
 
 	// DocumentVersion actions
-	ActionDocumentVersionGet             = "core:document-version:get"
-	ActionDocumentVersionList            = "core:document-version:list"
-	ActionDocumentVersionExportPDF       = "core:document-version:export-pdf"
-	ActionDocumentVersionSign            = "core:document-version:sign"
-	ActionDocumentVersionRequestApproval = "core:document-version:request-approval"
-	ActionDocumentVersionVoidApproval    = "core:document-version:void-approval"
-	ActionDocumentVersionApprove         = "core:document-version:approve"
-	ActionDocumentVersionReject          = "core:document-version:reject"
-	ActionDocumentVersionApprovalList    = "core:document-version:approval-list"
-	ActionDocumentVersionPublish         = "core:document-version:publish"
-	ActionDocumentVersionExport          = "core:document-version:export"
+	ActionDocumentVersionGet          = "core:document-version:get"
+	ActionDocumentVersionList         = "core:document-version:list"
+	ActionDocumentVersionExportPDF    = "core:document-version:export-pdf"
+	ActionDocumentVersionSign         = "core:document-version:sign"
+	ActionDocumentVersionVoidApproval = "core:document-version:void-approval"
+	ActionDocumentVersionApprove      = "core:document-version:approve"
+	ActionDocumentVersionReject       = "core:document-version:reject"
+	ActionDocumentVersionApprovalList = "core:document-version:approval-list"
+	ActionDocumentVersionPublish      = "core:document-version:publish"
+	ActionDocumentVersionExport       = "core:document-version:export"
 
 	// DocumentRevision actions
 	ActionDocumentRevisionGet  = "core:document-revision:get"

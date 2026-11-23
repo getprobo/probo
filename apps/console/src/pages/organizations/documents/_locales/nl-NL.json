@@ -103,6 +103,7 @@
       "remove": "{{name}} verwijderen",
       "loadMore": "Meer laden",
       "none": "Geen",
+      "review": "Beoordelen",
       "states": {
         "PENDING": "In afwachting",
         "APPROVED": "Goedgekeurd",

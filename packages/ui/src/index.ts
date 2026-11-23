@@ -129,7 +129,6 @@ export type { MentionItem, MentionSource } from "./RichEditor/MentionExtension";
 export { CommentEditor } from "./RichEditor/CommentEditor";
 export { RichEditor } from "./RichEditor/RichEditor";
 export type { RichEditorAutomergeDocument } from "./RichEditor/collaboration";
-export type { RichEditorHistoryHighlight } from "./RichEditor/historyDecorations";
 export type {
   RichEditorCollaborationHandle,
   RichEditorPresence,

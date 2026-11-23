@@ -388,14 +388,6 @@ type DocumentVersion implements Node {
     classification: DocumentClassification!
     documentType: DocumentType!
     orientation: DocumentVersionOrientation!
-    approvers(
-        first: Int
-        after: CursorKey
-        last: Int
-        before: CursorKey
-        orderBy: ProfileOrder
-    ): ProfileConnection! @goField(forceResolver: true)
-
     signatures(
         first: Int
         after: CursorKey
@@ -412,8 +404,6 @@ type DocumentVersion implements Node {
         before: CursorKey
         orderBy: DocumentVersionApprovalQuorumOrder
     ): DocumentVersionApprovalQuorumConnection! @goField(forceResolver: true)
-
-    signed: Boolean! @goField(forceResolver: true)
 
     publishedAt: Datetime
     createdAt: Datetime!
@@ -443,10 +433,7 @@ type DocumentRevision
     ) {
     id: ID!
     heads: [String!]!
-    previousHeads: [String!]!
-    actorID: String!
     authorName: String
-    author: Profile @goField(forceResolver: true)
     startedAt: Datetime!
     endedAt: Datetime!
     changeCount: Int!
@@ -519,7 +506,6 @@ type DocumentVersionApprovalDecision implements Node {
     approver: Profile! @goField(forceResolver: true)
     state: DocumentVersionApprovalDecisionState!
     comment: String
-    consentText: String! @goField(forceResolver: true)
     decidedAt: Datetime
     createdAt: Datetime!
     updatedAt: Datetime!
@@ -540,7 +526,6 @@ type DocumentVersionApprovalQuorum implements Node {
     ): DocumentVersionApprovalDecisionConnection! @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
-    permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type EmployeeDocument

@@ -23,66 +23,29 @@ import { type AppRoute } from "@probo/routes";
 import { Fragment } from "react";
 import { type LoaderFunctionArgs, redirect } from "react-router";
 
-import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 import { detailLayout } from "#/pages/iam/organizations/_lib/shellLayout";
 
 import { DocumentDetailsPageSkeleton } from "./DocumentDetailsPageSkeleton";
 
-function documentTabs(prefix: string, includeIndexRedirect = true): AppRoute[] {
-  const tabs: AppRoute[] = [
-    {
-      path: `${prefix}description`,
-      Fallback: LinkCardSkeleton,
-      Component: lazy(
-        () =>
-          import("./description/DocumentDescriptionPageLoader"),
-      ),
-    },
-    {
-      path: `${prefix}controls`,
-      Fallback: LinkCardSkeleton,
-      Component: lazy(
-        () =>
-          import("./controls/DocumentControlsPageLoader"),
-      ),
-    },
-    {
-      path: `${prefix}approvals`,
-      Fallback: LinkCardSkeleton,
-      Component: lazy(
-        () =>
-          import("./approvals/DocumentApprovalsPageLoader"),
-      ),
-    },
-    {
-      path: `${prefix}signatures`,
-      Fallback: LinkCardSkeleton,
-      Component: lazy(
-        () =>
-          import("./signatures/DocumentSignaturesPageLoader"),
-      ),
-    },
-  ];
-
-  if (includeIndexRedirect) {
-    tabs.unshift({
-      path: prefix,
-      loader: ({
-        params: { organizationId, documentId, versionId },
-      }: LoaderFunctionArgs) => {
-        const basePath = `/organizations/${organizationId}/governance/documents/${documentId}`;
-        const redirectPath = versionId
-          ? `${basePath}/versions/${versionId}/description`
-          : `${basePath}/description`;
-        // eslint-disable-next-line
-        throw redirect(redirectPath);
-      },
-      Component: Fragment,
-    });
-  }
-
-  return tabs;
+// Old document subpaths (tabs and versions/:versionId/...) are no longer
+// generated, but bookmarks to them should land on the document page.
+function redirectOldDocumentPath({ params }: LoaderFunctionArgs) {
+  const { organizationId = "", documentId = "" } = params;
+  const path = [
+    "",
+    "organizations",
+    encodeURIComponent(organizationId),
+    "governance",
+    "documents",
+    encodeURIComponent(documentId),
+  ].join("/");
+  const versionId = params["*"]?.match(/^versions\/([^/]+)/)?.[1];
+  const search = versionId == null
+    ? ""
+    : `?${new URLSearchParams({ version: versionId }).toString()}`;
+  // eslint-disable-next-line
+  throw redirect(`${path}${search}`);
 }
 
 export const documentsRoutes = [
@@ -93,21 +56,13 @@ export const documentsRoutes = [
   },
   {
     path: "documents/:documentId",
-    children: [
-      {
-        index: true,
-        handle: detailLayout,
-        Fallback: DocumentDetailsPageSkeleton,
-        Component: lazy(() => import("./DocumentDetailsPageLoader")),
-      },
-      {
-        Fallback: PageSkeleton,
-        Component: lazy(() => import("./DocumentLayoutLoader")),
-        children: [
-          ...documentTabs("", false),
-          ...documentTabs("versions/:versionId/"),
-        ],
-      },
-    ],
+    handle: detailLayout,
+    Fallback: DocumentDetailsPageSkeleton,
+    Component: lazy(() => import("./DocumentDetailsPageLoader")),
+  },
+  {
+    path: "documents/:documentId/*",
+    loader: redirectOldDocumentPath,
+    Component: Fragment,
   },
 ] satisfies AppRoute[];
