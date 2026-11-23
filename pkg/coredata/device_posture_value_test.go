@@ -872,6 +872,16 @@ func TestParseDevicePostureValue_MalwareProtection(t *testing.T) {
 				wantText: "ClamAV, osquery",
 			},
 			{
+				name:     "windows running endpoint agents",
+				checkKey: "MALWARE_PROTECTION",
+				evidence: map[string]any{
+					"active":    []any{"SentinelOne", "CrowdStrike Falcon"},
+					"installed": []any{},
+				},
+				wantKind: coredata.DevicePostureValueKindText,
+				wantText: "SentinelOne, CrowdStrike Falcon",
+			},
+			{
 				name:     "linux agent installed but stopped",
 				checkKey: "MALWARE_PROTECTION",
 				evidence: map[string]any{
@@ -1196,6 +1206,17 @@ func TestParseDevicePostureValue_AgreesWithAgentStatus(t *testing.T) {
 			agentStatus: coredata.DevicePostureStatusFail,
 		},
 		{
+			name:     "windows ninjaone patches with windows update disabled",
+			checkKey: "AUTO_UPDATE",
+			evidence: map[string]any{
+				"backend":                "ninjaone",
+				"no_auto_update":         "1",
+				"au_options":             "",
+				"wuauserv_service_start": "4",
+			},
+			agentStatus: coredata.DevicePostureStatusPass,
+		},
+		{
 			name:     "windows firewall through the COM fallback",
 			checkKey: "FIREWALL_ENABLED",
 			evidence: map[string]any{
@@ -1274,6 +1295,15 @@ func TestParseDevicePostureValue_AgreesWithAgentStatus(t *testing.T) {
 				"antivirus_enabled":    false,
 				"real_time_protection": false,
 				"am_service_enabled":   false,
+			},
+			agentStatus: coredata.DevicePostureStatusFail,
+		},
+		{
+			name:     "windows endpoint agent installed but stopped",
+			checkKey: "MALWARE_PROTECTION",
+			evidence: map[string]any{
+				"active":    []any{},
+				"installed": []any{"SentinelOne"},
 			},
 			agentStatus: coredata.DevicePostureStatusFail,
 		},

@@ -458,6 +458,9 @@ func parseAutoUpdateValue(ev map[string]any) DevicePostureValue {
 		return onOffValue(strings.Contains(stringEvidence(ev, "raw"), `"1"`))
 	case "dnf-automatic":
 		return unitStateValue(stringEvidence(ev, "state"))
+	case "ninjaone":
+		// NinjaOne patches the host and often turns Windows Update off.
+		return onOffValue(true)
 	}
 
 	// The Windows Update policy read sets no backend key.

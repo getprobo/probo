@@ -298,3 +298,242 @@ func windowsAutoUpdateOn(noAutoUpdate, auOptions, serviceStart string) (bool, bo
 		return false, false
 	}
 }
+
+func windowsNinjaAgentRunning(status string) bool {
+	return strings.EqualFold(strings.TrimSpace(status), "Running")
+}
+
+// A stopped NinjaOne agent is not patching, so Windows Update stays the reading.
+func windowsAutoUpdateVerdict(
+	ninjaStatus string,
+	noAutoUpdate string,
+	auOptions string,
+	serviceStart string,
+) (bool, bool) {
+	if windowsNinjaAgentRunning(ninjaStatus) {
+		return true, true
+	}
+
+	return windowsAutoUpdateOn(noAutoUpdate, auOptions, serviceStart)
+}
+
+type (
+	windowsEndpointService struct {
+		name     string
+		protects bool
+	}
+
+	windowsEndpointProduct struct {
+		name     string
+		services []windowsEndpointService
+	}
+)
+
+// Order is the order a running product is reported in.
+var windowsEndpointProducts = []windowsEndpointProduct{
+	{
+		name: "SentinelOne",
+		services: []windowsEndpointService{
+			{name: "SentinelAgent", protects: true},
+		},
+	},
+	{
+		name: "CrowdStrike Falcon",
+		services: []windowsEndpointService{
+			{name: "csagent", protects: true},
+			// The user-mode service stays up when the sensor itself is stopped.
+			{name: "CSFalconService", protects: false},
+		},
+	},
+	{
+		name: "Bitdefender",
+		services: []windowsEndpointService{
+			{name: "EPSecurityService", protects: true},
+			{name: "VSSERV", protects: true},
+			{name: "EPProtectedService", protects: false},
+		},
+	},
+	{
+		name: "Webroot",
+		services: []windowsEndpointService{
+			{name: "WRSVC", protects: true},
+		},
+	},
+}
+
+func windowsEndpointServiceNames() []string {
+	names := make([]string, 0)
+	seen := map[string]bool{}
+
+	for _, product := range windowsEndpointProducts {
+		for _, svc := range product.services {
+			key := strings.ToLower(svc.name)
+			if seen[key] {
+				continue
+			}
+
+			seen[key] = true
+
+			names = append(names, svc.name)
+		}
+	}
+
+	return names
+}
+
+func windowsMalwareProtectionScript() string {
+	names := windowsEndpointServiceNames()
+
+	quoted := make([]string, len(names))
+	for i, name := range names {
+		quoted[i] = "'" + name + "'"
+	}
+
+	return `$ErrorActionPreference = 'Stop'; ` +
+		`$names = @(` + strings.Join(quoted, ",") + `); ` +
+		`$parts = @(); ` +
+		`foreach ($n in $names) { ` +
+		`  $svc = Get-Service -Name $n -ErrorAction SilentlyContinue; ` +
+		`  if ($null -ne $svc) { $parts += ('{0}={1}' -f $n, $svc.Status) } ` +
+		`}; ` +
+		`$defender = 'ERR'; ` +
+		`try { ` +
+		`  $s = Get-MpComputerStatus -ErrorAction Stop; ` +
+		`  $defender = '{0};{1};{2};{3}' -f ` +
+		`$s.AntivirusEnabled, $s.RealTimeProtectionEnabled, ` +
+		`$s.AMServiceEnabled, $s.AntivirusSignatureLastUpdated ` +
+		`} catch { }; ` +
+		`Write-Output ('SERVICES=' + ($parts -join ';')); ` +
+		`Write-Output ('DEFENDER=' + $defender)`
+}
+
+func parseWindowsMalwareProbe(stdout string) (map[string]string, string, bool) {
+	var (
+		servicesLine string
+		defenderLine string
+		sawServices  bool
+		sawDefender  bool
+	)
+
+	normalized := strings.ReplaceAll(stdout, "\r\n", "\n")
+	for line := range strings.SplitSeq(normalized, "\n") {
+		line = strings.TrimSpace(line)
+		switch {
+		case strings.HasPrefix(line, "SERVICES="):
+			servicesLine = strings.TrimPrefix(line, "SERVICES=")
+			sawServices = true
+		case strings.HasPrefix(line, "DEFENDER="):
+			defenderLine = strings.TrimPrefix(line, "DEFENDER=")
+			sawDefender = true
+		}
+	}
+
+	if !sawServices || !sawDefender {
+		return nil, "", false
+	}
+
+	return parseWindowsJoinedPairs(servicesLine), defenderLine, true
+}
+
+func windowsServiceStatus(services map[string]string, name string) (string, bool) {
+	for key, status := range services {
+		if strings.EqualFold(strings.TrimSpace(key), name) {
+			return status, true
+		}
+	}
+
+	return "", false
+}
+
+func classifyWindowsEndpointAgents(services map[string]string) ([]string, []string) {
+	var active, installed []string
+
+	for _, product := range windowsEndpointProducts {
+		running := false
+		present := false
+
+		for _, svc := range product.services {
+			status, ok := windowsServiceStatus(services, svc.name)
+			if !ok {
+				continue
+			}
+
+			present = true
+
+			if svc.protects && strings.EqualFold(strings.TrimSpace(status), "Running") {
+				running = true
+			}
+		}
+
+		switch {
+		case running:
+			active = append(active, product.name)
+		case present:
+			installed = append(installed, product.name)
+		}
+	}
+
+	return active, installed
+}
+
+func windowsMalwareProtectionResult(services map[string]string, defender string) Result {
+	active, installed := classifyWindowsEndpointAgents(services)
+	if len(active) > 0 || len(installed) > 0 {
+		if active == nil {
+			active = []string{}
+		}
+
+		if installed == nil {
+			installed = []string{}
+		}
+
+		ev := map[string]any{
+			"active":    active,
+			"installed": installed,
+		}
+		if len(active) > 0 {
+			return pass(ev)
+		}
+
+		return fail(ev)
+	}
+
+	return windowsDefenderMalwareResult(defender)
+}
+
+func windowsDefenderMalwareResult(defender string) Result {
+	defender = strings.TrimSpace(defender)
+	if defender == "" || strings.EqualFold(defender, "ERR") {
+		ev := map[string]any{}
+		if strings.EqualFold(defender, "ERR") {
+			ev["error"] = "Get-MpComputerStatus failed"
+		}
+
+		return unknown(ev)
+	}
+
+	parts := strings.Split(defender, ";")
+
+	ev := map[string]any{"raw": defender}
+	if len(parts) < 3 {
+		return unknown(ev)
+	}
+
+	antivirusOn := strings.EqualFold(strings.TrimSpace(parts[0]), "True")
+	realtimeOn := strings.EqualFold(strings.TrimSpace(parts[1]), "True")
+	serviceOn := strings.EqualFold(strings.TrimSpace(parts[2]), "True")
+
+	ev["antivirus_enabled"] = antivirusOn
+	ev["real_time_protection"] = realtimeOn
+
+	ev["am_service_enabled"] = serviceOn
+	if len(parts) >= 4 {
+		ev["signatures_last_updated"] = strings.TrimSpace(parts[3])
+	}
+
+	if antivirusOn && (realtimeOn || serviceOn) {
+		return pass(ev)
+	}
+
+	return fail(ev)
+}

@@ -600,6 +600,297 @@ func TestWindowsAutoUpdateOn(t *testing.T) {
 	}
 }
 
+func TestWindowsAutoUpdateVerdict(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name          string
+		ninjaStatus   string
+		noAutoUpdate  string
+		auOptions     string
+		serviceStart  string
+		expectedOn    bool
+		expectedKnown bool
+	}{
+		{
+			name:          "running ninjaone overrides a disabled windows update policy",
+			ninjaStatus:   "Running",
+			noAutoUpdate:  "1",
+			serviceStart:  "4",
+			expectedOn:    true,
+			expectedKnown: true,
+		},
+		{
+			name:          "running ninjaone overrides an unreadable windows update service",
+			ninjaStatus:   "running",
+			expectedOn:    true,
+			expectedKnown: true,
+		},
+		{
+			name:          "stopped ninjaone leaves the windows update verdict",
+			ninjaStatus:   "Stopped",
+			noAutoUpdate:  "1",
+			serviceStart:  "3",
+			expectedKnown: true,
+		},
+		{
+			name:          "paused ninjaone leaves the windows update verdict",
+			ninjaStatus:   "Paused",
+			auOptions:     "4",
+			serviceStart:  "2",
+			expectedOn:    true,
+			expectedKnown: true,
+		},
+		{
+			name:          "absent ninjaone leaves a disabled service off",
+			auOptions:     "4",
+			serviceStart:  "4",
+			expectedKnown: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				on, known := windowsAutoUpdateVerdict(
+					tt.ninjaStatus,
+					tt.noAutoUpdate,
+					tt.auOptions,
+					tt.serviceStart,
+				)
+				assert.Equal(t, tt.expectedOn, on)
+				assert.Equal(t, tt.expectedKnown, known)
+			},
+		)
+	}
+}
+
+func TestClassifyWindowsEndpointAgents(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		services  map[string]string
+		active    []string
+		installed []string
+	}{
+		{
+			name:     "sentinelone running",
+			services: map[string]string{"SentinelAgent": "Running"},
+			active:   []string{"SentinelOne"},
+		},
+		{
+			name:      "sentinelone stopped",
+			services:  map[string]string{"SentinelAgent": "Stopped"},
+			installed: []string{"SentinelOne"},
+		},
+		{
+			name:      "sentinelone start pending is not protecting",
+			services:  map[string]string{"sentinelagent": "StartPending"},
+			installed: []string{"SentinelOne"},
+		},
+		{
+			name: "crowdstrike sensor running",
+			services: map[string]string{
+				"csagent":         "Running",
+				"CSFalconService": "Running",
+			},
+			active: []string{"CrowdStrike Falcon"},
+		},
+		{
+			name:      "crowdstrike user-mode service only",
+			services:  map[string]string{"CSFalconService": "Running"},
+			installed: []string{"CrowdStrike Falcon"},
+		},
+		{
+			name: "bitdefender gravityzone running",
+			services: map[string]string{
+				"EPSecurityService":  "Running",
+				"EPProtectedService": "Running",
+			},
+			active: []string{"Bitdefender"},
+		},
+		{
+			name:     "bitdefender virus shield running",
+			services: map[string]string{"VSSERV": "Running"},
+			active:   []string{"Bitdefender"},
+		},
+		{
+			name: "both bitdefender shields are one product",
+			services: map[string]string{
+				"EPSecurityService": "Running",
+				"VSSERV":            "Running",
+			},
+			active: []string{"Bitdefender"},
+		},
+		{
+			name:      "bitdefender helper only",
+			services:  map[string]string{"EPProtectedService": "Running"},
+			installed: []string{"Bitdefender"},
+		},
+		{
+			name:     "webroot running",
+			services: map[string]string{"WRSVC": "Running"},
+			active:   []string{"Webroot"},
+		},
+		{
+			name: "running products stay in candidate order",
+			services: map[string]string{
+				"WRSVC":         "Running",
+				"SentinelAgent": "Running",
+			},
+			active: []string{"SentinelOne", "Webroot"},
+		},
+		{
+			name: "a running product is not hidden by a stopped one",
+			services: map[string]string{
+				"SentinelAgent": "Running",
+				"WRSVC":         "Stopped",
+			},
+			active:    []string{"SentinelOne"},
+			installed: []string{"Webroot"},
+		},
+		{
+			name: "no known service",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				active, installed := classifyWindowsEndpointAgents(tt.services)
+				assert.Equal(t, tt.active, active)
+				assert.Equal(t, tt.installed, installed)
+			},
+		)
+	}
+}
+
+func TestParseWindowsMalwareProbe(t *testing.T) {
+	t.Parallel()
+
+	t.Run(
+		"services and defender",
+		func(t *testing.T) {
+			t.Parallel()
+
+			services, defender, ok := parseWindowsMalwareProbe(
+				"SERVICES=SentinelAgent=Running\nDEFENDER=True;True;True;Monday",
+			)
+			require.True(t, ok)
+			assert.Equal(t, map[string]string{"SentinelAgent": "Running"}, services)
+			assert.Equal(t, "True;True;True;Monday", defender)
+		},
+	)
+
+	t.Run(
+		"crlf and a failed defender read",
+		func(t *testing.T) {
+			t.Parallel()
+
+			services, defender, ok := parseWindowsMalwareProbe(
+				"SERVICES=\r\nDEFENDER=ERR\r\n",
+			)
+			require.True(t, ok)
+			assert.Empty(t, services)
+			assert.Equal(t, "ERR", defender)
+		},
+	)
+
+	t.Run(
+		"missing defender line",
+		func(t *testing.T) {
+			t.Parallel()
+
+			_, _, ok := parseWindowsMalwareProbe("SERVICES=WRSVC=Running")
+			assert.False(t, ok)
+		},
+	)
+}
+
+func TestWindowsMalwareProtectionResult(t *testing.T) {
+	t.Parallel()
+
+	t.Run(
+		"running sentinelone is the product name",
+		func(t *testing.T) {
+			t.Parallel()
+
+			got := windowsMalwareProtectionResult(
+				map[string]string{"SentinelAgent": "Running"},
+				"ERR",
+			)
+			assert.Equal(t, StatusPass, got.Status)
+			assert.Equal(t, []string{"SentinelOne"}, got.Evidence["active"])
+			assert.Equal(t, []string{}, got.Evidence["installed"])
+			assert.NotContains(t, got.Evidence, "antivirus_enabled")
+		},
+	)
+
+	t.Run(
+		"stopped sentinelone does not fall through to defender",
+		func(t *testing.T) {
+			t.Parallel()
+
+			got := windowsMalwareProtectionResult(
+				map[string]string{"SentinelAgent": "Stopped"},
+				"True;False;True;yesterday",
+			)
+			assert.Equal(t, StatusFail, got.Status)
+			assert.Equal(t, []string{}, got.Evidence["active"])
+			assert.Equal(t, []string{"SentinelOne"}, got.Evidence["installed"])
+			assert.NotContains(t, got.Evidence, "antivirus_enabled")
+		},
+	)
+
+	t.Run(
+		"no endpoint agent keeps the defender verdict",
+		func(t *testing.T) {
+			t.Parallel()
+
+			got := windowsMalwareProtectionResult(
+				map[string]string{},
+				"True;True;True;yesterday",
+			)
+			assert.Equal(t, StatusPass, got.Status)
+			assert.Equal(t, true, got.Evidence["antivirus_enabled"])
+			assert.Equal(t, true, got.Evidence["real_time_protection"])
+			assert.NotContains(t, got.Evidence, "active")
+		},
+	)
+
+	t.Run(
+		"defender disabled with no endpoint agent fails",
+		func(t *testing.T) {
+			t.Parallel()
+
+			got := windowsMalwareProtectionResult(
+				nil,
+				"False;False;False;",
+			)
+			assert.Equal(t, StatusFail, got.Status)
+			assert.Equal(t, false, got.Evidence["antivirus_enabled"])
+		},
+	)
+
+	t.Run(
+		"unreadable defender with no endpoint agent is unknown",
+		func(t *testing.T) {
+			t.Parallel()
+
+			got := windowsMalwareProtectionResult(nil, "ERR")
+			assert.Equal(t, StatusUnknown, got.Status)
+			assert.NotContains(t, got.Evidence, "antivirus_enabled")
+		},
+	)
+}
+
 func TestWindowsPasswordPolicyVerdict(t *testing.T) {
 	t.Parallel()
 

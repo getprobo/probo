@@ -297,8 +297,10 @@ func windowsAutoUpdate(ctx context.Context) Result {
 		ctx,
 		`$au = Get-ItemProperty 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU' `+
 			`-ErrorAction SilentlyContinue; `+
-			`$svc = Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Services\wuauserv'; `+
-			`"$($au.NoAutoUpdate);$($au.AUOptions);$($svc.Start)"`,
+			`$svc = Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Services\wuauserv' `+
+			`-ErrorAction SilentlyContinue; `+
+			`$ninja = Get-Service -Name 'NinjaRMMAgent' -ErrorAction SilentlyContinue; `+
+			`"$($au.NoAutoUpdate);$($au.AUOptions);$($svc.Start);$($ninja.Status)"`,
 	)
 
 	ev := map[string]any{}
@@ -309,9 +311,9 @@ func windowsAutoUpdate(ctx context.Context) Result {
 		return unknown(ev)
 	}
 
-	parts := strings.SplitN(strings.TrimSpace(out.Stdout), ";", 3)
+	parts := strings.SplitN(strings.TrimSpace(out.Stdout), ";", 4)
 
-	var noAutoUpdate, auOptions, serviceStart string
+	var noAutoUpdate, auOptions, serviceStart, ninjaStatus string
 	if len(parts) >= 1 {
 		noAutoUpdate = strings.TrimSpace(parts[0])
 	}
@@ -324,11 +326,23 @@ func windowsAutoUpdate(ctx context.Context) Result {
 		serviceStart = strings.TrimSpace(parts[2])
 	}
 
+	if len(parts) >= 4 {
+		ninjaStatus = strings.TrimSpace(parts[3])
+	}
+
 	ev["no_auto_update"] = noAutoUpdate
 	ev["au_options"] = auOptions
 	ev["wuauserv_service_start"] = serviceStart
+	if windowsNinjaAgentRunning(ninjaStatus) {
+		ev["backend"] = "ninjaone"
+	}
 
-	on, known := windowsAutoUpdateOn(noAutoUpdate, auOptions, serviceStart)
+	on, known := windowsAutoUpdateVerdict(
+		ninjaStatus,
+		noAutoUpdate,
+		auOptions,
+		serviceStart,
+	)
 	if !known {
 		return unknown(ev)
 	}
@@ -398,12 +412,7 @@ func windowsPasswordPolicy(ctx context.Context) Result {
 }
 
 func windowsMalwareProtection(ctx context.Context) Result {
-	out := powershell(
-		ctx,
-		`$s = Get-MpComputerStatus; `+
-			`"$($s.AntivirusEnabled);$($s.RealTimeProtectionEnabled);`+
-			`$($s.AMServiceEnabled);$($s.AntivirusSignatureLastUpdated)"`,
-	)
+	out := powershell(ctx, windowsMalwareProtectionScript())
 	if out.Err != nil {
 		return unknown(
 			map[string]any{
@@ -413,30 +422,12 @@ func windowsMalwareProtection(ctx context.Context) Result {
 		)
 	}
 
-	parts := strings.Split(out.Stdout, ";")
-
-	ev := map[string]any{"raw": out.Stdout}
-	if len(parts) < 3 {
-		return unknown(ev)
+	services, defender, ok := parseWindowsMalwareProbe(out.Stdout)
+	if !ok {
+		return unknown(map[string]any{"raw": out.Stdout})
 	}
 
-	antivirusOn := strings.EqualFold(strings.TrimSpace(parts[0]), "True")
-	realtimeOn := strings.EqualFold(strings.TrimSpace(parts[1]), "True")
-	serviceOn := strings.EqualFold(strings.TrimSpace(parts[2]), "True")
-
-	ev["antivirus_enabled"] = antivirusOn
-	ev["real_time_protection"] = realtimeOn
-
-	ev["am_service_enabled"] = serviceOn
-	if len(parts) >= 4 {
-		ev["signatures_last_updated"] = strings.TrimSpace(parts[3])
-	}
-
-	if antivirusOn && (realtimeOn || serviceOn) {
-		return pass(ev)
-	}
-
-	return fail(ev)
+	return windowsMalwareProtectionResult(services, defender)
 }
 
 func windowsRemoteLogin(ctx context.Context) Result {
