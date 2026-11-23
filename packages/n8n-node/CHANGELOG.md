@@ -4,6 +4,8 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.275.0] - 2026-11-23
+
 ### Added
 
 - Evidence Create Link uploads a `.uri` file containing an HTTP or
