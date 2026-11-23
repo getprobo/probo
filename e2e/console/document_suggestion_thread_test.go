@@ -303,6 +303,7 @@ func TestDocumentReview_SuggestionAutoReject(t *testing.T) {
 				if value, ok := span.Marks[collaboration.SuggestionInsertMark].(string); ok && strings.Contains(value, suggestionID) {
 					continue
 				}
+
 				kept = append(kept, span)
 			}
 
@@ -484,6 +485,7 @@ func rewriteCollaborationSpans(
 		for i, bytes := range changeBytes {
 			changes[i] = automerge.Change{Bytes: bytes}
 		}
+
 		require.NoError(t, document.ApplyChanges(changes))
 	}
 

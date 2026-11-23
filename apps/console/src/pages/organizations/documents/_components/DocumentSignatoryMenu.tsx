@@ -32,8 +32,8 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
 
-import type { DocumentSignatoryMenuQuery } from "#/__generated__/core/DocumentSignatoryMenuQuery.graphql";
 import type { DocumentSignatoryMenu_requestMutation } from "#/__generated__/core/DocumentSignatoryMenu_requestMutation.graphql";
+import type { DocumentSignatoryMenuQuery } from "#/__generated__/core/DocumentSignatoryMenuQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 import { useComboboxPage } from "#/pages/organizations/tasks/_lib/useComboboxPage";
