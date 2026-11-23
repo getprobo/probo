@@ -5,7 +5,7 @@ documented in this file.
 
 ## Unreleased
 
-## [0.10.0-rc.1] - 2026-11-23
+## [0.10.0] - 2026-11-23
 
 ### Added
 
