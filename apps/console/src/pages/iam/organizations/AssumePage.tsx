@@ -44,6 +44,7 @@ const assumeMutation = graphql`
         }
         ... on SAMLAuthenticationRequired {
           reason
+          ssoLoginURL
         }
       }
     }
@@ -54,9 +55,6 @@ export const assumePageQuery = graphql`
   query AssumePageQuery {
     viewer @required(action: THROW) {
       __typename
-      ... on Identity {
-        ssoLoginURL
-      }
     }
   }
 `;
@@ -71,7 +69,7 @@ export function AssumePage(props: { queryRef: PreloadedQuery<AssumePageQuery> })
 
   const safeContinueUrl = useSafeContinueURL(`/organizations/${organizationId}`);
 
-  const { viewer } = usePreloadedQuery<AssumePageQuery>(assumePageQuery, queryRef);
+  usePreloadedQuery<AssumePageQuery>(assumePageQuery, queryRef);
   const [assumeOrganizationSession] = useMutation<AssumePageMutation>(assumeMutation);
 
   useEffect(() => {
@@ -107,10 +105,7 @@ export function AssumePage(props: { queryRef: PreloadedQuery<AssumePageQuery> })
             void navigate({ pathname: "/auth/login", search: "?" + search.toString() });
             break;
           case "SAMLAuthenticationRequired":
-            if (!viewer.ssoLoginURL) {
-              throw new Error("missing SSO login URL for user email");
-            }
-            samlSSOLoginURL = new URL(viewer.ssoLoginURL);
+            samlSSOLoginURL = new URL(result.ssoLoginURL);
             samlSSOLoginURL.search = "?" + searchParams.toString();
 
             window.location.href = samlSSOLoginURL.toString();
@@ -120,7 +115,7 @@ export function AssumePage(props: { queryRef: PreloadedQuery<AssumePageQuery> })
         }
       },
     });
-  }, [organizationId, navigate, assumeOrganizationSession, safeContinueUrl, searchParams, viewer.ssoLoginURL]);
+  }, [organizationId, navigate, assumeOrganizationSession, safeContinueUrl, searchParams]);
 
   return (
     <div className="flex w-full flex-col gap-8">

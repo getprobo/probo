@@ -31,7 +31,7 @@ import { MainLayoutSkeleton } from "#/pages/iam/MainLayoutSkeleton";
 const assumeOrganizationSessionQuery = graphql`
   query AssumeOrganizationSessionQuery {
     viewer @required(action: THROW) {
-      ssoLoginURL
+      __typename
     }
   }
 `;
@@ -49,6 +49,7 @@ const assumeMutation = graphql`
         }
         ... on SAMLAuthenticationRequired {
           reason
+          ssoLoginURL
         }
       }
     }
@@ -57,7 +58,7 @@ const assumeMutation = graphql`
 
 export function AssumeOrganizationSession() {
   const { employeePortalId } = useParams();
-  const { viewer } = useLazyLoadQuery<AssumeOrganizationSessionQuery>(
+  useLazyLoadQuery<AssumeOrganizationSessionQuery>(
     assumeOrganizationSessionQuery,
     {},
     { fetchPolicy: "network-only" },
@@ -91,10 +92,7 @@ export function AssumeOrganizationSession() {
           redirectToLogin({ organizationId });
           return;
         case "SAMLAuthenticationRequired": {
-          if (!viewer.ssoLoginURL) {
-            throw new Error("missing SSO login URL for user email");
-          }
-          const samlURL = new URL(viewer.ssoLoginURL);
+          const samlURL = new URL(result.ssoLoginURL);
           const search = loginSearch({ organizationId });
           for (const [key, value] of search) {
             samlURL.searchParams.set(key, value);
@@ -108,7 +106,7 @@ export function AssumeOrganizationSession() {
     }).catch(() => {
       // UnAuthenticatedError is consumed by useMutation (full redirect).
     });
-  }, [employeePortalId, assume, viewer.ssoLoginURL]);
+  }, [employeePortalId, assume]);
 
   return <MainLayoutSkeleton />;
 }
