@@ -32,6 +32,7 @@ import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
+import { useSearchParams } from "react-router";
 
 import type { MarketplacePageQuery } from "#/__generated__/core/MarketplacePageQuery.graphql";
 import { SearchField } from "#/components/SearchField/SearchField";
@@ -79,10 +80,12 @@ interface MarketplacePageProps {
 
 export function MarketplacePage({ queryRef }: MarketplacePageProps) {
   const { t } = useTranslation("organizations/settings/integrations");
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
-  const [thirdPartyOnly, setThirdPartyOnly] = useState(false);
+  const [matchesSettled, setMatchesSettled] = useState(false);
   const [matchedProviders, setMatchedProviders] = useState<ReadonlySet<string>>(() => new Set());
   const handleMatchedProviders = useCallback((next: ReadonlySet<string>) => {
+    setMatchesSettled(true);
     setMatchedProviders((current) => {
       if (current.size === next.size && [...next].every(provider => current.has(provider))) {
         return current;
@@ -91,6 +94,21 @@ export function MarketplacePage({ queryRef }: MarketplacePageProps) {
       return next;
     });
   }, []);
+  const setSuggested = useCallback((value: boolean) => {
+    setSearchParams((previous) => {
+      if ((previous.get("suggested") === "1") === value) {
+        return previous;
+      }
+
+      const next = new URLSearchParams(previous);
+      if (value) {
+        next.set("suggested", "1");
+      } else {
+        next.delete("suggested");
+      }
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
   const organizationId = useOrganizationId();
   const data = usePreloadedQuery<MarketplacePageQuery>(marketplacePageQuery, queryRef);
   const { organization, connectorProviders } = data;
@@ -104,6 +122,9 @@ export function MarketplacePage({ queryRef }: MarketplacePageProps) {
   const credentialCounts = credentialCountByProvider(organization.connectors);
   const canCreateConnector = organization.canCreateConnector;
   const canListThirdParties = organization.canListThirdParties;
+  const suggested = searchParams.get("suggested") === "1";
+  const matchingActive = canCreateConnector && canListThirdParties;
+  const waitingForMatches = suggested && matchingActive && !matchesSettled;
   const normalizedSearch = searchQuery.trim().toLowerCase();
   const isSearching = normalizedSearch !== "";
   const isConnectable = (provider: string) =>
@@ -111,7 +132,7 @@ export function MarketplacePage({ queryRef }: MarketplacePageProps) {
   const providers = canCreateConnector
     ? connectorProviders
         .filter((provider) => {
-          if (thirdPartyOnly && !isConnectable(provider.provider)) {
+          if (suggested && !isConnectable(provider.provider)) {
             return false;
           }
 
@@ -154,7 +175,7 @@ export function MarketplacePage({ queryRef }: MarketplacePageProps) {
               color="neutral"
               highContrast
               iconStart={<SparkleIcon />}
-              onClick={() => setThirdPartyOnly(true)}
+              onClick={() => setSuggested(true)}
             >
               {t("marketplacePage.thirdParties.filterAction")}
             </Button>
@@ -204,9 +225,9 @@ export function MarketplacePage({ queryRef }: MarketplacePageProps) {
               <div className={filters()}>
                 <div className={filter()}>
                   <Select
-                    value={thirdPartyOnly ? "connectable" : null}
+                    value={suggested ? "connectable" : null}
                     onValueChange={(value: string | null) => {
-                      setThirdPartyOnly(value === "connectable");
+                      setSuggested(value === "connectable");
                     }}
                   >
                     <SelectTrigger
@@ -244,30 +265,32 @@ export function MarketplacePage({ queryRef }: MarketplacePageProps) {
                 </div>
               </Card>
             )
-          : providers.length === 0
-            ? (
-                <Card variant="soft" size={2}>
-                  <div className={empty()}>
-                    <Text size={2} color="faint">
-                      {isSearching
-                        ? t("listPage.emptyAvailableSearch")
-                        : t("listPage.emptyAvailable")}
-                    </Text>
+          : waitingForMatches
+            ? null
+            : providers.length === 0
+              ? (
+                  <Card variant="soft" size={2}>
+                    <div className={empty()}>
+                      <Text size={2} color="faint">
+                        {isSearching
+                          ? t("listPage.emptyAvailableSearch")
+                          : t("listPage.emptyAvailable")}
+                      </Text>
+                    </div>
+                  </Card>
+                )
+              : (
+                  <div className={marketplaceGrid()}>
+                    {providers.map(provider => (
+                      <ConnectorProviderListItem
+                        key={provider.provider}
+                        providerKey={provider}
+                        credentialCount={credentialCounts.get(provider.provider) ?? 0}
+                        matchesThirdParty={isConnectable(provider.provider)}
+                      />
+                    ))}
                   </div>
-                </Card>
-              )
-            : (
-                <div className={marketplaceGrid()}>
-                  {providers.map(provider => (
-                    <ConnectorProviderListItem
-                      key={provider.provider}
-                      providerKey={provider}
-                      credentialCount={credentialCounts.get(provider.provider) ?? 0}
-                      matchesThirdParty={isConnectable(provider.provider)}
-                    />
-                  ))}
-                </div>
-              )}
+                )}
       </div>
     </div>
   );
