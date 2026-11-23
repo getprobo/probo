@@ -4,11 +4,26 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.356.0] - 2026-11-23
+
 ### Added
 
 - MCP `addInternalControlLinkEvidence` uploads a `.uri` file
   containing an HTTP or HTTPS URL on an internal control, the same
   way as the console link form
+
+### Changed
+
+- An identity takes the full name of its membership profile when it
+  has exactly one, and renaming that profile (including through SCIM)
+  renames the identity. Existing identities with a single profile are
+  updated. SAML login no longer overwrites an existing identity name
+
+### Fixed
+
+- Publishing a document, republishing a generated document, or
+  restoring history no longer fails with "resolve open suggestions
+  before publishing" when the editor shows no suggestion
 
 ## [0.355.1] - 2026-11-20
 
