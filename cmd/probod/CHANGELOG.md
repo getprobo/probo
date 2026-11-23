@@ -4,6 +4,22 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.357.0] - 2026-11-23
+
+### Added
+
+- A connected credential with no organization now shows why the list
+  is empty and a link to grant access, and the card is marked as a
+  warning instead of looking healthy
+- Device posture reads Windows hosts patched by NinjaOne as having
+  automatic updates on, as reported by probo-agent 0.10.0
+
+### Changed
+
+- The Suggested filter in the connector marketplace is kept when you
+  open a connector and come back, including with the browser Back
+  button
+
 ## [0.356.0] - 2026-11-23
 
 ### Added
