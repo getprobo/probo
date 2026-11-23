@@ -26,6 +26,7 @@ import (
 	"time"
 
 	"github.com/crewjam/saml"
+	"github.com/stretchr/testify/assert"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -114,4 +115,25 @@ func TestHasSAMLSubject(t *testing.T) {
 			},
 		)
 	}
+}
+
+func TestReplayRecordExpiry(t *testing.T) {
+	t.Parallel()
+
+	now := time.Date(2026, 11, 23, 12, 0, 0, 0, time.UTC)
+
+	t.Run("short assertion keeps the 24 hour floor", func(t *testing.T) {
+		t.Parallel()
+
+		got := replayRecordExpiry(now, now.Add(5*time.Minute))
+		assert.Equal(t, now.Add(24*time.Hour), got)
+	})
+
+	t.Run("long assertion is remembered until it expires", func(t *testing.T) {
+		t.Parallel()
+
+		notOnOrAfter := now.Add(48 * time.Hour)
+		got := replayRecordExpiry(now, notOnOrAfter)
+		assert.Equal(t, notOnOrAfter.Add(clockSkewTolerance), got)
+	})
 }
