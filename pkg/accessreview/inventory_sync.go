@@ -156,7 +156,6 @@ func (s *Service) applyInventoryRoster(
 	tenantID := scope.GetTenantID()
 	resourceByKey := make(map[string]*coredata.AccessInventoryResource)
 	principalByKey := make(map[string]*coredata.AccessInventoryPrincipal)
-	seenGrants := make(map[string]struct{})
 	upserted := 0
 
 	if _, err := upsertInventoryResource(
@@ -229,11 +228,6 @@ func (s *Service) applyInventoryRoster(
 				return 0, err
 			}
 
-			seenGrants[inventoryGrantNaturalKey(
-				triple.PrincipalKey,
-				triple.ResourceKey,
-				triple.EntitlementKey,
-			)] = struct{}{}
 			upserted++
 		}
 	}
@@ -245,17 +239,12 @@ func (s *Service) applyInventoryRoster(
 		tenantID,
 		source,
 		run,
-		seenGrants,
 		observedAt,
 	); err != nil {
 		return 0, err
 	}
 
 	return upserted, nil
-}
-
-func inventoryGrantNaturalKey(principalKey, resourceKey, entitlementKey string) string {
-	return principalKey + "\x00" + resourceKey + "\x00" + entitlementKey
 }
 
 func markMissingInventoryGrants(
@@ -265,7 +254,6 @@ func markMissingInventoryGrants(
 	tenantID gid.TenantID,
 	source *coredata.AccessReviewSource,
 	run *coredata.AccessSourceSyncRun,
-	seen map[string]struct{},
 	observedAt time.Time,
 ) error {
 	return page.WalkAll(
@@ -279,11 +267,12 @@ func markMissingInventoryGrants(
 			cursor *page.Cursor[coredata.AccessInventoryGrantOrderField],
 		) ([]*coredata.AccessInventoryGrant, error) {
 			var batch coredata.AccessInventoryGrants
-			if err := batch.LoadBySourceID(
+			if err := batch.LoadBySourceIDAndLastSeenBefore(
 				ctx,
 				tx,
 				scope,
 				source.ID,
+				observedAt,
 				cursor,
 			); err != nil {
 				return nil, err
@@ -293,15 +282,6 @@ func markMissingInventoryGrants(
 		},
 		func(grants []*coredata.AccessInventoryGrant) error {
 			for _, grant := range grants {
-				key := inventoryGrantNaturalKey(
-					grant.PrincipalKey,
-					grant.ResourceKey,
-					grant.EntitlementKey,
-				)
-				if _, ok := seen[key]; ok {
-					continue
-				}
-
 				if err := disappearInventoryGrant(
 					ctx,
 					tx,

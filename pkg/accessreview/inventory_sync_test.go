@@ -271,23 +271,12 @@ func TestSyncInventorySource_AppearedOnNewEntitlements(t *testing.T) {
 
 	events = loadInventoryChangeEvents(t, ctx, client, fx)
 	require.Len(t, events, 3)
-
-	eventTypes := map[string]coredata.AccessInventoryChangeType{}
-	for _, event := range events {
-		eventTypes[event.EntitlementKey+"|"+event.ChangeType.String()] = event.ChangeType
-	}
-
-	assert.Equal(
-		t,
-		coredata.AccessInventoryChangeTypeAppeared,
-		eventTypes["Owner|"+coredata.AccessInventoryChangeTypeAppeared.String()],
-	)
-	assert.Equal(
-		t,
-		coredata.AccessInventoryChangeTypeDisappeared,
-		eventTypes["Admin|"+coredata.AccessInventoryChangeTypeDisappeared.String()],
-	)
+	assert.Equal(t, coredata.AccessInventoryChangeTypeAppeared, events[1].ChangeType)
+	assert.Equal(t, "Owner", events[1].EntitlementKey)
 	require.NotNil(t, events[1].SyncRunID)
+	assert.Equal(t, run2.ID, *events[1].SyncRunID)
+	assert.Equal(t, coredata.AccessInventoryChangeTypeDisappeared, events[2].ChangeType)
+	assert.Equal(t, "Admin", events[2].EntitlementKey)
 }
 
 func TestSyncInventorySource_EmptyRosterUpsertsDefaultResource(t *testing.T) {
