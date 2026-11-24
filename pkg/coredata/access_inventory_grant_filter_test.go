@@ -55,6 +55,7 @@ func TestAccessInventoryGrantFilter_NilSQLFragmentHidesPastThreshold(t *testing.
 	t.Parallel()
 
 	var filter *coredata.AccessInventoryGrantFilter
+
 	fragment := compactSQL(filter.SQLFragment())
 
 	assert.Contains(t, fragment, "WHEN @filter_include_disappeared::boolean IS TRUE THEN TRUE")
