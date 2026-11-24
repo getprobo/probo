@@ -55,16 +55,8 @@ const documentActionsMenuFragment = graphql`
     canArchive: permission(action: "core:document:archive")
     canUnarchive: permission(action: "core:document:unarchive")
     canDelete: permission(action: "core:document:delete")
-    publishedVersion: versions(
-      first: 1
-      filter: { statuses: [PUBLISHED] }
-      orderBy: { field: CREATED_AT, direction: DESC }
-    ) {
-      edges {
-        node {
-          ...DocumentPdfExportForm_version
-        }
-      }
+    publishedVersion {
+      ...DocumentPdfExportForm_version
     }
   }
 `;
@@ -82,7 +74,7 @@ export function DocumentActionsMenu({ documentKey }: DocumentActionsMenuProps) {
   const [downloadOpen, setDownloadOpen] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const publishedVersion = document.publishedVersion.edges[0]?.node ?? null;
+  const publishedVersion = document.publishedVersion;
   const archived = document.status === "ARCHIVED";
 
   function handleUnarchive() {

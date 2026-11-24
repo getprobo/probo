@@ -25,15 +25,15 @@ import { TooltipPopup } from "@probo/ui/src/v2/Tooltip/TooltipPopup";
 import { TooltipTrigger } from "@probo/ui/src/v2/Tooltip/TooltipTrigger";
 import { useTranslation } from "react-i18next";
 
-interface DocumentVersionsTriggerProps {
+interface DocumentHistoryTriggerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-// Shows or hides the versions column beside the document.
-export function DocumentVersionsTrigger({ open, onOpenChange }: DocumentVersionsTriggerProps) {
+// Shows or hides the history column beside the document.
+export function DocumentHistoryTrigger({ open, onOpenChange }: DocumentHistoryTriggerProps) {
   const { t } = useTranslation("organizations/documents");
-  const label = t("details.versions.trigger");
+  const label = t("details.history.trigger");
 
   return (
     <Tooltip>

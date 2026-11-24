@@ -140,17 +140,22 @@
       "suggestionFailed": "Could not start the suggestion",
       "suggestionUntracked": "That change could not be tracked as a suggestion"
     },
-    "versions": {
-      "trigger": "Versions",
-      "title": "Versions",
-      "close": "Close versions",
+    "history": {
+      "trigger": "History",
+      "title": "History",
+      "close": "Close history",
       "current": "Current version",
       "version": "Version <number>{{version}}</number>",
+      "versionedOnly": "Versions only",
+      "unknownAuthor": "Unknown author",
+      "changes_one": "{{count}} change",
+      "changes_other": "{{count}} changes",
       "viewingCurrent": "Viewing current version",
       "viewingVersion": "Viewing version <number>{{version}}</number> from {{date}}",
+      "viewingRevision": "Viewing revision by {{author}} from {{date}}",
       "showLatest": "Show latest",
       "loadMore": "Load more",
-      "openError": "Could not open this version",
+      "openError": "Could not open this revision",
       "status": {
         "pendingApproval": "Pending approval",
         "rejected": "Rejected",

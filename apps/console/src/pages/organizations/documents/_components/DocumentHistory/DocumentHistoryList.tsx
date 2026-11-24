@@ -23,65 +23,69 @@ import { XIcon } from "@phosphor-icons/react";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { ErrorBoundary } from "@probo/ui/src/v2/ErrorBoundary/ErrorBoundary";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
+import { Switch } from "@probo/ui/src/v2/Switch/Switch";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePaginationFragment, usePreloadedQuery } from "react-relay";
 
-import type { DocumentVersionList_document$key } from "#/__generated__/core/DocumentVersionList_document.graphql";
-import type { DocumentVersionListPaginationQuery } from "#/__generated__/core/DocumentVersionListPaginationQuery.graphql";
-import type { DocumentVersionListQuery } from "#/__generated__/core/DocumentVersionListQuery.graphql";
+import type { DocumentHistoryList_document$key } from "#/__generated__/core/DocumentHistoryList_document.graphql";
+import type { DocumentHistoryListPaginationQuery } from "#/__generated__/core/DocumentHistoryListPaginationQuery.graphql";
+import type { DocumentHistoryListQuery } from "#/__generated__/core/DocumentHistoryListQuery.graphql";
 
-import { documentVersionList } from "../../variants";
+import { documentHistoryList } from "../../variants";
 
-import { DocumentVersionListItem } from "./DocumentVersionListItem";
+import { DocumentHistoryListItem } from "./DocumentHistoryListItem";
 
-const versionPageSize = 20;
+const historyPageSize = 20;
 
-export const documentVersionListQuery = graphql`
-  query DocumentVersionListQuery($documentId: ID!) {
+export const documentHistoryListQuery = graphql`
+  query DocumentHistoryListQuery($documentId: ID!) {
     node(id: $documentId) {
       __typename
       ... on Document {
-        ...DocumentVersionList_document
+        ...DocumentHistoryList_document
       }
     }
   }
 `;
 
-const documentVersionListFragment = graphql`
-  fragment DocumentVersionList_document on Document
-  @refetchable(queryName: "DocumentVersionListPaginationQuery")
+const documentHistoryListFragment = graphql`
+  fragment DocumentHistoryList_document on Document
+  @refetchable(queryName: "DocumentHistoryListPaginationQuery")
   @argumentDefinitions(
     first: { type: "Int", defaultValue: 20 }
     after: { type: "CursorKey", defaultValue: null }
+    filter: { type: "DocumentRevisionFilter", defaultValue: null }
   ) {
-    versions(
+    history(
       first: $first
       after: $after
-      orderBy: { field: CREATED_AT, direction: DESC }
-    ) @connection(key: "DocumentVersionList_versions", filters: ["orderBy"]) {
+      orderBy: { field: ENDED_AT, direction: DESC }
+      filter: $filter
+    ) @connection(key: "DocumentHistoryList_history", filters: ["orderBy", "filter"]) {
       edges {
         node {
           id
-          ...DocumentVersionListItem_version
+          ...DocumentHistoryListItem_revision
         }
       }
     }
   }
 `;
 
-interface DocumentVersionListProps {
-  queryRef: PreloadedQuery<DocumentVersionListQuery> | null | undefined;
-  activeVersionId: string | null;
-  onSelect: (versionId: string | null) => void;
+interface DocumentHistoryListProps {
+  queryRef: PreloadedQuery<DocumentHistoryListQuery> | null | undefined;
+  activeRevisionId: string | null;
+  onSelect: (revisionId: string | null) => void;
   onClose: () => void;
 }
 
-// Every version of the document, newest first, after the live one. The
-// column never blocks the document: while it loads or after it fails, it
+// The one history of the document, newest first, after the live document: a
+// revision per editing session, with the versions published from it as tags.
+// The column never blocks the document: while it loads or after it fails, it
 // stays empty.
-export function DocumentVersionList({ queryRef, ...props }: DocumentVersionListProps) {
+export function DocumentHistoryList({ queryRef, ...props }: DocumentHistoryListProps) {
   if (queryRef == null) {
     return null;
   }
@@ -89,69 +93,87 @@ export function DocumentVersionList({ queryRef, ...props }: DocumentVersionListP
   return (
     <ErrorBoundary fallback={null}>
       <Suspense fallback={null}>
-        <DocumentVersionListLoaded queryRef={queryRef} {...props} />
+        <DocumentHistoryListLoaded queryRef={queryRef} {...props} />
       </Suspense>
     </ErrorBoundary>
   );
 }
 
-function DocumentVersionListLoaded({
+function DocumentHistoryListLoaded({
   queryRef,
   ...props
-}: Omit<DocumentVersionListProps, "queryRef"> & {
-  queryRef: PreloadedQuery<DocumentVersionListQuery>;
+}: Omit<DocumentHistoryListProps, "queryRef"> & {
+  queryRef: PreloadedQuery<DocumentHistoryListQuery>;
 }) {
-  const data = usePreloadedQuery<DocumentVersionListQuery>(documentVersionListQuery, queryRef);
+  const data = usePreloadedQuery<DocumentHistoryListQuery>(documentHistoryListQuery, queryRef);
 
   if (data.node.__typename !== "Document") {
     return null;
   }
 
-  return <DocumentVersionListContent documentKey={data.node} {...props} />;
+  return <DocumentHistoryListContent documentKey={data.node} {...props} />;
 }
 
-function DocumentVersionListContent({
+function DocumentHistoryListContent({
   documentKey,
-  activeVersionId,
+  activeRevisionId,
   onSelect,
   onClose,
-}: Omit<DocumentVersionListProps, "queryRef"> & {
-  documentKey: DocumentVersionList_document$key;
+}: Omit<DocumentHistoryListProps, "queryRef"> & {
+  documentKey: DocumentHistoryList_document$key;
 }) {
   const { t } = useTranslation("organizations/documents");
-  const { data, hasNext, isLoadingNext, loadNext } = usePaginationFragment<
-    DocumentVersionListPaginationQuery,
-    DocumentVersionList_document$key
-  >(documentVersionListFragment, documentKey);
-  const { root, heading, body, viewport, content, more } = documentVersionList();
+  const { data, hasNext, isLoadingNext, loadNext, refetch } = usePaginationFragment<
+    DocumentHistoryListPaginationQuery,
+    DocumentHistoryList_document$key
+  >(documentHistoryListFragment, documentKey);
+  const [versionedOnly, setVersionedOnly] = useState(false);
+  const { root, heading, filter, body, viewport, content, more } = documentHistoryList();
+
+  function handleVersionedOnlyChange(checked: boolean) {
+    setVersionedOnly(checked);
+    refetch(
+      { filter: checked ? { versioned: true } : null },
+      { fetchPolicy: "store-and-network" },
+    );
+  }
 
   return (
     <div className={root()}>
       <div className={heading()}>
-        <Text size={2} weight="medium">{t("details.versions.title")}</Text>
+        <Text size={2} weight="medium">{t("details.history.title")}</Text>
         <IconButton
           size={1}
           variant="ghost"
           color="neutral"
-          aria-label={t("details.versions.close")}
+          aria-label={t("details.history.close")}
           onClick={onClose}
         >
           <XIcon />
         </IconButton>
       </div>
+      <label className={filter()}>
+        <Text size={1} color="faint">{t("details.history.versionedOnly")}</Text>
+        <Switch
+          size={1}
+          checked={versionedOnly}
+          aria-label={t("details.history.versionedOnly")}
+          onCheckedChange={handleVersionedOnlyChange}
+        />
+      </label>
       <ScrollArea.Root className={body()}>
         <ScrollArea.Viewport className={viewport()}>
           <ScrollArea.Content className={content()}>
-            <DocumentVersionListItem
-              versionKey={null}
-              active={activeVersionId == null}
+            <DocumentHistoryListItem
+              revisionKey={null}
+              active={activeRevisionId == null}
               onSelect={() => onSelect(null)}
             />
-            {data.versions.edges.map(({ node }) => (
-              <DocumentVersionListItem
+            {data.history.edges.map(({ node }) => (
+              <DocumentHistoryListItem
                 key={node.id}
-                versionKey={node}
-                active={activeVersionId === node.id}
+                revisionKey={node}
+                active={activeRevisionId === node.id}
                 onSelect={() => onSelect(node.id)}
               />
             ))}
@@ -162,9 +184,9 @@ function DocumentVersionListContent({
                 color="neutral"
                 className={more()}
                 loading={isLoadingNext}
-                onClick={() => loadNext(versionPageSize)}
+                onClick={() => loadNext(historyPageSize)}
               >
-                {t("details.versions.loadMore")}
+                {t("details.history.loadMore")}
               </Button>
             )}
           </ScrollArea.Content>

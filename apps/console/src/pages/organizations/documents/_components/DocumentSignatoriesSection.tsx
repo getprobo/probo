@@ -42,16 +42,8 @@ const documentSignatoriesPageSize = 10;
 
 const documentSignatoriesSectionFragment = graphql`
   fragment DocumentSignatoriesSection_document on Document {
-    publishedVersion: versions(
-      first: 1
-      filter: { statuses: [PUBLISHED] }
-      orderBy: { field: CREATED_AT, direction: DESC }
-    ) {
-      edges {
-        node {
-          ...DocumentSignatoriesSectionList_version
-        }
-      }
+    publishedVersion {
+      ...DocumentSignatoriesSectionList_version
     }
   }
 `;
@@ -112,7 +104,7 @@ function stateColor(state: "REQUESTED" | "SIGNED") {
 
 export function DocumentSignatoriesSection({ documentKey }: DocumentSignatoriesSectionProps) {
   const document = useFragment(documentSignatoriesSectionFragment, documentKey);
-  const version = document.publishedVersion.edges[0]?.node ?? null;
+  const version = document.publishedVersion;
   const { root, title, titleLead, titleIcon } = documentSignatories();
   const { t } = useTranslation("organizations/documents");
 

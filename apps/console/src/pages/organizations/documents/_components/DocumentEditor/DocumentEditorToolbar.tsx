@@ -22,13 +22,13 @@ import type { RepoCollaborationHandle } from "@probo/collaboration";
 import { Separator } from "@probo/ui/src/v2/Separator/Separator";
 import type { PreloadedQuery } from "react-relay";
 
-import type { DocumentVersionContentQuery } from "#/__generated__/core/DocumentVersionContentQuery.graphql";
+import type { DocumentHistoryContentQuery } from "#/__generated__/core/DocumentHistoryContentQuery.graphql";
 
 import type { DocumentMode } from "../../_lib/useDocumentModes";
 import { documentEditor } from "../../variants";
+import { DocumentHistoryLabel } from "../DocumentHistory/DocumentHistoryLabel";
+import { DocumentHistoryTrigger } from "../DocumentHistory/DocumentHistoryTrigger";
 import { DocumentModeSelect } from "../DocumentModeSelect";
-import { DocumentVersionLabel } from "../DocumentVersionList/DocumentVersionLabel";
-import { DocumentVersionsTrigger } from "../DocumentVersionList/DocumentVersionsTrigger";
 
 import { DocumentPresenceAvatars } from "./DocumentPresenceAvatars";
 
@@ -40,9 +40,9 @@ interface DocumentEditorToolbarProps {
   // The editor portals its formatting controls here while editing or
   // suggesting. Viewing has no slot, so the editor mounts no controls.
   onControlsElement: (element: HTMLDivElement | null) => void;
-  versionsOpen: boolean;
-  onVersionsOpenChange: (open: boolean) => void;
-  versionQueryRef: PreloadedQuery<DocumentVersionContentQuery> | null;
+  historyOpen: boolean;
+  onHistoryOpenChange: (open: boolean) => void;
+  revisionQueryRef: PreloadedQuery<DocumentHistoryContentQuery> | null;
   onShowLatest: () => void;
 }
 
@@ -52,9 +52,9 @@ export function DocumentEditorToolbar({
   onModeChange,
   collaborationHandle,
   onControlsElement,
-  versionsOpen,
-  onVersionsOpenChange,
-  versionQueryRef,
+  historyOpen,
+  onHistoryOpenChange,
+  revisionQueryRef,
   onShowLatest,
 }: DocumentEditorToolbarProps) {
   const viewing = mode === "viewing";
@@ -67,7 +67,7 @@ export function DocumentEditorToolbar({
       {viewing
         ? (
             <div className={toolbarLabel()}>
-              <DocumentVersionLabel queryRef={versionQueryRef} onShowLatest={onShowLatest} />
+              <DocumentHistoryLabel queryRef={revisionQueryRef} onShowLatest={onShowLatest} />
             </div>
           )
         : <div ref={onControlsElement} className={toolbarControls()} />}
@@ -79,7 +79,7 @@ export function DocumentEditorToolbar({
           <DocumentModeSelect mode={mode} modes={modes} onModeChange={onModeChange} />
         </div>
         <Separator orientation="vertical" className={toolbarSeparator()} />
-        <DocumentVersionsTrigger open={versionsOpen} onOpenChange={onVersionsOpenChange} />
+        <DocumentHistoryTrigger open={historyOpen} onOpenChange={onHistoryOpenChange} />
       </div>
     </div>
   );

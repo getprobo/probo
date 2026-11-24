@@ -25,75 +25,87 @@ import { Suspense } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, useFragment, usePreloadedQuery } from "react-relay";
 
-import type { DocumentVersionContentQuery } from "#/__generated__/core/DocumentVersionContentQuery.graphql";
-import type { DocumentVersionLabel_version$key } from "#/__generated__/core/DocumentVersionLabel_version.graphql";
+import type { DocumentHistoryContentQuery } from "#/__generated__/core/DocumentHistoryContentQuery.graphql";
+import type { DocumentHistoryLabel_revision$key } from "#/__generated__/core/DocumentHistoryLabel_revision.graphql";
 
-import { useVersionDate } from "../../_lib/useVersionDate";
+import { useRevisionDate } from "../../_lib/useRevisionDate";
 
-import { documentVersionContentQuery } from "./DocumentVersionContent";
+import { documentHistoryContentQuery } from "./DocumentHistoryContent";
 
-const documentVersionLabelFragment = graphql`
-  fragment DocumentVersionLabel_version on DocumentVersion {
-    major
-    minor
-    publishedAt
-    createdAt
+const documentHistoryLabelFragment = graphql`
+  fragment DocumentHistoryLabel_revision on DocumentRevision {
+    authorName
+    endedAt
+    versions {
+      major
+      minor
+    }
   }
 `;
 
-interface DocumentVersionLabelProps {
-  queryRef: PreloadedQuery<DocumentVersionContentQuery> | null;
+interface DocumentHistoryLabelProps {
+  queryRef: PreloadedQuery<DocumentHistoryContentQuery> | null;
   onShowLatest: () => void;
 }
 
-// Says which version the document shows: the live one, or a previous one
-// with its number and date and a way back to the live one.
-export function DocumentVersionLabel({ queryRef, onShowLatest }: DocumentVersionLabelProps) {
+// Says which revision the document shows: the live one, or a previous one
+// with its version number or author and its date, and a way back to the live
+// one.
+export function DocumentHistoryLabel({ queryRef, onShowLatest }: DocumentHistoryLabelProps) {
   const { t } = useTranslation("organizations/documents");
 
   if (queryRef == null) {
-    return <Text size={2} color="faint">{t("details.versions.viewingCurrent")}</Text>;
+    return <Text size={2} color="faint">{t("details.history.viewingCurrent")}</Text>;
   }
 
   return (
     <>
       <ErrorBoundary fallback={null}>
         <Suspense fallback={null}>
-          <DocumentVersionLabelLoaded queryRef={queryRef} />
+          <DocumentHistoryLabelLoaded queryRef={queryRef} />
         </Suspense>
       </ErrorBoundary>
       <Button size={1} variant="ghost" color="neutral" className="shrink-0" onClick={onShowLatest}>
-        {t("details.versions.showLatest")}
+        {t("details.history.showLatest")}
       </Button>
     </>
   );
 }
 
-function DocumentVersionLabelLoaded({ queryRef }: { queryRef: PreloadedQuery<DocumentVersionContentQuery> }) {
-  const data = usePreloadedQuery<DocumentVersionContentQuery>(documentVersionContentQuery, queryRef);
+function DocumentHistoryLabelLoaded({ queryRef }: { queryRef: PreloadedQuery<DocumentHistoryContentQuery> }) {
+  const data = usePreloadedQuery<DocumentHistoryContentQuery>(documentHistoryContentQuery, queryRef);
 
-  if (data.node.__typename !== "DocumentVersion") {
+  if (data.node.__typename !== "Document" || data.node.revision == null) {
     return null;
   }
 
-  return <DocumentVersionLabelText versionKey={data.node} />;
+  return <DocumentHistoryLabelText revisionKey={data.node.revision} />;
 }
 
-function DocumentVersionLabelText({ versionKey }: { versionKey: DocumentVersionLabel_version$key }) {
-  const version = useFragment(documentVersionLabelFragment, versionKey);
-  const formatDate = useVersionDate();
+function DocumentHistoryLabelText({ revisionKey }: { revisionKey: DocumentHistoryLabel_revision$key }) {
+  const revision = useFragment(documentHistoryLabelFragment, revisionKey);
+  const { t } = useTranslation("organizations/documents");
+  const formatDate = useRevisionDate();
+  const version = revision.versions.at(-1);
 
   return (
     <Text size={2} weight="medium" className="truncate">
-      <Trans
-        ns="organizations/documents"
-        i18nKey="details.versions.viewingVersion"
-        values={{
-          version: `${version.major}.${version.minor}`,
-          date: formatDate(version.publishedAt ?? version.createdAt),
-        }}
-        components={{ number: <span className="font-mono tabular-nums" /> }}
-      />
+      {version != null
+        ? (
+            <Trans
+              ns="organizations/documents"
+              i18nKey="details.history.viewingVersion"
+              values={{
+                version: `${version.major}.${version.minor}`,
+                date: formatDate(revision.endedAt),
+              }}
+              components={{ number: <span className="font-mono tabular-nums" /> }}
+            />
+          )
+        : t("details.history.viewingRevision", {
+            author: revision.authorName ?? t("details.history.unknownAuthor"),
+            date: formatDate(revision.endedAt),
+          })}
     </Text>
   );
 }

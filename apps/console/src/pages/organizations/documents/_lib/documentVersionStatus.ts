@@ -18,18 +18,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { DocumentVersionStatus } from "#/__generated__/core/DocumentVersionListItem_version.graphql";
+import type { DocumentVersionStatus } from "#/__generated__/core/DocumentHistoryListItem_revision.graphql";
 
 // The badge a version carries in lists. Published versions are the norm and
 // carry none.
 export function documentVersionStatus(status: DocumentVersionStatus) {
   switch (status) {
     case "PENDING_APPROVAL":
-      return { color: "amber", label: "details.versions.status.pendingApproval" } as const;
+      return { color: "amber", label: "details.history.status.pendingApproval" } as const;
     case "REJECTED":
-      return { color: "red", label: "details.versions.status.rejected" } as const;
+      return { color: "red", label: "details.history.status.rejected" } as const;
     case "VOIDED":
-      return { color: "neutral", label: "details.versions.status.voided" } as const;
+      return { color: "neutral", label: "details.history.status.voided" } as const;
     default:
       return null;
   }

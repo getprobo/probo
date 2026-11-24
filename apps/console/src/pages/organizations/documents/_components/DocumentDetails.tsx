@@ -28,11 +28,11 @@ import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, useFragment } from "react-relay";
 
 import type { DocumentDetails_document$key } from "#/__generated__/core/DocumentDetails_document.graphql";
+import type { DocumentHistoryContentQuery } from "#/__generated__/core/DocumentHistoryContentQuery.graphql";
 import type { DocumentReviewListQuery } from "#/__generated__/core/DocumentReviewListQuery.graphql";
-import type { DocumentVersionContentQuery } from "#/__generated__/core/DocumentVersionContentQuery.graphql";
 
 import { type DocumentMode, useDocumentModes } from "../_lib/useDocumentModes";
-import { useDocumentVersionParam } from "../_lib/useDocumentVersionParam";
+import { useDocumentRevisionParam } from "../_lib/useDocumentRevisionParam";
 import { documentDetailsPage } from "../variants";
 
 import { DocumentApprovalsSection } from "./DocumentApprovalsSection";
@@ -60,7 +60,7 @@ const documentDetailsFragment = graphql`
 interface DocumentDetailsProps {
   documentKey: DocumentDetails_document$key;
   reviewQueryRef: PreloadedQuery<DocumentReviewListQuery> | null;
-  versionQueryRef: PreloadedQuery<DocumentVersionContentQuery> | null;
+  revisionQueryRef: PreloadedQuery<DocumentHistoryContentQuery> | null;
   organizationId: string;
   search: string;
 }
@@ -68,19 +68,19 @@ interface DocumentDetailsProps {
 export function DocumentDetails({
   documentKey,
   reviewQueryRef,
-  versionQueryRef,
+  revisionQueryRef,
   organizationId,
   search,
 }: DocumentDetailsProps) {
   const document = useFragment(documentDetailsFragment, documentKey);
   const { t } = useTranslation("organizations/documents");
   const { mode, selectMode, modes } = useDocumentModes(document);
-  const { versionId, selectVersion } = useDocumentVersionParam();
+  const { revisionId, selectRevision } = useDocumentRevisionParam();
 
   // Edits always apply to the live document.
   function changeMode(next: DocumentMode) {
-    if (next !== "viewing" && versionId != null) {
-      selectVersion(null);
+    if (next !== "viewing" && revisionId != null) {
+      selectRevision(null);
     }
     selectMode(next);
   }
@@ -130,9 +130,9 @@ export function DocumentDetails({
         <DocumentEditor
           documentKey={document}
           reviewQueryRef={reviewQueryRef}
-          versionId={versionId}
-          versionQueryRef={versionQueryRef}
-          onVersionChange={selectVersion}
+          revisionId={revisionId}
+          revisionQueryRef={revisionQueryRef}
+          onRevisionChange={selectRevision}
           mode={mode}
           modes={modes}
           onModeChange={changeMode}

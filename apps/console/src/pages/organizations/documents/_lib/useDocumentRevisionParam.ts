@@ -21,34 +21,40 @@
 import { useCallback } from "react";
 import { useSearchParams } from "react-router";
 
-// The document page shows a previous version while this search param holds
+// The document page shows a previous revision while this search param holds
 // its id, and the live document otherwise.
-export const documentVersionParam = "version";
+export const documentRevisionParam = "revision";
 
-export function useDocumentVersionParam() {
+// Links made before versions became tags of the history carry the version id
+// here. The page resolves it to the revision the version tags.
+export const legacyDocumentVersionParam = "version";
+
+export function useDocumentRevisionParam() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const versionId = searchParams.get(documentVersionParam);
+  const revisionId = searchParams.get(documentRevisionParam);
 
-  const selectVersion = useCallback((next: string | null) => {
+  const selectRevision = useCallback((next: string | null) => {
     setSearchParams((prev) => {
       const params = new URLSearchParams(prev);
+      params.delete(legacyDocumentVersionParam);
       if (next == null) {
-        params.delete(documentVersionParam);
+        params.delete(documentRevisionParam);
       } else {
-        params.set(documentVersionParam, next);
+        params.set(documentRevisionParam, next);
       }
       return params;
     });
   }, [setSearchParams]);
 
-  return { versionId, selectVersion };
+  return { revisionId, selectRevision };
 }
 
 // The document list keeps its filters in the search the details page was
-// opened with. The version belongs to the details page only.
+// opened with. The revision belongs to the details page only.
 export function documentListSearch(search: string): string {
   const params = new URLSearchParams(search);
-  params.delete(documentVersionParam);
+  params.delete(documentRevisionParam);
+  params.delete(legacyDocumentVersionParam);
   const next = params.toString();
   return next === "" ? "" : `?${next}`;
 }

@@ -69,16 +69,12 @@ const documentApprovalsSectionFragment = graphql`
         }
       }
     }
-    pendingApproval: versions(first: 1, filter: { statuses: [PENDING_APPROVAL] }) {
-      edges {
-        node {
-          approvalQuorums(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
-            edges {
-              node {
-                status
-                ...DocumentApprovalsSectionDecisions_quorum
-              }
-            }
+    pendingApprovalVersion {
+      approvalQuorums(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
+        edges {
+          node {
+            status
+            ...DocumentApprovalsSectionDecisions_quorum
           }
         }
       }
@@ -141,7 +137,7 @@ export function DocumentApprovalsSection({ documentKey }: DocumentApprovalsSecti
   const [updateDocument, isUpdating] = useUpdateDocument();
   const [visibleCount, setVisibleCount] = useState(documentApprovalsPageSize);
   const { root, title, titleLead, titleIcon, rows, row, name } = documentApprovals();
-  const quorum = document.pendingApproval.edges[0]?.node.approvalQuorums.edges[0]?.node ?? null;
+  const quorum = document.pendingApprovalVersion?.approvalQuorums.edges[0]?.node ?? null;
   const pending = quorum?.status === "PENDING";
   const canEdit = document.canUpdate && document.status !== "ARCHIVED" && !pending;
   const employeePortalId = catchResultValue(

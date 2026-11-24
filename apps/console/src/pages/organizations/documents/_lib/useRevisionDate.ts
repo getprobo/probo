@@ -21,16 +21,14 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
-// useVersionDate formats when a version was published, such as
-// "Monday, March 12, 2026", in the active language.
-export function useVersionDate() {
+// useRevisionDate formats when a revision of the document history ended, such
+// as "Mar 12, 2026, 3:04 PM", in the active language.
+export function useRevisionDate() {
   const { i18n } = useTranslation();
   const format = useMemo(
     () => new Intl.DateTimeFormat(i18n.language, {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
+      dateStyle: "medium",
+      timeStyle: "short",
     }),
     [i18n.language],
   );

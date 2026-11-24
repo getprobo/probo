@@ -23,64 +23,93 @@ import { Text } from "@probo/ui/src/v2/typography/Text";
 import { Trans, useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
-import type { DocumentVersionListItem_version$key } from "#/__generated__/core/DocumentVersionListItem_version.graphql";
+import type { DocumentHistoryListItem_revision$key } from "#/__generated__/core/DocumentHistoryListItem_revision.graphql";
 
 import { documentVersionStatus } from "../../_lib/documentVersionStatus";
-import { useVersionDate } from "../../_lib/useVersionDate";
-import { documentVersionListItem } from "../../variants";
+import { useRevisionDate } from "../../_lib/useRevisionDate";
+import { documentHistoryListItem } from "../../variants";
 
-const documentVersionListItemFragment = graphql`
-  fragment DocumentVersionListItem_version on DocumentVersion {
-    status
-    major
-    minor
-    changelog
-    publishedAt
-    createdAt
+const documentHistoryListItemFragment = graphql`
+  fragment DocumentHistoryListItem_revision on DocumentRevision {
+    authorName
+    endedAt
+    changeCount
+    synthetic
+    versions {
+      id
+      status
+      major
+      minor
+      changelog
+    }
   }
 `;
 
-interface DocumentVersionListItemProps {
+interface DocumentHistoryListItemProps {
   // Null for the live document, listed first.
-  versionKey: DocumentVersionListItem_version$key | null;
+  revisionKey: DocumentHistoryListItem_revision$key | null;
   active: boolean;
   onSelect: () => void;
 }
 
-export function DocumentVersionListItem({ versionKey, active, onSelect }: DocumentVersionListItemProps) {
-  const version = useFragment(documentVersionListItemFragment, versionKey);
+// A revision of the history. A version is a tag on it: the version number
+// and status replace the author when the revision carries one.
+export function DocumentHistoryListItem({ revisionKey, active, onSelect }: DocumentHistoryListItemProps) {
+  const revision = useFragment(documentHistoryListItemFragment, revisionKey);
   const { t } = useTranslation("organizations/documents");
-  const formatDate = useVersionDate();
-  const { root, header, changelog } = documentVersionListItem({ active });
-  const status = version == null ? null : documentVersionStatus(version.status);
+  const formatDate = useRevisionDate();
+  const { root, header, changelog } = documentHistoryListItem({ active });
+  const versions = revision?.versions ?? [];
 
   return (
     <button type="button" className={root()} aria-current={active ? "true" : undefined} onClick={onSelect}>
-      <div className={header()}>
-        <Text size={2} weight="medium">
-          {version == null
-            ? t("details.versions.current")
-            : (
-                <Trans
-                  ns="organizations/documents"
-                  i18nKey="details.versions.version"
-                  values={{ version: `${version.major}.${version.minor}` }}
-                  components={{ number: <span className="font-mono tabular-nums" /> }}
-                />
-              )}
-        </Text>
-        {status != null && (
-          <Badge size={1} color={status.color}>{t(status.label)}</Badge>
-        )}
-      </div>
-      {version != null && (
-        <>
-          <Text size={1} color="faint">{formatDate(version.publishedAt ?? version.createdAt)}</Text>
-          {version.changelog !== "" && (
-            <Text size={1} color="faint" className={changelog()}>{version.changelog}</Text>
+      {revision == null
+        ? (
+            <div className={header()}>
+              <Text size={2} weight="medium">{t("details.history.current")}</Text>
+            </div>
+          )
+        : (
+            <>
+              {versions.length > 0
+                ? versions.map((version) => {
+                    const status = documentVersionStatus(version.status);
+                    return (
+                      <div key={version.id} className={header()}>
+                        <Text size={2} weight="medium">
+                          <Trans
+                            ns="organizations/documents"
+                            i18nKey="details.history.version"
+                            values={{ version: `${version.major}.${version.minor}` }}
+                            components={{ number: <span className="font-mono tabular-nums" /> }}
+                          />
+                        </Text>
+                        {status != null && (
+                          <Badge size={1} color={status.color}>{t(status.label)}</Badge>
+                        )}
+                      </div>
+                    );
+                  })
+                : (
+                    <div className={header()}>
+                      <Text size={2} weight="medium" className="truncate">
+                        {revision.authorName ?? t("details.history.unknownAuthor")}
+                      </Text>
+                    </div>
+                  )}
+              <Text size={1} color="faint">
+                {formatDate(revision.endedAt)}
+                {!revision.synthetic && ` · ${t("details.history.changes", { count: revision.changeCount })}`}
+              </Text>
+              {versions.map(version => version.changelog !== ""
+                ? (
+                    <Text key={version.id} size={1} color="faint" className={changelog()}>
+                      {version.changelog}
+                    </Text>
+                  )
+                : null)}
+            </>
           )}
-        </>
-      )}
     </button>
   );
 }
