@@ -21,6 +21,8 @@
 import type { INodeProperties } from 'n8n-workflow';
 import * as getOp from './get.operation';
 import * as getAllOp from './getAll.operation';
+import * as listChangeEventsOp from './listChangeEvents.operation';
+import * as listGrantChangeEventsOp from './listGrantChangeEvents.operation';
 import * as listPrincipalsOp from './listPrincipals.operation';
 import * as listResourcesOp from './listResources.operation';
 
@@ -49,6 +51,18 @@ export const description: INodeProperties[] = [
 				action: 'Get many access inventory grants',
 			},
 			{
+				name: 'List Change Events',
+				value: 'listChangeEvents',
+				description: 'List the always-on access inventory diff feed',
+				action: 'List access inventory change events',
+			},
+			{
+				name: 'List Grant Change Events',
+				value: 'listGrantChangeEvents',
+				description: 'List the changelog for one access inventory grant',
+				action: 'List grant change events',
+			},
+			{
 				name: 'List Principals',
 				value: 'listPrincipals',
 				description: 'List access inventory principals',
@@ -65,6 +79,8 @@ export const description: INodeProperties[] = [
 	},
 	...getOp.description,
 	...getAllOp.description,
+	...listChangeEventsOp.description,
+	...listGrantChangeEventsOp.description,
 	...listPrincipalsOp.description,
 	...listResourcesOp.description,
 ];
@@ -72,6 +88,8 @@ export const description: INodeProperties[] = [
 export {
 	getOp as get,
 	getAllOp as getAll,
+	listChangeEventsOp as listChangeEvents,
+	listGrantChangeEventsOp as listGrantChangeEvents,
 	listPrincipalsOp as listPrincipals,
 	listResourcesOp as listResources,
 };

@@ -21,15 +21,23 @@
 package types
 
 import (
+	"encoding/json"
+
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 )
 
+const (
+	AccessInventoryChangeEventParentOrganization = "organization"
+	AccessInventoryChangeEventParentGrant        = "grant"
+)
+
 type (
-	AccessInventoryGrantOrderBy     OrderBy[coredata.AccessInventoryGrantOrderField]
-	AccessInventoryPrincipalOrderBy OrderBy[coredata.AccessInventoryPrincipalOrderField]
-	AccessInventoryResourceOrderBy  OrderBy[coredata.AccessInventoryResourceOrderField]
+	AccessInventoryGrantOrderBy       OrderBy[coredata.AccessInventoryGrantOrderField]
+	AccessInventoryPrincipalOrderBy   OrderBy[coredata.AccessInventoryPrincipalOrderField]
+	AccessInventoryResourceOrderBy    OrderBy[coredata.AccessInventoryResourceOrderField]
+	AccessInventoryChangeEventOrderBy OrderBy[coredata.AccessInventoryChangeEventOrderField]
 
 	AccessInventoryGrantConnection struct {
 		TotalCount int
@@ -59,6 +67,17 @@ type (
 		Resolver any
 		ParentID gid.GID
 		Filter   *coredata.AccessInventoryResourceFilter
+	}
+
+	AccessInventoryChangeEventConnection struct {
+		TotalCount int
+		Edges      []*AccessInventoryChangeEventEdge
+		PageInfo   PageInfo
+
+		Resolver   any
+		ParentID   gid.GID
+		ParentKind string
+		Filter     *coredata.AccessInventoryChangeEventFilter
 	}
 )
 
@@ -231,5 +250,98 @@ func NewAccessInventoryResource(r *coredata.AccessInventoryResource) *AccessInve
 		LastSeenAt:  r.LastSeenAt,
 		CreatedAt:   r.CreatedAt,
 		UpdatedAt:   r.UpdatedAt,
+	}
+}
+
+func NewAccessInventoryChangeEventConnection(
+	p *page.Page[*coredata.AccessInventoryChangeEvent, coredata.AccessInventoryChangeEventOrderField],
+	parentType any,
+	parentID gid.GID,
+	parentKind string,
+	filter *coredata.AccessInventoryChangeEventFilter,
+) *AccessInventoryChangeEventConnection {
+	edges := make([]*AccessInventoryChangeEventEdge, len(p.Data))
+
+	for i := range edges {
+		edges[i] = NewAccessInventoryChangeEventEdge(p.Data[i], p.Cursor.OrderBy.Field)
+	}
+
+	return &AccessInventoryChangeEventConnection{
+		Edges:    edges,
+		PageInfo: *NewPageInfo(p),
+
+		Resolver:   parentType,
+		ParentID:   parentID,
+		ParentKind: parentKind,
+		Filter:     filter,
+	}
+}
+
+func NewAccessInventoryChangeEventEdge(
+	e *coredata.AccessInventoryChangeEvent,
+	orderBy coredata.AccessInventoryChangeEventOrderField,
+) *AccessInventoryChangeEventEdge {
+	return &AccessInventoryChangeEventEdge{
+		Cursor: e.CursorKey(orderBy),
+		Node:   NewAccessInventoryChangeEvent(e),
+	}
+}
+
+func NewAccessInventoryChangeEvent(e *coredata.AccessInventoryChangeEvent) *AccessInventoryChangeEvent {
+	event := &AccessInventoryChangeEvent{
+		ID: e.ID,
+		Organization: &Organization{
+			ID: e.OrganizationID,
+		},
+		Source: &AccessReviewSource{
+			ID: e.AccessReviewSourceID,
+		},
+		PrincipalKey:       e.PrincipalKey,
+		ResourceKey:        e.ResourceKey,
+		EntitlementKey:     e.EntitlementKey,
+		ChangeType:         e.ChangeType,
+		ObservedAt:         e.ObservedAt,
+		ProviderOccurredAt: e.ProviderOccurredAt,
+		EffectiveAt:        e.EffectiveAt(),
+		Before:             newAccessInventoryGrantAttributeSnapshot(e.Before),
+		After:              newAccessInventoryGrantAttributeSnapshot(e.After),
+		CreatedAt:          e.CreatedAt,
+	}
+
+	if e.GrantID != nil {
+		event.Grant = &AccessInventoryGrant{ID: *e.GrantID}
+	}
+
+	if e.SyncRunID != nil {
+		event.SyncRun = &AccessSourceSyncRun{ID: *e.SyncRunID}
+	}
+
+	return event
+}
+
+func newAccessInventoryGrantAttributeSnapshot(
+	raw *json.RawMessage,
+) *AccessInventoryGrantAttributeSnapshot {
+	if raw == nil {
+		return nil
+	}
+
+	var snapshot struct {
+		EntitlementDisplayName string `json:"entitlement_display_name"`
+		Presence               string `json:"presence"`
+	}
+
+	if err := json.Unmarshal(*raw, &snapshot); err != nil {
+		return nil
+	}
+
+	presence := coredata.AccessInventoryGrantPresence(snapshot.Presence)
+	if !presence.IsValid() {
+		return nil
+	}
+
+	return &AccessInventoryGrantAttributeSnapshot{
+		EntitlementDisplayName: snapshot.EntitlementDisplayName,
+		Presence:               presence,
 	}
 }

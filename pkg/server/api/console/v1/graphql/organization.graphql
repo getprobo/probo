@@ -173,6 +173,15 @@ type Organization implements Node {
         filter: AccessInventoryResourceFilter
     ): AccessInventoryResourceConnection! @goField(forceResolver: true)
 
+    accessInventoryChangeEvents(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: AccessInventoryChangeEventOrder
+        filter: AccessInventoryChangeEventFilter
+    ): AccessInventoryChangeEventConnection! @goField(forceResolver: true)
+
     assetListDocument: Document @goField(forceResolver: true)
 
     assets(

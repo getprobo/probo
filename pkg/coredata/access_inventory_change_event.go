@@ -63,9 +63,24 @@ func (e AccessInventoryChangeEvent) CursorKey(orderBy AccessInventoryChangeEvent
 		return page.NewCursorKey(e.ID, e.CreatedAt)
 	case AccessInventoryChangeEventOrderFieldObservedAt:
 		return page.NewCursorKey(e.ID, e.ObservedAt)
+	case AccessInventoryChangeEventOrderFieldEffectiveAt:
+		effectiveAt := e.ObservedAt
+		if e.ProviderOccurredAt != nil {
+			effectiveAt = *e.ProviderOccurredAt
+		}
+
+		return page.NewCursorKey(e.ID, effectiveAt)
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
+}
+
+func (e AccessInventoryChangeEvent) EffectiveAt() time.Time {
+	if e.ProviderOccurredAt != nil {
+		return *e.ProviderOccurredAt
+	}
+
+	return e.ObservedAt
 }
 
 func (e *AccessInventoryChangeEvent) AuthorizationAttributes(
@@ -167,6 +182,7 @@ func (es *AccessInventoryChangeEvents) LoadByGrantID(
 	scope Scoper,
 	grantID gid.GID,
 	cursor *page.Cursor[AccessInventoryChangeEventOrderField],
+	filter *AccessInventoryChangeEventFilter,
 ) error {
 	q := `
 SELECT
@@ -191,11 +207,13 @@ WHERE
     %s
     AND grant_id = @grant_id
     AND %s
+    AND %s
 `
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"grant_id": grantID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -213,12 +231,42 @@ WHERE
 	return nil
 }
 
+func (es *AccessInventoryChangeEvents) CountByGrantID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	grantID gid.GID,
+	filter *AccessInventoryChangeEventFilter,
+) (int, error) {
+	q := `
+SELECT COUNT(id)
+FROM access_inventory_change_events
+WHERE
+    %s
+    AND grant_id = @grant_id
+    AND %s
+`
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"grant_id": grantID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+
+	var count int
+	if err := conn.QueryRow(ctx, q, args).Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot count access_inventory_change_events: %w", err)
+	}
+
+	return count, nil
+}
+
 func (es *AccessInventoryChangeEvents) LoadBySourceID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
 	sourceID gid.GID,
 	cursor *page.Cursor[AccessInventoryChangeEventOrderField],
+	filter *AccessInventoryChangeEventFilter,
 ) error {
 	q := `
 SELECT
@@ -243,11 +291,13 @@ WHERE
     %s
     AND access_review_source_id = @access_review_source_id
     AND %s
+    AND %s
 `
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"access_review_source_id": sourceID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -263,6 +313,90 @@ WHERE
 	*es = events
 
 	return nil
+}
+
+func (es *AccessInventoryChangeEvents) LoadByOrganizationID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	organizationID gid.GID,
+	cursor *page.Cursor[AccessInventoryChangeEventOrderField],
+	filter *AccessInventoryChangeEventFilter,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    access_review_source_id,
+    grant_id,
+    principal_key,
+    resource_key,
+    entitlement_key,
+    change_type,
+    observed_at,
+    provider_occurred_at,
+    sync_run_id,
+    before,
+    after,
+    idempotency_key,
+    created_at
+FROM
+    access_inventory_change_events
+WHERE
+    %s
+    AND organization_id = @organization_id
+    AND %s
+    AND %s
+`
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"organization_id": organizationID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query access_inventory_change_events: %w", err)
+	}
+
+	events, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[AccessInventoryChangeEvent])
+	if err != nil {
+		return fmt.Errorf("cannot collect access_inventory_change_events: %w", err)
+	}
+
+	*es = events
+
+	return nil
+}
+
+func (es *AccessInventoryChangeEvents) CountByOrganizationID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	organizationID gid.GID,
+	filter *AccessInventoryChangeEventFilter,
+) (int, error) {
+	q := `
+SELECT COUNT(id)
+FROM access_inventory_change_events
+WHERE
+    %s
+    AND organization_id = @organization_id
+    AND %s
+`
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"organization_id": organizationID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+
+	var count int
+	if err := conn.QueryRow(ctx, q, args).Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot count access_inventory_change_events: %w", err)
+	}
+
+	return count, nil
 }
 
 // Insert appends the change event. A false result means the idempotency key

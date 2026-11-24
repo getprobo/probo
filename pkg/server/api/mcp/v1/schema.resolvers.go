@@ -12871,3 +12871,107 @@ func (r *Resolver) GetAccessSourceSyncRunTool(ctx context.Context, req *mcp.Call
 		AccessSourceSyncRun: types.NewAccessSourceSyncRun(run),
 	}, nil
 }
+
+func (r *Resolver) ListAccessInventoryChangeEventsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListAccessInventoryChangeEventsInput) (*mcp.CallToolResult, types.ListAccessInventoryChangeEventsOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, accessreview.ActionInventoryChangeEventList)
+	if err != nil {
+		return nil, types.ListAccessInventoryChangeEventsOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.AccessInventoryChangeEventOrderField]{
+		Field:     coredata.AccessInventoryChangeEventOrderFieldEffectiveAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AccessInventoryChangeEventOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	var filter *coredata.AccessInventoryChangeEventFilter
+	if input.Filter != nil {
+		filter = &coredata.AccessInventoryChangeEventFilter{
+			AccessReviewSourceID: input.Filter.AccessReviewSourceID,
+			ChangeTypes:          input.Filter.ChangeTypes,
+			ObservedAtOnOrAfter:  input.Filter.ObservedAtOnOrAfter,
+			ObservedAtOnOrBefore: input.Filter.ObservedAtOnOrBefore,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	p, err := r.accessReview.ListInventoryChangeEventsForOrganizationID(
+		ctx,
+		scope,
+		input.OrganizationID,
+		cursor,
+		filter,
+	)
+	if err != nil {
+		panic(fmt.Errorf("cannot list access inventory change events: %w", err))
+	}
+
+	return nil, types.NewListAccessInventoryChangeEventsOutput(p), nil
+}
+
+func (r *Resolver) ListAccessInventoryGrantChangeEventsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListAccessInventoryGrantChangeEventsInput) (*mcp.CallToolResult, types.ListAccessInventoryGrantChangeEventsOutput, error) {
+	scope, err := r.Authorize(ctx, input.AccessInventoryGrantID, accessreview.ActionInventoryChangeEventList)
+	if err != nil {
+		return nil, types.ListAccessInventoryGrantChangeEventsOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.AccessInventoryChangeEventOrderField]{
+		Field:     coredata.AccessInventoryChangeEventOrderFieldEffectiveAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AccessInventoryChangeEventOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	var filter *coredata.AccessInventoryChangeEventFilter
+	if input.Filter != nil {
+		filter = &coredata.AccessInventoryChangeEventFilter{
+			AccessReviewSourceID: input.Filter.AccessReviewSourceID,
+			ChangeTypes:          input.Filter.ChangeTypes,
+			ObservedAtOnOrAfter:  input.Filter.ObservedAtOnOrAfter,
+			ObservedAtOnOrBefore: input.Filter.ObservedAtOnOrBefore,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	p, err := r.accessReview.ListInventoryChangeEventsForGrantID(
+		ctx,
+		scope,
+		input.AccessInventoryGrantID,
+		cursor,
+		filter,
+	)
+	if err != nil {
+		panic(fmt.Errorf("cannot list access inventory grant change events: %w", err))
+	}
+
+	return nil, types.NewListAccessInventoryGrantChangeEventsOutput(p), nil
+}
+
+func (r *Resolver) GetAccessInventoryChangeEventTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetAccessInventoryChangeEventInput) (*mcp.CallToolResult, types.GetAccessInventoryChangeEventOutput, error) {
+	scope, err := r.Authorize(ctx, input.AccessInventoryChangeEventID, accessreview.ActionInventoryChangeEventGet)
+	if err != nil {
+		return nil, types.GetAccessInventoryChangeEventOutput{}, err
+	}
+
+	event, err := r.accessReview.GetInventoryChangeEvent(ctx, scope, input.AccessInventoryChangeEventID)
+	if err != nil {
+		return nil, types.GetAccessInventoryChangeEventOutput{}, fmt.Errorf("cannot get access inventory change event: %w", err)
+	}
+
+	return nil, types.GetAccessInventoryChangeEventOutput{
+		ChangeEvent: types.NewAccessInventoryChangeEvent(event),
+	}, nil
+}

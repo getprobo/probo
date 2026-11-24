@@ -21,11 +21,16 @@
 package coredata
 
 import (
+	"database/sql/driver"
 	"encoding"
 	"fmt"
+	"strings"
 )
 
-type AccessInventoryChangeType string
+type (
+	AccessInventoryChangeType       string
+	AccessInventoryChangeTypeValues []AccessInventoryChangeType
+)
 
 const (
 	AccessInventoryChangeTypeAppeared         AccessInventoryChangeType = "APPEARED"
@@ -37,6 +42,7 @@ var (
 	_ fmt.Stringer             = AccessInventoryChangeType("")
 	_ encoding.TextMarshaler   = AccessInventoryChangeType("")
 	_ encoding.TextUnmarshaler = (*AccessInventoryChangeType)(nil)
+	_ driver.Valuer            = AccessInventoryChangeTypeValues(nil)
 )
 
 func AccessInventoryChangeTypes() []AccessInventoryChangeType {
@@ -76,4 +82,25 @@ func (v *AccessInventoryChangeType) UnmarshalText(text []byte) error {
 	*v = val
 
 	return nil
+}
+
+func (values AccessInventoryChangeTypeValues) Value() (driver.Value, error) {
+	if len(values) == 0 {
+		return nil, nil
+	}
+
+	var result strings.Builder
+	result.WriteString("{")
+
+	for i, value := range values {
+		if i > 0 {
+			result.WriteString(",")
+		}
+
+		fmt.Fprintf(&result, "%q", value.String())
+	}
+
+	result.WriteString("}")
+
+	return result.String(), nil
 }

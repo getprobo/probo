@@ -32,8 +32,9 @@ type (
 )
 
 const (
-	AccessInventoryChangeEventOrderFieldCreatedAt  AccessInventoryChangeEventOrderField = "CREATED_AT"
-	AccessInventoryChangeEventOrderFieldObservedAt AccessInventoryChangeEventOrderField = "OBSERVED_AT"
+	AccessInventoryChangeEventOrderFieldCreatedAt   AccessInventoryChangeEventOrderField = "CREATED_AT"
+	AccessInventoryChangeEventOrderFieldObservedAt  AccessInventoryChangeEventOrderField = "OBSERVED_AT"
+	AccessInventoryChangeEventOrderFieldEffectiveAt AccessInventoryChangeEventOrderField = "EFFECTIVE_AT"
 )
 
 var (
@@ -47,6 +48,7 @@ func AccessInventoryChangeEventOrderFields() []AccessInventoryChangeEventOrderFi
 	return []AccessInventoryChangeEventOrderField{
 		AccessInventoryChangeEventOrderFieldCreatedAt,
 		AccessInventoryChangeEventOrderFieldObservedAt,
+		AccessInventoryChangeEventOrderFieldEffectiveAt,
 	}
 }
 
@@ -72,6 +74,8 @@ func (p AccessInventoryChangeEventOrderField) Column() string {
 		return "created_at"
 	case AccessInventoryChangeEventOrderFieldObservedAt:
 		return "observed_at"
+	case AccessInventoryChangeEventOrderFieldEffectiveAt:
+		return "COALESCE(provider_occurred_at, observed_at)"
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", p))

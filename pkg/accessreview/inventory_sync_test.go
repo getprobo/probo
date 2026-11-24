@@ -176,7 +176,7 @@ func loadInventoryChangeEvents(
 			},
 		)
 
-		return events.LoadBySourceID(ctx, conn, fx.scope, fx.sourceID, cursor)
+		return events.LoadBySourceID(ctx, conn, fx.scope, fx.sourceID, cursor, nil)
 	}))
 
 	return events

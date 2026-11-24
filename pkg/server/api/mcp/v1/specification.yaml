@@ -12758,6 +12758,197 @@ components:
           items:
             $ref: "#/components/schemas/AccessInventoryResource"
 
+    AccessInventoryChangeType:
+      type: string
+      enum:
+        - APPEARED
+        - DISAPPEARED
+        - ATTRIBUTE_CHANGED
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AccessInventoryChangeType
+
+    AccessInventoryChangeEventOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+        - OBSERVED_AT
+        - EFFECTIVE_AT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AccessInventoryChangeEventOrderField
+
+    AccessInventoryChangeEventOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/AccessInventoryChangeEventOrderField"
+          description: Order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Order direction
+
+    AccessInventoryGrantAttributeSnapshot:
+      type: object
+      required:
+        - entitlement_display_name
+        - presence
+      properties:
+        entitlement_display_name:
+          type: string
+        presence:
+          $ref: "#/components/schemas/AccessInventoryGrantPresence"
+
+    AccessInventoryChangeEvent:
+      type: object
+      required:
+        - id
+        - organization_id
+        - access_review_source_id
+        - principal_key
+        - resource_key
+        - entitlement_key
+        - change_type
+        - observed_at
+        - effective_at
+        - created_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        organization_id:
+          $ref: "#/components/schemas/GID"
+        access_review_source_id:
+          $ref: "#/components/schemas/GID"
+        grant_id:
+          $ref: "#/components/schemas/GID"
+        principal_key:
+          type: string
+        resource_key:
+          type: string
+        entitlement_key:
+          type: string
+        change_type:
+          $ref: "#/components/schemas/AccessInventoryChangeType"
+        observed_at:
+          type: string
+          format: date-time
+        provider_occurred_at:
+          type:
+            - string
+            - "null"
+          format: date-time
+        effective_at:
+          type: string
+          format: date-time
+        sync_run_id:
+          $ref: "#/components/schemas/GID"
+        before:
+          $ref: "#/components/schemas/AccessInventoryGrantAttributeSnapshot"
+        after:
+          $ref: "#/components/schemas/AccessInventoryGrantAttributeSnapshot"
+        created_at:
+          type: string
+          format: date-time
+
+    ListAccessInventoryChangeEventsInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        order_by:
+          $ref: "#/components/schemas/AccessInventoryChangeEventOrderBy"
+        size:
+          type: integer
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+        filter:
+          type: object
+          properties:
+            access_review_source_id:
+              $ref: "#/components/schemas/GID"
+            change_types:
+              type: array
+              items:
+                $ref: "#/components/schemas/AccessInventoryChangeType"
+            observed_at_on_or_after:
+              type: string
+              format: date-time
+            observed_at_on_or_before:
+              type: string
+              format: date-time
+
+    ListAccessInventoryChangeEventsOutput:
+      type: object
+      required:
+        - change_events
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+        change_events:
+          type: array
+          items:
+            $ref: "#/components/schemas/AccessInventoryChangeEvent"
+
+    ListAccessInventoryGrantChangeEventsInput:
+      type: object
+      required:
+        - access_inventory_grant_id
+      properties:
+        access_inventory_grant_id:
+          $ref: "#/components/schemas/GID"
+          description: Access inventory grant ID
+        order_by:
+          $ref: "#/components/schemas/AccessInventoryChangeEventOrderBy"
+        size:
+          type: integer
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+        filter:
+          type: object
+          properties:
+            access_review_source_id:
+              $ref: "#/components/schemas/GID"
+            change_types:
+              type: array
+              items:
+                $ref: "#/components/schemas/AccessInventoryChangeType"
+            observed_at_on_or_after:
+              type: string
+              format: date-time
+            observed_at_on_or_before:
+              type: string
+              format: date-time
+
+    ListAccessInventoryGrantChangeEventsOutput:
+      type: object
+      required:
+        - change_events
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+        change_events:
+          type: array
+          items:
+            $ref: "#/components/schemas/AccessInventoryChangeEvent"
+
+    GetAccessInventoryChangeEventInput:
+      type: object
+      required:
+        - access_inventory_change_event_id
+      properties:
+        access_inventory_change_event_id:
+          $ref: "#/components/schemas/GID"
+
+    GetAccessInventoryChangeEventOutput:
+      type: object
+      required:
+        - change_event
+      properties:
+        change_event:
+          $ref: "#/components/schemas/AccessInventoryChangeEvent"
+
     GetAccessReviewStatisticsInput:
       type: object
       required:
@@ -23172,6 +23363,42 @@ tools:
       $ref: "#/components/schemas/ListAccessInventoryResourcesInput"
     outputSchema:
       $ref: "#/components/schemas/ListAccessInventoryResourcesOutput"
+  - name: listAccessInventoryChangeEvents
+    title: List Access Inventory Change Events
+    description: List the always-on access inventory diff feed for an organization. Filter by source, change type, and observed time window.
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListAccessInventoryChangeEventsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListAccessInventoryChangeEventsOutput"
+  - name: listAccessInventoryGrantChangeEvents
+    title: List Access Inventory Grant Change Events
+    description: List the changelog of change events for one live access inventory grant
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListAccessInventoryGrantChangeEventsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListAccessInventoryGrantChangeEventsOutput"
+  - name: getAccessInventoryChangeEvent
+    title: Get Access Inventory Change Event
+    description: Get an access inventory change event by ID
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/GetAccessInventoryChangeEventInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetAccessInventoryChangeEventOutput"
   - name: listAccessReviewSources
     title: List Access Review Sources
     description: List access sources for an organization
