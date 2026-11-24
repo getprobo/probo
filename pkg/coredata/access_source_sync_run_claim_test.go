@@ -85,14 +85,13 @@ func TestAccessSourceSyncRun_LoadNextQueuedForUpdateSkipLocked(t *testing.T) {
 		}
 
 		assert.Equal(t, coredata.AccessSourceSyncRunStatusQueued, claimed.Status)
-		assert.NotEqual(t, gid.TenantID{}, claimed.TenantID)
 
 		startedAt := createdAt
 		claimed.Status = coredata.AccessSourceSyncRunStatusRunning
 		claimed.StartedAt = &startedAt
 		claimed.UpdatedAt = createdAt
 
-		scope := coredata.NewScope(claimed.TenantID, gid.Nil)
+		scope := coredata.NewScope(claimed.ID.TenantID(), gid.Nil)
 
 		return claimed.Update(ctx, tx, scope)
 	}))
@@ -210,7 +209,7 @@ func TestAccessSourceSyncRuns_LoadStaleRunningForUpdateSkipLocked(t *testing.T) 
 		stale[0].CompletedAt = &completedAt
 		stale[0].UpdatedAt = completedAt
 
-		scope := coredata.NewScope(stale[0].TenantID, gid.Nil)
+		scope := coredata.NewScope(stale[0].ID.TenantID(), gid.Nil)
 
 		return stale[0].Update(ctx, tx, scope)
 	}))

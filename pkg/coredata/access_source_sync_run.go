@@ -38,14 +38,9 @@ type (
 	// AccessSourceSyncRun is one inventory sync for a live AccessReviewSource.
 	// Each enqueue produces a new row. Terminal rows (SUCCESS / FAILED) are
 	// immutable; only the in-flight run is updated.
-	//
-	// TenantID is retained on the struct because the background worker claims
-	// rows cross-tenant via LoadNextQueuedForUpdateSkipLocked and needs the
-	// tenant to construct a Scope for subsequent operations.
 	AccessSourceSyncRun struct {
 		ID                   gid.GID                   `db:"id"`
 		OrganizationID       gid.GID                   `db:"organization_id"`
-		TenantID             gid.TenantID              `db:"tenant_id"`
 		AccessReviewSourceID gid.GID                   `db:"access_review_source_id"`
 		Status               AccessSourceSyncRunStatus `db:"status"`
 		GrantsUpsertedCount  int                       `db:"grants_upserted_count"`
@@ -121,7 +116,6 @@ func (r *AccessSourceSyncRun) LoadByID(
 SELECT
     id,
     organization_id,
-    tenant_id,
     access_review_source_id,
     status,
     grants_upserted_count,
@@ -212,8 +206,6 @@ INSERT INTO access_source_sync_runs (
 		return fmt.Errorf("cannot insert access source sync run: %w", err)
 	}
 
-	r.TenantID = scope.GetTenantID()
-
 	return nil
 }
 
@@ -292,8 +284,8 @@ WHERE
 
 // LoadNextQueuedForUpdateSkipLocked is intentionally cross-tenant: the
 // background worker claims the next available sync run regardless of tenant.
-// The caller extracts TenantID from the returned struct to construct a Scope
-// for subsequent operations.
+// The caller builds a Scope with NewScope(run.ID.TenantID(), ...) for later
+// scoped writes.
 func (r *AccessSourceSyncRun) LoadNextQueuedForUpdateSkipLocked(
 	ctx context.Context,
 	conn pg.Tx,
@@ -302,7 +294,6 @@ func (r *AccessSourceSyncRun) LoadNextQueuedForUpdateSkipLocked(
 SELECT
     id,
     organization_id,
-    tenant_id,
     access_review_source_id,
     status,
     grants_upserted_count,
@@ -353,7 +344,6 @@ func (rs *AccessSourceSyncRuns) LoadStaleRunningForUpdateSkipLocked(
 SELECT
     id,
     organization_id,
-    tenant_id,
     access_review_source_id,
     status,
     grants_upserted_count,
@@ -402,7 +392,6 @@ func (rs *AccessSourceSyncRuns) LoadBySourceID(
 SELECT
     id,
     organization_id,
-    tenant_id,
     access_review_source_id,
     status,
     grants_upserted_count,
