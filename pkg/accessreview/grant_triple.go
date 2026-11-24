@@ -43,9 +43,11 @@ const (
 	ImplicitMemberEntitlementDisplayName = "Member"
 )
 
-// ErrMissingPrincipalKey is returned when a roster account has neither a
-// usable email nor an external ID, so no stable principal key can be formed.
-var ErrMissingPrincipalKey = errors.New("account has no email or external id")
+var (
+	// ErrMissingPrincipalKey is returned when a roster account has neither a
+	// usable email nor an external ID, so no stable principal key can be formed.
+	ErrMissingPrincipalKey = errors.New("account has no email or external id")
+)
 
 // GrantTriple is one principal × resource × entitlement binding derived from
 // a roster AccountRecord. Resource display names are supplied at upsert time

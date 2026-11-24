@@ -20,12 +20,16 @@
 
 -- Claim walks QUEUED rows by (created_at, id). The same-source anti-join
 -- looks up RUNNING / older QUEUED by (access_review_source_id, status,
--- created_at, id). Partial + composite indexes keep both paths from
--- rescanning terminal history as sync runs accumulate.
+-- created_at, id). Stale recovery walks RUNNING by updated_at. Partial +
+-- composite indexes keep these paths from rescanning terminal history.
 
 CREATE INDEX idx_access_source_sync_runs_queued
     ON access_source_sync_runs (created_at, id)
     WHERE status = 'QUEUED';
+
+CREATE INDEX idx_access_source_sync_runs_running
+    ON access_source_sync_runs (updated_at, id)
+    WHERE status = 'RUNNING';
 
 CREATE INDEX idx_access_source_sync_runs_source_status
     ON access_source_sync_runs (access_review_source_id, status, created_at, id);
