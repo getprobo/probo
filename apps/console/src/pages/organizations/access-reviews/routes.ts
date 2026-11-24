@@ -23,6 +23,7 @@ import type { AppRoute } from "@probo/routes";
 
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 
+import { AccessInventoryChangeEventsPageSkeleton } from "./changes/AccessInventoryChangeEventsPageSkeleton";
 import { AccessInventoryGrantPageSkeleton } from "./grants/AccessInventoryGrantPageSkeleton";
 import { AccessInventoryGrantsPageSkeleton } from "./grants/AccessInventoryGrantsPageSkeleton";
 
@@ -45,6 +46,13 @@ export const accessReviewRoutes = [
         ),
       },
     ],
+  },
+  {
+    path: "changes",
+    Fallback: AccessInventoryChangeEventsPageSkeleton,
+    Component: lazy(
+      () => import("./changes/AccessInventoryChangeEventsPageLoader"),
+    ),
   },
   {
     path: "campaigns",

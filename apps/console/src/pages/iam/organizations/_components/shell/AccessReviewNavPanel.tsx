@@ -35,6 +35,7 @@ const accessReviewNavPanelQuery = graphql`
       __typename
       ... on Organization {
         canListAccessInventoryGrants: permission(action: "access-review:inventory-grant:list")
+        canListAccessInventoryChangeEvents: permission(action: "access-review:inventory-change-event:list")
         canListAccessReviewCampaigns: permission(action: "access-review:campaign:list")
         canListAccessReviewSources: permission(action: "access-review:source:list")
       }
@@ -69,6 +70,12 @@ function AccessReviewNavPanelInner({ queryRef, group }: AccessReviewNavPanelInne
         <NavPanelItem
           label={t("nav.liveAccess")}
           to={navHref(organizationId, group, "grants")}
+        />
+      )}
+      {organization.canListAccessInventoryChangeEvents && (
+        <NavPanelItem
+          label={t("nav.accessChanges")}
+          to={navHref(organizationId, group, "changes")}
         />
       )}
       {organization.canListAccessReviewCampaigns && (

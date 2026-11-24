@@ -1400,6 +1400,7 @@
     "statementsOfApplicability": "SoA",
     "rightsRequests": "Rights Requests",
     "liveAccess": "Live access",
+    "accessChanges": "Access changes",
     "campaigns": "Campaigns",
     "connections": "Connectors",
     "sources": "Sources",

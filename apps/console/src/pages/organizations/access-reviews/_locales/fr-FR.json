@@ -1,4 +1,44 @@
 {
+  "changes": {
+    "title": "Changements d'accès",
+    "description": "Flux permanent des changements d'inventaire sur vos sources connectées.",
+    "empty": "Aucun changement d'accès pour le moment",
+    "emptyFiltered": "Aucun changement ne correspond à ces filtres",
+    "openGrant": "Ouvrir le droit pour {{name}}",
+    "columns": {
+      "changeType": "Changement",
+      "principal": "Principal",
+      "resource": "Ressource",
+      "entitlement": "Droit",
+      "source": "Source",
+      "effectiveAt": "Effectif"
+    },
+    "changeTypes": {
+      "APPEARED": "Apparu",
+      "DISAPPEARED": "Disparu",
+      "ATTRIBUTE_CHANGED": "Attribut modifié"
+    },
+    "filters": {
+      "source": "Source",
+      "allSources": "Toutes les sources",
+      "changeType": "Type de changement",
+      "allChangeTypes": "Tous les types",
+      "observedAfter": "Observé depuis",
+      "observedBefore": "Observé jusqu'au"
+    },
+    "actions": {
+      "previous": "Précédent",
+      "next": "Suivant"
+    },
+    "values": {
+      "unknown": "Inconnu"
+    },
+    "error": {
+      "title": "Impossible de charger les changements",
+      "description": "Une erreur est survenue lors du chargement du flux de changements. Réessayez.",
+      "retry": "Réessayer"
+    }
+  },
   "grants": {
     "title": "Accès en direct",
     "description": "Droits d'accès actuels synchronisés depuis vos sources connectées.",

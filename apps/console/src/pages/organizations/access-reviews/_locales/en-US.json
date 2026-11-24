@@ -1,4 +1,44 @@
 {
+  "changes": {
+    "title": "Access changes",
+    "description": "Always-on feed of inventory changes across your connected sources.",
+    "empty": "No access changes yet",
+    "emptyFiltered": "No changes match these filters",
+    "openGrant": "Open grant for {{name}}",
+    "columns": {
+      "changeType": "Change",
+      "principal": "Principal",
+      "resource": "Resource",
+      "entitlement": "Entitlement",
+      "source": "Source",
+      "effectiveAt": "Effective"
+    },
+    "changeTypes": {
+      "APPEARED": "Appeared",
+      "DISAPPEARED": "Disappeared",
+      "ATTRIBUTE_CHANGED": "Attribute changed"
+    },
+    "filters": {
+      "source": "Source",
+      "allSources": "All sources",
+      "changeType": "Change type",
+      "allChangeTypes": "All change types",
+      "observedAfter": "Observed from",
+      "observedBefore": "Observed until"
+    },
+    "actions": {
+      "previous": "Previous",
+      "next": "Next"
+    },
+    "values": {
+      "unknown": "Unknown"
+    },
+    "error": {
+      "title": "Could not load access changes",
+      "description": "Something went wrong while loading the change feed. Try again.",
+      "retry": "Try again"
+    }
+  },
   "grants": {
     "title": "Live access",
     "description": "Current access grants synced from your connected sources.",

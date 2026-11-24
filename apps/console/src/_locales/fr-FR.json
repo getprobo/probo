@@ -2094,6 +2094,7 @@
     "statementsOfApplicability": "SoA",
     "rightsRequests": "Demandes d’exercice de droits",
     "liveAccess": "Accès en direct",
+    "accessChanges": "Changements d'accès",
     "campaigns": "Campagnes",
     "connections": "Connecteurs",
     "sources": "Sources",
