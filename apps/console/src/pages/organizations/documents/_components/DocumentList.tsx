@@ -79,7 +79,7 @@ const fragment = graphql`
           canUpdate: permission(action: "core:document:update")
           canDelete: permission(action: "core:document:delete")
           canRequestSignatures: permission(
-            action: "core:document-version:request-signature"
+            action: "core:document-version-signature:request"
           )
           canArchive: permission(action: "core:document:archive")
           canUnarchive: permission(action: "core:document:unarchive")

@@ -66,7 +66,7 @@ function doc(...blocks: ProseMirrorNode[]) {
   return schema.node("doc", null, blocks);
 }
 
-function split(kind: "insertion" | "deletion") {
+function split(kind: "insertion" | "deletion" | "structural") {
   return { unknownAttrs: { suggestionSplit: id, splitKind: kind } };
 }
 
@@ -164,6 +164,17 @@ describe("suggestionAnchors", () => {
     ])));
 
     expect(result.changes).toEqual([{ kind: "node", node: "row", action: "delete" }]);
+    expect(result.changeCount).toBe(1);
+  });
+
+  it("reads only the text inside a structurally split row", () => {
+    const result = anchor(doc(schema.node("table", null, [
+      schema.node("tableRow", split("structural"), [
+        schema.node("tableCell", null, [paragraph(schema.text("cell", [insert]))]),
+      ]),
+    ])));
+
+    expect(result.changes).toEqual([{ kind: "text", deleted: "", inserted: "cell" }]);
     expect(result.changeCount).toBe(1);
   });
 

@@ -25,6 +25,7 @@ import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { DocumentVersionContentQuery } from "#/__generated__/core/DocumentVersionContentQuery.graphql";
+import { isNotFoundError } from "#/lib/relay/errors";
 
 import { DocumentReadOnlyContent } from "../DocumentEditor/DocumentReadOnlyContent";
 
@@ -57,8 +58,8 @@ interface DocumentVersionContentProps {
   // The version keeps the orientation it was published with, which sizes the
   // pages around it.
   onOrientation: (orientation: string) => void;
-  // A version of another document, or one that no longer exists, falls back
-  // to the live document.
+  // A version of another document, or an id the server reports as not found,
+  // falls back to the live document.
   onMissing: () => void;
 }
 
@@ -67,7 +68,11 @@ export function DocumentVersionContent(props: DocumentVersionContentProps) {
   const { t } = useTranslation("organizations/documents");
 
   return (
-    <ErrorBoundary fallback={<Text size={2} color="faint">{t("details.versions.openError")}</Text>}>
+    <ErrorBoundary
+      fallback={error => isNotFoundError(error)
+        ? <DocumentVersionMissing onMissing={props.onMissing} />
+        : <Text size={2} color="faint">{t("details.versions.openError")}</Text>}
+    >
       <Suspense fallback={<Text size={2} color="faint">{t("details.editor.loading")}</Text>}>
         <DocumentVersionContentLoaded {...props} />
       </Suspense>
@@ -94,15 +99,8 @@ function DocumentVersionContentLoaded({
     }
   }, [onOrientation, orientation]);
 
-  const missing = version == null;
-  useEffect(() => {
-    if (missing) {
-      onMissing();
-    }
-  }, [missing, onMissing]);
-
   if (version == null) {
-    return null;
+    return <DocumentVersionMissing onMissing={onMissing} />;
   }
 
   return (
@@ -113,4 +111,12 @@ function DocumentVersionContentLoaded({
       onPages={onPages}
     />
   );
+}
+
+function DocumentVersionMissing({ onMissing }: { onMissing: () => void }) {
+  useEffect(() => {
+    onMissing();
+  }, [onMissing]);
+
+  return null;
 }

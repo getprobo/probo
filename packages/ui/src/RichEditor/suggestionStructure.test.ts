@@ -223,6 +223,23 @@ describe("tracked tables", () => {
     expect(next.selection.$from.parent).toBe(diagram);
   });
 
+  it("drops an empty suggested diagram on discard", () => {
+    const content = { type: "doc", content: [paragraphJSON("Scope"), paragraphJSON("Next")] };
+    const editor = editorFor(content);
+    editor.apply(editor.state.tr.setSelection(TextSelection.create(editor.state.doc, 2)));
+    editor.apply(suggestInsertCodeBlock(editor.state, id, "mermaid")!);
+    expect(editor.state.doc.childCount).toBe(3);
+
+    discardSuggestionId(editor, id);
+    expect(editor.state.doc.childCount).toBe(2);
+    let hasCodeBlock = false;
+    editor.state.doc.descendants((node) => {
+      if (node.type.name === "codeBlock") hasCodeBlock = true;
+    });
+    expect(hasCodeBlock).toBe(false);
+    expect(editor.state.doc.toJSON()).toEqual(stateFor(content).doc.toJSON());
+  });
+
   it("redlines a whole table", () => {
     const state = stateFor(permissions);
     const next = state.apply(suggestDeleteTable(state, id, { tableStart: tableStart(state) })!);

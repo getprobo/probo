@@ -11979,12 +11979,7 @@ func (r *Resolver) StartDocumentSuggestionTool(ctx context.Context, req *mcp.Cal
 		return nil, types.StartDocumentSuggestionOutput{}, r.documentReviewError(ctx, "cannot start document suggestion", err)
 	}
 
-	node, err := r.newDocumentSuggestion(ctx, scope, suggestion)
-	if err != nil {
-		return nil, types.StartDocumentSuggestionOutput{}, err
-	}
-
-	return nil, types.StartDocumentSuggestionOutput{Suggestion: node}, nil
+	return nil, types.StartDocumentSuggestionOutput{Suggestion: r.changedDocumentSuggestion(ctx, scope, suggestion)}, nil
 }
 
 func (r *Resolver) AcceptDocumentSuggestionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AcceptDocumentSuggestionInput) (*mcp.CallToolResult, types.AcceptDocumentSuggestionOutput, error) {
@@ -12008,12 +12003,7 @@ func (r *Resolver) AcceptDocumentSuggestionTool(ctx context.Context, req *mcp.Ca
 		return nil, types.AcceptDocumentSuggestionOutput{}, r.documentReviewError(ctx, "cannot accept document suggestion", err)
 	}
 
-	node, err := r.newDocumentSuggestion(ctx, scope, suggestion)
-	if err != nil {
-		return nil, types.AcceptDocumentSuggestionOutput{}, err
-	}
-
-	return nil, types.AcceptDocumentSuggestionOutput{Suggestion: node}, nil
+	return nil, types.AcceptDocumentSuggestionOutput{Suggestion: r.changedDocumentSuggestion(ctx, scope, suggestion)}, nil
 }
 
 func (r *Resolver) RejectDocumentSuggestionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RejectDocumentSuggestionInput) (*mcp.CallToolResult, types.RejectDocumentSuggestionOutput, error) {
@@ -12037,12 +12027,7 @@ func (r *Resolver) RejectDocumentSuggestionTool(ctx context.Context, req *mcp.Ca
 		return nil, types.RejectDocumentSuggestionOutput{}, r.documentReviewError(ctx, "cannot reject document suggestion", err)
 	}
 
-	node, err := r.newDocumentSuggestion(ctx, scope, suggestion)
-	if err != nil {
-		return nil, types.RejectDocumentSuggestionOutput{}, err
-	}
-
-	return nil, types.RejectDocumentSuggestionOutput{Suggestion: node}, nil
+	return nil, types.RejectDocumentSuggestionOutput{Suggestion: r.changedDocumentSuggestion(ctx, scope, suggestion)}, nil
 }
 
 func (r *Resolver) ListAsanaTeamsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListAsanaTeamsInput) (*mcp.CallToolResult, types.ListAsanaTeamsOutput, error) {

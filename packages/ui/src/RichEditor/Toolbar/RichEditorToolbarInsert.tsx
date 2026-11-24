@@ -19,8 +19,9 @@
 // SOFTWARE.
 
 import { CaretDownIcon, PlusIcon } from "@phosphor-icons/react";
+import { Selection, type Transaction } from "@tiptap/pm/state";
 import type { Editor } from "@tiptap/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "../../v2/Button/Button";
@@ -28,6 +29,7 @@ import { Dropdown } from "../../v2/Dropdown/Dropdown";
 import { DropdownItem } from "../../v2/Dropdown/DropdownItem";
 import { DropdownPopup } from "../../v2/Dropdown/DropdownPopup";
 import { DropdownTrigger } from "../../v2/Dropdown/DropdownTrigger";
+import { automergeRemoteTransaction } from "../AutomergeSyncPlugin";
 import {
   type InsertItem,
   insertItems,
@@ -50,21 +52,24 @@ export function RichEditorToolbarInsert({ editor, disabled, onPickFiles }: RichE
   const { t } = useTranslation();
   const items = onPickFiles ? insertItems : insertItems.filter(item => !isPickerItem(item));
   const { triggerLabel, triggerCaret } = richEditorToolbar();
-  // Until the text is clicked, the selection sits at the start of the
-  // document. Inserting there would change the first block.
-  const [hadCaret, setHadCaret] = useState(editor.isFocused);
+  // Until the user places the caret, the selection sits at the start of the
+  // document. Inserting there would change the first block. Focusing the
+  // editor alone does not move it, and neither does a collaborator's edit.
+  const hadCaret = useRef(!editor.state.selection.eq(Selection.atStart(editor.state.doc)));
 
   useEffect(() => {
-    if (hadCaret) return;
-    const onFocus = () => setHadCaret(true);
-    editor.on("focus", onFocus);
-    return () => {
-      editor.off("focus", onFocus);
+    const onSelectionUpdate = ({ transaction }: { transaction: Transaction }) => {
+      if (transaction.getMeta(automergeRemoteTransaction)) return;
+      hadCaret.current = true;
     };
-  }, [editor, hadCaret]);
+    editor.on("selectionUpdate", onSelectionUpdate);
+    return () => {
+      editor.off("selectionUpdate", onSelectionUpdate);
+    };
+  }, [editor]);
 
   function insert(item: InsertItem) {
-    if (!hadCaret && !editor.isDestroyed) {
+    if (!hadCaret.current && !editor.isDestroyed) {
       editor.commands.focus("end");
     }
     if (item.id === "mermaid") {

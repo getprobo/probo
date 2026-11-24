@@ -25,3 +25,22 @@ export class NotFoundError extends Error {
     Object.setPrototypeOf(this, NotFoundError.prototype);
   }
 }
+
+type RelayNetworkError = Error & {
+  source?: {
+    errors?: ReadonlyArray<{ extensions?: { code?: unknown } }> | null;
+  };
+};
+
+// Relay throws when a non-null root field such as `node` fails, and keeps the
+// GraphQL errors on `source`.
+export function isNotFoundError(error: unknown): boolean {
+  if (error instanceof NotFoundError) {
+    return true;
+  }
+  if (!(error instanceof Error)) {
+    return false;
+  }
+  const errors = (error as RelayNetworkError).source?.errors ?? [];
+  return errors.some(item => item.extensions?.code === "NOT_FOUND");
+}

@@ -20,7 +20,7 @@
 
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, usePaginationFragment } from "react-relay";
 
@@ -88,14 +88,12 @@ export function DocumentReviewThread({
     DocumentReviewThread_thread$key
   >(documentReviewThreadFragment, threadKey);
   const [createDocumentComment] = useCreateDocumentComment();
+  const [replyDraft, setReplyDraft] = useState("");
   const { root, more } = documentReviewThread();
   const commentsConnectionId = thread.comments.__id;
   const comments = thread.comments.edges.map(edge => edge.node);
   const visible = expanded ? comments : comments.slice(0, 1);
-  // totalCount is not updated by a reply or a delete, so the loaded list is the
-  // count once every page is in the store.
-  const total = hasNext ? thread.comments.totalCount : comments.length;
-  const replies = total - 1;
+  const replies = thread.comments.totalCount - 1;
 
   return (
     <div className={root()}>
@@ -128,7 +126,16 @@ export function DocumentReviewThread({
       )}
       {expanded && allowReply && thread.canReply && (
         <DocumentReviewReplyForm
-          onSubmit={content => createDocumentComment(thread.id, content, commentsConnectionId)}
+          initialContent={replyDraft}
+          onDraftChange={setReplyDraft}
+          onSubmit={content => createDocumentComment(
+            thread.id,
+            content,
+            commentsConnectionId,
+            // Comments load oldest first, so a reply belongs after pages not
+            // loaded yet; the last page brings it in.
+            hasNext ? [] : [commentsConnectionId],
+          )}
         />
       )}
     </div>

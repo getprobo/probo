@@ -145,7 +145,7 @@ export function suggestionAnchors(doc: ProseMirrorNode): Map<string, SuggestionA
         if (node.isTextblock) {
           if (split.kind === "deletion") entry.lineDeleted = true;
           else entry.lineInserted = true;
-        } else {
+        } else if (split.kind !== "structural") {
           const structure = structureNode(node);
           const action = split.kind === "deletion" ? "delete" : "insert";
           addKeyed(entry, `node:${structure}:${action}`, { kind: "node", node: structure, action });
@@ -211,7 +211,8 @@ export function suggestionAnchors(doc: ProseMirrorNode): Map<string, SuggestionA
 }
 
 // threadAnchors resolves each thread cursor to its start in the document. A
-// thread whose anchor no longer resolves is left out.
+// thread whose text was deleted collapses to where that text was; one whose
+// anchor no longer resolves is left out.
 export function threadAnchors(
   handle: RepoCollaborationHandle,
   doc: ProseMirrorNode,
@@ -219,7 +220,7 @@ export function threadAnchors(
 ): Map<string, number> {
   const positions = new Map<string, number>();
   for (const thread of threads) {
-    const range = commentAnchorRange(handle, doc, thread);
+    const range = commentAnchorRange(handle, doc, thread, { allowCollapsed: true });
     if (range) positions.set(thread.id, range.from);
   }
   return positions;

@@ -19,11 +19,12 @@
 // SOFTWARE.
 
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { DocumentTitleField_document$key } from "#/__generated__/core/DocumentTitleField_document.graphql";
+import { useDebouncedSerializedFieldSave } from "#/pages/organizations/_lib/useSerializedFieldSave";
 
 import { clampDocumentTitle } from "../_lib/documentTitle";
 import { useUpdateDocument } from "../_lib/useUpdateDocument";
@@ -58,7 +59,6 @@ export function DocumentTitleField({ documentKey }: DocumentTitleFieldProps) {
   const [updateDocument] = useUpdateDocument();
   const [draft, setDraft] = useState(document.title);
   const savedRef = useRef(document.title);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { root, input, heading } = documentTitleField();
   const canEdit = document.canUpdate
     && document.status !== "ARCHIVED"
@@ -72,51 +72,29 @@ export function DocumentTitleField({ documentKey }: DocumentTitleFieldProps) {
     savedRef.current = document.title;
   }, [draft, document.title]);
 
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current != null) {
-        clearTimeout(timeoutRef.current);
+  const persist = useCallback(
+    async (value: string) => {
+      const next = value.trim();
+      if (!next || next === savedRef.current) {
+        return;
       }
-    };
-  }, []);
 
-  function persist(value: string) {
-    const next = value.trim();
-    if (!next || next === savedRef.current) {
-      setDraft(current => (current === value ? savedRef.current : current));
-      return;
-    }
-
-    void updateDocument({
-      variables: {
-        input: {
-          id: document.id,
-          title: next,
-        },
-      },
-    }).then(() => {
-      setDraft(current => (current.trim() === next ? next : current));
-    }).catch(() => {
-      setDraft(savedRef.current);
-    });
-  }
-
-  function schedule(value: string) {
-    if (timeoutRef.current != null) {
-      clearTimeout(timeoutRef.current);
-    }
-    timeoutRef.current = setTimeout(() => {
-      persist(value);
-    }, documentTitleSaveDelayMs);
-  }
-
-  function flush() {
-    if (timeoutRef.current != null) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
-    }
-    persist(draft);
-  }
+      try {
+        await updateDocument({
+          variables: {
+            input: {
+              id: document.id,
+              title: next,
+            },
+          },
+        });
+      } catch {
+        setDraft(current => (current.trim() === next ? savedRef.current : current));
+      }
+    },
+    [document.id, updateDocument],
+  );
+  const persistDebounced = useDebouncedSerializedFieldSave(persist, documentTitleSaveDelayMs);
 
   if (!canEdit) {
     return (
@@ -136,9 +114,12 @@ export function DocumentTitleField({ documentKey }: DocumentTitleFieldProps) {
         onChange={(event) => {
           const next = clampDocumentTitle(event.currentTarget.value);
           setDraft(next);
-          schedule(next);
+          persistDebounced.schedule(next);
         }}
-        onBlur={flush}
+        onBlur={() => {
+          persistDebounced.flush();
+          setDraft(current => current.trim() || savedRef.current);
+        }}
         onKeyDown={(event) => {
           if (event.key === "Enter") {
             event.preventDefault();

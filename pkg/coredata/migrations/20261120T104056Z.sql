@@ -22,7 +22,38 @@
 -- before that only had one once someone commented. The thread keeps no
 -- anchor: the suggestion locates itself.
 
--- An open suggestion gets an open thread.
+-- An open suggestion whose discussion was resolved gets it back.
+UPDATE
+    document_comment_threads
+SET
+    resolved_at = NULL,
+    resolved_by_profile_id = NULL,
+    updated_at = NOW()
+WHERE
+    id IN (
+        SELECT DISTINCT ON (t.suggestion_id)
+            t.id
+        FROM
+            document_comment_threads t
+            INNER JOIN document_suggestions s ON s.id = t.suggestion_id
+        WHERE
+            s.status = 'OPEN'
+            AND NOT EXISTS (
+                SELECT
+                    1
+                FROM
+                    document_comment_threads o
+                WHERE
+                    o.suggestion_id = t.suggestion_id
+                    AND o.resolved_at IS NULL
+            )
+        ORDER BY
+            t.suggestion_id,
+            t.created_at DESC,
+            t.id DESC
+    );
+
+-- An open suggestion with no thread gets an open one.
 INSERT INTO document_comment_threads (
     tenant_id,
     id,
@@ -61,7 +92,6 @@ WHERE
             document_comment_threads t
         WHERE
             t.suggestion_id = s.id
-            AND t.resolved_at IS NULL
     );
 
 -- A decided suggestion with no thread gets one resolved by its decision.
@@ -103,4 +133,19 @@ WHERE
             document_comment_threads t
         WHERE
             t.suggestion_id = s.id
+    );
+
+-- Threads that copied the suggestion's anchor drop it.
+UPDATE
+    document_comment_threads
+SET
+    anchor_start = NULL,
+    anchor_end = NULL,
+    anchor_quote = ''
+WHERE
+    suggestion_id IS NOT NULL
+    AND (
+        anchor_start IS NOT NULL
+        OR anchor_end IS NOT NULL
+        OR anchor_quote <> ''
     );

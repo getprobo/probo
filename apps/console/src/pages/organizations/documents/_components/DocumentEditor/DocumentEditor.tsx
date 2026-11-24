@@ -128,7 +128,8 @@ export function DocumentEditor({
     = useQueryLoader<DocumentVersionListQuery>(documentVersionListQuery);
   const [versionOrientation, setVersionOrientation] = useState<string | null>(null);
   const viewing = mode === "viewing";
-  const showingVersion = viewing && versionQueryRef != null;
+  const viewingVersion = viewing && versionId != null;
+  const showingVersion = viewingVersion && versionQueryRef != null;
   const showVersions = versionsOpen;
   const versionListLoaded = versionListQueryRef != null;
   useEffect(() => {
@@ -138,7 +139,7 @@ export function DocumentEditor({
   }, [document.id, loadVersionList, showVersions, versionListLoaded]);
   const [viewQueryRef, loadView, disposeView]
     = useQueryLoader<DocumentViewContentQuery>(documentViewContentQuery);
-  const viewingLive = viewing && !showingVersion;
+  const viewingLive = viewing && versionId == null;
   // The server persists a change after peers receive it, so the refetch
   // trails the last change instead of following each one.
   useEffect(() => {
@@ -285,30 +286,32 @@ export function DocumentEditor({
                           onMissing={onVersionMissing}
                         />
                       )
-                    : viewing
-                      ? viewQueryRef != null && (
-                        <DocumentViewContent queryRef={viewQueryRef} onPages={setPageCount} />
-                      )
-                      : failed
-                        ? <Text size={2} color="faint">{t("details.editor.openError")}</Text>
-                        : handle == null
-                          ? <Text size={2} color="faint">{t("details.editor.loading")}</Text>
-                          : (
-                              <CollaborativeRichEditor
-                                key={document.id}
-                                className="w-full"
-                                collaborationHandle={handle}
-                                content=""
-                                page={false}
-                                suggesting={controller}
-                                commentAnchorController={commentAnchorController}
-                                pagination={pagination}
-                                toolbarContainer={toolbarEl}
-                                bubbleMenu={bubbleMenu}
-                                onEditor={onEditor}
-                                onUploadFile={onUploadFile}
-                              />
-                            )}
+                    : viewingVersion
+                      ? <Text size={2} color="faint">{t("details.editor.loading")}</Text>
+                      : viewing
+                        ? viewQueryRef != null && (
+                          <DocumentViewContent queryRef={viewQueryRef} onPages={setPageCount} />
+                        )
+                        : failed
+                          ? <Text size={2} color="faint">{t("details.editor.openError")}</Text>
+                          : handle == null
+                            ? <Text size={2} color="faint">{t("details.editor.loading")}</Text>
+                            : (
+                                <CollaborativeRichEditor
+                                  key={document.id}
+                                  className="w-full"
+                                  collaborationHandle={handle}
+                                  content=""
+                                  page={false}
+                                  suggesting={controller}
+                                  commentAnchorController={commentAnchorController}
+                                  pagination={pagination}
+                                  toolbarContainer={toolbarEl}
+                                  bubbleMenu={bubbleMenu}
+                                  onEditor={onEditor}
+                                  onUploadFile={onUploadFile}
+                                />
+                              )}
                 </div>
               </div>
             </div>

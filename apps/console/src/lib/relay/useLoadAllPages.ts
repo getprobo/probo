@@ -18,9 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { LoadMoreFn } from "react-relay";
 import type { OperationType } from "relay-runtime";
+
+const maxAttempts = 3;
 
 interface LoadAllPagesOptions<TQuery extends OperationType> {
   hasNext: boolean;
@@ -30,25 +32,30 @@ interface LoadAllPagesOptions<TQuery extends OperationType> {
 }
 
 // Loads every remaining page of a pagination fragment in the background. A
-// failed page stops the loop so a persistent error does not retry forever.
+// failed page is retried with backoff, then the loop stops until `retry`.
 export function useLoadAllPages<TQuery extends OperationType>({
   hasNext,
   isLoadingNext,
   loadNext,
   pageSize,
 }: LoadAllPagesOptions<TQuery>) {
-  const [failed, setFailed] = useState(false);
+  const [failures, setFailures] = useState(0);
 
   useEffect(() => {
-    if (!hasNext || isLoadingNext || failed) {
+    if (!hasNext || isLoadingNext || failures >= maxAttempts) {
       return;
     }
-    loadNext(pageSize, {
-      onComplete: (error) => {
-        if (error) {
-          setFailed(true);
-        }
-      },
-    });
-  }, [failed, hasNext, isLoadingNext, loadNext, pageSize]);
+    const timeout = setTimeout(() => {
+      loadNext(pageSize, {
+        onComplete: (error) => {
+          setFailures(count => (error ? count + 1 : 0));
+        },
+      });
+    }, failures === 0 ? 0 : 1000 * 2 ** (failures - 1));
+    return () => clearTimeout(timeout);
+  }, [failures, hasNext, isLoadingNext, loadNext, pageSize]);
+
+  const retry = useCallback(() => setFailures(0), []);
+
+  return { retry };
 }

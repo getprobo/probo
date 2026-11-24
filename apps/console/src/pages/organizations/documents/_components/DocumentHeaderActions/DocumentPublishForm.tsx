@@ -76,6 +76,7 @@ export function DocumentPublishForm({ documentKey, reviewQueryRef, onDone }: Doc
   const {
     form, body, approversSection, approverRows, approverRow, approverName, addApprover,
   } = documentPublishForm();
+  const [changelogMissing, setChangelogMissing] = useState(false);
   const requestsApproval = approvers.length > 0;
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -85,6 +86,7 @@ export function DocumentPublishForm({ documentKey, reviewQueryRef, onDone }: Doc
     const value = new FormData(event.currentTarget).get("changelog");
     const changelog = typeof value === "string" ? value.trim() : "";
     if (changelog === "") {
+      setChangelogMissing(true);
       return;
     }
 
@@ -118,11 +120,16 @@ export function DocumentPublishForm({ documentKey, reviewQueryRef, onDone }: Doc
       <DialogBody>
         <div className={body()}>
           <DocumentPublishReviewCallout queryRef={reviewQueryRef} />
-          <Field label={t("details.actions.publish.changelog")} required>
+          <Field
+            label={t("details.actions.publish.changelog")}
+            required
+            error={changelogMissing ? t("details.actions.publish.changelogRequired") : undefined}
+          >
             <Textarea
               name="changelog"
               placeholder={t("details.actions.publish.changelogPlaceholder")}
               disabled={isPublishing}
+              onChange={() => setChangelogMissing(false)}
             />
           </Field>
           <div className={approversSection()}>

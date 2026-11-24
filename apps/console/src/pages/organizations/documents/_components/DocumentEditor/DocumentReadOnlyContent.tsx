@@ -38,7 +38,8 @@ interface DocumentReadOnlyContentProps {
 // editor nor moves the scroll.
 export function DocumentReadOnlyContent({ content, orientation, onPages }: DocumentReadOnlyContentProps) {
   const [initialContent] = useState(content);
-  const contentRef = useRef(content);
+  const [initialDocument] = useState(() => parseContent(content));
+  const contentRef = useRef(initialDocument);
   // TipTap reports its editor asynchronously, possibly before this component
   // mounts, so the editor is held in a ref rather than in state.
   const editorRef = useRef<Editor | null>(null);
@@ -56,15 +57,20 @@ export function DocumentReadOnlyContent({ content, orientation, onPages }: Docum
   // A rebuilt editor starts from the initial content, so it catches up too.
   const onEditor = useCallback((next: Editor | null) => {
     editorRef.current = next;
-    if (next != null) {
+    if (next != null && contentRef.current != null) {
       showContent(next, contentRef.current);
     }
   }, []);
 
+  // Malformed content keeps the last good one on screen.
   useEffect(() => {
-    contentRef.current = content;
+    const parsed = parseContent(content);
+    if (parsed == null) {
+      return;
+    }
+    contentRef.current = parsed;
     if (editorRef.current != null) {
-      showContent(editorRef.current, content);
+      showContent(editorRef.current, parsed);
     }
   }, [content]);
 
@@ -80,13 +86,18 @@ export function DocumentReadOnlyContent({ content, orientation, onPages }: Docum
   );
 }
 
-function showContent(editor: Editor, content: string) {
-  if (editor.isDestroyed || JSON.stringify(editor.getJSON()) === content) {
+function parseContent(content: string): object | null {
+  try {
+    const parsed: unknown = JSON.parse(content);
+    return typeof parsed === "object" && parsed !== null ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function showContent(editor: Editor, content: object) {
+  if (editor.isDestroyed || JSON.stringify(editor.getJSON()) === JSON.stringify(content)) {
     return;
   }
-  try {
-    editor.commands.setContent(JSON.parse(content) as object, { emitUpdate: false });
-  } catch {
-    // Malformed content keeps the last good one on screen.
-  }
+  editor.commands.setContent(content, { emitUpdate: false });
 }

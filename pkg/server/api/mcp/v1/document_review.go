@@ -24,6 +24,7 @@ import (
 	"context"
 	"errors"
 
+	"go.gearno.de/kit/log"
 	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/collaboration"
 	"go.probo.inc/probo/pkg/coredata"
@@ -156,12 +157,28 @@ func (r *Resolver) changeDocumentParts(
 		return document, nil, nil
 	}
 
-	suggestion, err := r.newDocumentSuggestion(ctx, scope, result.Suggestion)
+	return document, r.changedDocumentSuggestion(ctx, scope, result.Suggestion), nil
+}
+
+// changedDocumentSuggestion runs after the change has committed. A failed
+// thread lookup must not fail the tool, or a client retry would apply the
+// change twice, so the thread id is left empty instead.
+func (r *Resolver) changedDocumentSuggestion(
+	ctx context.Context,
+	scope coredata.Scoper,
+	suggestion *coredata.DocumentSuggestion,
+) *types.DocumentSuggestion {
+	threadIDs, err := r.documentSuggestionThreadIDs(ctx, scope, []*coredata.DocumentSuggestion{suggestion})
 	if err != nil {
-		return nil, nil, err
+		r.logger.ErrorCtx(
+			ctx,
+			"cannot load document suggestion thread",
+			log.String("suggestion_id", suggestion.ID.String()),
+			log.Error(err),
+		)
 	}
 
-	return document, suggestion, nil
+	return types.NewDocumentSuggestion(suggestion, threadIDs[suggestion.ID])
 }
 
 func (r *Resolver) newDocumentSuggestion(

@@ -26,6 +26,8 @@ import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { DocumentViewContentQuery } from "#/__generated__/core/DocumentViewContentQuery.graphql";
 
+import { ResetOnChange } from "../ResetOnChange";
+
 import { DocumentReadOnlyContent } from "./DocumentReadOnlyContent";
 
 // The server renders the live document without its pending suggestions.
@@ -54,7 +56,13 @@ export function DocumentViewContent(props: DocumentViewContentProps) {
   const { t } = useTranslation("organizations/documents");
 
   return (
-    <ErrorBoundary fallback={<Text size={2} color="faint">{t("details.editor.openError")}</Text>}>
+    <ErrorBoundary
+      fallback={(_, reset) => (
+        <ResetOnChange value={props.queryRef} onChange={reset}>
+          <Text size={2} color="faint">{t("details.editor.openError")}</Text>
+        </ResetOnChange>
+      )}
+    >
       <Suspense fallback={<Text size={2} color="faint">{t("details.editor.loading")}</Text>}>
         <DocumentViewContentLoaded {...props} />
       </Suspense>

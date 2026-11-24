@@ -39,6 +39,7 @@ import { DocumentReviewAuthor } from "./DocumentReviewAuthor";
 import { DocumentReviewItem } from "./DocumentReviewItem";
 import { DocumentReviewThread } from "./DocumentReviewThread";
 import { DocumentSuggestionChange } from "./DocumentSuggestionChange";
+import { DocumentSuggestionDecisions } from "./DocumentSuggestionDecisions";
 
 const documentCommentHistoryItemFragment = graphql`
   fragment DocumentCommentHistoryItem_thread on DocumentCommentThread {
@@ -56,6 +57,7 @@ const documentCommentHistoryItemFragment = graphql`
       author {
         ...DocumentReviewAuthor_profile
       }
+      ...DocumentSuggestionDecisions_suggestion
     }
     ...DocumentReviewThread_thread
   }
@@ -129,6 +131,14 @@ function SuggestionHistoryItem({
       {t(status.label)}
     </Badge>
   );
+  const trailing = open
+    ? (
+        <>
+          {badge}
+          <DocumentSuggestionDecisions suggestionKey={suggestion} threadConnections={threadConnections} />
+        </>
+      )
+    : badge;
 
   return (
     <div className={item()}>
@@ -137,7 +147,7 @@ function SuggestionHistoryItem({
           profileKey={suggestion.author}
           createdAt={suggestion.createdAt}
           primary
-          trailing={badge}
+          trailing={trailing}
         />
         {open && liveAnchor != null && (
           <div className={changes()}>

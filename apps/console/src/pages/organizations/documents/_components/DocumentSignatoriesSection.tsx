@@ -64,7 +64,7 @@ const documentSignatoriesListFragment = graphql`
     after: { type: "CursorKey" }
   ) {
     id
-    canRequestSignature: permission(action: "core:document-version:request-signature")
+    canRequestSignature: permission(action: "core:document-version-signature:request")
     signatures(
       first: $first
       after: $after

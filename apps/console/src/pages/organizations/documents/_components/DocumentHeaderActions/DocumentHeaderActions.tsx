@@ -29,6 +29,7 @@ import { graphql, useFragment, useQueryLoader } from "react-relay";
 import type { DocumentHeaderActions_document$key } from "#/__generated__/core/DocumentHeaderActions_document.graphql";
 import type { DocumentPublishReviewCalloutQuery } from "#/__generated__/core/DocumentPublishReviewCalloutQuery.graphql";
 
+import { useDocumentVersionParam } from "../../_lib/useDocumentVersionParam";
 import { documentHeaderActions } from "../../variants";
 
 import { DocumentActionsMenu } from "./DocumentActionsMenu";
@@ -53,8 +54,8 @@ interface DocumentHeaderActionsProps {
   documentKey: DocumentHeaderActions_document$key;
 }
 
-// Publishing waits while a version is pending approval, and archived or
-// generated documents cannot be published. The form mounts with the dialog
+// Publishing waits while a version is pending approval or a past version is
+// shown, and archived or generated documents cannot be published. The form mounts with the dialog
 // popup, so each opening starts from the default approvers.
 export function DocumentHeaderActions({ documentKey }: DocumentHeaderActionsProps) {
   const document = useFragment(documentHeaderActionsFragment, documentKey);
@@ -63,11 +64,13 @@ export function DocumentHeaderActions({ documentKey }: DocumentHeaderActionsProp
   const [reviewQueryRef, loadReview] = useQueryLoader<DocumentPublishReviewCalloutQuery>(
     documentPublishReviewCalloutQuery,
   );
+  const { versionId } = useDocumentVersionParam();
   const { root } = documentHeaderActions();
   const canPublish = document.canPublish
     && document.pendingApprovalCount.totalCount === 0
     && document.status !== "ARCHIVED"
-    && document.writeMode !== "GENERATED";
+    && document.writeMode !== "GENERATED"
+    && versionId == null;
 
   return (
     <div className={root()}>

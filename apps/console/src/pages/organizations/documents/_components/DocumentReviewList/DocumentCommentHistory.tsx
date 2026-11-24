@@ -27,6 +27,7 @@ import type { DocumentCommentHistoryQuery } from "#/__generated__/core/DocumentC
 import type { DocumentThreadConnections } from "../../_lib/documentThreadConnections";
 import type { SuggestionAnchor } from "../../_lib/reviewAnchors";
 import type { ReviewHistoryTarget } from "../../_lib/reviewHistoryTarget";
+import { ResetOnChange } from "../ResetOnChange";
 
 import { DocumentCommentHistoryList } from "./DocumentCommentHistoryList";
 
@@ -58,7 +59,7 @@ export function DocumentCommentHistory({ queryRef, ...props }: DocumentCommentHi
   }
 
   return (
-    <ErrorBoundary fallback={null}>
+    <ErrorBoundary fallback={(_, reset) => <ResetOnChange value={queryRef} onChange={reset} />}>
       <Suspense fallback={null}>
         <DocumentCommentHistoryLoaded queryRef={queryRef} {...props} />
       </Suspense>

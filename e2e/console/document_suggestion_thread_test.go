@@ -517,11 +517,11 @@ func rewriteCollaborationSpans(
 
 	_, err = conn.Exec(
 		ctx,
-		`UPDATE collaboration_documents SET snapshot = $2, heads = $3, snapshot_revision = $4 WHERE document_id = $1`,
+		`UPDATE collaboration_documents SET snapshot = $2, heads = $3, revision = revision + 1, change_revision = $4, snapshot_revision = $4 WHERE document_id = $1`,
 		documentID,
 		saved,
 		encodedHeads,
-		changeRevision,
+		changeRevision+1,
 	)
 	require.NoError(t, err)
 }

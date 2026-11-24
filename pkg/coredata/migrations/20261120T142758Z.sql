@@ -18,11 +18,13 @@
 -- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 -- SOFTWARE.
 
--- Existing open suggestions are past their first persist, so the next persist
--- of their document rejects those whose marks are gone.
+-- Open suggestions older than a day are past their first persist, so the next
+-- persist of their document rejects those whose marks are gone. Recent ones may
+-- still be waiting for their first edit and stay unmarked.
 UPDATE
     document_suggestions
 SET
     marked_at = created_at
 WHERE
-    status = 'OPEN';
+    status = 'OPEN'
+    AND created_at < NOW() - INTERVAL '1 day';

@@ -61,8 +61,13 @@ export function useComboboxPage<
   const readPageRef = useRef(readPage);
   const [scope, setScope] = useState(reloadKey);
   const [searchScope, setSearchScope] = useState(debouncedSearch);
+  const [wasEnabled, setWasEnabled] = useState(enabled);
   const loading = enabled && settledId !== request.id;
   const failed = failedId === request.id;
+
+  if (enabled !== wasEnabled) {
+    setWasEnabled(enabled);
+  }
 
   if (scope !== reloadKey) {
     setScope(reloadKey);
@@ -75,6 +80,11 @@ export function useComboboxPage<
     setEndCursor(null);
   } else if (searchScope !== debouncedSearch) {
     setSearchScope(debouncedSearch);
+    setRequest({ after: null, append: false, id: request.id + 1 });
+    setItems([]);
+    setHasNext(false);
+    setEndCursor(null);
+  } else if (enabled && !wasEnabled) {
     setRequest({ after: null, append: false, id: request.id + 1 });
     setItems([]);
     setHasNext(false);

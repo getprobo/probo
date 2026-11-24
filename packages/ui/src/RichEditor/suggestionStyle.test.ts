@@ -109,6 +109,10 @@ function markNames(marks: readonly Mark[]): string[] {
   return marks.map(mark => mark.type.name);
 }
 
+function flushClaims(): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, 0));
+}
+
 describe("format suggestions", () => {
   it("suggests bold and clears it when toggled again", () => {
     const editor = open(paragraph("Hello"), 1, 6);
@@ -197,8 +201,7 @@ describe("format suggestions", () => {
 
     expect(applySuggestingStyle(editor.view, editor.current, "underline")).toBe(true);
     expect(applySuggestingStyle(editor.view, editor.current, "underline")).toBe(true);
-    await Promise.resolve();
-    await Promise.resolve();
+    await flushClaims();
 
     expect(claims).toBe(1);
     expect(started).toBe(false);
@@ -218,19 +221,80 @@ describe("format suggestions", () => {
       started = true;
       return Promise.resolve(null);
     };
-    current.claimSuggestion = () => Promise.resolve(false);
+    let claims = 0;
+    current.claimSuggestion = () => {
+      claims += 1;
+      return Promise.resolve(false);
+    };
     const editor = open(paragraph("Hello", [
       schema.marks.underline.create(),
       schema.marks.suggestionFormatUnderline.create({ id: "someone-else", action: "add" }),
     ]), 1, 6, current);
 
     expect(applySuggestingStyle(editor.view, editor.current, "underline")).toBe(true);
-    await Promise.resolve();
+    await flushClaims();
 
+    expect(claims).toBe(1);
     expect(started).toBe(false);
     expect(editor.current.blocked).toBe(true);
+    expect(editor.current.claimingSuggestionId).toBeNull();
     const marks = marksOn(editor.state.doc, "Hello");
     expect(markNames(marks)).toEqual(expect.arrayContaining(["underline", "suggestionFormatUnderline"]));
+  });
+
+  it("drops a claimed toggle when the selected text changed meanwhile", async () => {
+    const owned = new Set<string>();
+    const current = controller();
+    current.suggestionId = null;
+    current.ownsSuggestion = id => owned.has(id);
+    current.claimSuggestion = (id) => {
+      owned.add(id);
+      return Promise.resolve(true);
+    };
+    const editor = open(paragraph("Hello", [
+      schema.marks.underline.create(),
+      schema.marks.suggestionFormatUnderline.create({ id: suggestionId, action: "add" }),
+    ]), 1, 6, current);
+
+    expect(applySuggestingStyle(editor.view, editor.current, "underline")).toBe(true);
+    editor.view.dispatch(editor.state.tr.insertText("J", 1, 2));
+    editor.select(1, 6);
+    await flushClaims();
+
+    expect(editor.current.blocked).toBe(false);
+    expect(editor.state.doc.textContent).toBe("Jello");
+    expect(markNames(marksOn(editor.state.doc, "Jello"))).toEqual(
+      expect.arrayContaining(["underline", "suggestionFormatUnderline"]),
+    );
+  });
+
+  it("removes bold from a selection that is only partly bold", () => {
+    const owned = "owned-bold";
+    const current = controller();
+    current.suggestionId = null;
+    current.ownsSuggestion = id => id === owned;
+    current.onStartSuggesting = () => {
+      current.suggestionId = "bold-burst";
+      return Promise.resolve(current.suggestionId);
+    };
+    const doc = schema.node("doc", null, [
+      schema.node("paragraph", null, [
+        schema.text("Hello", [
+          schema.marks.bold.create(),
+          schema.marks.suggestionFormatBold.create({ id: owned, action: "add" }),
+        ]),
+        schema.text("World"),
+      ]),
+    ]);
+    const editor = open(doc, 1, 11, current);
+
+    expect(applySuggestingStyle(editor.view, editor.current, "bold")).toBe(true);
+
+    expect(editor.current.blocked).toBe(false);
+    expect(markNames(marksOn(editor.state.doc, "Hello"))).not.toContain("bold");
+    const world = markNames(marksOn(editor.state.doc, "World"));
+    expect(world).not.toContain("bold");
+    expect(world).not.toContain("suggestionFormatBold");
   });
 
   it("clears a loaded bold suggestion while another burst is open", () => {
@@ -350,6 +414,21 @@ describe("format suggestions", () => {
     expect(markNames(typed)).toContain(suggestionInsertName);
     expect(markNames(typed)).not.toContain("bold");
     expect(markNames(typed)).not.toContain("suggestionFormatBold");
+  });
+
+  it("types a stored bold mark at a caret as part of the insertion", () => {
+    const editor = open(paragraph("Hello"), 3, 3);
+    expect(applySuggestingStyle(editor.view, editor.current, "bold")).toBe(false);
+    editor.view.dispatch(editor.state.tr.addStoredMark(schema.marks.bold.create()));
+    expect(editor.current.blocked).toBe(false);
+    expect(markNames(editor.state.storedMarks ?? [])).toEqual(["bold"]);
+
+    const plugin = suggestingPlugins(editor.current)[0];
+    expect(plugin?.props.handleTextInput?.call(plugin, editor.view, 3, 3, "X", () => editor.state.tr)).toBe(true);
+    const typed = markNames(marksOn(editor.state.doc, "X"));
+    expect(typed).toContain("bold");
+    expect(typed).toContain(suggestionInsertName);
+    expect(typed).not.toContain("suggestionFormatBold");
   });
 
   it("blocks an untracked bold mark while suggesting", () => {

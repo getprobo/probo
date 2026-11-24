@@ -510,41 +510,70 @@ function suggestedLinkAllowed(href: string): boolean {
   return scheme === "http:" || scheme === "https:" || scheme === "mailto:";
 }
 
+type FormatChange = (
+  state: EditorState,
+  id: string | null,
+  from: number,
+  to: number,
+  owns: (id: string) => boolean,
+) => Transaction | null;
+
+// The open burst counts as owned so a toggle can undo the suggestion that is
+// still being typed. Loaded suggestions are owned only after a claim.
+function formatOwner(controller: SuggestingController): (id: string) => boolean {
+  return candidate =>
+    controller.ownsSuggestion?.(candidate) === true || candidate === controller.suggestionId;
+}
+
 function applyFormatChange(
   view: EditorView,
   controller: SuggestingController,
   style: SuggestionStyleName,
-  change: (
-    state: EditorState,
-    id: string | null,
-    from: number,
-    to: number,
-    owns: (id: string) => boolean,
-  ) => Transaction | null,
+  change: FormatChange,
 ): boolean {
   if (!controller.enabled || view.state.selection.empty) return false;
-  // The open burst counts as owned so a toggle can undo the suggestion that
-  // is still being typed. Loaded suggestions are owned only after a claim.
-  const owns = (candidate: string) =>
-    controller.ownsSuggestion?.(candidate) === true || candidate === controller.suggestionId;
+  const owns = formatOwner(controller);
   const unknown = styleFormatIds(view.state, style).filter(id => !owns(id));
-  if (unknown.length > 0 && controller.claimSuggestion) {
+  const claimSuggestion = controller.claimSuggestion;
+  if (unknown.length > 0 && claimSuggestion) {
     const key = unknown.slice().sort().join("\n");
     if (controller.claimingSuggestionId === key) return true;
     const { from, to } = view.state.selection;
-    controller.claimingSuggestionId = key;
-    void Promise.all(unknown.map(id => controller.claimSuggestion!(id))).then(() => {
+    const content = view.state.doc.slice(from, to);
+    const releaseClaim = () => {
       if (controller.claimingSuggestionId === key) {
         controller.claimingSuggestionId = null;
       }
-      if (viewIsDestroyed(view)) return;
-      const selection = view.state.selection;
-      if (selection.from !== from || selection.to !== to) return;
-      applyFormatChange(view, controller, style, change);
-    });
+    };
+    controller.claimingSuggestionId = key;
+    Promise.all(unknown.map(id => claimSuggestion(id)))
+      .then(() => {
+        releaseClaim();
+        if (viewIsDestroyed(view)) return;
+        const selection = view.state.selection;
+        if (selection.from !== from || selection.to !== to) return;
+        if (!view.state.doc.slice(from, to).eq(content)) return;
+        // A rejected claim leaves its id unowned, so that text is skipped
+        // rather than claimed again.
+        applyOwnedFormatChange(view, controller, style, change);
+      })
+      .catch(() => {
+        releaseClaim();
+        controller.onBlocked?.();
+      });
     return true;
   }
 
+  return applyOwnedFormatChange(view, controller, style, change);
+}
+
+function applyOwnedFormatChange(
+  view: EditorView,
+  controller: SuggestingController,
+  style: SuggestionStyleName,
+  change: FormatChange,
+): boolean {
+  const owns = formatOwner(controller);
   // A new id is only for text that has no suggestion of this style. Slices
   // that already carry one keep that id, so a later toggle cannot collide.
   let fallback: string | null = null;
@@ -626,9 +655,6 @@ function applySuggestingKey(
     const key = event.key.toLowerCase();
     const style = suggestingStyleKey(key, event.shiftKey);
     if (style && !event.altKey) {
-      // A collapsed cursor has no range to redline. Swallow the shortcut so
-      // the default handler does not store an untracked mark.
-      if (view.state.selection.empty) return true;
       return applySuggestingStyle(view, controller, style);
     }
     if (key === "k" && !event.shiftKey && !event.altKey) {
@@ -984,6 +1010,7 @@ export function suggestionInputTransaction(
     tr = markDeletion(tr, from, to, id);
   }
 
+  let storedMarks = from === to ? state.storedMarks : null;
   let cursor = tr.mapping.map(from);
   for (const char of Array.from(text)) {
     const next = nextCodePoint(tr.doc, cursor);
@@ -998,7 +1025,8 @@ export function suggestionInputTransaction(
       continue;
     }
 
-    cursor = insertSuggestionText(tr, cursor, char, id);
+    cursor = insertSuggestionText(tr, cursor, char, id, storedMarks);
+    storedMarks = null;
   }
 
   tr.setSelection(TextSelection.create(tr.doc, cursor));
@@ -1084,8 +1112,14 @@ function sharedEdges(before: string, after: string): { prefix: number; suffix: n
   };
 }
 
-function insertSuggestionText(tr: Transaction, cursor: number, text: string, id: string): number {
-  const inherited = marksForSuggestionText(tr.doc.resolve(cursor).marks());
+function insertSuggestionText(
+  tr: Transaction,
+  cursor: number,
+  text: string,
+  id: string,
+  storedMarks: readonly ProseMirrorMark[] | null = null,
+): number {
+  const inherited = marksForSuggestionText(storedMarks ?? tr.doc.resolve(cursor).marks());
   const mark = tr.doc.type.schema.marks[suggestionInsertName].create({ id });
   tr.replaceWith(cursor, cursor, tr.doc.type.schema.text(text, [...inherited, mark]));
   return cursor + text.length;
@@ -1314,10 +1348,11 @@ export function discardSuggestionId(
   if (!editorViewReady(editor)) return;
   const rewrites: Array<{ from: number; to: number; marks: readonly ProseMirrorMark[] }> = [];
   const removals: Array<{ from: number; to: number }> = [];
-  const blocks: number[] = [];
+  const blocks: Array<{ pos: number; kind: string }> = [];
   let hasFormat = false;
   editor.state.doc.descendants((node, pos) => {
-    if (node.isTextblock && suggestionSplitId(node) === id) blocks.push(pos);
+    const split = node.isTextblock ? suggestionSplitOn(node) : null;
+    if (split?.id === id) blocks.push({ pos, kind: split.kind });
     if (!node.isText) return;
     const inserted = node.marks.some(mark =>
       mark.type.name === suggestionInsertName && mark.attrs.id === id,
@@ -1360,10 +1395,15 @@ export function discardSuggestionId(
   for (const range of removals.reverse()) {
     tr.delete(range.from, range.to);
   }
-  for (const pos of blocks.reverse()) {
+  for (const { pos, kind } of blocks.reverse()) {
     const mapped = tr.mapping.map(pos);
     const block = tr.doc.nodeAt(mapped);
-    if (!block?.type.spec.attrs?.unknownAttrs) continue;
+    if (!block) continue;
+    if (kind === "insertion" && block.content.size === 0 && blockRemovable(tr.doc, mapped)) {
+      tr.delete(mapped, mapped + block.nodeSize);
+      continue;
+    }
+    if (!block.type.spec.attrs?.unknownAttrs) continue;
     const current = attrRecord(nodeUnknownAttrs(block));
     delete current[suggestionSplitAttr];
     delete current[suggestionSplitKindAttr];
@@ -1378,6 +1418,12 @@ export function discardSuggestionId(
   tr.setMeta(suggestingPluginKey, { input: true });
   tr.setMeta("addToHistory", false);
   editor.view.dispatch(tr);
+}
+
+function blockRemovable(doc: ProseMirrorNode, pos: number): boolean {
+  const $pos = doc.resolve(pos);
+  const index = $pos.index();
+  return $pos.parent.childCount > 1 && $pos.parent.canReplace(index, index + 1);
 }
 
 function isSuggestionMark(mark: ProseMirrorMark): boolean {
@@ -1444,7 +1490,7 @@ const suggestionTargetAttributes = [
   "data-suggestion-delete",
   ...suggestionStyles.map(style => `data-suggestion-format-${style.name}`),
 ];
-const suggestionTargetSelector = suggestionTargetAttributes
+export const suggestionTargetSelector = suggestionTargetAttributes
   .map(attribute => `[${attribute}]`)
   .join(",");
 

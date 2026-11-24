@@ -46,19 +46,16 @@ type RichEditorToolbarMarksProps = {
   disabled: boolean;
 };
 
-// The style toggles act on selected text only, so they stay disabled while
-// the selection is a caret.
 export function RichEditorToolbarMarks({ editor, disabled }: RichEditorToolbarMarksProps) {
   const { t } = useTranslation();
   const state = useEditorState({
     editor,
     selector: ({ editor: current }) => {
       if (current.isDestroyed) {
-        return { empty: true, active: [] as FormattingStyle[] };
+        return { active: [] as FormattingStyle[] };
       }
 
       return {
-        empty: current.state.selection.empty,
         active: styles.map(({ style }) => style).filter(style => current.isActive(style)),
       };
     },
@@ -71,7 +68,7 @@ export function RichEditorToolbarMarks({ editor, disabled }: RichEditorToolbarMa
         key={style}
         label={t(`ui.richEditor.toolbar.styles.${style}`)}
         pressed={state.active.includes(style)}
-        disabled={disabled || state.empty}
+        disabled={disabled}
         onMouseDown={event => event.preventDefault()}
         onClick={() => toggleStyle(editor, style)}
       >

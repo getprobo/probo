@@ -12,6 +12,7 @@
         "description": "Describe what changed. A major version can ask approvers to sign off before it is published.",
         "changelog": "Changelog",
         "changelogPlaceholder": "What changed in this version?",
+        "changelogRequired": "Describe what changed.",
         "approvers": "Approvers",
         "approversDescription": "A major version waits for these people to approve it. Minor versions publish right away.",
         "removeApprover": "Remove {{name}}",

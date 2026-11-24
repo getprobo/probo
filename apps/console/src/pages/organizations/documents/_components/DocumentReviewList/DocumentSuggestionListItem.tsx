@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CheckIcon, XIcon } from "@phosphor-icons/react";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
@@ -27,26 +26,22 @@ import type { DocumentSuggestionListItem_thread$key } from "#/__generated__/core
 
 import type { DocumentThreadConnections } from "../../_lib/documentThreadConnections";
 import type { SuggestionAnchor } from "../../_lib/reviewAnchors";
-import { useAcceptDocumentSuggestion } from "../../_lib/useAcceptDocumentSuggestion";
-import { useRejectDocumentSuggestion } from "../../_lib/useRejectDocumentSuggestion";
 import { documentSuggestionListItem } from "../../variants";
 
-import { DocumentReviewAction } from "./DocumentReviewAction";
 import { DocumentReviewAuthor } from "./DocumentReviewAuthor";
 import { DocumentReviewItem } from "./DocumentReviewItem";
 import { DocumentReviewThread } from "./DocumentReviewThread";
 import { DocumentSuggestionChange } from "./DocumentSuggestionChange";
+import { DocumentSuggestionDecisions } from "./DocumentSuggestionDecisions";
 
 const documentSuggestionListItemFragment = graphql`
   fragment DocumentSuggestionListItem_thread on DocumentCommentThread {
     suggestion {
-      id
       createdAt
-      canAccept: permission(action: "core:document:suggest-accept")
-      canReject: permission(action: "core:document:suggest-reject")
       author {
         ...DocumentReviewAuthor_profile
       }
+      ...DocumentSuggestionDecisions_suggestion
     }
     ...DocumentReviewThread_thread
   }
@@ -70,52 +65,12 @@ export function DocumentSuggestionListItem({
 }: DocumentSuggestionListItemProps) {
   const thread = useFragment(documentSuggestionListItemFragment, threadKey);
   const { t } = useTranslation("organizations/documents");
-  const [acceptDocumentSuggestion, isAccepting] = useAcceptDocumentSuggestion();
-  const [rejectDocumentSuggestion, isRejecting] = useRejectDocumentSuggestion();
   const { changes } = documentSuggestionListItem();
   const suggestion = thread.suggestion;
   if (suggestion == null) {
     return null;
   }
   const hidden = anchor.changeCount - anchor.changes.length;
-  const deciding = isAccepting || isRejecting;
-
-  const decisions = suggestion.canAccept || suggestion.canReject
-    ? (
-        <>
-          {suggestion.canAccept && (
-            <DocumentReviewAction
-              label={t("details.review.accept")}
-              color="green"
-              loading={isAccepting}
-              disabled={deciding}
-              onClick={() => {
-                void acceptDocumentSuggestion(suggestion.id, threadConnections).catch(() => {
-                  // The mutation already shows an error toast.
-                });
-              }}
-            >
-              <CheckIcon />
-            </DocumentReviewAction>
-          )}
-          {suggestion.canReject && (
-            <DocumentReviewAction
-              label={t("details.review.reject")}
-              color="red"
-              loading={isRejecting}
-              disabled={deciding}
-              onClick={() => {
-                void rejectDocumentSuggestion(suggestion.id, threadConnections).catch(() => {
-                  // The mutation already shows an error toast.
-                });
-              }}
-            >
-              <XIcon />
-            </DocumentReviewAction>
-          )}
-        </>
-      )
-    : undefined;
 
   return (
     <DocumentReviewItem kind="suggestion" active={active} onActivate={onActivate}>
@@ -123,7 +78,7 @@ export function DocumentSuggestionListItem({
         profileKey={suggestion.author}
         createdAt={suggestion.createdAt}
         primary
-        trailing={decisions}
+        trailing={<DocumentSuggestionDecisions suggestionKey={suggestion} threadConnections={threadConnections} />}
       />
       <div className={changes()}>
         {anchor.changes.map((change, index) => (

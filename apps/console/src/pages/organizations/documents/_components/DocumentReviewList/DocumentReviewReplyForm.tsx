@@ -42,6 +42,8 @@ interface DocumentReviewReplyFormProps {
   autoFocus?: boolean;
   // Adds a cancel button; Escape cancels too.
   onCancel?: () => void;
+  initialContent?: string;
+  onDraftChange?: (content: string) => void;
 }
 
 export function DocumentReviewReplyForm({
@@ -50,10 +52,12 @@ export function DocumentReviewReplyForm({
   label,
   autoFocus = false,
   onCancel,
+  initialContent = "",
+  onDraftChange,
 }: DocumentReviewReplyFormProps) {
   const { t } = useTranslation("organizations/documents");
   const mentionSource = useMentionMembers();
-  const [content, setContent] = useState("");
+  const [content, setContent] = useState(initialContent);
   const [editorKey, setEditorKey] = useState(0);
   const [error, setError] = useState<string>();
   const [submitting, setSubmitting] = useState(false);
@@ -76,6 +80,7 @@ export function DocumentReviewReplyForm({
     onSubmit(content).then(
       () => {
         setContent("");
+        onDraftChange?.("");
         setEditorKey(key => key + 1);
         setError(undefined);
       },
@@ -92,7 +97,14 @@ export function DocumentReviewReplyForm({
       className={root()}
       onFormSubmit={handleSubmit}
       onKeyDown={(event) => {
-        if (onCancel != null && event.key === "Escape" && !event.defaultPrevented) {
+        if (event.key !== "Escape" || event.defaultPrevented) {
+          return;
+        }
+        if (submitting) {
+          event.preventDefault();
+          return;
+        }
+        if (onCancel != null) {
           event.preventDefault();
           onCancel();
         }
@@ -138,6 +150,7 @@ export function DocumentReviewReplyForm({
           )}
           onChangeContent={(next) => {
             setContent(next);
+            onDraftChange?.(next);
             setError(richEditorContentTextLength(next) > documentCommentMaxLength
               ? t("details.review.contentTooLong", { max: documentCommentMaxLength })
               : undefined);

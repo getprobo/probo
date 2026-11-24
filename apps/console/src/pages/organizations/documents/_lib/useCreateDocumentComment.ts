@@ -52,11 +52,19 @@ export function useCreateDocumentComment() {
     threadId: string,
     content: string,
     commentsConnectionId: string,
+    connections: string[],
   ) {
     await commit({
       variables: {
         input: { threadId, content },
-        connections: [commentsConnectionId],
+        connections,
+      },
+      updater: (store) => {
+        const connection = store.get(commentsConnectionId);
+        const totalCount: unknown = connection?.getValue("totalCount");
+        if (connection != null && typeof totalCount === "number") {
+          connection.setValue(totalCount + 1, "totalCount");
+        }
       },
     });
   }

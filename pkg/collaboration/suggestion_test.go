@@ -237,6 +237,32 @@ func TestDecideSuggestionSpans_Splits(t *testing.T) {
 	assert.Equal(t, automerge.SpanTypeBlock, rejected[0].Type)
 	assert.Equal(t, "Hello", rejected[1].Text)
 
+	diagram := []automerge.Span{
+		paragraphBlock(),
+		{Type: automerge.SpanTypeText, Text: "Scope"},
+		{
+			Type: automerge.SpanTypeBlock,
+			Block: map[string]any{
+				"type": "code-block",
+				"attrs": map[string]any{
+					"language":              "mermaid",
+					suggestionSplitAttr:     "s1",
+					suggestionSplitKindAttr: suggestionSplitInsertion,
+				},
+			},
+		},
+		paragraphBlock(),
+		{Type: automerge.SpanTypeText, Text: "Next"},
+	}
+
+	withoutDiagram, changed := decideSuggestionSpans(diagram, "s1", false)
+	require.True(t, changed)
+	require.Len(t, withoutDiagram, 4)
+	assert.Equal(t, "paragraph", withoutDiagram[0].Block["type"])
+	assert.Equal(t, "Scope", withoutDiagram[1].Text)
+	assert.Equal(t, "paragraph", withoutDiagram[2].Block["type"])
+	assert.Equal(t, "Next", withoutDiagram[3].Text)
+
 	structural := []automerge.Span{
 		paragraphBlock(),
 		{Type: automerge.SpanTypeText, Text: "Hello"},

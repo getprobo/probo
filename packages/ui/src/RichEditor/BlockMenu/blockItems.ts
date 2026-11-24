@@ -134,7 +134,7 @@ export function runBlockItem(
 export function insertMermaidFromToolbar(editor: Editor) {
   const { $from } = editor.state.selection;
   const block = $from.parent;
-  if (block.type.name === "paragraph" && block.content.size === 0) {
+  if (editor.state.selection.empty && block.type.name === "paragraph" && block.content.size === 0) {
     runBlockItem(editor, insertItems.find(item => item.id === "mermaid")!);
     return;
   }

@@ -12,6 +12,7 @@
         "description": "Décrivez ce qui a changé. Une version majeure peut demander une approbation avant d'être publiée.",
         "changelog": "Journal des modifications",
         "changelogPlaceholder": "Qu'est-ce qui a changé dans cette version ?",
+        "changelogRequired": "Décrivez ce qui a changé.",
         "approvers": "Approbateurs",
         "approversDescription": "Une version majeure attend l'approbation de ces personnes. Les versions mineures sont publiées immédiatement.",
         "removeApprover": "Retirer {{name}}",

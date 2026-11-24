@@ -229,17 +229,22 @@ function suggestStyle(
   const slices = textSlices(state.doc, from, to);
   if (slices.length === 0) return null;
 
-  const tr = state.tr;
-  let changed = false;
-  for (const slice of slices.slice().reverse()) {
+  const planned: Array<{ slice: TextSlice; id: string }> = [];
+  for (const slice of slices) {
     const plan = planStyleSlice(slice.marks, style, owns);
     const id = plan.action === "edit" ? plan.id : plan.action === "fresh" ? fallbackId : null;
     if (!id) continue;
     if (suggestionId(slice.marks, suggestionDeleteName) === id) continue;
     if (styleName === "code" && foreignFormat(slice.marks, id)) continue;
-    const removing = styleName === "link"
-      ? linkHref === null
-      : effectivelyHas(slice.marks, style);
+    planned.push({ slice, id });
+  }
+  const removing = styleName === "link"
+    ? linkHref === null
+    : planned.some(({ slice }) => effectivelyHas(slice.marks, style));
+
+  const tr = state.tr;
+  let changed = false;
+  for (const { slice, id } of planned.slice().reverse()) {
     const next = nextMarks(state, slice.marks, style, id, removing, linkHref);
     if (!next || sameMarks(slice.marks, next)) continue;
     rewriteSlice(tr, slice, next);

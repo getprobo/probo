@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useContext } from "react";
+import { useContext, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 
 import { CurrentUser } from "#/providers/CurrentUser";
@@ -48,10 +48,20 @@ export function DocumentCommentDraftCard({
   const { t } = useTranslation("organizations/documents");
   const profile = useContext(CurrentUser).profile;
   const [createDocumentCommentThread] = useCreateDocumentCommentThread();
+  const mounted = useRef(false);
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
 
   async function submit(content: string) {
     const threadId = await createDocumentCommentThread(documentId, draft, content, threadConnections);
-    onDone(threadId);
+    if (mounted.current) {
+      onDone(threadId);
+    }
   }
 
   return (

@@ -162,7 +162,7 @@ Do not put a record-scoped path (a chosen banner, third party, or portal) in `NA
 
 A detail page that should use the width of the navigation panel opts out of that panel. The rail stays. Set `handle: detailLayout` on that page's own route, imported from [`apps/console/src/pages/iam/organizations/_lib/shellLayout.ts`](../../apps/console/src/pages/iam/organizations/_lib/shellLayout.ts). `OrganizationLayout` reads the handle from `useMatches()` and skips `NavPanel` when any matched route sets `layout: "detail"`.
 
-Put the handle on the detail route itself, not on a parent that also wraps pages which should keep the panel. The documents list and the existing document tabs stay on the default shell; only `documents/:documentId` index sets the handle.
+Put the handle on the detail route itself, not on a parent that also wraps pages which should keep the panel. In the documents routes, `documents/:documentId` sets the handle and the `documents` list keeps the default shell. The legacy `documents/:documentId/*` route only redirects old bookmarks from its `loader`, so it never renders a page and needs no handle.
 
 The page's back link targets the list route. That list does not set the handle, so the panel returns with the navigation. This is not a nav-catalog change.
 
@@ -171,13 +171,9 @@ import { detailLayout } from "#/pages/iam/organizations/_lib/shellLayout";
 
 {
   path: "documents/:documentId",
-  children: [
-    {
-      index: true,
-      handle: detailLayout,
-      Component: lazy(() => import("./DocumentDetailsPageLoader")),
-    },
-  ],
+  handle: detailLayout,
+  Fallback: DocumentDetailsPageSkeleton,
+  Component: lazy(() => import("./DocumentDetailsPageLoader")),
 }
 ```
 

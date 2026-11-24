@@ -59,6 +59,13 @@ export function useDeleteDocumentComment() {
         commentConnections: [commentsConnectionId],
         threadConnections: [threadConnections.open, threadConnections.history],
       },
+      updater: (store) => {
+        const connection = store.get(commentsConnectionId);
+        const totalCount: unknown = connection?.getValue("totalCount");
+        if (connection != null && typeof totalCount === "number" && totalCount > 0) {
+          connection.setValue(totalCount - 1, "totalCount");
+        }
+      },
     });
   }
 

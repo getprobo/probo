@@ -111,7 +111,7 @@ export function DocumentReviewPanel({
     DocumentReviewPanelThreadsPaginationQuery,
     DocumentReviewPanel_threads$key
   >(documentReviewPanelThreadsFragment, documentKey);
-  useLoadAllPages({
+  const { retry: retryThreadPages } = useLoadAllPages({
     hasNext: threadsPage.hasNext,
     isLoadingNext: threadsPage.isLoadingNext,
     loadNext: threadsPage.loadNext,
@@ -144,12 +144,12 @@ export function DocumentReviewPanel({
   // reviewer, or the server rejecting a suggestion whose edits were undone.
   useEffect(() => {
     return collaborationHandle.onReview?.(() => {
-      refetchThreads({}, { fetchPolicy: "store-and-network" });
+      refetchThreads({}, { fetchPolicy: "store-and-network", onComplete: retryThreadPages });
       if (historyLoaded) {
         loadHistory({ documentId: reviewDocument.id }, { fetchPolicy: "store-and-network" });
       }
     });
-  }, [collaborationHandle, historyLoaded, loadHistory, refetchThreads, reviewDocument.id]);
+  }, [collaborationHandle, historyLoaded, loadHistory, refetchThreads, retryThreadPages, reviewDocument.id]);
   const openConnectionId = reviewDocument.commentThreads.__id;
   const threadConnections = useMemo<DocumentThreadConnections>(
     () => ({ open: openConnectionId, history: documentCommentHistoryConnectionId(reviewDocument.id) }),
@@ -180,8 +180,7 @@ export function DocumentReviewPanel({
   const cardAnchors = useMemo(() => {
     const list: ReviewCardAnchor[] = [];
     for (const thread of threads) {
-      const pos = anchors.threads.get(thread.id);
-      if (pos != null) list.push({ key: thread.id, pos });
+      list.push({ key: thread.id, pos: anchors.threads.get(thread.id) ?? Number.MAX_SAFE_INTEGER });
     }
     for (const suggestionId of suggestionThreads.keys()) {
       const anchor = anchors.suggestions.get(suggestionId);

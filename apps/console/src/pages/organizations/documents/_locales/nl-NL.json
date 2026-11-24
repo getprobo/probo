@@ -12,6 +12,7 @@
         "description": "Beschrijf wat er is gewijzigd. Een hoofdversie kan goedkeuring vragen voordat ze wordt gepubliceerd.",
         "changelog": "Wijzigingslog",
         "changelogPlaceholder": "Wat is er in deze versie gewijzigd?",
+        "changelogRequired": "Beschrijf wat er is gewijzigd.",
         "approvers": "Goedkeurders",
         "approversDescription": "Een hoofdversie wacht op de goedkeuring van deze personen. Subversies worden meteen gepubliceerd.",
         "removeApprover": "{{name}} verwijderen",

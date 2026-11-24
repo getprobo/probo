@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { suggestionTargetSelector } from "@probo/ui/src/RichEditor/SuggestionExtension";
 import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
 
 // useDismissActiveReview clears the active review item when a press lands
@@ -67,15 +68,7 @@ export function useDismissActiveReview(active: boolean, onDismiss: () => void) {
   }, []);
 }
 
-// Comment highlights carry data-comment-thread, and suggestion marks and
-// blocks carry a data-suggestion-* attribute.
 function isReviewAnchor(target: EventTarget | null): boolean {
-  for (let node = target instanceof Element ? target : null; node; node = node.parentElement) {
-    for (const { name } of Array.from(node.attributes)) {
-      if (name === "data-comment-thread" || name.startsWith("data-suggestion-")) {
-        return true;
-      }
-    }
-  }
-  return false;
+  return target instanceof Element
+    && target.closest(`[data-comment-thread],${suggestionTargetSelector}`) != null;
 }
