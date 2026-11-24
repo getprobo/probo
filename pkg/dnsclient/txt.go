@@ -67,3 +67,44 @@ func (c *Client) CheckTXT(ctx context.Context, domain, expectedValue string) err
 
 	return fmt.Errorf("%w for %q", ErrTXTMismatch, domain)
 }
+
+// LookupTXT returns the value of every TXT record owned by name, with the
+// character-strings of each record concatenated. It returns ErrTXTNotFound
+// when the name has no TXT records.
+func (c *Client) LookupTXT(ctx context.Context, name string) ([]string, error) {
+	msg := dns.NewMsg(name, dns.TypeTXT)
+
+	resp, err := c.query(ctx, msg)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query TXT record for %q: %w", name, err)
+	}
+
+	if resp.Rcode == dns.RcodeNameError {
+		return nil, fmt.Errorf("%w for %q", ErrTXTNotFound, name)
+	}
+
+	if resp.Rcode != dns.RcodeSuccess {
+		return nil, fmt.Errorf(
+			"cannot query TXT record for %q: %s",
+			name,
+			dns.RcodeToString[resp.Rcode],
+		)
+	}
+
+	var values []string
+
+	for _, answer := range resp.Answer {
+		txt, ok := answer.(*dns.TXT)
+		if !ok || !EqualNames(txt.Hdr.Name, name) {
+			continue
+		}
+
+		values = append(values, strings.Join(txt.Txt, ""))
+	}
+
+	if len(values) == 0 {
+		return nil, fmt.Errorf("%w for %q", ErrTXTNotFound, name)
+	}
+
+	return values, nil
+}
