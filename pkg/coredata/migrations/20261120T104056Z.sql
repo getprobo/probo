@@ -141,7 +141,8 @@ UPDATE
 SET
     anchor_start = NULL,
     anchor_end = NULL,
-    anchor_quote = ''
+    anchor_quote = '',
+    updated_at = NOW()
 WHERE
     suggestion_id IS NOT NULL
     AND (

@@ -85,6 +85,9 @@ export function useComboboxPage<
     setHasNext(false);
     setEndCursor(null);
   } else if (enabled && !wasEnabled) {
+    setSearch("");
+    setDebouncedSearch("");
+    setSearchScope("");
     setRequest({ after: null, append: false, id: request.id + 1 });
     setItems([]);
     setHasNext(false);

@@ -41,6 +41,8 @@ const documentSuggestionListItemFragment = graphql`
       author {
         ...DocumentReviewAuthor_profile
       }
+      canAccept: permission(action: "core:document:suggest-accept")
+      canReject: permission(action: "core:document:suggest-reject")
       ...DocumentSuggestionDecisions_suggestion
     }
     ...DocumentReviewThread_thread
@@ -78,7 +80,9 @@ export function DocumentSuggestionListItem({
         profileKey={suggestion.author}
         createdAt={suggestion.createdAt}
         primary
-        trailing={<DocumentSuggestionDecisions suggestionKey={suggestion} threadConnections={threadConnections} />}
+        trailing={suggestion.canAccept || suggestion.canReject
+          ? <DocumentSuggestionDecisions suggestionKey={suggestion} threadConnections={threadConnections} />
+          : undefined}
       />
       <div className={changes()}>
         {anchor.changes.map((change, index) => (

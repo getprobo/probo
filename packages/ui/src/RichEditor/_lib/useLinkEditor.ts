@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { type Editor, useEditorState } from "@tiptap/react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { linkEditorPluginKey, openLink } from "../LinkExtension";
 
@@ -31,6 +31,9 @@ import { applyLink } from "./formatting";
 export function useLinkEditor(editor: Editor) {
   const [open, setOpenState] = useState(false);
   const [url, setUrl] = useState("");
+  // Closing without submitting moves focus out of the field, and its blur
+  // handler submits. This makes that submit a no-op.
+  const discarded = useRef(false);
   const state = useEditorState({
     editor,
     selector: ({ editor: current }) => {
@@ -55,9 +58,17 @@ export function useLinkEditor(editor: Editor) {
     setOpenState(true);
   }
 
+  useEffect(() => {
+    if (open) {
+      discarded.current = false;
+    }
+  }, [open]);
+
   function setOpen(next: boolean) {
     if (next) {
       setUrl(state.href ?? "");
+    } else {
+      discarded.current = true;
     }
     setOpenState(next);
   }
@@ -66,6 +77,9 @@ export function useLinkEditor(editor: Editor) {
   function submit(): boolean {
     const next = url.trim();
     setOpenState(false);
+    if (discarded.current) {
+      return false;
+    }
     if (next && next !== (state.href ?? "")) {
       applyLink(editor, next);
       return true;

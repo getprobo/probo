@@ -18,10 +18,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import type { RepoCollaborationHandle } from "@probo/collaboration";
+import { commentAnchorRange } from "@probo/ui/src/RichEditor/commentAnchors";
 import { type Node as ProseMirrorNode, Schema } from "@tiptap/pm/model";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
-import { maxChangeTextLength, maxSuggestionChanges, suggestionAnchors } from "./reviewAnchors";
+import { maxChangeTextLength, maxSuggestionChanges, suggestionAnchors, threadAnchors } from "./reviewAnchors";
+
+vi.mock("@probo/ui/src/RichEditor/commentAnchors", async importOriginal => ({
+  ...await importOriginal<typeof import("@probo/ui/src/RichEditor/commentAnchors")>(),
+  commentAnchorRange: vi.fn(),
+}));
 
 const formatAttrs = {
   id: { default: null },
@@ -209,5 +216,33 @@ describe("suggestionAnchors", () => {
     const change = result.changes[0];
 
     expect(change?.kind === "text" && change.inserted).toBe(`${"x".repeat(maxChangeTextLength)}…`);
+  });
+});
+
+describe("threadAnchors", () => {
+  const handle = {} as RepoCollaborationHandle;
+  const thread = (threadId: string) => ({ id: threadId, anchorStart: "start", anchorEnd: "end" });
+
+  it("keeps a thread whose text was deleted at the point it collapsed to", () => {
+    vi.mocked(commentAnchorRange).mockReturnValueOnce({ from: 7, to: 7 });
+    const node = doc(paragraph(schema.text("Kept text")));
+
+    const positions = threadAnchors(handle, node, [thread("deleted-text")]);
+
+    expect(positions.get("deleted-text")).toBe(7);
+    expect(commentAnchorRange).toHaveBeenCalledWith(
+      handle,
+      node,
+      thread("deleted-text"),
+      { allowCollapsed: true },
+    );
+  });
+
+  it("leaves out a thread whose anchor no longer resolves", () => {
+    vi.mocked(commentAnchorRange).mockReturnValueOnce(null);
+
+    const positions = threadAnchors(handle, doc(paragraph()), [thread("lost")]);
+
+    expect(positions.has("lost")).toBe(false);
   });
 });

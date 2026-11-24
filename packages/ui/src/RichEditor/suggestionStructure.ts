@@ -215,8 +215,7 @@ export function suggestInsertTable(
   }
   const table = tableType.create(insertedAttrs(id), tableRows);
 
-  const { $from } = state.selection;
-  const position = $from.depth === 0 ? $from.pos : $from.after(1);
+  const position = afterSelectedBlock(state);
   const tr = state.tr.insert(position, table);
   tr.setSelection(TextSelection.near(tr.doc.resolve(position + 1)));
   return tracked(tr);

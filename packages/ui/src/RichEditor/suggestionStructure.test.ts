@@ -23,7 +23,7 @@ import type { DocHandle } from "@automerge/prosemirror";
 import { pmDocFromSpans } from "@automerge/prosemirror";
 import { getSchema } from "@tiptap/core";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
-import { EditorState, type Plugin, TextSelection, type Transaction } from "@tiptap/pm/state";
+import { EditorState, NodeSelection, type Plugin, TextSelection, type Transaction } from "@tiptap/pm/state";
 import { addRowAfter, CellSelection } from "@tiptap/pm/tables";
 import type { EditorView } from "@tiptap/pm/view";
 import { describe, expect, it } from "vitest";
@@ -195,6 +195,16 @@ describe("tracked table columns", () => {
 });
 
 describe("tracked tables", () => {
+  it("inserts a whole table after a selected block", () => {
+    const base = stateFor({ type: "doc", content: [paragraphJSON("Scope"), paragraphJSON("Next")] });
+    const state = base.apply(base.tr.setSelection(NodeSelection.create(base.doc, 0)));
+    const next = state.apply(suggestInsertTable(state, id, 2, 2, true)!);
+
+    expect(next.doc.child(0).textContent).toBe("Scope");
+    expect(next.doc.child(1).type.name).toBe("table");
+    expect(next.doc.child(2).textContent).toBe("Next");
+  });
+
   it("inserts a whole table after the current block", () => {
     const state = stateFor({ type: "doc", content: [paragraphJSON("Scope")] }, 2);
     const next = state.apply(suggestInsertTable(state, id, 2, 2, true)!);

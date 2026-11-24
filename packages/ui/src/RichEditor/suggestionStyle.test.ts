@@ -268,6 +268,32 @@ describe("format suggestions", () => {
     );
   });
 
+  it("drops a claimed toggle once suggesting is turned off meanwhile", async () => {
+    const owned = new Set<string>();
+    const claimed: string[] = [];
+    const current = controller();
+    current.suggestionId = null;
+    current.ownsSuggestion = id => owned.has(id);
+    current.claimSuggestion = (id) => {
+      claimed.push(id);
+      owned.add(id);
+      return Promise.resolve(true);
+    };
+    const editor = open(paragraph("Hello", [
+      schema.marks.underline.create(),
+      schema.marks.suggestionFormatUnderline.create({ id: suggestionId, action: "add" }),
+    ]), 1, 6, current);
+
+    expect(applySuggestingStyle(editor.view, editor.current, "underline")).toBe(true);
+    current.enabled = false;
+    await flushClaims();
+
+    expect(claimed).toEqual([suggestionId]);
+    expect(markNames(marksOn(editor.state.doc, "Hello"))).toEqual(
+      expect.arrayContaining(["underline", "suggestionFormatUnderline"]),
+    );
+  });
+
   it("removes bold from a selection that is only partly bold", () => {
     const owned = "owned-bold";
     const current = controller();

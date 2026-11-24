@@ -549,7 +549,7 @@ function applyFormatChange(
     Promise.all(unknown.map(id => claimSuggestion(id)))
       .then(() => {
         releaseClaim();
-        if (viewIsDestroyed(view)) return;
+        if (viewIsDestroyed(view) || !controller.enabled) return;
         const selection = view.state.selection;
         if (selection.from !== from || selection.to !== to) return;
         if (!view.state.doc.slice(from, to).eq(content)) return;

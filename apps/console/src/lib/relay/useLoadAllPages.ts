@@ -24,6 +24,16 @@ import type { OperationType } from "relay-runtime";
 
 const maxAttempts = 3;
 
+// nextPageDelay is how long to wait before loading the next page after this
+// many failures in a row: at once first, then 1s and 2s. It is null once the
+// attempts are spent.
+export function nextPageDelay(failures: number): number | null {
+  if (failures >= maxAttempts) {
+    return null;
+  }
+  return failures === 0 ? 0 : 1000 * 2 ** (failures - 1);
+}
+
 interface LoadAllPagesOptions<TQuery extends OperationType> {
   hasNext: boolean;
   isLoadingNext: boolean;
@@ -42,7 +52,8 @@ export function useLoadAllPages<TQuery extends OperationType>({
   const [failures, setFailures] = useState(0);
 
   useEffect(() => {
-    if (!hasNext || isLoadingNext || failures >= maxAttempts) {
+    const delay = nextPageDelay(failures);
+    if (!hasNext || isLoadingNext || delay == null) {
       return;
     }
     const timeout = setTimeout(() => {
@@ -51,7 +62,7 @@ export function useLoadAllPages<TQuery extends OperationType>({
           setFailures(count => (error ? count + 1 : 0));
         },
       });
-    }, failures === 0 ? 0 : 1000 * 2 ** (failures - 1));
+    }, delay);
     return () => clearTimeout(timeout);
   }, [failures, hasNext, isLoadingNext, loadNext, pageSize]);
 
