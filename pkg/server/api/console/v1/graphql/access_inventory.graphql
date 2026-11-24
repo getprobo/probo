@@ -1,0 +1,190 @@
+enum AccessInventoryGrantPresence
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.AccessInventoryGrantPresence"
+    ) {
+    PRESENT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessInventoryGrantPresencePresent"
+        )
+    DISAPPEARED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessInventoryGrantPresenceDisappeared"
+        )
+}
+
+enum AccessInventoryGrantOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.AccessInventoryGrantOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessInventoryGrantOrderFieldCreatedAt"
+        )
+}
+
+enum AccessInventoryPrincipalOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.AccessInventoryPrincipalOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessInventoryPrincipalOrderFieldCreatedAt"
+        )
+}
+
+enum AccessInventoryResourceOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.AccessInventoryResourceOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessInventoryResourceOrderFieldCreatedAt"
+        )
+}
+
+input AccessInventoryGrantOrder {
+    direction: OrderDirection!
+    field: AccessInventoryGrantOrderField!
+}
+
+input AccessInventoryPrincipalOrder {
+    direction: OrderDirection!
+    field: AccessInventoryPrincipalOrderField!
+}
+
+input AccessInventoryResourceOrder {
+    direction: OrderDirection!
+    field: AccessInventoryResourceOrderField!
+}
+
+input AccessInventoryGrantFilter
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.AccessInventoryGrantFilter"
+    ) {
+    accessReviewSourceId: ID
+    principalId: ID
+    resourceId: ID
+    presence: AccessInventoryGrantPresence
+    """
+    When true, include grants past the org hide-after-X threshold. Default
+    listing soft-hides disappeared grants once consecutive_missing_syncs
+    reaches the org setting (product default 3).
+    """
+    includeDisappeared: Boolean
+}
+
+input AccessInventoryPrincipalFilter
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.AccessInventoryPrincipalFilter"
+    ) {
+    accessReviewSourceId: ID
+}
+
+input AccessInventoryResourceFilter
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.AccessInventoryResourceFilter"
+    ) {
+    accessReviewSourceId: ID
+}
+
+type AccessInventoryPrincipal implements Node {
+    id: ID!
+    organization: Organization! @goField(forceResolver: true)
+    source: AccessReviewSource! @goField(forceResolver: true)
+    principalKey: String!
+    email: String!
+    fullName: String!
+    externalId: String!
+    jobTitle: String!
+    isAdmin: Boolean
+    mfaStatus: MfaStatus!
+    authMethod: AccessReviewEntryAuthMethod!
+    accountType: AccessReviewEntryAccountType!
+    active: Boolean
+    lastLogin: Datetime
+    accountCreatedAt: Datetime
+    firstSeenAt: Datetime!
+    lastSeenAt: Datetime!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type AccessInventoryResource implements Node {
+    id: ID!
+    organization: Organization! @goField(forceResolver: true)
+    source: AccessReviewSource! @goField(forceResolver: true)
+    resourceKey: String!
+    displayName: String!
+    kind: String!
+    firstSeenAt: Datetime!
+    lastSeenAt: Datetime!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type AccessInventoryGrant implements Node {
+    id: ID!
+    organization: Organization! @goField(forceResolver: true)
+    source: AccessReviewSource! @goField(forceResolver: true)
+    principal: AccessInventoryPrincipal! @goField(forceResolver: true)
+    resource: AccessInventoryResource! @goField(forceResolver: true)
+    principalKey: String!
+    resourceKey: String!
+    entitlementKey: String!
+    entitlementDisplayName: String!
+    presence: AccessInventoryGrantPresence!
+    consecutiveMissingSyncs: Int!
+    firstSeenAt: Datetime!
+    lastSeenAt: Datetime!
+    providerChangedAt: Datetime
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type AccessInventoryGrantConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.AccessInventoryGrantConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [AccessInventoryGrantEdge!]!
+    pageInfo: PageInfo!
+}
+
+type AccessInventoryGrantEdge {
+    cursor: CursorKey!
+    node: AccessInventoryGrant!
+}
+
+type AccessInventoryPrincipalConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.AccessInventoryPrincipalConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [AccessInventoryPrincipalEdge!]!
+    pageInfo: PageInfo!
+}
+
+type AccessInventoryPrincipalEdge {
+    cursor: CursorKey!
+    node: AccessInventoryPrincipal!
+}
+
+type AccessInventoryResourceConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.AccessInventoryResourceConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [AccessInventoryResourceEdge!]!
+    pageInfo: PageInfo!
+}
+
+type AccessInventoryResourceEdge {
+    cursor: CursorKey!
+    node: AccessInventoryResource!
+}

@@ -12404,6 +12404,360 @@ components:
           items:
             $ref: "#/components/schemas/AccessReviewEntry"
 
+
+    AccessInventoryGrantPresence:
+      type: string
+      enum:
+        - PRESENT
+        - DISAPPEARED
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AccessInventoryGrantPresence
+
+    AccessInventoryGrantOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AccessInventoryGrantOrderField
+
+    AccessInventoryGrantOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/AccessInventoryGrantOrderField"
+          description: Order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Order direction
+
+    AccessInventoryPrincipalOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AccessInventoryPrincipalOrderField
+
+    AccessInventoryPrincipalOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/AccessInventoryPrincipalOrderField"
+          description: Order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Order direction
+
+    AccessInventoryResourceOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AccessInventoryResourceOrderField
+
+    AccessInventoryResourceOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/AccessInventoryResourceOrderField"
+          description: Order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Order direction
+
+    AccessInventoryPrincipal:
+      type: object
+      required:
+        - id
+        - organization_id
+        - access_review_source_id
+        - principal_key
+        - email
+        - full_name
+        - external_id
+        - job_title
+        - mfa_status
+        - auth_method
+        - account_type
+        - first_seen_at
+        - last_seen_at
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        organization_id:
+          $ref: "#/components/schemas/GID"
+        access_review_source_id:
+          $ref: "#/components/schemas/GID"
+        principal_key:
+          type: string
+        email:
+          type: string
+        full_name:
+          type: string
+        external_id:
+          type: string
+        job_title:
+          type: string
+        is_admin:
+          type:
+            - boolean
+            - "null"
+        mfa_status:
+          $ref: "#/components/schemas/MFAStatus"
+        auth_method:
+          $ref: "#/components/schemas/AccessReviewEntryAuthMethod"
+        account_type:
+          $ref: "#/components/schemas/AccessReviewEntryAccountType"
+        active:
+          type:
+            - boolean
+            - "null"
+        last_login:
+          type:
+            - string
+            - "null"
+          format: date-time
+        account_created_at:
+          type:
+            - string
+            - "null"
+          format: date-time
+        first_seen_at:
+          type: string
+          format: date-time
+        last_seen_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    AccessInventoryResource:
+      type: object
+      required:
+        - id
+        - organization_id
+        - access_review_source_id
+        - resource_key
+        - display_name
+        - kind
+        - first_seen_at
+        - last_seen_at
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        organization_id:
+          $ref: "#/components/schemas/GID"
+        access_review_source_id:
+          $ref: "#/components/schemas/GID"
+        resource_key:
+          type: string
+        display_name:
+          type: string
+        kind:
+          type: string
+        first_seen_at:
+          type: string
+          format: date-time
+        last_seen_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    AccessInventoryGrant:
+      type: object
+      required:
+        - id
+        - organization_id
+        - access_review_source_id
+        - principal_id
+        - resource_id
+        - principal_key
+        - resource_key
+        - entitlement_key
+        - entitlement_display_name
+        - presence
+        - consecutive_missing_syncs
+        - first_seen_at
+        - last_seen_at
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        organization_id:
+          $ref: "#/components/schemas/GID"
+        access_review_source_id:
+          $ref: "#/components/schemas/GID"
+        principal_id:
+          $ref: "#/components/schemas/GID"
+        resource_id:
+          $ref: "#/components/schemas/GID"
+        principal_key:
+          type: string
+        resource_key:
+          type: string
+        entitlement_key:
+          type: string
+        entitlement_display_name:
+          type: string
+        presence:
+          $ref: "#/components/schemas/AccessInventoryGrantPresence"
+        consecutive_missing_syncs:
+          type: integer
+        first_seen_at:
+          type: string
+          format: date-time
+        last_seen_at:
+          type: string
+          format: date-time
+        provider_changed_at:
+          type:
+            - string
+            - "null"
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ListAccessInventoryGrantsInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        order_by:
+          $ref: "#/components/schemas/AccessInventoryGrantOrderBy"
+        size:
+          type: integer
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+        filter:
+          type: object
+          properties:
+            access_review_source_id:
+              $ref: "#/components/schemas/GID"
+            principal_id:
+              $ref: "#/components/schemas/GID"
+            resource_id:
+              $ref: "#/components/schemas/GID"
+            presence:
+              $ref: "#/components/schemas/AccessInventoryGrantPresence"
+            include_disappeared:
+              type: boolean
+              description: Include grants past the hide-after-X threshold
+
+    ListAccessInventoryGrantsOutput:
+      type: object
+      required:
+        - grants
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+        grants:
+          type: array
+          items:
+            $ref: "#/components/schemas/AccessInventoryGrant"
+
+    GetAccessInventoryGrantInput:
+      type: object
+      required:
+        - access_inventory_grant_id
+      properties:
+        access_inventory_grant_id:
+          $ref: "#/components/schemas/GID"
+
+    GetAccessInventoryGrantOutput:
+      type: object
+      required:
+        - grant
+      properties:
+        grant:
+          $ref: "#/components/schemas/AccessInventoryGrant"
+
+    ListAccessInventoryPrincipalsInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+        order_by:
+          $ref: "#/components/schemas/AccessInventoryPrincipalOrderBy"
+        size:
+          type: integer
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+        filter:
+          type: object
+          properties:
+            access_review_source_id:
+              $ref: "#/components/schemas/GID"
+
+    ListAccessInventoryPrincipalsOutput:
+      type: object
+      required:
+        - principals
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+        principals:
+          type: array
+          items:
+            $ref: "#/components/schemas/AccessInventoryPrincipal"
+
+    ListAccessInventoryResourcesInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+        order_by:
+          $ref: "#/components/schemas/AccessInventoryResourceOrderBy"
+        size:
+          type: integer
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+        filter:
+          type: object
+          properties:
+            access_review_source_id:
+              $ref: "#/components/schemas/GID"
+
+    ListAccessInventoryResourcesOutput:
+      type: object
+      required:
+        - resources
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+        resources:
+          type: array
+          items:
+            $ref: "#/components/schemas/AccessInventoryResource"
+
     GetAccessReviewStatisticsInput:
       type: object
       required:
@@ -22652,6 +23006,54 @@ tools:
       $ref: "#/components/schemas/CloseAccessReviewCampaignMCPInput"
     outputSchema:
       $ref: "#/components/schemas/CloseAccessReviewCampaignMCPOutput"
+  - name: listAccessInventoryGrants
+    title: List Access Inventory Grants
+    description: List live access inventory grants for an organization. Disappeared grants past hide-after-X are omitted unless filter.include_disappeared is true.
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListAccessInventoryGrantsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListAccessInventoryGrantsOutput"
+  - name: getAccessInventoryGrant
+    title: Get Access Inventory Grant
+    description: Get a live access inventory grant by ID
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/GetAccessInventoryGrantInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetAccessInventoryGrantOutput"
+  - name: listAccessInventoryPrincipals
+    title: List Access Inventory Principals
+    description: List live access inventory principals for an organization
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListAccessInventoryPrincipalsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListAccessInventoryPrincipalsOutput"
+  - name: listAccessInventoryResources
+    title: List Access Inventory Resources
+    description: List live access inventory resources for an organization
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListAccessInventoryResourcesInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListAccessInventoryResourcesOutput"
   - name: listAccessReviewSources
     title: List Access Review Sources
     description: List access sources for an organization

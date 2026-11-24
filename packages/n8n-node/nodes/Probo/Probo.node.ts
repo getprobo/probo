@@ -118,6 +118,11 @@ export class Probo implements INodeType {
 				noDataExpression: true,
 				options: [
 					{
+						name: 'Access Inventory',
+						value: 'accessInventory',
+						description: 'Browse live access inventory grants, principals, and resources',
+					},
+					{
 						name: 'Access Review',
 						value: 'accessReview',
 						description: 'Manage access review campaigns',

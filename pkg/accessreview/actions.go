@@ -50,6 +50,14 @@ const (
 	ActionSourceDelete = "access-review:source:delete"
 	ActionSourceSync   = "access-review:source:sync"
 
+	// Live inventory actions (read-only; decide/flag stay campaign-only).
+	ActionInventoryGrantGet      = "access-review:inventory-grant:get"
+	ActionInventoryGrantList     = "access-review:inventory-grant:list"
+	ActionInventoryPrincipalGet  = "access-review:inventory-principal:get"
+	ActionInventoryPrincipalList = "access-review:inventory-principal:list"
+	ActionInventoryResourceGet   = "access-review:inventory-resource:get"
+	ActionInventoryResourceList  = "access-review:inventory-resource:list"
+
 	// Driver catalog actions (global deployment-scoped catalog).
 	ActionDriverCatalogList = "access-review:driver-catalog:list"
 )

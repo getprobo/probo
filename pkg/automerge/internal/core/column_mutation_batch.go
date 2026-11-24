@@ -582,12 +582,12 @@ func directDivergedSequenceInsertion(
 	}
 
 	return storage.SnapshotOperationSplice{
-		Index:      index,
-		Operations: added,
-	}, []opset.Operation{
-		firstBoundary,
-		last,
-	}, true
+			Index:      index,
+			Operations: added,
+		}, []opset.Operation{
+			firstBoundary,
+			last,
+		}, true
 }
 
 // sequenceBranchWalk finds, for the insertions that follow an incoming
