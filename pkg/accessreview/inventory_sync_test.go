@@ -255,14 +255,39 @@ func TestSyncInventorySource_AppearedOnNewEntitlements(t *testing.T) {
 	require.NoError(t, svc.SyncInventorySource(ctx, fx.scope, run2))
 
 	grants = loadInventoryGrants(t, ctx, client, fx)
-	require.Len(t, grants, 2, "Owner is a new entitlement key; Admin remains until soft-disappear")
+	require.Len(t, grants, 2)
+
+	byEntitlement := map[string]*coredata.AccessInventoryGrant{}
+	for _, grant := range grants {
+		byEntitlement[grant.EntitlementKey] = grant
+	}
+
+	require.Contains(t, byEntitlement, "Admin")
+	require.Contains(t, byEntitlement, "Owner")
+	assert.Equal(t, coredata.AccessInventoryGrantPresenceDisappeared, byEntitlement["Admin"].Presence)
+	assert.Equal(t, 1, byEntitlement["Admin"].ConsecutiveMissingSyncs)
+	assert.Equal(t, coredata.AccessInventoryGrantPresencePresent, byEntitlement["Owner"].Presence)
+	assert.Equal(t, 0, byEntitlement["Owner"].ConsecutiveMissingSyncs)
 
 	events = loadInventoryChangeEvents(t, ctx, client, fx)
-	require.Len(t, events, 2)
-	assert.Equal(t, coredata.AccessInventoryChangeTypeAppeared, events[1].ChangeType)
-	assert.Equal(t, "Owner", events[1].EntitlementKey)
+	require.Len(t, events, 3)
+
+	eventTypes := map[string]coredata.AccessInventoryChangeType{}
+	for _, event := range events {
+		eventTypes[event.EntitlementKey+"|"+event.ChangeType.String()] = event.ChangeType
+	}
+
+	assert.Equal(
+		t,
+		coredata.AccessInventoryChangeTypeAppeared,
+		eventTypes["Owner|"+coredata.AccessInventoryChangeTypeAppeared.String()],
+	)
+	assert.Equal(
+		t,
+		coredata.AccessInventoryChangeTypeDisappeared,
+		eventTypes["Admin|"+coredata.AccessInventoryChangeTypeDisappeared.String()],
+	)
 	require.NotNil(t, events[1].SyncRunID)
-	assert.Equal(t, run2.ID, *events[1].SyncRunID)
 }
 
 func TestSyncInventorySource_EmptyRosterUpsertsDefaultResource(t *testing.T) {
@@ -415,4 +440,157 @@ func TestSyncInventorySource_AttributeChangedDisplayName(t *testing.T) {
 	assert.Equal(t, coredata.AccessInventoryChangeTypeAttributeChanged, events[0].ChangeType)
 	require.NotNil(t, events[0].Before)
 	require.NotNil(t, events[0].After)
+}
+
+func TestSyncInventorySource_SoftDisappearAndReappear(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	logger := log.NewLogger(log.WithOutput(io.Discard))
+	svc := NewService(client, cipher.EncryptionKey{}, nil, provider.NewBuiltinRegistry(), logger)
+
+	csvPresent := "email,full_name,role\nalice@example.com,Alice,Admin\n"
+	fx := seedInventorySyncFixture(t, ctx, client, csvPresent)
+
+	run1 := insertQueuedInventorySyncRun(t, ctx, client, fx)
+	markSyncRunRunning(t, ctx, client, fx, run1)
+	require.NoError(t, svc.SyncInventorySource(ctx, fx.scope, run1))
+
+	csvEmpty := "email,full_name,role\n"
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		source := &coredata.AccessReviewSource{}
+		if err := source.LoadByID(ctx, tx, fx.scope, fx.sourceID); err != nil {
+			return err
+		}
+
+		source.CsvData = &csvEmpty
+		source.UpdatedAt = time.Now().UTC()
+
+		return source.Update(ctx, tx, fx.scope)
+	}))
+
+	run2 := insertQueuedInventorySyncRun(t, ctx, client, fx)
+	markSyncRunRunning(t, ctx, client, fx, run2)
+	require.NoError(t, svc.SyncInventorySource(ctx, fx.scope, run2))
+
+	grants := loadInventoryGrants(t, ctx, client, fx)
+	require.Len(t, grants, 1)
+	assert.Equal(t, coredata.AccessInventoryGrantPresenceDisappeared, grants[0].Presence)
+	assert.Equal(t, 1, grants[0].ConsecutiveMissingSyncs)
+
+	events := loadInventoryChangeEvents(t, ctx, client, fx)
+	require.Len(t, events, 2)
+	assert.Equal(t, coredata.AccessInventoryChangeTypeAppeared, events[0].ChangeType)
+	assert.Equal(t, coredata.AccessInventoryChangeTypeDisappeared, events[1].ChangeType)
+	require.NotNil(t, events[1].Before)
+	assert.Nil(t, events[1].After)
+
+	run3 := insertQueuedInventorySyncRun(t, ctx, client, fx)
+	markSyncRunRunning(t, ctx, client, fx, run3)
+	require.NoError(t, svc.SyncInventorySource(ctx, fx.scope, run3))
+
+	grants = loadInventoryGrants(t, ctx, client, fx)
+	require.Len(t, grants, 1)
+	assert.Equal(t, coredata.AccessInventoryGrantPresenceDisappeared, grants[0].Presence)
+	assert.Equal(t, 2, grants[0].ConsecutiveMissingSyncs)
+
+	events = loadInventoryChangeEvents(t, ctx, client, fx)
+	assert.Len(t, events, 2, "still-missing grant must bump counter without another DISAPPEARED event")
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		source := &coredata.AccessReviewSource{}
+		if err := source.LoadByID(ctx, tx, fx.scope, fx.sourceID); err != nil {
+			return err
+		}
+
+		source.CsvData = &csvPresent
+		source.UpdatedAt = time.Now().UTC()
+
+		return source.Update(ctx, tx, fx.scope)
+	}))
+
+	run4 := insertQueuedInventorySyncRun(t, ctx, client, fx)
+	markSyncRunRunning(t, ctx, client, fx, run4)
+	require.NoError(t, svc.SyncInventorySource(ctx, fx.scope, run4))
+
+	grants = loadInventoryGrants(t, ctx, client, fx)
+	require.Len(t, grants, 1)
+	assert.Equal(t, coredata.AccessInventoryGrantPresencePresent, grants[0].Presence)
+	assert.Equal(t, 0, grants[0].ConsecutiveMissingSyncs)
+
+	events = loadInventoryChangeEvents(t, ctx, client, fx)
+	require.Len(t, events, 3)
+	assert.Equal(t, coredata.AccessInventoryChangeTypeAppeared, events[2].ChangeType)
+}
+
+func TestSyncInventorySource_FailedSyncDoesNotBumpMissing(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	logger := log.NewLogger(log.WithOutput(io.Discard))
+	svc := NewService(client, cipher.EncryptionKey{}, nil, provider.NewBuiltinRegistry(), logger)
+
+	csvPresent := "email,full_name,role\nbob@example.com,Bob,Member\n"
+	fx := seedInventorySyncFixture(t, ctx, client, csvPresent)
+
+	run1 := insertQueuedInventorySyncRun(t, ctx, client, fx)
+	markSyncRunRunning(t, ctx, client, fx, run1)
+	require.NoError(t, svc.SyncInventorySource(ctx, fx.scope, run1))
+
+	csvEmpty := "email,full_name,role\n"
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		source := &coredata.AccessReviewSource{}
+		if err := source.LoadByID(ctx, tx, fx.scope, fx.sourceID); err != nil {
+			return err
+		}
+
+		source.CsvData = &csvEmpty
+		source.UpdatedAt = time.Now().UTC()
+
+		return source.Update(ctx, tx, fx.scope)
+	}))
+
+	run2 := insertQueuedInventorySyncRun(t, ctx, client, fx)
+	markSyncRunRunning(t, ctx, client, fx, run2)
+	require.NoError(t, svc.SyncInventorySource(ctx, fx.scope, run2))
+
+	grants := loadInventoryGrants(t, ctx, client, fx)
+	require.Len(t, grants, 1)
+	assert.Equal(t, 1, grants[0].ConsecutiveMissingSyncs)
+
+	badCSV := "full_name\nAlice\n"
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		source := &coredata.AccessReviewSource{}
+		if err := source.LoadByID(ctx, tx, fx.scope, fx.sourceID); err != nil {
+			return err
+		}
+
+		source.CsvData = &badCSV
+		source.UpdatedAt = time.Now().UTC()
+
+		return source.Update(ctx, tx, fx.scope)
+	}))
+
+	run3 := insertQueuedInventorySyncRun(t, ctx, client, fx)
+	markSyncRunRunning(t, ctx, client, fx, run3)
+
+	h := &inventorySyncHandler{
+		svc:    svc,
+		pg:     client,
+		logger: logger,
+	}
+	require.NoError(t, h.handle(ctx, run3))
+
+	loaded := loadSyncRun(t, ctx, client, fx, run3.ID)
+	assert.Equal(t, coredata.AccessSourceSyncRunStatusFailed, loaded.Status)
+
+	grants = loadInventoryGrants(t, ctx, client, fx)
+	require.Len(t, grants, 1)
+	assert.Equal(t, coredata.AccessInventoryGrantPresenceDisappeared, grants[0].Presence)
+	assert.Equal(t, 1, grants[0].ConsecutiveMissingSyncs, "failed sync must not bump consecutive_missing_syncs")
+
+	events := loadInventoryChangeEvents(t, ctx, client, fx)
+	assert.Len(t, events, 2, "failed sync must not emit another change event")
 }
