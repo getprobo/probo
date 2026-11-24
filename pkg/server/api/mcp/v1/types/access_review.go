@@ -28,13 +28,31 @@ import (
 
 func NewAccessReviewSource(s *coredata.AccessReviewSource) *AccessReviewSource {
 	return &AccessReviewSource{
-		ID:                 s.ID,
-		OrganizationID:     s.OrganizationID,
-		ConnectorAccountID: s.ConnectorAccountID,
-		Name:               s.Name,
-		CsvData:            s.CsvData,
-		CreatedAt:          s.CreatedAt,
-		UpdatedAt:          s.UpdatedAt,
+		ID:                      s.ID,
+		OrganizationID:          s.OrganizationID,
+		ConnectorAccountID:      s.ConnectorAccountID,
+		Name:                    s.Name,
+		CsvData:                 s.CsvData,
+		LastSuccessfulSyncAt:    s.LastSuccessfulSyncAt,
+		NextSyncAt:              s.NextSyncAt,
+		SyncConsecutiveFailures: s.SyncConsecutiveFailures,
+		CreatedAt:               s.CreatedAt,
+		UpdatedAt:               s.UpdatedAt,
+	}
+}
+
+func NewAccessSourceSyncRun(r *coredata.AccessSourceSyncRun) *AccessSourceSyncRun {
+	return &AccessSourceSyncRun{
+		ID:                   r.ID,
+		OrganizationID:       r.OrganizationID,
+		AccessReviewSourceID: r.AccessReviewSourceID,
+		Status:               r.Status,
+		GrantsUpsertedCount:  r.GrantsUpsertedCount,
+		Error:                r.Error,
+		StartedAt:            r.StartedAt,
+		CompletedAt:          r.CompletedAt,
+		CreatedAt:            r.CreatedAt,
+		UpdatedAt:            r.UpdatedAt,
 	}
 }
 

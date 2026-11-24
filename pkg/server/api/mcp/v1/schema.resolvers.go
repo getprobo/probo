@@ -12814,3 +12814,48 @@ func (r *Resolver) ListAccessInventoryResourcesTool(ctx context.Context, req *mc
 
 	return nil, types.NewListAccessInventoryResourcesOutput(p), nil
 }
+
+func (r *Resolver) SyncAccessInventoryTool(ctx context.Context, req *mcp.CallToolRequest, input *types.SyncAccessInventoryInput) (*mcp.CallToolResult, types.SyncAccessInventoryOutput, error) {
+	scope, err := r.Authorize(ctx, input.AccessReviewSourceID, accessreview.ActionSourceSync)
+	if err != nil {
+		return nil, types.SyncAccessInventoryOutput{}, err
+	}
+
+	run, err := r.accessReview.SyncNow(ctx, scope, input.AccessReviewSourceID)
+	if err != nil {
+		return nil, types.SyncAccessInventoryOutput{}, mcpx.MapError(ctx, r.logger, "cannot sync access inventory", err)
+	}
+
+	source, err := r.accessReview.GetSource(ctx, scope, input.AccessReviewSourceID)
+	if err != nil {
+		return nil, types.SyncAccessInventoryOutput{}, mcpx.MapError(ctx, r.logger, "cannot get access review source after sync", err)
+	}
+
+	mapped := types.NewAccessReviewSource(source)
+	mapped.LatestSyncRun = types.NewAccessSourceSyncRun(run)
+
+	if err := r.fillSourceConnectorIDs(ctx, scope, []*coredata.AccessReviewSource{source}, []*types.AccessReviewSource{mapped}); err != nil {
+		return nil, types.SyncAccessInventoryOutput{}, mcpx.MapError(ctx, r.logger, "cannot load source connectors", err)
+	}
+
+	return nil, types.SyncAccessInventoryOutput{
+		AccessReviewSource:  mapped,
+		AccessSourceSyncRun: types.NewAccessSourceSyncRun(run),
+	}, nil
+}
+
+func (r *Resolver) GetAccessSourceSyncRunTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetAccessSourceSyncRunInput) (*mcp.CallToolResult, types.GetAccessSourceSyncRunOutput, error) {
+	scope, err := r.Authorize(ctx, input.AccessSourceSyncRunID, accessreview.ActionSourceGet)
+	if err != nil {
+		return nil, types.GetAccessSourceSyncRunOutput{}, err
+	}
+
+	run, err := r.accessReview.GetAccessSourceSyncRun(ctx, scope, input.AccessSourceSyncRunID)
+	if err != nil {
+		return nil, types.GetAccessSourceSyncRunOutput{}, mcpx.MapError(ctx, r.logger, "cannot get access source sync run", err)
+	}
+
+	return nil, types.GetAccessSourceSyncRunOutput{
+		AccessSourceSyncRun: types.NewAccessSourceSyncRun(run),
+	}, nil
+}

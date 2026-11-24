@@ -653,6 +653,16 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 			return types.NewAccessReviewSource(source), nil
 		}
+	case coredata.AccessSourceSyncRunEntityType:
+		action = accessreview.ActionSourceGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			run, err := r.accessReview.GetAccessSourceSyncRun(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewAccessSourceSyncRun(run), nil
+		}
 	case coredata.ConnectorEntityType:
 		action = probo.ActionConnectorGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {

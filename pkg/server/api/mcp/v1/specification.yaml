@@ -12896,12 +12896,73 @@ components:
           $ref: "#/components/schemas/OrderDirection"
           description: Order direction
 
+    AccessSourceSyncRunStatus:
+      type: string
+      enum:
+        - QUEUED
+        - RUNNING
+        - SUCCESS
+        - FAILED
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AccessSourceSyncRunStatus
+
+    AccessSourceSyncRun:
+      type: object
+      required:
+        - id
+        - organization_id
+        - access_review_source_id
+        - status
+        - grants_upserted_count
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Access source sync run ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        access_review_source_id:
+          $ref: "#/components/schemas/GID"
+          description: Access review source ID
+        status:
+          $ref: "#/components/schemas/AccessSourceSyncRunStatus"
+        grants_upserted_count:
+          type: integer
+          description: Grants upserted during a successful run
+        error:
+          type:
+            - string
+            - "null"
+          description: Error message when the run failed
+        started_at:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: When the run started
+        completed_at:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: When the run completed
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
     AccessReviewSource:
       type: object
       required:
         - id
         - organization_id
         - name
+        - sync_consecutive_failures
         - created_at
         - updated_at
       properties:
@@ -12929,6 +12990,26 @@ components:
             - string
             - "null"
           description: CSV data for manual sources
+        last_successful_sync_at:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: When inventory last synced successfully
+        next_sync_at:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: When the next inventory sync is scheduled
+        sync_consecutive_failures:
+          type: integer
+          description: Consecutive inventory sync failures since the last success
+        latest_sync_run:
+          anyOf:
+            - $ref: "#/components/schemas/AccessSourceSyncRun"
+            - type: "null"
+          description: Most recent inventory sync run for this source
         created_at:
           type: string
           format: date-time
@@ -12937,6 +13018,43 @@ components:
           type: string
           format: date-time
           description: Update timestamp
+
+    SyncAccessInventoryMCPInput:
+      type: object
+      required:
+        - access_review_source_id
+      properties:
+        access_review_source_id:
+          $ref: "#/components/schemas/GID"
+          description: Access review source ID to sync
+
+    SyncAccessInventoryMCPOutput:
+      type: object
+      required:
+        - access_review_source
+        - access_source_sync_run
+      properties:
+        access_review_source:
+          $ref: "#/components/schemas/AccessReviewSource"
+        access_source_sync_run:
+          $ref: "#/components/schemas/AccessSourceSyncRun"
+
+    GetAccessSourceSyncRunMCPInput:
+      type: object
+      required:
+        - access_source_sync_run_id
+      properties:
+        access_source_sync_run_id:
+          $ref: "#/components/schemas/GID"
+          description: Access source sync run ID
+
+    GetAccessSourceSyncRunMCPOutput:
+      type: object
+      required:
+        - access_source_sync_run
+      properties:
+        access_source_sync_run:
+          $ref: "#/components/schemas/AccessSourceSyncRun"
 
     ListAccessReviewSourcesInput:
       type: object
@@ -23106,6 +23224,30 @@ tools:
       $ref: "#/components/schemas/DeleteAccessReviewSourceMCPInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteAccessReviewSourceMCPOutput"
+  - name: syncAccessInventory
+    title: Sync Access Inventory
+    description: Enqueue an inventory sync for an access review source. Returns the existing in-flight run when one is already queued or running.
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/SyncAccessInventoryMCPInput"
+    outputSchema:
+      $ref: "#/components/schemas/SyncAccessInventoryMCPOutput"
+  - name: getAccessSourceSyncRun
+    title: Get Access Source Sync Run
+    description: Get an access source inventory sync run by ID
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/GetAccessSourceSyncRunMCPInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetAccessSourceSyncRunMCPOutput"
   - name: awsConnectorSetup
     title: AWS Connector Setup
     description: Return issuer, subject, audience and deploy artifacts for connecting an AWS account

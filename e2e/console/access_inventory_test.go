@@ -152,6 +152,138 @@ func TestAccessInventory_ListGrantsAfterCSVSync(t *testing.T) {
 	assert.Equal(t, "PRESENT", nodeResult.Node.Presence)
 }
 
+func TestAccessInventory_SyncNowAndStatus(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	orgID := owner.GetOrganizationID().String()
+
+	sourceID := factory.NewAccessReviewSource(owner, orgID).
+		WithName("Inventory Sync Status").
+		WithCsvData(testCsvData).
+		Create()
+
+	waitForAccessInventoryGrants(t, owner, orgID, 1)
+
+	const syncMutation = `
+		mutation($input: SyncAccessInventoryInput!) {
+			syncAccessInventory(input: $input) {
+				accessReviewSource {
+					id
+					syncConsecutiveFailures
+					latestSyncRun {
+						id
+						status
+					}
+				}
+				accessSourceSyncRun {
+					id
+					status
+					source {
+						id
+					}
+				}
+			}
+		}
+	`
+
+	var syncResult struct {
+		SyncAccessInventory struct {
+			AccessReviewSource struct {
+				ID                      string `json:"id"`
+				SyncConsecutiveFailures int    `json:"syncConsecutiveFailures"`
+				LatestSyncRun           *struct {
+					ID     string `json:"id"`
+					Status string `json:"status"`
+				} `json:"latestSyncRun"`
+			} `json:"accessReviewSource"`
+			AccessSourceSyncRun struct {
+				ID     string `json:"id"`
+				Status string `json:"status"`
+				Source struct {
+					ID string `json:"id"`
+				} `json:"source"`
+			} `json:"accessSourceSyncRun"`
+		} `json:"syncAccessInventory"`
+	}
+
+	err := owner.Execute(
+		syncMutation,
+		map[string]any{
+			"input": map[string]any{
+				"accessReviewSourceId": sourceID,
+			},
+		},
+		&syncResult,
+	)
+	require.NoError(t, err)
+
+	payload := syncResult.SyncAccessInventory
+	assert.Equal(t, sourceID, payload.AccessReviewSource.ID)
+	assert.Equal(t, sourceID, payload.AccessSourceSyncRun.Source.ID)
+	assert.Contains(t, []string{"QUEUED", "RUNNING", "SUCCESS"}, payload.AccessSourceSyncRun.Status)
+	require.NotNil(t, payload.AccessReviewSource.LatestSyncRun)
+	assert.Equal(t, payload.AccessSourceSyncRun.ID, payload.AccessReviewSource.LatestSyncRun.ID)
+
+	const statusQuery = `
+		query($id: ID!) {
+			node(id: $id) {
+				... on AccessReviewSource {
+					id
+					lastSuccessfulSyncAt
+					nextSyncAt
+					syncConsecutiveFailures
+					latestSyncRun {
+						id
+						status
+					}
+				}
+			}
+		}
+	`
+
+	var statusResult struct {
+		Node struct {
+			ID                      string  `json:"id"`
+			LastSuccessfulSyncAt    *string `json:"lastSuccessfulSyncAt"`
+			NextSyncAt              *string `json:"nextSyncAt"`
+			SyncConsecutiveFailures int     `json:"syncConsecutiveFailures"`
+			LatestSyncRun           *struct {
+				ID     string `json:"id"`
+				Status string `json:"status"`
+			} `json:"latestSyncRun"`
+		} `json:"node"`
+	}
+
+	err = owner.Execute(statusQuery, map[string]any{"id": sourceID}, &statusResult)
+	require.NoError(t, err)
+	assert.Equal(t, sourceID, statusResult.Node.ID)
+	require.NotNil(t, statusResult.Node.LatestSyncRun)
+	assert.Equal(t, payload.AccessSourceSyncRun.ID, statusResult.Node.LatestSyncRun.ID)
+
+	const nodeQuery = `
+		query($id: ID!) {
+			node(id: $id) {
+				... on AccessSourceSyncRun {
+					id
+					status
+				}
+			}
+		}
+	`
+
+	var nodeResult struct {
+		Node struct {
+			ID     string `json:"id"`
+			Status string `json:"status"`
+		} `json:"node"`
+	}
+
+	err = owner.Execute(nodeQuery, map[string]any{"id": payload.AccessSourceSyncRun.ID}, &nodeResult)
+	require.NoError(t, err)
+	assert.Equal(t, payload.AccessSourceSyncRun.ID, nodeResult.Node.ID)
+}
+
 func waitForAccessInventoryGrants(
 	t *testing.T,
 	client *testutil.Client,

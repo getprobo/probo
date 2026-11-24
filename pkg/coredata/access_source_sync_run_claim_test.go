@@ -514,3 +514,30 @@ func TestAccessInventoryChangeEvent_SyncRunForeignKey(t *testing.T) {
 		return nil
 	}))
 }
+
+func TestAccessSourceSyncRun_LoadLatestBySourceID(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedAccessInventoryFixture(t, ctx, client)
+
+	olderAt := time.Now().UTC().Add(-time.Minute)
+	newerAt := olderAt.Add(30 * time.Second)
+	_ = insertAccessSourceSyncRun(t, ctx, client, fx, coredata.AccessSourceSyncRunStatusSuccess, olderAt)
+	newerID := insertAccessSourceSyncRun(t, ctx, client, fx, coredata.AccessSourceSyncRunStatusQueued, newerAt)
+
+	var latest coredata.AccessSourceSyncRun
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return latest.LoadLatestBySourceID(ctx, conn, fx.scope, fx.sourceID)
+	}))
+	assert.Equal(t, newerID, latest.ID)
+	assert.Equal(t, coredata.AccessSourceSyncRunStatusQueued, latest.Status)
+
+	empty := seedAccessInventoryFixture(t, ctx, client)
+	err := client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		missing := &coredata.AccessSourceSyncRun{}
+		return missing.LoadLatestBySourceID(ctx, conn, empty.scope, empty.sourceID)
+	})
+	assert.ErrorIs(t, err, coredata.ErrResourceNotFound)
+}
