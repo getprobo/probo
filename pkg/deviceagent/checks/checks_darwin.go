@@ -208,6 +208,7 @@ func darwinFirewallResult(state, plist CmdResult) Result {
 	}
 
 	globalState := strings.TrimSpace(plist.Stdout)
+
 	ev["global_state"] = globalState
 	if globalState == "1" || globalState == "2" {
 		return pass(ev)

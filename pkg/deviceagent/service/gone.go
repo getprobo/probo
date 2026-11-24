@@ -34,6 +34,19 @@ func isWindowsServiceMissing(out string) bool {
 		strings.Contains(lower, "specified service does not exist")
 }
 
+func isWindowsServiceStopped(out string) bool {
+	if isWindowsServiceMissing(out) {
+		return true
+	}
+
+	upper := strings.ToUpper(out)
+	if strings.Contains(upper, "STOP_PENDING") {
+		return false
+	}
+
+	return strings.Contains(upper, "STOPPED")
+}
+
 func waitUntilWindowsServiceGone(
 	query func() (string, error),
 	timeout time.Duration,
@@ -54,6 +67,32 @@ func waitUntilWindowsServiceGone(
 			}
 
 			return fmt.Errorf("cannot wait for previous windows service deletion: %s", msg)
+		}
+
+		sleep(50 * time.Millisecond)
+	}
+}
+
+func waitUntilWindowsServiceStopped(
+	query func() (string, error),
+	timeout time.Duration,
+	sleep func(time.Duration),
+) error {
+	deadline := time.Now().Add(timeout)
+
+	for {
+		out, err := query()
+		if isWindowsServiceStopped(out) {
+			return nil
+		}
+
+		if time.Now().After(deadline) {
+			msg := strings.TrimSpace(out)
+			if msg == "" && err != nil {
+				msg = err.Error()
+			}
+
+			return fmt.Errorf("cannot wait for windows service to stop: %s", msg)
 		}
 
 		sleep(50 * time.Millisecond)

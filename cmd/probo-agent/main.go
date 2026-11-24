@@ -59,6 +59,10 @@ const restartExitCode = 75
 // set rather than a single probe.
 const collectTimeout = 30 * time.Minute
 
+// diagnosticsTimeout bounds the support report. The tray waits longer than
+// this so the process can print a partial report and exit on its own.
+const diagnosticsTimeout = 10 * time.Minute
+
 // Cobra prints a "this is a command line tool" splash and exits 1 when the
 // parent process is explorer.exe. The shell is what launches the probo://
 // handler and the HKLM Run entry, so the splash would break both browser
@@ -107,6 +111,7 @@ func newRootCmd() *cobra.Command {
 	root.AddCommand(newRunCmd())
 	root.AddCommand(newStatusCmd())
 	root.AddCommand(newCollectCmd())
+	root.AddCommand(newDiagnosticsCmd())
 	root.AddCommand(newUpdateCmd())
 	root.AddCommand(newEnrollURLCmd())
 	registerPlatformCommands(root)
@@ -544,7 +549,33 @@ func newRunCmd() *cobra.Command {
 				return fmt.Errorf("cannot load config: %w", err)
 			}
 
+			isSvc, err := service.IsWindowsService()
+			if err != nil {
+				return err
+			}
+
 			logger := newAgentLogger()
+
+			if isSvc {
+				serviceLog, err := deviceagent.OpenWindowsEventLog()
+				if err != nil {
+					return fmt.Errorf("cannot open service log: %w", err)
+				}
+
+				defer func() { _ = serviceLog.Close() }()
+
+				logger = log.NewLogger(
+					log.WithName("probo-agent"),
+					log.WithOutput(serviceLog),
+				)
+			}
+
+			if err := service.StartAgentLogRotation(); err != nil {
+				return err
+			}
+
+			defer service.StopAgentLogRotation()
+
 			agent := deviceagent.New(dir, version, logger)
 			agent.Updater = newUpdater(logger, dir, cfg.AllowPrereleases)
 
@@ -563,11 +594,6 @@ func newRunCmd() *cobra.Command {
 					return nil
 				}
 
-				return err
-			}
-
-			isSvc, err := service.IsWindowsService()
-			if err != nil {
 				return err
 			}
 
@@ -619,27 +645,57 @@ func newStatusCmd() *cobra.Command {
 				return fmt.Errorf("cannot load enrollments: %w", err)
 			}
 
-			if len(items) == 0 {
-				fmt.Printf("Enrollments:          0\n")
+			if _, err := fmt.Fprint(os.Stdout, deviceagent.FormatStatus(dir, cfg, items)); err != nil {
+				return fmt.Errorf("cannot write status: %w", err)
 			}
-
-			for i, item := range items {
-				fmt.Printf("Enrollment %d:\n", i+1)
-				fmt.Printf("  Server URL:           %s\n", item.ServerURL)
-				fmt.Printf("  Device ID:            %s\n", item.DeviceID)
-				fmt.Printf("  API key on disk:      %v\n", item.APIKey != "")
-			}
-
-			fmt.Printf("Heartbeat interval:   %s\n", cfg.HeartbeatInterval)
-			fmt.Printf("Posture interval:     %s\n", cfg.PostureInterval)
-			fmt.Printf("Update interval:      %s\n", cfg.UpdateInterval)
-			fmt.Printf("Auto-update enabled:  %v\n", !cfg.UpdatesDisabled)
-			fmt.Printf("Allow prereleases:    %v\n", cfg.AllowPrereleases)
-			fmt.Printf("Config directory:     %s\n", dir)
 
 			return nil
 		},
 	}
+}
+
+func newDiagnosticsCmd() *cobra.Command {
+	var (
+		output    string
+		outputPID int
+	)
+
+	cmd := &cobra.Command{
+		Use:   "diagnostics",
+		Short: "Print status, posture checks, and recent logs",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			dir := resolveDir(cmd)
+
+			ctx, cancel := context.WithTimeout(cmd.Context(), diagnosticsTimeout)
+			defer cancel()
+
+			report := deviceagent.BuildDiagnostics(ctx, dir, version)
+			if output != "" {
+				return deviceagent.WriteDiagnosticsOutput(output, report, outputPID)
+			}
+
+			if _, err := io.WriteString(os.Stdout, report); err != nil && runtime.GOOS != "windows" {
+				return fmt.Errorf("cannot write diagnostics: %w", err)
+			}
+
+			return nil
+		},
+	}
+
+	cmd.Flags().StringVar(
+		&output,
+		"output",
+		"",
+		"write the report to a named pipe or unix socket",
+	)
+	cmd.Flags().IntVar(
+		&outputPID,
+		"output-pid",
+		0,
+		"pid of the process listening on --output",
+	)
+
+	return cmd
 }
 
 func newCollectCmd() *cobra.Command {

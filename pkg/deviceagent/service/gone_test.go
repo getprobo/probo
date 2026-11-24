@@ -107,3 +107,85 @@ func TestWaitUntilWindowsServiceGone_TimesOutWhilePresent(t *testing.T) {
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "cannot wait for previous windows service deletion")
 }
+
+func TestWaitUntilWindowsServiceStopped(t *testing.T) {
+	t.Parallel()
+
+	t.Run(
+		"missing service",
+		func(t *testing.T) {
+			t.Parallel()
+
+			err := waitUntilWindowsServiceStopped(
+				func() (string, error) {
+					return "[SC] OpenService FAILED 1060:\nThe specified service does not exist as an installed service.",
+						errors.New("exit status 1060")
+				},
+				time.Second,
+				func(time.Duration) {},
+			)
+
+			require.NoError(t, err)
+		},
+	)
+
+	t.Run(
+		"already stopped",
+		func(t *testing.T) {
+			t.Parallel()
+
+			err := waitUntilWindowsServiceStopped(
+				func() (string, error) {
+					return "SERVICE_NAME: ProboAgent\n        STATE              : 1  STOPPED", nil
+				},
+				time.Second,
+				func(time.Duration) {},
+			)
+
+			require.NoError(t, err)
+		},
+	)
+
+	t.Run(
+		"pending then stopped",
+		func(t *testing.T) {
+			t.Parallel()
+
+			calls := 0
+			err := waitUntilWindowsServiceStopped(
+				func() (string, error) {
+					calls++
+					if calls < 3 {
+						return "SERVICE_NAME: ProboAgent\n        STATE              : 3  STOP_PENDING", nil
+					}
+
+					return "SERVICE_NAME: ProboAgent\n        STATE              : 1  STOPPED", nil
+				},
+				time.Second,
+				func(time.Duration) {},
+			)
+
+			require.NoError(t, err)
+			assert.Equal(t, 3, calls)
+		},
+	)
+
+	t.Run(
+		"times out while pending",
+		func(t *testing.T) {
+			t.Parallel()
+
+			err := waitUntilWindowsServiceStopped(
+				func() (string, error) {
+					return "SERVICE_NAME: ProboAgent\n        STATE              : 3  STOP_PENDING", nil
+				},
+				time.Millisecond,
+				func(time.Duration) {},
+			)
+
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "cannot wait for windows service to stop")
+			assert.NotContains(t, err.Error(), "STOPPED")
+		},
+	)
+}

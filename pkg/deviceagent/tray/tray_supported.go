@@ -142,6 +142,14 @@ func onReady(opts Options, done <-chan struct{}) {
 
 	enrollMenu := setupEnrollmentMenu(opts, done)
 
+	diagnosticsItem := systray.AddMenuItem(
+		"Send diagnostic report…",
+		"Email install details to Probo support",
+	)
+	bindMenuClick(diagnosticsItem, done, func() {
+		sendDiagnostics(opts)
+	})
+
 	aboutItem := systray.AddMenuItem(
 		"About Probo Device Posture Agent…",
 		"Probo device posture agent",

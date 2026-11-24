@@ -123,6 +123,13 @@ func WritePlist(cfg Config) error {
 		return fmt.Errorf("executable path must be %s", deviceagent.DefaultExecutablePath())
 	}
 
+	// Rotation setup must happen before the plist is replaced. Migration
+	// treats a canonical Program path as finished and skips the reload, so
+	// a failure after this write would leave launchd on the old binary.
+	if err := installNewsyslogConf(); err != nil {
+		return err
+	}
+
 	if err := os.MkdirAll(filepath.Dir(plistPath), 0o755); err != nil {
 		return fmt.Errorf("cannot ensure launch daemons directory: %w", err)
 	}
@@ -191,6 +198,10 @@ func Uninstall(cfg Config) error {
 	_ = cfg
 
 	if err := removeLaunchDaemonPlist(plistPath); err != nil {
+		return err
+	}
+
+	if err := removeNewsyslog(); err != nil {
 		return err
 	}
 

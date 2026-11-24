@@ -403,9 +403,11 @@ trap 'rm -rf "${STAGE}"' EXIT
 PAYLOAD="${STAGE}/payload"
 SCRIPTS="${STAGE}/scripts"
 RESOURCES="${STAGE}/Resources"
-mkdir -p "${PAYLOAD}/Library/Probo" "${SCRIPTS}" "${RESOURCES}"
+mkdir -p "${PAYLOAD}/Library/Probo" "${PAYLOAD}/etc/newsyslog.d" "${SCRIPTS}" "${RESOURCES}"
 
 install -m 0755 "${BINARY}" "${PAYLOAD}/Library/Probo/probo-agent"
+install -m 0644 "${REPO_ROOT}/pkg/deviceagent/service/newsyslog.conf" \
+  "${PAYLOAD}/etc/newsyslog.d/com.probo.agent.conf"
 codesign_runtime "${PAYLOAD}/Library/Probo/probo-agent" "com.probo.agent"
 
 mkdir -p "${PAYLOAD}/Applications"

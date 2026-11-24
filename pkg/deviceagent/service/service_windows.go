@@ -26,6 +26,8 @@ import (
 	"os/exec"
 	"strings"
 	"time"
+
+	"go.probo.inc/probo/pkg/deviceagent"
 )
 
 // Install registers and starts the Windows service via sc.exe.
@@ -95,6 +97,10 @@ func Install(cfg Config) error {
 		return fmt.Errorf("cannot run sc.exe failureflag: %w: %s", err, strings.TrimSpace(string(out)))
 	}
 
+	if err := deviceagent.InstallWindowsEventSource(); err != nil {
+		return err
+	}
+
 	if out, err := exec.Command("sc.exe", "start", name).CombinedOutput(); err != nil {
 		return fmt.Errorf("cannot run sc.exe start: %w: %s", err, strings.TrimSpace(string(out)))
 	}
@@ -139,14 +145,33 @@ func Uninstall(cfg Config) error {
 	name := DefaultWindowsName
 
 	_ = exec.Command("sc.exe", "stop", name).Run()
+	if err := waitUntilWindowsServiceStopped(
+		func() (string, error) {
+			out, err := exec.Command("sc.exe", "query", name).CombinedOutput()
+
+			return string(out), err
+		},
+		15*time.Second,
+		time.Sleep,
+	); err != nil {
+		return err
+	}
+
+	sourceErr := deviceagent.RemoveWindowsEventSource()
+
 	if out, err := exec.Command("sc.exe", "delete", name).CombinedOutput(); err != nil {
 		msg := strings.TrimSpace(string(out))
 		if isWindowsServiceMissing(msg) {
-			return nil
+			return sourceErr
 		}
 
-		return fmt.Errorf("cannot run sc.exe delete: %w: %s", err, msg)
+		deleteErr := fmt.Errorf("cannot run sc.exe delete: %w: %s", err, msg)
+		if sourceErr != nil {
+			return errors.Join(deleteErr, sourceErr)
+		}
+
+		return deleteErr
 	}
 
-	return nil
+	return sourceErr
 }

@@ -114,7 +114,10 @@ rm -f "${BINARY}" "${LEGACY_BINARY}"
 rmdir "${PROBO_DIR}" 2>/dev/null || true
 rm -rf "${STATE_DIR}" "${RUN_DIR}"
 rm -f \
+  /etc/newsyslog.d/com.probo.agent.conf \
   /var/log/probo-agent.log \
+  /var/log/probo-agent.log.[0-9] \
+  /var/log/probo-agent.log.[0-9][0-9] \
   /var/log/probo-agent-install.log \
   /tmp/probo-agent.conf
 log "Removed binary, state, run dir, logs, and staged conf (if present)"
