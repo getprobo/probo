@@ -182,6 +182,7 @@ const (
 	AccessInventoryPrincipalEntityType               uint16 = 150
 	AccessInventoryResourceEntityType                uint16 = 151
 	AccessInventoryGrantEntityType                   uint16 = 152
+	AccessInventoryChangeEventEntityType             uint16 = 153
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -462,6 +463,8 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &AccessInventoryResource{ID: id}, true
 	case AccessInventoryGrantEntityType:
 		return &AccessInventoryGrant{ID: id}, true
+	case AccessInventoryChangeEventEntityType:
+		return &AccessInventoryChangeEvent{ID: id}, true
 	default:
 		return nil, false
 	}
