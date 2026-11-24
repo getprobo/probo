@@ -167,7 +167,7 @@ var AuditorPolicy = policy.NewPolicy(
 	).WithSID("entity-read-access").When(organizationCondition),
 
 	policy.Allow(
-		ActionDocumentVersionExportPDF, ActionDocumentVersionSign,
+		ActionDocumentVersionExportPDF, ActionDocumentVersionExport, ActionDocumentVersionSign,
 	).WithSID("document-signing").When(organizationCondition),
 
 	policy.Allow(
