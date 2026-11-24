@@ -82,33 +82,47 @@ function isoDateFromParam(value: string | null): string | null {
   return value;
 }
 
-function startOfLocalDay(date: string): string {
-  const [yearText, monthText, dayText] = date.split("-");
-  return new Date(
-    Number(yearText),
-    Number(monthText) - 1,
-    Number(dayText),
-    0,
-    0,
-    0,
-    0,
-  ).toISOString();
+function localDayParts(
+  date: string,
+): { year: number; month: number; day: number } | null {
+  const valid = isoDateFromParam(date);
+  if (valid == null) {
+    return null;
+  }
+  const [yearText, monthText, dayText] = valid.split("-");
+  return {
+    year: Number(yearText),
+    month: Number(monthText),
+    day: Number(dayText),
+  };
 }
 
-function endOfLocalDay(date: string): string {
-  const [yearText, monthText, dayText] = date.split("-");
-  return new Date(
-    Number(yearText),
-    Number(monthText) - 1,
-    Number(dayText),
-    23,
-    59,
-    59,
-    999,
-  ).toISOString();
+// The picker stores a local calendar day. Bounds are that day's local
+// midnight / end-of-day, converted to UTC, so the query matches the day
+// the user chose.
+export function accessInventoryChangeEventLocalDayStart(
+  date: string,
+): string | null {
+  const parts = localDayParts(date);
+  if (parts == null) {
+    return null;
+  }
+  return new Date(parts.year, parts.month - 1, parts.day, 0, 0, 0, 0)
+    .toISOString();
 }
 
-function accessInventoryChangeEventsGraphqlFilter(filters: {
+export function accessInventoryChangeEventLocalDayEnd(
+  date: string,
+): string | null {
+  const parts = localDayParts(date);
+  if (parts == null) {
+    return null;
+  }
+  return new Date(parts.year, parts.month - 1, parts.day, 23, 59, 59, 999)
+    .toISOString();
+}
+
+export function accessInventoryChangeEventsGraphqlFilter(filters: {
   sourceId: string | null;
   changeType: AccessInventoryChangeTypeFilter | null;
   observedAfter: string | null;
@@ -118,10 +132,10 @@ function accessInventoryChangeEventsGraphqlFilter(filters: {
     accessReviewSourceId: filters.sourceId,
     changeTypes: filters.changeType != null ? [filters.changeType] : null,
     observedAtOnOrAfter: filters.observedAfter != null
-      ? startOfLocalDay(filters.observedAfter)
+      ? accessInventoryChangeEventLocalDayStart(filters.observedAfter)
       : null,
     observedAtOnOrBefore: filters.observedBefore != null
-      ? endOfLocalDay(filters.observedBefore)
+      ? accessInventoryChangeEventLocalDayEnd(filters.observedBefore)
       : null,
   };
 }
