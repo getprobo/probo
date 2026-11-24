@@ -412,10 +412,7 @@ func TestApplyInventorySyncJitter_CapsFailureBackoff(t *testing.T) {
 	})
 	assert.Greater(t, jittered, inventorySyncFailureMaxBackoff)
 
-	delay := jittered
-	if delay > inventorySyncFailureMaxBackoff {
-		delay = inventorySyncFailureMaxBackoff
-	}
+	delay := min(jittered, inventorySyncFailureMaxBackoff)
 
 	assert.Equal(t, inventorySyncFailureMaxBackoff, delay)
 }

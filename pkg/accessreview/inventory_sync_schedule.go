@@ -225,10 +225,7 @@ func (s *Service) scheduleInventorySyncAfterFailure(
 ) error {
 	source.SyncConsecutiveFailures++
 	backoff := inventorySyncFailureBackoff(source.SyncConsecutiveFailures)
-	delay := applyInventorySyncJitter(backoff, rand.Int64N)
-	if delay > inventorySyncFailureMaxBackoff {
-		delay = inventorySyncFailureMaxBackoff
-	}
+	delay := min(applyInventorySyncJitter(backoff, rand.Int64N), inventorySyncFailureMaxBackoff)
 
 	next := failedAt.Add(delay)
 	source.NextSyncAt = &next
