@@ -49,6 +49,7 @@ import (
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/notification"
+	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/probot"
 	slackchannel "go.probo.inc/probo/pkg/probot/channel/slack"
@@ -63,6 +64,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlx"
+	"go.probo.inc/probo/pkg/sign"
 	"go.probo.inc/probo/pkg/tag"
 	"go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/thirdparty"
@@ -95,6 +97,7 @@ type (
 		mailman                 *mailman.Service
 		cookieBanner            *cookiebanner.Service
 		employeePortal          *employeeportalmgmt.Service
+		sign                    *sign.Service
 		connectorRegistry       *connectorprotocol.Registry
 		providerRegistry        *provider.Registry
 		riskManagement          *riskmanagement.Service
@@ -132,6 +135,7 @@ func NewMux(
 	mailmanSvc *mailman.Service,
 	cookieBannerSvc *cookiebanner.Service,
 	employeePortalSvc *employeeportalmgmt.Service,
+	signSvc *sign.Service,
 	cookieConfig securecookie.Config,
 	installStateKey string,
 	connectorRegistry *connectorprotocol.Registry,
@@ -172,6 +176,7 @@ func NewMux(
 		mailmanSvc,
 		cookieBannerSvc,
 		employeePortalSvc,
+		signSvc,
 		connectorRegistry,
 		providerRegistry,
 		customDomainCname,
@@ -382,4 +387,19 @@ func (r *Resolver) treatmentPlanNetScores(
 	)
 
 	return likelihood, impact, score, nil
+}
+
+// parseStrCursorKey converts an optional string cursor to a *page.CursorKey for
+// connections whose GraphQL schema uses String for the after/before arguments.
+func parseStrCursorKey(s *string) *page.CursorKey {
+	if s == nil {
+		return nil
+	}
+
+	ck, err := page.ParseCursorKey(*s)
+	if err != nil {
+		return nil
+	}
+
+	return &ck
 }

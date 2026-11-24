@@ -179,6 +179,12 @@ const (
 	CMPDomainSurfaceEntityType                       uint16 = 147
 	TagEntityType                                    uint16 = 148
 	TagAssignmentEntityType                          uint16 = 149 // internal cursor key, not a Node
+
+	DocumentSigningConfigEntityType     uint16 = 150
+	OrganizationSigningSecretEntityType uint16 = 151
+	ClickwrapSubjectEntityType          uint16 = 152
+	ClickwrapAcceptanceEntityType       uint16 = 153
+	DataPlaneRequestLogEntityType       uint16 = 154
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -453,6 +459,16 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &CMPDomainSurface{ID: id}, true
 	case TagEntityType:
 		return &Tag{ID: id}, true
+	case DocumentSigningConfigEntityType:
+		return &DocumentSigningConfig{ID: id}, true
+	case OrganizationSigningSecretEntityType:
+		return &OrganizationSigningSecret{ID: id}, true
+	case ClickwrapSubjectEntityType:
+		return &ClickwrapSubject{ID: id}, true
+	case ClickwrapAcceptanceEntityType:
+		return &ClickwrapAcceptance{ID: id}, true
+	case DataPlaneRequestLogEntityType:
+		return &DataPlaneRequestLog{ID: id}, true
 	default:
 		return nil, false
 	}
