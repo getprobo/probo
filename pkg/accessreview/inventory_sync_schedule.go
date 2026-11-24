@@ -99,6 +99,26 @@ func (s *Service) enqueueInventorySyncRun(
 		return nil, fmt.Errorf("cannot load in-flight sync run: %w", err)
 	}
 
+	return s.insertQueuedInventorySyncRun(ctx, tx, scope, source)
+}
+
+// enqueueInventorySyncRunAfterCSVUpdate always inserts a QUEUED run so a
+// re-upload during RUNNING is not lost (driver may already hold stale CSV).
+func (s *Service) enqueueInventorySyncRunAfterCSVUpdate(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	source *coredata.AccessReviewSource,
+) (*coredata.AccessSourceSyncRun, error) {
+	return s.insertQueuedInventorySyncRun(ctx, tx, scope, source)
+}
+
+func (s *Service) insertQueuedInventorySyncRun(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	source *coredata.AccessReviewSource,
+) (*coredata.AccessSourceSyncRun, error) {
 	now := time.Now()
 	run := &coredata.AccessSourceSyncRun{
 		ID:                   gid.New(scope.GetTenantID(), coredata.AccessSourceSyncRunEntityType),

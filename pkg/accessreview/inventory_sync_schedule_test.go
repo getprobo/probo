@@ -35,6 +35,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/timespan"
 )
 
@@ -451,13 +452,48 @@ func TestUpdateSource_EnqueuesSyncOnCSVUpload(t *testing.T) {
 	require.NotNil(t, updated.CsvData)
 	assert.Equal(t, csvV2, *updated.CsvData)
 
-	inflight := &coredata.AccessSourceSyncRun{}
+	first := &coredata.AccessSourceSyncRun{}
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		return inflight.LoadInFlightBySourceID(ctx, conn, fx.scope, fx.sourceID)
+		return first.LoadInFlightBySourceID(ctx, conn, fx.scope, fx.sourceID)
 	}))
-	assert.Equal(t, coredata.AccessSourceSyncRunStatusQueued, inflight.Status)
+	assert.Equal(t, coredata.AccessSourceSyncRunStatusQueued, first.Status)
 
-	again, err := svc.UpdateSource(
+	csvV3 := "email,full_name,role\ncarol@example.com,Carol,Admin\n"
+	_, err = svc.UpdateSource(
+		ctx,
+		fx.scope,
+		UpdateAccessReviewSourceRequest{
+			AccessReviewSourceID: fx.sourceID,
+			CsvData:              new(&csvV3),
+		},
+	)
+	require.NoError(t, err)
+
+	runs := loadInventorySyncRunsBySource(t, ctx, client, fx)
+	require.Len(t, runs, 2)
+	assert.Equal(t, first.ID, runs[0].ID)
+	assert.Equal(t, coredata.AccessSourceSyncRunStatusQueued, runs[0].Status)
+	assert.Equal(t, coredata.AccessSourceSyncRunStatusQueued, runs[1].Status)
+	assert.NotEqual(t, runs[0].ID, runs[1].ID, "CSV re-upload must enqueue a fresh QUEUED run")
+
+	require.NoError(t, drainInFlightInventorySyncRunsForSource(t, ctx, client, fx.sourceID))
+}
+
+func TestUpdateSource_EnqueuesQueuedWhileRunning(t *testing.T) {
+	// Not parallel: leaves a cross-tenant QUEUED run until cleanup.
+	client := test.PGClient(t)
+	ctx := context.Background()
+	logger := log.NewLogger(log.WithOutput(io.Discard))
+	svc := NewService(client, cipher.EncryptionKey{}, nil, provider.NewBuiltinRegistry(), logger)
+
+	fx := seedInventorySyncFixture(t, ctx, client, "email,full_name,role\nalice@example.com,Alice,Admin\n")
+	require.NoError(t, drainInFlightInventorySyncRunsForSource(t, ctx, client, fx.sourceID))
+
+	running := insertQueuedInventorySyncRun(t, ctx, client, fx)
+	markSyncRunRunning(t, ctx, client, fx, running)
+
+	csvV2 := "email,full_name,role\nbob@example.com,Bob,Member\n"
+	_, err := svc.UpdateSource(
 		ctx,
 		fx.scope,
 		UpdateAccessReviewSourceRequest{
@@ -466,13 +502,24 @@ func TestUpdateSource_EnqueuesSyncOnCSVUpload(t *testing.T) {
 		},
 	)
 	require.NoError(t, err)
-	require.NotNil(t, again)
 
-	reused := &coredata.AccessSourceSyncRun{}
-	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		return reused.LoadInFlightBySourceID(ctx, conn, fx.scope, fx.sourceID)
-	}))
-	assert.Equal(t, inflight.ID, reused.ID, "CSV re-upload must reuse the in-flight run")
+	runs := loadInventorySyncRunsBySource(t, ctx, client, fx)
+	require.Len(t, runs, 2)
+	assert.Equal(t, running.ID, runs[0].ID)
+	assert.Equal(t, coredata.AccessSourceSyncRunStatusRunning, runs[0].Status)
+	assert.Equal(t, coredata.AccessSourceSyncRunStatusQueued, runs[1].Status)
+
+	// Claim must wait on RUNNING: the follow-up QUEUED stays unclaimed.
+	next := &coredata.AccessSourceSyncRun{}
+	err = client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return next.LoadNextQueuedForUpdateSkipLocked(ctx, tx)
+	})
+	if err == nil {
+		assert.NotEqual(t, runs[1].ID, next.ID, "follow-up QUEUED must wait while RUNNING")
+		assert.NotEqual(t, fx.sourceID, next.AccessReviewSourceID)
+	} else {
+		require.ErrorIs(t, err, coredata.ErrNoAccessSourceSyncRunAvailable)
+	}
 
 	require.NoError(t, drainInFlightInventorySyncRunsForSource(t, ctx, client, fx.sourceID))
 }
@@ -655,4 +702,30 @@ func seedMembershipsInventorySyncFixture(
 	}))
 
 	return fx
+}
+
+func loadInventorySyncRunsBySource(
+	t *testing.T,
+	ctx context.Context,
+	client *pg.Client,
+	fx inventorySyncFixture,
+) []*coredata.AccessSourceSyncRun {
+	t.Helper()
+
+	var runs coredata.AccessSourceSyncRuns
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		cursor := page.NewCursor(
+			100,
+			nil,
+			page.Head,
+			page.OrderBy[coredata.AccessSourceSyncRunOrderField]{
+				Field:     coredata.AccessSourceSyncRunOrderFieldCreatedAt,
+				Direction: page.OrderDirectionAsc,
+			},
+		)
+
+		return runs.LoadBySourceID(ctx, conn, fx.scope, fx.sourceID, cursor)
+	}))
+
+	return runs
 }

@@ -484,7 +484,7 @@ func (s *Service) UpdateSource(
 			}
 
 			if csvUpdated {
-				if _, err := s.enqueueInventorySyncRun(ctx, conn, scope, source); err != nil {
+				if _, err := s.enqueueInventorySyncRunAfterCSVUpdate(ctx, conn, scope, source); err != nil {
 					return fmt.Errorf("cannot enqueue inventory sync after csv update: %w", err)
 				}
 			}
