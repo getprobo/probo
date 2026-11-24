@@ -471,14 +471,22 @@ func (s *Service) UpdateSource(
 				}
 			}
 
+			csvUpdated := false
 			if req.CsvData != nil {
 				source.CsvData = *req.CsvData
+				csvUpdated = true
 			}
 
 			source.UpdatedAt = time.Now()
 
 			if err := source.Update(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot update access source: %w", err)
+			}
+
+			if csvUpdated {
+				if _, err := s.enqueueInventorySyncRun(ctx, conn, scope, source); err != nil {
+					return fmt.Errorf("cannot enqueue inventory sync after csv update: %w", err)
+				}
 			}
 
 			return nil

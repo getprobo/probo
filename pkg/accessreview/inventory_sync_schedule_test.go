@@ -427,3 +427,232 @@ func TestApplyInventorySyncJitter_CapsFailureBackoff(t *testing.T) {
 
 	assert.Equal(t, inventorySyncFailureMaxBackoff, delay)
 }
+
+func TestUpdateSource_EnqueuesSyncOnCSVUpload(t *testing.T) {
+	// Not parallel: leaves a cross-tenant QUEUED run until cleanup.
+	client := test.PGClient(t)
+	ctx := context.Background()
+	logger := log.NewLogger(log.WithOutput(io.Discard))
+	svc := NewService(client, cipher.EncryptionKey{}, nil, provider.NewBuiltinRegistry(), logger)
+
+	fx := seedInventorySyncFixture(t, ctx, client, "email,full_name,role\nalice@example.com,Alice,Admin\n")
+	require.NoError(t, drainInFlightInventorySyncRunsForSource(t, ctx, client, fx.sourceID))
+	csvV2 := "email,full_name,role\nbob@example.com,Bob,Member\n"
+
+	updated, err := svc.UpdateSource(
+		ctx,
+		fx.scope,
+		UpdateAccessReviewSourceRequest{
+			AccessReviewSourceID: fx.sourceID,
+			CsvData:              new(&csvV2),
+		},
+	)
+	require.NoError(t, err)
+	require.NotNil(t, updated.CsvData)
+	assert.Equal(t, csvV2, *updated.CsvData)
+
+	inflight := &coredata.AccessSourceSyncRun{}
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return inflight.LoadInFlightBySourceID(ctx, conn, fx.scope, fx.sourceID)
+	}))
+	assert.Equal(t, coredata.AccessSourceSyncRunStatusQueued, inflight.Status)
+
+	again, err := svc.UpdateSource(
+		ctx,
+		fx.scope,
+		UpdateAccessReviewSourceRequest{
+			AccessReviewSourceID: fx.sourceID,
+			CsvData:              new(&csvV2),
+		},
+	)
+	require.NoError(t, err)
+	require.NotNil(t, again)
+
+	reused := &coredata.AccessSourceSyncRun{}
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return reused.LoadInFlightBySourceID(ctx, conn, fx.scope, fx.sourceID)
+	}))
+	assert.Equal(t, inflight.ID, reused.ID, "CSV re-upload must reuse the in-flight run")
+
+	require.NoError(t, drainInFlightInventorySyncRunsForSource(t, ctx, client, fx.sourceID))
+}
+
+func TestUpdateSource_NameOnlyDoesNotEnqueueSync(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	logger := log.NewLogger(log.WithOutput(io.Discard))
+	svc := NewService(client, cipher.EncryptionKey{}, nil, provider.NewBuiltinRegistry(), logger)
+
+	fx := seedInventorySyncFixture(t, ctx, client, "email,full_name,role\ncarol@example.com,Carol,Admin\n")
+	require.NoError(t, drainInFlightInventorySyncRunsForSource(t, ctx, client, fx.sourceID))
+	name := "Renamed CSV Roster"
+
+	_, err := svc.UpdateSource(
+		ctx,
+		fx.scope,
+		UpdateAccessReviewSourceRequest{
+			AccessReviewSourceID: fx.sourceID,
+			Name:                 new(&name),
+		},
+	)
+	require.NoError(t, err)
+
+	inflight := &coredata.AccessSourceSyncRun{}
+	err = client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return inflight.LoadInFlightBySourceID(ctx, conn, fx.scope, fx.sourceID)
+	})
+	require.ErrorIs(t, err, coredata.ErrResourceNotFound)
+}
+
+func TestSyncNow_EnqueuesProboMembershipsSource(t *testing.T) {
+	// Not parallel: leaves a cross-tenant QUEUED run until cleanup.
+	client := test.PGClient(t)
+	ctx := context.Background()
+	logger := log.NewLogger(log.WithOutput(io.Discard))
+	svc := NewService(client, cipher.EncryptionKey{}, nil, provider.NewBuiltinRegistry(), logger)
+
+	fx := seedMembershipsInventorySyncFixture(t, ctx, client)
+	require.NoError(t, drainInFlightInventorySyncRunsForSource(t, ctx, client, fx.sourceID))
+
+	run, err := svc.SyncNow(ctx, fx.scope, fx.sourceID)
+	require.NoError(t, err)
+	require.NotNil(t, run)
+	assert.Equal(t, coredata.AccessSourceSyncRunStatusQueued, run.Status)
+
+	var cadence time.Duration
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		source := &coredata.AccessReviewSource{}
+		if err := source.LoadByID(ctx, conn, fx.scope, fx.sourceID); err != nil {
+			return err
+		}
+
+		var err error
+		cadence, err = svc.resolveSourceSyncCadence(ctx, conn, fx.scope, source)
+
+		return err
+	}))
+	assert.Equal(t, time.Hour, cadence)
+
+	require.NoError(t, drainInFlightInventorySyncRunsForSource(t, ctx, client, fx.sourceID))
+}
+
+func TestInventorySyncScheduler_EnqueuesDueMembershipsSource(t *testing.T) {
+	// Not parallel: shares the cross-tenant due-source claim queue.
+	client := test.PGClient(t)
+	ctx := context.Background()
+	logger := log.NewLogger(log.WithOutput(io.Discard))
+	svc := NewService(client, cipher.EncryptionKey{}, nil, provider.NewBuiltinRegistry(), logger)
+
+	fx := seedMembershipsInventorySyncFixture(t, ctx, client)
+	require.NoError(t, drainInFlightInventorySyncRunsForSource(t, ctx, client, fx.sourceID))
+	require.NoError(t, holdDueInventorySyncSchedulesExcept(t, ctx, client, fx.sourceID))
+
+	past := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		source := &coredata.AccessReviewSource{}
+		if err := source.LoadByID(ctx, tx, fx.scope, fx.sourceID); err != nil {
+			return err
+		}
+
+		source.NextSyncAt = &past
+		source.UpdatedAt = time.Now().UTC()
+
+		return source.UpdateInventorySyncSchedule(ctx, tx, fx.scope)
+	}))
+
+	h := &inventorySyncSchedulerHandler{svc: svc, pg: client, logger: logger}
+	claimed, err := h.Claim(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, fx.sourceID, claimed.ID)
+
+	inflight := &coredata.AccessSourceSyncRun{}
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return inflight.LoadInFlightBySourceID(ctx, conn, fx.scope, fx.sourceID)
+	}))
+	assert.Equal(t, coredata.AccessSourceSyncRunStatusQueued, inflight.Status)
+
+	require.NoError(t, drainInFlightInventorySyncRunsForSource(t, ctx, client, fx.sourceID))
+}
+
+func TestResolveInventoryProviderKey_EmptyCSVIsMemberships(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	logger := log.NewLogger(log.WithOutput(io.Discard))
+	svc := NewService(client, cipher.EncryptionKey{}, nil, provider.NewBuiltinRegistry(), logger)
+
+	empty := ""
+	fx := seedInventorySyncFixture(t, ctx, client, "email,full_name,role\n")
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		source := &coredata.AccessReviewSource{}
+		if err := source.LoadByIDForUpdate(ctx, tx, fx.scope, fx.sourceID); err != nil {
+			return err
+		}
+
+		source.CsvData = &empty
+		source.UpdatedAt = time.Now().UTC()
+
+		return source.Update(ctx, tx, fx.scope)
+	}))
+
+	source := &coredata.AccessReviewSource{}
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return source.LoadByID(ctx, conn, fx.scope, fx.sourceID)
+	}))
+
+	var key coredata.AccessInventoryProviderKey
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		var err error
+		key, err = svc.resolveInventoryProviderKey(ctx, conn, fx.scope, source)
+
+		return err
+	}))
+	assert.Equal(t, coredata.AccessInventoryProviderKeyProboMemberships, key)
+}
+
+func seedMembershipsInventorySyncFixture(
+	t *testing.T,
+	ctx context.Context,
+	client *pg.Client,
+) inventorySyncFixture {
+	t.Helper()
+
+	tenantID := gid.NewTenantID()
+	fx := inventorySyncFixture{
+		scope:          coredata.NewScope(tenantID, gid.Nil),
+		organizationID: gid.New(tenantID, coredata.OrganizationEntityType),
+		sourceID:       gid.New(tenantID, coredata.AccessReviewSourceEntityType),
+	}
+	now := time.Now().UTC()
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		org := &coredata.Organization{
+			ID:        fx.organizationID,
+			TenantID:  tenantID,
+			Name:      "Memberships Sync",
+			CreatedAt: now,
+			UpdatedAt: now,
+		}
+		if err := org.Insert(ctx, tx); err != nil {
+			return err
+		}
+
+		nextSyncAt := now.Add(24 * time.Hour)
+		source := &coredata.AccessReviewSource{
+			ID:             fx.sourceID,
+			OrganizationID: fx.organizationID,
+			Name:           "Probo Memberships",
+			NextSyncAt:     &nextSyncAt,
+			CreatedAt:      now,
+			UpdatedAt:      now,
+		}
+		_, err := source.Insert(ctx, tx, fx.scope)
+
+		return err
+	}))
+
+	return fx
+}
