@@ -37,7 +37,10 @@ import type { CursorPaginationVariables } from "#/lib/relay/useCursorPagination"
 import { useCursorPagination } from "#/lib/relay/useCursorPagination";
 
 import { ACCESS_INVENTORY_GRANTS_PAGE_SIZE } from "../_lib/pageSize";
-import { useAccessInventoryGrantsFilters } from "../_lib/useAccessInventoryGrantsFilters";
+import {
+  accessInventoryGrantsFilterKey,
+  useAccessInventoryGrantsFilters,
+} from "../_lib/useAccessInventoryGrantsFilters";
 
 import { AccessInventoryGrantListItem } from "./AccessInventoryGrantListItem";
 import { AccessInventoryGrantsFilters } from "./AccessInventoryGrantsFilters";
@@ -90,10 +93,12 @@ export const accessInventoryGrantsListFragment = graphql`
 
 interface AccessInventoryGrantsListProps {
   organizationKey: AccessInventoryGrantsList_organization$key;
+  loadedFilterKey: string;
 }
 
 export function AccessInventoryGrantsList({
   organizationKey,
+  loadedFilterKey,
 }: AccessInventoryGrantsListProps) {
   const { t } = useTranslation("organizations/access-reviews");
   const { graphqlFilter, hasActiveFilters } = useAccessInventoryGrantsFilters();
@@ -126,9 +131,13 @@ export function AccessInventoryGrantsList({
   );
 
   useEffect(() => {
+    const matchesLoaded
+      = accessInventoryGrantsFilterKey(graphqlFilter) === loadedFilterKey;
     if (skipFirstRefetch.current) {
       skipFirstRefetch.current = false;
-      return;
+      if (matchesLoaded) {
+        return;
+      }
     }
 
     pageVariablesRef.current = {
@@ -140,10 +149,10 @@ export function AccessInventoryGrantsList({
     startRefetchTransition(() => {
       refetch(
         { ...pageVariablesRef.current, filter: graphqlFilter },
-        { fetchPolicy: "store-or-network" },
+        { fetchPolicy: "network-only" },
       );
     });
-  }, [graphqlFilter, refetch]);
+  }, [graphqlFilter, loadedFilterKey, refetch]);
 
   const sources = useMemo(
     () => organization.accessReviewSources.edges.map(({ node }) => ({
@@ -160,6 +169,9 @@ export function AccessInventoryGrantsList({
   const { root, results, empty, pager } = accessInventoryGrantsList({
     pending: isPending,
   });
+  const showPager = edges.length > 0
+    || pageInfo.hasPreviousPage
+    || pageInfo.hasNextPage;
 
   return (
     <div className={root()}>
@@ -175,55 +187,55 @@ export function AccessInventoryGrantsList({
             </Card>
           )
         : (
-            <>
-              <div aria-busy={isPending} className={results()}>
-                <Table variant="surface" layout="fixed">
-                  <TableHeader>
-                    <TableRow>
-                      <TableColumnHeaderCell overflow="truncate">
-                        {t("grants.columns.principal")}
-                      </TableColumnHeaderCell>
-                      <TableColumnHeaderCell overflow="truncate">
-                        {t("grants.columns.resource")}
-                      </TableColumnHeaderCell>
-                      <TableColumnHeaderCell overflow="truncate">
-                        {t("grants.columns.entitlement")}
-                      </TableColumnHeaderCell>
-                      <TableColumnHeaderCell width="10rem" overflow="truncate">
-                        {t("grants.columns.source")}
-                      </TableColumnHeaderCell>
-                      <TableColumnHeaderCell width="8rem">
-                        {t("grants.columns.presence")}
-                      </TableColumnHeaderCell>
-                      <TableColumnHeaderCell width="10rem">
-                        {t("grants.columns.lastSeen")}
-                      </TableColumnHeaderCell>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {edges.map(({ node }) => (
-                      <AccessInventoryGrantListItem
-                        key={node.id}
-                        grantKey={node}
-                      />
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-              <div className={pager()}>
-                <Pagination
-                  hasPrevious={pageInfo.hasPreviousPage}
-                  hasNext={pageInfo.hasNextPage}
-                  previousLabel={t("grants.actions.previous")}
-                  nextLabel={t("grants.actions.next")}
-                  showLabels
-                  disabled={isPending}
-                  onPrevious={goPrevious}
-                  onNext={goNext}
-                />
-              </div>
-            </>
+            <div aria-busy={isPending} className={results()}>
+              <Table variant="surface" layout="fixed">
+                <TableHeader>
+                  <TableRow>
+                    <TableColumnHeaderCell overflow="truncate">
+                      {t("grants.columns.principal")}
+                    </TableColumnHeaderCell>
+                    <TableColumnHeaderCell overflow="truncate">
+                      {t("grants.columns.resource")}
+                    </TableColumnHeaderCell>
+                    <TableColumnHeaderCell overflow="truncate">
+                      {t("grants.columns.entitlement")}
+                    </TableColumnHeaderCell>
+                    <TableColumnHeaderCell width="10rem" overflow="truncate">
+                      {t("grants.columns.source")}
+                    </TableColumnHeaderCell>
+                    <TableColumnHeaderCell width="8rem">
+                      {t("grants.columns.presence")}
+                    </TableColumnHeaderCell>
+                    <TableColumnHeaderCell width="10rem">
+                      {t("grants.columns.lastSeen")}
+                    </TableColumnHeaderCell>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {edges.map(({ node }) => (
+                    <AccessInventoryGrantListItem
+                      key={node.id}
+                      grantKey={node}
+                    />
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
+      {showPager && (
+        <div className={pager()}>
+          <Pagination
+            hasPrevious={pageInfo.hasPreviousPage}
+            hasNext={pageInfo.hasNextPage}
+            previousLabel={t("grants.actions.previous")}
+            nextLabel={t("grants.actions.next")}
+            showLabels
+            disabled={isPending}
+            onPrevious={goPrevious}
+            onNext={goNext}
+          />
+        </div>
+      )}
     </div>
   );
 }

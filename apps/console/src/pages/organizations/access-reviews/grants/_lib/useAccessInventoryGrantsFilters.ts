@@ -54,13 +54,27 @@ function accessInventoryGrantsGraphqlFilter(filters: {
     principalId: null,
     resourceId: null,
     presence: filters.presence,
-    includeDisappeared: filters.includeDisappeared ? true : null,
+    includeDisappeared:
+      filters.includeDisappeared || filters.presence === "DISAPPEARED"
+        ? true
+        : null,
   };
 }
 
 export type AccessInventoryGrantsGraphqlFilter = ReturnType<
   typeof accessInventoryGrantsGraphqlFilter
 >;
+
+export function accessInventoryGrantsFilterKey(
+  filter: object | null | undefined,
+): string {
+  if (filter == null) {
+    return "";
+  }
+  return JSON.stringify(
+    Object.entries(filter).sort(([left], [right]) => left.localeCompare(right)),
+  );
+}
 
 export interface AccessInventoryGrantsFilters {
   sourceId: string | null;
@@ -75,7 +89,7 @@ export interface AccessInventoryGrantsFilters {
 
 export function useAccessInventoryGrantsFilters(): AccessInventoryGrantsFilters {
   const [searchParams, setSearchParams] = useSearchParams();
-  const sourceId = searchParams.get("source");
+  const sourceId = searchParams.get("source") || null;
   const presence = presenceFromParam(searchParams.get("presence") ?? "");
   const includeDisappeared = searchParams.get("includeDisappeared") === "1";
 

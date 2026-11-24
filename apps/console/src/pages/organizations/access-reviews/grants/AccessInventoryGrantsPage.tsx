@@ -30,6 +30,7 @@ import { NotFoundError } from "#/lib/relay/errors";
 
 import { AccessInventoryGrantsList } from "./_components/AccessInventoryGrantsList";
 import { accessInventoryGrantsPage } from "./_components/variants";
+import { accessInventoryGrantsFilterKey } from "./_lib/useAccessInventoryGrantsFilters";
 
 export const accessInventoryGrantsPageQuery = graphql`
   query AccessInventoryGrantsPageQuery(
@@ -87,7 +88,10 @@ export function AccessInventoryGrantsPage({
           </Text>
         </div>
       </div>
-      <AccessInventoryGrantsList organizationKey={organization} />
+      <AccessInventoryGrantsList
+        organizationKey={organization}
+        loadedFilterKey={accessInventoryGrantsFilterKey(queryRef.variables.filter)}
+      />
     </div>
   );
 }
