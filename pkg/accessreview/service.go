@@ -33,6 +33,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/identityfederation"
+	"golang.org/x/sync/errgroup"
 )
 
 type (
@@ -45,12 +46,14 @@ type (
 		logger            *log.Logger
 
 		fetchWorker *worker.Worker[coredata.AccessReviewCampaignSourceFetchAttempt]
+		syncWorker  *worker.Worker[coredata.AccessSourceSyncRun]
 	}
 
 	Option func(*options)
 
 	options struct {
 		fetchInterval time.Duration
+		syncInterval  time.Duration
 		federation    *identityfederation.Issuer
 		registerer    prometheus.Registerer
 	}
@@ -71,6 +74,12 @@ func WithRegisterer(registerer prometheus.Registerer) Option {
 func WithFetchInterval(interval time.Duration) Option {
 	return func(o *options) {
 		o.fetchInterval = interval
+	}
+}
+
+func WithInventorySyncInterval(interval time.Duration) Option {
+	return func(o *options) {
+		o.syncInterval = interval
 	}
 }
 
@@ -127,9 +136,43 @@ func NewService(
 		fetchWorkerOpts...,
 	)
 
+	var syncWorkerOpts []worker.Option
+	if o.syncInterval > 0 {
+		syncWorkerOpts = append(syncWorkerOpts, worker.WithInterval(o.syncInterval))
+	} else {
+		syncWorkerOpts = append(syncWorkerOpts, worker.WithInterval(30*time.Second))
+	}
+
+	syncWorkerOpts = append(syncWorkerOpts, worker.WithMaxConcurrency(20))
+
+	if o.registerer != nil {
+		syncWorkerOpts = append(syncWorkerOpts, worker.WithRegisterer(o.registerer))
+	}
+
+	s.syncWorker = NewInventorySyncWorker(
+		s,
+		pgClient,
+		logger,
+		syncWorkerOpts...,
+	)
+
 	return s
 }
 
 func (s *Service) Run(ctx context.Context) error {
-	return s.fetchWorker.Run(ctx)
+	g, gctx := errgroup.WithContext(ctx)
+
+	g.Go(
+		func() error {
+			return s.fetchWorker.Run(gctx)
+		},
+	)
+
+	g.Go(
+		func() error {
+			return s.syncWorker.Run(gctx)
+		},
+	)
+
+	return g.Wait()
 }
