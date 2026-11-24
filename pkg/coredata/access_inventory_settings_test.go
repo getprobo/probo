@@ -221,6 +221,7 @@ func TestAccessInventoryProviderSyncConfigUpsertAndResolve(t *testing.T) {
 		assert.Equal(t, 15*time.Minute, resolvedDuration)
 
 		var configs coredata.AccessInventoryProviderSyncConfigs
+
 		cursor := page.NewCursor(
 			10,
 			nil,
