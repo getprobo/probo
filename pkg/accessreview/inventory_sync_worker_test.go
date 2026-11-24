@@ -183,6 +183,7 @@ func TestInventorySyncHandler_RecoverStale(t *testing.T) {
 	}
 
 	before := time.Now().UTC()
+
 	require.NoError(t, h.RecoverStale(ctx))
 
 	loaded := loadSyncRun(t, ctx, client, fx, run.ID)
@@ -191,6 +192,7 @@ func TestInventorySyncHandler_RecoverStale(t *testing.T) {
 	assert.Equal(t, staleInventorySyncMessage, *loaded.Error)
 
 	source := &coredata.AccessReviewSource{}
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return source.LoadByID(ctx, conn, fx.scope, fx.sourceID)
 	}))
