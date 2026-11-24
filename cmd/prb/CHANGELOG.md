@@ -4,6 +4,20 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.275.0] - 2026-11-24
+
+### Added
+
+- `document suggestion view` shows the suggestion's thread and, once
+  it is accepted or rejected, the changes it made
+- `document comment list --auto-rejected` filters threads by whether
+  their suggestion was rejected automatically
+
+### Changed
+
+- `document comment create --suggestion` adds the comment to the
+  suggestion's own thread
+
 ## [0.274.0] - 2026-11-23
 
 ### Added
