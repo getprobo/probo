@@ -142,11 +142,14 @@ func TestAccessInventoryGrantUpsertPreservesFirstSeenAt(t *testing.T) {
 			CreatedAt:            firstSeen,
 			UpdatedAt:            firstSeen,
 		}
+
 		inserted, err := principal.Upsert(ctx, tx, fx.scope)
 		if err != nil {
 			return err
 		}
+
 		require.True(t, inserted)
+
 		principalID = principal.ID
 
 		resource := &coredata.AccessInventoryResource{
@@ -161,11 +164,14 @@ func TestAccessInventoryGrantUpsertPreservesFirstSeenAt(t *testing.T) {
 			CreatedAt:            firstSeen,
 			UpdatedAt:            firstSeen,
 		}
+
 		inserted, err = resource.Upsert(ctx, tx, fx.scope)
 		if err != nil {
 			return err
 		}
+
 		require.True(t, inserted)
+
 		resourceID = resource.ID
 
 		grant := &coredata.AccessInventoryGrant{
@@ -185,11 +191,14 @@ func TestAccessInventoryGrantUpsertPreservesFirstSeenAt(t *testing.T) {
 			CreatedAt:               firstSeen,
 			UpdatedAt:               firstSeen,
 		}
+
 		inserted, err = grant.Upsert(ctx, tx, fx.scope)
 		if err != nil {
 			return err
 		}
+
 		require.True(t, inserted)
+
 		grantID = grant.ID
 
 		return nil
@@ -214,10 +223,12 @@ func TestAccessInventoryGrantUpsertPreservesFirstSeenAt(t *testing.T) {
 			CreatedAt:               later,
 			UpdatedAt:               later,
 		}
+
 		inserted, err := grant.Upsert(ctx, tx, fx.scope)
 		if err != nil {
 			return err
 		}
+
 		require.False(t, inserted)
 		assert.Equal(t, grantID, grant.ID)
 		assert.Equal(t, "Administrator", grant.EntitlementDisplayName)
@@ -258,8 +269,10 @@ func TestAccessInventoryGrantRejectsCrossSourcePrincipal(t *testing.T) {
 	tenantB := fxB.scope.GetTenantID()
 	now := time.Now().UTC()
 
-	var principalFromA gid.GID
-	var resourceFromB gid.GID
+	var (
+		principalFromA gid.GID
+		resourceFromB  gid.GID
+	)
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		principal := &coredata.AccessInventoryPrincipal{
@@ -282,6 +295,7 @@ func TestAccessInventoryGrantRejectsCrossSourcePrincipal(t *testing.T) {
 		if _, err := principal.Upsert(ctx, tx, fxA.scope); err != nil {
 			return err
 		}
+
 		principalFromA = principal.ID
 
 		resource := &coredata.AccessInventoryResource{
@@ -299,6 +313,7 @@ func TestAccessInventoryGrantRejectsCrossSourcePrincipal(t *testing.T) {
 		if _, err := resource.Upsert(ctx, tx, fxB.scope); err != nil {
 			return err
 		}
+
 		resourceFromB = resource.ID
 
 		return nil
@@ -322,6 +337,7 @@ func TestAccessInventoryGrantRejectsCrossSourcePrincipal(t *testing.T) {
 			CreatedAt:               now,
 			UpdatedAt:               now,
 		}
+
 		_, err := grant.Upsert(ctx, tx, fxB.scope)
 
 		return err
@@ -329,6 +345,7 @@ func TestAccessInventoryGrantRejectsCrossSourcePrincipal(t *testing.T) {
 	require.Error(t, err)
 
 	var pgErr *pgconn.PgError
+
 	require.True(t, errors.As(err, &pgErr))
 	assert.Equal(t, "23503", pgErr.Code)
 }
