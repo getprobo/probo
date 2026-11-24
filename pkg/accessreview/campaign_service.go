@@ -754,9 +754,9 @@ func (s *Service) enqueueSourceFetches(
 		}
 
 		source := &coredata.AccessReviewSource{}
-		if err := source.LoadByID(ctx, tx, scope, *campaignSource.AccessReviewSourceID); err != nil {
+		if err := source.LoadByIDForUpdate(ctx, tx, scope, *campaignSource.AccessReviewSourceID); err != nil {
 			return fmt.Errorf(
-				"cannot load access source %s for inventory sync: %w",
+				"cannot lock access source %s for inventory sync: %w",
 				*campaignSource.AccessReviewSourceID,
 				err,
 			)

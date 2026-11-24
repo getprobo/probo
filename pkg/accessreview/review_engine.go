@@ -106,6 +106,8 @@ func (s *Service) FetchSource(
 		return 0, fmt.Errorf("cannot list accounts from source %s: %w", source.Name, err)
 	}
 
+	// Roster observation time — before write locks, for stale dual-write checks.
+	observedAt := time.Now()
 	fetchedCount = len(accounts)
 
 	err = s.pg.WithTx(
@@ -125,8 +127,6 @@ func (s *Service) FetchSource(
 			if current.Status != coredata.AccessReviewCampaignStatusInProgress {
 				return errCampaignNotInProgress
 			}
-
-			now := time.Now()
 
 			for _, account := range accounts {
 				accountKey := normalizeAccountKey(account.Email, account.ExternalID)
@@ -152,8 +152,8 @@ func (s *Service) FetchSource(
 					Flags:                        []coredata.AccessReviewEntryFlag{},
 					FlagReasons:                  []string{},
 					Decision:                     coredata.AccessReviewEntryDecisionPending,
-					CreatedAt:                    now,
-					UpdatedAt:                    now,
+					CreatedAt:                    observedAt,
+					UpdatedAt:                    observedAt,
 				}
 
 				if err := entry.Upsert(ctx, conn, scope); err != nil {
@@ -165,9 +165,9 @@ func (s *Service) FetchSource(
 				ctx,
 				conn,
 				scope,
-				source,
+				source.ID,
 				accounts,
-				now,
+				observedAt,
 			); err != nil {
 				return err
 			}
@@ -183,18 +183,32 @@ func (s *Service) FetchSource(
 }
 
 // dualWriteInventoryFromCampaignFetch refreshes live inventory from the
-// campaign fetch roster. No-op when a sync run is already in flight so
-// soft-disappear stays single-writer per source.
+// campaign fetch roster. Skips when the source is gone (campaign snapshot
+// still commits), a sync is already in flight, or a newer successful sync
+// already landed after this roster was observed.
 func (s *Service) dualWriteInventoryFromCampaignFetch(
 	ctx context.Context,
 	tx pg.Tx,
 	scope coredata.Scoper,
-	source *coredata.AccessReviewSource,
+	sourceID gid.GID,
 	accounts []drivers.AccountRecord,
 	observedAt time.Time,
 ) error {
+	source := &coredata.AccessReviewSource{}
+	err := source.LoadByIDForUpdate(ctx, tx, scope, sourceID)
+	if errors.Is(err, coredata.ErrResourceNotFound) {
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("cannot lock access source: %w", err)
+	}
+
+	if source.LastSuccessfulSyncAt != nil && !observedAt.After(*source.LastSuccessfulSyncAt) {
+		return nil
+	}
+
 	existing := &coredata.AccessSourceSyncRun{}
-	err := existing.LoadInFlightBySourceID(ctx, tx, scope, source.ID)
+	err = existing.LoadInFlightBySourceID(ctx, tx, scope, source.ID)
 	if err == nil {
 		return nil
 	}

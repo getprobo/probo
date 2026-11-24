@@ -24,12 +24,14 @@ import (
 	"context"
 	"io"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/internal/test"
+	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/connectorprotocol/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
@@ -185,4 +187,87 @@ func TestStartCampaign_EnqueuesInventorySync(t *testing.T) {
 	}))
 	require.Len(t, attempts, 1)
 	assert.Equal(t, coredata.AccessReviewCampaignSourceFetchStatusQueued, attempts[0].Status)
+}
+
+func TestDualWriteInventory_SkipsWhenSourceDeleted(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	logger := log.NewLogger(log.WithOutput(io.Discard))
+	svc := NewService(client, cipher.EncryptionKey{}, nil, provider.NewBuiltinRegistry(), logger)
+
+	fx := seedFetchFixture(t, ctx, client, fetchFixtureCSV)
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		source := &coredata.AccessReviewSource{ID: fx.sourceID}
+
+		return source.Delete(ctx, tx, fx.scope)
+	}))
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return svc.dualWriteInventoryFromCampaignFetch(
+			ctx,
+			tx,
+			fx.scope,
+			fx.sourceID,
+			[]drivers.AccountRecord{{Email: "alice@example.com", Roles: []string{"Admin"}}},
+			time.Now().UTC(),
+		)
+	}))
+
+	inventoryFX := inventorySyncFixture{
+		scope:          fx.scope,
+		organizationID: fx.organizationID,
+		sourceID:       fx.sourceID,
+	}
+	assert.Empty(t, loadInventoryGrants(t, ctx, client, inventoryFX))
+}
+
+func TestDualWriteInventory_SkipsStaleRoster(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	logger := log.NewLogger(log.WithOutput(io.Discard))
+	svc := NewService(client, cipher.EncryptionKey{}, nil, provider.NewBuiltinRegistry(), logger)
+
+	csvData := "email,full_name,role\ndave@example.com,Dave,Admin\n"
+	fx := seedFetchFixture(t, ctx, client, csvData)
+
+	observedAt := time.Now().UTC().Add(-time.Minute)
+	newerSyncAt := observedAt.Add(30 * time.Second)
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		source := &coredata.AccessReviewSource{}
+		if err := source.LoadByID(ctx, tx, fx.scope, fx.sourceID); err != nil {
+			return err
+		}
+
+		source.LastSuccessfulSyncAt = &newerSyncAt
+		source.UpdatedAt = newerSyncAt
+
+		return source.UpdateInventorySyncSchedule(ctx, tx, fx.scope)
+	}))
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return svc.dualWriteInventoryFromCampaignFetch(
+			ctx,
+			tx,
+			fx.scope,
+			fx.sourceID,
+			[]drivers.AccountRecord{{Email: "dave@example.com", Roles: []string{"Admin"}}},
+			observedAt,
+		)
+	}))
+
+	inventoryFX := inventorySyncFixture{
+		scope:          fx.scope,
+		organizationID: fx.organizationID,
+		sourceID:       fx.sourceID,
+	}
+	assert.Empty(t, loadInventoryGrants(t, ctx, client, inventoryFX))
+
+	_, err := svc.GetLatestAccessSourceSyncRunForSourceID(ctx, fx.scope, fx.sourceID)
+	require.ErrorIs(t, err, coredata.ErrResourceNotFound)
 }
