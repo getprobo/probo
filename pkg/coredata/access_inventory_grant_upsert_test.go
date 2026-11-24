@@ -254,7 +254,8 @@ func TestAccessInventoryGrantRejectsCrossSourcePrincipal(t *testing.T) {
 
 	fxA := seedAccessInventoryFixture(t, ctx, client)
 	fxB := seedAccessInventoryFixture(t, ctx, client)
-	tenantID := fxA.scope.GetTenantID()
+	tenantA := fxA.scope.GetTenantID()
+	tenantB := fxB.scope.GetTenantID()
 	now := time.Now().UTC()
 
 	var principalFromA gid.GID
@@ -262,7 +263,7 @@ func TestAccessInventoryGrantRejectsCrossSourcePrincipal(t *testing.T) {
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		principal := &coredata.AccessInventoryPrincipal{
-			ID:                   gid.New(tenantID, coredata.AccessInventoryPrincipalEntityType),
+			ID:                   gid.New(tenantA, coredata.AccessInventoryPrincipalEntityType),
 			OrganizationID:       fxA.organizationID,
 			AccessReviewSourceID: fxA.sourceID,
 			PrincipalKey:         "cross-source@example.com",
@@ -284,7 +285,7 @@ func TestAccessInventoryGrantRejectsCrossSourcePrincipal(t *testing.T) {
 		principalFromA = principal.ID
 
 		resource := &coredata.AccessInventoryResource{
-			ID:                   gid.New(tenantID, coredata.AccessInventoryResourceEntityType),
+			ID:                   gid.New(tenantB, coredata.AccessInventoryResourceEntityType),
 			OrganizationID:       fxB.organizationID,
 			AccessReviewSourceID: fxB.sourceID,
 			ResourceKey:          "system",
@@ -305,7 +306,7 @@ func TestAccessInventoryGrantRejectsCrossSourcePrincipal(t *testing.T) {
 
 	err := client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		grant := &coredata.AccessInventoryGrant{
-			ID:                      gid.New(tenantID, coredata.AccessInventoryGrantEntityType),
+			ID:                      gid.New(tenantB, coredata.AccessInventoryGrantEntityType),
 			OrganizationID:          fxB.organizationID,
 			AccessReviewSourceID:    fxB.sourceID,
 			PrincipalID:             principalFromA,
