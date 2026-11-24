@@ -35,5 +35,46 @@
       "description": "Er ging iets mis bij het laden van toegangsrechten. Probeer het opnieuw.",
       "retry": "Opnieuw proberen"
     }
+  },
+  "grantDetail": {
+    "back": "Live toegang",
+    "open": "Open recht voor {{name}}",
+    "notFound": "Toegangsrecht niet gevonden",
+    "properties": {
+      "title": "Details"
+    },
+    "fields": {
+      "principal": "Principal",
+      "resource": "Resource",
+      "entitlement": "Recht",
+      "source": "Bron",
+      "presence": "Aanwezigheid",
+      "missingSyncs": "Ontbrekende syncs",
+      "firstSeen": "Eerst gezien",
+      "lastSeen": "Laatst gezien",
+      "providerChanged": "Provider gewijzigd"
+    },
+    "values": {
+      "empty": "—"
+    },
+    "changelog": {
+      "title": "Wijzigingslog ({{count}})",
+      "description": "Geobserveerde wijzigingen voor dit recht, nieuwste eerst.",
+      "empty": "Nog geen wijzigingen geregistreerd",
+      "before": "Voor",
+      "after": "Na",
+      "observedAt": "Geobserveerd {{value}}",
+      "providerOccurredAt": "Provider {{value}}"
+    },
+    "changeTypes": {
+      "APPEARED": "Verschenen",
+      "DISAPPEARED": "Verdwenen",
+      "ATTRIBUTE_CHANGED": "Attribuut gewijzigd"
+    },
+    "error": {
+      "title": "Recht laden mislukt",
+      "description": "Er ging iets mis bij het laden van dit toegangsrecht. Probeer het opnieuw.",
+      "retry": "Opnieuw proberen"
+    }
   }
 }

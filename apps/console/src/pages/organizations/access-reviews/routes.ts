@@ -23,15 +23,28 @@ import type { AppRoute } from "@probo/routes";
 
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 
+import { AccessInventoryGrantPageSkeleton } from "./grants/AccessInventoryGrantPageSkeleton";
 import { AccessInventoryGrantsPageSkeleton } from "./grants/AccessInventoryGrantsPageSkeleton";
 
 export const accessReviewRoutes = [
   {
     path: "grants",
-    Fallback: AccessInventoryGrantsPageSkeleton,
-    Component: lazy(
-      () => import("./grants/AccessInventoryGrantsPageLoader"),
-    ),
+    children: [
+      {
+        index: true,
+        Fallback: AccessInventoryGrantsPageSkeleton,
+        Component: lazy(
+          () => import("./grants/AccessInventoryGrantsPageLoader"),
+        ),
+      },
+      {
+        path: ":grantId",
+        Fallback: AccessInventoryGrantPageSkeleton,
+        Component: lazy(
+          () => import("./grants/AccessInventoryGrantPageLoader"),
+        ),
+      },
+    ],
   },
   {
     path: "campaigns",

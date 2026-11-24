@@ -35,5 +35,46 @@
       "description": "Something went wrong while loading access grants. Try again.",
       "retry": "Try again"
     }
+  },
+  "grantDetail": {
+    "back": "Live access",
+    "open": "Open grant for {{name}}",
+    "notFound": "Access grant not found",
+    "properties": {
+      "title": "Details"
+    },
+    "fields": {
+      "principal": "Principal",
+      "resource": "Resource",
+      "entitlement": "Entitlement",
+      "source": "Source",
+      "presence": "Presence",
+      "missingSyncs": "Missing syncs",
+      "firstSeen": "First seen",
+      "lastSeen": "Last seen",
+      "providerChanged": "Provider changed"
+    },
+    "values": {
+      "empty": "—"
+    },
+    "changelog": {
+      "title": "Changelog ({{count}})",
+      "description": "Observed changes for this grant, newest first.",
+      "empty": "No changes recorded yet",
+      "before": "Before",
+      "after": "After",
+      "observedAt": "Observed {{value}}",
+      "providerOccurredAt": "Provider {{value}}"
+    },
+    "changeTypes": {
+      "APPEARED": "Appeared",
+      "DISAPPEARED": "Disappeared",
+      "ATTRIBUTE_CHANGED": "Attribute changed"
+    },
+    "error": {
+      "title": "Could not load grant",
+      "description": "Something went wrong while loading this access grant. Try again.",
+      "retry": "Try again"
+    }
   }
 }
