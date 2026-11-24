@@ -85,13 +85,14 @@ func ResolveSyncCadence(
 }
 
 // ResolveHideAfterMissingSyncs returns the configured X, or the product
-// default when no settings row exists yet.
+// default when no settings row exists yet. Out-of-range stored values are
+// clamped to the supported 1–30 band.
 func ResolveHideAfterMissingSyncs(settings *AccessInventorySettings) int {
 	if settings == nil {
 		return DefaultHideAfterMissingSyncs
 	}
 
-	return settings.HideAfterMissingSyncs
+	return ClampHideAfterMissingSyncs(settings.HideAfterMissingSyncs)
 }
 
 // ClampHideAfterMissingSyncs bounds X to the supported range.

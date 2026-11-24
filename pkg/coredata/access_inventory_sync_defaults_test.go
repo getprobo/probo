@@ -152,6 +152,20 @@ func TestResolveHideAfterMissingSyncs(t *testing.T) {
 			&coredata.AccessInventorySettings{HideAfterMissingSyncs: 5},
 		),
 	)
+	assert.Equal(
+		t,
+		coredata.MinHideAfterMissingSyncs,
+		coredata.ResolveHideAfterMissingSyncs(
+			&coredata.AccessInventorySettings{HideAfterMissingSyncs: 0},
+		),
+	)
+	assert.Equal(
+		t,
+		coredata.MaxHideAfterMissingSyncs,
+		coredata.ResolveHideAfterMissingSyncs(
+			&coredata.AccessInventorySettings{HideAfterMissingSyncs: 100},
+		),
+	)
 }
 
 func TestClampHideAfterMissingSyncs(t *testing.T) {
