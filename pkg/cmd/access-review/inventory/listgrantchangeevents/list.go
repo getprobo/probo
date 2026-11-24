@@ -22,6 +22,7 @@ package listgrantchangeevents
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
@@ -90,14 +91,24 @@ type changeEventNode struct {
 	After              *attributeSnapshot `json:"after"`
 }
 
+func formatSnapshot(s *attributeSnapshot) string {
+	if s == nil {
+		return "-"
+	}
+
+	return fmt.Sprintf("%s/%s", s.Presence, s.EntitlementDisplayName)
+}
+
 func NewCmdListGrantChangeEvents(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagLimit      int
-		flagAfter      string
-		flagOrderBy    string
-		flagOrderDir   string
-		flagChangeType []string
-		flagOutput     *string
+		flagLimit                int
+		flagAfter                string
+		flagOrderBy              string
+		flagOrderDir             string
+		flagChangeType           []string
+		flagObservedAtOnOrAfter  string
+		flagObservedAtOnOrBefore string
+		flagOutput               *string
 	)
 
 	cmd := &cobra.Command{
@@ -149,10 +160,26 @@ func NewCmdListGrantChangeEvents(f *cmdutil.Factory) *cobra.Command {
 				},
 			}
 
+			filter := map[string]any{}
 			if len(flagChangeType) > 0 {
-				variables["filter"] = map[string]any{
-					"changeTypes": flagChangeType,
+				filter["changeTypes"] = flagChangeType
+			}
+			if flagObservedAtOnOrAfter != "" {
+				if _, err := time.Parse(time.RFC3339, flagObservedAtOnOrAfter); err != nil {
+					return fmt.Errorf("invalid --observed-at-on-or-after %q: use RFC3339", flagObservedAtOnOrAfter)
 				}
+
+				filter["observedAtOnOrAfter"] = flagObservedAtOnOrAfter
+			}
+			if flagObservedAtOnOrBefore != "" {
+				if _, err := time.Parse(time.RFC3339, flagObservedAtOnOrBefore); err != nil {
+					return fmt.Errorf("invalid --observed-at-on-or-before %q: use RFC3339", flagObservedAtOnOrBefore)
+				}
+
+				filter["observedAtOnOrBefore"] = flagObservedAtOnOrBefore
+			}
+			if len(filter) > 0 {
+				variables["filter"] = filter
 			}
 
 			events, totalCount, nextCursor, err := api.Paginate(
@@ -180,9 +207,15 @@ func NewCmdListGrantChangeEvents(f *cmdutil.Factory) *cobra.Command {
 					Empty:      "No change events found for this grant.",
 					Noun:       "grant change events",
 					NextCursor: nextCursor,
-					Headers:    []string{"ID", "TYPE", "EFFECTIVE_AT"},
+					Headers:    []string{"ID", "TYPE", "BEFORE", "AFTER", "EFFECTIVE_AT"},
 					Row: func(e changeEventNode) ([]string, error) {
-						return []string{e.ID, e.ChangeType, e.EffectiveAt}, nil
+						return []string{
+							e.ID,
+							e.ChangeType,
+							formatSnapshot(e.Before),
+							formatSnapshot(e.After),
+							e.EffectiveAt,
+						}, nil
 					},
 				},
 			)
@@ -198,6 +231,18 @@ func NewCmdListGrantChangeEvents(f *cmdutil.Factory) *cobra.Command {
 		"change-type",
 		nil,
 		"Filter by change type (APPEARED, DISAPPEARED, ATTRIBUTE_CHANGED)",
+	)
+	cmd.Flags().StringVar(
+		&flagObservedAtOnOrAfter,
+		"observed-at-on-or-after",
+		"",
+		"Include events observed at or after this RFC3339 timestamp",
+	)
+	cmd.Flags().StringVar(
+		&flagObservedAtOnOrBefore,
+		"observed-at-on-or-before",
+		"",
+		"Include events observed at or before this RFC3339 timestamp",
 	)
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 

@@ -270,6 +270,7 @@ func TestAccessInventory_ChangeEventsChangelogAndFeed(t *testing.T) {
 	assert.Equal(t, "APPEARED", grant.ChangeEvents.Edges[0].Node.ChangeType)
 	require.NotNil(t, grant.ChangeEvents.Edges[0].Node.After)
 	assert.Equal(t, "PRESENT", grant.ChangeEvents.Edges[0].Node.After.Presence)
+	assert.Equal(t, "admin", grant.ChangeEvents.Edges[0].Node.After.EntitlementDisplayName)
 	assert.NotEmpty(t, grant.ChangeEvents.Edges[0].Node.EffectiveAt)
 
 	require.GreaterOrEqual(t, result.Node.AccessInventoryChangeEvents.TotalCount, 1)

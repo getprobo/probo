@@ -64,12 +64,7 @@ func (e AccessInventoryChangeEvent) CursorKey(orderBy AccessInventoryChangeEvent
 	case AccessInventoryChangeEventOrderFieldObservedAt:
 		return page.NewCursorKey(e.ID, e.ObservedAt)
 	case AccessInventoryChangeEventOrderFieldEffectiveAt:
-		effectiveAt := e.ObservedAt
-		if e.ProviderOccurredAt != nil {
-			effectiveAt = *e.ProviderOccurredAt
-		}
-
-		return page.NewCursorKey(e.ID, effectiveAt)
+		return page.NewCursorKey(e.ID, e.EffectiveAt())
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))

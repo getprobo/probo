@@ -22,6 +22,7 @@ package listchangeevents
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
@@ -57,6 +58,14 @@ query AccessInventoryChangeEventList(
             providerOccurredAt
             effectiveAt
             createdAt
+            before {
+              entitlementDisplayName
+              presence
+            }
+            after {
+              entitlementDisplayName
+              presence
+            }
           }
         }
         pageInfo {
@@ -69,28 +78,45 @@ query AccessInventoryChangeEventList(
 }
 `
 
+type attributeSnapshot struct {
+	EntitlementDisplayName string `json:"entitlementDisplayName"`
+	Presence               string `json:"presence"`
+}
+
 type changeEventNode struct {
-	ID                 string  `json:"id"`
-	ChangeType         string  `json:"changeType"`
-	PrincipalKey       string  `json:"principalKey"`
-	ResourceKey        string  `json:"resourceKey"`
-	EntitlementKey     string  `json:"entitlementKey"`
-	ObservedAt         string  `json:"observedAt"`
-	ProviderOccurredAt *string `json:"providerOccurredAt"`
-	EffectiveAt        string  `json:"effectiveAt"`
-	CreatedAt          string  `json:"createdAt"`
+	ID                 string             `json:"id"`
+	ChangeType         string             `json:"changeType"`
+	PrincipalKey       string             `json:"principalKey"`
+	ResourceKey        string             `json:"resourceKey"`
+	EntitlementKey     string             `json:"entitlementKey"`
+	ObservedAt         string             `json:"observedAt"`
+	ProviderOccurredAt *string            `json:"providerOccurredAt"`
+	EffectiveAt        string             `json:"effectiveAt"`
+	CreatedAt          string             `json:"createdAt"`
+	Before             *attributeSnapshot `json:"before"`
+	After              *attributeSnapshot `json:"after"`
+}
+
+func formatSnapshot(s *attributeSnapshot) string {
+	if s == nil {
+		return "-"
+	}
+
+	return fmt.Sprintf("%s/%s", s.Presence, s.EntitlementDisplayName)
 }
 
 func NewCmdListChangeEvents(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagOrg        string
-		flagLimit      int
-		flagAfter      string
-		flagOrderBy    string
-		flagOrderDir   string
-		flagSourceID   string
-		flagChangeType []string
-		flagOutput     *string
+		flagOrg                  string
+		flagLimit                int
+		flagAfter                string
+		flagOrderBy              string
+		flagOrderDir             string
+		flagSourceID             string
+		flagChangeType           []string
+		flagObservedAtOnOrAfter  string
+		flagObservedAtOnOrBefore string
+		flagOutput               *string
 	)
 
 	cmd := &cobra.Command{
@@ -158,6 +184,20 @@ func NewCmdListChangeEvents(f *cmdutil.Factory) *cobra.Command {
 			if len(flagChangeType) > 0 {
 				filter["changeTypes"] = flagChangeType
 			}
+			if flagObservedAtOnOrAfter != "" {
+				if _, err := time.Parse(time.RFC3339, flagObservedAtOnOrAfter); err != nil {
+					return fmt.Errorf("invalid --observed-at-on-or-after %q: use RFC3339", flagObservedAtOnOrAfter)
+				}
+
+				filter["observedAtOnOrAfter"] = flagObservedAtOnOrAfter
+			}
+			if flagObservedAtOnOrBefore != "" {
+				if _, err := time.Parse(time.RFC3339, flagObservedAtOnOrBefore); err != nil {
+					return fmt.Errorf("invalid --observed-at-on-or-before %q: use RFC3339", flagObservedAtOnOrBefore)
+				}
+
+				filter["observedAtOnOrBefore"] = flagObservedAtOnOrBefore
+			}
 			if len(filter) > 0 {
 				variables["filter"] = filter
 			}
@@ -187,7 +227,16 @@ func NewCmdListChangeEvents(f *cmdutil.Factory) *cobra.Command {
 					Empty:      "No access inventory change events found.",
 					Noun:       "access inventory change events",
 					NextCursor: nextCursor,
-					Headers:    []string{"ID", "TYPE", "PRINCIPAL", "RESOURCE", "ENTITLEMENT", "EFFECTIVE_AT"},
+					Headers: []string{
+						"ID",
+						"TYPE",
+						"PRINCIPAL",
+						"RESOURCE",
+						"ENTITLEMENT",
+						"BEFORE",
+						"AFTER",
+						"EFFECTIVE_AT",
+					},
 					Row: func(e changeEventNode) ([]string, error) {
 						return []string{
 							e.ID,
@@ -195,6 +244,8 @@ func NewCmdListChangeEvents(f *cmdutil.Factory) *cobra.Command {
 							e.PrincipalKey,
 							e.ResourceKey,
 							e.EntitlementKey,
+							formatSnapshot(e.Before),
+							formatSnapshot(e.After),
 							e.EffectiveAt,
 						}, nil
 					},
@@ -214,6 +265,18 @@ func NewCmdListChangeEvents(f *cmdutil.Factory) *cobra.Command {
 		"change-type",
 		nil,
 		"Filter by change type (APPEARED, DISAPPEARED, ATTRIBUTE_CHANGED)",
+	)
+	cmd.Flags().StringVar(
+		&flagObservedAtOnOrAfter,
+		"observed-at-on-or-after",
+		"",
+		"Include events observed at or after this RFC3339 timestamp",
+	)
+	cmd.Flags().StringVar(
+		&flagObservedAtOnOrBefore,
+		"observed-at-on-or-before",
+		"",
+		"Include events observed at or before this RFC3339 timestamp",
 	)
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 

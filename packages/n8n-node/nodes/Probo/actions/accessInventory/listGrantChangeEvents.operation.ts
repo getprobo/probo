@@ -55,6 +55,32 @@ export const description: INodeProperties[] = [
 		description: 'Filter by change event type',
 	},
 	{
+		displayName: 'Observed At On Or After',
+		name: 'observedAtOnOrAfter',
+		type: 'dateTime',
+		displayOptions: {
+			show: {
+				resource: ['accessInventory'],
+				operation: ['listGrantChangeEvents'],
+			},
+		},
+		default: '',
+		description: 'Include events observed at or after this time',
+	},
+	{
+		displayName: 'Observed At On Or Before',
+		name: 'observedAtOnOrBefore',
+		type: 'dateTime',
+		displayOptions: {
+			show: {
+				resource: ['accessInventory'],
+				operation: ['listGrantChangeEvents'],
+			},
+		},
+		default: '',
+		description: 'Include events observed at or before this time',
+	},
+	{
 		displayName: 'Return All',
 		name: 'returnAll',
 		type: 'boolean',
@@ -92,12 +118,20 @@ export async function execute(
 ): Promise<INodeExecutionData[]> {
 	const grantId = this.getNodeParameter('grantId', itemIndex) as string;
 	const changeTypes = this.getNodeParameter('changeTypes', itemIndex, []) as string[];
+	const observedAtOnOrAfter = this.getNodeParameter('observedAtOnOrAfter', itemIndex, '') as string;
+	const observedAtOnOrBefore = this.getNodeParameter('observedAtOnOrBefore', itemIndex, '') as string;
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
 
 	const filter: IDataObject = {};
 	if (changeTypes.length > 0) {
 		filter.changeTypes = changeTypes;
+	}
+	if (observedAtOnOrAfter) {
+		filter.observedAtOnOrAfter = observedAtOnOrAfter;
+	}
+	if (observedAtOnOrBefore) {
+		filter.observedAtOnOrBefore = observedAtOnOrBefore;
 	}
 
 	const query = `

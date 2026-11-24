@@ -322,26 +322,13 @@ func NewAccessInventoryChangeEvent(e *coredata.AccessInventoryChangeEvent) *Acce
 func newAccessInventoryGrantAttributeSnapshot(
 	raw *json.RawMessage,
 ) *AccessInventoryGrantAttributeSnapshot {
-	if raw == nil {
-		return nil
-	}
-
-	var snapshot struct {
-		EntitlementDisplayName string `json:"entitlement_display_name"`
-		Presence               string `json:"presence"`
-	}
-
-	if err := json.Unmarshal(*raw, &snapshot); err != nil {
-		return nil
-	}
-
-	presence := coredata.AccessInventoryGrantPresence(snapshot.Presence)
-	if !presence.IsValid() {
+	snapshot := coredata.DecodeAccessInventoryGrantAttributeSnapshot(raw)
+	if snapshot == nil {
 		return nil
 	}
 
 	return &AccessInventoryGrantAttributeSnapshot{
 		EntitlementDisplayName: snapshot.EntitlementDisplayName,
-		Presence:               presence,
+		Presence:               snapshot.Presence,
 	}
 }

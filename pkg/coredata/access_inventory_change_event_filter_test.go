@@ -63,11 +63,27 @@ func TestAccessInventoryChangeEventFilter_SQLArguments(t *testing.T) {
 		changeTypes,
 	)
 
-	fragment := filter.SQLFragment()
-	assert.Contains(t, fragment, "filter_access_review_source_id")
-	assert.Contains(t, fragment, "filter_change_types")
-	assert.Contains(t, fragment, "filter_observed_at_on_or_after")
-	assert.Contains(t, fragment, "filter_observed_at_on_or_before")
+	fragment := compactSQL(filter.SQLFragment())
+	assert.Contains(
+		t,
+		fragment,
+		"WHEN @filter_access_review_source_id::text IS NOT NULL THEN access_review_source_id = @filter_access_review_source_id ELSE TRUE END",
+	)
+	assert.Contains(
+		t,
+		fragment,
+		"WHEN @filter_change_types::access_inventory_change_type[] IS NOT NULL THEN change_type = ANY(@filter_change_types::access_inventory_change_type[]) ELSE TRUE END",
+	)
+	assert.Contains(
+		t,
+		fragment,
+		"WHEN @filter_observed_at_on_or_after::timestamptz IS NOT NULL THEN observed_at >= @filter_observed_at_on_or_after ELSE TRUE END",
+	)
+	assert.Contains(
+		t,
+		fragment,
+		"WHEN @filter_observed_at_on_or_before::timestamptz IS NOT NULL THEN observed_at <= @filter_observed_at_on_or_before ELSE TRUE END",
+	)
 }
 
 func TestAccessInventoryChangeEventFilter_NilDefaults(t *testing.T) {
