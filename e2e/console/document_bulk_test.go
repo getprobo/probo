@@ -51,7 +51,7 @@ func TestDocument_Bulk(t *testing.T) {
 		{name: "Export", run: documentBulkExport},
 		{name: "CancelSignatureRequest", run: documentBulkCancelSignatureRequest},
 		{name: "ArchiveViewerForbidden", run: documentBulkArchiveViewerForbidden},
-		{name: "ExportViewerForbidden", run: documentBulkExportViewerForbidden},
+		{name: "ExportViewerAllowed", run: documentBulkExportViewerAllowed},
 		{name: "CancelSignatureViewerForbidden", run: documentBulkCancelSignatureViewerForbidden},
 	}
 
@@ -313,14 +313,20 @@ func documentBulkArchiveViewerForbidden(t *testing.T, actors documentBulkActors)
 	testutil.RequireForbiddenError(t, err, "viewer must not bulk archive documents")
 }
 
-func documentBulkExportViewerForbidden(t *testing.T, actors documentBulkActors) {
+func documentBulkExportViewerAllowed(t *testing.T, actors documentBulkActors) {
 	owner := actors.owner.ForTest(t)
 	viewer := actors.viewer.ForTest(t)
 
 	documentID, _ := createTestDocument(t, owner)
 	approveTestDocument(t, owner, documentID)
 
-	_, err := viewer.Do(`
+	var result struct {
+		BulkExportDocuments struct {
+			ExportJobID string `json:"exportJobId"`
+		} `json:"bulkExportDocuments"`
+	}
+
+	err := viewer.Execute(`
 		mutation($input: BulkExportDocumentsInput!) {
 			bulkExportDocuments(input: $input) {
 				exportJobId
@@ -332,8 +338,9 @@ func documentBulkExportViewerForbidden(t *testing.T, actors documentBulkActors) 
 			"withWatermark":  false,
 			"withSignatures": false,
 		},
-	})
-	testutil.RequireForbiddenError(t, err, "viewer must not bulk export documents")
+	}, &result)
+	require.NoError(t, err)
+	assert.NotEmpty(t, result.BulkExportDocuments.ExportJobID)
 }
 
 func documentBulkCancelSignatureViewerForbidden(t *testing.T, actors documentBulkActors) {

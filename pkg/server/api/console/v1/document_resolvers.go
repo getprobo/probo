@@ -1548,7 +1548,7 @@ func (r *mutationResolver) BulkExportDocuments(ctx context.Context, input types.
 	var scope *coredata.Scope
 
 	for _, documentID := range input.DocumentIds {
-		authorized, err := r.authorize(ctx, documentID, probo.ActionDocumentVersionExport)
+		authorized, err := r.authorize(ctx, documentID, probo.ActionDocumentVersionExportPDF)
 		if err != nil {
 			return nil, err
 		}

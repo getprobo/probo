@@ -152,7 +152,6 @@ const (
 	ActionDocumentVersionReject       = "core:document-version:reject"
 	ActionDocumentVersionApprovalList = "core:document-version:approval-list"
 	ActionDocumentVersionPublish      = "core:document-version:publish"
-	ActionDocumentVersionExport       = "core:document-version:export"
 
 	// DocumentRevision actions
 	ActionDocumentRevisionGet  = "core:document-revision:get"
