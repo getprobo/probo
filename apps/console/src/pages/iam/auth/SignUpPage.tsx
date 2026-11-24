@@ -32,7 +32,7 @@ import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation, usePreloadedQuery, useQueryLoader } from "react-relay";
-import { useSearchParams } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { SignUpPageMutation } from "#/__generated__/iam/SignUpPageMutation.graphql";
@@ -41,6 +41,7 @@ import type { SignUpPageQuery } from "#/__generated__/iam/SignUpPageQuery.graphq
 const signUpPageQuery = graphql`
   query SignUpPageQuery {
     signUpEnabled
+    signUpEmailVerificationNonce
   }
 `;
 
@@ -49,6 +50,7 @@ const signUpMutation = graphql`
     signUp(input: $input) {
       identity {
         id
+        emailVerified
       }
     }
   }
@@ -57,6 +59,7 @@ const signUpMutation = graphql`
 function SignUpPageContent(props: { queryRef: NonNullable<ReturnType<typeof useQueryLoader<SignUpPageQuery>>[0]> }) {
   const { t } = useTranslation();
   const toast = useToast();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [signedUpEmail, setSignedUpEmail] = useState("");
 
@@ -66,22 +69,38 @@ function SignUpPageContent(props: { queryRef: NonNullable<ReturnType<typeof useQ
 
   const [signUp, isSigningUp] = useMutation<SignUpPageMutation>(signUpMutation);
 
-  const onSubmit = (email: string, password: string, fullName: string) => {
+  const onSubmit = (email: string, password: string, fullName: string, emailVerificationToken: string) => {
     signUp({
       variables: {
         input: {
           email,
           password,
           fullName,
+          emailVerificationToken: emailVerificationToken || null,
         },
       },
-      onCompleted: (_, e) => {
+      onCompleted: (response, e) => {
         if (e) {
           toast.add({
             title: t("signUpPage.errors.failed"),
             description: formatError(t("signUpPage.errors.failed"), e),
             type: "error",
           });
+          return;
+        }
+
+        if (response.signUp?.identity?.emailVerified) {
+          toast.add({
+            title: t("common.success"),
+            description: t("signUpPage.messages.created"),
+            type: "success",
+          });
+
+          const loginSearch = searchParams.toString();
+          void navigate({
+            pathname: "/auth/login",
+            search: loginSearch === "" ? "" : "?" + loginSearch,
+          }, { replace: true });
           return;
         }
 
@@ -187,9 +206,19 @@ function SignUpPageContent(props: { queryRef: NonNullable<ReturnType<typeof useQ
             String(values.email ?? ""),
             String(values.password ?? ""),
             String(values.fullName ?? ""),
+            String(values.emailVerificationToken ?? ""),
           );
         }}
       >
+        {data.signUpEmailVerificationNonce && (
+          <input
+            type="hidden"
+            name="emailVerificationToken"
+            autoComplete="email-verification-token"
+            nonce={data.signUpEmailVerificationNonce}
+          />
+        )}
+
         <Field.Root name="fullName" className="flex flex-col gap-1.5">
           <Field.Label className="text-1 font-medium text-sand-12">
             {t("signUpPage.fields.fullName")}
@@ -211,6 +240,7 @@ function SignUpPageContent(props: { queryRef: NonNullable<ReturnType<typeof useQ
           <TextField
             type="email"
             name="email"
+            autoComplete="email"
             required
             placeholder={t("signUpPage.fields.emailPlaceholder")}
           />
