@@ -528,6 +528,7 @@ func TestAccessSourceSyncRun_LoadLatestBySourceID(t *testing.T) {
 	newerID := insertAccessSourceSyncRun(t, ctx, client, fx, coredata.AccessSourceSyncRunStatusQueued, newerAt)
 
 	var latest coredata.AccessSourceSyncRun
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return latest.LoadLatestBySourceID(ctx, conn, fx.scope, fx.sourceID)
 	}))
@@ -537,6 +538,7 @@ func TestAccessSourceSyncRun_LoadLatestBySourceID(t *testing.T) {
 	empty := seedAccessInventoryFixture(t, ctx, client)
 	err := client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		missing := &coredata.AccessSourceSyncRun{}
+
 		return missing.LoadLatestBySourceID(ctx, conn, empty.scope, empty.sourceID)
 	})
 	assert.ErrorIs(t, err, coredata.ErrResourceNotFound)
