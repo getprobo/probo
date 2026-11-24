@@ -1218,13 +1218,13 @@ func (s *DocumentService) SuggestChange(
 		&profileID,
 		[][]byte{actorID[:]},
 	); err != nil {
-		s.abandonSuggestion(ctx, scope, suggestion.ID, req.IdentityID)
+		s.abandonSuggestion(ctx, scope, suggestion.ID)
 
 		return nil, fmt.Errorf("cannot record suggestion actor: %w", err)
 	}
 
 	if _, err := s.collaboration.Persist(ctx, scope, req.DocumentID, painted); err != nil {
-		s.abandonSuggestion(ctx, scope, suggestion.ID, req.IdentityID)
+		s.abandonSuggestion(ctx, scope, suggestion.ID)
 
 		return nil, fmt.Errorf("cannot persist suggestion: %w", err)
 	}
@@ -1232,7 +1232,7 @@ func (s *DocumentService) SuggestChange(
 	if strings.TrimSpace(req.Comment) != "" {
 		content, err := richtext.FromPlainText(req.Comment)
 		if err != nil {
-			s.abandonSuggestion(ctx, scope, suggestion.ID, req.IdentityID)
+			s.abandonSuggestion(ctx, scope, suggestion.ID)
 
 			return nil, fmt.Errorf("cannot encode suggestion comment: %w", err)
 		}
@@ -1247,7 +1247,7 @@ func (s *DocumentService) SuggestChange(
 				SuggestionID: &suggestion.ID,
 			},
 		); err != nil {
-			s.abandonSuggestion(ctx, scope, suggestion.ID, req.IdentityID)
+			s.abandonSuggestion(ctx, scope, suggestion.ID)
 
 			return nil, err
 		}
@@ -1556,20 +1556,23 @@ func (s *DocumentService) persistSuggestionChange(
 
 // abandonSuggestion rejects a suggestion whose body or comment did not finish.
 // Reject drops any marks already stored and closes the row, so a retry does
-// not leave an open redline behind the error.
+// not leave an open redline behind the error. Nobody decided it, so it is
+// recorded as rejected automatically.
 func (s *DocumentService) abandonSuggestion(
 	ctx context.Context,
 	scope coredata.Scoper,
 	suggestionID gid.GID,
-	identityID gid.GID,
 ) {
-	_, err := s.DecideSuggestion(
+	suggestion := &coredata.DocumentSuggestion{}
+
+	err := s.svc.pg.WithTx(
 		ctx,
-		scope,
-		DecideDocumentSuggestionRequest{
-			SuggestionID: suggestionID,
-			IdentityID:   identityID,
-			Accept:       false,
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := suggestion.LoadByIDForUpdate(ctx, tx, scope, suggestionID); err != nil {
+				return fmt.Errorf("cannot load document suggestion: %w", err)
+			}
+
+			return s.decideSuggestion(ctx, tx, scope, suggestion, false, nil)
 		},
 	)
 	if err != nil {
@@ -1579,7 +1582,11 @@ func (s *DocumentService) abandonSuggestion(
 			log.String("suggestion_id", suggestionID.String()),
 			log.Error(err),
 		)
+
+		return
 	}
+
+	s.notifyReview(ctx, suggestion.DocumentID)
 }
 
 func (s *DocumentService) DecideSuggestion(
@@ -1609,80 +1616,7 @@ func (s *DocumentService) DecideSuggestion(
 				return err
 			}
 
-			if suggestion.Status != coredata.DocumentSuggestionStatusOpen {
-				// Already decided: reconcile the body with the stored decision in
-				// case an earlier attempt committed metadata but not the body.
-				if err := s.applySuggestionDecision(ctx, scope, suggestion, suggestion.Status == coredata.DocumentSuggestionStatusAccepted); err != nil &&
-					!errors.Is(err, collaboration.ErrSuggestionNotInDocument) {
-					return err
-				}
-
-				return nil
-			}
-
-			now := time.Now()
-
-			if req.Accept {
-				suggestion.Status = coredata.DocumentSuggestionStatusAccepted
-			} else {
-				suggestion.Status = coredata.DocumentSuggestionStatusRejected
-			}
-
-			suggestion.ResolvedAt = &now
-			suggestion.ResolvedByProfileID = &profile.ID
-
-			// The marks locate a suggestion while it is open and go away with the
-			// decision, so keep where it was and what it covered.
-			start, end, quote, err := s.decisionAnchor(ctx, scope, suggestion.DocumentID, suggestion.ID.String(), req.Accept)
-			if err != nil && !errors.Is(err, collaboration.ErrSuggestionNotInDocument) {
-				return err
-			}
-
-			if err == nil {
-				suggestion.AnchorStart = start
-				suggestion.AnchorEnd = end
-				suggestion.AnchorQuote = &quote
-			}
-
-			suggestion.UpdatedAt = now
-			if err := suggestion.UpdateIfOpen(ctx, tx, scope); err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					if err := suggestion.LoadByID(ctx, tx, scope, req.SuggestionID); err != nil {
-						return fmt.Errorf("cannot reload document suggestion: %w", err)
-					}
-
-					return nil
-				}
-
-				return fmt.Errorf("cannot update document suggestion: %w", err)
-			}
-
-			thread := &coredata.DocumentCommentThread{}
-
-			err = thread.LoadOpenBySuggestionID(ctx, tx, scope, suggestion.ID)
-			if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
-				return fmt.Errorf("cannot load suggestion comment thread: %w", err)
-			}
-
-			if err == nil {
-				thread.ResolvedAt = &now
-				thread.ResolvedByProfileID = &profile.ID
-
-				thread.UpdatedAt = now
-				if err := thread.Update(ctx, tx, scope); err != nil {
-					return fmt.Errorf("cannot resolve suggestion comment thread: %w", err)
-				}
-			}
-
-			// Mutate the collaborative body last: authorization and metadata
-			// failures roll back the transaction before the body is touched. A
-			// body already matching the decision is tolerated for recovery.
-			if err := s.applySuggestionDecision(ctx, scope, suggestion, req.Accept); err != nil &&
-				!errors.Is(err, collaboration.ErrSuggestionNotInDocument) {
-				return err
-			}
-
-			return nil
+			return s.decideSuggestion(ctx, tx, scope, suggestion, req.Accept, &profile.ID)
 		},
 	)
 	if err != nil {
@@ -1692,6 +1626,116 @@ func (s *DocumentService) DecideSuggestion(
 	s.notifyReview(ctx, suggestion.DocumentID)
 
 	return suggestion, nil
+}
+
+// decideSuggestion closes a suggestion loaded for update and applies the
+// decision to the body. A nil resolvedBy records the decision as an automatic
+// rejection: nobody resolved it and nothing is snapshotted.
+func (s *DocumentService) decideSuggestion(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	suggestion *coredata.DocumentSuggestion,
+	accept bool,
+	resolvedBy *gid.GID,
+) error {
+	if suggestion.Status != coredata.DocumentSuggestionStatusOpen {
+		// Already decided: reconcile the body with the stored decision in
+		// case an earlier attempt committed metadata but not the body.
+		if err := s.applySuggestionDecision(ctx, scope, suggestion, suggestion.Status == coredata.DocumentSuggestionStatusAccepted); err != nil &&
+			!errors.Is(err, collaboration.ErrSuggestionNotInDocument) {
+			return err
+		}
+
+		return nil
+	}
+
+	now := time.Now()
+
+	if accept {
+		suggestion.Status = coredata.DocumentSuggestionStatusAccepted
+	} else {
+		suggestion.Status = coredata.DocumentSuggestionStatusRejected
+	}
+
+	suggestion.ResolvedAt = &now
+	suggestion.ResolvedByProfileID = resolvedBy
+
+	if resolvedBy == nil {
+		suggestion.AutoRejectedAt = &now
+	} else {
+		// The marks locate a suggestion while it is open and go away with the
+		// decision, so keep where it was and what it changed.
+		start, end, changes, err := s.decisionSnapshot(ctx, scope, suggestion.DocumentID, suggestion.ID.String(), accept)
+		if err != nil {
+			return err
+		}
+
+		suggestion.AnchorStart = start
+		suggestion.AnchorEnd = end
+		suggestion.Changes = changes
+	}
+
+	suggestion.UpdatedAt = now
+	if err := suggestion.UpdateIfOpen(ctx, tx, scope); err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			if err := suggestion.LoadByID(ctx, tx, scope, suggestion.ID); err != nil {
+				return fmt.Errorf("cannot reload document suggestion: %w", err)
+			}
+
+			return nil
+		}
+
+		return fmt.Errorf("cannot update document suggestion: %w", err)
+	}
+
+	if err := s.resolveSuggestionThread(ctx, tx, scope, suggestion.ID, resolvedBy, now); err != nil {
+		return err
+	}
+
+	// Mutate the collaborative body last: authorization and metadata
+	// failures roll back the transaction before the body is touched. A
+	// body already matching the decision is tolerated for recovery.
+	if err := s.applySuggestionDecision(ctx, scope, suggestion, accept); err != nil &&
+		!errors.Is(err, collaboration.ErrSuggestionNotInDocument) {
+		return err
+	}
+
+	return nil
+}
+
+func (s *DocumentService) resolveSuggestionThread(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	suggestionID gid.GID,
+	resolvedBy *gid.GID,
+	now time.Time,
+) error {
+	if resolvedBy == nil {
+		return coredata.ResolveSuggestionThreads(ctx, tx, scope, []gid.GID{suggestionID}, now)
+	}
+
+	thread := &coredata.DocumentCommentThread{}
+
+	err := thread.LoadOpenBySuggestionID(ctx, tx, scope, suggestionID)
+	if errors.Is(err, coredata.ErrResourceNotFound) {
+		return nil
+	}
+
+	if err != nil {
+		return fmt.Errorf("cannot load suggestion comment thread: %w", err)
+	}
+
+	thread.ResolvedAt = &now
+	thread.ResolvedByProfileID = resolvedBy
+	thread.UpdatedAt = now
+
+	if err := thread.Update(ctx, tx, scope); err != nil {
+		return fmt.Errorf("cannot resolve suggestion comment thread: %w", err)
+	}
+
+	return nil
 }
 
 func (s *DocumentService) applySuggestionDecision(
@@ -1771,26 +1815,34 @@ func (s *DocumentService) reviewProfile(
 	return profile, nil
 }
 
-func (s *DocumentService) decisionAnchor(
+// decisionSnapshot reads, before a decision applies, where the suggestion's
+// kept text is and what the suggestion changes. The cursors are nil when no
+// text of the suggestion is left to locate, as for a block retype alone.
+func (s *DocumentService) decisionSnapshot(
 	ctx context.Context,
 	scope coredata.Scoper,
 	documentID gid.GID,
 	suggestionID string,
 	accept bool,
-) ([]byte, []byte, string, error) {
+) ([]byte, []byte, *coredata.DocumentSuggestionChanges, error) {
 	opened, err := s.collaboration.Open(ctx, scope, documentID)
 	if err != nil {
-		return nil, nil, "", fmt.Errorf("cannot open collaboration document: %w", err)
+		return nil, nil, nil, fmt.Errorf("cannot open collaboration document: %w", err)
 	}
 
 	defer func() { _ = opened.Document.Close() }()
 
-	start, end, quote, err := collaboration.DecidedSuggestionCursors(opened.Document, suggestionID, accept)
+	spans, err := collaboration.BodySpans(opened.Document)
 	if err != nil {
-		return nil, nil, "", err
+		return nil, nil, nil, fmt.Errorf("cannot read collaboration body: %w", err)
 	}
 
-	return start, end, quote, nil
+	start, end, err := collaboration.DecidedSuggestionCursors(opened.Document, spans, suggestionID, accept)
+	if err != nil && !errors.Is(err, collaboration.ErrSuggestionNotInDocument) {
+		return nil, nil, nil, fmt.Errorf("cannot read decided suggestion cursors: %w", err)
+	}
+
+	return start, end, collaboration.SuggestionChanges(spans, suggestionID), nil
 }
 
 func (s *DocumentService) quoteAnchor(

@@ -38,6 +38,12 @@ input DocumentCommentThreadOrder
 
 input DocumentCommentThreadFilter {
     resolved: Boolean
+    """
+    Only threads of suggestions that were (true) or were not (false) rejected
+    automatically, which includes suggestions abandoned when their creation
+    failed. A thread without a suggestion was not. Null returns both.
+    """
+    autoRejected: Boolean
 }
 
 enum DocumentCommentOrderField
@@ -146,6 +152,147 @@ enum DocumentSuggestionFormatAction
         )
 }
 
+enum DocumentSuggestionChangeKind
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.DocumentSuggestionChangeKind"
+    ) {
+    TEXT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentSuggestionChangeKindText"
+        )
+    FORMAT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentSuggestionChangeKindFormat"
+        )
+    BLOCK
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentSuggestionChangeKindBlock"
+        )
+    NODE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentSuggestionChangeKindNode"
+        )
+}
+
+enum DocumentSuggestionBlockKind
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.DocumentSuggestionBlockKind"
+    ) {
+    PARAGRAPH
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentSuggestionBlockKindParagraph"
+        )
+    HEADING
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentSuggestionBlockKindHeading"
+        )
+    QUOTE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentSuggestionBlockKindQuote"
+        )
+    CODE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentSuggestionBlockKindCode"
+        )
+    BULLET_LIST
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentSuggestionBlockKindBulletList"
+        )
+    ORDERED_LIST
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentSuggestionBlockKindOrderedList"
+        )
+    TASK_LIST
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentSuggestionBlockKindTaskList"
+        )
+    OTHER
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentSuggestionBlockKindOther"
+        )
+}
+
+enum DocumentSuggestionNodeKind
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.DocumentSuggestionNodeKind"
+    ) {
+    TABLE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentSuggestionNodeKindTable"
+        )
+    ROW
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentSuggestionNodeKindRow"
+        )
+    COLUMN
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentSuggestionNodeKindColumn"
+        )
+    IMAGE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentSuggestionNodeKindImage"
+        )
+    DIVIDER
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentSuggestionNodeKindDivider"
+        )
+    FILE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentSuggestionNodeKindFile"
+        )
+    LINE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentSuggestionNodeKindLine"
+        )
+    OTHER
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentSuggestionNodeKindOther"
+        )
+}
+
+enum DocumentSuggestionNodeAction
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.DocumentSuggestionNodeAction"
+    ) {
+    INSERT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentSuggestionNodeActionInsert"
+        )
+    DELETE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentSuggestionNodeActionDelete"
+        )
+}
+
+type DocumentSuggestionBlockLabel {
+    kind: DocumentSuggestionBlockKind!
+    "Heading level. Null for every other kind."
+    level: Int
+}
+
+"""
+One change of a suggestion. kind tells which fields are set: TEXT sets deleted
+and inserted, FORMAT sets mark and formatAction (and href and previousHref for
+a link), BLOCK sets before and after, NODE sets node and nodeAction.
+"""
+type DocumentSuggestionChange {
+    kind: DocumentSuggestionChangeKind!
+    "Deleted text, cut with an ellipsis past 280 characters."
+    deleted: String
+    "Inserted text, cut with an ellipsis past 280 characters."
+    inserted: String
+    mark: DocumentSuggestionFormatMark
+    formatAction: DocumentSuggestionFormatAction
+    "Link address the suggestion sets."
+    href: String
+    "Link address before the suggestion."
+    previousHref: String
+    before: DocumentSuggestionBlockLabel
+    after: DocumentSuggestionBlockLabel
+    node: DocumentSuggestionNodeKind
+    nodeAction: DocumentSuggestionNodeAction
+}
+
 enum DocumentSuggestionOrderField
     @goModel(
         model: "go.probo.inc/probo/pkg/coredata.DocumentSuggestionOrderField"
@@ -252,9 +399,16 @@ type DocumentSuggestion implements Node {
     anchorStart: String
     anchorEnd: String
     """
-    The text the suggestion covered when it was decided.
+    What a reviewer's decision changed, read before the decision removed the
+    suggestion's marks: the first few changes. Null while open, when rejected
+    automatically, or decided before this was recorded.
     """
-    anchorQuote: String
+    changes: [DocumentSuggestionChange!]
+    """
+    How many changes the suggestion made, counting those past the ones listed
+    in changes. Null whenever changes is null.
+    """
+    changeCount: Int
     resolvedAt: Datetime
     """
     Who accepted or rejected the suggestion. Null when it was rejected

@@ -44,6 +44,19 @@ export const description: INodeProperties[] = [
 		displayOptions: { show: { resource: ['documentComment'], operation: ['getAll'] } },
 	},
 	{
+		displayName: 'Auto-Rejected Suggestions',
+		name: 'autoRejected',
+		type: 'options',
+		default: 'include',
+		description: 'Whether to keep threads of suggestions that were rejected automatically',
+		options: [
+			{ name: 'Include', value: 'include' },
+			{ name: 'Exclude', value: 'exclude' },
+			{ name: 'Only', value: 'only' },
+		],
+		displayOptions: { show: { resource: ['documentComment'], operation: ['getAll'] } },
+	},
+	{
 		displayName: 'Return All',
 		name: 'returnAll',
 		type: 'boolean',
@@ -65,9 +78,16 @@ export const description: INodeProperties[] = [
 export async function execute(this: IExecuteFunctions, itemIndex: number): Promise<INodeExecutionData> {
 	const documentId = this.getNodeParameter('documentId', itemIndex) as string;
 	const resolved = this.getNodeParameter('resolved', itemIndex) as string;
+	const autoRejected = this.getNodeParameter('autoRejected', itemIndex, 'include') as string;
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
-	const filter = resolved === 'all' ? null : { resolved: resolved === 'resolved' };
+	const filter: IDataObject = {};
+	if (resolved !== 'all') {
+		filter.resolved = resolved === 'resolved';
+	}
+	if (autoRejected !== 'include') {
+		filter.autoRejected = autoRejected === 'only';
+	}
 
 	const query = `
 		query ListDocumentCommentThreads($documentId: ID!, $first: Int, $after: CursorKey, $filter: DocumentCommentThreadFilter) {
@@ -86,7 +106,7 @@ export async function execute(this: IExecuteFunctions, itemIndex: number): Promi
 	const threads = await proboApiRequestAllItems.call(
 		this,
 		query,
-		{ documentId, filter },
+		{ documentId, filter: Object.keys(filter).length > 0 ? filter : null },
 		(response) => {
 			const data = response?.data as IDataObject | undefined;
 			const node = data?.node as IDataObject | undefined;

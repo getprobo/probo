@@ -35,11 +35,18 @@ import (
 	"go.probo.inc/probo/pkg/collaboration"
 )
 
+type suggestionChangeState struct {
+	Kind     string  `json:"kind"`
+	Deleted  *string `json:"deleted"`
+	Inserted *string `json:"inserted"`
+}
+
 type suggestionThreadState struct {
-	Status      string  `json:"status"`
-	AnchorStart *string `json:"anchorStart"`
-	AnchorEnd   *string `json:"anchorEnd"`
-	AnchorQuote *string `json:"anchorQuote"`
+	Status      string                  `json:"status"`
+	AnchorStart *string                 `json:"anchorStart"`
+	AnchorEnd   *string                 `json:"anchorEnd"`
+	Changes     []suggestionChangeState `json:"changes"`
+	ChangeCount *int                    `json:"changeCount"`
 	Thread      struct {
 		ID          string  `json:"id"`
 		AnchorStart string  `json:"anchorStart"`
@@ -86,7 +93,8 @@ func TestDocumentReview_SuggestionThread(t *testing.T) {
 		require.Equal(t, "OPEN", state.Status)
 		require.Nil(t, state.AnchorStart, "an open suggestion is located by its marks")
 		require.Nil(t, state.AnchorEnd)
-		require.Nil(t, state.AnchorQuote)
+		require.Nil(t, state.Changes, "an open suggestion records no changes")
+		require.Nil(t, state.ChangeCount)
 		require.NotEmpty(t, state.Thread.ID)
 		require.Nil(t, state.Thread.ResolvedAt)
 		require.NotNil(t, state.Thread.Suggestion)
@@ -202,7 +210,7 @@ func TestDocumentReview_SuggestionThread(t *testing.T) {
 		testutil.RequireConflictError(t, err, "reopening a suggestion thread should be refused")
 	})
 
-	t.Run("accepting resolves the thread and records the kept text", func(t *testing.T) {
+	t.Run("accepting resolves the thread and records what changed", func(t *testing.T) {
 		t.Parallel()
 
 		documentID := newDocument(t)
@@ -217,8 +225,7 @@ func TestDocumentReview_SuggestionThread(t *testing.T) {
 		require.NotNil(t, state.AnchorStart)
 		require.NotNil(t, state.AnchorEnd)
 		require.NotEqual(t, *state.AnchorStart, *state.AnchorEnd, "the anchor covers the accepted text")
-		require.NotNil(t, state.AnchorQuote)
-		require.Equal(t, " Added.", *state.AnchorQuote)
+		requireInsertedTextChange(t, state, " Added.")
 		require.Empty(t, state.Thread.AnchorStart)
 	})
 
@@ -237,8 +244,7 @@ func TestDocumentReview_SuggestionThread(t *testing.T) {
 		require.NotNil(t, state.AnchorStart)
 		require.NotNil(t, state.AnchorEnd)
 		require.Equal(t, *state.AnchorStart, *state.AnchorEnd, "no text survives a rejected insertion")
-		require.NotNil(t, state.AnchorQuote)
-		require.Equal(t, " Added.", *state.AnchorQuote)
+		requireInsertedTextChange(t, state, " Added.")
 	})
 
 	t.Run("a decided suggestion takes no new comments", func(t *testing.T) {
@@ -325,8 +331,21 @@ func TestDocumentReview_SuggestionAutoReject(t *testing.T) {
 		require.NotNil(t, state.ResolvedAt)
 		require.NotNil(t, state.Thread.ResolvedAt, "its thread leaves the open list")
 		require.Nil(t, state.AnchorStart)
-		require.NotNil(t, state.AnchorQuote)
-		require.Empty(t, *state.AnchorQuote, "nothing was changed")
+		require.Nil(t, state.Changes, "an automatic rejection records no changes")
+		require.Nil(t, state.ChangeCount)
+
+		require.Contains(
+			t,
+			listCommentThreadIDs(t, owner, documentID, map[string]any{"autoRejected": true}),
+			state.Thread.ID,
+			"the thread is listed among automatically rejected suggestions",
+		)
+		require.NotContains(
+			t,
+			listCommentThreadIDs(t, owner, documentID, map[string]any{"autoRejected": false}),
+			state.Thread.ID,
+			"the thread is hidden when automatically rejected suggestions are left out",
+		)
 
 		rewriteCollaborationSpans(t, documentID, addMarks)
 		applyDocumentText(t, owner, documentID, "Keep", "Hold")
@@ -335,7 +354,49 @@ func TestDocumentReview_SuggestionAutoReject(t *testing.T) {
 		require.Equal(t, "OPEN", state.Status, "the marks coming back reopen it")
 		require.Nil(t, state.ResolvedAt)
 		require.Nil(t, state.Thread.ResolvedAt)
-		require.Nil(t, state.AnchorQuote)
+		require.Nil(t, state.Changes)
+
+		require.Contains(
+			t,
+			listCommentThreadIDs(t, owner, documentID, map[string]any{"autoRejected": false}),
+			state.Thread.ID,
+			"a reopened suggestion's thread is no longer automatically rejected",
+		)
+	})
+
+	t.Run("a plain thread is not automatically rejected", func(t *testing.T) {
+		t.Parallel()
+
+		documentID := newDocument(t)
+
+		var created struct {
+			CreateDocumentCommentThread struct {
+				DocumentCommentThreadEdge struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"documentCommentThreadEdge"`
+			} `json:"createDocumentCommentThread"`
+		}
+
+		err := owner.Execute(`
+			mutation($input: CreateDocumentCommentThreadInput!) {
+				createDocumentCommentThread(input: $input) {
+					documentCommentThreadEdge { node { id } }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"documentId": documentID,
+				"quote":      "first",
+				"content":    factory.ProseMirrorPlainText("Plain note"),
+			},
+		}, &created)
+		require.NoError(t, err)
+
+		threadID := created.CreateDocumentCommentThread.DocumentCommentThreadEdge.Node.ID
+		require.Contains(t, listCommentThreadIDs(t, owner, documentID, map[string]any{"autoRejected": false}), threadID)
+		require.NotContains(t, listCommentThreadIDs(t, owner, documentID, map[string]any{"autoRejected": true}), threadID)
 	})
 
 	t.Run("a suggestion whose marks were never persisted stays open", func(t *testing.T) {
@@ -378,16 +439,74 @@ func TestDocumentReview_SuggestionAutoReject(t *testing.T) {
 }
 
 type suggestionResolutionState struct {
-	Status      string  `json:"status"`
-	ResolvedAt  *string `json:"resolvedAt"`
-	AnchorStart *string `json:"anchorStart"`
-	AnchorQuote *string `json:"anchorQuote"`
+	Status      string                  `json:"status"`
+	ResolvedAt  *string                 `json:"resolvedAt"`
+	AnchorStart *string                 `json:"anchorStart"`
+	Changes     []suggestionChangeState `json:"changes"`
+	ChangeCount *int                    `json:"changeCount"`
 	ResolvedBy  *struct {
 		ID string `json:"id"`
 	} `json:"resolvedBy"`
 	Thread struct {
+		ID         string  `json:"id"`
 		ResolvedAt *string `json:"resolvedAt"`
 	} `json:"thread"`
+}
+
+func requireInsertedTextChange(t *testing.T, state suggestionThreadState, inserted string) {
+	t.Helper()
+
+	require.Len(t, state.Changes, 1)
+	require.NotNil(t, state.ChangeCount)
+	require.Equal(t, 1, *state.ChangeCount)
+
+	change := state.Changes[0]
+	require.Equal(t, "TEXT", change.Kind)
+	require.NotNil(t, change.Inserted)
+	require.Equal(t, inserted, *change.Inserted)
+	require.NotNil(t, change.Deleted)
+	require.Empty(t, *change.Deleted)
+}
+
+func listCommentThreadIDs(
+	t *testing.T,
+	client *testutil.Client,
+	documentID string,
+	filter map[string]any,
+) []string {
+	t.Helper()
+
+	var resp struct {
+		Node struct {
+			CommentThreads struct {
+				Edges []struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"commentThreads"`
+		} `json:"node"`
+	}
+
+	err := client.Execute(`
+		query($id: ID!, $filter: DocumentCommentThreadFilter) {
+			node(id: $id) {
+				... on Document {
+					commentThreads(first: 50, filter: $filter) {
+						edges { node { id } }
+					}
+				}
+			}
+		}
+	`, map[string]any{"id": documentID, "filter": filter}, &resp)
+	require.NoError(t, err)
+
+	ids := make([]string, 0, len(resp.Node.CommentThreads.Edges))
+	for _, edge := range resp.Node.CommentThreads.Edges {
+		ids = append(ids, edge.Node.ID)
+	}
+
+	return ids
 }
 
 func loadSuggestionResolution(t *testing.T, client *testutil.Client, suggestionID string) suggestionResolutionState {
@@ -404,9 +523,10 @@ func loadSuggestionResolution(t *testing.T, client *testutil.Client, suggestionI
 					status
 					resolvedAt
 					anchorStart
-					anchorQuote
+					changes { kind deleted inserted }
+					changeCount
 					resolvedBy { id }
-					thread { resolvedAt }
+					thread { id resolvedAt }
 				}
 			}
 		}
@@ -540,7 +660,8 @@ func loadSuggestionThread(t *testing.T, client *testutil.Client, suggestionID st
 					status
 					anchorStart
 					anchorEnd
-					anchorQuote
+					changes { kind deleted inserted }
+					changeCount
 					thread {
 						id
 						anchorStart

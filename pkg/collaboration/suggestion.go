@@ -381,20 +381,17 @@ func SuggestionCursors(
 }
 
 // DecidedSuggestionCursors returns cursors covering the text of a suggestion
-// that survives the decision, read before the decision applies. Accepting
-// keeps inserted and format-changed text; rejecting keeps deleted-marked and
-// format-changed text. When nothing survives, both cursors sit on the first
-// character after the suggestion, so the place it was in stays findable.
+// that survives the decision, read from the body spans of document before the
+// decision applies. Accepting keeps inserted and format-changed text;
+// rejecting keeps deleted-marked and format-changed text. When nothing
+// survives, both cursors sit on the first character after the suggestion, so
+// the place it was in stays findable.
 func DecidedSuggestionCursors(
 	document *automerge.Document,
+	spans []automerge.Span,
 	suggestionID string,
 	accept bool,
-) (start []byte, end []byte, quote string, err error) {
-	spans, err := BodySpans(document)
-	if err != nil {
-		return nil, nil, "", err
-	}
-
+) (start []byte, end []byte, err error) {
 	var (
 		found        bool
 		survives     bool
@@ -438,7 +435,7 @@ func DecidedSuggestionCursors(
 	}
 
 	if !found {
-		return nil, nil, "", ErrSuggestionNotInDocument
+		return nil, nil, ErrSuggestionNotInDocument
 	}
 
 	if !survives {
@@ -448,20 +445,20 @@ func DecidedSuggestionCursors(
 
 	text, err := document.Text("body")
 	if err != nil {
-		return nil, nil, "", fmt.Errorf("cannot get collaboration body: %w", err)
+		return nil, nil, fmt.Errorf("cannot get collaboration body: %w", err)
 	}
 
 	startCursor, err := textCursor(text, startUTF16)
 	if err != nil {
-		return nil, nil, "", fmt.Errorf("cannot create suggestion start cursor: %w", err)
+		return nil, nil, fmt.Errorf("cannot create suggestion start cursor: %w", err)
 	}
 
 	endCursor, err := textCursor(text, endUTF16)
 	if err != nil {
-		return nil, nil, "", fmt.Errorf("cannot create suggestion end cursor: %w", err)
+		return nil, nil, fmt.Errorf("cannot create suggestion end cursor: %w", err)
 	}
 
-	return startCursor, endCursor, SuggestionQuote(spans, suggestionID), nil
+	return startCursor, endCursor, nil
 }
 
 func decideSuggestionSpans(

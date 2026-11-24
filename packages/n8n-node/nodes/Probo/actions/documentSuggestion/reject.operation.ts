@@ -36,7 +36,16 @@ export async function execute(this: IExecuteFunctions, itemIndex: number): Promi
 	const suggestionId = this.getNodeParameter('suggestionId', itemIndex) as string;
 	const query = `
 		mutation RejectDocumentSuggestion($input: RejectDocumentSuggestionInput!) {
-			rejectDocumentSuggestion(input: $input) { documentSuggestion { id status resolvedAt } }
+			rejectDocumentSuggestion(input: $input) {
+				documentSuggestion {
+					id status resolvedAt
+					changes {
+						kind deleted inserted mark formatAction href previousHref
+						before { kind level } after { kind level } node nodeAction
+					}
+					changeCount
+				}
+			}
 		}
 	`;
 	const responseData = await proboApiRequest.call(this, query, { input: { suggestionId } });

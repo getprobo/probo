@@ -35,8 +35,9 @@ import { DocumentCommentHistoryItem } from "./DocumentCommentHistoryItem";
 
 const historyPageSize = 20;
 
-// Every thread, open or resolved, including those of suggestions, newest
-// first. The order must match documentCommentHistoryOrder.
+// Every thread, open or resolved, including those of suggestions but not of
+// suggestions rejected automatically, newest first. The filter and order must
+// match documentCommentHistoryConnectionId.
 const documentCommentHistoryListFragment = graphql`
   fragment DocumentCommentHistoryList_document on Document
   @refetchable(queryName: "DocumentCommentHistoryListPaginationQuery")
@@ -47,8 +48,9 @@ const documentCommentHistoryListFragment = graphql`
     commentThreads(
       first: $first
       after: $after
+      filter: { autoRejected: false }
       orderBy: { field: CREATED_AT, direction: DESC }
-    ) @connection(key: "DocumentCommentHistoryList_commentThreads", filters: ["orderBy"]) {
+    ) @connection(key: "DocumentCommentHistoryList_commentThreads", filters: ["filter", "orderBy"]) {
       edges {
         node {
           id

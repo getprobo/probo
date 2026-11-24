@@ -47,6 +47,6 @@ export function documentCommentHistoryConnectionId(documentId: string) {
   return ConnectionHandler.getConnectionID(
     documentId,
     "DocumentCommentHistoryList_commentThreads",
-    { orderBy: documentCommentHistoryOrder },
+    { filter: { autoRejected: false }, orderBy: documentCommentHistoryOrder },
   );
 }

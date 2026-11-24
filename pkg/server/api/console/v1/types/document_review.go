@@ -23,6 +23,7 @@ package types
 import (
 	"encoding/base64"
 
+	"go.probo.inc/probo/pkg/collaboration"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
@@ -188,14 +189,13 @@ func NewDocumentSuggestionEdge(
 
 func NewDocumentSuggestion(suggestion *coredata.DocumentSuggestion) *DocumentSuggestion {
 	node := &DocumentSuggestion{
-		ID:          suggestion.ID,
-		Document:    &Document{ID: suggestion.DocumentID},
-		Author:      &Profile{ID: suggestion.AuthorProfileID},
-		Status:      suggestion.Status,
-		AnchorQuote: suggestion.AnchorQuote,
-		ResolvedAt:  suggestion.ResolvedAt,
-		CreatedAt:   suggestion.CreatedAt,
-		UpdatedAt:   suggestion.UpdatedAt,
+		ID:         suggestion.ID,
+		Document:   &Document{ID: suggestion.DocumentID},
+		Author:     &Profile{ID: suggestion.AuthorProfileID},
+		Status:     suggestion.Status,
+		ResolvedAt: suggestion.ResolvedAt,
+		CreatedAt:  suggestion.CreatedAt,
+		UpdatedAt:  suggestion.UpdatedAt,
 	}
 
 	if suggestion.AnchorStart != nil {
@@ -203,9 +203,58 @@ func NewDocumentSuggestion(suggestion *coredata.DocumentSuggestion) *DocumentSug
 		node.AnchorEnd = new(base64.StdEncoding.EncodeToString(suggestion.AnchorEnd))
 	}
 
+	if suggestion.Changes != nil {
+		node.Changes = newDocumentSuggestionChanges(suggestion.Changes.Changes)
+		node.ChangeCount = new(suggestion.Changes.ChangeCount)
+	}
+
 	if suggestion.ResolvedByProfileID != nil {
 		node.ResolvedBy = &Profile{ID: *suggestion.ResolvedByProfileID}
 	}
 
 	return node
+}
+
+func newDocumentSuggestionChanges(changes []coredata.DocumentSuggestionChange) []*DocumentSuggestionChange {
+	nodes := make([]*DocumentSuggestionChange, len(changes))
+	for i, change := range changes {
+		nodes[i] = &DocumentSuggestionChange{
+			Kind:         change.Kind,
+			Deleted:      change.Deleted,
+			Inserted:     change.Inserted,
+			Href:         change.Href,
+			PreviousHref: change.PreviousHref,
+			Before:       newDocumentSuggestionBlockLabel(change.Before),
+			After:        newDocumentSuggestionBlockLabel(change.After),
+		}
+
+		if change.Mark != "" {
+			nodes[i].Mark = new(collaboration.FormatSuggestionMark(change.Mark))
+		}
+
+		if change.FormatAction != "" {
+			nodes[i].FormatAction = new(collaboration.FormatSuggestionAction(change.FormatAction))
+		}
+
+		if change.Node != "" {
+			nodes[i].Node = new(change.Node)
+		}
+
+		if change.NodeAction != "" {
+			nodes[i].NodeAction = new(change.NodeAction)
+		}
+	}
+
+	return nodes
+}
+
+func newDocumentSuggestionBlockLabel(label *coredata.DocumentSuggestionBlockLabel) *DocumentSuggestionBlockLabel {
+	if label == nil {
+		return nil
+	}
+
+	return &DocumentSuggestionBlockLabel{
+		Kind:  label.Kind,
+		Level: label.Level,
+	}
 }

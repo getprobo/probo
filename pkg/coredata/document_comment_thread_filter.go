@@ -23,33 +23,72 @@ package coredata
 import "github.com/jackc/pgx/v5"
 
 type DocumentCommentThreadFilter struct {
-	resolved *bool
+	resolved     *bool
+	autoRejected *bool
 }
 
-func NewDocumentCommentThreadFilter(resolved *bool) *DocumentCommentThreadFilter {
-	return &DocumentCommentThreadFilter{resolved: resolved}
+// NewDocumentCommentThreadFilter filters threads by resolution and by whether
+// their suggestion was rejected automatically. A thread without a suggestion
+// counts as not rejected automatically.
+func NewDocumentCommentThreadFilter(resolved *bool, autoRejected *bool) *DocumentCommentThreadFilter {
+	return &DocumentCommentThreadFilter{
+		resolved:     resolved,
+		autoRejected: autoRejected,
+	}
 }
 
 func (f *DocumentCommentThreadFilter) SQLFragment() string {
 	return `
-CASE
-    WHEN @has_thread_resolved::boolean = FALSE THEN TRUE
-    WHEN @thread_resolved::boolean THEN resolved_at IS NOT NULL
-    ELSE resolved_at IS NULL
-END`
+(
+    CASE
+        WHEN @has_thread_resolved::boolean = FALSE THEN TRUE
+        WHEN @thread_resolved::boolean THEN resolved_at IS NOT NULL
+        ELSE resolved_at IS NULL
+    END
+    AND CASE
+        WHEN @has_thread_auto_rejected::boolean = FALSE THEN TRUE
+        WHEN @thread_auto_rejected::boolean THEN EXISTS (
+            SELECT
+                1
+            FROM
+                document_suggestions s
+            WHERE
+                s.id = document_comment_threads.suggestion_id
+                AND s.auto_rejected_at IS NOT NULL
+        )
+        ELSE NOT EXISTS (
+            SELECT
+                1
+            FROM
+                document_suggestions s
+            WHERE
+                s.id = document_comment_threads.suggestion_id
+                AND s.auto_rejected_at IS NOT NULL
+        )
+    END
+)`
 }
 
 func (f *DocumentCommentThreadFilter) SQLArguments() pgx.StrictNamedArgs {
 	resolved := false
 	hasResolved := false
+	autoRejected := false
+	hasAutoRejected := false
 
 	if f != nil && f.resolved != nil {
 		resolved = *f.resolved
 		hasResolved = true
 	}
 
+	if f != nil && f.autoRejected != nil {
+		autoRejected = *f.autoRejected
+		hasAutoRejected = true
+	}
+
 	return pgx.StrictNamedArgs{
-		"has_thread_resolved": hasResolved,
-		"thread_resolved":     resolved,
+		"has_thread_resolved":      hasResolved,
+		"thread_resolved":          resolved,
+		"has_thread_auto_rejected": hasAutoRejected,
+		"thread_auto_rejected":     autoRejected,
 	}
 }

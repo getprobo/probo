@@ -37,7 +37,7 @@ const acceptDocumentSuggestionMutation = graphql`
         status
         anchorStart
         anchorEnd
-        anchorQuote
+        ...DocumentSuggestionChangeList_suggestion
         thread {
           id @deleteEdge(connections: $connections)
           resolvedAt

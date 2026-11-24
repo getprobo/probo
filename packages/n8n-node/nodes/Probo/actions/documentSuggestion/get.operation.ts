@@ -38,7 +38,12 @@ export async function execute(this: IExecuteFunctions, itemIndex: number): Promi
 		query GetDocumentSuggestion($suggestionId: ID!) {
 			node(id: $suggestionId) {
 				... on DocumentSuggestion {
-					id status createdAt resolvedAt anchorQuote author { id fullName } document { id } thread { id }
+					id status createdAt resolvedAt author { id fullName } document { id } thread { id }
+					changes {
+						kind deleted inserted mark formatAction href previousHref
+						before { kind level } after { kind level } node nodeAction
+					}
+					changeCount
 				}
 			}
 		}

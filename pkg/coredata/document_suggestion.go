@@ -39,18 +39,19 @@ type (
 	DocumentSuggestionStatus string
 
 	DocumentSuggestion struct {
-		ID                  gid.GID                  `db:"id"`
-		OrganizationID      gid.GID                  `db:"organization_id"`
-		DocumentID          gid.GID                  `db:"document_id"`
-		AuthorProfileID     gid.GID                  `db:"author_profile_id"`
-		Status              DocumentSuggestionStatus `db:"status"`
-		CreatedAt           time.Time                `db:"created_at"`
-		UpdatedAt           time.Time                `db:"updated_at"`
-		ResolvedAt          *time.Time               `db:"resolved_at"`
-		ResolvedByProfileID *gid.GID                 `db:"resolved_by_profile_id"`
-		AnchorStart         []byte                   `db:"anchor_start"`
-		AnchorEnd           []byte                   `db:"anchor_end"`
-		AnchorQuote         *string                  `db:"anchor_quote"`
+		ID                  gid.GID                    `db:"id"`
+		OrganizationID      gid.GID                    `db:"organization_id"`
+		DocumentID          gid.GID                    `db:"document_id"`
+		AuthorProfileID     gid.GID                    `db:"author_profile_id"`
+		Status              DocumentSuggestionStatus   `db:"status"`
+		CreatedAt           time.Time                  `db:"created_at"`
+		UpdatedAt           time.Time                  `db:"updated_at"`
+		ResolvedAt          *time.Time                 `db:"resolved_at"`
+		ResolvedByProfileID *gid.GID                   `db:"resolved_by_profile_id"`
+		AnchorStart         []byte                     `db:"anchor_start"`
+		AnchorEnd           []byte                     `db:"anchor_end"`
+		Changes             *DocumentSuggestionChanges `db:"changes"`
+		AutoRejectedAt      *time.Time                 `db:"auto_rejected_at"`
 	}
 
 	DocumentSuggestions []*DocumentSuggestion
@@ -178,7 +179,8 @@ SELECT
     resolved_by_profile_id,
     anchor_start,
     anchor_end,
-    anchor_quote
+    changes,
+    auto_rejected_at
 FROM
     document_suggestions
 WHERE
@@ -211,7 +213,8 @@ SELECT
     resolved_by_profile_id,
     anchor_start,
     anchor_end,
-    anchor_quote
+    changes,
+    auto_rejected_at
 FROM
     document_suggestions
 WHERE
@@ -282,7 +285,8 @@ SELECT
     resolved_by_profile_id,
     anchor_start,
     anchor_end,
-    anchor_quote
+    changes,
+    auto_rejected_at
 FROM
     document_suggestions
 WHERE
@@ -340,7 +344,8 @@ SELECT
     resolved_by_profile_id,
     anchor_start,
     anchor_end,
-    anchor_quote
+    changes,
+    auto_rejected_at
 FROM
     document_suggestions
 WHERE
@@ -393,7 +398,8 @@ SELECT
     resolved_by_profile_id,
     anchor_start,
     anchor_end,
-    anchor_quote
+    changes,
+    auto_rejected_at
 FROM
     document_suggestions
 WHERE
@@ -482,7 +488,8 @@ INSERT INTO
         resolved_by_profile_id,
         anchor_start,
         anchor_end,
-        anchor_quote
+        changes,
+        auto_rejected_at
     )
 VALUES (
     @tenant_id,
@@ -497,7 +504,8 @@ VALUES (
     @resolved_by_profile_id,
     @anchor_start,
     @anchor_end,
-    @anchor_quote
+    @changes,
+    @auto_rejected_at
 )
 `
 
@@ -514,7 +522,8 @@ VALUES (
 		"resolved_by_profile_id": s.ResolvedByProfileID,
 		"anchor_start":           s.AnchorStart,
 		"anchor_end":             s.AnchorEnd,
-		"anchor_quote":           s.AnchorQuote,
+		"changes":                s.Changes,
+		"auto_rejected_at":       s.AutoRejectedAt,
 	}
 
 	if _, err := conn.Exec(ctx, q, args); err != nil {
@@ -558,7 +567,8 @@ SET
     resolved_by_profile_id = @resolved_by_profile_id,
     anchor_start = @anchor_start,
     anchor_end = @anchor_end,
-    anchor_quote = @anchor_quote
+    changes = @changes,
+    auto_rejected_at = @auto_rejected_at
 WHERE
     %s
     AND id = @suggestion_id
@@ -575,7 +585,8 @@ WHERE
 		"resolved_by_profile_id": s.ResolvedByProfileID,
 		"anchor_start":           s.AnchorStart,
 		"anchor_end":             s.AnchorEnd,
-		"anchor_quote":           s.AnchorQuote,
+		"changes":                s.Changes,
+		"auto_rejected_at":       s.AutoRejectedAt,
 		"only_open":              onlyOpen,
 		"open_status":            DocumentSuggestionStatusOpen,
 	}
@@ -672,7 +683,7 @@ SET
     auto_rejected_at = @now,
     anchor_start = NULL,
     anchor_end = NULL,
-    anchor_quote = ''
+    changes = NULL
 WHERE
     id IN (
         SELECT
@@ -742,7 +753,7 @@ SET
     auto_rejected_at = NULL,
     anchor_start = NULL,
     anchor_end = NULL,
-    anchor_quote = NULL
+    changes = NULL
 WHERE
     id IN (
         SELECT

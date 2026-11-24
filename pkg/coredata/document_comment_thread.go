@@ -442,7 +442,7 @@ func (t *DocumentCommentThreads) LoadByDocumentID(
 	filter *DocumentCommentThreadFilter,
 ) error {
 	if filter == nil {
-		filter = NewDocumentCommentThreadFilter(nil)
+		filter = NewDocumentCommentThreadFilter(nil, nil)
 	}
 
 	q := `
@@ -497,7 +497,7 @@ func (t *DocumentCommentThreads) CountByDocumentID(
 	filter *DocumentCommentThreadFilter,
 ) (int, error) {
 	if filter == nil {
-		filter = NewDocumentCommentThreadFilter(nil)
+		filter = NewDocumentCommentThreadFilter(nil, nil)
 	}
 
 	q := `

@@ -23,6 +23,7 @@ package types
 import (
 	"encoding/base64"
 
+	"go.probo.inc/probo/pkg/collaboration"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
@@ -61,7 +62,6 @@ func NewDocumentSuggestion(suggestion *coredata.DocumentSuggestion, threadID gid
 		AuthorProfileID:     suggestion.AuthorProfileID,
 		Status:              suggestion.Status,
 		ThreadID:            threadID,
-		AnchorQuote:         suggestion.AnchorQuote,
 		ResolvedAt:          suggestion.ResolvedAt,
 		ResolvedByProfileID: gidString(suggestion.ResolvedByProfileID),
 		CreatedAt:           suggestion.CreatedAt,
@@ -73,7 +73,56 @@ func NewDocumentSuggestion(suggestion *coredata.DocumentSuggestion, threadID gid
 		node.AnchorEnd = new(base64.StdEncoding.EncodeToString(suggestion.AnchorEnd))
 	}
 
+	if suggestion.Changes != nil {
+		node.Changes = new(newDocumentSuggestionChanges(suggestion.Changes.Changes))
+		node.ChangeCount = new(suggestion.Changes.ChangeCount)
+	}
+
 	return node
+}
+
+func newDocumentSuggestionChanges(changes []coredata.DocumentSuggestionChange) []*DocumentSuggestionChange {
+	nodes := make([]*DocumentSuggestionChange, len(changes))
+	for i, change := range changes {
+		nodes[i] = &DocumentSuggestionChange{
+			Kind:         change.Kind,
+			Deleted:      change.Deleted,
+			Inserted:     change.Inserted,
+			Href:         change.Href,
+			PreviousHref: change.PreviousHref,
+			Before:       newDocumentSuggestionBlockLabel(change.Before),
+			After:        newDocumentSuggestionBlockLabel(change.After),
+		}
+
+		if change.Mark != "" {
+			nodes[i].Mark = new(collaboration.FormatSuggestionMark(change.Mark))
+		}
+
+		if change.FormatAction != "" {
+			nodes[i].FormatAction = new(collaboration.FormatSuggestionAction(change.FormatAction))
+		}
+
+		if change.Node != "" {
+			nodes[i].Node = new(change.Node)
+		}
+
+		if change.NodeAction != "" {
+			nodes[i].NodeAction = new(change.NodeAction)
+		}
+	}
+
+	return nodes
+}
+
+func newDocumentSuggestionBlockLabel(label *coredata.DocumentSuggestionBlockLabel) *DocumentSuggestionBlockLabel {
+	if label == nil {
+		return nil
+	}
+
+	return &DocumentSuggestionBlockLabel{
+		Kind:  label.Kind,
+		Level: label.Level,
+	}
 }
 
 func NewListDocumentCommentThreadsOutput(

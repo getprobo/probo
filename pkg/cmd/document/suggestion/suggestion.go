@@ -27,6 +27,7 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
+	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/cli/api"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 )
@@ -164,14 +165,36 @@ func newListCmd(f *cmdutil.Factory) *cobra.Command {
 	return cmd
 }
 
+type (
+	blockLabel struct {
+		Kind  string `json:"kind"`
+		Level *int   `json:"level"`
+	}
+
+	suggestionChange struct {
+		Kind         string      `json:"kind"`
+		Deleted      *string     `json:"deleted"`
+		Inserted     *string     `json:"inserted"`
+		Mark         *string     `json:"mark"`
+		FormatAction *string     `json:"formatAction"`
+		Href         *string     `json:"href"`
+		PreviousHref *string     `json:"previousHref"`
+		Before       *blockLabel `json:"before"`
+		After        *blockLabel `json:"after"`
+		Node         *string     `json:"node"`
+		NodeAction   *string     `json:"nodeAction"`
+	}
+)
+
 type viewResponse struct {
 	Node *struct {
-		Typename    string `json:"__typename"`
-		ID          string `json:"id"`
-		Status      string `json:"status"`
-		CreatedAt   string `json:"createdAt"`
-		ResolvedAt  string `json:"resolvedAt"`
-		AnchorQuote string `json:"anchorQuote"`
+		Typename    string             `json:"__typename"`
+		ID          string             `json:"id"`
+		Status      string             `json:"status"`
+		CreatedAt   string             `json:"createdAt"`
+		ResolvedAt  string             `json:"resolvedAt"`
+		Changes     []suggestionChange `json:"changes"`
+		ChangeCount *int               `json:"changeCount"`
 		Author      *struct {
 			ID       string `json:"id"`
 			FullName string `json:"fullName"`
@@ -250,8 +273,12 @@ func newViewCmd(f *cmdutil.Factory) *cobra.Command {
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Document:"), document)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Thread:"), thread)
 
-			if n.AnchorQuote != "" {
-				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Quote:"), n.AnchorQuote)
+			for _, change := range n.Changes {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Change:"), describeChange(change))
+			}
+
+			if n.ChangeCount != nil && *n.ChangeCount > len(n.Changes) {
+				_, _ = fmt.Fprintf(out, "%s+%d more\n", label.Render(""), *n.ChangeCount-len(n.Changes))
 			}
 
 			_, _ = fmt.Fprintln(out)
@@ -268,6 +295,62 @@ func newViewCmd(f *cmdutil.Factory) *cobra.Command {
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd
+}
+
+func describeChange(change suggestionChange) string {
+	switch change.Kind {
+	case "TEXT":
+		deleted := ref.UnrefOrZero(change.Deleted)
+		inserted := ref.UnrefOrZero(change.Inserted)
+
+		switch {
+		case deleted != "" && inserted != "":
+			return fmt.Sprintf("replaced %q with %q", deleted, inserted)
+		case deleted != "":
+			return fmt.Sprintf("deleted %q", deleted)
+		default:
+			return fmt.Sprintf("added %q", inserted)
+		}
+	case "FORMAT":
+		mark := strings.ToLower(ref.UnrefOrZero(change.Mark))
+		if ref.UnrefOrZero(change.FormatAction) == "REMOVE" {
+			return "removed " + mark
+		}
+
+		if change.Href != nil && change.PreviousHref != nil {
+			return fmt.Sprintf("changed %s from %s to %s", mark, *change.PreviousHref, *change.Href)
+		}
+
+		if change.Href != nil {
+			return fmt.Sprintf("added %s to %s", mark, *change.Href)
+		}
+
+		return "added " + mark
+	case "BLOCK":
+		return describeBlock(change.Before) + " -> " + describeBlock(change.After)
+	case "NODE":
+		verb := "added"
+		if ref.UnrefOrZero(change.NodeAction) == "DELETE" {
+			verb = "removed"
+		}
+
+		return verb + " " + strings.ToLower(ref.UnrefOrZero(change.Node))
+	default:
+		return strings.ToLower(change.Kind)
+	}
+}
+
+func describeBlock(label *blockLabel) string {
+	if label == nil {
+		return "block"
+	}
+
+	name := strings.ReplaceAll(strings.ToLower(label.Kind), "_", " ")
+	if label.Level != nil {
+		return fmt.Sprintf("%s %d", name, *label.Level)
+	}
+
+	return name
 }
 
 func newStartCmd(f *cmdutil.Factory) *cobra.Command {
@@ -748,7 +831,20 @@ query DocumentSuggestion($id: ID!) {
       status
       createdAt
       resolvedAt
-      anchorQuote
+      changes {
+        kind
+        deleted
+        inserted
+        mark
+        formatAction
+        href
+        previousHref
+        before { kind level }
+        after { kind level }
+        node
+        nodeAction
+      }
+      changeCount
       author { id fullName }
       document { id }
       thread { id }

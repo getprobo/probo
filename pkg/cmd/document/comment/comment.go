@@ -61,10 +61,11 @@ type commentThread struct {
 
 func newListCmd(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagResolved string
-		flagLimit    int
-		flagAfter    string
-		flagOutput   *string
+		flagResolved     string
+		flagAutoRejected string
+		flagLimit        int
+		flagAfter        string
+		flagOutput       *string
 	)
 
 	cmd := &cobra.Command{
@@ -82,13 +83,26 @@ func newListCmd(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			variables := map[string]any{"id": args[0]}
+			filter := map[string]any{}
 
 			if flagResolved != "" {
 				if err := cmdutil.ValidateEnum("resolved", flagResolved, []string{"true", "false"}); err != nil {
 					return err
 				}
 
-				variables["filter"] = map[string]any{"resolved": flagResolved == "true"}
+				filter["resolved"] = flagResolved == "true"
+			}
+
+			if flagAutoRejected != "" {
+				if err := cmdutil.ValidateEnum("auto-rejected", flagAutoRejected, []string{"true", "false"}); err != nil {
+					return err
+				}
+
+				filter["autoRejected"] = flagAutoRejected == "true"
+			}
+
+			if len(filter) > 0 {
+				variables["filter"] = filter
 			}
 
 			client, _, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
@@ -163,6 +177,12 @@ func newListCmd(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&flagResolved, "resolved", "", "Filter by resolved state (true or false)")
+	cmd.Flags().StringVar(
+		&flagAutoRejected,
+		"auto-rejected",
+		"",
+		"Filter by whether the thread's suggestion was rejected automatically (true or false)",
+	)
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of threads")
 	cmdutil.AddAfterFlag(cmd, &flagAfter)
 	flagOutput = cmdutil.AddOutputFlag(cmd)

@@ -46,7 +46,7 @@ func documentCommentThreadFilter(
 		return nil
 	}
 
-	return coredata.NewDocumentCommentThreadFilter(filter.Resolved)
+	return coredata.NewDocumentCommentThreadFilter(filter.Resolved, filter.AutoRejected)
 }
 
 func documentSuggestionFilter(

@@ -9529,11 +9529,18 @@ components:
             - string
             - "null"
           description: Base64 Automerge cursor for the end of the text kept by the decision. Equals anchor_start when the decision kept no text.
-        anchor_quote:
+        changes:
+          anyOf:
+            - type: array
+              items:
+                $ref: "#/components/schemas/DocumentSuggestionChange"
+            - type: "null"
+          description: What a reviewer's decision changed, read before the decision removed the suggestion's redlines. Lists the first few changes. Null while open, when rejected automatically, or decided before this was recorded.
+        change_count:
           type:
-            - string
+            - integer
             - "null"
-          description: Text the suggestion covered when it was accepted or rejected
+          description: How many changes the suggestion made, counting those past the ones listed in changes. Null whenever changes is null.
         resolved_at:
           type:
             - string
@@ -9555,6 +9562,110 @@ components:
           format: date-time
           description: Update timestamp
 
+    DocumentSuggestionChangeKind:
+      type: string
+      enum:
+        - TEXT
+        - FORMAT
+        - BLOCK
+        - NODE
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DocumentSuggestionChangeKind
+
+    DocumentSuggestionBlockKind:
+      type: string
+      enum:
+        - PARAGRAPH
+        - HEADING
+        - QUOTE
+        - CODE
+        - BULLET_LIST
+        - ORDERED_LIST
+        - TASK_LIST
+        - OTHER
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DocumentSuggestionBlockKind
+
+    DocumentSuggestionNodeKind:
+      type: string
+      enum:
+        - TABLE
+        - ROW
+        - COLUMN
+        - IMAGE
+        - DIVIDER
+        - FILE
+        - LINE
+        - OTHER
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DocumentSuggestionNodeKind
+
+    DocumentSuggestionNodeAction:
+      type: string
+      enum:
+        - INSERT
+        - DELETE
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DocumentSuggestionNodeAction
+
+    DocumentSuggestionBlockLabel:
+      type: object
+      required:
+        - kind
+      properties:
+        kind:
+          $ref: "#/components/schemas/DocumentSuggestionBlockKind"
+          description: Block kind
+        level:
+          type:
+            - integer
+            - "null"
+          description: Heading level. Null for every other kind.
+
+    DocumentSuggestionChange:
+      type: object
+      description: "One change of a suggestion. kind tells which fields are set: TEXT sets deleted and inserted, FORMAT sets mark and format_action (and href and previous_href for a link), BLOCK sets before and after, NODE sets node and node_action."
+      required:
+        - kind
+      properties:
+        kind:
+          $ref: "#/components/schemas/DocumentSuggestionChangeKind"
+          description: Change kind
+        deleted:
+          type:
+            - string
+            - "null"
+          description: Deleted text, cut with an ellipsis past 280 characters
+        inserted:
+          type:
+            - string
+            - "null"
+          description: Inserted text, cut with an ellipsis past 280 characters
+        mark:
+          $ref: "#/components/schemas/DocumentSuggestionFormatMark"
+          description: Style the format change adds or removes
+        format_action:
+          $ref: "#/components/schemas/DocumentSuggestionFormatAction"
+          description: Whether the format change adds or removes the style
+        href:
+          type:
+            - string
+            - "null"
+          description: Link address the suggestion sets
+        previous_href:
+          type:
+            - string
+            - "null"
+          description: Link address before the suggestion
+        before:
+          $ref: "#/components/schemas/DocumentSuggestionBlockLabel"
+          description: Block before the change
+        after:
+          $ref: "#/components/schemas/DocumentSuggestionBlockLabel"
+          description: Block after the change
+        node:
+          $ref: "#/components/schemas/DocumentSuggestionNodeKind"
+          description: Structure the node change inserts or deletes
+        node_action:
+          $ref: "#/components/schemas/DocumentSuggestionNodeAction"
+          description: Whether the node change inserts or deletes the structure
+
     ListDocumentCommentThreadsInput:
       type: object
       required:
@@ -9566,6 +9677,9 @@ components:
         resolved:
           type: boolean
           description: When set, return only resolved or only open threads
+        auto_rejected:
+          type: boolean
+          description: When set, return only threads of suggestions that were (true) or were not (false) rejected automatically, which includes suggestions abandoned when their creation failed. A thread without a suggestion was not.
         order_by:
           $ref: "#/components/schemas/DocumentCommentThreadOrderBy"
           description: Comment thread order

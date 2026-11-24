@@ -39,6 +39,7 @@ import { DocumentReviewAuthor } from "./DocumentReviewAuthor";
 import { DocumentReviewItem } from "./DocumentReviewItem";
 import { DocumentReviewThread } from "./DocumentReviewThread";
 import { DocumentSuggestionChange } from "./DocumentSuggestionChange";
+import { DocumentSuggestionChangeList } from "./DocumentSuggestionChangeList";
 import { DocumentSuggestionDecisions } from "./DocumentSuggestionDecisions";
 
 const documentCommentHistoryItemFragment = graphql`
@@ -53,11 +54,11 @@ const documentCommentHistoryItemFragment = graphql`
     suggestion {
       status
       createdAt
-      anchorQuote
       author {
         ...DocumentReviewAuthor_profile
       }
       ...DocumentSuggestionDecisions_suggestion
+      ...DocumentSuggestionChangeList_suggestion
     }
     ...DocumentReviewThread_thread
   }
@@ -123,7 +124,7 @@ function SuggestionHistoryItem({
 }) {
   const { t } = useTranslation("organizations/documents");
   const open = suggestion.status === "OPEN";
-  const { item, quote } = documentCommentHistory({ resolved: !open });
+  const { item } = documentCommentHistory({ resolved: !open });
   const { changes } = documentSuggestionListItem();
   const status = suggestionStatus(suggestion.status);
   const badge = (
@@ -165,11 +166,7 @@ function SuggestionHistoryItem({
             )}
           </div>
         )}
-        {!open && suggestion.anchorQuote != null && suggestion.anchorQuote !== "" && (
-          <Text size={1} color="faint" className={quote()}>
-            {suggestion.anchorQuote}
-          </Text>
-        )}
+        {!open && <DocumentSuggestionChangeList suggestionKey={suggestion} />}
         <DocumentReviewThread
           threadKey={thread}
           threadConnections={threadConnections}

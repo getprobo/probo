@@ -333,7 +333,6 @@ export const documentCommentHistory = tv({
     list: "flex flex-col gap-2",
     more: "self-start",
     item: "",
-    quote: "line-clamp-2 border-l-2 border-sand-6 pl-2",
   },
   variants: {
     resolved: {

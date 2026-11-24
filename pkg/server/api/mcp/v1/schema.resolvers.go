@@ -11664,17 +11664,12 @@ func (r *Resolver) ListDocumentCommentThreadsTool(ctx context.Context, req *mcp.
 		pageOrderBy.Direction = input.OrderBy.Direction
 	}
 
-	var filter *coredata.DocumentCommentThreadFilter
-	if input.Resolved != nil {
-		filter = coredata.NewDocumentCommentThreadFilter(input.Resolved)
-	}
-
 	threads, err := r.proboSvc.Documents.ListCommentThreads(
 		ctx,
 		scope,
 		input.DocumentID,
 		types.NewCursor(input.Size, input.Cursor, pageOrderBy),
-		filter,
+		coredata.NewDocumentCommentThreadFilter(input.Resolved, input.AutoRejected),
 	)
 	if err != nil {
 		return nil, types.ListDocumentCommentThreadsOutput{}, r.documentReviewError(ctx, "cannot list document comment threads", err)
