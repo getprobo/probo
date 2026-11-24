@@ -309,6 +309,7 @@ func (s *Service) resolveInventoryGrantFilter(
 ) (*coredata.AccessInventoryGrantFilter, error) {
 	settings := &coredata.AccessInventorySettings{}
 	err := settings.LoadByOrganizationID(ctx, conn, scope, organizationID)
+
 	if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 		return nil, fmt.Errorf("cannot load access inventory settings: %w", err)
 	}

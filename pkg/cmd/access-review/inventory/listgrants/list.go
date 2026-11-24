@@ -141,9 +141,11 @@ func NewCmdListGrants(f *cmdutil.Factory) *cobra.Command {
 			if flagSourceID != "" {
 				filter["accessReviewSourceId"] = flagSourceID
 			}
+
 			if flagIncludeDisappeared {
 				filter["includeDisappeared"] = true
 			}
+
 			if len(filter) > 0 {
 				variables["filter"] = filter
 			}
