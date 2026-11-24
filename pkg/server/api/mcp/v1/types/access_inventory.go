@@ -195,6 +195,7 @@ func NewListAccessInventoryChangeEventsOutput(
 	}
 
 	var nextCursor *page.CursorKey
+
 	if p.Info.HasNext && len(p.Data) > 0 {
 		cursorKey := p.Data[len(p.Data)-1].CursorKey(p.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey
@@ -215,6 +216,7 @@ func NewListAccessInventoryGrantChangeEventsOutput(
 	}
 
 	var nextCursor *page.CursorKey
+
 	if p.Info.HasNext && len(p.Data) > 0 {
 		cursorKey := p.Data[len(p.Data)-1].CursorKey(p.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey
