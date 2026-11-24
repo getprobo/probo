@@ -63,19 +63,33 @@ describe("access inventory change event local day bounds", () => {
     expect(accessInventoryChangeEventLocalDayEnd("2026-02-31")).toBeNull();
   });
 
-  it("maps observed bounds onto GraphQL filter fields", () => {
-    const filter = accessInventoryChangeEventsGraphqlFilter({
-      sourceId: null,
-      changeType: null,
+  it("maps filter inputs onto GraphQL filter fields", () => {
+    const withSourceAndType = accessInventoryChangeEventsGraphqlFilter({
+      sourceId: "source-gid",
+      changeType: "APPEARED",
       observedAfter: "2026-03-10",
       observedBefore: "2026-03-12",
     });
 
-    expect(filter.observedAtOnOrAfter).toBe(
+    expect(withSourceAndType.accessReviewSourceId).toBe("source-gid");
+    expect(withSourceAndType.changeTypes).toEqual(["APPEARED"]);
+    expect(withSourceAndType.observedAtOnOrAfter).toBe(
       accessInventoryChangeEventLocalDayStart("2026-03-10"),
     );
-    expect(filter.observedAtOnOrBefore).toBe(
+    expect(withSourceAndType.observedAtOnOrBefore).toBe(
       accessInventoryChangeEventLocalDayEnd("2026-03-12"),
     );
+
+    const withoutSourceOrType = accessInventoryChangeEventsGraphqlFilter({
+      sourceId: null,
+      changeType: null,
+      observedAfter: null,
+      observedBefore: null,
+    });
+
+    expect(withoutSourceOrType.accessReviewSourceId).toBeNull();
+    expect(withoutSourceOrType.changeTypes).toBeNull();
+    expect(withoutSourceOrType.observedAtOnOrAfter).toBeNull();
+    expect(withoutSourceOrType.observedAtOnOrBefore).toBeNull();
   });
 });
