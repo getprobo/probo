@@ -19,7 +19,9 @@
 -- SOFTWARE.
 
 -- Live inventory source sync runs (AR-P1-03). Claim/stale helpers use
--- FOR UPDATE SKIP LOCKED. Change events may reference a completed run.
+-- FOR UPDATE SKIP LOCKED. Change events may reference a completed run; the
+-- composite FK keeps tenant/org/source aligned while only sync_run_id is
+-- cleared on run delete.
 
 CREATE TYPE access_source_sync_run_status AS ENUM (
     'QUEUED',
@@ -39,12 +41,13 @@ CREATE TABLE access_source_sync_runs (
     started_at TIMESTAMP WITH TIME ZONE,
     completed_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    UNIQUE (tenant_id, organization_id, access_review_source_id, id)
 );
 
 ALTER TABLE access_inventory_change_events
     ADD CONSTRAINT access_inventory_change_events_sync_run_id_fkey
-    FOREIGN KEY (sync_run_id)
-    REFERENCES access_source_sync_runs(id)
+    FOREIGN KEY (tenant_id, organization_id, access_review_source_id, sync_run_id)
+    REFERENCES access_source_sync_runs (tenant_id, organization_id, access_review_source_id, id)
     ON UPDATE CASCADE
-    ON DELETE SET NULL;
+    ON DELETE SET NULL (sync_run_id);

@@ -68,17 +68,15 @@ func insertAccessSourceSyncRun(
 }
 
 func TestAccessSourceSyncRun_LoadNextQueuedForUpdateSkipLocked(t *testing.T) {
-	t.Parallel()
-
+	// Not parallel: shares the cross-tenant QUEUED claim queue with the
+	// SkipLocked sibling below.
 	client := test.PGClient(t)
 	ctx := context.Background()
 
 	fx := seedAccessInventoryFixture(t, ctx, client)
-	now := time.Now().UTC()
-	runID := insertAccessSourceSyncRun(t, ctx, client, fx, coredata.AccessSourceSyncRunStatusQueued, now)
-	_ = insertAccessSourceSyncRun(t, ctx, client, fx, coredata.AccessSourceSyncRunStatusRunning, now)
-
-	var claimedID gid.GID
+	createdAt := time.Now().UTC()
+	runID := insertAccessSourceSyncRun(t, ctx, client, fx, coredata.AccessSourceSyncRunStatusQueued, createdAt)
+	_ = insertAccessSourceSyncRun(t, ctx, client, fx, coredata.AccessSourceSyncRunStatusRunning, createdAt)
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		claimed := &coredata.AccessSourceSyncRun{}
@@ -89,11 +87,10 @@ func TestAccessSourceSyncRun_LoadNextQueuedForUpdateSkipLocked(t *testing.T) {
 		assert.Equal(t, coredata.AccessSourceSyncRunStatusQueued, claimed.Status)
 		assert.NotEqual(t, gid.TenantID{}, claimed.TenantID)
 
-		startedAt := now
+		startedAt := createdAt
 		claimed.Status = coredata.AccessSourceSyncRunStatusRunning
 		claimed.StartedAt = &startedAt
-		claimed.UpdatedAt = now
-		claimedID = claimed.ID
+		claimed.UpdatedAt = createdAt
 
 		scope := coredata.NewScope(claimed.TenantID, gid.Nil)
 
@@ -101,16 +98,6 @@ func TestAccessSourceSyncRun_LoadNextQueuedForUpdateSkipLocked(t *testing.T) {
 	}))
 
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		scope := coredata.NewScope(claimedID.TenantID(), gid.Nil)
-		loaded := &coredata.AccessSourceSyncRun{}
-		if err := loaded.LoadByID(ctx, conn, scope, claimedID); err != nil {
-			return err
-		}
-
-		assert.Equal(t, coredata.AccessSourceSyncRunStatusRunning, loaded.Status)
-		require.NotNil(t, loaded.StartedAt)
-
-		// Our fixture row remains claimable if a different queued row was taken.
 		ours := &coredata.AccessSourceSyncRun{}
 		if err := ours.LoadByID(ctx, conn, fx.scope, runID); err != nil {
 			return err
@@ -130,14 +117,16 @@ func TestAccessSourceSyncRun_LoadNextQueuedForUpdateSkipLocked(t *testing.T) {
 }
 
 func TestAccessSourceSyncRun_LoadNextQueuedForUpdateSkipLocked_SkipLocked(t *testing.T) {
-	t.Parallel()
-
+	// Not parallel: pins exact claim IDs against the shared QUEUED queue.
 	client := test.PGClient(t)
 	ctx := context.Background()
 
 	fx := seedAccessInventoryFixture(t, ctx, client)
-	createdAt := time.Now().UTC()
-	runID := insertAccessSourceSyncRun(t, ctx, client, fx, coredata.AccessSourceSyncRunStatusQueued, createdAt)
+	// Far-past stamps so these two rows head the global claim queue.
+	unlockedAt := time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC)
+	lockedAt := unlockedAt.Add(time.Second)
+	unlockedID := insertAccessSourceSyncRun(t, ctx, client, fx, coredata.AccessSourceSyncRunStatusQueued, unlockedAt)
+	lockedID := insertAccessSourceSyncRun(t, ctx, client, fx, coredata.AccessSourceSyncRunStatusQueued, lockedAt)
 
 	var (
 		locked    = make(chan error, 1)
@@ -146,16 +135,14 @@ func TestAccessSourceSyncRun_LoadNextQueuedForUpdateSkipLocked_SkipLocked(t *tes
 		done      = make(chan error, 1)
 	)
 
-	// Hold a row lock on this specific QUEUED run the way a worker claim would,
-	// without racing other tests' older queued rows via LoadNextQueued.
 	go func() {
 		done <- client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-			var lockedID gid.GID
+			var held gid.GID
 			if err := tx.QueryRow(
 				ctx,
 				`SELECT id FROM access_source_sync_runs WHERE id = @id FOR UPDATE`,
-				pgx.StrictNamedArgs{"id": runID},
-			).Scan(&lockedID); err != nil {
+				pgx.StrictNamedArgs{"id": lockedID},
+			).Scan(&held); err != nil {
 				locked <- err
 
 				return err
@@ -181,17 +168,15 @@ func TestAccessSourceSyncRun_LoadNextQueuedForUpdateSkipLocked_SkipLocked(t *tes
 			return err
 		}
 
-		assert.NotEqual(t, runID, claimed.ID)
+		assert.Equal(t, unlockedID, claimed.ID, "SKIP LOCKED must claim the unlocked candidate")
+		assert.NotEqual(t, lockedID, claimed.ID)
 
 		return nil
 	})
 
 	release()
 	require.NoError(t, <-done)
-
-	if err != nil {
-		require.ErrorIs(t, err, coredata.ErrNoAccessSourceSyncRunAvailable)
-	}
+	require.NoError(t, err, "claim must skip the locked row instead of waiting on it")
 }
 
 func TestAccessSourceSyncRuns_LoadStaleRunningForUpdateSkipLocked(t *testing.T) {
@@ -244,6 +229,122 @@ func TestAccessSourceSyncRuns_LoadStaleRunningForUpdateSkipLocked(t *testing.T) 
 	}))
 }
 
+func TestAccessSourceSyncRuns_LoadStaleRunningForUpdateSkipLocked_SkipLocked(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+
+	fx := seedAccessInventoryFixture(t, ctx, client)
+	staleAt := time.Date(2001, time.March, 1, 0, 0, 0, 0, time.UTC)
+	staleThreshold := staleAt.Add(time.Hour)
+
+	lockedID := insertAccessSourceSyncRun(t, ctx, client, fx, coredata.AccessSourceSyncRunStatusRunning, staleAt)
+	unlockedID := insertAccessSourceSyncRun(
+		t,
+		ctx,
+		client,
+		fx,
+		coredata.AccessSourceSyncRunStatusRunning,
+		staleAt.Add(time.Second),
+	)
+
+	var (
+		locked    = make(chan error, 1)
+		releaseCh = make(chan struct{})
+		release   = sync.OnceFunc(func() { close(releaseCh) })
+		done      = make(chan error, 1)
+		ownLocked coredata.AccessSourceSyncRuns
+	)
+
+	go func() {
+		done <- client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+			var held gid.GID
+			if err := tx.QueryRow(
+				ctx,
+				`SELECT id FROM access_source_sync_runs WHERE id = @id FOR UPDATE`,
+				pgx.StrictNamedArgs{"id": lockedID},
+			).Scan(&held); err != nil {
+				locked <- err
+
+				return err
+			}
+
+			locked <- nil
+
+			<-releaseCh
+
+			return ownLocked.LoadStaleRunningForUpdateSkipLocked(ctx, tx, staleThreshold, 100)
+		})
+	}()
+
+	require.NoError(t, <-locked)
+	t.Cleanup(release)
+
+	sweepCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	var swept coredata.AccessSourceSyncRuns
+
+	err := client.WithTx(sweepCtx, func(ctx context.Context, tx pg.Tx) error {
+		return swept.LoadStaleRunningForUpdateSkipLocked(ctx, tx, staleThreshold, 100)
+	})
+
+	release()
+	require.NoError(t, <-done)
+	require.NoError(t, err, "the sweep must skip a locked stale run instead of waiting on it")
+
+	sweptIDs := make([]gid.GID, 0, len(swept))
+	for _, run := range swept {
+		sweptIDs = append(sweptIDs, run.ID)
+	}
+
+	assert.NotContains(t, sweptIDs, lockedID, "a locked stale run must be left for the next sweep")
+	assert.Contains(t, sweptIDs, unlockedID, "the unlocked stale run must still be recovered")
+
+	ownIDs := make([]gid.GID, 0, len(ownLocked))
+	for _, run := range ownLocked {
+		ownIDs = append(ownIDs, run.ID)
+	}
+
+	assert.Contains(t, ownIDs, lockedID, "the lock holder still sees its stale run")
+}
+
+func TestAccessSourceSyncRun_UpdateRejectsTerminalRows(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+
+	fx := seedAccessInventoryFixture(t, ctx, client)
+	now := time.Now().UTC()
+	runID := insertAccessSourceSyncRun(t, ctx, client, fx, coredata.AccessSourceSyncRunStatusSuccess, now)
+
+	err := client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		run := &coredata.AccessSourceSyncRun{}
+		if err := run.LoadByID(ctx, tx, fx.scope, runID); err != nil {
+			return err
+		}
+
+		run.Status = coredata.AccessSourceSyncRunStatusFailed
+		run.UpdatedAt = now.Add(time.Minute)
+
+		return run.Update(ctx, tx, fx.scope)
+	})
+	require.ErrorIs(t, err, coredata.ErrResourceNotFound)
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		loaded := &coredata.AccessSourceSyncRun{}
+		if err := loaded.LoadByID(ctx, conn, fx.scope, runID); err != nil {
+			return err
+		}
+
+		assert.Equal(t, coredata.AccessSourceSyncRunStatusSuccess, loaded.Status)
+
+		return nil
+	}))
+}
+
 func TestAccessInventoryChangeEvent_SyncRunForeignKey(t *testing.T) {
 	t.Parallel()
 
@@ -256,10 +357,11 @@ func TestAccessInventoryChangeEvent_SyncRunForeignKey(t *testing.T) {
 	now := time.Now().UTC()
 	runID := insertAccessSourceSyncRun(t, ctx, client, fx, coredata.AccessSourceSyncRunStatusSuccess, now)
 	afterPayload := json.RawMessage(`{"presence":"PRESENT"}`)
+	eventID := gid.New(tenantID, coredata.AccessInventoryChangeEventEntityType)
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		event := &coredata.AccessInventoryChangeEvent{
-			ID:                   gid.New(tenantID, coredata.AccessInventoryChangeEventEntityType),
+			ID:                   eventID,
 			OrganizationID:       fx.organizationID,
 			AccessReviewSourceID: fx.sourceID,
 			GrantID:              &grantID,
@@ -316,4 +418,49 @@ func TestAccessInventoryChangeEvent_SyncRunForeignKey(t *testing.T) {
 	})
 	require.Error(t, err)
 	assert.False(t, errors.Is(err, coredata.ErrNoAccessSourceSyncRunAvailable))
+
+	fxOther := seedAccessInventoryFixture(t, ctx, client)
+	otherRunID := insertAccessSourceSyncRun(t, ctx, client, fxOther, coredata.AccessSourceSyncRunStatusSuccess, now)
+
+	err = client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		event := &coredata.AccessInventoryChangeEvent{
+			ID:                   gid.New(tenantID, coredata.AccessInventoryChangeEventEntityType),
+			OrganizationID:       fx.organizationID,
+			AccessReviewSourceID: fx.sourceID,
+			GrantID:              &grantID,
+			PrincipalKey:         "change-event@example.com",
+			ResourceKey:          "system",
+			EntitlementKey:       "member",
+			ChangeType:           coredata.AccessInventoryChangeTypeAppeared,
+			ObservedAt:           now,
+			SyncRunID:            &otherRunID,
+			After:                &afterPayload,
+			IdempotencyKey:       "cross-source-sync-run|" + otherRunID.String(),
+			CreatedAt:            now,
+		}
+
+		_, err := event.Insert(ctx, tx, fx.scope)
+
+		return err
+	})
+	require.Error(t, err, "composite FK must reject a sync run from another source/tenant")
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		run := &coredata.AccessSourceSyncRun{ID: runID}
+
+		return run.Delete(ctx, tx, fx.scope)
+	}))
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		loaded := &coredata.AccessInventoryChangeEvent{}
+		if err := loaded.LoadByID(ctx, conn, fx.scope, eventID); err != nil {
+			return err
+		}
+
+		assert.Nil(t, loaded.SyncRunID, "ON DELETE SET NULL must clear only sync_run_id")
+		assert.Equal(t, fx.organizationID, loaded.OrganizationID)
+		assert.Equal(t, fx.sourceID, loaded.AccessReviewSourceID)
+
+		return nil
+	}))
 }

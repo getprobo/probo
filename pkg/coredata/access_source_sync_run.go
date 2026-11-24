@@ -217,8 +217,9 @@ INSERT INTO access_source_sync_runs (
 	return nil
 }
 
-// Update writes the in-flight run's lifecycle fields. It must only be called
-// on the run that the worker currently owns.
+// Update writes lifecycle fields on a non-terminal run. Terminal rows
+// (SUCCESS / FAILED) are immutable: the WHERE clause rejects them so a stale
+// writer cannot overwrite a completed sync.
 func (r *AccessSourceSyncRun) Update(
 	ctx context.Context,
 	conn pg.Tx,
@@ -236,6 +237,7 @@ SET
 WHERE
     %s
     AND id = @id
+    AND status IN (@queued_status, @running_status)
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
@@ -247,6 +249,8 @@ WHERE
 		"started_at":            r.StartedAt,
 		"completed_at":          r.CompletedAt,
 		"updated_at":            r.UpdatedAt,
+		"queued_status":         AccessSourceSyncRunStatusQueued,
+		"running_status":        AccessSourceSyncRunStatusRunning,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -257,6 +261,30 @@ WHERE
 
 	if result.RowsAffected() == 0 {
 		return ErrResourceNotFound
+	}
+
+	return nil
+}
+
+func (r *AccessSourceSyncRun) Delete(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+) error {
+	q := `
+DELETE FROM access_source_sync_runs
+WHERE
+    %s
+    AND id = @id
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"id": r.ID}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot delete access source sync run: %w", err)
 	}
 
 	return nil
