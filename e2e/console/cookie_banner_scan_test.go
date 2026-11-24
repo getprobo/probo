@@ -22,9 +22,11 @@ package console_test
 
 import (
 	"context"
+	"sync"
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/e2e/internal/factory"
@@ -39,6 +41,8 @@ func TestCookieBannerScan_ListAndRequest(t *testing.T) {
 	bannerID := factory.CreateCookieBanner(owner)
 
 	completedID := seedCompletedScan(t, bannerID, time.Now().Add(-2*time.Hour))
+
+	releaseScanClaims := holdScanClaims(t)
 
 	const requestQuery = `
 		mutation RequestCookieBannerScan($input: RequestCookieBannerScanInput!) {
@@ -160,6 +164,8 @@ func TestCookieBannerScan_ListAndRequest(t *testing.T) {
 	assert.Equal(t, "PENDING", listed.Node.Scans.Edges[0].Node.State)
 	assert.Equal(t, completedID, listed.Node.Scans.Edges[1].Node.ID)
 
+	releaseScanClaims()
+
 	completed := listed.Node.Scans.Edges[1].Node
 	assert.Equal(t, "COMPLETED", completed.State)
 	assert.True(t, completed.Truncated)
@@ -228,6 +234,40 @@ func TestCookieBannerScan_ListAndRequest(t *testing.T) {
 	require.NoError(t, owner.Execute(trackersQuery, map[string]any{"id": completedID}, &trackers))
 	require.Len(t, trackers.Node.DetectedTrackers.Edges, 1)
 	assert.Equal(t, "_ga", trackers.Node.DetectedTrackers.Edges[0].Node.Identifier)
+}
+
+// holdScanClaims keeps the scan worker from claiming a PENDING scan until
+// the returned release func runs, so the test can observe PENDING.
+func holdScanClaims(t *testing.T) func() {
+	t.Helper()
+
+	ctx := context.Background()
+	conn := dialTestPg(t, ctx)
+
+	var (
+		tx   pgx.Tx
+		once sync.Once
+	)
+
+	release := func() {
+		once.Do(func() {
+			if tx != nil {
+				_ = tx.Rollback(ctx)
+			}
+
+			_ = conn.Close(ctx)
+		})
+	}
+
+	t.Cleanup(release)
+
+	tx, err := conn.Begin(ctx)
+	require.NoError(t, err)
+
+	_, err = tx.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtext('cookie_banner_scans_claim'))`)
+	require.NoError(t, err)
+
+	return release
 }
 
 func seedCompletedScan(t *testing.T, bannerID string, createdAt time.Time) string {
