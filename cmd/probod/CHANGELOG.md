@@ -4,6 +4,54 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.358.0] - 2026-11-24
+
+### Added
+
+- New document page: properties, linked controls, approvers and
+  signatories sit in a collapsible side column, and the text is laid
+  out on A4 pages like the PDF export, under a fixed formatting
+  toolbar with an insert menu and the document mode
+- Comments and suggestions show as cards beside the text. Cards list
+  each change a suggestion makes, can be resolved, edited, accepted or
+  rejected, and open their thread with a reply form. An All comments
+  view lists every thread, including resolved ones
+- Each suggestion has its own comment thread, and a decided suggestion
+  keeps the changes it made in the history
+- The document toolbar shows who else is editing, and collaborators'
+  carets are colored per person
+- Viewing mode lists every published version beside the document and
+  opens one read only through a shareable `version` parameter
+- The publish dialog takes a changelog and approvers, and archive,
+  unarchive, delete and download PDF are in the page menu
+- Generated documents explain why they are view only
+- GraphQL and MCP document suggestions expose their thread and the
+  changes a decision made, and comment threads can be filtered on
+  automatically rejected suggestions
+
+### Changed
+
+- Documents can be published with open suggestions. They are left out
+  of the published version and stay open, and the publish dialog warns
+  about them
+- A suggestion whose edits are all undone is rejected automatically,
+  and reopens if they come back
+- Old document subpages redirect to the new document page
+- Bulk document export requires the `export-pdf` permission, so
+  viewers and auditors can bulk export documents
+
+### Fixed
+
+- Toggling a style on text already holding another style suggestion
+  no longer fails while suggesting
+- Editor menus show while suggesting
+
+### Removed
+
+- Unused console GraphQL fields: `DocumentVersion.approvers` and
+  `signed`, the approval decision `consentText`, and revision
+  `previousHeads`, `actorID` and `author`
+
 ## [0.357.0] - 2026-11-23
 
 ### Added
