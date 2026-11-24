@@ -22,6 +22,7 @@ package accessreview
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -164,13 +165,21 @@ func (s *Service) Run(ctx context.Context) error {
 
 	g.Go(
 		func() error {
-			return s.fetchWorker.Run(gctx)
+			if err := s.fetchWorker.Run(gctx); err != nil {
+				return fmt.Errorf("source-fetch-worker: %w", err)
+			}
+
+			return nil
 		},
 	)
 
 	g.Go(
 		func() error {
-			return s.syncWorker.Run(gctx)
+			if err := s.syncWorker.Run(gctx); err != nil {
+				return fmt.Errorf("inventory-sync-worker: %w", err)
+			}
+
+			return nil
 		},
 	)
 

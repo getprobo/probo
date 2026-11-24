@@ -259,6 +259,38 @@ func TestSyncInventorySource_AppearedOnNewEntitlements(t *testing.T) {
 	require.Len(t, events, 2)
 	assert.Equal(t, coredata.AccessInventoryChangeTypeAppeared, events[1].ChangeType)
 	assert.Equal(t, "Owner", events[1].EntitlementKey)
+	require.NotNil(t, events[1].SyncRunID)
+	assert.Equal(t, run2.ID, *events[1].SyncRunID)
+}
+
+func TestSyncInventorySource_EmptyRosterUpsertsDefaultResource(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	logger := log.NewLogger(log.WithOutput(io.Discard))
+	svc := NewService(client, cipher.EncryptionKey{}, nil, provider.NewBuiltinRegistry(), logger)
+
+	fx := seedInventorySyncFixture(t, ctx, client, "email,full_name,role\n")
+	run := insertQueuedInventorySyncRun(t, ctx, client, fx)
+	markSyncRunRunning(t, ctx, client, fx, run)
+	require.NoError(t, svc.SyncInventorySource(ctx, fx.scope, run))
+
+	resource := &coredata.AccessInventoryResource{}
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return resource.LoadBySourceIDAndResourceKey(ctx, conn, fx.scope, fx.sourceID, DefaultResourceKey)
+	}))
+	assert.Equal(t, DefaultResourceKind, resource.Kind)
+	assert.Equal(t, "CSV Roster", resource.DisplayName)
+	assert.Empty(t, loadInventoryGrants(t, ctx, client, fx))
+}
+
+func TestInventoryChangeIdempotencyKey_Unambiguous(t *testing.T) {
+	t.Parallel()
+
+	a := inventoryChangeIdempotencyKey("run", "a|b", "c", "d", "APPEARED", "appeared")
+	b := inventoryChangeIdempotencyKey("run", "a", "b|c", "d", "APPEARED", "appeared")
+	assert.NotEqual(t, a, b)
 }
 
 func TestSyncInventorySource_IdempotentOnUnchangedRoster(t *testing.T) {
@@ -279,6 +311,8 @@ func TestSyncInventorySource_IdempotentOnUnchangedRoster(t *testing.T) {
 	firstSeen := loadInventoryGrants(t, ctx, client, fx)[0].FirstSeenAt
 	require.Len(t, loadInventoryChangeEvents(t, ctx, client, fx), 1)
 
+	time.Sleep(2 * time.Millisecond)
+
 	run2 := insertQueuedInventorySyncRun(t, ctx, client, fx)
 	markSyncRunRunning(t, ctx, client, fx, run2)
 	require.NoError(t, svc.SyncInventorySource(ctx, fx.scope, run2))
@@ -286,7 +320,7 @@ func TestSyncInventorySource_IdempotentOnUnchangedRoster(t *testing.T) {
 	grants := loadInventoryGrants(t, ctx, client, fx)
 	require.Len(t, grants, 1)
 	assert.Equal(t, firstSeen.UTC(), grants[0].FirstSeenAt.UTC())
-	assert.True(t, grants[0].LastSeenAt.After(firstSeen) || grants[0].LastSeenAt.Equal(firstSeen))
+	assert.True(t, grants[0].LastSeenAt.After(firstSeen))
 
 	events := loadInventoryChangeEvents(t, ctx, client, fx)
 	assert.Len(t, events, 1, "unchanged roster must not emit another change event")

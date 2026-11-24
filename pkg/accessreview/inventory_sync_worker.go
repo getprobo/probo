@@ -52,10 +52,13 @@ func NewInventorySyncWorker(
 	opts ...worker.Option,
 ) *worker.Worker[coredata.AccessSourceSyncRun] {
 	h := &inventorySyncHandler{
-		svc:        svc,
-		pg:         pgClient,
-		logger:     logger,
-		staleAfter: 5 * time.Minute,
+		svc:    svc,
+		pg:     pgClient,
+		logger: logger,
+		// ListAccounts may take up to sourceFetchTimeout (2m); the roster
+		// write can add more. Heartbeat after ListAccounts renews the lease;
+		// this bound covers the remaining write without mid-txn pulses.
+		staleAfter: 15 * time.Minute,
 	}
 
 	return worker.New(
@@ -128,6 +131,7 @@ func (h *inventorySyncHandler) RecoverStale(ctx context.Context) error {
 				message := staleInventorySyncMessage
 
 				run.Status = coredata.AccessSourceSyncRunStatusFailed
+				run.GrantsUpsertedCount = 0
 				run.Error = &message
 				run.CompletedAt = &now
 				run.UpdatedAt = now
@@ -194,6 +198,7 @@ func (h *inventorySyncHandler) failSync(
 	)
 
 	run.Status = coredata.AccessSourceSyncRunStatusFailed
+	run.GrantsUpsertedCount = 0
 	run.Error = &message
 	run.CompletedAt = &now
 	run.UpdatedAt = now

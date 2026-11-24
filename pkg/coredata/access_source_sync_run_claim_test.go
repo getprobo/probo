@@ -76,7 +76,6 @@ func TestAccessSourceSyncRun_LoadNextQueuedForUpdateSkipLocked(t *testing.T) {
 	fx := seedAccessInventoryFixture(t, ctx, client)
 	createdAt := time.Now().UTC()
 	runID := insertAccessSourceSyncRun(t, ctx, client, fx, coredata.AccessSourceSyncRunStatusQueued, createdAt)
-	_ = insertAccessSourceSyncRun(t, ctx, client, fx, coredata.AccessSourceSyncRunStatusRunning, createdAt)
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		claimed := &coredata.AccessSourceSyncRun{}
@@ -84,6 +83,7 @@ func TestAccessSourceSyncRun_LoadNextQueuedForUpdateSkipLocked(t *testing.T) {
 			return err
 		}
 
+		assert.Equal(t, runID, claimed.ID)
 		assert.Equal(t, coredata.AccessSourceSyncRunStatusQueued, claimed.Status)
 
 		startedAt := createdAt
@@ -102,14 +102,48 @@ func TestAccessSourceSyncRun_LoadNextQueuedForUpdateSkipLocked(t *testing.T) {
 			return err
 		}
 
-		assert.Contains(
-			t,
-			[]coredata.AccessSourceSyncRunStatus{
-				coredata.AccessSourceSyncRunStatusQueued,
-				coredata.AccessSourceSyncRunStatusRunning,
-			},
-			ours.Status,
-		)
+		assert.Equal(t, coredata.AccessSourceSyncRunStatusRunning, ours.Status)
+
+		return nil
+	}))
+}
+
+func TestAccessSourceSyncRun_LoadNextQueuedForUpdateSkipLocked_SkipsSourceWithRunning(t *testing.T) {
+	// Not parallel: shares the cross-tenant QUEUED claim queue.
+	client := test.PGClient(t)
+	ctx := context.Background()
+
+	fx := seedAccessInventoryFixture(t, ctx, client)
+	createdAt := time.Now().UTC()
+	_ = insertAccessSourceSyncRun(t, ctx, client, fx, coredata.AccessSourceSyncRunStatusRunning, createdAt)
+	_ = insertAccessSourceSyncRun(t, ctx, client, fx, coredata.AccessSourceSyncRunStatusQueued, createdAt.Add(time.Second))
+
+	err := client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		claimed := &coredata.AccessSourceSyncRun{}
+
+		return claimed.LoadNextQueuedForUpdateSkipLocked(ctx, tx)
+	})
+	assert.ErrorIs(t, err, coredata.ErrNoAccessSourceSyncRunAvailable)
+}
+
+func TestAccessSourceSyncRun_LoadNextQueuedForUpdateSkipLocked_OneQueuedPerSource(t *testing.T) {
+	// Not parallel: shares the cross-tenant QUEUED claim queue.
+	client := test.PGClient(t)
+	ctx := context.Background()
+
+	fx := seedAccessInventoryFixture(t, ctx, client)
+	olderAt := time.Date(2, time.January, 1, 0, 0, 0, 0, time.UTC)
+	newerAt := olderAt.Add(time.Second)
+	olderID := insertAccessSourceSyncRun(t, ctx, client, fx, coredata.AccessSourceSyncRunStatusQueued, olderAt)
+	_ = insertAccessSourceSyncRun(t, ctx, client, fx, coredata.AccessSourceSyncRunStatusQueued, newerAt)
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		claimed := &coredata.AccessSourceSyncRun{}
+		if err := claimed.LoadNextQueuedForUpdateSkipLocked(ctx, tx); err != nil {
+			return err
+		}
+
+		assert.Equal(t, olderID, claimed.ID)
 
 		return nil
 	}))

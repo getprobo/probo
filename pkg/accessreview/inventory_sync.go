@@ -22,6 +22,9 @@ package accessreview
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/binary"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -84,6 +87,12 @@ func (s *Service) SyncInventorySource(
 		return fmt.Errorf("cannot list accounts from source %s: %w", source.Name, err)
 	}
 
+	// Refresh the lease after ListAccounts so a long provider call does not
+	// look stale before the roster write begins.
+	if err := s.heartbeatInventorySyncRun(ctx, scope, run); err != nil {
+		return fmt.Errorf("cannot heartbeat sync run: %w", err)
+	}
+
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
@@ -117,6 +126,22 @@ func (s *Service) SyncInventorySource(
 	)
 }
 
+func (s *Service) heartbeatInventorySyncRun(
+	ctx context.Context,
+	scope coredata.Scoper,
+	run *coredata.AccessSourceSyncRun,
+) error {
+	now := time.Now()
+	run.UpdatedAt = now
+
+	return s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			return run.Update(ctx, tx, scope)
+		},
+	)
+}
+
 func (s *Service) applyInventoryRoster(
 	ctx context.Context,
 	tx pg.Tx,
@@ -130,6 +155,22 @@ func (s *Service) applyInventoryRoster(
 	resourceByKey := make(map[string]*coredata.AccessInventoryResource)
 	principalByKey := make(map[string]*coredata.AccessInventoryPrincipal)
 	upserted := 0
+
+	if _, err := upsertInventoryResource(
+		ctx,
+		tx,
+		scope,
+		tenantID,
+		source,
+		GrantTriple{
+			ResourceKey:  DefaultResourceKey,
+			ResourceKind: DefaultResourceKind,
+		},
+		observedAt,
+		resourceByKey,
+	); err != nil {
+		return 0, err
+	}
 
 	for _, account := range accounts {
 		principal, err := upsertInventoryPrincipal(
@@ -433,8 +474,7 @@ func insertInventoryChangeEvent(
 ) error {
 	syncRunID := run.ID
 	grantID := grant.ID
-	idempotencyKey := fmt.Sprintf(
-		"%s|%s|%s|%s|%s|%s",
+	idempotencyKey := inventoryChangeIdempotencyKey(
 		run.ID.String(),
 		grant.PrincipalKey,
 		grant.ResourceKey,
@@ -465,4 +505,20 @@ func insertInventoryChangeEvent(
 	}
 
 	return nil
+}
+
+// inventoryChangeIdempotencyKey hashes a length-prefixed tuple so provider
+// keys that contain delimiters cannot collide with another encoding.
+func inventoryChangeIdempotencyKey(parts ...string) string {
+	h := sha256.New()
+
+	for _, part := range parts {
+		var length [4]byte
+
+		binary.BigEndian.PutUint32(length[:], uint32(len(part)))
+		_, _ = h.Write(length[:])
+		_, _ = h.Write([]byte(part))
+	}
+
+	return hex.EncodeToString(h.Sum(nil))
 }
