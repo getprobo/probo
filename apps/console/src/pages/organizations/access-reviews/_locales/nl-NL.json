@@ -1,0 +1,39 @@
+{
+  "grants": {
+    "title": "Live toegang",
+    "description": "Huidige toegangsrechten gesynchroniseerd vanaf uw gekoppelde bronnen.",
+    "empty": "Nog geen toegangsrechten",
+    "emptyFiltered": "Geen rechten komen overeen met deze filters",
+    "columns": {
+      "principal": "Principal",
+      "resource": "Resource",
+      "entitlement": "Recht",
+      "source": "Bron",
+      "presence": "Aanwezigheid",
+      "lastSeen": "Laatst gezien"
+    },
+    "presence": {
+      "present": "Aanwezig",
+      "disappeared": "Verdwenen"
+    },
+    "filters": {
+      "source": "Bron",
+      "allSources": "Alle bronnen",
+      "presence": "Aanwezigheid",
+      "allPresence": "Alle aanwezigheid",
+      "includeDisappeared": "Verdwenen opnemen"
+    },
+    "actions": {
+      "previous": "Vorige",
+      "next": "Volgende"
+    },
+    "values": {
+      "unknown": "Onbekend"
+    },
+    "error": {
+      "title": "Live toegang laden mislukt",
+      "description": "Er ging iets mis bij het laden van toegangsrechten. Probeer het opnieuw.",
+      "retry": "Opnieuw proberen"
+    }
+  }
+}

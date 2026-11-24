@@ -62,6 +62,7 @@ export type NavPermission
     | "canListRightsRequests"
     | "canListAccessReviewCampaigns"
     | "canListAccessReviewSources"
+    | "canListAccessInventoryGrants"
     | "canGetCompliancePortal"
     | "canGetEmployeePortal"
     | "canListCookieBanners"

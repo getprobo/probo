@@ -1,0 +1,39 @@
+{
+  "grants": {
+    "title": "Live access",
+    "description": "Current access grants synced from your connected sources.",
+    "empty": "No access grants yet",
+    "emptyFiltered": "No grants match these filters",
+    "columns": {
+      "principal": "Principal",
+      "resource": "Resource",
+      "entitlement": "Entitlement",
+      "source": "Source",
+      "presence": "Presence",
+      "lastSeen": "Last seen"
+    },
+    "presence": {
+      "present": "Present",
+      "disappeared": "Disappeared"
+    },
+    "filters": {
+      "source": "Source",
+      "allSources": "All sources",
+      "presence": "Presence",
+      "allPresence": "All presence",
+      "includeDisappeared": "Include disappeared"
+    },
+    "actions": {
+      "previous": "Previous",
+      "next": "Next"
+    },
+    "values": {
+      "unknown": "Unknown"
+    },
+    "error": {
+      "title": "Could not load live access",
+      "description": "Something went wrong while loading access grants. Try again.",
+      "retry": "Try again"
+    }
+  }
+}
