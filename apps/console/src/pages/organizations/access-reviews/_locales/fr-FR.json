@@ -4,14 +4,14 @@
     "description": "Flux permanent des changements d'inventaire sur vos sources connectées.",
     "empty": "Aucun changement d'accès pour le moment",
     "emptyFiltered": "Aucun changement ne correspond à ces filtres",
-    "openGrant": "Ouvrir le droit pour {{name}}",
+    "openGrant": "Ouvrir le droit d'accès pour {{name}}",
     "columns": {
       "changeType": "Changement",
       "principal": "Principal",
       "resource": "Ressource",
       "entitlement": "Droit",
       "source": "Source",
-      "effectiveAt": "Effectif"
+      "effectiveAt": "Date d'effet"
     },
     "changeTypes": {
       "APPEARED": "Apparu",

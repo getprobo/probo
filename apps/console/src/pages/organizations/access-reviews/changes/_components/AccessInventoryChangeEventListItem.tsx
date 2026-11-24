@@ -27,6 +27,7 @@ import { TableRowHeaderCell } from "@probo/ui/src/v2/Table/TableRowHeaderCell";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
+import { useLocation } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { AccessInventoryChangeEventListItem_event$key } from "#/__generated__/core/AccessInventoryChangeEventListItem_event.graphql";
@@ -84,6 +85,7 @@ export function AccessInventoryChangeEventListItem({
   eventKey,
 }: AccessInventoryChangeEventListItemProps) {
   const { i18n, t } = useTranslation("organizations/access-reviews");
+  const location = useLocation();
   const event = useFragment(
     accessInventoryChangeEventListItemFragment,
     eventKey,
@@ -137,7 +139,10 @@ export function AccessInventoryChangeEventListItem({
         {grant != null
           ? (
               <TableLink
-                to={`../grants/${grant.id}`}
+                to={{
+                  pathname: `../grants/${grant.id}`,
+                  search: location.search,
+                }}
                 aria-label={t("changes.openGrant", { name: principalTitle })}
               >
                 {principalContent}

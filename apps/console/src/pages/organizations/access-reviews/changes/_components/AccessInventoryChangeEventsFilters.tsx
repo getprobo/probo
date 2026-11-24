@@ -88,7 +88,7 @@ export function AccessInventoryChangeEventsFilters({
             >
               {(value: string | null) => (
                 value != null
-                  ? sourceById.get(value) ?? allSourcesLabel
+                  ? sourceById.get(value) ?? value
                   : allSourcesLabel
               )}
             </SelectTrigger>

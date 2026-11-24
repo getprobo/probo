@@ -141,7 +141,7 @@ export function AccessInventoryChangeEventsList({
     startRefetchTransition(() => {
       refetch(
         { ...pageVariablesRef.current, filter: graphqlFilter },
-        { fetchPolicy: "store-or-network" },
+        { fetchPolicy: "network-only" },
       );
     });
   }, [graphqlFilter, refetch]);

@@ -4,7 +4,7 @@
     "description": "Altijd-aan feed van inventariswijzigingen over uw gekoppelde bronnen.",
     "empty": "Nog geen toegangswijzigingen",
     "emptyFiltered": "Geen wijzigingen komen overeen met deze filters",
-    "openGrant": "Open recht voor {{name}}",
+    "openGrant": "Open het toegangsrecht voor {{name}}",
     "columns": {
       "changeType": "Wijziging",
       "principal": "Principal",

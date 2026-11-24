@@ -66,19 +66,46 @@ function isoDateFromParam(value: string | null): string | null {
   if (!isoDatePattern.test(value)) {
     return null;
   }
-  const parsed = Date.parse(`${value}T00:00:00.000Z`);
-  if (Number.isNaN(parsed)) {
+  const [yearText, monthText, dayText] = value.split("-");
+  const year = Number(yearText);
+  const month = Number(monthText);
+  const day = Number(dayText);
+  const local = new Date(year, month - 1, day);
+  if (
+    Number.isNaN(local.getTime())
+    || local.getFullYear() !== year
+    || local.getMonth() !== month - 1
+    || local.getDate() !== day
+  ) {
     return null;
   }
   return value;
 }
 
-function startOfUtcDay(date: string): string {
-  return `${date}T00:00:00.000Z`;
+function startOfLocalDay(date: string): string {
+  const [yearText, monthText, dayText] = date.split("-");
+  return new Date(
+    Number(yearText),
+    Number(monthText) - 1,
+    Number(dayText),
+    0,
+    0,
+    0,
+    0,
+  ).toISOString();
 }
 
-function endOfUtcDay(date: string): string {
-  return `${date}T23:59:59.999Z`;
+function endOfLocalDay(date: string): string {
+  const [yearText, monthText, dayText] = date.split("-");
+  return new Date(
+    Number(yearText),
+    Number(monthText) - 1,
+    Number(dayText),
+    23,
+    59,
+    59,
+    999,
+  ).toISOString();
 }
 
 function accessInventoryChangeEventsGraphqlFilter(filters: {
@@ -91,10 +118,10 @@ function accessInventoryChangeEventsGraphqlFilter(filters: {
     accessReviewSourceId: filters.sourceId,
     changeTypes: filters.changeType != null ? [filters.changeType] : null,
     observedAtOnOrAfter: filters.observedAfter != null
-      ? startOfUtcDay(filters.observedAfter)
+      ? startOfLocalDay(filters.observedAfter)
       : null,
     observedAtOnOrBefore: filters.observedBefore != null
-      ? endOfUtcDay(filters.observedBefore)
+      ? endOfLocalDay(filters.observedBefore)
       : null,
   };
 }
@@ -118,7 +145,7 @@ export interface AccessInventoryChangeEventsFilters {
 
 export function useAccessInventoryChangeEventsFilters(): AccessInventoryChangeEventsFilters {
   const [searchParams, setSearchParams] = useSearchParams();
-  const sourceId = searchParams.get("source");
+  const sourceId = searchParams.get("source") || null;
   const changeType = changeTypeFromParam(searchParams.get("changeType") ?? "");
   const observedAfter = isoDateFromParam(searchParams.get("observedAfter"));
   const observedBefore = isoDateFromParam(searchParams.get("observedBefore"));
