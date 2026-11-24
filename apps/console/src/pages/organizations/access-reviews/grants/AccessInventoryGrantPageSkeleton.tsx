@@ -51,6 +51,9 @@ export function AccessInventoryGrantPageSkeleton() {
             <TextSkeleton size={2} className="h-10 w-full" />
             <TextSkeleton size={2} className="h-10 w-full" />
             <TextSkeleton size={2} className="h-10 w-full" />
+            <TextSkeleton size={2} className="h-10 w-full" />
+            <TextSkeleton size={2} className="h-10 w-full" />
+            <TextSkeleton size={2} className="h-10 w-full" />
           </div>
         </Card>
       </section>

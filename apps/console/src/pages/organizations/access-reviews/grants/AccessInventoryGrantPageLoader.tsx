@@ -24,6 +24,8 @@ import { useQueryLoader } from "react-relay";
 import { useParams } from "react-router";
 
 import type { AccessInventoryGrantPageQuery } from "#/__generated__/core/AccessInventoryGrantPageQuery.graphql";
+import { PageError } from "#/components/PageError";
+import { isNotFoundError } from "#/lib/relay/errors";
 
 import { ACCESS_INVENTORY_GRANT_CHANGE_EVENTS_PAGE_SIZE } from "./_lib/pageSize";
 import {
@@ -71,11 +73,23 @@ function AccessInventoryGrantPageQueryLoader() {
 }
 
 export default function AccessInventoryGrantPageLoader() {
+  const { grantId } = useParams();
+
   return (
     <ErrorBoundary
-      fallback={(_error, reset) => (
-        <AccessInventoryGrantPageError onRetry={reset} />
-      )}
+      key={grantId}
+      fallback={(error, reset) => {
+        if (isNotFoundError(error)) {
+          return (
+            <PageError
+              error={error instanceof Error ? error : new Error("not found")}
+              resetErrorBoundary={reset}
+            />
+          );
+        }
+
+        return <AccessInventoryGrantPageError onRetry={reset} />;
+      }}
     >
       <AccessInventoryGrantPageQueryLoader />
     </ErrorBoundary>

@@ -64,7 +64,7 @@
       "before": "Before",
       "after": "After",
       "observedAt": "Observed {{value}}",
-      "providerOccurredAt": "Provider {{value}}"
+      "providerOccurredAt": "Provider event: {{value}}"
     },
     "changeTypes": {
       "APPEARED": "Appeared",

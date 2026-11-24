@@ -38,7 +38,7 @@
   },
   "grantDetail": {
     "back": "Accès en direct",
-    "open": "Ouvrir le droit pour {{name}}",
+    "open": "Ouvrir le droit d'accès pour {{name}}",
     "notFound": "Droit d'accès introuvable",
     "properties": {
       "title": "Détails"
@@ -49,10 +49,10 @@
       "entitlement": "Droit",
       "source": "Source",
       "presence": "Présence",
-      "missingSyncs": "Syncs manquantes",
-      "firstSeen": "Première vue",
-      "lastSeen": "Dernière vue",
-      "providerChanged": "Changement fournisseur"
+      "missingSyncs": "Synchronisations manquantes",
+      "firstSeen": "Première observation",
+      "lastSeen": "Dernière observation",
+      "providerChanged": "Fournisseur modifié"
     },
     "values": {
       "empty": "—"
@@ -64,7 +64,7 @@
       "before": "Avant",
       "after": "Après",
       "observedAt": "Observé {{value}}",
-      "providerOccurredAt": "Fournisseur {{value}}"
+      "providerOccurredAt": "Événement du fournisseur : {{value}}"
     },
     "changeTypes": {
       "APPEARED": "Apparu",

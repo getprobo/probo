@@ -38,7 +38,7 @@
   },
   "grantDetail": {
     "back": "Live toegang",
-    "open": "Open recht voor {{name}}",
+    "open": "Open het toegangsrecht voor {{name}}",
     "notFound": "Toegangsrecht niet gevonden",
     "properties": {
       "title": "Details"
@@ -64,7 +64,7 @@
       "before": "Voor",
       "after": "Na",
       "observedAt": "Geobserveerd {{value}}",
-      "providerOccurredAt": "Provider {{value}}"
+      "providerOccurredAt": "Gebeurtenis bij de provider: {{value}}"
     },
     "changeTypes": {
       "APPEARED": "Verschenen",

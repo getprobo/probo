@@ -33,6 +33,7 @@ const accessInventoryGrantChangeEventListItemFragment = graphql`
   fragment AccessInventoryGrantChangeEventListItem_event on AccessInventoryChangeEvent {
     id
     changeType
+    entitlementKey
     effectiveAt
     observedAt
     providerOccurredAt
@@ -93,6 +94,9 @@ export function AccessInventoryGrantChangeEventListItem({
   } = accessInventoryGrantChangeEventListItem();
 
   const showSnapshots = event.before != null || event.after != null;
+  const entitlementFallback = event.entitlementKey.trim() !== ""
+    ? event.entitlementKey
+    : t("grants.values.unknown");
 
   return (
     <div className={root()}>
@@ -138,7 +142,7 @@ export function AccessInventoryGrantChangeEventListItem({
                   <div className={snapshotBody()}>
                     <Text size={2} highContrast>
                       {event.before.entitlementDisplayName.trim()
-                        || t("grants.values.unknown")}
+                        || entitlementFallback}
                     </Text>
                     <Text size={1} color="faint">
                       {presenceLabel(event.before.presence, t)}
@@ -160,7 +164,7 @@ export function AccessInventoryGrantChangeEventListItem({
                   <div className={snapshotBody()}>
                     <Text size={2} highContrast>
                       {event.after.entitlementDisplayName.trim()
-                        || t("grants.values.unknown")}
+                        || entitlementFallback}
                     </Text>
                     <Text size={1} color="faint">
                       {presenceLabel(event.after.presence, t)}
