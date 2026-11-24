@@ -78,6 +78,13 @@ type (
 	}
 )
 
+// NeedsInitialInventorySync reports whether connect should call SyncNow:
+// newly created sources, or existing ones that never completed a first sync
+// (so a failed SyncNow after EnsureSources stays retryable on recreate).
+func NeedsInitialInventorySync(item EnsuredAccessReviewSource) bool {
+	return item.Created || item.Source.LastSuccessfulSyncAt == nil
+}
+
 func (r *CreateAccessReviewSourceRequest) Validate() error {
 	v := validator.New()
 
@@ -163,6 +170,16 @@ func (s *Service) EnsureSources(
 					source.ConnectorAccountID = &account.ID
 				}
 
+				// Park next_sync_at at the provider cadence until the create
+				// resolver finishes AutoSelectDefaultOrganization and SyncNow.
+				cadence, err := s.resolveSourceSyncCadence(ctx, conn, scope, source)
+				if err != nil {
+					return fmt.Errorf("cannot resolve deferred inventory sync cadence: %w", err)
+				}
+
+				nextSyncAt := now.Add(cadence)
+				source.NextSyncAt = &nextSyncAt
+
 				inserted, err := source.Insert(ctx, conn, scope)
 				if err != nil {
 					return fmt.Errorf("cannot insert access source: %w", err)
@@ -177,15 +194,6 @@ func (s *Service) EnsureSources(
 					results[i] = EnsuredAccessReviewSource{Source: existing, Created: false}
 
 					continue
-				}
-
-				// Hold cadence until the create resolver finishes
-				// AutoSelectDefaultOrganization, then SyncNow enqueues.
-				nextSyncAt := now.Add(24 * time.Hour)
-				source.NextSyncAt = &nextSyncAt
-				source.UpdatedAt = now
-				if err := source.UpdateInventorySyncSchedule(ctx, conn, scope); err != nil {
-					return fmt.Errorf("cannot defer inventory sync until connect finishes: %w", err)
 				}
 
 				results[i] = EnsuredAccessReviewSource{Source: source, Created: true}

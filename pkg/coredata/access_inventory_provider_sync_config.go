@@ -248,7 +248,7 @@ func (c *AccessInventoryProviderSyncConfig) validateForWrite() error {
 	}
 
 	if _, ok := c.SyncCadence.ClockDuration(); !ok {
-		return fmt.Errorf("sync cadence must be a fixed clock interval, not calendar months")
+		return fmt.Errorf("sync cadence must be representable as a fixed clock interval")
 	}
 
 	return nil

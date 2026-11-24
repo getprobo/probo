@@ -292,10 +292,15 @@ func TestEnsureSources_DefersSyncUntilSyncNow(t *testing.T) {
 	require.Len(t, results, 1)
 	require.True(t, results[0].Created)
 	require.NotNil(t, results[0].Source.NextSyncAt)
-	assert.True(
+
+	csvCadence, ok := coredata.DefaultSyncCadence(coredata.AccessInventoryProviderKeyCSV).ClockDuration()
+	require.True(t, ok)
+	assert.WithinDuration(
 		t,
-		results[0].Source.NextSyncAt.After(now.Add(time.Hour)),
-		"connect must defer cadence until SyncNow after AutoSelect",
+		now.Add(csvCadence),
+		*results[0].Source.NextSyncAt,
+		2*time.Second,
+		"connect must defer next_sync_at by the provider cadence",
 	)
 
 	inflight := &coredata.AccessSourceSyncRun{}
@@ -309,6 +314,26 @@ func TestEnsureSources_DefersSyncUntilSyncNow(t *testing.T) {
 	assert.Equal(t, coredata.AccessSourceSyncRunStatusQueued, run.Status)
 
 	require.NoError(t, drainInFlightInventorySyncRunsForSource(t, ctx, client, results[0].Source.ID))
+}
+
+func TestNeedsInitialInventorySync(t *testing.T) {
+	t.Parallel()
+
+	assert.True(t, NeedsInitialInventorySync(EnsuredAccessReviewSource{
+		Source:  &coredata.AccessReviewSource{},
+		Created: true,
+	}))
+
+	assert.True(t, NeedsInitialInventorySync(EnsuredAccessReviewSource{
+		Source:  &coredata.AccessReviewSource{},
+		Created: false,
+	}), "recreate must retry SyncNow until first success")
+
+	syncedAt := time.Now().UTC()
+	assert.False(t, NeedsInitialInventorySync(EnsuredAccessReviewSource{
+		Source:  &coredata.AccessReviewSource{LastSuccessfulSyncAt: &syncedAt},
+		Created: false,
+	}))
 }
 
 func TestResolveSourceSyncCadence_UsesOrgOverride(t *testing.T) {
@@ -374,7 +399,7 @@ func TestAccessInventoryProviderSyncConfig_RejectsMonthCadence(t *testing.T) {
 		return err
 	})
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "calendar months")
+	assert.Contains(t, err.Error(), "representable as a fixed clock interval")
 }
 
 func TestApplyInventorySyncJitter_CapsFailureBackoff(t *testing.T) {

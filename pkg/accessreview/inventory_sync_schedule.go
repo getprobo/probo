@@ -139,7 +139,7 @@ func (s *Service) resolveSourceSyncCadence(
 		duration, ok := coredata.ResolveSyncCadence(providerKey, &config.SyncCadence).ClockDuration()
 		if !ok {
 			return 0, fmt.Errorf(
-				"cannot use sync cadence for provider %s: calendar-month intervals are not supported",
+				"cannot use sync cadence for provider %s: interval is not representable as a fixed clock duration",
 				providerKey,
 			)
 		}
