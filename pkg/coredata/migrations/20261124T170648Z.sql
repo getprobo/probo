@@ -47,7 +47,8 @@ CREATE TABLE access_inventory_principals (
     last_seen_at TIMESTAMP WITH TIME ZONE NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    UNIQUE (access_review_source_id, principal_key)
+    UNIQUE (access_review_source_id, principal_key),
+    UNIQUE (access_review_source_id, id, principal_key)
 );
 
 CREATE TABLE access_inventory_resources (
@@ -62,7 +63,8 @@ CREATE TABLE access_inventory_resources (
     last_seen_at TIMESTAMP WITH TIME ZONE NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    UNIQUE (access_review_source_id, resource_key)
+    UNIQUE (access_review_source_id, resource_key),
+    UNIQUE (access_review_source_id, id, resource_key)
 );
 
 CREATE TABLE access_inventory_grants (
@@ -70,8 +72,8 @@ CREATE TABLE access_inventory_grants (
     tenant_id TEXT NOT NULL,
     organization_id TEXT NOT NULL REFERENCES organizations(id) ON UPDATE CASCADE ON DELETE CASCADE,
     access_review_source_id TEXT NOT NULL REFERENCES access_review_sources(id) ON UPDATE CASCADE ON DELETE CASCADE,
-    principal_id TEXT NOT NULL REFERENCES access_inventory_principals(id) ON UPDATE CASCADE ON DELETE CASCADE,
-    resource_id TEXT NOT NULL REFERENCES access_inventory_resources(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    principal_id TEXT NOT NULL,
+    resource_id TEXT NOT NULL,
     principal_key TEXT NOT NULL,
     resource_key TEXT NOT NULL,
     entitlement_key TEXT NOT NULL,
@@ -83,5 +85,11 @@ CREATE TABLE access_inventory_grants (
     provider_changed_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    UNIQUE (access_review_source_id, principal_key, resource_key, entitlement_key)
+    UNIQUE (access_review_source_id, principal_key, resource_key, entitlement_key),
+    FOREIGN KEY (access_review_source_id, principal_id, principal_key)
+        REFERENCES access_inventory_principals (access_review_source_id, id, principal_key)
+        ON UPDATE CASCADE ON DELETE CASCADE,
+    FOREIGN KEY (access_review_source_id, resource_id, resource_key)
+        REFERENCES access_inventory_resources (access_review_source_id, id, resource_key)
+        ON UPDATE CASCADE ON DELETE CASCADE
 );

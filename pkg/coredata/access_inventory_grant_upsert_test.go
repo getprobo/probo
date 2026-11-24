@@ -22,9 +22,11 @@ package coredata_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.gearno.de/kit/pg"
@@ -242,4 +244,90 @@ func TestAccessInventoryGrantUpsertPreservesFirstSeenAt(t *testing.T) {
 
 		return nil
 	}))
+}
+
+func TestAccessInventoryGrantRejectsCrossSourcePrincipal(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+
+	fxA := seedAccessInventoryFixture(t, ctx, client)
+	fxB := seedAccessInventoryFixture(t, ctx, client)
+	tenantID := fxA.scope.GetTenantID()
+	now := time.Now().UTC()
+
+	var principalFromA gid.GID
+	var resourceFromB gid.GID
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		principal := &coredata.AccessInventoryPrincipal{
+			ID:                   gid.New(tenantID, coredata.AccessInventoryPrincipalEntityType),
+			OrganizationID:       fxA.organizationID,
+			AccessReviewSourceID: fxA.sourceID,
+			PrincipalKey:         "cross-source@example.com",
+			Email:                "cross-source@example.com",
+			FullName:             "Cross Source",
+			ExternalID:           "",
+			JobTitle:             "",
+			MFAStatus:            coredata.MFAStatusUnknown,
+			AuthMethod:           coredata.AccessReviewEntryAuthMethodUnknown,
+			AccountType:          coredata.AccessReviewEntryAccountTypeUser,
+			FirstSeenAt:          now,
+			LastSeenAt:           now,
+			CreatedAt:            now,
+			UpdatedAt:            now,
+		}
+		if _, err := principal.Upsert(ctx, tx, fxA.scope); err != nil {
+			return err
+		}
+		principalFromA = principal.ID
+
+		resource := &coredata.AccessInventoryResource{
+			ID:                   gid.New(tenantID, coredata.AccessInventoryResourceEntityType),
+			OrganizationID:       fxB.organizationID,
+			AccessReviewSourceID: fxB.sourceID,
+			ResourceKey:          "system",
+			DisplayName:          "Source B",
+			Kind:                 "system",
+			FirstSeenAt:          now,
+			LastSeenAt:           now,
+			CreatedAt:            now,
+			UpdatedAt:            now,
+		}
+		if _, err := resource.Upsert(ctx, tx, fxB.scope); err != nil {
+			return err
+		}
+		resourceFromB = resource.ID
+
+		return nil
+	}))
+
+	err := client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		grant := &coredata.AccessInventoryGrant{
+			ID:                      gid.New(tenantID, coredata.AccessInventoryGrantEntityType),
+			OrganizationID:          fxB.organizationID,
+			AccessReviewSourceID:    fxB.sourceID,
+			PrincipalID:             principalFromA,
+			ResourceID:              resourceFromB,
+			PrincipalKey:            "cross-source@example.com",
+			ResourceKey:             "system",
+			EntitlementKey:          "member",
+			EntitlementDisplayName:  "Member",
+			Presence:                coredata.AccessInventoryGrantPresencePresent,
+			ConsecutiveMissingSyncs: 0,
+			FirstSeenAt:             now,
+			LastSeenAt:              now,
+			CreatedAt:               now,
+			UpdatedAt:               now,
+		}
+		_, err := grant.Upsert(ctx, tx, fxB.scope)
+
+		return err
+	})
+	require.Error(t, err)
+
+	var pgErr *pgconn.PgError
+	require.True(t, errors.As(err, &pgErr))
+	assert.Equal(t, "23503", pgErr.Code)
 }
