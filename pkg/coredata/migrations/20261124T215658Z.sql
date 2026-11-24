@@ -46,5 +46,6 @@ CREATE TABLE access_inventory_provider_sync_configs (
     sync_cadence INTERVAL NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    UNIQUE (organization_id, provider_key)
+    UNIQUE (organization_id, provider_key),
+    CHECK (sync_cadence >= INTERVAL '0')
 );

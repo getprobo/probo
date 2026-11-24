@@ -238,11 +238,27 @@ WHERE
 	return nil
 }
 
+func (c *AccessInventoryProviderSyncConfig) validateForWrite() error {
+	if !c.ProviderKey.IsValid() {
+		return fmt.Errorf("invalid access inventory provider key: %q", c.ProviderKey)
+	}
+
+	if c.SyncCadence.Compare(timespan.Zero) < 0 {
+		return fmt.Errorf("sync cadence must be non-negative")
+	}
+
+	return nil
+}
+
 func (c *AccessInventoryProviderSyncConfig) Insert(
 	ctx context.Context,
 	conn pg.Tx,
 	scope Scoper,
 ) error {
+	if err := c.validateForWrite(); err != nil {
+		return fmt.Errorf("cannot insert access inventory provider sync config: %w", err)
+	}
+
 	q := `
 INSERT INTO access_inventory_provider_sync_configs (
     id,
@@ -285,6 +301,10 @@ func (c *AccessInventoryProviderSyncConfig) Upsert(
 	conn pg.Tx,
 	scope Scoper,
 ) (inserted bool, err error) {
+	if err := c.validateForWrite(); err != nil {
+		return false, fmt.Errorf("cannot upsert access inventory provider sync config: %w", err)
+	}
+
 	q := `
 INSERT INTO access_inventory_provider_sync_configs (
     id,
@@ -346,6 +366,10 @@ func (c *AccessInventoryProviderSyncConfig) Update(
 	conn pg.Tx,
 	scope Scoper,
 ) error {
+	if c.SyncCadence.Compare(timespan.Zero) < 0 {
+		return fmt.Errorf("cannot update access inventory provider sync config: sync cadence must be non-negative")
+	}
+
 	q := `
 UPDATE access_inventory_provider_sync_configs
 SET

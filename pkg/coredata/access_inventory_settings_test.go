@@ -102,6 +102,63 @@ func TestAccessInventorySettingsUpsertAndLoad(t *testing.T) {
 		assert.False(t, inserted)
 		assert.Equal(t, settingsID, settings.ID)
 		assert.Equal(t, 5, settings.HideAfterMissingSyncs)
+		require.NotNil(t, settings.ChangeEventRetention)
+		require.NotNil(t, settings.SnapshotRetention)
+		assert.Equal(t, 0, settings.ChangeEventRetention.Compare(retention))
+		assert.Equal(t, 0, settings.SnapshotRetention.Compare(retention))
+
+		return nil
+	}))
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		loaded := &coredata.AccessInventorySettings{}
+		if err := loaded.LoadByOrganizationID(ctx, conn, fx.scope, fx.organizationID); err != nil {
+			return err
+		}
+
+		assert.Equal(t, 5, loaded.HideAfterMissingSyncs)
+		require.NotNil(t, loaded.ChangeEventRetention)
+		require.NotNil(t, loaded.SnapshotRetention)
+		assert.Equal(t, 0, loaded.ChangeEventRetention.Compare(retention))
+		assert.Equal(t, 0, loaded.SnapshotRetention.Compare(retention))
+
+		return nil
+	}))
+}
+
+func TestAccessInventoryProviderSyncConfigValidateForWrite(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedAccessInventoryFixture(t, ctx, client)
+	tenantID := fx.scope.GetTenantID()
+	now := time.Now().UTC()
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		invalidKey := &coredata.AccessInventoryProviderSyncConfig{
+			ID:             gid.New(tenantID, coredata.AccessInventoryProviderSyncConfigEntityType),
+			OrganizationID: fx.organizationID,
+			ProviderKey:    coredata.AccessInventoryProviderKey("BOGUS"),
+			SyncCadence:    timespan.FromDuration(time.Hour),
+			CreatedAt:      now,
+			UpdatedAt:      now,
+		}
+		_, err := invalidKey.Upsert(ctx, tx, fx.scope)
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "invalid access inventory provider key")
+
+		negativeCadence := &coredata.AccessInventoryProviderSyncConfig{
+			ID:             gid.New(tenantID, coredata.AccessInventoryProviderSyncConfigEntityType),
+			OrganizationID: fx.organizationID,
+			ProviderKey:    coredata.AccessInventoryProviderKeyCSV,
+			SyncCadence:    timespan.FromDuration(-time.Hour),
+			CreatedAt:      now,
+			UpdatedAt:      now,
+		}
+		_, err = negativeCadence.Upsert(ctx, tx, fx.scope)
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "sync cadence must be non-negative")
 
 		return nil
 	}))

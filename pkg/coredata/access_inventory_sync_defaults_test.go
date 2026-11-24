@@ -85,6 +85,12 @@ func TestDefaultSyncCadence(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, 30*time.Minute, identity)
 
+	authentik, ok := coredata.DefaultSyncCadence(
+		coredata.AccessInventoryProviderKeyFromConnector(coredata.ConnectorProviderAuthentik),
+	).ClockDuration()
+	require.True(t, ok)
+	assert.Equal(t, 30*time.Minute, authentik)
+
 	csv, ok := coredata.DefaultSyncCadence(coredata.AccessInventoryProviderKeyCSV).ClockDuration()
 	require.True(t, ok)
 	assert.Equal(t, 24*time.Hour, csv)
@@ -114,6 +120,15 @@ func TestResolveSyncCadence(t *testing.T) {
 		&zero,
 	)
 	duration, ok = fallback.ClockDuration()
+	require.True(t, ok)
+	assert.Equal(t, 24*time.Hour, duration)
+
+	negative := timespan.FromDuration(-time.Hour)
+	ignoredNegative := coredata.ResolveSyncCadence(
+		coredata.AccessInventoryProviderKeyCSV,
+		&negative,
+	)
+	duration, ok = ignoredNegative.ClockDuration()
 	require.True(t, ok)
 	assert.Equal(t, 24*time.Hour, duration)
 

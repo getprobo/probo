@@ -57,6 +57,9 @@ func DefaultSyncCadence(providerKey AccessInventoryProviderKey) timespan.TimeSpa
 		AccessInventoryProviderKeyFromConnector(ConnectorProviderOkta),
 		AccessInventoryProviderKeyFromConnector(ConnectorProviderGoogleWorkspace),
 		AccessInventoryProviderKeyFromConnector(ConnectorProviderMicrosoft365),
+		AccessInventoryProviderKeyFromConnector(ConnectorProviderAuthentik):
+		return defaultSyncCadenceIdentity
+	case
 		AccessInventoryProviderKeyFromConnector(ConnectorProviderAWS),
 		AccessInventoryProviderKeyFromConnector(ConnectorProviderGCP),
 		AccessInventoryProviderKeyFromConnector(ConnectorProviderAzure):
@@ -67,11 +70,14 @@ func DefaultSyncCadence(providerKey AccessInventoryProviderKey) timespan.TimeSpa
 }
 
 // ResolveSyncCadence prefers a non-zero org override, else the provider default.
+// Negative overrides are ignored so a bad row cannot invert scheduling.
 func ResolveSyncCadence(
 	providerKey AccessInventoryProviderKey,
 	orgOverride *timespan.TimeSpan,
 ) timespan.TimeSpan {
-	if orgOverride != nil && !orgOverride.IsZero() {
+	if orgOverride != nil &&
+		!orgOverride.IsZero() &&
+		orgOverride.Compare(timespan.Zero) > 0 {
 		return *orgOverride
 	}
 
