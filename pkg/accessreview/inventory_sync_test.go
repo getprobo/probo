@@ -177,6 +177,7 @@ func loadSyncRun(
 	t.Helper()
 
 	run := &coredata.AccessSourceSyncRun{}
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return run.LoadByID(ctx, conn, fx.scope, runID)
 	}))
@@ -236,6 +237,7 @@ func TestSyncInventorySource_AppearedOnNewEntitlements(t *testing.T) {
 	assert.Equal(t, run1.ID, *events[0].SyncRunID)
 
 	csvV2 := "email,full_name,role\nalice@example.com,Alice,Owner\n"
+
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		source := &coredata.AccessReviewSource{}
 		if err := source.LoadByID(ctx, tx, fx.scope, fx.sourceID); err != nil {
@@ -277,6 +279,7 @@ func TestSyncInventorySource_EmptyRosterUpsertsDefaultResource(t *testing.T) {
 	require.NoError(t, svc.SyncInventorySource(ctx, fx.scope, run))
 
 	resource := &coredata.AccessInventoryResource{}
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return resource.LoadBySourceIDAndResourceKey(ctx, conn, fx.scope, fx.sourceID, DefaultResourceKey)
 	}))
