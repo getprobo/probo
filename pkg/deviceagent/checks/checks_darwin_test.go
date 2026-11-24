@@ -21,6 +21,7 @@
 package checks
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -109,4 +110,102 @@ func TestDarwinSoftwareUpdateResult_MissingManagedDomainUsesDefault(t *testing.T
 	require.Equal(t, StatusPass, result.Status)
 	_, indeterminate := result.Evidence["indeterminate_keys"]
 	assert.False(t, indeterminate)
+}
+
+func TestDarwinFirewallResult(t *testing.T) {
+	t.Parallel()
+
+	commandErr := errors.New("exit status 1")
+
+	tests := []struct {
+		name            string
+		state           CmdResult
+		plist           CmdResult
+		want            Status
+		wantBackend     string
+		wantGlobalState string
+	}{
+		{
+			name:        "socketfilterfw enabled ignores plist off",
+			state:       CmdResult{Stdout: "Firewall is enabled. (State = 1)"},
+			plist:       CmdResult{Stdout: "0"},
+			want:        StatusPass,
+			wantBackend: "socketfilterfw",
+		},
+		{
+			name:        "socketfilterfw state 2",
+			state:       CmdResult{Stdout: "Firewall is enabled. (State = 2)"},
+			want:        StatusPass,
+			wantBackend: "socketfilterfw",
+		},
+		{
+			name:        "socketfilterfw disabled ignores plist on",
+			state:       CmdResult{Stdout: "Firewall is disabled. (State = 0)"},
+			plist:       CmdResult{Stdout: "1"},
+			want:        StatusFail,
+			wantBackend: "socketfilterfw",
+		},
+		{
+			name:            "socketfilterfw failure uses plist on",
+			state:           CmdResult{Err: commandErr, Stderr: "socketfilterfw failed"},
+			plist:           CmdResult{Stdout: "1"},
+			want:            StatusPass,
+			wantBackend:     "defaults",
+			wantGlobalState: "1",
+		},
+		{
+			name:            "socketfilterfw failure uses plist block all",
+			state:           CmdResult{Err: commandErr},
+			plist:           CmdResult{Stdout: "2"},
+			want:            StatusPass,
+			wantBackend:     "defaults",
+			wantGlobalState: "2",
+		},
+		{
+			name:            "socketfilterfw failure uses plist off",
+			state:           CmdResult{Err: commandErr},
+			plist:           CmdResult{Stdout: "0"},
+			want:            StatusFail,
+			wantBackend:     "defaults",
+			wantGlobalState: "0",
+		},
+		{
+			name:        "both commands fail",
+			state:       CmdResult{Err: commandErr},
+			plist:       CmdResult{Err: commandErr, Stderr: "domain not found"},
+			want:        StatusUnknown,
+			wantBackend: "defaults",
+		},
+		{
+			name:        "unparsed socketfilterfw ignores plist",
+			state:       CmdResult{Stdout: "unexpected firewall output"},
+			plist:       CmdResult{Stdout: "0"},
+			want:        StatusUnknown,
+			wantBackend: "socketfilterfw",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := darwinFirewallResult(tt.state, tt.plist)
+
+			require.Equal(t, tt.want, got.Status)
+			assert.Equal(t, tt.wantBackend, got.Evidence["backend"])
+
+			if tt.wantBackend == "socketfilterfw" {
+				_, hasGlobalState := got.Evidence["global_state"]
+				assert.False(t, hasGlobalState)
+			}
+
+			if tt.wantGlobalState != "" {
+				assert.Equal(t, tt.wantGlobalState, got.Evidence["global_state"])
+			}
+
+			if tt.state.Err != nil {
+				assert.Equal(t, tt.state.Err.Error(), got.Evidence["socketfilterfw_error"])
+			}
+		})
+	}
 }

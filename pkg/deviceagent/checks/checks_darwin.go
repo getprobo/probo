@@ -158,48 +158,62 @@ func darwinScreenLockMode(raw string) (string, int, bool) {
 }
 
 func darwinFirewall(ctx context.Context) Result {
-	out := RunCommand(
+	state := RunCommand(ctx, "/usr/libexec/ApplicationFirewall/socketfilterfw", "--getglobalstate")
+	if state.Err == nil {
+		return darwinFirewallResult(state, CmdResult{})
+	}
+
+	plist := RunCommand(
 		ctx,
 		"defaults",
 		"read",
 		"/Library/Preferences/com.apple.alf",
 		"globalstate",
 	)
-	if out.Err == nil {
-		state := strings.TrimSpace(out.Stdout)
 
-		ev := map[string]any{"backend": "defaults", "global_state": state}
-		if state == "1" || state == "2" {
+	return darwinFirewallResult(state, plist)
+}
+
+// Since macOS 15 the alf plist is not the firewall state (124405935).
+func darwinFirewallResult(state, plist CmdResult) Result {
+	if state.Err == nil {
+		ev := map[string]any{
+			"backend": "socketfilterfw",
+			"raw":     state.Stdout,
+		}
+		if darwinStateIndicatesEnabled(state.Stdout) {
 			return pass(ev)
 		}
 
-		return fail(ev)
-	}
-
-	fallback := RunCommand(ctx, "/usr/libexec/ApplicationFirewall/socketfilterfw", "--getglobalstate")
-
-	ev := map[string]any{
-		"backend":         "socketfilterfw",
-		"raw":             fallback.Stdout,
-		"defaults_error":  errString(out.Err),
-		"defaults_stderr": out.Stderr,
-	}
-	if fallback.Err != nil {
-		ev["error"] = fallback.Err.Error()
-		ev["stderr"] = fallback.Stderr
+		if darwinStateIndicatesDisabled(state.Stdout) {
+			return fail(ev)
+		}
 
 		return unknown(ev)
 	}
 
-	if darwinStateIndicatesEnabled(fallback.Stdout) {
+	ev := map[string]any{
+		"backend":              "defaults",
+		"socketfilterfw_error": errString(state.Err),
+	}
+	if state.Stderr != "" {
+		ev["socketfilterfw_stderr"] = state.Stderr
+	}
+
+	if plist.Err != nil {
+		ev["error"] = plist.Err.Error()
+		ev["stderr"] = plist.Stderr
+
+		return unknown(ev)
+	}
+
+	globalState := strings.TrimSpace(plist.Stdout)
+	ev["global_state"] = globalState
+	if globalState == "1" || globalState == "2" {
 		return pass(ev)
 	}
 
-	if darwinStateIndicatesDisabled(fallback.Stdout) {
-		return fail(ev)
-	}
-
-	return unknown(ev)
+	return fail(ev)
 }
 
 // darwinReadScreenSaverDefault prefers console-user settings when running as root.
