@@ -4,6 +4,20 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.276.0] - 2026-11-24
+
+### Added
+
+- Document Suggestion operations return the suggestion's thread, and
+  Accept, Reject and Get return the changes the decision made
+- Document Comment Get Many filters auto-rejected suggestions with
+  Include, Exclude or Only
+
+### Removed
+
+- Document Update Version, which called a mutation that no longer
+  exists
+
 ## [0.275.0] - 2026-11-23
 
 ### Added
