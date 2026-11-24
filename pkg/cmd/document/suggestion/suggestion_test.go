@@ -24,7 +24,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"go.gearno.de/x/ref"
 )
 
 func TestDescribeChange(t *testing.T) {
@@ -37,36 +36,36 @@ func TestDescribeChange(t *testing.T) {
 	}{
 		{
 			name:   "text replaced",
-			change: suggestionChange{Kind: "TEXT", Deleted: ref.Ref("old"), Inserted: ref.Ref("new")},
+			change: suggestionChange{Kind: "TEXT", Deleted: new("old"), Inserted: new("new")},
 			want:   `replaced "old" with "new"`,
 		},
 		{
 			name:   "text deleted",
-			change: suggestionChange{Kind: "TEXT", Deleted: ref.Ref("old"), Inserted: ref.Ref("")},
+			change: suggestionChange{Kind: "TEXT", Deleted: new("old"), Inserted: new("")},
 			want:   `deleted "old"`,
 		},
 		{
 			name:   "text inserted",
-			change: suggestionChange{Kind: "TEXT", Deleted: ref.Ref(""), Inserted: ref.Ref("new")},
+			change: suggestionChange{Kind: "TEXT", Deleted: new(""), Inserted: new("new")},
 			want:   `added "new"`,
 		},
 		{
 			name:   "format added",
-			change: suggestionChange{Kind: "FORMAT", Mark: ref.Ref("BOLD"), FormatAction: ref.Ref("ADD")},
+			change: suggestionChange{Kind: "FORMAT", Mark: new("BOLD"), FormatAction: new("ADD")},
 			want:   "added bold",
 		},
 		{
 			name:   "format removed",
-			change: suggestionChange{Kind: "FORMAT", Mark: ref.Ref("ITALIC"), FormatAction: ref.Ref("REMOVE")},
+			change: suggestionChange{Kind: "FORMAT", Mark: new("ITALIC"), FormatAction: new("REMOVE")},
 			want:   "removed italic",
 		},
 		{
 			name: "link added",
 			change: suggestionChange{
 				Kind:         "FORMAT",
-				Mark:         ref.Ref("LINK"),
-				FormatAction: ref.Ref("ADD"),
-				Href:         ref.Ref("https://example.com"),
+				Mark:         new("LINK"),
+				FormatAction: new("ADD"),
+				Href:         new("https://example.com"),
 			},
 			want: "added link to https://example.com",
 		},
@@ -74,10 +73,10 @@ func TestDescribeChange(t *testing.T) {
 			name: "link changed",
 			change: suggestionChange{
 				Kind:         "FORMAT",
-				Mark:         ref.Ref("LINK"),
-				FormatAction: ref.Ref("ADD"),
-				Href:         ref.Ref("https://new.example.com"),
-				PreviousHref: ref.Ref("https://old.example.com"),
+				Mark:         new("LINK"),
+				FormatAction: new("ADD"),
+				Href:         new("https://new.example.com"),
+				PreviousHref: new("https://old.example.com"),
 			},
 			want: "changed link from https://old.example.com to https://new.example.com",
 		},
@@ -85,7 +84,7 @@ func TestDescribeChange(t *testing.T) {
 			name: "block with a level",
 			change: suggestionChange{
 				Kind:   "BLOCK",
-				Before: &blockLabel{Kind: "HEADING", Level: ref.Ref(2)},
+				Before: &blockLabel{Kind: "HEADING", Level: new(2)},
 				After:  &blockLabel{Kind: "PARAGRAPH"},
 			},
 			want: "heading 2 -> paragraph",
@@ -106,12 +105,12 @@ func TestDescribeChange(t *testing.T) {
 		},
 		{
 			name:   "node added",
-			change: suggestionChange{Kind: "NODE", Node: ref.Ref("ROW"), NodeAction: ref.Ref("INSERT")},
+			change: suggestionChange{Kind: "NODE", Node: new("ROW"), NodeAction: new("INSERT")},
 			want:   "added row",
 		},
 		{
 			name:   "node removed",
-			change: suggestionChange{Kind: "NODE", Node: ref.Ref("TABLE"), NodeAction: ref.Ref("DELETE")},
+			change: suggestionChange{Kind: "NODE", Node: new("TABLE"), NodeAction: new("DELETE")},
 			want:   "removed table",
 		},
 		{

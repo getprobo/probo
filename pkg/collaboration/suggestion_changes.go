@@ -101,6 +101,7 @@ func SuggestionChanges(spans []automerge.Span, suggestionID string) *coredata.Do
 						}
 					case kind != suggestionSplitStructural:
 						reader.addNode(suggestionNodeKind(span), suggestionNodeAction(kind))
+
 						coveredUntil = subtreeEnd(spans, index)
 					}
 				}
@@ -169,6 +170,7 @@ func (r *suggestionChangeReader) result() *coredata.DocumentSuggestionChanges {
 	changes := r.changes
 
 	hasText := false
+
 	for _, change := range changes {
 		if change.Kind == coredata.DocumentSuggestionChangeKindText {
 			hasText = true
