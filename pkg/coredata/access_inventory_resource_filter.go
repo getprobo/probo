@@ -30,10 +30,6 @@ type AccessInventoryResourceFilter struct {
 }
 
 func (f *AccessInventoryResourceFilter) SQLFragment() string {
-	if f == nil {
-		return "TRUE"
-	}
-
 	return `
 (
 	CASE
@@ -49,11 +45,7 @@ func (f *AccessInventoryResourceFilter) SQLArguments() pgx.StrictNamedArgs {
 		"filter_access_review_source_id": nil,
 	}
 
-	if f == nil {
-		return args
-	}
-
-	if f.AccessReviewSourceID != nil {
+	if f != nil && f.AccessReviewSourceID != nil {
 		args["filter_access_review_source_id"] = *f.AccessReviewSourceID
 	}
 

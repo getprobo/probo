@@ -28,6 +28,19 @@ export const description: INodeProperties[] = [
 		operation: ['getAll'],
 	}),
 	{
+		displayName: 'Access Review Source ID',
+		name: 'accessReviewSourceId',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['accessInventory'],
+				operation: ['getAll'],
+			},
+		},
+		default: '',
+		description: 'Filter grants by access review source ID',
+	},
+	{
 		displayName: 'Include Disappeared',
 		name: 'includeDisappeared',
 		type: 'boolean',
@@ -77,9 +90,18 @@ export async function execute(
 	itemIndex: number,
 ): Promise<INodeExecutionData[]> {
 	const organizationId = this.getNodeParameter('organizationId', itemIndex, '', { extractValue: true }) as string;
+	const accessReviewSourceId = this.getNodeParameter('accessReviewSourceId', itemIndex, '') as string;
 	const includeDisappeared = this.getNodeParameter('includeDisappeared', itemIndex) as boolean;
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
+
+	const filter: IDataObject = {};
+	if (accessReviewSourceId) {
+		filter.accessReviewSourceId = accessReviewSourceId;
+	}
+	if (includeDisappeared) {
+		filter.includeDisappeared = true;
+	}
 
 	const query = `
 		query GetAccessInventoryGrants(
@@ -121,7 +143,7 @@ export async function execute(
 		query,
 		{
 			organizationId,
-			filter: includeDisappeared ? { includeDisappeared: true } : undefined,
+			filter: Object.keys(filter).length > 0 ? filter : undefined,
 		},
 		(response) => {
 			const data = response?.data as IDataObject | undefined;

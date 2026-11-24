@@ -115,19 +115,21 @@ func NewCmdListPrincipals(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("cannot determine organization, use --org or 'prb auth login'")
 			}
 
-			variables := map[string]any{
-				"id": flagOrg,
+			orderBy := flagOrderBy
+			if orderBy == "" {
+				orderBy = "CREATED_AT"
 			}
 
-			if flagOrderBy != "" {
-				if err := cmdutil.ValidateEnum("order-by", flagOrderBy, []string{"CREATED_AT"}); err != nil {
-					return err
-				}
+			if err := cmdutil.ValidateEnum("order-by", orderBy, []string{"CREATED_AT"}); err != nil {
+				return err
+			}
 
-				variables["orderBy"] = map[string]any{
-					"field":     flagOrderBy,
+			variables := map[string]any{
+				"id": flagOrg,
+				"orderBy": map[string]any{
+					"field":     orderBy,
 					"direction": flagOrderDir,
-				}
+				},
 			}
 
 			if flagSourceID != "" {

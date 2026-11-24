@@ -51,13 +51,6 @@ func (f *AccessInventoryGrantFilter) WithHideAfterMissingSyncs(hideAfter int) *A
 }
 
 func (f *AccessInventoryGrantFilter) SQLFragment() string {
-	if f == nil {
-		return `(
-	presence = @filter_presence_present::access_inventory_grant_presence
-	OR consecutive_missing_syncs < @filter_hide_after_missing_syncs
-)`
-	}
-
 	return `
 (
 	CASE

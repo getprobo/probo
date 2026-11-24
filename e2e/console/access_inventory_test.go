@@ -118,6 +118,7 @@ func TestAccessInventory_ListGrantsAfterCSVSync(t *testing.T) {
 
 	grant := result.Node.AccessInventoryGrants.Edges[0].Node
 	assert.Equal(t, "PRESENT", grant.Presence)
+	assert.Equal(t, "admin", grant.EntitlementKey)
 	assert.Equal(t, sourceID, grant.Source.ID)
 	assert.Equal(t, "jane@example.com", grant.Principal.Email)
 	assert.NotEmpty(t, grant.Resource.DisplayName)
@@ -147,6 +148,7 @@ func TestAccessInventory_ListGrantsAfterCSVSync(t *testing.T) {
 	err = owner.Execute(nodeQuery, map[string]any{"id": grant.ID}, &nodeResult)
 	require.NoError(t, err)
 	assert.Equal(t, grant.ID, nodeResult.Node.ID)
+	assert.Equal(t, "admin", nodeResult.Node.EntitlementKey)
 	assert.Equal(t, "PRESENT", nodeResult.Node.Presence)
 }
 

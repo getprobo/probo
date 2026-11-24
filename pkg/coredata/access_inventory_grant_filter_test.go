@@ -21,6 +21,7 @@
 package coredata_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -54,7 +55,22 @@ func TestAccessInventoryGrantFilter_NilSQLFragmentHidesPastThreshold(t *testing.
 	t.Parallel()
 
 	var filter *coredata.AccessInventoryGrantFilter
-	fragment := filter.SQLFragment()
-	assert.Contains(t, fragment, "consecutive_missing_syncs")
-	assert.Contains(t, fragment, "filter_presence_present")
+	fragment := compactSQL(filter.SQLFragment())
+
+	assert.Contains(t, fragment, "WHEN @filter_include_disappeared::boolean IS TRUE THEN TRUE")
+	assert.Contains(
+		t,
+		fragment,
+		"ELSE presence = @filter_presence_present::access_inventory_grant_presence OR consecutive_missing_syncs < @filter_hide_after_missing_syncs END",
+	)
+	assert.Equal(t, coredata.DefaultHideAfterMissingSyncs, filter.SQLArguments()["filter_hide_after_missing_syncs"])
+	assert.Equal(
+		t,
+		string(coredata.AccessInventoryGrantPresencePresent),
+		filter.SQLArguments()["filter_presence_present"],
+	)
+}
+
+func compactSQL(s string) string {
+	return strings.Join(strings.Fields(s), " ")
 }

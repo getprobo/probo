@@ -141,8 +141,12 @@ func NewCmdViewGrant(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("cannot decode response: %w", err)
 			}
 
-			if result.Node == nil || result.Node.Typename != "AccessInventoryGrant" {
+			if result.Node == nil {
 				return fmt.Errorf("access inventory grant %s not found", args[0])
+			}
+
+			if result.Node.Typename != "AccessInventoryGrant" {
+				return fmt.Errorf("expected AccessInventoryGrant node, got %s", result.Node.Typename)
 			}
 
 			node := result.Node
@@ -155,10 +159,25 @@ func NewCmdViewGrant(f *cmdutil.Factory) *cobra.Command {
 			bold := lipgloss.NewStyle().Bold(true)
 			label := lipgloss.NewStyle().Foreground(lipgloss.Color("242")).Width(22)
 
+			principalLabel := node.PrincipalKey
+			if node.Principal.FullName != "" {
+				principalLabel = fmt.Sprintf("%s (%s)", node.Principal.FullName, node.Principal.Email)
+			} else if node.Principal.Email != "" {
+				principalLabel = node.Principal.Email
+			}
+
+			resourceLabel := node.ResourceKey
+			if node.Resource.DisplayName != "" {
+				resourceLabel = node.Resource.DisplayName
+				if node.Resource.Kind != "" {
+					resourceLabel = fmt.Sprintf("%s (%s)", node.Resource.DisplayName, node.Resource.Kind)
+				}
+			}
+
 			_, _ = fmt.Fprintf(out, "%s\n\n", bold.Render("Access Inventory Grant"))
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("ID:"), node.ID)
-			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Principal:"), node.PrincipalKey)
-			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Resource:"), node.ResourceKey)
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Principal:"), principalLabel)
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Resource:"), resourceLabel)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Entitlement:"), node.EntitlementDisplayName)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Presence:"), node.Presence)
 			_, _ = fmt.Fprintf(out, "%s%d\n", label.Render("Missing syncs:"), node.ConsecutiveMissingSyncs)
