@@ -173,6 +173,15 @@ func (s *Service) applyInventoryRoster(
 	}
 
 	for _, account := range accounts {
+		triples, err := GrantTriplesFromAccount(account)
+		if err != nil {
+			if errors.Is(err, ErrMissingPrincipalKey) {
+				continue
+			}
+
+			return 0, fmt.Errorf("cannot normalise account grants: %w", err)
+		}
+
 		principal, err := upsertInventoryPrincipal(
 			ctx,
 			tx,
@@ -187,7 +196,7 @@ func (s *Service) applyInventoryRoster(
 			return 0, err
 		}
 
-		for _, triple := range GrantTriplesFromAccount(account) {
+		for _, triple := range triples {
 			resource, err := upsertInventoryResource(
 				ctx,
 				tx,
