@@ -170,6 +170,7 @@ func NewCmdListGrantChangeEvents(f *cmdutil.Factory) *cobra.Command {
 			if err != nil {
 				return err
 			}
+
 			if len(filter) > 0 {
 				variables["filter"] = filter
 			}
