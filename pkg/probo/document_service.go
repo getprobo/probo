@@ -3277,6 +3277,11 @@ func (s *DocumentService) insertSnapshot(
 		return nil, fmt.Errorf("cannot read live document content: %w", err)
 	}
 
+	heads, err := s.collaboration.EncodedHeads(ctx, scope, tx, document.ID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read live document heads: %w", err)
+	}
+
 	major, minorNumber := snapshotNumber(document, minor)
 	now := time.Now()
 	version := &coredata.DocumentVersion{
@@ -3293,6 +3298,8 @@ func (s *DocumentService) insertSnapshot(
 		Status:         status,
 		CreatedAt:      now,
 		UpdatedAt:      now,
+
+		CollaborationHeads: heads,
 	}
 
 	if changelog != nil {

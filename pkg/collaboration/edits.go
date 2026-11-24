@@ -83,6 +83,32 @@ func (s *Service) Heads(
 	return heads, nil
 }
 
+// EncodedHeads returns the encoded heads of the live document, read through
+// conn so a caller holding the collaboration row lock sees the heads that match
+// the content it materialized. It returns nil for a document without a CRDT.
+func (s *Service) EncodedHeads(
+	ctx context.Context,
+	scope coredata.Scoper,
+	conn pg.Querier,
+	documentID gid.GID,
+) ([]byte, error) {
+	doc := &coredata.CollaborationDocument{}
+
+	if err := doc.LoadByDocumentID(ctx, conn, scope, documentID); err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, nil
+		}
+
+		return nil, fmt.Errorf("cannot load collaboration heads: %w", err)
+	}
+
+	if len(doc.Heads) == 0 {
+		return nil, nil
+	}
+
+	return doc.Heads, nil
+}
+
 func (s *Service) ApplyEdits(
 	ctx context.Context,
 	scope coredata.Scoper,
