@@ -50,6 +50,7 @@ func (s *Service) SyncNow(
 ) (*coredata.AccessSourceSyncRun, error) {
 	v := validator.New()
 	v.Check(sourceID, "access_review_source_id", validator.Required(), validator.GID(coredata.AccessReviewSourceEntityType))
+
 	if err := v.Error(); err != nil {
 		return nil, err
 	}
@@ -89,6 +90,7 @@ func (s *Service) enqueueInventorySyncRun(
 ) (*coredata.AccessSourceSyncRun, error) {
 	existing := &coredata.AccessSourceSyncRun{}
 	err := existing.LoadInFlightBySourceID(ctx, tx, scope, source.ID)
+
 	if err == nil {
 		return existing, nil
 	}
