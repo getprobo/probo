@@ -224,7 +224,9 @@ func TestSyntheticRevision(t *testing.T) {
 	revision := syntheticRevision(documentID, version)
 
 	assert.True(t, revision.Synthetic)
-	assert.Equal(t, version.ID, revision.ID)
+	assert.NotEqual(t, version.ID, revision.ID)
+	assert.Equal(t, uint16(coredata.DocumentCollaborationSessionEntityType), revision.ID.EntityType())
+	assert.Equal(t, version.ID.TenantID(), revision.ID.TenantID())
 	assert.Equal(t, []gid.GID{version.ID}, revision.VersionIDs)
 	assert.Empty(t, revision.Heads)
 	assert.Equal(t, published, revision.EndedAt)

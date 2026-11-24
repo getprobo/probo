@@ -59,7 +59,7 @@ type (
 		VersionIDs []gid.GID
 		// Synthetic marks a version that predates the link to the history,
 		// or whose revision no longer exists. It stands alone in the
-		// timeline with the version ID as its ID and carries no heads.
+		// timeline under an ID derived from the version ID and carries no heads.
 		Synthetic bool
 	}
 
@@ -336,7 +336,7 @@ func syntheticRevision(
 	}
 
 	return &DocumentRevision{
-		ID:         version.ID,
+		ID:         syntheticRevisionID(version.ID),
 		DocumentID: documentID,
 		StartedAt:  at,
 		EndedAt:    at,
@@ -678,6 +678,16 @@ func groupRevisions(
 	slices.Reverse(sessions)
 
 	return sessions
+}
+
+// syntheticRevisionID derives the revision ID from the version ID. It must
+// differ from the version ID: clients key their caches by ID, and the two
+// objects would otherwise overwrite each other.
+func syntheticRevisionID(versionID gid.GID) gid.GID {
+	id := versionID
+	binary.BigEndian.PutUint16(id[8:10], coredata.DocumentCollaborationSessionEntityType)
+
+	return id
 }
 
 func revisionID(tenantID gid.TenantID, changeHash automerge.Hash) gid.GID {
