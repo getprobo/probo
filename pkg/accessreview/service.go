@@ -46,17 +46,19 @@ type (
 		federation        *identityfederation.Issuer
 		logger            *log.Logger
 
-		fetchWorker *worker.Worker[coredata.AccessReviewCampaignSourceFetchAttempt]
-		syncWorker  *worker.Worker[coredata.AccessSourceSyncRun]
+		fetchWorker     *worker.Worker[coredata.AccessReviewCampaignSourceFetchAttempt]
+		syncWorker      *worker.Worker[coredata.AccessSourceSyncRun]
+		schedulerWorker *worker.Worker[coredata.AccessReviewSource]
 	}
 
 	Option func(*options)
 
 	options struct {
-		fetchInterval time.Duration
-		syncInterval  time.Duration
-		federation    *identityfederation.Issuer
-		registerer    prometheus.Registerer
+		fetchInterval     time.Duration
+		syncInterval      time.Duration
+		schedulerInterval time.Duration
+		federation        *identityfederation.Issuer
+		registerer        prometheus.Registerer
 	}
 )
 
@@ -81,6 +83,12 @@ func WithFetchInterval(interval time.Duration) Option {
 func WithInventorySyncInterval(interval time.Duration) Option {
 	return func(o *options) {
 		o.syncInterval = interval
+	}
+}
+
+func WithInventorySyncSchedulerInterval(interval time.Duration) Option {
+	return func(o *options) {
+		o.schedulerInterval = interval
 	}
 }
 
@@ -157,6 +165,26 @@ func NewService(
 		syncWorkerOpts...,
 	)
 
+	var schedulerWorkerOpts []worker.Option
+	if o.schedulerInterval > 0 {
+		schedulerWorkerOpts = append(schedulerWorkerOpts, worker.WithInterval(o.schedulerInterval))
+	} else {
+		schedulerWorkerOpts = append(schedulerWorkerOpts, worker.WithInterval(30*time.Second))
+	}
+
+	schedulerWorkerOpts = append(schedulerWorkerOpts, worker.WithMaxConcurrency(10))
+
+	if o.registerer != nil {
+		schedulerWorkerOpts = append(schedulerWorkerOpts, worker.WithRegisterer(o.registerer))
+	}
+
+	s.schedulerWorker = NewInventorySyncSchedulerWorker(
+		s,
+		pgClient,
+		logger,
+		schedulerWorkerOpts...,
+	)
+
 	return s
 }
 
@@ -177,6 +205,16 @@ func (s *Service) Run(ctx context.Context) error {
 		func() error {
 			if err := s.syncWorker.Run(gctx); err != nil {
 				return fmt.Errorf("inventory-sync-worker: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	g.Go(
+		func() error {
+			if err := s.schedulerWorker.Run(gctx); err != nil {
+				return fmt.Errorf("inventory-sync-scheduler: %w", err)
 			}
 
 			return nil

@@ -72,11 +72,15 @@ func seedInventorySyncFixture(
 			return err
 		}
 
+		// Far-future next_sync_at keeps parallel scheduler claims off this
+		// fixture; Sync now / manual QUEUED runs do not consult the field.
+		nextSyncAt := now.Add(24 * time.Hour)
 		source := &coredata.AccessReviewSource{
 			ID:             fx.sourceID,
 			OrganizationID: fx.organizationID,
 			Name:           "CSV Roster",
 			CsvData:        &csvData,
+			NextSyncAt:     &nextSyncAt,
 			CreatedAt:      now,
 			UpdatedAt:      now,
 		}

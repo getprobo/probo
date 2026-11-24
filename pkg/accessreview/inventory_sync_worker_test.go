@@ -36,12 +36,47 @@ import (
 	"go.probo.inc/probo/pkg/crypto/cipher"
 )
 
+func drainInFlightInventorySyncRuns(t *testing.T, ctx context.Context, client *pg.Client) error {
+	t.Helper()
+
+	return client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		_, err := tx.Exec(
+			ctx,
+			`
+DELETE FROM access_source_sync_runs
+WHERE status IN ('QUEUED', 'RUNNING')
+`,
+		)
+
+		return err
+	})
+}
+
+func holdAllInventorySyncSchedules(t *testing.T, ctx context.Context, client *pg.Client) error {
+	t.Helper()
+
+	return client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		_, err := tx.Exec(
+			ctx,
+			`
+UPDATE access_review_sources
+SET next_sync_at = NOW() + INTERVAL '30 days'
+WHERE next_sync_at IS NULL OR next_sync_at <= NOW()
+`,
+		)
+
+		return err
+	})
+}
+
 func TestInventorySyncHandler_ClaimAndProcess(t *testing.T) {
 	// Not parallel: shares the cross-tenant QUEUED claim queue.
 	client := test.PGClient(t)
 	ctx := context.Background()
 	logger := log.NewLogger(log.WithOutput(io.Discard))
 	svc := NewService(client, cipher.EncryptionKey{}, nil, provider.NewBuiltinRegistry(), logger)
+
+	require.NoError(t, drainInFlightInventorySyncRuns(t, ctx, client))
 
 	csvData := "email,full_name,role\ndave@example.com,Dave,Viewer\n"
 	fx := seedInventorySyncFixture(t, ctx, client, csvData)

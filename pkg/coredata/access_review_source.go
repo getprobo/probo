@@ -36,16 +36,25 @@ import (
 
 type (
 	AccessReviewSource struct {
-		ID                 gid.GID   `db:"id"`
-		OrganizationID     gid.GID   `db:"organization_id"`
-		ConnectorAccountID *gid.GID  `db:"connector_account_id"`
-		Name               string    `db:"name"`
-		CsvData            *string   `db:"csv_data"`
-		CreatedAt          time.Time `db:"created_at"`
-		UpdatedAt          time.Time `db:"updated_at"`
+		ID                      gid.GID    `db:"id"`
+		OrganizationID          gid.GID    `db:"organization_id"`
+		ConnectorAccountID      *gid.GID   `db:"connector_account_id"`
+		Name                    string     `db:"name"`
+		CsvData                 *string    `db:"csv_data"`
+		LastSuccessfulSyncAt    *time.Time `db:"last_successful_sync_at"`
+		NextSyncAt              *time.Time `db:"next_sync_at"`
+		SyncConsecutiveFailures int        `db:"sync_consecutive_failures"`
+		CreatedAt               time.Time  `db:"created_at"`
+		UpdatedAt               time.Time  `db:"updated_at"`
 	}
 
 	AccessReviewSources []*AccessReviewSource
+)
+
+var (
+	ErrNoAccessReviewSourceInventorySyncDue = errors.New(
+		"no access review source due for inventory sync",
+	)
 )
 
 func (as AccessReviewSource) CursorKey(orderBy AccessReviewSourceOrderField) page.CursorKey {
@@ -109,6 +118,9 @@ SELECT
     connector_account_id,
     name,
     csv_data,
+    last_successful_sync_at,
+    next_sync_at,
+    sync_consecutive_failures,
     created_at,
     updated_at
 FROM
@@ -157,6 +169,9 @@ SELECT
     connector_account_id,
     name,
     csv_data,
+    last_successful_sync_at,
+    next_sync_at,
+    sync_consecutive_failures,
     created_at,
     updated_at
 FROM
@@ -204,6 +219,9 @@ SELECT
     connector_account_id,
     name,
     csv_data,
+    last_successful_sync_at,
+    next_sync_at,
+    sync_consecutive_failures,
     created_at,
     updated_at
 FROM
@@ -286,6 +304,9 @@ INSERT INTO
         connector_account_id,
         name,
         csv_data,
+        last_successful_sync_at,
+        next_sync_at,
+        sync_consecutive_failures,
         created_at,
         updated_at
     )
@@ -296,6 +317,9 @@ VALUES (
     @connector_account_id,
     @name,
     @csv_data,
+    @last_successful_sync_at,
+    @next_sync_at,
+    @sync_consecutive_failures,
     @created_at,
     @updated_at
 )
@@ -304,14 +328,17 @@ RETURNING id;
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":                   as.ID,
-		"tenant_id":            scope.GetTenantID(),
-		"organization_id":      as.OrganizationID,
-		"connector_account_id": as.ConnectorAccountID,
-		"name":                 as.Name,
-		"csv_data":             as.CsvData,
-		"created_at":           as.CreatedAt,
-		"updated_at":           as.UpdatedAt,
+		"id":                        as.ID,
+		"tenant_id":                 scope.GetTenantID(),
+		"organization_id":           as.OrganizationID,
+		"connector_account_id":      as.ConnectorAccountID,
+		"name":                      as.Name,
+		"csv_data":                  as.CsvData,
+		"last_successful_sync_at":   as.LastSuccessfulSyncAt,
+		"next_sync_at":              as.NextSyncAt,
+		"sync_consecutive_failures": as.SyncConsecutiveFailures,
+		"created_at":                as.CreatedAt,
+		"updated_at":                as.UpdatedAt,
 	}
 
 	var insertedID gid.GID
@@ -412,6 +439,9 @@ SELECT
     connector_account_id,
     name,
     csv_data,
+    last_successful_sync_at,
+    next_sync_at,
+    sync_consecutive_failures,
     created_at,
     updated_at
 FROM
@@ -485,6 +515,9 @@ SELECT
     connector_account_id,
     name,
     csv_data,
+    last_successful_sync_at,
+    next_sync_at,
+    sync_consecutive_failures,
     created_at,
     updated_at
 FROM

@@ -123,6 +123,10 @@ func (s *Service) SyncInventorySource(
 				return fmt.Errorf("cannot mark sync run success: %w", err)
 			}
 
+			if err := s.scheduleInventorySyncAfterSuccess(ctx, tx, scope, source, observedAt); err != nil {
+				return err
+			}
+
 			return nil
 		},
 	)

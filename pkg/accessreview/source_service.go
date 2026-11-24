@@ -179,6 +179,10 @@ func (s *Service) EnsureSources(
 					continue
 				}
 
+				if _, err := s.enqueueInventorySyncRun(ctx, conn, scope, source); err != nil {
+					return fmt.Errorf("cannot enqueue inventory sync on connect: %w", err)
+				}
+
 				results[i] = EnsuredAccessReviewSource{Source: source, Created: true}
 			}
 

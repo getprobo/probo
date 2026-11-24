@@ -67,11 +67,25 @@ func insertAccessSourceSyncRun(
 	return runID
 }
 
+func drainInFlightAccessSourceSyncRuns(t *testing.T, ctx context.Context, client *pg.Client) {
+	t.Helper()
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		_, err := tx.Exec(
+			ctx,
+			`DELETE FROM access_source_sync_runs WHERE status IN ('QUEUED', 'RUNNING')`,
+		)
+
+		return err
+	}))
+}
+
 func TestAccessSourceSyncRun_LoadNextQueuedForUpdateSkipLocked(t *testing.T) {
 	// Not parallel: shares the cross-tenant QUEUED claim queue with the
 	// SkipLocked sibling below.
 	client := test.PGClient(t)
 	ctx := context.Background()
+	drainInFlightAccessSourceSyncRuns(t, ctx, client)
 
 	fx := seedAccessInventoryFixture(t, ctx, client)
 	createdAt := time.Now().UTC()
@@ -112,6 +126,7 @@ func TestAccessSourceSyncRun_LoadNextQueuedForUpdateSkipLocked_SkipsSourceWithRu
 	// Not parallel: shares the cross-tenant QUEUED claim queue.
 	client := test.PGClient(t)
 	ctx := context.Background()
+	drainInFlightAccessSourceSyncRuns(t, ctx, client)
 
 	fx := seedAccessInventoryFixture(t, ctx, client)
 	createdAt := time.Now().UTC()
@@ -130,6 +145,7 @@ func TestAccessSourceSyncRun_LoadNextQueuedForUpdateSkipLocked_OneQueuedPerSourc
 	// Not parallel: shares the cross-tenant QUEUED claim queue.
 	client := test.PGClient(t)
 	ctx := context.Background()
+	drainInFlightAccessSourceSyncRuns(t, ctx, client)
 
 	fx := seedAccessInventoryFixture(t, ctx, client)
 	olderAt := time.Date(2, time.January, 1, 0, 0, 0, 0, time.UTC)
@@ -153,6 +169,7 @@ func TestAccessSourceSyncRun_LoadNextQueuedForUpdateSkipLocked_SkipLocked(t *tes
 	// Not parallel: pins exact claim IDs against the shared QUEUED queue.
 	client := test.PGClient(t)
 	ctx := context.Background()
+	drainInFlightAccessSourceSyncRuns(t, ctx, client)
 
 	fx := seedAccessInventoryFixture(t, ctx, client)
 	// Far-past stamps so these two rows head the global claim queue.
