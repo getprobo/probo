@@ -93,6 +93,7 @@ func TestFetchFailureMessage(t *testing.T) {
 type fetchFixture struct {
 	scope            *coredata.Scope
 	organizationID   gid.GID
+	sourceID         gid.GID
 	campaignID       gid.GID
 	campaignSourceID gid.GID
 }
@@ -111,10 +112,10 @@ func seedFetchFixture(
 	fx := fetchFixture{
 		scope:            coredata.NewScope(tenantID, gid.Nil),
 		organizationID:   gid.New(tenantID, coredata.OrganizationEntityType),
+		sourceID:         gid.New(tenantID, coredata.AccessReviewSourceEntityType),
 		campaignID:       gid.New(tenantID, coredata.AccessReviewCampaignEntityType),
 		campaignSourceID: gid.New(tenantID, coredata.AccessReviewCampaignSourceEntityType),
 	}
-	sourceID := gid.New(tenantID, coredata.AccessReviewSourceEntityType)
 	now := time.Now().UTC()
 
 	err := client.WithTx(
@@ -131,11 +132,15 @@ func seedFetchFixture(
 				return err
 			}
 
+			// Far-future next_sync_at keeps the cadence scheduler off this
+			// fixture while campaign dual-write / Sync now still enqueue.
+			nextSyncAt := now.Add(24 * time.Hour)
 			source := &coredata.AccessReviewSource{
-				ID:             sourceID,
+				ID:             fx.sourceID,
 				OrganizationID: fx.organizationID,
 				Name:           "CSV",
 				CsvData:        &csvData,
+				NextSyncAt:     &nextSyncAt,
 				CreatedAt:      now,
 				UpdatedAt:      now,
 			}
@@ -160,7 +165,7 @@ func seedFetchFixture(
 				ID:                     fx.campaignSourceID,
 				OrganizationID:         fx.organizationID,
 				AccessReviewCampaignID: fx.campaignID,
-				AccessReviewSourceID:   &sourceID,
+				AccessReviewSourceID:   &fx.sourceID,
 				Name:                   "CSV",
 				CreatedAt:              now,
 				UpdatedAt:              now,

@@ -161,6 +161,17 @@ func (s *Service) FetchSource(
 				}
 			}
 
+			if err := s.dualWriteInventoryFromCampaignFetch(
+				ctx,
+				conn,
+				scope,
+				source,
+				accounts,
+				now,
+			); err != nil {
+				return err
+			}
+
 			return nil
 		},
 	)
@@ -169,6 +180,71 @@ func (s *Service) FetchSource(
 	}
 
 	return fetchedCount, nil
+}
+
+// dualWriteInventoryFromCampaignFetch refreshes live inventory from the
+// campaign fetch roster. No-op when a sync run is already in flight so
+// soft-disappear stays single-writer per source.
+func (s *Service) dualWriteInventoryFromCampaignFetch(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	source *coredata.AccessReviewSource,
+	accounts []drivers.AccountRecord,
+	observedAt time.Time,
+) error {
+	existing := &coredata.AccessSourceSyncRun{}
+	err := existing.LoadInFlightBySourceID(ctx, tx, scope, source.ID)
+	if err == nil {
+		return nil
+	}
+
+	if !errors.Is(err, coredata.ErrResourceNotFound) {
+		return fmt.Errorf("cannot load in-flight sync run: %w", err)
+	}
+
+	run := &coredata.AccessSourceSyncRun{
+		ID:                   gid.New(scope.GetTenantID(), coredata.AccessSourceSyncRunEntityType),
+		OrganizationID:       source.OrganizationID,
+		AccessReviewSourceID: source.ID,
+		Status:               coredata.AccessSourceSyncRunStatusRunning,
+		StartedAt:            &observedAt,
+		CreatedAt:            observedAt,
+		UpdatedAt:            observedAt,
+	}
+	if err := run.Insert(ctx, tx, scope); err != nil {
+		return fmt.Errorf("cannot insert campaign dual-write sync run: %w", err)
+	}
+
+	upserted, err := s.applyInventoryRoster(
+		ctx,
+		tx,
+		scope,
+		source,
+		run,
+		accounts,
+		observedAt,
+	)
+	if err != nil {
+		return err
+	}
+
+	completedAt := time.Now()
+	run.Status = coredata.AccessSourceSyncRunStatusSuccess
+	run.GrantsUpsertedCount = upserted
+	run.Error = nil
+	run.CompletedAt = &completedAt
+	run.UpdatedAt = completedAt
+
+	if err := run.Update(ctx, tx, scope); err != nil {
+		return fmt.Errorf("cannot mark campaign dual-write sync run success: %w", err)
+	}
+
+	if err := s.scheduleInventorySyncAfterSuccess(ctx, tx, scope, source, completedAt); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func normalizeAccountKey(email, externalID string) string {

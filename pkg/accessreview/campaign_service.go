@@ -748,6 +748,27 @@ func (s *Service) enqueueSourceFetches(
 		if err := attempt.Insert(ctx, tx, scope); err != nil {
 			return fmt.Errorf("cannot queue source fetch %s: %w", campaignSource.ID, err)
 		}
+
+		if campaignSource.AccessReviewSourceID == nil {
+			continue
+		}
+
+		source := &coredata.AccessReviewSource{}
+		if err := source.LoadByID(ctx, tx, scope, *campaignSource.AccessReviewSourceID); err != nil {
+			return fmt.Errorf(
+				"cannot load access source %s for inventory sync: %w",
+				*campaignSource.AccessReviewSourceID,
+				err,
+			)
+		}
+
+		if _, err := s.enqueueInventorySyncRun(ctx, tx, scope, source); err != nil {
+			return fmt.Errorf(
+				"cannot enqueue inventory sync for source %s: %w",
+				source.ID,
+				err,
+			)
+		}
 	}
 
 	return nil
