@@ -29,3 +29,8 @@ ALTER TABLE access_review_sources
 
 ALTER TABLE access_review_sources
     ALTER COLUMN sync_consecutive_failures DROP DEFAULT;
+
+-- Scheduler claim orders by next_sync_at NULLS FIRST across tenants (same
+-- shape as iam_scim_bridges next_sync indexing).
+CREATE INDEX access_review_sources_next_sync_at_idx
+    ON access_review_sources (next_sync_at ASC NULLS FIRST);

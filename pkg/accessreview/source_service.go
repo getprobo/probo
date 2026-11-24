@@ -179,8 +179,13 @@ func (s *Service) EnsureSources(
 					continue
 				}
 
-				if _, err := s.enqueueInventorySyncRun(ctx, conn, scope, source); err != nil {
-					return fmt.Errorf("cannot enqueue inventory sync on connect: %w", err)
+				// Hold cadence until the create resolver finishes
+				// AutoSelectDefaultOrganization, then SyncNow enqueues.
+				nextSyncAt := now.Add(24 * time.Hour)
+				source.NextSyncAt = &nextSyncAt
+				source.UpdatedAt = now
+				if err := source.UpdateInventorySyncSchedule(ctx, conn, scope); err != nil {
+					return fmt.Errorf("cannot defer inventory sync until connect finishes: %w", err)
 				}
 
 				results[i] = EnsuredAccessReviewSource{Source: source, Created: true}

@@ -100,14 +100,25 @@ func insertQueuedInventorySyncRun(
 ) *coredata.AccessSourceSyncRun {
 	t.Helper()
 
-	now := time.Now().UTC()
+	return insertQueuedInventorySyncRunAt(t, ctx, client, fx, time.Now().UTC())
+}
+
+func insertQueuedInventorySyncRunAt(
+	t *testing.T,
+	ctx context.Context,
+	client *pg.Client,
+	fx inventorySyncFixture,
+	createdAt time.Time,
+) *coredata.AccessSourceSyncRun {
+	t.Helper()
+
 	run := &coredata.AccessSourceSyncRun{
 		ID:                   gid.New(fx.scope.GetTenantID(), coredata.AccessSourceSyncRunEntityType),
 		OrganizationID:       fx.organizationID,
 		AccessReviewSourceID: fx.sourceID,
 		Status:               coredata.AccessSourceSyncRunStatusQueued,
-		CreatedAt:            now,
-		UpdatedAt:            now,
+		CreatedAt:            createdAt,
+		UpdatedAt:            createdAt,
 	}
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {

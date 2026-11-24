@@ -137,8 +137,18 @@ func (s *Service) resolveSourceSyncCadence(
 	switch {
 	case err == nil:
 		duration, ok := coredata.ResolveSyncCadence(providerKey, &config.SyncCadence).ClockDuration()
-		if !ok || duration <= 0 {
-			return time.Hour, nil
+		if !ok {
+			return 0, fmt.Errorf(
+				"cannot use sync cadence for provider %s: calendar-month intervals are not supported",
+				providerKey,
+			)
+		}
+
+		if duration <= 0 {
+			duration, ok = coredata.DefaultSyncCadence(providerKey).ClockDuration()
+			if !ok || duration <= 0 {
+				return time.Hour, nil
+			}
 		}
 
 		return duration, nil
@@ -161,7 +171,9 @@ func (s *Service) resolveInventoryProviderKey(
 	source *coredata.AccessReviewSource,
 ) (coredata.AccessInventoryProviderKey, error) {
 	if source.ConnectorAccountID == nil {
-		return coredata.AccessInventoryProviderKeyForSource(nil, source.CsvData != nil), nil
+		hasCSV := source.CsvData != nil && *source.CsvData != ""
+
+		return coredata.AccessInventoryProviderKeyForSource(nil, hasCSV), nil
 	}
 
 	account := &coredata.ConnectorAccount{}
@@ -213,7 +225,12 @@ func (s *Service) scheduleInventorySyncAfterFailure(
 ) error {
 	source.SyncConsecutiveFailures++
 	backoff := inventorySyncFailureBackoff(source.SyncConsecutiveFailures)
-	next := failedAt.Add(applyInventorySyncJitter(backoff, rand.Int64N))
+	delay := applyInventorySyncJitter(backoff, rand.Int64N)
+	if delay > inventorySyncFailureMaxBackoff {
+		delay = inventorySyncFailureMaxBackoff
+	}
+
+	next := failedAt.Add(delay)
 	source.NextSyncAt = &next
 	source.UpdatedAt = failedAt
 

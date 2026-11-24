@@ -11066,6 +11066,19 @@ func (r *Resolver) CreateAccessReviewSourcesTool(ctx context.Context, req *mcp.C
 		// unconfigured, and a later add returns Created=false.
 		r.accessReview.AutoSelectDefaultOrganization(ctx, scope, item.Source)
 
+		// Enqueue only after org defaulting so the first sync sees a
+		// configured connector org (EnsureSources defers next_sync_at).
+		if item.Created {
+			if _, err := r.accessReview.SyncNow(ctx, scope, item.Source.ID); err != nil {
+				return nil, types.CreateAccessReviewSourcesOutput{}, mcpx.MapError(
+					ctx,
+					r.logger,
+					"cannot enqueue inventory sync on connect",
+					err,
+				)
+			}
+		}
+
 		rows[i] = item.Source
 		mapped[i] = types.NewAccessReviewSource(item.Source)
 		results[i] = &types.CreateAccessReviewSourceResultMCPOutput{

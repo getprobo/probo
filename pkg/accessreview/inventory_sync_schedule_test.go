@@ -76,15 +76,15 @@ func TestApplyInventorySyncJitter(t *testing.T) {
 }
 
 func TestSyncNow_EnqueuesQueuedRun(t *testing.T) {
-	// Not parallel: leaves a cross-tenant QUEUED run until cleanup.
+	t.Parallel()
+
 	client := test.PGClient(t)
 	ctx := context.Background()
 	logger := log.NewLogger(log.WithOutput(io.Discard))
 	svc := NewService(client, cipher.EncryptionKey{}, nil, provider.NewBuiltinRegistry(), logger)
 
-	require.NoError(t, drainInFlightInventorySyncRuns(t, ctx, client))
-
 	fx := seedInventorySyncFixture(t, ctx, client, "email,full_name,role\nalice@example.com,Alice,Admin\n")
+	require.NoError(t, drainInFlightInventorySyncRunsForSource(t, ctx, client, fx.sourceID))
 
 	run, err := svc.SyncNow(ctx, fx.scope, fx.sourceID)
 	require.NoError(t, err)
@@ -102,18 +102,17 @@ func TestSyncNow_EnqueuesQueuedRun(t *testing.T) {
 }
 
 func TestInventorySyncScheduler_EnqueuesDueSource(t *testing.T) {
-	// Not parallel: leaves a cross-tenant QUEUED run until cleanup.
+	// Not parallel: shares the cross-tenant due-source claim queue.
 	client := test.PGClient(t)
 	ctx := context.Background()
 	logger := log.NewLogger(log.WithOutput(io.Discard))
 	svc := NewService(client, cipher.EncryptionKey{}, nil, provider.NewBuiltinRegistry(), logger)
 
-	require.NoError(t, drainInFlightInventorySyncRuns(t, ctx, client))
-	require.NoError(t, holdAllInventorySyncSchedules(t, ctx, client))
-
 	fx := seedInventorySyncFixture(t, ctx, client, "email,full_name,role\nbob@example.com,Bob,Member\n")
+	require.NoError(t, drainInFlightInventorySyncRunsForSource(t, ctx, client, fx.sourceID))
+	require.NoError(t, holdDueInventorySyncSchedulesExcept(t, ctx, client, fx.sourceID))
 
-	past := time.Now().UTC().Add(-time.Minute)
+	past := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		source := &coredata.AccessReviewSource{}
 		if err := source.LoadByID(ctx, tx, fx.scope, fx.sourceID); err != nil {
@@ -158,6 +157,43 @@ func TestInventorySyncScheduler_EnqueuesDueSource(t *testing.T) {
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		return inflight.Delete(ctx, tx, fx.scope)
 	}))
+}
+
+func TestLoadNextDue_SkipsPastCadenceWhileQueued(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+
+	fx := seedInventorySyncFixture(t, ctx, client, "email,full_name,role\n")
+	require.NoError(t, drainInFlightInventorySyncRunsForSource(t, ctx, client, fx.sourceID))
+
+	past := time.Now().UTC().Add(-time.Hour)
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		source := &coredata.AccessReviewSource{}
+		if err := source.LoadByID(ctx, tx, fx.scope, fx.sourceID); err != nil {
+			return err
+		}
+
+		source.NextSyncAt = &past
+		source.UpdatedAt = time.Now().UTC()
+
+		return source.UpdateInventorySyncSchedule(ctx, tx, fx.scope)
+	}))
+
+	_ = insertQueuedInventorySyncRun(t, ctx, client, fx)
+
+	due := &coredata.AccessReviewSource{}
+	err := client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return due.LoadNextDueForInventorySyncSkipLocked(ctx, tx, time.Now().UTC())
+	})
+	if err == nil {
+		assert.NotEqual(t, fx.sourceID, due.ID, "QUEUED run must block due claim even when cadence is past")
+	} else {
+		require.ErrorIs(t, err, coredata.ErrNoAccessReviewSourceInventorySyncDue)
+	}
+
+	require.NoError(t, drainInFlightInventorySyncRunsForSource(t, ctx, client, fx.sourceID))
 }
 
 func TestSyncInventorySource_RecordsLastSuccessfulSyncAt(t *testing.T) {
@@ -214,14 +250,13 @@ func TestInventorySyncHandler_FailureSchedulesBackoff(t *testing.T) {
 	assert.Nil(t, source.LastSuccessfulSyncAt)
 }
 
-func TestEnsureSources_EnqueuesSyncOnCreate(t *testing.T) {
-	// Not parallel: leaves a cross-tenant QUEUED run until cleanup.
+func TestEnsureSources_DefersSyncUntilSyncNow(t *testing.T) {
+	t.Parallel()
+
 	client := test.PGClient(t)
 	ctx := context.Background()
 	logger := log.NewLogger(log.WithOutput(io.Discard))
 	svc := NewService(client, cipher.EncryptionKey{}, nil, provider.NewBuiltinRegistry(), logger)
-
-	require.NoError(t, drainInFlightInventorySyncRuns(t, ctx, client))
 
 	tenantID := gid.NewTenantID()
 	scope := coredata.NewScope(tenantID, gid.Nil)
@@ -256,25 +291,24 @@ func TestEnsureSources_EnqueuesSyncOnCreate(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, results, 1)
 	require.True(t, results[0].Created)
+	require.NotNil(t, results[0].Source.NextSyncAt)
+	assert.True(
+		t,
+		results[0].Source.NextSyncAt.After(now.Add(time.Hour)),
+		"connect must defer cadence until SyncNow after AutoSelect",
+	)
 
 	inflight := &coredata.AccessSourceSyncRun{}
-	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+	err = client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return inflight.LoadInFlightBySourceID(ctx, conn, scope, results[0].Source.ID)
-	}))
-	assert.Equal(t, coredata.AccessSourceSyncRunStatusQueued, inflight.Status)
+	})
+	require.ErrorIs(t, err, coredata.ErrResourceNotFound)
 
-	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		if err := inflight.Delete(ctx, tx, scope); err != nil {
-			return err
-		}
+	run, err := svc.SyncNow(ctx, scope, results[0].Source.ID)
+	require.NoError(t, err)
+	assert.Equal(t, coredata.AccessSourceSyncRunStatusQueued, run.Status)
 
-		source := results[0].Source
-		next := time.Now().UTC().Add(24 * time.Hour)
-		source.NextSyncAt = &next
-		source.UpdatedAt = time.Now().UTC()
-
-		return source.UpdateInventorySyncSchedule(ctx, tx, scope)
-	}))
+	require.NoError(t, drainInFlightInventorySyncRunsForSource(t, ctx, client, results[0].Source.ID))
 }
 
 func TestResolveSourceSyncCadence_UsesOrgOverride(t *testing.T) {
@@ -315,4 +349,48 @@ func TestResolveSourceSyncCadence_UsesOrgOverride(t *testing.T) {
 		return err
 	}))
 	assert.Equal(t, 15*time.Minute, cadence)
+}
+
+func TestAccessInventoryProviderSyncConfig_RejectsMonthCadence(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+
+	fx := seedInventorySyncFixture(t, ctx, client, "email,full_name,role\n")
+	now := time.Now().UTC()
+
+	err := client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		config := &coredata.AccessInventoryProviderSyncConfig{
+			ID:             gid.New(fx.scope.GetTenantID(), coredata.AccessInventoryProviderSyncConfigEntityType),
+			OrganizationID: fx.organizationID,
+			ProviderKey:    coredata.AccessInventoryProviderKeyCSV,
+			SyncCadence:    timespan.TimeSpan{Months: 1},
+			CreatedAt:      now,
+			UpdatedAt:      now,
+		}
+		_, err := config.Upsert(ctx, tx, fx.scope)
+
+		return err
+	})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "calendar months")
+}
+
+func TestApplyInventorySyncJitter_CapsFailureBackoff(t *testing.T) {
+	t.Parallel()
+
+	base := inventorySyncFailureMaxBackoff
+	// Force +20% jitter so uncapped delay would exceed the max.
+	jittered := applyInventorySyncJitter(base, func(n int64) int64 {
+		return n - 1
+	})
+	assert.Greater(t, jittered, inventorySyncFailureMaxBackoff)
+
+	delay := jittered
+	if delay > inventorySyncFailureMaxBackoff {
+		delay = inventorySyncFailureMaxBackoff
+	}
+
+	assert.Equal(t, inventorySyncFailureMaxBackoff, delay)
 }
