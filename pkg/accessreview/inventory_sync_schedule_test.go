@@ -152,7 +152,6 @@ func TestInventorySyncScheduler_EnqueuesDueSource(t *testing.T) {
 	err = client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		return due.LoadNextDueForInventorySyncSkipLocked(ctx, tx, time.Now().UTC())
 	})
-
 	if err == nil {
 		assert.NotEqual(t, fx.sourceID, due.ID, "our source must not be reclaimable while in flight")
 	} else {
@@ -194,7 +193,6 @@ func TestLoadNextDue_SkipsPastCadenceWhileQueued(t *testing.T) {
 	err := client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		return due.LoadNextDueForInventorySyncSkipLocked(ctx, tx, time.Now().UTC())
 	})
-
 	if err == nil {
 		assert.NotEqual(t, fx.sourceID, due.ID, "QUEUED run must block due claim even when cadence is past")
 	} else {
@@ -220,6 +218,7 @@ func TestSyncInventorySource_RecordsLastSuccessfulSyncAt(t *testing.T) {
 	require.NoError(t, svc.SyncInventorySource(ctx, fx.scope, run))
 
 	source := &coredata.AccessReviewSource{}
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return source.LoadByID(ctx, conn, fx.scope, fx.sourceID)
 	}))
@@ -249,6 +248,7 @@ func TestInventorySyncHandler_FailureSchedulesBackoff(t *testing.T) {
 	assert.Equal(t, coredata.AccessSourceSyncRunStatusFailed, loaded.Status)
 
 	source := &coredata.AccessReviewSource{}
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return source.LoadByID(ctx, conn, fx.scope, fx.sourceID)
 	}))
@@ -370,6 +370,7 @@ func TestResolveSourceSyncCadence_UsesOrgOverride(t *testing.T) {
 	}))
 
 	source := &coredata.AccessReviewSource{}
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return source.LoadByID(ctx, conn, fx.scope, fx.sourceID)
 	}))

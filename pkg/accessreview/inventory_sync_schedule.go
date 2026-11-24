@@ -89,8 +89,8 @@ func (s *Service) enqueueInventorySyncRun(
 	source *coredata.AccessReviewSource,
 ) (*coredata.AccessSourceSyncRun, error) {
 	existing := &coredata.AccessSourceSyncRun{}
-	err := existing.LoadInFlightBySourceID(ctx, tx, scope, source.ID)
 
+	err := existing.LoadInFlightBySourceID(ctx, tx, scope, source.ID)
 	if err == nil {
 		return existing, nil
 	}
