@@ -189,6 +189,10 @@ func NewService(
 }
 
 func (s *Service) Run(ctx context.Context) error {
+	if _, err := s.BackfillAllInventoryFromLatestCampaignEntries(ctx); err != nil {
+		return fmt.Errorf("campaign inventory backfill: %w", err)
+	}
+
 	g, gctx := errgroup.WithContext(ctx)
 
 	g.Go(

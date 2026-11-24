@@ -25,6 +25,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -412,4 +413,117 @@ ORDER BY name ASC
 	*sources = result
 
 	return nil
+}
+
+// LoadLatestSuccessfulByAccessReviewSourceID loads the campaign source
+// snapshot whose most recent SUCCESS fetch is the newest for the live source.
+// Snapshots whose live source link was cleared are ignored.
+func (s *AccessReviewCampaignSource) LoadLatestSuccessfulByAccessReviewSourceID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	accessReviewSourceID gid.GID,
+) error {
+	q := `
+SELECT
+	cs.id,
+	cs.organization_id,
+	cs.tenant_id,
+	cs.access_review_campaign_id,
+	cs.access_review_source_id,
+	cs.name,
+	cs.connector_id,
+	cs.connector_account_id,
+	cs.created_at,
+	cs.updated_at
+FROM access_review_campaign_sources cs
+INNER JOIN access_review_campaign_source_fetch_attempts a
+	ON a.access_review_campaign_source_id = cs.id
+WHERE
+	%s
+	AND cs.access_review_source_id = @access_review_source_id
+	AND a.status = @success_status
+ORDER BY
+	COALESCE(a.completed_at, a.created_at) DESC,
+	a.attempt_number DESC,
+	cs.id DESC
+LIMIT 1
+`
+	// Qualify tenant_id for the campaign_sources alias; NoScope stays TRUE.
+	scopeFragment := strings.Replace(scope.SQLFragment(), "tenant_id", "cs.tenant_id", 1)
+	q = fmt.Sprintf(q, scopeFragment)
+
+	args := pgx.StrictNamedArgs{
+		"access_review_source_id": accessReviewSourceID,
+		"success_status":          AccessReviewCampaignSourceFetchStatusSuccess,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query latest successful campaign source: %w", err)
+	}
+
+	result, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[AccessReviewCampaignSource])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect latest successful campaign source: %w", err)
+	}
+
+	*s = result
+
+	return nil
+}
+
+// LoadOrganizationIDsWithSuccessfulLiveFetches returns distinct organization
+// IDs that have at least one SUCCESS campaign fetch linked to a live source.
+// Intended for the one-shot inventory backfill with NoScope.
+func (sources *AccessReviewCampaignSources) LoadOrganizationIDsWithSuccessfulLiveFetches(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+) ([]gid.GID, error) {
+	q := `
+SELECT DISTINCT cs.organization_id
+FROM access_review_campaign_sources cs
+INNER JOIN access_review_campaign_source_fetch_attempts a
+	ON a.access_review_campaign_source_id = cs.id
+WHERE
+	%s
+	AND cs.access_review_source_id IS NOT NULL
+	AND a.status = @success_status
+ORDER BY cs.organization_id ASC
+`
+	scopeFragment := strings.Replace(scope.SQLFragment(), "tenant_id", "cs.tenant_id", 1)
+	q = fmt.Sprintf(q, scopeFragment)
+
+	args := pgx.StrictNamedArgs{
+		"success_status": AccessReviewCampaignSourceFetchStatusSuccess,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query organizations with successful campaign fetches: %w", err)
+	}
+	defer rows.Close()
+
+	var organizationIDs []gid.GID
+	for rows.Next() {
+		var organizationID gid.GID
+		if err := rows.Scan(&organizationID); err != nil {
+			return nil, fmt.Errorf("cannot scan organization id: %w", err)
+		}
+
+		organizationIDs = append(organizationIDs, organizationID)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate organization ids: %w", err)
+	}
+
+	return organizationIDs, nil
 }
