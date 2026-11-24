@@ -5,6 +5,13 @@ documented in this file.
 
 ## Unreleased
 
+### Fixed
+
+- A macOS firewall enabled by a configuration profile was reported
+  off because the deprecated `com.apple.alf` plist still said 0. The
+  check now reads `socketfilterfw` and uses the plist only when that
+  command fails.
+
 ## [0.10.0] - 2026-11-23
 
 ### Added
