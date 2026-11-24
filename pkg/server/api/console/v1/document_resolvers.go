@@ -533,7 +533,7 @@ func (r *documentRevisionResolver) Snapshot(ctx context.Context, obj *types.Docu
 	}
 
 	if obj.Synthetic {
-		return r.syntheticSnapshot(ctx, scope, obj)
+		return r.syntheticRevisionSnapshot(ctx, scope, obj)
 	}
 
 	heads, err := collaboration.ParseAutomergeHashes(obj.Heads)
@@ -564,31 +564,6 @@ func (r *documentRevisionResolver) Snapshot(ctx context.Context, obj *types.Docu
 	}
 
 	return types.NewDocumentHistorySnapshot(snapshot), nil
-}
-
-func (r *documentRevisionResolver) syntheticSnapshot(
-	ctx context.Context,
-	scope coredata.Scoper,
-	obj *types.DocumentRevision,
-) (*types.DocumentHistorySnapshot, error) {
-	if len(obj.VersionIDs) == 0 {
-		return nil, gqlx.Internal(ctx)
-	}
-
-	version, err := r.probo.Documents.GetVersion(ctx, scope, obj.VersionIDs[0])
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlx.NotFound(ctx, err)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot load synthetic revision version", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
-	}
-
-	return types.NewDocumentHistorySnapshot(
-		&collaboration.DocumentHistorySnapshot{Content: version.Content},
-	), nil
 }
 
 // TotalCount is the resolver for the totalCount field.
