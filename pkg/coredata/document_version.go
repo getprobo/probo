@@ -912,3 +912,63 @@ ORDER BY
 
 	return nil
 }
+
+// LoadWithoutCollaborationHeadsByDocumentID loads the versions of a document
+// that are not yet tied to a revision of its history, content included.
+func (dv *DocumentVersions) LoadWithoutCollaborationHeadsByDocumentID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	documentID gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	document_id,
+	title,
+	major,
+	minor,
+	classification,
+	document_type,
+	content,
+	changelog,
+	status,
+	orientation,
+	file_id,
+	pdf_attempt_count,
+	collaboration_heads,
+	published_at,
+	created_at,
+	updated_at
+FROM
+	document_versions
+WHERE
+	%s
+	AND document_id = @document_id
+	AND collaboration_heads IS NULL
+ORDER BY
+	created_at ASC,
+	id ASC
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"document_id": documentID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query unlinked document versions: %w", err)
+	}
+
+	versions, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[DocumentVersion])
+	if err != nil {
+		return fmt.Errorf("cannot collect unlinked document versions: %w", err)
+	}
+
+	*dv = versions
+
+	return nil
+}
