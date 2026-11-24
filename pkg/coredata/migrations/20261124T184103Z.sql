@@ -44,5 +44,10 @@ CREATE TABLE access_inventory_change_events (
     after JSONB,
     idempotency_key TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    UNIQUE (access_review_source_id, idempotency_key)
+    UNIQUE (access_review_source_id, idempotency_key),
+    CHECK (
+        (change_type = 'APPEARED' AND before IS NULL AND after IS NOT NULL)
+        OR (change_type = 'DISAPPEARED' AND before IS NOT NULL AND after IS NULL)
+        OR (change_type = 'ATTRIBUTE_CHANGED' AND before IS NOT NULL AND after IS NOT NULL)
+    )
 );

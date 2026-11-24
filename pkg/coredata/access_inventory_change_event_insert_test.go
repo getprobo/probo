@@ -194,12 +194,42 @@ func TestAccessInventoryChangeEvent_Insert_Idempotent(t *testing.T) {
 
 		assert.Equal(t, coredata.AccessInventoryChangeTypeAppeared, loaded.ChangeType)
 		assert.Equal(t, idempotencyKey, loaded.IdempotencyKey)
+		require.NotNil(t, loaded.GrantID)
 		assert.Equal(t, grantID, *loaded.GrantID)
 		require.NotNil(t, loaded.After)
 		assert.JSONEq(t, string(afterPayload), string(*loaded.After))
 		assert.Nil(t, loaded.Before)
 		assert.Nil(t, loaded.SyncRunID)
 		assert.WithinDuration(t, now, loaded.ObservedAt, time.Millisecond)
+
+		return nil
+	}))
+
+	fxOther := seedAccessInventoryFixture(t, ctx, client)
+	grantOther := seedAccessInventoryGrant(t, ctx, client, fxOther)
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		other := &coredata.AccessInventoryChangeEvent{
+			ID:                   gid.New(fxOther.scope.GetTenantID(), coredata.AccessInventoryChangeEventEntityType),
+			OrganizationID:       fxOther.organizationID,
+			AccessReviewSourceID: fxOther.sourceID,
+			GrantID:              &grantOther,
+			PrincipalKey:         "change-event@example.com",
+			ResourceKey:          "system",
+			EntitlementKey:       "member",
+			ChangeType:           coredata.AccessInventoryChangeTypeAppeared,
+			ObservedAt:           now,
+			After:                &afterPayload,
+			IdempotencyKey:       idempotencyKey,
+			CreatedAt:            now,
+		}
+
+		inserted, err := other.Insert(ctx, tx, fxOther.scope)
+		if err != nil {
+			return err
+		}
+
+		require.True(t, inserted)
 
 		return nil
 	}))

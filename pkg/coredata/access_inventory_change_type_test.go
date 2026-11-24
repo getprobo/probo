@@ -31,15 +31,22 @@ import (
 func TestAccessInventoryChangeType(t *testing.T) {
 	t.Parallel()
 
-	assert.True(t, coredata.AccessInventoryChangeTypeAppeared.IsValid())
-	assert.True(t, coredata.AccessInventoryChangeTypeDisappeared.IsValid())
-	assert.True(t, coredata.AccessInventoryChangeTypeAttributeChanged.IsValid())
 	assert.False(t, coredata.AccessInventoryChangeType("BOGUS").IsValid())
 
-	var changeType coredata.AccessInventoryChangeType
+	for _, expected := range coredata.AccessInventoryChangeTypes() {
+		t.Run(expected.String(), func(t *testing.T) {
+			t.Parallel()
 
-	require.NoError(t, changeType.UnmarshalText([]byte("APPEARED")))
-	assert.Equal(t, coredata.AccessInventoryChangeTypeAppeared, changeType)
+			assert.True(t, expected.IsValid())
+
+			var changeType coredata.AccessInventoryChangeType
+
+			require.NoError(t, changeType.UnmarshalText([]byte(expected)))
+			assert.Equal(t, expected, changeType)
+		})
+	}
+
+	var changeType coredata.AccessInventoryChangeType
 
 	require.Error(t, changeType.UnmarshalText([]byte("BOGUS")))
 }
