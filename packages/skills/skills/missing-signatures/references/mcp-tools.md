@@ -52,20 +52,24 @@ Returns `documents[]` and `next_cursor`. Each document includes
 
 Use when you need fresh `current_published_*` fields for one document.
 
-### `listDocumentVersions`
+### `listDocumentRevisions`
 
 Required: `document_id`
 
+A document has a single history. Every entry is a revision, and a version is a tag on the
+revision it was taken at.
+
 | Field | Usage |
 | --- | --- |
-| `filter.statuses` | `["PUBLISHED"]` or `["PENDING_APPROVAL"]` to narrow |
-| `size` / `cursor` | Paginate when a document has many versions |
+| `filter.versioned` | `true` to keep only the revisions tagged by a version |
+| `size` / `cursor` | Paginate when a document has many revisions |
 
-Returns `document_versions[]` with `title`, `major`, `minor`, `status`.
+Returns `revisions[]`. Each revision carries `versions[]` with `id`, `major`, `minor`, `status`.
+Filter `versions[]` on `status` (`PUBLISHED` or `PENDING_APPROVAL`) client-side.
 
 ### `getDocumentVersion`
 
-Use when you need a single version's metadata without listing all versions.
+Use when you need a single version's metadata and content, from the `id` in a revision's `versions[]`.
 
 ## Signature gaps (published versions)
 

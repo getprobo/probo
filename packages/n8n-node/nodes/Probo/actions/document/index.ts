@@ -28,7 +28,7 @@ import * as archiveOp from './archive.operation';
 import * as unarchiveOp from './unarchive.operation';
 import * as getVersionOp from './getVersion.operation';
 import * as getLatestPublishedVersionIdOp from './getLatestPublishedVersionId.operation';
-import * as getAllVersionsOp from './getAllVersions.operation';
+import * as getHistoryOp from './getHistory.operation';
 import * as publishOp from './publish.operation';
 import * as voidApprovalOp from './voidApproval.operation';
 import * as getSignatureOp from './getSignature.operation';
@@ -97,6 +97,12 @@ export const description: INodeProperties[] = [
 				action: 'Get an approval quorum',
 			},
 			{
+				name: 'Get History',
+				value: 'getHistory',
+				description: 'Get the history of a document, where a version is a tag on a revision',
+				action: 'Get the history of a document',
+			},
+			{
 				name: 'Get Latest Published Version ID',
 				value: 'getLatestPublishedVersionId',
 				description: 'Get the latest published document version ID',
@@ -125,12 +131,6 @@ export const description: INodeProperties[] = [
 				value: 'getAllSignatures',
 				description: 'Get many signatures for a document version',
 				action: 'Get many document version signatures',
-			},
-			{
-				name: 'Get Many Versions',
-				value: 'getAllVersions',
-				description: 'Get many versions of a document',
-				action: 'Get many document versions',
 			},
 			{
 				name: 'Get Pending Approvals',
@@ -198,7 +198,7 @@ export const description: INodeProperties[] = [
 	...unarchiveOp.description,
 	...getVersionOp.description,
 	...getLatestPublishedVersionIdOp.description,
-	...getAllVersionsOp.description,
+	...getHistoryOp.description,
 	...publishOp.description,
 	...voidApprovalOp.description,
 	...getSignatureOp.description,
@@ -223,7 +223,7 @@ export {
 	unarchiveOp as unarchive,
 	getVersionOp as getVersion,
 	getLatestPublishedVersionIdOp as getLatestPublishedVersionId,
-	getAllVersionsOp as getAllVersions,
+	getHistoryOp as getHistory,
 	publishOp as publish,
 	voidApprovalOp as voidApproval,
 	getSignatureOp as getSignature,

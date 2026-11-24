@@ -1782,6 +1782,79 @@ func (s *DocumentService) GetVersion(
 	return documentVersion, nil
 }
 
+func (s *DocumentService) GetVersions(
+	ctx context.Context, scope coredata.Scoper,
+	documentVersionIDs []gid.GID,
+) (coredata.DocumentVersions, error) {
+	var documentVersions coredata.DocumentVersions
+
+	if len(documentVersionIDs) == 0 {
+		return documentVersions, nil
+	}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return documentVersions.LoadByIDs(ctx, conn, scope, documentVersionIDs)
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	byID := make(map[gid.GID]*coredata.DocumentVersion, len(documentVersions))
+	for _, version := range documentVersions {
+		byID[version.ID] = version
+	}
+
+	ordered := make(coredata.DocumentVersions, 0, len(documentVersionIDs))
+	for _, id := range documentVersionIDs {
+		ordered = append(ordered, byID[id])
+	}
+
+	return ordered, nil
+}
+
+func (s *DocumentService) GetPublishedVersion(
+	ctx context.Context,
+	scope coredata.Scoper,
+	documentID gid.GID,
+) (*coredata.DocumentVersion, error) {
+	documentVersion := &coredata.DocumentVersion{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return documentVersion.LoadLatestPublishedVersion(ctx, conn, scope, documentID)
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return documentVersion, nil
+}
+
+func (s *DocumentService) GetPendingApprovalVersion(
+	ctx context.Context,
+	scope coredata.Scoper,
+	documentID gid.GID,
+) (*coredata.DocumentVersion, error) {
+	documentVersion := &coredata.DocumentVersion{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return documentVersion.LoadPendingApprovalByDocumentID(ctx, conn, scope, documentID)
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return documentVersion, nil
+}
+
 func (s *DocumentService) GetLatestVersion(
 	ctx context.Context,
 	scope coredata.Scoper,

@@ -54,8 +54,9 @@ Create or resume `.probo/missing-signatures/<org-slug>.md` per
 For each page from `listDocuments`:
 
 - Skip `ARCHIVED` documents.
-- Call `listDocumentVersions` for the document.
-- For each version, branch on `status`:
+- Call `listDocumentRevisions` for the document with `filter.versioned: true`. A version is a tag on a
+  revision of the document history and appears in `versions[]`.
+- For each version in `versions[]`, branch on `status`:
 
 | Version status | What to check |
 | --- | --- |

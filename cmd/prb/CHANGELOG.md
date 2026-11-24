@@ -4,6 +4,19 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+### Added
+
+- `document list-history` shows the versions tagging each revision in a
+  `VERSIONS` column, and `--versioned` lists only the tagged revisions
+
+### Removed
+
+- `document list-versions` is gone: the document history is the single
+  list, and a version is a tag on one of its revisions. Use
+  `document list-history --versioned`, then `document view-version`
+- `document view` no longer prints a `Latest Version` line. It prints
+  `Pending Approval` when a version waits for approval
+
 ## [0.275.0] - 2026-11-24
 
 ### Added

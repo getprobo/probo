@@ -22,44 +22,11 @@ package types
 
 import (
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/page"
 )
 
 type (
 	DocumentVersionOrderBy OrderBy[coredata.DocumentVersionOrderField]
-
-	DocumentVersionConnection struct {
-		TotalCount int
-		Edges      []*DocumentVersionEdge
-		PageInfo   PageInfo
-
-		Resolver any
-		ParentID gid.GID
-		Filters  *coredata.DocumentVersionFilter
-	}
 )
-
-func NewDocumentVersionConnection(
-	page *page.Page[*coredata.DocumentVersion, coredata.DocumentVersionOrderField],
-	parentType any,
-	parentID gid.GID,
-	filters *coredata.DocumentVersionFilter,
-) *DocumentVersionConnection {
-	edges := make([]*DocumentVersionEdge, len(page.Data))
-	for i, documentVersion := range page.Data {
-		edges[i] = NewDocumentVersionEdge(documentVersion, page.Cursor.OrderBy.Field)
-	}
-
-	return &DocumentVersionConnection{
-		Edges:    edges,
-		PageInfo: *NewPageInfo(page),
-
-		Resolver: parentType,
-		ParentID: parentID,
-		Filters:  filters,
-	}
-}
 
 func NewDocumentVersionEdges(documentVersions []*coredata.DocumentVersion, orderBy coredata.DocumentVersionOrderField) []*DocumentVersionEdge {
 	edges := make([]*DocumentVersionEdge, len(documentVersions))

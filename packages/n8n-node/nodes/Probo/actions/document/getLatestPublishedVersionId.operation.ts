@@ -46,12 +46,8 @@ export async function execute(
 		query GetLatestPublishedDocumentVersionId($documentId: ID!) {
 			node(id: $documentId) {
 				... on Document {
-					versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }, filter: { statuses: [PUBLISHED] }) {
-						edges {
-							node {
-								id
-							}
-						}
+					publishedVersion {
+						id
 					}
 				}
 			}
@@ -61,12 +57,11 @@ export async function execute(
 	const responseData = await proboApiRequest.call(this, query, { documentId });
 	const data = responseData.data as IDataObject | undefined;
 	const node = data?.node as IDataObject | undefined;
-	const versions = node?.versions as IDataObject | undefined;
-	const edges = versions?.edges as Array<{ node?: IDataObject }> | undefined;
+	const publishedVersion = node?.publishedVersion as IDataObject | undefined;
 
 	return {
 		json: {
-			documentVersionId: edges?.[0]?.node?.id ?? null,
+			documentVersionId: publishedVersion?.id ?? null,
 		},
 		pairedItem: { item: itemIndex },
 	};

@@ -248,10 +248,6 @@ input EmployeeDocumentFilter
     approvalStates: [DocumentVersionApprovalDecisionState!]
 }
 
-input DocumentVersionFilter {
-    statuses: [DocumentVersionStatus!]
-}
-
 input DocumentVersionSignatureOrder {
     field: DocumentVersionSignatureOrderField!
     direction: OrderDirection!
@@ -304,14 +300,15 @@ type Document implements Node & Taggable {
         compliancePortalAccessId: ID!
     ): CompliancePortalDocumentAccess @goField(forceResolver: true)
 
-    versions(
-        first: Int
-        after: CursorKey
-        last: Int
-        before: CursorKey
-        orderBy: DocumentVersionOrder
-        filter: DocumentVersionFilter
-    ): DocumentVersionConnection! @goField(forceResolver: true)
+    """
+    The latest published version: the tag the document is currently
+    published at.
+    """
+    publishedVersion: DocumentVersion @goField(forceResolver: true)
+    """
+    The version waiting for approval, if any.
+    """
+    pendingApprovalVersion: DocumentVersion @goField(forceResolver: true)
 
     commentThreads(
         first: Int
@@ -342,12 +339,18 @@ type Document implements Node & Taggable {
 
     defaultApprovers: [Profile!]! @goField(forceResolver: true)
 
+    """
+    The single history of the document. Every entry is a revision of the
+    live document; a published version is a tag on the revision it was
+    taken at.
+    """
     history(
         first: Int
         after: CursorKey
         last: Int
         before: CursorKey
         orderBy: DocumentRevisionOrder
+        filter: DocumentRevisionFilter
     ): DocumentRevisionConnection! @goField(forceResolver: true)
 
     revision(id: ID!): DocumentRevision! @goField(forceResolver: true)
@@ -422,6 +425,13 @@ enum DocumentRevisionOrderField
         )
 }
 
+input DocumentRevisionFilter {
+    """
+    Keep only the revisions tagged by at least one version.
+    """
+    versioned: Boolean
+}
+
 input DocumentRevisionOrder {
     field: DocumentRevisionOrderField!
     direction: OrderDirection!
@@ -437,6 +447,15 @@ type DocumentRevision
     startedAt: Datetime!
     endedAt: Datetime!
     changeCount: Int!
+    """
+    The versions tagging this revision, oldest first.
+    """
+    versions: [DocumentVersion!]! @goField(forceResolver: true)
+    """
+    A version that cannot be tied to a revision of the history, so it stands
+    alone in the timeline. It has no heads and cannot be restored.
+    """
+    synthetic: Boolean!
     snapshot: DocumentHistorySnapshot! @goField(forceResolver: true)
 }
 
@@ -579,15 +598,6 @@ type DocumentConnection
 type DocumentEdge {
     cursor: CursorKey!
     node: Document!
-}
-
-type DocumentVersionConnection
-    @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DocumentVersionConnection"
-    ) {
-    edges: [DocumentVersionEdge!]!
-    pageInfo: PageInfo!
-    totalCount: Int! @goField(forceResolver: true)
 }
 
 type DocumentVersionEdge {

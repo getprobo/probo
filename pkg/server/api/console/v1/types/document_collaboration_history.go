@@ -40,6 +40,8 @@ type (
 		StartedAt     time.Time `json:"startedAt"`
 		EndedAt       time.Time `json:"endedAt"`
 		ChangeCount   int       `json:"changeCount"`
+		Synthetic     bool      `json:"synthetic"`
+		VersionIDs    []gid.GID `json:"-"`
 	}
 
 	DocumentRevisionConnection struct {
@@ -81,6 +83,8 @@ func NewDocumentRevision(
 		StartedAt:     session.StartedAt,
 		EndedAt:       session.EndedAt,
 		ChangeCount:   session.ChangeCount,
+		Synthetic:     session.Synthetic,
+		VersionIDs:    session.VersionIDs,
 	}
 }
 

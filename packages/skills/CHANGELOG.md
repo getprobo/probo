@@ -5,6 +5,13 @@ this file.
 
 ## Unreleased
 
+### Changed
+
+- `missing-signatures` and `compliance-portal-commitments` read versions
+  from `listDocumentRevisions` with `filter.versioned`, since
+  `listDocumentVersions` is gone: a version is now a tag on the
+  document history
+
 ## [0.7.0] - 2026-11-23
 
 ### Added

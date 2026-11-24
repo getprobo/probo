@@ -53,6 +53,26 @@ type (
 		StartedAt     time.Time
 		EndedAt       time.Time
 		ChangeCount   int
+
+		// VersionIDs are the versions tagging this revision, oldest first.
+		// A published version is a tag on the revision it was taken at.
+		VersionIDs []gid.GID
+		// Synthetic marks a version that predates the link to the history,
+		// or whose revision no longer exists. It stands alone in the
+		// timeline with the version ID as its ID and carries no heads.
+		Synthetic bool
+	}
+
+	// DocumentRevisionFilter narrows the history. Versioned keeps only the
+	// revisions tagged by at least one version.
+	DocumentRevisionFilter struct {
+		Versioned bool
+	}
+
+	versionTag struct {
+		version *coredata.DocumentVersion
+		heads   []automerge.Hash
+		last    automerge.Hash
 	}
 
 	DocumentHistoryHighlight struct {
@@ -109,10 +129,18 @@ func (s *Service) ListRevisions(
 	scope coredata.Scoper,
 	documentID gid.GID,
 	cursor *page.Cursor[DocumentRevisionOrderField],
+	filter *DocumentRevisionFilter,
 ) (*page.Page[*DocumentRevision, DocumentRevisionOrderField], int, error) {
 	sessions, err := s.loadRevisions(ctx, scope, documentID)
 	if err != nil {
 		return nil, 0, err
+	}
+
+	if filter != nil && filter.Versioned {
+		sessions = slices.DeleteFunc(
+			sessions,
+			func(session *DocumentRevision) bool { return len(session.VersionIDs) == 0 },
+		)
 	}
 
 	paged := paginateRevisions(sessions, cursor)
@@ -145,20 +173,33 @@ func (s *Service) loadRevisions(
 	scope coredata.Scoper,
 	documentID gid.GID,
 ) ([]*DocumentRevision, error) {
-	opened, err := s.Open(ctx, scope, documentID)
-	if err != nil {
-		if errors.Is(err, ErrDocumentCollaborationNotFound) {
-			return nil, nil
-		}
+	var versions coredata.DocumentVersions
 
-		return nil, fmt.Errorf("cannot open collaboration for history: %w", err)
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return versions.LoadTagsByDocumentID(ctx, conn, scope, documentID)
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load document version tags: %w", err)
 	}
 
-	defer func() { _ = opened.Document.Close() }()
+	var changes []automerge.ChangeInfo
 
-	changes, err := opened.Document.ChangeHistory()
-	if err != nil {
-		return nil, fmt.Errorf("cannot read collaboration change history: %w", err)
+	opened, err := s.Open(ctx, scope, documentID)
+
+	switch {
+	case err == nil:
+		defer func() { _ = opened.Document.Close() }()
+
+		changes, err = opened.Document.ChangeHistory()
+		if err != nil {
+			return nil, fmt.Errorf("cannot read collaboration change history: %w", err)
+		}
+	case errors.Is(err, ErrDocumentCollaborationNotFound):
+	default:
+		return nil, fmt.Errorf("cannot open collaboration for history: %w", err)
 	}
 
 	actors, err := s.loadActorAttributions(ctx, scope, documentID, actorIDsFromChanges(changes))
@@ -166,12 +207,142 @@ func (s *Service) loadRevisions(
 		return nil, err
 	}
 
-	sessions := groupRevisions(scope.GetTenantID(), changes, actors)
+	tags, orphans := resolveVersionTags(versions, changes)
+
+	sessions := groupRevisions(scope.GetTenantID(), changes, actors, tags.splitHashes())
 	for _, session := range sessions {
 		session.DocumentID = documentID
 	}
 
+	tags.attach(sessions)
+
+	for i, session := range sessions {
+		session.PreviousHeads = nil
+		if i+1 < len(sessions) {
+			session.PreviousHeads = slices.Clone(sessions[i+1].Heads)
+		}
+	}
+
+	for _, orphan := range orphans {
+		sessions = append(sessions, syntheticRevision(documentID, orphan))
+	}
+
+	slices.SortStableFunc(
+		sessions,
+		func(a, b *DocumentRevision) int { return b.EndedAt.Compare(a.EndedAt) },
+	)
+
 	return sessions, nil
+}
+
+type versionTags []versionTag
+
+// resolveVersionTags splits versions into those whose heads are all part of
+// the change history and the orphans that are not: versions that predate the
+// link, and versions whose history was replaced since.
+func resolveVersionTags(
+	versions []*coredata.DocumentVersion,
+	changes []automerge.ChangeInfo,
+) (versionTags, []*coredata.DocumentVersion) {
+	order := make(map[automerge.Hash]int, len(changes))
+	for i, change := range changes {
+		order[change.Hash] = i
+	}
+
+	var (
+		tags    versionTags
+		orphans []*coredata.DocumentVersion
+	)
+
+	for _, version := range versions {
+		heads, err := decodeHeads(version.CollaborationHeads)
+		if err != nil || len(heads) == 0 {
+			orphans = append(orphans, version)
+
+			continue
+		}
+
+		last := -1
+		known := true
+
+		for _, head := range heads {
+			index, ok := order[head]
+			if !ok {
+				known = false
+
+				break
+			}
+
+			last = max(last, index)
+		}
+
+		if !known {
+			orphans = append(orphans, version)
+
+			continue
+		}
+
+		tags = append(tags, versionTag{
+			version: version,
+			heads:   heads,
+			last:    changes[last].Hash,
+		})
+	}
+
+	return tags, orphans
+}
+
+// splitHashes are the changes after which a new revision must start, so that
+// a tagged change always ends its revision instead of sitting mid-session.
+func (t versionTags) splitHashes() map[automerge.Hash]struct{} {
+	hashes := make(map[automerge.Hash]struct{}, len(t))
+
+	for _, tag := range t {
+		for _, head := range tag.heads {
+			hashes[head] = struct{}{}
+		}
+	}
+
+	return hashes
+}
+
+func (t versionTags) attach(sessions []*DocumentRevision) {
+	byLast := make(map[automerge.Hash]*DocumentRevision, len(sessions))
+	for _, session := range sessions {
+		byLast[session.Heads[0]] = session
+	}
+
+	for _, tag := range t {
+		session, ok := byLast[tag.last]
+		if !ok {
+			continue
+		}
+
+		if len(session.VersionIDs) == 0 && len(tag.heads) > 1 {
+			session.Heads = slices.Clone(tag.heads)
+		}
+
+		session.VersionIDs = append(session.VersionIDs, tag.version.ID)
+	}
+}
+
+func syntheticRevision(
+	documentID gid.GID,
+	version *coredata.DocumentVersion,
+) *DocumentRevision {
+	at := version.CreatedAt
+	if version.PublishedAt != nil {
+		at = *version.PublishedAt
+	}
+
+	return &DocumentRevision{
+		ID:         version.ID,
+		DocumentID: documentID,
+		StartedAt:  at,
+		EndedAt:    at,
+		VersionIDs: []gid.GID{version.ID},
+		Synthetic:  true,
+	}
 }
 
 func (s *Service) GetHistorySnapshot(
@@ -435,6 +606,7 @@ func groupRevisions(
 	tenantID gid.TenantID,
 	changes []automerge.ChangeInfo,
 	actors map[string]actorAttribution,
+	splitAfter map[automerge.Hash]struct{},
 ) []*DocumentRevision {
 	if len(changes) == 0 {
 		return nil
@@ -442,7 +614,10 @@ func groupRevisions(
 
 	sessions := make([]*DocumentRevision, 0)
 
-	var current *DocumentRevision
+	var (
+		current *DocumentRevision
+		closed  bool
+	)
 
 	for _, change := range changes {
 		actorKey := string(change.Actor)
@@ -453,6 +628,7 @@ func groupRevisions(
 		}
 
 		startsNew := current == nil ||
+			closed ||
 			string(current.ActorID) != actorKey ||
 			(!changeTime.Equal(time.Unix(0, 0).UTC()) &&
 				!current.EndedAt.Equal(time.Unix(0, 0).UTC()) &&
@@ -476,6 +652,8 @@ func groupRevisions(
 				ChangeCount: 1,
 			}
 
+			_, closed = splitAfter[change.Hash]
+
 			continue
 		}
 
@@ -483,6 +661,8 @@ func groupRevisions(
 		current.Heads = []automerge.Hash{change.Hash}
 		current.EndedAt = changeTime
 		current.ChangeCount++
+
+		_, closed = splitAfter[change.Hash]
 	}
 
 	if current != nil {

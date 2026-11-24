@@ -56,9 +56,9 @@ Commitments must trace to controls the company genuinely has. The source of trut
 2. **List the published policies.** Call `listDocuments` with `document_types: ["POLICY"]`. Policies with
    a `current_published_major` are published.
 3. **Read the actual content.** `getDocument` returns metadata only. To get the text, call
-   `listDocumentVersions` for each policy with `filter: {statuses: ["PUBLISHED"]}`,
-   `order_by: {field: "CREATED_AT", direction: "DESC"}`, `size: 1`. The returned version includes the
-   `title` and the full `content`. Fetch the policies in parallel.
+   `listDocumentRevisions` for each policy with `filter: {versioned: true}` and `size: 25`, newest first.
+   Take the first `versions[]` entry with `status: "PUBLISHED"`, then call `getDocumentVersion` with its
+   `id`. The returned version includes the `title` and the full `content`. Fetch the policies in parallel.
 
 Read the substance, not just the titles. The specific, quotable facts live inside the statements: exact
 algorithms (AES-256), protocols (TLS, SSH, VPN), tools (SAST, secret scanning), cadences (quarterly

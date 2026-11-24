@@ -4,6 +4,18 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+### Added
+
+- Document Get History returns the history of a document. A version is a
+  tag on a revision, listed under `versions`, and `Only Versioned` keeps
+  the tagged revisions
+
+### Removed
+
+- Document Get Many Versions: the document history is the single list.
+  Use Document Get History with `Only Versioned`, then Document Get
+  Version
+
 ## [0.276.0] - 2026-11-24
 
 ### Added

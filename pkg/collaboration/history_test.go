@@ -26,6 +26,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/automerge"
+	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 )
@@ -95,4 +97,135 @@ func TestPaginateRevisions_Tail(t *testing.T) {
 			assert.False(t, paged.Info.HasPrev)
 		},
 	)
+}
+
+func testChanges(actor []byte, base time.Time, offsets ...time.Duration) []automerge.ChangeInfo {
+	changes := make([]automerge.ChangeInfo, len(offsets))
+	for i, offset := range offsets {
+		changes[i] = automerge.ChangeInfo{
+			Hash:  automerge.Hash{byte(i + 1)},
+			Actor: actor,
+			Time:  base.Add(offset),
+		}
+	}
+
+	return changes
+}
+
+func testVersion(tenantID gid.TenantID, createdAt time.Time, heads ...automerge.Hash) *coredata.DocumentVersion {
+	return &coredata.DocumentVersion{
+		ID:                 gid.New(tenantID, coredata.DocumentVersionEntityType),
+		CreatedAt:          createdAt,
+		CollaborationHeads: encodeHeads(heads),
+	}
+}
+
+func TestGroupRevisions_SplitsAfterTaggedChange(t *testing.T) {
+	t.Parallel()
+
+	tenantID := gid.NewTenantID()
+	base := time.Unix(1_000_000, 0).UTC()
+	changes := testChanges([]byte("alice"), base, 0, time.Minute, 2*time.Minute)
+
+	t.Run(
+		"one session without a tag",
+		func(t *testing.T) {
+			t.Parallel()
+
+			sessions := groupRevisions(tenantID, changes, nil, nil)
+
+			require.Len(t, sessions, 1)
+			assert.Equal(t, 3, sessions[0].ChangeCount)
+		},
+	)
+
+	t.Run(
+		"tagged change ends its revision",
+		func(t *testing.T) {
+			t.Parallel()
+
+			split := map[automerge.Hash]struct{}{changes[1].Hash: {}}
+			sessions := groupRevisions(tenantID, changes, nil, split)
+
+			require.Len(t, sessions, 2)
+			assert.Equal(t, []automerge.Hash{changes[2].Hash}, sessions[0].Heads)
+			assert.Equal(t, []automerge.Hash{changes[1].Hash}, sessions[1].Heads)
+			assert.Equal(t, 2, sessions[1].ChangeCount)
+			assert.Equal(t, sessions[1].Heads, sessions[0].PreviousHeads)
+		},
+	)
+}
+
+func TestResolveVersionTags(t *testing.T) {
+	t.Parallel()
+
+	tenantID := gid.NewTenantID()
+	base := time.Unix(1_000_000, 0).UTC()
+	changes := testChanges([]byte("alice"), base, 0, time.Minute, 2*time.Minute)
+
+	tagged := testVersion(tenantID, base, changes[1].Hash)
+	headless := &coredata.DocumentVersion{ID: gid.New(tenantID, coredata.DocumentVersionEntityType), CreatedAt: base}
+	unknown := testVersion(tenantID, base, automerge.Hash{0xff})
+	merged := testVersion(tenantID, base, changes[0].Hash, changes[2].Hash)
+
+	tags, orphans := resolveVersionTags(
+		[]*coredata.DocumentVersion{tagged, headless, unknown, merged},
+		changes,
+	)
+
+	require.Len(t, tags, 2)
+	assert.Equal(t, tagged, tags[0].version)
+	assert.Equal(t, changes[1].Hash, tags[0].last)
+	assert.Equal(t, merged, tags[1].version)
+	assert.Equal(t, changes[2].Hash, tags[1].last)
+
+	assert.Equal(t, []*coredata.DocumentVersion{headless, unknown}, orphans)
+}
+
+func TestVersionTags_Attach(t *testing.T) {
+	t.Parallel()
+
+	tenantID := gid.NewTenantID()
+	base := time.Unix(1_000_000, 0).UTC()
+	changes := testChanges([]byte("alice"), base, 0, time.Minute, 2*time.Minute)
+
+	first := testVersion(tenantID, base, changes[1].Hash)
+	second := testVersion(tenantID, base.Add(time.Hour), changes[1].Hash)
+	merged := testVersion(tenantID, base.Add(2*time.Hour), changes[0].Hash, changes[2].Hash)
+
+	tags, orphans := resolveVersionTags([]*coredata.DocumentVersion{first, second, merged}, changes)
+	require.Empty(t, orphans)
+
+	sessions := groupRevisions(tenantID, changes, nil, tags.splitHashes())
+	tags.attach(sessions)
+
+	require.Len(t, sessions, 3)
+
+	assert.Equal(t, []gid.GID{merged.ID}, sessions[0].VersionIDs)
+	assert.Equal(t, []automerge.Hash{changes[0].Hash, changes[2].Hash}, sessions[0].Heads)
+
+	assert.Equal(t, []gid.GID{first.ID, second.ID}, sessions[1].VersionIDs)
+	assert.Equal(t, []automerge.Hash{changes[1].Hash}, sessions[1].Heads)
+
+	assert.Empty(t, sessions[2].VersionIDs)
+}
+
+func TestSyntheticRevision(t *testing.T) {
+	t.Parallel()
+
+	tenantID := gid.NewTenantID()
+	documentID := gid.New(tenantID, coredata.DocumentEntityType)
+	created := time.Unix(1_000_000, 0).UTC()
+	published := created.Add(time.Hour)
+
+	version := testVersion(tenantID, created)
+	version.PublishedAt = &published
+
+	revision := syntheticRevision(documentID, version)
+
+	assert.True(t, revision.Synthetic)
+	assert.Equal(t, version.ID, revision.ID)
+	assert.Equal(t, []gid.GID{version.ID}, revision.VersionIDs)
+	assert.Empty(t, revision.Heads)
+	assert.Equal(t, published, revision.EndedAt)
 }

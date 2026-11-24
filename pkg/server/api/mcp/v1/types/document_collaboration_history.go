@@ -24,16 +24,34 @@ import (
 	"encoding/hex"
 
 	"go.probo.inc/probo/pkg/collaboration"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/server/gqlx/types/pageinfo"
 )
 
 func NewDocumentRevision(
 	session *collaboration.DocumentRevision,
+	versions map[gid.GID]*coredata.DocumentVersion,
 ) *DocumentRevision {
 	var authorName *string
 	if session.AuthorName != "" {
 		authorName = new(session.AuthorName)
+	}
+
+	tags := make([]*DocumentRevisionVersion, 0, len(session.VersionIDs))
+	for _, versionID := range session.VersionIDs {
+		version, ok := versions[versionID]
+		if !ok {
+			continue
+		}
+
+		tags = append(tags, &DocumentRevisionVersion{
+			ID:     version.ID,
+			Major:  version.Major,
+			Minor:  version.Minor,
+			Status: version.Status,
+		})
 	}
 
 	return &DocumentRevision{
@@ -47,6 +65,8 @@ func NewDocumentRevision(
 		StartedAt:     session.StartedAt,
 		EndedAt:       session.EndedAt,
 		ChangeCount:   session.ChangeCount,
+		Versions:      tags,
+		Synthetic:     session.Synthetic,
 	}
 }
 
@@ -64,10 +84,16 @@ func newPageInfo[T page.Paginable[O], O page.OrderField](p *page.Page[T, O]) *Pa
 func NewListDocumentRevisionsOutput(
 	sessionPage *page.Page[*collaboration.DocumentRevision, collaboration.DocumentRevisionOrderField],
 	totalCount int,
+	versions coredata.DocumentVersions,
 ) ListDocumentRevisionsOutput {
+	versionsByID := make(map[gid.GID]*coredata.DocumentVersion, len(versions))
+	for _, version := range versions {
+		versionsByID[version.ID] = version
+	}
+
 	sessions := make([]*DocumentRevision, 0, len(sessionPage.Data))
 	for _, session := range sessionPage.Data {
-		sessions = append(sessions, NewDocumentRevision(session))
+		sessions = append(sessions, NewDocumentRevision(session, versionsByID))
 	}
 
 	var nextCursor *page.CursorKey

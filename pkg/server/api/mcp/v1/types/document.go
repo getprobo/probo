@@ -175,25 +175,6 @@ func NewDocumentVersion(dv *coredata.DocumentVersion) *DocumentVersion {
 	}
 }
 
-func NewListDocumentVersionsOutput(versionPage *page.Page[*coredata.DocumentVersion, coredata.DocumentVersionOrderField]) ListDocumentVersionsOutput {
-	versions := make([]*DocumentVersion, 0, len(versionPage.Data))
-	for _, v := range versionPage.Data {
-		versions = append(versions, NewDocumentVersion(v))
-	}
-
-	var nextCursor *page.CursorKey
-
-	if len(versionPage.Data) > 0 {
-		cursorKey := versionPage.Data[len(versionPage.Data)-1].CursorKey(versionPage.Cursor.OrderBy.Field)
-		nextCursor = &cursorKey
-	}
-
-	return ListDocumentVersionsOutput{
-		NextCursor:       nextCursor,
-		DocumentVersions: versions,
-	}
-}
-
 func NewDocumentVersionSignature(dvs *coredata.DocumentVersionSignature) *DocumentVersionSignature {
 	return &DocumentVersionSignature{
 		ID:                dvs.ID,

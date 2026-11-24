@@ -30,11 +30,11 @@ import (
 )
 
 const listQuery = `
-query DocumentListHistory($id: ID!, $first: Int, $after: CursorKey, $orderBy: DocumentRevisionOrder) {
+query DocumentListHistory($id: ID!, $first: Int, $after: CursorKey, $orderBy: DocumentRevisionOrder, $filter: DocumentRevisionFilter) {
   node(id: $id) {
     __typename
     ... on Document {
-      history(first: $first, after: $after, orderBy: $orderBy) {
+      history(first: $first, after: $after, orderBy: $orderBy, filter: $filter) {
         totalCount
         edges {
           node {
@@ -44,6 +44,13 @@ query DocumentListHistory($id: ID!, $first: Int, $after: CursorKey, $orderBy: Do
             endedAt
             changeCount
             heads
+            synthetic
+            versions {
+              id
+              major
+              minor
+              status
+            }
           }
         }
         pageInfo {
@@ -63,22 +70,40 @@ type revision struct {
 	EndedAt     string   `json:"endedAt"`
 	ChangeCount int      `json:"changeCount"`
 	Heads       []string `json:"heads"`
+	Synthetic   bool     `json:"synthetic"`
+	Versions    []struct {
+		ID     string `json:"id"`
+		Major  int    `json:"major"`
+		Minor  int    `json:"minor"`
+		Status string `json:"status"`
+	} `json:"versions"`
 }
 
 func NewCmdListHistory(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagLimit    int
-		flagAfter    string
-		flagOrderBy  string
-		flagOrderDir string
-		flagOutput   *string
+		flagLimit     int
+		flagAfter     string
+		flagOrderBy   string
+		flagOrderDir  string
+		flagVersioned bool
+		flagOutput    *string
 	)
 
 	cmd := &cobra.Command{
 		Use:   "list-history <document-id>",
-		Short: "List revisions for a document",
-		Example: `  # List revisions
-  prb document list-history <document-id>`,
+		Short: "List the history of a document",
+		Long: `List the history of a document, newest first.
+
+Every entry is a revision of the document. A published version is a tag on
+the revision it was taken at and shows in the VERSIONS column as
+<major>.<minor> (<status>); read its content with "prb document view-version
+<version-id>". A "*" marks a version that cannot be tied to a revision of the
+history.`,
+		Example: `  # List the history
+  prb document list-history <document-id>
+
+  # List only the revisions tagged by a version
+  prb document list-history <document-id> --versioned`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
@@ -113,6 +138,12 @@ func NewCmdListHistory(f *cmdutil.Factory) *cobra.Command {
 				}
 			}
 
+			if flagVersioned {
+				variables["filter"] = map[string]any{
+					"versioned": true,
+				}
+			}
+
 			sessions, totalCount, nextCursor, err := api.Paginate(
 				client,
 				listQuery,
@@ -134,11 +165,19 @@ func NewCmdListHistory(f *cmdutil.Factory) *cobra.Command {
 					Empty:      "No revisions found.",
 					Noun:       "sessions",
 					NextCursor: nextCursor,
-					Headers:    []string{"ID", "AUTHOR", "STARTED", "ENDED", "CHANGES", "HEADS"},
+					Headers:    []string{"ID", "AUTHOR", "STARTED", "ENDED", "CHANGES", "VERSIONS", "HEADS"},
 					Row: func(session revision) ([]string, error) {
 						author := ""
 						if session.AuthorName != nil {
 							author = *session.AuthorName
+						}
+
+						tags := make([]string, len(session.Versions))
+						for i, v := range session.Versions {
+							tags[i] = fmt.Sprintf("%d.%d (%s)", v.Major, v.Minor, v.Status)
+							if session.Synthetic {
+								tags[i] += " *"
+							}
 						}
 
 						return []string{
@@ -147,6 +186,7 @@ func NewCmdListHistory(f *cmdutil.Factory) *cobra.Command {
 							session.StartedAt,
 							session.EndedAt,
 							fmt.Sprintf("%d", session.ChangeCount),
+							strings.Join(tags, ", "),
 							strings.Join(session.Heads, ","),
 						}, nil
 					},
@@ -159,6 +199,7 @@ func NewCmdListHistory(f *cmdutil.Factory) *cobra.Command {
 	cmdutil.AddAfterFlag(cmd, &flagAfter)
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (ENDED_AT)")
 	cmdutil.AddOrderDirectionFlag(cmd, &flagOrderDir, "DESC")
+	cmd.Flags().BoolVar(&flagVersioned, "versioned", false, "Only list revisions tagged by a version")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd
