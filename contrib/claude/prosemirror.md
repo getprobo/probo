@@ -166,6 +166,38 @@ Built-in Tiptap nodes/marks that need a mapping are wrapped once in
 array (and optional target schema). Do not rebuild the adapter on every keystroke
 path without that cache.
 
+## Document history: revisions and versions
+
+A document has one history, the Automerge change log, and it is the only
+timeline the console, GraphQL, MCP and the CLI expose. Think of git:
+
+- A **revision** is a commit: a run of changes by one actor with less than a
+  10 minute gap (`pkg/collaboration/history.go`). Its ID is derived from the
+  last change hash.
+- A **version** (`document_versions`) is a tag on a revision: a frozen
+  ProseMirror snapshot with a number, a status, a changelog and approvals.
+  `document_versions.collaboration_heads` stores the heads it was taken at.
+  `insertSnapshot` fills it when a version is published.
+
+Rules that follow from this:
+
+- Revision IDs move while a session grows, so a tagged change always ends its
+  revision (`splitAfter` in `groupRevisions`). A tag never drifts to a later
+  edit.
+- `DocumentRevision.versions` lists the tags. The `versioned` filter on
+  `history` and `listDocumentRevisions` keeps only tagged revisions. There is
+  no separate version list. Use `Document.publishedVersion` and
+  `Document.pendingApprovalVersion` when a page only needs those two; `history`
+  replays the CRDT and must not back a list page.
+- A version with no stored heads, or whose heads are not part of the change
+  log, is shown as a **synthetic** revision: it has no heads, cannot be
+  restored, and serves the version content as its snapshot. Its revision ID is
+  derived from the version ID with the revision entity type, so clients that
+  cache by ID never merge the two objects.
+- `cmd/link-document-versions` backfills `collaboration_heads` for legacy
+  versions by matching content against the change log. It is idempotent and
+  has a `-dry-run` flag. Versions it cannot match stay synthetic.
+
 ## Performance rules
 
 This package sits on hot paths (`Sanitize` on every collaborative apply, docgen
