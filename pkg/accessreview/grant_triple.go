@@ -21,7 +21,6 @@
 package accessreview
 
 import (
-	"errors"
 	"strings"
 
 	"go.probo.inc/probo/pkg/accessreview/drivers"
@@ -41,12 +40,6 @@ const (
 	// ImplicitMemberEntitlementDisplayName is the display label for the
 	// implicit membership grant.
 	ImplicitMemberEntitlementDisplayName = "Member"
-)
-
-var (
-	// ErrMissingPrincipalKey is returned when a roster account has neither a
-	// usable email nor an external ID, so no stable principal key can be formed.
-	ErrMissingPrincipalKey = errors.New("account has no email or external id")
 )
 
 // GrantTriple is one principal × resource × entitlement binding derived from
