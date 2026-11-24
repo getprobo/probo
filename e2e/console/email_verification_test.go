@@ -263,3 +263,89 @@ func TestEmailVerification_ResendIsEnumerationSafe(t *testing.T) {
 
 	client.ResendVerificationEmail(fmt.Sprintf("missing-%d@e2e.probo.test", time.Now().UnixNano()))
 }
+
+func TestEmailVerification_RejectedEvidenceFallsBackToConfirmationEmail(t *testing.T) {
+	t.Parallel()
+
+	world := journey.New(t)
+	newUser := world.NewUnauthenticatedActor("new user")
+	client := newUser.Client()
+
+	uniqueID := fmt.Sprintf("%d", time.Now().UnixNano())
+	email := fmt.Sprintf("forged-evidence-%s@e2e.probo.test", uniqueID)
+	password := "TestPassword123!"
+
+	newUser.Step(
+		"signs up with an email verification token that does not verify",
+		func() error {
+			var signUpResult struct {
+				SignUp struct {
+					Identity struct {
+						ID string `json:"id"`
+					} `json:"identity"`
+				} `json:"signUp"`
+			}
+
+			err := client.ExecuteConnect(
+				signUpMutation,
+				map[string]any{
+					"input": map[string]any{
+						"email":                  email,
+						"password":               password,
+						"fullName":               "Forged Evidence User",
+						"emailVerificationToken": "EVT~not-a-valid-token",
+					},
+				},
+				&signUpResult,
+			)
+			if err != nil {
+				return fmt.Errorf("cannot sign up: %w", err)
+			}
+
+			if signUpResult.SignUp.Identity.ID == "" {
+				return fmt.Errorf("sign up returned an empty identity ID")
+			}
+
+			return nil
+		},
+	)
+
+	newUser.Step(
+		"is still required to verify their email address",
+		func() error {
+			err := client.SignIn(email, password)
+			testutil.RequireErrorCode(t, err, "EMAIL_NOT_VERIFIED")
+
+			return nil
+		},
+	)
+
+	newUser.Step(
+		"receives the confirmation email",
+		func() error {
+			if token := client.GetEmailConfirmationToken(email); token == "" {
+				return fmt.Errorf("confirmation email carried no token")
+			}
+
+			return nil
+		},
+	)
+}
+
+func TestEmailVerification_SignUpNonceIsIssued(t *testing.T) {
+	t.Parallel()
+
+	client := testutil.NewUnauthenticatedClient(t)
+
+	var result struct {
+		SignUpEmailVerificationNonce *string `json:"signUpEmailVerificationNonce"`
+	}
+
+	if err := client.ExecuteConnect(`query { signUpEmailVerificationNonce }`, nil, &result); err != nil {
+		t.Fatalf("cannot query sign-up nonce: %v", err)
+	}
+
+	if result.SignUpEmailVerificationNonce == nil || *result.SignUpEmailVerificationNonce == "" {
+		t.Fatal("sign-up nonce is empty")
+	}
+}

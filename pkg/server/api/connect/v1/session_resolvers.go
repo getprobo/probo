@@ -104,9 +104,10 @@ func (r *mutationResolver) SignUp(ctx context.Context, input types.SignUpInput) 
 	identity, err := r.iam.AuthService.CreateIdentityWithPassword(
 		ctx,
 		&iam.CreateIdentityWithPasswordRequest{
-			Email:    input.Email,
-			Password: input.Password,
-			FullName: input.FullName,
+			Email:                  input.Email,
+			Password:               input.Password,
+			FullName:               input.FullName,
+			EmailVerificationToken: input.EmailVerificationToken,
 		},
 	)
 	if err != nil {

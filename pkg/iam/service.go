@@ -41,6 +41,7 @@ import (
 	"go.probo.inc/probo/pkg/crypto/passwdhash"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/emailverification"
 	"go.probo.inc/probo/pkg/iam/oauth2"
 	"go.probo.inc/probo/pkg/iam/oauth2scope"
 	"go.probo.inc/probo/pkg/iam/oidc"
@@ -69,6 +70,8 @@ type (
 		certificate                    *x509.Certificate
 		privateKey                     *rsa.PrivateKey
 		logger                         *log.Logger
+		emailVerifier                  *emailverification.Verifier
+		emailVerificationAudience      string
 
 		AccountService      *AccountService
 		OrganizationService *OrganizationService
@@ -156,7 +159,14 @@ func NewService(
 		return nil, fmt.Errorf("cert manager is required")
 	}
 
+	emailVerificationAudience, err := cfg.BaseURL.CSPOrigin()
+	if err != nil {
+		return nil, fmt.Errorf("cannot derive email verification audience: %w", err)
+	}
+
 	svc := &Service{
+		emailVerifier:                  emailverification.NewVerifier(cfg.DomainVerificationResolverAddr),
+		emailVerificationAudience:      emailVerificationAudience,
 		pg:                             pgClient,
 		fm:                             fm,
 		hp:                             hp,

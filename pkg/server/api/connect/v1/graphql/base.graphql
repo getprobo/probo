@@ -45,6 +45,9 @@ type Query {
   signUpEnabled: Boolean!
     @goField(forceResolver: true)
     @authentication(required: OPTIONAL)
+  signUpEmailVerificationNonce: String
+    @goField(forceResolver: true)
+    @authentication(required: OPTIONAL)
   slackbotAvailable: Boolean!
     @goField(forceResolver: true)
     @authentication(required: PRESENT)
