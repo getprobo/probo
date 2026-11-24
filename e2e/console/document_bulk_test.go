@@ -171,10 +171,10 @@ func documentBulkArchiveUnarchive(t *testing.T, actors documentBulkActors) {
 func documentBulkExport(t *testing.T, actors documentBulkActors) {
 	owner := actors.owner.ForTest(t)
 
-	docID1, _ := createTestDocument(t, owner)
+	docID1 := createTestDocument(t, owner)
 	approveTestDocument(t, owner, docID1)
 
-	docID2, _ := createTestDocument(t, owner)
+	docID2 := createTestDocument(t, owner)
 	approveTestDocument(t, owner, docID2)
 
 	var result struct {
@@ -239,7 +239,7 @@ func firstDocumentVersionSignatureID(
 func documentBulkCancelSignatureRequest(t *testing.T, actors documentBulkActors) {
 	owner := actors.owner.ForTest(t)
 
-	docID, _ := createTestDocument(t, owner)
+	docID := createTestDocument(t, owner)
 	approveTestDocument(t, owner, docID)
 
 	publishedVersionID := latestDocumentVersionID(t, owner, docID)
@@ -317,7 +317,7 @@ func documentBulkExportViewerAllowed(t *testing.T, actors documentBulkActors) {
 	owner := actors.owner.ForTest(t)
 	viewer := actors.viewer.ForTest(t)
 
-	documentID, _ := createTestDocument(t, owner)
+	documentID := createTestDocument(t, owner)
 	approveTestDocument(t, owner, documentID)
 
 	var result struct {
@@ -347,7 +347,7 @@ func documentBulkCancelSignatureViewerForbidden(t *testing.T, actors documentBul
 	owner := actors.owner.ForTest(t)
 	viewer := actors.viewer.ForTest(t)
 
-	docID, _ := createTestDocument(t, owner)
+	docID := createTestDocument(t, owner)
 	approveTestDocument(t, owner, docID)
 
 	publishedVersionID := latestDocumentVersionID(t, owner, docID)

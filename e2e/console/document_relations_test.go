@@ -303,7 +303,7 @@ func documentRelationsOrganizationDefaultApproversPermission(t *testing.T, owner
 }
 
 func documentRelationsVersionSignatureAndApprovalCounts(t *testing.T, owner *testutil.Client) {
-	docID, _ := createTestDocument(t, owner)
+	docID := createTestDocument(t, owner)
 	approverID := getOwnerProfileID(t, owner)
 
 	requestDocumentApproval(t, owner, docID, []string{approverID})

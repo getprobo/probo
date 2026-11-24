@@ -34,7 +34,7 @@ func TestEmployeeDocument_NodeAccess(t *testing.T) {
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	employee := testutil.NewClientInOrg(t, testutil.RoleEmployee, owner)
 
-	docID, _ := createTestDocument(t, owner)
+	docID := createTestDocument(t, owner)
 
 	t.Run("employee cannot list documents", func(t *testing.T) {
 		t.Parallel()
@@ -120,7 +120,7 @@ func TestEmployeeDocument_ExportPDF(t *testing.T) {
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	employee := testutil.NewClientInOrg(t, testutil.RoleEmployee, owner)
 
-	docID, _ := createTestDocument(t, owner)
+	docID := createTestDocument(t, owner)
 	docVersionID := publishMajorDocumentVersion(t, owner, docID)
 
 	t.Run("employee cannot use exportDocumentVersionPDF", func(t *testing.T) {
@@ -243,37 +243,13 @@ func TestEmployeeDocument_SignableDocuments(t *testing.T) {
 		t.Parallel()
 
 		// Create a document with signature requested from owner only
-		docID, _ := createTestDocument(t, owner)
+		docID := createTestDocument(t, owner)
 		approveTestDocument(t, owner, docID)
 
-		var versionResult struct {
-			Node struct {
-				Versions struct {
-					Edges []struct {
-						Node struct {
-							ID string `json:"id"`
-						} `json:"node"`
-					} `json:"edges"`
-				} `json:"versions"`
-			} `json:"node"`
-		}
-
-		err := owner.Execute(`
-			query($id: ID!) {
-				node(id: $id) {
-					... on Document {
-						versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
-							edges { node { id } }
-						}
-					}
-				}
-			}
-		`, map[string]any{"id": docID}, &versionResult)
-		require.NoError(t, err)
-		require.NotEmpty(t, versionResult.Node.Versions.Edges)
+		versionResultID := latestDocumentVersionID(t, owner, docID)
 
 		ownerProfileID := owner.GetProfileID().String()
-		_, err = owner.Do(`
+		_, err := owner.Do(`
 			mutation($input: RequestSignatureInput!) {
 				requestSignature(input: $input) {
 					documentVersionSignatureEdge { node { id } }
@@ -281,7 +257,7 @@ func TestEmployeeDocument_SignableDocuments(t *testing.T) {
 			}
 		`, map[string]any{
 			"input": map[string]any{
-				"documentVersionId": versionResult.Node.Versions.Edges[0].Node.ID,
+				"documentVersionId": versionResultID,
 				"signatoryId":       ownerProfileID,
 			},
 		})
@@ -320,7 +296,7 @@ func TestEmployeeDocument_SignableDocuments(t *testing.T) {
 		t.Parallel()
 
 		// Create a document with approval requested from owner only
-		docID, _ := createTestDocument(t, owner)
+		docID := createTestDocument(t, owner)
 		ownerProfileID := owner.GetProfileID().String()
 
 		_, err := owner.Do(`
@@ -376,7 +352,7 @@ func TestEmployeeDocument_FilterModeIsolation(t *testing.T) {
 	admin := testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
 
 	// Create a document and have the admin approve it (so owner is NOT an approver)
-	docID, _ := createTestDocument(t, owner)
+	docID := createTestDocument(t, owner)
 
 	adminProfileID := admin.GetProfileID().String()
 
@@ -397,33 +373,9 @@ func TestEmployeeDocument_FilterModeIsolation(t *testing.T) {
 	require.NoError(t, err)
 
 	// Get the version ID created by the approval request
-	var approveVersionResult struct {
-		Node struct {
-			Versions struct {
-				Edges []struct {
-					Node struct {
-						ID string `json:"id"`
-					} `json:"node"`
-				} `json:"edges"`
-			} `json:"versions"`
-		} `json:"node"`
-	}
+	approveVersionResultID := latestDocumentVersionID(t, owner, docID)
 
-	err = owner.Execute(`
-		query($id: ID!) {
-			node(id: $id) {
-				... on Document {
-					versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
-						edges { node { id } }
-					}
-				}
-			}
-		}
-	`, map[string]any{"id": docID}, &approveVersionResult)
-	require.NoError(t, err)
-	require.NotEmpty(t, approveVersionResult.Node.Versions.Edges)
-
-	pendingVersionID := approveVersionResult.Node.Versions.Edges[0].Node.ID
+	pendingVersionID := approveVersionResultID
 
 	_, err = admin.Do(`
 		mutation($input: ApproveDocumentVersionInput!) {
@@ -439,33 +391,7 @@ func TestEmployeeDocument_FilterModeIsolation(t *testing.T) {
 	require.NoError(t, err)
 
 	// Get the published version ID
-	var versionResult struct {
-		Node struct {
-			Versions struct {
-				Edges []struct {
-					Node struct {
-						ID string `json:"id"`
-					} `json:"node"`
-				} `json:"edges"`
-			} `json:"versions"`
-		} `json:"node"`
-	}
-
-	err = owner.Execute(`
-		query($id: ID!) {
-			node(id: $id) {
-				... on Document {
-					versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
-						edges { node { id } }
-					}
-				}
-			}
-		}
-	`, map[string]any{"id": docID}, &versionResult)
-	require.NoError(t, err)
-	require.NotEmpty(t, versionResult.Node.Versions.Edges)
-
-	publishedVersionID := versionResult.Node.Versions.Edges[0].Node.ID
+	publishedVersionID := latestDocumentVersionID(t, owner, docID)
 	ownerProfileID := owner.GetProfileID().String()
 
 	// Request signature from the owner only (owner is a signer but NOT an approver)
@@ -576,7 +502,7 @@ func TestEmployeeDocument_ApproverFilterModeIsolation(t *testing.T) {
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
 	// Create a document and request approval (owner is approver but NOT a signer)
-	docID, _ := createTestDocument(t, owner)
+	docID := createTestDocument(t, owner)
 	ownerProfileID := owner.GetProfileID().String()
 
 	_, err := owner.Do(`
@@ -686,39 +612,13 @@ func TestEmployeeDocument_UnsignedDocument(t *testing.T) {
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
 	// Create a document, approve and publish it, then request signature from owner
-	docID, _ := createTestDocument(t, owner)
+	docID := createTestDocument(t, owner)
 	approveTestDocument(t, owner, docID)
 
-	var versionResult struct {
-		Node struct {
-			Versions struct {
-				Edges []struct {
-					Node struct {
-						ID string `json:"id"`
-					} `json:"node"`
-				} `json:"edges"`
-			} `json:"versions"`
-		} `json:"node"`
-	}
-
-	err := owner.Execute(`
-		query($id: ID!) {
-			node(id: $id) {
-				... on Document {
-					versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
-						edges { node { id } }
-					}
-				}
-			}
-		}
-	`, map[string]any{"id": docID}, &versionResult)
-	require.NoError(t, err)
-	require.NotEmpty(t, versionResult.Node.Versions.Edges)
-
-	publishedVersionID := versionResult.Node.Versions.Edges[0].Node.ID
+	publishedVersionID := latestDocumentVersionID(t, owner, docID)
 	ownerProfileID := owner.GetProfileID().String()
 
-	_, err = owner.Do(`
+	_, err := owner.Do(`
 		mutation($input: RequestSignatureInput!) {
 			requestSignature(input: $input) {
 				documentVersionSignatureEdge { node { id } }
@@ -801,7 +701,7 @@ func TestEmployeeDocument_UnapprovedDocument(t *testing.T) {
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
 	// Create a document and request approval from owner (don't approve yet)
-	docID, _ := createTestDocument(t, owner)
+	docID := createTestDocument(t, owner)
 	ownerProfileID := owner.GetProfileID().String()
 
 	_, err := owner.Do(`
@@ -875,31 +775,7 @@ func TestEmployeeDocument_UnapprovedDocument(t *testing.T) {
 	t.Run("unapproved document still allows exportEmployeeDocumentVersionPDF", func(t *testing.T) {
 		t.Parallel()
 
-		var versionResult struct {
-			Node struct {
-				Versions struct {
-					Edges []struct {
-						Node struct {
-							ID string `json:"id"`
-						} `json:"node"`
-					} `json:"edges"`
-				} `json:"versions"`
-			} `json:"node"`
-		}
-
-		err := owner.Execute(`
-			query($id: ID!) {
-				node(id: $id) {
-					... on Document {
-						versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
-							edges { node { id } }
-						}
-					}
-				}
-			}
-		`, map[string]any{"id": docID}, &versionResult)
-		require.NoError(t, err)
-		require.NotEmpty(t, versionResult.Node.Versions.Edges)
+		versionResultID := latestDocumentVersionID(t, owner, docID)
 
 		_, err = owner.Do(`
 			mutation($input: ExportEmployeeDocumentVersionPDFInput!) {
@@ -909,7 +785,7 @@ func TestEmployeeDocument_UnapprovedDocument(t *testing.T) {
 			}
 		`, map[string]any{
 			"input": map[string]any{
-				"documentVersionId": versionResult.Node.Versions.Edges[0].Node.ID,
+				"documentVersionId": versionResultID,
 			},
 		})
 		require.NoError(t, err, "approver should export PDF even before approving")
@@ -922,42 +798,16 @@ func TestEmployeeDocument_SignableDocumentNestedFields(t *testing.T) {
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
 	// Create a document, approve and publish it
-	docID, _ := createTestDocument(t, owner)
+	docID := createTestDocument(t, owner)
 	approveTestDocument(t, owner, docID)
 
 	// Get the published version ID
-	var versionResult struct {
-		Node struct {
-			Versions struct {
-				Edges []struct {
-					Node struct {
-						ID string `json:"id"`
-					} `json:"node"`
-				} `json:"edges"`
-			} `json:"versions"`
-		} `json:"node"`
-	}
-
-	err := owner.Execute(`
-		query($id: ID!) {
-			node(id: $id) {
-				... on Document {
-					versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
-						edges { node { id } }
-					}
-				}
-			}
-		}
-	`, map[string]any{"id": docID}, &versionResult)
-	require.NoError(t, err)
-	require.NotEmpty(t, versionResult.Node.Versions.Edges)
-
-	publishedVersionID := versionResult.Node.Versions.Edges[0].Node.ID
+	publishedVersionID := latestDocumentVersionID(t, owner, docID)
 
 	// Request signature from the owner
 	ownerProfileID := owner.GetProfileID().String()
 
-	_, err = owner.Do(`
+	_, err := owner.Do(`
 		mutation($input: RequestSignatureInput!) {
 			requestSignature(input: $input) {
 				documentVersionSignatureEdge {
@@ -1043,7 +893,7 @@ func TestEmployeeDocument_ApprovableDocumentNestedFields(t *testing.T) {
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
 	// Create a document and request approval with the owner as approver
-	docID, _ := createTestDocument(t, owner)
+	docID := createTestDocument(t, owner)
 	ownerProfileID := owner.GetProfileID().String()
 
 	_, err := owner.Do(`
@@ -1117,33 +967,7 @@ func TestEmployeeDocument_ApprovableDocumentNestedFields(t *testing.T) {
 		t.Parallel()
 
 		// Get the version ID
-		var versionResult struct {
-			Node struct {
-				Versions struct {
-					Edges []struct {
-						Node struct {
-							ID string `json:"id"`
-						} `json:"node"`
-					} `json:"edges"`
-				} `json:"versions"`
-			} `json:"node"`
-		}
-
-		err := owner.Execute(`
-			query($id: ID!) {
-				node(id: $id) {
-					... on Document {
-						versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
-							edges { node { id } }
-						}
-					}
-				}
-			}
-		`, map[string]any{"id": docID}, &versionResult)
-		require.NoError(t, err)
-		require.NotEmpty(t, versionResult.Node.Versions.Edges)
-
-		versionID := versionResult.Node.Versions.Edges[0].Node.ID
+		versionID := latestDocumentVersionID(t, owner, docID)
 
 		_, err = owner.Do(`
 			mutation($input: ExportEmployeeDocumentVersionPDFInput!) {
@@ -1167,7 +991,7 @@ func TestEmployeeDocument_SignableDocumentsFilter(t *testing.T) {
 	employee := testutil.NewClientInOrg(t, testutil.RoleEmployee, owner)
 	orgID := employee.GetOrganizationID().String()
 
-	docID, _ := createTestDocument(t, owner)
+	docID := createTestDocument(t, owner)
 	publishedVersionID := publishMajorDocumentVersion(t, owner, docID)
 	requestDocumentSignature(t, owner, publishedVersionID, employee.GetProfileID().String())
 
@@ -1214,7 +1038,7 @@ func TestEmployeeDocument_ApprovableDocumentsFilter(t *testing.T) {
 	employee := testutil.NewClientInOrg(t, testutil.RoleEmployee, owner)
 	orgID := employee.GetOrganizationID().String()
 
-	docID, _ := createTestDocument(t, owner)
+	docID := createTestDocument(t, owner)
 	requestDocumentApproval(t, owner, docID, []string{employee.GetProfileID().String()})
 
 	pending, pendingID := queryApprovableDocumentCounts(t, employee, orgID, []string{"PENDING"})
@@ -1251,7 +1075,7 @@ func TestEmployeeDocument_SignableDocumentsFilter_LatestMajor(t *testing.T) {
 	employee := testutil.NewClientInOrg(t, testutil.RoleEmployee, owner)
 	orgID := employee.GetOrganizationID().String()
 
-	docID, _ := createTestDocument(t, owner)
+	docID := createTestDocument(t, owner)
 	v1ID := publishMajorDocumentVersion(t, owner, docID)
 	requestDocumentSignature(t, owner, v1ID, employee.GetProfileID().String())
 	signDocumentVersion(t, employee, v1ID)
@@ -1279,7 +1103,7 @@ func TestEmployeeDocument_ApprovableDocumentsFilter_LatestDecision(t *testing.T)
 	employee := testutil.NewClientInOrg(t, testutil.RoleEmployee, owner)
 	orgID := employee.GetOrganizationID().String()
 
-	docID, _ := createTestDocument(t, owner)
+	docID := createTestDocument(t, owner)
 	requestDocumentApproval(t, owner, docID, []string{employee.GetProfileID().String()})
 
 	_, err := employee.Do(`

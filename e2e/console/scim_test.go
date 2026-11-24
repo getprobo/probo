@@ -361,7 +361,7 @@ func TestSCIM_DeleteUser_ArchivesWhenProfileInUse(t *testing.T) {
 
 	// The signer signs a published document version, creating a completed
 	// signature that references the signer's profile via a RESTRICT FK.
-	docID, _ := createTestDocument(t, owner)
+	docID := createTestDocument(t, owner)
 	approveTestDocument(t, owner, docID)
 	versionID := latestDocumentVersionID(t, owner, docID)
 

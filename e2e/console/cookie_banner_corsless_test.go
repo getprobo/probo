@@ -422,11 +422,13 @@ func loadLatestTrackerPolicyVersion(
 	var policy struct {
 		Node struct {
 			PolicyDocument *struct {
-				Versions struct {
+				History struct {
 					Edges []struct {
-						Node trackerPolicyVersion `json:"node"`
+						Node struct {
+							Versions []trackerPolicyVersion `json:"versions"`
+						} `json:"node"`
 					} `json:"edges"`
-				} `json:"versions"`
+				} `json:"history"`
 			} `json:"policyDocument"`
 		} `json:"node"`
 	}
@@ -437,8 +439,8 @@ func loadLatestTrackerPolicyVersion(
 			node(id: $id) {
 				... on CookieBanner {
 					policyDocument {
-						versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
-							edges { node { title content { prosemirror } } }
+						history(first: 1, orderBy: { field: ENDED_AT, direction: DESC }, filter: { versioned: true }) {
+							edges { node { versions { title content { prosemirror } } } }
 						}
 					}
 				}
@@ -452,11 +454,16 @@ func loadLatestTrackerPolicyVersion(
 		return trackerPolicyVersion{}, false, err
 	}
 
-	if policy.Node.PolicyDocument == nil || len(policy.Node.PolicyDocument.Versions.Edges) == 0 {
+	if policy.Node.PolicyDocument == nil || len(policy.Node.PolicyDocument.History.Edges) == 0 {
 		return trackerPolicyVersion{}, false, nil
 	}
 
-	return policy.Node.PolicyDocument.Versions.Edges[0].Node, true, nil
+	versions := policy.Node.PolicyDocument.History.Edges[0].Node.Versions
+	if len(versions) == 0 {
+		return trackerPolicyVersion{}, false, nil
+	}
+
+	return versions[len(versions)-1], true, nil
 }
 
 type consentRecordView struct {

@@ -324,7 +324,7 @@ func TestSecurity_ReadGap_DocumentVersionSignatureSignedBy(t *testing.T) {
 	org1Owner := testutil.NewClient(t, testutil.RoleOwner)
 	org2Owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	docID, _ := createTestDocument(t, org1Owner)
+	docID := createTestDocument(t, org1Owner)
 	approveTestDocument(t, org1Owner, docID)
 	versionID := latestDocumentVersionID(t, org1Owner, docID)
 	org1ProfileID := getOwnerProfileID(t, org1Owner)
@@ -399,7 +399,7 @@ func TestSecurity_ReadGap_DocumentVersionApprovalDecisionApprover(t *testing.T) 
 	org1Owner := testutil.NewClient(t, testutil.RoleOwner)
 	org2Owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	docID, _ := createTestDocument(t, org1Owner)
+	docID := createTestDocument(t, org1Owner)
 	org1ProfileID := getOwnerProfileID(t, org1Owner)
 	requestDocumentApproval(t, org1Owner, docID, []string{org1ProfileID})
 	versionID := latestDocumentVersionID(t, org1Owner, docID)

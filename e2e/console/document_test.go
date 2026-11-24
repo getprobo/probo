@@ -854,7 +854,7 @@ func TestDocument_MaxLength_Validation(t *testing.T) {
 	})
 
 	t.Run("update document with long content", func(t *testing.T) {
-		docID, _ := createTestDocument(t, owner)
+		docID := createTestDocument(t, owner)
 		require.NotEmpty(t, docID)
 
 		query := `
