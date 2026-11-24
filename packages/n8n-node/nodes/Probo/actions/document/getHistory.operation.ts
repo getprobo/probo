@@ -21,18 +21,18 @@
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
 import { organizationLocator, documentLocator } from '../../locators';
 import { proboApiRequestAllItems, executionItems } from '../../GenericFunctions';
-import { documentVersionSelection, withParentReference } from '../../output';
+import { withParentReference } from '../../output';
 
 export const description: INodeProperties[] = [
 	organizationLocator({
 		resource: ['document'],
-		operation: ['getAllVersions'],
+		operation: ['getHistory'],
 		required: false,
 		description: 'Organization to search documents in. Leave this empty when entering a document ID.',
 	}),
 	documentLocator({
 		resource: ['document'],
-		operation: ['getAllVersions'],
+		operation: ['getHistory'],
 	}),
 	{
 		displayName: 'Return All',
@@ -41,7 +41,7 @@ export const description: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['document'],
-				operation: ['getAllVersions'],
+				operation: ['getHistory'],
 			},
 		},
 		default: false,
@@ -54,7 +54,7 @@ export const description: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['document'],
-				operation: ['getAllVersions'],
+				operation: ['getHistory'],
 				returnAll: [false],
 			},
 		},
@@ -65,46 +65,18 @@ export const description: INodeProperties[] = [
 		description: 'Max number of results to return',
 	},
 	{
-		displayName: 'Simplify',
-		name: 'simple',
+		displayName: 'Only Versioned',
+		name: 'versioned',
 		type: 'boolean',
 		displayOptions: {
 			show: {
 				resource: ['document'],
-				operation: ['getAllVersions'],
+				operation: ['getHistory'],
 			},
 		},
-		default: true,
-		description: 'Whether to return a simplified version of the response instead of the raw data',
-		hint: 'Omits the version body and keeps titles, statuses, and identifiers',
-	},
-	{
-		displayName: 'Filters',
-		name: 'filters',
-		type: 'collection',
-		placeholder: 'Add Filter',
-		default: {},
-		displayOptions: {
-			show: {
-				resource: ['document'],
-				operation: ['getAllVersions'],
-			},
-		},
-		options: [
-			{
-				displayName: 'Statuses',
-				name: 'statuses',
-				type: 'multiOptions',
-				default: [],
-				description: 'Filter by version status',
-				options: [
-					{ name: 'Pending Approval', value: 'PENDING_APPROVAL' },
-					{ name: 'Published', value: 'PUBLISHED' },
-					{ name: 'Rejected', value: 'REJECTED' },
-					{ name: 'Voided', value: 'VOIDED' },
-				],
-			},
-		],
+		default: false,
+		description: 'Whether to return only the revisions tagged by a version',
+		hint: 'Read a version with Get Version, using the ID listed under its revision',
 	},
 ];
 
@@ -115,22 +87,30 @@ export async function execute(
 	const documentId = this.getNodeParameter('documentId', itemIndex, '', { extractValue: true }) as string;
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
-	const simplify = this.getNodeParameter('simple', itemIndex, true) as boolean;
-	const filters = this.getNodeParameter('filters', itemIndex, {}) as IDataObject;
-
-	const filter: IDataObject = {};
-	if ((filters.statuses as string[])?.length) filter.statuses = filters.statuses;
-
-	const hasFilter = Object.keys(filter).length > 0;
+	const versioned = this.getNodeParameter('versioned', itemIndex, false) as boolean;
 
 	const query = `
-		query GetDocumentVersions($documentId: ID!, $first: Int, $after: CursorKey${hasFilter ? ', $filter: DocumentVersionFilter' : ''}) {
+		query GetDocumentHistory($documentId: ID!, $first: Int, $after: CursorKey, $filter: DocumentRevisionFilter) {
 			node(id: $documentId) {
 				... on Document {
-					versions(first: $first, after: $after${hasFilter ? ', filter: $filter' : ''}) {
+					history(first: $first, after: $after, filter: $filter) {
 						edges {
 							node {
-								${documentVersionSelection(simplify)}
+								id
+								heads
+								authorName
+								startedAt
+								endedAt
+								changeCount
+								synthetic
+								versions {
+									id
+									title
+									major
+									minor
+									status
+									publishedAt
+								}
 							}
 						}
 						pageInfo {
@@ -143,24 +123,21 @@ export async function execute(
 		}
 	`;
 
-	const variables: IDataObject = { documentId };
-	if (hasFilter) variables.filter = filter;
-
-	const versions = await proboApiRequestAllItems.call(
+	const revisions = await proboApiRequestAllItems.call(
 		this,
 		query,
-		variables,
+		{ documentId, filter: versioned ? { versioned: true } : {} },
 		(response) => {
 			const data = response?.data as IDataObject | undefined;
 			const node = data?.node as IDataObject | undefined;
-			return node?.versions as IDataObject | undefined;
+			return node?.history as IDataObject | undefined;
 		},
 		returnAll,
 		limit,
 	);
 
 	return executionItems(
-		versions.map((version) => withParentReference(version, { documentId })),
+		revisions.map((revision) => withParentReference(revision, { documentId })),
 		itemIndex,
 	);
 }

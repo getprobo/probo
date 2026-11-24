@@ -31,8 +31,8 @@ const documentModesFragment = graphql`
     writeMode
     canUpdate: permission(action: "core:document:update")
     canSuggest: permission(action: "core:document:suggest")
-    pendingApprovalCount: versions(first: 0, filter: { statuses: [PENDING_APPROVAL] }) {
-      totalCount
+    pendingApprovalVersion {
+      __typename
     }
   }
 `;
@@ -41,7 +41,7 @@ export function useDocumentModes(documentKey: useDocumentModes_document$key) {
   const document = useFragment(documentModesFragment, documentKey);
   const locked = document.status === "ARCHIVED"
     || document.writeMode === "GENERATED"
-    || document.pendingApprovalCount.totalCount > 0;
+    || document.pendingApprovalVersion != null;
   const modes: DocumentMode[] = ["viewing"];
   if (document.canUpdate && !locked) {
     modes.push("editing");

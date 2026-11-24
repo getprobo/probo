@@ -18,22 +18,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useMemo } from "react";
+import { ClockCounterClockwiseIcon } from "@phosphor-icons/react";
+import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
+import { Tooltip } from "@probo/ui/src/v2/Tooltip/Tooltip";
+import { TooltipPopup } from "@probo/ui/src/v2/Tooltip/TooltipPopup";
+import { TooltipTrigger } from "@probo/ui/src/v2/Tooltip/TooltipTrigger";
 import { useTranslation } from "react-i18next";
 
-// useVersionDate formats when a version was published, such as
-// "Monday, March 12, 2026", in the active language.
-export function useVersionDate() {
-  const { i18n } = useTranslation();
-  const format = useMemo(
-    () => new Intl.DateTimeFormat(i18n.language, {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    }),
-    [i18n.language],
-  );
+interface DocumentHistoryTriggerProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
 
-  return (date: string) => format.format(new Date(date));
+// Shows or hides the history column beside the document.
+export function DocumentHistoryTrigger({ open, onOpenChange }: DocumentHistoryTriggerProps) {
+  const { t } = useTranslation("organizations/documents");
+  const label = t("details.history.trigger");
+
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={(
+          <IconButton
+            size={2}
+            variant={open ? "soft" : "ghost"}
+            color="neutral"
+            aria-label={label}
+            aria-pressed={open}
+            onClick={() => onOpenChange(!open)}
+          />
+        )}
+      >
+        <ClockCounterClockwiseIcon />
+      </TooltipTrigger>
+      <TooltipPopup>{label}</TooltipPopup>
+    </Tooltip>
+  );
 }

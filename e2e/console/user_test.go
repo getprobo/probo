@@ -712,39 +712,13 @@ func TestUser_DeactivateUserCancelsSignatureRequests(t *testing.T) {
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	signer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
 
-	docID, _ := createTestDocument(t, owner)
+	docID := createTestDocument(t, owner)
 	approveTestDocument(t, owner, docID)
 
-	var versionResult struct {
-		Node struct {
-			Versions struct {
-				Edges []struct {
-					Node struct {
-						ID string `json:"id"`
-					} `json:"node"`
-				} `json:"edges"`
-			} `json:"versions"`
-		} `json:"node"`
-	}
-
-	err := owner.Execute(`
-		query($id: ID!) {
-			node(id: $id) {
-				... on Document {
-					versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
-						edges { node { id } }
-					}
-				}
-			}
-		}
-	`, map[string]any{"id": docID}, &versionResult)
-	require.NoError(t, err)
-	require.NotEmpty(t, versionResult.Node.Versions.Edges)
-
-	documentVersionID := versionResult.Node.Versions.Edges[0].Node.ID
+	documentVersionID := latestDocumentVersionID(t, owner, docID)
 	signerProfileID := signer.GetProfileID().String()
 
-	_, err = owner.Do(`
+	_, err := owner.Do(`
 		mutation($input: RequestSignatureInput!) {
 			requestSignature(input: $input) {
 				documentVersionSignatureEdge { node { id } }
@@ -789,39 +763,13 @@ func TestUser_EndedContractCancelsSignatureRequests(t *testing.T) {
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	signer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
 
-	docID, _ := createTestDocument(t, owner)
+	docID := createTestDocument(t, owner)
 	approveTestDocument(t, owner, docID)
 
-	var versionResult struct {
-		Node struct {
-			Versions struct {
-				Edges []struct {
-					Node struct {
-						ID string `json:"id"`
-					} `json:"node"`
-				} `json:"edges"`
-			} `json:"versions"`
-		} `json:"node"`
-	}
-
-	err := owner.Execute(`
-		query($id: ID!) {
-			node(id: $id) {
-				... on Document {
-					versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
-						edges { node { id } }
-					}
-				}
-			}
-		}
-	`, map[string]any{"id": docID}, &versionResult)
-	require.NoError(t, err)
-	require.NotEmpty(t, versionResult.Node.Versions.Edges)
-
-	documentVersionID := versionResult.Node.Versions.Edges[0].Node.ID
+	documentVersionID := latestDocumentVersionID(t, owner, docID)
 	signerProfileID := signer.GetProfileID().String()
 
-	_, err = owner.Do(`
+	_, err := owner.Do(`
 		mutation($input: RequestSignatureInput!) {
 			requestSignature(input: $input) {
 				documentVersionSignatureEdge { node { id } }

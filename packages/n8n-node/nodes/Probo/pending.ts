@@ -72,66 +72,22 @@ const pendingSignatureDocumentsQuery = `
 						node {
 							id
 							title
-							versions(first: $nestedFirst, filter: { statuses: [PUBLISHED] }) {
-								edges {
-									node {
-										id
-										title
-										major
-										minor
-										status
-										signatures(first: $nestedFirst, filter: { states: [REQUESTED] }) {
-											edges {
-												node {
-													...SignatureFields
-												}
-											}
-											pageInfo {
-												hasNextPage
-												endCursor
-											}
+							publishedVersion {
+								id
+								title
+								major
+								minor
+								status
+								signatures(first: $nestedFirst, filter: { states: [REQUESTED] }) {
+									edges {
+										node {
+											...SignatureFields
 										}
 									}
-								}
-								pageInfo {
-									hasNextPage
-									endCursor
-								}
-							}
-						}
-					}
-					pageInfo {
-						hasNextPage
-						endCursor
-					}
-				}
-			}
-		}
-	}
-	${signatureFieldsFragment}
-`;
-
-const pendingSignatureVersionsQuery = `
-	query PendingSignatureVersions($documentId: ID!, $first: Int, $after: CursorKey, $nestedFirst: Int!) {
-		node(id: $documentId) {
-			... on Document {
-				versions(first: $first, after: $after, filter: { statuses: [PUBLISHED] }) {
-					edges {
-						node {
-							id
-							title
-							major
-							minor
-							status
-							signatures(first: $nestedFirst, filter: { states: [REQUESTED] }) {
-								edges {
-									node {
-										...SignatureFields
+									pageInfo {
+										hasNextPage
+										endCursor
 									}
-								}
-								pageInfo {
-									hasNextPage
-									endCursor
 								}
 							}
 						}
@@ -177,90 +133,34 @@ const pendingApprovalDocumentsQuery = `
 						node {
 							id
 							title
-							versions(first: $nestedFirst, filter: { statuses: [PENDING_APPROVAL] }) {
-								edges {
-									node {
-										id
-										title
-										major
-										minor
-										status
-										approvalQuorums(first: $nestedFirst) {
-											edges {
-												node {
-													id
-													status
-													decisions(first: $nestedFirst, filter: { states: [PENDING] }) {
-														edges {
-															node {
-																...DecisionFields
-															}
-														}
-														pageInfo {
-															hasNextPage
-															endCursor
-														}
+							pendingApprovalVersion {
+								id
+								title
+								major
+								minor
+								status
+								approvalQuorums(first: $nestedFirst) {
+									edges {
+										node {
+											id
+											status
+											decisions(first: $nestedFirst, filter: { states: [PENDING] }) {
+												edges {
+													node {
+														...DecisionFields
 													}
 												}
-											}
-											pageInfo {
-												hasNextPage
-												endCursor
-											}
-										}
-									}
-								}
-								pageInfo {
-									hasNextPage
-									endCursor
-								}
-							}
-						}
-					}
-					pageInfo {
-						hasNextPage
-						endCursor
-					}
-				}
-			}
-		}
-	}
-	${decisionFieldsFragment}
-`;
-
-const pendingApprovalVersionsQuery = `
-	query PendingApprovalVersions($documentId: ID!, $first: Int, $after: CursorKey, $nestedFirst: Int!) {
-		node(id: $documentId) {
-			... on Document {
-				versions(first: $first, after: $after, filter: { statuses: [PENDING_APPROVAL] }) {
-					edges {
-						node {
-							id
-							title
-							major
-							minor
-							status
-							approvalQuorums(first: $nestedFirst) {
-								edges {
-									node {
-										id
-										status
-										decisions(first: $nestedFirst, filter: { states: [PENDING] }) {
-											edges {
-												node {
-													...DecisionFields
+												pageInfo {
+													hasNextPage
+													endCursor
 												}
 											}
-											pageInfo {
-												hasNextPage
-												endCursor
-											}
 										}
 									}
-								}
-								pageInfo {
-									hasNextPage
-									endCursor
+									pageInfo {
+										hasNextPage
+										endCursor
+									}
 								}
 							}
 						}
@@ -346,6 +246,13 @@ function graphqlNode(response: IDataObject): IDataObject | undefined {
 		return undefined;
 	}
 	return node as IDataObject;
+}
+
+function asObject(value: unknown): IDataObject | undefined {
+	if (!value || typeof value !== 'object' || Array.isArray(value)) {
+		return undefined;
+	}
+	return value as IDataObject;
 }
 
 function asConnection(value: unknown): Connection<IDataObject> | undefined {
@@ -510,37 +417,27 @@ export async function collectPendingSignatures(
 		options,
 		() => items.length,
 		async (document) => {
+			const version = asObject(document.publishedVersion);
+			if (!version) {
+				return false;
+			}
+
 			return walkConnection(
-				asConnection(document.versions),
+				asConnection(version.signatures),
 				async (after) => {
-					const size = pageSize(options, items.length);
-					const response = await request(pendingSignatureVersionsQuery, {
-						documentId: document.id,
-						first: size,
-						nestedFirst: size,
+					const response = await request(pendingSignaturesQuery, {
+						documentVersionId: version.id,
+						first: pageSize(options, items.length),
 						after,
 					});
-					return asConnection(graphqlNode(response)?.versions);
+					return asConnection(graphqlNode(response)?.signatures);
 				},
-				async (version) => {
-					return walkConnection(
-						asConnection(version.signatures),
-						async (after) => {
-							const response = await request(pendingSignaturesQuery, {
-								documentVersionId: version.id,
-								first: pageSize(options, items.length),
-								after,
-							});
-							return asConnection(graphqlNode(response)?.signatures);
-						},
-						async (signature) => {
-							if (reachedLimit(options, items.length)) {
-								return true;
-							}
-							items.push(pendingSignatureRecord(document, version, signature, options.now));
-							return reachedLimit(options, items.length);
-						},
-					);
+				async (signature) => {
+					if (reachedLimit(options, items.length)) {
+						return true;
+					}
+					items.push(pendingSignatureRecord(document, version, signature, options.now));
+					return reachedLimit(options, items.length);
 				},
 			);
 		},
@@ -561,52 +458,42 @@ export async function collectPendingApprovals(
 		options,
 		() => items.length,
 		async (document) => {
+			const version = asObject(document.pendingApprovalVersion);
+			if (!version) {
+				return false;
+			}
+
 			return walkConnection(
-				asConnection(document.versions),
+				asConnection(version.approvalQuorums),
 				async (after) => {
 					const size = pageSize(options, items.length);
-					const response = await request(pendingApprovalVersionsQuery, {
-						documentId: document.id,
+					const response = await request(pendingApprovalQuorumsQuery, {
+						documentVersionId: version.id,
 						first: size,
 						nestedFirst: size,
 						after,
 					});
-					return asConnection(graphqlNode(response)?.versions);
+					return asConnection(graphqlNode(response)?.approvalQuorums);
 				},
-				async (version) => {
+				async (quorum) => {
 					return walkConnection(
-						asConnection(version.approvalQuorums),
+						asConnection(quorum.decisions),
 						async (after) => {
-							const size = pageSize(options, items.length);
-							const response = await request(pendingApprovalQuorumsQuery, {
-								documentVersionId: version.id,
-								first: size,
-								nestedFirst: size,
+							const response = await request(pendingApprovalDecisionsQuery, {
+								approvalQuorumId: quorum.id,
+								first: pageSize(options, items.length),
 								after,
 							});
-							return asConnection(graphqlNode(response)?.approvalQuorums);
+							return asConnection(graphqlNode(response)?.decisions);
 						},
-						async (quorum) => {
-							return walkConnection(
-								asConnection(quorum.decisions),
-								async (after) => {
-									const response = await request(pendingApprovalDecisionsQuery, {
-										approvalQuorumId: quorum.id,
-										first: pageSize(options, items.length),
-										after,
-									});
-									return asConnection(graphqlNode(response)?.decisions);
-								},
-								async (decision) => {
-									if (reachedLimit(options, items.length)) {
-										return true;
-									}
-									items.push(
-										pendingApprovalRecord(document, version, quorum, decision, options.now),
-									);
-									return reachedLimit(options, items.length);
-								},
+						async (decision) => {
+							if (reachedLimit(options, items.length)) {
+								return true;
+							}
+							items.push(
+								pendingApprovalRecord(document, version, quorum, decision, options.now),
 							);
+							return reachedLimit(options, items.length);
 						},
 					);
 				},

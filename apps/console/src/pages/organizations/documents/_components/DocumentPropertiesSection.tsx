@@ -48,12 +48,8 @@ const documentPropertiesSectionFragment = graphql`
     status
     writeMode
     canUpdate: permission(action: "core:document:update")
-    pendingApproval: versions(first: 1, filter: { statuses: [PENDING_APPROVAL] }) {
-      edges {
-        node {
-          id
-        }
-      }
+    pendingApprovalVersion {
+      id
     }
   }
 `;
@@ -68,7 +64,7 @@ export function DocumentPropertiesSection({ documentKey }: DocumentPropertiesSec
   const { t: tApp } = useTranslation();
   const [updateDocument, isUpdating] = useUpdateDocument();
   const { root, field, value } = documentProperties();
-  const pending = document.pendingApproval.edges[0]?.node != null;
+  const pending = document.pendingApprovalVersion != null;
   const locked = !document.canUpdate || document.status === "ARCHIVED" || pending;
   const canEditFields = !locked && document.writeMode !== "GENERATED";
 

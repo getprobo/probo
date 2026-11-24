@@ -51,9 +51,13 @@ type (
 		Orientation     DocumentVersionOrientation `db:"orientation"`
 		FileID          *gid.GID                   `db:"file_id"`
 		PdfAttemptCount int                        `db:"pdf_attempt_count"`
-		PublishedAt     *time.Time                 `db:"published_at"`
-		CreatedAt       time.Time                  `db:"created_at"`
-		UpdatedAt       time.Time                  `db:"updated_at"`
+		// CollaborationHeads are the encoded Automerge heads the version was
+		// taken at: the version is a tag on that revision of the document
+		// history. Nil for a version that predates the link.
+		CollaborationHeads []byte     `db:"collaboration_heads"`
+		PublishedAt        *time.Time `db:"published_at"`
+		CreatedAt          time.Time  `db:"created_at"`
+		UpdatedAt          time.Time  `db:"updated_at"`
 	}
 
 	DocumentVersions []*DocumentVersion
@@ -123,6 +127,7 @@ SELECT
 	orientation,
 	file_id,
 	pdf_attempt_count,
+	collaboration_heads,
 	published_at,
 	created_at,
 	updated_at
@@ -180,6 +185,7 @@ SELECT
 	orientation,
 	file_id,
 	pdf_attempt_count,
+	collaboration_heads,
 	published_at,
 	created_at,
 	updated_at
@@ -245,6 +251,7 @@ SELECT
 	orientation,
 	file_id,
 	pdf_attempt_count,
+	collaboration_heads,
 	published_at,
 	created_at,
 	updated_at
@@ -304,6 +311,7 @@ INSERT INTO document_versions (
 	orientation,
 	file_id,
 	pdf_attempt_count,
+	collaboration_heads,
 	published_at,
 	created_at,
 	updated_at
@@ -324,30 +332,32 @@ VALUES (
 	@orientation,
 	@file_id,
 	@pdf_attempt_count,
+	@collaboration_heads,
 	@published_at,
 	@created_at,
 	@updated_at
 )
 `
 	args := pgx.StrictNamedArgs{
-		"tenant_id":         scope.GetTenantID(),
-		"id":                dv.ID,
-		"organization_id":   dv.OrganizationID,
-		"document_id":       dv.DocumentID,
-		"title":             dv.Title,
-		"major":             dv.Major,
-		"minor":             dv.Minor,
-		"classification":    dv.Classification,
-		"document_type":     dv.DocumentType,
-		"content":           dv.Content,
-		"changelog":         dv.Changelog,
-		"status":            dv.Status,
-		"orientation":       dv.Orientation,
-		"file_id":           dv.FileID,
-		"pdf_attempt_count": dv.PdfAttemptCount,
-		"published_at":      dv.PublishedAt,
-		"created_at":        dv.CreatedAt,
-		"updated_at":        dv.UpdatedAt,
+		"tenant_id":           scope.GetTenantID(),
+		"id":                  dv.ID,
+		"organization_id":     dv.OrganizationID,
+		"document_id":         dv.DocumentID,
+		"title":               dv.Title,
+		"major":               dv.Major,
+		"minor":               dv.Minor,
+		"classification":      dv.Classification,
+		"document_type":       dv.DocumentType,
+		"content":             dv.Content,
+		"changelog":           dv.Changelog,
+		"status":              dv.Status,
+		"orientation":         dv.Orientation,
+		"file_id":             dv.FileID,
+		"pdf_attempt_count":   dv.PdfAttemptCount,
+		"collaboration_heads": dv.CollaborationHeads,
+		"published_at":        dv.PublishedAt,
+		"created_at":          dv.CreatedAt,
+		"updated_at":          dv.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -390,6 +400,7 @@ SELECT
 	orientation,
 	file_id,
 	pdf_attempt_count,
+	collaboration_heads,
 	published_at,
 	created_at,
 	updated_at
@@ -455,6 +466,7 @@ SELECT
 	orientation,
 	file_id,
 	pdf_attempt_count,
+	collaboration_heads,
 	published_at,
 	created_at,
 	updated_at
@@ -514,6 +526,7 @@ SELECT
 	orientation,
 	file_id,
 	pdf_attempt_count,
+	collaboration_heads,
 	published_at,
 	created_at,
 	updated_at
@@ -575,6 +588,7 @@ SELECT
 	orientation,
 	file_id,
 	pdf_attempt_count,
+	collaboration_heads,
 	published_at,
 	created_at,
 	updated_at
@@ -712,6 +726,7 @@ SELECT
 	dv.orientation,
 	dv.file_id,
 	dv.pdf_attempt_count,
+	dv.collaboration_heads,
 	dv.published_at,
 	dv.created_at,
 	dv.updated_at
@@ -809,4 +824,151 @@ WHERE
 	}
 
 	return count, nil
+}
+
+func (dv DocumentVersion) UpdateCollaborationHeads(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+) error {
+	q := `
+UPDATE document_versions SET
+	collaboration_heads = @collaboration_heads
+WHERE %s
+	AND id = @document_version_id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"document_version_id": dv.ID,
+		"collaboration_heads": dv.CollaborationHeads,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot update document version collaboration heads: %w", err)
+	}
+
+	return nil
+}
+
+// LoadTagsByDocumentID loads every version of a document without its content.
+// It is the cheap read behind the revision history, which only needs to know
+// which revision each version tags.
+func (dv *DocumentVersions) LoadTagsByDocumentID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	documentID gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	document_id,
+	title,
+	major,
+	minor,
+	classification,
+	document_type,
+	''::text AS content,
+	changelog,
+	status,
+	orientation,
+	file_id,
+	pdf_attempt_count,
+	collaboration_heads,
+	published_at,
+	created_at,
+	updated_at
+FROM
+	document_versions
+WHERE
+	%s
+	AND document_id = @document_id
+ORDER BY
+	created_at ASC,
+	id ASC
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"document_id": documentID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query document version tags: %w", err)
+	}
+
+	versions, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[DocumentVersion])
+	if err != nil {
+		return fmt.Errorf("cannot collect document version tags: %w", err)
+	}
+
+	*dv = versions
+
+	return nil
+}
+
+// LoadWithoutCollaborationHeadsByDocumentID loads the versions of a document
+// that are not yet tied to a revision of its history, content included.
+func (dv *DocumentVersions) LoadWithoutCollaborationHeadsByDocumentID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	documentID gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	document_id,
+	title,
+	major,
+	minor,
+	classification,
+	document_type,
+	content,
+	changelog,
+	status,
+	orientation,
+	file_id,
+	pdf_attempt_count,
+	collaboration_heads,
+	published_at,
+	created_at,
+	updated_at
+FROM
+	document_versions
+WHERE
+	%s
+	AND document_id = @document_id
+	AND collaboration_heads IS NULL
+ORDER BY
+	created_at ASC,
+	id ASC
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"document_id": documentID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query unlinked document versions: %w", err)
+	}
+
+	versions, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[DocumentVersion])
+	if err != nil {
+		return fmt.Errorf("cannot collect unlinked document versions: %w", err)
+	}
+
+	*dv = versions
+
+	return nil
 }

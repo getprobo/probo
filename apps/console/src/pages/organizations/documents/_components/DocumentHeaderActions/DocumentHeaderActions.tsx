@@ -29,7 +29,7 @@ import { graphql, useFragment, useQueryLoader } from "react-relay";
 import type { DocumentHeaderActions_document$key } from "#/__generated__/core/DocumentHeaderActions_document.graphql";
 import type { DocumentPublishReviewCalloutQuery } from "#/__generated__/core/DocumentPublishReviewCalloutQuery.graphql";
 
-import { useDocumentVersionParam } from "../../_lib/useDocumentVersionParam";
+import { useDocumentRevisionParam } from "../../_lib/useDocumentRevisionParam";
 import { documentHeaderActions } from "../../variants";
 
 import { DocumentActionsMenu } from "./DocumentActionsMenu";
@@ -42,8 +42,8 @@ const documentHeaderActionsFragment = graphql`
     status
     writeMode
     canPublish: permission(action: "core:document-version:publish")
-    pendingApprovalCount: versions(first: 0, filter: { statuses: [PENDING_APPROVAL] }) {
-      totalCount
+    pendingApprovalVersion {
+      id
     }
     ...DocumentPublishForm_document
     ...DocumentActionsMenu_document
@@ -54,7 +54,7 @@ interface DocumentHeaderActionsProps {
   documentKey: DocumentHeaderActions_document$key;
 }
 
-// Publishing waits while a version is pending approval or a past version is
+// Publishing waits while a version is pending approval or a past revision is
 // shown, and archived or generated documents cannot be published. The form mounts with the dialog
 // popup, so each opening starts from the default approvers.
 export function DocumentHeaderActions({ documentKey }: DocumentHeaderActionsProps) {
@@ -64,13 +64,13 @@ export function DocumentHeaderActions({ documentKey }: DocumentHeaderActionsProp
   const [reviewQueryRef, loadReview] = useQueryLoader<DocumentPublishReviewCalloutQuery>(
     documentPublishReviewCalloutQuery,
   );
-  const { versionId } = useDocumentVersionParam();
+  const { revisionId } = useDocumentRevisionParam();
   const { root } = documentHeaderActions();
   const canPublish = document.canPublish
-    && document.pendingApprovalCount.totalCount === 0
+    && document.pendingApprovalVersion == null
     && document.status !== "ARCHIVED"
     && document.writeMode !== "GENERATED"
-    && versionId == null;
+    && revisionId == null;
 
   return (
     <div className={root()}>

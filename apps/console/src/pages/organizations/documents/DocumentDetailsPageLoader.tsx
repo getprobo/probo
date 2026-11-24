@@ -23,25 +23,27 @@ import { useQueryLoader } from "react-relay";
 import { useParams, useSearchParams } from "react-router";
 
 import type { DocumentDetailsPageQuery } from "#/__generated__/core/DocumentDetailsPageQuery.graphql";
+import type { DocumentHistoryContentQuery } from "#/__generated__/core/DocumentHistoryContentQuery.graphql";
 import type { DocumentReviewListQuery } from "#/__generated__/core/DocumentReviewListQuery.graphql";
-import type { DocumentVersionContentQuery } from "#/__generated__/core/DocumentVersionContentQuery.graphql";
 
+import { documentHistoryContentQuery } from "./_components/DocumentHistory/DocumentHistoryContent";
 import { documentReviewListQuery } from "./_components/DocumentReviewList/DocumentReviewList";
-import { documentVersionContentQuery } from "./_components/DocumentVersionList/DocumentVersionContent";
-import { documentVersionParam } from "./_lib/useDocumentVersionParam";
+import { documentRevisionParam } from "./_lib/useDocumentRevisionParam";
+import { useLegacyVersionRedirect } from "./_lib/useLegacyVersionRedirect";
 import { DocumentDetailsPage, documentDetailsPageQuery } from "./DocumentDetailsPage";
 import { DocumentDetailsPageSkeleton } from "./DocumentDetailsPageSkeleton";
 
 export default function DocumentDetailsPageLoader() {
   const { documentId } = useParams<{ documentId: string }>();
   const [searchParams] = useSearchParams();
-  const versionId = searchParams.get(documentVersionParam);
+  const revisionId = searchParams.get(documentRevisionParam);
+  useLegacyVersionRedirect(documentId);
   const [queryRef, loadQuery]
     = useQueryLoader<DocumentDetailsPageQuery>(documentDetailsPageQuery);
   const [reviewQueryRef, loadReviewQuery]
     = useQueryLoader<DocumentReviewListQuery>(documentReviewListQuery);
-  const [versionQueryRef, loadVersionQuery, disposeVersionQuery]
-    = useQueryLoader<DocumentVersionContentQuery>(documentVersionContentQuery);
+  const [revisionQueryRef, loadRevisionQuery, disposeRevisionQuery]
+    = useQueryLoader<DocumentHistoryContentQuery>(documentHistoryContentQuery);
 
   useEffect(() => {
     if (documentId) {
@@ -51,12 +53,12 @@ export default function DocumentDetailsPageLoader() {
   }, [loadQuery, loadReviewQuery, documentId]);
 
   useEffect(() => {
-    if (versionId) {
-      loadVersionQuery({ versionId });
+    if (documentId && revisionId) {
+      loadRevisionQuery({ documentId, revisionId });
     } else {
-      disposeVersionQuery();
+      disposeRevisionQuery();
     }
-  }, [disposeVersionQuery, loadVersionQuery, versionId]);
+  }, [disposeRevisionQuery, loadRevisionQuery, documentId, revisionId]);
 
   if (documentId == null) {
     throw new Error(":documentId missing in route params");
@@ -70,10 +72,11 @@ export default function DocumentDetailsPageLoader() {
     && reviewQueryRef.variables.documentId === documentId
     ? reviewQueryRef
     : null;
-  const currentVersionQueryRef = versionId != null
-    && versionQueryRef != null
-    && versionQueryRef.variables.versionId === versionId
-    ? versionQueryRef
+  const currentRevisionQueryRef = revisionId != null
+    && revisionQueryRef != null
+    && revisionQueryRef.variables.documentId === documentId
+    && revisionQueryRef.variables.revisionId === revisionId
+    ? revisionQueryRef
     : null;
 
   if (currentQueryRef == null) {
@@ -86,7 +89,7 @@ export default function DocumentDetailsPageLoader() {
         key={documentId}
         queryRef={currentQueryRef}
         reviewQueryRef={currentReviewQueryRef}
-        versionQueryRef={currentVersionQueryRef}
+        revisionQueryRef={currentRevisionQueryRef}
       />
     </Suspense>
   );

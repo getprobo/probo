@@ -8892,25 +8892,6 @@ components:
           $ref: "#/components/schemas/OrderDirection"
           description: Document order direction
 
-    DocumentVersionOrderField:
-      type: string
-      enum:
-        - CREATED_AT
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DocumentVersionOrderField
-
-    DocumentVersionOrderBy:
-      type: object
-      required:
-        - field
-        - direction
-      properties:
-        field:
-          $ref: "#/components/schemas/DocumentVersionOrderField"
-          description: Document version order field
-        direction:
-          $ref: "#/components/schemas/OrderDirection"
-          description: Document version order direction
-
     DocumentVersionSignatureOrderField:
       type: string
       enum:
@@ -10365,46 +10346,6 @@ components:
         document:
           $ref: "#/components/schemas/Document"
 
-    ListDocumentVersionsInput:
-      type: object
-      required:
-        - document_id
-      properties:
-        document_id:
-          $ref: "#/components/schemas/GID"
-          description: Document ID
-        order_by:
-          $ref: "#/components/schemas/DocumentVersionOrderBy"
-          description: Document version order by
-        size:
-          type: integer
-          description: Page size
-        cursor:
-          $ref: "#/components/schemas/CursorKey"
-          description: Page cursor
-        filter:
-          type: object
-          properties:
-            statuses:
-              type: array
-              items:
-                $ref: "#/components/schemas/DocumentVersionStatus"
-              description: Document version statuses
-
-    ListDocumentVersionsOutput:
-      type: object
-      description: Each document_versions[].content is ProseMirror JSON
-      required:
-        - document_versions
-      properties:
-        next_cursor:
-          $ref: "#/components/schemas/CursorKey"
-          description: Next cursor
-        document_versions:
-          type: array
-          items:
-            $ref: "#/components/schemas/DocumentVersion"
-
     GetDocumentVersionInput:
       type: object
       required:
@@ -10416,7 +10357,9 @@ components:
 
     GetDocumentVersionOutput:
       type: object
-      description: document_version.content is ProseMirror JSON
+      description: >
+        document_version.content is ProseMirror JSON. A version is a tag on a
+        revision of the document history, listed by listDocumentRevisions.
       required:
         - document_version
       properties:
@@ -10465,6 +10408,28 @@ components:
           $ref: "#/components/schemas/OrderDirection"
           description: Sort direction
 
+    DocumentRevisionVersion:
+      type: object
+      description: A version tagging a revision. Read its content with getDocumentVersion.
+      required:
+        - id
+        - major
+        - minor
+        - status
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Document version ID
+        major:
+          type: integer
+          description: Major version number
+        minor:
+          type: integer
+          description: Minor version number
+        status:
+          $ref: "#/components/schemas/DocumentVersionStatus"
+          description: Document version status
+
     DocumentRevision:
       type: object
       required:
@@ -10475,6 +10440,8 @@ components:
         - started_at
         - ended_at
         - change_count
+        - versions
+        - synthetic
       properties:
         id:
           $ref: "#/components/schemas/GID"
@@ -10512,6 +10479,17 @@ components:
         change_count:
           type: integer
           description: Number of Automerge changes in this session
+        versions:
+          type: array
+          items:
+            $ref: "#/components/schemas/DocumentRevisionVersion"
+          description: Versions tagging this revision, oldest first
+        synthetic:
+          type: boolean
+          description: >
+            True for a version that cannot be tied to a revision of the
+            history. It has no heads and cannot be restored; read it with
+            getDocumentVersion.
 
     DocumentHistoryHighlightKind:
       type: string
@@ -10558,6 +10536,12 @@ components:
         cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
+        filter:
+          type: object
+          properties:
+            versioned:
+              type: boolean
+              description: Only return revisions tagged by at least one version
 
     ListDocumentRevisionsOutput:
       type: object
@@ -22112,21 +22096,9 @@ tools:
       $ref: "#/components/schemas/UnarchiveDocumentInput"
     outputSchema:
       $ref: "#/components/schemas/UnarchiveDocumentOutput"
-  - name: listDocumentVersions
-    title: List Document Versions
-    description: List all versions for a document
-    hints:
-      readonly: true
-      destructive: false
-      idempotent: true
-      openWorld: false
-    inputSchema:
-      $ref: "#/components/schemas/ListDocumentVersionsInput"
-    outputSchema:
-      $ref: "#/components/schemas/ListDocumentVersionsOutput"
   - name: getDocumentVersion
     title: Get Document Version
-    description: Get a document version by ID
+    description: Get a document version by ID. Versions are tags on the document history; discover them with listDocumentRevisions (set filter.versioned to list only the revisions that carry a version).
     hints:
       readonly: true
       destructive: false
@@ -22138,7 +22110,7 @@ tools:
       $ref: "#/components/schemas/GetDocumentVersionOutput"
   - name: listDocumentRevisions
     title: List Document Revisions
-    description: List revisions for a document
+    description: List the history of a document, newest first. This is the only history, every entry is a revision of the live document, and a published version appears as a tag (versions[]) on the revision it was taken at. Set filter.versioned to list only tagged revisions.
     hints:
       readonly: true
       destructive: false

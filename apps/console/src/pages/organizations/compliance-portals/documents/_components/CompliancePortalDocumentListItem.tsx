@@ -56,17 +56,9 @@ const documentFragment = graphql`
     alias
     canSetAlias: permission(action: "resourcealias:alias:set")
     canRemoveAlias: permission(action: "resourcealias:alias:remove")
-    latestPublishedVersion: versions(
-      first: 1
-      orderBy: { field: CREATED_AT, direction: DESC }
-      filter: { statuses: [PUBLISHED] }
-    ) {
-      edges {
-        node {
-          title
-          documentType
-        }
-      }
+    latestPublishedVersion: publishedVersion {
+      title
+      documentType
     }
     compliancePortalDocument(compliancePortalId: $compliancePortalId) {
       id
@@ -245,7 +237,7 @@ export function CompliancePortalDocumentListItem(props: {
 
   const isMutating = isUpdatingDocumentVisibility || isRemoving;
 
-  const latestVersion = document.latestPublishedVersion.edges[0]?.node;
+  const latestVersion = document.latestPublishedVersion;
   const versionTitle = latestVersion?.title;
 
   return (

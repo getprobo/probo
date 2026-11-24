@@ -2642,40 +2642,6 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 	}, nil
 }
 
-func (r *Resolver) ListDocumentVersionsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListDocumentVersionsInput) (*mcp.CallToolResult, types.ListDocumentVersionsOutput, error) {
-	scope, err := r.Authorize(ctx, input.DocumentID, probo.ActionDocumentVersionList)
-	if err != nil {
-		return nil, types.ListDocumentVersionsOutput{}, err
-	}
-
-	pageOrderBy := page.OrderBy[coredata.DocumentVersionOrderField]{
-		Field:     coredata.DocumentVersionOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-
-	if input.OrderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.DocumentVersionOrderField]{
-			Field:     input.OrderBy.Field,
-			Direction: input.OrderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
-	svc := r.proboSvc
-
-	versionFilter := coredata.NewDocumentVersionFilter()
-	if input.Filter != nil && len(input.Filter.Statuses) > 0 {
-		versionFilter = versionFilter.WithStatuses(input.Filter.Statuses...)
-	}
-
-	versionPage, err := svc.Documents.ListVersions(ctx, scope, input.DocumentID, cursor, versionFilter)
-	if err != nil {
-		panic(fmt.Errorf("cannot list document versions: %w", err))
-	}
-
-	return nil, types.NewListDocumentVersionsOutput(versionPage), nil
-}
-
 func (r *Resolver) GetDocumentVersionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetDocumentVersionInput) (*mcp.CallToolResult, types.GetDocumentVersionOutput, error) {
 	scope, err := r.Authorize(ctx, input.ID, probo.ActionDocumentVersionGet)
 	if err != nil {
@@ -11223,17 +11189,33 @@ func (r *Resolver) ListDocumentRevisionsTool(ctx context.Context, req *mcp.CallT
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
+	var revisionFilter *collaboration.DocumentRevisionFilter
+	if input.Filter != nil && input.Filter.Versioned != nil {
+		revisionFilter = &collaboration.DocumentRevisionFilter{Versioned: *input.Filter.Versioned}
+	}
+
 	sessions, totalCount, err := r.proboSvc.Collaboration.ListRevisions(
 		ctx,
 		scope,
 		input.DocumentID,
 		cursor,
+		revisionFilter,
 	)
 	if err != nil {
 		panic(fmt.Errorf("cannot list document revisions: %w", err))
 	}
 
-	return nil, types.NewListDocumentRevisionsOutput(sessions, totalCount), nil
+	versionIDs := make([]gid.GID, 0)
+	for _, session := range sessions.Data {
+		versionIDs = append(versionIDs, session.VersionIDs...)
+	}
+
+	versions, err := r.proboSvc.Documents.GetVersions(ctx, scope, versionIDs)
+	if err != nil {
+		panic(fmt.Errorf("cannot load document revision versions: %w", err))
+	}
+
+	return nil, types.NewListDocumentRevisionsOutput(sessions, totalCount, versions), nil
 }
 
 func (r *Resolver) GetDocumentHistorySnapshotTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetDocumentHistorySnapshotInput) (*mcp.CallToolResult, types.GetDocumentHistorySnapshotOutput, error) {

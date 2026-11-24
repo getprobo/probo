@@ -28,9 +28,9 @@ import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, useFragment, useQueryLoader } from "react-relay";
 
 import type { DocumentEditor_document$key } from "#/__generated__/core/DocumentEditor_document.graphql";
+import type { DocumentHistoryContentQuery } from "#/__generated__/core/DocumentHistoryContentQuery.graphql";
+import type { DocumentHistoryListQuery } from "#/__generated__/core/DocumentHistoryListQuery.graphql";
 import type { DocumentReviewListQuery } from "#/__generated__/core/DocumentReviewListQuery.graphql";
-import type { DocumentVersionContentQuery } from "#/__generated__/core/DocumentVersionContentQuery.graphql";
-import type { DocumentVersionListQuery } from "#/__generated__/core/DocumentVersionListQuery.graphql";
 import type { DocumentViewContentQuery } from "#/__generated__/core/DocumentViewContentQuery.graphql";
 import { useUploadRichTextFile } from "#/pages/organizations/_lib/useUploadRichTextFile";
 
@@ -48,9 +48,9 @@ import { usePageScale } from "../../_lib/usePageScale";
 import { usePreventSuggestionTextDrop } from "../../_lib/usePreventSuggestionTextDrop";
 import { useSuggestionController } from "../../_lib/useSuggestionController";
 import { documentEditor } from "../../variants";
+import { DocumentHistoryContent } from "../DocumentHistory/DocumentHistoryContent";
+import { DocumentHistoryList, documentHistoryListQuery } from "../DocumentHistory/DocumentHistoryList";
 import { DocumentReviewList } from "../DocumentReviewList/DocumentReviewList";
-import { DocumentVersionContent } from "../DocumentVersionList/DocumentVersionContent";
-import { DocumentVersionList, documentVersionListQuery } from "../DocumentVersionList/DocumentVersionList";
 
 import { DocumentCommentBubbleItem } from "./DocumentCommentBubbleItem";
 import { DocumentEditorPages } from "./DocumentEditorPages";
@@ -70,10 +70,10 @@ const documentEditorFragment = graphql`
 interface DocumentEditorProps {
   documentKey: DocumentEditor_document$key;
   reviewQueryRef: PreloadedQuery<DocumentReviewListQuery> | null;
-  // Set while a previous version replaces the live document, in viewing only.
-  versionId: string | null;
-  versionQueryRef: PreloadedQuery<DocumentVersionContentQuery> | null;
-  onVersionChange: (versionId: string | null) => void;
+  // Set while a previous revision replaces the live document, in viewing only.
+  revisionId: string | null;
+  revisionQueryRef: PreloadedQuery<DocumentHistoryContentQuery> | null;
+  onRevisionChange: (revisionId: string | null) => void;
   mode: DocumentMode;
   modes: readonly DocumentMode[];
   onModeChange: (mode: DocumentMode) => void;
@@ -82,9 +82,9 @@ interface DocumentEditorProps {
 export function DocumentEditor({
   documentKey,
   reviewQueryRef,
-  versionId,
-  versionQueryRef,
-  onVersionChange,
+  revisionId,
+  revisionQueryRef,
+  onRevisionChange,
   mode,
   modes,
   onModeChange,
@@ -123,23 +123,23 @@ export function DocumentEditor({
   const [reviewElement, setReviewElement] = useState<HTMLDivElement | null>(null);
   const [switchContainer, setSwitchContainer] = useState<HTMLDivElement | null>(null);
   const [switchBox, setSwitchBox] = useState<{ left: number; width: number } | null>(null);
-  const [versionsOpen, setVersionsOpen] = useState(versionId != null);
-  const [versionListQueryRef, loadVersionList]
-    = useQueryLoader<DocumentVersionListQuery>(documentVersionListQuery);
-  const [versionOrientation, setVersionOrientation] = useState<string | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(revisionId != null);
+  const [historyListQueryRef, loadHistoryList]
+    = useQueryLoader<DocumentHistoryListQuery>(documentHistoryListQuery);
+  const [revisionOrientation, setRevisionOrientation] = useState<string | null>(null);
   const viewing = mode === "viewing";
-  const viewingVersion = viewing && versionId != null;
-  const showingVersion = viewingVersion && versionQueryRef != null;
-  const showVersions = versionsOpen;
-  const versionListLoaded = versionListQueryRef != null;
+  const viewingRevision = viewing && revisionId != null;
+  const showingRevision = viewingRevision && revisionQueryRef != null;
+  const showHistory = historyOpen;
+  const historyListLoaded = historyListQueryRef != null;
   useEffect(() => {
-    if (showVersions && !versionListLoaded) {
-      loadVersionList({ documentId: document.id }, { fetchPolicy: "store-and-network" });
+    if (showHistory && !historyListLoaded) {
+      loadHistoryList({ documentId: document.id }, { fetchPolicy: "store-and-network" });
     }
-  }, [document.id, loadVersionList, showVersions, versionListLoaded]);
+  }, [document.id, loadHistoryList, showHistory, historyListLoaded]);
   const [viewQueryRef, loadView, disposeView]
     = useQueryLoader<DocumentViewContentQuery>(documentViewContentQuery);
-  const viewingLive = viewing && versionId == null;
+  const viewingLive = viewing && revisionId == null;
   // The server persists a change after peers receive it, so the refetch
   // trails the last change instead of following each one.
   useEffect(() => {
@@ -164,7 +164,7 @@ export function DocumentEditor({
     };
   }, [disposeView, document.id, handle, loadView, viewingLive]);
   const pageSize = documentPageSize(
-    showingVersion && versionOrientation != null ? versionOrientation : document.orientation,
+    showingRevision && revisionOrientation != null ? revisionOrientation : document.orientation,
   );
   const { ref: pagesRef, scale } = usePageScale(pageSize.width);
   // Caps the review history, which scrolls on its own within the frame.
@@ -177,11 +177,11 @@ export function DocumentEditor({
     [document.orientation],
   );
   const collaborating = !viewing;
-  const showReview = collaborating && !showVersions;
+  const showReview = collaborating && !showHistory;
   const {
     frame, viewport, content, pages, stack, paper, review,
     reviewSwitch, reviewSwitchTarget, scrollbar, thumb,
-  } = documentEditor({ review: collaborating || showVersions });
+  } = documentEditor({ review: collaborating || showHistory });
 
   // The switch sits on the frame, so it follows the review column's box
   // instead of scrolling inside the faded viewport.
@@ -227,21 +227,21 @@ export function DocumentEditor({
     [canComment, handle, startCommentDraft],
   );
 
-  const onVersionMissing = useCallback(() => onVersionChange(null), [onVersionChange]);
+  const onRevisionMissing = useCallback(() => onRevisionChange(null), [onRevisionChange]);
 
-  const showLatest = useCallback(() => onVersionChange(null), [onVersionChange]);
+  const showLatest = useCallback(() => onRevisionChange(null), [onRevisionChange]);
 
-  // Past versions only show while viewing.
-  function selectVersion(next: string | null) {
+  // Past revisions only show while viewing.
+  function selectRevision(next: string | null) {
     if (next != null && !viewing) {
       onModeChange("viewing");
     }
-    onVersionChange(next);
+    onRevisionChange(next);
   }
 
   function changeMode(next: DocumentMode) {
     if (next !== "viewing") {
-      setVersionsOpen(false);
+      setHistoryOpen(false);
     }
     onModeChange(next);
   }
@@ -254,9 +254,9 @@ export function DocumentEditor({
         onModeChange={changeMode}
         collaborationHandle={handle}
         onControlsElement={setToolbarEl}
-        versionsOpen={showVersions}
-        onVersionsOpenChange={setVersionsOpen}
-        versionQueryRef={viewing ? versionQueryRef : null}
+        historyOpen={showHistory}
+        onHistoryOpenChange={setHistoryOpen}
+        revisionQueryRef={viewing ? revisionQueryRef : null}
         onShowLatest={showLatest}
       />
       <ScrollArea.Root ref={frameRef} className={frame()}>
@@ -283,17 +283,17 @@ export function DocumentEditor({
                     minHeight: documentPagesHeight(pageSize, pageCount),
                   }}
                 >
-                  {showingVersion
+                  {showingRevision
                     ? (
-                        <DocumentVersionContent
-                          queryRef={versionQueryRef}
+                        <DocumentHistoryContent
+                          queryRef={revisionQueryRef}
                           documentId={document.id}
                           onPages={setPageCount}
-                          onOrientation={setVersionOrientation}
-                          onMissing={onVersionMissing}
+                          onOrientation={setRevisionOrientation}
+                          onMissing={onRevisionMissing}
                         />
                       )
-                    : viewingVersion
+                    : viewingRevision
                       ? <Text size={2} color="faint">{t("details.editor.loading")}</Text>
                       : viewing
                         ? viewQueryRef != null && (
@@ -338,13 +338,13 @@ export function DocumentEditor({
                 )}
               </div>
             )}
-            {showVersions && (
+            {showHistory && (
               <div className={review()}>
-                <DocumentVersionList
-                  queryRef={versionListQueryRef}
-                  activeVersionId={viewing ? versionId : null}
-                  onSelect={selectVersion}
-                  onClose={() => setVersionsOpen(false)}
+                <DocumentHistoryList
+                  queryRef={historyListQueryRef}
+                  activeRevisionId={viewing ? revisionId : null}
+                  onSelect={selectRevision}
+                  onClose={() => setHistoryOpen(false)}
                 />
               </div>
             )}

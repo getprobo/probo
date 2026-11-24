@@ -199,39 +199,46 @@ func (r *documentResolver) CompliancePortalDocumentAccess(ctx context.Context, o
 	return types.NewCompliancePortalDocumentAccess(access), nil
 }
 
-// Versions is the resolver for the versions field.
-func (r *documentResolver) Versions(ctx context.Context, obj *types.Document, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionOrderBy, filter *types.DocumentVersionFilter) (*types.DocumentVersionConnection, error) {
+// PublishedVersion is the resolver for the publishedVersion field.
+func (r *documentResolver) PublishedVersion(ctx context.Context, obj *types.Document) (*types.DocumentVersion, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentVersionList)
 	if err != nil {
 		return nil, err
 	}
 
-	pageOrderBy := page.OrderBy[coredata.DocumentVersionOrderField]{
-		Field:     coredata.DocumentVersionOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.DocumentVersionOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	versionFilter := coredata.NewDocumentVersionFilter()
-	if filter != nil && len(filter.Statuses) > 0 {
-		versionFilter = versionFilter.WithStatuses(filter.Statuses...)
-	}
-
-	page, err := r.probo.Documents.ListVersions(ctx, scope, obj.ID, cursor, versionFilter)
+	version, err := r.probo.Documents.GetPublishedVersion(ctx, scope, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list document versions", log.Error(err))
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load published document version", log.Error(err))
+
 		return nil, gqlx.Internal(ctx)
 	}
 
-	return types.NewDocumentVersionConnection(page, r, obj.ID, versionFilter), nil
+	return types.NewDocumentVersion(version), nil
+}
+
+// PendingApprovalVersion is the resolver for the pendingApprovalVersion field.
+func (r *documentResolver) PendingApprovalVersion(ctx context.Context, obj *types.Document) (*types.DocumentVersion, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentVersionList)
+	if err != nil {
+		return nil, err
+	}
+
+	version, err := r.probo.Documents.GetPendingApprovalVersion(ctx, scope, obj.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load pending approval document version", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return types.NewDocumentVersion(version), nil
 }
 
 // CommentThreads is the resolver for the commentThreads field.
@@ -349,7 +356,7 @@ func (r *documentResolver) DefaultApprovers(ctx context.Context, obj *types.Docu
 }
 
 // History is the resolver for the history field.
-func (r *documentResolver) History(ctx context.Context, obj *types.Document, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentRevisionOrder) (*types.DocumentRevisionConnection, error) {
+func (r *documentResolver) History(ctx context.Context, obj *types.Document, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentRevisionOrder, filter *types.DocumentRevisionFilter) (*types.DocumentRevisionConnection, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentRevisionList)
 	if err != nil {
 		return nil, err
@@ -368,11 +375,17 @@ func (r *documentResolver) History(ctx context.Context, obj *types.Document, fir
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
+	var revisionFilter *collaboration.DocumentRevisionFilter
+	if filter != nil && filter.Versioned != nil {
+		revisionFilter = &collaboration.DocumentRevisionFilter{Versioned: *filter.Versioned}
+	}
+
 	sessions, totalCount, err := r.probo.Collaboration.ListRevisions(
 		ctx,
 		scope,
 		obj.ID,
 		cursor,
+		revisionFilter,
 	)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list revisions", log.Error(err))
@@ -486,11 +499,41 @@ func (r *documentContentResolver) Markdown(ctx context.Context, obj *types.Docum
 	return md, nil
 }
 
+// Versions is the resolver for the versions field.
+func (r *documentRevisionResolver) Versions(ctx context.Context, obj *types.DocumentRevision) ([]*types.DocumentVersion, error) {
+	if len(obj.VersionIDs) == 0 {
+		return []*types.DocumentVersion{}, nil
+	}
+
+	scope, err := r.authorize(ctx, obj.DocumentID, probo.ActionDocumentVersionList)
+	if err != nil {
+		return nil, err
+	}
+
+	versions, err := r.probo.Documents.GetVersions(ctx, scope, obj.VersionIDs)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load revision versions", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	result := make([]*types.DocumentVersion, len(versions))
+	for i, version := range versions {
+		result[i] = types.NewDocumentVersion(version)
+	}
+
+	return result, nil
+}
+
 // Snapshot is the resolver for the snapshot field.
 func (r *documentRevisionResolver) Snapshot(ctx context.Context, obj *types.DocumentRevision) (*types.DocumentHistorySnapshot, error) {
 	scope, err := r.authorize(ctx, obj.DocumentID, probo.ActionDocumentRevisionGet)
 	if err != nil {
 		return nil, err
+	}
+
+	if obj.Synthetic {
+		return r.syntheticRevisionSnapshot(ctx, scope, obj)
 	}
 
 	heads, err := collaboration.ParseAutomergeHashes(obj.Heads)
@@ -830,34 +873,6 @@ func (r *documentVersionApprovalQuorumConnectionResolver) TotalCount(ctx context
 	}
 
 	return count, nil
-}
-
-// TotalCount is the resolver for the totalCount field.
-func (r *documentVersionConnectionResolver) TotalCount(ctx context.Context, obj *types.DocumentVersionConnection) (int, error) {
-	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionDocumentVersionList)
-	if err != nil {
-		return 0, err
-	}
-
-	switch obj.Resolver.(type) {
-	case *documentResolver:
-		filter := &coredata.DocumentVersionFilter{}
-		if obj.Filters != nil {
-			filter = obj.Filters
-		}
-
-		count, err := r.probo.Documents.CountVersionsForDocumentID(ctx, scope, obj.ParentID, filter)
-		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count document versions", log.Error(err))
-			return 0, gqlx.Internal(ctx)
-		}
-
-		return count, nil
-	}
-
-	r.logger.ErrorCtx(ctx, "unsupported resolver")
-
-	return 0, gqlx.Internal(ctx)
 }
 
 // DocumentVersion is the resolver for the documentVersion field.
@@ -2050,11 +2065,6 @@ func (r *Resolver) DocumentVersionApprovalQuorumConnection() schema.DocumentVers
 	return &documentVersionApprovalQuorumConnectionResolver{r}
 }
 
-// DocumentVersionConnection returns schema.DocumentVersionConnectionResolver implementation.
-func (r *Resolver) DocumentVersionConnection() schema.DocumentVersionConnectionResolver {
-	return &documentVersionConnectionResolver{r}
-}
-
 // DocumentVersionSignature returns schema.DocumentVersionSignatureResolver implementation.
 func (r *Resolver) DocumentVersionSignature() schema.DocumentVersionSignatureResolver {
 	return &documentVersionSignatureResolver{r}
@@ -2096,7 +2106,6 @@ type (
 	documentVersionApprovalDecisionConnectionResolver struct{ *Resolver }
 	documentVersionApprovalQuorumResolver             struct{ *Resolver }
 	documentVersionApprovalQuorumConnectionResolver   struct{ *Resolver }
-	documentVersionConnectionResolver                 struct{ *Resolver }
 	documentVersionSignatureResolver                  struct{ *Resolver }
 	documentVersionSignatureConnectionResolver        struct{ *Resolver }
 	employeeDocumentResolver                          struct{ *Resolver }

@@ -4,6 +4,26 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Changed
+
+- **Breaking**: a document has a single history. A published version is a
+  tag on the revision it was taken at, and the version lists are gone. In
+  GraphQL, `Document.versions` is removed in favor of `publishedVersion`,
+  `pendingApprovalVersion` and `DocumentRevision.versions`, and `history`
+  takes a `versioned` filter. In MCP, `listDocumentVersions` is removed and
+  `listDocumentRevisions` takes `filter.versioned`
+- The document page lists the history only, with its versions as tags and a
+  filter to show tagged revisions alone. The page opens a revision through a
+  shareable `revision` parameter, and links with the old `version`
+  parameter open the revision the version tags
+- A version ends its revision, so later edits never move its tag
+
+### Added
+
+- Versions published before this change are linked to the history by
+  running `link-document-versions`. A version that matches no revision
+  appears as a standalone entry with its own content
+
 ## [0.358.0] - 2026-11-24
 
 ### Added

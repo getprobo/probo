@@ -62,42 +62,30 @@ const fragment = graphql`
       id
       fullName
     }
-    pendingApproval: versions(first: 1, filter: { statuses: [PENDING_APPROVAL] }) {
-      edges {
-        node {
-          id
-          major
-          minor
-          approvalQuorums(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
-            edges {
-              node {
-                status
-                decisions(first: 0) {
-                  totalCount
-                }
-                approvedDecisions: decisions(first: 0 filter: { states: [APPROVED] }) {
-                  totalCount
-                }
-              }
+    pendingApprovalVersion {
+      id
+      major
+      minor
+      approvalQuorums(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
+        edges {
+          node {
+            status
+            decisions(first: 0) {
+              totalCount
+            }
+            approvedDecisions: decisions(first: 0 filter: { states: [APPROVED] }) {
+              totalCount
             }
           }
         }
       }
     }
-    publishedVersion: versions(
-      first: 1
-      filter: { statuses: [PUBLISHED] }
-      orderBy: { field: CREATED_AT, direction: DESC }
-    ) {
-      edges {
-        node {
-          signatures(first: 0 filter: { activeContract: true, profileStates: [ACTIVE] }) {
-            totalCount
-          }
-          signedSignatures: signatures(first: 0 filter: { states: [SIGNED], activeContract: true, profileStates: [ACTIVE] }) {
-            totalCount
-          }
-        }
+    publishedVersion {
+      signatures(first: 0 filter: { activeContract: true, profileStates: [ACTIVE] }) {
+        totalCount
+      }
+      signedSignatures: signatures(first: 0 filter: { states: [SIGNED], activeContract: true, profileStates: [ACTIVE] }) {
+        totalCount
       }
     }
   }
@@ -165,8 +153,8 @@ export function DocumentListItem(props: {
     fragmentRef,
   );
 
-  const pending = document.pendingApproval.edges[0]?.node;
-  const published = document.publishedVersion.edges[0]?.node;
+  const pending = document.pendingApprovalVersion;
+  const published = document.publishedVersion;
   const listStatus = pending
     ? "PENDING_APPROVAL"
     : document.currentPublishedMajor != null

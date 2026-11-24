@@ -72,8 +72,8 @@ func assertDraftEditable(
 }
 
 // writeLiveContent stores the materialized CRDT text on the document. Versions
-// stay frozen snapshots; this is the projection readers use without opening
-// the CRDT.
+// stay frozen snapshots, tags on a revision of the CRDT history; this is the
+// projection readers use without opening the CRDT.
 func writeLiveContent(
 	ctx context.Context,
 	scope coredata.Scoper,

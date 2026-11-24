@@ -42,17 +42,9 @@ query DocumentView($id: ID!) {
       classification
       currentPublishedMajor
       currentPublishedMinor
-      versions(first: 1) {
-        edges {
-          node {
-            title
-            documentType
-            classification
-            major
-            minor
-            status
-          }
-        }
+      pendingApprovalVersion {
+        major
+        minor
       }
       createdAt
       updatedAt
@@ -63,26 +55,18 @@ query DocumentView($id: ID!) {
 
 type viewResponse struct {
 	Node *struct {
-		Typename              string `json:"__typename"`
-		ID                    string `json:"id"`
-		Title                 string `json:"title"`
-		Status                string `json:"status"`
-		DocumentType          string `json:"documentType"`
-		Classification        string `json:"classification"`
-		CurrentPublishedMajor *int   `json:"currentPublishedMajor"`
-		CurrentPublishedMinor *int   `json:"currentPublishedMinor"`
-		Versions              struct {
-			Edges []struct {
-				Node struct {
-					Title          string `json:"title"`
-					DocumentType   string `json:"documentType"`
-					Classification string `json:"classification"`
-					Major          int    `json:"major"`
-					Minor          int    `json:"minor"`
-					Status         string `json:"status"`
-				} `json:"node"`
-			} `json:"edges"`
-		} `json:"versions"`
+		Typename               string `json:"__typename"`
+		ID                     string `json:"id"`
+		Title                  string `json:"title"`
+		Status                 string `json:"status"`
+		DocumentType           string `json:"documentType"`
+		Classification         string `json:"classification"`
+		CurrentPublishedMajor  *int   `json:"currentPublishedMajor"`
+		CurrentPublishedMinor  *int   `json:"currentPublishedMinor"`
+		PendingApprovalVersion *struct {
+			Major int `json:"major"`
+			Minor int `json:"minor"`
+		} `json:"pendingApprovalVersion"`
 		CreatedAt string `json:"createdAt"`
 		UpdatedAt string `json:"updatedAt"`
 	} `json:"node"`
@@ -156,13 +140,12 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Type:"), doc.DocumentType)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Classification:"), doc.Classification)
 
-			if len(doc.Versions.Edges) > 0 {
-				v := doc.Versions.Edges[0].Node
-				_, _ = fmt.Fprintf(out, "%s%d.%d (%s)\n", label.Render("Latest Version:"), v.Major, v.Minor, v.Status)
-			}
-
 			if doc.CurrentPublishedMajor != nil && doc.CurrentPublishedMinor != nil {
 				_, _ = fmt.Fprintf(out, "%s%d.%d\n", label.Render("Published Version:"), *doc.CurrentPublishedMajor, *doc.CurrentPublishedMinor)
+			}
+
+			if doc.PendingApprovalVersion != nil {
+				_, _ = fmt.Fprintf(out, "%s%d.%d\n", label.Render("Pending Approval:"), doc.PendingApprovalVersion.Major, doc.PendingApprovalVersion.Minor)
 			}
 
 			_, _ = fmt.Fprintln(out)

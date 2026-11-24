@@ -24,73 +24,84 @@ import { Suspense, useEffect, useLayoutEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
-import type { DocumentVersionContentQuery } from "#/__generated__/core/DocumentVersionContentQuery.graphql";
+import type { DocumentHistoryContentQuery } from "#/__generated__/core/DocumentHistoryContentQuery.graphql";
 import { isNotFoundError } from "#/lib/relay/errors";
 
 import { DocumentReadOnlyContent } from "../DocumentEditor/DocumentReadOnlyContent";
 
-export const documentVersionContentQuery = graphql`
-  query DocumentVersionContentQuery($versionId: ID!) {
-    node(id: $versionId) {
+export const documentHistoryContentQuery = graphql`
+  query DocumentHistoryContentQuery($documentId: ID!, $revisionId: ID!) {
+    node(id: $documentId) {
       __typename
-      ... on DocumentVersion {
+      ... on Document {
         id
         orientation
-        document {
+        revision(id: $revisionId) {
           id
+          versions {
+            id
+            orientation
+            content {
+              prosemirror
+            }
+          }
+          snapshot {
+            content {
+              prosemirror
+            }
+          }
+          # The toolbar label reads this query too, to share its request.
+          # eslint-disable-next-line relay/must-colocate-fragment-spreads
+          ...DocumentHistoryLabel_revision
         }
-        content {
-          prosemirror
-        }
-        # The toolbar label reads this query too, to share its request.
-        # eslint-disable-next-line relay/must-colocate-fragment-spreads
-        ...DocumentVersionLabel_version
       }
     }
   }
 `;
 
-interface DocumentVersionContentProps {
-  queryRef: PreloadedQuery<DocumentVersionContentQuery>;
+interface DocumentHistoryContentProps {
+  queryRef: PreloadedQuery<DocumentHistoryContentQuery>;
   documentId: string;
   // Must be stable: a new callback rebuilds the editor.
   onPages: (pages: number) => void;
-  // The version keeps the orientation it was published with, which sizes the
-  // pages around it.
+  // A revision tagged by a version keeps the orientation the version was
+  // published with, which sizes the pages around it.
   onOrientation: (orientation: string) => void;
-  // A version of another document, or an id the server reports as not found,
-  // falls back to the live document.
+  // A revision of another document, or an id the server reports as not
+  // found, falls back to the live document.
   onMissing: () => void;
 }
 
-// A previous version, read only, laid out on pages like the live document.
-export function DocumentVersionContent(props: DocumentVersionContentProps) {
+// A previous revision, read only, laid out on pages like the live document.
+export function DocumentHistoryContent(props: DocumentHistoryContentProps) {
   const { t } = useTranslation("organizations/documents");
 
   return (
     <ErrorBoundary
       fallback={error => isNotFoundError(error)
-        ? <DocumentVersionMissing onMissing={props.onMissing} />
-        : <Text size={2} color="faint">{t("details.versions.openError")}</Text>}
+        ? <DocumentHistoryMissing onMissing={props.onMissing} />
+        : <Text size={2} color="faint">{t("details.history.openError")}</Text>}
     >
       <Suspense fallback={<Text size={2} color="faint">{t("details.editor.loading")}</Text>}>
-        <DocumentVersionContentLoaded {...props} />
+        <DocumentHistoryContentLoaded {...props} />
       </Suspense>
     </ErrorBoundary>
   );
 }
 
-function DocumentVersionContentLoaded({
+function DocumentHistoryContentLoaded({
   queryRef,
   documentId,
   onPages,
   onOrientation,
   onMissing,
-}: DocumentVersionContentProps) {
-  const data = usePreloadedQuery<DocumentVersionContentQuery>(documentVersionContentQuery, queryRef);
-  const version = data.node.__typename === "DocumentVersion" && data.node.document.id === documentId
+}: DocumentHistoryContentProps) {
+  const data = usePreloadedQuery<DocumentHistoryContentQuery>(documentHistoryContentQuery, queryRef);
+  const document = data.node.__typename === "Document" && data.node.id === documentId
     ? data.node
     : null;
+  const revision = document?.revision ?? null;
+  const version = revision?.versions.at(-1) ?? null;
   const orientation = version?.orientation ?? null;
 
   useLayoutEffect(() => {
@@ -99,21 +110,21 @@ function DocumentVersionContentLoaded({
     }
   }, [onOrientation, orientation]);
 
-  if (version == null) {
-    return <DocumentVersionMissing onMissing={onMissing} />;
+  if (revision == null) {
+    return <DocumentHistoryMissing onMissing={onMissing} />;
   }
 
   return (
     <DocumentReadOnlyContent
-      key={version.id}
-      content={version.content.prosemirror}
-      orientation={version.orientation}
+      key={revision.id}
+      content={version?.content.prosemirror ?? revision.snapshot.content.prosemirror}
+      orientation={version?.orientation ?? document?.orientation ?? ""}
       onPages={onPages}
     />
   );
 }
 
-function DocumentVersionMissing({ onMissing }: { onMissing: () => void }) {
+function DocumentHistoryMissing({ onMissing }: { onMissing: () => void }) {
   useEffect(() => {
     onMissing();
   }, [onMissing]);

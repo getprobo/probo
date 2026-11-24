@@ -18,40 +18,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { ClockCounterClockwiseIcon } from "@phosphor-icons/react";
-import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
-import { Tooltip } from "@probo/ui/src/v2/Tooltip/Tooltip";
-import { TooltipPopup } from "@probo/ui/src/v2/Tooltip/TooltipPopup";
-import { TooltipTrigger } from "@probo/ui/src/v2/Tooltip/TooltipTrigger";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
-interface DocumentVersionsTriggerProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}
-
-// Shows or hides the versions column beside the document.
-export function DocumentVersionsTrigger({ open, onOpenChange }: DocumentVersionsTriggerProps) {
-  const { t } = useTranslation("organizations/documents");
-  const label = t("details.versions.trigger");
-
-  return (
-    <Tooltip>
-      <TooltipTrigger
-        render={(
-          <IconButton
-            size={2}
-            variant={open ? "soft" : "ghost"}
-            color="neutral"
-            aria-label={label}
-            aria-pressed={open}
-            onClick={() => onOpenChange(!open)}
-          />
-        )}
-      >
-        <ClockCounterClockwiseIcon />
-      </TooltipTrigger>
-      <TooltipPopup>{label}</TooltipPopup>
-    </Tooltip>
+// useRevisionDate formats when a revision of the document history ended, such
+// as "Mar 12, 2026, 3:04 PM", in the active language.
+export function useRevisionDate() {
+  const { i18n } = useTranslation();
+  const format = useMemo(
+    () => new Intl.DateTimeFormat(i18n.language, {
+      dateStyle: "medium",
+      timeStyle: "short",
+    }),
+    [i18n.language],
   );
+
+  return (date: string) => format.format(new Date(date));
 }

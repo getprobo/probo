@@ -747,17 +747,19 @@ export async function searchDocumentVersions(
 
 	const statuses = versionSearchStatuses(this.getNode().parameters.operation);
 	const query = `
-		query SearchDocumentVersions($documentId: ID!, $first: Int, $after: CursorKey, $filter: DocumentVersionFilter) {
+		query SearchDocumentVersions($documentId: ID!, $first: Int, $after: CursorKey) {
 			node(id: $documentId) {
 				... on Document {
-					versions(first: $first, after: $after, filter: $filter) {
+					history(first: $first, after: $after, filter: { versioned: true }) {
 						edges {
 							node {
-								id
-								title
-								major
-								minor
-								status
+								versions {
+									id
+									title
+									major
+									minor
+									status
+								}
 							}
 						}
 						pageInfo {
@@ -774,22 +776,27 @@ export async function searchDocumentVersions(
 		documentId,
 		first: 50,
 		after: paginationToken,
-		filter: statuses ? { statuses } : {},
 	});
 	const data = response.data as IDataObject | undefined;
 	const node = data?.node as IDataObject | undefined;
-	const versions = node?.versions;
-	const results = connectionEdges(versions).flatMap((version) => {
-		if (typeof version.id !== 'string' || !version.id) {
-			return [];
-		}
-		const name = versionResultName(version);
-		if (!matchesFilter(name, filter)) {
-			return [];
-		}
-		return [{ name, value: version.id }];
+	const history = node?.history;
+	const results = connectionEdges(history).flatMap((revision) => {
+		const versions = Array.isArray(revision.versions) ? (revision.versions as IDataObject[]) : [];
+		return versions.flatMap((version) => {
+			if (typeof version.id !== 'string' || !version.id) {
+				return [];
+			}
+			if (statuses && !statuses.includes(version.status as string)) {
+				return [];
+			}
+			const name = versionResultName(version);
+			if (!matchesFilter(name, filter)) {
+				return [];
+			}
+			return [{ name, value: version.id }];
+		});
 	});
-	const info = pageInfoOf(versions);
+	const info = pageInfoOf(history);
 	return {
 		results,
 		paginationToken: info.hasNextPage ? info.endCursor : undefined,

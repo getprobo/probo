@@ -24,13 +24,13 @@ import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { useLocation } from "react-router";
 
 import type { DocumentDetailsPageQuery } from "#/__generated__/core/DocumentDetailsPageQuery.graphql";
+import type { DocumentHistoryContentQuery } from "#/__generated__/core/DocumentHistoryContentQuery.graphql";
 import type { DocumentReviewListQuery } from "#/__generated__/core/DocumentReviewListQuery.graphql";
-import type { DocumentVersionContentQuery } from "#/__generated__/core/DocumentVersionContentQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { NotFoundError } from "#/lib/relay/errors";
 
 import { DocumentDetails } from "./_components/DocumentDetails";
-import { documentListSearch } from "./_lib/useDocumentVersionParam";
+import { documentListSearch } from "./_lib/useDocumentRevisionParam";
 
 export const documentDetailsPageQuery = graphql`
   query DocumentDetailsPageQuery($documentId: ID!) {
@@ -50,10 +50,10 @@ export const documentDetailsPageQuery = graphql`
 interface DocumentDetailsPageProps {
   queryRef: PreloadedQuery<DocumentDetailsPageQuery>;
   reviewQueryRef: PreloadedQuery<DocumentReviewListQuery> | null;
-  versionQueryRef: PreloadedQuery<DocumentVersionContentQuery> | null;
+  revisionQueryRef: PreloadedQuery<DocumentHistoryContentQuery> | null;
 }
 
-export function DocumentDetailsPage({ queryRef, reviewQueryRef, versionQueryRef }: DocumentDetailsPageProps) {
+export function DocumentDetailsPage({ queryRef, reviewQueryRef, revisionQueryRef }: DocumentDetailsPageProps) {
   const data = usePreloadedQuery<DocumentDetailsPageQuery>(
     documentDetailsPageQuery,
     queryRef,
@@ -72,7 +72,7 @@ export function DocumentDetailsPage({ queryRef, reviewQueryRef, versionQueryRef 
     <DocumentDetails
       documentKey={document}
       reviewQueryRef={reviewQueryRef}
-      versionQueryRef={versionQueryRef}
+      revisionQueryRef={revisionQueryRef}
       organizationId={organizationId}
       search={documentListSearch(location.search)}
     />

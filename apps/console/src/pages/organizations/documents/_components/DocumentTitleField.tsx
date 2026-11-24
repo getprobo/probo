@@ -39,12 +39,8 @@ const documentTitleFieldFragment = graphql`
     status
     writeMode
     canUpdate: permission(action: "core:document:update")
-    pendingApproval: versions(first: 1, filter: { statuses: [PENDING_APPROVAL] }) {
-      edges {
-        node {
-          id
-        }
-      }
+    pendingApprovalVersion {
+      id
     }
   }
 `;
@@ -63,7 +59,7 @@ export function DocumentTitleField({ documentKey }: DocumentTitleFieldProps) {
   const canEdit = document.canUpdate
     && document.status !== "ARCHIVED"
     && document.writeMode !== "GENERATED"
-    && document.pendingApproval.edges[0]?.node == null;
+    && document.pendingApprovalVersion == null;
 
   useEffect(() => {
     if (document.title !== savedRef.current && draft === savedRef.current) {

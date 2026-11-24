@@ -292,10 +292,11 @@ export const documentReviewPanel = tv({
 // history, they stay in view wherever the document is scrolled and scroll on
 // their own within the frame's height, with no scrollbar beside the
 // document's.
-export const documentVersionList = tv({
+export const documentHistoryList = tv({
   slots: {
     root: "sticky top-0 flex h-(--review-viewport-height,100vh) flex-col",
     heading: "flex shrink-0 items-center justify-between gap-2 pb-2",
+    filter: "flex shrink-0 cursor-pointer items-center justify-between gap-2 px-3 pb-2",
     body: "relative min-h-0 flex-1 overflow-hidden",
     viewport: [
       "h-full overscroll-y-contain outline-none",
@@ -307,7 +308,7 @@ export const documentVersionList = tv({
   },
 });
 
-export const documentVersionListItem = tv({
+export const documentHistoryListItem = tv({
   slots: {
     root: [
       "flex w-full cursor-pointer flex-col items-start gap-1 rounded-2 px-3 py-2 text-left",

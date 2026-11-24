@@ -29,14 +29,21 @@ import (
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
+type documentVersionSummary struct {
+	ID     string `json:"id"`
+	Status string `json:"status"`
+	Major  int    `json:"major"`
+	Minor  int    `json:"minor"`
+}
+
 func getOwnerProfileID(t *testing.T, owner *testutil.Client) string {
 	t.Helper()
 
 	return owner.GetProfileID().String()
 }
 
-// createTestDocument creates a document and returns its ID and the document version ID
-func createTestDocument(t *testing.T, owner *testutil.Client) (docID string, docVersionID string) {
+// createTestDocument creates a document and returns its ID.
+func createTestDocument(t *testing.T, owner *testutil.Client) string {
 	t.Helper()
 
 	query := `
@@ -45,13 +52,6 @@ func createTestDocument(t *testing.T, owner *testutil.Client) (docID string, doc
 				documentEdge {
 					node {
 						id
-						versions(first: 1) {
-							edges {
-								node {
-									id
-								}
-							}
-						}
 					}
 				}
 			}
@@ -62,14 +62,7 @@ func createTestDocument(t *testing.T, owner *testutil.Client) (docID string, doc
 		CreateDocument struct {
 			DocumentEdge struct {
 				Node struct {
-					ID       string `json:"id"`
-					Versions struct {
-						Edges []struct {
-							Node struct {
-								ID string `json:"id"`
-							} `json:"node"`
-						} `json:"edges"`
-					} `json:"versions"`
+					ID string `json:"id"`
 				} `json:"node"`
 			} `json:"documentEdge"`
 		} `json:"createDocument"`
@@ -86,12 +79,7 @@ func createTestDocument(t *testing.T, owner *testutil.Client) (docID string, doc
 	}, &result)
 	require.NoError(t, err)
 
-	docID = result.CreateDocument.DocumentEdge.Node.ID
-	if len(result.CreateDocument.DocumentEdge.Node.Versions.Edges) > 0 {
-		docVersionID = result.CreateDocument.DocumentEdge.Node.Versions.Edges[0].Node.ID
-	}
-
-	return docID, docVersionID
+	return result.CreateDocument.DocumentEdge.Node.ID
 }
 
 // approveTestDocument requests approval and approves the document so it can be published.
@@ -106,15 +94,26 @@ func approveTestDocument(t *testing.T, owner *testutil.Client, docID string) {
 func latestDocumentVersionID(t *testing.T, owner *testutil.Client, docID string) string {
 	t.Helper()
 
+	return latestDocumentVersion[struct {
+		ID string `json:"id"`
+	}](t, owner, docID, "id").ID
+}
+
+// latestDocumentVersion returns the document's most recently created
+// version. A version is a tag on a revision of the document history, so the
+// newest one is the last tag of the newest tagged revision.
+func latestDocumentVersion[T any](t *testing.T, owner *testutil.Client, docID string, selection string) T {
+	t.Helper()
+
 	var result struct {
 		Node struct {
-			Versions struct {
+			History struct {
 				Edges []struct {
 					Node struct {
-						ID string `json:"id"`
+						Versions []T `json:"versions"`
 					} `json:"node"`
 				} `json:"edges"`
-			} `json:"versions"`
+			} `json:"history"`
 		} `json:"node"`
 	}
 
@@ -122,17 +121,20 @@ func latestDocumentVersionID(t *testing.T, owner *testutil.Client, docID string)
 		query($id: ID!) {
 			node(id: $id) {
 				... on Document {
-					versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
-						edges { node { id } }
+					history(first: 1, orderBy: { field: ENDED_AT, direction: DESC }, filter: { versioned: true }) {
+						edges { node { versions { `+selection+` } } }
 					}
 				}
 			}
 		}
 	`, map[string]any{"id": docID}, &result)
 	require.NoError(t, err)
-	require.NotEmpty(t, result.Node.Versions.Edges)
+	require.NotEmpty(t, result.Node.History.Edges)
+	require.NotEmpty(t, result.Node.History.Edges[0].Node.Versions)
 
-	return result.Node.Versions.Edges[0].Node.ID
+	versions := result.Node.History.Edges[0].Node.Versions
+
+	return versions[len(versions)-1]
 }
 
 // requestDocumentApproval opens a major approval quorum on the document's draft.
@@ -303,6 +305,7 @@ func TestDocumentVersion(t *testing.T) {
 		run  func(*testing.T, documentVersionActors)
 	}{
 		{name: "PublishVersion", run: documentVersionPublishVersion},
+		{name: "VersionTagsRevision", run: documentVersionVersionTagsRevision},
 		{name: "PublishInitialMinorVersion", run: documentVersionPublishInitialMinorVersion},
 		{name: "AutoCreateDraft", run: documentVersionAutoCreateDraft},
 		{name: "RequestSignature", run: documentVersionRequestSignature},
@@ -353,58 +356,115 @@ func TestDocumentVersion(t *testing.T) {
 func documentVersionPublishVersion(t *testing.T, actors documentVersionActors) {
 	owner := actors.owner.ForTest(t)
 
-	docID, _ := createTestDocument(t, owner)
+	docID := createTestDocument(t, owner)
 	approveTestDocument(t, owner, docID)
 
 	// After approval, the version is auto-published.
-	// Verify the version status by querying.
-	query := `
-		query GetDocument($id: ID!) {
+	version := latestDocumentVersion[documentVersionSummary](t, owner, docID, "id status major minor")
+
+	assert.Equal(t, "PUBLISHED", version.Status)
+	assert.Equal(t, 1, version.Major)
+	assert.Equal(t, 0, version.Minor)
+}
+
+// documentVersionVersionTagsRevision verifies that the history is the only
+// timeline: a published version is a tag on the revision it was taken at, and
+// later edits open a newer revision that carries no tag.
+func documentVersionVersionTagsRevision(t *testing.T, actors documentVersionActors) {
+	owner := actors.owner.ForTest(t)
+
+	docID := createTestDocument(t, owner)
+	approveTestDocument(t, owner, docID)
+	versionID := latestDocumentVersionID(t, owner, docID)
+
+	updateDocumentContent(t, owner, docID, "Edited after the version")
+
+	type revision struct {
+		ID        string   `json:"id"`
+		Heads     []string `json:"heads"`
+		Synthetic bool     `json:"synthetic"`
+		Versions  []struct {
+			ID     string `json:"id"`
+			Status string `json:"status"`
+			Major  int    `json:"major"`
+			Minor  int    `json:"minor"`
+		} `json:"versions"`
+	}
+
+	var result struct {
+		Node struct {
+			PublishedVersion *struct {
+				ID string `json:"id"`
+			} `json:"publishedVersion"`
+			PendingApprovalVersion *struct {
+				ID string `json:"id"`
+			} `json:"pendingApprovalVersion"`
+			History struct {
+				Edges []struct {
+					Node revision `json:"node"`
+				} `json:"edges"`
+			} `json:"history"`
+			Versioned struct {
+				Edges []struct {
+					Node revision `json:"node"`
+				} `json:"edges"`
+			} `json:"versioned"`
+		} `json:"node"`
+	}
+
+	const revisionFields = `id heads synthetic versions { id status major minor }`
+
+	err := owner.Execute(`
+		query($id: ID!) {
 			node(id: $id) {
 				... on Document {
-					versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
-						edges {
-							node {
-								id
-								status
-								major
-								minor
-							}
-						}
+					publishedVersion { id }
+					pendingApprovalVersion { id }
+					history(first: 50, orderBy: { field: ENDED_AT, direction: DESC }) {
+						edges { node { `+revisionFields+` } }
+					}
+					versioned: history(first: 50, orderBy: { field: ENDED_AT, direction: DESC }, filter: { versioned: true }) {
+						edges { node { `+revisionFields+` } }
 					}
 				}
 			}
 		}
-	`
-
-	var result struct {
-		Node struct {
-			Versions struct {
-				Edges []struct {
-					Node struct {
-						ID     string `json:"id"`
-						Status string `json:"status"`
-						Major  int    `json:"major"`
-						Minor  int    `json:"minor"`
-					} `json:"node"`
-				} `json:"edges"`
-			} `json:"versions"`
-		} `json:"node"`
-	}
-
-	err := owner.Execute(query, map[string]any{"id": docID}, &result)
+	`, map[string]any{"id": docID}, &result)
 	require.NoError(t, err)
-	require.NotEmpty(t, result.Node.Versions.Edges)
 
-	assert.Equal(t, "PUBLISHED", result.Node.Versions.Edges[0].Node.Status)
-	assert.Equal(t, 1, result.Node.Versions.Edges[0].Node.Major)
-	assert.Equal(t, 0, result.Node.Versions.Edges[0].Node.Minor)
+	require.NotNil(t, result.Node.PublishedVersion)
+	assert.Equal(t, versionID, result.Node.PublishedVersion.ID)
+	assert.Nil(t, result.Node.PendingApprovalVersion)
+
+	require.Len(t, result.Node.Versioned.Edges, 1, "only the tagged revision is listed")
+	tagged := result.Node.Versioned.Edges[0].Node
+	assert.False(t, tagged.Synthetic)
+	assert.NotEmpty(t, tagged.Heads)
+	require.Len(t, tagged.Versions, 1)
+	assert.Equal(t, versionID, tagged.Versions[0].ID)
+	assert.Equal(t, "PUBLISHED", tagged.Versions[0].Status)
+	assert.Equal(t, 1, tagged.Versions[0].Major)
+
+	require.GreaterOrEqual(t, len(result.Node.History.Edges), 2, "the edit after the version opens a newer revision")
+	newest := result.Node.History.Edges[0].Node
+	assert.NotEqual(t, tagged.ID, newest.ID)
+	assert.Empty(t, newest.Versions, "the newer revision carries no tag")
+
+	var found bool
+	for _, edge := range result.Node.History.Edges {
+		if edge.Node.ID == tagged.ID {
+			found = true
+			require.Len(t, edge.Node.Versions, 1)
+			assert.Equal(t, versionID, edge.Node.Versions[0].ID)
+		}
+	}
+	assert.True(t, found, "the tagged revision is part of the full history")
 }
 
 func documentVersionPublishInitialMinorVersion(t *testing.T, actors documentVersionActors) {
 	owner := actors.owner.ForTest(t)
 
-	docID, _ := createTestDocument(t, owner)
+	docID := createTestDocument(t, owner)
 
 	publishMutation := `
 		mutation($input: PublishDocumentInput!) {
@@ -502,7 +562,7 @@ func documentVersionAutoCreateDraft(t *testing.T, actors documentVersionActors) 
 	owner := actors.owner.ForTest(t)
 
 	// Create and approve a document (auto-publishes on approval)
-	docID, _ := createTestDocument(t, owner)
+	docID := createTestDocument(t, owner)
 	approveTestDocument(t, owner, docID)
 
 	// Updating content writes the live document and leaves published snapshots unchanged.
@@ -555,43 +615,10 @@ func documentVersionRequestSignature(t *testing.T, actors documentVersionActors)
 	owner := actors.owner.ForTest(t)
 
 	// Create and approve a document (auto-publishes on approval)
-	docID, _ := createTestDocument(t, owner)
+	docID := createTestDocument(t, owner)
 	approveTestDocument(t, owner, docID)
 
-	// Get the published version ID
-	versionQuery := `
-		query GetVersions($id: ID!) {
-			node(id: $id) {
-				... on Document {
-					versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
-						edges {
-							node {
-								id
-							}
-						}
-					}
-				}
-			}
-		}
-	`
-
-	var versionResult struct {
-		Node struct {
-			Versions struct {
-				Edges []struct {
-					Node struct {
-						ID string `json:"id"`
-					} `json:"node"`
-				} `json:"edges"`
-			} `json:"versions"`
-		} `json:"node"`
-	}
-
-	err := owner.Execute(versionQuery, map[string]any{"id": docID}, &versionResult)
-	require.NoError(t, err)
-	require.NotEmpty(t, versionResult.Node.Versions.Edges)
-
-	publishedVersionID := versionResult.Node.Versions.Edges[0].Node.ID
+	publishedVersionID := latestDocumentVersionID(t, owner, docID)
 
 	// Create a person to sign
 	signerProfileID := factory.CreateUser(owner)
@@ -628,7 +655,7 @@ func documentVersionRequestSignature(t *testing.T, actors documentVersionActors)
 		} `json:"requestSignature"`
 	}
 
-	err = owner.Execute(query, map[string]any{
+	err := owner.Execute(query, map[string]any{
 		"input": map[string]any{
 			"documentVersionId": publishedVersionID,
 			"signatoryId":       signerProfileID,
@@ -681,8 +708,8 @@ func documentVersionBulkPublish(t *testing.T, actors documentVersionActors) {
 	owner := actors.owner.ForTest(t)
 
 	// Create multiple draft documents (no default approvers — should publish directly)
-	docID1, _ := createTestDocument(t, owner)
-	docID2, _ := createTestDocument(t, owner)
+	docID1 := createTestDocument(t, owner)
+	docID2 := createTestDocument(t, owner)
 
 	query := `
 		mutation BulkPublishDocuments($input: BulkPublishDocumentsInput!) {
@@ -822,7 +849,7 @@ func documentVersionBulkPublishMinorSkipsPendingApproval(t *testing.T, actors do
 	owner := actors.owner.ForTest(t)
 
 	// Create and publish a document first (need a published version for minor publish)
-	docID, _ := createTestDocument(t, owner)
+	docID := createTestDocument(t, owner)
 	approveTestDocument(t, owner, docID)
 
 	// Create a draft by updating content (auto-creates draft)
@@ -889,7 +916,7 @@ func documentVersionBulkRequestSignatures(t *testing.T, actors documentVersionAc
 	owner := actors.owner.ForTest(t)
 
 	// Create and approve a document (auto-publishes on approval)
-	docID, _ := createTestDocument(t, owner)
+	docID := createTestDocument(t, owner)
 	approveTestDocument(t, owner, docID)
 
 	// Create multiple signers
@@ -942,7 +969,7 @@ func documentVersionAutoCreateDraftOnClassificationOrTypeUpdate(t *testing.T, ac
 		owner := actors.owner.ForTest(t)
 
 		// Create and approve a document (auto-publishes on approval)
-		docID, _ := createTestDocument(t, owner)
+		docID := createTestDocument(t, owner)
 		approveTestDocument(t, owner, docID)
 
 		query := `
@@ -982,7 +1009,7 @@ func documentVersionAutoCreateDraftOnClassificationOrTypeUpdate(t *testing.T, ac
 		owner := actors.owner.ForTest(t)
 
 		// Create and approve a document (auto-publishes on approval)
-		docID, _ := createTestDocument(t, owner)
+		docID := createTestDocument(t, owner)
 		approveTestDocument(t, owner, docID)
 
 		query := `
@@ -1022,7 +1049,7 @@ func documentVersionViewerCannotUpdateDocument(t *testing.T, actors documentVers
 	viewer := actors.viewer.ForTest(t)
 
 	// Create and approve a document (auto-publishes on approval)
-	docID, _ := createTestDocument(t, owner)
+	docID := createTestDocument(t, owner)
 	approveTestDocument(t, owner, docID)
 
 	// Viewer attempts to update content on the published document
@@ -1045,8 +1072,8 @@ func documentVersionBulkDelete(t *testing.T, actors documentVersionActors) {
 	owner := actors.owner.ForTest(t)
 
 	// Create multiple documents to delete
-	docID1, _ := createTestDocument(t, owner)
-	docID2, _ := createTestDocument(t, owner)
+	docID1 := createTestDocument(t, owner)
+	docID2 := createTestDocument(t, owner)
 
 	query := `
 		mutation BulkDeleteDocuments($input: BulkDeleteDocumentsInput!) {
@@ -1077,7 +1104,7 @@ func documentVersionBulkDelete(t *testing.T, actors documentVersionActors) {
 func documentVersionVoidApproval(t *testing.T, actors documentVersionActors) {
 	owner := actors.owner.ForTest(t)
 
-	docID, _ := createTestDocument(t, owner)
+	docID := createTestDocument(t, owner)
 	approverID := getOwnerProfileID(t, owner)
 
 	// Request approval
@@ -1098,39 +1125,12 @@ func documentVersionVoidApproval(t *testing.T, actors documentVersionActors) {
 	require.NoError(t, err)
 
 	// Get version ID and verify version bumped to 1.0
-	var versionResult struct {
-		Node struct {
-			Versions struct {
-				Edges []struct {
-					Node struct {
-						ID     string `json:"id"`
-						Status string `json:"status"`
-						Major  int    `json:"major"`
-						Minor  int    `json:"minor"`
-					} `json:"node"`
-				} `json:"edges"`
-			} `json:"versions"`
-		} `json:"node"`
-	}
+	version := latestDocumentVersion[documentVersionSummary](t, owner, docID, "id status major minor")
+	assert.Equal(t, "PENDING_APPROVAL", version.Status)
+	assert.Equal(t, 1, version.Major)
+	assert.Equal(t, 0, version.Minor)
 
-	err = owner.Execute(`
-		query($id: ID!) {
-			node(id: $id) {
-				... on Document {
-					versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
-						edges { node { id status major minor } }
-					}
-				}
-			}
-		}
-	`, map[string]any{"id": docID}, &versionResult)
-	require.NoError(t, err)
-	require.NotEmpty(t, versionResult.Node.Versions.Edges)
-	assert.Equal(t, "PENDING_APPROVAL", versionResult.Node.Versions.Edges[0].Node.Status)
-	assert.Equal(t, 1, versionResult.Node.Versions.Edges[0].Node.Major)
-	assert.Equal(t, 0, versionResult.Node.Versions.Edges[0].Node.Minor)
-
-	versionID := versionResult.Node.Versions.Edges[0].Node.ID
+	versionID := version.ID
 
 	// Void keeps the snapshot number and marks the row voided.
 	var voidResult struct {
@@ -1168,57 +1168,33 @@ func documentVersionVoidApproval(t *testing.T, actors documentVersionActors) {
 	assert.Equal(t, 0, voidResult.VoidDocumentVersionApproval.DocumentVersion.Minor)
 
 	// Verify decisions are VOIDED after voiding
-	var quorumResult struct {
-		Node struct {
-			Versions struct {
-				Edges []struct {
-					Node struct {
-						ApprovalQuorums struct {
-							Edges []struct {
-								Node struct {
-									Decisions struct {
-										Edges []struct {
-											Node struct {
-												State string `json:"state"`
-											} `json:"node"`
-										} `json:"edges"`
-									} `json:"decisions"`
-								} `json:"node"`
-							} `json:"edges"`
-						} `json:"approvalQuorums"`
-					} `json:"node"`
-				} `json:"edges"`
-			} `json:"versions"`
-		} `json:"node"`
-	}
-
-	err = owner.Execute(`
-		query($id: ID!) {
-			node(id: $id) {
-				... on Document {
-					versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
-						edges {
-							node {
-								approvalQuorums(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
-									edges {
-										node {
-											decisions(first: 100) {
-												edges { node { state } }
-											}
-										}
-									}
-								}
-							}
-						}
+	quorums := latestDocumentVersion[struct {
+		ApprovalQuorums struct {
+			Edges []struct {
+				Node struct {
+					Decisions struct {
+						Edges []struct {
+							Node struct {
+								State string `json:"state"`
+							} `json:"node"`
+						} `json:"edges"`
+					} `json:"decisions"`
+				} `json:"node"`
+			} `json:"edges"`
+		} `json:"approvalQuorums"`
+	}](t, owner, docID, `
+		approvalQuorums(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
+			edges {
+				node {
+					decisions(first: 100) {
+						edges { node { state } }
 					}
 				}
 			}
 		}
-	`, map[string]any{"id": docID}, &quorumResult)
-	require.NoError(t, err)
-	require.NotEmpty(t, quorumResult.Node.Versions.Edges)
-	require.NotEmpty(t, quorumResult.Node.Versions.Edges[0].Node.ApprovalQuorums.Edges)
-	decisions := quorumResult.Node.Versions.Edges[0].Node.ApprovalQuorums.Edges[0].Node.Decisions.Edges
+	`).ApprovalQuorums.Edges
+	require.NotEmpty(t, quorums)
+	decisions := quorums[0].Node.Decisions.Edges
 	require.NotEmpty(t, decisions)
 
 	for _, d := range decisions {
@@ -1229,7 +1205,7 @@ func documentVersionVoidApproval(t *testing.T, actors documentVersionActors) {
 func documentVersionRejectApproval(t *testing.T, actors documentVersionActors) {
 	owner := actors.owner.ForTest(t)
 
-	docID, _ := createTestDocument(t, owner)
+	docID := createTestDocument(t, owner)
 	approverID := getOwnerProfileID(t, owner)
 
 	// Request approval — version should bump to 1.0
@@ -1250,39 +1226,12 @@ func documentVersionRejectApproval(t *testing.T, actors documentVersionActors) {
 	require.NoError(t, err)
 
 	// Get version ID
-	var versionResult struct {
-		Node struct {
-			Versions struct {
-				Edges []struct {
-					Node struct {
-						ID     string `json:"id"`
-						Status string `json:"status"`
-						Major  int    `json:"major"`
-						Minor  int    `json:"minor"`
-					} `json:"node"`
-				} `json:"edges"`
-			} `json:"versions"`
-		} `json:"node"`
-	}
+	version := latestDocumentVersion[documentVersionSummary](t, owner, docID, "id status major minor")
+	assert.Equal(t, "PENDING_APPROVAL", version.Status)
+	assert.Equal(t, 1, version.Major)
+	assert.Equal(t, 0, version.Minor)
 
-	err = owner.Execute(`
-		query($id: ID!) {
-			node(id: $id) {
-				... on Document {
-					versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
-						edges { node { id status major minor } }
-					}
-				}
-			}
-		}
-	`, map[string]any{"id": docID}, &versionResult)
-	require.NoError(t, err)
-	require.NotEmpty(t, versionResult.Node.Versions.Edges)
-	assert.Equal(t, "PENDING_APPROVAL", versionResult.Node.Versions.Edges[0].Node.Status)
-	assert.Equal(t, 1, versionResult.Node.Versions.Edges[0].Node.Major)
-	assert.Equal(t, 0, versionResult.Node.Versions.Edges[0].Node.Minor)
-
-	versionID := versionResult.Node.Versions.Edges[0].Node.ID
+	versionID := version.ID
 
 	// Reject approval
 	_, err = owner.Do(`
@@ -1300,75 +1249,39 @@ func documentVersionRejectApproval(t *testing.T, actors documentVersionActors) {
 	require.NoError(t, err)
 
 	// The refused snapshot keeps its number so the next publish can reuse it.
-	err = owner.Execute(`
-		query($id: ID!) {
-			node(id: $id) {
-				... on Document {
-					versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
-						edges { node { id status major minor } }
-					}
-				}
-			}
-		}
-	`, map[string]any{"id": docID}, &versionResult)
-	require.NoError(t, err)
-	require.NotEmpty(t, versionResult.Node.Versions.Edges)
-	assert.Equal(t, "REJECTED", versionResult.Node.Versions.Edges[0].Node.Status)
-	assert.Equal(t, 1, versionResult.Node.Versions.Edges[0].Node.Major)
-	assert.Equal(t, 0, versionResult.Node.Versions.Edges[0].Node.Minor)
+	version = latestDocumentVersion[documentVersionSummary](t, owner, docID, "id status major minor")
+	assert.Equal(t, "REJECTED", version.Status)
+	assert.Equal(t, 1, version.Major)
+	assert.Equal(t, 0, version.Minor)
 
 	// Verify decisions are VOIDED after reject
-	var quorumResult struct {
-		Node struct {
-			Versions struct {
-				Edges []struct {
-					Node struct {
-						ApprovalQuorums struct {
-							Edges []struct {
-								Node struct {
-									Decisions struct {
-										Edges []struct {
-											Node struct {
-												State string `json:"state"`
-											} `json:"node"`
-										} `json:"edges"`
-									} `json:"decisions"`
-								} `json:"node"`
-							} `json:"edges"`
-						} `json:"approvalQuorums"`
-					} `json:"node"`
-				} `json:"edges"`
-			} `json:"versions"`
-		} `json:"node"`
-	}
-
-	err = owner.Execute(`
-		query($id: ID!) {
-			node(id: $id) {
-				... on Document {
-					versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
-						edges {
-							node {
-								approvalQuorums(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
-									edges {
-										node {
-											decisions(first: 100) {
-												edges { node { state } }
-											}
-										}
-									}
-								}
-							}
-						}
+	quorums := latestDocumentVersion[struct {
+		ApprovalQuorums struct {
+			Edges []struct {
+				Node struct {
+					Decisions struct {
+						Edges []struct {
+							Node struct {
+								State string `json:"state"`
+							} `json:"node"`
+						} `json:"edges"`
+					} `json:"decisions"`
+				} `json:"node"`
+			} `json:"edges"`
+		} `json:"approvalQuorums"`
+	}](t, owner, docID, `
+		approvalQuorums(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
+			edges {
+				node {
+					decisions(first: 100) {
+						edges { node { state } }
 					}
 				}
 			}
 		}
-	`, map[string]any{"id": docID}, &quorumResult)
-	require.NoError(t, err)
-	require.NotEmpty(t, quorumResult.Node.Versions.Edges)
-	require.NotEmpty(t, quorumResult.Node.Versions.Edges[0].Node.ApprovalQuorums.Edges)
-	decisions := quorumResult.Node.Versions.Edges[0].Node.ApprovalQuorums.Edges[0].Node.Decisions.Edges
+	`).ApprovalQuorums.Edges
+	require.NotEmpty(t, quorums)
+	decisions := quorums[0].Node.Decisions.Edges
 	require.Len(t, decisions, 1)
 	assert.Equal(t, "REJECTED", decisions[0].Node.State, "rejecting approver's decision should be REJECTED")
 }
@@ -1376,7 +1289,7 @@ func documentVersionRejectApproval(t *testing.T, actors documentVersionActors) {
 func documentVersionPublishBlockedWhenPendingApproval(t *testing.T, actors documentVersionActors) {
 	owner := actors.owner.ForTest(t)
 
-	docID, _ := createTestDocument(t, owner)
+	docID := createTestDocument(t, owner)
 	approverID := getOwnerProfileID(t, owner)
 
 	// Request approval (puts version in PENDING_APPROVAL)
@@ -1468,7 +1381,7 @@ func documentVersionPublishApproverIDsContract(t *testing.T, actors documentVers
 	t.Run("major publish without approver_ids is rejected", func(t *testing.T) {
 		t.Parallel()
 		owner := actors.owner.ForTest(t)
-		docID, _ := createTestDocument(t, owner)
+		docID := createTestDocument(t, owner)
 
 		_, err := owner.Do(publishMutation, map[string]any{
 			"input": map[string]any{
@@ -1483,7 +1396,7 @@ func documentVersionPublishApproverIDsContract(t *testing.T, actors documentVers
 	t.Run("major publish with empty approver_ids publishes directly", func(t *testing.T) {
 		t.Parallel()
 		owner := actors.owner.ForTest(t)
-		docID, _ := createTestDocument(t, owner)
+		docID := createTestDocument(t, owner)
 
 		var result publishResult
 
@@ -1503,7 +1416,7 @@ func documentVersionPublishApproverIDsContract(t *testing.T, actors documentVers
 	t.Run("major publish with approver_ids requests approval", func(t *testing.T) {
 		t.Parallel()
 		owner := actors.owner.ForTest(t)
-		docID, _ := createTestDocument(t, owner)
+		docID := createTestDocument(t, owner)
 
 		var result publishResult
 
@@ -1523,7 +1436,7 @@ func documentVersionPublishApproverIDsContract(t *testing.T, actors documentVers
 	t.Run("minor publish without approver_ids is allowed", func(t *testing.T) {
 		t.Parallel()
 		owner := actors.owner.ForTest(t)
-		docID, _ := createTestDocument(t, owner)
+		docID := createTestDocument(t, owner)
 		publishMajorDocumentVersion(t, owner, docID)
 		updateDocumentContent(t, owner, docID, "Updated content for minor")
 
@@ -1544,7 +1457,7 @@ func documentVersionPublishApproverIDsContract(t *testing.T, actors documentVers
 	t.Run("minor publish with approver_ids is rejected", func(t *testing.T) {
 		t.Parallel()
 		owner := actors.owner.ForTest(t)
-		docID, _ := createTestDocument(t, owner)
+		docID := createTestDocument(t, owner)
 		publishMajorDocumentVersion(t, owner, docID)
 		updateDocumentContent(t, owner, docID, "Updated content for rejected minor")
 
@@ -1615,7 +1528,7 @@ func documentDefaultApprovers(t *testing.T, actors documentVersionActors) {
 
 		owner := actors.owner.ForTest(t)
 
-		docID, _ := createTestDocument(t, owner)
+		docID := createTestDocument(t, owner)
 
 		var result struct {
 			UpdateDocument struct {
@@ -1719,7 +1632,7 @@ func documentVersionExportPDFSignatures(t *testing.T, actors documentVersionActo
 
 			owner := actors.owner.ForTest(t)
 
-			docID, _ := createTestDocument(t, owner)
+			docID := createTestDocument(t, owner)
 			docVersionID := publishMajorDocumentVersion(t, owner, docID)
 
 			var result struct {
@@ -1753,36 +1666,10 @@ func documentVersionExportPDFSignatures(t *testing.T, actors documentVersionActo
 
 			owner := actors.owner.ForTest(t)
 
-			docID, _ := createTestDocument(t, owner)
+			docID := createTestDocument(t, owner)
 			approveTestDocument(t, owner, docID)
 
-			var versionResult struct {
-				Node struct {
-					Versions struct {
-						Edges []struct {
-							Node struct {
-								ID string `json:"id"`
-							} `json:"node"`
-						} `json:"edges"`
-					} `json:"versions"`
-				} `json:"node"`
-			}
-
-			err := owner.Execute(`
-				query GetVersions($id: ID!) {
-					node(id: $id) {
-						... on Document {
-							versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
-								edges { node { id } }
-							}
-						}
-					}
-				}
-			`, map[string]any{"id": docID}, &versionResult)
-			require.NoError(t, err)
-			require.NotEmpty(t, versionResult.Node.Versions.Edges)
-
-			publishedVersionID := versionResult.Node.Versions.Edges[0].Node.ID
+			publishedVersionID := latestDocumentVersionID(t, owner, docID)
 
 			var result struct {
 				ExportDocumentVersionPDF struct {
@@ -1790,7 +1677,7 @@ func documentVersionExportPDFSignatures(t *testing.T, actors documentVersionActo
 				} `json:"exportDocumentVersionPDF"`
 			}
 
-			err = owner.Execute(`
+			err := owner.Execute(`
 				mutation ExportPDF($input: ExportDocumentVersionPDFInput!) {
 					exportDocumentVersionPDF(input: $input) {
 						data
@@ -1816,7 +1703,7 @@ func documentVersionMajorPublishCancelsSignatureRequests(t *testing.T, actors do
 	owner := actors.owner.ForTest(t)
 	signer := actors.viewer.ForTest(t)
 
-	docID, _ := createTestDocument(t, owner)
+	docID := createTestDocument(t, owner)
 
 	v1ID := publishMajorDocumentVersion(t, owner, docID)
 	requestDocumentSignature(t, owner, v1ID, signer.GetProfileID().String())
@@ -1837,7 +1724,7 @@ func documentVersionMinorPublishKeepsSignatureRequests(t *testing.T, actors docu
 	owner := actors.owner.ForTest(t)
 	signer := actors.viewer.ForTest(t)
 
-	docID, _ := createTestDocument(t, owner)
+	docID := createTestDocument(t, owner)
 
 	v1ID := publishMajorDocumentVersion(t, owner, docID)
 	requestDocumentSignature(t, owner, v1ID, signer.GetProfileID().String())
@@ -1858,7 +1745,7 @@ func documentVersionMajorApprovalPublishCancelsSignatureRequests(t *testing.T, a
 	owner := actors.owner.ForTest(t)
 	signer := actors.viewer.ForTest(t)
 
-	docID, _ := createTestDocument(t, owner)
+	docID := createTestDocument(t, owner)
 	approveTestDocument(t, owner, docID)
 
 	v1ID := latestDocumentVersionID(t, owner, docID)
@@ -1883,7 +1770,7 @@ func documentVersionRequestSignatureIsIdempotentWithinVersion(t *testing.T, acto
 	owner := actors.owner.ForTest(t)
 	signer := actors.viewer.ForTest(t)
 
-	docID, _ := createTestDocument(t, owner)
+	docID := createTestDocument(t, owner)
 	signerID := signer.GetProfileID().String()
 
 	v1ID := publishMajorDocumentVersion(t, owner, docID)
@@ -1901,7 +1788,7 @@ func documentVersionRequestSignatureDeduplicatesAcrossMinors(t *testing.T, actor
 	owner := actors.owner.ForTest(t)
 	signer := actors.viewer.ForTest(t)
 
-	docID, _ := createTestDocument(t, owner)
+	docID := createTestDocument(t, owner)
 	signerID := signer.GetProfileID().String()
 
 	v10ID := publishMajorDocumentVersion(t, owner, docID)
@@ -1979,7 +1866,7 @@ func documentVersionMinorPublishMovesSignatureRequestsToNewVersion(t *testing.T,
 	owner := actors.owner.ForTest(t)
 	signer := actors.viewer.ForTest(t)
 
-	docID, _ := createTestDocument(t, owner)
+	docID := createTestDocument(t, owner)
 
 	v10ID := publishMajorDocumentVersion(t, owner, docID)
 	requestDocumentSignature(t, owner, v10ID, signer.GetProfileID().String())
@@ -2093,7 +1980,7 @@ const signDocumentVersionMutation = `
 func documentVersionSignDocument(t *testing.T, actors documentVersionActors) {
 	owner := actors.owner.ForTest(t)
 
-	docID, _ := createTestDocument(t, owner)
+	docID := createTestDocument(t, owner)
 	approveTestDocument(t, owner, docID)
 
 	publishedVersionID := latestDocumentVersionID(t, owner, docID)
@@ -2113,7 +2000,7 @@ func documentVersionSignDocument(t *testing.T, actors documentVersionActors) {
 func documentVersionSignDocumentWithoutRequestFails(t *testing.T, actors documentVersionActors) {
 	owner := actors.owner.ForTest(t)
 
-	docID, _ := createTestDocument(t, owner)
+	docID := createTestDocument(t, owner)
 	approveTestDocument(t, owner, docID)
 
 	publishedVersionID := latestDocumentVersionID(t, owner, docID)
@@ -2130,7 +2017,7 @@ func documentVersionSignDocumentWithoutRequestFails(t *testing.T, actors documen
 func documentVersionSignDocumentTwiceFails(t *testing.T, actors documentVersionActors) {
 	owner := actors.owner.ForTest(t)
 
-	docID, _ := createTestDocument(t, owner)
+	docID := createTestDocument(t, owner)
 	approveTestDocument(t, owner, docID)
 
 	publishedVersionID := latestDocumentVersionID(t, owner, docID)
@@ -2149,37 +2036,14 @@ func documentVersionSignDocumentTwiceFails(t *testing.T, actors documentVersionA
 func documentVersionArchiveVoidsPendingQuorum(t *testing.T, actors documentVersionActors) {
 	owner := actors.owner.ForTest(t)
 
-	docID, _ := createTestDocument(t, owner)
+	docID := createTestDocument(t, owner)
 	requestDocumentApproval(t, owner, docID, []string{getOwnerProfileID(t, owner)})
 
 	archiveDocument(t, owner, docID)
 
 	var result struct {
 		Node struct {
-			Status   string `json:"status"`
-			Versions struct {
-				Edges []struct {
-					Node struct {
-						Status          string `json:"status"`
-						Major           int    `json:"major"`
-						Minor           int    `json:"minor"`
-						ApprovalQuorums struct {
-							Edges []struct {
-								Node struct {
-									Status    string `json:"status"`
-									Decisions struct {
-										Edges []struct {
-											Node struct {
-												State string `json:"state"`
-											} `json:"node"`
-										} `json:"edges"`
-									} `json:"decisions"`
-								} `json:"node"`
-							} `json:"edges"`
-						} `json:"approvalQuorums"`
-					} `json:"node"`
-				} `json:"edges"`
-			} `json:"versions"`
+			Status string `json:"status"`
 		} `json:"node"`
 	}
 
@@ -2188,33 +2052,45 @@ func documentVersionArchiveVoidsPendingQuorum(t *testing.T, actors documentVersi
 			node(id: $id) {
 				... on Document {
 					status
-					versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
-						edges {
-							node {
-								status
-								major
-								minor
-								approvalQuorums(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
-									edges {
-										node {
-											status
-											decisions(first: 10) {
-												edges { node { state } }
-											}
-										}
-									}
-								}
-							}
-						}
-					}
 				}
 			}
 		}
 	`, map[string]any{"id": docID}, &result)
 	require.NoError(t, err)
-	require.NotEmpty(t, result.Node.Versions.Edges)
 
-	version := result.Node.Versions.Edges[0].Node
+	version := latestDocumentVersion[struct {
+		Status          string `json:"status"`
+		Major           int    `json:"major"`
+		Minor           int    `json:"minor"`
+		ApprovalQuorums struct {
+			Edges []struct {
+				Node struct {
+					Status    string `json:"status"`
+					Decisions struct {
+						Edges []struct {
+							Node struct {
+								State string `json:"state"`
+							} `json:"node"`
+						} `json:"edges"`
+					} `json:"decisions"`
+				} `json:"node"`
+			} `json:"edges"`
+		} `json:"approvalQuorums"`
+	}](t, owner, docID, `
+		status
+		major
+		minor
+		approvalQuorums(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
+			edges {
+				node {
+					status
+					decisions(first: 10) {
+						edges { node { state } }
+					}
+				}
+			}
+		}
+	`)
 	assert.Equal(t, "ARCHIVED", result.Node.Status)
 	assert.Equal(t, "VOIDED", version.Status)
 	assert.Equal(t, 1, version.Major)
@@ -2230,7 +2106,7 @@ func documentVersionArchiveVoidsPendingQuorum(t *testing.T, actors documentVersi
 func documentVersionArchiveCancelsPendingSignatures(t *testing.T, actors documentVersionActors) {
 	owner := actors.owner.ForTest(t)
 
-	docID, _ := createTestDocument(t, owner)
+	docID := createTestDocument(t, owner)
 	approveTestDocument(t, owner, docID)
 
 	publishedVersionID := latestDocumentVersionID(t, owner, docID)
@@ -2268,7 +2144,7 @@ func documentVersionArchiveCancelsPendingSignatures(t *testing.T, actors documen
 func documentVersionUnarchiveRestoresEditableDraft(t *testing.T, actors documentVersionActors) {
 	owner := actors.owner.ForTest(t)
 
-	docID, _ := createTestDocument(t, owner)
+	docID := createTestDocument(t, owner)
 	requestDocumentApproval(t, owner, docID, []string{getOwnerProfileID(t, owner)})
 
 	archiveDocument(t, owner, docID)
@@ -2276,14 +2152,7 @@ func documentVersionUnarchiveRestoresEditableDraft(t *testing.T, actors document
 
 	var result struct {
 		Node struct {
-			Status   string `json:"status"`
-			Versions struct {
-				Edges []struct {
-					Node struct {
-						Status string `json:"status"`
-					} `json:"node"`
-				} `json:"edges"`
-			} `json:"versions"`
+			Status string `json:"status"`
 		} `json:"node"`
 	}
 
@@ -2292,18 +2161,15 @@ func documentVersionUnarchiveRestoresEditableDraft(t *testing.T, actors document
 			node(id: $id) {
 				... on Document {
 					status
-					versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
-						edges { node { status } }
-					}
 				}
 			}
 		}
 	`, map[string]any{"id": docID}, &result)
 	require.NoError(t, err)
-	require.NotEmpty(t, result.Node.Versions.Edges)
 
+	version := latestDocumentVersion[documentVersionSummary](t, owner, docID, "id status major minor")
 	assert.Equal(t, "ACTIVE", result.Node.Status)
-	assert.Equal(t, "VOIDED", result.Node.Versions.Edges[0].Node.Status)
+	assert.Equal(t, "VOIDED", version.Status)
 
 	updateDocumentContent(t, owner, docID, "Updated after unarchive")
 }
@@ -2315,7 +2181,7 @@ func documentVersionUnarchiveRestoresEditableDraft(t *testing.T, actors document
 func documentVersionSignArchivedDocumentFails(t *testing.T, actors documentVersionActors) {
 	owner := actors.owner.ForTest(t)
 
-	docID, _ := createTestDocument(t, owner)
+	docID := createTestDocument(t, owner)
 	approveTestDocument(t, owner, docID)
 
 	publishedVersionID := latestDocumentVersionID(t, owner, docID)

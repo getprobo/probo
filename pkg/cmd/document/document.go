@@ -32,7 +32,6 @@ import (
 	listapprovaldecisions "go.probo.inc/probo/pkg/cmd/document/list-approval-decisions"
 	listapprovalquorums "go.probo.inc/probo/pkg/cmd/document/list-approval-quorums"
 	listhistory "go.probo.inc/probo/pkg/cmd/document/list-history"
-	listversions "go.probo.inc/probo/pkg/cmd/document/list-versions"
 	"go.probo.inc/probo/pkg/cmd/document/publish"
 	restorehistory "go.probo.inc/probo/pkg/cmd/document/restore-history"
 	"go.probo.inc/probo/pkg/cmd/document/suggestion"
@@ -58,7 +57,6 @@ func NewCmdDocument(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(delete.NewCmdDelete(f))
 	cmd.AddCommand(archive.NewCmdArchive(f))
 	cmd.AddCommand(unarchive.NewCmdUnarchive(f))
-	cmd.AddCommand(listversions.NewCmdListVersions(f))
 	cmd.AddCommand(listhistory.NewCmdListHistory(f))
 	cmd.AddCommand(viewversion.NewCmdViewVersion(f))
 	cmd.AddCommand(viewhistorysnapshot.NewCmdViewHistorySnapshot(f))

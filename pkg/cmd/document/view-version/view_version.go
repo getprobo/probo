@@ -79,7 +79,7 @@ func NewCmdViewVersion(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "view-version <id>",
-		Short: "View a document version",
+		Short: "View a document version, a tag on the document history",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {

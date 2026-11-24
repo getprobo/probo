@@ -51,12 +51,8 @@ const linkedDocumentFragment = graphql`
     title
     documentType
     currentPublishedMajor
-    pendingApproval: versions(first: 1, filter: { statuses: [PENDING_APPROVAL] }) {
-      edges {
-        node {
-          id
-        }
-      }
+    pendingApprovalVersion {
+      id
     }
   }
 `;
@@ -233,7 +229,7 @@ function DocumentRow(props: {
       <Td>
         <DocumentVersionBadge
           state={
-            document.pendingApproval.edges[0]
+            document.pendingApprovalVersion
               ? "PENDING_APPROVAL"
               : document.currentPublishedMajor != null
                 ? "PUBLISHED"
