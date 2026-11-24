@@ -447,6 +447,7 @@ func TestSyncInventorySource_SoftDisappearAndReappear(t *testing.T) {
 	require.NoError(t, svc.SyncInventorySource(ctx, fx.scope, run1))
 
 	csvEmpty := "email,full_name,role\n"
+
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		source := &coredata.AccessReviewSource{}
 		if err := source.LoadByID(ctx, tx, fx.scope, fx.sourceID); err != nil {
@@ -529,6 +530,7 @@ func TestSyncInventorySource_FailedSyncDoesNotBumpMissing(t *testing.T) {
 	require.NoError(t, svc.SyncInventorySource(ctx, fx.scope, run1))
 
 	csvEmpty := "email,full_name,role\n"
+
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		source := &coredata.AccessReviewSource{}
 		if err := source.LoadByID(ctx, tx, fx.scope, fx.sourceID); err != nil {
@@ -550,6 +552,7 @@ func TestSyncInventorySource_FailedSyncDoesNotBumpMissing(t *testing.T) {
 	assert.Equal(t, 1, grants[0].ConsecutiveMissingSyncs)
 
 	badCSV := "full_name\nAlice\n"
+
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		source := &coredata.AccessReviewSource{}
 		if err := source.LoadByID(ctx, tx, fx.scope, fx.sourceID); err != nil {
