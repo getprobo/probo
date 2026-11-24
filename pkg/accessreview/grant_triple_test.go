@@ -155,6 +155,22 @@ func TestGrantTriplesFromAccount(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "external id alone is a usable principal key",
+			account: drivers.AccountRecord{
+				ExternalID: "svc-9",
+				Roles:      []string{"Admin"},
+			},
+			want: []accessreview.GrantTriple{
+				{
+					PrincipalKey:           "|svc-9",
+					ResourceKey:            accessreview.DefaultResourceKey,
+					ResourceKind:           accessreview.DefaultResourceKind,
+					EntitlementKey:         "Admin",
+					EntitlementDisplayName: "Admin",
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -163,8 +179,44 @@ func TestGrantTriplesFromAccount(t *testing.T) {
 			func(t *testing.T) {
 				t.Parallel()
 
-				got := accessreview.GrantTriplesFromAccount(tt.account)
+				got, err := accessreview.GrantTriplesFromAccount(tt.account)
+				require.NoError(t, err)
 				assert.Equal(t, tt.want, got)
+			},
+		)
+	}
+}
+
+func TestGrantTriplesFromAccount_MissingPrincipalKey(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		account drivers.AccountRecord
+	}{
+		{
+			name:    "empty email and external id",
+			account: drivers.AccountRecord{Roles: []string{"Admin"}},
+		},
+		{
+			name: "whitespace email and external id",
+			account: drivers.AccountRecord{
+				Email:      "  \t ",
+				ExternalID: "   ",
+				Roles:      []string{"Admin"},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				got, err := accessreview.GrantTriplesFromAccount(tt.account)
+				require.ErrorIs(t, err, accessreview.ErrMissingPrincipalKey)
+				assert.Nil(t, got)
 			},
 		)
 	}
@@ -176,6 +228,9 @@ func TestGrantTriplesFromAccounts(t *testing.T) {
 	accounts := []drivers.AccountRecord{
 		{
 			Email: "a@example.com",
+			Roles: []string{"Admin"},
+		},
+		{
 			Roles: []string{"Admin"},
 		},
 		{

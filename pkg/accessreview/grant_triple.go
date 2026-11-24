@@ -21,6 +21,7 @@
 package accessreview
 
 import (
+	"errors"
 	"strings"
 
 	"go.probo.inc/probo/pkg/accessreview/drivers"
@@ -42,6 +43,10 @@ const (
 	ImplicitMemberEntitlementDisplayName = "Member"
 )
 
+// ErrMissingPrincipalKey is returned when a roster account has neither a
+// usable email nor an external ID, so no stable principal key can be formed.
+var ErrMissingPrincipalKey = errors.New("account has no email or external id")
+
 // GrantTriple is one principal × resource × entitlement binding derived from
 // a roster AccountRecord. Resource display names are supplied at upsert time
 // from the access-review source, not from the account record.
@@ -58,8 +63,15 @@ type GrantTriple struct {
 // an entitlement; when roles is empty (or only whitespace), a single implicit
 // member entitlement is emitted. Duplicate entitlement keys after trim keep
 // the first display name.
-func GrantTriplesFromAccount(account drivers.AccountRecord) []GrantTriple {
+//
+// Returns ErrMissingPrincipalKey when both email and external ID are empty
+// after trim — an empty principal key would collide inventory upserts.
+func GrantTriplesFromAccount(account drivers.AccountRecord) ([]GrantTriple, error) {
 	principalKey := normalizeAccountKey(account.Email, account.ExternalID)
+	if principalKey == "" {
+		return nil, ErrMissingPrincipalKey
+	}
+
 	entitlements := rosterEntitlements(account.Roles)
 
 	triples := make([]GrantTriple, 0, len(entitlements))
@@ -76,15 +88,21 @@ func GrantTriplesFromAccount(account drivers.AccountRecord) []GrantTriple {
 		)
 	}
 
-	return triples
+	return triples, nil
 }
 
 // GrantTriplesFromAccounts normalises a roster into grant triples, preserving
-// account order and per-account entitlement order.
+// account order and per-account entitlement order. Accounts with no usable
+// email or external ID are skipped so they never emit an empty principal key.
 func GrantTriplesFromAccounts(accounts []drivers.AccountRecord) []GrantTriple {
 	triples := make([]GrantTriple, 0, len(accounts))
 	for _, account := range accounts {
-		triples = append(triples, GrantTriplesFromAccount(account)...)
+		accountTriples, err := GrantTriplesFromAccount(account)
+		if err != nil {
+			continue
+		}
+
+		triples = append(triples, accountTriples...)
 	}
 
 	return triples
