@@ -30,6 +30,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -371,9 +372,7 @@ func newFixture(t *testing.T, issuer signer) *fixture {
 
 func (f *fixture) defaultSpec() tokenSpec {
 	confirmationJWK := make(map[string]any, len(f.browser.jwk)+1)
-	for k, v := range f.browser.jwk {
-		confirmationJWK[k] = v
-	}
+	maps.Copy(confirmationJWK, f.browser.jwk)
 
 	confirmationJWK["alg"] = f.browser.alg
 
@@ -470,10 +469,7 @@ func (f *fixture) serve() (*http.Client, func()) {
 
 	publicKey := f.issuer.jwk
 	jwkEntry := make(map[string]any, len(publicKey)+2)
-
-	for k, v := range publicKey {
-		jwkEntry[k] = v
-	}
+	maps.Copy(jwkEntry, publicKey)
 
 	jwkEntry["kid"] = f.kid
 	jwkEntry["alg"] = f.issuer.alg
