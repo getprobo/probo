@@ -453,6 +453,7 @@ func TestUpdateSource_EnqueuesSyncOnCSVUpload(t *testing.T) {
 	assert.Equal(t, csvV2, *updated.CsvData)
 
 	first := &coredata.AccessSourceSyncRun{}
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return first.LoadInFlightBySourceID(ctx, conn, fx.scope, fx.sourceID)
 	}))
@@ -511,6 +512,7 @@ func TestUpdateSource_EnqueuesQueuedWhileRunning(t *testing.T) {
 
 	// Claim must wait on RUNNING: the follow-up QUEUED stays unclaimed.
 	next := &coredata.AccessSourceSyncRun{}
+
 	err = client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		return next.LoadNextQueuedForUpdateSkipLocked(ctx, tx)
 	})
@@ -534,6 +536,7 @@ func TestUpdateSource_NameOnlyDoesNotEnqueueSync(t *testing.T) {
 
 	fx := seedInventorySyncFixture(t, ctx, client, "email,full_name,role\ncarol@example.com,Carol,Admin\n")
 	require.NoError(t, drainInFlightInventorySyncRunsForSource(t, ctx, client, fx.sourceID))
+
 	name := "Renamed CSV Roster"
 
 	_, err := svc.UpdateSource(
@@ -576,6 +579,7 @@ func TestSyncNow_EnqueuesProboMembershipsSource(t *testing.T) {
 		}
 
 		var err error
+
 		cadence, err = svc.resolveSourceSyncCadence(ctx, conn, fx.scope, source)
 
 		return err
@@ -597,6 +601,7 @@ func TestInventorySyncScheduler_EnqueuesDueMembershipsSource(t *testing.T) {
 	require.NoError(t, holdDueInventorySyncSchedulesExcept(t, ctx, client, fx.sourceID))
 
 	past := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
+
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		source := &coredata.AccessReviewSource{}
 		if err := source.LoadByID(ctx, tx, fx.scope, fx.sourceID); err != nil {
@@ -615,6 +620,7 @@ func TestInventorySyncScheduler_EnqueuesDueMembershipsSource(t *testing.T) {
 	assert.Equal(t, fx.sourceID, claimed.ID)
 
 	inflight := &coredata.AccessSourceSyncRun{}
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return inflight.LoadInFlightBySourceID(ctx, conn, fx.scope, fx.sourceID)
 	}))
@@ -651,8 +657,10 @@ func TestResolveInventoryProviderKey_EmptyCSVIsMemberships(t *testing.T) {
 	}))
 
 	var key coredata.AccessInventoryProviderKey
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		var err error
+
 		key, err = svc.resolveInventoryProviderKey(ctx, conn, fx.scope, source)
 
 		return err

@@ -472,6 +472,7 @@ func (s *Service) UpdateSource(
 			}
 
 			csvUpdated := false
+
 			if req.CsvData != nil {
 				source.CsvData = *req.CsvData
 				csvUpdated = true
