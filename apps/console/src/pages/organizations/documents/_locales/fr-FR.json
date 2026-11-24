@@ -121,6 +121,7 @@
       "empty": "Aucune personne trouvée",
       "loadMore": "Charger plus",
       "loadError": "Impossible de charger les personnes",
+      "alreadySignatory": "Déjà signataire",
       "none": "Aucun",
       "states": {
         "REQUESTED": "Demandée",

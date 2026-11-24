@@ -121,6 +121,7 @@
       "empty": "Geen personen gevonden",
       "loadMore": "Meer laden",
       "loadError": "Personen laden mislukt",
+      "alreadySignatory": "Al ondertekenaar",
       "none": "Geen",
       "states": {
         "REQUESTED": "Aangevraagd",

@@ -121,6 +121,7 @@
       "empty": "No people found",
       "loadMore": "Load more",
       "loadError": "Could not load people",
+      "alreadySignatory": "Already a signatory",
       "none": "None",
       "states": {
         "REQUESTED": "Requested",

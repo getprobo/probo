@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { MagnifyingGlassIcon, PlusIcon } from "@phosphor-icons/react";
+import { CheckIcon, MagnifyingGlassIcon, PlusIcon } from "@phosphor-icons/react";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
 import { DropdownItem } from "@probo/ui/src/v2/Dropdown/DropdownItem";
@@ -102,14 +102,16 @@ interface SignatoryOption {
 export interface DocumentSignatoryMenuProps {
   documentVersionId: string;
   connectionId: string;
-  excludeIds: ReadonlySet<string>;
+  // Only covers the signatures loaded so far. Requesting someone who already
+  // has a signature is a no-op on the server.
+  signatoryIds: ReadonlySet<string>;
   disabled?: boolean;
 }
 
 export function DocumentSignatoryMenu({
   documentVersionId,
   connectionId,
-  excludeIds,
+  signatoryIds,
   disabled,
 }: DocumentSignatoryMenuProps) {
   const { t } = useTranslation("organizations/documents");
@@ -142,7 +144,6 @@ export function DocumentSignatoryMenu({
     },
     reloadKey: organizationId,
   });
-  const items = page.items.filter(item => !excludeIds.has(item.id));
   const busy = disabled || isRequesting;
 
   return (
@@ -188,11 +189,17 @@ export function DocumentSignatoryMenu({
             />
           </div>
           <div className="flex max-h-64 flex-col gap-1 overflow-y-auto">
-            {items.map(item => (
+            {page.items.map(item => (
               <DropdownItem
                 key={item.id}
                 disabled={busy}
+                shortcut={signatoryIds.has(item.id)
+                  ? <CheckIcon aria-label={t("details.signatories.alreadySignatory")} />
+                  : undefined}
                 onClick={() => {
+                  if (signatoryIds.has(item.id)) {
+                    return;
+                  }
                   void requestSignature({
                     variables: {
                       input: {
@@ -209,7 +216,7 @@ export function DocumentSignatoryMenu({
                 {item.fullName}
               </DropdownItem>
             ))}
-            {page.loading && items.length === 0 && skeletonWidths.map(width => (
+            {page.loading && page.items.length === 0 && skeletonWidths.map(width => (
               <div key={width} className="flex h-8 items-center px-3" aria-hidden>
                 <TextSkeleton size={2} className={width} />
               </div>
@@ -219,7 +226,7 @@ export function DocumentSignatoryMenu({
                 {t("details.signatories.loadError")}
               </Text>
             )}
-            {!page.loading && !page.failed && !page.hasNext && items.length === 0 && (
+            {!page.loading && !page.failed && !page.hasNext && page.items.length === 0 && (
               <Text size={2} color="faint" className="px-3 py-1.5">
                 {t("details.signatories.empty")}
               </Text>

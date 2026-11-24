@@ -20,6 +20,7 @@
 
 import { SignatureIcon, XIcon } from "@phosphor-icons/react";
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
+import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
@@ -31,7 +32,6 @@ import type { DocumentSignatoriesSection_cancelMutation } from "#/__generated__/
 import type { DocumentSignatoriesSection_document$key } from "#/__generated__/core/DocumentSignatoriesSection_document.graphql";
 import type { DocumentSignatoriesSectionList_version$key } from "#/__generated__/core/DocumentSignatoriesSectionList_version.graphql";
 import type { DocumentSignatoriesSectionListRefetchQuery } from "#/__generated__/core/DocumentSignatoriesSectionListRefetchQuery.graphql";
-import { useLoadAllPages } from "#/lib/relay/useLoadAllPages";
 import { useMutation } from "#/lib/relay/useMutation";
 
 import { documentSignatories } from "../variants";
@@ -152,19 +152,13 @@ function DocumentSignatoriesList({
     DocumentSignatoriesSectionListRefetchQuery,
     DocumentSignatoriesSectionList_version$key
   >(documentSignatoriesListFragment, versionKey);
-  useLoadAllPages({
-    hasNext,
-    isLoadingNext,
-    loadNext,
-    pageSize: documentSignatoriesPageSize,
-  });
   const [cancelSignature, isCancelling] = useMutation<DocumentSignatoriesSection_cancelMutation>(
     cancelSignatureMutation,
     { errorToast: t("details.errors.update") },
   );
   const { root, title, titleLead, titleIcon, rows, row, name, trailing } = documentSignatories();
   const signatures = version.signatures.edges.map(edge => edge.node);
-  const signedByIds = new Set(signatures.map(signature => signature.signedBy.id));
+  const signatoryIds = new Set(signatures.map(signature => signature.signedBy.id));
 
   return (
     <Card variant="soft" size={2}>
@@ -180,7 +174,7 @@ function DocumentSignatoriesList({
             <DocumentSignatoryMenu
               documentVersionId={version.id}
               connectionId={version.signatures.__id}
-              excludeIds={signedByIds}
+              signatoryIds={signatoryIds}
               disabled={isCancelling || isLoadingNext}
             />
           )}
@@ -223,6 +217,18 @@ function DocumentSignatoriesList({
             : (
                 <Text size={1} color="faint">{t("details.signatories.none")}</Text>
               )}
+          {hasNext && (
+            <Button
+              variant="ghost"
+              color="neutral"
+              size={1}
+              className="self-start"
+              loading={isLoadingNext}
+              onClick={() => loadNext(documentSignatoriesPageSize)}
+            >
+              {t("details.signatories.loadMore")}
+            </Button>
+          )}
         </div>
       </div>
     </Card>
