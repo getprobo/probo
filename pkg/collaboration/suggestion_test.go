@@ -573,6 +573,89 @@ func TestQuoteCursors_ResolvesAcrossParagraphs(t *testing.T) {
 	assert.Equal(t, "stSe", textBetween(spans, startPos, endPos))
 }
 
+func TestDecidedSuggestionCursors(t *testing.T) {
+	t.Parallel()
+
+	const body = "Keep the first part."
+
+	cases := []struct {
+		name        string
+		quote       string
+		replacement string
+		accept      bool
+		wantKept    string
+		wantAt      uint32
+	}{
+		{
+			name:        "accepting keeps the inserted text",
+			quote:       "first",
+			replacement: "opening",
+			accept:      true,
+			wantKept:    "opening",
+		},
+		{
+			name:        "rejecting keeps the deleted text",
+			quote:       "first",
+			replacement: "opening",
+			accept:      false,
+			wantKept:    "first",
+		},
+		{
+			name:        "nothing survives an accepted deletion",
+			quote:       "first ",
+			replacement: "",
+			accept:      true,
+			wantAt:      utf16Len("Keep the first "),
+		},
+		{
+			name:        "nothing survives a rejected insertion",
+			quote:       "first",
+			replacement: "first and only",
+			accept:      false,
+			wantAt:      utf16Len("Keep the first and only"),
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			document := suggestionDocument(t, `{"type":"doc","content":[`+paragraphJSON(body)+`]}`)
+			require.NoError(t, ApplySuggestionEdit(document, suggestionEditID, tc.quote, tc.replacement, 0))
+
+			spans := bodySpans(t, document)
+			start, end, err := DecidedSuggestionCursors(document, spans, suggestionEditID, tc.accept)
+			require.NoError(t, err)
+
+			text, err := document.Text("body")
+			require.NoError(t, err)
+
+			startPos, err := text.CursorPosition(start)
+			require.NoError(t, err)
+			endPos, err := text.CursorPosition(end)
+			require.NoError(t, err)
+
+			if tc.wantKept != "" {
+				assert.Equal(t, tc.wantKept, textBetween(spans, startPos, endPos))
+
+				return
+			}
+
+			assert.Equal(t, tc.wantAt, startPos)
+			assert.Equal(t, tc.wantAt, endPos)
+		})
+	}
+}
+
+func TestDecidedSuggestionCursors_UnknownSuggestion(t *testing.T) {
+	t.Parallel()
+
+	document := suggestionDocument(t, `{"type":"doc","content":[`+paragraphJSON("Plain text.")+`]}`)
+
+	_, _, err := DecidedSuggestionCursors(document, bodySpans(t, document), suggestionEditID, true)
+	require.ErrorIs(t, err, ErrSuggestionNotInDocument)
+}
+
 func textBetween(spans []automerge.Span, start uint32, end uint32) string {
 	selected := make([]uint16, 0, end-start)
 
