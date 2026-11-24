@@ -438,6 +438,7 @@ func TestUpdateSource_EnqueuesSyncOnCSVUpload(t *testing.T) {
 
 	fx := seedInventorySyncFixture(t, ctx, client, "email,full_name,role\nalice@example.com,Alice,Admin\n")
 	require.NoError(t, drainInFlightInventorySyncRunsForSource(t, ctx, client, fx.sourceID))
+
 	csvV2 := "email,full_name,role\nbob@example.com,Bob,Member\n"
 
 	updated, err := svc.UpdateSource(
@@ -550,6 +551,7 @@ func TestUpdateSource_NameOnlyDoesNotEnqueueSync(t *testing.T) {
 	require.NoError(t, err)
 
 	inflight := &coredata.AccessSourceSyncRun{}
+
 	err = client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return inflight.LoadInFlightBySourceID(ctx, conn, fx.scope, fx.sourceID)
 	})
@@ -572,6 +574,7 @@ func TestSyncNow_EnqueuesProboMembershipsSource(t *testing.T) {
 	assert.Equal(t, coredata.AccessSourceSyncRunStatusQueued, run.Status)
 
 	var cadence time.Duration
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		source := &coredata.AccessReviewSource{}
 		if err := source.LoadByID(ctx, conn, fx.scope, fx.sourceID); err != nil {
@@ -652,6 +655,7 @@ func TestResolveInventoryProviderKey_EmptyCSVIsMemberships(t *testing.T) {
 	}))
 
 	source := &coredata.AccessReviewSource{}
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return source.LoadByID(ctx, conn, fx.scope, fx.sourceID)
 	}))
@@ -721,6 +725,7 @@ func loadInventorySyncRunsBySource(
 	t.Helper()
 
 	var runs coredata.AccessSourceSyncRuns
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		cursor := page.NewCursor(
 			100,
