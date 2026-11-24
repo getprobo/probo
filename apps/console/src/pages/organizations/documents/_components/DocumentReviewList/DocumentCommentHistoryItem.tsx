@@ -239,11 +239,9 @@ function CommentHistoryItem({
           firstActions={actions}
           allowReply={!resolved}
         />
-        {resolved && (
+        {resolved && thread.resolvedBy != null && (
           <Text size={1} color="faint">
-            {thread.resolvedBy != null
-              ? t("details.review.history.resolvedBy", { name: thread.resolvedBy.fullName })
-              : t("details.review.history.resolved")}
+            {t("details.review.history.resolvedBy", { name: thread.resolvedBy.fullName })}
           </Text>
         )}
       </DocumentReviewItem>

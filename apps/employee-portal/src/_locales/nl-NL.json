@@ -33,7 +33,31 @@
       "attachFiles": "Bestanden bijvoegen",
       "mentionMembers": "Een lid vermelden",
       "mentionLoading": "Zoeken…",
-      "mentionNoResults": "Geen leden gevonden"
+      "mentionNoResults": "Geen leden gevonden",
+      "slashNoResults": "Geen resultaten",
+      "toolbar": {
+        "blocks": {
+          "paragraph": "Tekst",
+          "heading1": "Kop 1",
+          "heading2": "Kop 2",
+          "heading3": "Kop 3",
+          "heading4": "Kop 4",
+          "bulletList": "Lijst met opsommingstekens",
+          "orderedList": "Genummerde lijst",
+          "taskList": "Takenlijst",
+          "codeBlock": "Codeblok",
+          "blockquote": "Citaat"
+        },
+        "openLink": "Link openen in een nieuw tabblad",
+        "removeLink": "Link verwijderen",
+        "inserts": {
+          "mermaid": "Mermaid-diagram",
+          "divider": "Scheidingslijn",
+          "table": "Tabel",
+          "image": "Afbeelding",
+          "file": "Bestand"
+        }
+      }
     }
   },
   "topBar": {

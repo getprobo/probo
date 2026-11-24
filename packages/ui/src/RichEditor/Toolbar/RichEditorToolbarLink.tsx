@@ -19,16 +19,15 @@
 // SOFTWARE.
 
 import { ArrowSquareOutIcon, LinkIcon, TrashIcon } from "@phosphor-icons/react";
-import { type Editor, useEditorState } from "@tiptap/react";
-import { type KeyboardEvent, useState } from "react";
+import type { Editor } from "@tiptap/react";
+import { type KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 
 import { IconButton } from "../../v2/IconButton/IconButton";
 import { Popover } from "../../v2/Popover/Popover";
 import { PopoverPopup } from "../../v2/Popover/PopoverPopup";
 import { PopoverTrigger } from "../../v2/Popover/PopoverTrigger";
-import { applyLink } from "../_lib/formatting";
-import { linkEditorPluginKey, openLink } from "../LinkExtension";
+import { useLinkEditor } from "../_lib/useLinkEditor";
 
 import { refocusEditor } from "./refocusEditor";
 import { RichEditorToolbarButton } from "./RichEditorToolbarButton";
@@ -39,56 +38,10 @@ type RichEditorToolbarLinkProps = {
   disabled: boolean;
 };
 
-// Opens from the toolbar button, or when a link in the text is clicked while
-// editing: the link extension then selects it and posts an editor request.
 export function RichEditorToolbarLink({ editor, disabled }: RichEditorToolbarLinkProps) {
   const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
-  const [url, setUrl] = useState("");
-  const state = useEditorState({
-    editor,
-    selector: ({ editor: current }) => {
-      if (current.isDestroyed) {
-        return { empty: true, isLink: false, href: undefined, request: null };
-      }
-
-      return {
-        empty: current.state.selection.empty,
-        isLink: current.isActive("link"),
-        href: current.getAttributes("link").href as string | undefined,
-        request: linkEditorPluginKey.getState(current.state) ?? null,
-      };
-    },
-  });
-  const requestId = state.request?.id ?? 0;
-  const [handledRequestId, setHandledRequestId] = useState(requestId);
+  const { open, setOpen, url, setUrl, isLink, empty, submit, remove, openUrl } = useLinkEditor(editor);
   const { linkPopup, linkInput } = richEditorToolbar();
-
-  if (requestId !== handledRequestId) {
-    setHandledRequestId(requestId);
-    setUrl(state.request?.href ?? "");
-    setOpen(true);
-  }
-
-  function handleOpenChange(next: boolean) {
-    if (next) {
-      setUrl(state.href ?? "");
-    }
-    setOpen(next);
-  }
-
-  function submit() {
-    const next = url.trim();
-    setOpen(false);
-    if (next && next !== (state.href ?? "")) {
-      applyLink(editor, next);
-    }
-  }
-
-  function remove() {
-    setOpen(false);
-    applyLink(editor, null);
-  }
 
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
     if (event.key === "Enter") {
@@ -98,13 +51,13 @@ export function RichEditorToolbarLink({ editor, disabled }: RichEditorToolbarLin
   }
 
   return (
-    <Popover open={open} onOpenChange={handleOpenChange}>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
         render={(
           <RichEditorToolbarButton
             label={t("ui.richEditor.toolbar.link")}
-            pressed={state.isLink || open}
-            disabled={disabled || (state.empty && !open)}
+            pressed={isLink || open}
+            disabled={disabled || (empty && !open)}
           />
         )}
       >
@@ -130,12 +83,12 @@ export function RichEditorToolbarLink({ editor, disabled }: RichEditorToolbarLin
             variant="ghost"
             color="neutral"
             aria-label={t("ui.richEditor.toolbar.openLink")}
-            onClick={() => openLink(url.trim())}
+            onClick={openUrl}
           >
             <ArrowSquareOutIcon weight="bold" />
           </IconButton>
         )}
-        {state.isLink && (
+        {isLink && (
           <IconButton
             size={1}
             variant="ghost"

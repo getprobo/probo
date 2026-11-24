@@ -274,7 +274,7 @@ function DocumentControlsList({
                       size={1}
                       variant="ghost"
                       color="neutral"
-                      disabled={isUpdating || linksIncomplete}
+                      disabled={isUpdating}
                       className="shrink-0"
                       aria-label={t("details.controls.remove", {
                         name: `${item.sectionTitle} ${item.name}`,

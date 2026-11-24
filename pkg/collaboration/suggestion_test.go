@@ -143,6 +143,8 @@ func TestSuggestionIDs(t *testing.T) {
 	deleted := gid.New(gid.NilTenant, coredata.DocumentSuggestionEntityType)
 	formatted := gid.New(gid.NilTenant, coredata.DocumentSuggestionEntityType)
 	split := gid.New(gid.NilTenant, coredata.DocumentSuggestionEntityType)
+	block := gid.New(gid.NilTenant, coredata.DocumentSuggestionEntityType)
+	untyped := gid.New(gid.NilTenant, coredata.DocumentSuggestionEntityType)
 	document := gid.New(gid.NilTenant, coredata.DocumentEntityType)
 
 	spans := []automerge.Span{
@@ -174,9 +176,28 @@ func TestSuggestionIDs(t *testing.T) {
 			Marks: map[string]any{SuggestionInsertMark: `{"id":"` + document.String() + `"}`},
 		},
 		{Type: automerge.SpanTypeText, Text: "plain"},
+		{
+			Type: automerge.SpanTypeBlock,
+			Block: map[string]any{
+				"type": "heading",
+				"attrs": map[string]any{
+					"level":             int64(2),
+					suggestionBlockAttr: `{"id":"` + block.String() + `","type":"paragraph"}`,
+				},
+			},
+		},
+		{
+			Type: automerge.SpanTypeBlock,
+			Block: map[string]any{
+				"type": "paragraph",
+				"attrs": map[string]any{
+					suggestionBlockAttr: `{"id":"` + untyped.String() + `"}`,
+				},
+			},
+		},
 	}
 
-	assert.ElementsMatch(t, []gid.GID{inserted, deleted, formatted, split}, SuggestionIDs(spans))
+	assert.ElementsMatch(t, []gid.GID{inserted, deleted, formatted, split, block}, SuggestionIDs(spans))
 	assert.Empty(t, SuggestionIDs([]automerge.Span{paragraphBlock()}))
 	assert.NotNil(t, SuggestionIDs(nil))
 }

@@ -219,7 +219,7 @@ export function DocumentSignatoryMenu({
                 {t("details.signatories.loadError")}
               </Text>
             )}
-            {!page.loading && !page.failed && items.length === 0 && (
+            {!page.loading && !page.failed && !page.hasNext && items.length === 0 && (
               <Text size={2} color="faint" className="px-3 py-1.5">
                 {t("details.signatories.empty")}
               </Text>

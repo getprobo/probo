@@ -33,7 +33,31 @@
       "attachFiles": "Attach files",
       "mentionMembers": "Mention a member",
       "mentionLoading": "Searching…",
-      "mentionNoResults": "No members found"
+      "mentionNoResults": "No members found",
+      "slashNoResults": "No results",
+      "toolbar": {
+        "blocks": {
+          "paragraph": "Text",
+          "heading1": "Heading 1",
+          "heading2": "Heading 2",
+          "heading3": "Heading 3",
+          "heading4": "Heading 4",
+          "bulletList": "Bullet list",
+          "orderedList": "Numbered list",
+          "taskList": "Task list",
+          "codeBlock": "Code block",
+          "blockquote": "Quote"
+        },
+        "openLink": "Open link in a new tab",
+        "removeLink": "Remove link",
+        "inserts": {
+          "mermaid": "Mermaid diagram",
+          "divider": "Divider",
+          "table": "Table",
+          "image": "Image",
+          "file": "File"
+        }
+      }
     }
   },
   "topBar": {

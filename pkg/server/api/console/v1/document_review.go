@@ -66,13 +66,7 @@ func (r *Resolver) loadReviewProfile(ctx context.Context, profileID gid.GID) (*t
 
 	profile, err := dataloader.FromContext(ctx).Profile.Load(ctx, profileID)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlx.NotFound(ctx, err)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot load document review profile", log.Error(err))
-
-		return nil, gqlx.Internal(ctx)
+		return nil, r.documentReviewLoadError(ctx, "cannot load document review profile", err)
 	}
 
 	return types.NewProfile(profile), nil

@@ -98,7 +98,7 @@ func (s *Service) Persist(
 // SQL and reads of the in-memory document. It reports false, and writes
 // nothing, when the canonical document holds changes the live one lacks. When
 // the change log is long enough to compact, it also returns the heads the
-// canonical document was left at. The last result reports whether a
+// canonical document was left at. The fourth result reports whether a
 // suggestion was rejected or reopened along the way.
 func (s *Service) appendLiveChanges(
 	ctx context.Context,

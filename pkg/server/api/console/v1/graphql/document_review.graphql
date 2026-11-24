@@ -369,7 +369,8 @@ input CreateDocumentCommentThreadInput {
     anchorEnd: String
     """
     Comment on an open suggestion. The comment is added to the suggestion's
-    thread and the anchor fields are ignored.
+    thread. The quote and anchor fields do not place it, but they are still
+    validated, so a malformed or half-set anchor is rejected.
     """
     suggestionId: ID
     quoteOccurrence: Int

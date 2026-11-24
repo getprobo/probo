@@ -21,10 +21,11 @@
 import { tv } from "tailwind-variants/lite";
 
 // Segmented control (single-select radio-cards over Base UI's ToggleGroup).
-// There is no surrounding track: items are standalone bordered pills. Size 2
-// uses an equal-width card grid so a lone wrapped item does not stretch.
-// Size 1 is a compact icon+label row with a gap. Each item keeps a 1px
-// border at all sizes (the pressed state only darkens the border).
+// There is no surrounding track: items are standalone bordered pills. Size 3
+// (the default) uses an equal-width card grid so a lone wrapped item does not
+// stretch. Sizes 1 and 2 are wrapping icon+label rows, size 1 the compact
+// one. Each item keeps a 1px border at all sizes (the pressed state only
+// darkens the border).
 export const segmentedControl = tv({
   slots: {
     root: "",

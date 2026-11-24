@@ -49,7 +49,7 @@ import {
   wrapCommand,
 } from "../suggestionBlock";
 import { applySuggestingStructure } from "../SuggestionExtension";
-import { suggestInsertCodeBlock, suggestInsertTable } from "../suggestionStructure";
+import { afterSelectedBlock, suggestInsertCodeBlock, suggestInsertTable } from "../suggestionStructure";
 
 type ChainCommands = ReturnType<Editor["chain"]>;
 
@@ -113,6 +113,12 @@ export function isPickerItem(item: BlockItem): item is BlockPicker {
   return "pick" in item;
 }
 
+export function blockItemLabelKey(item: BlockItem): string {
+  return insertItems.some(insert => insert.id === item.id)
+    ? `ui.richEditor.toolbar.inserts.${item.id}`
+    : `ui.richEditor.toolbar.blocks.${item.id}`;
+}
+
 export function runBlockItem(
   editor: Editor,
   item: BlockItem,
@@ -129,12 +135,22 @@ export function runBlockItem(
   }
 }
 
+export type MermaidToolbarTarget = { convert: true } | { convert: false; position: number };
+
 // The toolbar inserts a new diagram, unlike the block menus, which turn their
 // block into one. Only an empty line is turned into the diagram.
+export function mermaidToolbarTarget(state: EditorState): MermaidToolbarTarget {
+  const { selection } = state;
+  const block = selection.$from.parent;
+  if (selection.empty && block.type.name === "paragraph" && block.content.size === 0) {
+    return { convert: true };
+  }
+  return { convert: false, position: afterSelectedBlock(state) };
+}
+
 export function insertMermaidFromToolbar(editor: Editor) {
-  const { $from } = editor.state.selection;
-  const block = $from.parent;
-  if (editor.state.selection.empty && block.type.name === "paragraph" && block.content.size === 0) {
+  const target = mermaidToolbarTarget(editor.state);
+  if (target.convert) {
     runBlockItem(editor, insertItems.find(item => item.id === "mermaid")!);
     return;
   }
@@ -147,7 +163,7 @@ export function insertMermaidFromToolbar(editor: Editor) {
     )) {
       return;
     }
-    const position = $from.depth === 0 ? $from.pos : $from.after(1);
+    const { position } = target;
     editor
       .chain()
       .focus()

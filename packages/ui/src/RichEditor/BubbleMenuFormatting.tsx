@@ -4,12 +4,13 @@
 
 import { ArrowSquareOutIcon, CodeIcon, LinkIcon, TextBIcon, TextItalicIcon, TextStrikethroughIcon, TextUnderlineIcon, TrashIcon } from "@phosphor-icons/react";
 import { Editor, useEditorState } from "@tiptap/react";
-import { type FocusEvent, type KeyboardEvent, useEffect, useRef, useState } from "react";
+import { type FocusEvent, type KeyboardEvent, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { tv } from "tailwind-variants/lite";
 
-import { applyLink, toggleStyle } from "./_lib/formatting";
+import { toggleStyle } from "./_lib/formatting";
+import { useLinkEditor } from "./_lib/useLinkEditor";
 import { BubbleMenuToolbar } from "./BubbleMenu";
-import { linkEditorPluginKey, openLink } from "./LinkExtension";
 import { MenuButton } from "./MenuButton";
 
 const bubbleMenuFormattingVariants = tv({
@@ -27,8 +28,8 @@ type BubbleMenuFormattingProps = {
 
 export function BubbleMenuFormatting(props: BubbleMenuFormattingProps) {
   const { editor } = props;
-  const [showLinkInput, setShowLinkInput] = useState(false);
-  const [linkUrl, setLinkUrl] = useState("");
+  const { t } = useTranslation();
+  const link = useLinkEditor(editor);
   const linkInputRef = useRef<HTMLInputElement>(null);
 
   const state = useEditorState({
@@ -41,9 +42,6 @@ export function BubbleMenuFormatting(props: BubbleMenuFormattingProps) {
           isUnderline: false,
           isStrike: false,
           isCode: false,
-          isLink: false,
-          linkHref: undefined,
-          linkEditorRequest: null,
         };
       }
 
@@ -53,54 +51,20 @@ export function BubbleMenuFormatting(props: BubbleMenuFormattingProps) {
         isUnderline: current.isActive("underline"),
         isStrike: current.isActive("strike"),
         isCode: current.isActive("code"),
-        isLink: current.isActive("link"),
-        linkHref: current.getAttributes("link").href as string | undefined,
-        linkEditorRequest: linkEditorPluginKey.getState(current.state) ?? null,
       };
     },
   });
-  const linkEditorRequestId = state.linkEditorRequest?.id ?? 0;
-  const [handledLinkEditorRequestId, setHandledLinkEditorRequestId] = useState(
-    linkEditorRequestId,
-  );
-
-  if (linkEditorRequestId !== handledLinkEditorRequestId) {
-    setHandledLinkEditorRequestId(linkEditorRequestId);
-    setLinkUrl(state.linkEditorRequest?.href ?? "");
-    setShowLinkInput(true);
-  }
 
   useEffect(() => {
-    if (showLinkInput) {
+    if (link.open) {
       linkInputRef.current?.focus();
     }
-  }, [showLinkInput]);
-
-  function handleLinkButtonClick() {
-    if (showLinkInput) {
-      setShowLinkInput(false);
-      setLinkUrl("");
-      return;
-    }
-    setLinkUrl(state.linkHref ?? "");
-    setShowLinkInput(true);
-  }
+  }, [link.open]);
 
   function submitLink() {
-    const next = linkUrl.trim();
-    if (next && next !== (state.linkHref ?? "")) {
-      applyLink(editor, next);
-    } else if (!editor.isDestroyed) {
+    if (!link.submit() && !editor.isDestroyed) {
       editor.commands.focus();
     }
-    setShowLinkInput(false);
-    setLinkUrl("");
-  }
-
-  function removeLink() {
-    applyLink(editor, null);
-    setShowLinkInput(false);
-    setLinkUrl("");
   }
 
   function handleKeyDown(e: KeyboardEvent<HTMLInputElement>) {
@@ -110,8 +74,7 @@ export function BubbleMenuFormatting(props: BubbleMenuFormattingProps) {
     }
     if (e.key === "Escape") {
       e.preventDefault();
-      setShowLinkInput(false);
-      setLinkUrl("");
+      link.setOpen(false);
       if (!editor.isDestroyed) {
         editor.commands.focus();
       }
@@ -165,40 +128,40 @@ export function BubbleMenuFormatting(props: BubbleMenuFormattingProps) {
           <CodeIcon size={16} weight="bold" />
         </MenuButton>
         <MenuButton
-          active={state.isLink || showLinkInput}
-          onClick={handleLinkButtonClick}
+          active={link.isLink || link.open}
+          onClick={() => link.setOpen(!link.open)}
         >
           <LinkIcon size={16} weight="bold" />
         </MenuButton>
       </BubbleMenuToolbar>
-      {showLinkInput && (
+      {link.open && (
         <div className={linkInput()} onBlur={handleLinkInputBlur}>
           <input
             ref={linkInputRef}
             type="url"
             placeholder="https://…"
-            value={linkUrl}
-            onChange={e => setLinkUrl(e.target.value)}
+            value={link.url}
+            onChange={e => link.setUrl(e.target.value)}
             onKeyDown={handleKeyDown}
             className="min-w-0 flex-1 bg-transparent text-txt-primary outline-none placeholder:text-txt-quaternary"
           />
-          {linkUrl.trim() !== "" && (
+          {link.url.trim() !== "" && (
             <button
               type="button"
-              aria-label="Open link in a new tab"
+              aria-label={t("ui.richEditor.toolbar.openLink")}
               onMouseDown={e => e.preventDefault()}
-              onClick={() => openLink(linkUrl.trim())}
+              onClick={link.openUrl}
               className={linkAction()}
             >
               <ArrowSquareOutIcon size={16} weight="bold" />
             </button>
           )}
-          {state.isLink && (
+          {link.isLink && (
             <button
               type="button"
-              aria-label="Remove link"
+              aria-label={t("ui.richEditor.toolbar.removeLink")}
               onMouseDown={e => e.preventDefault()}
-              onClick={removeLink}
+              onClick={link.remove}
               className={linkAction()}
             >
               <TrashIcon size={16} weight="bold" />

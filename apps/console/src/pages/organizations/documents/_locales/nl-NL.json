@@ -110,7 +110,7 @@
         "PENDING": "In afwachting",
         "APPROVED": "Goedgekeurd",
         "REJECTED": "Afgewezen",
-        "VOIDED": "Ongeldig"
+        "VOIDED": "Nietig verklaard"
       }
     },
     "signatories": {
@@ -152,7 +152,7 @@
       "status": {
         "pendingApproval": "In afwachting van goedkeuring",
         "rejected": "Afgewezen",
-        "voided": "Ingetrokken"
+        "voided": "Nietig verklaard"
       }
     },
     "review": {

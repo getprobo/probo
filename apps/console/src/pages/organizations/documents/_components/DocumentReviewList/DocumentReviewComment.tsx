@@ -96,6 +96,9 @@ export function DocumentReviewComment({
   }
 
   async function saveComment() {
+    if (isSaving) {
+      return;
+    }
     if (isRichEditorContentEmpty(draft)) {
       setError(t("details.review.contentRequired"));
       return;
@@ -146,6 +149,7 @@ export function DocumentReviewComment({
                   className={editor()}
                   content={draft}
                   controls={false}
+                  disabled={isSaving}
                   mentionSource={mentionSource}
                   aria-label={t("details.review.edit")}
                   onModEnter={() => {

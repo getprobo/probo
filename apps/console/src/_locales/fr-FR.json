@@ -1325,6 +1325,7 @@
       "mentionMembers": "Mentionner un membre",
       "mentionLoading": "Recherche…",
       "mentionNoResults": "Aucun membre trouvé",
+      "slashNoResults": "Aucun résultat",
       "toolbar": {
         "label": "Mise en forme",
         "blockType": "Style",

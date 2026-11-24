@@ -222,6 +222,13 @@ export function suggestInsertTable(
   return tracked(tr);
 }
 
+// afterSelectedBlock is the position just after the top-level block the
+// selection starts in, or after the selected top-level node.
+export function afterSelectedBlock(state: EditorState): number {
+  const { selection } = state;
+  return selection.$from.depth === 0 ? selection.to : selection.$from.after(1);
+}
+
 // suggestInsertCodeBlock adds an empty code block after the current top-level
 // block, with the caret inside it.
 export function suggestInsertCodeBlock(
@@ -233,8 +240,7 @@ export function suggestInsertCodeBlock(
   if (!codeType) return null;
   const block = codeType.create({ language, ...insertedAttrs(id) });
 
-  const { $from } = state.selection;
-  const position = $from.depth === 0 ? $from.pos : $from.after(1);
+  const position = afterSelectedBlock(state);
   const tr = state.tr.insert(position, block);
   tr.setSelection(TextSelection.near(tr.doc.resolve(position + 1)));
   return tracked(tr);

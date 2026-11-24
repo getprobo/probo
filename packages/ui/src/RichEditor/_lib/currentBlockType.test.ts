@@ -20,7 +20,7 @@
 
 import { getSchema } from "@tiptap/core";
 import type { Node as PmNode } from "@tiptap/pm/model";
-import { EditorState, TextSelection } from "@tiptap/pm/state";
+import { EditorState, NodeSelection, TextSelection } from "@tiptap/pm/state";
 import { describe, expect, it } from "vitest";
 
 import { richEditorCollaborationExtensions } from "../RichEditor";
@@ -33,6 +33,12 @@ function stateAt(block: PmNode, pos = 2) {
   const doc = schema.node("doc", null, [block]);
   const state = EditorState.create({ doc, schema });
   return state.apply(state.tr.setSelection(TextSelection.create(state.doc, pos)));
+}
+
+function selectedBlock(block: PmNode) {
+  const doc = schema.node("doc", null, [paragraph("Before"), block]);
+  const state = EditorState.create({ doc, schema });
+  return state.apply(state.tr.setSelection(NodeSelection.create(state.doc, doc.child(0).nodeSize)));
 }
 
 function paragraph(text = "Hello") {
@@ -71,5 +77,24 @@ describe("currentBlockType", () => {
     const mermaid = schema.node("codeBlock", { language: "mermaid" }, [schema.text("flowchart TD")]);
     expect(currentBlockType(stateAt(code))).toBe("codeBlock");
     expect(currentBlockType(stateAt(mermaid))).toBeNull();
+  });
+
+  describe("with a selected block", () => {
+    it("names a heading by level", () => {
+      const heading = schema.node("heading", { level: 2 }, [schema.text("Title")]);
+      expect(currentBlockType(selectedBlock(heading))).toBe("heading2");
+    });
+
+    it("names a list", () => {
+      const list = schema.node("bulletList", null, [
+        schema.node("listItem", null, [paragraph()]),
+      ]);
+      expect(currentBlockType(selectedBlock(list))).toBe("bulletList");
+    });
+
+    it("returns null for a Mermaid diagram", () => {
+      const mermaid = schema.node("codeBlock", { language: "mermaid" }, [schema.text("flowchart TD")]);
+      expect(currentBlockType(selectedBlock(mermaid))).toBeNull();
+    });
   });
 });

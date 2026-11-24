@@ -907,6 +907,7 @@
       "mentionMembers": "Mention a member",
       "mentionLoading": "Searching…",
       "mentionNoResults": "No members found",
+      "slashNoResults": "No results",
       "toolbar": {
         "label": "Formatting",
         "blockType": "Style",

@@ -68,7 +68,7 @@ export function DocumentPresenceAvatars({ collaborationHandle }: DocumentPresenc
 
   return (
     <>
-      <div className={stack()} aria-label={t("details.presence.label")}>
+      <div className={stack()} role="group" aria-label={t("details.presence.label")}>
         {visible.map((person) => {
           const label = labelOf(person);
           return (

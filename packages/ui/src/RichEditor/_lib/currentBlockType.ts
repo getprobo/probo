@@ -18,7 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { EditorState } from "@tiptap/pm/state";
+import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
+import { type EditorState, NodeSelection } from "@tiptap/pm/state";
 
 import type { BlockTypeId } from "../BlockMenu/blockItems";
 
@@ -29,8 +30,19 @@ const wrapperTypes = new Set<string>(["bulletList", "orderedList", "taskList", "
 // text block inside it. Blocks the menu cannot produce, such as a Mermaid
 // diagram or a fifth-level heading, return null.
 export function currentBlockType(state: EditorState): BlockTypeId | null {
-  const { $from } = state.selection;
+  const { selection } = state;
+  // A dragged block is node-selected, and $from then sits in its container.
+  if (selection instanceof NodeSelection) {
+    const { node } = selection;
+    if (wrapperTypes.has(node.type.name)) {
+      return node.type.name as BlockTypeId;
+    }
+    if (node.isTextblock) {
+      return blockTypeOf(node);
+    }
+  }
 
+  const { $from } = selection;
   for (let depth = $from.depth; depth > 0; depth--) {
     const name = $from.node(depth).type.name;
     if (wrapperTypes.has(name)) {
@@ -38,7 +50,10 @@ export function currentBlockType(state: EditorState): BlockTypeId | null {
     }
   }
 
-  const block = $from.parent;
+  return blockTypeOf($from.parent);
+}
+
+function blockTypeOf(block: ProseMirrorNode): BlockTypeId | null {
   switch (block.type.name) {
     case "paragraph":
       return "paragraph";

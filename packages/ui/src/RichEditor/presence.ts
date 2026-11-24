@@ -118,16 +118,19 @@ export function decorationsForPresences(
         head,
         () => {
           const cursor = document.createElement("span");
-          const label = presence.displayName?.trim() || "Collaborator";
+          const name = presence.displayName?.trim();
+          const label = name || "Collaborator";
           cursor.className = "presence-cursor";
           cursor.setAttribute("aria-label", `${label} cursor`);
           cursor.style.setProperty("--presence-color", presenceColor(seed));
 
-          if (presence.displayName?.trim()) {
+          if (name) {
             const flag = document.createElement("span");
             flag.className = "presence-cursor-flag";
-            flag.textContent = presence.displayName.trim();
+            flag.textContent = name;
             cursor.appendChild(flag);
+          } else {
+            cursor.title = label;
           }
 
           return cursor;

@@ -1324,6 +1324,7 @@
       "mentionMembers": "Een lid vermelden",
       "mentionLoading": "Zoeken…",
       "mentionNoResults": "Geen leden gevonden",
+      "slashNoResults": "Geen resultaten",
       "toolbar": {
         "label": "Opmaak",
         "blockType": "Stijl",

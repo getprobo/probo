@@ -11,12 +11,13 @@ import {
 } from "@floating-ui/react";
 import { type Editor } from "@tiptap/react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { EditorFloatingPortal } from "../_lib/EditorFloatingPortal";
 import { MenuButton } from "../MenuButton";
 import { deactivateSlashCommand } from "../SlashCommandExtension";
 
-import { type BlockItem, blockItems, isPickerItem, runBlockItem } from "./blockItems";
+import { type BlockItem, blockItemLabelKey, blockItems, isPickerItem, runBlockItem } from "./blockItems";
 import { blockMenuVariants } from "./variants";
 
 const { menu } = blockMenuVariants();
@@ -28,6 +29,7 @@ type BlockMenuContentProps = {
 };
 
 export function BlockMenuContent({ editor, slashState, onPickFiles }: BlockMenuContentProps) {
+  const { t } = useTranslation();
   const [slashNav, setSlashNav] = useState({ index: 0, query: "" });
   const slashDropdownRef = useRef<HTMLDivElement | null>(null);
 
@@ -40,8 +42,10 @@ export function BlockMenuContent({ editor, slashState, onPickFiles }: BlockMenuC
     if (!slashState.active) return source;
     const q = slashState.query.toLowerCase();
     if (q.length === 0) return source;
-    return source.filter(item => item.label.toLowerCase().includes(q));
-  }, [onPickFiles, slashState.active, slashState.query]);
+    return source.filter(item =>
+      [t(blockItemLabelKey(item)), item.label, item.id].some(text => text.toLowerCase().includes(q)),
+    );
+  }, [onPickFiles, slashState.active, slashState.query, t]);
 
   const {
     refs: slashMenuRefs,
@@ -142,17 +146,17 @@ export function BlockMenuContent({ editor, slashState, onPickFiles }: BlockMenuC
         {filteredItems.length > 0
           ? filteredItems.map((item, index) => (
               <MenuButton
-                key={item.label}
+                key={item.id}
                 active={index === slashActiveIndex}
                 onClick={() => handleSlashAction(item)}
               >
                 <item.icon size={16} weight="bold" />
-                {item.label}
+                {t(blockItemLabelKey(item))}
               </MenuButton>
             ))
           : (
               <div className="px-2 py-1.5 text-sm text-txt-tertiary">
-                No results
+                {t("ui.richEditor.slashNoResults")}
               </div>
             )}
       </div>

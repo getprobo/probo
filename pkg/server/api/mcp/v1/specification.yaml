@@ -9674,7 +9674,7 @@ components:
           description: Zero-based occurrence of the quote to anchor
         suggestion_id:
           $ref: "#/components/schemas/GID"
-          description: Open suggestion to comment on. The comment is added to the suggestion's thread and quote is ignored.
+          description: Open suggestion to comment on. The comment is added to the suggestion's thread; quote and quote_occurrence do not place it, but they are still validated.
 
     CreateDocumentCommentThreadOutput:
       type: object

@@ -33,7 +33,31 @@
       "attachFiles": "Adjuntar archivos",
       "mentionMembers": "Mencionar a un miembro",
       "mentionLoading": "Buscando…",
-      "mentionNoResults": "No se encontraron miembros"
+      "mentionNoResults": "No se encontraron miembros",
+      "slashNoResults": "Sin resultados",
+      "toolbar": {
+        "blocks": {
+          "paragraph": "Texto",
+          "heading1": "Título 1",
+          "heading2": "Título 2",
+          "heading3": "Título 3",
+          "heading4": "Título 4",
+          "bulletList": "Lista con viñetas",
+          "orderedList": "Lista numerada",
+          "taskList": "Lista de tareas",
+          "codeBlock": "Bloque de código",
+          "blockquote": "Cita"
+        },
+        "openLink": "Abrir el enlace en una pestaña nueva",
+        "removeLink": "Quitar enlace",
+        "inserts": {
+          "mermaid": "Diagrama Mermaid",
+          "divider": "Separador",
+          "table": "Tabla",
+          "image": "Imagen",
+          "file": "Archivo"
+        }
+      }
     }
   },
   "topBar": {
