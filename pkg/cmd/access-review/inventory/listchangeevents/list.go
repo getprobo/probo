@@ -22,10 +22,10 @@ package listchangeevents
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
+	"go.probo.inc/probo/pkg/cmd/access-review/inventory/changefilter"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 )
 
@@ -177,26 +177,16 @@ func NewCmdListChangeEvents(f *cmdutil.Factory) *cobra.Command {
 				},
 			}
 
-			filter := map[string]any{}
-			if flagSourceID != "" {
-				filter["accessReviewSourceId"] = flagSourceID
-			}
-			if len(flagChangeType) > 0 {
-				filter["changeTypes"] = flagChangeType
-			}
-			if flagObservedAtOnOrAfter != "" {
-				if _, err := time.Parse(time.RFC3339, flagObservedAtOnOrAfter); err != nil {
-					return fmt.Errorf("invalid --observed-at-on-or-after %q: use RFC3339", flagObservedAtOnOrAfter)
-				}
-
-				filter["observedAtOnOrAfter"] = flagObservedAtOnOrAfter
-			}
-			if flagObservedAtOnOrBefore != "" {
-				if _, err := time.Parse(time.RFC3339, flagObservedAtOnOrBefore); err != nil {
-					return fmt.Errorf("invalid --observed-at-on-or-before %q: use RFC3339", flagObservedAtOnOrBefore)
-				}
-
-				filter["observedAtOnOrBefore"] = flagObservedAtOnOrBefore
+			filter, err := changefilter.BuildChangeEventFilter(
+				changefilter.ChangeEventFilterArgs{
+					SourceID:             flagSourceID,
+					ChangeTypes:          flagChangeType,
+					ObservedAtOnOrAfter:  flagObservedAtOnOrAfter,
+					ObservedAtOnOrBefore: flagObservedAtOnOrBefore,
+				},
+			)
+			if err != nil {
+				return err
 			}
 			if len(filter) > 0 {
 				variables["filter"] = filter

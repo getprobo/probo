@@ -37,11 +37,6 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
-type grantSnapshot struct {
-	EntitlementDisplayName string `json:"entitlement_display_name"`
-	Presence               string `json:"presence"`
-}
-
 // SyncInventorySource pulls the live roster for one AccessReviewSource and
 // upserts principals, resources, and grants. Real grant diffs emit
 // AccessInventoryChangeEvent rows (APPEARED / DISAPPEARED / ATTRIBUTE_CHANGED).
@@ -578,9 +573,9 @@ func upsertInventoryGrant(
 
 func marshalGrantSnapshot(grant *coredata.AccessInventoryGrant) (*json.RawMessage, error) {
 	payload, err := json.Marshal(
-		grantSnapshot{
+		coredata.AccessInventoryGrantAttributeSnapshot{
 			EntitlementDisplayName: grant.EntitlementDisplayName,
-			Presence:               grant.Presence.String(),
+			Presence:               grant.Presence,
 		},
 	)
 	if err != nil {
