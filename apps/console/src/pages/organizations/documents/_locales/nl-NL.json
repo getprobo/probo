@@ -143,6 +143,7 @@
     "versions": {
       "trigger": "Versies",
       "title": "Versies",
+      "close": "Versies sluiten",
       "current": "Huidige versie",
       "version": "Versie <number>{{version}}</number>",
       "viewingCurrent": "Huidige versie wordt bekeken",

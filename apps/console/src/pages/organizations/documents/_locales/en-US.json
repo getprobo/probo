@@ -143,6 +143,7 @@
     "versions": {
       "trigger": "Versions",
       "title": "Versions",
+      "close": "Close versions",
       "current": "Current version",
       "version": "Version <number>{{version}}</number>",
       "viewingCurrent": "Viewing current version",

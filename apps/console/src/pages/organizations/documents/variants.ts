@@ -295,7 +295,7 @@ export const documentReviewPanel = tv({
 export const documentVersionList = tv({
   slots: {
     root: "sticky top-0 flex h-(--review-viewport-height,100vh) flex-col",
-    heading: "shrink-0 pb-2",
+    heading: "flex shrink-0 items-center justify-between gap-2 pb-2",
     body: "relative min-h-0 flex-1 overflow-hidden",
     viewport: [
       "h-full overscroll-y-contain outline-none",

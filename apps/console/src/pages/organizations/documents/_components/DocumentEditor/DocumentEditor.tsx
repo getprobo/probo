@@ -239,12 +239,19 @@ export function DocumentEditor({
     onVersionChange(next);
   }
 
+  function changeMode(next: DocumentMode) {
+    if (next !== "viewing") {
+      setVersionsOpen(false);
+    }
+    onModeChange(next);
+  }
+
   return (
     <>
       <DocumentEditorToolbar
         mode={mode}
         modes={modes}
-        onModeChange={onModeChange}
+        onModeChange={changeMode}
         collaborationHandle={handle}
         onControlsElement={setToolbarEl}
         versionsOpen={showVersions}
@@ -337,6 +344,7 @@ export function DocumentEditor({
                   queryRef={versionListQueryRef}
                   activeVersionId={viewing ? versionId : null}
                   onSelect={selectVersion}
+                  onClose={() => setVersionsOpen(false)}
                 />
               </div>
             )}

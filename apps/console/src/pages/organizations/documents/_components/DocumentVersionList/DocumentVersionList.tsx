@@ -19,8 +19,10 @@
 // SOFTWARE.
 
 import { ScrollArea } from "@base-ui/react/scroll-area";
+import { XIcon } from "@phosphor-icons/react";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { ErrorBoundary } from "@probo/ui/src/v2/ErrorBoundary/ErrorBoundary";
+import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { Suspense } from "react";
 import { useTranslation } from "react-i18next";
@@ -73,6 +75,7 @@ interface DocumentVersionListProps {
   queryRef: PreloadedQuery<DocumentVersionListQuery> | null | undefined;
   activeVersionId: string | null;
   onSelect: (versionId: string | null) => void;
+  onClose: () => void;
 }
 
 // Every version of the document, newest first, after the live one. The
@@ -111,6 +114,7 @@ function DocumentVersionListContent({
   documentKey,
   activeVersionId,
   onSelect,
+  onClose,
 }: Omit<DocumentVersionListProps, "queryRef"> & {
   documentKey: DocumentVersionList_document$key;
 }) {
@@ -123,7 +127,18 @@ function DocumentVersionListContent({
 
   return (
     <div className={root()}>
-      <Text size={2} weight="medium" className={heading()}>{t("details.versions.title")}</Text>
+      <div className={heading()}>
+        <Text size={2} weight="medium">{t("details.versions.title")}</Text>
+        <IconButton
+          size={1}
+          variant="ghost"
+          color="neutral"
+          aria-label={t("details.versions.close")}
+          onClick={onClose}
+        >
+          <XIcon />
+        </IconButton>
+      </div>
       <ScrollArea.Root className={body()}>
         <ScrollArea.Viewport className={viewport()}>
           <ScrollArea.Content className={content()}>
