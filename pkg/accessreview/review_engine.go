@@ -128,6 +128,11 @@ func (s *Service) FetchSource(
 				return errCampaignNotInProgress
 			}
 
+			// Write-time after the campaign share lock — do not reuse
+			// observedAt here; waiting for the lock can make UpdatedAt go
+			// backwards relative to a concurrent upsert.
+			writeAt := time.Now()
+
 			for _, account := range accounts {
 				accountKey := normalizeAccountKey(account.Email, account.ExternalID)
 
@@ -152,8 +157,8 @@ func (s *Service) FetchSource(
 					Flags:                        []coredata.AccessReviewEntryFlag{},
 					FlagReasons:                  []string{},
 					Decision:                     coredata.AccessReviewEntryDecisionPending,
-					CreatedAt:                    observedAt,
-					UpdatedAt:                    observedAt,
+					CreatedAt:                    writeAt,
+					UpdatedAt:                    writeAt,
 				}
 
 				if err := entry.Upsert(ctx, conn, scope); err != nil {
