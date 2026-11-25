@@ -2517,6 +2517,8 @@ func (r *Resolver) AddDocumentTool(ctx context.Context, req *mcp.CallToolRequest
 			Classification:     input.Classification,
 			DocumentType:       input.DocumentType,
 			DefaultApproverIDs: input.DefaultApproverIds,
+			StartingMajor:      input.StartingMajor,
+			StartingMinor:      input.StartingMinor,
 		},
 	)
 	if err != nil {

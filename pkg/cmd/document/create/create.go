@@ -23,6 +23,8 @@ package create
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
@@ -61,6 +63,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		flagContent        string
 		flagDocumentType   string
 		flagClassification string
+		flagStartingVer    string
 	)
 
 	cmd := &cobra.Command{
@@ -68,6 +71,9 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		Short: "Create a new document",
 		Example: `  # Create a policy document
   prb document create --title "Information Security Policy" --document-type POLICY --classification INTERNAL
+
+  # Bring in a document that is already at version 3.2
+  prb document create --title "Access Policy" --document-type POLICY --classification INTERNAL --starting-version 3.2
 
   # Create a document interactively
   prb document create`,
@@ -189,6 +195,16 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				input["content"] = content
 			}
 
+			if flagStartingVer != "" {
+				major, minor, err := parseStartingVersion(flagStartingVer)
+				if err != nil {
+					return err
+				}
+
+				input["startingMajor"] = major
+				input["startingMinor"] = minor
+			}
+
 			data, err := client.Do(
 				createMutation,
 				map[string]any{"input": input},
@@ -219,6 +235,23 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagContent, "content", "", "Document content as markdown or ProseMirror JSON. Images and links to /api/files/v1/{id} are kept")
 	cmd.Flags().StringVar(&flagDocumentType, "document-type", "", "Document type: OTHER, GOVERNANCE, POLICY, PROCEDURE, PLAN, REGISTER, RECORD, REPORT, TEMPLATE")
 	cmd.Flags().StringVar(&flagClassification, "classification", "", "Classification: PUBLIC, INTERNAL, CONFIDENTIAL, SECRET")
+	cmd.Flags().StringVar(&flagStartingVer, "starting-version", "", "Version number the first publish takes, as <major>.<minor> (for example 3.2), for a document that already has a version history")
 
 	return cmd
+}
+
+func parseStartingVersion(value string) (int, int, error) {
+	majorText, minorText, ok := strings.Cut(value, ".")
+	if !ok {
+		return 0, 0, fmt.Errorf("invalid --starting-version %q: use <major>.<minor>, for example 3.2", value)
+	}
+
+	major, majorErr := strconv.Atoi(majorText)
+	minor, minorErr := strconv.Atoi(minorText)
+
+	if majorErr != nil || minorErr != nil || major < 0 || minor < 0 {
+		return 0, 0, fmt.Errorf("invalid --starting-version %q: use <major>.<minor>, for example 3.2", value)
+	}
+
+	return major, minor, nil
 }

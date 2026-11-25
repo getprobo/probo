@@ -497,3 +497,42 @@ func TestMCP_Document_PublishUsesDefaultApprovers(t *testing.T) {
 		assert.Equal(t, "PENDING_APPROVAL", result.DocumentVersion.Status)
 	})
 }
+
+func TestMCP_Document_StartingVersion(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	mc := testutil.NewMCPClient(t, owner)
+
+	var addResult struct {
+		Document struct {
+			ID string `json:"id"`
+		} `json:"document"`
+	}
+	mc.CallToolInto("addDocument", map[string]any{
+		"organization_id": owner.GetOrganizationID().String(),
+		"title":           factory.SafeName("Document"),
+		"content":         proseMirrorDoc("Body content"),
+		"classification":  "INTERNAL",
+		"document_type":   "POLICY",
+		"starting_major":  3,
+		"starting_minor":  2,
+	}, &addResult)
+	require.NotEmpty(t, addResult.Document.ID)
+
+	var published struct {
+		DocumentVersion struct {
+			Major  int    `json:"major"`
+			Minor  int    `json:"minor"`
+			Status string `json:"status"`
+		} `json:"document_version"`
+	}
+	mc.CallToolInto("publishDocument", map[string]any{
+		"document_id": addResult.Document.ID,
+		"minor":       false,
+		"changelog":   "Imported at 3.2",
+	}, &published)
+
+	assert.Equal(t, "PUBLISHED", published.DocumentVersion.Status)
+	assert.Equal(t, 3, published.DocumentVersion.Major)
+	assert.Equal(t, 2, published.DocumentVersion.Minor)
+}

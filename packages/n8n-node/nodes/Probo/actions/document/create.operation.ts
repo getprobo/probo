@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { NodeOperationError, type INodeProperties, type IExecuteFunctions, type INodeExecutionData } from 'n8n-workflow';
 import { organizationLocator } from '../../locators';
 import { proboApiRequest } from '../../GenericFunctions';
 
@@ -122,6 +122,14 @@ export const description: INodeProperties[] = [
 				default: '',
 				description: 'Comma-separated list of default approver profile IDs',
 			},
+			{
+				displayName: 'Starting Version',
+				name: 'startingVersion',
+				type: 'string',
+				default: '',
+				placeholder: '3.2',
+				description: 'Version number the first publish takes, as major.minor, for a document that already has a version history. Without it the first version is 1.0, or 0.1 for a minor publish.',
+			},
 		],
 	},
 ];
@@ -137,6 +145,7 @@ export async function execute(
 	const content = this.getNodeParameter('content', itemIndex, '') as string;
 	const additionalFields = this.getNodeParameter('additionalFields', itemIndex, {}) as {
 		defaultApproverIds?: string;
+		startingVersion?: string;
 	};
 
 	const query = `
@@ -184,6 +193,14 @@ export async function execute(
 	if (content) input.content = content;
 	if (additionalFields.defaultApproverIds) {
 		input.defaultApproverIds = additionalFields.defaultApproverIds.split(',').map(id => id.trim()).filter(Boolean);
+	}
+	if (additionalFields.startingVersion) {
+		const match = /^(\d+)\.(\d+)$/.exec(additionalFields.startingVersion.trim());
+		if (!match) {
+			throw new NodeOperationError(this.getNode(), 'Starting Version must be major.minor, for example 3.2', { itemIndex });
+		}
+		input.startingMajor = Number(match[1]);
+		input.startingMinor = Number(match[2]);
 	}
 
 	const responseData = await proboApiRequest.call(this, query, { input });

@@ -100,6 +100,11 @@ type (
 		Classification     coredata.DocumentClassification
 		DocumentType       coredata.DocumentType
 		DefaultApproverIDs []gid.GID
+		// StartingMajor and StartingMinor set the version number the first
+		// published version takes, for a document that already has a version
+		// history elsewhere. Both are set or neither.
+		StartingMajor *int
+		StartingMinor *int
 	}
 
 	UpdateDocumentRequest struct {
@@ -166,6 +171,7 @@ type (
 const (
 	documentContentMaxTextLength = 200_000
 	documentContentMaxJSONBytes  = 1 << 20 // 1 MiB
+	startingVersionMax           = 9999
 )
 
 func (cdr *CreateDocumentRequest) Validate() error {
@@ -187,6 +193,29 @@ func (cdr *CreateDocumentRequest) Validate() error {
 	v.CheckEach(cdr.DefaultApproverIDs, "default_approver_ids", func(_ int, item any) {
 		v.Check(item, "default_approver_ids", validator.GID(coredata.MembershipProfileEntityType))
 	})
+
+	if (cdr.StartingMajor == nil) != (cdr.StartingMinor == nil) {
+		v.Check(cdr.StartingMajor, "starting_major", func(any) *validator.ValidationError {
+			return &validator.ValidationError{
+				Code:    validator.ErrorCodeCustom,
+				Message: "starting major and minor must be set together",
+			}
+		})
+	}
+
+	if cdr.StartingMajor != nil && cdr.StartingMinor != nil {
+		v.Check(*cdr.StartingMajor, "starting_major", validator.Min(0), validator.Max(startingVersionMax))
+		v.Check(*cdr.StartingMinor, "starting_minor", validator.Min(0), validator.Max(startingVersionMax))
+
+		if *cdr.StartingMajor == 0 && *cdr.StartingMinor == 0 {
+			v.Check(cdr.StartingMinor, "starting_minor", func(any) *validator.ValidationError {
+				return &validator.ValidationError{
+					Code:    validator.ErrorCodeCustom,
+					Message: "starting version must be higher than 0.0",
+				}
+			})
+		}
+	}
 
 	return v.Error()
 }
@@ -735,6 +764,20 @@ func (s *DocumentService) Create(
 				content,
 			); err != nil {
 				return fmt.Errorf("cannot store document content: %w", err)
+			}
+
+			if req.StartingMajor != nil && req.StartingMinor != nil {
+				starting := &coredata.DocumentStartingVersion{
+					DocumentID:     documentID,
+					OrganizationID: organization.ID,
+					Major:          *req.StartingMajor,
+					Minor:          *req.StartingMinor,
+					CreatedAt:      now,
+				}
+
+				if err := starting.Insert(ctx, conn, scope); err != nil {
+					return fmt.Errorf("cannot store starting version: %w", err)
+				}
 			}
 
 			if len(req.DefaultApproverIDs) > 0 {
@@ -3305,20 +3348,39 @@ func (s *DocumentService) ensureNoPendingApproval(
 	return &ErrDocumentVersionPendingApproval{}
 }
 
-func snapshotNumber(document *coredata.Document, minor bool) (int, int) {
-	if minor {
-		if document.CurrentPublishedMajor != nil && document.CurrentPublishedMinor != nil {
-			return *document.CurrentPublishedMajor, *document.CurrentPublishedMinor + 1
+// snapshotNumber returns the number the next version takes. Before anything
+// is published, a starting version chosen at creation wins over the bump.
+func (s *DocumentService) snapshotNumber(
+	ctx context.Context,
+	scope coredata.Scoper,
+	conn pg.Querier,
+	document *coredata.Document,
+	minor bool,
+) (int, int, error) {
+	if document.CurrentPublishedMajor == nil || document.CurrentPublishedMinor == nil {
+		starting := &coredata.DocumentStartingVersion{}
+
+		err := starting.LoadByDocumentID(ctx, conn, scope, document.ID)
+		if err == nil {
+			return starting.Major, starting.Minor, nil
 		}
 
-		return 0, 1
+		if !errors.Is(err, coredata.ErrResourceNotFound) {
+			return 0, 0, fmt.Errorf("cannot load starting version: %w", err)
+		}
+
+		if minor {
+			return 0, 1, nil
+		}
+
+		return 1, 0, nil
 	}
 
-	if document.CurrentPublishedMajor != nil {
-		return *document.CurrentPublishedMajor + 1, 0
+	if minor {
+		return *document.CurrentPublishedMajor, *document.CurrentPublishedMinor + 1, nil
 	}
 
-	return 1, 0
+	return *document.CurrentPublishedMajor + 1, 0, nil
 }
 
 func (s *DocumentService) liveDocumentChanged(
@@ -3369,7 +3431,11 @@ func (s *DocumentService) insertSnapshot(
 		return nil, fmt.Errorf("cannot snapshot document %s: no collaboration heads", document.ID)
 	}
 
-	major, minorNumber := snapshotNumber(document, minor)
+	major, minorNumber, err := s.snapshotNumber(ctx, scope, tx, document, minor)
+	if err != nil {
+		return nil, err
+	}
+
 	now := time.Now()
 	version := &coredata.DocumentVersion{
 		ID:             gid.New(scope.GetTenantID(), coredata.DocumentVersionEntityType),

@@ -11,6 +11,8 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ### Added
 
+- Document Create has a Starting Version field (`major.minor`) that sets the
+  number the first published version takes
 - Document Get History returns the history of a document. A version is a
   tag on a revision, listed under `versions`, and `Only Versioned` keeps
   the tagged revisions

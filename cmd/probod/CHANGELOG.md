@@ -34,6 +34,11 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ### Added
 
+- A document can be created with a starting version: `startingMajor` and
+  `startingMinor` in `createDocument` (`starting_major` and
+  `starting_minor` in the MCP `addDocument` tool), and a field in the
+  create dialog. The first published version takes that number instead of
+  1.0, whichever bump is chosen. Later versions count up from it
 - Versions published before this change are linked to the history by
   running `link-document-versions`. A version that matches no revision
   appears as a standalone entry with its own content

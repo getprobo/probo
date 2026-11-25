@@ -21,6 +21,7 @@
 package console_test
 
 import (
+	"maps"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -331,6 +332,7 @@ func TestDocumentVersion(t *testing.T) {
 		{name: "MinorPublishMovesSignatureRequestsToNewVersion", run: documentVersionMinorPublishMovesSignatureRequestsToNewVersion},
 		{name: "MinorApprovalPublishesAndKeepsSignatureRequests", run: documentVersionMinorApprovalPublishesAndKeepsSignatureRequests},
 		{name: "BulkPublishRequestApprovalOverride", run: documentVersionBulkPublishRequestApprovalOverride},
+		{name: "StartingVersion", run: documentVersionStartingVersion},
 		{name: "SignDocument", run: documentVersionSignDocument},
 		{name: "SignDocumentWithoutRequestFails", run: documentVersionSignDocumentWithoutRequestFails},
 		{name: "SignDocumentTwiceFails", run: documentVersionSignDocumentTwiceFails},
@@ -2400,4 +2402,136 @@ func documentVersionSignArchivedDocumentFails(t *testing.T, actors documentVersi
 			"documentVersionId": publishedVersionID,
 		},
 	})
+}
+
+func documentVersionStartingVersion(t *testing.T, actors documentVersionActors) {
+	const createMutation = `
+		mutation($input: CreateDocumentInput!) {
+			createDocument(input: $input) {
+				documentEdge { node { id } }
+			}
+		}
+	`
+
+	create := func(t *testing.T, owner *testutil.Client, extra map[string]any) (string, error) {
+		t.Helper()
+
+		input := map[string]any{
+			"organizationId": owner.GetOrganizationID().String(),
+			"title":          "Imported document",
+			"content":        testutil.ProseMirrorTextDoc("Imported content"),
+			"documentType":   "POLICY",
+			"classification": "INTERNAL",
+		}
+		maps.Copy(input, extra)
+
+		var result struct {
+			CreateDocument struct {
+				DocumentEdge struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"documentEdge"`
+			} `json:"createDocument"`
+		}
+
+		err := owner.Execute(createMutation, map[string]any{"input": input}, &result)
+
+		return result.CreateDocument.DocumentEdge.Node.ID, err
+	}
+
+	t.Run("first publish takes the starting version", func(t *testing.T) {
+		t.Parallel()
+		owner := actors.owner.ForTest(t)
+
+		docID, err := create(t, owner, map[string]any{"startingMajor": 3, "startingMinor": 2})
+		require.NoError(t, err)
+
+		publishMajorDocumentVersion(t, owner, docID)
+
+		version := latestDocumentVersion[documentVersionSummary](t, owner, docID, "id status major minor")
+		assert.Equal(t, "PUBLISHED", version.Status)
+		assert.Equal(t, 3, version.Major)
+		assert.Equal(t, 2, version.Minor)
+
+		updateDocumentContent(t, owner, docID, "Second revision")
+		publishMinorDocumentVersion(t, owner, docID)
+
+		version = latestDocumentVersion[documentVersionSummary](t, owner, docID, "id status major minor")
+		assert.Equal(t, 3, version.Major)
+		assert.Equal(t, 3, version.Minor)
+
+		updateDocumentContent(t, owner, docID, "Third revision")
+		publishMajorDocumentVersion(t, owner, docID)
+
+		version = latestDocumentVersion[documentVersionSummary](t, owner, docID, "id status major minor")
+		assert.Equal(t, 4, version.Major)
+		assert.Equal(t, 0, version.Minor)
+	})
+
+	t.Run("a minor first publish also takes the starting version", func(t *testing.T) {
+		t.Parallel()
+		owner := actors.owner.ForTest(t)
+
+		docID, err := create(t, owner, map[string]any{"startingMajor": 7, "startingMinor": 0})
+		require.NoError(t, err)
+
+		publishMinorDocumentVersion(t, owner, docID)
+
+		version := latestDocumentVersion[documentVersionSummary](t, owner, docID, "id status major minor")
+		assert.Equal(t, 7, version.Major)
+		assert.Equal(t, 0, version.Minor)
+	})
+
+	t.Run("the first approval request takes the starting version", func(t *testing.T) {
+		t.Parallel()
+		owner := actors.owner.ForTest(t)
+
+		docID, err := create(t, owner, map[string]any{"startingMajor": 2, "startingMinor": 5})
+		require.NoError(t, err)
+
+		requestDocumentApproval(t, owner, docID, []string{getOwnerProfileID(t, owner)})
+
+		version := latestDocumentVersion[documentVersionSummary](t, owner, docID, "id status major minor")
+		assert.Equal(t, "PENDING_APPROVAL", version.Status)
+		assert.Equal(t, 2, version.Major)
+		assert.Equal(t, 5, version.Minor)
+
+		approveLatestDocumentVersion(t, owner, docID)
+
+		version = latestDocumentVersion[documentVersionSummary](t, owner, docID, "id status major minor")
+		assert.Equal(t, "PUBLISHED", version.Status)
+		assert.Equal(t, 2, version.Major)
+		assert.Equal(t, 5, version.Minor)
+	})
+
+	t.Run("without a starting version the first publish is 1.0", func(t *testing.T) {
+		t.Parallel()
+		owner := actors.owner.ForTest(t)
+
+		docID, err := create(t, owner, nil)
+		require.NoError(t, err)
+
+		publishMajorDocumentVersion(t, owner, docID)
+
+		version := latestDocumentVersion[documentVersionSummary](t, owner, docID, "id status major minor")
+		assert.Equal(t, 1, version.Major)
+		assert.Equal(t, 0, version.Minor)
+	})
+
+	for name, extra := range map[string]map[string]any{
+		"major without minor": {"startingMajor": 3},
+		"minor without major": {"startingMinor": 2},
+		"zero version":        {"startingMajor": 0, "startingMinor": 0},
+		"negative major":      {"startingMajor": -1, "startingMinor": 0},
+		"too large":           {"startingMajor": 100000, "startingMinor": 0},
+	} {
+		t.Run("rejects "+name, func(t *testing.T) {
+			t.Parallel()
+			owner := actors.owner.ForTest(t)
+
+			_, err := create(t, owner, extra)
+			require.Error(t, err)
+		})
+	}
 }

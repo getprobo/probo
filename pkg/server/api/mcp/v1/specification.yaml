@@ -10236,6 +10236,12 @@ components:
           items:
             $ref: "#/components/schemas/GID"
           description: Default approver profile IDs
+        starting_major:
+          type: integer
+          description: Major number of the version the first publish takes, for a document that already has a version history elsewhere. Set together with starting_minor. Without it the first version is 1.0, or 0.1 for a minor publish.
+        starting_minor:
+          type: integer
+          description: Minor number of the version the first publish takes. Set together with starting_major.
 
     AddDocumentOutput:
       type: object

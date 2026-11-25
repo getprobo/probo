@@ -12,6 +12,9 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ### Added
 
+- `document create --starting-version <major>.<minor>` sets the number the
+  first published version takes, for a document that already has a version
+  history
 - `document list-history` shows the versions tagging each revision in a
   `VERSIONS` column, and `--versioned` lists only the tagged revisions
 

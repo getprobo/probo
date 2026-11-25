@@ -749,6 +749,13 @@ input CreateDocumentInput {
     documentType: DocumentType!
     classification: DocumentClassification!
     defaultApproverIds: [ID!]
+    """
+    The version number the first published version takes, for a document that
+    already has a version history elsewhere. Set both or neither. Without it
+    the first version is 1.0, or 0.1 for a minor publish.
+    """
+    startingMajor: Int
+    startingMinor: Int
 }
 
 input UpdateDocumentInput {

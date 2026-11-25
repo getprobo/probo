@@ -1179,6 +1179,8 @@ func (r *mutationResolver) CreateDocument(ctx context.Context, input types.Creat
 			Classification:     input.Classification,
 			DocumentType:       input.DocumentType,
 			DefaultApproverIDs: input.DefaultApproverIds,
+			StartingMajor:      input.StartingMajor,
+			StartingMinor:      input.StartingMinor,
 		},
 	)
 	if err != nil {
