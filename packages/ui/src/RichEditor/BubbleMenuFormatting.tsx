@@ -2,13 +2,13 @@
 // Use of this source code is governed by the MIT license
 // that can be found in the LICENSE file.
 
-import { ArrowSquareOutIcon, CodeIcon, LinkIcon, TextBIcon, TextItalicIcon, TextStrikethroughIcon, TextUnderlineIcon, TrashIcon } from "@phosphor-icons/react";
+import { ArrowSquareOutIcon, CodeIcon, type Icon, LinkIcon, TextBIcon, TextItalicIcon, TextStrikethroughIcon, TextUnderlineIcon, TrashIcon } from "@phosphor-icons/react";
 import { Editor, useEditorState } from "@tiptap/react";
 import { type FocusEvent, type KeyboardEvent, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { tv } from "tailwind-variants/lite";
 
-import { hasStyleMark, toggleStyle } from "./_lib/formatting";
+import { type FormattingStyle, hasStyleMark, toggleStyle } from "./_lib/formatting";
 import { useLinkEditor } from "./_lib/useLinkEditor";
 import { BubbleMenuToolbar } from "./BubbleMenu";
 import { MenuButton } from "./MenuButton";
@@ -21,6 +21,18 @@ const bubbleMenuFormattingVariants = tv({
 });
 
 const { linkInput, linkAction } = bubbleMenuFormattingVariants();
+
+const styleButtons: {
+  style: FormattingStyle;
+  icon: Icon;
+  active: "isBold" | "isItalic" | "isUnderline" | "isStrike" | "isCode";
+}[] = [
+  { style: "bold", icon: TextBIcon, active: "isBold" },
+  { style: "italic", icon: TextItalicIcon, active: "isItalic" },
+  { style: "underline", icon: TextUnderlineIcon, active: "isUnderline" },
+  { style: "strike", icon: TextStrikethroughIcon, active: "isStrike" },
+  { style: "code", icon: CodeIcon, active: "isCode" },
+];
 
 type BubbleMenuFormattingProps = {
   editor: Editor;
@@ -95,38 +107,17 @@ export function BubbleMenuFormatting(props: BubbleMenuFormattingProps) {
   return (
     <>
       <BubbleMenuToolbar>
-        <MenuButton
-          active={state.isBold}
-          onClick={() => toggleStyle(editor, "bold")}
-        >
-          <TextBIcon size={16} weight="bold" />
-        </MenuButton>
-        <MenuButton
-          active={state.isItalic}
-          onClick={() => toggleStyle(editor, "italic")}
-        >
-          <TextItalicIcon size={16} weight="bold" />
-        </MenuButton>
-        {hasStyleMark(editor, "underline") && (
-          <MenuButton
-            active={state.isUnderline}
-            onClick={() => toggleStyle(editor, "underline")}
-          >
-            <TextUnderlineIcon size={16} weight="bold" />
-          </MenuButton>
-        )}
-        <MenuButton
-          active={state.isStrike}
-          onClick={() => toggleStyle(editor, "strike")}
-        >
-          <TextStrikethroughIcon size={16} weight="bold" />
-        </MenuButton>
-        <MenuButton
-          active={state.isCode}
-          onClick={() => toggleStyle(editor, "code")}
-        >
-          <CodeIcon size={16} weight="bold" />
-        </MenuButton>
+        {styleButtons
+          .filter(({ style }) => hasStyleMark(editor, style))
+          .map(({ style, icon: StyleIcon, active }) => (
+            <MenuButton
+              key={style}
+              active={state[active]}
+              onClick={() => toggleStyle(editor, style)}
+            >
+              <StyleIcon size={16} weight="bold" />
+            </MenuButton>
+          ))}
         <MenuButton
           active={link.isLink || link.open}
           onClick={() => link.setOpen(!link.open)}
