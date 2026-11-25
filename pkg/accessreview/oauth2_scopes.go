@@ -42,6 +42,8 @@ var OAuth2ScopeMappings = map[coredata.OAuth2Scope][]string{
 		ActionInventoryPrincipalList,
 		ActionInventoryResourceGet,
 		ActionInventoryResourceList,
+		ActionInventoryChangeEventGet,
+		ActionInventoryChangeEventList,
 		ActionDriverCatalogList,
 	},
 	ScopeV1AccessReview: {
@@ -57,6 +59,8 @@ var OAuth2ScopeMappings = map[coredata.OAuth2Scope][]string{
 		ActionInventoryPrincipalList,
 		ActionInventoryResourceGet,
 		ActionInventoryResourceList,
+		ActionInventoryChangeEventGet,
+		ActionInventoryChangeEventList,
 		ActionDriverCatalogList,
 		ActionCampaignCreate,
 		ActionCampaignUpdate,

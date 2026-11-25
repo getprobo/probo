@@ -246,7 +246,7 @@ func TestAccessInventoryChangeEvent_Insert_Idempotent(t *testing.T) {
 		)
 
 		var byGrant coredata.AccessInventoryChangeEvents
-		if err := byGrant.LoadByGrantID(ctx, conn, fx.scope, grantID, cursor); err != nil {
+		if err := byGrant.LoadByGrantID(ctx, conn, fx.scope, grantID, cursor, nil); err != nil {
 			return err
 		}
 
@@ -254,7 +254,7 @@ func TestAccessInventoryChangeEvent_Insert_Idempotent(t *testing.T) {
 		assert.Equal(t, eventID, byGrant[0].ID)
 
 		var bySource coredata.AccessInventoryChangeEvents
-		if err := bySource.LoadBySourceID(ctx, conn, fx.scope, fx.sourceID, cursor); err != nil {
+		if err := bySource.LoadBySourceID(ctx, conn, fx.scope, fx.sourceID, cursor, nil); err != nil {
 			return err
 		}
 

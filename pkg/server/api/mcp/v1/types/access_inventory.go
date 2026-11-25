@@ -21,6 +21,8 @@
 package types
 
 import (
+	"encoding/json"
+
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/page"
 )
@@ -145,5 +147,83 @@ func NewListAccessInventoryResourcesOutput(
 	return ListAccessInventoryResourcesOutput{
 		NextCursor: nextCursor,
 		Resources:  resources,
+	}
+}
+
+func NewAccessInventoryChangeEvent(e *coredata.AccessInventoryChangeEvent) *AccessInventoryChangeEvent {
+	event := &AccessInventoryChangeEvent{
+		ID:                   e.ID,
+		OrganizationID:       e.OrganizationID,
+		AccessReviewSourceID: e.AccessReviewSourceID,
+		GrantID:              e.GrantID,
+		PrincipalKey:         e.PrincipalKey,
+		ResourceKey:          e.ResourceKey,
+		EntitlementKey:       e.EntitlementKey,
+		ChangeType:           e.ChangeType,
+		ObservedAt:           e.ObservedAt,
+		ProviderOccurredAt:   e.ProviderOccurredAt,
+		EffectiveAt:          e.EffectiveAt(),
+		SyncRunID:            e.SyncRunID,
+		Before:               newAccessInventoryGrantAttributeSnapshot(e.Before),
+		After:                newAccessInventoryGrantAttributeSnapshot(e.After),
+		CreatedAt:            e.CreatedAt,
+	}
+
+	return event
+}
+
+func newAccessInventoryGrantAttributeSnapshot(
+	raw *json.RawMessage,
+) *AccessInventoryGrantAttributeSnapshot {
+	snapshot := coredata.DecodeAccessInventoryGrantAttributeSnapshot(raw)
+	if snapshot == nil {
+		return nil
+	}
+
+	return &AccessInventoryGrantAttributeSnapshot{
+		EntitlementDisplayName: snapshot.EntitlementDisplayName,
+		Presence:               snapshot.Presence,
+	}
+}
+
+func NewListAccessInventoryChangeEventsOutput(
+	p *page.Page[*coredata.AccessInventoryChangeEvent, coredata.AccessInventoryChangeEventOrderField],
+) ListAccessInventoryChangeEventsOutput {
+	events := make([]*AccessInventoryChangeEvent, 0, len(p.Data))
+	for _, event := range p.Data {
+		events = append(events, NewAccessInventoryChangeEvent(event))
+	}
+
+	var nextCursor *page.CursorKey
+
+	if p.Info.HasNext && len(p.Data) > 0 {
+		cursorKey := p.Data[len(p.Data)-1].CursorKey(p.Cursor.OrderBy.Field)
+		nextCursor = &cursorKey
+	}
+
+	return ListAccessInventoryChangeEventsOutput{
+		NextCursor:   nextCursor,
+		ChangeEvents: events,
+	}
+}
+
+func NewListAccessInventoryGrantChangeEventsOutput(
+	p *page.Page[*coredata.AccessInventoryChangeEvent, coredata.AccessInventoryChangeEventOrderField],
+) ListAccessInventoryGrantChangeEventsOutput {
+	events := make([]*AccessInventoryChangeEvent, 0, len(p.Data))
+	for _, event := range p.Data {
+		events = append(events, NewAccessInventoryChangeEvent(event))
+	}
+
+	var nextCursor *page.CursorKey
+
+	if p.Info.HasNext && len(p.Data) > 0 {
+		cursorKey := p.Data[len(p.Data)-1].CursorKey(p.Cursor.OrderBy.Field)
+		nextCursor = &cursorKey
+	}
+
+	return ListAccessInventoryGrantChangeEventsOutput{
+		NextCursor:   nextCursor,
+		ChangeEvents: events,
 	}
 }

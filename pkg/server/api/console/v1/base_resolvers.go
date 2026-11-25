@@ -723,6 +723,16 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 			return types.NewAccessInventoryResource(resource), nil
 		}
+	case coredata.AccessInventoryChangeEventEntityType:
+		action = accessreview.ActionInventoryChangeEventGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			event, err := r.accessReview.GetInventoryChangeEvent(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewAccessInventoryChangeEvent(event), nil
+		}
 	case coredata.CookieBannerEntityType:
 		action = probo.ActionCookieBannerGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {

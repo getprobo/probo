@@ -22,6 +22,8 @@ package inventory
 
 import (
 	"github.com/spf13/cobra"
+	"go.probo.inc/probo/pkg/cmd/access-review/inventory/listchangeevents"
+	"go.probo.inc/probo/pkg/cmd/access-review/inventory/listgrantchangeevents"
 	"go.probo.inc/probo/pkg/cmd/access-review/inventory/listgrants"
 	"go.probo.inc/probo/pkg/cmd/access-review/inventory/listprincipals"
 	"go.probo.inc/probo/pkg/cmd/access-review/inventory/listresources"
@@ -39,6 +41,8 @@ func NewCmdInventory(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(viewgrant.NewCmdViewGrant(f))
 	cmd.AddCommand(listprincipals.NewCmdListPrincipals(f))
 	cmd.AddCommand(listresources.NewCmdListResources(f))
+	cmd.AddCommand(listchangeevents.NewCmdListChangeEvents(f))
+	cmd.AddCommand(listgrantchangeevents.NewCmdListGrantChangeEvents(f))
 
 	return cmd
 }

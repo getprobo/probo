@@ -152,6 +152,161 @@ func TestAccessInventory_ListGrantsAfterCSVSync(t *testing.T) {
 	assert.Equal(t, "PRESENT", nodeResult.Node.Presence)
 }
 
+func TestAccessInventory_ChangeEventsChangelogAndFeed(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	orgID := owner.GetOrganizationID().String()
+
+	sourceID := factory.NewAccessReviewSource(owner, orgID).
+		WithName("Inventory Change Events").
+		WithCsvData(testCsvData).
+		Create()
+
+	waitForAccessInventoryGrants(t, owner, orgID, 1)
+
+	const listQuery = `
+		query($id: ID!, $sourceId: ID!) {
+			node(id: $id) {
+				... on Organization {
+					accessInventoryGrants(first: 10, filter: { accessReviewSourceId: $sourceId }) {
+						edges {
+							node {
+								id
+								changeEvents(first: 10) {
+									totalCount
+									edges {
+										node {
+											id
+											changeType
+											effectiveAt
+											after {
+												presence
+												entitlementDisplayName
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+					accessInventoryChangeEvents(
+						first: 10
+						filter: {
+							accessReviewSourceId: $sourceId
+							changeTypes: [APPEARED]
+						}
+					) {
+						totalCount
+						edges {
+							node {
+								id
+								changeType
+								principalKey
+								source {
+									id
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	`
+
+	var result struct {
+		Node struct {
+			AccessInventoryGrants struct {
+				Edges []struct {
+					Node struct {
+						ID           string `json:"id"`
+						ChangeEvents struct {
+							TotalCount int `json:"totalCount"`
+							Edges      []struct {
+								Node struct {
+									ID          string `json:"id"`
+									ChangeType  string `json:"changeType"`
+									EffectiveAt string `json:"effectiveAt"`
+									After       *struct {
+										Presence               string `json:"presence"`
+										EntitlementDisplayName string `json:"entitlementDisplayName"`
+									} `json:"after"`
+								} `json:"node"`
+							} `json:"edges"`
+						} `json:"changeEvents"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"accessInventoryGrants"`
+			AccessInventoryChangeEvents struct {
+				TotalCount int `json:"totalCount"`
+				Edges      []struct {
+					Node struct {
+						ID           string `json:"id"`
+						ChangeType   string `json:"changeType"`
+						PrincipalKey string `json:"principalKey"`
+						Source       struct {
+							ID string `json:"id"`
+						} `json:"source"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"accessInventoryChangeEvents"`
+		} `json:"node"`
+	}
+
+	err := owner.Execute(
+		listQuery,
+		map[string]any{
+			"id":       orgID,
+			"sourceId": sourceID,
+		},
+		&result,
+	)
+	require.NoError(t, err)
+	require.NotEmpty(t, result.Node.AccessInventoryGrants.Edges)
+
+	grant := result.Node.AccessInventoryGrants.Edges[0].Node
+	require.GreaterOrEqual(t, grant.ChangeEvents.TotalCount, 1)
+	require.NotEmpty(t, grant.ChangeEvents.Edges)
+	assert.Equal(t, "APPEARED", grant.ChangeEvents.Edges[0].Node.ChangeType)
+	require.NotNil(t, grant.ChangeEvents.Edges[0].Node.After)
+	assert.Equal(t, "PRESENT", grant.ChangeEvents.Edges[0].Node.After.Presence)
+	assert.Equal(t, "admin", grant.ChangeEvents.Edges[0].Node.After.EntitlementDisplayName)
+	assert.NotEmpty(t, grant.ChangeEvents.Edges[0].Node.EffectiveAt)
+
+	require.GreaterOrEqual(t, result.Node.AccessInventoryChangeEvents.TotalCount, 1)
+	require.NotEmpty(t, result.Node.AccessInventoryChangeEvents.Edges)
+	event := result.Node.AccessInventoryChangeEvents.Edges[0].Node
+	assert.Equal(t, "APPEARED", event.ChangeType)
+	assert.Equal(t, sourceID, event.Source.ID)
+	assert.NotEmpty(t, event.PrincipalKey)
+
+	const nodeQuery = `
+		query($id: ID!) {
+			node(id: $id) {
+				... on AccessInventoryChangeEvent {
+					id
+					changeType
+					effectiveAt
+				}
+			}
+		}
+	`
+
+	var nodeResult struct {
+		Node struct {
+			ID          string `json:"id"`
+			ChangeType  string `json:"changeType"`
+			EffectiveAt string `json:"effectiveAt"`
+		} `json:"node"`
+	}
+
+	err = owner.Execute(nodeQuery, map[string]any{"id": event.ID}, &nodeResult)
+	require.NoError(t, err)
+	assert.Equal(t, event.ID, nodeResult.Node.ID)
+	assert.Equal(t, "APPEARED", nodeResult.Node.ChangeType)
+	assert.NotEmpty(t, nodeResult.Node.EffectiveAt)
+}
+
 func TestAccessInventory_SyncNowAndStatus(t *testing.T) {
 	t.Parallel()
 

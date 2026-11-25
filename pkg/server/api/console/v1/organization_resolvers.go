@@ -331,6 +331,49 @@ func (r *organizationResolver) AccessInventoryResources(ctx context.Context, obj
 	return types.NewAccessInventoryResourceConnection(p, r, obj.ID, filter), nil
 }
 
+// AccessInventoryChangeEvents is the resolver for the accessInventoryChangeEvents field.
+func (r *organizationResolver) AccessInventoryChangeEvents(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AccessInventoryChangeEventOrder, filter *coredata.AccessInventoryChangeEventFilter) (*types.AccessInventoryChangeEventConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, accessreview.ActionInventoryChangeEventList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.AccessInventoryChangeEventOrderField]{
+		Field:     coredata.AccessInventoryChangeEventOrderFieldEffectiveAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AccessInventoryChangeEventOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	p, err := r.accessReview.ListInventoryChangeEventsForOrganizationID(
+		ctx,
+		scope,
+		obj.ID,
+		cursor,
+		filter,
+	)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list access inventory change events", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return types.NewAccessInventoryChangeEventConnection(
+		p,
+		r,
+		obj.ID,
+		types.AccessInventoryChangeEventParentOrganization,
+		filter,
+	), nil
+}
+
 // AssetListDocument is the resolver for the assetListDocument field.
 func (r *organizationResolver) AssetListDocument(ctx context.Context, obj *types.Organization) (*types.Document, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet)

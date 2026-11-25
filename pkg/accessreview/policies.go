@@ -43,6 +43,7 @@ var FullAccessPolicy = policy.NewPolicy(
 		ActionInventoryGrantGet, ActionInventoryGrantList,
 		ActionInventoryPrincipalGet, ActionInventoryPrincipalList,
 		ActionInventoryResourceGet, ActionInventoryResourceList,
+		ActionInventoryChangeEventGet, ActionInventoryChangeEventList,
 	).WithSID("access-review-full-access").When(organizationCondition),
 ).WithDescription("Full access-review access including campaign, entry, and source management")
 
@@ -57,6 +58,7 @@ var ReadAccessPolicy = policy.NewPolicy(
 		ActionInventoryGrantGet, ActionInventoryGrantList,
 		ActionInventoryPrincipalGet, ActionInventoryPrincipalList,
 		ActionInventoryResourceGet, ActionInventoryResourceList,
+		ActionInventoryChangeEventGet, ActionInventoryChangeEventList,
 	).WithSID("access-review-read-access").When(organizationCondition),
 ).WithDescription("Read-only access-review access")
 

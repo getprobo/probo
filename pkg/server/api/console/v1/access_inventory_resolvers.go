@@ -14,12 +14,152 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlx"
 )
+
+// Organization is the resolver for the organization field.
+func (r *accessInventoryChangeEventResolver) Organization(ctx context.Context, obj *types.AccessInventoryChangeEvent) (*types.Organization, error) {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
+		return nil, err
+	}
+
+	loaders := dataloader.FromContext(ctx)
+
+	organization, err := loaders.Organization.Load(ctx, obj.Organization.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
+			return nil, gqlx.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load organization", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return types.NewOrganization(organization), nil
+}
+
+// Source is the resolver for the source field.
+func (r *accessInventoryChangeEventResolver) Source(ctx context.Context, obj *types.AccessInventoryChangeEvent) (*types.AccessReviewSource, error) {
+	scope, err := r.authorize(ctx, obj.ID, accessreview.ActionInventoryChangeEventGet)
+	if err != nil {
+		return nil, err
+	}
+
+	source, err := r.accessReview.GetSource(ctx, scope, obj.Source.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlx.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get access review source", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return types.NewAccessReviewSource(source), nil
+}
+
+// Grant is the resolver for the grant field.
+func (r *accessInventoryChangeEventResolver) Grant(ctx context.Context, obj *types.AccessInventoryChangeEvent) (*types.AccessInventoryGrant, error) {
+	if obj.Grant == nil {
+		return nil, nil
+	}
+
+	scope, err := r.authorize(ctx, obj.ID, accessreview.ActionInventoryChangeEventGet)
+	if err != nil {
+		return nil, err
+	}
+
+	grant, err := r.accessReview.GetInventoryGrant(ctx, scope, obj.Grant.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get access inventory grant", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return types.NewAccessInventoryGrant(grant), nil
+}
+
+// SyncRun is the resolver for the syncRun field.
+func (r *accessInventoryChangeEventResolver) SyncRun(ctx context.Context, obj *types.AccessInventoryChangeEvent) (*types.AccessSourceSyncRun, error) {
+	if obj.SyncRun == nil {
+		return nil, nil
+	}
+
+	scope, err := r.authorize(ctx, obj.ID, accessreview.ActionInventoryChangeEventGet)
+	if err != nil {
+		return nil, err
+	}
+
+	run, err := r.accessReview.GetAccessSourceSyncRun(ctx, scope, obj.SyncRun.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get access source sync run", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return types.NewAccessSourceSyncRun(run), nil
+}
+
+// Permission is the resolver for the permission field.
+func (r *accessInventoryChangeEventResolver) Permission(ctx context.Context, obj *types.AccessInventoryChangeEvent, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *accessInventoryChangeEventConnectionResolver) TotalCount(ctx context.Context, obj *types.AccessInventoryChangeEventConnection) (int, error) {
+	scope, err := r.authorize(ctx, obj.ParentID, accessreview.ActionInventoryChangeEventList)
+	if err != nil {
+		return 0, err
+	}
+
+	switch obj.ParentKind {
+	case types.AccessInventoryChangeEventParentOrganization:
+		count, err := r.accessReview.CountInventoryChangeEventsForOrganizationID(
+			ctx,
+			scope,
+			obj.ParentID,
+			obj.Filter,
+		)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot count access inventory change events", log.Error(err))
+
+			return 0, gqlx.Internal(ctx)
+		}
+
+		return count, nil
+	case types.AccessInventoryChangeEventParentGrant:
+		count, err := r.accessReview.CountInventoryChangeEventsForGrantID(
+			ctx,
+			scope,
+			obj.ParentID,
+			obj.Filter,
+		)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot count access inventory change events", log.Error(err))
+
+			return 0, gqlx.Internal(ctx)
+		}
+
+		return count, nil
+	}
+
+	panic(fmt.Errorf("unsupported parent for access inventory change event connection"))
+}
 
 // Organization is the resolver for the organization field.
 func (r *accessInventoryGrantResolver) Organization(ctx context.Context, obj *types.AccessInventoryGrant) (*types.Organization, error) {
@@ -104,6 +244,43 @@ func (r *accessInventoryGrantResolver) Resource(ctx context.Context, obj *types.
 	}
 
 	return types.NewAccessInventoryResource(resource), nil
+}
+
+// ChangeEvents is the resolver for the changeEvents field.
+func (r *accessInventoryGrantResolver) ChangeEvents(ctx context.Context, obj *types.AccessInventoryGrant, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AccessInventoryChangeEventOrder, filter *coredata.AccessInventoryChangeEventFilter) (*types.AccessInventoryChangeEventConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, accessreview.ActionInventoryChangeEventList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.AccessInventoryChangeEventOrderField]{
+		Field:     coredata.AccessInventoryChangeEventOrderFieldEffectiveAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AccessInventoryChangeEventOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	p, err := r.accessReview.ListInventoryChangeEventsForGrantID(ctx, scope, obj.ID, cursor, filter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list access inventory change events", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return types.NewAccessInventoryChangeEventConnection(
+		p,
+		r,
+		obj.ID,
+		types.AccessInventoryChangeEventParentGrant,
+		filter,
+	), nil
 }
 
 // Permission is the resolver for the permission field.
@@ -337,6 +514,16 @@ func (r *accessSourceSyncRunResolver) Source(ctx context.Context, obj *types.Acc
 	return types.NewAccessReviewSource(source), nil
 }
 
+// AccessInventoryChangeEvent returns schema.AccessInventoryChangeEventResolver implementation.
+func (r *Resolver) AccessInventoryChangeEvent() schema.AccessInventoryChangeEventResolver {
+	return &accessInventoryChangeEventResolver{r}
+}
+
+// AccessInventoryChangeEventConnection returns schema.AccessInventoryChangeEventConnectionResolver implementation.
+func (r *Resolver) AccessInventoryChangeEventConnection() schema.AccessInventoryChangeEventConnectionResolver {
+	return &accessInventoryChangeEventConnectionResolver{r}
+}
+
 // AccessInventoryGrant returns schema.AccessInventoryGrantResolver implementation.
 func (r *Resolver) AccessInventoryGrant() schema.AccessInventoryGrantResolver {
 	return &accessInventoryGrantResolver{r}
@@ -373,11 +560,13 @@ func (r *Resolver) AccessSourceSyncRun() schema.AccessSourceSyncRunResolver {
 }
 
 type (
-	accessInventoryGrantResolver               struct{ *Resolver }
-	accessInventoryGrantConnectionResolver     struct{ *Resolver }
-	accessInventoryPrincipalResolver           struct{ *Resolver }
-	accessInventoryPrincipalConnectionResolver struct{ *Resolver }
-	accessInventoryResourceResolver            struct{ *Resolver }
-	accessInventoryResourceConnectionResolver  struct{ *Resolver }
-	accessSourceSyncRunResolver                struct{ *Resolver }
+	accessInventoryChangeEventResolver           struct{ *Resolver }
+	accessInventoryChangeEventConnectionResolver struct{ *Resolver }
+	accessInventoryGrantResolver                 struct{ *Resolver }
+	accessInventoryGrantConnectionResolver       struct{ *Resolver }
+	accessInventoryPrincipalResolver             struct{ *Resolver }
+	accessInventoryPrincipalConnectionResolver   struct{ *Resolver }
+	accessInventoryResourceResolver              struct{ *Resolver }
+	accessInventoryResourceConnectionResolver    struct{ *Resolver }
+	accessSourceSyncRunResolver                  struct{ *Resolver }
 )

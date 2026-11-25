@@ -120,7 +120,8 @@ export class Probo implements INodeType {
 					{
 						name: 'Access Inventory',
 						value: 'accessInventory',
-						description: 'Browse live access inventory grants, principals, and resources',
+						description:
+							'Browse live access inventory grants, principals, resources, and change events',
 					},
 					{
 						name: 'Access Review',

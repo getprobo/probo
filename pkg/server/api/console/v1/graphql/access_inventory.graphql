@@ -144,6 +144,15 @@ type AccessInventoryGrant implements Node {
     createdAt: Datetime!
     updatedAt: Datetime!
 
+    changeEvents(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: AccessInventoryChangeEventOrder
+        filter: AccessInventoryChangeEventFilter
+    ): AccessInventoryChangeEventConnection! @goField(forceResolver: true)
+
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
@@ -220,4 +229,95 @@ type AccessSourceSyncRun implements Node {
     completedAt: Datetime
     createdAt: Datetime!
     updatedAt: Datetime!
+}
+
+enum AccessInventoryChangeType
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.AccessInventoryChangeType") {
+    APPEARED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessInventoryChangeTypeAppeared"
+        )
+    DISAPPEARED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessInventoryChangeTypeDisappeared"
+        )
+    ATTRIBUTE_CHANGED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessInventoryChangeTypeAttributeChanged"
+        )
+}
+
+enum AccessInventoryChangeEventOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.AccessInventoryChangeEventOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessInventoryChangeEventOrderFieldCreatedAt"
+        )
+    OBSERVED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessInventoryChangeEventOrderFieldObservedAt"
+        )
+    EFFECTIVE_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessInventoryChangeEventOrderFieldEffectiveAt"
+        )
+}
+
+input AccessInventoryChangeEventOrder {
+    direction: OrderDirection!
+    field: AccessInventoryChangeEventOrderField!
+}
+
+input AccessInventoryChangeEventFilter
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.AccessInventoryChangeEventFilter"
+    ) {
+    accessReviewSourceId: ID
+    changeTypes: [AccessInventoryChangeType!]
+    observedAtOnOrAfter: Datetime
+    observedAtOnOrBefore: Datetime
+}
+
+type AccessInventoryGrantAttributeSnapshot {
+    entitlementDisplayName: String!
+    presence: AccessInventoryGrantPresence!
+}
+
+type AccessInventoryChangeEvent implements Node {
+    id: ID!
+    organization: Organization! @goField(forceResolver: true)
+    source: AccessReviewSource! @goField(forceResolver: true)
+    grant: AccessInventoryGrant @goField(forceResolver: true)
+    principalKey: String!
+    resourceKey: String!
+    entitlementKey: String!
+    changeType: AccessInventoryChangeType!
+    observedAt: Datetime!
+    providerOccurredAt: Datetime
+    """
+    COALESCE(providerOccurredAt, observedAt). Prefer provider clock when set.
+    """
+    effectiveAt: Datetime!
+    syncRun: AccessSourceSyncRun @goField(forceResolver: true)
+    before: AccessInventoryGrantAttributeSnapshot
+    after: AccessInventoryGrantAttributeSnapshot
+    createdAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type AccessInventoryChangeEventConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.AccessInventoryChangeEventConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [AccessInventoryChangeEventEdge!]!
+    pageInfo: PageInfo!
+}
+
+type AccessInventoryChangeEventEdge {
+    cursor: CursorKey!
+    node: AccessInventoryChangeEvent!
 }
