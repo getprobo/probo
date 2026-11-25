@@ -482,7 +482,7 @@ FROM
     access_source_sync_runs
 WHERE
     %s
-    AND access_review_source_id = ANY(@access_review_source_ids)
+    AND access_review_source_id = ANY(@access_review_source_ids::text[])
 ORDER BY access_review_source_id, created_at DESC, id DESC
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
