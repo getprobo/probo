@@ -573,6 +573,7 @@ func (r *documentVersionResolver) Signatures(ctx context.Context, obj *types.Doc
 		signatureStates []coredata.DocumentVersionSignatureState
 		activeContract  *bool
 		profileStates   []coredata.ProfileState
+		query           *string
 	)
 
 	if filter != nil {
@@ -587,9 +588,11 @@ func (r *documentVersionResolver) Signatures(ctx context.Context, obj *types.Doc
 		if filter.ProfileStates != nil {
 			profileStates = filter.ProfileStates
 		}
+
+		query = filter.Query
 	}
 
-	signatureFilter := coredata.NewDocumentVersionSignatureFilter(signatureStates, activeContract, profileStates)
+	signatureFilter := coredata.NewDocumentVersionSignatureFilter(signatureStates, activeContract, profileStates).WithQuery(query)
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
@@ -798,12 +801,17 @@ func (r *documentVersionApprovalQuorumResolver) Decisions(ctx context.Context, o
 		}
 	}
 
-	var approvalStates []coredata.DocumentVersionApprovalDecisionState
-	if filter != nil && filter.States != nil {
+	var (
+		approvalStates []coredata.DocumentVersionApprovalDecisionState
+		query          *string
+	)
+
+	if filter != nil {
 		approvalStates = filter.States
+		query = filter.Query
 	}
 
-	approvalFilter := coredata.NewDocumentVersionApprovalDecisionFilter(approvalStates)
+	approvalFilter := coredata.NewDocumentVersionApprovalDecisionFilter(approvalStates).WithQuery(query)
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 

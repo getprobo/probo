@@ -220,6 +220,15 @@ export const documentApprovals = tv({
     name: "min-w-0 flex-1 truncate",
     trailing: "flex shrink-0 items-center gap-1",
   },
+  variants: {
+    pending: {
+      true: { rows: "opacity-60" },
+      false: {},
+    },
+  },
+  defaultVariants: {
+    pending: false,
+  },
 });
 
 export const documentSignatories = tv({
@@ -232,6 +241,15 @@ export const documentSignatories = tv({
     row: "flex min-w-0 items-center justify-between gap-2",
     name: "min-w-0 flex-1 truncate",
     trailing: "flex shrink-0 items-center gap-1",
+  },
+  variants: {
+    pending: {
+      true: { rows: "opacity-60" },
+      false: {},
+    },
+  },
+  defaultVariants: {
+    pending: false,
   },
 });
 

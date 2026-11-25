@@ -18,10 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { SignatureIcon, XIcon } from "@phosphor-icons/react";
+import { MagnifyingGlassIcon, SignatureIcon, XIcon } from "@phosphor-icons/react";
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Card } from "@probo/ui/src/v2/Card/Card";
+import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
@@ -34,11 +35,13 @@ import type { DocumentSignatoriesSectionList_version$key } from "#/__generated__
 import type { DocumentSignatoriesSectionListRefetchQuery } from "#/__generated__/core/DocumentSignatoriesSectionListRefetchQuery.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
 
+import { cardListPageSize, useCardListSearch } from "../_lib/useCardListSearch";
 import { documentSignatories } from "../variants";
 
 import { DocumentSignatoryMenu } from "./DocumentSignatoryMenu";
 
-const documentSignatoriesPageSize = 10;
+// Must match the default filter of the signatures connection below.
+const activeSignatoriesFilter = { activeContract: true, profileStates: ["ACTIVE" as const] };
 
 const documentSignatoriesSectionFragment = graphql`
   fragment DocumentSignatoriesSection_document on Document {
@@ -63,13 +66,20 @@ const documentSignatoriesListFragment = graphql`
   @argumentDefinitions(
     first: { type: "Int", defaultValue: 10 }
     after: { type: "CursorKey" }
+    filter: {
+      type: "DocumentVersionSignatureFilter"
+      defaultValue: { activeContract: true, profileStates: [ACTIVE] }
+    }
   ) {
     id
     canRequestSignature: permission(action: "core:document-version-signature:request")
+    allSignatures: signatures(first: 0, filter: { activeContract: true, profileStates: [ACTIVE] }) {
+      totalCount
+    }
     signatures(
       first: $first
       after: $after
-      filter: { activeContract: true, profileStates: [ACTIVE] }
+      filter: $filter
     ) @connection(key: "DocumentSignatoriesSection_signatures") {
       __id
       edges {
@@ -155,15 +165,24 @@ function DocumentSignatoriesList({
     loadNext,
     hasNext,
     isLoadingNext,
+    refetch,
   } = usePaginationFragment<
     DocumentSignatoriesSectionListRefetchQuery,
     DocumentSignatoriesSectionList_version$key
   >(documentSignatoriesListFragment, versionKey);
+  const { query, setQuery, filtering, isPending } = useCardListSearch((next) => {
+    refetch({
+      first: cardListPageSize,
+      filter: { ...activeSignatoriesFilter, query: next === "" ? null : next },
+    }, { fetchPolicy: "network-only" });
+  });
   const [cancelSignature, isCancelling] = useMutation<DocumentSignatoriesSection_cancelMutation>(
     cancelSignatureMutation,
     { errorToast: t("details.errors.update") },
   );
-  const { root, title, titleLead, titleIcon, rows, row, name, trailing } = documentSignatories();
+  const { root, title, titleLead, titleIcon, rows, row, name, trailing } = documentSignatories({
+    pending: isPending,
+  });
   const signatures = version.signatures.edges.map(edge => edge.node);
   const signatoryIds = new Set(signatures.map(signature => signature.signedBy.id));
   const editable = version.id === publishedVersionId;
@@ -187,7 +206,17 @@ function DocumentSignatoriesList({
             />
           )}
         </div>
-        <div className={rows()}>
+        {version.allSignatures.totalCount > cardListPageSize && (
+          <TextField
+            size={1}
+            icon={<MagnifyingGlassIcon />}
+            value={query}
+            onValueChange={setQuery}
+            placeholder={t("details.signatories.filter")}
+            aria-label={t("details.signatories.filter")}
+          />
+        )}
+        <div className={rows()} aria-busy={isPending}>
           {signatures.length > 0
             ? signatures.map(signature => (
                 <div key={signature.id} className={row()}>
@@ -223,7 +252,9 @@ function DocumentSignatoriesList({
                 </div>
               ))
             : (
-                <Text size={1} color="faint">{t("details.signatories.none")}</Text>
+                <Text size={1} color="faint">
+                  {filtering ? t("details.signatories.filterEmpty") : t("details.signatories.none")}
+                </Text>
               )}
           {hasNext && (
             <Button
@@ -232,7 +263,7 @@ function DocumentSignatoriesList({
               size={1}
               className="self-start"
               loading={isLoadingNext}
-              onClick={() => loadNext(documentSignatoriesPageSize)}
+              onClick={() => loadNext(cardListPageSize)}
             >
               {t("details.signatories.loadMore")}
             </Button>

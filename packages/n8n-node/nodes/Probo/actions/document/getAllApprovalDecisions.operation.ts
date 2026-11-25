@@ -67,6 +67,28 @@ export const description: INodeProperties[] = [
 		default: 50,
 		description: 'Max number of results to return',
 	},
+	{
+		displayName: 'Filters',
+		name: 'filters',
+		type: 'collection',
+		placeholder: 'Add Filter',
+		default: {},
+		displayOptions: {
+			show: {
+				resource: ['document'],
+				operation: ['getAllApprovalDecisions'],
+			},
+		},
+		options: [
+			{
+				displayName: 'Approver Name',
+				name: 'query',
+				type: 'string',
+				default: '',
+				description: 'Part of the approver name',
+			},
+		],
+	},
 ];
 
 export async function execute(
@@ -76,12 +98,17 @@ export async function execute(
 	const approvalQuorumId = this.getNodeParameter('approvalQuorumId', itemIndex) as string;
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
+	const filters = this.getNodeParameter('filters', itemIndex, {}) as IDataObject;
+	const filter: IDataObject = {};
+	if (typeof filters.query === 'string' && filters.query !== '') {
+		filter.query = filters.query;
+	}
 
 	const query = `
-		query GetDocumentVersionApprovalDecisions($approvalQuorumId: ID!, $first: Int, $after: CursorKey) {
+		query GetDocumentVersionApprovalDecisions($approvalQuorumId: ID!, $first: Int, $after: CursorKey, $filter: DocumentVersionApprovalDecisionFilter) {
 			node(id: $approvalQuorumId) {
 				... on DocumentVersionApprovalQuorum {
-					decisions(first: $first, after: $after) {
+					decisions(first: $first, after: $after, filter: $filter) {
 						edges {
 							node {
 								id
@@ -116,7 +143,7 @@ export async function execute(
 	const approvalDecisions = await proboApiRequestAllItems.call(
 		this,
 		query,
-		{ approvalQuorumId },
+		{ approvalQuorumId, filter: Object.keys(filter).length > 0 ? filter : null },
 		(response) => {
 			const data = response?.data as IDataObject | undefined;
 			const node = data?.node as IDataObject | undefined;

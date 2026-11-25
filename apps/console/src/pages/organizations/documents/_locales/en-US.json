@@ -105,6 +105,8 @@
       "remove": "Remove {{name}}",
       "loadMore": "Load more",
       "none": "None",
+      "search": "Search approvers",
+      "empty": "No approvers found",
       "review": "Review",
       "states": {
         "PENDING": "Pending",
@@ -123,6 +125,8 @@
       "loadError": "Could not load people",
       "alreadySignatory": "Already a signatory",
       "none": "None",
+      "filter": "Search signatories",
+      "filterEmpty": "No signatories found",
       "states": {
         "REQUESTED": "Requested",
         "SIGNED": "Signed"

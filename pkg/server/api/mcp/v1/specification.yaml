@@ -10917,6 +10917,9 @@ components:
               items:
                 $ref: "#/components/schemas/ProfileState"
               description: Signatory profile states
+            query:
+              type: string
+              description: Part of the signatory's name
 
     ListDocumentVersionSignaturesOutput:
       type: object
@@ -11134,6 +11137,9 @@ components:
               items:
                 $ref: "#/components/schemas/DocumentVersionApprovalDecisionState"
               description: Filter by decision states
+            query:
+              type: string
+              description: Part of the approver's name
 
     ListDocumentVersionApprovalDecisionsOutput:
       type: object

@@ -29,6 +29,7 @@ type (
 		states         DocumentVersionSignatureStates
 		activeContract *bool
 		profileStates  ProfileStateValues
+		query          *string
 	}
 )
 
@@ -40,11 +41,25 @@ func NewDocumentVersionSignatureFilter(states []DocumentVersionSignatureState, a
 	}
 }
 
+// WithQuery keeps the signatures whose signatory's name contains query.
+func (f *DocumentVersionSignatureFilter) WithQuery(query *string) *DocumentVersionSignatureFilter {
+	f.query = query
+	return f
+}
+
 func (f *DocumentVersionSignatureFilter) SQLArguments() pgx.StrictNamedArgs {
+	var filterQuery *string
+
+	if f.query != nil && *f.query != "" {
+		escaped := escapeLikePattern(*f.query)
+		filterQuery = &escaped
+	}
+
 	return pgx.StrictNamedArgs{
 		"states":          f.states,
 		"active_contract": f.activeContract,
 		"profile_states":  f.profileStates,
+		"filter_query":    filterQuery,
 	}
 }
 
@@ -88,6 +103,17 @@ func (f *DocumentVersionSignatureFilter) SQLFragment() string {
         FROM iam_membership_profiles p
         WHERE p.id = signed_by_profile_id
         AND p.state = ANY(@profile_states::membership_state[])
+    )
+    END
+    AND
+    CASE
+    WHEN @filter_query::text IS NULL
+        THEN TRUE
+    ELSE EXISTS (
+        SELECT 1
+        FROM iam_membership_profiles p
+        WHERE p.id = signed_by_profile_id
+        AND p.full_name ILIKE '%' || @filter_query::text || '%' ESCAPE '\'
     )
     END
 )`

@@ -367,21 +367,37 @@ WITH source_version AS (
 major_versions AS (
 	SELECT dv.id FROM document_versions dv
 	INNER JOIN source_version sv ON dv.document_id = sv.document_id AND dv.major = sv.major
+),
+signatures AS (
+	SELECT
+		s.id,
+		s.tenant_id,
+		s.organization_id,
+		s.document_version_id,
+		s.state,
+		s.signed_by_profile_id,
+		s.signed_at,
+		s.requested_at,
+		s.electronic_signature_id,
+		s.created_at,
+		s.updated_at
+	FROM
+		document_version_signatures s
+	INNER JOIN major_versions mv ON s.document_version_id = mv.id
 )
 SELECT
-	document_version_signatures.id,
-	document_version_signatures.organization_id,
-	document_version_signatures.document_version_id,
-	document_version_signatures.state,
-	document_version_signatures.signed_by_profile_id,
-	document_version_signatures.signed_at,
-	document_version_signatures.requested_at,
-	document_version_signatures.electronic_signature_id,
-	document_version_signatures.created_at,
-	document_version_signatures.updated_at
+	id,
+	organization_id,
+	document_version_id,
+	state,
+	signed_by_profile_id,
+	signed_at,
+	requested_at,
+	electronic_signature_id,
+	created_at,
+	updated_at
 FROM
-	document_version_signatures
-INNER JOIN major_versions mv ON document_version_signatures.document_version_id = mv.id
+	signatures
 WHERE
 	%s
 	AND %s

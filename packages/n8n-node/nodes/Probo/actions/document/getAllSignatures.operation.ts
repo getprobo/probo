@@ -91,6 +91,13 @@ export const description: INodeProperties[] = [
 				description: 'Whether to filter by active contract status',
 			},
 			{
+				displayName: 'Signatory Name',
+				name: 'query',
+				type: 'string',
+				default: '',
+				description: 'Part of the signatory name',
+			},
+			{
 				displayName: 'Signatory Status',
 				name: 'profileStates',
 				type: 'multiOptions',

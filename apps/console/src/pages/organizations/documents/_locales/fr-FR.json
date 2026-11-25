@@ -106,6 +106,8 @@
       "loadMore": "Charger plus",
       "none": "Aucun",
       "review": "Examiner",
+      "search": "Rechercher un approbateur",
+      "empty": "Aucun approbateur trouvé",
       "states": {
         "PENDING": "En attente",
         "APPROVED": "Approuvé",
@@ -123,6 +125,8 @@
       "loadError": "Impossible de charger les personnes",
       "alreadySignatory": "Déjà signataire",
       "none": "Aucun",
+      "filter": "Rechercher un signataire",
+      "filterEmpty": "Aucun signataire trouvé",
       "states": {
         "REQUESTED": "Demandée",
         "SIGNED": "Signée"

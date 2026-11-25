@@ -27,6 +27,7 @@ import (
 type (
 	DocumentVersionApprovalDecisionFilter struct {
 		states DocumentVersionApprovalDecisionStates
+		query  *string
 	}
 )
 
@@ -40,9 +41,23 @@ func NewDocumentVersionApprovalDecisionFilter(states []DocumentVersionApprovalDe
 	}
 }
 
+// WithQuery keeps the decisions whose approver's name contains query.
+func (f *DocumentVersionApprovalDecisionFilter) WithQuery(query *string) *DocumentVersionApprovalDecisionFilter {
+	f.query = query
+	return f
+}
+
 func (f *DocumentVersionApprovalDecisionFilter) SQLArguments() pgx.StrictNamedArgs {
+	var filterQuery *string
+
+	if f.query != nil && *f.query != "" {
+		escaped := escapeLikePattern(*f.query)
+		filterQuery = &escaped
+	}
+
 	return pgx.StrictNamedArgs{
 		"filter_states": f.states,
+		"filter_query":  filterQuery,
 	}
 }
 
@@ -52,6 +67,16 @@ func (f *DocumentVersionApprovalDecisionFilter) SQLFragment() string {
     CASE
         WHEN @filter_states::document_version_approval_decision_state[] IS NOT NULL THEN
             state = ANY(@filter_states::document_version_approval_decision_state[])
+        ELSE TRUE
+    END
+    AND
+    CASE
+        WHEN @filter_query::text IS NOT NULL THEN
+            approver_id IN (
+                SELECT id
+                FROM iam_membership_profiles
+                WHERE full_name ILIKE '%' || @filter_query::text || '%' ESCAPE '\'
+            )
         ELSE TRUE
     END
 )`

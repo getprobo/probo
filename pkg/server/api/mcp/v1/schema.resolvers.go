@@ -2721,6 +2721,7 @@ func (r *Resolver) ListDocumentVersionSignaturesTool(ctx context.Context, req *m
 		signatureStates []coredata.DocumentVersionSignatureState
 		activeContract  *bool
 		profileStates   []coredata.ProfileState
+		query           *string
 	)
 
 	if input.Filter != nil {
@@ -2735,9 +2736,11 @@ func (r *Resolver) ListDocumentVersionSignaturesTool(ctx context.Context, req *m
 		if input.Filter.ProfileStates != nil {
 			profileStates = input.Filter.ProfileStates
 		}
+
+		query = input.Filter.Query
 	}
 
-	signatureFilter := coredata.NewDocumentVersionSignatureFilter(signatureStates, activeContract, profileStates)
+	signatureFilter := coredata.NewDocumentVersionSignatureFilter(signatureStates, activeContract, profileStates).WithQuery(query)
 
 	page, err := prb.Documents.ListSignatures(ctx, scope, input.DocumentVersionID, cursor, signatureFilter)
 	if err != nil {
@@ -4893,12 +4896,17 @@ func (r *Resolver) ListDocumentVersionApprovalDecisionsTool(ctx context.Context,
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	var states []coredata.DocumentVersionApprovalDecisionState
+	var (
+		states []coredata.DocumentVersionApprovalDecisionState
+		query  *string
+	)
+
 	if input.Filter != nil {
 		states = input.Filter.States
+		query = input.Filter.Query
 	}
 
-	filter := coredata.NewDocumentVersionApprovalDecisionFilter(states)
+	filter := coredata.NewDocumentVersionApprovalDecisionFilter(states).WithQuery(query)
 
 	p, err := svc.DocumentApprovals.ListDecisions(ctx, scope, input.QuorumID, cursor, filter)
 	if err != nil {

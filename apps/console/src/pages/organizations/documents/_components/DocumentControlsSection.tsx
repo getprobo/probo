@@ -27,7 +27,7 @@ import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { Link } from "@probo/ui/src/v2/Link/Link";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { Suspense, useEffect, useRef, useState, useTransition } from "react";
+import { Suspense } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useLazyLoadQuery, usePaginationFragment } from "react-relay";
 
@@ -40,12 +40,10 @@ import type { DocumentControlsSectionListRefetchQuery } from "#/__generated__/co
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 
+import { cardListPageSize, useCardListSearch } from "../_lib/useCardListSearch";
 import { documentControls } from "../variants";
 
 import { DocumentControlCombobox } from "./DocumentControlCombobox";
-
-const documentControlsPageSize = 10;
-const documentControlsSearchDelayMs = 300;
 
 const documentControlsSectionFragment = graphql`
   fragment DocumentControlsSection_document on Document {
@@ -77,6 +75,9 @@ const documentControlsListFragment = graphql`
     filter: { type: "ControlFilter", defaultValue: null }
   ) {
     id
+    allControls: controls(first: 0) {
+      totalCount
+    }
     controls(first: $first, after: $after, filter: $filter)
       @connection(key: "DocumentControlsSection_controls", filters: ["filter"]) {
       __id
@@ -185,9 +186,12 @@ function DocumentControlsList({
     DocumentControlsSectionListRefetchQuery,
     DocumentControlsSectionList_document$key
   >(documentControlsListFragment, documentKey);
-  const [query, setQuery] = useState("");
-  const [isPending, startTransition] = useTransition();
-  const committedQuery = useRef("");
+  const { query, setQuery, filtering, isPending } = useCardListSearch((next) => {
+    refetch({
+      first: cardListPageSize,
+      filter: next === "" ? null : { query: next },
+    }, { fetchPolicy: "network-only" });
+  });
   const [attachControl, isAttaching] = useMutation<DocumentControlsSection_attachMutation>(
     attachControlMutation,
     { errorToast: t("details.errors.update") },
@@ -200,26 +204,7 @@ function DocumentControlsList({
   const linksIncomplete = hasNext || isLoadingNext;
   const { root, title, names, name, control } = documentControls({ pending: isPending });
   const controls = document.controls.edges.map(edge => edge.node);
-  const filtering = query.trim() !== "";
-
-  useEffect(() => {
-    const handle = setTimeout(() => {
-      const next = query.trim();
-      if (next === committedQuery.current) {
-        return;
-      }
-      committedQuery.current = next;
-      startTransition(() => {
-        refetch({
-          first: documentControlsPageSize,
-          filter: next === "" ? null : { query: next },
-        }, { fetchPolicy: "network-only" });
-      });
-    }, documentControlsSearchDelayMs);
-    return () => {
-      clearTimeout(handle);
-    };
-  }, [query, refetch]);
+  const searchable = document.allControls.totalCount > cardListPageSize;
   const linkedIds = new Set(controls.map(item => item.id));
 
   return (
@@ -249,14 +234,16 @@ function DocumentControlsList({
             />
           )}
         </div>
-        <TextField
-          size={1}
-          icon={<MagnifyingGlassIcon />}
-          value={query}
-          onValueChange={setQuery}
-          placeholder={t("details.controls.search")}
-          aria-label={t("details.controls.search")}
-        />
+        {searchable && (
+          <TextField
+            size={1}
+            icon={<MagnifyingGlassIcon />}
+            value={query}
+            onValueChange={setQuery}
+            placeholder={t("details.controls.search")}
+            aria-label={t("details.controls.search")}
+          />
+        )}
         <div className={names()} aria-busy={isPending}>
           {controls.length > 0
             ? controls.map(item => (
@@ -310,7 +297,7 @@ function DocumentControlsList({
               size={1}
               className="self-start"
               loading={isLoadingNext}
-              onClick={() => loadNext(documentControlsPageSize)}
+              onClick={() => loadNext(cardListPageSize)}
             >
               {t("details.controls.loadMore")}
             </Button>
