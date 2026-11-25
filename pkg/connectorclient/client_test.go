@@ -79,7 +79,7 @@ func TestOpen_MemberAccountPassesExternalID(t *testing.T) {
 		connectorprotocol.NewConnectorRegistry(),
 	)
 
-	handle := openAccount(t, pgClient, opener, seeded.scope, seeded.account.ID)
+	handle := openAccount(t, opener, seeded.scope, seeded.account.ID)
 
 	assert.Equal(t, memberID, seen)
 	assert.Equal(t, coredata.ConnectorProviderAWS, handle.Provider)
@@ -108,7 +108,7 @@ func TestOpen_InitialAccountReachesHub(t *testing.T) {
 		connectorprotocol.NewConnectorRegistry(),
 	)
 
-	handle := openAccount(t, pgClient, opener, seeded.scope, seeded.account.ID)
+	handle := openAccount(t, opener, seeded.scope, seeded.account.ID)
 
 	assert.Empty(t, seen)
 	require.NotNil(t, handle.Session)
@@ -139,7 +139,7 @@ func TestOpen_PersistsRotatedOAuthToken(t *testing.T) {
 	)
 	opener := oauthOpener(t, pgClient, seeded.key, server.URL)
 
-	handle := openAccount(t, pgClient, opener, seeded.scope, seeded.account.ID)
+	handle := openAccount(t, opener, seeded.scope, seeded.account.ID)
 
 	require.NotNil(t, handle.HTTPClient)
 	assert.Nil(t, handle.Session)
@@ -173,12 +173,10 @@ func TestOpen_PersistsFullCredentialAfterRollback(t *testing.T) {
 	)
 	opener := oauthOpener(t, pgClient, seeded.key, server.URL)
 
-	err := pgClient.WithTx(t.Context(), func(ctx context.Context, tx pg.Tx) error {
-		_, openErr := opener.Open(ctx, tx, seeded.scope, seeded.account.ID)
-		if openErr != nil {
-			return openErr
-		}
+	_, err := opener.Open(t.Context(), seeded.scope, seeded.account.ID)
+	require.NoError(t, err)
 
+	err = pgClient.WithTx(t.Context(), func(context.Context, pg.Tx) error {
 		return errors.New("rollback")
 	})
 	require.EqualError(t, err, "rollback")
@@ -217,7 +215,7 @@ func TestOpen_LeavesUnchangedOAuthToken(t *testing.T) {
 	stored := append([]byte(nil), seeded.connector.EncryptedConnection...)
 	opener := oauthOpener(t, pgClient, seeded.key, server.URL)
 
-	handle := openAccount(t, pgClient, opener, seeded.scope, seeded.account.ID)
+	handle := openAccount(t, opener, seeded.scope, seeded.account.ID)
 
 	require.NotNil(t, handle.HTTPClient)
 	assert.Nil(t, handle.Session)
@@ -255,15 +253,7 @@ func TestOpen_NamesProviderWithoutASession(t *testing.T) {
 		connectorprotocol.NewConnectorRegistry(),
 	)
 
-	var handle *connectorclient.Handle
-
-	err := pgClient.WithTx(t.Context(), func(ctx context.Context, tx pg.Tx) error {
-		var openErr error
-
-		handle, openErr = opener.Open(ctx, tx, seeded.scope, seeded.account.ID)
-
-		return openErr
-	})
+	handle, err := opener.Open(t.Context(), seeded.scope, seeded.account.ID)
 
 	require.Error(t, err)
 	assert.ErrorContains(t, err, string(coredata.ConnectorProviderAWS))
@@ -413,22 +403,14 @@ func seedAccount(
 
 func openAccount(
 	t *testing.T,
-	pgClient *pg.Client,
 	opener *connectorclient.Client,
 	scope coredata.Scoper,
 	accountID gid.GID,
 ) *connectorclient.Handle {
 	t.Helper()
 
-	var handle *connectorclient.Handle
-
-	require.NoError(t, pgClient.WithTx(t.Context(), func(ctx context.Context, tx pg.Tx) error {
-		var err error
-
-		handle, err = opener.Open(ctx, tx, scope, accountID)
-
-		return err
-	}))
+	handle, err := opener.Open(t.Context(), scope, accountID)
+	require.NoError(t, err)
 
 	return handle
 }

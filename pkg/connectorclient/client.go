@@ -80,22 +80,31 @@ func New(
 }
 
 // Open loads the connector account and its connector, then returns a session
-// or an HTTP client. A refreshed OAuth credential is committed in its own
-// transaction before Open returns.
+// or an HTTP client. The load releases its connection before the provider
+// call. A refreshed OAuth credential is committed on its own transaction
+// after that, so the caller does not hold a connection while the commit
+// waits for one, and a rollback of the caller's transaction leaves it.
 func (c *Client) Open(
 	ctx context.Context,
-	tx pg.Tx,
 	scope coredata.Scoper,
 	accountID gid.GID,
 ) (*Handle, error) {
 	account := &coredata.ConnectorAccount{}
-	if err := account.LoadByID(ctx, tx, scope, accountID); err != nil {
-		return nil, fmt.Errorf("cannot load connector account: %w", err)
-	}
-
 	dbConnector := &coredata.Connector{}
-	if err := dbConnector.LoadByID(ctx, tx, scope, account.ConnectorID, c.encryptionKey); err != nil {
-		return nil, fmt.Errorf("cannot load connector %s: %w", account.ConnectorID, err)
+
+	err := c.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		if err := account.LoadByID(ctx, conn, scope, accountID); err != nil {
+			return fmt.Errorf("cannot load connector account: %w", err)
+		}
+
+		if err := dbConnector.LoadByID(ctx, conn, scope, account.ConnectorID, c.encryptionKey); err != nil {
+			return fmt.Errorf("cannot load connector %s: %w", account.ConnectorID, err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	switch dbConnector.Connection.(type) {
@@ -165,8 +174,9 @@ func (c *Client) openHTTP(
 		return nil, fmt.Errorf("cannot open %s connector account: empty HTTP client", dbConnector.Provider)
 	}
 
-	// A rotating provider has already consumed the old refresh token, so
-	// this write commits on its own and survives the caller's rollback.
+	// The provider has already consumed the old refresh token. The load
+	// connection is already released, so this commit does not wait for a
+	// pool connection while another transaction is held.
 	if before.changed(oauth2Conn) {
 		dbConnector.UpdatedAt = time.Now()
 
