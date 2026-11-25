@@ -40,6 +40,7 @@ import type {
   DocumentApprovalsSectionDecisions_quorum$key,
 } from "#/__generated__/core/DocumentApprovalsSectionDecisions_quorum.graphql";
 import type { DocumentApprovalsSectionDecisionsRefetchQuery } from "#/__generated__/core/DocumentApprovalsSectionDecisionsRefetchQuery.graphql";
+import type { DocumentApprovalsSectionVersion_version$key } from "#/__generated__/core/DocumentApprovalsSectionVersion_version.graphql";
 import { PeopleMenu } from "#/components/people/PeopleMenu";
 import { employeePortalHref } from "#/lib/employeePortalHref";
 
@@ -86,6 +87,18 @@ const documentApprovalsSectionFragment = graphql`
   }
 `;
 
+const documentApprovalsVersionFragment = graphql`
+  fragment DocumentApprovalsSectionVersion_version on DocumentVersion {
+    approvalQuorums(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
+      edges {
+        node {
+          ...DocumentApprovalsSectionDecisions_quorum
+        }
+      }
+    }
+  }
+`;
+
 const documentApprovalsDecisionsFragment = graphql`
   fragment DocumentApprovalsSectionDecisions_quorum on DocumentVersionApprovalQuorum
   @refetchable(queryName: "DocumentApprovalsSectionDecisionsRefetchQuery")
@@ -120,6 +133,9 @@ type DecisionState = DocumentApprovalsSectionDecisions_quorum$data[
 
 interface DocumentApprovalsSectionProps {
   documentKey: DocumentApprovalsSection_document$key;
+  // A previous version on screen: its own approvers, read only, in place of
+  // the document's default ones.
+  versionKey?: DocumentApprovalsSectionVersion_version$key | null;
 }
 
 function stateColor(state: DecisionState) {
@@ -135,8 +151,9 @@ function stateColor(state: DecisionState) {
   }
 }
 
-export function DocumentApprovalsSection({ documentKey }: DocumentApprovalsSectionProps) {
+export function DocumentApprovalsSection({ documentKey, versionKey }: DocumentApprovalsSectionProps) {
   const document = useFragment(documentApprovalsSectionFragment, documentKey);
+  const version = useFragment(documentApprovalsVersionFragment, versionKey ?? null);
   const { t } = useTranslation("organizations/documents");
   const [updateDocument, isUpdating] = useUpdateDocument();
   const [visibleCount, setVisibleCount] = useState(documentApprovalsPageSize);
@@ -166,16 +183,37 @@ export function DocumentApprovalsSection({ documentKey }: DocumentApprovalsSecti
     });
   }
 
+  const heading = (
+    <div className={titleLead()}>
+      <StampIcon className={titleIcon()} aria-hidden />
+      <Heading level={2} size={2} weight="medium">
+        {t("details.approvals.title")}
+      </Heading>
+    </div>
+  );
+
+  if (version != null) {
+    const versionQuorum = version.approvalQuorums.edges[0]?.node ?? null;
+
+    return (
+      <Card variant="soft" size={2}>
+        <div className={root()}>
+          <div className={title()}>{heading}</div>
+          <div className={rows()}>
+            {versionQuorum != null
+              ? <DocumentApprovalDecisions quorumKey={versionQuorum} reviewHref={reviewHref} />
+              : <Text size={1} color="faint">{t("details.approvals.none")}</Text>}
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
   return (
     <Card variant="soft" size={2}>
       <div className={root()}>
         <div className={title()}>
-          <div className={titleLead()}>
-            <StampIcon className={titleIcon()} aria-hidden />
-            <Heading level={2} size={2} weight="medium">
-              {t("details.approvals.title")}
-            </Heading>
-          </div>
+          {heading}
           {canEdit && (
             <Dropdown>
               <DropdownTrigger

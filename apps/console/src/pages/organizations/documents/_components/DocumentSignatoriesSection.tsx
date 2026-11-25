@@ -49,6 +49,7 @@ const documentSignatoriesSectionFragment = graphql`
     ) {
       edges {
         node {
+          id
           ...DocumentSignatoriesSectionList_version
         }
       }
@@ -99,6 +100,8 @@ const cancelSignatureMutation = graphql`
 
 interface DocumentSignatoriesSectionProps {
   documentKey: DocumentSignatoriesSection_document$key;
+  // A previous version on screen, in place of the published one.
+  versionKey?: DocumentSignatoriesSectionList_version$key | null;
 }
 
 function stateColor(state: "REQUESTED" | "SIGNED") {
@@ -110,9 +113,10 @@ function stateColor(state: "REQUESTED" | "SIGNED") {
   }
 }
 
-export function DocumentSignatoriesSection({ documentKey }: DocumentSignatoriesSectionProps) {
+export function DocumentSignatoriesSection({ documentKey, versionKey }: DocumentSignatoriesSectionProps) {
   const document = useFragment(documentSignatoriesSectionFragment, documentKey);
-  const version = document.publishedVersion.edges[0]?.node ?? null;
+  const published = document.publishedVersion.edges[0]?.node ?? null;
+  const version = versionKey ?? published;
   const { root, title, titleLead, titleIcon } = documentSignatories();
   const { t } = useTranslation("organizations/documents");
 
@@ -134,13 +138,16 @@ export function DocumentSignatoriesSection({ documentKey }: DocumentSignatoriesS
     );
   }
 
-  return <DocumentSignatoriesList versionKey={version} />;
+  return <DocumentSignatoriesList versionKey={version} publishedVersionId={published?.id ?? null} />;
 }
 
 function DocumentSignatoriesList({
   versionKey,
+  publishedVersionId,
 }: {
   versionKey: DocumentSignatoriesSectionList_version$key;
+  // Signatures are only requested or cancelled on the published version.
+  publishedVersionId: string | null;
 }) {
   const { t } = useTranslation("organizations/documents");
   const {
@@ -159,6 +166,7 @@ function DocumentSignatoriesList({
   const { root, title, titleLead, titleIcon, rows, row, name, trailing } = documentSignatories();
   const signatures = version.signatures.edges.map(edge => edge.node);
   const signatoryIds = new Set(signatures.map(signature => signature.signedBy.id));
+  const editable = version.id === publishedVersionId;
 
   return (
     <Card variant="soft" size={2}>
@@ -170,7 +178,7 @@ function DocumentSignatoriesList({
               {t("details.signatories.title")}
             </Heading>
           </div>
-          {version.canRequestSignature && (
+          {editable && version.canRequestSignature && (
             <DocumentSignatoryMenu
               documentVersionId={version.id}
               connectionId={version.signatures.__id}
@@ -190,7 +198,7 @@ function DocumentSignatoriesList({
                     <Badge size={1} variant="soft" color={stateColor(signature.state)}>
                       {t(`details.signatories.states.${signature.state}`)}
                     </Badge>
-                    {signature.state === "REQUESTED" && signature.canCancel && (
+                    {editable && signature.state === "REQUESTED" && signature.canCancel && (
                       <IconButton
                         size={1}
                         variant="ghost"

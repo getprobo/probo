@@ -90,6 +90,8 @@ export function useSuggestionController(
   documentId: string,
   mode: DocumentMode,
   onOpenSuggestion: (id: string) => void,
+  // Called on each local edit made as a suggestion. Must be stable.
+  onSuggest: () => void,
 ) {
   const { t } = useTranslation("organizations/documents");
   const toast = useToast();
@@ -169,6 +171,7 @@ export function useSuggestionController(
     current.onOpenSuggestion = onOpenSuggestion;
     current.onBlocked = notifyBlocked;
     current.onStartSuggesting = () => {
+      onSuggest();
       if (current.suggestionId) {
         return Promise.resolve(current.suggestionId);
       }
@@ -249,7 +252,7 @@ export function useSuggestionController(
       current.request = request;
       return request;
     };
-  }, [documentId, environment, notifyBlocked, onOpenSuggestion, profileId, startSuggestion, t, toast]);
+  }, [documentId, environment, notifyBlocked, onOpenSuggestion, onSuggest, profileId, startSuggestion, t, toast]);
 
   const setEditor = useCallback((editor: Editor | null) => {
     editorRef.current = editor;

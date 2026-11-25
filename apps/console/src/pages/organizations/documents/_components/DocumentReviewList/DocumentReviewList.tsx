@@ -29,6 +29,7 @@ import type { DocumentReviewListQuery } from "#/__generated__/core/DocumentRevie
 import type { DocumentCommentDraft } from "../../_lib/documentCommentDraft";
 
 import { DocumentReviewPanel } from "./DocumentReviewPanel";
+import type { DocumentReviewView } from "./DocumentReviewViewSwitch";
 
 export const documentReviewListQuery = graphql`
   query DocumentReviewListQuery($documentId: ID!) {
@@ -47,6 +48,8 @@ interface DocumentReviewListProps {
   collaborationHandle: RepoCollaborationHandle;
   // The view switch is portaled here so it sits outside the scroll viewport.
   switchContainer: HTMLElement | null;
+  view: DocumentReviewView;
+  onViewChange: (view: DocumentReviewView) => void;
   activeKey: string | null;
   onActiveChange: (key: string | null) => void;
   commentDraft: DocumentCommentDraft | null;

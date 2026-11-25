@@ -35,12 +35,11 @@ import { type DocumentMode, useDocumentModes } from "../_lib/useDocumentModes";
 import { useDocumentVersionParam } from "../_lib/useDocumentVersionParam";
 import { documentDetailsPage } from "../variants";
 
-import { DocumentApprovalsSection } from "./DocumentApprovalsSection";
 import { DocumentControlsSection } from "./DocumentControlsSection";
 import { DocumentEditor } from "./DocumentEditor/DocumentEditor";
 import { DocumentHeaderActions } from "./DocumentHeaderActions/DocumentHeaderActions";
+import { DocumentPeopleSections } from "./DocumentPeopleSections";
 import { DocumentPropertiesSection } from "./DocumentPropertiesSection";
-import { DocumentSignatoriesSection } from "./DocumentSignatoriesSection";
 import { DocumentTitleField } from "./DocumentTitleField";
 
 const documentDetailsFragment = graphql`
@@ -52,8 +51,7 @@ const documentDetailsFragment = graphql`
     ...useDocumentModes_document
     ...DocumentPropertiesSection_document
     ...DocumentControlsSection_document
-    ...DocumentApprovalsSection_document
-    ...DocumentSignatoriesSection_document
+    ...DocumentPeopleSections_document
   }
 `;
 
@@ -76,6 +74,7 @@ export function DocumentDetails({
   const { t } = useTranslation("organizations/documents");
   const { mode, selectMode, modes } = useDocumentModes(document);
   const { versionId, selectVersion } = useDocumentVersionParam();
+  const viewingVersion = mode === "viewing" && versionId != null;
 
   // Edits always apply to the live document.
   function changeMode(next: DocumentMode) {
@@ -144,8 +143,11 @@ export function DocumentDetails({
             <ScrollArea.Viewport className={viewport()}>
               <ScrollArea.Content className={cards()}>
                 <DocumentPropertiesSection documentKey={document} />
-                <DocumentApprovalsSection documentKey={document} />
-                <DocumentSignatoriesSection documentKey={document} />
+                <DocumentPeopleSections
+                  documentKey={document}
+                  viewingVersion={viewingVersion}
+                  versionQueryRef={viewingVersion ? versionQueryRef : null}
+                />
                 <DocumentControlsSection documentKey={document} />
               </ScrollArea.Content>
             </ScrollArea.Viewport>

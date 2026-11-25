@@ -49,6 +49,7 @@ import { usePreventSuggestionTextDrop } from "../../_lib/usePreventSuggestionTex
 import { useSuggestionController } from "../../_lib/useSuggestionController";
 import { documentEditor } from "../../variants";
 import { DocumentReviewList } from "../DocumentReviewList/DocumentReviewList";
+import type { DocumentReviewView } from "../DocumentReviewList/DocumentReviewViewSwitch";
 import { DocumentVersionContent } from "../DocumentVersionList/DocumentVersionContent";
 import { DocumentVersionList, documentVersionListQuery } from "../DocumentVersionList/DocumentVersionList";
 
@@ -106,9 +107,13 @@ export function DocumentEditor({
       setCommentDraft(null);
     }
   }, []);
+  // Comment and suggestion cards being written only show in the open view.
+  const [reviewView, setReviewView] = useState<DocumentReviewView>("open");
+  const showOpenReview = useCallback(() => setReviewView("open"), []);
   const startCommentDraft = useCallback((draft: DocumentCommentDraft) => {
     setActiveKey(null);
     setCommentDraft(draft);
+    setReviewView("open");
   }, []);
   const [editor, setEditorInstance] = useState<Editor | null>(null);
   const [pageCount, setPageCount] = useState(1);
@@ -117,7 +122,7 @@ export function DocumentEditor({
     document.id,
     document.status !== "ARCHIVED",
   );
-  const { controller, setEditor } = useSuggestionController(document.id, mode, activate);
+  const { controller, setEditor } = useSuggestionController(document.id, mode, activate, showOpenReview);
   const commentAnchorController: CommentAnchorController = useRef({
     onOpenThread: (id: string) => activate(id),
   });
@@ -334,6 +339,8 @@ export function DocumentEditor({
                     editor={editor}
                     collaborationHandle={handle}
                     switchContainer={switchContainer}
+                    view={reviewView}
+                    onViewChange={setReviewView}
                     activeKey={activeKey}
                     onActiveChange={activate}
                     commentDraft={commentDraft}

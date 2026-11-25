@@ -45,6 +45,9 @@ export const documentVersionContentQuery = graphql`
         # The toolbar label reads this query too, to share its request.
         # eslint-disable-next-line relay/must-colocate-fragment-spreads
         ...DocumentVersionLabel_version
+        # The sidebar's approvers and signatories read this query too.
+        # eslint-disable-next-line relay/must-colocate-fragment-spreads
+        ...DocumentPeopleSections_version
       }
     }
   }

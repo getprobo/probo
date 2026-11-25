@@ -88,6 +88,8 @@ interface DocumentReviewPanelProps {
   editor: Editor | null;
   collaborationHandle: RepoCollaborationHandle;
   switchContainer: HTMLElement | null;
+  view: DocumentReviewView;
+  onViewChange: (view: DocumentReviewView) => void;
   activeKey: string | null;
   onActiveChange: (key: string | null) => void;
   commentDraft: DocumentCommentDraft | null;
@@ -102,6 +104,8 @@ export function DocumentReviewPanel({
   editor,
   collaborationHandle,
   switchContainer,
+  view,
+  onViewChange,
   activeKey,
   onActiveChange,
   commentDraft,
@@ -117,7 +121,6 @@ export function DocumentReviewPanel({
     loadNext: threadsPage.loadNext,
     pageSize: reviewPageSize,
   });
-  const [view, setView] = useState<DocumentReviewView>("open");
   const [barElement, setBarElement] = useState<HTMLDivElement | null>(null);
   const [barHeight, setBarHeight] = useState(0);
 
@@ -150,6 +153,13 @@ export function DocumentReviewPanel({
       }
     });
   }, [collaborationHandle, historyLoaded, loadHistory, refetchThreads, retryThreadPages, reviewDocument.id]);
+  // The view outlives the panel, which mounts again with each switch back
+  // to editing or suggesting.
+  useEffect(() => {
+    if (view === "all" && !historyLoaded) {
+      loadHistory({ documentId: reviewDocument.id }, { fetchPolicy: "store-and-network" });
+    }
+  }, [historyLoaded, loadHistory, reviewDocument.id, view]);
   const openConnectionId = reviewDocument.commentThreads.__id;
   const threadConnections = useMemo<DocumentThreadConnections>(
     () => ({ open: openConnectionId, history: documentCommentHistoryConnectionId(reviewDocument.id) }),
@@ -221,12 +231,9 @@ export function DocumentReviewPanel({
   const { root, bar, body, viewport, content } = documentReviewPanel({ view });
 
   function selectView(next: DocumentReviewView) {
-    setView(next);
+    onViewChange(next);
     onActiveChange(null);
     onCommentDraftChange(null);
-    if (next === "all" && historyQueryRef == null) {
-      loadHistory({ documentId: reviewDocument.id }, { fetchPolicy: "store-and-network" });
-    }
   }
 
   function activateHistoryEntry(target: ReviewHistoryTarget) {
