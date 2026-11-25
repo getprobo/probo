@@ -4,6 +4,13 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.277.0] - 2026-11-25
+
+### Added
+
+- `document list-approval-decisions --query` filters decisions by
+  approver name
+
 ## [0.276.0] - 2026-11-25
 
 ### Added
