@@ -21,6 +21,7 @@
 package accessreview
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -747,6 +748,54 @@ func (s *Service) enqueueSourceFetches(
 		}
 		if err := attempt.Insert(ctx, tx, scope); err != nil {
 			return fmt.Errorf("cannot queue source fetch %s: %w", campaignSource.ID, err)
+		}
+	}
+
+	// Lock inventory sources in GID order so concurrent campaign starts that
+	// share sources cannot deadlock (campaign sources load ORDER BY name).
+	sourceIDs := make([]gid.GID, 0, len(campaignSources))
+	seen := make(map[gid.GID]struct{}, len(campaignSources))
+
+	for _, campaignSource := range campaignSources {
+		if campaignSource.AccessReviewSourceID == nil {
+			continue
+		}
+
+		id := *campaignSource.AccessReviewSourceID
+		if _, ok := seen[id]; ok {
+			continue
+		}
+
+		seen[id] = struct{}{}
+		sourceIDs = append(sourceIDs, id)
+	}
+
+	slices.SortFunc(sourceIDs, func(a, b gid.GID) int {
+		return bytes.Compare(a[:], b[:])
+	})
+
+	for _, sourceID := range sourceIDs {
+		source := &coredata.AccessReviewSource{}
+		if err := source.LoadByIDForUpdate(ctx, tx, scope, sourceID); err != nil {
+			if errors.Is(err, coredata.ErrResourceNotFound) {
+				// Source deleted after campaign snapshot — still queue the
+				// campaign fetch attempt; skip inventory enqueue only.
+				continue
+			}
+
+			return fmt.Errorf(
+				"cannot lock access source %s for inventory sync: %w",
+				sourceID,
+				err,
+			)
+		}
+
+		if _, err := s.enqueueInventorySyncRun(ctx, tx, scope, source); err != nil {
+			return fmt.Errorf(
+				"cannot enqueue inventory sync for source %s: %w",
+				source.ID,
+				err,
+			)
 		}
 	}
 

@@ -106,6 +106,8 @@ func (s *Service) FetchSource(
 		return 0, fmt.Errorf("cannot list accounts from source %s: %w", source.Name, err)
 	}
 
+	// Roster observation time — before write locks, for stale dual-write checks.
+	observedAt := time.Now()
 	fetchedCount = len(accounts)
 
 	err = s.pg.WithTx(
@@ -126,7 +128,10 @@ func (s *Service) FetchSource(
 				return errCampaignNotInProgress
 			}
 
-			now := time.Now()
+			// Write-time after the campaign share lock — do not reuse
+			// observedAt here; waiting for the lock can make UpdatedAt go
+			// backwards relative to a concurrent upsert.
+			writeAt := time.Now()
 
 			for _, account := range accounts {
 				accountKey := normalizeAccountKey(account.Email, account.ExternalID)
@@ -152,13 +157,24 @@ func (s *Service) FetchSource(
 					Flags:                        []coredata.AccessReviewEntryFlag{},
 					FlagReasons:                  []string{},
 					Decision:                     coredata.AccessReviewEntryDecisionPending,
-					CreatedAt:                    now,
-					UpdatedAt:                    now,
+					CreatedAt:                    writeAt,
+					UpdatedAt:                    writeAt,
 				}
 
 				if err := entry.Upsert(ctx, conn, scope); err != nil {
 					return fmt.Errorf("cannot upsert access entry: %w", err)
 				}
+			}
+
+			if err := s.dualWriteInventoryFromCampaignFetch(
+				ctx,
+				conn,
+				scope,
+				source.ID,
+				accounts,
+				observedAt,
+			); err != nil {
+				return err
 			}
 
 			return nil
@@ -169,6 +185,86 @@ func (s *Service) FetchSource(
 	}
 
 	return fetchedCount, nil
+}
+
+// dualWriteInventoryFromCampaignFetch refreshes live inventory from the
+// campaign fetch roster. Skips when the source is gone (campaign snapshot
+// still commits), a sync is already in flight, or a newer successful sync
+// already landed after this roster was observed.
+func (s *Service) dualWriteInventoryFromCampaignFetch(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	sourceID gid.GID,
+	accounts []drivers.AccountRecord,
+	observedAt time.Time,
+) error {
+	source := &coredata.AccessReviewSource{}
+	if err := source.LoadByIDForUpdate(ctx, tx, scope, sourceID); err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil
+		}
+
+		return fmt.Errorf("cannot lock access source: %w", err)
+	}
+
+	if source.LastSuccessfulSyncAt != nil && !observedAt.After(*source.LastSuccessfulSyncAt) {
+		return nil
+	}
+
+	existing := &coredata.AccessSourceSyncRun{}
+
+	err := existing.LoadInFlightBySourceID(ctx, tx, scope, source.ID)
+	if err == nil {
+		return nil
+	}
+
+	if !errors.Is(err, coredata.ErrResourceNotFound) {
+		return fmt.Errorf("cannot load in-flight sync run: %w", err)
+	}
+
+	run := &coredata.AccessSourceSyncRun{
+		ID:                   gid.New(scope.GetTenantID(), coredata.AccessSourceSyncRunEntityType),
+		OrganizationID:       source.OrganizationID,
+		AccessReviewSourceID: source.ID,
+		Status:               coredata.AccessSourceSyncRunStatusRunning,
+		StartedAt:            &observedAt,
+		CreatedAt:            observedAt,
+		UpdatedAt:            observedAt,
+	}
+	if err := run.Insert(ctx, tx, scope); err != nil {
+		return fmt.Errorf("cannot insert campaign dual-write sync run: %w", err)
+	}
+
+	upserted, err := s.applyInventoryRoster(
+		ctx,
+		tx,
+		scope,
+		source,
+		run,
+		accounts,
+		observedAt,
+	)
+	if err != nil {
+		return err
+	}
+
+	completedAt := time.Now()
+	run.Status = coredata.AccessSourceSyncRunStatusSuccess
+	run.GrantsUpsertedCount = upserted
+	run.Error = nil
+	run.CompletedAt = &completedAt
+	run.UpdatedAt = completedAt
+
+	if err := run.Update(ctx, tx, scope); err != nil {
+		return fmt.Errorf("cannot mark campaign dual-write sync run success: %w", err)
+	}
+
+	if err := s.scheduleInventorySyncAfterSuccess(ctx, tx, scope, source, completedAt); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func normalizeAccountKey(email, externalID string) string {
