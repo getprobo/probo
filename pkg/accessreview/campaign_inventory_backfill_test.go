@@ -82,6 +82,7 @@ func TestBackfillInventoryFromLatestCampaignEntries(t *testing.T) {
 		CreatedAt:                    now,
 		UpdatedAt:                    now,
 	}
+
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		return attempt.Insert(ctx, tx, fx.scope)
 	}))
@@ -152,6 +153,7 @@ func TestBackfillInventoryFromLatestCampaignEntries_SkipsWhenSyncSucceeded(t *te
 	)
 
 	completedAt := now
+
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		attempt := &coredata.AccessReviewCampaignSourceFetchAttempt{
 			ID:                           gid.New(fx.scope.GetTenantID(), coredata.AccessReviewCampaignSourceFetchAttemptEntityType),
@@ -233,6 +235,7 @@ func TestBackfillAllInventoryFromLatestCampaignEntries(t *testing.T) {
 	insertCampaignEntry(t, ctx, client, fxB, "b@example.com", "B", []string{"Viewer"}, now)
 
 	completedAt := now
+
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		for _, fx := range []fetchFixture{fxA, fxB} {
 			attempt := &coredata.AccessReviewCampaignSourceFetchAttempt{
@@ -390,6 +393,7 @@ func TestBackfillInventoryFromLatestCampaignEntries_UsesLatestSuccessfulSnapshot
 		}
 
 		completedNewer := newer
+
 		attempt := &coredata.AccessReviewCampaignSourceFetchAttempt{
 			ID:                           gid.New(fx.scope.GetTenantID(), coredata.AccessReviewCampaignSourceFetchAttemptEntityType),
 			OrganizationID:               fx.organizationID,
