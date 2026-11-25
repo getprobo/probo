@@ -131,12 +131,13 @@ export function DocumentEditor({
   const viewingRevision = viewing && revisionId != null;
   const showingRevision = viewingRevision && revisionQueryRef != null;
   const showHistory = historyOpen;
-  const historyListLoaded = historyListQueryRef != null;
+  // Reloads on every opening: approvals made in the employee portal do not
+  // reach this page, so the list is refreshed from the server each time.
   useEffect(() => {
-    if (showHistory && !historyListLoaded) {
+    if (showHistory) {
       loadHistoryList({ documentId: document.id }, { fetchPolicy: "store-and-network" });
     }
-  }, [document.id, loadHistoryList, showHistory, historyListLoaded]);
+  }, [document.id, loadHistoryList, showHistory]);
   const [viewQueryRef, loadView, disposeView]
     = useQueryLoader<DocumentViewContentQuery>(documentViewContentQuery);
   const viewingLive = viewing && revisionId == null;

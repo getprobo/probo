@@ -33,6 +33,7 @@ import type { DocumentHistoryList_document$key } from "#/__generated__/core/Docu
 import type { DocumentHistoryListPaginationQuery } from "#/__generated__/core/DocumentHistoryListPaginationQuery.graphql";
 import type { DocumentHistoryListQuery } from "#/__generated__/core/DocumentHistoryListQuery.graphql";
 
+import { documentVersionState } from "../../_lib/documentVersionState";
 import { documentHistoryList } from "../../variants";
 
 import { DocumentHistoryListItem } from "./DocumentHistoryListItem";
@@ -135,10 +136,9 @@ function DocumentHistoryListContent({
   >(documentHistoryListFragment, documentKey);
   const [versionedOnly, setVersionedOnly] = useState(false);
 
-  // The history loads once, so a publish, approval or rejection would leave it
-  // stale. The document's published and pending versions change with each of
-  // them, so a change in either reloads the list with the current filter.
-  const versionState = `${data.publishedVersion?.id ?? ""}|${data.pendingApprovalVersion?.id ?? ""}`;
+  // A publish from this page changes the document's versions, so the list
+  // reloads with the current filter.
+  const versionState = documentVersionState(data.publishedVersion?.id, data.pendingApprovalVersion?.id);
   const loadedVersionState = useRef(versionState);
 
   useEffect(() => {
