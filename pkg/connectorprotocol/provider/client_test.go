@@ -22,11 +22,15 @@ package provider_test
 
 import (
 	"context"
+	"net/http"
+	"net/http/httptest"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.gearno.de/kit/httpclient"
 	"go.probo.inc/probo/pkg/connectorprotocol"
 	"go.probo.inc/probo/pkg/connectorprotocol/provider"
 	"go.probo.inc/probo/pkg/coredata"
@@ -162,4 +166,54 @@ func TestHTTPClient_DerivedClientCredentialsTokenURL(t *testing.T) {
 			assert.Equal(t, "op_o_c_current", conn.AccessToken)
 		},
 	)
+}
+
+func TestHTTPClient_RefreshOptionsStayOffAPITransport(t *testing.T) {
+	t.Parallel()
+
+	var refreshed atomic.Bool
+
+	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		refreshed.Store(true)
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"access_token":"refreshed","token_type":"Bearer","expires_in":3600}`))
+	}))
+	t.Cleanup(tokenServer.Close)
+
+	apiServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	t.Cleanup(apiServer.Close)
+
+	registry := connectorprotocol.NewConnectorRegistry()
+	require.NoError(t, registry.Register(string(coredata.ConnectorProviderLinear), &connectorprotocol.OAuth2Connector{
+		ClientID:     "client",
+		ClientSecret: "secret",
+		TokenURL:     tokenServer.URL,
+	}))
+
+	client, err := provider.HTTPClient(
+		context.Background(),
+		registry,
+		provider.NewRegistry(),
+		&coredata.Connector{
+			Provider: coredata.ConnectorProviderLinear,
+			Connection: &connectorprotocol.OAuth2Connection{
+				AccessToken:  "stale",
+				RefreshToken: "refresh-token",
+				ExpiresAt:    time.Now().Add(-time.Hour),
+				TokenType:    "Bearer",
+			},
+		},
+		httpclient.WithSSRFAllowLoopback(),
+	)
+	require.NoError(t, err)
+	require.NotNil(t, client)
+	assert.True(t, refreshed.Load())
+
+	request, err := http.NewRequest(http.MethodGet, apiServer.URL, nil)
+	require.NoError(t, err)
+
+	_, err = client.Do(request)
+	require.ErrorIs(t, err, httpclient.ErrBlockedAddress)
 }

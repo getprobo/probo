@@ -43,6 +43,7 @@ type (
 	// Client opens a connector account. It holds the credentials and
 	// registries Open needs, and nothing about a particular account.
 	Client struct {
+		pg            *pg.Client
 		encryptionKey cipher.EncryptionKey
 		federation    *identityfederation.Issuer
 		providers     *provider.Registry
@@ -63,12 +64,14 @@ type (
 )
 
 func New(
+	pgClient *pg.Client,
 	encryptionKey cipher.EncryptionKey,
 	federation *identityfederation.Issuer,
 	providers *provider.Registry,
 	connectors *connectorprotocol.Registry,
 ) *Client {
 	return &Client{
+		pg:            pgClient,
 		encryptionKey: encryptionKey,
 		federation:    federation,
 		providers:     providers,
@@ -77,8 +80,8 @@ func New(
 }
 
 // Open loads the connector account and its connector, then returns a session
-// or an HTTP client. A rotated OAuth access token is written back on tx
-// before Open returns.
+// or an HTTP client. A refreshed OAuth credential is committed in its own
+// transaction before Open returns.
 func (c *Client) Open(
 	ctx context.Context,
 	tx pg.Tx,
@@ -100,7 +103,7 @@ func (c *Client) Open(
 		return c.openSession(ctx, dbConnector, account)
 
 	case connectorprotocol.HTTPConnection:
-		return c.openHTTP(ctx, tx, scope, dbConnector, account)
+		return c.openHTTP(ctx, scope, dbConnector, account)
 
 	default:
 		return nil, fmt.Errorf(
@@ -140,17 +143,12 @@ func (c *Client) openSession(
 
 func (c *Client) openHTTP(
 	ctx context.Context,
-	tx pg.Tx,
 	scope coredata.Scoper,
 	dbConnector *coredata.Connector,
 	account *coredata.ConnectorAccount,
 ) (*Handle, error) {
 	oauth2Conn := connectorprotocol.OAuth2ConnectionOf(dbConnector.Connection)
-
-	var tokenBefore string
-	if oauth2Conn != nil {
-		tokenBefore = oauth2Conn.AccessToken
-	}
+	before := oauthCredentialFrom(oauth2Conn)
 
 	httpClient, err := provider.HTTPClient(
 		ctx,
@@ -167,11 +165,14 @@ func (c *Client) openHTTP(
 		return nil, fmt.Errorf("cannot open %s connector account: empty HTTP client", dbConnector.Provider)
 	}
 
-	// Providers that rotate refresh tokens fail on the next call if the old
-	// token is reused, so a changed access token is written before return.
-	if oauth2Conn != nil && oauth2Conn.AccessToken != tokenBefore {
+	// A rotating provider has already consumed the old refresh token, so
+	// this write commits on its own and survives the caller's rollback.
+	if before.changed(oauth2Conn) {
 		dbConnector.UpdatedAt = time.Now()
-		if err := dbConnector.UpdateConnection(ctx, tx, scope, c.encryptionKey); err != nil {
+
+		if err := c.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+			return dbConnector.UpdateConnection(ctx, tx, scope, c.encryptionKey)
+		}); err != nil {
 			return nil, fmt.Errorf("cannot persist refreshed token for connector %s: %w", dbConnector.ID, err)
 		}
 	}
@@ -182,4 +183,35 @@ func (c *Client) openHTTP(
 		Account:    account,
 		HTTPClient: httpClient,
 	}, nil
+}
+
+type oauthCredential struct {
+	accessToken  string
+	refreshToken string
+	expiresAt    time.Time
+	tokenType    string
+}
+
+func oauthCredentialFrom(conn *connectorprotocol.OAuth2Connection) oauthCredential {
+	if conn == nil {
+		return oauthCredential{}
+	}
+
+	return oauthCredential{
+		accessToken:  conn.AccessToken,
+		refreshToken: conn.RefreshToken,
+		expiresAt:    conn.ExpiresAt,
+		tokenType:    conn.TokenType,
+	}
+}
+
+func (c oauthCredential) changed(conn *connectorprotocol.OAuth2Connection) bool {
+	if conn == nil {
+		return false
+	}
+
+	return c.accessToken != conn.AccessToken ||
+		c.refreshToken != conn.RefreshToken ||
+		!c.expiresAt.Equal(conn.ExpiresAt) ||
+		c.tokenType != conn.TokenType
 }

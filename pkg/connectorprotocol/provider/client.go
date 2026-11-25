@@ -82,7 +82,11 @@ func oauthClient(
 ) (*http.Client, error) {
 	refreshCfg := connectorRegistry.GetOAuth2RefreshConfig(string(prvdr))
 	if refreshCfg != nil {
-		return conn.RefreshableClient(ctx, *refreshCfg, opts...)
+		if _, err := conn.RefreshableClient(ctx, *refreshCfg, opts...); err != nil {
+			return nil, err
+		}
+
+		return conn.APIClient(), nil
 	}
 
 	return conn.Client(ctx)

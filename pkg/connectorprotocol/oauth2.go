@@ -813,6 +813,13 @@ func (c *OAuth2Connection) Client(ctx context.Context) (*http.Client, error) {
 	return c.ClientWithOptions(ctx)
 }
 
+// APIClient returns a client for the access token already on the connection.
+// The dial keeps SSRF protection. Options passed to a token refresh are not
+// applied.
+func (c *OAuth2Connection) APIClient() *http.Client {
+	return c.staticTokenClient()
+}
+
 // ClientWithOptions returns an HTTP client with the given options.
 // Use this to add logging and tracing to the HTTP client.
 //

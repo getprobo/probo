@@ -23,6 +23,7 @@ package connectorclient_test
 import (
 	"bytes"
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"sync/atomic"
@@ -71,6 +72,7 @@ func TestOpen_MemberAccountPassesExternalID(t *testing.T) {
 		memberID,
 	)
 	opener := connectorclient.New(
+		pgClient,
 		seeded.key,
 		nil,
 		workloadRegistry(t, &seen),
@@ -99,6 +101,7 @@ func TestOpen_InitialAccountReachesHub(t *testing.T) {
 		hubAccountID,
 	)
 	opener := connectorclient.New(
+		pgClient,
 		seeded.key,
 		nil,
 		workloadRegistry(t, &seen),
@@ -134,7 +137,7 @@ func TestOpen_PersistsRotatedOAuthToken(t *testing.T) {
 		},
 		"linear-workspace",
 	)
-	opener := oauthOpener(t, seeded.key, server.URL)
+	opener := oauthOpener(t, pgClient, seeded.key, server.URL)
 
 	handle := openAccount(t, pgClient, opener, seeded.scope, seeded.account.ID)
 
@@ -145,6 +148,48 @@ func TestOpen_PersistsRotatedOAuthToken(t *testing.T) {
 	conn, ok := reloaded.Connection.(*connectorprotocol.OAuth2Connection)
 	require.True(t, ok)
 	assert.Equal(t, "refreshed", conn.AccessToken)
+}
+
+func TestOpen_PersistsFullCredentialAfterRollback(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"access_token":"stale","refresh_token":"rotated-refresh","token_type":"DPoP","expires_in":3600}`))
+	}))
+	t.Cleanup(server.Close)
+
+	pgClient, seeded := seedAccount(
+		t,
+		coredata.ConnectorProviderLinear,
+		coredata.ConnectorProtocolOAuth2,
+		&connectorprotocol.OAuth2Connection{
+			AccessToken:  "stale",
+			RefreshToken: "refresh-token",
+			ExpiresAt:    time.Now().Add(-time.Hour),
+			TokenType:    "Bearer",
+		},
+		"linear-workspace",
+	)
+	opener := oauthOpener(t, pgClient, seeded.key, server.URL)
+
+	err := pgClient.WithTx(t.Context(), func(ctx context.Context, tx pg.Tx) error {
+		_, openErr := opener.Open(ctx, tx, seeded.scope, seeded.account.ID)
+		if openErr != nil {
+			return openErr
+		}
+
+		return errors.New("rollback")
+	})
+	require.EqualError(t, err, "rollback")
+
+	reloaded := reloadConnector(t, pgClient, seeded.scope, seeded.connector.ID, seeded.key)
+	conn, ok := reloaded.Connection.(*connectorprotocol.OAuth2Connection)
+	require.True(t, ok)
+	assert.Equal(t, "stale", conn.AccessToken)
+	assert.Equal(t, "rotated-refresh", conn.RefreshToken)
+	assert.Equal(t, "DPoP", conn.TokenType)
+	assert.True(t, conn.ExpiresAt.After(time.Now()))
 }
 
 func TestOpen_LeavesUnchangedOAuthToken(t *testing.T) {
@@ -170,7 +215,7 @@ func TestOpen_LeavesUnchangedOAuthToken(t *testing.T) {
 		"linear-workspace",
 	)
 	stored := append([]byte(nil), seeded.connector.EncryptedConnection...)
-	opener := oauthOpener(t, seeded.key, server.URL)
+	opener := oauthOpener(t, pgClient, seeded.key, server.URL)
 
 	handle := openAccount(t, pgClient, opener, seeded.scope, seeded.account.ID)
 
@@ -179,6 +224,7 @@ func TestOpen_LeavesUnchangedOAuthToken(t *testing.T) {
 	assert.False(t, called.Load())
 
 	reloaded := &coredata.Connector{}
+
 	require.NoError(t, pgClient.WithConn(t.Context(), func(ctx context.Context, conn pg.Querier) error {
 		return reloaded.LoadMetadataByID(ctx, conn, seeded.scope, seeded.connector.ID)
 	}))
@@ -202,6 +248,7 @@ func TestOpen_NamesProviderWithoutASession(t *testing.T) {
 		hubAccountID,
 	)
 	opener := connectorclient.New(
+		pgClient,
 		seeded.key,
 		nil,
 		registries,
@@ -212,6 +259,7 @@ func TestOpen_NamesProviderWithoutASession(t *testing.T) {
 
 	err := pgClient.WithTx(t.Context(), func(ctx context.Context, tx pg.Tx) error {
 		var openErr error
+
 		handle, openErr = opener.Open(ctx, tx, seeded.scope, seeded.account.ID)
 
 		return openErr
@@ -258,7 +306,12 @@ func workloadRegistry(t *testing.T, seen *string) *provider.Registry {
 	return registries
 }
 
-func oauthOpener(t *testing.T, key cipher.EncryptionKey, tokenURL string) *connectorclient.Client {
+func oauthOpener(
+	t *testing.T,
+	pgClient *pg.Client,
+	key cipher.EncryptionKey,
+	tokenURL string,
+) *connectorclient.Client {
 	t.Helper()
 
 	connectors := connectorprotocol.NewConnectorRegistry()
@@ -274,6 +327,7 @@ func oauthOpener(t *testing.T, key cipher.EncryptionKey, tokenURL string) *conne
 	))
 
 	opener := connectorclient.New(
+		pgClient,
 		key,
 		nil,
 		provider.NewRegistry(),
@@ -370,6 +424,7 @@ func openAccount(
 
 	require.NoError(t, pgClient.WithTx(t.Context(), func(ctx context.Context, tx pg.Tx) error {
 		var err error
+
 		handle, err = opener.Open(ctx, tx, scope, accountID)
 
 		return err
@@ -388,6 +443,7 @@ func reloadConnector(
 	t.Helper()
 
 	loaded := &coredata.Connector{}
+
 	require.NoError(t, pgClient.WithConn(t.Context(), func(ctx context.Context, conn pg.Querier) error {
 		return loaded.LoadByID(ctx, conn, scope, connectorID, key)
 	}))
