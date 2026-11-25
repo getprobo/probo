@@ -25,7 +25,7 @@ import { ErrorBoundary } from "@probo/ui/src/v2/ErrorBoundary/ErrorBoundary";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { Switch } from "@probo/ui/src/v2/Switch/Switch";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePaginationFragment, usePreloadedQuery } from "react-relay";
 
@@ -58,6 +58,12 @@ const documentHistoryListFragment = graphql`
     after: { type: "CursorKey", defaultValue: null }
     filter: { type: "DocumentRevisionFilter", defaultValue: null }
   ) {
+    publishedVersion {
+      id
+    }
+    pendingApprovalVersion {
+      id
+    }
     history(
       first: $first
       after: $after
@@ -128,6 +134,24 @@ function DocumentHistoryListContent({
     DocumentHistoryList_document$key
   >(documentHistoryListFragment, documentKey);
   const [versionedOnly, setVersionedOnly] = useState(false);
+
+  // The history loads once, so a publish, approval or rejection would leave it
+  // stale. The document's published and pending versions change with each of
+  // them, so a change in either reloads the list with the current filter.
+  const versionState = `${data.publishedVersion?.id ?? ""}|${data.pendingApprovalVersion?.id ?? ""}`;
+  const loadedVersionState = useRef(versionState);
+
+  useEffect(() => {
+    if (loadedVersionState.current === versionState) {
+      return;
+    }
+    loadedVersionState.current = versionState;
+    refetch(
+      { filter: versionedOnly ? { versioned: true } : null },
+      { fetchPolicy: "store-and-network" },
+    );
+  }, [refetch, versionState, versionedOnly]);
+
   const { root, heading, filter, body, viewport, content, more } = documentHistoryList();
 
   function handleVersionedOnlyChange(checked: boolean) {
