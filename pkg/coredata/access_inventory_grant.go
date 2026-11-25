@@ -279,6 +279,67 @@ WHERE
 	return nil
 }
 
+// LoadBySourceIDAndLastSeenBefore returns grants for the source whose
+// last_seen_at is strictly before before. Soft-disappear uses the sync's
+// observedAt so only grants not refreshed by the current roster are loaded.
+func (gs *AccessInventoryGrants) LoadBySourceIDAndLastSeenBefore(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	sourceID gid.GID,
+	before time.Time,
+	cursor *page.Cursor[AccessInventoryGrantOrderField],
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    access_review_source_id,
+    principal_id,
+    resource_id,
+    principal_key,
+    resource_key,
+    entitlement_key,
+    entitlement_display_name,
+    presence,
+    consecutive_missing_syncs,
+    first_seen_at,
+    last_seen_at,
+    provider_changed_at,
+    created_at,
+    updated_at
+FROM
+    access_inventory_grants
+WHERE
+    %s
+    AND access_review_source_id = @access_review_source_id
+    AND last_seen_at < @last_seen_before
+    AND %s
+`
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"access_review_source_id": sourceID,
+		"last_seen_before":        before,
+	}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query access_inventory_grants: %w", err)
+	}
+
+	grants, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[AccessInventoryGrant])
+	if err != nil {
+		return fmt.Errorf("cannot collect access_inventory_grants: %w", err)
+	}
+
+	*gs = grants
+
+	return nil
+}
+
 func (gs *AccessInventoryGrants) CountBySourceID(
 	ctx context.Context,
 	conn pg.Querier,

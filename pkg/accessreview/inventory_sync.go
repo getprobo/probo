@@ -34,6 +34,7 @@ import (
 	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type grantSnapshot struct {
@@ -43,8 +44,9 @@ type grantSnapshot struct {
 
 // SyncInventorySource pulls the live roster for one AccessReviewSource and
 // upserts principals, resources, and grants. Real grant diffs emit
-// AccessInventoryChangeEvent rows (APPEARED / ATTRIBUTE_CHANGED). Soft
-// disappear of missing grants is deferred to AR-P1-07.
+// AccessInventoryChangeEvent rows (APPEARED / DISAPPEARED / ATTRIBUTE_CHANGED).
+// Soft disappear runs only after a successful full roster pull; failed syncs
+// leave presence and consecutive_missing_syncs unchanged.
 func (s *Service) SyncInventorySource(
 	ctx context.Context,
 	scope coredata.Scoper,
@@ -230,7 +232,125 @@ func (s *Service) applyInventoryRoster(
 		}
 	}
 
+	if err := markMissingInventoryGrants(
+		ctx,
+		tx,
+		scope,
+		tenantID,
+		source,
+		run,
+		observedAt,
+	); err != nil {
+		return 0, err
+	}
+
 	return upserted, nil
+}
+
+func markMissingInventoryGrants(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	tenantID gid.TenantID,
+	source *coredata.AccessReviewSource,
+	run *coredata.AccessSourceSyncRun,
+	observedAt time.Time,
+) error {
+	return page.WalkAll(
+		ctx,
+		page.OrderBy[coredata.AccessInventoryGrantOrderField]{
+			Field:     coredata.AccessInventoryGrantOrderFieldCreatedAt,
+			Direction: page.OrderDirectionAsc,
+		},
+		func(
+			ctx context.Context,
+			cursor *page.Cursor[coredata.AccessInventoryGrantOrderField],
+		) ([]*coredata.AccessInventoryGrant, error) {
+			var batch coredata.AccessInventoryGrants
+			if err := batch.LoadBySourceIDAndLastSeenBefore(
+				ctx,
+				tx,
+				scope,
+				source.ID,
+				observedAt,
+				cursor,
+			); err != nil {
+				return nil, err
+			}
+
+			return batch, nil
+		},
+		func(grants []*coredata.AccessInventoryGrant) error {
+			for _, grant := range grants {
+				if err := disappearInventoryGrant(
+					ctx,
+					tx,
+					scope,
+					tenantID,
+					source,
+					run,
+					grant,
+					observedAt,
+				); err != nil {
+					return err
+				}
+			}
+
+			return nil
+		},
+	)
+}
+
+func disappearInventoryGrant(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	tenantID gid.TenantID,
+	source *coredata.AccessReviewSource,
+	run *coredata.AccessSourceSyncRun,
+	grant *coredata.AccessInventoryGrant,
+	observedAt time.Time,
+) error {
+	wasPresent := grant.Presence == coredata.AccessInventoryGrantPresencePresent
+	priorDisplayName := grant.EntitlementDisplayName
+	priorPresence := grant.Presence
+
+	grant.Presence = coredata.AccessInventoryGrantPresenceDisappeared
+	grant.ConsecutiveMissingSyncs++
+	grant.UpdatedAt = observedAt
+
+	if err := grant.Update(ctx, tx, scope); err != nil {
+		return fmt.Errorf("cannot mark inventory grant disappeared: %w", err)
+	}
+
+	if !wasPresent {
+		return nil
+	}
+
+	before, err := marshalGrantSnapshot(
+		&coredata.AccessInventoryGrant{
+			EntitlementDisplayName: priorDisplayName,
+			Presence:               priorPresence,
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	return insertInventoryChangeEvent(
+		ctx,
+		tx,
+		scope,
+		tenantID,
+		source,
+		run,
+		grant,
+		coredata.AccessInventoryChangeTypeDisappeared,
+		observedAt,
+		before,
+		nil,
+		"disappeared",
+	)
 }
 
 func upsertInventoryPrincipal(
