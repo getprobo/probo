@@ -18,16 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { DocumentSuggestionChangeList_suggestion$key } from "#/__generated__/core/DocumentSuggestionChangeList_suggestion.graphql";
 
 import { recordedSuggestionChanges } from "../../_lib/suggestionChanges";
-import { documentSuggestionListItem } from "../../variants";
 
-import { DocumentSuggestionChange } from "./DocumentSuggestionChange";
+import { DocumentSuggestionChangeSummary } from "./DocumentSuggestionChangeSummary";
 
 const documentSuggestionChangeListFragment = graphql`
   fragment DocumentSuggestionChangeList_suggestion on DocumentSuggestion {
@@ -42,26 +39,7 @@ interface DocumentSuggestionChangeListProps {
 // The changes a decided suggestion made, as recorded when it was decided.
 export function DocumentSuggestionChangeList({ suggestionKey }: DocumentSuggestionChangeListProps) {
   const suggestion = useFragment(documentSuggestionChangeListFragment, suggestionKey);
-  const { t } = useTranslation("organizations/documents");
-  const { changes } = documentSuggestionListItem();
-  const recorded = recordedSuggestionChanges(suggestion);
-  const hidden = recorded.changeCount - recorded.changes.length;
+  const { changes, changeCount } = recordedSuggestionChanges(suggestion);
 
-  if (recorded.changes.length === 0 && hidden <= 0) {
-    return null;
-  }
-
-  return (
-    <div className={changes()}>
-      {recorded.changes.map((change, index) => (
-        // A recorded change has no identity beyond its order.
-        <DocumentSuggestionChange key={index} change={change} />
-      ))}
-      {hidden > 0 && (
-        <Text size={1} color="faint">
-          {t("details.review.changes.moreChanges", { count: hidden })}
-        </Text>
-      )}
-    </div>
-  );
+  return <DocumentSuggestionChangeSummary changes={changes} changeCount={changeCount} />;
 }

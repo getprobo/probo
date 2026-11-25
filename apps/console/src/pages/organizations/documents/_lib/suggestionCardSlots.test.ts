@@ -20,7 +20,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { noteSuggestionCardSlot, suggestionCardSlot } from "./suggestionCardSlots";
+import { clearSuggestionCardSlots, noteSuggestionCardSlot, suggestionCardSlot } from "./suggestionCardSlots";
 
 describe("suggestionCardSlot", () => {
   it("keeps the local id a suggestion was first shown under", () => {
@@ -31,5 +31,12 @@ describe("suggestionCardSlot", () => {
 
   it("uses the id of a suggestion that never had a local id", () => {
     expect(suggestionCardSlot("suggestion-2")).toBe("suggestion-2");
+  });
+
+  it("forgets every slot once cleared", () => {
+    noteSuggestionCardSlot("local:third", "suggestion-3");
+    clearSuggestionCardSlots();
+
+    expect(suggestionCardSlot("suggestion-3")).toBe("suggestion-3");
   });
 });

@@ -21,26 +21,32 @@
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 
-import type { SuggestionAnchor } from "../../_lib/reviewAnchors";
+import type { SuggestionChange } from "../../_lib/reviewAnchors";
 import { documentSuggestionListItem } from "../../variants";
 
 import { DocumentSuggestionChange } from "./DocumentSuggestionChange";
 
-interface DocumentSuggestionAnchorChangesProps {
-  anchor: SuggestionAnchor;
+interface DocumentSuggestionChangeSummaryProps {
+  changes: readonly SuggestionChange[];
+  // Every change of the suggestion, including those left out of `changes`.
+  changeCount: number;
 }
 
-// The changes of an open suggestion, read from its redlines in the text.
-export function DocumentSuggestionAnchorChanges({ anchor }: DocumentSuggestionAnchorChangesProps) {
+// The first changes of a suggestion, then how many more there are. Open
+// suggestions read them from the text, decided ones from what was recorded.
+export function DocumentSuggestionChangeSummary({ changes, changeCount }: DocumentSuggestionChangeSummaryProps) {
   const { t } = useTranslation("organizations/documents");
-  const { changes } = documentSuggestionListItem();
-  const hidden = anchor.changeCount - anchor.changes.length;
+  const { changes: changesClass } = documentSuggestionListItem();
+  const hidden = changeCount - changes.length;
+
+  if (changes.length === 0 && hidden <= 0) {
+    return null;
+  }
 
   return (
-    <div className={changes()}>
-      {anchor.changes.map((change, index) => (
-        // The list is rebuilt from the document on every change and has no
-        // stable identity beyond its order.
+    <div className={changesClass()}>
+      {changes.map((change, index) => (
+        // The changes have no stable identity beyond their order.
         <DocumentSuggestionChange key={index} change={change} />
       ))}
       {hidden > 0 && (

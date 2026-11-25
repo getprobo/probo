@@ -38,8 +38,8 @@ import { DocumentReviewAction } from "./DocumentReviewAction";
 import { DocumentReviewAuthor } from "./DocumentReviewAuthor";
 import { DocumentReviewItem } from "./DocumentReviewItem";
 import { DocumentReviewThread } from "./DocumentReviewThread";
-import { DocumentSuggestionAnchorChanges } from "./DocumentSuggestionAnchorChanges";
 import { DocumentSuggestionChangeList } from "./DocumentSuggestionChangeList";
+import { DocumentSuggestionChangeSummary } from "./DocumentSuggestionChangeSummary";
 import { DocumentSuggestionDecisions } from "./DocumentSuggestionDecisions";
 
 const documentCommentHistoryItemFragment = graphql`
@@ -149,7 +149,9 @@ function SuggestionHistoryItem({
           primary
           trailing={trailing}
         />
-        {open && liveAnchor != null && <DocumentSuggestionAnchorChanges anchor={liveAnchor} />}
+        {open && liveAnchor != null && (
+          <DocumentSuggestionChangeSummary changes={liveAnchor.changes} changeCount={liveAnchor.changeCount} />
+        )}
         {!open && <DocumentSuggestionChangeList suggestionKey={suggestion} />}
         <DocumentReviewThread
           threadKey={thread}

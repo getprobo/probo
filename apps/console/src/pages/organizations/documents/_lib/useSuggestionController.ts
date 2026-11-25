@@ -38,7 +38,7 @@ import { useMutation } from "#/lib/relay/useMutation";
 import { CurrentUser } from "#/providers/CurrentUser";
 
 import { documentCommentHistoryConnectionId, documentOpenThreadsConnectionId } from "./documentThreadConnections";
-import { noteSuggestionCardSlot } from "./suggestionCardSlots";
+import { clearSuggestionCardSlots, noteSuggestionCardSlot } from "./suggestionCardSlots";
 import type { DocumentMode } from "./useDocumentModes";
 
 const blockedToastIntervalMs = 3_000;
@@ -99,6 +99,9 @@ export function useSuggestionController(
   onOpenSuggestion: (id: string) => void,
   // Called each time a local edit starts a suggestion. Must be stable.
   onSuggest: () => void,
+  // Called once the server assigns the id of a suggestion still marked with
+  // its local id. Must be stable.
+  onSuggestionSettled: (localId: string, id: string) => void,
 ) {
   const { t } = useTranslation("organizations/documents");
   const toast = useToast();
@@ -133,6 +136,8 @@ export function useSuggestionController(
     blockedToastIntervalMs,
     blockedToastOptions,
   );
+
+  useEffect(() => clearSuggestionCardSlots, [documentId]);
 
   useEffect(() => {
     controller.current.enabled = mode === "suggesting";
@@ -228,6 +233,7 @@ export function useSuggestionController(
             const id = response.startDocumentSuggestion.documentSuggestionEdge.node.id;
             ownedIds.current.add(id);
             noteSuggestionCardSlot(localId, id);
+            onSuggestionSettled(localId, id);
             if (editor) {
               reassignSuggestionId(editor, localId, id);
             }
@@ -260,7 +266,18 @@ export function useSuggestionController(
       current.request = request;
       return request;
     };
-  }, [documentId, environment, notifyBlocked, onOpenSuggestion, onSuggest, profileId, startSuggestion, t, toast]);
+  }, [
+    documentId,
+    environment,
+    notifyBlocked,
+    onOpenSuggestion,
+    onSuggest,
+    onSuggestionSettled,
+    profileId,
+    startSuggestion,
+    t,
+    toast,
+  ]);
 
   const setEditor = useCallback((editor: Editor | null) => {
     editorRef.current = editor;

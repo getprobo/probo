@@ -28,7 +28,7 @@ import type { SuggestionAnchor } from "../../_lib/reviewAnchors";
 import { DocumentReviewAuthor } from "./DocumentReviewAuthor";
 import { DocumentReviewItem } from "./DocumentReviewItem";
 import { DocumentReviewThread } from "./DocumentReviewThread";
-import { DocumentSuggestionAnchorChanges } from "./DocumentSuggestionAnchorChanges";
+import { DocumentSuggestionChangeSummary } from "./DocumentSuggestionChangeSummary";
 import { DocumentSuggestionDecisions } from "./DocumentSuggestionDecisions";
 
 const documentSuggestionListItemFragment = graphql`
@@ -78,7 +78,7 @@ export function DocumentSuggestionListItem({
           ? <DocumentSuggestionDecisions suggestionKey={suggestion} threadConnections={threadConnections} />
           : undefined}
       />
-      <DocumentSuggestionAnchorChanges anchor={anchor} />
+      <DocumentSuggestionChangeSummary changes={anchor.changes} changeCount={anchor.changeCount} />
       <DocumentReviewThread
         threadKey={thread}
         threadConnections={threadConnections}

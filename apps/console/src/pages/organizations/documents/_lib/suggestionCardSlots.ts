@@ -30,3 +30,7 @@ export function noteSuggestionCardSlot(localId: string, id: string) {
 export function suggestionCardSlot(id: string): string {
   return slots.get(id) ?? id;
 }
+
+export function clearSuggestionCardSlots() {
+  slots.clear();
+}

@@ -133,7 +133,17 @@ export function DocumentEditor({
     mode,
     document.status !== "ARCHIVED",
   );
-  const { controller, setEditor } = useSuggestionController(document.id, mode, activate, showOpenReview);
+  // A card opened under its local id stays open once the real id replaces it.
+  const settleActiveSuggestion = useCallback((localId: string, id: string) => {
+    setActiveKey(current => (current === localId ? id : current));
+  }, []);
+  const { controller, setEditor } = useSuggestionController(
+    document.id,
+    mode,
+    activate,
+    showOpenReview,
+    settleActiveSuggestion,
+  );
   const commentAnchorController: CommentAnchorController = useRef({
     onOpenThread: (id: string) => activate(id),
   });

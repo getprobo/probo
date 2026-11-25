@@ -26,7 +26,7 @@ import type { SuggestionAnchor } from "../../_lib/reviewAnchors";
 
 import { DocumentReviewAuthorView } from "./DocumentReviewAuthor";
 import { DocumentReviewItem } from "./DocumentReviewItem";
-import { DocumentSuggestionAnchorChanges } from "./DocumentSuggestionAnchorChanges";
+import { DocumentSuggestionChangeSummary } from "./DocumentSuggestionChangeSummary";
 
 interface DocumentSuggestionPendingListItemProps {
   anchor: SuggestionAnchor;
@@ -55,7 +55,7 @@ export function DocumentSuggestionPendingListItem({
           primary
         />
       )}
-      <DocumentSuggestionAnchorChanges anchor={anchor} />
+      <DocumentSuggestionChangeSummary changes={anchor.changes} changeCount={anchor.changeCount} />
     </DocumentReviewItem>
   );
 }
