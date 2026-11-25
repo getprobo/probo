@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import type { Schema } from "@tiptap/pm/model";
 import type { Editor } from "@tiptap/react";
 
 import {
@@ -36,6 +37,12 @@ const toggles: Record<FormattingStyle, (editor: Editor) => void> = {
   strike: editor => editor.chain().focus().toggleStrike().run(),
   code: editor => editor.chain().focus().toggleCode().run(),
 };
+
+// `destroy()` nulls `schema`, so render paths must check it before reading marks.
+export function hasStyleMark(editor: Editor, style: FormattingStyle): boolean {
+  const schema: Schema | null = editor.schema;
+  return schema != null && schema.marks[style] != null;
+}
 
 // Suggesting mode records the change as a format suggestion. Otherwise the
 // mark is toggled directly.

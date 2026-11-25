@@ -29,7 +29,7 @@ import {
 import { type Editor, useEditorState } from "@tiptap/react";
 import { useTranslation } from "react-i18next";
 
-import { type FormattingStyle, toggleStyle } from "../_lib/formatting";
+import { type FormattingStyle, hasStyleMark, toggleStyle } from "../_lib/formatting";
 
 import { RichEditorToolbarButton } from "./RichEditorToolbarButton";
 
@@ -62,7 +62,7 @@ export function RichEditorToolbarMarks({ editor, disabled }: RichEditorToolbarMa
   });
 
   return styles
-    .filter(({ style }) => editor.schema.marks[style] != null)
+    .filter(({ style }) => hasStyleMark(editor, style))
     .map(({ style, icon: StyleIcon }) => (
       <RichEditorToolbarButton
         key={style}

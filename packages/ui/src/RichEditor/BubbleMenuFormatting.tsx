@@ -8,7 +8,7 @@ import { type FocusEvent, type KeyboardEvent, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { tv } from "tailwind-variants/lite";
 
-import { toggleStyle } from "./_lib/formatting";
+import { hasStyleMark, toggleStyle } from "./_lib/formatting";
 import { useLinkEditor } from "./_lib/useLinkEditor";
 import { BubbleMenuToolbar } from "./BubbleMenu";
 import { MenuButton } from "./MenuButton";
@@ -107,7 +107,7 @@ export function BubbleMenuFormatting(props: BubbleMenuFormattingProps) {
         >
           <TextItalicIcon size={16} weight="bold" />
         </MenuButton>
-        {editor.schema.marks.underline != null && (
+        {hasStyleMark(editor, "underline") && (
           <MenuButton
             active={state.isUnderline}
             onClick={() => toggleStyle(editor, "underline")}
