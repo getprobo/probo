@@ -4,6 +4,34 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.359.0] - 2026-11-25
+
+### Added
+
+- A third party can hold any number of agreements, each with a title,
+  a type (amendment, annex, business associate, data privacy, master
+  service, terms or other), optional validity dates and one PDF file.
+  Existing business associate and data privacy agreements are migrated
+  automatically
+- The agreements page lists every agreement with a type badge, and
+  agreements can be previewed, downloaded, edited and deleted. The add
+  dialog previews the PDF before upload
+- MCP tools to upload, list, get, update and delete third party
+  agreements
+
+### Changed
+
+- The GraphQL API replaces the business associate and data privacy
+  agreement fields and mutations with `agreements` and
+  `upload/update/deleteThirdPartyAgreement`
+- Agreement uploads accept only PDF files up to 30MB
+
+### Fixed
+
+- The rich editor bubble menu no longer shows style buttons the
+  document schema does not support, and no longer crashes after the
+  editor is destroyed
+
 ## [0.358.0] - 2026-11-24
 
 ### Added
