@@ -268,9 +268,11 @@ func TestBackfillAllInventoryFromLatestCampaignEntries(t *testing.T) {
 		return run.Insert(ctx, tx, fxB.scope)
 	}))
 
+	// BackfillAll scans every org in the shared test DB, so global counts
+	// can include parallel sibling fixtures. Assert only this test's orgs.
 	count, err := svc.BackfillAllInventoryFromLatestCampaignEntries(ctx)
 	require.NoError(t, err)
-	assert.Equal(t, 1, count)
+	assert.GreaterOrEqual(t, count, 1)
 
 	grantsA := loadInventoryGrants(t, ctx, client, inventorySyncFixture{
 		scope:          fxA.scope,
@@ -288,12 +290,17 @@ func TestBackfillAllInventoryFromLatestCampaignEntries(t *testing.T) {
 
 	again, err := svc.BackfillAllInventoryFromLatestCampaignEntries(ctx)
 	require.NoError(t, err)
-	assert.Equal(t, 0, again)
+	assert.GreaterOrEqual(t, again, 0)
 	assert.Len(t, loadInventoryGrants(t, ctx, client, inventorySyncFixture{
 		scope:          fxA.scope,
 		organizationID: fxA.organizationID,
 		sourceID:       fxA.sourceID,
 	}), 1)
+	assert.Empty(t, loadInventoryGrants(t, ctx, client, inventorySyncFixture{
+		scope:          fxB.scope,
+		organizationID: fxB.organizationID,
+		sourceID:       fxB.sourceID,
+	}))
 }
 
 func TestBackfillInventoryFromLatestCampaignEntries_UsesLatestSuccessfulSnapshot(t *testing.T) {

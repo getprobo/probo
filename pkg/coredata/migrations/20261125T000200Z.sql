@@ -30,7 +30,6 @@ CREATE INDEX idx_access_review_campaign_source_fetch_attempts_success
     ON access_review_campaign_source_fetch_attempts (
         access_review_campaign_source_id,
         (COALESCE(completed_at, created_at)) DESC,
-        attempt_number DESC,
-        id DESC
+        attempt_number DESC
     )
     WHERE status = 'SUCCESS';

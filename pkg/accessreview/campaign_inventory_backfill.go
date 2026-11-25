@@ -86,7 +86,17 @@ func (s *Service) BackfillInventoryFromLatestCampaignEntries(
 					source,
 				)
 				if err != nil {
-					return err
+					// One sticky source must not block the rest of the org on
+					// every Service.Run — match per-org continue in BackfillAll.
+					s.logger.ErrorCtx(
+						ctx,
+						"cannot backfill inventory for access source",
+						log.String("organization_id", organizationID.String()),
+						log.String("access_review_source_id", source.ID.String()),
+						log.Error(err),
+					)
+
+					continue
 				}
 
 				upserted += count
