@@ -84,6 +84,10 @@ export function CreateDocumentDialog({ trigger, connection }: CreateDocumentDial
     documentType: z.enum(["OTHER", "GOVERNANCE", "POLICY", "PROCEDURE", "PLAN", "REGISTER", "RECORD", "REPORT", "TEMPLATE"]),
     classification: z.enum(["PUBLIC", "INTERNAL", "CONFIDENTIAL", "SECRET"]),
     defaultApproverIds: z.array(z.string()),
+    startingVersion: z.string().refine(
+      value => value === "" || /^\d+\.\d+$/.test(value),
+      t("createDocumentDialog.validation.startingVersionFormat"),
+    ),
   });
 
   const { control, handleSubmit, register, formState, reset } = useFormWithSchema(
@@ -93,6 +97,7 @@ export function CreateDocumentDialog({ trigger, connection }: CreateDocumentDial
         documentType: "POLICY",
         classification: "INTERNAL",
         defaultApproverIds: [],
+        startingVersion: "",
       },
     },
   );
@@ -100,11 +105,17 @@ export function CreateDocumentDialog({ trigger, connection }: CreateDocumentDial
   const [createDocument, isLoading]
     = useMutation<CreateDocumentDialogMutation>(createDocumentMutation);
 
-  const onSubmit = (data: z.infer<typeof documentSchema>) => {
+  const onSubmit = ({ startingVersion, ...data }: z.infer<typeof documentSchema>) => {
+    const [startingMajor, startingMinor] = startingVersion === ""
+      ? [null, null]
+      : startingVersion.split(".").map(Number);
+
     createDocument({
       variables: {
         input: {
           ...data,
+          startingMajor,
+          startingMinor,
           organizationId,
         },
         connections: [connection],
@@ -206,6 +217,19 @@ export function CreateDocumentDialog({ trigger, connection }: CreateDocumentDial
                 control={control}
                 organizationId={organizationId}
                 placeholder={t("createDocumentDialog.fields.approversPlaceholder")}
+              />
+            </PropertyRow>
+
+            <PropertyRow
+              id="startingVersion"
+              label={t("createDocumentDialog.properties.startingVersion")}
+              error={errors.startingVersion?.message}
+            >
+              <Input
+                id="startingVersion"
+                inputMode="decimal"
+                placeholder={t("createDocumentDialog.fields.startingVersionPlaceholder")}
+                {...register("startingVersion")}
               />
             </PropertyRow>
 

@@ -140,20 +140,23 @@
     "fields": {
       "title": "Titel",
       "titlePlaceholder": "Documenttitel",
-      "approversPlaceholder": "Goedkeurders toevoegen..."
+      "approversPlaceholder": "Goedkeurders toevoegen...",
+      "startingVersionPlaceholder": "bijv. 3.2"
     },
     "properties": {
       "title": "Eigenschappen",
       "status": "Status",
       "type": "Type",
       "classification": "Classificatie",
-      "approvers": "Goedkeurders"
+      "approvers": "Goedkeurders",
+      "startingVersion": "Startversie"
     },
     "status": {
       "draft": "Concept"
     },
     "validation": {
-      "titleRequired": "Titel is verplicht"
+      "titleRequired": "Titel is verplicht",
+      "startingVersionFormat": "Gebruik hoofd.sub, bijvoorbeeld 3.2"
     },
     "messages": {
       "successTitle": "Succes",

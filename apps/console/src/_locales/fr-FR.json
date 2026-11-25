@@ -141,20 +141,23 @@
     "fields": {
       "title": "Titre",
       "titlePlaceholder": "Titre du document",
-      "approversPlaceholder": "Ajouter des approbateurs..."
+      "approversPlaceholder": "Ajouter des approbateurs...",
+      "startingVersionPlaceholder": "ex. 3.2"
     },
     "properties": {
       "title": "Propriétés",
       "status": "Statut",
       "type": "Type",
       "classification": "Classification",
-      "approvers": "Approbateurs"
+      "approvers": "Approbateurs",
+      "startingVersion": "Version de départ"
     },
     "status": {
       "draft": "Brouillon"
     },
     "validation": {
-      "titleRequired": "Le titre est requis"
+      "titleRequired": "Le titre est requis",
+      "startingVersionFormat": "Utilisez majeure.mineure, par exemple 3.2"
     },
     "messages": {
       "successTitle": "Succès",

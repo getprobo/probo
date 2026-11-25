@@ -121,17 +121,20 @@
     "fields": {
       "title": "Title",
       "titlePlaceholder": "Document title",
-      "approversPlaceholder": "Add approvers..."
+      "approversPlaceholder": "Add approvers...",
+      "startingVersionPlaceholder": "e.g. 3.2"
     },
     "properties": {
       "title": "Properties",
       "status": "Status",
       "type": "Type",
       "classification": "Classification",
-      "approvers": "Approvers"
+      "approvers": "Approvers",
+      "startingVersion": "Starting version"
     },
     "status": { "draft": "Draft" },
-    "validation": { "titleRequired": "Title is required" },
+    "validation": { "titleRequired": "Title is required",
+      "startingVersionFormat": "Use major.minor, for example 3.2" },
     "messages": { "successTitle": "Success", "created": "Document created successfully." },
     "errors": { "title": "Error", "create": "Failed to create document" },
     "actions": { "create": "Create document" }
