@@ -3355,6 +3355,14 @@ func (s *DocumentService) insertSnapshot(
 		return nil, fmt.Errorf("cannot read live document heads: %w", err)
 	}
 
+	// A version without heads cannot be tied to the history. Every path that
+	// creates a document or publishes a version writes its collaboration
+	// record first, so missing heads here means a broken path, not a state to
+	// store.
+	if len(heads) == 0 {
+		return nil, fmt.Errorf("cannot snapshot document %s: no collaboration heads", document.ID)
+	}
+
 	major, minorNumber := snapshotNumber(document, minor)
 	now := time.Now()
 	version := &coredata.DocumentVersion{
