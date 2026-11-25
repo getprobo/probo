@@ -46,8 +46,9 @@ func AccessInventoryProviderKeyFromConnector(provider ConnectorProvider) AccessI
 }
 
 // AccessInventoryProviderKeyForSource picks the cadence key for a live source.
-// Connector-backed sources win; otherwise CSV when csv data is present; else
-// the built-in Probo memberships driver.
+// Connector-backed sources win; otherwise CSV when non-empty csv data is
+// present; else the built-in Probo memberships driver. Callers must treat an
+// empty string the same as missing CSV (matches resolveDriver).
 func AccessInventoryProviderKeyForSource(
 	connectorProvider *ConnectorProvider,
 	hasCSVData bool,
