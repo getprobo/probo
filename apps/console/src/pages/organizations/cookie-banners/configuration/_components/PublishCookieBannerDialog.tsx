@@ -69,12 +69,14 @@ const regeneratePolicyMutation = graphql`
 
 interface PublishCookieBannerDialogProps {
   cookieBannerId: string;
+  canRegeneratePolicy: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
 export function PublishCookieBannerDialog({
   cookieBannerId,
+  canRegeneratePolicy,
   open,
   onOpenChange,
 }: PublishCookieBannerDialogProps) {
@@ -152,18 +154,20 @@ export function PublishCookieBannerDialog({
           >
             {t("configLayout.actions.publishOnly")}
           </Button>
-          <Button
-            variant="solid"
-            color="neutral"
-            highContrast
-            disabled={busy}
-            loading={pending === "policy"}
-            onClick={() => {
-              void handlePublish(true);
-            }}
-          >
-            {t("configLayout.actions.publishAndUpdatePolicy")}
-          </Button>
+          {canRegeneratePolicy && (
+            <Button
+              variant="solid"
+              color="neutral"
+              highContrast
+              disabled={busy}
+              loading={pending === "policy"}
+              onClick={() => {
+                void handlePublish(true);
+              }}
+            >
+              {t("configLayout.actions.publishAndUpdatePolicy")}
+            </Button>
+          )}
         </DialogFooter>
       </DialogPopup>
     </Dialog>

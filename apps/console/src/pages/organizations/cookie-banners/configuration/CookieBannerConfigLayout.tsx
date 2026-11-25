@@ -53,6 +53,7 @@ const cookieBannerFragment = graphql`
       version
       state
     }
+    canRegeneratePolicy: permission(action: "core:cookie-banner:regenerate-policy")
   }
 `;
 
@@ -222,7 +223,7 @@ export function CookieBannerConfigLayout({
                 {t("configLayout.actions.publish")}
               </Button>
             )
-          : version != null
+          : version != null && banner.canRegeneratePolicy
             ? (
                 <Button
                   size={2}
@@ -248,6 +249,7 @@ export function CookieBannerConfigLayout({
       </TonedCard>
       <PublishCookieBannerDialog
         cookieBannerId={banner.id}
+        canRegeneratePolicy={banner.canRegeneratePolicy}
         open={publishOpen}
         onOpenChange={setPublishOpen}
       />
