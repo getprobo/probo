@@ -189,8 +189,10 @@ Rules that follow from this:
   no separate version list. Use `Document.publishedVersion` and
   `Document.pendingApprovalVersion` when a page only needs those two; `history`
   replays the CRDT and must not back a list page.
-- A version with no stored heads, or whose heads are not part of the change
-  log, is shown as a **synthetic** revision: it has no heads, cannot be
+- Every new version stores its heads: `insertSnapshot` refuses to write one
+  without them, so a document must have its collaboration record before it is
+  published. Only legacy versions can lack heads. A version whose heads are no
+  longer part of the change log is also shown as a **synthetic** revision: it has no heads, cannot be
   restored, and serves the version content as its snapshot. Its revision ID is
   derived from the version ID with the revision entity type, so clients that
   cache by ID never merge the two objects.

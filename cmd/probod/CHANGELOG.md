@@ -17,6 +17,8 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
   shareable `revision` parameter, and links with the old `version`
   parameter open the revision the version tags
 - A version ends its revision, so later edits never move its tag
+- Publishing fails when a document has no collaboration record, instead of
+  storing a version that cannot be tied to the history
 
 ### Added
 
