@@ -135,6 +135,7 @@ func seedFetchFixture(
 			// Far-future next_sync_at keeps the cadence scheduler off this
 			// fixture while campaign dual-write / Sync now still enqueue.
 			nextSyncAt := now.Add(24 * time.Hour)
+
 			source := &coredata.AccessReviewSource{
 				ID:             fx.sourceID,
 				OrganizationID: fx.organizationID,
