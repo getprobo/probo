@@ -189,7 +189,7 @@ func TestStartCampaign_EnqueuesInventorySync(t *testing.T) {
 	assert.Equal(t, coredata.AccessReviewCampaignSourceFetchStatusQueued, attempts[0].Status)
 }
 
-func TestStartCampaign_SkipsInventoryEnqueueWhenSourceDeleted(t *testing.T) {
+func TestEnqueueSourceFetches_SkipsInventoryWhenSourceDeleted(t *testing.T) {
 	t.Parallel()
 
 	client := test.PGClient(t)
@@ -200,30 +200,28 @@ func TestStartCampaign_SkipsInventoryEnqueueWhenSourceDeleted(t *testing.T) {
 	csvData := "email,full_name,role\neve@example.com,Eve,Viewer\n"
 	fx := seedFetchFixture(t, ctx, client, csvData)
 
+	// Delete after snapshot: ON DELETE SET NULL clears the campaign source
+	// ID in the DB, so load the snapshot first and keep AccessReviewSourceID
+	// in memory while deleting — same race StartCampaign / retry hit when a
+	// concurrent delete lands between LoadByCampaignID and LoadByIDForUpdate.
+	var campaignSources coredata.AccessReviewCampaignSources
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return campaignSources.LoadByCampaignID(ctx, conn, fx.scope, fx.campaignID)
+	}))
+	require.Len(t, campaignSources, 1)
+	require.NotNil(t, campaignSources[0].AccessReviewSourceID)
+	require.Equal(t, fx.sourceID, *campaignSources[0].AccessReviewSourceID)
+
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		campaign := &coredata.AccessReviewCampaign{}
-		if err := campaign.LoadByID(ctx, tx, fx.scope, fx.campaignID); err != nil {
-			return err
-		}
-
-		campaign.Status = coredata.AccessReviewCampaignStatusDraft
-		campaign.StartedAt = nil
-		campaign.UpdatedAt = campaign.CreatedAt
-
-		if err := campaign.Update(ctx, tx, fx.scope); err != nil {
-			return err
-		}
-
 		source := &coredata.AccessReviewSource{ID: fx.sourceID}
+		if err := source.Delete(ctx, tx, fx.scope); err != nil {
+			return err
+		}
 
-		return source.Delete(ctx, tx, fx.scope)
+		return svc.enqueueSourceFetches(ctx, tx, fx.scope, campaignSources)
 	}))
 
-	started, err := svc.StartCampaign(ctx, fx.scope, fx.campaignID)
-	require.NoError(t, err)
-	assert.Equal(t, coredata.AccessReviewCampaignStatusInProgress, started.Status)
-
-	_, err = svc.GetLatestAccessSourceSyncRunForSourceID(ctx, fx.scope, fx.sourceID)
+	_, err := svc.GetLatestAccessSourceSyncRunForSourceID(ctx, fx.scope, fx.sourceID)
 	require.ErrorIs(t, err, coredata.ErrResourceNotFound)
 
 	var attempts coredata.AccessReviewCampaignSourceFetchAttempts
