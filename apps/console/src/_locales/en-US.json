@@ -184,8 +184,8 @@
     "validation": { "changelogRequired": "Changelog is required" },
     "messages": { "successTitle": "Success", "published_one": "{{count}} document published", "published_other": "{{count}} documents published" },
     "errors": { "title": "Error", "publish": "Failed to publish documents" },
-    "warning": { "approval": "Publishing as major will request approval for documents that have default approvers configured. Approvers will receive an email notification.", "skipped": "Documents already published and pending approval will be skipped." },
-    "fields": { "changelog": "Changelog", "changelogPlaceholder": "Describe what changed in this version..." },
+    "warning": { "approval": "Documents with default approvers ask them for approval before publishing, whatever the version number. Approvers receive an email notification.", "skipped": "Documents already published and pending approval will be skipped." },
+    "fields": { "changelog": "Changelog", "requestApproval": "Request approval from the default approvers", "changelogPlaceholder": "Describe what changed in this version..." },
     "actions": { "publishMinor": "Publish as minor", "publish_one": "Publish {{count}} document", "publish_other": "Publish {{count}} documents" }
   },
   "signatureDocumentsDialog": {

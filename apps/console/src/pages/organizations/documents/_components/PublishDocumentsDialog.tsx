@@ -21,6 +21,7 @@
 import { formatError } from "@probo/helpers";
 import {
   Button,
+  Checkbox,
   Dialog,
   DialogContent,
   DialogFooter,
@@ -30,7 +31,7 @@ import {
   useDialogRef,
 } from "@probo/ui";
 import useToast from "@probo/ui/src/v2/Toaster/useToast";
-import { type ReactNode, useRef } from "react";
+import { type ReactNode, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
@@ -70,6 +71,7 @@ export function PublishDocumentsDialog({
   const toast = useToast();
   const dialogRef = useDialogRef();
   const minorRef = useRef(false);
+  const [requestApproval, setRequestApproval] = useState(true);
 
   const schema = z.object({
     changelog: z.string().min(1, t("publishDocumentsDialog.validation.changelogRequired")),
@@ -96,6 +98,7 @@ export function PublishDocumentsDialog({
         input: {
           documentIds,
           minor,
+          requestApproval,
           changelog: data.changelog,
         },
       },
@@ -141,10 +144,18 @@ export function PublishDocumentsDialog({
             <div className="flex items-start gap-2 rounded-lg bg-bg-warning/10 border border-border-warning p-3">
               <IconWarning size={16} className="text-txt-warning shrink-0 mt-0.5" />
               <div className="text-sm text-txt-warning space-y-1">
-                <p>{t("publishDocumentsDialog.warning.approval")}</p>
+                {requestApproval && <p>{t("publishDocumentsDialog.warning.approval")}</p>}
                 <p>{t("publishDocumentsDialog.warning.skipped")}</p>
               </div>
             </div>
+            <label className="flex items-center gap-2 text-sm text-txt-primary">
+              <Checkbox
+                checked={requestApproval}
+                onChange={setRequestApproval}
+                disabled={isPublishing}
+              />
+              {t("publishDocumentsDialog.fields.requestApproval")}
+            </label>
             <div>
               <label htmlFor="changelog" className="text-sm font-medium text-txt-primary mb-1 block">
                 {t("publishDocumentsDialog.fields.changelog")}

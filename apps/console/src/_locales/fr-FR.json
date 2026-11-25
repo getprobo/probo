@@ -306,11 +306,12 @@
       "publish": "Échec de la publication des documents"
     },
     "warning": {
-      "approval": "La publication en version majeure demandera une approbation pour les documents ayant des approbateurs par défaut configurés. Les approbateurs recevront une notification par e-mail.",
+      "approval": "Les documents ayant des approbateurs par défaut leur demandent l’approbation avant la publication, quel que soit le numéro de version. Les approbateurs reçoivent une notification par e-mail.",
       "skipped": "Les documents déjà publiés et en attente d’approbation seront ignorés."
     },
     "fields": {
       "changelog": "Journal des modifications",
+      "requestApproval": "Demander l’approbation aux approbateurs par défaut",
       "changelogPlaceholder": "Décrivez les changements apportés dans cette version..."
     },
     "actions": {

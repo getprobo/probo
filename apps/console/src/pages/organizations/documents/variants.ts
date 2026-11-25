@@ -160,7 +160,8 @@ export const documentPublishForm = tv({
     // The popup lays out its header, body, and footer as direct children.
     form: "contents",
     body: "flex flex-col gap-4",
-    approversSection: "flex flex-col gap-2",
+    section: "flex flex-col gap-2",
+    switchRow: "flex items-center justify-between gap-3",
     approverRows: "flex flex-col gap-1",
     approverRow: "flex min-w-0 items-center justify-between gap-2",
     approverName: "min-w-0 truncate",

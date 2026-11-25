@@ -305,11 +305,12 @@
       "publish": "Publiceren van documenten mislukt"
     },
     "warning": {
-      "approval": "Publiceren als hoofdversie vraagt goedkeuring aan voor documenten waarvoor standaard goedkeurders zijn geconfigureerd. Goedkeurders ontvangen een e-mailmelding.",
+      "approval": "Documenten met standaard goedkeurders vragen hun goedkeuring voordat ze worden gepubliceerd, ongeacht het versienummer. Goedkeurders ontvangen een e-mailmelding.",
       "skipped": "Documenten die al gepubliceerd zijn en in afwachting zijn van goedkeuring, worden overgeslagen."
     },
     "fields": {
       "changelog": "Changelog",
+      "requestApproval": "Goedkeuring vragen aan de standaard goedkeurders",
       "changelogPlaceholder": "Beschrijf wat er is gewijzigd in deze versie..."
     },
     "actions": {

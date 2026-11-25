@@ -32,6 +32,9 @@ import { DropdownTrigger } from "@probo/ui/src/v2/Dropdown/DropdownTrigger";
 import { Field } from "@probo/ui/src/v2/form/Field";
 import { Textarea } from "@probo/ui/src/v2/form/Textarea";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
+import { SegmentedControl } from "@probo/ui/src/v2/SegmentedControl/SegmentedControl";
+import { SegmentedControlItem } from "@probo/ui/src/v2/SegmentedControl/SegmentedControlItem";
+import { Switch } from "@probo/ui/src/v2/Switch/Switch";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { type FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -64,8 +67,14 @@ interface DocumentPublishFormProps {
   onDone: () => void;
 }
 
-// A minor version publishes right away. A major version asks the chosen
-// approvers first, or publishes right away when there are none.
+type VersionBump = "major" | "minor";
+
+function isVersionBump(value: string): value is VersionBump {
+  return value === "major" || value === "minor";
+}
+
+// The version number and the approval request are separate choices: either
+// kind of version asks the chosen approvers first, or publishes right away.
 export function DocumentPublishForm({ documentKey, reviewQueryRef, onDone }: DocumentPublishFormProps) {
   const document = useFragment(documentPublishFormFragment, documentKey);
   const { t } = useTranslation("organizations/documents");
@@ -74,20 +83,36 @@ export function DocumentPublishForm({ documentKey, reviewQueryRef, onDone }: Doc
     () => document.defaultApprovers.map(({ id, fullName }) => ({ id, fullName })),
   );
   const {
-    form, body, approversSection, approverRows, approverRow, approverName, addApprover,
+    form, body, section, switchRow, approverRows, approverRow, approverName, addApprover,
   } = documentPublishForm();
   const [changelogMissing, setChangelogMissing] = useState(false);
-  const requestsApproval = approvers.length > 0;
+  const [bump, setBump] = useState<VersionBump>("major");
+  const [approvalEnabled, setApprovalEnabled] = useState(approvers.length > 0);
+  const minor = bump === "minor";
+  const requestsApproval = approvalEnabled && approvers.length > 0;
+  const approverMissing = approvalEnabled && approvers.length === 0;
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const submitter = (event.nativeEvent as SubmitEvent).submitter;
-    const minor = submitter instanceof HTMLButtonElement && submitter.value === "minor";
     const value = new FormData(event.currentTarget).get("changelog");
     const changelog = typeof value === "string" ? value.trim() : "";
     if (changelog === "") {
       setChangelogMissing(true);
       return;
+    }
+
+    if (approverMissing) {
+      return;
+    }
+
+    // A major version must choose: an empty list publishes right away. A
+    // minor version without approval leaves the document's default approvers
+    // alone.
+    let approverIds: string[] | null = null;
+    if (requestsApproval) {
+      approverIds = approvers.map(approver => approver.id);
+    } else if (!minor) {
+      approverIds = [];
     }
 
     void publishDocument(
@@ -96,13 +121,13 @@ export function DocumentPublishForm({ documentKey, reviewQueryRef, onDone }: Doc
           input: {
             documentId: document.id,
             minor,
-            approverIds: minor ? null : approvers.map(approver => approver.id),
+            approverIds,
             changelog,
           },
         },
       },
       {
-        successMessage: !minor && requestsApproval
+        successMessage: requestsApproval
           ? t("details.actions.messages.approvalRequested")
           : t("details.actions.messages.published"),
       },
@@ -120,6 +145,34 @@ export function DocumentPublishForm({ documentKey, reviewQueryRef, onDone }: Doc
       <DialogBody>
         <div className={body()}>
           <DocumentPublishReviewCallout queryRef={reviewQueryRef} />
+          <div className={section()}>
+            <Text id="publish-version-label" size={2} weight="medium">
+              {t("details.actions.publish.version")}
+            </Text>
+            <SegmentedControl
+              size={2}
+              value={bump}
+              aria-labelledby="publish-version-label"
+              disabled={isPublishing}
+              onValueChange={(value) => {
+                if (isVersionBump(value)) {
+                  setBump(value);
+                }
+              }}
+            >
+              <SegmentedControlItem value="major">
+                {t("details.actions.publish.versionMajor")}
+              </SegmentedControlItem>
+              <SegmentedControlItem value="minor">
+                {t("details.actions.publish.versionMinor")}
+              </SegmentedControlItem>
+            </SegmentedControl>
+            <Text size={1} color="faint">
+              {minor
+                ? t("details.actions.publish.versionMinorDescription")
+                : t("details.actions.publish.versionMajorDescription")}
+            </Text>
+          </div>
           <Field
             label={t("details.actions.publish.changelog")}
             required
@@ -132,65 +185,84 @@ export function DocumentPublishForm({ documentKey, reviewQueryRef, onDone }: Doc
               onChange={() => setChangelogMissing(false)}
             />
           </Field>
-          <div className={approversSection()}>
-            <Text size={2} weight="medium">{t("details.actions.publish.approvers")}</Text>
-            <Text size={1} color="faint">{t("details.actions.publish.approversDescription")}</Text>
-            {approvers.length > 0 && (
-              <div className={approverRows()}>
-                {approvers.map(approver => (
-                  <div key={approver.id} className={approverRow()}>
-                    <Text size={2} className={approverName()} title={approver.fullName}>
-                      {approver.fullName}
-                    </Text>
-                    <IconButton
-                      size={1}
-                      variant="ghost"
-                      color="neutral"
-                      disabled={isPublishing}
-                      aria-label={t("details.actions.publish.removeApprover", { name: approver.fullName })}
-                      onClick={() => {
-                        setApprovers(current => current.filter(item => item.id !== approver.id));
-                      }}
-                    >
-                      <XIcon />
-                    </IconButton>
-                  </div>
-                ))}
-              </div>
-            )}
-            <Dropdown>
-              <DropdownTrigger
+          <div className={section()}>
+            <div className={switchRow()}>
+              <Text id="publish-approval-label" size={2} weight="medium">
+                {t("details.actions.publish.approval")}
+              </Text>
+              <Switch
+                size={2}
+                checked={approvalEnabled}
                 disabled={isPublishing}
-                render={(
-                  <Button
-                    size={1}
-                    variant="soft"
-                    color="neutral"
-                    className={addApprover()}
-                    iconStart={<PlusIcon />}
-                  />
-                )}
-              >
-                {t("details.actions.publish.addApprover")}
-              </DropdownTrigger>
-              <DropdownPopup>
-                <PeopleMenu
-                  value={null}
-                  emptyValue={null}
-                  disabled={isPublishing}
-                  onValueChange={() => {}}
-                  onSelect={(person) => {
-                    if (person == null) {
-                      return;
-                    }
-                    setApprovers(current => current.some(item => item.id === person.id)
-                      ? current
-                      : [...current, { id: person.id, fullName: person.fullName }]);
-                  }}
-                />
-              </DropdownPopup>
-            </Dropdown>
+                aria-labelledby="publish-approval-label"
+                onCheckedChange={setApprovalEnabled}
+              />
+            </div>
+            <Text size={1} color="faint">{t("details.actions.publish.approvalDescription")}</Text>
           </div>
+          {approvalEnabled && (
+            <div className={section()}>
+              <Text size={2} weight="medium">{t("details.actions.publish.approvers")}</Text>
+              {approvers.length > 0 && (
+                <div className={approverRows()}>
+                  {approvers.map(approver => (
+                    <div key={approver.id} className={approverRow()}>
+                      <Text size={2} className={approverName()} title={approver.fullName}>
+                        {approver.fullName}
+                      </Text>
+                      <IconButton
+                        size={1}
+                        variant="ghost"
+                        color="neutral"
+                        disabled={isPublishing}
+                        aria-label={t("details.actions.publish.removeApprover", { name: approver.fullName })}
+                        onClick={() => {
+                          setApprovers(current => current.filter(item => item.id !== approver.id));
+                        }}
+                      >
+                        <XIcon />
+                      </IconButton>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <Dropdown>
+                <DropdownTrigger
+                  disabled={isPublishing}
+                  render={(
+                    <Button
+                      size={1}
+                      variant="soft"
+                      color="neutral"
+                      className={addApprover()}
+                      iconStart={<PlusIcon />}
+                    />
+                  )}
+                >
+                  {t("details.actions.publish.addApprover")}
+                </DropdownTrigger>
+                <DropdownPopup>
+                  <PeopleMenu
+                    value={null}
+                    emptyValue={null}
+                    disabled={isPublishing}
+                    onValueChange={() => {}}
+                    onSelect={(person) => {
+                      if (person == null) {
+                        return;
+                      }
+                      setApprovers(current => current.some(item => item.id === person.id)
+                        ? current
+                        : [...current, { id: person.id, fullName: person.fullName }]);
+                    }}
+                  />
+                </DropdownPopup>
+              </Dropdown>
+              {approverMissing && (
+                <Text size={1} color="red">{t("details.actions.publish.approverRequired")}</Text>
+              )}
+            </div>
+          )}
         </div>
       </DialogBody>
       <DialogFooter>
@@ -203,26 +275,16 @@ export function DocumentPublishForm({ documentKey, reviewQueryRef, onDone }: Doc
         />
         <Button
           type="submit"
-          value="minor"
-          variant="soft"
-          color="neutral"
-          disabled={isPublishing}
-          iconStart={<UploadSimpleIcon />}
-        >
-          {t("details.actions.publish.minor")}
-        </Button>
-        <Button
-          type="submit"
-          value="major"
           variant="solid"
           color="neutral"
           highContrast
           loading={isPublishing}
+          disabled={approverMissing}
           iconStart={requestsApproval ? <PaperPlaneTiltIcon /> : <UploadSimpleIcon />}
         >
           {requestsApproval
             ? t("details.actions.publish.requestApproval")
-            : t("details.actions.publish.major")}
+            : t("details.actions.publish.submit")}
         </Button>
       </DialogFooter>
     </form>
