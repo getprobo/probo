@@ -4,6 +4,42 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.360.0] - 2026-11-25
+
+### Added
+
+- The document sidebar shows a search field on the approvers,
+  signatories and controls cards once a list is longer than one page.
+  Approval decision and signature filters take a `query` on the
+  approver or signatory name in GraphQL and MCP
+- The document sidebar follows the version on screen: a previous
+  version shows its own approval decisions, read only, and its
+  signatures
+- Suggestion cards appear as soon as a suggestion is made, before the
+  server replies
+
+### Changed
+
+- **Breaking**: creating a cookie banner publishes version 1 and does
+  not generate a cookie policy. Publishing a version no longer
+  generates one either: the console asks whether to update the policy
+  from the published trackers, and only users who can regenerate the
+  policy see that action. Banners that were never published stay
+  unpublished, so their config endpoint still returns 404. Sites on
+  `@probo/cookie-banner` 0.24.0 stop discovering and reporting
+  trackers for those banners. Page views are still counted
+- The document page keeps its mode and side column (open comments,
+  comment history or versions) in the URL, so reloads and shared
+  links open the same view
+- The new organization page uses the v2 UI kit
+
+### Fixed
+
+- Edits and suggestions made on the document page were dropped by the
+  server because the collaboration socket opened in viewing mode
+- Opening an archived document raised a "Document is unavailable"
+  error toast
+
 ## [0.359.0] - 2026-11-25
 
 ### Added
