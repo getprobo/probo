@@ -179,6 +179,9 @@ const (
 	CMPDomainSurfaceEntityType                       uint16 = 147
 	TagEntityType                                    uint16 = 148
 	TagAssignmentEntityType                          uint16 = 149 // internal cursor key, not a Node
+	AccessInventoryPrincipalEntityType               uint16 = 150
+	AccessInventoryResourceEntityType                uint16 = 151
+	AccessInventoryGrantEntityType                   uint16 = 152
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -453,6 +456,12 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &CMPDomainSurface{ID: id}, true
 	case TagEntityType:
 		return &Tag{ID: id}, true
+	case AccessInventoryPrincipalEntityType:
+		return &AccessInventoryPrincipal{ID: id}, true
+	case AccessInventoryResourceEntityType:
+		return &AccessInventoryResource{ID: id}, true
+	case AccessInventoryGrantEntityType:
+		return &AccessInventoryGrant{ID: id}, true
 	default:
 		return nil, false
 	}
