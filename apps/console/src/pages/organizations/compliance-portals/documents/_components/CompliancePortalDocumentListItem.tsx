@@ -56,7 +56,7 @@ const documentFragment = graphql`
     alias
     canSetAlias: permission(action: "resourcealias:alias:set")
     canRemoveAlias: permission(action: "resourcealias:alias:remove")
-    latestPublishedVersion: publishedVersion {
+    latestPublishedVersion {
       title
       documentType
     }

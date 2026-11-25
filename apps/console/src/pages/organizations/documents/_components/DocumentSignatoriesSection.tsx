@@ -42,7 +42,7 @@ const documentSignatoriesPageSize = 10;
 
 const documentSignatoriesSectionFragment = graphql`
   fragment DocumentSignatoriesSection_document on Document {
-    publishedVersion {
+    latestPublishedVersion {
       ...DocumentSignatoriesSectionList_version
     }
   }
@@ -104,7 +104,7 @@ function stateColor(state: "REQUESTED" | "SIGNED") {
 
 export function DocumentSignatoriesSection({ documentKey }: DocumentSignatoriesSectionProps) {
   const document = useFragment(documentSignatoriesSectionFragment, documentKey);
-  const version = document.publishedVersion;
+  const version = document.latestPublishedVersion;
   const { root, title, titleLead, titleIcon } = documentSignatories();
   const { t } = useTranslation("organizations/documents");
 

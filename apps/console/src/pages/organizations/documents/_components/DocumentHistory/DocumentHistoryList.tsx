@@ -59,7 +59,7 @@ const documentHistoryListFragment = graphql`
     after: { type: "CursorKey", defaultValue: null }
     filter: { type: "DocumentRevisionFilter", defaultValue: null }
   ) {
-    publishedVersion {
+    latestPublishedVersion {
       id
     }
     pendingApprovalVersion {
@@ -138,7 +138,7 @@ function DocumentHistoryListContent({
 
   // A publish from this page changes the document's versions, so the list
   // reloads with the current filter.
-  const versionState = documentVersionState(data.publishedVersion?.id, data.pendingApprovalVersion?.id);
+  const versionState = documentVersionState(data.latestPublishedVersion?.id, data.pendingApprovalVersion?.id);
   const loadedVersionState = useRef(versionState);
 
   useEffect(() => {

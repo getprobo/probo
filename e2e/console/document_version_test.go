@@ -397,9 +397,9 @@ func documentVersionVersionTagsRevision(t *testing.T, actors documentVersionActo
 
 	var result struct {
 		Node struct {
-			PublishedVersion *struct {
+			LatestPublishedVersion *struct {
 				ID string `json:"id"`
-			} `json:"publishedVersion"`
+			} `json:"latestPublishedVersion"`
 			PendingApprovalVersion *struct {
 				ID string `json:"id"`
 			} `json:"pendingApprovalVersion"`
@@ -422,7 +422,7 @@ func documentVersionVersionTagsRevision(t *testing.T, actors documentVersionActo
 		query($id: ID!) {
 			node(id: $id) {
 				... on Document {
-					publishedVersion { id }
+					latestPublishedVersion { id }
 					pendingApprovalVersion { id }
 					history(first: 50, orderBy: { field: ENDED_AT, direction: DESC }) {
 						edges { node { `+revisionFields+` } }
@@ -436,8 +436,8 @@ func documentVersionVersionTagsRevision(t *testing.T, actors documentVersionActo
 	`, map[string]any{"id": docID}, &result)
 	require.NoError(t, err)
 
-	require.NotNil(t, result.Node.PublishedVersion)
-	assert.Equal(t, versionID, result.Node.PublishedVersion.ID)
+	require.NotNil(t, result.Node.LatestPublishedVersion)
+	assert.Equal(t, versionID, result.Node.LatestPublishedVersion.ID)
 	assert.Nil(t, result.Node.PendingApprovalVersion)
 
 	require.Len(t, result.Node.Versioned.Edges, 1, "only the tagged revision is listed")

@@ -80,7 +80,7 @@ const fragment = graphql`
         }
       }
     }
-    publishedVersion {
+    latestPublishedVersion {
       signatures(first: 0 filter: { activeContract: true, profileStates: [ACTIVE] }) {
         totalCount
       }
@@ -154,7 +154,7 @@ export function DocumentListItem(props: {
   );
 
   const pending = document.pendingApprovalVersion;
-  const published = document.publishedVersion;
+  const published = document.latestPublishedVersion;
   const listStatus = pending
     ? "PENDING_APPROVAL"
     : document.currentPublishedMajor != null

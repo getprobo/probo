@@ -55,7 +55,7 @@ const documentActionsMenuFragment = graphql`
     canArchive: permission(action: "core:document:archive")
     canUnarchive: permission(action: "core:document:unarchive")
     canDelete: permission(action: "core:document:delete")
-    publishedVersion {
+    latestPublishedVersion {
       ...DocumentPdfExportForm_version
     }
   }
@@ -74,7 +74,7 @@ export function DocumentActionsMenu({ documentKey }: DocumentActionsMenuProps) {
   const [downloadOpen, setDownloadOpen] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const publishedVersion = document.publishedVersion;
+  const latestPublishedVersion = document.latestPublishedVersion;
   const archived = document.status === "ARCHIVED";
 
   function handleUnarchive() {
@@ -111,7 +111,7 @@ export function DocumentActionsMenu({ documentKey }: DocumentActionsMenuProps) {
           <DropdownItem
             color="neutral"
             iconStart={<DownloadSimpleIcon />}
-            disabled={publishedVersion == null}
+            disabled={latestPublishedVersion == null}
             onClick={() => setDownloadOpen(true)}
           >
             {t("details.actions.download.item")}
@@ -146,10 +146,10 @@ export function DocumentActionsMenu({ documentKey }: DocumentActionsMenuProps) {
           )}
         </DropdownPopup>
       </Dropdown>
-      {publishedVersion != null && (
+      {latestPublishedVersion != null && (
         <Dialog open={downloadOpen} onOpenChange={setDownloadOpen}>
           <DialogPopup>
-            <DocumentPdfExportForm versionKey={publishedVersion} onDone={() => setDownloadOpen(false)} />
+            <DocumentPdfExportForm versionKey={latestPublishedVersion} onDone={() => setDownloadOpen(false)} />
           </DialogPopup>
         </Dialog>
       )}

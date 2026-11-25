@@ -46,7 +46,7 @@ const employeePortalFragment = graphql`
 const documentFragment = graphql`
   fragment EmployeePortalDocumentListItem_document on Document {
     id
-    publishedVersion {
+    latestPublishedVersion {
       title
       documentType
     }
@@ -94,7 +94,7 @@ export function EmployeePortalDocumentListItem(props: {
   const { t } = useTranslation(NS);
   const employeePortal = useFragment(employeePortalFragment, props.employeePortalKey);
   const document = useFragment(documentFragment, props.documentKey);
-  const published = document.publishedVersion;
+  const published = document.latestPublishedVersion;
   const link = document.employeePortalDocument;
   const serverLinked = link != null;
   const [pendingLinked, setPendingLinked] = useState<boolean | null>(null);

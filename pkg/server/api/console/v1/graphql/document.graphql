@@ -304,7 +304,7 @@ type Document implements Node & Taggable {
     The latest published version: the tag the document is currently
     published at.
     """
-    publishedVersion: DocumentVersion @goField(forceResolver: true)
+    latestPublishedVersion: DocumentVersion @goField(forceResolver: true)
     """
     The version waiting for approval, if any.
     """

@@ -186,7 +186,7 @@ Rules that follow from this:
   edit.
 - `DocumentRevision.versions` lists the tags. The `versioned` filter on
   `history` and `listDocumentRevisions` keeps only tagged revisions. There is
-  no separate version list. Use `Document.publishedVersion` and
+  no separate version list. Use `Document.latestPublishedVersion` and
   `Document.pendingApprovalVersion` when a page only needs those two; `history`
   replays the CRDT and must not back a list page.
 - Every new version stores its heads: `insertSnapshot` refuses to write one

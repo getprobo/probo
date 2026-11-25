@@ -72,7 +72,7 @@ const pendingSignatureDocumentsQuery = `
 						node {
 							id
 							title
-							publishedVersion {
+							latestPublishedVersion {
 								id
 								title
 								major
@@ -417,7 +417,7 @@ export async function collectPendingSignatures(
 		options,
 		() => items.length,
 		async (document) => {
-			const version = asObject(document.publishedVersion);
+			const version = asObject(document.latestPublishedVersion);
 			if (!version) {
 				return false;
 			}

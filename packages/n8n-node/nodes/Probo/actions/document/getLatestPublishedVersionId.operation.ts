@@ -46,7 +46,7 @@ export async function execute(
 		query GetLatestPublishedDocumentVersionId($documentId: ID!) {
 			node(id: $documentId) {
 				... on Document {
-					publishedVersion {
+					latestPublishedVersion {
 						id
 					}
 				}
@@ -57,11 +57,11 @@ export async function execute(
 	const responseData = await proboApiRequest.call(this, query, { documentId });
 	const data = responseData.data as IDataObject | undefined;
 	const node = data?.node as IDataObject | undefined;
-	const publishedVersion = node?.publishedVersion as IDataObject | undefined;
+	const latestPublishedVersion = node?.latestPublishedVersion as IDataObject | undefined;
 
 	return {
 		json: {
-			documentVersionId: publishedVersion?.id ?? null,
+			documentVersionId: latestPublishedVersion?.id ?? null,
 		},
 		pairedItem: { item: itemIndex },
 	};

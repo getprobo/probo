@@ -199,8 +199,8 @@ func (r *documentResolver) CompliancePortalDocumentAccess(ctx context.Context, o
 	return types.NewCompliancePortalDocumentAccess(access), nil
 }
 
-// PublishedVersion is the resolver for the publishedVersion field.
-func (r *documentResolver) PublishedVersion(ctx context.Context, obj *types.Document) (*types.DocumentVersion, error) {
+// LatestPublishedVersion is the resolver for the latestPublishedVersion field.
+func (r *documentResolver) LatestPublishedVersion(ctx context.Context, obj *types.Document) (*types.DocumentVersion, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentVersionList)
 	if err != nil {
 		return nil, err
