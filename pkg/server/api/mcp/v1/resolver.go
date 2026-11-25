@@ -295,6 +295,38 @@ func (r *Resolver) fillSourceConnectorIDs(
 	return nil
 }
 
+func (r *Resolver) fillSourceLatestSyncRuns(
+	ctx context.Context,
+	scope coredata.Scoper,
+	rows []*coredata.AccessReviewSource,
+	mapped []*types.AccessReviewSource,
+) error {
+	if len(rows) == 0 {
+		return nil
+	}
+
+	sourceIDs := make([]gid.GID, len(rows))
+	for i, row := range rows {
+		sourceIDs[i] = row.ID
+	}
+
+	bySourceID, err := r.accessReview.GetLatestAccessSourceSyncRunsBySourceIDs(ctx, scope, sourceIDs)
+	if err != nil {
+		return err
+	}
+
+	for i, row := range rows {
+		run, ok := bySourceID[row.ID]
+		if !ok {
+			continue
+		}
+
+		mapped[i].LatestSyncRun = types.NewAccessSourceSyncRun(run)
+	}
+
+	return nil
+}
+
 func validateMCPDocumentContent(content string) error {
 	if err := richtext.DocumentSchema.ValidateJSON(content); err != nil {
 		return fmt.Errorf("invalid document content: %w", err)

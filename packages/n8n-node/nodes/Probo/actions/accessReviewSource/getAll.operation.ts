@@ -80,6 +80,9 @@ export async function execute(
 								connectionStatus
 								needsConfiguration
 								selectedOrganization
+								lastSuccessfulSyncAt
+								nextSyncAt
+								syncConsecutiveFailures
 								createdAt
 								updatedAt
 							}

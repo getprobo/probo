@@ -731,6 +731,26 @@ func (r *accessReviewSourceResolver) SelectedOrganization(ctx context.Context, o
 	return &slug, nil
 }
 
+// LatestSyncRun is the resolver for the latestSyncRun field.
+func (r *accessReviewSourceResolver) LatestSyncRun(ctx context.Context, obj *types.AccessReviewSource) (*types.AccessSourceSyncRun, error) {
+	if _, err := r.authorize(ctx, obj.ID, accessreview.ActionSourceGet); err != nil {
+		return nil, err
+	}
+
+	run, err := dataloader.FromContext(ctx).LatestAccessSourceSyncRun.Load(ctx, obj.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get latest access source sync run", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return types.NewAccessSourceSyncRun(run), nil
+}
+
 // Permission is the resolver for the permission field.
 func (r *accessReviewSourceResolver) Permission(ctx context.Context, obj *types.AccessReviewSource, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
@@ -927,6 +947,39 @@ func (r *mutationResolver) ConfigureAccessReviewSource(ctx context.Context, inpu
 
 	return &types.ConfigureAccessReviewSourcePayload{
 		AccessReviewSource: types.NewAccessReviewSource(source),
+	}, nil
+}
+
+// SyncAccessInventory is the resolver for the syncAccessInventory field.
+func (r *mutationResolver) SyncAccessInventory(ctx context.Context, input types.SyncAccessInventoryInput) (*types.SyncAccessInventoryPayload, error) {
+	scope, err := r.authorize(ctx, input.AccessReviewSourceID, accessreview.ActionSourceSync)
+	if err != nil {
+		return nil, err
+	}
+
+	run, err := r.accessReview.SyncNow(ctx, scope, input.AccessReviewSourceID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlx.NotFound(ctx, err)
+		}
+
+		return nil, gqlx.MapError(ctx, r.logger, "cannot sync access inventory", err)
+	}
+
+	source, err := r.accessReview.GetSource(ctx, scope, input.AccessReviewSourceID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlx.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get access review source after sync", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return &types.SyncAccessInventoryPayload{
+		AccessReviewSource:  types.NewAccessReviewSource(source),
+		AccessSourceSyncRun: types.NewAccessSourceSyncRun(run),
 	}, nil
 }
 

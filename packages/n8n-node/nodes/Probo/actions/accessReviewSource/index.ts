@@ -24,6 +24,7 @@ import * as getAllOp from './getAll.operation';
 import * as setupAwsOp from './setupAws.operation';
 import * as setupAzureOp from './setupAzure.operation';
 import * as setupGcpOp from './setupGcp.operation';
+import * as syncOp from './sync.operation';
 
 export const description: INodeProperties[] = [
 	{
@@ -68,6 +69,12 @@ export const description: INodeProperties[] = [
 				description: 'Get GCP access source setup values',
 				action: 'Get GCP access source setup',
 			},
+			{
+				name: 'Sync',
+				value: 'sync',
+				description: 'Enqueue an inventory sync for an access review source',
+				action: 'Sync access inventory',
+			},
 		],
 		default: 'getAll',
 	},
@@ -76,6 +83,7 @@ export const description: INodeProperties[] = [
 	...setupAwsOp.description,
 	...setupAzureOp.description,
 	...setupGcpOp.description,
+	...syncOp.description,
 ];
 
 export {
@@ -84,4 +92,5 @@ export {
 	setupAwsOp as setupAws,
 	setupAzureOp as setupAzure,
 	setupGcpOp as setupGcp,
+	syncOp as sync,
 };

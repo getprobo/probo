@@ -188,3 +188,36 @@ type AccessInventoryResourceEdge {
     cursor: CursorKey!
     node: AccessInventoryResource!
 }
+
+enum AccessSourceSyncRunStatus
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.AccessSourceSyncRunStatus") {
+    QUEUED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessSourceSyncRunStatusQueued"
+        )
+    RUNNING
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessSourceSyncRunStatusRunning"
+        )
+    SUCCESS
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessSourceSyncRunStatusSuccess"
+        )
+    FAILED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessSourceSyncRunStatusFailed"
+        )
+}
+
+type AccessSourceSyncRun implements Node {
+    id: ID!
+    organization: Organization! @goField(forceResolver: true)
+    source: AccessReviewSource! @goField(forceResolver: true)
+    status: AccessSourceSyncRunStatus!
+    grantsUpsertedCount: Int!
+    error: String
+    startedAt: Datetime
+    completedAt: Datetime
+    createdAt: Datetime!
+    updatedAt: Datetime!
+}

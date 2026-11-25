@@ -41,6 +41,75 @@ const (
 	inventorySyncJitterFraction = 5
 )
 
+func (s *Service) GetAccessSourceSyncRun(
+	ctx context.Context,
+	scope coredata.Scoper,
+	runID gid.GID,
+) (*coredata.AccessSourceSyncRun, error) {
+	run := &coredata.AccessSourceSyncRun{}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return run.LoadByID(ctx, conn, scope, runID)
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get access source sync run: %w", err)
+	}
+
+	return run, nil
+}
+
+func (s *Service) GetLatestAccessSourceSyncRunForSourceID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	sourceID gid.GID,
+) (*coredata.AccessSourceSyncRun, error) {
+	run := &coredata.AccessSourceSyncRun{}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return run.LoadLatestBySourceID(ctx, conn, scope, sourceID)
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get latest access source sync run: %w", err)
+	}
+
+	return run, nil
+}
+
+func (s *Service) GetLatestAccessSourceSyncRunsBySourceIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	sourceIDs []gid.GID,
+) (map[gid.GID]*coredata.AccessSourceSyncRun, error) {
+	if len(sourceIDs) == 0 {
+		return map[gid.GID]*coredata.AccessSourceSyncRun{}, nil
+	}
+
+	var runs coredata.AccessSourceSyncRuns
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return runs.LoadLatestBySourceIDs(ctx, conn, scope, sourceIDs)
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get latest access source sync runs: %w", err)
+	}
+
+	bySourceID := make(map[gid.GID]*coredata.AccessSourceSyncRun, len(runs))
+	for _, run := range runs {
+		bySourceID[run.AccessReviewSourceID] = run
+	}
+
+	return bySourceID, nil
+}
+
 // SyncNow enqueues an AccessSourceSyncRun for the source. If a QUEUED or
 // RUNNING run already exists, that run is returned unchanged.
 func (s *Service) SyncNow(

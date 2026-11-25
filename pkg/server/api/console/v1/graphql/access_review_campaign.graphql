@@ -346,6 +346,10 @@ type AccessReviewSource implements Node {
     needsConfiguration: Boolean! @goField(forceResolver: true)
     connectionStatus: AccessReviewSourceConnectionStatus! @goField(forceResolver: true)
     selectedOrganization: String @goField(forceResolver: true)
+    lastSuccessfulSyncAt: Datetime
+    nextSyncAt: Datetime
+    syncConsecutiveFailures: Int!
+    latestSyncRun: AccessSourceSyncRun @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
 
@@ -544,6 +548,9 @@ extend type Mutation {
     configureAccessReviewSource(
         input: ConfigureAccessReviewSourceInput!
     ): ConfigureAccessReviewSourcePayload!
+    syncAccessInventory(
+        input: SyncAccessInventoryInput!
+    ): SyncAccessInventoryPayload!
     createAccessReviewCampaign(
         input: CreateAccessReviewCampaignInput!
     ): CreateAccessReviewCampaignPayload!
@@ -634,6 +641,15 @@ input ConfigureAccessReviewSourceInput {
 
 type ConfigureAccessReviewSourcePayload {
     accessReviewSource: AccessReviewSource!
+}
+
+input SyncAccessInventoryInput {
+    accessReviewSourceId: ID!
+}
+
+type SyncAccessInventoryPayload {
+    accessReviewSource: AccessReviewSource!
+    accessSourceSyncRun: AccessSourceSyncRun!
 }
 
 input CreateAccessReviewCampaignInput {

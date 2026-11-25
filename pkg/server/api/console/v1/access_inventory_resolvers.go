@@ -294,6 +294,49 @@ func (r *accessInventoryResourceConnectionResolver) TotalCount(ctx context.Conte
 	return 0, gqlx.Internal(ctx)
 }
 
+// Organization is the resolver for the organization field.
+func (r *accessSourceSyncRunResolver) Organization(ctx context.Context, obj *types.AccessSourceSyncRun) (*types.Organization, error) {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
+		return nil, err
+	}
+
+	loaders := dataloader.FromContext(ctx)
+
+	organization, err := loaders.Organization.Load(ctx, obj.Organization.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
+			return nil, gqlx.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load organization", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return types.NewOrganization(organization), nil
+}
+
+// Source is the resolver for the source field.
+func (r *accessSourceSyncRunResolver) Source(ctx context.Context, obj *types.AccessSourceSyncRun) (*types.AccessReviewSource, error) {
+	scope, err := r.authorize(ctx, obj.ID, accessreview.ActionSourceGet)
+	if err != nil {
+		return nil, err
+	}
+
+	source, err := r.accessReview.GetSource(ctx, scope, obj.Source.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlx.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get access review source", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return types.NewAccessReviewSource(source), nil
+}
+
 // AccessInventoryGrant returns schema.AccessInventoryGrantResolver implementation.
 func (r *Resolver) AccessInventoryGrant() schema.AccessInventoryGrantResolver {
 	return &accessInventoryGrantResolver{r}
@@ -324,6 +367,11 @@ func (r *Resolver) AccessInventoryResourceConnection() schema.AccessInventoryRes
 	return &accessInventoryResourceConnectionResolver{r}
 }
 
+// AccessSourceSyncRun returns schema.AccessSourceSyncRunResolver implementation.
+func (r *Resolver) AccessSourceSyncRun() schema.AccessSourceSyncRunResolver {
+	return &accessSourceSyncRunResolver{r}
+}
+
 type (
 	accessInventoryGrantResolver               struct{ *Resolver }
 	accessInventoryGrantConnectionResolver     struct{ *Resolver }
@@ -331,4 +379,5 @@ type (
 	accessInventoryPrincipalConnectionResolver struct{ *Resolver }
 	accessInventoryResourceResolver            struct{ *Resolver }
 	accessInventoryResourceConnectionResolver  struct{ *Resolver }
+	accessSourceSyncRunResolver                struct{ *Resolver }
 )

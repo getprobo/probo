@@ -401,6 +401,110 @@ FOR UPDATE SKIP LOCKED
 	return nil
 }
 
+// LoadLatestBySourceID loads the most recent sync run for a source, if any.
+func (r *AccessSourceSyncRun) LoadLatestBySourceID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	sourceID gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    access_review_source_id,
+    status,
+    grants_upserted_count,
+    error,
+    started_at,
+    completed_at,
+    created_at,
+    updated_at
+FROM
+    access_source_sync_runs
+WHERE
+    %s
+    AND access_review_source_id = @access_review_source_id
+ORDER BY created_at DESC, id DESC
+LIMIT 1;
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"access_review_source_id": sourceID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query latest access source sync run: %w", err)
+	}
+
+	run, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[AccessSourceSyncRun])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect latest access source sync run: %w", err)
+	}
+
+	*r = run
+
+	return nil
+}
+
+// LoadLatestBySourceIDs loads the most recent sync run for each source ID.
+// Sources with no runs are absent from the result.
+func (rs *AccessSourceSyncRuns) LoadLatestBySourceIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	sourceIDs []gid.GID,
+) error {
+	if len(sourceIDs) == 0 {
+		*rs = nil
+
+		return nil
+	}
+
+	q := `
+SELECT DISTINCT ON (access_review_source_id)
+    id,
+    organization_id,
+    access_review_source_id,
+    status,
+    grants_upserted_count,
+    error,
+    started_at,
+    completed_at,
+    created_at,
+    updated_at
+FROM
+    access_source_sync_runs
+WHERE
+    %s
+    AND access_review_source_id = ANY(@access_review_source_ids::text[])
+ORDER BY access_review_source_id, created_at DESC, id DESC
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"access_review_source_ids": sourceIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query latest access source sync runs: %w", err)
+	}
+
+	runs, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[AccessSourceSyncRun])
+	if err != nil {
+		return fmt.Errorf("cannot collect latest access source sync runs: %w", err)
+	}
+
+	*rs = runs
+
+	return nil
+}
+
 // LoadInFlightBySourceID loads the QUEUED or RUNNING run for a source, if any.
 func (r *AccessSourceSyncRun) LoadInFlightBySourceID(
 	ctx context.Context,

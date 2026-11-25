@@ -39,6 +39,18 @@ query AccessReviewSourceView($id: ID!) {
       name
       connectorId
       connectionStatus
+      lastSuccessfulSyncAt
+      nextSyncAt
+      syncConsecutiveFailures
+      latestSyncRun {
+        id
+        status
+        grantsUpsertedCount
+        error
+        startedAt
+        completedAt
+        createdAt
+      }
       createdAt
       updatedAt
       connectorAccount {
@@ -50,13 +62,25 @@ query AccessReviewSourceView($id: ID!) {
 `
 
 type sourceNode struct {
-	Typename         string  `json:"__typename"`
-	ID               string  `json:"id"`
-	Name             string  `json:"name"`
-	ConnectorID      *string `json:"connectorId"`
-	ConnectionStatus string  `json:"connectionStatus"`
-	CreatedAt        string  `json:"createdAt"`
-	UpdatedAt        string  `json:"updatedAt"`
+	Typename                string  `json:"__typename"`
+	ID                      string  `json:"id"`
+	Name                    string  `json:"name"`
+	ConnectorID             *string `json:"connectorId"`
+	ConnectionStatus        string  `json:"connectionStatus"`
+	LastSuccessfulSyncAt    *string `json:"lastSuccessfulSyncAt"`
+	NextSyncAt              *string `json:"nextSyncAt"`
+	SyncConsecutiveFailures int     `json:"syncConsecutiveFailures"`
+	LatestSyncRun           *struct {
+		ID                  string  `json:"id"`
+		Status              string  `json:"status"`
+		GrantsUpsertedCount int     `json:"grantsUpsertedCount"`
+		Error               *string `json:"error"`
+		StartedAt           *string `json:"startedAt"`
+		CompletedAt         *string `json:"completedAt"`
+		CreatedAt           string  `json:"createdAt"`
+	} `json:"latestSyncRun"`
+	CreatedAt        string `json:"createdAt"`
+	UpdatedAt        string `json:"updatedAt"`
 	ConnectorAccount *struct {
 		Name string `json:"name"`
 	} `json:"connectorAccount"`
@@ -137,6 +161,29 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Connection:"), s.ConnectionStatus)
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Last successful sync:"), formatOptionalTime(s.LastSuccessfulSyncAt))
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Next sync:"), formatOptionalTime(s.NextSyncAt))
+			_, _ = fmt.Fprintf(out, "%s%d\n", label.Render("Sync failures:"), s.SyncConsecutiveFailures)
+
+			if s.LatestSyncRun != nil {
+				run := s.LatestSyncRun
+				_, _ = fmt.Fprintf(
+					out,
+					"%s%s [%s]\n",
+					label.Render("Latest run:"),
+					run.ID,
+					run.Status,
+				)
+				_, _ = fmt.Fprintf(out, "%s%d\n", label.Render("Grants upserted:"), run.GrantsUpsertedCount)
+
+				if run.Error != nil {
+					_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Run error:"), *run.Error)
+				}
+
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Run started:"), formatOptionalTime(run.StartedAt))
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Run completed:"), formatOptionalTime(run.CompletedAt))
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Run created:"), cmdutil.FormatTime(run.CreatedAt))
+			}
 
 			_, _ = fmt.Fprintln(out)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Created:"), cmdutil.FormatTime(s.CreatedAt))
@@ -157,4 +204,12 @@ func sourceLabel(node *sourceNode) string {
 	}
 
 	return node.Name
+}
+
+func formatOptionalTime(value *string) string {
+	if value == nil {
+		return "-"
+	}
+
+	return cmdutil.FormatTime(*value)
 }

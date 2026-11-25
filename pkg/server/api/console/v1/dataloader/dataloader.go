@@ -28,6 +28,7 @@ import (
 	"net/http"
 
 	"github.com/vikstrous/dataloadgen"
+	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
@@ -160,6 +161,7 @@ type (
 		DocumentCommentsByThread                   *dataloadgen.Loader[gid.GID, []*coredata.DocumentComment]
 		DocumentSuggestion                         *dataloadgen.Loader[gid.GID, *coredata.DocumentSuggestion]
 		DocumentCommentThreadBySuggestion          *dataloadgen.Loader[gid.GID, *coredata.DocumentCommentThread]
+		LatestAccessSourceSyncRun                  *dataloadgen.Loader[gid.GID, *coredata.AccessSourceSyncRun]
 	}
 
 	batchFetcher struct {
@@ -171,6 +173,7 @@ type (
 		employeePortal   *employeeportalmgmt.Service
 		riskManagement   *riskmanagement.Service
 		task             *task.Service
+		accessReview     *accessreview.Service
 	}
 )
 
@@ -189,6 +192,7 @@ func NewMiddleware(
 	riskManagementSvc *riskmanagement.Service,
 	taskSvc *task.Service,
 	employeePortalSvc *employeeportalmgmt.Service,
+	accessReviewSvc *accessreview.Service,
 ) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(
@@ -202,6 +206,7 @@ func NewMiddleware(
 					employeePortal:   employeePortalSvc,
 					riskManagement:   riskManagementSvc,
 					task:             taskSvc,
+					accessReview:     accessReviewSvc,
 				}
 				loaders := f.newLoaders()
 				ctx := context.WithValue(r.Context(), loadersKey, loaders)
@@ -257,7 +262,30 @@ func (f *batchFetcher) newLoaders() *Loaders {
 		DocumentCommentsByThread:          dataloadgen.NewMappedLoader(f.fetchDocumentCommentsByThread),
 		DocumentSuggestion:                dataloadgen.NewMappedLoader(f.fetchDocumentSuggestions),
 		DocumentCommentThreadBySuggestion: dataloadgen.NewMappedLoader(f.fetchDocumentCommentThreadsBySuggestion),
+		LatestAccessSourceSyncRun:         dataloadgen.NewMappedLoader(f.fetchLatestAccessSourceSyncRuns),
 	}
+}
+
+func (f *batchFetcher) fetchLatestAccessSourceSyncRuns(
+	ctx context.Context,
+	sourceIDs []gid.GID,
+) (map[gid.GID]*coredata.AccessSourceSyncRun, error) {
+	result := make(map[gid.GID]*coredata.AccessSourceSyncRun, len(sourceIDs))
+
+	for tenantID, ids := range gidKeysByTenant(sourceIDs) {
+		bySourceID, err := f.accessReview.GetLatestAccessSourceSyncRunsBySourceIDs(
+			ctx,
+			scopeFromContext(ctx, tenantID),
+			ids,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("cannot batch load latest access source sync runs: %w", err)
+		}
+
+		maps.Copy(result, bySourceID)
+	}
+
+	return result, nil
 }
 
 func (f *batchFetcher) fetchEmployeePortalsByOrganization(
