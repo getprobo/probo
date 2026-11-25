@@ -1,0 +1,39 @@
+{
+  "grants": {
+    "title": "Accès en direct",
+    "description": "Droits d'accès actuels synchronisés depuis vos sources connectées.",
+    "empty": "Aucun droit d'accès pour le moment",
+    "emptyFiltered": "Aucun droit ne correspond à ces filtres",
+    "columns": {
+      "principal": "Principal",
+      "resource": "Ressource",
+      "entitlement": "Droit",
+      "source": "Source",
+      "presence": "Présence",
+      "lastSeen": "Dernière vue"
+    },
+    "presence": {
+      "present": "Présent",
+      "disappeared": "Disparu"
+    },
+    "filters": {
+      "source": "Source",
+      "allSources": "Toutes les sources",
+      "presence": "Présence",
+      "allPresence": "Toutes les présences",
+      "includeDisappeared": "Inclure les disparus"
+    },
+    "actions": {
+      "previous": "Précédent",
+      "next": "Suivant"
+    },
+    "values": {
+      "unknown": "Inconnu"
+    },
+    "error": {
+      "title": "Impossible de charger l'accès en direct",
+      "description": "Une erreur est survenue lors du chargement des droits d'accès. Réessayez.",
+      "retry": "Réessayer"
+    }
+  }
+}

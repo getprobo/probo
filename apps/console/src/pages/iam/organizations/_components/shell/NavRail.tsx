@@ -112,7 +112,9 @@ function isEmployeePortalVisible(permissions: NavPermissions): boolean {
 }
 
 function isAccessReviewVisible(permissions: NavPermissions): boolean {
-  return permissions.canListAccessReviewCampaigns || permissions.canListAccessReviewSources;
+  return permissions.canListAccessInventoryGrants
+    || permissions.canListAccessReviewCampaigns
+    || permissions.canListAccessReviewSources;
 }
 
 function isSettingsVisible(
@@ -236,6 +238,9 @@ function registriesHref(organizationId: string, permissions: NavPermissions): st
 }
 
 function accessReviewHref(organizationId: string, permissions: NavPermissions): string {
+  if (permissions.canListAccessInventoryGrants) {
+    return groupHref(organizationId, "accessReview", "grants");
+  }
   if (permissions.canListAccessReviewCampaigns) {
     return groupHref(organizationId, "accessReview", "campaigns");
   }

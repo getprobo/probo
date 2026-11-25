@@ -48,6 +48,7 @@ export const navPermissionsFragment = graphql`
     canListRightsRequests: permission(action: "core:rights-request:list")
     canListAccessReviewCampaigns: permission(action: "access-review:campaign:list")
     canListAccessReviewSources: permission(action: "access-review:source:list")
+    canListAccessInventoryGrants: permission(action: "access-review:inventory-grant:list")
     canGetCompliancePortal: permission(action: "compliance-portal:portal:get")
     canGetEmployeePortal: permission(action: "employee-portal:portal:get")
     canListCookieBanners: permission(action: "core:cookie-banner:list")
