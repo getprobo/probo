@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"time"
 
+	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
@@ -37,9 +38,10 @@ import (
 // campaign entries for each live source in the organization into live
 // inventory principals and coarse grants on the default resource.
 //
-// Sources that already have a SUCCESS inventory sync run are skipped — dual-
-// write or continuous sync already seeded them. Existing inventory rows are
-// left untouched (insert-only). No change events or sync runs are created.
+// Sources that already have any SUCCESS inventory sync run are skipped —
+// dual-write or continuous sync already seeded them (a later FAILED run must
+// not re-seed stale campaign grants). Existing inventory rows are left
+// untouched (insert-only). No change events or sync runs are created.
 func (s *Service) BackfillInventoryFromLatestCampaignEntries(
 	ctx context.Context,
 	scope coredata.Scoper,
@@ -113,19 +115,23 @@ func (s *Service) backfillInventoryForSourceFromCampaign(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			latest := &coredata.AccessSourceSyncRun{}
-			err := latest.LoadLatestBySourceID(ctx, conn, scope, source.ID)
+			successful := &coredata.AccessSourceSyncRun{}
+			err := successful.LoadLatestSuccessfulBySourceID(
+				ctx,
+				conn,
+				scope,
+				source.ID,
+			)
 			switch {
 			case err == nil:
-				if latest.Status == coredata.AccessSourceSyncRunStatusSuccess {
-					skip = true
+				skip = true
 
-					return nil
-				}
+				return nil
 			case errors.Is(err, coredata.ErrResourceNotFound):
-				// No sync yet — campaign entries may still seed inventory.
+				// No successful sync yet — campaign entries may still seed
+				// inventory.
 			default:
-				return fmt.Errorf("cannot load latest sync run: %w", err)
+				return fmt.Errorf("cannot load successful sync run: %w", err)
 			}
 
 			campaign = &coredata.AccessReviewCampaignSource{}
@@ -198,17 +204,20 @@ func (s *Service) backfillInventoryForSourceFromCampaign(
 						return fmt.Errorf("cannot lock access source: %w", err)
 					}
 
-					latest := &coredata.AccessSourceSyncRun{}
-					err := latest.LoadLatestBySourceID(ctx, tx, scope, source.ID)
+					successful := &coredata.AccessSourceSyncRun{}
+					err := successful.LoadLatestSuccessfulBySourceID(
+						ctx,
+						tx,
+						scope,
+						source.ID,
+					)
 					switch {
 					case err == nil:
-						if latest.Status == coredata.AccessSourceSyncRunStatusSuccess {
-							return nil
-						}
+						return nil
 					case errors.Is(err, coredata.ErrResourceNotFound):
 						// Continue backfill.
 					default:
-						return fmt.Errorf("cannot load latest sync run: %w", err)
+						return fmt.Errorf("cannot load successful sync run: %w", err)
 					}
 
 					count, err := s.applyCampaignEntryInventoryBackfill(
@@ -243,7 +252,8 @@ func (s *Service) backfillInventoryForSourceFromCampaign(
 
 // BackfillAllInventoryFromLatestCampaignEntries runs the org-scoped backfill
 // for every organization that has a successful live-linked campaign fetch.
-// Safe to re-run: insert-only and skips sources with a SUCCESS sync.
+// Safe to re-run: insert-only and skips sources with any SUCCESS sync. Per-org
+// failures are logged and skipped so one bad tenant cannot abort the rest.
 func (s *Service) BackfillAllInventoryFromLatestCampaignEntries(
 	ctx context.Context,
 ) (int, error) {
@@ -280,11 +290,14 @@ func (s *Service) BackfillAllInventoryFromLatestCampaignEntries(
 			organizationID,
 		)
 		if err != nil {
-			return upserted, fmt.Errorf(
-				"cannot backfill organization %s: %w",
-				organizationID,
-				err,
+			s.logger.ErrorCtx(
+				ctx,
+				"cannot backfill inventory from campaign entries",
+				log.String("organization_id", organizationID.String()),
+				log.Error(err),
 			)
+
+			continue
 		}
 
 		upserted += count

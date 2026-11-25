@@ -138,6 +138,7 @@ func TestBackfillInventoryFromLatestCampaignEntries_SkipsWhenSyncSucceeded(t *te
 
 	fx := seedFetchFixture(t, ctx, client, "email,full_name,role\nunused@example.com,Unused,Admin\n")
 	now := time.Now().UTC()
+	later := now.Add(time.Minute)
 
 	insertCampaignEntry(
 		t,
@@ -168,7 +169,7 @@ func TestBackfillInventoryFromLatestCampaignEntries_SkipsWhenSyncSucceeded(t *te
 			return err
 		}
 
-		run := &coredata.AccessSourceSyncRun{
+		success := &coredata.AccessSourceSyncRun{
 			ID:                   gid.New(fx.scope.GetTenantID(), coredata.AccessSourceSyncRunEntityType),
 			OrganizationID:       fx.organizationID,
 			AccessReviewSourceID: fx.sourceID,
@@ -179,8 +180,24 @@ func TestBackfillInventoryFromLatestCampaignEntries_SkipsWhenSyncSucceeded(t *te
 			CreatedAt:            now,
 			UpdatedAt:            now,
 		}
+		if err := success.Insert(ctx, tx, fx.scope); err != nil {
+			return err
+		}
 
-		return run.Insert(ctx, tx, fx.scope)
+		// A later FAILED run must not re-open the source for campaign backfill.
+		failedCompleted := later
+		failed := &coredata.AccessSourceSyncRun{
+			ID:                   gid.New(fx.scope.GetTenantID(), coredata.AccessSourceSyncRunEntityType),
+			OrganizationID:       fx.organizationID,
+			AccessReviewSourceID: fx.sourceID,
+			Status:               coredata.AccessSourceSyncRunStatusFailed,
+			StartedAt:            &later,
+			CompletedAt:          &failedCompleted,
+			CreatedAt:            later,
+			UpdatedAt:            later,
+		}
+
+		return failed.Insert(ctx, tx, fx.scope)
 	}))
 
 	count, err := svc.BackfillInventoryFromLatestCampaignEntries(
@@ -198,6 +215,85 @@ func TestBackfillInventoryFromLatestCampaignEntries_SkipsWhenSyncSucceeded(t *te
 	}
 	assert.Empty(t, loadInventoryGrants(t, ctx, client, inventoryFX))
 	assert.Empty(t, loadInventoryChangeEvents(t, ctx, client, inventoryFX))
+}
+
+func TestBackfillAllInventoryFromLatestCampaignEntries(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	logger := log.NewLogger(log.WithOutput(io.Discard))
+	svc := NewService(client, cipher.EncryptionKey{}, nil, provider.NewBuiltinRegistry(), logger)
+
+	fxA := seedFetchFixture(t, ctx, client, "email,full_name,role\nunused@example.com,Unused,Admin\n")
+	fxB := seedFetchFixture(t, ctx, client, "email,full_name,role\nunused@example.com,Unused,Admin\n")
+	now := time.Now().UTC()
+
+	insertCampaignEntry(t, ctx, client, fxA, "a@example.com", "A", []string{"Admin"}, now)
+	insertCampaignEntry(t, ctx, client, fxB, "b@example.com", "B", []string{"Viewer"}, now)
+
+	completedAt := now
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		for _, fx := range []fetchFixture{fxA, fxB} {
+			attempt := &coredata.AccessReviewCampaignSourceFetchAttempt{
+				ID:                           gid.New(fx.scope.GetTenantID(), coredata.AccessReviewCampaignSourceFetchAttemptEntityType),
+				OrganizationID:               fx.organizationID,
+				TenantID:                     fx.scope.GetTenantID(),
+				AccessReviewCampaignSourceID: fx.campaignSourceID,
+				Status:                       coredata.AccessReviewCampaignSourceFetchStatusSuccess,
+				FetchedAccountsCount:         1,
+				StartedAt:                    &now,
+				CompletedAt:                  &completedAt,
+				CreatedAt:                    now,
+				UpdatedAt:                    now,
+			}
+			if err := attempt.Insert(ctx, tx, fx.scope); err != nil {
+				return err
+			}
+		}
+
+		// Org B already has a SUCCESS sync — BackfillAll must skip it.
+		run := &coredata.AccessSourceSyncRun{
+			ID:                   gid.New(fxB.scope.GetTenantID(), coredata.AccessSourceSyncRunEntityType),
+			OrganizationID:       fxB.organizationID,
+			AccessReviewSourceID: fxB.sourceID,
+			Status:               coredata.AccessSourceSyncRunStatusSuccess,
+			GrantsUpsertedCount:  1,
+			StartedAt:            &now,
+			CompletedAt:          &completedAt,
+			CreatedAt:            now,
+			UpdatedAt:            now,
+		}
+
+		return run.Insert(ctx, tx, fxB.scope)
+	}))
+
+	count, err := svc.BackfillAllInventoryFromLatestCampaignEntries(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, 1, count)
+
+	grantsA := loadInventoryGrants(t, ctx, client, inventorySyncFixture{
+		scope:          fxA.scope,
+		organizationID: fxA.organizationID,
+		sourceID:       fxA.sourceID,
+	})
+	require.Len(t, grantsA, 1)
+	assert.Equal(t, "a@example.com", grantsA[0].PrincipalKey)
+
+	assert.Empty(t, loadInventoryGrants(t, ctx, client, inventorySyncFixture{
+		scope:          fxB.scope,
+		organizationID: fxB.organizationID,
+		sourceID:       fxB.sourceID,
+	}))
+
+	again, err := svc.BackfillAllInventoryFromLatestCampaignEntries(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, 0, again)
+	assert.Len(t, loadInventoryGrants(t, ctx, client, inventorySyncFixture{
+		scope:          fxA.scope,
+		organizationID: fxA.organizationID,
+		sourceID:       fxA.sourceID,
+	}), 1)
 }
 
 func TestBackfillInventoryFromLatestCampaignEntries_UsesLatestSuccessfulSnapshot(t *testing.T) {
@@ -299,8 +395,28 @@ func TestBackfillInventoryFromLatestCampaignEntries_UsesLatestSuccessfulSnapshot
 			CreatedAt:                    newer,
 			UpdatedAt:                    newer,
 		}
+		if err := attempt.Insert(ctx, tx, fx.scope); err != nil {
+			return err
+		}
 
-		return attempt.Insert(ctx, tx, fx.scope)
+		// Newer FAILED attempt on the same snapshot must be ignored; without
+		// the SUCCESS filter the ORDER BY would prefer this row.
+		failedAt := newer.Add(time.Minute)
+		failedCompleted := failedAt
+		failed := &coredata.AccessReviewCampaignSourceFetchAttempt{
+			ID:                           gid.New(fx.scope.GetTenantID(), coredata.AccessReviewCampaignSourceFetchAttemptEntityType),
+			OrganizationID:               fx.organizationID,
+			TenantID:                     fx.scope.GetTenantID(),
+			AccessReviewCampaignSourceID: newerCampaignSourceID,
+			Status:                       coredata.AccessReviewCampaignSourceFetchStatusFailed,
+			FetchedAccountsCount:         0,
+			StartedAt:                    &failedAt,
+			CompletedAt:                  &failedCompleted,
+			CreatedAt:                    failedAt,
+			UpdatedAt:                    failedAt,
+		}
+
+		return failed.Insert(ctx, tx, fx.scope)
 	}))
 
 	count, err := svc.BackfillInventoryFromLatestCampaignEntries(

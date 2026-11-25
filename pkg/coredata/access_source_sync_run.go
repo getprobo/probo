@@ -505,6 +505,63 @@ ORDER BY access_review_source_id, created_at DESC, id DESC
 	return nil
 }
 
+// LoadLatestSuccessfulBySourceID loads the most recent SUCCESS sync run for a
+// source, if any. Used to detect that live inventory was already initialized
+// even when a later run failed.
+func (r *AccessSourceSyncRun) LoadLatestSuccessfulBySourceID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	sourceID gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    access_review_source_id,
+    status,
+    grants_upserted_count,
+    error,
+    started_at,
+    completed_at,
+    created_at,
+    updated_at
+FROM
+    access_source_sync_runs
+WHERE
+    %s
+    AND access_review_source_id = @access_review_source_id
+    AND status = @success_status
+ORDER BY created_at DESC, id DESC
+LIMIT 1;
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"access_review_source_id": sourceID,
+		"success_status":          AccessSourceSyncRunStatusSuccess,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query latest successful access source sync run: %w", err)
+	}
+
+	run, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[AccessSourceSyncRun])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect latest successful access source sync run: %w", err)
+	}
+
+	*r = run
+
+	return nil
+}
+
 // LoadInFlightBySourceID loads the QUEUED or RUNNING run for a source, if any.
 func (r *AccessSourceSyncRun) LoadInFlightBySourceID(
 	ctx context.Context,
