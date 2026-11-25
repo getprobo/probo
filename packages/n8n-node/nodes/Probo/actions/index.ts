@@ -20,6 +20,7 @@
 
 import type { IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
 import * as aiSystem from './aiSystem';
+import * as accessInventory from './accessInventory';
 import * as accessReview from './accessReview';
 import * as accessReviewSource from './accessReviewSource';
 import * as asset from './asset';
@@ -80,6 +81,7 @@ export interface OperationModule {
 
 export const resources: Record<string, ResourceModule> = {
 	aiSystem: aiSystem as ResourceModule,
+	accessInventory: accessInventory as ResourceModule,
 	accessReview: accessReview as ResourceModule,
 	accessReviewSource: accessReviewSource as ResourceModule,
 	asset: asset as ResourceModule,

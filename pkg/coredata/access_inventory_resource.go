@@ -202,6 +202,85 @@ LIMIT 1;
 	return nil
 }
 
+func (rs *AccessInventoryResources) LoadByOrganizationID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	organizationID gid.GID,
+	cursor *page.Cursor[AccessInventoryResourceOrderField],
+	filter *AccessInventoryResourceFilter,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    access_review_source_id,
+    resource_key,
+    display_name,
+    kind,
+    first_seen_at,
+    last_seen_at,
+    created_at,
+    updated_at
+FROM
+    access_inventory_resources
+WHERE
+    %s
+    AND organization_id = @organization_id
+    AND %s
+    AND %s
+`
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"organization_id": organizationID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query access_inventory_resources: %w", err)
+	}
+
+	resources, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[AccessInventoryResource])
+	if err != nil {
+		return fmt.Errorf("cannot collect access_inventory_resources: %w", err)
+	}
+
+	*rs = resources
+
+	return nil
+}
+
+func (rs *AccessInventoryResources) CountByOrganizationID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	organizationID gid.GID,
+	filter *AccessInventoryResourceFilter,
+) (int, error) {
+	q := `
+SELECT COUNT(id)
+FROM access_inventory_resources
+WHERE
+    %s
+    AND organization_id = @organization_id
+    AND %s
+`
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"organization_id": organizationID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+
+	var count int
+	if err := conn.QueryRow(ctx, q, args).Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot count access_inventory_resources: %w", err)
+	}
+
+	return count, nil
+}
+
 func (rs *AccessInventoryResources) LoadBySourceID(
 	ctx context.Context,
 	conn pg.Querier,

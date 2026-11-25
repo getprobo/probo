@@ -24,6 +24,7 @@ import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cmd/access-review/campaign"
 	"go.probo.inc/probo/pkg/cmd/access-review/entry"
+	"go.probo.inc/probo/pkg/cmd/access-review/inventory"
 	"go.probo.inc/probo/pkg/cmd/access-review/source"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 )
@@ -37,6 +38,7 @@ func NewCmdAccessReview(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.AddCommand(campaign.NewCmdCampaign(f))
 	cmd.AddCommand(entry.NewCmdEntry(f))
+	cmd.AddCommand(inventory.NewCmdInventory(f))
 	cmd.AddCommand(source.NewCmdSource(f))
 
 	return cmd

@@ -12671,3 +12671,146 @@ func (r *Resolver) AddInternalControlLinkEvidenceTool(ctx context.Context, _ *mc
 		Evidence: types.NewEvidence(evidence, file),
 	}, nil
 }
+
+func (r *Resolver) ListAccessInventoryGrantsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListAccessInventoryGrantsInput) (*mcp.CallToolResult, types.ListAccessInventoryGrantsOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, accessreview.ActionInventoryGrantList)
+	if err != nil {
+		return nil, types.ListAccessInventoryGrantsOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.AccessInventoryGrantOrderField]{
+		Field:     coredata.AccessInventoryGrantOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AccessInventoryGrantOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	var filter *coredata.AccessInventoryGrantFilter
+	if input.Filter != nil {
+		filter = &coredata.AccessInventoryGrantFilter{
+			AccessReviewSourceID: input.Filter.AccessReviewSourceID,
+			PrincipalID:          input.Filter.PrincipalID,
+			ResourceID:           input.Filter.ResourceID,
+			Presence:             input.Filter.Presence,
+			IncludeDisappeared:   input.Filter.IncludeDisappeared,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	p, err := r.accessReview.ListInventoryGrantsForOrganizationID(
+		ctx,
+		scope,
+		input.OrganizationID,
+		cursor,
+		filter,
+	)
+	if err != nil {
+		panic(fmt.Errorf("cannot list access inventory grants: %w", err))
+	}
+
+	return nil, types.NewListAccessInventoryGrantsOutput(p), nil
+}
+
+func (r *Resolver) GetAccessInventoryGrantTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetAccessInventoryGrantInput) (*mcp.CallToolResult, types.GetAccessInventoryGrantOutput, error) {
+	scope, err := r.Authorize(ctx, input.AccessInventoryGrantID, accessreview.ActionInventoryGrantGet)
+	if err != nil {
+		return nil, types.GetAccessInventoryGrantOutput{}, err
+	}
+
+	grant, err := r.accessReview.GetInventoryGrant(ctx, scope, input.AccessInventoryGrantID)
+	if err != nil {
+		return nil, types.GetAccessInventoryGrantOutput{}, fmt.Errorf("cannot get access inventory grant: %w", err)
+	}
+
+	return nil, types.GetAccessInventoryGrantOutput{
+		Grant: types.NewAccessInventoryGrant(grant),
+	}, nil
+}
+
+func (r *Resolver) ListAccessInventoryPrincipalsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListAccessInventoryPrincipalsInput) (*mcp.CallToolResult, types.ListAccessInventoryPrincipalsOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, accessreview.ActionInventoryPrincipalList)
+	if err != nil {
+		return nil, types.ListAccessInventoryPrincipalsOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.AccessInventoryPrincipalOrderField]{
+		Field:     coredata.AccessInventoryPrincipalOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AccessInventoryPrincipalOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	var filter *coredata.AccessInventoryPrincipalFilter
+	if input.Filter != nil {
+		filter = &coredata.AccessInventoryPrincipalFilter{
+			AccessReviewSourceID: input.Filter.AccessReviewSourceID,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	p, err := r.accessReview.ListInventoryPrincipalsForOrganizationID(
+		ctx,
+		scope,
+		input.OrganizationID,
+		cursor,
+		filter,
+	)
+	if err != nil {
+		panic(fmt.Errorf("cannot list access inventory principals: %w", err))
+	}
+
+	return nil, types.NewListAccessInventoryPrincipalsOutput(p), nil
+}
+
+func (r *Resolver) ListAccessInventoryResourcesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListAccessInventoryResourcesInput) (*mcp.CallToolResult, types.ListAccessInventoryResourcesOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, accessreview.ActionInventoryResourceList)
+	if err != nil {
+		return nil, types.ListAccessInventoryResourcesOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.AccessInventoryResourceOrderField]{
+		Field:     coredata.AccessInventoryResourceOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AccessInventoryResourceOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	var filter *coredata.AccessInventoryResourceFilter
+	if input.Filter != nil {
+		filter = &coredata.AccessInventoryResourceFilter{
+			AccessReviewSourceID: input.Filter.AccessReviewSourceID,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	p, err := r.accessReview.ListInventoryResourcesForOrganizationID(
+		ctx,
+		scope,
+		input.OrganizationID,
+		cursor,
+		filter,
+	)
+	if err != nil {
+		panic(fmt.Errorf("cannot list access inventory resources: %w", err))
+	}
+
+	return nil, types.NewListAccessInventoryResourcesOutput(p), nil
+}

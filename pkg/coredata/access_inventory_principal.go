@@ -229,6 +229,94 @@ LIMIT 1;
 	return nil
 }
 
+func (ps *AccessInventoryPrincipals) LoadByOrganizationID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	organizationID gid.GID,
+	cursor *page.Cursor[AccessInventoryPrincipalOrderField],
+	filter *AccessInventoryPrincipalFilter,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    access_review_source_id,
+    principal_key,
+    email,
+    full_name,
+    external_id,
+    job_title,
+    is_admin,
+    mfa_status,
+    auth_method,
+    account_type,
+    active,
+    last_login,
+    account_created_at,
+    first_seen_at,
+    last_seen_at,
+    created_at,
+    updated_at
+FROM
+    access_inventory_principals
+WHERE
+    %s
+    AND organization_id = @organization_id
+    AND %s
+    AND %s
+`
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"organization_id": organizationID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query access_inventory_principals: %w", err)
+	}
+
+	principals, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[AccessInventoryPrincipal])
+	if err != nil {
+		return fmt.Errorf("cannot collect access_inventory_principals: %w", err)
+	}
+
+	*ps = principals
+
+	return nil
+}
+
+func (ps *AccessInventoryPrincipals) CountByOrganizationID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	organizationID gid.GID,
+	filter *AccessInventoryPrincipalFilter,
+) (int, error) {
+	q := `
+SELECT COUNT(id)
+FROM access_inventory_principals
+WHERE
+    %s
+    AND organization_id = @organization_id
+    AND %s
+`
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"organization_id": organizationID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+
+	var count int
+	if err := conn.QueryRow(ctx, q, args).Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot count access_inventory_principals: %w", err)
+	}
+
+	return count, nil
+}
+
 func (ps *AccessInventoryPrincipals) LoadBySourceID(
 	ctx context.Context,
 	conn pg.Querier,

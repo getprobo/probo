@@ -238,6 +238,99 @@ func (r *organizationResolver) AccessReviewCampaigns(ctx context.Context, obj *t
 	return types.NewAccessReviewCampaignConnection(p, r, obj.ID), nil
 }
 
+// AccessInventoryGrants is the resolver for the accessInventoryGrants field.
+func (r *organizationResolver) AccessInventoryGrants(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AccessInventoryGrantOrder, filter *coredata.AccessInventoryGrantFilter) (*types.AccessInventoryGrantConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, accessreview.ActionInventoryGrantList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.AccessInventoryGrantOrderField]{
+		Field:     coredata.AccessInventoryGrantOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AccessInventoryGrantOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	p, err := r.accessReview.ListInventoryGrantsForOrganizationID(ctx, scope, obj.ID, cursor, filter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list access inventory grants", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return types.NewAccessInventoryGrantConnection(p, r, obj.ID, filter), nil
+}
+
+// AccessInventoryPrincipals is the resolver for the accessInventoryPrincipals field.
+func (r *organizationResolver) AccessInventoryPrincipals(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AccessInventoryPrincipalOrder, filter *coredata.AccessInventoryPrincipalFilter) (*types.AccessInventoryPrincipalConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, accessreview.ActionInventoryPrincipalList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.AccessInventoryPrincipalOrderField]{
+		Field:     coredata.AccessInventoryPrincipalOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AccessInventoryPrincipalOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	p, err := r.accessReview.ListInventoryPrincipalsForOrganizationID(ctx, scope, obj.ID, cursor, filter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list access inventory principals", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return types.NewAccessInventoryPrincipalConnection(p, r, obj.ID, filter), nil
+}
+
+// AccessInventoryResources is the resolver for the accessInventoryResources field.
+func (r *organizationResolver) AccessInventoryResources(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AccessInventoryResourceOrder, filter *coredata.AccessInventoryResourceFilter) (*types.AccessInventoryResourceConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, accessreview.ActionInventoryResourceList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.AccessInventoryResourceOrderField]{
+		Field:     coredata.AccessInventoryResourceOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AccessInventoryResourceOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	p, err := r.accessReview.ListInventoryResourcesForOrganizationID(ctx, scope, obj.ID, cursor, filter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list access inventory resources", log.Error(err))
+
+		return nil, gqlx.Internal(ctx)
+	}
+
+	return types.NewAccessInventoryResourceConnection(p, r, obj.ID, filter), nil
+}
+
 // AssetListDocument is the resolver for the assetListDocument field.
 func (r *organizationResolver) AssetListDocument(ctx context.Context, obj *types.Organization) (*types.Document, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet)

@@ -683,6 +683,36 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 			return types.NewAccessReviewEntry(entry), nil
 		}
+	case coredata.AccessInventoryGrantEntityType:
+		action = accessreview.ActionInventoryGrantGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			grant, err := r.accessReview.GetInventoryGrant(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewAccessInventoryGrant(grant), nil
+		}
+	case coredata.AccessInventoryPrincipalEntityType:
+		action = accessreview.ActionInventoryPrincipalGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			principal, err := r.accessReview.GetInventoryPrincipal(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewAccessInventoryPrincipal(principal), nil
+		}
+	case coredata.AccessInventoryResourceEntityType:
+		action = accessreview.ActionInventoryResourceGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			resource, err := r.accessReview.GetInventoryResource(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewAccessInventoryResource(resource), nil
+		}
 	case coredata.CookieBannerEntityType:
 		action = probo.ActionCookieBannerGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
