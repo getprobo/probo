@@ -543,3 +543,69 @@ func TestAccessSourceSyncRun_LoadLatestBySourceID(t *testing.T) {
 	})
 	assert.ErrorIs(t, err, coredata.ErrResourceNotFound)
 }
+
+func TestAccessSourceSyncRuns_LoadLatestBySourceIDs(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedAccessInventoryFixture(t, ctx, client)
+
+	sourceBID := gid.New(fx.scope.GetTenantID(), coredata.AccessReviewSourceEntityType)
+	now := time.Now().UTC()
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		source := &coredata.AccessReviewSource{
+			ID:             sourceBID,
+			OrganizationID: fx.organizationID,
+			Name:           "Access Inventory Second Source",
+			CreatedAt:      now,
+			UpdatedAt:      now,
+		}
+		_, err := source.Insert(ctx, tx, fx.scope)
+
+		return err
+	}))
+	t.Cleanup(func() {
+		_ = client.WithTx(context.Background(), func(ctx context.Context, tx pg.Tx) error {
+			_, err := tx.Exec(ctx, `DELETE FROM access_review_sources WHERE id = $1`, sourceBID)
+
+			return err
+		})
+	})
+
+	fxB := accessInventoryFixture{
+		scope:          fx.scope,
+		organizationID: fx.organizationID,
+		sourceID:       sourceBID,
+	}
+	emptySourceID := gid.New(fx.scope.GetTenantID(), coredata.AccessReviewSourceEntityType)
+
+	olderAt := now.Add(-time.Minute)
+	newerAt := olderAt.Add(30 * time.Second)
+	_ = insertAccessSourceSyncRun(t, ctx, client, fx, coredata.AccessSourceSyncRunStatusFailed, olderAt)
+	runAID := insertAccessSourceSyncRun(t, ctx, client, fx, coredata.AccessSourceSyncRunStatusSuccess, newerAt)
+	runBID := insertAccessSourceSyncRun(t, ctx, client, fxB, coredata.AccessSourceSyncRunStatusQueued, newerAt)
+
+	var latest coredata.AccessSourceSyncRuns
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return latest.LoadLatestBySourceIDs(
+			ctx,
+			conn,
+			fx.scope,
+			[]gid.GID{fx.sourceID, sourceBID, emptySourceID},
+		)
+	}))
+
+	bySource := map[gid.GID]*coredata.AccessSourceSyncRun{}
+	for _, run := range latest {
+		bySource[run.AccessReviewSourceID] = run
+	}
+
+	require.Len(t, bySource, 2)
+	assert.Equal(t, runAID, bySource[fx.sourceID].ID)
+	assert.Equal(t, coredata.AccessSourceSyncRunStatusSuccess, bySource[fx.sourceID].Status)
+	assert.Equal(t, runBID, bySource[sourceBID].ID)
+	_, hasEmpty := bySource[emptySourceID]
+	assert.False(t, hasEmpty)
+}

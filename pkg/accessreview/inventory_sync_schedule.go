@@ -81,6 +81,35 @@ func (s *Service) GetLatestAccessSourceSyncRunForSourceID(
 	return run, nil
 }
 
+func (s *Service) GetLatestAccessSourceSyncRunsBySourceIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	sourceIDs []gid.GID,
+) (map[gid.GID]*coredata.AccessSourceSyncRun, error) {
+	if len(sourceIDs) == 0 {
+		return map[gid.GID]*coredata.AccessSourceSyncRun{}, nil
+	}
+
+	var runs coredata.AccessSourceSyncRuns
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return runs.LoadLatestBySourceIDs(ctx, conn, scope, sourceIDs)
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get latest access source sync runs: %w", err)
+	}
+
+	bySourceID := make(map[gid.GID]*coredata.AccessSourceSyncRun, len(runs))
+	for _, run := range runs {
+		bySourceID[run.AccessReviewSourceID] = run
+	}
+
+	return bySourceID, nil
+}
+
 // SyncNow enqueues an AccessSourceSyncRun for the source. If a QUEUED or
 // RUNNING run already exists, that run is returned unchanged.
 func (s *Service) SyncNow(

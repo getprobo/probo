@@ -161,18 +161,26 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Connection:"), s.ConnectionStatus)
-			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Last sync:"), formatOptionalTime(s.LastSuccessfulSyncAt))
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Last successful sync:"), formatOptionalTime(s.LastSuccessfulSyncAt))
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Next sync:"), formatOptionalTime(s.NextSyncAt))
 			_, _ = fmt.Fprintf(out, "%s%d\n", label.Render("Sync failures:"), s.SyncConsecutiveFailures)
 
 			if s.LatestSyncRun != nil {
+				run := s.LatestSyncRun
 				_, _ = fmt.Fprintf(
 					out,
 					"%s%s [%s]\n",
 					label.Render("Latest run:"),
-					s.LatestSyncRun.ID,
-					s.LatestSyncRun.Status,
+					run.ID,
+					run.Status,
 				)
+				_, _ = fmt.Fprintf(out, "%s%d\n", label.Render("Grants upserted:"), run.GrantsUpsertedCount)
+				if run.Error != nil {
+					_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Run error:"), *run.Error)
+				}
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Run started:"), formatOptionalTime(run.StartedAt))
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Run completed:"), formatOptionalTime(run.CompletedAt))
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Run created:"), cmdutil.FormatTime(run.CreatedAt))
 			}
 
 			_, _ = fmt.Fprintln(out)

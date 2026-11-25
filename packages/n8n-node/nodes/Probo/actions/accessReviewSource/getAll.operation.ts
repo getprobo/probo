@@ -83,15 +83,6 @@ export async function execute(
 								lastSuccessfulSyncAt
 								nextSyncAt
 								syncConsecutiveFailures
-								latestSyncRun {
-									id
-									status
-									grantsUpsertedCount
-									error
-									startedAt
-									completedAt
-									createdAt
-								}
 								createdAt
 								updatedAt
 							}

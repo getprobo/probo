@@ -221,9 +221,12 @@ func TestAccessInventory_SyncNowAndStatus(t *testing.T) {
 	payload := syncResult.SyncAccessInventory
 	assert.Equal(t, sourceID, payload.AccessReviewSource.ID)
 	assert.Equal(t, sourceID, payload.AccessSourceSyncRun.Source.ID)
-	assert.Contains(t, []string{"QUEUED", "RUNNING", "SUCCESS"}, payload.AccessSourceSyncRun.Status)
+	require.NotEmpty(t, payload.AccessSourceSyncRun.ID)
 	require.NotNil(t, payload.AccessReviewSource.LatestSyncRun)
 	assert.Equal(t, payload.AccessSourceSyncRun.ID, payload.AccessReviewSource.LatestSyncRun.ID)
+
+	runID := payload.AccessSourceSyncRun.ID
+	waitForAccessSourceSyncRunSuccess(t, owner, runID)
 
 	const statusQuery = `
 		query($id: ID!) {
@@ -259,7 +262,9 @@ func TestAccessInventory_SyncNowAndStatus(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, sourceID, statusResult.Node.ID)
 	require.NotNil(t, statusResult.Node.LatestSyncRun)
-	assert.Equal(t, payload.AccessSourceSyncRun.ID, statusResult.Node.LatestSyncRun.ID)
+	assert.Equal(t, runID, statusResult.Node.LatestSyncRun.ID)
+	assert.Equal(t, "SUCCESS", statusResult.Node.LatestSyncRun.Status)
+	require.NotNil(t, statusResult.Node.LastSuccessfulSyncAt)
 
 	const nodeQuery = `
 		query($id: ID!) {
@@ -279,9 +284,54 @@ func TestAccessInventory_SyncNowAndStatus(t *testing.T) {
 		} `json:"node"`
 	}
 
-	err = owner.Execute(nodeQuery, map[string]any{"id": payload.AccessSourceSyncRun.ID}, &nodeResult)
+	err = owner.Execute(nodeQuery, map[string]any{"id": runID}, &nodeResult)
 	require.NoError(t, err)
-	assert.Equal(t, payload.AccessSourceSyncRun.ID, nodeResult.Node.ID)
+	assert.Equal(t, runID, nodeResult.Node.ID)
+	assert.Equal(t, "SUCCESS", nodeResult.Node.Status)
+}
+
+func waitForAccessSourceSyncRunSuccess(
+	t *testing.T,
+	client *testutil.Client,
+	runID string,
+) {
+	t.Helper()
+
+	const query = `
+		query($id: ID!) {
+			node(id: $id) {
+				... on AccessSourceSyncRun {
+					id
+					status
+				}
+			}
+		}
+	`
+
+	require.Eventually(t, func() bool {
+		var result struct {
+			Node struct {
+				ID     string `json:"id"`
+				Status string `json:"status"`
+			} `json:"node"`
+		}
+
+		err := client.Execute(query, map[string]any{"id": runID}, &result)
+		if err != nil {
+			t.Logf("access source sync run poll: %v", err)
+			return false
+		}
+
+		switch result.Node.Status {
+		case "SUCCESS":
+			return true
+		case "FAILED":
+			t.Fatalf("access source sync run %s failed", runID)
+			return false
+		default:
+			return false
+		}
+	}, 60*time.Second, 500*time.Millisecond)
 }
 
 func waitForAccessInventoryGrants(

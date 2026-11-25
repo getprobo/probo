@@ -733,14 +733,13 @@ func (r *accessReviewSourceResolver) SelectedOrganization(ctx context.Context, o
 
 // LatestSyncRun is the resolver for the latestSyncRun field.
 func (r *accessReviewSourceResolver) LatestSyncRun(ctx context.Context, obj *types.AccessReviewSource) (*types.AccessSourceSyncRun, error) {
-	scope, err := r.authorize(ctx, obj.ID, accessreview.ActionSourceGet)
-	if err != nil {
+	if _, err := r.authorize(ctx, obj.ID, accessreview.ActionSourceGet); err != nil {
 		return nil, err
 	}
 
-	run, err := r.accessReview.GetLatestAccessSourceSyncRunForSourceID(ctx, scope, obj.ID)
+	run, err := dataloader.FromContext(ctx).LatestAccessSourceSyncRun.Load(ctx, obj.ID)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, nil
 		}
 

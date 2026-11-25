@@ -96,7 +96,7 @@ func NewCmdSync(f *cmdutil.Factory) *cobra.Command {
 			out := f.IOStreams.Out
 			_, _ = fmt.Fprintf(
 				out,
-				"Queued inventory sync for source %s (%s): run %s [%s]\n",
+				"Requested inventory sync for source %s (%s): run %s [%s]\n",
 				payload.AccessReviewSource.ID,
 				payload.AccessReviewSource.Name,
 				payload.AccessSourceSyncRun.ID,

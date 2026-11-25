@@ -23230,7 +23230,7 @@ tools:
     hints:
       readonly: false
       destructive: false
-      idempotent: true
+      idempotent: false
       openWorld: false
     inputSchema:
       $ref: "#/components/schemas/SyncAccessInventoryMCPInput"

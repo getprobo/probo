@@ -4114,6 +4114,10 @@ func (r *Resolver) ListAccessReviewSourcesTool(ctx context.Context, req *mcp.Cal
 		return nil, types.ListAccessReviewSourcesOutput{}, err
 	}
 
+	if err := r.fillSourceLatestSyncRuns(ctx, scope, p.Data, out.AccessReviewSources); err != nil {
+		return nil, types.ListAccessReviewSourcesOutput{}, mcpx.MapError(ctx, r.logger, "cannot load latest sync runs", err)
+	}
+
 	return nil, out, nil
 }
 
@@ -4172,6 +4176,10 @@ func (r *Resolver) UpdateAccessReviewSourceTool(ctx context.Context, req *mcp.Ca
 	mapped := types.NewAccessReviewSource(source)
 	if err := r.fillSourceConnectorIDs(ctx, scope, []*coredata.AccessReviewSource{source}, []*types.AccessReviewSource{mapped}); err != nil {
 		return nil, types.UpdateAccessReviewSourceOutput{}, err
+	}
+
+	if err := r.fillSourceLatestSyncRuns(ctx, scope, []*coredata.AccessReviewSource{source}, []*types.AccessReviewSource{mapped}); err != nil {
+		return nil, types.UpdateAccessReviewSourceOutput{}, mcpx.MapError(ctx, r.logger, "cannot load latest sync run", err)
 	}
 
 	return nil, types.UpdateAccessReviewSourceOutput{
@@ -11092,6 +11100,10 @@ func (r *Resolver) CreateAccessReviewSourcesTool(ctx context.Context, req *mcp.C
 		return nil, types.CreateAccessReviewSourcesOutput{}, mcpx.MapError(ctx, r.logger, "cannot load source connectors", err)
 	}
 
+	if err := r.fillSourceLatestSyncRuns(ctx, scope, rows, mapped); err != nil {
+		return nil, types.CreateAccessReviewSourcesOutput{}, mcpx.MapError(ctx, r.logger, "cannot load latest sync runs", err)
+	}
+
 	return nil, types.CreateAccessReviewSourcesOutput{Results: results}, nil
 }
 
@@ -12840,7 +12852,7 @@ func (r *Resolver) SyncAccessInventoryTool(ctx context.Context, req *mcp.CallToo
 
 	return nil, types.SyncAccessInventoryOutput{
 		AccessReviewSource:  mapped,
-		AccessSourceSyncRun: types.NewAccessSourceSyncRun(run),
+		AccessSourceSyncRun: mapped.LatestSyncRun,
 	}, nil
 }
 
