@@ -21,7 +21,7 @@
   },
   "devDependencies": {
     "@probo/eslint-config": "1.0.0",
-    "eslint": "^10.12.0",
+    "eslint": "^10.15.0",
     "relay-compiler": "^21.0.1",
     "turbo": "^2.11.8",
     "typescript": "6.0.3"
@@ -37,7 +37,11 @@
     "postcss-selector-parser": "^7.1.6",
     "qs": "^6.16.0",
     "stream-json": "^3.6.0",
-    "typescript": "6.0.3"
+    "typescript": "6.0.3",
+    "zod-to-json-schema": "3.25.2",
+    "typescript-eslint": "8.73.0",
+    "@typescript-eslint/utils": "8.73.0",
+    "@typescript-eslint/typescript-estree": "8.73.0"
   },
   "allowScripts": {
     "cbor-extract": false,
