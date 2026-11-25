@@ -35,5 +35,46 @@
       "description": "Une erreur est survenue lors du chargement des droits d'accès. Réessayez.",
       "retry": "Réessayer"
     }
+  },
+  "grantDetail": {
+    "back": "Accès en direct",
+    "open": "Ouvrir le droit d'accès pour {{name}}",
+    "notFound": "Droit d'accès introuvable",
+    "properties": {
+      "title": "Détails"
+    },
+    "fields": {
+      "principal": "Principal",
+      "resource": "Ressource",
+      "entitlement": "Droit",
+      "source": "Source",
+      "presence": "Présence",
+      "missingSyncs": "Synchronisations manquantes",
+      "firstSeen": "Première observation",
+      "lastSeen": "Dernière observation",
+      "providerChanged": "Fournisseur modifié"
+    },
+    "values": {
+      "empty": "—"
+    },
+    "changelog": {
+      "title": "Journal ({{count}})",
+      "description": "Changements observés pour ce droit, du plus récent au plus ancien.",
+      "empty": "Aucun changement enregistré pour le moment",
+      "before": "Avant",
+      "after": "Après",
+      "observedAt": "Observé {{value}}",
+      "providerOccurredAt": "Événement du fournisseur : {{value}}"
+    },
+    "changeTypes": {
+      "APPEARED": "Apparu",
+      "DISAPPEARED": "Disparu",
+      "ATTRIBUTE_CHANGED": "Attribut modifié"
+    },
+    "error": {
+      "title": "Impossible de charger le droit",
+      "description": "Une erreur est survenue lors du chargement de ce droit d'accès. Réessayez.",
+      "retry": "Réessayer"
+    }
   }
 }

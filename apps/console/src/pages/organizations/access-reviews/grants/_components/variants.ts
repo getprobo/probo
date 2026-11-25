@@ -66,3 +66,66 @@ export const accessInventoryGrantsList = tv({
     },
   },
 });
+
+export const accessInventoryGrantPage = tv({
+  slots: {
+    root: "flex flex-col gap-6",
+    back: "self-start",
+    header: "flex items-start justify-between gap-4",
+    intro: "flex min-w-0 flex-col gap-2",
+    titleRow: "flex min-w-0 flex-wrap items-center gap-2",
+    title: "min-w-0",
+    subtitle: "min-w-0",
+  },
+});
+
+export const accessInventoryGrantPageSkeleton = tv({
+  slots: {
+    root: "flex flex-col gap-6",
+    header: "flex items-start justify-between gap-4",
+    intro: "flex min-w-0 flex-col gap-2",
+    titleRow: "flex min-w-0 flex-wrap items-center gap-2",
+    properties: "flex flex-col gap-3",
+    fields: "grid grid-cols-2 gap-4 max-md:grid-cols-1",
+    history: "flex flex-col gap-3",
+  },
+});
+
+export const accessInventoryGrantPropertiesSection = tv({
+  slots: {
+    root: "flex flex-col gap-3",
+    intro: "flex min-w-0 flex-col gap-1",
+    fields: "grid grid-cols-2 gap-4 max-md:grid-cols-1",
+    stack: "flex min-w-0 flex-col gap-0.5",
+  },
+});
+
+export const accessInventoryGrantChangeEventList = tv({
+  slots: {
+    root: "flex flex-col gap-4",
+    heading: "flex min-w-0 flex-col gap-1",
+    results: "transition-opacity",
+    empty: "flex flex-col items-center py-8 text-center",
+    item: "items-stretch",
+    pager: "flex justify-center",
+  },
+  variants: {
+    pending: {
+      true: {
+        results: "opacity-60",
+      },
+    },
+  },
+});
+
+export const accessInventoryGrantChangeEventListItem = tv({
+  slots: {
+    root: "flex w-full min-w-0 flex-col gap-2",
+    header: "flex min-w-0 flex-wrap items-center gap-2",
+    meta: "flex min-w-0 flex-wrap items-center gap-2",
+    snapshots: "grid grid-cols-2 gap-3 max-sm:grid-cols-1",
+    snapshot: "flex min-w-0 flex-col gap-1 rounded-2 bg-sand-2 p-3",
+    snapshotTitle: "text-1 text-sand-11",
+    snapshotBody: "flex min-w-0 flex-col gap-0.5",
+  },
+});

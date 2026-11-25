@@ -21,11 +21,13 @@
 import { dateTimeFormat } from "@probo/i18n";
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { TableCell } from "@probo/ui/src/v2/Table/TableCell";
+import { TableLink } from "@probo/ui/src/v2/Table/TableLink";
 import { TableRow } from "@probo/ui/src/v2/Table/TableRow";
 import { TableRowHeaderCell } from "@probo/ui/src/v2/Table/TableRowHeaderCell";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
+import { useLocation } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { AccessInventoryGrantListItem_grant$key } from "#/__generated__/core/AccessInventoryGrantListItem_grant.graphql";
@@ -66,6 +68,7 @@ export function AccessInventoryGrantListItem({
   grantKey,
 }: AccessInventoryGrantListItemProps) {
   const { i18n, t } = useTranslation("organizations/access-reviews");
+  const location = useLocation();
   const grant = useFragment(accessInventoryGrantListItemFragment, grantKey);
   const disappeared = grant.presence === "DISAPPEARED";
   const { principal, resource } = accessInventoryGrantsList({ disappeared });
@@ -83,18 +86,23 @@ export function AccessInventoryGrantListItem({
   });
 
   return (
-    <TableRow>
+    <TableRow interactive>
       <TableRowHeaderCell overflow="truncate">
-        <div className={principal()}>
-          <Text size={2} weight="medium" highContrast className="truncate">
-            {principalTitle}
-          </Text>
-          {fullName !== "" && email !== "" && (
-            <Text size={1} color="faint" className="truncate">
-              {email}
+        <TableLink
+          to={{ pathname: grant.id, search: location.search }}
+          aria-label={t("grantDetail.open", { name: principalTitle })}
+        >
+          <div className={principal()}>
+            <Text size={2} weight="medium" highContrast className="truncate">
+              {principalTitle}
             </Text>
-          )}
-        </div>
+            {fullName !== "" && email !== "" && (
+              <Text size={1} color="faint" className="truncate">
+                {email}
+              </Text>
+            )}
+          </div>
+        </TableLink>
       </TableRowHeaderCell>
       <TableCell overflow="truncate">
         <div className={resource()}>
