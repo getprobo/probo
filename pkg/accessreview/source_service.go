@@ -78,6 +78,13 @@ type (
 	}
 )
 
+// NeedsInitialInventorySync reports whether connect should call SyncNow:
+// newly created sources, or existing ones that never completed a first sync
+// (so a failed SyncNow after EnsureSources stays retryable on recreate).
+func NeedsInitialInventorySync(item EnsuredAccessReviewSource) bool {
+	return item.Created || item.Source.LastSuccessfulSyncAt == nil
+}
+
 func (r *CreateAccessReviewSourceRequest) Validate() error {
 	v := validator.New()
 
@@ -162,6 +169,16 @@ func (s *Service) EnsureSources(
 				if account != nil {
 					source.ConnectorAccountID = &account.ID
 				}
+
+				// Park next_sync_at at the provider cadence until the create
+				// resolver finishes AutoSelectDefaultOrganization and SyncNow.
+				cadence, err := s.resolveSourceSyncCadence(ctx, conn, scope, source)
+				if err != nil {
+					return fmt.Errorf("cannot resolve deferred inventory sync cadence: %w", err)
+				}
+
+				nextSyncAt := now.Add(cadence)
+				source.NextSyncAt = &nextSyncAt
 
 				inserted, err := source.Insert(ctx, conn, scope)
 				if err != nil {

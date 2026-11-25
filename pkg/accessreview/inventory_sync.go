@@ -113,14 +113,19 @@ func (s *Service) SyncInventorySource(
 				return err
 			}
 
+			completedAt := time.Now()
 			run.Status = coredata.AccessSourceSyncRunStatusSuccess
 			run.GrantsUpsertedCount = upserted
 			run.Error = nil
-			run.CompletedAt = &observedAt
-			run.UpdatedAt = observedAt
+			run.CompletedAt = &completedAt
+			run.UpdatedAt = completedAt
 
 			if err := run.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot mark sync run success: %w", err)
+			}
+
+			if err := s.scheduleInventorySyncAfterSuccess(ctx, tx, scope, source, completedAt); err != nil {
+				return err
 			}
 
 			return nil

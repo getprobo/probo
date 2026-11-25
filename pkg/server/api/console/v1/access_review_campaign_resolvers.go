@@ -807,6 +807,17 @@ func (r *mutationResolver) CreateAccessReviewSources(ctx context.Context, input 
 		// unconfigured, and a later add returns Created=false.
 		r.accessReview.AutoSelectDefaultOrganization(ctx, scope, item.Source)
 
+		// Enqueue after org defaulting so the first sync sees a configured
+		// connector org. Retry when recreate finds Created=false but the
+		// source still has no successful sync (failed SyncNow after insert).
+		if accessreview.NeedsInitialInventorySync(item) {
+			if _, err := r.accessReview.SyncNow(ctx, scope, item.Source.ID); err != nil {
+				r.logger.ErrorCtx(ctx, "cannot enqueue inventory sync on connect", log.Error(err))
+
+				return nil, gqlx.Internal(ctx)
+			}
+		}
+
 		results[i] = &types.CreateAccessReviewSourceResult{
 			AccessReviewSourceEdge: types.NewAccessReviewSourceEdge(item.Source, coredata.AccessReviewSourceOrderFieldCreatedAt),
 			Created:                item.Created,

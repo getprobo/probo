@@ -139,6 +139,19 @@ func (h *inventorySyncHandler) RecoverStale(ctx context.Context) error {
 				if err := run.Update(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot fail stale sync run %s: %w", run.ID, err)
 				}
+
+				source := &coredata.AccessReviewSource{}
+				if err := source.LoadByID(ctx, tx, scope, run.AccessReviewSourceID); err != nil {
+					return fmt.Errorf(
+						"cannot load access source for stale sync backoff %s: %w",
+						run.ID,
+						err,
+					)
+				}
+
+				if err := h.svc.scheduleInventorySyncAfterFailure(ctx, tx, scope, source, now); err != nil {
+					return fmt.Errorf("cannot schedule stale sync backoff %s: %w", run.ID, err)
+				}
 			}
 
 			if len(stale) > 0 {
@@ -206,7 +219,16 @@ func (h *inventorySyncHandler) failSync(
 	return h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			return run.Update(ctx, tx, scope)
+			if err := run.Update(ctx, tx, scope); err != nil {
+				return err
+			}
+
+			source := &coredata.AccessReviewSource{}
+			if err := source.LoadByID(ctx, tx, scope, run.AccessReviewSourceID); err != nil {
+				return fmt.Errorf("cannot load access source for sync backoff: %w", err)
+			}
+
+			return h.svc.scheduleInventorySyncAfterFailure(ctx, tx, scope, source, now)
 		},
 	)
 }
