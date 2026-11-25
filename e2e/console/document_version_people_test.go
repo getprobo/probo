@@ -89,11 +89,13 @@ func TestDocumentVersion_SignaturesPageAndSearch(t *testing.T) {
 		assert.False(t, next.PageInfo.HasNextPage)
 
 		seen := map[string]bool{}
+
 		for _, page := range []signaturePage{first, next} {
 			for _, edge := range page.Edges {
 				seen[edge.Node.ID] = true
 			}
 		}
+
 		assert.Len(t, seen, 3, "the second page continues after the first")
 	})
 
