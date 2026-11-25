@@ -4,6 +4,19 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.277.0] - 2026-11-25
+
+### Added
+
+- Third Party Upload Agreement, Get Agreement, Get Many Agreements,
+  Update Agreement and Delete Agreement operations, with a type, title,
+  validity dates and a PDF file
+
+### Removed
+
+- Third Party business associate and data privacy agreement
+  operations, replaced by the agreement operations
+
 ## [0.276.0] - 2026-11-24
 
 ### Added
