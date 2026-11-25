@@ -512,6 +512,7 @@ ORDER BY cs.organization_id ASC
 	defer rows.Close()
 
 	var organizationIDs []gid.GID
+
 	for rows.Next() {
 		var organizationID gid.GID
 		if err := rows.Scan(&organizationID); err != nil {

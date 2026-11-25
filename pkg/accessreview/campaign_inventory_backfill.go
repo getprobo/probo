@@ -60,6 +60,7 @@ func (s *Service) BackfillInventoryFromLatestCampaignEntries(
 			cursor *page.Cursor[coredata.AccessReviewSourceOrderField],
 		) ([]*coredata.AccessReviewSource, error) {
 			var batch coredata.AccessReviewSources
+
 			err := s.pg.WithConn(
 				ctx,
 				func(ctx context.Context, conn pg.Querier) error {
@@ -126,6 +127,7 @@ func (s *Service) backfillInventoryForSourceFromCampaign(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			successful := &coredata.AccessSourceSyncRun{}
+
 			err := successful.LoadLatestSuccessfulBySourceID(
 				ctx,
 				conn,
@@ -145,6 +147,7 @@ func (s *Service) backfillInventoryForSourceFromCampaign(
 			}
 
 			campaign = &coredata.AccessReviewCampaignSource{}
+
 			err = campaign.LoadLatestSuccessfulByAccessReviewSourceID(
 				ctx,
 				conn,
@@ -156,6 +159,7 @@ func (s *Service) backfillInventoryForSourceFromCampaign(
 
 				return nil
 			}
+
 			if err != nil {
 				return err
 			}
@@ -185,6 +189,7 @@ func (s *Service) backfillInventoryForSourceFromCampaign(
 			cursor *page.Cursor[coredata.AccessReviewEntryOrderField],
 		) ([]*coredata.AccessReviewEntry, error) {
 			var batch coredata.AccessReviewEntries
+
 			err := s.pg.WithConn(
 				ctx,
 				func(ctx context.Context, conn pg.Querier) error {
@@ -215,6 +220,7 @@ func (s *Service) backfillInventoryForSourceFromCampaign(
 					}
 
 					successful := &coredata.AccessSourceSyncRun{}
+
 					err := successful.LoadLatestSuccessfulBySourceID(
 						ctx,
 						tx,
@@ -273,6 +279,7 @@ func (s *Service) BackfillAllInventoryFromLatestCampaignEntries(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			var sources coredata.AccessReviewCampaignSources
+
 			ids, err := sources.LoadOrganizationIDsWithSuccessfulLiveFetches(
 				ctx,
 				conn,
@@ -292,8 +299,10 @@ func (s *Service) BackfillAllInventoryFromLatestCampaignEntries(
 	}
 
 	upserted := 0
+
 	for _, organizationID := range organizationIDs {
 		scope := coredata.NewScopeFromObjectID(organizationID)
+
 		count, err := s.BackfillInventoryFromLatestCampaignEntries(
 			ctx,
 			scope,
@@ -446,6 +455,7 @@ func ensureBackfillInventoryPrincipal(
 	}
 
 	existing := &coredata.AccessInventoryPrincipal{}
+
 	err := existing.LoadBySourceIDAndPrincipalKey(
 		ctx,
 		tx,
@@ -510,6 +520,7 @@ func ensureBackfillInventoryResource(
 	}
 
 	existing := &coredata.AccessInventoryResource{}
+
 	err := existing.LoadBySourceIDAndResourceKey(
 		ctx,
 		tx,
@@ -562,6 +573,7 @@ func insertBackfillInventoryGrantIfAbsent(
 	observedAt time.Time,
 ) (bool, error) {
 	existing := &coredata.AccessInventoryGrant{}
+
 	err := existing.LoadByNaturalKey(
 		ctx,
 		tx,
