@@ -97,8 +97,9 @@ export function signatureListFilter(filters: IDataObject): IDataObject {
 	if (profileStates.length) {
 		filter.profileStates = profileStates;
 	}
-	if (typeof filters.query === 'string' && filters.query !== '') {
-		filter.query = filters.query;
+	const nameQuery = typeof filters.query === 'string' ? filters.query.trim() : '';
+	if (nameQuery !== '') {
+		filter.query = nameQuery;
 	}
 
 	return filter;

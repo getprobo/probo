@@ -40,7 +40,7 @@ import { documentSignatories } from "../variants";
 
 import { DocumentSignatoryMenu } from "./DocumentSignatoryMenu";
 
-// Must match the default filter of the signatures connection below.
+// Must match the default filters of the signatures connections below.
 const activeSignatoriesFilter = { activeContract: true, profileStates: ["ACTIVE" as const] };
 
 const documentSignatoriesSectionFragment = graphql`
@@ -70,10 +70,15 @@ const documentSignatoriesListFragment = graphql`
       type: "DocumentVersionSignatureFilter"
       defaultValue: { activeContract: true, profileStates: [ACTIVE] }
     }
+    # The filter without the search query, for the count.
+    baseFilter: {
+      type: "DocumentVersionSignatureFilter"
+      defaultValue: { activeContract: true, profileStates: [ACTIVE] }
+    }
   ) {
     id
     canRequestSignature: permission(action: "core:document-version-signature:request")
-    allSignatures: signatures(first: 0, filter: { activeContract: true, profileStates: [ACTIVE] }) {
+    allSignatures: signatures(first: 0, filter: $baseFilter) {
       totalCount
     }
     signatures(
@@ -110,7 +115,8 @@ const cancelSignatureMutation = graphql`
 
 interface DocumentSignatoriesSectionProps {
   documentKey: DocumentSignatoriesSection_document$key;
-  // A previous version on screen, in place of the published one.
+  // A previous version on screen, in place of the published one. It is spread
+  // with empty filters: its signatures stay listed after a signer leaves.
   versionKey?: DocumentSignatoriesSectionList_version$key | null;
 }
 
@@ -148,16 +154,25 @@ export function DocumentSignatoriesSection({ documentKey, versionKey }: Document
     );
   }
 
-  return <DocumentSignatoriesList versionKey={version} publishedVersionId={published?.id ?? null} />;
+  return (
+    <DocumentSignatoriesList
+      versionKey={version}
+      publishedVersionId={published?.id ?? null}
+      activeOnly={versionKey == null}
+    />
+  );
 }
 
 function DocumentSignatoriesList({
   versionKey,
   publishedVersionId,
+  activeOnly,
 }: {
   versionKey: DocumentSignatoriesSectionList_version$key;
   // Signatures are only requested or cancelled on the published version.
   publishedVersionId: string | null;
+  // Whether the fragment was spread with the default, active-only filters.
+  activeOnly: boolean;
 }) {
   const { t } = useTranslation("organizations/documents");
   const {
@@ -170,10 +185,10 @@ function DocumentSignatoriesList({
     DocumentSignatoriesSectionListRefetchQuery,
     DocumentSignatoriesSectionList_version$key
   >(documentSignatoriesListFragment, versionKey);
-  const { query, setQuery, filtering, isPending } = useCardListSearch((next) => {
+  const { query, setQuery, filtering, isPending } = useCardListSearch(version.id, (next) => {
     refetch({
       first: cardListPageSize,
-      filter: { ...activeSignatoriesFilter, query: next === "" ? null : next },
+      filter: { ...(activeOnly ? activeSignatoriesFilter : {}), query: next === "" ? null : next },
     }, { fetchPolicy: "network-only" });
   });
   const [cancelSignature, isCancelling] = useMutation<DocumentSignatoriesSection_cancelMutation>(
@@ -206,7 +221,7 @@ function DocumentSignatoriesList({
             />
           )}
         </div>
-        {version.allSignatures.totalCount > cardListPageSize && (
+        {(version.allSignatures.totalCount > cardListPageSize || query !== "") && (
           <TextField
             size={1}
             icon={<MagnifyingGlassIcon />}

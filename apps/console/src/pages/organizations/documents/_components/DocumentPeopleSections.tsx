@@ -45,7 +45,7 @@ const documentPeopleSectionsVersionFragment = graphql`
       id
     }
     ...DocumentApprovalsSectionVersion_version
-    ...DocumentSignatoriesSectionList_version
+    ...DocumentSignatoriesSectionList_version @arguments(filter: {}, baseFilter: {})
   }
 `;
 

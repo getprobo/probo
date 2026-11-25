@@ -22,6 +22,7 @@ package listapprovaldecisions
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
@@ -29,11 +30,11 @@ import (
 )
 
 const listQuery = `
-query DocumentListApprovalDecisions($id: ID!, $first: Int, $after: CursorKey, $orderBy: DocumentVersionApprovalDecisionOrder) {
+query DocumentListApprovalDecisions($id: ID!, $first: Int, $after: CursorKey, $orderBy: DocumentVersionApprovalDecisionOrder, $filter: DocumentVersionApprovalDecisionFilter) {
   node(id: $id) {
     __typename
     ... on DocumentVersionApprovalQuorum {
-      decisions(first: $first, after: $after, orderBy: $orderBy) {
+      decisions(first: $first, after: $after, orderBy: $orderBy, filter: $filter) {
         totalCount
         edges {
           node {
@@ -72,6 +73,7 @@ func NewCmdListApprovalDecisions(f *cmdutil.Factory) *cobra.Command {
 		flagAfter    string
 		flagOrderBy  string
 		flagOrderDir string
+		flagQuery    string
 		flagOutput   *string
 	)
 
@@ -79,7 +81,10 @@ func NewCmdListApprovalDecisions(f *cmdutil.Factory) *cobra.Command {
 		Use:   "list-approval-decisions <quorum-id>",
 		Short: "List approval decisions for a quorum",
 		Example: `  # List approval decisions for a quorum
-  prb document list-approval-decisions <quorum-id>`,
+  prb document list-approval-decisions <quorum-id>
+
+  # List the decisions of approvers whose name contains "jane"
+  prb document list-approval-decisions <quorum-id> --query jane`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
@@ -111,6 +116,12 @@ func NewCmdListApprovalDecisions(f *cmdutil.Factory) *cobra.Command {
 				variables["orderBy"] = map[string]any{
 					"field":     flagOrderBy,
 					"direction": flagOrderDir,
+				}
+			}
+
+			if query := strings.TrimSpace(flagQuery); query != "" {
+				variables["filter"] = map[string]any{
+					"query": query,
 				}
 			}
 
@@ -164,6 +175,7 @@ func NewCmdListApprovalDecisions(f *cmdutil.Factory) *cobra.Command {
 	cmdutil.AddAfterFlag(cmd, &flagAfter)
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT)")
 	cmdutil.AddOrderDirectionFlag(cmd, &flagOrderDir, "DESC")
+	cmd.Flags().StringVar(&flagQuery, "query", "", "Search by approver name")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd

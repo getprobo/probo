@@ -100,8 +100,9 @@ export async function execute(
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
 	const filters = this.getNodeParameter('filters', itemIndex, {}) as IDataObject;
 	const filter: IDataObject = {};
-	if (typeof filters.query === 'string' && filters.query !== '') {
-		filter.query = filters.query;
+	const nameQuery = typeof filters.query === 'string' ? filters.query.trim() : '';
+	if (nameQuery !== '') {
+		filter.query = nameQuery;
 	}
 
 	const query = `

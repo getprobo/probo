@@ -95,7 +95,7 @@ describe("normalizeDocumentSearch", () => {
 });
 
 describe("withDocumentMode", () => {
-  it("leaves the version and its list when editing", () => {
+  it("drops the version and closes the versions list when editing", () => {
     expect(withDocumentMode(search("version=v1"), "editing").toString()).toBe("mode=editing");
     expect(withDocumentMode(search("view=versions"), "suggesting").toString()).toBe("mode=suggesting");
   });

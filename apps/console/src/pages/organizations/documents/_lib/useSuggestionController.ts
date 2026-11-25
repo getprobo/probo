@@ -97,7 +97,7 @@ export function useSuggestionController(
   documentId: string,
   mode: DocumentMode,
   onOpenSuggestion: (id: string) => void,
-  // Called on each local edit made as a suggestion. Must be stable.
+  // Called each time a local edit starts a suggestion. Must be stable.
   onSuggest: () => void,
 ) {
   const { t } = useTranslation("organizations/documents");

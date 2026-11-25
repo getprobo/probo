@@ -30,6 +30,7 @@ import { Text } from "@probo/ui/src/v2/typography/Text";
 import { Suspense } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useLazyLoadQuery, usePaginationFragment } from "react-relay";
+import type { RecordSourceSelectorProxy } from "relay-runtime";
 
 import type { DocumentControlsSection_attachMutation } from "#/__generated__/core/DocumentControlsSection_attachMutation.graphql";
 import type { DocumentControlsSection_detachMutation } from "#/__generated__/core/DocumentControlsSection_detachMutation.graphql";
@@ -128,6 +129,16 @@ const detachControlMutation = graphql`
   }
 `;
 
+// The unfiltered count decides whether the search shows, and no mutation
+// payload carries it.
+function adjustControlCount(store: RecordSourceSelectorProxy, documentId: string, delta: number) {
+  const allControls = store.get(documentId)?.getLinkedRecord("controls", { first: 0 });
+  const totalCount: unknown = allControls?.getValue("totalCount");
+  if (allControls != null && typeof totalCount === "number") {
+    allControls.setValue(totalCount + delta, "totalCount");
+  }
+}
+
 interface DocumentControlsSectionProps {
   documentKey: DocumentControlsSection_document$key;
 }
@@ -186,7 +197,7 @@ function DocumentControlsList({
     DocumentControlsSectionListRefetchQuery,
     DocumentControlsSectionList_document$key
   >(documentControlsListFragment, documentKey);
-  const { query, setQuery, filtering, isPending } = useCardListSearch((next) => {
+  const { query, setQuery, filtering, isPending } = useCardListSearch(document.id, (next) => {
     refetch({
       first: cardListPageSize,
       filter: next === "" ? null : { query: next },
@@ -204,7 +215,7 @@ function DocumentControlsList({
   const linksIncomplete = hasNext || isLoadingNext;
   const { root, title, names, name, control } = documentControls({ pending: isPending });
   const controls = document.controls.edges.map(edge => edge.node);
-  const searchable = document.allControls.totalCount > cardListPageSize;
+  const searchable = document.allControls.totalCount > cardListPageSize || query !== "";
   const linkedIds = new Set(controls.map(item => item.id));
 
   return (
@@ -227,6 +238,7 @@ function DocumentControlsList({
                     },
                     connections: [document.controls.__id],
                   },
+                  updater: store => adjustControlCount(store, document.id, 1),
                 }).catch(() => {
                   // Error toast is already shown by useMutation.
                 });
@@ -275,6 +287,7 @@ function DocumentControlsList({
                             },
                             connections: [document.controls.__id],
                           },
+                          updater: store => adjustControlCount(store, document.id, -1),
                         }).catch(() => {
                           // Error toast is already shown by useMutation.
                         });

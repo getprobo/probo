@@ -107,6 +107,7 @@ const documentApprovalsDecisionsFragment = graphql`
     after: { type: "CursorKey" }
     filter: { type: "DocumentVersionApprovalDecisionFilter", defaultValue: null }
   ) {
+    id
     allDecisions: decisions(first: 0) {
       totalCount
     }
@@ -266,7 +267,7 @@ export function DocumentApprovalsSection({ documentKey, versionKey }: DocumentAp
           ? <DocumentApprovalDecisions quorumKey={quorum} reviewHref={reviewHref} />
           : (
               <>
-                {savedApprovers.length > cardListPageSize && (
+                {(savedApprovers.length > cardListPageSize || approverQuery !== "") && (
                   <TextField
                     size={1}
                     icon={<MagnifyingGlassIcon />}
@@ -354,7 +355,7 @@ function DocumentApprovalDecisions({
     DocumentApprovalsSectionDecisionsRefetchQuery,
     DocumentApprovalsSectionDecisions_quorum$key
   >(documentApprovalsDecisionsFragment, quorumKey);
-  const { query, setQuery, filtering, isPending } = useCardListSearch((next) => {
+  const { query, setQuery, filtering, isPending } = useCardListSearch(quorum.id, (next) => {
     refetch({
       first: cardListPageSize,
       filter: next === "" ? null : { query: next },
@@ -365,7 +366,7 @@ function DocumentApprovalDecisions({
 
   return (
     <>
-      {quorum.allDecisions.totalCount > cardListPageSize && (
+      {(quorum.allDecisions.totalCount > cardListPageSize || query !== "") && (
         <TextField
           size={1}
           icon={<MagnifyingGlassIcon />}

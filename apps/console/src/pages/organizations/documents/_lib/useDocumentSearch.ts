@@ -32,8 +32,8 @@ export function useDocumentSearch() {
     latest.current = { searchParams, setSearchParams };
   }, [searchParams, setSearchParams]);
 
-  // Stable, and a no-op when the search stays the same: suggestions call it on
-  // each edit. Each call navigates from the last rendered search, so a change
+  // Stable, and a no-op when the search stays the same: each new suggestion
+  // calls it. Each call navigates from the last rendered search, so a change
   // touching several params goes through one call.
   const update = useCallback((change: DocumentSearchChange, options?: NavigateOptions) => {
     const { searchParams: current, setSearchParams: set } = latest.current;

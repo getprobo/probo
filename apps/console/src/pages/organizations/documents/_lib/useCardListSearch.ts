@@ -26,32 +26,39 @@ const searchDelayMs = 300;
 
 // The search box of a sidebar card list. Typing commits the trimmed query
 // after a pause, inside a transition so the card stays on screen while the
-// list refetches.
-export function useCardListSearch(onSearch: (query: string) => void) {
+// list refetches. A new source, such as another version, starts unfiltered.
+export function useCardListSearch(sourceId: string, onSearch: (query: string) => void) {
   const [query, setQuery] = useState("");
+  const [committedQuery, setCommittedQuery] = useState("");
+  const [source, setSource] = useState(sourceId);
   const [isPending, startTransition] = useTransition();
-  const committedQuery = useRef("");
   const search = useRef(onSearch);
+
+  if (source !== sourceId) {
+    setSource(sourceId);
+    setQuery("");
+    setCommittedQuery("");
+  }
 
   useEffect(() => {
     search.current = onSearch;
   }, [onSearch]);
 
   useEffect(() => {
+    const next = query.trim();
+    if (next === committedQuery) {
+      return;
+    }
     const handle = setTimeout(() => {
-      const next = query.trim();
-      if (next === committedQuery.current) {
-        return;
-      }
-      committedQuery.current = next;
       startTransition(() => {
+        setCommittedQuery(next);
         search.current(next);
       });
     }, searchDelayMs);
     return () => {
       clearTimeout(handle);
     };
-  }, [query]);
+  }, [committedQuery, query]);
 
-  return { query, setQuery, filtering: query.trim() !== "", isPending };
+  return { query, setQuery, filtering: committedQuery !== "", isPending };
 }
