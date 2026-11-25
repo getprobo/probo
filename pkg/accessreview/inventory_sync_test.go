@@ -286,12 +286,21 @@ func TestSyncInventorySource_AppearedOnNewEntitlements(t *testing.T) {
 
 	events = loadInventoryChangeEvents(t, ctx, client, fx)
 	require.Len(t, events, 3)
-	assert.Equal(t, coredata.AccessInventoryChangeTypeAppeared, events[1].ChangeType)
-	assert.Equal(t, "Owner", events[1].EntitlementKey)
-	require.NotNil(t, events[1].SyncRunID)
-	assert.Equal(t, run2.ID, *events[1].SyncRunID)
-	assert.Equal(t, coredata.AccessInventoryChangeTypeDisappeared, events[2].ChangeType)
-	assert.Equal(t, "Admin", events[2].EntitlementKey)
+	assert.Equal(t, coredata.AccessInventoryChangeTypeAppeared, events[0].ChangeType)
+
+	// APPEARED and DISAPPEARED from the same sync share observedAt/created_at,
+	// so load order between them is not stable — assert by entitlement key.
+	byEntitlementEvent := map[string]*coredata.AccessInventoryChangeEvent{}
+	for _, event := range events[1:] {
+		byEntitlementEvent[event.EntitlementKey] = event
+	}
+
+	require.Contains(t, byEntitlementEvent, "Owner")
+	require.Contains(t, byEntitlementEvent, "Admin")
+	assert.Equal(t, coredata.AccessInventoryChangeTypeAppeared, byEntitlementEvent["Owner"].ChangeType)
+	require.NotNil(t, byEntitlementEvent["Owner"].SyncRunID)
+	assert.Equal(t, run2.ID, *byEntitlementEvent["Owner"].SyncRunID)
+	assert.Equal(t, coredata.AccessInventoryChangeTypeDisappeared, byEntitlementEvent["Admin"].ChangeType)
 }
 
 func TestSyncInventorySource_EmptyRosterUpsertsDefaultResource(t *testing.T) {
