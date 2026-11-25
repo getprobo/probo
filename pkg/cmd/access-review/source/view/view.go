@@ -175,9 +175,11 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 					run.Status,
 				)
 				_, _ = fmt.Fprintf(out, "%s%d\n", label.Render("Grants upserted:"), run.GrantsUpsertedCount)
+
 				if run.Error != nil {
 					_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Run error:"), *run.Error)
 				}
+
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Run started:"), formatOptionalTime(run.StartedAt))
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Run completed:"), formatOptionalTime(run.CompletedAt))
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Run created:"), cmdutil.FormatTime(run.CreatedAt))

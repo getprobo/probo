@@ -553,6 +553,7 @@ func TestAccessSourceSyncRuns_LoadLatestBySourceIDs(t *testing.T) {
 
 	sourceBID := gid.New(fx.scope.GetTenantID(), coredata.AccessReviewSourceEntityType)
 	now := time.Now().UTC()
+
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		source := &coredata.AccessReviewSource{
 			ID:             sourceBID,
