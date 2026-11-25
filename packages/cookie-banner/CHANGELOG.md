@@ -4,13 +4,20 @@ All notable changes to the `@probo/cookie-banner` SDK will be documented in this
 
 ## Unreleased
 
-## [0.23.0] - 2026-11-17
+## [0.24.0] - 2026-11-25
 
 ### Changed
 
 - **Breaking**: a failed config fetch no longer grants Google Consent
   Mode or reports trackers. The visit still counts as a page view.
-  The banner stays unloaded until the config loads
+  The banner stays unloaded until the config loads instead of running
+  in discovery mode. Upgrade together with probod 0.360.0 or later,
+  which publishes new banners immediately
+
+## [0.23.0] - 2026-11-17
+
+### Changed
+
 - **Breaking**: every page reports a page view, and cookies already
   listed on the banner are always reported, so analytics are measured
   on every visit instead of only while a sample is open. The banner
