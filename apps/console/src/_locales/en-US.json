@@ -1401,7 +1401,8 @@
     "rightsRequests": "Rights Requests",
     "liveAccess": "Live access",
     "accessChanges": "Access changes",
-    "campaigns": "Campaigns",
+    "decideAndFlag": "Decide & flag",
+    "campaigns": "Reviews",
     "connections": "Connectors",
     "sources": "Sources",
     "employeePortalSettings": "Settings",
@@ -1694,12 +1695,12 @@
     "actions": { "previous": "Previous", "next": "Next" }
   },
   "accessReviewCampaignsPage": {
-    "title": "Campaigns",
-    "description": "Review and manage user access across your organization's systems and applications.",
+    "title": "Reviews",
+    "description": "Decide and flag access in review campaigns. For current access, use Live access.",
     "errors": { "delete": "Failed to delete campaign" },
     "messages": { "error": "Error", "success": "Success", "deleted": "Campaign deleted successfully." },
     "deleteConfirmation": "This will permanently delete \"{{name}}\". This action cannot be undone.",
-    "actions": { "new": "New campaign", "delete": "Delete", "loading": "Loading...", "loadMore": "Load more" },
+    "actions": { "new": "New review", "delete": "Delete", "loading": "Loading...", "loadMore": "Load more" },
     "columns": { "name": "Name", "status": "Status", "createdAt": "Created at" },
     "status": {
       "draft": "Draft",
@@ -1708,7 +1709,7 @@
       "completed": "Completed",
       "cancelled": "Cancelled"
     },
-    "empty": "No access review campaigns yet. Create your first campaign to start reviewing access."
+    "empty": "No reviews yet. Create a review campaign to decide and flag access."
   },
   "createCsvAccessReviewSourcePage": {
     "pageTitle": "Add CSV Access Source",
@@ -1830,7 +1831,7 @@
   "createAccessReviewCampaignDialog": {
     "errors": { "create": "Failed to create campaign" },
     "messages": { "error": "Error", "success": "Success", "created": "Campaign created successfully." },
-    "breadcrumb": { "accessReviews": "Campaigns", "newCampaign": "New Campaign" },
+    "breadcrumb": { "accessReviews": "Reviews", "newCampaign": "New review" },
     "fields": { "name": "Name", "description": "Description", "sources": "Sources" },
     "loadingSources": "Loading sources...",
     "actions": { "create": "Create" },
@@ -1849,7 +1850,7 @@
   },
   "accessReviewSourcesPage": {
     "title": "Sources",
-    "description": "Sources used in access reviews.",
+    "description": "Sources connected for live access sync and review campaigns.",
     "errors": { "create": "Failed to create access source" },
     "messages": { "error": "Error", "success": "Success", "created": "Access source created successfully." },
     "actions": { "loading": "Loading...", "loadMore": "Load more", "retry": "Retry", "more": "More actions", "addAll": "Add all", "edit": "Edit", "addSources": "Add sources" },

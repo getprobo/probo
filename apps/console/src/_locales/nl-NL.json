@@ -2094,7 +2094,8 @@
     "rightsRequests": "Rechtenverzoeken",
     "liveAccess": "Live toegang",
     "accessChanges": "Toegangswijzigingen",
-    "campaigns": "Campagnes",
+    "decideAndFlag": "Beslissen & markeren",
+    "campaigns": "Beoordelingen",
     "connections": "Connectoren",
     "sources": "Bronnen",
     "employeePortalSettings": "Instellingen",
@@ -2589,13 +2590,13 @@
     "actions": { "previous": "Vorige", "next": "Volgende" }
   },
   "accessReviewCampaignsPage": {
-    "title": "Campagnes",
-    "description": "Beoordeel en beheer gebruikerstoegang tot de systemen en applicaties van uw organisatie.",
+    "title": "Beoordelingen",
+    "description": "Beslis en markeer toegang in beoordelingscampagnes. Voor actuele toegang gebruikt u Live toegang.",
     "errors": { "delete": "Verwijderen van campagne mislukt" },
     "messages": { "error": "Fout", "success": "Succes", "deleted": "Campagne succesvol verwijderd." },
     "deleteConfirmation": "Hiermee wordt \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
     "actions": {
-      "new": "Nieuwe campagne",
+      "new": "Nieuwe beoordeling",
       "delete": "Verwijderen",
       "loading": "Laden...",
       "loadMore": "Meer laden"
@@ -2608,7 +2609,7 @@
       "completed": "Voltooid",
       "cancelled": "Geannuleerd"
     },
-    "empty": "Nog geen toegangsbeoordelingscampagnes. Maak uw eerste campagne aan om toegang te gaan beoordelen."
+    "empty": "Nog geen beoordelingen. Maak een beoordelingscampagne aan om toegang te beslissen en te markeren."
   },
   "createCsvAccessReviewSourcePage": {
     "pageTitle": "CSV-toegangsbron toevoegen",
@@ -2902,8 +2903,8 @@
       "created": "Campagne succesvol aangemaakt."
     },
     "breadcrumb": {
-      "accessReviews": "Campagnes",
-      "newCampaign": "Nieuwe campagne"
+      "accessReviews": "Beoordelingen",
+      "newCampaign": "Nieuwe beoordeling"
     },
     "fields": {
       "name": "Naam",
@@ -2935,7 +2936,7 @@
   },
   "accessReviewSourcesPage": {
     "title": "Bronnen",
-    "description": "Bronnen die worden gebruikt in toegangsbeoordelingen.",
+    "description": "Bronnen verbonden voor live-toegangssynchronisatie en beoordelingscampagnes.",
     "errors": { "create": "Aanmaken van toegangsbron mislukt" },
     "messages": { "error": "Fout", "success": "Succes", "created": "Toegangsbron succesvol aangemaakt." },
     "actions": { "loading": "Laden...", "loadMore": "Meer laden", "retry": "Opnieuw proberen", "more": "Meer acties", "addAll": "Alles toevoegen", "edit": "Bewerken", "addSources": "Bronnen toevoegen" },

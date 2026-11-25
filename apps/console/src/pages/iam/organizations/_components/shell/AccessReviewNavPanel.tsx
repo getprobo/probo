@@ -25,6 +25,7 @@ import type { AccessReviewNavPanelQuery } from "#/__generated__/iam/AccessReview
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { navHref } from "#/pages/iam/organizations/_lib/navigation";
 
+import { NavPanelGroup } from "./NavPanelGroup";
 import { NavPanelItem } from "./NavPanelItem";
 import { NavPanelQuery } from "./NavPanelQuery";
 import type { NavPanelBodyProps } from "./navPanels";
@@ -79,10 +80,12 @@ function AccessReviewNavPanelInner({ queryRef, group }: AccessReviewNavPanelInne
         />
       )}
       {organization.canListAccessReviewCampaigns && (
-        <NavPanelItem
-          label={t("nav.campaigns")}
-          to={navHref(organizationId, group, "campaigns")}
-        />
+        <NavPanelGroup label={t("nav.decideAndFlag")}>
+          <NavPanelItem
+            label={t("nav.campaigns")}
+            to={navHref(organizationId, group, "campaigns")}
+          />
+        </NavPanelGroup>
       )}
       {organization.canListAccessReviewSources && (
         <NavPanelItem

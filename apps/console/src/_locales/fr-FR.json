@@ -2095,7 +2095,8 @@
     "rightsRequests": "Demandes d’exercice de droits",
     "liveAccess": "Accès en direct",
     "accessChanges": "Changements d'accès",
-    "campaigns": "Campagnes",
+    "decideAndFlag": "Décider et signaler",
+    "campaigns": "Revues",
     "connections": "Connecteurs",
     "sources": "Sources",
     "employeePortalSettings": "Paramètres",
@@ -2590,13 +2591,13 @@
     "actions": { "previous": "Précédent", "next": "Suivant" }
   },
   "accessReviewCampaignsPage": {
-    "title": "Campagnes",
-    "description": "Passez en revue et gérez les accès des utilisateurs à travers les systèmes et applications de votre organisation.",
+    "title": "Revues",
+    "description": "Décidez et signalez les accès dans des campagnes de revue. Pour l’accès actuel, utilisez Accès en direct.",
     "errors": { "delete": "Échec de la suppression de la campagne" },
     "messages": { "error": "Erreur", "success": "Succès", "deleted": "Campagne supprimée avec succès." },
     "deleteConfirmation": "Cette action supprimera définitivement « {{name}} ». Cette action est irréversible.",
     "actions": {
-      "new": "Nouvelle campagne",
+      "new": "Nouvelle revue",
       "delete": "Supprimer",
       "loading": "Chargement...",
       "loadMore": "Charger plus"
@@ -2609,7 +2610,7 @@
       "completed": "Terminé",
       "cancelled": "Annulé"
     },
-    "empty": "Aucune campagne de revue d’accès pour le moment. Créez votre première campagne pour commencer à revoir les accès."
+    "empty": "Aucune revue pour le moment. Créez une campagne de revue pour décider et signaler les accès."
   },
   "createCsvAccessReviewSourcePage": {
     "pageTitle": "Ajouter une source d’accès CSV",
@@ -2903,8 +2904,8 @@
       "created": "Campagne créée avec succès."
     },
     "breadcrumb": {
-      "accessReviews": "Campagnes",
-      "newCampaign": "Nouvelle campagne"
+      "accessReviews": "Revues",
+      "newCampaign": "Nouvelle revue"
     },
     "fields": {
       "name": "Nom",
@@ -2936,7 +2937,7 @@
   },
   "accessReviewSourcesPage": {
     "title": "Sources",
-    "description": "Sources utilisées dans les revues d’accès.",
+    "description": "Sources connectées pour la synchronisation de l’accès en direct et les campagnes de revue.",
     "errors": { "create": "Échec de la création de la source d’accès" },
     "messages": { "error": "Erreur", "success": "Succès", "created": "Source d’accès créée avec succès." },
     "actions": { "loading": "Chargement...", "loadMore": "Charger plus", "retry": "Réessayer", "more": "Plus d’actions", "addAll": "Tout ajouter", "edit": "Modifier", "addSources": "Ajouter des sources" },
