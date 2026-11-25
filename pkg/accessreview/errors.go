@@ -51,6 +51,9 @@ var (
 	ErrCampaignSourceFetchNotFailed  = errors.New("access review campaign source fetch not failed")
 	ErrCampaignSourceNotConfigured   = errors.New("access review campaign source not configured")
 	ErrMissingOAuthScopes            = errors.New("missing required OAuth scopes")
+	// ErrMissingPrincipalKey is returned when a roster account has neither a
+	// usable email nor an external ID, so no stable principal key can be formed.
+	ErrMissingPrincipalKey = errors.New("account has no email or external id")
 )
 
 type (
