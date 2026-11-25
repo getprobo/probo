@@ -321,6 +321,7 @@ func TestBackfillInventoryFromLatestCampaignEntries_UsesLatestSuccessfulSnapshot
 	insertCampaignEntry(t, ctx, client, fx, "old@example.com", "Old", []string{"Legacy"}, older)
 
 	completedOlder := older
+
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		attempt := &coredata.AccessReviewCampaignSourceFetchAttempt{
 			ID:                           gid.New(fx.scope.GetTenantID(), coredata.AccessReviewCampaignSourceFetchAttemptEntityType),
