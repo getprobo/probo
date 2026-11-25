@@ -29,7 +29,9 @@ type CollaborationState = {
   failed?: boolean;
 };
 
-export function useDocumentCollaboration(documentId: string) {
+// A document that is not enabled opens no room. Archived documents are only
+// viewed, and legacy ones have no collaboration document to open.
+export function useDocumentCollaboration(documentId: string, enabled: boolean) {
   const { t } = useTranslation("organizations/documents");
   const toast = useToast();
   const addToast = toast.add;
@@ -37,6 +39,9 @@ export function useDocumentCollaboration(documentId: string) {
   const [state, setState] = useState<CollaborationState>();
 
   useEffect(() => {
+    if (!enabled) {
+      return;
+    }
     const attempt = ++attemptRef.current;
     let activeHandle: RepoCollaborationHandle | undefined;
 
@@ -69,10 +74,10 @@ export function useDocumentCollaboration(documentId: string) {
       activeHandle?.close();
       setState(current => (current?.attempt === attempt ? undefined : current));
     };
-  }, [addToast, documentId, t]);
+  }, [addToast, documentId, enabled, t]);
 
   return {
-    handle: state?.failed ? undefined : state?.handle,
-    failed: state?.failed === true,
+    handle: enabled && !state?.failed ? state?.handle : undefined,
+    failed: enabled && state?.failed === true,
   };
 }

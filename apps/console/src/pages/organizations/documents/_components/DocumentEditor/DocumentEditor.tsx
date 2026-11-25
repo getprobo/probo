@@ -62,6 +62,7 @@ const viewRefetchDelayMs = 1_000;
 const documentEditorFragment = graphql`
   fragment DocumentEditor_document on Document {
     id
+    status
     orientation
     canComment: permission(action: "core:document:comment")
   }
@@ -112,7 +113,10 @@ export function DocumentEditor({
   const [editor, setEditorInstance] = useState<Editor | null>(null);
   const [pageCount, setPageCount] = useState(1);
   const [toolbarEl, setToolbarEl] = useState<HTMLDivElement | null>(null);
-  const { handle, failed } = useDocumentCollaboration(document.id);
+  const { handle, failed } = useDocumentCollaboration(
+    document.id,
+    document.status !== "ARCHIVED",
+  );
   const { controller, setEditor } = useSuggestionController(document.id, mode, activate);
   const commentAnchorController: CommentAnchorController = useRef({
     onOpenThread: (id: string) => activate(id),
