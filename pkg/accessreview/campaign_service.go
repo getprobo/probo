@@ -775,7 +775,13 @@ func (s *Service) enqueueSourceFetches(
 
 	for _, sourceID := range sourceIDs {
 		source := &coredata.AccessReviewSource{}
-		if err := source.LoadByIDForUpdate(ctx, tx, scope, sourceID); err != nil {
+		err := source.LoadByIDForUpdate(ctx, tx, scope, sourceID)
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			// Source deleted after campaign snapshot — still queue the
+			// campaign fetch attempt; skip inventory enqueue only.
+			continue
+		}
+		if err != nil {
 			return fmt.Errorf(
 				"cannot lock access source %s for inventory sync: %w",
 				sourceID,

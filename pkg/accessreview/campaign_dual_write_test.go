@@ -189,6 +189,61 @@ func TestStartCampaign_EnqueuesInventorySync(t *testing.T) {
 	assert.Equal(t, coredata.AccessReviewCampaignSourceFetchStatusQueued, attempts[0].Status)
 }
 
+func TestStartCampaign_SkipsInventoryEnqueueWhenSourceDeleted(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	logger := log.NewLogger(log.WithOutput(io.Discard))
+	svc := NewService(client, cipher.EncryptionKey{}, nil, provider.NewBuiltinRegistry(), logger)
+
+	csvData := "email,full_name,role\neve@example.com,Eve,Viewer\n"
+	fx := seedFetchFixture(t, ctx, client, csvData)
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		campaign := &coredata.AccessReviewCampaign{}
+		if err := campaign.LoadByID(ctx, tx, fx.scope, fx.campaignID); err != nil {
+			return err
+		}
+
+		campaign.Status = coredata.AccessReviewCampaignStatusDraft
+		campaign.StartedAt = nil
+		campaign.UpdatedAt = campaign.CreatedAt
+
+		if err := campaign.Update(ctx, tx, fx.scope); err != nil {
+			return err
+		}
+
+		source := &coredata.AccessReviewSource{ID: fx.sourceID}
+
+		return source.Delete(ctx, tx, fx.scope)
+	}))
+
+	started, err := svc.StartCampaign(ctx, fx.scope, fx.campaignID)
+	require.NoError(t, err)
+	assert.Equal(t, coredata.AccessReviewCampaignStatusInProgress, started.Status)
+
+	_, err = svc.GetLatestAccessSourceSyncRunForSourceID(ctx, fx.scope, fx.sourceID)
+	require.ErrorIs(t, err, coredata.ErrResourceNotFound)
+
+	var attempts coredata.AccessReviewCampaignSourceFetchAttempts
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		cursor := page.NewCursor(
+			10,
+			nil,
+			page.Head,
+			page.OrderBy[coredata.AccessReviewCampaignSourceFetchAttemptOrderField]{
+				Field:     coredata.AccessReviewCampaignSourceFetchAttemptOrderFieldCreatedAt,
+				Direction: page.OrderDirectionAsc,
+			},
+		)
+
+		return attempts.LoadByCampaignSourceID(ctx, conn, fx.scope, fx.campaignSourceID, cursor)
+	}))
+	require.Len(t, attempts, 1)
+	assert.Equal(t, coredata.AccessReviewCampaignSourceFetchStatusQueued, attempts[0].Status)
+}
+
 func TestDualWriteInventory_SkipsWhenSourceDeleted(t *testing.T) {
 	t.Parallel()
 
