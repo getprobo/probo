@@ -143,7 +143,7 @@ export async function execute(
 	}
 
 	const query = `
-		query(
+		query GetAccessInventoryChangeEvents(
 			$organizationId: ID!,
 			$first: Int,
 			$after: CursorKey,

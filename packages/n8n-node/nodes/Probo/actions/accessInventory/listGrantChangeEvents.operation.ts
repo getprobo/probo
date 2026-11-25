@@ -135,7 +135,7 @@ export async function execute(
 	}
 
 	const query = `
-		query(
+		query GetAccessInventoryGrantChangeEvents(
 			$grantId: ID!,
 			$first: Int,
 			$after: CursorKey,
