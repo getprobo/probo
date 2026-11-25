@@ -1,0 +1,244 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+import { useCallback, useMemo } from "react";
+import { useSearchParams } from "react-router";
+
+export const accessInventoryChangeTypes = [
+  "APPEARED",
+  "DISAPPEARED",
+  "ATTRIBUTE_CHANGED",
+] as const;
+
+export type AccessInventoryChangeTypeFilter
+  = (typeof accessInventoryChangeTypes)[number];
+
+const changeTypeParam = {
+  APPEARED: "appeared",
+  DISAPPEARED: "disappeared",
+  ATTRIBUTE_CHANGED: "attribute-changed",
+} as const;
+
+const isoDatePattern = /^\d{4}-\d{2}-\d{2}$/;
+
+function isChangeTypeFilter(
+  value: string,
+): value is AccessInventoryChangeTypeFilter {
+  return (accessInventoryChangeTypes as readonly string[]).includes(value);
+}
+
+function changeTypeFromParam(
+  value: string,
+): AccessInventoryChangeTypeFilter | null {
+  if (value === "appeared") {
+    return "APPEARED";
+  }
+  if (value === "disappeared") {
+    return "DISAPPEARED";
+  }
+  if (value === "attribute-changed") {
+    return "ATTRIBUTE_CHANGED";
+  }
+  return null;
+}
+
+function isoDateFromParam(value: string | null): string | null {
+  if (value == null || value === "") {
+    return null;
+  }
+  if (!isoDatePattern.test(value)) {
+    return null;
+  }
+  const [yearText, monthText, dayText] = value.split("-");
+  const year = Number(yearText);
+  const month = Number(monthText);
+  const day = Number(dayText);
+  const local = new Date(year, month - 1, day);
+  if (
+    Number.isNaN(local.getTime())
+    || local.getFullYear() !== year
+    || local.getMonth() !== month - 1
+    || local.getDate() !== day
+  ) {
+    return null;
+  }
+  return value;
+}
+
+function localDayParts(
+  date: string,
+): { year: number; month: number; day: number } | null {
+  const valid = isoDateFromParam(date);
+  if (valid == null) {
+    return null;
+  }
+  const [yearText, monthText, dayText] = valid.split("-");
+  return {
+    year: Number(yearText),
+    month: Number(monthText),
+    day: Number(dayText),
+  };
+}
+
+// The picker stores a local calendar day. Bounds are that day's local
+// midnight / end-of-day, converted to UTC, so the query matches the day
+// the user chose.
+export function accessInventoryChangeEventLocalDayStart(
+  date: string,
+): string | null {
+  const parts = localDayParts(date);
+  if (parts == null) {
+    return null;
+  }
+  return new Date(parts.year, parts.month - 1, parts.day, 0, 0, 0, 0)
+    .toISOString();
+}
+
+export function accessInventoryChangeEventLocalDayEnd(
+  date: string,
+): string | null {
+  const parts = localDayParts(date);
+  if (parts == null) {
+    return null;
+  }
+  return new Date(parts.year, parts.month - 1, parts.day, 23, 59, 59, 999)
+    .toISOString();
+}
+
+export function accessInventoryChangeEventsGraphqlFilter(filters: {
+  sourceId: string | null;
+  changeType: AccessInventoryChangeTypeFilter | null;
+  observedAfter: string | null;
+  observedBefore: string | null;
+}) {
+  return {
+    accessReviewSourceId: filters.sourceId,
+    changeTypes: filters.changeType != null ? [filters.changeType] : null,
+    observedAtOnOrAfter: filters.observedAfter != null
+      ? accessInventoryChangeEventLocalDayStart(filters.observedAfter)
+      : null,
+    observedAtOnOrBefore: filters.observedBefore != null
+      ? accessInventoryChangeEventLocalDayEnd(filters.observedBefore)
+      : null,
+  };
+}
+
+export type AccessInventoryChangeEventsGraphqlFilter = ReturnType<
+  typeof accessInventoryChangeEventsGraphqlFilter
+>;
+
+export interface AccessInventoryChangeEventsFilters {
+  sourceId: string | null;
+  changeType: AccessInventoryChangeTypeFilter | null;
+  observedAfter: string | null;
+  observedBefore: string | null;
+  graphqlFilter: AccessInventoryChangeEventsGraphqlFilter;
+  hasActiveFilters: boolean;
+  setSourceId: (value: string | null) => void;
+  setChangeType: (value: AccessInventoryChangeTypeFilter | null) => void;
+  setObservedAfter: (value: string | null) => void;
+  setObservedBefore: (value: string | null) => void;
+}
+
+export function useAccessInventoryChangeEventsFilters(): AccessInventoryChangeEventsFilters {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const sourceId = searchParams.get("source") || null;
+  const changeType = changeTypeFromParam(searchParams.get("changeType") ?? "");
+  const observedAfter = isoDateFromParam(searchParams.get("observedAfter"));
+  const observedBefore = isoDateFromParam(searchParams.get("observedBefore"));
+
+  const graphqlFilter = useMemo(
+    () => accessInventoryChangeEventsGraphqlFilter({
+      sourceId,
+      changeType,
+      observedAfter,
+      observedBefore,
+    }),
+    [sourceId, changeType, observedAfter, observedBefore],
+  );
+
+  const setSourceId = useCallback((value: string | null) => {
+    setSearchParams((previous) => {
+      const next = new URLSearchParams(previous);
+      if (value) {
+        next.set("source", value);
+      } else {
+        next.delete("source");
+      }
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
+
+  const setChangeType = useCallback((
+    value: AccessInventoryChangeTypeFilter | null,
+  ) => {
+    setSearchParams((previous) => {
+      const next = new URLSearchParams(previous);
+      if (value != null && isChangeTypeFilter(value)) {
+        next.set("changeType", changeTypeParam[value]);
+      } else {
+        next.delete("changeType");
+      }
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
+
+  const setObservedAfter = useCallback((value: string | null) => {
+    setSearchParams((previous) => {
+      const next = new URLSearchParams(previous);
+      const date = isoDateFromParam(value);
+      if (date != null) {
+        next.set("observedAfter", date);
+      } else {
+        next.delete("observedAfter");
+      }
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
+
+  const setObservedBefore = useCallback((value: string | null) => {
+    setSearchParams((previous) => {
+      const next = new URLSearchParams(previous);
+      const date = isoDateFromParam(value);
+      if (date != null) {
+        next.set("observedBefore", date);
+      } else {
+        next.delete("observedBefore");
+      }
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
+
+  return {
+    sourceId,
+    changeType,
+    observedAfter,
+    observedBefore,
+    graphqlFilter,
+    hasActiveFilters: sourceId != null
+      || changeType != null
+      || observedAfter != null
+      || observedBefore != null,
+    setSourceId,
+    setChangeType,
+    setObservedAfter,
+    setObservedBefore,
+  };
+}

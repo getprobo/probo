@@ -204,6 +204,13 @@ const NAV_DESTINATIONS = [
     isVisible: permissions => permissions.canListAccessInventoryGrants,
   },
   {
+    id: "access-changes",
+    group: "accessReview",
+    labelKey: "nav.accessChanges",
+    path: "changes",
+    isVisible: permissions => permissions.canListAccessInventoryChangeEvents,
+  },
+  {
     id: "campaigns",
     group: "accessReview",
     labelKey: "nav.campaigns",
