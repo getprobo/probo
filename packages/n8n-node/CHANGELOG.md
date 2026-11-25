@@ -4,6 +4,13 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.278.0] - 2026-11-25
+
+### Added
+
+- Document Get Many Approval Decisions takes an Approver Name filter,
+  and Get Many Signatures a Signatory Name filter
+
 ## [0.277.0] - 2026-11-25
 
 ### Added
